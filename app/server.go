@@ -3,12 +3,13 @@ package app
 import (
 	"sync"
 
-	"github.com/tadoku/api/app/server"
+	"github.com/tadoku/api/domain"
+	"github.com/tadoku/api/infra/routers"
 )
 
 // ServerDependencies is a dependency container for the api
 type ServerDependencies interface {
-	Router() server.Router
+	Router() domain.Router
 }
 
 // NewServerDependencies instantiates all the dependencies for the api server
@@ -18,15 +19,15 @@ func NewServerDependencies() ServerDependencies {
 
 type serverDependencies struct {
 	router struct {
-		result server.Router
+		result domain.Router
 		once   sync.Once
 	}
 }
 
-func (d *serverDependencies) Router() server.Router {
+func (d *serverDependencies) Router() domain.Router {
 	holder := &d.router
 	holder.once.Do(func() {
-		holder.result = server.NewRouter()
+		holder.result = routers.NewServerRouter()
 	})
 	return holder.result
 }

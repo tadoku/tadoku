@@ -1,20 +1,25 @@
 package server
 
 import (
-	"net/http"
-
 	"github.com/labstack/echo"
 
 	"github.com/tadoku/api/domain"
+	"github.com/tadoku/api/domain/services"
 )
 
 // NewRouter instantiates an api router
-func NewRouter() domain.Router {
+func NewRouter(
+	healthService services.HealthService,
+) domain.Router {
 	e := echo.New()
 
-	e.GET("/ping", func(c echo.Context) error {
-		return c.String(http.StatusOK, "pong")
-	})
+	e.GET("/ping", wrap(healthService.Ping))
 
 	return e
+}
+
+func wrap(h domain.HandlerFunc) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		return h(c)
+	}
 }

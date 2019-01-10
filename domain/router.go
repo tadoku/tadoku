@@ -4,3 +4,6 @@ package domain
 type Router interface {
 	Start(address string) error
 }
+
+// HandlerFunc of the router
+type HandlerFunc func(Context) error

@@ -1,15 +1,14 @@
 package app
 
 import (
-	"net/http"
 	"sync"
 
-	"github.com/labstack/echo"
+	"github.com/tadoku/api/app/server"
 )
 
 // ServerDependencies is a dependency container for the api
 type ServerDependencies interface {
-	Router() *echo.Echo
+	Router() server.Router
 }
 
 // NewServerDependencies instantiates all the dependencies for the api server
@@ -19,18 +18,15 @@ func NewServerDependencies() ServerDependencies {
 
 type serverDependencies struct {
 	router struct {
-		result *echo.Echo
+		result server.Router
 		once   sync.Once
 	}
 }
 
-func (d *serverDependencies) Router() *echo.Echo {
+func (d *serverDependencies) Router() server.Router {
 	holder := &d.router
 	holder.once.Do(func() {
-		holder.result = echo.New()
-		holder.result.GET("/", func(c echo.Context) error {
-			return c.String(http.StatusOK, "Hello, World!")
-		})
+		holder.result = server.NewRouter()
 	})
 	return holder.result
 }
@@ -38,6 +34,6 @@ func (d *serverDependencies) Router() *echo.Echo {
 // RunServer starts the actual API server
 func RunServer(d ServerDependencies) error {
 	router := d.Router()
-	router.Logger.Fatal(router.Start(":1234"))
+	router.Start(":1234")
 	return nil
 }

@@ -5,6 +5,6 @@ import (
 )
 
 func main() {
-	s := app.NewServer()
-	app.RunServer(s)
+	deps := app.NewServerDependencies()
+	app.RunServer(deps)
 }

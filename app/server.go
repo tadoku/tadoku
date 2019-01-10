@@ -7,25 +7,25 @@ import (
 	"github.com/labstack/echo"
 )
 
-// Server is a dependency container for the api
-type Server interface {
+// ServerDependencies is a dependency container for the api
+type ServerDependencies interface {
 	Router() *echo.Echo
 }
 
-// NewServer instantiates a new api server
-func NewServer() Server {
-	return &server{}
+// NewServerDependencies instantiates all the dependencies for the api server
+func NewServerDependencies() ServerDependencies {
+	return &serverDependencies{}
 }
 
-type server struct {
+type serverDependencies struct {
 	router struct {
 		result *echo.Echo
 		once   sync.Once
 	}
 }
 
-func (s *server) Router() *echo.Echo {
-	holder := &s.router
+func (d *serverDependencies) Router() *echo.Echo {
+	holder := &d.router
 	holder.once.Do(func() {
 		holder.result = echo.New()
 		holder.result.GET("/", func(c echo.Context) error {
@@ -36,8 +36,8 @@ func (s *server) Router() *echo.Echo {
 }
 
 // RunServer starts the actual API server
-func RunServer(s Server) error {
-	router := s.Router()
+func RunServer(d ServerDependencies) error {
+	router := d.Router()
 	router.Logger.Fatal(router.Start(":1234"))
 	return nil
 }

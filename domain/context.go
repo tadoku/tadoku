@@ -16,6 +16,9 @@ type Context interface {
 	// String sends a string response with status code.
 	String(code int, s string) error
 
+	// NoContent sends a response with no body and a status code.
+	NoContent(code int) error
+
 	// JSON sends a JSON response with status code.
 	JSON(code int, i interface{}) error
 }

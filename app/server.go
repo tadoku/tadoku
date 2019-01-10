@@ -30,6 +30,7 @@ func (d *serverDependencies) Router() domain.Router {
 	holder.once.Do(func() {
 		holder.result = server.NewRouter(
 			services.NewHealthService(),
+			services.NewSessionService(),
 		)
 	})
 	return holder.result

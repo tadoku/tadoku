@@ -4,12 +4,15 @@ import (
 	"net/http"
 	"sync"
 
+	"github.com/creasty/configo"
+
 	"github.com/tadoku/api/infra/router"
 	"github.com/tadoku/api/interfaces/services"
 )
 
 // ServerDependencies is a dependency container for the api
 type ServerDependencies interface {
+	AutoConfigure() error
 	Router() services.Router
 	HealthService() services.HealthService
 	SessionService() services.SessionService
@@ -21,6 +24,10 @@ func NewServerDependencies() ServerDependencies {
 }
 
 type serverDependencies struct {
+	DatabaseURL          string `envconfig:"database_url" valid:"required"`
+	DatabaseMaxIdleConns string `envconfig:"database_max_idle_conns" valid:"required"`
+	DatabaseMaxOpenConns string `envconfig:"database_max_open_conns" valid:"required"`
+
 	router struct {
 		result services.Router
 		once   sync.Once
@@ -35,6 +42,10 @@ type serverDependencies struct {
 		result services.SessionService
 		once   sync.Once
 	}
+}
+
+func (d *serverDependencies) AutoConfigure() error {
+	return configo.Load(d, configo.Option{})
 }
 
 // ------------------------------

@@ -1,16 +1,18 @@
 package app
 
 import (
+	"net/http"
 	"sync"
 
-	"github.com/tadoku/api/app/server"
-	"github.com/tadoku/api/domain"
-	"github.com/tadoku/api/services"
+	"github.com/tadoku/api/infra/router"
+	"github.com/tadoku/api/interfaces/services"
 )
 
 // ServerDependencies is a dependency container for the api
 type ServerDependencies interface {
-	Router() domain.Router
+	Router() services.Router
+	HealthService() services.HealthService
+	SessionService() services.SessionService
 }
 
 // NewServerDependencies instantiates all the dependencies for the api server
@@ -20,20 +22,59 @@ func NewServerDependencies() ServerDependencies {
 
 type serverDependencies struct {
 	router struct {
-		result domain.Router
+		result services.Router
+		once   sync.Once
+	}
+
+	healthService struct {
+		result services.HealthService
+		once   sync.Once
+	}
+
+	sessionService struct {
+		result services.SessionService
 		once   sync.Once
 	}
 }
 
-func (d *serverDependencies) Router() domain.Router {
-	holder := &d.router
+// ------------------------------
+// Services
+// ------------------------------
+
+func (d *serverDependencies) HealthService() services.HealthService {
+	holder := &d.healthService
 	holder.once.Do(func() {
-		holder.result = server.NewRouter(
-			services.NewHealthService(),
-			services.NewSessionService(),
-		)
+		holder.result = services.NewHealthService()
 	})
 	return holder.result
+}
+
+func (d *serverDependencies) SessionService() services.SessionService {
+	holder := &d.sessionService
+	holder.once.Do(func() {
+		holder.result = services.NewSessionService()
+	})
+	return holder.result
+}
+
+// ------------------------------
+// Router
+// ------------------------------
+
+func (d *serverDependencies) Router() services.Router {
+	holder := &d.router
+	holder.once.Do(func() {
+		holder.result = router.NewRouter(d.routes()...)
+	})
+	return holder.result
+}
+
+func (d *serverDependencies) routes() []services.Route {
+	return []services.Route{
+		{Method: http.MethodGet, Path: "/ping", HandlerFunc: d.HealthService().Ping},
+		{Method: http.MethodPost, Path: "/login", HandlerFunc: d.SessionService().Login},
+		{Method: http.MethodPost, Path: "/register", HandlerFunc: d.SessionService().Register},
+	}
 }
 
 // RunServer starts the actual API server

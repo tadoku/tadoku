@@ -20,5 +20,5 @@ jobs:
         command: go test -cover ./...
       - save_cache:
         key: go-mod-v1-{{ checksum "go.sum" }}
-          paths:
-            - "/go/pkg/mod"
+        paths:
+          - "/go/pkg/mod"

@@ -6,5 +6,6 @@ import (
 
 func main() {
 	deps := app.NewServerDependencies()
+	deps.AutoConfigure()
 	app.RunServer(deps)
 }

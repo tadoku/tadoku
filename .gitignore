@@ -13,3 +13,6 @@
 
 # Project binaries
 cmd/server/server
+
+# Don't commit the environment variables that are in use
+.env

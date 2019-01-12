@@ -1,5 +1,7 @@
 # Tadoku API
 
+[![CircleCI](https://circleci.com/gh/tadoku/api/tree/master.svg?style=svg)](https://circleci.com/gh/tadoku/api/tree/master)
+
 ## Getting started
 
 ### 1. Setup environment

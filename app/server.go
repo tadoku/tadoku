@@ -6,7 +6,7 @@ import (
 
 	"github.com/creasty/configo"
 
-	"github.com/tadoku/api/infra/router"
+	"github.com/tadoku/api/infra"
 	"github.com/tadoku/api/interfaces/services"
 )
 
@@ -75,7 +75,7 @@ func (d *serverDependencies) SessionService() services.SessionService {
 func (d *serverDependencies) Router() services.Router {
 	holder := &d.router
 	holder.once.Do(func() {
-		holder.result = router.NewRouter(d.routes()...)
+		holder.result = infra.NewRouter(d.routes()...)
 	})
 	return holder.result
 }

@@ -5,9 +5,7 @@ import (
 	_ "github.com/lib/pq"
 )
 
-type RDB struct {
-	*sqlx.DB
-}
+type RDB = sqlx.DB
 
 func NewRDB(URL string, maxIdleConns, maxOpenConns int) (*RDB, error) {
 	db, err := sqlx.Open("postgres", URL)
@@ -19,5 +17,5 @@ func NewRDB(URL string, maxIdleConns, maxOpenConns int) (*RDB, error) {
 	db.SetMaxIdleConns(maxIdleConns)
 	db.SetMaxOpenConns(maxOpenConns)
 
-	return &RDB{db}, nil
+	return db, nil
 }

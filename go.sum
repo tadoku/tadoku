@@ -1,3 +1,5 @@
+github.com/DavidHuie/gomigrate v0.0.0-20160809001028-4004e6142040 h1:BaIvMMd6mG0r4WNpOzGFjqBYv8zz4Zoi5dzTcrAPGpY=
+github.com/DavidHuie/gomigrate v0.0.0-20160809001028-4004e6142040/go.mod h1:F3GZLX+VN44AjFiyKD8++nq8sVE0Sw3bOhhQ3mUffnM=
 github.com/asaskevich/govalidator v0.0.0-20180720115003-f9ffefc3facf h1:eg0MeVzsP1G42dRafH3vf+al2vQIJU0YHX+1Tw87oco=
 github.com/asaskevich/govalidator v0.0.0-20180720115003-f9ffefc3facf/go.mod h1:lB+ZfQJz7igIIfQNfa7Ml4HSf2uFQQRzpGGRXenZAgY=
 github.com/creasty/configo v0.0.0-20170711121124-288b7e8980d2 h1:SZh25gZhbFC/XxgF3k22M+LtkOMOLgWCoWEeJtZA3pA=

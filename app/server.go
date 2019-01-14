@@ -1,12 +1,13 @@
 package app
 
 import (
+	"log"
 	"net/http"
 	"sync"
 
 	"github.com/creasty/configo"
 
-	"github.com/tadoku/api/infra/router"
+	"github.com/tadoku/api/infra"
 	"github.com/tadoku/api/interfaces/services"
 )
 
@@ -14,6 +15,7 @@ import (
 type ServerDependencies interface {
 	AutoConfigure() error
 	Router() services.Router
+	RDB() *infra.RDB // @TODO: change this interface so it isn't exposed
 	HealthService() services.HealthService
 	SessionService() services.SessionService
 }
@@ -25,11 +27,16 @@ func NewServerDependencies() ServerDependencies {
 
 type serverDependencies struct {
 	DatabaseURL          string `envconfig:"database_url" valid:"required"`
-	DatabaseMaxIdleConns string `envconfig:"database_max_idle_conns" valid:"required"`
-	DatabaseMaxOpenConns string `envconfig:"database_max_open_conns" valid:"required"`
+	DatabaseMaxIdleConns int    `envconfig:"database_max_idle_conns" valid:"required"`
+	DatabaseMaxOpenConns int    `envconfig:"database_max_open_conns" valid:"required"`
 
 	router struct {
 		result services.Router
+		once   sync.Once
+	}
+
+	rdb struct {
+		result *infra.RDB
 		once   sync.Once
 	}
 
@@ -75,7 +82,7 @@ func (d *serverDependencies) SessionService() services.SessionService {
 func (d *serverDependencies) Router() services.Router {
 	holder := &d.router
 	holder.once.Do(func() {
-		holder.result = router.NewRouter(d.routes()...)
+		holder.result = infra.NewRouter(d.routes()...)
 	})
 	return holder.result
 }
@@ -86,6 +93,24 @@ func (d *serverDependencies) routes() []services.Route {
 		{Method: http.MethodPost, Path: "/login", HandlerFunc: d.SessionService().Login},
 		{Method: http.MethodPost, Path: "/register", HandlerFunc: d.SessionService().Register},
 	}
+}
+
+// ------------------------------
+// Relational database
+// ------------------------------
+
+func (d *serverDependencies) RDB() *infra.RDB {
+	holder := &d.rdb
+	holder.once.Do(func() {
+		var err error
+		holder.result, err = infra.NewRDB(d.DatabaseURL, d.DatabaseMaxIdleConns, d.DatabaseMaxOpenConns)
+
+		if err != nil {
+			// @TODO: we should handle errors more gracefully
+			log.Fatalf("Failed to initialize connection pool with database: %v\n", err)
+		}
+	})
+	return holder.result
 }
 
 // RunServer starts the actual API server

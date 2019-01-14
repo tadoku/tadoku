@@ -1,1 +1,3 @@
 DROP TABLE users CASCADE;
+
+DROP SEQUENCE IF EXISTS user_seq;

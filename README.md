@@ -19,6 +19,12 @@
 $ make all
 ```
 
+### Lint project
+
+```sh
+$ make lint
+```
+
 ### Run tests
 
 ```sh

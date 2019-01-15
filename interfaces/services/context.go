@@ -4,6 +4,7 @@ package services
 
 // based on https://github.com/labstack/echo/blob/a2d4cb9c7a629e2ee21861501690741d2374de10/context.go
 
+// Context is a subset of the echo framework context, so we are not directly depending on it
 type Context interface {
 	// Get retrieves data from the context.
 	Get(key string) interface{}

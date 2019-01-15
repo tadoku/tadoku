@@ -4,11 +4,14 @@ import (
 	"net/http"
 )
 
+// SessionService is responsible for anything user related when they're not logged in such as
+// logging in, registering, resetting passwords, requesting new tokens, etc...
 type SessionService interface {
 	Login(ctx Context) error
 	Register(ctx Context) error
 }
 
+// NewSessionService initializer
 func NewSessionService() SessionService {
 	return &sessionService{}
 }

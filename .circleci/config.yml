@@ -12,13 +12,23 @@ jobs:
     working_directory: /go/src/github.com/tadoku/api
     steps:
       - checkout
+
       - restore_cache:
           keys:
-            - go-mod-v1-{{ checksum "go.sum" }}
+            - go-mod-v1-{{ checksum "go.sum" }}-{{ checksum "tools.go" }}
+
+      - run:
+          name: Install gex
+          command: go get github.com/izumin5210/gex/cmd/gex && make setup
+
+      - run:
+          name: Lint project
+          command: make lint
       - run:
           name: Run tests
           command: go test -cover ./...
+
       - save_cache:
-          key: go-mod-v1-{{ checksum "go.sum" }}
+          key: go-mod-v1-{{ checksum "go.sum" }}-{{ checksum "tools.go" }}
           paths:
             - "/go/pkg/mod"

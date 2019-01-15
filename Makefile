@@ -2,7 +2,7 @@
 SHELL := /bin/bash -Eeuo pipefail
 
 .PHONY: all
-all: setup gen migrate test
+all: setup gen lint migrate test
 
 .PHONY: setup
 setup:
@@ -11,6 +11,10 @@ setup:
 .PHONY: gen
 gen:
 	@go generate ./...
+
+.PHONY: lint
+lint:
+	gex golint -set_exit_status ./...
 
 .PHONY: migrate
 migrate:

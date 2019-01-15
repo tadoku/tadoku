@@ -1,5 +1,6 @@
 package domain
 
+// User holds everything related to a user's account data
 type User struct {
 	ID          uint64      `json:"id" db:"id"`
 	Email       string      `json:"email" db:"email"`
@@ -9,4 +10,5 @@ type User struct {
 	Preferences Preferences `json:"preferences" db:"preferences"`
 }
 
+// Users is a collection of users
 type Users []User

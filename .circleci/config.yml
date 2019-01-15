@@ -16,6 +16,9 @@ jobs:
           keys:
             - go-mod-v1-{{ checksum "go.sum" }}
       - run:
+          name: Lint project
+          command: make lint
+      - run:
           name: Run tests
           command: go test -cover ./...
       - save_cache:

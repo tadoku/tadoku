@@ -33,6 +33,9 @@ jobs:
           name: Lint project
           command: make lint
       - run:
+          name: Run migrations
+          command: make migrate
+      - run:
           name: Run tests
           command: go test -cover ./...
 

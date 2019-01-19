@@ -16,6 +16,8 @@ require (
 	github.com/mattn/go-colorable v0.0.9 // indirect
 	github.com/mattn/go-isatty v0.0.4 // indirect
 	github.com/mattn/go-zglob v0.0.1 // indirect
+	github.com/pkg/errors v0.8.1 // indirect
+	github.com/srvc/fail v3.1.0+incompatible
 	github.com/stretchr/testify v1.3.0
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fasttemplate v0.0.0-20170224212429-dcecefd839c4 // indirect

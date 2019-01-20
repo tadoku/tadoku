@@ -11,6 +11,9 @@ jobs:
           DATABASE_URL: "postgres://tadoku:@localhost/tadoku_dev?sslmode=disable"
           DATABASE_MAX_IDLE_CONNS: 10
           DATABASE_MAX_OPEN_CONNS: 10
+          TESTING_DATABASE_URL: "postgres://tadoku:@localhost/tadoku_dev?sslmode=disable"
+          TESTING_DATABASE_MAX_IDLE_CONNS: 10
+          TESTING_DATABASE_MAX_OPEN_CONNS: 10
 
       - image: circleci/postgres:11.1-alpine
         environment:

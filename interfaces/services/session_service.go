@@ -2,6 +2,10 @@ package services
 
 import (
 	"net/http"
+
+	"github.com/srvc/fail"
+	"github.com/tadoku/api/domain"
+	"github.com/tadoku/api/usecases"
 )
 
 // SessionService is responsible for anything user related when they're not logged in such as
@@ -12,11 +16,15 @@ type SessionService interface {
 }
 
 // NewSessionService initializer
-func NewSessionService() SessionService {
-	return &sessionService{}
+func NewSessionService(sessionInteractor usecases.SessionInteractor) SessionService {
+	return &sessionService{
+		SessionInteractor: sessionInteractor,
+	}
 }
 
-type sessionService struct{}
+type sessionService struct {
+	SessionInteractor usecases.SessionInteractor
+}
 
 func (s *sessionService) Login(ctx Context) error {
 	ctx.NoContent(http.StatusNotImplemented)
@@ -24,6 +32,13 @@ func (s *sessionService) Login(ctx Context) error {
 }
 
 func (s *sessionService) Register(ctx Context) error {
-	ctx.NoContent(http.StatusNotImplemented)
-	return nil
+	user := &domain.User{}
+	err := ctx.Bind(user)
+	if err != nil {
+		return fail.Wrap(err)
+	}
+
+	s.SessionInteractor.CreateUser(*user)
+
+	return ctx.NoContent(http.StatusCreated)
 }

@@ -18,6 +18,10 @@ type ServerDependencies interface {
 	Router() services.Router
 	RDB() *infra.RDB
 	SQLHandler() rdb.SQLHandler
+
+	Repositories() *Repositories
+	Interactors() *Interactors
+
 	HealthService() services.HealthService
 	SessionService() services.SessionService
 }
@@ -45,6 +49,16 @@ type serverDependencies struct {
 
 	sqlHandler struct {
 		result rdb.SQLHandler
+		once   sync.Once
+	}
+
+	repositories struct {
+		result *Repositories
+		once   sync.Once
+	}
+
+	interactors struct {
+		result *Interactors
 		once   sync.Once
 	}
 
@@ -78,7 +92,31 @@ func (d *serverDependencies) HealthService() services.HealthService {
 func (d *serverDependencies) SessionService() services.SessionService {
 	holder := &d.sessionService
 	holder.once.Do(func() {
-		holder.result = services.NewSessionService()
+		holder.result = services.NewSessionService(d.Interactors().Session)
+	})
+	return holder.result
+}
+
+// ------------------------------
+// Repositories
+// ------------------------------
+
+func (d *serverDependencies) Repositories() *Repositories {
+	holder := &d.repositories
+	holder.once.Do(func() {
+		holder.result = NewRepositories(d.SQLHandler())
+	})
+	return holder.result
+}
+
+// ------------------------------
+// Interactors
+// ------------------------------
+
+func (d *serverDependencies) Interactors() *Interactors {
+	holder := &d.interactors
+	holder.once.Do(func() {
+		holder.result = NewInteractors(d.Repositories())
 	})
 	return holder.result
 }

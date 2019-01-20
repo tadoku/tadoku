@@ -17,6 +17,7 @@ type Result interface {
 // Row contains the data from a query
 type Row interface {
 	Scan(...interface{}) error
+	StructScan(interface{}) error
 	Next() bool
 	Close() error
 }

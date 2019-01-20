@@ -3,6 +3,7 @@ package infra
 import (
 	"database/sql"
 
+	"github.com/jmoiron/sqlx"
 	"github.com/tadoku/api/interfaces/rdb"
 
 	// Postgres driver that's used to connect to the db
@@ -42,7 +43,7 @@ func (handler *sqlHandler) NamedExecute(statement string, arg interface{}) (rdb.
 
 func (handler *sqlHandler) Query(statement string, args ...interface{}) (rdb.Row, error) {
 	row := new(sqlRow)
-	rows, err := handler.db.Query(statement, args...)
+	rows, err := handler.db.Queryx(statement, args...)
 	if err != nil {
 		return row, err
 	}
@@ -64,11 +65,15 @@ func (r sqlResult) RowsAffected() (int64, error) {
 }
 
 type sqlRow struct {
-	Rows *sql.Rows
+	Rows *sqlx.Rows
 }
 
 func (r sqlRow) Scan(dest ...interface{}) error {
 	return r.Rows.Scan(dest...)
+}
+
+func (r sqlRow) StructScan(dest interface{}) error {
+	return r.Rows.StructScan(dest)
 }
 
 func (r sqlRow) Next() bool {

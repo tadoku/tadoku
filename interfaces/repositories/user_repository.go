@@ -54,12 +54,7 @@ func (r *userRepository) FindByID(id uint64) (domain.User, error) {
 		from users
 		where id = $1
 	`
-	rows, err := r.sqlHandler.Query(query, id)
-	if err != nil {
-		return u, fail.Wrap(err)
-	}
-
-	err = rows.StructScan(&u)
+	err := r.sqlHandler.QueryRow(query, id).StructScan(&u)
 	if err != nil {
 		return u, fail.Wrap(err)
 	}

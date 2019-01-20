@@ -29,6 +29,17 @@ func (handler *sqlHandler) Execute(statement string, args ...interface{}) (rdb.R
 	return res, nil
 }
 
+func (handler *sqlHandler) NamedExecute(statement string, arg interface{}) (rdb.Result, error) {
+	res := sqlResult{}
+	result, err := handler.db.NamedExec(statement, arg)
+	if err != nil {
+		return res, err
+	}
+	res.Result = result
+
+	return res, nil
+}
+
 func (handler *sqlHandler) Query(statement string, args ...interface{}) (rdb.Row, error) {
 	row := new(sqlRow)
 	rows, err := handler.db.Query(statement, args...)

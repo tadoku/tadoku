@@ -4,6 +4,8 @@ package rdb
 type SQLHandler interface {
 	Execute(string, ...interface{}) (Result, error)
 	Query(string, ...interface{}) (Row, error)
+
+	NamedExecute(string, interface{}) (Result, error)
 }
 
 // Result contains meta data of a query that was executed

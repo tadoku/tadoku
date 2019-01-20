@@ -8,6 +8,7 @@ import (
 	"github.com/creasty/configo"
 
 	"github.com/tadoku/api/infra"
+	"github.com/tadoku/api/interfaces/rdb"
 	"github.com/tadoku/api/interfaces/services"
 )
 
@@ -15,7 +16,7 @@ import (
 type ServerDependencies interface {
 	AutoConfigure() error
 	Router() services.Router
-	RDB() *infra.RDB // @TODO: change this interface so it isn't exposed
+	SQLHandler() rdb.SQLHandler
 	HealthService() services.HealthService
 	SessionService() services.SessionService
 }
@@ -36,8 +37,8 @@ type serverDependencies struct {
 		once   sync.Once
 	}
 
-	rdb struct {
-		result *infra.RDB
+	sqlHandler struct {
+		result rdb.SQLHandler
 		once   sync.Once
 	}
 
@@ -100,8 +101,8 @@ func (d *serverDependencies) routes() []services.Route {
 // Relational database
 // ------------------------------
 
-func (d *serverDependencies) RDB() *infra.RDB {
-	holder := &d.rdb
+func (d *serverDependencies) SQLHandler() rdb.SQLHandler {
+	holder := &d.sqlHandler
 	holder.once.Do(func() {
 		var err error
 		holder.result, err = infra.NewRDB(d.DatabaseURL, d.DatabaseMaxIdleConns, d.DatabaseMaxOpenConns)

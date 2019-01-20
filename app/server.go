@@ -18,8 +18,10 @@ type ServerDependencies interface {
 	Router() services.Router
 	RDB() *infra.RDB
 	SQLHandler() rdb.SQLHandler
-	HealthService() services.HealthService
-	SessionService() services.SessionService
+
+	Repositories() *Repositories
+	Interactors() *Interactors
+	Services() *Services
 }
 
 // NewServerDependencies instantiates all the dependencies for the api server
@@ -28,7 +30,7 @@ func NewServerDependencies() ServerDependencies {
 }
 
 type serverDependencies struct {
-	Port                 string `envconfig:"app_port", valid:"required"`
+	Port                 string `envconfig:"app_port" valid:"required"`
 	DatabaseURL          string `envconfig:"database_url" valid:"required"`
 	DatabaseMaxIdleConns int    `envconfig:"database_max_idle_conns" valid:"required"`
 	DatabaseMaxOpenConns int    `envconfig:"database_max_open_conns" valid:"required"`
@@ -48,13 +50,18 @@ type serverDependencies struct {
 		once   sync.Once
 	}
 
-	healthService struct {
-		result services.HealthService
+	repositories struct {
+		result *Repositories
 		once   sync.Once
 	}
 
-	sessionService struct {
-		result services.SessionService
+	interactors struct {
+		result *Interactors
+		once   sync.Once
+	}
+
+	services struct {
+		result *Services
 		once   sync.Once
 	}
 }
@@ -67,18 +74,34 @@ func (d *serverDependencies) AutoConfigure() error {
 // Services
 // ------------------------------
 
-func (d *serverDependencies) HealthService() services.HealthService {
-	holder := &d.healthService
+func (d *serverDependencies) Services() *Services {
+	holder := &d.services
 	holder.once.Do(func() {
-		holder.result = services.NewHealthService()
+		holder.result = NewServices(d.Interactors())
 	})
 	return holder.result
 }
 
-func (d *serverDependencies) SessionService() services.SessionService {
-	holder := &d.sessionService
+// ------------------------------
+// Repositories
+// ------------------------------
+
+func (d *serverDependencies) Repositories() *Repositories {
+	holder := &d.repositories
 	holder.once.Do(func() {
-		holder.result = services.NewSessionService()
+		holder.result = NewRepositories(d.SQLHandler())
+	})
+	return holder.result
+}
+
+// ------------------------------
+// Interactors
+// ------------------------------
+
+func (d *serverDependencies) Interactors() *Interactors {
+	holder := &d.interactors
+	holder.once.Do(func() {
+		holder.result = NewInteractors(d.Repositories())
 	})
 	return holder.result
 }
@@ -97,9 +120,9 @@ func (d *serverDependencies) Router() services.Router {
 
 func (d *serverDependencies) routes() []services.Route {
 	return []services.Route{
-		{Method: http.MethodGet, Path: "/ping", HandlerFunc: d.HealthService().Ping},
-		{Method: http.MethodPost, Path: "/login", HandlerFunc: d.SessionService().Login},
-		{Method: http.MethodPost, Path: "/register", HandlerFunc: d.SessionService().Register},
+		{Method: http.MethodGet, Path: "/ping", HandlerFunc: d.Services().Health.Ping},
+		{Method: http.MethodPost, Path: "/login", HandlerFunc: d.Services().Session.Login},
+		{Method: http.MethodPost, Path: "/register", HandlerFunc: d.Services().Session.Register},
 	}
 }
 

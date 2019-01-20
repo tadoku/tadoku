@@ -6,6 +6,6 @@ import (
 
 // UserRepository handles User related interactions
 type UserRepository interface {
-	Store(user domain.User)
+	Store(user domain.User) error
 	FindById(id int) domain.User
 }

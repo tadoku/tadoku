@@ -1,6 +1,7 @@
 package interactors
 
 import (
+	"github.com/srvc/fail"
 	"github.com/tadoku/api/domain"
 	r "github.com/tadoku/api/usecases/repositories"
 )
@@ -14,14 +15,18 @@ type SessionInteractor interface {
 // NewSessionInteractor instantiates SessionInteractor with all dependencies
 func NewSessionInteractor(userRepository r.UserRepository) SessionInteractor {
 	return &sessionInteractor{
-		UserRepository: userRepository,
+		userRepository: userRepository,
 	}
 }
 
 type sessionInteractor struct {
-	UserRepository r.UserRepository
+	userRepository r.UserRepository
 }
 
 func (si *sessionInteractor) CreateUser(user domain.User) error {
-	return nil
+	if user.ID != 0 {
+		return fail.Errorf("User with an ID (%v) could not be created.", user.ID)
+	}
+
+	return si.userRepository.Store(user)
 }

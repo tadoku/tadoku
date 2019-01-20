@@ -46,6 +46,23 @@ func (r *userRepository) update(user domain.User) error {
 	return fail.Wrap(err)
 }
 
-func (r *userRepository) FindByID(id int) domain.User {
-	return domain.User{}
+func (r *userRepository) FindByID(id uint64) (domain.User, error) {
+	u := domain.User{}
+
+	query := `
+		select id, email, display_name, role, preferences
+		from users
+		where id = $1
+	`
+	rows, err := r.sqlHandler.Query(query, id)
+	if err != nil {
+		return u, fail.Wrap(err)
+	}
+
+	err = rows.StructScan(&u)
+	if err != nil {
+		return u, fail.Wrap(err)
+	}
+
+	return u, nil
 }

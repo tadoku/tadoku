@@ -42,8 +42,8 @@ func (handler *sqlHandler) NamedExecute(statement string, arg interface{}) (rdb.
 	return res, nil
 }
 
-func (handler *sqlHandler) Query(statement string, args ...interface{}) (rdb.Row, error) {
-	row := new(sqlRow)
+func (handler *sqlHandler) Query(statement string, args ...interface{}) (rdb.Rows, error) {
+	row := new(sqlRows)
 	rows, err := handler.db.Queryx(statement, args...)
 	if err != nil {
 		return row, fail.Wrap(err)
@@ -51,6 +51,10 @@ func (handler *sqlHandler) Query(statement string, args ...interface{}) (rdb.Row
 	row.Rows = rows
 
 	return row, nil
+}
+
+func (handler *sqlHandler) QueryRow(statement string, args ...interface{}) rdb.Row {
+	return sqlRow{Row: handler.db.QueryRowx(statement, args...)}
 }
 
 type sqlResult struct {
@@ -65,22 +69,34 @@ func (r sqlResult) RowsAffected() (int64, error) {
 	return r.Result.RowsAffected()
 }
 
-type sqlRow struct {
+type sqlRows struct {
 	Rows *sqlx.Rows
 }
 
-func (r sqlRow) Scan(dest ...interface{}) error {
+func (r sqlRows) Scan(dest ...interface{}) error {
 	return r.Rows.Scan(dest...)
 }
 
-func (r sqlRow) StructScan(dest interface{}) error {
+func (r sqlRows) StructScan(dest interface{}) error {
 	return r.Rows.StructScan(dest)
 }
 
-func (r sqlRow) Next() bool {
+func (r sqlRows) Next() bool {
 	return r.Rows.Next()
 }
 
-func (r sqlRow) Close() error {
+func (r sqlRows) Close() error {
 	return r.Rows.Close()
+}
+
+type sqlRow struct {
+	Row *sqlx.Row
+}
+
+func (r sqlRow) Scan(dest ...interface{}) error {
+	return r.Row.Scan(dest...)
+}
+
+func (r sqlRow) StructScan(dest interface{}) error {
+	return r.Row.StructScan(dest)
 }

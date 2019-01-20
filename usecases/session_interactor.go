@@ -27,5 +27,6 @@ func (si *sessionInteractor) CreateUser(user domain.User) error {
 		return fail.Errorf("User with an ID (%v) could not be created.", user.ID)
 	}
 
-	return si.userRepository.Store(user)
+	err := si.userRepository.Store(user)
+	return fail.Wrap(err)
 }

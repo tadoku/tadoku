@@ -4,6 +4,7 @@ import (
 	"database/sql"
 
 	"github.com/jmoiron/sqlx"
+	"github.com/srvc/fail"
 	"github.com/tadoku/api/interfaces/rdb"
 
 	// Postgres driver that's used to connect to the db
@@ -23,7 +24,7 @@ func (handler *sqlHandler) Execute(statement string, args ...interface{}) (rdb.R
 	res := sqlResult{}
 	result, err := handler.db.Exec(statement, args...)
 	if err != nil {
-		return res, err
+		return res, fail.Wrap(err)
 	}
 	res.Result = result
 
@@ -34,7 +35,7 @@ func (handler *sqlHandler) NamedExecute(statement string, arg interface{}) (rdb.
 	res := sqlResult{}
 	result, err := handler.db.NamedExec(statement, arg)
 	if err != nil {
-		return res, err
+		return res, fail.Wrap(err)
 	}
 	res.Result = result
 
@@ -45,7 +46,7 @@ func (handler *sqlHandler) Query(statement string, args ...interface{}) (rdb.Row
 	row := new(sqlRow)
 	rows, err := handler.db.Queryx(statement, args...)
 	if err != nil {
-		return row, err
+		return row, fail.Wrap(err)
 	}
 	row.Rows = rows
 

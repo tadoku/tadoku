@@ -14,7 +14,6 @@ type RDB = sqlx.DB
 func NewRDB(URL string, maxIdleConns, maxOpenConns int) (*RDB, error) {
 	db, err := sqlx.Open("postgres", URL)
 	if err != nil {
-		// @TODO: we should wrap errors
 		return nil, fail.Wrap(err)
 	}
 

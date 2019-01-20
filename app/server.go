@@ -8,6 +8,7 @@ import (
 	"github.com/creasty/configo"
 
 	"github.com/tadoku/api/infra"
+	"github.com/tadoku/api/interfaces/rdb"
 	"github.com/tadoku/api/interfaces/services"
 )
 
@@ -15,7 +16,8 @@ import (
 type ServerDependencies interface {
 	AutoConfigure() error
 	Router() services.Router
-	RDB() *infra.RDB // @TODO: change this interface so it isn't exposed
+	RDB() *infra.RDB
+	SQLHandler() rdb.SQLHandler
 	HealthService() services.HealthService
 	SessionService() services.SessionService
 }
@@ -38,6 +40,11 @@ type serverDependencies struct {
 
 	rdb struct {
 		result *infra.RDB
+		once   sync.Once
+	}
+
+	sqlHandler struct {
+		result rdb.SQLHandler
 		once   sync.Once
 	}
 
@@ -110,6 +117,14 @@ func (d *serverDependencies) RDB() *infra.RDB {
 			// @TODO: we should handle errors more gracefully
 			log.Fatalf("Failed to initialize connection pool with database: %v\n", err)
 		}
+	})
+	return holder.result
+}
+
+func (d *serverDependencies) SQLHandler() rdb.SQLHandler {
+	holder := &d.sqlHandler
+	holder.once.Do(func() {
+		holder.result = infra.NewSQLHandler(d.RDB())
 	})
 	return holder.result
 }

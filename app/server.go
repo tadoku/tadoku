@@ -21,9 +21,7 @@ type ServerDependencies interface {
 
 	Repositories() *Repositories
 	Interactors() *Interactors
-
-	HealthService() services.HealthService
-	SessionService() services.SessionService
+	Services() *Services
 }
 
 // NewServerDependencies instantiates all the dependencies for the api server
@@ -62,13 +60,8 @@ type serverDependencies struct {
 		once   sync.Once
 	}
 
-	healthService struct {
-		result services.HealthService
-		once   sync.Once
-	}
-
-	sessionService struct {
-		result services.SessionService
+	services struct {
+		result *Services
 		once   sync.Once
 	}
 }
@@ -81,18 +74,10 @@ func (d *serverDependencies) AutoConfigure() error {
 // Services
 // ------------------------------
 
-func (d *serverDependencies) HealthService() services.HealthService {
-	holder := &d.healthService
+func (d *serverDependencies) Services() *Services {
+	holder := &d.services
 	holder.once.Do(func() {
-		holder.result = services.NewHealthService()
-	})
-	return holder.result
-}
-
-func (d *serverDependencies) SessionService() services.SessionService {
-	holder := &d.sessionService
-	holder.once.Do(func() {
-		holder.result = services.NewSessionService(d.Interactors().Session)
+		holder.result = NewServices(d.Interactors())
 	})
 	return holder.result
 }
@@ -135,9 +120,9 @@ func (d *serverDependencies) Router() services.Router {
 
 func (d *serverDependencies) routes() []services.Route {
 	return []services.Route{
-		{Method: http.MethodGet, Path: "/ping", HandlerFunc: d.HealthService().Ping},
-		{Method: http.MethodPost, Path: "/login", HandlerFunc: d.SessionService().Login},
-		{Method: http.MethodPost, Path: "/register", HandlerFunc: d.SessionService().Register},
+		{Method: http.MethodGet, Path: "/ping", HandlerFunc: d.Services().Health.Ping},
+		{Method: http.MethodPost, Path: "/login", HandlerFunc: d.Services().Session.Login},
+		{Method: http.MethodPost, Path: "/register", HandlerFunc: d.Services().Session.Register},
 	}
 }
 

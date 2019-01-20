@@ -1,3 +1,5 @@
+github.com/DATA-DOG/go-txdb v0.1.0 h1:sC8/VRI7YvsXdthry93bEaqKwYGu/WehBFMyYwCHYpE=
+github.com/DATA-DOG/go-txdb v0.1.0/go.mod h1:aDC9AAfOY+kLbhVTKKXOwkqr2844my+djxj+Ou4wNb4=
 github.com/DavidHuie/gomigrate v0.0.0-20160809001028-4004e6142040 h1:BaIvMMd6mG0r4WNpOzGFjqBYv8zz4Zoi5dzTcrAPGpY=
 github.com/DavidHuie/gomigrate v0.0.0-20160809001028-4004e6142040/go.mod h1:F3GZLX+VN44AjFiyKD8++nq8sVE0Sw3bOhhQ3mUffnM=
 github.com/asaskevich/govalidator v0.0.0-20180720115003-f9ffefc3facf h1:eg0MeVzsP1G42dRafH3vf+al2vQIJU0YHX+1Tw87oco=

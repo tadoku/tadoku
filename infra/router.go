@@ -11,6 +11,7 @@ import (
 
 // NewRouter instantiates a router
 func NewRouter(
+	port string,
 	routes ...services.Route,
 ) services.Router {
 	e := echo.New()
@@ -26,11 +27,20 @@ func NewRouter(
 		}
 	}
 
-	return e
+	return router{e, port}
 }
 
 func wrap(h services.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		return h(c)
 	}
+}
+
+type router struct {
+	*echo.Echo
+	port string
+}
+
+func (r router) StartListening() error {
+	return r.Start(":" + r.port)
 }

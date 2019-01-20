@@ -26,6 +26,7 @@ func NewServerDependencies() ServerDependencies {
 }
 
 type serverDependencies struct {
+	Port                 string `envconfig:"app_port", valid:"required"`
 	DatabaseURL          string `envconfig:"database_url" valid:"required"`
 	DatabaseMaxIdleConns int    `envconfig:"database_max_idle_conns" valid:"required"`
 	DatabaseMaxOpenConns int    `envconfig:"database_max_open_conns" valid:"required"`
@@ -82,7 +83,7 @@ func (d *serverDependencies) SessionService() services.SessionService {
 func (d *serverDependencies) Router() services.Router {
 	holder := &d.router
 	holder.once.Do(func() {
-		holder.result = infra.NewRouter(d.routes()...)
+		holder.result = infra.NewRouter(d.Port, d.routes()...)
 	})
 	return holder.result
 }
@@ -116,6 +117,5 @@ func (d *serverDependencies) RDB() *infra.RDB {
 // RunServer starts the actual API server
 func RunServer(d ServerDependencies) error {
 	router := d.Router()
-	router.Start(":1234")
-	return nil
+	return router.StartListening()
 }

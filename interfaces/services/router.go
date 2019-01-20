@@ -2,7 +2,7 @@ package services
 
 // Router takes care of all the routing
 type Router interface {
-	Start(address string) error
+	StartListening() error
 }
 
 // HandlerFunc of the router

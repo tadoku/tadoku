@@ -38,7 +38,13 @@ func (s *sessionService) Register(ctx Context) error {
 		return fail.Wrap(err)
 	}
 
-	s.SessionInteractor.CreateUser(*user)
+	user.Role = domain.RoleUser
+	user.Preferences = &domain.Preferences{}
+
+	err = s.SessionInteractor.CreateUser(*user)
+	if err != nil {
+		return fail.Wrap(err)
+	}
 
 	return ctx.NoContent(http.StatusCreated)
 }

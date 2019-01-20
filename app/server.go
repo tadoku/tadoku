@@ -32,7 +32,7 @@ func NewServerDependencies() ServerDependencies {
 }
 
 type serverDependencies struct {
-	Port                 string `envconfig:"app_port", valid:"required"`
+	Port                 string `envconfig:"app_port" valid:"required"`
 	DatabaseURL          string `envconfig:"database_url" valid:"required"`
 	DatabaseMaxIdleConns int    `envconfig:"database_max_idle_conns" valid:"required"`
 	DatabaseMaxOpenConns int    `envconfig:"database_max_open_conns" valid:"required"`

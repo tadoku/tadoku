@@ -16,6 +16,7 @@ import (
 type ServerDependencies interface {
 	AutoConfigure() error
 	Router() services.Router
+	RDB() *infra.RDB
 	SQLHandler() rdb.SQLHandler
 	HealthService() services.HealthService
 	SessionService() services.SessionService
@@ -34,6 +35,11 @@ type serverDependencies struct {
 
 	router struct {
 		result services.Router
+		once   sync.Once
+	}
+
+	rdb struct {
+		result *infra.RDB
 		once   sync.Once
 	}
 
@@ -101,8 +107,8 @@ func (d *serverDependencies) routes() []services.Route {
 // Relational database
 // ------------------------------
 
-func (d *serverDependencies) SQLHandler() rdb.SQLHandler {
-	holder := &d.sqlHandler
+func (d *serverDependencies) RDB() *infra.RDB {
+	holder := &d.rdb
 	holder.once.Do(func() {
 		var err error
 		holder.result, err = infra.NewRDB(d.DatabaseURL, d.DatabaseMaxIdleConns, d.DatabaseMaxOpenConns)
@@ -111,6 +117,14 @@ func (d *serverDependencies) SQLHandler() rdb.SQLHandler {
 			// @TODO: we should handle errors more gracefully
 			log.Fatalf("Failed to initialize connection pool with database: %v\n", err)
 		}
+	})
+	return holder.result
+}
+
+func (d *serverDependencies) SQLHandler() rdb.SQLHandler {
+	holder := &d.sqlHandler
+	holder.once.Do(func() {
+		holder.result = infra.NewSQLHandler(d.RDB())
 	})
 	return holder.result
 }

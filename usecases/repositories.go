@@ -1,4 +1,4 @@
-package repositories
+package usecases
 
 import (
 	"github.com/tadoku/api/domain"
@@ -7,5 +7,5 @@ import (
 // UserRepository handles User related interactions
 type UserRepository interface {
 	Store(user domain.User) error
-	FindById(id int) domain.User
+	FindByID(id int) domain.User
 }

@@ -1,9 +1,8 @@
-package interactors
+package usecases
 
 import (
 	"github.com/srvc/fail"
 	"github.com/tadoku/api/domain"
-	r "github.com/tadoku/api/usecases/repositories"
 )
 
 // SessionInteractor contains all business logic for sessions
@@ -13,14 +12,14 @@ type SessionInteractor interface {
 }
 
 // NewSessionInteractor instantiates SessionInteractor with all dependencies
-func NewSessionInteractor(userRepository r.UserRepository) SessionInteractor {
+func NewSessionInteractor(userRepository UserRepository) SessionInteractor {
 	return &sessionInteractor{
 		userRepository: userRepository,
 	}
 }
 
 type sessionInteractor struct {
-	userRepository r.UserRepository
+	userRepository UserRepository
 }
 
 func (si *sessionInteractor) CreateUser(user domain.User) error {

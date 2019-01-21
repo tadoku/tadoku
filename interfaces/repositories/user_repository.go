@@ -73,3 +73,22 @@ func (r *userRepository) FindByID(id uint64) (domain.User, error) {
 
 	return u, nil
 }
+
+func (r *userRepository) FindByEmail(email string, withPassword bool) (domain.User, error) {
+	u := domain.User{}
+
+	query := `
+		select id, email, password, display_name, role, preferences
+		from users
+		where email = $1
+	`
+	err := r.sqlHandler.QueryRow(query, email).StructScan(&u)
+	if !withPassword {
+		u.Password = ""
+	}
+	if err != nil {
+		return u, fail.Wrap(err)
+	}
+
+	return u, nil
+}

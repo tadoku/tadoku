@@ -2,12 +2,12 @@ package infra
 
 import (
 	"github.com/srvc/fail"
-	"github.com/tadoku/api/interfaces"
+	"github.com/tadoku/api/usecases"
 	"golang.org/x/crypto/bcrypt"
 )
 
 // NewPasswordHasher initializes a new password hasher with sane defaults
-func NewPasswordHasher() interfaces.Hasher {
+func NewPasswordHasher() usecases.PasswordHasher {
 	return &passwordHasher{cost: bcrypt.DefaultCost}
 }
 

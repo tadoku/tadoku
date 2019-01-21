@@ -1,7 +1,6 @@
 package app
 
 import (
-	"github.com/tadoku/api/infra"
 	"github.com/tadoku/api/interfaces/rdb"
 	r "github.com/tadoku/api/interfaces/repositories"
 	"github.com/tadoku/api/usecases"
@@ -15,6 +14,6 @@ type Repositories struct {
 // NewRepositories initializes all repositories
 func NewRepositories(sh rdb.SQLHandler) *Repositories {
 	return &Repositories{
-		User: r.NewUserRepository(sh, infra.NewPasswordHasher()),
+		User: r.NewUserRepository(sh),
 	}
 }

@@ -3,19 +3,17 @@ package repositories
 import (
 	"github.com/srvc/fail"
 	"github.com/tadoku/api/domain"
-	"github.com/tadoku/api/interfaces"
 	"github.com/tadoku/api/interfaces/rdb"
 	"github.com/tadoku/api/usecases"
 )
 
 // NewUserRepository instantiates a new user repository
-func NewUserRepository(sqlHandler rdb.SQLHandler, hasher interfaces.Hasher) usecases.UserRepository {
-	return &userRepository{sqlHandler: sqlHandler, passwordHasher: hasher}
+func NewUserRepository(sqlHandler rdb.SQLHandler) usecases.UserRepository {
+	return &userRepository{sqlHandler: sqlHandler}
 }
 
 type userRepository struct {
-	sqlHandler     rdb.SQLHandler
-	passwordHasher interfaces.Hasher
+	sqlHandler rdb.SQLHandler
 }
 
 func (r *userRepository) Store(user domain.User) error {
@@ -32,15 +30,6 @@ func (r *userRepository) create(user domain.User) error {
 		(email, display_name, password, role, preferences)
 		values (:email, :display_name, :password, :role, :preferences)
 	`
-
-	// @TODO: move to session interactor
-	if user.NeedsHashing() {
-		var err error
-		user.Password, err = r.passwordHasher.Hash(user.Password)
-		if err != nil {
-			return fail.Wrap(err)
-		}
-	}
 
 	_, err := r.sqlHandler.NamedExecute(query, user)
 	return fail.Wrap(err)

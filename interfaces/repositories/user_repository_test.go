@@ -3,10 +3,8 @@ package repositories_test
 import (
 	"testing"
 
-	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 	"github.com/tadoku/api/domain"
-	"github.com/tadoku/api/interfaces"
 	"github.com/tadoku/api/interfaces/repositories"
 )
 
@@ -15,13 +13,7 @@ func TestUserRepository_StoreUser(t *testing.T) {
 	sqlHandler, cleanup := setupTestingSuite(t)
 	defer cleanup()
 
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	passwordHasher := interfaces.NewMockHasher(ctrl)
-	passwordHasher.EXPECT().Hash("foobar").Return("ABCDEFG", nil)
-
-	repo := repositories.NewUserRepository(sqlHandler, passwordHasher)
+	repo := repositories.NewUserRepository(sqlHandler)
 	user := &domain.User{
 		Email:       "foo@example.com",
 		DisplayName: "John Doe",

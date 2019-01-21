@@ -1,6 +1,7 @@
 package app
 
 import (
+	"github.com/tadoku/api/infra"
 	"github.com/tadoku/api/usecases"
 )
 
@@ -12,6 +13,6 @@ type Interactors struct {
 // NewInteractors initializes all repositories
 func NewInteractors(r *Repositories) *Interactors {
 	return &Interactors{
-		Session: usecases.NewSessionInteractor(r.User),
+		Session: usecases.NewSessionInteractor(r.User, infra.NewPasswordHasher()),
 	}
 }

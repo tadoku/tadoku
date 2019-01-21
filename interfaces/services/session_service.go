@@ -45,8 +45,8 @@ func (s *sessionService) Login(ctx Context) error {
 	}
 
 	res := map[string]interface{}{
-		token: token,
-		user:  user,
+		"token": token,
+		"user":  user,
 	}
 
 	return ctx.JSON(http.StatusOK, res)

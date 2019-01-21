@@ -5,5 +5,5 @@ package usecases
 // PasswordHasher is for hashing passwords without having to worry about the implementation
 type PasswordHasher interface {
 	Hash(string) (string, error)
-	Compare(first, second string) bool
+	Compare(hash, original string) bool
 }

@@ -33,6 +33,7 @@ func (r *userRepository) create(user domain.User) error {
 		values (:email, :display_name, :password, :role, :preferences)
 	`
 
+	// @TODO: move to session interactor
 	if user.NeedsHashing() {
 		var err error
 		user.Password, err = r.passwordHasher.Hash(user.Password)

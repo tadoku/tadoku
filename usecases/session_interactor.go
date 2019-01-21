@@ -47,6 +47,10 @@ func (si *sessionInteractor) CreateSession(email, password string) (domain.User,
 		return domain.User{}, "", fail.Wrap(err)
 	}
 
+	if !si.passwordHasher.Compare(user.Password, password) {
+		return domain.User{}, "", fail.New("invalid password supplied")
+	}
+
 	token := ""
 
 	return user, token, nil

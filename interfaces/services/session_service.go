@@ -27,8 +27,29 @@ type sessionService struct {
 }
 
 func (s *sessionService) Login(ctx Context) error {
-	ctx.NoContent(http.StatusNotImplemented)
-	return nil
+	type body struct {
+		Email    string `json:"email"`
+		Password string `json:"password"`
+	}
+
+	b := &body{}
+	err := ctx.Bind(b)
+	if err != nil {
+		return fail.Wrap(err)
+	}
+
+	user, token, err := s.SessionInteractor.CreateSession(b.Email, b.Password)
+	if err != nil {
+		ctx.NoContent(http.StatusUnauthorized)
+		return fail.Wrap(err)
+	}
+
+	res := map[string]interface{}{
+		token: token,
+		user:  user,
+	}
+
+	return ctx.JSON(http.StatusOK, res)
 }
 
 func (s *sessionService) Register(ctx Context) error {

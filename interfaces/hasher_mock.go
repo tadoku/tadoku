@@ -46,3 +46,17 @@ func (mr *MockHasherMockRecorder) Hash(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Hash", reflect.TypeOf((*MockHasher)(nil).Hash), arg0)
 }
+
+// Compare mocks base method
+func (m *MockHasher) Compare(first, second string) bool {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Compare", first, second)
+	ret0, _ := ret[0].(bool)
+	return ret0
+}
+
+// Compare indicates an expected call of Compare
+func (mr *MockHasherMockRecorder) Compare(first, second interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Compare", reflect.TypeOf((*MockHasher)(nil).Compare), first, second)
+}

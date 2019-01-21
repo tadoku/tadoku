@@ -13,3 +13,8 @@ type User struct {
 
 // Users is a collection of users
 type Users []User
+
+// NeedsHashing tells you if the password is in need of being hashed
+func (u *User) NeedsHashing() bool {
+	return u.Password != "" && !u.isPasswordHashed
+}

@@ -31,10 +31,10 @@ func (si *sessionInteractor) CreateUser(user domain.User) error {
 	return fail.Wrap(err)
 }
 
-func (si *sessionInteractor) CreateSession(email, password string) (*domain.User, string, error) {
+func (si *sessionInteractor) CreateSession(email, password string) (domain.User, string, error) {
 	user, err := si.userRepository.FindByEmail(email, true)
 	if err != nil {
-		return nil, "", fail.Wrap(err)
+		return domain.User{}, "", fail.Wrap(err)
 	}
 
 	token := ""

@@ -8,7 +8,7 @@ import (
 // SessionInteractor contains all business logic for sessions
 type SessionInteractor interface {
 	CreateUser(user domain.User) error
-	// CreateSession(email, password, deviceID string) (user domain.User, token string, err error)
+	CreateSession(email, password string) (user domain.User, token string, err error)
 }
 
 // NewSessionInteractor instantiates SessionInteractor with all dependencies
@@ -29,4 +29,15 @@ func (si *sessionInteractor) CreateUser(user domain.User) error {
 
 	err := si.userRepository.Store(user)
 	return fail.Wrap(err)
+}
+
+func (si *sessionInteractor) CreateSession(email, password string) (*domain.User, string, error) {
+	user, err := si.userRepository.FindByEmail(email, true)
+	if err != nil {
+		return nil, "", fail.Wrap(err)
+	}
+
+	token := ""
+
+	return user, token, nil
 }

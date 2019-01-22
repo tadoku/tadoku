@@ -34,16 +34,16 @@ func (m *MockJWTGenerator) EXPECT() *MockJWTGeneratorMockRecorder {
 }
 
 // NewToken mocks base method
-func (m *MockJWTGenerator) NewToken(expiresIn time.Duration, claims interface{}) (string, error) {
+func (m *MockJWTGenerator) NewToken(lifetime time.Duration, claims map[string]interface{}) (string, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "NewToken", expiresIn, claims)
+	ret := m.ctrl.Call(m, "NewToken", lifetime, claims)
 	ret0, _ := ret[0].(string)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // NewToken indicates an expected call of NewToken
-func (mr *MockJWTGeneratorMockRecorder) NewToken(expiresIn, claims interface{}) *gomock.Call {
+func (mr *MockJWTGeneratorMockRecorder) NewToken(lifetime, claims interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "NewToken", reflect.TypeOf((*MockJWTGenerator)(nil).NewToken), expiresIn, claims)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "NewToken", reflect.TypeOf((*MockJWTGenerator)(nil).NewToken), lifetime, claims)
 }

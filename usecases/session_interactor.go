@@ -62,7 +62,9 @@ func (si *sessionInteractor) CreateSession(email, password string) (domain.User,
 		return domain.User{}, "", fail.Wrap(fail.New("invalid password supplied"), fail.WithIgnorable())
 	}
 
-	token, err := si.jwtGenerator.NewToken(si.sessionLength, user)
+	token, err := si.jwtGenerator.NewToken(si.sessionLength, map[string]interface{}{
+		"user": user,
+	})
 	if err != nil {
 		return domain.User{}, "", fail.Wrap(err)
 	}

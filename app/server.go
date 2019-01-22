@@ -36,7 +36,7 @@ func NewServerDependencies() ServerDependencies {
 
 type serverDependencies struct {
 	Port                 string        `envconfig:"app_port" valid:"required"`
-	JWTSecret            string        `envconfig:"app_jwt_secret" valid:"required"`
+	JWTSecret            string        `envconfig:"jwt_secret" valid:"required"`
 	SessionLength        time.Duration `envconfig:"user_session_length" valid:"required"`
 	DatabaseURL          string        `envconfig:"database_url" valid:"required"`
 	DatabaseMaxIdleConns int           `envconfig:"database_max_idle_conns" valid:"required"`

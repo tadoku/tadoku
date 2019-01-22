@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 
 	"github.com/DavidHuie/gomigrate"
@@ -10,12 +11,15 @@ import (
 
 func main() {
 	deps := app.NewServerDependencies()
-	deps.AutoConfigure()
+	err := deps.AutoConfigure()
+	if err != nil {
+		panic(fmt.Sprintf("Migration failed: %v\n", err))
+	}
 
 	db := deps.RDB().DB
 	migrator, _ := gomigrate.NewMigrator(db, gomigrate.Postgres{}, "./migrations")
 
-	err := migrator.Migrate()
+	err = migrator.Migrate()
 	if err != nil {
 		log.Printf("Error during migration: %v\n", err)
 		log.Printf("Migration failed, trying to roll back...\n")

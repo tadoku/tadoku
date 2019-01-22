@@ -4,18 +4,23 @@ import (
 	"log"
 	"net/http"
 	"sync"
+	"time"
 
 	"github.com/creasty/configo"
 
 	"github.com/tadoku/api/infra"
 	"github.com/tadoku/api/interfaces/rdb"
 	"github.com/tadoku/api/interfaces/services"
+	"github.com/tadoku/api/usecases"
 )
 
 // ServerDependencies is a dependency container for the api
 type ServerDependencies interface {
 	AutoConfigure() error
+
 	Router() services.Router
+	JWTGenerator() usecases.JWTGenerator
+
 	RDB() *infra.RDB
 	SQLHandler() rdb.SQLHandler
 
@@ -30,13 +35,20 @@ func NewServerDependencies() ServerDependencies {
 }
 
 type serverDependencies struct {
-	Port                 string `envconfig:"app_port" valid:"required"`
-	DatabaseURL          string `envconfig:"database_url" valid:"required"`
-	DatabaseMaxIdleConns int    `envconfig:"database_max_idle_conns" valid:"required"`
-	DatabaseMaxOpenConns int    `envconfig:"database_max_open_conns" valid:"required"`
+	Port                 string        `envconfig:"app_port" valid:"required"`
+	JWTSecret            string        `envconfig:"jwt_secret" valid:"required"`
+	SessionLength        time.Duration `envconfig:"user_session_length" valid:"required"`
+	DatabaseURL          string        `envconfig:"database_url" valid:"required"`
+	DatabaseMaxIdleConns int           `envconfig:"database_max_idle_conns" valid:"required"`
+	DatabaseMaxOpenConns int           `envconfig:"database_max_open_conns" valid:"required"`
 
 	router struct {
 		result services.Router
+		once   sync.Once
+	}
+
+	jwtGenerator struct {
+		result usecases.JWTGenerator
 		once   sync.Once
 	}
 
@@ -101,7 +113,7 @@ func (d *serverDependencies) Repositories() *Repositories {
 func (d *serverDependencies) Interactors() *Interactors {
 	holder := &d.interactors
 	holder.once.Do(func() {
-		holder.result = NewInteractors(d.Repositories())
+		holder.result = NewInteractors(d.Repositories(), d.JWTGenerator(), d.SessionLength)
 	})
 	return holder.result
 }
@@ -124,6 +136,14 @@ func (d *serverDependencies) routes() []services.Route {
 		{Method: http.MethodPost, Path: "/login", HandlerFunc: d.Services().Session.Login},
 		{Method: http.MethodPost, Path: "/register", HandlerFunc: d.Services().Session.Register},
 	}
+}
+
+func (d *serverDependencies) JWTGenerator() usecases.JWTGenerator {
+	holder := &d.jwtGenerator
+	holder.once.Do(func() {
+		holder.result = infra.NewJWTGenerator(d.JWTSecret)
+	})
+	return holder.result
 }
 
 // ------------------------------

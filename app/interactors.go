@@ -13,12 +13,16 @@ type Interactors struct {
 }
 
 // NewInteractors initializes all repositories
-func NewInteractors(r *Repositories, sessionLength time.Duration) *Interactors {
+func NewInteractors(
+	r *Repositories,
+	jwtGenerator usecases.JWTGenerator,
+	sessionLength time.Duration,
+) *Interactors {
 	return &Interactors{
 		Session: usecases.NewSessionInteractor(
 			r.User,
 			infra.NewPasswordHasher(),
-			nil,
+			jwtGenerator,
 			sessionLength,
 		),
 	}

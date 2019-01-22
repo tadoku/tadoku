@@ -8,5 +8,5 @@ import (
 
 // JWTGenerator makes it easy to generate JWT tokens that expire in a given duration
 type JWTGenerator interface {
-	New(expiresIn time.Duration, claims ...interface{})
+	NewToken(expiresIn time.Duration, claims ...interface{}) (token string, err error)
 }

@@ -48,15 +48,15 @@ func (mr *MockPasswordHasherMockRecorder) Hash(arg0 interface{}) *gomock.Call {
 }
 
 // Compare mocks base method
-func (m *MockPasswordHasher) Compare(first, second string) bool {
+func (m *MockPasswordHasher) Compare(hash, original string) bool {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Compare", first, second)
+	ret := m.ctrl.Call(m, "Compare", hash, original)
 	ret0, _ := ret[0].(bool)
 	return ret0
 }
 
 // Compare indicates an expected call of Compare
-func (mr *MockPasswordHasherMockRecorder) Compare(first, second interface{}) *gomock.Call {
+func (mr *MockPasswordHasherMockRecorder) Compare(hash, original interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Compare", reflect.TypeOf((*MockPasswordHasher)(nil).Compare), first, second)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Compare", reflect.TypeOf((*MockPasswordHasher)(nil).Compare), hash, original)
 }

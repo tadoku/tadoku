@@ -46,4 +46,17 @@ func TestUserRepository_StoreUser(t *testing.T) {
 			Preferences: &domain.Preferences{},
 		})
 	}
+
+	{
+		dbUser, err := repo.FindByEmail("foo@example.com")
+		assert.Nil(t, err)
+		assert.Equal(t, dbUser, domain.User{
+			ID:          1,
+			Email:       "foo@example.com",
+			DisplayName: "John Smith",
+			Password:    "foobar",
+			Role:        user.Role,
+			Preferences: &domain.Preferences{},
+		})
+	}
 }

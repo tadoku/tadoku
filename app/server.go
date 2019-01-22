@@ -4,6 +4,7 @@ import (
 	"log"
 	"net/http"
 	"sync"
+	"time"
 
 	"github.com/creasty/configo"
 
@@ -30,10 +31,11 @@ func NewServerDependencies() ServerDependencies {
 }
 
 type serverDependencies struct {
-	Port                 string `envconfig:"app_port" valid:"required"`
-	DatabaseURL          string `envconfig:"database_url" valid:"required"`
-	DatabaseMaxIdleConns int    `envconfig:"database_max_idle_conns" valid:"required"`
-	DatabaseMaxOpenConns int    `envconfig:"database_max_open_conns" valid:"required"`
+	Port                 string        `envconfig:"app_port" valid:"required"`
+	SessionLength        time.Duration `envconfig:"user_session_length" valid:"required"`
+	DatabaseURL          string        `envconfig:"database_url" valid:"required"`
+	DatabaseMaxIdleConns int           `envconfig:"database_max_idle_conns" valid:"required"`
+	DatabaseMaxOpenConns int           `envconfig:"database_max_open_conns" valid:"required"`
 
 	router struct {
 		result services.Router
@@ -101,7 +103,7 @@ func (d *serverDependencies) Repositories() *Repositories {
 func (d *serverDependencies) Interactors() *Interactors {
 	holder := &d.interactors
 	holder.once.Do(func() {
-		holder.result = NewInteractors(d.Repositories())
+		holder.result = NewInteractors(d.Repositories(), d.SessionLength)
 	})
 	return holder.result
 }

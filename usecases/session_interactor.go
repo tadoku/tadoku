@@ -1,6 +1,8 @@
 package usecases
 
 import (
+	"time"
+
 	"github.com/srvc/fail"
 	"github.com/tadoku/api/domain"
 )
@@ -12,16 +14,25 @@ type SessionInteractor interface {
 }
 
 // NewSessionInteractor instantiates SessionInteractor with all dependencies
-func NewSessionInteractor(userRepository UserRepository, passwordHasher PasswordHasher) SessionInteractor {
+func NewSessionInteractor(
+	userRepository UserRepository,
+	passwordHasher PasswordHasher,
+	jwtGenerator JWTGenerator,
+	sessionLength time.Duration,
+) SessionInteractor {
 	return &sessionInteractor{
 		userRepository: userRepository,
 		passwordHasher: passwordHasher,
+		jwtGenerator:   jwtGenerator,
+		sessionLength:  sessionLength,
 	}
 }
 
 type sessionInteractor struct {
 	userRepository UserRepository
 	passwordHasher PasswordHasher
+	jwtGenerator   JWTGenerator
+	sessionLength  time.Duration
 }
 
 func (si *sessionInteractor) CreateUser(user domain.User) error {
@@ -51,7 +62,10 @@ func (si *sessionInteractor) CreateSession(email, password string) (domain.User,
 		return domain.User{}, "", fail.Wrap(fail.New("invalid password supplied"), fail.WithIgnorable())
 	}
 
-	token := ""
+	token, err := si.jwtGenerator.NewToken(si.sessionLength, user)
+	if err != nil {
+		return domain.User{}, "", fail.Wrap(err)
+	}
 
 	return user, token, nil
 }

@@ -8,5 +8,5 @@ import (
 type UserRepository interface {
 	Store(user domain.User) error
 	FindByID(id uint64) (domain.User, error)
-	FindByEmail(email string, withPassword bool) (domain.User, error)
+	FindByEmail(email string) (domain.User, error)
 }

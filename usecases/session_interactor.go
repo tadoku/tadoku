@@ -53,7 +53,7 @@ func (si *sessionInteractor) CreateUser(user domain.User) error {
 }
 
 func (si *sessionInteractor) CreateSession(email, password string) (domain.User, string, error) {
-	user, err := si.userRepository.FindByEmail(email, true)
+	user, err := si.userRepository.FindByEmail(email)
 	if err != nil {
 		return domain.User{}, "", fail.Wrap(err)
 	}

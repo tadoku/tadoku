@@ -2,8 +2,12 @@
 
 package usecases
 
+import (
+	"github.com/tadoku/api/domain"
+)
+
 // PasswordHasher is for hashing passwords without having to worry about the implementation
 type PasswordHasher interface {
-	Hash(string) (string, error)
-	Compare(hash, original string) bool
+	Hash(unhashed domain.Password) (hashed domain.Password, err error)
+	Compare(hash domain.Password, original string) bool
 }

@@ -6,6 +6,7 @@ package usecases
 
 import (
 	gomock "github.com/golang/mock/gomock"
+	domain "github.com/tadoku/api/domain"
 	reflect "reflect"
 )
 
@@ -33,22 +34,22 @@ func (m *MockPasswordHasher) EXPECT() *MockPasswordHasherMockRecorder {
 }
 
 // Hash mocks base method
-func (m *MockPasswordHasher) Hash(arg0 string) (string, error) {
+func (m *MockPasswordHasher) Hash(unhashed domain.Password) (domain.Password, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Hash", arg0)
-	ret0, _ := ret[0].(string)
+	ret := m.ctrl.Call(m, "Hash", unhashed)
+	ret0, _ := ret[0].(domain.Password)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // Hash indicates an expected call of Hash
-func (mr *MockPasswordHasherMockRecorder) Hash(arg0 interface{}) *gomock.Call {
+func (mr *MockPasswordHasherMockRecorder) Hash(unhashed interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Hash", reflect.TypeOf((*MockPasswordHasher)(nil).Hash), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Hash", reflect.TypeOf((*MockPasswordHasher)(nil).Hash), unhashed)
 }
 
 // Compare mocks base method
-func (m *MockPasswordHasher) Compare(hash, original string) bool {
+func (m *MockPasswordHasher) Compare(hash domain.Password, original string) bool {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Compare", hash, original)
 	ret0, _ := ret[0].(bool)

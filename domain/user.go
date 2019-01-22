@@ -1,13 +1,14 @@
 package domain
 
-type password string
+// Password is a safe version of a string that will never be exposed when marshalled into JSON
+type Password string
 
 // User holds everything related to a user's account data
 type User struct {
 	ID               uint64       `json:"id" db:"id"`
 	Email            string       `json:"email" db:"email"`
 	DisplayName      string       `json:"display_name" db:"display_name"`
-	Password         password     `json:"password" db:"password"`
+	Password         Password     `json:"password" db:"password"`
 	Role             Role         `json:"role" db:"role"`
 	Preferences      *Preferences `json:"preferences" db:"preferences"`
 	isPasswordHashed bool
@@ -21,7 +22,7 @@ func (u *User) NeedsHashing() bool {
 	return u.Password != "" && !u.isPasswordHashed
 }
 
-// Prevent the password from being exported into something client-facing
-func (password) MarshalJSON() ([]byte, error) {
+// MarshalJSON prevents the password from being exported into something client-facing
+func (Password) MarshalJSON() ([]byte, error) {
 	return []byte(`""`), nil
 }

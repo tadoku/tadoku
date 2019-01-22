@@ -2,6 +2,7 @@ package infra
 
 import (
 	"github.com/srvc/fail"
+	"github.com/tadoku/api/domain"
 	"github.com/tadoku/api/usecases"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -15,16 +16,16 @@ type passwordHasher struct {
 	cost int
 }
 
-func (h *passwordHasher) Hash(value string) (string, error) {
+func (h *passwordHasher) Hash(value domain.Password) (domain.Password, error) {
 	hash, err := bcrypt.GenerateFromPassword([]byte(value), h.cost)
 	if err != nil {
 		return "", fail.Wrap(err)
 	}
 
-	return string(hash), nil
+	return domain.Password(hash), nil
 }
 
-func (h *passwordHasher) Compare(hash, original string) bool {
+func (h *passwordHasher) Compare(hash domain.Password, original string) bool {
 	err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(original))
 	return err == nil
 }

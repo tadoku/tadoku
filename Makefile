@@ -2,7 +2,7 @@
 SHELL := /bin/bash -Eeuo pipefail
 
 .PHONY: all
-all: setup gen lint migrate test
+all: setup gen lint migrate test run
 
 .PHONY: setup
 setup:
@@ -23,3 +23,7 @@ migrate:
 .PHONY: test
 test:
 	@go test -v ./...
+
+.PHONY: run
+run:
+	@go run cmd/server/main.go

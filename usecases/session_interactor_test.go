@@ -11,13 +11,29 @@ import (
 	gomock "github.com/golang/mock/gomock"
 )
 
-func TestSessionInteractor_CreateUser(t *testing.T) {
+func setup(t *testing.T) (
+	*gomock.Controller,
+	*usecases.MockUserRepository,
+	*usecases.MockPasswordHasher,
+	*usecases.MockJWTGenerator,
+	usecases.SessionInteractor,
+) {
 	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
 
 	repo := usecases.NewMockUserRepository(ctrl)
 	pwHasher := usecases.NewMockPasswordHasher(ctrl)
 	jwtGen := usecases.NewMockJWTGenerator(ctrl)
+
+	interactor := usecases.NewSessionInteractor(
+		repo, pwHasher, jwtGen, time.Hour*1,
+	)
+
+	return ctrl, repo, pwHasher, jwtGen, interactor
+}
+
+func TestSessionInteractor_CreateUser(t *testing.T) {
+	ctrl, repo, pwHasher, _, interactor := setup(t)
+	defer ctrl.Finish()
 
 	user := domain.User{
 		Email:       "foo@bar.com",
@@ -30,10 +46,23 @@ func TestSessionInteractor_CreateUser(t *testing.T) {
 	pwHasher.EXPECT().Hash(user.Password).Return(hashedUser.Password, nil)
 	repo.EXPECT().Store(hashedUser)
 
-	i := usecases.NewSessionInteractor(
-		repo, pwHasher, jwtGen, time.Hour*1,
-	)
-	err := i.CreateUser(user)
+	err := interactor.CreateUser(user)
 
 	assert.NoError(t, err)
+}
+
+// CreateSession(email, password string) (user domain.User, token string, err error)
+func TestSessionInteractor_CreateSession(t *testing.T) {
+	ctrl, repo, pwHasher, jwtGen, interactor := setup(t)
+	defer ctrl.Finish()
+
+	dbUser := domain.User{Email: "foo@bar.com", Password: "foobar"}
+	repo.EXPECT().FindByEmail("foo@bar.com").Return(dbUser, nil)
+	pwHasher.EXPECT().Compare(dbUser.Password, "foobar").Return(true)
+	jwtGen.EXPECT().NewToken(gomock.Any(), map[string]interface{}{"user": dbUser}).Return("token", nil)
+
+	sessionUser, token, err := interactor.CreateSession("foo@bar.com", "foobar")
+	assert.NoError(t, err)
+	assert.Equal(t, sessionUser, dbUser)
+	assert.Equal(t, token, "token")
 }

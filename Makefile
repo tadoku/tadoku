@@ -22,6 +22,7 @@ migrate:
 
 .PHONY: test
 test:
+	@make lint
 	@go test -v ./...
 
 .PHONY: run

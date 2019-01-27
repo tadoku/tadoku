@@ -1,3 +1,5 @@
+//go:generate gex mockgen -source=repositories.go -package usecases -destination=repositories_mock.go
+
 package usecases
 
 import (

@@ -9,7 +9,10 @@ import (
 	"github.com/tadoku/api/domain"
 )
 
+// ErrPasswordIncorrect for when an invalid password is given
 var ErrPasswordIncorrect = fail.New("invalid password supplied")
+
+// ErrUserDoesNotExist for when a user could not be found
 var ErrUserDoesNotExist = fail.New("user does not exist")
 
 // SessionInteractor contains all business logic for sessions

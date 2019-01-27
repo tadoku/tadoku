@@ -29,7 +29,7 @@ jobs:
 
       - restore_cache:
           keys:
-            - go-mod-v1-{{ checksum "go.sum" }}-{{ checksum "tools.go" }}
+            - go-mod-$MOD_VERSION-{{ checksum "go.sum" }}-{{ checksum "tools.go" }}
 
       - run:
           name: Install gex
@@ -46,6 +46,6 @@ jobs:
           command: go test -cover ./...
 
       - save_cache:
-          key: go-mod-v1-{{ checksum "go.sum" }}-{{ checksum "tools.go" }}
+          key: go-mod-$MOD_VERSION-{{ checksum "go.sum" }}-{{ checksum "tools.go" }}
           paths:
             - "/go/pkg/mod"

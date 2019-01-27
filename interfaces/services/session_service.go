@@ -26,6 +26,7 @@ type sessionService struct {
 	SessionInteractor usecases.SessionInteractor
 }
 
+// SessionLoginBody is the data that's needed to log in
 type SessionLoginBody struct {
 	Email    string `json:"email"`
 	Password string `json:"password"`

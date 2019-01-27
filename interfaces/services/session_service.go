@@ -26,13 +26,13 @@ type sessionService struct {
 	SessionInteractor usecases.SessionInteractor
 }
 
-func (s *sessionService) Login(ctx Context) error {
-	type body struct {
-		Email    string `json:"email"`
-		Password string `json:"password"`
-	}
+type SessionLoginBody struct {
+	Email    string `json:"email"`
+	Password string `json:"password"`
+}
 
-	b := &body{}
+func (s *sessionService) Login(ctx Context) error {
+	b := &SessionLoginBody{}
 	err := ctx.Bind(b)
 	if err != nil {
 		return fail.Wrap(err)

@@ -36,3 +36,35 @@ func TestSessionService_Register(t *testing.T) {
 
 	assert.NoError(t, err)
 }
+
+func TestSessionService_Login(t *testing.T) {
+	user := &domain.User{
+		Email:       "foo@bar.com",
+		DisplayName: "John Doe",
+		Password:    "foobar",
+	}
+	token := "foobar"
+
+	b := &services.SessionLoginBody{
+		Email:    "foo@bar.com",
+		Password: "foobar",
+	}
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	ctx := services.NewMockContext(ctrl)
+	ctx.EXPECT().JSON(200, map[string]interface{}{
+		"token": token,
+		"user":  *user,
+	})
+	ctx.EXPECT().Bind(gomock.Any()).Return(nil).SetArg(0, *b)
+
+	i := usecases.NewMockSessionInteractor(ctrl)
+	i.EXPECT().CreateSession(b.Email, b.Password).Return(*user, token, nil)
+
+	s := services.NewSessionService(i)
+	err := s.Login(ctx)
+
+	assert.NoError(t, err)
+}

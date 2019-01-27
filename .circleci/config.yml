@@ -5,7 +5,7 @@ version: 2
 jobs:
   build:
     docker:
-      - image: circleci/golang:1.11
+      - image: circleci/golang:1.11.4
         environment:
           GO111MODULE: "on"
           USER_SESSION_LENGTH: "1h"

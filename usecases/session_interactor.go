@@ -9,6 +9,12 @@ import (
 	"github.com/tadoku/api/domain"
 )
 
+// ErrPasswordIncorrect for when an invalid password is given
+var ErrPasswordIncorrect = fail.New("invalid password supplied")
+
+// ErrUserDoesNotExist for when a user could not be found
+var ErrUserDoesNotExist = fail.New("user does not exist")
+
 // SessionInteractor contains all business logic for sessions
 type SessionInteractor interface {
 	CreateUser(user domain.User) error
@@ -60,8 +66,12 @@ func (si *sessionInteractor) CreateSession(email, password string) (domain.User,
 		return domain.User{}, "", fail.Wrap(err)
 	}
 
+	if user.ID == 0 {
+		return domain.User{}, "", fail.Wrap(ErrUserDoesNotExist, fail.WithIgnorable())
+	}
+
 	if !si.passwordHasher.Compare(user.Password, password) {
-		return domain.User{}, "", fail.Wrap(fail.New("invalid password supplied"), fail.WithIgnorable())
+		return domain.User{}, "", fail.Wrap(ErrPasswordIncorrect, fail.WithIgnorable())
 	}
 
 	token, err := si.jwtGenerator.NewToken(si.sessionLength, map[string]interface{}{

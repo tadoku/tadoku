@@ -1,3 +1,5 @@
+//go:generate gex mockgen -source=session_interactor.go -package usecases -destination=session_interactor_mock.go
+
 package usecases
 
 import (

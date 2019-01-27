@@ -4,6 +4,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/srvc/fail"
 	"github.com/stretchr/testify/assert"
 	"github.com/tadoku/api/domain"
 	"github.com/tadoku/api/usecases"
@@ -51,18 +52,36 @@ func TestSessionInteractor_CreateUser(t *testing.T) {
 	assert.NoError(t, err)
 }
 
-// CreateSession(email, password string) (user domain.User, token string, err error)
 func TestSessionInteractor_CreateSession(t *testing.T) {
 	ctrl, repo, pwHasher, jwtGen, interactor := setup(t)
 	defer ctrl.Finish()
 
-	dbUser := domain.User{Email: "foo@bar.com", Password: "foobar"}
-	repo.EXPECT().FindByEmail("foo@bar.com").Return(dbUser, nil)
-	pwHasher.EXPECT().Compare(dbUser.Password, "foobar").Return(true)
-	jwtGen.EXPECT().NewToken(gomock.Any(), map[string]interface{}{"user": dbUser}).Return("token", nil)
+	{
+		// Happy path: valid user
+		dbUser := domain.User{Email: "foo@bar.com", Password: "foobar"}
+		repo.EXPECT().FindByEmail("foo@bar.com").Return(dbUser, nil)
+		pwHasher.EXPECT().Compare(dbUser.Password, "foobar").Return(true)
+		jwtGen.EXPECT().NewToken(gomock.Any(), map[string]interface{}{"user": dbUser}).Return("token", nil)
 
-	sessionUser, token, err := interactor.CreateSession("foo@bar.com", "foobar")
-	assert.NoError(t, err)
-	assert.Equal(t, sessionUser, dbUser)
-	assert.Equal(t, token, "token")
+		sessionUser, token, err := interactor.CreateSession("foo@bar.com", "foobar")
+		assert.NoError(t, err)
+		assert.Equal(t, sessionUser, dbUser)
+		assert.Equal(t, token, "token")
+	}
+
+	{
+		// Sad path: user does not exist
+		repo.EXPECT().FindByEmail("bar@bar.com").Return(domain.User{}, fail.Errorf("could not find user"))
+		_, _, err := interactor.CreateSession("bar@bar.com", "foobar")
+		assert.EqualError(t, err, "could not find user")
+	}
+
+	{
+		// Sad path: password is incorrect
+		user := domain.User{Email: "foo@bar.com", Password: "barbar"}
+		repo.EXPECT().FindByEmail("foo@bar.com").Return(user, nil)
+		pwHasher.EXPECT().Compare(user.Password, "foobar").Return(false)
+		_, _, err := interactor.CreateSession("foo@bar.com", "foobar")
+		assert.EqualError(t, err, usecases.ErrPasswordIncorrect.Error())
+	}
 }

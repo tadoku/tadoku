@@ -10,6 +10,7 @@ import (
 )
 
 var ErrPasswordIncorrect = fail.New("invalid password supplied")
+var ErrUserDoesNotExist = fail.New("user does not exist")
 
 // SessionInteractor contains all business logic for sessions
 type SessionInteractor interface {
@@ -60,6 +61,10 @@ func (si *sessionInteractor) CreateSession(email, password string) (domain.User,
 	user, err := si.userRepository.FindByEmail(email)
 	if err != nil {
 		return domain.User{}, "", fail.Wrap(err)
+	}
+
+	if user.ID == 0 {
+		return domain.User{}, "", fail.Wrap(ErrUserDoesNotExist, fail.WithIgnorable())
 	}
 
 	if !si.passwordHasher.Compare(user.Password, password) {

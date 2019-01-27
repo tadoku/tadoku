@@ -4,7 +4,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/srvc/fail"
 	"github.com/stretchr/testify/assert"
 	"github.com/tadoku/api/domain"
 	"github.com/tadoku/api/usecases"
@@ -58,7 +57,7 @@ func TestSessionInteractor_CreateSession(t *testing.T) {
 
 	{
 		// Happy path: valid user
-		dbUser := domain.User{Email: "foo@bar.com", Password: "foobar"}
+		dbUser := domain.User{ID: 1, Email: "foo@bar.com", Password: "foobar"}
 		repo.EXPECT().FindByEmail("foo@bar.com").Return(dbUser, nil)
 		pwHasher.EXPECT().Compare(dbUser.Password, "foobar").Return(true)
 		jwtGen.EXPECT().NewToken(gomock.Any(), map[string]interface{}{"user": dbUser}).Return("token", nil)
@@ -71,14 +70,14 @@ func TestSessionInteractor_CreateSession(t *testing.T) {
 
 	{
 		// Sad path: user does not exist
-		repo.EXPECT().FindByEmail("bar@bar.com").Return(domain.User{}, fail.Errorf("could not find user"))
+		repo.EXPECT().FindByEmail("bar@bar.com").Return(domain.User{}, nil)
 		_, _, err := interactor.CreateSession("bar@bar.com", "foobar")
-		assert.EqualError(t, err, "could not find user")
+		assert.EqualError(t, err, usecases.ErrUserDoesNotExist.Error())
 	}
 
 	{
 		// Sad path: password is incorrect
-		user := domain.User{Email: "foo@bar.com", Password: "barbar"}
+		user := domain.User{ID: 1, Email: "foo@bar.com", Password: "barbar"}
 		repo.EXPECT().FindByEmail("foo@bar.com").Return(user, nil)
 		pwHasher.EXPECT().Compare(user.Password, "foobar").Return(false)
 		_, _, err := interactor.CreateSession("foo@bar.com", "foobar")

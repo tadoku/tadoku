@@ -16,5 +16,11 @@ CREATE TABLE mediums (
   PRIMARY KEY (id)
 );
 
+CREATE TABLE languages (
+  iso_code varchar(3) NOT NULL,
+  name varchar(50) NOT NULL,
+  PRIMARY KEY (iso_code)
+);
+
 ALTER SEQUENCE contest_seq RESTART WITH 1;
 ALTER SEQUENCE medium_seq RESTART WITH 1;

@@ -132,9 +132,9 @@ func (d *serverDependencies) Router() services.Router {
 
 func (d *serverDependencies) routes() []services.Route {
 	return []services.Route{
-		{Method: http.MethodGet, Path: "/ping", HandlerFunc: d.Services().Health.Ping},
-		{Method: http.MethodPost, Path: "/login", HandlerFunc: d.Services().Session.Login},
-		{Method: http.MethodPost, Path: "/register", HandlerFunc: d.Services().Session.Register},
+		{Method: http.MethodGet, Path: "/ping", HandlerFunc: d.Services().Health.Ping, Restricted: false},
+		{Method: http.MethodPost, Path: "/login", HandlerFunc: d.Services().Session.Login, Restricted: false},
+		{Method: http.MethodPost, Path: "/register", HandlerFunc: d.Services().Session.Register, Restricted: false},
 	}
 }
 

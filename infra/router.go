@@ -5,23 +5,28 @@ import (
 	"net/http"
 
 	"github.com/labstack/echo"
+	"github.com/labstack/echo/middleware"
 
 	"github.com/tadoku/api/interfaces/services"
 )
 
+var restricted echo.MiddlewareFunc
+
 // NewRouter instantiates a router
 func NewRouter(
 	port string,
+	jwtSecret string,
 	routes ...services.Route,
 ) services.Router {
 	e := echo.New()
+	restricted = middleware.JWT(jwtSecret)
 
 	for _, route := range routes {
 		switch route.Method {
 		case http.MethodGet:
-			e.GET(route.Path, wrap(route.HandlerFunc))
+			e.GET(route.Path, wrap(route))
 		case http.MethodPost:
-			e.POST(route.Path, wrap(route.HandlerFunc))
+			e.POST(route.Path, wrap(route))
 		default:
 			log.Fatalf("HTTP verb %v is not supported", route.Method)
 		}
@@ -30,10 +35,16 @@ func NewRouter(
 	return router{e, port}
 }
 
-func wrap(h services.HandlerFunc) echo.HandlerFunc {
-	return func(c echo.Context) error {
-		return h(c)
+func wrap(r services.Route) echo.HandlerFunc {
+	handler := func(c echo.Context) error {
+		return r.HandlerFunc(c)
 	}
+
+	if r.Restricted {
+		handler = restricted(handler)
+	}
+
+	return handler
 }
 
 type router struct {

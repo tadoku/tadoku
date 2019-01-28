@@ -5,7 +5,7 @@ type Router interface {
 	StartListening() error
 }
 
-// HandlerFunc of the router
+// HandlerFunc defines a function to serve HTTP requests.
 type HandlerFunc func(Context) error
 
 // Route is a definition of a route

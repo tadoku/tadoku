@@ -36,6 +36,11 @@ CREATE TABLE logs (
   PRIMARY KEY (id)
 );
 
+CREATE INDEX logs_contest_id ON logs(contest_id);
+CREATE INDEX logs_user_id ON logs(user_id);
+CREATE INDEX logs_language_code ON logs(language_code);
+CREATE INDEX logs_medium_id ON logs(medium_id);
+
 ALTER SEQUENCE contest_seq RESTART WITH 1;
 ALTER SEQUENCE medium_seq RESTART WITH 1;
 ALTER SEQUENCE log_seq RESTART WITH 1;

@@ -1,3 +1,5 @@
 DROP TABLE contests CASCADE;
+DROP TABLE mediums CASCADE;
 
 DROP SEQUENCE IF EXISTS contest_seq;
+DROP SEQUENCE IF EXISTS medium_seq;

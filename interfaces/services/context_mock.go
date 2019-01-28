@@ -6,6 +6,8 @@ package services
 
 import (
 	gomock "github.com/golang/mock/gomock"
+	domain "github.com/tadoku/api/domain"
+	usecases "github.com/tadoku/api/usecases"
 	reflect "reflect"
 )
 
@@ -112,4 +114,33 @@ func (m *MockContext) JSON(code int, i interface{}) error {
 func (mr *MockContextMockRecorder) JSON(code, i interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "JSON", reflect.TypeOf((*MockContext)(nil).JSON), code, i)
+}
+
+// Claims mocks base method
+func (m *MockContext) Claims() *usecases.SessionClaims {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Claims")
+	ret0, _ := ret[0].(*usecases.SessionClaims)
+	return ret0
+}
+
+// Claims indicates an expected call of Claims
+func (mr *MockContextMockRecorder) Claims() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Claims", reflect.TypeOf((*MockContext)(nil).Claims))
+}
+
+// User mocks base method
+func (m *MockContext) User() (*domain.User, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "User")
+	ret0, _ := ret[0].(*domain.User)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// User indicates an expected call of User
+func (mr *MockContextMockRecorder) User() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "User", reflect.TypeOf((*MockContext)(nil).User))
 }

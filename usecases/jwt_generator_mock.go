@@ -34,7 +34,7 @@ func (m *MockJWTGenerator) EXPECT() *MockJWTGeneratorMockRecorder {
 }
 
 // NewToken mocks base method
-func (m *MockJWTGenerator) NewToken(lifetime time.Duration, claims map[string]interface{}) (string, error) {
+func (m *MockJWTGenerator) NewToken(lifetime time.Duration, claims SessionClaims) (string, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "NewToken", lifetime, claims)
 	ret0, _ := ret[0].(string)

@@ -1,46 +1,46 @@
-CREATE SEQUENCE contest_seq;
-CREATE SEQUENCE medium_seq;
-CREATE SEQUENCE log_seq;
+create sequence contest_seq;
+create sequence medium_seq;
+create sequence log_seq;
 
-CREATE TABLE contests (
-  id bigint check (id > 0) NOT NULL DEFAULT NEXTVAL ('contest_seq'),
-  start date NOT NULL,
-  "end" date NOT NULL,
-  open boolean NOT NULL DEFAULT FALSE,
-  PRIMARY KEY (id)
+create table contests (
+  id bigint check (id > 0) not null default nextval ('contest_seq'),
+  start date not null,
+  "end" date not null,
+  open boolean not null default false,
+  primary key (id)
 );
 
-CREATE TABLE mediums (
-  id smallint check (id > 0) NOT NULL DEFAULT NEXTVAL ('medium_seq'),
-  description text NOT NULL,
-  points float(2) NOT NULL,
-  PRIMARY KEY (id)
+create table mediums (
+  id smallint check (id > 0) not null default nextval ('medium_seq'),
+  description text not null,
+  points float(2) not null,
+  primary key (id)
 );
 
-CREATE TABLE languages (
-  iso_code varchar(3) NOT NULL,
-  name varchar(50) NOT NULL,
-  PRIMARY KEY (iso_code)
+create table languages (
+  iso_code varchar(3) not null,
+  name varchar(50) not null,
+  primary key (iso_code)
 );
 
-CREATE TABLE logs (
-  id bigint check (id > 0) NOT NULL DEFAULT NEXTVAL ('log_seq'),
-  contest_id bigint NOT NULL,
-  user_id bigint NOT NULL,
-  language_code varchar(3) NOT NULL,
-  medium_id smallint NOT NULL,
-  amount float(3) NOT NULL,
-  created_at timestamp NOT NULL,
-  updated_at timestamp NOT NULL,
-  deleted_at timestamp DEFAULT NULL,
-  PRIMARY KEY (id)
+create table logs (
+  id bigint check (id > 0) not null default nextval ('log_seq'),
+  contest_id bigint not null,
+  user_id bigint not null,
+  language_code varchar(3) not null,
+  medium_id smallint not null,
+  amount float(3) not null,
+  created_at timestamp not null,
+  updated_at timestamp not null,
+  deleted_at timestamp default null,
+  primary key (id)
 );
 
-CREATE INDEX logs_contest_id ON logs(contest_id);
-CREATE INDEX logs_user_id ON logs(user_id);
-CREATE INDEX logs_language_code ON logs(language_code);
-CREATE INDEX logs_medium_id ON logs(medium_id);
+create index logs_contest_id on logs(contest_id);
+create index logs_user_id on logs(user_id);
+create index logs_language_code on logs(language_code);
+create index logs_medium_id on logs(medium_id);
 
-ALTER SEQUENCE contest_seq RESTART WITH 1;
-ALTER SEQUENCE medium_seq RESTART WITH 1;
-ALTER SEQUENCE log_seq RESTART WITH 1;
+alter sequence contest_seq restart with 1;
+alter sequence medium_seq restart with 1;
+alter sequence log_seq restart with 1;

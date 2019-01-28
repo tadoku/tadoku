@@ -1,8 +1,8 @@
-DROP TABLE contests CASCADE;
-DROP TABLE mediums CASCADE;
-DROP TABLE languages CASCADE;
-DROP TABLE logs CASCADE;
+drop table contests cascade;
+drop table mediums cascade;
+drop table languages cascade;
+drop table logs cascade;
 
-DROP SEQUENCE IF EXISTS contest_seq;
-DROP SEQUENCE IF EXISTS medium_seq;
-DROP SEQUENCE IF EXISTS log_seq;
+drop sequence if exists contest_seq;
+drop sequence if exists medium_seq;
+drop sequence if exists log_seq;

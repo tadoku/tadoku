@@ -1,5 +1,6 @@
 CREATE SEQUENCE contest_seq;
 CREATE SEQUENCE medium_seq;
+CREATE SEQUENCE log_seq;
 
 CREATE TABLE contests (
   id bigint check (id > 0) NOT NULL DEFAULT NEXTVAL ('contest_seq'),
@@ -22,5 +23,19 @@ CREATE TABLE languages (
   PRIMARY KEY (iso_code)
 );
 
+CREATE TABLE logs (
+  id bigint check (id > 0) NOT NULL DEFAULT NEXTVAL ('log_seq'),
+  contest_id bigint NOT NULL,
+  user_id bigint NOT NULL,
+  language_code varchar(3) NOT NULL,
+  medium_id smallint NOT NULL,
+  amount float(3) NOT NULL,
+  created_at timestamp NOT NULL,
+  updated_at timestamp NOT NULL,
+  deleted_at timestamp DEFAULT NULL,
+  PRIMARY KEY (id)
+);
+
 ALTER SEQUENCE contest_seq RESTART WITH 1;
 ALTER SEQUENCE medium_seq RESTART WITH 1;
+ALTER SEQUENCE log_seq RESTART WITH 1;

@@ -19,7 +19,7 @@ func NewRouter(
 	routes ...services.Route,
 ) services.Router {
 	e := echo.New()
-	restricted = middleware.JWT(jwtSecret)
+	restricted = newJWTMiddleware(jwtSecret)
 
 	for _, route := range routes {
 		switch route.Method {
@@ -35,9 +35,17 @@ func NewRouter(
 	return router{e, port}
 }
 
+func newJWTMiddleware(secret string) echo.MiddlewareFunc {
+	cfg := middleware.JWTConfig{
+		Claims:     &jwtClaims{},
+		SigningKey: []byte(secret),
+	}
+	return middleware.JWTWithConfig(cfg)
+}
+
 func wrap(r services.Route) echo.HandlerFunc {
 	handler := func(c echo.Context) error {
-		return r.HandlerFunc(c)
+		return r.HandlerFunc(&context{c})
 	}
 
 	if r.Restricted {

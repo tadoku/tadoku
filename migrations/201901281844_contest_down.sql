@@ -1,0 +1,3 @@
+DROP TABLE contests CASCADE;
+
+DROP SEQUENCE IF EXISTS contest_seq;

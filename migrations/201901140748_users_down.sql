@@ -1,3 +1,3 @@
-DROP TABLE users CASCADE;
+drop table users cascade;
 
-DROP SEQUENCE IF EXISTS user_seq;
+drop sequence if exists user_seq;

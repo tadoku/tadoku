@@ -1,13 +1,13 @@
-CREATE SEQUENCE user_seq;
+create sequence user_seq;
 
-CREATE TABLE users (
-  id bigint check (id > 0) NOT NULL DEFAULT NEXTVAL ('user_seq'),
-  email varchar(255) NOT NULL UNIQUE,
-  display_name varchar(255) NOT NULL,
-  password bytea NOT NULL,
-  role smallint NOT NULL DEFAULT 0,
-  preferences jsonb NOT NULL DEFAULT '{}'::jsonb,
-  PRIMARY KEY (id)
+create table users (
+  id bigint check (id > 0) not null default nextval ('user_seq'),
+  email varchar(255) not null unique,
+  display_name varchar(255) not null,
+  password bytea not null,
+  role smallint not null default 0,
+  preferences jsonb not null default '{}'::jsonb,
+  primary key (id)
 );
 
-ALTER SEQUENCE user_seq RESTART WITH 1;
+alter sequence user_seq restart with 1;

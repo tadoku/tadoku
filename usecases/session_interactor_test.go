@@ -60,7 +60,7 @@ func TestSessionInteractor_CreateSession(t *testing.T) {
 		dbUser := domain.User{ID: 1, Email: "foo@bar.com", Password: "foobar"}
 		repo.EXPECT().FindByEmail("foo@bar.com").Return(dbUser, nil)
 		pwHasher.EXPECT().Compare(dbUser.Password, "foobar").Return(true)
-		jwtGen.EXPECT().NewToken(gomock.Any(), map[string]interface{}{"user": dbUser}).Return("token", nil)
+		jwtGen.EXPECT().NewToken(gomock.Any(), usecases.SessionClaims{User: &dbUser}).Return("token", nil)
 
 		sessionUser, token, err := interactor.CreateSession("foo@bar.com", "foobar")
 		assert.NoError(t, err)

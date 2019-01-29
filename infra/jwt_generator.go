@@ -18,14 +18,13 @@ type jwtGenerator struct {
 }
 
 // NewToken generates a signed JWT token
-func (g *jwtGenerator) NewToken(lifetime time.Duration, data map[string]interface{}) (string, error) {
-
-	claims := make(jwt.MapClaims, len(data)+1)
-	for k, v := range data {
-		claims[k] = v
+func (g *jwtGenerator) NewToken(lifetime time.Duration, src usecases.SessionClaims) (string, error) {
+	claims := jwtClaims{
+		SessionClaims: src,
+		StandardClaims: jwt.StandardClaims{
+			ExpiresAt: time.Now().Add(lifetime).Unix(),
+		},
 	}
-
-	claims["exp"] = time.Now().Add(lifetime).Unix()
 
 	token := jwt.NewWithClaims(
 		jwt.SigningMethodHS256,
@@ -33,4 +32,9 @@ func (g *jwtGenerator) NewToken(lifetime time.Duration, data map[string]interfac
 	)
 
 	return token.SignedString([]byte(g.signingKey))
+}
+
+type jwtClaims struct {
+	usecases.SessionClaims
+	jwt.StandardClaims
 }

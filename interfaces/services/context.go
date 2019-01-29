@@ -2,6 +2,11 @@
 
 package services
 
+import (
+	"github.com/tadoku/api/domain"
+	"github.com/tadoku/api/usecases"
+)
+
 // based on https://github.com/labstack/echo/blob/a2d4cb9c7a629e2ee21861501690741d2374de10/context.go
 
 // Context is a subset of the echo framework context, so we are not directly depending on it
@@ -24,4 +29,10 @@ type Context interface {
 
 	// JSON sends a JSON response with status code.
 	JSON(code int, i interface{}) error
+
+	// Claims gets all the user Claims
+	Claims() *usecases.SessionClaims
+
+	// User gets the current logged in user
+	User() (*domain.User, error)
 }

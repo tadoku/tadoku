@@ -48,6 +48,11 @@ func newJWTMiddleware(secret string) echo.MiddlewareFunc {
 }
 
 func isRoleAllowed(c echo.Context, minRole domain.Role) bool {
+	// By default we assume that guests have access to everything
+	if minRole == 0 {
+		return true
+	}
+
 	ctx := &context{c}
 	u, err := ctx.User()
 	if err != nil {

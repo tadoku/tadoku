@@ -2,6 +2,8 @@ package services
 
 import (
 	"net/http"
+
+	"github.com/tadoku/api/domain"
 )
 
 // Router takes care of all the routing
@@ -15,8 +17,9 @@ type HandlerFunc func(Context) error
 
 // Route is a definition of a route
 type Route struct {
-	Method      string
-	Path        string
-	HandlerFunc HandlerFunc
-	Restricted  bool
+	Method          string
+	Path            string
+	HandlerFunc     HandlerFunc
+	Restricted      bool
+	RoleRestriction domain.Role
 }

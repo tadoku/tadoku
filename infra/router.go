@@ -7,6 +7,7 @@ import (
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
 
+	"github.com/tadoku/api/domain"
 	"github.com/tadoku/api/interfaces/services"
 )
 
@@ -46,8 +47,27 @@ func newJWTMiddleware(secret string) echo.MiddlewareFunc {
 	return middleware.JWTWithConfig(cfg)
 }
 
+func isRoleAllowed(c echo.Context, minRole domain.Role) bool {
+	ctx := &context{c}
+	u, err := ctx.User()
+	if err != nil {
+		return false
+	}
+
+	if u.Role < minRole {
+		return false
+	}
+
+	return true
+}
+
 func wrap(r services.Route, restrict echo.MiddlewareFunc) echo.HandlerFunc {
 	handler := func(c echo.Context) error {
+		// @TODO: find out if we can do this nicer with a middleware
+		if !isRoleAllowed(c, r.RoleRestriction) {
+			return c.NoContent(http.StatusForbidden)
+		}
+
 		return r.HandlerFunc(&context{c})
 	}
 

@@ -1,8 +1,6 @@
 package infra
 
 import (
-	"fmt"
-
 	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/labstack/echo"
 	"github.com/srvc/fail"
@@ -29,7 +27,6 @@ func (c context) User() (*domain.User, error) {
 
 func (c context) Claims() *usecases.SessionClaims {
 	if token, ok := c.Get("user").(*jwt.Token); ok {
-		fmt.Println(token.Claims)
 		return &token.Claims.(*jwtClaims).SessionClaims
 	}
 	return nil

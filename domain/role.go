@@ -5,7 +5,8 @@ type Role int
 
 // These are all the possible values for Role
 const (
-	RoleDisabled Role = iota
+	RoleGuest Role = iota
+	RoleDisabled
 	RoleUser
 	RoleAdmin
 )

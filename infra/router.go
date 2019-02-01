@@ -49,7 +49,7 @@ func newJWTMiddleware(secret string) echo.MiddlewareFunc {
 
 func isRoleAllowed(c echo.Context, minRole domain.Role) bool {
 	// By default we assume that guests have access to everything
-	if minRole == 0 {
+	if minRole == domain.RoleGuest {
 		return true
 	}
 
@@ -68,15 +68,14 @@ func isRoleAllowed(c echo.Context, minRole domain.Role) bool {
 
 func wrap(r services.Route, restrict echo.MiddlewareFunc) echo.HandlerFunc {
 	handler := func(c echo.Context) error {
-		// @TODO: find out if we can do this nicer with a middleware
-		if !isRoleAllowed(c, r.RoleRestriction) {
+		if !isRoleAllowed(c, r.MinRole) {
 			return c.NoContent(http.StatusForbidden)
 		}
 
 		return r.HandlerFunc(&context{c})
 	}
 
-	if r.Restricted {
+	if r.MinRole > domain.RoleGuest {
 		handler = restrict(handler)
 	}
 

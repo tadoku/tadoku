@@ -17,9 +17,8 @@ type HandlerFunc func(Context) error
 
 // Route is a definition of a route
 type Route struct {
-	Method          string
-	Path            string
-	HandlerFunc     HandlerFunc
-	Restricted      bool
-	RoleRestriction domain.Role
+	Method      string
+	Path        string
+	HandlerFunc HandlerFunc
+	MinRole     domain.Role
 }

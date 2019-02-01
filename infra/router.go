@@ -9,6 +9,7 @@ import (
 
 	"github.com/tadoku/api/domain"
 	"github.com/tadoku/api/interfaces/services"
+	"github.com/tadoku/api/usecases"
 )
 
 // NewRouter instantiates a router
@@ -17,20 +18,32 @@ func NewRouter(
 	jwtSecret string,
 	routes ...services.Route,
 ) services.Router {
-	e := newEcho(jwtSecret, routes...)
+	m := &middlewares{
+		restrict:      newJWTMiddleware(jwtSecret),
+		authenticator: usecases.NewRoleAuthenticator(),
+	}
+	e := newEcho(m, routes...)
 	return router{e, port}
 }
 
-func newEcho(jwtSecret string, routes ...services.Route) *echo.Echo {
+type middlewares struct {
+	restrict      echo.MiddlewareFunc
+	authenticator usecases.RoleAuthenticator
+}
+
+func newEcho(
+	m *middlewares,
+	routes ...services.Route,
+) *echo.Echo {
 	e := echo.New()
-	restricted := newJWTMiddleware(jwtSecret)
+	e.HTTPErrorHandler = errorHandler
 
 	for _, route := range routes {
 		switch route.Method {
 		case http.MethodGet:
-			e.GET(route.Path, wrap(route, restricted))
+			e.GET(route.Path, wrap(route, m))
 		case http.MethodPost:
-			e.POST(route.Path, wrap(route, restricted))
+			e.POST(route.Path, wrap(route, m))
 		default:
 			log.Fatalf("HTTP verb %v is not supported", route.Method)
 		}
@@ -47,36 +60,39 @@ func newJWTMiddleware(secret string) echo.MiddlewareFunc {
 	return middleware.JWTWithConfig(cfg)
 }
 
-func isRoleAllowed(c echo.Context, minRole domain.Role) bool {
-	// By default we assume that guests have access to everything
-	if minRole == domain.RoleGuest {
-		return true
+func errorHandler(err error, c echo.Context) {
+	if err == middleware.ErrJWTMissing {
+		c.NoContent(http.StatusUnauthorized)
 	}
-
-	ctx := &context{c}
-	u, err := ctx.User()
-	if err != nil {
-		return false
-	}
-
-	if u.Role < minRole {
-		return false
-	}
-
-	return true
+	c.Logger().Error(err)
 }
 
-func wrap(r services.Route, restrict echo.MiddlewareFunc) echo.HandlerFunc {
+func (m *middlewares) authenticateRole(c echo.Context, minRole domain.Role) error {
+	u, err := (&context{c}).User()
+	if err == ErrEmptyUser && minRole != domain.RoleGuest {
+		return c.NoContent(http.StatusUnauthorized)
+	}
+	err = m.authenticator.IsAllowed(u, minRole)
+
+	if err != nil {
+		return c.NoContent(http.StatusForbidden)
+	}
+
+	return nil
+}
+
+func wrap(r services.Route, m *middlewares) echo.HandlerFunc {
 	handler := func(c echo.Context) error {
-		if !isRoleAllowed(c, r.MinRole) {
-			return c.NoContent(http.StatusForbidden)
+		err := m.authenticateRole(c, r.MinRole)
+		if err != nil {
+			return err
 		}
 
 		return r.HandlerFunc(&context{c})
 	}
 
 	if r.MinRole > domain.RoleGuest {
-		handler = restrict(handler)
+		handler = m.restrict(handler)
 	}
 
 	return handler

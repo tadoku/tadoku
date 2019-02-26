@@ -4,8 +4,8 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/labstack/echo"
-	"github.com/labstack/echo/middleware"
+	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
 
 	"github.com/tadoku/api/domain"
 	"github.com/tadoku/api/interfaces/services"

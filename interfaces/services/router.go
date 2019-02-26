@@ -2,6 +2,8 @@ package services
 
 import (
 	"net/http"
+
+	"github.com/tadoku/api/domain"
 )
 
 // Router takes care of all the routing
@@ -18,5 +20,5 @@ type Route struct {
 	Method      string
 	Path        string
 	HandlerFunc HandlerFunc
-	Restricted  bool
+	MinRole     domain.Role
 }

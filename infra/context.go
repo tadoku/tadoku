@@ -1,10 +1,8 @@
 package infra
 
 import (
-	"fmt"
-
 	jwt "github.com/dgrijalva/jwt-go"
-	"github.com/labstack/echo"
+	"github.com/labstack/echo/v4"
 	"github.com/srvc/fail"
 
 	"github.com/tadoku/api/domain"
@@ -20,7 +18,7 @@ type context struct {
 
 func (c context) User() (*domain.User, error) {
 	claims := c.Claims()
-	if claims.User != nil {
+	if claims != nil && claims.User != nil {
 		return claims.User, nil
 	}
 
@@ -29,8 +27,10 @@ func (c context) User() (*domain.User, error) {
 
 func (c context) Claims() *usecases.SessionClaims {
 	if token, ok := c.Get("user").(*jwt.Token); ok {
-		fmt.Println(token.Claims)
-		return &token.Claims.(*jwtClaims).SessionClaims
+		claims := token.Claims.(*jwtClaims)
+		if claims != nil {
+			return &claims.SessionClaims
+		}
 	}
 	return nil
 }

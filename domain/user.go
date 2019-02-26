@@ -22,6 +22,11 @@ func (u *User) NeedsHashing() bool {
 	return u.Password != "" && !u.isPasswordHashed
 }
 
+// IsAdmin returns true when the user has the administration role
+func (u *User) IsAdmin() bool {
+	return u.Role == RoleAdmin
+}
+
 // MarshalJSON prevents the password from being exported into something client-facing
 func (Password) MarshalJSON() ([]byte, error) {
 	return []byte(`""`), nil

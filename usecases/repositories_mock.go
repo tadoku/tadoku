@@ -76,3 +76,40 @@ func (mr *MockUserRepositoryMockRecorder) FindByEmail(email interface{}) *gomock
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindByEmail", reflect.TypeOf((*MockUserRepository)(nil).FindByEmail), email)
 }
+
+// MockContestRepository is a mock of ContestRepository interface
+type MockContestRepository struct {
+	ctrl     *gomock.Controller
+	recorder *MockContestRepositoryMockRecorder
+}
+
+// MockContestRepositoryMockRecorder is the mock recorder for MockContestRepository
+type MockContestRepositoryMockRecorder struct {
+	mock *MockContestRepository
+}
+
+// NewMockContestRepository creates a new mock instance
+func NewMockContestRepository(ctrl *gomock.Controller) *MockContestRepository {
+	mock := &MockContestRepository{ctrl: ctrl}
+	mock.recorder = &MockContestRepositoryMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use
+func (m *MockContestRepository) EXPECT() *MockContestRepositoryMockRecorder {
+	return m.recorder
+}
+
+// Store mocks base method
+func (m *MockContestRepository) Store(contest domain.Contest) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Store", contest)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Store indicates an expected call of Store
+func (mr *MockContestRepositoryMockRecorder) Store(contest interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Store", reflect.TypeOf((*MockContestRepository)(nil).Store), contest)
+}

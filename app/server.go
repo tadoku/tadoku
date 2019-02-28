@@ -8,6 +8,7 @@ import (
 
 	"github.com/creasty/configo"
 
+	"github.com/tadoku/api/domain"
 	"github.com/tadoku/api/infra"
 	"github.com/tadoku/api/interfaces/rdb"
 	"github.com/tadoku/api/interfaces/services"
@@ -135,6 +136,7 @@ func (d *serverDependencies) routes() []services.Route {
 		{Method: http.MethodGet, Path: "/ping", HandlerFunc: d.Services().Health.Ping},
 		{Method: http.MethodPost, Path: "/login", HandlerFunc: d.Services().Session.Login},
 		{Method: http.MethodPost, Path: "/register", HandlerFunc: d.Services().Session.Register},
+		{Method: http.MethodPost, Path: "/contests", HandlerFunc: d.Services().Contest.Create, MinRole: domain.RoleAdmin},
 	}
 }
 

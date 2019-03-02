@@ -10,6 +10,9 @@ import (
 // ErrInvalidContest for when an invalid contest is given
 var ErrInvalidContest = fail.New("invalid contest supplied")
 
+// ErrOpenContestAlreadyExists for when you try to create a second contest that's open
+var ErrOpenContestAlreadyExists = fail.New("an open contest already exists, only one can exist at a time")
+
 // ContestInteractor contains all business logic for contests
 type ContestInteractor interface {
 	CreateContest(contest domain.Contest) error
@@ -38,6 +41,16 @@ func (si *contestInteractor) CreateContest(contest domain.Contest) error {
 
 	if _, err := si.validator.Validate(contest); err != nil {
 		return ErrInvalidContest
+	}
+
+	if contest.Open {
+		hasOpen, err := si.contestRepository.HasOpenContests()
+		if err != nil {
+			return fail.Wrap(err)
+		}
+		if hasOpen {
+			return ErrOpenContestAlreadyExists
+		}
 	}
 
 	err := si.contestRepository.Store(contest)

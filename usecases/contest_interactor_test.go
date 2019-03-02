@@ -38,11 +38,27 @@ func TestSessionInteractor_CreateContest(t *testing.T) {
 		}
 
 		repo.EXPECT().Store(contest)
+		repo.EXPECT().HasOpenContests().Return(false, nil)
 		validator.EXPECT().Validate(contest).Return(true, nil)
 
 		err := interactor.CreateContest(contest)
 
 		assert.NoError(t, err)
+	}
+
+	{
+		contest := domain.Contest{
+			Start: time.Date(2019, 1, 1, 0, 0, 0, 0, time.UTC),
+			End:   time.Date(2019, 1, 31, 0, 0, 0, 0, time.UTC),
+			Open:  true,
+		}
+
+		repo.EXPECT().HasOpenContests().Return(true, usecases.ErrOpenContestAlreadyExists)
+		validator.EXPECT().Validate(contest).Return(true, nil)
+
+		err := interactor.CreateContest(contest)
+
+		assert.Error(t, err, usecases.ErrOpenContestAlreadyExists)
 	}
 
 	{

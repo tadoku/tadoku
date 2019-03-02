@@ -7,6 +7,9 @@ import (
 	"github.com/tadoku/api/domain"
 )
 
+// ErrInvalidContest for when an invalid contest is given
+var ErrInvalidContest = fail.New("invalid contest supplied")
+
 // ContestInteractor contains all business logic for contests
 type ContestInteractor interface {
 	CreateContest(contest domain.Contest) error
@@ -15,14 +18,17 @@ type ContestInteractor interface {
 // NewContestInteractor instantiates ContestInteractor with all dependencies
 func NewContestInteractor(
 	contestRepository ContestRepository,
+	validator Validator,
 ) ContestInteractor {
 	return &contestInteractor{
 		contestRepository: contestRepository,
+		validator:         validator,
 	}
 }
 
 type contestInteractor struct {
 	contestRepository ContestRepository
+	validator         Validator
 }
 
 func (si *contestInteractor) CreateContest(contest domain.Contest) error {
@@ -30,10 +36,9 @@ func (si *contestInteractor) CreateContest(contest domain.Contest) error {
 		return fail.Errorf("user with an id (%v) could not be created", contest.ID)
 	}
 
-	// Add validation here
-	// if err := si.DomainValidator.Validate(contest); err != nil {
-	//   return fail.Errorf("contest is invalid")
-	// }
+	if _, err := si.validator.ValidateStruct(contest); err != nil {
+		return ErrInvalidContest
+	}
 
 	err := si.contestRepository.Store(contest)
 	return fail.Wrap(err)

@@ -14,29 +14,48 @@ import (
 func setupContestTest(t *testing.T) (
 	*gomock.Controller,
 	*usecases.MockContestRepository,
+	*usecases.MockValidator,
 	usecases.ContestInteractor,
 ) {
 	ctrl := gomock.NewController(t)
 
 	repo := usecases.NewMockContestRepository(ctrl)
-	interactor := usecases.NewContestInteractor(repo)
+	validator := usecases.NewMockValidator(ctrl)
+	interactor := usecases.NewContestInteractor(repo, validator)
 
-	return ctrl, repo, interactor
+	return ctrl, repo, validator, interactor
 }
 
 func TestSessionInteractor_CreateContest(t *testing.T) {
-	ctrl, repo, interactor := setupContestTest(t)
+	ctrl, repo, validator, interactor := setupContestTest(t)
 	defer ctrl.Finish()
 
-	contest := domain.Contest{
-		Start: time.Date(2019, 1, 1, 0, 0, 0, 0, time.UTC),
-		End:   time.Date(2019, 1, 31, 0, 0, 0, 0, time.UTC),
-		Open:  true,
+	{
+		contest := domain.Contest{
+			Start: time.Date(2019, 1, 1, 0, 0, 0, 0, time.UTC),
+			End:   time.Date(2019, 1, 31, 0, 0, 0, 0, time.UTC),
+			Open:  true,
+		}
+
+		repo.EXPECT().Store(contest)
+		validator.EXPECT().ValidateStruct(contest).Return(true, nil)
+
+		err := interactor.CreateContest(contest)
+
+		assert.NoError(t, err)
 	}
 
-	repo.EXPECT().Store(contest)
+	{
+		contest := domain.Contest{
+			Start: time.Date(2019, 1, 31, 0, 0, 0, 0, time.UTC),
+			End:   time.Date(2019, 1, 1, 0, 0, 0, 0, time.UTC),
+			Open:  true,
+		}
 
-	err := interactor.CreateContest(contest)
+		validator.EXPECT().ValidateStruct(contest).Return(false, usecases.ErrInvalidContest)
 
-	assert.NoError(t, err)
+		err := interactor.CreateContest(contest)
+
+		assert.Error(t, err)
+	}
 }

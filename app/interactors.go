@@ -26,6 +26,6 @@ func NewInteractors(
 			jwtGenerator,
 			sessionLength,
 		),
-		Contest: usecases.NewContestInteractor(r.Contest),
+		Contest: usecases.NewContestInteractor(r.Contest, infra.NewValidator()),
 	}
 }

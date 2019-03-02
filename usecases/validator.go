@@ -5,4 +5,5 @@ package usecases
 // Validator validates entities
 type Validator interface {
 	ValidateStruct(s interface{}) (bool, error)
+	Validate(target Validatable) (bool, error)
 }

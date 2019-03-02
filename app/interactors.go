@@ -10,6 +10,7 @@ import (
 // Interactors is a collection of all repositories
 type Interactors struct {
 	Session usecases.SessionInteractor
+	Contest usecases.ContestInteractor
 }
 
 // NewInteractors initializes all repositories
@@ -25,5 +26,6 @@ func NewInteractors(
 			jwtGenerator,
 			sessionLength,
 		),
+		Contest: usecases.NewContestInteractor(r.Contest, infra.NewValidator()),
 	}
 }

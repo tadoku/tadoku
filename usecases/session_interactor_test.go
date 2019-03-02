@@ -11,7 +11,7 @@ import (
 	gomock "github.com/golang/mock/gomock"
 )
 
-func setup(t *testing.T) (
+func setupUserTest(t *testing.T) (
 	*gomock.Controller,
 	*usecases.MockUserRepository,
 	*usecases.MockPasswordHasher,
@@ -32,7 +32,7 @@ func setup(t *testing.T) (
 }
 
 func TestSessionInteractor_CreateUser(t *testing.T) {
-	ctrl, repo, pwHasher, _, interactor := setup(t)
+	ctrl, repo, pwHasher, _, interactor := setupUserTest(t)
 	defer ctrl.Finish()
 
 	user := domain.User{
@@ -52,7 +52,7 @@ func TestSessionInteractor_CreateUser(t *testing.T) {
 }
 
 func TestSessionInteractor_CreateSession(t *testing.T) {
-	ctrl, repo, pwHasher, jwtGen, interactor := setup(t)
+	ctrl, repo, pwHasher, jwtGen, interactor := setupUserTest(t)
 	defer ctrl.Finish()
 
 	{

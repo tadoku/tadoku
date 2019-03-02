@@ -12,3 +12,9 @@ type UserRepository interface {
 	FindByID(id uint64) (domain.User, error)
 	FindByEmail(email string) (domain.User, error)
 }
+
+// ContestRepository handles Contest related interactions
+type ContestRepository interface {
+	Store(contest domain.Contest) error
+	HasOpenContests() (bool, error)
+}

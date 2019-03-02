@@ -8,6 +8,7 @@ import (
 type Services struct {
 	Health  services.HealthService
 	Session services.SessionService
+	Contest services.ContestService
 }
 
 // NewServices initializes all interactors
@@ -15,5 +16,6 @@ func NewServices(i *Interactors) *Services {
 	return &Services{
 		Health:  services.NewHealthService(),
 		Session: services.NewSessionService(i.Session),
+		Contest: services.NewContestService(i.Contest),
 	}
 }

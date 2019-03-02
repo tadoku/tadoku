@@ -46,3 +46,18 @@ func (mr *MockValidatorMockRecorder) ValidateStruct(s interface{}) *gomock.Call 
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ValidateStruct", reflect.TypeOf((*MockValidator)(nil).ValidateStruct), s)
 }
+
+// Validate mocks base method
+func (m *MockValidator) Validate(target Validatable) (bool, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Validate", target)
+	ret0, _ := ret[0].(bool)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Validate indicates an expected call of Validate
+func (mr *MockValidatorMockRecorder) Validate(target interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Validate", reflect.TypeOf((*MockValidator)(nil).Validate), target)
+}

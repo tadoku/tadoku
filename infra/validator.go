@@ -15,3 +15,11 @@ type validator struct{}
 func (v *validator) ValidateStruct(s interface{}) (bool, error) {
 	return govalidator.ValidateStruct(s)
 }
+
+func (v *validator) Validate(target usecases.Validatable) (bool, error) {
+	if result, err := target.Validate(); err != nil {
+		return result, err
+	}
+
+	return v.ValidateStruct(target)
+}

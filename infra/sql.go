@@ -57,6 +57,10 @@ func (handler *sqlHandler) QueryRow(statement string, args ...interface{}) rdb.R
 	return sqlRow{Row: handler.db.QueryRowx(statement, args...)}
 }
 
+func (handler *sqlHandler) Get(dest interface{}, query string, args ...interface{}) error {
+	return handler.db.Get(dest, query, args...)
+}
+
 type sqlResult struct {
 	Result sql.Result
 }

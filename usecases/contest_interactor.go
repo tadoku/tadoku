@@ -36,7 +36,7 @@ func (si *contestInteractor) CreateContest(contest domain.Contest) error {
 		return fail.Errorf("user with an id (%v) could not be created", contest.ID)
 	}
 
-	if _, err := si.validator.ValidateStruct(contest); err != nil {
+	if _, err := si.validator.Validate(contest); err != nil {
 		return ErrInvalidContest
 	}
 

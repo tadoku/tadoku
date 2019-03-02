@@ -35,3 +35,19 @@ func (r *contestRepository) create(contest domain.Contest) error {
 	_, err := r.sqlHandler.NamedExecute(query, contest)
 	return fail.Wrap(err)
 }
+
+func (r *contestRepository) HasOpenContests() (bool, error) {
+	query := `
+		select count(id)
+		from contests
+		where open = true
+	`
+
+	var cnt int
+	err := r.sqlHandler.Get(&cnt, query)
+	if err != nil {
+		return false, fail.Wrap(err)
+	}
+
+	return cnt > 0, nil
+}

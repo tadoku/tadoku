@@ -144,3 +144,32 @@ func (mr *MockContextMockRecorder) User() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "User", reflect.TypeOf((*MockContext)(nil).User))
 }
+
+// GetID mocks base method
+func (m *MockContext) GetID() (uint64, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetID")
+	ret0, _ := ret[0].(uint64)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetID indicates an expected call of GetID
+func (mr *MockContextMockRecorder) GetID() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetID", reflect.TypeOf((*MockContext)(nil).GetID))
+}
+
+// BindID mocks base method
+func (m *MockContext) BindID(arg0 *uint64) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "BindID", arg0)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// BindID indicates an expected call of BindID
+func (mr *MockContextMockRecorder) BindID(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "BindID", reflect.TypeOf((*MockContext)(nil).BindID), arg0)
+}

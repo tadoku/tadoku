@@ -1,6 +1,8 @@
 package infra
 
 import (
+	"strconv"
+
 	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/labstack/echo/v4"
 	"github.com/srvc/fail"
@@ -33,4 +35,18 @@ func (c context) Claims() *usecases.SessionClaims {
 		}
 	}
 	return nil
+}
+
+func (c context) GetID() (uint64, error) {
+	idFromRoute := c.Param("id")
+	id, err := strconv.ParseUint(idFromRoute, 10, 64)
+
+	return id, fail.Wrap(err)
+}
+
+func (c context) BindID(id *uint64) error {
+	value, err := c.GetID()
+	*id = value
+
+	return fail.Wrap(err)
 }

@@ -21,8 +21,7 @@ func (r *contestRepository) Store(contest domain.Contest) error {
 		return r.create(contest)
 	}
 
-	// TODO: implement update
-	return fail.Errorf("not yet implemented")
+	return r.update(contest)
 }
 
 func (r *contestRepository) create(contest domain.Contest) error {
@@ -30,6 +29,17 @@ func (r *contestRepository) create(contest domain.Contest) error {
 		insert into contests
 		(start, "end", open)
 		values (:start, :end, :open)
+	`
+
+	_, err := r.sqlHandler.NamedExecute(query, contest)
+	return fail.Wrap(err)
+}
+
+func (r *contestRepository) update(contest domain.Contest) error {
+	query := `
+		update contests
+		set start = :start, "end" = :end, open = :open
+		where id = :id
 	`
 
 	_, err := r.sqlHandler.NamedExecute(query, contest)

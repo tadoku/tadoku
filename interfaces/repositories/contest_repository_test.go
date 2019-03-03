@@ -25,6 +25,17 @@ func TestContestRepository_StoreContest(t *testing.T) {
 		err := repo.Store(*contest)
 		assert.Nil(t, err)
 	}
+
+	{
+		updatedContest := &domain.Contest{
+			ID:    1,
+			Start: time.Date(2019, 1, 1, 0, 0, 0, 0, time.UTC),
+			End:   time.Date(2019, 1, 30, 0, 0, 0, 0, time.UTC),
+			Open:  false,
+		}
+		err := repo.Store(*updatedContest)
+		assert.Nil(t, err)
+	}
 }
 
 func TestContestRepository_GetOpenContests(t *testing.T) {

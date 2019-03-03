@@ -16,6 +16,9 @@ var ErrOpenContestAlreadyExists = fail.New("an open contest already exists, only
 // ErrContestIDMissing for when you try to update a contest without id
 var ErrContestIDMissing = fail.New("a contest id is required when updating")
 
+// ErrCreateContestHasID for when you try to create a contest with a given id
+var ErrCreateContestHasID = fail.New("a contest can't have an id when being created")
+
 // ContestInteractor contains all business logic for contests
 type ContestInteractor interface {
 	CreateContest(contest domain.Contest) error
@@ -40,7 +43,7 @@ type contestInteractor struct {
 
 func (si *contestInteractor) CreateContest(contest domain.Contest) error {
 	if contest.ID != 0 {
-		return fail.Errorf("contest with id (%v) could not be created", contest.ID)
+		return ErrCreateContestHasID
 	}
 
 	return si.saveContest(contest)

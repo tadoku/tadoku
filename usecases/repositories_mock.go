@@ -114,17 +114,17 @@ func (mr *MockContestRepositoryMockRecorder) Store(contest interface{}) *gomock.
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Store", reflect.TypeOf((*MockContestRepository)(nil).Store), contest)
 }
 
-// HasOpenContests mocks base method
-func (m *MockContestRepository) HasOpenContests() (bool, error) {
+// GetOpenContests mocks base method
+func (m *MockContestRepository) GetOpenContests() ([]uint64, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "HasOpenContests")
-	ret0, _ := ret[0].(bool)
+	ret := m.ctrl.Call(m, "GetOpenContests")
+	ret0, _ := ret[0].([]uint64)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// HasOpenContests indicates an expected call of HasOpenContests
-func (mr *MockContestRepositoryMockRecorder) HasOpenContests() *gomock.Call {
+// GetOpenContests indicates an expected call of GetOpenContests
+func (mr *MockContestRepositoryMockRecorder) GetOpenContests() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "HasOpenContests", reflect.TypeOf((*MockContestRepository)(nil).HasOpenContests))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetOpenContests", reflect.TypeOf((*MockContestRepository)(nil).GetOpenContests))
 }

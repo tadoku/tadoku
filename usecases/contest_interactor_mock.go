@@ -46,3 +46,17 @@ func (mr *MockContestInteractorMockRecorder) CreateContest(contest interface{}) 
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateContest", reflect.TypeOf((*MockContestInteractor)(nil).CreateContest), contest)
 }
+
+// UpdateContest mocks base method
+func (m *MockContestInteractor) UpdateContest(contest domain.Contest) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateContest", contest)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// UpdateContest indicates an expected call of UpdateContest
+func (mr *MockContestInteractorMockRecorder) UpdateContest(contest interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateContest", reflect.TypeOf((*MockContestInteractor)(nil).UpdateContest), contest)
+}

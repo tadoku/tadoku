@@ -35,4 +35,9 @@ type Context interface {
 
 	// User gets the current logged in user
 	User() (*domain.User, error)
+
+	// GetID gets the current id in the route
+	GetID() (uint64, error)
+
+	BindID(*uint64) error
 }

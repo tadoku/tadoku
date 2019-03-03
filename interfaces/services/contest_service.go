@@ -11,6 +11,7 @@ import (
 // ContestService is responsible for managing contests
 type ContestService interface {
 	Create(ctx Context) error
+	Update(ctx Context) error
 }
 
 // NewContestService initializer
@@ -35,4 +36,19 @@ func (s *contestService) Create(ctx Context) error {
 	}
 
 	return ctx.NoContent(http.StatusCreated)
+}
+
+func (s *contestService) Update(ctx Context) error {
+	contest := &domain.Contest{}
+	if err := ctx.Bind(contest); err != nil {
+		return fail.Wrap(err)
+	}
+
+	ctx.BindID(&contest.ID)
+
+	if err := s.ContestInteractor.UpdateContest(*contest); err != nil {
+		return fail.Wrap(err)
+	}
+
+	return ctx.NoContent(http.StatusNoContent)
 }

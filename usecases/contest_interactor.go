@@ -13,9 +13,16 @@ var ErrInvalidContest = fail.New("invalid contest supplied")
 // ErrOpenContestAlreadyExists for when you try to create a second contest that's open
 var ErrOpenContestAlreadyExists = fail.New("an open contest already exists, only one can exist at a time")
 
+// ErrContestIDMissing for when you try to update a contest without id
+var ErrContestIDMissing = fail.New("a contest id is required when updating")
+
+// ErrCreateContestHasID for when you try to create a contest with a given id
+var ErrCreateContestHasID = fail.New("a contest can't have an id when being created")
+
 // ContestInteractor contains all business logic for contests
 type ContestInteractor interface {
 	CreateContest(contest domain.Contest) error
+	UpdateContest(contest domain.Contest) error
 }
 
 // NewContestInteractor instantiates ContestInteractor with all dependencies
@@ -36,20 +43,36 @@ type contestInteractor struct {
 
 func (si *contestInteractor) CreateContest(contest domain.Contest) error {
 	if contest.ID != 0 {
-		return fail.Errorf("user with an id (%v) could not be created", contest.ID)
+		return ErrCreateContestHasID
 	}
 
+	return si.saveContest(contest)
+}
+
+func (si *contestInteractor) UpdateContest(contest domain.Contest) error {
+	if contest.ID == 0 {
+		return ErrContestIDMissing
+	}
+
+	return si.saveContest(contest)
+}
+
+func (si *contestInteractor) saveContest(contest domain.Contest) error {
 	if _, err := si.validator.Validate(contest); err != nil {
 		return ErrInvalidContest
 	}
 
 	if contest.Open {
-		hasOpen, err := si.contestRepository.HasOpenContests()
+		ids, err := si.contestRepository.GetOpenContests()
 		if err != nil {
 			return fail.Wrap(err)
 		}
-		if hasOpen {
-			return ErrOpenContestAlreadyExists
+		if len(ids) > 0 {
+			for _, id := range ids {
+				if id != contest.ID {
+					return ErrOpenContestAlreadyExists
+				}
+			}
 		}
 	}
 

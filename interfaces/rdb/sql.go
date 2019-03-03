@@ -9,6 +9,7 @@ type SQLHandler interface {
 	NamedExecute(string, interface{}) (Result, error)
 
 	Get(dest interface{}, query string, args ...interface{}) error
+	Select(dest interface{}, query string, args ...interface{}) error
 }
 
 // Result contains meta data of a query that was executed

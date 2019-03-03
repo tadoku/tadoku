@@ -61,6 +61,10 @@ func (handler *sqlHandler) Get(dest interface{}, query string, args ...interface
 	return handler.db.Get(dest, query, args...)
 }
 
+func (handler *sqlHandler) Select(dest interface{}, query string, args ...interface{}) error {
+	return handler.db.Select(dest, query, args...)
+}
+
 type sqlResult struct {
 	Result sql.Result
 }

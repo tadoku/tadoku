@@ -9,7 +9,7 @@ import (
 	"github.com/tadoku/api/interfaces/repositories"
 )
 
-func TestUserRepository_StoreContest(t *testing.T) {
+func TestContestRepository_StoreContest(t *testing.T) {
 	t.Parallel()
 	sqlHandler, cleanup := setupTestingSuite(t)
 	defer cleanup()
@@ -27,7 +27,7 @@ func TestUserRepository_StoreContest(t *testing.T) {
 	}
 }
 
-func TestUserRepository_HasOpenContests(t *testing.T) {
+func TestContestRepository_GetOpenContests(t *testing.T) {
 	t.Parallel()
 	sqlHandler, cleanup := setupTestingSuite(t)
 	defer cleanup()
@@ -35,15 +35,15 @@ func TestUserRepository_HasOpenContests(t *testing.T) {
 	repo := repositories.NewContestRepository(sqlHandler)
 
 	{
-		hasOpen, err := repo.HasOpenContests()
+		ids, err := repo.GetOpenContests()
 		assert.Nil(t, err)
-		assert.False(t, hasOpen, "no open contests should exist")
+		assert.Empty(t, ids, "no open contests should exist")
 
 		err = repo.Store(domain.Contest{Start: time.Now(), End: time.Now(), Open: true})
 		assert.Nil(t, err)
 
-		hasOpen, err = repo.HasOpenContests()
-		assert.True(t, hasOpen, "an open contest should exist")
+		ids, err = repo.GetOpenContests()
+		assert.Equal(t, 1, len(ids), "an open contest should exist")
 		assert.Nil(t, err)
 	}
 }

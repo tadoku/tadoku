@@ -36,18 +36,18 @@ func (r *contestRepository) create(contest domain.Contest) error {
 	return fail.Wrap(err)
 }
 
-func (r *contestRepository) HasOpenContests() (bool, error) {
+func (r *contestRepository) GetOpenContests() ([]uint64, error) {
 	query := `
-		select count(id)
+		select id
 		from contests
 		where open = true
 	`
 
-	var cnt int
-	err := r.sqlHandler.Get(&cnt, query)
+	var ids []uint64
+	err := r.sqlHandler.Select(&ids, query)
 	if err != nil {
-		return false, fail.Wrap(err)
+		return nil, fail.Wrap(err)
 	}
 
-	return cnt > 0, nil
+	return ids, nil
 }

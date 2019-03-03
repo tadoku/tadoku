@@ -44,12 +44,16 @@ func (si *contestInteractor) CreateContest(contest domain.Contest) error {
 	}
 
 	if contest.Open {
-		hasOpen, err := si.contestRepository.HasOpenContests()
+		ids, err := si.contestRepository.GetOpenContests()
 		if err != nil {
 			return fail.Wrap(err)
 		}
-		if hasOpen {
-			return ErrOpenContestAlreadyExists
+		if len(ids) > 0 {
+			for _, id := range ids {
+				if id != contest.ID {
+					return ErrOpenContestAlreadyExists
+				}
+			}
 		}
 	}
 

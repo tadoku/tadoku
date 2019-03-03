@@ -38,7 +38,7 @@ func TestSessionInteractor_CreateContest(t *testing.T) {
 		}
 
 		repo.EXPECT().Store(contest)
-		repo.EXPECT().HasOpenContests().Return(false, nil)
+		repo.EXPECT().GetOpenContests().Return(nil, nil)
 		validator.EXPECT().Validate(contest).Return(true, nil)
 
 		err := interactor.CreateContest(contest)
@@ -53,7 +53,7 @@ func TestSessionInteractor_CreateContest(t *testing.T) {
 			Open:  true,
 		}
 
-		repo.EXPECT().HasOpenContests().Return(true, usecases.ErrOpenContestAlreadyExists)
+		repo.EXPECT().GetOpenContests().Return([]uint64{1}, usecases.ErrOpenContestAlreadyExists)
 		validator.EXPECT().Validate(contest).Return(true, nil)
 
 		err := interactor.CreateContest(contest)

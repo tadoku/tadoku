@@ -46,6 +46,8 @@ func newEcho(
 			e.GET(route.Path, wrap(route, m))
 		case http.MethodPost:
 			e.POST(route.Path, wrap(route, m))
+		case http.MethodPut:
+			e.PUT(route.Path, wrap(route, m))
 		default:
 			log.Fatalf("HTTP verb %v is not supported", route.Method)
 		}

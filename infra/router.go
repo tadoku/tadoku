@@ -3,6 +3,8 @@ package infra
 import (
 	"log"
 	"net/http"
+	"regexp"
+	"strconv"
 
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
@@ -60,11 +62,24 @@ func newJWTMiddleware(secret string) echo.MiddlewareFunc {
 	return middleware.JWTWithConfig(cfg)
 }
 
+var errorCodeRegularExpression = regexp.MustCompile("^code=([0-9]{3}).")
+
 func errorHandler(err error, c echo.Context) {
+	c.Logger().Error(err)
+
 	if err == middleware.ErrJWTMissing {
 		c.NoContent(http.StatusUnauthorized)
+		return
 	}
-	c.Logger().Error(err)
+
+	if match := errorCodeRegularExpression.FindStringSubmatch(err.Error()); len(match) > 1 {
+		if statusCode, errInt := strconv.Atoi(match[1]); errInt == nil {
+			c.NoContent(statusCode)
+			return
+		}
+	}
+
+	c.NoContent(http.StatusInternalServerError)
 }
 
 func (m *middlewares) authenticateRole(c echo.Context, minRole domain.Role) error {

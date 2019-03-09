@@ -26,16 +26,19 @@ type RankingInteractor interface {
 // NewRankingInteractor instantiates RankingInteractor with all dependencies
 func NewRankingInteractor(
 	rankingRepository RankingRepository,
+	contestRepository ContestRepository,
 	validator Validator,
 ) RankingInteractor {
 	return &rankingInteractor{
 		rankingRepository: rankingRepository,
+		contestRepository: contestRepository,
 		validator:         validator,
 	}
 }
 
 type rankingInteractor struct {
 	rankingRepository RankingRepository
+	contestRepository ContestRepository
 	validator         Validator
 }
 

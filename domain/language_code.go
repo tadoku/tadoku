@@ -5,6 +5,8 @@ type LanguageCode string
 
 // These are all the possible values for LanguageCode
 // This list is not yet complete, it's just a start
+// Language codes from:
+// https://en.wikipedia.org/wiki/Wikipedia:WikiProject_Languages/List_of_ISO_639-3_language_codes_(2019)
 const (
 	Chinese    LanguageCode = "zho"
 	Dutch      LanguageCode = "nld"

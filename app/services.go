@@ -18,6 +18,6 @@ func NewServices(i *Interactors) *Services {
 		Health:  services.NewHealthService(),
 		Session: services.NewSessionService(i.Session),
 		Contest: services.NewContestService(i.Contest),
-		Ranking: services.NewRankingService(),
+		Ranking: services.NewRankingService(i.Ranking),
 	}
 }

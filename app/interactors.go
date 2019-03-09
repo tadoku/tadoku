@@ -11,6 +11,7 @@ import (
 type Interactors struct {
 	Session usecases.SessionInteractor
 	Contest usecases.ContestInteractor
+	Ranking usecases.RankingInteractor
 }
 
 // NewInteractors initializes all repositories
@@ -27,5 +28,6 @@ func NewInteractors(
 			sessionLength,
 		),
 		Contest: usecases.NewContestInteractor(r.Contest, infra.NewValidator()),
+		Ranking: usecases.NewRankingInteractor(r.Ranking, infra.NewValidator()),
 	}
 }

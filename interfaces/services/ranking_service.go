@@ -2,6 +2,8 @@ package services
 
 import (
 	"net/http"
+
+	"github.com/tadoku/api/domain"
 )
 
 // RankingService is responsible for managing rankings
@@ -15,6 +17,11 @@ func NewRankingService() RankingService {
 }
 
 type rankingService struct {
+}
+
+type CreateRankingPayload struct {
+	ContestID uint64               `json:"contest_id"`
+	Languages domain.LanguageCodes `json:"languages"`
 }
 
 func (s *rankingService) Create(ctx Context) error {

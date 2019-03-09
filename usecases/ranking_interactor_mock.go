@@ -34,7 +34,7 @@ func (m *MockRankingInteractor) EXPECT() *MockRankingInteractorMockRecorder {
 }
 
 // CreateRanking mocks base method
-func (m *MockRankingInteractor) CreateRanking(userID, contestID uint64, languages LanguageCodes) error {
+func (m *MockRankingInteractor) CreateRanking(userID, contestID uint64, languages domain.LanguageCodes) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "CreateRanking", userID, contestID, languages)
 	ret0, _ := ret[0].(error)

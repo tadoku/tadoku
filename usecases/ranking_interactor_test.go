@@ -26,16 +26,12 @@ func setupRankingTest(t *testing.T) (
 }
 
 func TestRankingInteractor_CreateRanking(t *testing.T) {
-	ctrl, repo, validator, interactor := setupRankingTest(t)
+	ctrl, _, _, interactor := setupRankingTest(t)
 	defer ctrl.Finish()
 
 	{
-		repo.EXPECT().Store(ranking)
-		repo.EXPECT().GetOpenRankings().Return(nil, nil)
-		validator.EXPECT().Validate(ranking).Return(true, nil)
-
-		userID := 1
-		contestID := 1
+		userID := uint64(1)
+		contestID := uint64(1)
 		languages := domain.LanguageCodes{domain.Japanese, domain.English}
 
 		err := interactor.CreateRanking(userID, contestID, languages)

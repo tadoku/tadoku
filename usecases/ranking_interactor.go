@@ -13,6 +13,9 @@ var ErrInvalidRanking = fail.New("invalid ranking supplied")
 // ErrRankingIDMissing for when you try to update a ranking without id
 var ErrRankingIDMissing = fail.New("a ranking id is required when updating")
 
+// ErrContestIsClosed for when you try to log for a closed contest
+var ErrContestIsClosed = fail.New("the given contest is closed")
+
 // RankingInteractor contains all business logic for rankings
 type RankingInteractor interface {
 	CreateRanking(
@@ -48,6 +51,14 @@ func (si *rankingInteractor) CreateRanking(
 	languages domain.LanguageCodes,
 ) error {
 	// check if contest is open
+	ids, err := si.contestRepository.GetOpenContests()
+	if err != nil {
+		return fail.Wrap(err)
+	}
+
+	if !domain.ContainsID(ids, contestID) {
+		return ErrContestIsClosed
+	}
 
 	// check if user exists
 

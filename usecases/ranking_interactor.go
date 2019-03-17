@@ -19,6 +19,9 @@ var ErrContestIsClosed = fail.New("the given contest is closed")
 // ErrNoRankingToCreate for when you try to create a ranking that already exists
 var ErrNoRankingToCreate = fail.New("there is no new ranking to be created")
 
+// ErrGlobalIsASystemLanguage for when you try to create a global ranking through the api
+var ErrGlobalIsASystemLanguage = fail.New("global is a system language and cannot be created by the user")
+
 // RankingInteractor contains all business logic for rankings
 type RankingInteractor interface {
 	CreateRanking(
@@ -78,6 +81,10 @@ func (si *rankingInteractor) CreateRanking(
 	// Figure out which languages we need to create new rankings for
 	targetLanguages := domain.LanguageCodes{}
 	for _, lang := range languages {
+		if lang == domain.Global {
+			return ErrGlobalIsASystemLanguage
+		}
+
 		if existingLanguages.ContainsLanguage(lang) {
 			continue
 		}

@@ -76,4 +76,18 @@ func TestRankingInteractor_CreateRanking(t *testing.T) {
 
 		assert.EqualError(t, err, usecases.ErrNoRankingToCreate.Error())
 	}
+
+	{
+		userID := uint64(1)
+		contestID := uint64(1)
+		languages := domain.LanguageCodes{domain.Global}
+
+		contestRepo.EXPECT().GetOpenContests().Return([]uint64{1}, nil)
+		userRepo.EXPECT().FindByID(uint64(1)).Return(domain.User{ID: 1}, nil)
+		rankingRepo.EXPECT().GetAllLanguagesForContestAndUser(uint64(1), uint64(1)).Return(nil, nil)
+
+		err := interactor.CreateRanking(userID, contestID, languages)
+
+		assert.EqualError(t, err, usecases.ErrGlobalIsASystemLanguage.Error())
+	}
 }

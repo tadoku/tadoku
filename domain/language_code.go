@@ -1,5 +1,9 @@
 package domain
 
+import (
+	"github.com/srvc/fail"
+)
+
 // LanguageCode according to ISO 639-3
 type LanguageCode string
 
@@ -31,6 +35,7 @@ type LanguageCodes []LanguageCode
 
 // AllLanguages is an array with all possible languages
 var AllLanguages = LanguageCodes{
+	Global,
 	Chinese,
 	Dutch,
 	English,
@@ -57,4 +62,18 @@ func (codes LanguageCodes) ContainsLanguage(target LanguageCode) bool {
 	}
 
 	return false
+}
+
+// ErrInvalidLanguage for when a language is not defined in our app
+var ErrInvalidLanguage = fail.New("supplied language is not supported")
+
+// Validate a language code
+func (code LanguageCode) Validate() (bool, error) {
+	for _, possibleCode := range AllLanguages {
+		if possibleCode == code {
+			return true, nil
+		}
+	}
+
+	return false, ErrInvalidLanguage
 }

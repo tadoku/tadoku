@@ -99,6 +99,10 @@ func (si *rankingInteractor) CreateRanking(
 	}
 
 	for _, lang := range targetLanguages {
+		if _, err := lang.Validate(); err != nil {
+			return fail.Wrap(err)
+		}
+
 		ranking := domain.Ranking{
 			ContestID: contestID,
 			UserID:    userID,

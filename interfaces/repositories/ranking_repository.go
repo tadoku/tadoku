@@ -28,7 +28,7 @@ func (r *rankingRepository) create(ranking domain.Ranking) error {
 	query := `
 		insert into rankings
 		(contest_id, user_id, language_code, amount, created_at, updated_at)
-		values (:contest_id, :user_id, :language_code, :amount, :created_at, :updated_at)
+		values (:contest_id, :user_id, :language_code, :amount, now(), now())
 	`
 
 	_, err := r.sqlHandler.NamedExecute(query, ranking)
@@ -38,7 +38,7 @@ func (r *rankingRepository) create(ranking domain.Ranking) error {
 func (r *rankingRepository) update(ranking domain.Ranking) error {
 	query := `
 		update rankings
-		set amount = :amount, updated_at = NOW()
+		set amount = :amount, updated_at = now()
 		where id = :id
 	`
 

@@ -66,7 +66,37 @@ func (si *rankingInteractor) CreateRanking(
 		return ErrUserDoesNotExist
 	}
 
-	// check if user has rankings for a certain language already
+	existingLanguages, err := si.rankingRepository.GetAllLanguagesForContestAndUser(contestID, userID)
+	if err != nil {
+		return fail.Wrap(err)
+	}
+	needsGlobal := !existingLanguages.ContainsLanguage(domain.Global)
+
+	// Figure out which languages we need to create new rankings for
+	targetLanguages := domain.LanguageCodes{}
+	for _, lang := range languages {
+		if existingLanguages.ContainsLanguage(lang) {
+			continue
+		}
+		targetLanguages = append(targetLanguages, lang)
+	}
+
+	if needsGlobal {
+		targetLanguages = append(targetLanguages, domain.Global)
+	}
+
+	for _, lang := range targetLanguages {
+		ranking := domain.Ranking{
+			ContestID: contestID,
+			UserID:    userID,
+			Language:  lang,
+			Amount:    0,
+		}
+		err = si.rankingRepository.Store(ranking)
+		if err != nil {
+			return fail.Wrap(err)
+		}
+	}
 
 	return nil
 }

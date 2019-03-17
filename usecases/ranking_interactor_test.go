@@ -30,7 +30,7 @@ func setupRankingTest(t *testing.T) (
 }
 
 func TestRankingInteractor_CreateRanking(t *testing.T) {
-	ctrl, _, contestRepo, userRepo, _, interactor := setupRankingTest(t)
+	ctrl, rankingRepo, contestRepo, userRepo, _, interactor := setupRankingTest(t)
 	defer ctrl.Finish()
 
 	{
@@ -40,6 +40,8 @@ func TestRankingInteractor_CreateRanking(t *testing.T) {
 
 		contestRepo.EXPECT().GetOpenContests().Return([]uint64{1}, nil)
 		userRepo.EXPECT().FindByID(uint64(1)).Return(domain.User{ID: 1}, nil)
+		rankingRepo.EXPECT().GetAllLanguagesForContestAndUser(uint64(1), uint64(1)).Return(nil, nil)
+		rankingRepo.EXPECT().Store(gomock.Any()).Return(nil).Times(3) // Japanese, Chinese, and Global
 
 		err := interactor.CreateRanking(userID, contestID, languages)
 

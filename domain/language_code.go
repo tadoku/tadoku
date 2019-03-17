@@ -47,3 +47,14 @@ var AllLanguages = LanguageCodes{
 	Swedish,
 	Turkish,
 }
+
+// ContainsLanguage is a helper to figure out if a collection of languages contains the target language
+func (codes LanguageCodes) ContainsLanguage(target LanguageCode) bool {
+	for _, code := range codes {
+		if code == target {
+			return true
+		}
+	}
+
+	return false
+}

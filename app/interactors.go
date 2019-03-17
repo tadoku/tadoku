@@ -28,6 +28,6 @@ func NewInteractors(
 			sessionLength,
 		),
 		Contest: usecases.NewContestInteractor(r.Contest, infra.NewValidator()),
-		Ranking: usecases.NewRankingInteractor(r.Ranking, r.Contest, infra.NewValidator()),
+		Ranking: usecases.NewRankingInteractor(r.Ranking, r.Contest, r.User, infra.NewValidator()),
 	}
 }

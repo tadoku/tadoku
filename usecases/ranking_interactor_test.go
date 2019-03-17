@@ -14,6 +14,7 @@ func setupRankingTest(t *testing.T) (
 	*gomock.Controller,
 	*usecases.MockRankingRepository,
 	*usecases.MockContestRepository,
+	*usecases.MockUserRepository,
 	*usecases.MockValidator,
 	usecases.RankingInteractor,
 ) {
@@ -21,14 +22,15 @@ func setupRankingTest(t *testing.T) (
 
 	rankingRepo := usecases.NewMockRankingRepository(ctrl)
 	contestRepo := usecases.NewMockContestRepository(ctrl)
+	userRepo := usecases.NewMockUserRepository(ctrl)
 	validator := usecases.NewMockValidator(ctrl)
-	interactor := usecases.NewRankingInteractor(rankingRepo, contestRepo, validator)
+	interactor := usecases.NewRankingInteractor(rankingRepo, contestRepo, userRepo, validator)
 
-	return ctrl, rankingRepo, contestRepo, validator, interactor
+	return ctrl, rankingRepo, contestRepo, userRepo, validator, interactor
 }
 
 func TestRankingInteractor_CreateRanking(t *testing.T) {
-	ctrl, _, contestRepo, _, interactor := setupRankingTest(t)
+	ctrl, _, contestRepo, userRepo, _, interactor := setupRankingTest(t)
 	defer ctrl.Finish()
 
 	{
@@ -37,6 +39,7 @@ func TestRankingInteractor_CreateRanking(t *testing.T) {
 		languages := domain.LanguageCodes{domain.Japanese, domain.English}
 
 		contestRepo.EXPECT().GetOpenContests().Return([]uint64{1}, nil)
+		userRepo.EXPECT().FindByID(uint64(1)).Return(domain.User{ID: 1}, nil)
 
 		err := interactor.CreateRanking(userID, contestID, languages)
 

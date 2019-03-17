@@ -30,11 +30,13 @@ type RankingInteractor interface {
 func NewRankingInteractor(
 	rankingRepository RankingRepository,
 	contestRepository ContestRepository,
+	userRepository UserRepository,
 	validator Validator,
 ) RankingInteractor {
 	return &rankingInteractor{
 		rankingRepository: rankingRepository,
 		contestRepository: contestRepository,
+		userRepository:    userRepository,
 		validator:         validator,
 	}
 }
@@ -42,6 +44,7 @@ func NewRankingInteractor(
 type rankingInteractor struct {
 	rankingRepository RankingRepository
 	contestRepository ContestRepository
+	userRepository    UserRepository
 	validator         Validator
 }
 
@@ -50,7 +53,6 @@ func (si *rankingInteractor) CreateRanking(
 	contestID uint64,
 	languages domain.LanguageCodes,
 ) error {
-	// check if contest is open
 	ids, err := si.contestRepository.GetOpenContests()
 	if err != nil {
 		return fail.Wrap(err)
@@ -61,6 +63,9 @@ func (si *rankingInteractor) CreateRanking(
 	}
 
 	// check if user exists
+	if _, err := si.userRepository.FindByID(userID); err != nil {
+		return ErrUserDoesNotExist
+	}
 
 	// check if user has rankings for a certain language already
 

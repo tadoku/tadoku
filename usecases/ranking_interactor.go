@@ -16,6 +16,9 @@ var ErrRankingIDMissing = fail.New("a ranking id is required when updating")
 // ErrContestIsClosed for when you try to log for a closed contest
 var ErrContestIsClosed = fail.New("the given contest is closed")
 
+// ErrNoRankingToCreate for when you try to create a ranking that already exists
+var ErrNoRankingToCreate = fail.New("there is no new ranking to be created")
+
 // RankingInteractor contains all business logic for rankings
 type RankingInteractor interface {
 	CreateRanking(
@@ -83,6 +86,10 @@ func (si *rankingInteractor) CreateRanking(
 
 	if needsGlobal {
 		targetLanguages = append(targetLanguages, domain.Global)
+	}
+
+	if len(targetLanguages) == 0 {
+		return ErrNoRankingToCreate
 	}
 
 	for _, lang := range targetLanguages {

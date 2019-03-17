@@ -62,7 +62,6 @@ func (si *rankingInteractor) CreateRanking(
 		return ErrContestIsClosed
 	}
 
-	// check if user exists
 	if _, err := si.userRepository.FindByID(userID); err != nil {
 		return ErrUserDoesNotExist
 	}

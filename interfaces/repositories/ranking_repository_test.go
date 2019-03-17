@@ -39,3 +39,66 @@ func TestRankingRepository_StoreRanking(t *testing.T) {
 		assert.Nil(t, err)
 	}
 }
+
+func TestRankingRepository_GetAllLanguagesForContestAndUser(t *testing.T) {
+	t.Parallel()
+	sqlHandler, cleanup := setupTestingSuite(t)
+	defer cleanup()
+
+	repo := repositories.NewRankingRepository(sqlHandler)
+	rankingJapanese := &domain.Ranking{
+		ContestID: 1,
+		UserID:    1,
+		Language:  domain.Japanese,
+		Amount:    0,
+		CreatedAt: time.Date(2019, 1, 1, 0, 0, 0, 0, time.UTC),
+		UpdatedAt: time.Date(2019, 1, 1, 0, 0, 0, 0, time.UTC),
+	}
+	rankingChinese := &domain.Ranking{
+		ContestID: 1,
+		UserID:    1,
+		Language:  domain.Chinese,
+		Amount:    0,
+		CreatedAt: time.Date(2019, 1, 1, 0, 0, 0, 0, time.UTC),
+		UpdatedAt: time.Date(2019, 1, 1, 0, 0, 0, 0, time.UTC),
+	}
+	rankingGlobal := &domain.Ranking{
+		ContestID: 1,
+		UserID:    1,
+		Language:  domain.Global,
+		Amount:    0,
+		CreatedAt: time.Date(2019, 1, 1, 0, 0, 0, 0, time.UTC),
+		UpdatedAt: time.Date(2019, 1, 1, 0, 0, 0, 0, time.UTC),
+	}
+	rankingSingleLanguage := &domain.Ranking{
+		ContestID: 1,
+		UserID:    2,
+		Language:  domain.Chinese,
+		Amount:    0,
+		CreatedAt: time.Date(2019, 1, 1, 0, 0, 0, 0, time.UTC),
+		UpdatedAt: time.Date(2019, 1, 1, 0, 0, 0, 0, time.UTC),
+	}
+
+	{
+		for _, r := range []*domain.Ranking{rankingJapanese, rankingChinese, rankingGlobal, rankingSingleLanguage} {
+			err := repo.Store(*r)
+			assert.Nil(t, err)
+		}
+	}
+
+	{
+		languages, err := repo.GetAllLanguagesForContestAndUser(1, 1)
+		assert.Nil(t, err)
+		assert.Equal(t, len(languages), 3)
+		assert.Equal(t, languages[0], domain.Japanese)
+		assert.Equal(t, languages[1], domain.Chinese)
+		assert.Equal(t, languages[2], domain.Global)
+	}
+
+	{
+		languages, err := repo.GetAllLanguagesForContestAndUser(1, 2)
+		assert.Nil(t, err)
+		assert.Equal(t, len(languages), 1)
+		assert.Equal(t, languages[0], domain.Chinese)
+	}
+}

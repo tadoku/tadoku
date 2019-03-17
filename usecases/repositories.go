@@ -22,4 +22,5 @@ type ContestRepository interface {
 // RankingRepository handles Ranking related database interactions
 type RankingRepository interface {
 	Store(contest domain.Ranking) error
+	GetAllLanguagesForContestAndUser(contestID uint64, userID uint64) (domain.LanguageCodes, error)
 }

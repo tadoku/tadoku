@@ -165,3 +165,18 @@ func (mr *MockRankingRepositoryMockRecorder) Store(contest interface{}) *gomock.
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Store", reflect.TypeOf((*MockRankingRepository)(nil).Store), contest)
 }
+
+// GetAllLanguagesForContestAndUser mocks base method
+func (m *MockRankingRepository) GetAllLanguagesForContestAndUser(contestID, userID uint64) (domain.LanguageCodes, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetAllLanguagesForContestAndUser", contestID, userID)
+	ret0, _ := ret[0].(domain.LanguageCodes)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetAllLanguagesForContestAndUser indicates an expected call of GetAllLanguagesForContestAndUser
+func (mr *MockRankingRepositoryMockRecorder) GetAllLanguagesForContestAndUser(contestID, userID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAllLanguagesForContestAndUser", reflect.TypeOf((*MockRankingRepository)(nil).GetAllLanguagesForContestAndUser), contestID, userID)
+}

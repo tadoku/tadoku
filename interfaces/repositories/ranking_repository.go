@@ -45,3 +45,20 @@ func (r *rankingRepository) update(ranking domain.Ranking) error {
 	_, err := r.sqlHandler.NamedExecute(query, ranking)
 	return fail.Wrap(err)
 }
+
+func (r *rankingRepository) GetAllLanguagesForContestAndUser(contestID uint64, userID uint64) (domain.LanguageCodes, error) {
+	var codes []domain.LanguageCode
+
+	query := `
+		select language_code
+		from rankings
+		where contest_id = $1 and user_id = $2
+	`
+
+	err := r.sqlHandler.Select(&codes, query, contestID, userID)
+	if err != nil {
+		return nil, err
+	}
+
+	return codes, nil
+}

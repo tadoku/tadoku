@@ -14,7 +14,7 @@ require (
 	github.com/labstack/echo/v4 v4.0.0
 	github.com/lib/pq v1.0.0
 	github.com/mattn/go-zglob v0.0.1 // indirect
-	github.com/pkg/errors v0.8.1 // indirect
+	github.com/pkg/errors v0.8.1
 	github.com/srvc/fail v3.1.0+incompatible
 	github.com/stretchr/testify v1.3.0
 	golang.org/x/crypto v0.0.0-20190130090550-b01c7a725664

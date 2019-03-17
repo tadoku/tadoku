@@ -128,3 +128,55 @@ func (mr *MockContestRepositoryMockRecorder) GetOpenContests() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetOpenContests", reflect.TypeOf((*MockContestRepository)(nil).GetOpenContests))
 }
+
+// MockRankingRepository is a mock of RankingRepository interface
+type MockRankingRepository struct {
+	ctrl     *gomock.Controller
+	recorder *MockRankingRepositoryMockRecorder
+}
+
+// MockRankingRepositoryMockRecorder is the mock recorder for MockRankingRepository
+type MockRankingRepositoryMockRecorder struct {
+	mock *MockRankingRepository
+}
+
+// NewMockRankingRepository creates a new mock instance
+func NewMockRankingRepository(ctrl *gomock.Controller) *MockRankingRepository {
+	mock := &MockRankingRepository{ctrl: ctrl}
+	mock.recorder = &MockRankingRepositoryMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use
+func (m *MockRankingRepository) EXPECT() *MockRankingRepositoryMockRecorder {
+	return m.recorder
+}
+
+// Store mocks base method
+func (m *MockRankingRepository) Store(contest domain.Ranking) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Store", contest)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Store indicates an expected call of Store
+func (mr *MockRankingRepositoryMockRecorder) Store(contest interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Store", reflect.TypeOf((*MockRankingRepository)(nil).Store), contest)
+}
+
+// GetAllLanguagesForContestAndUser mocks base method
+func (m *MockRankingRepository) GetAllLanguagesForContestAndUser(contestID, userID uint64) (domain.LanguageCodes, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetAllLanguagesForContestAndUser", contestID, userID)
+	ret0, _ := ret[0].(domain.LanguageCodes)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetAllLanguagesForContestAndUser indicates an expected call of GetAllLanguagesForContestAndUser
+func (mr *MockRankingRepositoryMockRecorder) GetAllLanguagesForContestAndUser(contestID, userID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAllLanguagesForContestAndUser", reflect.TypeOf((*MockRankingRepository)(nil).GetAllLanguagesForContestAndUser), contestID, userID)
+}

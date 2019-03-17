@@ -2,6 +2,8 @@ package repositories_test
 
 import (
 	"fmt"
+	"io/ioutil"
+	"log"
 	"os"
 	"testing"
 	"time"
@@ -38,7 +40,12 @@ func loadConfig() *test.Config {
 func setupTestingSuite(t *testing.T) (rdb.SQLHandler, func() error) {
 	db, cleanup := prepareDB(t)
 
-	migrator, _ := gomigrate.NewMigrator(db.DB, gomigrate.Postgres{}, "./../../migrations")
+	migrator, _ := gomigrate.NewMigratorWithLogger(
+		db.DB,
+		gomigrate.Postgres{},
+		"./../../migrations",
+		log.New(ioutil.Discard, "", log.LstdFlags),
+	)
 
 	err := migrator.Migrate()
 	if err != nil {

@@ -4,7 +4,7 @@ create table rankings (
   id bigint check (id > 0) not null default nextval ('ranking_seq'),
   contest_id bigint not null,
   user_id bigint not null,
-  language_code varchar(3),
+  language_code varchar(3) not null,
   amount float(3) not null,
   created_at timestamp not null,
   updated_at timestamp not null,

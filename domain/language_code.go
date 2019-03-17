@@ -8,6 +8,7 @@ type LanguageCode string
 // Language codes from:
 // https://en.wikipedia.org/wiki/Wikipedia:WikiProject_Languages/List_of_ISO_639-3_language_codes_(2019)
 const (
+	Global     LanguageCode = "GLO" // This is uppercase so it wouldn't collide with Galambu
 	Chinese    LanguageCode = "zho"
 	Dutch      LanguageCode = "nld"
 	English    LanguageCode = "eng"

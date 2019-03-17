@@ -29,7 +29,6 @@ type RankingInteractor interface {
 		contestID uint64,
 		languages domain.LanguageCodes,
 	) error
-	UpdateRanking(ranking domain.Ranking) error
 }
 
 // NewRankingInteractor instantiates RankingInteractor with all dependencies
@@ -113,19 +112,4 @@ func (si *rankingInteractor) CreateRanking(
 	}
 
 	return nil
-}
-
-func (si *rankingInteractor) UpdateRanking(ranking domain.Ranking) error {
-	if ranking.ID == 0 {
-		return ErrRankingIDMissing
-	}
-
-	if _, err := si.validator.ValidateStruct(ranking); err != nil {
-		return ErrInvalidRanking
-	}
-
-	// TODO: Check if contest is open
-
-	err := si.rankingRepository.Store(ranking)
-	return fail.Wrap(err)
 }

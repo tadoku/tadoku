@@ -9,12 +9,6 @@ create table contests (
   primary key (id)
 );
 
-create table languages (
-  iso_code varchar(3) not null,
-  name varchar(50) not null,
-  primary key (iso_code)
-);
-
 create table contest_logs (
   id bigint check (id > 0) not null default nextval ('contest_log_seq'),
   contest_id bigint not null,

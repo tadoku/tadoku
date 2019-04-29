@@ -33,8 +33,8 @@ const (
 // LanguageCodes is a collection of language codes
 type LanguageCodes []LanguageCode
 
-// AllLanguages is an array with all possible languages
-var AllLanguages = LanguageCodes{
+// AllLanguageCodes is an array with all possible language codes
+var AllLanguageCodes = LanguageCodes{
 	Global,
 	Chinese,
 	Dutch,
@@ -69,7 +69,7 @@ var ErrInvalidLanguage = fail.New("supplied language is not supported")
 
 // Validate a language code
 func (code LanguageCode) Validate() (bool, error) {
-	for _, possibleCode := range AllLanguages {
+	for _, possibleCode := range AllLanguageCodes {
 		if possibleCode == code {
 			return true, nil
 		}

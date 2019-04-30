@@ -54,8 +54,8 @@ func (id MediumID) Validate() (bool, error) {
 		}
 	}
 	if !found {
-		return true, ErrMediumNotFound
+		return false, ErrMediumNotFound
 	}
 
-	return false, nil
+	return true, nil
 }

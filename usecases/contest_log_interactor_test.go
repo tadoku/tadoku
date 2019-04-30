@@ -26,7 +26,7 @@ func setupContestLogTest(t *testing.T) (
 }
 
 func TestContestLogInteractor_CreateLog(t *testing.T) {
-	ctrl, repo, _, interactor := setupContestLogTest(t)
+	ctrl, repo, contestRepo, interactor := setupContestLogTest(t)
 	defer ctrl.Finish()
 
 	{
@@ -39,7 +39,24 @@ func TestContestLogInteractor_CreateLog(t *testing.T) {
 		}
 
 		repo.EXPECT().Store(log)
+		contestRepo.EXPECT().GetOpenContests().Return([]uint64{1}, nil)
+
 		err := interactor.CreateLog(log)
 		assert.NoError(t, err)
+	}
+
+	{
+		log := domain.ContestLog{
+			ContestID: 2,
+			UserID:    1,
+			Language:  domain.Japanese,
+			Amount:    10,
+			MediumID:  1,
+		}
+
+		contestRepo.EXPECT().GetOpenContests().Return([]uint64{1}, nil)
+
+		err := interactor.CreateLog(log)
+		assert.Error(t, err)
 	}
 }

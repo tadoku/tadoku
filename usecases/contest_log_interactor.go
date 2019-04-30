@@ -3,6 +3,8 @@
 package usecases
 
 import (
+	"github.com/srvc/fail"
+
 	"github.com/tadoku/api/domain"
 )
 
@@ -28,7 +30,14 @@ type contestLogInteractor struct {
 }
 
 func (i *contestLogInteractor) CreateLog(log domain.ContestLog) error {
-	// TODO: Check if contest is open
+	ids, err := i.contestRepository.GetOpenContests()
+	if err != nil {
+		fail.Wrap(err)
+	}
+	if !domain.ContainsID(ids, log.ContestID) {
+		return ErrContestIsClosed
+	}
+
 	// TODO: Check if signed up for given language
 	// TODO: create log
 	// TODO: recalculate rankings

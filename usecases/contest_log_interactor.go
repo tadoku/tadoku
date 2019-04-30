@@ -8,6 +8,9 @@ import (
 	"github.com/tadoku/api/domain"
 )
 
+// ErrContestLanguageNotSignedUp for when a user tries to log an entry for a contest with a langauge they're not signed up for
+var ErrContestLanguageNotSignedUp = fail.New("user has not signed up for given language")
+
 // ContestLogInteractor contains all business logic for contest log entries
 type ContestLogInteractor interface {
 	CreateLog(log domain.ContestLog) error
@@ -41,7 +44,10 @@ func (i *contestLogInteractor) CreateLog(log domain.ContestLog) error {
 		return ErrContestIsClosed
 	}
 
-	// TODO: Check if signed up for given language
+	languages, err := i.rankingRepository.GetAllLanguagesForContestAndUser(log.ContestID, log.UserID)
+	if !languages.ContainsLanguage(log.Language) {
+		return ErrContestLanguageNotSignedUp
+	}
 	// TODO: create log
 	// TODO: recalculate rankings
 

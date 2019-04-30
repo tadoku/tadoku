@@ -21,16 +21,17 @@ func setupContestLogTest(t *testing.T) (
 
 	repo := usecases.NewMockContestLogRepository(ctrl)
 	contestRepo := usecases.NewMockContestRepository(ctrl)
-	rankingRepository := usecases.NewMockRankingRepository(ctrl)
-	interactor := usecases.NewContestLogInteractor(repo, contestRepo, rankingRepository)
+	rankingRepo := usecases.NewMockRankingRepository(ctrl)
+	interactor := usecases.NewContestLogInteractor(repo, contestRepo, rankingRepo)
 
-	return ctrl, repo, contestRepo, rankingRepository, interactor
+	return ctrl, repo, contestRepo, rankingRepo, interactor
 }
 
 func TestContestLogInteractor_CreateLog(t *testing.T) {
-	ctrl, repo, contestRepo, _, interactor := setupContestLogTest(t)
+	ctrl, repo, contestRepo, rankingRepo, interactor := setupContestLogTest(t)
 	defer ctrl.Finish()
 
+	// Test happy path
 	{
 		log := domain.ContestLog{
 			ContestID: 1,
@@ -42,11 +43,13 @@ func TestContestLogInteractor_CreateLog(t *testing.T) {
 
 		repo.EXPECT().Store(log)
 		contestRepo.EXPECT().GetOpenContests().Return([]uint64{1}, nil)
+		rankingRepo.EXPECT().GetAllLanguagesForContestAndUser(uint64(1), uint64(1)).Return(domain.LanguageCodes{domain.Japanese}, nil)
 
 		err := interactor.CreateLog(log)
 		assert.NoError(t, err)
 	}
 
+	// Test contest being closed
 	{
 		log := domain.ContestLog{
 			ContestID: 2,
@@ -57,6 +60,23 @@ func TestContestLogInteractor_CreateLog(t *testing.T) {
 		}
 
 		contestRepo.EXPECT().GetOpenContests().Return([]uint64{1}, nil)
+
+		err := interactor.CreateLog(log)
+		assert.Error(t, err)
+	}
+
+	// Test not being signed up for a language
+	{
+		log := domain.ContestLog{
+			ContestID: 1,
+			UserID:    1,
+			Language:  domain.Japanese,
+			Amount:    10,
+			MediumID:  1,
+		}
+
+		contestRepo.EXPECT().GetOpenContests().Return([]uint64{1}, nil)
+		rankingRepo.EXPECT().GetAllLanguagesForContestAndUser(uint64(1), uint64(1)).Return(domain.LanguageCodes{domain.Korean}, nil)
 
 		err := interactor.CreateLog(log)
 		assert.Error(t, err)

@@ -1,5 +1,9 @@
 package domain
 
+import (
+	"github.com/srvc/fail"
+)
+
 // Medium knows how the score for a medium should be calculated
 type Medium struct {
 	Description string  `json:"description" db:"description"`
@@ -36,4 +40,22 @@ var AllMediums = Mediums{
 	MediumSubs:      Medium{Description: "Subs", Points: 0.2},
 	MediumNews:      Medium{Description: "News", Points: 1},
 	MediumSentences: Medium{Description: "Sentences", Points: 0.05},
+}
+
+// ErrMediumNotFound for when a given medium id does not exist
+var ErrMediumNotFound = fail.New("medium does not exist")
+
+// Validate a MediumID
+func (id MediumID) Validate() (bool, error) {
+	found := false
+	for currentID := range AllMediums {
+		if currentID == id {
+			found = true
+		}
+	}
+	if !found {
+		return true, ErrMediumNotFound
+	}
+
+	return false, nil
 }

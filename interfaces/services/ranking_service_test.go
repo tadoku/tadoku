@@ -26,7 +26,7 @@ func TestRankingService_Create(t *testing.T) {
 	ctx.EXPECT().Bind(gomock.Any()).Return(nil).SetArg(0, *payload)
 
 	i := usecases.NewMockRankingInteractor(ctrl)
-	i.EXPECT().CreateRanking(uint64(1), uint64(1), gomock.Any()).Return(nil)
+	i.EXPECT().CreateRanking(uint64(1), uint64(1), payload.Languages).Return(nil)
 
 	s := services.NewRankingService(i)
 	err := s.Create(ctx)

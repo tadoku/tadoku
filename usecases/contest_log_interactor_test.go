@@ -13,18 +13,20 @@ import (
 func setupContestLogTest(t *testing.T) (
 	*gomock.Controller,
 	*usecases.MockContestLogRepository,
+	*usecases.MockContestRepository,
 	usecases.ContestLogInteractor,
 ) {
 	ctrl := gomock.NewController(t)
 
 	repo := usecases.NewMockContestLogRepository(ctrl)
-	interactor := usecases.NewContestLogInteractor(repo)
+	contestRepo := usecases.NewMockContestRepository(ctrl)
+	interactor := usecases.NewContestLogInteractor(repo, contestRepo)
 
-	return ctrl, repo, interactor
+	return ctrl, repo, contestRepo, interactor
 }
 
 func TestContestLogInteractor_CreateLog(t *testing.T) {
-	ctrl, repo, interactor := setupContestLogTest(t)
+	ctrl, repo, _, interactor := setupContestLogTest(t)
 	defer ctrl.Finish()
 
 	{
@@ -37,9 +39,7 @@ func TestContestLogInteractor_CreateLog(t *testing.T) {
 		}
 
 		repo.EXPECT().Store(log)
-
 		err := interactor.CreateLog(log)
-
 		assert.NoError(t, err)
 	}
 }

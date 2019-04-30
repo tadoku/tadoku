@@ -12,14 +12,19 @@ type ContestLogInteractor interface {
 }
 
 // NewContestLogInteractor instantiates ContestLogInteractor with all dependencies
-func NewContestLogInteractor(contestLogRepository ContestLogRepository) ContestLogInteractor {
+func NewContestLogInteractor(
+	contestLogRepository ContestLogRepository,
+	contestRepository ContestRepository,
+) ContestLogInteractor {
 	return &contestLogInteractor{
 		contestLogRepository: contestLogRepository,
+		contestRepository:    contestRepository,
 	}
 }
 
 type contestLogInteractor struct {
 	contestLogRepository ContestLogRepository
+	contestRepository    ContestRepository
 }
 
 func (i *contestLogInteractor) CreateLog(log domain.ContestLog) error {

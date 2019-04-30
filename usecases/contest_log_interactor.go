@@ -17,16 +17,19 @@ type ContestLogInteractor interface {
 func NewContestLogInteractor(
 	contestLogRepository ContestLogRepository,
 	contestRepository ContestRepository,
+	rankingRepository RankingRepository,
 ) ContestLogInteractor {
 	return &contestLogInteractor{
 		contestLogRepository: contestLogRepository,
 		contestRepository:    contestRepository,
+		rankingRepository:    rankingRepository,
 	}
 }
 
 type contestLogInteractor struct {
 	contestLogRepository ContestLogRepository
 	contestRepository    ContestRepository
+	rankingRepository    RankingRepository
 }
 
 func (i *contestLogInteractor) CreateLog(log domain.ContestLog) error {

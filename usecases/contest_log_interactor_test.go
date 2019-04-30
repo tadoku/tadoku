@@ -14,19 +14,21 @@ func setupContestLogTest(t *testing.T) (
 	*gomock.Controller,
 	*usecases.MockContestLogRepository,
 	*usecases.MockContestRepository,
+	*usecases.MockRankingRepository,
 	usecases.ContestLogInteractor,
 ) {
 	ctrl := gomock.NewController(t)
 
 	repo := usecases.NewMockContestLogRepository(ctrl)
 	contestRepo := usecases.NewMockContestRepository(ctrl)
-	interactor := usecases.NewContestLogInteractor(repo, contestRepo)
+	rankingRepository := usecases.NewMockRankingRepository(ctrl)
+	interactor := usecases.NewContestLogInteractor(repo, contestRepo, rankingRepository)
 
-	return ctrl, repo, contestRepo, interactor
+	return ctrl, repo, contestRepo, rankingRepository, interactor
 }
 
 func TestContestLogInteractor_CreateLog(t *testing.T) {
-	ctrl, repo, contestRepo, interactor := setupContestLogTest(t)
+	ctrl, repo, contestRepo, _, interactor := setupContestLogTest(t)
 	defer ctrl.Finish()
 
 	{

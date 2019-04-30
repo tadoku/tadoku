@@ -41,7 +41,9 @@ func TestRankingInteractor_CreateRanking(t *testing.T) {
 		contestRepo.EXPECT().GetOpenContests().Return([]uint64{1}, nil)
 		userRepo.EXPECT().FindByID(uint64(1)).Return(domain.User{ID: 1}, nil)
 		rankingRepo.EXPECT().GetAllLanguagesForContestAndUser(uint64(1), uint64(1)).Return(nil, nil)
-		rankingRepo.EXPECT().Store(gomock.Any()).Return(nil).Times(3) // Japanese, English, and Global
+		rankingRepo.EXPECT().Store(domain.Ranking{ContestID: contestID, UserID: userID, Language: languages[0], Amount: 0}).Return(nil)
+		rankingRepo.EXPECT().Store(domain.Ranking{ContestID: contestID, UserID: userID, Language: languages[1], Amount: 0}).Return(nil)
+		rankingRepo.EXPECT().Store(domain.Ranking{ContestID: contestID, UserID: userID, Language: domain.Global, Amount: 0}).Return(nil)
 
 		err := interactor.CreateRanking(userID, contestID, languages)
 
@@ -56,7 +58,7 @@ func TestRankingInteractor_CreateRanking(t *testing.T) {
 		contestRepo.EXPECT().GetOpenContests().Return([]uint64{1}, nil)
 		userRepo.EXPECT().FindByID(uint64(1)).Return(domain.User{ID: 1}, nil)
 		rankingRepo.EXPECT().GetAllLanguagesForContestAndUser(uint64(1), uint64(1)).Return(domain.LanguageCodes{domain.English, domain.Global}, nil)
-		rankingRepo.EXPECT().Store(gomock.Any()).Return(nil).Times(1) // Chinese
+		rankingRepo.EXPECT().Store(domain.Ranking{ContestID: contestID, UserID: userID, Language: languages[0], Amount: 0}).Return(nil)
 
 		err := interactor.CreateRanking(userID, contestID, languages)
 

@@ -49,7 +49,7 @@ func TestContestService_Update(t *testing.T) {
 	ctx := services.NewMockContext(ctrl)
 	ctx.EXPECT().NoContent(204)
 	ctx.EXPECT().Bind(gomock.Any()).Return(nil).SetArg(0, *contest)
-	ctx.EXPECT().BindID(gomock.Any()).Return(nil)
+	ctx.EXPECT().BindID(&contest.ID).Return(nil)
 
 	i := usecases.NewMockContestInteractor(ctrl)
 	i.EXPECT().UpdateContest(*contest).Return(nil)

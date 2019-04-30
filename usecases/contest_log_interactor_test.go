@@ -28,7 +28,13 @@ func TestContestLogInteractor_CreateLog(t *testing.T) {
 	defer ctrl.Finish()
 
 	{
-		log := domain.ContestLog{}
+		log := domain.ContestLog{
+			ContestID: 1,
+			UserID:    1,
+			Language:  domain.Japanese,
+			Amount:    10,
+			MediumID:  1,
+		}
 
 		repo.EXPECT().Store(log)
 

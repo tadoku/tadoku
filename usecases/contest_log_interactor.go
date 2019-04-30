@@ -3,7 +3,6 @@
 package usecases
 
 import (
-	"github.com/srvc/fail"
 	"github.com/tadoku/api/domain"
 )
 
@@ -23,6 +22,11 @@ type contestLogInteractor struct {
 	contestLogRepository ContestLogRepository
 }
 
-func (si *contestLogInteractor) CreateLog(log domain.ContestLog) error {
-	return fail.Errorf("not implemented yet")
+func (i *contestLogInteractor) CreateLog(log domain.ContestLog) error {
+	// TODO: Check if contest is open
+	// TODO: Check if signed up for given language
+	// TODO: create log
+	// TODO: recalculate rankings
+
+	return i.contestLogRepository.Store(log)
 }

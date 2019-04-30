@@ -7,17 +7,33 @@ type Medium struct {
 }
 
 // Mediums is a collection of media
-type Mediums map[uint64]Medium
+type Mediums map[MediumID]Medium
+
+// MediumID is an id for media
+type MediumID uint64
+
+// These are the named constants for medium IDs
+const (
+	MediumBook MediumID = iota
+	MediumManga
+	MediumNet
+	MediumFullGame
+	MediumGame
+	MediumLyric
+	MediumSubs
+	MediumNews
+	MediumSentences
+)
 
 // AllMediums is an array with all existing media
 var AllMediums = Mediums{
-	1: Medium{Description: "Book", Points: 1},
-	2: Medium{Description: "Manga", Points: 0.2},
-	3: Medium{Description: "Net", Points: 1},
-	4: Medium{Description: "Full game", Points: 0.1667},
-	5: Medium{Description: "Game", Points: 0.05},
-	6: Medium{Description: "Lyric", Points: 1},
-	7: Medium{Description: "Subs", Points: 0.2},
-	8: Medium{Description: "News", Points: 1},
-	9: Medium{Description: "Sentences", Points: 0.05},
+	MediumBook:      Medium{Description: "Book", Points: 1},
+	MediumManga:     Medium{Description: "Manga", Points: 0.2},
+	MediumNet:       Medium{Description: "Net", Points: 1},
+	MediumFullGame:  Medium{Description: "Full game", Points: 0.1667},
+	MediumGame:      Medium{Description: "Game", Points: 0.05},
+	MediumLyric:     Medium{Description: "Lyric", Points: 1},
+	MediumSubs:      Medium{Description: "Subs", Points: 0.2},
+	MediumNews:      Medium{Description: "News", Points: 1},
+	MediumSentences: Medium{Description: "Sentences", Points: 0.05},
 }

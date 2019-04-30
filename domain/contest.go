@@ -26,11 +26,11 @@ var ErrContestInvalidDateTooOld = fail.New("contest must end in the future")
 // Validate a contest
 func (c Contest) Validate() (bool, error) {
 	if c.Start.After(c.End) {
-		return true, ErrContestInvalidDateOrder
+		return false, ErrContestInvalidDateOrder
 	}
 	if c.End.Before(time.Now()) {
-		return true, ErrContestInvalidDateTooOld
+		return false, ErrContestInvalidDateTooOld
 	}
 
-	return false, nil
+	return true, nil
 }

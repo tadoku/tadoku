@@ -58,7 +58,7 @@ func (si *contestInteractor) UpdateContest(contest domain.Contest) error {
 }
 
 func (si *contestInteractor) saveContest(contest domain.Contest) error {
-	if _, err := si.validator.Validate(contest); err != nil {
+	if valid, _ := si.validator.Validate(contest); !valid {
 		return ErrInvalidContest
 	}
 

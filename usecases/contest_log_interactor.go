@@ -8,17 +8,20 @@ import (
 
 // ContestLogInteractor contains all business logic for contest log entries
 type ContestLogInteractor interface {
-	CreateLog(log domain.Log) error
+	CreateLog(log domain.ContestLog) error
 }
 
 // NewContestLogInteractor instantiates ContestLogInteractor with all dependencies
-func NewContestInteractor() ContestLogInteractor {
-	return &contestLogInteractor{}
+func NewContestLogInteractor(contestLogRepository ContestLogRepository) ContestLogInteractor {
+	return &contestLogInteractor{
+		contestLogRepository: contestLogRepository,
+	}
 }
 
 type contestLogInteractor struct {
+	contestLogRepository ContestLogRepository
 }
 
-func (si *contestInteractor) CreateLog(log domain.Log) error {
+func (si *contestLogInteractor) CreateLog(log domain.ContestLog) error {
 	return nil
 }

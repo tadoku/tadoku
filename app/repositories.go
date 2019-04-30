@@ -8,16 +8,18 @@ import (
 
 // Repositories is a collection of all repositories
 type Repositories struct {
-	User    usecases.UserRepository
-	Contest usecases.ContestRepository
-	Ranking usecases.RankingRepository
+	User       usecases.UserRepository
+	Contest    usecases.ContestRepository
+	ContestLog usecases.ContestLogRepository
+	Ranking    usecases.RankingRepository
 }
 
 // NewRepositories initializes all repositories
 func NewRepositories(sh rdb.SQLHandler) *Repositories {
 	return &Repositories{
-		User:    r.NewUserRepository(sh),
-		Contest: r.NewContestRepository(sh),
-		Ranking: r.NewRankingRepository(sh),
+		User:       r.NewUserRepository(sh),
+		Contest:    r.NewContestRepository(sh),
+		ContestLog: r.NewContestLogRepository(sh),
+		Ranking:    r.NewRankingRepository(sh),
 	}
 }

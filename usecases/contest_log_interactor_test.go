@@ -62,7 +62,7 @@ func TestContestLogInteractor_CreateLog(t *testing.T) {
 		contestRepo.EXPECT().GetOpenContests().Return([]uint64{1}, nil)
 
 		err := interactor.CreateLog(log)
-		assert.Error(t, err)
+		assert.Equal(t, err, usecases.ErrContestIsClosed)
 	}
 
 	// Test not being signed up for a language
@@ -79,6 +79,6 @@ func TestContestLogInteractor_CreateLog(t *testing.T) {
 		rankingRepo.EXPECT().GetAllLanguagesForContestAndUser(uint64(1), uint64(1)).Return(domain.LanguageCodes{domain.Korean}, nil)
 
 		err := interactor.CreateLog(log)
-		assert.Error(t, err)
+		assert.Equal(t, err, usecases.ErrContestLanguageNotSignedUp)
 	}
 }

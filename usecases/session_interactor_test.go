@@ -11,6 +11,8 @@ import (
 	gomock "github.com/golang/mock/gomock"
 )
 
+var sessionLength = time.Hour * 1
+
 func setupUserTest(t *testing.T) (
 	*gomock.Controller,
 	*usecases.MockUserRepository,
@@ -25,7 +27,7 @@ func setupUserTest(t *testing.T) (
 	jwtGen := usecases.NewMockJWTGenerator(ctrl)
 
 	interactor := usecases.NewSessionInteractor(
-		repo, pwHasher, jwtGen, time.Hour*1,
+		repo, pwHasher, jwtGen, sessionLength,
 	)
 
 	return ctrl, repo, pwHasher, jwtGen, interactor
@@ -60,7 +62,7 @@ func TestSessionInteractor_CreateSession(t *testing.T) {
 		dbUser := domain.User{ID: 1, Email: "foo@bar.com", Password: "foobar"}
 		repo.EXPECT().FindByEmail("foo@bar.com").Return(dbUser, nil)
 		pwHasher.EXPECT().Compare(dbUser.Password, "foobar").Return(true)
-		jwtGen.EXPECT().NewToken(gomock.Any(), usecases.SessionClaims{User: &dbUser}).Return("token", nil)
+		jwtGen.EXPECT().NewToken(sessionLength, usecases.SessionClaims{User: &dbUser}).Return("token", nil)
 
 		sessionUser, token, err := interactor.CreateSession("foo@bar.com", "foobar")
 		assert.NoError(t, err)

@@ -19,6 +19,11 @@ type ContestRepository interface {
 	GetOpenContests() ([]uint64, error)
 }
 
+// ContestLogRepository handles ContestLog related database interactions
+type ContestLogRepository interface {
+	Store(contestLog domain.ContestLog) error
+}
+
 // RankingRepository handles Ranking related database interactions
 type RankingRepository interface {
 	Store(contest domain.Ranking) error

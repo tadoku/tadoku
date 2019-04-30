@@ -21,11 +21,13 @@ func NewContestLogInteractor(
 	contestLogRepository ContestLogRepository,
 	contestRepository ContestRepository,
 	rankingRepository RankingRepository,
+	validator Validator,
 ) ContestLogInteractor {
 	return &contestLogInteractor{
 		contestLogRepository: contestLogRepository,
 		contestRepository:    contestRepository,
 		rankingRepository:    rankingRepository,
+		validator:            validator,
 	}
 }
 
@@ -33,6 +35,7 @@ type contestLogInteractor struct {
 	contestLogRepository ContestLogRepository
 	contestRepository    ContestRepository
 	rankingRepository    RankingRepository
+	validator            Validator
 }
 
 func (i *contestLogInteractor) CreateLog(log domain.ContestLog) error {

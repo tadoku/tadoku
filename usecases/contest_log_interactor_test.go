@@ -15,6 +15,7 @@ func setupContestLogTest(t *testing.T) (
 	*usecases.MockContestLogRepository,
 	*usecases.MockContestRepository,
 	*usecases.MockRankingRepository,
+	*usecases.MockValidator,
 	usecases.ContestLogInteractor,
 ) {
 	ctrl := gomock.NewController(t)
@@ -22,13 +23,14 @@ func setupContestLogTest(t *testing.T) (
 	repo := usecases.NewMockContestLogRepository(ctrl)
 	contestRepo := usecases.NewMockContestRepository(ctrl)
 	rankingRepo := usecases.NewMockRankingRepository(ctrl)
-	interactor := usecases.NewContestLogInteractor(repo, contestRepo, rankingRepo)
+	validator := usecases.NewMockValidator(ctrl)
+	interactor := usecases.NewContestLogInteractor(repo, contestRepo, rankingRepo, validator)
 
-	return ctrl, repo, contestRepo, rankingRepo, interactor
+	return ctrl, repo, contestRepo, rankingRepo, validator, interactor
 }
 
 func TestContestLogInteractor_CreateLog(t *testing.T) {
-	ctrl, repo, contestRepo, rankingRepo, interactor := setupContestLogTest(t)
+	ctrl, repo, contestRepo, rankingRepo, _, interactor := setupContestLogTest(t)
 	defer ctrl.Finish()
 
 	// Test happy path

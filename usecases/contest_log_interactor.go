@@ -48,8 +48,12 @@ func (i *contestLogInteractor) CreateLog(log domain.ContestLog) error {
 	if !languages.ContainsLanguage(log.Language) {
 		return ErrContestLanguageNotSignedUp
 	}
-	// TODO: create log
-	// TODO: recalculate rankings
 
-	return i.contestLogRepository.Store(log)
+	err = i.contestLogRepository.Store(log)
+	if err != nil {
+		return fail.Wrap(err)
+	}
+
+	// TODO: recalculate rankings
+	return nil
 }

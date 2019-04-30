@@ -8,6 +8,9 @@ import (
 	"github.com/tadoku/api/domain"
 )
 
+// ErrInvalidContestLog for when an invalid contest is given
+var ErrInvalidContestLog = fail.New("invalid contest log supplied")
+
 // ErrContestLanguageNotSignedUp for when a user tries to log an entry for a contest with a langauge they're not signed up for
 var ErrContestLanguageNotSignedUp = fail.New("user has not signed up for given language")
 
@@ -39,6 +42,10 @@ type contestLogInteractor struct {
 }
 
 func (i *contestLogInteractor) CreateLog(log domain.ContestLog) error {
+	if valid, _ := i.validator.Validate(log); !valid {
+		return ErrInvalidContestLog
+	}
+
 	ids, err := i.contestRepository.GetOpenContests()
 	if err != nil {
 		fail.Wrap(err)

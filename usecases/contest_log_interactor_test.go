@@ -30,7 +30,7 @@ func setupContestLogTest(t *testing.T) (
 }
 
 func TestContestLogInteractor_CreateLog(t *testing.T) {
-	ctrl, repo, contestRepo, rankingRepo, _, interactor := setupContestLogTest(t)
+	ctrl, repo, contestRepo, rankingRepo, validator, interactor := setupContestLogTest(t)
 	defer ctrl.Finish()
 
 	// Test happy path
@@ -44,11 +44,28 @@ func TestContestLogInteractor_CreateLog(t *testing.T) {
 		}
 
 		repo.EXPECT().Store(log)
+		validator.EXPECT().Validate(log).Return(true, nil)
 		contestRepo.EXPECT().GetOpenContests().Return([]uint64{1}, nil)
 		rankingRepo.EXPECT().GetAllLanguagesForContestAndUser(uint64(1), uint64(1)).Return(domain.LanguageCodes{domain.Japanese}, nil)
 
 		err := interactor.CreateLog(log)
 		assert.NoError(t, err)
+	}
+
+	// Test invalid medium
+	{
+		log := domain.ContestLog{
+			ContestID: 1,
+			UserID:    1,
+			Language:  domain.Japanese,
+			Amount:    10,
+			MediumID:  20,
+		}
+
+		validator.EXPECT().Validate(log).Return(false, domain.ErrMediumNotFound)
+
+		err := interactor.CreateLog(log)
+		assert.Equal(t, err, usecases.ErrInvalidContestLog)
 	}
 
 	// Test contest being closed
@@ -61,6 +78,7 @@ func TestContestLogInteractor_CreateLog(t *testing.T) {
 			MediumID:  1,
 		}
 
+		validator.EXPECT().Validate(log).Return(true, nil)
 		contestRepo.EXPECT().GetOpenContests().Return([]uint64{1}, nil)
 
 		err := interactor.CreateLog(log)
@@ -77,6 +95,7 @@ func TestContestLogInteractor_CreateLog(t *testing.T) {
 			MediumID:  1,
 		}
 
+		validator.EXPECT().Validate(log).Return(true, nil)
 		contestRepo.EXPECT().GetOpenContests().Return([]uint64{1}, nil)
 		rankingRepo.EXPECT().GetAllLanguagesForContestAndUser(uint64(1), uint64(1)).Return(domain.LanguageCodes{domain.Korean}, nil)
 

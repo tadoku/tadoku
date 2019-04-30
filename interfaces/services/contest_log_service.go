@@ -1,6 +1,9 @@
 package services
 
 import (
+	"github.com/srvc/fail"
+
+	"github.com/tadoku/api/domain"
 	"github.com/tadoku/api/usecases"
 )
 
@@ -21,7 +24,21 @@ type contestLogService struct {
 }
 
 func (s *contestLogService) Create(ctx Context) error {
-	ctx.NoContent(201)
+	log := &domain.ContestLog{}
+	if err := ctx.Bind(log); err != nil {
+		return fail.Wrap(err)
+	}
 
-	return nil
+	user, err := ctx.User()
+	if err != nil {
+		return fail.Wrap(err)
+	}
+
+	log.UserID = user.ID
+
+	if err := s.ContestLogInteractor.CreateLog(*log); err != nil {
+		return fail.Wrap(err)
+	}
+
+	return ctx.NoContent(201)
 }

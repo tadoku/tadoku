@@ -114,51 +114,59 @@ func TestRankingRepository_FindAllByContestAndUser(t *testing.T) {
 	contestID := uint64(1)
 	userID := uint64(1)
 
-	// Correct rankings
-	originalRankings := []domain.Ranking{}
-	for i, language := range []domain.LanguageCode{domain.Japanese, domain.Korean, domain.Global} {
-		ranking := &domain.Ranking{
-			ContestID: contestID,
-			UserID:    userID,
-			Language:  language,
-			Amount:    float32(i),
-			CreatedAt: time.Date(2019, 1, 1, 0, 0, 0, 0, time.UTC),
-			UpdatedAt: time.Date(2019, 1, 1, 0, 0, 0, 0, time.UTC),
-		}
-
-		originalRankings = append(originalRankings, *ranking)
-
-		err := repo.Store(*ranking)
-		assert.NoError(t, err)
+	expected := []struct {
+		language domain.LanguageCode
+		amount   float32
+	}{
+		{domain.Japanese, 10},
+		{domain.Korean, 20},
+		{domain.Global, 30},
 	}
 
-	// Unrelated rankings
-	for i, language := range []domain.LanguageCode{domain.Korean, domain.Global} {
-		ranking := &domain.Ranking{
-			ContestID: contestID,
-			UserID:    userID + 1,
-			Language:  language,
-			Amount:    float32(i),
-			CreatedAt: time.Date(2019, 1, 1, 0, 0, 0, 0, time.UTC),
-			UpdatedAt: time.Date(2019, 1, 1, 0, 0, 0, 0, time.UTC),
-		}
+	// Correct rankings
+	{
+		for _, data := range expected {
+			ranking := &domain.Ranking{
+				ContestID: contestID,
+				UserID:    userID,
+				Language:  data.language,
+				Amount:    data.amount,
+			}
 
-		err := repo.Store(*ranking)
-		assert.NoError(t, err)
+			err := repo.Store(*ranking)
+			assert.NoError(t, err)
+		}
+	}
+
+	// Create unrelated rankings to check if it is really working
+	{
+		for _, language := range []domain.LanguageCode{domain.Korean, domain.Global} {
+			ranking := &domain.Ranking{
+				ContestID: contestID,
+				UserID:    userID + 1,
+				Language:  language,
+				Amount:    0,
+			}
+
+			err := repo.Store(*ranking)
+			assert.NoError(t, err)
+		}
 	}
 
 	rankings, err := repo.FindAll(contestID, userID)
 	assert.NoError(t, err)
 
-	assert.Equal(t, len(originalRankings), len(rankings))
+	for _, expected := range expected {
+		var ranking domain.Ranking
+		for _, r := range rankings {
+			if r.Language == expected.language {
+				ranking = r
+			}
+		}
 
-	for i, ranking := range originalRankings {
-		r := rankings[i]
-		assert.Equal(t, uint64(i+1), r.ID)
-		assert.Equal(t, ranking.ContestID, r.ContestID)
-		assert.Equal(t, ranking.UserID, r.UserID)
-		assert.Equal(t, ranking.Language, r.Language)
-		assert.Equal(t, ranking.Amount, r.Amount)
+		assert.Equal(t, expected.amount, ranking.Amount)
+		assert.Equal(t, contestID, ranking.ContestID)
+		assert.Equal(t, userID, ranking.UserID)
 	}
 }
 

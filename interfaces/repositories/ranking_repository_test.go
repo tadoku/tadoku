@@ -104,6 +104,64 @@ func TestRankingRepository_GetAllLanguagesForContestAndUser(t *testing.T) {
 	}
 }
 
+func TestRankingRepository_FindAllByContestAndUser(t *testing.T) {
+	t.Parallel()
+	sqlHandler, cleanup := setupTestingSuite(t)
+	defer cleanup()
+
+	repo := repositories.NewRankingRepository(sqlHandler)
+
+	contestID := uint64(1)
+	userID := uint64(1)
+
+	// Correct rankings
+	originalRankings := []domain.Ranking{}
+	for i, language := range []domain.LanguageCode{domain.Japanese, domain.Korean, domain.Global} {
+		ranking := &domain.Ranking{
+			ContestID: contestID,
+			UserID:    userID,
+			Language:  language,
+			Amount:    float32(i),
+			CreatedAt: time.Date(2019, 1, 1, 0, 0, 0, 0, time.UTC),
+			UpdatedAt: time.Date(2019, 1, 1, 0, 0, 0, 0, time.UTC),
+		}
+
+		originalRankings = append(originalRankings, *ranking)
+
+		err := repo.Store(*ranking)
+		assert.NoError(t, err)
+	}
+
+	// Unrelated rankings
+	for i, language := range []domain.LanguageCode{domain.Korean, domain.Global} {
+		ranking := &domain.Ranking{
+			ContestID: contestID,
+			UserID:    userID + 1,
+			Language:  language,
+			Amount:    float32(i),
+			CreatedAt: time.Date(2019, 1, 1, 0, 0, 0, 0, time.UTC),
+			UpdatedAt: time.Date(2019, 1, 1, 0, 0, 0, 0, time.UTC),
+		}
+
+		err := repo.Store(*ranking)
+		assert.NoError(t, err)
+	}
+
+	rankings, err := repo.FindAll(contestID, userID)
+	assert.NoError(t, err)
+
+	assert.Equal(t, len(originalRankings), len(rankings))
+
+	for i, ranking := range originalRankings {
+		r := rankings[i]
+		assert.Equal(t, uint64(i+1), r.ID)
+		assert.Equal(t, ranking.ContestID, r.ContestID)
+		assert.Equal(t, ranking.UserID, r.UserID)
+		assert.Equal(t, ranking.Language, r.Language)
+		assert.Equal(t, ranking.Amount, r.Amount)
+	}
+}
+
 func TestRankingRepository_UpdateRankingsForContestAndUser(t *testing.T) {
 	t.Parallel()
 	sqlHandler, cleanup := setupTestingSuite(t)

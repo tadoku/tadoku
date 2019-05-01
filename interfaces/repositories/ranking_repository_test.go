@@ -111,7 +111,7 @@ func TestRankingRepository_UpdateRankingsForContestAndUser(t *testing.T) {
 
 	repo := repositories.NewRankingRepository(sqlHandler)
 
-	for _, language := range []domain.LanguageCode{domain.Japanese, domain.Global} {
+	for _, language := range []domain.LanguageCode{domain.Japanese, domain.Korean, domain.Global} {
 		ranking := &domain.Ranking{
 			ID:        1,
 			ContestID: 1,
@@ -126,4 +126,17 @@ func TestRankingRepository_UpdateRankingsForContestAndUser(t *testing.T) {
 		assert.NoError(t, err)
 	}
 
+	logs := []domain.ContestLog{
+		domain.ContestLog{ContestID: 1, UserID: 1, Language: domain.Japanese, Amount: 10, MediumID: domain.MediumBook},      // 10 pages
+		domain.ContestLog{ContestID: 1, UserID: 1, Language: domain.Japanese, Amount: 10, MediumID: domain.MediumManga},     // 2 pages
+		domain.ContestLog{ContestID: 1, UserID: 1, Language: domain.Japanese, Amount: 10, MediumID: domain.MediumNet},       // 10 pages
+		domain.ContestLog{ContestID: 1, UserID: 1, Language: domain.Japanese, Amount: 10, MediumID: domain.MediumFullGame},  // 1.667 pages
+		domain.ContestLog{ContestID: 1, UserID: 1, Language: domain.Korean, Amount: 10, MediumID: domain.MediumGame},        // 0.5 pages
+		domain.ContestLog{ContestID: 1, UserID: 1, Language: domain.Japanese, Amount: 10, MediumID: domain.MediumLyric},     // 10 pages
+		domain.ContestLog{ContestID: 1, UserID: 1, Language: domain.Japanese, Amount: 10, MediumID: domain.MediumSubs},      // 2 pages
+		domain.ContestLog{ContestID: 1, UserID: 1, Language: domain.Korean, Amount: 10, MediumID: domain.MediumNews},        // 10 pages
+		domain.ContestLog{ContestID: 1, UserID: 1, Language: domain.Japanese, Amount: 10, MediumID: domain.MediumSentences}, // 0.5 pages
+	}
+
+	assert.Equal(t, 9, len(logs))
 }

@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
+
 	"github.com/tadoku/api/domain"
 	"github.com/tadoku/api/interfaces/repositories"
 )
@@ -101,4 +102,28 @@ func TestRankingRepository_GetAllLanguagesForContestAndUser(t *testing.T) {
 		assert.Equal(t, len(languages), 1)
 		assert.Equal(t, languages[0], domain.Chinese)
 	}
+}
+
+func TestRankingRepository_UpdateRankingsForContestAndUser(t *testing.T) {
+	t.Parallel()
+	sqlHandler, cleanup := setupTestingSuite(t)
+	defer cleanup()
+
+	repo := repositories.NewRankingRepository(sqlHandler)
+
+	for _, language := range []domain.LanguageCode{domain.Japanese, domain.Global} {
+		ranking := &domain.Ranking{
+			ID:        1,
+			ContestID: 1,
+			UserID:    1,
+			Language:  language,
+			Amount:    0,
+			CreatedAt: time.Date(2019, 1, 1, 0, 0, 0, 0, time.UTC),
+			UpdatedAt: time.Date(2019, 1, 1, 0, 0, 0, 0, time.UTC),
+		}
+
+		err := repo.Store(*ranking)
+		assert.NoError(t, err)
+	}
+
 }

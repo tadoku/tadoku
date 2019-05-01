@@ -209,9 +209,13 @@ func TestRankingRepository_UpdateAmounts(t *testing.T) {
 
 		assert.Equal(t, len(updatedRankings), len(rankings))
 
-		for i, ranking := range updatedRankings {
-			r := rankings[i]
-			assert.Equal(t, ranking.Amount, r.Amount)
+		expectedRankings := make(map[uint64]domain.Ranking)
+		for _, ranking := range updatedRankings {
+			expectedRankings[ranking.ID] = ranking
+		}
+
+		for _, ranking := range rankings {
+			assert.Equal(t, ranking.Amount, expectedRankings[ranking.ID].Amount)
 		}
 	}
 }

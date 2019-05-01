@@ -202,23 +202,32 @@ func TestRankingInteractor_UpdateRankings(t *testing.T) {
 	userID := uint64(1)
 
 	{
-		log := domain.ContestLog{
+		logJapaneseBook := domain.ContestLog{
 			ContestID: contestID,
 			UserID:    userID,
 			Language:  domain.Japanese,
 			Amount:    10,
 			MediumID:  domain.MediumBook,
 		}
+		logKoreanManga := domain.ContestLog{
+			ContestID: contestID,
+			UserID:    userID,
+			Language:  domain.Korean,
+			Amount:    10,
+			MediumID:  domain.MediumManga,
+		}
 		rankings := domain.Rankings{
 			{ID: 1, ContestID: contestID, UserID: userID, Language: domain.Japanese, Amount: 0},
-			{ID: 2, ContestID: contestID, UserID: userID, Language: domain.Global, Amount: 0},
+			{ID: 2, ContestID: contestID, UserID: userID, Language: domain.Korean, Amount: 0},
+			{ID: 3, ContestID: contestID, UserID: userID, Language: domain.Global, Amount: 0},
 		}
 		expectedRankings := domain.Rankings{
 			{ID: 1, ContestID: contestID, UserID: userID, Language: domain.Japanese, Amount: 10},
-			{ID: 2, ContestID: contestID, UserID: userID, Language: domain.Global, Amount: 10},
+			{ID: 2, ContestID: contestID, UserID: userID, Language: domain.Korean, Amount: 2},
+			{ID: 3, ContestID: contestID, UserID: userID, Language: domain.Global, Amount: 12},
 		}
 		rankingRepo.EXPECT().FindAll(contestID, userID).Return(rankings, nil)
-		contestLogRepo.EXPECT().FindAll(contestID, userID).Return(domain.ContestLogs{log}, nil)
+		contestLogRepo.EXPECT().FindAll(contestID, userID).Return(domain.ContestLogs{logJapaneseBook, logKoreanManga}, nil)
 		rankingRepo.EXPECT().UpdateAmounts(expectedRankings).Return(nil)
 
 		err := interactor.UpdateRanking(contestID, userID)

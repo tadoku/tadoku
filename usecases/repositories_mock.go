@@ -166,6 +166,21 @@ func (mr *MockContestLogRepositoryMockRecorder) Store(contestLog interface{}) *g
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Store", reflect.TypeOf((*MockContestLogRepository)(nil).Store), contestLog)
 }
 
+// FindAll mocks base method
+func (m *MockContestLogRepository) FindAll(contestID, userID uint64) (domain.ContestLogs, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "FindAll", contestID, userID)
+	ret0, _ := ret[0].(domain.ContestLogs)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// FindAll indicates an expected call of FindAll
+func (mr *MockContestLogRepositoryMockRecorder) FindAll(contestID, userID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindAll", reflect.TypeOf((*MockContestLogRepository)(nil).FindAll), contestID, userID)
+}
+
 // MockRankingRepository is a mock of RankingRepository interface
 type MockRankingRepository struct {
 	ctrl     *gomock.Controller
@@ -201,6 +216,35 @@ func (m *MockRankingRepository) Store(contest domain.Ranking) error {
 func (mr *MockRankingRepositoryMockRecorder) Store(contest interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Store", reflect.TypeOf((*MockRankingRepository)(nil).Store), contest)
+}
+
+// UpdateAmounts mocks base method
+func (m *MockRankingRepository) UpdateAmounts(arg0 domain.Rankings) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateAmounts", arg0)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// UpdateAmounts indicates an expected call of UpdateAmounts
+func (mr *MockRankingRepositoryMockRecorder) UpdateAmounts(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateAmounts", reflect.TypeOf((*MockRankingRepository)(nil).UpdateAmounts), arg0)
+}
+
+// FindAll mocks base method
+func (m *MockRankingRepository) FindAll(contestID, userID uint64) (domain.Rankings, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "FindAll", contestID, userID)
+	ret0, _ := ret[0].(domain.Rankings)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// FindAll indicates an expected call of FindAll
+func (mr *MockRankingRepositoryMockRecorder) FindAll(contestID, userID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindAll", reflect.TypeOf((*MockRankingRepository)(nil).FindAll), contestID, userID)
 }
 
 // GetAllLanguagesForContestAndUser mocks base method

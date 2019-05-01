@@ -22,10 +22,14 @@ type ContestRepository interface {
 // ContestLogRepository handles ContestLog related database interactions
 type ContestLogRepository interface {
 	Store(contestLog domain.ContestLog) error
+	FindAll(contestID uint64, userID uint64) (domain.ContestLogs, error)
 }
 
 // RankingRepository handles Ranking related database interactions
 type RankingRepository interface {
 	Store(contest domain.Ranking) error
+	UpdateAmounts(domain.Rankings) error
+
+	FindAll(contestID uint64, userID uint64) (domain.Rankings, error)
 	GetAllLanguagesForContestAndUser(contestID uint64, userID uint64) (domain.LanguageCodes, error)
 }

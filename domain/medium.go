@@ -59,3 +59,8 @@ func (id MediumID) Validate() (bool, error) {
 
 	return true, nil
 }
+
+// AdjustedAmount gives the amount after having taken into account the medium
+func (id MediumID) AdjustedAmount(amount float32) float32 {
+	return AllMediums[id].Points * amount
+}

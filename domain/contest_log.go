@@ -28,3 +28,8 @@ func (c ContestLog) Validate() (bool, error) {
 
 	return true, nil
 }
+
+// AdjustedAmount gives the amount after having taken into account the medium
+func (c ContestLog) AdjustedAmount() float32 {
+	return c.MediumID.AdjustedAmount(c.Amount)
+}

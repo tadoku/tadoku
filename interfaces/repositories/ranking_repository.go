@@ -46,6 +46,50 @@ func (r *rankingRepository) update(ranking domain.Ranking) error {
 	return fail.Wrap(err)
 }
 
+func (r *rankingRepository) UpdateAmounts(rankings domain.Rankings) error {
+	tx, err := r.sqlHandler.Begin()
+	if err != nil {
+		return fail.Wrap(err)
+	}
+
+	query := `
+		update rankings
+		set
+			amount = :amount,
+			updated_at = now()
+		where id = :id
+	`
+
+	for _, ranking := range rankings {
+		_, err := tx.NamedExecute(query, ranking)
+
+		if err != nil {
+			_ = tx.Rollback()
+			return fail.Wrap(err)
+		}
+	}
+
+	return tx.Commit()
+}
+
+func (r *rankingRepository) FindAll(contestID uint64, userID uint64) (domain.Rankings, error) {
+	var rankings []domain.Ranking
+
+	query := `
+		select id, contest_id, user_id, language_code, amount, created_at, updated_at
+		from rankings
+		where contest_id = $1 and user_id = $2
+		order by id asc
+	`
+
+	err := r.sqlHandler.Select(&rankings, query, contestID, userID)
+	if err != nil {
+		return nil, err
+	}
+
+	return rankings, nil
+}
+
 func (r *rankingRepository) GetAllLanguagesForContestAndUser(contestID uint64, userID uint64) (domain.LanguageCodes, error) {
 	var codes []domain.LanguageCode
 

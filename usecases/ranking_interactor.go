@@ -19,6 +19,9 @@ var ErrContestIsClosed = fail.New("the given contest is closed")
 // ErrNoRankingToCreate for when you try to create a ranking that already exists
 var ErrNoRankingToCreate = fail.New("there is no new ranking to be created")
 
+//ErrNoRankingsFound for when you don't have any rankings to work with
+var ErrNoRankingsFound = fail.New("no rankings found")
+
 // ErrGlobalIsASystemLanguage for when you try to create a global ranking through the api
 var ErrGlobalIsASystemLanguage = fail.New("global is a system language and cannot be created by the user")
 
@@ -156,5 +159,14 @@ func (i *rankingInteractor) CreateLog(log domain.ContestLog) error {
 }
 
 func (i *rankingInteractor) UpdateRanking(contestID uint64, userID uint64) error {
+	rankings, err := i.rankingRepository.FindAll(contestID, userID)
+	if err != nil {
+		return fail.Wrap(err)
+	}
+
+	if len(rankings) == 0 {
+		return ErrNoRankingsFound
+	}
+
 	return nil
 }

@@ -120,10 +120,16 @@ func TestRankingInteractor_CreateLog(t *testing.T) {
 			MediumID:  1,
 		}
 
+		rankings := domain.Rankings{
+			{ID: 1, ContestID: contestID, UserID: userID, Language: domain.Japanese, Amount: 0},
+			{ID: 2, ContestID: contestID, UserID: userID, Language: domain.Global, Amount: 0},
+		}
+
 		contestLogRepo.EXPECT().Store(log)
 		validator.EXPECT().Validate(log).Return(true, nil)
 		contestRepo.EXPECT().GetOpenContests().Return([]uint64{contestID}, nil)
 		rankingRepo.EXPECT().GetAllLanguagesForContestAndUser(contestID, userID).Return(domain.LanguageCodes{domain.Japanese}, nil)
+		rankingRepo.EXPECT().FindAll(contestID, userID).Return(rankings, nil)
 
 		err := interactor.CreateLog(log)
 		assert.NoError(t, err)

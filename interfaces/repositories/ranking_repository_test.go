@@ -191,9 +191,9 @@ func TestRankingRepository_UpdateAmounts(t *testing.T) {
 		rankings, err := repo.FindAll(contestID, userID)
 		assert.NoError(t, err)
 
-		for i, r := range rankings {
+		for _, r := range rankings {
 			updatedRankings = append(updatedRankings, domain.Ranking{
-				ID:     uint64(i) + 1,
+				ID:     r.ID,
 				Amount: r.Amount + 10,
 			})
 		}

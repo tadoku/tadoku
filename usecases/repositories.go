@@ -28,4 +28,5 @@ type ContestLogRepository interface {
 type RankingRepository interface {
 	Store(contest domain.Ranking) error
 	GetAllLanguagesForContestAndUser(contestID uint64, userID uint64) (domain.LanguageCodes, error)
+	UpdateRankingsForContestAndUser(contestID uint64, userID uint64) error
 }

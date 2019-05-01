@@ -62,3 +62,7 @@ func (r *rankingRepository) GetAllLanguagesForContestAndUser(contestID uint64, u
 
 	return codes, nil
 }
+
+func (r *rankingRepository) UpdateRankingsForContestAndUser(contestID uint64, userID uint64) error {
+	return nil
+}

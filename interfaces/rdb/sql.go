@@ -24,6 +24,7 @@ type SQLHandler interface {
 // TxHandler is a SQLHandler in a transaction context
 type TxHandler interface {
 	sqlQueryHandler
+	sqlQueryExecuter
 
 	Commit() error
 	Rollback() error

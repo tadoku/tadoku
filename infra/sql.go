@@ -75,7 +75,7 @@ func (handler *sqlHandler) Begin() (rdb.TxHandler, error) {
 		return nil, fail.Wrap(err)
 	}
 
-	return txHandler{tx: tx}, nil
+	return &txHandler{tx: tx}, nil
 }
 
 // -----------------------------------------------------------------
@@ -85,7 +85,29 @@ type txHandler struct {
 	tx *sqlx.Tx
 }
 
-func (handler txHandler) Query(statement string, args ...interface{}) (rdb.Rows, error) {
+func (handler *txHandler) Execute(statement string, args ...interface{}) (rdb.Result, error) {
+	res := sqlResult{}
+	result, err := handler.tx.Exec(statement, args...)
+	if err != nil {
+		return res, fail.Wrap(err)
+	}
+	res.Result = result
+
+	return res, nil
+}
+
+func (handler *txHandler) NamedExecute(statement string, arg interface{}) (rdb.Result, error) {
+	res := sqlResult{}
+	result, err := handler.tx.NamedExec(statement, arg)
+	if err != nil {
+		return res, fail.Wrap(err)
+	}
+	res.Result = result
+
+	return res, nil
+}
+
+func (handler *txHandler) Query(statement string, args ...interface{}) (rdb.Rows, error) {
 	row := new(sqlRows)
 	rows, err := handler.tx.Queryx(statement, args...)
 	if err != nil {
@@ -96,19 +118,19 @@ func (handler txHandler) Query(statement string, args ...interface{}) (rdb.Rows,
 	return row, nil
 }
 
-func (handler txHandler) QueryRow(statement string, args ...interface{}) rdb.Row {
+func (handler *txHandler) QueryRow(statement string, args ...interface{}) rdb.Row {
 	return sqlRow{Row: handler.tx.QueryRowx(statement, args...)}
 }
 
-func (handler txHandler) Get(dest interface{}, query string, args ...interface{}) error {
+func (handler *txHandler) Get(dest interface{}, query string, args ...interface{}) error {
 	return handler.Get(dest, query, args...)
 }
 
-func (handler txHandler) Select(dest interface{}, query string, args ...interface{}) error {
+func (handler *txHandler) Select(dest interface{}, query string, args ...interface{}) error {
 	return handler.Select(dest, query, args...)
 }
 
-func (handler txHandler) Commit() error {
+func (handler *txHandler) Commit() error {
 	err := handler.tx.Commit()
 	if err != nil {
 		return fail.Wrap(err)
@@ -117,7 +139,7 @@ func (handler txHandler) Commit() error {
 	return nil
 }
 
-func (handler txHandler) Rollback() error {
+func (handler *txHandler) Rollback() error {
 	err := handler.tx.Rollback()
 	if err != nil {
 		return fail.Wrap(err)

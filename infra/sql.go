@@ -11,6 +11,10 @@ import (
 	_ "github.com/lib/pq"
 )
 
+// -----------------------------------------------------------------
+// SQLHandler
+// -----------------------------------------------------------------
+
 // NewSQLHandler creates an interface to run queries on a database
 func NewSQLHandler(db *RDB) rdb.SQLHandler {
 	return &sqlHandler{db: db}
@@ -65,6 +69,67 @@ func (handler *sqlHandler) Select(dest interface{}, query string, args ...interf
 	return handler.db.Select(dest, query, args...)
 }
 
+func (handler *sqlHandler) Begin() (rdb.TxHandler, error) {
+	tx, err := handler.db.Beginx()
+	if err != nil {
+		return nil, fail.Wrap(err)
+	}
+
+	return txHandler{tx: tx}, nil
+}
+
+// -----------------------------------------------------------------
+// Transaction - Tx
+// -----------------------------------------------------------------
+type txHandler struct {
+	tx *sqlx.Tx
+}
+
+func (handler txHandler) Query(statement string, args ...interface{}) (rdb.Rows, error) {
+	row := new(sqlRows)
+	rows, err := handler.tx.Queryx(statement, args...)
+	if err != nil {
+		return row, fail.Wrap(err)
+	}
+	row.Rows = rows
+
+	return row, nil
+}
+
+func (handler txHandler) QueryRow(statement string, args ...interface{}) rdb.Row {
+	return sqlRow{Row: handler.tx.QueryRowx(statement, args...)}
+}
+
+func (handler txHandler) Get(dest interface{}, query string, args ...interface{}) error {
+	return handler.Get(dest, query, args...)
+}
+
+func (handler txHandler) Select(dest interface{}, query string, args ...interface{}) error {
+	return handler.Select(dest, query, args...)
+}
+
+func (handler txHandler) Commit() error {
+	err := handler.tx.Commit()
+	if err != nil {
+		return fail.Wrap(err)
+	}
+
+	return nil
+}
+
+func (handler txHandler) Rollback() error {
+	err := handler.tx.Rollback()
+	if err != nil {
+		return fail.Wrap(err)
+	}
+
+	return nil
+}
+
+// -----------------------------------------------------------------
+// Result
+// -----------------------------------------------------------------
+
 type sqlResult struct {
 	Result sql.Result
 }
@@ -76,6 +141,10 @@ func (r sqlResult) LastInsertId() (int64, error) {
 func (r sqlResult) RowsAffected() (int64, error) {
 	return r.Result.RowsAffected()
 }
+
+// -----------------------------------------------------------------
+// Rows
+// -----------------------------------------------------------------
 
 type sqlRows struct {
 	Rows *sqlx.Rows
@@ -96,6 +165,10 @@ func (r sqlRows) Next() bool {
 func (r sqlRows) Close() error {
 	return r.Rows.Close()
 }
+
+// -----------------------------------------------------------------
+// Row
+// -----------------------------------------------------------------
 
 type sqlRow struct {
 	Row *sqlx.Row

@@ -1,15 +1,32 @@
 package rdb
 
-// SQLHandler knows how to run queries against itself
-type SQLHandler interface {
-	Execute(string, ...interface{}) (Result, error)
+type sqlQueryHandler interface {
 	Query(string, ...interface{}) (Rows, error)
 	QueryRow(string, ...interface{}) Row
 
-	NamedExecute(string, interface{}) (Result, error)
-
 	Get(dest interface{}, query string, args ...interface{}) error
 	Select(dest interface{}, query string, args ...interface{}) error
+}
+
+type sqlQueryExecuter interface {
+	Execute(string, ...interface{}) (Result, error)
+	NamedExecute(string, interface{}) (Result, error)
+}
+
+// SQLHandler knows how to run queries against itself
+type SQLHandler interface {
+	sqlQueryHandler
+	sqlQueryExecuter
+
+	Begin() (TxHandler, error)
+}
+
+// TxHandler is a SQLHandler in a transaction context
+type TxHandler interface {
+	sqlQueryHandler
+
+	Commit() error
+	Rollback() error
 }
 
 // Result contains meta data of a query that was executed

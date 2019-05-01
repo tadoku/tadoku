@@ -27,7 +27,7 @@ func TestRankingRepository_StoreRanking(t *testing.T) {
 
 	{
 		err := repo.Store(*ranking)
-		assert.Nil(t, err)
+		assert.NoError(t, err)
 	}
 
 	{
@@ -36,7 +36,7 @@ func TestRankingRepository_StoreRanking(t *testing.T) {
 			Amount: 2,
 		}
 		err := repo.Store(*updatedRanking)
-		assert.Nil(t, err)
+		assert.NoError(t, err)
 	}
 }
 
@@ -82,13 +82,13 @@ func TestRankingRepository_GetAllLanguagesForContestAndUser(t *testing.T) {
 	{
 		for _, r := range []*domain.Ranking{rankingJapanese, rankingChinese, rankingGlobal, rankingSingleLanguage} {
 			err := repo.Store(*r)
-			assert.Nil(t, err)
+			assert.NoError(t, err)
 		}
 	}
 
 	{
 		languages, err := repo.GetAllLanguagesForContestAndUser(1, 1)
-		assert.Nil(t, err)
+		assert.NoError(t, err)
 		assert.Equal(t, len(languages), 3)
 		assert.Equal(t, languages[0], domain.Japanese)
 		assert.Equal(t, languages[1], domain.Chinese)
@@ -97,7 +97,7 @@ func TestRankingRepository_GetAllLanguagesForContestAndUser(t *testing.T) {
 
 	{
 		languages, err := repo.GetAllLanguagesForContestAndUser(1, 2)
-		assert.Nil(t, err)
+		assert.NoError(t, err)
 		assert.Equal(t, len(languages), 1)
 		assert.Equal(t, languages[0], domain.Chinese)
 	}

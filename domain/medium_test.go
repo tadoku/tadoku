@@ -9,11 +9,11 @@ import (
 func TestMedium_MediumIDValidate(t *testing.T) {
 	{
 		_, err := MediumID(20).Validate()
-		assert.Equal(t, err, ErrMediumNotFound)
+		assert.EqualError(t, err, ErrMediumNotFound.Error())
 	}
 
 	{
 		_, err := MediumID(1).Validate()
-		assert.Nil(t, err)
+		assert.NoError(t, err)
 	}
 }

@@ -19,7 +19,7 @@ func TestContestLog_Validate(t *testing.T) {
 
 		valid, err := log.Validate()
 		assert.Equal(t, true, valid)
-		assert.Nil(t, err)
+		assert.NoError(t, err)
 	}
 
 	// With invalid medium

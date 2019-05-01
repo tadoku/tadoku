@@ -23,7 +23,7 @@ func TestContestRepository_StoreContest(t *testing.T) {
 
 	{
 		err := repo.Store(*contest)
-		assert.Nil(t, err)
+		assert.NoError(t, err)
 	}
 
 	{
@@ -34,7 +34,7 @@ func TestContestRepository_StoreContest(t *testing.T) {
 			Open:  false,
 		}
 		err := repo.Store(*updatedContest)
-		assert.Nil(t, err)
+		assert.NoError(t, err)
 	}
 }
 
@@ -47,14 +47,14 @@ func TestContestRepository_GetOpenContests(t *testing.T) {
 
 	{
 		ids, err := repo.GetOpenContests()
-		assert.Nil(t, err)
+		assert.NoError(t, err)
 		assert.Empty(t, ids, "no open contests should exist")
 
 		err = repo.Store(domain.Contest{Start: time.Now(), End: time.Now(), Open: true})
-		assert.Nil(t, err)
+		assert.NoError(t, err)
 
 		ids, err = repo.GetOpenContests()
 		assert.Equal(t, 1, len(ids), "an open contest should exist")
-		assert.Nil(t, err)
+		assert.NoError(t, err)
 	}
 }

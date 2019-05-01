@@ -125,12 +125,18 @@ func TestRankingInteractor_CreateLog(t *testing.T) {
 			{ID: 2, ContestID: contestID, UserID: userID, Language: domain.Global, Amount: 0},
 		}
 
+		expectedRankings := domain.Rankings{
+			{ID: 1, ContestID: contestID, UserID: userID, Language: domain.Japanese, Amount: 2},
+			{ID: 2, ContestID: contestID, UserID: userID, Language: domain.Global, Amount: 2},
+		}
+
 		contestLogRepo.EXPECT().Store(log)
 		validator.EXPECT().Validate(log).Return(true, nil)
 		contestRepo.EXPECT().GetOpenContests().Return([]uint64{contestID}, nil)
 		rankingRepo.EXPECT().GetAllLanguagesForContestAndUser(contestID, userID).Return(domain.LanguageCodes{domain.Japanese}, nil)
 		rankingRepo.EXPECT().FindAll(contestID, userID).Return(rankings, nil)
 		contestLogRepo.EXPECT().FindAll(contestID, userID).Return(domain.ContestLogs{log}, nil)
+		rankingRepo.EXPECT().UpdateAmounts(expectedRankings).Return(nil)
 
 		err := interactor.CreateLog(log)
 		assert.NoError(t, err)
@@ -207,8 +213,13 @@ func TestRankingInteractor_UpdateRankings(t *testing.T) {
 			{ID: 1, ContestID: contestID, UserID: userID, Language: domain.Japanese, Amount: 0},
 			{ID: 2, ContestID: contestID, UserID: userID, Language: domain.Global, Amount: 0},
 		}
+		expectedRankings := domain.Rankings{
+			{ID: 1, ContestID: contestID, UserID: userID, Language: domain.Japanese, Amount: 10},
+			{ID: 2, ContestID: contestID, UserID: userID, Language: domain.Global, Amount: 10},
+		}
 		rankingRepo.EXPECT().FindAll(contestID, userID).Return(rankings, nil)
 		contestLogRepo.EXPECT().FindAll(contestID, userID).Return(domain.ContestLogs{log}, nil)
+		rankingRepo.EXPECT().UpdateAmounts(expectedRankings).Return(nil)
 
 		err := interactor.UpdateRanking(contestID, userID)
 		assert.NoError(t, err)

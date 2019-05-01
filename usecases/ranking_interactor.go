@@ -180,8 +180,11 @@ func (i *rankingInteractor) UpdateRanking(contestID uint64, userID uint64) error
 		totals[domain.Global] += amount
 	}
 
-	// TODO: Calculate new totals
-	// TODO: Update rankiings with new totals
+	updatedRankings := domain.Rankings{}
+	for _, ranking := range rankings {
+		ranking.Amount = totals[ranking.Language]
+		updatedRankings = append(updatedRankings, ranking)
+	}
 
-	return nil
+	return i.rankingRepository.UpdateAmounts(updatedRankings)
 }

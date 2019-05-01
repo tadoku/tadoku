@@ -110,6 +110,7 @@ func TestRankingRepository_UpdateRankingsForContestAndUser(t *testing.T) {
 	defer cleanup()
 
 	repo := repositories.NewRankingRepository(sqlHandler)
+	logsRepo := repositories.NewContestLogRepository(sqlHandler)
 
 	for _, language := range []domain.LanguageCode{domain.Japanese, domain.Korean, domain.Global} {
 		ranking := &domain.Ranking{
@@ -138,5 +139,8 @@ func TestRankingRepository_UpdateRankingsForContestAndUser(t *testing.T) {
 		domain.ContestLog{ContestID: 1, UserID: 1, Language: domain.Japanese, Amount: 10, MediumID: domain.MediumSentences}, // 0.5 pages
 	}
 
-	assert.Equal(t, 9, len(logs))
+	for _, log := range logs {
+		err := logsRepo.Store(log)
+		assert.NoError(t, err)
+	}
 }

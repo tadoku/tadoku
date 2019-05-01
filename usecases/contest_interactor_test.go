@@ -58,7 +58,7 @@ func TestContestInteractor_CreateContest(t *testing.T) {
 
 		err := interactor.CreateContest(contest)
 
-		assert.Error(t, err, usecases.ErrOpenContestAlreadyExists)
+		assert.EqualError(t, err, usecases.ErrOpenContestAlreadyExists.Error())
 	}
 
 	{
@@ -72,7 +72,7 @@ func TestContestInteractor_CreateContest(t *testing.T) {
 
 		err := interactor.CreateContest(contest)
 
-		assert.Error(t, err)
+		assert.EqualError(t, err, usecases.ErrInvalidContest.Error())
 	}
 }
 
@@ -105,6 +105,6 @@ func TestContestInteractor_UpdateContest(t *testing.T) {
 
 		err := interactor.UpdateContest(contest)
 
-		assert.Error(t, err, usecases.ErrContestIDMissing)
+		assert.EqualError(t, err, usecases.ErrContestIDMissing.Error())
 	}
 }

@@ -65,7 +65,7 @@ func TestContestLogInteractor_CreateLog(t *testing.T) {
 		validator.EXPECT().Validate(log).Return(false, domain.ErrMediumNotFound)
 
 		err := interactor.CreateLog(log)
-		assert.Equal(t, err, usecases.ErrInvalidContestLog)
+		assert.EqualError(t, err, usecases.ErrInvalidContestLog.Error())
 	}
 
 	// Test contest being closed
@@ -82,7 +82,7 @@ func TestContestLogInteractor_CreateLog(t *testing.T) {
 		contestRepo.EXPECT().GetOpenContests().Return([]uint64{1}, nil)
 
 		err := interactor.CreateLog(log)
-		assert.Equal(t, err, usecases.ErrContestIsClosed)
+		assert.EqualError(t, err, usecases.ErrContestIsClosed.Error())
 	}
 
 	// Test not being signed up for a language
@@ -100,6 +100,6 @@ func TestContestLogInteractor_CreateLog(t *testing.T) {
 		rankingRepo.EXPECT().GetAllLanguagesForContestAndUser(uint64(1), uint64(1)).Return(domain.LanguageCodes{domain.Korean}, nil)
 
 		err := interactor.CreateLog(log)
-		assert.Equal(t, err, usecases.ErrContestLanguageNotSignedUp)
+		assert.EqualError(t, err, usecases.ErrContestLanguageNotSignedUp.Error())
 	}
 }

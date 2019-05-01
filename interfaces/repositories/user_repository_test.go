@@ -24,19 +24,19 @@ func TestUserRepository_StoreUser(t *testing.T) {
 
 	{
 		err := repo.Store(*user)
-		assert.Nil(t, err)
+		assert.NoError(t, err)
 	}
 
 	{
 		user.ID = 1
 		user.DisplayName = "John Smith"
 		err := repo.Store(*user)
-		assert.Nil(t, err)
+		assert.NoError(t, err)
 	}
 
 	{
 		dbUser, err := repo.FindByID(1)
-		assert.Nil(t, err)
+		assert.NoError(t, err)
 		assert.Equal(t, dbUser, domain.User{
 			ID:          1,
 			Email:       "foo@example.com",
@@ -49,7 +49,7 @@ func TestUserRepository_StoreUser(t *testing.T) {
 
 	{
 		dbUser, err := repo.FindByEmail("foo@example.com")
-		assert.Nil(t, err)
+		assert.NoError(t, err)
 		assert.Equal(t, dbUser, domain.User{
 			ID:          1,
 			Email:       "foo@example.com",

@@ -24,7 +24,7 @@ func TestContestLogRepository_StoreContest(t *testing.T) {
 
 	{
 		err := repo.Store(*log)
-		assert.Nil(t, err)
+		assert.NoError(t, err)
 	}
 
 	{

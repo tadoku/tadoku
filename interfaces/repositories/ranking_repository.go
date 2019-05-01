@@ -96,10 +96,13 @@ func (r *rankingRepository) GetAllLanguagesForContestAndUser(contestID uint64, u
 	query := `
 		select language_code
 		from rankings
-		where contest_id = $1 and user_id = $2
+		where
+			contest_id = $1
+			and user_id = $2
+			and language_code != $3
 	`
 
-	err := r.sqlHandler.Select(&codes, query, contestID, userID)
+	err := r.sqlHandler.Select(&codes, query, contestID, userID, domain.Global)
 	if err != nil {
 		return nil, err
 	}

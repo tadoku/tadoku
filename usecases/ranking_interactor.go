@@ -168,7 +168,11 @@ func (i *rankingInteractor) UpdateRanking(contestID uint64, userID uint64) error
 		return ErrNoRankingsFound
 	}
 
-	// TODO: Get all logs for this contest by this userID
+	_, err = i.contestLogRepository.FindAll(contestID, userID)
+	if err != nil {
+		return fail.Wrap(err)
+	}
+
 	// TODO: Calculate new totals
 	// TODO: Update rankiings with new totals
 

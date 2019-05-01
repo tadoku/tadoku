@@ -168,9 +168,15 @@ func (i *rankingInteractor) UpdateRanking(contestID uint64, userID uint64) error
 		return ErrNoRankingsFound
 	}
 
-	_, err = i.contestLogRepository.FindAll(contestID, userID)
+	logs, err := i.contestLogRepository.FindAll(contestID, userID)
 	if err != nil {
 		return fail.Wrap(err)
+	}
+
+	totals := make(map[domain.LanguageCode]float32)
+	for _, log := range logs {
+		totals[log.Language] += log.Amount
+		totals[domain.Global] += log.Amount
 	}
 
 	// TODO: Calculate new totals

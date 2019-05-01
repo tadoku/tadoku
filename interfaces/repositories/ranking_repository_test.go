@@ -145,4 +145,11 @@ func TestRankingRepository_UpdateRankingsForContestAndUser(t *testing.T) {
 		err := logsRepo.Store(log)
 		assert.NoError(t, err)
 	}
+
+	{
+		err := repo.UpdateRankingsForContestAndUser(contestID, userID)
+		assert.NoError(t, err)
+	}
+
+	// TODO: check actual rankings result
 }

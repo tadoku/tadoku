@@ -31,12 +31,12 @@ var ErrContestLanguageNotSignedUp = fail.New("user has not signed up for given l
 // RankingInteractor contains all business logic for rankings
 type RankingInteractor interface {
 	CreateRanking(
-		userID uint64,
 		contestID uint64,
+		userID uint64,
 		languages domain.LanguageCodes,
 	) error
 	CreateLog(log domain.ContestLog) error
-	UpdateRanking(userID uint64, contestID uint64) error
+	UpdateRanking(contestID uint64, userID uint64) error
 }
 
 // NewRankingInteractor instantiates RankingInteractor with all dependencies
@@ -65,8 +65,8 @@ type rankingInteractor struct {
 }
 
 func (i *rankingInteractor) CreateRanking(
-	userID uint64,
 	contestID uint64,
+	userID uint64,
 	languages domain.LanguageCodes,
 ) error {
 	ids, err := i.contestRepository.GetOpenContests()
@@ -155,6 +155,6 @@ func (i *rankingInteractor) CreateLog(log domain.ContestLog) error {
 	return i.UpdateRanking(log.ContestID, log.UserID)
 }
 
-func (i *rankingInteractor) UpdateRanking(userID uint64, contestID uint64) error {
+func (i *rankingInteractor) UpdateRanking(contestID uint64, userID uint64) error {
 	return nil
 }

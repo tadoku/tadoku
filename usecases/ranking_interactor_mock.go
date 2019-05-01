@@ -34,17 +34,17 @@ func (m *MockRankingInteractor) EXPECT() *MockRankingInteractorMockRecorder {
 }
 
 // CreateRanking mocks base method
-func (m *MockRankingInteractor) CreateRanking(userID, contestID uint64, languages domain.LanguageCodes) error {
+func (m *MockRankingInteractor) CreateRanking(contestID, userID uint64, languages domain.LanguageCodes) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CreateRanking", userID, contestID, languages)
+	ret := m.ctrl.Call(m, "CreateRanking", contestID, userID, languages)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // CreateRanking indicates an expected call of CreateRanking
-func (mr *MockRankingInteractorMockRecorder) CreateRanking(userID, contestID, languages interface{}) *gomock.Call {
+func (mr *MockRankingInteractorMockRecorder) CreateRanking(contestID, userID, languages interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateRanking", reflect.TypeOf((*MockRankingInteractor)(nil).CreateRanking), userID, contestID, languages)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateRanking", reflect.TypeOf((*MockRankingInteractor)(nil).CreateRanking), contestID, userID, languages)
 }
 
 // CreateLog mocks base method
@@ -62,15 +62,15 @@ func (mr *MockRankingInteractorMockRecorder) CreateLog(log interface{}) *gomock.
 }
 
 // UpdateRanking mocks base method
-func (m *MockRankingInteractor) UpdateRanking(userID, contestID uint64) error {
+func (m *MockRankingInteractor) UpdateRanking(contestID, userID uint64) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UpdateRanking", userID, contestID)
+	ret := m.ctrl.Call(m, "UpdateRanking", contestID, userID)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // UpdateRanking indicates an expected call of UpdateRanking
-func (mr *MockRankingInteractorMockRecorder) UpdateRanking(userID, contestID interface{}) *gomock.Call {
+func (mr *MockRankingInteractorMockRecorder) UpdateRanking(contestID, userID interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateRanking", reflect.TypeOf((*MockRankingInteractor)(nil).UpdateRanking), userID, contestID)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateRanking", reflect.TypeOf((*MockRankingInteractor)(nil).UpdateRanking), contestID, userID)
 }

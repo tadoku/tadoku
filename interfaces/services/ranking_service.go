@@ -41,7 +41,7 @@ func (s *rankingService) Create(ctx Context) error {
 		return fail.Wrap(err)
 	}
 
-	if err := s.RankingInteractor.CreateRanking(user.ID, payload.ContestID, payload.Languages); err != nil {
+	if err := s.RankingInteractor.CreateRanking(payload.ContestID, user.ID, payload.Languages); err != nil {
 		return fail.Wrap(err)
 	}
 

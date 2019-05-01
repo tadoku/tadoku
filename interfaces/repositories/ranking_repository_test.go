@@ -112,11 +112,13 @@ func TestRankingRepository_UpdateRankingsForContestAndUser(t *testing.T) {
 	repo := repositories.NewRankingRepository(sqlHandler)
 	logsRepo := repositories.NewContestLogRepository(sqlHandler)
 
+	contestID := uint64(1)
+	userID := uint64(1)
+
 	for _, language := range []domain.LanguageCode{domain.Japanese, domain.Korean, domain.Global} {
 		ranking := &domain.Ranking{
-			ID:        1,
-			ContestID: 1,
-			UserID:    1,
+			ContestID: contestID,
+			UserID:    userID,
 			Language:  language,
 			Amount:    0,
 			CreatedAt: time.Date(2019, 1, 1, 0, 0, 0, 0, time.UTC),
@@ -128,15 +130,15 @@ func TestRankingRepository_UpdateRankingsForContestAndUser(t *testing.T) {
 	}
 
 	logs := []domain.ContestLog{
-		domain.ContestLog{ContestID: 1, UserID: 1, Language: domain.Japanese, Amount: 10, MediumID: domain.MediumBook},      // 10 pages
-		domain.ContestLog{ContestID: 1, UserID: 1, Language: domain.Japanese, Amount: 10, MediumID: domain.MediumManga},     // 2 pages
-		domain.ContestLog{ContestID: 1, UserID: 1, Language: domain.Japanese, Amount: 10, MediumID: domain.MediumNet},       // 10 pages
-		domain.ContestLog{ContestID: 1, UserID: 1, Language: domain.Japanese, Amount: 10, MediumID: domain.MediumFullGame},  // 1.667 pages
-		domain.ContestLog{ContestID: 1, UserID: 1, Language: domain.Korean, Amount: 10, MediumID: domain.MediumGame},        // 0.5 pages
-		domain.ContestLog{ContestID: 1, UserID: 1, Language: domain.Japanese, Amount: 10, MediumID: domain.MediumLyric},     // 10 pages
-		domain.ContestLog{ContestID: 1, UserID: 1, Language: domain.Japanese, Amount: 10, MediumID: domain.MediumSubs},      // 2 pages
-		domain.ContestLog{ContestID: 1, UserID: 1, Language: domain.Korean, Amount: 10, MediumID: domain.MediumNews},        // 10 pages
-		domain.ContestLog{ContestID: 1, UserID: 1, Language: domain.Japanese, Amount: 10, MediumID: domain.MediumSentences}, // 0.5 pages
+		domain.ContestLog{ContestID: contestID, UserID: userID, Language: domain.Japanese, Amount: 10, MediumID: domain.MediumBook},      // 10 pages
+		domain.ContestLog{ContestID: contestID, UserID: userID, Language: domain.Japanese, Amount: 10, MediumID: domain.MediumManga},     // 2 pages
+		domain.ContestLog{ContestID: contestID, UserID: userID, Language: domain.Japanese, Amount: 10, MediumID: domain.MediumNet},       // 10 pages
+		domain.ContestLog{ContestID: contestID, UserID: userID, Language: domain.Japanese, Amount: 10, MediumID: domain.MediumFullGame},  // 1.667 pages
+		domain.ContestLog{ContestID: contestID, UserID: userID, Language: domain.Korean, Amount: 10, MediumID: domain.MediumGame},        // 0.5 pages
+		domain.ContestLog{ContestID: contestID, UserID: userID, Language: domain.Japanese, Amount: 10, MediumID: domain.MediumLyric},     // 10 pages
+		domain.ContestLog{ContestID: contestID, UserID: userID, Language: domain.Japanese, Amount: 10, MediumID: domain.MediumSubs},      // 2 pages
+		domain.ContestLog{ContestID: contestID, UserID: userID, Language: domain.Korean, Amount: 10, MediumID: domain.MediumNews},        // 10 pages
+		domain.ContestLog{ContestID: contestID, UserID: userID, Language: domain.Japanese, Amount: 10, MediumID: domain.MediumSentences}, // 0.5 pages
 	}
 
 	for _, log := range logs {

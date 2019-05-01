@@ -90,10 +90,9 @@ func TestRankingRepository_GetAllLanguagesForContestAndUser(t *testing.T) {
 	{
 		languages, err := repo.GetAllLanguagesForContestAndUser(1, 1)
 		assert.NoError(t, err)
-		assert.Equal(t, len(languages), 3)
+		assert.Equal(t, len(languages), 2)
 		assert.Equal(t, languages[0], domain.Japanese)
 		assert.Equal(t, languages[1], domain.Chinese)
-		assert.Equal(t, languages[2], domain.Global)
 	}
 
 	{

@@ -28,7 +28,7 @@ var ErrGlobalIsASystemLanguage = fail.New("global is a system language and canno
 // ErrInvalidContestLog for when an invalid contest is given
 var ErrInvalidContestLog = fail.New("invalid contest log supplied")
 
-// ErrContestLanguageNotSignedUp for when a user tries to log an entry for a contest with a langauge they're not signed up for
+// ErrContestLanguageNotSignedUp for when a user tries to log an entry for a contest with a language they're not signed up for
 var ErrContestLanguageNotSignedUp = fail.New("user has not signed up for given language")
 
 // RankingInteractor contains all business logic for rankings

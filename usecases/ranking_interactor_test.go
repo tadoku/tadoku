@@ -117,7 +117,7 @@ func TestRankingInteractor_CreateLog(t *testing.T) {
 			UserID:    userID,
 			Language:  domain.Japanese,
 			Amount:    10,
-			MediumID:  1,
+			MediumID:  domain.MediumManga,
 		}
 
 		rankings := domain.Rankings{
@@ -159,7 +159,7 @@ func TestRankingInteractor_CreateLog(t *testing.T) {
 			UserID:    userID,
 			Language:  domain.Japanese,
 			Amount:    10,
-			MediumID:  1,
+			MediumID:  domain.MediumManga,
 		}
 
 		validator.EXPECT().Validate(log).Return(true, nil)
@@ -176,7 +176,7 @@ func TestRankingInteractor_CreateLog(t *testing.T) {
 			UserID:    userID,
 			Language:  domain.Japanese,
 			Amount:    10,
-			MediumID:  1,
+			MediumID:  domain.MediumManga,
 		}
 
 		validator.EXPECT().Validate(log).Return(true, nil)
@@ -201,7 +201,7 @@ func TestRankingInteractor_UpdateRankings(t *testing.T) {
 			UserID:    userID,
 			Language:  domain.Japanese,
 			Amount:    10,
-			MediumID:  1,
+			MediumID:  domain.MediumBook,
 		}
 		rankings := domain.Rankings{
 			{ID: 1, ContestID: contestID, UserID: userID, Language: domain.Japanese, Amount: 0},

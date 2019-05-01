@@ -13,14 +13,14 @@ type ContestLogService interface {
 }
 
 // NewContestLogService initializer
-func NewContestLogService(contestLogInteractor usecases.ContestLogInteractor) ContestLogService {
+func NewContestLogService(rankingInteractor usecases.RankingInteractor) ContestLogService {
 	return &contestLogService{
-		ContestLogInteractor: contestLogInteractor,
+		RankingInteractor: rankingInteractor,
 	}
 }
 
 type contestLogService struct {
-	ContestLogInteractor usecases.ContestLogInteractor
+	RankingInteractor usecases.RankingInteractor
 }
 
 func (s *contestLogService) Create(ctx Context) error {
@@ -36,7 +36,7 @@ func (s *contestLogService) Create(ctx Context) error {
 
 	log.UserID = user.ID
 
-	if err := s.ContestLogInteractor.CreateLog(*log); err != nil {
+	if err := s.RankingInteractor.CreateLog(*log); err != nil {
 		return fail.Wrap(err)
 	}
 

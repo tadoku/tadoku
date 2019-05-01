@@ -46,3 +46,17 @@ func (mr *MockRankingInteractorMockRecorder) CreateRanking(userID, contestID, la
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateRanking", reflect.TypeOf((*MockRankingInteractor)(nil).CreateRanking), userID, contestID, languages)
 }
+
+// CreateLog mocks base method
+func (m *MockRankingInteractor) CreateLog(log domain.ContestLog) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateLog", log)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// CreateLog indicates an expected call of CreateLog
+func (mr *MockRankingInteractorMockRecorder) CreateLog(log interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateLog", reflect.TypeOf((*MockRankingInteractor)(nil).CreateLog), log)
+}

@@ -27,7 +27,7 @@ func TestContestLogService_Create(t *testing.T) {
 	ctx.EXPECT().User().Return(&domain.User{ID: 1}, nil)
 	ctx.EXPECT().Bind(gomock.Any()).Return(nil).SetArg(0, *log)
 
-	i := usecases.NewMockContestLogInteractor(ctrl)
+	i := usecases.NewMockRankingInteractor(ctrl)
 	i.EXPECT().CreateLog(domain.ContestLog{ContestID: 1, UserID: 1, Language: domain.Japanese, Amount: 10, MediumID: 1}).Return(nil)
 
 	s := services.NewContestLogService(i)

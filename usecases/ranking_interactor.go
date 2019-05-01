@@ -35,6 +35,7 @@ type RankingInteractor interface {
 		contestID uint64,
 		languages domain.LanguageCodes,
 	) error
+	CreateLog(log domain.ContestLog) error
 }
 
 // NewRankingInteractor instantiates RankingInteractor with all dependencies
@@ -62,12 +63,12 @@ type rankingInteractor struct {
 	validator            Validator
 }
 
-func (si *rankingInteractor) CreateRanking(
+func (i *rankingInteractor) CreateRanking(
 	userID uint64,
 	contestID uint64,
 	languages domain.LanguageCodes,
 ) error {
-	ids, err := si.contestRepository.GetOpenContests()
+	ids, err := i.contestRepository.GetOpenContests()
 	if err != nil {
 		return fail.Wrap(err)
 	}
@@ -76,11 +77,11 @@ func (si *rankingInteractor) CreateRanking(
 		return ErrContestIsClosed
 	}
 
-	if _, err := si.userRepository.FindByID(userID); err != nil {
+	if _, err := i.userRepository.FindByID(userID); err != nil {
 		return ErrUserDoesNotExist
 	}
 
-	existingLanguages, err := si.rankingRepository.GetAllLanguagesForContestAndUser(contestID, userID)
+	existingLanguages, err := i.rankingRepository.GetAllLanguagesForContestAndUser(contestID, userID)
 	if err != nil {
 		return fail.Wrap(err)
 	}
@@ -118,11 +119,38 @@ func (si *rankingInteractor) CreateRanking(
 			Language:  lang,
 			Amount:    0,
 		}
-		err = si.rankingRepository.Store(ranking)
+		err = i.rankingRepository.Store(ranking)
 		if err != nil {
 			return fail.Wrap(err)
 		}
 	}
 
+	return nil
+}
+
+func (i *rankingInteractor) CreateLog(log domain.ContestLog) error {
+	if valid, _ := i.validator.Validate(log); !valid {
+		return ErrInvalidContestLog
+	}
+
+	ids, err := i.contestRepository.GetOpenContests()
+	if err != nil {
+		fail.Wrap(err)
+	}
+	if !domain.ContainsID(ids, log.ContestID) {
+		return ErrContestIsClosed
+	}
+
+	languages, err := i.rankingRepository.GetAllLanguagesForContestAndUser(log.ContestID, log.UserID)
+	if !languages.ContainsLanguage(log.Language) {
+		return ErrContestLanguageNotSignedUp
+	}
+
+	err = i.contestLogRepository.Store(log)
+	if err != nil {
+		return fail.Wrap(err)
+	}
+
+	// TODO: recalculate rankings
 	return nil
 }

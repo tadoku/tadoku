@@ -9,10 +9,9 @@ import (
 
 // Interactors is a collection of all repositories
 type Interactors struct {
-	Session    usecases.SessionInteractor
-	Contest    usecases.ContestInteractor
-	ContestLog usecases.ContestLogInteractor
-	Ranking    usecases.RankingInteractor
+	Session usecases.SessionInteractor
+	Contest usecases.ContestInteractor
+	Ranking usecases.RankingInteractor
 }
 
 // NewInteractors initializes all repositories
@@ -28,8 +27,7 @@ func NewInteractors(
 			jwtGenerator,
 			sessionLength,
 		),
-		Contest:    usecases.NewContestInteractor(r.Contest, infra.NewValidator()),
-		ContestLog: usecases.NewContestLogInteractor(r.ContestLog, r.Contest, r.Ranking, infra.NewValidator()),
-		Ranking:    usecases.NewRankingInteractor(r.Ranking, r.Contest, r.ContestLog, r.User, infra.NewValidator()),
+		Contest: usecases.NewContestInteractor(r.Contest, infra.NewValidator()),
+		Ranking: usecases.NewRankingInteractor(r.Ranking, r.Contest, r.ContestLog, r.User, infra.NewValidator()),
 	}
 }

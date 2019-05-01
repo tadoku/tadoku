@@ -209,5 +209,28 @@ func TestRankingRepository_UpdateRankingsForContestAndUser(t *testing.T) {
 		assert.NoError(t, err)
 	}
 
-	// TODO: check actual rankings result
+	rankings, err := repo.FindAll(contestID, userID)
+	assert.NoError(t, err)
+	assert.Equal(t, 3, len(rankings))
+
+	tests := []struct {
+		language domain.LanguageCode
+		total    float32
+	}{
+		{domain.Japanese, 10},
+		{domain.Korean, 10},
+		{domain.Global, 10},
+	}
+
+	for _, expected := range tests {
+		var r *domain.Ranking
+		for _, ranking := range rankings {
+			if ranking.Language == expected.language {
+				r = &ranking
+			}
+		}
+
+		assert.NotNil(t, r)
+		assert.Equal(t, expected.total, r.Amount)
+	}
 }

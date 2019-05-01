@@ -172,33 +172,13 @@ func TestRankingRepository_UpdateAmounts(t *testing.T) {
 	contestID := uint64(1)
 	userID := uint64(1)
 
-	// Correct rankings
-	rankingsToStore := []domain.Ranking{}
+	// Create initial rankings
 	for i, language := range []domain.LanguageCode{domain.Japanese, domain.Korean, domain.Global} {
 		ranking := domain.Ranking{
 			ContestID: contestID,
 			UserID:    userID,
 			Language:  language,
 			Amount:    float32(i),
-			CreatedAt: time.Date(2019, 1, 1, 0, 0, 0, 0, time.UTC),
-			UpdatedAt: time.Date(2019, 1, 1, 0, 0, 0, 0, time.UTC),
-		}
-
-		rankingsToStore = append(rankingsToStore, ranking)
-
-		err := repo.Store(ranking)
-		assert.NoError(t, err)
-	}
-
-	// Unrelated rankings
-	for i, language := range []domain.LanguageCode{domain.Korean, domain.Global} {
-		ranking := domain.Ranking{
-			ContestID: contestID,
-			UserID:    userID + 1,
-			Language:  language,
-			Amount:    float32(i),
-			CreatedAt: time.Date(2019, 1, 1, 0, 0, 0, 0, time.UTC),
-			UpdatedAt: time.Date(2019, 1, 1, 0, 0, 0, 0, time.UTC),
 		}
 
 		err := repo.Store(ranking)
@@ -208,14 +188,17 @@ func TestRankingRepository_UpdateAmounts(t *testing.T) {
 	// Update rankings
 	updatedRankings := domain.Rankings{}
 	{
-		for i, r := range rankingsToStore {
+		rankings, err := repo.FindAll(contestID, userID)
+		assert.NoError(t, err)
+
+		for i, r := range rankings {
 			updatedRankings = append(updatedRankings, domain.Ranking{
 				ID:     uint64(i) + 1,
 				Amount: r.Amount + 10,
 			})
 		}
 
-		err := repo.UpdateAmounts(updatedRankings)
+		err = repo.UpdateAmounts(updatedRankings)
 		assert.NoError(t, err)
 	}
 
@@ -228,7 +211,6 @@ func TestRankingRepository_UpdateAmounts(t *testing.T) {
 
 		for i, ranking := range updatedRankings {
 			r := rankings[i]
-			assert.Equal(t, uint64(i+1), r.ID)
 			assert.Equal(t, ranking.Amount, r.Amount)
 		}
 	}

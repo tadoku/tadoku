@@ -186,3 +186,29 @@ func TestRankingInteractor_CreateLog(t *testing.T) {
 		assert.EqualError(t, err, usecases.ErrContestLanguageNotSignedUp.Error())
 	}
 }
+
+func TestRankingInteractor_UpdateRankings(t *testing.T) {
+	ctrl, rankingRepo, _, _, _, _, interactor := setupRankingTest(t)
+	defer ctrl.Finish()
+
+	contestID := uint64(1)
+	userID := uint64(1)
+
+	{
+		rankings := domain.Rankings{
+			{ID: 1, ContestID: contestID, UserID: userID, Language: domain.Japanese, Amount: 0},
+			{ID: 2, ContestID: contestID, UserID: userID, Language: domain.Global, Amount: 0},
+		}
+		rankingRepo.EXPECT().FindAll(contestID, userID).Return(rankings, nil)
+
+		err := interactor.UpdateRanking(contestID, userID)
+		assert.NoError(t, err)
+	}
+
+	{
+		rankingRepo.EXPECT().FindAll(contestID, userID).Return(nil, nil)
+
+		err := interactor.UpdateRanking(contestID, userID)
+		assert.EqualError(t, err, usecases.ErrNoRankingsFound.Error())
+	}
+}

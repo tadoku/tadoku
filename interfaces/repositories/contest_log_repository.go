@@ -34,3 +34,7 @@ func (r *contestLogRepository) create(contestLog domain.ContestLog) error {
 	_, err := r.sqlHandler.NamedExecute(query, contestLog)
 	return fail.Wrap(err)
 }
+
+func (r *contestLogRepository) FindAll(contestID uint64, userID uint64) (domain.ContestLogs, error) {
+	return nil, nil
+}

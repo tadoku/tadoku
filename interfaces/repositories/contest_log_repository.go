@@ -36,5 +36,19 @@ func (r *contestLogRepository) create(contestLog domain.ContestLog) error {
 }
 
 func (r *contestLogRepository) FindAll(contestID uint64, userID uint64) (domain.ContestLogs, error) {
-	return nil, nil
+	var logs []domain.ContestLog
+
+	query := `
+		select
+			id, contest_id, user_id, language_code, medium_id, amount, created_at, updated_at
+		from contest_logs
+		where contest_id = $1 and user_id = $2
+	`
+
+	err := r.sqlHandler.Select(&logs, query, contestID, userID)
+	if err != nil {
+		return nil, fail.Wrap(err)
+	}
+
+	return logs, nil
 }

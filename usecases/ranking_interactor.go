@@ -41,22 +41,25 @@ type RankingInteractor interface {
 func NewRankingInteractor(
 	rankingRepository RankingRepository,
 	contestRepository ContestRepository,
+	contestLogRepository ContestLogRepository,
 	userRepository UserRepository,
 	validator Validator,
 ) RankingInteractor {
 	return &rankingInteractor{
-		rankingRepository: rankingRepository,
-		contestRepository: contestRepository,
-		userRepository:    userRepository,
-		validator:         validator,
+		rankingRepository:    rankingRepository,
+		contestRepository:    contestRepository,
+		contestLogRepository: contestLogRepository,
+		userRepository:       userRepository,
+		validator:            validator,
 	}
 }
 
 type rankingInteractor struct {
-	rankingRepository RankingRepository
-	contestRepository ContestRepository
-	userRepository    UserRepository
-	validator         Validator
+	rankingRepository    RankingRepository
+	contestRepository    ContestRepository
+	contestLogRepository ContestLogRepository
+	userRepository       UserRepository
+	validator            Validator
 }
 
 func (si *rankingInteractor) CreateRanking(

@@ -14,6 +14,7 @@ func setupRankingTest(t *testing.T) (
 	*gomock.Controller,
 	*usecases.MockRankingRepository,
 	*usecases.MockContestRepository,
+	*usecases.MockContestLogRepository,
 	*usecases.MockUserRepository,
 	*usecases.MockValidator,
 	usecases.RankingInteractor,
@@ -22,15 +23,16 @@ func setupRankingTest(t *testing.T) (
 
 	rankingRepo := usecases.NewMockRankingRepository(ctrl)
 	contestRepo := usecases.NewMockContestRepository(ctrl)
+	contestLogRepo := usecases.NewMockContestLogRepository(ctrl)
 	userRepo := usecases.NewMockUserRepository(ctrl)
 	validator := usecases.NewMockValidator(ctrl)
-	interactor := usecases.NewRankingInteractor(rankingRepo, contestRepo, userRepo, validator)
+	interactor := usecases.NewRankingInteractor(rankingRepo, contestRepo, contestLogRepo, userRepo, validator)
 
-	return ctrl, rankingRepo, contestRepo, userRepo, validator, interactor
+	return ctrl, rankingRepo, contestRepo, contestLogRepo, userRepo, validator, interactor
 }
 
 func TestRankingInteractor_CreateRanking(t *testing.T) {
-	ctrl, rankingRepo, contestRepo, userRepo, _, interactor := setupRankingTest(t)
+	ctrl, rankingRepo, contestRepo, _, userRepo, _, interactor := setupRankingTest(t)
 	defer ctrl.Finish()
 
 	{

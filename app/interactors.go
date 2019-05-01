@@ -30,6 +30,6 @@ func NewInteractors(
 		),
 		Contest:    usecases.NewContestInteractor(r.Contest, infra.NewValidator()),
 		ContestLog: usecases.NewContestLogInteractor(r.ContestLog, r.Contest, r.Ranking, infra.NewValidator()),
-		Ranking:    usecases.NewRankingInteractor(r.Ranking, r.Contest, r.User, infra.NewValidator()),
+		Ranking:    usecases.NewRankingInteractor(r.Ranking, r.Contest, r.ContestLog, r.User, infra.NewValidator()),
 	}
 }

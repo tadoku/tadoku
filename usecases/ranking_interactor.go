@@ -175,8 +175,9 @@ func (i *rankingInteractor) UpdateRanking(contestID uint64, userID uint64) error
 
 	totals := make(map[domain.LanguageCode]float32)
 	for _, log := range logs {
-		totals[log.Language] += log.Amount
-		totals[domain.Global] += log.Amount
+		amount := log.AdjustedAmount()
+		totals[log.Language] += amount
+		totals[domain.Global] += amount
 	}
 
 	// TODO: Calculate new totals

@@ -22,6 +22,12 @@ var ErrNoRankingToCreate = fail.New("there is no new ranking to be created")
 // ErrGlobalIsASystemLanguage for when you try to create a global ranking through the api
 var ErrGlobalIsASystemLanguage = fail.New("global is a system language and cannot be created by the user")
 
+// ErrInvalidContestLog for when an invalid contest is given
+var ErrInvalidContestLog = fail.New("invalid contest log supplied")
+
+// ErrContestLanguageNotSignedUp for when a user tries to log an entry for a contest with a langauge they're not signed up for
+var ErrContestLanguageNotSignedUp = fail.New("user has not signed up for given language")
+
 // RankingInteractor contains all business logic for rankings
 type RankingInteractor interface {
 	CreateRanking(

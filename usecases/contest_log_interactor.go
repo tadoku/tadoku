@@ -8,12 +8,6 @@ import (
 	"github.com/tadoku/api/domain"
 )
 
-// ErrInvalidContestLog for when an invalid contest is given
-var ErrInvalidContestLog = fail.New("invalid contest log supplied")
-
-// ErrContestLanguageNotSignedUp for when a user tries to log an entry for a contest with a langauge they're not signed up for
-var ErrContestLanguageNotSignedUp = fail.New("user has not signed up for given language")
-
 // ContestLogInteractor contains all business logic for contest log entries
 type ContestLogInteractor interface {
 	CreateLog(log domain.ContestLog) error

@@ -162,75 +162,74 @@ func TestRankingRepository_FindAllByContestAndUser(t *testing.T) {
 	}
 }
 
-func TestRankingRepository_UpdateRankingsForContestAndUser(t *testing.T) {
+func TestRankingRepository_UpdateAmounts(t *testing.T) {
 	t.Parallel()
 	sqlHandler, cleanup := setupTestingSuite(t)
 	defer cleanup()
 
 	repo := repositories.NewRankingRepository(sqlHandler)
-	logsRepo := repositories.NewContestLogRepository(sqlHandler)
 
 	contestID := uint64(1)
 	userID := uint64(1)
 
-	for _, language := range []domain.LanguageCode{domain.Japanese, domain.Korean, domain.Global} {
-		ranking := &domain.Ranking{
+	// Correct rankings
+	rankingsToStore := []domain.Ranking{}
+	for i, language := range []domain.LanguageCode{domain.Japanese, domain.Korean, domain.Global} {
+		ranking := domain.Ranking{
 			ContestID: contestID,
 			UserID:    userID,
 			Language:  language,
-			Amount:    0,
+			Amount:    float32(i),
 			CreatedAt: time.Date(2019, 1, 1, 0, 0, 0, 0, time.UTC),
 			UpdatedAt: time.Date(2019, 1, 1, 0, 0, 0, 0, time.UTC),
 		}
 
-		err := repo.Store(*ranking)
+		rankingsToStore = append(rankingsToStore, ranking)
+
+		err := repo.Store(ranking)
 		assert.NoError(t, err)
 	}
 
-	logs := []domain.ContestLog{
-		domain.ContestLog{ContestID: contestID, UserID: userID, Language: domain.Japanese, Amount: 10, MediumID: domain.MediumBook},      // 10 pages
-		domain.ContestLog{ContestID: contestID, UserID: userID, Language: domain.Japanese, Amount: 10, MediumID: domain.MediumManga},     // 2 pages
-		domain.ContestLog{ContestID: contestID, UserID: userID, Language: domain.Japanese, Amount: 10, MediumID: domain.MediumNet},       // 10 pages
-		domain.ContestLog{ContestID: contestID, UserID: userID, Language: domain.Japanese, Amount: 10, MediumID: domain.MediumFullGame},  // 1.667 pages
-		domain.ContestLog{ContestID: contestID, UserID: userID, Language: domain.Korean, Amount: 10, MediumID: domain.MediumGame},        // 0.5 pages
-		domain.ContestLog{ContestID: contestID, UserID: userID, Language: domain.Japanese, Amount: 10, MediumID: domain.MediumLyric},     // 10 pages
-		domain.ContestLog{ContestID: contestID, UserID: userID, Language: domain.Japanese, Amount: 10, MediumID: domain.MediumSubs},      // 2 pages
-		domain.ContestLog{ContestID: contestID, UserID: userID, Language: domain.Korean, Amount: 10, MediumID: domain.MediumNews},        // 10 pages
-		domain.ContestLog{ContestID: contestID, UserID: userID, Language: domain.Japanese, Amount: 10, MediumID: domain.MediumSentences}, // 0.5 pages
-	}
-
-	for _, log := range logs {
-		err := logsRepo.Store(log)
-		assert.NoError(t, err)
-	}
-
-	{
-		err := repo.UpdateRankingsForContestAndUser(contestID, userID)
-		assert.NoError(t, err)
-	}
-
-	rankings, err := repo.FindAll(contestID, userID)
-	assert.NoError(t, err)
-	assert.Equal(t, 3, len(rankings))
-
-	tests := []struct {
-		language domain.LanguageCode
-		total    float32
-	}{
-		{domain.Japanese, 10},
-		{domain.Korean, 10},
-		{domain.Global, 10},
-	}
-
-	for _, expected := range tests {
-		var r *domain.Ranking
-		for _, ranking := range rankings {
-			if ranking.Language == expected.language {
-				r = &ranking
-			}
+	// Unrelated rankings
+	for i, language := range []domain.LanguageCode{domain.Korean, domain.Global} {
+		ranking := domain.Ranking{
+			ContestID: contestID,
+			UserID:    userID + 1,
+			Language:  language,
+			Amount:    float32(i),
+			CreatedAt: time.Date(2019, 1, 1, 0, 0, 0, 0, time.UTC),
+			UpdatedAt: time.Date(2019, 1, 1, 0, 0, 0, 0, time.UTC),
 		}
 
-		assert.NotNil(t, r)
-		assert.Equal(t, expected.total, r.Amount)
+		err := repo.Store(ranking)
+		assert.NoError(t, err)
+	}
+
+	// Update rankings
+	updatedRankings := domain.Rankings{}
+	{
+		for i, r := range rankingsToStore {
+			updatedRankings = append(updatedRankings, domain.Ranking{
+				ID:     uint64(i) + 1,
+				Amount: r.Amount + 10,
+			})
+		}
+
+		err := repo.UpdateAmounts(updatedRankings)
+		assert.NoError(t, err)
+	}
+
+	// Check updated content
+	{
+		rankings, err := repo.FindAll(contestID, userID)
+		assert.NoError(t, err)
+
+		assert.Equal(t, len(updatedRankings), len(rankings))
+
+		for i, ranking := range updatedRankings {
+			r := rankings[i]
+			assert.Equal(t, uint64(i+1), r.ID)
+			assert.Equal(t, ranking.Amount, r.Amount)
+		}
 	}
 }

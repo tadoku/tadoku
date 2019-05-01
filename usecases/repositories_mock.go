@@ -203,6 +203,20 @@ func (mr *MockRankingRepositoryMockRecorder) Store(contest interface{}) *gomock.
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Store", reflect.TypeOf((*MockRankingRepository)(nil).Store), contest)
 }
 
+// UpdateAmounts mocks base method
+func (m *MockRankingRepository) UpdateAmounts(arg0 domain.Rankings) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateAmounts", arg0)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// UpdateAmounts indicates an expected call of UpdateAmounts
+func (mr *MockRankingRepositoryMockRecorder) UpdateAmounts(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateAmounts", reflect.TypeOf((*MockRankingRepository)(nil).UpdateAmounts), arg0)
+}
+
 // FindAll mocks base method
 func (m *MockRankingRepository) FindAll(contestID, userID uint64) (domain.Rankings, error) {
 	m.ctrl.T.Helper()
@@ -231,18 +245,4 @@ func (m *MockRankingRepository) GetAllLanguagesForContestAndUser(contestID, user
 func (mr *MockRankingRepositoryMockRecorder) GetAllLanguagesForContestAndUser(contestID, userID interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAllLanguagesForContestAndUser", reflect.TypeOf((*MockRankingRepository)(nil).GetAllLanguagesForContestAndUser), contestID, userID)
-}
-
-// UpdateRankingsForContestAndUser mocks base method
-func (m *MockRankingRepository) UpdateRankingsForContestAndUser(contestID, userID uint64) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UpdateRankingsForContestAndUser", contestID, userID)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// UpdateRankingsForContestAndUser indicates an expected call of UpdateRankingsForContestAndUser
-func (mr *MockRankingRepositoryMockRecorder) UpdateRankingsForContestAndUser(contestID, userID interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateRankingsForContestAndUser", reflect.TypeOf((*MockRankingRepository)(nil).UpdateRankingsForContestAndUser), contestID, userID)
 }

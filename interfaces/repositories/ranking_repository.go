@@ -46,6 +46,10 @@ func (r *rankingRepository) update(ranking domain.Ranking) error {
 	return fail.Wrap(err)
 }
 
+func (r *rankingRepository) FindAll(contestID uint64, userID uint64) (domain.Rankings, error) {
+	return nil, nil
+}
+
 func (r *rankingRepository) GetAllLanguagesForContestAndUser(contestID uint64, userID uint64) (domain.LanguageCodes, error) {
 	var codes []domain.LanguageCode
 

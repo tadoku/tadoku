@@ -168,5 +168,9 @@ func (i *rankingInteractor) UpdateRanking(contestID uint64, userID uint64) error
 		return ErrNoRankingsFound
 	}
 
+	// TODO: Get all logs for this contest by this userID
+	// TODO: Calculate new totals
+	// TODO: Update rankiings with new totals
+
 	return nil
 }

@@ -79,6 +79,7 @@ func (r *rankingRepository) FindAll(contestID uint64, userID uint64) (domain.Ran
 		select id, contest_id, user_id, language_code, amount, created_at, updated_at
 		from rankings
 		where contest_id = $1 and user_id = $2
+		order by id
 	`
 
 	err := r.sqlHandler.Select(&rankings, query, contestID, userID)

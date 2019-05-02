@@ -237,12 +237,14 @@ func TestRankingInteractor_UpdateRankings(t *testing.T) {
 		rankings := domain.Rankings{
 			{ID: 1, ContestID: contestID, UserID: userID, Language: domain.Japanese, Amount: 0},
 			{ID: 2, ContestID: contestID, UserID: userID, Language: domain.Korean, Amount: 0},
-			{ID: 3, ContestID: contestID, UserID: userID, Language: domain.Global, Amount: 0},
+			{ID: 3, ContestID: contestID, UserID: userID, Language: domain.German, Amount: 11},
+			{ID: 4, ContestID: contestID, UserID: userID, Language: domain.Global, Amount: 0},
 		}
 		expectedRankings := domain.Rankings{
 			{ID: 1, ContestID: contestID, UserID: userID, Language: domain.Japanese, Amount: 10},
 			{ID: 2, ContestID: contestID, UserID: userID, Language: domain.Korean, Amount: 2},
-			{ID: 3, ContestID: contestID, UserID: userID, Language: domain.Global, Amount: 12},
+			{ID: 3, ContestID: contestID, UserID: userID, Language: domain.German, Amount: 0},
+			{ID: 4, ContestID: contestID, UserID: userID, Language: domain.Global, Amount: 12},
 		}
 		rankingRepo.EXPECT().FindAll(contestID, userID).Return(rankings, nil)
 		contestLogRepo.EXPECT().FindAll(contestID, userID).Return(domain.ContestLogs{logJapaneseBook, logKoreanManga}, nil)

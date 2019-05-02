@@ -72,6 +72,13 @@ func (r *rankingRepository) UpdateAmounts(rankings domain.Rankings) error {
 	return tx.Commit()
 }
 
+func (r *rankingRepository) RankingsForContest(
+	contestID uint64,
+	languageCode domain.LanguageCode,
+) (domain.Rankings, error) {
+	return nil, nil
+}
+
 func (r *rankingRepository) FindAll(contestID uint64, userID uint64) (domain.Rankings, error) {
 	var rankings []domain.Ranking
 

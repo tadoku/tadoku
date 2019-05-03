@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/srvc/fail"
+
 	"github.com/tadoku/api/domain"
 	"github.com/tadoku/api/usecases"
 )
@@ -57,6 +58,10 @@ func (s *rankingService) Get(ctx Context) error {
 
 	rankings, err := s.RankingInteractor.RankingsForContest(contestID, domain.Global)
 	if err != nil {
+		if err == usecases.ErrNoRankingsFound {
+			return ctx.NoContent(http.StatusNotFound)
+		}
+
 		return fail.Wrap(err)
 	}
 

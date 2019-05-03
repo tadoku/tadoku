@@ -201,12 +201,15 @@ func (i *rankingInteractor) RankingsForContest(
 		validatedLanguage = languageCode
 	}
 
-	lookup := i.rankingRepository.RankingsForContest
+	var rankings domain.Rankings
+	var err error
+
 	if domain.ContestID(contestID).IsGlobal() {
-		return nil, fail.New("not yet implemented")
+		rankings, err = i.rankingRepository.GlobalRankings(validatedLanguage)
+	} else {
+		rankings, err = i.rankingRepository.RankingsForContest(contestID, validatedLanguage)
 	}
 
-	rankings, err := lookup(contestID, validatedLanguage)
 	if err != nil {
 		return nil, fail.Wrap(err)
 	}

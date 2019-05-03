@@ -51,6 +51,7 @@ func TestRankingService_Get(t *testing.T) {
 	}
 
 	ctx := services.NewMockContext(ctrl)
+	ctx.EXPECT().GetID().Return(contestID, nil)
 	ctx.EXPECT().JSON(200, expected)
 
 	i := usecases.NewMockRankingInteractor(ctrl)

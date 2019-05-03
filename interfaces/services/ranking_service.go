@@ -50,7 +50,12 @@ func (s *rankingService) Create(ctx Context) error {
 }
 
 func (s *rankingService) Get(ctx Context) error {
-	rankings, err := s.RankingInteractor.RankingsForContest(1, domain.Global)
+	contestID, err := ctx.GetID()
+	if err != nil {
+		return fail.Wrap(err)
+	}
+
+	rankings, err := s.RankingInteractor.RankingsForContest(contestID, domain.Global)
 	if err != nil {
 		return fail.Wrap(err)
 	}

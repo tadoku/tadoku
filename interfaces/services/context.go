@@ -11,6 +11,9 @@ import (
 
 // Context is a subset of the echo framework context, so we are not directly depending on it
 type Context interface {
+	// QueryParam returns the query param for the provided name.
+	QueryParam(name string) string
+
 	// Get retrieves data from the context.
 	Get(key string) interface{}
 

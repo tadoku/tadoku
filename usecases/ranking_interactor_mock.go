@@ -74,3 +74,18 @@ func (mr *MockRankingInteractorMockRecorder) UpdateRanking(contestID, userID int
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateRanking", reflect.TypeOf((*MockRankingInteractor)(nil).UpdateRanking), contestID, userID)
 }
+
+// RankingsForContest mocks base method
+func (m *MockRankingInteractor) RankingsForContest(contestID uint64, languageCode domain.LanguageCode) (domain.Rankings, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "RankingsForContest", contestID, languageCode)
+	ret0, _ := ret[0].(domain.Rankings)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// RankingsForContest indicates an expected call of RankingsForContest
+func (mr *MockRankingInteractorMockRecorder) RankingsForContest(contestID, languageCode interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RankingsForContest", reflect.TypeOf((*MockRankingInteractor)(nil).RankingsForContest), contestID, languageCode)
+}

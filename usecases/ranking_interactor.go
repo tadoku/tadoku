@@ -40,6 +40,8 @@ type RankingInteractor interface {
 	) error
 	CreateLog(log domain.ContestLog) error
 	UpdateRanking(contestID uint64, userID uint64) error
+
+	RankingsForContest(contestID uint64, languageCode domain.LanguageCode) (domain.Rankings, error)
 }
 
 // NewRankingInteractor instantiates RankingInteractor with all dependencies
@@ -187,4 +189,11 @@ func (i *rankingInteractor) UpdateRanking(contestID uint64, userID uint64) error
 	}
 
 	return i.rankingRepository.UpdateAmounts(updatedRankings)
+}
+
+func (i *rankingInteractor) RankingsForContest(
+	contestID uint64,
+	languageCode domain.LanguageCode,
+) (domain.Rankings, error) {
+	return nil, nil
 }

@@ -82,7 +82,7 @@ func (r *rankingRepository) RankingsForContest(
 		select id, contest_id, user_id, language_code, amount, created_at, updated_at
 		from rankings
 		where contest_id = $1 and language_code = $2
-		order by id asc
+		order by amount desc, id asc
 	`
 
 	err := r.sqlHandler.Select(&rankings, query, contestID, languageCode)

@@ -112,12 +112,13 @@ func TestRankingRepository_RankingsForContest(t *testing.T) {
 
 	contestID := uint64(1)
 
-	expected := []struct {
+	type testCase struct {
 		contestID uint64
 		userID    uint64
 		language  domain.LanguageCode
 		amount    float32
-	}{
+	}
+	expected := []testCase{
 		{contestID, 3, domain.Global, 30},
 		{contestID, 2, domain.Global, 20},
 		{contestID, 1, domain.Global, 10},
@@ -125,7 +126,7 @@ func TestRankingRepository_RankingsForContest(t *testing.T) {
 
 	// Correct rankings
 	{
-		for _, data := range expected {
+		for _, data := range []testCase{expected[2], expected[1], expected[0]} {
 			ranking := &domain.Ranking{
 				ContestID: data.contestID,
 				UserID:    data.userID,
@@ -140,12 +141,7 @@ func TestRankingRepository_RankingsForContest(t *testing.T) {
 
 	// Create unrelated rankings to check if it is really working
 	{
-		for _, data := range []struct {
-			contestID uint64
-			userID    uint64
-			language  domain.LanguageCode
-			amount    float32
-		}{
+		for _, data := range []testCase{
 			{contestID + 1, 1, domain.Global, 50},
 			{contestID, 1, domain.Japanese, 250},
 			{contestID, 2, domain.Korean, 150},
@@ -168,13 +164,9 @@ func TestRankingRepository_RankingsForContest(t *testing.T) {
 
 	assert.Equal(t, len(expected), len(rankings))
 
-	for _, expected := range expected {
-		var ranking domain.Ranking
-		for _, r := range rankings {
-			if r.UserID == expected.userID {
-				ranking = r
-			}
-		}
+	for i, expected := range expected {
+		// This assumption should work as the order of the rankings should be fixed
+		ranking := rankings[i]
 
 		assert.Equal(t, expected.amount, ranking.Amount)
 		assert.Equal(t, contestID, ranking.ContestID)

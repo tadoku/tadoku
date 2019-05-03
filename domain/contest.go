@@ -34,3 +34,11 @@ func (c Contest) Validate() (bool, error) {
 
 	return true, nil
 }
+
+// ContestID is a container for contest ids with some domain logic
+type ContestID uint64
+
+// IsGlobal for knowing if a contest is a specific one or all of them
+func (id ContestID) IsGlobal() bool {
+	return id == 0
+}

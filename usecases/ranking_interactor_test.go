@@ -300,6 +300,17 @@ func TestRankingInteractor_RankingsForContent(t *testing.T) {
 	}
 
 	{
+		expected := domain.Rankings{
+			{ID: 1, ContestID: contestID, UserID: userID, Language: domain.Japanese, Amount: 15},
+		}
+		rankingRepo.EXPECT().RankingsForContest(contestID, domain.Japanese).Return(expected, nil)
+		validator.EXPECT().Validate(domain.Japanese).Return(true, nil)
+
+		_, err := interactor.RankingsForContest(contestID, domain.Japanese)
+		assert.NoError(t, err)
+	}
+
+	{
 		invalidLanguage := domain.LanguageCode("")
 		expected := domain.Rankings{
 			{ID: 1, ContestID: contestID, UserID: userID, Language: language, Amount: 15},

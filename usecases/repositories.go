@@ -31,6 +31,7 @@ type RankingRepository interface {
 	UpdateAmounts(domain.Rankings) error
 
 	RankingsForContest(contestID uint64, languageCode domain.LanguageCode) (domain.Rankings, error)
+	GlobalRankings(languageCode domain.LanguageCode) (domain.Rankings, error)
 	FindAll(contestID uint64, userID uint64) (domain.Rankings, error)
 	GetAllLanguagesForContestAndUser(contestID uint64, userID uint64) (domain.LanguageCodes, error)
 }

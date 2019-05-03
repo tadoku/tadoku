@@ -31,9 +31,6 @@ var ErrInvalidContestLog = fail.New("invalid contest log supplied")
 // ErrContestLanguageNotSignedUp for when a user tries to log an entry for a contest with a language they're not signed up for
 var ErrContestLanguageNotSignedUp = fail.New("user has not signed up for given language")
 
-// GlobalRankingsContestID is the ID that's passed in when the overall rankings are requested
-var GlobalRankingsContestID = uint64(0)
-
 // RankingInteractor contains all business logic for rankings
 type RankingInteractor interface {
 	CreateRanking(
@@ -204,12 +201,15 @@ func (i *rankingInteractor) RankingsForContest(
 		validatedLanguage = languageCode
 	}
 
-	lookup := i.rankingRepository.RankingsForContest
-	if contestID == GlobalRankingsContestID {
-		return nil, fail.New("not yet implemented")
+	var rankings domain.Rankings
+	var err error
+
+	if domain.ContestID(contestID).IsGlobal() {
+		rankings, err = i.rankingRepository.GlobalRankings(validatedLanguage)
+	} else {
+		rankings, err = i.rankingRepository.RankingsForContest(contestID, validatedLanguage)
 	}
 
-	rankings, err := lookup(contestID, validatedLanguage)
 	if err != nil {
 		return nil, fail.Wrap(err)
 	}

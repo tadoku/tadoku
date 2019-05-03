@@ -93,6 +93,25 @@ func (r *rankingRepository) RankingsForContest(
 	return rankings, nil
 }
 
+func (r *rankingRepository) GlobalRankings(languageCode domain.LanguageCode) (domain.Rankings, error) {
+	var rankings []domain.Ranking
+
+	query := `
+		select user_id, language_code, sum(amount) as amount
+		from rankings
+		where language_code = $1
+		group by user_id, language_code
+		order by amount desc
+	`
+
+	err := r.sqlHandler.Select(&rankings, query, languageCode)
+	if err != nil {
+		return nil, err
+	}
+
+	return rankings, nil
+}
+
 func (r *rankingRepository) FindAll(contestID uint64, userID uint64) (domain.Rankings, error) {
 	var rankings []domain.Ranking
 

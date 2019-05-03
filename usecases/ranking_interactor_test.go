@@ -262,7 +262,7 @@ func TestRankingInteractor_UpdateRankings(t *testing.T) {
 	}
 }
 
-func TestRankingInteractor_RankingsForContent(t *testing.T) {
+func TestRankingInteractor_RankingsForContest(t *testing.T) {
 	ctrl, rankingRepo, _, _, _, validator, interactor := setupRankingTest(t)
 	defer ctrl.Finish()
 
@@ -270,6 +270,7 @@ func TestRankingInteractor_RankingsForContent(t *testing.T) {
 	userID := uint64(1)
 	language := domain.Global
 
+	// Happy path for specific contest
 	{
 		expected := domain.Rankings{
 			{ID: 1, ContestID: contestID, UserID: userID, Language: language, Amount: 15},
@@ -291,14 +292,29 @@ func TestRankingInteractor_RankingsForContent(t *testing.T) {
 		}
 	}
 
+	// Happy path for global rankings
 	{
-		rankingRepo.EXPECT().RankingsForContest(contestID, language).Return(nil, nil)
+		expected := domain.Rankings{
+			{UserID: userID, Language: language, Amount: 15},
+			{UserID: userID + 1, Language: language, Amount: 12},
+			{UserID: userID + 2, Language: language, Amount: 11},
+			{UserID: userID + 3, Language: language, Amount: 0},
+		}
+		rankingRepo.EXPECT().GlobalRankings(language).Return(expected, nil)
 		validator.EXPECT().Validate(language).Return(true, nil)
 
-		_, err := interactor.RankingsForContest(contestID, language)
-		assert.EqualError(t, err, usecases.ErrNoRankingsFound.Error())
+		rankings, err := interactor.RankingsForContest(0, language)
+		assert.NoError(t, err)
+
+		for i, ranking := range rankings {
+			expect := expected[i]
+
+			assert.Equal(t, expect.UserID, ranking.UserID)
+			assert.Equal(t, expect.Amount, ranking.Amount)
+		}
 	}
 
+	// Happy path for specific language and contest
 	{
 		expected := domain.Rankings{
 			{ID: 1, ContestID: contestID, UserID: userID, Language: domain.Japanese, Amount: 15},
@@ -310,6 +326,7 @@ func TestRankingInteractor_RankingsForContent(t *testing.T) {
 		assert.NoError(t, err)
 	}
 
+	// Happy path for invalid language falls back to global
 	{
 		invalidLanguage := domain.LanguageCode("")
 		expected := domain.Rankings{
@@ -320,5 +337,14 @@ func TestRankingInteractor_RankingsForContent(t *testing.T) {
 
 		_, err := interactor.RankingsForContest(contestID, invalidLanguage)
 		assert.NoError(t, err)
+	}
+
+	// Sad path for no rankings found
+	{
+		rankingRepo.EXPECT().RankingsForContest(contestID, language).Return(nil, nil)
+		validator.EXPECT().Validate(language).Return(true, nil)
+
+		_, err := interactor.RankingsForContest(contestID, language)
+		assert.EqualError(t, err, usecases.ErrNoRankingsFound.Error())
 	}
 }

@@ -174,6 +174,64 @@ func TestRankingRepository_RankingsForContest(t *testing.T) {
 	}
 }
 
+func TestRankingRepository_GlobalRankings(t *testing.T) {
+	t.Parallel()
+	sqlHandler, cleanup := setupTestingSuite(t)
+	defer cleanup()
+
+	repo := repositories.NewRankingRepository(sqlHandler)
+
+	contestID := uint64(1)
+
+	expected := []struct {
+		userID   uint64
+		language domain.LanguageCode
+		amount   float32
+	}{
+		{1, domain.Global, 50},
+		{3, domain.Global, 30},
+		{2, domain.Global, 20},
+	}
+
+	{
+		rankings := []struct {
+			contestID uint64
+			userID    uint64
+			language  domain.LanguageCode
+			amount    float32
+		}{
+			{contestID, 3, domain.Global, 30},
+			{contestID, 2, domain.Global, 20},
+			{contestID, 1, domain.Global, 40},
+			{contestID + 1, 1, domain.Global, 10},
+			{contestID + 1, 1, domain.Japanese, 10},
+		}
+		for _, data := range rankings {
+			ranking := &domain.Ranking{
+				ContestID: data.contestID,
+				UserID:    data.userID,
+				Language:  data.language,
+				Amount:    data.amount,
+			}
+
+			err := repo.Store(*ranking)
+			assert.NoError(t, err)
+		}
+	}
+
+	rankings, err := repo.GlobalRankings(domain.Global)
+	assert.NoError(t, err)
+
+	assert.Equal(t, len(expected), len(rankings))
+
+	for i, expected := range expected {
+		// This assumption should work as the order of the rankings should be fixed
+		ranking := rankings[i]
+
+		assert.Equal(t, expected.amount, ranking.Amount)
+		assert.Equal(t, expected.userID, ranking.UserID)
+	}
+}
 func TestRankingRepository_FindAllByContestAndUser(t *testing.T) {
 	t.Parallel()
 	sqlHandler, cleanup := setupTestingSuite(t)

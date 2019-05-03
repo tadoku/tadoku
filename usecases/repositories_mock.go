@@ -247,6 +247,21 @@ func (mr *MockRankingRepositoryMockRecorder) RankingsForContest(contestID, langu
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RankingsForContest", reflect.TypeOf((*MockRankingRepository)(nil).RankingsForContest), contestID, languageCode)
 }
 
+// GlobalRankings mocks base method
+func (m *MockRankingRepository) GlobalRankings(languageCode domain.LanguageCode) (domain.Rankings, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GlobalRankings", languageCode)
+	ret0, _ := ret[0].(domain.Rankings)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GlobalRankings indicates an expected call of GlobalRankings
+func (mr *MockRankingRepositoryMockRecorder) GlobalRankings(languageCode interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GlobalRankings", reflect.TypeOf((*MockRankingRepository)(nil).GlobalRankings), languageCode)
+}
+
 // FindAll mocks base method
 func (m *MockRankingRepository) FindAll(contestID, userID uint64) (domain.Rankings, error) {
 	m.ctrl.T.Helper()

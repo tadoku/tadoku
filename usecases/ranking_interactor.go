@@ -195,7 +195,13 @@ func (i *rankingInteractor) RankingsForContest(
 	contestID uint64,
 	languageCode domain.LanguageCode,
 ) (domain.Rankings, error) {
-	rankings, err := i.rankingRepository.RankingsForContest(contestID, languageCode)
+
+	validatedLanguage := domain.Global
+	if ok, _ := i.validator.Validate(languageCode); ok {
+		validatedLanguage = languageCode
+	}
+
+	rankings, err := i.rankingRepository.RankingsForContest(contestID, validatedLanguage)
 	if err != nil {
 		return nil, fail.Wrap(err)
 	}

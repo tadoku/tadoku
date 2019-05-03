@@ -51,7 +51,7 @@ func TestRankingService_Get(t *testing.T) {
 	}
 
 	ctx := services.NewMockContext(ctrl)
-	ctx.EXPECT().GetID().Return(contestID, nil)
+	ctx.EXPECT().QueryParam("contest_id").Return("1")
 	ctx.EXPECT().QueryParam("language").Return(string(domain.Global))
 	ctx.EXPECT().JSON(200, expected)
 

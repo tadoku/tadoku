@@ -2,6 +2,7 @@ package services
 
 import (
 	"net/http"
+	"strconv"
 
 	"github.com/srvc/fail"
 
@@ -51,11 +52,10 @@ func (s *rankingService) Create(ctx Context) error {
 }
 
 func (s *rankingService) Get(ctx Context) error {
-	contestID, err := ctx.GetID()
+	contestID, err := strconv.ParseUint(ctx.QueryParam("contest_id"), 10, 64)
 	if err != nil {
 		return fail.Wrap(err)
 	}
-
 	language := domain.LanguageCode(ctx.QueryParam("language"))
 
 	rankings, err := s.RankingInteractor.RankingsForContest(contestID, language)

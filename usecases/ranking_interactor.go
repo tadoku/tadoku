@@ -195,5 +195,14 @@ func (i *rankingInteractor) RankingsForContest(
 	contestID uint64,
 	languageCode domain.LanguageCode,
 ) (domain.Rankings, error) {
-	return nil, nil
+	rankings, err := i.rankingRepository.RankingsForContest(contestID, languageCode)
+	if err != nil {
+		return nil, fail.Wrap(err)
+	}
+
+	if len(rankings) == 0 {
+		return nil, ErrNoRankingsFound
+	}
+
+	return rankings, nil
 }

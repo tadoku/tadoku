@@ -11,6 +11,7 @@ import (
 // RankingService is responsible for managing rankings
 type RankingService interface {
 	Create(ctx Context) error
+	Get(ctx Context) error
 }
 
 // NewRankingService initializer
@@ -46,4 +47,13 @@ func (s *rankingService) Create(ctx Context) error {
 	}
 
 	return ctx.NoContent(http.StatusCreated)
+}
+
+func (s *rankingService) Get(ctx Context) error {
+	rankings, err := s.RankingInteractor.RankingsForContest(1, domain.Global)
+	if err != nil {
+		return fail.Wrap(err)
+	}
+
+	return ctx.JSON(http.StatusOK, rankings)
 }

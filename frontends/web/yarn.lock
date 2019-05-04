@@ -337,6 +337,13 @@
   dependencies:
     "@babel/helper-plugin-utils" "^7.0.0"
 
+"@babel/plugin-syntax-typescript@^7.2.0":
+  version "7.3.3"
+  resolved "https://registry.yarnpkg.com/@babel/plugin-syntax-typescript/-/plugin-syntax-typescript-7.3.3.tgz#a7cc3f66119a9f7ebe2de5383cce193473d65991"
+  integrity sha512-dGwbSMA1YhVS8+31CnPR7LB4pcbrzcV99wQzby4uAfrkZPYZlQ7ImwdpzLqi6Z6IL02b8IAL379CaMwo0x5Lag==
+  dependencies:
+    "@babel/helper-plugin-utils" "^7.0.0"
+
 "@babel/plugin-transform-arrow-functions@^7.0.0":
   version "7.2.0"
   resolved "https://registry.yarnpkg.com/@babel/plugin-transform-arrow-functions/-/plugin-transform-arrow-functions-7.2.0.tgz#9aeafbe4d6ffc6563bf8f8372091628f00779550"
@@ -594,6 +601,14 @@
   dependencies:
     "@babel/helper-plugin-utils" "^7.0.0"
 
+"@babel/plugin-transform-typescript@^7.3.2":
+  version "7.4.4"
+  resolved "https://registry.yarnpkg.com/@babel/plugin-transform-typescript/-/plugin-transform-typescript-7.4.4.tgz#93e9c3f2a546e6d3da1e9cc990e30791b807aa9f"
+  integrity sha512-rwDvjaMTx09WC0rXGBRlYSSkEHOKRrecY6hEr3SVIPKII8DVWXtapNAfAyMC0dovuO+zYArcAuKeu3q9DNRfzA==
+  dependencies:
+    "@babel/helper-plugin-utils" "^7.0.0"
+    "@babel/plugin-syntax-typescript" "^7.2.0"
+
 "@babel/plugin-transform-unicode-regex@^7.0.0":
   version "7.4.4"
   resolved "https://registry.yarnpkg.com/@babel/plugin-transform-unicode-regex/-/plugin-transform-unicode-regex-7.4.4.tgz#ab4634bb4f14d36728bf5978322b35587787970f"
@@ -661,6 +676,14 @@
     "@babel/plugin-transform-react-jsx-self" "^7.0.0"
     "@babel/plugin-transform-react-jsx-source" "^7.0.0"
 
+"@babel/preset-typescript@^7.0.0":
+  version "7.3.3"
+  resolved "https://registry.yarnpkg.com/@babel/preset-typescript/-/preset-typescript-7.3.3.tgz#88669911053fa16b2b276ea2ede2ca603b3f307a"
+  integrity sha512-mzMVuIP4lqtn4du2ynEfdO0+RYcslwrZiJHXu4MGaC1ctJiW2fyaeDrtjJGs7R/KebZ1sgowcIoWf4uRpEfKEg==
+  dependencies:
+    "@babel/helper-plugin-utils" "^7.0.0"
+    "@babel/plugin-transform-typescript" "^7.3.2"
+
 "@babel/runtime-corejs2@7.1.2":
   version "7.1.2"
   resolved "https://registry.yarnpkg.com/@babel/runtime-corejs2/-/runtime-corejs2-7.1.2.tgz#8695811a3fd8091f54f274b9320334e5e8c62200"
@@ -708,6 +731,94 @@
     esutils "^2.0.2"
     lodash "^4.17.11"
     to-fast-properties "^2.0.0"
+
+"@types/anymatch@*":
+  version "1.3.1"
+  resolved "https://registry.yarnpkg.com/@types/anymatch/-/anymatch-1.3.1.tgz#336badc1beecb9dacc38bea2cf32adf627a8421a"
+  integrity sha512-/+CRPXpBDpo2RK9C68N3b2cOvO0Cf5B9aPijHsoDQTHivnGSObdOF2BRQOYjojWTDy6nQvMjmqRXIxH55VjxxA==
+
+"@types/next-server@*":
+  version "8.1.1"
+  resolved "https://registry.yarnpkg.com/@types/next-server/-/next-server-8.1.1.tgz#1570d5079cf7e82e77f48826024c6e2797cddda7"
+  integrity sha512-R9NbH5pcZSNx2mUkAlyqhP8RQDJIeugZm68AqZlrgRAKO3KqZAMiynqUv8bqm5zDw4nLy7OlD/ELUEP/iyVnsw==
+  dependencies:
+    "@types/next" "*"
+    "@types/node" "*"
+    "@types/react" "*"
+    "@types/react-loadable" "*"
+
+"@types/next@*", "@types/next@^8.0.5":
+  version "8.0.5"
+  resolved "https://registry.yarnpkg.com/@types/next/-/next-8.0.5.tgz#667551f587f7905388bd89a6962d93e930f6c314"
+  integrity sha512-JZVgbTPuptXEwu2pi928bG0WJARCInJEu9CW6wh0veKGkE2zWNvr9SSb4+7NN2ffNlTPRv9MMS3AE4cTI69HmA==
+  dependencies:
+    "@types/next-server" "*"
+    "@types/node" "*"
+    "@types/node-fetch" "*"
+    "@types/react" "*"
+
+"@types/node-fetch@*":
+  version "2.3.3"
+  resolved "https://registry.yarnpkg.com/@types/node-fetch/-/node-fetch-2.3.3.tgz#eb9c2a0ce8e9424ebe0c0cbe6f1e8ea7576c1310"
+  integrity sha512-MIplfRxrDTsIbOLGyFqNWTmxho5Fs710Kul35tEcaqkx9He86mGbSCDvILL0LCMfmm+oJ8tDg51crE9+pJGgiQ==
+  dependencies:
+    "@types/node" "*"
+
+"@types/node@*":
+  version "12.0.0"
+  resolved "https://registry.yarnpkg.com/@types/node/-/node-12.0.0.tgz#d11813b9c0ff8aaca29f04cbc12817f4c7d656e5"
+  integrity sha512-Jrb/x3HT4PTJp6a4avhmJCDEVrPdqLfl3e8GGMbpkGGdwAV5UGlIs4vVEfsHHfylZVOKZWpOqmqFH8CbfOZ6kg==
+
+"@types/prop-types@*":
+  version "15.7.1"
+  resolved "https://registry.yarnpkg.com/@types/prop-types/-/prop-types-15.7.1.tgz#f1a11e7babb0c3cad68100be381d1e064c68f1f6"
+  integrity sha512-CFzn9idOEpHrgdw8JsoTkaDDyRWk1jrzIV8djzcgpq0y9tG4B4lFT+Nxh52DVpDXV+n4+NPNv7M1Dj5uMp6XFg==
+
+"@types/react-dom@^16.8.4":
+  version "16.8.4"
+  resolved "https://registry.yarnpkg.com/@types/react-dom/-/react-dom-16.8.4.tgz#7fb7ba368857c7aa0f4e4511c4710ca2c5a12a88"
+  integrity sha512-eIRpEW73DCzPIMaNBDP5pPIpK1KXyZwNgfxiVagb5iGiz6da+9A5hslSX6GAQKdO7SayVCS/Fr2kjqprgAvkfA==
+  dependencies:
+    "@types/react" "*"
+
+"@types/react-loadable@*":
+  version "5.5.1"
+  resolved "https://registry.yarnpkg.com/@types/react-loadable/-/react-loadable-5.5.1.tgz#f04a262f16e9f088098ddad1aa50682ad0984aa7"
+  integrity sha512-PSmh6IT9vHeO9QjhApMMiJ65T0Amrpf3fom+04ur872IdgCZK9MzjeN3Q11bzgQMkrV448sbT8WopQw9o0LX1g==
+  dependencies:
+    "@types/react" "*"
+    "@types/webpack" "*"
+
+"@types/react@*", "@types/react@^16.8.16":
+  version "16.8.16"
+  resolved "https://registry.yarnpkg.com/@types/react/-/react-16.8.16.tgz#2bf980b4fb29cceeb01b2c139b3e185e57d3e08e"
+  integrity sha512-A0+6kS6zwPtvubOLiCJmZ8li5bm3wKIkoKV0h3RdMDOnCj9cYkUnj3bWbE03/lcICdQmwBmUfoFiHeNhbFiyHQ==
+  dependencies:
+    "@types/prop-types" "*"
+    csstype "^2.2.0"
+
+"@types/tapable@*":
+  version "1.0.4"
+  resolved "https://registry.yarnpkg.com/@types/tapable/-/tapable-1.0.4.tgz#b4ffc7dc97b498c969b360a41eee247f82616370"
+  integrity sha512-78AdXtlhpCHT0K3EytMpn4JNxaf5tbqbLcbIRoQIHzpTIyjpxLQKRoxU55ujBXAtg3Nl2h/XWvfDa9dsMOd0pQ==
+
+"@types/uglify-js@*":
+  version "3.0.4"
+  resolved "https://registry.yarnpkg.com/@types/uglify-js/-/uglify-js-3.0.4.tgz#96beae23df6f561862a830b4288a49e86baac082"
+  integrity sha512-SudIN9TRJ+v8g5pTG8RRCqfqTMNqgWCKKd3vtynhGzkIIjxaicNAMuY5TRadJ6tzDu3Dotf3ngaMILtmOdmWEQ==
+  dependencies:
+    source-map "^0.6.1"
+
+"@types/webpack@*":
+  version "4.4.29"
+  resolved "https://registry.yarnpkg.com/@types/webpack/-/webpack-4.4.29.tgz#d2a1c1d8c071b06521d32cee1c6b33d704b54b2c"
+  integrity sha512-8KVp+cNy9OPYsa4jU6vWsBemn5ixJ0Durh95Cw/YpEKm5ks2ODhdXc4FG3Xc46KIbPrJolwY7mSZFNn1aU3hKg==
+  dependencies:
+    "@types/anymatch" "*"
+    "@types/node" "*"
+    "@types/tapable" "*"
+    "@types/uglify-js" "*"
+    source-map "^0.6.0"
 
 "@webassemblyjs/ast@1.7.11":
   version "1.7.11"
@@ -861,6 +972,13 @@
   version "4.2.1"
   resolved "https://registry.yarnpkg.com/@xtuc/long/-/long-4.2.1.tgz#5c85d662f76fa1d34575766c5dcd6615abcd30d8"
   integrity sha512-FZdkNBDqBRHKQ2MEbSC17xnPFOhZxeJ2YGSfr2BKf3sujG49Qe3bB+rGCwQfIaA7WHnGeGkSijX4FuBCdrzW/g==
+
+"@zeit/next-typescript@^1.1.1":
+  version "1.1.1"
+  resolved "https://registry.yarnpkg.com/@zeit/next-typescript/-/next-typescript-1.1.1.tgz#0b0ddfbb13ca04cde52ac2718473f1b9c40ba0ee"
+  integrity sha512-EUcHCASftz1Bc80djkf3cKJrFgvFQyODOH1kty7ShVLLdXMaZpRLj+z7RxrCoNo1bP06w0vtXEDU0cKa0HmGgg==
+  dependencies:
+    "@babel/preset-typescript" "^7.0.0"
 
 abbrev@1:
   version "1.1.1"
@@ -1600,6 +1718,11 @@ css@^2.2.4:
     source-map "^0.6.1"
     source-map-resolve "^0.5.2"
     urix "^0.1.0"
+
+csstype@^2.2.0:
+  version "2.6.4"
+  resolved "https://registry.yarnpkg.com/csstype/-/csstype-2.6.4.tgz#d585a6062096e324e7187f80e04f92bd0f00e37f"
+  integrity sha512-lAJUJP3M6HxFXbqtGRc0iZrdyeN+WzOWeY0q/VnFzI+kqVrYIzC7bWlKqCW7oCIdzoPkvfp82EVvrTlQ8zsWQg==
 
 cyclist@~0.2.2:
   version "0.2.2"

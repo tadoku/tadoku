@@ -1,7 +1,8 @@
 import React from 'react'
+import Layout from '../components/ui/Layout'
 
-function Home() {
-  return <div>Welcome to Tadoku!</div>
+const Home = () => {
+  return <Layout>Welcome to Tadoku!</Layout>
 }
 
 export default Home

@@ -1,7 +1,7 @@
-import React from "react";
+import React from 'react'
 
 function Home() {
-  return <div>Welcome to Tadoku!</div>;
+  return <div>Welcome to Tadoku!</div>
 }
 
-export default Home;
+export default Home

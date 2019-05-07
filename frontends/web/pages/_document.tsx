@@ -23,7 +23,13 @@ export default class MyDocument extends Document<{
   render() {
     return (
       <html>
-        <Head>{this.props.styleTags}</Head>
+        <Head>
+          {this.props.styleTags}
+          <link
+            href="https://fonts.googleapis.com/css?family=Open+Sans"
+            rel="stylesheet"
+          />
+        </Head>
         <body>
           <Main />
           <NextScript />

@@ -1,8 +1,6 @@
 import { createStore } from 'redux'
 
-const initialState = {
-  open: false,
-}
+const initialState = {}
 
 export type State = typeof initialState
 
@@ -10,18 +8,13 @@ export type State = typeof initialState
 
 export enum AppActionTypes {
   AppReset = '@app/reset',
-  AppOpen = '@app/open',
 }
 
 export interface AppReset {
   type: typeof AppActionTypes.AppReset
 }
 
-export interface AppOpen {
-  type: typeof AppActionTypes.AppOpen
-}
-
-export type AppActions = AppReset | AppOpen
+export type AppActions = AppReset
 export type Action = AppActions
 
 export const actionTypes = {
@@ -33,8 +26,6 @@ export const reducer = (state = initialState, action: Action) => {
   switch (action.type) {
     case actionTypes.AppReset:
       return { ...initialState }
-    case actionTypes.AppOpen:
-      return { ...state, open: true }
     default:
       return state
   }

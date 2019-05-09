@@ -1,4 +1,5 @@
 import React from 'react'
+import Link from 'next/link'
 import styled from 'styled-components'
 import Constants from './Constants'
 import NavMenu from './NavMenu'
@@ -19,7 +20,11 @@ const Container = styled.div`
 
 const Header = () => (
   <Container>
-    <LogoType>Tadoku</LogoType>
+    <Link href="/">
+      <a href="">
+        <LogoType>Tadoku</LogoType>
+      </a>
+    </Link>
     <NavMenu />
   </Container>
 )

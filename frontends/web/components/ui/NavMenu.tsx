@@ -1,6 +1,6 @@
 import React from 'react'
+import Link from 'next/link'
 import styled from 'styled-components'
-import Constants from './Constants'
 
 const StyledNav = styled.nav`
   display: flex;
@@ -14,8 +14,12 @@ const NavLink = styled.a`
 
 const NavMenu = () => (
   <StyledNav>
-    <NavLink href="">Sign in</NavLink>
-    <NavLink href="">Register</NavLink>
+    <Link href="/sign-in">
+      <NavLink href="">Sign in</NavLink>
+    </Link>
+    <Link href="/register">
+      <NavLink href="">Register</NavLink>
+    </Link>
   </StyledNav>
 )
 

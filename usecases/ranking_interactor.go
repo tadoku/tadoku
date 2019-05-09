@@ -148,6 +148,9 @@ func (i *rankingInteractor) CreateLog(log domain.ContestLog) error {
 	}
 
 	languages, err := i.rankingRepository.GetAllLanguagesForContestAndUser(log.ContestID, log.UserID)
+	if err != nil {
+		return fail.Wrap(err)
+	}
 	if !languages.ContainsLanguage(log.Language) {
 		return ErrContestLanguageNotSignedUp
 	}

@@ -1,7 +1,12 @@
 import React, { FormEvent, useState } from 'react'
+import Router from 'next/router'
 import styled from 'styled-components'
 import Constants from '../ui/Constants'
 import { SignIn } from '../../domain/Api'
+import { connect } from 'react-redux'
+import { Dispatch } from 'redux'
+import { SessionActionTypes, SessionActions, State } from '../../store'
+import { User } from '../../domain/User'
 
 const Form = styled.form``
 const Label = styled.label`
@@ -27,14 +32,27 @@ const Button = styled.button`
   height: 36px;
 `
 
-const SignInForm = () => {
+interface Props {
+  user: User | undefined
+  setUser: (token: string, user: User) => void
+}
+
+const SignInForm = ({ setUser, user }: Props) => {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
 
+  if (user) {
+    Router.push('/')
+  }
+
   const submit = async (event: FormEvent) => {
     event.preventDefault()
+    // TODO: add validation
     const response = await SignIn({ email, password })
-    console.log(response)
+
+    if (response) {
+      setUser(response.token, response.user)
+    }
   }
 
   return (
@@ -61,4 +79,19 @@ const SignInForm = () => {
   )
 }
 
-export default SignInForm
+const mapStateToProps = (state: State) => ({
+  user: state.user,
+})
+
+const mapDispatchToProps = (dispatch: Dispatch<SessionActions>) => ({
+  setUser: (token: string, user: User) =>
+    dispatch({
+      type: SessionActionTypes.SessionSignIn,
+      payload: { token, user },
+    }),
+})
+
+export default connect(
+  mapStateToProps,
+  mapDispatchToProps,
+)(SignInForm)

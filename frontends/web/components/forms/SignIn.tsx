@@ -1,11 +1,10 @@
 import React, { FormEvent, useState } from 'react'
-import Router from 'next/router'
 import styled from 'styled-components'
 import Constants from '../ui/Constants'
 import { SignIn } from '../../domain/Api'
 import { connect } from 'react-redux'
 import { Dispatch } from 'redux'
-import { SessionActionTypes, SessionActions, State } from '../../store'
+import { SessionActionTypes, SessionActions } from '../../store'
 import { User } from '../../domain/User'
 import { storeUser } from '../../domain/Session'
 
@@ -34,17 +33,12 @@ const Button = styled.button`
 `
 
 interface Props {
-  user: User | undefined
   setUser: (token: string, user: User) => void
 }
 
-const SignInForm = ({ setUser, user }: Props) => {
+const SignInForm = ({ setUser }: Props) => {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-
-  if (user) {
-    Router.push('/')
-  }
 
   const submit = async (event: FormEvent) => {
     event.preventDefault()
@@ -80,10 +74,6 @@ const SignInForm = ({ setUser, user }: Props) => {
   )
 }
 
-const mapStateToProps = (state: State) => ({
-  user: state.user,
-})
-
 const mapDispatchToProps = (dispatch: Dispatch<SessionActions>) => ({
   setUser: (token: string, user: User) => {
     const payload = { token, user }
@@ -97,6 +87,6 @@ const mapDispatchToProps = (dispatch: Dispatch<SessionActions>) => ({
 })
 
 export default connect(
-  mapStateToProps,
+  null,
   mapDispatchToProps,
 )(SignInForm)

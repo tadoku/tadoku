@@ -1,5 +1,6 @@
 import React from 'react'
 import Layout from '../components/ui/Layout'
+import { withRedirectAuthenticated } from '../components/hoc/withRedirectAuthenticated'
 
 const Register = () => {
   return (
@@ -9,4 +10,4 @@ const Register = () => {
   )
 }
 
-export default Register
+export default withRedirectAuthenticated(Register)

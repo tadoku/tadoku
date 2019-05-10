@@ -7,6 +7,7 @@ import { connect } from 'react-redux'
 import { Dispatch } from 'redux'
 import { SessionActionTypes, SessionActions, State } from '../../store'
 import { User } from '../../domain/User'
+import { storeUser } from '../../domain/Session'
 
 const Form = styled.form``
 const Label = styled.label`
@@ -84,11 +85,15 @@ const mapStateToProps = (state: State) => ({
 })
 
 const mapDispatchToProps = (dispatch: Dispatch<SessionActions>) => ({
-  setUser: (token: string, user: User) =>
+  setUser: (token: string, user: User) => {
+    const payload = { token, user }
+    storeUser(payload)
+
     dispatch({
       type: SessionActionTypes.SessionSignIn,
-      payload: { token, user },
-    }),
+      payload,
+    })
+  },
 })
 
 export default connect(

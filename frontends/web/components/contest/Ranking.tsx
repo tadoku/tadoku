@@ -1,5 +1,21 @@
 import React from 'react'
+import { Ranking } from '../../domain/Ranking'
 
-const Ranking = () => <h1>Ranking</h1>
+interface Props {
+  rankings: Ranking[]
+}
 
-export default Ranking
+const RankingList = (props: Props) => (
+  <>
+    <h1>Ranking</h1>
+    <ul>
+      {props.rankings.map(r => (
+        <li key={r.userId}>
+          {r.userId}: {r.amount} ({r.languageCode})
+        </li>
+      ))}
+    </ul>
+  </>
+)
+
+export default RankingList

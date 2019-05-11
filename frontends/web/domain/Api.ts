@@ -44,3 +44,13 @@ export const SignIn = async (payload: {
     },
   }
 }
+
+export const Register = async (payload: {
+  email: string
+  password: string
+  displayName: string
+}): Promise<boolean> => {
+  const response = await post(`${endpoint}/register`, payload)
+
+  return response.status === 201
+}

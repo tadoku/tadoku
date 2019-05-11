@@ -16,6 +16,7 @@ export enum AppActionTypes {
 
 export enum SessionActionTypes {
   SessionSignIn = '@session/sign-in',
+  SessionSignOut = '@session/sign-out',
 }
 
 export interface AppReset {
@@ -30,7 +31,11 @@ export interface SessionSignIn {
   }
 }
 
-export type SessionActions = SessionSignIn
+export interface SessionSignOut {
+  type: typeof SessionActionTypes.SessionSignOut
+}
+
+export type SessionActions = SessionSignIn | SessionSignOut
 export type AppActions = AppReset
 export type Action = AppActions | SessionActions
 
@@ -47,6 +52,8 @@ export const reducer = (state = initialState, action: Action) => {
     case actionTypes.SessionSignIn:
       const payload = (action as SessionSignIn).payload
       return { ...state, token: payload.token, user: payload.user }
+    case actionTypes.SessionSignOut:
+      return { ...state, token: undefined, user: undefined }
     default:
       return state
   }

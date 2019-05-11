@@ -1,17 +1,5 @@
-import { User, RawUser } from './user'
-import 'isomorphic-fetch'
-
-const endpoint = 'http://localhost:4000'
-
-const post = (endpoint: string, body: any) =>
-  fetch(endpoint, {
-    method: 'post',
-    headers: {
-      Accept: 'application/json',
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(body),
-  })
+import { User, RawUser } from '../User'
+import { post } from './api'
 
 interface SignInResponse {
   token: string
@@ -23,11 +11,11 @@ interface rawSignInResponse {
   user: RawUser
 }
 
-export const SignIn = async (payload: {
+const signIn = async (payload: {
   email: string
   password: string
 }): Promise<SignInResponse | undefined> => {
-  const response = await post(`${endpoint}/login`, payload)
+  const response = await post(`/login`, payload)
 
   if (response.status !== 200) {
     return undefined
@@ -45,12 +33,19 @@ export const SignIn = async (payload: {
   }
 }
 
-export const Register = async (payload: {
+const register = async (payload: {
   email: string
   password: string
   displayName: string
 }): Promise<boolean> => {
-  const response = await post(`${endpoint}/register`, payload)
+  const response = await post(`/register`, payload)
 
   return response.status === 201
 }
+
+const SessionApi = {
+  signIn,
+  register,
+}
+
+export default SessionApi

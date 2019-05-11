@@ -1,7 +1,7 @@
 import React, { FormEvent, useState } from 'react'
 import styled from 'styled-components'
 import Constants from '../ui/Constants'
-import { SignIn, Register } from '../../domain/Api'
+import SessionApi from '../../domain/api/session'
 import { connect } from 'react-redux'
 import { Dispatch } from 'redux'
 import { SessionActionTypes, SessionActions } from '../../store'
@@ -44,7 +44,7 @@ const RegisterForm = ({ setUser }: Props) => {
   const submit = async (event: FormEvent) => {
     event.preventDefault()
     // TODO: add validation
-    const success = await Register({ email, password, displayName })
+    const success = await SessionApi.register({ email, password, displayName })
 
     if (!success) {
       // handle sad path
@@ -52,7 +52,7 @@ const RegisterForm = ({ setUser }: Props) => {
       return
     }
 
-    const response = await SignIn({ email, password })
+    const response = await SessionApi.signIn({ email, password })
 
     if (response) {
       setUser(response.token, response.user)

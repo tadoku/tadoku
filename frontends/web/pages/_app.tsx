@@ -4,7 +4,7 @@ import { Provider } from 'react-redux'
 import App, { Container, NextAppContext } from 'next/app'
 import withRedux from 'next-redux-wrapper'
 import { Store } from 'redux'
-import { loadUser } from '../domain/Session'
+import { loadUserFromLocalStorage } from '../domain/Session'
 
 class MyApp extends App<{ store: Store }> {
   static async getInitialProps({ Component, ctx }: NextAppContext) {
@@ -16,7 +16,7 @@ class MyApp extends App<{ store: Store }> {
   }
 
   componentDidMount() {
-    const payload = loadUser()
+    const payload = loadUserFromLocalStorage()
 
     if (payload) {
       this.props.store.dispatch({

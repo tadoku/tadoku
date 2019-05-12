@@ -18,13 +18,14 @@ import (
 func NewRouter(
 	port string,
 	jwtSecret string,
+	corsAllowedOrigins []string,
 	routes ...services.Route,
 ) services.Router {
 	m := &middlewares{
 		restrict:      newJWTMiddleware(jwtSecret),
 		authenticator: usecases.NewRoleAuthenticator(),
 	}
-	e := newEcho(m, routes...)
+	e := newEcho(m, corsAllowedOrigins, routes...)
 	return router{e, port}
 }
 
@@ -35,10 +36,15 @@ type middlewares struct {
 
 func newEcho(
 	m *middlewares,
+	corsAllowedOrigins []string,
 	routes ...services.Route,
 ) *echo.Echo {
 	e := echo.New()
 	e.HTTPErrorHandler = errorHandler
+	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
+		AllowOrigins: corsAllowedOrigins,
+		AllowMethods: []string{http.MethodGet, http.MethodPut, http.MethodPost, http.MethodDelete},
+	}))
 
 	for _, route := range routes {
 		switch route.Method {

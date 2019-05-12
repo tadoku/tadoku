@@ -26,7 +26,7 @@ func TestRouter_RestrictedRoute(t *testing.T) {
 		{Method: http.MethodGet, Path: "/registered_only", HandlerFunc: handler, MinRole: domain.RoleUser},
 		{Method: http.MethodGet, Path: "/admin", HandlerFunc: handler, MinRole: domain.RoleAdmin},
 	}
-	e := infra.NewRouter("1337", secret, routes...)
+	e := infra.NewRouter("1337", secret, nil, routes...)
 	gen := infra.NewJWTGenerator(secret)
 
 	for _, tc := range []struct {

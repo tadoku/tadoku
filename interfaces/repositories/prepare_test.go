@@ -24,6 +24,23 @@ func TestMain(m *testing.M) {
 	// Must be called pgx so the sqlx mapper uses the correct notation
 	txdb.Register("pgx", "postgres", cfg.DatabaseURL)
 
+	db, err := infra.NewRDB(cfg.DatabaseURL, cfg.DatabaseMaxIdleConns, cfg.DatabaseMaxOpenConns)
+	if err != nil {
+		panic(fmt.Sprintf("could not connect to testing DB: %s", err))
+	}
+
+	migrator, _ := gomigrate.NewMigratorWithLogger(
+		db.DB,
+		gomigrate.Postgres{},
+		"./../../migrations",
+		log.New(ioutil.Discard, "", log.LstdFlags),
+	)
+
+	err = migrator.Migrate()
+	if err != nil {
+		panic(fmt.Sprintf("could not migrate testing DB: %s", err))
+	}
+
 	code := m.Run()
 	defer os.Exit(code)
 }
@@ -39,19 +56,6 @@ func loadConfig() *test.Config {
 
 func setupTestingSuite(t *testing.T) (rdb.SQLHandler, func() error) {
 	db, cleanup := prepareDB(t)
-
-	migrator, _ := gomigrate.NewMigratorWithLogger(
-		db.DB,
-		gomigrate.Postgres{},
-		"./../../migrations",
-		log.New(ioutil.Discard, "", log.LstdFlags),
-	)
-
-	err := migrator.Migrate()
-	if err != nil {
-		t.Fatalf("could not migrate testing DB: %s", err)
-	}
-
 	return infra.NewSQLHandler(db), cleanup
 }
 

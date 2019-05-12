@@ -9,7 +9,6 @@ import (
 )
 
 func TestUserRepository_StoreUser(t *testing.T) {
-	t.Parallel()
 	sqlHandler, cleanup := setupTestingSuite(t)
 	defer cleanup()
 
@@ -23,22 +22,21 @@ func TestUserRepository_StoreUser(t *testing.T) {
 	}
 
 	{
-		err := repo.Store(*user)
+		err := repo.Store(user)
 		assert.NoError(t, err)
 	}
 
 	{
-		user.ID = 1
 		user.DisplayName = "John Smith"
-		err := repo.Store(*user)
+		err := repo.Store(user)
 		assert.NoError(t, err)
 	}
 
 	{
-		dbUser, err := repo.FindByID(1)
+		dbUser, err := repo.FindByID(user.ID)
 		assert.NoError(t, err)
 		assert.Equal(t, dbUser, domain.User{
-			ID:          1,
+			ID:          user.ID,
 			Email:       "foo@example.com",
 			DisplayName: "John Smith",
 			Password:    "",
@@ -51,7 +49,7 @@ func TestUserRepository_StoreUser(t *testing.T) {
 		dbUser, err := repo.FindByEmail("foo@example.com")
 		assert.NoError(t, err)
 		assert.Equal(t, dbUser, domain.User{
-			ID:          1,
+			ID:          user.ID,
 			Email:       "foo@example.com",
 			DisplayName: "John Smith",
 			Password:    "foobar",

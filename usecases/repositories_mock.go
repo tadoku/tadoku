@@ -34,7 +34,7 @@ func (m *MockUserRepository) EXPECT() *MockUserRepositoryMockRecorder {
 }
 
 // Store mocks base method
-func (m *MockUserRepository) Store(user domain.User) error {
+func (m *MockUserRepository) Store(user *domain.User) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Store", user)
 	ret0, _ := ret[0].(error)

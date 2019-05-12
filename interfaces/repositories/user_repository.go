@@ -16,7 +16,7 @@ type userRepository struct {
 	sqlHandler rdb.SQLHandler
 }
 
-func (r *userRepository) Store(user domain.User) error {
+func (r *userRepository) Store(user *domain.User) error {
 	if user.ID == 0 {
 		return r.create(user)
 	}
@@ -24,18 +24,24 @@ func (r *userRepository) Store(user domain.User) error {
 	return r.update(user)
 }
 
-func (r *userRepository) create(user domain.User) error {
+func (r *userRepository) create(user *domain.User) error {
 	query := `
 		insert into users
 		(email, display_name, password, role, preferences)
-		values (:email, :display_name, :password, :role, :preferences)
+		values ($1, $2, $3, $4, $5)
+		returning id
 	`
 
-	_, err := r.sqlHandler.NamedExecute(query, user)
-	return fail.Wrap(err)
+	row := r.sqlHandler.QueryRow(query, user.Email, user.DisplayName, user.Password, user.Role, user.Preferences)
+	err := row.Scan(&user.ID)
+	if err != nil {
+		return fail.Wrap(err)
+	}
+
+	return nil
 }
 
-func (r *userRepository) update(user domain.User) error {
+func (r *userRepository) update(user *domain.User) error {
 	query := `
 		update users
 		set

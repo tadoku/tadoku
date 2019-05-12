@@ -9,8 +9,11 @@ import (
 	"time"
 
 	"github.com/jmoiron/sqlx"
+	"github.com/stretchr/testify/assert"
+	"github.com/tadoku/api/domain"
 	"github.com/tadoku/api/infra"
 	"github.com/tadoku/api/interfaces/rdb"
+	"github.com/tadoku/api/interfaces/repositories"
 	"github.com/tadoku/api/test"
 
 	txdb "github.com/DATA-DOG/go-txdb"
@@ -23,6 +26,23 @@ func TestMain(m *testing.M) {
 
 	// Must be called pgx so the sqlx mapper uses the correct notation
 	txdb.Register("pgx", "postgres", cfg.DatabaseURL)
+
+	db, err := infra.NewRDB(cfg.DatabaseURL, cfg.DatabaseMaxIdleConns, cfg.DatabaseMaxOpenConns)
+	if err != nil {
+		panic(fmt.Sprintf("could not connect to testing DB: %s", err))
+	}
+
+	migrator, _ := gomigrate.NewMigratorWithLogger(
+		db.DB,
+		gomigrate.Postgres{},
+		"./../../migrations",
+		log.New(ioutil.Discard, "", log.LstdFlags),
+	)
+
+	err = migrator.Migrate()
+	if err != nil {
+		panic(fmt.Sprintf("could not migrate testing DB: %s", err))
+	}
 
 	code := m.Run()
 	defer os.Exit(code)
@@ -38,20 +58,9 @@ func loadConfig() *test.Config {
 }
 
 func setupTestingSuite(t *testing.T) (rdb.SQLHandler, func() error) {
+	t.Parallel()
+
 	db, cleanup := prepareDB(t)
-
-	migrator, _ := gomigrate.NewMigratorWithLogger(
-		db.DB,
-		gomigrate.Postgres{},
-		"./../../migrations",
-		log.New(ioutil.Discard, "", log.LstdFlags),
-	)
-
-	err := migrator.Migrate()
-	if err != nil {
-		t.Fatalf("could not migrate testing DB: %s", err)
-	}
-
 	return infra.NewSQLHandler(db), cleanup
 }
 
@@ -64,4 +73,26 @@ func prepareDB(t *testing.T) (db *sqlx.DB, cleanup func() error) {
 	}
 
 	return db, db.Close
+}
+
+func createTestUsers(t *testing.T, sqlHandler rdb.SQLHandler, count int) []*domain.User {
+	users := make([]*domain.User, count)
+
+	repo := repositories.NewUserRepository(sqlHandler)
+
+	for i := 0; i < count; i++ {
+		user := &domain.User{
+			Email:       fmt.Sprintf("foo+%d@bar.com", i),
+			DisplayName: fmt.Sprintf("FOO %d", i),
+			Password:    "foobar",
+			Role:        domain.RoleUser,
+			Preferences: &domain.Preferences{},
+		}
+		err := repo.Store(user)
+		assert.NoError(t, err)
+
+		users[i] = user
+	}
+
+	return users
 }

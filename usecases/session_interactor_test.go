@@ -46,7 +46,7 @@ func TestSessionInteractor_CreateUser(t *testing.T) {
 	hashedUser.Password = "barbar"
 
 	pwHasher.EXPECT().Hash(user.Password).Return(hashedUser.Password, nil)
-	repo.EXPECT().Store(hashedUser)
+	repo.EXPECT().Store(&hashedUser)
 
 	err := interactor.CreateUser(user)
 

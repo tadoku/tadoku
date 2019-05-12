@@ -11,7 +11,6 @@ import (
 )
 
 func TestRankingRepository_StoreRanking(t *testing.T) {
-	t.Parallel()
 	sqlHandler, cleanup := setupTestingSuite(t)
 	defer cleanup()
 
@@ -42,7 +41,6 @@ func TestRankingRepository_StoreRanking(t *testing.T) {
 }
 
 func TestRankingRepository_GetAllLanguagesForContestAndUser(t *testing.T) {
-	t.Parallel()
 	sqlHandler, cleanup := setupTestingSuite(t)
 	defer cleanup()
 
@@ -104,24 +102,25 @@ func TestRankingRepository_GetAllLanguagesForContestAndUser(t *testing.T) {
 }
 
 func TestRankingRepository_RankingsForContest(t *testing.T) {
-	t.Parallel()
 	sqlHandler, cleanup := setupTestingSuite(t)
 	defer cleanup()
 
 	repo := repositories.NewRankingRepository(sqlHandler)
 
 	contestID := uint64(1)
+	users := createTestUsers(t, sqlHandler, 3)
 
 	type testCase struct {
-		contestID uint64
-		userID    uint64
-		language  domain.LanguageCode
-		amount    float32
+		contestID       uint64
+		userID          uint64
+		userDisplayName string
+		language        domain.LanguageCode
+		amount          float32
 	}
 	expected := []testCase{
-		{contestID, 3, domain.Global, 30},
-		{contestID, 2, domain.Global, 20},
-		{contestID, 1, domain.Global, 10},
+		{contestID, users[2].ID, "FOO 3", domain.Global, 30},
+		{contestID, users[1].ID, "FOO 2", domain.Global, 20},
+		{contestID, users[0].ID, "FOO 1", domain.Global, 10},
 	}
 
 	// Correct rankings
@@ -142,10 +141,10 @@ func TestRankingRepository_RankingsForContest(t *testing.T) {
 	// Create unrelated rankings to check if it is really working
 	{
 		for _, data := range []testCase{
-			{contestID + 1, 1, domain.Global, 50},
-			{contestID, 1, domain.Japanese, 250},
-			{contestID, 2, domain.Korean, 150},
-			{contestID + 1, 3, domain.Global, 200},
+			{contestID + 1, 1, "", domain.Global, 50},
+			{contestID, 1, "", domain.Japanese, 250},
+			{contestID, 2, "", domain.Korean, 150},
+			{contestID + 1, 3, "", domain.Global, 200},
 		} {
 			ranking := &domain.Ranking{
 				ContestID: data.contestID,
@@ -175,22 +174,23 @@ func TestRankingRepository_RankingsForContest(t *testing.T) {
 }
 
 func TestRankingRepository_GlobalRankings(t *testing.T) {
-	t.Parallel()
 	sqlHandler, cleanup := setupTestingSuite(t)
 	defer cleanup()
 
 	repo := repositories.NewRankingRepository(sqlHandler)
 
 	contestID := uint64(1)
+	users := createTestUsers(t, sqlHandler, 3)
 
 	expected := []struct {
-		userID   uint64
-		language domain.LanguageCode
-		amount   float32
+		userID          uint64
+		userDisplayName string
+		language        domain.LanguageCode
+		amount          float32
 	}{
-		{1, domain.Global, 50},
-		{3, domain.Global, 30},
-		{2, domain.Global, 20},
+		{users[0].ID, users[0].DisplayName, domain.Global, 50},
+		{users[2].ID, users[2].DisplayName, domain.Global, 30},
+		{users[1].ID, users[1].DisplayName, domain.Global, 20},
 	}
 
 	{
@@ -200,11 +200,11 @@ func TestRankingRepository_GlobalRankings(t *testing.T) {
 			language  domain.LanguageCode
 			amount    float32
 		}{
-			{contestID, 3, domain.Global, 30},
-			{contestID, 2, domain.Global, 20},
-			{contestID, 1, domain.Global, 40},
-			{contestID + 1, 1, domain.Global, 10},
-			{contestID + 1, 1, domain.Japanese, 10},
+			{contestID, users[0].ID, domain.Global, 40},
+			{contestID + 1, users[0].ID, domain.Global, 10},
+			{contestID + 1, users[0].ID, domain.Japanese, 10},
+			{contestID, users[1].ID, domain.Global, 20},
+			{contestID, users[2].ID, domain.Global, 30},
 		}
 		for _, data := range rankings {
 			ranking := &domain.Ranking{
@@ -230,10 +230,10 @@ func TestRankingRepository_GlobalRankings(t *testing.T) {
 
 		assert.Equal(t, expected.amount, ranking.Amount)
 		assert.Equal(t, expected.userID, ranking.UserID)
+		assert.Equal(t, expected.userDisplayName, ranking.UserDisplayName)
 	}
 }
 func TestRankingRepository_FindAllByContestAndUser(t *testing.T) {
-	t.Parallel()
 	sqlHandler, cleanup := setupTestingSuite(t)
 	defer cleanup()
 
@@ -299,7 +299,6 @@ func TestRankingRepository_FindAllByContestAndUser(t *testing.T) {
 }
 
 func TestRankingRepository_UpdateAmounts(t *testing.T) {
-	t.Parallel()
 	sqlHandler, cleanup := setupTestingSuite(t)
 	defer cleanup()
 

@@ -67,5 +67,5 @@ func (s *rankingService) Get(ctx Context) error {
 		return fail.Wrap(err)
 	}
 
-	return ctx.JSON(http.StatusOK, rankings)
+	return ctx.JSON(http.StatusOK, rankings.GetView())
 }

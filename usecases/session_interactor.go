@@ -56,7 +56,7 @@ func (si *sessionInteractor) CreateUser(user domain.User) error {
 		}
 	}
 
-	err := si.userRepository.Store(user)
+	err := si.userRepository.Store(&user)
 	return fail.Wrap(err)
 }
 

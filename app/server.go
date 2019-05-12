@@ -127,7 +127,7 @@ func (d *serverDependencies) Interactors() *Interactors {
 func (d *serverDependencies) Router() services.Router {
 	holder := &d.router
 	holder.once.Do(func() {
-		holder.result = infra.NewRouter(d.Port, d.JWTSecret, d.routes()...)
+		holder.result = infra.NewRouter(d.Port, d.JWTSecret, d.CORSAllowedOrigins, d.routes()...)
 	})
 	return holder.result
 }

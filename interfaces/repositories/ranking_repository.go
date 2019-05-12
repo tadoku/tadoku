@@ -151,3 +151,7 @@ func (r *rankingRepository) GetAllLanguagesForContestAndUser(contestID uint64, u
 
 	return codes, nil
 }
+
+func (r *rankingRepository) CurrentRegistration(userID uint64) (domain.RankingRegistration, error) {
+	return domain.RankingRegistration{}, nil
+}

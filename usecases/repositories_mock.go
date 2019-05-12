@@ -291,3 +291,18 @@ func (mr *MockRankingRepositoryMockRecorder) GetAllLanguagesForContestAndUser(co
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAllLanguagesForContestAndUser", reflect.TypeOf((*MockRankingRepository)(nil).GetAllLanguagesForContestAndUser), contestID, userID)
 }
+
+// CurrentRegistration mocks base method
+func (m *MockRankingRepository) CurrentRegistration(userID uint64) (domain.RankingRegistration, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CurrentRegistration", userID)
+	ret0, _ := ret[0].(domain.RankingRegistration)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CurrentRegistration indicates an expected call of CurrentRegistration
+func (mr *MockRankingRepositoryMockRecorder) CurrentRegistration(userID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CurrentRegistration", reflect.TypeOf((*MockRankingRepository)(nil).CurrentRegistration), userID)
+}

@@ -354,3 +354,44 @@ func TestRankingRepository_UpdateAmounts(t *testing.T) {
 		}
 	}
 }
+
+func TestRankingRepository_CurrentRegistration(t *testing.T) {
+	sqlHandler, cleanup := setupTestingSuite(t)
+	defer cleanup()
+
+	repo := repositories.NewRankingRepository(sqlHandler)
+	contestRepo := repositories.NewContestRepository(sqlHandler)
+
+	user := createTestUsers(t, sqlHandler, 1)[0]
+	languages := domain.LanguageCodes{domain.Japanese, domain.German}
+	contest := &domain.Contest{
+		Start: time.Date(2019, 1, 1, 0, 0, 0, 0, time.UTC),
+		End:   time.Date(2019, 1, 31, 0, 0, 0, 0, time.UTC),
+		Open:  true,
+	}
+
+	{
+		err := contestRepo.Store(contest)
+		assert.NoError(t, err)
+	}
+
+	{
+		for _, l := range languages {
+			err := repo.Store(domain.Ranking{
+				ContestID: contest.ID,
+				UserID:    user.ID,
+				Language:  l,
+				Amount:    0,
+			})
+			assert.NoError(t, err)
+		}
+	}
+
+	{
+		registration, err := repo.CurrentRegistration(user.ID)
+		assert.NoError(t, err)
+		assert.Equal(t, contest.ID, registration.ContestID)
+		assert.Equal(t, contest.End.UTC(), registration.End.UTC())
+		assert.Equal(t, languages, registration.Languages)
+	}
+}

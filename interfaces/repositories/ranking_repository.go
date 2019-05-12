@@ -1,6 +1,8 @@
 package repositories
 
 import (
+	"time"
+
 	"github.com/srvc/fail"
 	"github.com/tadoku/api/domain"
 	"github.com/tadoku/api/interfaces/rdb"
@@ -150,4 +152,39 @@ func (r *rankingRepository) GetAllLanguagesForContestAndUser(contestID uint64, u
 	}
 
 	return codes, nil
+}
+
+func (r *rankingRepository) CurrentRegistration(userID uint64) (domain.RankingRegistration, error) {
+	var rows []struct {
+		ID           uint64
+		End          time.Time
+		LanguageCode domain.LanguageCode `db:"language_code"`
+	}
+
+	query := `
+		select
+			contests.id as id,
+			contests."end" as "end",
+			rankings.language_code as language_code
+		from rankings
+		inner join contests on contests.id = rankings.contest_id and contests.open = true
+		where rankings.user_id = $1 and rankings.language_code != 'GLO'
+	`
+
+	err := r.sqlHandler.Select(&rows, query, userID)
+	if err != nil {
+		return domain.RankingRegistration{}, fail.Wrap(err)
+	}
+
+	result := &domain.RankingRegistration{}
+
+	for i, row := range rows {
+		if i == 0 {
+			result.ContestID = row.ID
+			result.End = row.End
+		}
+		result.Languages = append(result.Languages, row.LanguageCode)
+	}
+
+	return *result, nil
 }

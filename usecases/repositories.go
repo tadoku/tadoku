@@ -15,7 +15,7 @@ type UserRepository interface {
 
 // ContestRepository handles Contest related database interactions
 type ContestRepository interface {
-	Store(contest domain.Contest) error
+	Store(contest *domain.Contest) error
 	GetOpenContests() ([]uint64, error)
 }
 
@@ -34,4 +34,5 @@ type RankingRepository interface {
 	GlobalRankings(languageCode domain.LanguageCode) (domain.Rankings, error)
 	FindAll(contestID uint64, userID uint64) (domain.Rankings, error)
 	GetAllLanguagesForContestAndUser(contestID uint64, userID uint64) (domain.LanguageCodes, error)
+	CurrentRegistration(userID uint64) (domain.RankingRegistration, error)
 }

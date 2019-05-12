@@ -31,6 +31,9 @@ var ErrInvalidContestLog = fail.New("invalid contest log supplied")
 // ErrContestLanguageNotSignedUp for when a user tries to log an entry for a contest with a language they're not signed up for
 var ErrContestLanguageNotSignedUp = fail.New("user has not signed up for given language")
 
+// ErrNoRankingRegistrationFound for when there is no active ranking registration for the given user
+var ErrNoRankingRegistrationFound = fail.New("no active ranking registration was found")
+
 // RankingInteractor contains all business logic for rankings
 type RankingInteractor interface {
 	CreateRanking(
@@ -42,6 +45,7 @@ type RankingInteractor interface {
 	UpdateRanking(contestID uint64, userID uint64) error
 
 	RankingsForContest(contestID uint64, languageCode domain.LanguageCode) (domain.Rankings, error)
+	CurrentRegistration(userID uint64) (domain.RankingRegistration, error)
 }
 
 // NewRankingInteractor instantiates RankingInteractor with all dependencies
@@ -222,4 +226,17 @@ func (i *rankingInteractor) RankingsForContest(
 	}
 
 	return rankings, nil
+}
+
+func (i *rankingInteractor) CurrentRegistration(userID uint64) (domain.RankingRegistration, error) {
+	registration, err := i.rankingRepository.CurrentRegistration(userID)
+	if err != nil {
+		return registration, fail.Wrap(err)
+	}
+
+	if registration.ContestID == 0 {
+		return registration, ErrNoRankingRegistrationFound
+	}
+
+	return registration, nil
 }

@@ -2,6 +2,7 @@ package usecases_test
 
 import (
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/tadoku/api/domain"
@@ -347,4 +348,34 @@ func TestRankingInteractor_RankingsForContest(t *testing.T) {
 		_, err := interactor.RankingsForContest(contestID, language)
 		assert.EqualError(t, err, usecases.ErrNoRankingsFound.Error())
 	}
+}
+
+func TestRankingInteractor_CurrentRegistration(t *testing.T) {
+	ctrl, rankingRepo, _, _, _, _, interactor := setupRankingTest(t)
+	defer ctrl.Finish()
+
+	userID := uint64(1)
+
+	{
+		// Happy path
+		expected := domain.RankingRegistration{
+			ContestID: 1,
+			End:       time.Now(),
+			Languages: domain.LanguageCodes{domain.Japanese, domain.Korean},
+		}
+		rankingRepo.EXPECT().CurrentRegistration(userID).Return(expected, nil)
+
+		registration, err := interactor.CurrentRegistration(userID)
+		assert.NoError(t, err)
+		assert.Equal(t, expected, registration)
+	}
+
+	{
+		// Sad path no registration found
+		rankingRepo.EXPECT().CurrentRegistration(userID).Return(domain.RankingRegistration{}, nil)
+
+		_, err := interactor.CurrentRegistration(userID)
+		assert.EqualError(t, err, usecases.ErrNoRankingRegistrationFound.Error())
+	}
+
 }

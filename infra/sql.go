@@ -156,7 +156,7 @@ type sqlResult struct {
 	Result sql.Result
 }
 
-func (r sqlResult) LastInsertId() (int64, error) {
+func (r sqlResult) LastInsertID() (int64, error) {
 	return r.Result.LastInsertId()
 }
 

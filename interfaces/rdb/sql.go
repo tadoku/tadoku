@@ -32,7 +32,7 @@ type TxHandler interface {
 
 // Result contains meta data of a query that was executed
 type Result interface {
-	LastInsertId() (int64, error)
+	LastInsertID() (int64, error)
 	RowsAffected() (int64, error)
 }
 

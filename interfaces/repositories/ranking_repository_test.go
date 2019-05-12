@@ -110,24 +110,39 @@ func TestRankingRepository_RankingsForContest(t *testing.T) {
 	defer cleanup()
 
 	repo := repositories.NewRankingRepository(sqlHandler)
+	userRepo := repositories.NewUserRepository(sqlHandler)
 
 	contestID := uint64(1)
 
 	type testCase struct {
-		contestID uint64
-		userID    uint64
-		language  domain.LanguageCode
-		amount    float32
+		contestID       uint64
+		userID          uint64
+		userDisplayName string
+		language        domain.LanguageCode
+		amount          float32
 	}
 	expected := []testCase{
-		{contestID, 3, domain.Global, 30},
-		{contestID, 2, domain.Global, 20},
-		{contestID, 1, domain.Global, 10},
+		{contestID, 3, "FOO 3", domain.Global, 30},
+		{contestID, 2, "FOO 2", domain.Global, 20},
+		{contestID, 1, "FOO 1", domain.Global, 10},
 	}
 
 	// Correct rankings
 	{
+		storedUsers := map[uint64]bool{}
 		for _, data := range []testCase{expected[2], expected[1], expected[0]} {
+			if storedUsers[data.userID] == false {
+				storedUsers[data.userID] = true
+				err := userRepo.Store(domain.User{
+					Email:       fmt.Sprintf("foo+%d@bar.com", data.userID),
+					DisplayName: fmt.Sprintf("FOO %d", data.userID),
+					Password:    "foobar",
+					Role:        domain.RoleUser,
+					Preferences: &domain.Preferences{},
+				})
+				assert.NoError(t, err)
+			}
+
 			ranking := &domain.Ranking{
 				ContestID: data.contestID,
 				UserID:    data.userID,
@@ -143,10 +158,10 @@ func TestRankingRepository_RankingsForContest(t *testing.T) {
 	// Create unrelated rankings to check if it is really working
 	{
 		for _, data := range []testCase{
-			{contestID + 1, 1, domain.Global, 50},
-			{contestID, 1, domain.Japanese, 250},
-			{contestID, 2, domain.Korean, 150},
-			{contestID + 1, 3, domain.Global, 200},
+			{contestID + 1, 1, "", domain.Global, 50},
+			{contestID, 1, "", domain.Japanese, 250},
+			{contestID, 2, "", domain.Korean, 150},
+			{contestID + 1, 3, "", domain.Global, 200},
 		} {
 			ranking := &domain.Ranking{
 				ContestID: data.contestID,

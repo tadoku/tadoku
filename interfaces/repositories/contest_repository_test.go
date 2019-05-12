@@ -23,11 +23,12 @@ func TestContestRepository_StoreContest(t *testing.T) {
 	{
 		err := repo.Store(contest)
 		assert.NoError(t, err)
+		assert.NotEqual(t, 0, contest.ID)
 	}
 
 	{
 		updatedContest := &domain.Contest{
-			ID:    1,
+			ID:    contest.ID,
 			Start: time.Date(2019, 1, 1, 0, 0, 0, 0, time.UTC),
 			End:   time.Date(2019, 1, 30, 0, 0, 0, 0, time.UTC),
 			Open:  false,

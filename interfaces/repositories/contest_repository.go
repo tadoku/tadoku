@@ -28,11 +28,17 @@ func (r *contestRepository) create(contest *domain.Contest) error {
 	query := `
 		insert into contests
 		(start, "end", open)
-		values (:start, :end, :open)
+		values ($1, $2, $3)
+		returning id
 	`
 
-	_, err := r.sqlHandler.NamedExecute(query, contest)
-	return fail.Wrap(err)
+	row := r.sqlHandler.QueryRow(query, contest.Start, contest.End, contest.Open)
+	err := row.Scan(&contest.ID)
+	if err != nil {
+		return fail.Wrap(err)
+	}
+
+	return nil
 }
 
 func (r *contestRepository) update(contest *domain.Contest) error {

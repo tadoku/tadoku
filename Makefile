@@ -15,6 +15,7 @@ gen:
 .PHONY: lint
 lint:
 	gex golint -set_exit_status ./...
+	gex ineffassign .
 
 .PHONY: migrate
 migrate:

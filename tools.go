@@ -7,5 +7,6 @@ package tools
 // tool dependencies
 import (
 	_ "github.com/golang/mock/mockgen"
+	_ "github.com/gordonklaus/ineffassign"
 	_ "golang.org/x/lint/golint"
 )

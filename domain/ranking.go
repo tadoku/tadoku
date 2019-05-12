@@ -13,6 +13,9 @@ type Ranking struct {
 	Amount    float32      `json:"amount" db:"amount" valid:"required"`
 	CreatedAt time.Time    `json:"created_at" db:"created_at"`
 	UpdatedAt time.Time    `json:"updated_at" db:"updated_at"`
+
+	// Optional fields
+	UserDisplayName string `json:"user_display_name" db:"user_display_name"`
 }
 
 // Rankings is a collection of Ranking

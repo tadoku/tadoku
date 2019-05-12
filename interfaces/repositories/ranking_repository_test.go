@@ -1,6 +1,7 @@
 package repositories_test
 
 import (
+	"fmt"
 	"testing"
 	"time"
 
@@ -180,33 +181,48 @@ func TestRankingRepository_GlobalRankings(t *testing.T) {
 	defer cleanup()
 
 	repo := repositories.NewRankingRepository(sqlHandler)
+	userRepo := repositories.NewUserRepository(sqlHandler)
 
 	contestID := uint64(1)
 
 	expected := []struct {
-		userID   uint64
-		language domain.LanguageCode
-		amount   float32
+		userID          uint64
+		userDisplayName string
+		language        domain.LanguageCode
+		amount          float32
 	}{
-		{1, domain.Global, 50},
-		{3, domain.Global, 30},
-		{2, domain.Global, 20},
+		{1, "FOO 1", domain.Global, 50},
+		{3, "FOO 3", domain.Global, 30},
+		{2, "FOO 2", domain.Global, 20},
 	}
 
 	{
+		storedUsers := map[uint64]bool{}
 		rankings := []struct {
 			contestID uint64
 			userID    uint64
 			language  domain.LanguageCode
 			amount    float32
 		}{
-			{contestID, 3, domain.Global, 30},
-			{contestID, 2, domain.Global, 20},
 			{contestID, 1, domain.Global, 40},
 			{contestID + 1, 1, domain.Global, 10},
 			{contestID + 1, 1, domain.Japanese, 10},
+			{contestID, 2, domain.Global, 20},
+			{contestID, 3, domain.Global, 30},
 		}
 		for _, data := range rankings {
+			if storedUsers[data.userID] == false {
+				storedUsers[data.userID] = true
+				err := userRepo.Store(domain.User{
+					Email:       fmt.Sprintf("foo+%d@bar.com", data.userID),
+					DisplayName: fmt.Sprintf("FOO %d", data.userID),
+					Password:    "foobar",
+					Role:        domain.RoleUser,
+					Preferences: &domain.Preferences{},
+				})
+				assert.NoError(t, err)
+			}
+
 			ranking := &domain.Ranking{
 				ContestID: data.contestID,
 				UserID:    data.userID,
@@ -230,6 +246,7 @@ func TestRankingRepository_GlobalRankings(t *testing.T) {
 
 		assert.Equal(t, expected.amount, ranking.Amount)
 		assert.Equal(t, expected.userID, ranking.UserID)
+		assert.Equal(t, expected.userDisplayName, ranking.UserDisplayName)
 	}
 }
 func TestRankingRepository_FindAllByContestAndUser(t *testing.T) {

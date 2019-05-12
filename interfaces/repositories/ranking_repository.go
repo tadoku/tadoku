@@ -97,10 +97,11 @@ func (r *rankingRepository) GlobalRankings(languageCode domain.LanguageCode) (do
 	var rankings []domain.Ranking
 
 	query := `
-		select user_id, language_code, sum(amount) as amount
+		select user_id, language_code, sum(amount) as amount, users.display_name as user_display_name
 		from rankings
+		inner join users on users.id = rankings.user_id
 		where language_code = $1
-		group by user_id, language_code
+		group by user_id, user_display_name, language_code
 		order by amount desc
 	`
 

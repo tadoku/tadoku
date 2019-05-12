@@ -9,7 +9,6 @@ import (
 )
 
 func TestContestLogRepository_StoreContest(t *testing.T) {
-	t.Parallel()
 	sqlHandler, cleanup := setupTestingSuite(t)
 	defer cleanup()
 
@@ -42,7 +41,6 @@ func TestContestLogRepository_StoreContest(t *testing.T) {
 }
 
 func TestContestLogRepository_FindAllByContestAndUser(t *testing.T) {
-	t.Parallel()
 	sqlHandler, cleanup := setupTestingSuite(t)
 	defer cleanup()
 

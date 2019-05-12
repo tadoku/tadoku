@@ -1,7 +1,6 @@
 package repositories_test
 
 import (
-	"fmt"
 	"testing"
 	"time"
 
@@ -12,7 +11,6 @@ import (
 )
 
 func TestRankingRepository_StoreRanking(t *testing.T) {
-	t.Parallel()
 	sqlHandler, cleanup := setupTestingSuite(t)
 	defer cleanup()
 
@@ -43,7 +41,6 @@ func TestRankingRepository_StoreRanking(t *testing.T) {
 }
 
 func TestRankingRepository_GetAllLanguagesForContestAndUser(t *testing.T) {
-	t.Parallel()
 	sqlHandler, cleanup := setupTestingSuite(t)
 	defer cleanup()
 
@@ -105,14 +102,13 @@ func TestRankingRepository_GetAllLanguagesForContestAndUser(t *testing.T) {
 }
 
 func TestRankingRepository_RankingsForContest(t *testing.T) {
-	t.Parallel()
 	sqlHandler, cleanup := setupTestingSuite(t)
 	defer cleanup()
 
 	repo := repositories.NewRankingRepository(sqlHandler)
-	userRepo := repositories.NewUserRepository(sqlHandler)
 
 	contestID := uint64(1)
+	users := createTestUsers(t, sqlHandler, 3)
 
 	type testCase struct {
 		contestID       uint64
@@ -122,27 +118,14 @@ func TestRankingRepository_RankingsForContest(t *testing.T) {
 		amount          float32
 	}
 	expected := []testCase{
-		{contestID, 3, "FOO 3", domain.Global, 30},
-		{contestID, 2, "FOO 2", domain.Global, 20},
-		{contestID, 1, "FOO 1", domain.Global, 10},
+		{contestID, users[2].ID, "FOO 3", domain.Global, 30},
+		{contestID, users[1].ID, "FOO 2", domain.Global, 20},
+		{contestID, users[0].ID, "FOO 1", domain.Global, 10},
 	}
 
 	// Correct rankings
 	{
-		storedUsers := map[uint64]bool{}
 		for _, data := range []testCase{expected[2], expected[1], expected[0]} {
-			if storedUsers[data.userID] == false {
-				storedUsers[data.userID] = true
-				err := userRepo.Store(domain.User{
-					Email:       fmt.Sprintf("foo+%d@bar.com", data.userID),
-					DisplayName: fmt.Sprintf("FOO %d", data.userID),
-					Password:    "foobar",
-					Role:        domain.RoleUser,
-					Preferences: &domain.Preferences{},
-				})
-				assert.NoError(t, err)
-			}
-
 			ranking := &domain.Ranking{
 				ContestID: data.contestID,
 				UserID:    data.userID,
@@ -191,14 +174,13 @@ func TestRankingRepository_RankingsForContest(t *testing.T) {
 }
 
 func TestRankingRepository_GlobalRankings(t *testing.T) {
-	t.Parallel()
 	sqlHandler, cleanup := setupTestingSuite(t)
 	defer cleanup()
 
 	repo := repositories.NewRankingRepository(sqlHandler)
-	userRepo := repositories.NewUserRepository(sqlHandler)
 
 	contestID := uint64(1)
+	users := createTestUsers(t, sqlHandler, 3)
 
 	expected := []struct {
 		userID          uint64
@@ -206,38 +188,25 @@ func TestRankingRepository_GlobalRankings(t *testing.T) {
 		language        domain.LanguageCode
 		amount          float32
 	}{
-		{1, "FOO 1", domain.Global, 50},
-		{3, "FOO 3", domain.Global, 30},
-		{2, "FOO 2", domain.Global, 20},
+		{users[0].ID, "FOO 0", domain.Global, 50},
+		{users[2].ID, "FOO 2", domain.Global, 30},
+		{users[1].ID, "FOO 1", domain.Global, 20},
 	}
 
 	{
-		storedUsers := map[uint64]bool{}
 		rankings := []struct {
 			contestID uint64
 			userID    uint64
 			language  domain.LanguageCode
 			amount    float32
 		}{
-			{contestID, 1, domain.Global, 40},
-			{contestID + 1, 1, domain.Global, 10},
-			{contestID + 1, 1, domain.Japanese, 10},
-			{contestID, 2, domain.Global, 20},
-			{contestID, 3, domain.Global, 30},
+			{contestID, users[0].ID, domain.Global, 40},
+			{contestID + 1, users[0].ID, domain.Global, 10},
+			{contestID + 1, users[0].ID, domain.Japanese, 10},
+			{contestID, users[1].ID, domain.Global, 20},
+			{contestID, users[2].ID, domain.Global, 30},
 		}
 		for _, data := range rankings {
-			if storedUsers[data.userID] == false {
-				storedUsers[data.userID] = true
-				err := userRepo.Store(domain.User{
-					Email:       fmt.Sprintf("foo+%d@bar.com", data.userID),
-					DisplayName: fmt.Sprintf("FOO %d", data.userID),
-					Password:    "foobar",
-					Role:        domain.RoleUser,
-					Preferences: &domain.Preferences{},
-				})
-				assert.NoError(t, err)
-			}
-
 			ranking := &domain.Ranking{
 				ContestID: data.contestID,
 				UserID:    data.userID,
@@ -265,7 +234,6 @@ func TestRankingRepository_GlobalRankings(t *testing.T) {
 	}
 }
 func TestRankingRepository_FindAllByContestAndUser(t *testing.T) {
-	t.Parallel()
 	sqlHandler, cleanup := setupTestingSuite(t)
 	defer cleanup()
 
@@ -331,7 +299,6 @@ func TestRankingRepository_FindAllByContestAndUser(t *testing.T) {
 }
 
 func TestRankingRepository_UpdateAmounts(t *testing.T) {
-	t.Parallel()
 	sqlHandler, cleanup := setupTestingSuite(t)
 	defer cleanup()
 

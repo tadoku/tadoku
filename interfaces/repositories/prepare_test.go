@@ -9,8 +9,11 @@ import (
 	"time"
 
 	"github.com/jmoiron/sqlx"
+	"github.com/stretchr/testify/assert"
+	"github.com/tadoku/api/domain"
 	"github.com/tadoku/api/infra"
 	"github.com/tadoku/api/interfaces/rdb"
+	"github.com/tadoku/api/interfaces/repositories"
 	"github.com/tadoku/api/test"
 
 	txdb "github.com/DATA-DOG/go-txdb"
@@ -55,6 +58,8 @@ func loadConfig() *test.Config {
 }
 
 func setupTestingSuite(t *testing.T) (rdb.SQLHandler, func() error) {
+	t.Parallel()
+
 	db, cleanup := prepareDB(t)
 	return infra.NewSQLHandler(db), cleanup
 }
@@ -67,8 +72,27 @@ func prepareDB(t *testing.T) (db *sqlx.DB, cleanup func() error) {
 		t.Fatalf("open pgx connection: %s", err)
 	}
 
-	return db, func() error {
-		fmt.Printf("Closing: %s\n", cName)
-		return db.Close()
+	return db, db.Close
+}
+
+func createTestUsers(t *testing.T, sqlHandler rdb.SQLHandler, count int) []*domain.User {
+	users := make([]*domain.User, count)
+
+	repo := repositories.NewUserRepository(sqlHandler)
+
+	for i := 0; i < count; i++ {
+		user := &domain.User{
+			Email:       fmt.Sprintf("foo+%d@bar.com", i),
+			DisplayName: fmt.Sprintf("FOO %d", i),
+			Password:    "foobar",
+			Role:        domain.RoleUser,
+			Preferences: &domain.Preferences{},
+		}
+		err := repo.Store(user)
+		assert.NoError(t, err)
+
+		users[i] = user
 	}
+
+	return users
 }

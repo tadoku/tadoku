@@ -9,7 +9,6 @@ import (
 )
 
 func TestUserRepository_StoreUser(t *testing.T) {
-	t.Parallel()
 	sqlHandler, cleanup := setupTestingSuite(t)
 	defer cleanup()
 

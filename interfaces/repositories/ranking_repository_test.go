@@ -188,9 +188,9 @@ func TestRankingRepository_GlobalRankings(t *testing.T) {
 		language        domain.LanguageCode
 		amount          float32
 	}{
-		{users[0].ID, "FOO 0", domain.Global, 50},
-		{users[2].ID, "FOO 2", domain.Global, 30},
-		{users[1].ID, "FOO 1", domain.Global, 20},
+		{users[0].ID, users[0].DisplayName, domain.Global, 50},
+		{users[2].ID, users[2].DisplayName, domain.Global, 30},
+		{users[1].ID, users[1].DisplayName, domain.Global, 20},
 	}
 
 	{

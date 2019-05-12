@@ -63,5 +63,8 @@ func prepareDB(t *testing.T) (db *sqlx.DB, cleanup func() error) {
 		t.Fatalf("open pgx connection: %s", err)
 	}
 
-	return db, db.Close
+	return db, func() error {
+		fmt.Printf("Closing: %s\n", cName)
+		return db.Close()
+	}
 }

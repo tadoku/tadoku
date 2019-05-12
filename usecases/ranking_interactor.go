@@ -42,7 +42,7 @@ type RankingInteractor interface {
 	UpdateRanking(contestID uint64, userID uint64) error
 
 	RankingsForContest(contestID uint64, languageCode domain.LanguageCode) (domain.Rankings, error)
-	CurrentRegistration(usedID uint64) (domain.RankingRegistration, error)
+	CurrentRegistration(userID uint64) (domain.RankingRegistration, error)
 }
 
 // NewRankingInteractor instantiates RankingInteractor with all dependencies
@@ -225,6 +225,11 @@ func (i *rankingInteractor) RankingsForContest(
 	return rankings, nil
 }
 
-func (i *rankingInteractor) CurrentRegistration(usedID uint64) (domain.RankingRegistration, error) {
-	return domain.RankingRegistration{}, nil
+func (i *rankingInteractor) CurrentRegistration(userID uint64) (domain.RankingRegistration, error) {
+	registration, err := i.rankingRepository.CurrentRegistration(userID)
+	if err != nil {
+		return registration, fail.Wrap(err)
+	}
+
+	return registration, nil
 }

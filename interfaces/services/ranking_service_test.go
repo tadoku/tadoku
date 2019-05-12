@@ -2,6 +2,7 @@ package services_test
 
 import (
 	"testing"
+	"time"
 
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
@@ -60,6 +61,30 @@ func TestRankingService_Get(t *testing.T) {
 
 	s := services.NewRankingService(i)
 	err := s.Get(ctx)
+
+	assert.NoError(t, err)
+}
+
+func TestRankingService_CurrentRegistration(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	userID := uint64(1)
+	expected := domain.RankingRegistration{
+		ContestID: 1,
+		End:       time.Now(),
+		Languages: domain.LanguageCodes{domain.Japanese, domain.English},
+	}
+
+	ctx := services.NewMockContext(ctrl)
+	ctx.EXPECT().User().Return(&domain.User{ID: userID}, nil)
+	ctx.EXPECT().JSON(200, expected)
+
+	i := usecases.NewMockRankingInteractor(ctrl)
+	i.EXPECT().CurrentRegistration(userID).Return(expected, nil)
+
+	s := services.NewRankingService(i)
+	err := s.CurrentRegistration(ctx)
 
 	assert.NoError(t, err)
 }

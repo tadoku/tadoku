@@ -72,16 +72,15 @@ func (s *rankingService) Get(ctx Context) error {
 }
 
 func (s *rankingService) CurrentRegistration(ctx Context) error {
-	/*  user, err := ctx.User() */
-	// if err != nil {
-	//   return fail.Wrap(err)
-	// }
+	user, err := ctx.User()
+	if err != nil {
+		return fail.Wrap(err)
+	}
 
-	// registration, err := s.RankingInteractor.CurrentContestFor(user.ID)
-	// if err != nil {
-	//   return fail.Wrap(err)
-	// }
+	registration, err := s.RankingInteractor.CurrentRegistration(user.ID)
+	if err != nil {
+		return fail.Wrap(err)
+	}
 
-	/* return ctx.JSON(http.StatusOK, registration) */
-	return nil
+	return ctx.JSON(http.StatusOK, registration)
 }

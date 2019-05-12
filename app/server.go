@@ -42,6 +42,7 @@ type serverDependencies struct {
 	DatabaseURL          string        `envconfig:"database_url" valid:"required"`
 	DatabaseMaxIdleConns int           `envconfig:"database_max_idle_conns" valid:"required"`
 	DatabaseMaxOpenConns int           `envconfig:"database_max_open_conns" valid:"required"`
+	CORSAllowedOrigins   []string      `envconfig:"cors_allowed_origins" valid:"required"`
 
 	router struct {
 		result services.Router

@@ -12,6 +12,7 @@ const getRankings = async (contest_id?: number): Promise<Ranking[]> => {
 
   return data.map(raw => ({
     userId: raw.user_id,
+    userDisplayName: raw.user_display_name,
     languageCode: raw.language_code,
     amount: raw.amount,
   }))

@@ -1,5 +1,44 @@
 import React from 'react'
+import Link from 'next/link'
 import { Ranking } from '../../domain/Ranking'
+import styled from 'styled-components'
+
+const List = styled.ul`
+  list-style: none;
+  padding: 0;
+  margin: 0 auto;
+`
+
+const Row = styled.li`
+  margin: 20px 0;
+  padding: 20px 30px;
+  border-radius: 2px;
+  box-shadow: 4px 5px 15px 1px rgba(0, 0, 0, 0.08);
+  display: flex;
+  align-items: center;
+`
+
+const Rank = styled.div`
+  width: 50px;
+  font-size: 30px;
+`
+
+const Name = styled.div`
+  flex: 1;
+  font-size: 20px;
+
+  a {
+    display: block;
+  }
+`
+
+const Pages = styled.div`
+  font-size: 25px;
+
+  span {
+    font-size: 20px;
+  }
+`
 
 interface Props {
   rankings: Ranking[]
@@ -8,13 +47,22 @@ interface Props {
 const RankingList = (props: Props) => (
   <>
     <h1>Ranking</h1>
-    <ul>
-      {props.rankings.map(r => (
-        <li key={r.userId}>
-          {r.userId}: {r.amount} ({r.languageCode})
-        </li>
+    <List>
+      {props.rankings.map((r, rank) => (
+        <Row key={r.userId}>
+          <Rank>{rank + 1}</Rank>
+          <Name>
+            <Link href={`/contest/1/rankings/${r.userId}`}>
+              <a href="">{r.userDisplayName}</a>
+            </Link>
+          </Name>
+          <Pages>
+            {r.amount}
+            <span> pages</span>
+          </Pages>
+        </Row>
       ))}
-    </ul>
+    </List>
   </>
 )
 

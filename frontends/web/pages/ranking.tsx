@@ -16,7 +16,7 @@ const Home = (props: Props) => {
   )
 }
 
-Home.getInitialProps = async (ctx: any) => {
+Home.getInitialProps = async (_: any) => {
   const rankings = await RankingApi.get(1)
 
   if (rankings.length > 0) {

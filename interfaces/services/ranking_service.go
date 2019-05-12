@@ -79,6 +79,10 @@ func (s *rankingService) CurrentRegistration(ctx Context) error {
 
 	registration, err := s.RankingInteractor.CurrentRegistration(user.ID)
 	if err != nil {
+		if err == usecases.ErrNoRankingRegistrationFound {
+			return ctx.NoContent(http.StatusNotFound)
+		}
+
 		return fail.Wrap(err)
 	}
 

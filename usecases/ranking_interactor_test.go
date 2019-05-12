@@ -372,6 +372,10 @@ func TestRankingInteractor_CurrentRegistration(t *testing.T) {
 
 	{
 		// Sad path no registration found
+		rankingRepo.EXPECT().CurrentRegistration(userID).Return(domain.RankingRegistration{}, nil)
+
+		_, err := interactor.CurrentRegistration(userID)
+		assert.EqualError(t, err, usecases.ErrNoRankingRegistrationFound.Error())
 	}
 
 }

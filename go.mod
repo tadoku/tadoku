@@ -8,15 +8,18 @@ require (
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/ghodss/yaml v1.0.0 // indirect
 	github.com/golang/mock v1.2.0
+	github.com/gordonklaus/ineffassign v0.0.0-20180909121442-1003c8bd00dc
 	github.com/jmoiron/sqlx v1.2.0
 	github.com/joho/godotenv v1.3.0 // indirect
 	github.com/kelseyhightower/envconfig v1.3.0 // indirect
 	github.com/labstack/echo/v4 v4.0.0
 	github.com/lib/pq v1.0.0
 	github.com/mattn/go-zglob v0.0.1 // indirect
-	github.com/pkg/errors v0.8.1
+	github.com/pkg/errors v0.8.1 // indirect
 	github.com/srvc/fail v3.1.0+incompatible
 	github.com/stretchr/testify v1.3.0
-	golang.org/x/crypto v0.0.0-20190130090550-b01c7a725664
+	golang.org/x/crypto v0.0.0-20190308221718-c2843e01d9a2
+	golang.org/x/lint v0.0.0-20190409202823-959b441ac422
+	google.golang.org/appengine v1.5.0 // indirect
 	gopkg.in/yaml.v2 v2.2.2 // indirect
 )

@@ -76,6 +76,6 @@ func (si *contestInteractor) saveContest(contest domain.Contest) error {
 		}
 	}
 
-	err := si.contestRepository.Store(contest)
+	err := si.contestRepository.Store(&contest)
 	return fail.Wrap(err)
 }

@@ -16,7 +16,7 @@ type contestRepository struct {
 	sqlHandler rdb.SQLHandler
 }
 
-func (r *contestRepository) Store(contest domain.Contest) error {
+func (r *contestRepository) Store(contest *domain.Contest) error {
 	if contest.ID == 0 {
 		return r.create(contest)
 	}
@@ -24,7 +24,7 @@ func (r *contestRepository) Store(contest domain.Contest) error {
 	return r.update(contest)
 }
 
-func (r *contestRepository) create(contest domain.Contest) error {
+func (r *contestRepository) create(contest *domain.Contest) error {
 	query := `
 		insert into contests
 		(start, "end", open)
@@ -35,7 +35,7 @@ func (r *contestRepository) create(contest domain.Contest) error {
 	return fail.Wrap(err)
 }
 
-func (r *contestRepository) update(contest domain.Contest) error {
+func (r *contestRepository) update(contest *domain.Contest) error {
 	query := `
 		update contests
 		set start = :start, "end" = :end, open = :open

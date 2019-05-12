@@ -15,7 +15,7 @@ type UserRepository interface {
 
 // ContestRepository handles Contest related database interactions
 type ContestRepository interface {
-	Store(contest domain.Contest) error
+	Store(contest *domain.Contest) error
 	GetOpenContests() ([]uint64, error)
 }
 

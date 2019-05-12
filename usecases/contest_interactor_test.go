@@ -37,7 +37,7 @@ func TestContestInteractor_CreateContest(t *testing.T) {
 			Open:  true,
 		}
 
-		repo.EXPECT().Store(contest)
+		repo.EXPECT().Store(&contest)
 		repo.EXPECT().GetOpenContests().Return(nil, nil)
 		validator.EXPECT().Validate(contest).Return(true, nil)
 
@@ -88,7 +88,7 @@ func TestContestInteractor_UpdateContest(t *testing.T) {
 			Open:  false,
 		}
 
-		repo.EXPECT().Store(contest)
+		repo.EXPECT().Store(&contest)
 		validator.EXPECT().Validate(contest).Return(true, nil)
 
 		err := interactor.UpdateContest(contest)

@@ -1,7 +1,7 @@
 import React from 'react'
 import Layout from '../components/ui/Layout'
 import { Ranking } from '../domain/Ranking'
-import RankingList from '../app/ranking/Ranking'
+import RankingList from '../app/ranking/List'
 import RankingApi from '../app/ranking/api'
 
 interface Props {

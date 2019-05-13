@@ -1,26 +1,22 @@
-import { createStore } from 'redux'
+import { createStore, combineReducers } from 'redux'
 import { User } from './app/user/interfaces'
 
-const initialState = {
+const sessionInitialState = {
   token: undefined as (string | undefined),
   user: undefined as (User | undefined),
+}
+
+const initialState = {
+  session: sessionInitialState,
 }
 
 export type State = typeof initialState
 
 // Actions
 
-export enum AppActionTypes {
-  AppReset = '@app/reset',
-}
-
 export enum SessionActionTypes {
   SessionSignIn = '@session/sign-in',
   SessionSignOut = '@session/sign-out',
-}
-
-export interface AppReset {
-  type: typeof AppActionTypes.AppReset
 }
 
 export interface SessionSignIn {
@@ -36,19 +32,16 @@ export interface SessionSignOut {
 }
 
 export type SessionActions = SessionSignIn | SessionSignOut
-export type AppActions = AppReset
-export type Action = AppActions | SessionActions
+export type Action = SessionActions
 
 export const actionTypes = {
-  ...AppActionTypes,
   ...SessionActionTypes,
 }
 
 // REDUCERS
-export const reducer = (state = initialState, action: Action) => {
+
+export const sessionReducer = (state = initialState, action: Action) => {
   switch (action.type) {
-    case actionTypes.AppReset:
-      return { ...initialState }
     case actionTypes.SessionSignIn:
       const payload = (action as SessionSignIn).payload
       return { ...state, token: payload.token, user: payload.user }
@@ -58,6 +51,8 @@ export const reducer = (state = initialState, action: Action) => {
       return state
   }
 }
+
+export const reducer = combineReducers({ session: sessionReducer })
 
 export function initializeStore(state = initialState) {
   return createStore(reducer, state)

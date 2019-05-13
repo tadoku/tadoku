@@ -1,7 +1,7 @@
 import React from 'react'
 import Header from './Header'
 import styled, { createGlobalStyle } from 'styled-components'
-import Constants from './Constants'
+import Constants from '../Constants'
 
 const GlobalStyle = createGlobalStyle<typeof Constants>`
   body {

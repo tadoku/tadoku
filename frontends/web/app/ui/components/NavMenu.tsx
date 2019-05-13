@@ -2,8 +2,8 @@ import React, { useEffect, useState } from 'react'
 import Link from 'next/link'
 import styled from 'styled-components'
 import { connect } from 'react-redux'
-import { State } from '../../store'
-import { User } from '../../domain/User'
+import { State } from '../../../store'
+import { User } from '../../../domain/User'
 
 const StyledNav = styled.nav`
   display: flex;

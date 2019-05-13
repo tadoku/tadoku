@@ -1,5 +1,5 @@
 import React from 'react'
-import Layout from '../app/ui/Layout'
+import Layout from '../app/ui/components/Layout'
 import RegisterForm from '../components/forms/Register'
 import { withRedirectAuthenticated } from '../app/session/components/withRedirectAuthenticated'
 

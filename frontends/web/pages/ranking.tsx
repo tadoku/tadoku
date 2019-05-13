@@ -1,5 +1,5 @@
 import React from 'react'
-import Layout from '../app/ui/Layout'
+import Layout from '../app/ui/components/Layout'
 import { Ranking } from '../app/ranking/interfaces'
 import RankingList from '../app/ranking/components/List'
 import RankingApi from '../app/ranking/api'

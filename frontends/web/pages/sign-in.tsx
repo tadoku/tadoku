@@ -1,7 +1,7 @@
 import React from 'react'
 import Layout from '../components/ui/Layout'
 import SignInForm from '../components/forms/SignIn'
-import { withRedirectAuthenticated } from '../components/hoc/withRedirectAuthenticated'
+import { withRedirectAuthenticated } from '../app/session/components/withRedirectAuthenticated'
 
 const SignIn = () => {
   return (

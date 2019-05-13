@@ -1,5 +1,5 @@
 import 'isomorphic-fetch'
-import { getAuthenticationToken } from '../../app/session/storage'
+import { getAuthenticationToken } from './app/session/storage'
 
 const root = 'http://localhost:4000'
 

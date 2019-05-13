@@ -1,4 +1,4 @@
-import { get } from '../../domain/api/api'
+import { get } from '../../api'
 import {
   Ranking,
   rawRanking,

@@ -25,3 +25,13 @@ export const loadUserFromLocalStorage = (): {
 
   return JSON.parse(user)
 }
+
+export const getAuthenticationToken = (): string | null => {
+  const user = loadUserFromLocalStorage()
+
+  if (!user) {
+    return null
+  }
+
+  return user.token
+}

@@ -8,18 +8,22 @@ interface APIOptions {
 }
 
 export const get = (endpoint: string, options?: APIOptions) => {
-  const authenticationHeader = {
-    authorization: `Bearer ${getAuthenticationToken()}`,
-  }
-
-  return fetch(`${root}${endpoint}`, {
+  let requestOptions: RequestInit = {
     method: 'get',
     headers: {
       Accept: 'application/json',
       'Content-Type': 'application/json',
-      ...((options || {}).authenticated ? authenticationHeader : {}),
     },
-  })
+  }
+
+  if (options && options.authenticated) {
+    requestOptions.headers = {
+      ...requestOptions.headers,
+      authorization: `Bearer ${getAuthenticationToken()}`,
+    }
+  }
+
+  return fetch(`${root}${endpoint}`, requestOptions)
 }
 
 export const post = (endpoint: string, body: any) =>

@@ -45,6 +45,7 @@ const getCurrentRegistration = async (): Promise<
 
 const RankingApi = {
   get: getRankings,
+  getCurrentRegistration,
 }
 
 export default RankingApi

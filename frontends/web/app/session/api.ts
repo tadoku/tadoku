@@ -1,5 +1,5 @@
-import { User, RawUser } from '../User'
-import { post } from './api'
+import { User, RawUser } from '../../domain/User'
+import { post } from '../../domain/api/api'
 
 interface SignInResponse {
   token: string

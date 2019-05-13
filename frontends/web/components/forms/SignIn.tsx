@@ -1,7 +1,7 @@
 import React, { FormEvent, useState } from 'react'
 import styled from 'styled-components'
 import Constants from '../../app/ui/Constants'
-import SessionApi from '../../domain/api/session'
+import SessionApi from '../../app/session/api'
 import { connect } from 'react-redux'
 import { Dispatch } from 'redux'
 import { SessionActionTypes, SessionActions } from '../../store'

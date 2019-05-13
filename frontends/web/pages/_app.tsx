@@ -1,10 +1,11 @@
 import React from 'react'
-import { initializeStore, SessionActionTypes } from './../store'
+import { initializeStore } from './../store'
 import { Provider } from 'react-redux'
 import App, { Container, NextAppContext } from 'next/app'
 import withRedux from 'next-redux-wrapper'
 import { Store } from 'redux'
 import { loadUserFromLocalStorage } from '../app/session/storage'
+import { SessionActionTypes } from '../app/session/redux'
 
 class MyApp extends App<{ store: Store }> {
   static async getInitialProps({ Component, ctx }: NextAppContext) {

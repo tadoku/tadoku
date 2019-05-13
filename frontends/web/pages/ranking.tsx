@@ -1,6 +1,6 @@
 import React from 'react'
 import Layout from '../components/ui/Layout'
-import { Ranking } from '../domain/Ranking'
+import { Ranking } from '../app/ranking/interfaces'
 import RankingList from '../app/ranking/components/List'
 import RankingApi from '../app/ranking/api'
 

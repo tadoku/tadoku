@@ -4,7 +4,7 @@ import {
   rawRanking,
   RankingRegistration,
   rawRankingRegistration,
-} from '../../domain/Ranking'
+} from './interfaces'
 
 const getRankings = async (contest_id?: number): Promise<Ranking[]> => {
   const response = await get(`/rankings?contest_id=${contest_id}`)

@@ -1,6 +1,6 @@
 import React from 'react'
 import Link from 'next/link'
-import { Ranking } from '../../domain/Ranking'
+import { Ranking } from '../../../domain/Ranking'
 import styled from 'styled-components'
 
 const List = styled.ul`

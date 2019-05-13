@@ -1,6 +1,6 @@
 import React from 'react'
 import Layout from '../app/ui/components/Layout'
-import RegisterForm from '../components/forms/Register'
+import RegisterForm from '../components/forms/RegisterForm'
 import { withRedirectAuthenticated } from '../app/session/components/withRedirectAuthenticated'
 
 const Register = () => {

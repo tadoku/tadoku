@@ -1,12 +1,12 @@
 import React, { FormEvent, useState } from 'react'
 import styled from 'styled-components'
-import Constants from '../../app/ui/Constants'
-import SessionApi from '../../app/session/api'
+import Constants from '../../ui/Constants'
+import SessionApi from '../api'
 import { connect } from 'react-redux'
 import { Dispatch } from 'redux'
-import { SessionActionTypes, SessionActions } from '../../store'
-import { User } from '../../domain/User'
-import { storeUserInLocalStorage } from '../../domain/Session'
+import { SessionActionTypes, SessionActions } from '../../../store'
+import { User } from '../../../domain/User'
+import { storeUserInLocalStorage } from '../../../domain/Session'
 
 const Form = styled.form``
 const Label = styled.label`

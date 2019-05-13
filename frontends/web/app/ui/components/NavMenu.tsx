@@ -3,7 +3,7 @@ import Link from 'next/link'
 import styled from 'styled-components'
 import { connect } from 'react-redux'
 import { State } from '../../../store'
-import { User } from '../../user/User'
+import { User } from '../../user/interfaces'
 
 const StyledNav = styled.nav`
   display: flex;

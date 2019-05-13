@@ -1,4 +1,4 @@
-import { User, RawUser } from '../user/User'
+import { User, RawUser } from '../user/interfaces'
 import { post } from '../../domain/api/api'
 
 interface SignInResponse {

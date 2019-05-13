@@ -5,7 +5,7 @@ import SessionApi from '../api'
 import { connect } from 'react-redux'
 import { Dispatch } from 'redux'
 import { SessionActionTypes, SessionActions } from '../../../store'
-import { User } from '../../user/User'
+import { User } from '../../user/interfaces'
 import { storeUserInLocalStorage } from '../storage'
 
 const Form = styled.form``

@@ -1,6 +1,6 @@
 import React, { FormEvent, useState } from 'react'
 import styled from 'styled-components'
-import Constants from '../ui/Constants'
+import Constants from '../../app/ui/Constants'
 import SessionApi from '../../domain/api/session'
 import { connect } from 'react-redux'
 import { Dispatch } from 'redux'

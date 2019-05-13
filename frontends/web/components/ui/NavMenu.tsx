@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import Link from 'next/link'
 import styled from 'styled-components'
 import { connect } from 'react-redux'
@@ -34,11 +34,23 @@ const LoggedOutNavigation = () => (
   </>
 )
 
-const NavMenu = ({ user }: { user: User | undefined }) => (
-  <StyledNav>
-    {user ? <LoggedInNavigation /> : <LoggedOutNavigation />}
-  </StyledNav>
-)
+const NavMenu = ({ user }: { user: User | undefined }) => {
+  const [hasMounted, setHasMounted] = useState(false)
+
+  useEffect(() => {
+    setHasMounted(true)
+  }, [])
+
+  if (!hasMounted) {
+    return null
+  }
+
+  return (
+    <StyledNav>
+      {user ? <LoggedInNavigation /> : <LoggedOutNavigation />}
+    </StyledNav>
+  )
+}
 
 const mapStateToProps = (state: State) => ({
   user: state.user,

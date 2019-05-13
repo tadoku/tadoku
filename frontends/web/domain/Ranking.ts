@@ -11,3 +11,15 @@ export interface rawRanking {
   language_code: string
   amount: number
 }
+
+export interface RankingRegistration {
+  end: Date
+  contestId: number
+  languages: string[]
+}
+
+export interface rawRankingRegistration {
+  end: Date
+  contest_id: number
+  languages: string[]
+}

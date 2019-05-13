@@ -1,5 +1,10 @@
 import { get } from './api'
-import { Ranking, rawRanking } from '../Ranking'
+import {
+  Ranking,
+  rawRanking,
+  RankingRegistration,
+  rawRankingRegistration,
+} from '../Ranking'
 
 const getRankings = async (contest_id?: number): Promise<Ranking[]> => {
   const response = await get(`/rankings?contest_id=${contest_id}`)
@@ -16,6 +21,26 @@ const getRankings = async (contest_id?: number): Promise<Ranking[]> => {
     languageCode: raw.language_code,
     amount: raw.amount,
   }))
+}
+
+const getCurrentRegistration = async (): Promise<
+  RankingRegistration | undefined
+> => {
+  const response = await get('/rankings/current', {
+    authenticated: true,
+  })
+
+  if (response.status != 200) {
+    return undefined
+  }
+
+  const data: rawRankingRegistration = await response.json()
+
+  return {
+    end: data.end,
+    contestId: data.contest_id,
+    languages: data.languages,
+  }
 }
 
 const RankingApi = {

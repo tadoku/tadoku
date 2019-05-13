@@ -1,6 +1,6 @@
 import React from 'react'
 import { connect } from 'react-redux'
-import { State } from '../../../store'
+import { State } from '../../store'
 import { User } from '../../user/interfaces'
 import Router from 'next/router'
 

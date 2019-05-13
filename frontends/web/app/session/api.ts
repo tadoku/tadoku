@@ -1,5 +1,5 @@
 import { User, RawUser } from '../user/interfaces'
-import { post } from '../../api'
+import { post } from '../api'
 
 interface SignInResponse {
   token: string

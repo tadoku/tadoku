@@ -3,7 +3,7 @@ import Router from 'next/router'
 import LandingPage from './landing-page'
 import { connect } from 'react-redux'
 import { User } from '../app/user/interfaces'
-import { State } from '../store'
+import { State } from '../app/store'
 interface Props {
   user: User | undefined
 }

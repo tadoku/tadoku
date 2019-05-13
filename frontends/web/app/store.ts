@@ -4,7 +4,7 @@ import {
   SessionAction,
   SessionActionTypes,
   sessionReducer,
-} from './app/session/redux'
+} from './session/redux'
 
 const initialState = {
   session: sessionInitialState,

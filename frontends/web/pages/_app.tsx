@@ -1,5 +1,5 @@
 import React from 'react'
-import { initializeStore } from './../store'
+import { initializeStore } from '../app/store'
 import { Provider } from 'react-redux'
 import App, { Container, NextAppContext } from 'next/app'
 import withRedux from 'next-redux-wrapper'

@@ -1,4 +1,4 @@
-import { User } from '../../domain/User'
+import { User } from '../user/User'
 
 const LOCAL_STORAGE_USER_KEY = 'user'
 

@@ -1,5 +1,5 @@
 import { createStore } from 'redux'
-import { User } from './domain/User'
+import { User } from './app/user/User'
 
 const initialState = {
   token: undefined as (string | undefined),

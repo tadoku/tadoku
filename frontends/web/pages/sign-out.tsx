@@ -2,7 +2,7 @@ import { useEffect } from 'react'
 import { connect } from 'react-redux'
 import { SessionActionTypes, SessionActions, State } from '../store'
 import { Dispatch } from 'redux'
-import { removeUserFromLocalStorage } from '../domain/Session'
+import { removeUserFromLocalStorage } from '../app/session/storage'
 import { User } from '../domain/User'
 import Router from 'next/router'
 

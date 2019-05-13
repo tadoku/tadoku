@@ -6,7 +6,7 @@ import { connect } from 'react-redux'
 import { Dispatch } from 'redux'
 import { SessionActionTypes, SessionActions } from '../../../store'
 import { User } from '../../../domain/User'
-import { storeUserInLocalStorage } from '../../../domain/Session'
+import { storeUserInLocalStorage } from '../storage'
 
 const Form = styled.form``
 const Label = styled.label`

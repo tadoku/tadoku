@@ -4,7 +4,7 @@ import { Provider } from 'react-redux'
 import App, { Container, NextAppContext } from 'next/app'
 import withRedux from 'next-redux-wrapper'
 import { Store } from 'redux'
-import { loadUserFromLocalStorage } from '../domain/Session'
+import { loadUserFromLocalStorage } from '../app/session/storage'
 
 class MyApp extends App<{ store: Store }> {
   static async getInitialProps({ Component, ctx }: NextAppContext) {

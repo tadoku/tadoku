@@ -6,24 +6,24 @@ export const initialState = {
 
 // Actions
 
-export enum RankingActionTypes {
+export enum ActionTypes {
   RankingUpdateRegistration = '@ranking/ranking-registration',
 }
 
 export interface RankingUpdateRegistration {
-  type: typeof RankingActionTypes.RankingUpdateRegistration
+  type: typeof ActionTypes.RankingUpdateRegistration
   payload: {
     registration: RankingRegistration | undefined
   }
 }
 
-export type RankingAction = RankingUpdateRegistration
+export type Action = RankingUpdateRegistration
 
 // REDUCER
 
-export const rankingReducer = (state = initialState, action: RankingAction) => {
+export const reducer = (state = initialState, action: Action) => {
   switch (action.type) {
-    case RankingActionTypes.RankingUpdateRegistration:
+    case ActionTypes.RankingUpdateRegistration:
       const payload = (action as RankingUpdateRegistration).payload
       return { ...state, registration: payload.registration }
     default:

@@ -5,29 +5,24 @@ import {
   SessionActionTypes,
   sessionReducer,
 } from './session/redux'
-import {
-  initialState as rankingInitialState,
-  rankingReducer,
-  RankingActionTypes,
-  RankingAction,
-} from './ranking/redux'
+import * as RankingStore from './ranking/redux'
 
 const initialState = {
   session: sessionInitialState,
-  ranking: rankingInitialState,
+  ranking: RankingStore.initialState,
 }
 
 export type State = typeof initialState
-export type Action = SessionAction | RankingAction
+export type Action = SessionAction | RankingStore.Action
 
 export const actionTypes = {
   ...SessionActionTypes,
-  ...RankingActionTypes,
+  ...RankingStore.ActionTypes,
 }
 
 export const reducer = combineReducers({
   session: sessionReducer,
-  ranking: rankingReducer,
+  ranking: RankingStore.reducer,
 })
 
 export function initializeStore(state = initialState) {

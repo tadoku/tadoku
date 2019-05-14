@@ -24,7 +24,7 @@ const SignOut = ({ user, signOut }: Props) => {
 }
 
 const mapStateToProps = (state: State) => ({
-  user: state.user,
+  user: state.session.user,
 })
 
 const mapDispatchToProps = (dispatch: Dispatch<SessionActions>) => ({

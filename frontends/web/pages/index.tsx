@@ -19,7 +19,7 @@ const Home = ({ user }: Props) => {
 }
 
 const mapStateToProps = (state: State) => ({
-  user: state.user,
+  user: state.session.user,
 })
 
 export default connect(mapStateToProps)(Home)

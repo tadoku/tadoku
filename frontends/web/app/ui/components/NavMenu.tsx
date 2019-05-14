@@ -53,7 +53,7 @@ const NavMenu = ({ user }: { user: User | undefined }) => {
 }
 
 const mapStateToProps = (state: State) => ({
-  user: state.user,
+  user: state.session.user,
 })
 
 export default connect(mapStateToProps)(NavMenu)

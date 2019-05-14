@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 import { connect } from 'react-redux'
-import { SessionActionTypes, SessionAction } from '../app/session/redux'
+import * as SessionStore from '../app/session/redux'
 import { State } from './../app/store'
 import { Dispatch } from 'redux'
 import { removeUserFromLocalStorage } from '../app/session/storage'
@@ -28,10 +28,10 @@ const mapStateToProps = (state: State) => ({
   user: state.session.user,
 })
 
-const mapDispatchToProps = (dispatch: Dispatch<SessionAction>) => ({
+const mapDispatchToProps = (dispatch: Dispatch<SessionStore.Action>) => ({
   signOut: () => {
     removeUserFromLocalStorage()
-    dispatch({ type: SessionActionTypes.SessionSignOut })
+    dispatch({ type: SessionStore.ActionTypes.SessionSignOut })
   },
 })
 

@@ -5,7 +5,7 @@ import App, { Container, NextAppContext } from 'next/app'
 import withRedux from 'next-redux-wrapper'
 import { Store } from 'redux'
 import { loadUserFromLocalStorage } from '../app/session/storage'
-import { SessionActionTypes } from '../app/session/redux'
+import * as SessionStore from '../app/session/redux'
 
 class MyApp extends App<{ store: Store }> {
   static async getInitialProps({ Component, ctx }: NextAppContext) {
@@ -21,7 +21,7 @@ class MyApp extends App<{ store: Store }> {
 
     if (payload) {
       this.props.store.dispatch({
-        type: SessionActionTypes.SessionSignIn,
+        type: SessionStore.ActionTypes.SessionSignIn,
         payload,
       })
     }

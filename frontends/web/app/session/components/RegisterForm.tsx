@@ -4,7 +4,7 @@ import Constants from '../../ui/Constants'
 import SessionApi from '../api'
 import { connect } from 'react-redux'
 import { Dispatch } from 'redux'
-import { SessionActionTypes, SessionActions } from '../../store'
+import { SessionActionTypes, SessionAction } from '../redux'
 import { User } from '../../user/interfaces'
 import { storeUserInLocalStorage } from '../storage'
 
@@ -92,7 +92,7 @@ const RegisterForm = ({ setUser }: Props) => {
   )
 }
 
-const mapDispatchToProps = (dispatch: Dispatch<SessionActions>) => ({
+const mapDispatchToProps = (dispatch: Dispatch<SessionAction>) => ({
   setUser: (token: string, user: User) => {
     const payload = { token, user }
     storeUserInLocalStorage(payload)

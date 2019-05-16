@@ -4,6 +4,7 @@ import styled from 'styled-components'
 import { connect } from 'react-redux'
 import { State } from '../../store'
 import { User } from '../../user/interfaces'
+import { RankingRegistration } from '../../ranking/interfaces'
 
 const StyledNav = styled.nav`
   display: flex;
@@ -15,8 +16,17 @@ const NavLink = styled.a`
   display: block;
 `
 
-const LoggedInNavigation = () => (
+const LoggedInNavigation = ({
+  registration,
+}: {
+  registration: RankingRegistration | undefined
+}) => (
   <>
+    {registration && (
+      <Link href="/contest-submission">
+        <NavLink href="">Submit pages</NavLink>
+      </Link>
+    )}
     <Link href="/sign-out">
       <NavLink href="">Sign out</NavLink>
     </Link>
@@ -34,7 +44,12 @@ const LoggedOutNavigation = () => (
   </>
 )
 
-const NavMenu = ({ user }: { user: User | undefined }) => {
+interface Props {
+  user: User | undefined
+  registration: RankingRegistration | undefined
+}
+
+const NavMenu = ({ user, registration }: Props) => {
   const [hasMounted, setHasMounted] = useState(false)
 
   useEffect(() => {
@@ -47,13 +62,18 @@ const NavMenu = ({ user }: { user: User | undefined }) => {
 
   return (
     <StyledNav>
-      {user ? <LoggedInNavigation /> : <LoggedOutNavigation />}
+      {user ? (
+        <LoggedInNavigation registration={registration} />
+      ) : (
+        <LoggedOutNavigation />
+      )}
     </StyledNav>
   )
 }
 
 const mapStateToProps = (state: State) => ({
   user: state.session.user,
+  registration: state.ranking.registration,
 })
 
 export default connect(mapStateToProps)(NavMenu)

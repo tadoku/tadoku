@@ -23,3 +23,8 @@ export interface rawRankingRegistration {
   contest_id: number
   languages: string[]
 }
+
+export interface Medium {
+  id: number
+  description: string
+}

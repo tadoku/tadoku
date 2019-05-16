@@ -1,0 +1,12 @@
+version: '3'
+
+services:
+  tadoku-web:
+    build: .
+    image: tadoku/web
+    container_name: tadoku-web
+    network_mode: bridge
+    expose:
+      - 3000
+    ports:
+      - 80:3000

@@ -1,7 +1,7 @@
 import 'isomorphic-fetch'
 import { getAuthenticationToken } from './session/storage'
 
-const root = 'http://localhost:4000'
+const root = 'http://api.langlog.be' //'http://localhost:4000'
 
 interface APIOptions {
   authenticated?: boolean

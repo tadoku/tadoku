@@ -10,3 +10,6 @@ services:
       - 3000
     ports:
       - 80:3000
+    environment:
+      VIRTUAL_HOST: langlog.be
+      VIRTUAL_PORT: 3000

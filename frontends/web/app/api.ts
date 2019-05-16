@@ -1,7 +1,11 @@
 import 'isomorphic-fetch'
 import { getAuthenticationToken } from './session/storage'
 
-const root = 'http://api.langlog.be' //'http://localhost:4000'
+// TODO: move this endpoint into env
+const root =
+  process.env.NODE_ENV === 'production'
+    ? 'http://api.langlog.be'
+    : 'http://localhost:4000'
 
 interface APIOptions {
   authenticated?: boolean

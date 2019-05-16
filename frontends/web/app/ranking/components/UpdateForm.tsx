@@ -1,6 +1,7 @@
 import React, { FormEvent, useState } from 'react'
 import styled from 'styled-components'
 import Constants from '../../ui/Constants'
+import { AllMediums } from '../database'
 
 const Form = styled.form``
 const Label = styled.label`
@@ -27,7 +28,8 @@ const Button = styled.button`
 `
 
 const UpdateForm = () => {
-  const [amount, setAmount] = useState('' as string)
+  const [amount, setAmount] = useState('')
+  const [medium, setMedium] = useState('0')
 
   const submit = async (event: FormEvent) => {
     event.preventDefault()
@@ -43,8 +45,17 @@ const UpdateForm = () => {
           value={amount}
           onChange={e => setAmount(e.target.value)}
           min={0}
+          max={3000}
           step={1}
         />
+      </Label>
+      <Label>
+        <LabelText>Medium</LabelText>
+        <select value={medium} onChange={e => setMedium(e.target.value)}>
+          {AllMediums.map(m => (
+            <option value={m.id}>{m.description}</option>
+          ))}
+        </select>
       </Label>
       <Button type="submit">Submit pages</Button>
     </Form>

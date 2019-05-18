@@ -15,7 +15,7 @@ const signIn = async (payload: {
   email: string
   password: string
 }): Promise<SignInResponse | undefined> => {
-  const response = await post(`/login`, payload)
+  const response = await post(`/login`, { body: payload })
 
   if (response.status !== 200) {
     return undefined
@@ -38,7 +38,7 @@ const register = async (payload: {
   password: string
   displayName: string
 }): Promise<boolean> => {
-  const response = await post(`/register`, payload)
+  const response = await post(`/register`, { body: payload })
 
   return response.status === 201
 }

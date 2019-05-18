@@ -11,6 +11,10 @@ interface APIOptions {
   authenticated?: boolean
 }
 
+interface APIOptionsForPost extends APIOptions {
+  body: any
+}
+
 export const get = (endpoint: string, options?: APIOptions) => {
   let requestOptions: RequestInit = {
     method: 'get',
@@ -30,12 +34,22 @@ export const get = (endpoint: string, options?: APIOptions) => {
   return fetch(`${root}${endpoint}`, requestOptions)
 }
 
-export const post = (endpoint: string, body: any) =>
-  fetch(`${root}${endpoint}`, {
+export const post = (endpoint: string, options: APIOptionsForPost) => {
+  const requestOptions: RequestInit = {
     method: 'post',
     headers: {
       Accept: 'application/json',
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify(body),
-  })
+    body: JSON.stringify(options.body),
+  }
+
+  if (options.authenticated) {
+    requestOptions.headers = {
+      ...requestOptions.headers,
+      authorization: `Bearer ${getAuthenticationToken()}`,
+    }
+  }
+
+  return fetch(`${root}${endpoint}`, requestOptions)
+}

@@ -57,7 +57,7 @@ const RankingList = (props: Props) => (
             </Link>
           </Name>
           <Pages>
-            {r.amount}
+            {Math.round(r.amount * 10) / 10}
             <span> pages</span>
           </Pages>
         </Row>

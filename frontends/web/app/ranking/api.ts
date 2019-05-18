@@ -1,4 +1,4 @@
-import { get } from '../api'
+import { get, post } from '../api'
 import {
   Ranking,
   rawRanking,
@@ -43,9 +43,29 @@ const getCurrentRegistration = async (): Promise<
   }
 }
 
+const createLog = async (payload: {
+  contestId: number
+  mediumId: number
+  amount: number
+  languageCode: string
+}): Promise<boolean> => {
+  const response = await post(`/contest_logs`, {
+    body: {
+      contest_id: payload.contestId,
+      medium_id: payload.mediumId,
+      amount: payload.amount,
+      language_code: payload.languageCode,
+    },
+    authenticated: true,
+  })
+
+  return response.status === 201
+}
+
 const RankingApi = {
   get: getRankings,
   getCurrentRegistration,
+  createLog,
 }
 
 export default RankingApi

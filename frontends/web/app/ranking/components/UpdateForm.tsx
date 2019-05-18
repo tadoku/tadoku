@@ -5,7 +5,6 @@ import { AllMediums, languageNameByCode } from '../database'
 import { connect } from 'react-redux'
 import { State } from '../../store'
 import { RankingRegistration } from '../interfaces'
-import Router from 'next/router'
 
 const Form = styled.form``
 const Label = styled.label`

@@ -14,5 +14,6 @@ create table rankings (
 create index rankings_contest_id on rankings(contest_id);
 create index rankings_user_id on rankings(user_id);
 create index rankings_language_code on rankings(language_code);
+create unique index rankings_unique_contest_user_language on rankings(contest_id, user_id, language_code);
 
 alter sequence ranking_seq restart with 1;

@@ -1,7 +1,11 @@
-import React, { FormEvent, useState } from 'react'
+import React, { FormEvent, useState, useEffect } from 'react'
 import styled from 'styled-components'
 import Constants from '../../ui/Constants'
 import { AllMediums } from '../database'
+import { connect } from 'react-redux'
+import { State } from '../../store'
+import { RankingRegistration } from '../interfaces'
+import Router from 'next/router'
 
 const Form = styled.form``
 const Label = styled.label`
@@ -27,9 +31,19 @@ const Button = styled.button`
   height: 36px;
 `
 
-const UpdateForm = () => {
+interface Props {
+  registration: RankingRegistration | undefined
+}
+
+const UpdateForm = ({ registration }: Props) => {
   const [amount, setAmount] = useState('')
   const [medium, setMedium] = useState('0')
+
+  useEffect(() => {
+    if (!registration) {
+      Router.push('/')
+    }
+  }, [])
 
   const submit = async (event: FormEvent) => {
     event.preventDefault()
@@ -62,4 +76,8 @@ const UpdateForm = () => {
   )
 }
 
-export default UpdateForm
+const mapStateToProps = (state: State) => ({
+  registration: state.ranking.registration,
+})
+
+export default connect(mapStateToProps)(UpdateForm)

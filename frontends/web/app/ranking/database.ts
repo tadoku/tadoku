@@ -39,3 +39,5 @@ export const LanguageByCode: { [key: string]: Language } = AllLanguages.reduce(
   },
   {},
 )
+
+export const languageNameByCode = (code: string) => LanguageByCode[code].name

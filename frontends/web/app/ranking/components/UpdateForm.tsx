@@ -1,7 +1,7 @@
 import React, { FormEvent, useState, useEffect } from 'react'
 import styled from 'styled-components'
 import Constants from '../../ui/Constants'
-import { AllMediums } from '../database'
+import { AllMediums, languageNameByCode } from '../database'
 import { connect } from 'react-redux'
 import { State } from '../../store'
 import { RankingRegistration } from '../interfaces'
@@ -38,15 +38,20 @@ interface Props {
 const UpdateForm = ({ registration }: Props) => {
   const [amount, setAmount] = useState('')
   const [medium, setMedium] = useState('0')
+  const [languageCode, setLanguageCode] = useState('')
 
   useEffect(() => {
-    if (!registration) {
-      Router.push('/')
+    if (registration) {
+      setLanguageCode(registration.languages[0])
     }
-  }, [])
+  }, [registration])
 
   const submit = async (event: FormEvent) => {
     event.preventDefault()
+  }
+
+  if (!registration) {
+    return null
   }
 
   return (
@@ -71,6 +76,19 @@ const UpdateForm = ({ registration }: Props) => {
           ))}
         </select>
       </Label>
+
+      <LabelText>Language</LabelText>
+      {registration.languages.map(code => (
+        <Label>
+          <input
+            type="radio"
+            value={code}
+            checked={code === languageCode}
+            onChange={e => setLanguageCode(e.target.value)}
+          />
+          {languageNameByCode(code)}
+        </Label>
+      ))}
       <Button type="submit">Submit pages</Button>
     </Form>
   )

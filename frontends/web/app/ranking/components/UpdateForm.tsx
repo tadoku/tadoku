@@ -5,6 +5,8 @@ import { AllMediums, languageNameByCode } from '../database'
 import { connect } from 'react-redux'
 import { State } from '../../store'
 import { RankingRegistration } from '../interfaces'
+import RankingApi from '../api'
+import Router from 'next/router'
 
 const Form = styled.form``
 const Label = styled.label`
@@ -36,7 +38,7 @@ interface Props {
 
 const UpdateForm = ({ registration }: Props) => {
   const [amount, setAmount] = useState('')
-  const [medium, setMedium] = useState('0')
+  const [mediumId, setMediumId] = useState('0')
   const [languageCode, setLanguageCode] = useState('')
 
   useEffect(() => {
@@ -47,6 +49,22 @@ const UpdateForm = ({ registration }: Props) => {
 
   const submit = async (event: FormEvent) => {
     event.preventDefault()
+
+    // TODO: add validation
+    if (!registration) {
+      return
+    }
+
+    const success = await RankingApi.createLog({
+      contestId: registration.contestId,
+      mediumId: Number(mediumId),
+      amount: Number(amount),
+      languageCode,
+    })
+
+    if (success) {
+      Router.push('/')
+    }
   }
 
   if (!registration) {
@@ -69,7 +87,7 @@ const UpdateForm = ({ registration }: Props) => {
       </Label>
       <Label>
         <LabelText>Medium</LabelText>
-        <select value={medium} onChange={e => setMedium(e.target.value)}>
+        <select value={mediumId} onChange={e => setMediumId(e.target.value)}>
           {AllMediums.map(m => (
             <option value={m.id}>{m.description}</option>
           ))}
@@ -78,7 +96,7 @@ const UpdateForm = ({ registration }: Props) => {
 
       <LabelText>Language</LabelText>
       {registration.languages.map(code => (
-        <Label>
+        <Label key={code}>
           <input
             type="radio"
             value={code}

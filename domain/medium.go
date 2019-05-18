@@ -18,7 +18,7 @@ type MediumID uint64
 
 // These are the named constants for medium IDs
 const (
-	MediumBook MediumID = iota
+	MediumBook MediumID = iota + 1
 	MediumManga
 	MediumNet
 	MediumFullGame

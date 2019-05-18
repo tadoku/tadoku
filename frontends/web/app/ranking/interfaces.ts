@@ -28,3 +28,8 @@ export interface Medium {
   id: number
   description: string
 }
+
+export interface Language {
+  code: string
+  name: string
+}

@@ -95,7 +95,7 @@ func (i *rankingInteractor) CreateRanking(
 	if err != nil {
 		return fail.Wrap(err)
 	}
-	needsGlobal := !existingLanguages.ContainsLanguage(domain.Global)
+	needsGlobal := len(existingLanguages) == 0
 
 	// Figure out which languages we need to create new rankings for
 	targetLanguages := domain.LanguageCodes{}

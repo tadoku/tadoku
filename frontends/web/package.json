@@ -7,9 +7,9 @@
   "author": "Anton Van Eechaute <974796+antonve@users.noreply.github.com>",
   "license": "MIT",
   "scripts": {
-    "dev": "next",
-    "build": "next build",
-    "start": "next start"
+    "dev": "nodemon",
+    "build": "next build && tsc && tsc --project tsconfig.server.json",
+    "start": "cross-env NODE_ENV=production node .next/server"
   },
   "dependencies": {
     "@types/express": "^4.16.1",

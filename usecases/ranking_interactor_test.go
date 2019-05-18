@@ -59,7 +59,7 @@ func TestRankingInteractor_CreateRanking(t *testing.T) {
 
 		contestRepo.EXPECT().GetOpenContests().Return([]uint64{contestID}, nil)
 		userRepo.EXPECT().FindByID(userID).Return(domain.User{ID: userID}, nil)
-		rankingRepo.EXPECT().GetAllLanguagesForContestAndUser(contestID, userID).Return(domain.LanguageCodes{domain.English, domain.Global}, nil)
+		rankingRepo.EXPECT().GetAllLanguagesForContestAndUser(contestID, userID).Return(domain.LanguageCodes{domain.English}, nil)
 		rankingRepo.EXPECT().Store(domain.Ranking{ContestID: contestID, UserID: userID, Language: languages[0], Amount: 0}).Return(nil)
 
 		err := interactor.CreateRanking(userID, contestID, languages)
@@ -72,7 +72,7 @@ func TestRankingInteractor_CreateRanking(t *testing.T) {
 
 		contestRepo.EXPECT().GetOpenContests().Return([]uint64{contestID}, nil)
 		userRepo.EXPECT().FindByID(userID).Return(domain.User{ID: userID}, nil)
-		rankingRepo.EXPECT().GetAllLanguagesForContestAndUser(contestID, userID).Return(domain.LanguageCodes{domain.English, domain.Global}, nil)
+		rankingRepo.EXPECT().GetAllLanguagesForContestAndUser(contestID, userID).Return(domain.LanguageCodes{domain.English}, nil)
 
 		err := interactor.CreateRanking(userID, contestID, languages)
 

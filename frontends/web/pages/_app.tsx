@@ -8,6 +8,7 @@ import { loadUserFromLocalStorage } from '../app/session/storage'
 import * as SessionStore from '../app/session/redux'
 import SessionEffects from '../app/session/components/Effects'
 import RankingEffects from '../app/ranking/components/Effects'
+import ContestEffects from '../app/contest/components/Effects'
 
 class MyApp extends App<{ store: Store }> {
   static async getInitialProps({ Component, ctx }: NextAppContext) {
@@ -37,6 +38,7 @@ class MyApp extends App<{ store: Store }> {
         <Provider store={store}>
           <SessionEffects />
           <RankingEffects />
+          <ContestEffects />
           <Component {...pageProps} />
         </Provider>
       </Container>

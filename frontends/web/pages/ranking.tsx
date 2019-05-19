@@ -1,29 +1,43 @@
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import Layout from '../app/ui/components/Layout'
 import { Ranking } from '../app/ranking/interfaces'
 import RankingList from '../app/ranking/components/List'
 import RankingApi from '../app/ranking/api'
+import { connect } from 'react-redux'
+import { State } from '../app/store'
+import { Contest } from '../app/contest/interfaces'
 
 interface Props {
-  rankings: Ranking[]
+  latestContest: Contest | undefined
 }
 
-const Home = (props: Props) => {
+const Home = ({ latestContest }: Props) => {
+  const [rankings, setRankings] = useState([] as Ranking[])
+  useEffect(() => {
+    if (!latestContest) {
+      return
+    }
+
+    const update = async () => {
+      const payload = await RankingApi.get(latestContest.id)
+      setRankings(payload)
+    }
+    update()
+  }, [latestContest])
+
+  if (!rankings) {
+    return <Layout>No ranking found.</Layout>
+  }
+
   return (
     <Layout>
-      <RankingList rankings={props.rankings} />
+      <RankingList rankings={rankings} />
     </Layout>
   )
 }
 
-Home.getInitialProps = async (_: any) => {
-  const rankings = await RankingApi.get(1)
+const mapStateToProps = (state: State) => ({
+  latestContest: state.contest.latestContest,
+})
 
-  if (rankings.length > 0) {
-    return { rankings }
-  }
-
-  return { rankings: [] }
-}
-
-export default Home
+export default connect(mapStateToProps)(Home)

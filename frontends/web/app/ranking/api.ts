@@ -4,6 +4,8 @@ import {
   rawRanking,
   RankingRegistration,
   rawRankingRegistration,
+  ContestLog,
+  rawContestLog,
 } from './interfaces'
 
 const getRankings = async (contest_id?: number): Promise<Ranking[]> => {
@@ -62,10 +64,37 @@ const createLog = async (payload: {
   return response.status === 201
 }
 
+const getLogsFor = async (
+  contestId: number,
+  userId: number,
+): Promise<ContestLog[]> => {
+  const response = await get(
+    `/contest_logs?contest_id=${contestId}&user_id=${userId}`,
+  )
+
+  if (response.status != 200) {
+    return []
+  }
+
+  const data: rawContestLog[] = await response.json()
+
+  return data.map(raw => ({
+    id: raw.id,
+    contestId: raw.contest_id,
+    userId: raw.user_id,
+    languageCode: raw.language_code,
+    mediumId: raw.medium_id,
+    amount: raw.amount,
+    adjustedAmount: raw.adjusted_amount,
+    date: new Date(raw.date),
+  }))
+}
+
 const RankingApi = {
   get: getRankings,
   getCurrentRegistration,
   createLog,
+  getLogsFor,
 }
 
 export default RankingApi

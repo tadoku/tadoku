@@ -52,7 +52,10 @@ const RankingList = (props: Props) => (
         <Row key={r.userId}>
           <Rank>{rank + 1}</Rank>
           <Name>
-            <Link href={`/contest/1/rankings/${r.userId}`}>
+            <Link
+              as={`/contest/1/rankings/${r.userId}`}
+              href={`/ranking-details?contest_id=1&user_id=${r.userId}`}
+            >
               <a href="">{r.userDisplayName}</a>
             </Link>
           </Name>

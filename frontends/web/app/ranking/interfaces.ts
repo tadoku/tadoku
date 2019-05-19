@@ -33,3 +33,25 @@ export interface Language {
   code: string
   name: string
 }
+
+export interface ContestLog {
+  id: number
+  contestId: number
+  userId: number
+  languageCode: string
+  mediumId: number
+  amount: number
+  adjustedAmount: number
+  date: Date
+}
+
+export interface rawContestLog {
+  id: number
+  contest_id: number
+  user_id: number
+  language_code: string
+  medium_id: number
+  amount: number
+  adjusted_amount: number
+  date: Date
+}

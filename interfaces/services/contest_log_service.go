@@ -60,6 +60,10 @@ func (s *contestLogService) Get(ctx Context) error {
 
 	logs, err := s.RankingInteractor.ContestLogs(contestID, userID)
 	if err != nil {
+		if err == usecases.ErrNoContestLogsFound {
+			return ctx.NoContent(http.StatusNotFound)
+		}
+
 		return fail.Wrap(err)
 	}
 

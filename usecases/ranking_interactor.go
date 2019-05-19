@@ -46,6 +46,7 @@ type RankingInteractor interface {
 
 	RankingsForContest(contestID uint64, languageCode domain.LanguageCode) (domain.Rankings, error)
 	CurrentRegistration(userID uint64) (domain.RankingRegistration, error)
+	ContestLogs(contestID uint64, userID uint64) (domain.ContestLogs, error)
 }
 
 // NewRankingInteractor instantiates RankingInteractor with all dependencies
@@ -239,4 +240,8 @@ func (i *rankingInteractor) CurrentRegistration(userID uint64) (domain.RankingRe
 	}
 
 	return registration, nil
+}
+
+func (i *rankingInteractor) ContestLogs(contestID uint64, userID uint64) (domain.ContestLogs, error) {
+	return nil, nil
 }

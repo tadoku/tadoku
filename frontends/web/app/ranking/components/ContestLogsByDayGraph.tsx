@@ -28,9 +28,10 @@ const Graph = ({ logs }: Props) => {
       <VerticalGridLines />
       <XAxis title="Days" tickFormat={date => date.getDate()} />
       <YAxis title="Pages" />
-      <LineSeries data={data['jpn']} />
-      {/* {Object.keys(data).map(language => ( */}
-      {/* ))} */}
+
+      {Object.keys(data).map(language => (
+        <LineSeries data={data[language]} key={language} />
+      ))}
     </XYPlot>
   )
 }

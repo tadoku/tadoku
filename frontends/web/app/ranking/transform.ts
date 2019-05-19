@@ -30,7 +30,13 @@ export const aggregateContestLogsByDays = (
   })
 
   languages.forEach(language => {
-    aggregated[language] = { ...initializedSeries }
+    const series: typeof initializedSeries = {}
+
+    Object.keys(initializedSeries).forEach(date => {
+      series[date] = { ...initializedSeries[date] }
+    })
+
+    aggregated[language] = series
   })
 
   logs.forEach(log => {

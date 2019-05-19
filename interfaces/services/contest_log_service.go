@@ -67,5 +67,5 @@ func (s *contestLogService) Get(ctx Context) error {
 		return fail.Wrap(err)
 	}
 
-	return ctx.JSON(http.StatusOK, logs)
+	return ctx.JSON(http.StatusOK, logs.GetView())
 }

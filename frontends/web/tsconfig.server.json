@@ -4,8 +4,9 @@
     "noEmit": false,
     "module": "commonjs",
     "target": "es2017",
-    "lib": ["es2017"]
+    "lib": ["es2017"],
+    "outDir": ".next/server"
   },
-  "include": ["server/**/*.ts"],
+  "include": ["server/*.ts"],
   "exclude": [".next"]
 }

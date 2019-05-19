@@ -1,6 +1,9 @@
 package services
 
 import (
+	"net/http"
+	"strconv"
+
 	"github.com/srvc/fail"
 
 	"github.com/tadoku/api/domain"
@@ -10,6 +13,7 @@ import (
 // ContestLogService is responsible for managing contest log entries
 type ContestLogService interface {
 	Create(ctx Context) error
+	Get(ctx Context) error
 }
 
 // NewContestLogService initializer
@@ -40,5 +44,28 @@ func (s *contestLogService) Create(ctx Context) error {
 		return fail.Wrap(err)
 	}
 
-	return ctx.NoContent(201)
+	return ctx.NoContent(http.StatusCreated)
+}
+
+func (s *contestLogService) Get(ctx Context) error {
+	contestID, err := strconv.ParseUint(ctx.QueryParam("contest_id"), 10, 64)
+	if err != nil {
+		return fail.Wrap(err)
+	}
+
+	userID, err := strconv.ParseUint(ctx.QueryParam("user_id"), 10, 64)
+	if err != nil {
+		return fail.Wrap(err)
+	}
+
+	logs, err := s.RankingInteractor.ContestLogs(contestID, userID)
+	if err != nil {
+		if err == usecases.ErrNoContestLogsFound {
+			return ctx.NoContent(http.StatusNotFound)
+		}
+
+		return fail.Wrap(err)
+	}
+
+	return ctx.JSON(http.StatusOK, logs.GetView())
 }

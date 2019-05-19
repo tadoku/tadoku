@@ -61,7 +61,7 @@ func (c ContestLogs) GetView() []ContestLogView {
 
 // ContestLogView is a representation of a contest log for external usages
 type ContestLogView struct {
-	ID             uint64       `json:"user_id"`
+	ID             uint64       `json:"id"`
 	ContestID      uint64       `json:"contest_id"`
 	UserID         uint64       `json:"user_id"`
 	Language       LanguageCode `json:"language_code"`

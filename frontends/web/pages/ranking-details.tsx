@@ -1,7 +1,9 @@
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import Layout from '../app/ui/components/Layout'
 import ErrorPage from 'next/error'
 import { ExpressNextContext } from '../app/interfaces'
+import { ContestLog } from '../app/ranking/interfaces'
+import RankingApi from '../app/ranking/api'
 
 interface Props {
   contestId: number | undefined
@@ -9,6 +11,21 @@ interface Props {
 }
 
 const RankingDetails = ({ contestId, userId }: Props) => {
+  const [logs, setLogs] = useState([] as ContestLog[])
+
+  useEffect(() => {
+    if (!contestId || !userId) {
+      return
+    }
+
+    const getLogs = async () => {
+      const payload = await RankingApi.getLogsFor(contestId, userId)
+      setLogs(payload)
+    }
+
+    getLogs()
+  }, [contestId, userId])
+
   if (!contestId || !userId) {
     return <ErrorPage statusCode={404} />
   }

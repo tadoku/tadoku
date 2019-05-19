@@ -12,6 +12,7 @@ import (
 type ContestService interface {
 	Create(ctx Context) error
 	Update(ctx Context) error
+	Latest(ctx Context) error
 }
 
 // NewContestService initializer
@@ -51,4 +52,18 @@ func (s *contestService) Update(ctx Context) error {
 	}
 
 	return ctx.NoContent(http.StatusNoContent)
+}
+
+func (s *contestService) Latest(ctx Context) error {
+	contest, err := s.ContestInteractor.Latest()
+
+	if err != nil {
+		if err == usecases.ErrContestNotFound {
+			return ctx.NoContent(http.StatusNotFound)
+		}
+
+		return fail.Wrap(err)
+	}
+
+	return ctx.JSON(http.StatusOK, contest)
 }

@@ -42,29 +42,29 @@ type contestInteractor struct {
 	validator         Validator
 }
 
-func (si *contestInteractor) CreateContest(contest domain.Contest) error {
+func (i *contestInteractor) CreateContest(contest domain.Contest) error {
 	if contest.ID != 0 {
 		return ErrCreateContestHasID
 	}
 
-	return si.saveContest(contest)
+	return i.saveContest(contest)
 }
 
-func (si *contestInteractor) UpdateContest(contest domain.Contest) error {
+func (i *contestInteractor) UpdateContest(contest domain.Contest) error {
 	if contest.ID == 0 {
 		return ErrContestIDMissing
 	}
 
-	return si.saveContest(contest)
+	return i.saveContest(contest)
 }
 
-func (si *contestInteractor) saveContest(contest domain.Contest) error {
-	if valid, _ := si.validator.Validate(contest); !valid {
+func (i *contestInteractor) saveContest(contest domain.Contest) error {
+	if valid, _ := i.validator.Validate(contest); !valid {
 		return ErrInvalidContest
 	}
 
 	if contest.Open {
-		ids, err := si.contestRepository.GetOpenContests()
+		ids, err := i.contestRepository.GetOpenContests()
 		if err != nil {
 			return fail.Wrap(err)
 		}
@@ -77,10 +77,10 @@ func (si *contestInteractor) saveContest(contest domain.Contest) error {
 		}
 	}
 
-	err := si.contestRepository.Store(&contest)
+	err := i.contestRepository.Store(&contest)
 	return fail.Wrap(err)
 }
 
-func (si *contestInteractor) Latest() (*domain.Contest, error) {
+func (i *contestInteractor) Latest() (*domain.Contest, error) {
 	return nil, nil
 }

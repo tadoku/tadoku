@@ -38,7 +38,7 @@ interface Props {
 
 const UpdateForm = ({ registration }: Props) => {
   const [amount, setAmount] = useState('')
-  const [mediumId, setMediumId] = useState('0')
+  const [mediumId, setMediumId] = useState('1')
   const [languageCode, setLanguageCode] = useState('')
 
   useEffect(() => {

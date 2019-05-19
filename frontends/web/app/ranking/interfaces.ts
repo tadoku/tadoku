@@ -55,3 +55,8 @@ export interface rawContestLog {
   adjusted_amount: number
   date: Date
 }
+
+export interface AggregatedContestLogsByDayEntry {
+  x: Date // day for x axis
+  y: number // page count for y axis
+}

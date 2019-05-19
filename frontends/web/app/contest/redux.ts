@@ -1,31 +1,31 @@
 import { Contest } from './interfaces'
 
 export const initialState = {
-  currentContest: undefined as (Contest | undefined),
+  latestContest: undefined as (Contest | undefined),
 }
 
 // Actions
 
 export enum ActionTypes {
-  ContestUpdateCurrentContest = '@contest/update-current-contest',
+  ContestUpdateLatestContest = '@contest/update-latest-contest',
 }
 
-export interface ContestUpdateCurrentContest {
-  type: typeof ActionTypes.ContestUpdateCurrentContest
+export interface ContestUpdateLatestContest {
+  type: typeof ActionTypes.ContestUpdateLatestContest
   payload: {
-    currentContest: Contest | undefined
+    latestContest: Contest | undefined
   }
 }
 
-export type Action = ContestUpdateCurrentContest
+export type Action = ContestUpdateLatestContest
 
 // REDUCER
 
 export const reducer = (state = initialState, action: Action) => {
   switch (action.type) {
-    case ActionTypes.ContestUpdateCurrentContest:
-      const payload = (action as ContestUpdateCurrentContest).payload
-      return { ...state, currentContest: payload.currentContest }
+    case ActionTypes.ContestUpdateLatestContest:
+      const payload = (action as ContestUpdateLatestContest).payload
+      return { ...state, latestContest: payload.latestContest }
     default:
       return state
   }

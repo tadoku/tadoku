@@ -379,3 +379,35 @@ func TestRankingInteractor_CurrentRegistration(t *testing.T) {
 	}
 
 }
+
+func TestRankingInteractor_ContestLogs(t *testing.T) {
+	ctrl, _, _, repo, _, _, interactor := setupRankingTest(t)
+	defer ctrl.Finish()
+
+	userID := uint64(1)
+	contestID := uint64(1)
+
+	{
+		// Happy path
+		expected := domain.ContestLogs{
+			{ContestID: contestID, UserID: userID, Language: domain.Japanese, Amount: 10, MediumID: domain.MediumBook, CreatedAt: time.Date(2019, 1, 1, 0, 0, 0, 0, time.UTC)},
+			{ContestID: contestID, UserID: userID, Language: domain.Japanese, Amount: 20, MediumID: domain.MediumManga, CreatedAt: time.Date(2019, 1, 1, 0, 0, 0, 0, time.UTC)},
+			{ContestID: contestID, UserID: userID, Language: domain.Chinese, Amount: 30, MediumID: domain.MediumGame, CreatedAt: time.Date(2019, 1, 1, 0, 0, 0, 0, time.UTC)},
+			{ContestID: contestID, UserID: userID, Language: domain.Korean, Amount: 100, MediumID: domain.MediumNet, CreatedAt: time.Date(2019, 1, 1, 0, 0, 0, 0, time.UTC)},
+			{ContestID: contestID, UserID: userID, Language: domain.Japanese, Amount: 40, MediumID: domain.MediumBook, CreatedAt: time.Date(2019, 1, 1, 0, 0, 0, 0, time.UTC)},
+		}
+		repo.EXPECT().FindAll(contestID, userID).Return(expected, nil)
+
+		logs, err := interactor.ContestLogs(contestID, userID)
+		assert.NoError(t, err)
+		assert.Equal(t, expected, logs)
+	}
+
+	{
+		// Sad path no registration found
+		repo.EXPECT().FindAll(contestID, userID).Return(domain.ContestLogs{}, nil)
+
+		_, err := interactor.ContestLogs(contestID, userID)
+		assert.EqualError(t, err, usecases.ErrNoContestLogsFound.Error())
+	}
+}

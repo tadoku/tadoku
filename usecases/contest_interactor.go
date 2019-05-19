@@ -3,6 +3,8 @@
 package usecases
 
 import (
+	"database/sql"
+
 	"github.com/srvc/fail"
 	"github.com/tadoku/api/domain"
 )
@@ -18,6 +20,9 @@ var ErrContestIDMissing = fail.New("a contest id is required when updating")
 
 // ErrCreateContestHasID for when you try to create a contest with a given id
 var ErrCreateContestHasID = fail.New("a contest can't have an id when being created")
+
+// ErrContestNotFound for when no contest could be found, e.g no contets has ever be ran
+var ErrContestNotFound = fail.New("no contest could be found")
 
 // ContestInteractor contains all business logic for contests
 type ContestInteractor interface {
@@ -82,5 +87,14 @@ func (i *contestInteractor) saveContest(contest domain.Contest) error {
 }
 
 func (i *contestInteractor) Latest() (*domain.Contest, error) {
-	return nil, nil
+	contest, err := i.contestRepository.FindLatest()
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, ErrContestNotFound
+		}
+
+		return nil, fail.Wrap(err)
+	}
+
+	return &contest, nil
 }

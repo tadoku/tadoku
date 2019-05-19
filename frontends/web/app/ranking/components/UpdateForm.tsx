@@ -89,7 +89,9 @@ const UpdateForm = ({ registration }: Props) => {
         <LabelText>Medium</LabelText>
         <select value={mediumId} onChange={e => setMediumId(e.target.value)}>
           {AllMediums.map(m => (
-            <option value={m.id}>{m.description}</option>
+            <option value={m.id} key={m.id}>
+              {m.description}
+            </option>
           ))}
         </select>
       </Label>

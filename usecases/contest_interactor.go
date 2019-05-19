@@ -23,6 +23,7 @@ var ErrCreateContestHasID = fail.New("a contest can't have an id when being crea
 type ContestInteractor interface {
 	CreateContest(contest domain.Contest) error
 	UpdateContest(contest domain.Contest) error
+	Latest() (*domain.Contest, error)
 }
 
 // NewContestInteractor instantiates ContestInteractor with all dependencies
@@ -78,4 +79,8 @@ func (si *contestInteractor) saveContest(contest domain.Contest) error {
 
 	err := si.contestRepository.Store(&contest)
 	return fail.Wrap(err)
+}
+
+func (si *contestInteractor) Latest() (*domain.Contest, error) {
+	return nil, nil
 }

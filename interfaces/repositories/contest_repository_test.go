@@ -1,10 +1,12 @@
 package repositories_test
 
 import (
+	"database/sql"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/assert"
+
 	"github.com/tadoku/api/domain"
 	"github.com/tadoku/api/interfaces/repositories"
 )
@@ -54,6 +56,26 @@ func TestContestRepository_GetOpenContests(t *testing.T) {
 
 		ids, err = repo.GetOpenContests()
 		assert.Equal(t, 1, len(ids), "an open contest should exist")
+		assert.NoError(t, err)
+	}
+}
+
+func TestContestRepository_FindLatest(t *testing.T) {
+	sqlHandler, cleanup := setupTestingSuite(t)
+	defer cleanup()
+
+	repo := repositories.NewContestRepository(sqlHandler)
+
+	{
+		contest, err := repo.FindLatest()
+		assert.EqualError(t, err, sql.ErrNoRows.Error())
+		assert.Empty(t, contest, "no contests should be found")
+
+		err = repo.Store(&domain.Contest{Start: time.Now(), End: time.Now(), Open: true})
+		assert.NoError(t, err)
+
+		contest, err = repo.FindLatest()
+		assert.Equal(t, true, contest.Open, "a contest should be found")
 		assert.NoError(t, err)
 	}
 }

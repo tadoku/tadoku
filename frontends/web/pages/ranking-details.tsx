@@ -4,6 +4,7 @@ import ErrorPage from 'next/error'
 import { ExpressNextContext } from '../app/interfaces'
 import { ContestLog } from '../app/ranking/interfaces'
 import RankingApi from '../app/ranking/api'
+import ContestLogsByDayGraph from '../app/ranking/components/ContestLogsByDayGraph'
 
 interface Props {
   contestId: number | undefined
@@ -30,7 +31,11 @@ const RankingDetails = ({ contestId, userId }: Props) => {
     return <ErrorPage statusCode={404} />
   }
 
-  return <Layout>This will show the details of a ranking</Layout>
+  return (
+    <Layout>
+      <ContestLogsByDayGraph logs={logs} />
+    </Layout>
+  )
 }
 
 RankingDetails.getInitialProps = async ({ req, query }: ExpressNextContext) => {

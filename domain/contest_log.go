@@ -37,13 +37,14 @@ func (c ContestLog) AdjustedAmount() float32 {
 // GetView gets the external view representation of a contest log
 func (c ContestLog) GetView() ContestLogView {
 	return ContestLogView{
-		ID:        c.ID,
-		ContestID: c.ContestID,
-		UserID:    c.UserID,
-		Language:  c.Language,
-		MediumID:  c.MediumID,
-		Amount:    c.Amount,
-		Date:      c.CreatedAt,
+		ID:             c.ID,
+		ContestID:      c.ContestID,
+		UserID:         c.UserID,
+		Language:       c.Language,
+		MediumID:       c.MediumID,
+		Amount:         c.Amount,
+		AdjustedAmount: c.AdjustedAmount(),
+		Date:           c.CreatedAt,
 	}
 }
 
@@ -60,11 +61,12 @@ func (c ContestLogs) GetView() []ContestLogView {
 
 // ContestLogView is a representation of a contest log for external usages
 type ContestLogView struct {
-	ID        uint64       `json:"user_id"`
-	ContestID uint64       `json:"contest_id"`
-	UserID    uint64       `json:"user_id"`
-	Language  LanguageCode `json:"language_code"`
-	MediumID  MediumID     `json:"medium_id"`
-	Amount    float32      `json:"amount"`
-	Date      time.Time    `json:"date"`
+	ID             uint64       `json:"user_id"`
+	ContestID      uint64       `json:"contest_id"`
+	UserID         uint64       `json:"user_id"`
+	Language       LanguageCode `json:"language_code"`
+	MediumID       MediumID     `json:"medium_id"`
+	Amount         float32      `json:"amount"`
+	AdjustedAmount float32      `json:"adjusted_amount"`
+	Date           time.Time    `json:"date"`
 }

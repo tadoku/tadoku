@@ -129,6 +129,21 @@ func (mr *MockContestRepositoryMockRecorder) GetOpenContests() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetOpenContests", reflect.TypeOf((*MockContestRepository)(nil).GetOpenContests))
 }
 
+// FindLatest mocks base method
+func (m *MockContestRepository) FindLatest() (domain.Contest, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "FindLatest")
+	ret0, _ := ret[0].(domain.Contest)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// FindLatest indicates an expected call of FindLatest
+func (mr *MockContestRepositoryMockRecorder) FindLatest() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindLatest", reflect.TypeOf((*MockContestRepository)(nil).FindLatest))
+}
+
 // MockContestLogRepository is a mock of ContestLogRepository interface
 type MockContestLogRepository struct {
 	ctrl     *gomock.Controller

@@ -30,7 +30,7 @@ const Graph = ({ logs }: Props) => {
       <YAxis title="Pages" />
 
       {Object.keys(data).map(language => (
-        <LineSeries data={data[language]} key={language} />
+        <LineSeries data={data[language] as any[]} key={language} />
       ))}
     </XYPlot>
   )

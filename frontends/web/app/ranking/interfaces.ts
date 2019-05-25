@@ -1,4 +1,5 @@
 export interface Ranking {
+  contestId: number
   userId: number
   userDisplayName: string
   languageCode: string

@@ -15,6 +15,7 @@ type RankingService interface {
 	Create(ctx Context) error
 	Get(ctx Context) error
 	CurrentRegistration(ctx Context) error
+	RankingsForRegistration(ctx Context) error
 }
 
 // NewRankingService initializer
@@ -87,4 +88,26 @@ func (s *rankingService) CurrentRegistration(ctx Context) error {
 	}
 
 	return ctx.JSON(http.StatusOK, registration)
+}
+
+func (s *rankingService) RankingsForRegistration(ctx Context) error {
+	contestID, err := strconv.ParseUint(ctx.QueryParam("contest_id"), 10, 64)
+	if err != nil {
+		return fail.Wrap(err)
+	}
+	userID, err := strconv.ParseUint(ctx.QueryParam("user_id"), 10, 64)
+	if err != nil {
+		return fail.Wrap(err)
+	}
+
+	rankings, err := s.RankingInteractor.RankingsForRegistration(contestID, userID)
+	if err != nil {
+		if err == usecases.ErrNoRankingsFound {
+			return ctx.NoContent(http.StatusNotFound)
+		}
+
+		return fail.Wrap(err)
+	}
+
+	return ctx.JSON(http.StatusOK, rankings.GetView())
 }

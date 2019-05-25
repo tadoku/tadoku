@@ -14,7 +14,7 @@ export interface rawRanking {
   amount: number
 }
 
-export interface RankingRegistrationProfile {
+export interface RankingRegistrationOverview {
   contestId: number
   userId: number
   userDisplayName: string

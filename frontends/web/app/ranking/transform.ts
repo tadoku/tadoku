@@ -2,7 +2,7 @@ import {
   AggregatedContestLogsByDayEntry,
   ContestLog,
   Ranking,
-  RankingRegistrationProfile,
+  RankingRegistrationOverview,
 } from './interfaces'
 import { Contest } from './../contest/interfaces'
 
@@ -85,9 +85,9 @@ const getDates = (startDate: Date, endDate: Date) => {
   return dates
 }
 
-export const rankingsToRegistrationProfile = (
+export const rankingsToRegistrationOverview = (
   rankings: Ranking[],
-): RankingRegistrationProfile | undefined => {
+): RankingRegistrationOverview | undefined => {
   if (rankings.length === 0) {
     return undefined
   }

@@ -48,8 +48,13 @@ const RankingDetails = ({ contestId, userId }: Props) => {
     return <Layout>Loading...</Layout>
   }
 
+  if (!registration) {
+    return <ErrorPage statusCode={500} />
+  }
+
   return (
     <Layout>
+      <h1>{registration.userDisplayName}</h1>
       <ContestLogsByDayGraph logs={logs} />
     </Layout>
   )

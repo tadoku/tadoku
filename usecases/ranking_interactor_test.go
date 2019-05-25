@@ -263,6 +263,36 @@ func TestRankingInteractor_UpdateRankings(t *testing.T) {
 	}
 }
 
+func TestRankingInteractor_RankingsForRegistration(t *testing.T) {
+	ctrl, rankingRepo, _, _, _, _, interactor := setupRankingTest(t)
+	defer ctrl.Finish()
+
+	contestID := uint64(1)
+	userID := uint64(1)
+
+	{
+		expected := domain.Rankings{
+			{ID: 1, ContestID: contestID, UserID: userID, Language: domain.Japanese, Amount: 10},
+			{ID: 2, ContestID: contestID, UserID: userID, Language: domain.Korean, Amount: 2},
+			{ID: 3, ContestID: contestID, UserID: userID, Language: domain.German, Amount: 0},
+			{ID: 4, ContestID: contestID, UserID: userID, Language: domain.Global, Amount: 12},
+		}
+		rankingRepo.EXPECT().FindAll(contestID, userID).Return(expected, nil)
+
+		rankings, err := interactor.RankingsForRegistration(contestID, userID)
+		assert.NoError(t, err)
+		assert.Equal(t, expected, rankings)
+	}
+
+	{
+		rankingRepo.EXPECT().FindAll(contestID, userID).Return(nil, nil)
+
+		rankings, err := interactor.RankingsForRegistration(contestID, userID)
+		assert.EqualError(t, err, usecases.ErrNoRankingsFound.Error())
+		assert.Equal(t, 0, len(rankings))
+	}
+}
+
 func TestRankingInteractor_RankingsForContest(t *testing.T) {
 	ctrl, rankingRepo, _, _, _, validator, interactor := setupRankingTest(t)
 	defer ctrl.Finish()

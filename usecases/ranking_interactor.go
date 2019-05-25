@@ -203,8 +203,20 @@ func (i *rankingInteractor) UpdateRanking(contestID uint64, userID uint64) error
 	return i.rankingRepository.UpdateAmounts(updatedRankings)
 }
 
-func (i *rankingInteractor) RankingsForRegistration(contestID uint64, userID uint64) (domain.Rankings, error) {
-	return nil, nil
+func (i *rankingInteractor) RankingsForRegistration(
+	contestID uint64,
+	userID uint64,
+) (domain.Rankings, error) {
+	rankings, err := i.rankingRepository.FindAll(contestID, userID)
+	if err != nil {
+		return nil, fail.Wrap(err)
+	}
+
+	if len(rankings) == 0 {
+		return nil, ErrNoRankingsFound
+	}
+
+	return rankings, nil
 }
 
 func (i *rankingInteractor) RankingsForContest(

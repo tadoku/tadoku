@@ -1,6 +1,7 @@
 package repositories_test
 
 import (
+	"sort"
 	"testing"
 	"time"
 
@@ -372,9 +373,10 @@ func TestRankingRepository_CurrentRegistration(t *testing.T) {
 	user := createTestUsers(t, sqlHandler, 1)[0]
 	languages := domain.LanguageCodes{domain.Japanese, domain.German}
 	contest := &domain.Contest{
-		Start: time.Date(2019, 1, 1, 0, 0, 0, 0, time.UTC),
-		End:   time.Date(2019, 1, 31, 0, 0, 0, 0, time.UTC),
-		Open:  true,
+		Description: "Round foo",
+		Start:       time.Date(2019, 1, 1, 0, 0, 0, 0, time.UTC),
+		End:         time.Date(2019, 1, 31, 0, 0, 0, 0, time.UTC),
+		Open:        true,
 	}
 
 	{
@@ -399,6 +401,9 @@ func TestRankingRepository_CurrentRegistration(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, contest.ID, registration.ContestID)
 		assert.Equal(t, contest.End.UTC(), registration.End.UTC())
+
+		sort.Sort(languages)
+		sort.Sort(registration.Languages)
 		assert.Equal(t, languages, registration.Languages)
 	}
 }

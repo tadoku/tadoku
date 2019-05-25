@@ -20,8 +20,10 @@ const RankingDetails = ({ contestId, userId }: Props) => {
     }
 
     const getLogs = async () => {
-      const payload = await RankingApi.getLogsFor(contestId, userId)
-      setLogs(payload)
+      const [logs] = await Promise.all([
+        RankingApi.getLogsFor(contestId, userId),
+      ])
+      setLogs(logs)
     }
 
     getLogs()

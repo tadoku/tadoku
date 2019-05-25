@@ -297,6 +297,12 @@ func TestRankingRepository_FindAllByContestAndUser(t *testing.T) {
 		assert.Equal(t, users[0].ID, ranking.UserID)
 		assert.Equal(t, users[0].DisplayName, ranking.UserDisplayName)
 	}
+
+	{
+		rankings, err := repo.FindAll(0, 0)
+		assert.NoError(t, err)
+		assert.Equal(t, 0, len(rankings))
+	}
 }
 
 func TestRankingRepository_UpdateAmounts(t *testing.T) {

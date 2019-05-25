@@ -45,6 +45,28 @@ const getCurrentRegistration = async (): Promise<
   }
 }
 
+const getRankingsRegistration = async (
+  contestId: number,
+  userId: number,
+): Promise<Ranking[]> => {
+  const response = await get(
+    `/rankings/registration?contest_id=${contestId}&user_id=${userId}`,
+  )
+
+  if (response.status !== 200) {
+    return []
+  }
+
+  const data: rawRanking[] = await response.json()
+
+  return data.map(raw => ({
+    userId: raw.user_id,
+    userDisplayName: raw.user_display_name,
+    languageCode: raw.language_code,
+    amount: raw.amount,
+  }))
+}
+
 const createLog = async (payload: {
   contestId: number
   mediumId: number
@@ -93,6 +115,7 @@ const getLogsFor = async (
 const RankingApi = {
   get: getRankings,
   getCurrentRegistration,
+  getRankingsRegistration,
   createLog,
   getLogsFor,
 }

@@ -7,10 +7,22 @@ export interface Ranking {
 }
 
 export interface rawRanking {
+  contest_id: number
   user_id: number
   user_display_name: string
   language_code: string
   amount: number
+}
+
+export interface RankingRegistrationProfile {
+  contestId: number
+  userId: number
+  userDisplayName: string
+
+  registrations: {
+    languageCode: string
+    amount: number
+  }[]
 }
 
 export interface RankingRegistration {

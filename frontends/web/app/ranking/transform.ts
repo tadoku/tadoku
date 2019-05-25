@@ -1,4 +1,9 @@
-import { AggregatedContestLogsByDayEntry, ContestLog } from './interfaces'
+import {
+  AggregatedContestLogsByDayEntry,
+  ContestLog,
+  Ranking,
+  RankingRegistrationProfile,
+} from './interfaces'
 import { Contest } from './../contest/interfaces'
 
 type AggregatedByDaysResult = {
@@ -78,4 +83,22 @@ const getDates = (startDate: Date, endDate: Date) => {
   }
 
   return dates
+}
+
+export const rankingsToRegistrationProfile = (
+  rankings: Ranking[],
+): RankingRegistrationProfile | undefined => {
+  if (rankings.length === 0) {
+    return undefined
+  }
+
+  return {
+    contestId: rankings[0].contestId,
+    userId: rankings[0].userId,
+    userDisplayName: rankings[0].userDisplayName,
+    registrations: rankings.map(r => ({
+      languageCode: r.languageCode,
+      amount: r.amount,
+    })),
+  }
 }

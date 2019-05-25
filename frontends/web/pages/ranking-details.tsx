@@ -2,9 +2,13 @@ import React, { useState, useEffect } from 'react'
 import Layout from '../app/ui/components/Layout'
 import ErrorPage from 'next/error'
 import { ExpressNextContext } from '../app/interfaces'
-import { ContestLog } from '../app/ranking/interfaces'
+import {
+  ContestLog,
+  RankingRegistrationOverview,
+} from '../app/ranking/interfaces'
 import RankingApi from '../app/ranking/api'
 import ContestLogsByDayGraph from '../app/ranking/components/ContestLogsByDayGraph'
+import { rankingsToRegistrationOverview } from '../app/ranking/transform'
 
 interface Props {
   contestId: number | undefined
@@ -13,6 +17,9 @@ interface Props {
 
 const RankingDetails = ({ contestId, userId }: Props) => {
   const [logs, setLogs] = useState([] as ContestLog[])
+  const [registration, setRegistration] = useState(undefined as
+    | RankingRegistrationOverview
+    | undefined)
 
   useEffect(() => {
     if (!contestId || !userId) {
@@ -20,10 +27,12 @@ const RankingDetails = ({ contestId, userId }: Props) => {
     }
 
     const getLogs = async () => {
-      const [logs] = await Promise.all([
+      const [logs, registration] = await Promise.all([
         RankingApi.getLogsFor(contestId, userId),
+        RankingApi.getRankingsRegistration(contestId, userId),
       ])
       setLogs(logs)
+      setRegistration(rankingsToRegistrationOverview(registration))
     }
 
     getLogs()

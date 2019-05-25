@@ -8,11 +8,14 @@ import {
   HorizontalGridLines,
   VerticalGridLines,
   LineSeries,
+  makeWidthFlexible,
 } from 'react-vis'
 
 interface Props {
   logs: ContestLog[]
 }
+
+const FlexiblePlot = makeWidthFlexible(XYPlot)
 
 const Graph = ({ logs }: Props) => {
   const data = aggregateContestLogsByDays(logs, {
@@ -23,7 +26,7 @@ const Graph = ({ logs }: Props) => {
   })
 
   return (
-    <XYPlot width={1000} height={400} xType={'time'}>
+    <FlexiblePlot height={400} xType={'time'}>
       <HorizontalGridLines />
       <VerticalGridLines />
       <XAxis title="Days" tickFormat={date => date.getDate()} />
@@ -32,7 +35,7 @@ const Graph = ({ logs }: Props) => {
       {Object.keys(data).map(language => (
         <LineSeries data={data[language] as any[]} key={language} />
       ))}
-    </XYPlot>
+    </FlexiblePlot>
   )
 }
 

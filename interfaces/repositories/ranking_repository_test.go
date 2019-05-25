@@ -240,7 +240,7 @@ func TestRankingRepository_FindAllByContestAndUser(t *testing.T) {
 	repo := repositories.NewRankingRepository(sqlHandler)
 
 	contestID := uint64(1)
-	userID := uint64(1)
+	users := createTestUsers(t, sqlHandler, 2)
 
 	expected := []struct {
 		language domain.LanguageCode
@@ -256,7 +256,7 @@ func TestRankingRepository_FindAllByContestAndUser(t *testing.T) {
 		for _, data := range expected {
 			ranking := &domain.Ranking{
 				ContestID: contestID,
-				UserID:    userID,
+				UserID:    users[0].ID,
 				Language:  data.language,
 				Amount:    data.amount,
 			}
@@ -271,7 +271,7 @@ func TestRankingRepository_FindAllByContestAndUser(t *testing.T) {
 		for _, language := range []domain.LanguageCode{domain.Korean, domain.Global} {
 			ranking := &domain.Ranking{
 				ContestID: contestID,
-				UserID:    userID + 1,
+				UserID:    users[1].ID,
 				Language:  language,
 				Amount:    0,
 			}
@@ -281,7 +281,7 @@ func TestRankingRepository_FindAllByContestAndUser(t *testing.T) {
 		}
 	}
 
-	rankings, err := repo.FindAll(contestID, userID)
+	rankings, err := repo.FindAll(contestID, users[0].ID)
 	assert.NoError(t, err)
 
 	for _, expected := range expected {
@@ -294,7 +294,14 @@ func TestRankingRepository_FindAllByContestAndUser(t *testing.T) {
 
 		assert.Equal(t, expected.amount, ranking.Amount)
 		assert.Equal(t, contestID, ranking.ContestID)
-		assert.Equal(t, userID, ranking.UserID)
+		assert.Equal(t, users[0].ID, ranking.UserID)
+		assert.Equal(t, users[0].DisplayName, ranking.UserDisplayName)
+	}
+
+	{
+		rankings, err := repo.FindAll(0, 0)
+		assert.NoError(t, err)
+		assert.Equal(t, 0, len(rankings))
 	}
 }
 

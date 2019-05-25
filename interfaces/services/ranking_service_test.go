@@ -88,3 +88,30 @@ func TestRankingService_CurrentRegistration(t *testing.T) {
 
 	assert.NoError(t, err)
 }
+
+func TestRankingService_RankingsForRegistration(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	contestID := uint64(1)
+	userID := uint64(1)
+
+	expected := domain.Rankings{
+		{ID: 1, ContestID: contestID, UserID: userID, Language: domain.Global, Amount: 23},
+		{ID: 2, ContestID: contestID, UserID: userID, Language: domain.Japanese, Amount: 12},
+		{ID: 3, ContestID: contestID, UserID: userID, Language: domain.Korean, Amount: 11},
+	}
+
+	ctx := services.NewMockContext(ctrl)
+	ctx.EXPECT().QueryParam("contest_id").Return("1")
+	ctx.EXPECT().QueryParam("user_id").Return("1")
+	ctx.EXPECT().JSON(200, expected.GetView())
+
+	i := usecases.NewMockRankingInteractor(ctrl)
+	i.EXPECT().RankingsForRegistration(contestID, userID).Return(expected, nil)
+
+	s := services.NewRankingService(i)
+	err := s.RankingsForRegistration(ctx)
+
+	assert.NoError(t, err)
+}

@@ -8,8 +8,8 @@ import {
   rawContestLog,
 } from './interfaces'
 
-const getRankings = async (contest_id?: number): Promise<Ranking[]> => {
-  const response = await get(`/rankings?contest_id=${contest_id}`)
+const getRankings = async (contestId?: number): Promise<Ranking[]> => {
+  const response = await get(`/rankings?contest_id=${contestId}`)
 
   if (response.status !== 200) {
     return []

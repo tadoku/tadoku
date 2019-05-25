@@ -16,6 +16,7 @@ interface Props {
 }
 
 const RankingDetails = ({ contestId, userId }: Props) => {
+  const [loaded, setLoaded] = useState(false)
   const [logs, setLogs] = useState([] as ContestLog[])
   const [registration, setRegistration] = useState(undefined as
     | RankingRegistrationOverview
@@ -33,6 +34,7 @@ const RankingDetails = ({ contestId, userId }: Props) => {
       ])
       setLogs(logs)
       setRegistration(rankingsToRegistrationOverview(registration))
+      setLoaded(true)
     }
 
     getLogs()
@@ -40,6 +42,10 @@ const RankingDetails = ({ contestId, userId }: Props) => {
 
   if (!contestId || !userId) {
     return <ErrorPage statusCode={404} />
+  }
+
+  if (!loaded) {
+    return <Layout>Loading...</Layout>
   }
 
   return (

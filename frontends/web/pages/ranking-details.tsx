@@ -58,10 +58,16 @@ const RankingDetails = ({ contestId, userId }: Props) => {
     return <ErrorPage statusCode={500} />
   }
 
+  const today = new Date()
+  const contestForGraphs = {
+    ...contest,
+    end: contest.end > today ? today : contest.end,
+  }
+
   return (
     <Layout>
       <h1>{registration.userDisplayName}</h1>
-      <ContestLogsByDayGraph logs={logs} contest={contest} />
+      <ContestLogsByDayGraph logs={logs} contest={contestForGraphs} />
     </Layout>
   )
 }

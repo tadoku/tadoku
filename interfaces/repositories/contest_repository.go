@@ -84,3 +84,7 @@ func (r *contestRepository) FindLatest() (domain.Contest, error) {
 
 	return contest, nil
 }
+
+func (r *contestRepository) FindByID(id uint64) (domain.Contest, error) {
+	return domain.Contest{}, nil
+}

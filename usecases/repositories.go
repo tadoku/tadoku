@@ -18,6 +18,7 @@ type ContestRepository interface {
 	Store(contest *domain.Contest) error
 	GetOpenContests() ([]uint64, error)
 	FindLatest() (domain.Contest, error)
+	FindByID(id uint64) (domain.Contest, error)
 }
 
 // ContestLogRepository handles ContestLog related database interactions

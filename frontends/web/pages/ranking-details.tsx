@@ -12,6 +12,7 @@ import ContestLogsByDayGraph from '../app/ranking/components/ContestLogsByDayGra
 import { rankingsToRegistrationOverview } from '../app/ranking/transform'
 import { Contest } from '../app/contest/interfaces'
 import Cards, { Card, CardLabel, CardContent } from '../app/ui/components/Cards'
+import { languageNameByCode } from '../app/ranking/database'
 
 interface Props {
   contestId: number | undefined
@@ -73,7 +74,12 @@ const RankingDetails = ({ contestId, userId }: Props) => {
           <CardContent>{contest.description}</CardContent>
           <CardLabel>Round</CardLabel>
         </Card>
-        <Card>{contest.description}</Card>
+        {registration.registrations.map(r => (
+          <Card>
+            <CardContent>{r.amount}</CardContent>
+            <CardLabel>{languageNameByCode(r.languageCode)}</CardLabel>
+          </Card>
+        ))}
       </Cards>
       <ContestLogsByDayGraph logs={logs} contest={contestForGraphs} />
     </Layout>

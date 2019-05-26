@@ -13,7 +13,6 @@ type AggregatedByDaysResult = {
   }
   legend: {
     title: string
-    color: string
   }[]
 }
 
@@ -28,7 +27,6 @@ export const aggregateContestLogsByDays = (
   const languages: string[] = []
   const legend: {
     title: string
-    color: string
   }[] = []
 
   logs.forEach(log => {
@@ -36,7 +34,6 @@ export const aggregateContestLogsByDays = (
       languages.push(log.languageCode)
       legend.push({
         title: languageNameByCode(log.languageCode),
-        color: generateColor(),
       })
     }
   })
@@ -134,6 +131,3 @@ export const amountToPages = (amount: number) => Math.round(amount * 10) / 10
 
 export const pagesLabel = (languageCode: string) =>
   `pages in ${languageNameByCode(languageCode)}`
-
-const generateColor = () =>
-  '#' + Math.floor(Math.random() * 16777215).toString(16)

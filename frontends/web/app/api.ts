@@ -4,7 +4,7 @@ import { getAuthenticationToken } from './session/storage'
 // TODO: move this endpoint into env
 const root =
   process.env.NODE_ENV === 'production'
-    ? 'http://api.langlog.be'
+    ? 'https://api.tadoku.app'
     : 'http://localhost:4000'
 
 interface APIOptions {

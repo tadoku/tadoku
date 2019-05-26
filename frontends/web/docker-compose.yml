@@ -9,5 +9,7 @@ services:
     expose:
       - 3000
     environment:
-      VIRTUAL_HOST: langlog.be
+      VIRTUAL_HOST: tadoku.app
       VIRTUAL_PORT: 3000
+      LETSENCRYPT_HOST: tadoku.app
+      LETSENCRYPT_EMAIL: hello@tadoku.app

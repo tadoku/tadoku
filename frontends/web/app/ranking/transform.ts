@@ -8,7 +8,13 @@ import { Contest } from './../contest/interfaces'
 import { languageNameByCode } from './database'
 
 type AggregatedByDaysResult = {
-  [languageCode: string]: AggregatedContestLogsByDayEntry[]
+  aggregated: {
+    [languageCode: string]: AggregatedContestLogsByDayEntry[]
+  }
+  legend: {
+    title: string
+    color: string
+  }[]
 }
 
 export const aggregateContestLogsByDays = (
@@ -20,10 +26,18 @@ export const aggregateContestLogsByDays = (
   } = {}
 
   const languages: string[] = []
+  const legend: {
+    title: string
+    color: string
+  }[] = []
 
   logs.forEach(log => {
     if (!languages.includes(log.languageCode)) {
       languages.push(log.languageCode)
+      legend.push({
+        title: languageNameByCode(log.languageCode),
+        color: generateColor(),
+      })
     }
   })
 
@@ -52,10 +66,10 @@ export const aggregateContestLogsByDays = (
       Math.round(log.adjustedAmount * 10) / 10
   })
 
-  const result: AggregatedByDaysResult = {}
+  const result: AggregatedByDaysResult = { aggregated: {}, legend }
 
   Object.keys(aggregated).forEach(languageCode => {
-    result[languageCode] = Object.values(aggregated[languageCode])
+    result.aggregated[languageCode] = Object.values(aggregated[languageCode])
   })
 
   return result
@@ -120,3 +134,6 @@ export const amountToPages = (amount: number) => Math.round(amount * 10) / 10
 
 export const pagesLabel = (languageCode: string) =>
   `pages in ${languageNameByCode(languageCode)}`
+
+const generateColor = () =>
+  '#' + Math.floor(Math.random() * 16777215).toString(16)

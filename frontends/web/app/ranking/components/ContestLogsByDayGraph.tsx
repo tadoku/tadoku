@@ -10,7 +10,9 @@ import {
   VerticalGridLines,
   LineSeries,
   makeWidthFlexible,
+  DiscreteColorLegend,
 } from 'react-vis'
+import styled from 'styled-components'
 
 interface Props {
   logs: ContestLog[]
@@ -19,23 +21,35 @@ interface Props {
 
 const FlexiblePlot = makeWidthFlexible(XYPlot)
 
+const Container = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+`
+
 const Graph = ({ logs, contest }: Props) => {
   const data = aggregateContestLogsByDays(logs, contest)
 
   return (
-    <FlexiblePlot height={400} xType={'time'}>
-      <HorizontalGridLines />
-      <VerticalGridLines />
-      <XAxis
-        title="Days"
-        tickFormat={date => `${date.getMonth() + 1}-${date.getDate()}`}
-      />
-      <YAxis title="Pages" />
+    <Container>
+      <FlexiblePlot height={400} xType={'time'}>
+        <HorizontalGridLines />
+        <VerticalGridLines />
+        <XAxis
+          title="Days"
+          tickFormat={date => `${date.getMonth() + 1}-${date.getDate()}`}
+        />
+        <YAxis title="Pages" />
 
-      {Object.keys(data).map(language => (
-        <LineSeries data={data[language] as any[]} key={language} />
-      ))}
-    </FlexiblePlot>
+        {Object.keys(data.aggregated).map(language => (
+          <LineSeries
+            data={data.aggregated[language] as any[]}
+            key={language}
+          />
+        ))}
+      </FlexiblePlot>
+      <DiscreteColorLegend items={data.legend} orientation="horizontal" />
+    </Container>
   )
 }
 

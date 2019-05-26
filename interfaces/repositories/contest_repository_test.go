@@ -17,9 +17,10 @@ func TestContestRepository_StoreContest(t *testing.T) {
 
 	repo := repositories.NewContestRepository(sqlHandler)
 	contest := &domain.Contest{
-		Start: time.Date(2019, 1, 1, 0, 0, 0, 0, time.UTC),
-		End:   time.Date(2019, 1, 31, 0, 0, 0, 0, time.UTC),
-		Open:  false,
+		Description: "Round 2019-05",
+		Start:       time.Date(2019, 1, 1, 0, 0, 0, 0, time.UTC),
+		End:         time.Date(2019, 1, 31, 0, 0, 0, 0, time.UTC),
+		Open:        false,
 	}
 
 	{
@@ -30,10 +31,11 @@ func TestContestRepository_StoreContest(t *testing.T) {
 
 	{
 		updatedContest := &domain.Contest{
-			ID:    contest.ID,
-			Start: time.Date(2019, 1, 1, 0, 0, 0, 0, time.UTC),
-			End:   time.Date(2019, 1, 30, 0, 0, 0, 0, time.UTC),
-			Open:  false,
+			ID:          contest.ID,
+			Description: "Round 2019-01",
+			Start:       time.Date(2019, 1, 1, 0, 0, 0, 0, time.UTC),
+			End:         time.Date(2019, 1, 30, 0, 0, 0, 0, time.UTC),
+			Open:        false,
 		}
 		err := repo.Store(updatedContest)
 		assert.NoError(t, err)
@@ -71,11 +73,13 @@ func TestContestRepository_FindLatest(t *testing.T) {
 		assert.EqualError(t, err, sql.ErrNoRows.Error())
 		assert.Empty(t, contest, "no contests should be found")
 
-		err = repo.Store(&domain.Contest{Start: time.Now(), End: time.Now(), Open: true})
+		expected := domain.Contest{Description: "Foo 2019", Start: time.Now(), End: time.Now(), Open: true}
+		err = repo.Store(&expected)
 		assert.NoError(t, err)
 
 		contest, err = repo.FindLatest()
-		assert.Equal(t, true, contest.Open, "a contest should be found")
+		assert.Equal(t, expected.Description, contest.Description, "contest should have the same description")
+		assert.Equal(t, expected.Open, contest.Open, "contest should both be open")
 		assert.NoError(t, err)
 	}
 }

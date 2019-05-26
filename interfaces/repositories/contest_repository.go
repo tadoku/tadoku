@@ -27,12 +27,12 @@ func (r *contestRepository) Store(contest *domain.Contest) error {
 func (r *contestRepository) create(contest *domain.Contest) error {
 	query := `
 		insert into contests
-		(start, "end", open)
-		values ($1, $2, $3)
+		(description, start, "end", open)
+		values ($1, $2, $3, $4)
 		returning id
 	`
 
-	row := r.sqlHandler.QueryRow(query, contest.Start, contest.End, contest.Open)
+	row := r.sqlHandler.QueryRow(query, contest.Description, contest.Start, contest.End, contest.Open)
 	err := row.Scan(&contest.ID)
 	if err != nil {
 		return fail.Wrap(err)
@@ -70,7 +70,7 @@ func (r *contestRepository) GetOpenContests() ([]uint64, error) {
 
 func (r *contestRepository) FindLatest() (domain.Contest, error) {
 	query := `
-		select id, start, "end", open
+		select id, description, start, "end", open
 		from contests
 		order by id
 		limit 1

@@ -1,6 +1,8 @@
 package domain
 
 import (
+	"strings"
+
 	"github.com/srvc/fail"
 )
 
@@ -76,4 +78,20 @@ func (code LanguageCode) Validate() (bool, error) {
 	}
 
 	return false, ErrInvalidLanguage
+}
+
+// Len is the number of elements in the collection.
+func (codes LanguageCodes) Len() int {
+	return len(codes)
+}
+
+// Swap swaps the elements with indexes i and j.
+func (codes LanguageCodes) Swap(i, j int) {
+	codes[i], codes[j] = codes[j], codes[i]
+}
+
+// Less reports whether the element with
+// index i should sort before the element with index j.
+func (codes LanguageCodes) Less(i, j int) bool {
+	return strings.Compare(string(codes[i]), string(codes[j])) >= 0
 }

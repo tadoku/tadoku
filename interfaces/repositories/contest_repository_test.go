@@ -17,9 +17,10 @@ func TestContestRepository_StoreContest(t *testing.T) {
 
 	repo := repositories.NewContestRepository(sqlHandler)
 	contest := &domain.Contest{
-		Start: time.Date(2019, 1, 1, 0, 0, 0, 0, time.UTC),
-		End:   time.Date(2019, 1, 31, 0, 0, 0, 0, time.UTC),
-		Open:  false,
+		Description: "Round 2019-05",
+		Start:       time.Date(2019, 1, 1, 0, 0, 0, 0, time.UTC),
+		End:         time.Date(2019, 1, 31, 0, 0, 0, 0, time.UTC),
+		Open:        false,
 	}
 
 	{
@@ -30,10 +31,11 @@ func TestContestRepository_StoreContest(t *testing.T) {
 
 	{
 		updatedContest := &domain.Contest{
-			ID:    contest.ID,
-			Start: time.Date(2019, 1, 1, 0, 0, 0, 0, time.UTC),
-			End:   time.Date(2019, 1, 30, 0, 0, 0, 0, time.UTC),
-			Open:  false,
+			ID:          contest.ID,
+			Description: "Round 2019-01",
+			Start:       time.Date(2019, 1, 1, 0, 0, 0, 0, time.UTC),
+			End:         time.Date(2019, 1, 30, 0, 0, 0, 0, time.UTC),
+			Open:        false,
 		}
 		err := repo.Store(updatedContest)
 		assert.NoError(t, err)

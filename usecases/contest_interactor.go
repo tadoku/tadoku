@@ -29,6 +29,7 @@ type ContestInteractor interface {
 	CreateContest(contest domain.Contest) error
 	UpdateContest(contest domain.Contest) error
 	Latest() (*domain.Contest, error)
+	Find(contestID uint64) (*domain.Contest, error)
 }
 
 // NewContestInteractor instantiates ContestInteractor with all dependencies
@@ -88,6 +89,19 @@ func (i *contestInteractor) saveContest(contest domain.Contest) error {
 
 func (i *contestInteractor) Latest() (*domain.Contest, error) {
 	contest, err := i.contestRepository.FindLatest()
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, ErrContestNotFound
+		}
+
+		return nil, fail.Wrap(err)
+	}
+
+	return &contest, nil
+}
+
+func (i *contestInteractor) Find(contestID uint64) (*domain.Contest, error) {
+	contest, err := i.contestRepository.FindByID(contestID)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, ErrContestNotFound

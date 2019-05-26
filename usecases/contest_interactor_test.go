@@ -139,3 +139,35 @@ func TestContestInteractor_Latest(t *testing.T) {
 		assert.EqualError(t, err, usecases.ErrContestNotFound.Error())
 	}
 }
+
+func TestContestInteractor_Find(t *testing.T) {
+	ctrl, repo, _, interactor := setupContestTest(t)
+	defer ctrl.Finish()
+
+	contestID := uint64(1)
+
+	// Happy path
+	{
+		contest := domain.Contest{
+			ID:    contestID,
+			Start: time.Date(2019, 1, 1, 0, 0, 0, 0, time.UTC),
+			End:   time.Date(2019, 1, 31, 0, 0, 0, 0, time.UTC),
+			Open:  false,
+		}
+
+		repo.EXPECT().FindByID(contestID).Return(contest, nil)
+
+		found, err := interactor.Find(contestID)
+		assert.NoError(t, err)
+		assert.Equal(t, &contest, found)
+	}
+
+	// Sad path: none found
+	{
+
+		repo.EXPECT().FindByID(contestID).Return(domain.Contest{}, sql.ErrNoRows)
+
+		_, err := interactor.Find(contestID)
+		assert.EqualError(t, err, usecases.ErrContestNotFound.Error())
+	}
+}

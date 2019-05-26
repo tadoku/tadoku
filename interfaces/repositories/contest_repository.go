@@ -95,7 +95,10 @@ func (r *contestRepository) FindByID(id uint64) (domain.Contest, error) {
 
 	var contest domain.Contest
 	err := r.sqlHandler.Get(&contest, query, id)
-	if err != nil {
+	switch {
+	case err == domain.ErrNotFound:
+		return contest, err
+	case err != nil:
 		return contest, fail.Wrap(err)
 	}
 

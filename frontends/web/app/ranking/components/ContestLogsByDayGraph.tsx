@@ -20,7 +20,12 @@ interface Props {
 const FlexiblePlot = makeWidthFlexible(XYPlot)
 
 const Graph = ({ logs, contest }: Props) => {
-  const data = aggregateContestLogsByDays(logs, contest)
+  const today = new Date()
+  const contestForGraph = {
+    ...contest,
+    end: contest.end > today ? today : contest.end,
+  }
+  const data = aggregateContestLogsByDays(logs, contestForGraph)
 
   return (
     <FlexiblePlot height={400} xType={'time'}>

@@ -1,7 +1,6 @@
 package repositories_test
 
 import (
-	"database/sql"
 	"testing"
 	"time"
 
@@ -70,7 +69,7 @@ func TestContestRepository_FindLatest(t *testing.T) {
 
 	{
 		contest, err := repo.FindLatest()
-		assert.EqualError(t, err, sql.ErrNoRows.Error())
+		assert.EqualError(t, err, domain.ErrNotFound.Error())
 		assert.Empty(t, contest, "no contests should be found")
 
 		expected := domain.Contest{Description: "Foo 2019", Start: time.Now(), End: time.Now(), Open: true}
@@ -78,6 +77,28 @@ func TestContestRepository_FindLatest(t *testing.T) {
 		assert.NoError(t, err)
 
 		contest, err = repo.FindLatest()
+		assert.Equal(t, expected.Description, contest.Description, "contest should have the same description")
+		assert.Equal(t, expected.Open, contest.Open, "contest should both be open")
+		assert.NoError(t, err)
+	}
+}
+
+func TestContestRepository_FindByID(t *testing.T) {
+	sqlHandler, cleanup := setupTestingSuite(t)
+	defer cleanup()
+
+	repo := repositories.NewContestRepository(sqlHandler)
+
+	{
+		contest, err := repo.FindByID(0)
+		assert.EqualError(t, err, domain.ErrNotFound.Error())
+		assert.Empty(t, contest, "no contests should be found")
+
+		expected := domain.Contest{Description: "Foo 2019", Start: time.Now(), End: time.Now(), Open: true}
+		err = repo.Store(&expected)
+		assert.NoError(t, err)
+
+		contest, err = repo.FindByID(expected.ID)
 		assert.Equal(t, expected.Description, contest.Description, "contest should have the same description")
 		assert.Equal(t, expected.Open, contest.Open, "contest should both be open")
 		assert.NoError(t, err)

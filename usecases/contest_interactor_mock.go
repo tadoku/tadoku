@@ -75,3 +75,18 @@ func (mr *MockContestInteractorMockRecorder) Latest() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Latest", reflect.TypeOf((*MockContestInteractor)(nil).Latest))
 }
+
+// Find mocks base method
+func (m *MockContestInteractor) Find(contestID uint64) (*domain.Contest, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Find", contestID)
+	ret0, _ := ret[0].(*domain.Contest)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Find indicates an expected call of Find
+func (mr *MockContestInteractorMockRecorder) Find(contestID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Find", reflect.TypeOf((*MockContestInteractor)(nil).Find), contestID)
+}

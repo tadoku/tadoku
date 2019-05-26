@@ -13,6 +13,7 @@ type ContestService interface {
 	Create(ctx Context) error
 	Update(ctx Context) error
 	Latest(ctx Context) error
+	Get(ctx Context) error
 }
 
 // NewContestService initializer
@@ -56,6 +57,23 @@ func (s *contestService) Update(ctx Context) error {
 
 func (s *contestService) Latest(ctx Context) error {
 	contest, err := s.ContestInteractor.Latest()
+
+	if err != nil {
+		if err == usecases.ErrContestNotFound {
+			return ctx.NoContent(http.StatusNotFound)
+		}
+
+		return fail.Wrap(err)
+	}
+
+	return ctx.JSON(http.StatusOK, contest)
+}
+
+func (s *contestService) Get(ctx Context) error {
+	var contestID uint64
+	ctx.BindID(&contestID)
+
+	contest, err := s.ContestInteractor.Find(contestID)
 
 	if err != nil {
 		if err == usecases.ErrContestNotFound {

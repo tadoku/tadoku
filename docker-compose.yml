@@ -6,7 +6,8 @@ services:
     image: tadoku/api
     container_name: tadoku-api
     network_mode: bridge
+    environment:
+      VIRTUAL_HOST: api.tadoku.app
+      VIRTUAL_PORT: $APP_PORT
     expose:
       - $APP_PORT
-    ports:
-      - $APP_PORT:80

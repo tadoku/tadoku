@@ -28,7 +28,7 @@ func (r *contestLogRepository) create(contestLog domain.ContestLog) error {
 	query := `
 		insert into contest_logs
 		(contest_id, user_id, language_code, medium_id, amount, created_at, updated_at)
-		values (:contest_id, :user_id, :language_code, :medium_id, :amount, now(), now())
+		values (:contest_id, :user_id, :language_code, :medium_id, :amount, now() at time zone 'utc', now() at time zone 'utc')
 	`
 
 	_, err := r.sqlHandler.NamedExecute(query, contestLog)

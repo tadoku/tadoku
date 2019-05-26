@@ -80,7 +80,7 @@ const RankingDetails = ({ contestId, userId }: Props) => {
           <CardLabel>Round</CardLabel>
         </Card>
         {registration.registrations.map(r => (
-          <Card>
+          <Card key={r.languageCode}>
             <CardContent>{amountToPages(r.amount)}</CardContent>
             <CardLabel>{pagesLabel(r.languageCode)}</CardLabel>
           </Card>

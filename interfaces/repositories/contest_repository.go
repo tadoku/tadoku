@@ -86,5 +86,18 @@ func (r *contestRepository) FindLatest() (domain.Contest, error) {
 }
 
 func (r *contestRepository) FindByID(id uint64) (domain.Contest, error) {
-	return domain.Contest{}, nil
+	query := `
+		select id, description, start, "end", open
+		from contests
+		where id = $1
+		limit 1
+	`
+
+	var contest domain.Contest
+	err := r.sqlHandler.Get(&contest, query, id)
+	if err != nil {
+		return contest, fail.Wrap(err)
+	}
+
+	return contest, nil
 }

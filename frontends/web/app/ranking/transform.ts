@@ -92,13 +92,25 @@ export const rankingsToRegistrationOverview = (
     return undefined
   }
 
+  const registrations = rankings
+    .map(r => ({
+      languageCode: r.languageCode,
+      amount: r.amount,
+    }))
+    .reduce(
+      (acc, element) => {
+        if (element.languageCode === 'GLO') {
+          return [element, ...acc]
+        }
+        return [...acc, element]
+      },
+      [] as { languageCode: string; amount: number }[],
+    )
+
   return {
     contestId: rankings[0].contestId,
     userId: rankings[0].userId,
     userDisplayName: rankings[0].userDisplayName,
-    registrations: rankings.map(r => ({
-      languageCode: r.languageCode,
-      amount: r.amount,
-    })),
+    registrations,
   }
 }

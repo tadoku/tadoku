@@ -2,11 +2,16 @@ import React from 'react'
 import styled from 'styled-components'
 
 export const Card = styled.div`
-  flex: 1;
+  flex: 1 1 auto;
   padding: 20px 30px;
   border-radius: 2px;
   box-shadow: 4px 5px 15px 1px rgba(0, 0, 0, 0.08);
   margin: 0 20px;
+  max-width: 300px;
+  height: 200px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 `
 
 export const CardContent = styled.div`
@@ -25,16 +30,9 @@ export const CardLabel = styled.span`
 const Container = styled.div`
   display: flex;
   align-items: center;
-  justify-content: space-between;
   box-sizing: border-box;
-
-  > :first-child {
-    margin-left: 0;
-  }
-
-  > :last-child {
-    margin-right: 0;
-  }
+  margin: 0 -20px;
+  flex-wrap: wrap;
 `
 
 const Cards: React.SFC<{}> = ({ children }) => <Container>{children}</Container>

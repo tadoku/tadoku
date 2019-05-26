@@ -9,5 +9,7 @@ services:
     environment:
       VIRTUAL_HOST: api.tadoku.app
       VIRTUAL_PORT: $APP_PORT
+      LETSENCRYPT_HOST: api.tadoku.app
+      LETSENCRYPT_EMAIL: hello@tadoku.app
     expose:
       - $APP_PORT

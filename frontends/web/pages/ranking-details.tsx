@@ -55,7 +55,16 @@ const RankingDetails = ({ contestId, userId }: Props) => {
   return (
     <Layout>
       <h1>{registration.userDisplayName}</h1>
-      <ContestLogsByDayGraph logs={logs} />
+      <ContestLogsByDayGraph
+        logs={logs}
+        contest={{
+          id: 1,
+          description: 'Test',
+          start: new Date('2019-05-01'),
+          end: new Date('2019-05-31'),
+          open: true,
+        }}
+      />
     </Layout>
   )
 }

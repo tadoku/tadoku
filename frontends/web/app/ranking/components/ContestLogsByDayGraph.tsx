@@ -1,5 +1,6 @@
 import React from 'react'
 import { ContestLog } from '../interfaces'
+import { Contest } from '../../contest/interfaces'
 import { aggregateContestLogsByDays } from '../transform'
 import {
   XYPlot,
@@ -13,18 +14,13 @@ import {
 
 interface Props {
   logs: ContestLog[]
+  contest: Contest
 }
 
 const FlexiblePlot = makeWidthFlexible(XYPlot)
 
-const Graph = ({ logs }: Props) => {
-  const data = aggregateContestLogsByDays(logs, {
-    id: 1,
-    description: 'Test',
-    start: new Date('2019-05-01'),
-    end: new Date('2019-05-31'),
-    open: true,
-  })
+const Graph = ({ logs, contest }: Props) => {
+  const data = aggregateContestLogsByDays(logs, contest)
 
   return (
     <FlexiblePlot height={400} xType={'time'}>

@@ -15,7 +15,12 @@ import {
   pagesLabel,
 } from '../app/ranking/transform'
 import { Contest } from '../app/contest/interfaces'
-import Cards, { Card, CardLabel, CardContent } from '../app/ui/components/Cards'
+import Cards, {
+  Card,
+  CardLabel,
+  CardContent,
+  LargeCard,
+} from '../app/ui/components/Cards'
 
 interface Props {
   contestId: number | undefined
@@ -85,8 +90,10 @@ const RankingDetails = ({ contestId, userId }: Props) => {
             <CardLabel>{pagesLabel(r.languageCode)}</CardLabel>
           </Card>
         ))}
+        <LargeCard>
+          <ContestLogsByDayGraph logs={logs} contest={contestForGraphs} />
+        </LargeCard>
       </Cards>
-      <ContestLogsByDayGraph logs={logs} contest={contestForGraphs} />
     </Layout>
   )
 }

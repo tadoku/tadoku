@@ -14,6 +14,17 @@ export const Card = styled.div`
   justify-content: center;
 `
 
+export const LargeCard = styled.div`
+  flex: 1 1 100%;
+  padding: 20px 30px;
+  border-radius: 2px;
+  box-shadow: 4px 5px 15px 1px rgba(0, 0, 0, 0.08);
+  margin: 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+`
+
 export const CardContent = styled.div`
   font-size: 3em;
   text-align: center;

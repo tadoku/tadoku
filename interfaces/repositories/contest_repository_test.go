@@ -73,11 +73,13 @@ func TestContestRepository_FindLatest(t *testing.T) {
 		assert.EqualError(t, err, sql.ErrNoRows.Error())
 		assert.Empty(t, contest, "no contests should be found")
 
-		err = repo.Store(&domain.Contest{Start: time.Now(), End: time.Now(), Open: true})
+		expected := domain.Contest{Description: "Foo 2019", Start: time.Now(), End: time.Now(), Open: true}
+		err = repo.Store(&expected)
 		assert.NoError(t, err)
 
 		contest, err = repo.FindLatest()
-		assert.Equal(t, true, contest.Open, "a contest should be found")
+		assert.Equal(t, expected.Description, contest.Description, "contest should have the same description")
+		assert.Equal(t, expected.Open, contest.Open, "contest should both be open")
 		assert.NoError(t, err)
 	}
 }

@@ -70,7 +70,7 @@ func (r *contestRepository) GetOpenContests() ([]uint64, error) {
 
 func (r *contestRepository) FindLatest() (domain.Contest, error) {
 	query := `
-		select id, start, "end", open
+		select id, description, start, "end", open
 		from contests
 		order by id
 		limit 1

@@ -20,6 +20,7 @@ const FlexiblePlot = makeWidthFlexible(XYPlot)
 const Graph = ({ logs }: Props) => {
   const data = aggregateContestLogsByDays(logs, {
     id: 1,
+    description: 'Test',
     start: new Date('2019-05-01'),
     end: new Date('2019-05-31'),
     open: true,

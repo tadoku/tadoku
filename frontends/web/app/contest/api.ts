@@ -12,6 +12,7 @@ const getContest = async (contestId: number): Promise<Contest | undefined> => {
 
   return {
     id: data.id,
+    description: data.description,
     start: new Date(data.start),
     end: new Date(data.end),
     open: data.open,
@@ -29,6 +30,7 @@ const getLatest = async (): Promise<Contest | undefined> => {
 
   return {
     id: data.id,
+    description: data.description,
     start: new Date(data.start),
     end: new Date(data.end),
     open: data.open,

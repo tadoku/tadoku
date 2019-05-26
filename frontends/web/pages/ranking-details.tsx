@@ -7,8 +7,10 @@ import {
   RankingRegistrationOverview,
 } from '../app/ranking/interfaces'
 import RankingApi from '../app/ranking/api'
+import ContestApi from '../app/contest/api'
 import ContestLogsByDayGraph from '../app/ranking/components/ContestLogsByDayGraph'
 import { rankingsToRegistrationOverview } from '../app/ranking/transform'
+import { Contest } from '../app/contest/interfaces'
 
 interface Props {
   contestId: number | undefined
@@ -18,6 +20,7 @@ interface Props {
 const RankingDetails = ({ contestId, userId }: Props) => {
   const [loaded, setLoaded] = useState(false)
   const [logs, setLogs] = useState([] as ContestLog[])
+  const [contest, setContest] = useState(undefined as Contest | undefined)
   const [registration, setRegistration] = useState(undefined as
     | RankingRegistrationOverview
     | undefined)
@@ -28,10 +31,13 @@ const RankingDetails = ({ contestId, userId }: Props) => {
     }
 
     const getLogs = async () => {
-      const [logs, registration] = await Promise.all([
+      const [contest, logs, registration] = await Promise.all([
+        ContestApi.get(contestId),
         RankingApi.getLogsFor(contestId, userId),
         RankingApi.getRankingsRegistration(contestId, userId),
       ])
+
+      setContest(contest)
       setLogs(logs)
       setRegistration(rankingsToRegistrationOverview(registration))
       setLoaded(true)
@@ -48,23 +54,14 @@ const RankingDetails = ({ contestId, userId }: Props) => {
     return <Layout>Loading...</Layout>
   }
 
-  if (!registration) {
+  if (!registration || !contest) {
     return <ErrorPage statusCode={500} />
   }
 
   return (
     <Layout>
       <h1>{registration.userDisplayName}</h1>
-      <ContestLogsByDayGraph
-        logs={logs}
-        contest={{
-          id: 1,
-          description: 'Test',
-          start: new Date('2019-05-01'),
-          end: new Date('2019-05-31'),
-          open: true,
-        }}
-      />
+      <ContestLogsByDayGraph logs={logs} contest={contest} />
     </Layout>
   )
 }

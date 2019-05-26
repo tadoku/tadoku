@@ -1,7 +1,6 @@
 package usecases_test
 
 import (
-	"database/sql"
 	"testing"
 	"time"
 
@@ -133,7 +132,7 @@ func TestContestInteractor_Latest(t *testing.T) {
 	// Sad path: none found
 	{
 
-		repo.EXPECT().FindLatest().Return(domain.Contest{}, sql.ErrNoRows)
+		repo.EXPECT().FindLatest().Return(domain.Contest{}, domain.ErrNotFound)
 
 		_, err := interactor.Latest()
 		assert.EqualError(t, err, usecases.ErrContestNotFound.Error())
@@ -165,7 +164,7 @@ func TestContestInteractor_Find(t *testing.T) {
 	// Sad path: none found
 	{
 
-		repo.EXPECT().FindByID(contestID).Return(domain.Contest{}, sql.ErrNoRows)
+		repo.EXPECT().FindByID(contestID).Return(domain.Contest{}, domain.ErrNotFound)
 
 		_, err := interactor.Find(contestID)
 		assert.EqualError(t, err, usecases.ErrContestNotFound.Error())

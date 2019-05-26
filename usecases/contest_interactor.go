@@ -3,8 +3,6 @@
 package usecases
 
 import (
-	"database/sql"
-
 	"github.com/srvc/fail"
 	"github.com/tadoku/api/domain"
 )
@@ -90,7 +88,7 @@ func (i *contestInteractor) saveContest(contest domain.Contest) error {
 func (i *contestInteractor) Latest() (*domain.Contest, error) {
 	contest, err := i.contestRepository.FindLatest()
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if err == domain.ErrNotFound {
 			return nil, ErrContestNotFound
 		}
 
@@ -103,7 +101,7 @@ func (i *contestInteractor) Latest() (*domain.Contest, error) {
 func (i *contestInteractor) Find(contestID uint64) (*domain.Contest, error) {
 	contest, err := i.contestRepository.FindByID(contestID)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if err == domain.ErrNotFound {
 			return nil, ErrContestNotFound
 		}
 

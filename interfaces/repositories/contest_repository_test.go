@@ -1,7 +1,6 @@
 package repositories_test
 
 import (
-	"database/sql"
 	"testing"
 	"time"
 
@@ -70,7 +69,7 @@ func TestContestRepository_FindLatest(t *testing.T) {
 
 	{
 		contest, err := repo.FindLatest()
-		assert.EqualError(t, err, sql.ErrNoRows.Error())
+		assert.EqualError(t, err, domain.ErrNotFound.Error())
 		assert.Empty(t, contest, "no contests should be found")
 
 		expected := domain.Contest{Description: "Foo 2019", Start: time.Now(), End: time.Now(), Open: true}
@@ -92,7 +91,7 @@ func TestContestRepository_FindByID(t *testing.T) {
 
 	{
 		contest, err := repo.FindByID(0)
-		assert.EqualError(t, err, sql.ErrNoRows.Error())
+		assert.EqualError(t, err, domain.ErrNotFound.Error())
 		assert.Empty(t, contest, "no contests should be found")
 
 		expected := domain.Contest{Description: "Foo 2019", Start: time.Now(), End: time.Now(), Open: true}

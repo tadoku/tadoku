@@ -16,7 +16,6 @@ import {
 } from '../app/ranking/transform'
 import { Contest } from '../app/contest/interfaces'
 import Cards, { Card, CardLabel, CardContent } from '../app/ui/components/Cards'
-import { languageNameByCode } from '../app/ranking/database'
 
 interface Props {
   contestId: number | undefined
@@ -65,6 +64,8 @@ const RankingDetails = ({ contestId, userId }: Props) => {
   }
 
   const today = new Date()
+  today.setHours(0, 0, 0, 0)
+
   const contestForGraphs = {
     ...contest,
     end: contest.end > today ? today : contest.end,

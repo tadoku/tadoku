@@ -30,7 +30,7 @@ func (r *rankingRepository) create(ranking domain.Ranking) error {
 	query := `
 		insert into rankings
 		(contest_id, user_id, language_code, amount, created_at, updated_at)
-		values (:contest_id, :user_id, :language_code, :amount, now(), now())
+		values (:contest_id, :user_id, :language_code, :amount, now() at time zone 'utc', now() at time zone 'utc')
 	`
 
 	_, err := r.sqlHandler.NamedExecute(query, ranking)
@@ -40,7 +40,7 @@ func (r *rankingRepository) create(ranking domain.Ranking) error {
 func (r *rankingRepository) update(ranking domain.Ranking) error {
 	query := `
 		update rankings
-		set amount = :amount, updated_at = now()
+		set amount = :amount, updated_at = now() at time zone 'utc'
 		where id = :id
 	`
 
@@ -58,7 +58,7 @@ func (r *rankingRepository) UpdateAmounts(rankings domain.Rankings) error {
 		update rankings
 		set
 			amount = :amount,
-			updated_at = now()
+			updated_at = now() at time zone 'utc'
 		where id = :id
 	`
 

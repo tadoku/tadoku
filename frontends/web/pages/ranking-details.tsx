@@ -9,7 +9,11 @@ import {
 import RankingApi from '../app/ranking/api'
 import ContestApi from '../app/contest/api'
 import ContestLogsByDayGraph from '../app/ranking/components/ContestLogsByDayGraph'
-import { rankingsToRegistrationOverview } from '../app/ranking/transform'
+import {
+  rankingsToRegistrationOverview,
+  amountToPages,
+  pagesLabel,
+} from '../app/ranking/transform'
 import { Contest } from '../app/contest/interfaces'
 import Cards, { Card, CardLabel, CardContent } from '../app/ui/components/Cards'
 import { languageNameByCode } from '../app/ranking/database'
@@ -76,8 +80,8 @@ const RankingDetails = ({ contestId, userId }: Props) => {
         </Card>
         {registration.registrations.map(r => (
           <Card>
-            <CardContent>{r.amount}</CardContent>
-            <CardLabel>{languageNameByCode(r.languageCode)}</CardLabel>
+            <CardContent>{amountToPages(r.amount)}</CardContent>
+            <CardLabel>{pagesLabel(r.languageCode)}</CardLabel>
           </Card>
         ))}
       </Cards>

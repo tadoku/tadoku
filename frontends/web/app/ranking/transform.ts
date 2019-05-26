@@ -5,6 +5,7 @@ import {
   RankingRegistrationOverview,
 } from './interfaces'
 import { Contest } from './../contest/interfaces'
+import { languageNameByCode } from './database'
 
 type AggregatedByDaysResult = {
   [languageCode: string]: AggregatedContestLogsByDayEntry[]
@@ -116,3 +117,6 @@ export const rankingsToRegistrationOverview = (
 }
 
 export const amountToPages = (amount: number) => Math.round(amount * 10) / 10
+
+export const pagesLabel = (languageCode: string) =>
+  `pages in ${languageNameByCode(languageCode)}`

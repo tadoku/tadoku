@@ -11,6 +11,7 @@ import ContestApi from '../app/contest/api'
 import ContestLogsByDayGraph from '../app/ranking/components/ContestLogsByDayGraph'
 import { rankingsToRegistrationOverview } from '../app/ranking/transform'
 import { Contest } from '../app/contest/interfaces'
+import Cards, { Card, CardLabel, CardContent } from '../app/ui/components/Cards'
 
 interface Props {
   contestId: number | undefined
@@ -67,6 +68,13 @@ const RankingDetails = ({ contestId, userId }: Props) => {
   return (
     <Layout>
       <h1>{registration.userDisplayName}</h1>
+      <Cards>
+        <Card>
+          <CardContent>{contest.description}</CardContent>
+          <CardLabel>Round</CardLabel>
+        </Card>
+        <Card>{contest.description}</Card>
+      </Cards>
       <ContestLogsByDayGraph logs={logs} contest={contestForGraphs} />
     </Layout>
   )

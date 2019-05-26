@@ -26,7 +26,10 @@ const Graph = ({ logs, contest }: Props) => {
     <FlexiblePlot height={400} xType={'time'}>
       <HorizontalGridLines />
       <VerticalGridLines />
-      <XAxis title="Days" tickFormat={date => date.getDate()} />
+      <XAxis
+        title="Days"
+        tickFormat={date => `${date.getMonth() + 1}-${date.getDate()}`}
+      />
       <YAxis title="Pages" />
 
       {Object.keys(data).map(language => (

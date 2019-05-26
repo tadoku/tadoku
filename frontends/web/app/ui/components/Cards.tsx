@@ -23,6 +23,8 @@ export const LargeCard = styled.div`
   display: flex;
   flex-direction: column;
   justify-content: center;
+  max-width: calc(100% - 40px);
+  box-sizing: border-box;
 `
 
 export const CardContent = styled.div`

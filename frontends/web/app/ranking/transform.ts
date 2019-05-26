@@ -114,3 +114,5 @@ export const rankingsToRegistrationOverview = (
     registrations,
   }
 }
+
+export const amountToPages = (amount: number) => Math.round(amount * 10) / 10

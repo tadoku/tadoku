@@ -2,6 +2,7 @@ import React from 'react'
 import Link from 'next/link'
 import { Ranking } from '../interfaces'
 import styled from 'styled-components'
+import { amountToPages } from '../transform'
 
 const List = styled.ul`
   list-style: none;
@@ -60,7 +61,7 @@ const RankingList = (props: Props) => (
             </Link>
           </Name>
           <Pages>
-            {Math.round(r.amount * 10) / 10}
+            {amountToPages(r.amount)}
             <span> pages</span>
           </Pages>
         </Row>

@@ -6,7 +6,7 @@ export const Card = styled.div`
   padding: 20px 30px;
   border-radius: 2px;
   box-shadow: 4px 5px 15px 1px rgba(0, 0, 0, 0.08);
-  margin: 0 20px;
+  margin: 20px;
   max-width: 300px;
   height: 200px;
   display: flex;
@@ -31,7 +31,7 @@ const Container = styled.div`
   display: flex;
   align-items: center;
   box-sizing: border-box;
-  margin: 0 -20px;
+  margin: -20px;
   flex-wrap: wrap;
 `
 

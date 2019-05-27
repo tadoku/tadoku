@@ -13,7 +13,7 @@ const Container = styled.div`
   display: flex;
   align-items: center;
   justify-content: space-between;
-  border-bottom: 2px solid ${Constants.colors.dark};
+  box-shadow: 4px 3px 7px 1px rgba(0, 0, 0, 0.08);
   padding: 0 20px;
   box-sizing: border-box;
 `

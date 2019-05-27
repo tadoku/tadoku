@@ -12,6 +12,18 @@ export const AllMediums: Medium[] = [
   { id: 9, description: 'Sentences' },
 ]
 
+export const MediumById: { [key: number]: Medium } = AllMediums.reduce(
+  (previous, current) => {
+    return {
+      ...previous,
+      [current.id]: current,
+    }
+  },
+  {},
+)
+
+export const mediumDescriptionById = (id: number) => MediumById[id].description
+
 export const AllLanguages: Language[] = [
   { code: 'zho', name: 'Chinese' },
   { code: 'nld', name: 'Dutch' },

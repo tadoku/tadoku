@@ -78,7 +78,7 @@ func TestContestLogService_Update(t *testing.T) {
 		ctx.EXPECT().BindID(gomock.Any()).Return(nil).SetArg(0, uint64(1))
 
 		i := usecases.NewMockRankingInteractor(ctrl)
-		i.EXPECT().UpdateLog(domain.ContestLog{ID: 1, ContestID: 1, UserID: 1, Language: domain.Japanese, Amount: 10, MediumID: 1}).Return(usecases.ErrContestLogInsufficientPermissions)
+		i.EXPECT().UpdateLog(domain.ContestLog{ID: 1, ContestID: 1, UserID: 1, Language: domain.Japanese, Amount: 10, MediumID: 1}).Return(domain.ErrInsufficientPermissions)
 
 		s := services.NewContestLogService(i)
 		err := s.Update(ctx)

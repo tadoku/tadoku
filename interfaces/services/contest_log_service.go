@@ -64,7 +64,7 @@ func (s *contestLogService) Update(ctx Context) error {
 	log.UserID = user.ID
 
 	if err := s.RankingInteractor.UpdateLog(*log); err != nil {
-		if err == usecases.ErrContestLogInsufficientPermissions {
+		if err == domain.ErrInsufficientPermissions {
 			return ctx.NoContent(http.StatusForbidden)
 		}
 

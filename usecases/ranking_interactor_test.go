@@ -284,7 +284,7 @@ func TestRankingInteractor_UpdateLog(t *testing.T) {
 
 		err := interactor.UpdateLog(log)
 
-		assert.EqualError(t, err, usecases.ErrContestLogInsufficientPermissions.Error())
+		assert.EqualError(t, err, domain.ErrInsufficientPermissions.Error())
 	}
 
 	{

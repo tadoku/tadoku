@@ -3,6 +3,14 @@
 # Check https://circleci.com/docs/2.0/language-go/ for more details
 version: 2
 jobs:
+  deploy:
+    machine:
+      enabled: true
+    steps:
+      - run:
+          name: Deploy Over SSH
+          command: |
+            ssh $SSH_USER@$SSH_HOST "./deploy-tadoku-api.sh"
   build:
     docker:
       - image: circleci/golang:1.11.4
@@ -50,3 +58,15 @@ jobs:
           key: go-mod-v1-{{ checksum "go.sum" }}-{{ checksum "tools.go" }}
           paths:
             - "/go/pkg/mod"
+
+workflows:
+  version: 2
+  build-and-deploy:
+    jobs:
+      - build
+      - deploy:
+          requires:
+            - build
+          filters:
+            branches:
+              only: master

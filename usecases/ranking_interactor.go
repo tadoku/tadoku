@@ -43,6 +43,9 @@ var ErrContestLogIDMissing = fail.New("a contest log id is required when updatin
 // ErrCreateContestLogHasID for when you try to create a log with a given id
 var ErrCreateContestLogHasID = fail.New("a contest log can't have an id when being created")
 
+// ErrContestLogInsufficientPermissions for when someone else tries to update a contest log
+var ErrContestLogInsufficientPermissions = fail.New("need to be the owner of a contest log to update it")
+
 // RankingInteractor contains all business logic for rankings
 type RankingInteractor interface {
 	CreateRanking(
@@ -169,6 +172,17 @@ func (i *rankingInteractor) UpdateLog(log domain.ContestLog) error {
 func (i *rankingInteractor) saveLog(log domain.ContestLog) error {
 	if valid, _ := i.validator.Validate(log); !valid {
 		return ErrInvalidContestLog
+	}
+
+	if log.ID != 0 {
+		existingLog, err := i.contestLogRepository.FindByID(log.ID)
+		if err != nil {
+			return fail.Wrap(err)
+		}
+
+		if existingLog.UserID != log.UserID {
+			return ErrContestLogInsufficientPermissions
+		}
 	}
 
 	ids, err := i.contestRepository.GetOpenContests()

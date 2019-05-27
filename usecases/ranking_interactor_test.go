@@ -257,6 +257,7 @@ func TestRankingInteractor_UpdateLog(t *testing.T) {
 
 		contestLogRepo.EXPECT().Store(&log)
 		validator.EXPECT().Validate(log).Return(true, nil)
+		contestLogRepo.EXPECT().FindByID(log.ID).Return(log, nil)
 		contestRepo.EXPECT().GetOpenContests().Return([]uint64{contestID}, nil)
 		rankingRepo.EXPECT().GetAllLanguagesForContestAndUser(contestID, userID).Return(domain.LanguageCodes{domain.Japanese}, nil)
 		rankingRepo.EXPECT().FindAll(contestID, userID).Return(rankings, nil)
@@ -266,6 +267,24 @@ func TestRankingInteractor_UpdateLog(t *testing.T) {
 		err := interactor.UpdateLog(log)
 
 		assert.NoError(t, err)
+	}
+
+	{
+		log := domain.ContestLog{
+			ID:        1,
+			ContestID: contestID,
+			UserID:    userID,
+			Language:  domain.Japanese,
+			Amount:    10,
+			MediumID:  domain.MediumManga,
+		}
+
+		validator.EXPECT().Validate(log).Return(true, nil)
+		contestLogRepo.EXPECT().FindByID(log.ID).Return(domain.ContestLog{UserID: userID + 1}, nil)
+
+		err := interactor.UpdateLog(log)
+
+		assert.EqualError(t, err, usecases.ErrContestLogInsufficientPermissions.Error())
 	}
 
 	{

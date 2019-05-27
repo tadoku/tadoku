@@ -28,11 +28,17 @@ func (r *contestLogRepository) create(contestLog *domain.ContestLog) error {
 	query := `
 		insert into contest_logs
 		(contest_id, user_id, language_code, medium_id, amount, created_at, updated_at)
-		values (:contest_id, :user_id, :language_code, :medium_id, :amount, now() at time zone 'utc', now() at time zone 'utc')
+		values ($1, $2, $3, $4, $5, now() at time zone 'utc', now() at time zone 'utc')
+		returning id
 	`
 
-	_, err := r.sqlHandler.NamedExecute(query, contestLog)
-	return fail.Wrap(err)
+	row := r.sqlHandler.QueryRow(query, contestLog.ContestID, contestLog.UserID, contestLog.Language, contestLog.MediumID, contestLog.Amount)
+	err := row.Scan(&contestLog.ID)
+	if err != nil {
+		return fail.Wrap(err)
+	}
+
+	return nil
 }
 
 func (r *contestLogRepository) update(contestLog *domain.ContestLog) error {

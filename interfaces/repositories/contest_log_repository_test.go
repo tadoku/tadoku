@@ -22,20 +22,22 @@ func TestContestLogRepository_StoreContest(t *testing.T) {
 	}
 
 	{
-		err := repo.Store(*log)
+		err := repo.Store(log)
 		assert.NoError(t, err)
 	}
 
 	{
 		updatedLog := &domain.ContestLog{
-			ID:        1,
+			ID:        log.ID,
 			ContestID: 1,
 			UserID:    1,
-			Language:  domain.Japanese,
-			Amount:    10,
-			MediumID:  1,
+			Language:  domain.Korean,
+			Amount:    20,
+			MediumID:  2,
 		}
-		_ = repo.Store(*updatedLog)
+		assert.NotEqual(t, 0, updatedLog.ID)
+		err := repo.Store(updatedLog)
+		assert.NoError(t, err)
 	}
 }
 

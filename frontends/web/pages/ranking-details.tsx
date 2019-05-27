@@ -9,6 +9,7 @@ import {
 import RankingApi from '../app/ranking/api'
 import ContestApi from '../app/contest/api'
 import ContestLogsByDayGraph from '../app/ranking/components/ContestLogsByDayGraph'
+import ContestLogsList from '../app/ranking/components/ContestLogsList'
 import {
   rankingsToRegistrationOverview,
   amountToPages,
@@ -92,6 +93,9 @@ const RankingDetails = ({ contestId, userId }: Props) => {
         ))}
         <LargeCard>
           <ContestLogsByDayGraph logs={logs} contest={contestForGraphs} />
+        </LargeCard>
+        <LargeCard>
+          <ContestLogsList logs={logs} />
         </LargeCard>
       </Cards>
     </Layout>

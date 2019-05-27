@@ -18,6 +18,6 @@ jobs:
           key: yarn-packages-{{ checksum "yarn.lock" }}
           paths:
             - ~/.cache/yarn
-      - build_production:
+      - run:
           name: Build production
           command: yarn build

@@ -1,5 +1,13 @@
 version: 2
 jobs:
+  deploy:
+    machine:
+      enabled: true
+    steps:
+      - run:
+          name: Deploy Over SSH
+          command: |
+            ssh $SSH_USER@$SSH_HOST "./deploy-tadoku-web.sh"
   build:
     working_directory: ~/tadoku-web
     docker:
@@ -21,3 +29,15 @@ jobs:
       - run:
           name: Build production
           command: yarn build
+
+workflows:
+  version: 2
+  build-and-deploy:
+    jobs:
+      - build
+      - deploy:
+          requires:
+            - build
+          filters:
+            branches:
+              only: master

@@ -21,7 +21,7 @@ func (r *contestLogRepository) Store(contestLog domain.ContestLog) error {
 		return r.create(contestLog)
 	}
 
-	return fail.Errorf("not yet implemented")
+	return r.update(contestLog)
 }
 
 func (r *contestLogRepository) create(contestLog domain.ContestLog) error {
@@ -29,6 +29,17 @@ func (r *contestLogRepository) create(contestLog domain.ContestLog) error {
 		insert into contest_logs
 		(contest_id, user_id, language_code, medium_id, amount, created_at, updated_at)
 		values (:contest_id, :user_id, :language_code, :medium_id, :amount, now() at time zone 'utc', now() at time zone 'utc')
+	`
+
+	_, err := r.sqlHandler.NamedExecute(query, contestLog)
+	return fail.Wrap(err)
+}
+
+func (r *contestLogRepository) update(contestLog domain.ContestLog) error {
+	query := `
+		update contest_logs
+		set amount = :amount, medium_id = :medium_id, language_code = :language_code, updated_at = now() at time zone 'utc'
+		where id = :id
 	`
 
 	_, err := r.sqlHandler.NamedExecute(query, contestLog)

@@ -164,7 +164,7 @@ func (i *rankingInteractor) CreateLog(log domain.ContestLog) error {
 		return ErrContestLanguageNotSignedUp
 	}
 
-	err = i.contestLogRepository.Store(log)
+	err = i.contestLogRepository.Store(&log)
 	if err != nil {
 		return fail.Wrap(err)
 	}

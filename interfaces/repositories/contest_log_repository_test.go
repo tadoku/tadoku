@@ -69,7 +69,7 @@ func TestContestLogRepository_FindAllByContestAndUser(t *testing.T) {
 				Amount:    data.amount,
 			}
 
-			err := repo.Store(*log)
+			err := repo.Store(log)
 			assert.NoError(t, err)
 		}
 	}
@@ -77,7 +77,7 @@ func TestContestLogRepository_FindAllByContestAndUser(t *testing.T) {
 	// Create unrelated rankings to check if it is really working
 	{
 		for _, language := range []domain.LanguageCode{domain.Korean, domain.Global} {
-			ranking := &domain.ContestLog{
+			log := &domain.ContestLog{
 				ContestID: contestID + 1,
 				UserID:    userID,
 				Language:  language,
@@ -85,7 +85,7 @@ func TestContestLogRepository_FindAllByContestAndUser(t *testing.T) {
 				Amount:    0,
 			}
 
-			err := repo.Store(*ranking)
+			err := repo.Store(log)
 			assert.NoError(t, err)
 		}
 	}

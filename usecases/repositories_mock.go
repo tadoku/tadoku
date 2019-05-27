@@ -183,7 +183,7 @@ func (m *MockContestLogRepository) EXPECT() *MockContestLogRepositoryMockRecorde
 }
 
 // Store mocks base method
-func (m *MockContestLogRepository) Store(contestLog domain.ContestLog) error {
+func (m *MockContestLogRepository) Store(contestLog *domain.ContestLog) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Store", contestLog)
 	ret0, _ := ret[0].(error)

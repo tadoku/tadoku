@@ -131,7 +131,7 @@ func TestRankingInteractor_CreateLog(t *testing.T) {
 			{ID: 2, ContestID: contestID, UserID: userID, Language: domain.Global, Amount: 2},
 		}
 
-		contestLogRepo.EXPECT().Store(log)
+		contestLogRepo.EXPECT().Store(&log)
 		validator.EXPECT().Validate(log).Return(true, nil)
 		contestRepo.EXPECT().GetOpenContests().Return([]uint64{contestID}, nil)
 		rankingRepo.EXPECT().GetAllLanguagesForContestAndUser(contestID, userID).Return(domain.LanguageCodes{domain.Japanese}, nil)

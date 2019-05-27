@@ -13,6 +13,7 @@ import (
 // ContestLogService is responsible for managing contest log entries
 type ContestLogService interface {
 	Create(ctx Context) error
+	Update(ctx Context) error
 	Get(ctx Context) error
 }
 
@@ -45,6 +46,32 @@ func (s *contestLogService) Create(ctx Context) error {
 	}
 
 	return ctx.NoContent(http.StatusCreated)
+}
+
+func (s *contestLogService) Update(ctx Context) error {
+	log := &domain.ContestLog{}
+	if err := ctx.Bind(log); err != nil {
+		return fail.Wrap(err)
+	}
+
+	ctx.BindID(&log.ID)
+
+	user, err := ctx.User()
+	if err != nil {
+		return fail.Wrap(err)
+	}
+
+	log.UserID = user.ID
+
+	if err := s.RankingInteractor.UpdateLog(*log); err != nil {
+		if err == domain.ErrInsufficientPermissions {
+			return ctx.NoContent(http.StatusForbidden)
+		}
+
+		return fail.Wrap(err)
+	}
+
+	return ctx.NoContent(http.StatusNoContent)
 }
 
 func (s *contestLogService) Get(ctx Context) error {

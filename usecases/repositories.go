@@ -23,8 +23,9 @@ type ContestRepository interface {
 
 // ContestLogRepository handles ContestLog related database interactions
 type ContestLogRepository interface {
-	Store(contestLog domain.ContestLog) error
+	Store(contestLog *domain.ContestLog) error
 	FindAll(contestID uint64, userID uint64) (domain.ContestLogs, error)
+	FindByID(id uint64) (domain.ContestLog, error)
 }
 
 // RankingRepository handles Ranking related database interactions

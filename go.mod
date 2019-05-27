@@ -18,7 +18,7 @@ require (
 	github.com/pkg/errors v0.8.1 // indirect
 	github.com/srvc/fail v3.1.1+incompatible
 	github.com/stretchr/testify v1.3.0
-	golang.org/x/crypto v0.0.0-20190308221718-c2843e01d9a2
+	golang.org/x/crypto v0.0.0-20190426145343-a29dc8fdc734
 	golang.org/x/lint v0.0.0-20190409202823-959b441ac422
 	google.golang.org/appengine v1.5.0 // indirect
 	gopkg.in/yaml.v2 v2.2.2 // indirect

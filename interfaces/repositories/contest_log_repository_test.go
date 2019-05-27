@@ -22,21 +22,22 @@ func TestContestLogRepository_StoreContest(t *testing.T) {
 	}
 
 	{
-		err := repo.Store(*log)
+		err := repo.Store(log)
 		assert.NoError(t, err)
 	}
 
 	{
 		updatedLog := &domain.ContestLog{
-			ID:        1,
+			ID:        log.ID,
 			ContestID: 1,
 			UserID:    1,
-			Language:  domain.Japanese,
-			Amount:    10,
-			MediumID:  1,
+			Language:  domain.Korean,
+			Amount:    20,
+			MediumID:  2,
 		}
-		err := repo.Store(*updatedLog)
-		assert.EqualError(t, err, "not yet implemented")
+		assert.NotEqual(t, 0, updatedLog.ID)
+		err := repo.Store(updatedLog)
+		assert.NoError(t, err)
 	}
 }
 
@@ -70,7 +71,7 @@ func TestContestLogRepository_FindAllByContestAndUser(t *testing.T) {
 				Amount:    data.amount,
 			}
 
-			err := repo.Store(*log)
+			err := repo.Store(log)
 			assert.NoError(t, err)
 		}
 	}
@@ -78,7 +79,7 @@ func TestContestLogRepository_FindAllByContestAndUser(t *testing.T) {
 	// Create unrelated rankings to check if it is really working
 	{
 		for _, language := range []domain.LanguageCode{domain.Korean, domain.Global} {
-			ranking := &domain.ContestLog{
+			log := &domain.ContestLog{
 				ContestID: contestID + 1,
 				UserID:    userID,
 				Language:  language,
@@ -86,7 +87,7 @@ func TestContestLogRepository_FindAllByContestAndUser(t *testing.T) {
 				Amount:    0,
 			}
 
-			err := repo.Store(*ranking)
+			err := repo.Store(log)
 			assert.NoError(t, err)
 		}
 	}

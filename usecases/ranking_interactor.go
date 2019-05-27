@@ -37,6 +37,12 @@ var ErrNoRankingRegistrationFound = fail.New("no active ranking registration was
 // ErrNoContestLogsFound for when a user doesn't have any logs for a given contest
 var ErrNoContestLogsFound = fail.New("no contest logs were found")
 
+// ErrContestLogIDMissing for when you try to update a log without id
+var ErrContestLogIDMissing = fail.New("a contest log id is required when updating")
+
+// ErrCreateContestLogHasID for when you try to create a log with a given id
+var ErrCreateContestLogHasID = fail.New("a contest log can't have an id when being created")
+
 // RankingInteractor contains all business logic for rankings
 type RankingInteractor interface {
 	CreateRanking(
@@ -45,6 +51,7 @@ type RankingInteractor interface {
 		languages domain.LanguageCodes,
 	) error
 	CreateLog(log domain.ContestLog) error
+	UpdateLog(log domain.ContestLog) error
 	UpdateRanking(contestID uint64, userID uint64) error
 
 	RankingsForRegistration(contestID uint64, userID uint64) (domain.Rankings, error)
@@ -144,8 +151,35 @@ func (i *rankingInteractor) CreateRanking(
 }
 
 func (i *rankingInteractor) CreateLog(log domain.ContestLog) error {
+	if log.ID != 0 {
+		return ErrCreateContestLogHasID
+	}
+
+	return i.saveLog(log)
+}
+
+func (i *rankingInteractor) UpdateLog(log domain.ContestLog) error {
+	if log.ID == 0 {
+		return ErrContestLogIDMissing
+	}
+
+	return i.saveLog(log)
+}
+
+func (i *rankingInteractor) saveLog(log domain.ContestLog) error {
 	if valid, _ := i.validator.Validate(log); !valid {
 		return ErrInvalidContestLog
+	}
+
+	if log.ID != 0 {
+		existingLog, err := i.contestLogRepository.FindByID(log.ID)
+		if err != nil {
+			return fail.Wrap(err)
+		}
+
+		if existingLog.UserID != log.UserID {
+			return domain.ErrInsufficientPermissions
+		}
 	}
 
 	ids, err := i.contestRepository.GetOpenContests()
@@ -164,7 +198,7 @@ func (i *rankingInteractor) CreateLog(log domain.ContestLog) error {
 		return ErrContestLanguageNotSignedUp
 	}
 
-	err = i.contestLogRepository.Store(log)
+	err = i.contestLogRepository.Store(&log)
 	if err != nil {
 		return fail.Wrap(err)
 	}

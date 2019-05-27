@@ -143,6 +143,21 @@ func TestRankingInteractor_CreateLog(t *testing.T) {
 		assert.NoError(t, err)
 	}
 
+	// Test creation with id
+	{
+		log := domain.ContestLog{
+			ID:        1,
+			ContestID: contestID,
+			UserID:    userID,
+			Language:  domain.Japanese,
+			Amount:    10,
+			MediumID:  20,
+		}
+
+		err := interactor.CreateLog(log)
+		assert.EqualError(t, err, usecases.ErrCreateContestLogHasID.Error())
+	}
+
 	// Test invalid medium
 	{
 		log := domain.ContestLog{
@@ -210,6 +225,61 @@ func TestRankingInteractor_CreateLog(t *testing.T) {
 
 		err := interactor.CreateLog(log)
 		assert.EqualError(t, err, usecases.ErrContestLanguageNotSignedUp.Error())
+	}
+}
+
+func TestRankingInteractor_UpdateLog(t *testing.T) {
+	ctrl, rankingRepo, contestRepo, contestLogRepo, _, validator, interactor := setupRankingTest(t)
+	defer ctrl.Finish()
+
+	contestID := uint64(1)
+	userID := uint64(1)
+
+	{
+		log := domain.ContestLog{
+			ID:        1,
+			ContestID: contestID,
+			UserID:    userID,
+			Language:  domain.Japanese,
+			Amount:    10,
+			MediumID:  domain.MediumManga,
+		}
+
+		rankings := domain.Rankings{
+			{ID: 1, ContestID: contestID, UserID: userID, Language: domain.Japanese, Amount: 0},
+			{ID: 2, ContestID: contestID, UserID: userID, Language: domain.Global, Amount: 0},
+		}
+
+		expectedRankings := domain.Rankings{
+			{ID: 1, ContestID: contestID, UserID: userID, Language: domain.Japanese, Amount: 2},
+			{ID: 2, ContestID: contestID, UserID: userID, Language: domain.Global, Amount: 2},
+		}
+
+		contestLogRepo.EXPECT().Store(&log)
+		validator.EXPECT().Validate(log).Return(true, nil)
+		contestRepo.EXPECT().GetOpenContests().Return([]uint64{contestID}, nil)
+		rankingRepo.EXPECT().GetAllLanguagesForContestAndUser(contestID, userID).Return(domain.LanguageCodes{domain.Japanese}, nil)
+		rankingRepo.EXPECT().FindAll(contestID, userID).Return(rankings, nil)
+		contestLogRepo.EXPECT().FindAll(contestID, userID).Return(domain.ContestLogs{log}, nil)
+		rankingRepo.EXPECT().UpdateAmounts(expectedRankings).Return(nil)
+
+		err := interactor.UpdateLog(log)
+
+		assert.NoError(t, err)
+	}
+
+	{
+		log := domain.ContestLog{
+			ContestID: contestID,
+			UserID:    userID,
+			Language:  domain.Global,
+			Amount:    10,
+			MediumID:  domain.MediumManga,
+		}
+
+		err := interactor.UpdateLog(log)
+
+		assert.EqualError(t, err, usecases.ErrContestLogIDMissing.Error())
 	}
 }
 

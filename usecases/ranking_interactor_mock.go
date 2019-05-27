@@ -61,6 +61,20 @@ func (mr *MockRankingInteractorMockRecorder) CreateLog(log interface{}) *gomock.
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateLog", reflect.TypeOf((*MockRankingInteractor)(nil).CreateLog), log)
 }
 
+// UpdateLog mocks base method
+func (m *MockRankingInteractor) UpdateLog(log domain.ContestLog) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateLog", log)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// UpdateLog indicates an expected call of UpdateLog
+func (mr *MockRankingInteractorMockRecorder) UpdateLog(log interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateLog", reflect.TypeOf((*MockRankingInteractor)(nil).UpdateLog), log)
+}
+
 // UpdateRanking mocks base method
 func (m *MockRankingInteractor) UpdateRanking(contestID, userID uint64) error {
 	m.ctrl.T.Helper()

@@ -147,6 +147,7 @@ func (d *serverDependencies) routes() []services.Route {
 		{Method: http.MethodGet, Path: "/rankings", HandlerFunc: d.Services().Ranking.Get},
 		{Method: http.MethodPost, Path: "/contest_logs", HandlerFunc: d.Services().ContestLog.Create, MinRole: domain.RoleUser},
 		{Method: http.MethodGet, Path: "/contest_logs", HandlerFunc: d.Services().ContestLog.Get},
+		{Method: http.MethodPut, Path: "/contest_logs/:id", HandlerFunc: d.Services().ContestLog.Update, MinRole: domain.RoleUser},
 	}
 }
 

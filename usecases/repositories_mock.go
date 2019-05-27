@@ -211,6 +211,21 @@ func (mr *MockContestLogRepositoryMockRecorder) FindAll(contestID, userID interf
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindAll", reflect.TypeOf((*MockContestLogRepository)(nil).FindAll), contestID, userID)
 }
 
+// FindByID mocks base method
+func (m *MockContestLogRepository) FindByID(id uint64) (domain.ContestLog, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "FindByID", id)
+	ret0, _ := ret[0].(domain.ContestLog)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// FindByID indicates an expected call of FindByID
+func (mr *MockContestLogRepositoryMockRecorder) FindByID(id interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindByID", reflect.TypeOf((*MockContestLogRepository)(nil).FindByID), id)
+}
+
 // MockRankingRepository is a mock of RankingRepository interface
 type MockRankingRepository struct {
 	ctrl     *gomock.Controller

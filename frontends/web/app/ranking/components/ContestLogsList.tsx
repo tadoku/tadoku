@@ -65,7 +65,7 @@ const ContestLogList = (props: Props) => {
         </Heading>
         <Body>
           {props.logs.map((l, i) => (
-            <Row even={i % 2 === 0}>
+            <Row even={i % 2 === 0} key={l.id}>
               <Column>{l.date.toLocaleString()}</Column>
               <Column>{languageNameByCode(l.languageCode)}</Column>
               <Column>{mediumDescriptionById(l.mediumId)}</Column>

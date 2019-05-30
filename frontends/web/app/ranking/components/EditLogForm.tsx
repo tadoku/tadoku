@@ -1,4 +1,4 @@
-import React, { FormEvent, useState, useEffect } from 'react'
+import React, { FormEvent, useState } from 'react'
 import styled from 'styled-components'
 import Constants from '../../ui/Constants'
 import { AllMediums, languageNameByCode } from '../database'
@@ -6,7 +6,6 @@ import { connect } from 'react-redux'
 import { State } from '../../store'
 import { RankingRegistration, ContestLog } from '../interfaces'
 import RankingApi from '../api'
-import Router from 'next/router'
 
 const Form = styled.form``
 const Label = styled.label`
@@ -35,9 +34,10 @@ const Button = styled.button`
 interface Props {
   log: ContestLog
   registration: RankingRegistration | undefined
+  onSuccess: () => void
 }
 
-const EditLogForm = ({ log, registration }: Props) => {
+const EditLogForm = ({ log, registration, onSuccess: completed }: Props) => {
   const [amount, setAmount] = useState(log.amount.toString())
   const [mediumId, setMediumId] = useState(log.mediumId.toString())
   const [languageCode, setLanguageCode] = useState(log.languageCode)
@@ -45,16 +45,16 @@ const EditLogForm = ({ log, registration }: Props) => {
   const submit = async (event: FormEvent) => {
     event.preventDefault()
 
-    // const success = await RankingApi.updateLog(log.id, {
-    //   contestId: log.contestId,
-    //   mediumId: Number(mediumId),
-    //   amount: Number(amount),
-    //   languageCode,
-    // })
+    const success = await RankingApi.updateLog(log.id, {
+      contestId: log.contestId,
+      mediumId: Number(mediumId),
+      amount: Number(amount),
+      languageCode,
+    })
 
-    // if (success) {
-    //   // @TODO
-    // }
+    if (success) {
+      completed()
+    }
   }
 
   if (!registration) {

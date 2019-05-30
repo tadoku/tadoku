@@ -41,6 +41,7 @@ const Body = styled.tbody``
 interface Props {
   logs: ContestLog[]
   canEdit: boolean
+  refreshData: () => void
 }
 
 const ContestLogList = (props: Props) => {
@@ -48,10 +49,19 @@ const ContestLogList = (props: Props) => {
     | ContestLog
     | undefined)
 
+  const finishUpdate = () => {
+    props.refreshData()
+    setSelectedLog(undefined)
+  }
+
   return (
     <>
       <h1>Updates</h1>
-      <EditLogFormModal log={selectedLog} setLog={setSelectedLog} />
+      <EditLogFormModal
+        log={selectedLog}
+        setLog={setSelectedLog}
+        onSuccess={finishUpdate}
+      />
       <List>
         <Heading>
           <Row>

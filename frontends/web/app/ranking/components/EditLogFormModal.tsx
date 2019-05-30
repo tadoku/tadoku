@@ -6,9 +6,11 @@ import EditLogForm from './EditLogForm'
 const EditLogFormModal = ({
   log,
   setLog,
+  onSuccess,
 }: {
   log: ContestLog | undefined
   setLog: (log: ContestLog | undefined) => void
+  onSuccess: () => void
 }) => {
   return (
     <Modal
@@ -16,7 +18,7 @@ const EditLogFormModal = ({
       onRequestClose={() => setLog(undefined)}
       contentLabel="Update"
     >
-      {log && <EditLogForm log={log} />}
+      {log && <EditLogForm log={log} onSuccess={onSuccess} />}
     </Modal>
   )
 }

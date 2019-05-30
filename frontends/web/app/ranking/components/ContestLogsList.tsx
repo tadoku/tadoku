@@ -3,7 +3,7 @@ import { ContestLog } from '../interfaces'
 import styled from 'styled-components'
 import { languageNameByCode, mediumDescriptionById } from '../database'
 import { amountToPages } from '../transform'
-import Modal from 'react-modal'
+import EditLogFormModal from './EditLogFormModal'
 
 const List = styled.table`
   list-style: none;
@@ -85,21 +85,3 @@ const ContestLogList = (props: Props) => {
 }
 
 export default ContestLogList
-
-const EditLogFormModal = ({
-  log,
-  setLog,
-}: {
-  log: ContestLog | undefined
-  setLog: (log: ContestLog | undefined) => void
-}) => {
-  return (
-    <Modal
-      isOpen={!!log}
-      onRequestClose={() => setLog(undefined)}
-      contentLabel="Update"
-    >
-      FORM
-    </Modal>
-  )
-}

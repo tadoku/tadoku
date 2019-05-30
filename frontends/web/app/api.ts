@@ -15,36 +15,34 @@ interface APIOptionsForPost extends APIOptions {
   body: any
 }
 
-export const get = (endpoint: string, options?: APIOptions) => {
-  let requestOptions: RequestInit = {
-    method: 'get',
+export const get = (endpoint: string, options?: APIOptions) =>
+  request('get', endpoint, options)
+
+export const post = (endpoint: string, options: APIOptionsForPost) =>
+  request('post', endpoint, options)
+
+export const put = (endpoint: string, options: APIOptionsForPost) =>
+  request('put', endpoint, options)
+
+const request = (
+  method: string,
+  endpoint: string,
+  options: APIOptions | APIOptionsForPost | undefined,
+) => {
+  const requestOptions: RequestInit = {
+    method,
     headers: {
       Accept: 'application/json',
       'Content-Type': 'application/json',
     },
+    ...(method === 'post' || method === 'put'
+      ? {
+          body: JSON.stringify((options as APIOptionsForPost).body),
+        }
+      : {}),
   }
 
   if (options && options.authenticated) {
-    requestOptions.headers = {
-      ...requestOptions.headers,
-      authorization: `Bearer ${getAuthenticationToken()}`,
-    }
-  }
-
-  return fetch(`${root}${endpoint}`, requestOptions)
-}
-
-export const post = (endpoint: string, options: APIOptionsForPost) => {
-  const requestOptions: RequestInit = {
-    method: 'post',
-    headers: {
-      Accept: 'application/json',
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(options.body),
-  }
-
-  if (options.authenticated) {
     requestOptions.headers = {
       ...requestOptions.headers,
       authorization: `Bearer ${getAuthenticationToken()}`,

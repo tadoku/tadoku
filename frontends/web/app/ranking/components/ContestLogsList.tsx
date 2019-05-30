@@ -1,8 +1,9 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { ContestLog } from '../interfaces'
 import styled from 'styled-components'
 import { languageNameByCode, mediumDescriptionById } from '../database'
 import { amountToPages } from '../transform'
+import Modal from 'react-modal'
 
 const List = styled.table`
   list-style: none;
@@ -42,34 +43,63 @@ interface Props {
   canEdit: boolean
 }
 
-const ContestLogList = (props: Props) => (
-  <>
-    <h1>Updates</h1>
-    <List>
-      <Heading>
-        <Row>
-          <Column>Date</Column>
-          <Column>Language</Column>
-          <Column>Medium</Column>
-          <Column alignRight>Amount</Column>
-          <Column alignRight>Score</Column>
-          {props.canEdit && <Column />}
-        </Row>
-      </Heading>
-      <Body>
-        {props.logs.map((l, i) => (
-          <Row even={i % 2 === 0}>
-            <Column>{l.date.toLocaleString()}</Column>
-            <Column>{languageNameByCode(l.languageCode)}</Column>
-            <Column>{mediumDescriptionById(l.mediumId)}</Column>
-            <Column alignRight>{amountToPages(l.amount)}</Column>
-            <Column alignRight>{amountToPages(l.adjustedAmount)}</Column>
-            {props.canEdit && <Column>Edit</Column>}
+const ContestLogList = (props: Props) => {
+  const [selectedLog, setSelectedLog] = useState(undefined as
+    | ContestLog
+    | undefined)
+
+  return (
+    <>
+      <h1>Updates</h1>
+      <EditLogFormModal log={selectedLog} setLog={setSelectedLog} />
+      <List>
+        <Heading>
+          <Row>
+            <Column>Date</Column>
+            <Column>Language</Column>
+            <Column>Medium</Column>
+            <Column alignRight>Amount</Column>
+            <Column alignRight>Score</Column>
+            {props.canEdit && <Column />}
           </Row>
-        ))}
-      </Body>
-    </List>
-  </>
-)
+        </Heading>
+        <Body>
+          {props.logs.map((l, i) => (
+            <Row even={i % 2 === 0}>
+              <Column>{l.date.toLocaleString()}</Column>
+              <Column>{languageNameByCode(l.languageCode)}</Column>
+              <Column>{mediumDescriptionById(l.mediumId)}</Column>
+              <Column alignRight>{amountToPages(l.amount)}</Column>
+              <Column alignRight>{amountToPages(l.adjustedAmount)}</Column>
+              {props.canEdit && (
+                <Column>
+                  <button onClick={() => setSelectedLog(l)}>Edit</button>
+                </Column>
+              )}
+            </Row>
+          ))}
+        </Body>
+      </List>
+    </>
+  )
+}
 
 export default ContestLogList
+
+const EditLogFormModal = ({
+  log,
+  setLog,
+}: {
+  log: ContestLog | undefined
+  setLog: (log: ContestLog | undefined) => void
+}) => {
+  return (
+    <Modal
+      isOpen={!!log}
+      onRequestClose={() => setLog(undefined)}
+      contentLabel="Update"
+    >
+      FORM
+    </Modal>
+  )
+}

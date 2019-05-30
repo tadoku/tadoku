@@ -39,6 +39,7 @@ const Body = styled.tbody``
 
 interface Props {
   logs: ContestLog[]
+  canEdit: boolean
 }
 
 const ContestLogList = (props: Props) => (
@@ -52,6 +53,7 @@ const ContestLogList = (props: Props) => (
           <Column>Medium</Column>
           <Column alignRight>Amount</Column>
           <Column alignRight>Score</Column>
+          {props.canEdit && <Column />}
         </Row>
       </Heading>
       <Body>
@@ -62,6 +64,7 @@ const ContestLogList = (props: Props) => (
             <Column>{mediumDescriptionById(l.mediumId)}</Column>
             <Column alignRight>{amountToPages(l.amount)}</Column>
             <Column alignRight>{amountToPages(l.adjustedAmount)}</Column>
+            {props.canEdit && <Column>Edit</Column>}
           </Row>
         ))}
       </Body>

@@ -105,7 +105,7 @@ const RankingDetails = ({ contestId, userId }: Props) => {
           <ContestLogsByDayGraph logs={logs} contest={contestForGraphs} />
         </LargeCard>
         <LargeCard>
-          <ContestLogsList logs={logs} />
+          <ContestLogsList logs={logs} canEdit={true} />
         </LargeCard>
       </Cards>
     </Layout>

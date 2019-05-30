@@ -1,6 +1,7 @@
 import React from 'react'
 import { ContestLog } from '../interfaces'
 import Modal from 'react-modal'
+import EditLogForm from './EditLogForm'
 
 const EditLogFormModal = ({
   log,
@@ -14,7 +15,9 @@ const EditLogFormModal = ({
       isOpen={!!log}
       onRequestClose={() => setLog(undefined)}
       contentLabel="Update"
-    />
+    >
+      {log && <EditLogForm log={log} />}
+    </Modal>
   )
 }
 

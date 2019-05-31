@@ -16,8 +16,8 @@ import {
 import { Button, StackContainer } from '../../ui/components'
 
 interface Props {
-  log: ContestLog
-  registration: RankingRegistration | undefined
+  log?: ContestLog
+  registration?: RankingRegistration | undefined
   onSuccess: () => void
   onCancel: () => void
 }
@@ -28,9 +28,27 @@ const EditLogForm = ({
   onSuccess: completed,
   onCancel: cancel,
 }: Props) => {
-  const [amount, setAmount] = useState(log.amount.toString())
-  const [mediumId, setMediumId] = useState(log.mediumId.toString())
-  const [languageCode, setLanguageCode] = useState(log.languageCode)
+  const [amount, setAmount] = useState(() => {
+    if (log) {
+      return log.amount.toString()
+    }
+
+    return ''
+  })
+  const [mediumId, setMediumId] = useState(() => {
+    if (log) {
+      return log.mediumId.toString()
+    }
+
+    return ''
+  })
+  const [languageCode, setLanguageCode] = useState(() => {
+    if (log) {
+      return log.languageCode
+    }
+
+    return ''
+  })
   const [changed, setChanged] = useState(false)
   const [isFirstRun, setIsFirstRun] = useState(true)
 
@@ -41,23 +59,37 @@ const EditLogForm = ({
     setIsFirstRun(false)
   }, [amount, mediumId, languageCode])
 
+  if (!registration) {
+    return null
+  }
+
   const submit = async (event: FormEvent) => {
     event.preventDefault()
 
-    const success = await RankingApi.updateLog(log.id, {
-      contestId: log.contestId,
-      mediumId: Number(mediumId),
-      amount: Number(amount),
-      languageCode,
-    })
+    let success: boolean
+
+    switch (log) {
+      case undefined:
+        success = await RankingApi.createLog({
+          contestId: registration.contestId,
+          mediumId: Number(mediumId),
+          amount: Number(amount),
+          languageCode,
+        })
+        break
+      default:
+        success = await RankingApi.updateLog(log.id, {
+          contestId: log.contestId,
+          mediumId: Number(mediumId),
+          amount: Number(amount),
+          languageCode,
+        })
+        break
+    }
 
     if (success) {
       completed()
     }
-  }
-
-  if (!registration) {
-    return null
   }
 
   return (
@@ -114,7 +146,8 @@ const EditLogForm = ({
   )
 }
 
-const mapStateToProps = (state: State) => ({
+const mapStateToProps = (state: State, oldProps: Props) => ({
+  ...oldProps,
   registration: state.ranking.registration,
 })
 

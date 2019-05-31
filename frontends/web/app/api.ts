@@ -18,6 +18,9 @@ interface APIOptionsForPost extends APIOptions {
 export const get = (endpoint: string, options?: APIOptions) =>
   request('get', endpoint, options)
 
+export const destroy = (endpoint: string, options?: APIOptions) =>
+  request('delete', endpoint, options)
+
 export const post = (endpoint: string, options: APIOptionsForPost) =>
   request('post', endpoint, options)
 

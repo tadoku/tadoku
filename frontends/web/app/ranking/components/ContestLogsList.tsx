@@ -7,6 +7,7 @@ import EditLogFormModal from './EditLogFormModal'
 import { State } from '../../store'
 import { connect } from 'react-redux'
 import { User } from '../../user/interfaces'
+import { Button } from '../../ui/components/Form'
 
 const List = styled.table`
   list-style: none;
@@ -90,7 +91,7 @@ const ContestLogList = (props: Props) => {
               <Column alignRight>{amountToPages(l.adjustedAmount)}</Column>
               {canEdit && (
                 <Column>
-                  <button onClick={() => setSelectedLog(l)}>Edit</button>
+                  <Button onClick={() => setSelectedLog(l)}>Edit</Button>
                 </Column>
               )}
             </Row>

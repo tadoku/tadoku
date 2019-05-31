@@ -8,6 +8,8 @@ import { State } from '../../store'
 import { connect } from 'react-redux'
 import { User } from '../../user/interfaces'
 import { Button } from '../../ui/components'
+import RankingApi from '../api'
+import Router from 'next/router'
 
 const List = styled.table`
   list-style: none;
@@ -59,6 +61,19 @@ const ContestLogList = (props: Props) => {
     setSelectedLog(undefined)
   }
 
+  const deleteLog = (log: ContestLog) => {
+    const shouldDelete = confirm('Are you sure you want to delete this?')
+
+    if (!shouldDelete) {
+      return
+    }
+
+    RankingApi.deleteLog(log.id)
+    if (Router.asPath) {
+      Router.push(Router.asPath)
+    }
+  }
+
   const canEdit =
     props.signedInUser && props.signedInUser.id === props.registration.userId
 
@@ -95,11 +110,7 @@ const ContestLogList = (props: Props) => {
                   <Button onClick={() => setSelectedLog(l)} icon="edit">
                     Edit
                   </Button>
-                  <Button
-                    onClick={() => setSelectedLog(l)}
-                    icon="trash"
-                    destructive
-                  >
+                  <Button onClick={() => deleteLog(l)} icon="trash" destructive>
                     Delete
                   </Button>
                 </Column>

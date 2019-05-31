@@ -1,4 +1,4 @@
-import React, { FormEvent, useState } from 'react'
+import React, { FormEvent, useState, useEffect } from 'react'
 import styled from 'styled-components'
 import Constants from '../../ui/Constants'
 import { AllMediums, languageNameByCode } from '../database'
@@ -82,6 +82,15 @@ const EditLogForm = ({ log, registration, onSuccess: completed }: Props) => {
   const [amount, setAmount] = useState(log.amount.toString())
   const [mediumId, setMediumId] = useState(log.mediumId.toString())
   const [languageCode, setLanguageCode] = useState(log.languageCode)
+  const [changed, setChanged] = useState(false)
+  const [isFirstRun, setIsFirstRun] = useState(true)
+
+  useEffect(() => {
+    if (!isFirstRun) {
+      setChanged(true)
+    }
+    setIsFirstRun(false)
+  }, [amount, mediumId, languageCode])
 
   const submit = async (event: FormEvent) => {
     event.preventDefault()
@@ -145,7 +154,9 @@ const EditLogForm = ({ log, registration, onSuccess: completed }: Props) => {
         ))}
       </Group>
       <Group>
-        <Button type="submit">Submit pages</Button>
+        <Button type="submit" disabled={!changed}>
+          Save changes
+        </Button>
       </Group>
     </Form>
   )

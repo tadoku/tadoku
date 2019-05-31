@@ -7,10 +7,12 @@ const EditLogFormModal = ({
   log,
   setLog,
   onSuccess,
+  onCancel,
 }: {
   log: ContestLog | undefined
   setLog: (log: ContestLog | undefined) => void
   onSuccess: () => void
+  onCancel: () => void
 }) => {
   return (
     <Modal
@@ -34,7 +36,9 @@ const EditLogFormModal = ({
         },
       }}
     >
-      {log && <EditLogForm log={log} onSuccess={onSuccess} />}
+      {log && (
+        <EditLogForm log={log} onSuccess={onSuccess} onCancel={onCancel} />
+      )}
     </Modal>
   )
 }

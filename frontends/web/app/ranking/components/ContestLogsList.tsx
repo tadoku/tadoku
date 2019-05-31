@@ -69,6 +69,7 @@ const ContestLogList = (props: Props) => {
         log={selectedLog}
         setLog={setSelectedLog}
         onSuccess={finishUpdate}
+        onCancel={() => setSelectedLog(undefined)}
       />
       <List>
         <Heading>

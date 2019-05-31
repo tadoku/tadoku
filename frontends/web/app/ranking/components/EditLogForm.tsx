@@ -13,15 +13,21 @@ import {
   Select,
   LabelForRadio,
 } from '../../ui/components/Form'
-import { Button } from '../../ui/components'
+import { Button, StackContainer } from '../../ui/components'
 
 interface Props {
   log: ContestLog
   registration: RankingRegistration | undefined
   onSuccess: () => void
+  onCancel: () => void
 }
 
-const EditLogForm = ({ log, registration, onSuccess: completed }: Props) => {
+const EditLogForm = ({
+  log,
+  registration,
+  onSuccess: completed,
+  onCancel: cancel,
+}: Props) => {
   const [amount, setAmount] = useState(log.amount.toString())
   const [mediumId, setMediumId] = useState(log.mediumId.toString())
   const [languageCode, setLanguageCode] = useState(log.languageCode)
@@ -97,9 +103,12 @@ const EditLogForm = ({ log, registration, onSuccess: completed }: Props) => {
         ))}
       </Group>
       <Group>
-        <Button type="submit" disabled={!changed} primary>
-          Save changes
-        </Button>
+        <StackContainer>
+          <Button type="submit" disabled={!changed} primary>
+            Save changes
+          </Button>
+          <Button onClick={cancel}>Cancel</Button>
+        </StackContainer>
       </Group>
     </Form>
   )

@@ -1,76 +1,19 @@
 import React, { FormEvent, useState, useEffect } from 'react'
-import styled from 'styled-components'
-import Constants from '../../ui/Constants'
 import { AllMediums, languageNameByCode } from '../database'
 import { connect } from 'react-redux'
 import { State } from '../../store'
 import { RankingRegistration, ContestLog } from '../interfaces'
 import RankingApi from '../api'
-
-const Form = styled.form``
-
-const Group = styled.div`
-  & + & {
-    margin-top: 30px;
-  }
-`
-
-const Label = styled.label`
-  display: block;
-`
-const LabelText = styled.span`
-  display: block;
-  font-weight: 600;
-  font-size: 1.3em;
-  margin-bottom: 7px;
-`
-
-const LabelForRadio = styled(Label)`
-  padding: 3px 0;
-  line-height: 1em;
-
-  span {
-    margin-left: 5px;
-  }
-
-  input:checked + span {
-    font-weight: 600;
-  }
-`
-
-const Select = styled.select`
-  -moz-appearance: none;
-  -webkit-appearance: none;
-  appearance: none;
-  display: block;
-  width: 100%;
-  padding: 8px 20px;
-  background: ${Constants.colors.secondary};
-  border: none;
-  font-size: 1.1em;
-  height: 36px;
-`
-
-const Input = styled.input`
-  border: none;
-  background: ${Constants.colors.secondary};
-  padding: 8px 20px;
-  font-size: 1.1em;
-  height: 36px;
-  display: block;
-  width: 100%;
-  box-sizing: border-box;
-`
-
-const Button = styled.button`
-  border: none;
-  background: ${Constants.colors.secondary};
-  padding: 8px 20px;
-  font-size: 1.1em;
-  height: 36px;
-  width: 100%;
-  box-sizing: border-box;
-`
+import {
+  Form,
+  Group,
+  Label,
+  LabelText,
+  Input,
+  Select,
+  LabelForRadio,
+  Button,
+} from '../../ui/components/Form'
 
 interface Props {
   log: ContestLog

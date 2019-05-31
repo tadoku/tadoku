@@ -7,30 +7,16 @@ import { State } from '../../store'
 import { RankingRegistration } from '../interfaces'
 import RankingApi from '../api'
 import Router from 'next/router'
-
-const Form = styled.form``
-const Label = styled.label`
-  display: block;
-  margin-bottom: 10px;
-`
-const LabelText = styled.span`
-  display: block;
-`
-const Input = styled.input`
-  border: none;
-  background: ${Constants.colors.secondary};
-  padding: 8px 20px;
-  font-size: 1.1em;
-  height: 36px;
-`
-
-const Button = styled.button`
-  border: none;
-  background: ${Constants.colors.secondary};
-  padding: 8px 20px;
-  font-size: 1.1em;
-  height: 36px;
-`
+import {
+  Form,
+  Group,
+  Label,
+  LabelText,
+  Input,
+  Select,
+  LabelForRadio,
+  Button,
+} from '../../ui/components/Form'
 
 interface Props {
   registration: RankingRegistration | undefined

@@ -29,7 +29,7 @@
     "react-redux": "^7.0.3",
     "react-vis": "^1.11.7",
     "redux": "^4.0.1",
-    "styled-components": "^4.2.0"
+    "styled-components": "^4.2.1"
   },
   "devDependencies": {
     "@zeit/next-css": "^1.0.1",

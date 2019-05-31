@@ -38,6 +38,19 @@ const LabelForRadio = styled(Label)`
   }
 `
 
+const Select = styled.select`
+  -moz-appearance: none;
+  -webkit-appearance: none;
+  appearance: none;
+  display: block;
+  width: 100%;
+  padding: 8px 20px;
+  background: ${Constants.colors.secondary};
+  border: none;
+  font-size: 1.1em;
+  height: 36px;
+`
+
 const Input = styled.input`
   border: none;
   background: ${Constants.colors.secondary};
@@ -108,13 +121,13 @@ const EditLogForm = ({ log, registration, onSuccess: completed }: Props) => {
       <Group>
         <Label>
           <LabelText>Medium</LabelText>
-          <select value={mediumId} onChange={e => setMediumId(e.target.value)}>
+          <Select value={mediumId} onChange={e => setMediumId(e.target.value)}>
             {AllMediums.map(m => (
               <option value={m.id} key={m.id}>
                 {m.description}
               </option>
             ))}
-          </select>
+          </Select>
         </Label>
       </Group>
       <Group>

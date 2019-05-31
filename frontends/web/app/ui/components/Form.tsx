@@ -97,7 +97,7 @@ export const Button = styled.button`
   border-radius: 3px;
   box-sizing: border-box;
 
-  ${({ primary }: { primary: boolean }) =>
+  ${({ primary }: { primary?: boolean }) =>
     primary &&
     `
     color: ${Constants.colors.light};

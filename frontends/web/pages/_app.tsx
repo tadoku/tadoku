@@ -12,8 +12,12 @@ import Modal from 'react-modal'
 
 // Setup icons
 import { library } from '@fortawesome/fontawesome-svg-core'
-import { faChevronDown, faEdit } from '@fortawesome/free-solid-svg-icons'
-library.add(faChevronDown, faEdit)
+import {
+  faChevronDown,
+  faEdit,
+  faTrash,
+} from '@fortawesome/free-solid-svg-icons'
+library.add(faChevronDown, faEdit, faTrash)
 
 class MyApp extends App<{ store: Store }> {
   static async getInitialProps({ Component, ctx }: NextAppContext) {

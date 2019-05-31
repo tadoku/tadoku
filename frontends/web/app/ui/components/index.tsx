@@ -6,6 +6,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 
 interface ButtonProps {
   primary?: boolean
+  destructive?: boolean
   icon?: IconProp
 }
 
@@ -29,12 +30,21 @@ const StyledButton = styled.button`
   height: 36px;
   border-radius: 3px;
   box-sizing: border-box;
+  margin: 0 5px;
 
-  ${({ primary }: { primary?: boolean }) =>
+  ${({ primary }: ButtonProps) =>
     primary &&
     `
     color: ${Constants.colors.light};
     background-color: ${Constants.colors.primary};
+  `}
+
+  ${({ destructive }: ButtonProps) =>
+    destructive &&
+    `
+    color: ${Constants.colors.destructive};
+    border-color: ${Constants.colors.destructive};
+    background-color: transparent;
   `}
 
   &:disabled {

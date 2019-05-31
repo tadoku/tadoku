@@ -94,7 +94,11 @@ const ContestLogList = (props: Props) => {
                   <Button onClick={() => setSelectedLog(l)} icon="edit">
                     Edit
                   </Button>
-                  <Button onClick={() => setSelectedLog(l)} icon="trash">
+                  <Button
+                    onClick={() => setSelectedLog(l)}
+                    icon="trash"
+                    destructive
+                  >
                     Delete
                   </Button>
                 </Column>

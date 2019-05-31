@@ -1,4 +1,4 @@
-import { get, post, put } from '../api'
+import { get, post, put, destroy } from '../api'
 import {
   Ranking,
   rawRanking,
@@ -88,6 +88,14 @@ const createLog = async (payload: {
   return response.status === 201
 }
 
+const deleteLog = async (contestId: number): Promise<boolean> => {
+  const response = await destroy(`/contest_logs/${contestId}`, {
+    authenticated: true,
+  })
+
+  return response.status === 200
+}
+
 const updateLog = async (
   id: number,
   payload: {
@@ -141,6 +149,7 @@ const RankingApi = {
   getCurrentRegistration,
   getRankingsRegistration,
   createLog,
+  deleteLog,
   updateLog,
   getLogsFor,
 }

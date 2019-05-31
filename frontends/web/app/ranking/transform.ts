@@ -59,8 +59,10 @@ export const aggregateContestLogsByDays = (
   logs.forEach(log => {
     const date = prettyDate(log.date)
 
-    aggregated[log.languageCode][date].y +=
-      Math.round(log.adjustedAmount * 10) / 10
+    if (aggregated[log.languageCode][date]) {
+      aggregated[log.languageCode][date].y +=
+        Math.round(log.adjustedAmount * 10) / 10
+    }
   })
 
   const result: AggregatedByDaysResult = { aggregated: {}, legend }
@@ -73,24 +75,28 @@ export const aggregateContestLogsByDays = (
 }
 
 export const prettyDate = (date: Date): string =>
-  `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`
+  `${date.getUTCFullYear()}-${date.getUTCMonth() + 1}-${date.getUTCDate()}`
 
 const getDates = (startDate: Date, endDate: Date) => {
   const dates = []
 
   let currentDate = new Date(
-    startDate.getFullYear(),
-    startDate.getMonth(),
-    startDate.getDate(),
+    Date.UTC(
+      startDate.getFullYear(),
+      startDate.getMonth(),
+      startDate.getDate(),
+    ),
   )
 
   while (currentDate <= endDate) {
     dates.push(currentDate)
 
     currentDate = new Date(
-      currentDate.getFullYear(),
-      currentDate.getMonth(),
-      currentDate.getDate() + 1,
+      Date.UTC(
+        currentDate.getFullYear(),
+        currentDate.getMonth(),
+        currentDate.getDate() + 1,
+      ),
     )
   }
 

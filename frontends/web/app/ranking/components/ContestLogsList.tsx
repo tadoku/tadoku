@@ -1,8 +1,12 @@
-import React from 'react'
-import { ContestLog } from '../interfaces'
+import React, { useState } from 'react'
+import { ContestLog, RankingRegistrationOverview } from '../interfaces'
 import styled from 'styled-components'
 import { languageNameByCode, mediumDescriptionById } from '../database'
 import { amountToPages } from '../transform'
+import EditLogFormModal from './EditLogFormModal'
+import { State } from '../../store'
+import { connect } from 'react-redux'
+import { User } from '../../user/interfaces'
 
 const List = styled.table`
   list-style: none;
@@ -39,34 +43,67 @@ const Body = styled.tbody``
 
 interface Props {
   logs: ContestLog[]
+  registration: RankingRegistrationOverview
+  signedInUser?: User | undefined
+  refreshData: () => void
 }
 
-const ContestLogList = (props: Props) => (
-  <>
-    <h1>Updates</h1>
-    <List>
-      <Heading>
-        <Row>
-          <Column>Date</Column>
-          <Column>Language</Column>
-          <Column>Medium</Column>
-          <Column alignRight>Amount</Column>
-          <Column alignRight>Score</Column>
-        </Row>
-      </Heading>
-      <Body>
-        {props.logs.map((l, i) => (
-          <Row even={i % 2 === 0}>
-            <Column>{l.date.toLocaleString()}</Column>
-            <Column>{languageNameByCode(l.languageCode)}</Column>
-            <Column>{mediumDescriptionById(l.mediumId)}</Column>
-            <Column alignRight>{amountToPages(l.amount)}</Column>
-            <Column alignRight>{amountToPages(l.adjustedAmount)}</Column>
-          </Row>
-        ))}
-      </Body>
-    </List>
-  </>
-)
+const ContestLogList = (props: Props) => {
+  const [selectedLog, setSelectedLog] = useState(undefined as
+    | ContestLog
+    | undefined)
 
-export default ContestLogList
+  const finishUpdate = () => {
+    props.refreshData()
+    setSelectedLog(undefined)
+  }
+
+  const canEdit =
+    props.signedInUser && props.signedInUser.id === props.registration.userId
+
+  return (
+    <>
+      <h1>Updates</h1>
+      <EditLogFormModal
+        log={selectedLog}
+        setLog={setSelectedLog}
+        onSuccess={finishUpdate}
+      />
+      <List>
+        <Heading>
+          <Row>
+            <Column>Date</Column>
+            <Column>Language</Column>
+            <Column>Medium</Column>
+            <Column alignRight>Amount</Column>
+            <Column alignRight>Score</Column>
+            {canEdit && <Column />}
+          </Row>
+        </Heading>
+        <Body>
+          {props.logs.map((l, i) => (
+            <Row even={i % 2 === 0} key={l.id}>
+              <Column>{l.date.toLocaleString()}</Column>
+              <Column>{languageNameByCode(l.languageCode)}</Column>
+              <Column>{mediumDescriptionById(l.mediumId)}</Column>
+              <Column alignRight>{amountToPages(l.amount)}</Column>
+              <Column alignRight>{amountToPages(l.adjustedAmount)}</Column>
+              {canEdit && (
+                <Column>
+                  <button onClick={() => setSelectedLog(l)}>Edit</button>
+                </Column>
+              )}
+            </Row>
+          ))}
+        </Body>
+      </List>
+    </>
+  )
+}
+
+const mapStateToProps = (state: State, props: Props) => ({
+  ...props,
+  signedInUser: state.session.user,
+})
+
+export default connect(mapStateToProps)(ContestLogList)

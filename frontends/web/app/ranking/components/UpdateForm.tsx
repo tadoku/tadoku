@@ -1,36 +1,11 @@
 import React, { FormEvent, useState, useEffect } from 'react'
-import styled from 'styled-components'
-import Constants from '../../ui/Constants'
 import { AllMediums, languageNameByCode } from '../database'
 import { connect } from 'react-redux'
 import { State } from '../../store'
 import { RankingRegistration } from '../interfaces'
 import RankingApi from '../api'
 import Router from 'next/router'
-
-const Form = styled.form``
-const Label = styled.label`
-  display: block;
-  margin-bottom: 10px;
-`
-const LabelText = styled.span`
-  display: block;
-`
-const Input = styled.input`
-  border: none;
-  background: ${Constants.colors.secondary};
-  padding: 8px 20px;
-  font-size: 1.1em;
-  height: 36px;
-`
-
-const Button = styled.button`
-  border: none;
-  background: ${Constants.colors.secondary};
-  padding: 8px 20px;
-  font-size: 1.1em;
-  height: 36px;
-`
+import { Form, Label, LabelText, Input, Button } from '../../ui/components/Form'
 
 interface Props {
   registration: RankingRegistration | undefined

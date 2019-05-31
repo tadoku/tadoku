@@ -1,4 +1,4 @@
-import { get, post } from '../api'
+import { get, post, put } from '../api'
 import {
   Ranking,
   rawRanking,
@@ -88,6 +88,28 @@ const createLog = async (payload: {
   return response.status === 201
 }
 
+const updateLog = async (
+  id: number,
+  payload: {
+    contestId: number
+    mediumId: number
+    amount: number
+    languageCode: string
+  },
+): Promise<boolean> => {
+  const response = await put(`/contest_logs/${id}`, {
+    body: {
+      contest_id: payload.contestId,
+      medium_id: payload.mediumId,
+      amount: payload.amount,
+      language_code: payload.languageCode,
+    },
+    authenticated: true,
+  })
+
+  return response.status === 204
+}
+
 const getLogsFor = async (
   contestId: number,
   userId: number,
@@ -119,6 +141,7 @@ const RankingApi = {
   getCurrentRegistration,
   getRankingsRegistration,
   createLog,
+  updateLog,
   getLogsFor,
 }
 

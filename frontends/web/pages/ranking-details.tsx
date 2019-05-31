@@ -35,6 +35,7 @@ const RankingDetails = ({ contestId, userId }: Props) => {
   const [registration, setRegistration] = useState(undefined as
     | RankingRegistrationOverview
     | undefined)
+  const [updateCounter, setUpdateCounter] = useState(0)
 
   useEffect(() => {
     if (!contestId || !userId) {
@@ -65,7 +66,7 @@ const RankingDetails = ({ contestId, userId }: Props) => {
     }
 
     getLogs()
-  }, [contestId, userId])
+  }, [contestId, userId, updateCounter])
 
   if (!contestId || !userId) {
     return <ErrorPage statusCode={404} />
@@ -105,7 +106,11 @@ const RankingDetails = ({ contestId, userId }: Props) => {
           <ContestLogsByDayGraph logs={logs} contest={contestForGraphs} />
         </LargeCard>
         <LargeCard>
-          <ContestLogsList logs={logs} />
+          <ContestLogsList
+            logs={logs}
+            registration={registration}
+            refreshData={() => setUpdateCounter(updateCounter + 1)}
+          />
         </LargeCard>
       </Cards>
     </Layout>

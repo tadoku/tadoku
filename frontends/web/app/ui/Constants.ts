@@ -1,7 +1,7 @@
 const Constants = {
   colors: {
-    primary: '#CBE86B',
-    secondary: '#F2E9E1',
+    primary: '#6969FF',
+    secondary: '#505096',
     dark: '#1C140D',
     light: '#FFFFFF',
   },

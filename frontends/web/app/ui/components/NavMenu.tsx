@@ -5,6 +5,8 @@ import { connect } from 'react-redux'
 import { State } from '../../store'
 import { User } from '../../user/interfaces'
 import { RankingRegistration } from '../../ranking/interfaces'
+import NewLogFormModal from '../../ranking/components/NewLogFormModal'
+import Router from 'next/router'
 
 const StyledNav = styled.nav`
   display: flex;
@@ -20,18 +22,34 @@ const LoggedInNavigation = ({
   registration,
 }: {
   registration: RankingRegistration | undefined
-}) => (
-  <>
-    {registration && (
-      <Link href="/contest-submission">
-        <NavLink href="">Submit pages</NavLink>
+}) => {
+  const [open, setOpen] = useState(false)
+
+  return (
+    <>
+      {registration && (
+        <>
+          <NavLink href="#" onClick={() => setOpen(true)}>
+            Submit pages
+          </NavLink>
+          <NewLogFormModal
+            isOpen={open}
+            onCancel={() => setOpen(false)}
+            onSuccess={() => {
+              setOpen(false)
+              if (Router.asPath) {
+                Router.push(Router.asPath)
+              }
+            }}
+          />
+        </>
+      )}
+      <Link href="/sign-out">
+        <NavLink href="">Sign out</NavLink>
       </Link>
-    )}
-    <Link href="/sign-out">
-      <NavLink href="">Sign out</NavLink>
-    </Link>
-  </>
-)
+    </>
+  )
+}
 
 const LoggedOutNavigation = () => (
   <>

@@ -8,19 +8,45 @@ import { RankingRegistration, ContestLog } from '../interfaces'
 import RankingApi from '../api'
 
 const Form = styled.form``
+
+const Group = styled.div`
+  & + & {
+    margin-top: 30px;
+  }
+`
+
 const Label = styled.label`
   display: block;
-  margin-bottom: 10px;
 `
 const LabelText = styled.span`
   display: block;
+  font-weight: 600;
+  font-size: 1.3em;
+  margin-bottom: 7px;
 `
+
+const LabelForRadio = styled(Label)`
+  padding: 3px 0;
+  line-height: 1em;
+
+  span {
+    margin-left: 5px;
+  }
+
+  input:checked + span {
+    font-weight: 600;
+  }
+`
+
 const Input = styled.input`
   border: none;
   background: ${Constants.colors.secondary};
   padding: 8px 20px;
   font-size: 1.1em;
   height: 36px;
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
 `
 
 const Button = styled.button`
@@ -29,6 +55,8 @@ const Button = styled.button`
   padding: 8px 20px;
   font-size: 1.1em;
   height: 36px;
+  width: 100%;
+  box-sizing: border-box;
 `
 
 interface Props {
@@ -63,42 +91,49 @@ const EditLogForm = ({ log, registration, onSuccess: completed }: Props) => {
 
   return (
     <Form onSubmit={submit}>
-      <Label>
-        <LabelText>Pages read</LabelText>
-        <Input
-          type="number"
-          placeholder="e.g. 7"
-          value={amount}
-          onChange={e => setAmount(e.target.value)}
-          min={0}
-          max={3000}
-          step={1}
-        />
-      </Label>
-      <Label>
-        <LabelText>Medium</LabelText>
-        <select value={mediumId} onChange={e => setMediumId(e.target.value)}>
-          {AllMediums.map(m => (
-            <option value={m.id} key={m.id}>
-              {m.description}
-            </option>
-          ))}
-        </select>
-      </Label>
-
-      <LabelText>Language</LabelText>
-      {registration.languages.map(code => (
-        <Label key={code}>
-          <input
-            type="radio"
-            value={code}
-            checked={code === languageCode}
-            onChange={e => setLanguageCode(e.target.value)}
+      <Group>
+        <Label>
+          <LabelText>Pages read</LabelText>
+          <Input
+            type="number"
+            placeholder="e.g. 7"
+            value={amount}
+            onChange={e => setAmount(e.target.value)}
+            min={0}
+            max={3000}
+            step={1}
           />
-          {languageNameByCode(code)}
         </Label>
-      ))}
-      <Button type="submit">Submit pages</Button>
+      </Group>
+      <Group>
+        <Label>
+          <LabelText>Medium</LabelText>
+          <select value={mediumId} onChange={e => setMediumId(e.target.value)}>
+            {AllMediums.map(m => (
+              <option value={m.id} key={m.id}>
+                {m.description}
+              </option>
+            ))}
+          </select>
+        </Label>
+      </Group>
+      <Group>
+        <LabelText>Language</LabelText>
+        {registration.languages.map(code => (
+          <LabelForRadio key={code}>
+            <input
+              type="radio"
+              value={code}
+              checked={code === languageCode}
+              onChange={e => setLanguageCode(e.target.value)}
+            />
+            <span>{languageNameByCode(code)}</span>
+          </LabelForRadio>
+        ))}
+      </Group>
+      <Group>
+        <Button type="submit">Submit pages</Button>
+      </Group>
     </Form>
   )
 }

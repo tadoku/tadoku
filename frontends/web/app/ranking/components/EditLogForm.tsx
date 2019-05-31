@@ -40,7 +40,7 @@ const EditLogForm = ({
       return log.mediumId.toString()
     }
 
-    return ''
+    return '1'
   })
   const [languageCode, setLanguageCode] = useState(() => {
     if (log) {

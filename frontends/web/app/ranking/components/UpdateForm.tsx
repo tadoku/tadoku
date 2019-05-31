@@ -1,22 +1,11 @@
 import React, { FormEvent, useState, useEffect } from 'react'
-import styled from 'styled-components'
-import Constants from '../../ui/Constants'
 import { AllMediums, languageNameByCode } from '../database'
 import { connect } from 'react-redux'
 import { State } from '../../store'
 import { RankingRegistration } from '../interfaces'
 import RankingApi from '../api'
 import Router from 'next/router'
-import {
-  Form,
-  Group,
-  Label,
-  LabelText,
-  Input,
-  Select,
-  LabelForRadio,
-  Button,
-} from '../../ui/components/Form'
+import { Form, Label, LabelText, Input, Button } from '../../ui/components/Form'
 
 interface Props {
   registration: RankingRegistration | undefined

@@ -1,5 +1,7 @@
 import styled from 'styled-components'
 import Constants from '../../ui/Constants'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { SFC, SelectHTMLAttributes } from 'react'
 
 export const Form = styled.form``
 
@@ -31,8 +33,30 @@ export const LabelForRadio = styled(Label)`
     font-weight: 600;
   }
 `
+export const SelectGroup = styled.div`
+  position: relative;
+`
 
-export const Select = styled.select`
+const SelectArrow = styled(FontAwesomeIcon)`
+  font-size: 12px;
+  position: absolute;
+  top: 12px;
+  right: 16px;
+  color: #434b67;
+  pointer-events: none;
+`
+
+export const Select: SFC<SelectHTMLAttributes<HTMLSelectElement>> = ({
+  children,
+  ...props
+}) => (
+  <SelectGroup>
+    <SelectArrow icon="chevron-down" />
+    <StyledSelect {...props}>{children}</StyledSelect>
+  </SelectGroup>
+)
+
+const StyledSelect = styled.select`
   -moz-appearance: none;
   -webkit-appearance: none;
   appearance: none;
@@ -40,7 +64,7 @@ export const Select = styled.select`
   background: ${Constants.colors.light};
   box-shadow: inset 0px 0px 2px rgba(0, 0, 0, 0.08),
     0px 2px 3px 0px rgba(0, 0, 0, 0.08);
-  padding: 4px 12px;
+  padding: 4px 20px 4px 12px;
   font-size: 1.1em;
   height: 36px;
   border-radius: 3px;

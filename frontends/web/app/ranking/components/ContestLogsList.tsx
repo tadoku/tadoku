@@ -91,7 +91,9 @@ const ContestLogList = (props: Props) => {
               <Column alignRight>{amountToPages(l.adjustedAmount)}</Column>
               {canEdit && (
                 <Column>
-                  <Button onClick={() => setSelectedLog(l)}>Edit</Button>
+                  <Button onClick={() => setSelectedLog(l)} icon="edit">
+                    Edit
+                  </Button>
                 </Column>
               )}
             </Row>

@@ -1,7 +1,24 @@
 import styled from 'styled-components'
 import Constants from '../Constants'
+import { SFC, ButtonHTMLAttributes } from 'react'
+import { IconProp } from '@fortawesome/fontawesome-svg-core'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 
-export const Button = styled.button`
+interface ButtonProps {
+  primary?: boolean
+  icon?: IconProp
+}
+
+export const Button: SFC<
+  ButtonHTMLAttributes<HTMLButtonElement> & ButtonProps
+> = ({ icon, children, ...props }) => (
+  <StyledButton {...props}>
+    {icon && <ButtonIcon icon={icon} />}
+    {children}
+  </StyledButton>
+)
+
+const StyledButton = styled.button`
   border: 1px solid rgba(0, 0, 0, 0.12);
   background: transparent;
   box-shadow: inset 0px 0px 2px rgba(0, 0, 0, 0.08),
@@ -23,4 +40,10 @@ export const Button = styled.button`
   &:disabled {
     opacity: 0.6;
   }
+`
+
+const ButtonIcon = styled(FontAwesomeIcon)`
+  margin-right: 7px;
+  height: 75%;
+  width: 75%;
 `

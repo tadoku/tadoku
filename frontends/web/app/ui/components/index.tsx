@@ -57,3 +57,17 @@ const ButtonIcon = styled(FontAwesomeIcon)`
   height: 75%;
   width: 75%;
 `
+
+export const StackContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+
+  > * {
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  > * + * {
+    margin-top: 5px;
+  }
+`

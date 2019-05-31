@@ -45,7 +45,7 @@ interface Props {
 }
 
 const ContestLogList = (props: Props) => {
-  const [selectedLog, setSelectedLog] = useState(undefined as
+  const [selectedLog, setSelectedLog] = useState(props.logs[0] as
     | ContestLog
     | undefined)
 

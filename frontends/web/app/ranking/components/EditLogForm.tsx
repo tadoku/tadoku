@@ -97,7 +97,7 @@ const EditLogForm = ({ log, registration, onSuccess: completed }: Props) => {
         ))}
       </Group>
       <Group>
-        <Button type="submit" disabled={!changed}>
+        <Button type="submit" disabled={!changed} primary>
           Save changes
         </Button>
       </Group>

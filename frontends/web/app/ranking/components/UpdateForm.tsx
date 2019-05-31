@@ -5,7 +5,8 @@ import { State } from '../../store'
 import { RankingRegistration } from '../interfaces'
 import RankingApi from '../api'
 import Router from 'next/router'
-import { Form, Label, LabelText, Input, Button } from '../../ui/components/Form'
+import { Form, Label, LabelText, Input } from '../../ui/components/Form'
+import { Button } from '../../ui/components'
 
 interface Props {
   registration: RankingRegistration | undefined

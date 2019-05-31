@@ -7,7 +7,7 @@ import EditLogFormModal from './EditLogFormModal'
 import { State } from '../../store'
 import { connect } from 'react-redux'
 import { User } from '../../user/interfaces'
-import { Button } from '../../ui/components/Form'
+import { Button } from '../../ui/components'
 
 const List = styled.table`
   list-style: none;

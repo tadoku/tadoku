@@ -12,8 +12,8 @@ import {
   Input,
   Select,
   LabelForRadio,
-  Button,
 } from '../../ui/components/Form'
+import { Button } from '../../ui/components'
 
 interface Props {
   log: ContestLog

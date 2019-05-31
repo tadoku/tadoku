@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { ContestLog } from '../interfaces'
+import { ContestLog, RankingRegistrationOverview } from '../interfaces'
 import styled from 'styled-components'
 import { languageNameByCode, mediumDescriptionById } from '../database'
 import { amountToPages } from '../transform'
@@ -40,7 +40,7 @@ const Body = styled.tbody``
 
 interface Props {
   logs: ContestLog[]
-  canEdit: boolean
+  registration: RankingRegistrationOverview
   refreshData: () => void
 }
 
@@ -53,6 +53,8 @@ const ContestLogList = (props: Props) => {
     props.refreshData()
     setSelectedLog(undefined)
   }
+
+  const canEdit = true
 
   return (
     <>
@@ -70,7 +72,7 @@ const ContestLogList = (props: Props) => {
             <Column>Medium</Column>
             <Column alignRight>Amount</Column>
             <Column alignRight>Score</Column>
-            {props.canEdit && <Column />}
+            {canEdit && <Column />}
           </Row>
         </Heading>
         <Body>
@@ -81,7 +83,7 @@ const ContestLogList = (props: Props) => {
               <Column>{mediumDescriptionById(l.mediumId)}</Column>
               <Column alignRight>{amountToPages(l.amount)}</Column>
               <Column alignRight>{amountToPages(l.adjustedAmount)}</Column>
-              {props.canEdit && (
+              {canEdit && (
                 <Column>
                   <button onClick={() => setSelectedLog(l)}>Edit</button>
                 </Column>

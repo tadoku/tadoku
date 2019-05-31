@@ -108,7 +108,7 @@ const RankingDetails = ({ contestId, userId }: Props) => {
         <LargeCard>
           <ContestLogsList
             logs={logs}
-            canEdit={true}
+            registration={registration}
             refreshData={() => setUpdateCounter(updateCounter + 1)}
           />
         </LargeCard>

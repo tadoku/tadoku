@@ -4,6 +4,9 @@ import styled from 'styled-components'
 import { languageNameByCode, mediumDescriptionById } from '../database'
 import { amountToPages } from '../transform'
 import EditLogFormModal from './EditLogFormModal'
+import { State } from '../../store'
+import { connect } from 'react-redux'
+import { User } from '../../user/interfaces'
 
 const List = styled.table`
   list-style: none;
@@ -41,11 +44,12 @@ const Body = styled.tbody``
 interface Props {
   logs: ContestLog[]
   registration: RankingRegistrationOverview
+  signedInUser?: User | undefined
   refreshData: () => void
 }
 
 const ContestLogList = (props: Props) => {
-  const [selectedLog, setSelectedLog] = useState(props.logs[0] as
+  const [selectedLog, setSelectedLog] = useState(undefined as
     | ContestLog
     | undefined)
 
@@ -54,7 +58,8 @@ const ContestLogList = (props: Props) => {
     setSelectedLog(undefined)
   }
 
-  const canEdit = true
+  const canEdit =
+    props.signedInUser && props.signedInUser.id === props.registration.userId
 
   return (
     <>
@@ -96,4 +101,9 @@ const ContestLogList = (props: Props) => {
   )
 }
 
-export default ContestLogList
+const mapStateToProps = (state: State, props: Props) => ({
+  ...props,
+  signedInUser: state.session.user,
+})
+
+export default connect(mapStateToProps)(ContestLogList)

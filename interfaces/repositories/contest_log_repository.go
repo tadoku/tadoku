@@ -98,5 +98,26 @@ func (r *contestLogRepository) FindAll(contestID uint64, userID uint64) (domain.
 }
 
 func (r *contestLogRepository) Delete(id uint64) error {
+	query := `
+		update contest_logs
+		set deleted_at = now() at time zone 'utc'
+		where
+			id = $1 and
+			deleted_at is null
+	`
+
+	result, err := r.sqlHandler.Execute(query, id)
+	if err != nil {
+		return fail.Wrap(err)
+	}
+
+	rows, err := result.RowsAffected()
+	if err != nil {
+		return fail.Wrap(err)
+	}
+	if rows != 1 {
+		return domain.ErrNotFound
+	}
+
 	return nil
 }

@@ -8,7 +8,7 @@ import (
 	"github.com/tadoku/api/interfaces/repositories"
 )
 
-func TestContestLogRepository_StoreContest(t *testing.T) {
+func TestContestLogRepository_StoreUpdateDeleteLog(t *testing.T) {
 	sqlHandler, cleanup := setupTestingSuite(t)
 	defer cleanup()
 
@@ -38,6 +38,14 @@ func TestContestLogRepository_StoreContest(t *testing.T) {
 		assert.NotEqual(t, 0, updatedLog.ID)
 		err := repo.Store(updatedLog)
 		assert.NoError(t, err)
+	}
+
+	{
+		err := repo.Delete(log.ID)
+		assert.NoError(t, err)
+
+		_, err = repo.FindByID(log.ID)
+		assert.EqualError(t, err, domain.ErrNotFound.Error())
 	}
 }
 

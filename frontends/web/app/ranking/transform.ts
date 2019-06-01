@@ -29,6 +29,8 @@ export const aggregateContestLogsByDays = (
     title: string
   }[] = []
 
+  console.log('start aggregating contest logs')
+
   logs.forEach(log => {
     if (!languages.includes(log.languageCode)) {
       languages.push(log.languageCode)
@@ -38,6 +40,9 @@ export const aggregateContestLogsByDays = (
     }
   })
 
+  console.log('built legend: ', legend)
+  console.log('built languages: ', languages)
+
   const initializedSeries: {
     [date: string]: AggregatedContestLogsByDayEntry
   } = {}
@@ -45,6 +50,8 @@ export const aggregateContestLogsByDays = (
   getDates(contest.start, contest.end).forEach(date => {
     initializedSeries[prettyDate(date)] = { x: date, y: 0 }
   })
+
+  console.log('generated initialized series: ', initializedSeries)
 
   languages.forEach(language => {
     const series: typeof initializedSeries = {}
@@ -56,6 +63,11 @@ export const aggregateContestLogsByDays = (
     aggregated[language] = series
   })
 
+  console.log(
+    'initialize aggregated data with initialized series: ',
+    aggregated,
+  )
+
   logs.forEach(log => {
     const date = prettyDate(log.date)
 
@@ -65,11 +77,15 @@ export const aggregateContestLogsByDays = (
     }
   })
 
+  console.log('fill aggregated data with scores: ', aggregated)
+
   const result: AggregatedByDaysResult = { aggregated: {}, legend }
 
   Object.keys(aggregated).forEach(languageCode => {
     result.aggregated[languageCode] = Object.values(aggregated[languageCode])
   })
+
+  console.log('shape up final result: ', result)
 
   return result
 }
@@ -79,6 +95,8 @@ export const prettyDate = (date: Date): string =>
 
 const getDates = (startDate: Date, endDate: Date) => {
   const dates = []
+  console.log('start calculating new date range')
+  let i = 0
 
   let currentDate = new Date(
     Date.UTC(
@@ -89,6 +107,7 @@ const getDates = (startDate: Date, endDate: Date) => {
   )
 
   while (currentDate <= endDate) {
+    console.log(`${i++}: pushing currentDate: `, currentDate)
     dates.push(currentDate)
 
     currentDate = new Date(
@@ -99,6 +118,8 @@ const getDates = (startDate: Date, endDate: Date) => {
       ),
     )
   }
+
+  console.log(`finish calculating date range: `, dates)
 
   return dates
 }

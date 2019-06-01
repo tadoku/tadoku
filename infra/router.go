@@ -1,7 +1,6 @@
 package infra
 
 import (
-	"log"
 	"net/http"
 	"regexp"
 	"strconv"
@@ -47,16 +46,7 @@ func newEcho(
 	}))
 
 	for _, route := range routes {
-		switch route.Method {
-		case http.MethodGet:
-			e.GET(route.Path, wrap(route, m))
-		case http.MethodPost:
-			e.POST(route.Path, wrap(route, m))
-		case http.MethodPut:
-			e.PUT(route.Path, wrap(route, m))
-		default:
-			log.Fatalf("HTTP verb %v is not supported", route.Method)
-		}
+		e.Add(route.Method, route.Path, wrap(route, m))
 	}
 
 	return e

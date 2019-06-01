@@ -14,6 +14,7 @@ import (
 type ContestLogService interface {
 	Create(ctx Context) error
 	Update(ctx Context) error
+	Delete(ctx Context) error
 	Get(ctx Context) error
 }
 
@@ -72,6 +73,29 @@ func (s *contestLogService) Update(ctx Context) error {
 	}
 
 	return ctx.NoContent(http.StatusNoContent)
+}
+
+func (s *contestLogService) Delete(ctx Context) error {
+	var id uint64
+	ctx.BindID(&id)
+
+	user, err := ctx.User()
+	if err != nil {
+		return fail.Wrap(err)
+	}
+
+	if err := s.RankingInteractor.DeleteLog(id, user.ID); err != nil {
+		if err == domain.ErrInsufficientPermissions {
+			return ctx.NoContent(http.StatusForbidden)
+		}
+		if err == domain.ErrNotFound {
+			return ctx.NoContent(http.StatusNotFound)
+		}
+
+		return fail.Wrap(err)
+	}
+
+	return ctx.NoContent(http.StatusOK)
 }
 
 func (s *contestLogService) Get(ctx Context) error {

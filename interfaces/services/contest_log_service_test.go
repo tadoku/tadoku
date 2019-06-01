@@ -86,3 +86,59 @@ func TestContestLogService_Update(t *testing.T) {
 		assert.NoError(t, err)
 	}
 }
+
+func TestContestLogService_Delete(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	logID := uint64(1)
+	userID := uint64(2)
+
+	// Happy path
+	{
+		ctx := services.NewMockContext(ctrl)
+		ctx.EXPECT().NoContent(200)
+		ctx.EXPECT().User().Return(&domain.User{ID: userID}, nil)
+		ctx.EXPECT().BindID(gomock.Any()).Return(nil).SetArg(0, logID)
+
+		i := usecases.NewMockRankingInteractor(ctrl)
+		i.EXPECT().DeleteLog(logID, userID).Return(nil)
+
+		s := services.NewContestLogService(i)
+		err := s.Delete(ctx)
+
+		assert.NoError(t, err)
+	}
+
+	// Sad path: log is not the user's
+	{
+		ctx := services.NewMockContext(ctrl)
+		ctx.EXPECT().NoContent(403)
+		ctx.EXPECT().User().Return(&domain.User{ID: userID}, nil)
+		ctx.EXPECT().BindID(gomock.Any()).Return(nil).SetArg(0, logID)
+
+		i := usecases.NewMockRankingInteractor(ctrl)
+		i.EXPECT().DeleteLog(logID, userID).Return(domain.ErrInsufficientPermissions)
+
+		s := services.NewContestLogService(i)
+		err := s.Delete(ctx)
+
+		assert.NoError(t, err)
+	}
+
+	// Sad path: log does not exist
+	{
+		ctx := services.NewMockContext(ctrl)
+		ctx.EXPECT().NoContent(404)
+		ctx.EXPECT().User().Return(&domain.User{ID: userID}, nil)
+		ctx.EXPECT().BindID(gomock.Any()).Return(nil).SetArg(0, logID)
+
+		i := usecases.NewMockRankingInteractor(ctrl)
+		i.EXPECT().DeleteLog(logID, userID).Return(domain.ErrNotFound)
+
+		s := services.NewContestLogService(i)
+		err := s.Delete(ctx)
+
+		assert.NoError(t, err)
+	}
+}

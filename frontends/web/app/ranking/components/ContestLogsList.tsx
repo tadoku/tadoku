@@ -9,7 +9,6 @@ import { connect } from 'react-redux'
 import { User } from '../../user/interfaces'
 import { Button } from '../../ui/components'
 import RankingApi from '../api'
-import Router from 'next/router'
 
 const List = styled.table`
   list-style: none;
@@ -69,9 +68,7 @@ const ContestLogList = (props: Props) => {
     }
 
     RankingApi.deleteLog(log.id)
-    if (Router.asPath) {
-      Router.push(Router.asPath)
-    }
+    props.refreshData()
   }
 
   const canEdit =

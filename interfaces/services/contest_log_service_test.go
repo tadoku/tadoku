@@ -125,4 +125,20 @@ func TestContestLogService_Delete(t *testing.T) {
 
 		assert.NoError(t, err)
 	}
+
+	// Sad path: log does not exist
+	{
+		ctx := services.NewMockContext(ctrl)
+		ctx.EXPECT().NoContent(404)
+		ctx.EXPECT().User().Return(&domain.User{ID: userID}, nil)
+		ctx.EXPECT().BindID(gomock.Any()).Return(nil).SetArg(0, logID)
+
+		i := usecases.NewMockRankingInteractor(ctrl)
+		i.EXPECT().DeleteLog(logID, userID).Return(domain.ErrNotFound)
+
+		s := services.NewContestLogService(i)
+		err := s.Delete(ctx)
+
+		assert.NoError(t, err)
+	}
 }

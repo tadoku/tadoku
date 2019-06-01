@@ -67,6 +67,10 @@ func (r *contestLogRepository) FindByID(id uint64) (domain.ContestLog, error) {
 	`
 	err := r.sqlHandler.QueryRow(query, id).StructScan(&l)
 	if err != nil {
+		if err == domain.ErrNotFound {
+			return l, domain.ErrNotFound
+		}
+
 		return l, fail.Wrap(err)
 	}
 	if l.ID == 0 {

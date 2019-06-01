@@ -210,6 +210,10 @@ func (i *rankingInteractor) saveLog(log domain.ContestLog) error {
 func (i *rankingInteractor) DeleteLog(logID uint64, userID uint64) error {
 	log, err := i.contestLogRepository.FindByID(logID)
 	if err != nil {
+		if err == domain.ErrNotFound {
+			return err
+		}
+
 		return fail.Wrap(err)
 	}
 

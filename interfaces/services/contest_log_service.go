@@ -88,6 +88,9 @@ func (s *contestLogService) Delete(ctx Context) error {
 		if err == domain.ErrInsufficientPermissions {
 			return ctx.NoContent(http.StatusForbidden)
 		}
+		if err == domain.ErrNotFound {
+			return ctx.NoContent(http.StatusNotFound)
+		}
 
 		return fail.Wrap(err)
 	}

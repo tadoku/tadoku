@@ -78,11 +78,8 @@ func (r *contestRepository) FindLatest() (domain.Contest, error) {
 
 	var contest domain.Contest
 	err := r.sqlHandler.Get(&contest, query)
-	switch {
-	case err == domain.ErrNotFound:
-		return contest, err
-	case err != nil:
-		return contest, fail.Wrap(err)
+	if err != nil {
+		return contest, domain.WrapError(err)
 	}
 
 	return contest, nil
@@ -98,11 +95,8 @@ func (r *contestRepository) FindByID(id uint64) (domain.Contest, error) {
 
 	var contest domain.Contest
 	err := r.sqlHandler.Get(&contest, query, id)
-	switch {
-	case err == domain.ErrNotFound:
-		return contest, err
-	case err != nil:
-		return contest, fail.Wrap(err)
+	if err != nil {
+		return contest, domain.WrapError(err)
 	}
 
 	return contest, nil

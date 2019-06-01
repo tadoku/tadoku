@@ -92,7 +92,7 @@ func (i *contestInteractor) Latest() (*domain.Contest, error) {
 			return nil, ErrContestNotFound
 		}
 
-		return nil, fail.Wrap(err)
+		return nil, domain.WrapError(err)
 	}
 
 	return &contest, nil

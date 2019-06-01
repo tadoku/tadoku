@@ -226,6 +226,20 @@ func (mr *MockContestLogRepositoryMockRecorder) FindByID(id interface{}) *gomock
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindByID", reflect.TypeOf((*MockContestLogRepository)(nil).FindByID), id)
 }
 
+// Delete mocks base method
+func (m *MockContestLogRepository) Delete(id uint64) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Delete", id)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Delete indicates an expected call of Delete
+func (mr *MockContestLogRepositoryMockRecorder) Delete(id interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Delete", reflect.TypeOf((*MockContestLogRepository)(nil).Delete), id)
+}
+
 // MockRankingRepository is a mock of RankingRepository interface
 type MockRankingRepository struct {
 	ctrl     *gomock.Controller

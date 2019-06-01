@@ -26,6 +26,7 @@ type ContestLogRepository interface {
 	Store(contestLog *domain.ContestLog) error
 	FindAll(contestID uint64, userID uint64) (domain.ContestLogs, error)
 	FindByID(id uint64) (domain.ContestLog, error)
+	Delete(id uint64) error
 }
 
 // RankingRepository handles Ranking related database interactions

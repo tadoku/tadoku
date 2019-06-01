@@ -85,3 +85,7 @@ func (r *contestLogRepository) FindAll(contestID uint64, userID uint64) (domain.
 
 	return logs, nil
 }
+
+func (r *contestLogRepository) Delete(id uint64) error {
+	return nil
+}

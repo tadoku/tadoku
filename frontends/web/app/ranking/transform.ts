@@ -82,9 +82,9 @@ const getDates = (startDate: Date, endDate: Date) => {
 
   let currentDate = new Date(
     Date.UTC(
-      startDate.getFullYear(),
-      startDate.getMonth(),
-      startDate.getDate(),
+      startDate.getUTCFullYear(),
+      startDate.getUTCMonth(),
+      startDate.getUTCDate(),
     ),
   )
 
@@ -93,9 +93,9 @@ const getDates = (startDate: Date, endDate: Date) => {
 
     currentDate = new Date(
       Date.UTC(
-        currentDate.getFullYear(),
-        currentDate.getMonth(),
-        currentDate.getDate() + 1,
+        currentDate.getUTCFullYear(),
+        currentDate.getUTCMonth(),
+        currentDate.getUTCDate() + 1,
       ),
     )
   }

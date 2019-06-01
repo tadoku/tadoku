@@ -75,6 +75,20 @@ func (mr *MockRankingInteractorMockRecorder) UpdateLog(log interface{}) *gomock.
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateLog", reflect.TypeOf((*MockRankingInteractor)(nil).UpdateLog), log)
 }
 
+// DeleteLog mocks base method
+func (m *MockRankingInteractor) DeleteLog(logID, userID uint64) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteLog", logID, userID)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeleteLog indicates an expected call of DeleteLog
+func (mr *MockRankingInteractorMockRecorder) DeleteLog(logID, userID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteLog", reflect.TypeOf((*MockRankingInteractor)(nil).DeleteLog), logID, userID)
+}
+
 // UpdateRanking mocks base method
 func (m *MockRankingInteractor) UpdateRanking(contestID, userID uint64) error {
 	m.ctrl.T.Helper()

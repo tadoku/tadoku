@@ -52,6 +52,7 @@ type RankingInteractor interface {
 	) error
 	CreateLog(log domain.ContestLog) error
 	UpdateLog(log domain.ContestLog) error
+	DeleteLog(logID uint64, userID uint64) error
 	UpdateRanking(contestID uint64, userID uint64) error
 
 	RankingsForRegistration(contestID uint64, userID uint64) (domain.Rankings, error)
@@ -204,6 +205,10 @@ func (i *rankingInteractor) saveLog(log domain.ContestLog) error {
 	}
 
 	return i.UpdateRanking(log.ContestID, log.UserID)
+}
+
+func (i *rankingInteractor) DeleteLog(logID uint64, userID uint64) error {
+	return nil
 }
 
 func (i *rankingInteractor) UpdateRanking(contestID uint64, userID uint64) error {

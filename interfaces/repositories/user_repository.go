@@ -1,7 +1,6 @@
 package repositories
 
 import (
-	"github.com/srvc/fail"
 	"github.com/tadoku/api/domain"
 	"github.com/tadoku/api/interfaces/rdb"
 	"github.com/tadoku/api/usecases"
@@ -35,7 +34,7 @@ func (r *userRepository) create(user *domain.User) error {
 	row := r.sqlHandler.QueryRow(query, user.Email, user.DisplayName, user.Password, user.Role, user.Preferences)
 	err := row.Scan(&user.ID)
 	if err != nil {
-		return fail.Wrap(err)
+		return domain.WrapError(err)
 	}
 
 	return nil
@@ -50,7 +49,7 @@ func (r *userRepository) update(user *domain.User) error {
 		where id = :id
 	`
 	_, err := r.sqlHandler.NamedExecute(query, user)
-	return fail.Wrap(err)
+	return domain.WrapError(err)
 }
 
 func (r *userRepository) FindByID(id uint64) (domain.User, error) {
@@ -63,7 +62,7 @@ func (r *userRepository) FindByID(id uint64) (domain.User, error) {
 	`
 	err := r.sqlHandler.QueryRow(query, id).StructScan(&u)
 	if err != nil {
-		return u, fail.Wrap(err)
+		return u, domain.WrapError(err)
 	}
 
 	return u, nil
@@ -79,7 +78,7 @@ func (r *userRepository) FindByEmail(email string) (domain.User, error) {
 	`
 	err := r.sqlHandler.QueryRow(query, email).StructScan(&u)
 	if err != nil {
-		return u, fail.Wrap(err)
+		return u, domain.WrapError(err)
 	}
 
 	return u, nil

@@ -41,12 +41,12 @@ func (c context) GetID() (uint64, error) {
 	idFromRoute := c.Param("id")
 	id, err := strconv.ParseUint(idFromRoute, 10, 64)
 
-	return id, fail.Wrap(err)
+	return id, domain.WrapError(err)
 }
 
 func (c context) BindID(id *uint64) error {
 	value, err := c.GetID()
 	*id = value
 
-	return fail.Wrap(err)
+	return domain.WrapError(err)
 }

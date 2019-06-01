@@ -4,6 +4,7 @@ package usecases
 
 import (
 	"github.com/srvc/fail"
+
 	"github.com/tadoku/api/domain"
 )
 
@@ -93,7 +94,7 @@ func (i *rankingInteractor) CreateRanking(
 ) error {
 	ids, err := i.contestRepository.GetOpenContests()
 	if err != nil {
-		return fail.Wrap(err)
+		return domain.WrapError(err)
 	}
 
 	if !domain.ContainsID(ids, contestID) {
@@ -106,7 +107,7 @@ func (i *rankingInteractor) CreateRanking(
 
 	existingLanguages, err := i.rankingRepository.GetAllLanguagesForContestAndUser(contestID, userID)
 	if err != nil {
-		return fail.Wrap(err)
+		return domain.WrapError(err)
 	}
 	needsGlobal := len(existingLanguages) == 0
 
@@ -133,7 +134,7 @@ func (i *rankingInteractor) CreateRanking(
 
 	for _, lang := range targetLanguages {
 		if _, err := lang.Validate(); err != nil {
-			return fail.Wrap(err)
+			return domain.WrapError(err)
 		}
 
 		ranking := domain.Ranking{
@@ -144,7 +145,7 @@ func (i *rankingInteractor) CreateRanking(
 		}
 		err = i.rankingRepository.Store(ranking)
 		if err != nil {
-			return fail.Wrap(err)
+			return domain.WrapError(err)
 		}
 	}
 
@@ -175,7 +176,7 @@ func (i *rankingInteractor) saveLog(log domain.ContestLog) error {
 	if log.ID != 0 {
 		existingLog, err := i.contestLogRepository.FindByID(log.ID)
 		if err != nil {
-			return fail.Wrap(err)
+			return domain.WrapError(err)
 		}
 
 		if existingLog.UserID != log.UserID {
@@ -185,7 +186,7 @@ func (i *rankingInteractor) saveLog(log domain.ContestLog) error {
 
 	ids, err := i.contestRepository.GetOpenContests()
 	if err != nil {
-		fail.Wrap(err)
+		domain.WrapError(err)
 	}
 	if !domain.ContainsID(ids, log.ContestID) {
 		return ErrContestIsClosed
@@ -193,7 +194,7 @@ func (i *rankingInteractor) saveLog(log domain.ContestLog) error {
 
 	languages, err := i.rankingRepository.GetAllLanguagesForContestAndUser(log.ContestID, log.UserID)
 	if err != nil {
-		return fail.Wrap(err)
+		return domain.WrapError(err)
 	}
 	if !languages.ContainsLanguage(log.Language) {
 		return ErrContestLanguageNotSignedUp
@@ -201,7 +202,7 @@ func (i *rankingInteractor) saveLog(log domain.ContestLog) error {
 
 	err = i.contestLogRepository.Store(&log)
 	if err != nil {
-		return fail.Wrap(err)
+		return domain.WrapError(err)
 	}
 
 	return i.UpdateRanking(log.ContestID, log.UserID)
@@ -219,7 +220,7 @@ func (i *rankingInteractor) DeleteLog(logID uint64, userID uint64) error {
 
 	ids, err := i.contestRepository.GetOpenContests()
 	if err != nil {
-		fail.Wrap(err)
+		domain.WrapError(err)
 	}
 	if !domain.ContainsID(ids, log.ContestID) {
 		return ErrContestIsClosed
@@ -227,7 +228,7 @@ func (i *rankingInteractor) DeleteLog(logID uint64, userID uint64) error {
 
 	err = i.contestLogRepository.Delete(logID)
 	if err != nil {
-		return fail.Wrap(err)
+		return domain.WrapError(err)
 	}
 
 	return i.UpdateRanking(log.ContestID, log.UserID)
@@ -236,7 +237,7 @@ func (i *rankingInteractor) DeleteLog(logID uint64, userID uint64) error {
 func (i *rankingInteractor) UpdateRanking(contestID uint64, userID uint64) error {
 	rankings, err := i.rankingRepository.FindAll(contestID, userID)
 	if err != nil {
-		return fail.Wrap(err)
+		return domain.WrapError(err)
 	}
 
 	if len(rankings) == 0 {
@@ -245,7 +246,7 @@ func (i *rankingInteractor) UpdateRanking(contestID uint64, userID uint64) error
 
 	logs, err := i.contestLogRepository.FindAll(contestID, userID)
 	if err != nil {
-		return fail.Wrap(err)
+		return domain.WrapError(err)
 	}
 
 	totals := make(map[domain.LanguageCode]float32)
@@ -270,7 +271,7 @@ func (i *rankingInteractor) RankingsForRegistration(
 ) (domain.Rankings, error) {
 	rankings, err := i.rankingRepository.FindAll(contestID, userID)
 	if err != nil {
-		return nil, fail.Wrap(err)
+		return nil, domain.WrapError(err)
 	}
 
 	if len(rankings) == 0 {
@@ -300,7 +301,7 @@ func (i *rankingInteractor) RankingsForContest(
 	}
 
 	if err != nil {
-		return nil, fail.Wrap(err)
+		return nil, domain.WrapError(err)
 	}
 
 	if len(rankings) == 0 {
@@ -313,7 +314,7 @@ func (i *rankingInteractor) RankingsForContest(
 func (i *rankingInteractor) CurrentRegistration(userID uint64) (domain.RankingRegistration, error) {
 	registration, err := i.rankingRepository.CurrentRegistration(userID)
 	if err != nil {
-		return registration, fail.Wrap(err)
+		return registration, domain.WrapError(err)
 	}
 
 	if registration.ContestID == 0 {
@@ -326,7 +327,7 @@ func (i *rankingInteractor) CurrentRegistration(userID uint64) (domain.RankingRe
 func (i *rankingInteractor) ContestLogs(contestID uint64, userID uint64) (domain.ContestLogs, error) {
 	logs, err := i.contestLogRepository.FindAll(contestID, userID)
 	if err != nil {
-		return logs, fail.Wrap(err)
+		return logs, domain.WrapError(err)
 	}
 
 	if len(logs) == 0 {

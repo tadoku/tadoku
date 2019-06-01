@@ -1,10 +1,10 @@
 package infra
 
 import (
-	"github.com/srvc/fail"
+	"golang.org/x/crypto/bcrypt"
+
 	"github.com/tadoku/api/domain"
 	"github.com/tadoku/api/usecases"
-	"golang.org/x/crypto/bcrypt"
 )
 
 // NewPasswordHasher initializes a new password hasher with sane defaults
@@ -19,7 +19,7 @@ type passwordHasher struct {
 func (h *passwordHasher) Hash(value domain.Password) (domain.Password, error) {
 	hash, err := bcrypt.GenerateFromPassword([]byte(value), h.cost)
 	if err != nil {
-		return "", fail.Wrap(err)
+		return "", domain.WrapError(err)
 	}
 
 	return domain.Password(hash), nil

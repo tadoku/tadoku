@@ -1,7 +1,6 @@
 package repositories
 
 import (
-	"github.com/srvc/fail"
 	"github.com/tadoku/api/domain"
 	"github.com/tadoku/api/interfaces/rdb"
 	"github.com/tadoku/api/usecases"
@@ -35,7 +34,7 @@ func (r *contestLogRepository) create(contestLog *domain.ContestLog) error {
 	row := r.sqlHandler.QueryRow(query, contestLog.ContestID, contestLog.UserID, contestLog.Language, contestLog.MediumID, contestLog.Amount)
 	err := row.Scan(&contestLog.ID)
 	if err != nil {
-		return fail.Wrap(err)
+		return domain.WrapError(err)
 	}
 
 	return nil
@@ -52,7 +51,7 @@ func (r *contestLogRepository) update(contestLog *domain.ContestLog) error {
 	`
 
 	_, err := r.sqlHandler.NamedExecute(query, contestLog)
-	return fail.Wrap(err)
+	return domain.WrapError(err)
 }
 
 func (r *contestLogRepository) FindByID(id uint64) (domain.ContestLog, error) {
@@ -91,7 +90,7 @@ func (r *contestLogRepository) FindAll(contestID uint64, userID uint64) (domain.
 
 	err := r.sqlHandler.Select(&logs, query, contestID, userID)
 	if err != nil {
-		return nil, fail.Wrap(err)
+		return nil, domain.WrapError(err)
 	}
 
 	return logs, nil
@@ -108,12 +107,12 @@ func (r *contestLogRepository) Delete(id uint64) error {
 
 	result, err := r.sqlHandler.Execute(query, id)
 	if err != nil {
-		return fail.Wrap(err)
+		return domain.WrapError(err)
 	}
 
 	rows, err := result.RowsAffected()
 	if err != nil {
-		return fail.Wrap(err)
+		return domain.WrapError(err)
 	}
 	if rows != 1 {
 		return domain.ErrNotFound

@@ -4,8 +4,6 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/srvc/fail"
-
 	"github.com/tadoku/api/domain"
 	"github.com/tadoku/api/usecases"
 )
@@ -38,16 +36,16 @@ type CreateRankingPayload struct {
 func (s *rankingService) Create(ctx Context) error {
 	payload := &CreateRankingPayload{}
 	if err := ctx.Bind(payload); err != nil {
-		return fail.Wrap(err)
+		return domain.WrapError(err)
 	}
 
 	user, err := ctx.User()
 	if err != nil {
-		return fail.Wrap(err)
+		return domain.WrapError(err)
 	}
 
 	if err := s.RankingInteractor.CreateRanking(payload.ContestID, user.ID, payload.Languages); err != nil {
-		return fail.Wrap(err)
+		return domain.WrapError(err)
 	}
 
 	return ctx.NoContent(http.StatusCreated)
@@ -56,7 +54,7 @@ func (s *rankingService) Create(ctx Context) error {
 func (s *rankingService) Get(ctx Context) error {
 	contestID, err := strconv.ParseUint(ctx.QueryParam("contest_id"), 10, 64)
 	if err != nil {
-		return fail.Wrap(err)
+		return domain.WrapError(err)
 	}
 	language := domain.LanguageCode(ctx.QueryParam("language"))
 
@@ -66,7 +64,7 @@ func (s *rankingService) Get(ctx Context) error {
 			return ctx.NoContent(http.StatusNotFound)
 		}
 
-		return fail.Wrap(err)
+		return domain.WrapError(err)
 	}
 
 	return ctx.JSON(http.StatusOK, rankings.GetView())
@@ -75,7 +73,7 @@ func (s *rankingService) Get(ctx Context) error {
 func (s *rankingService) CurrentRegistration(ctx Context) error {
 	user, err := ctx.User()
 	if err != nil {
-		return fail.Wrap(err)
+		return domain.WrapError(err)
 	}
 
 	registration, err := s.RankingInteractor.CurrentRegistration(user.ID)
@@ -84,7 +82,7 @@ func (s *rankingService) CurrentRegistration(ctx Context) error {
 			return ctx.NoContent(http.StatusNotFound)
 		}
 
-		return fail.Wrap(err)
+		return domain.WrapError(err)
 	}
 
 	return ctx.JSON(http.StatusOK, registration)
@@ -93,11 +91,11 @@ func (s *rankingService) CurrentRegistration(ctx Context) error {
 func (s *rankingService) RankingsForRegistration(ctx Context) error {
 	contestID, err := strconv.ParseUint(ctx.QueryParam("contest_id"), 10, 64)
 	if err != nil {
-		return fail.Wrap(err)
+		return domain.WrapError(err)
 	}
 	userID, err := strconv.ParseUint(ctx.QueryParam("user_id"), 10, 64)
 	if err != nil {
-		return fail.Wrap(err)
+		return domain.WrapError(err)
 	}
 
 	rankings, err := s.RankingInteractor.RankingsForRegistration(contestID, userID)
@@ -106,7 +104,7 @@ func (s *rankingService) RankingsForRegistration(ctx Context) error {
 			return ctx.NoContent(http.StatusNotFound)
 		}
 
-		return fail.Wrap(err)
+		return domain.WrapError(err)
 	}
 
 	return ctx.JSON(http.StatusOK, rankings.GetView())

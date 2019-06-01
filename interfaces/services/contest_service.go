@@ -3,7 +3,6 @@ package services
 import (
 	"net/http"
 
-	"github.com/srvc/fail"
 	"github.com/tadoku/api/domain"
 	"github.com/tadoku/api/usecases"
 )
@@ -30,11 +29,11 @@ type contestService struct {
 func (s *contestService) Create(ctx Context) error {
 	contest := &domain.Contest{}
 	if err := ctx.Bind(contest); err != nil {
-		return fail.Wrap(err)
+		return domain.WrapError(err)
 	}
 
 	if err := s.ContestInteractor.CreateContest(*contest); err != nil {
-		return fail.Wrap(err)
+		return domain.WrapError(err)
 	}
 
 	return ctx.NoContent(http.StatusCreated)
@@ -43,13 +42,13 @@ func (s *contestService) Create(ctx Context) error {
 func (s *contestService) Update(ctx Context) error {
 	contest := &domain.Contest{}
 	if err := ctx.Bind(contest); err != nil {
-		return fail.Wrap(err)
+		return domain.WrapError(err)
 	}
 
 	ctx.BindID(&contest.ID)
 
 	if err := s.ContestInteractor.UpdateContest(*contest); err != nil {
-		return fail.Wrap(err)
+		return domain.WrapError(err)
 	}
 
 	return ctx.NoContent(http.StatusNoContent)
@@ -63,7 +62,7 @@ func (s *contestService) Latest(ctx Context) error {
 			return ctx.NoContent(http.StatusNotFound)
 		}
 
-		return fail.Wrap(err)
+		return domain.WrapError(err)
 	}
 
 	return ctx.JSON(http.StatusOK, contest)
@@ -80,7 +79,7 @@ func (s *contestService) Get(ctx Context) error {
 			return ctx.NoContent(http.StatusNotFound)
 		}
 
-		return fail.Wrap(err)
+		return domain.WrapError(err)
 	}
 
 	return ctx.JSON(http.StatusOK, contest)

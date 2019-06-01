@@ -4,8 +4,6 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/srvc/fail"
-
 	"github.com/tadoku/api/domain"
 	"github.com/tadoku/api/usecases"
 )
@@ -32,18 +30,18 @@ type contestLogService struct {
 func (s *contestLogService) Create(ctx Context) error {
 	log := &domain.ContestLog{}
 	if err := ctx.Bind(log); err != nil {
-		return fail.Wrap(err)
+		return domain.WrapError(err)
 	}
 
 	user, err := ctx.User()
 	if err != nil {
-		return fail.Wrap(err)
+		return domain.WrapError(err)
 	}
 
 	log.UserID = user.ID
 
 	if err := s.RankingInteractor.CreateLog(*log); err != nil {
-		return fail.Wrap(err)
+		return domain.WrapError(err)
 	}
 
 	return ctx.NoContent(http.StatusCreated)
@@ -52,14 +50,14 @@ func (s *contestLogService) Create(ctx Context) error {
 func (s *contestLogService) Update(ctx Context) error {
 	log := &domain.ContestLog{}
 	if err := ctx.Bind(log); err != nil {
-		return fail.Wrap(err)
+		return domain.WrapError(err)
 	}
 
 	ctx.BindID(&log.ID)
 
 	user, err := ctx.User()
 	if err != nil {
-		return fail.Wrap(err)
+		return domain.WrapError(err)
 	}
 
 	log.UserID = user.ID
@@ -69,7 +67,7 @@ func (s *contestLogService) Update(ctx Context) error {
 			return ctx.NoContent(http.StatusForbidden)
 		}
 
-		return fail.Wrap(err)
+		return domain.WrapError(err)
 	}
 
 	return ctx.NoContent(http.StatusNoContent)
@@ -81,7 +79,7 @@ func (s *contestLogService) Delete(ctx Context) error {
 
 	user, err := ctx.User()
 	if err != nil {
-		return fail.Wrap(err)
+		return domain.WrapError(err)
 	}
 
 	if err := s.RankingInteractor.DeleteLog(id, user.ID); err != nil {
@@ -92,7 +90,7 @@ func (s *contestLogService) Delete(ctx Context) error {
 			return ctx.NoContent(http.StatusNotFound)
 		}
 
-		return fail.Wrap(err)
+		return domain.WrapError(err)
 	}
 
 	return ctx.NoContent(http.StatusOK)
@@ -101,12 +99,12 @@ func (s *contestLogService) Delete(ctx Context) error {
 func (s *contestLogService) Get(ctx Context) error {
 	contestID, err := strconv.ParseUint(ctx.QueryParam("contest_id"), 10, 64)
 	if err != nil {
-		return fail.Wrap(err)
+		return domain.WrapError(err)
 	}
 
 	userID, err := strconv.ParseUint(ctx.QueryParam("user_id"), 10, 64)
 	if err != nil {
-		return fail.Wrap(err)
+		return domain.WrapError(err)
 	}
 
 	logs, err := s.RankingInteractor.ContestLogs(contestID, userID)
@@ -115,7 +113,7 @@ func (s *contestLogService) Get(ctx Context) error {
 			return ctx.NoContent(http.StatusNotFound)
 		}
 
-		return fail.Wrap(err)
+		return domain.WrapError(err)
 	}
 
 	return ctx.JSON(http.StatusOK, logs.GetView())

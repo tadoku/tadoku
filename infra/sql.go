@@ -4,11 +4,11 @@ import (
 	"database/sql"
 
 	"github.com/jmoiron/sqlx"
-	"github.com/srvc/fail"
-	"github.com/tadoku/api/interfaces/rdb"
-
 	// Postgres driver that's used to connect to the db
 	_ "github.com/lib/pq"
+
+	"github.com/tadoku/api/domain"
+	"github.com/tadoku/api/interfaces/rdb"
 )
 
 // -----------------------------------------------------------------
@@ -28,7 +28,7 @@ func (handler *sqlHandler) Execute(statement string, args ...interface{}) (rdb.R
 	res := sqlResult{}
 	result, err := handler.db.Exec(statement, args...)
 	if err != nil {
-		return res, fail.Wrap(err)
+		return res, domain.WrapError(err)
 	}
 	res.Result = result
 
@@ -39,7 +39,7 @@ func (handler *sqlHandler) NamedExecute(statement string, arg interface{}) (rdb.
 	res := sqlResult{}
 	result, err := handler.db.NamedExec(statement, arg)
 	if err != nil {
-		return res, fail.Wrap(err)
+		return res, domain.WrapError(err)
 	}
 	res.Result = result
 
@@ -50,7 +50,7 @@ func (handler *sqlHandler) Query(statement string, args ...interface{}) (rdb.Row
 	row := new(sqlRows)
 	rows, err := handler.db.Queryx(statement, args...)
 	if err != nil {
-		return row, fail.Wrap(err)
+		return row, domain.WrapError(err)
 	}
 	row.Rows = rows
 
@@ -72,7 +72,7 @@ func (handler *sqlHandler) Select(dest interface{}, query string, args ...interf
 func (handler *sqlHandler) Begin() (rdb.TxHandler, error) {
 	tx, err := handler.db.Beginx()
 	if err != nil {
-		return nil, fail.Wrap(err)
+		return nil, domain.WrapError(err)
 	}
 
 	return &txHandler{tx: tx}, nil
@@ -89,7 +89,7 @@ func (handler *txHandler) Execute(statement string, args ...interface{}) (rdb.Re
 	res := sqlResult{}
 	result, err := handler.tx.Exec(statement, args...)
 	if err != nil {
-		return res, fail.Wrap(err)
+		return res, domain.WrapError(err)
 	}
 	res.Result = result
 
@@ -100,7 +100,7 @@ func (handler *txHandler) NamedExecute(statement string, arg interface{}) (rdb.R
 	res := sqlResult{}
 	result, err := handler.tx.NamedExec(statement, arg)
 	if err != nil {
-		return res, fail.Wrap(err)
+		return res, domain.WrapError(err)
 	}
 	res.Result = result
 
@@ -111,7 +111,7 @@ func (handler *txHandler) Query(statement string, args ...interface{}) (rdb.Rows
 	row := new(sqlRows)
 	rows, err := handler.tx.Queryx(statement, args...)
 	if err != nil {
-		return row, fail.Wrap(err)
+		return row, domain.WrapError(err)
 	}
 	row.Rows = rows
 
@@ -133,7 +133,7 @@ func (handler *txHandler) Select(dest interface{}, query string, args ...interfa
 func (handler *txHandler) Commit() error {
 	err := handler.tx.Commit()
 	if err != nil {
-		return fail.Wrap(err)
+		return domain.WrapError(err)
 	}
 
 	return nil
@@ -142,7 +142,7 @@ func (handler *txHandler) Commit() error {
 func (handler *txHandler) Rollback() error {
 	err := handler.tx.Rollback()
 	if err != nil {
-		return fail.Wrap(err)
+		return domain.WrapError(err)
 	}
 
 	return nil

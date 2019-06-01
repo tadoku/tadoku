@@ -3,7 +3,6 @@ package repositories
 import (
 	"time"
 
-	"github.com/srvc/fail"
 	"github.com/tadoku/api/domain"
 	"github.com/tadoku/api/interfaces/rdb"
 	"github.com/tadoku/api/usecases"
@@ -34,7 +33,7 @@ func (r *rankingRepository) create(ranking domain.Ranking) error {
 	`
 
 	_, err := r.sqlHandler.NamedExecute(query, ranking)
-	return fail.Wrap(err)
+	return domain.WrapError(err)
 }
 
 func (r *rankingRepository) update(ranking domain.Ranking) error {
@@ -45,13 +44,13 @@ func (r *rankingRepository) update(ranking domain.Ranking) error {
 	`
 
 	_, err := r.sqlHandler.NamedExecute(query, ranking)
-	return fail.Wrap(err)
+	return domain.WrapError(err)
 }
 
 func (r *rankingRepository) UpdateAmounts(rankings domain.Rankings) error {
 	tx, err := r.sqlHandler.Begin()
 	if err != nil {
-		return fail.Wrap(err)
+		return domain.WrapError(err)
 	}
 
 	query := `
@@ -67,7 +66,7 @@ func (r *rankingRepository) UpdateAmounts(rankings domain.Rankings) error {
 
 		if err != nil {
 			_ = tx.Rollback()
-			return fail.Wrap(err)
+			return domain.WrapError(err)
 		}
 	}
 
@@ -174,7 +173,7 @@ func (r *rankingRepository) CurrentRegistration(userID uint64) (domain.RankingRe
 
 	err := r.sqlHandler.Select(&rows, query, userID)
 	if err != nil {
-		return domain.RankingRegistration{}, fail.Wrap(err)
+		return domain.RankingRegistration{}, domain.WrapError(err)
 	}
 
 	result := &domain.RankingRegistration{}

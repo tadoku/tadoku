@@ -302,6 +302,71 @@ func TestRankingInteractor_UpdateLog(t *testing.T) {
 	}
 }
 
+func TestRankingInteractor_DeleteLog(t *testing.T) {
+	ctrl, rankingRepo, contestRepo, contestLogRepo, _, _, interactor := setupRankingTest(t)
+	defer ctrl.Finish()
+
+	contestID := uint64(1)
+	userID := uint64(1)
+
+	log := domain.ContestLog{
+		ID:        1,
+		ContestID: contestID,
+		UserID:    userID,
+		Language:  domain.Japanese,
+		Amount:    10,
+		MediumID:  domain.MediumBook,
+	}
+
+	// Happy path
+	{
+		rankings := domain.Rankings{
+			{ID: 1, ContestID: contestID, UserID: userID, Language: domain.Japanese, Amount: 10},
+			{ID: 2, ContestID: contestID, UserID: userID, Language: domain.Global, Amount: 10},
+		}
+
+		expectedRankings := domain.Rankings{
+			{ID: 1, ContestID: contestID, UserID: userID, Language: domain.Japanese, Amount: 0},
+			{ID: 2, ContestID: contestID, UserID: userID, Language: domain.Global, Amount: 0},
+		}
+
+		contestLogRepo.EXPECT().Delete(log.ID)
+		contestLogRepo.EXPECT().FindByID(log.ID).Return(log, nil)
+		contestRepo.EXPECT().GetOpenContests().Return([]uint64{contestID}, nil)
+		rankingRepo.EXPECT().FindAll(contestID, userID).Return(rankings, nil)
+		contestLogRepo.EXPECT().FindAll(contestID, userID).Return(domain.ContestLogs{}, nil)
+		rankingRepo.EXPECT().UpdateAmounts(expectedRankings).Return(nil)
+
+		err := interactor.DeleteLog(log.ID, log.UserID)
+		assert.NoError(t, err)
+	}
+
+	// Sad path: different user trying to delete a log
+	{
+		contestLogRepo.EXPECT().FindByID(log.ID).Return(log, nil)
+
+		err := interactor.DeleteLog(log.ID, log.UserID+1)
+		assert.EqualError(t, err, domain.ErrInsufficientPermissions.Error())
+	}
+
+	// Sad path: contest is cloaed
+	{
+		contestLogRepo.EXPECT().FindByID(log.ID).Return(log, nil)
+		contestRepo.EXPECT().GetOpenContests().Return([]uint64{contestID + 1}, nil)
+
+		err := interactor.DeleteLog(log.ID, log.UserID)
+		assert.EqualError(t, err, usecases.ErrContestIsClosed.Error())
+	}
+
+	// Sad path: log does not exist
+	{
+		contestLogRepo.EXPECT().FindByID(log.ID).Return(domain.ContestLog{}, domain.ErrNotFound)
+
+		err := interactor.DeleteLog(log.ID, log.UserID)
+		assert.EqualError(t, err, domain.ErrNotFound.Error())
+	}
+}
+
 func TestRankingInteractor_UpdateRankings(t *testing.T) {
 	ctrl, rankingRepo, _, contestLogRepo, _, _, interactor := setupRankingTest(t)
 	defer ctrl.Finish()

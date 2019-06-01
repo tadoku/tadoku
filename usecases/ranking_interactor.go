@@ -208,7 +208,29 @@ func (i *rankingInteractor) saveLog(log domain.ContestLog) error {
 }
 
 func (i *rankingInteractor) DeleteLog(logID uint64, userID uint64) error {
-	return nil
+	log, err := i.contestLogRepository.FindByID(logID)
+	if err != nil {
+		return fail.Wrap(err)
+	}
+
+	if log.UserID != userID {
+		return domain.ErrInsufficientPermissions
+	}
+
+	ids, err := i.contestRepository.GetOpenContests()
+	if err != nil {
+		fail.Wrap(err)
+	}
+	if !domain.ContainsID(ids, log.ContestID) {
+		return ErrContestIsClosed
+	}
+
+	err = i.contestLogRepository.Delete(logID)
+	if err != nil {
+		return fail.Wrap(err)
+	}
+
+	return i.UpdateRanking(log.ContestID, log.UserID)
 }
 
 func (i *rankingInteractor) UpdateRanking(contestID uint64, userID uint64) error {

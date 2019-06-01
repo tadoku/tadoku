@@ -52,32 +52,32 @@ func (si *sessionInteractor) CreateUser(user domain.User) error {
 		var err error
 		user.Password, err = si.passwordHasher.Hash(user.Password)
 		if err != nil {
-			return fail.Wrap(err)
+			return domain.WrapError(err)
 		}
 	}
 
 	err := si.userRepository.Store(&user)
-	return fail.Wrap(err)
+	return domain.WrapError(err)
 }
 
 func (si *sessionInteractor) CreateSession(email, password string) (domain.User, string, error) {
 	user, err := si.userRepository.FindByEmail(email)
 	if err != nil {
-		return domain.User{}, "", fail.Wrap(err)
+		return domain.User{}, "", domain.WrapError(err)
 	}
 
 	if user.ID == 0 {
-		return domain.User{}, "", fail.Wrap(ErrUserDoesNotExist, fail.WithIgnorable())
+		return domain.User{}, "", domain.WrapError(ErrUserDoesNotExist, fail.WithIgnorable())
 	}
 
 	if !si.passwordHasher.Compare(user.Password, password) {
-		return domain.User{}, "", fail.Wrap(ErrPasswordIncorrect, fail.WithIgnorable())
+		return domain.User{}, "", domain.WrapError(ErrPasswordIncorrect, fail.WithIgnorable())
 	}
 
 	claims := SessionClaims{User: &user}
 	token, err := si.jwtGenerator.NewToken(si.sessionLength, claims)
 	if err != nil {
-		return domain.User{}, "", fail.Wrap(err)
+		return domain.User{}, "", domain.WrapError(err)
 	}
 
 	return user, token, nil

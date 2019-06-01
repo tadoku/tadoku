@@ -70,7 +70,7 @@ func (i *contestInteractor) saveContest(contest domain.Contest) error {
 	if contest.Open {
 		ids, err := i.contestRepository.GetOpenContests()
 		if err != nil {
-			return fail.Wrap(err)
+			return domain.WrapError(err)
 		}
 		if len(ids) > 0 {
 			for _, id := range ids {
@@ -82,7 +82,7 @@ func (i *contestInteractor) saveContest(contest domain.Contest) error {
 	}
 
 	err := i.contestRepository.Store(&contest)
-	return fail.Wrap(err)
+	return domain.WrapError(err)
 }
 
 func (i *contestInteractor) Latest() (*domain.Contest, error) {
@@ -92,7 +92,7 @@ func (i *contestInteractor) Latest() (*domain.Contest, error) {
 			return nil, ErrContestNotFound
 		}
 
-		return nil, fail.Wrap(err)
+		return nil, domain.WrapError(err)
 	}
 
 	return &contest, nil
@@ -105,7 +105,7 @@ func (i *contestInteractor) Find(contestID uint64) (*domain.Contest, error) {
 			return nil, ErrContestNotFound
 		}
 
-		return nil, fail.Wrap(err)
+		return nil, domain.WrapError(err)
 	}
 
 	return &contest, nil

@@ -2,7 +2,8 @@ package test
 
 import (
 	"github.com/creasty/configo"
-	"github.com/srvc/fail"
+
+	"github.com/tadoku/api/domain"
 )
 
 // Config contains testing configuration data
@@ -20,5 +21,5 @@ func LoadConfig() (*Config, error) {
 	}
 	err := configo.Load(c, opts)
 
-	return c, fail.Wrap(err)
+	return c, domain.WrapError(err)
 }

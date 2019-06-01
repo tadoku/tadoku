@@ -1,7 +1,6 @@
 package repositories
 
 import (
-	"github.com/srvc/fail"
 	"github.com/tadoku/api/domain"
 	"github.com/tadoku/api/interfaces/rdb"
 	"github.com/tadoku/api/usecases"
@@ -35,7 +34,7 @@ func (r *contestRepository) create(contest *domain.Contest) error {
 	row := r.sqlHandler.QueryRow(query, contest.Description, contest.Start, contest.End, contest.Open)
 	err := row.Scan(&contest.ID)
 	if err != nil {
-		return fail.Wrap(err)
+		return domain.WrapError(err)
 	}
 
 	return nil
@@ -49,7 +48,7 @@ func (r *contestRepository) update(contest *domain.Contest) error {
 	`
 
 	_, err := r.sqlHandler.NamedExecute(query, contest)
-	return fail.Wrap(err)
+	return domain.WrapError(err)
 }
 
 func (r *contestRepository) GetOpenContests() ([]uint64, error) {
@@ -62,7 +61,7 @@ func (r *contestRepository) GetOpenContests() ([]uint64, error) {
 	var ids []uint64
 	err := r.sqlHandler.Select(&ids, query)
 	if err != nil {
-		return nil, fail.Wrap(err)
+		return nil, domain.WrapError(err)
 	}
 
 	return ids, nil
@@ -78,11 +77,8 @@ func (r *contestRepository) FindLatest() (domain.Contest, error) {
 
 	var contest domain.Contest
 	err := r.sqlHandler.Get(&contest, query)
-	switch {
-	case err == domain.ErrNotFound:
-		return contest, err
-	case err != nil:
-		return contest, fail.Wrap(err)
+	if err != nil {
+		return contest, domain.WrapError(err)
 	}
 
 	return contest, nil
@@ -98,11 +94,8 @@ func (r *contestRepository) FindByID(id uint64) (domain.Contest, error) {
 
 	var contest domain.Contest
 	err := r.sqlHandler.Get(&contest, query, id)
-	switch {
-	case err == domain.ErrNotFound:
-		return contest, err
-	case err != nil:
-		return contest, fail.Wrap(err)
+	if err != nil {
+		return contest, domain.WrapError(err)
 	}
 
 	return contest, nil

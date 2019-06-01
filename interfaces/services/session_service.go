@@ -3,7 +3,6 @@ package services
 import (
 	"net/http"
 
-	"github.com/srvc/fail"
 	"github.com/tadoku/api/domain"
 	"github.com/tadoku/api/usecases"
 )
@@ -36,13 +35,13 @@ func (s *sessionService) Login(ctx Context) error {
 	b := &SessionLoginBody{}
 	err := ctx.Bind(b)
 	if err != nil {
-		return fail.Wrap(err)
+		return domain.WrapError(err)
 	}
 
 	user, token, err := s.SessionInteractor.CreateSession(b.Email, b.Password)
 	if err != nil {
 		ctx.NoContent(http.StatusUnauthorized)
-		return fail.Wrap(err)
+		return domain.WrapError(err)
 	}
 
 	res := map[string]interface{}{
@@ -57,7 +56,7 @@ func (s *sessionService) Register(ctx Context) error {
 	user := &domain.User{}
 	err := ctx.Bind(user)
 	if err != nil {
-		return fail.Wrap(err)
+		return domain.WrapError(err)
 	}
 
 	user.Role = domain.RoleUser
@@ -65,7 +64,7 @@ func (s *sessionService) Register(ctx Context) error {
 
 	err = s.SessionInteractor.CreateUser(*user)
 	if err != nil {
-		return fail.Wrap(err)
+		return domain.WrapError(err)
 	}
 
 	return ctx.NoContent(http.StatusCreated)

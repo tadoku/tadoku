@@ -45,7 +45,10 @@ func (r *contestLogRepository) update(contestLog *domain.ContestLog) error {
 	query := `
 		update contest_logs
 		set amount = :amount, medium_id = :medium_id, language_code = :language_code, updated_at = now() at time zone 'utc'
-		where id = :id and user_id = :user_id
+		where
+			id = :id and
+			user_id = :user_id and
+			deleted_at is null
 	`
 
 	_, err := r.sqlHandler.NamedExecute(query, contestLog)
@@ -58,11 +61,16 @@ func (r *contestLogRepository) FindByID(id uint64) (domain.ContestLog, error) {
 	query := `
 		select id, contest_id, user_id, language_code, medium_id, amount, created_at, updated_at
 		from contest_logs
-		where id = $1
+		where
+			id = $1 and
+			deleted_at is null
 	`
 	err := r.sqlHandler.QueryRow(query, id).StructScan(&l)
 	if err != nil {
 		return l, fail.Wrap(err)
+	}
+	if l.ID == 0 {
+		return l, domain.ErrNotFound
 	}
 
 	return l, nil
@@ -75,7 +83,10 @@ func (r *contestLogRepository) FindAll(contestID uint64, userID uint64) (domain.
 		select
 			id, contest_id, user_id, language_code, medium_id, amount, created_at, updated_at
 		from contest_logs
-		where contest_id = $1 and user_id = $2
+		where
+			contest_id = $1 and
+			user_id = $2 and
+			deleted_at is null
 	`
 
 	err := r.sqlHandler.Select(&logs, query, contestID, userID)

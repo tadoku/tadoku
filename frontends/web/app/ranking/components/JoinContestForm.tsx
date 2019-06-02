@@ -18,7 +18,7 @@ const sanitizeLanguageCode = (code: string) => (code === '' ? undefined : code)
 // @TODO: extract out
 const maxLanguages = 3
 
-const EditLogForm = ({
+const JoinContestForm = ({
   contest,
   onSuccess: completed,
   onCancel: cancel,
@@ -53,7 +53,7 @@ const EditLogForm = ({
     <Form onSubmit={submit}>
       <Group>
         {languages.map((language, i) => (
-          <Label key={language}>
+          <Label key={i}>
             <Select
               value={language}
               onChange={e =>
@@ -68,7 +68,9 @@ const EditLogForm = ({
             >
               <option value="">Choose a language...</option>
               {AllLanguages.map(l => (
-                <option value={l.code}>{languageNameByCode(l.code)}</option>
+                <option value={l.code} key={l.code}>
+                  {languageNameByCode(l.code)}
+                </option>
               ))}
             </Select>
           </Label>
@@ -99,4 +101,4 @@ const mapStateToProps = (state: State, oldProps: Props) => ({
   registration: state.ranking.registration,
 })
 
-export default connect(mapStateToProps)(EditLogForm)
+export default connect(mapStateToProps)(JoinContestForm)

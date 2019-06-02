@@ -6,6 +6,7 @@ services:
     image: tadoku/web
     container_name: tadoku-web
     network_mode: bridge
+    restart: 'always'
     expose:
       - 3000
     environment:

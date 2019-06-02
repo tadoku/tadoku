@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import LogInModal from '../components/LogInModal'
-import Router from 'next/router'
 import { NavigationBarLink } from '../../ui/components/navigation/index'
+import { refresh } from '../../router'
 
 const LogIn = () => {
   const [open, setOpen] = useState(false)
@@ -16,9 +16,7 @@ const LogIn = () => {
         onCancel={() => setOpen(false)}
         onSuccess={() => {
           setOpen(false)
-          if (Router.asPath) {
-            Router.push('/ranking')
-          }
+          refresh()
         }}
       />
     </>

@@ -1,8 +1,8 @@
 import React, { useState } from 'react'
 import { RankingRegistration } from '../interfaces'
 import NewLogFormModal from '../components/NewLogFormModal'
-import Router from 'next/router'
 import { NavigationBarLink } from '../../ui/components/navigation/index'
+import { refresh } from '../../router'
 
 const SubmitPages = ({
   registration,
@@ -25,9 +25,7 @@ const SubmitPages = ({
         onCancel={() => setOpen(false)}
         onSuccess={() => {
           setOpen(false)
-          if (Router.asPath) {
-            Router.push(Router.asPath)
-          }
+          refresh()
         }}
       />
     </>

@@ -8,6 +8,21 @@ import {
   rawContestLog,
 } from './interfaces'
 
+const joinContest = async (
+  contestId: number,
+  languages: string[],
+): Promise<boolean> => {
+  const response = await post(`/rankings`, {
+    body: {
+      contest_id: contestId,
+      languages: languages,
+    },
+    authenticated: true,
+  })
+
+  return response.status === 201
+}
+
 const getRankings = async (contestId?: number): Promise<Ranking[]> => {
   const response = await get(`/rankings?contest_id=${contestId}`)
 
@@ -145,6 +160,7 @@ const getLogsFor = async (
 }
 
 const RankingApi = {
+  joinContest,
   get: getRankings,
   getCurrentRegistration,
   getRankingsRegistration,

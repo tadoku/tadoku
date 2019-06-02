@@ -17,7 +17,7 @@ export const LogIn = () => {
         onSuccess={() => {
           setOpen(false)
           if (Router.asPath) {
-            Router.push(Router.asPath)
+            Router.push('/ranking')
           }
         }}
       />

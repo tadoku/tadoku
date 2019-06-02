@@ -12,6 +12,7 @@ import {
   Input,
   Select,
   LabelForRadio,
+  RadioButton,
 } from '../../ui/components/Form'
 import { Button, StackContainer } from '../../ui/components'
 
@@ -127,15 +128,14 @@ const EditLogForm = ({
       <Group>
         <LabelText>Language</LabelText>
         {registration.languages.map(code => (
-          <LabelForRadio key={code} checked={code === languageCode}>
-            <input
-              type="radio"
-              value={code}
-              checked={code === languageCode}
-              onChange={e => setLanguageCode(e.target.value)}
-            />
-            <span>{languageNameByCode(code)}</span>
-          </LabelForRadio>
+          <RadioButton
+            key={code}
+            type="radio"
+            value={code}
+            checked={code === languageCode}
+            onChange={e => setLanguageCode(e.target.value)}
+            label={languageNameByCode(code)}
+          />
         ))}
       </Group>
       <Group>

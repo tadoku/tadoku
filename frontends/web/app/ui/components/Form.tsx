@@ -1,7 +1,7 @@
 import styled from 'styled-components'
 import Constants from '../Constants'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { SFC, SelectHTMLAttributes } from 'react'
+import { SFC, SelectHTMLAttributes, InputHTMLAttributes } from 'react'
 
 export const Form = styled.form``
 
@@ -26,8 +26,9 @@ interface LabelForRadioProps {
 }
 
 export const LabelForRadio = styled(Label)`
+  display: flex;
+  align-items: center;
   padding: 3px 8px;
-  line-height: 44px;
   height: 44px;
 
   ${({ checked }: LabelForRadioProps) =>
@@ -46,6 +47,38 @@ export const LabelForRadio = styled(Label)`
     margin-left: 8px;
   }
 `
+
+const HiddenRadio = styled.input`
+  display: none;
+`
+
+const StyledRadio = styled.span`
+  display: inline-block;
+  height: 10px;
+  width: 10px;
+  border-radius: 8px;
+  border: 2px solid ${Constants.colors.secondary};
+
+  ${({ checked }: LabelForRadioProps) =>
+    checked &&
+    `
+    background:  ${Constants.colors.primary};
+    border: 2px solid white;
+  `}
+`
+
+export const RadioButton: SFC<
+  InputHTMLAttributes<HTMLInputElement> & {
+    label: string
+  }
+> = ({ label, checked, ...props }) => (
+  <LabelForRadio checked={checked}>
+    <HiddenRadio type="radio" {...props} checked={checked} />
+    <StyledRadio checked={checked} />
+    <span>{label}</span>
+  </LabelForRadio>
+)
+
 export const SelectGroup = styled.div`
   position: relative;
 `

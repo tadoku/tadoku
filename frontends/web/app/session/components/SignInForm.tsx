@@ -1,36 +1,12 @@
 import React, { FormEvent, useState } from 'react'
-import styled from 'styled-components'
-import Constants from '../../ui/Constants'
 import SessionApi from '../api'
 import { connect } from 'react-redux'
 import { Dispatch } from 'redux'
 import * as SessionStore from '../redux'
 import { User } from '../../user/interfaces'
 import { storeUserInLocalStorage } from '../storage'
-
-const Form = styled.form``
-const Label = styled.label`
-  display: block;
-  margin-bottom: 10px;
-`
-const LabelText = styled.span`
-  display: block;
-`
-const Input = styled.input`
-  border: none;
-  background: ${Constants.colors.secondary};
-  padding: 8px 20px;
-  font-size: 1.1em;
-  height: 36px;
-`
-
-const Button = styled.button`
-  border: none;
-  background: ${Constants.colors.secondary};
-  padding: 8px 20px;
-  font-size: 1.1em;
-  height: 36px;
-`
+import { Form, Label, LabelText, Input, Group } from '../../ui/components/Form'
+import { Button, StackContainer } from '../../ui/components'
 
 interface Props {
   setUser: (token: string, user: User) => void
@@ -52,24 +28,34 @@ const SignInForm = ({ setUser }: Props) => {
 
   return (
     <Form onSubmit={submit}>
-      <Label>
-        <LabelText>Email</LabelText>
-        <Input
-          type="email"
-          placeholder="tadoku@example.com"
-          value={email}
-          onChange={e => setEmail(e.target.value)}
-        />
-      </Label>
-      <Label>
-        <LabelText>Password</LabelText>
-        <Input
-          type="password"
-          value={password}
-          onChange={e => setPassword(e.target.value)}
-        />
-      </Label>
-      <Button type="submit">Sign in</Button>
+      <Group>
+        <Label>
+          <LabelText>Email</LabelText>
+          <Input
+            type="email"
+            placeholder="tadoku@example.com"
+            value={email}
+            onChange={e => setEmail(e.target.value)}
+          />
+        </Label>
+      </Group>
+      <Group>
+        <Label>
+          <LabelText>Password</LabelText>
+          <Input
+            type="password"
+            value={password}
+            onChange={e => setPassword(e.target.value)}
+          />
+        </Label>
+      </Group>
+      <Group>
+        <StackContainer>
+          <Button type="submit" primary>
+            Sign in
+          </Button>
+        </StackContainer>
+      </Group>
     </Form>
   )
 }

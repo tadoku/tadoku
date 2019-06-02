@@ -5,8 +5,10 @@ import { State } from '../../store'
 import { Form, Group, Label, Select } from '../../ui/components/Form'
 import { Button, StackContainer } from '../../ui/components'
 import RankingApi from '../api'
+import { Contest } from '../../contest/interfaces'
 
 interface Props {
+  contest: Contest
   onSuccess: () => void
   onCancel: () => void
 }
@@ -16,7 +18,11 @@ const sanitizeLanguageCode = (code: string) => (code === '' ? undefined : code)
 // @TODO: extract out
 const maxLanguages = 3
 
-const EditLogForm = ({ onSuccess: completed, onCancel: cancel }: Props) => {
+const EditLogForm = ({
+  contest,
+  onSuccess: completed,
+  onCancel: cancel,
+}: Props) => {
   const [languages, setLanguages] = useState([undefined] as (
     | string
     | undefined)[])
@@ -28,7 +34,7 @@ const EditLogForm = ({ onSuccess: completed, onCancel: cancel }: Props) => {
 
     const languageCodes = languages.filter(l => !!l) as string[]
 
-    const success = await RankingApi.joinContest(1, languageCodes)
+    const success = await RankingApi.joinContest(contest.id, languageCodes)
 
     if (success) {
       completed()

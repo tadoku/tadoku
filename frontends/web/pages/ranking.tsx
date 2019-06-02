@@ -33,7 +33,7 @@ const Home = ({ latestContest, registration, user }: Props) => {
     update()
   }, [latestContest])
 
-  if (!rankings) {
+  if (!rankings || !latestContest) {
     return <Layout>No ranking found.</Layout>
   }
 

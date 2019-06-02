@@ -7,7 +7,7 @@ import EditLogFormModal from './EditLogFormModal'
 import { State } from '../../store'
 import { connect } from 'react-redux'
 import { User } from '../../user/interfaces'
-import { Button } from '../../ui/components'
+import { Button, ButtonContainer } from '../../ui/components'
 import RankingApi from '../api'
 
 const List = styled.table`
@@ -104,12 +104,18 @@ const ContestLogList = (props: Props) => {
               <Column alignRight>{amountToPages(l.adjustedAmount)}</Column>
               {canEdit && (
                 <Column style={{ width: '1px', whiteSpace: 'nowrap' }}>
-                  <Button onClick={() => setSelectedLog(l)} icon="edit">
-                    Edit
-                  </Button>
-                  <Button onClick={() => deleteLog(l)} icon="trash" destructive>
-                    Delete
-                  </Button>
+                  <ButtonContainer>
+                    <Button onClick={() => setSelectedLog(l)} icon="edit">
+                      Edit
+                    </Button>
+                    <Button
+                      onClick={() => deleteLog(l)}
+                      icon="trash"
+                      destructive
+                    >
+                      Delete
+                    </Button>
+                  </ButtonContainer>
                 </Column>
               )}
             </Row>

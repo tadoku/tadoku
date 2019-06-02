@@ -83,6 +83,10 @@ const ButtonIcon = styled(FontAwesomeIcon)`
   width: 75%;
 `
 
+export const ButtonContainer = styled.div`
+  display: flex;
+`
+
 export const StackContainer = styled.div`
   display: flex;
   flex-direction: column;

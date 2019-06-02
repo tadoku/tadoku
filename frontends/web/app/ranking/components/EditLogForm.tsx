@@ -63,6 +63,10 @@ const EditLogForm = ({
     return null
   }
 
+  if (languageCode === '') {
+    setLanguageCode(registration.languages[0])
+  }
+
   const submit = async (event: FormEvent) => {
     event.preventDefault()
 
@@ -123,7 +127,7 @@ const EditLogForm = ({
       <Group>
         <LabelText>Language</LabelText>
         {registration.languages.map(code => (
-          <LabelForRadio key={code}>
+          <LabelForRadio key={code} checked={code === languageCode}>
             <input
               type="radio"
               value={code}

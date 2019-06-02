@@ -17,20 +17,33 @@ export const Label = styled.label`
 export const LabelText = styled.span`
   display: block;
   font-weight: 600;
-  font-size: 1.3em;
+  font-size: 1.1em;
   margin-bottom: 7px;
 `
 
+interface LabelForRadioProps {
+  checked?: boolean
+}
+
 export const LabelForRadio = styled(Label)`
-  padding: 3px 0;
-  line-height: 1em;
+  padding: 3px 8px;
+  line-height: 44px;
+  height: 44px;
+
+  ${({ checked }: LabelForRadioProps) =>
+    checked &&
+    `
+    background: ${Constants.colors.secondary};
+    color: ${Constants.colors.light};
+    border-radius: 3px;
+
+    span {
+      font-weight: 600;
+    }
+  `}
 
   span {
-    margin-left: 5px;
-  }
-
-  input:checked + span {
-    font-weight: 600;
+    margin-left: 8px;
   }
 `
 export const SelectGroup = styled.div`
@@ -40,7 +53,7 @@ export const SelectGroup = styled.div`
 const SelectArrow = styled(FontAwesomeIcon)`
   font-size: 12px;
   position: absolute;
-  top: 12px;
+  top: 16px;
   right: 16px;
   color: #434b67;
   pointer-events: none;
@@ -66,7 +79,7 @@ const StyledSelect = styled.select`
     0px 2px 3px 0px rgba(0, 0, 0, 0.08);
   padding: 4px 20px 4px 12px;
   font-size: 1.1em;
-  height: 36px;
+  height: 44px;
   border-radius: 3px;
   width: 100%;
   box-sizing: border-box;
@@ -79,7 +92,7 @@ export const Input = styled.input`
     0px 2px 3px 0px rgba(0, 0, 0, 0.08);
   padding: 4px 12px;
   font-size: 1.1em;
-  height: 36px;
+  height: 44px;
   border-radius: 3px;
   width: 100%;
   box-sizing: border-box;

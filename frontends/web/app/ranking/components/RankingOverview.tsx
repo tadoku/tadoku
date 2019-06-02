@@ -3,8 +3,6 @@ import Layout from '../../ui/components/Layout'
 import { Ranking, RankingRegistration } from '../../ranking/interfaces'
 import RankingList from '../../ranking/components/List'
 import RankingApi from '../../ranking/api'
-import { connect } from 'react-redux'
-import { State } from '../../store'
 import { Contest } from '../../contest/interfaces'
 import { Button } from '../../ui/components'
 import styled from 'styled-components'
@@ -72,13 +70,7 @@ const RankingOverview = ({ contest, registration, user }: Props) => {
   )
 }
 
-const mapStateToProps = (state: State) => ({
-  contest: state.contest.latestContest,
-  registration: state.ranking.registration,
-  user: state.session.user,
-})
-
-export default connect(mapStateToProps)(RankingOverview)
+export default RankingOverview
 
 const Container = styled.div`
   display: flex;

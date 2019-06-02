@@ -142,7 +142,9 @@ const EditLogForm = ({
           <Button type="submit" disabled={!changed} primary>
             Save changes
           </Button>
-          <Button onClick={cancel}>Cancel</Button>
+          <Button type="button" onClick={cancel}>
+            Cancel
+          </Button>
         </StackContainer>
       </Group>
     </Form>

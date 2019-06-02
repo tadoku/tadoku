@@ -61,7 +61,9 @@ const LogInForm = ({
           <Button type="submit" primary>
             Sign in
           </Button>
-          <Button onClick={cancel}>Cancel</Button>
+          <Button type="button" onClick={cancel}>
+            Cancel
+          </Button>
         </StackContainer>
       </Group>
     </Form>

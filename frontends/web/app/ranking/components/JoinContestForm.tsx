@@ -69,7 +69,7 @@ const EditLogForm = ({ onSuccess: completed, onCancel: cancel }: Props) => {
         ))}
 
         {languages.length < maxLanguages && (
-          <Button onClick={addLanguage} icon="plus" plain small>
+          <Button type="button" onClick={addLanguage} icon="plus" plain small>
             Add language
           </Button>
         )}
@@ -79,7 +79,9 @@ const EditLogForm = ({ onSuccess: completed, onCancel: cancel }: Props) => {
           <Button type="submit" primary>
             Join
           </Button>
-          <Button onClick={cancel}>Nevermind, next time!</Button>
+          <Button type="button" onClick={cancel}>
+            Nevermind, next time!
+          </Button>
         </StackContainer>
       </Group>
     </Form>

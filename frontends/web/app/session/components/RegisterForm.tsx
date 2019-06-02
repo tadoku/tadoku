@@ -81,6 +81,7 @@ const RegisterForm = ({
           <Button type="submit" primary>
             Create account
           </Button>
+          <Button onClick={cancel}>Cancel</Button>
         </StackContainer>
       </Group>
     </Form>

@@ -6,6 +6,8 @@ import RankingApi from '../app/ranking/api'
 import { connect } from 'react-redux'
 import { State } from '../app/store'
 import { Contest } from '../app/contest/interfaces'
+import { Button } from '../app/ui/components'
+import styled from 'styled-components'
 
 interface Props {
   latestContest: Contest | undefined
@@ -31,7 +33,10 @@ const Home = ({ latestContest }: Props) => {
 
   return (
     <Layout>
-      <h1>Ranking</h1>
+      <Container>
+        <h1>Ranking</h1>
+        <Button primary>Join contest</Button>
+      </Container>
       <RankingList rankings={rankings} />
     </Layout>
   )
@@ -42,3 +47,9 @@ const mapStateToProps = (state: State) => ({
 })
 
 export default connect(mapStateToProps)(Home)
+
+const Container = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+`

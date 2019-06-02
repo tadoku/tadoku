@@ -30,13 +30,15 @@ export const LabelForRadio = styled(Label)`
   align-items: center;
   padding: 3px 8px;
   height: 44px;
+  transition: all 0.2s ease;
 
   ${({ checked }: LabelForRadioProps) =>
     checked &&
     `
-    background: ${Constants.colors.secondary};
-    color: ${Constants.colors.light};
+    background: ${Constants.colors.lightGray};
     border-radius: 3px;
+    box-shadow: inset 0px 0px 2px rgba(0, 0, 0, 0.08),
+      0px 2px 3px 0px rgba(0, 0, 0, 0.08);
 
     span {
       font-weight: 600;
@@ -58,6 +60,7 @@ const StyledRadio = styled.span`
   width: 10px;
   border-radius: 8px;
   border: 2px solid ${Constants.colors.secondary};
+  transition: all 0.2s ease;
 
   ${({ checked }: LabelForRadioProps) =>
     checked &&

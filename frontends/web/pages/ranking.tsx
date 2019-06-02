@@ -9,6 +9,7 @@ import { Contest } from '../app/contest/interfaces'
 import { Button } from '../app/ui/components'
 import styled from 'styled-components'
 import { User } from '../app/user/interfaces'
+import JoinContestModal from '../app/ranking/components/JoinContestModal'
 
 interface Props {
   latestContest: Contest | undefined
@@ -18,6 +19,8 @@ interface Props {
 
 const Home = ({ latestContest, registration, user }: Props) => {
   const [rankings, setRankings] = useState([] as Ranking[])
+  const [joinModalOpen, setJoinModalOpen] = useState(false)
+
   useEffect(() => {
     if (!latestContest) {
       return
@@ -48,9 +51,16 @@ const Home = ({ latestContest, registration, user }: Props) => {
       <Container>
         <h1>Ranking</h1>
         {canJoin && (
-          <Button primary large>
-            Join contest
-          </Button>
+          <>
+            <Button primary large onClick={() => setJoinModalOpen(true)}>
+              Join contest
+            </Button>
+            <JoinContestModal
+              isOpen={joinModalOpen}
+              onSuccess={() => setJoinModalOpen(false)}
+              onCancel={() => setJoinModalOpen(false)}
+            />
+          </>
         )}
       </Container>
       <RankingList rankings={rankings} />

@@ -22,7 +22,7 @@ interface Props {
   registration: RankingRegistration | undefined
 }
 
-const NavMenu = ({ user, registration }: Props) => {
+const NavigationBar = ({ user, registration }: Props) => {
   const [hasMounted, setHasMounted] = useState(false)
 
   useEffect(() => {
@@ -49,4 +49,4 @@ const mapStateToProps = (state: State) => ({
   registration: state.ranking.registration,
 })
 
-export default connect(mapStateToProps)(NavMenu)
+export default connect(mapStateToProps)(NavigationBar)

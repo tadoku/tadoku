@@ -2,7 +2,7 @@ import React from 'react'
 import Link from 'next/link'
 import styled from 'styled-components'
 import Constants from '../Constants'
-import NavMenu from './navigation/Menu'
+import NavigationBar from './navigation/NavigationBar'
 
 const LogoType = styled.h1`
   color: ${Constants.colors.dark};
@@ -25,7 +25,7 @@ const Header = () => (
         <LogoType>Tadoku</LogoType>
       </a>
     </Link>
-    <NavMenu />
+    <NavigationBar />
   </Container>
 )
 

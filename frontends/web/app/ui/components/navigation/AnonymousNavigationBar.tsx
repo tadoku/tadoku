@@ -1,6 +1,6 @@
 import React from 'react'
 import Link from 'next/link'
-import { NavLink } from './Menu'
+import { NavLink } from './NavigationBar'
 
 export const AnonymousNavigationBar = () => (
   <>

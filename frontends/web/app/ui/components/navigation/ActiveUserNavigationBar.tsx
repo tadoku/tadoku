@@ -2,7 +2,7 @@ import React from 'react'
 import Link from 'next/link'
 import { RankingRegistration } from '../../../ranking/interfaces'
 import { SubmitPages } from '../../../ranking/navigation/SubmitPages'
-import { NavLink } from './Menu'
+import { NavLink } from './NavigationBar'
 
 export const ActiveUserNavigationBar = ({
   registration,

@@ -12,11 +12,6 @@ const StyledNav = styled.nav`
   align-items: center;
 `
 
-export const NavLink = styled.a`
-  padding: 10px;
-  display: block;
-`
-
 interface Props {
   user: User | undefined
   registration: RankingRegistration | undefined

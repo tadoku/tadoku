@@ -1,14 +1,14 @@
 import React from 'react'
 import Link from 'next/link'
-import { NavLink } from './NavigationBar'
+import { NavigationBarLink } from './index'
 
 export const AnonymousNavigationBar = () => (
   <>
     <Link href="/sign-in">
-      <NavLink href="">Sign in</NavLink>
+      <NavigationBarLink href="">Sign in</NavigationBarLink>
     </Link>
     <Link href="/register">
-      <NavLink href="">Register</NavLink>
+      <NavigationBarLink href="">Register</NavigationBarLink>
     </Link>
   </>
 )

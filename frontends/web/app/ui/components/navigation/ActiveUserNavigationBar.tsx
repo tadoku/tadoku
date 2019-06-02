@@ -2,7 +2,7 @@ import React from 'react'
 import Link from 'next/link'
 import { RankingRegistration } from '../../../ranking/interfaces'
 import { SubmitPages } from '../../../ranking/navigation/SubmitPages'
-import { NavLink } from './NavigationBar'
+import { NavigationBarLink } from './index'
 
 export const ActiveUserNavigationBar = ({
   registration,
@@ -12,7 +12,7 @@ export const ActiveUserNavigationBar = ({
   <>
     <SubmitPages registration={registration} />
     <Link href="/sign-out">
-      <NavLink href="">Sign out</NavLink>
+      <NavigationBarLink href="">Sign out</NavigationBarLink>
     </Link>
   </>
 )

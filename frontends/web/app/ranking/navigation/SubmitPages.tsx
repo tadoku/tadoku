@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import { RankingRegistration } from '../interfaces'
 import NewLogFormModal from '../components/NewLogFormModal'
 import Router from 'next/router'
-import { NavLink } from '../../ui/components/navigation/NavigationBar'
+import { NavigationBarLink } from '../../ui/components/navigation/index'
 
 export const SubmitPages = ({
   registration,
@@ -17,9 +17,9 @@ export const SubmitPages = ({
 
   return (
     <>
-      <NavLink href="#" onClick={() => setOpen(true)}>
+      <NavigationBarLink href="#" onClick={() => setOpen(true)}>
         Submit pages
-      </NavLink>
+      </NavigationBarLink>
       <NewLogFormModal
         isOpen={open}
         onCancel={() => setOpen(false)}

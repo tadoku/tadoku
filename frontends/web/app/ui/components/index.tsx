@@ -65,6 +65,8 @@ export const StackContainer = styled.div`
   > * {
     width: 100%;
     box-sizing: border-box;
+    margin-left: 0;
+    margin-right: 0;
   }
 
   > * + * {

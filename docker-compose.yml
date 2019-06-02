@@ -6,6 +6,7 @@ services:
     image: tadoku/api
     container_name: tadoku-api
     network_mode: bridge
+    restart: always
     environment:
       VIRTUAL_HOST: api.tadoku.app
       VIRTUAL_PORT: $APP_PORT

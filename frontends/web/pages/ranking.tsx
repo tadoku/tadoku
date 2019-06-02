@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import Layout from '../app/ui/components/Layout'
-import { Ranking } from '../app/ranking/interfaces'
+import { Ranking, RankingRegistration } from '../app/ranking/interfaces'
 import RankingList from '../app/ranking/components/List'
 import RankingApi from '../app/ranking/api'
 import { connect } from 'react-redux'
@@ -11,9 +11,10 @@ import styled from 'styled-components'
 
 interface Props {
   latestContest: Contest | undefined
+  registration: RankingRegistration | undefined
 }
 
-const Home = ({ latestContest }: Props) => {
+const Home = ({ latestContest, registration }: Props) => {
   const [rankings, setRankings] = useState([] as Ranking[])
   useEffect(() => {
     if (!latestContest) {
@@ -31,13 +32,23 @@ const Home = ({ latestContest }: Props) => {
     return <Layout>No ranking found.</Layout>
   }
 
+  // @TODO: extract this business logic
+  const canJoin =
+    latestContest &&
+    latestContest.open &&
+    latestContest.end > new Date() &&
+    ((registration && registration.contestId !== latestContest.id) ||
+      !registration)
+
   return (
     <Layout>
       <Container>
         <h1>Ranking</h1>
-        <Button primary large>
-          Join contest
-        </Button>
+        {canJoin && (
+          <Button primary large>
+            Join contest
+          </Button>
+        )}
       </Container>
       <RankingList rankings={rankings} />
     </Layout>
@@ -46,6 +57,7 @@ const Home = ({ latestContest }: Props) => {
 
 const mapStateToProps = (state: State) => ({
   latestContest: state.contest.latestContest,
+  registration: state.ranking.registration,
 })
 
 export default connect(mapStateToProps)(Home)

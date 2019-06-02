@@ -38,7 +38,13 @@ const register = async (payload: {
   password: string
   displayName: string
 }): Promise<boolean> => {
-  const response = await post(`/register`, { body: payload })
+  const response = await post(`/register`, {
+    body: {
+      email: payload.email,
+      password: payload.password,
+      display_name: payload.displayName,
+    },
+  })
 
   return response.status === 201
 }

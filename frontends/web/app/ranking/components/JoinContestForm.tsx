@@ -4,7 +4,6 @@ import { connect } from 'react-redux'
 import { State } from '../../store'
 import { Form, Group, Label, LabelText, Select } from '../../ui/components/Form'
 import { Button, StackContainer } from '../../ui/components'
-import { Language } from '../interfaces'
 
 interface Props {
   onSuccess: () => void
@@ -24,6 +23,9 @@ const EditLogForm = ({ onSuccess: completed, onCancel: cancel }: Props) => {
     event.preventDefault()
 
     // @TODO: implement
+    if (false) {
+      completed()
+    }
   }
 
   return (

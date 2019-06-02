@@ -20,6 +20,7 @@ interface Props {
 const Home = ({ latestContest, registration, user }: Props) => {
   const [rankings, setRankings] = useState([] as Ranking[])
   const [joinModalOpen, setJoinModalOpen] = useState(false)
+  const [updateCount, setUpdateCount] = useState(0)
 
   useEffect(() => {
     if (!latestContest) {
@@ -31,7 +32,7 @@ const Home = ({ latestContest, registration, user }: Props) => {
       setRankings(payload)
     }
     update()
-  }, [latestContest])
+  }, [latestContest, updateCount])
 
   if (!rankings || !latestContest) {
     return <Layout>No ranking found.</Layout>
@@ -56,8 +57,12 @@ const Home = ({ latestContest, registration, user }: Props) => {
               Join contest
             </Button>
             <JoinContestModal
+              contest={latestContest}
               isOpen={joinModalOpen}
-              onSuccess={() => setJoinModalOpen(false)}
+              onSuccess={() => {
+                setJoinModalOpen(false)
+                setUpdateCount(updateCount + 1)
+              }}
               onCancel={() => setJoinModalOpen(false)}
             />
           </>

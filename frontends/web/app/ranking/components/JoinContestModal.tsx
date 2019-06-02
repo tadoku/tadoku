@@ -1,5 +1,6 @@
 import React from 'react'
 import Modal from '../../ui/components/Modal'
+import JoinContestForm from './JoinContestForm'
 
 const JoinContestModal = ({
   isOpen,
@@ -16,7 +17,7 @@ const JoinContestModal = ({
       onRequestClose={onCancel}
       contentLabel="Join contest"
     >
-      TODO
+      <JoinContestForm onSuccess={onSuccess} onCancel={onCancel} />
     </Modal>
   )
 }

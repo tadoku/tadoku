@@ -3,6 +3,7 @@ import Constants from '../Constants'
 import { SFC, ButtonHTMLAttributes } from 'react'
 import { IconProp } from '@fortawesome/fontawesome-svg-core'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import ReactModal from 'react-modal'
 
 interface ButtonProps {
   primary?: boolean
@@ -90,3 +91,9 @@ export const modalStyles = {
     backgroundColor: 'rgba(0, 0, 0, 0.4)',
   },
 }
+
+export const Modal: SFC<ReactModal.Props> = ({ children, style, ...props }) => (
+  <ReactModal style={style ? style : modalStyles} {...props}>
+    {children}
+  </ReactModal>
+)

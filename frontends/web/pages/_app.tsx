@@ -9,23 +9,7 @@ import * as SessionStore from '../app/session/redux'
 import AppEffects from '../app/AppEffects'
 import 'react-vis/dist/style.css'
 import Modal from 'react-modal'
-import { createGlobalStyle } from 'styled-components'
-import Constants from '../app/ui/Constants'
-
-// Setup icons
-import { library } from '@fortawesome/fontawesome-svg-core'
-import {
-  faChevronDown,
-  faEdit,
-  faTrash,
-} from '@fortawesome/free-solid-svg-icons'
-library.add(faChevronDown, faEdit, faTrash)
-
-createGlobalStyle`
-  body {
-    color: ${Constants.colors.dark};
-  }
-`
+import '../app/ui/setup'
 
 class MyApp extends App<{ store: Store }> {
   static async getInitialProps({ Component, ctx }: NextAppContext) {

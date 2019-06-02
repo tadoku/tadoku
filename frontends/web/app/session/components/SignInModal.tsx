@@ -18,7 +18,7 @@ const NewLogFormModal = ({
       contentLabel="Submit new pages"
     >
       <h2>Sign in</h2>
-      <SignInForm />
+      <SignInForm onSuccess={onSuccess} onCancel={onCancel} />
     </Modal>
   )
 }

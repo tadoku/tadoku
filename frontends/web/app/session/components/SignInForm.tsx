@@ -10,9 +10,15 @@ import { Button, StackContainer } from '../../ui/components'
 
 interface Props {
   setUser: (token: string, user: User) => void
+  onSuccess: () => void
+  onCancel: () => void
 }
 
-const SignInForm = ({ setUser }: Props) => {
+const SignInForm = ({
+  setUser,
+  onSuccess: complete,
+  onCancel: cancel,
+}: Props) => {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
 
@@ -23,6 +29,7 @@ const SignInForm = ({ setUser }: Props) => {
 
     if (response) {
       setUser(response.token, response.user)
+      complete()
     }
   }
 

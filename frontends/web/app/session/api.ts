@@ -1,27 +1,27 @@
 import { User, RawUser } from '../user/interfaces'
 import { post } from '../api'
 
-interface SignInResponse {
+interface LogInResponse {
   token: string
   user: User
 }
 
-interface rawSignInResponse {
+interface rawLogInResponse {
   token: string
   user: RawUser
 }
 
-const signIn = async (payload: {
+const logIn = async (payload: {
   email: string
   password: string
-}): Promise<SignInResponse | undefined> => {
+}): Promise<LogInResponse | undefined> => {
   const response = await post(`/login`, { body: payload })
 
   if (response.status !== 200) {
     return undefined
   }
 
-  const data: rawSignInResponse = await response.json()
+  const data: rawLogInResponse = await response.json()
 
   return {
     token: data.token,
@@ -44,7 +44,7 @@ const register = async (payload: {
 }
 
 const SessionApi = {
-  signIn,
+  logIn,
   register,
 }
 

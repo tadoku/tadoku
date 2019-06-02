@@ -1,17 +1,17 @@
 import React, { useState } from 'react'
-import SignInModal from '../components/SignInModal'
+import LogInModal from '../components/LogInModal'
 import Router from 'next/router'
 import { NavigationBarLink } from '../../ui/components/navigation/index'
 
-export const SignIn = () => {
+export const LogIn = () => {
   const [open, setOpen] = useState(false)
 
   return (
     <>
       <NavigationBarLink href="#" onClick={() => setOpen(true)}>
-        Sign in
+        Log in
       </NavigationBarLink>
-      <SignInModal
+      <LogInModal
         isOpen={open}
         onCancel={() => setOpen(false)}
         onSuccess={() => {

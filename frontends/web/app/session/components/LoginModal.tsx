@@ -1,8 +1,8 @@
 import React from 'react'
-import SignInForm from './SignInForm'
+import LogInForm from './LogInForm'
 import Modal from '../../ui/components/Modal'
 
-const SignInModal = ({
+const LogInModal = ({
   isOpen,
   onSuccess,
   onCancel,
@@ -13,9 +13,9 @@ const SignInModal = ({
 }) => {
   return (
     <Modal isOpen={isOpen} onRequestClose={onCancel} contentLabel="Sign in">
-      <SignInForm onSuccess={onSuccess} onCancel={onCancel} />
+      <LogInForm onSuccess={onSuccess} onCancel={onCancel} />
     </Modal>
   )
 }
 
-export default SignInModal
+export default LogInModal

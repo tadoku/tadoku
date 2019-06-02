@@ -33,7 +33,7 @@ class MyApp extends App<{ store: Store }> {
 
     if (payload) {
       this.props.store.dispatch({
-        type: SessionStore.ActionTypes.SessionSignIn,
+        type: SessionStore.ActionTypes.SessionLogIn,
         payload,
       })
     }

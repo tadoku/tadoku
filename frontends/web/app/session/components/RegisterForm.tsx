@@ -34,7 +34,7 @@ const RegisterForm = ({
       return
     }
 
-    const response = await SessionApi.signIn({ email, password })
+    const response = await SessionApi.logIn({ email, password })
 
     if (response) {
       setUser(response.token, response.user)
@@ -94,7 +94,7 @@ const mapDispatchToProps = (dispatch: Dispatch<SessionStore.Action>) => ({
     storeUserInLocalStorage(payload)
 
     dispatch({
-      type: SessionStore.ActionTypes.SessionSignIn,
+      type: SessionStore.ActionTypes.SessionLogIn,
       payload,
     })
   },

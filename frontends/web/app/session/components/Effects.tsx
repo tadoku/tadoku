@@ -16,7 +16,7 @@ const mapDispatchToProps = (dispatch: Dispatch<SessionStore.Action>) => ({
 
     if (payload) {
       dispatch({
-        type: SessionStore.ActionTypes.SessionSignIn,
+        type: SessionStore.ActionTypes.SessionLogIn,
         payload,
       })
     }

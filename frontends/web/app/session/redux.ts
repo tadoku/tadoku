@@ -8,12 +8,12 @@ export const initialState = {
 // Actions
 
 export enum ActionTypes {
-  SessionSignIn = '@session/sign-in',
+  SessionLogIn = '@session/sign-in',
   SessionSignOut = '@session/sign-out',
 }
 
-export interface SessionSignIn {
-  type: typeof ActionTypes.SessionSignIn
+export interface SessionLogIn {
+  type: typeof ActionTypes.SessionLogIn
   payload: {
     token: string
     user: User
@@ -24,14 +24,14 @@ export interface SessionSignOut {
   type: typeof ActionTypes.SessionSignOut
 }
 
-export type Action = SessionSignIn | SessionSignOut
+export type Action = SessionLogIn | SessionSignOut
 
 // REDUCER
 
 export const reducer = (state = initialState, action: Action) => {
   switch (action.type) {
-    case ActionTypes.SessionSignIn:
-      const payload = (action as SessionSignIn).payload
+    case ActionTypes.SessionLogIn:
+      const payload = (action as SessionLogIn).payload
       return { ...state, token: payload.token, user: payload.user }
     case ActionTypes.SessionSignOut:
       return { ...state, token: undefined, user: undefined }

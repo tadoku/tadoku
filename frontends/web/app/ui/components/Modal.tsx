@@ -13,6 +13,7 @@ const modalStyles = {
     border: 0,
     boxShadow: '4px 15px 20px 1px rgba(0, 0, 0, 0.28)',
     padding: '40px',
+    minWidth: '200px',
   },
   overlay: {
     backgroundColor: 'rgba(0, 0, 0, 0.4)',

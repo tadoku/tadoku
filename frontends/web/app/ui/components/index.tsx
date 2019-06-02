@@ -6,6 +6,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 
 interface ButtonProps {
   primary?: boolean
+  large?: boolean
   destructive?: boolean
   icon?: IconProp
 }
@@ -37,6 +38,15 @@ const StyledButton = styled.button`
     `
     color: ${Constants.colors.light};
     background-color: ${Constants.colors.primary};
+  `}
+
+  ${({ large }: ButtonProps) =>
+    large &&
+    `
+    height: 48px;
+    font-size: 1.4em;
+    padding: 8px 24px;
+    border-radius: 4px;
   `}
 
   ${({ destructive }: ButtonProps) =>

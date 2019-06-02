@@ -35,7 +35,9 @@ const Home = ({ latestContest }: Props) => {
     <Layout>
       <Container>
         <h1>Ranking</h1>
-        <Button primary>Join contest</Button>
+        <Button primary large>
+          Join contest
+        </Button>
       </Container>
       <RankingList rankings={rankings} />
     </Layout>

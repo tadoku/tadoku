@@ -5,15 +5,14 @@ import { connect } from 'react-redux'
 import { State } from '../../store'
 import { User } from '../../user/interfaces'
 import { RankingRegistration } from '../../ranking/interfaces'
-import NewLogFormModal from '../../ranking/components/NewLogFormModal'
-import Router from 'next/router'
+import { SubmitPages } from '../../ranking/navigation/SubmitPages'
 
 const StyledNav = styled.nav`
   display: flex;
   align-items: center;
 `
 
-const NavLink = styled.a`
+export const NavLink = styled.a`
   padding: 10px;
   display: block;
 `
@@ -22,34 +21,14 @@ const LoggedInNavigation = ({
   registration,
 }: {
   registration: RankingRegistration | undefined
-}) => {
-  const [open, setOpen] = useState(false)
-
-  return (
-    <>
-      {registration && (
-        <>
-          <NavLink href="#" onClick={() => setOpen(true)}>
-            Submit pages
-          </NavLink>
-          <NewLogFormModal
-            isOpen={open}
-            onCancel={() => setOpen(false)}
-            onSuccess={() => {
-              setOpen(false)
-              if (Router.asPath) {
-                Router.push(Router.asPath)
-              }
-            }}
-          />
-        </>
-      )}
-      <Link href="/sign-out">
-        <NavLink href="">Sign out</NavLink>
-      </Link>
-    </>
-  )
-}
+}) => (
+  <>
+    <SubmitPages registration={registration} />
+    <Link href="/sign-out">
+      <NavLink href="">Sign out</NavLink>
+    </Link>
+  </>
+)
 
 const LoggedOutNavigation = () => (
   <>

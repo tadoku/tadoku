@@ -31,6 +31,7 @@ const Home = ({ latestContest }: Props) => {
 
   return (
     <Layout>
+      <h1>Ranking</h1>
       <RankingList rankings={rankings} />
     </Layout>
   )

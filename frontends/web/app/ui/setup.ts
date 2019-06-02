@@ -7,8 +7,9 @@ import {
   faChevronDown,
   faEdit,
   faTrash,
+  faPlus,
 } from '@fortawesome/free-solid-svg-icons'
-library.add(faChevronDown, faEdit, faTrash)
+library.add(faChevronDown, faEdit, faTrash, faPlus)
 
 // Global styles
 createGlobalStyle`

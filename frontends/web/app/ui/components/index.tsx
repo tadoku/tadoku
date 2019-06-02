@@ -8,6 +8,7 @@ interface ButtonProps {
   primary?: boolean
   large?: boolean
   destructive?: boolean
+  plain?: boolean
   icon?: IconProp
 }
 
@@ -29,9 +30,21 @@ const StyledButton = styled.button`
   font-size: 1.1em;
   font-weight: 600;
   height: 44px;
+  line-height: 36px;
   border-radius: 3px;
   box-sizing: border-box;
   margin: 0 5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  ${({ plain }: ButtonProps) =>
+    plain &&
+    `
+    background-color: transparent;
+    box-shadow: none;
+    border: none;
+  `}
 
   ${({ primary }: ButtonProps) =>
     primary &&

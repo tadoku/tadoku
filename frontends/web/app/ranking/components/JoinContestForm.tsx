@@ -26,7 +26,7 @@ const EditLogForm = ({ onSuccess: completed, onCancel: cancel }: Props) => {
 
     // @TODO: add validation
 
-    const languageCodes = languages.filter(l => l != undefined) as string[]
+    const languageCodes = languages.filter(l => !!l) as string[]
 
     const success = await RankingApi.joinContest(1, languageCodes)
 
@@ -60,7 +60,7 @@ const EditLogForm = ({ onSuccess: completed, onCancel: cancel }: Props) => {
                 )
               }
             >
-              <option value={undefined}>Choose a language...</option>
+              <option value="">Choose a language...</option>
               {AllLanguages.map(l => (
                 <option value={l.code}>{languageNameByCode(l.code)}</option>
               ))}

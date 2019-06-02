@@ -2,7 +2,7 @@ import React from 'react'
 import Link from 'next/link'
 import styled from 'styled-components'
 import Constants from '../Constants'
-import NavMenu from './NavMenu'
+import NavMenu from './navigation/NavMenu'
 
 const LogoType = styled.h1`
   color: ${Constants.colors.dark};

@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import { RankingRegistration } from '../interfaces'
 import NewLogFormModal from '../components/NewLogFormModal'
 import Router from 'next/router'
-import { NavLink } from '../../ui/components/NavMenu'
+import { NavLink } from '../../ui/components/navigation/NavMenu'
 
 export const SubmitPages = ({
   registration,

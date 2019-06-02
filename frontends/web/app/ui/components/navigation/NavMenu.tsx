@@ -2,10 +2,10 @@ import React, { useEffect, useState } from 'react'
 import Link from 'next/link'
 import styled from 'styled-components'
 import { connect } from 'react-redux'
-import { State } from '../../store'
-import { User } from '../../user/interfaces'
-import { RankingRegistration } from '../../ranking/interfaces'
-import { SubmitPages } from '../../ranking/navigation/SubmitPages'
+import { State } from '../../../store'
+import { User } from '../../../user/interfaces'
+import { RankingRegistration } from '../../../ranking/interfaces'
+import { SubmitPages } from '../../../ranking/navigation/SubmitPages'
 
 const StyledNav = styled.nav`
   display: flex;

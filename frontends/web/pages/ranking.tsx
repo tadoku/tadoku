@@ -8,13 +8,15 @@ import { State } from '../app/store'
 import { Contest } from '../app/contest/interfaces'
 import { Button } from '../app/ui/components'
 import styled from 'styled-components'
+import { User } from '../app/user/interfaces'
 
 interface Props {
   latestContest: Contest | undefined
   registration: RankingRegistration | undefined
+  user: User | undefined
 }
 
-const Home = ({ latestContest, registration }: Props) => {
+const Home = ({ latestContest, registration, user }: Props) => {
   const [rankings, setRankings] = useState([] as Ranking[])
   useEffect(() => {
     if (!latestContest) {
@@ -34,6 +36,7 @@ const Home = ({ latestContest, registration }: Props) => {
 
   // @TODO: extract this business logic
   const canJoin =
+    user &&
     latestContest &&
     latestContest.open &&
     latestContest.end > new Date() &&
@@ -58,6 +61,7 @@ const Home = ({ latestContest, registration }: Props) => {
 const mapStateToProps = (state: State) => ({
   latestContest: state.contest.latestContest,
   registration: state.ranking.registration,
+  user: state.session.user,
 })
 
 export default connect(mapStateToProps)(Home)

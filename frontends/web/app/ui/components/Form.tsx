@@ -13,6 +13,10 @@ export const Group = styled.div`
 
 export const Label = styled.label`
   display: block;
+
+  & + & {
+    margin-top: 12px;
+  }
 `
 export const LabelText = styled.span`
   display: block;

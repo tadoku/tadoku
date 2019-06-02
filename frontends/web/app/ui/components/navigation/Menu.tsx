@@ -6,6 +6,7 @@ import { State } from '../../../store'
 import { User } from '../../../user/interfaces'
 import { RankingRegistration } from '../../../ranking/interfaces'
 import { SubmitPages } from '../../../ranking/navigation/SubmitPages'
+import { LoggedInMenu } from './LoggedinMenu'
 
 const StyledNav = styled.nav`
   display: flex;
@@ -16,19 +17,6 @@ export const NavLink = styled.a`
   padding: 10px;
   display: block;
 `
-
-const LoggedInNavigation = ({
-  registration,
-}: {
-  registration: RankingRegistration | undefined
-}) => (
-  <>
-    <SubmitPages registration={registration} />
-    <Link href="/sign-out">
-      <NavLink href="">Sign out</NavLink>
-    </Link>
-  </>
-)
 
 const LoggedOutNavigation = () => (
   <>
@@ -60,7 +48,7 @@ const NavMenu = ({ user, registration }: Props) => {
   return (
     <StyledNav>
       {user ? (
-        <LoggedInNavigation registration={registration} />
+        <LoggedInMenu registration={registration} />
       ) : (
         <LoggedOutNavigation />
       )}

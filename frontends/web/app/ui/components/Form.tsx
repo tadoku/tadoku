@@ -25,7 +25,7 @@ interface LabelForRadioProps {
   checked?: boolean
 }
 
-export const LabelForRadio = styled(Label)`
+const RadioLabel = styled(Label)`
   display: flex;
   align-items: center;
   padding: 3px 8px;
@@ -75,11 +75,11 @@ export const RadioButton: SFC<
     label: string
   }
 > = ({ label, checked, ...props }) => (
-  <LabelForRadio checked={checked}>
+  <RadioLabel checked={checked}>
     <HiddenRadio type="radio" {...props} checked={checked} />
     <StyledRadio checked={checked} />
     <span>{label}</span>
-  </LabelForRadio>
+  </RadioLabel>
 )
 
 export const SelectGroup = styled.div`

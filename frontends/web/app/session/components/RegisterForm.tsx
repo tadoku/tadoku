@@ -10,9 +10,15 @@ import { Button, StackContainer } from '../../ui/components'
 
 interface Props {
   setUser: (token: string, user: User) => void
+  onSuccess: () => void
+  onCancel: () => void
 }
 
-const RegisterForm = ({ setUser }: Props) => {
+const RegisterForm = ({
+  setUser,
+  onSuccess: complete,
+  onCancel: cancel,
+}: Props) => {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [displayName, setDisplayName] = useState('')
@@ -32,6 +38,7 @@ const RegisterForm = ({ setUser }: Props) => {
 
     if (response) {
       setUser(response.token, response.user)
+      complete()
     }
   }
 

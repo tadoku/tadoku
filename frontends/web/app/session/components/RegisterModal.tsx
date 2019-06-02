@@ -17,7 +17,7 @@ const RegisterModal = ({
       onRequestClose={onCancel}
       contentLabel="Create a new account"
     >
-      <RegisterForm />
+      <RegisterForm onSuccess={onSuccess} onCancel={onCancel} />
     </Modal>
   )
 }

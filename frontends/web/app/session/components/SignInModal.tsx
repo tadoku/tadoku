@@ -2,7 +2,7 @@ import React from 'react'
 import SignInForm from './SignInForm'
 import Modal from '../../ui/components/Modal'
 
-const NewLogFormModal = ({
+const SignInModal = ({
   isOpen,
   onSuccess,
   onCancel,
@@ -23,4 +23,4 @@ const NewLogFormModal = ({
   )
 }
 
-export default NewLogFormModal
+export default SignInModal

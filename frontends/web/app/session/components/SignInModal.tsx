@@ -13,7 +13,6 @@ const SignInModal = ({
 }) => {
   return (
     <Modal isOpen={isOpen} onRequestClose={onCancel} contentLabel="Sign in">
-      <h2>Sign in</h2>
       <SignInForm onSuccess={onSuccess} onCancel={onCancel} />
     </Modal>
   )

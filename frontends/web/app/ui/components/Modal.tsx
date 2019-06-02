@@ -1,5 +1,6 @@
 import React, { SFC } from 'react'
 import ReactModal from 'react-modal'
+import styled from 'styled-components'
 
 const modalStyles = {
   content: {
@@ -18,8 +19,15 @@ const modalStyles = {
   },
 }
 
+const ModalHeading = styled.h2`
+  margin-top: 0;
+  text-transform: uppercase;
+  text-align: center;
+`
+
 const Modal: SFC<ReactModal.Props> = ({ children, style, ...props }) => (
   <ReactModal style={style ? style : modalStyles} {...props}>
+    {props.contentLabel && <ModalHeading>{props.contentLabel}</ModalHeading>}
     {children}
   </ReactModal>
 )

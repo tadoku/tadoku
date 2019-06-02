@@ -14,6 +14,10 @@ const modalStyles = {
     boxShadow: '4px 15px 20px 1px rgba(0, 0, 0, 0.28)',
     padding: '40px',
     minWidth: '200px',
+    maxWidth: '100vh',
+    maxHeight: 'calc(100vh + 4px)',
+    boxSizing: 'border-box',
+    borderRadius: '4px',
   },
   overlay: {
     backgroundColor: 'rgba(0, 0, 0, 0.4)',

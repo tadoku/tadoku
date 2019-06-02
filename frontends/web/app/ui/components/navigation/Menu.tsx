@@ -4,8 +4,8 @@ import { connect } from 'react-redux'
 import { State } from '../../../store'
 import { User } from '../../../user/interfaces'
 import { RankingRegistration } from '../../../ranking/interfaces'
-import { LoggedInMenu } from './LoggedinMenu'
-import { LoggedOutMenu } from './LoggedOutMenu'
+import { ActiveUserNavigationBar } from './ActiveUserNavigationBar'
+import { AnonymousNavigationBar } from './AnonymousNavigationBar'
 
 const StyledNav = styled.nav`
   display: flex;
@@ -35,7 +35,11 @@ const NavMenu = ({ user, registration }: Props) => {
 
   return (
     <StyledNav>
-      {user ? <LoggedInMenu registration={registration} /> : <LoggedOutMenu />}
+      {user ? (
+        <ActiveUserNavigationBar registration={registration} />
+      ) : (
+        <AnonymousNavigationBar />
+      )}
     </StyledNav>
   )
 }

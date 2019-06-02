@@ -4,7 +4,7 @@ import { RankingRegistration } from '../../../ranking/interfaces'
 import { SubmitPages } from '../../../ranking/navigation/SubmitPages'
 import { NavLink } from './Menu'
 
-export const LoggedInMenu = ({
+export const ActiveUserNavigationBar = ({
   registration,
 }: {
   registration: RankingRegistration | undefined

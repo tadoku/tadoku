@@ -2,7 +2,7 @@ import React, { FormEvent, useState } from 'react'
 import { languageNameByCode, AllLanguages } from '../database'
 import { connect } from 'react-redux'
 import { State } from '../../store'
-import { Form, Group, Label, LabelText, Select } from '../../ui/components/Form'
+import { Form, Group, Label, Select } from '../../ui/components/Form'
 import { Button, StackContainer } from '../../ui/components'
 
 interface Props {
@@ -12,12 +12,13 @@ interface Props {
 
 const sanitizeLanguageCode = (code: string) => (code === '' ? undefined : code)
 
+// @TODO: extract out
+const maxLanguages = 3
+
 const EditLogForm = ({ onSuccess: completed, onCancel: cancel }: Props) => {
-  const [languages, setLanguages] = useState([
-    undefined,
-    undefined,
-    undefined,
-  ] as (string | undefined)[])
+  const [languages, setLanguages] = useState([undefined] as (
+    | string
+    | undefined)[])
 
   const submit = async (event: FormEvent) => {
     event.preventDefault()
@@ -28,12 +29,19 @@ const EditLogForm = ({ onSuccess: completed, onCancel: cancel }: Props) => {
     }
   }
 
+  const addLanguage = () => {
+    if (languages.length >= maxLanguages) {
+      return
+    }
+
+    setLanguages([...languages, undefined])
+  }
+
   return (
     <Form onSubmit={submit}>
-      {languages.map((language, i) => (
-        <Group key={language}>
-          <Label>
-            <LabelText>Language {i + 1}</LabelText>
+      <Group>
+        {languages.map((language, i) => (
+          <Label key={language}>
             <Select
               value={language}
               onChange={e =>
@@ -52,8 +60,14 @@ const EditLogForm = ({ onSuccess: completed, onCancel: cancel }: Props) => {
               ))}
             </Select>
           </Label>
-        </Group>
-      ))}
+        ))}
+
+        {languages.length < maxLanguages && (
+          <Button onClick={addLanguage} icon="plus" plain small>
+            Add language
+          </Button>
+        )}
+      </Group>
       <Group>
         <StackContainer>
           <Button type="submit" primary>

@@ -28,7 +28,7 @@ const StyledButton = styled.button`
   padding: 4px 12px;
   font-size: 1.1em;
   font-weight: 600;
-  height: 36px;
+  height: 44px;
   border-radius: 3px;
   box-sizing: border-box;
   margin: 0 5px;
@@ -38,12 +38,14 @@ const StyledButton = styled.button`
     `
     color: ${Constants.colors.light};
     background-color: ${Constants.colors.primary};
+    box-shadow: inset 0px 0px 2px rgba(0, 0, 0, 0.08),
+      0px 2px 3px 0px rgba(0, 0, 0, 0.24);
   `}
 
   ${({ large }: ButtonProps) =>
     large &&
     `
-    height: 48px;
+    height: 56px;
     font-size: 1.4em;
     padding: 8px 24px;
     border-radius: 4px;
@@ -80,6 +82,6 @@ export const StackContainer = styled.div`
   }
 
   > * + * {
-    margin-top: 5px;
+    margin-top: 12px;
   }
 `

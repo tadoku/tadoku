@@ -1,12 +1,11 @@
 import React, { useEffect, useState } from 'react'
-import Link from 'next/link'
 import styled from 'styled-components'
 import { connect } from 'react-redux'
 import { State } from '../../../store'
 import { User } from '../../../user/interfaces'
 import { RankingRegistration } from '../../../ranking/interfaces'
-import { SubmitPages } from '../../../ranking/navigation/SubmitPages'
 import { LoggedInMenu } from './LoggedinMenu'
+import { LoggedOutMenu } from './LoggedOutMenu'
 
 const StyledNav = styled.nav`
   display: flex;
@@ -17,17 +16,6 @@ export const NavLink = styled.a`
   padding: 10px;
   display: block;
 `
-
-const LoggedOutNavigation = () => (
-  <>
-    <Link href="/sign-in">
-      <NavLink href="">Sign in</NavLink>
-    </Link>
-    <Link href="/register">
-      <NavLink href="">Register</NavLink>
-    </Link>
-  </>
-)
 
 interface Props {
   user: User | undefined
@@ -47,11 +35,7 @@ const NavMenu = ({ user, registration }: Props) => {
 
   return (
     <StyledNav>
-      {user ? (
-        <LoggedInMenu registration={registration} />
-      ) : (
-        <LoggedOutNavigation />
-      )}
+      {user ? <LoggedInMenu registration={registration} /> : <LoggedOutMenu />}
     </StyledNav>
   )
 }

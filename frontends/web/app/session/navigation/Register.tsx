@@ -9,7 +9,7 @@ export const Register = () => {
   return (
     <>
       <NavigationBarLink href="#" onClick={() => setOpen(true)}>
-        Create account
+        Sign up
       </NavigationBarLink>
       <RegisterModal
         isOpen={open}

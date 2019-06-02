@@ -61,6 +61,7 @@ const SignInForm = ({
           <Button type="submit" primary>
             Sign in
           </Button>
+          <Button onClick={cancel}>Cancel</Button>
         </StackContainer>
       </Group>
     </Form>

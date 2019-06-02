@@ -4,7 +4,7 @@ import NewLogFormModal from '../components/NewLogFormModal'
 import Router from 'next/router'
 import { NavigationBarLink } from '../../ui/components/navigation/index'
 
-export const SubmitPages = ({
+const SubmitPages = ({
   registration,
 }: {
   registration: RankingRegistration | undefined
@@ -33,3 +33,5 @@ export const SubmitPages = ({
     </>
   )
 }
+
+export default SubmitPages

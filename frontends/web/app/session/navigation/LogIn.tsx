@@ -3,7 +3,7 @@ import LogInModal from '../components/LogInModal'
 import Router from 'next/router'
 import { NavigationBarLink } from '../../ui/components/navigation/index'
 
-export const LogIn = () => {
+const LogIn = () => {
   const [open, setOpen] = useState(false)
 
   return (
@@ -24,3 +24,5 @@ export const LogIn = () => {
     </>
   )
 }
+
+export default LogIn

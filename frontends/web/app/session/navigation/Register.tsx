@@ -3,7 +3,7 @@ import RegisterModal from '../components/RegisterModal'
 import Router from 'next/router'
 import { NavigationBarLink } from '../../ui/components/navigation/index'
 
-export const Register = () => {
+const Register = () => {
   const [open, setOpen] = useState(false)
 
   return (
@@ -24,3 +24,5 @@ export const Register = () => {
     </>
   )
 }
+
+export default Register

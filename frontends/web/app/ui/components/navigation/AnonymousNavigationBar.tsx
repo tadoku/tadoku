@@ -1,10 +1,10 @@
 import React from 'react'
-import { LogIn } from '../../../session/navigation/LogIn'
-import { Register } from '../../../session/navigation/Register'
+import LogInLink from '../../../session/navigation/LogIn'
+import RegisterLink from '../../../session/navigation/Register'
 
 export const AnonymousNavigationBar = () => (
   <>
-    <LogIn />
-    <Register />
+    <LogInLink />
+    <RegisterLink />
   </>
 )

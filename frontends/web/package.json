@@ -22,7 +22,7 @@
     "@types/react-dom": "^16.8.4",
     "@types/react-modal": "^3.8.2",
     "@types/react-redux": "^7.0.9",
-    "@types/styled-components": "^4.1.15",
+    "@types/styled-components": "^4.1.16",
     "@zeit/next-typescript": "^1.1.1",
     "express": "^4.17.1",
     "isomorphic-fetch": "^2.2.1",

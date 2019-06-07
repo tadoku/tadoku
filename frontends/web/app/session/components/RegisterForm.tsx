@@ -44,7 +44,7 @@ const RegisterForm = ({
 
     if (!success) {
       // @TODO: handle sad path
-      setError("shit happened, couldn't register")
+      setError('Email already in use or invalid.')
       return
     }
 
@@ -70,6 +70,7 @@ const RegisterForm = ({
             placeholder="tadoku@example.com"
             value={email}
             onChange={e => setEmail(e.target.value)}
+            error={email !== '' && !validateEmail(email)}
           />
         </Label>
       </Group>
@@ -81,6 +82,7 @@ const RegisterForm = ({
             placeholder="Bob The Reader"
             value={displayName}
             onChange={e => setDisplayName(e.target.value)}
+            error={displayName !== '' && !validateDisplayName(displayName)}
           />
         </Label>
       </Group>
@@ -91,6 +93,7 @@ const RegisterForm = ({
             type="password"
             value={password}
             onChange={e => setPassword(e.target.value)}
+            error={password != '' && !validatePassword(password)}
           />
         </Label>
       </Group>

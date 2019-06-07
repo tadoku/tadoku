@@ -158,4 +158,14 @@ export const Input = styled.input`
   border-radius: 3px;
   width: 100%;
   box-sizing: border-box;
+
+  ${({ error }: Errorable) =>
+    error &&
+    `
+    border: 1px solid ${Constants.colors.destructive};
+  `}
 `
+
+interface Errorable {
+  error?: boolean
+}

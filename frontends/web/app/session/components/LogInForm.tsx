@@ -7,6 +7,7 @@ import { User } from '../../user/interfaces'
 import { storeUserInLocalStorage } from '../storage'
 import { Form, Label, LabelText, Input, Group } from '../../ui/components/Form'
 import { Button, StackContainer } from '../../ui/components'
+import { validatePassword, validateEmail } from '../domain'
 
 interface Props {
   setUser: (token: string, user: User) => void
@@ -22,18 +23,7 @@ const LogInForm = ({
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
 
-  // @TODO: should this live here?
-  const validate = () => {
-    if (email == '' || !email.match(/.+@.+/)) {
-      return false
-    }
-
-    if (password == '' || password.length < 3) {
-      return false
-    }
-
-    return true
-  }
+  const validate = () => validateEmail(email) && validatePassword(password)
 
   const submit = async (event: FormEvent) => {
     event.preventDefault()

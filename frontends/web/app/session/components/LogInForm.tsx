@@ -12,6 +12,7 @@ import {
   Input,
   Group,
   ErrorMessage,
+  GroupError,
 } from '../../ui/components/Form'
 import { Button, StackContainer } from '../../ui/components'
 import { validatePassword, validateEmail } from '../domain'
@@ -48,7 +49,11 @@ const LogInForm = ({
     complete()
   }
 
-  const valid = validate()
+  const hasError = {
+    form: !validate(),
+    email: email !== '' && !validateEmail(email),
+    password: password != '' && !validatePassword(password),
+  }
 
   return (
     <Form onSubmit={submit}>
@@ -61,8 +66,9 @@ const LogInForm = ({
             placeholder="tadoku@example.com"
             value={email}
             onChange={e => setEmail(e.target.value)}
-            error={email !== '' && !validateEmail(email)}
+            error={hasError.email}
           />
+          <GroupError message="Invalid email" hidden={!hasError.email} />
         </Label>
       </Group>
       <Group>
@@ -72,13 +78,17 @@ const LogInForm = ({
             type="password"
             value={password}
             onChange={e => setPassword(e.target.value)}
-            error={password != '' && !validatePassword(password)}
+            error={hasError.password}
           />
         </Label>
+        <GroupError
+          message="Password should be at least 6 characters"
+          hidden={!hasError.password}
+        />
       </Group>
       <Group>
         <StackContainer>
-          <Button type="submit" primary disabled={!valid}>
+          <Button type="submit" primary disabled={hasError.form}>
             Sign in
           </Button>
           <Button type="button" onClick={cancel}>

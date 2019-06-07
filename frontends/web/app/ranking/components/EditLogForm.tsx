@@ -1,4 +1,4 @@
-import React, { FormEvent, useState, useEffect } from 'react'
+import React, { FormEvent, useState } from 'react'
 import { AllMediums, languageNameByCode } from '../database'
 import { connect } from 'react-redux'
 import { State } from '../../store'
@@ -13,6 +13,7 @@ import {
   Select,
   RadioButton,
   GroupError,
+  ErrorMessage,
 } from '../../ui/components/Form'
 import { Button, StackContainer } from '../../ui/components'
 import { validateLanguageCode, validateAmount } from '../domain'
@@ -30,6 +31,7 @@ const EditLogForm = ({
   onSuccess: completed,
   onCancel: cancel,
 }: Props) => {
+  const [error, setError] = useState(undefined as string | undefined)
   const [amount, setAmount] = useState(() => {
     if (log) {
       return log.amount.toString()
@@ -84,9 +86,13 @@ const EditLogForm = ({
         break
     }
 
-    if (success) {
-      completed()
+    if (!success) {
+      setError(
+        'Something went wrong with saving your update, please try again later.',
+      )
     }
+
+    completed()
   }
 
   const validate = () =>
@@ -100,6 +106,7 @@ const EditLogForm = ({
 
   return (
     <Form onSubmit={submit}>
+      <ErrorMessage message={error} />
       <Group>
         <Label>
           <LabelText>Pages read</LabelText>

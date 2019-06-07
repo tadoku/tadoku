@@ -22,6 +22,19 @@ const LogInForm = ({
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
 
+  // @TODO: should this live here?
+  const validate = () => {
+    if (email == '' || !email.match(/.+@.+/)) {
+      return false
+    }
+
+    if (password == '' || password.length < 3) {
+      return false
+    }
+
+    return true
+  }
+
   const submit = async (event: FormEvent) => {
     event.preventDefault()
     // TODO: add validation
@@ -32,6 +45,8 @@ const LogInForm = ({
       complete()
     }
   }
+
+  const valid = validate()
 
   return (
     <Form onSubmit={submit}>
@@ -58,7 +73,7 @@ const LogInForm = ({
       </Group>
       <Group>
         <StackContainer>
-          <Button type="submit" primary>
+          <Button type="submit" primary disabled={!valid}>
             Sign in
           </Button>
           <Button type="button" onClick={cancel}>

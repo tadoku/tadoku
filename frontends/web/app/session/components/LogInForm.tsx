@@ -61,6 +61,7 @@ const LogInForm = ({
             placeholder="tadoku@example.com"
             value={email}
             onChange={e => setEmail(e.target.value)}
+            error={email !== '' && !validateEmail(email)}
           />
         </Label>
       </Group>
@@ -71,6 +72,7 @@ const LogInForm = ({
             type="password"
             value={password}
             onChange={e => setPassword(e.target.value)}
+            error={password != '' && !validatePassword(password)}
           />
         </Label>
       </Group>

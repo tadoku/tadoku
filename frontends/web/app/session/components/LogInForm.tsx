@@ -5,7 +5,14 @@ import { Dispatch } from 'redux'
 import * as SessionStore from '../redux'
 import { User } from '../../user/interfaces'
 import { storeUserInLocalStorage } from '../storage'
-import { Form, Label, LabelText, Input, Group } from '../../ui/components/Form'
+import {
+  Form,
+  Label,
+  LabelText,
+  Input,
+  Group,
+  ErrorMessage,
+} from '../../ui/components/Form'
 import { Button, StackContainer } from '../../ui/components'
 import { validatePassword, validateEmail } from '../domain'
 
@@ -22,24 +29,30 @@ const LogInForm = ({
 }: Props) => {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [error, setError] = useState(undefined as string | undefined)
 
   const validate = () => validateEmail(email) && validatePassword(password)
 
   const submit = async (event: FormEvent) => {
     event.preventDefault()
-    // TODO: add validation
+
     const response = await SessionApi.logIn({ email, password })
 
-    if (response) {
-      setUser(response.token, response.user)
-      complete()
+    if (!response) {
+      setError('Invalid email/password combination.')
+      return
     }
+
+    setUser(response.token, response.user)
+    setError(undefined)
+    complete()
   }
 
   const valid = validate()
 
   return (
     <Form onSubmit={submit}>
+      <ErrorMessage message={error} />
       <Group>
         <Label>
           <LabelText>Email</LabelText>

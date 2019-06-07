@@ -2,7 +2,13 @@ import React, { FormEvent, useState } from 'react'
 import { languageNameByCode, AllLanguages } from '../database'
 import { connect } from 'react-redux'
 import { State } from '../../store'
-import { Form, Group, Label, Select } from '../../ui/components/Form'
+import {
+  Form,
+  Group,
+  Label,
+  Select,
+  ErrorMessage,
+} from '../../ui/components/Form'
 import { Button, StackContainer } from '../../ui/components'
 import RankingApi from '../api'
 import { Contest } from '../../contest/interfaces'
@@ -24,6 +30,7 @@ const JoinContestForm = ({
   onSuccess: completed,
   onCancel: cancel,
 }: Props) => {
+  const [error, setError] = useState(undefined as string | undefined)
   const [languages, setLanguages] = useState([undefined] as (
     | string
     | undefined)[])
@@ -34,9 +41,13 @@ const JoinContestForm = ({
     const languageCodes = languages.filter(l => !!l) as string[]
     const success = await RankingApi.joinContest(contest.id, languageCodes)
 
-    if (success) {
-      completed()
+    if (!success) {
+      setError(
+        'Something went wrong while joining the contest, please try again later.',
+      )
     }
+
+    completed()
   }
 
   const addLanguage = () => {
@@ -55,6 +66,7 @@ const JoinContestForm = ({
 
   return (
     <Form onSubmit={submit}>
+      <ErrorMessage message={error} />
       <Group>
         {languages.map((language, i) => (
           <Label key={i}>

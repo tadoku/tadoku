@@ -12,6 +12,7 @@ import {
   Input,
   Group,
   ErrorMessage,
+  GroupError,
 } from '../../ui/components/Form'
 import { Button, StackContainer } from '../../ui/components'
 import { validateEmail, validatePassword, validateDisplayName } from '../domain'
@@ -57,7 +58,12 @@ const RegisterForm = ({
     }
   }
 
-  const valid = validate()
+  const hasError = {
+    form: !validate(),
+    email: email !== '' && !validateEmail(email),
+    displayName: displayName !== '' && !validateDisplayName(displayName),
+    password: password != '' && !validatePassword(password),
+  }
 
   return (
     <Form onSubmit={submit}>
@@ -70,8 +76,9 @@ const RegisterForm = ({
             placeholder="tadoku@example.com"
             value={email}
             onChange={e => setEmail(e.target.value)}
-            error={email !== '' && !validateEmail(email)}
+            error={hasError.email}
           />
+          <GroupError message="Invalid email" hidden={!hasError.email} />
         </Label>
       </Group>
       <Group>
@@ -82,7 +89,11 @@ const RegisterForm = ({
             placeholder="Bob The Reader"
             value={displayName}
             onChange={e => setDisplayName(e.target.value)}
-            error={displayName !== '' && !validateDisplayName(displayName)}
+            error={hasError.displayName}
+          />
+          <GroupError
+            message="Display name should be at least 6 characters"
+            hidden={!hasError.displayName}
           />
         </Label>
       </Group>
@@ -93,13 +104,17 @@ const RegisterForm = ({
             type="password"
             value={password}
             onChange={e => setPassword(e.target.value)}
-            error={password != '' && !validatePassword(password)}
+            error={hasError.password}
+          />
+          <GroupError
+            message="Password should be at least 6 characters"
+            hidden={!hasError.password}
           />
         </Label>
       </Group>
       <Group>
         <StackContainer>
-          <Button type="submit" primary disabled={!valid}>
+          <Button type="submit" primary disabled={hasError.form}>
             Create account
           </Button>
           <Button type="button" onClick={cancel}>

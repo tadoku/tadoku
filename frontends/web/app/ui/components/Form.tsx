@@ -6,6 +6,8 @@ import { SFC, SelectHTMLAttributes, InputHTMLAttributes } from 'react'
 export const Form = styled.form``
 
 export const Group = styled.div`
+  position: relative;
+
   & + & {
     margin-top: 30px;
   }
@@ -169,3 +171,27 @@ export const Input = styled.input`
 interface Errorable {
   error?: boolean
 }
+
+export const GroupError: SFC<{ message: string; hidden: boolean }> = ({
+  message,
+  hidden,
+}) => <StyledGroupError hidden={hidden}>{message}</StyledGroupError>
+
+const StyledGroupError = styled.span`
+  margin-top: 4px;
+  font-size: 0.7em;
+  display: block;
+  width: 100%;
+  text-align: right;
+  color: ${Constants.colors.destructive};
+  transition: all 0.2s ease;
+  position: absolute;
+
+  ${({ hidden }: { hidden: boolean }) =>
+    hidden &&
+    `
+    font-size: 0;
+    opacity: 0;
+    display: none;
+  `}
+`

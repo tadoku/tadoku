@@ -5,8 +5,16 @@ import { Dispatch } from 'redux'
 import * as SessionStore from '../redux'
 import { User } from '../../user/interfaces'
 import { storeUserInLocalStorage } from '../storage'
-import { Form, Label, LabelText, Input, Group } from '../../ui/components/Form'
+import {
+  Form,
+  Label,
+  LabelText,
+  Input,
+  Group,
+  ErrorMessage,
+} from '../../ui/components/Form'
 import { Button, StackContainer } from '../../ui/components'
+import { validateEmail, validatePassword, validateDisplayName } from '../domain'
 
 interface Props {
   setUser: (token: string, user: User) => void
@@ -22,6 +30,12 @@ const RegisterForm = ({
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [displayName, setDisplayName] = useState('')
+  const [error, setError] = useState(undefined as string | undefined)
+
+  const validate = () =>
+    validateEmail(email) &&
+    validatePassword(password) &&
+    validateDisplayName(displayName)
 
   const submit = async (event: FormEvent) => {
     event.preventDefault()
@@ -30,7 +44,7 @@ const RegisterForm = ({
 
     if (!success) {
       // @TODO: handle sad path
-      console.log("shit happened, couldn't register")
+      setError("shit happened, couldn't register")
       return
     }
 
@@ -38,13 +52,17 @@ const RegisterForm = ({
 
     if (response) {
       setUser(response.token, response.user)
+      setError(undefined)
       complete()
     }
   }
 
+  const valid = validate()
+
   return (
     <Form onSubmit={submit}>
       <Group>
+        <ErrorMessage message={error} />
         <Label>
           <LabelText>Email</LabelText>
           <Input
@@ -78,7 +96,7 @@ const RegisterForm = ({
       </Group>
       <Group>
         <StackContainer>
-          <Button type="submit" primary>
+          <Button type="submit" primary disabled={!valid}>
             Create account
           </Button>
           <Button type="button" onClick={cancel}>

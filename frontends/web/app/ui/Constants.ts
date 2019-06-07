@@ -6,6 +6,7 @@ const Constants = {
     light: '#FFFFFF',
     lightGray: 'rgba(0, 0, 0, 0.08)',
     destructive: '#FC4A49', //8B1E3F
+    lightDestructive: 'rgba(252, 74, 73, 0.1)', //8B1E3F
   },
 }
 

@@ -11,6 +11,28 @@ export const Group = styled.div`
   }
 `
 
+export const ErrorMessage: SFC<{ message?: string }> = ({ message }) => (
+  <StyledErrorMessage hidden={!message}>{message}</StyledErrorMessage>
+)
+
+const StyledErrorMessage = styled.p`
+  ${({ hidden }: { hidden?: boolean }) =>
+    hidden &&
+    `
+    display: hidden;
+    opacity: 0;
+  `}
+
+  background-color: ${Constants.colors.lightDestructive};
+  color: ${Constants.colors.destructive};
+  border: 1px solid ${Constants.colors.lightDestructive};
+  box-shadow: 0px 2px 3px 0px ${Constants.colors.lightDestructive};
+  padding: 12px;
+  margin: 24px 0;
+  border-radius: 3px;
+  transition: all 0.2s ease;
+`
+
 export const Label = styled.label`
   display: block;
 

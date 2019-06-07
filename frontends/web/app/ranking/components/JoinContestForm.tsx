@@ -6,6 +6,7 @@ import { Form, Group, Label, Select } from '../../ui/components/Form'
 import { Button, StackContainer } from '../../ui/components'
 import RankingApi from '../api'
 import { Contest } from '../../contest/interfaces'
+import { validateLanguageCode } from '../domain'
 
 interface Props {
   contest: Contest
@@ -30,10 +31,7 @@ const JoinContestForm = ({
   const submit = async (event: FormEvent) => {
     event.preventDefault()
 
-    // @TODO: add validation
-
     const languageCodes = languages.filter(l => !!l) as string[]
-
     const success = await RankingApi.joinContest(contest.id, languageCodes)
 
     if (success) {
@@ -47,6 +45,12 @@ const JoinContestForm = ({
     }
 
     setLanguages([...languages, undefined])
+  }
+
+  const validate = () => validateLanguageCode(languages[0] || '')
+
+  const hasError = {
+    form: !validate(),
   }
 
   return (
@@ -84,7 +88,7 @@ const JoinContestForm = ({
       </Group>
       <Group>
         <StackContainer>
-          <Button type="submit" primary>
+          <Button type="submit" primary disabled={hasError.form}>
             Join
           </Button>
           <Button type="button" onClick={cancel}>

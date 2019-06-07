@@ -51,15 +51,6 @@ const EditLogForm = ({
 
     return ''
   })
-  const [changed, setChanged] = useState(false)
-  const [isFirstRun, setIsFirstRun] = useState(true)
-
-  useEffect(() => {
-    if (!isFirstRun) {
-      setChanged(true)
-    }
-    setIsFirstRun(false)
-  }, [amount, mediumId, languageCode])
 
   if (!registration) {
     return null

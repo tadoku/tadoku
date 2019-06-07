@@ -12,8 +12,10 @@ import {
   Input,
   Select,
   RadioButton,
+  GroupError,
 } from '../../ui/components/Form'
 import { Button, StackContainer } from '../../ui/components'
+import { validateLanguageCode, validateAmount } from '../domain'
 
 interface Props {
   log?: ContestLog
@@ -96,6 +98,15 @@ const EditLogForm = ({
     }
   }
 
+  const validate = () =>
+    validateAmount(amount) && validateLanguageCode(languageCode)
+
+  const hasError = {
+    form: !validate(),
+    amount: amount !== '' && !validateAmount(amount),
+    languageCode: languageCode != '' && !validateLanguageCode(languageCode),
+  }
+
   return (
     <Form onSubmit={submit}>
       <Group>
@@ -109,7 +120,9 @@ const EditLogForm = ({
             min={0}
             max={3000}
             step={1}
+            error={hasError.amount}
           />
+          <GroupError message="Invalid page count" hidden={!hasError.amount} />
         </Label>
       </Group>
       <Group>
@@ -136,10 +149,14 @@ const EditLogForm = ({
             label={languageNameByCode(code)}
           />
         ))}
+        <GroupError
+          message="Invalid language"
+          hidden={!hasError.languageCode}
+        />
       </Group>
       <Group>
         <StackContainer>
-          <Button type="submit" disabled={!changed} primary>
+          <Button type="submit" disabled={hasError.form} primary>
             Save changes
           </Button>
           <Button type="button" onClick={cancel}>

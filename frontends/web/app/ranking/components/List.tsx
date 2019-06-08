@@ -48,6 +48,7 @@ const RowLink = styled.a`
   box-shadow: 4px 5px 15px 1px rgba(0, 0, 0, 0.08);
   display: flex;
   align-items: center;
+  transition: all 0.2s ease;
 
   &:hover,
   &:focus,

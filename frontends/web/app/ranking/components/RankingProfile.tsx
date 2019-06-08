@@ -22,16 +22,22 @@ import Cards, {
 interface Props {
   contestId: number | undefined
   userId: number | undefined
+  effectCount: number
+  refreshRanking: () => void
 }
 
-const RankingProfile = ({ contestId, userId }: Props) => {
+const RankingProfile = ({
+  contestId,
+  userId,
+  effectCount,
+  refreshRanking,
+}: Props) => {
   const [loaded, setLoaded] = useState(false)
   const [logs, setLogs] = useState([] as ContestLog[])
   const [contest, setContest] = useState(undefined as Contest | undefined)
   const [registration, setRegistration] = useState(undefined as
     | RankingRegistrationOverview
     | undefined)
-  const [updateCounter, setUpdateCounter] = useState(0)
 
   useEffect(() => {
     if (!contestId || !userId) {
@@ -62,7 +68,7 @@ const RankingProfile = ({ contestId, userId }: Props) => {
     }
 
     getLogs()
-  }, [contestId, userId, updateCounter])
+  }, [contestId, userId, effectCount])
 
   if (!contestId || !userId) {
     return <ErrorPage statusCode={404} />
@@ -105,7 +111,7 @@ const RankingProfile = ({ contestId, userId }: Props) => {
           <ContestLogsList
             logs={logs}
             registration={registration}
-            refreshData={() => setUpdateCounter(updateCounter + 1)}
+            refreshData={refreshRanking}
           />
         </LargeCard>
       </Cards>

@@ -34,10 +34,7 @@ const NavigationBar = ({ user, registration, refreshSession }: Props) => {
   return (
     <StyledNav>
       {user ? (
-        <ActiveUserNavigationBar
-          registration={registration}
-          refreshSession={refreshSession}
-        />
+        <ActiveUserNavigationBar registration={registration} />
       ) : (
         <AnonymousNavigationBar refreshSession={refreshSession} />
       )}

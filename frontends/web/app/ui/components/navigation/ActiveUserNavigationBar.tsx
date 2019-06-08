@@ -7,7 +7,6 @@ export const ActiveUserNavigationBar = ({
   registration,
 }: {
   registration: RankingRegistration | undefined
-  refreshSession: () => void
 }) => (
   <>
     <SubmitPagesLink registration={registration} />

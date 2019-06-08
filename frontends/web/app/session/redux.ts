@@ -40,7 +40,12 @@ export const reducer = (state = initialState, action: Action) => {
       const payload = (action as SessionLogIn).payload
       return { ...state, token: payload.token, user: payload.user }
     case ActionTypes.SessionSignOut:
-      return { ...state, token: undefined, user: undefined }
+      return {
+        ...state,
+        token: undefined,
+        user: undefined,
+        runEffectCount: state.runEffectCount + 1,
+      }
     case ActionTypes.SessionRunEffects:
       return { ...state, runEffectCount: state.runEffectCount + 1 }
     default:

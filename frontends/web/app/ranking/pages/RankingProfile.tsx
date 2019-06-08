@@ -91,8 +91,7 @@ const RankingProfile = ({
   }
 
   return (
-    <Layout>
-      <h1>{registration.userDisplayName}</h1>
+    <Layout title={registration.userDisplayName}>
       <Cards>
         <Card>
           <CardContent>{contest.description}</CardContent>

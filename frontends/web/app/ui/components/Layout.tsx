@@ -1,14 +1,18 @@
 import React from 'react'
 import Header from './Header'
 import styled, { createGlobalStyle } from 'styled-components'
+import media from 'styled-media-query'
 import Constants from '../Constants'
 
-const Layout: React.SFC<{}> = ({ children }) => {
+const Layout: React.SFC<{ title?: string }> = ({ title, children }) => {
   return (
     <div>
       <GlobalStyle {...Constants} />
       <Header />
-      <Container>{children}</Container>
+      <Container>
+        {title && <PageTitle>{title}</PageTitle>}
+        {children}
+      </Container>
     </div>
   )
 }
@@ -47,4 +51,10 @@ const Container = styled.div`
   padding: 20px;
   max-width: ${Constants.maxWidth};
   margin: 0 auto;
+`
+
+const PageTitle = styled.h1`
+  ${media.lessThan('medium')`
+    margin: 0 0 20px 0;
+  `}
 `

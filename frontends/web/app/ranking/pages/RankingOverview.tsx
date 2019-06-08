@@ -52,9 +52,8 @@ const RankingOverview = ({
     ((registration && registration.contestId !== contest.id) || !registration)
 
   return (
-    <Layout>
+    <Layout title="Ranking">
       <Container>
-        <h1>Ranking</h1>
         {canJoin && (
           <>
             <Button primary large onClick={() => setJoinModalOpen(true)}>

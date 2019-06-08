@@ -25,7 +25,7 @@ interface Props {
   onCancel: () => void
 }
 
-const EditLogForm = ({
+const LogForm = ({
   log,
   registration,
   onSuccess: completed,
@@ -173,4 +173,4 @@ const mapStateToProps = (state: State, oldProps: Props) => ({
   registration: state.ranking.registration,
 })
 
-export default connect(mapStateToProps)(EditLogForm)
+export default connect(mapStateToProps)(LogForm)

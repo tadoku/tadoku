@@ -1,6 +1,6 @@
 import React from 'react'
 import { ContestLog } from '../interfaces'
-import EditLogForm from './EditLogForm'
+import LogForm from './LogForm'
 import Modal from '../../ui/components/Modal'
 
 const EditLogFormModal = ({
@@ -20,9 +20,7 @@ const EditLogFormModal = ({
       onRequestClose={() => setLog(undefined)}
       contentLabel="Update"
     >
-      {log && (
-        <EditLogForm log={log} onSuccess={onSuccess} onCancel={onCancel} />
-      )}
+      {log && <LogForm log={log} onSuccess={onSuccess} onCancel={onCancel} />}
     </Modal>
   )
 }

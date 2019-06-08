@@ -1,6 +1,6 @@
 import React from 'react'
 import Modal from '../../ui/components/Modal'
-import EditLogForm from './EditLogForm'
+import LogForm from './LogForm'
 
 const NewLogFormModal = ({
   isOpen,
@@ -17,7 +17,7 @@ const NewLogFormModal = ({
       onRequestClose={onCancel}
       contentLabel="Submit new pages"
     >
-      <EditLogForm onSuccess={onSuccess} onCancel={onCancel} />
+      <LogForm onSuccess={onSuccess} onCancel={onCancel} />
     </Modal>
   )
 }

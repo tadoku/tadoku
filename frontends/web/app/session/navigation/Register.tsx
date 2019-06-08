@@ -1,9 +1,8 @@
 import React, { useState } from 'react'
 import RegisterModal from '../components/RegisterModal'
 import { NavigationBarLink } from '../../ui/components/navigation/index'
-import { refresh } from '../../router'
 
-const Register = () => {
+const Register = ({ refreshSession }: { refreshSession: () => void }) => {
   const [open, setOpen] = useState(false)
 
   return (
@@ -16,7 +15,7 @@ const Register = () => {
         onCancel={() => setOpen(false)}
         onSuccess={() => {
           setOpen(false)
-          refresh()
+          refreshSession()
         }}
       />
     </>

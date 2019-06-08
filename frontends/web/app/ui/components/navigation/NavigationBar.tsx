@@ -6,6 +6,8 @@ import { User } from '../../../user/interfaces'
 import { RankingRegistration } from '../../../ranking/interfaces'
 import { ActiveUserNavigationBar } from './ActiveUserNavigationBar'
 import { AnonymousNavigationBar } from './AnonymousNavigationBar'
+import { Dispatch } from 'redux'
+import * as SessionStore from '../../../session/redux'
 
 const StyledNav = styled.nav`
   display: flex;
@@ -15,9 +17,10 @@ const StyledNav = styled.nav`
 interface Props {
   user: User | undefined
   registration: RankingRegistration | undefined
+  refreshSession: () => void
 }
 
-const NavigationBar = ({ user, registration }: Props) => {
+const NavigationBar = ({ user, registration, refreshSession }: Props) => {
   const [hasMounted, setHasMounted] = useState(false)
 
   useEffect(() => {
@@ -31,9 +34,12 @@ const NavigationBar = ({ user, registration }: Props) => {
   return (
     <StyledNav>
       {user ? (
-        <ActiveUserNavigationBar registration={registration} />
+        <ActiveUserNavigationBar
+          registration={registration}
+          refreshSession={refreshSession}
+        />
       ) : (
-        <AnonymousNavigationBar />
+        <AnonymousNavigationBar refreshSession={refreshSession} />
       )}
     </StyledNav>
   )
@@ -44,4 +50,15 @@ const mapStateToProps = (state: State) => ({
   registration: state.ranking.registration,
 })
 
-export default connect(mapStateToProps)(NavigationBar)
+const mapDispatchToProps = (dispatch: Dispatch<SessionStore.Action>) => ({
+  refreshSession: () => {
+    dispatch({
+      type: SessionStore.ActionTypes.SessionRunEffects,
+    })
+  },
+})
+
+export default connect(
+  mapStateToProps,
+  mapDispatchToProps,
+)(NavigationBar)

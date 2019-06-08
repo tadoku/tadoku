@@ -1,9 +1,8 @@
 import React, { useState } from 'react'
 import LogInModal from '../components/LogInModal'
 import { NavigationBarLink } from '../../ui/components/navigation/index'
-import { refresh } from '../../router'
 
-const LogIn = () => {
+const LogIn = ({ refreshSession }: { refreshSession: () => void }) => {
   const [open, setOpen] = useState(false)
 
   return (
@@ -16,7 +15,7 @@ const LogIn = () => {
         onCancel={() => setOpen(false)}
         onSuccess={() => {
           setOpen(false)
-          refresh()
+          refreshSession()
         }}
       />
     </>

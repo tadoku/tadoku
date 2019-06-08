@@ -1,18 +1,18 @@
 import React, { FormEvent, useState } from 'react'
-import { languageNameByCode, AllLanguages } from '../database'
+import { languageNameByCode, AllLanguages } from '../../database'
 import { connect } from 'react-redux'
-import { State } from '../../store'
+import { State } from '../../../store'
 import {
   Form,
   Group,
   Label,
   Select,
   ErrorMessage,
-} from '../../ui/components/Form'
-import { Button, StackContainer } from '../../ui/components'
-import RankingApi from '../api'
-import { Contest } from '../../contest/interfaces'
-import { validateLanguageCode } from '../domain'
+} from '../../../ui/components/Form'
+import { Button, StackContainer } from '../../../ui/components'
+import RankingApi from '../../api'
+import { Contest } from '../../../contest/interfaces'
+import { validateLanguageCode } from '../../domain'
 
 interface Props {
   contest: Contest

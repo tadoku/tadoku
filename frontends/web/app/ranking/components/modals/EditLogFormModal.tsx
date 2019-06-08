@@ -1,6 +1,6 @@
 import React from 'react'
 import { ContestLog } from '../../interfaces'
-import LogForm from '../LogForm'
+import LogForm from '../forms/LogForm'
 import Modal from '../../../ui/components/Modal'
 
 const EditLogFormModal = ({

@@ -1,6 +1,6 @@
 import React from 'react'
 import Modal from '../../../ui/components/Modal'
-import LogForm from '../LogForm'
+import LogForm from '../forms/LogForm'
 
 const NewLogFormModal = ({
   isOpen,

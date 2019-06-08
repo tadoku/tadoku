@@ -1,9 +1,9 @@
 import React, { FormEvent, useState } from 'react'
-import { AllMediums, languageNameByCode } from '../database'
+import { AllMediums, languageNameByCode } from '../../database'
 import { connect } from 'react-redux'
-import { State } from '../../store'
-import { RankingRegistration, ContestLog } from '../interfaces'
-import RankingApi from '../api'
+import { State } from '../../../store'
+import { RankingRegistration, ContestLog } from '../../interfaces'
+import RankingApi from '../../api'
 import {
   Form,
   Group,
@@ -14,9 +14,9 @@ import {
   RadioButton,
   GroupError,
   ErrorMessage,
-} from '../../ui/components/Form'
-import { Button, StackContainer } from '../../ui/components'
-import { validateLanguageCode, validateAmount } from '../domain'
+} from '../../../ui/components/Form'
+import { Button, StackContainer } from '../../../ui/components'
+import { validateLanguageCode, validateAmount } from '../../domain'
 
 interface Props {
   log?: ContestLog

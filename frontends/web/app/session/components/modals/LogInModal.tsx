@@ -1,5 +1,5 @@
 import React from 'react'
-import LogInForm from '../LogInForm'
+import LogInForm from '../forms/LogInForm'
 import Modal from '../../../ui/components/Modal'
 
 const LogInModal = ({

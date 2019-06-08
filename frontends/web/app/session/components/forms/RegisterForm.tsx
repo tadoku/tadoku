@@ -1,10 +1,10 @@
 import React, { FormEvent, useState } from 'react'
-import SessionApi from '../api'
+import SessionApi from '../../api'
 import { connect } from 'react-redux'
 import { Dispatch } from 'redux'
-import * as SessionStore from '../redux'
-import { User } from '../../user/interfaces'
-import { storeUserInLocalStorage } from '../storage'
+import * as SessionStore from '../../redux'
+import { User } from '../../../user/interfaces'
+import { storeUserInLocalStorage } from '../../storage'
 import {
   Form,
   Label,
@@ -13,9 +13,13 @@ import {
   Group,
   ErrorMessage,
   GroupError,
-} from '../../ui/components/Form'
-import { Button, StackContainer } from '../../ui/components'
-import { validatePassword, validateEmail } from '../domain'
+} from '../../../ui/components/Form'
+import { Button, StackContainer } from '../../../ui/components'
+import {
+  validateEmail,
+  validatePassword,
+  validateDisplayName,
+} from '../../domain'
 
 interface Props {
   setUser: (token: string, user: User) => void
@@ -23,42 +27,52 @@ interface Props {
   onCancel: () => void
 }
 
-const LogInForm = ({
+const RegisterForm = ({
   setUser,
   onSuccess: complete,
   onCancel: cancel,
 }: Props) => {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [displayName, setDisplayName] = useState('')
   const [error, setError] = useState(undefined as string | undefined)
 
-  const validate = () => validateEmail(email) && validatePassword(password)
+  const validate = () =>
+    validateEmail(email) &&
+    validatePassword(password) &&
+    validateDisplayName(displayName)
 
   const submit = async (event: FormEvent) => {
     event.preventDefault()
+    // TODO: add validation
+    const success = await SessionApi.register({ email, password, displayName })
 
-    const response = await SessionApi.logIn({ email, password })
-
-    if (!response) {
-      setError('Invalid email/password combination.')
+    if (!success) {
+      // @TODO: handle sad path
+      setError('Email already in use or invalid.')
       return
     }
 
-    setUser(response.token, response.user)
-    setError(undefined)
-    complete()
+    const response = await SessionApi.logIn({ email, password })
+
+    if (response) {
+      setUser(response.token, response.user)
+      setError(undefined)
+      complete()
+    }
   }
 
   const hasError = {
     form: !validate(),
     email: email !== '' && !validateEmail(email),
+    displayName: displayName !== '' && !validateDisplayName(displayName),
     password: password != '' && !validatePassword(password),
   }
 
   return (
     <Form onSubmit={submit}>
-      <ErrorMessage message={error} />
       <Group>
+        <ErrorMessage message={error} />
         <Label>
           <LabelText>Email</LabelText>
           <Input
@@ -73,6 +87,22 @@ const LogInForm = ({
       </Group>
       <Group>
         <Label>
+          <LabelText>Nickname</LabelText>
+          <Input
+            type="text"
+            placeholder="Bob The Reader"
+            value={displayName}
+            onChange={e => setDisplayName(e.target.value)}
+            error={hasError.displayName}
+          />
+          <GroupError
+            message="Display name should be at least 6 characters"
+            hidden={!hasError.displayName}
+          />
+        </Label>
+      </Group>
+      <Group>
+        <Label>
           <LabelText>Password</LabelText>
           <Input
             type="password"
@@ -80,16 +110,16 @@ const LogInForm = ({
             onChange={e => setPassword(e.target.value)}
             error={hasError.password}
           />
+          <GroupError
+            message="Password should be at least 6 characters"
+            hidden={!hasError.password}
+          />
         </Label>
-        <GroupError
-          message="Password should be at least 6 characters"
-          hidden={!hasError.password}
-        />
       </Group>
       <Group>
         <StackContainer>
           <Button type="submit" primary disabled={hasError.form}>
-            Sign in
+            Create account
           </Button>
           <Button type="button" onClick={cancel}>
             Cancel
@@ -115,4 +145,4 @@ const mapDispatchToProps = (dispatch: Dispatch<SessionStore.Action>) => ({
 export default connect(
   null,
   mapDispatchToProps,
-)(LogInForm)
+)(RegisterForm)

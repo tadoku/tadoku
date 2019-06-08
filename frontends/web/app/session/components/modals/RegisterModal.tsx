@@ -1,5 +1,5 @@
 import React from 'react'
-import RegisterForm from '../RegisterForm'
+import RegisterForm from '../forms/RegisterForm'
 import Modal from '../../../ui/components/Modal'
 
 const RegisterModal = ({

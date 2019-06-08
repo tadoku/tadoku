@@ -4,7 +4,7 @@ import ErrorPage from 'next/error'
 import { ContestLog, RankingRegistrationOverview } from '../interfaces'
 import RankingApi from '../api'
 import ContestApi from '../../contest/api'
-import ContestLogsByDayGraph from '../components/ContestLogsByDayGraph'
+import ContestLogsByDayGraph from '../components/graphs/ContestLogsByDayGraph'
 import ContestLogsList from '../components/ContestLogsList'
 import {
   rankingsToRegistrationOverview,

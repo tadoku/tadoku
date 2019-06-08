@@ -1,7 +1,7 @@
 import React from 'react'
-import { ContestLog } from '../interfaces'
-import { Contest } from '../../contest/interfaces'
-import { aggregateContestLogsByDays } from '../transform'
+import { ContestLog } from '../../interfaces'
+import { Contest } from '../../../contest/interfaces'
+import { aggregateContestLogsByDays } from '../../transform'
 import {
   XYPlot,
   XAxis,

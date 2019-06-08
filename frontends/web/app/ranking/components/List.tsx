@@ -3,7 +3,6 @@ import Link from 'next/link'
 import { Ranking } from '../interfaces'
 import styled from 'styled-components'
 import { amountToPages } from '../transform'
-import Constants from '../../ui/Constants'
 
 interface Props {
   rankings: Ranking[]

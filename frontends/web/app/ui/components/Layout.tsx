@@ -31,6 +31,10 @@ const GlobalStyle = createGlobalStyle<typeof Constants>`
       color: ${props => props.colors.primary}
     }
   }
+
+  a[href], input[type='submit'], input[type='image'], label[for], select, button {
+    cursor: pointer;
+  }
 `
 
 const Container = styled.div`

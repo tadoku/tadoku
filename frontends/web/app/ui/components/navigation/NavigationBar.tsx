@@ -44,6 +44,7 @@ const NavigationBar = ({
         <ActiveUserNavigationBar
           registration={registration}
           refreshRanking={refreshRanking}
+          user={user}
         />
       ) : (
         <AnonymousNavigationBar refreshSession={refreshSession} />

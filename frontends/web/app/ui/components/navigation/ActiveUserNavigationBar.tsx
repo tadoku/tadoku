@@ -1,4 +1,5 @@
 import React from 'react'
+import styled from 'styled-components'
 import { RankingRegistration } from '../../../ranking/interfaces'
 import SubmitPagesLink from '../../../ranking/components/navigation/SubmitPages'
 import SignOutLink from '../../../session/components/navigation/LogOut'
@@ -17,11 +18,31 @@ export const ActiveUserNavigationBar = ({
   refreshRanking,
 }: Props) => (
   <>
-    <SubmitPagesLink
-      registration={registration}
-      refreshRanking={refreshRanking}
-    />
-    <SignOutLink />
-    <UserProfile user={user} />
+    <LinkContainer>
+      <SubmitPagesLink
+        registration={registration}
+        refreshRanking={refreshRanking}
+      />
+    </LinkContainer>
+    <UserProfileContainer>
+      <UserProfile user={user} />
+      <SignOutLink />
+    </UserProfileContainer>
   </>
 )
+
+const LinkContainer = styled.div`
+  display: flex;
+  margin-right: 20px;
+  padding-right: 20px;
+  border-right: 1px solid rgba(0, 0, 0, 0.1);
+`
+
+const UserProfileContainer = styled.div`
+  display: flex;
+  align-items: center;
+
+  * + * {
+    margin-left: 20px;
+  }
+`

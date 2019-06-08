@@ -5,8 +5,6 @@ interface Props {
   user: User
 }
 
-const UserProfile = ({ user }: Props) => (
-  <span>Welcome, {user.displayName}</span>
-)
+const UserProfile = ({ user }: Props) => <div>Welcome, {user.displayName}</div>
 
 export default UserProfile

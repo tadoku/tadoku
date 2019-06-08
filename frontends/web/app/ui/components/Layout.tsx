@@ -26,6 +26,7 @@ const GlobalStyle = createGlobalStyle<typeof Constants>`
   a {
     color: ${props => props.colors.dark}
     text-decoration: none;
+    transition: color 0.2s ease;
 
     &:hover, &:active, &:focus {
       color: ${props => props.colors.primary}

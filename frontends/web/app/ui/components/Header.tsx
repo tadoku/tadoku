@@ -23,6 +23,10 @@ export default Header
 const LogoType = styled.h1`
   color: ${Constants.colors.dark};
   text-transform: uppercase;
+
+  ${media.lessThan('medium')`
+    margin: 10px;
+  `}
 `
 
 const Container = styled.div`

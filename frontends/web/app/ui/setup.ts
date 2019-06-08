@@ -5,5 +5,6 @@ import {
   faEdit,
   faTrash,
   faPlus,
+  faSignOutAlt,
 } from '@fortawesome/free-solid-svg-icons'
-library.add(faChevronDown, faEdit, faTrash, faPlus)
+library.add(faChevronDown, faEdit, faTrash, faPlus, faSignOutAlt)

@@ -14,6 +14,7 @@ export const LogOut = ({ signOut }: Props) => {
   return (
     <Button
       plain
+      icon="sign-out-alt"
       onClick={() => {
         signOut()
         Router.push('/')

@@ -51,7 +51,7 @@ const UserProfileContainer = styled.div`
   align-items: center;
 
   ${media.lessThan('medium')`
-    margin-top: 20px;
+    margin: 5px 0 15px;
     padding: 4px 10px;
     border-radius: 2px;
     box-shadow: 4px 5px 15px 1px rgba(0, 0, 0, 0.08);

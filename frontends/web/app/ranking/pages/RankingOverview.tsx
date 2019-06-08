@@ -6,7 +6,7 @@ import RankingApi from '../../ranking/api'
 import { Contest } from '../../contest/interfaces'
 import { Button } from '../../ui/components'
 import styled from 'styled-components'
-import { User } from '../../user/interfaces'
+import { User } from '../../session/interfaces'
 import JoinContestModal from '../components/modals/JoinContestModal'
 
 interface Props {

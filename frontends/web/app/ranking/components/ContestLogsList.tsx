@@ -6,7 +6,7 @@ import { amountToPages } from '../transform'
 import EditLogFormModal from './modals/EditLogFormModal'
 import { State } from '../../store'
 import { connect } from 'react-redux'
-import { User } from '../../user/interfaces'
+import { User } from '../../session/interfaces'
 import { Button, ButtonContainer } from '../../ui/components'
 import RankingApi from '../api'
 

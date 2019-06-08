@@ -2,7 +2,7 @@ import { useEffect } from 'react'
 import Router from 'next/router'
 import LandingPage from './landing-page'
 import { connect } from 'react-redux'
-import { User } from '../app/user/interfaces'
+import { User } from '../app/session/interfaces'
 import { State } from '../app/store'
 interface Props {
   user: User | undefined

@@ -3,7 +3,7 @@ import SessionApi from '../../api'
 import { connect } from 'react-redux'
 import { Dispatch } from 'redux'
 import * as SessionStore from '../../redux'
-import { User } from '../../../user/interfaces'
+import { User } from '../../interfaces'
 import { storeUserInLocalStorage } from '../../storage'
 import {
   Form,

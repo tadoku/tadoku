@@ -1,4 +1,4 @@
-import { User } from '../user/interfaces'
+import { User } from './interfaces'
 
 const LOCAL_STORAGE_USER_KEY = 'user'
 

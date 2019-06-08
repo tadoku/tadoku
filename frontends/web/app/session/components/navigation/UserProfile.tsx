@@ -1,5 +1,5 @@
 import React from 'react'
-import { User } from '../../../user/interfaces'
+import { User } from '../../interfaces'
 
 interface Props {
   user: User

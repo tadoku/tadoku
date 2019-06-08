@@ -4,7 +4,7 @@ import * as RankingStore from '../redux'
 import { connect } from 'react-redux'
 import { RankingRegistration } from '../interfaces'
 import { State } from '../../store'
-import { User } from '../../user/interfaces'
+import { User } from '../../session/interfaces'
 import RankingApi from '../api'
 
 interface Props {

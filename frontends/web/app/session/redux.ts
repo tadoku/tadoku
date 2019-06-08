@@ -1,4 +1,4 @@
-import { User } from './../user/interfaces'
+import { User } from './interfaces'
 
 export const initialState = {
   token: undefined as (string | undefined),

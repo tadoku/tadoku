@@ -2,13 +2,13 @@ import React, { useState } from 'react'
 import { RankingRegistration } from '../interfaces'
 import NewLogFormModal from '../components/NewLogFormModal'
 import { NavigationBarLink } from '../../ui/components/navigation/index'
-import { refresh } from '../../router'
 
-const SubmitPages = ({
-  registration,
-}: {
+interface Props {
   registration: RankingRegistration | undefined
-}) => {
+  refreshRanking: () => void
+}
+
+const SubmitPages = ({ registration, refreshRanking }: Props) => {
   const [open, setOpen] = useState(false)
 
   if (!registration) {
@@ -25,7 +25,7 @@ const SubmitPages = ({
         onCancel={() => setOpen(false)}
         onSuccess={() => {
           setOpen(false)
-          refresh()
+          refreshRanking()
         }}
       />
     </>

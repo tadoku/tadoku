@@ -13,12 +13,19 @@ interface Props {
   contest: Contest | undefined
   registration: RankingRegistration | undefined
   user: User | undefined
+  effectCount: number
+  refreshRegistration: () => void
 }
 
-const RankingOverview = ({ contest, registration, user }: Props) => {
+const RankingOverview = ({
+  contest,
+  registration,
+  user,
+  effectCount,
+  refreshRegistration,
+}: Props) => {
   const [rankings, setRankings] = useState([] as Ranking[])
   const [joinModalOpen, setJoinModalOpen] = useState(false)
-  const [updateCount, setUpdateCount] = useState(0)
 
   useEffect(() => {
     if (!contest) {
@@ -30,7 +37,7 @@ const RankingOverview = ({ contest, registration, user }: Props) => {
       setRankings(payload)
     }
     update()
-  }, [contest, updateCount])
+  }, [contest, effectCount])
 
   if (!rankings || !contest) {
     return <Layout>No ranking found.</Layout>
@@ -58,7 +65,7 @@ const RankingOverview = ({ contest, registration, user }: Props) => {
               isOpen={joinModalOpen}
               onSuccess={() => {
                 setJoinModalOpen(false)
-                setUpdateCount(updateCount + 1)
+                refreshRegistration()
               }}
               onCancel={() => setJoinModalOpen(false)}
             />

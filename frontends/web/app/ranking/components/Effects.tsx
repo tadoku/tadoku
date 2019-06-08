@@ -10,9 +10,10 @@ import RankingApi from '../api'
 interface Props {
   user: User | undefined
   updateRegistration: (registration: RankingRegistration | undefined) => void
+  effectCount: number
 }
 
-const RankingEffects = ({ user, updateRegistration }: Props) => {
+const RankingEffects = ({ user, updateRegistration, effectCount }: Props) => {
   useEffect(() => {
     const update = async () => {
       if (!user) {
@@ -24,13 +25,14 @@ const RankingEffects = ({ user, updateRegistration }: Props) => {
     }
 
     update()
-  }, [user])
+  }, [user, effectCount])
 
   return null
 }
 
 const mapStateToProps = (state: State) => ({
   user: state.session.user,
+  effectCount: state.ranking.runEffectCount,
 })
 
 const mapDispatchToProps = (dispatch: Dispatch<RankingStore.Action>) => ({

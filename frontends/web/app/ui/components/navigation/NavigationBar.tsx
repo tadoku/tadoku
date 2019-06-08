@@ -79,6 +79,6 @@ const StyledNav = styled.nav`
   ${({ prefersVertical }: { prefersVertical?: boolean }) =>
     prefersVertical &&
     media.lessThan('medium')`
-      flex-direction: column;
+      flex-direction: column-reverse;
     `}
 `

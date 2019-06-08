@@ -17,7 +17,7 @@ const SubmitPages = ({ registration, refreshRanking }: Props) => {
 
   return (
     <>
-      <Button onClick={() => setOpen(true)} plain>
+      <Button onClick={() => setOpen(true)} icon="edit" plain>
         Submit pages
       </Button>
       <NewLogFormModal

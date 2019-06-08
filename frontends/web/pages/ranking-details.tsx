@@ -1,5 +1,5 @@
 import { ExpressNextContext } from '../app/interfaces'
-import RankingProfile from '../app/ranking/components/RankingProfile'
+import RankingProfile from '../app/ranking/pages/RankingProfile'
 import { connect } from 'react-redux'
 import { State } from '../app/store'
 import { Dispatch } from 'redux'

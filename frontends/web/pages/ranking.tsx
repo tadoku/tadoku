@@ -1,6 +1,6 @@
 import { connect } from 'react-redux'
 import { State } from '../app/store'
-import RankingOverview from '../app/ranking/components/RankingOverview'
+import RankingOverview from '../app/ranking/pages/RankingOverview'
 import { Dispatch } from 'redux'
 import * as RankingStore from '../app/ranking/redux'
 

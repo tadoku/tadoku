@@ -1,6 +1,6 @@
 import React from 'react'
 import Router from 'next/router'
-import { NavigationBarLink } from '../../../ui/components/navigation/index'
+import { Button } from '../../../ui/components'
 import { connect } from 'react-redux'
 import * as SessionStore from '../../redux'
 import { Dispatch } from 'redux'
@@ -12,15 +12,15 @@ interface Props {
 
 export const LogOut = ({ signOut }: Props) => {
   return (
-    <NavigationBarLink
-      href="#"
+    <Button
+      plain
       onClick={() => {
         signOut()
         Router.push('/')
       }}
     >
       Log out
-    </NavigationBarLink>
+    </Button>
   )
 }
 

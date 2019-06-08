@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { RankingRegistration } from '../../interfaces'
 import NewLogFormModal from '../modals/NewLogFormModal'
-import { NavigationBarLink } from '../../../ui/components/navigation/index'
+import { Button } from '../../../ui/components'
 
 interface Props {
   registration: RankingRegistration | undefined
@@ -17,9 +17,9 @@ const SubmitPages = ({ registration, refreshRanking }: Props) => {
 
   return (
     <>
-      <NavigationBarLink href="#" onClick={() => setOpen(true)}>
+      <Button onClick={() => setOpen(true)} plain>
         Submit pages
-      </NavigationBarLink>
+      </Button>
       <NewLogFormModal
         isOpen={open}
         onCancel={() => setOpen(false)}

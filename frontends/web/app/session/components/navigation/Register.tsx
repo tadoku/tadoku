@@ -1,15 +1,15 @@
 import React, { useState } from 'react'
 import RegisterModal from '../modals/RegisterModal'
-import { NavigationBarLink } from '../../../ui/components/navigation/index'
+import { Button } from '../../../ui/components'
 
 const Register = ({ refreshSession }: { refreshSession: () => void }) => {
   const [open, setOpen] = useState(false)
 
   return (
     <>
-      <NavigationBarLink href="#" onClick={() => setOpen(true)}>
+      <Button onClick={() => setOpen(true)} plain>
         Sign up
-      </NavigationBarLink>
+      </Button>
       <RegisterModal
         isOpen={open}
         onCancel={() => setOpen(false)}

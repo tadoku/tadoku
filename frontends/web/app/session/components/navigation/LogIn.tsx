@@ -1,15 +1,15 @@
 import React, { useState } from 'react'
 import LogInModal from '../modals/LogInModal'
-import { NavigationBarLink } from '../../../ui/components/navigation/index'
+import { Button } from '../../../ui/components'
 
 const LogIn = ({ refreshSession }: { refreshSession: () => void }) => {
   const [open, setOpen] = useState(false)
 
   return (
     <>
-      <NavigationBarLink href="#" onClick={() => setOpen(true)}>
+      <Button onClick={() => setOpen(true)} plain>
         Log in
-      </NavigationBarLink>
+      </Button>
       <LogInModal
         isOpen={open}
         onCancel={() => setOpen(false)}

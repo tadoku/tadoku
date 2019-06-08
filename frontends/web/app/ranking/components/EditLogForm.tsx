@@ -135,23 +135,25 @@ const EditLogForm = ({
           </Select>
         </Label>
       </Group>
-      <Group>
-        <LabelText>Language</LabelText>
-        {registration.languages.map(code => (
-          <RadioButton
-            key={code}
-            type="radio"
-            value={code}
-            checked={code === languageCode}
-            onChange={e => setLanguageCode(e.target.value)}
-            label={languageNameByCode(code)}
+      {registration.languages.length > 1 && (
+        <Group>
+          <LabelText>Language</LabelText>
+          {registration.languages.map(code => (
+            <RadioButton
+              key={code}
+              type="radio"
+              value={code}
+              checked={code === languageCode}
+              onChange={e => setLanguageCode(e.target.value)}
+              label={languageNameByCode(code)}
+            />
+          ))}
+          <GroupError
+            message="Invalid language"
+            hidden={!hasError.languageCode}
           />
-        ))}
-        <GroupError
-          message="Invalid language"
-          hidden={!hasError.languageCode}
-        />
-      </Group>
+        </Group>
+      )}
       <Group>
         <StackContainer>
           <Button type="submit" disabled={hasError.form} primary>

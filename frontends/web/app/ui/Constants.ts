@@ -8,6 +8,7 @@ const Constants = {
     destructive: '#FC4A49', //8B1E3F
     lightDestructive: 'rgba(252, 74, 73, 0.1)', //8B1E3F
   },
+  maxWidth: '1200px',
 }
 
 export default Constants

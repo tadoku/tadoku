@@ -35,4 +35,6 @@ const GlobalStyle = createGlobalStyle<typeof Constants>`
 
 const Container = styled.div`
   padding: 20px;
+  max-width: ${Constants.maxWidth};
+  margin: 0 auto;
 `

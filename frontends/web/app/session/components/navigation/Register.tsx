@@ -1,16 +1,16 @@
 import React, { useState } from 'react'
-import LogInModal from '../components/modals/LogInModal'
-import { NavigationBarLink } from '../../ui/components/navigation/index'
+import RegisterModal from '../modals/RegisterModal'
+import { NavigationBarLink } from '../../../ui/components/navigation/index'
 
-const LogIn = ({ refreshSession }: { refreshSession: () => void }) => {
+const Register = ({ refreshSession }: { refreshSession: () => void }) => {
   const [open, setOpen] = useState(false)
 
   return (
     <>
       <NavigationBarLink href="#" onClick={() => setOpen(true)}>
-        Log in
+        Sign up
       </NavigationBarLink>
-      <LogInModal
+      <RegisterModal
         isOpen={open}
         onCancel={() => setOpen(false)}
         onSuccess={() => {
@@ -22,4 +22,4 @@ const LogIn = ({ refreshSession }: { refreshSession: () => void }) => {
   )
 }
 
-export default LogIn
+export default Register

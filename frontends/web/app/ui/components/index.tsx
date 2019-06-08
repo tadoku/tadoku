@@ -38,6 +38,17 @@ const StyledButton = styled.button`
   display: flex;
   align-items: center;
   justify-content: center;
+  transition: all 0.2s ease;
+
+  &:hover, &:active, &:focus {
+    box-shadow: inset 0px 0px 2px rgba(0, 0, 0, 0.1),
+      0px 2px 3px 0px rgba(0, 0, 0, 0.15);
+  }
+
+  &:active, &:focus {
+    outline: none;
+    border-color: ${Constants.colors.primary};
+  }
 
   ${({ plain }: ButtonProps) =>
     plain &&
@@ -46,6 +57,15 @@ const StyledButton = styled.button`
     box-shadow: none;
     border: none;
     padding: 0;
+
+    &:hover, &:active, &:focus {
+      box-shadow: none;
+      color: ${Constants.colors.primary};
+    }
+
+    &:active, &:focus {
+      text-decoration: underline;
+    }
   `}
 
   ${({ primary }: ButtonProps) =>
@@ -55,6 +75,12 @@ const StyledButton = styled.button`
     background-color: ${Constants.colors.primary};
     box-shadow: inset 0px 0px 2px rgba(0, 0, 0, 0.08),
       0px 2px 3px 0px rgba(0, 0, 0, 0.24);
+
+    &:hover, &:active, &:focus {
+      box-shadow: inset 0px 0px 2px rgba(0, 0, 0, 0.1),
+        0px 2px 3px 0px rgba(0, 0, 0, 0.3),
+        0px 2px 6px 2px ${Constants.colors.primaryWithAlpha(0.4)};
+    }
   `}
 
   ${({ large }: ButtonProps) =>
@@ -79,6 +105,14 @@ const StyledButton = styled.button`
     color: ${Constants.colors.destructive};
     border-color: ${Constants.colors.destructive};
     background-color: transparent;
+
+    &:hover, &:active, &:focus {
+      color: ${Constants.colors.light};
+      background-color: ${Constants.colors.destructive};
+      box-shadow: inset 0px 0px 2px rgba(0, 0, 0, 0.1),
+        0px 2px 3px 0px rgba(0, 0, 0, 0.15),
+        0px 2px 6px 2px ${Constants.colors.destructiveWithAlpha(0.4)};
+    }
   `}
 
   &:disabled {

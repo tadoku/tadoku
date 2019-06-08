@@ -35,7 +35,7 @@
     "react-vis": "^1.11.7",
     "redux": "^4.0.1",
     "styled-components": "^4.3.1",
-    "styled-media-query": "morajabi/styled-media-query#687a2089dbf46924783a8b157f4d3ebcdead7b3b"
+    "styled-media-query": "^2.1.1"
   },
   "devDependencies": {
     "@zeit/next-css": "^1.0.1",

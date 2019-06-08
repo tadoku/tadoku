@@ -54,7 +54,6 @@ const RowLink = styled.a`
   &:focus,
   &:active {
     background-color: rgba(0, 0, 0, 0.02);
-    color: ${Constants.colors.primary};
     box-shadow: 4px 5px 15px 1px rgba(0, 0, 0, 0.12);
   }
 `

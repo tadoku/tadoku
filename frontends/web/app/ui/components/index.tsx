@@ -40,12 +40,15 @@ const StyledButton = styled.button`
   justify-content: center;
   transition: all 0.2s ease;
 
-  &:hover, &:active, &:focus {
+  &:hover:not([disabled]),
+  &:active:not([disabled]),
+  &:focus:not([disabled]) {
     box-shadow: inset 0px 0px 2px rgba(0, 0, 0, 0.1),
       0px 2px 3px 0px rgba(0, 0, 0, 0.15);
   }
 
-  &:active, &:focus {
+  &:active:not([disabled]),
+  &:focus:not([disabled]) {
     outline: none;
     border-color: ${Constants.colors.primary};
   }
@@ -58,12 +61,15 @@ const StyledButton = styled.button`
     border: none;
     padding: 0;
 
-    &:hover, &:active, &:focus {
+    &:hover:not([disabled]),
+    &:active:not([disabled]),
+    &:focus:not([disabled]) {
       box-shadow: none;
       color: ${Constants.colors.primary};
     }
 
-    &:active, &:focus {
+    &:active:not([disabled]),
+    &:focus:not([disabled]) {
       text-decoration: underline;
     }
   `}
@@ -76,7 +82,9 @@ const StyledButton = styled.button`
     box-shadow: inset 0px 0px 2px rgba(0, 0, 0, 0.08),
       0px 2px 3px 0px rgba(0, 0, 0, 0.24);
 
-    &:hover, &:active, &:focus {
+    &:hover:not([disabled]),
+    &:active:not([disabled]),
+    &:focus:not([disabled]) {
       box-shadow: inset 0px 0px 2px rgba(0, 0, 0, 0.1),
         0px 2px 3px 0px rgba(0, 0, 0, 0.3),
         0px 2px 6px 2px ${Constants.colors.primaryWithAlpha(0.4)};
@@ -106,7 +114,9 @@ const StyledButton = styled.button`
     border-color: ${Constants.colors.destructive};
     background-color: transparent;
 
-    &:hover, &:active, &:focus {
+    &:hover:not([disabled]),
+    &:active:not([disabled]),
+    &:focus:not([disabled]) {
       color: ${Constants.colors.light};
       background-color: ${Constants.colors.destructive};
       box-shadow: inset 0px 0px 2px rgba(0, 0, 0, 0.1),

@@ -32,7 +32,12 @@ const GlobalStyle = createGlobalStyle<typeof Constants>`
     }
   }
 
-  a[href], input[type='submit'], input[type='image'], label[for], select, button {
+  a[href],
+  input[type='submit']:not([disabled]),
+  input[type='image']:not([disabled]),
+  label[for]:not([disabled]),
+  select:not([disabled]),
+  button:not([disabled]) {
     cursor: pointer;
   }
 `

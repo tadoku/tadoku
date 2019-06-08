@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import styled from 'styled-components'
+import media from 'styled-media-query'
 import { connect } from 'react-redux'
 import { State, Action } from '../../../store'
 import { User } from '../../../session/interfaces'
@@ -74,4 +75,8 @@ export default connect(
 const StyledNav = styled.nav`
   display: flex;
   align-items: center;
+
+  ${media.lessThan('medium')`
+    flex-direction: column;
+  `}
 `

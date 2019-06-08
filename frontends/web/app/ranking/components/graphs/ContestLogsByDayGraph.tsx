@@ -19,14 +19,6 @@ interface Props {
   contest: Contest
 }
 
-const FlexiblePlot = makeWidthFlexible(XYPlot)
-
-const Container = styled.div`
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-`
-
 const Graph = ({ logs, contest }: Props) => {
   const data = aggregateContestLogsByDays(logs, contest)
 
@@ -54,3 +46,11 @@ const Graph = ({ logs, contest }: Props) => {
 }
 
 export default Graph
+
+const FlexiblePlot = makeWidthFlexible(XYPlot)
+
+const Container = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+`

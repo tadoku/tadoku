@@ -1,6 +1,10 @@
 import React from 'react'
 import styled from 'styled-components'
 
+const Cards: React.SFC<{}> = ({ children }) => <Container>{children}</Container>
+
+export default Cards
+
 export const Card = styled.div`
   flex: 1 1 auto;
   padding: 20px 30px;
@@ -47,7 +51,3 @@ const Container = styled.div`
   margin: -20px;
   flex-wrap: wrap;
 `
-
-const Cards: React.SFC<{}> = ({ children }) => <Container>{children}</Container>
-
-export default Cards

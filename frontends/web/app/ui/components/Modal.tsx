@@ -2,6 +2,22 @@ import React, { SFC } from 'react'
 import ReactModal from 'react-modal'
 import styled from 'styled-components'
 
+const Modal: SFC<ReactModal.Props> = ({ children, ...props }) => (
+  <StyledModal
+    style={{
+      overlay: {
+        backgroundColor: 'rgba(0, 0, 0, 0.4)',
+      },
+    }}
+    {...props}
+  >
+    {props.contentLabel && <ModalHeading>{props.contentLabel}</ModalHeading>}
+    {children}
+  </StyledModal>
+)
+
+export default Modal
+
 const ModalHeading = styled.h2`
   margin-top: 0;
   text-transform: uppercase;
@@ -34,19 +50,3 @@ const StyledModal = styled(ReactModal)`
   padding: 40px;
   border-radius: 4px;
 `
-
-const Modal: SFC<ReactModal.Props> = ({ children, ...props }) => (
-  <StyledModal
-    style={{
-      overlay: {
-        backgroundColor: 'rgba(0, 0, 0, 0.4)',
-      },
-    }}
-    {...props}
-  >
-    {props.contentLabel && <ModalHeading>{props.contentLabel}</ModalHeading>}
-    {children}
-  </StyledModal>
-)
-
-export default Modal

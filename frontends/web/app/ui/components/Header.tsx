@@ -4,6 +4,19 @@ import styled from 'styled-components'
 import Constants from '../Constants'
 import NavigationBar from './navigation/NavigationBar'
 
+const Header = () => (
+  <Container>
+    <Link href="/">
+      <a href="">
+        <LogoType>Tadoku</LogoType>
+      </a>
+    </Link>
+    <NavigationBar />
+  </Container>
+)
+
+export default Header
+
 const LogoType = styled.h1`
   color: ${Constants.colors.dark};
   text-transform: uppercase;
@@ -17,16 +30,3 @@ const Container = styled.div`
   padding: 0 20px;
   box-sizing: border-box;
 `
-
-const Header = () => (
-  <Container>
-    <Link href="/">
-      <a href="">
-        <LogoType>Tadoku</LogoType>
-      </a>
-    </Link>
-    <NavigationBar />
-  </Container>
-)
-
-export default Header

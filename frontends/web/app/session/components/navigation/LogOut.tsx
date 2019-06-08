@@ -1,7 +1,6 @@
 import React from 'react'
 import Router from 'next/router'
 import { NavigationBarLink } from '../../../ui/components/navigation/index'
-
 import { connect } from 'react-redux'
 import * as SessionStore from '../../redux'
 import { Dispatch } from 'redux'

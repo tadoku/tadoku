@@ -10,39 +10,6 @@ import { User } from '../../session/interfaces'
 import { Button, ButtonContainer } from '../../ui/components'
 import RankingApi from '../api'
 
-const List = styled.table`
-  list-style: none;
-  padding: 0;
-  margin: 0 auto;
-  width: 100%;
-  border-collapse: collapse;
-`
-
-const Row = styled.tr`
-  margin: 20px 0;
-  padding: 20px 30px;
-  background-color: ${({ even }: { even?: boolean }) =>
-    even ? 'rgba(0, 0, 0, 0.02)' : 'transparant'};
-`
-
-const Column = styled.td`
-  padding: 15px;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.04);
-  text-align: ${({ alignRight }: { alignRight?: boolean }) =>
-    alignRight ? 'right' : 'left'};
-`
-
-const Heading = styled.thead`
-  font-weight: bold;
-  font-size: 1.2em;
-
-  td {
-    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
-  }
-`
-
-const Body = styled.tbody``
-
 interface Props {
   logs: ContestLog[]
   registration: RankingRegistrationOverview
@@ -132,3 +99,36 @@ const mapStateToProps = (state: State, props: Props) => ({
 })
 
 export default connect(mapStateToProps)(ContestLogList)
+
+const List = styled.table`
+  list-style: none;
+  padding: 0;
+  margin: 0 auto;
+  width: 100%;
+  border-collapse: collapse;
+`
+
+const Row = styled.tr`
+  margin: 20px 0;
+  padding: 20px 30px;
+  background-color: ${({ even }: { even?: boolean }) =>
+    even ? 'rgba(0, 0, 0, 0.02)' : 'transparant'};
+`
+
+const Column = styled.td`
+  padding: 15px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+  text-align: ${({ alignRight }: { alignRight?: boolean }) =>
+    alignRight ? 'right' : 'left'};
+`
+
+const Heading = styled.thead`
+  font-weight: bold;
+  font-size: 1.2em;
+
+  td {
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  }
+`
+
+const Body = styled.tbody``

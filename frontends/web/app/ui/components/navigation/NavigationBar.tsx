@@ -10,11 +10,6 @@ import { Dispatch } from 'redux'
 import * as SessionStore from '../../../session/redux'
 import * as RankingStore from '../../../ranking/redux'
 
-const StyledNav = styled.nav`
-  display: flex;
-  align-items: center;
-`
-
 interface Props {
   user: User | undefined
   registration: RankingRegistration | undefined
@@ -75,3 +70,8 @@ export default connect(
   mapStateToProps,
   mapDispatchToProps,
 )(NavigationBar)
+
+const StyledNav = styled.nav`
+  display: flex;
+  align-items: center;
+`

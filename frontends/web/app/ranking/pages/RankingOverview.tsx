@@ -7,7 +7,7 @@ import { Contest } from '../../contest/interfaces'
 import { Button } from '../../ui/components'
 import styled from 'styled-components'
 import { User } from '../../user/interfaces'
-import JoinContestModal from '../../ranking/components/JoinContestModal'
+import JoinContestModal from '../components/modals/JoinContestModal'
 
 interface Props {
   contest: Contest | undefined

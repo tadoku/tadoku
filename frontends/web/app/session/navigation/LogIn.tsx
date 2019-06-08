@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import LogInModal from '../components/LogInModal'
+import LogInModal from '../components/modals/LogInModal'
 import { NavigationBarLink } from '../../ui/components/navigation/index'
 
 const LogIn = ({ refreshSession }: { refreshSession: () => void }) => {

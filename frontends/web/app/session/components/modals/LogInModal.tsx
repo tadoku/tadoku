@@ -1,6 +1,6 @@
 import React from 'react'
-import LogInForm from './LogInForm'
-import Modal from '../../ui/components/Modal'
+import LogInForm from '../LogInForm'
+import Modal from '../../../ui/components/Modal'
 
 const LogInModal = ({
   isOpen,

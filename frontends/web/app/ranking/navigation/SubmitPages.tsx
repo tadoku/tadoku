@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { RankingRegistration } from '../interfaces'
-import NewLogFormModal from '../components/NewLogFormModal'
+import NewLogFormModal from '../components/modals/NewLogFormModal'
 import { NavigationBarLink } from '../../ui/components/navigation/index'
 
 interface Props {

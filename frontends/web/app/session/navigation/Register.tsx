@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import RegisterModal from '../components/RegisterModal'
+import RegisterModal from '../components/modals/RegisterModal'
 import { NavigationBarLink } from '../../ui/components/navigation/index'
 
 const Register = ({ refreshSession }: { refreshSession: () => void }) => {

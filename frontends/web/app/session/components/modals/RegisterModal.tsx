@@ -1,6 +1,6 @@
 import React from 'react'
-import RegisterForm from './RegisterForm'
-import Modal from '../../ui/components/Modal'
+import RegisterForm from '../RegisterForm'
+import Modal from '../../../ui/components/Modal'
 
 const RegisterModal = ({
   isOpen,

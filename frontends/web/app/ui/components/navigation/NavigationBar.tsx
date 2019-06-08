@@ -35,7 +35,7 @@ const NavigationBar = ({
   }
 
   return (
-    <StyledNav>
+    <StyledNav prefersVertical={!!user}>
       {user ? (
         <ActiveUserNavigationBar
           registration={registration}
@@ -76,7 +76,9 @@ const StyledNav = styled.nav`
   display: flex;
   align-items: center;
 
-  ${media.lessThan('medium')`
-    flex-direction: column;
-  `}
+  ${({ prefersVertical }: { prefersVertical?: boolean }) =>
+    prefersVertical &&
+    media.lessThan('medium')`
+      flex-direction: column;
+    `}
 `

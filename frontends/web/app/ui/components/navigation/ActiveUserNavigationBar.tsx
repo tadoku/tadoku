@@ -3,7 +3,7 @@ import { RankingRegistration } from '../../../ranking/interfaces'
 import SubmitPagesLink from '../../../ranking/components/navigation/SubmitPages'
 import SignOutLink from '../../../session/components/navigation/LogOut'
 import { User } from '../../../user/interfaces'
-import { UserInNavigation } from '../UserInNavigation'
+import UserProfile from '../../../session/components/navigation/UserProfile'
 
 interface Props {
   user: User
@@ -22,6 +22,6 @@ export const ActiveUserNavigationBar = ({
       refreshRanking={refreshRanking}
     />
     <SignOutLink />
-    <UserInNavigation user={user} />
+    <UserProfile user={user} />
   </>
 )

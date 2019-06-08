@@ -3,7 +3,7 @@ import styled from 'styled-components'
 import { RankingRegistration } from '../../../ranking/interfaces'
 import SubmitPagesLink from '../../../ranking/components/navigation/SubmitPages'
 import SignOutLink from '../../../session/components/navigation/LogOut'
-import { User } from '../../../user/interfaces'
+import { User } from '../../../session/interfaces'
 import UserProfile from '../../../session/components/navigation/UserProfile'
 
 interface Props {

@@ -1,6 +1,7 @@
 import React from 'react'
 import Link from 'next/link'
 import styled from 'styled-components'
+import media from 'styled-media-query'
 import Constants from '../Constants'
 import NavigationBar from './navigation/NavigationBar'
 
@@ -28,6 +29,10 @@ const Container = styled.div`
   box-shadow: 4px 3px 7px 1px rgba(0, 0, 0, 0.08);
   padding: 0 20px;
   box-sizing: border-box;
+
+  ${media.lessThan('medium')`
+    box-shadow: none;
+  `}
 `
 
 const InnerContainer = styled.div`
@@ -36,4 +41,8 @@ const InnerContainer = styled.div`
   align-items: center;
   justify-content: space-between;
   margin: 0 auto;
+
+  ${media.lessThan('medium')`
+    flex-direction: column;
+  `}
 `

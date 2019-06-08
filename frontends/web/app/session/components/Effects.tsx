@@ -3,12 +3,23 @@ import { Dispatch } from 'redux'
 import * as SessionStore from '../redux'
 import { loadUserFromLocalStorage } from '../storage'
 import { connect } from 'react-redux'
+import { State } from '../../store'
 
-const SessionEffects = ({ loadUser }: { loadUser: () => void }) => {
-  useEffect(() => loadUser(), [])
+const SessionEffects = ({
+  loadUser,
+  effectCount,
+}: {
+  loadUser: () => void
+  effectCount: number
+}) => {
+  useEffect(() => loadUser(), [effectCount])
 
   return null
 }
+
+const mapStateToProps = (state: State) => ({
+  effectCount: state.session.runEffectCount,
+})
 
 const mapDispatchToProps = (dispatch: Dispatch<SessionStore.Action>) => ({
   loadUser: () => {
@@ -24,6 +35,6 @@ const mapDispatchToProps = (dispatch: Dispatch<SessionStore.Action>) => ({
 })
 
 export default connect(
-  null,
+  mapStateToProps,
   mapDispatchToProps,
 )(SessionEffects)

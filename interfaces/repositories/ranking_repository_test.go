@@ -400,6 +400,7 @@ func TestRankingRepository_CurrentRegistration(t *testing.T) {
 		registration, err := repo.CurrentRegistration(user.ID)
 		assert.NoError(t, err)
 		assert.Equal(t, contest.ID, registration.ContestID)
+		assert.Equal(t, contest.Start.UTC(), registration.Start.UTC())
 		assert.Equal(t, contest.End.UTC(), registration.End.UTC())
 
 		sort.Sort(languages)

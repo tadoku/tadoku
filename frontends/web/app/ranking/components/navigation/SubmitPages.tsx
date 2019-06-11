@@ -15,13 +15,19 @@ const SubmitPages = ({ registration, refreshRanking }: Props) => {
     return null
   }
 
-  if (registration.start > new Date()) {
-    return null
-  }
+  const disabled = registration.start > new Date()
 
   return (
     <>
-      <Button onClick={() => setOpen(true)} icon="edit" plain>
+      <Button
+        onClick={() => setOpen(true)}
+        icon="edit"
+        plain
+        disabled={disabled}
+        title={
+          disabled ? 'You can submit updates as soon as the contest starts' : ''
+        }
+      >
         Submit pages
       </Button>
       <NewLogFormModal

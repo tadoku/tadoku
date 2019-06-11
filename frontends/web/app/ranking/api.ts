@@ -55,7 +55,8 @@ const getCurrentRegistration = async (): Promise<
   const data: rawRankingRegistration = await response.json()
 
   return {
-    end: data.end,
+    start: new Date(data.start),
+    end: new Date(data.end),
     contestId: data.contest_id,
     languages: data.languages,
   }

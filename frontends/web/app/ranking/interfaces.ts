@@ -26,13 +26,15 @@ export interface RankingRegistrationOverview {
 }
 
 export interface RankingRegistration {
+  start: Date
   end: Date
   contestId: number
   languages: string[]
 }
 
 export interface rawRankingRegistration {
-  end: Date
+  start: string
+  end: string
   contest_id: number
   languages: string[]
 }
@@ -66,7 +68,7 @@ export interface rawContestLog {
   medium_id: number
   amount: number
   adjusted_amount: number
-  date: Date
+  date: string
 }
 
 export interface AggregatedContestLogsByDayEntry {

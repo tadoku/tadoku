@@ -71,6 +71,10 @@ const RankingOverview = ({
           </>
         )}
       </Container>
+      <p>
+        We'll be running a test round from June 15th until June 30th. All
+        existing data will be wiped after this. Registrations are open now.
+      </p>
       <RankingList rankings={rankings} />
     </Layout>
   )

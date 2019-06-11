@@ -7,9 +7,8 @@ export const AllMediums: Medium[] = [
   { id: 4, description: 'Full game' },
   { id: 5, description: 'Game' },
   { id: 6, description: 'Lyric' },
-  { id: 7, description: 'Subs' },
-  { id: 8, description: 'News' },
-  { id: 9, description: 'Sentences' },
+  { id: 7, description: 'News' },
+  { id: 8, description: 'Sentences' },
 ]
 
 export const MediumById: { [key: number]: Medium } = AllMediums.reduce(

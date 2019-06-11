@@ -24,7 +24,6 @@ const (
 	MediumFullGame
 	MediumGame
 	MediumLyric
-	MediumSubs
 	MediumNews
 	MediumSentences
 )
@@ -37,7 +36,6 @@ var AllMediums = Mediums{
 	MediumFullGame:  Medium{Description: "Full game", Points: 0.1667},
 	MediumGame:      Medium{Description: "Game", Points: 0.05},
 	MediumLyric:     Medium{Description: "Lyric", Points: 1},
-	MediumSubs:      Medium{Description: "Subs", Points: 0.2},
 	MediumNews:      Medium{Description: "News", Points: 1},
 	MediumSentences: Medium{Description: "Sentences", Points: 0.05},
 }

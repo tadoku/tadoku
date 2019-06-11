@@ -157,6 +157,7 @@ func (r *rankingRepository) GetAllLanguagesForContestAndUser(contestID uint64, u
 func (r *rankingRepository) CurrentRegistration(userID uint64) (domain.RankingRegistration, error) {
 	var rows []struct {
 		ID           uint64
+		Start        time.Time
 		End          time.Time
 		LanguageCode domain.LanguageCode `db:"language_code"`
 	}
@@ -165,6 +166,7 @@ func (r *rankingRepository) CurrentRegistration(userID uint64) (domain.RankingRe
 		select
 			contests.id as id,
 			contests."end" as "end",
+			contests.start as start,
 			rankings.language_code as language_code
 		from rankings
 		inner join contests on contests.id = rankings.contest_id and contests.open = true
@@ -181,6 +183,7 @@ func (r *rankingRepository) CurrentRegistration(userID uint64) (domain.RankingRe
 	for i, row := range rows {
 		if i == 0 {
 			result.ContestID = row.ID
+			result.Start = row.Start
 			result.End = row.End
 		}
 		result.Languages = append(result.Languages, row.LanguageCode)

@@ -52,6 +52,7 @@ type RankingView struct {
 
 // RankingRegistration holds the current contest registration
 type RankingRegistration struct {
+	Start     time.Time     `json:"start" db:"start" valid:"required"`
 	End       time.Time     `json:"end" db:"end" valid:"required"`
 	ContestID uint64        `json:"contest_id" db:"contest_id" valid:"required"`
 	Languages LanguageCodes `json:"languages" db:"language_code" valid:"required"`

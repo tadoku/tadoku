@@ -82,6 +82,17 @@ const RankingProfile = ({
     return <ErrorPage statusCode={500} />
   }
 
+  if (logs.length == 0) {
+    return (
+      <Layout title={registration.userDisplayName}>
+        <p>
+          Nothing to see here! {registration.userDisplayName} hasn't logged any
+          updates for this round yet, please check again later.
+        </p>
+      </Layout>
+    )
+  }
+
   const today = new Date()
   today.setHours(0, 0, 0, 0)
 

@@ -15,6 +15,10 @@ const SubmitPages = ({ registration, refreshRanking }: Props) => {
     return null
   }
 
+  if (registration.start > new Date()) {
+    return null
+  }
+
   return (
     <>
       <Button onClick={() => setOpen(true)} icon="edit" plain>

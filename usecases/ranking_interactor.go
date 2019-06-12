@@ -184,7 +184,7 @@ func (i *rankingInteractor) saveLog(log domain.ContestLog) error {
 		}
 	}
 
-	ids, err := i.contestRepository.GetOpenContests()
+	ids, err := i.contestRepository.GetRunningContests()
 	if err != nil {
 		domain.WrapError(err)
 	}

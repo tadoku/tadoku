@@ -332,7 +332,7 @@ func TestRankingInteractor_DeleteLog(t *testing.T) {
 
 		contestLogRepo.EXPECT().Delete(log.ID)
 		contestLogRepo.EXPECT().FindByID(log.ID).Return(log, nil)
-		contestRepo.EXPECT().GetOpenContests().Return([]uint64{contestID}, nil)
+		contestRepo.EXPECT().GetRunningContests().Return([]uint64{contestID}, nil)
 		rankingRepo.EXPECT().FindAll(contestID, userID).Return(rankings, nil)
 		contestLogRepo.EXPECT().FindAll(contestID, userID).Return(domain.ContestLogs{}, nil)
 		rankingRepo.EXPECT().UpdateAmounts(expectedRankings).Return(nil)
@@ -352,7 +352,7 @@ func TestRankingInteractor_DeleteLog(t *testing.T) {
 	// Sad path: contest is cloaed
 	{
 		contestLogRepo.EXPECT().FindByID(log.ID).Return(log, nil)
-		contestRepo.EXPECT().GetOpenContests().Return([]uint64{contestID + 1}, nil)
+		contestRepo.EXPECT().GetRunningContests().Return([]uint64{contestID + 1}, nil)
 
 		err := interactor.DeleteLog(log.ID, log.UserID)
 		assert.EqualError(t, err, usecases.ErrContestIsClosed.Error())

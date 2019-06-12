@@ -218,7 +218,7 @@ func (i *rankingInteractor) DeleteLog(logID uint64, userID uint64) error {
 		return domain.ErrInsufficientPermissions
 	}
 
-	ids, err := i.contestRepository.GetOpenContests()
+	ids, err := i.contestRepository.GetRunningContests()
 	if err != nil {
 		domain.WrapError(err)
 	}

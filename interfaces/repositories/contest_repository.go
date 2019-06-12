@@ -68,7 +68,22 @@ func (r *contestRepository) GetOpenContests() ([]uint64, error) {
 }
 
 func (r *contestRepository) GetRunningContests() ([]uint64, error) {
-	return nil, nil
+	query := `
+		select id
+		from contests
+		where
+			open = true and
+			start <= now() at time zone 'utc' and
+			"end" >= now() at time zone 'utc'
+	`
+
+	var ids []uint64
+	err := r.sqlHandler.Select(&ids, query)
+	if err != nil {
+		return nil, domain.WrapError(err)
+	}
+
+	return ids, nil
 }
 
 func (r *contestRepository) FindLatest() (domain.Contest, error) {

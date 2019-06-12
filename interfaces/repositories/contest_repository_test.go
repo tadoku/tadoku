@@ -61,6 +61,32 @@ func TestContestRepository_GetOpenContests(t *testing.T) {
 	}
 }
 
+func TestContestRepository_GetRunningContests(t *testing.T) {
+	sqlHandler, cleanup := setupTestingSuite(t)
+	defer cleanup()
+
+	repo := repositories.NewContestRepository(sqlHandler)
+
+	{
+		ids, err := repo.GetRunningContests()
+		assert.NoError(t, err)
+		assert.Empty(t, ids, "no running contests should exist")
+
+		for _, contest := range []*domain.Contest{
+			&domain.Contest{Start: time.Now().Add(-1 * time.Hour), End: time.Now().Add(1 * time.Hour), Open: true},
+			&domain.Contest{Start: time.Now().Add(-1 * time.Hour), End: time.Now().Add(1 * time.Hour), Open: false},
+			&domain.Contest{Start: time.Now().Add(-5 * time.Hour), End: time.Now().Add(-1 * time.Hour), Open: false},
+		} {
+			err = repo.Store(contest)
+			assert.NoError(t, err, "saving seed contest should return no error")
+		}
+
+		ids, err = repo.GetOpenContests()
+		assert.Equal(t, 1, len(ids), "only one running contest should exist")
+		assert.NoError(t, err)
+	}
+}
+
 func TestContestRepository_FindLatest(t *testing.T) {
 	sqlHandler, cleanup := setupTestingSuite(t)
 	defer cleanup()

@@ -67,6 +67,10 @@ func (r *contestRepository) GetOpenContests() ([]uint64, error) {
 	return ids, nil
 }
 
+func (r *contestRepository) GetRunningContests() ([]uint64, error) {
+	return nil, nil
+}
+
 func (r *contestRepository) FindLatest() (domain.Contest, error) {
 	query := `
 		select id, description, start, "end", open

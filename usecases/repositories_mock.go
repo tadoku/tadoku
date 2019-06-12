@@ -129,6 +129,21 @@ func (mr *MockContestRepositoryMockRecorder) GetOpenContests() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetOpenContests", reflect.TypeOf((*MockContestRepository)(nil).GetOpenContests))
 }
 
+// GetRunningContests mocks base method
+func (m *MockContestRepository) GetRunningContests() ([]uint64, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetRunningContests")
+	ret0, _ := ret[0].([]uint64)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetRunningContests indicates an expected call of GetRunningContests
+func (mr *MockContestRepositoryMockRecorder) GetRunningContests() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetRunningContests", reflect.TypeOf((*MockContestRepository)(nil).GetRunningContests))
+}
+
 // FindLatest mocks base method
 func (m *MockContestRepository) FindLatest() (domain.Contest, error) {
 	m.ctrl.T.Helper()

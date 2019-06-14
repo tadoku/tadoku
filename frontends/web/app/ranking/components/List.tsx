@@ -1,8 +1,13 @@
 import React from 'react'
 import Link from 'next/link'
+import dynamic from 'next/dynamic'
 import { Ranking } from '../interfaces'
 import styled from 'styled-components'
 import { amountToPages } from '../transform'
+
+const Skeleton = dynamic(() =>
+  import('react-loading-skeleton').then(module => module.default),
+)
 
 interface Props {
   rankings: Ranking[]
@@ -10,26 +15,22 @@ interface Props {
 }
 
 const RankingList = (props: Props) => {
-  const rankings = props.loading ? skeletonData : props.rankings
+  if (props.loading) {
+    const rows = [...Array(5)]
+
+    return (
+      <List>
+        {rows.map((_, i) => (
+          <RankingRowSkeleton key={i} rank={i + 1} />
+        ))}
+      </List>
+    )
+  }
 
   return (
     <List>
-      {rankings.map((r, rank) => (
-        <Row key={r.userId}>
-          <Link
-            as={`/contest/1/rankings/${r.userId}`}
-            href={`/ranking-details?contest_id=1&user_id=${r.userId}`}
-          >
-            <RowLink href="">
-              <Rank>{rank + 1}</Rank>
-              <Name>{r.userDisplayName}</Name>
-              <Pages>
-                {amountToPages(r.amount)}
-                <span> pages</span>
-              </Pages>
-            </RowLink>
-          </Link>
-        </Row>
+      {props.rankings.map((r, rank) => (
+        <RankingRow rank={rank} data={r} key={r.userId} />
       ))}
     </List>
   )
@@ -37,11 +38,37 @@ const RankingList = (props: Props) => {
 
 export default RankingList
 
-const skeletonData = Array(10).fill({
-  userId: 0,
-  userDisplayName: null,
-  amount: 0,
-})
+const RankingRow = ({ rank, data }: { rank: number; data: Ranking }) => (
+  <Row>
+    <Link
+      as={`/contest/1/rankings/${data.userId}`}
+      href={`/ranking-details?contest_id=1&user_id=${data.userId}`}
+    >
+      <RowLink href="">
+        <Rank>{rank + 1}</Rank>
+        <Name>{data.userDisplayName}</Name>
+        <Pages>
+          {amountToPages(data.amount)}
+          <PagesLabel> pages</PagesLabel>
+        </Pages>
+      </RowLink>
+    </Link>
+  </Row>
+)
+
+const RankingRowSkeleton = ({ rank }: { rank: number }) => (
+  <Row>
+    <RowLink href="">
+      <Rank>{rank}</Rank>
+      <Name>
+        <Skeleton />
+      </Name>
+      <Pages>
+        <Skeleton />
+      </Pages>
+    </RowLink>
+  </Row>
+)
 
 const List = styled.ul`
   list-style: none;
@@ -80,9 +107,11 @@ const Name = styled.div`
 `
 
 const Pages = styled.div`
+  margin-left: 30px;
+  min-width: 50px;
   font-size: 25px;
+`
 
-  span {
-    font-size: 20px;
-  }
+const PagesLabel = styled.span`
+  font-size: 20px;
 `

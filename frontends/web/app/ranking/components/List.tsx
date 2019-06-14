@@ -6,31 +6,42 @@ import { amountToPages } from '../transform'
 
 interface Props {
   rankings: Ranking[]
+  loading: boolean
 }
 
-const RankingList = (props: Props) => (
-  <List>
-    {props.rankings.map((r, rank) => (
-      <Row key={r.userId}>
-        <Link
-          as={`/contest/1/rankings/${r.userId}`}
-          href={`/ranking-details?contest_id=1&user_id=${r.userId}`}
-        >
-          <RowLink href="">
-            <Rank>{rank + 1}</Rank>
-            <Name>{r.userDisplayName}</Name>
-            <Pages>
-              {amountToPages(r.amount)}
-              <span> pages</span>
-            </Pages>
-          </RowLink>
-        </Link>
-      </Row>
-    ))}
-  </List>
-)
+const RankingList = (props: Props) => {
+  const rankings = props.loading ? skeletonData : props.rankings
+
+  return (
+    <List>
+      {rankings.map((r, rank) => (
+        <Row key={r.userId}>
+          <Link
+            as={`/contest/1/rankings/${r.userId}`}
+            href={`/ranking-details?contest_id=1&user_id=${r.userId}`}
+          >
+            <RowLink href="">
+              <Rank>{rank + 1}</Rank>
+              <Name>{r.userDisplayName}</Name>
+              <Pages>
+                {amountToPages(r.amount)}
+                <span> pages</span>
+              </Pages>
+            </RowLink>
+          </Link>
+        </Row>
+      ))}
+    </List>
+  )
+}
 
 export default RankingList
+
+const skeletonData = Array(10).fill({
+  userId: 0,
+  userDisplayName: null,
+  amount: 0,
+})
 
 const List = styled.ul`
   list-style: none;

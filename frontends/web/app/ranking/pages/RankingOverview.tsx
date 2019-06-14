@@ -24,6 +24,7 @@ const RankingOverview = ({
   effectCount,
   refreshRegistration,
 }: Props) => {
+  const [loading, setLoading] = useState(true)
   const [rankings, setRankings] = useState([] as Ranking[])
   const [joinModalOpen, setJoinModalOpen] = useState(false)
 
@@ -35,6 +36,7 @@ const RankingOverview = ({
     const update = async () => {
       const payload = await RankingApi.get(contest.id)
       setRankings(payload)
+      setLoading(false)
     }
     update()
   }, [contest, effectCount])
@@ -71,7 +73,7 @@ const RankingOverview = ({
         We'll be running a test round from June 15th until June 30th UTC. All
         existing data will be wiped after this. Registrations are open now.
       </p>
-      <RankingList rankings={rankings} />
+      <RankingList rankings={rankings} loading={loading} />
     </Layout>
   )
 }

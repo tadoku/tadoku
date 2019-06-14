@@ -1,5 +1,6 @@
 import React from 'react'
 import Link from 'next/link'
+import ContentLoader from 'react-content-loader'
 import { Ranking } from '../interfaces'
 import styled from 'styled-components'
 import { amountToPages } from '../transform'
@@ -55,10 +56,24 @@ const RankingRowSkeleton = ({ rank }: { rank: number }) => (
   <Row>
     <RowLink href="">
       <Rank>{rank}</Rank>
-      <Name>...</Name>
-      <Pages>...</Pages>
+      <Name>
+        <Skeleton />
+      </Name>
+      <PagesLoading>
+        <Skeleton />
+      </PagesLoading>
     </RowLink>
   </Row>
+)
+
+const Skeleton = () => (
+  <ContentLoader
+    speed={2}
+    style={{ width: '100%', height: '25px' }}
+    height={25}
+  >
+    <rect x="0" y="0" rx="0" ry="0" width="100%" height="25" />
+  </ContentLoader>
 )
 
 const List = styled.ul`
@@ -99,7 +114,13 @@ const Name = styled.div`
 
 const Pages = styled.div`
   margin-left: 30px;
+  font-size: 25px;
+`
+
+const PagesLoading = styled.div`
+  margin-left: 30px;
   min-width: 50px;
+  max-width: 100px;
   font-size: 25px;
 `
 

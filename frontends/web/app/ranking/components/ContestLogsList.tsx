@@ -22,27 +22,24 @@ interface Props {
 const ContestLogsList = (props: Props) => (
   <List>
     {props.logs.map((l, i) => (
-      <Item even={i % 2 === 0} key={l.id}>
-        <span>{l.date.toLocaleString()}</span>
-        <span>{languageNameByCode(l.languageCode)}</span>
-        <span>{mediumDescriptionById(l.mediumId)}</span>
-        <span>{amountToPages(l.amount)}</span>
-        <span>{amountToPages(l.adjustedAmount)}</span>
+      <Item key={l.id}>
+        <UpdateText>
+          <strong>{amountToPages(l.amount)}</strong>{' '}
+          {l.amount === 1 ? 'page' : 'pages'} of{' '}
+          <strong>{mediumDescriptionById(l.mediumId)}</strong> in{' '}
+          <strong>{languageNameByCode(l.languageCode)}</strong> at{' '}
+          <strong>{l.date.toLocaleString()}</strong> for a total of{' '}
+          <strong>{amountToPages(l.adjustedAmount)}</strong> points
+        </UpdateText>
         {props.canEdit && (
-          <span style={{ width: '1px', whiteSpace: 'nowrap' }}>
-            <ButtonContainer>
-              <Button onClick={() => props.editLog(l)} icon="edit">
-                Edit
-              </Button>
-              <Button
-                onClick={() => props.deleteLog(l)}
-                icon="trash"
-                destructive
-              >
-                Delete
-              </Button>
-            </ButtonContainer>
-          </span>
+          <ActionButtonContainer>
+            <Button onClick={() => props.editLog(l)} icon="edit">
+              Edit
+            </Button>
+            <Button onClick={() => props.deleteLog(l)} icon="trash" destructive>
+              Delete
+            </Button>
+          </ActionButtonContainer>
         )}
       </Item>
     ))}
@@ -54,8 +51,7 @@ export default ContestLogsList
 const List = styled.ul`
   list-style: none;
   padding: 0;
-  margin: 0 auto;
-  width: 100%;
+  margin: 0 -30px;
 
   ${media.greaterThan('medium')`
     display: none;
@@ -63,8 +59,19 @@ const List = styled.ul`
 `
 
 const Item = styled.li`
-  margin: 20px 0;
-  padding: 20px 30px;
-  background-color: ${({ even }: { even?: boolean }) =>
-    even ? 'rgba(0, 0, 0, 0.02)' : 'transparant'};
+  margin: 10px 0;
+  padding: 15px;
+  border-radius: 2px;
+  background-color: rgba(0, 0, 0, 0.03);
+`
+
+const UpdateText = styled.p`
+  padding: 0;
+  margin: 0 5px 15px;
+`
+
+const ActionButtonContainer = styled(ButtonContainer)`
+  > button {
+    flex: 1;
+  }
 `

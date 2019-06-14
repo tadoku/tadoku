@@ -69,7 +69,7 @@ const RankingRowSkeleton = ({ rank }: { rank: number }) => (
 const Skeleton = () => (
   <ContentLoader
     speed={2}
-    style={{ width: '100%', height: '25px' }}
+    style={{ width: '100%', height: '25px', borderRadius: '2px' }}
     height={25}
   >
     <rect x="0" y="0" rx="0" ry="0" width="100%" height="25" />

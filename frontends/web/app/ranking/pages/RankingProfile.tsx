@@ -5,7 +5,7 @@ import { ContestLog, RankingRegistrationOverview } from '../interfaces'
 import RankingApi from '../api'
 import ContestApi from '../../contest/api'
 import ContestLogsByDayGraph from '../components/graphs/ContestLogsByDayGraph'
-import ContestLogsList from '../components/ContestLogsList'
+import ContestLogsOverview from '../components/ContestLogsOverview'
 import {
   rankingsToRegistrationOverview,
   amountToPages,
@@ -118,7 +118,7 @@ const RankingProfile = ({
           <ContestLogsByDayGraph logs={logs} contest={contestForGraphs} />
         </LargeCard>
         <LargeCard>
-          <ContestLogsList
+          <ContestLogsOverview
             logs={logs.reverse()}
             registration={registration}
             refreshData={refreshRanking}

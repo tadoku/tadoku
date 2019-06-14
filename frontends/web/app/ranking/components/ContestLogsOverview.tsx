@@ -19,7 +19,7 @@ interface Props {
   refreshData: () => void
 }
 
-const ContestLogList = (props: Props) => {
+const ContestLogsOverview = (props: Props) => {
   const [selectedLog, setSelectedLog] = useState(undefined as
     | ContestLog
     | undefined)
@@ -110,4 +110,4 @@ const mapStateToProps = (state: State, props: Props) => ({
   signedInUser: state.session.user,
 })
 
-export default connect(mapStateToProps)(ContestLogList)
+export default connect(mapStateToProps)(ContestLogsOverview)

@@ -40,7 +40,9 @@ const ContestLogList = (props: Props) => {
   }
 
   const canEdit =
-    props.signedInUser && props.signedInUser.id === props.registration.userId
+    (props.signedInUser &&
+      props.signedInUser.id === props.registration.userId) ||
+    false
 
   return (
     <>
@@ -51,45 +53,12 @@ const ContestLogList = (props: Props) => {
         onSuccess={finishUpdate}
         onCancel={() => setSelectedLog(undefined)}
       />
-      <TableList>
-        <Heading>
-          <Row>
-            <Column>Date</Column>
-            <Column>Language</Column>
-            <Column>Medium</Column>
-            <Column alignRight>Amount</Column>
-            <Column alignRight>Score</Column>
-            {canEdit && <Column />}
-          </Row>
-        </Heading>
-        <Body>
-          {props.logs.map((l, i) => (
-            <Row even={i % 2 === 0} key={l.id}>
-              <Column>{l.date.toLocaleString()}</Column>
-              <Column>{languageNameByCode(l.languageCode)}</Column>
-              <Column>{mediumDescriptionById(l.mediumId)}</Column>
-              <Column alignRight>{amountToPages(l.amount)}</Column>
-              <Column alignRight>{amountToPages(l.adjustedAmount)}</Column>
-              {canEdit && (
-                <Column style={{ width: '1px', whiteSpace: 'nowrap' }}>
-                  <ButtonContainer>
-                    <Button onClick={() => setSelectedLog(l)} icon="edit">
-                      Edit
-                    </Button>
-                    <Button
-                      onClick={() => deleteLog(l)}
-                      icon="trash"
-                      destructive
-                    >
-                      Delete
-                    </Button>
-                  </ButtonContainer>
-                </Column>
-              )}
-            </Row>
-          ))}
-        </Body>
-      </TableList>
+      <ContestLogsTable
+        logs={props.logs}
+        canEdit={canEdit}
+        editLog={setSelectedLog}
+        deleteLog={deleteLog}
+      />
       <SmallList>
         {props.logs.map((l, i) => (
           <SmallRow even={i % 2 === 0} key={l.id}>
@@ -116,6 +85,53 @@ const ContestLogList = (props: Props) => {
     </>
   )
 }
+
+const ContestLogsTable = (props: {
+  logs: ContestLog[]
+  canEdit: boolean
+  editLog: (log: ContestLog) => void
+  deleteLog: (log: ContestLog) => void
+}) => (
+  <TableList>
+    <Heading>
+      <Row>
+        <Column>Date</Column>
+        <Column>Language</Column>
+        <Column>Medium</Column>
+        <Column alignRight>Amount</Column>
+        <Column alignRight>Score</Column>
+        {props.canEdit && <Column />}
+      </Row>
+    </Heading>
+    <Body>
+      {props.logs.map((l, i) => (
+        <Row even={i % 2 === 0} key={l.id}>
+          <Column>{l.date.toLocaleString()}</Column>
+          <Column>{languageNameByCode(l.languageCode)}</Column>
+          <Column>{mediumDescriptionById(l.mediumId)}</Column>
+          <Column alignRight>{amountToPages(l.amount)}</Column>
+          <Column alignRight>{amountToPages(l.adjustedAmount)}</Column>
+          {props.canEdit && (
+            <Column style={{ width: '1px', whiteSpace: 'nowrap' }}>
+              <ButtonContainer>
+                <Button onClick={() => props.editLog(l)} icon="edit">
+                  Edit
+                </Button>
+                <Button
+                  onClick={() => props.deleteLog(l)}
+                  icon="trash"
+                  destructive
+                >
+                  Delete
+                </Button>
+              </ButtonContainer>
+            </Column>
+          )}
+        </Row>
+      ))}
+    </Body>
+  </TableList>
+)
 
 const SmallList = styled.ul`
   list-style: none;

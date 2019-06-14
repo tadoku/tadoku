@@ -132,19 +132,22 @@ func (i *rankingInteractor) CreateRanking(
 		return ErrNoRankingToCreate
 	}
 
-	for _, lang := range targetLanguages {
+	rankings := make([]domain.Ranking, len(targetLanguages))
+	for i, lang := range targetLanguages {
 		if _, err := lang.Validate(); err != nil {
 			return domain.WrapError(err)
 		}
 
-		ranking := domain.Ranking{
+		rankings[i] = domain.Ranking{
 			ContestID: contestID,
 			UserID:    userID,
 			Language:  lang,
 			Amount:    0,
 		}
-		err = i.rankingRepository.Store(ranking)
-		if err != nil {
+	}
+
+	for _, ranking := range rankings {
+		if err := i.rankingRepository.Store(ranking); err != nil {
 			return domain.WrapError(err)
 		}
 	}

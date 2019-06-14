@@ -62,7 +62,7 @@ const ContestLogList = (props: Props) => {
           </Row>
         </Heading>
         <Body>
-          {props.logs.reverse().map((l, i) => (
+          {props.logs.map((l, i) => (
             <Row even={i % 2 === 0} key={l.id}>
               <Column>{l.date.toLocaleString()}</Column>
               <Column>{languageNameByCode(l.languageCode)}</Column>

@@ -119,7 +119,7 @@ const RankingProfile = ({
         </LargeCard>
         <LargeCard>
           <ContestLogsList
-            logs={logs}
+            logs={logs.reverse()}
             registration={registration}
             refreshData={refreshRanking}
           />

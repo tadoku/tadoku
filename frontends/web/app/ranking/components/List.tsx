@@ -1,13 +1,8 @@
 import React from 'react'
 import Link from 'next/link'
-import dynamic from 'next/dynamic'
 import { Ranking } from '../interfaces'
 import styled from 'styled-components'
 import { amountToPages } from '../transform'
-
-const Skeleton = dynamic(() =>
-  import('react-loading-skeleton').then(module => module.default),
-)
 
 interface Props {
   rankings: Ranking[]
@@ -60,12 +55,8 @@ const RankingRowSkeleton = ({ rank }: { rank: number }) => (
   <Row>
     <RowLink href="">
       <Rank>{rank}</Rank>
-      <Name>
-        <Skeleton />
-      </Name>
-      <Pages>
-        <Skeleton />
-      </Pages>
+      <Name>...</Name>
+      <Pages>...</Pages>
     </RowLink>
   </Row>
 )

@@ -57,7 +57,6 @@ const RegisterForm = ({
 
     if (response) {
       setUser(response.token, response.user)
-      setError(undefined)
       complete()
     }
   }

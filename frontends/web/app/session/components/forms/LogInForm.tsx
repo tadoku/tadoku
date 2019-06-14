@@ -45,7 +45,6 @@ const LogInForm = ({
     }
 
     setUser(response.token, response.user)
-    setError(undefined)
     complete()
   }
 

@@ -14,7 +14,6 @@ const LogIn = ({ refreshSession }: { refreshSession: () => void }) => {
         isOpen={open}
         onCancel={() => setOpen(false)}
         onSuccess={() => {
-          setOpen(false)
           refreshSession()
         }}
       />

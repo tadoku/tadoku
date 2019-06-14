@@ -9,6 +9,7 @@ import { connect } from 'react-redux'
 import { User } from '../../session/interfaces'
 import { Button, ButtonContainer } from '../../ui/components'
 import RankingApi from '../api'
+import media from 'styled-media-query'
 
 interface Props {
   logs: ContestLog[]
@@ -50,7 +51,7 @@ const ContestLogList = (props: Props) => {
         onSuccess={finishUpdate}
         onCancel={() => setSelectedLog(undefined)}
       />
-      <List>
+      <TableList>
         <Heading>
           <Row>
             <Column>Date</Column>
@@ -88,7 +89,7 @@ const ContestLogList = (props: Props) => {
             </Row>
           ))}
         </Body>
-      </List>
+      </TableList>
     </>
   )
 }
@@ -100,12 +101,16 @@ const mapStateToProps = (state: State, props: Props) => ({
 
 export default connect(mapStateToProps)(ContestLogList)
 
-const List = styled.table`
+const TableList = styled.table`
   list-style: none;
   padding: 0;
   margin: 0 auto;
   width: 100%;
   border-collapse: collapse;
+
+  ${media.lessThan('medium')`
+    display: none;
+  `}
 `
 
 const Row = styled.tr`

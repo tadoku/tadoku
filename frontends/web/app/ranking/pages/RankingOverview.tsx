@@ -39,10 +39,6 @@ const RankingOverview = ({
     update()
   }, [contest, effectCount])
 
-  if (!rankings || !contest) {
-    return <Layout>No ranking found.</Layout>
-  }
-
   // @TODO: extract this business logic
   const canJoin =
     user &&
@@ -54,7 +50,7 @@ const RankingOverview = ({
   return (
     <Layout title="Ranking">
       <Container>
-        {canJoin && (
+        {canJoin && contest && (
           <>
             <Button primary large onClick={() => setJoinModalOpen(true)}>
               Join contest

@@ -21,6 +21,7 @@ const (
 	Dutch      LanguageCode = "nld"
 	English    LanguageCode = "eng"
 	Esperanto  LanguageCode = "epo"
+	Finnish    LanguageCode = "fin"
 	French     LanguageCode = "fra"
 	German     LanguageCode = "deu"
 	Greek      LanguageCode = "ell"
@@ -49,6 +50,7 @@ var AllLanguageCodes = LanguageCodes{
 	Dutch,
 	Esperanto,
 	English,
+	Finnish,
 	French,
 	German,
 	Greek,

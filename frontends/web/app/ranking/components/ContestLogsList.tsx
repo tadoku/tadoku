@@ -1,16 +1,10 @@
-import React, { useState } from 'react'
-import { ContestLog, RankingRegistrationOverview } from '../interfaces'
+import React from 'react'
+import { ContestLog } from '../interfaces'
 import styled from 'styled-components'
 import { languageNameByCode, mediumDescriptionById } from '../database'
 import { amountToPages } from '../transform'
-import EditLogFormModal from './modals/EditLogFormModal'
-import { State } from '../../store'
-import { connect } from 'react-redux'
-import { User } from '../../session/interfaces'
 import { Button, ButtonContainer } from '../../ui/components'
-import RankingApi from '../api'
 import media from 'styled-media-query'
-import ContestLogsTable from './ContestLogsTable'
 
 interface Props {
   logs: ContestLog[]
@@ -21,7 +15,7 @@ interface Props {
 
 const ContestLogsList = (props: Props) => (
   <List>
-    {props.logs.map((l, i) => (
+    {props.logs.map(l => (
       <Item key={l.id}>
         <UpdateText>
           <strong>{amountToPages(l.amount)}</strong>{' '}

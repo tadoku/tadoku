@@ -22,14 +22,17 @@ export const useCachedApiState = (
       setStatus(ApiFetchStatus.Stale)
       setData(JSON.parse(cachedValue))
     } else {
+      // We don't want to set loading state when we don't have a cached version
       setStatus(ApiFetchStatus.Loading)
     }
 
     const fetchedData = await fetchData()
-    setData(fetchedData)
-    setStatus(ApiFetchStatus.Completed)
+    if (fetchedData !== data) {
+      setData(fetchedData)
+      localStorage.setItem(cacheKey, JSON.stringify(fetchedData))
+    }
 
-    localStorage.setItem(cacheKey, JSON.stringify(fetchedData))
+    setStatus(ApiFetchStatus.Completed)
   }
 
   useEffect(() => {

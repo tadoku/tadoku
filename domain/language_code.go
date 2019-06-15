@@ -19,6 +19,7 @@ const (
 	Czech      LanguageCode = "ces"
 	Dutch      LanguageCode = "nld"
 	English    LanguageCode = "eng"
+	Esperanto  LanguageCode = "epo"
 	French     LanguageCode = "fra"
 	German     LanguageCode = "deu"
 	Greek      LanguageCode = "ell"
@@ -44,6 +45,7 @@ var AllLanguageCodes = LanguageCodes{
 	Chinese,
 	Czech,
 	Dutch,
+	Esperanto,
 	English,
 	French,
 	German,

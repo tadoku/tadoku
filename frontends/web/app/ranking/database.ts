@@ -24,20 +24,28 @@ export const MediumById: { [key: number]: Medium } = AllMediums.reduce(
 export const mediumDescriptionById = (id: number) => MediumById[id].description
 
 export const AllLanguages: Language[] = [
+  { code: 'ara', name: 'Arabic' },
   { code: 'zho', name: 'Chinese' },
+  { code: 'hrv', name: 'Croatian' },
+  { code: 'ces', name: 'Czech' },
   { code: 'nld', name: 'Dutch' },
   { code: 'eng', name: 'English' },
+  { code: 'eso', name: 'Esperanto' },
+  { code: 'fin', name: 'Finnish' },
   { code: 'fra', name: 'French' },
   { code: 'deu', name: 'German' },
   { code: 'ell', name: 'Greek' },
+  { code: 'heb', name: 'Hebrew' },
   { code: 'gle', name: 'Irish' },
   { code: 'ita', name: 'Italian' },
   { code: 'jpn', name: 'Japanese' },
   { code: 'kor', name: 'Korean' },
+  { code: 'pol', name: 'Polish' },
   { code: 'por', name: 'Portuguese' },
   { code: 'rus', name: 'Russian' },
   { code: 'spa', name: 'Spanish' },
   { code: 'swe', name: 'Swedish' },
+  { code: 'tha', name: 'Thai' },
   { code: 'tur', name: 'Turkish' },
 ]
 

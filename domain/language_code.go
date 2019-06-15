@@ -26,6 +26,7 @@ const (
 	Italian    LanguageCode = "ita"
 	Japanese   LanguageCode = "jpn"
 	Korean     LanguageCode = "kor"
+	Polish     LanguageCode = "pol"
 	Portuguese LanguageCode = "por"
 	Russian    LanguageCode = "rus"
 	Spanish    LanguageCode = "spa"
@@ -50,6 +51,7 @@ var AllLanguageCodes = LanguageCodes{
 	Italian,
 	Japanese,
 	Korean,
+	Polish,
 	Portuguese,
 	Russian,
 	Spanish,

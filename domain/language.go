@@ -22,6 +22,7 @@ var AllLanguages = Languages{
 	Language{Code: Italian, Name: "Italian"},
 	Language{Code: Japanese, Name: "Japanese"},
 	Language{Code: Korean, Name: "Korean"},
+	Language{Code: Polish, Name: "Polish"},
 	Language{Code: Portuguese, Name: "Portuguese"},
 	Language{Code: Russian, Name: "Russian"},
 	Language{Code: Spanish, Name: "Spanish"},

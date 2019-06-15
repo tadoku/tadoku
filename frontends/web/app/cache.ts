@@ -7,25 +7,25 @@ export enum ApiFetchStatus {
   Completed,
 }
 
-interface useCachedApiStateParameters {
+interface useCachedApiStateParameters<DataType> {
   cacheKey: string
-  defaultValue: any
-  fetchData: () => Promise<any>
+  defaultValue: DataType
+  fetchData: () => Promise<DataType>
   dependencies?: any[]
 }
 
-export const useCachedApiState = ({
+export const useCachedApiState = <DataType>({
   cacheKey,
   defaultValue,
   fetchData,
   dependencies: originalDependencies,
-}: useCachedApiStateParameters) => {
+}: useCachedApiStateParameters<DataType>) => {
   const [status, setStatus] = useState(ApiFetchStatus.Initialized)
   const [data, setData] = useState(defaultValue)
 
   const dependencies = originalDependencies || []
 
-  const reloadData = async () => {
+  const reload = async () => {
     const cachedValue = localStorage.getItem(cacheKey)
     if (cachedValue) {
       setStatus(ApiFetchStatus.Stale)
@@ -45,9 +45,9 @@ export const useCachedApiState = ({
   }
 
   useEffect(() => {
-    const update = async () => await reloadData()
+    const update = async () => await reload()
     update()
   }, dependencies)
 
-  return [data, status, reloadData]
+  return { data, status, reload }
 }

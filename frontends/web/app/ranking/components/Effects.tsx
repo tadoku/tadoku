@@ -15,7 +15,7 @@ interface Props {
 }
 
 const RankingEffects = ({ user, updateRegistration, effectCount }: Props) => {
-  const [registration] = useCachedApiState({
+  const { data: registration } = useCachedApiState({
     cacheKey: `current_registration`,
     defaultValue: undefined as RankingRegistration | undefined,
     fetchData: () => {

@@ -27,9 +27,9 @@ const RankingOverview = ({
 }: Props) => {
   const [joinModalOpen, setJoinModalOpen] = useState(false)
 
-  const [rankings, status] = useCachedApiState({
+  const { data: rankings, status } = useCachedApiState<Ranking[]>({
     cacheKey: `ranking_overview?contest_id=${contest.id}`,
-    defaultValue: [] as Ranking[],
+    defaultValue: [],
     fetchData: () => {
       if (!contest) {
         return new Promise<Ranking[]>(resolve => resolve([]))

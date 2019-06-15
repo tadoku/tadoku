@@ -11,17 +11,19 @@ interface useCachedApiStateParameters {
   cacheKey: string
   defaultValue: any
   fetchData: () => Promise<any>
-  dependencies: any[]
+  dependencies?: any[]
 }
 
 export const useCachedApiState = ({
   cacheKey,
   defaultValue,
   fetchData,
-  dependencies,
+  dependencies: originalDependencies,
 }: useCachedApiStateParameters) => {
   const [status, setStatus] = useState(ApiFetchStatus.Initialized)
   const [data, setData] = useState(defaultValue)
+
+  const dependencies = originalDependencies || []
 
   const reloadData = async () => {
     const cachedValue = localStorage.getItem(cacheKey)

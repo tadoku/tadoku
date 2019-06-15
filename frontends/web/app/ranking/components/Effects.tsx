@@ -6,6 +6,7 @@ import { RankingRegistration } from '../interfaces'
 import { State } from '../../store'
 import { User } from '../../session/interfaces'
 import RankingApi from '../api'
+import { useCachedApiState } from '../../cache'
 
 interface Props {
   user: User | undefined
@@ -14,18 +15,24 @@ interface Props {
 }
 
 const RankingEffects = ({ user, updateRegistration, effectCount }: Props) => {
-  useEffect(() => {
-    const update = async () => {
+  const [registration] = useCachedApiState(
+    `current_registration`,
+    undefined as RankingRegistration | undefined,
+    () => {
       if (!user) {
-        updateRegistration(undefined)
-        return
+        return new Promise<RankingRegistration | undefined>(resolve =>
+          resolve(undefined),
+        )
       }
 
-      updateRegistration(await RankingApi.getCurrentRegistration())
-    }
+      return RankingApi.getCurrentRegistration()
+    },
+    [user, effectCount],
+  )
 
-    update()
-  }, [user, effectCount])
+  useEffect(() => {
+    updateRegistration(registration)
+  }, [registration])
 
   return null
 }

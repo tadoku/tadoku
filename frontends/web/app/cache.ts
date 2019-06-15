@@ -24,8 +24,9 @@ export const useCachedApiState = <DataType>({
 }: useCachedApiStateParameters<DataType>) => {
   const [status, setStatus] = useState(ApiFetchStatus.Initialized)
   const [data, setData] = useState(defaultValue)
+  const [apiEffectCounter, setApiEffectCounter] = useState(0)
 
-  const dependencies = originalDependencies || []
+  const dependencies = [...(originalDependencies || []), apiEffectCounter]
 
   const observedSetData = (newData: DataType) => {
     setData(newData)
@@ -35,29 +36,41 @@ export const useCachedApiState = <DataType>({
     }
   }
 
-  const reload = async () => {
+  useEffect(() => {
+    let isSubscribed = true
+
     const cachedValue = localStorage.getItem(cacheKey)
     if (cachedValue) {
-      setStatus(ApiFetchStatus.Stale)
-      observedSetData(JSON.parse(cachedValue))
+      const parsedCacheData = JSON.parse(cachedValue)
+
+      if (parsedCacheData !== data) {
+        setStatus(ApiFetchStatus.Stale)
+        observedSetData(parsedCacheData)
+      }
     } else {
       // We don't want to set loading state when we don't have a cached version
       setStatus(ApiFetchStatus.Loading)
     }
 
-    const fetchedData = await fetchData()
-    if (fetchedData !== data) {
+    fetchData().then(fetchedData => {
+      if (!isSubscribed || fetchedData === data) {
+        return
+      }
+
       observedSetData(fetchedData)
       localStorage.setItem(cacheKey, JSON.stringify(fetchedData))
-    }
+    })
 
     setStatus(ApiFetchStatus.Completed)
-  }
 
-  useEffect(() => {
-    const update = async () => await reload()
-    update()
+    return () => {
+      isSubscribed = false
+    }
   }, dependencies)
 
-  return { data, status, reload }
+  return {
+    data,
+    status,
+    reload: () => setApiEffectCounter(apiEffectCounter + 1),
+  }
 }

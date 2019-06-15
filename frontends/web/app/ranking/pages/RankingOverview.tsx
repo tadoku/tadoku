@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useState } from 'react'
 import Layout from '../../ui/components/Layout'
 import { Ranking, RankingRegistration } from '../../ranking/interfaces'
 import RankingList from '../../ranking/components/List'
@@ -8,6 +8,7 @@ import { Button } from '../../ui/components'
 import styled from 'styled-components'
 import { User } from '../../session/interfaces'
 import JoinContestModal from '../components/modals/JoinContestModal'
+import { useCachedApiState, ApiFetchStatus } from '../../cache'
 
 interface Props {
   contest: Contest
@@ -15,46 +16,6 @@ interface Props {
   user: User | undefined
   effectCount: number
   refreshRegistration: () => void
-}
-
-enum ApiFetchStatus {
-  Initialized,
-  Stale,
-  Loading,
-  Completed,
-}
-
-const useCachedApiState = (
-  cacheKey: string,
-  defaultValue: any,
-  fetchData: () => Promise<any>,
-  dependencies: any[],
-) => {
-  const [status, setStatus] = useState(ApiFetchStatus.Initialized)
-  const [data, setData] = useState(defaultValue)
-
-  const reloadData = async () => {
-    const cachedValue = localStorage.getItem(cacheKey)
-    if (cachedValue) {
-      setStatus(ApiFetchStatus.Stale)
-      setData(JSON.parse(cachedValue))
-    } else {
-      setStatus(ApiFetchStatus.Loading)
-    }
-
-    const fetchedData = await fetchData()
-    setData(fetchedData)
-    setStatus(ApiFetchStatus.Completed)
-
-    localStorage.setItem(cacheKey, JSON.stringify(fetchedData))
-  }
-
-  useEffect(() => {
-    const update = async () => await reloadData()
-    update()
-  }, dependencies)
-
-  return [data, status, reloadData]
 }
 
 const RankingOverview = ({

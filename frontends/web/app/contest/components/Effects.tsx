@@ -11,12 +11,12 @@ interface Props {
 }
 
 const ContestEffects = ({ updateLatestContest }: Props) => {
-  const [contest] = useCachedApiState(
-    `latest_contest`,
-    undefined as Contest | undefined,
-    ContestApi.getLatest,
-    [],
-  )
+  const [contest] = useCachedApiState({
+    cacheKey: `latest_contest`,
+    defaultValue: undefined as Contest | undefined,
+    fetchData: ContestApi.getLatest,
+    dependencies: [],
+  })
 
   useEffect(() => {
     updateLatestContest(contest)

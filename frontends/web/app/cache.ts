@@ -7,12 +7,19 @@ export enum ApiFetchStatus {
   Completed,
 }
 
-export const useCachedApiState = (
-  cacheKey: string,
-  defaultValue: any,
-  fetchData: () => Promise<any>,
-  dependencies: any[],
-) => {
+interface useCachedApiStateParameters {
+  cacheKey: string
+  defaultValue: any
+  fetchData: () => Promise<any>
+  dependencies: any[]
+}
+
+export const useCachedApiState = ({
+  cacheKey,
+  defaultValue,
+  fetchData,
+  dependencies,
+}: useCachedApiStateParameters) => {
   const [status, setStatus] = useState(ApiFetchStatus.Initialized)
   const [data, setData] = useState(defaultValue)
 

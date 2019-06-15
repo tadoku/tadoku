@@ -27,18 +27,18 @@ const RankingOverview = ({
 }: Props) => {
   const [joinModalOpen, setJoinModalOpen] = useState(false)
 
-  const [rankings, status] = useCachedApiState(
-    `ranking_overview?contest_id=${contest.id}`,
-    [] as Ranking[],
-    () => {
+  const [rankings, status] = useCachedApiState({
+    cacheKey: `ranking_overview?contest_id=${contest.id}`,
+    defaultValue: [] as Ranking[],
+    fetchData: () => {
       if (!contest) {
         return new Promise<Ranking[]>(resolve => resolve([]))
       }
 
       return RankingApi.get(contest.id)
     },
-    [contest, effectCount],
-  )
+    dependencies: [contest, effectCount],
+  })
 
   // @TODO: extract this business logic
   const canJoin =

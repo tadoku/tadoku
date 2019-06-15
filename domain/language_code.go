@@ -15,6 +15,7 @@ type LanguageCode string
 // https://en.wikipedia.org/wiki/Wikipedia:WikiProject_Languages/List_of_ISO_639-3_language_codes_(2019)
 const (
 	Global     LanguageCode = "GLO" // This is uppercase so it wouldn't collide with Galambu
+	Arabic     LanguageCode = "ara"
 	Chinese    LanguageCode = "zho"
 	Czech      LanguageCode = "ces"
 	Dutch      LanguageCode = "nld"
@@ -42,6 +43,7 @@ type LanguageCodes []LanguageCode
 // AllLanguageCodes is an array with all possible language codes
 var AllLanguageCodes = LanguageCodes{
 	Global,
+	Arabic,
 	Chinese,
 	Czech,
 	Dutch,

@@ -15,20 +15,28 @@ type LanguageCode string
 // https://en.wikipedia.org/wiki/Wikipedia:WikiProject_Languages/List_of_ISO_639-3_language_codes_(2019)
 const (
 	Global     LanguageCode = "GLO" // This is uppercase so it wouldn't collide with Galambu
+	Arabic     LanguageCode = "ara"
 	Chinese    LanguageCode = "zho"
+	Croatian   LanguageCode = "hrv"
+	Czech      LanguageCode = "ces"
 	Dutch      LanguageCode = "nld"
 	English    LanguageCode = "eng"
+	Esperanto  LanguageCode = "epo"
+	Finnish    LanguageCode = "fin"
 	French     LanguageCode = "fra"
 	German     LanguageCode = "deu"
 	Greek      LanguageCode = "ell"
+	Hebrew     LanguageCode = "heb"
 	Irish      LanguageCode = "gle"
 	Italian    LanguageCode = "ita"
 	Japanese   LanguageCode = "jpn"
 	Korean     LanguageCode = "kor"
+	Polish     LanguageCode = "pol"
 	Portuguese LanguageCode = "por"
 	Russian    LanguageCode = "rus"
 	Spanish    LanguageCode = "spa"
 	Swedish    LanguageCode = "swe"
+	Thai       LanguageCode = "tha"
 	Turkish    LanguageCode = "tur"
 )
 
@@ -38,20 +46,28 @@ type LanguageCodes []LanguageCode
 // AllLanguageCodes is an array with all possible language codes
 var AllLanguageCodes = LanguageCodes{
 	Global,
+	Arabic,
 	Chinese,
+	Croatian,
+	Czech,
 	Dutch,
+	Esperanto,
 	English,
+	Finnish,
 	French,
 	German,
 	Greek,
+	Hebrew,
 	Irish,
 	Italian,
 	Japanese,
 	Korean,
+	Polish,
 	Portuguese,
 	Russian,
 	Spanish,
 	Swedish,
+	Thai,
 	Turkish,
 }
 

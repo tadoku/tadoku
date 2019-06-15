@@ -11,19 +11,27 @@ type Languages []Language
 
 // AllLanguages is an array with all possible languages
 var AllLanguages = Languages{
+	Language{Code: Arabic, Name: "Arabic"},
 	Language{Code: Chinese, Name: "Chinese"},
+	Language{Code: Croatian, Name: "Croatian"},
+	Language{Code: Czech, Name: "Czech"},
 	Language{Code: Dutch, Name: "Dutch"},
+	Language{Code: Esperanto, Name: "Esperanto"},
 	Language{Code: English, Name: "English"},
+	Language{Code: Finnish, Name: "Finnish"},
 	Language{Code: French, Name: "French"},
 	Language{Code: German, Name: "German"},
 	Language{Code: Greek, Name: "Greek"},
+	Language{Code: Hebrew, Name: "Hebrew"},
 	Language{Code: Irish, Name: "Irish"},
 	Language{Code: Italian, Name: "Italian"},
 	Language{Code: Japanese, Name: "Japanese"},
 	Language{Code: Korean, Name: "Korean"},
+	Language{Code: Polish, Name: "Polish"},
 	Language{Code: Portuguese, Name: "Portuguese"},
 	Language{Code: Russian, Name: "Russian"},
 	Language{Code: Spanish, Name: "Spanish"},
 	Language{Code: Swedish, Name: "Swedish"},
+	Language{Code: Thai, Name: "Thai"},
 	Language{Code: Turkish, Name: "Turkish"},
 }

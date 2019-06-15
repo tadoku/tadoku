@@ -4,17 +4,23 @@ import * as ContestStore from '../redux'
 import { connect } from 'react-redux'
 import { Contest } from '../interfaces'
 import ContestApi from '../api'
+import { useCachedApiState } from '../../cache'
 
 interface Props {
   updateLatestContest: (contest: Contest | undefined) => void
 }
 
 const ContestEffects = ({ updateLatestContest }: Props) => {
-  useEffect(() => {
-    const update = async () => updateLatestContest(await ContestApi.getLatest())
+  const [contest] = useCachedApiState(
+    `latest_contest`,
+    undefined as Contest | undefined,
+    ContestApi.getLatest,
+    [],
+  )
 
-    update()
-  }, [])
+  useEffect(() => {
+    updateLatestContest(contest)
+  }, [contest])
 
   return null
 }

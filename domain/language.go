@@ -13,6 +13,7 @@ type Languages []Language
 var AllLanguages = Languages{
 	Language{Code: Arabic, Name: "Arabic"},
 	Language{Code: Chinese, Name: "Chinese"},
+	Language{Code: Croatian, Name: "Croatian"},
 	Language{Code: Czech, Name: "Czech"},
 	Language{Code: Dutch, Name: "Dutch"},
 	Language{Code: Esperanto, Name: "Esperanto"},

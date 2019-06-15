@@ -17,6 +17,7 @@ const (
 	Global     LanguageCode = "GLO" // This is uppercase so it wouldn't collide with Galambu
 	Arabic     LanguageCode = "ara"
 	Chinese    LanguageCode = "zho"
+	Croatian   LanguageCode = "hrv"
 	Czech      LanguageCode = "ces"
 	Dutch      LanguageCode = "nld"
 	English    LanguageCode = "eng"
@@ -46,6 +47,7 @@ var AllLanguageCodes = LanguageCodes{
 	Global,
 	Arabic,
 	Chinese,
+	Croatian,
 	Czech,
 	Dutch,
 	Esperanto,

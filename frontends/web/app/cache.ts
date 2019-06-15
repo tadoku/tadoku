@@ -11,6 +11,7 @@ interface useCachedApiStateParameters<DataType> {
   cacheKey: string
   defaultValue: DataType
   fetchData: () => Promise<DataType>
+  onChange?: (data: DataType) => void
   dependencies?: any[]
 }
 
@@ -18,6 +19,7 @@ export const useCachedApiState = <DataType>({
   cacheKey,
   defaultValue,
   fetchData,
+  onChange,
   dependencies: originalDependencies,
 }: useCachedApiStateParameters<DataType>) => {
   const [status, setStatus] = useState(ApiFetchStatus.Initialized)
@@ -25,11 +27,19 @@ export const useCachedApiState = <DataType>({
 
   const dependencies = originalDependencies || []
 
+  const observedSetData = (newData: DataType) => {
+    setData(newData)
+
+    if (onChange) {
+      onChange(newData)
+    }
+  }
+
   const reload = async () => {
     const cachedValue = localStorage.getItem(cacheKey)
     if (cachedValue) {
       setStatus(ApiFetchStatus.Stale)
-      setData(JSON.parse(cachedValue))
+      observedSetData(JSON.parse(cachedValue))
     } else {
       // We don't want to set loading state when we don't have a cached version
       setStatus(ApiFetchStatus.Loading)
@@ -37,7 +47,7 @@ export const useCachedApiState = <DataType>({
 
     const fetchedData = await fetchData()
     if (fetchedData !== data) {
-      setData(fetchedData)
+      observedSetData(fetchedData)
       localStorage.setItem(cacheKey, JSON.stringify(fetchedData))
     }
 

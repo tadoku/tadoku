@@ -1,4 +1,3 @@
-import { useEffect } from 'react'
 import { Dispatch } from 'redux'
 import * as ContestStore from '../redux'
 import { connect } from 'react-redux'
@@ -11,15 +10,12 @@ interface Props {
 }
 
 const ContestEffects = ({ updateLatestContest }: Props) => {
-  const { data: contest } = useCachedApiState({
+  useCachedApiState({
     cacheKey: `latest_contest`,
     defaultValue: undefined as Contest | undefined,
     fetchData: ContestApi.getLatest,
+    onChange: updateLatestContest,
   })
-
-  useEffect(() => {
-    updateLatestContest(contest)
-  }, [contest])
 
   return null
 }

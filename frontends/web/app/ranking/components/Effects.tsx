@@ -1,4 +1,3 @@
-import { useEffect } from 'react'
 import { Dispatch } from 'redux'
 import * as RankingStore from '../redux'
 import { connect } from 'react-redux'
@@ -15,7 +14,7 @@ interface Props {
 }
 
 const RankingEffects = ({ user, updateRegistration, effectCount }: Props) => {
-  const { data: registration } = useCachedApiState({
+  useCachedApiState({
     cacheKey: `current_registration`,
     defaultValue: undefined as RankingRegistration | undefined,
     fetchData: () => {
@@ -27,12 +26,9 @@ const RankingEffects = ({ user, updateRegistration, effectCount }: Props) => {
 
       return RankingApi.getCurrentRegistration()
     },
+    onChange: updateRegistration,
     dependencies: [user, effectCount],
   })
-
-  useEffect(() => {
-    updateRegistration(registration)
-  }, [registration])
 
   return null
 }

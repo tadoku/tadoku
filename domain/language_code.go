@@ -16,6 +16,7 @@ type LanguageCode string
 const (
 	Global     LanguageCode = "GLO" // This is uppercase so it wouldn't collide with Galambu
 	Chinese    LanguageCode = "zho"
+	Czech      LanguageCode = "ces"
 	Dutch      LanguageCode = "nld"
 	English    LanguageCode = "eng"
 	French     LanguageCode = "fra"
@@ -39,6 +40,7 @@ type LanguageCodes []LanguageCode
 var AllLanguageCodes = LanguageCodes{
 	Global,
 	Chinese,
+	Czech,
 	Dutch,
 	English,
 	French,

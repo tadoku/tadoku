@@ -15,22 +15,26 @@ interface Props {
 
 const ContestLogsList = (props: Props) => (
   <List>
-    {props.logs.map(l => (
-      <Item key={l.id}>
+    {props.logs.map(log => (
+      <Item key={log.id}>
         <UpdateText>
-          <strong>{amountToPages(l.amount)}</strong>{' '}
-          {l.amount === 1 ? 'page' : 'pages'} of{' '}
-          <strong>{mediumDescriptionById(l.mediumId)}</strong> in{' '}
-          <strong>{languageNameByCode(l.languageCode)}</strong> at{' '}
-          <strong>{l.date.toLocaleString()}</strong> for a total of{' '}
-          <strong>{amountToPages(l.adjustedAmount)}</strong> points
+          <strong>{amountToPages(log.amount)}</strong>{' '}
+          {log.amount === 1 ? 'page' : 'pages'} of{' '}
+          <strong>{mediumDescriptionById(log.mediumId)}</strong> in{' '}
+          <strong>{languageNameByCode(log.languageCode)}</strong> at{' '}
+          <strong>{log.date.toLocaleString()}</strong> for a total of{' '}
+          <strong>{amountToPages(log.adjustedAmount)}</strong> points
         </UpdateText>
         {props.canEdit && (
           <ActionButtonContainer>
-            <Button onClick={() => props.editLog(l)} icon="edit">
+            <Button onClick={() => props.editLog(log)} icon="edit">
               Edit
             </Button>
-            <Button onClick={() => props.deleteLog(l)} icon="trash" destructive>
+            <Button
+              onClick={() => props.deleteLog(log)}
+              icon="trash"
+              destructive
+            >
               Delete
             </Button>
           </ActionButtonContainer>

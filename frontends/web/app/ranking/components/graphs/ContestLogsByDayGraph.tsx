@@ -32,7 +32,6 @@ const Graph = ({ logs, contest }: Props) => {
           tickFormat={date => `${date.getMonth() + 1}-${date.getDate()}`}
         />
         <YAxis title="Pages" />
-
         {Object.keys(data.aggregated).map(language => (
           <LineSeries
             data={data.aggregated[language] as any[]}

@@ -93,14 +93,6 @@ const RankingProfile = ({
     )
   }
 
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
-
-  const contestForGraphs = {
-    ...contest,
-    end: contest.end > today ? today : contest.end,
-  }
-
   return (
     <Layout title={registration.userDisplayName}>
       <Cards>
@@ -115,7 +107,7 @@ const RankingProfile = ({
           </Card>
         ))}
         <LargeCard>
-          <ContestLogsByDayGraph logs={logs} contest={contestForGraphs} />
+          <ContestLogsByDayGraph logs={logs} contest={contest} />
         </LargeCard>
         <LargeCard>
           <ContestLogsOverview

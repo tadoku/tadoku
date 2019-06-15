@@ -26,6 +26,7 @@ const (
 	French     LanguageCode = "fra"
 	German     LanguageCode = "deu"
 	Greek      LanguageCode = "ell"
+	Hebrew     LanguageCode = "heb"
 	Irish      LanguageCode = "gle"
 	Italian    LanguageCode = "ita"
 	Japanese   LanguageCode = "jpn"
@@ -56,6 +57,7 @@ var AllLanguageCodes = LanguageCodes{
 	French,
 	German,
 	Greek,
+	Hebrew,
 	Irish,
 	Italian,
 	Japanese,

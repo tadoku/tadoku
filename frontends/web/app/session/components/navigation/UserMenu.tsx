@@ -12,14 +12,14 @@ interface Props {
 const UserProfile = ({ user }: Props) => (
   <Dropdown label={user.displayName}>
     <DropdownItem>
-      <LogOutLink></LogOutLink>
-    </DropdownItem>
-    <DropdownItem>
       <Link href={`/settings`}>
         <Button plain icon="cog">
           Settings
         </Button>
       </Link>
+    </DropdownItem>
+    <DropdownItem>
+      <LogOutLink></LogOutLink>
     </DropdownItem>
   </Dropdown>
 )

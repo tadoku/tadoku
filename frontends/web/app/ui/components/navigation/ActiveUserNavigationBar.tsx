@@ -32,9 +32,7 @@ export const ActiveUserNavigationBar = ({
 
 const LinkContainer = styled.div`
   display: flex;
-  margin-right: 20px;
   padding-right: 20px;
-  border-right: 1px solid rgba(0, 0, 0, 0.1);
 
   ${media.lessThan('medium')`
     border: none;

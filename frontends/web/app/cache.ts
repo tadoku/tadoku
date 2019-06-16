@@ -40,15 +40,17 @@ export const useCachedApiState = <DataType>({
   dependencies: originalDependencies,
   serializer: originalSerializer,
 }: useCachedApiStateParameters<DataType>) => {
-  const [status, setStatus] = useState(ApiFetchStatus.Initialized)
-  const [data, setData] = useState(defaultValue)
+  const [data, setData] = useState({
+    body: defaultValue,
+    status: ApiFetchStatus.Initialized,
+  })
   const [apiEffectCounter, setApiEffectCounter] = useState(0)
 
   const dependencies = [...(originalDependencies || []), apiEffectCounter]
   const serializer = originalSerializer ? originalSerializer : DefaultSerializer
 
-  const observedSetData = (newData: DataType) => {
-    setData(newData)
+  const observedSetData = (newData: DataType, status: ApiFetchStatus) => {
+    setData({ body: newData, status })
 
     if (onChange) {
       onChange(newData)
@@ -62,25 +64,21 @@ export const useCachedApiState = <DataType>({
     if (cachedValue) {
       const parsedCacheData = serializer.deserialize(cachedValue) as DataType
 
-      if (parsedCacheData !== data) {
-        setStatus(ApiFetchStatus.Stale)
-        observedSetData(parsedCacheData)
+      if (parsedCacheData !== data.body) {
+        observedSetData(parsedCacheData, ApiFetchStatus.Stale)
       }
     } else {
-      // We don't want to set loading state when we don't have a cached version
-      setStatus(ApiFetchStatus.Loading)
+      setData({ ...data, status: ApiFetchStatus.Loading })
     }
 
     fetchData().then(fetchedData => {
-      if (!isSubscribed || fetchedData === data) {
+      if (!isSubscribed || fetchedData === data.body) {
         return
       }
 
-      observedSetData(fetchedData)
+      observedSetData(fetchedData, ApiFetchStatus.Completed)
       localStorage.setItem(cacheKey, serializer.serialize(fetchedData))
     })
-
-    setStatus(ApiFetchStatus.Completed)
 
     return () => {
       isSubscribed = false
@@ -88,8 +86,8 @@ export const useCachedApiState = <DataType>({
   }, dependencies)
 
   return {
-    data,
-    status,
+    data: data.body,
+    status: data.status,
     reload: () => setApiEffectCounter(apiEffectCounter + 1),
   }
 }

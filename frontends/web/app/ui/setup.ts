@@ -8,7 +8,10 @@ import {
   faPlus,
   faSignOutAlt,
   faCog,
+  faUser,
+  faUnlock,
 } from '@fortawesome/free-solid-svg-icons'
+
 library.add(
   faChevronDown,
   faChevronUp,
@@ -17,4 +20,6 @@ library.add(
   faPlus,
   faSignOutAlt,
   faCog,
+  faUser,
+  faUnlock,
 )

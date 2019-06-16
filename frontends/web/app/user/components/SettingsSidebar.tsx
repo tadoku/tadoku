@@ -19,13 +19,13 @@ const SettingsSidebar = ({ activeTab }: Props) => {
         <SettingsLink
           activeTab={activeTab}
           tab={SettingsTab.ChangePassword}
-          icon="cog"
+          icon="unlock"
           label="Change password"
         />
         <SettingsLink
           activeTab={activeTab}
           tab={SettingsTab.Profile}
-          icon="cog"
+          icon="user"
           label="Profile"
         />
       </SettingsList>

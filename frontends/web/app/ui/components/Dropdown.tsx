@@ -97,6 +97,7 @@ export const DropdownItem = styled.li`
   padding: 0;
   margin: 0;
   transition: all 0.2s ease;
+  border-top: 1px solid ${Constants.colors.lightGray};
 
   button,
   a {
@@ -115,9 +116,5 @@ export const DropdownItem = styled.li`
       background: ${Constants.colors.primary};
       color: white;
     }
-  }
-
-  & + & {
-    border-top: 1px solid ${Constants.colors.lightGray};
   }
 `

@@ -26,7 +26,7 @@ func setupUserTest(t *testing.T) (
 	return ctrl, repo, pwHasher, interactor
 }
 
-func TestSessionInteractor_UpdatePassword(t *testing.T) {
+func TestUserInteractor_UpdatePassword(t *testing.T) {
 	ctrl, repo, pwHasher, interactor := setupUserTest(t)
 	defer ctrl.Finish()
 

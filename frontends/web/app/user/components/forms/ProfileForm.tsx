@@ -18,16 +18,24 @@ import { Dispatch } from 'redux'
 import * as SessionStore from '../../../session/redux'
 import { User } from '../../../session/interfaces'
 import { storeUserInLocalStorage } from '../../../session/storage'
+import { State } from '../../../store'
 
 interface Props {
   setUser: (token: string, user: User) => void
-  user: User
+  user: User | undefined
+  userLoaded: boolean
 }
 
-const ProfileForm = ({ user, setUser }: Props) => {
-  const [displayName, setDisplayName] = useState(user.displayName)
+const ProfileForm = ({ user, setUser, userLoaded }: Props) => {
+  const [displayName, setDisplayName] = useState(() =>
+    user ? user.displayName : '',
+  )
   const [error, setError] = useState(undefined as string | undefined)
   const [message, setMessage] = useState(undefined as string | undefined)
+
+  if (userLoaded && !user) {
+    return null
+  }
 
   const validate = () => validateDisplayName(displayName)
 
@@ -88,6 +96,11 @@ const ProfileForm = ({ user, setUser }: Props) => {
   )
 }
 
+const mapStateToProps = (state: State) => ({
+  user: state.session.user,
+  userLoaded: state.session.loaded,
+})
+
 const mapDispatchToProps = (dispatch: Dispatch<SessionStore.Action>) => ({
   setUser: (token: string, user: User) => {
     const payload = { token, user }
@@ -101,6 +114,6 @@ const mapDispatchToProps = (dispatch: Dispatch<SessionStore.Action>) => ({
 })
 
 export default connect(
-  null,
+  mapStateToProps,
   mapDispatchToProps,
 )(ProfileForm)

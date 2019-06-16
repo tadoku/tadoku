@@ -29,19 +29,19 @@ const Settings = ({ tab, user, userLoaded }: Props) => {
     <Layout title="Settings">
       <Container>
         <SettingsSidebar activeTab={tab} />
-        <Content>{componentForTab(tab, user as User)}</Content>
+        <Content>{componentForTab(tab)}</Content>
       </Container>
     </Layout>
   )
 }
 
-const componentForTab = (tab: SettingsTab, user: User): JSX.Element => {
+const componentForTab = (tab: SettingsTab): JSX.Element => {
   switch (tab) {
     case SettingsTab.Profile: {
       return (
         <FormContainer>
           <h2>Profile</h2>
-          <ProfileForm user={user} />
+          <ProfileForm />
         </FormContainer>
       )
     }

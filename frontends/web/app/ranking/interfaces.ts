@@ -1,4 +1,4 @@
-import { RawMapper } from '../interfaces'
+import { Mapper } from '../interfaces'
 
 export interface Ranking {
   contestId: number
@@ -16,7 +16,7 @@ export interface rawRanking {
   amount: number
 }
 
-export const RankingMapper: RawMapper<rawRanking, Ranking> = raw => ({
+export const RawToRankingMapper: Mapper<rawRanking, Ranking> = raw => ({
   contestId: raw.contest_id,
   userId: raw.user_id,
   userDisplayName: raw.user_display_name,

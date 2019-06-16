@@ -6,6 +6,4 @@ export interface ExpressNextContext extends NextContext {
   res?: Express.Response
 }
 
-export type RawMapper<RawDataType, DataType> = (
-  rawData: RawDataType,
-) => DataType
+export type Mapper<A, B> = (rawData: A) => B

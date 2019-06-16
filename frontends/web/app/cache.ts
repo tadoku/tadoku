@@ -26,7 +26,7 @@ interface useCachedApiStateParameters<DataType> {
   fetchData: () => Promise<DataType>
   onChange?: (data: DataType) => void
   dependencies?: any[]
-  serializer?: Serializer<DataType> | Serializer<Exclude<DataType, undefined>>
+  serializer?: Serializer<DataType>
 }
 
 export const useCachedApiState = <DataType>({
@@ -74,15 +74,7 @@ export const useCachedApiState = <DataType>({
       }
 
       observedSetData(fetchedData)
-
-      if (fetchedData !== undefined) {
-        localStorage.setItem(
-          cacheKey,
-          serializer.serialize(fetchedData as Exclude<DataType, undefined>),
-        )
-      } else {
-        localStorage.setItem(cacheKey, '')
-      }
+      localStorage.setItem(cacheKey, serializer.serialize(fetchedData))
     })
 
     setStatus(ApiFetchStatus.Completed)

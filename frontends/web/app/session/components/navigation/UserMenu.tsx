@@ -16,7 +16,9 @@ const UserProfile = ({ user }: Props) => (
     </DropdownItem>
     <DropdownItem>
       <Link href={`/settings`}>
-        <Button plain>Settings</Button>
+        <Button plain icon="cog">
+          Settings
+        </Button>
       </Link>
     </DropdownItem>
   </Dropdown>

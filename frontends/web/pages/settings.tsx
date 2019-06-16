@@ -1,12 +1,13 @@
 import { ExpressNextContext } from '../app/interfaces'
 import { SettingsTab } from '../app/user/interfaces'
+import Settings from '../app/user/pages/Settings'
 
 interface Props {
-  tab?: SettingsTab
+  tab: SettingsTab
 }
 
 const SettingsPage = ({ tab }: Props) => {
-  return <p>current: {tab}</p>
+  return <Settings tab={tab} />
 }
 
 SettingsPage.getInitialProps = async ({ req, query }: ExpressNextContext) => {

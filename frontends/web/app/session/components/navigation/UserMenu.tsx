@@ -10,7 +10,7 @@ interface Props {
 }
 
 const UserProfile = ({ user }: Props) => {
-  const [isMenuOpen, setIsMenuOpen] = useState(false)
+  const [isMenuOpen, setIsMenuOpen] = useState(true)
 
   return (
     <Container>
@@ -77,11 +77,6 @@ const DropDown = styled.ul`
       display: block;
       animation: ${show} 0.3s ease;
     `}
-
-  button, a {
-    margin: 0;
-    width: 100%;
-  }
 `
 
 const DropDownOverlay = styled.div`
@@ -105,11 +100,26 @@ const DropDownOverlay = styled.div`
 `
 
 const DropDownItem = styled.li`
-  padding: 2px 12px;
+  padding: 0;
   margin: 0;
+  transition: all 0.2s ease;
 
-  &:hover {
-    background: ${Constants.colors.lightGray};
+  button,
+  a {
+    padding: 2px 12px;
+    margin: 0;
+    width: 100%;
+    border-radius: 0;
+
+    &:last-child {
+      border-radius: 0 0 2px 2px;
+    }
+
+    &:hover:not([disabled]),
+    &:active:not([disabled]) {
+      background: ${Constants.colors.primary};
+      color: white;
+    }
   }
 
   & + & {

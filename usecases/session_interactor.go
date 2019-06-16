@@ -19,6 +19,7 @@ var ErrUserDoesNotExist = fail.New("user does not exist")
 type SessionInteractor interface {
 	CreateUser(user domain.User) error
 	CreateSession(email, password string) (user domain.User, token string, err error)
+	RefreshSession(user domain.User) (latestUser domain.User, token string, err error)
 }
 
 // NewSessionInteractor instantiates SessionInteractor with all dependencies
@@ -72,6 +73,25 @@ func (si *sessionInteractor) CreateSession(email, password string) (domain.User,
 
 	if !si.passwordHasher.Compare(user.Password, password) {
 		return domain.User{}, "", domain.WrapError(ErrPasswordIncorrect, fail.WithIgnorable())
+	}
+
+	claims := SessionClaims{User: &user}
+	token, err := si.jwtGenerator.NewToken(si.sessionLength, claims)
+	if err != nil {
+		return domain.User{}, "", domain.WrapError(err)
+	}
+
+	return user, token, nil
+}
+
+func (si *sessionInteractor) RefreshSession(user domain.User) (domain.User, string, error) {
+	user, err := si.userRepository.FindByEmail(user.Email)
+	if err != nil {
+		return domain.User{}, "", domain.WrapError(err)
+	}
+
+	if user.ID == 0 {
+		return domain.User{}, "", domain.WrapError(ErrUserDoesNotExist, fail.WithIgnorable())
 	}
 
 	claims := SessionClaims{User: &user}

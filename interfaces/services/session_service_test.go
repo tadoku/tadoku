@@ -68,3 +68,31 @@ func TestSessionService_Login(t *testing.T) {
 
 	assert.NoError(t, err)
 }
+
+func TestSessionService_Refresh(t *testing.T) {
+	user := &domain.User{
+		ID:          1,
+		Email:       "foo@bar.com",
+		DisplayName: "John Doe",
+		Role:        domain.RoleUser,
+	}
+	token := "foobar"
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	ctx := services.NewMockContext(ctrl)
+	ctx.EXPECT().JSON(200, map[string]interface{}{
+		"token": token,
+		"user":  *user,
+	})
+	ctx.EXPECT().User().Return(user, nil)
+
+	i := usecases.NewMockSessionInteractor(ctrl)
+	i.EXPECT().RefreshSession(*user).Return(*user, token, nil)
+
+	s := services.NewSessionService(i)
+	err := s.Refresh(ctx)
+
+	assert.NoError(t, err)
+}

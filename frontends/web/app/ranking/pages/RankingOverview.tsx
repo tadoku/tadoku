@@ -9,6 +9,7 @@ import styled from 'styled-components'
 import { User } from '../../session/interfaces'
 import JoinContestModal from '../components/modals/JoinContestModal'
 import { useCachedApiState, ApiFetchStatus } from '../../cache'
+import { RankingsSerializer } from '../transform'
 
 interface Props {
   contest: Contest
@@ -38,6 +39,7 @@ const RankingOverview = ({
       return RankingApi.get(contest.id)
     },
     dependencies: [contest, effectCount],
+    serializer: RankingsSerializer,
   })
 
   // @TODO: extract this business logic

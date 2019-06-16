@@ -8,6 +8,7 @@ import {
 import { Contest } from './../contest/interfaces'
 import { languageNameByCode } from './database'
 import { Mapper } from '../interfaces'
+import { Serializer } from '../cache'
 
 export const RawToRankingMapper: Mapper<rawRanking, Ranking> = raw => ({
   contestId: raw.contest_id,
@@ -16,6 +17,25 @@ export const RawToRankingMapper: Mapper<rawRanking, Ranking> = raw => ({
   languageCode: raw.language_code,
   amount: raw.amount,
 })
+
+export const RankingToRawMapper: Mapper<Ranking, rawRanking> = ranking => ({
+  contest_id: ranking.contestId,
+  user_id: ranking.userId,
+  user_display_name: ranking.userDisplayName,
+  language_code: ranking.languageCode,
+  amount: ranking.amount,
+})
+
+export const RankingsSerializer: Serializer<Ranking[]> = {
+  serialize: rankings => {
+    const raw = rankings.map(RankingToRawMapper)
+    return JSON.stringify(raw)
+  },
+  deserialize: serializedData => {
+    let raw = JSON.parse(serializedData)
+    return raw.map(RawToRankingMapper)
+  },
+}
 
 type AggregatedByDaysResult = {
   aggregated: {

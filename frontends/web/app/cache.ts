@@ -7,6 +7,9 @@ export enum ApiFetchStatus {
   Completed,
 }
 
+export const isReady = (status: ApiFetchStatus[]) =>
+  !status.includes(ApiFetchStatus.Loading)
+
 interface useCachedApiStateParameters<DataType> {
   cacheKey: string
   defaultValue: DataType

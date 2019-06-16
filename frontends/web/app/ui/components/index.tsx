@@ -147,6 +147,12 @@ const ButtonIconRight = styled(FontAwesomeIcon)`
 
 export const ButtonContainer = styled.div`
   display: flex;
+
+  ${({ noMargin }: { noMargin?: boolean }) =>
+    noMargin &&
+    `
+    margin: 0 -5px;
+  `}
 `
 
 export const StackContainer = styled.div`

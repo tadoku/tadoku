@@ -20,8 +20,8 @@ import Cards, {
 } from '../../ui/components/Cards'
 
 interface Props {
-  contestId: number | undefined
-  userId: number | undefined
+  contestId: number
+  userId: number
   effectCount: number
   refreshRanking: () => void
 }
@@ -40,10 +40,6 @@ const RankingProfile = ({
     | undefined)
 
   useEffect(() => {
-    if (!contestId || !userId) {
-      return
-    }
-
     const getLogs = async () => {
       const [contest, logs, registration] = await Promise.all([
         ContestApi.get(contestId),
@@ -69,10 +65,6 @@ const RankingProfile = ({
 
     getLogs()
   }, [contestId, userId, effectCount])
-
-  if (!contestId || !userId) {
-    return <ErrorPage statusCode={404} />
-  }
 
   if (!loaded) {
     return <Layout>Loading...</Layout>

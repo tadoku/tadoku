@@ -12,7 +12,13 @@ interface Props {
   refreshRanking: () => void
 }
 
-const RankingDetails = (props: Props) => <RankingProfile {...props} />
+const RankingDetails = ({ contestId, userId, ...props }: Props) => {
+  if (!contestId || !userId) {
+    return null
+  }
+
+  return <RankingProfile contestId={contestId} userId={userId} {...props} />
+}
 
 RankingDetails.getInitialProps = async ({ req, query }: ExpressNextContext) => {
   if (req && req.params) {

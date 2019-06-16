@@ -134,17 +134,29 @@ func (d *serverDependencies) Router() services.Router {
 
 func (d *serverDependencies) routes() []services.Route {
 	return []services.Route{
+		// Service infra
 		{Method: http.MethodGet, Path: "/ping", HandlerFunc: d.Services().Health.Ping},
+
+		// Session
 		{Method: http.MethodPost, Path: "/login", HandlerFunc: d.Services().Session.Login},
 		{Method: http.MethodPost, Path: "/register", HandlerFunc: d.Services().Session.Register},
+
+		// Users
+		{Method: http.MethodPost, Path: "/users/update_password", HandlerFunc: d.Services().User.UpdatePassword, MinRole: domain.RoleUser},
+
+		// Contests
 		{Method: http.MethodGet, Path: "/contests/latest", HandlerFunc: d.Services().Contest.Latest},
 		{Method: http.MethodGet, Path: "/contests/:id", HandlerFunc: d.Services().Contest.Get},
 		{Method: http.MethodPost, Path: "/contests", HandlerFunc: d.Services().Contest.Create, MinRole: domain.RoleAdmin},
 		{Method: http.MethodPut, Path: "/contests/:id", HandlerFunc: d.Services().Contest.Update, MinRole: domain.RoleAdmin},
+
+		// Rankings
 		{Method: http.MethodGet, Path: "/rankings/current", HandlerFunc: d.Services().Ranking.CurrentRegistration, MinRole: domain.RoleUser},
 		{Method: http.MethodGet, Path: "/rankings/registration", HandlerFunc: d.Services().Ranking.RankingsForRegistration},
 		{Method: http.MethodPost, Path: "/rankings", HandlerFunc: d.Services().Ranking.Create, MinRole: domain.RoleUser},
 		{Method: http.MethodGet, Path: "/rankings", HandlerFunc: d.Services().Ranking.Get},
+
+		// Contest logs
 		{Method: http.MethodPost, Path: "/contest_logs", HandlerFunc: d.Services().ContestLog.Create, MinRole: domain.RoleUser},
 		{Method: http.MethodGet, Path: "/contest_logs", HandlerFunc: d.Services().ContestLog.Get},
 		{Method: http.MethodPut, Path: "/contest_logs/:id", HandlerFunc: d.Services().ContestLog.Update, MinRole: domain.RoleUser},

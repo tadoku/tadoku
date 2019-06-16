@@ -52,10 +52,10 @@ const RankingProfile = ({
         const result = (await RankingApi.getLogsFor(contestId, userId)).sort(
           (a, b) => {
             if (a.date > b.date) {
-              return 1
+              return -1
             }
             if (a.date < b.date) {
-              return -1
+              return 1
             }
             return 0
           },
@@ -122,7 +122,7 @@ const RankingProfile = ({
         </LargeCard>
         <LargeCard>
           <ContestLogsOverview
-            logs={logs.reverse()}
+            logs={logs}
             registration={registration}
             refreshData={refreshRanking}
           />

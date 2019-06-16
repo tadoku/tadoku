@@ -54,5 +54,5 @@ func (i *userInteractor) UpdatePassword(email string, currentPassword, newPasswo
 }
 
 func (i *userInteractor) UpdateProfile(user domain.User) error {
-	return nil
+	return i.userRepository.Store(&user)
 }

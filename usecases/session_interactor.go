@@ -84,6 +84,21 @@ func (si *sessionInteractor) CreateSession(email, password string) (domain.User,
 	return user, token, nil
 }
 
-func (si *SessionInteractor) RefreshSession(user domain.User) (domain.User, string, error) {
-	return domain.User{}, "", nil
+func (si *sessionInteractor) RefreshSession(user domain.User) (domain.User, string, error) {
+	user, err := si.userRepository.FindByEmail(user.Email)
+	if err != nil {
+		return domain.User{}, "", domain.WrapError(err)
+	}
+
+	if user.ID == 0 {
+		return domain.User{}, "", domain.WrapError(ErrUserDoesNotExist, fail.WithIgnorable())
+	}
+
+	claims := SessionClaims{User: &user}
+	token, err := si.jwtGenerator.NewToken(si.sessionLength, claims)
+	if err != nil {
+		return domain.User{}, "", domain.WrapError(err)
+	}
+
+	return user, token, nil
 }

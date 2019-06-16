@@ -19,6 +19,14 @@ app
       app.render(req, res, page, queryParams)
     })
 
+    server.get('/settings/:tab', (req, res) => {
+      const page = '/settings'
+      const queryParams = {
+        tab: req.params.tab,
+      }
+      app.render(req, res, page, queryParams)
+    })
+
     server.get('*', (req, res) => {
       return handle(req, res)
     })

@@ -52,6 +52,10 @@ func (r *userRepository) update(user *domain.User) error {
 	return domain.WrapError(err)
 }
 
+func (r *userRepository) UpdatePassword(user *domain.User) error {
+	return nil
+}
+
 func (r *userRepository) FindByID(id uint64) (domain.User, error) {
 	u := domain.User{}
 

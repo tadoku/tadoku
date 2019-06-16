@@ -4,7 +4,7 @@ import media from 'styled-media-query'
 import { RankingRegistration } from '../../../ranking/interfaces'
 import SubmitPagesLink from '../../../ranking/components/navigation/SubmitPages'
 import { User } from '../../../session/interfaces'
-import UserProfile from '../../../session/components/navigation/UserProfile'
+import UserProfile from '../../../session/components/navigation/UserMenu'
 
 interface Props {
   user: User

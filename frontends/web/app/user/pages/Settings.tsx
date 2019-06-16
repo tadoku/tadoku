@@ -37,7 +37,12 @@ const Settings = ({ tab, user, userLoaded }: Props) => {
 const componentForTab = (tab: SettingsTab): JSX.Element => {
   switch (tab) {
     case SettingsTab.Profile: {
-      return <p>profile</p>
+      return (
+        <>
+          <h2>Profile</h2>
+          <p>Under construction</p>
+        </>
+      )
     }
     case SettingsTab.ChangePassword: {
       return (

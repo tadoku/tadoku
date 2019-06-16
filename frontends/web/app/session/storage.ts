@@ -10,7 +10,7 @@ export const storeUserInLocalStorage = (user: {
 }
 
 export const removeUserFromLocalStorage = () => {
-  window.localStorage.removeItem(LOCAL_STORAGE_USER_KEY)
+  window.localStorage.clear()
 }
 
 export const loadUserFromLocalStorage = (): {

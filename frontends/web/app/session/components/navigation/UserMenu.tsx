@@ -14,11 +14,6 @@ const UserProfile = ({ user }: Props) => {
 
   return (
     <Container>
-      <DropDown open={isMenuOpen}>
-        <DropDownItem>
-          <SignOutLink />
-        </DropDownItem>
-      </DropDown>
       <Button
         onClick={() => setIsMenuOpen(!isMenuOpen)}
         icon={isMenuOpen ? 'chevron-up' : 'chevron-down'}
@@ -26,13 +21,19 @@ const UserProfile = ({ user }: Props) => {
         alignIconRight
         style={{
           position: 'relative',
-          zIndex: 2,
-          margin: '0 20px',
+          zIndex: 3,
+          margin: '0 20px 0 0',
           textDecoration: 'none',
         }}
       >
         {user.displayName}
       </Button>
+      <DropDown open={isMenuOpen}>
+        <DropDownItem>
+          <SignOutLink />
+        </DropDownItem>
+      </DropDown>
+      <DropDownOverlay open={isMenuOpen} onClick={() => setIsMenuOpen(false)} />
     </Container>
   )
 }
@@ -56,8 +57,10 @@ const DropDown = styled.ul`
   display: none;
   position: absolute;
   top: 0;
-  z-index: 1;
-  width: 102%;
+  right: 0px;
+  z-index: 2;
+  width: calc(100% + 20px);
+  min-width: 100px;
   list-style: none;
   box-sizing: border-box;
   margin: 0;
@@ -67,6 +70,26 @@ const DropDown = styled.ul`
   box-shadow: 0 2px 4px 0px rgba(0, 0, 0, 0.08);
   border-radius: 2px;
   border: 1px solid ${Constants.colors.lightGray};
+
+  ${({ open }: { open: boolean }) =>
+    open &&
+    css`
+      display: block;
+      animation: ${show} 0.3s ease;
+    `}
+`
+
+const DropDownOverlay = styled.div`
+  display: none;
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 1;
+  margin: 0 !important;
+
+  background: none;
 
   ${({ open }: { open: boolean }) =>
     open &&

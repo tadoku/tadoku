@@ -11,14 +11,16 @@ interface ButtonProps {
   destructive?: boolean
   plain?: boolean
   icon?: IconProp
+  alignIconRight?: boolean
 }
 
 export const Button: SFC<
   ButtonHTMLAttributes<HTMLButtonElement> & ButtonProps
-> = ({ icon, children, ...props }) => (
+> = ({ icon, alignIconRight, children, ...props }) => (
   <StyledButton {...props}>
-    {icon && <ButtonIcon icon={icon} />}
+    {icon && !alignIconRight && <ButtonIconLeft icon={icon} />}
     {children}
+    {icon && alignIconRight && <ButtonIconRight icon={icon} />}
   </StyledButton>
 )
 
@@ -130,8 +132,14 @@ const StyledButton = styled.button`
   }
 `
 
-const ButtonIcon = styled(FontAwesomeIcon)`
+const ButtonIconLeft = styled(FontAwesomeIcon)`
   margin-right: 7px;
+  height: 75%;
+  width: 75%;
+`
+
+const ButtonIconRight = styled(FontAwesomeIcon)`
+  margin-left: 7px;
   height: 75%;
   width: 75%;
 `

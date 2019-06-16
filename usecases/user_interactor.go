@@ -10,6 +10,7 @@ import (
 // UserInteractor contains all business logic for users
 type UserInteractor interface {
 	UpdatePassword(email string, currentPassword, newPassword string) error
+	UpdateProfile(user domain.User) error
 }
 
 // NewUserInteractor instantiates UserInteractor with all dependencies
@@ -50,4 +51,8 @@ func (i *userInteractor) UpdatePassword(email string, currentPassword, newPasswo
 	err = i.userRepository.UpdatePassword(&user)
 
 	return domain.WrapError(err)
+}
+
+func (i *userInteractor) UpdateProfile(user domain.User) error {
+	return i.userRepository.Store(&user)
 }

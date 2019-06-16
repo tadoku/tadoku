@@ -6,6 +6,7 @@ package usecases
 
 import (
 	gomock "github.com/golang/mock/gomock"
+	domain "github.com/tadoku/api/domain"
 	reflect "reflect"
 )
 
@@ -44,4 +45,18 @@ func (m *MockUserInteractor) UpdatePassword(email, currentPassword, newPassword 
 func (mr *MockUserInteractorMockRecorder) UpdatePassword(email, currentPassword, newPassword interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdatePassword", reflect.TypeOf((*MockUserInteractor)(nil).UpdatePassword), email, currentPassword, newPassword)
+}
+
+// UpdateProfile mocks base method
+func (m *MockUserInteractor) UpdateProfile(user domain.User) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateProfile", user)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// UpdateProfile indicates an expected call of UpdateProfile
+func (mr *MockUserInteractorMockRecorder) UpdateProfile(user interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateProfile", reflect.TypeOf((*MockUserInteractor)(nil).UpdateProfile), user)
 }

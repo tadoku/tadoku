@@ -10,6 +10,7 @@ import (
 // UserService is responsible for user related when they're logged in
 type UserService interface {
 	UpdatePassword(ctx Context) error
+	UpdateProfile(ctx Context) error
 }
 
 // NewUserService initializer
@@ -42,6 +43,33 @@ func (u *userService) UpdatePassword(ctx Context) error {
 	}
 
 	err = u.UserInteractor.UpdatePassword(user.Email, b.CurrentPassword, b.NewPassword)
+	if err != nil {
+		return domain.WrapError(err)
+	}
+
+	return ctx.NoContent(http.StatusOK)
+}
+
+// UserUpdateProfileBody is the data that's needed to update your profile
+type UserUpdateProfileBody struct {
+	DisplayName string `json:"display_name"`
+}
+
+func (u *userService) UpdateProfile(ctx Context) error {
+	user, err := ctx.User()
+	if err != nil {
+		return domain.WrapError(err)
+	}
+
+	b := &UserUpdateProfileBody{}
+	err = ctx.Bind(b)
+	if err != nil {
+		return domain.WrapError(err)
+	}
+
+	user.DisplayName = b.DisplayName
+
+	err = u.UserInteractor.UpdateProfile(*user)
 	if err != nil {
 		return domain.WrapError(err)
 	}

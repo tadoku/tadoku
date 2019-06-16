@@ -61,3 +61,17 @@ func TestUserInteractor_UpdatePassword(t *testing.T) {
 		assert.EqualError(t, err, usecases.ErrPasswordIncorrect.Error())
 	}
 }
+
+func TestUserInteractor_UpdateProfile(t *testing.T) {
+	ctrl, repo, _, interactor := setupUserTest(t)
+	defer ctrl.Finish()
+
+	{
+		user := domain.User{ID: 1, DisplayName: "test", Email: "foo@bar.com", Password: ""}
+
+		repo.EXPECT().Store(&user)
+
+		err := interactor.UpdateProfile(user)
+		assert.NoError(t, err)
+	}
+}

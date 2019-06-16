@@ -73,9 +73,9 @@ func TestContestRepository_GetRunningContests(t *testing.T) {
 		assert.Empty(t, ids, "no running contests should exist")
 
 		for _, contest := range []*domain.Contest{
-			&domain.Contest{Start: time.Now().Add(-1 * time.Hour), End: time.Now().Add(1 * time.Hour), Open: true},
-			&domain.Contest{Start: time.Now().Add(-1 * time.Hour), End: time.Now().Add(1 * time.Hour), Open: false},
-			&domain.Contest{Start: time.Now().Add(-5 * time.Hour), End: time.Now().Add(-1 * time.Hour), Open: false},
+			{Start: time.Now().Add(-1 * time.Hour), End: time.Now().Add(1 * time.Hour), Open: true},
+			{Start: time.Now().Add(-1 * time.Hour), End: time.Now().Add(1 * time.Hour), Open: false},
+			{Start: time.Now().Add(-5 * time.Hour), End: time.Now().Add(-1 * time.Hour), Open: false},
 		} {
 			err = repo.Store(contest)
 			assert.NoError(t, err, "saving seed contest should return no error")

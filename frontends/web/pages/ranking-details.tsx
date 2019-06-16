@@ -1,3 +1,4 @@
+import ErrorPage from 'next/error'
 import { ExpressNextContext } from '../app/interfaces'
 import RankingProfile from '../app/ranking/pages/RankingProfile'
 import { connect } from 'react-redux'
@@ -14,7 +15,7 @@ interface Props {
 
 const RankingDetails = ({ contestId, userId, ...props }: Props) => {
   if (!contestId || !userId) {
-    return null
+    return <ErrorPage statusCode={404} />
   }
 
   return <RankingProfile contestId={contestId} userId={userId} {...props} />

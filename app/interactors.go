@@ -12,6 +12,7 @@ type Interactors struct {
 	Session usecases.SessionInteractor
 	Contest usecases.ContestInteractor
 	Ranking usecases.RankingInteractor
+	User    usecases.UserInteractor
 }
 
 // NewInteractors initializes all repositories
@@ -20,14 +21,17 @@ func NewInteractors(
 	jwtGenerator usecases.JWTGenerator,
 	sessionLength time.Duration,
 ) *Interactors {
+	passwordHasher := infra.NewPasswordHasher()
+
 	return &Interactors{
 		Session: usecases.NewSessionInteractor(
 			r.User,
-			infra.NewPasswordHasher(),
+			passwordHasher,
 			jwtGenerator,
 			sessionLength,
 		),
 		Contest: usecases.NewContestInteractor(r.Contest, infra.NewValidator()),
 		Ranking: usecases.NewRankingInteractor(r.Ranking, r.Contest, r.ContestLog, r.User, infra.NewValidator()),
+		User:    usecases.NewUserInteractor(r.User, passwordHasher),
 	}
 }

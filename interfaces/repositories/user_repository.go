@@ -52,6 +52,17 @@ func (r *userRepository) update(user *domain.User) error {
 	return domain.WrapError(err)
 }
 
+func (r *userRepository) UpdatePassword(user *domain.User) error {
+	query := `
+		update users
+		set
+			password = :password
+		where id = :id
+	`
+	_, err := r.sqlHandler.NamedExecute(query, user)
+	return domain.WrapError(err)
+}
+
 func (r *userRepository) FindByID(id uint64) (domain.User, error) {
 	u := domain.User{}
 

@@ -11,6 +11,7 @@ type Services struct {
 	Contest    services.ContestService
 	Ranking    services.RankingService
 	ContestLog services.ContestLogService
+	User       services.UserService
 }
 
 // NewServices initializes all interactors
@@ -21,5 +22,6 @@ func NewServices(i *Interactors) *Services {
 		Contest:    services.NewContestService(i.Contest),
 		Ranking:    services.NewRankingService(i.Ranking),
 		ContestLog: services.NewContestLogService(i.Ranking),
+		User:       services.NewUserService(i.User),
 	}
 }

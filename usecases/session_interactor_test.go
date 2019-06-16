@@ -13,7 +13,7 @@ import (
 
 var sessionLength = time.Hour * 1
 
-func setupUserTest(t *testing.T) (
+func setupSessionTest(t *testing.T) (
 	*gomock.Controller,
 	*usecases.MockUserRepository,
 	*usecases.MockPasswordHasher,
@@ -34,7 +34,7 @@ func setupUserTest(t *testing.T) (
 }
 
 func TestSessionInteractor_CreateUser(t *testing.T) {
-	ctrl, repo, pwHasher, _, interactor := setupUserTest(t)
+	ctrl, repo, pwHasher, _, interactor := setupSessionTest(t)
 	defer ctrl.Finish()
 
 	user := domain.User{
@@ -54,7 +54,7 @@ func TestSessionInteractor_CreateUser(t *testing.T) {
 }
 
 func TestSessionInteractor_CreateSession(t *testing.T) {
-	ctrl, repo, pwHasher, jwtGen, interactor := setupUserTest(t)
+	ctrl, repo, pwHasher, jwtGen, interactor := setupSessionTest(t)
 	defer ctrl.Finish()
 
 	{

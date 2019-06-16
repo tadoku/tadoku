@@ -33,6 +33,25 @@ const logIn = async (payload: {
   }
 }
 
+const refresh = async (): Promise<LogInResponse | undefined> => {
+  const response = await post(`/refresh`, { body: {}, authenticated: true })
+
+  if (response.status !== 200) {
+    return undefined
+  }
+
+  const data: rawLogInResponse = await response.json()
+
+  return {
+    token: data.token,
+    user: {
+      id: data.user.id,
+      email: data.user.email,
+      displayName: data.user.display_name,
+    },
+  }
+}
+
 const register = async (payload: {
   email: string
   password: string
@@ -51,6 +70,7 @@ const register = async (payload: {
 
 const SessionApi = {
   logIn,
+  refresh,
   register,
 }
 

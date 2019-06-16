@@ -52,8 +52,4 @@ const UserProfileContainer = styled.div`
     border-radius: 2px;
     box-shadow: 4px 5px 15px 1px rgba(0, 0, 0, 0.08);
   `}
-
-  * + * {
-    margin-left: 20px;
-  }
 `

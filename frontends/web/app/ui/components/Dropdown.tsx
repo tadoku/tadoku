@@ -104,6 +104,7 @@ export const DropdownItem = styled.li`
     margin: 0;
     width: 100%;
     border-radius: 0;
+    justify-content: flex-start;
 
     &:last-child {
       border-radius: 0 0 2px 2px;

@@ -7,7 +7,9 @@ interface Props {
 }
 
 const UserProfile = ({ user }: Props) => (
-  <Button plain>{user.displayName}</Button>
+  <Button icon="chevron-down" plain alignIconRight>
+    {user.displayName}
+  </Button>
 )
 
 export default UserProfile

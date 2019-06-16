@@ -17,15 +17,15 @@ const SettingsSidebar = ({ activeTab }: Props) => {
       <SettingsList>
         <SettingsLink
           activeTab={activeTab}
-          tab={SettingsTab.ChangePassword}
-          icon="unlock"
-          label="Change password"
-        />
-        <SettingsLink
-          activeTab={activeTab}
           tab={SettingsTab.Profile}
           icon="user"
           label="Profile"
+        />
+        <SettingsLink
+          activeTab={activeTab}
+          tab={SettingsTab.ChangePassword}
+          icon="unlock"
+          label="Change password"
         />
       </SettingsList>
     </Container>

@@ -12,10 +12,7 @@ interface Props {
 const UserProfile = ({ user }: Props) => (
   <Dropdown label={user.displayName}>
     <DropdownItem>
-      <Link
-        as={`/settings/change-password`}
-        href={`/settings?tab=change-password`}
-      >
+      <Link href={`/settings`}>
         <Button plain icon="cog">
           Settings
         </Button>

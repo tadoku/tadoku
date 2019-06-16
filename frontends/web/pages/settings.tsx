@@ -11,17 +11,18 @@ const SettingsPage = ({ tab }: Props) => {
 }
 
 SettingsPage.getInitialProps = async ({ req, query }: ExpressNextContext) => {
+  const defaultTab = SettingsTab.Profile
   if (req && req.params) {
     const { tab } = req.params
-    return { tab }
+    return { tab: tab || defaultTab }
   }
 
   if (query.tab) {
     const { tab } = query
-    return { tab }
+    return { tab: tab || defaultTab }
   }
 
-  return { tab: SettingsTab.ChangePassword }
+  return { tab: defaultTab }
 }
 
 export default SettingsPage

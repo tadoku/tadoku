@@ -7,6 +7,7 @@ import { State } from '../../store'
 import { User } from '../../session/interfaces'
 import SettingsSidebar from '../components/SettingsSidebar'
 import styled from 'styled-components'
+import ChangePasswordForm from '../components/forms/ChangePasswordForm'
 
 interface Props {
   tab: SettingsTab
@@ -39,7 +40,11 @@ const componentForTab = (tab: SettingsTab): JSX.Element => {
       return <p>profile</p>
     }
     case SettingsTab.ChangePassword: {
-      return <p>change pass</p>
+      return (
+        <FormContainer>
+          <ChangePasswordForm />
+        </FormContainer>
+      )
     }
   }
 }
@@ -57,5 +62,8 @@ const Container = styled.div`
 
 const Content = styled.div`
   flex: 1;
-  background: red;
+`
+
+const FormContainer = styled.div`
+  max-width: 350px;
 `

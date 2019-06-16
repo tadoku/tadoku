@@ -19,7 +19,8 @@ import Cards, {
   LargeCard,
 } from '../../ui/components/Cards'
 import { useCachedApiState, isReady } from '../../cache'
-import { OptionalContestSerializer } from '../../contest/transform'
+import { ContestSerializer } from '../../contest/transform'
+import { OptionalizeSerializer } from '../../transform'
 
 interface Props {
   contestId: number
@@ -43,7 +44,7 @@ const RankingProfile = ({
       return ContestApi.get(contestId)
     },
     dependencies: [contestId],
-    serializer: OptionalContestSerializer,
+    serializer: OptionalizeSerializer(ContestSerializer),
   })
 
   const { data: logs, status: statusLogs } = useCachedApiState<ContestLog[]>({

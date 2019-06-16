@@ -28,22 +28,3 @@ export const ContestSerializer: Serializer<Contest> = {
     return RawToContestMapper(raw)
   },
 }
-
-export const OptionalContestSerializer: Serializer<Contest | undefined> = {
-  serialize: contest => {
-    if (!contest) {
-      return ''
-    }
-
-    const raw = ContestToRawMapper(contest)
-    return JSON.stringify(raw)
-  },
-  deserialize: serializedData => {
-    if (serializedData === '') {
-      return undefined
-    }
-
-    let raw = JSON.parse(serializedData)
-    return RawToContestMapper(raw)
-  },
-}

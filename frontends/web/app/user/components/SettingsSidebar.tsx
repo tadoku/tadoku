@@ -16,21 +16,17 @@ const SettingsSidebar = ({ activeTab }: Props) => {
     <Container>
       <Heading>Account settings</Heading>
       <SettingsList>
-        {/* <SettingsItem active={activeTab === SettingsTab.ChangePassword}>
-          <Link
-            as={`/settings/change-password`}
-            href={`/settings?tab=change-password`}
-          >
-            <Button plain icon="cog" disabled>
-              Settings
-            </Button>
-          </Link>
-        </SettingsItem> */}
         <SettingsLink
           activeTab={activeTab}
           tab={SettingsTab.ChangePassword}
           icon="cog"
-          label="Change Password"
+          label="Change password"
+        />
+        <SettingsLink
+          activeTab={activeTab}
+          tab={SettingsTab.Profile}
+          icon="cog"
+          label="Profile"
         />
       </SettingsList>
     </Container>
@@ -52,7 +48,7 @@ const SettingsLink = ({
 }) => (
   <SettingsItem active={activeTab === tab}>
     <Link as={`/settings/${tab}`} href={`/settings?tab=${tab}`}>
-      <StyledLink href="">
+      <StyledLink href="" active={activeTab === tab}>
         <Icon icon={icon} />
         {label}
       </StyledLink>
@@ -78,6 +74,16 @@ const StyledLink = styled.a`
   align-items: center;
   justify-content: center;
   transition: all 0.2s ease;
+
+  ${({ active }: { active: boolean }) =>
+    active &&
+    `
+    color: ${Constants.colors.primary};
+
+    &:hover {
+      cursor: default;
+    }
+`}
 `
 
 const Container = styled.div`
@@ -100,6 +106,7 @@ const SettingsList = styled.ul`
 const SettingsItem = styled.li`
   margin: 0;
   padding: 0;
+  border-left: 2px solid transparent;
 
   button,
   a {
@@ -116,6 +123,6 @@ const SettingsItem = styled.li`
   ${({ active }: { active: boolean }) =>
     active &&
     `
-    border-left: 2px solid ${Constants.colors.primary};
+    border-color: ${Constants.colors.primary};
 `}
 `

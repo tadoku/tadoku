@@ -1,6 +1,6 @@
 import React from 'react'
 import { User } from '../../interfaces'
-import SignOutLink from './LogOut'
+import LogOutLink from './LogOut'
 import Dropdown, { DropdownItem } from '../../../ui/components/Dropdown'
 
 interface Props {
@@ -10,7 +10,7 @@ interface Props {
 const UserProfile = ({ user }: Props) => (
   <Dropdown label={user.displayName}>
     <DropdownItem>
-      <SignOutLink></SignOutLink>
+      <LogOutLink></LogOutLink>
     </DropdownItem>
   </Dropdown>
 )

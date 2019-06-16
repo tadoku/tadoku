@@ -6,6 +6,7 @@ import { connect } from 'react-redux'
 import { State } from '../../store'
 import { User } from '../../session/interfaces'
 import SettingsSidebar from '../components/SettingsSidebar'
+import styled from 'styled-components'
 
 interface Props {
   tab: SettingsTab
@@ -24,9 +25,23 @@ const Settings = ({ tab, user, userLoaded }: Props) => {
 
   return (
     <Layout title="Settings">
-      <SettingsSidebar activeTab={tab} />
+      <Container>
+        <SettingsSidebar activeTab={tab} />
+        <Content>{componentForTab(tab)}</Content>
+      </Container>
     </Layout>
   )
+}
+
+const componentForTab = (tab: SettingsTab): JSX.Element => {
+  switch (tab) {
+    case SettingsTab.Profile: {
+      return <p>profile</p>
+    }
+    case SettingsTab.ChangePassword: {
+      return <p>change pass</p>
+    }
+  }
 }
 
 const mapStateToProps = (state: State) => ({
@@ -35,3 +50,12 @@ const mapStateToProps = (state: State) => ({
 })
 
 export default connect(mapStateToProps)(Settings)
+
+const Container = styled.div`
+  display: flex;
+`
+
+const Content = styled.div`
+  flex: 1;
+  background: red;
+`

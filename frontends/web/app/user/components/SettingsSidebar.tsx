@@ -38,7 +38,6 @@ const Container = styled.div`
   margin-right: 20px;
   padding-right: 20px;
   border-right: 1px solid ${Constants.colors.lightGray};
-  max-width: 250px;
 `
 
 const Heading = styled.h2``

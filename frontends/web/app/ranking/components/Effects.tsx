@@ -5,7 +5,8 @@ import { RankingRegistration } from '../interfaces'
 import { State } from '../../store'
 import { User } from '../../session/interfaces'
 import RankingApi from '../api'
-import { useCachedApiState } from '../../cache'
+import { useCachedApiState, DefaultSerializer } from '../../cache'
+import { OptionalizeSerializer } from '../../transform'
 
 interface Props {
   user: User | undefined
@@ -28,6 +29,7 @@ const RankingEffects = ({ user, updateRegistration, effectCount }: Props) => {
     },
     onChange: updateRegistration,
     dependencies: [user, effectCount],
+    serializer: OptionalizeSerializer(DefaultSerializer),
   })
 
   return null

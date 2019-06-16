@@ -5,7 +5,7 @@ export interface Serializer<DataType> {
   deserialize: (rawData: string) => DataType
 }
 
-const jsonSerializer: Serializer<any> = {
+export const DefaultSerializer: Serializer<any> = {
   serialize: JSON.stringify,
   deserialize: JSON.parse,
 }
@@ -45,7 +45,7 @@ export const useCachedApiState = <DataType>({
   const [apiEffectCounter, setApiEffectCounter] = useState(0)
 
   const dependencies = [...(originalDependencies || []), apiEffectCounter]
-  const serializer = originalSerializer ? originalSerializer : jsonSerializer
+  const serializer = originalSerializer ? originalSerializer : DefaultSerializer
 
   const observedSetData = (newData: DataType) => {
     setData(newData)

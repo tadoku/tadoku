@@ -143,6 +143,7 @@ func (d *serverDependencies) routes() []services.Route {
 
 		// Users
 		{Method: http.MethodPost, Path: "/users/update_password", HandlerFunc: d.Services().User.UpdatePassword, MinRole: domain.RoleUser},
+		{Method: http.MethodPost, Path: "/users/profile", HandlerFunc: d.Services().User.UpdateProfile, MinRole: domain.RoleUser},
 
 		// Contests
 		{Method: http.MethodGet, Path: "/contests/latest", HandlerFunc: d.Services().Contest.Latest},

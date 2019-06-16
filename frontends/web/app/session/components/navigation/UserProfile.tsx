@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { User } from '../../interfaces'
 import { Button } from '../../../ui/components'
+import SignOutLink from './LogOut'
 
 interface Props {
   user: User
@@ -19,7 +20,13 @@ const UserProfile = ({ user }: Props) => {
       >
         {user.displayName}
       </Button>
-      {isMenuOpen && 'open'}
+      {isMenuOpen && (
+        <ul>
+          <li>
+            <SignOutLink />
+          </li>
+        </ul>
+      )}
     </>
   )
 }

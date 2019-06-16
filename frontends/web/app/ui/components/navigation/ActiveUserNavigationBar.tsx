@@ -3,7 +3,6 @@ import styled from 'styled-components'
 import media from 'styled-media-query'
 import { RankingRegistration } from '../../../ranking/interfaces'
 import SubmitPagesLink from '../../../ranking/components/navigation/SubmitPages'
-import SignOutLink from '../../../session/components/navigation/LogOut'
 import { User } from '../../../session/interfaces'
 import UserProfile from '../../../session/components/navigation/UserProfile'
 
@@ -27,7 +26,6 @@ export const ActiveUserNavigationBar = ({
     </LinkContainer>
     <UserProfileContainer>
       <UserProfile user={user} />
-      <SignOutLink />
     </UserProfileContainer>
   </>
 )

@@ -15,8 +15,22 @@ const changePassword = async (payload: {
   return response.status === 200
 }
 
+const updateProfile = async (payload: {
+  displayName: string
+}): Promise<boolean> => {
+  const response = await post(`/users/profile`, {
+    body: {
+      display_name: payload.displayName,
+    },
+    authenticated: true,
+  })
+
+  return response.status === 200
+}
+
 const UserApi = {
   changePassword,
+  updateProfile,
 }
 
 export default UserApi

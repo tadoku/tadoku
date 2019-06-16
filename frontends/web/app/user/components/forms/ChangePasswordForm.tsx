@@ -14,7 +14,7 @@ import { validatePassword } from '../../../session/domain'
 import UserApi from '../../api'
 
 const ChangePasswordForm = () => {
-  const [currentPassword, setcurrentPassword] = useState('')
+  const [currentPassword, setCurrentPassword] = useState('')
   const [newPassword, setNewPassword] = useState('')
   const [newPasswordConfirmation, setNewPasswordConfirmation] = useState('')
   const [error, setError] = useState(undefined as string | undefined)
@@ -39,7 +39,7 @@ const ChangePasswordForm = () => {
       return
     }
 
-    setcurrentPassword('')
+    setCurrentPassword('')
     setNewPassword('')
     setNewPasswordConfirmation('')
     setError(undefined)
@@ -65,7 +65,7 @@ const ChangePasswordForm = () => {
           <Input
             type="password"
             value={currentPassword}
-            onChange={e => setcurrentPassword(e.target.value)}
+            onChange={e => setCurrentPassword(e.target.value)}
             error={hasError.currentPassword}
           />
           <GroupError

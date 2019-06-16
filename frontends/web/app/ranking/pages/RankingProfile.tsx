@@ -10,6 +10,7 @@ import {
   rankingsToRegistrationOverview,
   amountToPages,
   pagesLabel,
+  ContestLogsSerializer,
 } from '../transform'
 import { Contest } from '../../contest/interfaces'
 import Cards, {
@@ -68,6 +69,7 @@ const RankingProfile = ({
       })
     },
     dependencies: [contestId, userId, effectCount],
+    serializer: ContestLogsSerializer,
   })
 
   const { data: registration, status: statusRegistration } = useCachedApiState<

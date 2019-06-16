@@ -1,5 +1,15 @@
 import { useEffect, useState } from 'react'
 
+export interface Serializer<DataType> {
+  serialize: (data: DataType) => string
+  deserialize: (rawData: string) => DataType
+}
+
+const jsonSerializer: Serializer<any> = {
+  serialize: JSON.stringify,
+  deserialize: JSON.parse,
+}
+
 export enum ApiFetchStatus {
   Initialized,
   Stale,
@@ -16,6 +26,7 @@ interface useCachedApiStateParameters<DataType> {
   fetchData: () => Promise<DataType>
   onChange?: (data: DataType) => void
   dependencies?: any[]
+  serializer?: Serializer<DataType>
 }
 
 export const useCachedApiState = <DataType>({
@@ -24,12 +35,14 @@ export const useCachedApiState = <DataType>({
   fetchData,
   onChange,
   dependencies: originalDependencies,
+  serializer: originalSerializer,
 }: useCachedApiStateParameters<DataType>) => {
   const [status, setStatus] = useState(ApiFetchStatus.Initialized)
   const [data, setData] = useState(defaultValue)
   const [apiEffectCounter, setApiEffectCounter] = useState(0)
 
   const dependencies = [...(originalDependencies || []), apiEffectCounter]
+  const serializer = originalSerializer ? originalSerializer : jsonSerializer
 
   const observedSetData = (newData: DataType) => {
     setData(newData)
@@ -44,7 +57,7 @@ export const useCachedApiState = <DataType>({
 
     const cachedValue = localStorage.getItem(cacheKey)
     if (cachedValue) {
-      const parsedCacheData = JSON.parse(cachedValue)
+      const parsedCacheData = serializer.deserialize(cachedValue) as DataType
 
       if (parsedCacheData !== data) {
         setStatus(ApiFetchStatus.Stale)
@@ -61,7 +74,7 @@ export const useCachedApiState = <DataType>({
       }
 
       observedSetData(fetchedData)
-      localStorage.setItem(cacheKey, JSON.stringify(fetchedData))
+      localStorage.setItem(cacheKey, serializer.serialize(fetchedData))
     })
 
     setStatus(ApiFetchStatus.Completed)

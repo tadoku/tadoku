@@ -1,7 +1,7 @@
 import React from 'react'
 import Layout from '../../ui/components/Layout'
 import ErrorPage from 'next/error'
-import { ContestLog, RankingRegistrationOverview } from '../interfaces'
+import { ContestLog, Ranking } from '../interfaces'
 import RankingApi from '../api'
 import ContestApi from '../../contest/api'
 import ContestLogsByDayGraph from '../components/graphs/ContestLogsByDayGraph'
@@ -11,6 +11,7 @@ import {
   amountToPages,
   pagesLabel,
   ContestLogsSerializer,
+  RankingsSerializer,
 } from '../transform'
 import { Contest } from '../../contest/interfaces'
 import Cards, {
@@ -73,50 +74,46 @@ const RankingProfile = ({
   })
 
   const { data: registration, status: statusRegistration } = useCachedApiState<
-    RankingRegistrationOverview | undefined
+    Ranking[]
   >({
-    cacheKey: `ranking_registration?contest_id=${contestId}&user_id=${userId}`,
-    defaultValue: undefined,
+    cacheKey: `ranking_profile_registration?contest_id=${contestId}&user_id=${userId}`,
+    defaultValue: [],
     fetchData: () => {
-      return new Promise(async resolve => {
-        const result = await RankingApi.getRankingsRegistration(
-          contestId,
-          userId,
-        )
-
-        resolve(result ? rankingsToRegistrationOverview(result) : undefined)
-      })
+      return RankingApi.getRankingsRegistration(contestId, userId)
     },
     dependencies: [contestId, userId, effectCount],
+    serializer: RankingsSerializer,
   })
 
   if (!isReady([statusContest, statusLogs, statusRegistration])) {
     return <Layout>Loading...</Layout>
   }
 
-  if (!registration || !contest) {
+  const registrationOverview = rankingsToRegistrationOverview(registration)
+
+  if (!registrationOverview || !contest) {
     return <ErrorPage statusCode={500} />
   }
 
   if (logs.length == 0) {
     return (
-      <Layout title={registration.userDisplayName}>
+      <Layout title={registrationOverview.userDisplayName}>
         <p>
-          Nothing to see here! {registration.userDisplayName} hasn't logged any
-          updates for this round yet, please check again later.
+          Nothing to see here! {registrationOverview.userDisplayName} hasn't
+          logged any updates for this round yet, please check again later.
         </p>
       </Layout>
     )
   }
 
   return (
-    <Layout title={registration.userDisplayName}>
+    <Layout title={registrationOverview.userDisplayName}>
       <Cards>
         <Card>
           <CardContent>{contest.description}</CardContent>
           <CardLabel>Round</CardLabel>
         </Card>
-        {registration.registrations.map(r => (
+        {registrationOverview.registrations.map(r => (
           <Card key={r.languageCode}>
             <CardContent>{amountToPages(r.amount)}</CardContent>
             <CardLabel>{pagesLabel(r.languageCode)}</CardLabel>
@@ -128,7 +125,7 @@ const RankingProfile = ({
         <LargeCard>
           <ContestLogsOverview
             logs={logs}
-            registration={registration}
+            registration={registrationOverview}
             refreshData={refreshRanking}
           />
         </LargeCard>

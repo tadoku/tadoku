@@ -6,6 +6,7 @@ import {
   rawRankingRegistration,
   ContestLog,
   rawContestLog,
+  RankingMapper,
 } from './interfaces'
 
 const joinContest = async (
@@ -32,13 +33,7 @@ const getRankings = async (contestId?: number): Promise<Ranking[]> => {
 
   const data: rawRanking[] = await response.json()
 
-  return data.map(raw => ({
-    contestId: raw.contest_id,
-    userId: raw.user_id,
-    userDisplayName: raw.user_display_name,
-    languageCode: raw.language_code,
-    amount: raw.amount,
-  }))
+  return data.map(RankingMapper)
 }
 
 const getCurrentRegistration = async (): Promise<
@@ -76,13 +71,7 @@ const getRankingsRegistration = async (
 
   const data: rawRanking[] = await response.json()
 
-  return data.map(raw => ({
-    contestId: raw.contest_id,
-    userId: raw.user_id,
-    userDisplayName: raw.user_display_name,
-    languageCode: raw.language_code,
-    amount: raw.amount,
-  }))
+  return data.map(RankingMapper)
 }
 
 const createLog = async (payload: {

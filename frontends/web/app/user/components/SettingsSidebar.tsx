@@ -3,7 +3,6 @@ import { SettingsTab } from '../interfaces'
 import styled from 'styled-components'
 import Constants from '../../ui/Constants'
 import Link from 'next/link'
-import { Button } from '../../ui/components'
 import { IconProp } from '@fortawesome/fontawesome-svg-core'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 
@@ -34,6 +33,23 @@ const SettingsSidebar = ({ activeTab }: Props) => {
 }
 
 export default SettingsSidebar
+
+const Container = styled.div`
+  margin-right: 20px;
+  padding-right: 20px;
+  border-right: 1px solid ${Constants.colors.lightGray};
+  max-width: 250px;
+`
+
+const Heading = styled.h2``
+
+const SettingsList = styled.ul`
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  width: 100%;
+`
 
 const SettingsLink = ({
   activeTab,
@@ -84,23 +100,6 @@ const StyledLink = styled.a`
       cursor: default;
     }
 `}
-`
-
-const Container = styled.div`
-  margin-right: 20px;
-  padding-right: 20px;
-  border-right: 1px solid ${Constants.colors.lightGray};
-  max-width: 250px;
-`
-
-const Heading = styled.h2``
-
-const SettingsList = styled.ul`
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-  width: 100%;
 `
 
 const SettingsItem = styled.li`

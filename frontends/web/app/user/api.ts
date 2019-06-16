@@ -1,11 +1,14 @@
 import { post } from '../api'
 
 const changePassword = async (payload: {
-  oldPassword: string
+  currentPassword: string
   newPassword: string
 }): Promise<boolean> => {
   const response = await post(`/users/update_password`, {
-    body: payload,
+    body: {
+      current_password: payload.currentPassword,
+      new_password: payload.newPassword,
+    },
     authenticated: true,
   })
 

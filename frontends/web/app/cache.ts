@@ -18,7 +18,10 @@ export enum ApiFetchStatus {
 }
 
 export const isReady = (status: ApiFetchStatus[]) =>
-  !status.includes(ApiFetchStatus.Loading)
+  !(
+    status.includes(ApiFetchStatus.Loading) ||
+    status.includes(ApiFetchStatus.Initialized)
+  )
 
 interface useCachedApiStateParameters<DataType> {
   cacheKey: string

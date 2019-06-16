@@ -50,6 +50,7 @@ func (u *userService) UpdatePassword(ctx Context) error {
 	return ctx.NoContent(http.StatusOK)
 }
 
+// UserUpdateProfileBody is the data that's needed to update your profile
 type UserUpdateProfileBody struct {
 	DisplayName string `json:"display_name"`
 }

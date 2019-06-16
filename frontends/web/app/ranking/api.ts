@@ -6,8 +6,8 @@ import {
   rawRankingRegistration,
   ContestLog,
   rawContestLog,
-  RawToRankingMapper,
 } from './interfaces'
+import { RawToRankingMapper } from './transform'
 
 const joinContest = async (
   contestId: number,

@@ -1,5 +1,3 @@
-import { Mapper } from '../interfaces'
-
 export interface Ranking {
   contestId: number
   userId: number
@@ -15,14 +13,6 @@ export interface rawRanking {
   language_code: string
   amount: number
 }
-
-export const RawToRankingMapper: Mapper<rawRanking, Ranking> = raw => ({
-  contestId: raw.contest_id,
-  userId: raw.user_id,
-  userDisplayName: raw.user_display_name,
-  languageCode: raw.language_code,
-  amount: raw.amount,
-})
 
 export interface RankingRegistrationOverview {
   contestId: number

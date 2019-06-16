@@ -3,9 +3,19 @@ import {
   ContestLog,
   Ranking,
   RankingRegistrationOverview,
+  rawRanking,
 } from './interfaces'
 import { Contest } from './../contest/interfaces'
 import { languageNameByCode } from './database'
+import { Mapper } from '../interfaces'
+
+export const RawToRankingMapper: Mapper<rawRanking, Ranking> = raw => ({
+  contestId: raw.contest_id,
+  userId: raw.user_id,
+  userDisplayName: raw.user_display_name,
+  languageCode: raw.language_code,
+  amount: raw.amount,
+})
 
 type AggregatedByDaysResult = {
   aggregated: {

@@ -3,6 +3,7 @@ import { User } from './interfaces'
 export const initialState = {
   token: undefined as (string | undefined),
   user: undefined as (User | undefined),
+  loaded: false,
   runEffectCount: 0,
 }
 
@@ -38,7 +39,12 @@ export const reducer = (state = initialState, action: Action) => {
   switch (action.type) {
     case ActionTypes.SessionLogIn:
       const payload = (action as SessionLogIn).payload
-      return { ...state, token: payload.token, user: payload.user }
+      return {
+        ...state,
+        token: payload.token,
+        user: payload.user,
+        loaded: true,
+      }
     case ActionTypes.SessionSignOut:
       return {
         ...state,

@@ -42,6 +42,7 @@ const componentForTab = (tab: SettingsTab): JSX.Element => {
     case SettingsTab.ChangePassword: {
       return (
         <FormContainer>
+          <h2>Change password</h2>
           <ChangePasswordForm />
         </FormContainer>
       )

@@ -10,7 +10,7 @@ interface Props {
 }
 
 const UserProfile = ({ user }: Props) => {
-  const [isMenuOpen, setIsMenuOpen] = useState(true)
+  const [isMenuOpen, setIsMenuOpen] = useState(false)
 
   return (
     <Container>
@@ -60,7 +60,7 @@ const DropDown = styled.ul`
   right: 0px;
   z-index: 2;
   width: calc(100% + 20px);
-  min-width: 100px;
+  min-width: 120px;
   list-style: none;
   box-sizing: border-box;
   margin: 0;
@@ -77,6 +77,11 @@ const DropDown = styled.ul`
       display: block;
       animation: ${show} 0.3s ease;
     `}
+
+  button, a {
+    margin: 0;
+    width: 100%;
+  }
 `
 
 const DropDownOverlay = styled.div`

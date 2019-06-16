@@ -12,13 +12,19 @@ import {
 import { Button, ButtonContainer } from '../../../ui/components'
 import { validateDisplayName } from '../../../session/domain'
 import UserApi from '../../api'
+import SessionApi from '../../../session/api'
+import { connect } from 'react-redux'
+import { Dispatch } from 'redux'
+import * as SessionStore from '../../../session/redux'
 import { User } from '../../../session/interfaces'
+import { storeUserInLocalStorage } from '../../../session/storage'
 
 interface Props {
+  setUser: (token: string, user: User) => void
   user: User
 }
 
-const ProfileForm = ({ user }: Props) => {
+const ProfileForm = ({ user, setUser }: Props) => {
   const [displayName, setDisplayName] = useState(user.displayName)
   const [error, setError] = useState(undefined as string | undefined)
   const [message, setMessage] = useState(undefined as string | undefined)
@@ -40,6 +46,11 @@ const ProfileForm = ({ user }: Props) => {
 
     setError(undefined)
     setMessage('Your profile has been updated.')
+
+    const sessionResponse = await SessionApi.refresh()
+    if (sessionResponse) {
+      setUser(sessionResponse.token, sessionResponse.user)
+    }
   }
 
   const hasError = {
@@ -76,4 +87,20 @@ const ProfileForm = ({ user }: Props) => {
     </Form>
   )
 }
-export default ProfileForm
+
+const mapDispatchToProps = (dispatch: Dispatch<SessionStore.Action>) => ({
+  setUser: (token: string, user: User) => {
+    const payload = { token, user }
+    storeUserInLocalStorage(payload)
+
+    dispatch({
+      type: SessionStore.ActionTypes.SessionLogIn,
+      payload,
+    })
+  },
+})
+
+export default connect(
+  null,
+  mapDispatchToProps,
+)(ProfileForm)

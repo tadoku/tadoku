@@ -57,4 +57,10 @@ func TestUserRepository_StoreUser(t *testing.T) {
 			Preferences: &domain.Preferences{},
 		})
 	}
+
+	{
+		user.Password = "barfoo"
+		err := repo.UpdatePassword(user)
+		assert.NoError(t, err)
+	}
 }

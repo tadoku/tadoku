@@ -8,6 +8,7 @@ import { User } from '../../session/interfaces'
 import SettingsSidebar from '../components/SettingsSidebar'
 import styled from 'styled-components'
 import ChangePasswordForm from '../components/forms/ChangePasswordForm'
+import ProfileForm from '../components/forms/ProfileForm'
 
 interface Props {
   tab: SettingsTab
@@ -28,20 +29,20 @@ const Settings = ({ tab, user, userLoaded }: Props) => {
     <Layout title="Settings">
       <Container>
         <SettingsSidebar activeTab={tab} />
-        <Content>{componentForTab(tab)}</Content>
+        <Content>{componentForTab(tab, user as User)}</Content>
       </Container>
     </Layout>
   )
 }
 
-const componentForTab = (tab: SettingsTab): JSX.Element => {
+const componentForTab = (tab: SettingsTab, user: User): JSX.Element => {
   switch (tab) {
     case SettingsTab.Profile: {
       return (
-        <>
+        <FormContainer>
           <h2>Profile</h2>
-          <p>Under construction</p>
-        </>
+          <ProfileForm user={user} />
+        </FormContainer>
       )
     }
     case SettingsTab.ChangePassword: {

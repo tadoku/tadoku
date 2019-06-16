@@ -12,9 +12,14 @@ import {
 import { Button, ButtonContainer } from '../../../ui/components'
 import { validateDisplayName } from '../../../session/domain'
 import UserApi from '../../api'
+import { User } from '../../../session/interfaces'
 
-const ProfileForm = () => {
-  const [displayName, setDisplayName] = useState('')
+interface Props {
+  user: User
+}
+
+const ProfileForm = ({ user }: Props) => {
+  const [displayName, setDisplayName] = useState(user.displayName)
   const [error, setError] = useState(undefined as string | undefined)
   const [message, setMessage] = useState(undefined as string | undefined)
 

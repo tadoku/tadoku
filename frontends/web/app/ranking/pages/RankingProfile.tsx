@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React from 'react'
 import Layout from '../../ui/components/Layout'
 import ErrorPage from 'next/error'
 import { ContestLog, RankingRegistrationOverview } from '../interfaces'
@@ -18,6 +18,7 @@ import Cards, {
   CardContent,
   LargeCard,
 } from '../../ui/components/Cards'
+import { useCachedApiState, isReady } from '../../cache'
 
 interface Props {
   contestId: number
@@ -32,41 +33,59 @@ const RankingProfile = ({
   effectCount,
   refreshRanking,
 }: Props) => {
-  const [loaded, setLoaded] = useState(false)
-  const [logs, setLogs] = useState([] as ContestLog[])
-  const [contest, setContest] = useState(undefined as Contest | undefined)
-  const [registration, setRegistration] = useState(undefined as
-    | RankingRegistrationOverview
-    | undefined)
+  const { data: contest, status: statusContest } = useCachedApiState<
+    Contest | undefined
+  >({
+    cacheKey: `contest?id=${contestId}`,
+    defaultValue: undefined,
+    fetchData: () => {
+      return ContestApi.get(contestId)
+    },
+    dependencies: [contestId],
+  })
 
-  useEffect(() => {
-    const getLogs = async () => {
-      const [contest, logs, registration] = await Promise.all([
-        ContestApi.get(contestId),
-        RankingApi.getLogsFor(contestId, userId),
-        RankingApi.getRankingsRegistration(contestId, userId),
-      ])
+  const { data: logs, status: statusLogs } = useCachedApiState<ContestLog[]>({
+    cacheKey: `contest_logs?contest_id=${contestId}&user_id=${userId}`,
+    defaultValue: [],
+    fetchData: () => {
+      return new Promise(async resolve => {
+        const result = (await RankingApi.getLogsFor(contestId, userId)).sort(
+          (a, b) => {
+            if (a.date > b.date) {
+              return 1
+            }
+            if (a.date < b.date) {
+              return -1
+            }
+            return 0
+          },
+        )
 
-      setContest(contest)
-      setLogs(
-        logs.sort((a, b) => {
-          if (a.date > b.date) {
-            return 1
-          }
-          if (a.date < b.date) {
-            return -1
-          }
-          return 0
-        }),
-      )
-      setRegistration(rankingsToRegistrationOverview(registration))
-      setLoaded(true)
-    }
+        resolve(result)
+      })
+    },
+    dependencies: [contestId, userId, effectCount],
+  })
 
-    getLogs()
-  }, [contestId, userId, effectCount])
+  const { data: registration, status: statusRegistration } = useCachedApiState<
+    RankingRegistrationOverview | undefined
+  >({
+    cacheKey: `ranking_registration?contest_id=${contestId}&user_id=${userId}`,
+    defaultValue: undefined,
+    fetchData: () => {
+      return new Promise(async resolve => {
+        const result = await RankingApi.getRankingsRegistration(
+          contestId,
+          userId,
+        )
 
-  if (!loaded) {
+        resolve(result ? rankingsToRegistrationOverview(result) : undefined)
+      })
+    },
+    dependencies: [contestId, userId, effectCount],
+  })
+
+  if (!isReady([statusContest, statusLogs, statusRegistration])) {
     return <Layout>Loading...</Layout>
   }
 

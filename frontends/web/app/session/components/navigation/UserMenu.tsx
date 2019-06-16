@@ -24,7 +24,12 @@ const UserProfile = ({ user }: Props) => {
         icon={isMenuOpen ? 'chevron-up' : 'chevron-down'}
         plain
         alignIconRight
-        style={{ position: 'relative', zIndex: 2, margin: '0 20px' }}
+        style={{
+          position: 'relative',
+          zIndex: 2,
+          margin: '0 20px',
+          textDecoration: 'none',
+        }}
       >
         {user.displayName}
       </Button>

@@ -5,6 +5,7 @@ import { SettingsTab } from '../interfaces'
 import { connect } from 'react-redux'
 import { State } from '../../store'
 import { User } from '../../session/interfaces'
+import SettingsSidebar from '../components/SettingsSidebar'
 
 interface Props {
   tab: SettingsTab
@@ -21,7 +22,11 @@ const Settings = ({ tab, user, userLoaded }: Props) => {
     return <ErrorPage statusCode={404} />
   }
 
-  return <Layout title="Settings">Active tab: {tab}</Layout>
+  return (
+    <Layout title="Settings">
+      <SettingsSidebar activeTab={tab} />
+    </Layout>
+  )
 }
 
 const mapStateToProps = (state: State) => ({

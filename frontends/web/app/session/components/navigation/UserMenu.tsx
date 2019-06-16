@@ -16,7 +16,7 @@ const UserProfile = ({ user }: Props) => {
     <Container>
       <Button
         onClick={() => setIsMenuOpen(!isMenuOpen)}
-        icon="chevron-down"
+        icon={isMenuOpen ? 'chevron-up' : 'chevron-down'}
         plain
         alignIconRight
       >

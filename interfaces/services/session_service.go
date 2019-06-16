@@ -12,6 +12,7 @@ import (
 type SessionService interface {
 	Login(ctx Context) error
 	Register(ctx Context) error
+	Refresh(ctx Context) error
 }
 
 // NewSessionService initializer
@@ -68,4 +69,24 @@ func (s *sessionService) Register(ctx Context) error {
 	}
 
 	return ctx.NoContent(http.StatusCreated)
+}
+
+func (s *sessionService) Refresh(ctx Context) error {
+	sessionUser, err := ctx.User()
+	if err != nil {
+		return domain.WrapError(err)
+	}
+
+	user, token, err := s.SessionInteractor.RefreshSession(*sessionUser)
+	if err != nil {
+		ctx.NoContent(http.StatusUnauthorized)
+		return domain.WrapError(err)
+	}
+
+	res := map[string]interface{}{
+		"token": token,
+		"user":  user,
+	}
+
+	return ctx.JSON(http.StatusOK, res)
 }

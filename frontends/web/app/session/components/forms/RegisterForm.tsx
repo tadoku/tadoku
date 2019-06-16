@@ -95,7 +95,7 @@ const RegisterForm = ({
             error={hasError.displayName}
           />
           <GroupError
-            message="Display name should be at least 6 characters"
+            message="Display name should be at least 2 characters"
             hidden={!hasError.displayName}
           />
         </Label>

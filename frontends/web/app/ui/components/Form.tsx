@@ -14,21 +14,45 @@ export const Group = styled.div`
 `
 
 export const ErrorMessage: SFC<{ message?: string }> = ({ message }) => (
-  <StyledErrorMessage hidden={!message}>{message}</StyledErrorMessage>
+  <StyledMessage
+    hidden={!message}
+    color={Constants.colors.destructive}
+    background={Constants.colors.lightDestructive}
+  >
+    {message}
+  </StyledMessage>
 )
 
-const StyledErrorMessage = styled.p`
-  ${({ hidden }: { hidden?: boolean }) =>
+export const SuccessMessage: SFC<{ message?: string }> = ({ message }) => (
+  <StyledMessage
+    hidden={!message}
+    color={Constants.colors.success}
+    background={Constants.colors.lightSuccess}
+  >
+    {message}
+  </StyledMessage>
+)
+
+interface MessageProps {
+  hidden?: boolean
+  color: string
+  background: string
+}
+
+const StyledMessage = styled.p`
+  ${({ hidden }: MessageProps) =>
     hidden &&
     `
     display: hidden;
     opacity: 0;
   `}
 
-  background-color: ${Constants.colors.lightDestructive};
-  color: ${Constants.colors.destructive};
-  border: 1px solid ${Constants.colors.lightDestructive};
-  box-shadow: 0px 2px 3px 0px ${Constants.colors.lightDestructive};
+  ${({ color, background }: MessageProps) => `
+    color: ${color};
+    background-color: ${background};
+    border: 1px solid ${background};
+    box-shadow: 0px 2px 3px 0px ${background};
+  `}
   padding: 12px;
   margin: 24px 0;
   border-radius: 3px;

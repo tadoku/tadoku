@@ -7,6 +7,7 @@ import {
   Group,
   ErrorMessage,
   GroupError,
+  SuccessMessage,
 } from '../../../ui/components/Form'
 import { Button, ButtonContainer } from '../../../ui/components'
 import { validatePassword } from '../../../session/domain'
@@ -33,6 +34,7 @@ const ChangePasswordForm = () => {
     })
 
     if (!response) {
+      setMessage(undefined)
       setError('Old password is incorrect.')
       return
     }
@@ -56,7 +58,7 @@ const ChangePasswordForm = () => {
   return (
     <Form onSubmit={submit}>
       <ErrorMessage message={error} />
-      <ErrorMessage message={message} />
+      <SuccessMessage message={message} />
       <Group>
         <Label>
           <LabelText>Old password</LabelText>

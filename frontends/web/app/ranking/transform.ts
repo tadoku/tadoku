@@ -4,6 +4,7 @@ import {
   Ranking,
   RankingRegistrationOverview,
   rawRanking,
+  rawContestLog,
 } from './interfaces'
 import { Contest } from './../contest/interfaces'
 import { languageNameByCode } from './database'
@@ -27,13 +28,52 @@ export const RankingToRawMapper: Mapper<Ranking, rawRanking> = ranking => ({
 })
 
 export const RankingsSerializer: Serializer<Ranking[]> = {
-  serialize: rankings => {
-    const raw = rankings.map(RankingToRawMapper)
+  serialize: data => {
+    const raw = data.map(RankingToRawMapper)
     return JSON.stringify(raw)
   },
   deserialize: serializedData => {
     let raw = JSON.parse(serializedData)
     return raw.map(RawToRankingMapper)
+  },
+}
+
+export const RawToContestLogMapper: Mapper<
+  rawContestLog,
+  ContestLog
+> = raw => ({
+  id: raw.id,
+  contestId: raw.contest_id,
+  userId: raw.user_id,
+  languageCode: raw.language_code,
+  mediumId: raw.medium_id,
+  amount: raw.amount,
+  adjustedAmount: raw.adjusted_amount,
+  date: new Date(raw.date),
+})
+
+export const ContestLogToRawMapper: Mapper<
+  ContestLog,
+  rawContestLog
+> = contestLog => ({
+  id: contestLog.id,
+  contest_id: contestLog.contestId,
+  user_id: contestLog.userId,
+  language_code: contestLog.languageCode,
+  medium_id: contestLog.mediumId,
+  amount: contestLog.amount,
+  adjusted_amount: contestLog.adjustedAmount,
+  date: contestLog.date.toISOString(),
+})
+
+export const ContestLogsSerializer: Serializer<ContestLog[]> = {
+  serialize: data => {
+    const raw = data.map(ContestLogToRawMapper)
+    return JSON.stringify(raw)
+  },
+  deserialize: serializedData => {
+    let raw = JSON.parse(serializedData)
+    return raw.map(RawToContestLogMapper)
   },
 }
 

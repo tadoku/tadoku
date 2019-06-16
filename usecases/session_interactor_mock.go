@@ -62,3 +62,17 @@ func (mr *MockSessionInteractorMockRecorder) CreateSession(email, password inter
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateSession", reflect.TypeOf((*MockSessionInteractor)(nil).CreateSession), email, password)
 }
+
+// RefreshSession mocks base method
+func (m *MockSessionInteractor) RefreshSession(user domain.User) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "RefreshSession", user)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// RefreshSession indicates an expected call of RefreshSession
+func (mr *MockSessionInteractorMockRecorder) RefreshSession(user interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RefreshSession", reflect.TypeOf((*MockSessionInteractor)(nil).RefreshSession), user)
+}

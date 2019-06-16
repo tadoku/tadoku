@@ -19,6 +19,7 @@ var ErrUserDoesNotExist = fail.New("user does not exist")
 type SessionInteractor interface {
 	CreateUser(user domain.User) error
 	CreateSession(email, password string) (user domain.User, token string, err error)
+	RefreshSession(user domain.User) error
 }
 
 // NewSessionInteractor instantiates SessionInteractor with all dependencies
@@ -81,4 +82,8 @@ func (si *sessionInteractor) CreateSession(email, password string) (domain.User,
 	}
 
 	return user, token, nil
+}
+
+func (si *SessionInteractor) RefreshSession(user domain.User) error {
+	return nil
 }

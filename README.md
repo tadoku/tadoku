@@ -2,6 +2,7 @@
 
 [![CircleCI](https://circleci.com/gh/tadoku/api/tree/master.svg?style=svg)](https://circleci.com/gh/tadoku/api/tree/master)
 [![Go Report Card](https://goreportcard.com/badge/github.com/tadoku/api)](https://goreportcard.com/report/github.com/tadoku/api)
+[![Dependabot Status](https://api.dependabot.com/badges/status?host=github&repo=tadoku/api)](https://dependabot.com)
 
 ## Getting started
 

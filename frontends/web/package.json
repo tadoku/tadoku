@@ -36,7 +36,7 @@
     "react-vis": "^1.11.7",
     "redux": "^4.0.1",
     "styled-components": "^4.3.1",
-    "styled-media-query": "^2.1.1"
+    "styled-media-query": "^2.1.2"
   },
   "devDependencies": {
     "@zeit/next-css": "^1.0.1",

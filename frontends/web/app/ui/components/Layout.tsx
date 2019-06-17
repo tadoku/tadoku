@@ -23,11 +23,11 @@ export default Layout
 const GlobalStyle = createGlobalStyle<typeof Constants>`
   html,
   body {
-    height: 100%;
     position: relative;
   }
 
   html {
+    height: 100%;
     overflow-x: hidden;
     margin-right: calc(-1 * (100vw - 100%));
   }

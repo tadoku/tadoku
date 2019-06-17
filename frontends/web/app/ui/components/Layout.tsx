@@ -2,6 +2,7 @@ import React from 'react'
 import Header from './Header'
 import styled, { createGlobalStyle } from 'styled-components'
 import Constants from '../Constants'
+import Footer from './Footer'
 
 const Layout: React.SFC<{}> = ({ children }) => {
   return (
@@ -9,6 +10,7 @@ const Layout: React.SFC<{}> = ({ children }) => {
       <GlobalStyle {...Constants} />
       <Header />
       <Container>{children}</Container>
+      <Footer />
     </div>
   )
 }

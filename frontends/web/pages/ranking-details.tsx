@@ -1,3 +1,4 @@
+import React from 'react'
 import ErrorPage from 'next/error'
 import { ExpressNextContext } from '../app/interfaces'
 import RankingProfile from '../app/ranking/pages/RankingProfile'

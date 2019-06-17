@@ -1,3 +1,4 @@
+import React from 'react'
 import styled from 'styled-components'
 import Constants from '../Constants'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'

@@ -1,3 +1,4 @@
+import React from 'react'
 import { ExpressNextContext } from '../app/interfaces'
 import { SettingsTab } from '../app/user/interfaces'
 import Settings from '../app/user/pages/Settings'

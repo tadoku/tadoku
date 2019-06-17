@@ -1,6 +1,6 @@
 import styled from 'styled-components'
 import Constants from '../Constants'
-import { SFC, ButtonHTMLAttributes } from 'react'
+import React, { SFC, ButtonHTMLAttributes } from 'react'
 import { IconProp } from '@fortawesome/fontawesome-svg-core'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import media from 'styled-media-query'

@@ -1,3 +1,4 @@
+import React from 'react'
 import { connect } from 'react-redux'
 import { State } from '../app/store'
 import RankingOverview from '../app/ranking/pages/RankingOverview'

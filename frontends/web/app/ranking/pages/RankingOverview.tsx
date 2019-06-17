@@ -1,5 +1,4 @@
 import React, { useState } from 'react'
-import Layout from '../../ui/components/Layout'
 import { Ranking, RankingRegistration } from '../../ranking/interfaces'
 import RankingList from '../../ranking/components/List'
 import RankingApi from '../../ranking/api'

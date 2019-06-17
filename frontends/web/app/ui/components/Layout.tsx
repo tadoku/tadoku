@@ -8,8 +8,10 @@ const Layout: React.SFC<{}> = ({ children }) => {
   return (
     <div>
       <GlobalStyle {...Constants} />
-      <Header />
-      <Container>{children}</Container>
+      <StickyFooterContainer>
+        <Header />
+        <Container>{children}</Container>
+      </StickyFooterContainer>
       <Footer />
     </div>
   )
@@ -18,6 +20,12 @@ const Layout: React.SFC<{}> = ({ children }) => {
 export default Layout
 
 const GlobalStyle = createGlobalStyle<typeof Constants>`
+  html,
+  body {
+    height: 100%;
+    position: relative;
+  }
+
   body {
     background: ${props => props.colors.light};
     font-family: 'Open Sans', sans-serif;
@@ -49,4 +57,13 @@ const Container = styled.div`
   padding: 20px;
   max-width: ${Constants.maxWidth};
   margin: 0 auto;
+`
+
+const StickyFooterContainer = styled.div`
+  min-height: 100vh;
+  overflow: hidden;
+  position: relative;
+  // height of the footer
+  box-sizing: border-box;
+  padding-bottom: 150px;
 `

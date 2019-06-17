@@ -36,6 +36,13 @@ const Container = styled.div`
   padding: 0 20px;
   box-sizing: border-box;
   height: 100px;
+
+  ${media.greaterThan('medium')`
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+  `}
 `
 
 const InnerContainer = styled.div`
@@ -44,12 +51,7 @@ const InnerContainer = styled.div`
   display: flex;
   align-items: top;
   justify-content: space-between;
-  margin: 50px auto 0;
-
-  ${media.lessThan('medium')`
-    flex-direction: column;
-    margin-top: 10px;
-  `}
+  margin: 0 auto;
 `
 
 const Credits = styled.p`

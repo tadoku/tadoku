@@ -100,8 +100,9 @@ const RankingProfile = ({
       <>
         <PageTitle>{registrationOverview.userDisplayName}</PageTitle>
         <p>
-          Nothing to see here! {registrationOverview.userDisplayName} hasn't
-          logged any updates for this round yet, please check again later.
+          Nothing to see here! {registrationOverview.userDisplayName}{' '}
+          hasn&apos;t logged any updates for this round yet, please check again
+          later.
         </p>
       </>
     )

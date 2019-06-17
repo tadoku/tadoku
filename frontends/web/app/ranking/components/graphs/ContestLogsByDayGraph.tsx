@@ -39,7 +39,11 @@ const Graph = ({ logs, contest }: Props) => {
           />
         ))}
       </FlexiblePlot>
-      <DiscreteColorLegend items={data.legend} orientation="horizontal" />
+      <DiscreteColorLegend
+        items={data.legend}
+        orientation="horizontal"
+        height={60}
+      />
     </Container>
   )
 }
@@ -51,5 +55,5 @@ const FlexiblePlot = makeWidthFlexible(XYPlot)
 const Container = styled.div`
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: stretch;
 `

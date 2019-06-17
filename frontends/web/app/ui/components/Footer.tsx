@@ -36,8 +36,10 @@ const Container = styled.div`
   padding: 0 20px;
   box-sizing: border-box;
   height: 100px;
+  display: none;
 
   ${media.greaterThan('medium')`
+      display: block;
       position: absolute;
       left: 0;
       right: 0;

@@ -3,6 +3,7 @@ import Header from './Header'
 import styled, { createGlobalStyle } from 'styled-components'
 import Constants from '../Constants'
 import Footer from './Footer'
+import media from 'styled-media-query'
 
 const Layout: React.SFC<{}> = ({ children }) => {
   return (
@@ -65,5 +66,8 @@ const StickyFooterContainer = styled.div`
   position: relative;
   // height of the footer
   box-sizing: border-box;
-  padding-bottom: 150px;
+
+  ${media.greaterThan('medium')`
+    padding-bottom: 150px;
+  `}
 `

@@ -7,6 +7,7 @@ const Modal: SFC<ReactModal.Props> = ({ children, ...props }) => (
     style={{
       overlay: {
         backgroundColor: 'rgba(0, 0, 0, 0.4)',
+        zIndex: 100,
       },
     }}
     {...props}

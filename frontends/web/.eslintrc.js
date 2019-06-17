@@ -15,6 +15,22 @@ module.exports = {
   rules: {
     // Place to specify ESLint rules. Can be used to overwrite rules specified from the extended configs
     // e.g. "@typescript-eslint/explicit-function-return-type": "off",
+    // note you must disable the base rule as it can report incorrect errors
+    indent: 'off',
+    '@typescript-eslint/indent': ['error', 2],
+    '@typescript-eslint/no-explicit-any': 'off',
+    '@typescript-eslint/camelcase': 'off',
+    '@typescript-eslint/explicit-function-return-type': 'off',
+    '@typescript-eslint/member-delimiter-style': {
+      multiline: {
+        delimiter: 'none',
+        requireLast: false,
+      },
+      singleline: {
+        delimiter: 'semi',
+        requireLast: false,
+      },
+    },
   },
   settings: {
     react: {

@@ -1,3 +1,5 @@
+/* eslint-disable */
+
 declare module 'react-vis' {
 
   import {

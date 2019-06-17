@@ -1,6 +1,5 @@
 import React from 'react'
 import ErrorPage from 'next/error'
-import Layout from '../../ui/components/Layout'
 import { SettingsTab } from '../interfaces'
 import { connect } from 'react-redux'
 import { State } from '../../store'
@@ -9,6 +8,7 @@ import SettingsSidebar from '../components/SettingsSidebar'
 import styled from 'styled-components'
 import ChangePasswordForm from '../components/forms/ChangePasswordForm'
 import ProfileForm from '../components/forms/ProfileForm'
+import { PageTitle } from '../../ui/components'
 
 interface Props {
   tab: SettingsTab
@@ -18,7 +18,7 @@ interface Props {
 
 const Settings = ({ tab, user, userLoaded }: Props) => {
   if (!userLoaded) {
-    return <Layout title="Settings">Loading...</Layout>
+    return <p>Loading...</p>
   }
 
   if (userLoaded && !user) {
@@ -26,12 +26,13 @@ const Settings = ({ tab, user, userLoaded }: Props) => {
   }
 
   return (
-    <Layout title="Settings">
+    <>
+      <PageTitle>Setting</PageTitle>
       <Container>
         <SettingsSidebar activeTab={tab} />
         <Content>{componentForTab(tab)}</Content>
       </Container>
-    </Layout>
+    </>
   )
 }
 

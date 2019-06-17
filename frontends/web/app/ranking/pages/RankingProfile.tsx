@@ -1,5 +1,4 @@
 import React from 'react'
-import Layout from '../../ui/components/Layout'
 import ErrorPage from 'next/error'
 import { ContestLog, Ranking } from '../interfaces'
 import RankingApi from '../api'
@@ -23,6 +22,7 @@ import Cards, {
 import { useCachedApiState, isReady } from '../../cache'
 import { ContestSerializer } from '../../contest/transform'
 import { OptionalizeSerializer } from '../../transform'
+import { PageTitle } from '../../ui/components'
 
 interface Props {
   contestId: number
@@ -86,7 +86,7 @@ const RankingProfile = ({
   })
 
   if (!isReady([statusContest, statusLogs, statusRegistration])) {
-    return <Layout>Loading...</Layout>
+    return <p>Loading...</p>
   }
 
   const registrationOverview = rankingsToRegistrationOverview(registration)
@@ -97,17 +97,19 @@ const RankingProfile = ({
 
   if (logs.length == 0) {
     return (
-      <Layout title={registrationOverview.userDisplayName}>
+      <>
+        <PageTitle>{registrationOverview.userDisplayName}</PageTitle>
         <p>
           Nothing to see here! {registrationOverview.userDisplayName} hasn't
           logged any updates for this round yet, please check again later.
         </p>
-      </Layout>
+      </>
     )
   }
 
   return (
-    <Layout title={registrationOverview.userDisplayName}>
+    <>
+      <PageTitle>{registrationOverview.userDisplayName}</PageTitle>
       <Cards>
         <Card>
           <CardContent>{contest.description}</CardContent>
@@ -130,7 +132,7 @@ const RankingProfile = ({
           />
         </LargeCard>
       </Cards>
-    </Layout>
+    </>
   )
 }
 

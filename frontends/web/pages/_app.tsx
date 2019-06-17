@@ -10,6 +10,7 @@ import AppEffects from '../app/AppEffects'
 import 'react-vis/dist/style.css'
 import Modal from 'react-modal'
 import '../app/ui/setup'
+import Layout from '../app/ui/components/Layout'
 
 class MyApp extends App<{ store: Store }> {
   static async getInitialProps({ Component, ctx }: NextAppContext) {
@@ -40,7 +41,9 @@ class MyApp extends App<{ store: Store }> {
       <Container>
         <Provider store={store}>
           <AppEffects />
-          <Component {...pageProps} />
+          <Layout>
+            <Component {...pageProps} />
+          </Layout>
         </Provider>
       </Container>
     )

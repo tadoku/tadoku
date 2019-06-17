@@ -3,6 +3,7 @@ import Constants from '../Constants'
 import { SFC, ButtonHTMLAttributes } from 'react'
 import { IconProp } from '@fortawesome/fontawesome-svg-core'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import media from 'styled-media-query'
 
 interface ButtonProps {
   primary?: boolean
@@ -169,4 +170,10 @@ export const StackContainer = styled.div`
   > * + * {
     margin-top: 12px;
   }
+`
+
+export const PageTitle = styled.h1`
+  ${media.lessThan('medium')`
+    margin: 0 0 20px 0;
+  `}
 `

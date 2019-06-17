@@ -4,7 +4,7 @@ import { Ranking, RankingRegistration } from '../../ranking/interfaces'
 import RankingList from '../../ranking/components/List'
 import RankingApi from '../../ranking/api'
 import { Contest } from '../../contest/interfaces'
-import { Button } from '../../ui/components'
+import { Button, PageTitle } from '../../ui/components'
 import styled from 'styled-components'
 import { User } from '../../session/interfaces'
 import JoinContestModal from '../components/modals/JoinContestModal'
@@ -51,7 +51,8 @@ const RankingOverview = ({
     ((registration && registration.contestId !== contest.id) || !registration)
 
   return (
-    <Layout title="Ranking">
+    <>
+      <PageTitle>Ranking</PageTitle>
       <Container>
         {canJoin && contest && (
           <>
@@ -78,7 +79,7 @@ const RankingOverview = ({
         rankings={rankings}
         loading={status === ApiFetchStatus.Loading}
       />
-    </Layout>
+    </>
   )
 }
 

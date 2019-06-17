@@ -15,18 +15,6 @@ interface APIOptionsForPost extends APIOptions {
   body: any
 }
 
-export const get = (endpoint: string, options?: APIOptions) =>
-  request('get', endpoint, options)
-
-export const destroy = (endpoint: string, options?: APIOptions) =>
-  request('delete', endpoint, options)
-
-export const post = (endpoint: string, options: APIOptionsForPost) =>
-  request('post', endpoint, options)
-
-export const put = (endpoint: string, options: APIOptionsForPost) =>
-  request('put', endpoint, options)
-
 const request = (
   method: string,
   endpoint: string,
@@ -54,3 +42,15 @@ const request = (
 
   return fetch(`${root}${endpoint}`, requestOptions)
 }
+
+export const get = (endpoint: string, options?: APIOptions) =>
+  request('get', endpoint, options)
+
+export const destroy = (endpoint: string, options?: APIOptions) =>
+  request('delete', endpoint, options)
+
+export const post = (endpoint: string, options: APIOptionsForPost) =>
+  request('post', endpoint, options)
+
+export const put = (endpoint: string, options: APIOptionsForPost) =>
+  request('put', endpoint, options)

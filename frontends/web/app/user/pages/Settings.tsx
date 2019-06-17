@@ -30,13 +30,15 @@ const Settings = ({ tab, user, userLoaded }: Props) => {
       <PageTitle>Setting</PageTitle>
       <Container>
         <SettingsSidebar activeTab={tab} />
-        <Content>{componentForTab(tab)}</Content>
+        <Content>
+          <PageContent tab={tab} />
+        </Content>
       </Container>
     </>
   )
 }
 
-const componentForTab = (tab: SettingsTab): JSX.Element => {
+const PageContent = ({ tab }: { tab: SettingsTab }) => {
   switch (tab) {
     case SettingsTab.Profile: {
       return (
@@ -55,6 +57,8 @@ const componentForTab = (tab: SettingsTab): JSX.Element => {
       )
     }
   }
+
+  return null
 }
 
 const mapStateToProps = (state: State) => ({

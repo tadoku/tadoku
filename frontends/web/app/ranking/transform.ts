@@ -110,6 +110,35 @@ export const RankingRegistrationSerializer: Serializer<RankingRegistration> = {
   },
 }
 
+export const prettyDate = (date: Date): string =>
+  `${date.getUTCFullYear()}-${date.getUTCMonth() + 1}-${date.getUTCDate()}`
+
+const getDates = (startDate: Date, endDate: Date) => {
+  const dates = []
+
+  let currentDate = new Date(
+    Date.UTC(
+      startDate.getUTCFullYear(),
+      startDate.getUTCMonth(),
+      startDate.getUTCDate(),
+    ),
+  )
+
+  while (currentDate <= endDate) {
+    dates.push(currentDate)
+
+    currentDate = new Date(
+      Date.UTC(
+        currentDate.getUTCFullYear(),
+        currentDate.getUTCMonth(),
+        currentDate.getUTCDate() + 1,
+      ),
+    )
+  }
+
+  return dates
+}
+
 interface AggregatedByDaysResult {
   aggregated: {
     [languageCode: string]: AggregatedContestLogsByDayEntry[]
@@ -175,35 +204,6 @@ export const aggregateContestLogsByDays = (
   })
 
   return result
-}
-
-export const prettyDate = (date: Date): string =>
-  `${date.getUTCFullYear()}-${date.getUTCMonth() + 1}-${date.getUTCDate()}`
-
-const getDates = (startDate: Date, endDate: Date) => {
-  const dates = []
-
-  let currentDate = new Date(
-    Date.UTC(
-      startDate.getUTCFullYear(),
-      startDate.getUTCMonth(),
-      startDate.getUTCDate(),
-    ),
-  )
-
-  while (currentDate <= endDate) {
-    dates.push(currentDate)
-
-    currentDate = new Date(
-      Date.UTC(
-        currentDate.getUTCFullYear(),
-        currentDate.getUTCMonth(),
-        currentDate.getUTCDate() + 1,
-      ),
-    )
-  }
-
-  return dates
 }
 
 export const rankingsToRegistrationOverview = (

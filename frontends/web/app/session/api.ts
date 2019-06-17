@@ -6,7 +6,7 @@ interface LogInResponse {
   user: User
 }
 
-interface rawLogInResponse {
+interface RawLogInResponse {
   token: string
   user: RawUser
 }
@@ -21,7 +21,7 @@ const logIn = async (payload: {
     return undefined
   }
 
-  const data: rawLogInResponse = await response.json()
+  const data: RawLogInResponse = await response.json()
 
   return {
     token: data.token,
@@ -40,7 +40,7 @@ const refresh = async (): Promise<LogInResponse | undefined> => {
     return undefined
   }
 
-  const data: rawLogInResponse = await response.json()
+  const data: RawLogInResponse = await response.json()
 
   return {
     token: data.token,

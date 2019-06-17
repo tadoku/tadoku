@@ -27,6 +27,11 @@ const GlobalStyle = createGlobalStyle<typeof Constants>`
     position: relative;
   }
 
+  html {
+    overflow-x: hidden;
+    margin-right: calc(-1 * (100vw - 100%));
+  }
+
   body {
     background: ${props => props.colors.light};
     font-family: 'Open Sans', sans-serif;

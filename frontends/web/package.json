@@ -10,7 +10,8 @@
     "dev": "nodemon",
     "build": "next build && tsc && tsc --project tsconfig.server.json",
     "start": "cross-env NODE_ENV=production node .next/server",
-    "lint": "eslint ./ --ext .js,.ts,.tsx"
+    "lint": "eslint --ext .js,.ts,.tsx ./",
+    "lint-fix": "eslint --fix --ext .js,.ts,.tsx ./"
   },
   "dependencies": {
     "@fortawesome/fontawesome-svg-core": "^1.2.19",

@@ -6,7 +6,7 @@ export interface Ranking {
   amount: number
 }
 
-export interface rawRanking {
+export interface RawRanking {
   contest_id: number
   user_id: number
   user_display_name: string
@@ -32,7 +32,7 @@ export interface RankingRegistration {
   languages: string[]
 }
 
-export interface rawRankingRegistration {
+export interface RawRankingRegistration {
   start: string
   end: string
   contest_id: number
@@ -60,7 +60,7 @@ export interface ContestLog {
   date: Date
 }
 
-export interface rawContestLog {
+export interface RawContestLog {
   id: number
   contest_id: number
   user_id: number

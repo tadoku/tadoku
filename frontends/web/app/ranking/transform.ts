@@ -3,17 +3,17 @@ import {
   ContestLog,
   Ranking,
   RankingRegistrationOverview,
-  rawRanking,
-  rawContestLog,
+  RawRanking,
+  RawContestLog,
   RankingRegistration,
-  rawRankingRegistration,
+  RawRankingRegistration,
 } from './interfaces'
 import { Contest } from './../contest/interfaces'
 import { languageNameByCode } from './database'
 import { Mapper } from '../interfaces'
 import { Serializer } from '../cache'
 
-export const RawToRankingMapper: Mapper<rawRanking, Ranking> = raw => ({
+export const RawToRankingMapper: Mapper<RawRanking, Ranking> = raw => ({
   contestId: raw.contest_id,
   userId: raw.user_id,
   userDisplayName: raw.user_display_name,
@@ -21,7 +21,7 @@ export const RawToRankingMapper: Mapper<rawRanking, Ranking> = raw => ({
   amount: raw.amount,
 })
 
-export const RankingToRawMapper: Mapper<Ranking, rawRanking> = ranking => ({
+export const RankingToRawMapper: Mapper<Ranking, RawRanking> = ranking => ({
   contest_id: ranking.contestId,
   user_id: ranking.userId,
   user_display_name: ranking.userDisplayName,
@@ -41,7 +41,7 @@ export const RankingsSerializer: Serializer<Ranking[]> = {
 }
 
 export const RawToContestLogMapper: Mapper<
-  rawContestLog,
+  RawContestLog,
   ContestLog
 > = raw => ({
   id: raw.id,
@@ -56,7 +56,7 @@ export const RawToContestLogMapper: Mapper<
 
 export const ContestLogToRawMapper: Mapper<
   ContestLog,
-  rawContestLog
+  RawContestLog
 > = contestLog => ({
   id: contestLog.id,
   contest_id: contestLog.contestId,
@@ -80,7 +80,7 @@ export const ContestLogsSerializer: Serializer<ContestLog[]> = {
 }
 
 export const RawToRankingRegistrationMapper: Mapper<
-  rawRankingRegistration,
+  RawRankingRegistration,
   RankingRegistration
 > = raw => ({
   contestId: raw.contest_id,
@@ -91,7 +91,7 @@ export const RawToRankingRegistrationMapper: Mapper<
 
 export const RankingRegistrationToRawMapper: Mapper<
   RankingRegistration,
-  rawRankingRegistration
+  RawRankingRegistration
 > = registration => ({
   contest_id: registration.contestId,
   languages: registration.languages,

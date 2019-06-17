@@ -1,11 +1,11 @@
 import { get, post, put, destroy } from '../api'
 import {
   Ranking,
-  rawRanking,
+  RawRanking,
   RankingRegistration,
-  rawRankingRegistration,
+  RawRankingRegistration,
   ContestLog,
-  rawContestLog,
+  RawContestLog,
 } from './interfaces'
 import { RawToRankingMapper, RawToContestLogMapper } from './transform'
 
@@ -31,7 +31,7 @@ const getRankings = async (contestId?: number): Promise<Ranking[]> => {
     return []
   }
 
-  const data: rawRanking[] = await response.json()
+  const data: RawRanking[] = await response.json()
 
   return data.map(RawToRankingMapper)
 }
@@ -47,7 +47,7 @@ const getCurrentRegistration = async (): Promise<
     return undefined
   }
 
-  const data: rawRankingRegistration = await response.json()
+  const data: RawRankingRegistration = await response.json()
 
   return {
     start: new Date(data.start),
@@ -69,7 +69,7 @@ const getRankingsRegistration = async (
     return []
   }
 
-  const data: rawRanking[] = await response.json()
+  const data: RawRanking[] = await response.json()
 
   return data.map(RawToRankingMapper)
 }
@@ -135,7 +135,7 @@ const getLogsFor = async (
     return []
   }
 
-  const data: rawContestLog[] = await response.json()
+  const data: RawContestLog[] = await response.json()
 
   return data.map(RawToContestLogMapper)
 }

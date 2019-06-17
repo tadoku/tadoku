@@ -110,7 +110,7 @@ export const RankingRegistrationSerializer: Serializer<RankingRegistration> = {
   },
 }
 
-type AggregatedByDaysResult = {
+interface AggregatedByDaysResult {
   aggregated: {
     [languageCode: string]: AggregatedContestLogsByDayEntry[]
   }

@@ -7,7 +7,7 @@ import Document, {
 import { ServerStyleSheet } from 'styled-components'
 
 export default class MyDocument extends Document<{
-  styleTags: Array<React.ReactElement<{}>>
+  styleTags: React.ReactElement<{}>[]
 }> {
   static getInitialProps({ renderPage }: NextDocumentContext) {
     const sheet = new ServerStyleSheet()

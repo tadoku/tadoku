@@ -26,7 +26,9 @@ const Dropdown: SFC<Props> = ({ label, children }) => {
       >
         {label}
       </Button>
-      <StyledDropdown open={isOpen}>{children}</StyledDropdown>
+      <StyledDropdown open={isOpen} onClick={() => setIsOpen(false)}>
+        {children}
+      </StyledDropdown>
       <DropdownOverlay open={isOpen} onClick={() => setIsOpen(false)} />
     </Container>
   )

@@ -6,7 +6,7 @@ export interface Contest {
   open: boolean
 }
 
-export interface rawContest {
+export interface RawContest {
   id: number
   description: string
   start: string

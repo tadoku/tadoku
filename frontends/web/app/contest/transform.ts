@@ -1,8 +1,8 @@
-import { Contest, rawContest } from './interfaces'
+import { Contest, RawContest } from './interfaces'
 import { Mapper } from '../interfaces'
 import { Serializer } from '../cache'
 
-export const RawToContestMapper: Mapper<rawContest, Contest> = raw => ({
+export const RawToContestMapper: Mapper<RawContest, Contest> = raw => ({
   id: raw.id,
   description: raw.description,
   start: new Date(raw.start),
@@ -10,7 +10,7 @@ export const RawToContestMapper: Mapper<rawContest, Contest> = raw => ({
   open: raw.open,
 })
 
-export const ContestToRawMapper: Mapper<Contest, rawContest> = contest => ({
+export const ContestToRawMapper: Mapper<Contest, RawContest> = contest => ({
   id: contest.id,
   description: contest.description,
   start: contest.start.toISOString(),

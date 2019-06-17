@@ -27,6 +27,9 @@ jobs:
           paths:
             - ~/.cache/yarn
       - run:
+          name: Lint project
+          command: yarn lint
+      - run:
           name: Build production
           command: yarn build
 

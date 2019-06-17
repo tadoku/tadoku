@@ -23,7 +23,7 @@ export const isReady = (status: ApiFetchStatus[]) =>
     status.includes(ApiFetchStatus.Initialized)
   )
 
-interface useCachedApiStateParameters<DataType> {
+interface UseCachedApiStateParameters<DataType> {
   cacheKey: string
   defaultValue: DataType
   fetchData: () => Promise<DataType>
@@ -39,7 +39,7 @@ export const useCachedApiState = <DataType>({
   onChange,
   dependencies: originalDependencies,
   serializer: originalSerializer,
-}: useCachedApiStateParameters<DataType>) => {
+}: UseCachedApiStateParameters<DataType>) => {
   const [data, setData] = useState({
     body: defaultValue,
     status: ApiFetchStatus.Initialized,

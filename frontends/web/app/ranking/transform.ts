@@ -265,21 +265,21 @@ export const calculateLeaderboard = (
     currentRank: number
     rankings: RankingWithRank[]
   } = {
-    currentRank: 0,
+    currentRank: 1,
     rankings: [],
   }
 
   const result = sortedScores.reduce((result, score) => {
     const rankings = rankingsByScore[score]
-    const rank = result.currentRank + rankings.length
 
     const newRankings = rankings.map(ranking => ({
       data: ranking,
-      rank,
+      tied: rankings.length > 1,
+      rank: result.currentRank,
     }))
 
     result.rankings.push(...newRankings)
-    result.currentRank = rank
+    result.currentRank += rankings.length
 
     return result
   }, initialResult)

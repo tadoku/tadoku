@@ -16,6 +16,7 @@ export interface RawRanking {
 
 export interface RankingWithRank {
   rank: number
+  tied: boolean
   data: Ranking
 }
 

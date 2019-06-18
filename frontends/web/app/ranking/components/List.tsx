@@ -43,7 +43,7 @@ const RankingRow = ({ rank, data }: { rank: number; data: Ranking }) => (
       href={`/ranking-details?contest_id=1&user_id=${data.userId}`}
     >
       <RowLink href="">
-        <Rank>{rank + 1}</Rank>
+        <Rank>{rank}</Rank>
         <Name>{data.userDisplayName}</Name>
         <Pages>
           {amountToPages(data.amount)}

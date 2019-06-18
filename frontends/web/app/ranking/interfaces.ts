@@ -14,6 +14,11 @@ export interface RawRanking {
   amount: number
 }
 
+export interface RankingWithRank {
+  rank: number
+  data: Ranking
+}
+
 export interface RankingRegistrationOverview {
   contestId: number
   userId: number

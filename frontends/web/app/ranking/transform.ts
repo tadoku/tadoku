@@ -7,6 +7,7 @@ import {
   RawContestLog,
   RankingRegistration,
   RawRankingRegistration,
+  RankingWithRank,
 } from './interfaces'
 import { Contest } from './../contest/interfaces'
 import { languageNameByCode } from './database'
@@ -241,23 +242,49 @@ export const amountToPages = (amount: number) => Math.round(amount * 10) / 10
 export const pagesLabel = (languageCode: string) =>
   `pages in ${languageNameByCode(languageCode)}`
 
-export const calculateLeaderboard = (rankings: Ranking[]) => {
-  const result = rankings.map((ranking, i) => {
-    return {
-      rank: i,
-      data: ranking,
-    }
-  })
+export const calculateLeaderboard = (
+  rankings: Ranking[],
+): RankingWithRank[] => {
+  const rankingsByScore = rankings.reduce(
+    (scores, ranking) => {
+      if (!scores[ranking.amount]) {
+        scores[ranking.amount] = []
+      }
 
-  result.forEach((_, i) => {
-    if (i === 0) {
-      return
-    }
+      scores[ranking.amount].push(ranking)
 
-    const isTied = result[i].data.amount === result[i - 1].data.amount
+      return scores
+    },
+    {} as { [key: number]: Ranking[] },
+  )
 
-    result[i].rank = result[i - 1].rank + (isTied ? 0 : 1)
-  })
+  const sortedScores = Object.keys(rankingsByScore)
+    .map(n => Number(n))
+    .sort((a, b) => b - a)
 
-  return result
+  const result = sortedScores.reduce(
+    (result, score) => {
+      const rankings = rankingsByScore[score]
+      const rank = result.currentRank + rankings.length
+
+      const newRankings = rankings.map(ranking => ({
+        data: ranking,
+        rank,
+      }))
+
+      result.rankings.push(...newRankings)
+      result.currentRank = rank
+
+      return result
+    },
+    {
+      currentRank: 0,
+      rankings: [],
+    } as {
+      currentRank: number
+      rankings: RankingWithRank[]
+    },
+  )
+
+  return result.rankings
 }

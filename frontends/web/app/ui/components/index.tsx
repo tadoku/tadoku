@@ -11,17 +11,24 @@ interface ButtonProps {
   small?: boolean
   destructive?: boolean
   plain?: boolean
+  loading?: boolean
   icon?: IconProp
   alignIconRight?: boolean
 }
 
 export const Button: SFC<
   ButtonHTMLAttributes<HTMLButtonElement> & ButtonProps
-> = ({ icon, alignIconRight, children, ...props }) => (
-  <StyledButton {...props}>
-    {icon && !alignIconRight && <ButtonIconLeft icon={icon} />}
-    {children}
-    {icon && alignIconRight && <ButtonIconRight icon={icon} />}
+> = ({ icon, alignIconRight, loading, children, ...props }) => (
+  <StyledButton {...props} loading={loading}>
+    {loading ? (
+      <ButtonIconLeft icon="circle-notch" />
+    ) : (
+      <>
+        {icon && !alignIconRight && <ButtonIconLeft icon={icon} />}
+        {children}
+        {icon && alignIconRight && <ButtonIconRight icon={icon} />}
+      </>
+    )}
   </StyledButton>
 )
 
@@ -128,6 +135,15 @@ const StyledButton = styled.button`
         0px 2px 6px 2px ${Constants.colors.destructiveWithAlpha(0.4)};
     }
   `}
+
+  ${({ loading }: ButtonProps) =>
+    loading &&
+    `
+    svg {
+      animation: fa-spin 1.4s infinite linear;
+    }
+  `}
+
 
   &:disabled {
     opacity: 0.6;

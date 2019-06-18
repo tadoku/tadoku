@@ -10,6 +10,7 @@ import {
   faCog,
   faUser,
   faUnlock,
+  faCircleNotch,
 } from '@fortawesome/free-solid-svg-icons'
 
 library.add(
@@ -22,4 +23,5 @@ library.add(
   faCog,
   faUser,
   faUnlock,
+  faCircleNotch,
 )

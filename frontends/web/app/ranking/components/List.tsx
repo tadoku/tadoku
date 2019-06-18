@@ -3,7 +3,7 @@ import Link from 'next/link'
 import ContentLoader from 'react-content-loader'
 import { Ranking } from '../interfaces'
 import styled from 'styled-components'
-import { amountToPages } from '../transform'
+import { amountToPages, calculateLeaderboard } from '../transform'
 
 interface Props {
   rankings: Ranking[]
@@ -23,10 +23,12 @@ const RankingList = (props: Props) => {
     )
   }
 
+  const leaderboard = calculateLeaderboard(props.rankings)
+
   return (
     <List>
-      {props.rankings.map((r, rank) => (
-        <RankingRow rank={rank} data={r} key={r.userId} />
+      {leaderboard.map(row => (
+        <RankingRow {...row} key={row.data.userId} />
       ))}
     </List>
   )

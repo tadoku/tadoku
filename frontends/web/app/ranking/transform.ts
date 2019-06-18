@@ -240,3 +240,24 @@ export const amountToPages = (amount: number) => Math.round(amount * 10) / 10
 
 export const pagesLabel = (languageCode: string) =>
   `pages in ${languageNameByCode(languageCode)}`
+
+export const calculateLeaderboard = (rankings: Ranking[]) => {
+  const result = rankings.map((ranking, i) => {
+    return {
+      rank: i,
+      data: ranking,
+    }
+  })
+
+  result.forEach((_, i) => {
+    if (i === 0) {
+      return
+    }
+
+    const isTied = result[i].data.amount === result[i - 1].data.amount
+
+    result[i].rank = result[i - 1].rank + (isTied ? 0 : 1)
+  })
+
+  return result
+}

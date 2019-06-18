@@ -21,7 +21,9 @@ export const Button: SFC<
 > = ({ icon, alignIconRight, loading, children, ...props }) => (
   <StyledButton {...props} loading={loading}>
     {loading ? (
-      <ButtonIconLeft icon="circle-notch" />
+      <div>
+        <FontAwesomeIcon icon="circle-notch" />
+      </div>
     ) : (
       <>
         {icon && !alignIconRight && <ButtonIconLeft icon={icon} />}
@@ -139,8 +141,13 @@ const StyledButton = styled.button`
   ${({ loading }: ButtonProps) =>
     loading &&
     `
-    svg {
-      animation: fa-spin 1.4s infinite linear;
+    div {
+      width: 30px;
+      text-align: center;
+
+      > * {
+        animation: fa-spin 1.4s infinite linear;
+      }
     }
   `}
 

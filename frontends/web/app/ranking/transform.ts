@@ -245,46 +245,44 @@ export const pagesLabel = (languageCode: string) =>
 export const calculateLeaderboard = (
   rankings: Ranking[],
 ): RankingWithRank[] => {
-  const rankingsByScore = rankings.reduce(
-    (scores, ranking) => {
-      if (!scores[ranking.amount]) {
-        scores[ranking.amount] = []
-      }
+  const initialRankingsByScore: { [key: number]: Ranking[] } = {}
 
-      scores[ranking.amount].push(ranking)
+  const rankingsByScore = rankings.reduce((scores, ranking) => {
+    if (!scores[ranking.amount]) {
+      scores[ranking.amount] = []
+    }
 
-      return scores
-    },
-    {} as { [key: number]: Ranking[] },
-  )
+    scores[ranking.amount].push(ranking)
+
+    return scores
+  }, initialRankingsByScore)
 
   const sortedScores = Object.keys(rankingsByScore)
     .map(n => Number(n))
     .sort((a, b) => b - a)
 
-  const result = sortedScores.reduce(
-    (result, score) => {
-      const rankings = rankingsByScore[score]
-      const rank = result.currentRank + rankings.length
+  const initialResult: {
+    currentRank: number
+    rankings: RankingWithRank[]
+  } = {
+    currentRank: 0,
+    rankings: [],
+  }
 
-      const newRankings = rankings.map(ranking => ({
-        data: ranking,
-        rank,
-      }))
+  const result = sortedScores.reduce((result, score) => {
+    const rankings = rankingsByScore[score]
+    const rank = result.currentRank + rankings.length
 
-      result.rankings.push(...newRankings)
-      result.currentRank = rank
+    const newRankings = rankings.map(ranking => ({
+      data: ranking,
+      rank,
+    }))
 
-      return result
-    },
-    {
-      currentRank: 0,
-      rankings: [],
-    } as {
-      currentRank: number
-      rankings: RankingWithRank[]
-    },
-  )
+    result.rankings.push(...newRankings)
+    result.currentRank = rank
+
+    return result
+  }, initialResult)
 
   return result.rankings
 }

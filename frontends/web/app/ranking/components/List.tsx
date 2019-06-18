@@ -1,7 +1,7 @@
 import React from 'react'
 import Link from 'next/link'
 import ContentLoader from 'react-content-loader'
-import { Ranking } from '../interfaces'
+import { Ranking, RankingWithRank } from '../interfaces'
 import styled from 'styled-components'
 import { amountToPages, calculateLeaderboard } from '../transform'
 
@@ -36,14 +36,17 @@ const RankingList = (props: Props) => {
 
 export default RankingList
 
-const RankingRow = ({ rank, data }: { rank: number; data: Ranking }) => (
+const RankingRow = ({ rank, tied, data }: RankingWithRank) => (
   <Row>
     <Link
       as={`/contest/1/rankings/${data.userId}`}
       href={`/ranking-details?contest_id=1&user_id=${data.userId}`}
     >
       <RowLink href="">
-        <Rank>{rank}</Rank>
+        <Rank>
+          {tied && <span title="Tied">T</span>}
+          {rank}
+        </Rank>
         <Name>{data.userDisplayName}</Name>
         <Pages>
           {amountToPages(data.amount)}

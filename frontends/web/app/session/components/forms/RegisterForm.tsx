@@ -35,6 +35,7 @@ const RegisterForm = ({
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [displayName, setDisplayName] = useState('')
+  const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState(undefined as string | undefined)
 
   const validate = () =>
@@ -44,16 +45,20 @@ const RegisterForm = ({
 
   const submit = async (event: FormEvent) => {
     event.preventDefault()
-    // TODO: add validation
+
+    setSubmitting(true)
+
     const success = await SessionApi.register({ email, password, displayName })
 
     if (!success) {
-      // @TODO: handle sad path
+      setSubmitting(false)
       setError('Email already in use or invalid.')
       return
     }
 
     const response = await SessionApi.logIn({ email, password })
+
+    setSubmitting(false)
 
     if (response) {
       setUser(response.token, response.user)
@@ -117,7 +122,12 @@ const RegisterForm = ({
       </Group>
       <Group>
         <StackContainer>
-          <Button type="submit" primary disabled={hasError.form}>
+          <Button
+            type="submit"
+            disabled={hasError.form || submitting}
+            loading={submitting}
+            primary
+          >
             Create account
           </Button>
           <Button type="button" onClick={cancel}>

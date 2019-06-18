@@ -160,7 +160,12 @@ const LogForm = ({
       )}
       <Group>
         <StackContainer>
-          <Button type="submit" disabled={hasError.form || submitting} primary>
+          <Button
+            type="submit"
+            disabled={hasError.form || submitting}
+            loading={submitting}
+            primary
+          >
             Save changes
           </Button>
           <Button type="button" onClick={cancel}>

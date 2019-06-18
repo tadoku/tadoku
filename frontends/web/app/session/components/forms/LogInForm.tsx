@@ -28,6 +28,7 @@ const LogInForm = ({
   onSuccess: complete,
   onCancel: cancel,
 }: Props) => {
+  const [submitting, setSubmitting] = useState(false)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState(undefined as string | undefined)
@@ -37,7 +38,11 @@ const LogInForm = ({
   const submit = async (event: FormEvent) => {
     event.preventDefault()
 
+    setSubmitting(true)
+
     const response = await SessionApi.logIn({ email, password })
+
+    setSubmitting(false)
 
     if (!response) {
       setError('Invalid email/password combination.')
@@ -87,7 +92,12 @@ const LogInForm = ({
       </Group>
       <Group>
         <StackContainer>
-          <Button type="submit" primary disabled={hasError.form}>
+          <Button
+            type="submit"
+            disabled={hasError.form || submitting}
+            loading={submitting}
+            primary
+          >
             Sign in
           </Button>
           <Button type="button" onClick={cancel}>

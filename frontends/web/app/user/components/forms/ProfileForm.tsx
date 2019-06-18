@@ -30,6 +30,7 @@ const ProfileForm = ({ user, setUser, userLoaded }: Props) => {
   const [displayName, setDisplayName] = useState(() =>
     user ? user.displayName : '',
   )
+  const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState(undefined as string | undefined)
   const [message, setMessage] = useState(undefined as string | undefined)
 
@@ -42,9 +43,13 @@ const ProfileForm = ({ user, setUser, userLoaded }: Props) => {
   const submit = async (event: FormEvent) => {
     event.preventDefault()
 
+    setSubmitting(true)
+
     const response = await UserApi.updateProfile({
       displayName,
     })
+
+    setSubmitting(false)
 
     if (!response) {
       setMessage(undefined)
@@ -87,7 +92,11 @@ const ProfileForm = ({ user, setUser, userLoaded }: Props) => {
       </Group>
       <Group>
         <ButtonContainer noMargin>
-          <Button type="submit" disabled={hasError.form}>
+          <Button
+            type="submit"
+            disabled={hasError.form || submitting}
+            loading={submitting}
+          >
             Update profile
           </Button>
         </ButtonContainer>

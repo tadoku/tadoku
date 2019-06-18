@@ -30,6 +30,7 @@ const JoinContestForm = ({
   onSuccess: completed,
   onCancel: cancel,
 }: Props) => {
+  const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState(undefined as string | undefined)
   const [languages, setLanguages] = useState([undefined] as (
     | string
@@ -38,8 +39,12 @@ const JoinContestForm = ({
   const submit = async (event: FormEvent) => {
     event.preventDefault()
 
+    setSubmitting(true)
+
     const languageCodes = languages.filter(l => !!l) as string[]
     const success = await RankingApi.joinContest(contest.id, languageCodes)
+
+    setSubmitting(false)
 
     if (!success) {
       setError(
@@ -100,7 +105,12 @@ const JoinContestForm = ({
       </Group>
       <Group>
         <StackContainer>
-          <Button type="submit" primary disabled={hasError.form}>
+          <Button
+            type="submit"
+            disabled={hasError.form || submitting}
+            loading={submitting}
+            primary
+          >
             Join
           </Button>
           <Button type="button" onClick={cancel}>

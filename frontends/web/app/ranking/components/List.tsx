@@ -108,8 +108,12 @@ const RowLink = styled.a`
 `
 
 const Rank = styled.div`
-  width: 50px;
   font-size: 30px;
+  margin-right: 30px;
+
+  span {
+    padding-right: 5px;
+  }
 `
 
 const Name = styled.div`

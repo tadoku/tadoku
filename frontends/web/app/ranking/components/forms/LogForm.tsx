@@ -31,6 +31,7 @@ const LogForm = ({
   onSuccess: completed,
   onCancel: cancel,
 }: Props) => {
+  const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState(undefined as string | undefined)
   const [amount, setAmount] = useState(() => {
     if (log) {
@@ -64,6 +65,7 @@ const LogForm = ({
 
   const submit = async (event: FormEvent) => {
     event.preventDefault()
+    setSubmitting(true)
 
     let success: boolean
 
@@ -85,6 +87,8 @@ const LogForm = ({
         })
         break
     }
+
+    setSubmitting(false)
 
     if (!success) {
       setError(
@@ -156,7 +160,7 @@ const LogForm = ({
       )}
       <Group>
         <StackContainer>
-          <Button type="submit" disabled={hasError.form} primary>
+          <Button type="submit" disabled={hasError.form || submitting} primary>
             Save changes
           </Button>
           <Button type="button" onClick={cancel}>

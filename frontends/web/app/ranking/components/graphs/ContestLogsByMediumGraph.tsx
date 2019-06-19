@@ -26,7 +26,7 @@ const Graph = ({ logs }: Props) => {
       <FlexibleRadialChart
         innerRadius={100}
         radius={140}
-        getAngle={(d: { theta: number }) => d.theta}
+        getAngle={(d: { amount: number }) => d.amount}
         data={data.aggregated}
         width={300}
         height={300}
@@ -37,8 +37,8 @@ const Graph = ({ logs }: Props) => {
         {selected && (
           <Hint value={selected}>
             <HintContainer>
-              {selected.theta} pages of {selected.medium.toLowerCase()} (
-              {Math.floor((selected.theta / data.totalAmount) * 100)}%)
+              {selected.amount} points from {selected.medium.toLowerCase()} (
+              {Math.floor((selected.amount / data.totalAmount) * 100)}%)
             </HintContainer>
           </Hint>
         )}

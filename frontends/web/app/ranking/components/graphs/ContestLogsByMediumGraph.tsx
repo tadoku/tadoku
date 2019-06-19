@@ -1,7 +1,13 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { ContestLog } from '../../interfaces'
 import { aggregateContestLogsByMedium } from '../../transform'
-import { makeWidthFlexible, DiscreteColorLegend, RadialChart } from 'react-vis'
+import {
+  makeWidthFlexible,
+  DiscreteColorLegend,
+  RadialChart,
+  Hint,
+  RadialChartPoint,
+} from 'react-vis'
 import styled from 'styled-components'
 import Constants from '../../../ui/Constants'
 
@@ -11,6 +17,9 @@ interface Props {
 
 const Graph = ({ logs }: Props) => {
   const data = aggregateContestLogsByMedium(logs)
+  const [selected, setSelected] = useState(undefined as
+    | undefined
+    | RadialChartPoint)
 
   return (
     <Container>
@@ -22,7 +31,18 @@ const Graph = ({ logs }: Props) => {
         width={300}
         height={300}
         padAngle={0.04}
-      />
+        onValueMouseOver={(v: RadialChartPoint) => setSelected(v)}
+        onSeriesMouseOut={() => setSelected(undefined)}
+      >
+        {selected && (
+          <Hint value={selected}>
+            <HintContainer>
+              {selected.theta} pages of {selected.medium.toLowerCase()} (
+              {Math.floor((selected.theta / data.totalAmount) * 100)}%)
+            </HintContainer>
+          </Hint>
+        )}
+      </FlexibleRadialChart>
       <DiscreteColorLegend
         items={data.legend}
         orientation="horizontal"
@@ -40,4 +60,12 @@ const Container = styled.div`
   display: flex;
   flex-direction: column;
   align-items: stretch;
+`
+
+const HintContainer = styled.div`
+  background: ${Constants.colors.darkWithAlpha(0.9)};
+  box-shadow: 0px 2px 7px 1px rgba(0, 0, 0, 0.25);
+  color: ${Constants.colors.light};
+  padding: 8px 12px;
+  border-radius: 4px;
 `

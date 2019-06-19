@@ -176,7 +176,7 @@ export const aggregateContestLogsByDays = (
   } = {}
 
   getDates(contest.start, contest.end).forEach(date => {
-    initializedSeries[prettyDate(date)] = { x: date, y: 0 }
+    initializedSeries[prettyDate(date)] = { x: date, y: 0, language: '' }
   })
 
   languages.forEach(language => {
@@ -193,6 +193,9 @@ export const aggregateContestLogsByDays = (
     const date = prettyDate(log.date)
 
     if (aggregated[log.languageCode][date]) {
+      aggregated[log.languageCode][date].language = languageNameByCode(
+        log.languageCode,
+      )
       aggregated[log.languageCode][date].y +=
         Math.round(log.adjustedAmount * 10) / 10
     }

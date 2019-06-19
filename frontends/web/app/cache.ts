@@ -61,6 +61,15 @@ interface UseCachedApiStateParameters<DataType> {
   serializer?: Serializer<DataType>
 }
 
+const isCacheValid = <DataType>(cache: CachedData<DataType>): boolean => {
+  const expirationDate = new Date(new Date(cache.fetchedAt))
+  expirationDate.setSeconds(expirationDate.getSeconds() + cache.maxAge)
+
+  const today = new Date()
+
+  return today < expirationDate
+}
+
 export const useCachedApiState = <DataType>({
   cacheKey,
   defaultValue,

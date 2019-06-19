@@ -35,6 +35,7 @@ const Graph = ({ logs, contest }: Props) => {
         {Object.keys(data.aggregated).map(language => (
           <LineSeries
             data={data.aggregated[language] as any[]}
+            curve={'curveMonotoneX'}
             key={language}
           />
         ))}

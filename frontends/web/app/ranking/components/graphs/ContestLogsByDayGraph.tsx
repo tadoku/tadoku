@@ -1,7 +1,11 @@
 import React, { useState } from 'react'
 import { ContestLog } from '../../interfaces'
 import { Contest } from '../../../contest/interfaces'
-import { aggregateContestLogsByDays, prettyDate } from '../../transform'
+import {
+  aggregateContestLogsByDays,
+  prettyDate,
+  amountToString,
+} from '../../transform'
 import {
   XYPlot,
   XAxis,
@@ -50,13 +54,7 @@ const Graph = ({ logs, contest }: Props) => {
         {selected && (
           <Hint value={selected}>
             <HintContainer>
-              {!!selected.language ? (
-                <>
-                  {selected.y} pages in {selected.language} on
-                </>
-              ) : (
-                <>No pages read on</>
-              )}
+              {amountToString(selected.y as number)} in {selected.language} on
               <br />
               {prettyDate(selected.x as Date)}
             </HintContainer>

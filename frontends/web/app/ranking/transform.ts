@@ -183,7 +183,10 @@ export const aggregateContestLogsByDays = (
     const series: typeof initializedSeries = {}
 
     Object.keys(initializedSeries).forEach(date => {
-      series[date] = { ...initializedSeries[date] }
+      series[date] = {
+        ...initializedSeries[date],
+        language: languageNameByCode(language),
+      }
     })
 
     aggregated[language] = series
@@ -193,9 +196,6 @@ export const aggregateContestLogsByDays = (
     const date = prettyDate(log.date)
 
     if (aggregated[log.languageCode][date]) {
-      aggregated[log.languageCode][date].language = languageNameByCode(
-        log.languageCode,
-      )
       aggregated[log.languageCode][date].y +=
         Math.round(log.adjustedAmount * 10) / 10
     }
@@ -288,4 +288,15 @@ export const calculateLeaderboard = (
   }, initialResult)
 
   return result.rankings
+}
+
+export const amountToString = (amount: number): string => {
+  switch (amount) {
+    case 0:
+      return 'No pages'
+    case 1:
+      return '1 page'
+    default:
+      return `${amountToPages(amount)} pages`
+  }
 }

@@ -50,7 +50,14 @@ const Graph = ({ logs, contest }: Props) => {
         {selected && (
           <Hint value={selected}>
             <HintContainer>
-              {selected.y} pages in {selected.language} on <br />
+              {!!selected.language ? (
+                <>
+                  {selected.y} pages in {selected.language} on
+                </>
+              ) : (
+                <>No pages read on</>
+              )}
+              <br />
               {prettyDate(selected.x as Date)}
             </HintContainer>
           </Hint>

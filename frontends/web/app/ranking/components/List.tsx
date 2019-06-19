@@ -42,7 +42,7 @@ const RankingRow = ({ rank, tied, data }: RankingWithRank) => (
       as={`/contest/1/rankings/${data.userId}`}
       href={`/ranking-details?contest_id=1&user_id=${data.userId}`}
     >
-      <RowLink href="">
+      <RowLink href={`/contest/1/rankings/${data.userId}`}>
         <Rank>
           {tied && <span title="Tied">T</span>}
           {rank}

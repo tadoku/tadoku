@@ -10,7 +10,7 @@ import {
   RankingWithRank,
 } from './interfaces'
 import { Contest } from './../contest/interfaces'
-import { languageNameByCode } from './database'
+import { languageNameByCode, mediumDescriptionById } from './database'
 import { Mapper } from '../interfaces'
 import { Serializer } from '../cache'
 
@@ -208,6 +208,40 @@ export const aggregateContestLogsByDays = (
   })
 
   return result
+}
+
+interface AggregatedByMediumResult {
+  aggregated: {
+    [mediaId: number]: number
+  }
+  legend: {
+    title: string
+  }[]
+}
+
+export const aggregateContestLogsByMedium = (
+  logs: ContestLog[],
+): AggregatedByMediumResult => {
+  const aggregated: {
+    [mediumId: number]: number
+  } = {}
+
+  const legend: {
+    title: string
+  }[] = []
+
+  logs.forEach(log => {
+    if (!Object.keys(aggregated).includes(log.mediumId.toString())) {
+      aggregated[log.mediumId] = 0
+      legend.push({
+        title: mediumDescriptionById(log.mediumId),
+      })
+    }
+
+    aggregated[log.mediumId] += log.adjustedAmount
+  })
+
+  return { aggregated, legend }
 }
 
 export const rankingsToRegistrationOverview = (

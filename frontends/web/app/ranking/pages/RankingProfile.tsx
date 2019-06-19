@@ -40,7 +40,7 @@ const RankingProfile = ({
   const { data: contest, status: statusContest } = useCachedApiState<
     Contest | undefined
   >({
-    cacheKey: `contest?id=${contestId}`,
+    cacheKey: `contest?i=1&id=${contestId}`,
     defaultValue: undefined,
     fetchData: () => {
       return ContestApi.get(contestId)
@@ -50,7 +50,7 @@ const RankingProfile = ({
   })
 
   const { data: logs, status: statusLogs } = useCachedApiState<ContestLog[]>({
-    cacheKey: `contest_logs?contest_id=${contestId}&user_id=${userId}`,
+    cacheKey: `contest_logs?i=1&contest_id=${contestId}&user_id=${userId}`,
     defaultValue: [],
     fetchData: () => {
       return new Promise(async resolve => {
@@ -76,7 +76,7 @@ const RankingProfile = ({
   const { data: registration, status: statusRegistration } = useCachedApiState<
     Ranking[]
   >({
-    cacheKey: `ranking_profile_registration?contest_id=${contestId}&user_id=${userId}`,
+    cacheKey: `ranking_registration?i=1&contest_id=${contestId}&user_id=${userId}`,
     defaultValue: [],
     fetchData: () => {
       return RankingApi.getRankingsRegistration(contestId, userId)

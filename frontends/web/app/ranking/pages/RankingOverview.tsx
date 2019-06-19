@@ -28,7 +28,7 @@ const RankingOverview = ({
   const [joinModalOpen, setJoinModalOpen] = useState(false)
 
   const { data: rankings, status } = useCachedApiState<Ranking[]>({
-    cacheKey: `ranking_overview?contest_id=${contest.id}`,
+    cacheKey: `ranking_overview?i=1&contest_id=${contest.id}`,
     defaultValue: [],
     fetchData: () => {
       if (!contest) {

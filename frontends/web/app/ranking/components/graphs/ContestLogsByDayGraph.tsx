@@ -8,9 +8,9 @@ import {
   YAxis,
   HorizontalGridLines,
   VerticalGridLines,
-  LineSeries,
   makeWidthFlexible,
   DiscreteColorLegend,
+  LineMarkSeries,
 } from 'react-vis'
 import styled from 'styled-components'
 
@@ -33,7 +33,7 @@ const Graph = ({ logs, contest }: Props) => {
         />
         <YAxis title="Pages" />
         {Object.keys(data.aggregated).map(language => (
-          <LineSeries
+          <LineMarkSeries
             data={data.aggregated[language] as any[]}
             curve={'curveMonotoneX'}
             key={language}

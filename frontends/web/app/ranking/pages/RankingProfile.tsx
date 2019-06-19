@@ -4,6 +4,7 @@ import { ContestLog, Ranking } from '../interfaces'
 import RankingApi from '../api'
 import ContestApi from '../../contest/api'
 import ContestLogsByDayGraph from '../components/graphs/ContestLogsByDayGraph'
+import ContestLogsByMediumGraph from '../components/graphs/ContestLogsByMediumGraph'
 import ContestLogsOverview from '../components/ContestLogsOverview'
 import {
   rankingsToRegistrationOverview,
@@ -124,6 +125,9 @@ const RankingProfile = ({
         ))}
         <LargeCard>
           <ContestLogsByDayGraph logs={logs} contest={contest} />
+        </LargeCard>
+        <LargeCard>
+          <ContestLogsByMediumGraph logs={logs} />
         </LargeCard>
         <LargeCard>
           <ContestLogsOverview

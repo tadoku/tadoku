@@ -17,6 +17,35 @@ export enum ApiFetchStatus {
   Completed,
 }
 
+interface CachedData<DataType> {
+  maxAge: number
+  fetchedAt: Date
+  data: DataType
+}
+
+const generateCachedDataSerializer = <DataType>(
+  dataSerializer: Serializer<DataType>,
+): Serializer<CachedData<DataType>> => {
+  return {
+    serialize: cache => {
+      const raw = {
+        maxAge: cache.maxAge,
+        fetchedAt: cache.fetchedAt.toISOString(),
+        data: dataSerializer.serialize(cache.data),
+      }
+      return JSON.stringify(raw)
+    },
+    deserialize: serializedData => {
+      let raw = JSON.parse(serializedData)
+      return {
+        maxAge: raw.maxAge,
+        fetchedAt: new Date(raw.fetchedAt),
+        data: dataSerializer.deserialize(raw.data),
+      }
+    },
+  }
+}
+
 export const isReady = (status: ApiFetchStatus[]) =>
   !(
     status.includes(ApiFetchStatus.Loading) ||

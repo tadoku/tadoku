@@ -38,7 +38,7 @@ const Graph = ({ logs, contest }: Props) => {
         <HorizontalGridLines />
         <VerticalGridLines />
         <XAxis
-          title="Days"
+          title="Date"
           tickFormat={date => `${date.getMonth() + 1}-${date.getDate()}`}
         />
         <YAxis title="Pages" />

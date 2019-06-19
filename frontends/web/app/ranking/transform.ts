@@ -212,8 +212,8 @@ export const aggregateContestLogsByDays = (
 
 interface AggregatedByMediumResult {
   aggregated: {
-    [mediaId: number]: number
-  }
+    theta: number
+  }[]
   legend: {
     title: string
   }[]
@@ -241,7 +241,13 @@ export const aggregateContestLogsByMedium = (
     aggregated[log.mediumId] += log.adjustedAmount
   })
 
-  return { aggregated, legend }
+  const forChart = Object.keys(aggregated)
+    .map(k => Number(k))
+    .map(k => ({
+      theta: aggregated[k],
+    }))
+
+  return { aggregated: forChart, legend }
 }
 
 export const rankingsToRegistrationOverview = (

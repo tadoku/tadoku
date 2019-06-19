@@ -54,6 +54,7 @@ export const isReady = (status: ApiFetchStatus[]) =>
 
 interface UseCachedApiStateParameters<DataType> {
   cacheKey: string
+  cacheMaxAge?: number
   defaultValue: DataType
   fetchData: () => Promise<DataType>
   onChange?: (data: DataType) => void
@@ -72,6 +73,7 @@ const isCacheValid = <DataType>(cache: CachedData<DataType>): boolean => {
 
 export const useCachedApiState = <DataType>({
   cacheKey,
+  cacheMaxAge: originalCacheMaxAge,
   defaultValue,
   fetchData,
   onChange,
@@ -84,8 +86,13 @@ export const useCachedApiState = <DataType>({
   })
   const [apiEffectCounter, setApiEffectCounter] = useState(0)
 
+  const defaultMaxAge = 24 * 60 * 60 // 24 hours
+  const cacheMaxAge = originalCacheMaxAge || defaultMaxAge
   const dependencies = [...(originalDependencies || []), apiEffectCounter]
   const serializer = originalSerializer ? originalSerializer : DefaultSerializer
+  const cachedDataSerializer = generateCachedDataSerializer<DataType>(
+    serializer,
+  )
 
   const observedSetData = (newData: DataType, status: ApiFetchStatus) => {
     setData({ body: newData, status })
@@ -97,15 +104,21 @@ export const useCachedApiState = <DataType>({
 
   useEffect(() => {
     let isSubscribed = true
+    let shouldSetLoadingState = true
 
     const cachedValue = localStorage.getItem(cacheKey)
     if (cachedValue) {
-      const parsedCacheData = serializer.deserialize(cachedValue) as DataType
+      const parsedCache = cachedDataSerializer.deserialize(
+        cachedValue,
+      ) as CachedData<DataType>
 
-      if (parsedCacheData !== data.body) {
-        observedSetData(parsedCacheData, ApiFetchStatus.Stale)
+      if (isCacheValid(parsedCache) && parsedCache.data !== data.body) {
+        shouldSetLoadingState = false
+        observedSetData(parsedCache.data, ApiFetchStatus.Stale)
       }
-    } else {
+    }
+
+    if (shouldSetLoadingState) {
       setData({ ...data, status: ApiFetchStatus.Loading })
     }
 
@@ -115,7 +128,13 @@ export const useCachedApiState = <DataType>({
       }
 
       observedSetData(fetchedData, ApiFetchStatus.Completed)
-      localStorage.setItem(cacheKey, serializer.serialize(fetchedData))
+
+      const cache: CachedData<DataType> = {
+        maxAge: cacheMaxAge,
+        fetchedAt: new Date(),
+        data: fetchedData,
+      }
+      localStorage.setItem(cacheKey, cachedDataSerializer.serialize(cache))
     })
 
     return () => {

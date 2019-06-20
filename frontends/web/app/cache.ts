@@ -1,4 +1,7 @@
 import { useEffect, useState } from 'react'
+import { Dispatch } from 'redux'
+
+import * as AppStore from './redux'
 
 export interface Serializer<DataType> {
   serialize: (data: DataType) => string
@@ -60,6 +63,7 @@ interface UseCachedApiStateParameters<DataType> {
   onChange?: (data: DataType) => void
   dependencies?: any[]
   serializer?: Serializer<DataType>
+  dispatch?: Dispatch
 }
 
 const isCacheValid = <DataType>(cache: CachedData<DataType>): boolean => {
@@ -79,6 +83,7 @@ export const useCachedApiState = <DataType>({
   onChange,
   dependencies: originalDependencies,
   serializer: originalSerializer,
+  dispatch,
 }: UseCachedApiStateParameters<DataType>) => {
   const [data, setData] = useState({
     body: defaultValue,
@@ -122,7 +127,21 @@ export const useCachedApiState = <DataType>({
       setData({ ...data, status: ApiFetchStatus.Loading })
     }
 
+    if (dispatch) {
+      dispatch({
+        type: AppStore.ActionTypes.AppLoadingStart,
+        payload: { count: 1 },
+      })
+    }
+
     fetchData().then(fetchedData => {
+      if (dispatch) {
+        dispatch({
+          type: AppStore.ActionTypes.AppLoadingFinish,
+          payload: { count: 1 },
+        })
+      }
+
       if (!isSubscribed || fetchedData === data.body) {
         return
       }

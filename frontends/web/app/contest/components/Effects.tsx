@@ -7,20 +7,23 @@ import { useCachedApiState } from '../../cache'
 
 interface Props {
   updateLatestContest: (contest: Contest | undefined) => void
+  dispatch: Dispatch
 }
 
-const ContestEffects = ({ updateLatestContest }: Props) => {
+const ContestEffects = ({ updateLatestContest, dispatch }: Props) => {
   useCachedApiState({
     cacheKey: `latest_contest?i=1`,
     defaultValue: undefined as Contest | undefined,
     fetchData: ContestApi.getLatest,
     onChange: updateLatestContest,
+    dispatch,
   })
 
   return null
 }
 
-const mapDispatchToProps = (dispatch: Dispatch<ContestStore.Action>) => ({
+const mapDispatchToProps = (dispatch: Dispatch) => ({
+  dispatch,
   updateLatestContest: (contest: Contest | undefined) => {
     dispatch({
       type: ContestStore.ActionTypes.ContestUpdateLatestContest,

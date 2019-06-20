@@ -24,12 +24,14 @@ import { useCachedApiState, isReady } from '../../cache'
 import { ContestSerializer } from '../../contest/transform'
 import { OptionalizeSerializer } from '../../transform'
 import { PageTitle } from '../../ui/components'
+import { Dispatch } from 'redux'
 
 interface Props {
   contestId: number
   userId: number
   effectCount: number
   refreshRanking: () => void
+  dispatch: Dispatch
 }
 
 const RankingProfile = ({
@@ -37,6 +39,7 @@ const RankingProfile = ({
   userId,
   effectCount,
   refreshRanking,
+  dispatch,
 }: Props) => {
   const { data: contest, status: statusContest } = useCachedApiState<
     Contest | undefined
@@ -48,6 +51,7 @@ const RankingProfile = ({
     },
     dependencies: [contestId],
     serializer: OptionalizeSerializer(ContestSerializer),
+    dispatch,
   })
 
   const { data: logs, status: statusLogs } = useCachedApiState<ContestLog[]>({
@@ -72,6 +76,7 @@ const RankingProfile = ({
     },
     dependencies: [contestId, userId, effectCount],
     serializer: ContestLogsSerializer,
+    dispatch,
   })
 
   const { data: registration, status: statusRegistration } = useCachedApiState<
@@ -84,6 +89,7 @@ const RankingProfile = ({
     },
     dependencies: [contestId, userId, effectCount],
     serializer: RankingsSerializer,
+    dispatch,
   })
 
   if (!isReady([statusContest, statusLogs, statusRegistration])) {

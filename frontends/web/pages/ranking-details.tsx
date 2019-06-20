@@ -12,6 +12,7 @@ interface Props {
   userId: number | undefined
   effectCount: number
   refreshRanking: () => void
+  dispatch: Dispatch
 }
 
 const RankingDetails = ({ contestId, userId, ...props }: Props) => {
@@ -49,6 +50,7 @@ const mapStateToProps = (state: State) => ({
 })
 
 const mapDispatchToProps = (dispatch: Dispatch<RankingStore.Action>) => ({
+  dispatch,
   refreshRanking: () => {
     dispatch({
       type: RankingStore.ActionTypes.RankingRunEffects,

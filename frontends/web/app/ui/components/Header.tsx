@@ -1,11 +1,18 @@
 import React from 'react'
+import { State } from '../../store'
+import { connect } from 'react-redux'
 import Link from 'next/link'
 import styled from 'styled-components'
 import media from 'styled-media-query'
 import Constants from '../Constants'
 import NavigationBar from './navigation/NavigationBar'
+import ActivityIndicator from './ActivityIndicator'
 
-const Header = () => (
+interface Props {
+  isLoading: boolean
+}
+
+const Header = ({ isLoading }: Props) => (
   <Container>
     <InnerContainer>
       <Link href="/">
@@ -13,12 +20,17 @@ const Header = () => (
           <LogoType>Tadoku</LogoType>
         </a>
       </Link>
+      <ActivityIndicator isLoading={isLoading} />
       <NavigationBar />
     </InnerContainer>
   </Container>
 )
 
-export default Header
+const mapStateToProps = (state: State) => ({
+  isLoading: state.app.isLoading,
+})
+
+export default connect(mapStateToProps)(Header)
 
 const LogoType = styled.h1`
   color: ${Constants.colors.dark};

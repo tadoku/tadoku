@@ -32,12 +32,12 @@ export const reducer = (state = initialState, action: Action) => {
   switch (action.type) {
     case ActionTypes.AppLoadingStart:
       const startPayload = (action as AppLoadingStart).payload
-      const activityCountForStart = state.activityCount - startPayload.count
+      const activityCountForStart = state.activityCount + startPayload.count
 
       return {
         ...state,
         activityCount: activityCountForStart,
-        isLoading: activityCountForStart === 0,
+        isLoading: activityCountForStart > 0,
       }
     case ActionTypes.AppLoadingFinish:
       const finishPayload = (action as AppLoadingFinish).payload
@@ -46,7 +46,7 @@ export const reducer = (state = initialState, action: Action) => {
       return {
         ...state,
         activityCount: activityCountForFinish,
-        isLoading: activityCountForFinish === 0,
+        isLoading: activityCountForFinish > 0,
       }
     default:
       return state

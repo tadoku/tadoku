@@ -1,10 +1,11 @@
 import React from 'react'
+import { Button } from './index'
 
 interface Props {
   isLoading: boolean
 }
 
 const ActivityIndicator = ({ isLoading }: Props) =>
-  isLoading ? <span>Loading...</span> : null
+  isLoading ? <Button plain loading disabled /> : null
 
 export default ActivityIndicator

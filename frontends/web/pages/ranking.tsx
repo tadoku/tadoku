@@ -16,6 +16,7 @@ const mapStateToProps = (state: State) => ({
 })
 
 const mapDispatchToProps = (dispatch: Dispatch<RankingStore.Action>) => ({
+  dispatch,
   refreshRegistration: () => {
     dispatch({
       type: RankingStore.ActionTypes.RankingRunEffects,
@@ -29,6 +30,7 @@ interface Props {
   user: User | undefined
   effectCount: number
   refreshRegistration: () => void
+  dispatch: Dispatch
 }
 
 export default connect(

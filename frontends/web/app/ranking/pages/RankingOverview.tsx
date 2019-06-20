@@ -9,6 +9,7 @@ import { User } from '../../session/interfaces'
 import JoinContestModal from '../components/modals/JoinContestModal'
 import { useCachedApiState, ApiFetchStatus } from '../../cache'
 import { RankingsSerializer } from '../transform'
+import { Dispatch } from 'redux'
 
 interface Props {
   contest: Contest
@@ -16,6 +17,7 @@ interface Props {
   user: User | undefined
   effectCount: number
   refreshRegistration: () => void
+  dispatch: Dispatch
 }
 
 const RankingOverview = ({
@@ -24,6 +26,7 @@ const RankingOverview = ({
   user,
   effectCount,
   refreshRegistration,
+  dispatch,
 }: Props) => {
   const [joinModalOpen, setJoinModalOpen] = useState(false)
 
@@ -39,6 +42,7 @@ const RankingOverview = ({
     },
     dependencies: [contest, effectCount],
     serializer: RankingsSerializer,
+    dispatch,
   })
 
   // @TODO: extract this business logic

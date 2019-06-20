@@ -12,9 +12,15 @@ interface Props {
   user: User | undefined
   updateRegistration: (registration: RankingRegistration | undefined) => void
   effectCount: number
+  dispatch: Dispatch
 }
 
-const RankingEffects = ({ user, updateRegistration, effectCount }: Props) => {
+const RankingEffects = ({
+  user,
+  updateRegistration,
+  effectCount,
+  dispatch,
+}: Props) => {
   useCachedApiState({
     cacheKey: `current_registration?i=2`,
     defaultValue: undefined as RankingRegistration | undefined,
@@ -30,6 +36,7 @@ const RankingEffects = ({ user, updateRegistration, effectCount }: Props) => {
     onChange: updateRegistration,
     dependencies: [user, effectCount],
     serializer: OptionalizeSerializer(DefaultSerializer),
+    dispatch,
   })
 
   return null
@@ -41,6 +48,7 @@ const mapStateToProps = (state: State) => ({
 })
 
 const mapDispatchToProps = (dispatch: Dispatch<RankingStore.Action>) => ({
+  dispatch,
   updateRegistration: (registration: RankingRegistration | undefined) => {
     dispatch({
       type: RankingStore.ActionTypes.RankingUpdateRegistration,

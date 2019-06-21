@@ -19,13 +19,14 @@ func NewRouter(
 	port string,
 	jwtSecret string,
 	corsAllowedOrigins []string,
+	errorReporter usecases.ErrorReporter,
 	routes ...services.Route,
 ) services.Router {
 	m := &middlewares{
 		restrict:      newJWTMiddleware(jwtSecret),
 		authenticator: usecases.NewRoleAuthenticator(),
 	}
-	e := newEcho(m, corsAllowedOrigins, routes...)
+	e := newEcho(m, corsAllowedOrigins, errorReporter, routes...)
 	return router{e, port}
 }
 
@@ -37,15 +38,16 @@ type middlewares struct {
 func newEcho(
 	m *middlewares,
 	corsAllowedOrigins []string,
+	errorReporter usecases.ErrorReporter,
 	routes ...services.Route,
 ) *echo.Echo {
 	e := echo.New()
-	e.HTTPErrorHandler = errorHandler
+	e.HTTPErrorHandler = errorHandler(errorReporter)
+	e.Use(sentryecho.New(sentryecho.Options{}))
 	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
 		AllowOrigins: corsAllowedOrigins,
 		AllowMethods: []string{http.MethodGet, http.MethodPut, http.MethodPost, http.MethodDelete},
 	}))
-	e.Use(sentryecho.New(sentryecho.Options{}))
 
 	for _, route := range routes {
 		e.Add(route.Method, route.Path, wrap(route, m))
@@ -64,22 +66,25 @@ func newJWTMiddleware(secret string) echo.MiddlewareFunc {
 
 var errorCodeRegularExpression = regexp.MustCompile("^code=([0-9]{3}).")
 
-func errorHandler(err error, c echo.Context) {
-	c.Logger().Error(err)
+func errorHandler(errorReporter usecases.ErrorReporter) func(error, echo.Context) {
+	return func(err error, c echo.Context) {
+		c.Logger().Error(err)
 
-	if err == middleware.ErrJWTMissing {
-		c.NoContent(http.StatusUnauthorized)
-		return
-	}
-
-	if match := errorCodeRegularExpression.FindStringSubmatch(err.Error()); len(match) > 1 {
-		if statusCode, errInt := strconv.Atoi(match[1]); errInt == nil {
-			c.NoContent(statusCode)
+		if err == middleware.ErrJWTMissing {
+			c.NoContent(http.StatusUnauthorized)
 			return
 		}
-	}
 
-	c.NoContent(http.StatusInternalServerError)
+		if match := errorCodeRegularExpression.FindStringSubmatch(err.Error()); len(match) > 1 {
+			if statusCode, errInt := strconv.Atoi(match[1]); errInt == nil {
+				c.NoContent(statusCode)
+				return
+			}
+		}
+
+		errorReporter.Capture(err)
+		c.NoContent(http.StatusInternalServerError)
+	}
 }
 
 func (m *middlewares) authenticateRole(c echo.Context, minRole domain.Role) error {

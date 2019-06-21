@@ -6,6 +6,7 @@ require (
 	github.com/asaskevich/govalidator v0.0.0-20180720115003-f9ffefc3facf
 	github.com/creasty/configo v0.0.0-20170711121124-288b7e8980d2
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
+	github.com/getsentry/sentry-go v0.1.0
 	github.com/ghodss/yaml v1.0.0 // indirect
 	github.com/golang/mock v1.3.1
 	github.com/gordonklaus/ineffassign v0.0.0-20180909121442-1003c8bd00dc
@@ -15,7 +16,6 @@ require (
 	github.com/labstack/echo/v4 v4.1.6
 	github.com/lib/pq v1.1.1
 	github.com/mattn/go-zglob v0.0.1 // indirect
-	github.com/pkg/errors v0.8.1 // indirect
 	github.com/srvc/fail v3.1.1+incompatible
 	github.com/stretchr/testify v1.3.0
 	golang.org/x/crypto v0.0.0-20190605123033-f99c8df09eb5

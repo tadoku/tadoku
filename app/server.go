@@ -19,8 +19,10 @@ import (
 type ServerDependencies interface {
 	AutoConfigure() error
 
+	Init()
 	Router() services.Router
 	JWTGenerator() usecases.JWTGenerator
+	ErrorReporter() usecases.ErrorReporter
 
 	RDB() *infra.RDB
 	SQLHandler() rdb.SQLHandler
@@ -38,6 +40,7 @@ func NewServerDependencies() ServerDependencies {
 type serverDependencies struct {
 	Port                 string        `envconfig:"app_port" valid:"required"`
 	JWTSecret            string        `envconfig:"jwt_secret" valid:"required"`
+	ErrorReporterDSN     string        `envconfig:"error_reporter_dsn"`
 	SessionLength        time.Duration `envconfig:"user_session_length" valid:"required"`
 	DatabaseURL          string        `envconfig:"database_url" valid:"required"`
 	DatabaseMaxIdleConns int           `envconfig:"database_max_idle_conns" valid:"required"`
@@ -46,6 +49,11 @@ type serverDependencies struct {
 
 	router struct {
 		result services.Router
+		once   sync.Once
+	}
+
+	errorReporter struct {
+		result usecases.ErrorReporter
 		once   sync.Once
 	}
 
@@ -127,7 +135,7 @@ func (d *serverDependencies) Interactors() *Interactors {
 func (d *serverDependencies) Router() services.Router {
 	holder := &d.router
 	holder.once.Do(func() {
-		holder.result = infra.NewRouter(d.Port, d.JWTSecret, d.CORSAllowedOrigins, d.routes()...)
+		holder.result = infra.NewRouter(d.Port, d.JWTSecret, d.CORSAllowedOrigins, d.ErrorReporter(), d.routes()...)
 	})
 	return holder.result
 }
@@ -174,6 +182,24 @@ func (d *serverDependencies) JWTGenerator() usecases.JWTGenerator {
 	return holder.result
 }
 
+func (d *serverDependencies) ErrorReporter() usecases.ErrorReporter {
+	holder := &d.errorReporter
+	holder.once.Do(func() {
+		var err error
+		holder.result, err = infra.NewErrorReporter(d.ErrorReporterDSN)
+
+		if err != nil {
+			log.Fatalf("failed to initialize error reporter: %v\n", err)
+		}
+
+	})
+	return holder.result
+}
+
+func (d *serverDependencies) Init() {
+	_ = d.ErrorReporter()
+}
+
 // ------------------------------
 // Relational database
 // ------------------------------
@@ -186,7 +212,7 @@ func (d *serverDependencies) RDB() *infra.RDB {
 
 		if err != nil {
 			// @TODO: we should handle errors more gracefully
-			log.Fatalf("Failed to initialize connection pool with database: %v\n", err)
+			log.Fatalf("failed to initialize connection pool with database: %v\n", err)
 		}
 	})
 	return holder.result
@@ -202,6 +228,8 @@ func (d *serverDependencies) SQLHandler() rdb.SQLHandler {
 
 // RunServer starts the actual API server
 func RunServer(d ServerDependencies) error {
+	d.Init()
+
 	router := d.Router()
 	return router.StartListening()
 }

@@ -9,6 +9,10 @@ import (
 
 // NewErrorReporter creates a new error reporter that sends errors to sentry
 func NewErrorReporter(dsn string) (usecases.ErrorReporter, error) {
+	if dsn == "" {
+		return nil, nil
+	}
+
 	err := sentry.Init(sentry.ClientOptions{
 		Dsn: dsn,
 	})

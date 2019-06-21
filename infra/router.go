@@ -5,6 +5,7 @@ import (
 	"regexp"
 	"strconv"
 
+	sentryecho "github.com/getsentry/sentry-go/echo"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 
@@ -44,6 +45,7 @@ func newEcho(
 		AllowOrigins: corsAllowedOrigins,
 		AllowMethods: []string{http.MethodGet, http.MethodPut, http.MethodPost, http.MethodDelete},
 	}))
+	e.Use(sentryecho.New(sentryecho.Options{}))
 
 	for _, route := range routes {
 		e.Add(route.Method, route.Path, wrap(route, m))

@@ -30,6 +30,7 @@ export default class MyDocument extends Document<{
             href="https://fonts.googleapis.com/css?family=Open+Sans:400,600&display=swap"
             rel="stylesheet"
           />
+          <link rel="icon" href="/static/favicon.png" />
         </Head>
         <body>
           <Main />

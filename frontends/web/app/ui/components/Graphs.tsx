@@ -1,3 +1,4 @@
+import React from 'react'
 import { GradientDefs } from 'react-vis'
 import Constants from '../Constants'
 

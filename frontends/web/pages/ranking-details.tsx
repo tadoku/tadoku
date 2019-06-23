@@ -1,4 +1,5 @@
 import React from 'react'
+import Head from 'next/head'
 import ErrorPage from 'next/error'
 import { ExpressNextContext } from '../app/interfaces'
 import RankingProfile from '../app/ranking/pages/RankingProfile'
@@ -20,7 +21,14 @@ const RankingDetails = ({ contestId, userId, ...props }: Props) => {
     return <ErrorPage statusCode={404} />
   }
 
-  return <RankingProfile contestId={contestId} userId={userId} {...props} />
+  return (
+    <>
+      <Head>
+        <title>Tadoku - Stats</title>
+      </Head>
+      <RankingProfile contestId={contestId} userId={userId} {...props} />
+    </>
+  )
 }
 
 RankingDetails.getInitialProps = async ({ req, query }: ExpressNextContext) => {

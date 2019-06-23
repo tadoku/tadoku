@@ -14,11 +14,12 @@ func TestContestLogRepository_StoreUpdateDeleteLog(t *testing.T) {
 
 	repo := repositories.NewContestLogRepository(sqlHandler)
 	log := &domain.ContestLog{
-		ContestID: 1,
-		UserID:    1,
-		Language:  domain.Japanese,
-		Amount:    10,
-		MediumID:  1,
+		ContestID:   1,
+		UserID:      1,
+		Language:    domain.Japanese,
+		Amount:      10,
+		MediumID:    1,
+		Description: "foobar",
 	}
 
 	{
@@ -28,12 +29,13 @@ func TestContestLogRepository_StoreUpdateDeleteLog(t *testing.T) {
 
 	{
 		updatedLog := &domain.ContestLog{
-			ID:        log.ID,
-			ContestID: 1,
-			UserID:    1,
-			Language:  domain.Korean,
-			Amount:    20,
-			MediumID:  2,
+			ID:          log.ID,
+			ContestID:   1,
+			UserID:      1,
+			Language:    domain.Korean,
+			Amount:      20,
+			MediumID:    2,
+			Description: "foobar 2",
 		}
 		assert.NotEqual(t, 0, updatedLog.ID)
 		err := repo.Store(updatedLog)
@@ -59,24 +61,26 @@ func TestContestLogRepository_FindAllByContestAndUser(t *testing.T) {
 	userID := uint64(1)
 
 	expected := []struct {
-		language domain.LanguageCode
-		medium   domain.MediumID
-		amount   float32
+		language    domain.LanguageCode
+		medium      domain.MediumID
+		amount      float32
+		description string
 	}{
-		{domain.Japanese, domain.MediumBook, 10},
-		{domain.Korean, domain.MediumManga, 20},
-		{domain.Global, domain.MediumNet, 30},
+		{domain.Japanese, domain.MediumBook, 10, "foobar"},
+		{domain.Korean, domain.MediumManga, 20, "foobar 2"},
+		{domain.Global, domain.MediumNet, 30, "foobar 3"},
 	}
 
 	// Correct logs
 	{
 		for _, data := range expected {
 			log := &domain.ContestLog{
-				ContestID: contestID,
-				UserID:    userID,
-				Language:  data.language,
-				MediumID:  data.medium,
-				Amount:    data.amount,
+				ContestID:   contestID,
+				UserID:      userID,
+				Language:    data.language,
+				MediumID:    data.medium,
+				Amount:      data.amount,
+				Description: data.description,
 			}
 
 			err := repo.Store(log)
@@ -88,11 +92,12 @@ func TestContestLogRepository_FindAllByContestAndUser(t *testing.T) {
 	{
 		for _, language := range []domain.LanguageCode{domain.Korean, domain.Global} {
 			log := &domain.ContestLog{
-				ContestID: contestID + 1,
-				UserID:    userID,
-				Language:  language,
-				MediumID:  domain.MediumBook,
-				Amount:    0,
+				ContestID:   contestID + 1,
+				UserID:      userID,
+				Language:    language,
+				MediumID:    domain.MediumBook,
+				Amount:      0,
+				Description: "barbar",
 			}
 
 			err := repo.Store(log)
@@ -113,6 +118,7 @@ func TestContestLogRepository_FindAllByContestAndUser(t *testing.T) {
 
 		assert.Equal(t, expected.amount, log.Amount)
 		assert.Equal(t, expected.medium, log.MediumID)
+		assert.Equal(t, expected.description, log.Description)
 		assert.Equal(t, contestID, log.ContestID)
 		assert.Equal(t, userID, log.UserID)
 	}

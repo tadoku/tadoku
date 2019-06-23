@@ -6,15 +6,16 @@ import (
 
 // ContestLog contains a single entry in a contest for a user
 type ContestLog struct {
-	ID        uint64       `json:"id" db:"id"`
-	ContestID uint64       `json:"contest_id" db:"contest_id" valid:"required"`
-	UserID    uint64       `json:"user_id" db:"user_id" valid:"required"`
-	Language  LanguageCode `json:"language_code" db:"language_code" valid:"required"`
-	MediumID  MediumID     `json:"medium_id" db:"medium_id" valid:"required"`
-	Amount    float32      `json:"amount" db:"amount" valid:"required"`
-	CreatedAt time.Time    `json:"created_at" db:"created_at"`
-	UpdatedAt time.Time    `json:"updated_at" db:"updated_at"`
-	DeletedAt *time.Time   `json:"deleted_at" db:"deleted_at"`
+	ID          uint64       `json:"id" db:"id"`
+	ContestID   uint64       `json:"contest_id" db:"contest_id" valid:"required"`
+	UserID      uint64       `json:"user_id" db:"user_id" valid:"required"`
+	Language    LanguageCode `json:"language_code" db:"language_code" valid:"required"`
+	MediumID    MediumID     `json:"medium_id" db:"medium_id" valid:"required"`
+	Amount      float32      `json:"amount" db:"amount" valid:"required"`
+	Description string       `json:"description" db:"description"`
+	CreatedAt   time.Time    `json:"created_at" db:"created_at"`
+	UpdatedAt   time.Time    `json:"updated_at" db:"updated_at"`
+	DeletedAt   *time.Time   `json:"deleted_at" db:"deleted_at"`
 }
 
 // ContestLogs is a collection of ContestLog
@@ -44,6 +45,7 @@ func (c ContestLog) GetView() ContestLogView {
 		MediumID:       c.MediumID,
 		Amount:         c.Amount,
 		AdjustedAmount: c.AdjustedAmount(),
+		Description:    c.Description,
 		Date:           c.CreatedAt,
 	}
 }
@@ -68,5 +70,6 @@ type ContestLogView struct {
 	MediumID       MediumID     `json:"medium_id"`
 	Amount         float32      `json:"amount"`
 	AdjustedAmount float32      `json:"adjusted_amount"`
+	Description    string       `json:"description"`
 	Date           time.Time    `json:"date"`
 }

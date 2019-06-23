@@ -26,12 +26,20 @@ func (r *contestLogRepository) Store(contestLog *domain.ContestLog) error {
 func (r *contestLogRepository) create(contestLog *domain.ContestLog) error {
 	query := `
 		insert into contest_logs
-		(contest_id, user_id, language_code, medium_id, amount, created_at, updated_at)
-		values ($1, $2, $3, $4, $5, now() at time zone 'utc', now() at time zone 'utc')
+		(contest_id, user_id, language_code, medium_id, amount, description, created_at, updated_at)
+		values ($1, $2, $3, $4, $5, $6, now() at time zone 'utc', now() at time zone 'utc')
 		returning id
 	`
 
-	row := r.sqlHandler.QueryRow(query, contestLog.ContestID, contestLog.UserID, contestLog.Language, contestLog.MediumID, contestLog.Amount)
+	row := r.sqlHandler.QueryRow(
+		query,
+		contestLog.ContestID,
+		contestLog.UserID,
+		contestLog.Language,
+		contestLog.MediumID,
+		contestLog.Amount,
+		contestLog.Description,
+	)
 	err := row.Scan(&contestLog.ID)
 	if err != nil {
 		return domain.WrapError(err)
@@ -43,7 +51,7 @@ func (r *contestLogRepository) create(contestLog *domain.ContestLog) error {
 func (r *contestLogRepository) update(contestLog *domain.ContestLog) error {
 	query := `
 		update contest_logs
-		set amount = :amount, medium_id = :medium_id, language_code = :language_code, updated_at = now() at time zone 'utc'
+		set amount = :amount, medium_id = :medium_id, language_code = :language_code, description = :description, updated_at = now() at time zone 'utc'
 		where
 			id = :id and
 			user_id = :user_id and
@@ -58,7 +66,7 @@ func (r *contestLogRepository) FindByID(id uint64) (domain.ContestLog, error) {
 	l := domain.ContestLog{}
 
 	query := `
-		select id, contest_id, user_id, language_code, medium_id, amount, created_at, updated_at
+		select id, contest_id, user_id, language_code, medium_id, amount, description, created_at, updated_at
 		from contest_logs
 		where
 			id = $1 and
@@ -80,7 +88,7 @@ func (r *contestLogRepository) FindAll(contestID uint64, userID uint64) (domain.
 
 	query := `
 		select
-			id, contest_id, user_id, language_code, medium_id, amount, created_at, updated_at
+			id, contest_id, user_id, language_code, medium_id, amount, description, created_at, updated_at
 		from contest_logs
 		where
 			contest_id = $1 and

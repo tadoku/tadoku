@@ -178,7 +178,12 @@ export const aggregateContestLogsByDays = (
   } = {}
 
   getDates(contest.start, contest.end).forEach(date => {
-    initializedSeries[prettyDate(date)] = { x: date, y: 0, language: '' }
+    initializedSeries[prettyDate(date)] = {
+      x: date,
+      y: 0,
+      language: '',
+      size: 2,
+    }
   })
 
   languages.forEach(language => {

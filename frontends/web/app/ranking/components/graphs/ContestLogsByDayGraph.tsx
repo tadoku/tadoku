@@ -68,6 +68,7 @@ const Graph = ({ logs, contest }: Props) => {
             onValueMouseOut={() => setSelected(undefined)}
             key={language}
             color={graphColor(i)}
+            sizeRange={[1, 4]}
           />
         ))}
         {selected && (

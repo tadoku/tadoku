@@ -52,6 +52,7 @@ export const RawToContestLogMapper: Mapper<
   mediumId: raw.medium_id,
   amount: raw.amount,
   adjustedAmount: raw.adjusted_amount,
+  description: raw.description ? raw.description : undefined,
   date: new Date(raw.date),
 })
 
@@ -66,6 +67,7 @@ export const ContestLogToRawMapper: Mapper<
   medium_id: contestLog.mediumId,
   amount: contestLog.amount,
   adjusted_amount: contestLog.adjustedAmount,
+  description: contestLog.description ? contestLog.description : '',
   date: contestLog.date.toISOString(),
 })
 

@@ -63,6 +63,7 @@ export interface ContestLog {
   mediumId: number
   amount: number
   adjustedAmount: number
+  description?: string
   date: Date
 }
 
@@ -74,6 +75,7 @@ export interface RawContestLog {
   medium_id: number
   amount: number
   adjusted_amount: number
+  description: string
   date: string
 }
 

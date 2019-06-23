@@ -20,6 +20,7 @@ const ContestLogsTable = (props: Props) => (
         <Column>Date</Column>
         <Column>Language</Column>
         <Column>Medium</Column>
+        <Column>Description</Column>
         <Column alignRight>Amount</Column>
         <Column alignRight>Score</Column>
         {props.canEdit && <Column />}
@@ -28,9 +29,12 @@ const ContestLogsTable = (props: Props) => (
     <Body>
       {props.logs.map((l, i) => (
         <Row even={i % 2 === 0} key={l.id}>
-          <Column>{l.date.toLocaleString()}</Column>
+          <Column title={l.date.toLocaleString()}>
+            {l.date.toLocaleDateString()}
+          </Column>
           <Column>{languageNameByCode(l.languageCode)}</Column>
           <Column>{mediumDescriptionById(l.mediumId)}</Column>
+          <Column>{l.description || 'N/A'}</Column>
           <Column alignRight>{amountToPages(l.amount)}</Column>
           <Column alignRight>{amountToPages(l.adjustedAmount)}</Column>
           {props.canEdit && (

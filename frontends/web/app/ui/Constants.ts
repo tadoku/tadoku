@@ -12,6 +12,7 @@ const Constants = {
     success: '#7cc452',
     lightSuccess: 'rgba(137, 218, 89, 0.2)',
     destructiveWithAlpha: (alpha: number) => `rgba(252, 74, 73, ${alpha})`,
+    graphColorRange: ['#12939A', '#79C7E3', '#1A3177', '#FF9833', '#EF5D28'],
   },
   maxWidth: '1200px',
 }

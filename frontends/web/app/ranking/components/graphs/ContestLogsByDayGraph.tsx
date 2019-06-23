@@ -10,6 +10,7 @@ import {
   XYPlot,
   XAxis,
   YAxis,
+  AreaSeries,
   HorizontalGridLines,
   VerticalGridLines,
   makeWidthFlexible,
@@ -42,13 +43,25 @@ const Graph = ({ logs, contest }: Props) => {
           tickFormat={date => `${date.getMonth() + 1}-${date.getDate()}`}
         />
         <YAxis title="Pages" />
-        {Object.keys(data.aggregated).map(language => (
+        {Object.keys(data.aggregated).map((language, i) => (
+          <AreaSeries
+            data={data.aggregated[language] as any[]}
+            key={language}
+            curve={'curveMonotoneX'}
+            onValueMouseOver={value => setSelected(value)}
+            onValueMouseOut={() => setSelected(undefined)}
+            color={Constants.colors.graphColorRange[i]}
+            opacity={0.3}
+          />
+        ))}
+        {Object.keys(data.aggregated).map((language, i) => (
           <LineMarkSeries
             data={data.aggregated[language] as any[]}
             curve={'curveMonotoneX'}
             onValueMouseOver={value => setSelected(value)}
             onValueMouseOut={() => setSelected(undefined)}
             key={language}
+            color={Constants.colors.graphColorRange[i]}
           />
         ))}
         {selected && (

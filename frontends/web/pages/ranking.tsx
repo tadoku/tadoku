@@ -1,4 +1,5 @@
 import React from 'react'
+import Head from 'next/head'
 import { connect } from 'react-redux'
 import { State } from '../app/store'
 import RankingOverview from '../app/ranking/pages/RankingOverview'
@@ -41,5 +42,12 @@ export default connect(
     return null
   }
 
-  return <RankingOverview contest={contest} {...props} />
+  return (
+    <>
+      <Head>
+        <title>Tadoku - Ranking</title>
+      </Head>
+      <RankingOverview contest={contest} {...props} />
+    </>
+  )
 })

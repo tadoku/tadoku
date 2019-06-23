@@ -374,7 +374,8 @@ declare module 'react-vis' {
   export class CustomSVGSeries extends AbstractSeries<CustomSVGSeriesProps> {}
 
   export interface AreaSeriesProps extends AbstractSeriesProps<AreaSeriesPoint> {
-    getNull?: RVGetNull<AreaSeriesPoint>;
+    getNull?: RVGetNull<AreaSeriesPoint>
+    curve?: string | Function; //default: null
   }
   export class AreaSeries extends AbstractSeries<AreaSeriesProps> {}
 

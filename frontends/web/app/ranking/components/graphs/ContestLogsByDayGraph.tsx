@@ -24,6 +24,7 @@ import Constants from '../../../ui/Constants'
 import {
   GradientDefinitions,
   gradientColor,
+  gradientDefinitionUrl,
 } from '../../../ui/components/Graphs'
 
 interface Props {
@@ -55,7 +56,7 @@ const Graph = ({ logs, contest }: Props) => {
             curve={'curveMonotoneX'}
             onValueMouseOver={value => setSelected(value)}
             onValueMouseOut={() => setSelected(undefined)}
-            color={`url(#bg-${Constants.colors.graphColorRange[i]})`}
+            color={gradientDefinitionUrl(i)}
             opacity={0.3}
           />
         ))}

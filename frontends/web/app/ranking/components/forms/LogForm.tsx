@@ -121,7 +121,7 @@ const LogForm = ({
             onChange={e => setAmount(e.target.value)}
             min={0}
             max={3000}
-            step={1}
+            step={0.1}
             error={hasError.amount}
           />
           <GroupError message="Invalid page count" hidden={!hasError.amount} />

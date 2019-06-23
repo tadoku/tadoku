@@ -21,7 +21,10 @@ import {
 } from 'react-vis'
 import styled from 'styled-components'
 import Constants from '../../../ui/Constants'
-import { GradientDefinitions } from '../../../ui/components/Graphs'
+import {
+  GradientDefinitions,
+  gradientColor,
+} from '../../../ui/components/Graphs'
 
 interface Props {
   logs: ContestLog[]
@@ -63,7 +66,7 @@ const Graph = ({ logs, contest }: Props) => {
             onValueMouseOver={value => setSelected(value)}
             onValueMouseOut={() => setSelected(undefined)}
             key={language}
-            color={Constants.colors.graphColorRange[i]}
+            color={gradientColor(i)}
           />
         ))}
         {selected && (

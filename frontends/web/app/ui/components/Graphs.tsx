@@ -18,3 +18,8 @@ export const GradientDefinitions = (
     ))}
   </GradientDefs>
 )
+
+export const gradientColor = (i: number) =>
+  Constants.colors.graphColorRange[
+    i % (Constants.colors.graphColorRange.length - 1)
+  ]

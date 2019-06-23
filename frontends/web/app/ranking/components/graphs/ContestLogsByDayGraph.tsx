@@ -18,6 +18,7 @@ import {
   LineMarkSeries,
   Hint,
   LineMarkSeriesPoint,
+  GradientDefs,
 } from 'react-vis'
 import styled from 'styled-components'
 import Constants from '../../../ui/Constants'
@@ -36,6 +37,21 @@ const Graph = ({ logs, contest }: Props) => {
   return (
     <Container>
       <FlexiblePlot height={400} xType={'time'}>
+        <GradientDefs>
+          {Constants.colors.graphColorRange.map(color => (
+            <linearGradient
+              id={`bg-${color}`}
+              x1="0"
+              x2="0"
+              y1="0"
+              y2="1"
+              key={color}
+            >
+              <stop offset="0%" stopColor={color} stopOpacity={0.5} />
+              <stop offset="100%" stopColor={color} stopOpacity={0.3} />
+            </linearGradient>
+          ))}
+        </GradientDefs>
         <HorizontalGridLines />
         <VerticalGridLines />
         <XAxis
@@ -50,7 +66,7 @@ const Graph = ({ logs, contest }: Props) => {
             curve={'curveMonotoneX'}
             onValueMouseOver={value => setSelected(value)}
             onValueMouseOut={() => setSelected(undefined)}
-            color={Constants.colors.graphColorRange[i]}
+            color={`url(#bg-${Constants.colors.graphColorRange[i]})`}
             opacity={0.3}
           />
         ))}

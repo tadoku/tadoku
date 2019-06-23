@@ -229,16 +229,9 @@ export const aggregateContestLogsByMedium = (
   } = {}
 
   let total = 0
-  const legend: {
-    title: string
-  }[] = []
-
   logs.forEach(log => {
     if (!Object.keys(aggregated).includes(log.mediumId.toString())) {
       aggregated[log.mediumId] = 0
-      legend.push({
-        title: mediumDescriptionById(log.mediumId),
-      })
     }
 
     aggregated[log.mediumId] += log.adjustedAmount
@@ -250,6 +243,12 @@ export const aggregateContestLogsByMedium = (
     .map(k => ({
       amount: aggregated[k],
       medium: mediumDescriptionById(k),
+    }))
+
+  const legend = Object.values(forChart)
+    .sort((a, b) => a.amount - b.amount)
+    .map(mediumStats => ({
+      title: mediumStats.medium,
     }))
 
   return { aggregated: forChart, legend, totalAmount: total }

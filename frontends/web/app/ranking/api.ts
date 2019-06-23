@@ -79,6 +79,7 @@ const createLog = async (payload: {
   mediumId: number
   amount: number
   languageCode: string
+  description: string
 }): Promise<boolean> => {
   const response = await post(`/contest_logs`, {
     body: {
@@ -86,6 +87,7 @@ const createLog = async (payload: {
       medium_id: payload.mediumId,
       amount: payload.amount,
       language_code: payload.languageCode,
+      description: payload.description,
     },
     authenticated: true,
   })
@@ -108,6 +110,7 @@ const updateLog = async (
     mediumId: number
     amount: number
     languageCode: string
+    description: string
   },
 ): Promise<boolean> => {
   const response = await put(`/contest_logs/${id}`, {
@@ -116,6 +119,7 @@ const updateLog = async (
       medium_id: payload.mediumId,
       amount: payload.amount,
       language_code: payload.languageCode,
+      description: payload.description,
     },
     authenticated: true,
   })

@@ -54,6 +54,13 @@ const LogForm = ({
 
     return ''
   })
+  const [description, setDescription] = useState(() => {
+    if (log) {
+      return log.description || ''
+    }
+
+    return ''
+  })
 
   if (!registration) {
     return null
@@ -76,6 +83,7 @@ const LogForm = ({
           mediumId: Number(mediumId),
           amount: Number(amount),
           languageCode,
+          description,
         })
         break
       default:
@@ -84,6 +92,7 @@ const LogForm = ({
           mediumId: Number(mediumId),
           amount: Number(amount),
           languageCode,
+          description,
         })
         break
     }
@@ -137,6 +146,17 @@ const LogForm = ({
               </option>
             ))}
           </Select>
+        </Label>
+      </Group>
+      <Group>
+        <Label>
+          <LabelText>Description (optional)</LabelText>
+          <Input
+            type="text"
+            value={description}
+            onChange={e => setDescription(e.target.value)}
+            placeholder="e.g. One Piece volume 45"
+          />
         </Label>
       </Group>
       {registration.languages.length > 1 && (

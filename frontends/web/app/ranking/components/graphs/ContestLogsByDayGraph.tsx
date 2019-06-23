@@ -23,7 +23,7 @@ import styled from 'styled-components'
 import Constants from '../../../ui/Constants'
 import {
   GradientDefinitions,
-  gradientColor,
+  graphColor,
   gradientDefinitionUrl,
 } from '../../../ui/components/Graphs'
 
@@ -67,7 +67,7 @@ const Graph = ({ logs, contest }: Props) => {
             onValueMouseOver={value => setSelected(value)}
             onValueMouseOut={() => setSelected(undefined)}
             key={language}
-            color={gradientColor(i)}
+            color={graphColor(i)}
           />
         ))}
         {selected && (

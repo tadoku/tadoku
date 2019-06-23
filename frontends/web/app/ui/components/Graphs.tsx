@@ -19,10 +19,9 @@ export const GradientDefinitions = (
   </GradientDefs>
 )
 
-export const gradientColor = (i: number) =>
+export const graphColor = (i: number) =>
   Constants.colors.graphColorRange[
     i % (Constants.colors.graphColorRange.length - 1)
   ]
 
-export const gradientDefinitionUrl = (i: number) =>
-  `url(#bg-${gradientColor(i)})`
+export const gradientDefinitionUrl = (i: number) => `url(#bg-${graphColor(i)})`

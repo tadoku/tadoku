@@ -19,7 +19,7 @@ interface ButtonProps {
 export const Button: SFC<
   ButtonHTMLAttributes<HTMLButtonElement> & ButtonProps
 > = ({ icon, alignIconRight, loading, children, ...props }) => (
-  <StyledButton {...props} loading={loading}>
+  <StyledButton loading={loading} {...props}>
     {loading ? (
       <div>
         <FontAwesomeIcon icon="circle-notch" />
@@ -34,7 +34,19 @@ export const Button: SFC<
   </StyledButton>
 )
 
-const StyledButton = styled.button`
+const StyledButton = styled(
+  ({
+    primary,
+    large,
+    small,
+    destructive,
+    plain,
+    loading,
+    icon,
+    alignIconRight,
+    ...props
+  }) => <button {...props} />,
+)`
   border: 1px solid rgba(0, 0, 0, 0.12);
   background: transparent;
   box-shadow: inset 0px 0px 2px rgba(0, 0, 0, 0.08),

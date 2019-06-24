@@ -32,6 +32,10 @@ module.exports = {
         requireLast: false,
       },
     },
+    '@typescript-eslint/no-unused-vars': [
+      'error',
+      { ignoreRestSiblings: true },
+    ],
   },
   settings: {
     react: {

@@ -1,16 +1,16 @@
 import { Dispatch } from 'redux'
 import * as ContestStore from '../redux'
-import { connect } from 'react-redux'
+import { connect, useDispatch } from 'react-redux'
 import { Contest } from '../interfaces'
 import ContestApi from '../api'
 import { useCachedApiState } from '../../cache'
 
 interface Props {
   updateLatestContest: (contest: Contest | undefined) => void
-  dispatch: Dispatch
 }
 
-const ContestEffects = ({ updateLatestContest, dispatch }: Props) => {
+const ContestEffects = ({ updateLatestContest }: Props) => {
+  const dispatch = useDispatch()
   useCachedApiState({
     cacheKey: `latest_contest?i=1`,
     defaultValue: undefined as Contest | undefined,
@@ -23,7 +23,6 @@ const ContestEffects = ({ updateLatestContest, dispatch }: Props) => {
 }
 
 const mapDispatchToProps = (dispatch: Dispatch) => ({
-  dispatch,
   updateLatestContest: (contest: Contest | undefined) => {
     dispatch({
       type: ContestStore.ActionTypes.ContestUpdateLatestContest,

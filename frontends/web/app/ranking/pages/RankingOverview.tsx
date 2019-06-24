@@ -9,7 +9,7 @@ import { User } from '../../session/interfaces'
 import JoinContestModal from '../components/modals/JoinContestModal'
 import { useCachedApiState, ApiFetchStatus } from '../../cache'
 import { RankingsSerializer } from '../transform'
-import { Dispatch } from 'redux'
+import { useDispatch } from 'react-redux'
 
 interface Props {
   contest: Contest
@@ -17,7 +17,6 @@ interface Props {
   user: User | undefined
   effectCount: number
   refreshRegistration: () => void
-  dispatch: Dispatch
 }
 
 const RankingOverview = ({
@@ -26,9 +25,9 @@ const RankingOverview = ({
   user,
   effectCount,
   refreshRegistration,
-  dispatch,
 }: Props) => {
   const [joinModalOpen, setJoinModalOpen] = useState(false)
+  const dispatch = useDispatch()
 
   const { data: rankings, status } = useCachedApiState<Ranking[]>({
     cacheKey: `ranking_overview?i=1&contest_id=${contest.id}`,

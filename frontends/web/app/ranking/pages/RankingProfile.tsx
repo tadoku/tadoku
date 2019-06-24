@@ -24,14 +24,13 @@ import { useCachedApiState, isReady } from '../../cache'
 import { ContestSerializer } from '../../contest/transform'
 import { OptionalizeSerializer } from '../../transform'
 import { PageTitle } from '../../ui/components'
-import { Dispatch } from 'redux'
+import { useDispatch } from 'react-redux'
 
 interface Props {
   contestId: number
   userId: number
   effectCount: number
   refreshRanking: () => void
-  dispatch: Dispatch
 }
 
 const RankingProfile = ({
@@ -39,8 +38,8 @@ const RankingProfile = ({
   userId,
   effectCount,
   refreshRanking,
-  dispatch,
 }: Props) => {
+  const dispatch = useDispatch()
   const { data: contest, status: statusContest } = useCachedApiState<
     Contest | undefined
   >({

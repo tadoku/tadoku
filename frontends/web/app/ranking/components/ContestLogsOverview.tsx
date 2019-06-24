@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import { ContestLog, RankingRegistrationOverview } from '../interfaces'
 import EditLogFormModal from './modals/EditLogFormModal'
 import { State } from '../../store'
-import { connect } from 'react-redux'
+import { useSelector } from 'react-redux'
 import { User } from '../../session/interfaces'
 import RankingApi from '../api'
 import ContestLogsTable from './ContestLogsTable'
@@ -16,6 +16,7 @@ interface Props {
 }
 
 const ContestLogsOverview = (props: Props) => {
+  const signedInUser = useSelector((state: State) => state.session.user)
   const [selectedLog, setSelectedLog] = useState(undefined as
     | ContestLog
     | undefined)
@@ -37,9 +38,7 @@ const ContestLogsOverview = (props: Props) => {
   }
 
   const canEdit =
-    (props.signedInUser &&
-      props.signedInUser.id === props.registration.userId) ||
-    false
+    (signedInUser && signedInUser.id === props.registration.userId) || false
 
   return (
     <>
@@ -66,9 +65,4 @@ const ContestLogsOverview = (props: Props) => {
   )
 }
 
-const mapStateToProps = (state: State, props: Props) => ({
-  ...props,
-  signedInUser: state.session.user,
-})
-
-export default connect(mapStateToProps)(ContestLogsOverview)
+export default ContestLogsOverview

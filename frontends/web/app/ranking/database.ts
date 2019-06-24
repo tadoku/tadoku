@@ -2,7 +2,7 @@ import { Medium, Language } from './interfaces'
 
 export const AllMediums: Medium[] = [
   { id: 1, description: 'Book' },
-  { id: 2, description: 'Manga' },
+  { id: 2, description: 'Comic' },
   { id: 3, description: 'Net' },
   { id: 4, description: 'Full game' },
   { id: 5, description: 'Game' },

@@ -41,6 +41,7 @@
     "styled-media-query": "^2.1.2"
   },
   "devDependencies": {
+    "@types/jest": "^24.0.15",
     "@typescript-eslint/eslint-plugin": "^1.11.0",
     "@typescript-eslint/parser": "^1.11.0",
     "@zeit/next-css": "^1.0.1",
@@ -50,6 +51,7 @@
     "eslint-config-prettier": "^5.0.0",
     "eslint-plugin-prettier": "^3.1.0",
     "eslint-plugin-react": "^7.14.0",
+    "jest": "^24.8.0",
     "nodemon": "^1.19.1",
     "prettier": "1.18.2",
     "ts-node": "^8.3.0",

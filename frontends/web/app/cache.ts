@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react'
-import { Dispatch } from 'redux'
 
 import * as AppStore from './redux'
 import { useDispatch } from 'react-redux'

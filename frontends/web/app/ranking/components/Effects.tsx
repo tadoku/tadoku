@@ -1,6 +1,5 @@
-import { Dispatch } from 'redux'
 import * as RankingStore from '../redux'
-import { connect, useSelector, useDispatch } from 'react-redux'
+import { useSelector, useDispatch } from 'react-redux'
 import { RankingRegistration } from '../interfaces'
 import { State } from '../../store'
 import RankingApi from '../api'

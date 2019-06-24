@@ -34,6 +34,7 @@ export const Button: SFC<
   </StyledButton>
 )
 
+/* eslint-disable @typescript-eslint/no-unused-vars */
 const StyledButton = styled(
   ({
     primary,
@@ -168,6 +169,7 @@ const StyledButton = styled(
     opacity: 0.6;
   }
 `
+/* eslint-enable @typescript-eslint/no-unused-vars */
 
 const ButtonIconLeft = styled(FontAwesomeIcon)`
   margin-right: 7px;

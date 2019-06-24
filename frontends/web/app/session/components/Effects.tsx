@@ -1,21 +1,16 @@
 import { useEffect } from 'react'
-import { Dispatch } from 'redux'
 import * as SessionStore from '../redux'
 import { loadUserFromLocalStorage } from '../storage'
-import { connect, useSelector } from 'react-redux'
+import { useSelector, useDispatch } from 'react-redux'
 import { State } from '../../store'
 
-const SessionEffects = ({ loadUser }: { loadUser: () => void }) => {
+const SessionEffects = () => {
+  const dispatch = useDispatch()
   const effectCount = useSelector(
     (state: State) => state.session.runEffectCount,
   )
-  useEffect(() => loadUser(), [effectCount])
 
-  return null
-}
-
-const mapDispatchToProps = (dispatch: Dispatch<SessionStore.Action>) => ({
-  loadUser: () => {
+  useEffect(() => {
     const payload = loadUserFromLocalStorage()
 
     if (payload) {
@@ -24,10 +19,9 @@ const mapDispatchToProps = (dispatch: Dispatch<SessionStore.Action>) => ({
         payload,
       })
     }
-  },
-})
+  }, [effectCount])
 
-export default connect(
-  null,
-  mapDispatchToProps,
-)(SessionEffects)
+  return null
+}
+
+export default SessionEffects

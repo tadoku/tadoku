@@ -21,7 +21,6 @@ const ContestEffects = () => {
     defaultValue: undefined as Contest | undefined,
     fetchData: ContestApi.getLatest,
     onChange: updateLatestContest,
-    dispatch,
   })
 
   return null

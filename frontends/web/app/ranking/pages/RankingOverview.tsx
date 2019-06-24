@@ -9,7 +9,6 @@ import { User } from '../../session/interfaces'
 import JoinContestModal from '../components/modals/JoinContestModal'
 import { useCachedApiState, ApiFetchStatus } from '../../cache'
 import { RankingsSerializer } from '../transform'
-import { useDispatch } from 'react-redux'
 
 interface Props {
   contest: Contest
@@ -27,7 +26,6 @@ const RankingOverview = ({
   refreshRegistration,
 }: Props) => {
   const [joinModalOpen, setJoinModalOpen] = useState(false)
-  const dispatch = useDispatch()
 
   const { data: rankings, status } = useCachedApiState<Ranking[]>({
     cacheKey: `ranking_overview?i=1&contest_id=${contest.id}`,
@@ -41,7 +39,6 @@ const RankingOverview = ({
     },
     dependencies: [contest, effectCount],
     serializer: RankingsSerializer,
-    dispatch,
   })
 
   // @TODO: extract this business logic

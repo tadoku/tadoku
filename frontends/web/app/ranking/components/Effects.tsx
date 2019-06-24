@@ -1,6 +1,6 @@
 import { Dispatch } from 'redux'
 import * as RankingStore from '../redux'
-import { connect, useDispatch } from 'react-redux'
+import { connect } from 'react-redux'
 import { RankingRegistration } from '../interfaces'
 import { State } from '../../store'
 import { User } from '../../session/interfaces'
@@ -15,8 +15,6 @@ interface Props {
 }
 
 const RankingEffects = ({ user, updateRegistration, effectCount }: Props) => {
-  const dispatch = useDispatch()
-
   useCachedApiState({
     cacheKey: `current_registration?i=2`,
     defaultValue: undefined as RankingRegistration | undefined,
@@ -32,7 +30,6 @@ const RankingEffects = ({ user, updateRegistration, effectCount }: Props) => {
     onChange: updateRegistration,
     dependencies: [user, effectCount],
     serializer: OptionalizeSerializer(DefaultSerializer),
-    dispatch,
   })
 
   return null

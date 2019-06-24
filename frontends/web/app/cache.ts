@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Dispatch } from 'redux'
 
 import * as AppStore from './redux'
+import { useDispatch } from 'react-redux'
 
 export interface Serializer<DataType> {
   serialize: (data: DataType) => string
@@ -63,7 +64,6 @@ interface UseCachedApiStateParameters<DataType> {
   onChange?: (data: DataType) => void
   dependencies?: any[]
   serializer?: Serializer<DataType>
-  dispatch?: Dispatch
 }
 
 const isCacheValid = <DataType>(cache: CachedData<DataType>): boolean => {
@@ -83,13 +83,13 @@ export const useCachedApiState = <DataType>({
   onChange,
   dependencies: originalDependencies,
   serializer: originalSerializer,
-  dispatch,
 }: UseCachedApiStateParameters<DataType>) => {
   const [data, setData] = useState({
     body: defaultValue,
     status: ApiFetchStatus.Initialized,
   })
   const [apiEffectCounter, setApiEffectCounter] = useState(0)
+  const dispatch = useDispatch()
 
   const defaultMaxAge = 24 * 60 * 60 // 24 hours
   const cacheMaxAge = originalCacheMaxAge || defaultMaxAge

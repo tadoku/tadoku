@@ -1,20 +1,30 @@
 import { Dispatch } from 'redux'
 import * as RankingStore from '../redux'
-import { connect } from 'react-redux'
+import { connect, useSelector, useDispatch } from 'react-redux'
 import { RankingRegistration } from '../interfaces'
 import { State } from '../../store'
-import { User } from '../../session/interfaces'
 import RankingApi from '../api'
 import { useCachedApiState, DefaultSerializer } from '../../cache'
 import { OptionalizeSerializer } from '../../transform'
 
-interface Props {
-  user: User | undefined
-  updateRegistration: (registration: RankingRegistration | undefined) => void
-  effectCount: number
-}
+const RankingEffects = () => {
+  const user = useSelector((state: State) => state.session.user)
+  const effectCount = useSelector(
+    (state: State) => state.ranking.runEffectCount,
+  )
 
-const RankingEffects = ({ user, updateRegistration, effectCount }: Props) => {
+  const dispatch = useDispatch()
+  const updateRegistration = (
+    registration: RankingRegistration | undefined,
+  ) => {
+    dispatch({
+      type: RankingStore.ActionTypes.RankingUpdateRegistration,
+      payload: {
+        registration,
+      },
+    })
+  }
+
   useCachedApiState({
     cacheKey: `current_registration?i=2`,
     defaultValue: undefined as RankingRegistration | undefined,
@@ -35,23 +45,4 @@ const RankingEffects = ({ user, updateRegistration, effectCount }: Props) => {
   return null
 }
 
-const mapStateToProps = (state: State) => ({
-  user: state.session.user,
-  effectCount: state.ranking.runEffectCount,
-})
-
-const mapDispatchToProps = (dispatch: Dispatch<RankingStore.Action>) => ({
-  updateRegistration: (registration: RankingRegistration | undefined) => {
-    dispatch({
-      type: RankingStore.ActionTypes.RankingUpdateRegistration,
-      payload: {
-        registration,
-      },
-    })
-  },
-})
-
-export default connect(
-  mapStateToProps,
-  mapDispatchToProps,
-)(RankingEffects)
+export default RankingEffects

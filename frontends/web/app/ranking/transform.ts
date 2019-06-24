@@ -247,6 +247,7 @@ export const aggregateContestLogsByMedium = (
 
   const forChart = Object.keys(aggregated)
     .map(k => Number(k))
+    .sort((a, b) => aggregated[a] - aggregated[b])
     .map(k => ({
       amount: aggregated[k],
       medium: mediumDescriptionById(k),

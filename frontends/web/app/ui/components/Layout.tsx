@@ -39,6 +39,11 @@ const GlobalStyle = createGlobalStyle<typeof Constants>`
     padding: 0;
   }
 
+  ::selection {
+    background: ${props => props.colors.primary};
+    color: ${props => props.colors.light};
+  }
+
   a {
     color: ${props => props.colors.dark}
     text-decoration: none;

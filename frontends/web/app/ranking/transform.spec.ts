@@ -118,15 +118,20 @@ describe('aggregateContestLogsByMedium', () => {
     expect(result).toStrictEqual({
       aggregated: [
         {
-          amount: 14.336201,
-          medium: 'Full game',
-        },
-        {
           amount: 37,
           medium: 'Book',
+          color: '#12939A',
+        },
+        {
+          amount: 14.336201,
+          medium: 'Full game',
+          color: '#79C7E3',
         },
       ],
-      legend: [{ title: 'Full game' }, { title: 'Book' }],
+      legend: [
+        { title: 'Book', color: '#12939A' },
+        { title: 'Full game', color: '#79C7E3' },
+      ],
       totalAmount: 51.336201,
     })
   })

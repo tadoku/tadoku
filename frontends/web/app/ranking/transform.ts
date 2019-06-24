@@ -13,6 +13,7 @@ import { Contest } from './../contest/interfaces'
 import { languageNameByCode, mediumDescriptionById } from './database'
 import { Mapper } from '../interfaces'
 import { Serializer } from '../cache'
+import { graphColor } from '../ui/components/Graphs'
 
 export const RawToRankingMapper: Mapper<RawRanking, Ranking> = raw => ({
   contestId: raw.contest_id,
@@ -247,17 +248,16 @@ export const aggregateContestLogsByMedium = (
 
   const forChart = Object.keys(aggregated)
     .map(k => Number(k))
-    .sort((a, b) => aggregated[a] - aggregated[b])
-    .map(k => ({
+    .map((k, i) => ({
       amount: aggregated[k],
       medium: mediumDescriptionById(k),
+      color: graphColor(i),
     }))
 
-  const legend = Object.values(forChart)
-    .sort((a, b) => a.amount - b.amount)
-    .map(mediumStats => ({
-      title: mediumStats.medium,
-    }))
+  const legend = Object.values(forChart).map(mediumStats => ({
+    title: mediumStats.medium,
+    color: mediumStats.color,
+  }))
 
   return { aggregated: forChart, legend, totalAmount: total }
 }

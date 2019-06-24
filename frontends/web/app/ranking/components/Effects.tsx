@@ -1,6 +1,6 @@
 import { Dispatch } from 'redux'
 import * as RankingStore from '../redux'
-import { connect } from 'react-redux'
+import { connect, useDispatch } from 'react-redux'
 import { RankingRegistration } from '../interfaces'
 import { State } from '../../store'
 import { User } from '../../session/interfaces'
@@ -12,15 +12,11 @@ interface Props {
   user: User | undefined
   updateRegistration: (registration: RankingRegistration | undefined) => void
   effectCount: number
-  dispatch: Dispatch
 }
 
-const RankingEffects = ({
-  user,
-  updateRegistration,
-  effectCount,
-  dispatch,
-}: Props) => {
+const RankingEffects = ({ user, updateRegistration, effectCount }: Props) => {
+  const dispatch = useDispatch()
+
   useCachedApiState({
     cacheKey: `current_registration?i=2`,
     defaultValue: undefined as RankingRegistration | undefined,
@@ -48,7 +44,6 @@ const mapStateToProps = (state: State) => ({
 })
 
 const mapDispatchToProps = (dispatch: Dispatch<RankingStore.Action>) => ({
-  dispatch,
   updateRegistration: (registration: RankingRegistration | undefined) => {
     dispatch({
       type: RankingStore.ActionTypes.RankingUpdateRegistration,

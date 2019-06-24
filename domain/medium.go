@@ -19,7 +19,7 @@ type MediumID uint64
 // These are the named constants for medium IDs
 const (
 	MediumBook MediumID = iota + 1
-	MediumManga
+	MediumComic
 	MediumNet
 	MediumFullGame
 	MediumGame
@@ -31,7 +31,7 @@ const (
 // AllMediums is an array with all existing media
 var AllMediums = Mediums{
 	MediumBook:      Medium{Description: "Book", Points: 1},
-	MediumManga:     Medium{Description: "Manga", Points: 0.2},
+	MediumComic:     Medium{Description: "Comic", Points: 0.2},
 	MediumNet:       Medium{Description: "Net", Points: 1},
 	MediumFullGame:  Medium{Description: "Full game", Points: 0.1667},
 	MediumGame:      Medium{Description: "Game", Points: 0.05},

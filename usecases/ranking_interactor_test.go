@@ -118,7 +118,7 @@ func TestRankingInteractor_CreateLog(t *testing.T) {
 			UserID:    userID,
 			Language:  domain.Japanese,
 			Amount:    10,
-			MediumID:  domain.MediumManga,
+			MediumID:  domain.MediumComic,
 		}
 
 		rankings := domain.Rankings{
@@ -181,7 +181,7 @@ func TestRankingInteractor_CreateLog(t *testing.T) {
 			UserID:    userID,
 			Language:  domain.Japanese,
 			Amount:    10,
-			MediumID:  domain.MediumManga,
+			MediumID:  domain.MediumComic,
 		}
 
 		validator.EXPECT().Validate(log).Return(true, nil)
@@ -198,7 +198,7 @@ func TestRankingInteractor_CreateLog(t *testing.T) {
 			UserID:    userID,
 			Language:  domain.Japanese,
 			Amount:    10,
-			MediumID:  domain.MediumManga,
+			MediumID:  domain.MediumComic,
 		}
 
 		validator.EXPECT().Validate(log).Return(true, nil)
@@ -216,7 +216,7 @@ func TestRankingInteractor_CreateLog(t *testing.T) {
 			UserID:    userID,
 			Language:  domain.Global,
 			Amount:    10,
-			MediumID:  domain.MediumManga,
+			MediumID:  domain.MediumComic,
 		}
 
 		validator.EXPECT().Validate(log).Return(true, nil)
@@ -242,7 +242,7 @@ func TestRankingInteractor_UpdateLog(t *testing.T) {
 			UserID:    userID,
 			Language:  domain.Japanese,
 			Amount:    10,
-			MediumID:  domain.MediumManga,
+			MediumID:  domain.MediumComic,
 		}
 
 		rankings := domain.Rankings{
@@ -276,7 +276,7 @@ func TestRankingInteractor_UpdateLog(t *testing.T) {
 			UserID:    userID,
 			Language:  domain.Japanese,
 			Amount:    10,
-			MediumID:  domain.MediumManga,
+			MediumID:  domain.MediumComic,
 		}
 
 		validator.EXPECT().Validate(log).Return(true, nil)
@@ -293,7 +293,7 @@ func TestRankingInteractor_UpdateLog(t *testing.T) {
 			UserID:    userID,
 			Language:  domain.Global,
 			Amount:    10,
-			MediumID:  domain.MediumManga,
+			MediumID:  domain.MediumComic,
 		}
 
 		err := interactor.UpdateLog(log)
@@ -382,12 +382,12 @@ func TestRankingInteractor_UpdateRankings(t *testing.T) {
 			Amount:    10,
 			MediumID:  domain.MediumBook,
 		}
-		logKoreanManga := domain.ContestLog{
+		logKoreanComic := domain.ContestLog{
 			ContestID: contestID,
 			UserID:    userID,
 			Language:  domain.Korean,
 			Amount:    10,
-			MediumID:  domain.MediumManga,
+			MediumID:  domain.MediumComic,
 		}
 		rankings := domain.Rankings{
 			{ID: 1, ContestID: contestID, UserID: userID, Language: domain.Japanese, Amount: 0},
@@ -402,7 +402,7 @@ func TestRankingInteractor_UpdateRankings(t *testing.T) {
 			{ID: 4, ContestID: contestID, UserID: userID, Language: domain.Global, Amount: 12},
 		}
 		rankingRepo.EXPECT().FindAll(contestID, userID).Return(rankings, nil)
-		contestLogRepo.EXPECT().FindAll(contestID, userID).Return(domain.ContestLogs{logJapaneseBook, logKoreanManga}, nil)
+		contestLogRepo.EXPECT().FindAll(contestID, userID).Return(domain.ContestLogs{logJapaneseBook, logKoreanComic}, nil)
 		rankingRepo.EXPECT().UpdateAmounts(expectedRankings).Return(nil)
 
 		err := interactor.UpdateRanking(contestID, userID)
@@ -575,7 +575,7 @@ func TestRankingInteractor_ContestLogs(t *testing.T) {
 		// Happy path
 		expected := domain.ContestLogs{
 			{ContestID: contestID, UserID: userID, Language: domain.Japanese, Amount: 10, MediumID: domain.MediumBook, CreatedAt: time.Date(2019, 1, 1, 0, 0, 0, 0, time.UTC)},
-			{ContestID: contestID, UserID: userID, Language: domain.Japanese, Amount: 20, MediumID: domain.MediumManga, CreatedAt: time.Date(2019, 1, 1, 0, 0, 0, 0, time.UTC)},
+			{ContestID: contestID, UserID: userID, Language: domain.Japanese, Amount: 20, MediumID: domain.MediumComic, CreatedAt: time.Date(2019, 1, 1, 0, 0, 0, 0, time.UTC)},
 			{ContestID: contestID, UserID: userID, Language: domain.Chinese, Amount: 30, MediumID: domain.MediumGame, CreatedAt: time.Date(2019, 1, 1, 0, 0, 0, 0, time.UTC)},
 			{ContestID: contestID, UserID: userID, Language: domain.Korean, Amount: 100, MediumID: domain.MediumNet, CreatedAt: time.Date(2019, 1, 1, 0, 0, 0, 0, time.UTC)},
 			{ContestID: contestID, UserID: userID, Language: domain.Japanese, Amount: 40, MediumID: domain.MediumBook, CreatedAt: time.Date(2019, 1, 1, 0, 0, 0, 0, time.UTC)},

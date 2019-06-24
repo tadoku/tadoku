@@ -67,7 +67,7 @@ func TestContestLogRepository_FindAllByContestAndUser(t *testing.T) {
 		description string
 	}{
 		{domain.Japanese, domain.MediumBook, 10, "foobar"},
-		{domain.Korean, domain.MediumManga, 20, "foobar 2"},
+		{domain.Korean, domain.MediumComic, 20, "foobar 2"},
 		{domain.Global, domain.MediumNet, 30, "foobar 3"},
 	}
 

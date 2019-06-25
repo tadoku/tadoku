@@ -26,6 +26,7 @@ import { OptionalizeSerializer } from '../../transform'
 import { PageTitle, ButtonLink } from '../../ui/components'
 import { useSelector } from 'react-redux'
 import { State } from '../../store'
+import styled from 'styled-components'
 
 interface Props {
   contestId: number
@@ -118,15 +119,17 @@ const RankingProfile = ({
 
   return (
     <>
-      <PageTitle>{registrationOverview.userDisplayName}</PageTitle>
-      {signedInUser && userId === signedInUser.id && (
-        <ButtonLink
-          href={dataUrl}
-          download={`tadoku-contest-${contestId}-data.json`}
-        >
-          Export data
-        </ButtonLink>
-      )}
+      <Container>
+        <PageTitle>{registrationOverview.userDisplayName}</PageTitle>
+        {signedInUser && userId === signedInUser.id && (
+          <ButtonLink
+            href={dataUrl}
+            download={`tadoku-contest-${contestId}-data.json`}
+          >
+            Export data
+          </ButtonLink>
+        )}
+      </Container>
       <Cards>
         <Card>
           <CardContent>{contest.description}</CardContent>
@@ -157,3 +160,9 @@ const RankingProfile = ({
 }
 
 export default RankingProfile
+
+const Container = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+`

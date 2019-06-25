@@ -125,6 +125,7 @@ const RankingProfile = ({
           <ButtonLink
             href={dataUrl}
             download={`tadoku-contest-${contestId}-data.json`}
+            icon="file-download"
           >
             Export data
           </ButtonLink>

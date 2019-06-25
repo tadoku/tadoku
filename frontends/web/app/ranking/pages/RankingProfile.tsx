@@ -23,7 +23,7 @@ import Cards, {
 import { useCachedApiState, isReady } from '../../cache'
 import { ContestSerializer } from '../../contest/transform'
 import { OptionalizeSerializer } from '../../transform'
-import { PageTitle } from '../../ui/components'
+import { PageTitle, ButtonLink } from '../../ui/components'
 
 interface Props {
   contestId: number
@@ -109,9 +109,19 @@ const RankingProfile = ({
     )
   }
 
+  const dataUrl = `data:text/json;charset=utf-8,${encodeURIComponent(
+    JSON.stringify(logs, null, 2),
+  )}`
+
   return (
     <>
       <PageTitle>{registrationOverview.userDisplayName}</PageTitle>
+      <ButtonLink
+        href={dataUrl}
+        download={`tadoku-contest-${contestId}-data.json`}
+      >
+        Export data
+      </ButtonLink>
       <Cards>
         <Card>
           <CardContent>{contest.description}</CardContent>

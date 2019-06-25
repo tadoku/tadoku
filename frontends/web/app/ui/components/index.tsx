@@ -1,4 +1,4 @@
-import styled from 'styled-components'
+import styled, { css } from 'styled-components'
 import Constants from '../Constants'
 import React, { SFC, ButtonHTMLAttributes } from 'react'
 import { IconProp } from '@fortawesome/fontawesome-svg-core'
@@ -16,37 +16,7 @@ interface ButtonProps {
   alignIconRight?: boolean
 }
 
-export const Button: SFC<
-  ButtonHTMLAttributes<HTMLButtonElement> & ButtonProps
-> = ({ icon, alignIconRight, loading, children, ...props }) => (
-  <StyledButton loading={loading} {...props}>
-    {loading ? (
-      <div>
-        <FontAwesomeIcon icon="circle-notch" />
-      </div>
-    ) : (
-      <>
-        {icon && !alignIconRight && <ButtonIconLeft icon={icon} />}
-        {children}
-        {icon && alignIconRight && <ButtonIconRight icon={icon} />}
-      </>
-    )}
-  </StyledButton>
-)
-
-const StyledButton = styled(
-  ({
-    primary,
-    large,
-    small,
-    destructive,
-    plain,
-    loading,
-    icon,
-    alignIconRight,
-    ...props
-  }) => <button {...props} />,
-)`
+const buttonStyles = css`
   border: 1px solid rgba(0, 0, 0, 0.12);
   background: transparent;
   box-shadow: inset 0px 0px 2px rgba(0, 0, 0, 0.08),
@@ -167,6 +137,40 @@ const StyledButton = styled(
   &:disabled {
     opacity: 0.6;
   }
+ `
+
+export const Button: SFC<
+  ButtonHTMLAttributes<HTMLButtonElement> & ButtonProps
+> = ({ icon, alignIconRight, loading, children, ...props }) => (
+  <StyledButton loading={loading} {...props}>
+    {loading ? (
+      <div>
+        <FontAwesomeIcon icon="circle-notch" />
+      </div>
+    ) : (
+      <>
+        {icon && !alignIconRight && <ButtonIconLeft icon={icon} />}
+        {children}
+        {icon && alignIconRight && <ButtonIconRight icon={icon} />}
+      </>
+    )}
+  </StyledButton>
+)
+
+const StyledButton = styled(
+  ({
+    primary,
+    large,
+    small,
+    destructive,
+    plain,
+    loading,
+    icon,
+    alignIconRight,
+    ...props
+  }) => <button {...props} />,
+)`
+  ${buttonStyles}
 `
 
 const ButtonIconLeft = styled(FontAwesomeIcon)`

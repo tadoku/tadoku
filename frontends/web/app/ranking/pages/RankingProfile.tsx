@@ -24,6 +24,8 @@ import { useCachedApiState, isReady } from '../../cache'
 import { ContestSerializer } from '../../contest/transform'
 import { OptionalizeSerializer } from '../../transform'
 import { PageTitle, ButtonLink } from '../../ui/components'
+import { useSelector } from 'react-redux'
+import { State } from '../../store'
 
 interface Props {
   contestId: number
@@ -38,6 +40,7 @@ const RankingProfile = ({
   effectCount,
   refreshRanking,
 }: Props) => {
+  const signedInUser = useSelector((state: State) => state.session.user)
   const { data: contest, status: statusContest } = useCachedApiState<
     Contest | undefined
   >({
@@ -116,12 +119,14 @@ const RankingProfile = ({
   return (
     <>
       <PageTitle>{registrationOverview.userDisplayName}</PageTitle>
-      <ButtonLink
-        href={dataUrl}
-        download={`tadoku-contest-${contestId}-data.json`}
-      >
-        Export data
-      </ButtonLink>
+      {signedInUser && userId === signedInUser.id && (
+        <ButtonLink
+          href={dataUrl}
+          download={`tadoku-contest-${contestId}-data.json`}
+        >
+          Export data
+        </ButtonLink>
+      )}
       <Cards>
         <Card>
           <CardContent>{contest.description}</CardContent>

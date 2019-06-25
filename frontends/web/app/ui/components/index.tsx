@@ -1,6 +1,6 @@
 import styled, { css } from 'styled-components'
 import Constants from '../Constants'
-import React, { SFC, ButtonHTMLAttributes } from 'react'
+import React, { SFC, ButtonHTMLAttributes, AnchorHTMLAttributes } from 'react'
 import { IconProp } from '@fortawesome/fontawesome-svg-core'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import media from 'styled-media-query'
@@ -157,6 +157,24 @@ export const Button: SFC<
   </StyledButton>
 )
 
+export const ButtonLink: SFC<
+  AnchorHTMLAttributes<HTMLAnchorElement> & ButtonProps
+> = ({ icon, alignIconRight, loading, children, ...props }) => (
+  <StyledButtonLink loading={loading} {...props}>
+    {loading ? (
+      <div>
+        <FontAwesomeIcon icon="circle-notch" />
+      </div>
+    ) : (
+      <>
+        {icon && !alignIconRight && <ButtonIconLeft icon={icon} />}
+        {children}
+        {icon && alignIconRight && <ButtonIconRight icon={icon} />}
+      </>
+    )}
+  </StyledButtonLink>
+)
+
 const StyledButton = styled(
   ({
     primary,
@@ -169,6 +187,21 @@ const StyledButton = styled(
     alignIconRight,
     ...props
   }) => <button {...props} />,
+)`
+  ${buttonStyles}
+`
+const StyledButtonLink = styled(
+  ({
+    primary,
+    large,
+    small,
+    destructive,
+    plain,
+    loading,
+    icon,
+    alignIconRight,
+    ...props
+  }) => <a {...props} />,
 )`
   ${buttonStyles}
 `

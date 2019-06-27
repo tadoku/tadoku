@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Ranking, RankingRegistration } from '../../ranking/interfaces'
 import RankingList from '../../ranking/components/List'
 import RankingApi from '../../ranking/api'
@@ -74,6 +74,8 @@ const RankingOverview = ({
         We&apos;ll be running a test round from June 15th until June 30th UTC.
         All existing data will be wiped after this. Registrations are open now.
       </p>
+
+      <RemainingUntil date={contest.end} />
       <RankingList
         rankings={rankings}
         loading={status === ApiFetchStatus.Loading}
@@ -89,3 +91,38 @@ const Container = styled.div`
   align-items: center;
   justify-content: space-between;
 `
+
+// @TODO: Make this a proper component, too quick and dirty atm
+const RemainingUntil = ({ date }: { date: Date }) => {
+  const [currentDate, setCurrentDate] = useState(() => new Date())
+
+  useEffect(() => {
+    const id = setInterval(() => {
+      setCurrentDate(new Date())
+    }, 1000)
+
+    return () => clearInterval(id)
+  }, [])
+
+  if (!date.getTime) {
+    return null
+  }
+
+  const t = date.getTime() - currentDate.getTime()
+  const seconds = Math.floor((t / 1000) % 60)
+  const minutes = Math.floor((t / 1000 / 60) % 60)
+  const hours = Math.floor((t / (1000 * 60 * 60)) % 24)
+  const days = Math.floor(t / (1000 * 60 * 60 * 24))
+
+  if (t <= 0) {
+    return <p>Contest has ended.</p>
+  }
+
+  return (
+    <p>
+      {days} day{days !== 1 && 's'} {hours} hour{hours !== 1 && 's'} {minutes}{' '}
+      minute{minutes !== 1 && 's'} {seconds} second{seconds !== 1 && 's'}{' '}
+      remaining
+    </p>
+  )
+}

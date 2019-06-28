@@ -46,7 +46,7 @@
     "@typescript-eslint/eslint-plugin": "^1.11.0",
     "@typescript-eslint/parser": "^1.11.0",
     "@zeit/next-css": "^1.0.1",
-    "babel-plugin-styled-components": "^1.10.2",
+    "babel-plugin-styled-components": "^1.10.4",
     "cross-env": "^5.2.0",
     "eslint": "^5.16.0",
     "eslint-config-prettier": "^6.0.0",

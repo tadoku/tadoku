@@ -15,7 +15,17 @@ const SubmitPages = ({ registration, refreshRanking }: Props) => {
     return null
   }
 
-  const disabled = registration.start > new Date()
+  const hasStarted = registration.start > new Date()
+  const hasEnded = registration.end <= new Date()
+  const disabled = !hasStarted || hasEnded
+
+  let title = ''
+  if (hasStarted) {
+    title = 'You can submit updates as soon as the contest starts'
+  }
+  if (hasEnded) {
+    title = 'The contest has ended, you cannot submit updates anymore'
+  }
 
   return (
     <>
@@ -24,9 +34,7 @@ const SubmitPages = ({ registration, refreshRanking }: Props) => {
         icon="edit"
         plain
         disabled={disabled}
-        title={
-          disabled ? 'You can submit updates as soon as the contest starts' : ''
-        }
+        title={title}
       >
         Submit pages
       </Button>

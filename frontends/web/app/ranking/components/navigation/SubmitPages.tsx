@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { RankingRegistration } from '../../interfaces'
 import NewLogFormModal from '../modals/NewLogFormModal'
 import { Button } from '../../../ui/components'
@@ -10,13 +10,19 @@ interface Props {
 
 const SubmitPages = ({ registration, refreshRanking }: Props) => {
   const [open, setOpen] = useState(false)
+  const [currentDate, setCurrentDate] = useState(() => new Date())
+
+  useEffect(() => {
+    const id = setInterval(() => setCurrentDate(new Date()), 1000)
+    return () => clearInterval(id)
+  }, [])
 
   if (!registration) {
     return null
   }
 
-  const hasStarted = registration.start > new Date()
-  const hasEnded = registration.end <= new Date()
+  const hasStarted = registration.start > currentDate
+  const hasEnded = registration.end <= currentDate
   const disabled = !hasStarted || hasEnded
 
   let title = ''

@@ -3,8 +3,9 @@ import { useSelector, useDispatch } from 'react-redux'
 import { RankingRegistration } from '../interfaces'
 import { State } from '../../store'
 import RankingApi from '../api'
-import { useCachedApiState, DefaultSerializer } from '../../cache'
+import { useCachedApiState } from '../../cache'
 import { OptionalizeSerializer } from '../../transform'
+import { RankingRegistrationSerializer } from '../transform'
 
 const RankingEffects = () => {
   const user = useSelector((state: State) => state.session.user)
@@ -38,7 +39,7 @@ const RankingEffects = () => {
     },
     onChange: updateRegistration,
     dependencies: [user, effectCount],
-    serializer: OptionalizeSerializer(DefaultSerializer),
+    serializer: OptionalizeSerializer(RankingRegistrationSerializer),
   })
 
   return null

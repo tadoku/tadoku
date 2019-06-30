@@ -71,8 +71,13 @@ const RankingOverview = ({
         )}
       </Container>
       <p>
+        Tadoku's first official round will start September 1st until September
+        30th! Meanwhile we'll be working on improving the platform and adding
+        missing features.
+      </p>
+      <p>
         We&apos;ll be running a test round from June 15th until June 30th UTC.
-        All existing data will be wiped after this. Registrations are open now.
+        All existing data will be wiped after this.
       </p>
 
       <RemainingUntil date={contest.end} />

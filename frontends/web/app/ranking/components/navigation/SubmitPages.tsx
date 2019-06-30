@@ -21,12 +21,12 @@ const SubmitPages = ({ registration, refreshRanking }: Props) => {
     return null
   }
 
-  const hasStarted = registration.start > currentDate
+  const hasStarted = registration.start <= currentDate
   const hasEnded = registration.end <= currentDate
   const disabled = !hasStarted || hasEnded
 
   let title = ''
-  if (hasStarted) {
+  if (!hasStarted) {
     title = 'You can submit updates as soon as the contest starts'
   }
   if (hasEnded) {

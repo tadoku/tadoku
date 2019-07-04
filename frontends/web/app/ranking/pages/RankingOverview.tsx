@@ -9,6 +9,7 @@ import { User } from '../../session/interfaces'
 import JoinContestModal from '../components/modals/JoinContestModal'
 import { useCachedApiState, ApiFetchStatus } from '../../cache'
 import { RankingsSerializer } from '../transform'
+import { isContestActive } from '../domain'
 
 interface Props {
   contest: Contest
@@ -45,8 +46,7 @@ const RankingOverview = ({
   const canJoin =
     user &&
     contest &&
-    contest.open &&
-    contest.end > new Date() &&
+    isContestActive(contest) &&
     ((registration && registration.contestId !== contest.id) || !registration)
 
   return (

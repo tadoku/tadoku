@@ -8,6 +8,7 @@ import RankingApi from '../api'
 import ContestLogsTable from './ContestLogsTable'
 import ContestLogsList from './ContestLogsList'
 import { Contest } from '../../contest/interfaces'
+import { isContestActive } from '../domain'
 
 interface Props {
   logs: ContestLog[]
@@ -39,8 +40,8 @@ const ContestLogsOverview = (props: Props) => {
     props.refreshData()
   }
 
-  const canEdit =
-    (signedInUser && signedInUser.id === props.registration.userId) || false
+  const isOwner = signedInUser && signedInUser.id === props.registration.userId
+  const canEdit = (isOwner && isContestActive(props.contest)) || false
 
   return (
     <>

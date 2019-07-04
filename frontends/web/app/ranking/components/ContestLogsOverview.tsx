@@ -7,10 +7,12 @@ import { User } from '../../session/interfaces'
 import RankingApi from '../api'
 import ContestLogsTable from './ContestLogsTable'
 import ContestLogsList from './ContestLogsList'
+import { Contest } from '../../contest/interfaces'
 
 interface Props {
   logs: ContestLog[]
   registration: RankingRegistrationOverview
+  contest: Contest
   signedInUser?: User | undefined
   refreshData: () => void
 }

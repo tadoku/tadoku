@@ -150,6 +150,7 @@ const RankingProfile = ({
         </LargeCard>
         <LargeCard>
           <ContestLogsOverview
+            contest={contest}
             logs={logs}
             registration={registrationOverview}
             refreshData={refreshRanking}

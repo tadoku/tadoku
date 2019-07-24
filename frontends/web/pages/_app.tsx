@@ -1,7 +1,7 @@
 import React from 'react'
 import { initializeStore } from '../app/store'
 import { Provider } from 'react-redux'
-import App, { Container, NextAppContext } from 'next/app'
+import App, { Container, AppContext } from 'next/app'
 import withRedux from 'next-redux-wrapper'
 import { Store } from 'redux'
 import { loadUserFromLocalStorage } from '../app/session/storage'
@@ -13,7 +13,7 @@ import '../app/ui/setup'
 import Layout from '../app/ui/components/Layout'
 
 class MyApp extends App<{ store: Store }> {
-  static async getInitialProps({ Component, ctx }: NextAppContext) {
+  static async getInitialProps({ Component, ctx }: AppContext) {
     const pageProps = Component.getInitialProps
       ? await Component.getInitialProps(ctx)
       : {}

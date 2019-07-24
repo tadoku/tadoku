@@ -3,29 +3,33 @@ import Document, {
   Head,
   Main,
   NextScript,
-  NextDocumentContext,
+  DocumentContext,
+  DocumentInitialProps,
 } from 'next/document'
 import { ServerStyleSheet } from 'styled-components'
 
-export default class MyDocument extends Document<{
-  styleTags: React.ReactElement<{}>[]
-}> {
-  static getInitialProps({ renderPage }: NextDocumentContext) {
+export default class MyDocument extends Document {
+  static getInitialProps({
+    renderPage,
+  }: DocumentContext): Promise<DocumentInitialProps> {
     const sheet = new ServerStyleSheet()
+
     const page = renderPage(App => props =>
       sheet.collectStyles(<App {...props} />),
     )
 
-    const styleTags = sheet.getStyleElement()
+    const styles = sheet.getStyleElement()
 
-    return { ...page, styleTags }
+    return new Promise(resolve => {
+      resolve({ ...page, styles })
+    })
   }
 
   render() {
     return (
       <html>
         <Head>
-          {this.props.styleTags}
+          {this.props.styles}
           <link
             href="https://fonts.googleapis.com/css?family=Open+Sans:400,600&display=swap"
             rel="stylesheet"

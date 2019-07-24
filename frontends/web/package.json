@@ -22,7 +22,7 @@
     "@types/next": "^8.0.5",
     "@types/next-redux-wrapper": "^2.0.2",
     "@types/react": "^16.8.23",
-    "@types/react-dom": "^16.8.4",
+    "@types/react-dom": "^16.8.5",
     "@types/react-modal": "^3.8.2",
     "@types/react-redux": "^7.1.1",
     "@types/styled-components": "^4.1.18",

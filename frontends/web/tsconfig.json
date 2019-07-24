@@ -25,8 +25,10 @@
     "isolatedModules": true
   },
   "exclude": [
+    "dist",
     ".next",
-    "server/**/*.*"
+    "out",
+    "next.config.js"
   ],
   "include": [
     "next-env.d.ts",

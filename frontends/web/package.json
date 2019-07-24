@@ -26,7 +26,6 @@
     "@types/react-modal": "^3.8.2",
     "@types/react-redux": "^7.1.1",
     "@types/styled-components": "^4.1.18",
-    "@zeit/next-typescript": "^1.1.1",
     "express": "^4.17.1",
     "isomorphic-fetch": "^2.2.1",
     "next": "^9.0.2",

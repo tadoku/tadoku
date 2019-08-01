@@ -27,7 +27,7 @@
     "@types/styled-components": "^4.1.18",
     "express": "^4.17.1",
     "isomorphic-fetch": "^2.2.1",
-    "next": "^9.0.2",
+    "next": "^9.0.3",
     "next-redux-wrapper": "^3.0.0-alpha.3",
     "react": "^16.8.6",
     "react-content-loader": "^4.2.2",

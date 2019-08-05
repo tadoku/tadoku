@@ -13,7 +13,7 @@ require (
 	github.com/jmoiron/sqlx v1.2.0
 	github.com/joho/godotenv v1.3.0 // indirect
 	github.com/kelseyhightower/envconfig v1.3.0 // indirect
-	github.com/labstack/echo/v4 v4.1.6
+	github.com/labstack/echo/v4 v4.1.7
 	github.com/lib/pq v1.2.0
 	github.com/mattn/go-zglob v0.0.1 // indirect
 	github.com/srvc/fail v3.1.1+incompatible

@@ -29,7 +29,7 @@
     "isomorphic-fetch": "^2.2.1",
     "next": "^9.0.3",
     "next-redux-wrapper": "^3.0.0-alpha.3",
-    "react": "^16.8.6",
+    "react": "^16.9.0",
     "react-content-loader": "^4.2.2",
     "react-dom": "^16.8.6",
     "react-modal": "^3.9.1",

@@ -17,7 +17,7 @@ require (
 	github.com/lib/pq v1.2.0
 	github.com/mattn/go-zglob v0.0.1 // indirect
 	github.com/srvc/fail v3.1.1+incompatible
-	github.com/stretchr/testify v1.3.0
+	github.com/stretchr/testify v1.4.0
 	golang.org/x/crypto v0.0.0-20190605123033-f99c8df09eb5
 	golang.org/x/lint v0.0.0-20190409202823-959b441ac422
 	google.golang.org/appengine v1.5.0 // indirect

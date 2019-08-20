@@ -40,7 +40,7 @@
     "styled-media-query": "^2.1.2"
   },
   "devDependencies": {
-    "@types/jest": "^24.0.17",
+    "@types/jest": "^24.0.18",
     "@typescript-eslint/eslint-plugin": "^1.13.0",
     "@typescript-eslint/parser": "^1.13.0",
     "@zeit/next-css": "^1.0.1",

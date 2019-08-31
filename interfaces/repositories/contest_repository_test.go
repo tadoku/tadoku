@@ -97,12 +97,25 @@ func TestContestRepository_FindLatest(t *testing.T) {
 		contest, err := repo.FindLatest()
 		assert.EqualError(t, err, domain.ErrNotFound.Error())
 		assert.Empty(t, contest, "no contests should be found")
+	}
 
+	{
 		expected := domain.Contest{Description: "Foo 2019", Start: time.Now(), End: time.Now(), Open: true}
-		err = repo.Store(&expected)
+		err := repo.Store(&expected)
 		assert.NoError(t, err)
 
-		contest, err = repo.FindLatest()
+		contest, err := repo.FindLatest()
+		assert.Equal(t, expected.Description, contest.Description, "contest should have the same description")
+		assert.Equal(t, expected.Open, contest.Open, "contest should both be open")
+		assert.NoError(t, err)
+	}
+
+	{
+		expected := domain.Contest{Description: "Foo 2019 2", Start: time.Now(), End: time.Now(), Open: true}
+		err := repo.Store(&expected)
+		assert.NoError(t, err)
+
+		contest, err := repo.FindLatest()
 		assert.Equal(t, expected.Description, contest.Description, "contest should have the same description")
 		assert.Equal(t, expected.Open, contest.Open, "contest should both be open")
 		assert.NoError(t, err)

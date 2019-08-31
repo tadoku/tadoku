@@ -90,7 +90,7 @@ func (r *contestRepository) FindLatest() (domain.Contest, error) {
 	query := `
 		select id, description, start, "end", open
 		from contests
-		order by id
+		order by id desc
 		limit 1
 	`
 

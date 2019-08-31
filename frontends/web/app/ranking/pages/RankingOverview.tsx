@@ -76,8 +76,8 @@ const RankingOverview = ({
         platform and adding missing features.
       </p>
       <p>
-        I've been a bit busy and haven't had the time to run a new test round,
-        so it&apos;ll be a second test round. Sorry about that!
+        I&apos;ve been a bit busy and haven&apos;t had the time to run a new
+        test round, so it&apos;ll be a second test round. Sorry about that!
       </p>
 
       {new Date() >= contest.start && <RemainingUntil date={contest.end} />}

@@ -1,5 +1,8 @@
 import 'isomorphic-fetch'
-import { getAuthenticationToken } from './session/storage'
+import {
+  getAuthenticationToken,
+  removeUserFromLocalStorage,
+} from './session/storage'
 
 // TODO: move this endpoint into env
 const root =
@@ -44,7 +47,14 @@ const request = (
 }
 
 export const get = (endpoint: string, options?: APIOptions) =>
-  request('get', endpoint, options)
+  request('get', endpoint, options).then(response => {
+    if (response.status === 401) {
+      removeUserFromLocalStorage()
+      location.reload()
+    }
+
+    return response
+  })
 
 export const destroy = (endpoint: string, options?: APIOptions) =>
   request('delete', endpoint, options)

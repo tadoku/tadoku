@@ -80,7 +80,7 @@ const RankingOverview = ({
         so it&apos;ll be a second test round. Sorry about that!
       </p>
 
-      <RemainingUntil date={contest.end} />
+      {new Date() >= contest.start && <RemainingUntil date={contest.end} />}
       <RankingList
         rankings={rankings}
         loading={status === ApiFetchStatus.Loading}

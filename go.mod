@@ -6,7 +6,7 @@ require (
 	github.com/asaskevich/govalidator v0.0.0-20180720115003-f9ffefc3facf
 	github.com/creasty/configo v0.0.0-20170711121124-288b7e8980d2
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
-	github.com/getsentry/sentry-go v0.2.1
+	github.com/getsentry/sentry-go v0.3.0
 	github.com/ghodss/yaml v1.0.0 // indirect
 	github.com/golang/mock v1.3.1
 	github.com/gordonklaus/ineffassign v0.0.0-20180909121442-1003c8bd00dc

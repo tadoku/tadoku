@@ -40,7 +40,10 @@
     "styled-media-query": "^2.1.2"
   },
   "devDependencies": {
+    "@storybook/addon-info": "^5.1.11",
+    "@storybook/react": "^5.1.11",
     "@types/jest": "^24.0.18",
+    "@types/storybook__react": "^4.0.2",
     "@typescript-eslint/eslint-plugin": "^1.13.0",
     "@typescript-eslint/parser": "^1.13.0",
     "@zeit/next-css": "^1.0.1",
@@ -53,6 +56,7 @@
     "jest": "^24.9.0",
     "nodemon": "^1.19.2",
     "prettier": "1.18.2",
+    "react-docgen-typescript-loader": "^3.2.0",
     "ts-node": "^8.3.0",
     "typescript": "^3.6.2"
   }

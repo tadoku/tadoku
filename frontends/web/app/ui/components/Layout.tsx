@@ -20,7 +20,7 @@ const Layout: React.SFC<{}> = ({ children }) => {
 
 export default Layout
 
-const GlobalStyle = createGlobalStyle<typeof Constants>`
+export const GlobalStyle = createGlobalStyle<typeof Constants>`
   html,
   body {
     position: relative;
@@ -45,7 +45,7 @@ const GlobalStyle = createGlobalStyle<typeof Constants>`
   }
 
   a {
-    color: ${props => props.colors.dark}
+    color: ${props => props.colors.dark};
     text-decoration: none;
     transition: color 0.2s ease;
 

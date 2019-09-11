@@ -63,6 +63,6 @@
     "prettier": "1.18.2",
     "react-docgen-typescript-loader": "^3.2.0",
     "ts-node": "^8.3.0",
-    "typescript": "^3.6.2"
+    "typescript": "^3.6.3"
   }
 }

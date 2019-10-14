@@ -1,7 +1,7 @@
 import React from 'react'
 import { initializeStore } from '../app/store'
 import { Provider } from 'react-redux'
-import App, { Container, AppContext } from 'next/app'
+import App, { AppContext } from 'next/app'
 import withRedux from 'next-redux-wrapper'
 import { Store } from 'redux'
 import { loadUserFromLocalStorage } from '../app/session/storage'
@@ -38,14 +38,12 @@ class MyApp extends App<{ store: Store }> {
     const { Component, pageProps, store } = this.props
 
     return (
-      <Container>
-        <Provider store={store}>
-          <AppEffects />
-          <Layout>
-            <Component {...pageProps} />
-          </Layout>
-        </Provider>
-      </Container>
+      <Provider store={store}>
+        <AppEffects />
+        <Layout>
+          <Component {...pageProps} />
+        </Layout>
+      </Provider>
     )
   }
 }

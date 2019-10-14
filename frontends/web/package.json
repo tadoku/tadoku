@@ -7,9 +7,9 @@
   "author": "Anton Van Eechaute <974796+antonve@users.noreply.github.com>",
   "license": "MIT",
   "scripts": {
-    "dev": "nodemon",
-    "build": "next build && tsc && tsc --project tsconfig.server.json",
-    "start": "cross-env NODE_ENV=production node dist/index.js",
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
     "test": "jest",
     "lint": "eslint --ext .js,.ts,.tsx ./",
     "lint-fix": "eslint --fix --ext .js,.ts,.tsx ./",

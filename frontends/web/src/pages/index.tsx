@@ -1,8 +1,8 @@
 import { useEffect } from 'react'
 import Router from 'next/router'
 import { connect } from 'react-redux'
-import { User } from '../session/interfaces'
-import { State } from '../store'
+import { User } from '../app/session/interfaces'
+import { State } from '../app/store'
 interface Props {
   user: User | undefined
 }

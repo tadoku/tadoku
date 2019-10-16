@@ -1,13 +1,13 @@
 import React from 'react'
 import Head from 'next/head'
 import { connect } from 'react-redux'
-import { State } from '../store'
-import RankingOverview from '../ranking/pages/RankingOverview'
+import { State } from '../app/store'
+import RankingOverview from '../app/ranking/pages/RankingOverview'
 import { Dispatch } from 'redux'
-import * as RankingStore from '../ranking/redux'
-import { Contest } from '../contest/interfaces'
-import { RankingRegistration } from '../ranking/interfaces'
-import { User } from '../session/interfaces'
+import * as RankingStore from '../app/ranking/redux'
+import { Contest } from '../app/contest/interfaces'
+import { RankingRegistration } from '../app/ranking/interfaces'
+import { User } from '../app/session/interfaces'
 
 const mapStateToProps = (state: State) => ({
   contest: state.contest.latestContest,

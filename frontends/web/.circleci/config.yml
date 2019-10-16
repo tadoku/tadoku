@@ -30,9 +30,9 @@ jobs:
       - run:
           name: Deploy image to Docker hub
           command: |
-            if [ ! "$CIRCLE_BRANCH" == "master"]
-              exit 0
-            fi
+            # ignore branches other than master
+            [ ! "$CIRCLE_BRANCH" == "master"] && exit 0
+
   deploy:
     machine:
       image: circleci/classic:latest

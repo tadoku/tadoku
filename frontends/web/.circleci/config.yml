@@ -1,13 +1,5 @@
 version: 2
 jobs:
-  deploy:
-    machine:
-      enabled: true
-    steps:
-      - run:
-          name: Deploy Over SSH
-          command: |
-            ssh $SSH_USER@$SSH_HOST "./deploy-tadoku-web.sh"
   build:
     working_directory: ~/tadoku-web
     docker:
@@ -35,6 +27,20 @@ jobs:
       - run:
           name: Build production
           command: yarn build
+      - run:
+          name: Deploy image to Docker hub
+          command: |
+            if [ ! "$CIRCLE_BRANCH" == "master"]
+              exit 0
+            fi
+  deploy:
+    machine:
+      image: circleci/classic:latest
+    steps:
+      - run:
+          name: Deploy Over SSH
+          command: |
+            ssh $SSH_USER@$SSH_HOST "./deploy-tadoku-web.sh"
 
 workflows:
   version: 2

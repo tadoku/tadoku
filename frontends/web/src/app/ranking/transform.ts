@@ -9,7 +9,7 @@ import {
   RawRankingRegistration,
   RankingWithRank,
 } from './interfaces'
-import { Contest } from './../contest/interfaces'
+import { Contest } from '../contest/interfaces'
 import { languageNameByCode, mediumDescriptionById } from './database'
 import { Mapper } from '../interfaces'
 import { Serializer } from '../cache'

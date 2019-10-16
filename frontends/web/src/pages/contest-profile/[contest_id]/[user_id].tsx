@@ -1,11 +1,11 @@
 import React from 'react'
 import Head from 'next/head'
 import ErrorPage from 'next/error'
-import RankingProfile from '../../../src/ranking/pages/RankingProfile'
+import RankingProfile from '../../../ranking/pages/RankingProfile'
 import { connect } from 'react-redux'
-import { State } from '../../../src/store'
+import { State } from '../../../store'
 import { Dispatch } from 'redux'
-import * as RankingStore from '../../../src/ranking/redux'
+import * as RankingStore from '../../../ranking/redux'
 import { useRouter } from 'next/router'
 
 interface Props {

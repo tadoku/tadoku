@@ -1,7 +1,7 @@
 import React from 'react'
 import Head from 'next/head'
-import { SettingsTab } from '../../src/user/interfaces'
-import Settings from '../../src/user/pages/Settings'
+import { SettingsTab } from '../../user/interfaces'
+import Settings from '../../user/pages/Settings'
 import { useRouter } from 'next/router'
 
 const SettingsPage = () => {

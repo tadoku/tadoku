@@ -1,5 +1,5 @@
 import React from 'react'
-import { PageTitle } from '../app/ui/components'
+import { PageTitle } from '../src/ui/components'
 
 const LandingPage = () => {
   return (

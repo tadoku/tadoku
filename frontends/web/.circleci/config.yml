@@ -31,7 +31,10 @@ jobs:
           name: Deploy image to Docker hub
           command: |
             # ignore branches other than master
-            [ ! [ "$CIRCLE_BRANCH" == "master" ] ] && circleci-agent step halt
+            if [ ! "$CIRCLE_BRANCH" == "master" ]
+            then
+              circleci-agent step halt
+            fi
 
   deploy:
     machine:

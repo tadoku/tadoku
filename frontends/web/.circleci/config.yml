@@ -28,13 +28,17 @@ jobs:
           name: Build production
           command: yarn build
       - run:
-          name: Deploy image to Docker hub
+          name: Cancel if not master
           command: |
-            # ignore branches other than master
             if [ ! "$CIRCLE_BRANCH" == "master" ]
             then
-              circleci-agent step halt
+              # circleci-agent step halt
             fi
+      - setup_remote_docker
+      - run:
+          name: Deploy image to Docker hub
+          command: |
+            docker login -u $DOCKER_USER -p $DOCKER_PASSWORD
 
   deploy:
     machine:

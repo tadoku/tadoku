@@ -2,8 +2,7 @@ version: "3"
 
 services:
   tadoku-web:
-    build: .
-    image: tadoku/web
+    image: tadoku/web:latest
     container_name: tadoku-web
     network_mode: bridge
     restart: always

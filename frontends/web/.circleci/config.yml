@@ -41,7 +41,8 @@ jobs:
             docker login -u $DOCKER_USER -p $DOCKER_PASSWORD
 
             IMAGE_NAME=tadoku/web
-            docker build -t $IMAGE_NAME:${CIRCLE_SHA1} .
+            docker build -t $IMAGE_NAME:latest .
+            docker tag $IMAGE_NAME:latest $IMAGE_NAME:${CIRCLE_SHA1}
             docker push $IMAGE_NAME
 
   deploy:

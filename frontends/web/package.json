@@ -24,7 +24,7 @@
     "@types/react-dom": "^16.9.2",
     "@types/react-modal": "^3.10.0",
     "@types/react-redux": "^7.1.5",
-    "@types/styled-components": "^4.1.19",
+    "@types/styled-components": "^4.1.20",
     "isomorphic-fetch": "^2.2.1",
     "next": "^9.1.1",
     "next-redux-wrapper": "^4.0.1",

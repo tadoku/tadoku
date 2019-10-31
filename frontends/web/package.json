@@ -35,7 +35,7 @@
     "react-redux": "^7.1.1",
     "react-vis": "^1.11.7",
     "redux": "^4.0.4",
-    "styled-components": "^4.4.0",
+    "styled-components": "^4.4.1",
     "styled-media-query": "^2.1.2"
   },
   "devDependencies": {

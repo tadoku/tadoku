@@ -39,8 +39,8 @@ export default RankingList
 // @TODO: make sure the contest id is given with the ranking
 const RankingRow = ({ rank, tied, data }: RankingWithRank) => (
   <Row>
-    <Link href={`/contest-profile/2/${data.userId}`}>
-      <RowLink href={`/contest-profile/2/${data.userId}`}>
+    <Link href={`/contest-profile/3/${data.userId}`}>
+      <RowLink href={`/contest-profile/3/${data.userId}`}>
         <Rank>
           {tied && <span title="Tied">T</span>}
           {rank}

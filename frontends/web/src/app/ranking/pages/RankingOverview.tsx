@@ -70,16 +70,6 @@ const RankingOverview = ({
           </>
         )}
       </Container>
-      <p>
-        Tadoku&apos;s first <del>official</del> round will start September 1st
-        until September 30th! Meanwhile we&apos;ll be working on improving the
-        platform and adding missing features.
-      </p>
-      <p>
-        I&apos;ve been a bit busy and haven&apos;t had the time to run a new
-        test round, so it&apos;ll be a second test round. Sorry about that!
-      </p>
-
       {new Date() >= contest.start && <RemainingUntil date={contest.end} />}
       <RankingList
         rankings={rankings}

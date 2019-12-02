@@ -20,9 +20,9 @@ interface Props {
 
 const ContestLogsOverview = (props: Props) => {
   const signedInUser = useSelector((state: State) => state.session.user)
-  const [selectedLog, setSelectedLog] = useState(undefined as
-    | ContestLog
-    | undefined)
+  const [selectedLog, setSelectedLog] = useState(
+    undefined as ContestLog | undefined,
+  )
 
   const finishUpdate = () => {
     props.refreshData()

@@ -151,7 +151,4 @@ const mapDispatchToProps = (dispatch: Dispatch<SessionStore.Action>) => ({
   },
 })
 
-export default connect(
-  null,
-  mapDispatchToProps,
-)(RegisterForm)
+export default connect(null, mapDispatchToProps)(RegisterForm)

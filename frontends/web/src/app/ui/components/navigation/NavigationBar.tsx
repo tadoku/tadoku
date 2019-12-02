@@ -67,10 +67,7 @@ const mapDispatchToProps = (dispatch: Dispatch<Action>) => ({
   },
 })
 
-export default connect(
-  mapStateToProps,
-  mapDispatchToProps,
-)(NavigationBar)
+export default connect(mapStateToProps, mapDispatchToProps)(NavigationBar)
 
 const StyledNav = styled.nav`
   display: flex;

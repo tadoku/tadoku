@@ -1,7 +1,7 @@
 import { Contest } from './interfaces'
 
 export const initialState = {
-  latestContest: undefined as (Contest | undefined),
+  latestContest: undefined as Contest | undefined,
 }
 
 // Actions

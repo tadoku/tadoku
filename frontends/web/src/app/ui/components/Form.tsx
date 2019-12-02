@@ -123,11 +123,9 @@ const StyledRadio = styled.span`
   `}
 `
 
-export const RadioButton: SFC<
-  InputHTMLAttributes<HTMLInputElement> & {
-    label: string
-  }
-> = ({ label, checked, ...props }) => (
+export const RadioButton: SFC<InputHTMLAttributes<HTMLInputElement> & {
+  label: string
+}> = ({ label, checked, ...props }) => (
   <RadioLabel checked={checked}>
     <HiddenRadio type="radio" {...props} checked={checked} />
     <StyledRadio checked={checked} />

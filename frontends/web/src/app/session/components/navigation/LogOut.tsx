@@ -32,7 +32,4 @@ const mapDispatchToProps = (dispatch: Dispatch<SessionStore.Action>) => ({
   },
 })
 
-export default connect(
-  null,
-  mapDispatchToProps,
-)(LogOut)
+export default connect(null, mapDispatchToProps)(LogOut)

@@ -139,9 +139,8 @@ const buttonStyles = css`
   }
  `
 
-export const Button: SFC<
-  ButtonHTMLAttributes<HTMLButtonElement> & ButtonProps
-> = ({ icon, alignIconRight, loading, children, ...props }) => (
+export const Button: SFC<ButtonHTMLAttributes<HTMLButtonElement> &
+  ButtonProps> = ({ icon, alignIconRight, loading, children, ...props }) => (
   <StyledButton loading={loading} {...props}>
     {loading ? (
       <div>
@@ -157,9 +156,8 @@ export const Button: SFC<
   </StyledButton>
 )
 
-export const ButtonLink: SFC<
-  AnchorHTMLAttributes<HTMLAnchorElement> & ButtonProps
-> = ({ icon, alignIconRight, loading, children, ...props }) => (
+export const ButtonLink: SFC<AnchorHTMLAttributes<HTMLAnchorElement> &
+  ButtonProps> = ({ icon, alignIconRight, loading, children, ...props }) => (
   <StyledButtonLink loading={loading} {...props}>
     {loading ? (
       <div>

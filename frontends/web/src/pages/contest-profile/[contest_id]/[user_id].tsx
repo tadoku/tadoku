@@ -44,7 +44,4 @@ const mapDispatchToProps = (dispatch: Dispatch<RankingStore.Action>) => ({
   },
 })
 
-export default connect(
-  mapStateToProps,
-  mapDispatchToProps,
-)(RankingDetails)
+export default connect(mapStateToProps, mapDispatchToProps)(RankingDetails)

@@ -122,7 +122,4 @@ const mapDispatchToProps = (dispatch: Dispatch<SessionStore.Action>) => ({
   },
 })
 
-export default connect(
-  mapStateToProps,
-  mapDispatchToProps,
-)(ProfileForm)
+export default connect(mapStateToProps, mapDispatchToProps)(ProfileForm)

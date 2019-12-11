@@ -19,7 +19,7 @@
     "@fortawesome/fontawesome-svg-core": "^1.2.26",
     "@fortawesome/free-solid-svg-icons": "^5.12.0",
     "@fortawesome/react-fontawesome": "^0.1.8",
-    "@types/next-redux-wrapper": "^2.0.2",
+    "@types/next-redux-wrapper": "^3.0.0",
     "@types/react": "^16.9.16",
     "@types/react-dom": "^16.9.4",
     "@types/react-modal": "^3.10.1",

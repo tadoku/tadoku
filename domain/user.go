@@ -9,13 +9,14 @@ type Password string
 
 // User holds everything related to a user's account data
 type User struct {
-	ID          uint64 `json:"id" db:"id"`
-	Email       string `json:"email" db:"email"`
-	DisplayName string `json:"display_name" db:"display_name"`
+	ID          uint64       `json:"id" db:"id"`
+	Email       string       `json:"email" db:"email"`
+	DisplayName string       `json:"display_name" db:"display_name" valid:"utfletternum,required,runelength(2|18)"`
+	Role        Role         `json:"role" db:"role"`
+	Preferences *Preferences `json:"preferences" db:"preferences"`
+
 	// Password max runelength is an arbitrary high number that in theory should never be hit
-	Password         Password     `json:"password" db:"password" valid:"runelength(6|99999999)"`
-	Role             Role         `json:"role" db:"role"`
-	Preferences      *Preferences `json:"preferences" db:"preferences"`
+	Password         Password `json:"password" db:"password" valid:"runelength(6|99999999)"`
 	isPasswordHashed bool
 }
 

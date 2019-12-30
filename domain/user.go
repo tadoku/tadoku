@@ -1,6 +1,7 @@
 package domain
 
 import (
+	"strings"
 	"unicode"
 
 	"github.com/srvc/fail"
@@ -60,13 +61,15 @@ func (Password) MarshalJSON() ([]byte, error) {
 }
 
 func validateDisplayName(name string) bool {
-	for _, c := range name {
+	trimmedName := strings.TrimSpace(name)
+
+	for _, c := range trimmedName {
 		if !(unicode.IsLetter(c) || unicode.IsNumber(c) || c == '_' || c == '-' || c == ' ') {
 			return false
 		}
 	}
 
-	length := len(name)
+	length := len(trimmedName)
 	if !(length >= 2 && length <= 18) {
 		return false
 	}

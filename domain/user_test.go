@@ -59,6 +59,10 @@ func TestUser_Validation(t *testing.T) {
 			nil,
 		},
 		{
+			domain.User{DisplayName: "           ", Password: "apassword"},
+			domain.ErrDisplayNameInvalid,
+		},
+		{
 			domain.User{DisplayName: "a", Password: "apassword"},
 			domain.ErrDisplayNameInvalid,
 		},

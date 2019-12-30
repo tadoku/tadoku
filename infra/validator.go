@@ -2,6 +2,7 @@ package infra
 
 import (
 	"github.com/asaskevich/govalidator"
+
 	"github.com/tadoku/api/usecases"
 )
 

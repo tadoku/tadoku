@@ -4,11 +4,7 @@ import {
   removeUserFromLocalStorage,
 } from './session/storage'
 
-// TODO: move this endpoint into env
-const root =
-  process.env.NODE_ENV === 'production'
-    ? 'https://api.tadoku.app'
-    : 'http://localhost:4000'
+const root = process.env.API_ROOT
 
 interface APIOptions {
   authenticated?: boolean

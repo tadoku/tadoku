@@ -1,6 +1,8 @@
 import React from 'react'
 import LogInLink from '../../../session/components/navigation/LogIn'
 import RegisterLink from '../../../session/components/navigation/Register'
+import Link from 'next/link'
+import { Button } from '..'
 
 export const AnonymousNavigationBar = ({
   refreshSession,
@@ -8,6 +10,16 @@ export const AnonymousNavigationBar = ({
   refreshSession: () => void
 }) => (
   <>
+    <Link href="/blog">
+      <a href="">
+        <Button plain>Blog</Button>
+      </a>
+    </Link>
+    <Link href="/ranking">
+      <a href="">
+        <Button plain>Ranking</Button>
+      </a>
+    </Link>
     <LogInLink refreshSession={refreshSession} />
     <RegisterLink refreshSession={refreshSession} />
   </>

@@ -9,7 +9,7 @@ interface Props {
 
 const Home = ({}: Props) => {
   useEffect(() => {
-    Router.replace('/ranking')
+    Router.replace('/blog')
   }, [])
 
   return null

@@ -1,10 +1,13 @@
 import React from 'react'
 import styled from 'styled-components'
 import media from 'styled-media-query'
+import Link from 'next/link'
+
 import { RankingRegistration } from '../../../ranking/interfaces'
 import SubmitPagesLink from '../../../ranking/components/navigation/SubmitPages'
 import { User } from '../../../session/interfaces'
 import UserProfile from '../../../session/components/navigation/UserMenu'
+import { Button } from '..'
 
 interface Props {
   user: User
@@ -19,6 +22,16 @@ export const ActiveUserNavigationBar = ({
 }: Props) => (
   <>
     <LinkContainer>
+      <Link href="/blog">
+        <a href="">
+          <Button plain>Blog</Button>
+        </a>
+      </Link>
+      <Link href="/ranking">
+        <a href="">
+          <Button plain>Ranking</Button>
+        </a>
+      </Link>
       <SubmitPagesLink
         registration={registration}
         refreshRanking={refreshRanking}
@@ -40,6 +53,10 @@ const LinkContainer = styled.div`
     padding: 0;
     flex-direction: column;
   `}
+
+  * + * {
+    margin-left: 20px;
+  }
 `
 
 const UserProfileContainer = styled.div`

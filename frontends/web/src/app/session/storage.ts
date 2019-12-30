@@ -1,6 +1,6 @@
 import { User } from './interfaces'
 
-const LOCAL_STORAGE_USER_KEY = 'user'
+const LOCAL_STORAGE_USER_KEY = 'user?i=1'
 
 export const storeUserInLocalStorage = (user: {
   token: string

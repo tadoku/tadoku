@@ -20,7 +20,7 @@ const getPosts = async (): Promise<Post[]> => {
 
   return Object.entries(response)
     .filter(([key]) => key !== 'meta')
-    .map(([_, p]) => ({
+    .map(([, p]) => ({
       uuid: p.uuid,
       title: p.title,
       html: p.html,

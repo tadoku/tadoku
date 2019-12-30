@@ -5,9 +5,7 @@ import { useCachedApiState } from '../../cache'
 import { Post } from '../domain'
 import BlogPost from '../components/BlogPost'
 
-interface Props {}
-
-const BlogsList = ({}: Props) => {
+const BlogsList = () => {
   const { data: posts } = useCachedApiState<Post[]>({
     cacheKey: `blog_list?i=1`,
     defaultValue: [],

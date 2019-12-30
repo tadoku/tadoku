@@ -2,7 +2,7 @@ import React from 'react'
 import Head from 'next/head'
 import BlogsList from '../app/blog/pages/BlogsList'
 
-export default () => (
+const Blog = () => (
   <>
     <Head>
       <title>Tadoku - Blog</title>
@@ -10,3 +10,5 @@ export default () => (
     <BlogsList />
   </>
 )
+
+export default Blog

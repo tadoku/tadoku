@@ -23,3 +23,23 @@ func TestUser_PasswordIsNotExported(t *testing.T) {
 	json.Unmarshal(userJSON, &newUser)
 	assert.Empty(t, newUser.Password)
 }
+
+func TestUser_Validation(t *testing.T) {
+	// Happy path
+	{
+		u := User{
+			Password: "ilkjgewojgewjpoe",
+		}
+		ok, err := u.Validate()
+		assert.True(t, ok, "a new user with correct data should validate correctly")
+		assert.NoError(t, err, "a new user with correct data should validate correctly")
+	}
+
+	// Missing password for new user
+	{
+		u := User{}
+		ok, err := u.Validate()
+		assert.False(t, ok, "a new user without a password should not validate correctly")
+		assert.EqualError(t, err, ErrUserMissingPassword.Error(), "a new user without a password should not validate correctly")
+	}
+}

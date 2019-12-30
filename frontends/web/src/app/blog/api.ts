@@ -2,7 +2,7 @@ import GhostContentAPI from '@tryghost/content-api'
 import { Post } from './domain'
 
 const api = GhostContentAPI({
-  url: 'https://blog.tadoku.app',
+  url: process.env.GHOST_URL || '',
   key: process.env.GHOST_KEY || '',
   version: 'canary',
 })

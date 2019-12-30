@@ -21,6 +21,7 @@ type Ranking struct {
 // GetView gets the external view representation of a Ranking
 func (r Ranking) GetView() RankingView {
 	return RankingView{
+		ContestID:       r.ContestID,
 		UserID:          r.UserID,
 		UserDisplayName: r.UserDisplayName,
 		Language:        r.Language,
@@ -44,6 +45,7 @@ func (r Rankings) GetView() []RankingView {
 
 // RankingView is a representation of a ranking for external usages
 type RankingView struct {
+	ContestID       uint64       `json:"contest_id"`
 	UserID          uint64       `json:"user_id"`
 	UserDisplayName string       `json:"user_display_name"`
 	Language        LanguageCode `json:"language_code"`

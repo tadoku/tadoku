@@ -80,7 +80,7 @@ func (r *rankingRepository) RankingsForContest(
 	var rankings []domain.Ranking
 
 	query := `
-		select rankings.id as id, contest_id, user_id, language_code, amount, created_at, updated_at, users.display_name as user_display_name
+		select rankings.id as id, rankings.contest_id as contest_id, user_id, language_code, amount, created_at, updated_at, users.display_name as user_display_name
 		from rankings
 		inner join users on users.id = rankings.user_id
 		where contest_id = $1 and language_code = $2

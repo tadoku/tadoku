@@ -4,7 +4,6 @@ import {
   removeUserFromLocalStorage,
 } from './session/storage'
 
-// TODO: move this endpoint into env
 const root = process.env.API_ROOT
 
 interface APIOptions {

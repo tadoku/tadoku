@@ -62,7 +62,7 @@ const SettingsLink = ({
   label: string
 }) => (
   <SettingsItem active={activeTab === tab}>
-    <Link as={`/settings/${tab}`} href={`/settings?tab=${tab}`}>
+    <Link as={`/settings/${tab}`} href={`/settings/[tab]`}>
       <StyledLink href="" active={activeTab === tab}>
         <Icon icon={icon} />
         {label}

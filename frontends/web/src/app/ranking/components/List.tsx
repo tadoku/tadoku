@@ -36,11 +36,13 @@ const RankingList = (props: Props) => {
 
 export default RankingList
 
-// @TODO: make sure the contest id is given with the ranking
 const RankingRow = ({ rank, tied, data }: RankingWithRank) => (
   <Row>
-    <Link href={`/contest-profile/${data.contestId}/${data.userId}`}>
-      <RowLink href={`/contest-profile/${data.contestId}/${data.userId}`}>
+    <Link
+      href="/contest-profile/[contest_id]/[user_id]"
+      as={`/contest-profile/${data.contestId}/${data.userId}`}
+    >
+      <RowLink href="">
         <Rank>
           {tied && <span title="Tied">T</span>}
           {rank}

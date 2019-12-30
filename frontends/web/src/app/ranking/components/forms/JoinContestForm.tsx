@@ -34,7 +34,8 @@ const JoinContestForm = ({
   const [error, setError] = useState(undefined as string | undefined)
   const [languages, setLanguages] = useState([undefined] as (
     | string
-    | undefined)[])
+    | undefined
+  )[])
 
   const submit = async (event: FormEvent) => {
     event.preventDefault()

@@ -1,7 +1,7 @@
 import { RankingRegistration } from './interfaces'
 
 export const initialState = {
-  registration: undefined as (RankingRegistration | undefined),
+  registration: undefined as RankingRegistration | undefined,
   runEffectCount: 0,
 }
 

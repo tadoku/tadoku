@@ -7,7 +7,7 @@ interface Props {
   user: User | undefined
 }
 
-const Home = ({  }: Props) => {
+const Home = ({}: Props) => {
   useEffect(() => {
     Router.replace('/ranking')
   }, [])

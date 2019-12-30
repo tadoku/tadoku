@@ -34,9 +34,9 @@ interface Props {
 
 const Graph = ({ logs, contest }: Props) => {
   const data = aggregateContestLogsByDays(logs, contest)
-  const [selected, setSelected] = useState(undefined as
-    | undefined
-    | LineMarkSeriesPoint)
+  const [selected, setSelected] = useState(
+    undefined as undefined | LineMarkSeriesPoint,
+  )
 
   return (
     <Container>

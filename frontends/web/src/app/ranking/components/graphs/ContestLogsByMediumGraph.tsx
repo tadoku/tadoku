@@ -17,9 +17,9 @@ interface Props {
 
 const Graph = ({ logs }: Props) => {
   const data = aggregateContestLogsByMedium(logs)
-  const [selected, setSelected] = useState(undefined as
-    | undefined
-    | RadialChartPoint)
+  const [selected, setSelected] = useState(
+    undefined as undefined | RadialChartPoint,
+  )
 
   return (
     <Container>

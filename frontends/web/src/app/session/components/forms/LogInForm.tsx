@@ -121,7 +121,4 @@ const mapDispatchToProps = (dispatch: Dispatch<SessionStore.Action>) => ({
   },
 })
 
-export default connect(
-  null,
-  mapDispatchToProps,
-)(LogInForm)
+export default connect(null, mapDispatchToProps)(LogInForm)

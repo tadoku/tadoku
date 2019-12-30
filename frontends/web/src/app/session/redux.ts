@@ -1,8 +1,8 @@
 import { User } from './interfaces'
 
 export const initialState = {
-  token: undefined as (string | undefined),
-  user: undefined as (User | undefined),
+  token: undefined as string | undefined,
+  user: undefined as User | undefined,
   loaded: false,
   runEffectCount: 0,
 }

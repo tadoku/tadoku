@@ -274,15 +274,12 @@ export const rankingsToRegistrationOverview = (
       languageCode: r.languageCode,
       amount: r.amount,
     }))
-    .reduce(
-      (acc, element) => {
-        if (element.languageCode === 'GLO') {
-          return [element, ...acc]
-        }
-        return [...acc, element]
-      },
-      [] as { languageCode: string; amount: number }[],
-    )
+    .reduce((acc, element) => {
+      if (element.languageCode === 'GLO') {
+        return [element, ...acc]
+      }
+      return [...acc, element]
+    }, [] as { languageCode: string; amount: number }[])
 
   return {
     contestId: rankings[0].contestId,

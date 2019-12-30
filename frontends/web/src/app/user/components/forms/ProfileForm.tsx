@@ -38,8 +38,6 @@ const ProfileForm = ({ user, setUser, userLoaded }: Props) => {
     return null
   }
 
-  const validate = () => validateDisplayName(displayName)
-
   const submit = async (event: FormEvent) => {
     event.preventDefault()
 
@@ -66,6 +64,8 @@ const ProfileForm = ({ user, setUser, userLoaded }: Props) => {
     }
   }
 
+  const validate = () => validateDisplayName(displayName)
+
   const hasError = {
     form: !validate(),
     displayName: displayName != '' && !validateDisplayName(displayName),
@@ -85,7 +85,7 @@ const ProfileForm = ({ user, setUser, userLoaded }: Props) => {
             error={hasError.displayName}
           />
           <GroupError
-            message="Display name should be at least 2 characters"
+            message="Should be between 2-18 letters or numbers"
             hidden={!hasError.displayName}
           />
         </Label>
@@ -122,7 +122,4 @@ const mapDispatchToProps = (dispatch: Dispatch<SessionStore.Action>) => ({
   },
 })
 
-export default connect(
-  mapStateToProps,
-  mapDispatchToProps,
-)(ProfileForm)
+export default connect(mapStateToProps, mapDispatchToProps)(ProfileForm)

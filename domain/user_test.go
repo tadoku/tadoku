@@ -40,6 +40,14 @@ func TestUser_Validation(t *testing.T) {
 			domain.User{DisplayName: "foobar", Password: ""},
 			domain.ErrUserMissingPassword,
 		},
+		{
+			domain.User{ID: 1, DisplayName: "foobar", Password: ""},
+			nil,
+		},
+		{
+			domain.User{ID: 1, DisplayName: "foobar", Password: "short"},
+			errors.New("password: short does not validate as runelength(6|99999999)"),
+		},
 
 		// DisplayName checks
 		{

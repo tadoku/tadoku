@@ -16,7 +16,7 @@ type User struct {
 	Preferences *Preferences `json:"preferences" db:"preferences"`
 
 	// Password max runelength is an arbitrary high number that in theory should never be hit
-	Password         Password `json:"password" db:"password" valid:"runelength(6|99999999)"`
+	Password         Password `json:"password" db:"password" valid:"optional,runelength(6|99999999)"`
 	isPasswordHashed bool
 }
 

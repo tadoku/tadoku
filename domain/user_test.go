@@ -51,7 +51,7 @@ func TestUser_Validation(t *testing.T) {
 
 		// DisplayName checks
 		{
-			domain.User{DisplayName: "foobar123", Password: "apassword"},
+			domain.User{DisplayName: "foo bar123", Password: "apassword"},
 			nil,
 		},
 		{

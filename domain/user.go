@@ -61,8 +61,7 @@ func (Password) MarshalJSON() ([]byte, error) {
 
 func validateDisplayName(name string) bool {
 	for _, c := range name {
-		// //letters && numbers && _- are ok
-		if !unicode.IsLetter(c) && !unicode.IsNumber(c) && c != '_' && c != '-' {
+		if !(unicode.IsLetter(c) || unicode.IsNumber(c) || c == '_' || c == '-' || c == ' ') {
 			return false
 		}
 	}

@@ -60,19 +60,19 @@ func TestUser_Validation(t *testing.T) {
 		},
 		{
 			domain.User{DisplayName: "a", Password: "apassword"},
-			errors.New("display_name: a does not validate as runelength(2|18)"),
+			domain.ErrDisplayNameInvalid,
 		},
 		{
 			domain.User{DisplayName: "abcdefghijklmnopqrstuvwxyz", Password: "apassword"},
-			errors.New("display_name: abcdefghijklmnopqrstuvwxyz does not validate as runelength(2|18)"),
+			domain.ErrDisplayNameInvalid,
 		},
 		{
 			domain.User{DisplayName: "Robert'); DROP TABLE students;--", Password: "apassword"},
-			errors.New("display_name: Robert'); DROP TABLE students;-- does not validate as utfletternum"),
+			domain.ErrDisplayNameInvalid,
 		},
 		{
 			domain.User{DisplayName: "", Password: "apassword"},
-			errors.New("display_name: non zero value required"),
+			domain.ErrDisplayNameInvalid,
 		},
 	}
 

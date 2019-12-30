@@ -11,9 +11,9 @@ describe('validateDisplayName', () => {
     expect(valid).toBeTruthy()
   })
 
-  it('should disallow spaces', () => {
+  it('should allow spaces', () => {
     const valid = validateDisplayName('foo bar')
-    expect(valid).toBeFalsy()
+    expect(valid).toBeTruthy()
   })
 
   it('should disallow 1 character names', () => {

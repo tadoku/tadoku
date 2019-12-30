@@ -25,21 +25,21 @@ func TestUser_PasswordIsNotExported(t *testing.T) {
 }
 
 func TestUser_Validation(t *testing.T) {
-	// Happy path
-	{
-		u := User{
-			Password: "ilkjgewojgewjpoe",
-		}
-		ok, err := u.Validate()
-		assert.True(t, ok, "a new user with correct data should validate correctly")
-		assert.NoError(t, err, "a new user with correct data should validate correctly")
+	var tests = []struct {
+		user          User
+		expectedError error
+	}{
+		{User{Password: "ewgflikhghewioghew"}, nil},
+		{User{}, ErrUserMissingPassword},
 	}
 
-	// Missing password for new user
-	{
-		u := User{}
-		ok, err := u.Validate()
-		assert.False(t, ok, "a new user without a password should not validate correctly")
-		assert.EqualError(t, err, ErrUserMissingPassword.Error(), "a new user without a password should not validate correctly")
+	for _, test := range tests {
+		_, err := test.user.Validate()
+
+		if test.expectedError != nil {
+			assert.EqualErrorf(t, err, test.expectedError.Error(), "expected user.Validate of %v to be %v, got %v instead", test.user, test.expectedError, err)
+		} else {
+			assert.NoErrorf(t, err, "expected user.Validate of %v to be %v, got %v instead", test.user, test.expectedError, err)
+		}
 	}
 }

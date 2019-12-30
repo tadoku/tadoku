@@ -25,6 +25,9 @@ jobs:
           name: Run tests
           command: yarn test
       - run:
+          name: Create environment
+          command: cp .env{.sample,}
+      - run:
           name: Build production
           command: yarn build
       - run:

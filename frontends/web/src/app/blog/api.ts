@@ -28,7 +28,9 @@ const getPosts = async (): Promise<Post[]> => {
 }
 
 const BlogApi = {
-  get: getPosts,
+  posts: {
+    list: getPosts,
+  },
 }
 
 export default BlogApi

@@ -9,7 +9,7 @@ const BlogsList = () => {
   const { data: posts } = useCachedApiState<Post[]>({
     cacheKey: `blog_list?i=1`,
     defaultValue: [],
-    fetchData: BlogApi.get,
+    fetchData: BlogApi.posts.list,
     dependencies: [],
   })
 

@@ -1,10 +1,11 @@
 import React from 'react'
 import styled from 'styled-components'
-import { Post } from '../domain'
+import { PostOrPage } from '../interfaces'
+import { PageTitle } from '../../ui/components'
 
-const BlogPost = ({ post }: { post: Post }) => (
+const BlogPost = ({ post }: { post: PostOrPage }) => (
   <Container>
-    <Title>{post.title}</Title>
+    <PageTitle>{post.title}</PageTitle>
     <Content dangerouslySetInnerHTML={{ __html: post.html }} />
   </Container>
 )
@@ -13,5 +14,4 @@ export default BlogPost
 
 const Container = styled.div``
 
-const Title = styled.h2``
 const Content = styled.div``

@@ -25,9 +25,24 @@ const getPosts = async (): Promise<PostOrPage[]> => {
     .map(RawToPostOrPageMapper)
 }
 
+const getPage = async (slug: string): Promise<PostOrPage> => {
+  const response = await api.pages.read(
+    // @ts-ignore, upstream type isn't defined correctly
+    { slug },
+    {
+      formats: ['html'],
+    },
+  )
+
+  return RawToPostOrPageMapper(response)
+}
+
 const BlogApi = {
   posts: {
     list: getPosts,
+  },
+  pages: {
+    get: getPage,
   },
 }
 

@@ -3,13 +3,13 @@ import Head from 'next/head'
 import styled from 'styled-components'
 import PostOrPageDetail from '../app/blog/pages/PostOrPageDetail'
 
-const Manual = () => (
+const About = () => (
   <>
     <Head>
-      <title>Tadoku - Manual</title>
+      <title>Tadoku - About</title>
     </Head>
     <Container>
-      <PostOrPageDetail slug="manual" />
+      <PostOrPageDetail slug="about" />
     </Container>
   </>
 )
@@ -19,4 +19,4 @@ const Container = styled.div`
   max-width: 700px;
 `
 
-export default Manual
+export default About

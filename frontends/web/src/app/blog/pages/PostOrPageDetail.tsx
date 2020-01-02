@@ -10,7 +10,7 @@ interface Props {
 
 const PostOrPageDetail = ({ slug }: Props) => {
   const { data: page } = useCachedApiState<PostOrPage | undefined>({
-    cacheKey: `blog_page?i=1`,
+    cacheKey: `blog_page?i=1&slug=${slug}`,
     defaultValue: undefined,
     fetchData: () => BlogApi.pages.get(slug),
     dependencies: [],

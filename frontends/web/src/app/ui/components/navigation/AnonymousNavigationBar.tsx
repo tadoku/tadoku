@@ -15,14 +15,19 @@ export const AnonymousNavigationBar = ({
         <Button plain>Blog</Button>
       </a>
     </Link>
+    <Link href="/ranking">
+      <a href="">
+        <Button plain>Ranking</Button>
+      </a>
+    </Link>
     <Link href="/manual">
       <a href="">
         <Button plain>Manual</Button>
       </a>
     </Link>
-    <Link href="/ranking">
+    <Link href="/about">
       <a href="">
-        <Button plain>Ranking</Button>
+        <Button plain>About</Button>
       </a>
     </Link>
     <LogInLink refreshSession={refreshSession} />

@@ -12,9 +12,6 @@ const BlogPost = ({ post }: { post: PostOrPage }) => (
 
 export default BlogPost
 
-const Container = styled.div`
-  max-width: 700px;
-  margin: 0 auto;
-`
+const Container = styled.div``
 
 const Content = styled.div``

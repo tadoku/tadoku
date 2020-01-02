@@ -15,6 +15,11 @@ export const AnonymousNavigationBar = ({
         <Button plain>Blog</Button>
       </a>
     </Link>
+    <Link href="/manual">
+      <a href="">
+        <Button plain>Manual</Button>
+      </a>
+    </Link>
     <Link href="/ranking">
       <a href="">
         <Button plain>Ranking</Button>

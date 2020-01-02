@@ -1,5 +1,6 @@
 import React from 'react'
 import Head from 'next/head'
+import styled from 'styled-components'
 import PostOrPageDetail from '../app/blog/pages/PostOrPageDetail'
 
 const Blog = () => (
@@ -7,8 +8,15 @@ const Blog = () => (
     <Head>
       <title>Tadoku - Manual</title>
     </Head>
-    <PostOrPageDetail slug="manual" />
+    <Container>
+      <PostOrPageDetail slug="manual" />
+    </Container>
   </>
 )
+
+const Container = styled.div`
+  margin: 0 auto;
+  max-width: 700px;
+`
 
 export default Blog

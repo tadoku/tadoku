@@ -1,8 +1,8 @@
 import React from 'react'
 import styled from 'styled-components'
-import { Post } from '../domain'
+import { PostOrPage } from '../interfaces'
 
-const BlogPost = ({ post }: { post: Post }) => (
+const BlogPost = ({ post }: { post: PostOrPage }) => (
   <Container>
     <Title>{post.title}</Title>
     <Content dangerouslySetInnerHTML={{ __html: post.html }} />

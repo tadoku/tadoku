@@ -1,5 +1,6 @@
 import GhostContentAPI from '@tryghost/content-api'
-import { Post } from './domain'
+import { PostOrPage } from './interfaces'
+import { RawToPostOrPageMapper } from './transform'
 
 const api = GhostContentAPI({
   url: process.env.GHOST_URL || '',
@@ -7,7 +8,7 @@ const api = GhostContentAPI({
   version: 'canary',
 })
 
-const getPosts = async (): Promise<Post[]> => {
+const getPosts = async (): Promise<PostOrPage[]> => {
   const response = await api.posts.browse({
     limit: 5,
     include: ['authors', 'tags'],
@@ -20,11 +21,8 @@ const getPosts = async (): Promise<Post[]> => {
 
   return Object.entries(response)
     .filter(([key]) => key !== 'meta')
-    .map(([, p]) => ({
-      uuid: p.uuid,
-      title: p.title,
-      html: p.html,
-    }))
+    .map(([, p]) => p)
+    .map(RawToPostOrPageMapper)
 }
 
 const BlogApi = {

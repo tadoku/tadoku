@@ -100,6 +100,7 @@ const SignupTitle = styled.h2`
 `
 
 const LoginPrompt = styled.p`
+  font-family: 'Open sans', serif;
   font-size: 16px;
   text-align: center;
 

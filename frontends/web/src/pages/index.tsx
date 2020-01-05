@@ -1,15 +1,13 @@
 import { useEffect } from 'react'
 import Router from 'next/router'
-import { connect } from 'react-redux'
-import { User } from '../app/session/interfaces'
+import { useSelector } from 'react-redux'
 import { State } from '../app/store'
 import LandingPage from '../app/landing/pages/landing'
 import Blog from './blog'
-interface Props {
-  user: User | undefined
-}
 
-const Home = ({ user }: Props) => {
+const Home = () => {
+  const user = useSelector((state: State) => state.session.user)
+
   useEffect(() => {
     if (user) {
       Router.replace('/blog')
@@ -23,8 +21,10 @@ const Home = ({ user }: Props) => {
   return <LandingPage />
 }
 
-const mapStateToProps = (state: State) => ({
-  user: state.session.user,
-})
+Home.getInitialProps = async function() {
+  return {
+    overridesLayout: true,
+  }
+}
 
-export default connect(mapStateToProps)(Home)
+export default Home

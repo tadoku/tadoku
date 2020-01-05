@@ -5,7 +5,20 @@ import Constants from '../Constants'
 import Footer from './Footer'
 import media from 'styled-media-query'
 
-const Layout: React.SFC<{}> = ({ children }) => {
+interface Props {
+  overridesLayout: boolean
+}
+
+const Layout: React.SFC<Props> = ({ children, overridesLayout }) => {
+  if (overridesLayout) {
+    return (
+      <div>
+        <GlobalStyle {...Constants} />
+        {children}
+      </div>
+    )
+  }
+
   return (
     <div>
       <GlobalStyle {...Constants} />

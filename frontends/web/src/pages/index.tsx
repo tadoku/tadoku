@@ -3,16 +3,24 @@ import Router from 'next/router'
 import { connect } from 'react-redux'
 import { User } from '../app/session/interfaces'
 import { State } from '../app/store'
+import LandingPage from '../app/landing/pages/landing'
+import Blog from './blog'
 interface Props {
   user: User | undefined
 }
 
-const Home = ({}: Props) => {
+const Home = ({ user }: Props) => {
   useEffect(() => {
-    Router.replace('/blog')
-  }, [])
+    if (user) {
+      Router.replace('/blog')
+    }
+  }, [user])
 
-  return null
+  if (user) {
+    return <Blog />
+  }
+
+  return <LandingPage />
 }
 
 const mapStateToProps = (state: State) => ({

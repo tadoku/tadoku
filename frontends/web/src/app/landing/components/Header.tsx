@@ -1,17 +1,29 @@
 import React from 'react'
 import styled from 'styled-components'
+import RegisterForm from '../../session/components/forms/RegisterForm'
 
-const Header = () => (
+interface Props {
+  refreshSession: () => void
+}
+
+const Header = ({ refreshSession }: Props) => (
   <Background>
     <Grid>
-      <Card>
+      <IntroCard>
         <Logo />
         <Title>Get good at your second language</Title>
         <Tagline>
           Tadoku is a friendly foreign-language reading contest aimed at
           building a habit of reading in your non-native languages.
         </Tagline>
-      </Card>
+      </IntroCard>
+      <SignupCard>
+        <SignupTitle>
+          Create a <br />
+          new account
+        </SignupTitle>
+        <RegisterForm onSuccess={refreshSession} />
+      </SignupCard>
     </Grid>
   </Background>
 )
@@ -27,17 +39,18 @@ const Background = styled.div`
   background-size: cover;
 `
 
-const Card = styled.div`
+const Grid = styled.div`
+  max-width: 1240px;
+  margin: 0 auto;
+  position: relative;
+`
+
+const IntroCard = styled.div`
   background: #f2f8ff;
   box-shadow: 0px 2px 3px 0px rgba(0, 0, 0, 0.08);
   max-width: 505px;
   box-sizing: border-box;
   padding: 60px;
-`
-
-const Grid = styled.div`
-  max-width: 1240px;
-  margin: 0 auto;
 `
 
 const Logo = styled.img.attrs(() => ({
@@ -60,4 +73,23 @@ const Tagline = styled.p`
   font-family: 'Open sans', serif;
   padding: 0;
   margin: 0;
+`
+
+const SignupCard = styled.div`
+  background: #fff;
+  box-shadow: 0px 2px 3px 0px rgba(0, 0, 0, 0.08);
+  width: 400px;
+  box-sizing: border-box;
+  padding: 60px;
+  position: absolute;
+  top: 120px;
+  right: 105px;
+`
+
+const SignupTitle = styled.h2`
+  font-family: 'Merriweather', serif;
+  margin: 0 0 30px 0;
+  font-size: 26px;
+  line-height: 32px;
+  font-weight: 700;
 `

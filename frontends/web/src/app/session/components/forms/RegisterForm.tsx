@@ -24,7 +24,7 @@ import {
 interface Props {
   setUser: (token: string, user: User) => void
   onSuccess: () => void
-  onCancel: () => void
+  onCancel?: () => void
 }
 
 const RegisterForm = ({
@@ -130,9 +130,11 @@ const RegisterForm = ({
           >
             Create account
           </Button>
-          <Button type="button" onClick={cancel}>
-            Cancel
-          </Button>
+          {cancel && (
+            <Button type="button" onClick={cancel}>
+              Cancel
+            </Button>
+          )}
         </StackContainer>
       </Group>
     </Form>

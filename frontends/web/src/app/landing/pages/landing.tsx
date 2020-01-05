@@ -1,13 +1,22 @@
 import React from 'react'
 import styled, { createGlobalStyle } from 'styled-components'
+import { useDispatch } from 'react-redux'
 
 import Header from './../components/Header'
+import * as RankingStore from '../../ranking/redux'
 
 const LandingPage = () => {
+  const dispatch = useDispatch()
+  const refreshSession = () => {
+    dispatch({
+      type: RankingStore.ActionTypes.RankingRunEffects,
+    })
+  }
+
   return (
     <Container>
       <GlobalStyle />
-      <Header />
+      <Header refreshSession={refreshSession} />
     </Container>
   )
 }

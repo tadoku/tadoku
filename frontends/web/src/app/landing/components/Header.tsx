@@ -1,6 +1,7 @@
 import React from 'react'
 import styled from 'styled-components'
 import RegisterForm from '../../session/components/forms/RegisterForm'
+import media from 'styled-media-query'
 
 interface Props {
   refreshSession: () => void
@@ -89,6 +90,11 @@ const SignupCard = styled.div`
   position: absolute;
   top: 120px;
   right: 105px;
+
+  /* TODO: Change the card content based on the width */
+  ${media.lessThan('large')`
+    display: none;
+  `}
 `
 
 const SignupTitle = styled.h2`

@@ -1,8 +1,9 @@
-import React from 'react'
+import React, { useState } from 'react'
 import styled, { createGlobalStyle } from 'styled-components'
 import { useDispatch } from 'react-redux'
 
 import Header from './../components/Header'
+import LogInModal from './../../session/components/modals/LogInModal'
 import * as RankingStore from '../../ranking/redux'
 
 const LandingPage = () => {
@@ -13,10 +14,20 @@ const LandingPage = () => {
     })
   }
 
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false)
+
   return (
     <Container>
       <GlobalStyle />
-      <Header refreshSession={refreshSession} />
+      <LogInModal
+        isOpen={isLoginModalOpen}
+        onSuccess={refreshSession}
+        onCancel={() => setIsLoginModalOpen(false)}
+      />
+      <Header
+        refreshSession={refreshSession}
+        openLoginModal={() => setIsLoginModalOpen(true)}
+      />
     </Container>
   )
 }

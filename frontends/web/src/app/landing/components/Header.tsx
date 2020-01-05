@@ -4,9 +4,10 @@ import RegisterForm from '../../session/components/forms/RegisterForm'
 
 interface Props {
   refreshSession: () => void
+  openLoginModal: () => void
 }
 
-const Header = ({ refreshSession }: Props) => (
+const Header = ({ refreshSession, openLoginModal }: Props) => (
   <Background>
     <Grid>
       <IntroCard>
@@ -23,6 +24,9 @@ const Header = ({ refreshSession }: Props) => (
           new account
         </SignupTitle>
         <RegisterForm onSuccess={refreshSession} />
+        <LoginPrompt>
+          Already have an account? <a onClick={openLoginModal}>Log in</a>
+        </LoginPrompt>
       </SignupCard>
     </Grid>
   </Background>
@@ -55,6 +59,7 @@ const IntroCard = styled.div`
 
 const Logo = styled.img.attrs(() => ({
   src: './img/logo.svg',
+  alt: 'Tadoku',
 }))`
   height: 29px;
   width: 158px;
@@ -92,4 +97,15 @@ const SignupTitle = styled.h2`
   font-size: 26px;
   line-height: 32px;
   font-weight: 700;
+`
+
+const LoginPrompt = styled.p`
+  font-size: 16px;
+  text-align: center;
+
+  a {
+    color: #725dff;
+    font-weight: 600;
+    text-decoration: underline;
+  }
 `

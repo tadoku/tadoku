@@ -42,7 +42,7 @@
   },
   "devDependencies": {
     "@babel/core": "^7.7.7",
-    "@storybook/addon-info": "^5.2.8",
+    "@storybook/addon-info": "^5.3.2",
     "@storybook/react": "^5.3.2",
     "@types/jest": "^24.0.25",
     "@types/node": "^13.1.6",

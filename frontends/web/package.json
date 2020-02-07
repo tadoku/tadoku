@@ -16,7 +16,7 @@
     "storybook": "start-storybook -p 6006 -c .storybook"
   },
   "dependencies": {
-    "@fortawesome/fontawesome-svg-core": "^1.2.26",
+    "@fortawesome/fontawesome-svg-core": "^1.2.27",
     "@fortawesome/free-solid-svg-icons": "^5.12.1",
     "@fortawesome/react-fontawesome": "^0.1.8",
     "@tryghost/content-api": "^1.3.7",

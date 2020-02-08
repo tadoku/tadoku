@@ -8,10 +8,13 @@ import { RawContest } from '../app/contest/interfaces'
 import { RankingRegistration } from '../app/ranking/interfaces'
 import { User } from '../app/session/interfaces'
 import { RawToContestMapper } from '../app/contest/transform'
+import { RankingRegistrationMapper } from '../app/ranking/transform'
 
 const mapStateToProps = (state: RootState) => ({
   rawContest: state.contest.latestContest,
-  registration: state.ranking.registration,
+  registration: RankingRegistrationMapper.optional.fromRaw(
+    state.ranking.rawRegistration,
+  ),
   user: state.session.user,
   effectCount: state.ranking.runEffectCount,
 })
@@ -35,6 +38,7 @@ export default connect(
   if (!rawContest) {
     return null
   }
+  debugger
 
   const contest = RawToContestMapper(rawContest)
 

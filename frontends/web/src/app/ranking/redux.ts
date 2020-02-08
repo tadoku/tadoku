@@ -1,8 +1,8 @@
-import { RankingRegistration } from './interfaces'
+import { RawRankingRegistration } from './interfaces'
 import { createSlice, PayloadAction } from '@reduxjs/toolkit'
 
 export const initialState = {
-  registration: undefined as RankingRegistration | undefined,
+  rawRegistration: undefined as RawRankingRegistration | undefined,
   runEffectCount: 0,
 }
 
@@ -12,9 +12,9 @@ const slice = createSlice({
   reducers: {
     updateRegistration(
       state,
-      action: PayloadAction<RankingRegistration | undefined>,
+      action: PayloadAction<RawRankingRegistration | undefined>,
     ) {
-      state.registration = action.payload
+      state.rawRegistration = action.payload
     },
     runEffects(state) {
       state.runEffectCount += 1

@@ -114,6 +114,23 @@ export const RankingRegistrationSerializer: Serializer<RankingRegistration> = {
   },
 }
 
+export const RankingRegistrationMapper = {
+  toRaw: RankingRegistrationToRawMapper,
+  fromRaw: RawToRankingRegistrationMapper,
+  optional: {
+    toRaw: (
+      registration: RankingRegistration | undefined,
+    ): RawRankingRegistration | undefined =>
+      registration ? RankingRegistrationToRawMapper(registration) : undefined,
+    fromRaw: (
+      rawRegistration: RawRankingRegistration | undefined,
+    ): RankingRegistration | undefined =>
+      rawRegistration
+        ? RawToRankingRegistrationMapper(rawRegistration)
+        : undefined,
+  },
+}
+
 export const prettyDate = (date: Date): string =>
   `${date.getUTCFullYear()}-${date.getUTCMonth() + 1}-${date.getUTCDate()}`
 

@@ -13,6 +13,7 @@ import { Button, StackContainer } from '../../../ui/components'
 import RankingApi from '../../api'
 import { Contest } from '../../../contest/interfaces'
 import { validateLanguageCode } from '../../domain'
+import { RankingRegistrationMapper } from '../../transform'
 
 interface Props {
   contest: Contest
@@ -125,7 +126,9 @@ const JoinContestForm = ({
 
 const mapStateToProps = (state: RootState, oldProps: Props) => ({
   ...oldProps,
-  registration: state.ranking.registration,
+  registration: RankingRegistrationMapper.optional.fromRaw(
+    state.ranking.rawRegistration,
+  ),
 })
 
 export default connect(mapStateToProps)(JoinContestForm)

@@ -16,6 +16,7 @@ const slice = createSlice({
       state.token = action.payload.token
       state.user = action.payload.user
       state.loaded = true
+      debugger
     },
     logOut(state) {
       state.token = undefined

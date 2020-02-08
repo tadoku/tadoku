@@ -4,12 +4,13 @@ import { connect } from 'react-redux'
 import { RootState } from '../app/store'
 import RankingOverview from '../app/ranking/pages/RankingOverview'
 import { runEffects } from '../app/ranking/redux'
-import { Contest } from '../app/contest/interfaces'
+import { RawContest } from '../app/contest/interfaces'
 import { RankingRegistration } from '../app/ranking/interfaces'
 import { User } from '../app/session/interfaces'
+import { RawToContestMapper } from '../app/contest/transform'
 
 const mapStateToProps = (state: RootState) => ({
-  contest: state.contest.latestContest,
+  rawContest: state.contest.latestContest,
   registration: state.ranking.registration,
   user: state.session.user,
   effectCount: state.ranking.runEffectCount,
@@ -20,7 +21,7 @@ const mapDispatchToProps = {
 }
 
 interface Props {
-  contest: Contest | undefined
+  rawContest: RawContest | undefined
   registration: RankingRegistration | undefined
   user: User | undefined
   effectCount: number
@@ -30,10 +31,12 @@ interface Props {
 export default connect(
   mapStateToProps,
   mapDispatchToProps,
-)(({ contest, ...props }: Props) => {
-  if (!contest) {
+)(({ rawContest, ...props }: Props) => {
+  if (!rawContest) {
     return null
   }
+
+  const contest = RawToContestMapper(rawContest)
 
   return (
     <>

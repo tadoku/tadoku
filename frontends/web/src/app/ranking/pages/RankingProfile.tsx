@@ -12,7 +12,7 @@ import {
   pagesLabel,
   ContestLogsSerializer,
   RankingsSerializer,
-} from '../transform'
+} from '../transform/graph'
 import { Contest } from '../../contest/interfaces'
 import Cards, {
   Card,

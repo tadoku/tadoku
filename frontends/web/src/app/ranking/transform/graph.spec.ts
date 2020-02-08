@@ -1,7 +1,7 @@
 import {
   aggregateContestLogsByDays,
   aggregateContestLogsByMedium,
-} from './transform'
+} from './graph'
 
 describe('aggregateContestLogsByDays', () => {
   it('should aggregate correctly', () => {

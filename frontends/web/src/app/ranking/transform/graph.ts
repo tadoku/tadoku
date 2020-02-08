@@ -4,10 +4,10 @@ import {
   Ranking,
   RankingRegistrationOverview,
   RankingWithRank,
-} from './interfaces'
-import { Contest } from '../contest/interfaces'
-import { languageNameByCode, mediumDescriptionById } from './database'
-import { graphColor } from '../ui/components/Graphs'
+} from '../interfaces'
+import { Contest } from '../../contest/interfaces'
+import { languageNameByCode, mediumDescriptionById } from '../database'
+import { graphColor } from '../../ui/components/Graphs'
 
 export const prettyDate = (date: Date): string =>
   `${date.getUTCFullYear()}-${date.getUTCMonth() + 1}-${date.getUTCDate()}`

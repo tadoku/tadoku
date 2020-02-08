@@ -38,7 +38,6 @@ export default connect(
   if (!rawContest) {
     return null
   }
-  debugger
 
   const contest = RawToContestMapper(rawContest)
 

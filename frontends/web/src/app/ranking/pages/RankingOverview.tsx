@@ -38,7 +38,7 @@ const RankingOverview = ({
 
       return RankingApi.get(contest.id)
     },
-    dependencies: [contest, effectCount],
+    dependencies: [contest?.id, effectCount],
     serializer: RankingsSerializer,
   })
 

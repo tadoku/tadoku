@@ -17,7 +17,7 @@ import { connect } from 'react-redux'
 import { logIn } from '../../../session/redux'
 import { User } from '../../../session/interfaces'
 import { storeUserInLocalStorage } from '../../../session/storage'
-import { State, Dispatch } from '../../../store'
+import { RootState, Dispatch } from '../../../store'
 
 interface Props {
   setUser: (token: string, user: User) => void
@@ -104,7 +104,7 @@ const ProfileForm = ({ user, setUser, userLoaded }: Props) => {
   )
 }
 
-const mapStateToProps = (state: State) => ({
+const mapStateToProps = (state: RootState) => ({
   user: state.session.user,
   userLoaded: state.session.loaded,
 })

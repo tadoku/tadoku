@@ -1,16 +1,16 @@
 import { updateRegistration } from '../redux'
 import { useSelector, useDispatch } from 'react-redux'
 import { RankingRegistration } from '../interfaces'
-import { State } from '../../store'
+import { RootState } from '../../store'
 import RankingApi from '../api'
 import { useCachedApiState } from '../../cache'
 import { OptionalizeSerializer } from '../../transform'
 import { RankingRegistrationSerializer } from '../transform'
 
 const RankingEffects = () => {
-  const user = useSelector((state: State) => state.session.user)
+  const user = useSelector((state: RootState) => state.session.user)
   const effectCount = useSelector(
-    (state: State) => state.ranking.runEffectCount,
+    (state: RootState) => state.ranking.runEffectCount,
   )
 
   const dispatch = useDispatch()

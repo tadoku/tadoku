@@ -2,12 +2,12 @@ import { useEffect } from 'react'
 import { logIn } from '../redux'
 import { loadUserFromLocalStorage } from '../storage'
 import { useSelector, useDispatch } from 'react-redux'
-import { State } from '../../store'
+import { RootState } from '../../store'
 
 const SessionEffects = () => {
   const dispatch = useDispatch()
   const effectCount = useSelector(
-    (state: State) => state.session.runEffectCount,
+    (state: RootState) => state.session.runEffectCount,
   )
 
   useEffect(() => {

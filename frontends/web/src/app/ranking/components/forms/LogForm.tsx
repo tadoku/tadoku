@@ -1,7 +1,7 @@
 import React, { FormEvent, useState } from 'react'
 import { AllMediums, languageNameByCode } from '../../database'
 import { connect } from 'react-redux'
-import { State } from '../../../store'
+import { RootState } from '../../../store'
 import { RankingRegistration, ContestLog } from '../../interfaces'
 import RankingApi from '../../api'
 import {
@@ -197,7 +197,7 @@ const LogForm = ({
   )
 }
 
-const mapStateToProps = (state: State, oldProps: Props) => ({
+const mapStateToProps = (state: RootState, oldProps: Props) => ({
   ...oldProps,
   registration: state.ranking.registration,
 })

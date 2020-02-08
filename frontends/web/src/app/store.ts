@@ -11,7 +11,7 @@ const initialState = {
   session: sessionInitialState,
 }
 
-export type State = typeof initialState
+export type RootState = typeof initialState
 
 export const reducer = combineReducers({
   app: appReducer,

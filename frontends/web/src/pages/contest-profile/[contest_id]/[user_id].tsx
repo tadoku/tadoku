@@ -3,7 +3,7 @@ import Head from 'next/head'
 import ErrorPage from 'next/error'
 import RankingProfile from '../../../app/ranking/pages/RankingProfile'
 import { connect } from 'react-redux'
-import { State } from '../../../app/store'
+import { RootState } from '../../../app/store'
 import { useRouter } from 'next/router'
 import { runEffects } from '../../../app/ranking/redux'
 
@@ -31,7 +31,7 @@ const RankingDetails = (props: Props) => {
   )
 }
 
-const mapStateToProps = (state: State) => ({
+const mapStateToProps = (state: RootState) => ({
   effectCount: state.ranking.runEffectCount,
 })
 

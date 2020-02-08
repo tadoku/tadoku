@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react'
 import styled from 'styled-components'
 import media from 'styled-media-query'
 import { connect } from 'react-redux'
-import { State } from '../../../store'
+import { RootState } from '../../../store'
 import { User } from '../../../session/interfaces'
 import { RankingRegistration } from '../../../ranking/interfaces'
 import { ActiveUserNavigationBar } from './ActiveUserNavigationBar'
@@ -48,7 +48,7 @@ const NavigationBar = ({
   )
 }
 
-const mapStateToProps = (state: State) => ({
+const mapStateToProps = (state: RootState) => ({
   user: state.session.user,
   registration: state.ranking.registration,
 })

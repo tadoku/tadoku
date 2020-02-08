@@ -1,7 +1,7 @@
 import React, { FormEvent, useState } from 'react'
 import { languageNameByCode, AllLanguages } from '../../database'
 import { connect } from 'react-redux'
-import { State } from '../../../store'
+import { RootState } from '../../../store'
 import {
   Form,
   Group,
@@ -123,7 +123,7 @@ const JoinContestForm = ({
   )
 }
 
-const mapStateToProps = (state: State, oldProps: Props) => ({
+const mapStateToProps = (state: RootState, oldProps: Props) => ({
   ...oldProps,
   registration: state.ranking.registration,
 })

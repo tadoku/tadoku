@@ -1,4 +1,5 @@
-import { createStore, combineReducers } from 'redux'
+import { combineReducers } from 'redux'
+import { configureStore } from '@reduxjs/toolkit'
 import * as AppStore from './redux'
 import * as ContestStore from './contest/redux'
 import * as RankingStore from './ranking/redux'
@@ -33,5 +34,8 @@ export const reducer = combineReducers({
 })
 
 export function initializeStore(state = initialState) {
-  return createStore(reducer, state)
+  return configureStore({
+    reducer,
+    preloadedState: state,
+  })
 }

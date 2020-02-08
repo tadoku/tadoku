@@ -1,5 +1,5 @@
 import React from 'react'
-import { State } from '../../store'
+import { RootState } from '../../store'
 import { connect } from 'react-redux'
 import Link from 'next/link'
 import styled from 'styled-components'
@@ -26,7 +26,7 @@ const Header = ({ isLoading }: Props) => (
   </Container>
 )
 
-const mapStateToProps = (state: State) => ({
+const mapStateToProps = (state: RootState) => ({
   isLoading: state.app.isLoading,
 })
 

@@ -1,40 +1,29 @@
-import { RankingRegistration } from './interfaces'
+import { RawRankingRegistration } from './interfaces'
+import { createSlice, PayloadAction } from '@reduxjs/toolkit'
 
 export const initialState = {
-  registration: undefined as RankingRegistration | undefined,
+  rawRegistration: undefined as RawRankingRegistration | undefined,
   runEffectCount: 0,
 }
 
-// Actions
+const slice = createSlice({
+  name: 'ranking',
+  initialState,
+  reducers: {
+    updateRegistration(
+      state,
+      action: PayloadAction<RawRankingRegistration | undefined>,
+    ) {
+      state.rawRegistration = action.payload
+    },
+    runEffects(state) {
+      state.runEffectCount += 1
+    },
+  },
+})
 
-export enum ActionTypes {
-  RankingUpdateRegistration = '@ranking/ranking-registration',
-  RankingRunEffects = '@ranking/run-effects',
-}
+export const { updateRegistration, runEffects } = slice.actions
 
-export interface RankingUpdateRegistration {
-  type: typeof ActionTypes.RankingUpdateRegistration
-  payload: {
-    registration: RankingRegistration | undefined
-  }
-}
+export const rankingInitialState = initialState
 
-export interface RankingRunEffects {
-  type: typeof ActionTypes.RankingRunEffects
-}
-
-export type Action = RankingUpdateRegistration | RankingRunEffects
-
-// REDUCER
-
-export const reducer = (state = initialState, action: Action) => {
-  switch (action.type) {
-    case ActionTypes.RankingUpdateRegistration:
-      const payload = (action as RankingUpdateRegistration).payload
-      return { ...state, registration: payload.registration }
-    case ActionTypes.RankingRunEffects:
-      return { ...state, runEffectCount: state.runEffectCount + 1 }
-    default:
-      return state
-  }
-}
+export default slice.reducer

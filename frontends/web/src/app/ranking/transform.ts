@@ -83,7 +83,7 @@ export const ContestLogsSerializer: Serializer<ContestLog[]> = {
   },
 }
 
-export const RawToRankingRegistrationMapper: Mapper<
+const RawToRankingRegistrationMapper: Mapper<
   RawRankingRegistration,
   RankingRegistration
 > = raw => ({
@@ -93,7 +93,7 @@ export const RawToRankingRegistrationMapper: Mapper<
   end: new Date(raw.end),
 })
 
-export const RankingRegistrationToRawMapper: Mapper<
+const RankingRegistrationToRawMapper: Mapper<
   RankingRegistration,
   RawRankingRegistration
 > = registration => ({
@@ -111,6 +111,23 @@ export const RankingRegistrationSerializer: Serializer<RankingRegistration> = {
   deserialize: serializedData => {
     let raw = JSON.parse(serializedData)
     return RawToRankingRegistrationMapper(raw)
+  },
+}
+
+export const RankingRegistrationMapper = {
+  toRaw: RankingRegistrationToRawMapper,
+  fromRaw: RawToRankingRegistrationMapper,
+  optional: {
+    toRaw: (
+      registration: RankingRegistration | undefined,
+    ): RawRankingRegistration | undefined =>
+      registration ? RankingRegistrationToRawMapper(registration) : undefined,
+    fromRaw: (
+      rawRegistration: RawRankingRegistration | undefined,
+    ): RankingRegistration | undefined =>
+      rawRegistration
+        ? RawToRankingRegistrationMapper(rawRegistration)
+        : undefined,
   },
 }
 

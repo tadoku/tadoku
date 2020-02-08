@@ -2,7 +2,7 @@ import React from 'react'
 import ErrorPage from 'next/error'
 import { SettingsTab } from '../interfaces'
 import { connect } from 'react-redux'
-import { State } from '../../store'
+import { RootState } from '../../store'
 import { User } from '../../session/interfaces'
 import SettingsSidebar from '../components/SettingsSidebar'
 import styled from 'styled-components'
@@ -61,7 +61,7 @@ const PageContent = ({ tab }: { tab: SettingsTab }) => {
   return null
 }
 
-const mapStateToProps = (state: State) => ({
+const mapStateToProps = (state: RootState) => ({
   user: state.session.user,
   userLoaded: state.session.loaded,
 })

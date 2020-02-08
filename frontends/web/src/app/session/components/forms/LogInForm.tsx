@@ -1,8 +1,7 @@
 import React, { FormEvent, useState } from 'react'
 import SessionApi from '../../api'
 import { connect } from 'react-redux'
-import { Dispatch } from 'redux'
-import * as SessionStore from '../../redux'
+import { logIn } from '../../redux'
 import { User } from '../../interfaces'
 import { storeUserInLocalStorage } from '../../storage'
 import {
@@ -16,6 +15,7 @@ import {
 } from '../../../ui/components/Form'
 import { Button, StackContainer } from '../../../ui/components'
 import { validatePassword, validateEmail } from '../../domain'
+import { Dispatch } from '../../../store'
 
 interface Props {
   setUser: (token: string, user: User) => void
@@ -109,15 +109,12 @@ const LogInForm = ({
   )
 }
 
-const mapDispatchToProps = (dispatch: Dispatch<SessionStore.Action>) => ({
+const mapDispatchToProps = (dispatch: Dispatch) => ({
   setUser: (token: string, user: User) => {
     const payload = { token, user }
     storeUserInLocalStorage(payload)
 
-    dispatch({
-      type: SessionStore.ActionTypes.SessionLogIn,
-      payload,
-    })
+    dispatch(logIn(payload))
   },
 })
 

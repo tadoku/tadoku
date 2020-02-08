@@ -1,4 +1,5 @@
 import { User } from './interfaces'
+import { createSlice, PayloadAction } from '@reduxjs/toolkit'
 
 export const initialState = {
   token: undefined as string | undefined,
@@ -7,54 +8,28 @@ export const initialState = {
   runEffectCount: 0,
 }
 
-// Actions
+const slice = createSlice({
+  name: 'session',
+  initialState,
+  reducers: {
+    logIn(state, action: PayloadAction<{ token: string; user: User }>) {
+      state.token = action.payload.token
+      state.user = action.payload.user
+      state.loaded = true
+    },
+    logOut(state) {
+      state.token = undefined
+      state.user = undefined
+      state.runEffectCount += 1
+    },
+    runEffects(state) {
+      state.runEffectCount += 1
+    },
+  },
+})
 
-export enum ActionTypes {
-  SessionLogIn = '@session/sign-in',
-  SessionSignOut = '@session/sign-out',
-  SessionRunEffects = '@session/run-effects',
-}
+export const { logIn, logOut, runEffects } = slice.actions
 
-export interface SessionLogIn {
-  type: typeof ActionTypes.SessionLogIn
-  payload: {
-    token: string
-    user: User
-  }
-}
+export const sessionInitialState = initialState
 
-export interface SessionSignOut {
-  type: typeof ActionTypes.SessionSignOut
-}
-
-export interface SessionRunEffects {
-  type: typeof ActionTypes.SessionRunEffects
-}
-
-export type Action = SessionLogIn | SessionSignOut | SessionRunEffects
-
-// REDUCER
-
-export const reducer = (state = initialState, action: Action) => {
-  switch (action.type) {
-    case ActionTypes.SessionLogIn:
-      const payload = (action as SessionLogIn).payload
-      return {
-        ...state,
-        token: payload.token,
-        user: payload.user,
-        loaded: true,
-      }
-    case ActionTypes.SessionSignOut:
-      return {
-        ...state,
-        token: undefined,
-        user: undefined,
-        runEffectCount: state.runEffectCount + 1,
-      }
-    case ActionTypes.SessionRunEffects:
-      return { ...state, runEffectCount: state.runEffectCount + 1 }
-    default:
-      return state
-  }
-}
+export default slice.reducer

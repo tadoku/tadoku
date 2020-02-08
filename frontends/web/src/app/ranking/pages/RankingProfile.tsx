@@ -25,7 +25,7 @@ import { ContestSerializer } from '../../contest/transform'
 import { OptionalizeSerializer } from '../../transform'
 import { PageTitle, ButtonLink } from '../../ui/components'
 import { useSelector } from 'react-redux'
-import { State } from '../../store'
+import { RootState } from '../../store'
 import styled from 'styled-components'
 
 interface Props {
@@ -41,7 +41,7 @@ const RankingProfile = ({
   effectCount,
   refreshRanking,
 }: Props) => {
-  const signedInUser = useSelector((state: State) => state.session.user)
+  const signedInUser = useSelector((state: RootState) => state.session.user)
   const { data: contest, status: statusContest } = useCachedApiState<
     Contest | undefined
   >({

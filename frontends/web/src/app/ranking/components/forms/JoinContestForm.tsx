@@ -1,7 +1,7 @@
 import React, { FormEvent, useState } from 'react'
 import { languageNameByCode, AllLanguages } from '../../database'
 import { connect } from 'react-redux'
-import { State } from '../../../store'
+import { RootState } from '../../../store'
 import {
   Form,
   Group,
@@ -13,6 +13,7 @@ import { Button, StackContainer } from '../../../ui/components'
 import RankingApi from '../../api'
 import { Contest } from '../../../contest/interfaces'
 import { validateLanguageCode } from '../../domain'
+import { RankingRegistrationMapper } from '../../transform'
 
 interface Props {
   contest: Contest
@@ -123,9 +124,11 @@ const JoinContestForm = ({
   )
 }
 
-const mapStateToProps = (state: State, oldProps: Props) => ({
+const mapStateToProps = (state: RootState, oldProps: Props) => ({
   ...oldProps,
-  registration: state.ranking.registration,
+  registration: RankingRegistrationMapper.optional.fromRaw(
+    state.ranking.rawRegistration,
+  ),
 })
 
 export default connect(mapStateToProps)(JoinContestForm)

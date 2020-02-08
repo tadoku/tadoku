@@ -1,26 +1,25 @@
-import * as ContestStore from '../redux'
 import { useDispatch } from 'react-redux'
 import { Contest } from '../interfaces'
 import ContestApi from '../api'
+import { updateLatestContest } from '../redux'
 import { useCachedApiState } from '../../cache'
+import { ContestToRawMapper, ContestSerializer } from '../transform'
+import { OptionalizeSerializer } from '../../transform'
 
 const ContestEffects = () => {
   const dispatch = useDispatch()
 
-  const updateLatestContest = (contest: Contest | undefined) => {
-    dispatch({
-      type: ContestStore.ActionTypes.ContestUpdateLatestContest,
-      payload: {
-        latestContest: contest,
-      },
-    })
+  const update = (contest: Contest | undefined) => {
+    const payload = contest ? ContestToRawMapper(contest) : undefined
+    dispatch(updateLatestContest(payload))
   }
 
   useCachedApiState({
-    cacheKey: `latest_contest?i=1`,
+    cacheKey: `latest_contest?i=2`,
     defaultValue: undefined as Contest | undefined,
     fetchData: ContestApi.getLatest,
-    onChange: updateLatestContest,
+    onChange: update,
+    serializer: OptionalizeSerializer(ContestSerializer),
   })
 
   return null

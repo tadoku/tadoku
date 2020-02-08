@@ -1,32 +1,22 @@
-import { Contest } from './interfaces'
+import { RawContest } from './interfaces'
+import { createSlice, PayloadAction } from '@reduxjs/toolkit'
 
-export const initialState = {
-  latestContest: undefined as Contest | undefined,
+const initialState = {
+  latestContest: undefined as RawContest | undefined,
 }
 
-// Actions
+const slice = createSlice({
+  name: 'contest',
+  initialState,
+  reducers: {
+    updateLatestContest(state, action: PayloadAction<RawContest | undefined>) {
+      state.latestContest = action.payload
+    },
+  },
+})
 
-export enum ActionTypes {
-  ContestUpdateLatestContest = '@contest/update-latest-contest',
-}
+export const { updateLatestContest } = slice.actions
 
-export interface ContestUpdateLatestContest {
-  type: typeof ActionTypes.ContestUpdateLatestContest
-  payload: {
-    latestContest: Contest | undefined
-  }
-}
+export const contestInitialState = initialState
 
-export type Action = ContestUpdateLatestContest
-
-// REDUCER
-
-export const reducer = (state = initialState, action: Action) => {
-  switch (action.type) {
-    case ActionTypes.ContestUpdateLatestContest:
-      const payload = (action as ContestUpdateLatestContest).payload
-      return { ...state, latestContest: payload.latestContest }
-    default:
-      return state
-  }
-}
+export default slice.reducer

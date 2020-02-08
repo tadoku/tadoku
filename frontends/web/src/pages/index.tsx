@@ -2,7 +2,7 @@ import { useEffect } from 'react'
 import Router from 'next/router'
 import { connect } from 'react-redux'
 import { User } from '../app/session/interfaces'
-import { State } from '../app/store'
+import { RootState } from '../app/store'
 interface Props {
   user: User | undefined
 }
@@ -15,7 +15,7 @@ const Home = ({}: Props) => {
   return null
 }
 
-const mapStateToProps = (state: State) => ({
+const mapStateToProps = (state: RootState) => ({
   user: state.session.user,
 })
 

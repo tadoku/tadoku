@@ -8,7 +8,7 @@ import { OptionalizeSerializer } from '../../transform'
 import {
   RankingRegistrationSerializer,
   RankingRegistrationMapper,
-} from '../transform'
+} from '../transform/ranking-registration'
 
 const RankingEffects = () => {
   const user = useSelector((state: RootState) => state.session.user)

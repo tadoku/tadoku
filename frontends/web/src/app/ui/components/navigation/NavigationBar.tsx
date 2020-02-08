@@ -9,7 +9,7 @@ import { ActiveUserNavigationBar } from './ActiveUserNavigationBar'
 import { AnonymousNavigationBar } from './AnonymousNavigationBar'
 import { runEffects as sessionRunEffects } from '../../../session/redux'
 import { runEffects as rankingRunEffects } from '../../../ranking/redux'
-import { RankingRegistrationMapper } from '../../../ranking/transform'
+import { RankingRegistrationMapper } from '../../../ranking/transform/ranking-registration'
 
 interface Props {
   user: User | undefined

@@ -8,7 +8,7 @@ import { RawContest } from '../app/contest/interfaces'
 import { RankingRegistration } from '../app/ranking/interfaces'
 import { User } from '../app/session/interfaces'
 import { RawToContestMapper } from '../app/contest/transform'
-import { RankingRegistrationMapper } from '../app/ranking/transform'
+import { RankingRegistrationMapper } from '../app/ranking/transform/ranking-registration'
 
 const mapStateToProps = (state: RootState) => ({
   rawContest: state.contest.latestContest,

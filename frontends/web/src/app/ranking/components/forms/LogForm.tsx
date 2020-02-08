@@ -17,7 +17,7 @@ import {
 } from '../../../ui/components/Form'
 import { Button, StackContainer } from '../../../ui/components'
 import { validateLanguageCode, validateAmount } from '../../domain'
-import { RankingRegistrationMapper } from '../../transform'
+import { RankingRegistrationMapper } from '../../transform/ranking-registration'
 
 interface Props {
   log?: ContestLog

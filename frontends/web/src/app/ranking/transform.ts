@@ -83,7 +83,7 @@ export const ContestLogsSerializer: Serializer<ContestLog[]> = {
   },
 }
 
-export const RawToRankingRegistrationMapper: Mapper<
+const RawToRankingRegistrationMapper: Mapper<
   RawRankingRegistration,
   RankingRegistration
 > = raw => ({
@@ -93,7 +93,7 @@ export const RawToRankingRegistrationMapper: Mapper<
   end: new Date(raw.end),
 })
 
-export const RankingRegistrationToRawMapper: Mapper<
+const RankingRegistrationToRawMapper: Mapper<
   RankingRegistration,
   RawRankingRegistration
 > = registration => ({

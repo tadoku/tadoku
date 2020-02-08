@@ -4,9 +4,8 @@ import ErrorPage from 'next/error'
 import RankingProfile from '../../../app/ranking/pages/RankingProfile'
 import { connect } from 'react-redux'
 import { State } from '../../../app/store'
-import { Dispatch } from 'redux'
-import * as RankingStore from '../../../app/ranking/redux'
 import { useRouter } from 'next/router'
+import { runEffects } from '../../../app/ranking/redux'
 
 interface Props {
   effectCount: number
@@ -36,12 +35,6 @@ const mapStateToProps = (state: State) => ({
   effectCount: state.ranking.runEffectCount,
 })
 
-const mapDispatchToProps = (dispatch: Dispatch<RankingStore.Action>) => ({
-  refreshRanking: () => {
-    dispatch({
-      type: RankingStore.ActionTypes.RankingRunEffects,
-    })
-  },
-})
+const mapDispatchToProps = { refreshRanking: runEffects }
 
 export default connect(mapStateToProps, mapDispatchToProps)(RankingDetails)

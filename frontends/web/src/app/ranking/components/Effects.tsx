@@ -1,4 +1,4 @@
-import * as RankingStore from '../redux'
+import { updateRegistration } from '../redux'
 import { useSelector, useDispatch } from 'react-redux'
 import { RankingRegistration } from '../interfaces'
 import { State } from '../../store'
@@ -14,15 +14,8 @@ const RankingEffects = () => {
   )
 
   const dispatch = useDispatch()
-  const updateRegistration = (
-    registration: RankingRegistration | undefined,
-  ) => {
-    dispatch({
-      type: RankingStore.ActionTypes.RankingUpdateRegistration,
-      payload: {
-        registration,
-      },
-    })
+  const update = (registration: RankingRegistration | undefined) => {
+    dispatch(updateRegistration(registration))
   }
 
   useCachedApiState({
@@ -37,7 +30,7 @@ const RankingEffects = () => {
 
       return RankingApi.getCurrentRegistration()
     },
-    onChange: updateRegistration,
+    onChange: update,
     dependencies: [user, effectCount],
     serializer: OptionalizeSerializer(RankingRegistrationSerializer),
   })

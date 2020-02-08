@@ -9,7 +9,6 @@ import { ActiveUserNavigationBar } from './ActiveUserNavigationBar'
 import { AnonymousNavigationBar } from './AnonymousNavigationBar'
 import { Dispatch } from 'redux'
 import * as SessionStore from '../../../session/redux'
-import * as RankingStore from '../../../ranking/redux'
 
 interface Props {
   user: User | undefined
@@ -61,9 +60,10 @@ const mapDispatchToProps = (dispatch: Dispatch<Action>) => ({
     })
   },
   refreshRanking: () => {
-    dispatch({
-      type: RankingStore.ActionTypes.RankingRunEffects,
-    })
+    // TODO fix this when we finish refactoring session reducer
+    // dispatch({
+    //   type: RankingStore.ActionTypes.RankingRunEffects,
+    // })
   },
 })
 

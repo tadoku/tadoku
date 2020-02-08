@@ -5,7 +5,7 @@ const initialState = {
   activityCount: 0,
 }
 
-const appSlice = createSlice({
+const slice = createSlice({
   name: 'app',
   initialState,
   reducers: {
@@ -20,8 +20,8 @@ const appSlice = createSlice({
   },
 })
 
-export const { startLoading, finishLoading } = appSlice.actions
+export const { startLoading, finishLoading } = slice.actions
 
 export const appInitialState = initialState
 
-export default appSlice.reducer
+export default slice.reducer

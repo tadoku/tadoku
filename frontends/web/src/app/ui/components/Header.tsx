@@ -15,7 +15,7 @@ interface Props {
 const Header = ({ isLoading }: Props) => (
   <Container>
     <InnerContainer>
-      <Link href="/">
+      <Link href="/" passHref>
         <a href="">
           <LogoType>Tadoku</LogoType>
         </a>

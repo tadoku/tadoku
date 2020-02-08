@@ -13,7 +13,11 @@ interface Props {
 const UserProfile = ({ user }: Props) => (
   <Dropdown label={user.displayName}>
     <DropdownItem>
-      <Link href="/settings/[tab]" as={`/settings/${SettingsTab.Profile}`}>
+      <Link
+        href="/settings/[tab]"
+        as={`/settings/${SettingsTab.Profile}`}
+        passHref
+      >
         {/* TODO: Remove span once https://github.com/zeit/next.js/issues/7915 is fixed */}
         <span>
           <Button plain icon="cog">

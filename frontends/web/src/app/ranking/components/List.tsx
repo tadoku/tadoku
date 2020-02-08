@@ -41,6 +41,7 @@ const RankingRow = ({ rank, tied, data }: RankingWithRank) => (
     <Link
       href="/contest-profile/[contest_id]/[user_id]"
       as={`/contest-profile/${data.contestId}/${data.userId}`}
+      passHref
     >
       <RowLink href="">
         <Rank>

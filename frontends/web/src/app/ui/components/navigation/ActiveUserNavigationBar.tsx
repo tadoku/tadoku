@@ -22,22 +22,22 @@ export const ActiveUserNavigationBar = ({
 }: Props) => (
   <>
     <LinkContainer>
-      <Link href="/blog">
+      <Link href="/blog" passHref>
         <a href="">
           <Button plain>Blog</Button>
         </a>
       </Link>
-      <Link href="/ranking">
+      <Link href="/ranking" passHref>
         <a href="">
           <Button plain>Ranking</Button>
         </a>
       </Link>
-      <Link href="/manual">
+      <Link href="/manual" passHref>
         <a href="">
           <Button plain>Manual</Button>
         </a>
       </Link>
-      <Link href="/about">
+      <Link href="/about" passHref>
         <a href="">
           <Button plain>About</Button>
         </a>

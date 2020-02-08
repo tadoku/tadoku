@@ -3,7 +3,7 @@ import Link from 'next/link'
 import ContentLoader from 'react-content-loader'
 import { Ranking, RankingWithRank } from '../interfaces'
 import styled from 'styled-components'
-import { amountToPages, calculateLeaderboard } from '../transform'
+import { amountToPages, calculateLeaderboard } from '../transform/graph'
 
 interface Props {
   rankings: Ranking[]

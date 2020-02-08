@@ -10,9 +10,7 @@ import {
   rankingsToRegistrationOverview,
   amountToPages,
   pagesLabel,
-  ContestLogsSerializer,
-  RankingsSerializer,
-} from '../transform'
+} from '../transform/graph'
 import { Contest } from '../../contest/interfaces'
 import Cards, {
   Card,
@@ -27,6 +25,8 @@ import { PageTitle, ButtonLink } from '../../ui/components'
 import { useSelector } from 'react-redux'
 import { RootState } from '../../store'
 import styled from 'styled-components'
+import { ContestLogsSerializer } from '../transform/contest-log'
+import { RankingsSerializer } from '../transform/ranking'
 
 interface Props {
   contestId: number

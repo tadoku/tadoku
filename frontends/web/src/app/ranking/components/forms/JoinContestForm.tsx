@@ -13,7 +13,7 @@ import { Button, StackContainer } from '../../../ui/components'
 import RankingApi from '../../api'
 import { Contest } from '../../../contest/interfaces'
 import { validateLanguageCode } from '../../domain'
-import { RankingRegistrationMapper } from '../../transform'
+import { RankingRegistrationMapper } from '../../transform/ranking-registration'
 
 interface Props {
   contest: Contest

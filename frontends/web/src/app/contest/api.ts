@@ -1,6 +1,6 @@
 import { get } from '../api'
 import { Contest, RawContest } from './interfaces'
-import { RawToContestMapper } from './transform'
+import { ContestMapper } from './transform'
 
 const getContest = async (contestId: number): Promise<Contest | undefined> => {
   const response = await get(`/contests/${contestId}`)
@@ -11,7 +11,7 @@ const getContest = async (contestId: number): Promise<Contest | undefined> => {
 
   const data: RawContest = await response.json()
 
-  return RawToContestMapper(data)
+  return ContestMapper.fromRaw(data)
 }
 
 const getLatest = async (): Promise<Contest | undefined> => {
@@ -23,7 +23,7 @@ const getLatest = async (): Promise<Contest | undefined> => {
 
   const data: RawContest = await response.json()
 
-  return RawToContestMapper(data)
+  return ContestMapper.fromRaw(data)
 }
 
 const ContestApi = {

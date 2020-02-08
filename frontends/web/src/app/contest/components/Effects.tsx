@@ -3,14 +3,14 @@ import { Contest } from '../interfaces'
 import ContestApi from '../api'
 import { updateLatestContest } from '../redux'
 import { useCachedApiState } from '../../cache'
-import { ContestToRawMapper, ContestSerializer } from '../transform'
+import { ContestMapper, ContestSerializer } from '../transform'
 import { OptionalizeSerializer } from '../../transform'
 
 const ContestEffects = () => {
   const dispatch = useDispatch()
 
   const update = (contest: Contest | undefined) => {
-    const payload = contest ? ContestToRawMapper(contest) : undefined
+    const payload = ContestMapper.optional.toRaw(contest)
     dispatch(updateLatestContest(payload))
   }
 

@@ -5,7 +5,7 @@ import {
   aggregateContestLogsByDays,
   prettyDate,
   amountToString,
-} from '../../transform'
+} from '../../transform/graph'
 import {
   XYPlot,
   XAxis,

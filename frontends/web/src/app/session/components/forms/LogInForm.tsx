@@ -1,7 +1,6 @@
 import React, { FormEvent, useState } from 'react'
 import SessionApi from '../../api'
 import { connect } from 'react-redux'
-import { Dispatch } from 'redux'
 import { logIn } from '../../redux'
 import { User } from '../../interfaces'
 import { storeUserInLocalStorage } from '../../storage'
@@ -16,6 +15,7 @@ import {
 } from '../../../ui/components/Form'
 import { Button, StackContainer } from '../../../ui/components'
 import { validatePassword, validateEmail } from '../../domain'
+import { Dispatch } from '../../../store'
 
 interface Props {
   setUser: (token: string, user: User) => void

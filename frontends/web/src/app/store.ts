@@ -26,3 +26,7 @@ export function initializeStore(state = initialState) {
     preloadedState: state,
   })
 }
+
+const dispatch = initializeStore().dispatch
+
+export type Dispatch = typeof dispatch

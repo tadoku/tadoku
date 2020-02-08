@@ -3,8 +3,8 @@ import Router from 'next/router'
 import { Button } from '../../../ui/components'
 import { connect } from 'react-redux'
 import { logOut } from '../../redux'
-import { Dispatch } from 'redux'
 import { removeUserFromLocalStorage } from '../../storage'
+import { Dispatch } from '../../../store'
 
 interface Props {
   logOut: () => void

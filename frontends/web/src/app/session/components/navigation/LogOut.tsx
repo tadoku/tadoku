@@ -2,21 +2,21 @@ import React from 'react'
 import Router from 'next/router'
 import { Button } from '../../../ui/components'
 import { connect } from 'react-redux'
-import * as SessionStore from '../../redux'
+import { logOut } from '../../redux'
 import { Dispatch } from 'redux'
 import { removeUserFromLocalStorage } from '../../storage'
 
 interface Props {
-  signOut: () => void
+  logOut: () => void
 }
 
-export const LogOut = ({ signOut }: Props) => {
+export const LogOut = ({ logOut }: Props) => {
   return (
     <Button
       plain
       icon="sign-out-alt"
       onClick={() => {
-        signOut()
+        logOut()
         Router.push('/')
       }}
     >
@@ -25,10 +25,10 @@ export const LogOut = ({ signOut }: Props) => {
   )
 }
 
-const mapDispatchToProps = (dispatch: Dispatch<SessionStore.Action>) => ({
-  signOut: () => {
+const mapDispatchToProps = (dispatch: Dispatch) => ({
+  logOut: () => {
     removeUserFromLocalStorage()
-    dispatch({ type: SessionStore.ActionTypes.SessionSignOut })
+    dispatch(logOut())
   },
 })
 

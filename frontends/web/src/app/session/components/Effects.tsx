@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import * as SessionStore from '../redux'
+import { logIn } from '../redux'
 import { loadUserFromLocalStorage } from '../storage'
 import { useSelector, useDispatch } from 'react-redux'
 import { State } from '../../store'
@@ -14,10 +14,7 @@ const SessionEffects = () => {
     const payload = loadUserFromLocalStorage()
 
     if (payload) {
-      dispatch({
-        type: SessionStore.ActionTypes.SessionLogIn,
-        payload,
-      })
+      dispatch(logIn(payload))
     }
   }, [effectCount])
 

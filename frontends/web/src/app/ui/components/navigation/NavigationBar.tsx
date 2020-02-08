@@ -2,13 +2,13 @@ import React, { useEffect, useState } from 'react'
 import styled from 'styled-components'
 import media from 'styled-media-query'
 import { connect } from 'react-redux'
-import { State, Action } from '../../../store'
+import { State } from '../../../store'
 import { User } from '../../../session/interfaces'
 import { RankingRegistration } from '../../../ranking/interfaces'
 import { ActiveUserNavigationBar } from './ActiveUserNavigationBar'
 import { AnonymousNavigationBar } from './AnonymousNavigationBar'
-import { Dispatch } from 'redux'
-import * as SessionStore from '../../../session/redux'
+import { runEffects as sessionRunEffects } from '../../../session/redux'
+import { runEffects as rankingRunEffects } from '../../../ranking/redux'
 
 interface Props {
   user: User | undefined
@@ -53,19 +53,10 @@ const mapStateToProps = (state: State) => ({
   registration: state.ranking.registration,
 })
 
-const mapDispatchToProps = (dispatch: Dispatch<Action>) => ({
-  refreshSession: () => {
-    dispatch({
-      type: SessionStore.ActionTypes.SessionRunEffects,
-    })
-  },
-  refreshRanking: () => {
-    // TODO fix this when we finish refactoring session reducer
-    // dispatch({
-    //   type: RankingStore.ActionTypes.RankingRunEffects,
-    // })
-  },
-})
+const mapDispatchToProps = {
+  refreshSession: sessionRunEffects,
+  refreshRanking: rankingRunEffects,
+}
 
 export default connect(mapStateToProps, mapDispatchToProps)(NavigationBar)
 

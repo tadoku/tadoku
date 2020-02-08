@@ -5,7 +5,7 @@ import App, { AppContext } from 'next/app'
 import withRedux from 'next-redux-wrapper'
 import { Store } from 'redux'
 import { loadUserFromLocalStorage } from '../app/session/storage'
-import * as SessionStore from '../app/session/redux'
+import { logIn } from '../app/session/redux'
 import AppEffects from '../app/AppEffects'
 import 'react-vis/dist/style.css'
 import Modal from 'react-modal'
@@ -25,10 +25,7 @@ class MyApp extends App<{ store: Store }> {
     const payload = loadUserFromLocalStorage()
 
     if (payload) {
-      this.props.store.dispatch({
-        type: SessionStore.ActionTypes.SessionLogIn,
-        payload,
-      })
+      this.props.store.dispatch(logIn(payload))
     }
 
     Modal.setAppElement('#__next')

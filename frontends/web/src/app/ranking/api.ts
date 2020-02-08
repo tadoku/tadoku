@@ -8,7 +8,7 @@ import {
   RawContestLog,
 } from './interfaces'
 import { RankingMapper } from './transform/ranking'
-import { RawToContestLogMapper } from './transform'
+import { ContestLogMapper } from './transform/contest-log'
 
 const joinContest = async (
   contestId: number,
@@ -142,7 +142,7 @@ const getLogsFor = async (
 
   const data: RawContestLog[] = await response.json()
 
-  return data.map(RawToContestLogMapper)
+  return data.map(ContestLogMapper.fromRaw)
 }
 
 const RankingApi = {

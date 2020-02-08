@@ -7,7 +7,8 @@ import {
   ContestLog,
   RawContestLog,
 } from './interfaces'
-import { RawToRankingMapper, RawToContestLogMapper } from './transform'
+import { RankingMapper } from './transform/ranking'
+import { RawToContestLogMapper } from './transform'
 
 const joinContest = async (
   contestId: number,
@@ -33,7 +34,7 @@ const getRankings = async (contestId?: number): Promise<Ranking[]> => {
 
   const data: RawRanking[] = await response.json()
 
-  return data.map(RawToRankingMapper)
+  return data.map(RankingMapper.fromRaw)
 }
 
 const getCurrentRegistration = async (): Promise<
@@ -71,7 +72,7 @@ const getRankingsRegistration = async (
 
   const data: RawRanking[] = await response.json()
 
-  return data.map(RawToRankingMapper)
+  return data.map(RankingMapper.fromRaw)
 }
 
 const createLog = async (payload: {

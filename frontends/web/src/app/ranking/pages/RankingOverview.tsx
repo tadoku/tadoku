@@ -8,7 +8,7 @@ import styled from 'styled-components'
 import { User } from '../../session/interfaces'
 import JoinContestModal from '../components/modals/JoinContestModal'
 import { useCachedApiState, ApiFetchStatus } from '../../cache'
-import { RankingsSerializer } from '../transform'
+import { RankingsSerializer } from '../transform/ranking'
 import { isContestActive } from '../domain'
 
 interface Props {

@@ -9,6 +9,6 @@ export interface MappersWithOptional<Raw, Original>
   extends Mappers<Raw, Original> {
   optional: {
     toRaw: (original: Original | undefined) => Raw | undefined
-    fromRaw: (raw: Raw) => Original | undefined
+    fromRaw: (raw: Raw | undefined) => Original | undefined
   }
 }

@@ -1,6 +1,7 @@
 import { Contest, RawContest } from './interfaces'
 import { Mapper } from '../interfaces'
 import { Serializer } from '../cache'
+import { withOptional } from '../transform'
 
 const RawToContestMapper: Mapper<RawContest, Contest> = raw => ({
   id: raw.id,
@@ -29,7 +30,7 @@ export const ContestSerializer: Serializer<Contest> = {
   },
 }
 
-export const ContestMapper = {
+export const ContestMapper = withOptional({
   toRaw: ContestToRawMapper,
   fromRaw: RawToContestMapper,
-}
+})

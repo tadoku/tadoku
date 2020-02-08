@@ -1,6 +1,7 @@
 import { RankingRegistration, RawRankingRegistration } from './../interfaces'
 import { Mapper } from '../../interfaces'
 import { Serializer } from '../../cache'
+import { withOptional } from '../../transform'
 
 const RawToRankingRegistrationMapper: Mapper<
   RawRankingRegistration,
@@ -33,19 +34,7 @@ export const RankingRegistrationSerializer: Serializer<RankingRegistration> = {
   },
 }
 
-export const RankingRegistrationMapper = {
+export const RankingRegistrationMapper = withOptional({
   toRaw: RankingRegistrationToRawMapper,
   fromRaw: RawToRankingRegistrationMapper,
-  optional: {
-    toRaw: (
-      registration: RankingRegistration | undefined,
-    ): RawRankingRegistration | undefined =>
-      registration ? RankingRegistrationToRawMapper(registration) : undefined,
-    fromRaw: (
-      rawRegistration: RawRankingRegistration | undefined,
-    ): RankingRegistration | undefined =>
-      rawRegistration
-        ? RawToRankingRegistrationMapper(rawRegistration)
-        : undefined,
-  },
-}
+})

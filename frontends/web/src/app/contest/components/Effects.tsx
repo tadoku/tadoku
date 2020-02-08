@@ -10,7 +10,7 @@ const ContestEffects = () => {
   const dispatch = useDispatch()
 
   const update = (contest: Contest | undefined) => {
-    const payload = contest ? ContestMapper.toRaw(contest) : undefined
+    const payload = ContestMapper.optional.toRaw(contest)
     dispatch(updateLatestContest(payload))
   }
 

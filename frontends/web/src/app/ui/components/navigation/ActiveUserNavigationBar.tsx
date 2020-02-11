@@ -6,7 +6,7 @@ import Link from 'next/link'
 import { RankingRegistration } from '../../../ranking/interfaces'
 import SubmitPagesLink from '../../../ranking/components/navigation/SubmitPages'
 import { User } from '../../../session/interfaces'
-import UserProfile from '../../../session/components/navigation/UserMenu'
+import UserMenu from '../../../session/components/navigation/UserMenu'
 import { Button } from '..'
 
 interface Props {
@@ -47,9 +47,9 @@ export const ActiveUserNavigationBar = ({
         refreshRanking={refreshRanking}
       />
     </LinkContainer>
-    <UserProfileContainer>
-      <UserProfile user={user} />
-    </UserProfileContainer>
+    <UserMenuContainer>
+      <UserMenu user={user} registration={registration} />
+    </UserMenuContainer>
   </>
 )
 
@@ -69,7 +69,7 @@ const LinkContainer = styled.div`
   }
 `
 
-const UserProfileContainer = styled.div`
+const UserMenuContainer = styled.div`
   display: flex;
   align-items: center;
 

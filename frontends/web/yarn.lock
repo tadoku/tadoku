@@ -2168,10 +2168,10 @@
     react-lifecycles-compat "^3.0.4"
     warning "^3.0.0"
 
-"@reduxjs/toolkit@^1.2.3":
-  version "1.2.3"
-  resolved "https://registry.yarnpkg.com/@reduxjs/toolkit/-/toolkit-1.2.3.tgz#666f6085fab0f10f72dbafb8259496da9bd5914d"
-  integrity sha512-CgeZl41Bmz1rFkASt5gA9egCy9YWXzy485EsEXoGd2Xm1o63UQCxfuCLTH+XlTs25WqtGjSmn5H4xu7n86ytYw==
+"@reduxjs/toolkit@^1.2.4":
+  version "1.2.4"
+  resolved "https://registry.yarnpkg.com/@reduxjs/toolkit/-/toolkit-1.2.4.tgz#4076605eafd9670a53a1c2344c2a9cee63c5acf2"
+  integrity sha512-M/UNvLWqz4Zh0mxCC6dEobvZKdBTuAwABbh2pGxrTRAwgF0nsnkp1WUZWDch+cYXYO9+SM2mRSCoUpoJYxIyrA==
   dependencies:
     immer "^4.0.1"
     redux "^4.0.0"

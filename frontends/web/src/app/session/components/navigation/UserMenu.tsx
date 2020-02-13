@@ -13,62 +13,53 @@ interface Props {
   registration: RankingRegistration | undefined
 }
 
-const Settings = () => (
-  <DropdownItem>
+const SettingsLink = () => (
+  <Link href="/settings/[tab]" as={`/settings/${SettingsTab.Profile}`} passHref>
+    {/* TODO: Remove span once https://github.com/zeit/next.js/issues/7915 is fixed */}
+    <span>
+      <Button plain icon="cog">
+        Settings
+      </Button>
+    </span>
+  </Link>
+)
+
+const ContestProfileLink = ({
+  user,
+  registration,
+}: {
+  user: User
+  registration: RankingRegistration
+}) => {
+  return (
     <Link
-      href="/settings/[tab]"
-      as={`/settings/${SettingsTab.Profile}`}
-      passHref
+      href="/contest-profile/[tab]/[tab]"
+      as={`/contest-profile/${registration.contestId}/${user.id}`}
     >
       {/* TODO: Remove span once https://github.com/zeit/next.js/issues/7915 is fixed */}
       <span>
-        <Button plain icon="cog">
-          Settings
+        <Button plain icon="user">
+          Profile
         </Button>
       </span>
     </Link>
-  </DropdownItem>
-)
-
-interface ProfileLinkProps {
-  user: User
-  registration: RankingRegistration
+  )
 }
-const ContestProfile = ({ user, registration }: ProfileLinkProps) => {
-  return (
+
+const UserMenu = ({ user, registration }: Props) => (
+  <Dropdown label={user.displayName}>
     <DropdownItem>
-      <Link
-        href="/contest-profile/[tab]/[tab]"
-        as={`/contest-profile/${registration.contestId}/${user.id}`}
-      >
-        {/* TODO: Remove span once https://github.com/zeit/next.js/issues/7915 is fixed */}
-        <span>
-          <Button plain icon="user">
-            Profile
-          </Button>
-        </span>
-      </Link>
+      <SettingsLink />
     </DropdownItem>
-  )
-}
-
-const UserMenu = ({ user, registration }: Props) => {
-  return registration ? (
-    <Dropdown label={user.displayName}>
-      <Settings />
-      <ContestProfile user={user} registration={registration}></ContestProfile>
+    {registration && (
       <DropdownItem>
-        <LogOutLink />
+        <ContestProfileLink user={user} registration={registration} />
       </DropdownItem>
-    </Dropdown>
-  ) : (
-    <Dropdown label={user.displayName}>
-      <Settings />
-      <DropdownItem>
-        <LogOutLink />
-      </DropdownItem>
-    </Dropdown>
-  )
-}
+    )}
+    <DropdownItem>
+      <LogOutLink />
+    </DropdownItem>
+  </Dropdown>
+)
 
 export default UserMenu

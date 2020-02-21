@@ -30,7 +30,7 @@
     "dotenv": "^8.2.0",
     "isomorphic-fetch": "^2.2.1",
     "next": "^9.2.2",
-    "next-redux-wrapper": "^4.0.1",
+    "next-redux-wrapper": "^5.0.0",
     "react": "^16.12.0",
     "react-content-loader": "^5.0.1",
     "react-dom": "^16.12.0",

@@ -11111,10 +11111,10 @@ react-clientside-effect@^1.2.2:
   dependencies:
     "@babel/runtime" "^7.0.0"
 
-react-content-loader@^5.0.1:
-  version "5.0.1"
-  resolved "https://registry.yarnpkg.com/react-content-loader/-/react-content-loader-5.0.1.tgz#8da35e362bd1f53233c9daec99a67d8ea14ecd68"
-  integrity sha512-id1zp9jcB+SfJV9Vrjpmk+Qt+zJ3owYiIAGkHy8V4Sffvcyr6zmZbai8qT+Y3bPrvnH3kWvr9iO5giC5g9cYKQ==
+react-content-loader@^5.0.2:
+  version "5.0.2"
+  resolved "https://registry.yarnpkg.com/react-content-loader/-/react-content-loader-5.0.2.tgz#f4d417ac2b3a913a4b5e406b8b36ff724bcfe15b"
+  integrity sha512-d9+/FX640VXyO+9dBgMWaHD5IL0+tGsCAFBhYPGNziPx2abTMUBXL1+oIlenOTYlxuOWDcUcpmgjj4Ws+0xdhA==
 
 react-dev-utils@^9.0.0:
   version "9.0.3"

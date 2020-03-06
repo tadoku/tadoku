@@ -42,7 +42,7 @@
     "styled-media-query": "^2.1.2"
   },
   "devDependencies": {
-    "@babel/core": "^7.8.6",
+    "@babel/core": "^7.8.7",
     "@storybook/addon-info": "^5.3.14",
     "@storybook/react": "^5.3.14",
     "@types/jest": "^25.1.3",

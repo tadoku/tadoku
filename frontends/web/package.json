@@ -29,7 +29,7 @@
     "@types/styled-components": "^5.0.1",
     "dotenv": "^8.2.0",
     "isomorphic-fetch": "^2.2.1",
-    "next": "^9.2.2",
+    "next": "^9.3.0",
     "next-redux-wrapper": "^5.0.0",
     "react": "^16.13.0",
     "react-content-loader": "^5.0.2",

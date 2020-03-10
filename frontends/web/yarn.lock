@@ -11191,10 +11191,10 @@ react-dev-utils@^9.0.0:
     strip-ansi "5.2.0"
     text-table "0.2.0"
 
-react-docgen-typescript-loader@^3.7.0:
-  version "3.7.0"
-  resolved "https://registry.yarnpkg.com/react-docgen-typescript-loader/-/react-docgen-typescript-loader-3.7.0.tgz#c2035929d93981f50ab96b71c0f58c8751aa6d23"
-  integrity sha512-M3oz/poiCSWsL9/OGtPHcpw6H85uEslVR44EV9itpG6kV570U/g9qY71UlJsPsigG5zanFHaVwrwhOpYjtSzlg==
+react-docgen-typescript-loader@^3.7.1:
+  version "3.7.1"
+  resolved "https://registry.yarnpkg.com/react-docgen-typescript-loader/-/react-docgen-typescript-loader-3.7.1.tgz#4a361d0b8ea1557a007c54bb5eea74bb6ca85c4b"
+  integrity sha512-GdQ/Jts6frqbRNXDRtC1M3N89dfZeMZYuVsxZ2H0i00PKUhbUPgZyiWCaVPJfwUQDxMraCmF7m79BAPgIW2zKA==
   dependencies:
     "@webpack-contrib/schema-utils" "^1.0.0-beta.0"
     loader-utils "^1.2.3"

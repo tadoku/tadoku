@@ -1,4 +1,4 @@
-FROM golang:1.12
+FROM golang:1.14.2
 
 WORKDIR $GOPATH/src/github.com/tadoku/api
 

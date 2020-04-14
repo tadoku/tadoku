@@ -27,7 +27,6 @@ const getPosts = async (): Promise<PostOrPage[]> => {
 
 const getPage = async (slug: string): Promise<PostOrPage> => {
   const response = await api.pages.read(
-    // @ts-ignore, upstream type isn't defined correctly
     { slug },
     {
       formats: ['html'],

@@ -14,9 +14,6 @@ const Manual = () => (
   </>
 )
 
-const Container = styled.div`
-  margin: 0 auto;
-  max-width: 700px;
-`
+const Container = styled.div``
 
 export default Manual

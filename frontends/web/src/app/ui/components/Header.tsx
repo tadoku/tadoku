@@ -14,15 +14,13 @@ interface Props {
 
 const Header = ({ isLoading }: Props) => (
   <Container>
-    <InnerContainer>
-      <Link href="/" passHref>
-        <a href="">
-          <LogoType>Tadoku</LogoType>
-        </a>
-      </Link>
-      <ActivityIndicator isLoading={isLoading} />
-      <NavigationBar />
-    </InnerContainer>
+    <Link href="/" passHref>
+      <a href="">
+        <Logo />
+      </a>
+    </Link>
+    <ActivityIndicator isLoading={isLoading} />
+    <NavigationBar />
   </Container>
 )
 
@@ -32,27 +30,21 @@ const mapStateToProps = (state: RootState) => ({
 
 export default connect(mapStateToProps)(Header)
 
-const LogoType = styled.h1`
-  color: ${Constants.colors.dark};
-  text-transform: uppercase;
-
-  ${media.lessThan('medium')`
-    margin: 10px;
-  `}
+const Logo = styled.img.attrs(() => ({
+  src: './img/logo.svg',
+  alt: 'Tadoku',
+}))`
+  height: 29px;
+  width: 158px;
 `
 
 const Container = styled.div`
-  box-shadow: 4px 3px 7px 1px rgba(0, 0, 0, 0.08);
-  padding: 0 20px;
-  box-sizing: border-box;
-
-  ${media.lessThan('medium')`
-    box-shadow: none;
-  `}
-`
-
-const InnerContainer = styled.div`
+  box-shadow: 0px 2px 3px 0px rgba(0, 0, 0, 0.08);
+  background: #f2f8ff;
+  height: 120px;
   max-width: ${Constants.maxWidth};
+  box-sizing: border-box;
+  padding: 0 60px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -60,5 +52,6 @@ const InnerContainer = styled.div`
 
   ${media.lessThan('medium')`
     flex-direction: column;
+    box-shadow: none;
   `}
 `

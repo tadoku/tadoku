@@ -29,7 +29,7 @@ class MyApp extends App<{ store: Store }> {
     return (
       <Provider store={store}>
         <AppEffects />
-        <Layout>
+        <Layout overridesLayout={pageProps?.overridesLayout ?? false}>
           <Component {...pageProps} />
         </Layout>
       </Provider>

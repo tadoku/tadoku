@@ -14,15 +14,13 @@ interface Props {
 
 const Header = ({ isLoading }: Props) => (
   <Container>
-    <InnerContainer>
-      <Link href="/" passHref>
-        <a href="">
-          <Logo />
-        </a>
-      </Link>
-      <ActivityIndicator isLoading={isLoading} />
-      <NavigationBar />
-    </InnerContainer>
+    <Link href="/" passHref>
+      <a href="">
+        <Logo />
+      </a>
+    </Link>
+    <ActivityIndicator isLoading={isLoading} />
+    <NavigationBar />
   </Container>
 )
 
@@ -44,23 +42,16 @@ const Container = styled.div`
   box-shadow: 0px 2px 3px 0px rgba(0, 0, 0, 0.08);
   background: #f2f8ff;
   height: 120px;
+  max-width: ${Constants.maxWidth};
   box-sizing: border-box;
   padding: 0 60px;
-
-  ${media.lessThan('medium')`
-    box-shadow: none;
-  `}
-`
-
-const InnerContainer = styled.div`
-  max-width: ${Constants.maxWidth};
   display: flex;
   align-items: center;
   justify-content: space-between;
   margin: 0 auto;
-  height: 100%;
 
   ${media.lessThan('medium')`
     flex-direction: column;
+    box-shadow: none;
   `}
 `

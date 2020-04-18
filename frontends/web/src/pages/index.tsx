@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import React, { useEffect } from 'react'
 import Router from 'next/router'
 import { useSelector } from 'react-redux'
 import { RootState } from '../app/store'
@@ -21,7 +21,7 @@ const Home = () => {
   return <LandingPage />
 }
 
-Home.getInitialProps = async function() {
+Home.getInitialProps = async function () {
   return {
     overridesLayout: true,
   }

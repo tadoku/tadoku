@@ -34,19 +34,19 @@ const LandingPage = () => {
             <Title>Why should I participate?</Title>
             <Paragraph>
               Extensive reading of native materials is a great way to improve
-              your understanding of the language you're learning. There are many
-              benefits to doing so: it builds vocabulary, reinforces grammar
-              patterns, and you learn about the culture of where your language
-              is spoken. As you participate in more rounds you will notice that
-              you can read more and more as your command of your target language
-              improves.
+              your understanding of the language you&apos;re learning. There are
+              many benefits to doing so: it builds vocabulary, reinforces
+              grammar patterns, and you learn about the culture of where your
+              language is spoken. As you participate in more rounds you will
+              notice that you can read more and more as your command of your
+              target language improves.
             </Paragraph>
             <Paragraph>
-              That said, it's not for everyone. Not everyone enjoys the process
-              of immersing themselves. Tadoku isn't a magical pill that will
-              make you fluent. It only covers extensive reading, and not
-              extensive listening. While Tadoku is here to promote reading, a
-              balanced approach to learning is still recommended.
+              That said, it&apos;s not for everyone. Not everyone enjoys the
+              process of immersing themselves. Tadoku isn&apos;t a magical pill
+              that will make you fluent. It only covers extensive reading, and
+              not extensive listening. While Tadoku is here to promote reading,
+              a balanced approach to learning is still recommended.
             </Paragraph>
           </Card>
         </Content>

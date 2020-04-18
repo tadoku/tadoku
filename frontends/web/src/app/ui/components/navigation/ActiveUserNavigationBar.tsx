@@ -37,11 +37,6 @@ export const ActiveUserNavigationBar = ({
           <Button plain>Manual</Button>
         </a>
       </Link>
-      <Link href="/about" passHref>
-        <a href="">
-          <Button plain>About</Button>
-        </a>
-      </Link>
       <SubmitPagesLink
         registration={registration}
         refreshRanking={refreshRanking}

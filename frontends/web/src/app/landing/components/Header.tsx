@@ -1,5 +1,6 @@
 import React from 'react'
 import styled from 'styled-components'
+import media from 'styled-media-query'
 
 import SignupCard from './SignupCard'
 
@@ -36,12 +37,21 @@ const Background = styled.div`
   margin: 0 auto;
   background-image: url('./img/header.jpg');
   background-size: cover;
+
+  ${media.lessThan('large')`
+    height: inherit;
+  `}
 `
 
 const Grid = styled.div`
   max-width: 1240px;
   margin: 0 auto;
   position: relative;
+
+  ${media.lessThan('large')`
+    display: flex;
+    align-items:flex-start;
+  `}
 `
 
 const IntroCard = styled.div`
@@ -50,6 +60,11 @@ const IntroCard = styled.div`
   max-width: 505px;
   box-sizing: border-box;
   padding: 60px;
+
+  ${media.lessThan('large')`
+    box-shadow: none;
+    max-height: inherit;
+  `}
 `
 
 const Logo = styled.img.attrs(() => ({

@@ -10,14 +10,16 @@ interface Props {
 
 const SignupCard = ({ refreshSession, openLoginModal }: Props) => (
   <Card>
-    <SignupTitle>
-      Create a <br />
-      new account
-    </SignupTitle>
-    <RegisterForm onSuccess={refreshSession} />
-    <LoginPrompt>
-      Already have an account? <a onClick={openLoginModal}>Log in</a>
-    </LoginPrompt>
+    <Large>
+      <SignupTitle>
+        Create a <br />
+        new account
+      </SignupTitle>
+      <RegisterForm onSuccess={refreshSession} />
+      <LoginPrompt>
+        Already have an account? <a onClick={openLoginModal}>Log in</a>
+      </LoginPrompt>
+    </Large>
   </Card>
 )
 
@@ -33,9 +35,20 @@ const Card = styled.div`
   top: 120px;
   right: 105px;
 
-  /* TODO: Change the card content based on the width */
   ${media.lessThan('large')`
-    display: none;
+    position: inherit;
+    top: inherit;
+    right: inherit;
+    width: inherit;
+    min-width: 400px;
+    flex: 1;
+    box-shadow: none;
+  `}
+`
+
+const Large = styled.div`
+  ${media.lessThan('large')`
+    /* display: none; */
   `}
 `
 

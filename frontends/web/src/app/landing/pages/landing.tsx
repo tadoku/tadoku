@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import styled, { createGlobalStyle } from 'styled-components'
 import { useDispatch } from 'react-redux'
+import media from 'styled-media-query'
 
 import Header from './../components/Header'
 import LogInModal from './../../session/components/modals/LogInModal'
@@ -62,6 +63,10 @@ const Container = styled.div``
 const Content = styled.div`
   margin: 90px auto;
   width: 1240px;
+
+  ${media.lessThan('large')`
+    width: 100%;
+  `}
 `
 
 const Title = styled.h2`
@@ -83,4 +88,8 @@ const Card = styled.div`
   max-width: 715px;
   box-sizing: border-box;
   padding: 0 60px;
+
+  ${media.lessThan('large')`
+    max-width: 100%;
+  `}
 `

@@ -115,8 +115,7 @@ export const DropdownItem = styled.li`
 
     &:hover:not([disabled]),
     &:active:not([disabled]) {
-      background: ${Constants.colors.primary};
-      color: white;
+      background: ${Constants.colors.darkWithAlpha(0.05)};
     }
   }
 `

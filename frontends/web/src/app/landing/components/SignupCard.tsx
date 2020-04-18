@@ -44,6 +44,13 @@ const Card = styled.div`
     flex: 1;
     box-shadow: none;
   `}
+
+  ${media.lessThan('medium')`
+    max-width: 500px;
+    min-width: inherit;
+    width: 100%;
+    margin: 0 auto;
+  `}
 `
 
 const Large = styled.div`

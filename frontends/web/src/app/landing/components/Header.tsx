@@ -41,6 +41,10 @@ const Background = styled.div`
   ${media.lessThan('large')`
     height: inherit;
   `}
+
+  ${media.lessThan('medium')`
+    background: none;
+  `}
 `
 
 const Grid = styled.div`
@@ -51,6 +55,10 @@ const Grid = styled.div`
   ${media.lessThan('large')`
     display: flex;
     align-items:flex-start;
+  `}
+
+  ${media.lessThan('medium')`
+    flex-direction: column;
   `}
 `
 
@@ -64,6 +72,10 @@ const IntroCard = styled.div`
   ${media.lessThan('large')`
     box-shadow: none;
     max-height: inherit;
+  `}
+
+  ${media.lessThan('medium')`
+    max-width: 100%;
   `}
 `
 

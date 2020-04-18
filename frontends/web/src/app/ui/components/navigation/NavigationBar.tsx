@@ -2,14 +2,14 @@ import React, { useEffect, useState } from 'react'
 import styled from 'styled-components'
 import media from 'styled-media-query'
 import { connect } from 'react-redux'
-import { State, Action } from '../../../store'
+import { RootState } from '../../../store'
 import { User } from '../../../session/interfaces'
 import { RankingRegistration } from '../../../ranking/interfaces'
 import { ActiveUserNavigationBar } from './ActiveUserNavigationBar'
 import { AnonymousNavigationBar } from './AnonymousNavigationBar'
-import { Dispatch } from 'redux'
-import * as SessionStore from '../../../session/redux'
-import * as RankingStore from '../../../ranking/redux'
+import { runEffects as sessionRunEffects } from '../../../session/redux'
+import { runEffects as rankingRunEffects } from '../../../ranking/redux'
+import { RankingRegistrationMapper } from '../../../ranking/transform/ranking-registration'
 
 interface Props {
   user: User | undefined
@@ -49,23 +49,17 @@ const NavigationBar = ({
   )
 }
 
-const mapStateToProps = (state: State) => ({
+const mapStateToProps = (state: RootState) => ({
   user: state.session.user,
-  registration: state.ranking.registration,
+  registration: RankingRegistrationMapper.optional.fromRaw(
+    state.ranking.rawRegistration,
+  ),
 })
 
-const mapDispatchToProps = (dispatch: Dispatch<Action>) => ({
-  refreshSession: () => {
-    dispatch({
-      type: SessionStore.ActionTypes.SessionRunEffects,
-    })
-  },
-  refreshRanking: () => {
-    dispatch({
-      type: RankingStore.ActionTypes.RankingRunEffects,
-    })
-  },
-})
+const mapDispatchToProps = {
+  refreshSession: sessionRunEffects,
+  refreshRanking: rankingRunEffects,
+}
 
 export default connect(mapStateToProps, mapDispatchToProps)(NavigationBar)
 

@@ -1,54 +1,27 @@
-export const initialState = {
+import { createSlice } from '@reduxjs/toolkit'
+
+const initialState = {
   isLoading: false,
   activityCount: 0,
 }
 
-// Actions
+const slice = createSlice({
+  name: 'app',
+  initialState,
+  reducers: {
+    startLoading(state) {
+      state.activityCount += 1
+      state.isLoading = state.activityCount > 0
+    },
+    finishLoading(state) {
+      state.activityCount -= 1
+      state.isLoading = state.activityCount > 0
+    },
+  },
+})
 
-export enum ActionTypes {
-  AppLoadingStart = '@app/loading-start',
-  AppLoadingFinish = '@app/loading-finish',
-}
+export const { startLoading, finishLoading } = slice.actions
 
-export interface AppLoadingStart {
-  type: typeof ActionTypes.AppLoadingStart
-  payload: {
-    count: number
-  }
-}
+export const appInitialState = initialState
 
-export interface AppLoadingFinish {
-  type: typeof ActionTypes.AppLoadingFinish
-  payload: {
-    count: number
-  }
-}
-
-export type Action = AppLoadingStart | AppLoadingFinish
-
-// REDUCER
-
-export const reducer = (state = initialState, action: Action) => {
-  switch (action.type) {
-    case ActionTypes.AppLoadingStart:
-      const startPayload = (action as AppLoadingStart).payload
-      const activityCountForStart = state.activityCount + startPayload.count
-
-      return {
-        ...state,
-        activityCount: activityCountForStart,
-        isLoading: activityCountForStart > 0,
-      }
-    case ActionTypes.AppLoadingFinish:
-      const finishPayload = (action as AppLoadingFinish).payload
-      const activityCountForFinish = state.activityCount - finishPayload.count
-
-      return {
-        ...state,
-        activityCount: activityCountForFinish,
-        isLoading: activityCountForFinish > 0,
-      }
-    default:
-      return state
-  }
-}
+export default slice.reducer

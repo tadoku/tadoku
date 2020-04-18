@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { ContestLog, RankingRegistrationOverview } from '../interfaces'
 import EditLogFormModal from './modals/EditLogFormModal'
-import { State } from '../../store'
+import { RootState } from '../../store'
 import { useSelector } from 'react-redux'
 import { User } from '../../session/interfaces'
 import RankingApi from '../api'
@@ -19,7 +19,7 @@ interface Props {
 }
 
 const ContestLogsOverview = (props: Props) => {
-  const signedInUser = useSelector((state: State) => state.session.user)
+  const signedInUser = useSelector((state: RootState) => state.session.user)
   const [selectedLog, setSelectedLog] = useState(
     undefined as ContestLog | undefined,
   )

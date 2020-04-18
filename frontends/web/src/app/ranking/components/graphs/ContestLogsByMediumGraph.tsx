@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { ContestLog } from '../../interfaces'
-import { aggregateContestLogsByMedium } from '../../transform'
+import { aggregateContestLogsByMedium } from '../../transform/graph'
 import {
   makeWidthFlexible,
   DiscreteColorLegend,

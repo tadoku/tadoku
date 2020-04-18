@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 
-import * as AppStore from './redux'
+import { startLoading, finishLoading } from './redux'
 import { useDispatch } from 'react-redux'
 
 export interface Serializer<DataType> {
@@ -126,20 +126,10 @@ export const useCachedApiState = <DataType>({
       setData({ ...data, status: ApiFetchStatus.Loading })
     }
 
-    if (dispatch) {
-      dispatch({
-        type: AppStore.ActionTypes.AppLoadingStart,
-        payload: { count: 1 },
-      })
-    }
+    dispatch(startLoading())
 
     fetchData().then(fetchedData => {
-      if (dispatch) {
-        dispatch({
-          type: AppStore.ActionTypes.AppLoadingFinish,
-          payload: { count: 1 },
-        })
-      }
+      dispatch(finishLoading())
 
       if (!isSubscribed || fetchedData === data.body) {
         return

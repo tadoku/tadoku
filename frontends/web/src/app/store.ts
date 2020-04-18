@@ -1,37 +1,32 @@
-import { createStore, combineReducers } from 'redux'
-import * as AppStore from './redux'
-import * as ContestStore from './contest/redux'
-import * as RankingStore from './ranking/redux'
-import * as SessionStore from './session/redux'
+import { configureStore, combineReducers } from '@reduxjs/toolkit'
+import appReducer, { appInitialState } from './redux'
+import contestReducer, { contestInitialState } from './contest/redux'
+import rankingReducer, { rankingInitialState } from './ranking/redux'
+import sessionReducer, { sessionInitialState } from './session/redux'
 
 const initialState = {
-  app: AppStore.initialState,
-  contest: ContestStore.initialState,
-  ranking: RankingStore.initialState,
-  session: SessionStore.initialState,
+  app: appInitialState,
+  contest: contestInitialState,
+  ranking: rankingInitialState,
+  session: sessionInitialState,
 }
 
-export type State = typeof initialState
-export type Action =
-  | AppStore.Action
-  | ContestStore.Action
-  | RankingStore.Action
-  | SessionStore.Action
-
-export const actionTypes = {
-  ...AppStore.ActionTypes,
-  ...ContestStore.ActionTypes,
-  ...RankingStore.ActionTypes,
-  ...SessionStore.ActionTypes,
-}
+export type RootState = typeof initialState
 
 export const reducer = combineReducers({
-  app: AppStore.reducer,
-  contest: ContestStore.reducer,
-  ranking: RankingStore.reducer,
-  session: SessionStore.reducer,
+  app: appReducer,
+  contest: contestReducer,
+  ranking: rankingReducer,
+  session: sessionReducer,
 })
 
 export function initializeStore(state = initialState) {
-  return createStore(reducer, state)
+  return configureStore({
+    reducer,
+    preloadedState: state,
+  })
 }
+
+const dispatch = initializeStore().dispatch
+
+export type Dispatch = typeof dispatch

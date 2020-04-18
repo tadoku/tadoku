@@ -1,12 +1,12 @@
 import { useEffect } from 'react'
 import Router from 'next/router'
 import { useSelector } from 'react-redux'
-import { State } from '../app/store'
+import { RootState } from '../app/store'
 import LandingPage from '../app/landing/pages/landing'
 import Blog from './blog'
 
 const Home = () => {
-  const user = useSelector((state: State) => state.session.user)
+  const user = useSelector((state: RootState) => state.session.user)
 
   useEffect(() => {
     if (user) {

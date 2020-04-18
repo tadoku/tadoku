@@ -9,9 +9,7 @@ import * as RankingStore from '../../ranking/redux'
 const LandingPage = () => {
   const dispatch = useDispatch()
   const refreshSession = () => {
-    dispatch({
-      type: RankingStore.ActionTypes.RankingRunEffects,
-    })
+    dispatch(RankingStore.runEffects())
   }
 
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false)

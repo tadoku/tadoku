@@ -14,11 +14,10 @@ import { validateDisplayName } from '../../../session/domain'
 import UserApi from '../../api'
 import SessionApi from '../../../session/api'
 import { connect } from 'react-redux'
-import { Dispatch } from 'redux'
-import * as SessionStore from '../../../session/redux'
+import { logIn } from '../../../session/redux'
 import { User } from '../../../session/interfaces'
 import { storeUserInLocalStorage } from '../../../session/storage'
-import { State } from '../../../store'
+import { RootState, Dispatch } from '../../../store'
 
 interface Props {
   setUser: (token: string, user: User) => void
@@ -105,20 +104,16 @@ const ProfileForm = ({ user, setUser, userLoaded }: Props) => {
   )
 }
 
-const mapStateToProps = (state: State) => ({
+const mapStateToProps = (state: RootState) => ({
   user: state.session.user,
   userLoaded: state.session.loaded,
 })
 
-const mapDispatchToProps = (dispatch: Dispatch<SessionStore.Action>) => ({
+const mapDispatchToProps = (dispatch: Dispatch) => ({
   setUser: (token: string, user: User) => {
     const payload = { token, user }
     storeUserInLocalStorage(payload)
-
-    dispatch({
-      type: SessionStore.ActionTypes.SessionLogIn,
-      payload,
-    })
+    dispatch(logIn(payload))
   },
 })
 

@@ -78,7 +78,7 @@ export const GlobalStyle = createGlobalStyle<typeof Constants>`
 `
 
 const Container = styled.div`
-  padding: 60px;
+  padding: 20px 60px;
   box-sizing: border-box;
   max-width: ${Constants.maxWidth};
   margin: 0 auto;

@@ -1,6 +1,7 @@
 import React, { SFC } from 'react'
 import Link from 'next/link'
 import styled from 'styled-components'
+import ContentLoader from 'react-content-loader'
 
 import { Ranking, RankingWithRank } from '../interfaces'
 import { amountToPages, calculateLeaderboard } from '../transform/graph'
@@ -12,6 +13,21 @@ interface Props {
 }
 
 const RankingList = (props: Props) => {
+  if (props.loading) {
+    const rows = [...Array(5)]
+
+    return (
+      <Table>
+        <Heading />
+        <tbody>
+          {rows.map((_, i) => (
+            <RankingRowSkeleton key={i} />
+          ))}
+        </tbody>
+      </Table>
+    )
+  }
+
   const leaderboard = calculateLeaderboard(props.rankings)
 
   return (
@@ -159,3 +175,32 @@ const ScoreCell = styled.td`
   height: 55px;
   padding-right: 60px;
 `
+
+const RankingRowSkeleton = () => (
+  <SkeletonRow>
+    <RankCell>
+      <Skeleton />
+    </RankCell>
+    <NicknameCell>
+      <Skeleton />
+    </NicknameCell>
+    <ScoreCell>
+      <Skeleton />
+    </ScoreCell>
+  </SkeletonRow>
+)
+
+const SkeletonRow = styled.tr`
+  height: 55px;
+  padding: 0;
+`
+
+const Skeleton = () => (
+  <ContentLoader
+    speed={2}
+    style={{ width: '100%', height: '25px', borderRadius: '2px' }}
+    height={25}
+  >
+    <rect x="0" y="0" rx="0" ry="0" width="100%" height="25" />
+  </ContentLoader>
+)

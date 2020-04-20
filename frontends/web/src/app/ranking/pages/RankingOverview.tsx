@@ -3,7 +3,7 @@ import { Ranking, RankingRegistration } from '../interfaces'
 import RankingList from '../components/List'
 import RankingApi from '../api'
 import { Contest } from '../../contest/interfaces'
-import { Button, PageTitle } from '../../ui/components'
+import { Button, PageTitle, ContentContainer } from '../../ui/components'
 import styled from 'styled-components'
 import { User } from '../../session/interfaces'
 import JoinContestModal from '../components/modals/JoinContestModal'
@@ -51,26 +51,28 @@ const RankingOverview = ({
 
   return (
     <>
-      <PageTitle>Ranking</PageTitle>
-      <Container>
-        {canJoin && contest && (
-          <>
-            <Button primary large onClick={() => setJoinModalOpen(true)}>
-              Join contest
-            </Button>
-            <JoinContestModal
-              contest={contest}
-              isOpen={joinModalOpen}
-              onSuccess={() => {
-                setJoinModalOpen(false)
-                refreshRegistration()
-              }}
-              onCancel={() => setJoinModalOpen(false)}
-            />
-          </>
-        )}
-      </Container>
-      {new Date() >= contest.start && <RemainingUntil date={contest.end} />}
+      <ContentContainer>
+        <Container>
+          <PageTitle>Ranking</PageTitle>
+          {canJoin && contest && (
+            <>
+              <Button primary large onClick={() => setJoinModalOpen(true)}>
+                Join contest
+              </Button>
+              <JoinContestModal
+                contest={contest}
+                isOpen={joinModalOpen}
+                onSuccess={() => {
+                  setJoinModalOpen(false)
+                  refreshRegistration()
+                }}
+                onCancel={() => setJoinModalOpen(false)}
+              />
+            </>
+          )}
+        </Container>
+        {new Date() >= contest.start && <RemainingUntil date={contest.end} />}
+      </ContentContainer>
       <RankingList
         rankings={rankings}
         loading={status === ApiFetchStatus.Loading}
@@ -110,14 +112,18 @@ const RemainingUntil = ({ date }: { date: Date }) => {
   const days = Math.floor(t / (1000 * 60 * 60 * 24))
 
   if (t <= 0) {
-    return <p>Contest has ended.</p>
+    return <Notes>Contest has ended.</Notes>
   }
 
   return (
-    <p>
+    <Notes>
       {days} day{days !== 1 && 's'} {hours} hour{hours !== 1 && 's'} {minutes}{' '}
       minute{minutes !== 1 && 's'} {seconds} second{seconds !== 1 && 's'}{' '}
       remaining
-    </p>
+    </Notes>
   )
 }
+
+const Notes = styled.p`
+  padding: 0 0 20px 0;
+`

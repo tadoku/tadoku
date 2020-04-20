@@ -1,9 +1,12 @@
-import React from 'react'
+import React, { SFC } from 'react'
 import Link from 'next/link'
-import ContentLoader from 'react-content-loader'
-import { Ranking, RankingWithRank } from '../interfaces'
 import styled from 'styled-components'
+import ContentLoader from 'react-content-loader'
+
+import { Ranking, RankingWithRank } from '../interfaces'
 import { amountToPages, calculateLeaderboard } from '../transform/graph'
+import Constants from '../../ui/Constants'
+import media from 'styled-media-query'
 
 interface Props {
   rankings: Ranking[]
@@ -15,62 +18,207 @@ const RankingList = (props: Props) => {
     const rows = [...Array(5)]
 
     return (
-      <List>
-        {rows.map((_, i) => (
-          <RankingRowSkeleton key={i} rank={i + 1} />
-        ))}
-      </List>
+      <Table>
+        <Heading />
+        <tbody>
+          {rows.map((_, i) => (
+            <RankingRowSkeleton key={i} />
+          ))}
+        </tbody>
+      </Table>
     )
   }
 
   const leaderboard = calculateLeaderboard(props.rankings)
 
   return (
-    <List>
-      {leaderboard.map(row => (
-        <RankingRow {...row} key={row.data.userId} />
-      ))}
-    </List>
+    <Table>
+      <Heading />
+      <tbody>
+        {leaderboard.map(row => (
+          <RankingRow {...row} key={row.data.userId} />
+        ))}
+      </tbody>
+    </Table>
   )
 }
 
 export default RankingList
 
-const RankingRow = ({ rank, tied, data }: RankingWithRank) => (
+const RankingRow = ({ rank, tied, data: rankingData }: RankingWithRank) => (
   <Row>
-    <Link
-      href="/contest-profile/[contest_id]/[user_id]"
-      as={`/contest-profile/${data.contestId}/${data.userId}`}
-      passHref
-    >
-      <RowLink href="">
-        <Rank>
-          {tied && <span title="Tied">T</span>}
-          {rank}
-        </Rank>
-        <Name>{data.userDisplayName}</Name>
-        <Pages>
-          {amountToPages(data.amount)}
-          <PagesLabel> pages</PagesLabel>
-        </Pages>
+    <RankCell>
+      <RowLink ranking={rankingData}>
+        {tied && <span title="Tied">T</span>}
+        {rank}
       </RowLink>
-    </Link>
+    </RankCell>
+    <NicknameCell>
+      <RowLink ranking={rankingData}>{rankingData.userDisplayName}</RowLink>
+    </NicknameCell>
+    <ScoreCell>
+      <RowLink ranking={rankingData}>
+        {amountToPages(rankingData.amount)}
+      </RowLink>
+    </ScoreCell>
   </Row>
 )
 
-const RankingRowSkeleton = ({ rank }: { rank: number }) => (
-  <Row>
-    <RowLink href="">
-      <Rank>{rank}</Rank>
-      <Name>
-        <Skeleton />
-      </Name>
-      <PagesLoading>
-        <Skeleton />
-      </PagesLoading>
-    </RowLink>
-  </Row>
+const RowLink: SFC<{ ranking: Ranking }> = ({ ranking, children }) => (
+  <Link
+    href="/contest-profile/[contest_id]/[user_id]"
+    as={`/contest-profile/${ranking.contestId}/${ranking.userId}`}
+    passHref
+  >
+    <RowAnchor href="">{children}</RowAnchor>
+  </Link>
 )
+
+const Heading = () => (
+  <thead>
+    <TableHeading>
+      <RankHeading>Rank</RankHeading>
+      <NicknameHeading>Nickname</NicknameHeading>
+      <ScoreHeading>Score</ScoreHeading>
+    </TableHeading>
+  </thead>
+)
+
+const Table = styled.table`
+  padding: 0;
+  width: 100%;
+  background: ${Constants.colors.light};
+  box-shadow: 0px 2px 3px 0px rgba(0, 0, 0, 0.08);
+  border-collapse: collapse;
+`
+
+const TableHeading = styled.tr`
+  height: 55px;
+  font-size: 16px;
+  font-weight: bold;
+  text-transform: uppercase;
+  color: ${Constants.colors.nonFocusText};
+`
+
+const RankHeading = styled.td`
+  width: 80px;
+  padding: 0 30px 0 60px;
+  box-sizing: border-box;
+  border-bottom: 2px solid ${Constants.colors.nonFocusTextWithAlpha(0.2)};
+
+  ${media.lessThan('large')`
+    padding: 0 20px;
+  `}
+`
+
+const NicknameHeading = styled.td`
+  width: 100%;
+  padding: 0 30px;
+  box-sizing: border-box;
+  border-bottom: 2px solid ${Constants.colors.nonFocusTextWithAlpha(0.2)};
+
+  ${media.lessThan('large')`
+    padding: 0 20px;
+  `}
+`
+
+const ScoreHeading = styled.td`
+  min-width: 100px;
+  max-width: 150px;
+  padding: 0 60px 0 30px;
+  text-align: right;
+  box-sizing: border-box;
+  border-bottom: 2px solid ${Constants.colors.nonFocusTextWithAlpha(0.2)};
+
+  ${media.lessThan('large')`
+    padding: 0 20px;
+  `}
+`
+
+const Row = styled.tr`
+  height: 55px;
+  padding: 0;
+  font-size: 20px;
+  font-weight: bold;
+  transition: background 0.1s ease;
+
+  &:nth-child(2n) {
+    background-color: ${Constants.colors.nonFocusTextWithAlpha(0.05)};
+  }
+
+  &:hover,
+  &:active,
+  &:focus {
+    background: ${Constants.colors.primary};
+
+    a {
+      color: ${Constants.colors.light};
+      transition: none;
+    }
+  }
+`
+
+const RowAnchor = styled.a`
+  display: block;
+  padding: 0;
+  height: 55px;
+  line-height: 55px;
+
+  &:hover,
+  &:active,
+  &:focus {
+    color: inherit;
+  }
+`
+
+const RankCell = styled.td`
+  text-align: center;
+  height: 55px;
+  padding-left: 60px;
+  padding-right: 30px;
+
+  ${media.lessThan('large')`
+    padding: 0 20px;
+  `}
+`
+
+const NicknameCell = styled.td`
+  height: 55px;
+  padding: 0 30px;
+
+  ${media.lessThan('large')`
+    padding: 0 20px;
+  `}
+`
+
+const ScoreCell = styled.td`
+  text-align: right;
+  height: 55px;
+  padding-right: 60px;
+
+  ${media.lessThan('large')`
+    padding: 0 20px;
+  `}
+`
+
+const RankingRowSkeleton = () => (
+  <SkeletonRow>
+    <RankCell>
+      <Skeleton />
+    </RankCell>
+    <NicknameCell>
+      <Skeleton />
+    </NicknameCell>
+    <ScoreCell>
+      <Skeleton />
+    </ScoreCell>
+  </SkeletonRow>
+)
+
+const SkeletonRow = styled.tr`
+  height: 55px;
+  padding: 0;
+`
 
 const Skeleton = () => (
   <ContentLoader
@@ -81,59 +229,3 @@ const Skeleton = () => (
     <rect x="0" y="0" rx="0" ry="0" width="100%" height="25" />
   </ContentLoader>
 )
-
-const List = styled.ul`
-  list-style: none;
-  padding: 0;
-  margin: 0 auto;
-`
-
-const Row = styled.li`
-  margin: 20px 0;
-`
-
-const RowLink = styled.a`
-  padding: 20px 30px;
-  border-radius: 2px;
-  box-shadow: 4px 5px 15px 1px rgba(0, 0, 0, 0.08);
-  display: flex;
-  align-items: center;
-  transition: all 0.2s ease;
-
-  &:hover,
-  &:focus,
-  &:active {
-    background-color: rgba(0, 0, 0, 0.02);
-    box-shadow: 4px 5px 15px 1px rgba(0, 0, 0, 0.12);
-  }
-`
-
-const Rank = styled.div`
-  font-size: 30px;
-  margin-right: 30px;
-
-  span {
-    padding-right: 5px;
-  }
-`
-
-const Name = styled.div`
-  flex: 1;
-  font-size: 20px;
-`
-
-const Pages = styled.div`
-  margin-left: 30px;
-  font-size: 25px;
-`
-
-const PagesLoading = styled.div`
-  margin-left: 30px;
-  min-width: 50px;
-  max-width: 100px;
-  font-size: 25px;
-`
-
-const PagesLabel = styled.span`
-  font-size: 20px;
-`

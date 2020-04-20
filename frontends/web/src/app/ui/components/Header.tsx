@@ -40,7 +40,7 @@ const Logo = styled.img.attrs(() => ({
 
 const Container = styled.div`
   box-shadow: 0px 2px 3px 0px rgba(0, 0, 0, 0.08);
-  background: #f2f8ff;
+  background: ${Constants.colors.lightTinted};
   height: 120px;
   max-width: ${Constants.maxWidth};
   box-sizing: border-box;
@@ -52,6 +52,6 @@ const Container = styled.div`
 
   ${media.lessThan('medium')`
     flex-direction: column;
-    box-shadow: none;
+    padding-top: 30px;
   `}
 `

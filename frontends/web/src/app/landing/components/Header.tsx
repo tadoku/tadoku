@@ -35,7 +35,7 @@ const Background = styled.div`
   max-width: 1850px;
   height: 460px;
   margin: 0 auto;
-  background-image: url('./img/header.jpg');
+  background-image: url('/img/header.jpg');
   background-size: cover;
 
   ${media.lessThan('large')`
@@ -80,7 +80,7 @@ const IntroCard = styled.div`
 `
 
 const Logo = styled.img.attrs(() => ({
-  src: './img/logo.svg',
+  src: '/img/logo.svg',
   alt: 'Tadoku',
 }))`
   height: 29px;

@@ -31,7 +31,7 @@ const mapStateToProps = (state: RootState) => ({
 export default connect(mapStateToProps)(Header)
 
 const Logo = styled.img.attrs(() => ({
-  src: './img/logo.svg',
+  src: '/img/logo.svg',
   alt: 'Tadoku',
 }))`
   height: 29px;

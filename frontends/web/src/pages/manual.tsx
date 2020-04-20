@@ -1,19 +1,17 @@
 import React from 'react'
 import Head from 'next/head'
-import styled from 'styled-components'
 import PostOrPageDetail from '../app/blog/pages/PostOrPageDetail'
+import { ContentContainer } from '../app/ui/components'
 
 const Manual = () => (
   <>
     <Head>
       <title>Tadoku - Manual</title>
     </Head>
-    <Container>
+    <ContentContainer>
       <PostOrPageDetail slug="manual" />
-    </Container>
+    </ContentContainer>
   </>
 )
-
-const Container = styled.div``
 
 export default Manual

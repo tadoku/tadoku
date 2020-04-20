@@ -54,6 +54,8 @@ const InnerContainer = styled.div`
   align-items: top;
   justify-content: space-between;
   margin: 0 auto;
+  padding: 0 60px;
+  box-sizing: border-box;
 `
 
 const Credits = styled.p`

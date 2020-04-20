@@ -46,7 +46,7 @@ export const GlobalStyle = createGlobalStyle<typeof Constants>`
   }
 
   body {
-    background: ${props => props.colors.light};
+    background: ${props => props.colors.lighter};
     font-family: 'Open Sans', sans-serif;
     margin: 0;
     padding: 0;
@@ -78,7 +78,7 @@ export const GlobalStyle = createGlobalStyle<typeof Constants>`
 `
 
 const Container = styled.div`
-  padding: 20px 60px;
+  padding: 20px 0;
   box-sizing: border-box;
   max-width: ${Constants.maxWidth};
   margin: 0 auto;

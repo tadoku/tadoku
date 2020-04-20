@@ -15,15 +15,9 @@ interface Props {
   user: User | undefined
   registration: RankingRegistration | undefined
   refreshSession: () => void
-  refreshRanking: () => void
 }
 
-const NavigationBar = ({
-  user,
-  registration,
-  refreshSession,
-  refreshRanking,
-}: Props) => {
+const NavigationBar = ({ user, registration, refreshSession }: Props) => {
   const [hasMounted, setHasMounted] = useState(false)
 
   useEffect(() => {
@@ -37,11 +31,7 @@ const NavigationBar = ({
   return (
     <StyledNav prefersVertical={!!user}>
       {user ? (
-        <ActiveUserNavigationBar
-          registration={registration}
-          refreshRanking={refreshRanking}
-          user={user}
-        />
+        <ActiveUserNavigationBar registration={registration} user={user} />
       ) : (
         <AnonymousNavigationBar refreshSession={refreshSession} />
       )}

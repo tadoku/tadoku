@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from 'react'
-import { RankingRegistration } from '../../interfaces'
-import NewLogFormModal from '../modals/NewLogFormModal'
-import { Button } from '../../../ui/components'
+import { RankingRegistration } from '../interfaces'
+import NewLogFormModal from './modals/NewLogFormModal'
+import { Button } from '../../ui/components'
 
 interface Props {
   registration: RankingRegistration | undefined
   refreshRanking: () => void
 }
 
-const SubmitPages = ({ registration, refreshRanking }: Props) => {
+const SubmitPagesButton = ({ registration, refreshRanking }: Props) => {
   const [open, setOpen] = useState(false)
   const [currentDate, setCurrentDate] = useState(() => new Date())
 
@@ -37,8 +37,8 @@ const SubmitPages = ({ registration, refreshRanking }: Props) => {
     <>
       <Button
         onClick={() => setOpen(true)}
+        primary
         icon="edit"
-        plain
         disabled={disabled}
         title={title}
       >
@@ -56,4 +56,4 @@ const SubmitPages = ({ registration, refreshRanking }: Props) => {
   )
 }
 
-export default SubmitPages
+export default SubmitPagesButton

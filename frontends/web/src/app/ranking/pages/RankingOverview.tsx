@@ -10,13 +10,14 @@ import JoinContestModal from '../components/modals/JoinContestModal'
 import { useCachedApiState, ApiFetchStatus } from '../../cache'
 import { RankingsSerializer } from '../transform/ranking'
 import { isContestActive } from '../domain'
+import SubmitPagesButton from '../components/SubmitPagesButton'
 
 interface Props {
   contest: Contest
   registration: RankingRegistration | undefined
   user: User | undefined
   effectCount: number
-  refreshRegistration: () => void
+  refreshRanking: () => void
 }
 
 const RankingOverview = ({
@@ -24,7 +25,7 @@ const RankingOverview = ({
   registration,
   user,
   effectCount,
-  refreshRegistration,
+  refreshRanking,
 }: Props) => {
   const [joinModalOpen, setJoinModalOpen] = useState(false)
 
@@ -43,11 +44,10 @@ const RankingOverview = ({
   })
 
   // @TODO: extract this business logic
-  const canJoin =
-    user &&
-    contest &&
-    isContestActive(contest) &&
-    ((registration && registration.contestId !== contest.id) || !registration)
+  const isActive = user && contest && isContestActive(contest)
+  const isRegistered = registration?.contestId === contest.id
+  const canJoin = isActive && !isRegistered
+  const canSubmit = isActive && isRegistered
 
   return (
     <>
@@ -64,11 +64,17 @@ const RankingOverview = ({
                 isOpen={joinModalOpen}
                 onSuccess={() => {
                   setJoinModalOpen(false)
-                  refreshRegistration()
+                  refreshRanking()
                 }}
                 onCancel={() => setJoinModalOpen(false)}
               />
             </>
+          )}
+          {canSubmit && (
+            <SubmitPagesButton
+              registration={registration}
+              refreshRanking={refreshRanking}
+            />
           )}
         </Container>
         {new Date() >= contest.start && <RemainingUntil date={contest.end} />}

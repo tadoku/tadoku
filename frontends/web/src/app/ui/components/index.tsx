@@ -252,4 +252,8 @@ export const PageTitle = styled.h1`
 
 export const ContentContainer = styled.div`
   margin: 0 60px;
+
+  ${media.lessThan('large')`
+    margin: 0 20px;
+  `}
 `

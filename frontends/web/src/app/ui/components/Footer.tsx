@@ -33,7 +33,6 @@ const LogoType = styled.h4`
 `
 
 const Container = styled.div`
-  padding: 0 20px;
   box-sizing: border-box;
   height: 100px;
   display: none;
@@ -56,6 +55,10 @@ const InnerContainer = styled.div`
   margin: 0 auto;
   padding: 0 60px;
   box-sizing: border-box;
+
+  ${media.lessThan('large')`
+    padding: 0 20px;
+  `}
 `
 
 const Credits = styled.p`

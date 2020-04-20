@@ -6,6 +6,7 @@ import ContentLoader from 'react-content-loader'
 import { Ranking, RankingWithRank } from '../interfaces'
 import { amountToPages, calculateLeaderboard } from '../transform/graph'
 import Constants from '../../ui/Constants'
+import media from 'styled-media-query'
 
 interface Props {
   rankings: Ranking[]
@@ -104,6 +105,10 @@ const RankHeading = styled.td`
   padding: 0 30px 0 60px;
   box-sizing: border-box;
   border-bottom: 2px solid ${Constants.colors.nonFocusTextWithAlpha(0.2)};
+
+  ${media.lessThan('large')`
+    padding: 0 20px;
+  `}
 `
 
 const NicknameHeading = styled.td`
@@ -111,6 +116,10 @@ const NicknameHeading = styled.td`
   padding: 0 30px;
   box-sizing: border-box;
   border-bottom: 2px solid ${Constants.colors.nonFocusTextWithAlpha(0.2)};
+
+  ${media.lessThan('large')`
+    padding: 0 20px;
+  `}
 `
 
 const ScoreHeading = styled.td`
@@ -120,6 +129,10 @@ const ScoreHeading = styled.td`
   text-align: right;
   box-sizing: border-box;
   border-bottom: 2px solid ${Constants.colors.nonFocusTextWithAlpha(0.2)};
+
+  ${media.lessThan('large')`
+    padding: 0 20px;
+  `}
 `
 
 const Row = styled.tr`
@@ -163,17 +176,29 @@ const RankCell = styled.td`
   height: 55px;
   padding-left: 60px;
   padding-right: 30px;
+
+  ${media.lessThan('large')`
+    padding: 0 20px;
+  `}
 `
 
 const NicknameCell = styled.td`
   height: 55px;
   padding: 0 30px;
+
+  ${media.lessThan('large')`
+    padding: 0 20px;
+  `}
 `
 
 const ScoreCell = styled.td`
   text-align: right;
   height: 55px;
   padding-right: 60px;
+
+  ${media.lessThan('large')`
+    padding: 0 20px;
+  `}
 `
 
 const RankingRowSkeleton = () => (

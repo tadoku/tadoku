@@ -52,6 +52,6 @@ const Container = styled.div`
 
   ${media.lessThan('medium')`
     flex-direction: column;
-    box-shadow: none;
+    padding-top: 30px;
   `}
 `

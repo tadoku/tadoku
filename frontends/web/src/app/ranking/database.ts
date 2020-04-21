@@ -30,7 +30,7 @@ export const AllLanguages: Language[] = [
   { code: 'ces', name: 'Czech' },
   { code: 'nld', name: 'Dutch' },
   { code: 'eng', name: 'English' },
-  { code: 'eso', name: 'Esperanto' },
+  { code: 'epo', name: 'Esperanto' },
   { code: 'fin', name: 'Finnish' },
   { code: 'fra', name: 'French' },
   { code: 'deu', name: 'German' },

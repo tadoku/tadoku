@@ -47,7 +47,6 @@ const RankingOverview = ({
   const isActive = user && contest && isContestActive(contest)
   const isRegistered = registration?.contestId === contest.id
   const canJoin = isActive && !isRegistered
-  const canSubmit = isActive && isRegistered
 
   return (
     <>
@@ -70,7 +69,7 @@ const RankingOverview = ({
               />
             </>
           )}
-          {canSubmit && (
+          {isRegistered && (
             <SubmitPagesButton
               registration={registration}
               refreshRanking={refreshRanking}

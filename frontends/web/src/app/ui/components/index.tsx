@@ -180,11 +180,11 @@ const StyledButton = styled(
 
 export const ButtonLink: SFC<
   AnchorHTMLAttributes<HTMLAnchorElement> & ButtonProps
-> = forwardRef(
-  (
-    { icon, alignIconRight, loading, children, ...props },
-    ref: Ref<HTMLAnchorElement>,
-  ) => (
+> = forwardRef(function buttonLink(
+  { icon, alignIconRight, loading, children, ...props },
+  ref: Ref<HTMLAnchorElement>,
+) {
+  return (
     <StyledButtonLink loading={loading} {...props} ref={ref}>
       {loading ? (
         <div>
@@ -198,28 +198,28 @@ export const ButtonLink: SFC<
         </>
       )}
     </StyledButtonLink>
-  ),
-)
+  )
+})
 
 const ForwardedStyledButtonLink: SFC<
   AnchorHTMLAttributes<HTMLAnchorElement> &
     ButtonProps & { ref: Ref<HTMLAnchorElement> }
-> = forwardRef(
-  (
-    {
-      primary,
-      large,
-      small,
-      destructive,
-      plain,
-      loading,
-      icon,
-      alignIconRight,
-      ...props
-    },
-    ref: Ref<HTMLAnchorElement>,
-  ) => <a {...props} ref={ref} />,
-)
+> = forwardRef(function link(
+  {
+    primary,
+    large,
+    small,
+    destructive,
+    plain,
+    loading,
+    icon,
+    alignIconRight,
+    ...props
+  },
+  ref: Ref<HTMLAnchorElement>,
+) {
+  return <a {...props} ref={ref} />
+})
 const StyledButtonLink = styled(ForwardedStyledButtonLink)`
   ${buttonStyles}
 `

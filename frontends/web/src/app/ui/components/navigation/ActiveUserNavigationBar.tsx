@@ -6,8 +6,9 @@ import Link from 'next/link'
 import { RankingRegistration } from '../../../ranking/interfaces'
 import { User } from '../../../session/interfaces'
 import UserMenu from '../../../session/components/navigation/UserMenu'
-import { Button } from '..'
+import { ButtonLink } from '..'
 import Constants from '../../Constants'
+import LinkContainer from './LinkContainer'
 
 interface Props {
   user: User
@@ -18,19 +19,13 @@ export const ActiveUserNavigationBar = ({ user, registration }: Props) => (
   <>
     <LinkContainer>
       <Link href="/blog" passHref>
-        <a href="">
-          <Button plain>Blog</Button>
-        </a>
+        <ButtonLink plain>Blog</ButtonLink>
       </Link>
       <Link href="/ranking" passHref>
-        <a href="">
-          <Button plain>Ranking</Button>
-        </a>
+        <ButtonLink plain>Ranking</ButtonLink>
       </Link>
       <Link href="/manual" passHref>
-        <a href="">
-          <Button plain>Manual</Button>
-        </a>
+        <ButtonLink plain>Manual</ButtonLink>
       </Link>
     </LinkContainer>
     <UserMenuContainer>
@@ -43,35 +38,6 @@ export const ActiveUserNavigationBar = ({ user, registration }: Props) => (
     </UserMenuContainer>
   </>
 )
-
-const LinkContainer = styled.div`
-  display: flex;
-  padding-right: 20px;
-
-  * + * {
-    margin-left: 20px;
-
-    ${media.lessThan('medium')`
-      margin-left: 0;
-    `}
-  }
-
-  > * {
-    ${media.lessThan('medium')`
-      margin-left: 0;
-      padding-left: 30px;
-      border-top: 1px solid ${Constants.colors.lightGray};
-      display: block;
-    `}
-  }
-
-  ${media.lessThan('medium')`
-    border: none;
-    margin: 0;
-    padding: 0;
-    flex-direction: column;
-  `}
-`
 
 const LargeContainer = styled.div`
   ${media.lessThan('medium')`

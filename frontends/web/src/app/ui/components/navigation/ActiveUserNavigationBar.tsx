@@ -4,7 +4,6 @@ import media from 'styled-media-query'
 import Link from 'next/link'
 
 import { RankingRegistration } from '../../../ranking/interfaces'
-import SubmitPagesLink from '../../../ranking/components/navigation/SubmitPages'
 import { User } from '../../../session/interfaces'
 import UserMenu from '../../../session/components/navigation/UserMenu'
 import { Button } from '..'
@@ -12,14 +11,9 @@ import { Button } from '..'
 interface Props {
   user: User
   registration: RankingRegistration | undefined
-  refreshRanking: () => void
 }
 
-export const ActiveUserNavigationBar = ({
-  user,
-  registration,
-  refreshRanking,
-}: Props) => (
+export const ActiveUserNavigationBar = ({ user, registration }: Props) => (
   <>
     <LinkContainer>
       <Link href="/blog" passHref>
@@ -37,10 +31,6 @@ export const ActiveUserNavigationBar = ({
           <Button plain>Manual</Button>
         </a>
       </Link>
-      <SubmitPagesLink
-        registration={registration}
-        refreshRanking={refreshRanking}
-      />
     </LinkContainer>
     <UserMenuContainer>
       <UserMenu user={user} registration={registration} />

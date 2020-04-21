@@ -20,7 +20,7 @@ const mapStateToProps = (state: RootState) => ({
 })
 
 const mapDispatchToProps = {
-  refreshRegistration: runEffects,
+  refreshRanking: runEffects,
 }
 
 interface Props {
@@ -28,7 +28,7 @@ interface Props {
   registration: RankingRegistration | undefined
   user: User | undefined
   effectCount: number
-  refreshRegistration: () => void
+  refreshRanking: () => void
 }
 
 export default connect(

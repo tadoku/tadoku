@@ -12,6 +12,8 @@ import {
   faUnlock,
   faCircleNotch,
   faFileDownload,
+  faBars,
+  faTimes,
 } from '@fortawesome/free-solid-svg-icons'
 
 library.add(
@@ -26,4 +28,6 @@ library.add(
   faUnlock,
   faCircleNotch,
   faFileDownload,
+  faBars,
+  faTimes,
 )

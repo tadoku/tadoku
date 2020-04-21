@@ -1,6 +1,7 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { RootState } from '../../store'
 import { connect } from 'react-redux'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import Link from 'next/link'
 import styled from 'styled-components'
 import media from 'styled-media-query'
@@ -12,17 +13,28 @@ interface Props {
   isLoading: boolean
 }
 
-const Header = ({ isLoading }: Props) => (
-  <Container>
-    <Link href="/" passHref>
-      <a href="">
-        <Logo />
-      </a>
-    </Link>
-    <ActivityIndicator isLoading={isLoading} />
-    <NavigationBar />
-  </Container>
-)
+const Header = ({ isLoading }: Props) => {
+  const [isOpen, setIsOpen] = useState(false)
+
+  return (
+    <Container>
+      <Link href="/" passHref>
+        <LogoLink href="">
+          <Logo />
+        </LogoLink>
+      </Link>
+      <ActivityIndicator isLoading={isLoading} />
+      <NavigationBar isOpen={isOpen} />
+      <Hamburger onClick={() => setIsOpen(!isOpen)}>
+        <FontAwesomeIcon
+          icon={isOpen ? 'times' : 'bars'}
+          rotation={isOpen ? 90 : undefined}
+          size="2x"
+        />
+      </Hamburger>
+    </Container>
+  )
+}
 
 const mapStateToProps = (state: RootState) => ({
   isLoading: state.app.isLoading,
@@ -38,6 +50,24 @@ const Logo = styled.img.attrs(() => ({
   width: 158px;
 `
 
+const Hamburger = styled.div`
+  position: absolute;
+  top: 30px;
+  right: 30px;
+  height: 29px;
+  width: 29px;
+
+  svg {
+    transition: 0.2s all ease-out;
+    max-height: 29px;
+    max-width: 33px;
+  }
+
+  ${media.greaterThan('medium')`
+    display: none
+  `}
+`
+
 const Container = styled.div`
   box-shadow: 0px 2px 3px 0px rgba(0, 0, 0, 0.08);
   background: ${Constants.colors.lightTinted};
@@ -51,7 +81,13 @@ const Container = styled.div`
   margin: 0 auto;
 
   ${media.lessThan('medium')`
-    flex-direction: column;
-    padding-top: 30px;
+    padding: 30px;
+    height: inherit;
+    align-items: start;
   `}
+`
+
+const LogoLink = styled.a`
+  display: block;
+  height: 29px;
 `

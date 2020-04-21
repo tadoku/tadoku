@@ -15,9 +15,15 @@ interface Props {
   user: User | undefined
   registration: RankingRegistration | undefined
   refreshSession: () => void
+  isOpen: boolean
 }
 
-const NavigationBar = ({ user, registration, refreshSession }: Props) => {
+const NavigationBar = ({
+  user,
+  registration,
+  refreshSession,
+  isOpen,
+}: Props) => {
   const [hasMounted, setHasMounted] = useState(false)
 
   useEffect(() => {
@@ -29,7 +35,7 @@ const NavigationBar = ({ user, registration, refreshSession }: Props) => {
   }
 
   return (
-    <StyledNav prefersVertical={!!user}>
+    <StyledNav isOpen={isOpen}>
       {user ? (
         <ActiveUserNavigationBar registration={registration} user={user} />
       ) : (
@@ -53,13 +59,11 @@ const mapDispatchToProps = {
 
 export default connect(mapStateToProps, mapDispatchToProps)(NavigationBar)
 
-const StyledNav = styled.nav`
+const StyledNav = styled.nav<{ isOpen: boolean }>`
   display: flex;
   align-items: center;
 
-  ${({ prefersVertical }: { prefersVertical?: boolean }) =>
-    prefersVertical &&
-    media.lessThan('medium')`
-      flex-direction: column-reverse;
-    `}
+  ${({ isOpen }) => media.lessThan('medium')`
+      display: ${isOpen ? 'block' : 'none'};
+  `}
 `

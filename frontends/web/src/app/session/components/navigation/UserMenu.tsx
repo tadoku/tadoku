@@ -83,7 +83,8 @@ const ListItem = styled.li`
   border-bottom: 1px solid ${Constants.colors.lightGray};
   display: block;
 
-  > a {
+  > a,
+  > button {
     width: 100%;
     padding-left: 30px;
     align-items: center;

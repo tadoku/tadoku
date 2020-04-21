@@ -78,10 +78,15 @@ export const GlobalStyle = createGlobalStyle<typeof Constants>`
 `
 
 const Container = styled.div`
-  padding: 20px 0;
   box-sizing: border-box;
   max-width: ${Constants.maxWidth};
   margin: 0 auto;
+  padding: 30px;
+  box-sizing: border-box;
+
+  ${media.lessThan('medium')`
+    padding: 20px;
+  `}
 `
 
 const StickyFooterContainer = styled.div`

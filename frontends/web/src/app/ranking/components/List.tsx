@@ -102,7 +102,7 @@ const TableHeading = styled.tr`
 
 const RankHeading = styled.td`
   width: 80px;
-  padding: 0 30px 0 60px;
+  padding: 0 30px;
   box-sizing: border-box;
   border-bottom: 2px solid ${Constants.colors.nonFocusTextWithAlpha(0.2)};
 
@@ -125,7 +125,7 @@ const NicknameHeading = styled.td`
 const ScoreHeading = styled.td`
   min-width: 100px;
   max-width: 150px;
-  padding: 0 60px 0 30px;
+  padding: 0 30px;
   text-align: right;
   box-sizing: border-box;
   border-bottom: 2px solid ${Constants.colors.nonFocusTextWithAlpha(0.2)};
@@ -174,8 +174,7 @@ const RowAnchor = styled.a`
 const RankCell = styled.td`
   text-align: center;
   height: 55px;
-  padding-left: 60px;
-  padding-right: 30px;
+  padding: 0 30px;
 
   ${media.lessThan('large')`
     padding: 0 20px;
@@ -194,7 +193,7 @@ const NicknameCell = styled.td`
 const ScoreCell = styled.td`
   text-align: right;
   height: 55px;
-  padding-right: 60px;
+  padding: 0 30px;
 
   ${media.lessThan('large')`
     padding: 0 20px;

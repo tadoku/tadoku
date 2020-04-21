@@ -18,20 +18,22 @@ const Header = ({ isLoading }: Props) => {
 
   return (
     <Container>
-      <Link href="/" passHref>
-        <LogoLink href="">
-          <Logo />
-        </LogoLink>
-      </Link>
-      <ActivityIndicator isLoading={isLoading} />
-      <NavigationBar isOpen={isOpen} />
-      <Hamburger onClick={() => setIsOpen(!isOpen)}>
-        <FontAwesomeIcon
-          icon={isOpen ? 'times' : 'bars'}
-          rotation={isOpen ? 90 : undefined}
-          size="2x"
-        />
-      </Hamburger>
+      <InnerContainer>
+        <Link href="/" passHref>
+          <LogoLink href="">
+            <Logo />
+          </LogoLink>
+        </Link>
+        <ActivityIndicator isLoading={isLoading} />
+        <NavigationBar isOpen={isOpen} />
+        <Hamburger onClick={() => setIsOpen(!isOpen)}>
+          <FontAwesomeIcon
+            icon={isOpen ? 'times' : 'bars'}
+            rotation={isOpen ? 90 : undefined}
+            size="2x"
+          />
+        </Hamburger>
+      </InnerContainer>
     </Container>
   )
 }
@@ -52,11 +54,13 @@ const Logo = styled.img.attrs(() => ({
 
 const Hamburger = styled.div`
   position: absolute;
-  top: 30px;
-  right: 30px;
-  height: 29px;
-  width: 29px;
+  top: 20px;
+  right: 20px;
+  height: 50px;
+  width: 50px;
   display: none;
+  padding: 10px;
+  box-sizing: border-box;
 
   svg {
     transition: 0.2s all ease-out;
@@ -67,25 +71,37 @@ const Hamburger = styled.div`
   ${media.lessThan('medium')`
     display: block;
   `}
+
+  &:hover {
+    cursor: pointer;
+  }
 `
 
-const Container = styled.div`
-  box-shadow: 0px 2px 3px 0px rgba(0, 0, 0, 0.08);
-  background: ${Constants.colors.lightTinted};
-  height: 120px;
+const InnerContainer = styled.div`
   max-width: ${Constants.maxWidth};
+  height: 100%;
   box-sizing: border-box;
-  padding: 0 60px;
+  padding: 0 30px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   margin: 0 auto;
 
   ${media.lessThan('medium')`
-    padding: 30px;
-    height: inherit;
+    padding: 30px 20px;
     align-items: start;
     flex-direction: column;
+  `}
+`
+
+const Container = styled.div`
+  box-shadow: 0px 2px 3px 0px rgba(0, 0, 0, 0.08);
+  background: ${Constants.colors.lightTinted};
+  height: 120px;
+  width: 100%;
+
+  ${media.lessThan('medium')`
+    height: inherit;
   `}
 `
 

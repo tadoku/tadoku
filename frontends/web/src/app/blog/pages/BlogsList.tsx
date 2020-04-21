@@ -1,6 +1,6 @@
 import React from 'react'
 import BlogApi from '../api'
-import { PageTitle, ContentContainer } from '../../ui/components'
+import { PageTitle } from '../../ui/components'
 import { useCachedApiState } from '../../cache'
 import { PostOrPage } from '../interfaces'
 import BlogPost from '../components/BlogPost'
@@ -14,12 +14,12 @@ const BlogsList = () => {
   })
 
   return (
-    <ContentContainer>
+    <>
       <PageTitle>Blog</PageTitle>
       {posts.map(p => (
         <BlogPost key={p.slug} post={p} />
       ))}
-    </ContentContainer>
+    </>
   )
 }
 

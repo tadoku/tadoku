@@ -3,7 +3,7 @@ import { Ranking, RankingRegistration } from '../interfaces'
 import RankingList from '../components/List'
 import RankingApi from '../api'
 import { Contest } from '../../contest/interfaces'
-import { Button, PageTitle, ContentContainer } from '../../ui/components'
+import { Button, PageTitle } from '../../ui/components'
 import styled from 'styled-components'
 import { User } from '../../session/interfaces'
 import JoinContestModal from '../components/modals/JoinContestModal'
@@ -50,34 +50,32 @@ const RankingOverview = ({
 
   return (
     <>
-      <ContentContainer>
-        <Container>
-          <PageTitle>Ranking</PageTitle>
-          {canJoin && contest && (
-            <>
-              <Button primary large onClick={() => setJoinModalOpen(true)}>
-                Join contest
-              </Button>
-              <JoinContestModal
-                contest={contest}
-                isOpen={joinModalOpen}
-                onSuccess={() => {
-                  setJoinModalOpen(false)
-                  refreshRanking()
-                }}
-                onCancel={() => setJoinModalOpen(false)}
-              />
-            </>
-          )}
-          {isRegistered && (
-            <SubmitPagesButton
-              registration={registration}
-              refreshRanking={refreshRanking}
+      <Container>
+        <PageTitle>Ranking</PageTitle>
+        {canJoin && contest && (
+          <>
+            <Button primary large onClick={() => setJoinModalOpen(true)}>
+              Join contest
+            </Button>
+            <JoinContestModal
+              contest={contest}
+              isOpen={joinModalOpen}
+              onSuccess={() => {
+                setJoinModalOpen(false)
+                refreshRanking()
+              }}
+              onCancel={() => setJoinModalOpen(false)}
             />
-          )}
-        </Container>
-        {new Date() >= contest.start && <RemainingUntil date={contest.end} />}
-      </ContentContainer>
+          </>
+        )}
+        {isRegistered && (
+          <SubmitPagesButton
+            registration={registration}
+            refreshRanking={refreshRanking}
+          />
+        )}
+      </Container>
+      {new Date() >= contest.start && <RemainingUntil date={contest.end} />}
       <RankingList
         rankings={rankings}
         loading={status === ApiFetchStatus.Loading}

@@ -6,7 +6,9 @@ import Link from 'next/link'
 import { RankingRegistration } from '../../../ranking/interfaces'
 import { User } from '../../../session/interfaces'
 import UserMenu from '../../../session/components/navigation/UserMenu'
-import { Button } from '..'
+import { ButtonLink } from '..'
+import Constants from '../../Constants'
+import LinkContainer from './LinkContainer'
 
 interface Props {
   user: User
@@ -17,51 +19,43 @@ export const ActiveUserNavigationBar = ({ user, registration }: Props) => (
   <>
     <LinkContainer>
       <Link href="/blog" passHref>
-        <a href="">
-          <Button plain>Blog</Button>
-        </a>
+        <ButtonLink plain>Blog</ButtonLink>
       </Link>
       <Link href="/ranking" passHref>
-        <a href="">
-          <Button plain>Ranking</Button>
-        </a>
+        <ButtonLink plain>Ranking</ButtonLink>
       </Link>
       <Link href="/manual" passHref>
-        <a href="">
-          <Button plain>Manual</Button>
-        </a>
+        <ButtonLink plain>Manual</ButtonLink>
       </Link>
     </LinkContainer>
     <UserMenuContainer>
-      <UserMenu user={user} registration={registration} />
+      <SmallContainer>
+        <UserMenu.List user={user} registration={registration} />
+      </SmallContainer>
+      <LargeContainer>
+        <UserMenu.Dropdown user={user} registration={registration} />
+      </LargeContainer>
     </UserMenuContainer>
   </>
 )
 
-const LinkContainer = styled.div`
-  display: flex;
-  padding-right: 20px;
+const LargeContainer = styled.div`
+  ${media.lessThan('medium')`
+    display: none;
+  `}
+`
+
+const SmallContainer = styled.div`
+  display: none;
 
   ${media.lessThan('medium')`
-    border: none;
-    margin: 0;
-    padding: 0;
-    flex-direction: column;
+    display: block;
+    border-top: 2px solid ${Constants.colors.lightGray};
+    width: 100%;
   `}
-
-  * + * {
-    margin-left: 20px;
-  }
 `
 
 const UserMenuContainer = styled.div`
   display: flex;
   align-items: center;
-
-  ${media.lessThan('medium')`
-    margin: 5px 0 15px;
-    padding: 4px 10px;
-    border-radius: 2px;
-    box-shadow: 4px 5px 15px 1px rgba(0, 0, 0, 0.08);
-  `}
 `

@@ -1,6 +1,12 @@
 import styled, { css } from 'styled-components'
 import Constants from '../Constants'
-import React, { SFC, ButtonHTMLAttributes, AnchorHTMLAttributes } from 'react'
+import React, {
+  SFC,
+  ButtonHTMLAttributes,
+  AnchorHTMLAttributes,
+  forwardRef,
+  Ref,
+} from 'react'
 import { IconProp } from '@fortawesome/fontawesome-svg-core'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import media from 'styled-media-query'
@@ -156,25 +162,6 @@ export const Button: SFC<
     )}
   </StyledButton>
 )
-
-export const ButtonLink: SFC<
-  AnchorHTMLAttributes<HTMLAnchorElement> & ButtonProps
-> = ({ icon, alignIconRight, loading, children, ...props }) => (
-  <StyledButtonLink loading={loading} {...props}>
-    {loading ? (
-      <div>
-        <FontAwesomeIcon icon="circle-notch" />
-      </div>
-    ) : (
-      <>
-        {icon && !alignIconRight && <ButtonIconLeft icon={icon} />}
-        {children}
-        {icon && alignIconRight && <ButtonIconRight icon={icon} />}
-      </>
-    )}
-  </StyledButtonLink>
-)
-
 const StyledButton = styled(
   ({
     primary,
@@ -190,8 +177,35 @@ const StyledButton = styled(
 )`
   ${buttonStyles}
 `
-const StyledButtonLink = styled(
-  ({
+
+export const ButtonLink: SFC<
+  AnchorHTMLAttributes<HTMLAnchorElement> & ButtonProps
+> = forwardRef(function buttonLink(
+  { icon, alignIconRight, loading, children, ...props },
+  ref: Ref<HTMLAnchorElement>,
+) {
+  return (
+    <StyledButtonLink loading={loading} {...props} ref={ref}>
+      {loading ? (
+        <div>
+          <FontAwesomeIcon icon="circle-notch" />
+        </div>
+      ) : (
+        <>
+          {icon && !alignIconRight && <ButtonIconLeft icon={icon} />}
+          {children}
+          {icon && alignIconRight && <ButtonIconRight icon={icon} />}
+        </>
+      )}
+    </StyledButtonLink>
+  )
+})
+
+const ForwardedStyledButtonLink: SFC<
+  AnchorHTMLAttributes<HTMLAnchorElement> &
+    ButtonProps & { ref: Ref<HTMLAnchorElement> }
+> = forwardRef(function link(
+  {
     primary,
     large,
     small,
@@ -201,8 +215,12 @@ const StyledButtonLink = styled(
     icon,
     alignIconRight,
     ...props
-  }) => <a {...props} />,
-)`
+  },
+  ref: Ref<HTMLAnchorElement>,
+) {
+  return <a {...props} ref={ref} />
+})
+const StyledButtonLink = styled(ForwardedStyledButtonLink)`
   ${buttonStyles}
 `
 

@@ -14,7 +14,7 @@ interface Props {
 }
 
 const Header = ({ isLoading }: Props) => {
-  const [isOpen, setIsOpen] = useState(false)
+  const [isOpen, setIsOpen] = useState(true)
 
   return (
     <Container>
@@ -56,6 +56,7 @@ const Hamburger = styled.div`
   right: 30px;
   height: 29px;
   width: 29px;
+  display: none;
 
   svg {
     transition: 0.2s all ease-out;
@@ -63,8 +64,8 @@ const Hamburger = styled.div`
     max-width: 33px;
   }
 
-  ${media.greaterThan('medium')`
-    display: none
+  ${media.lessThan('medium')`
+    display: block;
   `}
 `
 
@@ -84,6 +85,7 @@ const Container = styled.div`
     padding: 30px;
     height: inherit;
     align-items: start;
+    flex-direction: column;
   `}
 `
 

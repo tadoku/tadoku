@@ -7,6 +7,7 @@ import { RankingRegistration } from '../../../ranking/interfaces'
 import { User } from '../../../session/interfaces'
 import UserMenu from '../../../session/components/navigation/UserMenu'
 import { Button } from '..'
+import Constants from '../../Constants'
 
 interface Props {
   user: User
@@ -33,7 +34,12 @@ export const ActiveUserNavigationBar = ({ user, registration }: Props) => (
       </Link>
     </LinkContainer>
     <UserMenuContainer>
-      <UserMenu user={user} registration={registration} />
+      <SmallContainer>
+        <UserMenu.List user={user} registration={registration} />
+      </SmallContainer>
+      <LargeContainer>
+        <UserMenu.Dropdown user={user} registration={registration} />
+      </LargeContainer>
     </UserMenuContainer>
   </>
 )
@@ -43,8 +49,19 @@ const LinkContainer = styled.div`
   padding-right: 20px;
 
   * + * {
-    ${media.greaterThan('medium')`
-      margin-left: 20px;
+    margin-left: 20px;
+
+    ${media.lessThan('medium')`
+      margin-left: 0;
+    `}
+  }
+
+  > * {
+    ${media.lessThan('medium')`
+      margin-left: 0;
+      padding-left: 30px;
+      border-top: 1px solid ${Constants.colors.lightGray};
+      display: block;
     `}
   }
 
@@ -56,11 +73,23 @@ const LinkContainer = styled.div`
   `}
 `
 
+const LargeContainer = styled.div`
+  ${media.lessThan('medium')`
+    display: none;
+  `}
+`
+
+const SmallContainer = styled.div`
+  display: none;
+
+  ${media.lessThan('medium')`
+    display: block;
+    border-top: 2px solid ${Constants.colors.lightGray};
+    width: 100%;
+  `}
+`
+
 const UserMenuContainer = styled.div`
   display: flex;
   align-items: center;
-
-  ${media.lessThan('medium')`
-    margin: 0 5px;
-  `}
 `

@@ -65,6 +65,7 @@ const StyledNav = styled.nav<{ isOpen: boolean }>`
 
   ${({ isOpen }) => media.lessThan('medium')`
       display: ${isOpen ? 'block' : 'none'};
-      margin-top: 40px;
+      margin: 30px -30px -30px -30px;
+      width: calc(100% + 60px);
   `}
 `

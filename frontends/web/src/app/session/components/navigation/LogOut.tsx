@@ -1,6 +1,6 @@
 import React from 'react'
 import Router from 'next/router'
-import { Button } from '../../../ui/components'
+import { ButtonLink } from '../../../ui/components'
 import { connect } from 'react-redux'
 import { logOut } from '../../redux'
 import { removeUserFromLocalStorage } from '../../storage'
@@ -12,7 +12,7 @@ interface Props {
 
 export const LogOut = ({ logOut }: Props) => {
   return (
-    <Button
+    <ButtonLink
       plain
       icon="sign-out-alt"
       onClick={() => {
@@ -21,7 +21,7 @@ export const LogOut = ({ logOut }: Props) => {
       }}
     >
       Log out
-    </Button>
+    </ButtonLink>
   )
 }
 

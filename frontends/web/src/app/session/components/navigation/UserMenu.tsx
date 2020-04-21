@@ -1,12 +1,14 @@
 import React from 'react'
 import LogOutLink from './LogOut'
 import Dropdown, { DropdownItem } from '../../../ui/components/Dropdown'
-import { Button } from '../../../ui/components'
+import { ButtonLink } from '../../../ui/components'
 import Link from 'next/link'
 import { SettingsTab } from '../../../user/interfaces'
 
 import { RankingRegistration } from '../../../ranking/interfaces'
 import { User } from '../../interfaces'
+import styled from 'styled-components'
+import Constants from '../../../ui/Constants'
 
 interface Props {
   user: User
@@ -15,12 +17,9 @@ interface Props {
 
 const SettingsLink = () => (
   <Link href="/settings/[tab]" as={`/settings/${SettingsTab.Profile}`} passHref>
-    {/* TODO: Remove span once https://github.com/zeit/next.js/issues/7915 is fixed */}
-    <span>
-      <Button plain icon="cog">
-        Settings
-      </Button>
-    </span>
+    <ButtonLink plain icon="cog">
+      Settings
+    </ButtonLink>
   </Link>
 )
 
@@ -33,20 +32,18 @@ const ContestProfileLink = ({
 }) => {
   return (
     <Link
-      href="/contest-profile/[tab]/[tab]"
+      href="/contest-profile/[contest_id]/[user_id]"
       as={`/contest-profile/${registration.contestId}/${user.id}`}
+      passHref
     >
-      {/* TODO: Remove span once https://github.com/zeit/next.js/issues/7915 is fixed */}
-      <span>
-        <Button plain icon="user">
-          Profile
-        </Button>
-      </span>
+      <ButtonLink plain icon="user">
+        Profile
+      </ButtonLink>
     </Link>
   )
 }
 
-const UserMenu = ({ user, registration }: Props) => (
+const UserMenuDropdown = ({ user, registration }: Props) => (
   <Dropdown label={user.displayName}>
     <DropdownItem>
       <SettingsLink />
@@ -62,4 +59,55 @@ const UserMenu = ({ user, registration }: Props) => (
   </Dropdown>
 )
 
-export default UserMenu
+const UserMenuList = ({ user, registration }: Props) => (
+  <List>
+    <ListItem>
+      <DisplayName>{user.displayName}</DisplayName>
+    </ListItem>
+    <ListItem>
+      <SettingsLink />
+    </ListItem>
+    {registration && (
+      <ListItem>
+        <ContestProfileLink user={user} registration={registration} />
+      </ListItem>
+    )}
+    <ListItem>
+      <LogOutLink />
+    </ListItem>
+  </List>
+)
+
+const ListItem = styled.li`
+  margin-left: 0;
+  border-bottom: 1px solid ${Constants.colors.lightGray};
+  display: block;
+
+  > a {
+    width: 100%;
+    padding-left: 30px;
+    align-items: center;
+    justify-content: flex-start;
+  }
+
+  &:last-child {
+    border: none;
+  }
+`
+
+const List = styled.ul`
+  margin: 0;
+  padding: 0;
+`
+
+const DisplayName = styled.div`
+  padding-left: 30px;
+  font-weight: 600;
+  font-size: 24px;
+  height: 55px;
+  display: flex;
+  align-items: center;
+  background: ${Constants.colors.lighter};
+`
+
+export default { Dropdown: UserMenuDropdown, List: UserMenuList }

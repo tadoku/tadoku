@@ -62,7 +62,7 @@
     "jest": "^25.4.0",
     "prettier": "2.0.4",
     "react-docgen-typescript-loader": "^3.7.2",
-    "ts-node": "^8.8.2",
+    "ts-node": "^8.9.0",
     "typescript": "^3.8.3"
   }
 }

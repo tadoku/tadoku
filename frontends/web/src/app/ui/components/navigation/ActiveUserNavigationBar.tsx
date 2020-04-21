@@ -42,16 +42,18 @@ const LinkContainer = styled.div`
   display: flex;
   padding-right: 20px;
 
+  * + * {
+    ${media.greaterThan('medium')`
+      margin-left: 20px;
+    `}
+  }
+
   ${media.lessThan('medium')`
     border: none;
     margin: 0;
     padding: 0;
     flex-direction: column;
   `}
-
-  * + * {
-    margin-left: 20px;
-  }
 `
 
 const UserMenuContainer = styled.div`
@@ -59,9 +61,6 @@ const UserMenuContainer = styled.div`
   align-items: center;
 
   ${media.lessThan('medium')`
-    margin: 5px 0 15px;
-    padding: 4px 10px;
-    border-radius: 2px;
-    box-shadow: 4px 5px 15px 1px rgba(0, 0, 0, 0.08);
+    margin: 0 5px;
   `}
 `

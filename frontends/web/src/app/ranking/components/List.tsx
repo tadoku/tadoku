@@ -142,7 +142,7 @@ const Row = styled.tr`
   font-weight: bold;
   transition: background 0.1s ease;
 
-  &:nth-child(2n) {
+  &:nth-child(2n + 1) {
     background-color: ${Constants.colors.nonFocusTextWithAlpha(0.05)};
   }
 

@@ -88,8 +88,12 @@ export default RankingOverview
 
 const Container = styled.div`
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
+
+  h1 {
+    margin-top: 0;
+  }
 `
 
 // @TODO: Make this a proper component, too quick and dirty atm

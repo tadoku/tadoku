@@ -263,15 +263,26 @@ export const StackContainer = styled.div`
 `
 
 export const PageTitle = styled.h1`
+  font-family: 'Merriweather', serif;
+  font-size: 30px;
+
   ${media.lessThan('medium')`
     margin: 0 0 20px 0;
   `}
 `
 
-export const ContentContainer = styled.div`
-  margin: 0 60px;
+export const Logo = styled.img.attrs(() => ({
+  src: '/img/logo.svg',
+  alt: 'Tadoku',
+}))`
+  height: 29px;
+  width: 158px;
+`
 
-  ${media.lessThan('large')`
-    margin: 0 20px;
-  `}
+export const LogoLight = styled.img.attrs(() => ({
+  src: '/img/logo-light.svg',
+  alt: 'Tadoku',
+}))`
+  height: 29px;
+  width: 158px;
 `

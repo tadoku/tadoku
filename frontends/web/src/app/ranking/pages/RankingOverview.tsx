@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState } from 'react'
 import { Ranking, RankingRegistration } from '../interfaces'
 import RankingList from '../components/List'
 import RankingApi from '../api'
 import { Contest } from '../../contest/interfaces'
-import { Button, PageTitle, ContentContainer } from '../../ui/components'
+import { Button, PageTitle } from '../../ui/components'
 import styled from 'styled-components'
 import { User } from '../../session/interfaces'
 import JoinContestModal from '../components/modals/JoinContestModal'
@@ -11,6 +11,7 @@ import { useCachedApiState, ApiFetchStatus } from '../../cache'
 import { RankingsSerializer } from '../transform/ranking'
 import { isContestActive } from '../domain'
 import SubmitPagesButton from '../components/SubmitPagesButton'
+import Constants from '../../ui/Constants'
 
 interface Props {
   contest: Contest
@@ -50,34 +51,34 @@ const RankingOverview = ({
 
   return (
     <>
-      <ContentContainer>
-        <Container>
+      <Container>
+        <div>
           <PageTitle>Ranking</PageTitle>
-          {canJoin && contest && (
-            <>
-              <Button primary large onClick={() => setJoinModalOpen(true)}>
-                Join contest
-              </Button>
-              <JoinContestModal
-                contest={contest}
-                isOpen={joinModalOpen}
-                onSuccess={() => {
-                  setJoinModalOpen(false)
-                  refreshRanking()
-                }}
-                onCancel={() => setJoinModalOpen(false)}
-              />
-            </>
-          )}
-          {isRegistered && (
-            <SubmitPagesButton
-              registration={registration}
-              refreshRanking={refreshRanking}
+          <Description>{contest.description}</Description>
+        </div>
+        {canJoin && contest && (
+          <>
+            <Button primary large onClick={() => setJoinModalOpen(true)}>
+              Join contest
+            </Button>
+            <JoinContestModal
+              contest={contest}
+              isOpen={joinModalOpen}
+              onSuccess={() => {
+                setJoinModalOpen(false)
+                refreshRanking()
+              }}
+              onCancel={() => setJoinModalOpen(false)}
             />
-          )}
-        </Container>
-        {new Date() >= contest.start && <RemainingUntil date={contest.end} />}
-      </ContentContainer>
+          </>
+        )}
+        {isRegistered && (
+          <SubmitPagesButton
+            registration={registration}
+            refreshRanking={refreshRanking}
+          />
+        )}
+      </Container>
       <RankingList
         rankings={rankings}
         loading={status === ApiFetchStatus.Loading}
@@ -90,45 +91,55 @@ export default RankingOverview
 
 const Container = styled.div`
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
+
+  h1 {
+    margin: 0;
+  }
 `
 
-// @TODO: Make this a proper component, too quick and dirty atm
-const RemainingUntil = ({ date }: { date: Date }) => {
-  const [currentDate, setCurrentDate] = useState(() => new Date())
-
-  useEffect(() => {
-    const id = setInterval(() => {
-      setCurrentDate(new Date())
-    }, 1000)
-
-    return () => clearInterval(id)
-  }, [])
-
-  if (!date.getTime) {
-    return null
-  }
-
-  const t = date.getTime() - currentDate.getTime()
-  const seconds = Math.floor((t / 1000) % 60)
-  const minutes = Math.floor((t / 1000 / 60) % 60)
-  const hours = Math.floor((t / (1000 * 60 * 60)) % 24)
-  const days = Math.floor(t / (1000 * 60 * 60 * 24))
-
-  if (t <= 0) {
-    return <Notes>Contest has ended.</Notes>
-  }
-
-  return (
-    <Notes>
-      {days} day{days !== 1 && 's'} {hours} hour{hours !== 1 && 's'} {minutes}{' '}
-      minute{minutes !== 1 && 's'} {seconds} second{seconds !== 1 && 's'}{' '}
-      remaining
-    </Notes>
-  )
-}
-
-const Notes = styled.p`
-  padding: 0 0 20px 0;
+const Description = styled.h2`
+  color: ${Constants.colors.nonFocusText};
+  margin-top: 10px;
+  margin-bottom: 30px;
+  font-size: 17px;
+  text-transform: uppercase;
 `
+
+// TODO: Refactor remaining time
+// const RemainingUntil = ({ date }: { date: Date }) => {
+//   const [currentDate, setCurrentDate] = useState(() => new Date())
+
+//   useEffect(() => {
+//     const id = setInterval(() => {
+//       setCurrentDate(new Date())
+//     }, 1000)
+
+//     return () => clearInterval(id)
+//   }, [])
+
+//   if (!date.getTime) {
+//     return null
+//   }
+
+//   const t = date.getTime() - currentDate.getTime()
+//   const seconds = Math.floor((t / 1000) % 60)
+//   const minutes = Math.floor((t / 1000 / 60) % 60)
+//   const hours = Math.floor((t / (1000 * 60 * 60)) % 24)
+//   const days = Math.floor(t / (1000 * 60 * 60 * 24))
+
+//   if (t <= 0) {
+//     return <Notes>Contest has ended.</Notes>
+//   }
+
+//   return `${days} day${days !== 1 && 's'} ${hours} hour${
+//     hours !== 1 && 's'
+//   } ${minutes} minute${minutes !== 1 && 's'} ${seconds} second${
+//     seconds !== 1 && 's'
+//   } remaining`
+// }
+
+// const Notes = styled.p`
+//   padding: 0 0 20px 0;
+// `

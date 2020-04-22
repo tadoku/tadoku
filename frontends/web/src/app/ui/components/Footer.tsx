@@ -1,41 +1,82 @@
 import React from 'react'
-import Link from 'next/link'
 import styled from 'styled-components'
 import media from 'styled-media-query'
 import Constants from '../Constants'
+import { LogoLight } from './index'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 
 const Footer = () => (
   <Container>
     <InnerContainer>
-      <Link href="/" passHref>
-        <a href="">
-          <LogoType>Tadoku</LogoType>
-        </a>
-      </Link>
-      <Credits>
-        Source code available on <a href="https://github.com/tadoku">GitHub</a>
-        <br />
-        Built by <a href="https://antonve.be">antonve</a>
-      </Credits>
+      <FooterContent />
     </InnerContainer>
   </Container>
 )
 
 export default Footer
 
-const LogoType = styled.h4`
-  color: ${Constants.colors.dark};
-  text-transform: uppercase;
+export const FooterLanding = () => (
+  <Container>
+    <InnerContainer wide>
+      <FooterContent />
+    </InnerContainer>
+  </Container>
+)
 
-  ${media.lessThan('medium')`
-    margin: 10px;
-  `}
-`
+const FooterContent = () => (
+  <>
+    <div>
+      <LogoLight />
+      <Credits>
+        Built by <a href="https://antonve.be">antonve</a>
+      </Credits>
+      <SocialList>
+        <SocialLink fixOffset>
+          <a
+            href="https://discord.gg/Dd8t9WB"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <FontAwesomeIcon
+              icon={['fab', 'twitter-square']}
+              size="3x"
+              inverse
+            />
+          </a>
+        </SocialLink>
+        <SocialLink fixOffset>
+          <a
+            href="https://github.com/tadoku"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <FontAwesomeIcon
+              icon={['fab', 'github-square']}
+              size="3x"
+              inverse
+            />
+          </a>
+        </SocialLink>
+        <SocialLink>
+          <a
+            href="https://discord.gg/Dd8t9WB"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <FontAwesomeIcon icon={['fab', 'discord']} size="3x" inverse />
+          </a>
+        </SocialLink>
+      </SocialList>
+    </div>
+    <div></div>
+  </>
+)
 
 const Container = styled.div`
   box-sizing: border-box;
-  height: 100px;
   display: none;
+  height: 250px;
+  background: ${Constants.colors.dark2};
 
   ${media.greaterThan('medium')`
       display: block;
@@ -47,27 +88,57 @@ const Container = styled.div`
 `
 
 const InnerContainer = styled.div`
-  border-top: 1px solid ${Constants.colors.lightGray};
   max-width: ${Constants.maxWidth};
   display: flex;
   align-items: top;
   justify-content: space-between;
   margin: 0 auto;
-  padding: 0 60px;
+  padding: 40px 30px;
   box-sizing: border-box;
 
-  ${media.lessThan('large')`
-    padding: 0 20px;
-  `}
+  ${({ wide }: { wide?: boolean }) => wide && `padding: 40px 60px;`}
+`
+
+const SocialList = styled.ul`
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  align-items: top;
+`
+
+const SocialLink = styled.li`
+  height: 100%;
+
+  ${({ fixOffset }: { fixOffset?: boolean }) =>
+    fixOffset && ` a svg {  margin-top: -3px; }`}
+
+  a {
+    opacity: 0.8;
+    transition: 0.2s opacity;
+
+    &:hover {
+      opacity: 1;
+    }
+  }
+
+  & + & {
+    margin-left: 20px;
+  }
 `
 
 const Credits = styled.p`
-  text-align: right;
-  line-height: 2em;
+  color: ${Constants.colors.light};
+  margin: 20px 0 40px;
+  padding: 0;
 
   a {
     display: inline-block;
     border-bottom: 2px solid ${Constants.colors.primary};
-    height: 1.6em;
+    color: ${Constants.colors.light};
+
+    &:hover {
+      color: ${Constants.colors.primary};
+    }
   }
 `

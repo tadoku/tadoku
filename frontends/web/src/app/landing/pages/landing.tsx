@@ -6,7 +6,7 @@ import media from 'styled-media-query'
 import Header from './../components/Header'
 import LogInModal from './../../session/components/modals/LogInModal'
 import * as RankingStore from '../../ranking/redux'
-import Footer from '../../ui/components/Footer'
+import { FooterLanding } from '../../ui/components/Footer'
 
 const LandingPage = () => {
   const dispatch = useDispatch()
@@ -38,8 +38,7 @@ const LandingPage = () => {
               many benefits to doing so: it builds vocabulary, reinforces
               grammar patterns, and you learn about the culture of where your
               language is spoken. As you participate in more rounds you will
-              notice that you can read more and more as your command of your
-              target language improves.
+              notice that you can read more and more as you improve.
             </Paragraph>
             <Paragraph>
               That said, it&apos;s not for everyone. Not everyone enjoys the
@@ -51,7 +50,7 @@ const LandingPage = () => {
           </Card>
         </Content>
       </StickyFooterContainer>
-      <Footer />
+      <FooterLanding />
     </Container>
   )
 }
@@ -66,7 +65,7 @@ const Container = styled.div``
 
 const Content = styled.div`
   margin: 90px auto;
-  width: 1240px;
+  width: 1200px;
 
   ${media.lessThan('large')`
     width: 100%;
@@ -89,7 +88,7 @@ const Paragraph = styled.p`
 `
 
 const Card = styled.div`
-  max-width: 715px;
+  max-width: 695px;
   box-sizing: border-box;
   padding: 0 60px;
 
@@ -102,10 +101,10 @@ const StickyFooterContainer = styled.div`
   min-height: 100vh;
   overflow: hidden;
   position: relative;
-  // height of the footer
   box-sizing: border-box;
 
   ${media.greaterThan('medium')`
-    padding-bottom: 150px;
+    // height of the footer
+    padding-bottom: 250px;
   `}
 `

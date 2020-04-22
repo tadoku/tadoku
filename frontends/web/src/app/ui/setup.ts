@@ -15,6 +15,11 @@ import {
   faBars,
   faTimes,
 } from '@fortawesome/free-solid-svg-icons'
+import {
+  faDiscord,
+  faTwitterSquare,
+  faGithubSquare,
+} from '@fortawesome/free-brands-svg-icons'
 
 library.add(
   faChevronDown,
@@ -30,4 +35,7 @@ library.add(
   faFileDownload,
   faBars,
   faTimes,
+  faDiscord,
+  faTwitterSquare,
+  faGithubSquare,
 )

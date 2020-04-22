@@ -3,6 +3,7 @@ import styled from 'styled-components'
 import media from 'styled-media-query'
 
 import SignupCard from './SignupCard'
+import { Logo } from '../../ui/components'
 
 interface Props {
   refreshSession: () => void
@@ -48,7 +49,7 @@ const Background = styled.div`
 `
 
 const Grid = styled.div`
-  max-width: 1240px;
+  max-width: 1200px;
   margin: 0 auto;
   position: relative;
 
@@ -79,13 +80,6 @@ const IntroCard = styled.div`
   `}
 `
 
-const Logo = styled.img.attrs(() => ({
-  src: '/img/logo.svg',
-  alt: 'Tadoku',
-}))`
-  height: 29px;
-  width: 158px;
-`
 const Title = styled.h1`
   font-family: 'Merriweather', serif;
   margin: 60px 20px 30px 0;

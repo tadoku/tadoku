@@ -78,20 +78,24 @@ export const GlobalStyle = createGlobalStyle<typeof Constants>`
 `
 
 const Container = styled.div`
-  padding: 20px 0;
   box-sizing: border-box;
   max-width: ${Constants.maxWidth};
-  margin: 0 auto;
+  margin: 50px auto 60px;
+  padding: 0 30px;
+  box-sizing: border-box;
+
+  ${media.lessThan('medium')`
+    padding: 0 20px;
+  `}
 `
 
 const StickyFooterContainer = styled.div`
   min-height: 100vh;
   overflow: hidden;
   position: relative;
-  // height of the footer
   box-sizing: border-box;
 
   ${media.greaterThan('medium')`
-    padding-bottom: 150px;
+    padding-bottom: 250px;
   `}
 `

@@ -32,7 +32,11 @@ const FooterContent = () => (
       </Credits>
       <SocialList>
         <SocialLink fixOffset>
-          <a href="https://discord.gg/Dd8t9WB" target="_blank">
+          <a
+            href="https://discord.gg/Dd8t9WB"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
             <FontAwesomeIcon
               icon={['fab', 'twitter-square']}
               size="3x"
@@ -41,7 +45,11 @@ const FooterContent = () => (
           </a>
         </SocialLink>
         <SocialLink fixOffset>
-          <a href="https://github.com/tadoku" target="_blank">
+          <a
+            href="https://github.com/tadoku"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
             <FontAwesomeIcon
               icon={['fab', 'github-square']}
               size="3x"
@@ -50,7 +58,11 @@ const FooterContent = () => (
           </a>
         </SocialLink>
         <SocialLink>
-          <a href="https://discord.gg/Dd8t9WB" target="_blank">
+          <a
+            href="https://discord.gg/Dd8t9WB"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
             <FontAwesomeIcon icon={['fab', 'discord']} size="3x" inverse />
           </a>
         </SocialLink>

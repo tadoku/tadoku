@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState } from 'react'
 import { Ranking, RankingRegistration } from '../interfaces'
 import RankingList from '../components/List'
 import RankingApi from '../api'
@@ -11,6 +11,7 @@ import { useCachedApiState, ApiFetchStatus } from '../../cache'
 import { RankingsSerializer } from '../transform/ranking'
 import { isContestActive } from '../domain'
 import SubmitPagesButton from '../components/SubmitPagesButton'
+import Constants from '../../ui/Constants'
 
 interface Props {
   contest: Contest
@@ -51,7 +52,10 @@ const RankingOverview = ({
   return (
     <>
       <Container>
-        <PageTitle>Ranking</PageTitle>
+        <div>
+          <PageTitle>Ranking</PageTitle>
+          <Description>{contest.description}</Description>
+        </div>
         {canJoin && contest && (
           <>
             <Button primary large onClick={() => setJoinModalOpen(true)}>
@@ -75,7 +79,6 @@ const RankingOverview = ({
           />
         )}
       </Container>
-      {new Date() >= contest.start && <RemainingUntil date={contest.end} />}
       <RankingList
         rankings={rankings}
         loading={status === ApiFetchStatus.Loading}
@@ -92,45 +95,51 @@ const Container = styled.div`
   justify-content: space-between;
 
   h1 {
-    margin-top: 0;
+    margin: 0;
   }
 `
 
-// @TODO: Make this a proper component, too quick and dirty atm
-const RemainingUntil = ({ date }: { date: Date }) => {
-  const [currentDate, setCurrentDate] = useState(() => new Date())
-
-  useEffect(() => {
-    const id = setInterval(() => {
-      setCurrentDate(new Date())
-    }, 1000)
-
-    return () => clearInterval(id)
-  }, [])
-
-  if (!date.getTime) {
-    return null
-  }
-
-  const t = date.getTime() - currentDate.getTime()
-  const seconds = Math.floor((t / 1000) % 60)
-  const minutes = Math.floor((t / 1000 / 60) % 60)
-  const hours = Math.floor((t / (1000 * 60 * 60)) % 24)
-  const days = Math.floor(t / (1000 * 60 * 60 * 24))
-
-  if (t <= 0) {
-    return <Notes>Contest has ended.</Notes>
-  }
-
-  return (
-    <Notes>
-      {days} day{days !== 1 && 's'} {hours} hour{hours !== 1 && 's'} {minutes}{' '}
-      minute{minutes !== 1 && 's'} {seconds} second{seconds !== 1 && 's'}{' '}
-      remaining
-    </Notes>
-  )
-}
-
-const Notes = styled.p`
-  padding: 0 0 20px 0;
+const Description = styled.h2`
+  color: ${Constants.colors.nonFocusText};
+  margin-top: 10px;
+  margin-bottom: 30px;
+  font-size: 17px;
+  text-transform: uppercase;
 `
+
+// TODO: Refactor remaining time
+// const RemainingUntil = ({ date }: { date: Date }) => {
+//   const [currentDate, setCurrentDate] = useState(() => new Date())
+
+//   useEffect(() => {
+//     const id = setInterval(() => {
+//       setCurrentDate(new Date())
+//     }, 1000)
+
+//     return () => clearInterval(id)
+//   }, [])
+
+//   if (!date.getTime) {
+//     return null
+//   }
+
+//   const t = date.getTime() - currentDate.getTime()
+//   const seconds = Math.floor((t / 1000) % 60)
+//   const minutes = Math.floor((t / 1000 / 60) % 60)
+//   const hours = Math.floor((t / (1000 * 60 * 60)) % 24)
+//   const days = Math.floor(t / (1000 * 60 * 60 * 24))
+
+//   if (t <= 0) {
+//     return <Notes>Contest has ended.</Notes>
+//   }
+
+//   return `${days} day${days !== 1 && 's'} ${hours} hour${
+//     hours !== 1 && 's'
+//   } ${minutes} minute${minutes !== 1 && 's'} ${seconds} second${
+//     seconds !== 1 && 's'
+//   } remaining`
+// }
+
+// const Notes = styled.p`
+//   padding: 0 0 20px 0;
+// `

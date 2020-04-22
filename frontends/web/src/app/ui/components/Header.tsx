@@ -8,6 +8,7 @@ import media from 'styled-media-query'
 import Constants from '../Constants'
 import NavigationBar from './navigation/NavigationBar'
 import ActivityIndicator from './ActivityIndicator'
+import { Logo } from './index'
 
 interface Props {
   isLoading: boolean
@@ -43,14 +44,6 @@ const mapStateToProps = (state: RootState) => ({
 })
 
 export default connect(mapStateToProps)(Header)
-
-const Logo = styled.img.attrs(() => ({
-  src: '/img/logo.svg',
-  alt: 'Tadoku',
-}))`
-  height: 29px;
-  width: 158px;
-`
 
 const Hamburger = styled.div`
   position: absolute;

@@ -4,6 +4,7 @@ const Constants = {
     primaryWithAlpha: (alpha: number) => `rgba(105, 105, 255, ${alpha})`,
     secondary: '#1B264F',
     dark: '#211A1D', // 211A1D
+    dark2: '#1A1A21',
     darkWithAlpha: (alpha: number) => `rgba(33, 26, 29, ${alpha})`,
     light: '#FFFFFF',
     lighter: '#FBFBFB',

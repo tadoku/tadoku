@@ -4,12 +4,15 @@ import media from 'styled-media-query'
 import Constants from '../Constants'
 import { LogoLight } from './index'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import Link from 'next/link'
 
 const Footer = () => (
   <Container>
-    <InnerContainer>
-      <FooterContent />
-    </InnerContainer>
+    <Background>
+      <InnerContainer>
+        <FooterContent />
+      </InnerContainer>
+    </Background>
   </Container>
 )
 
@@ -17,9 +20,11 @@ export default Footer
 
 export const FooterLanding = () => (
   <Container>
-    <InnerContainer wide>
-      <FooterContent />
-    </InnerContainer>
+    <Background>
+      <InnerContainer wide>
+        <FooterContent />
+      </InnerContainer>
+    </Background>
   </Container>
 )
 
@@ -68,7 +73,20 @@ const FooterContent = () => (
         </SocialLink>
       </SocialList>
     </div>
-    <div></div>
+    <nav>
+      <Menu>
+        <MenuHeading>Get started</MenuHeading>
+        <Link href="/" passHref>
+          <a>Home</a>
+        </Link>
+        <Link href="/blog" passHref>
+          <a>Blog</a>
+        </Link>
+        <Link href="/manual" passHref>
+          <a>Manual</a>
+        </Link>
+      </Menu>
+    </nav>
   </>
 )
 
@@ -76,7 +94,7 @@ const Container = styled.div`
   box-sizing: border-box;
   display: none;
   height: 250px;
-  background: ${Constants.colors.dark2};
+  background-color: ${Constants.colors.dark2};
 
   ${media.greaterThan('medium')`
       display: block;
@@ -85,6 +103,14 @@ const Container = styled.div`
       right: 0;
       bottom: 0;
   `}
+`
+
+const Background = styled.div`
+  background: url('/img/footer.png') no-repeat center center;
+  background-size: cover;
+  max-width: 1851px;
+  height: 100%;
+  margin: 0 auto;
 `
 
 const InnerContainer = styled.div`
@@ -141,4 +167,28 @@ const Credits = styled.p`
       color: ${Constants.colors.primary};
     }
   }
+`
+
+const Menu = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  color: ${Constants.colors.light};
+  width: 160px;
+
+  a {
+    color: ${Constants.colors.light};
+    line-height: 26px;
+    font-size: 16px;
+
+    &:hover {
+      color: ${Constants.colors.primary};
+    }
+  }
+`
+
+const MenuHeading = styled.h3`
+  border-bottom: 2px solid ${Constants.colors.primary};
+  font-size: 20px;
+  margin: 0 0 10px;
 `

@@ -4,6 +4,7 @@ import media from 'styled-media-query'
 
 import SignupCard from './SignupCard'
 import { Logo } from '../../ui/components'
+import Constants from '../../ui/Constants'
 
 interface Props {
   refreshSession: () => void
@@ -81,7 +82,7 @@ const IntroCard = styled.div`
 `
 
 const Title = styled.h1`
-  font-family: 'Merriweather', serif;
+  font-family: ${Constants.fonts.serif};
   margin: 60px 20px 30px 0;
   font-size: 30px;
   line-height: 37px;
@@ -91,7 +92,7 @@ const Title = styled.h1`
 const Tagline = styled.p`
   font-size: 18px;
   line-height: 29px;
-  font-family: 'Open sans', serif;
+  font-family: ${Constants.fonts.sansSerif};
   padding: 0;
   margin: 0;
 `

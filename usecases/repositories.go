@@ -20,6 +20,7 @@ type ContestRepository interface {
 	GetOpenContests() ([]uint64, error)
 	GetRunningContests() ([]uint64, error)
 	FindLatest() (domain.Contest, error)
+	FindRecent(count int) ([]domain.Contest, error)
 	FindByID(id uint64) (domain.Contest, error)
 }
 

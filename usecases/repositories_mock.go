@@ -173,6 +173,21 @@ func (mr *MockContestRepositoryMockRecorder) FindLatest() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindLatest", reflect.TypeOf((*MockContestRepository)(nil).FindLatest))
 }
 
+// FindRecent mocks base method
+func (m *MockContestRepository) FindRecent(count int) ([]domain.Contest, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "FindRecent", count)
+	ret0, _ := ret[0].([]domain.Contest)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// FindRecent indicates an expected call of FindRecent
+func (mr *MockContestRepositoryMockRecorder) FindRecent(count interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindRecent", reflect.TypeOf((*MockContestRepository)(nil).FindRecent), count)
+}
+
 // FindByID mocks base method
 func (m *MockContestRepository) FindByID(id uint64) (domain.Contest, error) {
 	m.ctrl.T.Helper()

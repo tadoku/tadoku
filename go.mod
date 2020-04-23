@@ -1,5 +1,7 @@
 module github.com/tadoku/api
 
+go 1.14
+
 require (
 	github.com/DATA-DOG/go-txdb v0.1.3
 	github.com/DavidHuie/gomigrate v0.0.0-20160809001028-4004e6142040

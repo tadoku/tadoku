@@ -38,7 +38,7 @@ const FooterContent = () => (
       <SocialList>
         <SocialLink fixOffset>
           <a
-            href="https://discord.gg/Dd8t9WB"
+            href="https://twitter.com/tadoku_app"
             target="_blank"
             rel="noopener noreferrer"
           >

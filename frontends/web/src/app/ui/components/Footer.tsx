@@ -4,6 +4,7 @@ import media from 'styled-media-query'
 import Constants from '../Constants'
 import { LogoLight } from './index'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import Link from 'next/link'
 
 const Footer = () => (
   <Container>
@@ -68,7 +69,20 @@ const FooterContent = () => (
         </SocialLink>
       </SocialList>
     </div>
-    <div></div>
+    <nav>
+      <Menu>
+        <MenuHeading>Get started</MenuHeading>
+        <Link href="/" passHref>
+          <a>Home</a>
+        </Link>
+        <Link href="/blog" passHref>
+          <a>Blog</a>
+        </Link>
+        <Link href="/manual" passHref>
+          <a>Manual</a>
+        </Link>
+      </Menu>
+    </nav>
   </>
 )
 
@@ -144,4 +158,28 @@ const Credits = styled.p`
       color: ${Constants.colors.primary};
     }
   }
+`
+
+const Menu = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  color: ${Constants.colors.light};
+  width: 160px;
+
+  a {
+    color: ${Constants.colors.light};
+    line-height: 26px;
+    font-size: 16px;
+
+    &:hover {
+      color: ${Constants.colors.primary};
+    }
+  }
+`
+
+const MenuHeading = styled.h3`
+  border-bottom: 2px solid ${Constants.colors.primary};
+  font-size: 20px;
+  margin: 0 0 10px;
 `

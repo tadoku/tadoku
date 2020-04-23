@@ -8,9 +8,11 @@ import Link from 'next/link'
 
 const Footer = () => (
   <Container>
-    <InnerContainer>
-      <FooterContent />
-    </InnerContainer>
+    <Background>
+      <InnerContainer>
+        <FooterContent />
+      </InnerContainer>
+    </Background>
   </Container>
 )
 
@@ -18,9 +20,11 @@ export default Footer
 
 export const FooterLanding = () => (
   <Container>
-    <InnerContainer wide>
-      <FooterContent />
-    </InnerContainer>
+    <Background>
+      <InnerContainer wide>
+        <FooterContent />
+      </InnerContainer>
+    </Background>
   </Container>
 )
 
@@ -91,9 +95,6 @@ const Container = styled.div`
   display: none;
   height: 250px;
   background-color: ${Constants.colors.dark2};
-  background-image: url('/img/footer.png');
-  background-repeat: no-repeat;
-  background-size: cover;
 
   ${media.greaterThan('medium')`
       display: block;
@@ -102,6 +103,14 @@ const Container = styled.div`
       right: 0;
       bottom: 0;
   `}
+`
+
+const Background = styled.div`
+  background: url('/img/footer.png') no-repeat center center;
+  background-size: cover;
+  max-width: 1851px;
+  height: 100%;
+  margin: 0 auto;
 `
 
 const InnerContainer = styled.div`

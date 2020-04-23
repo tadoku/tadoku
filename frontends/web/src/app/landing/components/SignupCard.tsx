@@ -2,6 +2,7 @@ import React from 'react'
 import styled from 'styled-components'
 import RegisterForm from '../../session/components/forms/RegisterForm'
 import media from 'styled-media-query'
+import Constants from '../../ui/Constants'
 
 interface Props {
   refreshSession: () => void
@@ -60,7 +61,7 @@ const Large = styled.div`
 `
 
 const SignupTitle = styled.h2`
-  font-family: 'Merriweather', serif;
+  font-family: ${Constants.fonts.serif};
   margin: 0 0 30px 0;
   font-size: 26px;
   line-height: 32px;
@@ -68,7 +69,7 @@ const SignupTitle = styled.h2`
 `
 
 const LoginPrompt = styled.p`
-  font-family: 'Open sans', serif;
+  font-family: ${Constants.fonts.sansSerif};
   font-size: 16px;
   text-align: center;
 

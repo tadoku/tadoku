@@ -7,6 +7,7 @@ import Header from './../components/Header'
 import LogInModal from './../../session/components/modals/LogInModal'
 import * as RankingStore from '../../ranking/redux'
 import { FooterLanding } from '../../ui/components/Footer'
+import Constants from '../../ui/Constants'
 
 const LandingPage = () => {
   const dispatch = useDispatch()
@@ -73,7 +74,7 @@ const Content = styled.div`
 `
 
 const Title = styled.h2`
-  font-family: 'Merriweather', serif;
+  font-family: ${Constants.fonts.serif};
   margin: 0 0 30px 0;
   font-size: 24px;
   line-height: 31px;
@@ -82,7 +83,7 @@ const Title = styled.h2`
 `
 
 const Paragraph = styled.p`
-  font-family: 'Open sans', serif;
+  font-family: ${Constants.fonts.sansSerif};
   font-size: 18px;
   line-height: 29px;
 `

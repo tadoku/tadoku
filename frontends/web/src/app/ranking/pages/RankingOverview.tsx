@@ -100,6 +100,7 @@ const Container = styled.div`
 `
 
 const Description = styled.h2`
+  font-family: ${Constants.fonts.sansSerif};
   color: ${Constants.colors.nonFocusText};
   margin-top: 10px;
   margin-bottom: 30px;

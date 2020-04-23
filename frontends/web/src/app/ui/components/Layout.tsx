@@ -47,7 +47,7 @@ export const GlobalStyle = createGlobalStyle<typeof Constants>`
 
   body {
     background: ${props => props.colors.lighter};
-    font-family: 'Open Sans', sans-serif;
+    font-family: ${props => props.fonts.sansSerif};
     margin: 0;
     padding: 0;
   }
@@ -65,6 +65,10 @@ export const GlobalStyle = createGlobalStyle<typeof Constants>`
     &:hover, &:active, &:focus {
       color: ${props => props.colors.primary}
     }
+  }
+
+  h1, h2, h3, h4, h5, h6, h7 {
+    font-family: ${props => props.fonts.serif};
   }
 
   a[href],

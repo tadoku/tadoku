@@ -263,7 +263,6 @@ export const StackContainer = styled.div`
 `
 
 export const PageTitle = styled.h1`
-  font-family: 'Merriweather', serif;
   font-size: 30px;
 
   ${media.lessThan('medium')`

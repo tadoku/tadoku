@@ -46,6 +46,10 @@ const Constants = {
     ],
   },
   maxWidth: '1200px',
+  fonts: {
+    serif: "'Merriweather', serif",
+    sansSerif: "'Open Sans', sans-serif",
+  },
 }
 
 export default Constants

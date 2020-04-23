@@ -76,7 +76,10 @@ const Container = styled.div`
   box-sizing: border-box;
   display: none;
   height: 250px;
-  background: ${Constants.colors.dark2};
+  background-color: ${Constants.colors.dark2};
+  background-image: url('/img/footer.png');
+  background-repeat: no-repeat;
+  background-size: cover;
 
   ${media.greaterThan('medium')`
       display: block;

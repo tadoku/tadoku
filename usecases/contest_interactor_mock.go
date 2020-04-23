@@ -76,6 +76,21 @@ func (mr *MockContestInteractorMockRecorder) Latest() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Latest", reflect.TypeOf((*MockContestInteractor)(nil).Latest))
 }
 
+// Recent mocks base method
+func (m *MockContestInteractor) Recent(count int) ([]domain.Contest, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Recent", count)
+	ret0, _ := ret[0].([]domain.Contest)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Recent indicates an expected call of Recent
+func (mr *MockContestInteractorMockRecorder) Recent(count interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Recent", reflect.TypeOf((*MockContestInteractor)(nil).Recent), count)
+}
+
 // Find mocks base method
 func (m *MockContestInteractor) Find(contestID uint64) (*domain.Contest, error) {
 	m.ctrl.T.Helper()

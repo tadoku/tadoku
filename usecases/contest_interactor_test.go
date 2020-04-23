@@ -131,10 +131,46 @@ func TestContestInteractor_Latest(t *testing.T) {
 
 	// Sad path: none found
 	{
-
 		repo.EXPECT().FindLatest().Return(domain.Contest{}, domain.ErrNotFound)
 
 		_, err := interactor.Latest()
+		assert.EqualError(t, err, usecases.ErrContestNotFound.Error())
+	}
+}
+
+func TestContestInteractor_Recent(t *testing.T) {
+	ctrl, repo, _, interactor := setupContestTest(t)
+	defer ctrl.Finish()
+
+	// Happy path
+	{
+		contests := []domain.Contest{
+			{
+				ID:    1,
+				Start: time.Date(2019, 1, 1, 0, 0, 0, 0, time.UTC),
+				End:   time.Date(2019, 1, 31, 0, 0, 0, 0, time.UTC),
+				Open:  false,
+			},
+			{
+				ID:    2,
+				Start: time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC),
+				End:   time.Date(2020, 1, 31, 0, 0, 0, 0, time.UTC),
+				Open:  true,
+			},
+		}
+
+		repo.EXPECT().FindRecent(2).Return(contests, nil)
+
+		found, err := interactor.Recent(2)
+		assert.NoError(t, err)
+		assert.ElementsMatch(t, contests, found)
+	}
+
+	// Sad path: none found
+	{
+		repo.EXPECT().FindRecent(2).Return([]domain.Contest{}, domain.ErrNotFound)
+
+		_, err := interactor.Recent(2)
 		assert.EqualError(t, err, usecases.ErrContestNotFound.Error())
 	}
 }
@@ -163,7 +199,6 @@ func TestContestInteractor_Find(t *testing.T) {
 
 	// Sad path: none found
 	{
-
 		repo.EXPECT().FindByID(contestID).Return(domain.Contest{}, domain.ErrNotFound)
 
 		_, err := interactor.Find(contestID)

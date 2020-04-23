@@ -27,6 +27,7 @@ type ContestInteractor interface {
 	CreateContest(contest domain.Contest) error
 	UpdateContest(contest domain.Contest) error
 	Latest() (*domain.Contest, error)
+	Recent(count int) ([]domain.Contest, error)
 	Find(contestID uint64) (*domain.Contest, error)
 }
 
@@ -96,6 +97,19 @@ func (i *contestInteractor) Latest() (*domain.Contest, error) {
 	}
 
 	return &contest, nil
+}
+
+func (i *contestInteractor) Recent(count int) ([]domain.Contest, error) {
+	contest, err := i.contestRepository.FindRecent(count)
+	if err != nil {
+		if err == domain.ErrNotFound {
+			return nil, ErrContestNotFound
+		}
+
+		return nil, domain.WrapError(err)
+	}
+
+	return contest, nil
 }
 
 func (i *contestInteractor) Find(contestID uint64) (*domain.Contest, error) {

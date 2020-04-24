@@ -1,15 +1,21 @@
 import React from 'react'
-import Header from './Header'
 import styled, { createGlobalStyle } from 'styled-components'
+import media from 'styled-media-query'
+import { useSelector } from 'react-redux'
+
+import Header from './Header'
 import Constants from '../Constants'
 import Footer from './Footer'
-import media from 'styled-media-query'
+import ActivityIndicator from './ActivityIndicator'
+import { RootState } from '../../store'
 
 interface Props {
   overridesLayout: boolean
 }
 
 const Layout: React.SFC<Props> = ({ children, overridesLayout }) => {
+  const isLoading = useSelector((state: RootState) => state.app.isLoading)
+
   if (overridesLayout) {
     return (
       <div>
@@ -21,6 +27,7 @@ const Layout: React.SFC<Props> = ({ children, overridesLayout }) => {
 
   return (
     <div>
+      <ActivityIndicator isLoading={isLoading} />
       <GlobalStyle {...Constants} />
       <StickyFooterContainer>
         <Header />

@@ -1,20 +1,13 @@
 import React, { useState } from 'react'
-import { RootState } from '../../store'
-import { connect } from 'react-redux'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import Link from 'next/link'
 import styled from 'styled-components'
 import media from 'styled-media-query'
 import Constants from '../Constants'
 import NavigationBar from './navigation/NavigationBar'
-import ActivityIndicator from './ActivityIndicator'
 import { Logo } from './index'
 
-interface Props {
-  isLoading: boolean
-}
-
-const Header = ({ isLoading }: Props) => {
+const Header = () => {
   const [isOpen, setIsOpen] = useState(false)
 
   return (
@@ -25,7 +18,6 @@ const Header = ({ isLoading }: Props) => {
             <Logo />
           </LogoLink>
         </Link>
-        <ActivityIndicator isLoading={isLoading} />
         <NavigationBar isOpen={isOpen} />
         <Hamburger onClick={() => setIsOpen(!isOpen)}>
           <FontAwesomeIcon
@@ -39,11 +31,7 @@ const Header = ({ isLoading }: Props) => {
   )
 }
 
-const mapStateToProps = (state: RootState) => ({
-  isLoading: state.app.isLoading,
-})
-
-export default connect(mapStateToProps)(Header)
+export default Header
 
 const Hamburger = styled.div`
   position: absolute;

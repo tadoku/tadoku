@@ -2,6 +2,7 @@ const Constants = {
   colors: {
     primary: '#6969FF', //6320EE
     primaryWithAlpha: (alpha: number) => `rgba(105, 105, 255, ${alpha})`,
+    primaryTint: '#698CFF',
     secondary: '#1B264F',
     dark: '#211A1D', // 211A1D
     dark2: '#1A1A21',

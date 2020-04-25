@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import styled, { createGlobalStyle } from 'styled-components'
-import { useDispatch } from 'react-redux'
+import { useDispatch, useSelector } from 'react-redux'
 import media from 'styled-media-query'
 
 import Header from './../components/Header'
@@ -8,6 +8,8 @@ import LogInModal from './../../session/components/modals/LogInModal'
 import * as RankingStore from '../../ranking/redux'
 import { FooterLanding } from '../../ui/components/Footer'
 import Constants from '../../ui/Constants'
+import { RootState } from '../../store'
+import { ContestMapper } from '../../contest/transform'
 
 const LandingPage = () => {
   const dispatch = useDispatch()
@@ -16,6 +18,9 @@ const LandingPage = () => {
   }
 
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false)
+  const contests = useSelector((state: RootState) =>
+    state.contest.recentContests.map(ContestMapper.fromRaw),
+  )
 
   return (
     <Container>
@@ -51,7 +56,7 @@ const LandingPage = () => {
           </Card>
         </Content>
       </StickyFooterContainer>
-      <FooterLanding />
+      <FooterLanding contests={contests} />
     </Container>
   )
 }

@@ -14,12 +14,12 @@ const getContest = async (contestId: number): Promise<Contest | undefined> => {
   return ContestMapper.fromRaw(data)
 }
 
-const getAll = async (limit?: number): Promise<Contest[] | undefined> => {
+const getAll = async (limit?: number): Promise<Contest[]> => {
   let queryString = limit ? `?limit=${limit}` : ''
   const response = await get(`/contests${queryString}`)
 
   if (response.status !== 200) {
-    return undefined
+    return []
   }
 
   const data: RawContest[] = await response.json()
@@ -27,18 +27,8 @@ const getAll = async (limit?: number): Promise<Contest[] | undefined> => {
   return data.map(ContestMapper.fromRaw)
 }
 
-const getLatest = async (): Promise<Contest | undefined> => {
-  let contest = await getAll(1)
-  if (!contest) {
-    return undefined
-  }
-
-  return contest[0]
-}
-
 const ContestApi = {
   get: getContest,
-  getLatest,
   getAll,
 }
 

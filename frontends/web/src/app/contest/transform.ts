@@ -30,6 +30,17 @@ export const ContestSerializer: Serializer<Contest> = {
   },
 }
 
+export const ContestsSerializer: Serializer<Contest[]> = {
+  serialize: contests => {
+    const raw = contests.map(ContestToRawMapper)
+    return JSON.stringify(raw)
+  },
+  deserialize: serializedData => {
+    let raw = JSON.parse(serializedData)
+    return raw.map(RawToContestMapper)
+  },
+}
+
 export const ContestMapper = withOptional({
   toRaw: ContestToRawMapper,
   fromRaw: RawToContestMapper,

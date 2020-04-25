@@ -95,8 +95,8 @@ const FooterContent = ({ contests }: Props) => (
         <MenuHeading>Contests</MenuHeading>
         {contests.map(contest => (
           <Link
-            href="/ranking/[id]"
-            as={`/ranking/${contest.id}`}
+            href="/contests/[contest_id]/ranking"
+            as={`/contests/${contest.id}/ranking`}
             key={contest.id}
             passHref
           >

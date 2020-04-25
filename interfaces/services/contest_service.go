@@ -2,6 +2,7 @@ package services
 
 import (
 	"net/http"
+	"strconv"
 
 	"github.com/tadoku/api/domain"
 	"github.com/tadoku/api/usecases"
@@ -11,7 +12,7 @@ import (
 type ContestService interface {
 	Create(ctx Context) error
 	Update(ctx Context) error
-	Latest(ctx Context) error
+	All(ctx Context) error
 	Get(ctx Context) error
 }
 
@@ -54,8 +55,12 @@ func (s *contestService) Update(ctx Context) error {
 	return ctx.NoContent(http.StatusNoContent)
 }
 
-func (s *contestService) Latest(ctx Context) error {
-	contest, err := s.ContestInteractor.Latest()
+func (s *contestService) All(ctx Context) error {
+	limit, err := strconv.ParseInt(ctx.QueryParam("limit"), 10, 64)
+	if err != nil {
+		limit = 0
+	}
+	contests, err := s.ContestInteractor.Recent(int(limit))
 
 	if err != nil {
 		if err == usecases.ErrContestNotFound {
@@ -65,7 +70,7 @@ func (s *contestService) Latest(ctx Context) error {
 		return domain.WrapError(err)
 	}
 
-	return ctx.JSON(http.StatusOK, contest)
+	return ctx.JSON(http.StatusOK, contests)
 }
 
 func (s *contestService) Get(ctx Context) error {

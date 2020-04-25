@@ -60,12 +60,20 @@ func TestContestService_Update(t *testing.T) {
 	assert.NoError(t, err)
 }
 
-func TestContestService_Latest(t *testing.T) {
-	contest := &domain.Contest{
-		ID:    1,
-		Start: time.Date(2019, 1, 1, 0, 0, 0, 0, time.UTC),
-		End:   time.Date(2019, 1, 31, 0, 0, 0, 0, time.UTC),
-		Open:  true,
+func TestContestService_All(t *testing.T) {
+	contests := []domain.Contest{
+		{
+			ID:    1,
+			Start: time.Date(2019, 1, 1, 0, 0, 0, 0, time.UTC),
+			End:   time.Date(2019, 1, 31, 0, 0, 0, 0, time.UTC),
+			Open:  false,
+		},
+		{
+			ID:    2,
+			Start: time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC),
+			End:   time.Date(2020, 1, 31, 0, 0, 0, 0, time.UTC),
+			Open:  true,
+		},
 	}
 
 	ctrl := gomock.NewController(t)
@@ -73,26 +81,42 @@ func TestContestService_Latest(t *testing.T) {
 
 	{
 		ctx := services.NewMockContext(ctrl)
-		ctx.EXPECT().JSON(200, contest)
+		ctx.EXPECT().JSON(200, contests[1:])
+		ctx.EXPECT().QueryParam("limit").Return("1")
 
 		i := usecases.NewMockContestInteractor(ctrl)
-		i.EXPECT().Latest().Return(contest, nil)
+		i.EXPECT().Recent(1).Return(contests[1:], nil)
 
 		s := services.NewContestService(i)
-		err := s.Latest(ctx)
+		err := s.All(ctx)
 
 		assert.NoError(t, err)
 	}
 
 	{
 		ctx := services.NewMockContext(ctrl)
+		ctx.EXPECT().QueryParam("limit").Return("")
+		ctx.EXPECT().JSON(200, contests)
+
+		i := usecases.NewMockContestInteractor(ctrl)
+		i.EXPECT().Recent(0).Return(contests, nil)
+
+		s := services.NewContestService(i)
+		err := s.All(ctx)
+
+		assert.NoError(t, err)
+	}
+
+	{
+		ctx := services.NewMockContext(ctrl)
+		ctx.EXPECT().QueryParam("limit").Return("5")
 		ctx.EXPECT().NoContent(404)
 
 		i := usecases.NewMockContestInteractor(ctrl)
-		i.EXPECT().Latest().Return(nil, usecases.ErrContestNotFound)
+		i.EXPECT().Recent(5).Return(nil, usecases.ErrContestNotFound)
 
 		s := services.NewContestService(i)
-		err := s.Latest(ctx)
+		err := s.All(ctx)
 
 		assert.NoError(t, err)
 	}

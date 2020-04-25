@@ -19,14 +19,14 @@ var ErrContestIDMissing = fail.New("a contest id is required when updating")
 // ErrCreateContestHasID for when you try to create a contest with a given id
 var ErrCreateContestHasID = fail.New("a contest can't have an id when being created")
 
-// ErrContestNotFound for when no contest could be found, e.g no contets has ever be ran
+// ErrContestNotFound for when no contest could be found, e.g no contest has ever be ran
 var ErrContestNotFound = fail.New("no contest could be found")
 
 // ContestInteractor contains all business logic for contests
 type ContestInteractor interface {
 	CreateContest(contest domain.Contest) error
 	UpdateContest(contest domain.Contest) error
-	Latest() (*domain.Contest, error)
+	Recent(count int) ([]domain.Contest, error)
 	Find(contestID uint64) (*domain.Contest, error)
 }
 
@@ -85,8 +85,16 @@ func (i *contestInteractor) saveContest(contest domain.Contest) error {
 	return domain.WrapError(err)
 }
 
-func (i *contestInteractor) Latest() (*domain.Contest, error) {
-	contest, err := i.contestRepository.FindLatest()
+func (i *contestInteractor) Recent(count int) ([]domain.Contest, error) {
+	var contests []domain.Contest
+	var err error
+
+	if count == 0 {
+		contests, err = i.contestRepository.FindAll()
+	} else {
+		contests, err = i.contestRepository.FindRecent(count)
+	}
+
 	if err != nil {
 		if err == domain.ErrNotFound {
 			return nil, ErrContestNotFound
@@ -95,7 +103,7 @@ func (i *contestInteractor) Latest() (*domain.Contest, error) {
 		return nil, domain.WrapError(err)
 	}
 
-	return &contest, nil
+	return contests, nil
 }
 
 func (i *contestInteractor) Find(contestID uint64) (*domain.Contest, error) {

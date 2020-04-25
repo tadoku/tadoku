@@ -8,6 +8,7 @@ import Constants from '../Constants'
 import Footer from './Footer'
 import ActivityIndicator from './ActivityIndicator'
 import { RootState } from '../../store'
+import { Contest } from '../../contest/interfaces'
 
 interface Props {
   overridesLayout: boolean
@@ -15,6 +16,23 @@ interface Props {
 
 const Layout: React.SFC<Props> = ({ children, overridesLayout }) => {
   const isLoading = useSelector((state: RootState) => state.app.isLoading)
+  // TODO: Replace dummy data
+  const contests: Contest[] = [
+    {
+      id: 1,
+      description: '2020 Round 1',
+      start: new Date(),
+      end: new Date(),
+      open: false,
+    },
+    {
+      id: 2,
+      description: '2020 Round 1',
+      start: new Date(),
+      end: new Date(),
+      open: false,
+    },
+  ]
 
   if (overridesLayout) {
     return (
@@ -33,7 +51,7 @@ const Layout: React.SFC<Props> = ({ children, overridesLayout }) => {
         <Header />
         <Container>{children}</Container>
       </StickyFooterContainer>
-      <Footer />
+      <Footer contests={contests} />
     </div>
   )
 }

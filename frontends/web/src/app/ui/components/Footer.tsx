@@ -5,12 +5,17 @@ import Constants from '../Constants'
 import { LogoLight } from './index'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import Link from 'next/link'
+import { Contest } from '../../contest/interfaces'
 
-const Footer = () => (
+interface Props {
+  contests: Contest[]
+}
+
+const Footer = (props: Props) => (
   <Container>
     <Background>
       <InnerContainer>
-        <FooterContent />
+        <FooterContent {...props} />
       </InnerContainer>
     </Background>
   </Container>
@@ -18,17 +23,17 @@ const Footer = () => (
 
 export default Footer
 
-export const FooterLanding = () => (
+export const FooterLanding = (props: Props) => (
   <Container>
     <Background>
       <InnerContainer wide>
-        <FooterContent />
+        <FooterContent {...props} />
       </InnerContainer>
     </Background>
   </Container>
 )
 
-const FooterContent = () => (
+const FooterContent = ({ contests }: Props) => (
   <>
     <div>
       <LogoLight />
@@ -73,7 +78,7 @@ const FooterContent = () => (
         </SocialLink>
       </SocialList>
     </div>
-    <nav>
+    <Navigation>
       <Menu>
         <MenuHeading>Get started</MenuHeading>
         <Link href="/" passHref>
@@ -86,7 +91,20 @@ const FooterContent = () => (
           <a>Manual</a>
         </Link>
       </Menu>
-    </nav>
+      <Menu>
+        <MenuHeading>Contests</MenuHeading>
+        {contests.map(contest => (
+          <Link
+            href="/ranking/[id]"
+            as={`/ranking/${contest.id}`}
+            key={contest.id}
+            passHref
+          >
+            <a>{contest.description}</a>
+          </Link>
+        ))}
+      </Menu>
+    </Navigation>
   </>
 )
 
@@ -123,6 +141,10 @@ const InnerContainer = styled.div`
   box-sizing: border-box;
 
   ${({ wide }: { wide?: boolean }) => wide && `padding: 40px 60px;`}
+`
+
+const Navigation = styled.nav`
+  display: flex;
 `
 
 const SocialList = styled.ul`
@@ -174,16 +196,19 @@ const Menu = styled.div`
   flex-direction: column;
   align-items: flex-start;
   color: ${Constants.colors.light};
-  width: 160px;
 
   a {
     color: ${Constants.colors.light};
-    line-height: 26px;
+    line-height: 28px;
     font-size: 16px;
 
     &:hover {
       color: ${Constants.colors.primary};
     }
+  }
+
+  & + & {
+    margin-left: 60px;
   }
 `
 

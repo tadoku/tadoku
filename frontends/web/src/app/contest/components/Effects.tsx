@@ -1,7 +1,7 @@
 import { useDispatch } from 'react-redux'
 import { Contest } from '../interfaces'
 import ContestApi from '../api'
-import { updateLatestContest } from '../redux'
+import { updateRecentContests } from '../redux'
 import { useCachedApiState } from '../../cache'
 import { ContestMapper, ContestsSerializer } from '../transform'
 
@@ -9,8 +9,8 @@ const ContestEffects = () => {
   const dispatch = useDispatch()
 
   const update = (contests: Contest[]) => {
-    const rawContests = contests.map(ContestMapper.optional.toRaw)
-    dispatch(updateLatestContest(rawContests[0]))
+    const rawContests = contests.map(ContestMapper.toRaw)
+    dispatch(updateRecentContests(rawContests))
   }
 
   useCachedApiState({

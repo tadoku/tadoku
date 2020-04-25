@@ -48,8 +48,10 @@ const Constants = {
   },
   maxWidth: '1200px',
   fonts: {
-    serif: "'Merriweather', serif",
-    sansSerif: "'Open Sans', sans-serif",
+    serif:
+      "Merriweather, Cambria, Georgia, 'ヒラギノ明朝 ProN' , 'Hiragino Mincho ProN', serif",
+    sansSerif:
+      "'Open Sans', Helvetica, Arial, 'ヒラギノ角ゴ ProN' , 'Hiragino Kaku Gothic ProN', sans-serif",
   },
 }
 

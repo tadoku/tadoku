@@ -12,6 +12,7 @@ type ContestService interface {
 	Create(ctx Context) error
 	Update(ctx Context) error
 	Latest(ctx Context) error
+	Recent(ctx Context) error
 	Get(ctx Context) error
 }
 
@@ -66,6 +67,20 @@ func (s *contestService) Latest(ctx Context) error {
 	}
 
 	return ctx.JSON(http.StatusOK, contest)
+}
+
+func (s *contestService) Recent(ctx Context) error {
+	contests, err := s.ContestInteractor.Recent(5)
+
+	if err != nil {
+		if err == usecases.ErrContestNotFound {
+			return ctx.NoContent(http.StatusNotFound)
+		}
+
+		return domain.WrapError(err)
+	}
+
+	return ctx.JSON(http.StatusOK, contests)
 }
 
 func (s *contestService) Get(ctx Context) error {

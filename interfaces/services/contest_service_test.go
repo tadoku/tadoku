@@ -98,6 +98,52 @@ func TestContestService_Latest(t *testing.T) {
 	}
 }
 
+func TestContestService_Recent(t *testing.T) {
+	contests := []domain.Contest{
+		{
+			ID:    1,
+			Start: time.Date(2019, 1, 1, 0, 0, 0, 0, time.UTC),
+			End:   time.Date(2019, 1, 31, 0, 0, 0, 0, time.UTC),
+			Open:  false,
+		},
+		{
+			ID:    2,
+			Start: time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC),
+			End:   time.Date(2020, 1, 31, 0, 0, 0, 0, time.UTC),
+			Open:  true,
+		},
+	}
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	{
+		ctx := services.NewMockContext(ctrl)
+		ctx.EXPECT().JSON(200, contests)
+
+		i := usecases.NewMockContestInteractor(ctrl)
+		i.EXPECT().Recent(5).Return(contests, nil)
+
+		s := services.NewContestService(i)
+		err := s.Recent(ctx)
+
+		assert.NoError(t, err)
+	}
+
+	{
+		ctx := services.NewMockContext(ctrl)
+		ctx.EXPECT().NoContent(404)
+
+		i := usecases.NewMockContestInteractor(ctrl)
+		i.EXPECT().Recent(5).Return(nil, usecases.ErrContestNotFound)
+
+		s := services.NewContestService(i)
+		err := s.Recent(ctx)
+
+		assert.NoError(t, err)
+	}
+}
+
 func TestContestService_Get(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()

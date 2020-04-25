@@ -8,7 +8,7 @@ import Constants from '../Constants'
 import Footer from './Footer'
 import ActivityIndicator from './ActivityIndicator'
 import { RootState } from '../../store'
-import { Contest } from '../../contest/interfaces'
+import { ContestMapper } from '../../contest/transform'
 
 interface Props {
   overridesLayout: boolean
@@ -16,23 +16,9 @@ interface Props {
 
 const Layout: React.SFC<Props> = ({ children, overridesLayout }) => {
   const isLoading = useSelector((state: RootState) => state.app.isLoading)
-  // TODO: Replace dummy data
-  const contests: Contest[] = [
-    {
-      id: 1,
-      description: '2020 Round 1',
-      start: new Date(),
-      end: new Date(),
-      open: false,
-    },
-    {
-      id: 2,
-      description: '2020 Round 1',
-      start: new Date(),
-      end: new Date(),
-      open: false,
-    },
-  ]
+  const contests = useSelector((state: RootState) =>
+    state.contest.recentContests.map(ContestMapper.fromRaw),
+  )
 
   if (overridesLayout) {
     return (

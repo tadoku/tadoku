@@ -109,35 +109,6 @@ func TestContestInteractor_UpdateContest(t *testing.T) {
 	}
 }
 
-func TestContestInteractor_Latest(t *testing.T) {
-	ctrl, repo, _, interactor := setupContestTest(t)
-	defer ctrl.Finish()
-
-	// Happy path
-	{
-		contest := domain.Contest{
-			ID:    1,
-			Start: time.Date(2019, 1, 1, 0, 0, 0, 0, time.UTC),
-			End:   time.Date(2019, 1, 31, 0, 0, 0, 0, time.UTC),
-			Open:  false,
-		}
-
-		repo.EXPECT().FindLatest().Return(contest, nil)
-
-		found, err := interactor.Latest()
-		assert.NoError(t, err)
-		assert.Equal(t, &contest, found)
-	}
-
-	// Sad path: none found
-	{
-		repo.EXPECT().FindLatest().Return(domain.Contest{}, domain.ErrNotFound)
-
-		_, err := interactor.Latest()
-		assert.EqualError(t, err, usecases.ErrContestNotFound.Error())
-	}
-}
-
 func TestContestInteractor_Recent(t *testing.T) {
 	ctrl, repo, _, interactor := setupContestTest(t)
 	defer ctrl.Finish()

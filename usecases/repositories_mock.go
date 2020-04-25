@@ -158,19 +158,19 @@ func (mr *MockContestRepositoryMockRecorder) GetRunningContests() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetRunningContests", reflect.TypeOf((*MockContestRepository)(nil).GetRunningContests))
 }
 
-// FindLatest mocks base method
-func (m *MockContestRepository) FindLatest() (domain.Contest, error) {
+// FindAll mocks base method
+func (m *MockContestRepository) FindAll() ([]domain.Contest, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "FindLatest")
-	ret0, _ := ret[0].(domain.Contest)
+	ret := m.ctrl.Call(m, "FindAll")
+	ret0, _ := ret[0].([]domain.Contest)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// FindLatest indicates an expected call of FindLatest
-func (mr *MockContestRepositoryMockRecorder) FindLatest() *gomock.Call {
+// FindAll indicates an expected call of FindAll
+func (mr *MockContestRepositoryMockRecorder) FindAll() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindLatest", reflect.TypeOf((*MockContestRepository)(nil).FindLatest))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindAll", reflect.TypeOf((*MockContestRepository)(nil).FindAll))
 }
 
 // FindRecent mocks base method

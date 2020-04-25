@@ -87,14 +87,14 @@ func TestContestRepository_GetRunningContests(t *testing.T) {
 	}
 }
 
-func TestContestRepository_FindLatest(t *testing.T) {
+func TestContestRepository_FindAll(t *testing.T) {
 	sqlHandler, cleanup := setupTestingSuite(t)
 	defer cleanup()
 
 	repo := repositories.NewContestRepository(sqlHandler)
 
 	{
-		contest, err := repo.FindLatest()
+		contest, err := repo.FindAll()
 		assert.EqualError(t, err, domain.ErrNotFound.Error())
 		assert.Empty(t, contest, "no contests should be found")
 	}
@@ -104,9 +104,9 @@ func TestContestRepository_FindLatest(t *testing.T) {
 		err := repo.Store(&expected)
 		assert.NoError(t, err)
 
-		contest, err := repo.FindLatest()
-		assert.Equal(t, expected.Description, contest.Description, "contest should have the same description")
-		assert.Equal(t, expected.Open, contest.Open, "contest should both be open")
+		contest, err := repo.FindAll()
+		assert.Equal(t, expected.Description, contest[0].Description, "contest should have the same description")
+		assert.Equal(t, expected.Open, contest[0].Open, "contest should both be open")
 		assert.NoError(t, err)
 	}
 
@@ -115,9 +115,9 @@ func TestContestRepository_FindLatest(t *testing.T) {
 		err := repo.Store(&expected)
 		assert.NoError(t, err)
 
-		contest, err := repo.FindLatest()
-		assert.Equal(t, expected.Description, contest.Description, "contest should have the same description")
-		assert.Equal(t, expected.Open, contest.Open, "contest should both be open")
+		contest, err := repo.FindAll()
+		assert.Equal(t, expected.Description, contest[0].Description, "contest should have the same description")
+		assert.Equal(t, expected.Open, contest[0].Open, "contest should both be open")
 		assert.NoError(t, err)
 	}
 }

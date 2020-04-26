@@ -75,7 +75,8 @@ const buttonStyles = css`
         content: '';
         position: absolute;
         bottom: 10px;
-        width: 100%;
+        left: 0;
+        right: 0;
         border-bottom: 2px solid ${Constants.colors.primary};
       }
     }
@@ -90,7 +91,8 @@ const buttonStyles = css`
         content: '';
         position: absolute;
         bottom: 10px;
-        width: 100%;
+        left: 0;
+        right: 0;
         border-bottom: 2px solid ${Constants.colors.primary};
       }
 

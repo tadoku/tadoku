@@ -6,7 +6,7 @@ const LinkContainer = styled.div`
   display: flex;
   padding-right: 20px;
 
-  * + * {
+  > * + * {
     margin-left: 20px;
 
     ${media.lessThan('medium')`

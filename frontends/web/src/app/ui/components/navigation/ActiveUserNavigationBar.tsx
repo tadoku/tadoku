@@ -13,16 +13,14 @@ interface Props {
 }
 
 export const ActiveUserNavigationBar = ({ user, registration }: Props) => (
-  <>
-    <UserMenuContainer>
-      <SmallContainer>
-        <UserMenu.List user={user} registration={registration} />
-      </SmallContainer>
-      <LargeContainer>
-        <UserMenu.Dropdown user={user} registration={registration} />
-      </LargeContainer>
-    </UserMenuContainer>
-  </>
+  <UserMenuContainer>
+    <SmallContainer>
+      <UserMenu.List user={user} registration={registration} />
+    </SmallContainer>
+    <LargeContainer>
+      <UserMenu.Dropdown user={user} registration={registration} />
+    </LargeContainer>
+  </UserMenuContainer>
 )
 
 const LargeContainer = styled.div`

@@ -12,20 +12,15 @@ const Dropdown: SFC<Props> = ({ label, children }) => {
 
   return (
     <Container>
-      <Button
+      <TriggerButton
         onClick={() => setIsOpen(!isOpen)}
         icon={isOpen ? 'chevron-up' : 'chevron-down'}
         plain
         alignIconRight
-        style={{
-          position: 'relative',
-          zIndex: 3,
-          margin: '0 20px 0 0',
-          textDecoration: 'none',
-        }}
+        open={isOpen}
       >
         {label}
-      </Button>
+      </TriggerButton>
       <StyledDropdown open={isOpen} onClick={() => setIsOpen(false)}>
         {children}
       </StyledDropdown>
@@ -38,6 +33,21 @@ export default Dropdown
 
 const Container = styled.div`
   position: relative;
+`
+
+const TriggerButton = styled(Button)`
+  position: relative;
+  z-index: 3;
+  margin: 0 20px 0 0;
+  text-decoration: none;
+
+  &:after {
+    ${({ open }: { open: boolean }) =>
+      open &&
+      `
+    display: none;
+    `}
+  }
 `
 
 const show = keyframes`
@@ -116,6 +126,9 @@ export const DropdownItem = styled.li`
     &:hover:not([disabled]),
     &:active:not([disabled]) {
       background: ${Constants.colors.darkWithAlpha(0.05)};
+      &:after {
+        display: none;
+      }
     }
   }
 `

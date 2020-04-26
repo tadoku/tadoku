@@ -4,13 +4,15 @@ import { PageTitle } from '../../ui/components'
 import { useCachedApiState } from '../../cache'
 import { PostOrPage } from '../interfaces'
 import BlogPost from '../components/BlogPost'
+import { PostOrPagesSerializer } from '../transform'
 
 const BlogsList = () => {
   const { data: posts } = useCachedApiState<PostOrPage[]>({
-    cacheKey: `blog_list?i=1`,
+    cacheKey: `blog_list?i=3`,
     defaultValue: [],
     fetchData: BlogApi.posts.list,
     dependencies: [],
+    serializer: PostOrPagesSerializer,
   })
 
   return (

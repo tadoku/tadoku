@@ -25,9 +25,17 @@ const LinkContainer = styled.div`
     `}
   }
 
-  > a {
+  a,
+  button {
     ${media.lessThan('medium')`
       line-height: 48px;
+      &:focus {
+        border-color: ${Constants.colors.lightGray} !important;
+      }
+
+      &:after {
+        display: none;
+      }
     `}
   }
 

@@ -42,4 +42,7 @@ const SmallContainer = styled.div`
 const UserMenuContainer = styled.div`
   display: flex;
   align-items: center;
+  ${media.lessThan('medium')`
+      padding-left: 0 !important;
+  `}
 `

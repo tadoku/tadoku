@@ -10,6 +10,10 @@ import { AnonymousNavigationBar } from './AnonymousNavigationBar'
 import { runEffects as sessionRunEffects } from '../../../session/redux'
 import { runEffects as rankingRunEffects } from '../../../ranking/redux'
 import { RankingRegistrationMapper } from '../../../ranking/transform/ranking-registration'
+import LinkContainer from './LinkContainer'
+import Link from 'next/link'
+import { ButtonLink } from '..'
+import { useRouter } from 'next/router'
 
 interface Props {
   user: User | undefined
@@ -25,6 +29,7 @@ const NavigationBar = ({
   isOpen,
 }: Props) => {
   const [hasMounted, setHasMounted] = useState(false)
+  const router = useRouter()
 
   useEffect(() => {
     setHasMounted(true)
@@ -36,11 +41,28 @@ const NavigationBar = ({
 
   return (
     <StyledNav isOpen={isOpen}>
-      {user ? (
-        <ActiveUserNavigationBar registration={registration} user={user} />
-      ) : (
-        <AnonymousNavigationBar refreshSession={refreshSession} />
-      )}
+      <LinkContainer>
+        <Link href="/blog" passHref>
+          <ButtonLink plain active={router.pathname == '/blog'}>
+            Blog
+          </ButtonLink>
+        </Link>
+        <Link href="/ranking" passHref>
+          <ButtonLink plain active={router.pathname == '/ranking'}>
+            Ranking
+          </ButtonLink>
+        </Link>
+        <Link href="/manual" passHref>
+          <ButtonLink plain active={router.pathname == '/manual'}>
+            Manual
+          </ButtonLink>
+        </Link>
+        {user ? (
+          <ActiveUserNavigationBar registration={registration} user={user} />
+        ) : (
+          <AnonymousNavigationBar refreshSession={refreshSession} />
+        )}
+      </LinkContainer>
     </StyledNav>
   )
 }

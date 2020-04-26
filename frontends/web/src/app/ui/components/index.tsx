@@ -20,6 +20,7 @@ interface ButtonProps {
   loading?: boolean
   icon?: IconProp
   alignIconRight?: boolean
+  active?: boolean
 }
 
 const buttonStyles = css`
@@ -54,24 +55,49 @@ const buttonStyles = css`
     border-color: ${Constants.colors.primary};
   }
 
-  ${({ plain }: ButtonProps) =>
+  ${({ plain, active }: ButtonProps) =>
     plain &&
     `
     background-color: transparent;
     box-shadow: none;
     border: none;
     padding: 0;
+    border-radius: 0;
 
     &:hover:not([disabled]),
     &:active:not([disabled]),
     &:focus:not([disabled]) {
-      box-shadow: none;
       color: ${Constants.colors.primary};
+      position: relative;
+      box-shadow: none;
+
+      &:after {
+        content: '';
+        position: absolute;
+        bottom: 10px;
+        width: 100%;
+        border-bottom: 2px solid ${Constants.colors.primary};
+      }
     }
 
-    &:active:not([disabled]),
-    &:focus:not([disabled]) {
-      text-decoration: underline;
+    ${
+      active &&
+      `
+      color: ${Constants.colors.primary};
+      position: relative;
+
+      &:after {
+        content: '';
+        position: absolute;
+        bottom: 10px;
+        width: 100%;
+        border-bottom: 2px solid ${Constants.colors.primary};
+      }
+
+      &:hover {
+        opacity: 0.7;
+      }
+    `
     }
   `}
 
@@ -214,6 +240,7 @@ const ForwardedStyledButtonLink: SFC<
     loading,
     icon,
     alignIconRight,
+    active,
     ...props
   },
   ref: Ref<HTMLAnchorElement>,

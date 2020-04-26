@@ -1,14 +1,11 @@
 import React from 'react'
 import styled from 'styled-components'
 import media from 'styled-media-query'
-import Link from 'next/link'
 
 import { RankingRegistration } from '../../../ranking/interfaces'
 import { User } from '../../../session/interfaces'
 import UserMenu from '../../../session/components/navigation/UserMenu'
-import { ButtonLink } from '..'
 import Constants from '../../Constants'
-import LinkContainer from './LinkContainer'
 
 interface Props {
   user: User
@@ -16,27 +13,14 @@ interface Props {
 }
 
 export const ActiveUserNavigationBar = ({ user, registration }: Props) => (
-  <>
-    <LinkContainer>
-      <Link href="/blog" passHref>
-        <ButtonLink plain>Blog</ButtonLink>
-      </Link>
-      <Link href="/ranking" passHref>
-        <ButtonLink plain>Ranking</ButtonLink>
-      </Link>
-      <Link href="/manual" passHref>
-        <ButtonLink plain>Manual</ButtonLink>
-      </Link>
-    </LinkContainer>
-    <UserMenuContainer>
-      <SmallContainer>
-        <UserMenu.List user={user} registration={registration} />
-      </SmallContainer>
-      <LargeContainer>
-        <UserMenu.Dropdown user={user} registration={registration} />
-      </LargeContainer>
-    </UserMenuContainer>
-  </>
+  <UserMenuContainer>
+    <SmallContainer>
+      <UserMenu.List user={user} registration={registration} />
+    </SmallContainer>
+    <LargeContainer>
+      <UserMenu.Dropdown user={user} registration={registration} />
+    </LargeContainer>
+  </UserMenuContainer>
 )
 
 const LargeContainer = styled.div`
@@ -58,4 +42,7 @@ const SmallContainer = styled.div`
 const UserMenuContainer = styled.div`
   display: flex;
   align-items: center;
+  ${media.lessThan('medium')`
+      padding-left: 0 !important;
+  `}
 `

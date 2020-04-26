@@ -8,7 +8,7 @@ import { PostOrPagesSerializer } from '../transform'
 
 const BlogsList = () => {
   const { data: posts } = useCachedApiState<PostOrPage[]>({
-    cacheKey: `blog_list?i=3`,
+    cacheKey: `blog_list?i=2`,
     defaultValue: [],
     fetchData: BlogApi.posts.list,
     dependencies: [],

@@ -22,7 +22,7 @@ const PostOrPageToRawMapper: Mapper<
   slug: postOrPage.slug,
   title: postOrPage.title,
   html: postOrPage.html,
-  publishedAt: postOrPage.publishedAt.toISOString(),
+  published_at: postOrPage.publishedAt.toISOString(),
 })
 
 export const PostOrPageSerializer: Serializer<PostOrPage> = {

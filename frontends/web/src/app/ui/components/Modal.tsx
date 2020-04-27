@@ -21,7 +21,6 @@ export default Modal
 
 const ModalHeading = styled.h2`
   margin-top: 0;
-  text-transform: uppercase;
   text-align: center;
 `
 
@@ -47,7 +46,8 @@ const StyledModal = styled(ReactModal)`
   background: #fff;
   outline: none;
   border: 0;
-  box-shadow: 4px 15px 20px 1px rgba(0, 0, 0, 0.28);
+  box-shadow: 0 7px 10px 1px rgba(0, 0, 0, 0.28);
   padding: 40px;
-  border-radius: 4px;
+  border-radius: 0;
+  min-width: 400px;
 `

@@ -8,6 +8,7 @@ const Constants = {
     dark2: '#1A1A21',
     darkWithAlpha: (alpha: number) => `rgba(33, 26, 29, ${alpha})`,
     light: '#FFFFFF',
+    lightWithAlpha: (alpha: number) => `rgba(255, 255, 255, ${alpha})`,
     lighter: '#FBFBFB',
     lightTinted: '#f2f8ff',
     nonFocusText: 'hsl(212, 20%, 45%)',

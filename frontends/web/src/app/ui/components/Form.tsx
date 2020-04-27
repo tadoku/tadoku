@@ -84,14 +84,14 @@ const RadioLabel = styled(Label)`
   padding: 3px 8px;
   height: 44px;
   transition: all 0.2s ease;
+  border: 1px solid transparent;
+  border-bottom-width: 3px;
 
   ${({ checked }: LabelForRadioProps) =>
     checked &&
     `
-    background: ${Constants.colors.lightGray};
-    border-radius: 3px;
-    box-shadow: inset 0px 0px 2px rgba(0, 0, 0, 0.08),
-      0px 2px 3px 0px rgba(0, 0, 0, 0.08);
+    border: 1px solid rgba(0, 0, 0, 0.12);
+    border-bottom-width: 3px;
 
     span {
       font-weight: 600;
@@ -114,12 +114,22 @@ const StyledRadio = styled.span`
   border-radius: 8px;
   border: 2px solid ${Constants.colors.secondary};
   transition: all 0.2s ease;
+  position: relative;
 
   ${({ checked }: LabelForRadioProps) =>
     checked &&
     `
     background:  ${Constants.colors.primary};
-    border: 2px solid white;
+    &:after {
+      content: '';
+      border: 0.5px solid white;
+      position: absolute;
+      left: 0px;
+      right: 0px;
+      top: 0;
+      bottom: 0;
+      border-radius: 8px;
+    }
   `}
 `
 
@@ -163,26 +173,23 @@ const StyledSelect = styled.select`
   -webkit-appearance: none;
   appearance: none;
   border: 1px solid rgba(0, 0, 0, 0.12);
+  border-bottom-width: 3px;
+  border-radius: 0;
   background: ${Constants.colors.light};
-  box-shadow: inset 0px 0px 2px rgba(0, 0, 0, 0.08),
-    0px 2px 3px 0px rgba(0, 0, 0, 0.08);
   padding: 4px 20px 4px 12px;
   font-size: 1.1em;
   height: 44px;
-  border-radius: 3px;
   width: 100%;
   box-sizing: border-box;
 `
 
 export const Input = styled.input`
   border: 1px solid rgba(0, 0, 0, 0.12);
+  border-bottom-width: 3px;
   background: ${Constants.colors.light};
-  box-shadow: inset 0px 0px 2px rgba(0, 0, 0, 0.08),
-    0px 2px 3px 0px rgba(0, 0, 0, 0.08);
   padding: 4px 12px;
   font-size: 1.1em;
   height: 44px;
-  border-radius: 3px;
   width: 100%;
   box-sizing: border-box;
 

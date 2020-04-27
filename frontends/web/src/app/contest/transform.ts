@@ -28,7 +28,9 @@ export const contestMapper: Mappers<RawContest, Contest> = createMappers({
   toRaw: contestToRawMapper,
 })
 
-export const contestSerializer = createSerializer(contestMapper)
+export const contestSerializer: Serializer<Contest> = createSerializer(
+  contestMapper,
+)
 
 export const contestsSerializer: Serializer<
   Contest[]

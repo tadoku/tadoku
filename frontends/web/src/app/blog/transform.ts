@@ -35,7 +35,9 @@ export const postOrPageMapper: Mappers<
   toRaw: postOrPageToRawMapper,
 })
 
-export const postOrPageSerializer = createSerializer(postOrPageMapper)
+export const postOrPageSerializer: Serializer<PostOrPage> = createSerializer(
+  postOrPageMapper,
+)
 
 export const postOrPagesSerializer: Serializer<
   PostOrPage[]

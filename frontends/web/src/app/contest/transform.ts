@@ -3,7 +3,7 @@ import { Mapper } from '../interfaces'
 import { Serializer } from '../cache'
 import { withOptional } from '../transform'
 
-const RawToContestMapper: Mapper<RawContest, Contest> = raw => ({
+const rawToContestMapper: Mapper<RawContest, Contest> = raw => ({
   id: raw.id,
   description: raw.description,
   start: new Date(raw.start),
@@ -11,7 +11,7 @@ const RawToContestMapper: Mapper<RawContest, Contest> = raw => ({
   open: raw.open,
 })
 
-const ContestToRawMapper: Mapper<Contest, RawContest> = contest => ({
+const contestToRawMapper: Mapper<Contest, RawContest> = contest => ({
   id: contest.id,
   description: contest.description,
   start: contest.start.toISOString(),
@@ -19,29 +19,29 @@ const ContestToRawMapper: Mapper<Contest, RawContest> = contest => ({
   open: contest.open,
 })
 
-export const ContestSerializer: Serializer<Contest> = {
+export const contestSerializer: Serializer<Contest> = {
   serialize: contest => {
-    const raw = ContestToRawMapper(contest)
+    const raw = contestToRawMapper(contest)
     return JSON.stringify(raw)
   },
   deserialize: serializedData => {
     let raw = JSON.parse(serializedData)
-    return RawToContestMapper(raw)
+    return rawToContestMapper(raw)
   },
 }
 
-export const ContestsSerializer: Serializer<Contest[]> = {
+export const contestsSerializer: Serializer<Contest[]> = {
   serialize: contests => {
-    const raw = contests.map(ContestToRawMapper)
+    const raw = contests.map(contestToRawMapper)
     return JSON.stringify(raw)
   },
   deserialize: serializedData => {
     let raw = JSON.parse(serializedData)
-    return raw.map(RawToContestMapper)
+    return raw.map(rawToContestMapper)
   },
 }
 
-export const ContestMapper = withOptional({
-  toRaw: ContestToRawMapper,
-  fromRaw: RawToContestMapper,
+export const contestMapper = withOptional({
+  toRaw: contestToRawMapper,
+  fromRaw: rawToContestMapper,
 })

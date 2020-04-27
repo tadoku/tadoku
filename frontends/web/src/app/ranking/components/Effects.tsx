@@ -4,10 +4,10 @@ import { RankingRegistration } from '../interfaces'
 import { RootState } from '../../store'
 import RankingApi from '../api'
 import { useCachedApiState } from '../../cache'
-import { OptionalizeSerializer } from '../../transform'
+import { optionalizeSerializer } from '../../transform'
 import {
-  RankingRegistrationSerializer,
-  RankingRegistrationMapper,
+  rankingRegistrationSerializer,
+  rankingRegistrationMapper,
 } from '../transform/ranking-registration'
 
 const RankingEffects = () => {
@@ -18,7 +18,7 @@ const RankingEffects = () => {
 
   const dispatch = useDispatch()
   const update = (registration: RankingRegistration | undefined) => {
-    const payload = RankingRegistrationMapper.optional.toRaw(registration)
+    const payload = rankingRegistrationMapper.optional.toRaw(registration)
     dispatch(updateRegistration(payload))
   }
 
@@ -36,7 +36,7 @@ const RankingEffects = () => {
     },
     onChange: update,
     dependencies: [user, effectCount],
-    serializer: OptionalizeSerializer(RankingRegistrationSerializer),
+    serializer: optionalizeSerializer(rankingRegistrationSerializer),
   })
 
   return null

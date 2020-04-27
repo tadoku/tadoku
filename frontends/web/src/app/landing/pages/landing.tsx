@@ -9,7 +9,7 @@ import * as RankingStore from '../../ranking/redux'
 import { FooterLanding } from '../../ui/components/Footer'
 import Constants from '../../ui/Constants'
 import { RootState } from '../../store'
-import { ContestMapper } from '../../contest/transform'
+import { contestMapper } from '../../contest/transform'
 
 const LandingPage = () => {
   const dispatch = useDispatch()
@@ -19,7 +19,7 @@ const LandingPage = () => {
 
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false)
   const contests = useSelector((state: RootState) =>
-    state.contest.recentContests.map(ContestMapper.fromRaw),
+    state.contest.recentContests.map(contestMapper.fromRaw),
   )
 
   return (

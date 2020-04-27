@@ -1,7 +1,7 @@
 import { Serializer } from './cache'
 import { Mappers, MappersWithOptional } from './interfaces'
 
-export const OptionalizeSerializer = <DataType>(
+export const optionalizeSerializer = <DataType>(
   serializer: Serializer<DataType>,
 ): Serializer<DataType | undefined> => ({
   serialize: data => {

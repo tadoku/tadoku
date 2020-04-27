@@ -3,7 +3,7 @@ import { Mapper } from '../../interfaces'
 import { Serializer } from '../../cache'
 import { withOptional } from '../../transform'
 
-const RawToRankingRegistrationMapper: Mapper<
+const rawToRankingRegistrationMapper: Mapper<
   RawRankingRegistration,
   RankingRegistration
 > = raw => ({
@@ -13,7 +13,7 @@ const RawToRankingRegistrationMapper: Mapper<
   end: new Date(raw.end),
 })
 
-const RankingRegistrationToRawMapper: Mapper<
+const rankingRegistrationToRawMapper: Mapper<
   RankingRegistration,
   RawRankingRegistration
 > = registration => ({
@@ -23,18 +23,18 @@ const RankingRegistrationToRawMapper: Mapper<
   end: registration.end.toISOString(),
 })
 
-export const RankingRegistrationSerializer: Serializer<RankingRegistration> = {
+export const rankingRegistrationSerializer: Serializer<RankingRegistration> = {
   serialize: data => {
-    const raw = RankingRegistrationToRawMapper(data)
+    const raw = rankingRegistrationToRawMapper(data)
     return JSON.stringify(raw)
   },
   deserialize: serializedData => {
     let raw = JSON.parse(serializedData)
-    return RawToRankingRegistrationMapper(raw)
+    return rawToRankingRegistrationMapper(raw)
   },
 }
 
-export const RankingRegistrationMapper = withOptional({
-  toRaw: RankingRegistrationToRawMapper,
-  fromRaw: RawToRankingRegistrationMapper,
+export const rankingRegistrationMapper = withOptional({
+  toRaw: rankingRegistrationToRawMapper,
+  fromRaw: rawToRankingRegistrationMapper,
 })

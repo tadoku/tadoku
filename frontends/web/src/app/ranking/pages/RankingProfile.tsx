@@ -19,14 +19,14 @@ import Cards, {
   LargeCard,
 } from '../../ui/components/Cards'
 import { useCachedApiState, isReady } from '../../cache'
-import { ContestSerializer } from '../../contest/transform'
-import { OptionalizeSerializer } from '../../transform'
+import { contestSerializer } from '../../contest/transform'
+import { optionalizeSerializer } from '../../transform'
 import { PageTitle, ButtonLink } from '../../ui/components'
 import { useSelector } from 'react-redux'
 import { RootState } from '../../store'
 import styled from 'styled-components'
-import { ContestLogsSerializer } from '../transform/contest-log'
-import { RankingsSerializer } from '../transform/ranking'
+import { contestLogsSerializer } from '../transform/contest-log'
+import { rankingsSerializer } from '../transform/ranking'
 
 interface Props {
   contestId: number
@@ -51,7 +51,7 @@ const RankingProfile = ({
       return ContestApi.get(contestId)
     },
     dependencies: [contestId],
-    serializer: OptionalizeSerializer(ContestSerializer),
+    serializer: optionalizeSerializer(contestSerializer),
   })
 
   const { data: logs, status: statusLogs } = useCachedApiState<ContestLog[]>({
@@ -75,7 +75,7 @@ const RankingProfile = ({
       })
     },
     dependencies: [contestId, userId, effectCount],
-    serializer: ContestLogsSerializer,
+    serializer: contestLogsSerializer,
   })
 
   const { data: registration, status: statusRegistration } = useCachedApiState<
@@ -87,7 +87,7 @@ const RankingProfile = ({
       return RankingApi.getRankingsRegistration(contestId, userId)
     },
     dependencies: [contestId, userId, effectCount],
-    serializer: RankingsSerializer,
+    serializer: rankingsSerializer,
   })
 
   if (!isReady([statusContest, statusLogs, statusRegistration])) {

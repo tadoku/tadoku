@@ -190,4 +190,5 @@ const RoundDescription = styled(SubHeading)`
 
 const GraphHeading = styled(SubHeading)`
   margin-bottom: 15px;
+  margin-top: 0;
 `

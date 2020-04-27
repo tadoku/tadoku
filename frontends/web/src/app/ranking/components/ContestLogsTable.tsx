@@ -36,7 +36,7 @@ const ContestLogsTable = (props: Props) => (
           </Column>
           <Column>{languageNameByCode(l.languageCode)}</Column>
           <Column>{mediumDescriptionById(l.mediumId)}</Column>
-          <Column>{l.description || 'N/A'}</Column>
+          <Column limit>{l.description || 'N/A'}</Column>
           <Column alignRight>
             <strong>{amountToPages(l.amount)}</strong>
           </Column>
@@ -102,11 +102,10 @@ const Row = styled.tr`
   }
 `
 
-const Column = styled.td`
+const Column = styled.td<{ alignRight?: boolean; limit?: boolean }>`
   padding: 10px 20px;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.04);
-  text-align: ${({ alignRight }: { alignRight?: boolean }) =>
-    alignRight ? 'right' : 'left'};
+  text-align: ${({ alignRight }) => (alignRight ? 'right' : 'left')};
+  width: ${({ limit }) => (limit ? '50%' : 'inherit')};
 `
 
 const Body = styled.tbody``

@@ -77,7 +77,7 @@ const InnerContainer = styled.div`
 
 const Container = styled.div`
   box-shadow: 0px 2px 3px 0px rgba(0, 0, 0, 0.08);
-  background: ${Constants.colors.lightTinted};
+  background: ${Constants.colors.light};
   height: 120px;
   width: 100%;
 

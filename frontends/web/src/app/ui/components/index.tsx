@@ -290,6 +290,7 @@ export const SubHeading = styled.h2`
   color: ${Constants.colors.nonFocusText};
   font-size: 17px;
   text-transform: uppercase;
+  letter-spacing: 0.75px;
 `
 
 export const Logo = styled.img.attrs(() => ({

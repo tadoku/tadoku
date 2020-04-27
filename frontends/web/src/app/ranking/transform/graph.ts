@@ -6,7 +6,11 @@ import {
   RankingWithRank,
 } from '../interfaces'
 import { Contest } from '../../contest/interfaces'
-import { languageNameByCode, mediumDescriptionById } from '../database'
+import {
+  languageNameByCode,
+  mediumDescriptionById,
+  GlobalLanguage,
+} from '../database'
 import { graphColor } from '../../ui/components/Graphs'
 
 export const prettyDate = (date: Date): string =>
@@ -186,8 +190,13 @@ export const rankingsToRegistrationOverview = (
 
 export const amountToPages = (amount: number) => Math.round(amount * 10) / 10
 
-export const pagesLabel = (languageCode: string) =>
-  `pages in ${languageNameByCode(languageCode)}`
+export const pagesLabel = (languageCode: string) => {
+  if (languageCode == GlobalLanguage.code) {
+    return 'Overall score'
+  }
+
+  return `Score for ${languageNameByCode(languageCode)}`
+}
 
 export const calculateLeaderboard = (
   rankings: Ranking[],

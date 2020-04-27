@@ -12,12 +12,7 @@ import {
   pagesLabel,
 } from '../transform/graph'
 import { Contest } from '../../contest/interfaces'
-import Cards, {
-  Card,
-  CardLabel,
-  CardContent,
-  LargeCard,
-} from '../../ui/components/Cards'
+import Cards, { LargeCard } from '../../ui/components/Cards'
 import { useCachedApiState, isReady } from '../../cache'
 import { contestSerializer } from '../../contest/transform'
 import { optionalizeSerializer } from '../../transform'
@@ -27,6 +22,8 @@ import { RootState } from '../../store'
 import styled from 'styled-components'
 import { contestLogCollectionSerializer } from '../transform/contest-log'
 import { rankingCollectionSerializer } from '../transform/ranking'
+import Constants from '../../ui/Constants'
+import media from 'styled-media-query'
 
 interface Props {
   contestId: number
@@ -135,17 +132,15 @@ const RankingProfile = ({
           </ButtonLink>
         )}
       </HeaderContainer>
-      <Cards>
-        <Card>
-          <CardContent>{contest.description}</CardContent>
-          <CardLabel>Round</CardLabel>
-        </Card>
+      <Scores>
         {registrationOverview.registrations.map(r => (
-          <Card key={r.languageCode}>
-            <CardContent>{amountToPages(r.amount)}</CardContent>
-            <CardLabel>{pagesLabel(r.languageCode)}</CardLabel>
-          </Card>
+          <Score key={r.languageCode}>
+            <ScoreLabel>{pagesLabel(r.languageCode)}</ScoreLabel>
+            <ScoreValue>{amountToPages(r.amount)}</ScoreValue>
+          </Score>
         ))}
+      </Scores>
+      <Cards>
         <LargeCard>
           <ContestLogsByDayGraph logs={logs} contest={contest} />
         </LargeCard>
@@ -167,11 +162,43 @@ const RankingProfile = ({
 
 export default RankingProfile
 
+const Scores = styled.div`
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  margin-bottom: 50px;
+  width: 100%;
+  flex-wrap: wrap;
+
+  ${media.lessThan('small')`
+    flex-direction: column;
+  `}
+`
+
+const Score = styled.div`
+  width: 20%;
+  height: 100px;
+
+  ${media.lessThan('medium')`
+    width: 50%;
+  `}
+`
+const ScoreLabel = styled(SubHeading)`
+  margin: 0;
+`
+const ScoreValue = styled.div`
+  font-size: 38px;
+  font-weight: bold;
+  margin-top: 10px;
+`
+
 const HeaderContainer = styled.div`
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  margin-bottom: 30px;
+  margin-bottom: 60px;
+  border-bottom: 2px solid ${Constants.colors.lightGray};
+  padding-bottom: 30px;
 
   h1 {
     margin: 0;

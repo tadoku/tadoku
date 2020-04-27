@@ -51,3 +51,18 @@ export function createSerializer<Raw, Target>(
     },
   }
 }
+
+export function createCollectionSerializer<Raw, Target>(
+  mapper: Mappers<Raw, Target>,
+): Serializer<Target[]> {
+  return {
+    serialize: data => {
+      const raw = data.map(mapper.toRaw)
+      return JSON.stringify(raw)
+    },
+    deserialize: data => {
+      let raw = JSON.parse(data)
+      return raw.map(mapper.fromRaw)
+    },
+  }
+}

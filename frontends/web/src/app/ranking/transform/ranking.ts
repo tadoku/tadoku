@@ -1,7 +1,7 @@
 import { Ranking, RawRanking } from './../interfaces'
 import { Mapper, Mappers } from '../../interfaces'
 import { Serializer } from '../../cache'
-import { createMappers } from '../../transform'
+import { createMappers, createCollectionSerializer } from '../../transform'
 
 const rawToRankingMapper: Mapper<RawRanking, Ranking> = raw => ({
   contestId: raw.contest_id,
@@ -19,18 +19,11 @@ const rankingToRawMapper: Mapper<Ranking, RawRanking> = ranking => ({
   amount: ranking.amount,
 })
 
-export const rankingsSerializer: Serializer<Ranking[]> = {
-  serialize: data => {
-    const raw = data.map(rankingToRawMapper)
-    return JSON.stringify(raw)
-  },
-  deserialize: serializedData => {
-    let raw = JSON.parse(serializedData)
-    return raw.map(rawToRankingMapper)
-  },
-}
-
 export const rankingMapper: Mappers<RawRanking, Ranking> = createMappers({
   toRaw: rankingToRawMapper,
   fromRaw: rawToRankingMapper,
 })
+
+export const rankingsSerializer: Serializer<
+  Ranking[]
+> = createCollectionSerializer(rankingMapper)

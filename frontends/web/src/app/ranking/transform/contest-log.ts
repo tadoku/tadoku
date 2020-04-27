@@ -1,6 +1,7 @@
 import { ContestLog, RawContestLog } from './../interfaces'
-import { Mapper } from '../../interfaces'
+import { Mapper, Mappers } from '../../interfaces'
 import { Serializer } from '../../cache'
+import { createCollectionSerializer, createMappers } from '../../transform'
 
 const rawToContestLogMapper: Mapper<RawContestLog, ContestLog> = raw => ({
   id: raw.id,
@@ -29,18 +30,14 @@ const contestLogToRawMapper: Mapper<
   date: contestLog.date.toISOString(),
 })
 
-export const contestLogsSerializer: Serializer<ContestLog[]> = {
-  serialize: data => {
-    const raw = data.map(contestLogToRawMapper)
-    return JSON.stringify(raw)
-  },
-  deserialize: serializedData => {
-    let raw = JSON.parse(serializedData)
-    return raw.map(rawToContestLogMapper)
-  },
-}
-
-export const contestLogMapper = {
+export const contestLogMapper: Mappers<
+  RawContestLog,
+  ContestLog
+> = createMappers({
   toRaw: contestLogToRawMapper,
   fromRaw: rawToContestLogMapper,
-}
+})
+
+export const contestLogsSerializer: Serializer<
+  ContestLog[]
+> = createCollectionSerializer(contestLogMapper)

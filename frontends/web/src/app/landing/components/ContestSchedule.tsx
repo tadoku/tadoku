@@ -66,6 +66,10 @@ const Title = styled.h2`
   line-height: 31px;
   font-weight: 700;
   letter-spacing: 1.05;
+
+  ${media.lessThan('large')`
+    text-align: center;
+  `}
 `
 
 const Schedule = styled.ul`
@@ -86,6 +90,10 @@ const Schedule = styled.ul`
     left: calc(50% - 1px);
     background: ${Constants.colors.lightGray};
   }
+
+  ${media.lessThan('large')`
+    margin: 0 auto;
+  `}
 
   ${media.lessThan('medium')`
     width: 100%;

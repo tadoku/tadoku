@@ -8,7 +8,7 @@ import styled from 'styled-components'
 import { User } from '../../session/interfaces'
 import JoinContestModal from '../components/modals/JoinContestModal'
 import { useCachedApiState, ApiFetchStatus } from '../../cache'
-import { rankingsSerializer } from '../transform/ranking'
+import { rankingCollectionSerializer } from '../transform/ranking'
 import { isContestActive } from '../domain'
 import SubmitPagesButton from '../components/SubmitPagesButton'
 import Constants from '../../ui/Constants'
@@ -41,7 +41,7 @@ const RankingOverview = ({
       return RankingApi.get(contest.id)
     },
     dependencies: [contest?.id, effectCount],
-    serializer: rankingsSerializer,
+    serializer: rankingCollectionSerializer,
   })
 
   // @TODO: extract this business logic

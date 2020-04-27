@@ -39,6 +39,6 @@ export const postOrPageSerializer: Serializer<PostOrPage> = createSerializer(
   postOrPageMapper,
 )
 
-export const postOrPagesSerializer: Serializer<
+export const postOrPageCollectionSerializer: Serializer<
   PostOrPage[]
 > = createCollectionSerializer(postOrPageMapper)

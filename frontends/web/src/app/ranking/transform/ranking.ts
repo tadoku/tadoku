@@ -24,6 +24,6 @@ export const rankingMapper: Mappers<RawRanking, Ranking> = createMappers({
   fromRaw: rawToRankingMapper,
 })
 
-export const rankingsSerializer: Serializer<
+export const rankingCollectionSerializer: Serializer<
   Ranking[]
 > = createCollectionSerializer(rankingMapper)

@@ -3,7 +3,7 @@ import { Contest } from '../interfaces'
 import ContestApi from '../api'
 import { updateRecentContests } from '../redux'
 import { useCachedApiState } from '../../cache'
-import { contestMapper, contestsSerializer } from '../transform'
+import { contestMapper, contestCollectionSerializer } from '../transform'
 
 const ContestEffects = () => {
   const dispatch = useDispatch()
@@ -18,7 +18,7 @@ const ContestEffects = () => {
     defaultValue: [] as Contest[],
     fetchData: async () => await ContestApi.getAll(5),
     onChange: update,
-    serializer: contestsSerializer,
+    serializer: contestCollectionSerializer,
   })
 
   return null

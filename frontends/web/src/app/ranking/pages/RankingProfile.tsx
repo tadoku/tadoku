@@ -25,8 +25,8 @@ import { PageTitle, ButtonLink } from '../../ui/components'
 import { useSelector } from 'react-redux'
 import { RootState } from '../../store'
 import styled from 'styled-components'
-import { contestLogsSerializer } from '../transform/contest-log'
-import { rankingsSerializer } from '../transform/ranking'
+import { contestLogCollectionSerializer } from '../transform/contest-log'
+import { rankingCollectionSerializer } from '../transform/ranking'
 
 interface Props {
   contestId: number
@@ -75,7 +75,7 @@ const RankingProfile = ({
       })
     },
     dependencies: [contestId, userId, effectCount],
-    serializer: contestLogsSerializer,
+    serializer: contestLogCollectionSerializer,
   })
 
   const { data: registration, status: statusRegistration } = useCachedApiState<
@@ -87,7 +87,7 @@ const RankingProfile = ({
       return RankingApi.getRankingsRegistration(contestId, userId)
     },
     dependencies: [contestId, userId, effectCount],
-    serializer: rankingsSerializer,
+    serializer: rankingCollectionSerializer,
   })
 
   if (!isReady([statusContest, statusLogs, statusRegistration])) {

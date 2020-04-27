@@ -38,6 +38,6 @@ export const contestLogMapper: Mappers<
   fromRaw: rawToContestLogMapper,
 })
 
-export const contestLogsSerializer: Serializer<
+export const contestLogCollectionSerializer: Serializer<
   ContestLog[]
 > = createCollectionSerializer(contestLogMapper)

@@ -32,6 +32,6 @@ export const contestSerializer: Serializer<Contest> = createSerializer(
   contestMapper,
 )
 
-export const contestsSerializer: Serializer<
+export const contestCollectionSerializer: Serializer<
   Contest[]
 > = createCollectionSerializer(contestMapper)

@@ -20,6 +20,7 @@ import { contestLogCollectionSerializer } from '../transform/contest-log'
 import { rankingCollectionSerializer } from '../transform/ranking'
 import Constants from '../../ui/Constants'
 import ScoreList from '../components/ScoreList'
+import media from 'styled-media-query'
 
 interface Props {
   contestId: number
@@ -155,9 +156,16 @@ const GraphContainer = styled.div`
   display: flex;
   justify-content: space-between;
   width: 100%;
+  flex-wrap: nowrap;
+
+  ${media.lessThan('large')`
+    flex-wrap: wrap;
+    padding-bottom: 30px;
+  `}
 `
 
 const LargeCard = styled.div`
+  margin-top: 30px;
   padding: 30px;
   box-shadow: 0px 2px 3px 0px rgba(0, 0, 0, 0.08);
   box-sizing: border-box;
@@ -166,10 +174,11 @@ const LargeCard = styled.div`
 
 const OverallGraph = styled(LargeCard)`
   flex: 1 1 0;
+  margin-right: 30px;
+  max-width: calc(100% - 260px - 30px);
+  ${media.lessThan('large')`max-width: 100%;`}
 `
-const MediaGraph = styled(LargeCard)`
-  margin-left: 30px;
-`
+const MediaGraph = styled(LargeCard)``
 
 const HeaderContainer = styled.div`
   display: flex;

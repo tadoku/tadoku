@@ -29,7 +29,7 @@ const Scores = styled.div`
   display: flex;
   flex-direction: row;
   justify-content: space-between;
-  margin-bottom: 50px;
+  margin-bottom: 20px;
   width: 100%;
   flex-wrap: wrap;
 

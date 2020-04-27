@@ -61,6 +61,7 @@ const Container = styled.div`
   display: flex;
   flex-direction: column;
   align-items: stretch;
+  width: 200px;
 `
 
 const HintContainer = styled.div`

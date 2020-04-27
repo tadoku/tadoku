@@ -9,6 +9,8 @@ import ContestLogsTable from './ContestLogsTable'
 import ContestLogsList from './ContestLogsList'
 import { Contest } from '../../contest/interfaces'
 import { isContestActive } from '../domain'
+import styled from 'styled-components'
+import { PageTitle } from '../../ui/components'
 
 interface Props {
   logs: ContestLog[]
@@ -45,7 +47,7 @@ const ContestLogsOverview = (props: Props) => {
 
   return (
     <>
-      <h1>Updates</h1>
+      <Heading>Updates</Heading>
       <EditLogFormModal
         log={selectedLog}
         setLog={setSelectedLog}
@@ -69,3 +71,8 @@ const ContestLogsOverview = (props: Props) => {
 }
 
 export default ContestLogsOverview
+
+const Heading = styled(PageTitle).attrs({ as: 'h3' })`
+  margin: 60px 0 30px;
+  font-size: 22px;
+`

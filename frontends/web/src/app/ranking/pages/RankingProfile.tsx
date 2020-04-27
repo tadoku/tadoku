@@ -11,7 +11,6 @@ import ContestLogsByMediumGraph from '../components/graphs/ContestLogsByMediumGr
 import ContestLogsOverview from '../components/ContestLogsOverview'
 import { rankingsToRegistrationOverview } from '../transform/graph'
 import { Contest } from '../../contest/interfaces'
-import Cards, { LargeCard } from '../../ui/components/Cards'
 import { useCachedApiState, isReady } from '../../cache'
 import { contestSerializer } from '../../contest/transform'
 import { optionalizeSerializer } from '../../transform'
@@ -140,16 +139,12 @@ const RankingProfile = ({
           <ContestLogsByMediumGraph logs={logs} />
         </MediaGraph>
       </GraphContainer>
-      <Cards>
-        <LargeCard>
-          <ContestLogsOverview
-            contest={contest}
-            logs={logs}
-            registration={registrationOverview}
-            refreshData={refreshRanking}
-          />
-        </LargeCard>
-      </Cards>
+      <ContestLogsOverview
+        contest={contest}
+        logs={logs}
+        registration={registrationOverview}
+        refreshData={refreshRanking}
+      />
     </>
   )
 }
@@ -161,6 +156,14 @@ const GraphContainer = styled.div`
   justify-content: space-between;
   width: 100%;
 `
+
+const LargeCard = styled.div`
+  padding: 30px;
+  box-shadow: 0px 2px 3px 0px rgba(0, 0, 0, 0.08);
+  box-sizing: border-box;
+  background: ${Constants.colors.light};
+`
+
 const OverallGraph = styled(LargeCard)`
   flex: 1 1 0;
 `

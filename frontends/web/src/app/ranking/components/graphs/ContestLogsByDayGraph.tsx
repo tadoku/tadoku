@@ -40,7 +40,7 @@ const Graph = ({ logs, contest }: Props) => {
 
   return (
     <Container>
-      <FlexiblePlot height={400} xType={'time'}>
+      <FlexiblePlot height={200} xType={'time'}>
         {GradientDefinitions}
         <HorizontalGridLines />
         <VerticalGridLines />

@@ -130,13 +130,17 @@ const RankingProfile = ({
         )}
       </HeaderContainer>
       <ScoreList registrationOverview={registrationOverview} />
-      <Cards>
-        <LargeCard>
+      <GraphContainer>
+        <OverallGraph>
+          <GraphHeading>Reading Activity</GraphHeading>
           <ContestLogsByDayGraph logs={logs} contest={contest} />
-        </LargeCard>
-        <LargeCard>
+        </OverallGraph>
+        <MediaGraph>
+          <GraphHeading>Media distribution</GraphHeading>
           <ContestLogsByMediumGraph logs={logs} />
-        </LargeCard>
+        </MediaGraph>
+      </GraphContainer>
+      <Cards>
         <LargeCard>
           <ContestLogsOverview
             contest={contest}
@@ -151,6 +155,18 @@ const RankingProfile = ({
 }
 
 export default RankingProfile
+
+const GraphContainer = styled.div`
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+`
+const OverallGraph = styled(LargeCard)`
+  flex: 1 1 0;
+`
+const MediaGraph = styled(LargeCard)`
+  margin-left: 30px;
+`
 
 const HeaderContainer = styled.div`
   display: flex;
@@ -167,4 +183,8 @@ const HeaderContainer = styled.div`
 
 const RoundDescription = styled(SubHeading)`
   margin-top: 10px;
+`
+
+const GraphHeading = styled(SubHeading)`
+  margin-bottom: 15px;
 `

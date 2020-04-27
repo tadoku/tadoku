@@ -125,6 +125,7 @@ interface AggregatedByMediumResult {
   totalAmount: number
   legend: {
     title: string
+    strokeWidth: number
   }[]
 }
 
@@ -156,6 +157,7 @@ export const aggregateContestLogsByMedium = (
   const legend = Object.values(forChart).map(mediumStats => ({
     title: mediumStats.medium,
     color: mediumStats.color,
+    strokeWidth: 10,
   }))
 
   return { aggregated: forChart, legend, totalAmount: total }

@@ -184,8 +184,12 @@ const StyledSelect = styled.select`
 `
 
 export const Input = styled.input`
+  -moz-appearance: none;
+  -webkit-appearance: none;
+  appearance: none;
   border: 1px solid rgba(0, 0, 0, 0.12);
   border-bottom-width: 3px;
+  border-radius: 0;
   background: ${Constants.colors.light};
   padding: 4px 12px;
   font-size: 1.1em;

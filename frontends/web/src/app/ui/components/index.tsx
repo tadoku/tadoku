@@ -24,17 +24,15 @@ interface ButtonProps {
 }
 
 const buttonStyles = css`
-  border: 1px solid rgba(0, 0, 0, 0.12);
+  border: 1px solid ${Constants.colors.darkWithAlpha(0.2)};
+  border-bottom-width: 3px;
   background: transparent;
-  box-shadow: inset 0px 0px 2px rgba(0, 0, 0, 0.08),
-    0px 2px 3px 0px rgba(0, 0, 0, 0.08);
   padding: 4px 12px;
   font-size: 1.1em;
   font-weight: 600;
   height: 48px;
   white-space: nowrap;
   line-height: 36px;
-  border-radius: 3px;
   box-sizing: border-box;
   margin: 0 5px;
   display: flex;
@@ -45,8 +43,7 @@ const buttonStyles = css`
   &:hover:not([disabled]),
   &:active:not([disabled]),
   &:focus:not([disabled]) {
-    box-shadow: inset 0px 0px 2px rgba(0, 0, 0, 0.1),
-      0px 2px 3px 0px rgba(0, 0, 0, 0.15);
+    border-color: ${Constants.colors.darkWithAlpha(0.4)};
   }
 
   &:active:not([disabled]),
@@ -62,7 +59,6 @@ const buttonStyles = css`
     box-shadow: none;
     border: none;
     padding: 0;
-    border-radius: 0;
 
     &:hover:not([disabled]),
     &:active:not([disabled]),
@@ -108,15 +104,10 @@ const buttonStyles = css`
     `
     color: ${Constants.colors.light};
     background-color: ${Constants.colors.primary};
-    box-shadow: inset 0px 0px 2px rgba(0, 0, 0, 0.08),
-      0px 2px 3px 0px rgba(0, 0, 0, 0.24);
 
     &:hover:not([disabled]),
     &:active:not([disabled]),
     &:focus:not([disabled]) {
-      box-shadow: inset 0px 0px 2px rgba(0, 0, 0, 0.1),
-        0px 2px 3px 0px rgba(0, 0, 0, 0.3),
-        0px 2px 6px 2px ${Constants.colors.primaryWithAlpha(0.4)};
     }
   `}
 
@@ -126,14 +117,12 @@ const buttonStyles = css`
     height: 56px;
     font-size: 1.4em;
     padding: 8px 24px;
-    border-radius: 4px;
   `}
 
   ${({ small }: ButtonProps) =>
     small &&
     `
     font-size: 0.9em;
-    border-radius: 2px;
   `}
 
   ${({ destructive }: ButtonProps) =>
@@ -148,9 +137,6 @@ const buttonStyles = css`
     &:focus:not([disabled]) {
       color: ${Constants.colors.light};
       background-color: ${Constants.colors.destructive};
-      box-shadow: inset 0px 0px 2px rgba(0, 0, 0, 0.1),
-        0px 2px 3px 0px rgba(0, 0, 0, 0.15),
-        0px 2px 6px 2px ${Constants.colors.destructiveWithAlpha(0.4)};
     }
   `}
 

@@ -19,7 +19,10 @@ const SignupCard = ({ refreshSession, openLoginModal }: Props) => (
         </SignupTitle>
         <RegisterForm onSuccess={refreshSession} />
         <LoginPrompt>
-          Already have an account? <a onClick={openLoginModal}>Log in</a>
+          Already have an account?{' '}
+          <a onClick={openLoginModal} href="#">
+            Log in
+          </a>
         </LoginPrompt>
       </Large>
     </Card>

@@ -1,29 +1,26 @@
 import React from 'react'
+import { useSelector } from 'react-redux'
+import styled from 'styled-components'
 import ErrorPage from 'next/error'
+
 import { ContestLog, Ranking } from '../interfaces'
 import RankingApi from '../api'
 import ContestApi from '../../contest/api'
 import ContestLogsByDayGraph from '../components/graphs/ContestLogsByDayGraph'
 import ContestLogsByMediumGraph from '../components/graphs/ContestLogsByMediumGraph'
 import ContestLogsOverview from '../components/ContestLogsOverview'
-import {
-  rankingsToRegistrationOverview,
-  amountToPages,
-  pagesLabel,
-} from '../transform/graph'
+import { rankingsToRegistrationOverview } from '../transform/graph'
 import { Contest } from '../../contest/interfaces'
 import Cards, { LargeCard } from '../../ui/components/Cards'
 import { useCachedApiState, isReady } from '../../cache'
 import { contestSerializer } from '../../contest/transform'
 import { optionalizeSerializer } from '../../transform'
 import { PageTitle, ButtonLink, SubHeading } from '../../ui/components'
-import { useSelector } from 'react-redux'
 import { RootState } from '../../store'
-import styled from 'styled-components'
 import { contestLogCollectionSerializer } from '../transform/contest-log'
 import { rankingCollectionSerializer } from '../transform/ranking'
 import Constants from '../../ui/Constants'
-import media from 'styled-media-query'
+import ScoreList from '../components/ScoreList'
 
 interface Props {
   contestId: number
@@ -132,14 +129,7 @@ const RankingProfile = ({
           </ButtonLink>
         )}
       </HeaderContainer>
-      <Scores>
-        {registrationOverview.registrations.map(r => (
-          <Score key={r.languageCode}>
-            <ScoreLabel>{pagesLabel(r.languageCode)}</ScoreLabel>
-            <ScoreValue>{amountToPages(r.amount)}</ScoreValue>
-          </Score>
-        ))}
-      </Scores>
+      <ScoreList registrationOverview={registrationOverview} />
       <Cards>
         <LargeCard>
           <ContestLogsByDayGraph logs={logs} contest={contest} />
@@ -162,36 +152,6 @@ const RankingProfile = ({
 
 export default RankingProfile
 
-const Scores = styled.div`
-  display: flex;
-  flex-direction: row;
-  justify-content: space-between;
-  margin-bottom: 50px;
-  width: 100%;
-  flex-wrap: wrap;
-
-  ${media.lessThan('small')`
-    flex-direction: column;
-  `}
-`
-
-const Score = styled.div`
-  width: 20%;
-  height: 100px;
-
-  ${media.lessThan('medium')`
-    width: 50%;
-  `}
-`
-const ScoreLabel = styled(SubHeading)`
-  margin: 0;
-`
-const ScoreValue = styled.div`
-  font-size: 38px;
-  font-weight: bold;
-  margin-top: 10px;
-`
-
 const HeaderContainer = styled.div`
   display: flex;
   align-items: flex-start;
@@ -203,10 +163,8 @@ const HeaderContainer = styled.div`
   h1 {
     margin: 0;
   }
-
-  h2 {
-    margin: 10px 0 0 0;
-  }
 `
 
-const RoundDescription = styled(SubHeading)``
+const RoundDescription = styled(SubHeading)`
+  margin-top: 10px;
+`

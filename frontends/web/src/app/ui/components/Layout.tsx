@@ -109,6 +109,7 @@ const StickyFooterContainer = styled.div`
   overflow: hidden;
   position: relative;
   box-sizing: border-box;
+  top: -10px;
 
   ${media.greaterThan('medium')`
     padding-bottom: 250px;

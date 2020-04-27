@@ -51,7 +51,7 @@ func TestMain(m *testing.M) {
 func loadConfig() *test.Config {
 	c, err := test.LoadConfig()
 	if err != nil {
-		panic("could not load config")
+		panic(fmt.Sprintf("could not load config: %s", err))
 	}
 
 	return c

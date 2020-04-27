@@ -1,25 +1,6 @@
 import { Serializer } from './cache'
 import { Mappers } from './interfaces'
 
-export const optionalizeSerializer = <DataType>(
-  serializer: Serializer<DataType>,
-): Serializer<DataType | undefined> => ({
-  serialize: data => {
-    if (!data) {
-      return ''
-    }
-
-    return serializer.serialize(data)
-  },
-  deserialize: serializedData => {
-    if (serializedData === '') {
-      return undefined
-    }
-
-    return serializer.deserialize(serializedData)
-  },
-})
-
 export const createMappers = <Raw, Original>({
   toRaw,
   fromRaw,
@@ -66,3 +47,22 @@ export function createCollectionSerializer<Raw, Target>(
     },
   }
 }
+
+export const optionalizeSerializer = <DataType>(
+  serializer: Serializer<DataType>,
+): Serializer<DataType | undefined> => ({
+  serialize: data => {
+    if (!data) {
+      return ''
+    }
+
+    return serializer.serialize(data)
+  },
+  deserialize: serializedData => {
+    if (serializedData === '') {
+      return undefined
+    }
+
+    return serializer.deserialize(serializedData)
+  },
+})

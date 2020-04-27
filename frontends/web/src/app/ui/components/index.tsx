@@ -285,6 +285,13 @@ export const PageTitle = styled.h1`
   `}
 `
 
+export const SubHeading = styled.h2`
+  font-family: ${Constants.fonts.sansSerif};
+  color: ${Constants.colors.nonFocusText};
+  font-size: 17px;
+  text-transform: uppercase;
+`
+
 export const Logo = styled.img.attrs(() => ({
   src: '/img/logo.svg',
   alt: 'Tadoku',

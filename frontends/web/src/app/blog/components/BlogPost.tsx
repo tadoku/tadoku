@@ -3,6 +3,7 @@ import styled from 'styled-components'
 import { PostOrPage } from '../interfaces'
 import { format } from 'date-fns'
 import Constants from '../../ui/Constants'
+import { SubHeading } from '../../ui/components'
 
 const BlogPost = ({ post }: { post: PostOrPage }) => (
   <Container>
@@ -28,11 +29,8 @@ const Title = styled.h2`
   margin: 0;
 `
 
-const Date = styled.h3`
-  font-family: ${Constants.fonts.sansSerif};
-  color: ${Constants.colors.nonFocusText};
+const Date = styled(SubHeading).attrs({ as: 'h3' })`
   margin-top: 5px;
   margin-bottom: 30px;
   font-size: 16px;
-  text-transform: uppercase;
 `

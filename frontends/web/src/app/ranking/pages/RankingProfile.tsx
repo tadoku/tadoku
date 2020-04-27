@@ -21,7 +21,7 @@ import Cards, {
 import { useCachedApiState, isReady } from '../../cache'
 import { contestSerializer } from '../../contest/transform'
 import { optionalizeSerializer } from '../../transform'
-import { PageTitle, ButtonLink } from '../../ui/components'
+import { PageTitle, ButtonLink, SubHeading } from '../../ui/components'
 import { useSelector } from 'react-redux'
 import { RootState } from '../../store'
 import styled from 'styled-components'
@@ -104,6 +104,7 @@ const RankingProfile = ({
     return (
       <>
         <PageTitle>{registrationOverview.userDisplayName}</PageTitle>
+        <RoundDescription>{contest.description}</RoundDescription>
         <p>
           Nothing to see here! {registrationOverview.userDisplayName}{' '}
           hasn&apos;t logged any updates for this round yet, please check again
@@ -119,8 +120,11 @@ const RankingProfile = ({
 
   return (
     <>
-      <Container>
-        <PageTitle>{registrationOverview.userDisplayName}</PageTitle>
+      <HeaderContainer>
+        <div>
+          <PageTitle>{registrationOverview.userDisplayName}</PageTitle>
+          <RoundDescription>{contest.description}</RoundDescription>
+        </div>
         {signedInUser && userId === signedInUser.id && (
           <ButtonLink
             href={dataUrl}
@@ -130,7 +134,7 @@ const RankingProfile = ({
             Export data
           </ButtonLink>
         )}
-      </Container>
+      </HeaderContainer>
       <Cards>
         <Card>
           <CardContent>{contest.description}</CardContent>
@@ -163,8 +167,19 @@ const RankingProfile = ({
 
 export default RankingProfile
 
-const Container = styled.div`
+const HeaderContainer = styled.div`
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
+  margin-bottom: 30px;
+
+  h1 {
+    margin: 0;
+  }
+
+  h2 {
+    margin: 10px 0 0 0;
+  }
 `
+
+const RoundDescription = styled(SubHeading)``

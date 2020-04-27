@@ -52,7 +52,6 @@ const Background = styled.div`
 const Grid = styled.div`
   max-width: 1200px;
   margin: 0 auto;
-  position: relative;
 
   ${media.lessThan('large')`
     display: flex;

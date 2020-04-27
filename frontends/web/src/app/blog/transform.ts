@@ -2,7 +2,7 @@ import { PostOrPage } from './interfaces'
 import { PostOrPage as RawPostOrPage } from '@tryghost/content-api'
 import { Mapper, Mappers } from '../interfaces'
 import { Serializer } from '../cache'
-import { createSerializer } from '../transform'
+import { createSerializer, createMappers } from '../transform'
 
 const rawToPostOrPageMapper: Mapper<RawPostOrPage, PostOrPage> = raw => ({
   id: raw.id,
@@ -23,10 +23,13 @@ const postOrPageToRawMapper: Mapper<
   published_at: postOrPage.publishedAt.toISOString(),
 })
 
-export const postOrPageMapper: Mappers<RawPostOrPage, PostOrPage> = {
+export const postOrPageMapper: Mappers<
+  RawPostOrPage,
+  PostOrPage
+> = createMappers({
   fromRaw: rawToPostOrPageMapper,
   toRaw: postOrPageToRawMapper,
-}
+})
 
 export const postOrPageSerializer = createSerializer(postOrPageMapper)
 

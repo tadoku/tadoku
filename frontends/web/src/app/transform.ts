@@ -1,5 +1,5 @@
 import { Serializer } from './cache'
-import { Mappers, MappersWithOptional } from './interfaces'
+import { Mappers } from './interfaces'
 
 export const optionalizeSerializer = <DataType>(
   serializer: Serializer<DataType>,
@@ -20,15 +20,20 @@ export const optionalizeSerializer = <DataType>(
   },
 })
 
-export const withOptional = <Raw, Original>(
-  mappers: Mappers<Raw, Original>,
-): MappersWithOptional<Raw, Original> => ({
-  ...mappers,
+export const createMappers = <Raw, Original>({
+  toRaw,
+  fromRaw,
+}: {
+  toRaw: (original: Original) => Raw
+  fromRaw: (raw: Raw) => Original
+}): Mappers<Raw, Original> => ({
+  toRaw,
+  fromRaw,
   optional: {
     toRaw: (original: Original | undefined): Raw | undefined =>
-      original ? mappers.toRaw(original) : undefined,
+      original ? toRaw(original) : undefined,
     fromRaw: (raw: Raw | undefined): Original | undefined =>
-      raw ? mappers.fromRaw(raw) : undefined,
+      raw ? fromRaw(raw) : undefined,
   },
 })
 

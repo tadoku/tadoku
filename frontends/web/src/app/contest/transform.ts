@@ -1,7 +1,7 @@
 import { Contest, RawContest } from './interfaces'
 import { Mapper, Mappers } from '../interfaces'
 import { Serializer } from '../cache'
-import { createSerializer } from '../transform'
+import { createSerializer, createMappers } from '../transform'
 
 const rawToContestMapper: Mapper<RawContest, Contest> = raw => ({
   id: raw.id,
@@ -19,10 +19,10 @@ const contestToRawMapper: Mapper<Contest, RawContest> = contest => ({
   open: contest.open,
 })
 
-export const contestMapper: Mappers<RawContest, Contest> = {
+export const contestMapper: Mappers<RawContest, Contest> = createMappers({
   fromRaw: rawToContestMapper,
   toRaw: contestToRawMapper,
-}
+})
 
 export const contestSerializer = createSerializer(contestMapper)
 

@@ -709,6 +709,7 @@ declare module 'react-vis' {
     height?: number;
     width?: number;
     orientation?: 'vertical' | 'horizontal'; //default: 'vertical'
+    style?: CSSProperties
   }
   export const DiscreteColorLegend: SFC<DiscreteColorLegendProps>;
 

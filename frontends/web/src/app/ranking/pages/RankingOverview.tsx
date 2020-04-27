@@ -3,7 +3,7 @@ import { Ranking, RankingRegistration } from '../interfaces'
 import RankingList from '../components/List'
 import RankingApi from '../api'
 import { Contest } from '../../contest/interfaces'
-import { Button, PageTitle } from '../../ui/components'
+import { Button, PageTitle, SubHeading } from '../../ui/components'
 import styled from 'styled-components'
 import { User } from '../../session/interfaces'
 import JoinContestModal from '../components/modals/JoinContestModal'
@@ -11,7 +11,6 @@ import { useCachedApiState, ApiFetchStatus } from '../../cache'
 import { rankingCollectionSerializer } from '../transform/ranking'
 import { isContestActive } from '../domain'
 import SubmitPagesButton from '../components/SubmitPagesButton'
-import Constants from '../../ui/Constants'
 
 interface Props {
   contest: Contest
@@ -99,13 +98,9 @@ const Container = styled.div`
   }
 `
 
-const Description = styled.h2`
-  font-family: ${Constants.fonts.sansSerif};
-  color: ${Constants.colors.nonFocusText};
+const Description = styled(SubHeading)`
   margin-top: 10px;
   margin-bottom: 30px;
-  font-size: 17px;
-  text-transform: uppercase;
 `
 
 // TODO: Refactor remaining time

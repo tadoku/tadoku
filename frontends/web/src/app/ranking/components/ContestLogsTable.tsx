@@ -5,6 +5,8 @@ import { languageNameByCode, mediumDescriptionById } from '../database'
 import { amountToPages } from '../transform/graph'
 import { Button, ButtonContainer } from '../../ui/components'
 import media from 'styled-media-query'
+import Constants from '../../ui/Constants'
+import { format } from 'date-fns'
 
 interface Props {
   logs: ContestLog[]
@@ -16,7 +18,7 @@ interface Props {
 const ContestLogsTable = (props: Props) => (
   <TableList>
     <Heading>
-      <Row>
+      <HeadingRow>
         <Column>Date</Column>
         <Column>Language</Column>
         <Column>Medium</Column>
@@ -24,19 +26,23 @@ const ContestLogsTable = (props: Props) => (
         <Column alignRight>Amount</Column>
         <Column alignRight>Score</Column>
         {props.canEdit && <Column />}
-      </Row>
+      </HeadingRow>
     </Heading>
     <Body>
-      {props.logs.map((l, i) => (
-        <Row even={i % 2 === 0} key={l.id}>
+      {props.logs.map(l => (
+        <Row key={l.id}>
           <Column title={l.date.toLocaleString()}>
-            {l.date.toLocaleDateString()}
+            {format(l.date, 'MMMM do')}
           </Column>
           <Column>{languageNameByCode(l.languageCode)}</Column>
           <Column>{mediumDescriptionById(l.mediumId)}</Column>
-          <Column>{l.description || 'N/A'}</Column>
-          <Column alignRight>{amountToPages(l.amount)}</Column>
-          <Column alignRight>{amountToPages(l.adjustedAmount)}</Column>
+          <Column limit>{l.description || 'N/A'}</Column>
+          <Column alignRight>
+            <strong>{amountToPages(l.amount)}</strong>
+          </Column>
+          <Column alignRight>
+            <strong>{amountToPages(l.adjustedAmount)}</strong>
+          </Column>
           {props.canEdit && (
             <Column style={{ width: '1px', whiteSpace: 'nowrap' }}>
               <ButtonContainer>
@@ -63,8 +69,9 @@ export default ContestLogsTable
 
 const TableList = styled.table`
   padding: 0;
-  margin: 0 auto;
   width: 100%;
+  background: ${Constants.colors.light};
+  box-shadow: 0px 2px 3px 0px rgba(0, 0, 0, 0.08);
   border-collapse: collapse;
 
   ${media.lessThan('medium')`
@@ -72,27 +79,33 @@ const TableList = styled.table`
   `}
 `
 
+const Heading = styled.thead`
+  height: 55px;
+  font-size: 16px;
+  font-weight: bold;
+  text-transform: uppercase;
+  color: ${Constants.colors.nonFocusText};
+`
+
+const HeadingRow = styled.tr`
+  margin: 20px 0;
+  height: 55px;
+  border-bottom: 2px solid ${Constants.colors.nonFocusTextWithAlpha(0.2)};
+`
+
 const Row = styled.tr`
   margin: 20px 0;
   padding: 20px 30px;
-  background-color: ${({ even }: { even?: boolean }) =>
-    even ? 'rgba(0, 0, 0, 0.02)' : 'transparant'};
-`
 
-const Column = styled.td`
-  padding: 15px;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.04);
-  text-align: ${({ alignRight }: { alignRight?: boolean }) =>
-    alignRight ? 'right' : 'left'};
-`
-
-const Heading = styled.thead`
-  font-weight: bold;
-  font-size: 1.2em;
-
-  td {
-    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  &:nth-child(2n + 1) {
+    background-color: ${Constants.colors.nonFocusTextWithAlpha(0.05)};
   }
+`
+
+const Column = styled.td<{ alignRight?: boolean; limit?: boolean }>`
+  padding: 10px 20px;
+  text-align: ${({ alignRight }) => (alignRight ? 'right' : 'left')};
+  width: ${({ limit }) => (limit ? '50%' : 'inherit')};
 `
 
 const Body = styled.tbody``

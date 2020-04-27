@@ -1,32 +1,26 @@
 import React from 'react'
+import { useSelector } from 'react-redux'
+import styled from 'styled-components'
 import ErrorPage from 'next/error'
+
 import { ContestLog, Ranking } from '../interfaces'
 import RankingApi from '../api'
 import ContestApi from '../../contest/api'
 import ContestLogsByDayGraph from '../components/graphs/ContestLogsByDayGraph'
 import ContestLogsByMediumGraph from '../components/graphs/ContestLogsByMediumGraph'
 import ContestLogsOverview from '../components/ContestLogsOverview'
-import {
-  rankingsToRegistrationOverview,
-  amountToPages,
-  pagesLabel,
-} from '../transform/graph'
+import { rankingsToRegistrationOverview } from '../transform/graph'
 import { Contest } from '../../contest/interfaces'
-import Cards, {
-  Card,
-  CardLabel,
-  CardContent,
-  LargeCard,
-} from '../../ui/components/Cards'
 import { useCachedApiState, isReady } from '../../cache'
 import { contestSerializer } from '../../contest/transform'
 import { optionalizeSerializer } from '../../transform'
-import { PageTitle, ButtonLink } from '../../ui/components'
-import { useSelector } from 'react-redux'
+import { PageTitle, ButtonLink, SubHeading } from '../../ui/components'
 import { RootState } from '../../store'
-import styled from 'styled-components'
 import { contestLogCollectionSerializer } from '../transform/contest-log'
 import { rankingCollectionSerializer } from '../transform/ranking'
+import Constants from '../../ui/Constants'
+import ScoreList from '../components/ScoreList'
+import media from 'styled-media-query'
 
 interface Props {
   contestId: number
@@ -104,6 +98,7 @@ const RankingProfile = ({
     return (
       <>
         <PageTitle>{registrationOverview.userDisplayName}</PageTitle>
+        <RoundDescription>{contest.description}</RoundDescription>
         <p>
           Nothing to see here! {registrationOverview.userDisplayName}{' '}
           hasn&apos;t logged any updates for this round yet, please check again
@@ -119,8 +114,11 @@ const RankingProfile = ({
 
   return (
     <>
-      <Container>
-        <PageTitle>{registrationOverview.userDisplayName}</PageTitle>
+      <HeaderContainer>
+        <div>
+          <PageTitle>{registrationOverview.userDisplayName}</PageTitle>
+          <RoundDescription>{contest.description}</RoundDescription>
+        </div>
         {signedInUser && userId === signedInUser.id && (
           <ButtonLink
             href={dataUrl}
@@ -130,41 +128,76 @@ const RankingProfile = ({
             Export data
           </ButtonLink>
         )}
-      </Container>
-      <Cards>
-        <Card>
-          <CardContent>{contest.description}</CardContent>
-          <CardLabel>Round</CardLabel>
-        </Card>
-        {registrationOverview.registrations.map(r => (
-          <Card key={r.languageCode}>
-            <CardContent>{amountToPages(r.amount)}</CardContent>
-            <CardLabel>{pagesLabel(r.languageCode)}</CardLabel>
-          </Card>
-        ))}
-        <LargeCard>
+      </HeaderContainer>
+      <ScoreList registrationOverview={registrationOverview} />
+      <GraphContainer>
+        <OverallGraph>
+          <GraphHeading>Reading Activity</GraphHeading>
           <ContestLogsByDayGraph logs={logs} contest={contest} />
-        </LargeCard>
-        <LargeCard>
+        </OverallGraph>
+        <MediaGraph>
+          <GraphHeading>Media distribution</GraphHeading>
           <ContestLogsByMediumGraph logs={logs} />
-        </LargeCard>
-        <LargeCard>
-          <ContestLogsOverview
-            contest={contest}
-            logs={logs}
-            registration={registrationOverview}
-            refreshData={refreshRanking}
-          />
-        </LargeCard>
-      </Cards>
+        </MediaGraph>
+      </GraphContainer>
+      <ContestLogsOverview
+        contest={contest}
+        logs={logs}
+        registration={registrationOverview}
+        refreshData={refreshRanking}
+      />
     </>
   )
 }
 
 export default RankingProfile
 
-const Container = styled.div`
+const GraphContainer = styled.div`
   display: flex;
-  align-items: center;
   justify-content: space-between;
+  width: 100%;
+  flex-wrap: nowrap;
+
+  ${media.lessThan('large')`
+    flex-wrap: wrap;
+    padding-bottom: 30px;
+  `}
+`
+
+const LargeCard = styled.div`
+  margin-top: 30px;
+  padding: 30px;
+  box-shadow: 0px 2px 3px 0px rgba(0, 0, 0, 0.08);
+  box-sizing: border-box;
+  background: ${Constants.colors.light};
+`
+
+const OverallGraph = styled(LargeCard)`
+  flex: 1 1 0;
+  margin-right: 30px;
+  max-width: calc(100% - 260px - 30px);
+  ${media.lessThan('large')`max-width: 100%;`}
+`
+const MediaGraph = styled(LargeCard)``
+
+const HeaderContainer = styled.div`
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 60px;
+  border-bottom: 2px solid ${Constants.colors.lightGray};
+  padding-bottom: 30px;
+
+  h1 {
+    margin: 0;
+  }
+`
+
+const RoundDescription = styled(SubHeading)`
+  margin-top: 10px;
+`
+
+const GraphHeading = styled(SubHeading)`
+  margin-bottom: 15px;
+  margin-top: 0;
 `

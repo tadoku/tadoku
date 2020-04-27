@@ -24,12 +24,12 @@ const Graph = ({ logs }: Props) => {
   return (
     <Container>
       <FlexibleRadialChart
-        innerRadius={100}
-        radius={140}
+        innerRadius={60}
+        radius={90}
         getAngle={(d: { amount: number }) => d.amount}
         data={data.aggregated}
-        width={300}
-        height={300}
+        width={200}
+        height={200}
         padAngle={0.04}
         onValueMouseOver={(v: RadialChartPoint) => setSelected(v)}
         onSeriesMouseOut={() => setSelected(undefined)}
@@ -47,6 +47,7 @@ const Graph = ({ logs }: Props) => {
         items={data.legend}
         orientation="horizontal"
         height={60}
+        style={{ textAlign: 'center' }}
       />
     </Container>
   )
@@ -60,6 +61,7 @@ const Container = styled.div`
   display: flex;
   flex-direction: column;
   align-items: stretch;
+  width: 200px;
 `
 
 const HintContainer = styled.div`

@@ -4,6 +4,7 @@ import { useDispatch, useSelector } from 'react-redux'
 import media from 'styled-media-query'
 
 import Header from './../components/Header'
+import ContestSchedule from '../components/ContestSchedule'
 import LogInModal from './../../session/components/modals/LogInModal'
 import * as RankingStore from '../../ranking/redux'
 import { FooterLanding } from '../../ui/components/Footer'
@@ -54,6 +55,7 @@ const LandingPage = () => {
               a balanced approach to learning is still recommended.
             </Paragraph>
           </Card>
+          <ContestSchedule />
         </Content>
       </StickyFooterContainer>
       <FooterLanding contests={contests} />

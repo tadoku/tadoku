@@ -107,7 +107,6 @@ const Card = styled.div`
 
 const StickyFooterContainer = styled.div`
   min-height: 100vh;
-  overflow: hidden;
   position: relative;
   box-sizing: border-box;
 

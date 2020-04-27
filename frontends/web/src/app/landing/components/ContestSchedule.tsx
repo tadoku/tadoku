@@ -50,10 +50,13 @@ const Background = styled.div`
   right: 0px;
   bottom: 60px;
   top: 60px;
+  padding-left: 520px;
   width: 100%;
   max-width: 680px;
   z-index: -1;
   background: bottom right no-repeat url('/img/background-contests.jpg');
+
+  ${media.lessThan('large')`display: none;`}
 `
 
 const Title = styled.h2`

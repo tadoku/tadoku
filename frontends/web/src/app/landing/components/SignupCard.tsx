@@ -10,31 +10,30 @@ interface Props {
 }
 
 const SignupCard = ({ refreshSession, openLoginModal }: Props) => (
-  <Card>
-    <Large>
-      <SignupTitle>
-        Create a <br />
-        new account
-      </SignupTitle>
-      <RegisterForm onSuccess={refreshSession} />
-      <LoginPrompt>
-        Already have an account? <a onClick={openLoginModal}>Log in</a>
-      </LoginPrompt>
-    </Large>
-  </Card>
+  <Container>
+    <Card>
+      <Large>
+        <SignupTitle>
+          Create a <br />
+          new account
+        </SignupTitle>
+        <RegisterForm onSuccess={refreshSession} />
+        <LoginPrompt>
+          Already have an account? <a onClick={openLoginModal}>Log in</a>
+        </LoginPrompt>
+      </Large>
+    </Card>
+  </Container>
 )
 
 export default SignupCard
 
-const Card = styled.div`
-  background: #fff;
-  box-shadow: 0px 2px 3px 0px rgba(0, 0, 0, 0.08);
+const Container = styled.div`
   width: 400px;
-  box-sizing: border-box;
-  padding: 60px;
   position: absolute;
   top: 120px;
-  right: 105px;
+  right: calc((100% - ${Constants.maxWidth}) / 2 + 105px);
+  bottom: 340px;
 
   ${media.lessThan('large')`
     position: inherit;
@@ -43,7 +42,6 @@ const Card = styled.div`
     width: inherit;
     min-width: 400px;
     flex: 1;
-    box-shadow: none;
   `}
 
   ${media.lessThan('medium')`
@@ -52,6 +50,24 @@ const Card = styled.div`
     width: 100%;
     margin: 0 auto;
   `}
+`
+
+const Card = styled.div`
+  background: #fff;
+  box-shadow: 0px 2px 3px 0px rgba(0, 0, 0, 0.08);
+  width: 100%;
+  box-sizing: border-box;
+  padding: 60px;
+
+  ${media.lessThan('large')`
+    box-shadow: none;
+  `}
+
+  @supports (position: -webkit-sticky) or (position: sticky) {
+    position: sticky;
+    top: 60px;
+    right: 0;
+  }
 `
 
 const Large = styled.div`

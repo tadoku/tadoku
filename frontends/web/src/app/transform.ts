@@ -31,3 +31,18 @@ export const withOptional = <Raw, Original>(
       raw ? mappers.fromRaw(raw) : undefined,
   },
 })
+
+export function createSerializer<Raw, Target>(
+  mapper: Mappers<Raw, Target>,
+): Serializer<Target> {
+  return {
+    serialize: data => {
+      const raw = mapper.toRaw(data)
+      return JSON.stringify(raw)
+    },
+    deserialize: data => {
+      let raw = JSON.parse(data)
+      return mapper.fromRaw(raw)
+    },
+  }
+}

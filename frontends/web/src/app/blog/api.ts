@@ -1,6 +1,6 @@
 import GhostContentAPI from '@tryghost/content-api'
 import { PostOrPage } from './interfaces'
-import { rawToPostOrPageMapper } from './transform'
+import { postOrPageMapper } from './transform'
 
 const api = GhostContentAPI({
   url: process.env.GHOST_URL || '',
@@ -22,7 +22,7 @@ const getPosts = async (): Promise<PostOrPage[]> => {
   return Object.entries(response)
     .filter(([key]) => key !== 'meta')
     .map(([, p]) => p)
-    .map(rawToPostOrPageMapper)
+    .map(postOrPageMapper.fromRaw)
 }
 
 const getPage = async (slug: string): Promise<PostOrPage> => {
@@ -33,7 +33,7 @@ const getPage = async (slug: string): Promise<PostOrPage> => {
     },
   )
 
-  return rawToPostOrPageMapper(response)
+  return postOrPageMapper.fromRaw(response)
 }
 
 const BlogApi = {

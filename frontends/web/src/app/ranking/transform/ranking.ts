@@ -1,5 +1,5 @@
 import { Ranking, RawRanking } from './../interfaces'
-import { Mapper } from '../../interfaces'
+import { Mapper, Mappers } from '../../interfaces'
 import { Serializer } from '../../cache'
 
 const rawToRankingMapper: Mapper<RawRanking, Ranking> = raw => ({
@@ -29,7 +29,7 @@ export const rankingsSerializer: Serializer<Ranking[]> = {
   },
 }
 
-export const rankingMapper = {
+export const rankingMapper: Mappers<RawRanking, Ranking> = {
   toRaw: rankingToRawMapper,
   fromRaw: rawToRankingMapper,
 }

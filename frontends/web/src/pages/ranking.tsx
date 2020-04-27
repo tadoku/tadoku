@@ -7,12 +7,12 @@ import { runEffects } from '../app/ranking/redux'
 import { RawContest } from '../app/contest/interfaces'
 import { RankingRegistration } from '../app/ranking/interfaces'
 import { User } from '../app/session/interfaces'
-import { ContestMapper } from '../app/contest/transform'
-import { RankingRegistrationMapper } from '../app/ranking/transform/ranking-registration'
+import { contestMapper } from '../app/contest/transform'
+import { rankingRegistrationMapper } from '../app/ranking/transform/ranking-registration'
 
 const mapStateToProps = (state: RootState) => ({
   rawContest: state.contest.latestContest,
-  registration: RankingRegistrationMapper.optional.fromRaw(
+  registration: rankingRegistrationMapper.optional.fromRaw(
     state.ranking.rawRegistration,
   ),
   user: state.session.user,
@@ -39,7 +39,7 @@ export default connect(
     return null
   }
 
-  const contest = ContestMapper.fromRaw(rawContest)
+  const contest = contestMapper.fromRaw(rawContest)
 
   return (
     <>

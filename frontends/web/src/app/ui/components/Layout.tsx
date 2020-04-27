@@ -8,7 +8,7 @@ import Constants from '../Constants'
 import Footer from './Footer'
 import ActivityIndicator from './ActivityIndicator'
 import { RootState } from '../../store'
-import { ContestMapper } from '../../contest/transform'
+import { contestMapper } from '../../contest/transform'
 
 interface Props {
   overridesLayout: boolean
@@ -17,7 +17,7 @@ interface Props {
 const Layout: React.SFC<Props> = ({ children, overridesLayout }) => {
   const isLoading = useSelector((state: RootState) => state.app.isLoading)
   const contests = useSelector((state: RootState) =>
-    state.contest.recentContests.map(ContestMapper.fromRaw),
+    state.contest.recentContests.map(contestMapper.fromRaw),
   )
 
   if (overridesLayout) {

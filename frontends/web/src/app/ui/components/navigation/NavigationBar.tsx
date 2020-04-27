@@ -9,7 +9,7 @@ import { ActiveUserNavigationBar } from './ActiveUserNavigationBar'
 import { AnonymousNavigationBar } from './AnonymousNavigationBar'
 import { runEffects as sessionRunEffects } from '../../../session/redux'
 import { runEffects as rankingRunEffects } from '../../../ranking/redux'
-import { RankingRegistrationMapper } from '../../../ranking/transform/ranking-registration'
+import { rankingRegistrationMapper } from '../../../ranking/transform/ranking-registration'
 import LinkContainer from './LinkContainer'
 import Link from 'next/link'
 import { ButtonLink } from '..'
@@ -69,7 +69,7 @@ const NavigationBar = ({
 
 const mapStateToProps = (state: RootState) => ({
   user: state.session.user,
-  registration: RankingRegistrationMapper.optional.fromRaw(
+  registration: rankingRegistrationMapper.optional.fromRaw(
     state.ranking.rawRegistration,
   ),
 })

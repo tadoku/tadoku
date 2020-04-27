@@ -1,12 +1,14 @@
 import { PostOrPage } from './interfaces'
 import { PostOrPage as RawPostOrPage } from '@tryghost/content-api'
-import { Mapper } from '../interfaces'
+import { Mapper, Mappers } from '../interfaces'
 import { Serializer } from '../cache'
+import {
+  createSerializer,
+  createMappers,
+  createCollectionSerializer,
+} from '../transform'
 
-export const RawToPostOrPageMapper: Mapper<
-  RawPostOrPage,
-  PostOrPage
-> = raw => ({
+const rawToPostOrPageMapper: Mapper<RawPostOrPage, PostOrPage> = raw => ({
   id: raw.id,
   slug: raw.slug,
   title: raw.title ?? '',
@@ -14,7 +16,7 @@ export const RawToPostOrPageMapper: Mapper<
   publishedAt: raw.published_at ? new Date(raw.published_at) : new Date(),
 })
 
-const PostOrPageToRawMapper: Mapper<
+const postOrPageToRawMapper: Mapper<
   PostOrPage,
   RawPostOrPage
 > = postOrPage => ({
@@ -25,24 +27,18 @@ const PostOrPageToRawMapper: Mapper<
   published_at: postOrPage.publishedAt.toISOString(),
 })
 
-export const PostOrPageSerializer: Serializer<PostOrPage> = {
-  serialize: postOrPage => {
-    let raw = PostOrPageToRawMapper(postOrPage)
-    return JSON.stringify(raw)
-  },
-  deserialize: serializedData => {
-    let raw = JSON.parse(serializedData)
-    return RawToPostOrPageMapper(raw)
-  },
-}
+export const postOrPageMapper: Mappers<
+  RawPostOrPage,
+  PostOrPage
+> = createMappers({
+  fromRaw: rawToPostOrPageMapper,
+  toRaw: postOrPageToRawMapper,
+})
 
-export const PostOrPagesSerializer: Serializer<PostOrPage[]> = {
-  serialize: postOrPages => {
-    const raw = postOrPages.map(PostOrPageToRawMapper)
-    return JSON.stringify(raw)
-  },
-  deserialize: serializedData => {
-    let raw = JSON.parse(serializedData)
-    return raw.map(RawToPostOrPageMapper)
-  },
-}
+export const postOrPageSerializer: Serializer<PostOrPage> = createSerializer(
+  postOrPageMapper,
+)
+
+export const postOrPageCollectionSerializer: Serializer<
+  PostOrPage[]
+> = createCollectionSerializer(postOrPageMapper)

@@ -17,7 +17,7 @@ import {
 } from '../../../ui/components/Form'
 import { Button, StackContainer } from '../../../ui/components'
 import { validateLanguageCode, validateAmount } from '../../domain'
-import { RankingRegistrationMapper } from '../../transform/ranking-registration'
+import { rankingRegistrationMapper } from '../../transform/ranking-registration'
 
 interface Props {
   log?: ContestLog
@@ -200,7 +200,7 @@ const LogForm = ({
 
 const mapStateToProps = (state: RootState, oldProps: Props) => ({
   ...oldProps,
-  registration: RankingRegistrationMapper.optional.fromRaw(
+  registration: rankingRegistrationMapper.optional.fromRaw(
     state.ranking.rawRegistration,
   ),
 })

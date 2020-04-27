@@ -7,16 +7,16 @@ import { useSelector, useDispatch } from 'react-redux'
 import { RootState } from '../../../app/store'
 import RankingOverview from '../../../app/ranking/pages/RankingOverview'
 import { runEffects } from '../../../app/ranking/redux'
-import { ContestSerializer } from '../../../app/contest/transform'
-import { RankingRegistrationMapper } from '../../../app/ranking/transform/ranking-registration'
+import { contestSerializer } from '../../../app/contest/transform'
+import { rankingRegistrationMapper } from '../../../app/ranking/transform/ranking-registration'
 import { useCachedApiState, isReady } from '../../../app/cache'
 import ContestApi from '../../../app/contest/api'
-import { OptionalizeSerializer } from '../../../app/transform'
+import { optionalizeSerializer } from '../../../app/transform'
 import { Contest } from '../../../app/contest/interfaces'
 
 export default () => {
   const registration = useSelector((state: RootState) =>
-    RankingRegistrationMapper.optional.fromRaw(state.ranking.rawRegistration),
+    rankingRegistrationMapper.optional.fromRaw(state.ranking.rawRegistration),
   )
   const user = useSelector((state: RootState) => state.session.user)
   const effectCount = useSelector(
@@ -38,7 +38,7 @@ export default () => {
       return ContestApi.get(contestId)
     },
     dependencies: [contestId],
-    serializer: OptionalizeSerializer(ContestSerializer),
+    serializer: optionalizeSerializer(contestSerializer),
   })
 
   if (!contestId) {

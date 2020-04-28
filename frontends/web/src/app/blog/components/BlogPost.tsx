@@ -23,7 +23,16 @@ const Container = styled.div`
   }
 `
 
-const Content = styled.div``
+const Content = styled.div`
+  a {
+    color: ${Constants.colors.primary};
+    text-decoration: underline;
+
+    &:hover {
+      opacity: 0.7;
+    }
+  }
+`
 
 const Title = styled.h2`
   margin: 0;

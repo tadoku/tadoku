@@ -6,7 +6,7 @@ import ErrorPage from 'next/error'
 import { ContestLog, Ranking } from '../interfaces'
 import RankingApi from '../api'
 import ContestApi from '../../contest/api'
-import ContestLogsByDayGraph from '../components/graphs/ContestLogsByDayGraph'
+import ContestLogsByDayGraph from '../components/graphs/ReadingActivityGraph'
 import ContestLogsByMediumGraph from '../components/graphs/ContestLogsByMediumGraph'
 import ContestLogsOverview from '../components/ContestLogsOverview'
 import { rankingsToRegistrationOverview } from '../transform/graph'
@@ -175,6 +175,7 @@ const LargeCard = styled.div`
 const OverallGraph = styled(LargeCard)`
   flex: 1 1 0;
   margin-right: 30px;
+  padding-bottom: 21px;
   max-width: calc(100% - 260px - 30px);
   ${media.lessThan('large')`max-width: 100%;`}
 `

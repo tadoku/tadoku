@@ -1,5 +1,4 @@
 import {
-  AggregatedContestLogsByDayEntry,
   ContestLog,
   Ranking,
   RankingRegistrationOverview,
@@ -42,21 +41,27 @@ const getDates = (startDate: Date, endDate: Date) => {
   return dates
 }
 
-interface AggregatedByDaysResult {
+interface AggregatedReadingActivity {
   aggregated: {
-    [languageCode: string]: AggregatedContestLogsByDayEntry[]
+    [languageCode: string]: AggregatedReadingActivityEntry[]
   }
   legend: {
     title: string
   }[]
 }
 
-export const aggregateContestLogsByDays = (
+export interface AggregatedReadingActivityEntry {
+  x: string // date in iso string for x axis
+  y: number // page count for y axis
+  language: string
+}
+
+export const aggregateReadingActivity = (
   logs: ContestLog[],
   contest: Contest,
-): AggregatedByDaysResult => {
+): AggregatedReadingActivity => {
   const aggregated: {
-    [languageCode: string]: { [date: string]: AggregatedContestLogsByDayEntry }
+    [languageCode: string]: { [date: string]: AggregatedReadingActivityEntry }
   } = {}
 
   const languages: string[] = []
@@ -74,15 +79,14 @@ export const aggregateContestLogsByDays = (
   })
 
   const initializedSeries: {
-    [date: string]: AggregatedContestLogsByDayEntry
+    [date: string]: AggregatedReadingActivityEntry
   } = {}
 
   getDates(contest.start, contest.end).forEach(date => {
     initializedSeries[prettyDate(date)] = {
-      x: date,
+      x: date.toISOString(),
       y: 0,
       language: '',
-      size: 2,
     }
   })
 
@@ -108,7 +112,7 @@ export const aggregateContestLogsByDays = (
     }
   })
 
-  const result: AggregatedByDaysResult = { aggregated: {}, legend }
+  const result: AggregatedReadingActivity = { aggregated: {}, legend }
 
   Object.keys(aggregated).forEach(languageCode => {
     result.aggregated[languageCode] = Object.values(aggregated[languageCode])

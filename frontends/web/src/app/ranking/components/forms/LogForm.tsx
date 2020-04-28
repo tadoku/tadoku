@@ -1,5 +1,5 @@
 import React, { FormEvent, useState } from 'react'
-import { AllMediums, languageNameByCode } from '../../database'
+import { AllMediums, languageNameByCode, mediumUnitById } from '../../database'
 import { connect } from 'react-redux'
 import { RootState } from '../../../store'
 import { RankingRegistration, ContestLog } from '../../interfaces'
@@ -123,7 +123,7 @@ const LogForm = ({
       <ErrorMessage message={error} />
       <Group>
         <Label>
-          <LabelText>Pages read</LabelText>
+          <LabelText>{mediumUnitById(parseInt(mediumId))} read</LabelText>
           <Input
             type="number"
             placeholder="e.g. 7"

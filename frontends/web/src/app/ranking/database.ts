@@ -1,14 +1,14 @@
 import { Medium, Language } from './interfaces'
 
 export const AllMediums: Medium[] = [
-  { id: 1, description: 'Book' },
-  { id: 2, description: 'Comic' },
-  { id: 3, description: 'Net' },
-  { id: 4, description: 'Full game' },
-  { id: 5, description: 'Game' },
-  { id: 6, description: 'Lyric' },
-  { id: 7, description: 'News' },
-  { id: 8, description: 'Sentences' },
+  { id: 1, description: 'Book', unit: 'Pages' },
+  { id: 2, description: 'Comic', unit: 'Pages' },
+  { id: 3, description: 'Net', unit: 'Articles' },
+  { id: 4, description: 'Full game', unit: 'Screens' },
+  { id: 5, description: 'Game', unit: 'Screens' },
+  { id: 6, description: 'Lyric', unit: 'Songs' },
+  { id: 7, description: 'News', unit: 'Articles' },
+  { id: 8, description: 'Sentences', unit: 'Sentences' },
 ]
 
 export const MediumById: { [key: number]: Medium } = AllMediums.reduce(
@@ -22,6 +22,7 @@ export const MediumById: { [key: number]: Medium } = AllMediums.reduce(
 )
 
 export const mediumDescriptionById = (id: number) => MediumById[id].description
+export const mediumUnitById = (id: number) => MediumById[id].unit
 
 export const AllLanguages: Language[] = [
   { code: 'ara', name: 'Arabic' },

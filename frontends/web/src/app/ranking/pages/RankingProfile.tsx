@@ -6,8 +6,8 @@ import ErrorPage from 'next/error'
 import { ContestLog, Ranking } from '../interfaces'
 import RankingApi from '../api'
 import ContestApi from '../../contest/api'
-import ContestLogsByDayGraph from '../components/graphs/ReadingActivityGraph'
-import ContestLogsByMediumGraph from '../components/graphs/MediaDistributionGraph'
+import ReadingActivityGraph from '../components/graphs/ReadingActivityGraph'
+import MediaDistributionGraph from '../components/graphs/MediaDistributionGraph'
 import ContestLogsOverview from '../components/ContestLogsOverview'
 import { rankingsToRegistrationOverview } from '../transform/ranking'
 import { Contest } from '../../contest/interfaces'
@@ -131,14 +131,18 @@ const RankingProfile = ({
       </HeaderContainer>
       <ScoreList registrationOverview={registrationOverview} />
       <GraphContainer>
-        <OverallGraph>
+        <ReadingActivityGraphContainer>
           <GraphHeading>Reading Activity</GraphHeading>
-          <ContestLogsByDayGraph logs={logs} contest={contest} />
-        </OverallGraph>
-        <MediaGraph>
+          <ReadingActivityGraph
+            logs={logs}
+            contest={contest}
+            effectCount={effectCount}
+          />
+        </ReadingActivityGraphContainer>
+        <MediaDistributionGraphContainer>
           <GraphHeading>Media distribution</GraphHeading>
-          <ContestLogsByMediumGraph logs={logs} />
-        </MediaGraph>
+          <MediaDistributionGraph logs={logs} effectCount={effectCount} />
+        </MediaDistributionGraphContainer>
       </GraphContainer>
       <ContestLogsOverview
         contest={contest}
@@ -180,13 +184,13 @@ const LargeCard = styled.div`
   }
 `
 
-const OverallGraph = styled(LargeCard)`
+const ReadingActivityGraphContainer = styled(LargeCard)`
   flex: 1 1 0;
   margin-right: 30px;
   max-width: calc(100% - 260px - 30px);
   ${media.lessThan('large')`max-width: 100%;`}
 `
-const MediaGraph = styled(LargeCard)``
+const MediaDistributionGraphContainer = styled(LargeCard)``
 
 const HeaderContainer = styled.div`
   display: flex;

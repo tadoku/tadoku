@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useMemo } from 'react'
 import {
   XYPlot,
   XAxis,
@@ -25,10 +25,15 @@ import { formatPoints } from '../../transform/format'
 interface Props {
   logs: ContestLog[]
   contest: Contest
+  effectCount: number
 }
 
-const ReadingActivityGraph = ({ logs, contest }: Props) => {
-  const data = aggregateReadingActivity(logs, contest)
+const ReadingActivityGraph = ({ logs, contest, effectCount }: Props) => {
+  const data = useMemo(() => aggregateReadingActivity(logs, contest), [
+    effectCount,
+    logs,
+    contest,
+  ])
   const [selected, setSelected] = useState(
     undefined as undefined | LineMarkSeriesPoint,
   )

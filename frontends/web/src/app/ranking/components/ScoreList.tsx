@@ -2,9 +2,9 @@ import React from 'react'
 import styled from 'styled-components'
 import media from 'styled-media-query'
 
-import { amountToPages, pagesLabel } from '../transform/graph'
 import { SubHeading } from '../../ui/components'
 import { RankingRegistrationOverview } from '../interfaces'
+import { scoreLabel, formatScore } from '../transform/format'
 
 interface Props {
   registrationOverview: RankingRegistrationOverview
@@ -15,8 +15,8 @@ const ScoreList = ({ registrationOverview }: Props) => {
     <Scores>
       {registrationOverview.registrations.map(r => (
         <Score key={r.languageCode}>
-          <ScoreLabel>{pagesLabel(r.languageCode)}</ScoreLabel>
-          <ScoreValue>{amountToPages(r.amount)}</ScoreValue>
+          <ScoreLabel>{scoreLabel(r.languageCode)}</ScoreLabel>
+          <ScoreValue>{formatScore(r.amount)}</ScoreValue>
         </Score>
       ))}
     </Scores>

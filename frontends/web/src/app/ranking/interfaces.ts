@@ -78,10 +78,3 @@ export interface RawContestLog {
   description: string
   date: string
 }
-
-export interface AggregatedContestLogsByDayEntry {
-  x: Date // day for x axis
-  y: number // page count for y axis
-  language: string
-  size: number
-}

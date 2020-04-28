@@ -1,19 +1,10 @@
-import {
-  AggregatedContestLogsByDayEntry,
-  ContestLog,
-  Ranking,
-  RankingRegistrationOverview,
-  RankingWithRank,
-} from '../interfaces'
+import { ContestLog, Ranking, RankingRegistrationOverview } from '../interfaces'
 import { Contest } from '../../contest/interfaces'
-import {
-  languageNameByCode,
-  mediumDescriptionById,
-  GlobalLanguage,
-} from '../database'
+import { languageNameByCode, mediumDescriptionById } from '../database'
 import { graphColor } from '../../ui/components/Graphs'
 
-export const prettyDate = (date: Date): string =>
+// Utils
+const prettyDate = (date: Date): string =>
   `${date.getUTCFullYear()}-${date.getUTCMonth() + 1}-${date.getUTCDate()}`
 
 const getDates = (startDate: Date, endDate: Date) => {
@@ -27,7 +18,7 @@ const getDates = (startDate: Date, endDate: Date) => {
     ),
   )
 
-  while (currentDate <= endDate) {
+  while (currentDate < endDate) {
     dates.push(currentDate)
 
     currentDate = new Date(
@@ -42,21 +33,29 @@ const getDates = (startDate: Date, endDate: Date) => {
   return dates
 }
 
-interface AggregatedByDaysResult {
+// Graph aggregators
+
+interface AggregatedReadingActivity {
   aggregated: {
-    [languageCode: string]: AggregatedContestLogsByDayEntry[]
+    [languageCode: string]: AggregatedReadingActivityEntry[]
   }
   legend: {
     title: string
   }[]
 }
 
-export const aggregateContestLogsByDays = (
+export interface AggregatedReadingActivityEntry {
+  x: string // date in iso string for x axis
+  y: number // page count for y axis
+  language: string
+}
+
+export const aggregateReadingActivity = (
   logs: ContestLog[],
   contest: Contest,
-): AggregatedByDaysResult => {
+): AggregatedReadingActivity => {
   const aggregated: {
-    [languageCode: string]: { [date: string]: AggregatedContestLogsByDayEntry }
+    [languageCode: string]: { [date: string]: AggregatedReadingActivityEntry }
   } = {}
 
   const languages: string[] = []
@@ -74,15 +73,14 @@ export const aggregateContestLogsByDays = (
   })
 
   const initializedSeries: {
-    [date: string]: AggregatedContestLogsByDayEntry
+    [date: string]: AggregatedReadingActivityEntry
   } = {}
 
   getDates(contest.start, contest.end).forEach(date => {
     initializedSeries[prettyDate(date)] = {
-      x: date,
+      x: date.toISOString(),
       y: 0,
       language: '',
-      size: 2,
     }
   })
 
@@ -108,7 +106,7 @@ export const aggregateContestLogsByDays = (
     }
   })
 
-  const result: AggregatedByDaysResult = { aggregated: {}, legend }
+  const result: AggregatedReadingActivity = { aggregated: {}, legend }
 
   Object.keys(aggregated).forEach(languageCode => {
     result.aggregated[languageCode] = Object.values(aggregated[languageCode])
@@ -117,7 +115,7 @@ export const aggregateContestLogsByDays = (
   return result
 }
 
-interface AggregatedByMediumResult {
+interface AggregatedMediaDistribution {
   aggregated: {
     amount: number
     medium: string
@@ -132,9 +130,9 @@ interface AggregatedByMediumResult {
   }[]
 }
 
-export const aggregateContestLogsByMedium = (
+export const aggregateMediaDistribution = (
   logs: ContestLog[],
-): AggregatedByMediumResult => {
+): AggregatedMediaDistribution => {
   const aggregated: {
     [mediumId: number]: number
   } = {}
@@ -193,71 +191,5 @@ export const rankingsToRegistrationOverview = (
     userId: rankings[0].userId,
     userDisplayName: rankings[0].userDisplayName,
     registrations,
-  }
-}
-
-export const amountToPages = (amount: number) => Math.round(amount * 10) / 10
-
-export const pagesLabel = (languageCode: string) => {
-  if (languageCode == GlobalLanguage.code) {
-    return 'Overall score'
-  }
-
-  return `Score for ${languageNameByCode(languageCode)}`
-}
-
-export const calculateLeaderboard = (
-  rankings: Ranking[],
-): RankingWithRank[] => {
-  const initialRankingsByScore: { [key: number]: Ranking[] } = {}
-
-  const rankingsByScore = rankings.reduce((scores, ranking) => {
-    if (!scores[ranking.amount]) {
-      scores[ranking.amount] = []
-    }
-
-    scores[ranking.amount].push(ranking)
-
-    return scores
-  }, initialRankingsByScore)
-
-  const sortedScores = Object.keys(rankingsByScore)
-    .map(n => Number(n))
-    .sort((a, b) => b - a)
-
-  const initialResult: {
-    currentRank: number
-    rankings: RankingWithRank[]
-  } = {
-    currentRank: 1,
-    rankings: [],
-  }
-
-  const result = sortedScores.reduce((result, score) => {
-    const rankings = rankingsByScore[score]
-
-    const newRankings = rankings.map(ranking => ({
-      data: ranking,
-      tied: rankings.length > 1,
-      rank: result.currentRank,
-    }))
-
-    result.rankings.push(...newRankings)
-    result.currentRank += rankings.length
-
-    return result
-  }, initialResult)
-
-  return result.rankings
-}
-
-export const amountToString = (amount: number): string => {
-  switch (amount) {
-    case 0:
-      return 'No pages'
-    case 1:
-      return '1 page'
-    default:
-      return `${amountToPages(amount)} pages`
   }
 }

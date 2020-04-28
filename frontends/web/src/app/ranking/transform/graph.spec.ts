@@ -1,9 +1,6 @@
-import {
-  aggregateContestLogsByDays,
-  aggregateContestLogsByMedium,
-} from './graph'
+import { aggregateReadingActivity, aggregateMediaDistribution } from './graph'
 
-describe('aggregateContestLogsByDays', () => {
+describe('aggregateReadingActivity', () => {
   it('should aggregate correctly', () => {
     const contest = {
       id: 1,
@@ -48,25 +45,22 @@ describe('aggregateContestLogsByDays', () => {
       },
     ]
 
-    expect(aggregateContestLogsByDays(logs, contest)).toStrictEqual({
+    expect(aggregateReadingActivity(logs, contest)).toStrictEqual({
       aggregated: {
         jpn: [
           {
             language: 'Japanese',
-            size: 2,
-            x: new Date('2019-06-01T00:00:00.000Z'),
+            x: '2019-06-01T00:00:00.000Z',
             y: 11,
           },
           {
             language: 'Japanese',
-            size: 2,
-            x: new Date('2019-06-02T00:00:00.000Z'),
+            x: '2019-06-02T00:00:00.000Z',
             y: 26,
           },
           {
             language: 'Japanese',
-            size: 2,
-            x: new Date('2019-06-03T00:00:00.000Z'),
+            x: '2019-06-03T00:00:00.000Z',
             y: 14.3,
           },
         ],
@@ -76,7 +70,7 @@ describe('aggregateContestLogsByDays', () => {
   })
 })
 
-describe('aggregateContestLogsByMedium', () => {
+describe('aggregateMediaDistribution', () => {
   it('should aggregate correctly', () => {
     const logs = [
       {
@@ -114,7 +108,7 @@ describe('aggregateContestLogsByMedium', () => {
       },
     ]
 
-    const result = aggregateContestLogsByMedium(logs)
+    const result = aggregateMediaDistribution(logs)
     expect(result).toStrictEqual({
       aggregated: [
         {

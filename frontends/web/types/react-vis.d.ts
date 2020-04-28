@@ -1082,7 +1082,18 @@ declare module 'react-vis' {
     getXYPlotValues: (props?: any, children?: any) => any;
     literalScale: (defaultValue?: any) => any;
   };
-}
+
+
+  export interface ChartLabelProps {
+    text?: string
+    includeMargin?: boolean
+    className?: string;
+    style?: CSSProperties;
+    xPercent?: number
+    yPercent?: number
+  }
+  export const ChartLabel: SFC<ChartLabelProps>;
+} // END react-vis
 
 declare module 'react-vis/es/plot/series/abstract-series' {
   import { AbstractSeries } from 'react-vis';
@@ -1343,4 +1354,8 @@ declare module 'react-vis/es/make-vis-flexible' {
     FlexibleWidthXYPlot,
     FlexibleHeightXYPlot,
   } from 'react-vis';
+}
+
+declare module 'react-vis/es/plot/chart-label' { 
+  export { ChartLabel } from 'react-vis'
 }

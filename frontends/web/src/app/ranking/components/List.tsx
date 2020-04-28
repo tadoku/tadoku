@@ -4,9 +4,10 @@ import styled from 'styled-components'
 import ContentLoader from 'react-content-loader'
 
 import { Ranking, RankingWithRank } from '../interfaces'
-import { amountToPages, calculateLeaderboard } from '../transform/graph'
 import Constants from '../../ui/Constants'
 import media from 'styled-media-query'
+import { aggregateRankingLeaderboard } from '../transform/ranking-leaderboard'
+import { formatScore } from '../transform/format'
 
 interface Props {
   rankings: Ranking[]
@@ -29,7 +30,7 @@ const RankingList = (props: Props) => {
     )
   }
 
-  const leaderboard = calculateLeaderboard(props.rankings)
+  const leaderboard = aggregateRankingLeaderboard(props.rankings)
 
   return (
     <Table>
@@ -57,9 +58,7 @@ const RankingRow = ({ rank, tied, data: rankingData }: RankingWithRank) => (
       <RowLink ranking={rankingData}>{rankingData.userDisplayName}</RowLink>
     </NicknameCell>
     <ScoreCell>
-      <RowLink ranking={rankingData}>
-        {amountToPages(rankingData.amount)}
-      </RowLink>
+      <RowLink ranking={rankingData}>{formatScore(rankingData.amount)}</RowLink>
     </ScoreCell>
   </Row>
 )

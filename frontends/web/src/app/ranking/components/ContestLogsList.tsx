@@ -2,9 +2,9 @@ import React from 'react'
 import { ContestLog } from '../interfaces'
 import styled from 'styled-components'
 import { languageNameByCode, mediumDescriptionById } from '../database'
-import { amountToPages } from '../transform/graph'
 import { Button, ButtonContainer } from '../../ui/components'
 import media from 'styled-media-query'
+import { formatScore } from '../transform/format'
 
 interface Props {
   logs: ContestLog[]
@@ -18,12 +18,11 @@ const ContestLogsList = (props: Props) => (
     {props.logs.map(log => (
       <Item key={log.id}>
         <UpdateText>
-          <strong>{amountToPages(log.amount)}</strong>{' '}
-          {log.amount === 1 ? 'page' : 'pages'} of{' '}
+          <strong>{formatScore(log.amount)}</strong> of{' '}
           <strong>{mediumDescriptionById(log.mediumId)}</strong> in{' '}
           <strong>{languageNameByCode(log.languageCode)}</strong> at{' '}
           <strong>{log.date.toLocaleString()}</strong> for a total of{' '}
-          <strong>{amountToPages(log.adjustedAmount)}</strong> points
+          <strong>{formatScore(log.adjustedAmount)}</strong> points
         </UpdateText>
         {props.canEdit && (
           <ActionButtonContainer>

@@ -26,7 +26,7 @@ const getDates = (startDate: Date, endDate: Date) => {
     ),
   )
 
-  while (currentDate <= endDate) {
+  while (currentDate < endDate) {
     dates.push(currentDate)
 
     currentDate = new Date(

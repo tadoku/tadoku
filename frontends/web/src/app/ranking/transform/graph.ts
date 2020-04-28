@@ -1,13 +1,10 @@
 import { ContestLog, Ranking, RankingRegistrationOverview } from '../interfaces'
 import { Contest } from '../../contest/interfaces'
-import {
-  languageNameByCode,
-  mediumDescriptionById,
-  GlobalLanguage,
-} from '../database'
+import { languageNameByCode, mediumDescriptionById } from '../database'
 import { graphColor } from '../../ui/components/Graphs'
 
-export const prettyDate = (date: Date): string =>
+// Utils
+const prettyDate = (date: Date): string =>
   `${date.getUTCFullYear()}-${date.getUTCMonth() + 1}-${date.getUTCDate()}`
 
 const getDates = (startDate: Date, endDate: Date) => {
@@ -35,6 +32,8 @@ const getDates = (startDate: Date, endDate: Date) => {
 
   return dates
 }
+
+// Graph aggregators
 
 interface AggregatedReadingActivity {
   aggregated: {
@@ -192,26 +191,5 @@ export const rankingsToRegistrationOverview = (
     userId: rankings[0].userId,
     userDisplayName: rankings[0].userDisplayName,
     registrations,
-  }
-}
-
-export const formatScore = (amount: number) => Math.round(amount * 10) / 10
-
-export const scoreLabel = (languageCode: string) => {
-  if (languageCode == GlobalLanguage.code) {
-    return 'Overall score'
-  }
-
-  return `Score for ${languageNameByCode(languageCode)}`
-}
-
-export const amountToString = (amount: number): string => {
-  switch (amount) {
-    case 0:
-      return 'No pages'
-    case 1:
-      return '1 page'
-    default:
-      return `${formatScore(amount)} pages`
   }
 }

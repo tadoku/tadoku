@@ -2,9 +2,9 @@ import React from 'react'
 import styled from 'styled-components'
 import media from 'styled-media-query'
 
-import { formatScore, scoreLabel } from '../transform/graph'
 import { SubHeading } from '../../ui/components'
 import { RankingRegistrationOverview } from '../interfaces'
+import { scoreLabel, formatScore } from '../transform/format'
 
 interface Props {
   registrationOverview: RankingRegistrationOverview

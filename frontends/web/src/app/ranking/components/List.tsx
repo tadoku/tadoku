@@ -4,10 +4,10 @@ import styled from 'styled-components'
 import ContentLoader from 'react-content-loader'
 
 import { Ranking, RankingWithRank } from '../interfaces'
-import { formatScore } from '../transform/graph'
 import Constants from '../../ui/Constants'
 import media from 'styled-media-query'
 import { aggregateRankingLeaderboard } from '../transform/ranking-leaderboard'
+import { formatScore } from '../transform/format'
 
 interface Props {
   rankings: Ranking[]

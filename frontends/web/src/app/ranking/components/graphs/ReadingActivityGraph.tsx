@@ -17,9 +17,10 @@ import styled from 'styled-components'
 
 import { ContestLog } from '../../interfaces'
 import { Contest } from '../../../contest/interfaces'
-import { aggregateReadingActivity, amountToString } from '../../transform/graph'
+import { aggregateReadingActivity } from '../../transform/graph'
 import { graphColor } from '../../../ui/components/Graphs'
 import HintContainer from './HintContainer'
+import { amountToString } from '../../transform/format'
 
 interface Props {
   logs: ContestLog[]

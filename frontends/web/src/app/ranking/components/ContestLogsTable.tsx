@@ -2,11 +2,11 @@ import React from 'react'
 import { ContestLog } from '../interfaces'
 import styled from 'styled-components'
 import { languageNameByCode, mediumDescriptionById } from '../database'
-import { formatScore } from '../transform/graph'
 import { Button, ButtonContainer } from '../../ui/components'
 import media from 'styled-media-query'
 import Constants from '../../ui/Constants'
 import { format } from 'date-fns'
+import { formatScore } from '../transform/format'
 
 interface Props {
   logs: ContestLog[]

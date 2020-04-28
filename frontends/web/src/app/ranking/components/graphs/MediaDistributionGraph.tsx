@@ -10,7 +10,8 @@ import styled from 'styled-components'
 
 import HintContainer from './HintContainer'
 import { ContestLog } from '../../interfaces'
-import { aggregateMediaDistribution, formatScore } from '../../transform/graph'
+import { aggregateMediaDistribution } from '../../transform/graph'
+import { formatScore } from '../../transform/format'
 
 interface Props {
   logs: ContestLog[]

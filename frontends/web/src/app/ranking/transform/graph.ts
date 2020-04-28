@@ -41,6 +41,7 @@ interface AggregatedReadingActivity {
   }
   legend: {
     title: string
+    strokeWidth: number
   }[]
 }
 
@@ -61,6 +62,7 @@ export const aggregateReadingActivity = (
   const languages: string[] = []
   const legend: {
     title: string
+    strokeWidth: number
   }[] = []
 
   logs.forEach(log => {
@@ -68,6 +70,7 @@ export const aggregateReadingActivity = (
       languages.push(log.languageCode)
       legend.push({
         title: languageNameByCode(log.languageCode),
+        strokeWidth: 10,
       })
     }
   })

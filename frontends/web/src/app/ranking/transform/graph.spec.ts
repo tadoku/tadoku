@@ -65,7 +65,7 @@ describe('aggregateReadingActivity', () => {
           },
         ],
       },
-      legend: [{ title: 'Japanese' }],
+      legend: [{ title: 'Japanese', strokeWidth: 10 }],
     })
   })
 })

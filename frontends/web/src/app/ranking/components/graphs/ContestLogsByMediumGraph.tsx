@@ -27,12 +27,14 @@ const Graph = ({ logs }: Props) => {
         innerRadius={60}
         radius={90}
         getAngle={(d: { amount: number }) => d.amount}
+        getLabel={(d: { medium: string }) => d.medium}
         data={data.aggregated}
         width={200}
         height={200}
         padAngle={0.04}
         onValueMouseOver={(v: RadialChartPoint) => setSelected(v)}
         onSeriesMouseOut={() => setSelected(undefined)}
+        colorType="literal"
       >
         {selected && (
           <Hint value={selected}>
@@ -66,8 +68,8 @@ const Container = styled.div`
 
 const HintContainer = styled.div`
   background: ${Constants.colors.darkWithAlpha(0.9)};
-  box-shadow: 0px 2px 7px 1px rgba(0, 0, 0, 0.25);
+  box-shadow: 0px 2px 3px 0px rgba(0, 0, 0, 0.08);
   color: ${Constants.colors.light};
   padding: 8px 12px;
-  border-radius: 4px;
+  border-radius: 0;
 `

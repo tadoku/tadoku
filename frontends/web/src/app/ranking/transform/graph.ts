@@ -121,11 +121,14 @@ interface AggregatedByMediumResult {
   aggregated: {
     amount: number
     medium: string
+    color: string
   }[]
   totalAmount: number
   legend: {
     title: string
     strokeWidth: number
+    color: string
+    amount: number
   }[]
 }
 
@@ -146,7 +149,7 @@ export const aggregateContestLogsByMedium = (
     total += log.adjustedAmount
   })
 
-  const forChart = Object.keys(aggregated)
+  let forChart = Object.keys(aggregated)
     .map(k => Number(k))
     .map((k, i) => ({
       amount: aggregated[k],
@@ -154,10 +157,13 @@ export const aggregateContestLogsByMedium = (
       color: graphColor(i),
     }))
 
-  const legend = Object.values(forChart).map(mediumStats => ({
+  forChart.sort((a, b) => b.amount - a.amount)
+
+  let legend = Object.values(forChart).map(mediumStats => ({
     title: mediumStats.medium,
     color: mediumStats.color,
     strokeWidth: 10,
+    amount: mediumStats.amount,
   }))
 
   return { aggregated: forChart, legend, totalAmount: total }

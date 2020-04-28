@@ -32,7 +32,7 @@ const MediaDistributionGraph = ({ logs }: Props) => {
         getLabel={(d: { medium: string }) => d.medium}
         data={data.aggregated}
         width={200}
-        height={200}
+        height={220}
         padAngle={0.04}
         onValueMouseOver={(v: RadialChartPoint) => setSelected(v)}
         onSeriesMouseOut={() => setSelected(undefined)}
@@ -51,8 +51,7 @@ const MediaDistributionGraph = ({ logs }: Props) => {
       <DiscreteColorLegend
         items={data.legend}
         orientation="horizontal"
-        height={60}
-        style={{ textAlign: 'center' }}
+        height={52}
       />
     </Container>
   )

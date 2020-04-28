@@ -28,7 +28,7 @@ export default ScoreList
 const Scores = styled.div`
   display: flex;
   flex-direction: row;
-  justify-content: space-between;
+  justify-content: left;
   margin-bottom: 20px;
   width: 100%;
   flex-wrap: wrap;
@@ -39,8 +39,10 @@ const Scores = styled.div`
 `
 
 const Score = styled.div`
-  width: 20%;
+  width: 25%;
   height: 100px;
+  box-sizing: border-box;
+  padding-right: 30px;
 
   ${media.lessThan('medium')`
     width: 50%;

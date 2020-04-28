@@ -166,16 +166,23 @@ const GraphContainer = styled.div`
 
 const LargeCard = styled.div`
   margin-top: 30px;
-  padding: 30px;
+  padding: 30px 30px 21px;
   box-shadow: 0px 2px 3px 0px rgba(0, 0, 0, 0.08);
   box-sizing: border-box;
   background: ${Constants.colors.light};
+
+  .rv-discrete-color-legend {
+    overflow-y: hidden;
+
+    .rv-discrete-color-legend-item {
+      padding: 9px 4px;
+    }
+  }
 `
 
 const OverallGraph = styled(LargeCard)`
   flex: 1 1 0;
   margin-right: 30px;
-  padding-bottom: 21px;
   max-width: calc(100% - 260px - 30px);
   ${media.lessThan('large')`max-width: 100%;`}
 `

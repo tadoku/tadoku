@@ -46,8 +46,7 @@ declare module 'react-vis' {
   export type RVGetNull<T extends AbstractSeriesPoint> = (datapoint: T) => any;
   export type RVGetAlignStyle = (align: {horizontal: string, vertical: string}, x: number, y: number) => CSSProperties;
 
-  export type RVTickFormat = (tick: any) => string;
-
+  export type RVTickFormat = (tick: any, index: number, scale: any, tickTotal: number) => string;
 
   export interface LineSeriesPoint extends AbstractSeriesPoint {
     x: number;

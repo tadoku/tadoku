@@ -44,7 +44,15 @@ const ReadingActivityGraph = ({ logs, contest }: Props) => {
         <HorizontalGridLines />
         <VerticalGridLines />
         <XAxis
-          tickFormat={raw => {
+          tickFormat={(raw, i) => {
+            const length =
+              data.aggregated[Object.keys(data.aggregated)[0]].length
+            if (length > 40 && i % 3 != 0) {
+              return ''
+            }
+            if (length > 20 && length < 40 && i % 2 != 0) {
+              return ''
+            }
             return `${format(new Date(raw), 'MMM dd')}`
           }}
           tickLabelAngle={-55}

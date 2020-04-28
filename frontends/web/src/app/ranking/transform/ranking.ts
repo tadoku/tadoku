@@ -1,4 +1,8 @@
-import { Ranking, RawRanking } from './../interfaces'
+import {
+  Ranking,
+  RawRanking,
+  RankingRegistrationOverview,
+} from './../interfaces'
 import { Mapper, Mappers } from '../../interfaces'
 import { Serializer } from '../../cache'
 import { createMappers, createCollectionSerializer } from '../../transform'
@@ -27,3 +31,30 @@ export const rankingMapper: Mappers<RawRanking, Ranking> = createMappers({
 export const rankingCollectionSerializer: Serializer<
   Ranking[]
 > = createCollectionSerializer(rankingMapper)
+
+export const rankingsToRegistrationOverview = (
+  rankings: Ranking[],
+): RankingRegistrationOverview | undefined => {
+  if (rankings.length === 0) {
+    return undefined
+  }
+
+  const registrations = rankings
+    .map(r => ({
+      languageCode: r.languageCode,
+      amount: r.amount,
+    }))
+    .reduce((acc, element) => {
+      if (element.languageCode === 'GLO') {
+        return [element, ...acc]
+      }
+      return [...acc, element]
+    }, [] as { languageCode: string; amount: number }[])
+
+  return {
+    contestId: rankings[0].contestId,
+    userId: rankings[0].userId,
+    userDisplayName: rankings[0].userDisplayName,
+    registrations,
+  }
+}

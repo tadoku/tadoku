@@ -48,6 +48,7 @@ export interface RawRankingRegistration {
 export interface Medium {
   id: number
   description: string
+  unit: string
 }
 
 export interface Language {

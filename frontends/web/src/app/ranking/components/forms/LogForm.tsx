@@ -1,5 +1,5 @@
 import React, { FormEvent, useState } from 'react'
-import { AllMediums, languageNameByCode } from '../../database'
+import { allMedia } from '../../database'
 import { connect } from 'react-redux'
 import { RootState } from '../../../store'
 import { RankingRegistration, ContestLog } from '../../interfaces'
@@ -18,6 +18,7 @@ import {
 import { Button, StackContainer } from '../../../ui/components'
 import { validateLanguageCode, validateAmount } from '../../domain'
 import { rankingRegistrationMapper } from '../../transform/ranking-registration'
+import { formatMediaUnit, formatLanguageName } from '../../transform/format'
 
 interface Props {
   log?: ContestLog
@@ -123,7 +124,7 @@ const LogForm = ({
       <ErrorMessage message={error} />
       <Group>
         <Label>
-          <LabelText>Pages read</LabelText>
+          <LabelText>{formatMediaUnit(parseInt(mediumId))} read</LabelText>
           <Input
             type="number"
             placeholder="e.g. 7"
@@ -141,7 +142,7 @@ const LogForm = ({
         <Label>
           <LabelText>Medium</LabelText>
           <Select value={mediumId} onChange={e => setMediumId(e.target.value)}>
-            {AllMediums.map(m => (
+            {allMedia.map(m => (
               <option value={m.id} key={m.id}>
                 {m.description}
               </option>
@@ -170,7 +171,7 @@ const LogForm = ({
               value={code}
               checked={code === languageCode}
               onChange={e => setLanguageCode(e.target.value)}
-              label={languageNameByCode(code)}
+              label={formatLanguageName(code)}
             />
           ))}
           <GroupError

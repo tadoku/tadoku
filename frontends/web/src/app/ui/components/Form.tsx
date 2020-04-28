@@ -83,9 +83,14 @@ const RadioLabel = styled(Label)`
   align-items: center;
   padding: 3px 8px;
   height: 44px;
+  box-sizing: border-box;
   transition: all 0.2s ease;
   border: 1px solid transparent;
   border-bottom-width: 3px;
+
+  & + & {
+    margin-top: 0px;
+  }
 
   ${({ checked }: LabelForRadioProps) =>
     checked &&
@@ -122,7 +127,7 @@ const StyledRadio = styled.span`
     background:  ${Constants.colors.primary};
     &:after {
       content: '';
-      border: 0.5px solid white;
+      border: 2px solid white;
       position: absolute;
       left: 0px;
       right: 0px;

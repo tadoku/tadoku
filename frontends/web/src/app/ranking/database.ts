@@ -1,17 +1,17 @@
 import { Medium, Language } from './interfaces'
 
-export const AllMediums: Medium[] = [
-  { id: 1, description: 'Book' },
-  { id: 2, description: 'Comic' },
-  { id: 3, description: 'Net' },
-  { id: 4, description: 'Full game' },
-  { id: 5, description: 'Game' },
-  { id: 6, description: 'Lyric' },
-  { id: 7, description: 'News' },
-  { id: 8, description: 'Sentences' },
+export const allMedia: Medium[] = [
+  { id: 1, description: 'Book', unit: 'Pages' },
+  { id: 2, description: 'Comic', unit: 'Pages' },
+  { id: 3, description: 'Net', unit: 'Articles' },
+  { id: 4, description: 'Full game', unit: 'Screens' },
+  { id: 5, description: 'Game', unit: 'Screens' },
+  { id: 6, description: 'Lyric', unit: 'Songs' },
+  { id: 7, description: 'News', unit: 'Articles' },
+  { id: 8, description: 'Sentences', unit: 'Sentences' },
 ]
 
-export const MediumById: { [key: number]: Medium } = AllMediums.reduce(
+export const mediaByID: { [key: number]: Medium } = allMedia.reduce(
   (previous, current) => {
     return {
       ...previous,
@@ -21,9 +21,7 @@ export const MediumById: { [key: number]: Medium } = AllMediums.reduce(
   {},
 )
 
-export const mediumDescriptionById = (id: number) => MediumById[id].description
-
-export const AllLanguages: Language[] = [
+export const allLanguages: Language[] = [
   { code: 'ara', name: 'Arabic' },
   { code: 'zho', name: 'Chinese' },
   { code: 'hrv', name: 'Croatian' },
@@ -49,7 +47,7 @@ export const AllLanguages: Language[] = [
   { code: 'tur', name: 'Turkish' },
 ]
 
-export const LanguageByCode: { [key: string]: Language } = AllLanguages.reduce(
+export const languageByCode: { [key: string]: Language } = allLanguages.reduce(
   (previous, current) => {
     return {
       ...previous,
@@ -59,10 +57,7 @@ export const LanguageByCode: { [key: string]: Language } = AllLanguages.reduce(
   {},
 )
 
-export const GlobalLanguage: Language = {
+export const globalLanguage: Language = {
   code: 'GLO',
   name: 'Total',
 }
-
-export const languageNameByCode = (code: string) =>
-  (LanguageByCode[code] || GlobalLanguage).name

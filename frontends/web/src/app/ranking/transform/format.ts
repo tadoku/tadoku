@@ -1,13 +1,19 @@
-import { GlobalLanguage, languageNameByCode } from '../database'
+import { globalLanguage, mediaByID, languageByCode } from '../database'
+
+export const formatMediaDescription = (id: number) => mediaByID[id].description
+export const formatMediaUnit = (id: number) => mediaByID[id].unit
+
+export const formatLanguageName = (code: string) =>
+  (languageByCode[code] || globalLanguage).name
 
 export const formatScore = (amount: number) => Math.round(amount * 10) / 10
 
 export const scoreLabel = (languageCode: string) => {
-  if (languageCode == GlobalLanguage.code) {
+  if (languageCode == globalLanguage.code) {
     return 'Overall score'
   }
 
-  return `Score for ${languageNameByCode(languageCode)}`
+  return `Score for ${formatLanguageName(languageCode)}`
 }
 
 export const formatPoints = (amount: number): string => {

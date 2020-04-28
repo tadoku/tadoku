@@ -81,8 +81,8 @@ const FooterContent = ({ contests }: Props) => (
     <Navigation>
       <Menu>
         <MenuHeading>Get started</MenuHeading>
-        <Link href="/" passHref>
-          <a>Home</a>
+        <Link href="/landing" passHref>
+          <a>About</a>
         </Link>
         <Link href="/blog" passHref>
           <a>Blog</a>

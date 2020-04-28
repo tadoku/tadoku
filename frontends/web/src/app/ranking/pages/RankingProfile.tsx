@@ -21,6 +21,8 @@ import { rankingCollectionSerializer } from '../transform/ranking'
 import Constants from '../../ui/Constants'
 import ScoreList from '../components/ScoreList'
 import media from 'styled-media-query'
+import SubmitPagesButton from '../components/SubmitPagesButton'
+import { rankingRegistrationMapper } from '../transform/ranking-registration'
 
 interface Props {
   contestId: number
@@ -36,6 +38,10 @@ const RankingProfile = ({
   refreshRanking,
 }: Props) => {
   const signedInUser = useSelector((state: RootState) => state.session.user)
+  const rankingRegistration = useSelector((state: RootState) =>
+    rankingRegistrationMapper.optional.fromRaw(state.ranking.rawRegistration),
+  )
+
   const { data: contest, status: statusContest } = useCachedApiState<
     Contest | undefined
   >({
@@ -120,13 +126,19 @@ const RankingProfile = ({
           <RoundDescription>{contest.description}</RoundDescription>
         </div>
         {signedInUser && userId === signedInUser.id && (
-          <ButtonLink
-            href={dataUrl}
-            download={`tadoku-contest-${contestId}-data.json`}
-            icon="file-download"
-          >
-            Export data
-          </ButtonLink>
+          <ActionContainer>
+            <ButtonLink
+              href={dataUrl}
+              download={`tadoku-contest-${contestId}-data.json`}
+              icon="file-download"
+            >
+              Export data
+            </ButtonLink>
+            <SubmitPagesButton
+              registration={rankingRegistration}
+              refreshRanking={refreshRanking}
+            />
+          </ActionContainer>
         )}
       </HeaderContainer>
       <ScoreList registrationOverview={registrationOverview} />
@@ -208,4 +220,8 @@ const RoundDescription = styled(SubHeading)`
 const GraphHeading = styled(SubHeading)`
   margin-bottom: 15px;
   margin-top: 0;
+`
+
+const ActionContainer = styled.div`
+  display: flex;
 `

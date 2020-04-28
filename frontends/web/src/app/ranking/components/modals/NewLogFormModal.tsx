@@ -15,7 +15,7 @@ const NewLogFormModal = ({
     <Modal
       isOpen={isOpen}
       onRequestClose={onCancel}
-      contentLabel="Submit new pages"
+      contentLabel="Submit an update"
     >
       <LogForm onSuccess={onSuccess} onCancel={onCancel} />
     </Modal>

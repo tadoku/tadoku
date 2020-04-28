@@ -9,7 +9,7 @@ import { User } from '../../session/interfaces'
 import JoinContestModal from '../components/modals/JoinContestModal'
 import { useCachedApiState, ApiFetchStatus } from '../../cache'
 import { rankingCollectionSerializer } from '../transform/ranking'
-import { isContestActive } from '../domain'
+import { isRegisteredForContest, canJoinContest } from '../domain'
 import SubmitPagesButton from '../components/SubmitPagesButton'
 
 interface Props {
@@ -43,10 +43,8 @@ const RankingOverview = ({
     serializer: rankingCollectionSerializer,
   })
 
-  // @TODO: extract this business logic
-  const isActive = user && contest && isContestActive(contest)
-  const isRegistered = registration?.contestId === contest.id
-  const canJoin = isActive && !isRegistered
+  const isRegistered = isRegisteredForContest(registration, contest)
+  const canJoin = canJoinContest(user, registration, contest)
 
   return (
     <>

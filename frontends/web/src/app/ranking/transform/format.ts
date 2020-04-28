@@ -10,13 +10,13 @@ export const scoreLabel = (languageCode: string) => {
   return `Score for ${languageNameByCode(languageCode)}`
 }
 
-export const amountToString = (amount: number): string => {
+export const formatPoints = (amount: number): string => {
   switch (amount) {
     case 0:
-      return 'No pages'
+      return 'No points'
     case 1:
-      return '1 page'
+      return '1 point'
     default:
-      return `${formatScore(amount)} pages`
+      return `${formatScore(amount)} points`
   }
 }

@@ -18,8 +18,7 @@ const ContestLogsList = (props: Props) => (
     {props.logs.map(log => (
       <Item key={log.id}>
         <UpdateText>
-          <strong>{formatScore(log.amount)}</strong>{' '}
-          {log.amount === 1 ? 'page' : 'pages'} of{' '}
+          <strong>{formatScore(log.amount)}</strong> of{' '}
           <strong>{mediumDescriptionById(log.mediumId)}</strong> in{' '}
           <strong>{languageNameByCode(log.languageCode)}</strong> at{' '}
           <strong>{log.date.toLocaleString()}</strong> for a total of{' '}

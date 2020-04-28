@@ -11,7 +11,7 @@ import styled from 'styled-components'
 import HintContainer from './HintContainer'
 import { ContestLog } from '../../interfaces'
 import { aggregateMediaDistribution } from '../../transform/graph'
-import { formatScore } from '../../transform/format'
+import { formatPoints } from '../../transform/format'
 
 interface Props {
   logs: ContestLog[]
@@ -41,7 +41,7 @@ const MediaDistributionGraph = ({ logs }: Props) => {
         {selected && (
           <Hint value={selected}>
             <HintContainer>
-              <strong>{formatScore(selected.amount)}</strong> points from{' '}
+              <strong>{formatPoints(selected.amount)}</strong> from{' '}
               <strong>{selected.medium.toLowerCase()}</strong> (
               {Math.floor((selected.amount / data.totalAmount) * 100)}%)
             </HintContainer>

@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import Router from 'next/router'
 import styled, { createGlobalStyle } from 'styled-components'
 import { useDispatch, useSelector } from 'react-redux'
 import media from 'styled-media-query'
@@ -16,6 +17,7 @@ const LandingPage = () => {
   const dispatch = useDispatch()
   const refreshSession = () => {
     dispatch(RankingStore.runEffects())
+    Router.push('/blog')
   }
 
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false)

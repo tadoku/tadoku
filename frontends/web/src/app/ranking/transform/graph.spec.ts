@@ -1,4 +1,4 @@
-import { aggregateReadingActivity, aggregateContestLogsByMedium } from './graph'
+import { aggregateReadingActivity, aggregateMediaDistribution } from './graph'
 
 describe('aggregateReadingActivity', () => {
   it('should aggregate correctly', () => {
@@ -70,7 +70,7 @@ describe('aggregateReadingActivity', () => {
   })
 })
 
-describe('aggregateContestLogsByMedium', () => {
+describe('aggregateMediaDistribution', () => {
   it('should aggregate correctly', () => {
     const logs = [
       {
@@ -108,7 +108,7 @@ describe('aggregateContestLogsByMedium', () => {
       },
     ]
 
-    const result = aggregateContestLogsByMedium(logs)
+    const result = aggregateMediaDistribution(logs)
     expect(result).toStrictEqual({
       aggregated: [
         {

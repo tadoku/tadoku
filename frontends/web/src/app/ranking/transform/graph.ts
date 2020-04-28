@@ -121,7 +121,7 @@ export const aggregateReadingActivity = (
   return result
 }
 
-interface AggregatedByMediumResult {
+interface AggregatedMediaDistribution {
   aggregated: {
     amount: number
     medium: string
@@ -136,9 +136,9 @@ interface AggregatedByMediumResult {
   }[]
 }
 
-export const aggregateContestLogsByMedium = (
+export const aggregateMediaDistribution = (
   logs: ContestLog[],
-): AggregatedByMediumResult => {
+): AggregatedMediaDistribution => {
   const aggregated: {
     [mediumId: number]: number
   } = {}

@@ -1356,6 +1356,6 @@ declare module 'react-vis/es/make-vis-flexible' {
   } from 'react-vis';
 }
 
-declare module 'react-vis/es/plot/chart-label' {
+declare module 'react-vis/es/plot/chart-label' { 
   export { ChartLabel } from 'react-vis'
 }

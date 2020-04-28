@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { ContestLog } from '../../interfaces'
-import { aggregateContestLogsByMedium } from '../../transform/graph'
+import { aggregateMediaDistribution } from '../../transform/graph'
 import {
   makeWidthFlexible,
   DiscreteColorLegend,
@@ -15,8 +15,8 @@ interface Props {
   logs: ContestLog[]
 }
 
-const Graph = ({ logs }: Props) => {
-  const data = aggregateContestLogsByMedium(logs)
+const MediaDistributionGraph = ({ logs }: Props) => {
+  const data = aggregateMediaDistribution(logs)
   const [selected, setSelected] = useState(
     undefined as undefined | RadialChartPoint,
   )
@@ -55,7 +55,7 @@ const Graph = ({ logs }: Props) => {
   )
 }
 
-export default Graph
+export default MediaDistributionGraph
 
 const FlexibleRadialChart = makeWidthFlexible(RadialChart)
 

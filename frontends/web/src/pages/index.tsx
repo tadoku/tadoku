@@ -11,6 +11,8 @@ const Home = () => {
   useEffect(() => {
     if (user) {
       Router.replace('/blog')
+    } else {
+      Router.replace('/landing')
     }
   }, [user])
 

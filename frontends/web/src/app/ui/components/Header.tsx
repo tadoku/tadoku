@@ -7,13 +7,17 @@ import Constants from '../Constants'
 import NavigationBar from './navigation/NavigationBar'
 import { Logo } from './index'
 
-const Header = () => {
+interface Props {
+  homeURL: string
+}
+
+const Header = ({ homeURL }: Props) => {
   const [isOpen, setIsOpen] = useState(false)
 
   return (
     <Container>
       <InnerContainer>
-        <Link href="/" passHref>
+        <Link href={homeURL} passHref>
           <LogoLink href="">
             <Logo />
           </LogoLink>

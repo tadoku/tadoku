@@ -16,6 +16,7 @@ interface Props {
 
 const Layout: React.SFC<Props> = ({ children, overridesLayout }) => {
   const isLoading = useSelector((state: RootState) => state.app.isLoading)
+  const user = useSelector((state: RootState) => state.session.user)
   const contests = useSelector((state: RootState) =>
     state.contest.recentContests.map(contestMapper.fromRaw),
   )
@@ -29,12 +30,14 @@ const Layout: React.SFC<Props> = ({ children, overridesLayout }) => {
     )
   }
 
+  const homeURL = user ? '/blog' : '/landing'
+
   return (
     <div>
       <ActivityIndicator isLoading={isLoading} />
       <GlobalStyle {...Constants} />
       <StickyFooterContainer>
-        <Header />
+        <Header homeURL={homeURL} />
         <Container>{children}</Container>
       </StickyFooterContainer>
       <Footer contests={contests} />

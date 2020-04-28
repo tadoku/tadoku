@@ -200,9 +200,9 @@ export const rankingsToRegistrationOverview = (
   }
 }
 
-export const amountToPages = (amount: number) => Math.round(amount * 10) / 10
+export const formatScore = (amount: number) => Math.round(amount * 10) / 10
 
-export const pagesLabel = (languageCode: string) => {
+export const scoreLabel = (languageCode: string) => {
   if (languageCode == GlobalLanguage.code) {
     return 'Overall score'
   }
@@ -262,6 +262,6 @@ export const amountToString = (amount: number): string => {
     case 1:
       return '1 page'
     default:
-      return `${amountToPages(amount)} pages`
+      return `${formatScore(amount)} pages`
   }
 }

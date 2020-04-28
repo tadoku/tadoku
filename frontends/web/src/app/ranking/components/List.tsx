@@ -4,7 +4,7 @@ import styled from 'styled-components'
 import ContentLoader from 'react-content-loader'
 
 import { Ranking, RankingWithRank } from '../interfaces'
-import { amountToPages, calculateLeaderboard } from '../transform/graph'
+import { formatScore, calculateLeaderboard } from '../transform/graph'
 import Constants from '../../ui/Constants'
 import media from 'styled-media-query'
 
@@ -57,9 +57,7 @@ const RankingRow = ({ rank, tied, data: rankingData }: RankingWithRank) => (
       <RowLink ranking={rankingData}>{rankingData.userDisplayName}</RowLink>
     </NicknameCell>
     <ScoreCell>
-      <RowLink ranking={rankingData}>
-        {amountToPages(rankingData.amount)}
-      </RowLink>
+      <RowLink ranking={rankingData}>{formatScore(rankingData.amount)}</RowLink>
     </ScoreCell>
   </Row>
 )

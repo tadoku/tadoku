@@ -1,11 +1,4 @@
 import React, { useState } from 'react'
-import { ContestLog } from '../../interfaces'
-import { Contest } from '../../../contest/interfaces'
-import {
-  aggregateReadingActivity,
-  prettyDate,
-  amountToString,
-} from '../../transform/graph'
 import {
   XYPlot,
   XAxis,
@@ -19,10 +12,14 @@ import {
   makeWidthFlexible,
   ChartLabel,
 } from 'react-vis'
-import styled from 'styled-components'
-import Constants from '../../../ui/Constants'
-import { graphColor } from '../../../ui/components/Graphs'
 import { format } from 'date-fns'
+import styled from 'styled-components'
+
+import { ContestLog } from '../../interfaces'
+import { Contest } from '../../../contest/interfaces'
+import { aggregateReadingActivity, amountToString } from '../../transform/graph'
+import { graphColor } from '../../../ui/components/Graphs'
+import HintContainer from './HintContainer'
 
 interface Props {
   logs: ContestLog[]
@@ -64,9 +61,10 @@ const ReadingActivityGraph = ({ logs, contest }: Props) => {
         {selected && (
           <Hint value={selected}>
             <HintContainer>
-              {amountToString(selected.y as number)} in {selected.language} on
+              <strong>{amountToString(selected.y as number)}</strong> in{' '}
+              <strong>{selected.language}</strong> on
               <br />
-              {prettyDate(new Date(selected.x))}
+              {format(new Date(selected.x), 'MMMM do')}
             </HintContainer>
           </Hint>
         )}
@@ -130,12 +128,4 @@ const Container = styled.div`
   display: flex;
   flex-direction: column;
   align-items: stretch;
-`
-
-const HintContainer = styled.div`
-  background: ${Constants.colors.darkWithAlpha(0.9)};
-  box-shadow: 0px 2px 7px 1px rgba(0, 0, 0, 0.25);
-  color: ${Constants.colors.light};
-  padding: 8px 12px;
-  border-radius: 4px;
 `

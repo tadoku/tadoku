@@ -2,7 +2,7 @@ import React from 'react'
 import { ContestLog } from '../interfaces'
 import styled from 'styled-components'
 import { languageNameByCode, mediumDescriptionById } from '../database'
-import { amountToPages } from '../transform/graph'
+import { formatScore } from '../transform/graph'
 import { Button, ButtonContainer } from '../../ui/components'
 import media from 'styled-media-query'
 import Constants from '../../ui/Constants'
@@ -38,10 +38,10 @@ const ContestLogsTable = (props: Props) => (
           <Column>{mediumDescriptionById(l.mediumId)}</Column>
           <Column limit>{l.description || 'N/A'}</Column>
           <Column alignRight>
-            <strong>{amountToPages(l.amount)}</strong>
+            <strong>{formatScore(l.amount)}</strong>
           </Column>
           <Column alignRight>
-            <strong>{amountToPages(l.adjustedAmount)}</strong>
+            <strong>{formatScore(l.adjustedAmount)}</strong>
           </Column>
           {props.canEdit && (
             <Column style={{ width: '1px', whiteSpace: 'nowrap' }}>

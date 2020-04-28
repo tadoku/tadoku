@@ -1,6 +1,4 @@
 import React, { useState } from 'react'
-import { ContestLog } from '../../interfaces'
-import { aggregateMediaDistribution } from '../../transform/graph'
 import {
   makeWidthFlexible,
   DiscreteColorLegend,
@@ -9,7 +7,10 @@ import {
   RadialChartPoint,
 } from 'react-vis'
 import styled from 'styled-components'
-import Constants from '../../../ui/Constants'
+
+import HintContainer from './HintContainer'
+import { ContestLog } from '../../interfaces'
+import { aggregateMediaDistribution, formatScore } from '../../transform/graph'
 
 interface Props {
   logs: ContestLog[]
@@ -39,7 +40,8 @@ const MediaDistributionGraph = ({ logs }: Props) => {
         {selected && (
           <Hint value={selected}>
             <HintContainer>
-              {selected.amount} points from {selected.medium.toLowerCase()} (
+              <strong>{formatScore(selected.amount)}</strong> points from{' '}
+              <strong>{selected.medium.toLowerCase()}</strong> (
               {Math.floor((selected.amount / data.totalAmount) * 100)}%)
             </HintContainer>
           </Hint>
@@ -64,12 +66,4 @@ const Container = styled.div`
   flex-direction: column;
   align-items: stretch;
   width: 200px;
-`
-
-const HintContainer = styled.div`
-  background: ${Constants.colors.darkWithAlpha(0.9)};
-  box-shadow: 0px 2px 3px 0px rgba(0, 0, 0, 0.08);
-  color: ${Constants.colors.light};
-  padding: 8px 12px;
-  border-radius: 0;
 `

@@ -5,13 +5,15 @@ import media from 'styled-media-query'
 import SignupCard from './SignupCard'
 import { Logo } from '../../ui/components'
 import Constants from '../../ui/Constants'
+import { User } from '../../session/interfaces'
 
 interface Props {
   refreshSession: () => void
   openLoginModal: () => void
+  user: User | undefined
 }
 
-const Header = ({ refreshSession, openLoginModal }: Props) => (
+const Header = ({ refreshSession, openLoginModal, user }: Props) => (
   <Background>
     <Grid>
       <IntroCard>
@@ -22,10 +24,12 @@ const Header = ({ refreshSession, openLoginModal }: Props) => (
           building a habit of reading in your non-native languages.
         </Tagline>
       </IntroCard>
-      <SignupCard
-        refreshSession={refreshSession}
-        openLoginModal={openLoginModal}
-      />
+      {!user && (
+        <SignupCard
+          refreshSession={refreshSession}
+          openLoginModal={openLoginModal}
+        />
+      )}
     </Grid>
   </Background>
 )

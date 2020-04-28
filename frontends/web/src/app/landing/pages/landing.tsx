@@ -22,6 +22,7 @@ const LandingPage = () => {
   const contests = useSelector((state: RootState) =>
     state.contest.recentContests.map(contestMapper.fromRaw),
   )
+  const user = useSelector((state: RootState) => state.session.user)
 
   return (
     <Container>
@@ -35,6 +36,7 @@ const LandingPage = () => {
         <Header
           refreshSession={refreshSession}
           openLoginModal={() => setIsLoginModalOpen(true)}
+          user={user}
         />
         <Content>
           <Card>

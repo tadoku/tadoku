@@ -129,8 +129,13 @@ describe('aggregateContestLogsByMedium', () => {
         },
       ],
       legend: [
-        { title: 'Book', color: '#12939A', strokeWidth: 10 },
-        { title: 'Full game', color: '#79C7E3', strokeWidth: 10 },
+        { title: 'Book', color: '#12939A', strokeWidth: 10, amount: 37 },
+        {
+          title: 'Full game',
+          color: '#79C7E3',
+          strokeWidth: 10,
+          amount: 14.336201,
+        },
       ],
       totalAmount: 51.336201,
     })

@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useMemo } from 'react'
 import {
   makeWidthFlexible,
   DiscreteColorLegend,
@@ -15,10 +15,14 @@ import { formatPoints } from '../../transform/format'
 
 interface Props {
   logs: ContestLog[]
+  effectCount: number
 }
 
-const MediaDistributionGraph = ({ logs }: Props) => {
-  const data = aggregateMediaDistribution(logs)
+const MediaDistributionGraph = ({ logs, effectCount }: Props) => {
+  const data = useMemo(() => aggregateMediaDistribution(logs), [
+    effectCount,
+    logs,
+  ])
   const [selected, setSelected] = useState(
     undefined as undefined | RadialChartPoint,
   )

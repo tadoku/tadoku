@@ -32,7 +32,7 @@ const ContestLogsTable = (props: Props) => (
       {props.logs.map(l => (
         <Row key={l.id}>
           <Column title={l.date.toLocaleString()}>
-            {format(l.date, 'MMMM do')}
+            {format(l.date, 'MMM do')}
           </Column>
           <Column>{languageNameByCode(l.languageCode)}</Column>
           <Column>{mediumDescriptionById(l.mediumId)}</Column>

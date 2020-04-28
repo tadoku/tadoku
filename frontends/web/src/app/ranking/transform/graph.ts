@@ -1,6 +1,6 @@
 import { ContestLog, Ranking, RankingRegistrationOverview } from '../interfaces'
 import { Contest } from '../../contest/interfaces'
-import { languageNameByCode, mediumDescriptionById } from '../database'
+import { formatLanguageName, formatMediaDescription } from '../transform/format'
 import { graphColor } from '../../ui/components/Graphs'
 
 // Utils
@@ -69,7 +69,7 @@ export const aggregateReadingActivity = (
     if (!languages.includes(log.languageCode)) {
       languages.push(log.languageCode)
       legend.push({
-        title: languageNameByCode(log.languageCode),
+        title: formatLanguageName(log.languageCode),
         strokeWidth: 10,
       })
     }
@@ -93,7 +93,7 @@ export const aggregateReadingActivity = (
     Object.keys(initializedSeries).forEach(date => {
       series[date] = {
         ...initializedSeries[date],
-        language: languageNameByCode(language),
+        language: formatLanguageName(language),
       }
     })
 
@@ -154,7 +154,7 @@ export const aggregateMediaDistribution = (
     .map(k => Number(k))
     .map((k, i) => ({
       amount: aggregated[k],
-      medium: mediumDescriptionById(k),
+      medium: formatMediaDescription(k),
       color: graphColor(i),
     }))
 

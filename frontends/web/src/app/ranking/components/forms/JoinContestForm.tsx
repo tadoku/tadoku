@@ -1,5 +1,5 @@
 import React, { FormEvent, useState } from 'react'
-import { languageNameByCode, AllLanguages } from '../../database'
+import { allLanguages } from '../../database'
 import { connect } from 'react-redux'
 import { RootState } from '../../../store'
 import {
@@ -14,6 +14,7 @@ import RankingApi from '../../api'
 import { Contest } from '../../../contest/interfaces'
 import { validateLanguageCode } from '../../domain'
 import { rankingRegistrationMapper } from '../../transform/ranking-registration'
+import { formatLanguageName } from '../../transform/format'
 
 interface Props {
   contest: Contest
@@ -90,9 +91,9 @@ const JoinContestForm = ({
               }
             >
               <option value="">Choose a language...</option>
-              {AllLanguages.map(l => (
+              {allLanguages.map(l => (
                 <option value={l.code} key={l.code}>
-                  {languageNameByCode(l.code)}
+                  {formatLanguageName(l.code)}
                 </option>
               ))}
             </Select>

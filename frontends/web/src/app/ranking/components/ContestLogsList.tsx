@@ -1,7 +1,7 @@
 import React from 'react'
 import { ContestLog } from '../interfaces'
 import styled from 'styled-components'
-import { languageNameByCode, mediumDescriptionById } from '../database'
+import { formatLanguageName, formatMediaDescription } from '../transform/format'
 import { Button, ButtonContainer } from '../../ui/components'
 import media from 'styled-media-query'
 import { formatScore } from '../transform/format'
@@ -19,8 +19,8 @@ const ContestLogsList = (props: Props) => (
       <Item key={log.id}>
         <UpdateText>
           <strong>{formatScore(log.amount)}</strong> of{' '}
-          <strong>{mediumDescriptionById(log.mediumId)}</strong> in{' '}
-          <strong>{languageNameByCode(log.languageCode)}</strong> at{' '}
+          <strong>{formatMediaDescription(log.mediumId)}</strong> in{' '}
+          <strong>{formatLanguageName(log.languageCode)}</strong> at{' '}
           <strong>{log.date.toLocaleString()}</strong> for a total of{' '}
           <strong>{formatScore(log.adjustedAmount)}</strong> points
         </UpdateText>

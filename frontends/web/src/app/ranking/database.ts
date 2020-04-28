@@ -1,6 +1,6 @@
 import { Medium, Language } from './interfaces'
 
-export const AllMediums: Medium[] = [
+export const allMedia: Medium[] = [
   { id: 1, description: 'Book', unit: 'Pages' },
   { id: 2, description: 'Comic', unit: 'Pages' },
   { id: 3, description: 'Net', unit: 'Articles' },
@@ -11,7 +11,7 @@ export const AllMediums: Medium[] = [
   { id: 8, description: 'Sentences', unit: 'Sentences' },
 ]
 
-export const MediumById: { [key: number]: Medium } = AllMediums.reduce(
+export const mediaByID: { [key: number]: Medium } = allMedia.reduce(
   (previous, current) => {
     return {
       ...previous,
@@ -21,10 +21,7 @@ export const MediumById: { [key: number]: Medium } = AllMediums.reduce(
   {},
 )
 
-export const mediumDescriptionById = (id: number) => MediumById[id].description
-export const mediumUnitById = (id: number) => MediumById[id].unit
-
-export const AllLanguages: Language[] = [
+export const allLanguages: Language[] = [
   { code: 'ara', name: 'Arabic' },
   { code: 'zho', name: 'Chinese' },
   { code: 'hrv', name: 'Croatian' },
@@ -50,7 +47,7 @@ export const AllLanguages: Language[] = [
   { code: 'tur', name: 'Turkish' },
 ]
 
-export const LanguageByCode: { [key: string]: Language } = AllLanguages.reduce(
+export const languageByCode: { [key: string]: Language } = allLanguages.reduce(
   (previous, current) => {
     return {
       ...previous,
@@ -60,10 +57,7 @@ export const LanguageByCode: { [key: string]: Language } = AllLanguages.reduce(
   {},
 )
 
-export const GlobalLanguage: Language = {
+export const globalLanguage: Language = {
   code: 'GLO',
   name: 'Total',
 }
-
-export const languageNameByCode = (code: string) =>
-  (LanguageByCode[code] || GlobalLanguage).name

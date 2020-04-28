@@ -1,7 +1,7 @@
 import React from 'react'
 import { ContestLog } from '../interfaces'
 import styled from 'styled-components'
-import { languageNameByCode, mediumDescriptionById } from '../database'
+import { formatLanguageName, formatMediaDescription } from '../transform/format'
 import { Button, ButtonContainer } from '../../ui/components'
 import media from 'styled-media-query'
 import Constants from '../../ui/Constants'
@@ -34,8 +34,8 @@ const ContestLogsTable = (props: Props) => (
           <Column title={l.date.toLocaleString()}>
             {format(l.date, 'MMM do')}
           </Column>
-          <Column>{languageNameByCode(l.languageCode)}</Column>
-          <Column>{mediumDescriptionById(l.mediumId)}</Column>
+          <Column>{formatLanguageName(l.languageCode)}</Column>
+          <Column>{formatMediaDescription(l.mediumId)}</Column>
           <Column limit>{l.description || 'N/A'}</Column>
           <Column alignRight>
             <strong>{formatScore(l.amount)}</strong>

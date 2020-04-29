@@ -2,6 +2,7 @@ package services_test
 
 import (
 	"testing"
+	"time"
 
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
@@ -38,6 +39,7 @@ func TestSessionService_Register(t *testing.T) {
 }
 
 func TestSessionService_Login(t *testing.T) {
+	expiresAt := time.Now().Unix()
 	user := &domain.User{
 		Email:       "foo@bar.com",
 		DisplayName: "John Doe",
@@ -55,13 +57,13 @@ func TestSessionService_Login(t *testing.T) {
 
 	ctx := services.NewMockContext(ctrl)
 	ctx.EXPECT().JSON(200, map[string]interface{}{
-		"token": token,
-		"user":  *user,
+		"expiresAt": expiresAt,
+		"user":      *user,
 	})
 	ctx.EXPECT().Bind(gomock.Any()).Return(nil).SetArg(0, *b)
 
 	i := usecases.NewMockSessionInteractor(ctrl)
-	i.EXPECT().CreateSession(b.Email, b.Password).Return(*user, token, nil)
+	i.EXPECT().CreateSession(b.Email, b.Password).Return(*user, token, expiresAt, nil)
 
 	s := services.NewSessionService(i)
 	err := s.Login(ctx)

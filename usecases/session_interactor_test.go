@@ -62,18 +62,20 @@ func TestSessionInteractor_CreateSession(t *testing.T) {
 		dbUser := domain.User{ID: 1, Email: "foo@bar.com", Password: "foobar"}
 		repo.EXPECT().FindByEmail("foo@bar.com").Return(dbUser, nil)
 		pwHasher.EXPECT().Compare(dbUser.Password, "foobar").Return(true)
-		jwtGen.EXPECT().NewToken(sessionLength, usecases.SessionClaims{User: &dbUser}).Return("token", int64(1337), nil)
+		expectedExpiration := time.Now().Unix()
+		jwtGen.EXPECT().NewToken(sessionLength, usecases.SessionClaims{User: &dbUser}).Return("token", expectedExpiration, nil)
 
-		sessionUser, token, err := interactor.CreateSession("foo@bar.com", "foobar")
+		sessionUser, token, expiresAt, err := interactor.CreateSession("foo@bar.com", "foobar")
 		assert.NoError(t, err)
 		assert.Equal(t, sessionUser, dbUser)
 		assert.Equal(t, token, "token")
+		assert.Equal(t, expiresAt, expectedExpiration)
 	}
 
 	{
 		// Sad path: user does not exist
 		repo.EXPECT().FindByEmail("bar@bar.com").Return(domain.User{}, nil)
-		_, _, err := interactor.CreateSession("bar@bar.com", "foobar")
+		_, _, _, err := interactor.CreateSession("bar@bar.com", "foobar")
 		assert.EqualError(t, err, usecases.ErrUserDoesNotExist.Error())
 	}
 
@@ -82,7 +84,7 @@ func TestSessionInteractor_CreateSession(t *testing.T) {
 		user := domain.User{ID: 1, Email: "foo@bar.com", Password: "barbar"}
 		repo.EXPECT().FindByEmail("foo@bar.com").Return(user, nil)
 		pwHasher.EXPECT().Compare(user.Password, "foobar").Return(false)
-		_, _, err := interactor.CreateSession("foo@bar.com", "foobar")
+		_, _, _, err := interactor.CreateSession("foo@bar.com", "foobar")
 		assert.EqualError(t, err, usecases.ErrPasswordIncorrect.Error())
 	}
 }

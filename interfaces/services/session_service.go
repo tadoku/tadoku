@@ -39,15 +39,15 @@ func (s *sessionService) Login(ctx Context) error {
 		return domain.WrapError(err)
 	}
 
-	user, token, err := s.SessionInteractor.CreateSession(b.Email, b.Password)
+	user, _, expiresAt, err := s.SessionInteractor.CreateSession(b.Email, b.Password)
 	if err != nil {
 		ctx.NoContent(http.StatusUnauthorized)
 		return domain.WrapError(err)
 	}
 
 	res := map[string]interface{}{
-		"token": token,
-		"user":  user,
+		"expiresAt": expiresAt,
+		"user":      user,
 	}
 
 	return ctx.JSON(http.StatusOK, res)

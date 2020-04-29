@@ -200,3 +200,17 @@ func (mr *MockContextMockRecorder) SetCookie(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetCookie", reflect.TypeOf((*MockContext)(nil).SetCookie), arg0)
 }
+
+// Environment mocks base method
+func (m *MockContext) Environment() domain.Environment {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Environment")
+	ret0, _ := ret[0].(domain.Environment)
+	return ret0
+}
+
+// Environment indicates an expected call of Environment
+func (mr *MockContextMockRecorder) Environment() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Environment", reflect.TypeOf((*MockContext)(nil).Environment))
+}

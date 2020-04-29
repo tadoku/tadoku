@@ -29,7 +29,7 @@ func NewRouter(
 		restrict:      newJWTMiddleware(jwtSecret, sessionCookieName),
 		authenticator: usecases.NewRoleAuthenticator(),
 	}
-	e := newEcho(m, corsAllowedOrigins, errorReporter, routes...)
+	e := newEcho(environment, m, corsAllowedOrigins, errorReporter, routes...)
 	return router{e, port}
 }
 
@@ -39,6 +39,7 @@ type middlewares struct {
 }
 
 func newEcho(
+	environment domain.Environment,
 	m *middlewares,
 	corsAllowedOrigins []string,
 	errorReporter usecases.ErrorReporter,
@@ -46,6 +47,7 @@ func newEcho(
 ) *echo.Echo {
 	e := echo.New()
 	e.HTTPErrorHandler = errorHandler(errorReporter)
+	e.Use(newContextMiddleware(environment))
 	e.Use(sentryecho.New(sentryecho.Options{}))
 	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
 		AllowOrigins: corsAllowedOrigins,
@@ -57,6 +59,15 @@ func newEcho(
 	}
 
 	return e
+}
+
+func newContextMiddleware(environment domain.Environment) echo.MiddlewareFunc {
+	return func(next echo.HandlerFunc) echo.HandlerFunc {
+		return func(c echo.Context) error {
+			cc := &context{c, environment}
+			return next(cc)
+		}
+	}
 }
 
 func newJWTMiddleware(secret, sessionCookieName string) echo.MiddlewareFunc {
@@ -92,7 +103,7 @@ func errorHandler(errorReporter usecases.ErrorReporter) func(error, echo.Context
 }
 
 func (m *middlewares) authenticateRole(c echo.Context, minRole domain.Role) error {
-	u, err := (&context{c}).User()
+	u, err := c.(*context).User()
 	if err == ErrEmptyUser && minRole != domain.RoleGuest {
 		return c.NoContent(http.StatusUnauthorized)
 	}
@@ -112,7 +123,7 @@ func wrap(r services.Route, m *middlewares) echo.HandlerFunc {
 			return err
 		}
 
-		return r.HandlerFunc(&context{c})
+		return r.HandlerFunc(c.(*context))
 	}
 
 	if r.MinRole > domain.RoleGuest {

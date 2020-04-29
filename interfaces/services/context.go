@@ -49,4 +49,7 @@ type Context interface {
 
 	// Sets a new cookie to send back to the client
 	SetCookie(*http.Cookie)
+
+	// Returns the environment the app is running in
+	Environment() domain.Environment
 }

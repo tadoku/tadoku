@@ -16,6 +16,11 @@ var ErrEmptyUser = fail.Errorf("user is empty")
 
 type context struct {
 	echo.Context
+	environment domain.Environment
+}
+
+func (c context) Environment() domain.Environment {
+	return c.environment
 }
 
 func (c context) User() (*domain.User, error) {

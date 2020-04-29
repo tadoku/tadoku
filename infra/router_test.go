@@ -25,7 +25,7 @@ func TestRouter_RestrictedRoute(t *testing.T) {
 		{Method: http.MethodGet, Path: "/registered_only", HandlerFunc: handler, MinRole: domain.RoleUser},
 		{Method: http.MethodGet, Path: "/admin", HandlerFunc: handler, MinRole: domain.RoleAdmin},
 	}
-	e := infra.NewRouter("1337", secret, cookieName, nil, nil, routes...)
+	e := infra.NewRouter(domain.EnvTest, "1337", secret, cookieName, nil, nil, routes...)
 	clock, _ := infra.NewClock("UTC")
 	gen := infra.NewJWTGenerator(secret, clock)
 

@@ -6,8 +6,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/labstack/echo/v4"
-	"github.com/labstack/echo/v4/middleware"
 	"github.com/stretchr/testify/assert"
 	"github.com/tadoku/api/domain"
 	"github.com/tadoku/api/infra"
@@ -60,10 +58,15 @@ func TestRouter_RestrictedRoute(t *testing.T) {
 		},
 	} {
 		token, _, _ := gen.NewToken(time.Hour*1, usecases.SessionClaims{User: tc.user})
-		authHeader := middleware.DefaultJWTConfig.AuthScheme + " " + token
+		cookie := &http.Cookie{
+			Name:     "token",
+			Value:    token,
+			Secure:   true,
+			HttpOnly: true,
+		}
 
 		req := httptest.NewRequest(http.MethodGet, tc.path, nil)
-		req.Header.Set(echo.HeaderAuthorization, authHeader)
+		req.AddCookie(cookie)
 
 		res := httptest.NewRecorder()
 

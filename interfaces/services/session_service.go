@@ -52,12 +52,14 @@ func (s *sessionService) Login(ctx Context) error {
 	}
 
 	// @TODO: Make cookie name configurable
-	sessionCookie := &http.Cookie{}
-	sessionCookie.Name = "token"
-	sessionCookie.Value = token
-	sessionCookie.Expires = time.Unix(expiresAt, 0)
-	sessionCookie.Secure = true
-	sessionCookie.HttpOnly = true
+	sessionCookie := &http.Cookie{
+		Name:     "token",
+		Value:    token,
+		Expires:  time.Unix(expiresAt, 0),
+		Secure:   true,
+		HttpOnly: true,
+	}
+
 	ctx.SetCookie(sessionCookie)
 
 	return ctx.JSON(http.StatusOK, res)

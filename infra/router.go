@@ -60,6 +60,8 @@ func newJWTMiddleware(secret string) echo.MiddlewareFunc {
 	cfg := middleware.JWTConfig{
 		Claims:     &jwtClaims{},
 		SigningKey: []byte(secret),
+		// @TODO: extract out this cookie name
+		TokenLookup: "cookie:token",
 	}
 	return middleware.JWTWithConfig(cfg)
 }

@@ -1,3 +1,5 @@
+//go:generate gex mockgen -source=clock.go -package usecases -destination=clock_mock.go
+
 package usecases
 
 import (

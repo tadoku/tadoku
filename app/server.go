@@ -186,7 +186,7 @@ func (d *serverDependencies) routes() []services.Route {
 func (d *serverDependencies) JWTGenerator() usecases.JWTGenerator {
 	holder := &d.jwtGenerator
 	holder.once.Do(func() {
-		holder.result = infra.NewJWTGenerator(d.JWTSecret)
+		holder.result = infra.NewJWTGenerator(d.JWTSecret, d.Clock())
 	})
 	return holder.result
 }

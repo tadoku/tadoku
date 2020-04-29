@@ -8,13 +8,14 @@ import (
 )
 
 // NewJWTGenerator intializes a new JWTGenerator
-func NewJWTGenerator(signingKey string) usecases.JWTGenerator {
-	return &jwtGenerator{signingKey: signingKey}
+func NewJWTGenerator(signingKey string, clock usecases.Clock) usecases.JWTGenerator {
+	return &jwtGenerator{signingKey: signingKey, clock: clock}
 }
 
 // JWTGenerator makes it easy to generate JWT tokens that expire in a given duration
 type jwtGenerator struct {
 	signingKey string
+	clock      usecases.Clock
 }
 
 // NewToken generates a signed JWT token
@@ -22,7 +23,7 @@ func (g *jwtGenerator) NewToken(lifetime time.Duration, src usecases.SessionClai
 	claims := jwtClaims{
 		SessionClaims: src,
 		StandardClaims: jwt.StandardClaims{
-			ExpiresAt: time.Now().Add(lifetime).Unix(),
+			ExpiresAt: g.clock.Now().Add(lifetime).Unix(),
 		},
 	}
 

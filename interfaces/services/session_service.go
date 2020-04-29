@@ -66,7 +66,7 @@ func (s *sessionService) setSessionCookie(ctx Context, token string, expiresAt i
 		Name:     s.sessionCookieName,
 		Value:    token,
 		Expires:  time.Unix(expiresAt, 0),
-		Secure:   true,
+		Secure:   ctx.Environment().ShouldSecure(),
 		HttpOnly: true,
 	}
 
@@ -99,7 +99,7 @@ func (s *sessionService) Logout(ctx Context) error {
 	ctx.SetCookie(&http.Cookie{
 		Name:     s.sessionCookieName,
 		MaxAge:   -1,
-		Secure:   true,
+		Secure:   ctx.Environment().ShouldSecure(),
 		HttpOnly: true,
 	})
 

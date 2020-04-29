@@ -32,3 +32,8 @@ func (env Environment) Validate() error {
 
 	return ErrInvalidEnvironment
 }
+
+// ShouldSecure indicates wether or not the environment needs to have security enforced
+func (env Environment) ShouldSecure() bool {
+	return env == EnvProduction
+}

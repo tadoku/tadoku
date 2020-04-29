@@ -37,6 +37,7 @@ func TestSessionService_Login(t *testing.T) {
 		"user":      *user,
 	})
 	ctx.EXPECT().Bind(gomock.Any()).Return(nil).SetArg(0, *b)
+	ctx.EXPECT().Environment().Return(domain.EnvProduction)
 	ctx.EXPECT().SetCookie(gomock.Any()).Do(func(cookie *http.Cookie) {
 		assert.Equal(t, cookieName, cookie.Name)
 		assert.Equal(t, token, cookie.Value)
@@ -74,6 +75,7 @@ func TestSessionService_Refresh(t *testing.T) {
 		"user":      *user,
 	})
 	ctx.EXPECT().User().Return(user, nil)
+	ctx.EXPECT().Environment().Return(domain.EnvProduction)
 	ctx.EXPECT().SetCookie(gomock.Any()).Do(func(cookie *http.Cookie) {
 		assert.Equal(t, cookieName, cookie.Name)
 		assert.Equal(t, token, cookie.Value)
@@ -99,6 +101,7 @@ func TestSessionService_Logout(t *testing.T) {
 
 	ctx := services.NewMockContext(ctrl)
 	ctx.EXPECT().NoContent(200)
+	ctx.EXPECT().Environment().Return(domain.EnvProduction)
 	ctx.EXPECT().SetCookie(gomock.Any()).Do(func(cookie *http.Cookie) {
 		assert.Equal(t, cookieName, cookie.Name)
 		assert.Equal(t, "", cookie.Value)

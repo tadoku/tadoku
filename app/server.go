@@ -23,6 +23,7 @@ type ServerDependencies interface {
 	Router() services.Router
 	JWTGenerator() usecases.JWTGenerator
 	ErrorReporter() usecases.ErrorReporter
+	Clock() usecases.Clock
 
 	RDB() *infra.RDB
 	SQLHandler() rdb.SQLHandler
@@ -38,14 +39,15 @@ func NewServerDependencies() ServerDependencies {
 }
 
 type serverDependencies struct {
-	Port                 string        `envconfig:"app_port" valid:"required"`
-	JWTSecret            string        `envconfig:"jwt_secret" valid:"required"`
-	ErrorReporterDSN     string        `envconfig:"error_reporter_dsn"`
-	SessionLength        time.Duration `envconfig:"user_session_length" valid:"required"`
 	DatabaseURL          string        `envconfig:"database_url" valid:"required"`
 	DatabaseMaxIdleConns int           `envconfig:"database_max_idle_conns" valid:"required"`
 	DatabaseMaxOpenConns int           `envconfig:"database_max_open_conns" valid:"required"`
 	CORSAllowedOrigins   []string      `envconfig:"cors_allowed_origins" valid:"required"`
+	ErrorReporterDSN     string        `envconfig:"error_reporter_dsn"`
+	JWTSecret            string        `envconfig:"jwt_secret" valid:"required"`
+	Port                 string        `envconfig:"app_port" valid:"required"`
+	SessionLength        time.Duration `envconfig:"user_session_length" valid:"required"`
+	TimeZone             string        `envconfig:"app_timezone" valid:"required"`
 
 	router struct {
 		result services.Router
@@ -59,6 +61,11 @@ type serverDependencies struct {
 
 	jwtGenerator struct {
 		result usecases.JWTGenerator
+		once   sync.Once
+	}
+
+	clock struct {
+		result usecases.Clock
 		once   sync.Once
 	}
 
@@ -184,6 +191,19 @@ func (d *serverDependencies) JWTGenerator() usecases.JWTGenerator {
 	return holder.result
 }
 
+func (d *serverDependencies) Clock() usecases.Clock {
+	holder := &d.clock
+	holder.once.Do(func() {
+		var err error
+		holder.result, err = infra.NewClock(d.TimeZone)
+
+		if err != nil {
+			log.Fatalf("failed to initialize clock: %v\n", err)
+		}
+	})
+	return holder.result
+}
+
 func (d *serverDependencies) ErrorReporter() usecases.ErrorReporter {
 	holder := &d.errorReporter
 	holder.once.Do(func() {
@@ -193,7 +213,6 @@ func (d *serverDependencies) ErrorReporter() usecases.ErrorReporter {
 		if err != nil {
 			log.Fatalf("failed to initialize error reporter: %v\n", err)
 		}
-
 	})
 	return holder.result
 }

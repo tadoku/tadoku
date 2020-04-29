@@ -39,16 +39,17 @@ func NewServerDependencies() ServerDependencies {
 }
 
 type serverDependencies struct {
-	DatabaseURL          string        `envconfig:"database_url" valid:"required"`
-	DatabaseMaxIdleConns int           `envconfig:"database_max_idle_conns" valid:"required"`
-	DatabaseMaxOpenConns int           `envconfig:"database_max_open_conns" valid:"required"`
-	CORSAllowedOrigins   []string      `envconfig:"cors_allowed_origins" valid:"required"`
-	ErrorReporterDSN     string        `envconfig:"error_reporter_dsn"`
-	JWTSecret            string        `envconfig:"jwt_secret" valid:"required"`
-	Port                 string        `envconfig:"app_port" valid:"required"`
-	SessionLength        time.Duration `envconfig:"user_session_length" valid:"required"`
-	SessionCookieName    string        `envconfig:"user_session_cookie_name" valid:"required"`
-	TimeZone             string        `envconfig:"app_timezone" valid:"required"`
+	Environment          domain.Environment `envconfig:"app_env" valid:"environment" default:"development"`
+	DatabaseURL          string             `envconfig:"database_url" valid:"required"`
+	DatabaseMaxIdleConns int                `envconfig:"database_max_idle_conns" valid:"required"`
+	DatabaseMaxOpenConns int                `envconfig:"database_max_open_conns" valid:"required"`
+	CORSAllowedOrigins   []string           `envconfig:"cors_allowed_origins" valid:"required"`
+	ErrorReporterDSN     string             `envconfig:"error_reporter_dsn"`
+	JWTSecret            string             `envconfig:"jwt_secret" valid:"required"`
+	Port                 string             `envconfig:"app_port" valid:"required"`
+	SessionLength        time.Duration      `envconfig:"user_session_length" valid:"required"`
+	SessionCookieName    string             `envconfig:"user_session_cookie_name" valid:"required"`
+	TimeZone             string             `envconfig:"app_timezone" valid:"required"`
 
 	router struct {
 		result services.Router
@@ -97,6 +98,7 @@ type serverDependencies struct {
 }
 
 func (d *serverDependencies) AutoConfigure() error {
+	infra.ConfigureCustomValidators()
 	return configo.Load(d, configo.Option{})
 }
 
@@ -143,7 +145,7 @@ func (d *serverDependencies) Interactors() *Interactors {
 func (d *serverDependencies) Router() services.Router {
 	holder := &d.router
 	holder.once.Do(func() {
-		holder.result = infra.NewRouter(d.Port, d.JWTSecret, d.SessionCookieName, d.CORSAllowedOrigins, d.ErrorReporter(), d.routes()...)
+		holder.result = infra.NewRouter(d.Environment, d.Port, d.JWTSecret, d.SessionCookieName, d.CORSAllowedOrigins, d.ErrorReporter(), d.routes()...)
 	})
 	return holder.result
 }

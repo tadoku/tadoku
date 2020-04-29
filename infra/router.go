@@ -17,6 +17,7 @@ import (
 
 // NewRouter instantiates a router
 func NewRouter(
+	environment domain.Environment,
 	port string,
 	jwtSecret string,
 	sessionCookieName string,

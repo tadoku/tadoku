@@ -4,7 +4,7 @@ import {
   removeUserFromLocalStorage,
 } from './session/storage'
 
-const root = process.env.API_ROOT
+const root = '/api'
 
 interface APIOptions {
   authenticated?: boolean

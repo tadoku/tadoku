@@ -12,6 +12,8 @@ import {
 import { Button, ButtonContainer } from '../../../ui/components'
 import { validatePassword } from '../../../session/domain'
 import UserApi from '../../api'
+import { useSelector } from 'react-redux'
+import { RootState } from '../../../store'
 
 const ChangePasswordForm = () => {
   const [currentPassword, setCurrentPassword] = useState('')
@@ -20,6 +22,11 @@ const ChangePasswordForm = () => {
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState(undefined as string | undefined)
   const [message, setMessage] = useState(undefined as string | undefined)
+  const user = useSelector((state: RootState) => state.session.user)
+
+  if (!user) {
+    return null
+  }
 
   const validate = () =>
     validatePassword(currentPassword) &&
@@ -31,7 +38,7 @@ const ChangePasswordForm = () => {
 
     setSubmitting(true)
 
-    const response = await UserApi.changePassword({
+    const response = await UserApi.changePassword(user.id, {
       currentPassword,
       newPassword,
     })

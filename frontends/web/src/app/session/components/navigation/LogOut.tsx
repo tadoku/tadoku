@@ -1,35 +1,21 @@
 import React from 'react'
 import Router from 'next/router'
+import { useDispatch } from 'react-redux'
+
 import { Button } from '../../../ui/components'
-import { connect } from 'react-redux'
-import { logOut } from '../../redux'
-import { removeUserFromLocalStorage } from '../../storage'
-import { Dispatch } from '../../../store'
 
-interface Props {
-  logOut: () => void
-}
+export const LogOut = () => {
+  const dispatch = useDispatch()
+  const logOut = () => {
+    dispatch(logOut())
+    Router.push('/')
+  }
 
-export const LogOut = ({ logOut }: Props) => {
   return (
-    <Button
-      plain
-      icon="sign-out-alt"
-      onClick={() => {
-        logOut()
-        Router.push('/')
-      }}
-    >
+    <Button plain icon="sign-out-alt" onClick={logOut}>
       Log out
     </Button>
   )
 }
 
-const mapDispatchToProps = (dispatch: Dispatch) => ({
-  logOut: () => {
-    removeUserFromLocalStorage()
-    dispatch(logOut())
-  },
-})
-
-export default connect(null, mapDispatchToProps)(LogOut)
+export default LogOut

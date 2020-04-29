@@ -1,23 +1,16 @@
 import 'isomorphic-fetch'
-import {
-  getAuthenticationToken,
-  removeUserFromLocalStorage,
-} from './session/storage'
+import { removeUserFromLocalStorage } from './session/storage'
 
 const root = '/api'
 
-interface APIOptions {
-  authenticated?: boolean
-}
-
-interface APIOptionsForPost extends APIOptions {
+interface APIOptionsForPost {
   body: any
 }
 
 const request = (
   method: string,
   endpoint: string,
-  options: APIOptions | APIOptionsForPost | undefined,
+  options?: APIOptionsForPost,
 ) => {
   const requestOptions: RequestInit = {
     method,
@@ -32,18 +25,11 @@ const request = (
       : {}),
   }
 
-  if (options && options.authenticated) {
-    requestOptions.headers = {
-      ...requestOptions.headers,
-      authorization: `Bearer ${getAuthenticationToken()}`,
-    }
-  }
-
   return fetch(`${root}${endpoint}`, requestOptions)
 }
 
-export const get = (endpoint: string, options?: APIOptions) =>
-  request('get', endpoint, options).then(response => {
+export const get = (endpoint: string) =>
+  request('get', endpoint).then(response => {
     if (response.status === 401) {
       removeUserFromLocalStorage()
       location.reload()
@@ -52,8 +38,7 @@ export const get = (endpoint: string, options?: APIOptions) =>
     return response
   })
 
-export const destroy = (endpoint: string, options?: APIOptions) =>
-  request('delete', endpoint, options)
+export const destroy = (endpoint: string) => request('delete', endpoint)
 
 export const post = (endpoint: string, options: APIOptionsForPost) =>
   request('post', endpoint, options)

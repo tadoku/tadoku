@@ -12,7 +12,6 @@ import (
 // logging in, registering, resetting passwords, requesting new tokens, etc...
 type SessionService interface {
 	Login(ctx Context) error
-	Register(ctx Context) error
 	Refresh(ctx Context) error
 }
 
@@ -67,24 +66,6 @@ func (s *sessionService) Login(ctx Context) error {
 	ctx.SetCookie(sessionCookie)
 
 	return ctx.JSON(http.StatusOK, res)
-}
-
-func (s *sessionService) Register(ctx Context) error {
-	user := &domain.User{}
-	err := ctx.Bind(user)
-	if err != nil {
-		return domain.WrapError(err)
-	}
-
-	user.Role = domain.RoleUser
-	user.Preferences = &domain.Preferences{}
-
-	err = s.SessionInteractor.CreateUser(*user)
-	if err != nil {
-		return domain.WrapError(err)
-	}
-
-	return ctx.NoContent(http.StatusCreated)
 }
 
 func (s *sessionService) Refresh(ctx Context) error {

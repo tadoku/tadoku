@@ -9,6 +9,7 @@ import (
 
 // UserInteractor contains all business logic for users
 type UserInteractor interface {
+	CreateUser(user domain.User) error
 	UpdatePassword(email string, currentPassword, newPassword string) error
 	UpdateProfile(user domain.User) error
 }
@@ -27,6 +28,23 @@ func NewUserInteractor(
 type userInteractor struct {
 	userRepository UserRepository
 	passwordHasher PasswordHasher
+}
+
+func (i *userInteractor) CreateUser(user domain.User) error {
+	if user.ID != 0 {
+		return fail.Errorf("User with an ID (%v) could not be created.", user.ID)
+	}
+
+	if user.NeedsHashing() {
+		var err error
+		user.Password, err = i.passwordHasher.Hash(user.Password)
+		if err != nil {
+			return domain.WrapError(err)
+		}
+	}
+
+	err := i.userRepository.Store(&user)
+	return domain.WrapError(err)
 }
 
 func (i *userInteractor) UpdatePassword(email string, currentPassword, newPassword string) error {

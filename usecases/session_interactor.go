@@ -17,7 +17,6 @@ var ErrUserDoesNotExist = fail.New("user does not exist")
 
 // SessionInteractor contains all business logic for sessions
 type SessionInteractor interface {
-	CreateUser(user domain.User) error
 	CreateSession(email, password string) (user domain.User, token string, expiresAt int64, err error)
 	RefreshSession(user domain.User) (latestUser domain.User, token string, err error)
 }
@@ -42,23 +41,6 @@ type sessionInteractor struct {
 	passwordHasher PasswordHasher
 	jwtGenerator   JWTGenerator
 	sessionLength  time.Duration
-}
-
-func (si *sessionInteractor) CreateUser(user domain.User) error {
-	if user.ID != 0 {
-		return fail.Errorf("User with an ID (%v) could not be created.", user.ID)
-	}
-
-	if user.NeedsHashing() {
-		var err error
-		user.Password, err = si.passwordHasher.Hash(user.Password)
-		if err != nil {
-			return domain.WrapError(err)
-		}
-	}
-
-	err := si.userRepository.Store(&user)
-	return domain.WrapError(err)
 }
 
 func (si *sessionInteractor) CreateSession(email, password string) (domain.User, string, int64, error) {

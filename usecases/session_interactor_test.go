@@ -33,26 +33,6 @@ func setupSessionTest(t *testing.T) (
 	return ctrl, repo, pwHasher, jwtGen, interactor
 }
 
-func TestSessionInteractor_CreateUser(t *testing.T) {
-	ctrl, repo, pwHasher, _, interactor := setupSessionTest(t)
-	defer ctrl.Finish()
-
-	user := domain.User{
-		Email:       "foo@bar.com",
-		DisplayName: "John Doe",
-		Password:    "foobar",
-	}
-	hashedUser := user
-	hashedUser.Password = "barbar"
-
-	pwHasher.EXPECT().Hash(user.Password).Return(hashedUser.Password, nil)
-	repo.EXPECT().Store(&hashedUser)
-
-	err := interactor.CreateUser(user)
-
-	assert.NoError(t, err)
-}
-
 func TestSessionInteractor_CreateSession(t *testing.T) {
 	ctrl, repo, pwHasher, jwtGen, interactor := setupSessionTest(t)
 	defer ctrl.Finish()

@@ -13,32 +13,6 @@ import (
 	"github.com/tadoku/api/usecases"
 )
 
-func TestSessionService_Register(t *testing.T) {
-	user := &domain.User{
-		Email:       "foo@bar.com",
-		DisplayName: "John Doe",
-		Password:    "foobar",
-	}
-
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	ctx := services.NewMockContext(ctrl)
-	ctx.EXPECT().NoContent(201)
-	ctx.EXPECT().Bind(gomock.Any()).Return(nil).SetArg(0, *user)
-
-	user.Role = domain.RoleUser
-	user.Preferences = &domain.Preferences{}
-
-	i := usecases.NewMockSessionInteractor(ctrl)
-	i.EXPECT().CreateUser(*user).Return(nil)
-
-	s := services.NewSessionService(i, "session_cookie")
-	err := s.Register(ctx)
-
-	assert.NoError(t, err)
-}
-
 func TestSessionService_Login(t *testing.T) {
 	expiresAt := time.Now().Unix()
 	user := &domain.User{

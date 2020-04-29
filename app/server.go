@@ -47,6 +47,7 @@ type serverDependencies struct {
 	JWTSecret            string        `envconfig:"jwt_secret" valid:"required"`
 	Port                 string        `envconfig:"app_port" valid:"required"`
 	SessionLength        time.Duration `envconfig:"user_session_length" valid:"required"`
+	SessionCookieName    string        `envconfig:"user_session_cookie_name" valid:"required"`
 	TimeZone             string        `envconfig:"app_timezone" valid:"required"`
 
 	router struct {
@@ -106,7 +107,7 @@ func (d *serverDependencies) AutoConfigure() error {
 func (d *serverDependencies) Services() *Services {
 	holder := &d.services
 	holder.once.Do(func() {
-		holder.result = NewServices(d.Interactors())
+		holder.result = NewServices(d.Interactors(), d.SessionCookieName)
 	})
 	return holder.result
 }
@@ -142,7 +143,7 @@ func (d *serverDependencies) Interactors() *Interactors {
 func (d *serverDependencies) Router() services.Router {
 	holder := &d.router
 	holder.once.Do(func() {
-		holder.result = infra.NewRouter(d.Port, d.JWTSecret, d.CORSAllowedOrigins, d.ErrorReporter(), d.routes()...)
+		holder.result = infra.NewRouter(d.Port, d.JWTSecret, d.SessionCookieName, d.CORSAllowedOrigins, d.ErrorReporter(), d.routes()...)
 	})
 	return holder.result
 }

@@ -15,10 +15,10 @@ type Services struct {
 }
 
 // NewServices initializes all interactors
-func NewServices(i *Interactors) *Services {
+func NewServices(i *Interactors, sessionCookieName string) *Services {
 	return &Services{
 		Health:     services.NewHealthService(),
-		Session:    services.NewSessionService(i.Session),
+		Session:    services.NewSessionService(i.Session, sessionCookieName),
 		Contest:    services.NewContestService(i.Contest),
 		Ranking:    services.NewRankingService(i.Ranking),
 		ContestLog: services.NewContestLogService(i.Ranking),

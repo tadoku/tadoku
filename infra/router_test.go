@@ -17,6 +17,7 @@ func TestRouter_RestrictedRoute(t *testing.T) {
 	handler := func(ctx services.Context) error {
 		return ctx.String(200, "test")
 	}
+	cookieName := "session_cookie"
 	secret := "foobar"
 	routes := []services.Route{
 		{Method: http.MethodGet, Path: "/unrestricted", HandlerFunc: handler},
@@ -24,7 +25,7 @@ func TestRouter_RestrictedRoute(t *testing.T) {
 		{Method: http.MethodGet, Path: "/registered_only", HandlerFunc: handler, MinRole: domain.RoleUser},
 		{Method: http.MethodGet, Path: "/admin", HandlerFunc: handler, MinRole: domain.RoleAdmin},
 	}
-	e := infra.NewRouter("1337", secret, nil, nil, routes...)
+	e := infra.NewRouter("1337", secret, cookieName, nil, nil, routes...)
 	clock, _ := infra.NewClock("UTC")
 	gen := infra.NewJWTGenerator(secret, clock)
 
@@ -59,7 +60,7 @@ func TestRouter_RestrictedRoute(t *testing.T) {
 	} {
 		token, _, _ := gen.NewToken(time.Hour*1, usecases.SessionClaims{User: tc.user})
 		cookie := &http.Cookie{
-			Name:     "token",
+			Name:     cookieName,
 			Value:    token,
 			Secure:   true,
 			HttpOnly: true,

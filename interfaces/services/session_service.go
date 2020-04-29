@@ -17,14 +17,19 @@ type SessionService interface {
 }
 
 // NewSessionService initializer
-func NewSessionService(sessionInteractor usecases.SessionInteractor) SessionService {
+func NewSessionService(
+	sessionInteractor usecases.SessionInteractor,
+	sessionCookieName string,
+) SessionService {
 	return &sessionService{
 		SessionInteractor: sessionInteractor,
+		sessionCookieName: sessionCookieName,
 	}
 }
 
 type sessionService struct {
 	SessionInteractor usecases.SessionInteractor
+	sessionCookieName string
 }
 
 // SessionLoginBody is the data that's needed to log in
@@ -51,9 +56,8 @@ func (s *sessionService) Login(ctx Context) error {
 		"user":      user,
 	}
 
-	// @TODO: Make cookie name configurable
 	sessionCookie := &http.Cookie{
-		Name:     "token",
+		Name:     s.sessionCookieName,
 		Value:    token,
 		Expires:  time.Unix(expiresAt, 0),
 		Secure:   true,

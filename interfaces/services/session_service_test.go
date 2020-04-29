@@ -33,7 +33,7 @@ func TestSessionService_Register(t *testing.T) {
 	i := usecases.NewMockSessionInteractor(ctrl)
 	i.EXPECT().CreateUser(*user).Return(nil)
 
-	s := services.NewSessionService(i)
+	s := services.NewSessionService(i, "session_cookie")
 	err := s.Register(ctx)
 
 	assert.NoError(t, err)
@@ -46,6 +46,7 @@ func TestSessionService_Login(t *testing.T) {
 		DisplayName: "John Doe",
 		Password:    "foobar",
 	}
+	cookieName := "session_cookie"
 	token := "foobar"
 
 	b := &services.SessionLoginBody{
@@ -63,8 +64,9 @@ func TestSessionService_Login(t *testing.T) {
 	})
 	ctx.EXPECT().Bind(gomock.Any()).Return(nil).SetArg(0, *b)
 	ctx.EXPECT().SetCookie(gomock.Any()).Do(func(cookie *http.Cookie) {
-		assert.Equal(t, expiresAt, cookie.Expires.Unix())
+		assert.Equal(t, cookieName, cookie.Name)
 		assert.Equal(t, token, cookie.Value)
+		assert.Equal(t, expiresAt, cookie.Expires.Unix())
 		assert.True(t, cookie.Secure)
 		assert.True(t, cookie.HttpOnly)
 	})
@@ -72,7 +74,7 @@ func TestSessionService_Login(t *testing.T) {
 	i := usecases.NewMockSessionInteractor(ctrl)
 	i.EXPECT().CreateSession(b.Email, b.Password).Return(*user, token, expiresAt, nil)
 
-	s := services.NewSessionService(i)
+	s := services.NewSessionService(i, cookieName)
 	err := s.Login(ctx)
 
 	assert.NoError(t, err)
@@ -100,7 +102,7 @@ func TestSessionService_Refresh(t *testing.T) {
 	i := usecases.NewMockSessionInteractor(ctrl)
 	i.EXPECT().RefreshSession(*user).Return(*user, token, nil)
 
-	s := services.NewSessionService(i)
+	s := services.NewSessionService(i, "session_cookie")
 	err := s.Refresh(ctx)
 
 	assert.NoError(t, err)

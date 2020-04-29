@@ -1,6 +1,7 @@
 package infra
 
 import (
+	"fmt"
 	"net/http"
 	"regexp"
 	"strconv"
@@ -18,12 +19,13 @@ import (
 func NewRouter(
 	port string,
 	jwtSecret string,
+	sessionCookieName string,
 	corsAllowedOrigins []string,
 	errorReporter usecases.ErrorReporter,
 	routes ...services.Route,
 ) services.Router {
 	m := &middlewares{
-		restrict:      newJWTMiddleware(jwtSecret),
+		restrict:      newJWTMiddleware(jwtSecret, sessionCookieName),
 		authenticator: usecases.NewRoleAuthenticator(),
 	}
 	e := newEcho(m, corsAllowedOrigins, errorReporter, routes...)
@@ -56,12 +58,11 @@ func newEcho(
 	return e
 }
 
-func newJWTMiddleware(secret string) echo.MiddlewareFunc {
+func newJWTMiddleware(secret, sessionCookieName string) echo.MiddlewareFunc {
 	cfg := middleware.JWTConfig{
-		Claims:     &jwtClaims{},
-		SigningKey: []byte(secret),
-		// @TODO: extract out this cookie name
-		TokenLookup: "cookie:token",
+		Claims:      &jwtClaims{},
+		SigningKey:  []byte(secret),
+		TokenLookup: fmt.Sprintf("cookie:%s", sessionCookieName),
 	}
 	return middleware.JWTWithConfig(cfg)
 }

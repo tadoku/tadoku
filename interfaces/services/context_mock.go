@@ -8,6 +8,7 @@ import (
 	gomock "github.com/golang/mock/gomock"
 	domain "github.com/tadoku/api/domain"
 	usecases "github.com/tadoku/api/usecases"
+	http "net/http"
 	reflect "reflect"
 )
 
@@ -186,4 +187,16 @@ func (m *MockContext) BindID(arg0 *uint64) error {
 func (mr *MockContextMockRecorder) BindID(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "BindID", reflect.TypeOf((*MockContext)(nil).BindID), arg0)
+}
+
+// SetCookie mocks base method
+func (m *MockContext) SetCookie(arg0 *http.Cookie) {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "SetCookie", arg0)
+}
+
+// SetCookie indicates an expected call of SetCookie
+func (mr *MockContextMockRecorder) SetCookie(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetCookie", reflect.TypeOf((*MockContext)(nil).SetCookie), arg0)
 }

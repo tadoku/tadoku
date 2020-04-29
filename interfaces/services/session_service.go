@@ -2,6 +2,7 @@ package services
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/tadoku/api/domain"
 	"github.com/tadoku/api/usecases"
@@ -39,7 +40,7 @@ func (s *sessionService) Login(ctx Context) error {
 		return domain.WrapError(err)
 	}
 
-	user, _, expiresAt, err := s.SessionInteractor.CreateSession(b.Email, b.Password)
+	user, token, expiresAt, err := s.SessionInteractor.CreateSession(b.Email, b.Password)
 	if err != nil {
 		ctx.NoContent(http.StatusUnauthorized)
 		return domain.WrapError(err)
@@ -49,6 +50,15 @@ func (s *sessionService) Login(ctx Context) error {
 		"expiresAt": expiresAt,
 		"user":      user,
 	}
+
+	// @TODO: Make cookie name configurable
+	sessionCookie := &http.Cookie{}
+	sessionCookie.Name = "token"
+	sessionCookie.Value = token
+	sessionCookie.Expires = time.Unix(expiresAt, 0)
+	sessionCookie.Secure = true
+	sessionCookie.HttpOnly = true
+	ctx.SetCookie(sessionCookie)
 
 	return ctx.JSON(http.StatusOK, res)
 }

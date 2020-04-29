@@ -1,6 +1,7 @@
 package services_test
 
 import (
+	"net/http"
 	"testing"
 	"time"
 
@@ -61,6 +62,12 @@ func TestSessionService_Login(t *testing.T) {
 		"user":      *user,
 	})
 	ctx.EXPECT().Bind(gomock.Any()).Return(nil).SetArg(0, *b)
+	ctx.EXPECT().SetCookie(gomock.Any()).Do(func(cookie *http.Cookie) {
+		assert.Equal(t, expiresAt, cookie.Expires.Unix())
+		assert.Equal(t, token, cookie.Value)
+		assert.True(t, cookie.Secure)
+		assert.True(t, cookie.HttpOnly)
+	})
 
 	i := usecases.NewMockSessionInteractor(ctrl)
 	i.EXPECT().CreateSession(b.Email, b.Password).Return(*user, token, expiresAt, nil)

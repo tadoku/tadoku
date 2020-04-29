@@ -62,7 +62,7 @@ func TestSessionInteractor_CreateSession(t *testing.T) {
 		dbUser := domain.User{ID: 1, Email: "foo@bar.com", Password: "foobar"}
 		repo.EXPECT().FindByEmail("foo@bar.com").Return(dbUser, nil)
 		pwHasher.EXPECT().Compare(dbUser.Password, "foobar").Return(true)
-		jwtGen.EXPECT().NewToken(sessionLength, usecases.SessionClaims{User: &dbUser}).Return("token", nil)
+		jwtGen.EXPECT().NewToken(sessionLength, usecases.SessionClaims{User: &dbUser}).Return("token", int64(1337), nil)
 
 		sessionUser, token, err := interactor.CreateSession("foo@bar.com", "foobar")
 		assert.NoError(t, err)
@@ -96,7 +96,7 @@ func TestSessionInteractor_RefreshSession(t *testing.T) {
 		dbUser := domain.User{ID: 1, DisplayName: "bar", Email: "foo@bar.com", Password: "foobar"}
 
 		repo.EXPECT().FindByEmail("foo@bar.com").Return(dbUser, nil)
-		jwtGen.EXPECT().NewToken(sessionLength, usecases.SessionClaims{User: &dbUser}).Return("token", nil)
+		jwtGen.EXPECT().NewToken(sessionLength, usecases.SessionClaims{User: &dbUser}).Return("token", int64(1337), nil)
 
 		sessionUser, token, err := interactor.RefreshSession(user)
 		assert.NoError(t, err)

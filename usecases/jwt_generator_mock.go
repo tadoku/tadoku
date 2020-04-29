@@ -34,12 +34,13 @@ func (m *MockJWTGenerator) EXPECT() *MockJWTGeneratorMockRecorder {
 }
 
 // NewToken mocks base method
-func (m *MockJWTGenerator) NewToken(lifetime time.Duration, claims SessionClaims) (string, error) {
+func (m *MockJWTGenerator) NewToken(lifetime time.Duration, claims SessionClaims) (string, int64, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "NewToken", lifetime, claims)
 	ret0, _ := ret[0].(string)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
+	ret1, _ := ret[1].(int64)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
 }
 
 // NewToken indicates an expected call of NewToken

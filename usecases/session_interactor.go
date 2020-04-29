@@ -76,7 +76,7 @@ func (si *sessionInteractor) CreateSession(email, password string) (domain.User,
 	}
 
 	claims := SessionClaims{User: &user}
-	token, err := si.jwtGenerator.NewToken(si.sessionLength, claims)
+	token, _, err := si.jwtGenerator.NewToken(si.sessionLength, claims)
 	if err != nil {
 		return domain.User{}, "", domain.WrapError(err)
 	}
@@ -95,7 +95,7 @@ func (si *sessionInteractor) RefreshSession(user domain.User) (domain.User, stri
 	}
 
 	claims := SessionClaims{User: &user}
-	token, err := si.jwtGenerator.NewToken(si.sessionLength, claims)
+	token, _, err := si.jwtGenerator.NewToken(si.sessionLength, claims)
 	if err != nil {
 		return domain.User{}, "", domain.WrapError(err)
 	}

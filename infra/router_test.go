@@ -59,7 +59,7 @@ func TestRouter_RestrictedRoute(t *testing.T) {
 			info:          "Admin access as admin",
 		},
 	} {
-		token, _ := gen.NewToken(time.Hour*1, usecases.SessionClaims{User: tc.user})
+		token, _, _ := gen.NewToken(time.Hour*1, usecases.SessionClaims{User: tc.user})
 		authHeader := middleware.DefaultJWTConfig.AuthScheme + " " + token
 
 		req := httptest.NewRequest(http.MethodGet, tc.path, nil)

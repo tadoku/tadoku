@@ -51,13 +51,14 @@ func (mr *MockSessionInteractorMockRecorder) CreateSession(email, password inter
 }
 
 // RefreshSession mocks base method
-func (m *MockSessionInteractor) RefreshSession(user domain.User) (domain.User, string, error) {
+func (m *MockSessionInteractor) RefreshSession(user domain.User) (domain.User, string, int64, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "RefreshSession", user)
 	ret0, _ := ret[0].(domain.User)
 	ret1, _ := ret[1].(string)
-	ret2, _ := ret[2].(error)
-	return ret0, ret1, ret2
+	ret2, _ := ret[2].(int64)
+	ret3, _ := ret[3].(error)
+	return ret0, ret1, ret2, ret3
 }
 
 // RefreshSession indicates an expected call of RefreshSession

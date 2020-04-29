@@ -74,7 +74,7 @@ func (s *sessionService) Refresh(ctx Context) error {
 		return domain.WrapError(err)
 	}
 
-	user, token, err := s.SessionInteractor.RefreshSession(*sessionUser)
+	user, token, _, err := s.SessionInteractor.RefreshSession(*sessionUser)
 	if err != nil {
 		ctx.NoContent(http.StatusUnauthorized)
 		return domain.WrapError(err)

@@ -18,7 +18,7 @@ var ErrUserDoesNotExist = fail.New("user does not exist")
 // SessionInteractor contains all business logic for sessions
 type SessionInteractor interface {
 	CreateSession(email, password string) (user domain.User, token string, expiresAt int64, err error)
-	RefreshSession(user domain.User) (latestUser domain.User, token string, err error)
+	RefreshSession(user domain.User) (latestUser domain.User, token string, expiresAt int64, err error)
 }
 
 // NewSessionInteractor instantiates SessionInteractor with all dependencies
@@ -66,21 +66,21 @@ func (si *sessionInteractor) CreateSession(email, password string) (domain.User,
 	return user, token, expiresAt, nil
 }
 
-func (si *sessionInteractor) RefreshSession(user domain.User) (domain.User, string, error) {
+func (si *sessionInteractor) RefreshSession(user domain.User) (domain.User, string, int64, error) {
 	user, err := si.userRepository.FindByEmail(user.Email)
 	if err != nil {
-		return domain.User{}, "", domain.WrapError(err)
+		return domain.User{}, "", 0, domain.WrapError(err)
 	}
 
 	if user.ID == 0 {
-		return domain.User{}, "", domain.WrapError(ErrUserDoesNotExist, fail.WithIgnorable())
+		return domain.User{}, "", 0, domain.WrapError(ErrUserDoesNotExist, fail.WithIgnorable())
 	}
 
 	claims := SessionClaims{User: &user}
-	token, _, err := si.jwtGenerator.NewToken(si.sessionLength, claims)
+	token, expiresAt, err := si.jwtGenerator.NewToken(si.sessionLength, claims)
 	if err != nil {
-		return domain.User{}, "", domain.WrapError(err)
+		return domain.User{}, "", 0, domain.WrapError(err)
 	}
 
-	return user, token, nil
+	return user, token, expiresAt, nil
 }

@@ -78,11 +78,13 @@ func TestSessionInteractor_RefreshSession(t *testing.T) {
 		dbUser := domain.User{ID: 1, DisplayName: "bar", Email: "foo@bar.com", Password: "foobar"}
 
 		repo.EXPECT().FindByEmail("foo@bar.com").Return(dbUser, nil)
-		jwtGen.EXPECT().NewToken(sessionLength, usecases.SessionClaims{User: &dbUser}).Return("token", int64(1337), nil)
+		expectedExpiration := time.Now().Unix()
+		jwtGen.EXPECT().NewToken(sessionLength, usecases.SessionClaims{User: &dbUser}).Return("token", expectedExpiration, nil)
 
-		sessionUser, token, err := interactor.RefreshSession(user)
+		sessionUser, token, expiresAt, err := interactor.RefreshSession(user)
 		assert.NoError(t, err)
 		assert.Equal(t, sessionUser, dbUser)
 		assert.Equal(t, token, "token")
+		assert.Equal(t, expiresAt, expectedExpiration)
 	}
 }

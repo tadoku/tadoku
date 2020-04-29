@@ -55,6 +55,12 @@ func (s *sessionService) Login(ctx Context) error {
 		"user":      user,
 	}
 
+	s.setSessionCookie(ctx, token, expiresAt)
+
+	return ctx.JSON(http.StatusOK, res)
+}
+
+func (s *sessionService) setSessionCookie(ctx Context, token string, expiresAt int64) {
 	sessionCookie := &http.Cookie{
 		Name:     s.sessionCookieName,
 		Value:    token,
@@ -64,8 +70,6 @@ func (s *sessionService) Login(ctx Context) error {
 	}
 
 	ctx.SetCookie(sessionCookie)
-
-	return ctx.JSON(http.StatusOK, res)
 }
 
 func (s *sessionService) Refresh(ctx Context) error {
@@ -74,16 +78,18 @@ func (s *sessionService) Refresh(ctx Context) error {
 		return domain.WrapError(err)
 	}
 
-	user, token, _, err := s.SessionInteractor.RefreshSession(*sessionUser)
+	user, token, expiresAt, err := s.SessionInteractor.RefreshSession(*sessionUser)
 	if err != nil {
 		ctx.NoContent(http.StatusUnauthorized)
 		return domain.WrapError(err)
 	}
 
 	res := map[string]interface{}{
-		"token": token,
-		"user":  user,
+		"expiresAt": expiresAt,
+		"user":      user,
 	}
+
+	s.setSessionCookie(ctx, token, expiresAt)
 
 	return ctx.JSON(http.StatusOK, res)
 }

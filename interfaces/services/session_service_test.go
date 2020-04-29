@@ -90,3 +90,26 @@ func TestSessionService_Refresh(t *testing.T) {
 
 	assert.NoError(t, err)
 }
+
+func TestSessionService_Logout(t *testing.T) {
+	cookieName := "session_cookie"
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	ctx := services.NewMockContext(ctrl)
+	ctx.EXPECT().NoContent(200)
+	ctx.EXPECT().SetCookie(gomock.Any()).Do(func(cookie *http.Cookie) {
+		assert.Equal(t, cookieName, cookie.Name)
+		assert.Equal(t, "", cookie.Value)
+		assert.Equal(t, -1, cookie.MaxAge)
+		assert.True(t, cookie.Secure)
+		assert.True(t, cookie.HttpOnly)
+	})
+
+	i := usecases.NewMockSessionInteractor(ctrl)
+	s := services.NewSessionService(i, cookieName)
+	err := s.Logout(ctx)
+
+	assert.NoError(t, err)
+}

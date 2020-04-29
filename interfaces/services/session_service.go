@@ -13,6 +13,7 @@ import (
 type SessionService interface {
 	Login(ctx Context) error
 	Refresh(ctx Context) error
+	Logout(ctx Context) error
 }
 
 // NewSessionService initializer
@@ -92,4 +93,15 @@ func (s *sessionService) Refresh(ctx Context) error {
 	s.setSessionCookie(ctx, token, expiresAt)
 
 	return ctx.JSON(http.StatusOK, res)
+}
+
+func (s *sessionService) Logout(ctx Context) error {
+	ctx.SetCookie(&http.Cookie{
+		Name:     s.sessionCookieName,
+		MaxAge:   -1,
+		Secure:   true,
+		HttpOnly: true,
+	})
+
+	return ctx.NoContent(200)
 }

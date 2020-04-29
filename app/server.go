@@ -155,6 +155,7 @@ func (d *serverDependencies) routes() []services.Route {
 
 		// Session
 		{Method: http.MethodPost, Path: "/login", HandlerFunc: d.Services().Session.Login},
+		{Method: http.MethodDelete, Path: "/sessions", HandlerFunc: d.Services().Session.Logout, MinRole: domain.RoleUser},
 		{Method: http.MethodPost, Path: "/refresh", HandlerFunc: d.Services().Session.Refresh, MinRole: domain.RoleUser},
 
 		// Users

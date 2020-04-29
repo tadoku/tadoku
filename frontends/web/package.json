@@ -36,7 +36,7 @@
     "date-fns": "^2.12.0",
     "dotenv": "^8.2.0",
     "isomorphic-fetch": "^2.2.1",
-    "next": "^9.3.5",
+    "next": "^9.3.6",
     "next-redux-wrapper": "^5.0.0",
     "react": "^16.13.1",
     "react-content-loader": "^5.0.4",

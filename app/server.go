@@ -156,12 +156,13 @@ func (d *serverDependencies) routes() []services.Route {
 		// Session
 		{Method: http.MethodPost, Path: "/sessions", HandlerFunc: d.Services().Session.Login},
 		{Method: http.MethodDelete, Path: "/sessions", HandlerFunc: d.Services().Session.Logout, MinRole: domain.RoleUser},
-		{Method: http.MethodPost, Path: "/sessions?action=refresh", HandlerFunc: d.Services().Session.Refresh, MinRole: domain.RoleUser},
+		// TODO: need better route for this, not RESTful as it is now
+		{Method: http.MethodPost, Path: "/sessions/refresh", HandlerFunc: d.Services().Session.Refresh, MinRole: domain.RoleUser},
 
 		// Users
 		{Method: http.MethodPost, Path: "/users", HandlerFunc: d.Services().User.Register},
-		{Method: http.MethodPost, Path: "/users/profile", HandlerFunc: d.Services().User.UpdateProfile, MinRole: domain.RoleUser},
-		{Method: http.MethodPost, Path: "/users?action=update_password", HandlerFunc: d.Services().User.UpdatePassword, MinRole: domain.RoleUser},
+		{Method: http.MethodPost, Path: "/users/:id/profile", HandlerFunc: d.Services().User.UpdateProfile, MinRole: domain.RoleUser},
+		{Method: http.MethodPost, Path: "/users/:id/password", HandlerFunc: d.Services().User.UpdatePassword, MinRole: domain.RoleUser},
 
 		// Contests
 		{Method: http.MethodGet, Path: "/contests", HandlerFunc: d.Services().Contest.All},
@@ -175,8 +176,8 @@ func (d *serverDependencies) routes() []services.Route {
 
 		// Ranking registrations
 		{Method: http.MethodPost, Path: "/ranking_registrations", HandlerFunc: d.Services().Ranking.Create, MinRole: domain.RoleUser},
-		{Method: http.MethodGet, Path: "/ranking_registrations?view=current", HandlerFunc: d.Services().Ranking.CurrentRegistration, MinRole: domain.RoleUser},
 		{Method: http.MethodGet, Path: "/ranking_registrations", HandlerFunc: d.Services().Ranking.RankingsForRegistration},
+		{Method: http.MethodGet, Path: "/ranking_registrations/:id/current", HandlerFunc: d.Services().Ranking.CurrentRegistration, MinRole: domain.RoleUser},
 
 		// Contest logs
 		{Method: http.MethodPost, Path: "/contest_logs", HandlerFunc: d.Services().ContestLog.Create, MinRole: domain.RoleUser},

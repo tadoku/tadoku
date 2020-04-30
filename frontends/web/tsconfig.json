@@ -27,7 +27,8 @@
   "exclude": [
     ".next",
     "out",
-    "next.config.js"
+    "next.config.js",
+    "server.js"
   ],
   "include": [
     "next-env.d.ts",

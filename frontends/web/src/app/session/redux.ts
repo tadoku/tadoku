@@ -1,8 +1,10 @@
 import { User } from './interfaces'
 import { createSlice, PayloadAction } from '@reduxjs/toolkit'
+import { storeUserInLocalStorage, removeUserFromLocalStorage } from './storage'
+import SessionApi from './api'
 
 export const initialState = {
-  token: undefined as string | undefined,
+  expiresAt: undefined as number | undefined,
   user: undefined as User | undefined,
   loaded: false,
   runEffectCount: 0,
@@ -12,15 +14,18 @@ const slice = createSlice({
   name: 'session',
   initialState,
   reducers: {
-    logIn(state, action: PayloadAction<{ token: string; user: User }>) {
-      state.token = action.payload.token
+    logIn(state, action: PayloadAction<{ expiresAt: number; user: User }>) {
+      storeUserInLocalStorage(action.payload)
+      state.expiresAt = action.payload.expiresAt
       state.user = action.payload.user
       state.loaded = true
     },
     logOut(state) {
-      state.token = undefined
+      removeUserFromLocalStorage()
+      state.expiresAt = undefined
       state.user = undefined
       state.runEffectCount += 1
+      SessionApi.logOut()
     },
     runEffects(state) {
       state.runEffectCount += 1

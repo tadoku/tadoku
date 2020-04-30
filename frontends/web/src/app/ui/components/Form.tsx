@@ -52,11 +52,10 @@ const StyledMessage = styled.p`
     color: ${color};
     background-color: ${background};
     border: 1px solid ${background};
-    box-shadow: 0px 2px 3px 0px ${background};
+    border-bottom-width: 2px;
   `}
   padding: 12px;
   margin: 24px 0;
-  border-radius: 3px;
   transition: all 0.2s ease;
 `
 

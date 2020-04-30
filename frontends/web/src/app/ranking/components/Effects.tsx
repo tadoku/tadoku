@@ -32,7 +32,7 @@ const RankingEffects = () => {
         )
       }
 
-      return RankingApi.getCurrentRegistration()
+      return RankingApi.getCurrentRegistration(user.id)
     },
     onChange: update,
     dependencies: [user, effectCount],

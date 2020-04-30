@@ -1,9 +1,9 @@
 import React, { FormEvent, useState } from 'react'
+import { useDispatch } from 'react-redux'
+
 import SessionApi from '../../api'
-import { connect } from 'react-redux'
 import { logIn } from '../../redux'
 import { User } from '../../interfaces'
-import { storeUserInLocalStorage } from '../../storage'
 import {
   Form,
   Label,
@@ -15,23 +15,23 @@ import {
 } from '../../../ui/components/Form'
 import { Button, StackContainer } from '../../../ui/components'
 import { validatePassword, validateEmail } from '../../domain'
-import { Dispatch } from '../../../store'
 
 interface Props {
-  setUser: (token: string, user: User) => void
   onSuccess: () => void
   onCancel: () => void
 }
 
-const LogInForm = ({
-  setUser,
-  onSuccess: complete,
-  onCancel: cancel,
-}: Props) => {
+const LogInForm = ({ onSuccess: complete, onCancel: cancel }: Props) => {
   const [submitting, setSubmitting] = useState(false)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState(undefined as string | undefined)
+
+  const dispatch = useDispatch()
+  const setUser = (expiresAt: number, user: User) => {
+    const payload = { expiresAt, user }
+    dispatch(logIn(payload))
+  }
 
   const validate = () => validateEmail(email) && validatePassword(password)
 
@@ -49,7 +49,7 @@ const LogInForm = ({
       return
     }
 
-    setUser(response.token, response.user)
+    setUser(response.expiresAt, response.user)
     complete()
   }
 
@@ -109,13 +109,4 @@ const LogInForm = ({
   )
 }
 
-const mapDispatchToProps = (dispatch: Dispatch) => ({
-  setUser: (token: string, user: User) => {
-    const payload = { token, user }
-    storeUserInLocalStorage(payload)
-
-    dispatch(logIn(payload))
-  },
-})
-
-export default connect(null, mapDispatchToProps)(LogInForm)
+export default LogInForm

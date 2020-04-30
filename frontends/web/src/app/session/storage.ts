@@ -1,9 +1,9 @@
 import { User } from './interfaces'
 
-const LOCAL_STORAGE_USER_KEY = 'user?i=1'
+const LOCAL_STORAGE_USER_KEY = 'user?i=2'
 
 export const storeUserInLocalStorage = (user: {
-  token: string
+  expiresAt: number
   user: User
 }) => {
   window.localStorage.setItem(LOCAL_STORAGE_USER_KEY, JSON.stringify(user))
@@ -14,7 +14,7 @@ export const removeUserFromLocalStorage = () => {
 }
 
 export const loadUserFromLocalStorage = (): {
-  token: string
+  expiresAt: number
   user: User
 } | null => {
   const user = window.localStorage.getItem(LOCAL_STORAGE_USER_KEY)
@@ -24,14 +24,4 @@ export const loadUserFromLocalStorage = (): {
   }
 
   return JSON.parse(user)
-}
-
-export const getAuthenticationToken = (): string | null => {
-  const user = loadUserFromLocalStorage()
-
-  if (!user) {
-    return null
-  }
-
-  return user.token
 }

@@ -14,9 +14,9 @@ const Constants = {
     nonFocusText: 'hsl(212, 20%, 45%)',
     nonFocusTextWithAlpha: (alpha: number) => `hsla(212, 20%, 45%, ${alpha})`,
     lightGray: 'rgba(0, 0, 0, 0.08)',
-    destructive: '#FC4A49', //8B1E3F
+    destructive: '#C13838', //8B1E3F
     lightDestructive: 'rgba(252, 74, 73, 0.1)', //8B1E3F
-    success: '#7cc452',
+    success: '#507C34',
     lightSuccess: 'rgba(137, 218, 89, 0.2)',
     destructiveWithAlpha: (alpha: number) => `rgba(252, 74, 73, ${alpha})`,
     graphColorRange: [

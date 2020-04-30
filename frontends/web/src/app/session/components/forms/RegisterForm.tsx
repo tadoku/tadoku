@@ -1,9 +1,8 @@
 import React, { FormEvent, useState } from 'react'
 import SessionApi from '../../api'
-import { connect } from 'react-redux'
+import { useDispatch } from 'react-redux'
 import { logIn } from '../../redux'
 import { User } from '../../interfaces'
-import { storeUserInLocalStorage } from '../../storage'
 import {
   Form,
   Label,
@@ -19,24 +18,24 @@ import {
   validatePassword,
   validateDisplayName,
 } from '../../domain'
-import { Dispatch } from '../../../store'
 
 interface Props {
-  setUser: (token: string, user: User) => void
   onSuccess: () => void
   onCancel?: () => void
 }
 
-const RegisterForm = ({
-  setUser,
-  onSuccess: complete,
-  onCancel: cancel,
-}: Props) => {
+const RegisterForm = ({ onSuccess: complete, onCancel: cancel }: Props) => {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [displayName, setDisplayName] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState(undefined as string | undefined)
+
+  const dispatch = useDispatch()
+  const setUser = (expiresAt: number, user: User) => {
+    const payload = { expiresAt, user }
+    dispatch(logIn(payload))
+  }
 
   const submit = async (event: FormEvent) => {
     event.preventDefault()
@@ -56,7 +55,7 @@ const RegisterForm = ({
     setSubmitting(false)
 
     if (response) {
-      setUser(response.token, response.user)
+      setUser(response.expiresAt, response.user)
       complete()
     }
   }
@@ -141,13 +140,4 @@ const RegisterForm = ({
   )
 }
 
-const mapDispatchToProps = (dispatch: Dispatch) => ({
-  setUser: (token: string, user: User) => {
-    const payload = { token, user }
-    storeUserInLocalStorage(payload)
-
-    dispatch(logIn(payload))
-  },
-})
-
-export default connect(null, mapDispatchToProps)(RegisterForm)
+export default RegisterForm

@@ -1,13 +1,13 @@
 import { User, RawUser } from './interfaces'
-import { post } from '../api'
+import { post, destroy } from '../api'
 
 interface LogInResponse {
-  token: string
+  expiresAt: number
   user: User
 }
 
 interface RawLogInResponse {
-  token: string
+  expiresAt: number
   user: RawUser
 }
 
@@ -15,7 +15,7 @@ const logIn = async (payload: {
   email: string
   password: string
 }): Promise<LogInResponse | undefined> => {
-  const response = await post(`/login`, { body: payload })
+  const response = await post(`/sessions`, { body: payload })
 
   if (response.status !== 200) {
     return undefined
@@ -24,7 +24,7 @@ const logIn = async (payload: {
   const data: RawLogInResponse = await response.json()
 
   return {
-    token: data.token,
+    expiresAt: data.expiresAt,
     user: {
       id: data.user.id,
       email: data.user.email,
@@ -33,8 +33,15 @@ const logIn = async (payload: {
   }
 }
 
+const logOut = async (): Promise<boolean> => {
+  const response = await destroy(`/sessions`)
+  return response.status === 200
+}
+
 const refresh = async (): Promise<LogInResponse | undefined> => {
-  const response = await post(`/refresh`, { body: {}, authenticated: true })
+  const response = await post(`/sessions/refresh`, {
+    body: {},
+  })
 
   if (response.status !== 200) {
     return undefined
@@ -43,7 +50,7 @@ const refresh = async (): Promise<LogInResponse | undefined> => {
   const data: RawLogInResponse = await response.json()
 
   return {
-    token: data.token,
+    expiresAt: data.expiresAt,
     user: {
       id: data.user.id,
       email: data.user.email,
@@ -57,7 +64,7 @@ const register = async (payload: {
   password: string
   displayName: string
 }): Promise<boolean> => {
-  const response = await post(`/register`, {
+  const response = await post(`/users`, {
     body: {
       email: payload.email,
       password: payload.password,
@@ -70,6 +77,7 @@ const register = async (payload: {
 
 const SessionApi = {
   logIn,
+  logOut,
   refresh,
   register,
 }

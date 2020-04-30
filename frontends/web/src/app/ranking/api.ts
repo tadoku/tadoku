@@ -14,12 +14,11 @@ const joinContest = async (
   contestId: number,
   languages: string[],
 ): Promise<boolean> => {
-  const response = await post(`/rankings`, {
+  const response = await post(`/ranking_registrations`, {
     body: {
       contest_id: contestId,
       languages: languages,
     },
-    authenticated: true,
   })
 
   return response.status === 201
@@ -37,12 +36,10 @@ const getRankings = async (contestId?: number): Promise<Ranking[]> => {
   return data.map(rankingMapper.fromRaw)
 }
 
-const getCurrentRegistration = async (): Promise<
-  RankingRegistration | undefined
-> => {
-  const response = await get('/rankings/current', {
-    authenticated: true,
-  })
+const getCurrentRegistration = async (
+  userId: number,
+): Promise<RankingRegistration | undefined> => {
+  const response = await get(`/ranking_registrations/${userId}/current`)
 
   if (response.status != 200) {
     return undefined
@@ -63,7 +60,7 @@ const getRankingsRegistration = async (
   userId: number,
 ): Promise<Ranking[]> => {
   const response = await get(
-    `/rankings/registration?contest_id=${contestId}&user_id=${userId}`,
+    `/ranking_registrations?contest_id=${contestId}&user_id=${userId}`,
   )
 
   if (response.status !== 200) {
@@ -90,16 +87,13 @@ const createLog = async (payload: {
       language_code: payload.languageCode,
       description: payload.description,
     },
-    authenticated: true,
   })
 
   return response.status === 201
 }
 
 const deleteLog = async (contestId: number): Promise<boolean> => {
-  const response = await destroy(`/contest_logs/${contestId}`, {
-    authenticated: true,
-  })
+  const response = await destroy(`/contest_logs/${contestId}`)
 
   return response.status === 200
 }
@@ -122,7 +116,6 @@ const updateLog = async (
       language_code: payload.languageCode,
       description: payload.description,
     },
-    authenticated: true,
   })
 
   return response.status === 204

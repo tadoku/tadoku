@@ -65,6 +65,7 @@ func (s *sessionService) setSessionCookie(ctx Context, token string, expiresAt i
 	sessionCookie := &http.Cookie{
 		Name:     s.sessionCookieName,
 		Value:    token,
+		Path:     "/",
 		Expires:  time.Unix(expiresAt, 0),
 		Secure:   ctx.Environment().ShouldSecure(),
 		HttpOnly: true,

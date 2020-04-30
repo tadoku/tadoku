@@ -70,6 +70,14 @@ const Card = styled.div`
     position: sticky;
     top: 60px;
     right: 0;
+    z-index: 100;
+
+    @media screen and (max-height: 700px) {
+      & {
+        top: 0;
+        position: absolute;
+      }
+    }
   }
 `
 

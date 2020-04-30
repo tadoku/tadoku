@@ -99,6 +99,7 @@ func (s *sessionService) Refresh(ctx Context) error {
 func (s *sessionService) Logout(ctx Context) error {
 	ctx.SetCookie(&http.Cookie{
 		Name:     s.sessionCookieName,
+		Path:     "/",
 		MaxAge:   -1,
 		Secure:   ctx.Environment().ShouldSecure(),
 		HttpOnly: true,

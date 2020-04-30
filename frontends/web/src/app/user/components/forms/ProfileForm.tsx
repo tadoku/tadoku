@@ -52,7 +52,7 @@ const ProfileForm = () => {
 
     if (!response) {
       setMessage(undefined)
-      setError("Your profile couldn't be update. Please try again later.")
+      setError("Your profile couldn't be updated. Please try again later.")
       return
     }
 

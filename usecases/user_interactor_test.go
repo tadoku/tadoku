@@ -78,7 +78,7 @@ func TestUserInteractor_UpdatePassword(t *testing.T) {
 		repo.EXPECT().FindByEmail("foo@bar.com").Return(user, nil)
 		pwHasher.EXPECT().Compare(user.Password, "foobar").Return(false)
 		err := interactor.UpdatePassword("foo@bar.com", "foobar", "foofoo")
-		assert.EqualError(t, err, usecases.ErrPasswordIncorrect.Error())
+		assert.EqualError(t, err, domain.ErrPasswordIncorrect.Error())
 	}
 }
 

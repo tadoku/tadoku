@@ -9,9 +9,6 @@ import (
 	"github.com/tadoku/api/domain"
 )
 
-// ErrPasswordIncorrect for when an invalid password is given
-var ErrPasswordIncorrect = fail.New("invalid password supplied")
-
 // ErrUserDoesNotExist for when a user could not be found
 var ErrUserDoesNotExist = fail.New("user does not exist")
 
@@ -54,7 +51,7 @@ func (si *sessionInteractor) CreateSession(email, password string) (domain.User,
 	}
 
 	if !si.passwordHasher.Compare(user.Password, password) {
-		return domain.User{}, "", 0, domain.WrapError(ErrPasswordIncorrect, fail.WithIgnorable())
+		return domain.User{}, "", 0, domain.WrapError(domain.ErrPasswordIncorrect, fail.WithIgnorable())
 	}
 
 	claims := SessionClaims{User: &user}

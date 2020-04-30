@@ -58,7 +58,7 @@ func (i *userInteractor) UpdatePassword(email string, currentPassword, newPasswo
 	}
 
 	if !i.passwordHasher.Compare(user.Password, currentPassword) {
-		return domain.WrapError(ErrPasswordIncorrect, fail.WithIgnorable())
+		return domain.WrapError(domain.ErrPasswordIncorrect, fail.WithIgnorable())
 	}
 
 	user.Password, err = i.passwordHasher.Hash(domain.Password(newPassword))

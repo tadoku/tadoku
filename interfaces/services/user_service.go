@@ -63,6 +63,10 @@ func (u *userService) UpdatePassword(ctx Context) error {
 
 	err = u.UserInteractor.UpdatePassword(user.Email, b.CurrentPassword, b.NewPassword)
 	if err != nil {
+		if err == domain.ErrPasswordIncorrect {
+			return ctx.NoContent(401)
+		}
+
 		return domain.WrapError(err)
 	}
 

@@ -1,29 +1,21 @@
-import React, { useEffect } from 'react'
-import Router from 'next/router'
-import { useSelector } from 'react-redux'
-import { RootState } from '../app/store'
+import React from 'react'
 import LandingPage from '../app/landing/pages/landing'
-import Blog from './blog'
+import { NextPageContext } from 'next'
 
 const Home = () => {
-  const user = useSelector((state: RootState) => state.session.user)
-
-  useEffect(() => {
-    if (user) {
-      Router.replace('/blog')
-    } else {
-      Router.replace('/landing')
-    }
-  }, [user])
-
-  if (user) {
-    return <Blog />
-  }
-
   return <LandingPage />
 }
 
-Home.getInitialProps = async function () {
+Home.getInitialProps = async function (ctx: NextPageContext) {
+  if (typeof window === 'undefined') {
+    const state = ctx.store.getState()
+    if (state.session.user) {
+      ctx?.res?.writeHead(301, { Location: '/blog' })
+      ctx?.res?.end()
+      return {}
+    }
+  }
+
   return {
     overridesLayout: true,
   }

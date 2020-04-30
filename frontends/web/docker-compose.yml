@@ -14,5 +14,5 @@ services:
       LETSENCRYPT_HOST: tadoku.app
       LETSENCRYPT_EMAIL: hello@tadoku.app
       API_ROOT: https://api.tadoku.app
-      GHOST_KEY: 477fac7529430b58b5a2d255dc
+      GHOST_KEY: 9d5bb9093f8308a69abeb3d16f
       GHOST_URL: https://blog.tadoku.app

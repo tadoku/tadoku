@@ -20,12 +20,6 @@ import { User } from '../../../session/interfaces'
 import { RootState } from '../../../store'
 
 const ProfileForm = () => {
-  const [displayName, setDisplayName] = useState(() =>
-    user ? user.displayName : '',
-  )
-  const [submitting, setSubmitting] = useState(false)
-  const [error, setError] = useState(undefined as string | undefined)
-  const [message, setMessage] = useState(undefined as string | undefined)
   const { user, loaded: userLoaded } = useSelector(
     (state: RootState) => state.session,
   )
@@ -34,6 +28,12 @@ const ProfileForm = () => {
     const payload = { expiresAt, user }
     dispatch(logIn(payload))
   }
+  const [displayName, setDisplayName] = useState(() =>
+    user ? user.displayName : '',
+  )
+  const [submitting, setSubmitting] = useState(false)
+  const [error, setError] = useState(undefined as string | undefined)
+  const [message, setMessage] = useState(undefined as string | undefined)
 
   if (!userLoaded || !user) {
     return null

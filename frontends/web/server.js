@@ -1,3 +1,5 @@
+// This file doesn't work with ES6 modules, so we need to disable the linter for it
+/* eslint-disable @typescript-eslint/no-var-requires */
 const express = require('express')
 const next = require('next')
 const proxy = require('http-proxy-middleware')

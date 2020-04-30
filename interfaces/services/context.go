@@ -3,6 +3,8 @@
 package services
 
 import (
+	"net/http"
+
 	"github.com/tadoku/api/domain"
 	"github.com/tadoku/api/usecases"
 )
@@ -42,5 +44,12 @@ type Context interface {
 	// GetID gets the current id in the route
 	GetID() (uint64, error)
 
+	// Parses out the id in the route and binds it to the given variable
 	BindID(*uint64) error
+
+	// Sets a new cookie to send back to the client
+	SetCookie(*http.Cookie)
+
+	// Returns the environment the app is running in
+	Environment() domain.Environment
 }

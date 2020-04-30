@@ -33,6 +33,20 @@ func (m *MockUserInteractor) EXPECT() *MockUserInteractorMockRecorder {
 	return m.recorder
 }
 
+// CreateUser mocks base method
+func (m *MockUserInteractor) CreateUser(user domain.User) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateUser", user)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// CreateUser indicates an expected call of CreateUser
+func (mr *MockUserInteractorMockRecorder) CreateUser(user interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateUser", reflect.TypeOf((*MockUserInteractor)(nil).CreateUser), user)
+}
+
 // UpdatePassword mocks base method
 func (m *MockUserInteractor) UpdatePassword(email, currentPassword, newPassword string) error {
 	m.ctrl.T.Helper()

@@ -26,6 +26,26 @@ func setupUserTest(t *testing.T) (
 	return ctrl, repo, pwHasher, interactor
 }
 
+func TestUserInteractor_CreateUser(t *testing.T) {
+	ctrl, repo, pwHasher, interactor := setupUserTest(t)
+	defer ctrl.Finish()
+
+	user := domain.User{
+		Email:       "foo@bar.com",
+		DisplayName: "John Doe",
+		Password:    "foobar",
+	}
+	hashedUser := user
+	hashedUser.Password = "barbar"
+
+	pwHasher.EXPECT().Hash(user.Password).Return(hashedUser.Password, nil)
+	repo.EXPECT().Store(&hashedUser)
+
+	err := interactor.CreateUser(user)
+
+	assert.NoError(t, err)
+}
+
 func TestUserInteractor_UpdatePassword(t *testing.T) {
 	ctrl, repo, pwHasher, interactor := setupUserTest(t)
 	defer ctrl.Finish()
@@ -58,7 +78,7 @@ func TestUserInteractor_UpdatePassword(t *testing.T) {
 		repo.EXPECT().FindByEmail("foo@bar.com").Return(user, nil)
 		pwHasher.EXPECT().Compare(user.Password, "foobar").Return(false)
 		err := interactor.UpdatePassword("foo@bar.com", "foobar", "foofoo")
-		assert.EqualError(t, err, usecases.ErrPasswordIncorrect.Error())
+		assert.EqualError(t, err, domain.ErrPasswordIncorrect.Error())
 	}
 }
 

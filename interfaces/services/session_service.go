@@ -2,6 +2,7 @@ package services
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/tadoku/api/domain"
 	"github.com/tadoku/api/usecases"
@@ -11,19 +12,24 @@ import (
 // logging in, registering, resetting passwords, requesting new tokens, etc...
 type SessionService interface {
 	Login(ctx Context) error
-	Register(ctx Context) error
 	Refresh(ctx Context) error
+	Logout(ctx Context) error
 }
 
 // NewSessionService initializer
-func NewSessionService(sessionInteractor usecases.SessionInteractor) SessionService {
+func NewSessionService(
+	sessionInteractor usecases.SessionInteractor,
+	sessionCookieName string,
+) SessionService {
 	return &sessionService{
 		SessionInteractor: sessionInteractor,
+		sessionCookieName: sessionCookieName,
 	}
 }
 
 type sessionService struct {
 	SessionInteractor usecases.SessionInteractor
+	sessionCookieName string
 }
 
 // SessionLoginBody is the data that's needed to log in
@@ -39,36 +45,32 @@ func (s *sessionService) Login(ctx Context) error {
 		return domain.WrapError(err)
 	}
 
-	user, token, err := s.SessionInteractor.CreateSession(b.Email, b.Password)
+	user, token, expiresAt, err := s.SessionInteractor.CreateSession(b.Email, b.Password)
 	if err != nil {
 		ctx.NoContent(http.StatusUnauthorized)
 		return domain.WrapError(err)
 	}
 
 	res := map[string]interface{}{
-		"token": token,
-		"user":  user,
+		"expiresAt": expiresAt,
+		"user":      user,
 	}
+
+	s.setSessionCookie(ctx, token, expiresAt)
 
 	return ctx.JSON(http.StatusOK, res)
 }
 
-func (s *sessionService) Register(ctx Context) error {
-	user := &domain.User{}
-	err := ctx.Bind(user)
-	if err != nil {
-		return domain.WrapError(err)
+func (s *sessionService) setSessionCookie(ctx Context, token string, expiresAt int64) {
+	sessionCookie := &http.Cookie{
+		Name:     s.sessionCookieName,
+		Value:    token,
+		Expires:  time.Unix(expiresAt, 0),
+		Secure:   ctx.Environment().ShouldSecure(),
+		HttpOnly: true,
 	}
 
-	user.Role = domain.RoleUser
-	user.Preferences = &domain.Preferences{}
-
-	err = s.SessionInteractor.CreateUser(*user)
-	if err != nil {
-		return domain.WrapError(err)
-	}
-
-	return ctx.NoContent(http.StatusCreated)
+	ctx.SetCookie(sessionCookie)
 }
 
 func (s *sessionService) Refresh(ctx Context) error {
@@ -77,16 +79,29 @@ func (s *sessionService) Refresh(ctx Context) error {
 		return domain.WrapError(err)
 	}
 
-	user, token, err := s.SessionInteractor.RefreshSession(*sessionUser)
+	user, token, expiresAt, err := s.SessionInteractor.RefreshSession(*sessionUser)
 	if err != nil {
 		ctx.NoContent(http.StatusUnauthorized)
 		return domain.WrapError(err)
 	}
 
 	res := map[string]interface{}{
-		"token": token,
-		"user":  user,
+		"expiresAt": expiresAt,
+		"user":      user,
 	}
 
+	s.setSessionCookie(ctx, token, expiresAt)
+
 	return ctx.JSON(http.StatusOK, res)
+}
+
+func (s *sessionService) Logout(ctx Context) error {
+	ctx.SetCookie(&http.Cookie{
+		Name:     s.sessionCookieName,
+		MaxAge:   -1,
+		Secure:   ctx.Environment().ShouldSecure(),
+		HttpOnly: true,
+	})
+
+	return ctx.NoContent(200)
 }

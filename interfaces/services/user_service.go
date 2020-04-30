@@ -9,6 +9,7 @@ import (
 
 // UserService is responsible for user related when they're logged in
 type UserService interface {
+	Register(ctx Context) error
 	UpdatePassword(ctx Context) error
 	UpdateProfile(ctx Context) error
 }
@@ -22,6 +23,24 @@ func NewUserService(userInteractor usecases.UserInteractor) UserService {
 
 type userService struct {
 	UserInteractor usecases.UserInteractor
+}
+
+func (u *userService) Register(ctx Context) error {
+	user := &domain.User{}
+	err := ctx.Bind(user)
+	if err != nil {
+		return domain.WrapError(err)
+	}
+
+	user.Role = domain.RoleUser
+	user.Preferences = &domain.Preferences{}
+
+	err = u.UserInteractor.CreateUser(*user)
+	if err != nil {
+		return domain.WrapError(err)
+	}
+
+	return ctx.NoContent(http.StatusCreated)
 }
 
 // UserUpdatePasswordBody is the data that's needed to update your password
@@ -44,6 +63,10 @@ func (u *userService) UpdatePassword(ctx Context) error {
 
 	err = u.UserInteractor.UpdatePassword(user.Email, b.CurrentPassword, b.NewPassword)
 	if err != nil {
+		if err == domain.ErrPasswordIncorrect {
+			return ctx.NoContent(401)
+		}
+
 		return domain.WrapError(err)
 	}
 

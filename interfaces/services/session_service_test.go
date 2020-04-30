@@ -1,7 +1,9 @@
 package services_test
 
 import (
+	"net/http"
 	"testing"
+	"time"
 
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
@@ -11,38 +13,14 @@ import (
 	"github.com/tadoku/api/usecases"
 )
 
-func TestSessionService_Register(t *testing.T) {
-	user := &domain.User{
-		Email:       "foo@bar.com",
-		DisplayName: "John Doe",
-		Password:    "foobar",
-	}
-
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	ctx := services.NewMockContext(ctrl)
-	ctx.EXPECT().NoContent(201)
-	ctx.EXPECT().Bind(gomock.Any()).Return(nil).SetArg(0, *user)
-
-	user.Role = domain.RoleUser
-	user.Preferences = &domain.Preferences{}
-
-	i := usecases.NewMockSessionInteractor(ctrl)
-	i.EXPECT().CreateUser(*user).Return(nil)
-
-	s := services.NewSessionService(i)
-	err := s.Register(ctx)
-
-	assert.NoError(t, err)
-}
-
 func TestSessionService_Login(t *testing.T) {
 	user := &domain.User{
 		Email:       "foo@bar.com",
 		DisplayName: "John Doe",
 		Password:    "foobar",
 	}
+	expiresAt := time.Now().Unix()
+	cookieName := "session_cookie"
 	token := "foobar"
 
 	b := &services.SessionLoginBody{
@@ -55,15 +33,23 @@ func TestSessionService_Login(t *testing.T) {
 
 	ctx := services.NewMockContext(ctrl)
 	ctx.EXPECT().JSON(200, map[string]interface{}{
-		"token": token,
-		"user":  *user,
+		"expiresAt": expiresAt,
+		"user":      *user,
 	})
 	ctx.EXPECT().Bind(gomock.Any()).Return(nil).SetArg(0, *b)
+	ctx.EXPECT().Environment().Return(domain.EnvProduction)
+	ctx.EXPECT().SetCookie(gomock.Any()).Do(func(cookie *http.Cookie) {
+		assert.Equal(t, cookieName, cookie.Name)
+		assert.Equal(t, token, cookie.Value)
+		assert.Equal(t, expiresAt, cookie.Expires.Unix())
+		assert.True(t, cookie.Secure)
+		assert.True(t, cookie.HttpOnly)
+	})
 
 	i := usecases.NewMockSessionInteractor(ctrl)
-	i.EXPECT().CreateSession(b.Email, b.Password).Return(*user, token, nil)
+	i.EXPECT().CreateSession(b.Email, b.Password).Return(*user, token, expiresAt, nil)
 
-	s := services.NewSessionService(i)
+	s := services.NewSessionService(i, cookieName)
 	err := s.Login(ctx)
 
 	assert.NoError(t, err)
@@ -76,23 +62,57 @@ func TestSessionService_Refresh(t *testing.T) {
 		DisplayName: "John Doe",
 		Role:        domain.RoleUser,
 	}
+	expiresAt := time.Now().Unix()
 	token := "foobar"
+	cookieName := "session_cookie"
 
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
 	ctx := services.NewMockContext(ctrl)
 	ctx.EXPECT().JSON(200, map[string]interface{}{
-		"token": token,
-		"user":  *user,
+		"expiresAt": expiresAt,
+		"user":      *user,
 	})
 	ctx.EXPECT().User().Return(user, nil)
+	ctx.EXPECT().Environment().Return(domain.EnvProduction)
+	ctx.EXPECT().SetCookie(gomock.Any()).Do(func(cookie *http.Cookie) {
+		assert.Equal(t, cookieName, cookie.Name)
+		assert.Equal(t, token, cookie.Value)
+		assert.Equal(t, expiresAt, cookie.Expires.Unix())
+		assert.True(t, cookie.Secure)
+		assert.True(t, cookie.HttpOnly)
+	})
 
 	i := usecases.NewMockSessionInteractor(ctrl)
-	i.EXPECT().RefreshSession(*user).Return(*user, token, nil)
+	i.EXPECT().RefreshSession(*user).Return(*user, token, expiresAt, nil)
 
-	s := services.NewSessionService(i)
+	s := services.NewSessionService(i, cookieName)
 	err := s.Refresh(ctx)
+
+	assert.NoError(t, err)
+}
+
+func TestSessionService_Logout(t *testing.T) {
+	cookieName := "session_cookie"
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	ctx := services.NewMockContext(ctrl)
+	ctx.EXPECT().NoContent(200)
+	ctx.EXPECT().Environment().Return(domain.EnvProduction)
+	ctx.EXPECT().SetCookie(gomock.Any()).Do(func(cookie *http.Cookie) {
+		assert.Equal(t, cookieName, cookie.Name)
+		assert.Equal(t, "", cookie.Value)
+		assert.Equal(t, -1, cookie.MaxAge)
+		assert.True(t, cookie.Secure)
+		assert.True(t, cookie.HttpOnly)
+	})
+
+	i := usecases.NewMockSessionInteractor(ctrl)
+	s := services.NewSessionService(i, cookieName)
+	err := s.Logout(ctx)
 
 	assert.NoError(t, err)
 }

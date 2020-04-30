@@ -6,8 +6,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/labstack/echo/v4"
-	"github.com/labstack/echo/v4/middleware"
 	"github.com/stretchr/testify/assert"
 	"github.com/tadoku/api/domain"
 	"github.com/tadoku/api/infra"
@@ -19,6 +17,7 @@ func TestRouter_RestrictedRoute(t *testing.T) {
 	handler := func(ctx services.Context) error {
 		return ctx.String(200, "test")
 	}
+	cookieName := "session_cookie"
 	secret := "foobar"
 	routes := []services.Route{
 		{Method: http.MethodGet, Path: "/unrestricted", HandlerFunc: handler},
@@ -26,8 +25,9 @@ func TestRouter_RestrictedRoute(t *testing.T) {
 		{Method: http.MethodGet, Path: "/registered_only", HandlerFunc: handler, MinRole: domain.RoleUser},
 		{Method: http.MethodGet, Path: "/admin", HandlerFunc: handler, MinRole: domain.RoleAdmin},
 	}
-	e := infra.NewRouter("1337", secret, nil, nil, routes...)
-	gen := infra.NewJWTGenerator(secret)
+	e := infra.NewRouter(domain.EnvTest, "1337", secret, cookieName, nil, nil, routes...)
+	clock, _ := infra.NewClock("UTC")
+	gen := infra.NewJWTGenerator(secret, clock)
 
 	for _, tc := range []struct {
 		path          string
@@ -58,11 +58,16 @@ func TestRouter_RestrictedRoute(t *testing.T) {
 			info:          "Admin access as admin",
 		},
 	} {
-		token, _ := gen.NewToken(time.Hour*1, usecases.SessionClaims{User: tc.user})
-		authHeader := middleware.DefaultJWTConfig.AuthScheme + " " + token
+		token, _, _ := gen.NewToken(time.Hour*1, usecases.SessionClaims{User: tc.user})
+		cookie := &http.Cookie{
+			Name:     cookieName,
+			Value:    token,
+			Secure:   true,
+			HttpOnly: true,
+		}
 
 		req := httptest.NewRequest(http.MethodGet, tc.path, nil)
-		req.Header.Set(echo.HeaderAuthorization, authHeader)
+		req.AddCookie(cookie)
 
 		res := httptest.NewRecorder()
 

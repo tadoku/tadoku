@@ -9,17 +9,13 @@ import (
 	"github.com/tadoku/api/domain"
 )
 
-// ErrPasswordIncorrect for when an invalid password is given
-var ErrPasswordIncorrect = fail.New("invalid password supplied")
-
 // ErrUserDoesNotExist for when a user could not be found
 var ErrUserDoesNotExist = fail.New("user does not exist")
 
 // SessionInteractor contains all business logic for sessions
 type SessionInteractor interface {
-	CreateUser(user domain.User) error
-	CreateSession(email, password string) (user domain.User, token string, err error)
-	RefreshSession(user domain.User) (latestUser domain.User, token string, err error)
+	CreateSession(email, password string) (user domain.User, token string, expiresAt int64, err error)
+	RefreshSession(user domain.User) (latestUser domain.User, token string, expiresAt int64, err error)
 }
 
 // NewSessionInteractor instantiates SessionInteractor with all dependencies
@@ -44,61 +40,44 @@ type sessionInteractor struct {
 	sessionLength  time.Duration
 }
 
-func (si *sessionInteractor) CreateUser(user domain.User) error {
-	if user.ID != 0 {
-		return fail.Errorf("User with an ID (%v) could not be created.", user.ID)
-	}
-
-	if user.NeedsHashing() {
-		var err error
-		user.Password, err = si.passwordHasher.Hash(user.Password)
-		if err != nil {
-			return domain.WrapError(err)
-		}
-	}
-
-	err := si.userRepository.Store(&user)
-	return domain.WrapError(err)
-}
-
-func (si *sessionInteractor) CreateSession(email, password string) (domain.User, string, error) {
+func (si *sessionInteractor) CreateSession(email, password string) (domain.User, string, int64, error) {
 	user, err := si.userRepository.FindByEmail(email)
 	if err != nil {
-		return domain.User{}, "", domain.WrapError(err)
+		return domain.User{}, "", 0, domain.WrapError(err)
 	}
 
 	if user.ID == 0 {
-		return domain.User{}, "", domain.WrapError(ErrUserDoesNotExist, fail.WithIgnorable())
+		return domain.User{}, "", 0, domain.WrapError(ErrUserDoesNotExist, fail.WithIgnorable())
 	}
 
 	if !si.passwordHasher.Compare(user.Password, password) {
-		return domain.User{}, "", domain.WrapError(ErrPasswordIncorrect, fail.WithIgnorable())
+		return domain.User{}, "", 0, domain.WrapError(domain.ErrPasswordIncorrect, fail.WithIgnorable())
 	}
 
 	claims := SessionClaims{User: &user}
-	token, err := si.jwtGenerator.NewToken(si.sessionLength, claims)
+	token, expiresAt, err := si.jwtGenerator.NewToken(si.sessionLength, claims)
 	if err != nil {
-		return domain.User{}, "", domain.WrapError(err)
+		return domain.User{}, "", 0, domain.WrapError(err)
 	}
 
-	return user, token, nil
+	return user, token, expiresAt, nil
 }
 
-func (si *sessionInteractor) RefreshSession(user domain.User) (domain.User, string, error) {
+func (si *sessionInteractor) RefreshSession(user domain.User) (domain.User, string, int64, error) {
 	user, err := si.userRepository.FindByEmail(user.Email)
 	if err != nil {
-		return domain.User{}, "", domain.WrapError(err)
+		return domain.User{}, "", 0, domain.WrapError(err)
 	}
 
 	if user.ID == 0 {
-		return domain.User{}, "", domain.WrapError(ErrUserDoesNotExist, fail.WithIgnorable())
+		return domain.User{}, "", 0, domain.WrapError(ErrUserDoesNotExist, fail.WithIgnorable())
 	}
 
 	claims := SessionClaims{User: &user}
-	token, err := si.jwtGenerator.NewToken(si.sessionLength, claims)
+	token, expiresAt, err := si.jwtGenerator.NewToken(si.sessionLength, claims)
 	if err != nil {
-		return domain.User{}, "", domain.WrapError(err)
+		return domain.User{}, "", 0, domain.WrapError(err)
 	}
 
-	return user, token, nil
+	return user, token, expiresAt, nil
 }

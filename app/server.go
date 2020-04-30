@@ -23,6 +23,7 @@ type ServerDependencies interface {
 	Router() services.Router
 	JWTGenerator() usecases.JWTGenerator
 	ErrorReporter() usecases.ErrorReporter
+	Clock() usecases.Clock
 
 	RDB() *infra.RDB
 	SQLHandler() rdb.SQLHandler
@@ -38,14 +39,17 @@ func NewServerDependencies() ServerDependencies {
 }
 
 type serverDependencies struct {
-	Port                 string        `envconfig:"app_port" valid:"required"`
-	JWTSecret            string        `envconfig:"jwt_secret" valid:"required"`
-	ErrorReporterDSN     string        `envconfig:"error_reporter_dsn"`
-	SessionLength        time.Duration `envconfig:"user_session_length" valid:"required"`
-	DatabaseURL          string        `envconfig:"database_url" valid:"required"`
-	DatabaseMaxIdleConns int           `envconfig:"database_max_idle_conns" valid:"required"`
-	DatabaseMaxOpenConns int           `envconfig:"database_max_open_conns" valid:"required"`
-	CORSAllowedOrigins   []string      `envconfig:"cors_allowed_origins" valid:"required"`
+	Environment          domain.Environment `envconfig:"app_env" valid:"environment" default:"development"`
+	DatabaseURL          string             `envconfig:"database_url" valid:"required"`
+	DatabaseMaxIdleConns int                `envconfig:"database_max_idle_conns" valid:"required"`
+	DatabaseMaxOpenConns int                `envconfig:"database_max_open_conns" valid:"required"`
+	CORSAllowedOrigins   []string           `envconfig:"cors_allowed_origins" valid:"required"`
+	ErrorReporterDSN     string             `envconfig:"error_reporter_dsn"`
+	JWTSecret            string             `envconfig:"jwt_secret" valid:"required"`
+	Port                 string             `envconfig:"app_port" valid:"required"`
+	SessionLength        time.Duration      `envconfig:"user_session_length" valid:"required"`
+	SessionCookieName    string             `envconfig:"user_session_cookie_name" valid:"required"`
+	TimeZone             string             `envconfig:"app_timezone" valid:"required"`
 
 	router struct {
 		result services.Router
@@ -59,6 +63,11 @@ type serverDependencies struct {
 
 	jwtGenerator struct {
 		result usecases.JWTGenerator
+		once   sync.Once
+	}
+
+	clock struct {
+		result usecases.Clock
 		once   sync.Once
 	}
 
@@ -89,6 +98,7 @@ type serverDependencies struct {
 }
 
 func (d *serverDependencies) AutoConfigure() error {
+	infra.ConfigureCustomValidators()
 	return configo.Load(d, configo.Option{})
 }
 
@@ -99,7 +109,7 @@ func (d *serverDependencies) AutoConfigure() error {
 func (d *serverDependencies) Services() *Services {
 	holder := &d.services
 	holder.once.Do(func() {
-		holder.result = NewServices(d.Interactors())
+		holder.result = NewServices(d.Interactors(), d.SessionCookieName)
 	})
 	return holder.result
 }
@@ -135,7 +145,7 @@ func (d *serverDependencies) Interactors() *Interactors {
 func (d *serverDependencies) Router() services.Router {
 	holder := &d.router
 	holder.once.Do(func() {
-		holder.result = infra.NewRouter(d.Port, d.JWTSecret, d.CORSAllowedOrigins, d.ErrorReporter(), d.routes()...)
+		holder.result = infra.NewRouter(d.Environment, d.Port, d.JWTSecret, d.SessionCookieName, d.CORSAllowedOrigins, d.ErrorReporter(), d.routes()...)
 	})
 	return holder.result
 }
@@ -146,13 +156,15 @@ func (d *serverDependencies) routes() []services.Route {
 		{Method: http.MethodGet, Path: "/ping", HandlerFunc: d.Services().Health.Ping},
 
 		// Session
-		{Method: http.MethodPost, Path: "/login", HandlerFunc: d.Services().Session.Login},
-		{Method: http.MethodPost, Path: "/register", HandlerFunc: d.Services().Session.Register},
-		{Method: http.MethodPost, Path: "/refresh", HandlerFunc: d.Services().Session.Refresh, MinRole: domain.RoleUser},
+		{Method: http.MethodPost, Path: "/sessions", HandlerFunc: d.Services().Session.Login},
+		{Method: http.MethodDelete, Path: "/sessions", HandlerFunc: d.Services().Session.Logout, MinRole: domain.RoleUser},
+		// TODO: need better route for this, not RESTful as it is now
+		{Method: http.MethodPost, Path: "/sessions/refresh", HandlerFunc: d.Services().Session.Refresh, MinRole: domain.RoleUser},
 
 		// Users
-		{Method: http.MethodPost, Path: "/users/update_password", HandlerFunc: d.Services().User.UpdatePassword, MinRole: domain.RoleUser},
-		{Method: http.MethodPost, Path: "/users/profile", HandlerFunc: d.Services().User.UpdateProfile, MinRole: domain.RoleUser},
+		{Method: http.MethodPost, Path: "/users", HandlerFunc: d.Services().User.Register},
+		{Method: http.MethodPost, Path: "/users/:id/profile", HandlerFunc: d.Services().User.UpdateProfile, MinRole: domain.RoleUser},
+		{Method: http.MethodPost, Path: "/users/:id/password", HandlerFunc: d.Services().User.UpdatePassword, MinRole: domain.RoleUser},
 
 		// Contests
 		{Method: http.MethodGet, Path: "/contests", HandlerFunc: d.Services().Contest.All},
@@ -161,11 +173,13 @@ func (d *serverDependencies) routes() []services.Route {
 		{Method: http.MethodPut, Path: "/contests/:id", HandlerFunc: d.Services().Contest.Update, MinRole: domain.RoleAdmin},
 
 		// Rankings
-		{Method: http.MethodGet, Path: "/rankings/current", HandlerFunc: d.Services().Ranking.CurrentRegistration, MinRole: domain.RoleUser},
-		{Method: http.MethodGet, Path: "/rankings/registration", HandlerFunc: d.Services().Ranking.RankingsForRegistration},
-		{Method: http.MethodPost, Path: "/rankings", HandlerFunc: d.Services().Ranking.Create, MinRole: domain.RoleUser},
 		// TODO: Rename Get to All
 		{Method: http.MethodGet, Path: "/rankings", HandlerFunc: d.Services().Ranking.Get},
+
+		// Ranking registrations
+		{Method: http.MethodPost, Path: "/ranking_registrations", HandlerFunc: d.Services().Ranking.Create, MinRole: domain.RoleUser},
+		{Method: http.MethodGet, Path: "/ranking_registrations", HandlerFunc: d.Services().Ranking.RankingsForRegistration},
+		{Method: http.MethodGet, Path: "/ranking_registrations/:id/current", HandlerFunc: d.Services().Ranking.CurrentRegistration, MinRole: domain.RoleUser},
 
 		// Contest logs
 		{Method: http.MethodPost, Path: "/contest_logs", HandlerFunc: d.Services().ContestLog.Create, MinRole: domain.RoleUser},
@@ -179,7 +193,20 @@ func (d *serverDependencies) routes() []services.Route {
 func (d *serverDependencies) JWTGenerator() usecases.JWTGenerator {
 	holder := &d.jwtGenerator
 	holder.once.Do(func() {
-		holder.result = infra.NewJWTGenerator(d.JWTSecret)
+		holder.result = infra.NewJWTGenerator(d.JWTSecret, d.Clock())
+	})
+	return holder.result
+}
+
+func (d *serverDependencies) Clock() usecases.Clock {
+	holder := &d.clock
+	holder.once.Do(func() {
+		var err error
+		holder.result, err = infra.NewClock(d.TimeZone)
+
+		if err != nil {
+			log.Fatalf("failed to initialize clock: %v\n", err)
+		}
 	})
 	return holder.result
 }
@@ -193,7 +220,6 @@ func (d *serverDependencies) ErrorReporter() usecases.ErrorReporter {
 		if err != nil {
 			log.Fatalf("failed to initialize error reporter: %v\n", err)
 		}
-
 	})
 	return holder.result
 }

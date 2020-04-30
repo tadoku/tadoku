@@ -1,5 +1,4 @@
 import 'isomorphic-fetch'
-import { removeUserFromLocalStorage } from './session/storage'
 
 const root = '/api'
 
@@ -31,7 +30,6 @@ const request = (
 export const get = (endpoint: string) =>
   request('get', endpoint).then(response => {
     if (response.status === 401) {
-      removeUserFromLocalStorage()
       location.reload()
     }
 

@@ -13,6 +13,6 @@ services:
       VIRTUAL_PORT: 3000
       LETSENCRYPT_HOST: tadoku.app
       LETSENCRYPT_EMAIL: hello@tadoku.app
-      API_ROOT: https://api.tadoku.app
+      API_ROOT: http://172.17.0.7:4000
       GHOST_KEY: 9d5bb9093f8308a69abeb3d16f
       GHOST_URL: https://blog.tadoku.app

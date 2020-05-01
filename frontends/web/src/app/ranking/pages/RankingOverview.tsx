@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { Ranking, RankingRegistration } from '../interfaces'
-import RankingList from '../components/List'
+import Leaderboard from '../components/Leaderboard'
 import RankingApi from '../api'
 import { Contest } from '../../contest/interfaces'
 import { Button, PageTitle, SubHeading } from '../../ui/components'
@@ -76,7 +76,7 @@ const RankingOverview = ({
           />
         )}
       </Container>
-      <RankingList
+      <Leaderboard
         rankings={rankings}
         loading={status === ApiFetchStatus.Loading}
       />

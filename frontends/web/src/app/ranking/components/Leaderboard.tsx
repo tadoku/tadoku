@@ -14,7 +14,7 @@ interface Props {
   loading: boolean
 }
 
-const RankingList = (props: Props) => {
+const Leaderboard = (props: Props) => {
   if (props.loading) {
     const rows = [...Array(5)]
 
@@ -44,7 +44,7 @@ const RankingList = (props: Props) => {
   )
 }
 
-export default RankingList
+export default Leaderboard
 
 const RankingRow = ({ rank, tied, data: rankingData }: RankingWithRank) => (
   <Row>

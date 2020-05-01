@@ -5,8 +5,7 @@ import { RootState } from '../../store'
 import { useSelector } from 'react-redux'
 import { User } from '../../session/interfaces'
 import RankingApi from '../api'
-import ContestLogsTable from './ContestLogsTable'
-import ContestLogsList from './ContestLogsList'
+import UpdatesList from './UpdatesList'
 import { Contest } from '../../contest/interfaces'
 import { isContestActive } from '../domain'
 import styled from 'styled-components'
@@ -20,7 +19,7 @@ interface Props {
   refreshData: () => void
 }
 
-const ContestLogsOverview = (props: Props) => {
+const UpdatesOverview = (props: Props) => {
   const signedInUser = useSelector((state: RootState) => state.session.user)
   const [selectedLog, setSelectedLog] = useState(
     undefined as ContestLog | undefined,
@@ -54,13 +53,7 @@ const ContestLogsOverview = (props: Props) => {
         onSuccess={finishUpdate}
         onCancel={() => setSelectedLog(undefined)}
       />
-      <ContestLogsTable
-        logs={props.logs}
-        canEdit={canEdit}
-        editLog={setSelectedLog}
-        deleteLog={deleteLog}
-      />
-      <ContestLogsList
+      <UpdatesList
         logs={props.logs}
         canEdit={canEdit}
         editLog={setSelectedLog}
@@ -70,7 +63,7 @@ const ContestLogsOverview = (props: Props) => {
   )
 }
 
-export default ContestLogsOverview
+export default UpdatesOverview
 
 const Heading = styled(PageTitle).attrs({ as: 'h3' })`
   margin: 60px 0 30px;

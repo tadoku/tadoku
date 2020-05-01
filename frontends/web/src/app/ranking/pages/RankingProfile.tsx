@@ -8,7 +8,7 @@ import RankingApi from '../api'
 import ContestApi from '../../contest/api'
 import ReadingActivityGraph from '../components/graphs/ReadingActivityGraph'
 import MediaDistributionGraph from '../components/graphs/MediaDistributionGraph'
-import ContestLogsOverview from '../components/ContestLogsOverview'
+import UpdatesOverview from '../components/UpdatesOverview'
 import { rankingsToRegistrationOverview } from '../transform/ranking'
 import { Contest } from '../../contest/interfaces'
 import { useCachedApiState, isReady } from '../../cache'
@@ -156,7 +156,7 @@ const RankingProfile = ({
           <MediaDistributionGraph logs={logs} effectCount={effectCount} />
         </MediaDistributionGraphContainer>
       </GraphContainer>
-      <ContestLogsOverview
+      <UpdatesOverview
         contest={contest}
         logs={logs}
         registration={registrationOverview}

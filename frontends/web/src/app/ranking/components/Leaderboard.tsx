@@ -14,7 +14,7 @@ interface Props {
   loading: boolean
 }
 
-const RankingList = (props: Props) => {
+const Leaderboard = (props: Props) => {
   if (props.loading) {
     const rows = [...Array(5)]
 
@@ -44,7 +44,7 @@ const RankingList = (props: Props) => {
   )
 }
 
-export default RankingList
+export default Leaderboard
 
 const RankingRow = ({ rank, tied, data: rankingData }: RankingWithRank) => (
   <Row>
@@ -111,7 +111,6 @@ const RankHeading = styled.td`
 `
 
 const NicknameHeading = styled.td`
-  width: 100%;
   padding: 0 30px;
   box-sizing: border-box;
   border-bottom: 2px solid ${Constants.colors.nonFocusTextWithAlpha(0.2)};
@@ -183,9 +182,33 @@ const RankCell = styled.td`
 const NicknameCell = styled.td`
   height: 55px;
   padding: 0 30px;
+  position: relative;
+  width: 100%;
+
+  &:before {
+    content: '&nbsp;';
+    visibility: hidden;
+  }
+
+  a {
+    height: 55px;
+    line-height: 55px;
+    position: absolute;
+    top: 0;
+    left: 30px;
+    right: 30px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
 
   ${media.lessThan('large')`
     padding: 0 20px;
+
+    a {
+      left: 20px;
+      right: 20px;
+    }
   `}
 `
 

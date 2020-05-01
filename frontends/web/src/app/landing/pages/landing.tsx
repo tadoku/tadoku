@@ -47,7 +47,7 @@ const LandingPage = () => {
               Extensive reading of native materials is a great way to improve
               your understanding of the language you&apos;re learning. There are
               many benefits to doing so: it builds vocabulary, reinforces
-              grammar patterns, and you learn about the culture of where your
+              grammar patterns, and you learn about the culture where your
               language is spoken. As you participate in more rounds you will
               notice that you can read more and more as you improve.
             </Paragraph>

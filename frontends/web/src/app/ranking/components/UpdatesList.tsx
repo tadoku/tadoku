@@ -15,34 +15,51 @@ interface Props {
   deleteLog: (log: ContestLog) => void
 }
 
-const ContestLogsTable = (props: Props) => (
+const UpdatesList = (props: Props) => (
   <TableList>
     <Heading>
       <HeadingRow>
-        <Column>Date</Column>
-        <Column>Language</Column>
-        <Column>Medium</Column>
-        <Column>Description</Column>
-        <Column alignRight>Amount</Column>
-        <Column alignRight>Score</Column>
+        <HideSmallColumn>Date</HideSmallColumn>
+        <HideSmallColumn>Language</HideSmallColumn>
+        <HideSmallColumn>Medium</HideSmallColumn>
+        <HideSmallColumn>Description</HideSmallColumn>
+        <HideSmallColumn alignRight>Amount</HideSmallColumn>
+        <HideSmallColumn alignRight>Score</HideSmallColumn>
+        <ShowSmallColumn>Description</ShowSmallColumn>
         {props.canEdit && <Column />}
       </HeadingRow>
     </Heading>
     <Body>
       {props.logs.map(l => (
         <Row key={l.id}>
-          <Column title={l.date.toLocaleString()}>
+          <HideSmallColumn
+            style={{ whiteSpace: 'nowrap' }}
+            title={l.date.toLocaleString()}
+          >
             {format(l.date, 'MMM do')}
-          </Column>
-          <Column>{formatLanguageName(l.languageCode)}</Column>
-          <Column>{formatMediaDescription(l.mediumId)}</Column>
-          <Column limit>{l.description || 'N/A'}</Column>
-          <Column alignRight>
+          </HideSmallColumn>
+          <HideSmallColumn>
+            {formatLanguageName(l.languageCode)}
+          </HideSmallColumn>
+          <HideSmallColumn>
+            {formatMediaDescription(l.mediumId)}
+          </HideSmallColumn>
+          <DescriptionColumn title={l.description || 'N/A'}>
+            <span>{l.description || 'N/A'}</span>
+          </DescriptionColumn>
+          <HideSmallColumn alignRight>
             <strong>{formatScore(l.amount)}</strong>
-          </Column>
-          <Column alignRight>
+          </HideSmallColumn>
+          <HideSmallColumn alignRight>
             <strong>{formatScore(l.adjustedAmount)}</strong>
-          </Column>
+          </HideSmallColumn>
+          <ShowSmallColumn>
+            <strong>{formatScore(l.amount)}</strong> of{' '}
+            <strong>{formatMediaDescription(l.mediumId)}</strong> in{' '}
+            <strong>{formatLanguageName(l.languageCode)}</strong> at{' '}
+            <strong>{format(l.date, 'MMM do')}</strong> for a total of{' '}
+            <strong>{formatScore(l.adjustedAmount)}</strong> points
+          </ShowSmallColumn>
           {props.canEdit && (
             <Column style={{ width: '1px', whiteSpace: 'nowrap' }}>
               <ButtonContainer>
@@ -65,7 +82,7 @@ const ContestLogsTable = (props: Props) => (
   </TableList>
 )
 
-export default ContestLogsTable
+export default UpdatesList
 
 const TableList = styled.table`
   padding: 0;
@@ -73,10 +90,6 @@ const TableList = styled.table`
   background: ${Constants.colors.light};
   box-shadow: 0px 2px 3px 0px rgba(0, 0, 0, 0.08);
   border-collapse: collapse;
-
-  ${media.lessThan('medium')`
-    display: none;
-  `}
 `
 
 const Heading = styled.thead`
@@ -102,10 +115,47 @@ const Row = styled.tr`
   }
 `
 
-const Column = styled.td<{ alignRight?: boolean; limit?: boolean }>`
+const Column = styled.td<{ alignRight?: boolean }>`
   padding: 10px 20px;
   text-align: ${({ alignRight }) => (alignRight ? 'right' : 'left')};
-  width: ${({ limit }) => (limit ? '50%' : 'inherit')};
+`
+
+const HideSmallColumn = styled(Column)`
+  ${media.lessThan('medium')`
+    display: none;
+  `}
+`
+
+const ShowSmallColumn = styled(Column)`
+  display: none;
+
+  ${media.lessThan('medium')`
+    display: table-cell;
+  `}
+`
+
+const DescriptionColumn = styled(HideSmallColumn)`
+  position: relative;
+  height: 69px;
+  box-sizing: border-box;
+  width: 100%;
+
+  &:before {
+    content: '&nbsp;';
+    visibility: hidden;
+  }
+
+  span {
+    position: absolute;
+    height: 69px;
+    line-height: 69px;
+    top: 0;
+    left: 20px;
+    right: 20px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
 `
 
 const Body = styled.tbody``

@@ -49,7 +49,7 @@ const buttonStyles = css`
   &:active:not([disabled]),
   &:focus:not([disabled]) {
     outline: none;
-    border-color: ${Constants.colors.primary};
+    border-color: ${Constants.colors.darkWithAlpha(1)};
   }
 
   ${({ plain, active }: ButtonProps) =>
@@ -137,6 +137,7 @@ const buttonStyles = css`
     &:focus:not([disabled]) {
       color: ${Constants.colors.light};
       background-color: ${Constants.colors.destructive};
+      border-color: ${Constants.colors.darkWithAlpha(0.6)};
     }
   `}
 

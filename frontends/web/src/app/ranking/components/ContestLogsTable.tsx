@@ -31,12 +31,17 @@ const ContestLogsTable = (props: Props) => (
     <Body>
       {props.logs.map(l => (
         <Row key={l.id}>
-          <Column title={l.date.toLocaleString()}>
+          <Column
+            style={{ whiteSpace: 'nowrap' }}
+            title={l.date.toLocaleString()}
+          >
             {format(l.date, 'MMM do')}
           </Column>
           <Column>{formatLanguageName(l.languageCode)}</Column>
           <Column>{formatMediaDescription(l.mediumId)}</Column>
-          <Column limit>{l.description || 'N/A'}</Column>
+          <DescriptionColumn title={l.description || 'N/A'}>
+            <span>{l.description || 'N/A'}</span>
+          </DescriptionColumn>
           <Column alignRight>
             <strong>{formatScore(l.amount)}</strong>
           </Column>
@@ -102,10 +107,33 @@ const Row = styled.tr`
   }
 `
 
-const Column = styled.td<{ alignRight?: boolean; limit?: boolean }>`
+const Column = styled.td<{ alignRight?: boolean }>`
   padding: 10px 20px;
   text-align: ${({ alignRight }) => (alignRight ? 'right' : 'left')};
-  width: ${({ limit }) => (limit ? '50%' : 'inherit')};
+`
+
+const DescriptionColumn = styled(Column)`
+  position: relative;
+  height: 69px;
+  box-sizing: border-box;
+  width: 100%;
+
+  &:before {
+    content: '&nbsp;';
+    visibility: hidden;
+  }
+
+  span {
+    position: absolute;
+    height: 69px;
+    line-height: 69px;
+    top: 0;
+    left: 20px;
+    right: 20px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
 `
 
 const Body = styled.tbody``

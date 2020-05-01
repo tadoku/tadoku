@@ -27,6 +27,9 @@ const LinkContainer = styled.div`
 
   a,
   button {
+    font-weight: bold;
+    font-family: ${Constants.fonts.sansSerif};
+
     ${media.lessThan('medium')`
       line-height: 48px;
       &:focus {

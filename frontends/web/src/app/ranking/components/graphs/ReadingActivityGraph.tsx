@@ -44,7 +44,7 @@ const ReadingActivityGraph = ({ logs, contest, effectCount }: Props) => {
         height={220}
         xType="ordinal"
         stackBy="y"
-        margin={{ top: 0, bottom: 50, right: 0, left: 40 }}
+        margin={{ top: 5, bottom: 50, right: 0, left: 45 }}
       >
         <HorizontalGridLines />
         <VerticalGridLines />

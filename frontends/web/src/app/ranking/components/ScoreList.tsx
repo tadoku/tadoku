@@ -44,9 +44,8 @@ const Score = styled.div`
   box-sizing: border-box;
   padding-right: 30px;
 
-  ${media.lessThan('medium')`
-    width: 50%;
-  `}
+  ${media.lessThan('medium')`width: 50%; height: 80px;`}
+  ${media.lessThan('small')`width: 100%; & + & { margin-top: 30px; }`}
 `
 const ScoreLabel = styled(SubHeading)`
   margin: 0;

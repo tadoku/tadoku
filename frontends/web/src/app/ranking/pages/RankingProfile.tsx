@@ -218,6 +218,8 @@ const HeaderContainer = styled.div`
   h1 {
     margin: 0;
   }
+
+  ${media.lessThan('medium')`padding-bottom: 10px; margin-bottom: 20px`}
 `
 
 const RoundDescription = styled(SubHeading)`

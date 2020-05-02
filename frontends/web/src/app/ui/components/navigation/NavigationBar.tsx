@@ -20,6 +20,7 @@ interface Props {
   registration: RankingRegistration | undefined
   refreshSession: () => void
   isOpen: boolean
+  closeNavigation: () => void
 }
 
 const NavigationBar = ({
@@ -27,6 +28,7 @@ const NavigationBar = ({
   registration,
   refreshSession,
   isOpen,
+  closeNavigation,
 }: Props) => {
   const [hasMounted, setHasMounted] = useState(false)
   const router = useRouter()
@@ -41,7 +43,7 @@ const NavigationBar = ({
 
   return (
     <StyledNav isOpen={isOpen}>
-      <LinkContainer>
+      <LinkContainer onClick={closeNavigation}>
         <Link href="/blog" passHref>
           <ButtonLink plain active={router.pathname == '/blog'}>
             Blog

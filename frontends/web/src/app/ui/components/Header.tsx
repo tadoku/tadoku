@@ -22,7 +22,10 @@ const Header = ({ homeURL }: Props) => {
             <Logo />
           </LogoLink>
         </Link>
-        <NavigationBar isOpen={isOpen} />
+        <NavigationBar
+          isOpen={isOpen}
+          closeNavigation={() => setIsOpen(false)}
+        />
         <Hamburger onClick={() => setIsOpen(!isOpen)}>
           <FontAwesomeIcon
             icon={isOpen ? 'times' : 'bars'}

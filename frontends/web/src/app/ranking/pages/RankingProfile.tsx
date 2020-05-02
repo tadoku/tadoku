@@ -200,9 +200,12 @@ const ReadingActivityGraphContainer = styled(LargeCard)`
   flex: 1 1 0;
   margin-right: 30px;
   max-width: calc(100% - 260px - 30px);
-  ${media.lessThan('large')`max-width: 100%;`}
+  ${media.lessThan('large')`max-width: 100%; margin-right: 0;`}
+  ${media.lessThan('small')`display: none;`}
 `
-const MediaDistributionGraphContainer = styled(LargeCard)``
+const MediaDistributionGraphContainer = styled(LargeCard)`
+  ${media.lessThan('large')`display: none;`}
+`
 
 const HeaderContainer = styled.div`
   display: flex;

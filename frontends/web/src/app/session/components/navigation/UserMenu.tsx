@@ -102,13 +102,17 @@ const List = styled.ul`
 `
 
 const DisplayName = styled.div`
-  padding-left: 30px;
+  padding: 0 30px;
   font-weight: 600;
   font-size: 24px;
   height: 55px;
-  display: flex;
-  align-items: center;
+  line-height: 55px;
   background: ${Constants.colors.lighter};
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  width: 100%;
+  box-sizing: border-box;
 `
 
 export default { Dropdown: UserMenuDropdown, List: UserMenuList }

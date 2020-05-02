@@ -18,11 +18,14 @@ const Header = ({ homeURL }: Props) => {
     <Container>
       <InnerContainer>
         <Link href={homeURL} passHref>
-          <LogoLink href="">
+          <LogoLink href="" onClick={() => setIsOpen(false)}>
             <Logo />
           </LogoLink>
         </Link>
-        <NavigationBar isOpen={isOpen} />
+        <NavigationBar
+          isOpen={isOpen}
+          closeNavigation={() => setIsOpen(false)}
+        />
         <Hamburger onClick={() => setIsOpen(!isOpen)}>
           <FontAwesomeIcon
             icon={isOpen ? 'times' : 'bars'}

@@ -11,6 +11,7 @@ import { useCachedApiState, ApiFetchStatus } from '../../cache'
 import { rankingCollectionSerializer } from '../transform/ranking'
 import { isRegisteredForContest, canJoinContest } from '../domain'
 import SubmitPagesButton from '../components/SubmitPagesButton'
+import media from 'styled-media-query'
 
 interface Props {
   contest: Contest
@@ -90,15 +91,26 @@ const Container = styled.div`
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
+  margin-bottom: 30px;
 
   h1 {
     margin: 0;
   }
+
+  ${media.lessThan('small')`
+    flex-direction: column;
+
+    > button {
+      width: 100%;
+      box-sizing: border-box;
+      margin: 10px 0;
+    }
+  `}
 `
 
 const Description = styled(SubHeading)`
   margin-top: 10px;
-  margin-bottom: 30px;
+  margin-bottom: 10px;
 `
 
 // TODO: Refactor remaining time

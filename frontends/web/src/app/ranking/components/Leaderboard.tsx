@@ -58,7 +58,16 @@ const RankingRow = ({ rank, tied, data: rankingData }: RankingWithRank) => (
       <RowLink ranking={rankingData}>{rankingData.userDisplayName}</RowLink>
     </NicknameCell>
     <ScoreCell>
-      <RowLink ranking={rankingData}>{formatScore(rankingData.amount)}</RowLink>
+      <ScoreLarge>
+        <RowLink ranking={rankingData}>
+          {formatScore(rankingData.amount)}
+        </RowLink>
+      </ScoreLarge>
+      <ScoreSmall>
+        <RowLink ranking={rankingData}>
+          {Math.floor(rankingData.amount)}
+        </RowLink>
+      </ScoreSmall>
     </ScoreCell>
   </Row>
 )
@@ -117,6 +126,10 @@ const NicknameHeading = styled.td`
 
   ${media.lessThan('large')`
     padding: 0 20px;
+  `}
+
+  ${media.lessThan('medium')`
+    padding: 0;
   `}
 `
 
@@ -210,6 +223,15 @@ const NicknameCell = styled.td`
       right: 20px;
     }
   `}
+
+  ${media.lessThan('medium')`
+    padding: 0;
+
+    a {
+      left: 0;
+      right: 0;
+    }
+  `}
 `
 
 const ScoreCell = styled.td`
@@ -220,6 +242,15 @@ const ScoreCell = styled.td`
   ${media.lessThan('large')`
     padding: 0 20px;
   `}
+`
+
+const ScoreSmall = styled.span`
+  display: none;
+  ${media.lessThan('medium')`display: block;`}
+`
+const ScoreLarge = styled.span`
+  display: block;
+  ${media.lessThan('medium')`display: none;`}
 `
 
 const RankingRowSkeleton = () => (

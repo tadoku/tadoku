@@ -2936,10 +2936,10 @@
     "@types/react-native" "*"
     csstype "^2.2.0"
 
-"@types/tryghost__content-api@^1.3.3":
-  version "1.3.3"
-  resolved "https://registry.yarnpkg.com/@types/tryghost__content-api/-/tryghost__content-api-1.3.3.tgz#376a0142651dd1bfac7c6c00a059fdca56a589da"
-  integrity sha512-2UHetw01a7RBQr7hhTxd2qWs6EyZp3RMxtJ+EN88HDK64azQ8AY+RUXSwUUiALCYC50WALEdULVXBSKm77ZGvg==
+"@types/tryghost__content-api@^1.3.4":
+  version "1.3.4"
+  resolved "https://registry.yarnpkg.com/@types/tryghost__content-api/-/tryghost__content-api-1.3.4.tgz#b7d00d4c30a07eaf398d14fb98f5872087e5ca26"
+  integrity sha512-EmTQqkcgokPNMSC2WOBwdYA+D+uCCHypMlBGWgkSy0IMYOGac01I5h5jugzHfqjpDDrycTSatgRVE1fwrjmUdg==
 
 "@types/webpack-env@^1.15.0":
   version "1.15.0"

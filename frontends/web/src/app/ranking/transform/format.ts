@@ -1,4 +1,5 @@
 import { globalLanguage, mediaByID, languageByCode } from '../database'
+import { LineMarkSeriesPoint } from 'react-vis'
 
 export const formatMediaDescription = (id: number) => mediaByID[id].description
 export const formatMediaUnit = (id: number) => mediaByID[id].unit
@@ -25,4 +26,16 @@ export const formatPoints = (amount: number): string => {
     default:
       return `${formatScore(amount)} points`
   }
+}
+
+export const formatLineMarkSeriesPoint = (
+  point: LineMarkSeriesPoint,
+): string => {
+  if (point.y0) {
+    const base = point.y0 as number
+    const total = (point.y as number) - base
+    return formatPoints(total)
+  }
+
+  return formatPoints(point.y as number)
 }

@@ -20,7 +20,7 @@ import { Contest } from '../../../contest/interfaces'
 import { aggregateReadingActivity } from '../../transform/graph'
 import { graphColor } from '../../../ui/components/Graphs'
 import HintContainer from './HintContainer'
-import { formatPoints } from '../../transform/format'
+import { formatLineMarkSeriesPoint } from '../../transform/format'
 
 interface Props {
   logs: ContestLog[]
@@ -75,7 +75,7 @@ const ReadingActivityGraph = ({ logs, contest, effectCount }: Props) => {
         {selected && (
           <Hint value={selected}>
             <HintContainer>
-              <strong>{formatPoints(selected.y as number)}</strong> in{' '}
+              <strong>{formatLineMarkSeriesPoint(selected)}</strong> in{' '}
               <strong>{selected.language}</strong> on
               <br />
               {format(new Date(selected.x), 'MMMM do')}

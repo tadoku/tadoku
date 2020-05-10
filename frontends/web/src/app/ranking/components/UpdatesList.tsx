@@ -61,19 +61,19 @@ const UpdatesList = (props: Props) => (
             <strong>{formatScore(l.adjustedAmount)}</strong> points
           </ShowSmallColumn>
           {props.canEdit && (
-            <Column style={{ width: '1px', whiteSpace: 'nowrap' }}>
-              <ButtonContainer>
+            <Column style={{ width: '1px', whiteSpace: 'nowrap', padding: 0 }}>
+              <ActionButtonContainer>
                 <Button onClick={() => props.editLog(l)} icon="edit">
-                  Edit
+                  <span>Edit</span>
                 </Button>
                 <Button
                   onClick={() => props.deleteLog(l)}
                   icon="trash"
                   destructive
                 >
-                  Delete
+                  <span>Delete</span>
                 </Button>
-              </ButtonContainer>
+              </ActionButtonContainer>
             </Column>
           )}
         </Row>
@@ -121,7 +121,7 @@ const Column = styled.td<{ alignRight?: boolean }>`
 `
 
 const HideSmallColumn = styled(Column)`
-  ${media.lessThan('medium')`
+  ${media.lessThan('large')`
     display: none;
   `}
 `
@@ -129,7 +129,7 @@ const HideSmallColumn = styled(Column)`
 const ShowSmallColumn = styled(Column)`
   display: none;
 
-  ${media.lessThan('medium')`
+  ${media.lessThan('large')`
     display: table-cell;
   `}
 `
@@ -159,3 +159,11 @@ const DescriptionColumn = styled(HideSmallColumn)`
 `
 
 const Body = styled.tbody``
+
+const ActionButtonContainer = styled(ButtonContainer)`
+  ${media.lessThan('large')`
+    button > span { display: none; }
+    button svg { margin: 0; }
+    button { border-color: transparent !important; }
+  `}
+`

@@ -127,13 +127,13 @@ const RankingProfile = ({
         </div>
         {signedInUser && userId === signedInUser.id && (
           <ActionContainer>
-            <ButtonLink
+            <DownloadButton
               href={dataUrl}
               download={`tadoku-contest-${contestId}-data.json`}
               icon="file-download"
             >
               Export data
-            </ButtonLink>
+            </DownloadButton>
             <SubmitPagesButton
               registration={rankingRegistration}
               refreshRanking={refreshRanking}
@@ -219,7 +219,11 @@ const HeaderContainer = styled.div`
     margin: 0;
   }
 
-  ${media.lessThan('medium')`padding-bottom: 10px; margin-bottom: 20px`}
+  ${media.lessThan('medium')`
+    padding-bottom: 10px;
+    margin-bottom: 20px
+    flex-direction: column;
+  `}
 `
 
 const RoundDescription = styled(SubHeading)`
@@ -233,4 +237,13 @@ const GraphHeading = styled(SubHeading)`
 
 const ActionContainer = styled.div`
   display: flex;
+
+  ${media.lessThan('medium')`
+    width: 100%;
+    button { margin: 0; flex: 1; }
+  `}
+`
+
+const DownloadButton = styled(ButtonLink)`
+  ${media.lessThan('medium')`display: none;`}
 `

@@ -121,7 +121,7 @@ const Column = styled.td<{ alignRight?: boolean }>`
 `
 
 const HideSmallColumn = styled(Column)`
-  ${media.lessThan('medium')`
+  ${media.lessThan('large')`
     display: none;
   `}
 `
@@ -129,7 +129,7 @@ const HideSmallColumn = styled(Column)`
 const ShowSmallColumn = styled(Column)`
   display: none;
 
-  ${media.lessThan('medium')`
+  ${media.lessThan('large')`
     display: table-cell;
   `}
 `
@@ -161,8 +161,9 @@ const DescriptionColumn = styled(HideSmallColumn)`
 const Body = styled.tbody``
 
 const ActionButtonContainer = styled(ButtonContainer)`
-  ${media.lessThan('medium')`
+  ${media.lessThan('large')`
     button > span { display: none; }
     button svg { margin: 0; }
+    button { border-color: transparent !important; }
   `}
 `

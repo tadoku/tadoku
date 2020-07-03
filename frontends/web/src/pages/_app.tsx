@@ -9,7 +9,7 @@ import 'react-vis/dist/style.css'
 import Modal from 'react-modal'
 import '@app/ui/setup'
 import Layout from '@app/ui/components/Layout'
-import { parseSessionFromContext } from '../app/session/domain'
+import { parseSessionFromContext } from '@app/session/domain'
 
 class MyApp extends App<{ store: Store }> {
   static async getInitialProps({ Component, ctx }: AppContext) {

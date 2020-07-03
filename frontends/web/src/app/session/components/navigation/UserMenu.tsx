@@ -3,7 +3,7 @@ import LogOutLink from './LogOut'
 import Dropdown, { DropdownItem } from '@app/ui/components/Dropdown'
 import { ButtonLink } from '@app/ui/components'
 import Link from 'next/link'
-import { SettingsTab } from '../../../user/interfaces'
+import { SettingsTab } from '@app/user/interfaces'
 
 import { RankingRegistration } from '../../../ranking/interfaces'
 import { User } from '../../interfaces'

@@ -1,6 +1,6 @@
 import React from 'react'
 import styled from 'styled-components'
-import RegisterForm from '../../session/components/forms/RegisterForm'
+import RegisterForm from '@app/session/components/forms/RegisterForm'
 import media from 'styled-media-query'
 import Constants from '@app/ui/Constants'
 

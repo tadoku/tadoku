@@ -10,7 +10,7 @@ import {
   SuccessMessage,
 } from '@app/ui/components/Form'
 import { Button, ButtonContainer } from '@app/ui/components'
-import { validatePassword } from '../../../session/domain'
+import { validatePassword } from '@app/session/domain'
 import UserApi from '../../api'
 import { useSelector } from 'react-redux'
 import { RootState } from '../../../store'

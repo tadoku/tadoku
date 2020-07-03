@@ -5,7 +5,7 @@ import media from 'styled-media-query'
 import SignupCard from './SignupCard'
 import { Logo } from '@app/ui/components'
 import Constants from '@app/ui/Constants'
-import { User } from '../../session/interfaces'
+import { User } from '@app/session/interfaces'
 
 interface Props {
   refreshSession: () => void

@@ -4,7 +4,7 @@ import styled, { createGlobalStyle } from 'styled-components'
 import { useDispatch, useSelector } from 'react-redux'
 import media from 'styled-media-query'
 
-import Header from './../components/Header'
+import Header from '@app/landing/components/Header'
 import ContestSchedule from '../components/ContestSchedule'
 import LogInModal from './../../session/components/modals/LogInModal'
 import * as RankingStore from '../../ranking/redux'

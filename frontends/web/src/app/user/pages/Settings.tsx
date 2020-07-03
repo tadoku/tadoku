@@ -8,7 +8,7 @@ import SettingsSidebar from '../components/SettingsSidebar'
 import styled from 'styled-components'
 import ChangePasswordForm from '../components/forms/ChangePasswordForm'
 import ProfileForm from '../components/forms/ProfileForm'
-import { PageTitle } from '../../ui/components'
+import { PageTitle } from '@app/ui/components'
 
 interface Props {
   tab: SettingsTab

@@ -5,13 +5,13 @@ import { useDispatch, useSelector } from 'react-redux'
 import media from 'styled-media-query'
 
 import Header from '@app/landing/components/Header'
-import ContestSchedule from '../components/ContestSchedule'
-import LogInModal from './../../session/components/modals/LogInModal'
-import * as RankingStore from '../../ranking/redux'
-import { FooterLanding } from '../../ui/components/Footer'
-import Constants from '../../ui/Constants'
-import { RootState } from '../../store'
-import { contestMapper } from '../../contest/transform'
+import ContestSchedule from '@app/landing/components/ContestSchedule'
+import LogInModal from '@app/session/components/modals/LogInModal'
+import * as RankingStore from '@app/ranking/redux'
+import { FooterLanding } from '@app/ui/components/Footer'
+import Constants from '@app/ui/Constants'
+import { RootState } from '@app/store'
+import { contestMapper } from '@app/contest/transform'
 
 const LandingPage = () => {
   const dispatch = useDispatch()

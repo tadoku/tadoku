@@ -1,7 +1,7 @@
 import React from 'react'
 import styled from 'styled-components'
 
-import Constants from '../../ui/Constants'
+import Constants from '@app/ui/Constants'
 import media from 'styled-media-query'
 
 const ContestSchedule = () => (

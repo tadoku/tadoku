@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import LogInModal from '../modals/LogInModal'
-import { Button } from '../../../ui/components'
+import { Button } from '@app/ui/components'
 
 const LogIn = ({ refreshSession }: { refreshSession: () => void }) => {
   const [open, setOpen] = useState(false)

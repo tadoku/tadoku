@@ -10,8 +10,8 @@ import {
   ErrorMessage,
   GroupError,
   SuccessMessage,
-} from '../../../ui/components/Form'
-import { Button, ButtonContainer } from '../../../ui/components'
+} from '@app/ui/components/Form'
+import { Button, ButtonContainer } from '@app/ui/components'
 import { validateDisplayName } from '../../../session/domain'
 import UserApi from '../../api'
 import SessionApi from '../../../session/api'

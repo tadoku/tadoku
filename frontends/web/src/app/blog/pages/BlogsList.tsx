@@ -1,6 +1,6 @@
 import React from 'react'
 import BlogApi from '../api'
-import { PageTitle } from '../../ui/components'
+import { PageTitle } from '@app/ui/components'
 import { useCachedApiState } from '../../cache'
 import { PostOrPage } from '../interfaces'
 import BlogPost from '../components/BlogPost'

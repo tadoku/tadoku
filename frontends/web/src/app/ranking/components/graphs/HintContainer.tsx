@@ -1,5 +1,5 @@
 import styled from 'styled-components'
-import Constants from '../../../ui/Constants'
+import Constants from '@app/ui/Constants'
 
 const HintContainer = styled.div`
   background: ${Constants.colors.darkWithAlpha(0.9)};

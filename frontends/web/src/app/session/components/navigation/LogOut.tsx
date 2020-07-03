@@ -2,7 +2,7 @@ import React from 'react'
 import Router from 'next/router'
 import { useDispatch } from 'react-redux'
 
-import { Button } from '../../../ui/components'
+import { Button } from '@app/ui/components'
 import { logOut } from '../../redux'
 
 export const LogOut = () => {

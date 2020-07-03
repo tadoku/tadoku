@@ -3,8 +3,8 @@ import styled from 'styled-components'
 import media from 'styled-media-query'
 
 import SignupCard from './SignupCard'
-import { Logo } from '../../ui/components'
-import Constants from '../../ui/Constants'
+import { Logo } from '@app/ui/components'
+import Constants from '@app/ui/Constants'
 import { User } from '../../session/interfaces'
 
 interface Props {

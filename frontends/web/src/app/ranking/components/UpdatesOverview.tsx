@@ -9,7 +9,7 @@ import UpdatesList from './UpdatesList'
 import { Contest } from '../../contest/interfaces'
 import { isContestActive } from '../domain'
 import styled from 'styled-components'
-import { PageTitle } from '../../ui/components'
+import { PageTitle } from '@app/ui/components'
 
 interface Props {
   logs: ContestLog[]

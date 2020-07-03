@@ -7,8 +7,8 @@ import { Store } from 'redux'
 import AppEffects from '../app/AppEffects'
 import 'react-vis/dist/style.css'
 import Modal from 'react-modal'
-import '../app/ui/setup'
-import Layout from '../app/ui/components/Layout'
+import '@app/ui/setup'
+import Layout from '@app/ui/components/Layout'
 import { parseSessionFromContext } from '../app/session/domain'
 
 class MyApp extends App<{ store: Store }> {

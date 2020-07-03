@@ -2,7 +2,7 @@ import React from 'react'
 import styled from 'styled-components'
 import media from 'styled-media-query'
 
-import { SubHeading } from '../../ui/components'
+import { SubHeading } from '@app/ui/components'
 import { RankingRegistrationOverview } from '../interfaces'
 import { scoreLabel, formatScore } from '../transform/format'
 

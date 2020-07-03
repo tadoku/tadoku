@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import RegisterModal from '../modals/RegisterModal'
-import { Button } from '../../../ui/components'
+import { Button } from '@app/ui/components'
 
 const Register = ({ refreshSession }: { refreshSession: () => void }) => {
   const [open, setOpen] = useState(false)

@@ -8,8 +8,8 @@ import {
   Label,
   Select,
   ErrorMessage,
-} from '../../../ui/components/Form'
-import { Button, StackContainer } from '../../../ui/components'
+} from '@app/ui/components/Form'
+import { Button, StackContainer } from '@app/ui/components'
 import RankingApi from '../../api'
 import { Contest } from '../../../contest/interfaces'
 import { validateLanguageCode } from '../../domain'

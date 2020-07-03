@@ -1,7 +1,7 @@
 import React, { FormEvent, useState } from 'react'
-import { allLanguages } from '../../database'
+import { allLanguages } from '@app/ranking/database'
 import { connect } from 'react-redux'
-import { RootState } from '../../../store'
+import { RootState } from '@app/store'
 import {
   Form,
   Group,
@@ -10,11 +10,11 @@ import {
   ErrorMessage,
 } from '@app/ui/components/Form'
 import { Button, StackContainer } from '@app/ui/components'
-import RankingApi from '../../api'
+import RankingApi from '@app/ranking/api'
 import { Contest } from '@app/contest/interfaces'
-import { validateLanguageCode } from '../../domain'
-import { rankingRegistrationMapper } from '../../transform/ranking-registration'
-import { formatLanguageName } from '../../transform/format'
+import { validateLanguageCode } from '@app/ranking/domain'
+import { rankingRegistrationMapper } from '@app/ranking/transform/ranking-registration'
+import { formatLanguageName } from '@app/ranking/transform/format'
 
 interface Props {
   contest: Contest

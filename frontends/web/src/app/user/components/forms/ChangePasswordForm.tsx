@@ -11,9 +11,9 @@ import {
 } from '@app/ui/components/Form'
 import { Button, ButtonContainer } from '@app/ui/components'
 import { validatePassword } from '@app/session/domain'
-import UserApi from '../../api'
+import UserApi from '@app/user/api'
 import { useSelector } from 'react-redux'
-import { RootState } from '../../../store'
+import { RootState } from '@app/store'
 
 const ChangePasswordForm = () => {
   const [currentPassword, setCurrentPassword] = useState('')

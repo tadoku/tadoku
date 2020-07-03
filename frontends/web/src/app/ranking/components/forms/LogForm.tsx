@@ -3,7 +3,7 @@ import { allMedia } from '../../database'
 import { connect } from 'react-redux'
 import { RootState } from '../../../store'
 import { RankingRegistration, ContestLog } from '../../interfaces'
-import RankingApi from '../../api'
+import RankingApi from '@app/ranking/api'
 import {
   Form,
   Group,

@@ -1,9 +1,9 @@
 import React, { FormEvent, useState } from 'react'
 import { useDispatch } from 'react-redux'
 
-import SessionApi from '../../api'
-import { logIn } from '../../redux'
-import { User } from '../../interfaces'
+import SessionApi from '@app/session/api'
+import { logIn } from '@app/session/redux'
+import { User } from '@app/session/interfaces'
 import {
   Form,
   Label,

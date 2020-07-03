@@ -1,8 +1,8 @@
 import React from 'react'
 import { configure } from '@storybook/react'
 import { addDecorator } from '@storybook/react'
-import { GlobalStyle } from '@app/ui/components/Layout'
-import Constants from '@app/ui/Constants'
+import { GlobalStyle } from '../src/app/ui/components/Layout'
+import Constants from '../src/app/ui/Constants'
 
 const req = require.context('../src/app', true, /.stories.tsx$/)
 function loadStories() {

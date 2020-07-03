@@ -1,5 +1,5 @@
 import { ContestLog, Ranking, RankingRegistrationOverview } from '../interfaces'
-import { Contest } from '../../contest/interfaces'
+import { Contest } from '@app/contest/interfaces'
 import { formatLanguageName, formatMediaDescription } from '../transform/format'
 import { graphColor } from '@app/ui/components/Graphs'
 

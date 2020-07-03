@@ -11,7 +11,7 @@ import {
 } from '@app/ui/components/Form'
 import { Button, StackContainer } from '@app/ui/components'
 import RankingApi from '../../api'
-import { Contest } from '../../../contest/interfaces'
+import { Contest } from '@app/contest/interfaces'
 import { validateLanguageCode } from '../../domain'
 import { rankingRegistrationMapper } from '../../transform/ranking-registration'
 import { formatLanguageName } from '../../transform/format'

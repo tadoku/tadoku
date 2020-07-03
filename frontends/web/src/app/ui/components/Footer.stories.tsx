@@ -1,7 +1,7 @@
 import React from 'react'
 import { storiesOf } from '@storybook/react'
 import Footer from './Footer'
-import { Contest } from '../../contest/interfaces'
+import { Contest } from '@app/contest/interfaces'
 
 const contests: Contest[] = [
   {

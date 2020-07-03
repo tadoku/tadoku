@@ -8,7 +8,7 @@ import Constants from '../Constants'
 import Footer from './Footer'
 import ActivityIndicator from './ActivityIndicator'
 import { RootState } from '../../store'
-import { contestMapper } from '../../contest/transform'
+import { contestMapper } from '@app/contest/transform'
 
 interface Props {
   overridesLayout: boolean

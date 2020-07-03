@@ -1,6 +1,6 @@
 import { configureStore, combineReducers } from '@reduxjs/toolkit'
 import appReducer, { appInitialState } from './redux'
-import contestReducer, { contestInitialState } from './contest/redux'
+import contestReducer, { contestInitialState } from '@app/contest/redux'
 import rankingReducer, { rankingInitialState } from '@app/ranking/redux'
 import sessionReducer, { sessionInitialState } from '@app/session/redux'
 

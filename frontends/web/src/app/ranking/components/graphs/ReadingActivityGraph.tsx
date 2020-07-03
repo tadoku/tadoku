@@ -16,7 +16,7 @@ import { format } from 'date-fns'
 import styled from 'styled-components'
 
 import { ContestLog } from '../../interfaces'
-import { Contest } from '../../../contest/interfaces'
+import { Contest } from '@app/contest/interfaces'
 import { aggregateReadingActivity } from '../../transform/graph'
 import { graphColor } from '@app/ui/components/Graphs'
 import HintContainer from './HintContainer'

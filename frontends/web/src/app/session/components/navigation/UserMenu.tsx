@@ -5,7 +5,7 @@ import { ButtonLink } from '@app/ui/components'
 import Link from 'next/link'
 import { SettingsTab } from '@app/user/interfaces'
 
-import { RankingRegistration } from '../../../ranking/interfaces'
+import { RankingRegistration } from '@app/ranking/interfaces'
 import { User } from '../../interfaces'
 import styled from 'styled-components'
 import Constants from '@app/ui/Constants'

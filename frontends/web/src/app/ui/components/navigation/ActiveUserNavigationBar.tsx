@@ -2,7 +2,7 @@ import React from 'react'
 import styled from 'styled-components'
 import media from 'styled-media-query'
 
-import { RankingRegistration } from '../../../ranking/interfaces'
+import { RankingRegistration } from '@app/ranking/interfaces'
 import { User } from '@app/session/interfaces'
 import UserMenu from '@app/session/components/navigation/UserMenu'
 import Constants from '../../Constants'

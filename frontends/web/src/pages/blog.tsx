@@ -1,6 +1,6 @@
 import React from 'react'
 import Head from 'next/head'
-import BlogsList from '../app/blog/pages/BlogsList'
+import BlogsList from '@app/blog/pages/BlogsList'
 
 const Blog = () => (
   <>

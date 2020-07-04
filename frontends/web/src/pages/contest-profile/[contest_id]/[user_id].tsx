@@ -1,11 +1,11 @@
 import React from 'react'
 import Head from 'next/head'
 import ErrorPage from 'next/error'
-import RankingProfile from '../../../app/ranking/pages/RankingProfile'
+import RankingProfile from '@app/ranking/pages/RankingProfile'
 import { connect } from 'react-redux'
 import { RootState } from '../../../app/store'
 import { useRouter } from 'next/router'
-import { runEffects } from '../../../app/ranking/redux'
+import { runEffects } from '@app/ranking/redux'
 
 interface Props {
   effectCount: number

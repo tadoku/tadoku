@@ -2,9 +2,9 @@ import React from 'react'
 import styled from 'styled-components'
 import media from 'styled-media-query'
 
-import { RankingRegistration } from '../../../ranking/interfaces'
-import { User } from '../../../session/interfaces'
-import UserMenu from '../../../session/components/navigation/UserMenu'
+import { RankingRegistration } from '@app/ranking/interfaces'
+import { User } from '@app/session/interfaces'
+import UserMenu from '@app/session/components/navigation/UserMenu'
 import Constants from '../../Constants'
 
 interface Props {

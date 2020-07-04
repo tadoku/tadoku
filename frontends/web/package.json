@@ -78,5 +78,10 @@
     "react-docgen-typescript-loader": "^3.7.2",
     "ts-node": "^8.10.2",
     "typescript": "^3.9.5"
+  },
+  "jest": {
+    "moduleNameMapper": {
+      "@app/(.*)": "<rootDir>/src/app/$1"
+    }
   }
 }

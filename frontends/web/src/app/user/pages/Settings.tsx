@@ -3,12 +3,12 @@ import ErrorPage from 'next/error'
 import { SettingsTab } from '../interfaces'
 import { connect } from 'react-redux'
 import { RootState } from '../../store'
-import { User } from '../../session/interfaces'
+import { User } from '@app/session/interfaces'
 import SettingsSidebar from '../components/SettingsSidebar'
 import styled from 'styled-components'
 import ChangePasswordForm from '../components/forms/ChangePasswordForm'
 import ProfileForm from '../components/forms/ProfileForm'
-import { PageTitle } from '../../ui/components'
+import { PageTitle } from '@app/ui/components'
 
 interface Props {
   tab: SettingsTab

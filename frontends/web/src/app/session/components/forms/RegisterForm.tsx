@@ -1,8 +1,8 @@
 import React, { FormEvent, useState } from 'react'
-import SessionApi from '../../api'
+import SessionApi from '@app/session/api'
 import { useDispatch } from 'react-redux'
-import { logIn } from '../../redux'
-import { User } from '../../interfaces'
+import { logIn } from '@app/session/redux'
+import { User } from '@app/session/interfaces'
 import {
   Form,
   Label,
@@ -11,8 +11,8 @@ import {
   Group,
   ErrorMessage,
   GroupError,
-} from '../../../ui/components/Form'
-import { Button, StackContainer } from '../../../ui/components'
+} from '@app/ui/components/Form'
+import { Button, StackContainer } from '@app/ui/components'
 import {
   validateEmail,
   validatePassword,

@@ -3,7 +3,7 @@ import { allMedia } from '../../database'
 import { connect } from 'react-redux'
 import { RootState } from '../../../store'
 import { RankingRegistration, ContestLog } from '../../interfaces'
-import RankingApi from '../../api'
+import RankingApi from '@app/ranking/api'
 import {
   Form,
   Group,
@@ -14,8 +14,8 @@ import {
   RadioButton,
   GroupError,
   ErrorMessage,
-} from '../../../ui/components/Form'
-import { Button, StackContainer } from '../../../ui/components'
+} from '@app/ui/components/Form'
+import { Button, StackContainer } from '@app/ui/components'
 import { validateLanguageCode, validateAmount } from '../../domain'
 import { rankingRegistrationMapper } from '../../transform/ranking-registration'
 import { formatMediaUnit, formatLanguageName } from '../../transform/format'

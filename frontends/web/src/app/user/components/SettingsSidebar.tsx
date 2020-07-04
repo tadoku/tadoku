@@ -1,7 +1,7 @@
 import React from 'react'
 import { SettingsTab } from '../interfaces'
 import styled from 'styled-components'
-import Constants from '../../ui/Constants'
+import Constants from '@app/ui/Constants'
 import Link from 'next/link'
 import { IconProp } from '@fortawesome/fontawesome-svg-core'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'

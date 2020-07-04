@@ -10,14 +10,14 @@ import {
   ErrorMessage,
   GroupError,
   SuccessMessage,
-} from '../../../ui/components/Form'
-import { Button, ButtonContainer } from '../../../ui/components'
-import { validateDisplayName } from '../../../session/domain'
-import UserApi from '../../api'
-import SessionApi from '../../../session/api'
-import { logIn } from '../../../session/redux'
-import { User } from '../../../session/interfaces'
-import { RootState } from '../../../store'
+} from '@app/ui/components/Form'
+import { Button, ButtonContainer } from '@app/ui/components'
+import { validateDisplayName } from '@app/session/domain'
+import UserApi from '@app/user/api'
+import SessionApi from '@app/session/api'
+import { logIn } from '@app/session/redux'
+import { User } from '@app/session/interfaces'
+import { RootState } from '@app/store'
 
 const ProfileForm = () => {
   const { user, loaded: userLoaded } = useSelector(

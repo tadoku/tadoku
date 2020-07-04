@@ -3,13 +3,13 @@ import { ContestLog, RankingRegistrationOverview } from '../interfaces'
 import EditLogFormModal from './modals/EditLogFormModal'
 import { RootState } from '../../store'
 import { useSelector } from 'react-redux'
-import { User } from '../../session/interfaces'
+import { User } from '@app/session/interfaces'
 import RankingApi from '../api'
 import UpdatesList from './UpdatesList'
-import { Contest } from '../../contest/interfaces'
+import { Contest } from '@app/contest/interfaces'
 import { isContestActive } from '../domain'
 import styled from 'styled-components'
-import { PageTitle } from '../../ui/components'
+import { PageTitle } from '@app/ui/components'
 
 interface Props {
   logs: ContestLog[]

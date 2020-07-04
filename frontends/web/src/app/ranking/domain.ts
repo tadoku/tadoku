@@ -1,7 +1,7 @@
 import { languageByCode } from './database'
-import { Contest } from '../contest/interfaces'
+import { Contest } from '@app/contest/interfaces'
 import { RankingRegistration } from './interfaces'
-import { User } from '../session/interfaces'
+import { User } from '@app/session/interfaces'
 
 export const validateAmount = (amount: string): boolean =>
   Number(amount) !== NaN && Number(amount) > 0

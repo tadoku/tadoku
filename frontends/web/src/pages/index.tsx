@@ -1,5 +1,5 @@
 import React from 'react'
-import LandingPage from '../app/landing/pages/landing'
+import LandingPage from '@app/landing/pages/landing'
 import { NextPageContext } from 'next'
 
 const Home = () => {

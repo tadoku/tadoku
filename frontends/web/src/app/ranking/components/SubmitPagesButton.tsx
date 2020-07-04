@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { RankingRegistration } from '../interfaces'
 import NewLogFormModal from './modals/NewLogFormModal'
-import { Button } from '../../ui/components'
+import { Button } from '@app/ui/components'
 
 interface Props {
   registration: RankingRegistration | undefined

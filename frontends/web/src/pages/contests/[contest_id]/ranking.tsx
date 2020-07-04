@@ -5,14 +5,14 @@ import { useRouter } from 'next/router'
 import { useSelector, useDispatch } from 'react-redux'
 
 import { RootState } from '../../../app/store'
-import RankingOverview from '../../../app/ranking/pages/RankingOverview'
-import { runEffects } from '../../../app/ranking/redux'
-import { contestSerializer } from '../../../app/contest/transform'
-import { rankingRegistrationMapper } from '../../../app/ranking/transform/ranking-registration'
+import RankingOverview from '@app/ranking/pages/RankingOverview'
+import { runEffects } from '@app/ranking/redux'
+import { contestSerializer } from '@app/contest/transform'
+import { rankingRegistrationMapper } from '@app/ranking/transform/ranking-registration'
 import { useCachedApiState, isReady } from '../../../app/cache'
-import ContestApi from '../../../app/contest/api'
+import ContestApi from '@app/contest/api'
 import { optionalizeSerializer } from '../../../app/transform'
-import { Contest } from '../../../app/contest/interfaces'
+import { Contest } from '@app/contest/interfaces'
 
 export default () => {
   const registration = useSelector((state: RootState) =>

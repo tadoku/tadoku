@@ -5,7 +5,7 @@ import Constants from '../Constants'
 import { LogoLight } from './index'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import Link from 'next/link'
-import { Contest } from '../../contest/interfaces'
+import { Contest } from '@app/contest/interfaces'
 
 interface Props {
   contests: Contest[]

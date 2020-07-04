@@ -8,12 +8,12 @@ import {
   ErrorMessage,
   GroupError,
   SuccessMessage,
-} from '../../../ui/components/Form'
-import { Button, ButtonContainer } from '../../../ui/components'
-import { validatePassword } from '../../../session/domain'
-import UserApi from '../../api'
+} from '@app/ui/components/Form'
+import { Button, ButtonContainer } from '@app/ui/components'
+import { validatePassword } from '@app/session/domain'
+import UserApi from '@app/user/api'
 import { useSelector } from 'react-redux'
-import { RootState } from '../../../store'
+import { RootState } from '@app/store'
 
 const ChangePasswordForm = () => {
   const [currentPassword, setCurrentPassword] = useState('')

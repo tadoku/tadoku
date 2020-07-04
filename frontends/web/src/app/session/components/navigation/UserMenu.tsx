@@ -1,14 +1,14 @@
 import React from 'react'
 import LogOutLink from './LogOut'
-import Dropdown, { DropdownItem } from '../../../ui/components/Dropdown'
-import { ButtonLink } from '../../../ui/components'
+import Dropdown, { DropdownItem } from '@app/ui/components/Dropdown'
+import { ButtonLink } from '@app/ui/components'
 import Link from 'next/link'
-import { SettingsTab } from '../../../user/interfaces'
+import { SettingsTab } from '@app/user/interfaces'
 
-import { RankingRegistration } from '../../../ranking/interfaces'
+import { RankingRegistration } from '@app/ranking/interfaces'
 import { User } from '../../interfaces'
 import styled from 'styled-components'
-import Constants from '../../../ui/Constants'
+import Constants from '@app/ui/Constants'
 
 interface Props {
   user: User

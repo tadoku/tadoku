@@ -2,8 +2,8 @@ import React from 'react'
 import styled from 'styled-components'
 import { PostOrPage } from '../interfaces'
 import { format } from 'date-fns'
-import Constants from '../../ui/Constants'
-import { SubHeading } from '../../ui/components'
+import Constants from '@app/ui/Constants'
+import { SubHeading } from '@app/ui/components'
 
 const BlogPost = ({ post }: { post: PostOrPage }) => (
   <Container>

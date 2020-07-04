@@ -1,7 +1,7 @@
 import React from 'react'
-import SessionEffects from './session/components/Effects'
-import RankingEffects from './ranking/components/Effects'
-import ContestEffects from './contest/components/Effects'
+import SessionEffects from '@app/session/components/Effects'
+import RankingEffects from '@app/ranking/components/Effects'
+import ContestEffects from '@app/contest/components/Effects'
 
 const AppEffects = () => (
   <>

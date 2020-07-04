@@ -1,7 +1,7 @@
 import React from 'react'
-import Modal from '../../../ui/components/Modal'
+import Modal from '@app/ui/components/Modal'
 import JoinContestForm from '../forms/JoinContestForm'
-import { Contest } from '../../../contest/interfaces'
+import { Contest } from '@app/contest/interfaces'
 
 const JoinContestModal = ({
   contest,

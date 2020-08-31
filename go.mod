@@ -15,12 +15,12 @@ require (
 	github.com/jmoiron/sqlx v1.2.0
 	github.com/joho/godotenv v1.3.0 // indirect
 	github.com/kelseyhightower/envconfig v1.3.0 // indirect
-	github.com/labstack/echo/v4 v4.1.16
+	github.com/labstack/echo/v4 v4.1.17
 	github.com/lib/pq v1.8.0
 	github.com/mattn/go-zglob v0.0.1 // indirect
 	github.com/srvc/fail v3.1.1+incompatible
 	github.com/stretchr/testify v1.6.1
-	golang.org/x/crypto v0.0.0-20200221231518-2aa609cf4a9d
+	golang.org/x/crypto v0.0.0-20200820211705-5c72a883971a
 	golang.org/x/lint v0.0.0-20190409202823-959b441ac422
 	google.golang.org/appengine v1.5.0 // indirect
 )

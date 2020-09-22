@@ -13,6 +13,8 @@ services:
       VIRTUAL_PORT: 3000
       LETSENCRYPT_HOST: tadoku.app
       LETSENCRYPT_EMAIL: hello@tadoku.app
+      # make sure to also check .env.sample, sometimes it uses values from there.
+      # need to figure out the exact reasons why it does so
       API_ROOT: http://172.17.0.2:4000 # hardcoded for now, will revise infra hopefully before the end of the year
       GHOST_KEY: 22c9b1088957389622d210662f
       GHOST_URL: https://blog.tadoku.app

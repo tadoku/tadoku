@@ -2246,10 +2246,10 @@
     "@svgr/plugin-svgo" "^4.3.1"
     loader-utils "^1.2.3"
 
-"@tryghost/content-api@^1.4.1":
-  version "1.4.1"
-  resolved "https://registry.yarnpkg.com/@tryghost/content-api/-/content-api-1.4.1.tgz#6b5c66e07be3dd87b21086e08d664c205b0cdb33"
-  integrity sha512-aWkktQ5Q4lqIcNX6LDj7DmfiT1O/6AWEIsSmJmMMnaQrKO0ltoTkP/95ZDwBZq82c9arESsX1RJuMAbC2Wwv8w==
+"@tryghost/content-api@^1.4.4":
+  version "1.4.4"
+  resolved "https://registry.yarnpkg.com/@tryghost/content-api/-/content-api-1.4.4.tgz#ae52a86e694edbe50a7460693f4b7fff619d6174"
+  integrity sha512-5q/M/fcE9OwPHKM+DQUrrjQD7CaNShBxtI/3/aBrcbQPX/aIL2FjbFA5pi3KJ/oe2f0IFlUPGeM1IGuXWsIV4Q==
   dependencies:
     axios "0.19.2"
 

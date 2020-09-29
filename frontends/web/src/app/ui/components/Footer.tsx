@@ -199,7 +199,7 @@ const Menu = styled.div`
 
   a {
     color: ${Constants.colors.light};
-    line-height: 28px;
+    line-height: 26px;
     font-size: 16px;
 
     &:hover {

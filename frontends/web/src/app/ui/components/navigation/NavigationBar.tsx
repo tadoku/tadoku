@@ -59,6 +59,9 @@ const NavigationBar = ({
             Manual
           </ButtonLink>
         </Link>
+        <ButtonLink plain href="https://forum.tadoku.app">
+          Forum
+        </ButtonLink>
         {user ? (
           <ActiveUserNavigationBar registration={registration} user={user} />
         ) : (

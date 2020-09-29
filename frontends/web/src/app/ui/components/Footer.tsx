@@ -81,14 +81,15 @@ const FooterContent = ({ contests }: Props) => (
     <Navigation>
       <Menu>
         <MenuHeading>Get started</MenuHeading>
+        <Link href="/manual" passHref>
+          <a>Manual</a>
+        </Link>
         <Link href="/landing" passHref>
           <a>About</a>
         </Link>
+        <a href="https://forum.tadoku.app">Forum</a>
         <Link href="/blog" passHref>
           <a>Blog</a>
-        </Link>
-        <Link href="/manual" passHref>
-          <a>Manual</a>
         </Link>
       </Menu>
       <Menu>

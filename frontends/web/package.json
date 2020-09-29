@@ -54,7 +54,7 @@
   },
   "devDependencies": {
     "@babel/core": "^7.10.5",
-    "@storybook/addon-info": "^5.3.19",
+    "@storybook/addon-info": "^5.3.21",
     "@storybook/react": "^5.3.19",
     "@types/cookie": "^0.4.0",
     "@types/jest": "^26.0.14",

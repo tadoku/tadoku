@@ -72,7 +72,7 @@ const Card = styled.div`
     right: 0;
     z-index: 100;
 
-    @media screen and (max-height: 700px) {
+    @media screen and (max-height: 700px) and (min-width: 1171px) {
       & {
         top: 0;
         position: absolute;

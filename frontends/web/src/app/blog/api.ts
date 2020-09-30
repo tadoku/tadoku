@@ -29,15 +29,19 @@ const getPosts = async (): Promise<PostOrPage[]> => {
   }
 }
 
-const getPage = async (slug: string): Promise<PostOrPage> => {
-  const response = await api.pages.read(
-    { slug },
-    {
-      formats: ['html'],
-    },
-  )
+const getPage = async (slug: string): Promise<PostOrPage | undefined> => {
+  try {
+    const response = await api.pages.read(
+      { slug },
+      {
+        formats: ['html'],
+      },
+    )
 
-  return postOrPageMapper.fromRaw(response)
+    return postOrPageMapper.fromRaw(response)
+  } catch (_) {
+    return undefined
+  }
 }
 
 const BlogApi = {

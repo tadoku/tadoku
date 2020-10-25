@@ -1,5 +1,5 @@
 import React, { FormEvent, useState } from 'react'
-import { useDispatch } from 'react-redux'
+import { useDispatch, useSelector } from 'react-redux'
 
 import SessionApi from '@app/session/api'
 import { logIn } from '@app/session/redux'
@@ -15,6 +15,7 @@ import {
 } from '@app/ui/components/Form'
 import { Button, StackContainer } from '@app/ui/components'
 import { validatePassword, validateEmail } from '../../domain'
+import { RootState } from '@app/store'
 
 interface Props {
   onSuccess: () => void
@@ -26,6 +27,11 @@ const LogInForm = ({ onSuccess: complete, onCancel: cancel }: Props) => {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState(undefined as string | undefined)
+  const user = useSelector((state: RootState) => state.session.user)
+
+  if (user) {
+    return null
+  }
 
   const dispatch = useDispatch()
   const setUser = (expiresAt: number, user: User) => {

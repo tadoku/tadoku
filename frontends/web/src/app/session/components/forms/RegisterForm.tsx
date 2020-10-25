@@ -1,6 +1,6 @@
 import React, { FormEvent, useState } from 'react'
 import SessionApi from '@app/session/api'
-import { useDispatch } from 'react-redux'
+import { useDispatch, useSelector } from 'react-redux'
 import { logIn } from '@app/session/redux'
 import { User } from '@app/session/interfaces'
 import {
@@ -18,6 +18,7 @@ import {
   validatePassword,
   validateDisplayName,
 } from '../../domain'
+import { RootState } from '@app/store'
 
 interface Props {
   onSuccess: () => void
@@ -35,6 +36,12 @@ const RegisterForm = ({ onSuccess: complete, onCancel: cancel }: Props) => {
   const setUser = (expiresAt: number, user: User) => {
     const payload = { expiresAt, user }
     dispatch(logIn(payload))
+  }
+
+  const user = useSelector((state: RootState) => state.session.user)
+
+  if (user) {
+    return null
   }
 
   const submit = async (event: FormEvent) => {

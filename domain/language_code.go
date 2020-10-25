@@ -27,10 +27,12 @@ const (
 	German     LanguageCode = "deu"
 	Greek      LanguageCode = "ell"
 	Hebrew     LanguageCode = "heb"
+	Hungarian  LanguageCode = "hun"
 	Irish      LanguageCode = "gle"
 	Italian    LanguageCode = "ita"
 	Japanese   LanguageCode = "jpn"
 	Korean     LanguageCode = "kor"
+	Latin      LanguageCode = "lat"
 	Polish     LanguageCode = "pol"
 	Portuguese LanguageCode = "por"
 	Russian    LanguageCode = "rus"
@@ -58,10 +60,12 @@ var AllLanguageCodes = LanguageCodes{
 	German,
 	Greek,
 	Hebrew,
+	Hungarian,
 	Irish,
 	Italian,
 	Japanese,
 	Korean,
+	Latin,
 	Polish,
 	Portuguese,
 	Russian,

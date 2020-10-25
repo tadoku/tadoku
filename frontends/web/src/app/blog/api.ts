@@ -9,31 +9,39 @@ const api = GhostContentAPI({
 })
 
 const getPosts = async (): Promise<PostOrPage[]> => {
-  const response = await api.posts.browse({
-    limit: 5,
-    include: ['authors', 'tags'],
-    formats: ['html'],
-  })
+  try {
+    const response = await api.posts.browse({
+      limit: 5,
+      include: ['authors', 'tags'],
+      formats: ['html'],
+    })
 
-  if (!response) {
+    if (!response) {
+      return []
+    }
+
+    return Object.entries(response)
+      .filter(([key]) => key !== 'meta')
+      .map(([, p]) => p)
+      .map(postOrPageMapper.fromRaw)
+  } catch (_) {
     return []
   }
-
-  return Object.entries(response)
-    .filter(([key]) => key !== 'meta')
-    .map(([, p]) => p)
-    .map(postOrPageMapper.fromRaw)
 }
 
-const getPage = async (slug: string): Promise<PostOrPage> => {
-  const response = await api.pages.read(
-    { slug },
-    {
-      formats: ['html'],
-    },
-  )
+const getPage = async (slug: string): Promise<PostOrPage | undefined> => {
+  try {
+    const response = await api.pages.read(
+      { slug },
+      {
+        formats: ['html'],
+      },
+    )
 
-  return postOrPageMapper.fromRaw(response)
+    return postOrPageMapper.fromRaw(response)
+  } catch (_) {
+    return undefined
+  }
 }
 
 const BlogApi = {

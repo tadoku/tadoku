@@ -158,7 +158,7 @@ const buttonStyles = css`
   &:disabled {
     opacity: 0.6;
   }
- `
+`
 
 export const Button: SFC<
   ButtonHTMLAttributes<HTMLButtonElement> & ButtonProps

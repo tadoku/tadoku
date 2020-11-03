@@ -8,7 +8,7 @@ const Home = () => {
 
 Home.getInitialProps = async function ({ ctx }: AppContext) {
   const isServer = typeof window === 'undefined'
-  if (isServer) {
+  if (isServer && ctx.store) {
     const state = ctx.store.getState()
     if (state.session.user) {
       ctx.res?.writeHead(301, { Location: '/blog' })

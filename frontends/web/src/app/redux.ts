@@ -1,4 +1,5 @@
 import { createSlice } from '@reduxjs/toolkit'
+import { HYDRATE } from 'next-redux-wrapper'
 
 const initialState = {
   isLoading: false,
@@ -17,6 +18,9 @@ const slice = createSlice({
       state.activityCount -= 1
       state.isLoading = state.activityCount > 0
     },
+  },
+  extraReducers: {
+    [HYDRATE]: (_, action) => action.payload.app,
   },
 })
 

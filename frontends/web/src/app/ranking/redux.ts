@@ -1,5 +1,6 @@
 import { RawRankingRegistration } from './interfaces'
 import { createSlice, PayloadAction } from '@reduxjs/toolkit'
+import { HYDRATE } from 'next-redux-wrapper'
 
 export const initialState = {
   rawRegistration: undefined as RawRankingRegistration | undefined,
@@ -19,6 +20,9 @@ const slice = createSlice({
     runEffects(state) {
       state.runEffectCount += 1
     },
+  },
+  extraReducers: {
+    [HYDRATE]: (_, action) => action.payload.ranking,
   },
 })
 

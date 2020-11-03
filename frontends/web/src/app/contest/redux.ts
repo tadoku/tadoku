@@ -1,5 +1,6 @@
 import { RawContest } from './interfaces'
 import { createSlice, PayloadAction } from '@reduxjs/toolkit'
+import { HYDRATE } from 'next-redux-wrapper'
 
 const initialState = {
   latestContest: undefined as RawContest | undefined,
@@ -14,6 +15,9 @@ const slice = createSlice({
       state.latestContest = action.payload[0]
       state.recentContests = action.payload
     },
+  },
+  extraReducers: {
+    [HYDRATE]: (_, action) => action.payload.contest,
   },
 })
 

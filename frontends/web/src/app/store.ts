@@ -1,8 +1,9 @@
-import { configureStore, combineReducers } from '@reduxjs/toolkit'
+import { configureStore, combineReducers, Store } from '@reduxjs/toolkit'
 import appReducer, { appInitialState } from './redux'
 import contestReducer, { contestInitialState } from '@app/contest/redux'
 import rankingReducer, { rankingInitialState } from '@app/ranking/redux'
 import sessionReducer, { sessionInitialState } from '@app/session/redux'
+import { createWrapper, MakeStore } from 'next-redux-wrapper'
 
 const initialState = {
   app: appInitialState,
@@ -20,13 +21,13 @@ export const reducer = combineReducers({
   session: sessionReducer,
 })
 
-export function initializeStore(state = initialState) {
-  return configureStore({
-    reducer,
-    preloadedState: state,
+const makeStore: MakeStore<RootState> = () => {
+  const store: Store = configureStore({
+    reducer: reducer,
   })
+  return store
 }
 
-const dispatch = initializeStore().dispatch
-
-export type Dispatch = typeof dispatch
+export const wrapper = createWrapper<RootState>(makeStore, {
+  debug: process.env.NODE_ENV === 'development',
+})

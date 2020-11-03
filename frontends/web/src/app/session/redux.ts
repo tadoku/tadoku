@@ -1,6 +1,7 @@
 import { User } from './interfaces'
 import { createSlice, PayloadAction } from '@reduxjs/toolkit'
 import SessionApi from './api'
+import { HYDRATE } from 'next-redux-wrapper'
 
 export const initialState = {
   expiresAt: undefined as number | undefined,
@@ -27,6 +28,9 @@ const slice = createSlice({
     runEffects(state) {
       state.runEffectCount += 1
     },
+  },
+  extraReducers: {
+    [HYDRATE]: (_, action) => action.payload.session,
   },
 })
 

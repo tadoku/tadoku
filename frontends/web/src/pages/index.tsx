@@ -1,19 +1,19 @@
 import React from 'react'
 import LandingPage from '@app/landing/pages/landing'
-import { AppContext } from 'next/app'
+import { NextPage } from 'next'
 
-const Home = () => {
+const Home: NextPage = () => {
   return <LandingPage />
 }
 
-Home.getInitialProps = async function ({ ctx }: AppContext) {
+Home.getInitialProps = async function ({ store, res }) {
   const isServer = typeof window === 'undefined'
-  const hasContext = ctx !== undefined
-  if (isServer && hasContext) {
-    const state = ctx.store.getState()
+
+  if (isServer) {
+    const state = store.getState()
     if (state.session.user) {
-      ctx.res?.writeHead(301, { Location: '/blog' })
-      ctx.res?.end()
+      res?.writeHead(301, { Location: '/blog' })
+      res?.end()
       return {}
     }
   }

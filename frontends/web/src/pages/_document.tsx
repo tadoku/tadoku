@@ -1,5 +1,6 @@
 import React from 'react'
 import Document, {
+  Html,
   Head,
   Main,
   NextScript,
@@ -27,7 +28,7 @@ export default class MyDocument extends Document {
 
   render() {
     return (
-      <html>
+      <Html>
         <Head>
           {this.props.styles}
           <link
@@ -40,7 +41,7 @@ export default class MyDocument extends Document {
           <Main />
           <NextScript />
         </body>
-      </html>
+      </Html>
     )
   }
 }

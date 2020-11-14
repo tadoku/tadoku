@@ -43,7 +43,7 @@
     "next": "^10.0.0",
     "next-redux-wrapper": "^6.0.2",
     "react": "^16.14.0",
-    "react-content-loader": "^5.1.2",
+    "react-content-loader": "^5.1.4",
     "react-dom": "^16.14.0",
     "react-modal": "^3.11.2",
     "react-redux": "^7.2.1",

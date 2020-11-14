@@ -2914,12 +2914,12 @@
     "@svgr/plugin-svgo" "^4.3.1"
     loader-utils "^1.2.3"
 
-"@tryghost/content-api@^1.4.7":
-  version "1.4.7"
-  resolved "https://registry.yarnpkg.com/@tryghost/content-api/-/content-api-1.4.7.tgz#daf9222a0fbe427ff7a27abf98610f49e7d97c83"
-  integrity sha512-DPSnwZreBqxL4333VXAyVIi9hMcn9P+8mYvm1l39XjRWRVjRwfIARQJVDvC/xRQ5WXJSGKc3ytLf2ZJKs8dzFA==
+"@tryghost/content-api@^1.4.10":
+  version "1.4.10"
+  resolved "https://registry.yarnpkg.com/@tryghost/content-api/-/content-api-1.4.10.tgz#97a5c1a17246ec62f2efd7da303e55f0acf38186"
+  integrity sha512-EuqNx3wJ8TWsUcTssDGlmILZ3Bhs+XruF8R8Rjsj2IytZujQUt1n1a7xoMufT/yX0wqXcUjYCKL540Cux1IJbw==
   dependencies:
-    axios "0.20.0"
+    axios "0.21.0"
 
 "@types/babel__core@^7.0.0":
   version "7.1.9"
@@ -3902,10 +3902,10 @@ aws4@^1.8.0:
   resolved "https://registry.yarnpkg.com/aws4/-/aws4-1.8.0.tgz#f0e003d9ca9e7f59c7a508945d7b2ef9a04a542f"
   integrity sha512-ReZxvNHIOv88FlT7rxcXIIC0fPt4KZqZbOlivyWtXLt8ESx84zd3kMC6iK5jVeS2qt+g7ftS7ye4fi06X5rtRQ==
 
-axios@0.20.0:
-  version "0.20.0"
-  resolved "https://registry.yarnpkg.com/axios/-/axios-0.20.0.tgz#057ba30f04884694993a8cd07fa394cff11c50bd"
-  integrity sha512-ANA4rr2BDcmmAQLOKft2fufrtuvlqR+cXNNinUmvfeSNCOF98PZL+7M/v1zIdGo7OLjEA9J2gXJL+j4zGsl0bA==
+axios@0.21.0:
+  version "0.21.0"
+  resolved "https://registry.yarnpkg.com/axios/-/axios-0.21.0.tgz#26df088803a2350dff2c27f96fef99fe49442aca"
+  integrity sha512-fmkJBknJKoZwem3/IKSSLpkdNXZeBu5Q7GA/aRsr2btgrptmSCxi2oFjZHqGdK9DoTil9PIHlPIZw2EcRJXRvw==
   dependencies:
     follow-redirects "^1.10.0"
 

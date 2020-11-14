@@ -1,8 +1,6 @@
 import React, { useState } from 'react'
-import { format } from 'date-fns'
 import styled from 'styled-components'
 import media from 'styled-media-query'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 
 import { Ranking, RankingRegistration } from '../interfaces'
 import Leaderboard from '../components/Leaderboard'
@@ -15,7 +13,7 @@ import { useCachedApiState, ApiFetchStatus } from '../../cache'
 import { rankingCollectionSerializer } from '../transform/ranking'
 import { isRegisteredForContest, canJoinContest } from '../domain'
 import SubmitPagesButton from '../components/SubmitPagesButton'
-import Constants from '@app/ui/Constants'
+import ContestPeriod from '../components/ContestPeriod'
 
 interface Props {
   contest: Contest
@@ -125,54 +123,4 @@ const Container = styled.div`
 const Description = styled(SubHeading)`
   margin-top: 10px;
   margin-bottom: 10px;
-`
-const ContestPeriod = ({ contest }: { contest: Contest }) => {
-  return (
-    <ContestPeriodContainer>
-      <ContestPeriodDate>
-        <ContestPeriodLabel>Starting</ContestPeriodLabel>
-        <ContestPeriodValue>
-          {format(contest.start, 'MMMM dd')}
-        </ContestPeriodValue>
-      </ContestPeriodDate>
-      <Icon icon="arrow-right" />
-      <ContestPeriodDate>
-        <ContestPeriodLabel>Ending</ContestPeriodLabel>
-        <ContestPeriodValue>
-          {format(contest.end, 'MMMM dd')}
-        </ContestPeriodValue>
-      </ContestPeriodDate>
-    </ContestPeriodContainer>
-  )
-}
-
-const ContestPeriodContainer = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 10px 15px;
-  box-shadow: 0px 2px 3px 0px rgba(0, 0, 0, 0.08);
-  box-sizing: border-box;
-  background: ${Constants.colors.light};
-
-  ${media.lessThan('small')`width: 100%; margin-top: 5px;`}
-`
-
-const Icon = styled(FontAwesomeIcon)`
-  color: ${Constants.colors.nonFocusText};
-  opacity: 0.4;
-  margin: 0 20px;
-`
-
-const ContestPeriodDate = styled.div``
-
-const ContestPeriodLabel = styled.div`
-  font-size: 12px;
-  text-transform: uppercase;
-  font-weight: bold;
-  color: ${Constants.colors.nonFocusText};
-`
-const ContestPeriodValue = styled.div`
-  font-weight: bold;
-  font-size: 13px;
 `

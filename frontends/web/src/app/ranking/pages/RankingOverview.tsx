@@ -1,17 +1,19 @@
 import React, { useState } from 'react'
+import styled from 'styled-components'
+import media from 'styled-media-query'
+
 import { Ranking, RankingRegistration } from '../interfaces'
 import Leaderboard from '../components/Leaderboard'
 import RankingApi from '../api'
 import { Contest } from '@app/contest/interfaces'
 import { Button, PageTitle, SubHeading } from '@app/ui/components'
-import styled from 'styled-components'
 import { User } from '@app/session/interfaces'
 import JoinContestModal from '../components/modals/JoinContestModal'
 import { useCachedApiState, ApiFetchStatus } from '../../cache'
 import { rankingCollectionSerializer } from '../transform/ranking'
 import { isRegisteredForContest, canJoinContest } from '../domain'
 import SubmitPagesButton from '../components/SubmitPagesButton'
-import media from 'styled-media-query'
+import ContestPeriod from '../components/ContestPeriod'
 
 interface Props {
   contest: Contest
@@ -54,6 +56,7 @@ const RankingOverview = ({
           <PageTitle>Ranking</PageTitle>
           <Description>{contest.description}</Description>
         </div>
+        <ContestPeriod contest={contest} />
         {canJoin && contest && (
           <>
             <Button primary large onClick={() => setJoinModalOpen(true)}>
@@ -97,8 +100,17 @@ const Container = styled.div`
     margin: 0;
   }
 
-  ${media.lessThan('small')`
+  ${media.lessThan('medium')`
     flex-direction: column;
+    margin-bottom: 20px;
+
+    > button {
+      margin: 10px 0;
+    }
+  `}
+
+  ${media.lessThan('small')`
+    margin-bottom: 20px;
 
     > button {
       width: 100%;
@@ -112,40 +124,3 @@ const Description = styled(SubHeading)`
   margin-top: 10px;
   margin-bottom: 10px;
 `
-
-// TODO: Refactor remaining time
-// const RemainingUntil = ({ date }: { date: Date }) => {
-//   const [currentDate, setCurrentDate] = useState(() => new Date())
-
-//   useEffect(() => {
-//     const id = setInterval(() => {
-//       setCurrentDate(new Date())
-//     }, 1000)
-
-//     return () => clearInterval(id)
-//   }, [])
-
-//   if (!date.getTime) {
-//     return null
-//   }
-
-//   const t = date.getTime() - currentDate.getTime()
-//   const seconds = Math.floor((t / 1000) % 60)
-//   const minutes = Math.floor((t / 1000 / 60) % 60)
-//   const hours = Math.floor((t / (1000 * 60 * 60)) % 24)
-//   const days = Math.floor(t / (1000 * 60 * 60 * 24))
-
-//   if (t <= 0) {
-//     return <Notes>Contest has ended.</Notes>
-//   }
-
-//   return `${days} day${days !== 1 && 's'} ${hours} hour${
-//     hours !== 1 && 's'
-//   } ${minutes} minute${minutes !== 1 && 's'} ${seconds} second${
-//     seconds !== 1 && 's'
-//   } remaining`
-// }
-
-// const Notes = styled.p`
-//   padding: 0 0 20px 0;
-// `

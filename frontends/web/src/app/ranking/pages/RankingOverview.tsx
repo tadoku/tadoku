@@ -51,7 +51,7 @@ const RankingOverview = ({
 
   return (
     <>
-      <Container>
+      <Header>
         <div>
           <PageTitle>Ranking</PageTitle>
           <Description>{contest.description}</Description>
@@ -78,23 +78,27 @@ const RankingOverview = ({
             refreshRanking={refreshRanking}
           />
         )}
-        <ContestPeriod contest={contest} />
-      </Container>
-      <Leaderboard
-        rankings={rankings}
-        loading={status === ApiFetchStatus.Loading}
-      />
+      </Header>
+
+      <TwoColumn>
+        <Sidebar>
+          <ContestPeriod contest={contest} />
+        </Sidebar>
+        <Leaderboard
+          rankings={rankings}
+          loading={status === ApiFetchStatus.Loading}
+        />
+      </TwoColumn>
     </>
   )
 }
 
 export default RankingOverview
 
-const Container = styled.div`
+const Header = styled.div`
   display: flex;
-  align-items: flex-start;
   justify-content: space-between;
-  margin-bottom: 30px;
+  margin-bottom: 15px;
 
   h1 {
     margin: 0;
@@ -102,7 +106,6 @@ const Container = styled.div`
 
   ${media.lessThan('medium')`
     flex-direction: column;
-    margin-bottom: 20px;
 
     > button {
       margin: 10px 0;
@@ -117,6 +120,33 @@ const Container = styled.div`
       box-sizing: border-box;
       margin: 10px 0;
     }
+  `}
+`
+
+const TwoColumn = styled.div`
+  display: flex;
+  flex-direction: row;
+  margin-bottom: 30px;
+  width: 100%;
+
+  ${media.lessThan('medium')`
+    flex-direction: column;
+    margin-bottom: 20px;
+  `}
+`
+
+const Sidebar = styled.div`
+  display: flex;
+  flex-direction: column;
+  margin-right: 30px;
+  flex-basis: 260px;
+  flex-grow: 0;
+  flex-shrink: 0;
+  box-sizing: border-box;
+
+  ${media.lessThan('medium')`
+    flex-basis: inherit;
+    margin: 0 0 30px 0;
   `}
 `
 

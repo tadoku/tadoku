@@ -12,12 +12,31 @@ import {
   Cell,
 } from '@app/ui/components/Table'
 import { format } from 'date-fns'
+import { SubHeading } from '@app/ui/components'
 
 interface Props {
   contests: Contest[]
 }
 
 const ContestList = ({ contests }: Props) => {
+  const grouped = contests.reduce((grouped, contest) => {
+    const year = contest.start.getUTCFullYear()
+    grouped[year] = grouped[year] || []
+    grouped[year].push(contest)
+    return grouped
+  }, ({} as any) as { [key: string]: Contest[] })
+
+  return Object.keys(grouped)
+    .sort((a, b) => Number(b) - Number(a))
+    .map(year => (
+      <>
+        <SubHeading>{year}</SubHeading>
+        <ContestListGroup contests={grouped[year]} />
+      </>
+    ))
+}
+
+const ContestListGroup = ({ contests }: Props) => {
   return (
     <Table>
       <thead>

@@ -56,7 +56,6 @@ const RankingOverview = ({
           <PageTitle>Ranking</PageTitle>
           <Description>{contest.description}</Description>
         </div>
-        <ContestPeriod contest={contest} />
         {canJoin && contest && (
           <>
             <Button primary large onClick={() => setJoinModalOpen(true)}>
@@ -79,6 +78,7 @@ const RankingOverview = ({
             refreshRanking={refreshRanking}
           />
         )}
+        <ContestPeriod contest={contest} />
       </Container>
       <Leaderboard
         rankings={rankings}

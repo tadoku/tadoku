@@ -14,9 +14,9 @@ const ContestEffects = () => {
   }
 
   useCachedApiState({
-    cacheKey: `recent_contest?i=1`,
+    cacheKey: `recent_contest?i=2`,
     defaultValue: [] as Contest[],
-    fetchData: async () => await ContestApi.getAll(5),
+    fetchData: async () => await ContestApi.getAll(4),
     onChange: update,
     serializer: contestCollectionSerializer,
   })

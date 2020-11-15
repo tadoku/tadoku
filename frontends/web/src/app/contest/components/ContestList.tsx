@@ -1,5 +1,4 @@
 import React, { FunctionComponent } from 'react'
-import styled from 'styled-components'
 import Link from 'next/link'
 
 import { Contest } from '../interfaces'
@@ -26,14 +25,18 @@ const ContestList = ({ contests }: Props) => {
     return grouped
   }, ({} as any) as { [key: string]: Contest[] })
 
-  return Object.keys(grouped)
-    .sort((a, b) => Number(b) - Number(a))
-    .map(year => (
-      <>
-        <SubHeading>{year}</SubHeading>
-        <ContestListGroup contests={grouped[year]} />
-      </>
-    ))
+  return (
+    <>
+      {Object.keys(grouped)
+        .sort((a, b) => Number(b) - Number(a))
+        .map(year => (
+          <>
+            <SubHeading>{year}</SubHeading>
+            <ContestListGroup contests={grouped[year]} />
+          </>
+        ))}
+    </>
+  )
 }
 
 const ContestListGroup = ({ contests }: Props) => {

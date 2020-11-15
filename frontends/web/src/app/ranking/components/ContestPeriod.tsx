@@ -12,17 +12,21 @@ interface Props {
 }
 
 const ContestPeriod = ({ contest }: Props) => {
+  const now = new Date()
+  const startingLabel = now > contest.start ? 'Started' : 'Starting'
+  const endingLabel = now > contest.end ? 'Ended' : 'Ending'
+
   return (
     <Container>
-      <Date>
-        <Label>Starting</Label>
+      <Box>
+        <Label>{startingLabel}</Label>
         <Value>{format(contest.start, 'MMMM dd')}</Value>
-      </Date>
+      </Box>
       <Icon icon="arrow-right" />
-      <Date>
-        <Label>Ending</Label>
+      <Box>
+        <Label>{endingLabel}</Label>
         <Value>{format(contest.end, 'MMMM dd')}</Value>
-      </Date>
+      </Box>
     </Container>
   )
 }
@@ -47,7 +51,7 @@ const Icon = styled(FontAwesomeIcon)`
   margin: 0 20px;
 `
 
-const Date = styled.div``
+const Box = styled.div``
 
 const Label = styled.div`
   font-size: 12px;

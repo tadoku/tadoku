@@ -72,6 +72,8 @@ const RankingRow = ({ rank, tied, data: rankingData }: RankingWithRank) => (
   </Row>
 )
 
+// @TODO: refactor styled components with table components from ui package
+
 const RowLink: SFC<{ ranking: Ranking }> = ({ ranking, children }) => (
   <Link
     href="/contest-profile/[contest_id]/[user_id]"

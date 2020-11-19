@@ -178,16 +178,27 @@ func TestContestLogRepository_FindRecent(t *testing.T) {
 		}
 	}
 
-	logs, err := repo.FindRecent(contestID)
-	assert.NoError(t, err)
+	// Test when there are too few logs
+	{
+		logs, err := repo.FindRecent(contestID, 25)
+		assert.NoError(t, err)
 
-	count := len(expected)
-	for i, expected := range expected {
-		log := logs[count-i-1]
+		count := len(expected)
+		for i, expected := range expected {
+			log := logs[count-i-1]
 
-		assert.Equal(t, expected.amount, log.Amount)
-		assert.Equal(t, expected.medium, log.MediumID)
-		assert.Equal(t, expected.description, log.Description)
-		assert.Equal(t, contestID, log.ContestID)
+			assert.Equal(t, expected.amount, log.Amount)
+			assert.Equal(t, expected.medium, log.MediumID)
+			assert.Equal(t, expected.description, log.Description)
+			assert.Equal(t, contestID, log.ContestID)
+		}
+	}
+
+	// Test when there are too many logs
+	{
+		logs, err := repo.FindRecent(contestID, 2)
+		assert.NoError(t, err)
+		assert.Equal(t, 2, len(logs))
+		assert.Equal(t, expected[len(expected)-1].description, logs[0].Description)
 	}
 }

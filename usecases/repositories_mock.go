@@ -285,18 +285,18 @@ func (mr *MockContestLogRepositoryMockRecorder) Delete(id interface{}) *gomock.C
 }
 
 // FindRecent mocks base method
-func (m *MockContestLogRepository) FindRecent(contestID uint64) (domain.ContestLogs, error) {
+func (m *MockContestLogRepository) FindRecent(contestID, limit uint64) (domain.ContestLogs, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "FindRecent", contestID)
+	ret := m.ctrl.Call(m, "FindRecent", contestID, limit)
 	ret0, _ := ret[0].(domain.ContestLogs)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // FindRecent indicates an expected call of FindRecent
-func (mr *MockContestLogRepositoryMockRecorder) FindRecent(contestID interface{}) *gomock.Call {
+func (mr *MockContestLogRepositoryMockRecorder) FindRecent(contestID, limit interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindRecent", reflect.TypeOf((*MockContestLogRepository)(nil).FindRecent), contestID)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindRecent", reflect.TypeOf((*MockContestLogRepository)(nil).FindRecent), contestID, limit)
 }
 
 // MockRankingRepository is a mock of RankingRepository interface

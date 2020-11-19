@@ -284,6 +284,21 @@ func (mr *MockContestLogRepositoryMockRecorder) Delete(id interface{}) *gomock.C
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Delete", reflect.TypeOf((*MockContestLogRepository)(nil).Delete), id)
 }
 
+// FindRecent mocks base method
+func (m *MockContestLogRepository) FindRecent(contestID uint64) (domain.ContestLogs, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "FindRecent", contestID)
+	ret0, _ := ret[0].(domain.ContestLogs)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// FindRecent indicates an expected call of FindRecent
+func (mr *MockContestLogRepositoryMockRecorder) FindRecent(contestID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindRecent", reflect.TypeOf((*MockContestLogRepository)(nil).FindRecent), contestID)
+}
+
 // MockRankingRepository is a mock of RankingRepository interface
 type MockRankingRepository struct {
 	ctrl     *gomock.Controller

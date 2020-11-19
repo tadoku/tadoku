@@ -128,3 +128,25 @@ func (r *contestLogRepository) Delete(id uint64) error {
 
 	return nil
 }
+
+func (r *contestLogRepository) FindRecent(contestID uint64) (domain.ContestLogs, error) {
+	var logs []domain.ContestLog
+
+	query := `
+		select
+			id, contest_id, user_id, language_code, medium_id, amount, description, created_at, updated_at
+		from contest_logs
+		where
+			contest_id = $1 and
+			deleted_at is null
+		order by created_at desc, id desc
+		limit 25
+	`
+
+	err := r.sqlHandler.Select(&logs, query, contestID)
+	if err != nil {
+		return nil, domain.WrapError(err)
+	}
+
+	return logs, nil
+}

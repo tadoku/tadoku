@@ -16,6 +16,12 @@ type Context interface {
 	// QueryParam returns the query param for the provided name.
 	QueryParam(name string) string
 
+	// IntQueryParam returns the query param for the provided name, converted to int
+	IntQueryParam(name string) (uint64, error)
+
+	// OptionalIntQueryParam returns the query param for the provided name, converted to int with a fallback
+	OptionalIntQueryParam(name string, defaultValue uint64) (result uint64)
+
 	// Get retrieves data from the context.
 	Get(key string) interface{}
 

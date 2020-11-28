@@ -55,3 +55,22 @@ func (c context) BindID(id *uint64) error {
 
 	return domain.WrapError(err)
 }
+
+func (c context) IntQueryParam(name string) (uint64, error) {
+	param := c.QueryParam(name)
+	result, err := strconv.ParseUint(param, 10, 64)
+	if err != nil {
+		return 0, domain.WrapError(err)
+	}
+
+	return result, nil
+}
+
+func (c context) OptionalIntQueryParam(name string, defaultValue uint64) uint64 {
+	result, err := c.IntQueryParam(name)
+	if err != nil {
+		return defaultValue
+	}
+
+	return result
+}

@@ -49,6 +49,35 @@ func (mr *MockContextMockRecorder) QueryParam(name interface{}) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "QueryParam", reflect.TypeOf((*MockContext)(nil).QueryParam), name)
 }
 
+// IntQueryParam mocks base method
+func (m *MockContext) IntQueryParam(name string) (uint64, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "IntQueryParam", name)
+	ret0, _ := ret[0].(uint64)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// IntQueryParam indicates an expected call of IntQueryParam
+func (mr *MockContextMockRecorder) IntQueryParam(name interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IntQueryParam", reflect.TypeOf((*MockContext)(nil).IntQueryParam), name)
+}
+
+// OptionalIntQueryParam mocks base method
+func (m *MockContext) OptionalIntQueryParam(name string, defaultValue uint64) uint64 {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "OptionalIntQueryParam", name, defaultValue)
+	ret0, _ := ret[0].(uint64)
+	return ret0
+}
+
+// OptionalIntQueryParam indicates an expected call of OptionalIntQueryParam
+func (mr *MockContextMockRecorder) OptionalIntQueryParam(name, defaultValue interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "OptionalIntQueryParam", reflect.TypeOf((*MockContext)(nil).OptionalIntQueryParam), name, defaultValue)
+}
+
 // Get mocks base method
 func (m *MockContext) Get(key string) interface{} {
 	m.ctrl.T.Helper()

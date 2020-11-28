@@ -2,7 +2,6 @@ package services
 
 import (
 	"net/http"
-	"strconv"
 
 	"github.com/tadoku/api/domain"
 	"github.com/tadoku/api/usecases"
@@ -97,17 +96,21 @@ func (s *contestLogService) Delete(ctx Context) error {
 }
 
 func (s *contestLogService) Get(ctx Context) error {
-	contestID, err := strconv.ParseUint(ctx.QueryParam("contest_id"), 10, 64)
+	contestID, err := ctx.IntQueryParam("contest_id")
 	if err != nil {
 		return domain.WrapError(err)
 	}
+	userID := ctx.OptionalIntQueryParam("user_id", 0)
+	limit := ctx.OptionalIntQueryParam("limit", 25)
 
-	userID, err := strconv.ParseUint(ctx.QueryParam("user_id"), 10, 64)
-	if err != nil {
-		return domain.WrapError(err)
+	var logs domain.ContestLogs
+
+	if userID > 0 {
+		logs, err = s.RankingInteractor.ContestLogs(contestID, userID)
+	} else {
+		logs, err = s.RankingInteractor.RecentContestLogs(contestID, limit)
 	}
 
-	logs, err := s.RankingInteractor.ContestLogs(contestID, userID)
 	if err != nil {
 		if err == usecases.ErrNoContestLogsFound {
 			return ctx.NoContent(http.StatusNotFound)

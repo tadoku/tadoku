@@ -162,3 +162,18 @@ func (mr *MockRankingInteractorMockRecorder) ContestLogs(contestID, userID inter
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ContestLogs", reflect.TypeOf((*MockRankingInteractor)(nil).ContestLogs), contestID, userID)
 }
+
+// RecentContestLogs mocks base method
+func (m *MockRankingInteractor) RecentContestLogs(contestID, limit uint64) (domain.ContestLogs, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "RecentContestLogs", contestID, limit)
+	ret0, _ := ret[0].(domain.ContestLogs)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// RecentContestLogs indicates an expected call of RecentContestLogs
+func (mr *MockRankingInteractorMockRecorder) RecentContestLogs(contestID, limit interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RecentContestLogs", reflect.TypeOf((*MockRankingInteractor)(nil).RecentContestLogs), contestID, limit)
+}

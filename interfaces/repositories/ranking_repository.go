@@ -180,6 +180,7 @@ func (r *rankingRepository) CurrentRegistration(userID uint64, now time.Time) (d
 			$2::date <= contests."end"
 		group by contests.id
 		order by contests.id desc
+		limit 1
 	`
 
 	err := r.sqlHandler.Get(&row, query, userID, now)

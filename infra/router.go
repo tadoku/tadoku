@@ -97,6 +97,11 @@ func errorHandler(errorReporter usecases.ErrorReporter) func(error, echo.Context
 			}
 		}
 
+		if err == domain.ErrNotFound {
+			c.NoContent(http.StatusNotFound)
+			return
+		}
+
 		errorReporter.Capture(err)
 		c.NoContent(http.StatusInternalServerError)
 	}

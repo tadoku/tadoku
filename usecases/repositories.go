@@ -3,6 +3,8 @@
 package usecases
 
 import (
+	"time"
+
 	"github.com/tadoku/api/domain"
 )
 
@@ -42,5 +44,5 @@ type RankingRepository interface {
 	GlobalRankings(languageCode domain.LanguageCode) (domain.Rankings, error)
 	FindAll(contestID uint64, userID uint64) (domain.Rankings, error)
 	GetAllLanguagesForContestAndUser(contestID uint64, userID uint64) (domain.LanguageCodes, error)
-	CurrentRegistration(userID uint64) (domain.RankingRegistration, error)
+	CurrentRegistration(userID uint64, now time.Time) (domain.RankingRegistration, error)
 }

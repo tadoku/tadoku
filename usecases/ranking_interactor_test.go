@@ -544,10 +544,11 @@ func TestRankingInteractor_CurrentRegistration(t *testing.T) {
 		// Happy path
 		expected := domain.RankingRegistration{
 			ContestID: 1,
-			End:       time.Now(),
+			Start:     time.Now().Add(-10 * time.Minute),
+			End:       time.Now().Add(10 * time.Minute),
 			Languages: domain.LanguageCodes{domain.Japanese, domain.Korean},
 		}
-		rankingRepo.EXPECT().CurrentRegistration(userID).Return(expected, nil)
+		rankingRepo.EXPECT().CurrentRegistration(userID, gomock.Any()).Return(expected, nil)
 
 		registration, err := interactor.CurrentRegistration(userID)
 		assert.NoError(t, err)
@@ -556,7 +557,7 @@ func TestRankingInteractor_CurrentRegistration(t *testing.T) {
 
 	{
 		// Sad path no registration found
-		rankingRepo.EXPECT().CurrentRegistration(userID).Return(domain.RankingRegistration{}, nil)
+		rankingRepo.EXPECT().CurrentRegistration(userID, gomock.Any()).Return(domain.RankingRegistration{}, nil)
 
 		_, err := interactor.CurrentRegistration(userID)
 		assert.EqualError(t, err, usecases.ErrNoRankingRegistrationFound.Error())

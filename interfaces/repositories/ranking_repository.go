@@ -156,7 +156,7 @@ func (r *rankingRepository) GetAllLanguagesForContestAndUser(contestID uint64, u
 	return codes, nil
 }
 
-func (r *rankingRepository) CurrentRegistration(userID uint64) (domain.RankingRegistration, error) {
+func (r *rankingRepository) CurrentRegistration(userID uint64, now time.Time) (domain.RankingRegistration, error) {
 	type Row struct {
 		ContestID uint64 `db:"contest_id"`
 		Start     time.Time
@@ -171,16 +171,19 @@ func (r *rankingRepository) CurrentRegistration(userID uint64) (domain.RankingRe
 			contests.id as contest_id,
 			contests."end" as "end",
 			contests.start as start,
-			array_agg(rankings.language_code) as language_codes
-		from rankings
-		inner join contests on contests.id = rankings.contest_id and contests.open = true
-		where rankings.user_id = $1 and rankings.language_code != 'GLO'
-		group by contests.id, rankings.contest_id
-		order by contest_id desc
-		limit 1
+			array_agg(distinct rankings.language_code) as language_codes
+		from contests
+		left join rankings on contests.id = rankings.contest_id
+		where
+			rankings.user_id = $1 and
+			rankings.language_code != 'GLO' and
+			$2::date >= contests.start and
+			$2::date <= contests."end"
+		group by contests.id
+		order by contests.id desc
 	`
 
-	err := r.sqlHandler.Get(&row, query, userID)
+	err := r.sqlHandler.Get(&row, query, userID, now)
 	if err != nil {
 		return domain.RankingRegistration{}, domain.WrapError(err)
 	}

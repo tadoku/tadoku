@@ -8,6 +8,7 @@ import (
 	gomock "github.com/golang/mock/gomock"
 	domain "github.com/tadoku/api/domain"
 	reflect "reflect"
+	time "time"
 )
 
 // MockUserRepository is a mock of UserRepository interface
@@ -411,16 +412,16 @@ func (mr *MockRankingRepositoryMockRecorder) GetAllLanguagesForContestAndUser(co
 }
 
 // CurrentRegistration mocks base method
-func (m *MockRankingRepository) CurrentRegistration(userID uint64) (domain.RankingRegistration, error) {
+func (m *MockRankingRepository) CurrentRegistration(userID uint64, now time.Time) (domain.RankingRegistration, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CurrentRegistration", userID)
+	ret := m.ctrl.Call(m, "CurrentRegistration", userID, now)
 	ret0, _ := ret[0].(domain.RankingRegistration)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // CurrentRegistration indicates an expected call of CurrentRegistration
-func (mr *MockRankingRepositoryMockRecorder) CurrentRegistration(userID interface{}) *gomock.Call {
+func (mr *MockRankingRepositoryMockRecorder) CurrentRegistration(userID, now interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CurrentRegistration", reflect.TypeOf((*MockRankingRepository)(nil).CurrentRegistration), userID)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CurrentRegistration", reflect.TypeOf((*MockRankingRepository)(nil).CurrentRegistration), userID, now)
 }

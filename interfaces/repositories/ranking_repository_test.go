@@ -379,6 +379,8 @@ func TestRankingRepository_CurrentRegistration(t *testing.T) {
 		Open:        true,
 	}
 
+	now := time.Date(2019, 1, 20, 0, 0, 0, 0, time.UTC)
+
 	{
 		err := contestRepo.Store(contest)
 		assert.NoError(t, err)
@@ -397,7 +399,7 @@ func TestRankingRepository_CurrentRegistration(t *testing.T) {
 	}
 
 	{
-		registration, err := repo.CurrentRegistration(user.ID)
+		registration, err := repo.CurrentRegistration(user.ID, now)
 		assert.NoError(t, err)
 		assert.Equal(t, contest.ID, registration.ContestID)
 		assert.Equal(t, contest.Start.UTC(), registration.Start.UTC())

@@ -3,6 +3,8 @@
 package usecases
 
 import (
+	"time"
+
 	"github.com/srvc/fail"
 
 	"github.com/tadoku/api/domain"
@@ -316,7 +318,7 @@ func (i *rankingInteractor) RankingsForContest(
 }
 
 func (i *rankingInteractor) CurrentRegistration(userID uint64) (domain.RankingRegistration, error) {
-	registration, err := i.rankingRepository.CurrentRegistration(userID)
+	registration, err := i.rankingRepository.CurrentRegistration(userID, time.Now())
 	if err != nil {
 		return registration, domain.WrapError(err)
 	}

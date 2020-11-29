@@ -123,3 +123,82 @@ func TestContestLogRepository_FindAllByContestAndUser(t *testing.T) {
 		assert.Equal(t, userID, log.UserID)
 	}
 }
+
+func TestContestLogRepository_FindRecent(t *testing.T) {
+	sqlHandler, cleanup := setupTestingSuite(t)
+	defer cleanup()
+
+	repo := repositories.NewContestLogRepository(sqlHandler)
+
+	contestID := uint64(1)
+
+	expected := []struct {
+		language    domain.LanguageCode
+		medium      domain.MediumID
+		amount      float32
+		description string
+	}{
+		{domain.Japanese, domain.MediumBook, 10, "foobar"},
+		{domain.Korean, domain.MediumComic, 20, "foobar 2"},
+		{domain.Croatian, domain.MediumGame, 30, "foobar 3"},
+		{domain.Dutch, domain.MediumSentences, 40, "foobar 4"},
+	}
+
+	// Correct logs
+	{
+		for userID, data := range expected {
+			log := &domain.ContestLog{
+				ContestID:   contestID,
+				UserID:      uint64(userID),
+				Language:    data.language,
+				MediumID:    data.medium,
+				Amount:      data.amount,
+				Description: data.description,
+			}
+
+			err := repo.Store(log)
+			assert.NoError(t, err)
+		}
+	}
+
+	// Create unrelated logs to check if it is really working
+	{
+		for _, language := range []domain.LanguageCode{domain.Korean, domain.Japanese} {
+			log := &domain.ContestLog{
+				ContestID:   contestID + 1,
+				UserID:      1,
+				Language:    language,
+				MediumID:    domain.MediumBook,
+				Amount:      0,
+				Description: "barbar",
+			}
+
+			err := repo.Store(log)
+			assert.NoError(t, err)
+		}
+	}
+
+	// Test when there are too few logs
+	{
+		logs, err := repo.FindRecent(contestID, 25)
+		assert.NoError(t, err)
+
+		count := len(expected)
+		for i, expected := range expected {
+			log := logs[count-i-1]
+
+			assert.Equal(t, expected.amount, log.Amount)
+			assert.Equal(t, expected.medium, log.MediumID)
+			assert.Equal(t, expected.description, log.Description)
+			assert.Equal(t, contestID, log.ContestID)
+		}
+	}
+
+	// Test when there are too many logs
+	{
+		logs, err := repo.FindRecent(contestID, 2)
+		assert.NoError(t, err)
+		assert.Equal(t, 2, len(logs))
+		assert.Equal(t, expected[len(expected)-1].description, logs[0].Description)
+	}
+}

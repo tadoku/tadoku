@@ -142,3 +142,58 @@ func TestContestLogService_Delete(t *testing.T) {
 		assert.NoError(t, err)
 	}
 }
+
+func TestContestLogService_Get(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	contestID := uint64(1)
+	userID := uint64(1)
+	limit := uint64(40)
+
+	{
+		// Happy path: with user id
+		expected := domain.ContestLogs{
+			{ContestID: contestID, UserID: 1, Language: domain.Global, Amount: 15, MediumID: domain.MediumBook},
+			// {ContestID: contestID, UserID: 2, Language: domain.Global, Amount: 12, MediumID: domain.MediumBook},
+			// {ContestID: contestID, UserID: 3, Language: domain.Global, Amount: 11, MediumID: domain.MediumBook},
+		}
+
+		ctx := services.NewMockContext(ctrl)
+		ctx.EXPECT().IntQueryParam("contest_id").Return(contestID, nil)
+		ctx.EXPECT().OptionalIntQueryParam("user_id", uint64(0)).Return(userID)
+		ctx.EXPECT().OptionalIntQueryParam("limit", uint64(25)).Return(uint64(25))
+		ctx.EXPECT().JSON(200, expected.GetView())
+
+		i := usecases.NewMockRankingInteractor(ctrl)
+		i.EXPECT().ContestLogs(contestID, userID).Return(expected, nil)
+
+		s := services.NewContestLogService(i)
+		err := s.Get(ctx)
+
+		assert.NoError(t, err)
+	}
+
+	{
+		// Happy path: without user id
+		expected := domain.ContestLogs{
+			{ContestID: contestID, UserID: 1, Language: domain.Global, Amount: 15, MediumID: domain.MediumBook},
+			{ContestID: contestID, UserID: 2, Language: domain.Global, Amount: 12, MediumID: domain.MediumBook},
+			{ContestID: contestID, UserID: 3, Language: domain.Global, Amount: 11, MediumID: domain.MediumBook},
+		}
+
+		ctx := services.NewMockContext(ctrl)
+		ctx.EXPECT().IntQueryParam("contest_id").Return(contestID, nil)
+		ctx.EXPECT().OptionalIntQueryParam("user_id", uint64(0)).Return(uint64(0))
+		ctx.EXPECT().OptionalIntQueryParam("limit", uint64(25)).Return(limit)
+		ctx.EXPECT().JSON(200, expected.GetView())
+
+		i := usecases.NewMockRankingInteractor(ctrl)
+		i.EXPECT().RecentContestLogs(contestID, limit).Return(expected, nil)
+
+		s := services.NewContestLogService(i)
+		err := s.Get(ctx)
+
+		assert.NoError(t, err)
+	}
+}

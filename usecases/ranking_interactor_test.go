@@ -595,3 +595,36 @@ func TestRankingInteractor_ContestLogs(t *testing.T) {
 		assert.EqualError(t, err, usecases.ErrNoContestLogsFound.Error())
 	}
 }
+
+func TestRankingInteractor_RecentContestLogs(t *testing.T) {
+	ctrl, _, _, repo, _, _, interactor := setupRankingTest(t)
+	defer ctrl.Finish()
+
+	contestID := uint64(1)
+	limit := uint64(50)
+
+	{
+		// Happy path
+		expected := domain.ContestLogs{
+			{ContestID: contestID, UserID: 1, Language: domain.Japanese, Amount: 10, MediumID: domain.MediumBook, CreatedAt: time.Date(2019, 1, 1, 0, 0, 0, 0, time.UTC)},
+			{ContestID: contestID, UserID: 1, Language: domain.Japanese, Amount: 20, MediumID: domain.MediumComic, CreatedAt: time.Date(2019, 1, 1, 0, 0, 0, 0, time.UTC)},
+			{ContestID: contestID, UserID: 1, Language: domain.Chinese, Amount: 30, MediumID: domain.MediumGame, CreatedAt: time.Date(2019, 1, 1, 0, 0, 0, 0, time.UTC)},
+			{ContestID: contestID, UserID: 2, Language: domain.Korean, Amount: 100, MediumID: domain.MediumNet, CreatedAt: time.Date(2019, 1, 1, 0, 0, 0, 0, time.UTC)},
+			{ContestID: contestID, UserID: 2, Language: domain.Japanese, Amount: 40, MediumID: domain.MediumBook, CreatedAt: time.Date(2019, 1, 1, 0, 0, 0, 0, time.UTC)},
+		}
+		repo.EXPECT().FindRecent(contestID, limit).Return(expected, nil)
+
+		logs, err := interactor.RecentContestLogs(contestID, limit)
+		assert.NoError(t, err)
+		assert.Equal(t, expected, logs)
+	}
+
+	{
+		// Sad path no logs found for contest
+		repo.EXPECT().FindRecent(contestID, limit).Return(domain.ContestLogs{}, nil)
+
+		_, err := interactor.RecentContestLogs(contestID, limit)
+		assert.EqualError(t, err, usecases.ErrNoContestLogsFound.Error())
+	}
+
+}

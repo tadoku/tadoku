@@ -60,6 +60,7 @@ type RankingInteractor interface {
 	RankingsForContest(contestID uint64, languageCode domain.LanguageCode) (domain.Rankings, error)
 	CurrentRegistration(userID uint64) (domain.RankingRegistration, error)
 	ContestLogs(contestID uint64, userID uint64) (domain.ContestLogs, error)
+	RecentContestLogs(contestID uint64, limit uint64) (domain.ContestLogs, error)
 }
 
 // NewRankingInteractor instantiates RankingInteractor with all dependencies
@@ -329,6 +330,19 @@ func (i *rankingInteractor) CurrentRegistration(userID uint64) (domain.RankingRe
 
 func (i *rankingInteractor) ContestLogs(contestID uint64, userID uint64) (domain.ContestLogs, error) {
 	logs, err := i.contestLogRepository.FindAll(contestID, userID)
+	if err != nil {
+		return logs, domain.WrapError(err)
+	}
+
+	if len(logs) == 0 {
+		return logs, ErrNoContestLogsFound
+	}
+
+	return logs, nil
+}
+
+func (i *rankingInteractor) RecentContestLogs(contestID, limit uint64) (domain.ContestLogs, error) {
+	logs, err := i.contestLogRepository.FindRecent(contestID, limit)
 	if err != nil {
 		return logs, domain.WrapError(err)
 	}

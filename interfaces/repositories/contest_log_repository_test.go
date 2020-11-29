@@ -129,8 +129,16 @@ func TestContestLogRepository_FindRecent(t *testing.T) {
 	defer cleanup()
 
 	repo := repositories.NewContestLogRepository(sqlHandler)
+	userRepo := repositories.NewUserRepository(sqlHandler)
 
 	contestID := uint64(1)
+	user := &domain.User{
+		Email:       "foo@example.com",
+		DisplayName: "John Smith",
+		Password:    "foobar",
+		Role:        domain.RoleUser,
+		Preferences: &domain.Preferences{},
+	}
 
 	expected := []struct {
 		language    domain.LanguageCode
@@ -144,12 +152,18 @@ func TestContestLogRepository_FindRecent(t *testing.T) {
 		{domain.Dutch, domain.MediumSentences, 40, "foobar 4"},
 	}
 
+	// Create user
+	{
+		err := userRepo.Store(user)
+		assert.NoError(t, err)
+	}
+
 	// Correct logs
 	{
-		for userID, data := range expected {
+		for _, data := range expected {
 			log := &domain.ContestLog{
 				ContestID:   contestID,
-				UserID:      uint64(userID),
+				UserID:      user.ID,
 				Language:    data.language,
 				MediumID:    data.medium,
 				Amount:      data.amount,
@@ -166,7 +180,7 @@ func TestContestLogRepository_FindRecent(t *testing.T) {
 		for _, language := range []domain.LanguageCode{domain.Korean, domain.Japanese} {
 			log := &domain.ContestLog{
 				ContestID:   contestID + 1,
-				UserID:      1,
+				UserID:      user.ID,
 				Language:    language,
 				MediumID:    domain.MediumBook,
 				Amount:      0,
@@ -191,6 +205,7 @@ func TestContestLogRepository_FindRecent(t *testing.T) {
 			assert.Equal(t, expected.medium, log.MediumID)
 			assert.Equal(t, expected.description, log.Description)
 			assert.Equal(t, contestID, log.ContestID)
+			assert.Equal(t, user.DisplayName, log.UserDisplayName)
 		}
 	}
 

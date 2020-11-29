@@ -88,12 +88,22 @@ func (r *contestLogRepository) FindAll(contestID uint64, userID uint64) (domain.
 
 	query := `
 		select
-			id, contest_id, user_id, language_code, medium_id, amount, description, created_at, updated_at
-		from contest_logs
+			l.id,
+			l.contest_id,
+			l.user_id,
+			l.language_code,
+			l.medium_id,
+			l.amount,
+			l.description,
+			l.created_at,
+			l.updated_at,
+			coalesce(u.display_name, '') as user_display_name
+		from contest_logs as l
+		left join users as u on u.id = l.user_id
 		where
-			contest_id = $1 and
-			user_id = $2 and
-			deleted_at is null
+			l.contest_id = $1 and
+			l.user_id = $2 and
+			l.deleted_at is null
 	`
 
 	err := r.sqlHandler.Select(&logs, query, contestID, userID)
@@ -134,12 +144,22 @@ func (r *contestLogRepository) FindRecent(contestID, limit uint64) (domain.Conte
 
 	query := `
 		select
-			id, contest_id, user_id, language_code, medium_id, amount, description, created_at, updated_at
-		from contest_logs
+			l.id,
+			l.contest_id,
+			l.user_id,
+			l.language_code,
+			l.medium_id,
+			l.amount,
+			l.description,
+			l.created_at,
+			l.updated_at,
+			coalesce(u.display_name, '') as user_display_name
+		from contest_logs as l
+		left join users as u on u.id = l.user_id
 		where
-			contest_id = $1 and
-			deleted_at is null
-		order by created_at desc, id desc
+			l.contest_id = $1 and
+			l.deleted_at is null
+		order by l.created_at desc, l.id desc
 		limit $2
 	`
 

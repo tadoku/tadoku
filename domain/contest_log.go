@@ -16,6 +16,9 @@ type ContestLog struct {
 	CreatedAt   time.Time    `json:"created_at" db:"created_at"`
 	UpdatedAt   time.Time    `json:"updated_at" db:"updated_at"`
 	DeletedAt   *time.Time   `json:"deleted_at" db:"deleted_at"`
+
+	// Optional embedded records
+	UserDisplayName string `db:"user_display_name"`
 }
 
 // ContestLogs is a collection of ContestLog
@@ -38,15 +41,16 @@ func (c ContestLog) AdjustedAmount() float32 {
 // GetView gets the external view representation of a contest log
 func (c ContestLog) GetView() ContestLogView {
 	return ContestLogView{
-		ID:             c.ID,
-		ContestID:      c.ContestID,
-		UserID:         c.UserID,
-		Language:       c.Language,
-		MediumID:       c.MediumID,
-		Amount:         c.Amount,
-		AdjustedAmount: c.AdjustedAmount(),
-		Description:    c.Description,
-		Date:           c.CreatedAt,
+		ID:              c.ID,
+		ContestID:       c.ContestID,
+		UserID:          c.UserID,
+		Language:        c.Language,
+		MediumID:        c.MediumID,
+		Amount:          c.Amount,
+		AdjustedAmount:  c.AdjustedAmount(),
+		Description:     c.Description,
+		Date:            c.CreatedAt,
+		UserDisplayName: c.UserDisplayName,
 	}
 }
 
@@ -72,4 +76,6 @@ type ContestLogView struct {
 	AdjustedAmount float32      `json:"adjusted_amount"`
 	Description    string       `json:"description"`
 	Date           time.Time    `json:"date"`
+
+	UserDisplayName string `json:"user_display_name,omitempty"`
 }

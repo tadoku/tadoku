@@ -3,6 +3,8 @@ package repositories
 import (
 	"time"
 
+	"github.com/lib/pq"
+
 	"github.com/tadoku/api/domain"
 	"github.com/tadoku/api/interfaces/rdb"
 	"github.com/tadoku/api/usecases"
@@ -155,38 +157,40 @@ func (r *rankingRepository) GetAllLanguagesForContestAndUser(contestID uint64, u
 }
 
 func (r *rankingRepository) CurrentRegistration(userID uint64) (domain.RankingRegistration, error) {
-	var rows []struct {
-		ID           uint64
-		Start        time.Time
-		End          time.Time
-		LanguageCode domain.LanguageCode `db:"language_code"`
+	type Row struct {
+		ContestID uint64 `db:"contest_id"`
+		Start     time.Time
+		End       time.Time
+		Languages pq.StringArray `db:"language_codes"`
 	}
+	row := Row{}
+	result := &domain.RankingRegistration{}
 
 	query := `
 		select
-			contests.id as id,
+			contests.id as contest_id,
 			contests."end" as "end",
 			contests.start as start,
-			rankings.language_code as language_code
+			array_agg(rankings.language_code) as language_codes
 		from rankings
 		inner join contests on contests.id = rankings.contest_id and contests.open = true
 		where rankings.user_id = $1 and rankings.language_code != 'GLO'
+		group by contests.id, rankings.contest_id
+		order by contest_id desc
+		limit 1
 	`
 
-	err := r.sqlHandler.Select(&rows, query, userID)
+	err := r.sqlHandler.Get(&row, query, userID)
 	if err != nil {
 		return domain.RankingRegistration{}, domain.WrapError(err)
 	}
 
-	result := &domain.RankingRegistration{}
+	result.ContestID = row.ContestID
+	result.Start = row.Start
+	result.End = row.End
 
-	for i, row := range rows {
-		if i == 0 {
-			result.ContestID = row.ID
-			result.Start = row.Start
-			result.End = row.End
-		}
-		result.Languages = append(result.Languages, row.LanguageCode)
+	for _, code := range row.Languages {
+		result.Languages = append(result.Languages, domain.LanguageCode(code))
 	}
 
 	return *result, nil

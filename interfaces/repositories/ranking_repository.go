@@ -177,7 +177,6 @@ func (r *rankingRepository) CurrentRegistration(userID uint64, now time.Time) (d
 		where
 			rankings.user_id = $1 and
 			rankings.language_code != 'GLO' and
-			$2::date >= contests.start and
 			$2::date <= contests."end"
 		group by contests.id
 		order by contests.id desc

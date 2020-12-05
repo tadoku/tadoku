@@ -85,8 +85,9 @@ const Container = styled.div`
   box-shadow: 0px 2px 3px 0px rgba(0, 0, 0, 0.08);
   box-sizing: border-box;
   background: ${Constants.colors.light};
+  width: 100%;
 
-  ${media.lessThan('small')`width: 100%; margin-top: 5px;`}
+  ${media.lessThan('small')`margin-top: 5px;`}
 `
 
 const Dates = styled.div`

@@ -237,8 +237,14 @@ const GraphHeading = styled(SubHeading)`
 
 const ActionContainer = styled.div`
   display: flex;
+  margin-right: -5px;
+
+  button {
+    margin: 0 5px;
+  }
 
   ${media.lessThan('medium')`
+  margin-right: 0;
     width: 100%;
     button { margin: 0; flex: 1; }
   `}

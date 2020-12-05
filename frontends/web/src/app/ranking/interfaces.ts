@@ -60,6 +60,7 @@ export interface ContestLog {
   id: number
   contestId: number
   userId: number
+  userDisplayName?: string
   languageCode: string
   mediumId: number
   amount: number
@@ -72,6 +73,7 @@ export interface RawContestLog {
   id: number
   contest_id: number
   user_id: number
+  user_display_name?: string
   language_code: string
   medium_id: number
   amount: number

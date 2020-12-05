@@ -55,8 +55,8 @@ const UpdatesList = (props: Props) => (
           </HideSmallColumn>
           <ShowSmallColumn>
             <strong>{formatScore(l.amount)}</strong> of{' '}
-            <strong>{formatMediaDescription(l.mediumId)}</strong> in{' '}
-            <strong>{formatLanguageName(l.languageCode)}</strong> at{' '}
+            <strong>{formatMediaDescription(l.mediumId).toLowerCase()}</strong>{' '}
+            in <strong>{formatLanguageName(l.languageCode)}</strong> at{' '}
             <strong>{format(l.date, 'MMM do')}</strong> for a total of{' '}
             <strong>{formatScore(l.adjustedAmount)}</strong> points
           </ShowSmallColumn>
@@ -161,9 +161,12 @@ const DescriptionColumn = styled(HideSmallColumn)`
 const Body = styled.tbody``
 
 const ActionButtonContainer = styled(ButtonContainer)`
+  margin: 0 5px;
+
   ${media.lessThan('large')`
+    margin: 0;
     button > span { display: none; }
     button svg { margin: 0; }
-    button { border-color: transparent !important; }
+    button { margin: 0; border-color: transparent !important; }
   `}
 `

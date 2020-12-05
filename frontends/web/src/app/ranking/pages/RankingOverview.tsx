@@ -2,8 +2,9 @@ import React, { useState } from 'react'
 import styled from 'styled-components'
 import media from 'styled-media-query'
 
-import { Ranking, RankingRegistration } from '../interfaces'
+import { ContestLog, Ranking, RankingRegistration } from '../interfaces'
 import Leaderboard from '../components/Leaderboard'
+import ContestUpdates from '../components/ContestUpdates'
 import RankingApi from '../api'
 import { Contest } from '@app/contest/interfaces'
 import { Button, PageTitle, SubHeading } from '@app/ui/components'
@@ -14,6 +15,7 @@ import { rankingCollectionSerializer } from '../transform/ranking'
 import { isRegisteredForContest, canJoinContest } from '../domain'
 import SubmitPagesButton from '../components/SubmitPagesButton'
 import ContestPeriod from '../components/ContestPeriod'
+import { contestLogCollectionSerializer } from '../transform/contest-log'
 
 interface Props {
   contest: Contest
@@ -32,7 +34,9 @@ const RankingOverview = ({
 }: Props) => {
   const [joinModalOpen, setJoinModalOpen] = useState(false)
 
-  const { data: rankings, status } = useCachedApiState<Ranking[]>({
+  const { data: rankings, status: statusRanking } = useCachedApiState<
+    Ranking[]
+  >({
     cacheKey: `ranking_overview?i=1&contest_id=${contest.id}`,
     defaultValue: [],
     fetchData: () => {
@@ -44,6 +48,20 @@ const RankingOverview = ({
     },
     dependencies: [contest?.id, effectCount],
     serializer: rankingCollectionSerializer,
+  })
+
+  const { data: logs, status: statusLogs } = useCachedApiState<ContestLog[]>({
+    cacheKey: `recent_contest_logs?i=1&contest_id=${contest.id}`,
+    defaultValue: [],
+    fetchData: () => {
+      if (!contest) {
+        return new Promise<ContestLog[]>(resolve => resolve([]))
+      }
+
+      return RankingApi.getRecentLogs(contest.id)
+    },
+    dependencies: [contest?.id, effectCount],
+    serializer: contestLogCollectionSerializer,
   })
 
   const isRegistered = isRegisteredForContest(registration, contest)
@@ -81,13 +99,17 @@ const RankingOverview = ({
       </Header>
 
       <TwoColumn>
-        <Sidebar>
-          <ContestPeriod contest={contest} />
-        </Sidebar>
         <Leaderboard
           rankings={rankings}
-          loading={status === ApiFetchStatus.Loading}
+          loading={statusRanking === ApiFetchStatus.Loading}
         />
+        <Sidebar>
+          <ContestPeriod contest={contest} />
+          <ContestUpdates
+            logs={logs}
+            loading={statusLogs == ApiFetchStatus.Loading}
+          />
+        </Sidebar>
       </TwoColumn>
     </>
   )
@@ -138,7 +160,7 @@ const TwoColumn = styled.div`
 const Sidebar = styled.div`
   display: flex;
   flex-direction: column;
-  margin-right: 30px;
+  margin-left: 30px;
   flex-basis: 260px;
   flex-grow: 0;
   flex-shrink: 0;

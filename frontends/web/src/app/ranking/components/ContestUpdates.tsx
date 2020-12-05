@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react'
 import styled from 'styled-components'
 import { formatDistanceToNow } from 'date-fns'
+import media from 'styled-media-query'
 
 import { ContestLog } from '../interfaces'
 import Constants from '@app/ui/Constants'
@@ -9,7 +10,6 @@ import {
   formatMediaDescription,
   formatScore,
 } from '../transform/format'
-import media from 'styled-media-query'
 
 interface Props {
   logs: ContestLog[]

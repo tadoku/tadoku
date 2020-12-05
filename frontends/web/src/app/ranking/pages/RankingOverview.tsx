@@ -16,6 +16,7 @@ import { isRegisteredForContest, canJoinContest } from '../domain'
 import SubmitPagesButton from '../components/SubmitPagesButton'
 import ContestPeriod from '../components/ContestPeriod'
 import { contestLogCollectionSerializer } from '../transform/contest-log'
+import { useInterval } from '@app/hooks'
 
 interface Props {
   contest: Contest
@@ -34,6 +35,11 @@ const RankingOverview = ({
 }: Props) => {
   const [joinModalOpen, setJoinModalOpen] = useState(false)
 
+  const [refreshCounter, setRefreshCounter] = useState(0)
+
+  const delay = 1000 * 60 // every minute in miliseconds
+  useInterval(() => setRefreshCounter(refreshCounter + 1), delay)
+
   const { data: rankings, status: statusRanking } = useCachedApiState<
     Ranking[]
   >({
@@ -46,7 +52,7 @@ const RankingOverview = ({
 
       return RankingApi.get(contest.id)
     },
-    dependencies: [contest?.id, effectCount],
+    dependencies: [contest?.id, effectCount, refreshCounter],
     serializer: rankingCollectionSerializer,
   })
 
@@ -60,7 +66,7 @@ const RankingOverview = ({
 
       return RankingApi.getRecentLogs(contest.id)
     },
-    dependencies: [contest?.id, effectCount],
+    dependencies: [contest?.id, effectCount, refreshCounter],
     serializer: contestLogCollectionSerializer,
   })
 

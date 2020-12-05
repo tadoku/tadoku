@@ -83,8 +83,9 @@ const Update = ({ logs }: { logs: ContestLog[] }) => {
       {logs.map(log => (
         <Details key={log.id}>
           <Description>
-            {formatScore(log.amount)} of {formatMediaDescription(log.mediumId)}{' '}
-            in {formatLanguageName(log.languageCode)}
+            {formatScore(log.amount)} of{' '}
+            {formatMediaDescription(log.mediumId).toLowerCase()} in{' '}
+            {formatLanguageName(log.languageCode)}
           </Description>
           <When>
             {formatDistanceToNow(log.date, {

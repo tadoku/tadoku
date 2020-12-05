@@ -55,8 +55,8 @@ const UpdatesList = (props: Props) => (
           </HideSmallColumn>
           <ShowSmallColumn>
             <strong>{formatScore(l.amount)}</strong> of{' '}
-            <strong>{formatMediaDescription(l.mediumId)}</strong> in{' '}
-            <strong>{formatLanguageName(l.languageCode)}</strong> at{' '}
+            <strong>{formatMediaDescription(l.mediumId).toLowerCase()}</strong>{' '}
+            in <strong>{formatLanguageName(l.languageCode)}</strong> at{' '}
             <strong>{format(l.date, 'MMM do')}</strong> for a total of{' '}
             <strong>{formatScore(l.adjustedAmount)}</strong> points
           </ShowSmallColumn>

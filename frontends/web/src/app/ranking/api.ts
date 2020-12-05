@@ -121,6 +121,18 @@ const updateLog = async (
   return response.status === 204
 }
 
+const getRecentLogs = async (contestId: number): Promise<ContestLog[]> => {
+  const response = await get(`/contest_logs?contest_id=${contestId}&limit=25`)
+
+  if (response.status != 200) {
+    return []
+  }
+
+  const data: RawContestLog[] = await response.json()
+
+  return data.map(contestLogMapper.fromRaw)
+}
+
 const getLogsFor = async (
   contestId: number,
   userId: number,
@@ -147,6 +159,7 @@ const RankingApi = {
   deleteLog,
   updateLog,
   getLogsFor,
+  getRecentLogs,
 }
 
 export default RankingApi

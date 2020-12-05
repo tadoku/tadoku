@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useMemo } from 'react'
 import styled from 'styled-components'
 import { formatDistanceToNow } from 'date-fns'
 
@@ -21,21 +21,28 @@ const ContestUpdates = ({ logs, loading }: Props) => {
     return null
   }
 
-  const grouped = logs.reduce((accumulator, log) => {
-    const { length } = accumulator
-    if (length === 0) {
-      accumulator.push([log])
-      return accumulator
-    }
-    const previous = accumulator[length - 1]
-    if (previous[0].userId === log.userId) {
-      previous.push(log)
-      return accumulator
-    } else {
-      accumulator.push([log])
-      return accumulator
-    }
-  }, [] as ContestLog[][])
+  const grouped = useMemo(
+    () =>
+      logs.reduce((accumulator, log) => {
+        const { length } = accumulator
+
+        if (length === 0) {
+          accumulator.push([log])
+          return accumulator
+        }
+
+        const previous = accumulator[length - 1]
+
+        if (previous[0].userId === log.userId) {
+          previous.push(log)
+        } else {
+          accumulator.push([log])
+        }
+
+        return accumulator
+      }, [] as ContestLog[][]),
+    [logs],
+  )
 
   return (
     <Container>

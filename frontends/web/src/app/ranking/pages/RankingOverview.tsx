@@ -152,7 +152,7 @@ const TwoColumn = styled.div`
   width: 100%;
 
   ${media.lessThan('medium')`
-    flex-direction: column;
+    flex-direction: column-reverse;
     margin-bottom: 20px;
   `}
 `

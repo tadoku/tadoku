@@ -9,6 +9,7 @@ import {
   formatMediaDescription,
   formatScore,
 } from '../transform/format'
+import media from 'styled-media-query'
 
 interface Props {
   logs: ContestLog[]
@@ -21,14 +22,14 @@ const ContestUpdates = ({ logs, loading }: Props) => {
   }
 
   return (
-    <>
+    <Container>
       <h3>Recent updates</h3>
       <List>
         {logs.map(log => (
           <Update log={log} key={log.id} />
         ))}
       </List>
-    </>
+    </Container>
   )
 }
 
@@ -61,6 +62,12 @@ const Update = ({ log }: { log: ContestLog }) => (
     </Details>
   </StyledUpdate>
 )
+
+const Container = styled.div`
+  ${media.lessThan('medium')`
+    display: none;
+  `}
+`
 
 const StyledUpdate = styled.li`
   background: ${Constants.colors.light};

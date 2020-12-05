@@ -17,7 +17,7 @@ interface Props {
 }
 
 const ContestUpdates = ({ logs, loading }: Props) => {
-  if (loading) {
+  if (loading || logs.length === 0) {
     return null
   }
 

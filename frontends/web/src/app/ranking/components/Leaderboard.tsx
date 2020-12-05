@@ -39,6 +39,7 @@ const Leaderboard = (props: Props) => {
         {leaderboard.map(row => (
           <RankingRow {...row} key={row.data.userId} />
         ))}
+        {leaderboard.length === 0 && <EmptyRow />}
       </tbody>
     </Table>
   )
@@ -70,6 +71,12 @@ const RankingRow = ({ rank, tied, data: rankingData }: RankingWithRank) => (
       </ScoreSmall>
     </ScoreCell>
   </Row>
+)
+
+const EmptyRow = () => (
+  <BaseRow>
+    <ErrorCell>No participants found</ErrorCell>
+  </BaseRow>
 )
 
 // @TODO: refactor styled components with table components from ui package
@@ -148,11 +155,24 @@ const ScoreHeading = styled.td`
   `}
 `
 
-const Row = styled.tr`
+const ErrorCell = styled.td.attrs({ colSpan: 3 })`
+  padding: 50px 30px;
+  text-align: center;
+  color: ${Constants.colors.darkWithAlpha(0.5)};
+
+  ${media.lessThan('large')`
+    padding: 50px 20px;
+  `}
+`
+
+const BaseRow = styled.tr`
   height: 55px;
   padding: 0;
   font-size: 20px;
   font-weight: bold;
+`
+
+const Row = styled(BaseRow)`
   transition: background 0.1s ease;
 
   &:nth-child(2n + 1) {

@@ -21,12 +21,28 @@ const ContestUpdates = ({ logs, loading }: Props) => {
     return null
   }
 
+  const grouped = logs.reduce((accumulator, log) => {
+    const { length } = accumulator
+    if (length === 0) {
+      accumulator.push([log])
+      return accumulator
+    }
+    const previous = accumulator[length - 1]
+    if (previous[0].userId === log.userId) {
+      previous.push(log)
+      return accumulator
+    } else {
+      accumulator.push([log])
+      return accumulator
+    }
+  }, [] as ContestLog[][])
+
   return (
     <Container>
       <h3>Recent updates</h3>
       <List>
-        {logs.map(log => (
-          <Update log={log} key={log.id} />
+        {grouped.map(logs => (
+          <Update logs={logs} key={logs[0].id} />
         ))}
       </List>
     </Container>
@@ -42,26 +58,38 @@ const List = styled.ul`
   list-style: none;
 `
 
-const Update = ({ log }: { log: ContestLog }) => (
-  <StyledUpdate>
-    <Header>
-      <DisplayName>{log.userDisplayName}</DisplayName>
-      <Score>+{formatScore(log.adjustedAmount)}</Score>
-    </Header>
-    <Details>
-      <Description>
-        {formatScore(log.amount)} of {formatMediaDescription(log.mediumId)} in{' '}
-        {formatLanguageName(log.languageCode)}
-      </Description>
-      <When>
-        {formatDistanceToNow(log.date, {
-          includeSeconds: true,
-        })}{' '}
-        ago
-      </When>
-    </Details>
-  </StyledUpdate>
-)
+const Update = ({ logs }: { logs: ContestLog[] }) => {
+  if (logs.length === 0) {
+    return null
+  }
+
+  const totalScore = logs
+    .map(l => l.amount)
+    .reduce((total, amount) => total + amount)
+
+  return (
+    <StyledUpdate>
+      <Header>
+        <DisplayName>{logs[0].userDisplayName}</DisplayName>
+        <Score>+{formatScore(totalScore)}</Score>
+      </Header>
+      {logs.map(log => (
+        <Details key={log.id}>
+          <Description>
+            {formatScore(log.amount)} of {formatMediaDescription(log.mediumId)}{' '}
+            in {formatLanguageName(log.languageCode)}
+          </Description>
+          <When>
+            {formatDistanceToNow(log.date, {
+              includeSeconds: true,
+            })}{' '}
+            ago
+          </When>
+        </Details>
+      ))}
+    </StyledUpdate>
+  )
+}
 
 const Container = styled.div`
   ${media.lessThan('medium')`
@@ -87,6 +115,10 @@ const Header = styled.div`
 const Details = styled.div`
   background-color: ${Constants.colors.nonFocusTextWithAlpha(0.05)};
   padding: 10px 15px;
+
+  & + & {
+    border-top: 1px solid ${Constants.colors.nonFocusTextWithAlpha(0.07)};
+  }
 `
 const DisplayName = styled.div`
   font-weight: bold;

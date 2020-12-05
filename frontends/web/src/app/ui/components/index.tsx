@@ -34,7 +34,6 @@ const buttonStyles = css`
   white-space: nowrap;
   line-height: 36px;
   box-sizing: border-box;
-  margin: 0 5px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -254,12 +253,12 @@ const ButtonIconRight = styled(FontAwesomeIcon)`
 
 export const ButtonContainer = styled.div`
   display: flex;
+  margin: 0 -5px;
 
-  ${({ noMargin }: { noMargin?: boolean }) =>
-    noMargin &&
-    `
-    margin: 0 -5px;
-  `}
+  a,
+  button {
+    margin: 0 5px;
+  }
 `
 
 export const StackContainer = styled.div`

@@ -9,7 +9,7 @@ import {
   GroupError,
   SuccessMessage,
 } from '@app/ui/components/Form'
-import { Button, ButtonContainer } from '@app/ui/components'
+import { Button } from '@app/ui/components'
 import { validatePassword } from '@app/session/domain'
 import UserApi from '@app/user/api'
 import { useSelector } from 'react-redux'
@@ -117,15 +117,13 @@ const ChangePasswordForm = () => {
         />
       </Group>
       <Group>
-        <ButtonContainer noMargin>
-          <Button
-            type="submit"
-            disabled={hasError.form || submitting}
-            loading={submitting}
-          >
-            Update password
-          </Button>
-        </ButtonContainer>
+        <Button
+          type="submit"
+          disabled={hasError.form || submitting}
+          loading={submitting}
+        >
+          Update password
+        </Button>
       </Group>
     </Form>
   )

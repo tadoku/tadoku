@@ -161,9 +161,12 @@ const DescriptionColumn = styled(HideSmallColumn)`
 const Body = styled.tbody``
 
 const ActionButtonContainer = styled(ButtonContainer)`
+  margin: 0 5px;
+
   ${media.lessThan('large')`
+    margin: 0;
     button > span { display: none; }
     button svg { margin: 0; }
-    button { border-color: transparent !important; }
+    button { margin: 0; border-color: transparent !important; }
   `}
 `

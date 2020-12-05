@@ -11,7 +11,7 @@ import {
   GroupError,
   SuccessMessage,
 } from '@app/ui/components/Form'
-import { Button, ButtonContainer } from '@app/ui/components'
+import { Button } from '@app/ui/components'
 import { validateDisplayName } from '@app/session/domain'
 import UserApi from '@app/user/api'
 import SessionApi from '@app/session/api'
@@ -92,15 +92,13 @@ const ProfileForm = () => {
         </Label>
       </Group>
       <Group>
-        <ButtonContainer noMargin>
-          <Button
-            type="submit"
-            disabled={hasError.form || submitting}
-            loading={submitting}
-          >
-            Update profile
-          </Button>
-        </ButtonContainer>
+        <Button
+          type="submit"
+          disabled={hasError.form || submitting}
+          loading={submitting}
+        >
+          Update profile
+        </Button>
       </Group>
     </Form>
   )

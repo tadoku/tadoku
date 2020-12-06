@@ -15,11 +15,11 @@ RUN yarn run build
 FROM node:10 AS production
 ENV NODE_ENV=production
 WORKDIR /app
-COPY --from=build /build/package.json ./
+COPY --from=build /build/package.json /build/yarn.lock /build/server.js ./
 COPY --from=build /build/yarn.lock ./
 COPY --from=build /build/.next ./.next
 COPY --from=build /build/public ./public
-RUN yarn add next --frozen-lockfile --production && yarn cache clean
+RUN yarn add next express http-proxy-middleware --frozen-lockfile --production && yarn cache clean
 
 # Running the app
 EXPOSE 3000

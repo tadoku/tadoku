@@ -2,6 +2,7 @@ import React, { useMemo } from 'react'
 import styled from 'styled-components'
 import { formatDistanceToNow } from 'date-fns'
 import media from 'styled-media-query'
+import Link from 'next/link'
 
 import { ContestLog } from '../interfaces'
 import Constants from '@app/ui/Constants'
@@ -77,7 +78,13 @@ const Update = ({ logs }: { logs: ContestLog[] }) => {
   return (
     <StyledUpdate>
       <Header>
-        <DisplayName>{logs[0].userDisplayName}</DisplayName>
+        <DisplayName>
+          <Link
+            href={`/contest-profile/${logs[0].contestId}/${logs[0].userId}`}
+          >
+            <a>{logs[0].userDisplayName}</a>
+          </Link>
+        </DisplayName>
         <Score>+{formatScore(totalScore)}</Score>
       </Header>
       {logs.map(log => (

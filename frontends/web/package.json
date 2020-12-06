@@ -40,7 +40,7 @@
     "http-proxy-middleware": "^1.0.6",
     "isomorphic-fetch": "^3.0.0",
     "jsonwebtoken": "^8.5.1",
-    "next": "^10.0.1",
+    "next": "^10.0.3",
     "next-redux-wrapper": "^6.0.2",
     "react": "^16.14.0",
     "react-content-loader": "^5.1.4",

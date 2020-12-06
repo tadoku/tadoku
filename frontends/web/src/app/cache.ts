@@ -109,8 +109,11 @@ export const useCachedApiState = <DataType>({
   useEffect(() => {
     let isSubscribed = true
     let shouldSetLoadingState = true
+    const hasLocalStorage = window.cookies && localStorage
 
-    const cachedValue = localStorage.getItem(cacheKey)
+    const cachedValue = hasLocalStorage
+      ? localStorage.getItem(cacheKey)
+      : undefined
     if (cachedValue) {
       const parsedCache = cachedDataSerializer.deserialize(
         cachedValue,
@@ -142,7 +145,9 @@ export const useCachedApiState = <DataType>({
         fetchedAt: new Date(),
         data: fetchedData,
       }
-      localStorage.setItem(cacheKey, cachedDataSerializer.serialize(cache))
+      if (hasLocalStorage) {
+        localStorage.setItem(cacheKey, cachedDataSerializer.serialize(cache))
+      }
     })
 
     return () => {

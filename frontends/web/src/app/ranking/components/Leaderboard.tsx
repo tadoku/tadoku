@@ -102,8 +102,8 @@ const Heading = () => (
 )
 
 const Table = styled.table`
+  flex: 1;
   padding: 0;
-  width: 100%;
   background: ${Constants.colors.light};
   box-shadow: 0px 2px 3px 0px rgba(0, 0, 0, 0.08);
   border-collapse: collapse;

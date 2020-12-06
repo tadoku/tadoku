@@ -71,7 +71,7 @@ const Update = ({ logs }: { logs: ContestLog[] }) => {
   }
 
   const totalScore = logs
-    .map(l => l.amount)
+    .map(l => l.adjustedAmount)
     .reduce((total, amount) => total + amount)
 
   return (

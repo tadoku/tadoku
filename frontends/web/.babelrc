@@ -10,6 +10,12 @@
         "displayName": true,
         "preprocess": false
       }
+    ],
+    [
+      "@babel/plugin-proposal-unicode-property-regex",
+      {
+        "useUnicodeFlag": true
+      }
     ]
   ]
 }

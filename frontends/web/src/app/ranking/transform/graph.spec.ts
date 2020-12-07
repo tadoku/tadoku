@@ -1,30 +1,4 @@
-import {
-  aggregateReadingActivity,
-  aggregateMediaDistribution,
-  prettyDate,
-  getDates,
-} from './graph'
-
-describe('prettyDate', () => {
-  it('should format dates', () => {
-    const input = new Date('2020-12-08T00:00:00Z')
-    const output = prettyDate(input)
-
-    expect(output).toEqual('2020-12-8')
-  })
-})
-
-describe('getDates', () => {
-  it('should generate the correct set of dates in UTC', () => {
-    const start = new Date('2020-12-01T00:00:00Z')
-    const end = new Date('2021-01-01T00:00:00Z')
-    const output = getDates(start, end)
-
-    expect(output).toHaveLength(31)
-    expect(prettyDate(output[0])).toEqual('2020-12-1')
-    expect(prettyDate(output[30])).toEqual('2020-12-31')
-  })
-})
+import { aggregateReadingActivity, aggregateMediaDistribution } from './graph'
 
 describe('aggregateReadingActivity', () => {
   it('should aggregate correctly', () => {

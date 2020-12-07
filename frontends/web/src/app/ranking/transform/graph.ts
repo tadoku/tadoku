@@ -3,28 +3,7 @@ import { ContestLog, Ranking, RankingRegistrationOverview } from '../interfaces'
 import { Contest } from '@app/contest/interfaces'
 import { formatLanguageName, formatMediaDescription } from '../transform/format'
 import { graphColor } from '@app/ui/components/Graphs'
-import { format, utcToZonedTime } from 'date-fns-tz'
-import { addDays } from 'date-fns'
-
-// Utils
-// Will format the date correctly in utc
-export function prettyDate(date: Date): string {
-  return format(utcToZonedTime(date, 'utc'), 'uuuu-MM-d', { timeZone: 'UTC' })
-}
-
-export function getDates(startDate: Date, endDate: Date) {
-  const dates = []
-
-  let currentDate = utcToZonedTime(startDate, 'utc')
-  const deadline = utcToZonedTime(endDate, 'UTC')
-
-  while (currentDate < deadline) {
-    dates.push(currentDate)
-    currentDate = addDays(currentDate, 1)
-  }
-
-  return dates
-}
+import { getDates, prettyDateInUTC } from '@app/dates'
 
 // Graph aggregators
 
@@ -73,7 +52,7 @@ export const aggregateReadingActivity = (
   } = {}
 
   getDates(contest.start, contest.end).forEach(date => {
-    initializedSeries[prettyDate(date)] = {
+    initializedSeries[prettyDateInUTC(date)] = {
       x: date.toISOString(),
       y: 0,
       language: '',
@@ -94,7 +73,7 @@ export const aggregateReadingActivity = (
   })
 
   logs.forEach(log => {
-    const date = prettyDate(log.date)
+    const date = prettyDateInUTC(log.date)
 
     if (aggregated[log.languageCode][date]) {
       aggregated[log.languageCode][date].y +=

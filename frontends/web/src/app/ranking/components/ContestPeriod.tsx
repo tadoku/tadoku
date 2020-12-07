@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useState } from 'react'
 import styled from 'styled-components'
 import media from 'styled-media-query'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
@@ -32,6 +32,7 @@ const ContestPeriod = ({ contest }: Props) => {
         </Box>
       </Dates>
       <RemainingTime contest={contest} />
+      <TadokuTime />
     </Container>
   )
 }
@@ -66,6 +67,19 @@ const RemainingTime = ({ contest }: Props) => {
   }
 
   return <RemainingBlock>Contest has ended</RemainingBlock>
+}
+
+const TadokuTime = () => {
+  const [now, setNow] = useState(() => new Date())
+  useInterval(() => setNow(new Date()), 1000)
+
+  const time = formatUTC(now, 'MMM do yyyy HH:mm:ss')
+
+  return (
+    <RemainingBlock>
+      Tadoku time: <strong>{time}</strong>
+    </RemainingBlock>
+  )
 }
 
 const RemainingBlock = styled.div`

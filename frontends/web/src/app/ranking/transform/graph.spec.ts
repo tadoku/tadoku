@@ -1,4 +1,16 @@
-import { aggregateReadingActivity, aggregateMediaDistribution } from './graph'
+import {
+  aggregateReadingActivity,
+  aggregateMediaDistribution,
+  prettyDate,
+} from './graph'
+
+describe('prettyDate', () => {
+  it('should format dates', () => {
+    const input = new Date('2020-12-08T00:00:00Z')
+    const output = prettyDate(input)
+    expect(output).toEqual('2020-12-8')
+  })
+})
 
 describe('aggregateReadingActivity', () => {
   it('should aggregate correctly', () => {

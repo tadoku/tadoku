@@ -1,11 +1,15 @@
+// import parseJSON from 'date-fns/parseJSON'
 import { ContestLog, Ranking, RankingRegistrationOverview } from '../interfaces'
 import { Contest } from '@app/contest/interfaces'
 import { formatLanguageName, formatMediaDescription } from '../transform/format'
 import { graphColor } from '@app/ui/components/Graphs'
+import { format, utcToZonedTime } from 'date-fns-tz'
 
 // Utils
-const prettyDate = (date: Date): string =>
-  `${date.getUTCFullYear()}-${date.getUTCMonth() + 1}-${date.getUTCDate()}`
+// Will format the date correctly in utc
+export function prettyDate(date: Date): string {
+  return format(utcToZonedTime(date, 'utc'), 'uuuu-MM-d', { timeZone: 'UTC' })
+}
 
 const getDates = (startDate: Date, endDate: Date) => {
   const dates = []

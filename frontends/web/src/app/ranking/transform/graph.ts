@@ -4,6 +4,7 @@ import { Contest } from '@app/contest/interfaces'
 import { formatLanguageName, formatMediaDescription } from '../transform/format'
 import { graphColor } from '@app/ui/components/Graphs'
 import { format, utcToZonedTime } from 'date-fns-tz'
+import { addDays } from 'date-fns'
 
 // Utils
 // Will format the date correctly in utc
@@ -11,27 +12,15 @@ export function prettyDate(date: Date): string {
   return format(utcToZonedTime(date, 'utc'), 'uuuu-MM-d', { timeZone: 'UTC' })
 }
 
-const getDates = (startDate: Date, endDate: Date) => {
+export function getDates(startDate: Date, endDate: Date) {
   const dates = []
 
-  let currentDate = new Date(
-    Date.UTC(
-      startDate.getUTCFullYear(),
-      startDate.getUTCMonth(),
-      startDate.getUTCDate(),
-    ),
-  )
+  let currentDate = utcToZonedTime(startDate, 'utc')
+  const deadline = utcToZonedTime(endDate, 'UTC')
 
-  while (currentDate < endDate) {
+  while (currentDate < deadline) {
     dates.push(currentDate)
-
-    currentDate = new Date(
-      Date.UTC(
-        currentDate.getUTCFullYear(),
-        currentDate.getUTCMonth(),
-        currentDate.getUTCDate() + 1,
-      ),
-    )
+    currentDate = addDays(currentDate, 1)
   }
 
   return dates

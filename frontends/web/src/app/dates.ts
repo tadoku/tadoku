@@ -6,6 +6,10 @@ export function prettyDateInUTC(date: Date): string {
   return format(utcToZonedTime(date, 'utc'), 'uuuu-MM-d', { timeZone: 'UTC' })
 }
 
+export function formatUTC(date: Date, pattern: string): string {
+  return format(utcToZonedTime(date, 'utc'), pattern, { timeZone: 'UTC' })
+}
+
 export function getDates(startDate: Date, endDate: Date) {
   const dates = []
 

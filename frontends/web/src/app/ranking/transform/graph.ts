@@ -1,37 +1,9 @@
+// import parseJSON from 'date-fns/parseJSON'
 import { ContestLog, Ranking, RankingRegistrationOverview } from '../interfaces'
 import { Contest } from '@app/contest/interfaces'
 import { formatLanguageName, formatMediaDescription } from '../transform/format'
 import { graphColor } from '@app/ui/components/Graphs'
-
-// Utils
-const prettyDate = (date: Date): string =>
-  `${date.getUTCFullYear()}-${date.getUTCMonth() + 1}-${date.getUTCDate()}`
-
-const getDates = (startDate: Date, endDate: Date) => {
-  const dates = []
-
-  let currentDate = new Date(
-    Date.UTC(
-      startDate.getUTCFullYear(),
-      startDate.getUTCMonth(),
-      startDate.getUTCDate(),
-    ),
-  )
-
-  while (currentDate < endDate) {
-    dates.push(currentDate)
-
-    currentDate = new Date(
-      Date.UTC(
-        currentDate.getUTCFullYear(),
-        currentDate.getUTCMonth(),
-        currentDate.getUTCDate() + 1,
-      ),
-    )
-  }
-
-  return dates
-}
+import { getDates, prettyDateInUTC } from '@app/dates'
 
 // Graph aggregators
 
@@ -80,7 +52,7 @@ export const aggregateReadingActivity = (
   } = {}
 
   getDates(contest.start, contest.end).forEach(date => {
-    initializedSeries[prettyDate(date)] = {
+    initializedSeries[prettyDateInUTC(date)] = {
       x: date.toISOString(),
       y: 0,
       language: '',
@@ -101,7 +73,7 @@ export const aggregateReadingActivity = (
   })
 
   logs.forEach(log => {
-    const date = prettyDate(log.date)
+    const date = prettyDateInUTC(log.date)
 
     if (aggregated[log.languageCode][date]) {
       aggregated[log.languageCode][date].y +=

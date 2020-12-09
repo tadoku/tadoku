@@ -7,6 +7,7 @@ import media from 'styled-media-query'
 import Constants from '@app/ui/Constants'
 import { format } from 'date-fns'
 import { formatScore } from '../transform/format'
+import { formatUTC } from '@app/dates'
 
 interface Props {
   logs: ContestLog[]
@@ -36,7 +37,7 @@ const UpdatesList = (props: Props) => (
             style={{ whiteSpace: 'nowrap' }}
             title={l.date.toLocaleString()}
           >
-            {format(l.date, 'MMM do')}
+            {formatUTC(l.date, 'MMM do')}
           </HideSmallColumn>
           <HideSmallColumn>
             {formatLanguageName(l.languageCode)}

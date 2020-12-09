@@ -1,5 +1,4 @@
-import React, { useEffect, useState } from 'react'
-import { format } from 'date-fns'
+import React, { useState } from 'react'
 import styled from 'styled-components'
 import media from 'styled-media-query'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
@@ -7,6 +6,8 @@ import { formatDistanceToNow } from 'date-fns'
 
 import { Contest } from '@app/contest/interfaces'
 import Constants from '@app/ui/Constants'
+import { formatUTC } from '@app/dates'
+import { useInterval } from '@app/hooks'
 
 interface Props {
   contest: Contest
@@ -22,15 +23,16 @@ const ContestPeriod = ({ contest }: Props) => {
       <Dates>
         <Box>
           <Label>{startingLabel}</Label>
-          <Value>{format(contest.start, 'MMMM dd')}</Value>
+          <Value>{formatUTC(contest.start, 'MMMM dd')}</Value>
         </Box>
         <Icon icon="arrow-right" />
         <Box>
           <Label>{endingLabel}</Label>
-          <Value>{format(contest.end, 'MMMM dd')}</Value>
+          <Value>{formatUTC(contest.end, 'MMMM dd')}</Value>
         </Box>
       </Dates>
       <RemainingTime contest={contest} />
+      <TadokuTime />
     </Container>
   )
 }
@@ -39,13 +41,7 @@ export default ContestPeriod
 
 const RemainingTime = ({ contest }: Props) => {
   const [now, setNow] = useState(() => new Date())
-
-  useEffect(() => {
-    const id = setInterval(() => {
-      setNow(new Date())
-    }, 1000)
-    return () => clearInterval(id)
-  }, [])
+  useInterval(() => setNow(new Date()), 1000)
 
   const startingLabel = formatDistanceToNow(contest.start, {
     includeSeconds: true,
@@ -71,6 +67,19 @@ const RemainingTime = ({ contest }: Props) => {
   }
 
   return <RemainingBlock>Contest has ended</RemainingBlock>
+}
+
+const TadokuTime = () => {
+  const [now, setNow] = useState(() => new Date())
+  useInterval(() => setNow(new Date()), 1000)
+
+  const time = formatUTC(now, 'MMM do yyyy HH:mm:ss')
+
+  return (
+    <RemainingBlock>
+      Tadoku time: <strong>{time}</strong>
+    </RemainingBlock>
+  )
 }
 
 const RemainingBlock = styled.div`

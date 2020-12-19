@@ -85,6 +85,10 @@ export const GlobalStyle = createGlobalStyle<typeof Constants>`
     font-family: ${props => props.fonts.serif};
   }
 
+  button {
+    font-family: ${props => props.fonts.sansSerif};
+  }
+
   a[href],
   input[type='submit']:not([disabled]),
   input[type='image']:not([disabled]),
@@ -113,9 +117,13 @@ const StickyFooterContainer = styled.div`
   position: relative;
   box-sizing: border-box;
   top: -10px;
-  padding-bottom: 30px;
+  padding-bottom: 250px;
 
-  ${media.greaterThan('medium')`
-    padding-bottom: 250px;
+  ${media.lessThan('medium')`
+    min-height: inherit;
+    overflow: inherit;
+    position: inherit;
+    top: inherit;
+    padding-bottom: inherit;
   `}
 `

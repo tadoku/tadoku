@@ -111,11 +111,17 @@ const Card = styled.div`
 
 const StickyFooterContainer = styled.div`
   min-height: 100vh;
+  overflow: hidden;
   position: relative;
   box-sizing: border-box;
+  // height of the footer
+  padding-bottom: 250px;
 
-  ${media.greaterThan('medium')`
-    // height of the footer
-    padding-bottom: 250px;
+  ${media.lessThan('medium')`
+    min-height: inherit;
+    overflow: inherit;
+    position: inherit;
+    top: inherit;
+    padding-bottom: inherit;
   `}
 `

@@ -112,7 +112,7 @@ const Container = styled.div`
 `
 
 const StickyFooterContainer = styled.div`
-  min-height: 100vh;
+  min-height: calc(100vh - 10px);
   overflow: hidden;
   position: relative;
   box-sizing: border-box;
@@ -122,8 +122,6 @@ const StickyFooterContainer = styled.div`
   ${media.lessThan('medium')`
     min-height: inherit;
     overflow: inherit;
-    position: inherit;
-    top: inherit;
     padding-bottom: inherit;
   `}
 `

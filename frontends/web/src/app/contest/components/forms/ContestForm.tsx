@@ -136,7 +136,7 @@ const ContestForm = ({
         <Label>
           <LabelText>Start</LabelText>
           <Input
-            type="text"
+            type="date"
             value={start}
             onChange={e => setStart(e.target.value)}
             error={hasError.description}
@@ -148,7 +148,7 @@ const ContestForm = ({
         <Label>
           <LabelText>End</LabelText>
           <Input
-            type="text"
+            type="date"
             value={end}
             onChange={e => setEnd(e.target.value)}
             error={hasError.end}

@@ -1,4 +1,4 @@
-import React, { FunctionComponent } from 'react'
+import React, { Fragment, useState } from 'react'
 import Link from 'next/link'
 import { format } from 'date-fns'
 import styled from 'styled-components'
@@ -9,7 +9,6 @@ import {
   TableHeading,
   TableHeadingCell,
   Row,
-  RowAnchor,
   Cell,
 } from '@app/ui/components/Table'
 import {
@@ -23,12 +22,16 @@ import { isReady, useCachedApiState } from '@app/cache'
 import ContestApi from '@app/contest/api'
 import { contestCollectionSerializer } from '@app/contest/transform'
 import Constants from '@app/ui/Constants'
+import EditContestFormModal from '@app/contest/components/modals/EditContestFormModal'
+import { isContestActive } from '@app/ranking/domain'
 
 interface Props {
   contests: Contest[]
+  editContest: (contest: Contest) => void
 }
 
 const Manage = () => {
+  const [effectCount, setEffectCount] = useState(0)
   const { data: contests, status: statusContests } = useCachedApiState<
     Contest[]
   >({
@@ -37,9 +40,12 @@ const Manage = () => {
     fetchData: () => {
       return ContestApi.getAll()
     },
-    dependencies: [],
+    dependencies: [effectCount],
     serializer: contestCollectionSerializer,
   })
+  const [selectedContest, setSelectedContest] = useState(
+    undefined as Contest | undefined,
+  )
 
   if (!isReady([statusContests])) {
     return <p>Loading...</p>
@@ -51,14 +57,23 @@ const Manage = () => {
         <PageTitle>Manage contests</PageTitle>
         <ActionContainer></ActionContainer>
       </HeaderContainer>
-      <ContestList contests={contests} />
+      <EditContestFormModal
+        setContest={setSelectedContest}
+        contest={selectedContest}
+        onCancel={() => setSelectedContest(undefined)}
+        onSuccess={() => {
+          setSelectedContest(undefined)
+          setEffectCount(effectCount + 1)
+        }}
+      />
+      <ContestList contests={contests} editContest={setSelectedContest} />
     </>
   )
 }
 
 export default Manage
 
-const ContestList = ({ contests }: Props) => {
+const ContestList = ({ contests, editContest }: Props) => {
   const grouped = contests.reduce((grouped, contest) => {
     const year = contest.start.getUTCFullYear()
     grouped[year] = grouped[year] || []
@@ -71,50 +86,56 @@ const ContestList = ({ contests }: Props) => {
       {Object.keys(grouped)
         .sort((a, b) => Number(b) - Number(a))
         .map(year => (
-          <>
+          <Fragment key={year}>
             <SubHeading>{year}</SubHeading>
-            <ContestListGroup contests={grouped[year]} />
-          </>
+            <ContestListGroup
+              contests={grouped[year]}
+              editContest={editContest}
+            />
+          </Fragment>
         ))}
     </>
   )
 }
 
-const ContestListGroup = ({ contests }: Props) => {
-  return (
-    <Table>
-      <thead>
-        <TableHeading>
-          <TableHeadingCell>Round</TableHeadingCell>
-          <TableHeadingCell>Starting date</TableHeadingCell>
-          <TableHeadingCell>Ending date</TableHeadingCell>
-          <TableHeadingCell>Actions</TableHeadingCell>
-        </TableHeading>
-      </thead>
-      <tbody>
-        {contests.map(contest => (
-          <Row key={contest.id}>
-            <Cell>{contest.description}</Cell>
-            <Cell>{format(contest.start, 'MMMM do')}</Cell>
-            <Cell>{format(contest.end, 'MMMM do')}</Cell>
-            <Cell style={{ width: '1px', whiteSpace: 'nowrap', padding: 0 }}>
-              <ActionButtonContainer>
-                <Link href={`/contests/${contest.id}/ranking`} passHref>
-                  <ButtonLink icon="eye" plain>
-                    View
-                  </ButtonLink>
-                </Link>
-                <Button onClick={() => {}} icon="edit" plain>
-                  Edit
-                </Button>
-              </ActionButtonContainer>
-            </Cell>
-          </Row>
-        ))}
-      </tbody>
-    </Table>
-  )
-}
+const ContestListGroup = ({ contests, editContest }: Props) => (
+  <Table>
+    <thead>
+      <TableHeading>
+        <TableHeadingCell>Round</TableHeadingCell>
+        <TableHeadingCell>Starting date</TableHeadingCell>
+        <TableHeadingCell>Ending date</TableHeadingCell>
+        <TableHeadingCell>Actions</TableHeadingCell>
+      </TableHeading>
+    </thead>
+    <tbody>
+      {contests.map(contest => (
+        <Row key={contest.id} fontSize="16px">
+          <Cell>{contest.description}</Cell>
+          <Cell>{format(contest.start, 'MMMM do')}</Cell>
+          <Cell>{format(contest.end, 'MMMM do')}</Cell>
+          <Cell style={{ width: '1px', whiteSpace: 'nowrap', padding: 0 }}>
+            <ActionButtonContainer>
+              <Link href={`/contests/${contest.id}/ranking`} passHref>
+                <ButtonLink icon="eye" plain>
+                  View
+                </ButtonLink>
+              </Link>
+              <Button
+                onClick={() => editContest(contest)}
+                icon="edit"
+                plain
+                disabled={!isContestActive(contest)}
+              >
+                Edit
+              </Button>
+            </ActionButtonContainer>
+          </Cell>
+        </Row>
+      ))}
+    </tbody>
+  </Table>
+)
 
 const HeaderContainer = styled.div`
   display: flex;
@@ -138,8 +159,7 @@ const ActionContainer = styled.div`
 `
 
 const ActionButtonContainer = styled(ButtonContainer)`
-  margin: 0;
-  font-size: 15px;
+  margin: 0 0 0 20px;
 
   button {
     margin: 0 20px;

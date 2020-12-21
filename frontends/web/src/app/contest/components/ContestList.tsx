@@ -1,4 +1,4 @@
-import React, { FunctionComponent } from 'react'
+import React, { Fragment, FunctionComponent } from 'react'
 import Link from 'next/link'
 
 import { Contest } from '../interfaces'
@@ -30,10 +30,10 @@ const ContestList = ({ contests }: Props) => {
       {Object.keys(grouped)
         .sort((a, b) => Number(b) - Number(a))
         .map(year => (
-          <>
+          <Fragment key={year}>
             <SubHeading>{year}</SubHeading>
             <ContestListGroup contests={grouped[year]} />
-          </>
+          </Fragment>
         ))}
     </>
   )

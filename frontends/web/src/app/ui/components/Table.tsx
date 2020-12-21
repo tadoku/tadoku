@@ -29,15 +29,15 @@ export const TableHeadingCell = styled.td`
   `}
 `
 
-export const Row = styled.tr`
+export const Row = styled.tr<{ fontSize?: string }>`
   height: 55px;
   padding: 0;
-  font-size: 20px;
+  font-size: ${({ fontSize }) => (fontSize ? fontSize : '20px')};
   font-weight: bold;
   transition: background 0.1s ease;
 
   &:nth-child(2n + 1) {
-    cackground-color: ${Constants.colors.nonFocusTextWithAlpha(0.05)};
+    background-color: ${Constants.colors.nonFocusTextWithAlpha(0.05)};
   }
 `
 

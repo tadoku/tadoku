@@ -11,3 +11,7 @@ export interface RawUser {
   display_name: string
   role: number
 }
+
+export interface RoleBasedEntity {
+  role: number
+}

@@ -43,7 +43,7 @@ func (r *contestRepository) create(contest *domain.Contest) error {
 func (r *contestRepository) update(contest *domain.Contest) error {
 	query := `
 		update contests
-		set start = :start, "end" = :end, open = :open
+		set description = :description, start = :start, "end" = :end, open = :open
 		where id = :id
 	`
 

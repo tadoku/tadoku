@@ -102,7 +102,7 @@ const Heading = () => (
 )
 
 const Table = styled.table`
-  flex: 1;
+  width: 100%;
   padding: 0;
   background: ${Constants.colors.light};
   box-shadow: 0px 2px 3px 0px rgba(0, 0, 0, 0.08);
@@ -218,7 +218,6 @@ const NicknameCell = styled.td`
   height: 55px;
   padding: 0 30px;
   position: relative;
-  width: 100%;
 
   &:before {
     content: '&nbsp;';

@@ -2,6 +2,7 @@ import React from 'react'
 import styled from 'styled-components'
 import media from 'styled-media-query'
 import Constants from '../Constants'
+import LinkContainer from '@app/ui/components/navigation/LinkContainer'
 import { LogoLight } from './index'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import Link from 'next/link'
@@ -35,7 +36,7 @@ export const FooterLanding = (props: Props) => (
 
 const FooterContent = ({ contests }: Props) => (
   <>
-    <div>
+    <BrandingContainer>
       <LogoLight />
       <Credits>
         Built by <a href="https://antonve.be">antonve</a>
@@ -77,52 +78,65 @@ const FooterContent = ({ contests }: Props) => (
           </a>
         </SocialLink>
       </SocialList>
-    </div>
+    </BrandingContainer>
     <Navigation>
       <Menu>
         <MenuHeading>Get started</MenuHeading>
-        <Link href="/manual" passHref>
-          <a>Manual</a>
-        </Link>
-        <Link href="/landing" passHref>
-          <a>About</a>
-        </Link>
-        <a href="https://forum.tadoku.app">Forum</a>
-        <Link href="/blog" passHref>
-          <a>Blog</a>
-        </Link>
+        <LinkContainer dark>
+          <Link href="/manual" passHref>
+            <a>Manual</a>
+          </Link>
+          <Link href="/landing" passHref>
+            <a>About</a>
+          </Link>
+          <a href="https://forum.tadoku.app">Forum</a>
+          <Link href="/blog" passHref>
+            <a>Blog</a>
+          </Link>
+        </LinkContainer>
       </Menu>
       <Menu>
         <MenuHeading>Contests</MenuHeading>
-        {contests.map(contest => (
-          <Link
-            href={`/contests/${contest.id}/ranking`}
-            key={contest.id}
-            passHref
-          >
-            <a>{contest.description}</a>
+        <LinkContainer dark>
+          {contests.map(contest => (
+            <Link
+              href={`/contests/${contest.id}/ranking`}
+              key={contest.id}
+              passHref
+            >
+              <a>{contest.description}</a>
+            </Link>
+          ))}
+          <Link href="/contests" passHref>
+            <a>Archive</a>
           </Link>
-        ))}
-        <Link href="/contests" passHref>
-          <a>Archive</a>
-        </Link>
+        </LinkContainer>
       </Menu>
     </Navigation>
   </>
 )
 
+const BrandingContainer = styled.div`
+  ${media.lessThan('medium')`
+    text-align: center;
+  `}
+`
+
 const Container = styled.div`
   box-sizing: border-box;
-  display: none;
-  height: 250px;
   background-color: ${Constants.colors.dark2};
+  height: 250px;
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
 
-  ${media.greaterThan('medium')`
-      display: block;
-      position: absolute;
-      left: 0;
-      right: 0;
-      bottom: 0;
+  ${media.lessThan('medium')`
+    height: inherit;
+    position: inherit;
+    left: inherit;
+    position: inherit;
+    position: inherit;
   `}
 `
 
@@ -137,17 +151,47 @@ const Background = styled.div`
 const InnerContainer = styled.div`
   max-width: ${Constants.maxWidth};
   display: flex;
+  flex-direction: row;
   align-items: top;
   justify-content: space-between;
   margin: 0 auto;
-  padding: 40px 30px;
   box-sizing: border-box;
-
+  padding: 40px 30px;
   ${({ wide }: { wide?: boolean }) => wide && `padding: 40px 60px;`}
+
+  ${media.lessThan('medium')`
+    flex-direction: column;
+    padding: 20px 0;
+  `}
+`
+
+const Credits = styled.p`
+  color: ${Constants.colors.light};
+  margin: 20px 0 40px;
+  padding: 0;
+
+  a {
+    display: inline-block;
+    border-bottom: 2px solid ${Constants.colors.primary};
+    color: ${Constants.colors.light};
+
+    &:hover {
+      color: ${Constants.colors.primary};
+    }
+  }
+
+  ${media.lessThan('medium')`
+    display: none;
+  `}
 `
 
 const Navigation = styled.nav`
   display: flex;
+  flex-direction: row;
+
+  ${media.lessThan('medium')`
+    flex-direction: column;
+  `}
 `
 
 const SocialList = styled.ul`
@@ -156,6 +200,10 @@ const SocialList = styled.ul`
   margin: 0;
   display: flex;
   align-items: top;
+
+  ${media.lessThan('medium')`
+    display: none;
+  `}
 `
 
 const SocialLink = styled.li`
@@ -178,45 +226,54 @@ const SocialLink = styled.li`
   }
 `
 
-const Credits = styled.p`
-  color: ${Constants.colors.light};
-  margin: 20px 0 40px;
-  padding: 0;
-
-  a {
-    display: inline-block;
-    border-bottom: 2px solid ${Constants.colors.primary};
-    color: ${Constants.colors.light};
-
-    &:hover {
-      color: ${Constants.colors.primary};
-    }
-  }
-`
-
 const Menu = styled.div`
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   color: ${Constants.colors.light};
-
-  a {
-    color: ${Constants.colors.light};
-    line-height: 26px;
-    font-size: 16px;
-
-    &:hover {
-      color: ${Constants.colors.primary};
-    }
-  }
+  flex: 1;
 
   & + & {
     margin-left: 60px;
   }
+
+  & > div {
+    flex-direction: column;
+
+    & > a {
+      margin: 0;
+      font-weight: normal;
+      font-size: 16px;
+      line-height: 26px;
+      color: ${Constants.colors.light};
+    }
+  }
+
+  ${media.lessThan('medium')`
+    margin-top: 20px;
+
+    & + & {
+      margin-left: 0;
+    }
+
+    & > div > a {
+      font-size: 16px;
+      line-height: 48px;
+    }
+ `}
 `
 
 const MenuHeading = styled.h3`
-  border-bottom: 2px solid ${Constants.colors.primary};
   font-size: 20px;
   margin: 0 0 10px;
+  box-sizing: border-box;
+  border-bottom: 2px solid ${Constants.colors.primary};
+
+  ${media.lessThan('medium')`
+    border: none;
+    margin: 0;
+    padding: 10px 30px;
+    background-color: ${Constants.colors.lightWithAlpha(0.04)};
+    width: 100%;
+  `}
 `

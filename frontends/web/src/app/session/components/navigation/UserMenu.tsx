@@ -89,6 +89,10 @@ const ListItem = styled.li`
     padding-left: 30px;
     align-items: center;
     justify-content: flex-start;
+
+    &:after {
+      bottom: 0 !important;
+    }
   }
 
   &:last-child {

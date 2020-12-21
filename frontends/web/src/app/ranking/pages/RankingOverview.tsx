@@ -105,10 +105,12 @@ const RankingOverview = ({
       </Header>
 
       <TwoColumn>
-        <Leaderboard
-          rankings={rankings}
-          loading={statusRanking === ApiFetchStatus.Loading}
-        />
+        <Content>
+          <Leaderboard
+            rankings={rankings}
+            loading={statusRanking === ApiFetchStatus.Loading}
+          />
+        </Content>
         <Sidebar>
           <ContestPeriod contest={contest} />
           <ContestUpdates
@@ -154,6 +156,7 @@ const Header = styled.div`
 const TwoColumn = styled.div`
   display: flex;
   flex-direction: row;
+  flex-wrap: wrap;
   margin-bottom: 30px;
   width: 100%;
 
@@ -163,13 +166,15 @@ const TwoColumn = styled.div`
   `}
 `
 
+const Content = styled.div`
+  flex: 1 0 auto; // enable grow, disable shrink
+`
+
 const Sidebar = styled.div`
   display: flex;
   flex-direction: column;
   margin-left: 30px;
   flex-basis: 260px;
-  flex-grow: 0;
-  flex-shrink: 0;
   box-sizing: border-box;
 
   ${media.lessThan('medium')`

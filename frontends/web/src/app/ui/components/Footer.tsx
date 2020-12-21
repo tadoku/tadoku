@@ -245,6 +245,7 @@ const Menu = styled.div`
       font-weight: normal;
       font-size: 16px;
       line-height: 26px;
+      color: ${Constants.colors.light};
     }
   }
 

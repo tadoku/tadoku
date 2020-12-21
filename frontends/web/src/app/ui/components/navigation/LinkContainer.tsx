@@ -23,11 +23,9 @@ const LinkContainer = styled.div<Props>`
   > button {
     font-weight: bold;
     font-family: ${Constants.fonts.sansSerif};
-    color: ${({ dark }) =>
-      dark ? Constants.colors.light : Constants.colors.dark};
   }
 
-  ${media.lessThan('medium')`
+  ${media.lessThan<Props>('medium')`
     border: none;
     margin: 0;
     padding: 0;
@@ -46,15 +44,24 @@ const LinkContainer = styled.div<Props>`
       align-items: flex-start;
       line-height: 48px;
 
-      &:focus {
+      &:focus,
+      &:active,
+      &:hover {
+        background-color: ${Constants.colors.lightWithAlpha(0.05)};
         border-color: ${({ dark }) =>
           dark
-            ? Constants.colors.lightWithAlpha(0.2)
+            ? Constants.colors.lightWithAlpha(0.08)
             : Constants.colors.lightGray} !important;
       }
 
       &:after {
-        display: none;
+        bottom: 0 !important;
+        left: 10px !important;
+        right: inherit !important;
+        top: 0 !important;
+        width: 7px;
+        border: none;
+        background-color: ${Constants.colors.primary};
       }
     }
   `}

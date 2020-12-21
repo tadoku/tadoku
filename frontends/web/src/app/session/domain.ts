@@ -17,13 +17,13 @@ export const validateDisplayName = (name: string): boolean =>
     name,
   ) !== null
 
-const GUEST_ROLE = 0
-const BANNED_ROLE = 1
-const USER_ROLE = 2
+// const GUEST_ROLE = 0
+// const BANNED_ROLE = 1
+// const USER_ROLE = 2
 const ADMIN_ROLE = 3
 
-export const isAdmin = (entity: RoleBasedEntity): boolean =>
-  entity.role >= ADMIN_ROLE
+export const isAdmin = (entity: RoleBasedEntity | undefined): boolean =>
+  entity !== undefined && entity.role >= ADMIN_ROLE
 
 const sessionCookieName = process.env.SESSION_COOKIE_NAME || 'session_token'
 

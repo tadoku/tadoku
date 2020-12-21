@@ -34,6 +34,11 @@ describe('validateDisplayName', () => {
 })
 
 describe('isAdmin', () => {
+  it('should disallow undefined', () => {
+    const result = isAdmin(undefined)
+    expect(result).toBeFalsy()
+  })
+
   it('should disallow banned users', () => {
     const user: RoleBasedEntity = { role: 1 }
     const result = isAdmin(user)

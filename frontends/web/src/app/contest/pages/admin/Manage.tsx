@@ -23,7 +23,8 @@ import ContestApi from '@app/contest/api'
 import { contestCollectionSerializer } from '@app/contest/transform'
 import Constants from '@app/ui/Constants'
 import EditContestFormModal from '@app/contest/components/modals/EditContestFormModal'
-import { isContestActive } from '@app/ranking/domain'
+import { isContestEditable } from '@app/ranking/domain'
+import NewContestFormModal from '@app/contest/components/modals/NewContestFormModal'
 
 interface Props {
   contests: Contest[]
@@ -46,6 +47,7 @@ const Manage = () => {
   const [selectedContest, setSelectedContest] = useState(
     undefined as Contest | undefined,
   )
+  const [createContestModalOpen, setCreateContestModalOpen] = useState(false)
 
   if (!isReady([statusContests])) {
     return <p>Loading...</p>
@@ -55,7 +57,19 @@ const Manage = () => {
     <>
       <HeaderContainer>
         <PageTitle>Manage contests</PageTitle>
-        <ActionContainer></ActionContainer>
+        <ActionContainer>
+          <NewContestFormModal
+            isOpen={createContestModalOpen}
+            onCancel={() => setCreateContestModalOpen(false)}
+            onSuccess={() => {
+              setCreateContestModalOpen(false)
+              setEffectCount(effectCount + 1)
+            }}
+          />
+          <Button onClick={() => setCreateContestModalOpen(true)} primary>
+            Create contest
+          </Button>
+        </ActionContainer>
       </HeaderContainer>
       <EditContestFormModal
         setContest={setSelectedContest}
@@ -125,7 +139,7 @@ const ContestListGroup = ({ contests, editContest }: Props) => (
                 onClick={() => editContest(contest)}
                 icon="edit"
                 plain
-                disabled={!isContestActive(contest)}
+                disabled={!isContestEditable(contest)}
               >
                 Edit
               </Button>

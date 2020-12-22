@@ -123,7 +123,6 @@ const ContestForm = ({
             type="text"
             value={description}
             onChange={e => setDescription(e.target.value)}
-            placeholder="e.g. One Piece volume 45"
             error={hasError.description}
           />
           <GroupError
@@ -139,7 +138,7 @@ const ContestForm = ({
             type="date"
             value={start}
             onChange={e => setStart(e.target.value)}
-            error={hasError.description}
+            error={hasError.start}
           />
           <GroupError message="Invalid start date" hidden={!hasError.start} />
         </Label>

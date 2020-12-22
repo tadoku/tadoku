@@ -1,5 +1,5 @@
 import { formatRFC3339 } from 'date-fns'
-import { get, put } from '../api'
+import { get, put, post } from '../api'
 import { Contest, RawContest } from './interfaces'
 import { contestMapper } from './transform'
 

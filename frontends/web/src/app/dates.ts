@@ -3,7 +3,7 @@ import { addDays } from 'date-fns'
 
 // Will format the date correctly in utc
 export function prettyDateInUTC(date: Date): string {
-  return format(utcToZonedTime(date, 'utc'), 'uuuu-MM-d', { timeZone: 'UTC' })
+  return format(utcToZonedTime(date, 'utc'), 'uuuu-MM-dd', { timeZone: 'UTC' })
 }
 
 export function formatUTC(date: Date, pattern: string): string {

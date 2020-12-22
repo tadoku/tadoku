@@ -1,5 +1,5 @@
 import React from 'react'
-import {Contest} from '../../interfaces'
+import { Contest } from '../../interfaces'
 import ContestForm from '../forms/ContestForm'
 import Modal from '@app/ui/components/Modal'
 
@@ -18,9 +18,15 @@ const EditContestFormModal = ({
     <Modal
       isOpen={!!contest}
       onRequestClose={() => setContest(undefined)}
-      contentLabel={`Edit contest ${contest?.description ?? ""}`}
+      contentLabel={`Edit contest ${contest?.description ?? ''}`}
     >
-      {contest && <ContestForm contest={contest} onSuccess={onSuccess} onCancel={onCancel} />}
+      {contest && (
+        <ContestForm
+          contest={contest}
+          onSuccess={onSuccess}
+          onCancel={onCancel}
+        />
+      )}
     </Modal>
   )
 }

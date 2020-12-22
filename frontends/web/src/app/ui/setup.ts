@@ -15,6 +15,8 @@ import {
   faBars,
   faTimes,
   faArrowRight,
+  faTools,
+  faEye,
 } from '@fortawesome/free-solid-svg-icons'
 import {
   faDiscord,
@@ -40,4 +42,6 @@ library.add(
   faTwitterSquare,
   faGithubSquare,
   faArrowRight,
+  faTools,
+  faEye,
 )

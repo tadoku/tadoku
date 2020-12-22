@@ -29,6 +29,7 @@ const logIn = async (payload: {
       id: data.user.id,
       email: data.user.email,
       displayName: data.user.display_name,
+      role: data.user.role,
     },
   }
 }
@@ -55,6 +56,7 @@ const refresh = async (): Promise<LogInResponse | undefined> => {
       id: data.user.id,
       email: data.user.email,
       displayName: data.user.display_name,
+      role: data.user.role,
     },
   }
 }

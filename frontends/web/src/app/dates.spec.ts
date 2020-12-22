@@ -5,7 +5,7 @@ describe('prettyDate', () => {
     const input = new Date('2020-12-08T00:00:00Z')
     const output = prettyDateInUTC(input)
 
-    expect(output).toEqual('2020-12-8')
+    expect(output).toEqual('2020-12-08')
   })
 })
 
@@ -16,7 +16,7 @@ describe('getDates', () => {
     const output = getDates(start, end)
 
     expect(output).toHaveLength(31)
-    expect(prettyDateInUTC(output[0])).toEqual('2020-12-1')
+    expect(prettyDateInUTC(output[0])).toEqual('2020-12-01')
     expect(prettyDateInUTC(output[30])).toEqual('2020-12-31')
   })
 })

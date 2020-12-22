@@ -12,6 +12,9 @@ export const validateLanguageCode = (code: string): boolean =>
 export const isContestActive = (contest: Contest): boolean =>
   contest.open && contest.end > new Date()
 
+export const isContestEditable = (contest: Contest): boolean =>
+  contest.open || contest.end > new Date()
+
 export const isRegisteredForContest = (
   registration: RankingRegistration | undefined,
   contest: Contest,

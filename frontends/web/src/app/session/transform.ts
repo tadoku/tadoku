@@ -11,12 +11,14 @@ const rawToUserMapper: Mapper<RawUser, User> = raw => ({
   id: raw.id,
   email: raw.email,
   displayName: raw.display_name,
+  role: raw.role,
 })
 
 const userToRawMapper: Mapper<User, RawUser> = user => ({
   id: user.id,
   email: user.email,
   display_name: user.displayName,
+  role: user.role,
 })
 
 export const userMapper: Mappers<RawUser, User> = createMappers({

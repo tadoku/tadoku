@@ -9,6 +9,7 @@ import { RankingRegistration } from '@app/ranking/interfaces'
 import { User } from '../../interfaces'
 import styled from 'styled-components'
 import Constants from '@app/ui/Constants'
+import { isAdmin } from '@app/session/domain'
 
 interface Props {
   user: User
@@ -19,6 +20,14 @@ const SettingsLink = () => (
   <Link href="/settings/[tab]" as={`/settings/${SettingsTab.Profile}`} passHref>
     <ButtonLink plain icon="cog">
       Settings
+    </ButtonLink>
+  </Link>
+)
+
+const AdminLink = () => (
+  <Link href="/manage" passHref>
+    <ButtonLink plain icon="tools">
+      Admin
     </ButtonLink>
   </Link>
 )
@@ -45,6 +54,11 @@ const ContestProfileLink = ({
 
 const UserMenuDropdown = ({ user, registration }: Props) => (
   <Dropdown label={user.displayName}>
+    {isAdmin(user) && (
+      <DropdownItem>
+        <AdminLink />
+      </DropdownItem>
+    )}
     <DropdownItem>
       <SettingsLink />
     </DropdownItem>
@@ -64,6 +78,11 @@ const UserMenuList = ({ user, registration }: Props) => (
     <ListItem>
       <DisplayName>{user.displayName}</DisplayName>
     </ListItem>
+    {isAdmin(user) && (
+      <ListItem>
+        <AdminLink />
+      </ListItem>
+    )}
     <ListItem>
       <SettingsLink />
     </ListItem>

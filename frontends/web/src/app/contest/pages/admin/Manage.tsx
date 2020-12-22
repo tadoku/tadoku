@@ -125,7 +125,10 @@ const ContestListGroup = ({ contests, editContest }: Props) => (
     <tbody>
       {contests.map(contest => (
         <Row key={contest.id} fontSize="16px">
-          <Cell>{contest.description}</Cell>
+          <DescriptionCell>
+            {contest.description}
+            {contest.open && <OpenTag>Open</OpenTag>}
+          </DescriptionCell>
           <Cell>{format(contest.start, 'MMMM do')}</Cell>
           <Cell>{format(contest.end, 'MMMM do')}</Cell>
           <Cell style={{ width: '1px', whiteSpace: 'nowrap', padding: 0 }}>
@@ -178,4 +181,18 @@ const ActionButtonContainer = styled(ButtonContainer)`
   button {
     margin: 0 20px;
   }
+`
+
+const DescriptionCell = styled(Cell)`
+  display: flex;
+  align-items: center;
+`
+
+const OpenTag = styled.span`
+  font-size: 9px;
+  text-transform: uppercase;
+  background-color: ${Constants.colors.success};
+  color: ${Constants.colors.light};
+  padding: 2px 5px;
+  margin-left: 10px;
 `

@@ -9,22 +9,14 @@ const ContestSchedule = () => (
     <Title>Contest schedule</Title>
     <BackgroundContainer>
       <Schedule>
+        <Contest round="1" description="January 1st - January 31st (1 month)" />
+        <Contest round="2" description="March 1st - March 31st (1 month)" />
+        <Contest round="3" description="May 1st - 14th (2 weeks)" />
+        <Contest round="4" description="July 1st - July 31st (1 month)" />
+        <Contest round="5" description="September 1st - 30th (1 month)" />
         <Contest
-          round="1"
-          description="January 1st - February 14th (1.5 months)"
-        />
-        <Contest round="2" description="March 24th - April 7th (2 weeks)" />
-        <Contest round="3" description="May 1st - 31st (1 month)" />
-        <Contest round="4" description="June 23rd - July 7th (2 weeks)" />
-        <Contest round="5" description="July 24th - August 7th (2 weeks)" />
-        <Contest round="6" description="September 1st - 30th (1 month)" />
-        <Contest
-          round="7"
-          description="October 24th - November 7th (2 weeks)"
-        />
-        <Contest
-          round="8"
-          description="November 23rd - December 7th (2 weeks)"
+          round="6"
+          description="November 1st - November 14th (2 weeks)"
         />
       </Schedule>
       <Background />

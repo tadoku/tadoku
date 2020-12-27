@@ -11,7 +11,7 @@ jobs:
           name: Deploy Over SSH
           command: |
             ssh $SSH_USER@$SSH_HOST "./deploy-tadoku-api.sh"
-  build:
+  test:
     docker:
       - image: circleci/golang:1.14.2
         environment:
@@ -60,15 +60,35 @@ jobs:
           key: go-mod-v1-{{ checksum "go.sum" }}-{{ checksum "tools.go" }}
           paths:
             - "/go/pkg/mod"
+  build:
+    docker:
+      - image: circleci/golang:1.14.2
+        environment:
+          GO111MODULE: "on"
+
+    working_directory: /go/src/github.com/tadoku/api
+    steps:
+      - checkout
+      - setup_remote_docker
+      - run:
+          name: Deploy image to Docker hub
+          command: |
+            docker login -u $DOCKER_USER -p $DOCKER_PASSWORD
+
+            IMAGE_NAME=tadoku/api
+            docker build -t $IMAGE_NAME:latest .
+            docker tag $IMAGE_NAME:latest $IMAGE_NAME:${CIRCLE_SHA1}
+            docker push $IMAGE_NAME
 
 workflows:
   version: 2
   build-and-deploy:
     jobs:
+      # - test
       - build
-      - deploy:
-          requires:
-            - build
-          filters:
-            branches:
-              only: master
+      # - deploy:
+          # requires:
+          #   - build
+          # filters:
+          #   branches:
+              # only: master

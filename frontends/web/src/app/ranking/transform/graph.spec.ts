@@ -1,5 +1,11 @@
 import { aggregateReadingActivity, aggregateMediaDistribution } from './graph'
 
+describe('timezone', () => {
+  it('should always be UTC', () => {
+    expect(new Date().getTimezoneOffset()).toBe(0)
+  })
+})
+
 describe('aggregateReadingActivity', () => {
   it('should aggregate correctly', () => {
     const contest = {

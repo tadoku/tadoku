@@ -6,6 +6,10 @@ export function prettyDateInUTC(date: Date): string {
   return format(utcToZonedTime(date, 'utc'), 'uuuu-MM-dd', { timeZone: 'UTC' })
 }
 
+export function prettyDateIgnoreTimezone(date: Date): string {
+  return format(date, 'uuuu-MM-dd')
+}
+
 export function formatUTC(date: Date, pattern: string): string {
   return format(utcToZonedTime(date, 'utc'), pattern, { timeZone: 'UTC' })
 }
@@ -13,7 +17,7 @@ export function formatUTC(date: Date, pattern: string): string {
 export function getDates(startDate: Date, endDate: Date) {
   const dates = []
 
-  let currentDate = utcToZonedTime(startDate, 'utc')
+  let currentDate = utcToZonedTime(startDate, 'UTC')
   const deadline = utcToZonedTime(endDate, 'UTC')
 
   while (currentDate < deadline) {

@@ -3,7 +3,7 @@ import { ContestLog, Ranking, RankingRegistrationOverview } from '../interfaces'
 import { Contest } from '@app/contest/interfaces'
 import { formatLanguageName, formatMediaDescription } from '../transform/format'
 import { graphColor } from '@app/ui/components/Graphs'
-import { getDates, prettyDateInUTC } from '@app/dates'
+import { getDates, prettyDateIgnoreTimezone, prettyDateInUTC } from '@app/dates'
 
 // Graph aggregators
 
@@ -52,7 +52,7 @@ export const aggregateReadingActivity = (
   } = {}
 
   getDates(contest.start, contest.end).forEach(date => {
-    initializedSeries[prettyDateInUTC(date)] = {
+    initializedSeries[prettyDateIgnoreTimezone(date)] = {
       x: date.toISOString(),
       y: 0,
       language: '',

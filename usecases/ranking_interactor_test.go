@@ -174,23 +174,6 @@ func TestRankingInteractor_CreateLog(t *testing.T) {
 		assert.EqualError(t, err, usecases.ErrInvalidContestLog.Error())
 	}
 
-	// Test contest being closed
-	{
-		log := domain.ContestLog{
-			ContestID: contestID + 1,
-			UserID:    userID,
-			Language:  domain.Japanese,
-			Amount:    10,
-			MediumID:  domain.MediumComic,
-		}
-
-		validator.EXPECT().Validate(log).Return(true, nil)
-		contestRepo.EXPECT().GetRunningContests().Return([]uint64{contestID}, nil)
-
-		err := interactor.CreateLog(log)
-		assert.EqualError(t, err, usecases.ErrContestIsClosed.Error())
-	}
-
 	// Test not being signed up for a language
 	{
 		log := domain.ContestLog{

@@ -7,7 +7,7 @@ import { User } from '@app/session/interfaces'
 import RankingApi from '../api'
 import UpdatesList from './UpdatesList'
 import { Contest } from '@app/contest/interfaces'
-import { isContestActive } from '../domain'
+import { isContestRunning } from '../domain'
 import styled from 'styled-components'
 import { PageTitle } from '@app/ui/components'
 
@@ -42,7 +42,7 @@ const UpdatesOverview = (props: Props) => {
   }
 
   const isOwner = signedInUser && signedInUser.id === props.registration.userId
-  const canEdit = (isOwner && isContestActive(props.contest)) || false
+  const canEdit = (isOwner && isContestRunning(props.contest)) || false
 
   return (
     <>

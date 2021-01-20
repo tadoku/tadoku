@@ -72,7 +72,6 @@ func (r *contestRepository) GetRunningContests() ([]uint64, error) {
 		select id
 		from contests
 		where
-			open = true and
 			start <= now() at time zone 'utc' and
 			"end" >= now() at time zone 'utc'
 	`

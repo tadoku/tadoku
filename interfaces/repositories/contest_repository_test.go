@@ -67,23 +67,38 @@ func TestContestRepository_GetRunningContests(t *testing.T) {
 
 	repo := repositories.NewContestRepository(sqlHandler)
 
-	{
-		ids, err := repo.GetRunningContests()
-		assert.NoError(t, err)
-		assert.Empty(t, ids, "no running contests should exist")
-
-		for _, contest := range []*domain.Contest{
-			{Start: time.Now().Add(-1 * time.Hour), End: time.Now().Add(1 * time.Hour), Open: true},
-			{Start: time.Now().Add(-1 * time.Hour), End: time.Now().Add(1 * time.Hour), Open: false},
+	tests := []struct {
+		name           string
+		expectedLength int
+		newContests    []*domain.Contest
+	}{
+		{"no contests", 0, nil},
+		{"one old contest", 0, []*domain.Contest{
 			{Start: time.Now().Add(-5 * time.Hour), End: time.Now().Add(-1 * time.Hour), Open: false},
-		} {
-			err = repo.Store(contest)
+		}},
+		{"one old, one new contest", 1, []*domain.Contest{
+			{Start: time.Now().Add(-24 * time.Hour), End: time.Now().Add(24 * time.Hour), Open: true},
+		}},
+		{"one old, two new contest, of which one is closed", 2, []*domain.Contest{
+			{Start: time.Now().Add(-24 * time.Hour), End: time.Now().Add(24 * time.Hour), Open: false},
+		}},
+	}
+
+	for _, tt := range tests {
+		t.Log("case: " + tt.name)
+
+		for _, contest := range tt.newContests {
+			err := repo.Store(contest)
 			assert.NoError(t, err, "saving seed contest should return no error")
 		}
 
-		ids, err = repo.GetOpenContests()
-		assert.Equal(t, 1, len(ids), "only one running contest should exist")
+		ids, err := repo.GetRunningContests()
 		assert.NoError(t, err)
+		if tt.expectedLength == 0 {
+			assert.Empty(t, ids, "no running contests should exist")
+		} else {
+			assert.Equal(t, tt.expectedLength, len(ids), "incorrect running contests")
+		}
 	}
 }
 

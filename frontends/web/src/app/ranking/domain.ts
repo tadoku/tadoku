@@ -9,11 +9,14 @@ export const validateAmount = (amount: string): boolean =>
 export const validateLanguageCode = (code: string): boolean =>
   code != '' && languageByCode[code] !== undefined
 
+export const isContestRunning = (contest: Contest): boolean =>
+  contest.end > new Date()
+
 export const isContestActive = (contest: Contest): boolean =>
-  contest.open && contest.end > new Date()
+  contest.open && isContestRunning(contest)
 
 export const isContestEditable = (contest: Contest): boolean =>
-  contest.open || contest.end > new Date()
+  contest.open || isContestRunning(contest)
 
 export const isRegisteredForContest = (
   registration: RankingRegistration | undefined,
@@ -28,4 +31,14 @@ export const canJoinContest = (
   user &&
   contest &&
   isContestActive(contest) &&
+  !isRegisteredForContest(registration, contest)
+
+export const isRegistrationClosedFor = (
+  user: User | undefined,
+  registration: RankingRegistration | undefined,
+  contest: Contest,
+) =>
+  user &&
+  contest &&
+  isContestRunning(contest) &&
   !isRegisteredForContest(registration, contest)

@@ -12,7 +12,11 @@ import { User } from '@app/session/interfaces'
 import JoinContestModal from '../components/modals/JoinContestModal'
 import { useCachedApiState, ApiFetchStatus } from '../../cache'
 import { rankingCollectionSerializer } from '../transform/ranking'
-import { isRegisteredForContest, canJoinContest } from '../domain'
+import {
+  canJoinContest,
+  isRegisteredForContest,
+  isRegistrationClosedFor,
+} from '../domain'
 import SubmitPagesButton from '../components/SubmitPagesButton'
 import ContestPeriod from '../components/ContestPeriod'
 import { contestLogCollectionSerializer } from '../transform/contest-log'
@@ -72,6 +76,11 @@ const RankingOverview = ({
 
   const isRegistered = isRegisteredForContest(registration, contest)
   const canJoin = canJoinContest(user, registration, contest)
+  const isRegistrationClosed = isRegistrationClosedFor(
+    user,
+    registration,
+    contest,
+  )
 
   return (
     <>
@@ -102,6 +111,7 @@ const RankingOverview = ({
             refreshRanking={refreshRanking}
           />
         )}
+        {isRegistrationClosed && <Button disabled>Sign up closed</Button>}
       </Header>
 
       <TwoColumn>

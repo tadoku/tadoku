@@ -111,7 +111,9 @@ const RankingOverview = ({
             refreshRanking={refreshRanking}
           />
         )}
-        {isRegistrationClosed && <Button disabled>Sign up closed</Button>}
+        {!canJoin && isRegistrationClosed && (
+          <Button disabled>Sign up closed</Button>
+        )}
       </Header>
 
       <TwoColumn>

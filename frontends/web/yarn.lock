@@ -2719,10 +2719,10 @@
   resolved "https://registry.yarnpkg.com/@types/tapable/-/tapable-1.0.6.tgz#a9ca4b70a18b270ccb2bc0aaafefd1d486b7ea74"
   integrity sha512-W+bw9ds02rAQaMvaLYxAbJ6cvguW/iJXNT6lTssS1ps6QdrMKttqEAMEG/b5CR8TZl3/L7/lH0ZV5nNR1LXikA==
 
-"@types/tryghost__content-api@^1.3.5":
-  version "1.3.5"
-  resolved "https://registry.yarnpkg.com/@types/tryghost__content-api/-/tryghost__content-api-1.3.5.tgz#5d2856f081542d559dcca8af11e134c7bf1032b7"
-  integrity sha512-/F7IhhFYXFknsP0LSytZ2C1tYbBLleyRilpiOLoqNF8ymSByEDMiqxcfKs/NFnwWkBlm1zqfZi+HeG1fI+vsZA==
+"@types/tryghost__content-api@^1.3.6":
+  version "1.3.6"
+  resolved "https://registry.yarnpkg.com/@types/tryghost__content-api/-/tryghost__content-api-1.3.6.tgz#80182cb5be8c28edcd8d7e31201d65fa95b7a0b0"
+  integrity sha512-DbChUPYYk32RY4DsVkPd+ygKDoNMMoff2/tID9dGx0VRo19/sNur2wtLa96NWaddHCY0hUlCEP3+Vthye64Zag==
 
 "@types/uglify-js@*":
   version "3.11.1"

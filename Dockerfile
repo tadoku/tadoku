@@ -1,9 +1,9 @@
 # Build server
-FROM golang:1.14.2 as build
+FROM golang:1.16-alpine as build
 WORKDIR /base
 COPY . .
-RUN GO111MODULE=on go mod download
-RUN GO111MODULE=on go install -v ./...
+RUN go mod download
+RUN CGO_ENABLED=0 GOOS=linux go install -v ./...
 
 # Create production container
 FROM alpine:3.7

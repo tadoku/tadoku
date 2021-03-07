@@ -85,6 +85,7 @@
     "moduleNameMapper": {
       "@app/(.*)": "<rootDir>/src/app/$1"
     },
-    "globalSetup": "./jest-global-setup.js"
+    "globalSetup": "./jest-global-setup.js",
+    "setupFiles": ["./jest-setup.js"]
   }
 }

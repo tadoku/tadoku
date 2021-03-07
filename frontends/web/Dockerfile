@@ -4,7 +4,7 @@ WORKDIR /base
 COPY . .
 RUN yarn install
 
-# Building app
+# Build app
 FROM base AS build
 ENV NODE_ENV=production
 WORKDIR /build
@@ -16,6 +16,7 @@ FROM node:10 AS production
 ENV NODE_ENV=production
 WORKDIR /app
 COPY --from=build /build/package.json /build/yarn.lock /build/server.js ./
+COPY --from=build /build/next.config.js /build/config.js ./
 COPY --from=build /build/yarn.lock ./
 COPY --from=build /build/.next ./.next
 COPY --from=build /build/public ./public

@@ -1,10 +1,13 @@
 import GhostContentAPI from '@tryghost/content-api'
 import { PostOrPage } from './interfaces'
 import { postOrPageMapper } from './transform'
+import getConfig from 'next/config'
+
+const { publicRuntimeConfig } = getConfig()
 
 const api = GhostContentAPI({
-  url: process.env.GHOST_URL || '',
-  key: process.env.GHOST_KEY || '',
+  url: publicRuntimeConfig.GHOST_URL || '',
+  key: publicRuntimeConfig.GHOST_KEY || '',
   version: 'canary',
 })
 

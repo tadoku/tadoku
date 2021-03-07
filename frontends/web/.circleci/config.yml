@@ -29,10 +29,9 @@ jobs:
           command: yarn build
 
   build-push-image:
-    machine:
-      image: circleci/classic:latest
+    machine: true
     steps:
-      - setup_remote_docker
+      - checkout
       - run:
           name: Deploy image to Docker hub
           command: |

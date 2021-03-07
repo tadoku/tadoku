@@ -46,4 +46,15 @@ workflows:
   version: 2
   build-and-deploy:
     jobs:
-      - build-push-image
+      - build:
+          filters:
+            tags:
+              only: /^v.*/
+      - build-push-image:
+          requires:
+            - build
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /^v.*/

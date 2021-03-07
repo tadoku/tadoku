@@ -1,10 +1,13 @@
+import { NextPageContext } from 'next'
+import getConfig from 'next/config'
 import cookie from 'cookie'
 import jwt from 'jsonwebtoken'
 
 import { logIn } from './redux'
 import { userMapper } from './transform'
-import { NextPageContext } from 'next'
 import { RoleBasedEntity } from './interfaces'
+
+const { publicRuntimeConfig } = getConfig()
 
 export const validateEmail = (email: string): boolean =>
   email != '' && !!email.match(/.+@.+/)
@@ -25,7 +28,8 @@ const ADMIN_ROLE = 3
 export const isAdmin = (entity: RoleBasedEntity | undefined): boolean =>
   entity !== undefined && entity.role >= ADMIN_ROLE
 
-const sessionCookieName = process.env.SESSION_COOKIE_NAME || 'session_token'
+const sessionCookieName =
+  publicRuntimeConfig.SESSION_COOKIE_NAME || 'session_token'
 
 export const parseSessionFromContext = (ctx: NextPageContext) => {
   const request = ctx.req

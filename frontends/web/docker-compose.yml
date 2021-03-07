@@ -1,21 +1,17 @@
 version: "3"
 
 services:
+  # This docker file is only used for debugging the docker build locally, use `yarn dev` for development.
+  # TODO: Move all development inside docker container
   tadoku-web:
-    image: tadoku/web:latest
+    build: .
     container_name: tadoku-web
-    network_mode: bridge
-    restart: always
     expose:
       - 3000
+    ports:
+      - "3000:3000"
     environment:
-      VIRTUAL_HOST: tadoku.app
-      VIRTUAL_PORT: 3000
-      LETSENCRYPT_HOST: tadoku.app
-      LETSENCRYPT_EMAIL: hello@tadoku.app
-      # make sure to also check .env.sample, sometimes it uses values from there.
-      # need to figure out the exact reasons why it does so
-      API_ROOT: http://172.17.0.2:4000 # hardcoded for now, will revise infra hopefully before the end of the year
+      API_ROOT: http://localhost:4000
       GHOST_KEY: 22c9b1088957389622d210662f
       GHOST_URL: https://blog.tadoku.app
       SESSION_COOKIE_NAME: session_token

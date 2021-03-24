@@ -57,7 +57,7 @@
     "@babel/core": "^7.12.10",
     "@babel/plugin-proposal-unicode-property-regex": "^7.12.13",
     "@storybook/addon-info": "^5.3.21",
-    "@storybook/react": "^6.1.11",
+    "@storybook/react": "^6.1.21",
     "@types/cookie": "^0.4.0",
     "@types/jest": "^26.0.20",
     "@types/jsonwebtoken": "^8.5.0",

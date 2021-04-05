@@ -3,7 +3,7 @@ module github.com/tadoku/api
 go 1.14
 
 require (
-	github.com/DATA-DOG/go-txdb v0.1.3
+	github.com/DATA-DOG/go-txdb v0.1.4
 	github.com/DavidHuie/gomigrate v0.0.0-20160809001028-4004e6142040
 	github.com/asaskevich/govalidator v0.0.0-20180720115003-f9ffefc3facf
 	github.com/creasty/configo v0.0.0-20170711121124-288b7e8980d2

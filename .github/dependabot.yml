@@ -1,0 +1,17 @@
+version: 2
+updates:
+- package-ecosystem: gomod
+  directory: "/"
+  schedule:
+    interval: daily
+    time: "10:00"
+    timezone: Japan
+  open-pull-requests-limit: 10
+  reviewers:
+  - antonve
+  assignees:
+  - antonve
+  ignore:
+  - dependency-name: github.com/labstack/echo/v4
+    versions:
+    - 4.2.0

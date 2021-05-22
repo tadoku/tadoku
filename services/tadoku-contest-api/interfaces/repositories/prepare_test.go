@@ -1,6 +1,7 @@
 package repositories_test
 
 import (
+	"context"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -10,26 +11,75 @@ import (
 
 	"github.com/jmoiron/sqlx"
 	"github.com/stretchr/testify/assert"
-	"github.com/tadoku/tadoku/services/tadoku-contest-api/domain"
-	"github.com/tadoku/tadoku/services/tadoku-contest-api/infra"
-	"github.com/tadoku/tadoku/services/tadoku-contest-api/interfaces/rdb"
-	"github.com/tadoku/tadoku/services/tadoku-contest-api/interfaces/repositories"
-	"github.com/tadoku/tadoku/services/tadoku-contest-api/test"
+	"github.com/tadoku/tadoku-monorepo/services/tadoku-contest-api/domain"
+	"github.com/tadoku/tadoku-monorepo/services/tadoku-contest-api/infra"
+	"github.com/tadoku/tadoku-monorepo/services/tadoku-contest-api/interfaces/rdb"
+	"github.com/tadoku/tadoku-monorepo/services/tadoku-contest-api/interfaces/repositories"
 
 	txdb "github.com/DATA-DOG/go-txdb"
 	"github.com/DavidHuie/gomigrate"
+	"github.com/cenkalti/backoff"
 	_ "github.com/lib/pq"
+	"github.com/testcontainers/testcontainers-go"
+	"github.com/testcontainers/testcontainers-go/wait"
 )
 
 func TestMain(m *testing.M) {
-	cfg := loadConfig()
+	database := "database"
+
+	/ Spin up a postgres container for testing
+	ctx := context.Background()
+	req := testcontainers.ContainerRequest{
+		Image:        "postgres:11.6-alpine",
+		ExposedPorts: []string{"5432/tcp"},
+		Env: map[string]string{
+			"POSTGRES_DB": database,
+		},
+		WaitingFor: wait.ForLog("database system is ready to accept connections"),
+	}
+	postgresC, err := testcontainers.GenericContainer(ctx, testcontainers.GenericContainerRequest{
+		ContainerRequest: req,
+		Started:          true,
+	})
+	if err != nil {
+		// Panic and fail since there isn't much we can do if the container doesn't start
+		panic(fmt.Sprintf("could not create postgresql container: %s", err))
+	}
+	defer postgresC.Terminate(ctx)
+
+	// Create connection string for test container
+	p, err := postgresC.MappedPort(ctx, "5432")
+	if err != nil {
+		panic(fmt.Sprintf("could not fetch postgresql container port: %s", err))
+	}
+	host, err := postgresC.Host(ctx)
+	if err != nil {
+		panic(fmt.Sprintf("could not fetch postgresql container host: %s", err))
+	}
+	databaseURL := fmt.Sprintf("host=%s port=%s user=postgres dbname=%s sslmode=disable", host, p.Port(), database)
 
 	// Must be called pgx so the sqlx mapper uses the correct notation
-	txdb.Register("pgx", "postgres", cfg.DatabaseURL)
+	txdb.Register("pgx", "postgres", databaseURL)
 
-	db, err := infra.NewRDB(cfg.DatabaseURL, cfg.DatabaseMaxIdleConns, cfg.DatabaseMaxOpenConns)
+	db, err := infra.NewRDB(databaseURL, 10, 10)
 	if err != nil {
 		panic(fmt.Sprintf("could not connect to testing DB: %s", err))
+	}
+
+	// Wait until database is ready before we migrate
+	var pingDb backoff.Operation = func() error {
+		err := db.DB.Ping()
+		if err != nil {
+			log.Println("DB is not ready...backing off...")
+			return err
+		}
+		log.Println("DB is ready!")
+		return nil
+	}
+
+	err = backoff.Retry(pingDb, backoff.NewExponentialBackOff())
+	if err != nil {
+		log.Panic(err)
 	}
 
 	migrator, _ := gomigrate.NewMigratorWithLogger(
@@ -46,15 +96,6 @@ func TestMain(m *testing.M) {
 
 	code := m.Run()
 	defer os.Exit(code)
-}
-
-func loadConfig() *test.Config {
-	c, err := test.LoadConfig()
-	if err != nil {
-		panic(fmt.Sprintf("could not load config: %s", err))
-	}
-
-	return c
 }
 
 func setupTestingSuite(t *testing.T) (rdb.SQLHandler, func() error) {

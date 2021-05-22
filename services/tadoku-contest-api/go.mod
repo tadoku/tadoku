@@ -5,7 +5,8 @@ go 1.14
 require (
 	github.com/DATA-DOG/go-txdb v0.1.3
 	github.com/DavidHuie/gomigrate v0.0.0-20160809001028-4004e6142040
-	github.com/asaskevich/govalidator v0.0.0-20180720115003-f9ffefc3facf
+	github.com/asaskevich/govalidator v0.0.0-20190424111038-f61b66f89f4a
+	github.com/cenkalti/backoff v2.2.1+incompatible
 	github.com/creasty/configo v0.0.0-20170711121124-288b7e8980d2
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/getsentry/sentry-go v0.10.0
@@ -20,7 +21,7 @@ require (
 	github.com/mattn/go-zglob v0.0.1 // indirect
 	github.com/srvc/fail v3.1.1+incompatible
 	github.com/stretchr/testify v1.7.0
-	golang.org/x/crypto v0.0.0-20200820211705-5c72a883971a
-	golang.org/x/lint v0.0.0-20190409202823-959b441ac422
-	google.golang.org/appengine v1.5.0 // indirect
+	github.com/testcontainers/testcontainers-go v0.10.0
+	golang.org/x/crypto v0.0.0-20201002170205-7f63de1d35b0
+	golang.org/x/lint v0.0.0-20200302205851-738671d3881b
 )

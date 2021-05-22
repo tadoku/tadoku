@@ -1,8 +1,4 @@
-# Tadoku API
-
-[![CircleCI](https://circleci.com/gh/tadoku/api/tree/master.svg?style=svg)](https://circleci.com/gh/tadoku/api/tree/master)
-[![Go Report Card](https://goreportcard.com/badge/github.com/tadoku/tadoku/services/tadoku-contest-api)](https://goreportcard.com/report/github.com/tadoku/tadoku/services/tadoku-contest-api)
-[![Dependabot Status](https://api.dependabot.com/badges/status?host=github&repo=tadoku/api)](https://dependabot.com)
+# Tadoku Contest API
 
 ## Getting started
 

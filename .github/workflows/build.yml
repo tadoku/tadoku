@@ -16,3 +16,13 @@ jobs:
 
       - name: Build
         run: bazel build //...
+
+      - name: Push images
+        run: |
+          # Setup credentials for GitHub packages
+          mkdir /tmp/docker
+          echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u tadoku --password-stdin
+          cp /home/runner/.docker/config.json /tmp/docker/config.json
+
+          # Push images
+          bazel run //services/tadoku-contest-api/cmd/migrate:image_push

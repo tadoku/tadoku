@@ -78,6 +78,17 @@ load(
 
 _go_image_repos()
 
+docker_toolchain_configure(
+  name = "docker_config",
+  # Replace this with an absolute path to a directory which has a custom docker
+  # client config.json. Note relative paths are not supported.
+  # Docker allows you to specify custom authentication credentials
+  # in the client configuration JSON file.
+  # See https://docs.docker.com/engine/reference/commandline/cli/#configuration-files
+  # for more details.
+  client_config="/tmp/docker",
+)
+
 ## Setup file packaging toolchain
 load("@rules_pkg//:deps.bzl", "rules_pkg_dependencies")
 rules_pkg_dependencies()

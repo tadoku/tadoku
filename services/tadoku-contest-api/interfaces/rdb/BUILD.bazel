@@ -1,0 +1,8 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "rdb",
+    srcs = ["sql.go"],
+    importpath = "github.com/tadoku/tadoku/services/tadoku-contest-api/interfaces/rdb",
+    visibility = ["//visibility:public"],
+)

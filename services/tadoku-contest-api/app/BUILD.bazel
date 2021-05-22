@@ -1,0 +1,22 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "app",
+    srcs = [
+        "interactors.go",
+        "repositories.go",
+        "server.go",
+        "services.go",
+    ],
+    importpath = "github.com/tadoku/tadoku/services/tadoku-contest-api/app",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//services/tadoku-contest-api/domain",
+        "//services/tadoku-contest-api/infra",
+        "//services/tadoku-contest-api/interfaces/rdb",
+        "//services/tadoku-contest-api/interfaces/repositories",
+        "//services/tadoku-contest-api/interfaces/services",
+        "//services/tadoku-contest-api/usecases",
+        "@com_github_creasty_configo//:configo",
+    ],
+)

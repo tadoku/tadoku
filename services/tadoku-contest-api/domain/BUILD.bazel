@@ -1,0 +1,38 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "domain",
+    srcs = [
+        "contest.go",
+        "contest_log.go",
+        "environment.go",
+        "errors.go",
+        "id.go",
+        "language.go",
+        "language_code.go",
+        "medium.go",
+        "preferences.go",
+        "ranking.go",
+        "role.go",
+        "user.go",
+    ],
+    importpath = "github.com/tadoku/tadoku/services/tadoku-contest-api/domain",
+    visibility = ["//visibility:public"],
+    deps = ["@com_github_srvc_fail//:fail"],
+)
+
+go_test(
+    name = "domain_test",
+    srcs = [
+        "contest_log_test.go",
+        "language_test.go",
+        "medium_test.go",
+        "user_test.go",
+        "validate_test.go",
+    ],
+    embed = [":domain"],
+    deps = [
+        "@com_github_asaskevich_govalidator//:govalidator",
+        "@com_github_stretchr_testify//assert",
+    ],
+)

@@ -49,6 +49,6 @@ jobs:
 
           # Push images
           IMAGE_NAME=ghcr.io/tadoku/web
-          docker build -t $IMAGE_NAME:latest .
+          docker build --no-cache -t $IMAGE_NAME:latest .
           docker tag $IMAGE_NAME:latest $IMAGE_NAME:$GITHUB_SHA
           docker push $IMAGE_NAME

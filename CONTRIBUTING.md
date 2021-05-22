@@ -14,7 +14,7 @@ Nearly all code should be tested. Please include a test so your contribution can
 
 ## Submitting changes
 
-Please send a [GitHub Pull Request](https://github.com/tadoku/tadoku/services/tadoku-contest-api/pull/new/master) with a clear list of what you've done (read more about [pull requests](http://help.github.com/pull-requests/)).
+Please send a [GitHub Pull Request](https://github.com/tadoku/tadoku/pull/new/master) with a clear list of what you've done (read more about [pull requests](http://help.github.com/pull-requests/)).
 
 Always write a clear log message for your commits without the use of capital letters.
 
@@ -25,7 +25,6 @@ Always write a clear log message for your commits without the use of capital let
 Start reading our code and you'll get the hang of it. We optimize for readability:
 
   * Code should be formatted with `gofmt`
-  * Code should pass the linting tests: `$ make lint`
   * The project is structured in layers, it's roughly an implementation of clean architecture
     * It's okay to depend on domain in infra, but the other way around is not okay
   * Use interfaces instead of depending on external types

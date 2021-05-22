@@ -1,18 +1,18 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
 
 go_library(
-    name = "go_default_library",
+    name = "migrate_lib",
     srcs = ["main.go"],
     importpath = "github.com/tadoku/tadoku/services/tadoku-contest-api/cmd/migrate",
     visibility = ["//visibility:private"],
     deps = [
-        "//services/tadoku-contest-api/app:go_default_library",
-        "@com_github_davidhuie_gomigrate//:go_default_library",
+        "//services/tadoku-contest-api/app",
+        "@com_github_davidhuie_gomigrate//:gomigrate",
     ],
 )
 
 go_binary(
     name = "migrate",
-    embed = [":go_default_library"],
+    embed = [":migrate_lib"],
     visibility = ["//visibility:public"],
 )

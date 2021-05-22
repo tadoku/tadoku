@@ -1,12 +1,12 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_library")
 
 go_library(
-    name = "go_default_library",
+    name = "test",
     srcs = ["helpers.go"],
     importpath = "github.com/tadoku/tadoku/services/tadoku-contest-api/test",
     visibility = ["//visibility:public"],
     deps = [
-        "//services/tadoku-contest-api/domain:go_default_library",
-        "@com_github_creasty_configo//:go_default_library",
+        "//services/tadoku-contest-api/domain",
+        "@com_github_creasty_configo//:configo",
     ],
 )

@@ -1,7 +1,7 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
 
 go_library(
-    name = "go_default_library",
+    name = "usecases",
     srcs = [
         "clock.go",
         "clock_mock.go",
@@ -30,24 +30,24 @@ go_library(
     importpath = "github.com/tadoku/tadoku/services/tadoku-contest-api/usecases",
     visibility = ["//visibility:public"],
     deps = [
-        "//services/tadoku-contest-api/domain:go_default_library",
-        "@com_github_golang_mock//gomock:go_default_library",
-        "@com_github_srvc_fail//:go_default_library",
+        "//services/tadoku-contest-api/domain",
+        "@com_github_golang_mock//gomock",
+        "@com_github_srvc_fail//:fail",
     ],
 )
 
 go_test(
-    name = "go_default_test",
+    name = "usecases_test",
     srcs = [
         "contest_interactor_test.go",
         "ranking_interactor_test.go",
         "session_interactor_test.go",
         "user_interactor_test.go",
     ],
-    embed = [":go_default_library"],
     deps = [
-        "//services/tadoku-contest-api/domain:go_default_library",
-        "@com_github_golang_mock//gomock:go_default_library",
-        "@com_github_stretchr_testify//assert:go_default_library",
+        ":usecases",
+        "//services/tadoku-contest-api/domain",
+        "@com_github_golang_mock//gomock",
+        "@com_github_stretchr_testify//assert",
     ],
 )

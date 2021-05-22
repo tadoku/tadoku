@@ -25,3 +25,9 @@ $ bazel test //...
 ```sh
 $ bazel run //:gazelle -- update-repos --from_file=go.mod -to_macro=go_third_party.bzl%go_deps
 ```
+
+### Generate BUILD files for Golang
+
+```sh
+bazel run //:gazelle
+```

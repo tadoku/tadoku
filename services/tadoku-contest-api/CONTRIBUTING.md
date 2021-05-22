@@ -14,7 +14,7 @@ Nearly all code should be tested. Please include a test so your contribution can
 
 ## Submitting changes
 
-Please send a [GitHub Pull Request](https://github.com/tadoku/api/pull/new/master) with a clear list of what you've done (read more about [pull requests](http://help.github.com/pull-requests/)).
+Please send a [GitHub Pull Request](https://github.com/tadoku/tadoku/services/tadoku-contest-api/pull/new/master) with a clear list of what you've done (read more about [pull requests](http://help.github.com/pull-requests/)).
 
 Always write a clear log message for your commits without the use of capital letters.
 

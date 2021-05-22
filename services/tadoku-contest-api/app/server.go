@@ -8,11 +8,11 @@ import (
 
 	"github.com/creasty/configo"
 
-	"github.com/tadoku/api/domain"
-	"github.com/tadoku/api/infra"
-	"github.com/tadoku/api/interfaces/rdb"
-	"github.com/tadoku/api/interfaces/services"
-	"github.com/tadoku/api/usecases"
+	"github.com/tadoku/tadoku/services/tadoku-contest-api/domain"
+	"github.com/tadoku/tadoku/services/tadoku-contest-api/infra"
+	"github.com/tadoku/tadoku/services/tadoku-contest-api/interfaces/rdb"
+	"github.com/tadoku/tadoku/services/tadoku-contest-api/interfaces/services"
+	"github.com/tadoku/tadoku/services/tadoku-contest-api/usecases"
 )
 
 // ServerDependencies is a dependency container for the api

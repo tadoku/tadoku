@@ -5,8 +5,8 @@ import (
 
 	"github.com/srvc/fail"
 
-	"github.com/tadoku/api/domain"
-	"github.com/tadoku/api/usecases"
+	"github.com/tadoku/tadoku/services/tadoku-contest-api/domain"
+	"github.com/tadoku/tadoku/services/tadoku-contest-api/usecases"
 )
 
 // NewClock creates a new clock for a given location

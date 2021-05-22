@@ -3,8 +3,8 @@ package app
 import (
 	"time"
 
-	"github.com/tadoku/api/infra"
-	"github.com/tadoku/api/usecases"
+	"github.com/tadoku/tadoku/services/tadoku-contest-api/infra"
+	"github.com/tadoku/tadoku/services/tadoku-contest-api/usecases"
 )
 
 // Interactors is a collection of all repositories

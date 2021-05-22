@@ -6,7 +6,7 @@ package usecases
 
 import (
 	gomock "github.com/golang/mock/gomock"
-	domain "github.com/tadoku/api/domain"
+	domain "github.com/tadoku/tadoku/services/tadoku-contest-api/domain"
 	reflect "reflect"
 )
 

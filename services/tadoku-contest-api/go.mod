@@ -1,4 +1,4 @@
-module github.com/tadoku/api
+module github.com/tadoku/tadoku/services/tadoku-contest-api
 
 go 1.14
 

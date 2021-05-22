@@ -26,7 +26,7 @@ jobs:
           POSTGRES_USER: tadoku
           POSTGRES_DB: tadoku_dev
 
-    working_directory: /go/src/github.com/tadoku/api
+    working_directory: /go/src/github.com/tadoku/tadoku/services/tadoku-contest-api
     steps:
       - checkout
 
@@ -55,7 +55,7 @@ jobs:
   build:
     docker:
       - image: circleci/golang:1.14.2
-    working_directory: /go/src/github.com/tadoku/api
+    working_directory: /go/src/github.com/tadoku/tadoku/services/tadoku-contest-api
     steps:
       - checkout
       - setup_remote_docker

@@ -10,11 +10,11 @@ import (
 
 	"github.com/jmoiron/sqlx"
 	"github.com/stretchr/testify/assert"
-	"github.com/tadoku/api/domain"
-	"github.com/tadoku/api/infra"
-	"github.com/tadoku/api/interfaces/rdb"
-	"github.com/tadoku/api/interfaces/repositories"
-	"github.com/tadoku/api/test"
+	"github.com/tadoku/tadoku/services/tadoku-contest-api/domain"
+	"github.com/tadoku/tadoku/services/tadoku-contest-api/infra"
+	"github.com/tadoku/tadoku/services/tadoku-contest-api/interfaces/rdb"
+	"github.com/tadoku/tadoku/services/tadoku-contest-api/interfaces/repositories"
+	"github.com/tadoku/tadoku/services/tadoku-contest-api/test"
 
 	txdb "github.com/DATA-DOG/go-txdb"
 	"github.com/DavidHuie/gomigrate"

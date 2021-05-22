@@ -4,8 +4,8 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/tadoku/api/domain"
-	"github.com/tadoku/api/usecases"
+	"github.com/tadoku/tadoku/services/tadoku-contest-api/domain"
+	"github.com/tadoku/tadoku/services/tadoku-contest-api/usecases"
 
 	gomock "github.com/golang/mock/gomock"
 )

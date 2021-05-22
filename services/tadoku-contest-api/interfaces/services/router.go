@@ -3,7 +3,7 @@ package services
 import (
 	"net/http"
 
-	"github.com/tadoku/api/domain"
+	"github.com/tadoku/tadoku/services/tadoku-contest-api/domain"
 )
 
 // Router takes care of all the routing

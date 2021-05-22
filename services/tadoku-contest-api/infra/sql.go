@@ -7,8 +7,8 @@ import (
 	// Postgres driver that's used to connect to the db
 	_ "github.com/lib/pq"
 
-	"github.com/tadoku/api/domain"
-	"github.com/tadoku/api/interfaces/rdb"
+	"github.com/tadoku/tadoku/services/tadoku-contest-api/domain"
+	"github.com/tadoku/tadoku/services/tadoku-contest-api/interfaces/rdb"
 )
 
 // -----------------------------------------------------------------

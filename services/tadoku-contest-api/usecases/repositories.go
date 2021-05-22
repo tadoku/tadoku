@@ -5,7 +5,7 @@ package usecases
 import (
 	"time"
 
-	"github.com/tadoku/api/domain"
+	"github.com/tadoku/tadoku/services/tadoku-contest-api/domain"
 )
 
 // UserRepository handles User related database interactions

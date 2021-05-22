@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/tadoku/api/domain"
+	"github.com/tadoku/tadoku/services/tadoku-contest-api/domain"
 )
 
 func TestUser_PasswordIsNotExported(t *testing.T) {

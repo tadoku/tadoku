@@ -7,8 +7,8 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/srvc/fail"
 
-	"github.com/tadoku/api/domain"
-	"github.com/tadoku/api/usecases"
+	"github.com/tadoku/tadoku/services/tadoku-contest-api/domain"
+	"github.com/tadoku/tadoku/services/tadoku-contest-api/usecases"
 )
 
 // ErrEmptyUser when context contains no user when trying to get one

@@ -1,7 +1,7 @@
 package app
 
 import (
-	"github.com/tadoku/api/interfaces/services"
+	"github.com/tadoku/tadoku/services/tadoku-contest-api/interfaces/services"
 )
 
 // Services is a collection of all services

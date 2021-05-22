@@ -3,8 +3,8 @@ package infra
 import (
 	"golang.org/x/crypto/bcrypt"
 
-	"github.com/tadoku/api/domain"
-	"github.com/tadoku/api/usecases"
+	"github.com/tadoku/tadoku/services/tadoku-contest-api/domain"
+	"github.com/tadoku/tadoku/services/tadoku-contest-api/usecases"
 )
 
 // NewPasswordHasher initializes a new password hasher with sane defaults

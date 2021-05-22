@@ -10,9 +10,9 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 
-	"github.com/tadoku/api/domain"
-	"github.com/tadoku/api/interfaces/services"
-	"github.com/tadoku/api/usecases"
+	"github.com/tadoku/tadoku/services/tadoku-contest-api/domain"
+	"github.com/tadoku/tadoku/services/tadoku-contest-api/interfaces/services"
+	"github.com/tadoku/tadoku/services/tadoku-contest-api/usecases"
 )
 
 // NewRouter instantiates a router

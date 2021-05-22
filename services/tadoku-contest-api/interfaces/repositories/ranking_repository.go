@@ -5,9 +5,9 @@ import (
 
 	"github.com/lib/pq"
 
-	"github.com/tadoku/api/domain"
-	"github.com/tadoku/api/interfaces/rdb"
-	"github.com/tadoku/api/usecases"
+	"github.com/tadoku/tadoku/services/tadoku-contest-api/domain"
+	"github.com/tadoku/tadoku/services/tadoku-contest-api/interfaces/rdb"
+	"github.com/tadoku/tadoku/services/tadoku-contest-api/usecases"
 )
 
 // NewRankingRepository instantiates a new ranking repository

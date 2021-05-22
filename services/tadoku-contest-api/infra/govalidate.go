@@ -3,7 +3,7 @@ package infra
 import (
 	"github.com/asaskevich/govalidator"
 
-	"github.com/tadoku/api/domain"
+	"github.com/tadoku/tadoku/services/tadoku-contest-api/domain"
 )
 
 // ConfigureCustomValidators sets up custom struct validators

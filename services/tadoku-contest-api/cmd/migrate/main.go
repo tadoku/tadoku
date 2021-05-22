@@ -6,7 +6,7 @@ import (
 
 	"github.com/DavidHuie/gomigrate"
 
-	"github.com/tadoku/api/app"
+	"github.com/tadoku/tadoku/services/tadoku-contest-api/app"
 )
 
 func main() {

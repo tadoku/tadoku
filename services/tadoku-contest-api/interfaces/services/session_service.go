@@ -4,8 +4,8 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/tadoku/api/domain"
-	"github.com/tadoku/api/usecases"
+	"github.com/tadoku/tadoku/services/tadoku-contest-api/domain"
+	"github.com/tadoku/tadoku/services/tadoku-contest-api/usecases"
 )
 
 // SessionService is responsible for anything user related when they're not logged in such as

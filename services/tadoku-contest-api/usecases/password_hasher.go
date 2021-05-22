@@ -3,7 +3,7 @@
 package usecases
 
 import (
-	"github.com/tadoku/api/domain"
+	"github.com/tadoku/tadoku/services/tadoku-contest-api/domain"
 )
 
 // PasswordHasher is for hashing passwords without having to worry about the implementation

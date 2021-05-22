@@ -3,8 +3,8 @@ package infra
 import (
 	"github.com/getsentry/sentry-go"
 
-	"github.com/tadoku/api/domain"
-	"github.com/tadoku/api/usecases"
+	"github.com/tadoku/tadoku/services/tadoku-contest-api/domain"
+	"github.com/tadoku/tadoku/services/tadoku-contest-api/usecases"
 )
 
 // NewErrorReporter creates a new error reporter that sends errors to sentry

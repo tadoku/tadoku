@@ -2,7 +2,6 @@
 
 ![Build](https://github.com/tadoku/tadoku/actions/workflows/build.yml/badge.svg)
 [![Go Report Card](https://goreportcard.com/badge/github.com/tadoku/tadoku)](https://goreportcard.com/report/github.com/tadoku/tadoku)
-[![Dependabot Status](https://api.dependabot.com/badges/status?host=github&repo=tadoku/tadoku)](https://dependabot.com)
 
 ## Getting Started
 

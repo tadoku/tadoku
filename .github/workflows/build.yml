@@ -19,3 +19,28 @@ jobs:
 
       - name: Run tests
         run: bazel test //...
+
+  publish:
+    name: Publish Tadoku Images
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Setup cache
+        uses: actions/cache@v2
+        with:
+          path: "/home/runner/.cache/bazel"
+          key: bazel
+
+      - name: Push images
+        run: |
+          # Setup credentials for GitHub packages
+          mkdir /tmp/docker
+          echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u tadoku --password-stdin
+          cp /home/runner/.docker/config.json /tmp/docker/config.json
+
+          # Push images
+          bazel run //services/tadoku-contest-api/cmd/migrate:image_push
+          bazel run //services/tadoku-contest-api/cmd/server:image_push

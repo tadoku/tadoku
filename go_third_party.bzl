@@ -1825,8 +1825,8 @@ def go_deps():
     go_repository(
         name = "com_github_testcontainers_testcontainers_go",
         importpath = "github.com/testcontainers/testcontainers-go",
-        sum = "h1:ASWe0nwTNg5z8K3WSQ8aBNB6j5vrNJocFPEZF4NS0qI=",
-        version = "v0.10.0",
+        sum = "h1:IK+y9L4aToxLHSy0na5lIGr9lP51Zip/si8lgauVo/E=",
+        version = "v0.10.1-0.20210331130832-54854fb15ccb",
     )
     go_repository(
         name = "com_github_tmc_grpc_websocket_proxy",

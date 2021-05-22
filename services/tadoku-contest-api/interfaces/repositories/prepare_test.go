@@ -3,7 +3,6 @@ package repositories_test
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"os"
 	"testing"
@@ -11,10 +10,10 @@ import (
 
 	"github.com/jmoiron/sqlx"
 	"github.com/stretchr/testify/assert"
-	"github.com/tadoku/tadoku-monorepo/services/tadoku-contest-api/domain"
-	"github.com/tadoku/tadoku-monorepo/services/tadoku-contest-api/infra"
-	"github.com/tadoku/tadoku-monorepo/services/tadoku-contest-api/interfaces/rdb"
-	"github.com/tadoku/tadoku-monorepo/services/tadoku-contest-api/interfaces/repositories"
+	"github.com/tadoku/tadoku/services/tadoku-contest-api/domain"
+	"github.com/tadoku/tadoku/services/tadoku-contest-api/infra"
+	"github.com/tadoku/tadoku/services/tadoku-contest-api/interfaces/rdb"
+	"github.com/tadoku/tadoku/services/tadoku-contest-api/interfaces/repositories"
 
 	txdb "github.com/DATA-DOG/go-txdb"
 	"github.com/DavidHuie/gomigrate"
@@ -27,7 +26,7 @@ import (
 func TestMain(m *testing.M) {
 	database := "database"
 
-	/ Spin up a postgres container for testing
+	// Spin up a postgres container for testing
 	ctx := context.Background()
 	req := testcontainers.ContainerRequest{
 		Image:        "postgres:11.6-alpine",
@@ -35,7 +34,7 @@ func TestMain(m *testing.M) {
 		Env: map[string]string{
 			"POSTGRES_DB": database,
 		},
-		WaitingFor: wait.ForLog("database system is ready to accept connections"),
+		WaitingFor: wait.ForListeningPort("5432/tcp"),
 	}
 	postgresC, err := testcontainers.GenericContainer(ctx, testcontainers.GenericContainerRequest{
 		ContainerRequest: req,
@@ -48,13 +47,13 @@ func TestMain(m *testing.M) {
 	defer postgresC.Terminate(ctx)
 
 	// Create connection string for test container
-	p, err := postgresC.MappedPort(ctx, "5432")
-	if err != nil {
-		panic(fmt.Sprintf("could not fetch postgresql container port: %s", err))
-	}
 	host, err := postgresC.Host(ctx)
 	if err != nil {
 		panic(fmt.Sprintf("could not fetch postgresql container host: %s", err))
+	}
+	p, err := postgresC.MappedPort(ctx, "5432")
+	if err != nil {
+		panic(fmt.Sprintf("could not fetch postgresql container port: %s", err))
 	}
 	databaseURL := fmt.Sprintf("host=%s port=%s user=postgres dbname=%s sslmode=disable", host, p.Port(), database)
 
@@ -82,17 +81,18 @@ func TestMain(m *testing.M) {
 		log.Panic(err)
 	}
 
-	migrator, _ := gomigrate.NewMigratorWithLogger(
+	migrator, _ := gomigrate.NewMigrator(
 		db.DB,
 		gomigrate.Postgres{},
-		"./../../migrations",
-		log.New(ioutil.Discard, "", log.LstdFlags),
+		"./migrations",
 	)
 
 	err = migrator.Migrate()
 	if err != nil {
 		panic(fmt.Sprintf("could not migrate testing DB: %s", err))
 	}
+
+	fmt.Println("DB has been migrated, running test...")
 
 	code := m.Run()
 	defer os.Exit(code)

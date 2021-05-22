@@ -21,7 +21,7 @@ require (
 	github.com/mattn/go-zglob v0.0.1 // indirect
 	github.com/srvc/fail v3.1.1+incompatible
 	github.com/stretchr/testify v1.7.0
-	github.com/testcontainers/testcontainers-go v0.10.0
+	github.com/testcontainers/testcontainers-go v0.10.1-0.20210331130832-54854fb15ccb
 	golang.org/x/crypto v0.0.0-20201002170205-7f63de1d35b0
 	golang.org/x/lint v0.0.0-20200302205851-738671d3881b
 )

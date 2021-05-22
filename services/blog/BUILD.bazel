@@ -1,48 +1,36 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
 
 go_library(
-    name = "migrate_lib",
+    name = "blog_lib",
     srcs = ["main.go"],
-    importpath = "github.com/tadoku/tadoku/services/tadoku-contest-api/cmd/migrate",
+    embedsrcs = ["posts-stub.json"],
+    importpath = "github.com/tadoku/tadoku/services/blog",
     visibility = ["//visibility:private"],
-    deps = [
-        "//services/tadoku-contest-api/app",
-        "@com_github_davidhuie_gomigrate//:gomigrate",
-    ],
 )
 
 go_binary(
-    name = "migrate",
-    embed = [":migrate_lib"],
+    name = "blog",
+    embed = [":blog_lib"],
     visibility = ["//visibility:public"],
 )
 
 # Docker image
 load("@io_bazel_rules_docker//go:image.bzl", "go_image")
 load("@io_bazel_rules_docker//container:container.bzl", "container_image")
-load("@rules_pkg//:pkg.bzl", "pkg_tar")
 load("@io_bazel_rules_docker//container:container.bzl", "container_push")
 
 go_image(
     name = "base_image",
-    embed = [":migrate_lib"],
+    embed = [":blog_lib"],
     goarch = "amd64",
     goos = "linux",
     visibility = ["//visibility:public"],
-)
-
-pkg_tar(
-    name = "migrations-tar",
-    srcs = ["//services/tadoku-contest-api/interfaces/repositories:migrations"],
-    mode = "0644",
-    package_dir = "/app/services/tadoku-contest-api/cmd/migrate/base_image.binary.runfiles/__main__/migrations",
 )
 
 container_image(
     name = "image",
     base = ":base_image",
     stamp = True,
-    tars = [":migrations-tar"],
 )
 
 container_push(
@@ -50,5 +38,5 @@ container_push(
     format = "Docker",
     image = ":image",
     registry = "ghcr.io",
-    repository = "tadoku/tadoku/tadoku-contest-api-migrate",
+    repository = "tadoku/tadoku/blog",
 )

@@ -38,5 +38,5 @@ container_push(
     format = "Docker",
     image = ":image",
     registry = "ghcr.io",
-    repository = "tadoku/tadoku-monorepo/tadoku-contest-api-server",
+    repository = "tadoku/tadoku/tadoku-contest-api-server",
 )

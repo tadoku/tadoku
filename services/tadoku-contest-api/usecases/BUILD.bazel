@@ -1,0 +1,53 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "go_default_library",
+    srcs = [
+        "clock.go",
+        "clock_mock.go",
+        "contest_interactor.go",
+        "contest_interactor_mock.go",
+        "error_reporter.go",
+        "error_reporter_mock.go",
+        "jwt_generator.go",
+        "jwt_generator_mock.go",
+        "password_hasher.go",
+        "password_hasher_mock.go",
+        "ranking_interactor.go",
+        "ranking_interactor_mock.go",
+        "repositories.go",
+        "repositories_mock.go",
+        "role_authenticator.go",
+        "session_claims.go",
+        "session_interactor.go",
+        "session_interactor_mock.go",
+        "user_interactor.go",
+        "user_interactor_mock.go",
+        "validatable.go",
+        "validator.go",
+        "validator_mock.go",
+    ],
+    importpath = "github.com/tadoku/tadoku/services/tadoku-contest-api/usecases",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//services/tadoku-contest-api/domain:go_default_library",
+        "@com_github_golang_mock//gomock:go_default_library",
+        "@com_github_srvc_fail//:go_default_library",
+    ],
+)
+
+go_test(
+    name = "go_default_test",
+    srcs = [
+        "contest_interactor_test.go",
+        "ranking_interactor_test.go",
+        "session_interactor_test.go",
+        "user_interactor_test.go",
+    ],
+    embed = [":go_default_library"],
+    deps = [
+        "//services/tadoku-contest-api/domain:go_default_library",
+        "@com_github_golang_mock//gomock:go_default_library",
+        "@com_github_stretchr_testify//assert:go_default_library",
+    ],
+)

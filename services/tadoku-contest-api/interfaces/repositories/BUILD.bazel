@@ -1,0 +1,42 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "go_default_library",
+    srcs = [
+        "contest_log_repository.go",
+        "contest_repository.go",
+        "ranking_repository.go",
+        "user_repository.go",
+    ],
+    importpath = "github.com/tadoku/tadoku/services/tadoku-contest-api/interfaces/repositories",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//services/tadoku-contest-api/domain:go_default_library",
+        "//services/tadoku-contest-api/interfaces/rdb:go_default_library",
+        "//services/tadoku-contest-api/usecases:go_default_library",
+        "@com_github_lib_pq//:go_default_library",
+    ],
+)
+
+go_test(
+    name = "go_default_test",
+    srcs = [
+        "contest_log_repository_test.go",
+        "contest_repository_test.go",
+        "prepare_test.go",
+        "ranking_repository_test.go",
+        "user_repository_test.go",
+    ],
+    embed = [":go_default_library"],
+    deps = [
+        "//services/tadoku-contest-api/domain:go_default_library",
+        "//services/tadoku-contest-api/infra:go_default_library",
+        "//services/tadoku-contest-api/interfaces/rdb:go_default_library",
+        "//services/tadoku-contest-api/test:go_default_library",
+        "@com_github_data_dog_go_txdb//:go_default_library",
+        "@com_github_davidhuie_gomigrate//:go_default_library",
+        "@com_github_jmoiron_sqlx//:go_default_library",
+        "@com_github_lib_pq//:go_default_library",
+        "@com_github_stretchr_testify//assert:go_default_library",
+    ],
+)

@@ -1,0 +1,42 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "go_default_library",
+    srcs = [
+        "contest_log_service.go",
+        "contest_service.go",
+        "context.go",
+        "context_mock.go",
+        "health_service.go",
+        "ranking_service.go",
+        "router.go",
+        "session_service.go",
+        "user_service.go",
+    ],
+    importpath = "github.com/tadoku/tadoku/services/tadoku-contest-api/interfaces/services",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//services/tadoku-contest-api/domain:go_default_library",
+        "//services/tadoku-contest-api/usecases:go_default_library",
+        "@com_github_golang_mock//gomock:go_default_library",
+    ],
+)
+
+go_test(
+    name = "go_default_test",
+    srcs = [
+        "contest_log_service_test.go",
+        "contest_service_test.go",
+        "health_service_test.go",
+        "ranking_service_test.go",
+        "session_service_test.go",
+        "user_service_test.go",
+    ],
+    embed = [":go_default_library"],
+    deps = [
+        "//services/tadoku-contest-api/domain:go_default_library",
+        "//services/tadoku-contest-api/usecases:go_default_library",
+        "@com_github_golang_mock//gomock:go_default_library",
+        "@com_github_stretchr_testify//assert:go_default_library",
+    ],
+)

@@ -13,3 +13,20 @@ go_binary(
     embed = [":server_lib"],
     visibility = ["//visibility:public"],
 )
+
+load("@io_bazel_rules_docker//go:image.bzl", "go_image")
+load("@io_bazel_rules_docker//container:container.bzl", "container_image")
+
+go_image(
+    name = "base_image",
+    goos = "linux",
+    goarch = "amd64",
+    embed = [":server_lib"],
+    visibility = ["//visibility:public"],
+)
+
+container_image(
+    name = "image",
+    base = ":base_image",
+    stamp = True,
+)

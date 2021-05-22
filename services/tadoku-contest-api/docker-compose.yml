@@ -2,15 +2,19 @@ version: '3'
 
 services:
   tadoku-api:
-    build: .
-    image: tadoku/api
+    image: tadoku/api:latest
     container_name: tadoku-api
     network_mode: bridge
-    restart: always
     environment:
-      VIRTUAL_HOST: api.tadoku.app
-      VIRTUAL_PORT: $APP_PORT
-      LETSENCRYPT_HOST: api.tadoku.app
-      LETSENCRYPT_EMAIL: hello@tadoku.app
-    expose:
-      - $APP_PORT
+      USER_SESSION_LENGTH: "1h"
+      JWT_SECRET: "FOOBAR"
+      USER_SESSION_COOKIE_NAME: "session_token"
+      APP_PORT: 3000
+      APP_TIMEZONE: "UTC"
+      DATABASE_URL: "postgres://io:@localhost/tadoku?sslmode=disable"
+      DATABASE_MAX_IDLE_CONNS: 10
+      DATABASE_MAX_OPEN_CONNS: 10
+      CORS_ALLOWED_ORIGINS: "http://localhost:3000,https://readmod.com"
+    ports:
+      - "3000:3000"
+

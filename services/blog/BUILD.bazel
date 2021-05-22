@@ -1,0 +1,42 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
+
+go_library(
+    name = "blog_lib",
+    srcs = ["main.go"],
+    embedsrcs = ["posts-stub.json"],
+    importpath = "github.com/tadoku/tadoku/services/blog",
+    visibility = ["//visibility:private"],
+)
+
+go_binary(
+    name = "blog",
+    embed = [":blog_lib"],
+    visibility = ["//visibility:public"],
+)
+
+# Docker image
+load("@io_bazel_rules_docker//go:image.bzl", "go_image")
+load("@io_bazel_rules_docker//container:container.bzl", "container_image")
+load("@io_bazel_rules_docker//container:container.bzl", "container_push")
+
+go_image(
+    name = "base_image",
+    embed = [":blog_lib"],
+    goarch = "amd64",
+    goos = "linux",
+    visibility = ["//visibility:public"],
+)
+
+container_image(
+    name = "image",
+    base = ":base_image",
+    stamp = True,
+)
+
+container_push(
+    name = "image_push",
+    format = "Docker",
+    image = ":image",
+    registry = "ghcr.io",
+    repository = "tadoku/tadoku/blog",
+)

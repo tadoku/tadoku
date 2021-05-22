@@ -14,8 +14,10 @@ go_binary(
     visibility = ["//visibility:public"],
 )
 
+# Docker image
 load("@io_bazel_rules_docker//go:image.bzl", "go_image")
 load("@io_bazel_rules_docker//container:container.bzl", "container_image")
+load("@io_bazel_rules_docker//container:container.bzl", "container_push")
 
 go_image(
     name = "base_image",
@@ -29,4 +31,12 @@ container_image(
     name = "image",
     base = ":base_image",
     stamp = True,
+)
+
+container_push(
+    name = "image_push",
+    format = "Docker",
+    image = ":image",
+    registry = "ghcr.io",
+    repository = "tadoku/tadoku-monorepo/tadoku-contest-api-server",
 )

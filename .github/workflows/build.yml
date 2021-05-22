@@ -45,3 +45,4 @@ jobs:
           # Push images
           bazel run //services/tadoku-contest-api/cmd/migrate:image_push
           bazel run //services/tadoku-contest-api/cmd/server:image_push
+          bazel run //services/blog:image_push

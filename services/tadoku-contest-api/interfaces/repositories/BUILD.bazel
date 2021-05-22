@@ -44,3 +44,9 @@ go_test(
         "@com_github_testcontainers_testcontainers_go//wait",
     ],
 )
+
+filegroup(
+    name = "migrations",
+    srcs = glob(["migrations/**"]),
+    visibility = ["//visibility:public"],
+)

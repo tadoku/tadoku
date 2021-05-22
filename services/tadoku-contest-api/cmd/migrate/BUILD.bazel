@@ -16,3 +16,29 @@ go_binary(
     embed = [":migrate_lib"],
     visibility = ["//visibility:public"],
 )
+
+load("@io_bazel_rules_docker//go:image.bzl", "go_image")
+load("@io_bazel_rules_docker//container:container.bzl", "container_image")
+load("@rules_pkg//:pkg.bzl", "pkg_tar")
+
+go_image(
+    name = "base_image",
+    goos = "linux",
+    goarch = "amd64",
+    embed = [":migrate_lib"],
+    visibility = ["//visibility:public"],
+)
+
+pkg_tar(
+    name = "migrations-tar",
+    package_dir = "/app/services/tadoku-contest-api/cmd/migrate/base_image.binary.runfiles/__main__/migrations",
+    srcs = ["//services/tadoku-contest-api/interfaces/repositories:migrations"],
+    mode = "0644",
+)
+
+container_image(
+    name = "image",
+    base = ":base_image",
+    tars = [":migrations-tar"],
+    stamp = True,
+)

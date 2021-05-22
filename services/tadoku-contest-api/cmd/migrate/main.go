@@ -17,7 +17,7 @@ func main() {
 	}
 
 	db := deps.RDB().DB
-	migrator, _ := gomigrate.NewMigrator(db, gomigrate.Postgres{}, "./interfaces/repositories/migrations")
+	migrator, _ := gomigrate.NewMigrator(db, gomigrate.Postgres{}, "./migrations")
 
 	err = migrator.Migrate()
 	if err != nil {

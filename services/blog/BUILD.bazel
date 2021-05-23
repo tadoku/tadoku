@@ -3,7 +3,7 @@ load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
 go_library(
     name = "blog_lib",
     srcs = ["main.go"],
-    embedsrcs = ["posts-stub.json"],
+    embedsrcs = ["posts-stub.json", "manual-stub.json"],
     importpath = "github.com/tadoku/tadoku/services/blog",
     visibility = ["//visibility:private"],
 )

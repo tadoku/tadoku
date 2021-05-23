@@ -1,50 +1,29 @@
-import GhostContentAPI from '@tryghost/content-api'
 import { PostOrPage } from './interfaces'
 import { postOrPageMapper } from './transform'
-import getConfig from 'next/config'
-
-const { publicRuntimeConfig } = getConfig()
-
-const api = GhostContentAPI({
-  url: publicRuntimeConfig.GHOST_URL || '',
-  key: publicRuntimeConfig.GHOST_KEY || '',
-  version: 'canary',
-})
+import { get } from '../api'
 
 const getPosts = async (): Promise<PostOrPage[]> => {
-  try {
-    const response = await api.posts.browse({
-      limit: 5,
-      include: ['authors', 'tags'],
-      formats: ['html'],
-    })
+  const response = await get(`/blog/posts`)
 
-    if (!response) {
-      return []
-    }
-
-    return Object.entries(response)
-      .filter(([key]) => key !== 'meta')
-      .map(([, p]) => p)
-      .map(postOrPageMapper.fromRaw)
-  } catch (_) {
+  if (response.status !== 200) {
     return []
   }
+
+  const posts = (await response.json()).posts
+
+  return posts.map(postOrPageMapper.fromRaw)
 }
 
 const getPage = async (slug: string): Promise<PostOrPage | undefined> => {
-  try {
-    const response = await api.pages.read(
-      { slug },
-      {
-        formats: ['html'],
-      },
-    )
+  const response = await get(`/blog/pages/${slug}`)
 
-    return postOrPageMapper.fromRaw(response)
-  } catch (_) {
+  if (response.status !== 200) {
     return undefined
   }
+
+  const page = await response.json()
+
+  return postOrPageMapper.fromRaw(page)
 }
 
 const BlogApi = {

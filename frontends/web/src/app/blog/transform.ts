@@ -1,5 +1,4 @@
-import { PostOrPage } from './interfaces'
-import { PostOrPage as RawPostOrPage } from '@tryghost/content-api'
+import { PostOrPage, RawPostOrPage } from './interfaces'
 import { Mapper, Mappers } from '../interfaces'
 import { Serializer } from '../cache'
 import {

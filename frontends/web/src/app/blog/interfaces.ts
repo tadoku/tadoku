@@ -11,5 +11,5 @@ export interface RawPostOrPage {
   slug: string
   title: string
   html: string
-  published_at: Date
+  published_at: string
 }

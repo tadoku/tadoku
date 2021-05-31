@@ -33,10 +33,11 @@ container_image(
     stamp = True,
 )
 
-container_push(
+new_container_push(
     name = "image_push",
-    format = "Docker",
+    format = "docker",
     image = ":image",
     registry = "ghcr.io",
     repository = "tadoku/tadoku/tadoku-contest-api-server",
+    skip_unchanged_digest = True,
 )

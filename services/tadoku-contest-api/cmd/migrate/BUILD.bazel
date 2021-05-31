@@ -51,4 +51,5 @@ container_push(
     image = ":image",
     registry = "ghcr.io",
     repository = "tadoku/tadoku/tadoku-contest-api-migrate",
+    skip_unchanged_digest = True,
 )

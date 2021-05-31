@@ -39,4 +39,5 @@ container_push(
     image = ":image",
     registry = "ghcr.io",
     repository = "tadoku/tadoku/blog",
+    skip_unchanged_digest = True,
 )

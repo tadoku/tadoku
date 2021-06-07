@@ -5,16 +5,12 @@ go_library(
     srcs = [
         "clock.go",
         "clock_mock.go",
-        "contest_interactor.go",
-        "contest_interactor_mock.go",
         "error_reporter.go",
         "error_reporter_mock.go",
         "jwt_generator.go",
         "jwt_generator_mock.go",
         "password_hasher.go",
         "password_hasher_mock.go",
-        "ranking_interactor.go",
-        "ranking_interactor_mock.go",
         "repositories.go",
         "repositories_mock.go",
         "role_authenticator.go",
@@ -39,8 +35,6 @@ go_library(
 go_test(
     name = "usecases_test",
     srcs = [
-        "contest_interactor_test.go",
-        "ranking_interactor_test.go",
         "session_interactor_test.go",
         "user_interactor_test.go",
     ],

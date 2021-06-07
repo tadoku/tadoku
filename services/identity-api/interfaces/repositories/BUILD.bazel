@@ -3,9 +3,6 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
 go_library(
     name = "repositories",
     srcs = [
-        "contest_log_repository.go",
-        "contest_repository.go",
-        "ranking_repository.go",
         "user_repository.go",
     ],
     data = glob(["migrations/**"]),
@@ -22,10 +19,7 @@ go_library(
 go_test(
     name = "repositories_test",
     srcs = [
-        "contest_log_repository_test.go",
-        "contest_repository_test.go",
         "prepare_test.go",
-        "ranking_repository_test.go",
         "user_repository_test.go",
     ],
     data = glob(["migrations/**"]),

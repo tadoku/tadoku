@@ -1,0 +1,12 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "test",
+    srcs = ["helpers.go"],
+    importpath = "github.com/tadoku/tadoku/services/identity-api/test",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//services/identity-api/domain",
+        "@com_github_creasty_configo//:configo",
+    ],
+)

@@ -19,10 +19,10 @@ interface Props {
 }
 
 const MediaDistributionGraph = ({ logs, effectCount }: Props) => {
-  const data = useMemo(() => aggregateMediaDistribution(logs), [
-    effectCount,
-    logs,
-  ])
+  const data = useMemo(
+    () => aggregateMediaDistribution(logs),
+    [effectCount, logs],
+  )
   const [selected, setSelected] = useState(
     undefined as undefined | RadialChartPoint,
   )

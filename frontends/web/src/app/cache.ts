@@ -94,9 +94,8 @@ export const useCachedApiState = <DataType>({
   const cacheMaxAge = originalCacheMaxAge || defaultMaxAge
   const dependencies = [...(originalDependencies || []), apiEffectCounter]
   const serializer = originalSerializer ? originalSerializer : DefaultSerializer
-  const cachedDataSerializer = generateCachedDataSerializer<DataType>(
-    serializer,
-  )
+  const cachedDataSerializer =
+    generateCachedDataSerializer<DataType>(serializer)
 
   const observedSetData = (newData: DataType, status: ApiFetchStatus) => {
     setData({ body: newData, status })

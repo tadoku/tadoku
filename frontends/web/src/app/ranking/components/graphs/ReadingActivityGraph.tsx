@@ -29,11 +29,10 @@ interface Props {
 }
 
 const ReadingActivityGraph = ({ logs, contest, effectCount }: Props) => {
-  const data = useMemo(() => aggregateReadingActivity(logs, contest), [
-    effectCount,
-    logs,
-    contest,
-  ])
+  const data = useMemo(
+    () => aggregateReadingActivity(logs, contest),
+    [effectCount, logs, contest],
+  )
   const [selected, setSelected] = useState(
     undefined as undefined | LineMarkSeriesPoint,
   )

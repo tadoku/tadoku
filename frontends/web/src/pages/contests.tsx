@@ -9,7 +9,7 @@ import { Contest } from '@app/contest/interfaces'
 import { PageTitle } from '@app/ui/components'
 import ContestList from '@app/contest/components/ContestList'
 
-export default () => {
+const Contests = () => {
   const { data: contests, status: statusContests } = useCachedApiState<
     Contest[]
   >({
@@ -39,4 +39,6 @@ export default () => {
       <ContestList contests={contests} />
     </>
   )
-}
+};
+
+export default Contests;

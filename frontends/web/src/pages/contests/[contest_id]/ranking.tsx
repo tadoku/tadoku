@@ -14,7 +14,7 @@ import ContestApi from '@app/contest/api'
 import { optionalizeSerializer } from '../../../app/transform'
 import { Contest } from '@app/contest/interfaces'
 
-export default () => {
+const Ranking = () => {
   const registration = useSelector((state: RootState) =>
     rankingRegistrationMapper.optional.fromRaw(state.ranking.rawRegistration),
   )
@@ -67,4 +67,6 @@ export default () => {
       />
     </>
   )
-}
+};
+
+export default Ranking;

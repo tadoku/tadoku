@@ -28,6 +28,5 @@ export const userMapper: Mappers<RawUser, User> = createMappers({
 
 export const contestSerializer: Serializer<User> = createSerializer(userMapper)
 
-export const userCollectionSerializer: Serializer<
-  User[]
-> = createCollectionSerializer(userMapper)
+export const userCollectionSerializer: Serializer<User[]> =
+  createCollectionSerializer(userMapper)

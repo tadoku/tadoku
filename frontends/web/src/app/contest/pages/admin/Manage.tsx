@@ -93,7 +93,7 @@ const ContestList = ({ contests, editContest }: Props) => {
     grouped[year] = grouped[year] || []
     grouped[year].push(contest)
     return grouped
-  }, ({} as any) as { [key: string]: Contest[] })
+  }, {} as any as { [key: string]: Contest[] })
 
   return (
     <>

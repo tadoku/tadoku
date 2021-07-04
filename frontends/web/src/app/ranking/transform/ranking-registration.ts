@@ -31,6 +31,5 @@ export const rankingRegistrationMapper: Mappers<
   fromRaw: rawToRankingRegistrationMapper,
 })
 
-export const rankingRegistrationSerializer: Serializer<RankingRegistration> = createSerializer(
-  rankingRegistrationMapper,
-)
+export const rankingRegistrationSerializer: Serializer<RankingRegistration> =
+  createSerializer(rankingRegistrationMapper)

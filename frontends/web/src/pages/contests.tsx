@@ -39,6 +39,6 @@ const Contests = () => {
       <ContestList contests={contests} />
     </>
   )
-};
+}
 
-export default Contests;
+export default Contests

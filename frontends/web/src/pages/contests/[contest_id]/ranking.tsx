@@ -67,6 +67,6 @@ const Ranking = () => {
       />
     </>
   )
-};
+}
 
-export default Ranking;
+export default Ranking

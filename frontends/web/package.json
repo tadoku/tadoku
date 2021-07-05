@@ -54,7 +54,7 @@
   },
   "devDependencies": {
     "@babel/core": "^7.14.6",
-    "@babel/plugin-proposal-unicode-property-regex": "^7.12.13",
+    "@babel/plugin-proposal-unicode-property-regex": "^7.14.5",
     "@storybook/addon-info": "^5.3.21",
     "@storybook/react": "^6.3.2",
     "@types/cookie": "^0.4.0",

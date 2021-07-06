@@ -1,4 +1,4 @@
-import { NextPageContext } from 'next'
+import { IncomingMessage } from 'http'
 import getConfig from 'next/config'
 import cookie from 'cookie'
 import jwt from 'jsonwebtoken'
@@ -31,8 +31,10 @@ export const isAdmin = (entity: RoleBasedEntity | undefined): boolean =>
 const sessionCookieName =
   publicRuntimeConfig.SESSION_COOKIE_NAME || 'session_token'
 
-export const parseSessionFromContext = (ctx: NextPageContext) => {
-  const request = ctx.req
+export const parseSessionFromContext = (
+  request: IncomingMessage | undefined,
+  store: any,
+) => {
   if (!request) {
     return
   }
@@ -42,7 +44,7 @@ export const parseSessionFromContext = (ctx: NextPageContext) => {
   const decoded: any = jwt.decode(sessionCookie)
 
   if (decoded && decoded.User && decoded.exp) {
-    ctx.store.dispatch(
+    store.dispatch(
       logIn({
         expiresAt: decoded.exp,
         user: userMapper.fromRaw(decoded.User),

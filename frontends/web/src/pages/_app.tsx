@@ -28,14 +28,17 @@ class MyApp extends App<{ store: Store }> {
   }
 }
 
-MyApp.getInitialProps = async ({ Component, ctx }) => {
-  parseSessionFromContext(ctx)
+MyApp.getInitialProps = wrapper.getInitialAppProps(
+  store =>
+    async ({ Component, ctx }) => {
+      parseSessionFromContext(ctx.req, store)
 
-  const pageProps = Component.getInitialProps
-    ? await Component.getInitialProps(ctx)
-    : {}
+      const pageProps = Component.getInitialProps
+        ? await Component.getInitialProps(ctx)
+        : {}
 
-  return { pageProps }
-}
+      return { pageProps }
+    },
+)
 
 export default wrapper.withRedux(MyApp)

@@ -12,8 +12,6 @@ const initialState = {
   session: sessionInitialState,
 }
 
-export type RootState = typeof initialState
-
 export const reducer = combineReducers({
   app: appReducer,
   contest: contestReducer,
@@ -21,13 +19,16 @@ export const reducer = combineReducers({
   session: sessionReducer,
 })
 
-const makeStore: MakeStore<RootState> = () => {
+const makeStore: MakeStore<Store<RootState>> = () => {
   const store: Store = configureStore({
     reducer: reducer,
   })
   return store
 }
 
-export const wrapper = createWrapper<RootState>(makeStore, {
+export const wrapper = createWrapper<Store<RootState>>(makeStore, {
   debug: process.env.NODE_ENV === 'development',
 })
+
+export type RootState = typeof initialState
+export type AppStore = ReturnType<typeof makeStore>

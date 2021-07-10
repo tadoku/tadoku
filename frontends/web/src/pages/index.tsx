@@ -1,12 +1,13 @@
 import React from 'react'
 import LandingPage from '@app/landing/pages/landing'
 import { NextPage } from 'next'
+import { wrapper } from '@app/store'
 
 const Home: NextPage = () => {
   return <LandingPage />
 }
 
-Home.getInitialProps = async function ({ store, res }) {
+Home.getInitialProps = wrapper.getInitialPageProps(store => async ({ res }) => {
   const isServer = typeof window === 'undefined'
 
   if (isServer) {
@@ -21,6 +22,6 @@ Home.getInitialProps = async function ({ store, res }) {
   return {
     overridesLayout: true,
   }
-}
+})
 
 export default Home

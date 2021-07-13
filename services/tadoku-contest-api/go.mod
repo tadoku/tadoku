@@ -1,6 +1,6 @@
 module github.com/tadoku/tadoku/services/tadoku-contest-api
 
-go 1.14
+go 1.16
 
 require (
 	github.com/DATA-DOG/go-txdb v0.1.3

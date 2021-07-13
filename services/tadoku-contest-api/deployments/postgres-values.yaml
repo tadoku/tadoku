@@ -1,0 +1,4 @@
+postgresqlPostgresPassword: password_for_migrations
+postgresqlDatabase: tadoku-contest-api
+postgresqlUsername: tadoku
+postgresqlPassword: password_for_app

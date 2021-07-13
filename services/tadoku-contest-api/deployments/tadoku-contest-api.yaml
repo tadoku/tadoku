@@ -1,0 +1,21 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tadoku-contest-api
+  labels:
+    app: tadoku-contest-api
+spec:
+  selector:
+    matchLabels:
+      app: tadoku-contest-api
+  template:
+    metadata:
+      labels:
+        app: tadoku-contest-api
+    spec:
+      containers:
+      - name: tadoku-contest-api
+        image: tadoku-contest-api-image
+        ports:
+        - containerPort: 8000
+

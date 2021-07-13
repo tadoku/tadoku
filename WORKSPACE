@@ -38,11 +38,11 @@ http_archive(
 
 http_archive(
     name = "rules_pkg",
+    sha256 = "038f1caa773a7e35b3663865ffb003169c6a71dc995e39bf4815792f385d837d",
     urls = [
         "https://mirror.bazel.build/github.com/bazelbuild/rules_pkg/releases/download/0.4.0/rules_pkg-0.4.0.tar.gz",
         "https://github.com/bazelbuild/rules_pkg/releases/download/0.4.0/rules_pkg-0.4.0.tar.gz",
     ],
-    sha256 = "038f1caa773a7e35b3663865ffb003169c6a71dc995e39bf4815792f385d837d",
 )
 
 # Setup golang toolchain
@@ -61,7 +61,9 @@ go_deps()
 
 ## Setup protobuf toolchain
 load("@rules_proto//proto:repositories.bzl", "rules_proto_dependencies", "rules_proto_toolchains")
+
 rules_proto_dependencies()
+
 rules_proto_toolchains()
 
 ## Setup Docker toolchain
@@ -69,9 +71,11 @@ load(
     "@io_bazel_rules_docker//repositories:repositories.bzl",
     container_repositories = "repositories",
 )
-load("@io_bazel_rules_docker//toolchains/docker:toolchain.bzl",
-    docker_toolchain_configure="toolchain_configure"
+load(
+    "@io_bazel_rules_docker//toolchains/docker:toolchain.bzl",
+    docker_toolchain_configure = "toolchain_configure",
 )
+
 container_repositories()
 
 load(
@@ -82,16 +86,17 @@ load(
 _go_image_repos()
 
 docker_toolchain_configure(
-  name = "docker_config",
-  # Replace this with an absolute path to a directory which has a custom docker
-  # client config.json. Note relative paths are not supported.
-  # Docker allows you to specify custom authentication credentials
-  # in the client configuration JSON file.
-  # See https://docs.docker.com/engine/reference/commandline/cli/#configuration-files
-  # for more details.
-  client_config="/tmp/docker",
+    name = "docker_config",
+    # Replace this with an absolute path to a directory which has a custom docker
+    # client config.json. Note relative paths are not supported.
+    # Docker allows you to specify custom authentication credentials
+    # in the client configuration JSON file.
+    # See https://docs.docker.com/engine/reference/commandline/cli/#configuration-files
+    # for more details.
+    client_config = "/tmp/docker",
 )
 
 ## Setup file packaging toolchain
 load("@rules_pkg//:deps.bzl", "rules_pkg_dependencies")
+
 rules_pkg_dependencies()

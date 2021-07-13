@@ -1,8 +1,7 @@
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
 # Download all required rules
-http_archive(
-    name = "io_bazel_rules_go",
+http_archive( name = "io_bazel_rules_go",
     sha256 = "69de5c704a05ff37862f7e0f5534d4f479418afc21806c887db544a316f3cb6b",
     urls = [
         "https://mirror.bazel.build/github.com/bazelbuild/rules_go/releases/download/v0.27.0/rules_go-v0.27.0.tar.gz",
@@ -100,3 +99,19 @@ docker_toolchain_configure(
 load("@rules_pkg//:deps.bzl", "rules_pkg_dependencies")
 
 rules_pkg_dependencies()
+
+# Setup k8s
+http_archive(
+    name = "io_bazel_rules_k8s",
+    strip_prefix = "rules_k8s-0.6",
+    urls = ["https://github.com/bazelbuild/rules_k8s/archive/v0.6.tar.gz"],
+    sha256 = "51f0977294699cd547e139ceff2396c32588575588678d2054da167691a227ef",
+)
+
+load("@io_bazel_rules_k8s//k8s:k8s.bzl", "k8s_repositories")
+
+k8s_repositories()
+
+load("@io_bazel_rules_k8s//k8s:k8s_go_deps.bzl", k8s_go_deps = "deps")
+
+k8s_go_deps()

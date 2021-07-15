@@ -3,15 +3,16 @@
 # Extensions
 load('ext://helm_remote', 'helm_remote')
 
+# Infra
+helm_remote('postgres-operator',
+            repo_name='commonground',
+            repo_url='https://charts.commonground.nl/')
+
 # Services
 
 # -----------------------------
 # tadoku-contest-api
 # -----------------------------
-helm_remote('postgresql',
-            repo_name='bitnami',
-            repo_url='https://charts.bitnami.com/bitnami',
-            values='./services/tadoku-contest-api/deployments/postgres-values.yaml')
 watch_file('./services/tadoku-contest-api/deployments/tadoku-contest-api.yaml')
 k8s_yaml(local('bazel run //services/tadoku-contest-api/deployments:tadoku-contest-api'))
 custom_build(
@@ -19,8 +20,8 @@ custom_build(
   command=(
     'bazel run --platforms=@io_bazel_rules_go//go/toolchain:linux_amd64 {image_target} -- --norun && ' +
     'docker tag {bazel_image} $EXPECTED_REF').format(
-      image_target='services/tadoku-contest-api/deployments/BUILD',
-      bazel_image='services/tadoku-contest-api/deployments/BUILD'
+      image_target='//services/tadoku-contest-api/cmd/server:base_image',
+      bazel_image='bazel/services/tadoku-contest-api/cmd/server:base_image'
     ),
   deps=['main.go', 'web'],
 )

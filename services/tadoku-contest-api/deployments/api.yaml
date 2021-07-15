@@ -17,7 +17,7 @@ spec:
       - name: tadoku-contest-api
         image: tadoku-contest-api-image
         ports:
-        - containerPort: 8000
+        - containerPort: 4000
         envFrom:
           - configMapRef:
               name: tadoku-contest-api-configmap
@@ -55,6 +55,8 @@ apiVersion: "acid.zalan.do/v1"
 kind: postgresql
 metadata:
   name: tadoku-contest-api-db
+  labels:
+    app: tadoku-contest-api-db
 spec:
   teamId: "tadoku"
   volume:

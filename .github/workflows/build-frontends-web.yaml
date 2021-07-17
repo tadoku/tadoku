@@ -1,5 +1,8 @@
 name: build-frontend-web
-on: push
+on:
+  push:
+    paths:
+      - "frontends/web/**"
 jobs:
   build:
     name: Build Web

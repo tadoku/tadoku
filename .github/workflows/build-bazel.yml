@@ -1,5 +1,13 @@
 name: build-bazel
-on: push # change building to merges to master only
+on:
+  push:
+    paths:
+      - "services/**"
+      - "BUILD"
+      - "go_third_party.bzl"
+      - "go.mod"
+      - "go.sum"
+      - "WORKSPACE"
 jobs:
   build:
     name: Build Tadoku

@@ -1,9 +1,11 @@
 import { PostOrPage } from './interfaces'
 import { postOrPageMapper } from './transform'
-import { get } from '../api'
+import { createApiClient } from '../api'
+
+const apiClient = createApiClient('/api/blog')
 
 const getPosts = async (): Promise<PostOrPage[]> => {
-  const response = await get(`/blog/posts`)
+  const response = await apiClient.get(`/posts`)
 
   if (response.status !== 200) {
     return []
@@ -15,7 +17,7 @@ const getPosts = async (): Promise<PostOrPage[]> => {
 }
 
 const getPage = async (slug: string): Promise<PostOrPage | undefined> => {
-  const response = await get(`/blog/pages/${slug}`)
+  const response = await apiClient.get(`/pages/${slug}`)
 
   if (response.status !== 200) {
     return undefined

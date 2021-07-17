@@ -1,6 +1,11 @@
 import 'isomorphic-fetch'
 
-const root = '/api'
+interface ApiClient {
+  get(endpoint: string): any
+  destroy(endpoint: string): void
+  post(endpoint: string, options: APIOptionsForPost): void
+  put(endpoint: string, options: APIOptionsForPost): void
+}
 
 interface APIOptionsForPost {
   body: any
@@ -24,11 +29,11 @@ const request = (
       : {}),
   }
 
-  return fetch(`${root}${endpoint}`, requestOptions)
+  return fetch(endpoint, requestOptions)
 }
 
-export const get = (endpoint: string) =>
-  request('get', endpoint).then(response => {
+const createGet = (rootUrl: string) => (endpoint: string) =>
+  request('get', `${rootUrl}${endpoint}`).then(response => {
     if (response.status === 401) {
       location.reload()
     }
@@ -36,10 +41,27 @@ export const get = (endpoint: string) =>
     return response
   })
 
-export const destroy = (endpoint: string) => request('delete', endpoint)
+const createDestroy = (rootUrl: string) => (endpoint: string) =>
+  request('delete', `${rootUrl}${endpoint}`)
 
-export const post = (endpoint: string, options: APIOptionsForPost) =>
-  request('post', endpoint, options)
+const createPost =
+  (rootUrl: string) => (endpoint: string, options: APIOptionsForPost) =>
+    request('post', `${rootUrl}${endpoint}`, options)
 
-export const put = (endpoint: string, options: APIOptionsForPost) =>
-  request('put', endpoint, options)
+const createPut =
+  (rootUrl: string) => (endpoint: string, options: APIOptionsForPost) =>
+    request('put', `${rootUrl}${endpoint}`, options)
+
+export const createApiClient = (rootUrl: string): ApiClient => ({
+  get: createGet(rootUrl),
+  destroy: createDestroy(rootUrl),
+  post: createPost(rootUrl),
+  put: createPut(rootUrl),
+})
+
+const defaultApiClient = createApiClient('/api')
+
+export const get = defaultApiClient.get
+export const post = defaultApiClient.post
+export const destroy = defaultApiClient.destroy
+export const put = defaultApiClient.put

@@ -1,0 +1,33 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tadoku-web
+  labels:
+    app: tadoku-web
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: tadoku-web
+  template:
+    metadata:
+      labels:
+        app: tadoku-web
+    spec:
+      containers:
+      - name: web
+        image: frontends-web
+        ports:
+        - containerPort: 3000
+        env:
+        - name: API_ROOT
+          value: "http://tadoku-contest-api" # TODO: upgrade to services
+        - name: PORT
+          value: "3000"
+        readinessProbe:
+          httpGet:
+            scheme: HTTP
+            path: /
+            port: 3000
+          initialDelaySeconds: 60
+          periodSeconds: 15

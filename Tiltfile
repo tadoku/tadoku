@@ -47,3 +47,9 @@ custom_build(
 )
 
 k8s_resource('tadoku-contest-api-migration-job', resource_deps=['tadoku-contest-api'])
+
+# -----------------------------
+# tadoku-web
+# -----------------------------
+
+# include('./frontends/web/Tiltfile')

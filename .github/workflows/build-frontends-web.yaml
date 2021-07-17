@@ -3,6 +3,7 @@ on:
   push:
     paths:
       - "frontends/web/**"
+      - ".github/workflows/build-frontends-web.yaml"
 jobs:
   build:
     name: Build Web

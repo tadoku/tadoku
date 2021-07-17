@@ -8,6 +8,7 @@ on:
       - "go.mod"
       - "go.sum"
       - "WORKSPACE"
+      - ".github/workflows/build-bazel.yaml"
 jobs:
   build:
     name: Build Tadoku

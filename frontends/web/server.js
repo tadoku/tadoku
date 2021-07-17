@@ -14,6 +14,17 @@ const handle = app.getRequestHandler()
 app.prepare().then(() => {
   const server = express()
 
+  if (dev) {
+    server.use(
+      '/api/blog',
+      proxy.createProxyMiddleware({
+        target: process.env.BLOG_ROOT,
+        changeOrigin: true,
+        pathRewrite: { '^/api/blog': '' },
+      }),
+    )
+  }
+
   server.use(
     '/api',
     proxy.createProxyMiddleware({

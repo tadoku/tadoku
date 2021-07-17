@@ -1,0 +1,9 @@
+parser: typescript
+
+semi: false
+arrowParens: avoid
+jsxBracketSameLine: false
+tabWidth: 2
+trailingComma: all
+printWidth: 80
+singleQuote: true

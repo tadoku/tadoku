@@ -23,7 +23,7 @@ const getAll = async (limit?: number): Promise<Contest[]> => {
     return []
   }
 
-  const data: RawContest[] = await response.json()
+  const data: RawContest[] = (await response.json()) || []
 
   return data.map(contestMapper.fromRaw)
 }

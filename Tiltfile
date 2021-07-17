@@ -49,6 +49,27 @@ custom_build(
 k8s_resource('tadoku-contest-api-migration-job', resource_deps=['tadoku-contest-api'])
 
 # -----------------------------
+# blog
+# -----------------------------
+
+# Server container
+watch_file('./services/blog/deployments/blog.yaml')
+k8s_yaml(local('bazel run //services/blog/deployments:blog'))
+
+custom_build(
+  ref='blog-image',
+  command=(
+    'bazel run --platforms=@io_bazel_rules_go//go/toolchain:linux_amd64 {image_target} -- --norun && ' +
+    'docker tag {bazel_image} $EXPECTED_REF').format(
+      image_target='//services/blog:image',
+      bazel_image='bazel/services/blog:image'
+    ),
+  deps=['services/blog'],
+)
+
+k8s_resource('blog', port_forwards=8001)
+
+# -----------------------------
 # tadoku-web
 # -----------------------------
 

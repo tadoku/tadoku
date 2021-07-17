@@ -1,6 +1,6 @@
 # Tadoku Monorepo
 
-![Build](https://github.com/tadoku/tadoku/actions/workflows/build.yml/badge.svg)
+![Build](https://github.com/tadoku/tadoku/actions/workflows/build-bazel.yaml/badge.svg)
 [![Go Report Card](https://goreportcard.com/badge/github.com/tadoku/tadoku)](https://goreportcard.com/report/github.com/tadoku/tadoku)
 
 ## Getting Started

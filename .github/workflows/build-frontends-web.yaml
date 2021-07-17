@@ -1,4 +1,4 @@
-name: frontend-web-build
+name: build-frontend-web
 on: push
 jobs:
   build:

@@ -1,4 +1,4 @@
-name: build
+name: build-bazel
 on: push # change building to merges to master only
 jobs:
   build:

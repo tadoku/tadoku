@@ -131,7 +131,7 @@ const LogForm = ({
             value={amount}
             onChange={e => setAmount(e.target.value)}
             min={0}
-            max={3000}
+            max={10_000}
             step={0.1}
             error={hasError.amount}
           />

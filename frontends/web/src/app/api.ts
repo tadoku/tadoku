@@ -1,10 +1,10 @@
 import 'isomorphic-fetch'
 
 interface ApiClient {
-  get(endpoint: string): any
-  destroy(endpoint: string): void
-  post(endpoint: string, options: APIOptionsForPost): void
-  put(endpoint: string, options: APIOptionsForPost): void
+  get(endpoint: string): ReturnType<typeof fetch>
+  destroy(endpoint: string): ReturnType<typeof fetch>
+  post(endpoint: string, options: APIOptionsForPost): ReturnType<typeof fetch>
+  put(endpoint: string, options: APIOptionsForPost): ReturnType<typeof fetch>
 }
 
 interface APIOptionsForPost {

@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  labels:
+    run: pgweb
+  name: pgweb
+spec:
+  containers:
+    - image: sosedoff/pgweb
+      name: pgweb
+      ports:
+        - containerPort: 8081

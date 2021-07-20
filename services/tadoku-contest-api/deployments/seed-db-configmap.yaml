@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: seed-sql-tadoku-contest-api
+data:
+  seed.sql: |
+    -- clear tables
+    truncate table users;
+    truncate table rankings;
+    truncate table contests;
+    truncate table contest_logs;
+
+    -- seed with initial data
+    -- test user with password 'tadoku'
+    insert into users (email, display_name, password, role)
+    values ('dev@tadoku.app', 'developer', '$2a$10$ahYnvUhPdL9bKKaSaGXM/OFZBEWU9RBxlKLPeCkQhZTLHlXlybITS', 3);
+
+    -- a test contest for one month starting today
+    insert into contests (start, "end", open, description)
+    values (current_date, current_date + interval '1 month', true, 'Test Contest');

@@ -52,6 +52,14 @@ custom_build(
 
 k8s_resource('tadoku-contest-api-migration-job', resource_deps=['tadoku-contest-api'])
 
+# Seed script
+k8s_yaml('services/tadoku-contest-api/deployments/seed-db-configmap.yaml')
+k8s_yaml('services/tadoku-contest-api/deployments/seed-db.yaml')
+k8s_resource('seed-tadoku-contest-api-job',
+  trigger_mode=TRIGGER_MODE_MANUAL,
+  auto_init=False
+)
+
 # -----------------------------
 # blog
 # -----------------------------

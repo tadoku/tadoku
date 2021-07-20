@@ -1,21 +1,21 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: blog
+  name: blog-api
   labels:
-    app: blog
+    app: blog-api
 spec:
   selector:
     matchLabels:
-      app: blog
+      app: blog-api
   template:
     metadata:
       labels:
-        app: blog
+        app: blog-api
     spec:
       containers:
-      - name: blog
-        image: blog-image
+      - name: blog-api
+        image: blog-api-image
         ports:
         - containerPort: 8080
         readinessProbe:

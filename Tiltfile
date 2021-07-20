@@ -65,21 +65,21 @@ k8s_resource('seed-tadoku-contest-api-job',
 # -----------------------------
 
 # Server container
-watch_file('./services/blog/deployments/blog.yaml')
-k8s_yaml(local('bazel run //services/blog/deployments:blog'))
+watch_file('./services/blog-api/deployments/api.yaml')
+k8s_yaml(local('bazel run //services/blog-api/deployments:api'))
 
 custom_build(
-  ref='blog-image',
+  ref='blog-api-image',
   command=(
     'bazel run --platforms=@io_bazel_rules_go//go/toolchain:linux_amd64 {image_target} -- --norun && ' +
     'docker tag {bazel_image} $EXPECTED_REF').format(
-      image_target='//services/blog:image',
-      bazel_image='bazel/services/blog:image'
+      image_target='//services/blog-api:image',
+      bazel_image='bazel/services/blog-api:image'
     ),
-  deps=['services/blog'],
+  deps=['services/blog-api'],
 )
 
-k8s_resource('blog', port_forwards=8001)
+k8s_resource('blog-api', port_forwards=8001)
 
 # -----------------------------
 # tadoku-web

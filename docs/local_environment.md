@@ -11,6 +11,10 @@ We use [Tilt](https://tilt.dev/) to spin up a local Kubernetes cluster with all 
 3. Run `$ tilt up` in the root of this repository.
 4. Some services will have a database seed script, these can be manually triggered from within Tilt when needed.
 
+## Can't connect connect to service/database
+
+It's possible that the containers for a particular service or database have been shut down due resource constraints. In this case you can restart the service manually from the Tilt dashboard. If a database is unreachable it might be useful to restart the Tilt cluster.
+
 ## Connecting to a database within Tilt
 
 We have configured a [pgweb instance](https://github.com/sosedoff/pgweb) for access to our PostgreSQL databases. The connection details can be found from Kubernetes.

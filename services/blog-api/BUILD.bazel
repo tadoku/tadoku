@@ -38,6 +38,6 @@ container_push(
     format = "Docker",
     image = ":image",
     registry = "ghcr.io",
-    repository = "tadoku/tadoku/blog_api",
+    repository = "tadoku/tadoku/blog-api",
     skip_unchanged_digest = True,
 )

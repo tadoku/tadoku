@@ -7,7 +7,7 @@
 
   <!-- - [Architectural Decision Records](adr.md) -->
   <!-- - [Bazel](bazel.md) -->
-  <!-- - [Local Environment](/local_environment.md) -->
+  - [Local Environment](/local_environment.md)
 
 - Services
 

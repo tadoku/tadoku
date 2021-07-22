@@ -1,0 +1,6 @@
+load('ext://helm_remote', 'helm_remote')
+
+helm_remote('kong',
+            repo_name='kong',
+            repo_url='https://charts.konghq.com',
+            set=['ingressController.installCRDs=false'])

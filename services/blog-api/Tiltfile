@@ -10,7 +10,7 @@ custom_build(
       image_target='//services/blog-api:image',
       bazel_image='bazel/services/blog-api:image'
     ),
-  deps=['services/blog-api'],
+  deps=['./'],
 )
 
 k8s_resource('blog-api', port_forwards=8001)

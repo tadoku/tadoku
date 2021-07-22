@@ -10,7 +10,7 @@ custom_build(
       image_target='//services/tadoku-contest-api/cmd/server:base_image',
       bazel_image='bazel/services/tadoku-contest-api/cmd/server:base_image'
     ),
-  deps=['services/tadoku-contest-api'],
+  deps=['./'],
 )
 
 k8s_resource('tadoku-contest-api', port_forwards=8000)

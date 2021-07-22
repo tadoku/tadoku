@@ -75,7 +75,7 @@ metadata:
   name: tadoku-contest-api-configmap
 data:
   APP_PORT: "4000"
-  APP_ENV: production
+  APP_ENV: development
   APP_NAME: tadoku-contest-api
   APP_TIMEZONE: UTC
   CORS_ALLOWED_ORIGINS: https://tadoku.app

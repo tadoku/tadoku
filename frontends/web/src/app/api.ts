@@ -1,4 +1,5 @@
 import 'isomorphic-fetch'
+import { getService } from '@app/services'
 
 interface ApiClient {
   get(endpoint: string): ReturnType<typeof fetch>
@@ -59,7 +60,9 @@ export const createApiClient = (rootUrl: string): ApiClient => ({
   put: createPut(rootUrl),
 })
 
-const defaultApiClient = createApiClient('/api')
+const defaultApiClient = createApiClient(
+  getService('tadokuContest').externalUrl,
+)
 
 export const get = defaultApiClient.get
 export const post = defaultApiClient.post

@@ -1,8 +1,9 @@
 import { PostOrPage } from './interfaces'
 import { postOrPageMapper } from './transform'
 import { createApiClient } from '../api'
+import { getService } from '@app/services'
 
-const apiClient = createApiClient('/api/blog')
+const apiClient = createApiClient(getService('blog').externalUrl)
 
 const getPosts = async (): Promise<PostOrPage[]> => {
   const response = await apiClient.get(`/posts`)

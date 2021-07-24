@@ -51,6 +51,7 @@ type serverDependencies struct {
 	SessionCookieName     string             `envconfig:"user_session_cookie_name" valid:"required"`
 	TimeZone              string             `envconfig:"app_timezone" valid:"required"`
 	UserSessionAPIEnabled bool               `envconfig:"user_session_api_enabled"`
+	ChangeUsernameEnabled bool               `envconfig:"change_username_enabled"`
 
 	router struct {
 		result services.Router
@@ -189,9 +190,17 @@ func (d *serverDependencies) routes() []services.Route {
 
 			// Users
 			{Method: http.MethodPost, Path: "/users", HandlerFunc: d.Services().User.Register},
-			{Method: http.MethodPost, Path: "/users/:id/profile", HandlerFunc: d.Services().User.UpdateProfile, MinRole: domain.RoleUser},
 			{Method: http.MethodPost, Path: "/users/:id/password", HandlerFunc: d.Services().User.UpdatePassword, MinRole: domain.RoleUser},
 		}...)
+
+		if d.ChangeUsernameEnabled {
+			routes = append(routes, services.Route{
+				Method:      http.MethodPost,
+				Path:        "/users/:id/profile",
+				HandlerFunc: d.Services().User.UpdateProfile,
+				MinRole:     domain.RoleUser,
+			})
+		}
 	}
 
 	return routes

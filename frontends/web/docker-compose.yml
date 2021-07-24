@@ -12,6 +12,4 @@ services:
       - "3000:3000"
     environment:
       API_ROOT: http://localhost:4000
-      GHOST_KEY: 22c9b1088957389622d210662f
-      GHOST_URL: https://blog.tadoku.app
       SESSION_COOKIE_NAME: session_token

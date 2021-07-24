@@ -68,4 +68,17 @@ data:
   USER_SESSION_LENGTH: "792h"
   USER_SESSION_COOKIE_NAME: "session_token"
   ERROR_REPORTER_DSN: ""
-
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: identity-api
+  labels:
+    app: identity-api
+    service: identity-api
+spec:
+  ports:
+  - port: 4000
+    name: http
+  selector:
+    app: identity-api

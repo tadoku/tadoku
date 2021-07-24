@@ -13,3 +13,7 @@ spec:
         backend:
           serviceName: tadoku-contest-api
           servicePort: 4000
+      - path: /identity-api
+        backend:
+          serviceName: identity-api
+          servicePort: 4000

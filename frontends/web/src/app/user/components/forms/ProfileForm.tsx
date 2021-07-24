@@ -19,6 +19,9 @@ import { logIn } from '@app/session/redux'
 import { User } from '@app/session/interfaces'
 import { RootState } from '@app/store'
 
+import getConfig from 'next/config'
+const { publicRuntimeConfig } = getConfig()
+
 const ProfileForm = () => {
   const { user, loaded: userLoaded } = useSelector(
     (state: RootState) => state.session,
@@ -36,7 +39,8 @@ const ProfileForm = () => {
   const [message, setMessage] = useState(undefined as string | undefined)
 
   // TODO: refactor feature flags to be centrally managed
-  const canChangeUsername = process.env.CHANGE_USERNAME_ENABLED === 'true'
+  const canChangeUsername =
+    publicRuntimeConfig.CHANGE_USERNAME_ENABLED === 'true'
 
   if (!userLoaded || !user) {
     return null

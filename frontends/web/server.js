@@ -3,12 +3,10 @@
 const express = require('express')
 const next = require('next')
 const proxy = require('http-proxy-middleware')
-const publicRuntimeConfig = require('./config')
 
 const port = parseInt(process.env.PORT, 10) || 3000
 const dev = process.env.NODE_ENV !== 'production'
-const config = { publicRuntimeConfig }
-const app = next({ dev, config })
+const app = next({ dev })
 const handle = app.getRequestHandler()
 
 app.prepare().then(() => {

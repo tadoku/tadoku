@@ -36,7 +36,7 @@ spec:
               name: tadoku-user.tadoku-contest-api-db.credentials.postgresql.acid.zalan.do
               key: password
         - name: DATABASE_URL
-          value: "postgres://$(username):$(password)@tadoku-contest-db/tadoku"
+          value: "postgres://$(username):$(password)@tadoku-contest-api-db/tadoku"
         readinessProbe:
           httpGet:
             scheme: HTTP

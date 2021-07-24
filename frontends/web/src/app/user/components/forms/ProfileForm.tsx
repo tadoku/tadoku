@@ -35,6 +35,9 @@ const ProfileForm = () => {
   const [error, setError] = useState(undefined as string | undefined)
   const [message, setMessage] = useState(undefined as string | undefined)
 
+  // TODO: refactor feature flags to be centrally managed
+  const canChangeUsername = process.env.CHANGE_USERNAME_ENABLED === 'true'
+
   if (!userLoaded || !user) {
     return null
   }
@@ -84,6 +87,11 @@ const ProfileForm = () => {
             value={displayName}
             onChange={e => setDisplayName(e.target.value)}
             error={hasError.displayName}
+            disabled={!canChangeUsername}
+          />
+          <GroupError
+            message="Changing nicknames has been temporarily disabled"
+            hidden={canChangeUsername}
           />
           <GroupError
             message="Should be between 2-18 letters or numbers"
@@ -94,7 +102,7 @@ const ProfileForm = () => {
       <Group>
         <Button
           type="submit"
-          disabled={hasError.form || submitting}
+          disabled={hasError.form || submitting || !canChangeUsername}
           loading={submitting}
         >
           Update profile

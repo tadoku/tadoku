@@ -19,7 +19,7 @@ COPY --from=build /build/package.json /build/yarn.lock /build/server.js ./
 # Need to add dummy RUN statements so Docker doesn't crash...
 # Ref. https://github.com/moby/moby/issues/37965
 RUN true
-COPY --from=build /build/next.config.js /build/config.js ./
+COPY --from=build /build/next.config.js ./
 RUN true
 COPY --from=build /build/yarn.lock ./
 RUN true

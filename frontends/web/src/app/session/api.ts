@@ -1,5 +1,7 @@
 import { User, RawUser } from './interfaces'
-import { post, destroy } from '../api'
+import { createApiClient } from '@app/api'
+
+const apiClient = createApiClient('identity')
 
 interface LogInResponse {
   expiresAt: number
@@ -15,7 +17,7 @@ const logIn = async (payload: {
   email: string
   password: string
 }): Promise<LogInResponse | undefined> => {
-  const response = await post(`/sessions`, { body: payload })
+  const response = await apiClient.post(`/sessions`, { body: payload })
 
   if (response.status !== 200) {
     return undefined
@@ -35,12 +37,12 @@ const logIn = async (payload: {
 }
 
 const logOut = async (): Promise<boolean> => {
-  const response = await destroy(`/sessions`)
+  const response = await apiClient.destroy(`/sessions`)
   return response.status === 200
 }
 
 const refresh = async (): Promise<LogInResponse | undefined> => {
-  const response = await post(`/sessions/refresh`, {
+  const response = await apiClient.post(`/sessions/refresh`, {
     body: {},
   })
 
@@ -66,7 +68,7 @@ const register = async (payload: {
   password: string
   displayName: string
 }): Promise<boolean> => {
-  const response = await post(`/users`, {
+  const response = await apiClient.post(`/users`, {
     body: {
       email: payload.email,
       password: payload.password,

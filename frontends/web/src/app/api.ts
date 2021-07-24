@@ -53,16 +53,18 @@ const createPut =
   (rootUrl: string) => (endpoint: string, options: APIOptionsForPost) =>
     request('put', `${rootUrl}${endpoint}`, options)
 
-export const createApiClient = (rootUrl: string): ApiClient => ({
-  get: createGet(rootUrl),
-  destroy: createDestroy(rootUrl),
-  post: createPost(rootUrl),
-  put: createPut(rootUrl),
-})
+export const createApiClient = (serviceName: string): ApiClient => {
+  const rootUrl = getService(serviceName).externalUrl
 
-const defaultApiClient = createApiClient(
-  getService('tadokuContest').externalUrl,
-)
+  return {
+    get: createGet(rootUrl),
+    destroy: createDestroy(rootUrl),
+    post: createPost(rootUrl),
+    put: createPut(rootUrl),
+  }
+}
+
+const defaultApiClient = createApiClient('tadokuContest')
 
 export const get = defaultApiClient.get
 export const post = defaultApiClient.post

@@ -87,3 +87,17 @@ data:
   ERROR_REPORTER_DSN: ""
   USER_SESSION_API_ENABLED: "true"
   CHANGE_USERNAME_ENABLED: "true"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: tadoku-contest-api
+  labels:
+    app: tadoku-contest-api
+    service: tadoku-contest-api
+spec:
+  ports:
+  - port: 4000
+    name: http
+  selector:
+    app: tadoku-contest-api

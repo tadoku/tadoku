@@ -4,3 +4,5 @@ helm_remote('kong',
             repo_name='kong',
             repo_url='https://charts.konghq.com',
             set=['ingressController.installCRDs=false'])
+
+k8s_yaml('./ingress.yaml')

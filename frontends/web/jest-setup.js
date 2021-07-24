@@ -1,3 +1,5 @@
 jest.mock('next/config', () => () => ({
-  publicRuntimeConfig: require('./config'),
+  publicRuntimeConfig: {
+    CHANGE_USERNAME_ENABLED: 'true',
+  },
 }))

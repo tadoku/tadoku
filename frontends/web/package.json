@@ -72,7 +72,7 @@
     "eslint-config-prettier": "^6.15.0",
     "eslint-plugin-prettier": "^3.4.0",
     "eslint-plugin-react": "^7.24.0",
-    "fork-ts-checker-webpack-plugin": "^6.2.12",
+    "fork-ts-checker-webpack-plugin": "^6.2.13",
     "husky": "^7.0.1",
     "jest": "^27.0.6",
     "prettier": "2.3.2",

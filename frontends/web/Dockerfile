@@ -2,7 +2,7 @@
 FROM node:12 AS base
 WORKDIR /base
 COPY . .
-RUN yarn install
+RUN yarn install --frozen-lockfile
 
 # Build app
 FROM base AS build
@@ -10,6 +10,7 @@ ENV NODE_ENV=production
 WORKDIR /build
 COPY --from=base /base ./
 RUN yarn run build
+RUN yarn install --production --ignore-scripts --prefer-offline
 
 # Create production container
 FROM node:12 AS production
@@ -26,7 +27,9 @@ RUN true
 COPY --from=build /build/.next ./.next
 RUN true
 COPY --from=build /build/public ./public
-RUN yarn add next express http-proxy-middleware --frozen-lockfile --production && yarn cache clean
+RUN true
+COPY --from=build /build/node_modules ./node_modules
+RUN yarn cache clean
 
 # Running the app
 EXPOSE 3000

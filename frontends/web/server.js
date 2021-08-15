@@ -12,14 +12,16 @@ const handle = app.getRequestHandler()
 app.prepare().then(() => {
   const server = express()
 
-  server.use(
-    '/api',
-    proxy.createProxyMiddleware({
-      target: process.env.API_ROOT,
-      changeOrigin: true,
-      pathRewrite: { '^/api': '' },
-    }),
-  )
+  if (dev) {
+    server.use(
+      '/api',
+      proxy.createProxyMiddleware({
+        target: process.env.API_ROOT,
+        changeOrigin: true,
+        pathRewrite: { '^/api': '' },
+      }),
+    )
+  }
 
   server.all('*', (req, res) => {
     return handle(req, res)

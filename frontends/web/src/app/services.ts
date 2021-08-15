@@ -9,9 +9,9 @@ const createService = (suffix: string): Service => ({
 })
 
 const services: { [key: string]: Service } = {
-  tadokuContest: createService('tadoku-contest-api'),
-  identity: createService('identity-api'),
-  blog: createService('blog-api'),
+  tadokuContest: createService('reading-contest'),
+  identity: createService('identity'),
+  blog: createService('blog'),
 }
 
 export const getService = (service: string): Service => {

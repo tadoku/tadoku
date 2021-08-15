@@ -37,6 +37,7 @@
     "date-fns-tz": "^1.1.6",
     "dotenv": "^10.0.0",
     "express": "^4.17.1",
+    "express-naked-redirect": "^0.1.9",
     "http-proxy-middleware": "^2.0.1",
     "isomorphic-fetch": "^3.0.0",
     "jsonwebtoken": "^8.5.1",

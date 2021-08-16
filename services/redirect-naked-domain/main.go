@@ -25,11 +25,18 @@ func main() {
 	})
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		// url := RemoveWWWSubdomain(r.URL)
-		// http.Redirect(w, r, url.String(), 301)
+		host, err := url.Parse(fmt.Sprintf("https://%s%s", r.Host, r.URL))
+		if err != nil {
+			w.WriteHeader(500)
+			return
+		}
+
+		target := RemoveWWWSubdomain(host)
+		// http.Redirect(w, r, target.String(), 301)
+
+		fmt.Fprintf(w, "will redirect to: %s", target.String())
 
 		fmt.Fprintf(w, "%s %s %s \n", r.Method, r.URL, r.Proto)
-
 		//Iterate over all header fields
 		for k, v := range r.Header {
 			fmt.Fprintf(w, "Header field %q, Value %q\n", k, v)

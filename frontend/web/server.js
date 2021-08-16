@@ -3,7 +3,6 @@
 const express = require('express')
 const next = require('next')
 const proxy = require('http-proxy-middleware')
-const redirect = require('express-naked-redirect')
 
 const port = parseInt(process.env.PORT, 10) || 3000
 const dev = process.env.NODE_ENV !== 'production'
@@ -20,16 +19,6 @@ app.prepare().then(() => {
         target: process.env.API_ROOT,
         changeOrigin: true,
         pathRewrite: { '^/api': '' },
-      }),
-    )
-  }
-
-  // Redirect www to naked domain in production
-  if (!dev) {
-    server.use(
-      redirect({
-        reverse: true,
-        protocol: 'https',
       }),
     )
   }

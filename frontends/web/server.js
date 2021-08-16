@@ -26,7 +26,12 @@ app.prepare().then(() => {
 
   // Redirect www to naked domain in production
   if (!dev) {
-    server.use(redirect({ reverse: true }))
+    server.use(
+      redirect({
+        reverse: true,
+        protocol: 'https',
+      }),
+    )
   }
 
   server.all('*', (req, res) => {

@@ -25,8 +25,20 @@ func main() {
 	})
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		url := RemoveWWWSubdomain(r.URL)
-		http.Redirect(w, r, url.String(), 301)
+		// url := RemoveWWWSubdomain(r.URL)
+		// http.Redirect(w, r, url.String(), 301)
+
+		fmt.Fprintf(w, "%s %s %s \n", r.Method, r.URL, r.Proto)
+
+		//Iterate over all header fields
+		for k, v := range r.Header {
+			fmt.Fprintf(w, "Header field %q, Value %q\n", k, v)
+		}
+
+		fmt.Fprintf(w, "Host = %q\n", r.Host)
+		fmt.Fprintf(w, "RemoteAddr= %q\n", r.RemoteAddr)
+		//Get value for a specified token
+		fmt.Fprintf(w, "\n\nFinding value of \"Accept\" %q", r.Header["Accept"])
 	})
 
 	log.Print("Starting server on port 8080")

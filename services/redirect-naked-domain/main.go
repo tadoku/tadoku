@@ -1,6 +1,9 @@
 package main
 
 import (
+	"fmt"
+	"log"
+	"net/http"
 	"net/url"
 	"strings"
 )
@@ -17,4 +20,15 @@ func RemoveWWWSubdomain(url *url.URL) *url.URL {
 }
 
 func main() {
+	http.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprint(w, "ok")
+	})
+
+	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		url := RemoveWWWSubdomain(r.URL)
+		http.Redirect(w, r, url.String(), 301)
+	})
+
+	log.Print("Starting server on port 8080")
+	log.Fatal(http.ListenAndServe(":8080", nil))
 }

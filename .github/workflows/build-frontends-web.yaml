@@ -2,15 +2,15 @@ name: build-frontend-web
 on:
   push:
     paths:
-      - "frontends/web/**"
-      - ".github/workflows/build-frontends-web.yaml"
+      - "frontend/web/**"
+      - ".github/workflows/build-frontend-web.yaml"
 jobs:
   build:
     name: Build Web
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: frontends/web
+        working-directory: frontend/web
 
     steps:
       - name: Checkout repository
@@ -47,7 +47,7 @@ jobs:
     if: github.ref == 'refs/heads/master'
     defaults:
       run:
-        working-directory: frontends/web
+        working-directory: frontend/web
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
@@ -58,7 +58,7 @@ jobs:
           echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u tadoku --password-stdin
 
           # Push images
-          IMAGE_NAME=ghcr.io/tadoku/tadoku/frontends-web
+          IMAGE_NAME=ghcr.io/tadoku/tadoku/frontend-web
           docker build --no-cache -t $IMAGE_NAME:latest .
           docker tag $IMAGE_NAME:latest $IMAGE_NAME:$GITHUB_SHA
           docker push $IMAGE_NAME

@@ -15,6 +15,6 @@
   - `identity-api`
   - `blog-api`
 
-- Frontends
+- Frontend
 
   - `tadoku-web`

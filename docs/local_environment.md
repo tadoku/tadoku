@@ -2,7 +2,7 @@
 
 Tadoku is made up of several services working together. It can be quite difficult to set up a local development environment with all the required services linked up together. This is a requirement for anyone to be productive in this project, and is also why we've provided a development environment for you.
 
-We use [Tilt](https://tilt.dev/) to spin up a local Kubernetes cluster with all our backend services & dependencies. We've decided to leave out the frontends from this environment for now, as it turned out to be quite resource intensive when doing so. Each frontend will have some sort of development mode included which is configured to connect to this environment.
+We use [Tilt](https://tilt.dev/) to spin up a local Kubernetes cluster with all our backend services & dependencies. We've decided to leave out the frontend packages from this environment for now, as it turned out to be quite resource intensive when doing so. Each frontend will have some sort of development mode included which is configured to connect to this environment.
 
 ## Getting Started
 

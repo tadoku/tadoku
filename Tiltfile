@@ -20,6 +20,6 @@ include('./services/tadoku-contest-api/Tiltfile')
 include('./services/blog-api/Tiltfile')
 include('./services/identity-api/Tiltfile')
 
-# Frontends
+# Frontend
 
-# include('./frontends/web/Tiltfile')
+# include('./frontend/web/Tiltfile')

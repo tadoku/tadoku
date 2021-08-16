@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
       - name: web
-        image: frontends-web
+        image: frontend-web
         ports:
         - containerPort: 3000
         env:

@@ -16,7 +16,7 @@ updates:
         versions:
           - 4.2.0
   - package-ecosystem: npm
-    directory: "/frontends/web"
+    directory: "/frontend/web"
     schedule:
       interval: weekly
       time: "10:00"

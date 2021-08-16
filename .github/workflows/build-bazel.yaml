@@ -9,6 +9,7 @@ on:
       - "go.sum"
       - "WORKSPACE"
       - ".github/workflows/build-bazel.yaml"
+      - "!frontend/**"
 jobs:
   build:
     name: Build Tadoku

@@ -4,7 +4,6 @@ import (
 	"log"
 	"net/http"
 	"sync"
-	"time"
 
 	"github.com/creasty/configo"
 
@@ -21,9 +20,7 @@ type ServerDependencies interface {
 
 	Init()
 	Router() services.Router
-	JWTGenerator() usecases.JWTGenerator
 	ErrorReporter() usecases.ErrorReporter
-	Clock() usecases.Clock
 
 	RDB() *infra.RDB
 	SQLHandler() rdb.SQLHandler
@@ -47,7 +44,6 @@ type serverDependencies struct {
 	ErrorReporterDSN      string             `envconfig:"error_reporter_dsn"`
 	JWTSecret             string             `envconfig:"jwt_secret" valid:"required"`
 	Port                  string             `envconfig:"app_port" valid:"required"`
-	SessionLength         time.Duration      `envconfig:"user_session_length" valid:"required"`
 	SessionCookieName     string             `envconfig:"user_session_cookie_name" valid:"required"`
 	TimeZone              string             `envconfig:"app_timezone" valid:"required"`
 	ChangeUsernameEnabled bool               `envconfig:"change_username_enabled"`
@@ -110,7 +106,7 @@ func (d *serverDependencies) AutoConfigure() error {
 func (d *serverDependencies) Services() *Services {
 	holder := &d.services
 	holder.once.Do(func() {
-		holder.result = NewServices(d.Interactors(), d.SessionCookieName)
+		holder.result = NewServices(d.Interactors())
 	})
 	return holder.result
 }
@@ -134,7 +130,7 @@ func (d *serverDependencies) Repositories() *Repositories {
 func (d *serverDependencies) Interactors() *Interactors {
 	holder := &d.interactors
 	holder.once.Do(func() {
-		holder.result = NewInteractors(d.Repositories(), d.JWTGenerator(), d.SessionLength)
+		holder.result = NewInteractors(d.Repositories())
 	})
 	return holder.result
 }
@@ -180,27 +176,6 @@ func (d *serverDependencies) routes() []services.Route {
 	}
 
 	return routes
-}
-
-func (d *serverDependencies) JWTGenerator() usecases.JWTGenerator {
-	holder := &d.jwtGenerator
-	holder.once.Do(func() {
-		holder.result = infra.NewJWTGenerator(d.JWTSecret, d.Clock())
-	})
-	return holder.result
-}
-
-func (d *serverDependencies) Clock() usecases.Clock {
-	holder := &d.clock
-	holder.once.Do(func() {
-		var err error
-		holder.result, err = infra.NewClock(d.TimeZone)
-
-		if err != nil {
-			log.Fatalf("failed to initialize clock: %v\n", err)
-		}
-	})
-	return holder.result
 }
 
 func (d *serverDependencies) ErrorReporter() usecases.ErrorReporter {

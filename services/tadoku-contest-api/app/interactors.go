@@ -12,7 +12,6 @@ type Interactors struct {
 	Session usecases.SessionInteractor
 	Contest usecases.ContestInteractor
 	Ranking usecases.RankingInteractor
-	User    usecases.UserInteractor
 }
 
 // NewInteractors initializes all repositories
@@ -32,6 +31,5 @@ func NewInteractors(
 		),
 		Contest: usecases.NewContestInteractor(r.Contest, infra.NewValidator()),
 		Ranking: usecases.NewRankingInteractor(r.Ranking, r.Contest, r.ContestLog, r.User, infra.NewValidator()),
-		User:    usecases.NewUserInteractor(r.User, passwordHasher),
 	}
 }

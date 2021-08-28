@@ -54,7 +54,7 @@ jobs:
 
           # Push images
           bazel run //services/identity-api/cmd/server:image_push
-          bazel run //services/tadoku-contest-api/cmd/migrate:image_push
-          bazel run //services/tadoku-contest-api/cmd/server:image_push
+          bazel run //services/reading-contest-api/cmd/migrate:image_push
+          bazel run //services/reading-contest-api/cmd/server:image_push
           bazel run //services/blog-api:image_push
           bazel run //services/redirect-naked-domain:image_push

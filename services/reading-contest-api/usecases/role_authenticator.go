@@ -3,7 +3,7 @@ package usecases
 import (
 	"github.com/srvc/fail"
 
-	"github.com/tadoku/tadoku/services/tadoku-contest-api/domain"
+	"github.com/tadoku/tadoku/services/reading-contest-api/domain"
 )
 
 var (

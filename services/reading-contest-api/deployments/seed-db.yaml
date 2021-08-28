@@ -1,15 +1,15 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: seed-tadoku-contest-api-job
+  name: seed-reading-contest-api-job
 spec:
   template:
     metadata:
-      name: "seed-tadoku-contest-api-job-pod"
+      name: "seed-reading-contest-api-job-pod"
     spec:
       restartPolicy: Never
       containers:
-      - name: seed-tadoku-contest-api
+      - name: seed-reading-contest-api
         imagePullPolicy: IfNotPresent
         image: postgres:12
         command: [ "bin/sh", "-c", "psql -a -f /seed.sql" ]
@@ -19,23 +19,23 @@ spec:
             subPath: seed.sql
         envFrom:
           - secretRef:
-              name: tadoku-user.tadoku-contest-api-db.credentials.postgresql.acid.zalan.do
+              name: tadoku-user.reading-contest-api-db.credentials.postgresql.acid.zalan.do
         env:
         - name: PGUSER
           valueFrom:
             secretKeyRef:
-              name: tadoku-user.tadoku-contest-api-db.credentials.postgresql.acid.zalan.do
+              name: tadoku-user.reading-contest-api-db.credentials.postgresql.acid.zalan.do
               key: username
         - name: PGPASSWORD
           valueFrom:
             secretKeyRef:
-              name: tadoku-user.tadoku-contest-api-db.credentials.postgresql.acid.zalan.do
+              name: tadoku-user.reading-contest-api-db.credentials.postgresql.acid.zalan.do
               key: password
         - name: PGHOST
-          value: tadoku-contest-api-db
+          value: reading-contest-api-db
         - name: PGDATABASE
           value: tadoku
       volumes:
         - name: seed-sql
           configMap:
-            name: seed-sql-tadoku-contest-api
+            name: seed-sql-reading-contest-api

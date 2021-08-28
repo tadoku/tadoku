@@ -16,7 +16,7 @@ k8s_resource('pgweb', port_forwards=9000)
 
 # Services
 
-include('./services/tadoku-contest-api/Tiltfile')
+include('./services/reading-contest-api/Tiltfile')
 include('./services/blog-api/Tiltfile')
 include('./services/identity-api/Tiltfile')
 

@@ -11,11 +11,11 @@ go_library(
         "ranking_service.go",
         "router.go",
     ],
-    importpath = "github.com/tadoku/tadoku/services/tadoku-contest-api/interfaces/services",
+    importpath = "github.com/tadoku/tadoku/services/reading-contest-api/interfaces/services",
     visibility = ["//visibility:public"],
     deps = [
-        "//services/tadoku-contest-api/domain",
-        "//services/tadoku-contest-api/usecases",
+        "//services/reading-contest-api/domain",
+        "//services/reading-contest-api/usecases",
         "@com_github_golang_mock//gomock",
     ],
 )
@@ -30,8 +30,8 @@ go_test(
     ],
     deps = [
         ":services",
-        "//services/tadoku-contest-api/domain",
-        "//services/tadoku-contest-api/usecases",
+        "//services/reading-contest-api/domain",
+        "//services/reading-contest-api/usecases",
         "@com_github_golang_mock//gomock",
         "@com_github_stretchr_testify//assert",
     ],

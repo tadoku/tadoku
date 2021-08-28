@@ -1,41 +1,41 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: tadoku-contest-api
+  name: reading-contest-api
   labels:
-    app: tadoku-contest-api
+    app: reading-contest-api
 spec:
   selector:
     matchLabels:
-      app: tadoku-contest-api
+      app: reading-contest-api
   template:
     metadata:
       labels:
-        app: tadoku-contest-api
+        app: reading-contest-api
     spec:
       containers:
-        - name: tadoku-contest-api
-          image: tadoku-contest-api-image
+        - name: reading-contest-api
+          image: reading-contest-api-image
           ports:
             - containerPort: 4000
           envFrom:
             - configMapRef:
-                name: tadoku-contest-api-configmap
+                name: reading-contest-api-configmap
             - secretRef:
-                name: tadoku-user.tadoku-contest-api-db.credentials.postgresql.acid.zalan.do
+                name: tadoku-user.reading-contest-api-db.credentials.postgresql.acid.zalan.do
           env:
             - name: POSTGRES_USER
               valueFrom:
                 secretKeyRef:
-                  name: tadoku-user.tadoku-contest-api-db.credentials.postgresql.acid.zalan.do
+                  name: tadoku-user.reading-contest-api-db.credentials.postgresql.acid.zalan.do
                   key: username
             - name: POSTGRES_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: tadoku-user.tadoku-contest-api-db.credentials.postgresql.acid.zalan.do
+                  name: tadoku-user.reading-contest-api-db.credentials.postgresql.acid.zalan.do
                   key: password
             - name: DATABASE_URL
-              value: "postgres://$(username):$(password)@tadoku-contest-api-db/tadoku"
+              value: "postgres://$(username):$(password)@reading-contest-api-db/tadoku"
           readinessProbe:
             httpGet:
               scheme: HTTP
@@ -54,9 +54,9 @@ spec:
 apiVersion: "acid.zalan.do/v1"
 kind: postgresql
 metadata:
-  name: tadoku-contest-api-db
+  name: reading-contest-api-db
   labels:
-    app: tadoku-contest-api-db
+    app: reading-contest-api-db
 spec:
   teamId: "tadoku"
   volume:
@@ -72,11 +72,11 @@ spec:
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: tadoku-contest-api-configmap
+  name: reading-contest-api-configmap
 data:
   APP_PORT: "4000"
   APP_ENV: development
-  APP_NAME: tadoku-contest-api
+  APP_NAME: reading-contest-api
   APP_TIMEZONE: UTC
   CORS_ALLOWED_ORIGINS: https://tadoku.app
   DATABASE_MAX_IDLE_CONNS: "10"
@@ -88,13 +88,13 @@ data:
 apiVersion: v1
 kind: Service
 metadata:
-  name: tadoku-contest-api
+  name: reading-contest-api
   labels:
-    app: tadoku-contest-api
-    service: tadoku-contest-api
+    app: reading-contest-api
+    service: reading-contest-api
 spec:
   ports:
     - port: 4000
       name: http
   selector:
-    app: tadoku-contest-api
+    app: reading-contest-api

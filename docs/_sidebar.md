@@ -11,7 +11,7 @@
 
 - Services
 
-  - `tadoku-contest-api`
+  - `reading-contest-api`
   - `identity-api`
   - `blog-api`
 

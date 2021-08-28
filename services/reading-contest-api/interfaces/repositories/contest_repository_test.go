@@ -6,8 +6,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/tadoku/tadoku/services/tadoku-contest-api/domain"
-	"github.com/tadoku/tadoku/services/tadoku-contest-api/interfaces/repositories"
+	"github.com/tadoku/tadoku/services/reading-contest-api/domain"
+	"github.com/tadoku/tadoku/services/reading-contest-api/interfaces/repositories"
 )
 
 func TestContestRepository_StoreContest(t *testing.T) {

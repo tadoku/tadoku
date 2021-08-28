@@ -6,8 +6,8 @@ package services
 
 import (
 	gomock "github.com/golang/mock/gomock"
-	domain "github.com/tadoku/tadoku/services/tadoku-contest-api/domain"
-	usecases "github.com/tadoku/tadoku/services/tadoku-contest-api/usecases"
+	domain "github.com/tadoku/tadoku/services/reading-contest-api/domain"
+	usecases "github.com/tadoku/tadoku/services/reading-contest-api/usecases"
 	http "net/http"
 	reflect "reflect"
 )

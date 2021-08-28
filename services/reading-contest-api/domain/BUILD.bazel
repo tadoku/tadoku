@@ -16,7 +16,7 @@ go_library(
         "role.go",
         "user.go",
     ],
-    importpath = "github.com/tadoku/tadoku/services/tadoku-contest-api/domain",
+    importpath = "github.com/tadoku/tadoku/services/reading-contest-api/domain",
     visibility = ["//visibility:public"],
     deps = ["@com_github_srvc_fail//:fail"],
 )

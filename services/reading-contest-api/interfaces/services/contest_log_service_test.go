@@ -6,9 +6,9 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 
-	"github.com/tadoku/tadoku/services/tadoku-contest-api/domain"
-	"github.com/tadoku/tadoku/services/tadoku-contest-api/interfaces/services"
-	"github.com/tadoku/tadoku/services/tadoku-contest-api/usecases"
+	"github.com/tadoku/tadoku/services/reading-contest-api/domain"
+	"github.com/tadoku/tadoku/services/reading-contest-api/interfaces/services"
+	"github.com/tadoku/tadoku/services/reading-contest-api/usecases"
 )
 
 func TestContestLogService_Create(t *testing.T) {

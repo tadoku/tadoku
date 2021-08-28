@@ -1,8 +1,8 @@
 package app
 
 import (
-	"github.com/tadoku/tadoku/services/tadoku-contest-api/infra"
-	"github.com/tadoku/tadoku/services/tadoku-contest-api/usecases"
+	"github.com/tadoku/tadoku/services/reading-contest-api/infra"
+	"github.com/tadoku/tadoku/services/reading-contest-api/usecases"
 )
 
 // Interactors is a collection of all repositories

@@ -11,9 +11,9 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 
-	"github.com/tadoku/tadoku/services/tadoku-contest-api/domain"
-	"github.com/tadoku/tadoku/services/tadoku-contest-api/interfaces/services"
-	"github.com/tadoku/tadoku/services/tadoku-contest-api/usecases"
+	"github.com/tadoku/tadoku/services/reading-contest-api/domain"
+	"github.com/tadoku/tadoku/services/reading-contest-api/interfaces/services"
+	"github.com/tadoku/tadoku/services/reading-contest-api/usecases"
 )
 
 type jwtClaims struct {

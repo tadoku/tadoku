@@ -5,8 +5,8 @@ package services
 import (
 	"net/http"
 
-	"github.com/tadoku/tadoku/services/tadoku-contest-api/domain"
-	"github.com/tadoku/tadoku/services/tadoku-contest-api/usecases"
+	"github.com/tadoku/tadoku/services/reading-contest-api/domain"
+	"github.com/tadoku/tadoku/services/reading-contest-api/usecases"
 )
 
 // based on https://github.com/labstack/echo/blob/a2d4cb9c7a629e2ee21861501690741d2374de10/context.go

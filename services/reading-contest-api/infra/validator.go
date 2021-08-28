@@ -3,7 +3,7 @@ package infra
 import (
 	"github.com/asaskevich/govalidator"
 
-	"github.com/tadoku/tadoku/services/tadoku-contest-api/usecases"
+	"github.com/tadoku/tadoku/services/reading-contest-api/usecases"
 )
 
 // NewValidator validates structs and possibly other stuff in the future

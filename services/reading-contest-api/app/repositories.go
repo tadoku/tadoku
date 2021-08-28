@@ -1,9 +1,9 @@
 package app
 
 import (
-	"github.com/tadoku/tadoku/services/tadoku-contest-api/interfaces/rdb"
-	r "github.com/tadoku/tadoku/services/tadoku-contest-api/interfaces/repositories"
-	"github.com/tadoku/tadoku/services/tadoku-contest-api/usecases"
+	"github.com/tadoku/tadoku/services/reading-contest-api/interfaces/rdb"
+	r "github.com/tadoku/tadoku/services/reading-contest-api/interfaces/repositories"
+	"github.com/tadoku/tadoku/services/reading-contest-api/usecases"
 )
 
 // Repositories is a collection of all repositories

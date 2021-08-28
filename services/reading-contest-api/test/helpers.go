@@ -3,7 +3,7 @@ package test
 import (
 	"github.com/creasty/configo"
 
-	"github.com/tadoku/tadoku/services/tadoku-contest-api/domain"
+	"github.com/tadoku/tadoku/services/reading-contest-api/domain"
 )
 
 // Config contains testing configuration data

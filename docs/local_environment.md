@@ -25,9 +25,9 @@ Given the following database configuration we can derive the connections as foll
 apiVersion: "acid.zalan.do/v1"
 kind: postgresql
 metadata:
-  name: tadoku-contest-api-db
+  name: reading-contest-api-db
   labels:
-    app: tadoku-contest-api-db
+    app: reading-contest-api-db
 spec:
   teamId: "tadoku"
   volume:
@@ -43,13 +43,13 @@ spec:
 
 ```sh
 # Host, derived from `metadata.name`
-tadoku-contest-api-db
+reading-contest-api-db
 
 # Username, default superuser
 postgres
 
 # Password, secret name has the following pattern: `$username.$database_name.credentials.postgresql.acid.zalan.do`
-$ kubectl get secret postgres.tadoku-contest-api-db.credentials.postgresql.acid.zalan.do -o json | jq -r .data.password | base64 --decode`
+$ kubectl get secret postgres.reading-contest-api-db.credentials.postgresql.acid.zalan.do -o json | jq -r .data.password | base64 --decode`
 
 # Database name, derived from `spec.databases.$database_name`
 tadoku

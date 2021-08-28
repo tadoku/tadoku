@@ -3,8 +3,8 @@ package services
 import (
 	"net/http"
 
-	"github.com/tadoku/tadoku/services/tadoku-contest-api/domain"
-	"github.com/tadoku/tadoku/services/tadoku-contest-api/usecases"
+	"github.com/tadoku/tadoku/services/reading-contest-api/domain"
+	"github.com/tadoku/tadoku/services/reading-contest-api/usecases"
 )
 
 // ContestLogService is responsible for managing contest log entries

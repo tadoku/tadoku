@@ -15,19 +15,19 @@ spec:
         app: tadoku-web
     spec:
       containers:
-      - name: web
-        image: frontend-web
-        ports:
-        - containerPort: 3000
-        env:
-        - name: API_ROOT
-          value: "http://tadoku-contest-api" # TODO: upgrade to services
-        - name: PORT
-          value: "3000"
-        readinessProbe:
-          httpGet:
-            scheme: HTTP
-            path: /
-            port: 3000
-          initialDelaySeconds: 60
-          periodSeconds: 15
+        - name: web
+          image: frontend-web
+          ports:
+            - containerPort: 3000
+          env:
+            - name: API_ROOT
+              value: "http://reading-contest-api" # TODO: upgrade to services
+            - name: PORT
+              value: "3000"
+          readinessProbe:
+            httpGet:
+              scheme: HTTP
+              path: /
+              port: 3000
+            initialDelaySeconds: 60
+            periodSeconds: 15

@@ -7,17 +7,17 @@ metadata:
     konghq.com/strip-path: "true"
 spec:
   rules:
-  - http:
-      paths:
-      - path: /reading-contest
-        backend:
-          serviceName: tadoku-contest-api
-          servicePort: 4000
-      - path: /identity
-        backend:
-          serviceName: identity-api
-          servicePort: 4000
-      - path: /blog
-        backend:
-          serviceName: blog-api
-          servicePort: 8080
+    - http:
+        paths:
+          - path: /reading-contest
+            backend:
+              serviceName: reading-contest-api
+              servicePort: 4000
+          - path: /identity
+            backend:
+              serviceName: identity-api
+              servicePort: 4000
+          - path: /blog
+            backend:
+              serviceName: blog-api
+              servicePort: 8080

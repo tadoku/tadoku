@@ -6,9 +6,9 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/tadoku/tadoku/services/tadoku-contest-api/domain"
-	"github.com/tadoku/tadoku/services/tadoku-contest-api/infra"
-	"github.com/tadoku/tadoku/services/tadoku-contest-api/interfaces/services"
+	"github.com/tadoku/tadoku/services/reading-contest-api/domain"
+	"github.com/tadoku/tadoku/services/reading-contest-api/infra"
+	"github.com/tadoku/tadoku/services/reading-contest-api/interfaces/services"
 )
 
 func TestRouter_RestrictedRoute(t *testing.T) {

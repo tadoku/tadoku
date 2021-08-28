@@ -17,10 +17,10 @@ go_library(
         "validator.go",
         "validator_mock.go",
     ],
-    importpath = "github.com/tadoku/tadoku/services/tadoku-contest-api/usecases",
+    importpath = "github.com/tadoku/tadoku/services/reading-contest-api/usecases",
     visibility = ["//visibility:public"],
     deps = [
-        "//services/tadoku-contest-api/domain",
+        "//services/reading-contest-api/domain",
         "@com_github_golang_mock//gomock",
         "@com_github_srvc_fail//:fail",
     ],
@@ -34,7 +34,7 @@ go_test(
     ],
     deps = [
         ":usecases",
-        "//services/tadoku-contest-api/domain",
+        "//services/reading-contest-api/domain",
         "@com_github_golang_mock//gomock",
         "@com_github_stretchr_testify//assert",
     ],

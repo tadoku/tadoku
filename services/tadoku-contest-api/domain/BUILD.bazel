@@ -27,7 +27,6 @@ go_test(
         "contest_log_test.go",
         "language_test.go",
         "medium_test.go",
-        "user_test.go",
         "validate_test.go",
     ],
     embed = [":domain"],

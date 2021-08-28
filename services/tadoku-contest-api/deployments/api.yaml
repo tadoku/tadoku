@@ -14,42 +14,42 @@ spec:
         app: tadoku-contest-api
     spec:
       containers:
-      - name: tadoku-contest-api
-        image: tadoku-contest-api-image
-        ports:
-        - containerPort: 4000
-        envFrom:
-          - configMapRef:
-              name: tadoku-contest-api-configmap
-          - secretRef:
-              name: tadoku-user.tadoku-contest-api-db.credentials.postgresql.acid.zalan.do
-        env:
-        - name: POSTGRES_USER
-          valueFrom:
-            secretKeyRef:
-              name: tadoku-user.tadoku-contest-api-db.credentials.postgresql.acid.zalan.do
-              key: username
-        - name: POSTGRES_PASSWORD
-          valueFrom:
-            secretKeyRef:
-              name: tadoku-user.tadoku-contest-api-db.credentials.postgresql.acid.zalan.do
-              key: password
-        - name: DATABASE_URL
-          value: "postgres://$(username):$(password)@tadoku-contest-api-db/tadoku"
-        readinessProbe:
-          httpGet:
-            scheme: HTTP
-            path: /ping
-            port: 4000
-          initialDelaySeconds: 10
-          periodSeconds: 5
-        livenessProbe:
-          httpGet:
-            scheme: HTTP
-            path: /ping
-            port: 4000
-          initialDelaySeconds: 10
-          periodSeconds: 5
+        - name: tadoku-contest-api
+          image: tadoku-contest-api-image
+          ports:
+            - containerPort: 4000
+          envFrom:
+            - configMapRef:
+                name: tadoku-contest-api-configmap
+            - secretRef:
+                name: tadoku-user.tadoku-contest-api-db.credentials.postgresql.acid.zalan.do
+          env:
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  name: tadoku-user.tadoku-contest-api-db.credentials.postgresql.acid.zalan.do
+                  key: username
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: tadoku-user.tadoku-contest-api-db.credentials.postgresql.acid.zalan.do
+                  key: password
+            - name: DATABASE_URL
+              value: "postgres://$(username):$(password)@tadoku-contest-api-db/tadoku"
+          readinessProbe:
+            httpGet:
+              scheme: HTTP
+              path: /ping
+              port: 4000
+            initialDelaySeconds: 10
+            periodSeconds: 5
+          livenessProbe:
+            httpGet:
+              scheme: HTTP
+              path: /ping
+              port: 4000
+            initialDelaySeconds: 10
+            periodSeconds: 5
 ---
 apiVersion: "acid.zalan.do/v1"
 kind: postgresql
@@ -82,11 +82,8 @@ data:
   DATABASE_MAX_IDLE_CONNS: "10"
   DATABASE_MAX_OPEN_CONNS: "10"
   JWT_SECRET: "abcdefghijklmnopqrstuvwxyz"
-  USER_SESSION_LENGTH: "792h"
   USER_SESSION_COOKIE_NAME: "session_token"
   ERROR_REPORTER_DSN: ""
-  USER_SESSION_API_ENABLED: "true"
-  CHANGE_USERNAME_ENABLED: "true"
 ---
 apiVersion: v1
 kind: Service
@@ -97,7 +94,7 @@ metadata:
     service: tadoku-contest-api
 spec:
   ports:
-  - port: 4000
-    name: http
+    - port: 4000
+      name: http
   selector:
     app: tadoku-contest-api

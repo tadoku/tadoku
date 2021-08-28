@@ -50,7 +50,6 @@ type serverDependencies struct {
 	SessionLength         time.Duration      `envconfig:"user_session_length" valid:"required"`
 	SessionCookieName     string             `envconfig:"user_session_cookie_name" valid:"required"`
 	TimeZone              string             `envconfig:"app_timezone" valid:"required"`
-	UserSessionAPIEnabled bool               `envconfig:"user_session_api_enabled"`
 	ChangeUsernameEnabled bool               `envconfig:"change_username_enabled"`
 
 	router struct {

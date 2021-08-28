@@ -19,10 +19,6 @@ go_library(
         "repositories_mock.go",
         "role_authenticator.go",
         "session_claims.go",
-        "session_interactor.go",
-        "session_interactor_mock.go",
-        "user_interactor.go",
-        "user_interactor_mock.go",
         "validatable.go",
         "validator.go",
         "validator_mock.go",
@@ -41,8 +37,6 @@ go_test(
     srcs = [
         "contest_interactor_test.go",
         "ranking_interactor_test.go",
-        "session_interactor_test.go",
-        "user_interactor_test.go",
     ],
     deps = [
         ":usecases",

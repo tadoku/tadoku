@@ -16,7 +16,6 @@ func setupRankingTest(t *testing.T) (
 	*usecases.MockRankingRepository,
 	*usecases.MockContestRepository,
 	*usecases.MockContestLogRepository,
-	*usecases.MockUserRepository,
 	*usecases.MockValidator,
 	usecases.RankingInteractor,
 ) {
@@ -25,15 +24,14 @@ func setupRankingTest(t *testing.T) (
 	rankingRepo := usecases.NewMockRankingRepository(ctrl)
 	contestRepo := usecases.NewMockContestRepository(ctrl)
 	contestLogRepo := usecases.NewMockContestLogRepository(ctrl)
-	userRepo := usecases.NewMockUserRepository(ctrl)
 	validator := usecases.NewMockValidator(ctrl)
-	interactor := usecases.NewRankingInteractor(rankingRepo, contestRepo, contestLogRepo, userRepo, validator)
+	interactor := usecases.NewRankingInteractor(rankingRepo, contestRepo, contestLogRepo, validator)
 
-	return ctrl, rankingRepo, contestRepo, contestLogRepo, userRepo, validator, interactor
+	return ctrl, rankingRepo, contestRepo, contestLogRepo, validator, interactor
 }
 
 func TestRankingInteractor_CreateRanking(t *testing.T) {
-	ctrl, rankingRepo, contestRepo, _, userRepo, _, interactor := setupRankingTest(t)
+	ctrl, rankingRepo, contestRepo, _, _, interactor := setupRankingTest(t)
 	defer ctrl.Finish()
 
 	contestID := uint64(1)
@@ -43,7 +41,6 @@ func TestRankingInteractor_CreateRanking(t *testing.T) {
 		languages := domain.LanguageCodes{domain.Japanese, domain.English}
 
 		contestRepo.EXPECT().GetOpenContests().Return([]uint64{contestID}, nil)
-		userRepo.EXPECT().FindByID(userID).Return(domain.User{ID: userID}, nil)
 		rankingRepo.EXPECT().GetAllLanguagesForContestAndUser(contestID, userID).Return(nil, nil)
 		rankingRepo.EXPECT().Store(domain.Ranking{ContestID: contestID, UserID: userID, Language: languages[0], Amount: 0}).Return(nil)
 		rankingRepo.EXPECT().Store(domain.Ranking{ContestID: contestID, UserID: userID, Language: languages[1], Amount: 0}).Return(nil)
@@ -58,7 +55,6 @@ func TestRankingInteractor_CreateRanking(t *testing.T) {
 		languages := domain.LanguageCodes{domain.Chinese}
 
 		contestRepo.EXPECT().GetOpenContests().Return([]uint64{contestID}, nil)
-		userRepo.EXPECT().FindByID(userID).Return(domain.User{ID: userID}, nil)
 		rankingRepo.EXPECT().GetAllLanguagesForContestAndUser(contestID, userID).Return(domain.LanguageCodes{domain.English}, nil)
 		rankingRepo.EXPECT().Store(domain.Ranking{ContestID: contestID, UserID: userID, Language: languages[0], Amount: 0}).Return(nil)
 
@@ -71,7 +67,6 @@ func TestRankingInteractor_CreateRanking(t *testing.T) {
 		languages := domain.LanguageCodes{domain.English}
 
 		contestRepo.EXPECT().GetOpenContests().Return([]uint64{contestID}, nil)
-		userRepo.EXPECT().FindByID(userID).Return(domain.User{ID: userID}, nil)
 		rankingRepo.EXPECT().GetAllLanguagesForContestAndUser(contestID, userID).Return(domain.LanguageCodes{domain.English}, nil)
 
 		err := interactor.CreateRanking(userID, contestID, languages)
@@ -83,7 +78,6 @@ func TestRankingInteractor_CreateRanking(t *testing.T) {
 		languages := domain.LanguageCodes{domain.Global}
 
 		contestRepo.EXPECT().GetOpenContests().Return([]uint64{contestID}, nil)
-		userRepo.EXPECT().FindByID(userID).Return(domain.User{ID: userID}, nil)
 		rankingRepo.EXPECT().GetAllLanguagesForContestAndUser(contestID, userID).Return(nil, nil)
 
 		err := interactor.CreateRanking(userID, contestID, languages)
@@ -95,7 +89,6 @@ func TestRankingInteractor_CreateRanking(t *testing.T) {
 		languages := domain.LanguageCodes{"xxx"}
 
 		contestRepo.EXPECT().GetOpenContests().Return([]uint64{contestID}, nil)
-		userRepo.EXPECT().FindByID(userID).Return(domain.User{ID: userID}, nil)
 		rankingRepo.EXPECT().GetAllLanguagesForContestAndUser(contestID, userID).Return(nil, nil)
 
 		err := interactor.CreateRanking(userID, contestID, languages)
@@ -105,7 +98,7 @@ func TestRankingInteractor_CreateRanking(t *testing.T) {
 }
 
 func TestRankingInteractor_CreateLog(t *testing.T) {
-	ctrl, rankingRepo, contestRepo, contestLogRepo, _, validator, interactor := setupRankingTest(t)
+	ctrl, rankingRepo, contestRepo, contestLogRepo, validator, interactor := setupRankingTest(t)
 	defer ctrl.Finish()
 
 	contestID := uint64(1)
@@ -212,7 +205,7 @@ func TestRankingInteractor_CreateLog(t *testing.T) {
 }
 
 func TestRankingInteractor_UpdateLog(t *testing.T) {
-	ctrl, rankingRepo, contestRepo, contestLogRepo, _, validator, interactor := setupRankingTest(t)
+	ctrl, rankingRepo, contestRepo, contestLogRepo, validator, interactor := setupRankingTest(t)
 	defer ctrl.Finish()
 
 	contestID := uint64(1)
@@ -286,7 +279,7 @@ func TestRankingInteractor_UpdateLog(t *testing.T) {
 }
 
 func TestRankingInteractor_DeleteLog(t *testing.T) {
-	ctrl, rankingRepo, contestRepo, contestLogRepo, _, _, interactor := setupRankingTest(t)
+	ctrl, rankingRepo, contestRepo, contestLogRepo, _, interactor := setupRankingTest(t)
 	defer ctrl.Finish()
 
 	contestID := uint64(1)
@@ -351,7 +344,7 @@ func TestRankingInteractor_DeleteLog(t *testing.T) {
 }
 
 func TestRankingInteractor_UpdateRankings(t *testing.T) {
-	ctrl, rankingRepo, _, contestLogRepo, _, _, interactor := setupRankingTest(t)
+	ctrl, rankingRepo, _, contestLogRepo, _, interactor := setupRankingTest(t)
 	defer ctrl.Finish()
 
 	contestID := uint64(1)
@@ -401,7 +394,7 @@ func TestRankingInteractor_UpdateRankings(t *testing.T) {
 }
 
 func TestRankingInteractor_RankingsForRegistration(t *testing.T) {
-	ctrl, rankingRepo, _, _, _, _, interactor := setupRankingTest(t)
+	ctrl, rankingRepo, _, _, _, interactor := setupRankingTest(t)
 	defer ctrl.Finish()
 
 	contestID := uint64(1)
@@ -431,7 +424,7 @@ func TestRankingInteractor_RankingsForRegistration(t *testing.T) {
 }
 
 func TestRankingInteractor_RankingsForContest(t *testing.T) {
-	ctrl, rankingRepo, _, _, _, validator, interactor := setupRankingTest(t)
+	ctrl, rankingRepo, _, _, validator, interactor := setupRankingTest(t)
 	defer ctrl.Finish()
 
 	contestID := uint64(1)
@@ -518,7 +511,7 @@ func TestRankingInteractor_RankingsForContest(t *testing.T) {
 }
 
 func TestRankingInteractor_CurrentRegistration(t *testing.T) {
-	ctrl, rankingRepo, _, _, _, _, interactor := setupRankingTest(t)
+	ctrl, rankingRepo, _, _, _, interactor := setupRankingTest(t)
 	defer ctrl.Finish()
 
 	userID := uint64(1)
@@ -549,7 +542,7 @@ func TestRankingInteractor_CurrentRegistration(t *testing.T) {
 }
 
 func TestRankingInteractor_ContestLogs(t *testing.T) {
-	ctrl, _, _, repo, _, _, interactor := setupRankingTest(t)
+	ctrl, _, _, repo, _, interactor := setupRankingTest(t)
 	defer ctrl.Finish()
 
 	userID := uint64(1)
@@ -581,7 +574,7 @@ func TestRankingInteractor_ContestLogs(t *testing.T) {
 }
 
 func TestRankingInteractor_RecentContestLogs(t *testing.T) {
-	ctrl, _, _, repo, _, _, interactor := setupRankingTest(t)
+	ctrl, _, _, repo, _, interactor := setupRankingTest(t)
 	defer ctrl.Finish()
 
 	contestID := uint64(1)

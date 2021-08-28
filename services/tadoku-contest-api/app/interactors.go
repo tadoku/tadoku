@@ -17,6 +17,6 @@ func NewInteractors(
 ) *Interactors {
 	return &Interactors{
 		Contest: usecases.NewContestInteractor(r.Contest, infra.NewValidator()),
-		Ranking: usecases.NewRankingInteractor(r.Ranking, r.Contest, r.ContestLog, r.User, infra.NewValidator()),
+		Ranking: usecases.NewRankingInteractor(r.Ranking, r.Contest, r.ContestLog, infra.NewValidator()),
 	}
 }

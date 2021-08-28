@@ -180,29 +180,6 @@ func (d *serverDependencies) routes() []services.Route {
 		{Method: http.MethodDelete, Path: "/contest_logs/:id", HandlerFunc: d.Services().ContestLog.Delete, MinRole: domain.RoleUser},
 	}
 
-	if d.UserSessionAPIEnabled {
-		routes = append(routes, []services.Route{
-			// Session
-			{Method: http.MethodPost, Path: "/sessions", HandlerFunc: d.Services().Session.Login},
-			{Method: http.MethodDelete, Path: "/sessions", HandlerFunc: d.Services().Session.Logout, MinRole: domain.RoleUser},
-			// TODO: need better route for this, not RESTful as it is now
-			{Method: http.MethodPost, Path: "/sessions/refresh", HandlerFunc: d.Services().Session.Refresh, MinRole: domain.RoleUser},
-
-			// Users
-			{Method: http.MethodPost, Path: "/users", HandlerFunc: d.Services().User.Register},
-			{Method: http.MethodPost, Path: "/users/:id/password", HandlerFunc: d.Services().User.UpdatePassword, MinRole: domain.RoleUser},
-		}...)
-
-		if d.ChangeUsernameEnabled {
-			routes = append(routes, services.Route{
-				Method:      http.MethodPost,
-				Path:        "/users/:id/profile",
-				HandlerFunc: d.Services().User.UpdateProfile,
-				MinRole:     domain.RoleUser,
-			})
-		}
-	}
-
 	return routes
 }
 

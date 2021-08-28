@@ -36,17 +36,16 @@ func NewServerDependencies() ServerDependencies {
 }
 
 type serverDependencies struct {
-	Environment           domain.Environment `envconfig:"app_env" valid:"environment" default:"development"`
-	DatabaseURL           string             `envconfig:"database_url" valid:"required"`
-	DatabaseMaxIdleConns  int                `envconfig:"database_max_idle_conns" valid:"required"`
-	DatabaseMaxOpenConns  int                `envconfig:"database_max_open_conns" valid:"required"`
-	CORSAllowedOrigins    []string           `envconfig:"cors_allowed_origins" valid:"required"`
-	ErrorReporterDSN      string             `envconfig:"error_reporter_dsn"`
-	JWTSecret             string             `envconfig:"jwt_secret" valid:"required"`
-	Port                  string             `envconfig:"app_port" valid:"required"`
-	SessionCookieName     string             `envconfig:"user_session_cookie_name" valid:"required"`
-	TimeZone              string             `envconfig:"app_timezone" valid:"required"`
-	ChangeUsernameEnabled bool               `envconfig:"change_username_enabled"`
+	Environment          domain.Environment `envconfig:"app_env" valid:"environment" default:"development"`
+	DatabaseURL          string             `envconfig:"database_url" valid:"required"`
+	DatabaseMaxIdleConns int                `envconfig:"database_max_idle_conns" valid:"required"`
+	DatabaseMaxOpenConns int                `envconfig:"database_max_open_conns" valid:"required"`
+	CORSAllowedOrigins   []string           `envconfig:"cors_allowed_origins" valid:"required"`
+	ErrorReporterDSN     string             `envconfig:"error_reporter_dsn"`
+	JWTSecret            string             `envconfig:"jwt_secret" valid:"required"`
+	Port                 string             `envconfig:"app_port" valid:"required"`
+	SessionCookieName    string             `envconfig:"user_session_cookie_name" valid:"required"`
+	TimeZone             string             `envconfig:"app_timezone" valid:"required"`
 
 	router struct {
 		result services.Router

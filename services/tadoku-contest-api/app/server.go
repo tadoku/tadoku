@@ -58,16 +58,6 @@ type serverDependencies struct {
 		once   sync.Once
 	}
 
-	jwtGenerator struct {
-		result usecases.JWTGenerator
-		once   sync.Once
-	}
-
-	clock struct {
-		result usecases.Clock
-		once   sync.Once
-	}
-
 	rdb struct {
 		result *infra.RDB
 		once   sync.Once

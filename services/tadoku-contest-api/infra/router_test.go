@@ -4,13 +4,11 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/tadoku/tadoku/services/tadoku-contest-api/domain"
 	"github.com/tadoku/tadoku/services/tadoku-contest-api/infra"
 	"github.com/tadoku/tadoku/services/tadoku-contest-api/interfaces/services"
-	"github.com/tadoku/tadoku/services/tadoku-contest-api/usecases"
 )
 
 func TestRouter_RestrictedRoute(t *testing.T) {
@@ -26,8 +24,6 @@ func TestRouter_RestrictedRoute(t *testing.T) {
 		{Method: http.MethodGet, Path: "/admin", HandlerFunc: handler, MinRole: domain.RoleAdmin},
 	}
 	e := infra.NewRouter(domain.EnvTest, "1337", secret, cookieName, nil, nil, routes...)
-	clock, _ := infra.NewClock("UTC")
-	gen := infra.NewJWTGenerator(secret, clock)
 
 	for _, tc := range []struct {
 		path          string
@@ -58,7 +54,9 @@ func TestRouter_RestrictedRoute(t *testing.T) {
 			info:          "Admin access as admin",
 		},
 	} {
-		token, _, _ := gen.NewToken(time.Hour*1, usecases.SessionClaims{User: tc.user})
+		token, err := infra.NewJwtForTest(tc.user, secret)
+		assert.NoError(t, err, "creating a jwt should not fail")
+
 		cookie := &http.Cookie{
 			Name:     cookieName,
 			Value:    token,

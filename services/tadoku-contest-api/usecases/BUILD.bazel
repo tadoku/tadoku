@@ -3,16 +3,10 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
 go_library(
     name = "usecases",
     srcs = [
-        "clock.go",
-        "clock_mock.go",
         "contest_interactor.go",
         "contest_interactor_mock.go",
         "error_reporter.go",
         "error_reporter_mock.go",
-        "jwt_generator.go",
-        "jwt_generator_mock.go",
-        "password_hasher.go",
-        "password_hasher_mock.go",
         "ranking_interactor.go",
         "ranking_interactor_mock.go",
         "repositories.go",

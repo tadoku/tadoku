@@ -54,7 +54,7 @@ const createPut =
     request('put', `${rootUrl}${endpoint}`, options)
 
 export const createApiClient = (serviceName: string): ApiClient => {
-  const rootUrl = getService(serviceName).externalUrl
+  const rootUrl = getService(serviceName).endpoint
 
   return {
     get: createGet(rootUrl),

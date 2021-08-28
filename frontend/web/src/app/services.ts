@@ -1,11 +1,11 @@
 export interface Service {
   internalHost: string
-  externalUrl: string
+  endpoint: string
 }
 
 const createService = (suffix: string): Service => ({
   internalHost: `${process.env.API_ROOT}/${suffix}`,
-  externalUrl: `/api/${suffix}`,
+  endpoint: `/api/${suffix}`,
 })
 
 const services: { [key: string]: Service } = {

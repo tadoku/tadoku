@@ -4,7 +4,6 @@ import (
 	"log"
 	"net/http"
 	"sync"
-	"time"
 
 	"github.com/creasty/configo"
 
@@ -21,9 +20,7 @@ type ServerDependencies interface {
 
 	Init()
 	Router() services.Router
-	JWTGenerator() usecases.JWTGenerator
 	ErrorReporter() usecases.ErrorReporter
-	Clock() usecases.Clock
 
 	RDB() *infra.RDB
 	SQLHandler() rdb.SQLHandler
@@ -39,19 +36,16 @@ func NewServerDependencies() ServerDependencies {
 }
 
 type serverDependencies struct {
-	Environment           domain.Environment `envconfig:"app_env" valid:"environment" default:"development"`
-	DatabaseURL           string             `envconfig:"database_url" valid:"required"`
-	DatabaseMaxIdleConns  int                `envconfig:"database_max_idle_conns" valid:"required"`
-	DatabaseMaxOpenConns  int                `envconfig:"database_max_open_conns" valid:"required"`
-	CORSAllowedOrigins    []string           `envconfig:"cors_allowed_origins" valid:"required"`
-	ErrorReporterDSN      string             `envconfig:"error_reporter_dsn"`
-	JWTSecret             string             `envconfig:"jwt_secret" valid:"required"`
-	Port                  string             `envconfig:"app_port" valid:"required"`
-	SessionLength         time.Duration      `envconfig:"user_session_length" valid:"required"`
-	SessionCookieName     string             `envconfig:"user_session_cookie_name" valid:"required"`
-	TimeZone              string             `envconfig:"app_timezone" valid:"required"`
-	UserSessionAPIEnabled bool               `envconfig:"user_session_api_enabled"`
-	ChangeUsernameEnabled bool               `envconfig:"change_username_enabled"`
+	Environment          domain.Environment `envconfig:"app_env" valid:"environment" default:"development"`
+	DatabaseURL          string             `envconfig:"database_url" valid:"required"`
+	DatabaseMaxIdleConns int                `envconfig:"database_max_idle_conns" valid:"required"`
+	DatabaseMaxOpenConns int                `envconfig:"database_max_open_conns" valid:"required"`
+	CORSAllowedOrigins   []string           `envconfig:"cors_allowed_origins" valid:"required"`
+	ErrorReporterDSN     string             `envconfig:"error_reporter_dsn"`
+	JWTSecret            string             `envconfig:"jwt_secret" valid:"required"`
+	Port                 string             `envconfig:"app_port" valid:"required"`
+	SessionCookieName    string             `envconfig:"user_session_cookie_name" valid:"required"`
+	TimeZone             string             `envconfig:"app_timezone" valid:"required"`
 
 	router struct {
 		result services.Router
@@ -60,16 +54,6 @@ type serverDependencies struct {
 
 	errorReporter struct {
 		result usecases.ErrorReporter
-		once   sync.Once
-	}
-
-	jwtGenerator struct {
-		result usecases.JWTGenerator
-		once   sync.Once
-	}
-
-	clock struct {
-		result usecases.Clock
 		once   sync.Once
 	}
 
@@ -111,7 +95,7 @@ func (d *serverDependencies) AutoConfigure() error {
 func (d *serverDependencies) Services() *Services {
 	holder := &d.services
 	holder.once.Do(func() {
-		holder.result = NewServices(d.Interactors(), d.SessionCookieName)
+		holder.result = NewServices(d.Interactors())
 	})
 	return holder.result
 }
@@ -135,7 +119,7 @@ func (d *serverDependencies) Repositories() *Repositories {
 func (d *serverDependencies) Interactors() *Interactors {
 	holder := &d.interactors
 	holder.once.Do(func() {
-		holder.result = NewInteractors(d.Repositories(), d.JWTGenerator(), d.SessionLength)
+		holder.result = NewInteractors(d.Repositories())
 	})
 	return holder.result
 }
@@ -180,51 +164,7 @@ func (d *serverDependencies) routes() []services.Route {
 		{Method: http.MethodDelete, Path: "/contest_logs/:id", HandlerFunc: d.Services().ContestLog.Delete, MinRole: domain.RoleUser},
 	}
 
-	if d.UserSessionAPIEnabled {
-		routes = append(routes, []services.Route{
-			// Session
-			{Method: http.MethodPost, Path: "/sessions", HandlerFunc: d.Services().Session.Login},
-			{Method: http.MethodDelete, Path: "/sessions", HandlerFunc: d.Services().Session.Logout, MinRole: domain.RoleUser},
-			// TODO: need better route for this, not RESTful as it is now
-			{Method: http.MethodPost, Path: "/sessions/refresh", HandlerFunc: d.Services().Session.Refresh, MinRole: domain.RoleUser},
-
-			// Users
-			{Method: http.MethodPost, Path: "/users", HandlerFunc: d.Services().User.Register},
-			{Method: http.MethodPost, Path: "/users/:id/password", HandlerFunc: d.Services().User.UpdatePassword, MinRole: domain.RoleUser},
-		}...)
-
-		if d.ChangeUsernameEnabled {
-			routes = append(routes, services.Route{
-				Method:      http.MethodPost,
-				Path:        "/users/:id/profile",
-				HandlerFunc: d.Services().User.UpdateProfile,
-				MinRole:     domain.RoleUser,
-			})
-		}
-	}
-
 	return routes
-}
-
-func (d *serverDependencies) JWTGenerator() usecases.JWTGenerator {
-	holder := &d.jwtGenerator
-	holder.once.Do(func() {
-		holder.result = infra.NewJWTGenerator(d.JWTSecret, d.Clock())
-	})
-	return holder.result
-}
-
-func (d *serverDependencies) Clock() usecases.Clock {
-	holder := &d.clock
-	holder.once.Do(func() {
-		var err error
-		holder.result, err = infra.NewClock(d.TimeZone)
-
-		if err != nil {
-			log.Fatalf("failed to initialize clock: %v\n", err)
-		}
-	})
-	return holder.result
 }
 
 func (d *serverDependencies) ErrorReporter() usecases.ErrorReporter {

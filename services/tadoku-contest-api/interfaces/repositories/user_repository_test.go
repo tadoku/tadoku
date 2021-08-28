@@ -16,7 +16,6 @@ func TestUserRepository_StoreUser(t *testing.T) {
 	user := &domain.User{
 		Email:       "foo@example.com",
 		DisplayName: "John Doe",
-		Password:    "foobar",
 		Role:        domain.RoleUser,
 		Preferences: &domain.Preferences{},
 	}
@@ -29,38 +28,6 @@ func TestUserRepository_StoreUser(t *testing.T) {
 	{
 		user.DisplayName = "John Smith"
 		err := repo.Store(user)
-		assert.NoError(t, err)
-	}
-
-	{
-		dbUser, err := repo.FindByID(user.ID)
-		assert.NoError(t, err)
-		assert.Equal(t, dbUser, domain.User{
-			ID:          user.ID,
-			Email:       "foo@example.com",
-			DisplayName: "John Smith",
-			Password:    "",
-			Role:        user.Role,
-			Preferences: &domain.Preferences{},
-		})
-	}
-
-	{
-		dbUser, err := repo.FindByEmail("foo@example.com")
-		assert.NoError(t, err)
-		assert.Equal(t, dbUser, domain.User{
-			ID:          user.ID,
-			Email:       "foo@example.com",
-			DisplayName: "John Smith",
-			Password:    "foobar",
-			Role:        user.Role,
-			Preferences: &domain.Preferences{},
-		})
-	}
-
-	{
-		user.Password = "barfoo"
-		err := repo.UpdatePassword(user)
 		assert.NoError(t, err)
 	}
 }

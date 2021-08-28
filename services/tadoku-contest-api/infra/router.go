@@ -6,6 +6,7 @@ import (
 	"regexp"
 	"strconv"
 
+	jwt "github.com/dgrijalva/jwt-go"
 	sentryecho "github.com/getsentry/sentry-go/echo"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
@@ -14,6 +15,25 @@ import (
 	"github.com/tadoku/tadoku/services/tadoku-contest-api/interfaces/services"
 	"github.com/tadoku/tadoku/services/tadoku-contest-api/usecases"
 )
+
+type jwtClaims struct {
+	usecases.SessionClaims
+	jwt.StandardClaims
+}
+
+func NewJwtForTest(user *domain.User, key string) (string, error) {
+	claims := jwtClaims{
+		SessionClaims:  usecases.SessionClaims{User: user},
+		StandardClaims: jwt.StandardClaims{},
+	}
+
+	token := jwt.NewWithClaims(
+		jwt.SigningMethodHS256,
+		claims,
+	)
+
+	return token.SignedString([]byte(key))
+}
 
 // NewRouter instantiates a router
 func NewRouter(

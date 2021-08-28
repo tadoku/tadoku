@@ -10,8 +10,6 @@ go_library(
         "health_service.go",
         "ranking_service.go",
         "router.go",
-        "session_service.go",
-        "user_service.go",
     ],
     importpath = "github.com/tadoku/tadoku/services/tadoku-contest-api/interfaces/services",
     visibility = ["//visibility:public"],
@@ -29,8 +27,6 @@ go_test(
         "contest_service_test.go",
         "health_service_test.go",
         "ranking_service_test.go",
-        "session_service_test.go",
-        "user_service_test.go",
     ],
     deps = [
         ":services",

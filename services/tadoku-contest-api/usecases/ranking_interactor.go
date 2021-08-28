@@ -70,14 +70,12 @@ func NewRankingInteractor(
 	rankingRepository RankingRepository,
 	contestRepository ContestRepository,
 	contestLogRepository ContestLogRepository,
-	userRepository UserRepository,
 	validator Validator,
 ) RankingInteractor {
 	return &rankingInteractor{
 		rankingRepository:    rankingRepository,
 		contestRepository:    contestRepository,
 		contestLogRepository: contestLogRepository,
-		userRepository:       userRepository,
 		validator:            validator,
 	}
 }
@@ -102,10 +100,6 @@ func (i *rankingInteractor) CreateRanking(
 
 	if !domain.ContainsID(ids, contestID) {
 		return ErrContestIsClosed
-	}
-
-	if _, err := i.userRepository.FindByID(userID); err != nil {
-		return ErrUserDoesNotExist
 	}
 
 	existingLanguages, err := i.rankingRepository.GetAllLanguagesForContestAndUser(contestID, userID)

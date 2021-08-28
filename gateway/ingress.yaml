@@ -9,15 +9,15 @@ spec:
   rules:
   - http:
       paths:
-      - path: /tadoku-contest-api
+      - path: /reading-contest
         backend:
           serviceName: tadoku-contest-api
           servicePort: 4000
-      - path: /identity-api
+      - path: /identity
         backend:
           serviceName: identity-api
           servicePort: 4000
-      - path: /blog-api
+      - path: /blog
         backend:
           serviceName: blog-api
           servicePort: 8080

@@ -8,6 +8,7 @@ import Document, {
   DocumentInitialProps,
 } from 'next/document'
 import { ServerStyleSheet } from 'styled-components'
+import GoogleSiteTag from 'src/app/lib/GoogleSiteTag'
 
 export default class MyDocument extends Document {
   static getInitialProps({
@@ -36,6 +37,7 @@ export default class MyDocument extends Document {
             rel="stylesheet"
           />
           <link rel="icon" href="/static/favicon.png" />
+          <GoogleSiteTag />
         </Head>
         <body>
           <Main />

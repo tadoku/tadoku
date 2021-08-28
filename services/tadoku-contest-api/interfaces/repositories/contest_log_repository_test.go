@@ -135,7 +135,6 @@ func TestContestLogRepository_FindRecent(t *testing.T) {
 	user := &domain.User{
 		Email:       "foo@example.com",
 		DisplayName: "John Smith",
-		Password:    "foobar",
 		Role:        domain.RoleUser,
 		Preferences: &domain.Preferences{},
 	}

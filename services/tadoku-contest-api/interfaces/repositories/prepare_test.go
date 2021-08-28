@@ -125,7 +125,6 @@ func createTestUsers(t *testing.T, sqlHandler rdb.SQLHandler, count int) []*doma
 		user := &domain.User{
 			Email:       fmt.Sprintf("foo+%d@bar.com", i),
 			DisplayName: fmt.Sprintf("FOO %d", i),
-			Password:    "foobar",
 			Role:        domain.RoleUser,
 			Preferences: &domain.Preferences{},
 		}

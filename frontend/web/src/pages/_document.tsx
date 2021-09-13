@@ -17,7 +17,7 @@ export default class MyDocument extends Document {
     const sheet = new ServerStyleSheet()
 
     const page = renderPage(
-      App => props => sheet.collectStyles(<App {...props} />),
+      App => props => sheet.collectStyles(<App {...props} />), // eslint-disable-line react/display-name
     )
 
     const styles = sheet.getStyleElement()

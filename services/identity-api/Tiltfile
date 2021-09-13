@@ -14,3 +14,5 @@ custom_build(
 )
 
 k8s_resource('identity-api', port_forwards=8002)
+
+k8s_yaml('./deployments/nats.yaml')

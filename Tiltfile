@@ -7,6 +7,9 @@ load('ext://helm_remote', 'helm_remote')
 helm_remote('postgres-operator',
             repo_name='commonground',
             repo_url='https://charts.commonground.nl/')
+helm_remote('nats',
+            repo_name='nats',
+            repo_url='https://nats-io.github.io/k8s/helm/charts/')
 
 include('./gateway/Tiltfile')
 

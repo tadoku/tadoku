@@ -181,7 +181,7 @@ const Credits = styled.p`
   }
 
   ${media.lessThan('medium')`
-    display: none;
+    margin: 20px;
   `}
 `
 
@@ -202,7 +202,7 @@ const SocialList = styled.ul`
   align-items: top;
 
   ${media.lessThan('medium')`
-    display: none;
+    justify-content: center;
   `}
 `
 

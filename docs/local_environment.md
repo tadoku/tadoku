@@ -8,8 +8,9 @@ We use [Tilt](https://tilt.dev/) to spin up a local Kubernetes cluster with all 
 
 1. Install Tilt according to their [installation instructions](https://docs.tilt.dev/install.html).
 2. Read the [Getting Started Tutorial](https://docs.tilt.dev/tutorial.html) for Tilt to get familiar with it.
-3. Run `$ tilt up` in the root of this repository.
-4. Some services will have a database seed script, these can be manually triggered from within Tilt when needed.
+3. Install [Helm](https://helm.sh/).
+4. Run `$ tilt up` in the root of this repository.
+5. Some services will have a database seed script, these can be manually triggered from within Tilt when needed.
 
 ## Can't connect connect to service/database
 

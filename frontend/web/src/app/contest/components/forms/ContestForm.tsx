@@ -124,6 +124,7 @@ const ContestForm = ({
             value={description}
             onChange={e => setDescription(e.target.value)}
             error={hasError.description}
+            placeholder="e.g. 2022 Round 1"
           />
           <GroupError
             message="Invalid description"
@@ -156,7 +157,7 @@ const ContestForm = ({
         </Label>
       </Group>
       <Group>
-        <LabelText>Open</LabelText>
+        <LabelText>Open to new participants</LabelText>
         <RadioButton
           type="radio"
           value="false"

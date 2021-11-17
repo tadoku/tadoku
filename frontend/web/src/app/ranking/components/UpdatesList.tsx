@@ -58,8 +58,14 @@ const UpdatesList = (props: Props) => (
             <strong>{formatScore(l.amount)}</strong> of{' '}
             <strong>{formatMediaDescription(l.mediumId).toLowerCase()}</strong>{' '}
             in <strong>{formatLanguageName(l.languageCode)}</strong> at{' '}
-            <strong>{format(l.date, 'MMM do')}</strong> for a total of{' '}
+            <strong>{formatUTC(l.date, 'MMM do')}</strong> for a total of{' '}
             <strong>{formatScore(l.adjustedAmount)}</strong> points
+            {l.description ? (
+              <>
+                <br />
+                {l.description}
+              </>
+            ) : null}
           </ShowSmallColumn>
           {props.canEdit && (
             <Column style={{ width: '1px', whiteSpace: 'nowrap', padding: 0 }}>

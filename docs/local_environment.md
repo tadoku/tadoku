@@ -7,7 +7,7 @@ We use [Tilt](https://tilt.dev/) to spin up a local Kubernetes cluster with all 
 ## Getting Started
 
 1. Install [Helm](https://helm.sh/docs/intro/install/).
-2. Install [Bazel](https://docs.bazel.build/bazel-overview.html)
+2. Install [Bazel](https://docs.bazel.build/bazel-overview.html).
 3. Install [Tilt](https://docs.tilt.dev/install.html).
 4. Read the [Getting Started Tutorial](https://docs.tilt.dev/tutorial.html) for Tilt to get familiar with it.
 5. Run `$ tilt up` in the root of this repository.

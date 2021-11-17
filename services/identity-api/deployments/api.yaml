@@ -23,20 +23,20 @@ spec:
             - configMapRef:
                 name: identity-api-configmap
             - secretRef:
-                name: tadoku-user.reading-contest-api-db.credentials.postgresql.acid.zalan.do
+                name: tadoku-user.tadoku-reading-contest-api-db.credentials.postgresql.acid.zalan.do
           env:
             - name: POSTGRES_USER
               valueFrom:
                 secretKeyRef:
-                  name: tadoku-user.reading-contest-api-db.credentials.postgresql.acid.zalan.do
+                  name: tadoku-user.tadoku-reading-contest-api-db.credentials.postgresql.acid.zalan.do
                   key: username
             - name: POSTGRES_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: tadoku-user.reading-contest-api-db.credentials.postgresql.acid.zalan.do
+                  name: tadoku-user.tadoku-reading-contest-api-db.credentials.postgresql.acid.zalan.do
                   key: password
             - name: DATABASE_URL
-              value: "postgres://$(username):$(password)@reading-contest-api-db/tadoku"
+              value: "postgres://$(username):$(password)@tadoku-reading-contest-api-db/tadoku"
           readinessProbe:
             httpGet:
               scheme: HTTP

@@ -5,8 +5,8 @@ load('ext://helm_remote', 'helm_remote')
 
 # Infra
 helm_remote('postgres-operator',
-            repo_name='commonground',
-            repo_url='https://charts.commonground.nl/')
+            repo_name='postgres-operator',
+            repo_url='https://opensource.zalando.com/postgres-operator/charts/postgres-operator/')
 helm_remote('nats',
             repo_name='nats',
             repo_url='https://nats-io.github.io/k8s/helm/charts/',

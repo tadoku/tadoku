@@ -5,7 +5,6 @@ import { formatLanguageName, formatMediaDescription } from '../transform/format'
 import { Button, ButtonContainer } from '@app/ui/components'
 import media from 'styled-media-query'
 import Constants from '@app/ui/Constants'
-import { format } from 'date-fns'
 import { formatScore } from '../transform/format'
 import { formatUTC } from '@app/dates'
 

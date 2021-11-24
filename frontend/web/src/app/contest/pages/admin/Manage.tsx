@@ -1,6 +1,6 @@
 import React, { Fragment, useState } from 'react'
 import Link from 'next/link'
-import { format } from 'date-fns'
+import { formatUTC } from '@app/dates'
 import styled from 'styled-components'
 
 import { Contest } from '@app/contest/interfaces'
@@ -129,8 +129,8 @@ const ContestListGroup = ({ contests, editContest }: Props) => (
             {contest.description}
             {contest.open && <OpenTag>Open</OpenTag>}
           </DescriptionCell>
-          <Cell>{format(contest.start, 'MMMM do')}</Cell>
-          <Cell>{format(contest.end, 'MMMM do')}</Cell>
+          <Cell>{formatUTC(contest.start, 'MMMM do')}</Cell>
+          <Cell>{formatUTC(contest.end, 'MMMM do')}</Cell>
           <Cell style={{ width: '1px', whiteSpace: 'nowrap', padding: 0 }}>
             <ActionButtonContainer>
               <Link href={`/contests/${contest.id}/ranking`} passHref>

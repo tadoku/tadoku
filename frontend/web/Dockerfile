@@ -1,5 +1,5 @@
 # Install deps
-FROM node:12 AS base
+FROM node:16 AS base
 WORKDIR /base
 COPY . .
 RUN yarn install --frozen-lockfile
@@ -13,7 +13,7 @@ RUN yarn run build
 RUN yarn install --production --ignore-scripts --prefer-offline
 
 # Create production container
-FROM node:12 AS production
+FROM node:16 AS production
 ENV NODE_ENV=production
 WORKDIR /app
 COPY --from=build /build/package.json /build/yarn.lock /build/server.js ./

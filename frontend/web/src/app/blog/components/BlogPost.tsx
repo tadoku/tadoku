@@ -24,6 +24,10 @@ const Container = styled.div`
 `
 
 const Content = styled.div`
+  th {
+    font-weight: normal;
+    text-align: left;
+  }
   a {
     color: ${Constants.colors.primary};
     text-decoration: underline;

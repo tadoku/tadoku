@@ -39,6 +39,7 @@ const (
 	Spanish    LanguageCode = "spa"
 	Swedish    LanguageCode = "swe"
 	Thai       LanguageCode = "tha"
+	Tagalog    LanguageCode = "tgl"
 	Turkish    LanguageCode = "tur"
 )
 
@@ -72,6 +73,7 @@ var AllLanguageCodes = LanguageCodes{
 	Spanish,
 	Swedish,
 	Thai,
+	Tagalog,
 	Turkish,
 }
 

@@ -35,5 +35,6 @@ var AllLanguages = Languages{
 	Language{Code: Spanish, Name: "Spanish"},
 	Language{Code: Swedish, Name: "Swedish"},
 	Language{Code: Thai, Name: "Thai"},
+	Language{Code: Tagalog, Name: "Tagalog"},
 	Language{Code: Turkish, Name: "Turkish"},
 }

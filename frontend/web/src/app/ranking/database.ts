@@ -46,6 +46,7 @@ export const allLanguages: Language[] = [
   { code: 'spa', name: 'Spanish' },
   { code: 'swe', name: 'Swedish' },
   { code: 'tha', name: 'Thai' },
+  { code: 'tgl', name: 'Tagalog' },
   { code: 'tur', name: 'Turkish' },
 ]
 

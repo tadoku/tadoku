@@ -1,4 +1,6 @@
-import { post } from '../api'
+import { createApiClient } from '../api'
+
+const { post } = createApiClient('identity')
 
 const changePassword = async (
   userId: number,

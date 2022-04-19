@@ -13,7 +13,7 @@
     "test": "jest",
     "lint": "eslint --ext .js,.ts,.tsx ./",
     "lint-fix": "eslint --fix --ext .js,.ts,.tsx ./",
-    "style-fix": "prettier --write .",
+    "fmt": "prettier --write .",
     "storybook": "start-storybook -p 6006 -c .storybook"
   },
   "husky": {

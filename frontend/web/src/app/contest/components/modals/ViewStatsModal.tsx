@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react'
+import { renderToStaticMarkup } from 'react-dom/server'
 import { Contest, ContestStats } from '../../interfaces'
 import Modal from '@app/ui/components/Modal'
 import { Group, Label, LabelText, TextArea } from '@app/ui/components/Form'
@@ -9,61 +10,32 @@ import { Ranking } from '@app/ranking/interfaces'
 import { formatLanguageName } from '@app/ranking/transform/format'
 
 function generateBlogPostSkeleton(stats: ContestStats, ranking: Ranking[]) {
-  const text = (textContent: string) => document.createTextNode(textContent)
-  const el = (
-    tagName: string,
-    textContent: string | number,
-    children: (HTMLElement | Text)[] = [],
-    attributes?: Record<string, string>,
-  ) => {
-    const el = document.createElement(tagName)
-    el.textContent = '' + textContent
-    for (const child of children) {
-      el.appendChild(child)
-    }
-    if (attributes) {
-      for (const attr in attributes) {
-        if (attributes.hasOwnProperty(attr)) {
-          el.setAttribute(attr, attributes[attr])
-        }
-      }
-    }
-    return el
-  }
-
   const winner = ranking[0]
 
-  return el('div', '', [
-    el('p', '', [
-      text('Congrats to '),
-      el('strong', winner.userDisplayName),
-      text(' for winning the round with a total score of '),
-      el('strong', winner.amount),
-      text('! In total '),
-      el('strong', stats.participants),
-      text(
-        ` ${
-          stats.participants === 1 ? 'person' : 'people'
-        } participated in this round for a total score of `,
-      ),
-      el('strong', stats.totalPages),
-      text('!'),
-    ]),
-    el('table', '', [
-      el(
-        'tbody',
-        '',
-        stats.byLanguage
-          .filter(({ languageCode }) => languageCode !== 'GLO')
-          .map(({ count, languageCode }) => {
-            return el('tr', '', [
-              el('th', formatLanguageName(languageCode), [], { scope: 'row' }),
-              el('td', `${count} reader${count === 1 ? '' : 's'}`, []),
-            ])
-          }),
-      ),
-    ]),
-  ]).innerHTML
+  return renderToStaticMarkup(
+    <>
+      <p>
+        Congrats to <strong>{winner.userDisplayName}</strong> for winning the
+        round with a total score of <strong>{winner.amount}</strong>! In total{' '}
+        <strong>{stats.participants}</strong>{' '}
+        {stats.participants === 1 ? 'person' : 'people'} participated in this
+        round for a total score of <strong>{stats.totalAmount}</strong>!
+      </p>
+
+      <table>
+        <tbody>
+          {stats.byLanguage
+            .filter(({ languageCode }) => languageCode !== 'GLO')
+            .map(({ languageCode, count }) => (
+              <tr key={languageCode}>
+                <th scope="row">{formatLanguageName(languageCode)}</th>
+                <td>{`${count} reader${count === 1 ? '' : 's'}`}</td>
+              </tr>
+            ))}
+        </tbody>
+      </table>
+    </>,
+  )
 }
 
 const EditContestFormModal = ({

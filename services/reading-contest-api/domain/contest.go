@@ -45,12 +45,12 @@ func (id ContestID) IsGlobal() bool {
 }
 
 type ContestStats struct {
-	ByLanguage   []ContestLanguageStat `json:"byLanguage"`
+	ByLanguage   []ContestLanguageStat `json:"by_language"`
 	Participants int                   `json:"participants"`
-	TotalPages   float64               `json:"totalPages"`
+	TotalAmount  float64               `json:"total_amount"`
 }
 
 type ContestLanguageStat struct {
 	Count        int    `json:"count" db:"cnt"`
-	LanguageCode string `json:"languageCode" db:"language_code"`
+	LanguageCode string `json:"language_code" db:"language_code"`
 }

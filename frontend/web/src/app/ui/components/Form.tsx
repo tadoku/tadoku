@@ -217,7 +217,7 @@ export const TextArea = styled.textarea`
   background: ${Constants.colors.light};
   padding: 4px 12px;
   font-size: 1.1em;
-  height: 44px;
+  height: 200px;
   width: 100%;
   box-sizing: border-box;
 

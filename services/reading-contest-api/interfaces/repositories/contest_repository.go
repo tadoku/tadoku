@@ -190,7 +190,7 @@ func (r *contestRepository) Stats(id uint64) (domain.ContestStats, error) {
 		return contestStats, domain.WrapError(err)
 	}
 
-	err = r.sqlHandler.Get(&contestStats.TotalPages, queryTotalPages, id)
+	err = r.sqlHandler.Get(&contestStats.TotalAmount, queryTotalPages, id)
 	if err != nil {
 		return contestStats, domain.WrapError(err)
 	}

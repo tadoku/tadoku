@@ -1,7 +1,7 @@
 import { formatRFC3339 } from 'date-fns'
 import { get, put, post } from '../api'
 import { Contest, RawContest, ContestStats } from './interfaces'
-import { contestMapper } from './transform'
+import { contestMapper, contestStatsMapper } from './transform'
 
 const getContest = async (contestId: number): Promise<Contest | undefined> => {
   const response = await get(`/contests/${contestId}`)
@@ -37,7 +37,7 @@ const getStats = async (
     return undefined
   }
 
-  return await response.json()
+  return contestStatsMapper.fromRaw(await response.json())
 }
 
 const create = async (payload: {

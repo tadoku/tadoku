@@ -20,5 +20,14 @@ export interface ContestStats {
     count: number
   }[]
   participants: number
-  totalPages: number
+  totalAmount: number
+}
+
+export interface RawContestStats {
+  by_language: {
+    language_code: string
+    count: number
+  }[]
+  participants: number
+  total_amount: number
 }

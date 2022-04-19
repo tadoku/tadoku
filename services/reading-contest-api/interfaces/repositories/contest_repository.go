@@ -140,7 +140,7 @@ func (r *contestRepository) FindByID(id uint64) (domain.Contest, error) {
 }
 
 func (r *contestRepository) Stats(id uint64) (domain.ContestStats, error) {
-	var contestStats domain.ContestStats
+	var contestStats domain.ContestStats = domain.ContestStats{ByLanguage: []domain.ContestLanguageStat{}, Participants: 0, TotalAmount: 0}
 
 	_, err := r.FindByID(id)
 

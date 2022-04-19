@@ -42,7 +42,7 @@ export const contestCollectionSerializer: Serializer<Contest[]> =
 const rawToContestStatsMapper: Mapper<RawContestStats, ContestStats> = raw => ({
   totalAmount: raw.total_amount,
   participants: raw.participants,
-  byLanguage: raw.by_language.map(({ count, language_code }) => ({
+  byLanguage: (raw.by_language || []).map(({ count, language_code }) => ({
     count,
     languageCode: language_code,
   })),

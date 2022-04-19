@@ -207,6 +207,26 @@ export const Input = styled.input`
     border: 1px solid ${Constants.colors.destructive};
   `}
 `
+export const TextArea = styled.textarea`
+  -moz-appearance: none;
+  -webkit-appearance: none;
+  appearance: none;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  border-bottom-width: 3px;
+  border-radius: 0;
+  background: ${Constants.colors.light};
+  padding: 4px 12px;
+  font-size: 1.1em;
+  height: 44px;
+  width: 100%;
+  box-sizing: border-box;
+
+  ${({ error }: Errorable) =>
+    error &&
+    `
+    border: 1px solid ${Constants.colors.destructive};
+  `}
+`
 
 interface Errorable {
   error?: boolean

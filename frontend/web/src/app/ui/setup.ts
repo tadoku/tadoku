@@ -17,6 +17,7 @@ import {
   faArrowRight,
   faTools,
   faEye,
+  faCalculator,
 } from '@fortawesome/free-solid-svg-icons'
 import {
   faDiscord,
@@ -44,4 +45,5 @@ library.add(
   faArrowRight,
   faTools,
   faEye,
+  faCalculator,
 )

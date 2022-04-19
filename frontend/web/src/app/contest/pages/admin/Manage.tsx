@@ -23,12 +23,14 @@ import ContestApi from '@app/contest/api'
 import { contestCollectionSerializer } from '@app/contest/transform'
 import Constants from '@app/ui/Constants'
 import EditContestFormModal from '@app/contest/components/modals/EditContestFormModal'
+import ViewStatsModal from '@app/contest/components/modals/ViewStatsModal'
 import { isContestEditable } from '@app/ranking/domain'
 import NewContestFormModal from '@app/contest/components/modals/NewContestFormModal'
 
 interface Props {
   contests: Contest[]
   editContest: (contest: Contest) => void
+  viewContestStats: (contest: Contest) => void
 }
 
 const Manage = () => {
@@ -44,9 +46,11 @@ const Manage = () => {
     dependencies: [effectCount],
     serializer: contestCollectionSerializer,
   })
-  const [selectedContest, setSelectedContest] = useState(
+  const [selectedEditingContest, setSelectedEditingContest] = useState(
     undefined as Contest | undefined,
   )
+  const [selectedViewingStatsContest, setSelectedViewingStatsContest] =
+    useState(undefined as Contest | undefined)
   const [createContestModalOpen, setCreateContestModalOpen] = useState(false)
 
   if (!isReady([statusContests])) {
@@ -72,22 +76,30 @@ const Manage = () => {
         </ActionContainer>
       </HeaderContainer>
       <EditContestFormModal
-        setContest={setSelectedContest}
-        contest={selectedContest}
-        onCancel={() => setSelectedContest(undefined)}
+        setContest={setSelectedEditingContest}
+        contest={selectedEditingContest}
+        onCancel={() => setSelectedEditingContest(undefined)}
         onSuccess={() => {
-          setSelectedContest(undefined)
+          setSelectedEditingContest(undefined)
           setEffectCount(effectCount + 1)
         }}
       />
-      <ContestList contests={contests} editContest={setSelectedContest} />
+      <ViewStatsModal
+        contest={selectedViewingStatsContest}
+        onCancel={() => setSelectedViewingStatsContest(undefined)}
+      />
+      <ContestList
+        contests={contests}
+        editContest={setSelectedEditingContest}
+        viewContestStats={setSelectedViewingStatsContest}
+      />
     </>
   )
 }
 
 export default Manage
 
-const ContestList = ({ contests, editContest }: Props) => {
+const ContestList = ({ contests, editContest, viewContestStats }: Props) => {
   const grouped = contests.reduce((grouped, contest) => {
     const year = contest.start.getUTCFullYear()
     grouped[year] = grouped[year] || []
@@ -105,6 +117,7 @@ const ContestList = ({ contests, editContest }: Props) => {
             <ContestListGroup
               contests={grouped[year]}
               editContest={editContest}
+              viewContestStats={viewContestStats}
             />
           </Fragment>
         ))}
@@ -112,7 +125,11 @@ const ContestList = ({ contests, editContest }: Props) => {
   )
 }
 
-const ContestListGroup = ({ contests, editContest }: Props) => (
+const ContestListGroup = ({
+  contests,
+  editContest,
+  viewContestStats,
+}: Props) => (
   <Table>
     <thead>
       <TableHeading>
@@ -145,6 +162,13 @@ const ContestListGroup = ({ contests, editContest }: Props) => (
                 disabled={!isContestEditable(contest)}
               >
                 Edit
+              </Button>
+              <Button
+                onClick={() => viewContestStats(contest)}
+                icon="calculator"
+                plain
+              >
+                Stats
               </Button>
             </ActionButtonContainer>
           </Cell>

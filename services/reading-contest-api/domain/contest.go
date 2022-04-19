@@ -43,3 +43,14 @@ type ContestID uint64
 func (id ContestID) IsGlobal() bool {
 	return id == 0
 }
+
+type ContestStats struct {
+	ByLanguage   []ContestLanguageStat `json:"byLanguage"`
+	Participants int                   `json:"participants"`
+	TotalPages   float64               `json:"totalPages"`
+}
+
+type ContestLanguageStat struct {
+	Count        int    `json:"count" db:"cnt"`
+	LanguageCode string `json:"languageCode" db:"language_code"`
+}

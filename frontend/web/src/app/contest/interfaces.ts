@@ -13,3 +13,12 @@ export interface RawContest {
   end: string
   open: boolean
 }
+
+export interface ContestStats {
+  byLanguage: {
+    languageCode: string
+    count: number
+  }[]
+  participants: number
+  totalPages: number
+}

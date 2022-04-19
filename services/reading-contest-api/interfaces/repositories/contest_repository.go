@@ -138,3 +138,62 @@ func (r *contestRepository) FindByID(id uint64) (domain.Contest, error) {
 
 	return contest, nil
 }
+
+func (r *contestRepository) Stats(id uint64) (domain.ContestStats, error) {
+	var contestStats domain.ContestStats
+
+	_, err := r.FindByID(id)
+
+	if err != nil {
+		return contestStats, err
+	}
+
+	queryStatsByLanguage := `
+		select count(*) as cnt, language_code
+		from rankings
+		where
+			amount > 0 and
+			contest_id = $1
+		group by
+			language_code
+		order by cnt desc
+	`
+	queryParticipants := `
+		select count(*)
+			from rankings
+		where
+			language_code = 'GLO' and
+			amount > 0 and
+			contest_id = $1
+	`
+
+	queryTotalPages := `
+		select sum(amount)
+		from rankings
+		where
+			language_code = 'GLO' and
+			amount > 0 and
+			contest_id = $1
+	`
+
+	err = r.sqlHandler.Select(&contestStats.ByLanguage, queryStatsByLanguage, id)
+	if err != nil {
+		return contestStats, domain.WrapError(err)
+	}
+
+	if len(contestStats.ByLanguage) == 0 {
+		return contestStats, nil
+	}
+
+	err = r.sqlHandler.Get(&contestStats.Participants, queryParticipants, id)
+	if err != nil {
+		return contestStats, domain.WrapError(err)
+	}
+
+	err = r.sqlHandler.Get(&contestStats.TotalPages, queryTotalPages, id)
+	if err != nil {
+		return contestStats, domain.WrapError(err)
+	}
+
+	return contestStats, nil
+}

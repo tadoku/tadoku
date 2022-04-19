@@ -146,6 +146,7 @@ func (d *serverDependencies) routes() []services.Route {
 		{Method: http.MethodGet, Path: "/contests/:id", HandlerFunc: d.Services().Contest.Get},
 		{Method: http.MethodPost, Path: "/contests", HandlerFunc: d.Services().Contest.Create, MinRole: domain.RoleAdmin},
 		{Method: http.MethodPut, Path: "/contests/:id", HandlerFunc: d.Services().Contest.Update, MinRole: domain.RoleAdmin},
+		{Method: http.MethodGet, Path: "/contests/:id/stats", HandlerFunc: d.Services().Contest.Stats, MinRole: domain.RoleAdmin},
 
 		// Rankings
 		// TODO: Rename Get to All

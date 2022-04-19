@@ -5,106 +5,38 @@
 package services
 
 import (
+	http "net/http"
+	reflect "reflect"
+
 	gomock "github.com/golang/mock/gomock"
 	domain "github.com/tadoku/tadoku/services/reading-contest-api/domain"
 	usecases "github.com/tadoku/tadoku/services/reading-contest-api/usecases"
-	http "net/http"
-	reflect "reflect"
 )
 
-// MockContext is a mock of Context interface
+// MockContext is a mock of Context interface.
 type MockContext struct {
 	ctrl     *gomock.Controller
 	recorder *MockContextMockRecorder
 }
 
-// MockContextMockRecorder is the mock recorder for MockContext
+// MockContextMockRecorder is the mock recorder for MockContext.
 type MockContextMockRecorder struct {
 	mock *MockContext
 }
 
-// NewMockContext creates a new mock instance
+// NewMockContext creates a new mock instance.
 func NewMockContext(ctrl *gomock.Controller) *MockContext {
 	mock := &MockContext{ctrl: ctrl}
 	mock.recorder = &MockContextMockRecorder{mock}
 	return mock
 }
 
-// EXPECT returns an object that allows the caller to indicate expected use
+// EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockContext) EXPECT() *MockContextMockRecorder {
 	return m.recorder
 }
 
-// QueryParam mocks base method
-func (m *MockContext) QueryParam(name string) string {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "QueryParam", name)
-	ret0, _ := ret[0].(string)
-	return ret0
-}
-
-// QueryParam indicates an expected call of QueryParam
-func (mr *MockContextMockRecorder) QueryParam(name interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "QueryParam", reflect.TypeOf((*MockContext)(nil).QueryParam), name)
-}
-
-// IntQueryParam mocks base method
-func (m *MockContext) IntQueryParam(name string) (uint64, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "IntQueryParam", name)
-	ret0, _ := ret[0].(uint64)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// IntQueryParam indicates an expected call of IntQueryParam
-func (mr *MockContextMockRecorder) IntQueryParam(name interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IntQueryParam", reflect.TypeOf((*MockContext)(nil).IntQueryParam), name)
-}
-
-// OptionalIntQueryParam mocks base method
-func (m *MockContext) OptionalIntQueryParam(name string, defaultValue uint64) uint64 {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "OptionalIntQueryParam", name, defaultValue)
-	ret0, _ := ret[0].(uint64)
-	return ret0
-}
-
-// OptionalIntQueryParam indicates an expected call of OptionalIntQueryParam
-func (mr *MockContextMockRecorder) OptionalIntQueryParam(name, defaultValue interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "OptionalIntQueryParam", reflect.TypeOf((*MockContext)(nil).OptionalIntQueryParam), name, defaultValue)
-}
-
-// Get mocks base method
-func (m *MockContext) Get(key string) interface{} {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Get", key)
-	ret0, _ := ret[0].(interface{})
-	return ret0
-}
-
-// Get indicates an expected call of Get
-func (mr *MockContextMockRecorder) Get(key interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Get", reflect.TypeOf((*MockContext)(nil).Get), key)
-}
-
-// Set mocks base method
-func (m *MockContext) Set(key string, val interface{}) {
-	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "Set", key, val)
-}
-
-// Set indicates an expected call of Set
-func (mr *MockContextMockRecorder) Set(key, val interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Set", reflect.TypeOf((*MockContext)(nil).Set), key, val)
-}
-
-// Bind mocks base method
+// Bind mocks base method.
 func (m *MockContext) Bind(i interface{}) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Bind", i)
@@ -112,55 +44,27 @@ func (m *MockContext) Bind(i interface{}) error {
 	return ret0
 }
 
-// Bind indicates an expected call of Bind
+// Bind indicates an expected call of Bind.
 func (mr *MockContextMockRecorder) Bind(i interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Bind", reflect.TypeOf((*MockContext)(nil).Bind), i)
 }
 
-// String mocks base method
-func (m *MockContext) String(code int, s string) error {
+// BindID mocks base method.
+func (m *MockContext) BindID(arg0 *uint64) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "String", code, s)
+	ret := m.ctrl.Call(m, "BindID", arg0)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
-// String indicates an expected call of String
-func (mr *MockContextMockRecorder) String(code, s interface{}) *gomock.Call {
+// BindID indicates an expected call of BindID.
+func (mr *MockContextMockRecorder) BindID(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "String", reflect.TypeOf((*MockContext)(nil).String), code, s)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "BindID", reflect.TypeOf((*MockContext)(nil).BindID), arg0)
 }
 
-// NoContent mocks base method
-func (m *MockContext) NoContent(code int) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "NoContent", code)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// NoContent indicates an expected call of NoContent
-func (mr *MockContextMockRecorder) NoContent(code interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "NoContent", reflect.TypeOf((*MockContext)(nil).NoContent), code)
-}
-
-// JSON mocks base method
-func (m *MockContext) JSON(code int, i interface{}) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "JSON", code, i)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// JSON indicates an expected call of JSON
-func (mr *MockContextMockRecorder) JSON(code, i interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "JSON", reflect.TypeOf((*MockContext)(nil).JSON), code, i)
-}
-
-// Claims mocks base method
+// Claims mocks base method.
 func (m *MockContext) Claims() *usecases.SessionClaims {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Claims")
@@ -168,28 +72,41 @@ func (m *MockContext) Claims() *usecases.SessionClaims {
 	return ret0
 }
 
-// Claims indicates an expected call of Claims
+// Claims indicates an expected call of Claims.
 func (mr *MockContextMockRecorder) Claims() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Claims", reflect.TypeOf((*MockContext)(nil).Claims))
 }
 
-// User mocks base method
-func (m *MockContext) User() (*domain.User, error) {
+// Environment mocks base method.
+func (m *MockContext) Environment() domain.Environment {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "User")
-	ret0, _ := ret[0].(*domain.User)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
+	ret := m.ctrl.Call(m, "Environment")
+	ret0, _ := ret[0].(domain.Environment)
+	return ret0
 }
 
-// User indicates an expected call of User
-func (mr *MockContextMockRecorder) User() *gomock.Call {
+// Environment indicates an expected call of Environment.
+func (mr *MockContextMockRecorder) Environment() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "User", reflect.TypeOf((*MockContext)(nil).User))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Environment", reflect.TypeOf((*MockContext)(nil).Environment))
 }
 
-// GetID mocks base method
+// Get mocks base method.
+func (m *MockContext) Get(key string) interface{} {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Get", key)
+	ret0, _ := ret[0].(interface{})
+	return ret0
+}
+
+// Get indicates an expected call of Get.
+func (mr *MockContextMockRecorder) Get(key interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Get", reflect.TypeOf((*MockContext)(nil).Get), key)
+}
+
+// GetID mocks base method.
 func (m *MockContext) GetID() (uint64, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetID")
@@ -198,48 +115,132 @@ func (m *MockContext) GetID() (uint64, error) {
 	return ret0, ret1
 }
 
-// GetID indicates an expected call of GetID
+// GetID indicates an expected call of GetID.
 func (mr *MockContextMockRecorder) GetID() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetID", reflect.TypeOf((*MockContext)(nil).GetID))
 }
 
-// BindID mocks base method
-func (m *MockContext) BindID(arg0 *uint64) error {
+// IntQueryParam mocks base method.
+func (m *MockContext) IntQueryParam(name string) (uint64, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "BindID", arg0)
+	ret := m.ctrl.Call(m, "IntQueryParam", name)
+	ret0, _ := ret[0].(uint64)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// IntQueryParam indicates an expected call of IntQueryParam.
+func (mr *MockContextMockRecorder) IntQueryParam(name interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IntQueryParam", reflect.TypeOf((*MockContext)(nil).IntQueryParam), name)
+}
+
+// JSON mocks base method.
+func (m *MockContext) JSON(code int, i interface{}) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "JSON", code, i)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
-// BindID indicates an expected call of BindID
-func (mr *MockContextMockRecorder) BindID(arg0 interface{}) *gomock.Call {
+// JSON indicates an expected call of JSON.
+func (mr *MockContextMockRecorder) JSON(code, i interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "BindID", reflect.TypeOf((*MockContext)(nil).BindID), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "JSON", reflect.TypeOf((*MockContext)(nil).JSON), code, i)
 }
 
-// SetCookie mocks base method
+// NoContent mocks base method.
+func (m *MockContext) NoContent(code int) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "NoContent", code)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// NoContent indicates an expected call of NoContent.
+func (mr *MockContextMockRecorder) NoContent(code interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "NoContent", reflect.TypeOf((*MockContext)(nil).NoContent), code)
+}
+
+// OptionalIntQueryParam mocks base method.
+func (m *MockContext) OptionalIntQueryParam(name string, defaultValue uint64) uint64 {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "OptionalIntQueryParam", name, defaultValue)
+	ret0, _ := ret[0].(uint64)
+	return ret0
+}
+
+// OptionalIntQueryParam indicates an expected call of OptionalIntQueryParam.
+func (mr *MockContextMockRecorder) OptionalIntQueryParam(name, defaultValue interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "OptionalIntQueryParam", reflect.TypeOf((*MockContext)(nil).OptionalIntQueryParam), name, defaultValue)
+}
+
+// QueryParam mocks base method.
+func (m *MockContext) QueryParam(name string) string {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "QueryParam", name)
+	ret0, _ := ret[0].(string)
+	return ret0
+}
+
+// QueryParam indicates an expected call of QueryParam.
+func (mr *MockContextMockRecorder) QueryParam(name interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "QueryParam", reflect.TypeOf((*MockContext)(nil).QueryParam), name)
+}
+
+// Set mocks base method.
+func (m *MockContext) Set(key string, val interface{}) {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "Set", key, val)
+}
+
+// Set indicates an expected call of Set.
+func (mr *MockContextMockRecorder) Set(key, val interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Set", reflect.TypeOf((*MockContext)(nil).Set), key, val)
+}
+
+// SetCookie mocks base method.
 func (m *MockContext) SetCookie(arg0 *http.Cookie) {
 	m.ctrl.T.Helper()
 	m.ctrl.Call(m, "SetCookie", arg0)
 }
 
-// SetCookie indicates an expected call of SetCookie
+// SetCookie indicates an expected call of SetCookie.
 func (mr *MockContextMockRecorder) SetCookie(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetCookie", reflect.TypeOf((*MockContext)(nil).SetCookie), arg0)
 }
 
-// Environment mocks base method
-func (m *MockContext) Environment() domain.Environment {
+// String mocks base method.
+func (m *MockContext) String(code int, s string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Environment")
-	ret0, _ := ret[0].(domain.Environment)
+	ret := m.ctrl.Call(m, "String", code, s)
+	ret0, _ := ret[0].(error)
 	return ret0
 }
 
-// Environment indicates an expected call of Environment
-func (mr *MockContextMockRecorder) Environment() *gomock.Call {
+// String indicates an expected call of String.
+func (mr *MockContextMockRecorder) String(code, s interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Environment", reflect.TypeOf((*MockContext)(nil).Environment))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "String", reflect.TypeOf((*MockContext)(nil).String), code, s)
+}
+
+// User mocks base method.
+func (m *MockContext) User() (*domain.User, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "User")
+	ret0, _ := ret[0].(*domain.User)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// User indicates an expected call of User.
+func (mr *MockContextMockRecorder) User() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "User", reflect.TypeOf((*MockContext)(nil).User))
 }

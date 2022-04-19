@@ -28,6 +28,7 @@ type ContestInteractor interface {
 	UpdateContest(contest domain.Contest) error
 	Recent(count int) ([]domain.Contest, error)
 	Find(contestID uint64) (*domain.Contest, error)
+	Stats(contestID uint64) (*domain.ContestStats, error)
 }
 
 // NewContestInteractor instantiates ContestInteractor with all dependencies
@@ -117,4 +118,17 @@ func (i *contestInteractor) Find(contestID uint64) (*domain.Contest, error) {
 	}
 
 	return &contest, nil
+}
+
+func (i *contestInteractor) Stats(contestID uint64) (*domain.ContestStats, error) {
+	contestStats, err := i.contestRepository.Stats(contestID)
+	if err != nil {
+		if err == domain.ErrNotFound {
+			return nil, ErrContestNotFound
+		}
+
+		return nil, domain.WrapError(err)
+	}
+
+	return &contestStats, nil
 }

@@ -38,12 +38,11 @@ function generateBlogPostSkeleton(stats: ContestStats, ranking: Ranking[]) {
   )
 }
 
-const EditContestFormModal = ({
+const ViewStatsModal = ({
   contest,
   onCancel,
 }: {
   contest: Contest | undefined
-  onSuccess: () => void
   onCancel: () => void
 }) => {
   const [statsHtml, setStatsHtml] = useState('')
@@ -87,4 +86,4 @@ const EditContestFormModal = ({
   )
 }
 
-export default EditContestFormModal
+export default ViewStatsModal

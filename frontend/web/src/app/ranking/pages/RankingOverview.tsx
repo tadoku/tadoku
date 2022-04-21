@@ -179,7 +179,7 @@ const TwoColumn = styled.div`
 `
 
 const Content = styled.div`
-  flex: 1 0 auto; // enable grow, disable shrink
+  flex: 1 0; // enable grow, disable shrink
 `
 
 const Sidebar = styled.div`

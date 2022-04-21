@@ -12,29 +12,35 @@ import { formatLanguageName } from '@app/ranking/transform/format'
 function generateBlogPostSkeleton(stats: ContestStats, ranking: Ranking[]) {
   const winner = ranking[0]
 
-  return renderToStaticMarkup(
-    <>
-      <p>
-        Congrats to <strong>{winner.userDisplayName}</strong> for winning the
-        round with a total score of <strong>{winner.amount}</strong>! In total{' '}
-        <strong>{stats.participants}</strong>{' '}
-        {stats.participants === 1 ? 'person' : 'people'} participated in this
-        round for a total score of <strong>{stats.totalAmount}</strong>!
-      </p>
+  return (
+    renderToStaticMarkup(
+      <>
+        <p>
+          Congrats to <strong>{winner.userDisplayName}</strong> for winning the
+          round with a total score of{' '}
+          <strong>{winner.amount.toLocaleString()}</strong>! In total{' '}
+          <strong>{stats.participants}</strong>{' '}
+          {stats.participants === 1 ? 'person' : 'people'} participated in this
+          round for a total score of{' '}
+          <strong>{stats.totalAmount.toLocaleString()}</strong>!
+        </p>
 
-      <table>
-        <tbody>
-          {stats.byLanguage
-            .filter(({ languageCode }) => languageCode !== 'GLO')
-            .map(({ languageCode, count }) => (
-              <tr key={languageCode}>
-                <th scope="row">{formatLanguageName(languageCode)}</th>
-                <td>{`${count} reader${count === 1 ? '' : 's'}`}</td>
-              </tr>
-            ))}
-        </tbody>
-      </table>
-    </>,
+        <table>
+          <tbody>
+            {stats.byLanguage
+              .filter(({ languageCode }) => languageCode !== 'GLO')
+              .map(({ languageCode, count }) => (
+                <tr key={languageCode}>
+                  <th scope="row">{formatLanguageName(languageCode)}</th>
+                  <td>{`${count} reader${count === 1 ? '' : 's'}`}</td>
+                </tr>
+              ))}
+          </tbody>
+        </table>
+      </>,
+    )
+      // posts are stored in a JSON file, the quotes need to be either esacaped or single quotes
+      .replace(/"/g, '\\"')
   )
 }
 

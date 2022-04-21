@@ -7,7 +7,7 @@ import { Button, StackContainer } from '@app/ui/components'
 import ContestApi from '../../api'
 import RankingApi from '@app/ranking/api'
 import { Ranking } from '@app/ranking/interfaces'
-import { formatLanguageName } from '@app/ranking/transform/format'
+import { formatLanguageName, formatScore } from '@app/ranking/transform/format'
 
 function generateBlogPostSkeleton(stats: ContestStats, ranking: Ranking[]) {
   const winner = ranking[0]
@@ -18,11 +18,11 @@ function generateBlogPostSkeleton(stats: ContestStats, ranking: Ranking[]) {
         <p>
           Congrats to <strong>{winner.userDisplayName}</strong> for winning the
           round with a total score of{' '}
-          <strong>{winner.amount.toLocaleString()}</strong>! In total{' '}
+          <strong>{formatScore(winner.amount)}</strong>! In total{' '}
           <strong>{stats.participants}</strong>{' '}
           {stats.participants === 1 ? 'person' : 'people'} participated in this
           round for a total score of{' '}
-          <strong>{stats.totalAmount.toLocaleString()}</strong>!
+          <strong>{formatScore(stats.totalAmount, 0)}</strong>!
         </p>
 
         <table>

@@ -1,6 +1,6 @@
 import React, { SFC } from 'react'
 import Link from 'next/link'
-import styled from 'styled-components'
+import styled, { css } from 'styled-components'
 import ContentLoader from 'react-content-loader'
 
 import { Ranking, RankingWithRank } from '../interfaces'
@@ -55,7 +55,7 @@ const RankingRow = ({ rank, tied, data: rankingData }: RankingWithRank) => (
         {rank}
       </RowLink>
     </RankCell>
-    <NicknameCell>
+    <NicknameCell truncate>
       <RowLink ranking={rankingData}>{rankingData.userDisplayName}</RowLink>
     </NicknameCell>
     <ScoreCell>
@@ -214,15 +214,19 @@ const RankCell = styled.td`
   `}
 `
 
-const NicknameCell = styled.td`
+const NicknameCell = styled.td<{ truncate?: boolean }>`
   height: 55px;
   padding: 0 30px;
   position: relative;
 
-  &:before {
-    content: '&nbsp;';
-    visibility: hidden;
-  }
+  ${props =>
+    props.truncate &&
+    css`
+      &:before {
+        content: '&nbsp;';
+        visibility: hidden;
+      }
+    `}
 
   a {
     height: 55px;

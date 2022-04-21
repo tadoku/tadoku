@@ -5,40 +5,41 @@
 package usecases
 
 import (
-	gomock "github.com/golang/mock/gomock"
 	reflect "reflect"
+
+	gomock "github.com/golang/mock/gomock"
 )
 
-// MockErrorReporter is a mock of ErrorReporter interface
+// MockErrorReporter is a mock of ErrorReporter interface.
 type MockErrorReporter struct {
 	ctrl     *gomock.Controller
 	recorder *MockErrorReporterMockRecorder
 }
 
-// MockErrorReporterMockRecorder is the mock recorder for MockErrorReporter
+// MockErrorReporterMockRecorder is the mock recorder for MockErrorReporter.
 type MockErrorReporterMockRecorder struct {
 	mock *MockErrorReporter
 }
 
-// NewMockErrorReporter creates a new mock instance
+// NewMockErrorReporter creates a new mock instance.
 func NewMockErrorReporter(ctrl *gomock.Controller) *MockErrorReporter {
 	mock := &MockErrorReporter{ctrl: ctrl}
 	mock.recorder = &MockErrorReporterMockRecorder{mock}
 	return mock
 }
 
-// EXPECT returns an object that allows the caller to indicate expected use
+// EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockErrorReporter) EXPECT() *MockErrorReporterMockRecorder {
 	return m.recorder
 }
 
-// Capture mocks base method
+// Capture mocks base method.
 func (m *MockErrorReporter) Capture(err error) {
 	m.ctrl.T.Helper()
 	m.ctrl.Call(m, "Capture", err)
 }
 
-// Capture indicates an expected call of Capture
+// Capture indicates an expected call of Capture.
 func (mr *MockErrorReporterMockRecorder) Capture(err interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Capture", reflect.TypeOf((*MockErrorReporter)(nil).Capture), err)

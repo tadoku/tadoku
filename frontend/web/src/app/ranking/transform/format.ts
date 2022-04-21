@@ -7,7 +7,14 @@ export const formatMediaUnit = (id: number) => mediaByID[id].unit
 export const formatLanguageName = (code: string) =>
   (languageByCode[code] || globalLanguage).name
 
-export const formatScore = (amount: number) => Math.round(amount * 10) / 10
+export const formatScore = (
+  amount: number,
+  maximumFractionDigits: number = 1,
+) => {
+  return new Intl.NumberFormat('en-US', { maximumFractionDigits }).format(
+    amount,
+  )
+}
 
 export const scoreLabel = (languageCode: string) => {
   if (languageCode == globalLanguage.code) {

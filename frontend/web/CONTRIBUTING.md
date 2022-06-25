@@ -12,7 +12,7 @@ No strategy has been decided yet. There are a handful of `jest` tests, but they'
 
 Heads up: before starting any work on a pull request it might make sense to discuss your changes on our Discord server first.
 
-Please send a [GitHub Pull Request](https://github.com/tadoku/web/pull/new/master) with a clear list of what you've done (read more about [pull requests](http://help.github.com/pull-requests/)).
+Please send a [GitHub Pull Request](https://github.com/tadoku/web/pull/new/main) with a clear list of what you've done (read more about [pull requests](http://help.github.com/pull-requests/)).
 
 Always write a clear log message for your commits without the use of capital letters.
 

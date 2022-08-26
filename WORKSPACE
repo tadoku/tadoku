@@ -116,13 +116,23 @@ load("@io_bazel_rules_k8s//k8s:k8s_go_deps.bzl", k8s_go_deps = "deps")
 
 k8s_go_deps()
 
-# Pull postgres image 14.5
-# https://hub.docker.com/layers/library/postgres/14.5/images/sha256-ff2e3aa7d9b885f778ac9a3487c9f558b0808c672be3187aad5cf6a7c2c76973?context=explore
+## Pull Docker dependencies
 load( "@io_bazel_rules_docker//container:container.bzl", "container_pull")
 
+# postgres image 14.5
+# https://hub.docker.com/layers/library/postgres/14.5/images/sha256-ff2e3aa7d9b885f778ac9a3487c9f558b0808c672be3187aad5cf6a7c2c76973?context=explore
 container_pull(
   name = "postgres",
   registry = "docker.io",
   repository = "library/postgres",
   digest = "sha256:ff2e3aa7d9b885f778ac9a3487c9f558b0808c672be3187aad5cf6a7c2c76973",
+)
+
+# amazon/aws-cli 2.7.27
+# https://hub.docker.com/layers/aws-cli/amazon/aws-cli/2.7.27/images/sha256-553be0b45a2ab831fd8d0b3f8d0acf7e6de2a16f08537bf9ab6d95594fa25925?context=explore
+container_pull(
+  name = "aws-cli",
+  registry = "docker.io",
+  repository = "amazon/aws-cli",
+  digest = "sha256:553be0b45a2ab831fd8d0b3f8d0acf7e6de2a16f08537bf9ab6d95594fa25925",
 )

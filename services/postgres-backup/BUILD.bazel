@@ -1,10 +1,37 @@
-# Pull postgres image 14.5
-# https://hub.docker.com/layers/library/postgres/14.5/images/sha256-ff2e3aa7d9b885f778ac9a3487c9f558b0808c672be3187aad5cf6a7c2c76973?context=explore
-load( "@io_bazel_rules_docker//container:container.bzl", "container_image")
+load("@io_bazel_rules_docker//container:container.bzl", "container_image")
+load("@io_bazel_rules_docker//docker/util:run.bzl", "container_run_and_extract")
+
+# Extract AWS client
+container_image(
+  name = "aws-cli-image",
+  base = "@aws-cli//image",
+  entrypoint = None,
+)
+container_run_and_extract(
+    name = "extract_aws_cli",
+    image = ":aws-cli-image.tar",
+    commands=["cp /usr/local/bin/aws /awss"],
+    extract_file = "/awss",
+)
+
+# load("@bazel_tools//tools/build_defs/pkg:pkg.bzl", "pkg_tar")
+# pkg_tar(
+#     name = "aws-cli-bin",
+#     deps = [
+#         ":extract_aws_cli",
+#     ],
+#     package_dir = "/usr/local/bin",
+# )
 
 container_image(
   name = "image",
   base = "@postgres//image",
-  files = ["backup.sh"],
+  files = [
+      "backup.sh",
+      "extract_aws_cli/awss",
+  ],
+  # tars = [
+  #   ":aws-cli-bin",
+  # ],
   entrypoint = ["/backup.sh"],
 )

@@ -20,4 +20,4 @@ then
 fi
 
 bzip2 $DUMP_FILE
-aws s3 cp ${DUMP_FILE}.bz2 $S3_BACKUP_PATH --storage-class GLACIER_IR
+aws s3 cp ${DUMP_FILE}.bz2 $S3_BACKUP_PATH --storage-class GLACIER

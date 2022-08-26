@@ -3,32 +3,23 @@ load("@io_bazel_rules_docker//docker/util:run.bzl", "container_run_and_extract")
 
 # Extract AWS client
 container_image(
-  name = "aws-cli-image",
-  base = "@aws-cli//image",
+  name = "postgres",
+  base = "@postgres//image",
   entrypoint = None,
 )
 container_run_and_extract(
-    name = "extract_aws_cli",
-    image = ":aws-cli-image.tar",
-    commands=["cp /usr/local/bin/aws /awss"],
-    extract_file = "/awss",
+    name = "extract_pg_dumpall",
+    image = ":postgres.tar",
+    commands=["cp /usr/bin/pg_dumpall /pg_dumpall"],
+    extract_file = "/pg_dumpall",
 )
-
-# load("@bazel_tools//tools/build_defs/pkg:pkg.bzl", "pkg_tar")
-# pkg_tar(
-#     name = "aws-cli-bin",
-#     deps = [
-#         ":extract_aws_cli",
-#     ],
-#     package_dir = "/usr/local/bin",
-# )
 
 container_image(
   name = "image",
-  base = "@postgres//image",
+  base = "@aws-cli//image",
   files = [
       "backup.sh",
-      "extract_aws_cli/awss",
+      "extract_pg_dumpall/pg_dumpall",
   ],
   # tars = [
   #   ":aws-cli-bin",

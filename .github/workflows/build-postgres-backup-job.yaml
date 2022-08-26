@@ -1,0 +1,28 @@
+name: build-postgres-backup-job
+on:
+  push:
+    paths:
+      - "jobs/postgres-backup/**"
+      - ".github/workflows/build-postgres-backup-job.yaml"
+jobs:
+  build:
+    name: Build Postgres Backup Job
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: jobs/postgres-backup
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Build and publish image
+        run: |
+          # Setup credentials for GitHub packages
+          echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u tadoku --password-stdin
+
+          # Push images
+          IMAGE_NAME=ghcr.io/tadoku/tadoku/postgres-backup
+          docker build --no-cache -t $IMAGE_NAME:latest .
+          docker tag $IMAGE_NAME:latest $IMAGE_NAME:$GITHUB_SHA
+          docker push $IMAGE_NAME

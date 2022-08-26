@@ -115,3 +115,14 @@ k8s_repositories()
 load("@io_bazel_rules_k8s//k8s:k8s_go_deps.bzl", k8s_go_deps = "deps")
 
 k8s_go_deps()
+
+# Pull postgres image 14.5
+# https://hub.docker.com/layers/library/postgres/14.5/images/sha256-ff2e3aa7d9b885f778ac9a3487c9f558b0808c672be3187aad5cf6a7c2c76973?context=explore
+load( "@io_bazel_rules_docker//container:container.bzl", "container_pull")
+
+container_pull(
+  name = "postgres",
+  registry = "docker.io",
+  repository = "library/postgres",
+  digest = "sha256:ff2e3aa7d9b885f778ac9a3487c9f558b0808c672be3187aad5cf6a7c2c76973",
+)

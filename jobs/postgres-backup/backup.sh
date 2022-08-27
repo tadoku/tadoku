@@ -35,4 +35,4 @@ fi
 bzip2 "$DUMP_FILE"
 aws s3 cp "${DUMP_FILE}".bz2 "$S3_BACKUP_PATH" --storage-class GLACIER
 
-send_discord_notification ":green_circle: ${PRODUCT_NAME} database ran successfully"
+send_discord_notification ":green_circle: ${PRODUCT_NAME} database backup ran successfully"

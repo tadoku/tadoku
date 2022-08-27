@@ -4,7 +4,7 @@ send_discord_notification() {
   curl --request POST \
     --url "$DISCORD_WEBHOOK_URL" \
     --header 'Content-Type: application/json' \
-    --data '{ "content": "'"$0"'" }'
+    --data '{ "content": "'"$1"'" }'
 }
 
 send_failure_notification() {

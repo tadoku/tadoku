@@ -15,14 +15,16 @@ const rawToPostOrPageMapper: Mapper<RawPostOrPage, PostOrPage> = raw => ({
   publishedAt: raw.published_at ? new Date(raw.published_at) : new Date(),
 })
 
-const postOrPageToRawMapper: Mapper<PostOrPage, RawPostOrPage> =
-  postOrPage => ({
-    id: postOrPage.id,
-    slug: postOrPage.slug,
-    title: postOrPage.title,
-    html: postOrPage.html,
-    published_at: postOrPage.publishedAt.toISOString(),
-  })
+const postOrPageToRawMapper: Mapper<
+  PostOrPage,
+  RawPostOrPage
+> = postOrPage => ({
+  id: postOrPage.id,
+  slug: postOrPage.slug,
+  title: postOrPage.title,
+  html: postOrPage.html,
+  published_at: postOrPage.publishedAt.toISOString(),
+})
 
 export const postOrPageMapper: Mappers<RawPostOrPage, PostOrPage> =
   createMappers({

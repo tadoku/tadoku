@@ -16,19 +16,21 @@ const rawToContestLogMapper: Mapper<RawContestLog, ContestLog> = raw => ({
   date: new Date(raw.date),
 })
 
-const contestLogToRawMapper: Mapper<ContestLog, RawContestLog> =
-  contestLog => ({
-    id: contestLog.id,
-    contest_id: contestLog.contestId,
-    user_id: contestLog.userId,
-    user_display_name: contestLog.userDisplayName,
-    language_code: contestLog.languageCode,
-    medium_id: contestLog.mediumId,
-    amount: contestLog.amount,
-    adjusted_amount: contestLog.adjustedAmount,
-    description: contestLog.description ? contestLog.description : '',
-    date: contestLog.date.toISOString(),
-  })
+const contestLogToRawMapper: Mapper<
+  ContestLog,
+  RawContestLog
+> = contestLog => ({
+  id: contestLog.id,
+  contest_id: contestLog.contestId,
+  user_id: contestLog.userId,
+  user_display_name: contestLog.userDisplayName,
+  language_code: contestLog.languageCode,
+  medium_id: contestLog.mediumId,
+  amount: contestLog.amount,
+  adjusted_amount: contestLog.adjustedAmount,
+  description: contestLog.description ? contestLog.description : '',
+  date: contestLog.date.toISOString(),
+})
 
 export const contestLogMapper: Mappers<RawContestLog, ContestLog> =
   createMappers({

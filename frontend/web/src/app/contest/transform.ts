@@ -48,15 +48,17 @@ const rawToContestStatsMapper: Mapper<RawContestStats, ContestStats> = raw => ({
   })),
 })
 
-const contestStatsToRawMapper: Mapper<ContestStats, RawContestStats> =
-  stats => ({
-    total_amount: stats.totalAmount,
-    participants: stats.participants,
-    by_language: stats.byLanguage.map(({ count, languageCode }) => ({
-      count,
-      language_code: languageCode,
-    })),
-  })
+const contestStatsToRawMapper: Mapper<
+  ContestStats,
+  RawContestStats
+> = stats => ({
+  total_amount: stats.totalAmount,
+  participants: stats.participants,
+  by_language: stats.byLanguage.map(({ count, languageCode }) => ({
+    count,
+    language_code: languageCode,
+  })),
+})
 
 export const contestStatsMapper: Mappers<RawContestStats, ContestStats> =
   createMappers({

@@ -9,6 +9,7 @@ send_discord_notification() {
 
 send_failure_notification() {
   send_discord_notification ":red_circle: ${PRODUCT_NAME} database backup failed, needs investigation"
+  exit 1
 }
 
 trap 'send_failure_notification' ERR

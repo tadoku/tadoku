@@ -8,7 +8,7 @@ send_discord_notification() {
 }
 
 send_failure_notification() {
-  send_discord_notification ":red_circle: Tadoku database backup failed, needs investigation"
+  send_discord_notification ":red_circle: ${PRODUCT_NAME} database backup failed, needs investigation"
 }
 
 trap 'send_failure_notification' ERR
@@ -35,4 +35,4 @@ fi
 bzip2 "$DUMP_FILE"
 aws s3 cp "${DUMP_FILE}".bz2 "$S3_BACKUP_PATH" --storage-class GLACIER
 
-send_discord_notification ":green_circle: Tadoku database ran successfully"
+send_discord_notification ":green_circle: ${PRODUCT_NAME} database ran successfully"

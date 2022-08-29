@@ -44,6 +44,11 @@ const NavigationBar = ({
   return (
     <StyledNav isOpen={isOpen}>
       <LinkContainer onClick={closeNavigation}>
+        <Link href="/" passHref>
+          <ButtonLink plain active={router.pathname == '/'}>
+            Home
+          </ButtonLink>
+        </Link>
         <Link href="/blog" passHref>
           <ButtonLink plain active={router.pathname == '/blog'}>
             Blog

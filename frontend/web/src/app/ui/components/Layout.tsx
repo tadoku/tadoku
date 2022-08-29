@@ -16,7 +16,6 @@ interface Props {
 
 const Layout: React.FC<Props> = ({ children, overridesLayout }) => {
   const isLoading = useSelector((state: RootState) => state.app.isLoading)
-  const user = useSelector((state: RootState) => state.session.user)
   const contests = useSelector((state: RootState) =>
     state.contest.recentContests.map(contestMapper.fromRaw),
   )

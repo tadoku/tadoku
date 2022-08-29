@@ -49,7 +49,7 @@
     "react-modal": "^3.14.4",
     "react-redux": "^7.2.6",
     "react-vis": "^1.11.7",
-    "redux": "^4.1.2",
+    "redux": "^4.2.0",
     "styled-components": "^4.4.1",
     "styled-media-query": "^2.1.2"
   },

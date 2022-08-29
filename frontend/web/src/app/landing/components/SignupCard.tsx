@@ -34,7 +34,7 @@ export default SignupCard
 const Container = styled.div`
   width: 400px;
   position: absolute;
-  top: 120px;
+  top: 240px;
   right: calc((100% - ${Constants.maxWidth}) / 2 + 105px);
   bottom: 340px;
 

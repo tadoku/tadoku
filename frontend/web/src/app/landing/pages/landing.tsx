@@ -8,10 +8,8 @@ import Header from '@app/landing/components/Header'
 import ContestSchedule from '@app/landing/components/ContestSchedule'
 import LogInModal from '@app/session/components/modals/LogInModal'
 import * as RankingStore from '@app/ranking/redux'
-import { FooterLanding } from '@app/ui/components/Footer'
 import Constants from '@app/ui/Constants'
 import { RootState } from '@app/store'
-import { contestMapper } from '@app/contest/transform'
 
 const LandingPage = () => {
   const dispatch = useDispatch()
@@ -21,9 +19,6 @@ const LandingPage = () => {
   }
 
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false)
-  const contests = useSelector((state: RootState) =>
-    state.contest.recentContests.map(contestMapper.fromRaw),
-  )
   const user = useSelector((state: RootState) => state.session.user)
 
   return (
@@ -34,35 +29,32 @@ const LandingPage = () => {
         onSuccess={refreshSession}
         onCancel={() => setIsLoginModalOpen(false)}
       />
-      <StickyFooterContainer>
-        <Header
-          refreshSession={refreshSession}
-          openLoginModal={() => setIsLoginModalOpen(true)}
-          user={user}
-        />
-        <Content>
-          <Card>
-            <Title>Why should I participate?</Title>
-            <Paragraph>
-              Extensive reading of native materials is a great way to improve
-              your understanding of the language you&apos;re learning. There are
-              many benefits to doing so: it builds vocabulary, reinforces
-              grammar patterns, and you learn about the culture where your
-              language is spoken. As you participate in more rounds you will
-              notice that you can read more and more as you improve.
-            </Paragraph>
-            <Paragraph>
-              That said, it&apos;s not for everyone. Not everyone enjoys the
-              process of immersing themselves. Tadoku isn&apos;t a magical pill
-              that will make you fluent. It only covers extensive reading, and
-              not extensive listening. While Tadoku is here to promote reading,
-              a balanced approach to learning is still recommended.
-            </Paragraph>
-          </Card>
-          <ContestSchedule />
-        </Content>
-      </StickyFooterContainer>
-      <FooterLanding contests={contests} />
+      <Header
+        refreshSession={refreshSession}
+        openLoginModal={() => setIsLoginModalOpen(true)}
+        user={user}
+      />
+      <Content>
+        <Card>
+          <Title>Why should I participate?</Title>
+          <Paragraph>
+            Extensive reading of native materials is a great way to improve your
+            understanding of the language you&apos;re learning. There are many
+            benefits to doing so: it builds vocabulary, reinforces grammar
+            patterns, and you learn about the culture where your language is
+            spoken. As you participate in more rounds you will notice that you
+            can read more and more as you improve.
+          </Paragraph>
+          <Paragraph>
+            That said, it&apos;s not for everyone. Not everyone enjoys the
+            process of immersing themselves. Tadoku isn&apos;t a magical pill
+            that will make you fluent. It only covers extensive reading, and not
+            extensive listening. While Tadoku is here to promote reading, a
+            balanced approach to learning is still recommended.
+          </Paragraph>
+        </Card>
+        <ContestSchedule />
+      </Content>
     </Container>
   )
 }
@@ -106,22 +98,5 @@ const Card = styled.div`
 
   ${media.lessThan('large')`
     max-width: 100%;
-  `}
-`
-
-const StickyFooterContainer = styled.div`
-  min-height: 100vh;
-  overflow: hidden;
-  position: relative;
-  box-sizing: border-box;
-  // height of the footer
-  padding-bottom: 250px;
-
-  ${media.lessThan('medium')`
-    min-height: inherit;
-    overflow: inherit;
-    position: inherit;
-    top: inherit;
-    padding-bottom: inherit;
   `}
 `

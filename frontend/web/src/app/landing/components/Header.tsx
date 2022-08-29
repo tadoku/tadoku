@@ -3,7 +3,6 @@ import styled from 'styled-components'
 import media from 'styled-media-query'
 
 import SignupCard from './SignupCard'
-import { Logo } from '@app/ui/components'
 import Constants from '@app/ui/Constants'
 import { User } from '@app/session/interfaces'
 
@@ -17,7 +16,6 @@ const Header = ({ refreshSession, openLoginModal, user }: Props) => (
   <Background>
     <Grid>
       <IntroCard>
-        <Logo />
         <Title>Get good at your second language</Title>
         <Tagline>
           Tadoku is a friendly foreign-language reading contest aimed at
@@ -86,7 +84,7 @@ const IntroCard = styled.div`
 
 const Title = styled.h1`
   font-family: ${Constants.fonts.serif};
-  margin: 60px 20px 30px 0;
+  margin: 0px 20px 30px 0;
   font-size: 30px;
   line-height: 37px;
   font-weight: 700;

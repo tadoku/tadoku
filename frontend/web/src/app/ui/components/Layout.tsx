@@ -30,14 +30,12 @@ const Layout: React.FC<Props> = ({ children, overridesLayout }) => {
     )
   }
 
-  const homeURL = user ? '/blog' : '/landing'
-
   return (
     <div>
       <ActivityIndicator isLoading={isLoading} />
       <GlobalStyle {...Constants} />
       <StickyFooterContainer>
-        <Header homeURL={homeURL} />
+        <Header />
         <div>{children}</div>
       </StickyFooterContainer>
       <Footer contests={contests} />

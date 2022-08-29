@@ -42,30 +42,22 @@ const FooterContent = ({ contests }: Props) => (
         Built by <a href="https://antonve.be">antonve</a>
       </Credits>
       <SocialList>
-        <SocialLink fixOffset>
+        <SocialLink>
           <a
             href="https://twitter.com/tadoku_app"
             target="_blank"
             rel="noopener noreferrer"
           >
-            <FontAwesomeIcon
-              icon={['fab', 'twitter-square']}
-              size="3x"
-              inverse
-            />
+            <FontAwesomeIcon icon={['fab', 'twitter']} size="2x" />
           </a>
         </SocialLink>
-        <SocialLink fixOffset>
+        <SocialLink>
           <a
             href="https://github.com/tadoku"
             target="_blank"
             rel="noopener noreferrer"
           >
-            <FontAwesomeIcon
-              icon={['fab', 'github-square']}
-              size="3x"
-              inverse
-            />
+            <FontAwesomeIcon icon={['fab', 'github']} size="2x" />
           </a>
         </SocialLink>
         <SocialLink>
@@ -74,7 +66,7 @@ const FooterContent = ({ contests }: Props) => (
             target="_blank"
             rel="noopener noreferrer"
           >
-            <FontAwesomeIcon icon={['fab', 'discord']} size="3x" inverse />
+            <FontAwesomeIcon icon={['fab', 'discord']} size="2x" />
           </a>
         </SocialLink>
       </SocialList>
@@ -208,17 +200,22 @@ const SocialList = styled.ul`
 
 const SocialLink = styled.li`
   height: 100%;
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: 4px;
+  max-width: 48px;
 
-  ${({ fixOffset }: { fixOffset?: boolean }) =>
-    fixOffset && ` a svg {  margin-top: -3px; }`}
+  transition: 0.2s background;
+  &:hover {
+    background: rgba(255, 255, 255, 1);
+  }
 
   a {
-    opacity: 0.8;
-    transition: 0.2s opacity;
-
-    &:hover {
-      opacity: 1;
-    }
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: ${Constants.colors.dark} !important;
   }
 
   & + & {

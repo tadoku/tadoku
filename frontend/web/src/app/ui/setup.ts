@@ -21,8 +21,8 @@ import {
 } from '@fortawesome/free-solid-svg-icons'
 import {
   faDiscord,
-  faTwitterSquare,
-  faGithubSquare,
+  faGithub,
+  faTwitter,
 } from '@fortawesome/free-brands-svg-icons'
 
 library.add(
@@ -40,8 +40,8 @@ library.add(
   faBars,
   faTimes,
   faDiscord,
-  faTwitterSquare,
-  faGithubSquare,
+  faTwitter,
+  faGithub,
   faArrowRight,
   faTools,
   faEye,

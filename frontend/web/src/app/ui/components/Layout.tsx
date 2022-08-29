@@ -14,7 +14,7 @@ interface Props {
   overridesLayout: boolean
 }
 
-const Layout: React.SFC<Props> = ({ children, overridesLayout }) => {
+const Layout: React.FC<Props> = ({ children, overridesLayout }) => {
   const isLoading = useSelector((state: RootState) => state.app.isLoading)
   const user = useSelector((state: RootState) => state.session.user)
   const contests = useSelector((state: RootState) =>
@@ -38,7 +38,7 @@ const Layout: React.SFC<Props> = ({ children, overridesLayout }) => {
       <GlobalStyle {...Constants} />
       <StickyFooterContainer>
         <Header homeURL={homeURL} />
-        <Container>{children}</Container>
+        <div>{children}</div>
       </StickyFooterContainer>
       <Footer contests={contests} />
     </div>
@@ -99,7 +99,7 @@ export const GlobalStyle = createGlobalStyle<typeof Constants>`
   }
 `
 
-const Container = styled.div`
+export const PageContainer = styled.div`
   box-sizing: border-box;
   max-width: ${Constants.maxWidth};
   margin: 50px auto 60px;

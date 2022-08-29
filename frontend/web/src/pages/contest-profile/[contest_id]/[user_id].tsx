@@ -6,6 +6,7 @@ import { connect } from 'react-redux'
 import { RootState } from '../../../app/store'
 import { useRouter } from 'next/router'
 import { runEffects } from '@app/ranking/redux'
+import { PageContainer } from '@app/ui/components/Layout'
 
 interface Props {
   effectCount: number
@@ -26,7 +27,9 @@ const RankingDetails = (props: Props) => {
       <Head>
         <title>Tadoku - Stats</title>
       </Head>
-      <RankingProfile contestId={contestId} userId={userId} {...props} />
+      <PageContainer>
+        <RankingProfile contestId={contestId} userId={userId} {...props} />
+      </PageContainer>
     </>
   )
 }

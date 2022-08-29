@@ -13,6 +13,7 @@ import { useCachedApiState, isReady } from '../../../app/cache'
 import ContestApi from '@app/contest/api'
 import { optionalizeSerializer } from '../../../app/transform'
 import { Contest } from '@app/contest/interfaces'
+import { PageContainer } from '@app/ui/components/Layout'
 
 const Ranking = () => {
   const registration = useSelector((state: RootState) =>
@@ -58,13 +59,15 @@ const Ranking = () => {
       <Head>
         <title>Tadoku - Ranking for {contest.description}</title>
       </Head>
-      <RankingOverview
-        contest={contest}
-        registration={registration}
-        user={user}
-        effectCount={effectCount}
-        refreshRanking={refreshRanking}
-      />
+      <PageContainer>
+        <RankingOverview
+          contest={contest}
+          registration={registration}
+          user={user}
+          effectCount={effectCount}
+          refreshRanking={refreshRanking}
+        />
+      </PageContainer>
     </>
   )
 }

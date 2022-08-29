@@ -25,9 +25,14 @@
     "isolatedModules": true,
     "baseUrl": ".",
     "paths": {
-      "@app/*": ["./src/app/*"],
-      "@pages/*": ["./src/pages/*"]
-    }
+      "@app/*": [
+        "./src/app/*"
+      ],
+      "@pages/*": [
+        "./src/pages/*"
+      ]
+    },
+    "incremental": true
   },
   "exclude": [
     ".next",

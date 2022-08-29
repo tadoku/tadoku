@@ -9,6 +9,7 @@ import { RankingRegistration } from '@app/ranking/interfaces'
 import { User } from '@app/session/interfaces'
 import { contestMapper } from '@app/contest/transform'
 import { rankingRegistrationMapper } from '@app/ranking/transform/ranking-registration'
+import { PageContainer } from '@app/ui/components/Layout'
 
 const mapStateToProps = (state: RootState) => ({
   rawContest: state.contest.latestContest,
@@ -46,7 +47,9 @@ export default connect(
       <Head>
         <title>Tadoku - Ranking</title>
       </Head>
-      <RankingOverview contest={contest} {...props} />
+      <PageContainer>
+        <RankingOverview contest={contest} {...props} />
+      </PageContainer>
     </>
   )
 })

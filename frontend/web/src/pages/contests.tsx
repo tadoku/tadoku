@@ -8,6 +8,7 @@ import ContestApi from '@app/contest/api'
 import { Contest } from '@app/contest/interfaces'
 import { PageTitle } from '@app/ui/components'
 import ContestList from '@app/contest/components/ContestList'
+import { PageContainer } from '@app/ui/components/Layout'
 
 const Contests = () => {
   const { data: contests, status: statusContests } = useCachedApiState<
@@ -35,8 +36,10 @@ const Contests = () => {
       <Head>
         <title>Tadoku - Contest Archive</title>
       </Head>
-      <PageTitle>Contest archive</PageTitle>
-      <ContestList contests={contests} />
+      <PageContainer>
+        <PageTitle>Contest archive</PageTitle>
+        <ContestList contests={contests} />
+      </PageContainer>
     </>
   )
 }

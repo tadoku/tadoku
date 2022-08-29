@@ -6,6 +6,7 @@ import { useSelector } from 'react-redux'
 import { RootState } from '@app/store'
 import { isAdmin } from '@app/session/domain'
 import ManageContests from '@app/contest/pages/admin/Manage'
+import { PageContainer } from '@app/ui/components/Layout'
 
 const Manage = () => {
   const user = useSelector((state: RootState) => state.session.user)
@@ -20,7 +21,9 @@ const Manage = () => {
       <Head>
         <title>Tadoku - Admin</title>
       </Head>
-      <ManageContests />
+      <PageContainer>
+        <ManageContests />
+      </PageContainer>
     </>
   )
 }

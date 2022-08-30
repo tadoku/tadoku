@@ -35,18 +35,18 @@ func TestRankingInteractor_CreateRanking(t *testing.T) {
 	defer ctrl.Finish()
 
 	contestID := uint64(1)
-	userID := uint64(1)
+	user := &domain.User{ID: 1, DisplayName: "John Doe"}
 
 	{
 		languages := domain.LanguageCodes{domain.Japanese, domain.English}
 
 		contestRepo.EXPECT().GetOpenContests().Return([]uint64{contestID}, nil)
-		rankingRepo.EXPECT().GetAllLanguagesForContestAndUser(contestID, userID).Return(nil, nil)
-		rankingRepo.EXPECT().Store(domain.Ranking{ContestID: contestID, UserID: userID, Language: languages[0], Amount: 0}).Return(nil)
-		rankingRepo.EXPECT().Store(domain.Ranking{ContestID: contestID, UserID: userID, Language: languages[1], Amount: 0}).Return(nil)
-		rankingRepo.EXPECT().Store(domain.Ranking{ContestID: contestID, UserID: userID, Language: domain.Global, Amount: 0}).Return(nil)
+		rankingRepo.EXPECT().GetAllLanguagesForContestAndUser(contestID, user.ID).Return(nil, nil)
+		rankingRepo.EXPECT().Store(domain.Ranking{ContestID: contestID, UserID: user.ID, UserDisplayName: user.DisplayName, Language: languages[0], Amount: 0}).Return(nil)
+		rankingRepo.EXPECT().Store(domain.Ranking{ContestID: contestID, UserID: user.ID, UserDisplayName: user.DisplayName, Language: languages[1], Amount: 0}).Return(nil)
+		rankingRepo.EXPECT().Store(domain.Ranking{ContestID: contestID, UserID: user.ID, UserDisplayName: user.DisplayName, Language: domain.Global, Amount: 0}).Return(nil)
 
-		err := interactor.CreateRanking(userID, contestID, languages)
+		err := interactor.CreateRanking(contestID, user, languages)
 
 		assert.NoError(t, err)
 	}
@@ -55,10 +55,10 @@ func TestRankingInteractor_CreateRanking(t *testing.T) {
 		languages := domain.LanguageCodes{domain.Chinese}
 
 		contestRepo.EXPECT().GetOpenContests().Return([]uint64{contestID}, nil)
-		rankingRepo.EXPECT().GetAllLanguagesForContestAndUser(contestID, userID).Return(domain.LanguageCodes{domain.English}, nil)
-		rankingRepo.EXPECT().Store(domain.Ranking{ContestID: contestID, UserID: userID, Language: languages[0], Amount: 0}).Return(nil)
+		rankingRepo.EXPECT().GetAllLanguagesForContestAndUser(contestID, user.ID).Return(domain.LanguageCodes{domain.English}, nil)
+		rankingRepo.EXPECT().Store(domain.Ranking{ContestID: contestID, UserID: user.ID, UserDisplayName: user.DisplayName, Language: languages[0], Amount: 0}).Return(nil)
 
-		err := interactor.CreateRanking(userID, contestID, languages)
+		err := interactor.CreateRanking(contestID, user, languages)
 
 		assert.NoError(t, err)
 	}
@@ -67,9 +67,9 @@ func TestRankingInteractor_CreateRanking(t *testing.T) {
 		languages := domain.LanguageCodes{domain.English}
 
 		contestRepo.EXPECT().GetOpenContests().Return([]uint64{contestID}, nil)
-		rankingRepo.EXPECT().GetAllLanguagesForContestAndUser(contestID, userID).Return(domain.LanguageCodes{domain.English}, nil)
+		rankingRepo.EXPECT().GetAllLanguagesForContestAndUser(contestID, user.ID).Return(domain.LanguageCodes{domain.English}, nil)
 
-		err := interactor.CreateRanking(userID, contestID, languages)
+		err := interactor.CreateRanking(contestID, user, languages)
 
 		assert.EqualError(t, err, usecases.ErrNoRankingToCreate.Error())
 	}
@@ -78,9 +78,9 @@ func TestRankingInteractor_CreateRanking(t *testing.T) {
 		languages := domain.LanguageCodes{domain.Global}
 
 		contestRepo.EXPECT().GetOpenContests().Return([]uint64{contestID}, nil)
-		rankingRepo.EXPECT().GetAllLanguagesForContestAndUser(contestID, userID).Return(nil, nil)
+		rankingRepo.EXPECT().GetAllLanguagesForContestAndUser(contestID, user.ID).Return(nil, nil)
 
-		err := interactor.CreateRanking(userID, contestID, languages)
+		err := interactor.CreateRanking(contestID, user, languages)
 
 		assert.EqualError(t, err, usecases.ErrGlobalIsASystemLanguage.Error())
 	}
@@ -89,9 +89,9 @@ func TestRankingInteractor_CreateRanking(t *testing.T) {
 		languages := domain.LanguageCodes{"xxx"}
 
 		contestRepo.EXPECT().GetOpenContests().Return([]uint64{contestID}, nil)
-		rankingRepo.EXPECT().GetAllLanguagesForContestAndUser(contestID, userID).Return(nil, nil)
+		rankingRepo.EXPECT().GetAllLanguagesForContestAndUser(contestID, user.ID).Return(nil, nil)
 
-		err := interactor.CreateRanking(userID, contestID, languages)
+		err := interactor.CreateRanking(contestID, user, languages)
 
 		assert.EqualError(t, err, domain.ErrInvalidLanguage.Error())
 	}

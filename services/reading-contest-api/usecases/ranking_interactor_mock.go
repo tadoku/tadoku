@@ -64,17 +64,17 @@ func (mr *MockRankingInteractorMockRecorder) CreateLog(log interface{}) *gomock.
 }
 
 // CreateRanking mocks base method.
-func (m *MockRankingInteractor) CreateRanking(contestID, userID uint64, languages domain.LanguageCodes) error {
+func (m *MockRankingInteractor) CreateRanking(contestID uint64, user *domain.User, languages domain.LanguageCodes) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CreateRanking", contestID, userID, languages)
+	ret := m.ctrl.Call(m, "CreateRanking", contestID, user, languages)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // CreateRanking indicates an expected call of CreateRanking.
-func (mr *MockRankingInteractorMockRecorder) CreateRanking(contestID, userID, languages interface{}) *gomock.Call {
+func (mr *MockRankingInteractorMockRecorder) CreateRanking(contestID, user, languages interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateRanking", reflect.TypeOf((*MockRankingInteractor)(nil).CreateRanking), contestID, userID, languages)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateRanking", reflect.TypeOf((*MockRankingInteractor)(nil).CreateRanking), contestID, user, languages)
 }
 
 // CurrentRegistration mocks base method.

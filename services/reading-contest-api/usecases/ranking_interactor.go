@@ -50,7 +50,7 @@ var ErrCreateContestLogHasID = fail.New("a contest log can't have an id when bei
 type RankingInteractor interface {
 	CreateRanking(
 		contestID uint64,
-		userID uint64,
+		user *domain.User,
 		languages domain.LanguageCodes,
 	) error
 	CreateLog(log domain.ContestLog) error
@@ -90,7 +90,7 @@ type rankingInteractor struct {
 
 func (i *rankingInteractor) CreateRanking(
 	contestID uint64,
-	userID uint64,
+	user *domain.User,
 	languages domain.LanguageCodes,
 ) error {
 	ids, err := i.contestRepository.GetOpenContests()
@@ -102,7 +102,7 @@ func (i *rankingInteractor) CreateRanking(
 		return ErrContestIsClosed
 	}
 
-	existingLanguages, err := i.rankingRepository.GetAllLanguagesForContestAndUser(contestID, userID)
+	existingLanguages, err := i.rankingRepository.GetAllLanguagesForContestAndUser(contestID, user.ID)
 	if err != nil {
 		return domain.WrapError(err)
 	}
@@ -136,10 +136,11 @@ func (i *rankingInteractor) CreateRanking(
 		}
 
 		rankings[i] = domain.Ranking{
-			ContestID: contestID,
-			UserID:    userID,
-			Language:  lang,
-			Amount:    0,
+			ContestID:       contestID,
+			UserID:          user.ID,
+			UserDisplayName: user.DisplayName,
+			Language:        lang,
+			Amount:          0,
 		}
 	}
 

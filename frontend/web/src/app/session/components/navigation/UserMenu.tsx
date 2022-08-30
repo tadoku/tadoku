@@ -17,7 +17,11 @@ interface Props {
 }
 
 const SettingsLink = () => (
-  <Link href="/settings/[tab]" as={`/settings/${SettingsTab.Profile}`} passHref>
+  <Link
+    href="/settings/[tab]"
+    as={`/settings/${SettingsTab.ChangePassword}`}
+    passHref
+  >
     <ButtonLink plain icon="cog">
       Settings
     </ButtonLink>

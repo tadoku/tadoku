@@ -40,14 +40,6 @@ const Settings = ({ tab, user, userLoaded }: Props) => {
 
 const PageContent = ({ tab }: { tab: SettingsTab }) => {
   switch (tab) {
-    case SettingsTab.Profile: {
-      return (
-        <FormContainer>
-          <h2>Profile</h2>
-          <ProfileForm />
-        </FormContainer>
-      )
-    }
     case SettingsTab.ChangePassword: {
       return (
         <FormContainer>
@@ -57,8 +49,6 @@ const PageContent = ({ tab }: { tab: SettingsTab }) => {
       )
     }
   }
-
-  return null
 }
 
 const mapStateToProps = (state: RootState) => ({

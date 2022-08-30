@@ -7,14 +7,14 @@ load('ext://helm_remote', 'helm_remote')
 helm_remote('postgres-operator',
             repo_name='postgres-operator',
             repo_url='https://opensource.zalando.com/postgres-operator/charts/postgres-operator/')
-helm_remote('nats',
-            repo_name='nats',
-            repo_url='https://nats-io.github.io/k8s/helm/charts/',
-            set=['nats.image=synadia/nats-server:nightly', 'nats.jetstream.enabled=true'])
-helm_remote('nack',
-            repo_name='nats',
-            repo_url='https://nats-io.github.io/k8s/helm/charts/',
-            set=['jetstream.nats.url=nats://nats:4222'])
+# helm_remote('nats',
+#             repo_name='nats',
+#             repo_url='https://nats-io.github.io/k8s/helm/charts/',
+#             set=['nats.image=synadia/nats-server:nightly', 'nats.jetstream.enabled=true'])
+# helm_remote('nack',
+#             repo_name='nats',
+#             repo_url='https://nats-io.github.io/k8s/helm/charts/',
+#             set=['jetstream.nats.url=nats://nats:4222'])
 
 include('./gateway/Tiltfile')
 

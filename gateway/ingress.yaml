@@ -1,4 +1,4 @@
-apiVersion: extensions/v1beta1
+apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: tadoku
@@ -10,14 +10,23 @@ spec:
     - http:
         paths:
           - path: /reading-contest
+            pathType: Prefix
             backend:
-              serviceName: reading-contest-api
-              servicePort: 4000
+              service:
+                name: reading-contest-api
+                port:
+                  number: 4000
           - path: /identity
+            pathType: Prefix
             backend:
-              serviceName: identity-api
-              servicePort: 4000
+              service:
+                name: identity-api
+                port:
+                  number: 4000
           - path: /blog
+            pathType: Prefix
             backend:
-              serviceName: blog-api
-              servicePort: 8080
+              service:
+                name: blog-api
+                port:
+                  number: 8080

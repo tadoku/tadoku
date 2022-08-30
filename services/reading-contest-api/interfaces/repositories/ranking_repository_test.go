@@ -196,23 +196,25 @@ func TestRankingRepository_GlobalRankings(t *testing.T) {
 
 	{
 		rankings := []struct {
-			contestID uint64
-			userID    uint64
-			language  domain.LanguageCode
-			amount    float32
+			contestID       uint64
+			userID          uint64
+			userDisplayName string
+			language        domain.LanguageCode
+			amount          float32
 		}{
-			{contestID, users[0].ID, domain.Global, 40},
-			{contestID + 1, users[0].ID, domain.Global, 10},
-			{contestID + 1, users[0].ID, domain.Japanese, 10},
-			{contestID, users[1].ID, domain.Global, 20},
-			{contestID, users[2].ID, domain.Global, 30},
+			{contestID, users[0].ID, users[0].DisplayName, domain.Global, 40},
+			{contestID + 1, users[0].ID, users[0].DisplayName, domain.Global, 10},
+			{contestID + 1, users[0].ID, users[0].DisplayName, domain.Japanese, 10},
+			{contestID, users[1].ID, users[1].DisplayName, domain.Global, 20},
+			{contestID, users[2].ID, users[2].DisplayName, domain.Global, 30},
 		}
 		for _, data := range rankings {
 			ranking := &domain.Ranking{
-				ContestID: data.contestID,
-				UserID:    data.userID,
-				Language:  data.language,
-				Amount:    data.amount,
+				ContestID:       data.contestID,
+				UserID:          data.userID,
+				Language:        data.language,
+				Amount:          data.amount,
+				UserDisplayName: data.userDisplayName,
 			}
 
 			err := repo.Store(*ranking)
@@ -318,10 +320,11 @@ func TestRankingRepository_UpdateAmounts(t *testing.T) {
 	// Create initial rankings
 	for i, language := range []domain.LanguageCode{domain.Japanese, domain.Korean, domain.Global} {
 		ranking := domain.Ranking{
-			ContestID: contestID,
-			UserID:    userID,
-			Language:  language,
-			Amount:    float32(i),
+			ContestID:       contestID,
+			UserID:          userID,
+			Language:        language,
+			Amount:          float32(i),
+			UserDisplayName: "John Doe",
 		}
 
 		err := repo.Store(ranking)

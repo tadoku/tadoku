@@ -30,8 +30,8 @@ func (r *rankingRepository) Store(ranking domain.Ranking) error {
 func (r *rankingRepository) create(ranking domain.Ranking) error {
 	query := `
 		insert into rankings
-		(contest_id, user_id, language_code, amount, created_at, updated_at)
-		values (:contest_id, :user_id, :language_code, :amount, now() at time zone 'utc', now() at time zone 'utc')
+		(contest_id, user_id, language_code, amount, user_display_name, created_at, updated_at)
+		values (:contest_id, :user_id, :language_code, :amount, :user_display_name, now() at time zone 'utc', now() at time zone 'utc')
 	`
 
 	_, err := r.sqlHandler.NamedExecute(query, ranking)
@@ -101,9 +101,8 @@ func (r *rankingRepository) GlobalRankings(languageCode domain.LanguageCode) (do
 	var rankings []domain.Ranking
 
 	query := `
-		select user_id, language_code, sum(amount) as amount, users.display_name as user_display_name
+		select user_id, language_code, sum(amount) as amount, user_display_name
 		from rankings
-		inner join users on users.id = rankings.user_id
 		where language_code = $1
 		group by user_id, user_display_name, language_code
 		order by amount desc

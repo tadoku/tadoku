@@ -258,10 +258,11 @@ func TestRankingRepository_FindAllByContestAndUser(t *testing.T) {
 	{
 		for _, data := range expected {
 			ranking := &domain.Ranking{
-				ContestID: contestID,
-				UserID:    users[0].ID,
-				Language:  data.language,
-				Amount:    data.amount,
+				ContestID:       contestID,
+				UserID:          users[0].ID,
+				Language:        data.language,
+				Amount:          data.amount,
+				UserDisplayName: users[0].DisplayName,
 			}
 
 			err := repo.Store(*ranking)
@@ -273,10 +274,11 @@ func TestRankingRepository_FindAllByContestAndUser(t *testing.T) {
 	{
 		for _, language := range []domain.LanguageCode{domain.Korean, domain.Global} {
 			ranking := &domain.Ranking{
-				ContestID: contestID,
-				UserID:    users[1].ID,
-				Language:  language,
-				Amount:    0,
+				ContestID:       contestID,
+				UserID:          users[1].ID,
+				Language:        language,
+				Amount:          0,
+				UserDisplayName: users[1].DisplayName,
 			}
 
 			err := repo.Store(*ranking)

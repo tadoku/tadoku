@@ -82,9 +82,8 @@ func (r *rankingRepository) RankingsForContest(
 	var rankings []domain.Ranking
 
 	query := `
-		select rankings.id as id, rankings.contest_id as contest_id, user_id, language_code, amount, created_at, updated_at, users.display_name as user_display_name
+		select rankings.id as id, rankings.contest_id as contest_id, user_id, language_code, amount, created_at, updated_at, user_display_name
 		from rankings
-		inner join users on users.id = rankings.user_id
 		where contest_id = $1 and language_code = $2
 		order by amount desc, id asc
 	`
@@ -120,9 +119,8 @@ func (r *rankingRepository) FindAll(contestID uint64, userID uint64) (domain.Ran
 	var rankings []domain.Ranking
 
 	query := `
-		select r.id, contest_id, user_id, u.display_name as user_display_name, language_code, amount, created_at, updated_at
+		select r.id, contest_id, user_id, user_display_name, language_code, amount, created_at, updated_at
 		from rankings as r
-		inner join users as u on u.id = r.user_id
 		where contest_id = $1 and user_id = $2
 		order by id asc
 	`

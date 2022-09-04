@@ -34,6 +34,7 @@ then
 fi
 
 bzip2 "$DUMP_FILE"
+# storage class options: STANDARD | REDUCED_REDUNDANCY | STANDARD_IA | ONEZONE_IA | INTELLIGENT_TIERING | GLACIER | DEEP_ARCHIVE | OUTPOSTS | GLACIER_IR
 aws s3 cp "${DUMP_FILE}".bz2 "$S3_BACKUP_PATH" --storage-class ${STORAGE_CLASS}
 
 send_discord_notification ":green_circle: ${PRODUCT_NAME} database backup ran successfully"

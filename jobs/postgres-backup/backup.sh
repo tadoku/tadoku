@@ -30,10 +30,10 @@ then
 
   cat "${DUMP_FILE}"
 
-  echo "aws s3 cp ${DUMP_FILE}.bz2 ${S3_BACKUP_PATH} --storage-class GLACIER"
+  echo "aws s3 cp ${DUMP_FILE}.bz2 ${S3_BACKUP_PATH} --storage-class ${STORAGE_CLASS}"
 fi
 
 bzip2 "$DUMP_FILE"
-aws s3 cp "${DUMP_FILE}".bz2 "$S3_BACKUP_PATH" --storage-class GLACIER
+aws s3 cp "${DUMP_FILE}".bz2 "$S3_BACKUP_PATH" --storage-class ${STORAGE_CLASS}
 
 send_discord_notification ":green_circle: ${PRODUCT_NAME} database backup ran successfully"

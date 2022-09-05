@@ -26,8 +26,18 @@ func (r *contestLogRepository) Store(contestLog *domain.ContestLog) error {
 func (r *contestLogRepository) create(contestLog *domain.ContestLog) error {
 	query := `
 		insert into contest_logs
-		(contest_id, user_id, language_code, medium_id, amount, description, created_at, updated_at)
-		values ($1, $2, $3, $4, $5, $6, now() at time zone 'utc', now() at time zone 'utc')
+		(
+			contest_id,
+			user_id,
+			language_code,
+			medium_id,
+			amount,
+			weighted_score,
+			description,
+			created_at,
+			updated_at
+		)
+		values ($1, $2, $3, $4, $5, $6, $7, now() at time zone 'utc', now() at time zone 'utc')
 		returning id
 	`
 
@@ -38,6 +48,7 @@ func (r *contestLogRepository) create(contestLog *domain.ContestLog) error {
 		contestLog.Language,
 		contestLog.MediumID,
 		contestLog.Amount,
+		contestLog.AdjustedAmount(),
 		contestLog.Description,
 	)
 	err := row.Scan(&contestLog.ID)
@@ -51,14 +62,28 @@ func (r *contestLogRepository) create(contestLog *domain.ContestLog) error {
 func (r *contestLogRepository) update(contestLog *domain.ContestLog) error {
 	query := `
 		update contest_logs
-		set amount = :amount, medium_id = :medium_id, language_code = :language_code, description = :description, updated_at = now() at time zone 'utc'
+		set
+			amount = :amount,
+			weighted_score = :weighted_score,
+			medium_id = :medium_id,
+			language_code = :language_code,
+			description = :description,
+			updated_at = now() at time zone 'utc'
 		where
 			id = :id and
 			user_id = :user_id and
 			deleted_at is null
 	`
 
-	_, err := r.sqlHandler.NamedExecute(query, contestLog)
+	_, err := r.sqlHandler.NamedExecute(query, map[string]interface{}{
+		"amount":         contestLog.Amount,
+		"weighted_score": contestLog.AdjustedAmount(),
+		"medium_id":      contestLog.MediumID,
+		"language_code":  contestLog.Language,
+		"description":    contestLog.Description,
+		"id":             contestLog.ID,
+		"user_id":        contestLog.UserID,
+	})
 	return domain.WrapError(err)
 }
 

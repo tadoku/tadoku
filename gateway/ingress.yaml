@@ -30,3 +30,10 @@ spec:
                 name: blog-api
                 port:
                   number: 8080
+          - path: /pgweb
+            pathType: Prefix
+            backend:
+              service:
+                name: pgweb
+                port:
+                  number: 8081

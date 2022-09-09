@@ -25,14 +25,16 @@ import (
 
 func TestMain(m *testing.M) {
 	database := "database"
+	password := "foobar"
 
 	// Spin up a postgres container for testing
 	ctx := context.Background()
 	req := testcontainers.ContainerRequest{
-		Image:        "postgres:11.6-alpine",
+		Image:        "postgres:13.2-alpine",
 		ExposedPorts: []string{"5432/tcp"},
 		Env: map[string]string{
-			"POSTGRES_DB": database,
+			"POSTGRES_DB":       database,
+			"POSTGRES_PASSWORD": password,
 		},
 		WaitingFor: wait.ForListeningPort("5432/tcp"),
 	}
@@ -55,7 +57,7 @@ func TestMain(m *testing.M) {
 	if err != nil {
 		panic(fmt.Sprintf("could not fetch postgresql container port: %s", err))
 	}
-	databaseURL := fmt.Sprintf("host=%s port=%s user=postgres dbname=%s sslmode=disable", host, p.Port(), database)
+	databaseURL := fmt.Sprintf("host=%s port=%s user=postgres password=%s dbname=%s sslmode=disable", host, p.Port(), password, database)
 
 	// Must be called pgx so the sqlx mapper uses the correct notation
 	txdb.Register("pgx", "postgres", databaseURL)

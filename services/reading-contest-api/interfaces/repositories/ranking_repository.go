@@ -120,8 +120,26 @@ func (r *rankingRepository) FindAll(contestID uint64, userID uint64) (domain.Ran
 	var rankings []domain.Ranking
 
 	query := `
-		select r.id, contest_id, user_id, user_display_name, language_code, amount, created_at, updated_at
+		with scores as (
+			select
+				language_code,
+				sum(weighted_score) as amount
+			from contest_logs
+			where contest_id = $1 and user_id = $2
+			group by language_code
+		)
+
+		select
+			r.id,
+			contest_id,
+			user_id,
+			user_display_name,
+			r.language_code,
+			created_at,
+			updated_at,
+			coalesce(s.amount, 0) as amount
 		from rankings as r
+		left join scores as s on (s.language_code = r.language_code)
 		where contest_id = $1 and user_id = $2
 		order by id asc
 	`

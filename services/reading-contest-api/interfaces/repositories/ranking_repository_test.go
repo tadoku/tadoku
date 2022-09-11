@@ -17,7 +17,6 @@ func TestRankingRepository_StoreRanking(t *testing.T) {
 
 	repo := repositories.NewRankingRepository(sqlHandler)
 	ranking := &domain.Ranking{
-		ID:        1,
 		ContestID: 1,
 		UserID:    1,
 		Language:  domain.Japanese,
@@ -37,7 +36,7 @@ func TestRankingRepository_StoreRanking(t *testing.T) {
 			Amount: 2,
 		}
 		err := repo.Store(*updatedRanking)
-		assert.NoError(t, err)
+		assert.Error(t, err)
 	}
 }
 
@@ -171,73 +170,12 @@ func TestRankingRepository_RankingsForContest(t *testing.T) {
 	}
 }
 
-func TestRankingRepository_GlobalRankings(t *testing.T) {
-	sqlHandler, cleanup := setupTestingSuite(t)
-	defer cleanup()
-
-	repo := repositories.NewRankingRepository(sqlHandler)
-
-	contestID := uint64(1)
-	users := createTestUsers(t, sqlHandler, 3)
-
-	expected := []struct {
-		userID          uint64
-		userDisplayName string
-		language        domain.LanguageCode
-		amount          float32
-	}{
-		{users[0].ID, users[0].DisplayName, domain.Global, 50},
-		{users[2].ID, users[2].DisplayName, domain.Global, 30},
-		{users[1].ID, users[1].DisplayName, domain.Global, 20},
-	}
-
-	{
-		rankings := []struct {
-			contestID       uint64
-			userID          uint64
-			userDisplayName string
-			language        domain.LanguageCode
-			amount          float32
-		}{
-			{contestID, users[0].ID, users[0].DisplayName, domain.Global, 40},
-			{contestID + 1, users[0].ID, users[0].DisplayName, domain.Global, 10},
-			{contestID + 1, users[0].ID, users[0].DisplayName, domain.Japanese, 10},
-			{contestID, users[1].ID, users[1].DisplayName, domain.Global, 20},
-			{contestID, users[2].ID, users[2].DisplayName, domain.Global, 30},
-		}
-		for _, data := range rankings {
-			ranking := &domain.Ranking{
-				ContestID:       data.contestID,
-				UserID:          data.userID,
-				Language:        data.language,
-				Amount:          data.amount,
-				UserDisplayName: data.userDisplayName,
-			}
-
-			err := repo.Store(*ranking)
-			assert.NoError(t, err)
-		}
-	}
-
-	rankings, err := repo.GlobalRankings(domain.Global)
-	assert.NoError(t, err)
-
-	assert.Equal(t, len(expected), len(rankings))
-
-	for i, expected := range expected {
-		// This assumption should work as the order of the rankings should be fixed
-		ranking := rankings[i]
-
-		assert.Equal(t, expected.amount, ranking.Amount)
-		assert.Equal(t, expected.userID, ranking.UserID)
-		assert.Equal(t, expected.userDisplayName, ranking.UserDisplayName)
-	}
-}
 func TestRankingRepository_FindAllByContestAndUser(t *testing.T) {
 	sqlHandler, cleanup := setupTestingSuite(t)
 	defer cleanup()
 
 	repo := repositories.NewRankingRepository(sqlHandler)
+	contestRepo := repositories.NewContestLogRepository(sqlHandler)
 
 	contestID := uint64(1)
 	users := createTestUsers(t, sqlHandler, 2)
@@ -258,11 +196,21 @@ func TestRankingRepository_FindAllByContestAndUser(t *testing.T) {
 				ContestID:       contestID,
 				UserID:          users[0].ID,
 				Language:        data.language,
-				Amount:          data.amount,
 				UserDisplayName: users[0].DisplayName,
 			}
 
 			err := repo.Store(*ranking)
+			assert.NoError(t, err)
+
+			log := &domain.ContestLog{
+				ContestID: contestID,
+				UserID:    users[0].ID,
+				Language:  data.language,
+				Amount:    data.amount,
+				MediumID:  domain.MediumBook,
+			}
+
+			err = contestRepo.Store(log)
 			assert.NoError(t, err)
 		}
 	}
@@ -274,7 +222,6 @@ func TestRankingRepository_FindAllByContestAndUser(t *testing.T) {
 				ContestID:       contestID,
 				UserID:          users[1].ID,
 				Language:        language,
-				Amount:          0,
 				UserDisplayName: users[1].DisplayName,
 			}
 
@@ -304,64 +251,6 @@ func TestRankingRepository_FindAllByContestAndUser(t *testing.T) {
 		rankings, err := repo.FindAll(0, 0)
 		assert.NoError(t, err)
 		assert.Equal(t, 0, len(rankings))
-	}
-}
-
-func TestRankingRepository_UpdateAmounts(t *testing.T) {
-	sqlHandler, cleanup := setupTestingSuite(t)
-	defer cleanup()
-
-	repo := repositories.NewRankingRepository(sqlHandler)
-
-	contestID := uint64(1)
-	userID := uint64(1)
-
-	// Create initial rankings
-	for i, language := range []domain.LanguageCode{domain.Japanese, domain.Korean, domain.Global} {
-		ranking := domain.Ranking{
-			ContestID:       contestID,
-			UserID:          userID,
-			Language:        language,
-			Amount:          float32(i),
-			UserDisplayName: "John Doe",
-		}
-
-		err := repo.Store(ranking)
-		assert.NoError(t, err)
-	}
-
-	// Update rankings
-	updatedRankings := domain.Rankings{}
-	{
-		rankings, err := repo.FindAll(contestID, userID)
-		assert.NoError(t, err)
-
-		for _, r := range rankings {
-			updatedRankings = append(updatedRankings, domain.Ranking{
-				ID:     r.ID,
-				Amount: r.Amount + 10,
-			})
-		}
-
-		err = repo.UpdateAmounts(updatedRankings)
-		assert.NoError(t, err)
-	}
-
-	// Check updated content
-	{
-		rankings, err := repo.FindAll(contestID, userID)
-		assert.NoError(t, err)
-
-		assert.Equal(t, len(updatedRankings), len(rankings))
-
-		expectedRankings := make(map[uint64]domain.Ranking)
-		for _, ranking := range updatedRankings {
-			expectedRankings[ranking.ID] = ranking
-		}
-
-		for _, ranking := range rankings {
-			assert.Equal(t, ranking.Amount, expectedRankings[ranking.ID].Amount)
-		}
 	}
 }
 

@@ -356,18 +356,18 @@ func (mr *MockRankingRepositoryMockRecorder) GlobalRankings(languageCode interfa
 }
 
 // RankingsForContest mocks base method.
-func (m *MockRankingRepository) RankingsForContest(contestID uint64, languageCode domain.LanguageCode) (domain.Rankings, error) {
+func (m *MockRankingRepository) RankingsForContest(contestID uint64) (domain.Rankings, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "RankingsForContest", contestID, languageCode)
+	ret := m.ctrl.Call(m, "RankingsForContest", contestID)
 	ret0, _ := ret[0].(domain.Rankings)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // RankingsForContest indicates an expected call of RankingsForContest.
-func (mr *MockRankingRepositoryMockRecorder) RankingsForContest(contestID, languageCode interface{}) *gomock.Call {
+func (mr *MockRankingRepositoryMockRecorder) RankingsForContest(contestID interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RankingsForContest", reflect.TypeOf((*MockRankingRepository)(nil).RankingsForContest), contestID, languageCode)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RankingsForContest", reflect.TypeOf((*MockRankingRepository)(nil).RankingsForContest), contestID)
 }
 
 // Store mocks base method.
@@ -382,18 +382,4 @@ func (m *MockRankingRepository) Store(contest domain.Ranking) error {
 func (mr *MockRankingRepositoryMockRecorder) Store(contest interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Store", reflect.TypeOf((*MockRankingRepository)(nil).Store), contest)
-}
-
-// UpdateAmounts mocks base method.
-func (m *MockRankingRepository) UpdateAmounts(arg0 domain.Rankings) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UpdateAmounts", arg0)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// UpdateAmounts indicates an expected call of UpdateAmounts.
-func (mr *MockRankingRepositoryMockRecorder) UpdateAmounts(arg0 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateAmounts", reflect.TypeOf((*MockRankingRepository)(nil).UpdateAmounts), arg0)
 }

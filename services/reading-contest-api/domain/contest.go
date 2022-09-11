@@ -39,11 +39,6 @@ func (c Contest) Validate() (bool, error) {
 // ContestID is a container for contest ids with some domain logic
 type ContestID uint64
 
-// IsGlobal for knowing if a contest is a specific one or all of them
-func (id ContestID) IsGlobal() bool {
-	return id == 0
-}
-
 type ContestStats struct {
 	ByLanguage   []ContestLanguageStat `json:"by_language"`
 	Participants int                   `json:"participants"`

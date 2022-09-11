@@ -45,7 +45,6 @@ func (r *rankingRepository) update(ranking domain.Ranking) error {
 
 func (r *rankingRepository) RankingsForContest(
 	contestID uint64,
-	languageCode domain.LanguageCode,
 ) (domain.Rankings, error) {
 	var rankings []domain.Ranking
 
@@ -89,26 +88,6 @@ func (r *rankingRepository) RankingsForContest(
 	`
 
 	err := r.sqlHandler.Select(&rankings, query, contestID)
-	if err != nil {
-		return nil, err
-	}
-
-	return rankings, nil
-}
-
-// TODO: Might need deprecation
-func (r *rankingRepository) GlobalRankings(languageCode domain.LanguageCode) (domain.Rankings, error) {
-	var rankings []domain.Ranking
-
-	query := `
-		select user_id, language_code, sum(amount) as amount, user_display_name
-		from rankings
-		where language_code = $1
-		group by user_id, user_display_name, language_code
-		order by amount desc
-	`
-
-	err := r.sqlHandler.Select(&rankings, query, languageCode)
 	if err != nil {
 		return nil, err
 	}

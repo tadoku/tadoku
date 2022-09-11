@@ -336,7 +336,7 @@ func TestRankingInteractor_RankingsForRegistration(t *testing.T) {
 }
 
 func TestRankingInteractor_RankingsForContest(t *testing.T) {
-	ctrl, rankingRepo, _, _, validator, interactor := setupRankingTest(t)
+	ctrl, rankingRepo, _, _, _, interactor := setupRankingTest(t)
 	defer ctrl.Finish()
 
 	contestID := uint64(1)
@@ -351,10 +351,9 @@ func TestRankingInteractor_RankingsForContest(t *testing.T) {
 			{ID: 3, ContestID: contestID, UserID: userID + 2, Language: language, Amount: 11},
 			{ID: 4, ContestID: contestID, UserID: userID + 3, Language: language, Amount: 0},
 		}
-		rankingRepo.EXPECT().RankingsForContest(contestID, language).Return(expected, nil)
-		validator.EXPECT().Validate(language).Return(true, nil)
+		rankingRepo.EXPECT().RankingsForContest(contestID).Return(expected, nil)
 
-		rankings, err := interactor.RankingsForContest(contestID, language)
+		rankings, err := interactor.RankingsForContest(contestID)
 		assert.NoError(t, err)
 
 		for i, ranking := range rankings {
@@ -365,59 +364,11 @@ func TestRankingInteractor_RankingsForContest(t *testing.T) {
 		}
 	}
 
-	// Happy path for global rankings
-	{
-		expected := domain.Rankings{
-			{UserID: userID, Language: language, Amount: 15},
-			{UserID: userID + 1, Language: language, Amount: 12},
-			{UserID: userID + 2, Language: language, Amount: 11},
-			{UserID: userID + 3, Language: language, Amount: 0},
-		}
-		rankingRepo.EXPECT().GlobalRankings(language).Return(expected, nil)
-		validator.EXPECT().Validate(language).Return(true, nil)
-
-		rankings, err := interactor.RankingsForContest(0, language)
-		assert.NoError(t, err)
-
-		for i, ranking := range rankings {
-			expect := expected[i]
-
-			assert.Equal(t, expect.UserID, ranking.UserID)
-			assert.Equal(t, expect.Amount, ranking.Amount)
-		}
-	}
-
-	// Happy path for specific language and contest
-	{
-		expected := domain.Rankings{
-			{ID: 1, ContestID: contestID, UserID: userID, Language: domain.Japanese, Amount: 15},
-		}
-		rankingRepo.EXPECT().RankingsForContest(contestID, domain.Japanese).Return(expected, nil)
-		validator.EXPECT().Validate(domain.Japanese).Return(true, nil)
-
-		_, err := interactor.RankingsForContest(contestID, domain.Japanese)
-		assert.NoError(t, err)
-	}
-
-	// Happy path for invalid language falls back to global
-	{
-		invalidLanguage := domain.LanguageCode("")
-		expected := domain.Rankings{
-			{ID: 1, ContestID: contestID, UserID: userID, Language: language, Amount: 15},
-		}
-		rankingRepo.EXPECT().RankingsForContest(contestID, language).Return(expected, nil)
-		validator.EXPECT().Validate(invalidLanguage).Return(false, domain.ErrInvalidLanguage)
-
-		_, err := interactor.RankingsForContest(contestID, invalidLanguage)
-		assert.NoError(t, err)
-	}
-
 	// Sad path for no rankings found
 	{
-		rankingRepo.EXPECT().RankingsForContest(contestID, language).Return(nil, nil)
-		validator.EXPECT().Validate(language).Return(true, nil)
+		rankingRepo.EXPECT().RankingsForContest(contestID).Return(nil, nil)
 
-		_, err := interactor.RankingsForContest(contestID, language)
+		_, err := interactor.RankingsForContest(contestID)
 		assert.EqualError(t, err, usecases.ErrNoRankingsFound.Error())
 	}
 }

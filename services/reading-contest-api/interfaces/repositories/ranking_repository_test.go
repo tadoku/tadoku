@@ -154,7 +154,7 @@ func TestRankingRepository_RankingsForContest(t *testing.T) {
 		}
 	}
 
-	rankings, err := repo.RankingsForContest(contestID, domain.Global)
+	rankings, err := repo.RankingsForContest(contestID)
 	assert.NoError(t, err)
 
 	assert.Equal(t, len(expected), len(rankings))

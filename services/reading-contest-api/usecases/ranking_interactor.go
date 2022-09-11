@@ -58,7 +58,7 @@ type RankingInteractor interface {
 	DeleteLog(logID uint64, userID uint64) error
 
 	RankingsForRegistration(contestID uint64, userID uint64) (domain.Rankings, error)
-	RankingsForContest(contestID uint64, languageCode domain.LanguageCode) (domain.Rankings, error)
+	RankingsForContest(contestID uint64) (domain.Rankings, error)
 	CurrentRegistration(userID uint64) (domain.RankingRegistration, error)
 	ContestLogs(contestID uint64, userID uint64) (domain.ContestLogs, error)
 	RecentContestLogs(contestID uint64, limit uint64) (domain.ContestLogs, error)
@@ -252,23 +252,8 @@ func (i *rankingInteractor) RankingsForRegistration(
 
 func (i *rankingInteractor) RankingsForContest(
 	contestID uint64,
-	languageCode domain.LanguageCode,
 ) (domain.Rankings, error) {
-
-	validatedLanguage := domain.Global
-	if ok, _ := i.validator.Validate(languageCode); ok {
-		validatedLanguage = languageCode
-	}
-
-	var rankings domain.Rankings
-	var err error
-
-	// TODO: Remove global rankings here
-	if domain.ContestID(contestID).IsGlobal() {
-		rankings, err = i.rankingRepository.GlobalRankings(validatedLanguage)
-	} else {
-		rankings, err = i.rankingRepository.RankingsForContest(contestID, validatedLanguage)
-	}
+	rankings, err := i.rankingRepository.RankingsForContest(contestID)
 
 	if err != nil {
 		return nil, domain.WrapError(err)

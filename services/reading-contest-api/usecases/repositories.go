@@ -37,8 +37,7 @@ type ContestLogRepository interface {
 type RankingRepository interface {
 	Store(contest domain.Ranking) error
 
-	RankingsForContest(contestID uint64, languageCode domain.LanguageCode) (domain.Rankings, error)
-	GlobalRankings(languageCode domain.LanguageCode) (domain.Rankings, error)
+	RankingsForContest(contestID uint64) (domain.Rankings, error)
 	FindAll(contestID uint64, userID uint64) (domain.Rankings, error)
 	GetAllLanguagesForContestAndUser(contestID uint64, userID uint64) (domain.LanguageCodes, error)
 	CurrentRegistration(userID uint64, now time.Time) (domain.RankingRegistration, error)

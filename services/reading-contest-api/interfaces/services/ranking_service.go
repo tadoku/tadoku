@@ -56,9 +56,8 @@ func (s *rankingService) Get(ctx Context) error {
 	if err != nil {
 		return domain.WrapError(err)
 	}
-	language := domain.LanguageCode(ctx.QueryParam("language"))
 
-	rankings, err := s.RankingInteractor.RankingsForContest(contestID, language)
+	rankings, err := s.RankingInteractor.RankingsForContest(contestID)
 	if err != nil {
 		if err == usecases.ErrNoRankingsFound {
 			return ctx.NoContent(http.StatusNotFound)

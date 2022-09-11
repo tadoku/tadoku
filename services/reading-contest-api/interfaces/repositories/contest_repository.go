@@ -149,31 +149,54 @@ func (r *contestRepository) Stats(id uint64) (domain.ContestStats, error) {
 	}
 
 	queryStatsByLanguage := `
-		select count(*) as cnt, language_code
-		from rankings
-		where
-			amount > 0 and
-			contest_id = $1
-		group by
+		with leaderboard as (
+			select
+				language_code,
+				user_id,
+				sum(weighted_score) as amount
+			from contest_logs
+			where
+				contest_id = $1 and
+				deleted_at is null
+			group by
+				language_code,
+				user_id
+		)
+
+		select
+			count(user_id) as cnt,
 			language_code
-		order by cnt desc
+		from leaderboard
+		where amount > 0
+		group by language_code
+		order by
+			cnt desc,
+			language_code asc
 	`
 	queryParticipants := `
-		select count(*)
-			from rankings
-		where
-			language_code = 'GLO' and
-			amount > 0 and
-			contest_id = $1
+		with leaderboard as (
+			select
+				user_id,
+				sum(weighted_score) as amount
+			from contest_logs
+			where
+				contest_id = $1 and
+				deleted_at is null
+			group by user_id
+		)
+
+		select count(user_id)
+		from leaderboard
+		where amount > 0
 	`
 
 	queryTotalPages := `
-		select sum(amount)
-		from rankings
+		select
+			sum(weighted_score) as amount
+		from contest_logs
 		where
-			language_code = 'GLO' and
-			amount > 0 and
-			contest_id = $1
+			contest_id = $1 and
+			deleted_at is null
 	`
 
 	err = r.sqlHandler.Select(&contestStats.ByLanguage, queryStatsByLanguage, id)

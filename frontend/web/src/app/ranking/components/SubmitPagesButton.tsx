@@ -23,7 +23,8 @@ const SubmitPagesButton = ({ registration, refreshRanking }: Props) => {
 
   const hasStarted = registration.start <= currentDate
   const hasEnded = registration.end <= currentDate
-  const disabled = !hasStarted || hasEnded
+  // TODO: remove temporarily disabled submit pages button
+  const disabled = true || !hasStarted || hasEnded
 
   if (hasEnded || !hasStarted) {
     return null

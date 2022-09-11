@@ -182,3 +182,23 @@ func TestContestRepository_FindByID(t *testing.T) {
 		assert.NoError(t, err)
 	}
 }
+
+func TestContestRepository_Register(t *testing.T) {
+	sqlHandler, cleanup := setupTestingSuite(t)
+	defer cleanup()
+
+	repo := repositories.NewContestRepository(sqlHandler)
+	registration := &domain.ContestRegistration{
+		ContestID:       1,
+		UserID:          1,
+		UserDisplayName: "John Smith",
+		LanguageCodes:   []domain.LanguageCode{domain.Japanese, domain.English},
+		CreatedAt:       time.Date(2019, 1, 1, 0, 0, 0, 0, time.UTC),
+		UpdatedAt:       time.Date(2019, 1, 1, 0, 0, 0, 0, time.UTC),
+	}
+
+	{
+		err := repo.Register(*registration)
+		assert.NoError(t, err)
+	}
+}

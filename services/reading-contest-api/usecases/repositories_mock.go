@@ -147,6 +147,20 @@ func (mr *MockContestRepositoryMockRecorder) GetRunningContests() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetRunningContests", reflect.TypeOf((*MockContestRepository)(nil).GetRunningContests))
 }
 
+// Register mocks base method.
+func (m *MockContestRepository) Register(registration domain.ContestRegistration) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Register", registration)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Register indicates an expected call of Register.
+func (mr *MockContestRepositoryMockRecorder) Register(registration interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Register", reflect.TypeOf((*MockContestRepository)(nil).Register), registration)
+}
+
 // Stats mocks base method.
 func (m *MockContestRepository) Stats(id uint64) (domain.ContestStats, error) {
 	m.ctrl.T.Helper()
@@ -338,21 +352,6 @@ func (m *MockRankingRepository) GetAllLanguagesForContestAndUser(contestID, user
 func (mr *MockRankingRepositoryMockRecorder) GetAllLanguagesForContestAndUser(contestID, userID interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAllLanguagesForContestAndUser", reflect.TypeOf((*MockRankingRepository)(nil).GetAllLanguagesForContestAndUser), contestID, userID)
-}
-
-// GlobalRankings mocks base method.
-func (m *MockRankingRepository) GlobalRankings(languageCode domain.LanguageCode) (domain.Rankings, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GlobalRankings", languageCode)
-	ret0, _ := ret[0].(domain.Rankings)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GlobalRankings indicates an expected call of GlobalRankings.
-func (mr *MockRankingRepositoryMockRecorder) GlobalRankings(languageCode interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GlobalRankings", reflect.TypeOf((*MockRankingRepository)(nil).GlobalRankings), languageCode)
 }
 
 // RankingsForContest mocks base method.

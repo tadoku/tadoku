@@ -1,6 +1,7 @@
 package repositories
 
 import (
+	"github.com/lib/pq"
 	"github.com/tadoku/tadoku/services/reading-contest-api/domain"
 	"github.com/tadoku/tadoku/services/reading-contest-api/interfaces/rdb"
 	"github.com/tadoku/tadoku/services/reading-contest-api/usecases"
@@ -219,4 +220,21 @@ func (r *contestRepository) Stats(id uint64) (domain.ContestStats, error) {
 	}
 
 	return contestStats, nil
+}
+
+func (r *contestRepository) Register(reg domain.ContestRegistration) error {
+	query := `
+		insert into contest_registrations
+		(contest_id, user_id, user_display_name, language_codes, created_at, updated_at)
+		values ($1, $2, $3, $4, now() at time zone 'utc', now() at time zone 'utc')
+		returning id
+	`
+
+	row := r.sqlHandler.QueryRow(query, reg.ContestID, reg.UserID, reg.UserDisplayName, pq.Array(reg.LanguageCodes))
+	err := row.Scan(&reg.ID)
+	if err != nil {
+		return domain.WrapError(err)
+	}
+
+	return nil
 }

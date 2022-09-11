@@ -22,6 +22,8 @@ type ContestRepository interface {
 	FindRecent(count int) ([]domain.Contest, error)
 	FindByID(id uint64) (domain.Contest, error)
 	Stats(id uint64) (domain.ContestStats, error)
+
+	Register(registration domain.ContestRegistration) error
 }
 
 // ContestLogRepository handles ContestLog related database interactions

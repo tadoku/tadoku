@@ -49,3 +49,14 @@ type ContestLanguageStat struct {
 	Count        int    `json:"count" db:"cnt"`
 	LanguageCode string `json:"language_code" db:"language_code"`
 }
+
+// ContestRegistration holds the contest registration data for a user
+type ContestRegistration struct {
+	ID              uint64        `json:"id" db:"id"`
+	UserID          uint64        `json:"user_id" db:"user_id" valid:"required"`
+	UserDisplayName string        `json:"user_display_name" db:"user_display_name"`
+	ContestID       uint64        `json:"contest_id" db:"contest_id" valid:"required"`
+	LanguageCodes   LanguageCodes `json:"languages" db:"language_codes" valid:"required"`
+	CreatedAt       time.Time     `json:"created_at" db:"created_at"`
+	UpdatedAt       time.Time     `json:"updated_at" db:"updated_at"`
+}

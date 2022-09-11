@@ -56,7 +56,6 @@ type RankingInteractor interface {
 	CreateLog(log domain.ContestLog) error
 	UpdateLog(log domain.ContestLog) error
 	DeleteLog(logID uint64, userID uint64) error
-	UpdateRanking(contestID uint64, userID uint64) error
 
 	RankingsForRegistration(contestID uint64, userID uint64) (domain.Rankings, error)
 	RankingsForContest(contestID uint64, languageCode domain.LanguageCode) (domain.Rankings, error)
@@ -206,7 +205,7 @@ func (i *rankingInteractor) saveLog(log domain.ContestLog) error {
 		return domain.WrapError(err)
 	}
 
-	return i.UpdateRanking(log.ContestID, log.UserID)
+	return nil
 }
 
 func (i *rankingInteractor) DeleteLog(logID uint64, userID uint64) error {
@@ -232,38 +231,7 @@ func (i *rankingInteractor) DeleteLog(logID uint64, userID uint64) error {
 		return domain.WrapError(err)
 	}
 
-	return i.UpdateRanking(log.ContestID, log.UserID)
-}
-
-func (i *rankingInteractor) UpdateRanking(contestID uint64, userID uint64) error {
-	rankings, err := i.rankingRepository.FindAll(contestID, userID)
-	if err != nil {
-		return domain.WrapError(err)
-	}
-
-	if len(rankings) == 0 {
-		return ErrNoRankingsFound
-	}
-
-	logs, err := i.contestLogRepository.FindAll(contestID, userID)
-	if err != nil {
-		return domain.WrapError(err)
-	}
-
-	totals := make(map[domain.LanguageCode]float32)
-	for _, log := range logs {
-		amount := log.AdjustedAmount()
-		totals[log.Language] += amount
-		totals[domain.Global] += amount
-	}
-
-	updatedRankings := domain.Rankings{}
-	for _, ranking := range rankings {
-		ranking.Amount = totals[ranking.Language]
-		updatedRankings = append(updatedRankings, ranking)
-	}
-
-	return i.rankingRepository.UpdateAmounts(updatedRankings)
+	return nil
 }
 
 func (i *rankingInteractor) RankingsForRegistration(

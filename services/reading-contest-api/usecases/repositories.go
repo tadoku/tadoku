@@ -36,7 +36,6 @@ type ContestLogRepository interface {
 // RankingRepository handles Ranking related database interactions
 type RankingRepository interface {
 	Store(contest domain.Ranking) error
-	UpdateAmounts(domain.Rankings) error
 
 	RankingsForContest(contestID uint64, languageCode domain.LanguageCode) (domain.Rankings, error)
 	GlobalRankings(languageCode domain.LanguageCode) (domain.Rankings, error)

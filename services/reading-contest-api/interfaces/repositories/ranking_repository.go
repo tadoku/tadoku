@@ -1,6 +1,7 @@
 package repositories
 
 import (
+	"errors"
 	"time"
 
 	"github.com/lib/pq"
@@ -30,8 +31,8 @@ func (r *rankingRepository) Store(ranking domain.Ranking) error {
 func (r *rankingRepository) create(ranking domain.Ranking) error {
 	query := `
 		insert into rankings
-		(contest_id, user_id, language_code, amount, user_display_name, created_at, updated_at)
-		values (:contest_id, :user_id, :language_code, :amount, :user_display_name, now() at time zone 'utc', now() at time zone 'utc')
+		(contest_id, user_id, language_code, user_display_name, created_at, updated_at)
+		values (:contest_id, :user_id, :language_code, :user_display_name, now() at time zone 'utc', now() at time zone 'utc')
 	`
 
 	_, err := r.sqlHandler.NamedExecute(query, ranking)
@@ -39,40 +40,7 @@ func (r *rankingRepository) create(ranking domain.Ranking) error {
 }
 
 func (r *rankingRepository) update(ranking domain.Ranking) error {
-	query := `
-		update rankings
-		set amount = :amount, updated_at = now() at time zone 'utc'
-		where id = :id
-	`
-
-	_, err := r.sqlHandler.NamedExecute(query, ranking)
-	return domain.WrapError(err)
-}
-
-func (r *rankingRepository) UpdateAmounts(rankings domain.Rankings) error {
-	tx, err := r.sqlHandler.Begin()
-	if err != nil {
-		return domain.WrapError(err)
-	}
-
-	query := `
-		update rankings
-		set
-			amount = :amount,
-			updated_at = now() at time zone 'utc'
-		where id = :id
-	`
-
-	for _, ranking := range rankings {
-		_, err := tx.NamedExecute(query, ranking)
-
-		if err != nil {
-			_ = tx.Rollback()
-			return domain.WrapError(err)
-		}
-	}
-
-	return tx.Commit()
+	return errors.New("rankings cannot be updated at this time")
 }
 
 func (r *rankingRepository) RankingsForContest(
@@ -128,6 +96,7 @@ func (r *rankingRepository) RankingsForContest(
 	return rankings, nil
 }
 
+// TODO: Might need deprecation
 func (r *rankingRepository) GlobalRankings(languageCode domain.LanguageCode) (domain.Rankings, error) {
 	var rankings []domain.Ranking
 

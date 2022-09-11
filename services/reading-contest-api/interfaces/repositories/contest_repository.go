@@ -222,7 +222,7 @@ func (r *contestRepository) Stats(id uint64) (domain.ContestStats, error) {
 	return contestStats, nil
 }
 
-func (r *contestRepository) Register(reg domain.ContestRegistration) error {
+func (r *contestRepository) Register(reg *domain.ContestRegistration) error {
 	query := `
 		insert into contest_registrations
 		(contest_id, user_id, user_display_name, language_codes, created_at, updated_at)

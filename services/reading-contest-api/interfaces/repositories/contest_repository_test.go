@@ -198,7 +198,7 @@ func TestContestRepository_Register(t *testing.T) {
 	}
 
 	{
-		err := repo.Register(*registration)
+		err := repo.Register(registration)
 		assert.NoError(t, err)
 	}
 }

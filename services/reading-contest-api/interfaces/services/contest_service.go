@@ -15,6 +15,7 @@ type ContestService interface {
 	All(ctx Context) error
 	Get(ctx Context) error
 	Stats(ctx Context) error
+	Register(ctx Context) error
 }
 
 // NewContestService initializer
@@ -106,4 +107,37 @@ func (s *contestService) Stats(ctx Context) error {
 	}
 
 	return ctx.JSON(http.StatusOK, contest)
+}
+
+// ContestRegistrationPayload payload for the create action
+type ContestRegistrationPayload struct {
+	LanguageCodes domain.LanguageCodes `json:"language_codes"`
+}
+
+func (s *contestService) Register(ctx Context) error {
+	payload := &ContestRegistrationPayload{}
+	if err := ctx.Bind(payload); err != nil {
+		return domain.WrapError(err)
+	}
+
+	var contestID uint64
+	ctx.BindID(&contestID)
+
+	user, err := ctx.User()
+	if err != nil {
+		return domain.WrapError(err)
+	}
+
+	registration := &domain.ContestRegistration{
+		UserID:          user.ID,
+		UserDisplayName: user.DisplayName,
+		ContestID:       contestID,
+		LanguageCodes:   payload.LanguageCodes,
+	}
+
+	if err := s.ContestInteractor.CreateRegistration(registration); err != nil {
+		return domain.WrapError(err)
+	}
+
+	return ctx.NoContent(http.StatusCreated)
 }

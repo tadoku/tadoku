@@ -10,7 +10,7 @@ import {
   ErrorMessage,
 } from '@app/ui/components/Form'
 import { Button, StackContainer } from '@app/ui/components'
-import RankingApi from '@app/ranking/api'
+import ContestAPI from '@app/contest/api'
 import { Contest } from '@app/contest/interfaces'
 import { validateLanguageCode } from '@app/ranking/domain'
 import { rankingRegistrationMapper } from '@app/ranking/transform/ranking-registration'
@@ -45,7 +45,7 @@ const JoinContestForm = ({
     setSubmitting(true)
 
     const languageCodes = languages.filter(l => !!l) as string[]
-    const success = await RankingApi.joinContest(contest.id, languageCodes)
+    const success = await ContestAPI.register(contest.id, { languageCodes })
 
     setSubmitting(false)
 

@@ -79,12 +79,28 @@ const update = async (
   return response.status === 204
 }
 
+const register = async (
+  id: number,
+  payload: {
+    languageCodes: string[]
+  },
+): Promise<boolean> => {
+  const response = await post(`/contests/${id}/registrations`, {
+    body: {
+      language_codes: payload.languageCodes,
+    },
+  })
+
+  return response.status === 201
+}
+
 const ContestApi = {
   get: getContest,
   getAll,
   create,
   update,
   getStats,
+  register,
 }
 
 export default ContestApi

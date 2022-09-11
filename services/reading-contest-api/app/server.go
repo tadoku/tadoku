@@ -147,12 +147,14 @@ func (d *serverDependencies) routes() []services.Route {
 		{Method: http.MethodPost, Path: "/contests", HandlerFunc: d.Services().Contest.Create, MinRole: domain.RoleAdmin},
 		{Method: http.MethodPut, Path: "/contests/:id", HandlerFunc: d.Services().Contest.Update, MinRole: domain.RoleAdmin},
 		{Method: http.MethodGet, Path: "/contests/:id/stats", HandlerFunc: d.Services().Contest.Stats, MinRole: domain.RoleAdmin},
+		{Method: http.MethodPost, Path: "/contests/:id/registrations", HandlerFunc: d.Services().Contest.Register, MinRole: domain.RoleUser},
 
 		// Rankings
 		// TODO: Rename Get to All
 		{Method: http.MethodGet, Path: "/rankings", HandlerFunc: d.Services().Ranking.Get},
 
 		// Ranking registrations
+		// TODO: DEPRECATED
 		{Method: http.MethodPost, Path: "/ranking_registrations", HandlerFunc: d.Services().Ranking.Create, MinRole: domain.RoleUser},
 		{Method: http.MethodGet, Path: "/ranking_registrations", HandlerFunc: d.Services().Ranking.RankingsForRegistration},
 		{Method: http.MethodGet, Path: "/ranking_registrations/:id/current", HandlerFunc: d.Services().Ranking.CurrentRegistration, MinRole: domain.RoleUser},

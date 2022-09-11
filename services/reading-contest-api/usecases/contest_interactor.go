@@ -29,6 +29,8 @@ type ContestInteractor interface {
 	Recent(count int) ([]domain.Contest, error)
 	Find(contestID uint64) (*domain.Contest, error)
 	Stats(contestID uint64) (*domain.ContestStats, error)
+
+	CreateRegistration(registration *domain.ContestRegistration) error
 }
 
 // NewContestInteractor instantiates ContestInteractor with all dependencies
@@ -131,4 +133,24 @@ func (i *contestInteractor) Stats(contestID uint64) (*domain.ContestStats, error
 	}
 
 	return &contestStats, nil
+}
+
+func (i *contestInteractor) CreateRegistration(
+	registration *domain.ContestRegistration,
+) error {
+	ids, err := i.contestRepository.GetOpenContests()
+	if err != nil {
+		return domain.WrapError(err)
+	}
+
+	if !domain.ContainsID(ids, registration.ContestID) {
+		return ErrContestIsClosed
+	}
+
+	err = i.contestRepository.Register(registration)
+	if err != nil {
+		return domain.WrapError(err)
+	}
+
+	return nil
 }

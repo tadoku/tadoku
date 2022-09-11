@@ -48,6 +48,20 @@ func (mr *MockContestInteractorMockRecorder) CreateContest(contest interface{}) 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateContest", reflect.TypeOf((*MockContestInteractor)(nil).CreateContest), contest)
 }
 
+// CreateRegistration mocks base method.
+func (m *MockContestInteractor) CreateRegistration(registration *domain.ContestRegistration) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateRegistration", registration)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// CreateRegistration indicates an expected call of CreateRegistration.
+func (mr *MockContestInteractorMockRecorder) CreateRegistration(registration interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateRegistration", reflect.TypeOf((*MockContestInteractor)(nil).CreateRegistration), registration)
+}
+
 // Find mocks base method.
 func (m *MockContestInteractor) Find(contestID uint64) (*domain.Contest, error) {
 	m.ctrl.T.Helper()

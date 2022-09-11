@@ -148,7 +148,7 @@ func (mr *MockContestRepositoryMockRecorder) GetRunningContests() *gomock.Call {
 }
 
 // Register mocks base method.
-func (m *MockContestRepository) Register(registration domain.ContestRegistration) error {
+func (m *MockContestRepository) Register(registration *domain.ContestRegistration) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Register", registration)
 	ret0, _ := ret[0].(error)

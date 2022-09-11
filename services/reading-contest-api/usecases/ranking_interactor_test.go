@@ -114,23 +114,10 @@ func TestRankingInteractor_CreateLog(t *testing.T) {
 			MediumID:  domain.MediumComic,
 		}
 
-		rankings := domain.Rankings{
-			{ID: 1, ContestID: contestID, UserID: userID, Language: domain.Japanese, Amount: 0},
-			{ID: 2, ContestID: contestID, UserID: userID, Language: domain.Global, Amount: 0},
-		}
-
-		expectedRankings := domain.Rankings{
-			{ID: 1, ContestID: contestID, UserID: userID, Language: domain.Japanese, Amount: 2},
-			{ID: 2, ContestID: contestID, UserID: userID, Language: domain.Global, Amount: 2},
-		}
-
 		contestLogRepo.EXPECT().Store(&log)
 		validator.EXPECT().Validate(log).Return(true, nil)
 		contestRepo.EXPECT().GetRunningContests().Return([]uint64{contestID}, nil)
 		rankingRepo.EXPECT().GetAllLanguagesForContestAndUser(contestID, userID).Return(domain.LanguageCodes{domain.Japanese}, nil)
-		rankingRepo.EXPECT().FindAll(contestID, userID).Return(rankings, nil)
-		contestLogRepo.EXPECT().FindAll(contestID, userID).Return(domain.ContestLogs{log}, nil)
-		rankingRepo.EXPECT().UpdateAmounts(expectedRankings).Return(nil)
 
 		err := interactor.CreateLog(log)
 		assert.NoError(t, err)
@@ -221,24 +208,11 @@ func TestRankingInteractor_UpdateLog(t *testing.T) {
 			MediumID:  domain.MediumComic,
 		}
 
-		rankings := domain.Rankings{
-			{ID: 1, ContestID: contestID, UserID: userID, Language: domain.Japanese, Amount: 0},
-			{ID: 2, ContestID: contestID, UserID: userID, Language: domain.Global, Amount: 0},
-		}
-
-		expectedRankings := domain.Rankings{
-			{ID: 1, ContestID: contestID, UserID: userID, Language: domain.Japanese, Amount: 2},
-			{ID: 2, ContestID: contestID, UserID: userID, Language: domain.Global, Amount: 2},
-		}
-
 		contestLogRepo.EXPECT().Store(&log)
 		validator.EXPECT().Validate(log).Return(true, nil)
 		contestLogRepo.EXPECT().FindByID(log.ID).Return(log, nil)
 		contestRepo.EXPECT().GetRunningContests().Return([]uint64{contestID}, nil)
 		rankingRepo.EXPECT().GetAllLanguagesForContestAndUser(contestID, userID).Return(domain.LanguageCodes{domain.Japanese}, nil)
-		rankingRepo.EXPECT().FindAll(contestID, userID).Return(rankings, nil)
-		contestLogRepo.EXPECT().FindAll(contestID, userID).Return(domain.ContestLogs{log}, nil)
-		rankingRepo.EXPECT().UpdateAmounts(expectedRankings).Return(nil)
 
 		err := interactor.UpdateLog(log)
 
@@ -279,7 +253,7 @@ func TestRankingInteractor_UpdateLog(t *testing.T) {
 }
 
 func TestRankingInteractor_DeleteLog(t *testing.T) {
-	ctrl, rankingRepo, contestRepo, contestLogRepo, _, interactor := setupRankingTest(t)
+	ctrl, _, contestRepo, contestLogRepo, _, interactor := setupRankingTest(t)
 	defer ctrl.Finish()
 
 	contestID := uint64(1)
@@ -296,22 +270,10 @@ func TestRankingInteractor_DeleteLog(t *testing.T) {
 
 	// Happy path
 	{
-		rankings := domain.Rankings{
-			{ID: 1, ContestID: contestID, UserID: userID, Language: domain.Japanese, Amount: 10},
-			{ID: 2, ContestID: contestID, UserID: userID, Language: domain.Global, Amount: 10},
-		}
-
-		expectedRankings := domain.Rankings{
-			{ID: 1, ContestID: contestID, UserID: userID, Language: domain.Japanese, Amount: 0},
-			{ID: 2, ContestID: contestID, UserID: userID, Language: domain.Global, Amount: 0},
-		}
 
 		contestLogRepo.EXPECT().Delete(log.ID)
 		contestLogRepo.EXPECT().FindByID(log.ID).Return(log, nil)
 		contestRepo.EXPECT().GetRunningContests().Return([]uint64{contestID}, nil)
-		rankingRepo.EXPECT().FindAll(contestID, userID).Return(rankings, nil)
-		contestLogRepo.EXPECT().FindAll(contestID, userID).Return(domain.ContestLogs{}, nil)
-		rankingRepo.EXPECT().UpdateAmounts(expectedRankings).Return(nil)
 
 		err := interactor.DeleteLog(log.ID, log.UserID)
 		assert.NoError(t, err)
@@ -340,56 +302,6 @@ func TestRankingInteractor_DeleteLog(t *testing.T) {
 
 		err := interactor.DeleteLog(log.ID, log.UserID)
 		assert.EqualError(t, err, domain.ErrNotFound.Error())
-	}
-}
-
-func TestRankingInteractor_UpdateRankings(t *testing.T) {
-	ctrl, rankingRepo, _, contestLogRepo, _, interactor := setupRankingTest(t)
-	defer ctrl.Finish()
-
-	contestID := uint64(1)
-	userID := uint64(1)
-
-	{
-		logJapaneseBook := domain.ContestLog{
-			ContestID: contestID,
-			UserID:    userID,
-			Language:  domain.Japanese,
-			Amount:    10,
-			MediumID:  domain.MediumBook,
-		}
-		logKoreanComic := domain.ContestLog{
-			ContestID: contestID,
-			UserID:    userID,
-			Language:  domain.Korean,
-			Amount:    10,
-			MediumID:  domain.MediumComic,
-		}
-		rankings := domain.Rankings{
-			{ID: 1, ContestID: contestID, UserID: userID, Language: domain.Japanese, Amount: 0},
-			{ID: 2, ContestID: contestID, UserID: userID, Language: domain.Korean, Amount: 0},
-			{ID: 3, ContestID: contestID, UserID: userID, Language: domain.German, Amount: 11},
-			{ID: 4, ContestID: contestID, UserID: userID, Language: domain.Global, Amount: 0},
-		}
-		expectedRankings := domain.Rankings{
-			{ID: 1, ContestID: contestID, UserID: userID, Language: domain.Japanese, Amount: 10},
-			{ID: 2, ContestID: contestID, UserID: userID, Language: domain.Korean, Amount: 2},
-			{ID: 3, ContestID: contestID, UserID: userID, Language: domain.German, Amount: 0},
-			{ID: 4, ContestID: contestID, UserID: userID, Language: domain.Global, Amount: 12},
-		}
-		rankingRepo.EXPECT().FindAll(contestID, userID).Return(rankings, nil)
-		contestLogRepo.EXPECT().FindAll(contestID, userID).Return(domain.ContestLogs{logJapaneseBook, logKoreanComic}, nil)
-		rankingRepo.EXPECT().UpdateAmounts(expectedRankings).Return(nil)
-
-		err := interactor.UpdateRanking(contestID, userID)
-		assert.NoError(t, err)
-	}
-
-	{
-		rankingRepo.EXPECT().FindAll(contestID, userID).Return(nil, nil)
-
-		err := interactor.UpdateRanking(contestID, userID)
-		assert.EqualError(t, err, usecases.ErrNoRankingsFound.Error())
 	}
 }
 

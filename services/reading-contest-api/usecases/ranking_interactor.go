@@ -263,6 +263,7 @@ func (i *rankingInteractor) RankingsForContest(
 	var rankings domain.Rankings
 	var err error
 
+	// TODO: Remove global rankings here
 	if domain.ContestID(contestID).IsGlobal() {
 		rankings, err = i.rankingRepository.GlobalRankings(validatedLanguage)
 	} else {

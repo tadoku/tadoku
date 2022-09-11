@@ -107,14 +107,14 @@ func (r *rankingRepository) RankingsForContest(
 		)
 
 		select
-			leaderboard.user_id,
-			leaderboard.amount,
+			coalesce(leaderboard.amount, 0) as amount,
+			registrations.user_id,
 			registrations.user_display_name,
 			'GLO' as language_code,
 			$1 as contest_id
 			-- , registrations.language_codes
-		from leaderboard
-		inner join registrations using(user_id)
+		from registrations
+		left join leaderboard using(user_id)
 		order by
 			amount desc,
 			registrations.id asc;

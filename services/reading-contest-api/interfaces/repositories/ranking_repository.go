@@ -119,7 +119,10 @@ func (r *rankingRepository) FindAll(contestID uint64, userID uint64) (domain.Ran
 			coalesce(s.amount, 0) as amount
 		from rankings as r
 		left join scores as s on (s.language_code = r.language_code)
-		where contest_id = $1 and user_id = $2
+		where
+			contest_id = $1 and
+			user_id = $2 and
+			r.language_code != 'GLO'
 		order by id asc
 	`
 

@@ -11,8 +11,18 @@ interface Props {
 }
 
 const ScoreList = ({ registrationOverview }: Props) => {
+  const total = registrationOverview.registrations.reduce(
+    (prev, cur) => prev + cur.amount,
+    0,
+  )
+
   return (
     <Scores>
+      <Score>
+        <ScoreLabel>{scoreLabel('GLO')}</ScoreLabel>
+        <ScoreValue>{formatScore(total)}</ScoreValue>
+      </Score>
+
       {registrationOverview.registrations.map(r => (
         <Score key={r.languageCode}>
           <ScoreLabel>{scoreLabel(r.languageCode)}</ScoreLabel>

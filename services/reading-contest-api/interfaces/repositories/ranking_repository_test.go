@@ -186,7 +186,6 @@ func TestRankingRepository_FindAllByContestAndUser(t *testing.T) {
 	}{
 		{domain.Japanese, 10},
 		{domain.Korean, 20},
-		{domain.Global, 30},
 	}
 
 	// Correct rankings

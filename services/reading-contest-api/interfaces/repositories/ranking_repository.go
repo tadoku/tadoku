@@ -89,7 +89,9 @@ func (r *rankingRepository) RankingsForContest(
 				user_id,
 				sum(weighted_score) as amount
 			from contest_logs
-			where contest_id = $1
+			where
+				contest_id = $1 and
+				deleted_at is null
 			group by user_id
 		), registrations as (
 			select

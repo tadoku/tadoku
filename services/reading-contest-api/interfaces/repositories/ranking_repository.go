@@ -81,14 +81,44 @@ func (r *rankingRepository) RankingsForContest(
 ) (domain.Rankings, error) {
 	var rankings []domain.Ranking
 
+	// TODO: remove filter on language code once they're reworked
+	// TODO: rename rankings
 	query := `
-		select rankings.id as id, rankings.contest_id as contest_id, user_id, language_code, amount, created_at, updated_at, user_display_name
-		from rankings
-		where contest_id = $1 and language_code = $2
-		order by amount desc, id asc
+		with leaderboard as (
+			select
+				user_id,
+				sum(weighted_score) as amount
+			from contest_logs
+			where contest_id = $1
+			group by user_id
+		), registrations as (
+			select
+				min(id) as id,
+				user_id,
+				array_agg(language_code) as language_codes,
+				user_display_name
+			from rankings
+			where contest_id = $1
+			group by
+				user_id,
+				user_display_name
+		)
+
+		select
+			leaderboard.user_id,
+			leaderboard.amount,
+			registrations.user_display_name,
+			'GLO' as language_code,
+			$1 as contest_id
+			-- , registrations.language_codes
+		from leaderboard
+		inner join registrations using(user_id)
+		order by
+			amount desc,
+			registrations.id asc;
 	`
 
-	err := r.sqlHandler.Select(&rankings, query, contestID, languageCode)
+	err := r.sqlHandler.Select(&rankings, query, contestID)
 	if err != nil {
 		return nil, err
 	}

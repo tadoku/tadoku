@@ -1,7 +1,6 @@
 package repositories
 
 import (
-	"errors"
 	"time"
 
 	"github.com/lib/pq"
@@ -18,29 +17,6 @@ func NewRankingRepository(sqlHandler rdb.SQLHandler) usecases.RankingRepository 
 
 type rankingRepository struct {
 	sqlHandler rdb.SQLHandler
-}
-
-func (r *rankingRepository) Store(ranking domain.Ranking) error {
-	if ranking.ID == 0 {
-		return r.create(ranking)
-	}
-
-	return r.update(ranking)
-}
-
-func (r *rankingRepository) create(ranking domain.Ranking) error {
-	query := `
-		insert into rankings
-		(contest_id, user_id, language_code, user_display_name, created_at, updated_at)
-		values (:contest_id, :user_id, :language_code, :user_display_name, now() at time zone 'utc', now() at time zone 'utc')
-	`
-
-	_, err := r.sqlHandler.NamedExecute(query, ranking)
-	return domain.WrapError(err)
-}
-
-func (r *rankingRepository) update(ranking domain.Ranking) error {
-	return errors.New("rankings cannot be updated at this time")
 }
 
 func (r *rankingRepository) RankingsForContest(

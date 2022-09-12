@@ -12,32 +12,6 @@ import (
 	"github.com/tadoku/tadoku/services/reading-contest-api/usecases"
 )
 
-func TestRankingService_Create(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	contestID := uint64(1)
-	user := &domain.User{ID: 1, DisplayName: "John Doe"}
-
-	payload := &services.CreateRankingPayload{
-		ContestID: contestID,
-		Languages: domain.LanguageCodes{domain.Japanese},
-	}
-
-	ctx := services.NewMockContext(ctrl)
-	ctx.EXPECT().NoContent(201)
-	ctx.EXPECT().User().Return(user, nil)
-	ctx.EXPECT().Bind(gomock.Any()).Return(nil).SetArg(0, *payload)
-
-	i := usecases.NewMockRankingInteractor(ctrl)
-	i.EXPECT().CreateRanking(contestID, user, payload.Languages).Return(nil)
-
-	s := services.NewRankingService(i)
-	err := s.Create(ctx)
-
-	assert.NoError(t, err)
-}
-
 func TestRankingService_Get(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()

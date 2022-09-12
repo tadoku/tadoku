@@ -48,11 +48,6 @@ var ErrCreateContestLogHasID = fail.New("a contest log can't have an id when bei
 
 // RankingInteractor contains all business logic for rankings
 type RankingInteractor interface {
-	CreateRanking(
-		contestID uint64,
-		user *domain.User,
-		languages domain.LanguageCodes,
-	) error
 	CreateLog(log domain.ContestLog) error
 	UpdateLog(log domain.ContestLog) error
 	DeleteLog(logID uint64, userID uint64) error
@@ -85,71 +80,6 @@ type rankingInteractor struct {
 	contestLogRepository ContestLogRepository
 	userRepository       UserRepository
 	validator            Validator
-}
-
-func (i *rankingInteractor) CreateRanking(
-	contestID uint64,
-	user *domain.User,
-	languages domain.LanguageCodes,
-) error {
-	ids, err := i.contestRepository.GetOpenContests()
-	if err != nil {
-		return domain.WrapError(err)
-	}
-
-	if !domain.ContainsID(ids, contestID) {
-		return ErrContestIsClosed
-	}
-
-	existingLanguages, err := i.rankingRepository.GetAllLanguagesForContestAndUser(contestID, user.ID)
-	if err != nil {
-		return domain.WrapError(err)
-	}
-	needsGlobal := len(existingLanguages) == 0
-
-	// Figure out which languages we need to create new rankings for
-	targetLanguages := domain.LanguageCodes{}
-	for _, lang := range languages {
-		if lang == domain.Global {
-			return ErrGlobalIsASystemLanguage
-		}
-
-		if existingLanguages.ContainsLanguage(lang) {
-			continue
-		}
-		targetLanguages = append(targetLanguages, lang)
-	}
-
-	if needsGlobal {
-		targetLanguages = append(targetLanguages, domain.Global)
-	}
-
-	if len(targetLanguages) == 0 {
-		return ErrNoRankingToCreate
-	}
-
-	rankings := make([]domain.Ranking, len(targetLanguages))
-	for i, lang := range targetLanguages {
-		if _, err := lang.Validate(); err != nil {
-			return domain.WrapError(err)
-		}
-
-		rankings[i] = domain.Ranking{
-			ContestID:       contestID,
-			UserID:          user.ID,
-			UserDisplayName: user.DisplayName,
-			Language:        lang,
-			Amount:          0,
-		}
-	}
-
-	for _, ranking := range rankings {
-		if err := i.rankingRepository.Store(ranking); err != nil {
-			return domain.WrapError(err)
-		}
-	}
-
-	return nil
 }
 
 func (i *rankingInteractor) CreateLog(log domain.ContestLog) error {

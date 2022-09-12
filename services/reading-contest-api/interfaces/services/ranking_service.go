@@ -10,7 +10,6 @@ import (
 
 // RankingService is responsible for managing rankings
 type RankingService interface {
-	Create(ctx Context) error
 	Get(ctx Context) error
 	CurrentRegistration(ctx Context) error
 	RankingsForRegistration(ctx Context) error
@@ -25,30 +24,6 @@ func NewRankingService(rankingInteractor usecases.RankingInteractor) RankingServ
 
 type rankingService struct {
 	RankingInteractor usecases.RankingInteractor
-}
-
-// CreateRankingPayload payload for the create action
-type CreateRankingPayload struct {
-	ContestID uint64               `json:"contest_id"`
-	Languages domain.LanguageCodes `json:"languages"`
-}
-
-func (s *rankingService) Create(ctx Context) error {
-	payload := &CreateRankingPayload{}
-	if err := ctx.Bind(payload); err != nil {
-		return domain.WrapError(err)
-	}
-
-	user, err := ctx.User()
-	if err != nil {
-		return domain.WrapError(err)
-	}
-
-	if err := s.RankingInteractor.CreateRanking(payload.ContestID, user, payload.Languages); err != nil {
-		return domain.WrapError(err)
-	}
-
-	return ctx.NoContent(http.StatusCreated)
 }
 
 func (s *rankingService) Get(ctx Context) error {

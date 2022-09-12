@@ -78,23 +78,26 @@ func (r *rankingRepository) FindAll(contestID uint64, userID uint64) (domain.Ran
 			from contest_logs
 			where contest_id = $1 and user_id = $2
 			group by language_code
+		), registrations as (
+			select
+				id,
+				contest_id,
+				user_id,
+				user_display_name,
+				unnest(language_codes) as language_code,
+				created_at,
+				updated_at
+			from contest_registrations
+			where
+				contest_id = $1 and
+				user_id = $2
 		)
 
 		select
-			r.id,
-			contest_id,
-			user_id,
-			user_display_name,
-			r.language_code,
-			created_at,
-			updated_at,
+			r.*,
 			coalesce(s.amount, 0) as amount
-		from rankings as r
+		from registrations as r
 		left join scores as s on (s.language_code = r.language_code)
-		where
-			contest_id = $1 and
-			user_id = $2 and
-			r.language_code != 'GLO'
 		order by id asc
 	`
 

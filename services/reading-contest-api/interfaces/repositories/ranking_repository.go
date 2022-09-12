@@ -144,14 +144,12 @@ func (r *rankingRepository) CurrentRegistration(userID uint64, now time.Time) (d
 			contests.id as contest_id,
 			contests."end" as "end",
 			contests.start as start,
-			array_agg(distinct rankings.language_code) as language_codes
+			contest_registrations.language_codes
 		from contests
-		left join rankings on contests.id = rankings.contest_id
+		left join contest_registrations on contests.id = contest_registrations.contest_id
 		where
-			rankings.user_id = $1 and
-			rankings.language_code != 'GLO' and
+			user_id = $1 and
 			$2::date <= contests."end"
-		group by contests.id
 		order by contests.id desc
 		limit 1
 	`

@@ -25,7 +25,6 @@ func (r *rankingRepository) RankingsForContest(
 	var rankings []domain.Ranking
 
 	// TODO: remove filter on language code once they're reworked
-	// TODO: rename rankings
 	query := `
 		with leaderboard as (
 			select
@@ -38,15 +37,12 @@ func (r *rankingRepository) RankingsForContest(
 			group by user_id
 		), registrations as (
 			select
-				min(id) as id,
+				id,
 				user_id,
-				array_agg(language_code) as language_codes,
+				language_codes,
 				user_display_name
-			from rankings
+			from contest_registrations
 			where contest_id = $1
-			group by
-				user_id,
-				user_display_name
 		)
 
 		select

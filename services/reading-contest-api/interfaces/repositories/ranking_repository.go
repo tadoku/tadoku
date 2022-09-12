@@ -76,7 +76,10 @@ func (r *rankingRepository) FindAll(contestID uint64, userID uint64) (domain.Ran
 				language_code,
 				sum(weighted_score) as amount
 			from contest_logs
-			where contest_id = $1 and user_id = $2
+			where
+				contest_id = $1 and
+				user_id = $2 and
+				deleted_at is null
 			group by language_code
 		), registrations as (
 			select

@@ -19,17 +19,17 @@ spec:
             subPath: seed.sql
         envFrom:
           - secretRef:
-              name: tadoku-user.tadoku-reading-contest-api-db.credentials.postgresql.acid.zalan.do
+              name: postgres.tadoku-reading-contest-api-db.credentials.postgresql.acid.zalan.do
         env:
         - name: PGUSER
           valueFrom:
             secretKeyRef:
-              name: tadoku-user.tadoku-reading-contest-api-db.credentials.postgresql.acid.zalan.do
+              name: postgres.tadoku-reading-contest-api-db.credentials.postgresql.acid.zalan.do
               key: username
         - name: PGPASSWORD
           valueFrom:
             secretKeyRef:
-              name: tadoku-user.tadoku-reading-contest-api-db.credentials.postgresql.acid.zalan.do
+              name: postgres.tadoku-reading-contest-api-db.credentials.postgresql.acid.zalan.do
               key: password
         - name: PGHOST
           value: tadoku-reading-contest-api-db

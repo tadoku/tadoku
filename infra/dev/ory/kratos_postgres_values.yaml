@@ -10,7 +10,7 @@ auth:
 primary:
   persistence:
     enabled: true
-    existingClaim: "postgresql-data-claim"
+    existingClaim: "postgresql-kratos-data-claim"
 
 volumePermissions:
   enabled: true

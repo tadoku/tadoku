@@ -80,11 +80,11 @@ kratos:
       flows:
         verification:
           enabled: true
-          ui_url: http://localhost:3000/verification
+          ui_url: http://localhost:3001/verification
 
         recovery:
           enabled: true
-          ui_url: http://localhost:3000/account-recovery
+          ui_url: http://localhost:3001/account-recovery
 
         registration:
           ui_url: "/register"
@@ -95,14 +95,14 @@ kratos:
                 - hook: session
 
         login:
-          ui_url: http://localhost:3000/login
+          ui_url: http://localhost:3001/login
           after:
             password:
               hooks:
                 - hook: require_verified_address
 
         settings:
-          ui_url: http://localhost:3000/settings
+          ui_url: http://localhost:3001/settings
           # after:
           #   profile:
           #     hooks:
@@ -126,10 +126,10 @@ kratos:
 
     serve:
       public:
-        base_url: http://localhost:3000/kratos/
+        base_url: http://localhost:3001/kratos/
         cors:
           allowed_origins:
-            - http://localhost:3000
+            - http://localhost:3001
         request_log:
           disable_for_health: true
       admin:

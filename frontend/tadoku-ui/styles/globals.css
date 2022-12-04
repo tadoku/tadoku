@@ -79,7 +79,7 @@
   }
 
   .subtitle {
-    @apply font-sans text-slate-500 text-lg uppercase font-bold tracking-wide;
+    @apply font-sans text-slate-500 text-base uppercase font-bold tracking-wide;
   }
 
   .v-stack {

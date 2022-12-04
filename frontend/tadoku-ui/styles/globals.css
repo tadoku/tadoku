@@ -1,0 +1,144 @@
+@import url('https://fonts.googleapis.com/css?family=Merriweather:700|Open+Sans:400,400i,600&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+
+@layer base {
+  html,
+  body {
+    position: relative;
+  }
+
+  html {
+    height: 100%;
+    overflow-x: hidden;
+    margin-right: calc(-1 * (100vw - 100%));
+  }
+
+  body {
+    background: theme('colors.neutral.100');
+    font-family: theme('fontFamily.sans');
+    margin: 0;
+    padding: 0;
+  }
+
+  ::selection {
+    background: theme('colors.primary');
+    color: theme('colors.neutral.50');
+  }
+
+  a {
+    color: theme('colors.neutral.800');
+    text-decoration: none;
+    transition: color 0.2s ease;
+  }
+
+  a:hover, a:active, a:focus {
+    color: theme('colors.primary');
+  }
+
+  h1, h2, h3, h4, h5, h6, h7 {
+    font-family: theme('fontFamily.serif');
+  }
+
+  button {
+    font-family: theme('fontFamily.sans');
+  }
+
+  a[href],
+  input[type='submit']:not([disabled]),
+  input[type='image']:not([disabled]),
+  label:not([disabled]),
+  select:not([disabled]),
+  button:not([disabled]) {
+    cursor: pointer;
+  }
+
+  table {
+    @apply bg-white shadow shadow-slate-500/10;
+  }
+
+  table thead tr {
+    @apply border-b-2 border-slate-500/20;
+  }
+
+  table tbody tr:nth-child(2n+1) {
+    @apply bg-slate-500/5
+  }
+
+  input[type=text] {
+    @apply border border-b-2 border-black/10 focus:border-primary focus:ring-primary/40 focus:ring-2;
+    @apply bg-white px-4 py-1 h-11 w-full transition ease-in-out;
+  }
+
+  textarea {
+    @apply border border-b-2 border-black/10 focus:border-primary focus:ring-primary/40 focus:ring-2;
+    @apply bg-white px-4 py-1 w-full min-h-[10rem] transition ease-in-out;
+  }
+
+  select {
+    @apply appearance-none border border-b-2 border-black/10 focus:border-primary focus:ring-primary/40 focus:ring-2;
+    @apply bg-white px-4 py-1 w-full transition ease-in-out;
+  }
+
+  input[type=radio] {
+    @apply rounded-full h-4 w-4 border border-gray-300 bg-white;
+    @apply checked:bg-primary checked:border-primary;
+    @apply focus:outline-none transition duration-200 mt-1 align-top;
+    @apply cursor-pointer checked:font-bold focus:ring-1 focus:ring-primary text-primary;
+  }
+
+  input[type=radio]:checked + span {
+    @apply font-semibold;
+  }
+}
+
+@layer components {
+  /* typography */
+
+  .text-link {
+    @apply underline text-primary hover:text-black;
+  }
+
+  .title {
+    @apply font-serif text-3xl font-bold;
+  }
+
+  .subtitle {
+    @apply font-sans text-slate-500 text-base uppercase font-bold tracking-wide;
+  }
+
+  /* templates */
+
+  .v-stack {
+    @apply flex flex-col space-y-3;
+  }
+
+  .v-stack > * {
+    @apply mx-0 box-border;
+  }
+
+  .h-stack {
+    @apply flex flex-row space-x-3;
+  }
+
+  .h-stack > * {
+    @apply my-0 box-border;
+  }
+
+  /* forms */
+
+  .label {
+    @apply block space-y-3;
+  }
+
+  .label-text {
+    @apply block font-semibold text-lg;
+  }
+
+  .label-radio {
+    @apply h-stack items-center h-8;
+  }
+}

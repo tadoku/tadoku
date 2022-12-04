@@ -48,7 +48,7 @@ export default function App({ Component, pageProps }: AppProps) {
           </>
         ))}
       </div>
-      <div className="p-8">
+      <div className="p-8 flex-grow">
         <Component {...pageProps} />
       </div>
     </div>

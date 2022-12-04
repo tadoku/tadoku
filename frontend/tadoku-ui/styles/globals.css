@@ -61,6 +61,10 @@
   }
 
   .title {
-    @apply font-serif text-3xl font-bold my-8;
+    @apply font-serif text-3xl font-bold;
+  }
+
+  .subtitle {
+    @apply font-sans text-slate-500 text-lg uppercase font-bold tracking-wide;
   }
 }

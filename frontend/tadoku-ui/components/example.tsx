@@ -2,8 +2,14 @@ import { ReactNode } from 'react'
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter'
 import { coldarkDark as theme } from 'react-syntax-highlighter/dist/cjs/styles/prism'
 
-export const CodeBlock = ({ code }: { code: string }) => (
-  <SyntaxHighlighter language="typescript" style={theme}>
+export const CodeBlock = ({
+  code,
+  language,
+}: {
+  code: string
+  language?: string
+}) => (
+  <SyntaxHighlighter language={language ?? 'typescript'} style={theme}>
     {code}
   </SyntaxHighlighter>
 )

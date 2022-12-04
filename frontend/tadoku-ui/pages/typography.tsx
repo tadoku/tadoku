@@ -9,6 +9,7 @@ export default function Typography() {
         <h1 className="title">The quick brown fox jumps over the lazy dog</h1>
       </Preview>
       <CodeBlock
+        language={'html'}
         code={`<h1 className="title">
   The quick brown fox jumps over the lazy dog
 </h1>`}
@@ -23,6 +24,7 @@ export default function Typography() {
         </h1>
       </Preview>
       <CodeBlock
+        language={'html'}
         code={`<h1 className="subtitle">
   The quick brown fox jumps over the lazy dog
 </h1>`}
@@ -37,6 +39,7 @@ export default function Typography() {
         </a>
       </Preview>
       <CodeBlock
+        language={'html'}
         code={`<a className="text-link" href="#">
   A text link
 </a>`}

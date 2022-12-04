@@ -2,52 +2,65 @@
 @tailwind components;
 @tailwind utilities;
 
-html,
-body {
-  position: relative;
+
+@layer base {
+  html,
+  body {
+    position: relative;
+  }
+
+  html {
+    height: 100%;
+    overflow-x: hidden;
+    margin-right: calc(-1 * (100vw - 100%));
+  }
+
+  body {
+    background: theme('colors.neutral.100');
+    font-family: theme('fontFamily.sans');
+    margin: 0;
+    padding: 0;
+  }
+
+  ::selection {
+    background: theme('colors.primary');
+    color: theme('colors.neutral.50');
+  }
+
+  a {
+    color: theme('colors.neutral.800');
+    text-decoration: none;
+    transition: color 0.2s ease;
+  }
+
+  a:hover, a:active, a:focus {
+    color: theme('colors.primary');
+  }
+
+  h1, h2, h3, h4, h5, h6, h7 {
+    font-family: theme('fontFamily.serif');
+  }
+
+  button {
+    font-family: theme('fontFamily.sans');
+  }
+
+  a[href],
+  input[type='submit']:not([disabled]),
+  input[type='image']:not([disabled]),
+  label[for]:not([disabled]),
+  select:not([disabled]),
+  button:not([disabled]) {
+    cursor: pointer;
+  }
 }
 
-html {
-  height: 100%;
-  overflow-x: hidden;
-  margin-right: calc(-1 * (100vw - 100%));
-}
+@layer components {
+  .text-link {
+    @apply underline text-primary hover:text-black;
+  }
 
-body {
-  background: theme('colors.neutral.100');
-  font-family: theme('fontFamily.sans');
-  margin: 0;
-  padding: 0;
-}
-
-::selection {
-  background: theme('colors.primary');
-  color: theme('colors.neutral.50');
-}
-
-a {
-  color: theme('colors.neutral.800');
-  text-decoration: none;
-  transition: color 0.2s ease;
-}
-
-a:hover, a:active, a:focus {
-  color: theme('colors.primary');
-}
-
-h1, h2, h3, h4, h5, h6, h7 {
-  font-family: theme('fontFamily.serif');
-}
-
-button {
-  font-family: theme('fontFamily.sans');
-}
-
-a[href],
-input[type='submit']:not([disabled]),
-input[type='image']:not([disabled]),
-label[for]:not([disabled]),
-select:not([disabled]),
-button:not([disabled]) {
-  cursor: pointer;
+  .title {
+    @apply font-serif text-3xl font-bold my-8;
+  }
 }

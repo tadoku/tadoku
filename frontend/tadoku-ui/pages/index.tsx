@@ -1,12 +1,13 @@
-import { Title } from '@components/typography'
-
 export default function Home() {
   return (
     <>
-      <Title>Hello world!</Title>
+      <h1 className="title">Hello world!</h1>
       <p>
         This is the design system used in{' '}
-        <a href="https://www.tadoku.app">Tadoku</a>.
+        <a href="https://www.tadoku.app" className="text-link">
+          Tadoku
+        </a>
+        .
       </p>
     </>
   )

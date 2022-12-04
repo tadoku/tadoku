@@ -69,8 +69,36 @@ export default function Forms() {
       <Separator />
 
       <Title>Radio button</Title>
-      <Preview></Preview>
-      <CodeBlock code={``} />
+      <Preview>
+        <span className="label-text">Choose a color</span>
+        <label className="label-radio">
+          <input type="radio" name="color-radio" />
+          <span>Red</span>
+        </label>
+        <label className="label-radio">
+          <input type="radio" name="color-radio" />
+          <span>Green</span>
+        </label>
+        <label className="label-radio">
+          <input type="radio" name="color-radio" />
+          <span>Blue</span>
+        </label>
+      </Preview>
+      <CodeBlock
+        code={`<span className="label-text">Choose a color</span>
+<label className="label-radio">
+  <input type="radio" name="color-radio" />
+  <span>Red</span>
+</label>
+<label className="label-radio">
+  <input type="radio" name="color-radio" />
+  <span>Green</span>
+</label>
+<label className="label-radio">
+  <input type="radio" name="color-radio" />
+  <span>Blue</span>
+</label>`}
+      />
 
       <Separator />
 

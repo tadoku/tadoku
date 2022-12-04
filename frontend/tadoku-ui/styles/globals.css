@@ -53,6 +53,18 @@
   button:not([disabled]) {
     cursor: pointer;
   }
+
+  table {
+    @apply bg-white shadow shadow-slate-500/10;
+  }
+
+  table thead tr {
+    @apply border-b-2 border-slate-500/20;
+  }
+
+  table tbody tr:nth-child(2n+1) {
+    @apply bg-slate-500/5
+  }
 }
 
 @layer components {

@@ -67,9 +67,16 @@
   table tbody tr:nth-child(2n+1) {
     @apply bg-slate-500/5
   }
+
+  input[type=text] {
+    @apply border border-b-2 border-black/10 focus:border-primary focus:ring-primary/40 focus:ring-2;
+    @apply bg-white px-4 py-1 h-11 w-full;
+  }
 }
 
 @layer components {
+  /* typography */
+
   .text-link {
     @apply underline text-primary hover:text-black;
   }
@@ -81,6 +88,8 @@
   .subtitle {
     @apply font-sans text-slate-500 text-base uppercase font-bold tracking-wide;
   }
+
+  /* templates */
 
   .v-stack {
     @apply flex flex-col space-y-3;
@@ -96,5 +105,15 @@
 
   .h-stack > * {
     @apply my-0 box-border;
+  }
+
+  /* forms */
+
+  .label {
+    @apply block space-y-3;
+  }
+
+  .label .label-text {
+    @apply block font-semibold text-lg;
   }
 }

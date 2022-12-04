@@ -27,5 +27,7 @@ module.exports = {
     'bg-neutral-100',
     'bg-neutral-900',
   ],
-  plugins: [],
+  plugins: [
+    require('@tailwindcss/forms'),
+  ],
 }

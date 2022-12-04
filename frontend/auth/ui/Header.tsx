@@ -40,14 +40,6 @@ const ActiveSessionHeader = ({ session }: { session: Session }) => {
       </span>
       <br />
       <Link href="/">
-        <a>Home</a>
-      </Link>
-      <br />
-      <Link href="/private">
-        <a>Protected page</a>
-      </Link>
-      <br />
-      <Link href="/settings">
         <a>Settings</a>
       </Link>
       <br />

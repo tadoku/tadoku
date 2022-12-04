@@ -77,19 +77,3 @@ export interface AppContextWithSession extends AppContext {
 export interface NextPageContextWithSession extends NextPageContext {
   session: Session | undefined
 }
-
-export const getInitialPropsRedirectIfLoggedOut = async ({
-  res,
-  session,
-}: NextPageContextWithSession) => {
-  if (session) {
-    return
-  }
-
-  if (res) {
-    res.writeHead(307, { Location: '/login' })
-    res.end()
-  } else {
-    Router.replace('/login')
-  }
-}

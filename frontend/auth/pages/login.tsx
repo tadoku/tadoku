@@ -13,13 +13,11 @@ import { handleFlowError } from '../src/errors'
 import Link from 'next/link'
 import { ErrorFallback, withOryErrorBoundary } from '../src/OryErrorBoundary'
 
-interface Props {
-  initialFlow: SelfServiceLoginFlow
-}
+interface Props {}
 
 const Login: NextPage<Props> = () => {
   const [flow, setFlow] = useState<SelfServiceLoginFlow>()
-  const [_, setSession] = useSession()
+  const [session, setSession] = useSession()
   const router = useRouter()
   const { flow: flowId, return_to: returnTo, refresh, aal } = router.query
   const [error, setError] = useState<Error>()
@@ -29,6 +27,11 @@ const Login: NextPage<Props> = () => {
   const onLogout = useLogoutHandler([aal, refresh])
 
   useEffect(() => {
+    if (session) {
+      router.replace('/')
+      return
+    }
+
     // Skip if we aren't ready
     if (!router.isReady || flow || error) {
       return

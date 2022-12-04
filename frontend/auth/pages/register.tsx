@@ -15,12 +15,17 @@ interface Props {}
 
 const Register: NextPage<Props> = () => {
   const [flow, setFlow] = useState<SelfServiceRegistrationFlow>()
-  const [_, setSession] = useSession()
+  const [session, setSession] = useSession()
   const router = useRouter()
   const { flow: flowId, return_to: returnTo } = router.query
 
   // In this effect we either initiate a new registration flow, or we fetch an existing registration flow.
   useEffect(() => {
+    if (session) {
+      router.replace('/')
+      return
+    }
+
     // If the router is not ready yet, or we already have a flow, do nothing.
     if (!router.isReady || flow) {
       return
@@ -47,7 +52,7 @@ const Register: NextPage<Props> = () => {
         setFlow(data)
       })
       .catch(handleFlowError(router, 'registration', setFlow))
-  }, [flowId, router, router.isReady, returnTo, flow])
+  }, [flowId, router, router.isReady, returnTo, flow, session])
 
   const onSubmit = async (data: SubmitSelfServiceRegistrationFlowBody) => {
     await router.push(`/register?flow=${flow?.id}`, undefined, {

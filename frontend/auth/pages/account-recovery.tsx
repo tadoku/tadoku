@@ -1,4 +1,4 @@
-import { SelfServiceLoginFlow, SelfServiceRecoveryFlow } from '@ory/client'
+import { SelfServiceRecoveryFlow } from '@ory/client'
 import type { NextPage, GetServerSideProps } from 'next'
 import { useState } from 'react'
 import Flow from '../ui/Flow'
@@ -9,6 +9,8 @@ import { useAnonymouseRoute, useSession } from '../src/session'
 interface Props {
   initialFlow: SelfServiceRecoveryFlow
 }
+
+// TODO: Refactor to client-side
 
 const AccountRecovery: NextPage<Props> = ({ initialFlow }) => {
   const [flow, setFlow] = useState(initialFlow)

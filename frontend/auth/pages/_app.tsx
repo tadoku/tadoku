@@ -6,11 +6,10 @@ import { Session } from '@ory/client'
 import Header from '../ui/Header'
 import { ToastContainer } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
+import { NextPageContext } from 'next'
 
 interface Props {
-  initialState: {
-    session: Session | undefined
-  }
+  session: Session | undefined
 }
 
 const createInitialValues = () => {
@@ -23,7 +22,7 @@ const createInitialValues = () => {
 }
 
 const MyApp = ({ Component, pageProps }: AppProps<Props>) => {
-  const { initialState } = pageProps
+  const initialState = pageProps
   const { get: getInitialValues, set: setInitialValues } = createInitialValues()
 
   setInitialValues(sessionAtom, initialState.session)
@@ -40,19 +39,36 @@ const MyApp = ({ Component, pageProps }: AppProps<Props>) => {
   )
 }
 
-MyApp.getInitialProps = async (ctx: AppContext) => {
-  const props = await App.getInitialProps(ctx)
-  props.pageProps.initialState = { session: undefined }
+interface AppContextWithSession extends AppContext {
+  ctx: NextPageContextWithSession
+}
 
+export interface NextPageContextWithSession extends NextPageContext {
+  session: Session | undefined
+}
+
+MyApp.getInitialProps = async (ctx: AppContextWithSession) => {
   const cookie = ctx.ctx.req?.headers.cookie
+  const props = {
+    pageProps: {
+      initialState: {
+        session: undefined as Session | undefined,
+      },
+    },
+  }
+
   if (cookie) {
     try {
       const { data: session } = await ory.toSession(undefined, cookie)
       props.pageProps.initialState.session = session
+      ctx.ctx.session = session
     } catch (err) {}
   }
 
-  return props
+  const initialAppProps = await App.getInitialProps(ctx)
+  initialAppProps.pageProps.session = ctx.ctx.session
+
+  return { ...props, ...initialAppProps }
 }
 
 export default MyApp

@@ -1,10 +1,22 @@
 import type { NextPage } from 'next'
+import Router from 'next/router'
+import { NextPageContextWithSession } from './_app'
 
-const Home: NextPage = () => (
-  <>
-    <h1>Home</h1>
-    <p>This is a demo of integrating Ory Kratos in a Next.js app</p>
-  </>
-)
+const Home: NextPage = () => {
+  return null
+}
+
+Home.getInitialProps = async ({ res, session }: NextPageContextWithSession) => {
+  if (!session) {
+    if (res) {
+      res.writeHead(307, { Location: '/login' })
+      res.end()
+    } else {
+      Router.replace('/login')
+    }
+  }
+
+  return Promise.resolve({})
+}
 
 export default Home

@@ -2,7 +2,7 @@ import {
   SelfServiceRegistrationFlow,
   SubmitSelfServiceRegistrationFlowBody,
 } from '@ory/client'
-import type { NextPage, GetServerSideProps } from 'next'
+import type { NextPage } from 'next'
 import { useEffect, useState } from 'react'
 import Flow from '../ui/Flow'
 import ory from '../src/ory'

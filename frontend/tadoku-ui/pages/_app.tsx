@@ -38,8 +38,10 @@ export default function App({ Component, pageProps }: AppProps) {
             <h2 className="text-l font-semibold">{block.title}</h2>
             <ul className="mt-2 mb-4">
               {block.links.map(l => (
-                <li className="border-l-2 border-neutral-200 pl-4 py-1 hover:border-blue-300 text-neutral-600 hover:text-neutral-900">
-                  <Link href={l.href}>{l.title}</Link>
+                <li className="border-l-2 border-neutral-200 hover:border-primary text-neutral-600">
+                  <Link href={l.href} className="block pl-4 py-1">
+                    {l.title}
+                  </Link>
                 </li>
               ))}
             </ul>

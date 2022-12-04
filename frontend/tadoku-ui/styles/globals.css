@@ -81,4 +81,12 @@
   .subtitle {
     @apply font-sans text-slate-500 text-lg uppercase font-bold tracking-wide;
   }
+
+  .v-stack {
+    @apply flex flex-col space-y-3;
+  }
+
+  .v-stack > * {
+    @apply w-full mx-0 box-border;
+  }
 }

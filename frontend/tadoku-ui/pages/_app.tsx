@@ -24,6 +24,7 @@ const navigation: NavigationBlock[] = [
     title: 'Components',
     links: [
       { title: 'Forms', href: '/forms' },
+      { title: 'Buttons', href: '/buttons' },
       { title: 'Navigation', href: '/navigation' },
     ],
   },

@@ -70,12 +70,17 @@
 
   input[type=text] {
     @apply border border-b-2 border-black/10 focus:border-primary focus:ring-primary/40 focus:ring-2;
-    @apply bg-white px-4 py-1 h-11 w-full;
+    @apply bg-white px-4 py-1 h-11 w-full transition ease-in-out;
   }
 
   textarea {
     @apply border border-b-2 border-black/10 focus:border-primary focus:ring-primary/40 focus:ring-2;
-    @apply bg-white px-4 py-1 w-full min-h-[10rem];
+    @apply bg-white px-4 py-1 w-full min-h-[10rem] transition ease-in-out;
+  }
+
+  select {
+    @apply appearance-none border border-b-2 border-black/10 focus:border-primary focus:ring-primary/40 focus:ring-2;
+    @apply bg-white px-4 py-1 w-full transition ease-in-out;
   }
 }
 

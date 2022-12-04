@@ -103,8 +103,20 @@ export default function Forms() {
       <Separator />
 
       <Title>Error message</Title>
-      <Preview></Preview>
-      <CodeBlock code={``} />
+      <Preview>
+        <label className="label error">
+          <span className="label-text">First name</span>
+          <input type="text" placeholder="John Doe" />
+          <span className="error">Should be at least 1 character long</span>
+        </label>
+      </Preview>
+      <CodeBlock
+        code={`<label className="label error">
+  <span className="label-text">First name</span>
+  <input type="text" placeholder="John Doe" />
+  <span className="error">Should be at least 1 character long</span>
+</label>`}
+      />
     </>
   )
 }

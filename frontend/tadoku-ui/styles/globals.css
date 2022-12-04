@@ -131,7 +131,7 @@
   /* forms */
 
   .label {
-    @apply block space-y-3;
+    @apply block space-y-2 relative;
   }
 
   .label-text {
@@ -140,5 +140,19 @@
 
   .label-radio {
     @apply h-stack items-center h-8;
+  }
+}
+
+@layer utilities {
+  .label.error input {
+    @apply border-red-600 focus:ring-red-600/40;
+  }
+
+  .label .error {
+    @apply hidden w-full text-right text-red-600 transition duration-200 ease-out;
+  }
+
+  .label.error .error {
+    @apply block text-xs;
   }
 }

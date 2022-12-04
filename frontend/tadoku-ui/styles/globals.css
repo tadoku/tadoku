@@ -87,6 +87,14 @@
   }
 
   .v-stack > * {
-    @apply w-full mx-0 box-border;
+    @apply mx-0 box-border;
+  }
+
+  .h-stack {
+    @apply flex flex-row space-x-3;
+  }
+
+  .h-stack > * {
+    @apply my-0 box-border;
   }
 }

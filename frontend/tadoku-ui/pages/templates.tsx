@@ -4,6 +4,7 @@ export default function Templates() {
   return (
     <>
       <h1 className="title mb-8">Templates</h1>
+
       <Title>Vertical stack</Title>
       <Preview>
         <div className="v-stack">
@@ -22,6 +23,23 @@ export default function Templates() {
       />
 
       <Separator />
+
+      <Title>Horizonal stack</Title>
+      <Preview>
+        <div className="h-stack">
+          <div className="bg-red-200 h-24">one</div>
+          <div className="bg-green-200">two</div>
+          <div className="bg-blue-200">three</div>
+        </div>
+      </Preview>
+      <CodeBlock
+        language={'html'}
+        code={`<div className="h-stack">
+  <div className="bg-red-200 h-24">one</div>
+  <div className="bg-green-200">two</div>
+  <div className="bg-blue-200">three</div>
+</div>`}
+      />
     </>
   )
 }

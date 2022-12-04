@@ -1,12 +1,11 @@
-import App, { AppContext, AppProps } from 'next/app'
+import App, { AppProps } from 'next/app'
 import ory from '../src/ory'
 import { Atom, Provider } from 'jotai'
-import { sessionAtom } from '../src/session'
+import { AppContextWithSession, sessionAtom } from '../src/session'
 import { Session } from '@ory/client'
 import Header from '../ui/Header'
 import { ToastContainer } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
-import { NextPageContext } from 'next'
 
 interface Props {
   session: Session | undefined
@@ -37,14 +36,6 @@ const MyApp = ({ Component, pageProps }: AppProps<Props>) => {
       </div>
     </Provider>
   )
-}
-
-interface AppContextWithSession extends AppContext {
-  ctx: NextPageContextWithSession
-}
-
-export interface NextPageContextWithSession extends NextPageContext {
-  session: Session | undefined
 }
 
 MyApp.getInitialProps = async (ctx: AppContextWithSession) => {

@@ -1,9 +1,11 @@
 import { atom, useAtom } from 'jotai'
 import { Session } from '@ory/client'
-import { useRouter } from 'next/router'
+import Router, { useRouter } from 'next/router'
 import { useEffect, DependencyList, useState } from 'react'
 import { AxiosError } from 'axios'
 import ory from './ory'
+import { AppContext } from 'next/app'
+import { NextPageContext } from 'next'
 
 export const sessionAtom = atom(undefined as undefined | Session)
 
@@ -66,4 +68,28 @@ export const useAnonymouseRoute = (fallback: string = '/') => {
       router.replace(fallback)
     }
   }, [session])
+}
+
+export interface AppContextWithSession extends AppContext {
+  ctx: NextPageContextWithSession
+}
+
+export interface NextPageContextWithSession extends NextPageContext {
+  session: Session | undefined
+}
+
+export const getInitialPropsRedirectIfLoggedOut = async ({
+  res,
+  session,
+}: NextPageContextWithSession) => {
+  if (session) {
+    return
+  }
+
+  if (res) {
+    res.writeHead(307, { Location: '/login' })
+    res.end()
+  } else {
+    Router.replace('/login')
+  }
 }

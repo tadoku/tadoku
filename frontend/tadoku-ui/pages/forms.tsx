@@ -22,8 +22,18 @@ export default function Forms() {
       <Separator />
 
       <Title>Textarea</Title>
-      <Preview></Preview>
-      <CodeBlock code={``} />
+      <Preview>
+        <label className="label">
+          <span className="label-text">Message</span>
+          <textarea placeholder="Dolor sit amet..." />
+        </label>
+      </Preview>
+      <CodeBlock
+        code={`<label className="label">
+  <span className="label-text">Message</span>
+  <textarea placeholder="Dolor sit amet..." />
+</label>`}
+      />
 
       <Separator />
 

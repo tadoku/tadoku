@@ -16,6 +16,7 @@ const navigation: NavigationBlock[] = [
     links: [
       { title: 'Color', href: '/forms' },
       { title: 'Typography', href: '/typography' },
+      { title: 'Branding', href: '/branding' },
       { title: 'Templates', href: '/templates' },
     ],
   },

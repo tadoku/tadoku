@@ -161,4 +161,8 @@
   .label.error .error {
     @apply block text-xs;
   }
+
+  .btn.primary {
+    @apply text-white bg-primary focus:ring-primary/40;
+  }
 }

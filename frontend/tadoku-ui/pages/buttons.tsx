@@ -15,6 +15,15 @@ export default function Buttons() {
       />
 
       <Separator />
+
+      <Title>Primary button</Title>
+      <Preview>
+        <button className="btn primary">Submit</button>
+      </Preview>
+      <CodeBlock
+        language="html"
+        code={`<button className="btn primary">Submit</button>`}
+      />
     </>
   )
 }

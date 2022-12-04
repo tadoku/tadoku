@@ -27,13 +27,13 @@ const Login: NextPage<Props> = () => {
   const onLogout = useLogoutHandler([aal, refresh])
 
   useEffect(() => {
-    if (session) {
-      router.replace('/')
+    // Skip if we aren't ready
+    if (!router.isReady || flow || error) {
       return
     }
 
-    // Skip if we aren't ready
-    if (!router.isReady || flow || error) {
+    if (session) {
+      router.replace('/')
       return
     }
 

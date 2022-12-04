@@ -21,13 +21,13 @@ const Register: NextPage<Props> = () => {
 
   // In this effect we either initiate a new registration flow, or we fetch an existing registration flow.
   useEffect(() => {
-    if (session) {
-      router.replace('/')
+    // If the router is not ready yet, or we already have a flow, do nothing.
+    if (!router.isReady || flow) {
       return
     }
 
-    // If the router is not ready yet, or we already have a flow, do nothing.
-    if (!router.isReady || flow) {
+    if (session) {
+      router.replace('/')
       return
     }
 

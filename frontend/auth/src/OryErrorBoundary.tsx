@@ -5,7 +5,7 @@ export const ErrorFallback = ({ error, resetErrorBoundary }: FallbackProps) => (
     <h1>Something seems to have gone wrong</h1>
     <p>
       <a onClick={resetErrorBoundary} href="#">
-        please refresh this page to try again
+        Please refresh this page to try again.
       </a>
     </p>
     <pre>{error.message}</pre>

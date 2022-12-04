@@ -1,72 +1,100 @@
-import { SelfServiceRecoveryFlow } from '@ory/client'
-import type { NextPage, GetServerSideProps } from 'next'
-import { useState } from 'react'
+import {
+  SelfServiceRecoveryFlow,
+  SubmitSelfServiceRecoveryFlowBody,
+} from '@ory/client'
+import type { NextPage } from 'next'
+import { useEffect, useState } from 'react'
 import Flow from '../ui/Flow'
 import ory from '../src/ory'
-import axios from 'axios'
-import { useAnonymouseRoute, useSession } from '../src/session'
+import { AxiosError } from 'axios'
+import { useSession } from '../src/session'
+import { useRouter } from 'next/router'
+import { handleFlowError } from '../src/errors'
+import { ErrorFallback, withOryErrorBoundary } from '../src/OryErrorBoundary'
 
-interface Props {
-  initialFlow: SelfServiceRecoveryFlow
-}
+interface Props {}
 
-// TODO: Refactor to client-side
+const AccountRecovery: NextPage<Props> = () => {
+  const [flow, setFlow] = useState<SelfServiceRecoveryFlow>()
+  const [session, setSession] = useSession()
+  const router = useRouter()
+  const { flow: flowId, return_to: returnTo } = router.query
+  const [error, setError] = useState<Error>()
 
-const AccountRecovery: NextPage<Props> = ({ initialFlow }) => {
-  const [flow, setFlow] = useState(initialFlow)
-
-  // Would be better to do this at the layout level once the feature is available
-  useAnonymouseRoute()
-
-  const onSubmit = async (data: any) => {
-    if (flow === undefined) {
-      console.error('no account recovery flow available to use')
+  useEffect(() => {
+    // Skip if we aren't ready
+    if (!router.isReady || flow || error) {
       return
     }
 
-    try {
-      console.log(data)
-      const res = await ory.submitSelfServiceRecoveryFlow(flow.id, data)
-    } catch (err) {
-      if (
-        axios.isAxiosError(err) &&
-        err.response?.data &&
-        err.response.status === 400
-      ) {
-        // TODO: figure out types
-        setFlow(err.response.data as SelfServiceRecoveryFlow)
-      }
+    if (session) {
+      router.replace('/')
+      return
     }
+
+    // If ?flow=.. was in the URL, we fetch it
+    if (flowId) {
+      ory
+        .getSelfServiceRecoveryFlow(String(flowId))
+        .then(({ data }) => {
+          setFlow(data)
+        })
+        .catch(handleFlowError(router, 'recovery', setFlow))
+      return
+    }
+
+    ory
+      .initializeSelfServiceRecoveryFlowForBrowsers()
+      .then(({ data }) => {
+        console.log(data)
+        setFlow(data)
+      })
+      .catch(handleFlowError(router, 'recovery', setFlow))
+      .catch(err => setError(err))
+  }, [flowId, router, router.isReady, returnTo, flow, error])
+
+  if (error) {
+    return (
+      <ErrorFallback
+        error={error}
+        resetErrorBoundary={() => setError(undefined)}
+      />
+    )
+  }
+
+  if (!flow) {
+    return null
+  }
+
+  const onSubmit = async (data: SubmitSelfServiceRecoveryFlowBody) => {
+    await router.push(`/account-recovery?flow=${flow?.id}`, undefined, {
+      shallow: true,
+    })
+
+    ory
+      .submitSelfServiceRecoveryFlow(flow.id, data)
+      .then(async ({ data }) => {
+        setFlow(data)
+      })
+      .catch(handleFlowError(router, 'recovery', setFlow))
+      .catch(async (err: AxiosError) => {
+        // If the previous handler did not catch the error it's most likely a form validation error
+        if (err.response?.status === 400) {
+          // Yup, it is!
+          setFlow(err.response?.data)
+          return
+        }
+
+        return Promise.reject(err)
+      })
   }
 
   return (
     <div>
-      <h1>Account recovery</h1>
-      <Flow flow={flow} method="link" onSubmit={onSubmit} />
+      <h1>Account Recovery</h1>
+      <Flow flow={flow} onSubmit={onSubmit} />
     </div>
   )
 }
 
-export const getServerSideProps: GetServerSideProps = async ctx => {
-  try {
-    const { data: initialFlow, headers } =
-      await ory.initializeSelfServiceRecoveryFlowForBrowsers()
-
-    // Proxy cookies
-    if (headers['set-cookie']) {
-      ctx.res.setHeader('set-cookie', headers['set-cookie'])
-    }
-
-    return { props: { initialFlow } }
-  } catch (err) {
-    console.error(err)
-    return {
-      redirect: {
-        destination: '/error',
-      },
-      props: {},
-    }
-  }
-}
-
-export default AccountRecovery
+export default withOryErrorBoundary(AccountRecovery)

@@ -20,13 +20,13 @@ const Settings: NextPage<Props> = () => {
   const { flow: flowId, return_to: returnTo } = router.query
 
   useEffect(() => {
-    if (!session) {
-      router.replace('/login')
+    // Skip if we aren't ready
+    if (!router.isReady || flow) {
       return
     }
 
-    // Skip if we aren't ready
-    if (!router.isReady || flow) {
+    if (!session) {
+      router.replace('/login')
       return
     }
 

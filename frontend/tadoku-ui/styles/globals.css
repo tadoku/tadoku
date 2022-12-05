@@ -148,6 +148,10 @@
     @apply hover:border-black/40 font-bold hover:bg-black/5;
   }
 
+  .btn > svg {
+    @apply h-5 w-5 inline mr-1;
+  }
+
   a.btn {
     @apply inline-flex items-center justify-center w-fit hover:text-inherit;
   }

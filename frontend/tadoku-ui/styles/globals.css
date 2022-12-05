@@ -153,7 +153,7 @@
   }
 
   a.btn {
-    @apply inline-flex items-center justify-center w-fit hover:text-inherit;
+    @apply inline-flex items-center justify-center w-fit hover:text-inherit active:text-inherit focus:text-inherit;
   }
 
   .btn:disabled {
@@ -175,7 +175,7 @@
   }
 
   .btn.primary {
-    @apply text-white hover:text-white bg-primary hover:bg-primary/90 focus:ring-primary/40;
+    @apply text-white hover:text-white active:text-white focus:text-white bg-primary hover:bg-primary/90 focus:ring-primary/40;
   }
 
   .btn.primary:disabled {
@@ -183,7 +183,7 @@
   }
 
   .btn.secondary {
-    @apply text-white hover:text-white bg-secondary hover:bg-secondary/90 focus:ring-secondary/40;
+    @apply text-white hover:text-white active:text-white focus:text-white bg-secondary hover:bg-secondary/90 focus:ring-secondary/40;
   }
 
   .btn.secondary:disabled {
@@ -191,7 +191,7 @@
   }
 
   .btn.danger {
-    @apply text-white hover:text-white bg-red-600 hover:bg-red-600/80 focus:ring-red-600/40;
+    @apply text-white hover:text-white active:text-white focus:text-white bg-red-600 hover:bg-red-600/80 focus:ring-red-600/40;
   }
 
   .btn.danger:disabled {

@@ -1,5 +1,5 @@
 import { CodeBlock, Preview, Separator, Title } from '@components/example'
-import { Input } from '@components/Form'
+import { Input, Select } from '@components/Form'
 import { useForm } from 'react-hook-form'
 
 export default function Forms() {
@@ -121,6 +121,21 @@ const ExampleReactForm = () => {
           required: 'This field is required',
           valueAsNumber: true,
         }}
+      />
+      <Select
+        name="medium"
+        label="Medium"
+        register={register}
+        formState={formState}
+        options={{
+          required: true,
+          valueAsNumber: true,
+        }}
+        values={[
+          { value: '1', label: 'Book' },
+          { value: '2', label: 'Comic' },
+          { value: '3', label: 'Sentence' },
+        ]}
       />
       <button type="submit" className="btn primary">
         Save changes

@@ -80,7 +80,7 @@
 
   select {
     @apply appearance-none border border-b-2 border-black/10 focus:border-primary focus:ring-primary/40 focus:ring-2;
-    @apply bg-white px-4 py-1 w-full transition ease-in-out;
+    @apply bg-white px-4 py-1 h-11 w-full transition ease-in-out;
   }
 
   input[type=radio] {

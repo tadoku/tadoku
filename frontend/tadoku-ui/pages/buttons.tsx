@@ -5,57 +5,58 @@ export default function Buttons() {
     <>
       <h1 className="title mb-8">Buttons</h1>
 
-      <Title>Primary button</Title>
+      <Title>Buttons</Title>
       <Preview>
-        <button className="btn primary">Submit</button>
+        <div className="h-stack">
+          <button className="btn primary">Primary</button>
+          <button className="btn secondary">Secondary</button>
+          <button className="btn">Tertiary (default)</button>
+          <button className="btn danger">Danger</button>
+          <button className="btn ghost">Ghost</button>
+        </div>
       </Preview>
       <CodeBlock
         language="html"
-        code={`<button className="btn primary">Submit</button>`}
+        code={`<div className="h-stack">
+  <button className="btn primary">Primary</button>
+  <button className="btn secondary">Secondary</button>
+  <button className="btn">Tertiary (default)</button>
+  <button className="btn danger">Danger</button>
+  <button className="btn ghost">Ghost</button>
+</div>`}
       />
 
       <Separator />
 
-      <Title>Secondary button</Title>
+      <Title>Disabled button</Title>
       <Preview>
-        <button className="btn secondary">Call to Action</button>
+        <div className="h-stack">
+          <button className="btn primary" disabled>
+            Primary
+          </button>
+          <button className="btn secondary" disabled>
+            Secondary
+          </button>
+          <button className="btn" disabled>
+            Tertiary (default)
+          </button>
+          <button className="btn danger" disabled>
+            Danger
+          </button>
+          <button className="btn ghost" disabled>
+            Ghost
+          </button>
+        </div>
       </Preview>
       <CodeBlock
         language="html"
-        code={`<button className="btn secondary">Call to Action</button>`}
-      />
-
-      <Separator />
-
-      <Title>Tertiary button (default)</Title>
-      <Preview>
-        <button className="btn">Call to Action</button>
-      </Preview>
-      <CodeBlock
-        language="html"
-        code={`<button className="btn">Call to Action</button>`}
-      />
-
-      <Separator />
-
-      <Title>Danger button</Title>
-      <Preview>
-        <button className="btn danger">Call to Action</button>
-      </Preview>
-      <CodeBlock
-        language="html"
-        code={`<button className="btn danger">Call to Action</button>`}
-      />
-
-      <Separator />
-
-      <Title>Ghost button</Title>
-      <Preview>
-        <button className="btn ghost">Cancel</button>
-      </Preview>
-      <CodeBlock
-        language="html"
-        code={`<button className="btn ghost">Cancel</button>`}
+        code={`<div className="h-stack">
+  <button className="btn primary" disabled>Primary</button>
+  <button className="btn secondary" disabled>Secondary</button>
+  <button className="btn" disabled>Tertiary (default)</button>
+  <button className="btn danger" disabled>Danger</button>
+  <button className="btn ghost" disabled>Ghost</button>
+</div>`}
       />
     </>
   )

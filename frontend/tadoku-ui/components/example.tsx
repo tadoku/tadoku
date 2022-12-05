@@ -2,6 +2,11 @@ import { ReactNode } from 'react'
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter'
 import { coldarkDark as theme } from 'react-syntax-highlighter/dist/cjs/styles/prism'
 
+theme['pre[class*="language-"]'].margin = 0
+theme['pre[class*="language-"]'].lineHeight = '1.2'
+theme['code[class*="language-"]'].fontSize = '0.8em'
+theme['code[class*="language-"]'].lineHeight = '1.2'
+
 export const CodeBlock = ({
   code,
   language,
@@ -9,7 +14,11 @@ export const CodeBlock = ({
   code: string
   language?: string
 }) => (
-  <SyntaxHighlighter language={language ?? 'typescript'} style={theme}>
+  <SyntaxHighlighter
+    language={language ?? 'typescript'}
+    style={theme}
+    showLineNumbers
+  >
     {code}
   </SyntaxHighlighter>
 )

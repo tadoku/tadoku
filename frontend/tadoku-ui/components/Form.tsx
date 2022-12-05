@@ -41,6 +41,27 @@ export function Input<T extends FieldValues>(props: InputProps<T>) {
   )
 }
 
+interface TextaAreaProps<T extends FieldValues>
+  extends Props<T>,
+    Omit<HTMLProps<HTMLTextAreaElement>, 'name'> {
+  label: string
+}
+
+export function TextArea<T extends FieldValues>(props: TextaAreaProps<T>) {
+  const { name, register, formState, label, options, ...inputProps } = props
+  const hasError = formState.errors[name] !== undefined
+  const errorMessage =
+    formState.errors[name]?.message?.toString() || 'This input is invalid'
+
+  return (
+    <label className={`label ${hasError ? 'error' : ''}`} htmlFor={name}>
+      <span className="label-text">{label}</span>
+      <textarea id={name} {...inputProps} {...register(name, options)} />
+      <span className="error">{errorMessage}</span>
+    </label>
+  )
+}
+
 interface Option {
   value: string
   label: string

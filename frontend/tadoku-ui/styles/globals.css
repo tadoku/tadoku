@@ -162,7 +162,7 @@
 }
 
 @layer utilities {
-  .label.error input {
+  .label.error input, .label.error textarea {
     @apply border-red-600 focus:ring-red-600/40;
   }
 

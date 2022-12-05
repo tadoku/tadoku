@@ -1,5 +1,5 @@
 import { CodeBlock, Preview, Separator, Title } from '@components/example'
-import { Input, RadioSelect, Select } from '@components/Form'
+import { Input, RadioSelect, Select, TextArea } from '@components/Form'
 import { useForm } from 'react-hook-form'
 
 export default function Forms() {
@@ -79,7 +79,9 @@ const LogPagesForm = () => {
       <Title>React example: Compose blog post form</Title>
       <div className="h-stack w-full">
         <div className="w-96">
-          <Preview>todo</Preview>
+          <Preview>
+            <ComposeBlogPostForm />
+          </Preview>
         </div>
         <div className="flex-1">
           <CodeBlock
@@ -254,6 +256,46 @@ const LogPagesForm = () => {
         disabled={formState.isSubmitting}
       >
         Save changes
+      </button>
+    </form>
+  )
+}
+
+const ComposeBlogPostForm = () => {
+  // TODO: Form for creating a blog post
+  // imports
+  // Published: checkmark
+  // Published at: datetime
+  const { register, handleSubmit, formState } = useForm()
+  const onSubmit = (data: any) => console.log(data, 'submitted')
+
+  return (
+    <form onSubmit={handleSubmit(onSubmit)} className="v-stack">
+      <Input
+        name="title"
+        label="Title"
+        register={register}
+        formState={formState}
+        type="text"
+        options={{
+          required: true,
+        }}
+      />
+      <TextArea
+        name="content"
+        label="Content"
+        register={register}
+        formState={formState}
+        options={{
+          required: true,
+        }}
+      />
+      <button
+        type="submit"
+        className="btn primary"
+        disabled={formState.isSubmitting}
+      >
+        Save
       </button>
     </form>
   )

@@ -145,11 +145,15 @@
   .btn {
     @apply border border-b-2 border-black/10 focus:border-black/40 focus:ring-black/10 focus:ring-2;
     @apply bg-white px-4 py-1 h-11 w-full transition ease-in-out;
-    @apply hover:border-black/40 font-bold;
+    @apply hover:border-black/40 font-bold hover:bg-black/5;
+  }
+
+  a.btn {
+    @apply inline-flex items-center justify-center w-fit hover:text-inherit;
   }
 
   .btn:disabled {
-    @apply hover:border-black/10 focus:ring-0 cursor-not-allowed text-black/40;
+    @apply hover:border-black/10 hover:bg-inherit focus:ring-0 cursor-not-allowed text-black/40;
   }
 }
 
@@ -167,7 +171,7 @@
   }
 
   .btn.primary {
-    @apply text-white bg-primary focus:ring-primary/40;
+    @apply text-white hover:text-white bg-primary hover:bg-primary/90 focus:ring-primary/40;
   }
 
   .btn.primary:disabled {
@@ -175,7 +179,7 @@
   }
 
   .btn.secondary {
-    @apply text-white bg-secondary focus:ring-secondary/40;
+    @apply text-white hover:text-white bg-secondary hover:bg-secondary/90 focus:ring-secondary/40;
   }
 
   .btn.secondary:disabled {
@@ -183,7 +187,7 @@
   }
 
   .btn.danger {
-    @apply text-white bg-red-600 focus:ring-red-600/40;
+    @apply text-white hover:text-white bg-red-600 hover:bg-red-600/80 focus:ring-red-600/40;
   }
 
   .btn.danger:disabled {

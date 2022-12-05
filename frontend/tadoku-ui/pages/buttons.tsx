@@ -58,6 +58,39 @@ export default function Buttons() {
   <button className="btn ghost" disabled>Ghost</button>
 </div>`}
       />
+
+      <Separator />
+
+      <Title>Button links</Title>
+      <Preview>
+        <div className="space-x-3">
+          <a href="#" className="btn primary">
+            Primary
+          </a>
+          <a href="#" className="btn secondary">
+            Secondary
+          </a>
+          <a href="#" className="btn">
+            Tertiary (default)
+          </a>
+          <a href="#" className="btn danger">
+            Danger
+          </a>
+          <a href="#" className="btn ghost">
+            Ghost
+          </a>
+        </div>
+      </Preview>
+      <CodeBlock
+        language="html"
+        code={`<div className="space-x-3">
+  <a href="#" className="btn primary">Primary</a>
+  <a href="#" className="btn secondary">Secondary</a>
+  <a href="#" className="btn">Tertiary (default)</a>
+  <a href="#" className="btn danger">Danger</a>
+  <a href="#" className="btn ghost">Ghost</a>
+</div>`}
+      />
     </>
   )
 }

@@ -169,4 +169,8 @@
   .btn.secondary {
     @apply text-white bg-secondary focus:ring-secondary/40;
   }
+
+  .btn.danger {
+    @apply text-white bg-red-600 focus:ring-red-600/40;
+  }
 }

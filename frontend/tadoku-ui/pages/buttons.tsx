@@ -37,6 +37,15 @@ export default function Buttons() {
       />
 
       <Separator />
+
+      <Title>Danger button</Title>
+      <Preview>
+        <button className="btn danger">Call to Action</button>
+      </Preview>
+      <CodeBlock
+        language="html"
+        code={`<button className="btn danger">Call to Action</button>`}
+      />
     </>
   )
 }

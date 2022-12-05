@@ -1,4 +1,6 @@
 import { CodeBlock, Preview, Separator, Title } from '@components/example'
+import { Input } from '@components/Form'
+import { useForm } from 'react-hook-form'
 
 export default function Forms() {
   return (
@@ -6,7 +8,9 @@ export default function Forms() {
       <h1 className="title mb-8">Forms</h1>
 
       <Title>React usage</Title>
-      <Preview></Preview>
+      <Preview>
+        <ExampleReactForm />
+      </Preview>
       <CodeBlock language="html" code={``} />
 
       <Separator />
@@ -98,5 +102,28 @@ export default function Forms() {
 </form>`}
       />
     </>
+  )
+}
+
+const ExampleReactForm = () => {
+  const { register, handleSubmit, formState } = useForm()
+  const onSubmit = (data: any) => console.log(data)
+
+  return (
+    <form onSubmit={handleSubmit(onSubmit)} className="v-stack w-96">
+      <Input
+        name="pagesRead"
+        label="Pages read"
+        register={register}
+        type="number"
+        options={{
+          required: true,
+          valueAsNumber: true,
+        }}
+      />
+      <button type="submit" className="btn primary">
+        Save changes
+      </button>
+    </form>
   )
 }

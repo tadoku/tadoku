@@ -145,7 +145,7 @@
   .btn {
     @apply border border-b-2 border-black/10 focus:border-black/40 focus:ring-black/10 focus:ring-2;
     @apply bg-white px-4 py-1 h-11 w-full transition ease-in-out;
-    @apply hover:border-black/40
+    @apply hover:border-black/40 font-bold;
   }
 }
 
@@ -172,5 +172,9 @@
 
   .btn.danger {
     @apply text-white bg-red-600 focus:ring-red-600/40;
+  }
+
+  .btn.ghost {
+    @apply border-0 focus:ring-0 hover:bg-secondary/5 focus:bg-secondary/5;
   }
 }

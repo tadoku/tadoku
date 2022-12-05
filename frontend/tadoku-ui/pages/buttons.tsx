@@ -46,6 +46,17 @@ export default function Buttons() {
         language="html"
         code={`<button className="btn danger">Call to Action</button>`}
       />
+
+      <Separator />
+
+      <Title>Ghost button</Title>
+      <Preview>
+        <button className="btn ghost">Cancel</button>
+      </Preview>
+      <CodeBlock
+        language="html"
+        code={`<button className="btn ghost">Cancel</button>`}
+      />
     </>
   )
 }

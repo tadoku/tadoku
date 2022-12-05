@@ -165,4 +165,8 @@
   .btn.primary {
     @apply text-white bg-primary focus:ring-primary/40;
   }
+
+  .btn.secondary {
+    @apply text-white bg-secondary focus:ring-secondary/40;
+  }
 }

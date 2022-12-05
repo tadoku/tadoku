@@ -92,12 +92,61 @@ const LogPagesForm = () => {
         <div className="flex-1">
           <CodeBlock
             language="typescript"
-            code={`// TODO: Form for creating a blog post
-// imports
-// Title: text
-// Content: textarea
-// Published: checkmark
-// Published at: datetime`}
+            code={`import { Checkbox, Input, TextArea } from '@components/Form'
+import { useForm } from 'react-hook-form'
+
+const ComposeBlogPostForm = () => {
+  const { register, handleSubmit, formState } = useForm()
+  const onSubmit = (data: any) => console.log(data, 'submitted')
+
+  return (
+    <form onSubmit={handleSubmit(onSubmit)} className="v-stack">
+      <Input
+        name="title"
+        label="Title"
+        register={register}
+        formState={formState}
+        type="text"
+        options={{
+          required: true,
+        }}
+      />
+      <TextArea
+        name="content"
+        label="Content"
+        register={register}
+        formState={formState}
+        options={{
+          required: true,
+        }}
+      />
+      <Input
+        name="publishedAt"
+        label="Published at"
+        register={register}
+        formState={formState}
+        type="date"
+        options={{
+          required: true,
+          valueAsDate: true,
+        }}
+      />
+      <Checkbox
+        name="isPublished"
+        label="Published"
+        register={register}
+        formState={formState}
+      />
+      <button
+        type="submit"
+        className="btn primary"
+        disabled={formState.isSubmitting}
+      >
+        Save
+      </button>
+    </form>
+  )
+}`}
           />
         </div>
       </div>
@@ -112,7 +161,43 @@ const LogPagesForm = () => {
           </Preview>
         </div>
         <div className="flex-1">
-          <CodeBlock language="typescript" code={``} />
+          <CodeBlock
+            language="typescript"
+            code={`import { RadioSelect } from '@components/Form'
+import { useForm } from 'react-hook-form'
+
+const MiscForm = () => {
+  const { register, handleSubmit, formState } = useForm()
+  const onSubmit = (data: any) => console.log(data, 'submitted')
+
+  return (
+    <form onSubmit={handleSubmit(onSubmit)} className="v-stack">
+      <RadioSelect
+        name="cardType"
+        label="Card type"
+        register={register}
+        formState={formState}
+        options={{
+          required: true,
+          valueAsNumber: true,
+        }}
+        values={[
+          { value: '1', label: 'Sentence card' },
+          { value: '2', label: 'Vocab card' },
+        ]}
+      />
+      <button
+        type="submit"
+        className="btn primary"
+        disabled={formState.isSubmitting}
+      >
+        Submit
+      </button>
+    </form>
+  )
+}
+`}
+          />
         </div>
       </div>
 
@@ -143,15 +228,15 @@ const LogPagesForm = () => {
               </label>
               <div>
                 <span className="label-text">Choose a color</span>
-                <label className="label-radio">
+                <label className="label-inline">
                   <input type="radio" name="color-radio" />
                   <span>Red</span>
                 </label>
-                <label className="label-radio">
+                <label className="label-inline">
                   <input type="radio" name="color-radio" />
                   <span>Green</span>
                 </label>
-                <label className="label-radio">
+                <label className="label-inline">
                   <input type="radio" name="color-radio" />
                   <span>Blue</span>
                 </label>
@@ -190,15 +275,15 @@ const LogPagesForm = () => {
 </label>
 <div>
   <span className="label-text">Choose a color</span>
-  <label className="label-radio">
+  <label className="label-inline">
     <input type="radio" name="color-radio" />
     <span>Red</span>
   </label>
-  <label className="label-radio">
+  <label className="label-inline">
     <input type="radio" name="color-radio" />
     <span>Green</span>
   </label>
-  <label className="label-radio">
+  <label className="label-inline">
     <input type="radio" name="color-radio" />
     <span>Blue</span>
   </label>
@@ -268,7 +353,6 @@ const LogPagesForm = () => {
 }
 
 const ComposeBlogPostForm = () => {
-  // Published: checkmark
   const { register, handleSubmit, formState } = useForm()
   const onSubmit = (data: any) => console.log(data, 'submitted')
 

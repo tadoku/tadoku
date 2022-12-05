@@ -17,7 +17,10 @@ export default function Forms() {
         <div className="flex-1">
           <CodeBlock
             language="typescript"
-            code={`const LogPagesForm = () => {
+            code={`import { Input, Select } from '@components/Form'
+import { useForm } from 'react-hook-form'
+
+const LogPagesForm = () => {
   const { register, handleSubmit, formState } = useForm()
   const onSubmit = (data: any) => console.log(data, 'submitted')
 
@@ -82,6 +85,7 @@ export default function Forms() {
           <CodeBlock
             language="typescript"
             code={`// TODO: Form for creating a blog post
+// imports
 // Title: text
 // Content: textarea
 // Published: checkmark

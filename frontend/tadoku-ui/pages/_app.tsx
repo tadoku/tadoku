@@ -26,6 +26,7 @@ const navigation: NavigationBlock[] = [
       { title: 'Forms', href: '/forms' },
       { title: 'Buttons', href: '/buttons' },
       { title: 'Navigation', href: '/navigation' },
+      { title: 'Toasts', href: '/toasts' },
     ],
   },
 ]

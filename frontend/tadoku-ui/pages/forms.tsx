@@ -262,10 +262,7 @@ const LogPagesForm = () => {
 }
 
 const ComposeBlogPostForm = () => {
-  // TODO: Form for creating a blog post
-  // imports
   // Published: checkmark
-  // Published at: datetime
   const { register, handleSubmit, formState } = useForm()
   const onSubmit = (data: any) => console.log(data, 'submitted')
 
@@ -288,6 +285,17 @@ const ComposeBlogPostForm = () => {
         formState={formState}
         options={{
           required: true,
+        }}
+      />
+      <Input
+        name="publishedAt"
+        label="Published at"
+        register={register}
+        formState={formState}
+        type="date"
+        options={{
+          required: true,
+          valueAsDate: true,
         }}
       />
       <button

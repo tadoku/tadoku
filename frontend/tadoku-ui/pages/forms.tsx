@@ -7,7 +7,7 @@ export default function Forms() {
     <>
       <h1 className="title mb-8">Forms</h1>
 
-      <Title>React usage</Title>
+      <Title>React example: Log pages form</Title>
       <div className="h-stack w-full">
         <div className="w-96">
           <Preview>
@@ -67,6 +67,25 @@ export default function Forms() {
     </form>
   )
 }`}
+          />
+        </div>
+      </div>
+
+      <Separator />
+
+      <Title>React example: Compose blog post form</Title>
+      <div className="h-stack w-full">
+        <div className="w-96">
+          <Preview>todo</Preview>
+        </div>
+        <div className="flex-1">
+          <CodeBlock
+            language="typescript"
+            code={`// TODO: Form for creating a blog post
+// Title: text
+// Content: textarea
+// Published: checkmark
+// Published at: datetime`}
           />
         </div>
       </div>

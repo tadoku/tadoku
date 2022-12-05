@@ -62,6 +62,34 @@ export function TextArea<T extends FieldValues>(props: TextaAreaProps<T>) {
   )
 }
 
+interface CheckboxProps<T extends FieldValues>
+  extends Props<T>,
+    Omit<HTMLProps<HTMLInputElement>, 'name' | 'type'> {
+  label: string
+}
+
+export function Checkbox<T extends FieldValues>(props: CheckboxProps<T>) {
+  const { name, register, formState, label, options, ...inputProps } = props
+  const hasError = formState.errors[name] !== undefined
+  const errorMessage =
+    formState.errors[name]?.message?.toString() || 'This input is invalid'
+
+  return (
+    <div className={`label ${hasError ? 'error' : ''}`}>
+      <label className="label-inline" htmlFor={name}>
+        <input
+          type="checkbox"
+          id={name}
+          {...inputProps}
+          {...register(name, options)}
+        />
+        <span className="label-text">{label}</span>
+      </label>
+      <span className="error">{errorMessage}</span>
+    </div>
+  )
+}
+
 interface Option {
   value: string
   label: string
@@ -130,7 +158,11 @@ export function RadioSelect<T extends FieldValues>(props: RadioSelectProps<T>) {
     <div className={`label ${hasError ? 'error' : ''}`}>
       <span className="label-text">{label}</span>
       {values.map(({ value, label }) => (
-        <label className="label-radio" htmlFor={`${name}-${value}`} key={value}>
+        <label
+          className="label-inline"
+          htmlFor={`${name}-${value}`}
+          key={value}
+        >
           <input
             type="radio"
             value={value}

@@ -1,5 +1,11 @@
 import { CodeBlock, Preview, Separator, Title } from '@components/example'
-import { Input, RadioSelect, Select, TextArea } from '@components/Form'
+import {
+  Checkbox,
+  Input,
+  RadioSelect,
+  Select,
+  TextArea,
+} from '@components/Form'
 import { useForm } from 'react-hook-form'
 
 export default function Forms() {
@@ -297,6 +303,12 @@ const ComposeBlogPostForm = () => {
           required: true,
           valueAsDate: true,
         }}
+      />
+      <Checkbox
+        name="isPublished"
+        label="Published"
+        register={register}
+        formState={formState}
       />
       <button
         type="submit"

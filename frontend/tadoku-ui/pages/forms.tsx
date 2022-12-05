@@ -107,10 +107,10 @@ export default function Forms() {
 
 const ExampleReactForm = () => {
   const { register, handleSubmit, formState } = useForm()
-  const onSubmit = (data: any) => console.log(data)
+  const onSubmit = (data: any) => console.log(data, 'submitted')
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="v-stack w-96">
+    <form onSubmit={handleSubmit(onSubmit)} className="v-stack">
       <Input
         name="pagesRead"
         label="Pages read"
@@ -137,7 +137,19 @@ const ExampleReactForm = () => {
           { value: '3', label: 'Sentence' },
         ]}
       />
-      <button type="submit" className="btn primary">
+      <Input
+        name="description"
+        label="Description"
+        register={register}
+        formState={formState}
+        type="text"
+        placeholder="e.g. One Piece volume 45"
+      />
+      <button
+        type="submit"
+        className="btn primary"
+        disabled={formState.isSubmitting}
+      >
         Save changes
       </button>
     </form>

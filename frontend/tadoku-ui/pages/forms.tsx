@@ -115,9 +115,10 @@ const ExampleReactForm = () => {
         name="pagesRead"
         label="Pages read"
         register={register}
+        formState={formState}
         type="number"
         options={{
-          required: true,
+          required: 'This field is required',
           valueAsNumber: true,
         }}
       />

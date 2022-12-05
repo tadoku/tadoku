@@ -25,7 +25,7 @@ export function Input<T extends FieldValues>(props: InputProps<T>) {
     props
   const hasError = formState.errors[name] !== undefined
   const errorMessage =
-    formState.errors[name]?.message?.toString() ?? 'This field is invalid'
+    formState.errors[name]?.message?.toString() || 'This input is invalid'
 
   return (
     <label className={`label ${hasError ? 'error' : ''}`} htmlFor={name}>
@@ -66,17 +66,61 @@ export function Select<T extends FieldValues>(props: SelectProps<T>) {
   } = props
   const hasError = formState.errors[name] !== undefined
   const errorMessage =
-    formState.errors[name]?.message?.toString() ?? 'This field is invalid'
+    formState.errors[name]?.message?.toString() || 'This selection is invalid'
 
   return (
     <label className={`label ${hasError ? 'error' : ''}`} htmlFor={name}>
       <span className="label-text">{label}</span>
       <select {...selectProps} {...register(name, options)}>
         {values.map(({ value, label }) => (
-          <option value={value}>{label}</option>
+          <option value={value} key={value}>
+            {label}
+          </option>
         ))}
       </select>
       <span className="error">{errorMessage}</span>
     </label>
+  )
+}
+
+interface RadioSelectProps<T extends FieldValues>
+  extends Props<T>,
+    Omit<HTMLProps<HTMLInputElement>, 'name'> {
+  label: string
+  values: Option[]
+}
+
+export function RadioSelect<T extends FieldValues>(props: RadioSelectProps<T>) {
+  const {
+    name,
+    register,
+    formState,
+    label,
+    type,
+    options,
+    values,
+    ...selectProps
+  } = props
+  const hasError = formState.errors[name] !== undefined
+  let errorMessage =
+    formState.errors[name]?.message?.toString() || 'This selection is invalid'
+
+  return (
+    <div className={`label ${hasError ? 'error' : ''}`}>
+      <span className="label-text">{label}</span>
+      {values.map(({ value, label }) => (
+        <label className="label-radio" htmlFor={`${name}-${value}`} key={value}>
+          <input
+            type="radio"
+            value={value}
+            id={`${name}-${value}`}
+            {...selectProps}
+            {...register(name, options)}
+          />
+          <span>{label}</span>
+        </label>
+      ))}
+      <span className="error">{errorMessage}</span>
+    </div>
   )
 }

@@ -167,7 +167,7 @@
   }
 
   .label .error {
-    @apply hidden w-full text-right text-red-600 transition duration-200 ease-out;
+    @apply hidden w-full text-red-600 transition duration-200 ease-out;
   }
 
   .label.error .error {

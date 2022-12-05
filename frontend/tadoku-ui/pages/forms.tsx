@@ -1,5 +1,5 @@
 import { CodeBlock, Preview, Separator, Title } from '@components/example'
-import { Input, Select } from '@components/Form'
+import { Input, RadioSelect, Select } from '@components/Form'
 import { useForm } from 'react-hook-form'
 
 export default function Forms() {
@@ -91,6 +91,20 @@ const LogPagesForm = () => {
 // Published: checkmark
 // Published at: datetime`}
           />
+        </div>
+      </div>
+
+      <Separator />
+
+      <Title>React example: other elements</Title>
+      <div className="h-stack w-full">
+        <div className="w-96">
+          <Preview>
+            <MiscForm />
+          </Preview>
+        </div>
+        <div className="flex-1">
+          <CodeBlock language="typescript" code={``} />
         </div>
       </div>
 
@@ -240,6 +254,37 @@ const LogPagesForm = () => {
         disabled={formState.isSubmitting}
       >
         Save changes
+      </button>
+    </form>
+  )
+}
+
+const MiscForm = () => {
+  const { register, handleSubmit, formState } = useForm()
+  const onSubmit = (data: any) => console.log(data, 'submitted')
+
+  return (
+    <form onSubmit={handleSubmit(onSubmit)} className="v-stack">
+      <RadioSelect
+        name="cardType"
+        label="Card type"
+        register={register}
+        formState={formState}
+        options={{
+          required: true,
+          valueAsNumber: true,
+        }}
+        values={[
+          { value: '1', label: 'Sentence card' },
+          { value: '2', label: 'Vocab card' },
+        ]}
+      />
+      <button
+        type="submit"
+        className="btn primary"
+        disabled={formState.isSubmitting}
+      >
+        Submit
       </button>
     </form>
   )

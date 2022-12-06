@@ -186,6 +186,117 @@ const MiscForm = () => {
           { value: '2', label: 'Vocab card' },
         ]}
       />
+      <Input
+        name="datetime"
+        label="Datetime"
+        register={register}
+        formState={formState}
+        type="datetime-local"
+        options={{
+          required: true,
+          valueAsDate: true,
+        }}
+      />
+      <Input
+        name="time"
+        label="Time"
+        register={register}
+        formState={formState}
+        type="time"
+        options={{
+          required: true,
+        }}
+      />
+      <Input
+        name="week"
+        label="Week"
+        register={register}
+        formState={formState}
+        type="week"
+        options={{
+          required: true,
+        }}
+      />
+      <Input
+        name="month"
+        label="Month"
+        register={register}
+        formState={formState}
+        type="month"
+        options={{
+          required: true,
+        }}
+      />
+      <Input
+        name="color"
+        label="Color"
+        register={register}
+        formState={formState}
+        type="color"
+        options={{
+          required: true,
+        }}
+      />
+      <Input
+        name="email"
+        label="Email"
+        register={register}
+        formState={formState}
+        type="email"
+        options={{
+          required: true,
+        }}
+      />
+      <Input
+        name="file"
+        label="File"
+        register={register}
+        formState={formState}
+        type="file"
+        options={{
+          required: true,
+        }}
+      />
+      <Input
+        name="range"
+        label="Range"
+        register={register}
+        formState={formState}
+        type="range"
+        options={{
+          required: true,
+        }}
+      />
+      <Input
+        name="search"
+        label="Search"
+        register={register}
+        formState={formState}
+        type="search"
+        options={{
+          required: true,
+        }}
+      />
+      <Input
+        name="tel"
+        label="tel"
+        register={register}
+        formState={formState}
+        type="tel"
+        options={{
+          required: true,
+        }}
+      />
+      <Input
+        name="url"
+        label="url"
+        register={register}
+        formState={formState}
+        type="url"
+        options={{
+          required: true,
+        }}
+      />
       <button
         type="submit"
         className="btn primary"
@@ -195,8 +306,7 @@ const MiscForm = () => {
       </button>
     </form>
   )
-}
-`}
+}`}
           />
         </div>
       </div>
@@ -424,6 +534,117 @@ const MiscForm = () => {
           { value: '1', label: 'Sentence card' },
           { value: '2', label: 'Vocab card' },
         ]}
+      />
+      <Input
+        name="datetime"
+        label="Datetime"
+        register={register}
+        formState={formState}
+        type="datetime-local"
+        options={{
+          required: true,
+          valueAsDate: true,
+        }}
+      />
+      <Input
+        name="time"
+        label="Time"
+        register={register}
+        formState={formState}
+        type="time"
+        options={{
+          required: true,
+        }}
+      />
+      <Input
+        name="week"
+        label="Week"
+        register={register}
+        formState={formState}
+        type="week"
+        options={{
+          required: true,
+        }}
+      />
+      <Input
+        name="month"
+        label="Month"
+        register={register}
+        formState={formState}
+        type="month"
+        options={{
+          required: true,
+        }}
+      />
+      <Input
+        name="color"
+        label="Color"
+        register={register}
+        formState={formState}
+        type="color"
+        options={{
+          required: true,
+        }}
+      />
+      <Input
+        name="email"
+        label="Email"
+        register={register}
+        formState={formState}
+        type="email"
+        options={{
+          required: true,
+        }}
+      />
+      <Input
+        name="file"
+        label="File"
+        register={register}
+        formState={formState}
+        type="file"
+        options={{
+          required: true,
+        }}
+      />
+      <Input
+        name="range"
+        label="Range"
+        register={register}
+        formState={formState}
+        type="range"
+        options={{
+          required: true,
+        }}
+      />
+      <Input
+        name="search"
+        label="Search"
+        register={register}
+        formState={formState}
+        type="search"
+        options={{
+          required: true,
+        }}
+      />
+      <Input
+        name="tel"
+        label="tel"
+        register={register}
+        formState={formState}
+        type="tel"
+        options={{
+          required: true,
+        }}
+      />
+      <Input
+        name="url"
+        label="url"
+        register={register}
+        formState={formState}
+        type="url"
+        options={{
+          required: true,
+        }}
       />
       <button
         type="submit"

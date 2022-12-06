@@ -1,7 +1,7 @@
 import { Logo, LogoInverted } from '@components/branding'
 import { CodeBlock, Preview, Separator, Title } from '@components/example'
 
-export default function branding() {
+export default function Branding() {
   return (
     <>
       <h1 className="title mb-8">Branding</h1>

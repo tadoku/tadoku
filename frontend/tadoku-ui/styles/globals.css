@@ -71,9 +71,28 @@
   input[type=text],
   input[type=password],
   input[type=date],
+  input[type=datetime-local],
+  input[type=time],
+  input[type=week],
+  input[type=month],
+  input[type=color],
+  input[type=email],
+  input[type=search],
+  input[type=tel],
+  input[type=url],
   input[type=number] {
     @apply border border-b-2 border-black/10 focus:border-primary focus:ring-primary/40 focus:ring-2;
     @apply bg-white px-4 py-1 h-11 w-full transition ease-in-out;
+  }
+
+  input[type=range] {
+    @apply w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-primary;
+  }
+
+  input[type=file] {
+    @apply text-sm text-gray-500 file:h-11 file:mr-3 file:py-2 file:px-6 file:border-0 file:text-sm file:font-medium file:bg-slate-100 file:text-black file:font-bold hover:file:cursor-pointer hover:file:bg-slate-50 hover:file:text-black/70;
+    @apply border border-b-2 border-black/10 focus:border-primary focus:ring-primary/40 focus:ring-2;
+    @apply bg-white h-11 w-full transition ease-in-out;
   }
 
   textarea {

@@ -24,6 +24,16 @@
     padding: 0;
   }
 
+  :root {
+    --toastify-color-light: theme('colors.slate.100');
+    --toastify-color-dark: theme('colors.slate.900');
+    --toastify-color-info: theme('colors.primary');
+    --toastify-color-success: theme('colors.emerald.600');
+    --toastify-color-warning: theme('colors.orange.600');
+    --toastify-color-error: theme('colors.red.600');
+    --toastify-color-progress-light: theme('colors.secondary');
+  }
+
   ::selection {
     background: theme('colors.primary');
     color: theme('colors.neutral.50');
@@ -33,6 +43,18 @@
     color: theme('colors.neutral.800');
     text-decoration: none;
     transition: color 0.2s ease;
+  }
+
+  p a {
+    text-decoration: underline;;
+  }
+
+  p {
+    @apply my-3;
+  }
+
+  p > code {
+    @apply border border-slate-300 bg-slate-100 rounded-sm p-1 text-indigo-700;
   }
 
   a:hover, a:active, a:focus {

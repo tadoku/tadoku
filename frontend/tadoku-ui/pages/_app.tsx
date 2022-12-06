@@ -1,6 +1,8 @@
+import 'react-toastify/dist/ReactToastify.css'
 import '../styles/globals.css'
 import type { AppProps } from 'next/app'
 import Link from 'next/link'
+import { ToastContainer } from 'react-toastify'
 
 interface NavigationBlock {
   title: string
@@ -53,6 +55,11 @@ export default function App({ Component, pageProps }: AppProps) {
       </div>
       <div className="p-8 flex-grow">
         <Component {...pageProps} />
+        <ToastContainer
+          toastClassName={() =>
+            'relative flex px-3 py-3 text-black border border-b-2 shadow shadow-slate-500/10 bg-white border-black/10 justify-between overflow-hidden cursor-pointer'
+          }
+        />
       </div>
     </div>
   )

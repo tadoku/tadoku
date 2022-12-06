@@ -214,6 +214,10 @@
   .btn:disabled {
     @apply hover:border-black/10 hover:bg-inherit focus:ring-0 cursor-not-allowed text-black/40;
   }
+
+  .card {
+    @apply p-7 shadow-md shadow-slate-500/10 bg-white;
+  }
 }
 
 @layer utilities {

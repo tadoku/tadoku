@@ -26,14 +26,16 @@ export const CodeBlock = ({
 export const Preview = ({
   children,
   dark = false,
+  className = '',
 }: {
   children: ReactNode
   dark?: boolean
+  className?: string
 }) => (
   <div
     className={`not-prose overflow-hidden p-8 relative ${
       dark ? 'bg-black' : 'bg-white'
-    }`}
+    } ${className}`}
   >
     {children}
   </div>

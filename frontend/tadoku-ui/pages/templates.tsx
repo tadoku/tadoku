@@ -40,6 +40,21 @@ export default function Templates() {
   <div className="bg-blue-200">three</div>
 </div>`}
       />
+
+      <Separator />
+
+      <Title>Card</Title>
+      <Preview className="bg-gray-100">
+        <div className="card">
+          <p>Some content</p>
+        </div>
+      </Preview>
+      <CodeBlock
+        language={'html'}
+        code={`<div className="card">
+  <p>Some content</p>
+</div>`}
+      />
     </>
   )
 }

@@ -73,7 +73,22 @@ const ToastExample = () => (
         In order to use toasts you need to set them up in your{' '}
         <code>_app.tsx</code>.
       </p>
-      <CodeBlock language="typescript" code={``} />
+      <CodeBlock
+        language="typescript"
+        code={`import ToastContainer from '@components/toasts'
+import type { AppProps } from 'next/app'
+// Note that it's important that your global stylesheet is loaded last, otherwise the theme will be overridden
+import '../styles/globals.css'
+
+export default function App({ Component, pageProps }: AppProps) {
+  return (
+    <>
+      <Component {...pageProps} />
+      <ToastContainer />
+    </>
+  )
+}`}
+      />
     </>
   )
 }

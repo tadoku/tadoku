@@ -39,14 +39,14 @@
     color: theme('colors.neutral.50');
   }
 
-  a {
+  a:not(.reset) {
     color: theme('colors.neutral.800');
     text-decoration: none;
     transition: color 0.2s ease;
   }
 
-  p a {
-    text-decoration: underline;;
+  p a:not(.reset) {
+    text-decoration: underline;
   }
 
   p {
@@ -57,7 +57,7 @@
     @apply border border-slate-300 bg-slate-100 rounded-sm p-1 text-indigo-700;
   }
 
-  a:hover, a:active, a:focus {
+  a:not(.reset):hover, a:not(.reset):active, a:not(.reset):focus {
     color: theme('colors.primary');
   }
 

@@ -33,7 +33,7 @@ export const Preview = ({
   className?: string
 }) => (
   <div
-    className={`not-prose overflow-hidden p-8 relative ${
+    className={`not-prose p-8 relative ${
       dark ? 'bg-black' : 'bg-white'
     } ${className}`}
   >

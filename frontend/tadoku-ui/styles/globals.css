@@ -183,6 +183,10 @@
     @apply my-0 box-border;
   }
 
+  .h-stack > .btn {
+    @apply !w-fit;
+  }
+
   /* forms */
 
   .label {
@@ -217,6 +221,18 @@
 
   .card {
     @apply p-7 shadow-md shadow-slate-500/10 bg-white;
+  }
+
+  .modal-body {
+    @apply text-sm text-gray-700;
+  }
+
+  .modal-actions {
+    @apply mt-4 h-stack;
+  }
+
+  ul.list {
+    @apply list-disc pl-7 my-2;
   }
 }
 

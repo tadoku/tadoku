@@ -3,10 +3,7 @@ import { Disclosure, Menu, Transition } from '@headlessui/react'
 import { Bars3Icon, XMarkIcon } from '@heroicons/react/24/outline'
 import { Logo } from './branding'
 import { ChevronDownIcon } from '@heroicons/react/24/solid'
-
-function classNames(...classes: string[]) {
-  return classes.filter(Boolean).join(' ')
-}
+import classNames from 'classnames'
 
 interface NavigationDropDownProps {
   type: 'dropdown'
@@ -158,7 +155,7 @@ const DropDown = ({ label, links }: NavigationDropDownProps) => (
                   onClick={onClick}
                   className={classNames(
                     active ? 'bg-gray-100' : '',
-                    'block px-3 py-2 text-sm text-gray-700 flex font-bold',
+                    'px-3 py-2 text-sm text-gray-700 flex font-bold',
                   )}
                 >
                   {IconComponent && <IconComponent className="w-5 h-5 mr-3" />}{' '}
@@ -206,7 +203,7 @@ const DropDownMobile = ({ label, links }: NavigationDropDownProps) => (
                   onClick={onClick}
                   className={classNames(
                     active ? 'bg-gray-100' : '',
-                    'block px-3 py-2 text-sm text-gray-700 flex font-bold',
+                    'px-3 py-2 text-sm text-gray-700 flex font-bold',
                   )}
                 >
                   {IconComponent && <IconComponent className="w-5 h-5 mr-3" />}{' '}

@@ -92,10 +92,10 @@ const Settings: NextPage<Props> = () => {
 
   return (
     <div>
-      <h1 className="title">Settings</h1>
+      <h1 className="title mb-4">Settings</h1>
       <MessagesList messages={flow?.ui.messages} />
-      <div className="v-stack md:h-stack md:space-y-0 w-full mt-4">
-        <div className="flex-grow card">
+      <div className="v-stack">
+        <div className="card">
           <h2 className="subtitle mb-4">Update profile</h2>
           <Flow
             flow={flow}
@@ -104,7 +104,7 @@ const Settings: NextPage<Props> = () => {
             hideGlobalMessages
           />
         </div>
-        <div className="flex-grow card">
+        <div className="grow card">
           <h2 className="subtitle mb-4">Change password</h2>
           <Flow
             flow={flow}

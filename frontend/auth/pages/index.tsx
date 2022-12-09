@@ -1,13 +1,13 @@
 import { SelfServiceSettingsFlow } from '@ory/client'
 import type { NextPage } from 'next'
 import { useEffect, useState } from 'react'
-import Flow from '../ui/Flow'
+import Flow from '../src/ui/Flow'
 import ory from '../src/ory'
 import { AxiosError } from 'axios'
 import { useSession } from '../src/session'
 import { useRouter } from 'next/router'
 import { handleFlowError } from '../src/errors'
-import MessagesList from '../ui/MessagesList'
+import MessagesList from '../src/ui/MessagesList'
 
 interface Props {}
 

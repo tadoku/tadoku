@@ -4,7 +4,7 @@ import {
 } from '@ory/client'
 import type { NextPage } from 'next'
 import { useEffect, useState } from 'react'
-import Flow from '../ui/Flow'
+import Flow from '../src/ui/Flow'
 import ory from '../src/ory'
 import { useSession } from '../src/session'
 import { useRouter } from 'next/router'

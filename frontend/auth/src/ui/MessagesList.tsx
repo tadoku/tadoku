@@ -10,7 +10,7 @@ const MessagesList = ({ messages }: MessagesListProps) => {
   }
 
   return (
-    <ul>
+    <ul className={`mb-4 space-y-2`}>
       {messages.map(m => (
         <Message key={m.id} message={m} />
       ))}
@@ -24,11 +24,7 @@ interface MessageProps {
 
 export const Message = ({ message }: MessageProps) => {
   return (
-    <li
-      style={{
-        backgroundColor: message.type === 'error' ? 'lightred' : 'lightblue',
-      }}
-    >
+    <li className={`flash ${message.type === 'error' ? 'error' : 'info'}`}>
       {message.text}
     </li>
   )

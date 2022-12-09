@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { useLogoutHandler, useSession } from '../src/session'
+import { useLogoutHandler, useSession } from '../session'
 import { Session } from '@ory/client'
 
 const Header = () => {

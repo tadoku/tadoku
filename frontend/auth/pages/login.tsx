@@ -4,7 +4,7 @@ import {
 } from '@ory/client'
 import type { NextPage } from 'next'
 import { useEffect, useState } from 'react'
-import Flow from '../ui/Flow'
+import Flow from '../src/ui/Flow'
 import ory from '../src/ory'
 import { AxiosError } from 'axios'
 import { useLogoutHandler, useSession } from '../src/session'
@@ -108,7 +108,7 @@ const Login: NextPage<Props> = () => {
 
   return (
     <div>
-      <h1>
+      <h1 className="title mb-4">
         {(() => {
           if (flow?.refresh) {
             return 'Confirm Action'
@@ -118,18 +118,23 @@ const Login: NextPage<Props> = () => {
           return 'Sign In'
         })()}
       </h1>
-      <Flow flow={flow} onSubmit={onSubmit} />
+
+      <div className="card">
+        <Flow flow={flow} onSubmit={onSubmit} />
+      </div>
 
       {aal || refresh ? (
-        <a onClick={onLogout}>Log out</a>
+        <a onClick={onLogout} className="btn ghost">
+          Log out
+        </a>
       ) : (
         <>
-          <Link href="/register">
-            <a>Create account</a>
+          <Link href="/register" className="btn ghost">
+            Create account
           </Link>
           <br />
-          <Link href="/account-recovery">
-            <a>Recover your account</a>
+          <Link href="/account-recovery" className="btn ghost">
+            Forgot password?
           </Link>
         </>
       )}

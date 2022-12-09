@@ -234,6 +234,10 @@
   ul.list {
     @apply list-disc pl-7 my-2;
   }
+
+  .flash {
+    @apply font-medium pl-4 py-2;
+  }
 }
 
 @layer utilities {
@@ -242,7 +246,7 @@
   }
 
   .label .error {
-    @apply hidden w-full text-red-600 transition duration-200 ease-out;
+    @apply hidden w-full text-red-700 transition duration-200 ease-out;
   }
 
   .label.error .error {
@@ -283,5 +287,21 @@
 
   .btn.disabled {
     @apply opacity-50;
+  }
+
+  .flash.info {
+    @apply bg-primary text-white;
+  }
+
+  .flash.success {
+    @apply bg-emerald-700 text-white;
+  }
+
+  .flash.warning {
+    @apply bg-orange-700 text-white;
+  }
+
+  .flash.error {
+    @apply bg-red-700 text-white;
   }
 }

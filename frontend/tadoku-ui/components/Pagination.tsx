@@ -4,6 +4,8 @@ import {
   EllipsisHorizontalIcon,
 } from '@heroicons/react/20/solid'
 import classNames from 'classnames'
+import { useState } from 'react'
+import Modal from './Modal'
 
 interface Props {
   totalPages: number
@@ -20,6 +22,8 @@ export default function Pagination({
   onClick,
   window = 4,
 }: Props) {
+  const [isJumpToPageModalOpen, setIsJumpToPageModalOpen] = useState(false)
+
   const canGoPrevious = current > 1
   const canGoNext = current < total
 
@@ -41,81 +45,113 @@ export default function Pagination({
     : (page: number) => () => onClick(page)
 
   return (
-    <nav className="flex" aria-label="Breadcrumb">
-      <a
-        className={classNames('btn ghost', {
-          'pointer-events-none disabled': !canGoPrevious,
-        })}
-        href={getHref?.(current - 1) ?? '#'}
-        onClick={clickHandler?.(current - 1)}
+    <>
+      <Modal
+        isOpen={isJumpToPageModalOpen}
+        setIsOpen={setIsJumpToPageModalOpen}
+        title="Navigate to page"
       >
-        <ChevronLeftIcon className="w-5 h-5 mr-2" />
-        Previous
-      </a>
-      <ol className="inline-flex items-center justify-center space-x-1 md:space-x-3 w-full">
-        {start > 1 ? (
-          <>
-            <Page
-              href={getHref?.(1) ?? '#'}
-              page={1}
-              isActive={current === 1}
-              onClick={clickHandler?.(1)}
-            />
-            {start === 3 ? (
-              <Page
-                href={getHref?.(2) ?? '#'}
-                page={2}
-                isActive={current === 2}
-                onClick={clickHandler?.(2)}
-              />
-            ) : null}
-            {start > 3 ? <Spacer /> : null}
-          </>
-        ) : null}
-        {Array.from({ length: end - start + 1 }, (_, i) => i + start).map(
-          page => (
-            <Page
-              key={page}
-              href={getHref?.(page) ?? '#'}
-              page={page}
-              isActive={current === page}
-              onClick={clickHandler?.(page)}
-            />
-          ),
-        )}
-        {end < total ? (
-          <>
-            {end < total - 2 ? <Spacer /> : null}
+        <p className="modal-body"></p>
 
-            {end === total - 2 ? (
+        <div className="modal-actions">
+          <button
+            type="button"
+            className="btn secondary"
+            onClick={() => {
+              setIsJumpToPageModalOpen(false)
+            }}
+          >
+            Go
+          </button>
+          <button
+            type="button"
+            className="btn ghost"
+            onClick={() => setIsJumpToPageModalOpen(false)}
+          >
+            Cancel
+          </button>
+        </div>
+      </Modal>
+      <nav className="flex" aria-label="Breadcrumb">
+        <a
+          className={classNames('btn ghost', {
+            'pointer-events-none disabled': !canGoPrevious,
+          })}
+          href={getHref?.(current - 1) ?? '#'}
+          onClick={clickHandler?.(current - 1)}
+        >
+          <ChevronLeftIcon className="w-5 h-5 mr-2" />
+          Previous
+        </a>
+        <ol className="inline-flex items-center justify-center space-x-1 md:space-x-3 w-full">
+          {start > 1 ? (
+            <>
               <Page
-                href={getHref?.(total - 1) ?? '#'}
-                page={total - 1}
-                isActive={current === total - 1}
-                onClick={clickHandler?.(total - 1)}
+                href={getHref?.(1) ?? '#'}
+                page={1}
+                isActive={current === 1}
+                onClick={clickHandler?.(1)}
               />
-            ) : null}
-            <Page
-              href={getHref?.(total) ?? '#'}
-              page={total}
-              isActive={current === total}
-              onClick={clickHandler?.(total)}
-            />
-          </>
-        ) : null}
-      </ol>
+              {start === 3 ? (
+                <Page
+                  href={getHref?.(2) ?? '#'}
+                  page={2}
+                  isActive={current === 2}
+                  onClick={clickHandler?.(2)}
+                />
+              ) : null}
+              {start > 3 ? (
+                <Spacer onClick={() => setIsJumpToPageModalOpen(true)} />
+              ) : null}
+            </>
+          ) : null}
+          {Array.from({ length: end - start + 1 }, (_, i) => i + start).map(
+            page => (
+              <Page
+                key={page}
+                href={getHref?.(page) ?? '#'}
+                page={page}
+                isActive={current === page}
+                onClick={clickHandler?.(page)}
+              />
+            ),
+          )}
+          {end < total ? (
+            <>
+              {end < total - 2 ? (
+                <Spacer onClick={() => setIsJumpToPageModalOpen(true)} />
+              ) : null}
 
-      <a
-        className={classNames('btn ghost', {
-          'pointer-events-none disabled': !canGoNext,
-        })}
-        href={getHref?.(current + 1) ?? '#'}
-        onClick={clickHandler?.(current + 1)}
-      >
-        Next
-        <ChevronRightIcon className="w-5 h-5 ml-2" />
-      </a>
-    </nav>
+              {end === total - 2 ? (
+                <Page
+                  href={getHref?.(total - 1) ?? '#'}
+                  page={total - 1}
+                  isActive={current === total - 1}
+                  onClick={clickHandler?.(total - 1)}
+                />
+              ) : null}
+              <Page
+                href={getHref?.(total) ?? '#'}
+                page={total}
+                isActive={current === total}
+                onClick={clickHandler?.(total)}
+              />
+            </>
+          ) : null}
+        </ol>
+
+        <a
+          className={classNames('btn ghost', {
+            'pointer-events-none disabled': !canGoNext,
+          })}
+          href={getHref?.(current + 1) ?? '#'}
+          onClick={clickHandler?.(current + 1)}
+        >
+          Next
+          <ChevronRightIcon className="w-5 h-5 ml-2" />
+        </a>
+      </nav>
+    </>
   )
 }
 
@@ -148,8 +184,13 @@ const Page = ({
   </li>
 )
 
-const Spacer = () => (
-  <li className="inline-flex items-center text-gray-300 ">
-    <EllipsisHorizontalIcon className="w-5 h-5" />
+const Spacer = ({ onClick }: { onClick: () => void }) => (
+  <li>
+    <button
+      className="flex items-center text-gray-300 hover:text-secondary"
+      onClick={onClick}
+    >
+      <EllipsisHorizontalIcon className="w-5 h-5" />
+    </button>
   </li>
 )

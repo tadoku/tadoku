@@ -5,7 +5,7 @@ import { useState } from 'react'
 export default function Page() {
   return (
     <>
-      <h1 className="title mb-8">Breadcrumb</h1>
+      <h1 className="title mb-8">Pagination</h1>
 
       <Title>Example</Title>
       <Preview>

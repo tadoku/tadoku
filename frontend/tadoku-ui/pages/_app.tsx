@@ -34,7 +34,7 @@ const navigation: NavigationBlock[] = [
       { title: 'Modals', href: '/modals' },
       { title: 'Tables', href: '/tables', todo: true },
       { title: 'Breadcrumb', href: '/breadcrumb' },
-      { title: 'Overflow menu', href: '/overflow-menu', todo: true },
+      { title: 'Action menu', href: '/action-menu' },
       { title: 'Pagination', href: '/pagination' },
     ],
   },

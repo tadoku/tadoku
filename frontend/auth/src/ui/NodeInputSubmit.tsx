@@ -17,7 +17,7 @@ export function NodeInputSubmit<T>({
         disabled={attributes.disabled || disabled}
         className="btn primary"
       >
-        {getNodeLabel(node)}
+        {getNodeLabel(node).replaceAll('Sign in', 'Log in')}
       </button>
     </>
   )

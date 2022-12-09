@@ -25,14 +25,15 @@ export interface NavigationLinkProps {
 
 interface Props {
   navigation: (NavigationLinkProps | NavigationDropDownProps)[]
+  width?: string
 }
 
-export default function Navbar({ navigation }: Props) {
+export default function Navbar({ navigation, width = 'max-w-7xl' }: Props) {
   return (
     <Disclosure as="nav" className="bg-white shadow-md shadow-slate-500/10">
       {({ open }) => (
         <>
-          <div className="mx-auto max-w-7xl px-2 sm:px-6 lg:px-8">
+          <div className={`mx-auto ${width} px-2 sm:px-6 lg:px-8`}>
             <div className="relative flex h-16 items-center justify-between">
               <div className="absolute inset-y-0 left-0 flex items-center sm:hidden">
                 {/* Mobile menu button*/}

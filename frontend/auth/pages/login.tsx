@@ -111,16 +111,23 @@ const Login: NextPage<Props> = () => {
       <h1 className="title mb-4">
         {(() => {
           if (flow?.refresh) {
-            return 'Confirm Action'
+            return 'Confirm action'
           } else if (flow?.requested_aal === 'aal2') {
-            return 'Two-Factor Authentication'
+            return 'Two-factor authentication'
           }
-          return 'Sign In'
+          return 'Log in'
         })()}
       </h1>
 
-      <div className="card">
+      <div className="card relative">
         <Flow flow={flow} onSubmit={onSubmit} />
+
+        <Link
+          href="/account-recovery"
+          className="btn ghost absolute right-7 bottom-7 text-sm small"
+        >
+          Forgot password?
+        </Link>
       </div>
 
       {aal || refresh ? (
@@ -128,15 +135,12 @@ const Login: NextPage<Props> = () => {
           Log out
         </a>
       ) : (
-        <>
-          <Link href="/register" className="btn ghost">
-            Create account
+        <div className="h-stack justify-center mt-4 items-center space-x-2 text-xs">
+          <span className="text-gray-500">Don't have an account?</span>
+          <Link href="/register" className="btn ghost small">
+            Sign up now
           </Link>
-          <br />
-          <Link href="/account-recovery" className="btn ghost">
-            Forgot password?
-          </Link>
-        </>
+        </div>
       )}
     </div>
   )

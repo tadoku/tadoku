@@ -253,6 +253,10 @@
     @apply block text-xs;
   }
 
+  .btn.small {
+    @apply px-2 py-1 h-8;
+  }
+
   .btn.primary {
     @apply text-white hover:text-white active:text-white focus:text-white bg-primary hover:bg-primary/90 focus:ring-primary/40;
   }
@@ -278,7 +282,7 @@
   }
 
   .btn.ghost {
-    @apply border-0 focus:ring-0 hover:bg-secondary/5 focus:bg-secondary/5;
+    @apply bg-transparent border-0 focus:ring-0 hover:bg-secondary/5 focus:bg-secondary/5;
   }
 
   .btn.ghost:disabled {

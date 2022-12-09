@@ -10,6 +10,7 @@ import { useSession } from '../src/session'
 import { useRouter } from 'next/router'
 import { handleFlowError } from '../src/errors'
 import { AxiosError } from 'axios'
+import Link from 'next/link'
 
 interface Props {}
 
@@ -82,8 +83,17 @@ const Register: NextPage<Props> = () => {
 
   return (
     <div>
-      <h1>Create account</h1>
-      <Flow flow={flow} method="password" onSubmit={onSubmit} />
+      <h1 className="title mb-4">Create account</h1>
+      <div className="card">
+        <Flow flow={flow} method="password" onSubmit={onSubmit} />
+      </div>
+
+      <div className="h-stack items-center space-x-2 mt-4 justify-center text-xs">
+        <span className="text-gray-500">Already have an account?</span>
+        <Link href="/login" className="btn ghost small">
+          Log in now
+        </Link>
+      </div>
     </div>
   )
 }

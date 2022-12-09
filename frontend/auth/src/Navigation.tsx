@@ -8,10 +8,12 @@ import {
   Cog8ToothIcon,
 } from '@heroicons/react/20/solid'
 import { useLogoutHandler, useSession } from './session'
+import { useRouter } from 'next/router'
 
 export default function Navigation() {
   const [session] = useSession()
   const onLogout = useLogoutHandler([session])
+  const router = useRouter()
 
   const userNavigation: (NavigationLinkProps | NavigationDropDownProps)[] =
     session
@@ -30,7 +32,18 @@ export default function Navigation() {
             ],
           },
         ]
-      : []
+      : [
+          {
+            type: 'link',
+            label: 'Log in',
+            href: '/login',
+          },
+          {
+            type: 'link',
+            label: 'Sign up',
+            href: '/register',
+          },
+        ]
 
   return (
     <Navbar

@@ -4,6 +4,8 @@ import { Bars3Icon, XMarkIcon } from '@heroicons/react/24/outline'
 import { Logo } from './branding'
 import { ChevronDownIcon } from '@heroicons/react/24/solid'
 import classNames from 'classnames'
+import { useRouter } from 'next/router'
+import Link from 'next/link'
 
 export interface NavigationDropDownProps {
   type: 'dropdown'
@@ -20,7 +22,7 @@ export interface NavigationLinkProps {
   type: 'link'
   label: string
   href: string
-  current: boolean
+  current?: boolean
 }
 
 interface Props {
@@ -29,6 +31,8 @@ interface Props {
 }
 
 export default function Navbar({ navigation, width = 'max-w-7xl' }: Props) {
+  const router = useRouter()
+
   return (
     <Disclosure as="nav" className="bg-white shadow-md shadow-slate-500/10">
       {({ open }) => (
@@ -59,11 +63,11 @@ export default function Navbar({ navigation, width = 'max-w-7xl' }: Props) {
 
                       if (item.type === 'link') {
                         return (
-                          <a
+                          <Link
                             key={item.label}
                             href={item.href}
                             className={classNames(
-                              item.current
+                              item.current || router.pathname === item.href
                                 ? 'bg-secondary !text-white hover:bg-secondary/80'
                                 : 'text-secondary hover:bg-secondary hover:text-white',
                               'reset text-xs px-2 py-1 md:px-3 md:py-2 md:text-sm font-bold inline-flex items-center justify-center',
@@ -71,7 +75,7 @@ export default function Navbar({ navigation, width = 'max-w-7xl' }: Props) {
                             aria-current={item.current ? 'page' : undefined}
                           >
                             {item.label}
-                          </a>
+                          </Link>
                         )
                       }
                     })}
@@ -102,7 +106,7 @@ export default function Navbar({ navigation, width = 'max-w-7xl' }: Props) {
                   return (
                     <Disclosure.Button
                       key={item.label}
-                      as="a"
+                      as={Link}
                       href={item.href}
                       className={classNames(
                         item.current
@@ -151,7 +155,7 @@ const DropDown = ({ label, links }: NavigationDropDownProps) => (
           {links.map(({ label, href, IconComponent, onClick }, i) => (
             <Menu.Item key={i}>
               {({ active }) => (
-                <a
+                <Link
                   href={href}
                   onClick={onClick}
                   className={classNames(
@@ -161,7 +165,7 @@ const DropDown = ({ label, links }: NavigationDropDownProps) => (
                 >
                   {IconComponent && <IconComponent className="w-4 h-4 mr-3" />}{' '}
                   {label}
-                </a>
+                </Link>
               )}
             </Menu.Item>
           ))}
@@ -199,7 +203,7 @@ const DropDownMobile = ({ label, links }: NavigationDropDownProps) => (
             <Menu.Item key={i}>
               {({ active }) => (
                 <Disclosure.Button
-                  as="a"
+                  as={Link}
                   href={href}
                   onClick={onClick}
                   className={classNames(

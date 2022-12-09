@@ -61,7 +61,15 @@ export default function Pagination({
               isActive={current === 1}
               onClick={clickHandler?.(1)}
             />
-            {start > 2 ? <Spacer /> : null}
+            {start === 3 ? (
+              <Page
+                href={getHref?.(2) ?? '#'}
+                page={2}
+                isActive={current === 2}
+                onClick={clickHandler?.(2)}
+              />
+            ) : null}
+            {start > 3 ? <Spacer /> : null}
           </>
         ) : null}
         {Array.from({ length: end - start + 1 }, (_, i) => i + start).map(
@@ -77,7 +85,16 @@ export default function Pagination({
         )}
         {end < total ? (
           <>
-            {end < total - 1 ? <Spacer /> : null}
+            {end < total - 2 ? <Spacer /> : null}
+
+            {end === total - 2 ? (
+              <Page
+                href={getHref?.(total - 1) ?? '#'}
+                page={total - 1}
+                isActive={current === total - 1}
+                onClick={clickHandler?.(total - 1)}
+              />
+            ) : null}
             <Page
               href={getHref?.(total) ?? '#'}
               page={total}

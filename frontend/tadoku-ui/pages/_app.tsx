@@ -57,7 +57,9 @@ export default function App({ Component, pageProps }: AppProps) {
                 >
                   <Link
                     href={l.todo ? '#' : l.href}
-                    className={`block pl-4 py-1 ${l.todo ? 'opacity-40' : ''}`}
+                    className={`block pl-4 py-1 ${
+                      l.todo ? 'opacity-40 pointer-events-none' : ''
+                    }`}
                   >
                     {l.title}
                   </Link>

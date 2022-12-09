@@ -61,7 +61,7 @@ export default function Pagination({
               isActive={current === 1}
               onClick={clickHandler?.(1)}
             />
-            <Spacer />
+            {start > 2 ? <Spacer /> : null}
           </>
         ) : null}
         {Array.from({ length: end - start + 1 }, (_, i) => i + start).map(
@@ -76,7 +76,7 @@ export default function Pagination({
         )}
         {end < total ? (
           <>
-            <Spacer />
+            {end < total - 1 ? <Spacer /> : null}
             <Page
               href={getHref?.(total) ?? '#'}
               page={total}
@@ -116,7 +116,7 @@ const Page = ({
     <a
       href={href}
       className={classNames(
-        'reset box-border border-b-2 px-4 py-1 h-11 inline-flex items-center justify-center hover:bg-secondary/5 focus:bg-secondary/5',
+        'reset min-w-[50px] box-border border-b-2 px-4 py-1 h-11 inline-flex items-center justify-center hover:bg-secondary/5 focus:bg-secondary/5',
         {
           'border-primary font-bold text-primary hover:text-primary': isActive,
           'font-medium border-transparent text-secondary !hover:text-secondary':

@@ -32,7 +32,7 @@ const navigation: NavigationBlock[] = [
       { title: 'Toasts', href: '/toasts' },
       { title: 'Charts', href: '/charts' },
       { title: 'Modals', href: '/modals' },
-      { title: 'Tables', href: '/tables', todo: true },
+      { title: 'Tables', href: '/tables' },
       { title: 'Breadcrumb', href: '/breadcrumb' },
       { title: 'Action menu', href: '/action-menu' },
       { title: 'Pagination', href: '/pagination' },

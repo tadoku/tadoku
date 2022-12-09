@@ -30,6 +30,13 @@ spec:
                 name: blog-api
                 port:
                   number: 8080
+          - path: /kratos
+            pathType: Prefix
+            backend:
+              service:
+                name: kratos-public
+                port:
+                  number: 80
           - path: /pgweb
             pathType: Prefix
             backend:
@@ -37,3 +44,10 @@ spec:
                 name: pgweb
                 port:
                   number: 8081
+          - path: /mail
+            pathType: Prefix
+            backend:
+              service:
+                name: mailhog
+                port:
+                  number: 8025

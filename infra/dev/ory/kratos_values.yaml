@@ -1,0 +1,138 @@
+kratos:
+  development: true
+  automigration:
+    enabled: true
+
+  identitySchemas:
+    "identity.default.schema.json": |
+      {
+        "$id": "test",
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "title": "User",
+        "type": "object",
+        "properties": {
+          "traits": {
+            "type": "object",
+            "properties": {
+              "email": {
+                "type": "string",
+                "format": "email",
+                "title": "Email",
+                "minLength": 3,
+                "ory.sh/kratos": {
+                  "credentials": {
+                    "password": {
+                      "identifier": true
+                    }
+                  },
+                  "verification": {
+                    "via": "email"
+                  },
+                  "recovery": {
+                    "via": "email"
+                  }
+                }
+              },
+              "display_name": {
+                "type": "string",
+                "title": "Display Name"
+              }
+            },
+            "required": [
+              "email"
+            ],
+            "additionalProperties": false
+          }
+        }
+      }
+    # this shouldn't be under identitySchemas but it's the easiest way to add a file to the container
+    "post-profile-update-hook.jsonnet": |
+      function (ctx) {
+        content: "User %s just changed their display name to %s" % [ctx.identity.id, ctx.identity.traits.display_name],
+      }
+
+  # kratos config https://www.ory.sh/docs/kratos/reference/configuration
+  config:
+    dsn: postgres://postgres:foobar@postgresql:5432/kratos
+    secrets:
+      default:
+        - dolore occaecat nostrud Ut
+        - sit et commodoaute ut voluptate consectetur Duis
+
+    identity:
+      schemas:
+        - id: user
+          url: file:///etc/config/identity.default.schema.json
+      default_schema_id: "user"
+
+    version: v0.10.1
+    log:
+      leak_sensitive_values: true
+
+    selfservice:
+      default_browser_return_url: /
+      methods:
+        link:
+          enabled: true
+        password:
+          config:
+            haveibeenpwned_enabled: false
+      flows:
+        verification:
+          enabled: true
+          ui_url: http://localhost:3001/verification
+
+        recovery:
+          enabled: true
+          ui_url: http://localhost:3001/account-recovery
+
+        registration:
+          ui_url: "/register"
+          lifespan: 1h
+          after:
+            password:
+              hooks:
+                - hook: session
+
+        login:
+          ui_url: http://localhost:3001/login
+          after:
+            password:
+              hooks:
+                - hook: require_verified_address
+
+        settings:
+          ui_url: http://localhost:3001/
+          # after:
+          #   profile:
+          #     hooks:
+          #       - hook: web_hook
+          #         config:
+          #           url: "add a discord webhook"
+          #           method: POST
+          #           body: /etc/config/post-profile-update-hook.jsonnet
+
+    cookies:
+      domain: localhost
+      path: /
+      same_site: Lax
+
+    session:
+      lifespan: 720h0m0s
+
+    courier:
+      smtp:
+        connection_uri: smtp://mailhog:1025/?disable_starttls=true
+
+    serve:
+      public:
+        base_url: http://localhost:3001/kratos/
+        cors:
+          allowed_origins:
+            - http://localhost:3001
+        request_log:
+          disable_for_health: true
+      admin:
+        base_url: http://localhost/admin/
+        request_log:
+          disable_for_health: true

@@ -21,3 +21,5 @@ bazel-*
 # Ignore Tilt generated files
 .helm/
 tilt_modules/
+
+node_modules/

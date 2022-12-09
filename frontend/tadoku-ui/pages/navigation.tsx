@@ -14,6 +14,7 @@ export default function Toasts() {
       <Title>Navigation bar</Title>
       <Preview className="!bg-neutral-100">
         <Navbar
+          logoHref="/"
           navigation={[
             { type: 'link', label: 'Home', href: '#', current: true },
             { type: 'link', label: 'Blog', href: '#', current: false },

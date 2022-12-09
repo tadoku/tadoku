@@ -17,6 +17,7 @@ helm_remote('postgres-operator',
 #             set=['jetstream.nats.url=nats://nats:4222'])
 
 include('./gateway/Tiltfile')
+include('./infra/dev/ory/Tiltfile')
 
 # Tools
 k8s_yaml('./tools/deployments/pgweb.yaml')

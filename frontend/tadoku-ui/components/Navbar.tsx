@@ -4,8 +4,10 @@ import { Bars3Icon, XMarkIcon } from '@heroicons/react/24/outline'
 import { Logo } from './branding'
 import { ChevronDownIcon } from '@heroicons/react/24/solid'
 import classNames from 'classnames'
+import { useRouter } from 'next/router'
+import Link from 'next/link'
 
-interface NavigationDropDownProps {
+export interface NavigationDropDownProps {
   type: 'dropdown'
   label: string
   links: {
@@ -16,27 +18,35 @@ interface NavigationDropDownProps {
   }[]
 }
 
-interface NavigationLinkProps {
+export interface NavigationLinkProps {
   type: 'link'
   label: string
   href: string
-  current: boolean
+  current?: boolean
 }
 
 interface Props {
   navigation: (NavigationLinkProps | NavigationDropDownProps)[]
+  width?: string
+  logoHref: string
 }
 
-export default function Navbar({ navigation }: Props) {
+export default function Navbar({
+  navigation,
+  logoHref,
+  width = 'max-w-7xl',
+}: Props) {
+  const router = useRouter()
+
   return (
     <Disclosure as="nav" className="bg-white shadow-md shadow-slate-500/10">
       {({ open }) => (
         <>
-          <div className="mx-auto max-w-7xl px-2 sm:px-6 lg:px-8">
+          <div className={`mx-auto ${width} px-2 sm:px-6 lg:px-8`}>
             <div className="relative flex h-16 items-center justify-between">
               <div className="absolute inset-y-0 left-0 flex items-center sm:hidden">
                 {/* Mobile menu button*/}
-                <Disclosure.Button className="inline-flex items-center justify-center rounded-md p-2 text-secondary hover:bg-secondary hover:text-white focus:outline-none focus:ring-3 focus:ring-inset focus:ring-white">
+                <Disclosure.Button className="inline-flex items-center justify-center p-2 text-secondary hover:bg-secondary hover:text-white focus:outline-none focus:ring-3 focus:ring-inset focus:ring-white">
                   <span className="sr-only">Open main menu</span>
                   {open ? (
                     <XMarkIcon className="block h-6 w-6" aria-hidden="true" />
@@ -47,7 +57,9 @@ export default function Navbar({ navigation }: Props) {
               </div>
               <div className="flex flex-1 items-center justify-center sm:items-stretch sm:justify-between">
                 <div className="flex flex-shrink-0 items-center">
-                  <Logo scale={0.8} />
+                  <Link href={logoHref}>
+                    <Logo scale={0.8} />
+                  </Link>
                 </div>
                 <div className="hidden sm:ml-6 sm:block">
                   <div className="flex space-x-1 md:space-x-2">
@@ -58,19 +70,19 @@ export default function Navbar({ navigation }: Props) {
 
                       if (item.type === 'link') {
                         return (
-                          <a
+                          <Link
                             key={item.label}
                             href={item.href}
                             className={classNames(
-                              item.current
+                              item.current || router.pathname === item.href
                                 ? 'bg-secondary !text-white hover:bg-secondary/80'
                                 : 'text-secondary hover:bg-secondary hover:text-white',
-                              'reset text-xs px-2 py-1 rounded-sm md:px-3 md:py-2 md:rounded-md md:text-sm font-bold inline-flex items-center justify-center',
+                              'reset text-xs px-2 py-1 md:px-3 md:py-2 md:text-sm font-bold inline-flex items-center justify-center',
                             )}
                             aria-current={item.current ? 'page' : undefined}
                           >
                             {item.label}
-                          </a>
+                          </Link>
                         )
                       }
                     })}
@@ -89,7 +101,7 @@ export default function Navbar({ navigation }: Props) {
                       key={item.label}
                       className={classNames(
                         'text-secondary hover:bg-secondary hover:text-white',
-                        'reset block px-3 py-2 rounded-md text-base font-bold',
+                        'reset block px-3 py-2 text-base font-bold',
                       )}
                     >
                       <DropDownMobile {...item} />
@@ -101,13 +113,13 @@ export default function Navbar({ navigation }: Props) {
                   return (
                     <Disclosure.Button
                       key={item.label}
-                      as="a"
+                      as={Link}
                       href={item.href}
                       className={classNames(
                         item.current
                           ? 'bg-secondary text-white'
                           : 'text-secondary hover:bg-secondary hover:text-white',
-                        'reset block px-3 py-2 rounded-md text-base font-bold',
+                        'reset block px-3 py-2 text-base font-bold',
                       )}
                       aria-current={item.current ? 'page' : undefined}
                     >
@@ -128,7 +140,7 @@ const DropDown = ({ label, links }: NavigationDropDownProps) => (
   <div className="">
     <Menu as="div" className="relative">
       <div>
-        <Menu.Button className="text-secondary hover:bg-secondary hover:text-white text-xs px-2 py-1 rounded-sm md:px-3 md:py-2 md:rounded-md md:text-sm font-bold flex items-center justify-center">
+        <Menu.Button className="text-secondary hover:bg-secondary hover:text-white text-xs px-2 py-1 md:px-3 md:py-2 md:text-sm font-bold flex items-center justify-center">
           <span className="sr-only">Open navigation menu</span>
           {label}
           <ChevronDownIcon
@@ -150,7 +162,7 @@ const DropDown = ({ label, links }: NavigationDropDownProps) => (
           {links.map(({ label, href, IconComponent, onClick }, i) => (
             <Menu.Item key={i}>
               {({ active }) => (
-                <a
+                <Link
                   href={href}
                   onClick={onClick}
                   className={classNames(
@@ -160,7 +172,7 @@ const DropDown = ({ label, links }: NavigationDropDownProps) => (
                 >
                   {IconComponent && <IconComponent className="w-4 h-4 mr-3" />}{' '}
                   {label}
-                </a>
+                </Link>
               )}
             </Menu.Item>
           ))}
@@ -198,7 +210,7 @@ const DropDownMobile = ({ label, links }: NavigationDropDownProps) => (
             <Menu.Item key={i}>
               {({ active }) => (
                 <Disclosure.Button
-                  as="a"
+                  as={Link}
                   href={href}
                   onClick={onClick}
                   className={classNames(

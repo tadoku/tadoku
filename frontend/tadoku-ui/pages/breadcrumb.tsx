@@ -2,7 +2,7 @@ import Breadcrumb from '@components/Breadcrumb'
 import { CodeBlock, Preview, Title } from '@components/example'
 import { HomeIcon } from '@heroicons/react/20/solid'
 
-export default function Buttons() {
+export default function BreadcrumbExample() {
   return (
     <>
       <h1 className="title mb-8">Breadcrumb</h1>

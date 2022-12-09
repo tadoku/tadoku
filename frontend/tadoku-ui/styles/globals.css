@@ -280,4 +280,8 @@
   .btn.ghost:disabled {
     @apply hover:bg-inherit;
   }
+
+  .btn.disabled {
+    @apply opacity-50;
+  }
 }

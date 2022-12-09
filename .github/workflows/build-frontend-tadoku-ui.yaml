@@ -34,9 +34,6 @@ jobs:
       - name: Lint project
         run: yarn lint
 
-      - name: Run tests
-        run: yarn test
-
       - name: Build production
         run: yarn build
 

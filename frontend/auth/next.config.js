@@ -12,4 +12,6 @@ const nextConfig = {
   }
 }
 
-module.exports = nextConfig
+const withTM = require('next-transpile-modules')(['tadoku-ui']);
+
+module.exports = withTM(nextConfig)

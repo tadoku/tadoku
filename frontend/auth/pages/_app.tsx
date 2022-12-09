@@ -4,8 +4,8 @@ import { Atom, Provider } from 'jotai'
 import { AppContextWithSession, sessionAtom } from '../src/session'
 import { Session } from '@ory/client'
 import Header from '../ui/Header'
-import { ToastContainer } from 'react-toastify'
-import 'react-toastify/dist/ReactToastify.css'
+import ToastContainer from 'tadoku-ui/components/toasts'
+import 'tadoku-ui/styles/globals.css'
 
 interface Props {
   session: Session | undefined

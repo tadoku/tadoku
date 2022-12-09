@@ -36,7 +36,7 @@ export default function Navbar({ navigation }: Props) {
             <div className="relative flex h-16 items-center justify-between">
               <div className="absolute inset-y-0 left-0 flex items-center sm:hidden">
                 {/* Mobile menu button*/}
-                <Disclosure.Button className="inline-flex items-center justify-center rounded-md p-2 text-secondary hover:bg-secondary hover:text-white focus:outline-none focus:ring-3 focus:ring-inset focus:ring-white">
+                <Disclosure.Button className="inline-flex items-center justify-center p-2 text-secondary hover:bg-secondary hover:text-white focus:outline-none focus:ring-3 focus:ring-inset focus:ring-white">
                   <span className="sr-only">Open main menu</span>
                   {open ? (
                     <XMarkIcon className="block h-6 w-6" aria-hidden="true" />
@@ -65,7 +65,7 @@ export default function Navbar({ navigation }: Props) {
                               item.current
                                 ? 'bg-secondary !text-white hover:bg-secondary/80'
                                 : 'text-secondary hover:bg-secondary hover:text-white',
-                              'reset text-xs px-2 py-1 rounded-sm md:px-3 md:py-2 md:rounded-md md:text-sm font-bold inline-flex items-center justify-center',
+                              'reset text-xs px-2 py-1 md:px-3 md:py-2 md:text-sm font-bold inline-flex items-center justify-center',
                             )}
                             aria-current={item.current ? 'page' : undefined}
                           >
@@ -89,7 +89,7 @@ export default function Navbar({ navigation }: Props) {
                       key={item.label}
                       className={classNames(
                         'text-secondary hover:bg-secondary hover:text-white',
-                        'reset block px-3 py-2 rounded-md text-base font-bold',
+                        'reset block px-3 py-2 text-base font-bold',
                       )}
                     >
                       <DropDownMobile {...item} />
@@ -107,7 +107,7 @@ export default function Navbar({ navigation }: Props) {
                         item.current
                           ? 'bg-secondary text-white'
                           : 'text-secondary hover:bg-secondary hover:text-white',
-                        'reset block px-3 py-2 rounded-md text-base font-bold',
+                        'reset block px-3 py-2 text-base font-bold',
                       )}
                       aria-current={item.current ? 'page' : undefined}
                     >
@@ -128,7 +128,7 @@ const DropDown = ({ label, links }: NavigationDropDownProps) => (
   <div className="">
     <Menu as="div" className="relative">
       <div>
-        <Menu.Button className="text-secondary hover:bg-secondary hover:text-white text-xs px-2 py-1 rounded-sm md:px-3 md:py-2 md:rounded-md md:text-sm font-bold flex items-center justify-center">
+        <Menu.Button className="text-secondary hover:bg-secondary hover:text-white text-xs px-2 py-1 md:px-3 md:py-2 md:text-sm font-bold flex items-center justify-center">
           <span className="sr-only">Open navigation menu</span>
           {label}
           <ChevronDownIcon

@@ -5,7 +5,7 @@ import { Logo } from './branding'
 import { ChevronDownIcon } from '@heroicons/react/24/solid'
 import classNames from 'classnames'
 
-interface NavigationDropDownProps {
+export interface NavigationDropDownProps {
   type: 'dropdown'
   label: string
   links: {
@@ -16,7 +16,7 @@ interface NavigationDropDownProps {
   }[]
 }
 
-interface NavigationLinkProps {
+export interface NavigationLinkProps {
   type: 'link'
   label: string
   href: string

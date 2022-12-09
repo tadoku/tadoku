@@ -11,6 +11,7 @@ import { useSession } from '../src/session'
 import { useRouter } from 'next/router'
 import { handleFlowError } from '../src/errors'
 import { ErrorFallback, withOryErrorBoundary } from '../src/OryErrorBoundary'
+import Link from 'next/link'
 
 interface Props {}
 
@@ -91,8 +92,17 @@ const AccountRecovery: NextPage<Props> = () => {
 
   return (
     <div>
-      <h1>Account Recovery</h1>
-      <Flow flow={flow} onSubmit={onSubmit} />
+      <h1 className="title mb-4">Account recovery</h1>
+      <div className="card">
+        <Flow flow={flow} onSubmit={onSubmit} />
+      </div>
+
+      <div className="h-stack items-center space-x-2 mt-4 justify-center text-xs">
+        <span className="text-gray-500">Remember your login details?</span>
+        <Link href="/login" className="btn ghost small">
+          Log in now
+        </Link>
+      </div>
     </div>
   )
 }

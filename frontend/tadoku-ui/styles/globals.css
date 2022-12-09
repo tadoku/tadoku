@@ -294,7 +294,7 @@
   }
 
   .flash.info {
-    @apply bg-primary text-white;
+    @apply bg-blue-700 text-white;
   }
 
   .flash.success {

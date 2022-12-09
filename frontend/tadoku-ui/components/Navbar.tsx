@@ -28,9 +28,14 @@ export interface NavigationLinkProps {
 interface Props {
   navigation: (NavigationLinkProps | NavigationDropDownProps)[]
   width?: string
+  logoHref: string
 }
 
-export default function Navbar({ navigation, width = 'max-w-7xl' }: Props) {
+export default function Navbar({
+  navigation,
+  logoHref,
+  width = 'max-w-7xl',
+}: Props) {
   const router = useRouter()
 
   return (
@@ -52,7 +57,9 @@ export default function Navbar({ navigation, width = 'max-w-7xl' }: Props) {
               </div>
               <div className="flex flex-1 items-center justify-center sm:items-stretch sm:justify-between">
                 <div className="flex flex-shrink-0 items-center">
-                  <Logo scale={0.8} />
+                  <Link href={logoHref}>
+                    <Logo scale={0.8} />
+                  </Link>
                 </div>
                 <div className="hidden sm:ml-6 sm:block">
                   <div className="flex space-x-1 md:space-x-2">

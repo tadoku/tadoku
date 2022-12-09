@@ -92,22 +92,28 @@ const Settings: NextPage<Props> = () => {
 
   return (
     <div>
-      <h1>Settings</h1>
+      <h1 className="title">Settings</h1>
       <MessagesList messages={flow?.ui.messages} />
-      <h2>Profile</h2>
-      <Flow
-        flow={flow}
-        method="profile"
-        onSubmit={onSubmit}
-        hideGlobalMessages
-      />
-      <h2>Password</h2>
-      <Flow
-        flow={flow}
-        method="password"
-        onSubmit={onSubmit}
-        hideGlobalMessages
-      />
+      <div className="v-stack md:h-stack md:space-y-0 w-full mt-4">
+        <div className="flex-grow card">
+          <h2 className="subtitle mb-4">Update profile</h2>
+          <Flow
+            flow={flow}
+            method="profile"
+            onSubmit={onSubmit}
+            hideGlobalMessages
+          />
+        </div>
+        <div className="flex-grow card">
+          <h2 className="subtitle mb-4">Change password</h2>
+          <Flow
+            flow={flow}
+            method="password"
+            onSubmit={onSubmit}
+            hideGlobalMessages
+          />
+        </div>
+      </div>
     </div>
   )
 }

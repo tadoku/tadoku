@@ -33,6 +33,7 @@ export function NodeInputButton<T>({
         onClick={onClick}
         value={attributes.value || ''}
         disabled={attributes.disabled || disabled}
+        className="btn"
       >
         {getNodeLabel(node)}
       </button>

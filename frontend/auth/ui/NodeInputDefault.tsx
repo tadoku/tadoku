@@ -17,21 +17,28 @@ export function NodeInputDefault<T>(props: NodeInputProps) {
   // Render a generic text input field.
   return (
     <>
-      <label htmlFor={attributes.name}>{node.meta.label?.text}</label>
-      <input
-        {...register(attributes.name, {
-          required: attributes.required,
-        })}
-        id={attributes.name}
-        onClick={onClick}
-        type={attributes.type}
-        disabled={attributes.disabled || disabled}
-      />
-      <p>
+      <label
+        htmlFor={attributes.name}
+        className={`label ${node.messages.length > 0 ? 'error' : ''}`}
+      >
+        <span className="label-text">{node.meta.label?.text}</span>
+        <input
+          {...register(attributes.name, {
+            required: attributes.required,
+          })}
+          id={attributes.name}
+          onClick={onClick}
+          type={attributes.type}
+          disabled={attributes.disabled || disabled}
+        />
+
         {node.messages.map(({ text, id }, k) => (
-          <span key={`${id}-${k}`}>{text}</span>
+          <span className="error" key={`${id}-${k}`}>
+            {text}
+          </span>
         ))}
-      </p>
+      </label>
+      <p></p>
     </>
   )
 }

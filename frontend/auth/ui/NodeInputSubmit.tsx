@@ -15,6 +15,7 @@ export function NodeInputSubmit<T>({
         {...register(attributes.name)}
         value={attributes.value || ''}
         disabled={attributes.disabled || disabled}
+        className="btn primary"
       >
         {getNodeLabel(node)}
       </button>

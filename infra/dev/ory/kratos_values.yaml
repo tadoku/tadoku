@@ -102,7 +102,7 @@ kratos:
                 - hook: require_verified_address
 
         settings:
-          ui_url: http://localhost:3001/settings
+          ui_url: http://localhost:3001/
           # after:
           #   profile:
           #     hooks:

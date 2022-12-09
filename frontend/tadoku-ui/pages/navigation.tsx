@@ -5,7 +5,7 @@ import {
   Cog8ToothIcon,
   UserIcon,
   WrenchScrewdriverIcon,
-} from '@heroicons/react/24/solid'
+} from '@heroicons/react/20/solid'
 
 export default function Toasts() {
   return (

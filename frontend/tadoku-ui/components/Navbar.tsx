@@ -53,7 +53,7 @@ export default function Navbar({ navigation }: Props) {
                   <div className="flex space-x-1 md:space-x-2">
                     {navigation.map(item => {
                       if (item.type === 'dropdown') {
-                        return <DropDown {...item} />
+                        return <DropDown {...item} key={item.label} />
                       }
 
                       if (item.type === 'link') {
@@ -147,8 +147,8 @@ const DropDown = ({ label, links }: NavigationDropDownProps) => (
         leaveTo="transform opacity-0 scale-95"
       >
         <Menu.Items className="absolute right-0 z-10 mt-2 w-48 origin-top-right bg-white py-1 shadow-md shadow-slate-500/20 ring-1 ring-secondary ring-opacity-5 focus:outline-none">
-          {links.map(({ label, href, IconComponent, onClick }) => (
-            <Menu.Item>
+          {links.map(({ label, href, IconComponent, onClick }, i) => (
+            <Menu.Item key={i}>
               {({ active }) => (
                 <a
                   href={href}
@@ -194,8 +194,8 @@ const DropDownMobile = ({ label, links }: NavigationDropDownProps) => (
         leaveTo="transform opacity-0 scale-95"
       >
         <Menu.Items className="absolute right-0 z-10 mt-2 w-48 origin-top-right bg-white py-1 shadow-md shadow-slate-500/20 ring-1 ring-secondary ring-opacity-5 focus:outline-none">
-          {links.map(({ label, href, IconComponent, onClick }) => (
-            <Menu.Item>
+          {links.map(({ label, href, IconComponent, onClick }, i) => (
+            <Menu.Item key={i}>
               {({ active }) => (
                 <Disclosure.Button
                   as="a"

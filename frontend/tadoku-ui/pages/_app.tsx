@@ -1,6 +1,7 @@
 import ToastContainer from '@components/toasts'
 import type { AppProps } from 'next/app'
 import Link from 'next/link'
+import { Fragment } from 'react'
 
 import '../styles/globals.css'
 
@@ -45,12 +46,13 @@ export default function App({ Component, pageProps }: AppProps) {
     <div className="flex min-h-screen">
       <div className="bg-white w-48 p-8">
         <h1 className="text-2xl font-bold mb-4">tadoku-ui</h1>
-        {navigation.map(block => (
-          <>
+        {navigation.map((block, i) => (
+          <Fragment key={i}>
             <h2 className="text-l font-semibold">{block.title}</h2>
             <ul className="mt-2 mb-4">
               {block.links.map(l => (
                 <li
+                  key={l.href}
                   className={`border-l-2 border-neutral-200 text-neutral-600 ${
                     l.todo ? '' : 'hover:border-primary'
                   }`}
@@ -66,7 +68,7 @@ export default function App({ Component, pageProps }: AppProps) {
                 </li>
               ))}
             </ul>
-          </>
+          </Fragment>
         ))}
       </div>
       <div className="p-8 flex-grow">

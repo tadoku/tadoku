@@ -67,6 +67,7 @@ export default function Pagination({
         {Array.from({ length: end - start + 1 }, (_, i) => i + start).map(
           page => (
             <Page
+              key={page}
               href={getHref?.(page) ?? '#'}
               page={page}
               isActive={current === page}

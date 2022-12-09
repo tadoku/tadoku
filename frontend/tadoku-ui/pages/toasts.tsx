@@ -11,6 +11,7 @@ export default function Toasts() {
         <a
           href="https://fkhadra.github.io/react-toastify/introduction"
           target="_blank"
+          rel="noreferrer"
         >
           react-toast
         </a>

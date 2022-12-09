@@ -28,8 +28,8 @@ export const ActionMenu = ({ children, links }: Props) => (
       >
         <Menu.Items className="absolute left-0 z-10 mt-2 min-w-[150px] origin-top-right bg-white py-1 shadow-md shadow-slate-500/20 ring-1 ring-secondary ring-opacity-5 focus:outline-none">
           {links.map(
-            ({ label, href, IconComponent, onClick, type = 'normal' }) => (
-              <Menu.Item>
+            ({ label, href, IconComponent, onClick, type = 'normal' }, i) => (
+              <Menu.Item key={i}>
                 {({ active }) => (
                   <a
                     href={href}

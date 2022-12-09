@@ -1,9 +1,11 @@
+import Image from 'next/image'
+
 interface LogoProps {
   scale?: number
 }
 
 export const Logo = ({ scale = 1 }: LogoProps) => (
-  <img
+  <Image
     src="/img/logo.svg"
     alt="Tadoku"
     height={29 * scale}
@@ -12,7 +14,7 @@ export const Logo = ({ scale = 1 }: LogoProps) => (
 )
 
 export const LogoInverted = ({ scale = 1 }: LogoProps) => (
-  <img
+  <Image
     src="/img/logo-light.svg"
     alt="Tadoku"
     height={29 * scale}

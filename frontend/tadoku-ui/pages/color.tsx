@@ -24,7 +24,7 @@ export default function branding() {
         </thead>
         <tbody>
           {colors.map(([color, description]) => (
-            <tr>
+            <tr key={color}>
               <td className="flex items-center px-4 py-2">
                 <div className={`bg-${color} h-10 w-10 mr-4`}></div>
                 <div className="align-middle font-mono">{color}</div>

@@ -15,7 +15,7 @@ export default function Breadcrumb({ links }: Props) {
     <nav className="flex" aria-label="Breadcrumb">
       <ol className="inline-flex items-center space-x-1 md:space-x-3">
         {links.map(({ label, href, IconComponent }, i) => (
-          <li className="inline-flex items-center">
+          <li className="inline-flex items-center" key={i}>
             <a
               href={href}
               className={classNames(

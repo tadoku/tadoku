@@ -16,7 +16,7 @@ RUN yarn install --production --ignore-scripts --prefer-offline
 FROM node:16 AS production
 ENV NODE_ENV=production
 WORKDIR /app
-COPY --from=build /build/package.json /build/yarn.lock /build/server.js ./
+COPY --from=build /build/package.json /build/yarn.lock ./
 # Need to add dummy RUN statements so Docker doesn't crash...
 # Ref. https://github.com/moby/moby/issues/37965
 RUN true

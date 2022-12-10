@@ -4,14 +4,16 @@ import {
   EllipsisHorizontalIcon,
 } from '@heroicons/react/20/solid'
 import classNames from 'classnames'
-import { useState } from 'react'
+import { Dispatch, SetStateAction, useEffect, useState } from 'react'
+import { FieldValues, useForm } from 'react-hook-form'
+import { Input } from './Form'
 import Modal from './Modal'
 
 interface Props {
   totalPages: number
   currentPage: number
   getHref?: (page: number) => string
-  onClick?: (page: number) => void
+  onClick?: Dispatch<SetStateAction<number>>
   window?: number
 }
 
@@ -22,7 +24,7 @@ export default function Pagination({
   onClick,
   window = 4,
 }: Props) {
-  const [isJumpToPageModalOpen, setIsJumpToPageModalOpen] = useState(false)
+  const [isNavigationModalOpen, setIsNavigationModalOpen] = useState(false)
 
   const canGoPrevious = current > 1
   const canGoNext = current < total
@@ -46,32 +48,14 @@ export default function Pagination({
 
   return (
     <>
-      <Modal
-        isOpen={isJumpToPageModalOpen}
-        setIsOpen={setIsJumpToPageModalOpen}
-        title="Navigate to page"
-      >
-        <p className="modal-body"></p>
-
-        <div className="modal-actions">
-          <button
-            type="button"
-            className="btn secondary"
-            onClick={() => {
-              setIsJumpToPageModalOpen(false)
-            }}
-          >
-            Go
-          </button>
-          <button
-            type="button"
-            className="btn ghost"
-            onClick={() => setIsJumpToPageModalOpen(false)}
-          >
-            Cancel
-          </button>
-        </div>
-      </Modal>
+      {onClick ? (
+        <NavigateForm
+          isOpen={isNavigationModalOpen}
+          setIsOpen={setIsNavigationModalOpen}
+          setPage={onClick}
+          totalPages={total}
+        />
+      ) : null}
       <nav className="flex" aria-label="Breadcrumb">
         <a
           className={classNames('btn ghost', {
@@ -101,7 +85,7 @@ export default function Pagination({
                 />
               ) : null}
               {start > 3 ? (
-                <Spacer onClick={() => setIsJumpToPageModalOpen(true)} />
+                <Spacer onClick={() => setIsNavigationModalOpen(true)} />
               ) : null}
             </>
           ) : null}
@@ -119,7 +103,7 @@ export default function Pagination({
           {end < total ? (
             <>
               {end < total - 2 ? (
-                <Spacer onClick={() => setIsJumpToPageModalOpen(true)} />
+                <Spacer onClick={() => setIsNavigationModalOpen(true)} />
               ) : null}
 
               {end === total - 2 ? (
@@ -184,13 +168,73 @@ const Page = ({
   </li>
 )
 
-const Spacer = ({ onClick }: { onClick: () => void }) => (
+const Spacer = ({ onClick }: { onClick?: () => void }) => (
   <li>
     <button
-      className="flex items-center text-gray-300 hover:text-secondary"
+      className={`flex items-center text-gray-300 ${
+        onClick ? 'hover:text-secondary' : 'pointer-events-none'
+      }`}
       onClick={onClick}
     >
       <EllipsisHorizontalIcon className="w-5 h-5" />
     </button>
   </li>
 )
+
+const NavigateForm = ({
+  isOpen,
+  setIsOpen,
+  setPage,
+  totalPages: total,
+}: {
+  isOpen: boolean
+  setIsOpen: Dispatch<SetStateAction<boolean>>
+  setPage: Dispatch<SetStateAction<number>>
+  totalPages: number
+}) => {
+  const { register, handleSubmit, formState, reset } = useForm()
+  const onSubmit = ({ page }: FieldValues) => {
+    setPage(page)
+    setIsOpen(false)
+  }
+
+  useEffect(() => reset(), [isOpen])
+
+  return (
+    <Modal isOpen={isOpen} setIsOpen={setIsOpen}>
+      <form onSubmit={handleSubmit(onSubmit)} className="v-stack">
+        <Input
+          name="page"
+          label="Navigate to page"
+          register={register}
+          formState={formState}
+          type="number"
+          options={{
+            required: 'This field is required',
+            valueAsNumber: true,
+          }}
+          min={1}
+          max={total}
+        />
+        <p className="modal-body"></p>
+
+        <div className="modal-actions">
+          <button
+            type="submit"
+            className="btn secondary"
+            disabled={formState.isSubmitting}
+          >
+            Go
+          </button>
+          <button
+            type="button"
+            className="btn ghost"
+            onClick={() => setIsOpen(false)}
+          >
+            Cancel
+          </button>
+        </div>
+      </form>
+    </Modal>
+  )
+}

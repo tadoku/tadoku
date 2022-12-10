@@ -1,0 +1,26 @@
+apiVersion: v1
+kind: PersistentVolume # Create a PV
+metadata:
+  name: postgresql-reading-contest-data # Sets PV's name
+  labels:
+    type: local # Sets PV's type to local
+spec:
+  storageClassName: manual
+  capacity:
+    storage: 512Mi # Sets PV Volume
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: "/tmp/reading-contest-tadoku" # Sets the volume's path
+---
+apiVersion: v1
+kind: PersistentVolumeClaim # Create PVC
+metadata:
+  name: postgresql-reading-contest-data-claim # Sets name of PV
+spec:
+  storageClassName: manual
+  accessModes:
+    - ReadWriteOnce # Sets read and write access
+  resources:
+    requests:
+      storage: 512Mi # Sets volume size

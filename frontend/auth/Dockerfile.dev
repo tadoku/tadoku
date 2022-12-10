@@ -1,0 +1,14 @@
+FROM node:16-alpine3.14
+
+WORKDIR /usr/src/app
+
+ADD package.json yarn.lock ./
+RUN yarn install
+
+ADD . .
+
+EXPOSE 3001
+
+WORKDIR /usr/src/app/auth
+
+CMD ["yarn", "run", "dev"]

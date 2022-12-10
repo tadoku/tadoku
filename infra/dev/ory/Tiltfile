@@ -1,11 +1,5 @@
 load('ext://helm_remote', 'helm_remote')
 
-# Kratos
-k8s_yaml('./kratos_postgres.yaml')
-helm_remote('postgresql',
-            repo_name='bitnami',
-            repo_url='https://charts.bitnami.com/bitnami',
-            values='./kratos_postgres_values.yaml')
 helm_remote('kratos',
             repo_name='ory',
             repo_url='https://k8s.ory.sh/helm/charts',

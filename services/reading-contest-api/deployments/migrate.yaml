@@ -3,7 +3,7 @@ kind: Job
 metadata:
   name: reading-contest-api-migration-job
 spec:
-  backoffLimit: 10
+  backoffLimit: 0
   template:
     metadata:
       name: "reading-contest-api-migration-job-pod"
@@ -17,18 +17,6 @@ spec:
         envFrom:
           - configMapRef:
               name: reading-contest-api-configmap
-          - secretRef:
-              name: postgres.tadoku-reading-contest-api-db.credentials.postgresql.acid.zalan.do
         env:
-        - name: POSTGRES_USER
-          valueFrom:
-            secretKeyRef:
-              name: postgres.tadoku-reading-contest-api-db.credentials.postgresql.acid.zalan.do
-              key: username
-        - name: POSTGRES_PASSWORD
-          valueFrom:
-            secretKeyRef:
-              name: postgres.tadoku-reading-contest-api-db.credentials.postgresql.acid.zalan.do
-              key: password
         - name: DATABASE_URL
-          value: "postgres://$(username):$(password)@tadoku-reading-contest-api-db/tadoku"
+          value: "postgres://reading_contest:foobar@postgresql-reading-contest/reading_contest"

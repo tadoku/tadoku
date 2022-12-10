@@ -1,0 +1,19 @@
+# define default database user, name, and password for PostgreSQL deployment
+auth:
+  enablePostgresUser: true
+  postgresPassword: "foobar"
+  username: "reading_contest"
+  password: "foobar"
+  database: "reading_contest"
+
+nameOverride: "reading-contest"
+standalone: "standalone"
+
+# The postgres helm chart deployment will be using PVC postgresql-data-claim
+primary:
+  persistence:
+    enabled: true
+    existingClaim: "postgresql-reading-contest-data-claim"
+
+volumePermissions:
+  enabled: true

@@ -1,0 +1,35 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend-auth
+  labels:
+    app: frontend-auth
+spec:
+  selector:
+    matchLabels:
+      app: frontend-auth
+  template:
+    metadata:
+      labels:
+        app: frontend-auth
+        tier: web
+    spec:
+      containers:
+      - name: frontend-auth
+        image: frontend-auth
+        ports:
+        - containerPort: 3001
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontend-auth
+  labels:
+    app: frontend-auth
+spec:
+  ports:
+    - port: 3001
+      targetPort: 3001
+      protocol: TCP
+  selector:
+    app: frontend-auth

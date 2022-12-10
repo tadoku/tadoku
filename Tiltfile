@@ -4,9 +4,6 @@
 load('ext://helm_remote', 'helm_remote')
 
 # Infra
-# helm_remote('postgres-operator',
-#             repo_name='postgres-operator',
-#             repo_url='https://opensource.zalando.com/postgres-operator/charts/postgres-operator/')
 # helm_remote('nats',
 #             repo_name='nats',
 #             repo_url='https://nats-io.github.io/k8s/helm/charts/',
@@ -24,8 +21,8 @@ include('./infra/dev/postgres/Tiltfile')
 # Services
 
 include('./services/reading-contest-api/Tiltfile')
-# include('./services/blog-api/Tiltfile')
-# include('./services/identity-api/Tiltfile')
+include('./services/blog-api/Tiltfile')
+include('./services/identity-api/Tiltfile')
 
 # Frontend
 # include('./frontend/Tiltfile')

@@ -7,47 +7,58 @@ metadata:
     konghq.com/strip-path: "true"
 spec:
   rules:
-    - http:
-        paths:
-          - path: /reading-contest
-            pathType: Prefix
-            backend:
-              service:
-                name: reading-contest-api
-                port:
-                  number: 4000
-          - path: /identity
-            pathType: Prefix
-            backend:
-              service:
-                name: identity-api
-                port:
-                  number: 4000
-          - path: /blog
-            pathType: Prefix
-            backend:
-              service:
-                name: blog-api
-                port:
-                  number: 8080
-          - path: /kratos
-            pathType: Prefix
-            backend:
-              service:
-                name: kratos-public
-                port:
-                  number: 80
-          - path: /pgweb
-            pathType: Prefix
-            backend:
-              service:
-                name: pgweb
-                port:
-                  number: 8081
-          - path: /mail
-            pathType: Prefix
-            backend:
-              service:
-                name: mailhog
-                port:
-                  number: 8025
+  - host: langlog.be
+    http:
+      paths:
+        - path: /reading-contest
+          pathType: Prefix
+          backend:
+            service:
+              name: reading-contest-api
+              port:
+                number: 4000
+        - path: /identity
+          pathType: Prefix
+          backend:
+            service:
+              name: identity-api
+              port:
+                number: 4000
+        - path: /blog
+          pathType: Prefix
+          backend:
+            service:
+              name: blog-api
+              port:
+                number: 8080
+        - path: /kratos
+          pathType: Prefix
+          backend:
+            service:
+              name: kratos-public
+              port:
+                number: 80
+        - path: /pgweb
+          pathType: Prefix
+          backend:
+            service:
+              name: pgweb
+              port:
+                number: 8081
+        - path: /mail
+          pathType: Prefix
+          backend:
+            service:
+              name: mailhog
+              port:
+                number: 8025
+  - host: account.langlog.be
+    http:
+      paths:
+        - path: /
+          pathType: Prefix
+          backend:
+            service:
+              name: frontend-auth
+              port:
+                number: 3001

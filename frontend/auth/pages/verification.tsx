@@ -97,7 +97,7 @@ const Verification: NextPage<Props> = () => {
 
   return (
     <div>
-      <h1>Account verification</h1>
+      <h1 className="title mb-4">Account verification</h1>
       <Flow flow={flow} method="password" onSubmit={onSubmit} />
     </div>
   )

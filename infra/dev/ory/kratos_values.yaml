@@ -71,6 +71,9 @@ kratos:
 
     selfservice:
       default_browser_return_url: /
+      allowed_return_urls:
+        - http://account.langlog.be/
+        - http://langlog.be/
       methods:
         link:
           enabled: true
@@ -80,11 +83,11 @@ kratos:
       flows:
         verification:
           enabled: true
-          ui_url: http://localhost:3001/verification
+          ui_url: http://account.langlog.be/verification
 
         recovery:
           enabled: true
-          ui_url: http://localhost:3001/account-recovery
+          ui_url: http://account.langlog.be/account-recovery
 
         registration:
           ui_url: "/register"
@@ -95,14 +98,14 @@ kratos:
                 - hook: session
 
         login:
-          ui_url: http://localhost:3001/login
+          ui_url: http://account.langlog.be/login
           after:
             password:
               hooks:
                 - hook: require_verified_address
 
         settings:
-          ui_url: http://localhost:3001/
+          ui_url: http://account.langlog.be/
           # after:
           #   profile:
           #     hooks:
@@ -113,7 +116,7 @@ kratos:
           #           body: /etc/config/post-profile-update-hook.jsonnet
 
     cookies:
-      domain: localhost
+      domain: langlog.be
       path: /
       same_site: Lax
 
@@ -126,13 +129,14 @@ kratos:
 
     serve:
       public:
-        base_url: http://localhost:3001/kratos/
+        base_url: http://account.langlog.be/kratos/
         cors:
           allowed_origins:
-            - http://localhost:3001
+            - http://account.langlog.be
+            - http://langlog.be
         request_log:
           disable_for_health: true
       admin:
-        base_url: http://localhost/admin/
+        base_url: http://account.langlog.be/admin/
         request_log:
           disable_for_health: true

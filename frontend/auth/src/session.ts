@@ -14,6 +14,7 @@ export const useSession = () => {
 }
 
 // Returns a function which will log the user out
+// TODO: cache result as this is now triggering four logout flows at once
 export const useLogoutHandler = (deps?: DependencyList) => {
   const [logoutToken, setLogoutToken] = useState<string>('')
   const router = useRouter()

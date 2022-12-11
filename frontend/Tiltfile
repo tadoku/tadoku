@@ -7,7 +7,8 @@ docker_build(
   context='.',
   dockerfile='./auth/Dockerfile.dev',
   live_update=[
-    sync('./', '/app'),
-    run('cd /app/auth && yarn install', trigger=['./auth/package.json', './auth/yarn.lock']),
+    sync('./', '/usr/src/app'),
+    run('cd /usr/src/app/auth && yarn install', trigger=['./auth/package.json', './auth/yarn.lock']),
+    run('cd /usr/src/app && yarn install', trigger=['./package.json', './yarn.lock']),
   ]
 )

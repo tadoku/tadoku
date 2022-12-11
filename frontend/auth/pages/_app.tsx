@@ -1,5 +1,5 @@
 import App, { AppProps } from 'next/app'
-import ory from '../src/ory'
+import { sdkServer as ory } from '../src/ory'
 import { Atom, Provider } from 'jotai'
 import { AppContextWithSession, sessionAtom } from '../src/session'
 import { Session } from '@ory/client'
@@ -54,7 +54,9 @@ MyApp.getInitialProps = async (ctx: AppContextWithSession) => {
       const { data: session } = await ory.toSession(undefined, cookie)
       props.pageProps.initialState.session = session
       ctx.ctx.session = session
-    } catch (err) {}
+    } catch (err) {
+      ctx.ctx.res?.setHeader('Set-Cookie', ['ory_kratos_session=0; Max-Age=0'])
+    }
   }
 
   const initialAppProps = await App.getInitialProps(ctx)

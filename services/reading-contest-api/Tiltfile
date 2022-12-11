@@ -13,7 +13,7 @@ custom_build(
   deps=['./'],
 )
 
-k8s_resource('reading-contest-api', port_forwards=8000)
+k8s_resource('reading-contest-api', port_forwards=8000, labels=["backend"])
 
 # Migration job
 watch_file('./deployments/migrate.yaml')
@@ -30,12 +30,13 @@ custom_build(
   deps=['interfaces/repositories/migrations'],
 )
 
-k8s_resource('reading-contest-api-migration-job', resource_deps=['reading-contest-api'])
+k8s_resource('reading-contest-api-migration-job', resource_deps=['reading-contest-api'], labels=["backend"])
 
 # Seed script
 k8s_yaml('deployments/seed-db-configmap.yaml')
 k8s_yaml('deployments/seed-db.yaml')
 k8s_resource('seed-reading-contest-api-job',
   trigger_mode=TRIGGER_MODE_MANUAL,
-  auto_init=False
+  auto_init=False,
+  labels=["backend"],
 )

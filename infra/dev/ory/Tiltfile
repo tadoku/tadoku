@@ -4,6 +4,7 @@ helm_remote('kratos',
             repo_name='ory',
             repo_url='https://k8s.ory.sh/helm/charts',
             values='./kratos_values.yaml')
-helm_remote('mailhog',
-            repo_name='codecentric',
-            repo_url='https://codecentric.github.io/helm-charts')
+
+k8s_resource("kratos", labels=["auth"])
+k8s_resource("kratos-courier", labels=["auth"])
+k8s_resource("kratos-automigrate", labels=["auth"])

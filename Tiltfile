@@ -16,7 +16,7 @@ load('ext://helm_remote', 'helm_remote')
 include('./infra/dev/gateway/Tiltfile')
 include('./infra/dev/ory/Tiltfile')
 include('./infra/dev/postgres/Tiltfile')
-k8s_yaml('./infra/dev/tools/pgweb.yaml')
+include('./infra/dev/tools/Tiltfile')
 
 # Services
 

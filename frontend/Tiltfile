@@ -1,6 +1,6 @@
 k8s_yaml('./auth/deployments/frontend-auth.yaml')
 
-k8s_resource("frontend-auth", port_forwards="3001", labels=["frontend"])
+k8s_resource("frontend-auth", port_forwards="3001", labels=["auth"])
 
 docker_build(
   'frontend-auth', 

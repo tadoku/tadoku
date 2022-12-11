@@ -5,7 +5,7 @@ k8s_resource("frontend-auth", port_forwards="3001", labels=["frontend"])
 docker_build(
   'frontend-auth', 
   context='.',
-  dockerfile = './auth/Dockerfile.dev',
+  dockerfile='./auth/Dockerfile.dev',
   live_update=[
     sync('./', '/app'),
     run('cd /app/auth && yarn install', trigger=['./auth/package.json', './auth/yarn.lock']),

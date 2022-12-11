@@ -25,4 +25,4 @@ include('./services/blog-api/Tiltfile')
 include('./services/identity-api/Tiltfile')
 
 # Frontend
-# include('./frontend/Tiltfile')
+include('./frontend/Tiltfile')

@@ -17,9 +17,6 @@ spec:
           - name: seed-sql
             mountPath: /seed.sql
             subPath: seed.sql
-        envFrom:
-          - secretRef:
-              name: postgres.tadoku-reading-contest-api-db.credentials.postgresql.acid.zalan.do
         env:
         - name: PGUSER
           value: reading_contest

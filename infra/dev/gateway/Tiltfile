@@ -7,3 +7,5 @@ helm_remote('kong',
             set=['ingressController.installCRDs=false'])
 
 k8s_yaml('./ingress.yaml')
+
+k8s_resource("kong-kong", labels=["infra"])

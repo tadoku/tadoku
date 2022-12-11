@@ -53,7 +53,7 @@ kratos:
 
   # kratos config https://www.ory.sh/docs/kratos/reference/configuration
   config:
-    dsn: postgres://postgres:foobar@postgresql:5432/kratos
+    dsn: postgres://postgres:foobar@postgresql-kratos:5432/kratos
     secrets:
       default:
         - dolore occaecat nostrud Ut

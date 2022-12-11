@@ -4,9 +4,6 @@
 load('ext://helm_remote', 'helm_remote')
 
 # Infra
-helm_remote('postgres-operator',
-            repo_name='postgres-operator',
-            repo_url='https://opensource.zalando.com/postgres-operator/charts/postgres-operator/')
 # helm_remote('nats',
 #             repo_name='nats',
 #             repo_url='https://nats-io.github.io/k8s/helm/charts/',
@@ -16,11 +13,10 @@ helm_remote('postgres-operator',
 #             repo_url='https://nats-io.github.io/k8s/helm/charts/',
 #             set=['jetstream.nats.url=nats://nats:4222'])
 
-include('./gateway/Tiltfile')
+include('./infra/dev/gateway/Tiltfile')
 include('./infra/dev/ory/Tiltfile')
-
-# Tools
-k8s_yaml('./tools/deployments/pgweb.yaml')
+include('./infra/dev/postgres/Tiltfile')
+include('./infra/dev/tools/Tiltfile')
 
 # Services
 
@@ -29,5 +25,4 @@ include('./services/blog-api/Tiltfile')
 include('./services/identity-api/Tiltfile')
 
 # Frontend
-
-# include('./frontend/web/Tiltfile')
+include('./frontend/Tiltfile')

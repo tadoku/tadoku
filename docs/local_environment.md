@@ -12,6 +12,7 @@ We use [Tilt](https://tilt.dev/) to spin up a local Kubernetes cluster with all 
 4. Read the [Getting Started Tutorial](https://docs.tilt.dev/tutorial.html) for Tilt to get familiar with it.
 5. Run `$ tilt up` in the root of this repository.
 6. Some services will have a database seed script, these can be manually triggered from within Tilt when needed.
+7. Access the cluster from `http://langlog.be`, a domain reserved to serve a local dev instance of Tadoku.
 
 ## Can't connect connect to service/database
 
@@ -20,39 +21,3 @@ It's possible that the containers for a particular service or database have been
 ## Connecting to a database within Tilt
 
 We have configured a [pgweb instance](https://github.com/sosedoff/pgweb) for access to our PostgreSQL databases. The connection details can be found from Kubernetes.
-
-Given the following database configuration we can derive the connections as follows:
-
-```yaml
-apiVersion: "acid.zalan.do/v1"
-kind: postgresql
-metadata:
-  name: tadoku-reading-contest-api-db
-  labels:
-    app: reading-contest-api-db
-spec:
-  teamId: "tadoku"
-  volume:
-    size: 1Gi
-  numberOfInstances: 1
-  users:
-    tadoku_user: []
-  databases:
-    tadoku: tadoku_user
-  postgresql:
-    version: "13"
-```
-
-```sh
-# Host, derived from `metadata.name`
-tadoku-reading-contest-api-db
-
-# Username, default superuser
-postgres
-
-# Password, secret name has the following pattern: `$username.$database_name.credentials.postgresql.acid.zalan.do`
-$ kubectl get secret postgres.tadoku-reading-contest-api-db.credentials.postgresql.acid.zalan.do -o json | jq -r .data.password | base64 --decode`
-
-# Database name, derived from `spec.databases.$database_name`
-tadoku
-```

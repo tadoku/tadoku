@@ -6,6 +6,9 @@ auth:
   password: "foobar"
   database: "kratos"
 
+nameOverride: "kratos"
+standalone: "standalone"
+
 # The postgres helm chart deployment will be using PVC postgresql-data-claim
 primary:
   persistence:

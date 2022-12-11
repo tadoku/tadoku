@@ -2,13 +2,9 @@
 const nextConfig = {
   reactStrictMode: true,
   swcMinify: true,
-  async rewrites() {
-    return [
-      {
-        source: '/kratos/:path*',
-        destination: 'http://localhost/kratos/:path*'
-      }
-    ]
+  publicRuntimeConfig: {
+    kratosPublicEndpoint: process.env.NEXT_PUBLIC_KRATOS_ENDPOINT,
+    kratosInternalEndpoint: process.env.NEXT_PUBLIC_KRATOS_INTERNAL_ENDPOINT,
   }
 }
 

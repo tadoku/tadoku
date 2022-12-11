@@ -19,6 +19,11 @@ spec:
         image: frontend-auth
         ports:
         - containerPort: 3001
+        env:
+        - name:  NEXT_PUBLIC_KRATOS_INTERNAL_ENDPOINT
+          value: http://kratos-public
+        - name: NEXT_PUBLIC_KRATOS_ENDPOINT
+          value: http://account.langlog.be/kratos
 ---
 apiVersion: v1
 kind: Service

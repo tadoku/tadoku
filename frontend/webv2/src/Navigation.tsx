@@ -54,7 +54,6 @@ export default function Navigation() {
   return (
     <Navbar
       logoHref="/"
-      width="max-w-xl"
       navigation={[
         {
           type: 'link',

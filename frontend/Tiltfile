@@ -1,7 +1,20 @@
+# webv2
+k8s_yaml('./webv2/deployments/frontend-webv2.yaml')
+k8s_resource("frontend-webv2", port_forwards="3000", labels=["frontend"])
+docker_build(
+  'frontend-webv2',
+  context='.',
+  dockerfile='./webv2/Dockerfile.dev',
+  live_update=[
+    sync('./', '/usr/src/app'),
+    run('cd /usr/src/app/webv2 && yarn install', trigger=['./webv2/package.json', './webv2/yarn.lock']),
+    run('cd /usr/src/app && yarn install', trigger=['./package.json', './yarn.lock']),
+  ]
+)
+
+# auth
 k8s_yaml('./auth/deployments/frontend-auth.yaml')
-
 k8s_resource("frontend-auth", port_forwards="3001", labels=["auth"])
-
 docker_build(
   'frontend-auth', 
   context='.',

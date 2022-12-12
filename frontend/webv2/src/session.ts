@@ -47,30 +47,6 @@ export const useLogoutHandler = (deps?: DependencyList) => {
   }
 }
 
-// Used to prevent access to a page when a user is not authenticated
-export const useProtectedRoute = (fallback: string = '/') => {
-  const [session] = useSession()
-  const router = useRouter()
-
-  useEffect(() => {
-    if (!session) {
-      router.replace(fallback)
-    }
-  }, [session])
-}
-
-// Used to prevent access to a page when a user is authenticated
-export const useAnonymouseRoute = (fallback: string = '/') => {
-  const [session] = useSession()
-  const router = useRouter()
-
-  useEffect(() => {
-    if (session) {
-      router.replace(fallback)
-    }
-  }, [session])
-}
-
 export interface AppContextWithSession extends AppContext {
   ctx: NextPageContextWithSession
 }

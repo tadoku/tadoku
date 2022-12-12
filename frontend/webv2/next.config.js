@@ -7,6 +7,7 @@ const nextConfig = {
     kratosInternalEndpoint: process.env.NEXT_PUBLIC_KRATOS_INTERNAL_ENDPOINT,
     authUiUrl: process.env.NEXT_PUBLIC_AUTH_UI_URL,
     homeUrl: process.env.NEXT_PUBLIC_HOME_URL,
+    apiEndpoint: process.env.NEXT_PUBLIC_API_ENDPOINT,
   }
 }
 

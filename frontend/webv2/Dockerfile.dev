@@ -5,6 +5,6 @@ WORKDIR /usr/src/app
 ADD . .
 RUN yarn install --check-files
 
-EXPOSE 3001
+EXPOSE 3000
 
 CMD ["yarn", "run", "webv2"]

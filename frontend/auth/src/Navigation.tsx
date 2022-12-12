@@ -13,7 +13,6 @@ import { useRouter } from 'next/router'
 export default function Navigation() {
   const [session] = useSession()
   const onLogout = useLogoutHandler([session])
-  const router = useRouter()
 
   const userNavigation: (NavigationLinkProps | NavigationDropDownProps)[] =
     session

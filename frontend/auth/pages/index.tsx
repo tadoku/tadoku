@@ -46,7 +46,6 @@ const Settings: NextPage<Props> = () => {
         returnTo ? String(returnTo) : undefined,
       )
       .then(({ data }) => {
-        console.log(data)
         setFlow(data)
       })
       .catch(handleFlowError(router, 'settings', setFlow))
@@ -62,14 +61,13 @@ const Settings: NextPage<Props> = () => {
       return
     }
 
-    await router.push(`/settings?flow=${flow?.id}`, undefined, {
+    await router.push(`/?flow=${flow?.id}`, undefined, {
       shallow: true,
     })
 
     ory
       .submitSelfServiceSettingsFlow(flow.id, data)
       .then(async ({ data }) => {
-        console.log('Submitted settings flow', data)
         setFlow(data)
 
         // Update session with new data
@@ -83,8 +81,6 @@ const Settings: NextPage<Props> = () => {
           setFlow(err.response.data as SelfServiceSettingsFlow)
           return
         }
-
-        debugger
 
         return Promise.reject(err)
       })

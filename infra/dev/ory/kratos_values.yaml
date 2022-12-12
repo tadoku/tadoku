@@ -35,11 +35,13 @@ kratos:
               },
               "display_name": {
                 "type": "string",
-                "title": "Display Name"
+                "title": "Display Name",
+                "minLength": 2
               }
             },
             "required": [
-              "email"
+              "email",
+              "display_name"
             ],
             "additionalProperties": false
           }

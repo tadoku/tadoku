@@ -119,7 +119,7 @@ export default function Navbar({
                         item.current
                           ? 'bg-secondary text-white'
                           : 'text-secondary hover:bg-secondary hover:text-white',
-                        'reset block px-3 py-2 text-base font-bold',
+                        'reset transition-[background-color] block px-3 py-2 text-base font-bold',
                       )}
                       aria-current={item.current ? 'page' : undefined}
                     >
@@ -158,7 +158,7 @@ const DropDown = ({ label, links }: NavigationDropDownProps) => (
         leaveFrom="transform opacity-100 scale-100"
         leaveTo="transform opacity-0 scale-95"
       >
-        <Menu.Items className="absolute right-0 z-10 mt-2 w-48 origin-top-right bg-white py-1 shadow-md shadow-slate-500/20 ring-1 ring-secondary ring-opacity-5 focus:outline-none">
+        <Menu.Items className="absolute right-0 z-10 mt-2 origin-top-right bg-white py-1 shadow-md shadow-slate-500/20 ring-1 ring-secondary ring-opacity-5 focus:outline-none">
           {links.map(({ label, href, IconComponent, onClick }, i) => (
             <Menu.Item key={i}>
               {({ active }) => (
@@ -166,8 +166,8 @@ const DropDown = ({ label, links }: NavigationDropDownProps) => (
                   href={href}
                   onClick={onClick}
                   className={classNames(
-                    active ? 'bg-gray-100' : '',
-                    'flex-inline items-center px-3 py-2 text-sm text-gray-700 flex font-bold',
+                    active ? 'bg-secondary !text-white' : '',
+                    'reset flex-inline transition-[background-color] items-center px-3 py-2 text-sm text-gray-700 flex font-bold',
                   )}
                 >
                   {IconComponent && <IconComponent className="w-4 h-4 mr-3" />}{' '}
@@ -205,7 +205,7 @@ const DropDownMobile = ({ label, links }: NavigationDropDownProps) => (
         leaveFrom="transform opacity-100 scale-100"
         leaveTo="transform opacity-0 scale-95"
       >
-        <Menu.Items className="absolute right-0 z-10 mt-2 w-48 origin-top-right bg-white py-1 shadow-md shadow-slate-500/20 ring-1 ring-secondary ring-opacity-5 focus:outline-none">
+        <Menu.Items className="absolute left-0 right-0 z-10 mt-2 min-w-48 origin-top-right bg-white py-1 shadow-md shadow-slate-500/20 ring-1 ring-secondary ring-opacity-5 focus:outline-none">
           {links.map(({ label, href, IconComponent, onClick }, i) => (
             <Menu.Item key={i}>
               {({ active }) => (
@@ -214,8 +214,8 @@ const DropDownMobile = ({ label, links }: NavigationDropDownProps) => (
                   href={href}
                   onClick={onClick}
                   className={classNames(
-                    active ? 'bg-gray-100' : '',
-                    'px-3 py-2 text-sm text-gray-700 flex font-bold',
+                    active ? 'bg-secondary !text-white' : '',
+                    'reset transition-[background-color] flex-inline items-center px-3 py-4 text-sm text-gray-700 flex font-bold',
                   )}
                 >
                   {IconComponent && <IconComponent className="w-4 h-4 mr-3" />}{' '}

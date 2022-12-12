@@ -1,0 +1,10 @@
+FROM node:16-alpine3.14
+
+WORKDIR /usr/src/app
+
+ADD . .
+RUN yarn install --check-files
+
+EXPOSE 3001
+
+CMD ["yarn", "run", "webv2"]

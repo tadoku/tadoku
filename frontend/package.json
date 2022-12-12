@@ -5,10 +5,12 @@
   "license": "MIT",
   "private": true,
   "workspaces": [
+    "webv2",
     "tadoku-ui",
     "auth"
   ],
   "scripts": {
+    "webv2": "yarn workspace webv2 dev",
     "auth": "yarn workspace auth dev"
   }
 }

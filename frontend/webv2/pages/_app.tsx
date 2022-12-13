@@ -1,11 +1,11 @@
 import App, { AppProps } from 'next/app'
-import { sdkServer as ory } from '../src/common/ory'
+import { sdkServer as ory } from '@app/common/ory'
 import { Atom, Provider } from 'jotai'
-import { AppContextWithSession, sessionAtom } from '../src/common/session'
+import { AppContextWithSession, sessionAtom } from '@app/common/session'
 import { Session } from '@ory/client'
 import ToastContainer from 'tadoku-ui/components/toasts'
 import 'tadoku-ui/styles/globals.css'
-import Navigation from '../src/ui/Navigation'
+import Navigation from '@app/ui/Navigation'
 
 interface Props {
   session: Session | undefined

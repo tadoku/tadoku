@@ -7,9 +7,9 @@ import {
   ArrowRightOnRectangleIcon,
   Cog8ToothIcon,
 } from '@heroicons/react/20/solid'
-import { useLogoutHandler, useSession } from '../common/session'
+import { useLogoutHandler, useSession } from '@app/common/session'
 import getConfig from 'next/config'
-import { useCurrentLocation } from '../common/hooks'
+import { useCurrentLocation } from '@app/common/hooks'
 
 const { publicRuntimeConfig } = getConfig()
 

@@ -1,9 +1,9 @@
 import { atom, useAtom } from 'jotai'
 import { Session } from '@ory/client'
 import { useRouter } from 'next/router'
-import { useEffect, DependencyList, useState } from 'react'
+import { useEffect, DependencyList } from 'react'
 import { AxiosError } from 'axios'
-import ory from './ory'
+import ory from '@app/common/ory'
 import { AppContext } from 'next/app'
 import { NextPageContext } from 'next'
 

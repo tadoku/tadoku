@@ -66,6 +66,15 @@ export default function Navigation() {
           href: '/',
           current: false,
         },
+        { type: 'link', label: 'Blog', href: '/blog', current: false },
+        { type: 'link', label: 'Ranking', href: '/ranking', current: false },
+        { type: 'link', label: 'Manual', href: '/manual', current: false },
+        {
+          type: 'link',
+          label: 'Forum',
+          href: 'https://forum.tadoku.app',
+          current: false,
+        },
         ...userNavigation,
       ]}
     />

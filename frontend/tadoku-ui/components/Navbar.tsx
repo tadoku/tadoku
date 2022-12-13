@@ -167,7 +167,7 @@ const DropDown = ({ label, links }: NavigationDropDownProps) => (
                   onClick={onClick}
                   className={classNames(
                     active ? 'bg-secondary !text-white' : '',
-                    'reset flex-inline transition-[background-color] items-center px-3 py-2 text-sm text-gray-700 flex font-bold',
+                    'reset whitespace-nowrap flex-inline transition-[background-color] items-center px-3 py-2 text-sm text-gray-700 flex font-bold',
                   )}
                 >
                   {IconComponent && <IconComponent className="w-4 h-4 mr-3" />}{' '}

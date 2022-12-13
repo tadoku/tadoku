@@ -30,7 +30,7 @@ const MyApp = ({ Component, pageProps }: AppProps<Props>) => {
     <Provider initialValues={getInitialValues()}>
       <div>
         <Navigation />
-        <div className="p-8 mx-auto max-w-7xl">
+        <div className="px-8 pb-8 pt-4 mx-auto max-w-7xl">
           <Component {...pageProps} />
         </div>
         <ToastContainer />

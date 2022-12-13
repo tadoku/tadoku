@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import getConfig from 'next/config'
+import { QueryFunctionContext } from 'react-query'
 
 const { publicRuntimeConfig } = getConfig()
 
@@ -11,7 +12,7 @@ const PostOrPage = z
     slug: z.string(),
     title: z.string(),
     html: z.string(),
-    published_at: z.string().datetime(),
+    published_at: z.string().datetime({ offset: true }),
   })
   .transform(postOrPage => {
     const { published_at: publishedAt, ...rest } = postOrPage
@@ -23,7 +24,10 @@ const PostOrPage = z
 
 export type PostOrPage = z.infer<typeof PostOrPage>
 
-export const getPage = async (slug: string): Promise<PostOrPage> => {
+export const getPage = async ({
+  queryKey,
+}: QueryFunctionContext<[string, { slug: string }]>): Promise<PostOrPage> => {
+  const [_, { slug }] = queryKey
   const response = await fetch(`${root}/pages/${slug}`)
 
   if (response.status !== 200) {

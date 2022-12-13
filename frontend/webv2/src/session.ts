@@ -1,6 +1,6 @@
 import { atom, useAtom } from 'jotai'
 import { Session } from '@ory/client'
-import Router, { useRouter } from 'next/router'
+import { useRouter } from 'next/router'
 import { useEffect, DependencyList, useState } from 'react'
 import { AxiosError } from 'axios'
 import ory from './ory'
@@ -13,15 +13,23 @@ export const useSession = () => {
   return useAtom(sessionAtom)
 }
 
+export const logoutTokenAtom = atom(undefined as undefined | string)
+
 // Returns a function which will log the user out
-// TODO: cache result as this is now triggering four logout flows at once
 export const useLogoutHandler = (deps?: DependencyList) => {
-  const [logoutToken, setLogoutToken] = useState<string>('')
+  const [logoutToken, setLogoutToken] = useAtom(logoutTokenAtom)
+  const [session] = useSession()
   const router = useRouter()
 
   useEffect(() => {
+    if (logoutToken || !session) {
+      return
+    }
+
     ory
-      .createSelfServiceLogoutFlowUrlForBrowsers()
+      .createSelfServiceLogoutFlowUrlForBrowsers(undefined, {
+        withCredentials: true,
+      })
       .then(({ data }) => {
         setLogoutToken(data.logout_token)
       })
@@ -35,12 +43,14 @@ export const useLogoutHandler = (deps?: DependencyList) => {
         // Something else happened!
         return Promise.reject(err)
       })
-  }, deps)
+  }, [...(deps ?? []), logoutToken, session])
 
   return () => {
     if (logoutToken) {
       ory
-        .submitSelfServiceLogoutFlow(logoutToken)
+        .submitSelfServiceLogoutFlow(logoutToken, undefined, {
+          withCredentials: true,
+        })
         .then(() => router.push('/login'))
         .then(() => router.reload())
     }

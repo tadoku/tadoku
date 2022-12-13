@@ -133,9 +133,22 @@ kratos:
       public:
         base_url: http://account.langlog.be/kratos/
         cors:
+          enabled: true
           allowed_origins:
             - http://account.langlog.be
             - http://langlog.be
+          allowed_methods:
+            - POST
+            - GET
+            - PUT
+            - PATCH
+            - DELETE
+          allowed_headers:
+            - Authorization
+            - Cookie
+          exposed_headers:
+            - Content-Type
+            - Set-Cookie
         request_log:
           disable_for_health: true
       admin:

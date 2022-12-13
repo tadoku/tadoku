@@ -7,9 +7,9 @@ import {
   ArrowRightOnRectangleIcon,
   Cog8ToothIcon,
 } from '@heroicons/react/20/solid'
-import { useLogoutHandler, useSession } from './session'
+import { useLogoutHandler, useSession } from '../common/session'
 import getConfig from 'next/config'
-import { useCurrentLocation } from './hooks'
+import { useCurrentLocation } from '../common/hooks'
 
 const { publicRuntimeConfig } = getConfig()
 
@@ -25,7 +25,12 @@ export default function Navigation() {
             type: 'dropdown',
             label: session.identity.traits.display_name ?? 'User',
             links: [
-              { label: 'Settings', href: '/', IconComponent: Cog8ToothIcon },
+              {
+                label: 'Account settings',
+                href:
+                  publicRuntimeConfig.authUiUrl + `/?return_to=${currentUrl}`,
+                IconComponent: Cog8ToothIcon,
+              },
               {
                 label: 'Log out',
                 href: '#',

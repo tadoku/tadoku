@@ -58,7 +58,7 @@ export default function Navigation() {
         {
           type: 'link',
           label: 'Home',
-          href: publicRuntimeConfig.homeUrl ?? 'https://tadoku.app/',
+          href: '/',
           current: false,
         },
         ...userNavigation,

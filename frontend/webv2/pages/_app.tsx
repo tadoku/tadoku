@@ -6,10 +6,13 @@ import { Session } from '@ory/client'
 import ToastContainer from 'tadoku-ui/components/toasts'
 import 'tadoku-ui/styles/globals.css'
 import Navigation from '@app/ui/Navigation'
+import { QueryClient, QueryClientProvider } from 'react-query'
 
 interface Props {
   session: Session | undefined
 }
+
+const queryClient = new QueryClient()
 
 const createInitialValues = () => {
   const initialValues: (readonly [Atom<unknown>, unknown])[] = []
@@ -28,13 +31,15 @@ const MyApp = ({ Component, pageProps }: AppProps<Props>) => {
 
   return (
     <Provider initialValues={getInitialValues()}>
-      <div>
-        <Navigation />
-        <div className="px-8 pb-8 pt-4 mx-auto max-w-7xl">
-          <Component {...pageProps} />
+      <QueryClientProvider client={queryClient}>
+        <div>
+          <Navigation />
+          <div className="px-8 pb-8 pt-4 mx-auto max-w-7xl">
+            <Component {...pageProps} />
+          </div>
+          <ToastContainer />
         </div>
-        <ToastContainer />
-      </div>
+      </QueryClientProvider>
     </Provider>
   )
 }

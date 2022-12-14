@@ -1,9 +1,13 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
+load("//:build/oapi-codegen.bzl", "oapi_codegen")
 
 go_library(
     name = "blog_api_lib",
     srcs = ["main.go"],
-    embedsrcs = ["posts-stub.json", "manual-stub.json"],
+    embedsrcs = [
+        "posts-stub.json",
+        "manual-stub.json",
+    ],
     importpath = "github.com/tadoku/tadoku/services/blog-api",
     visibility = ["//visibility:private"],
 )
@@ -12,6 +16,19 @@ go_binary(
     name = "blog_api",
     embed = [":blog_api_lib"],
     visibility = ["//visibility:public"],
+)
+
+# OpenAPI
+oapi_codegen(
+    name = "api",
+    out = "http/rest/openapi/api.gen.go",
+    generate = [
+        "types",
+        "server",
+    ],
+    package = "main",
+    spec = "openapi.yaml",
+    visibility = ["//services/blog-api/__pkg__"],
 )
 
 # Docker image

@@ -1,0 +1,18 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "autocert",
+    srcs = [
+        "autocert.go",
+        "cache.go",
+        "listener.go",
+        "renewal.go",
+    ],
+    importmap = "github.com/tadoku/tadoku/third_party/oapi-codegen/vendor/golang.org/x/crypto/acme/autocert",
+    importpath = "golang.org/x/crypto/acme/autocert",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//third_party/oapi-codegen/vendor/golang.org/x/crypto/acme",
+        "//third_party/oapi-codegen/vendor/golang.org/x/net/idna",
+    ],
+)

@@ -20,8 +20,8 @@ go_test(
         "user_test.go",
         "validate_test.go",
     ],
-    embed = [":domain"],
     deps = [
+        ":domain",
         "@com_github_asaskevich_govalidator//:govalidator",
         "@com_github_stretchr_testify//assert",
     ],

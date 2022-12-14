@@ -2,9 +2,7 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
 
 go_library(
     name = "repositories",
-    srcs = [
-        "user_repository.go",
-    ],
+    srcs = ["user_repository.go"],
     data = glob(["migrations/**"]),
     importpath = "github.com/tadoku/tadoku/services/identity-api/interfaces/repositories",
     visibility = ["//visibility:public"],
@@ -12,7 +10,6 @@ go_library(
         "//services/identity-api/domain",
         "//services/identity-api/interfaces/rdb",
         "//services/identity-api/usecases",
-        "@com_github_lib_pq//:pq",
     ],
 )
 

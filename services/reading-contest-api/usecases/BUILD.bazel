@@ -13,6 +13,7 @@ go_library(
         "repositories_mock.go",
         "role_authenticator.go",
         "session_claims.go",
+        "session_interactor_mock.go",
         "validatable.go",
         "validator.go",
         "validator_mock.go",

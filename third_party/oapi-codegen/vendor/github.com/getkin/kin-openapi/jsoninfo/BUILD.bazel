@@ -1,0 +1,18 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "jsoninfo",
+    srcs = [
+        "doc.go",
+        "field_info.go",
+        "marshal.go",
+        "marshal_ref.go",
+        "strict_struct.go",
+        "type_info.go",
+        "unmarshal.go",
+        "unsupported_properties_error.go",
+    ],
+    importmap = "github.com/tadoku/tadoku/third_party/oapi-codegen/vendor/github.com/getkin/kin-openapi/jsoninfo",
+    importpath = "github.com/getkin/kin-openapi/jsoninfo",
+    visibility = ["//visibility:public"],
+)

@@ -1,0 +1,13 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "color",
+    srcs = ["color.go"],
+    importmap = "github.com/tadoku/tadoku/third_party/oapi-codegen/vendor/github.com/labstack/gommon/color",
+    importpath = "github.com/labstack/gommon/color",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//third_party/oapi-codegen/vendor/github.com/mattn/go-colorable",
+        "//third_party/oapi-codegen/vendor/github.com/mattn/go-isatty",
+    ],
+)

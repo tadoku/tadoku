@@ -1,0 +1,112 @@
+openapi: 3.0.3
+info:
+  title: blog-api
+  license:
+    name: MIT
+    url: https://github.com/tadoku/tadoku/blob/main/LICENSE
+  version: 1.0.0
+externalDocs:
+  description: Find out more about Tadoku
+  url: https://tadoku.github.io/tadoku/
+servers:
+  - url: https://tadoku.app/api/blog/v2
+paths:
+  /pages/{pageSlug}:
+    get:
+      summary: Returns page content for a given slug
+      operationId: findPageBySlug
+      parameters:
+        - name: pageSlug
+          in: path
+          description: Slug of page to return
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Page'    
+        '404':
+          description: Page not found or not published
+  /pages/{id}:
+    put:
+      summary: Updates an existing page
+      operationId: updatePage
+      security:
+        - cookieAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Page'
+      parameters:
+        - name: id
+          in: path
+          description: ID of page
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: successful operation
+        '400':
+          description: Invalid page
+        '404':
+          description: Page does not exist and cannot be updated
+  /pages:
+    post:
+      summary: Creates a new page
+      operationId: createPage
+      security:
+        - cookieAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Page'
+      responses:
+        '201':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: string
+                format: uuid
+                example: d7e82f70-f7b9-4952-8258-1e4d16f0c244
+        '400':
+          description: Invalid page
+components:
+  schemas:
+    Page:
+      required:
+        - id
+        - slug
+        - title
+        - html
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: d7e82f70-f7b9-4952-8258-1e4d16f0c244
+        slug:
+          type: string
+          example: welcome-to-tadoku
+        title:
+          type: string
+          example: Welcome to Tadoku!
+        html:
+          type: string
+          example: <p>Example page!</p>
+        published_at:
+          type: string
+          format: date-time
+          example: 2022-12-14T19:48:00Z
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: ory_kratos_session

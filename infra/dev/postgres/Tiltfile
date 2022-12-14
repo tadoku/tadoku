@@ -15,3 +15,11 @@ helm_remote('postgresql',
             repo_url='https://charts.bitnami.com/bitnami',
             values='./reading-contest/postgres_values.yaml')
 k8s_resource("postgresql-reading-contest", labels=["infra"])
+
+# reading-contest
+k8s_yaml('./blog/postgres.yaml')
+helm_remote('postgresql',
+            repo_name='bitnami',
+            repo_url='https://charts.bitnami.com/bitnami',
+            values='./blog/postgres_values.yaml')
+k8s_resource("postgresql-blog", labels=["infra"])

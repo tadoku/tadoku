@@ -1,5 +1,6 @@
 name: build-bazel
 on:
+  workflow_dispatch:
   push:
     paths:
       - "services/**"
@@ -34,7 +35,7 @@ jobs:
     name: Publish Tadoku Images
     needs: build
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/stable'
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2

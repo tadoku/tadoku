@@ -18,6 +18,11 @@ spec:
         image: blog-api-image
         ports:
         - containerPort: 8080
+        env:
+          - name: API_POSTGRES_URL
+            value: "postgres://blog:foobar@postgresql-blog/blog?sslmode=disable"
+          - name: API_PORT
+            value: "8080"
         readinessProbe:
           httpGet:
             scheme: HTTP

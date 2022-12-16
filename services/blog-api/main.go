@@ -1,31 +1,45 @@
 package main
 
 import (
-	_ "embed"
+	"database/sql"
 	"fmt"
-	"log"
-	"net/http"
+
+	"github.com/asaskevich/govalidator"
+	"github.com/kelseyhightower/envconfig"
+	"github.com/tadoku/tadoku/services/blog-api/http/rest"
+	"github.com/tadoku/tadoku/services/blog-api/http/rest/openapi"
+
+	_ "github.com/jackc/pgx/v4/stdlib"
+	"github.com/labstack/echo/v4"
+	echomiddleware "github.com/labstack/echo/v4/middleware"
 )
 
-//go:embed posts-stub.json
-var posts string
-
-//go:embed manual-stub.json
-var manual string
+type Config struct {
+	PostgresURL string `valid:"required" envconfig:"postgres_url"`
+	Port        int64  `valid:"required"`
+}
 
 func main() {
-	http.HandleFunc("/posts", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprint(w, posts)
-	})
+	cfg := Config{}
+	envconfig.Process("API", &cfg)
 
-	http.HandleFunc("/pages/manual", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprint(w, manual)
-	})
+	valid, err := govalidator.ValidateStruct(cfg)
+	if err != nil || !valid {
+		panic(fmt.Errorf("could not configure server: %w", err))
+	}
 
-	http.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprint(w, "ok")
-	})
+	_, err = sql.Open("pgx", cfg.PostgresURL)
+	if err != nil {
+		panic(err)
+	}
 
-	log.Print("Starting server on port 8080")
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	e := echo.New()
+	e.Use(echomiddleware.Logger())
+
+	server := rest.NewServer()
+
+	openapi.RegisterHandlersWithBaseURL(e, server, "/v2")
+
+	fmt.Printf("blog-api is now available at: http://localhost:%d/v2\n", cfg.Port)
+	e.Logger.Fatal(e.Start(fmt.Sprintf("0.0.0.0:%d", cfg.Port)))
 }

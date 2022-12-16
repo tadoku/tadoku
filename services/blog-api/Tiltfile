@@ -13,4 +13,4 @@ custom_build(
   deps=['./'],
 )
 
-k8s_resource('blog-api', port_forwards=8001, labels=["backend"])
+k8s_resource('blog-api', labels=["backend"])

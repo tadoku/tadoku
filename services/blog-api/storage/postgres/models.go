@@ -12,12 +12,19 @@ import (
 )
 
 type Page struct {
-	ID          uuid.UUID
-	Slug        string
-	Title       string
-	Html        string
-	PublishedAt sql.NullTime
-	CreatedAt   time.Time
-	UpdatedAt   time.Time
-	DeletedAt   sql.NullTime
+	ID               uuid.UUID
+	Slug             string
+	CurrentContentID uuid.UUID
+	PublishedAt      sql.NullTime
+	CreatedAt        time.Time
+	UpdatedAt        time.Time
+	DeletedAt        sql.NullTime
+}
+
+type PagesContent struct {
+	ID        uuid.UUID
+	PageID    uuid.UUID
+	Title     string
+	Html      string
+	CreatedAt time.Time
 }

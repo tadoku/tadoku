@@ -1,8 +1,7 @@
 create table pages (
   id uuid primary key default uuid_generate_v4(),
   slug varchar(200) not null,
-  title text not null,
-  html text not null,
+  current_content_id uuid not null,
   published_at timestamp,
   created_at timestamp not null default now(),
   updated_at timestamp not null default now(),
@@ -10,3 +9,13 @@ create table pages (
 );
 
 create unique index pages_slug on pages(slug);
+
+create table pages_content (
+  id uuid primary key default uuid_generate_v4(),
+  page_id uuid not null,
+  title text not null,
+  html text not null,
+  created_at timestamp not null default now()
+);
+
+create index pages_content_page_id on pages_content(page_id);

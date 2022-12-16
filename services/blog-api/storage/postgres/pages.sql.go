@@ -14,12 +14,14 @@ import (
 
 const findPageBySlug = `-- name: findPageBySlug :one
 select
-  id,
+  pages.id,
   slug,
-  title,
-  html,
+  pages_content.title,
+  pages_content.html,
   published_at
 from pages
+inner join pages_content
+  on pages_content.id = pages.current_content_id
 where
   deleted_at is null
   and slug = $1

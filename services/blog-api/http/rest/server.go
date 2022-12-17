@@ -1,9 +1,7 @@
 package rest
 
 import (
-	"encoding/json"
 	"errors"
-	"io"
 	"net/http"
 
 	"github.com/labstack/echo/v4"
@@ -27,19 +25,19 @@ type server struct {
 // Creates a new page
 // (POST /pages)
 func (s *server) PageCreate(ctx echo.Context) error {
-	body, err := io.ReadAll(ctx.Request().Body)
-	if err != nil {
+	var req openapi.Page
+	if err := ctx.Bind(&req); err != nil {
 		ctx.Echo().Logger.Error("could not process request: ", err)
 		return ctx.NoContent(http.StatusBadRequest)
 	}
 
-	req := &pagecreate.PageCreateRequest{}
-	if err := json.Unmarshal(body, req); err != nil {
-		ctx.Echo().Logger.Error("could not process request: ", err)
-		return ctx.NoContent(http.StatusBadRequest)
-	}
-
-	res, err := s.pageCreateService.CreatePage(ctx.Request().Context(), req)
+	res, err := s.pageCreateService.CreatePage(ctx.Request().Context(), &pagecreate.PageCreateRequest{
+		ID:          req.Id,
+		Slug:        req.Slug,
+		Title:       req.Title,
+		Html:        req.Html,
+		PublishedAt: req.PublishedAt,
+	})
 	if err != nil {
 		if errors.Is(err, pagecreate.ErrPageAlreadyExists) || errors.Is(err, pagecreate.ErrInvalidPage) {
 			ctx.Echo().Logger.Error("could not process request: ", err)
@@ -50,7 +48,12 @@ func (s *server) PageCreate(ctx echo.Context) error {
 		return ctx.NoContent(http.StatusInternalServerError)
 	}
 
-	return ctx.JSON(http.StatusOK, res)
+	return ctx.JSON(http.StatusOK, openapi.Page{
+		Id:    res.ID,
+		Slug:  res.Slug,
+		Title: res.Title,
+		Html:  res.Html,
+	})
 }
 
 // Updates an existing page

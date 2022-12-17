@@ -29,24 +29,24 @@ type server struct {
 func (s *server) PageCreate(ctx echo.Context) error {
 	body, err := io.ReadAll(ctx.Request().Body)
 	if err != nil {
-		ctx.Echo().Logger.Error("could not process request: %w", err)
+		ctx.Echo().Logger.Error("could not process request: ", err)
 		return ctx.NoContent(http.StatusBadRequest)
 	}
 
 	req := &pagecreate.PageCreateRequest{}
 	if err := json.Unmarshal(body, req); err != nil {
-		ctx.Echo().Logger.Error("could not process request: %w", err)
+		ctx.Echo().Logger.Error("could not process request: ", err)
 		return ctx.NoContent(http.StatusBadRequest)
 	}
 
 	res, err := s.pageCreateService.CreatePage(ctx.Request().Context(), req)
 	if err != nil {
 		if errors.Is(err, pagecreate.ErrPageAlreadyExists) || errors.Is(err, pagecreate.ErrInvalidPage) {
-			ctx.Echo().Logger.Error("could not process request: %w", err)
+			ctx.Echo().Logger.Error("could not process request: ", err)
 			return ctx.NoContent(http.StatusBadRequest)
 		}
 
-		ctx.Echo().Logger.Error("could not process request: %w", err)
+		ctx.Echo().Logger.Error("could not process request: ", err)
 		return ctx.NoContent(http.StatusInternalServerError)
 	}
 

@@ -1,3 +1,5 @@
+create extension if not exists "uuid-ossp";
+
 create table pages (
   id uuid primary key default uuid_generate_v4(),
   slug varchar(200) not null,

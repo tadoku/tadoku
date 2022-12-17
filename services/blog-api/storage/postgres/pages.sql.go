@@ -12,7 +12,7 @@ import (
 	"github.com/google/uuid"
 )
 
-const createPage = `-- name: createPage :one
+const createPage = `-- name: CreatePage :one
 insert into pages (
   id,
   slug,
@@ -26,14 +26,14 @@ insert into pages (
 ) returning id
 `
 
-type createPageParams struct {
+type CreatePageParams struct {
 	ID               uuid.UUID
 	Slug             string
 	CurrentContentID uuid.UUID
 	PublishedAt      sql.NullTime
 }
 
-func (q *Queries) createPage(ctx context.Context, arg createPageParams) (uuid.UUID, error) {
+func (q *Queries) CreatePage(ctx context.Context, arg CreatePageParams) (uuid.UUID, error) {
 	row := q.db.QueryRowContext(ctx, createPage,
 		arg.ID,
 		arg.Slug,
@@ -45,7 +45,7 @@ func (q *Queries) createPage(ctx context.Context, arg createPageParams) (uuid.UU
 	return id, err
 }
 
-const createPageContent = `-- name: createPageContent :one
+const createPageContent = `-- name: CreatePageContent :one
 insert into pages_content (
   id,
   page_id,
@@ -59,14 +59,14 @@ insert into pages_content (
 ) returning id
 `
 
-type createPageContentParams struct {
+type CreatePageContentParams struct {
 	ID     uuid.UUID
 	PageID uuid.UUID
 	Title  string
 	Html   string
 }
 
-func (q *Queries) createPageContent(ctx context.Context, arg createPageContentParams) (uuid.UUID, error) {
+func (q *Queries) CreatePageContent(ctx context.Context, arg CreatePageContentParams) (uuid.UUID, error) {
 	row := q.db.QueryRowContext(ctx, createPageContent,
 		arg.ID,
 		arg.PageID,
@@ -78,7 +78,7 @@ func (q *Queries) createPageContent(ctx context.Context, arg createPageContentPa
 	return id, err
 }
 
-const findPageBySlug = `-- name: findPageBySlug :one
+const findPageBySlug = `-- name: FindPageBySlug :one
 select
   pages.id,
   slug,
@@ -93,7 +93,7 @@ where
   and slug = $1
 `
 
-type findPageBySlugRow struct {
+type FindPageBySlugRow struct {
 	ID          uuid.UUID
 	Slug        string
 	Title       string
@@ -101,9 +101,9 @@ type findPageBySlugRow struct {
 	PublishedAt sql.NullTime
 }
 
-func (q *Queries) findPageBySlug(ctx context.Context, slug string) (findPageBySlugRow, error) {
+func (q *Queries) FindPageBySlug(ctx context.Context, slug string) (FindPageBySlugRow, error) {
 	row := q.db.QueryRowContext(ctx, findPageBySlug, slug)
-	var i findPageBySlugRow
+	var i FindPageBySlugRow
 	err := row.Scan(
 		&i.ID,
 		&i.Slug,

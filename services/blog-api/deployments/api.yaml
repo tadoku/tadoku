@@ -13,6 +13,14 @@ spec:
       labels:
         app: blog-api
     spec:
+      initContainers:
+        - name: migrations
+          image: blog-api-migrate-image
+          command: ['/migrate']
+          args: ['-source', 'file:///migrations', '-database', '$(DATABASE_URL)', 'up']
+          env:
+          - name: DATABASE_URL
+            value: "postgres://blog:foobar@postgresql-blog/blog?sslmode=disable"
       containers:
       - name: blog-api
         image: blog-api-image

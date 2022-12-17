@@ -1,4 +1,4 @@
--- name: findPageBySlug :one
+-- name: FindPageBySlug :one
 select
   pages.id,
   slug,
@@ -12,7 +12,7 @@ where
   deleted_at is null
   and slug = sqlc.arg('slug');
 
--- name: createPage :one
+-- name: CreatePage :one
 insert into pages (
   id,
   slug,
@@ -25,7 +25,7 @@ insert into pages (
   sqlc.arg('published_at')
 ) returning id;
 
--- name: createPageContent :one
+-- name: CreatePageContent :one
 insert into pages_content (
   id,
   page_id,

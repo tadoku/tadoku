@@ -130,3 +130,13 @@ git_repository(
 load("@rules_openapi//openapi:toolchain.bzl", rules_openapi_toolchains = "toolchains")
 
 rules_openapi_toolchains(version = "5.2.1")
+
+# Pull required docker images
+load("@io_bazel_rules_docker//container:pull.bzl", "container_pull")
+
+container_pull(
+    name = "migrate_docker",
+    registry = "index.docker.io",
+    repository = "migrate/migrate",
+    tag = "4",
+)

@@ -5,6 +5,7 @@ go_library(
     srcs = [
         "db.go",
         "generate.go",
+        "helpers.go",
         "models.go",
         "pagerepository.go",
         "pages.sql.go",
@@ -14,5 +15,7 @@ go_library(
     deps = [
         "//services/blog-api/domain/pagecreate",
         "@com_github_google_uuid//:uuid",
+        "@com_github_jackc_pgconn//:pgconn",
+        "@com_github_jackc_pgerrcode//:pgerrcode",
     ],
 )

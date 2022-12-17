@@ -33,5 +33,5 @@ func (s *service) CreatePage(ctx context.Context, req *PageCreateRequest) (*Page
 		return nil, fmt.Errorf("%w: %w", ErrInvalidPage, err)
 	}
 
-	return nil, nil
+	return s.pr.CreatePage(ctx, req)
 }

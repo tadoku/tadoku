@@ -10,7 +10,7 @@ go_library(
         "//services/blog-api/http/rest",
         "//services/blog-api/http/rest/openapi",
         "//services/blog-api/storage/postgres",
-        "@com_github_asaskevich_govalidator//:govalidator",
+        "@com_github_go_playground_validator_v10//:validator",
         "@com_github_jackc_pgx_v4//stdlib",
         "@com_github_kelseyhightower_envconfig//:envconfig",
         "@com_github_labstack_echo_v4//:echo",

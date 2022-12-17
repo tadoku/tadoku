@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 
-	"github.com/asaskevich/govalidator"
+	"github.com/go-playground/validator/v10"
 	"github.com/kelseyhightower/envconfig"
 	"github.com/tadoku/tadoku/services/blog-api/domain/pagecreate"
 	"github.com/tadoku/tadoku/services/blog-api/http/rest"
@@ -17,16 +17,17 @@ import (
 )
 
 type Config struct {
-	PostgresURL string `valid:"required" envconfig:"postgres_url"`
-	Port        int64  `valid:"required"`
+	PostgresURL string `validate:"required" envconfig:"postgres_url"`
+	Port        int64  `validate:"required"`
 }
 
 func main() {
 	cfg := Config{}
 	envconfig.Process("API", &cfg)
 
-	valid, err := govalidator.ValidateStruct(cfg)
-	if err != nil || !valid {
+	validate := validator.New()
+	err := validate.Struct(cfg)
+	if err != nil {
 		panic(fmt.Errorf("could not configure server: %w", err))
 	}
 

@@ -26,23 +26,23 @@ type Page struct {
 	Title       string             `json:"title"`
 }
 
-// CreatePageJSONRequestBody defines body for CreatePage for application/json ContentType.
-type CreatePageJSONRequestBody = Page
+// PageCreateJSONRequestBody defines body for PageCreate for application/json ContentType.
+type PageCreateJSONRequestBody = Page
 
-// UpdatePageJSONRequestBody defines body for UpdatePage for application/json ContentType.
-type UpdatePageJSONRequestBody = Page
+// PageUpdateJSONRequestBody defines body for PageUpdate for application/json ContentType.
+type PageUpdateJSONRequestBody = Page
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
 	// Creates a new page
 	// (POST /pages)
-	CreatePage(ctx echo.Context) error
+	PageCreate(ctx echo.Context) error
 	// Updates an existing page
 	// (PUT /pages/{id})
-	UpdatePage(ctx echo.Context, id string) error
+	PageUpdate(ctx echo.Context, id string) error
 	// Returns page content for a given slug
 	// (GET /pages/{pageSlug})
-	FindPageBySlug(ctx echo.Context, pageSlug string) error
+	PageFindBySlug(ctx echo.Context, pageSlug string) error
 	// Checks if service is responsive
 	// (GET /ping)
 	Ping(ctx echo.Context) error
@@ -53,19 +53,19 @@ type ServerInterfaceWrapper struct {
 	Handler ServerInterface
 }
 
-// CreatePage converts echo context to params.
-func (w *ServerInterfaceWrapper) CreatePage(ctx echo.Context) error {
+// PageCreate converts echo context to params.
+func (w *ServerInterfaceWrapper) PageCreate(ctx echo.Context) error {
 	var err error
 
 	ctx.Set(CookieAuthScopes, []string{""})
 
 	// Invoke the callback with all the unmarshalled arguments
-	err = w.Handler.CreatePage(ctx)
+	err = w.Handler.PageCreate(ctx)
 	return err
 }
 
-// UpdatePage converts echo context to params.
-func (w *ServerInterfaceWrapper) UpdatePage(ctx echo.Context) error {
+// PageUpdate converts echo context to params.
+func (w *ServerInterfaceWrapper) PageUpdate(ctx echo.Context) error {
 	var err error
 	// ------------- Path parameter "id" -------------
 	var id string
@@ -78,12 +78,12 @@ func (w *ServerInterfaceWrapper) UpdatePage(ctx echo.Context) error {
 	ctx.Set(CookieAuthScopes, []string{""})
 
 	// Invoke the callback with all the unmarshalled arguments
-	err = w.Handler.UpdatePage(ctx, id)
+	err = w.Handler.PageUpdate(ctx, id)
 	return err
 }
 
-// FindPageBySlug converts echo context to params.
-func (w *ServerInterfaceWrapper) FindPageBySlug(ctx echo.Context) error {
+// PageFindBySlug converts echo context to params.
+func (w *ServerInterfaceWrapper) PageFindBySlug(ctx echo.Context) error {
 	var err error
 	// ------------- Path parameter "pageSlug" -------------
 	var pageSlug string
@@ -94,7 +94,7 @@ func (w *ServerInterfaceWrapper) FindPageBySlug(ctx echo.Context) error {
 	}
 
 	// Invoke the callback with all the unmarshalled arguments
-	err = w.Handler.FindPageBySlug(ctx, pageSlug)
+	err = w.Handler.PageFindBySlug(ctx, pageSlug)
 	return err
 }
 
@@ -135,9 +135,9 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 		Handler: si,
 	}
 
-	router.POST(baseURL+"/pages", wrapper.CreatePage)
-	router.PUT(baseURL+"/pages/:id", wrapper.UpdatePage)
-	router.GET(baseURL+"/pages/:pageSlug", wrapper.FindPageBySlug)
+	router.POST(baseURL+"/pages", wrapper.PageCreate)
+	router.PUT(baseURL+"/pages/:id", wrapper.PageUpdate)
+	router.GET(baseURL+"/pages/:pageSlug", wrapper.PageFindBySlug)
 	router.GET(baseURL+"/ping", wrapper.Ping)
 
 }

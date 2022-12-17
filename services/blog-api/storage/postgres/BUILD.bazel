@@ -14,6 +14,7 @@ go_library(
     visibility = ["//visibility:public"],
     deps = [
         "//services/blog-api/domain/pagecreate",
+        "//services/blog-api/domain/pagefind",
         "@com_github_google_uuid//:uuid",
         "@com_github_jackc_pgconn//:pgconn",
         "@com_github_jackc_pgerrcode//:pgerrcode",

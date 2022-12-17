@@ -6,20 +6,24 @@ import (
 
 	"github.com/labstack/echo/v4"
 	"github.com/tadoku/tadoku/services/blog-api/domain/pagecreate"
+	"github.com/tadoku/tadoku/services/blog-api/domain/pagefind"
 	"github.com/tadoku/tadoku/services/blog-api/http/rest/openapi"
 )
 
 // NewServer creates a new server conforming to the OpenAPI spec
 func NewServer(
 	pageCreateService pagecreate.Service,
+	pageFindService pagefind.Service,
 ) openapi.ServerInterface {
 	return &server{
 		pageCreateService: pageCreateService,
+		pageFindService:   pageFindService,
 	}
 }
 
 type server struct {
 	pageCreateService pagecreate.Service
+	pageFindService   pagefind.Service
 }
 
 // Creates a new page
@@ -31,7 +35,7 @@ func (s *server) PageCreate(ctx echo.Context) error {
 		return ctx.NoContent(http.StatusBadRequest)
 	}
 
-	res, err := s.pageCreateService.CreatePage(ctx.Request().Context(), &pagecreate.PageCreateRequest{
+	page, err := s.pageCreateService.CreatePage(ctx.Request().Context(), &pagecreate.PageCreateRequest{
 		ID:          req.Id,
 		Slug:        req.Slug,
 		Title:       req.Title,
@@ -49,10 +53,10 @@ func (s *server) PageCreate(ctx echo.Context) error {
 	}
 
 	return ctx.JSON(http.StatusOK, openapi.Page{
-		Id:    res.ID,
-		Slug:  res.Slug,
-		Title: res.Title,
-		Html:  res.Html,
+		Id:    page.ID,
+		Slug:  page.Slug,
+		Title: page.Title,
+		Html:  page.Html,
 	})
 }
 
@@ -65,7 +69,21 @@ func (s *server) PageUpdate(ctx echo.Context, id string) error {
 // Returns page content for a given slug
 // (GET /pages/{pageSlug})
 func (s *server) PageFindBySlug(ctx echo.Context, pageSlug string) error {
-	return ctx.NoContent(http.StatusNotImplemented)
+	page, err := s.pageFindService.FindBySlug(ctx.Request().Context(), pageSlug)
+	if err != nil {
+		if errors.Is(err, pagefind.ErrPageNotFound) {
+			return ctx.NoContent(http.StatusNotFound)
+		}
+
+		return ctx.NoContent(http.StatusInternalServerError)
+	}
+
+	return ctx.JSON(http.StatusOK, openapi.Page{
+		Id:    page.ID,
+		Slug:  page.Slug,
+		Title: page.Title,
+		Html:  page.Html,
+	})
 }
 
 // Checks if service is responsive

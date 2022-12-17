@@ -7,6 +7,7 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/kelseyhightower/envconfig"
 	"github.com/tadoku/tadoku/services/blog-api/domain/pagecreate"
+	"github.com/tadoku/tadoku/services/blog-api/domain/pagefind"
 	"github.com/tadoku/tadoku/services/blog-api/http/rest"
 	"github.com/tadoku/tadoku/services/blog-api/http/rest/openapi"
 	"github.com/tadoku/tadoku/services/blog-api/storage/postgres"
@@ -42,9 +43,11 @@ func main() {
 	pageRepository := postgres.NewPageRepository(psql)
 
 	pageCreateService := pagecreate.NewService(pageRepository)
+	pageFindService := pagefind.NewService(pageRepository)
 
 	server := rest.NewServer(
 		pageCreateService,
+		pageFindService,
 	)
 
 	openapi.RegisterHandlersWithBaseURL(e, server, "")

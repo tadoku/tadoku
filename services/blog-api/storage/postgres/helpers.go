@@ -17,3 +17,11 @@ func NewNullTime(t *time.Time) sql.NullTime {
 		Time:  *t,
 	}
 }
+
+func NewTimeFromNullTime(t sql.NullTime) *time.Time {
+	if !t.Valid {
+		return nil
+	}
+
+	return &t.Time
+}

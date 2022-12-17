@@ -11,3 +11,29 @@ inner join pages_content
 where
   deleted_at is null
   and slug = sqlc.arg('slug');
+
+-- name: createPage :one
+insert into pages (
+  id,
+  slug,
+  current_content_id,
+  published_at
+) values (
+  sqlc.arg('id'),
+  sqlc.arg('slug'),
+  sqlc.arg('current_content_id'),
+  sqlc.arg('published_at')
+) returning id;
+
+-- name: createPageContent :one
+insert into pages_content (
+  id,
+  page_id,
+  title,
+  html
+) values (
+  sqlc.arg('id'),
+  sqlc.arg('page_id'),
+  sqlc.arg('title'),
+  sqlc.arg('html')
+) returning id;

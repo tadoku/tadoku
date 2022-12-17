@@ -6,9 +6,13 @@ go_library(
         "db.go",
         "generate.go",
         "models.go",
+        "pagerepository.go",
         "pages.sql.go",
     ],
     importpath = "github.com/tadoku/tadoku/services/blog-api/storage/postgres",
     visibility = ["//visibility:public"],
-    deps = ["@com_github_google_uuid//:uuid"],
+    deps = [
+        "//services/blog-api/domain/pagecreate",
+        "@com_github_google_uuid//:uuid",
+    ],
 )

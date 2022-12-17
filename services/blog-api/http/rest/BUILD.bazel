@@ -6,6 +6,7 @@ go_library(
     importpath = "github.com/tadoku/tadoku/services/blog-api/http/rest",
     visibility = ["//visibility:public"],
     deps = [
+        "//services/blog-api/domain/pagecreate",
         "//services/blog-api/http/rest/openapi",
         "@com_github_labstack_echo_v4//:echo",
     ],

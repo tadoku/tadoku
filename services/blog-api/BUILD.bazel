@@ -6,10 +6,12 @@ go_library(
     importpath = "github.com/tadoku/tadoku/services/blog-api",
     visibility = ["//visibility:private"],
     deps = [
+        "//services/blog-api/domain/pagecreate",
         "//services/blog-api/http/rest",
         "//services/blog-api/http/rest/openapi",
+        "//services/blog-api/storage/postgres",
         "@com_github_asaskevich_govalidator//:govalidator",
-        "@com_github_jackc_pgx_v4//stdlib:go_default_library",
+        "@com_github_jackc_pgx_v4//stdlib",
         "@com_github_kelseyhightower_envconfig//:envconfig",
         "@com_github_labstack_echo_v4//:echo",
         "@com_github_labstack_echo_v4//middleware",

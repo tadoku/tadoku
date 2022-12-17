@@ -6,8 +6,10 @@ import (
 
 	"github.com/asaskevich/govalidator"
 	"github.com/kelseyhightower/envconfig"
+	"github.com/tadoku/tadoku/services/blog-api/domain/pagecreate"
 	"github.com/tadoku/tadoku/services/blog-api/http/rest"
 	"github.com/tadoku/tadoku/services/blog-api/http/rest/openapi"
+	"github.com/tadoku/tadoku/services/blog-api/storage/postgres"
 
 	_ "github.com/jackc/pgx/v4/stdlib"
 	"github.com/labstack/echo/v4"
@@ -28,7 +30,7 @@ func main() {
 		panic(fmt.Errorf("could not configure server: %w", err))
 	}
 
-	_, err = sql.Open("pgx", cfg.PostgresURL)
+	psql, err := sql.Open("pgx", cfg.PostgresURL)
 	if err != nil {
 		panic(err)
 	}
@@ -36,7 +38,13 @@ func main() {
 	e := echo.New()
 	e.Use(echomiddleware.Logger())
 
-	server := rest.NewServer()
+	pageRepository := postgres.NewPageRepository(psql)
+
+	pageCreateService := pagecreate.NewService(pageRepository)
+
+	server := rest.NewServer(
+		pageCreateService,
+	)
 
 	openapi.RegisterHandlersWithBaseURL(e, server, "")
 

@@ -12,6 +12,72 @@ import (
 	"github.com/google/uuid"
 )
 
+const createPage = `-- name: createPage :one
+insert into pages (
+  id,
+  slug,
+  current_content_id,
+  published_at
+) values (
+  $1,
+  $2,
+  $3,
+  $4
+) returning id
+`
+
+type createPageParams struct {
+	ID               uuid.UUID
+	Slug             string
+	CurrentContentID uuid.UUID
+	PublishedAt      sql.NullTime
+}
+
+func (q *Queries) createPage(ctx context.Context, arg createPageParams) (uuid.UUID, error) {
+	row := q.db.QueryRowContext(ctx, createPage,
+		arg.ID,
+		arg.Slug,
+		arg.CurrentContentID,
+		arg.PublishedAt,
+	)
+	var id uuid.UUID
+	err := row.Scan(&id)
+	return id, err
+}
+
+const createPageContent = `-- name: createPageContent :one
+insert into pages_content (
+  id,
+  page_id,
+  title,
+  html
+) values (
+  $1,
+  $2,
+  $3,
+  $4
+) returning id
+`
+
+type createPageContentParams struct {
+	ID     uuid.UUID
+	PageID uuid.UUID
+	Title  string
+	Html   string
+}
+
+func (q *Queries) createPageContent(ctx context.Context, arg createPageContentParams) (uuid.UUID, error) {
+	row := q.db.QueryRowContext(ctx, createPageContent,
+		arg.ID,
+		arg.PageID,
+		arg.Title,
+		arg.Html,
+	)
+	var id uuid.UUID
+	err := row.Scan(&id)
+	return id, err
+}
+
 const findPageBySlug = `-- name: findPageBySlug :one
 select
   pages.id,

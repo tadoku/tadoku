@@ -14,7 +14,7 @@ paths:
   /pages/{pageSlug}:
     get:
       summary: Returns page content for a given slug
-      operationId: findPageBySlug
+      operationId: pageFindBySlug
       parameters:
         - name: pageSlug
           in: path
@@ -34,7 +34,7 @@ paths:
   /pages/{id}:
     put:
       summary: Updates an existing page
-      operationId: updatePage
+      operationId: pageUpdate
       security:
         - cookieAuth: []
       requestBody:
@@ -63,7 +63,7 @@ paths:
   /pages:
     post:
       summary: Creates a new page
-      operationId: createPage
+      operationId: pageCreate
       security:
         - cookieAuth: []
       requestBody:

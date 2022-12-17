@@ -80,6 +80,17 @@ paths:
                 $ref: '#/components/schemas/Page'
         '400':
           description: Invalid page
+  /ping:
+    get:
+      summary: Checks if service is responsive
+      operationId: ping
+      responses:
+        '200':
+          description: successful operation
+          content:
+            text/plain:
+              schema:
+                type: string
 components:
   schemas:
     Page:

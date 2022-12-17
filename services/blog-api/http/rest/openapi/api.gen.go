@@ -43,6 +43,9 @@ type ServerInterface interface {
 	// Returns page content for a given slug
 	// (GET /pages/{pageSlug})
 	FindPageBySlug(ctx echo.Context, pageSlug string) error
+	// Checks if service is responsive
+	// (GET /ping)
+	Ping(ctx echo.Context) error
 }
 
 // ServerInterfaceWrapper converts echo contexts to parameters.
@@ -95,6 +98,15 @@ func (w *ServerInterfaceWrapper) FindPageBySlug(ctx echo.Context) error {
 	return err
 }
 
+// Ping converts echo context to params.
+func (w *ServerInterfaceWrapper) Ping(ctx echo.Context) error {
+	var err error
+
+	// Invoke the callback with all the unmarshalled arguments
+	err = w.Handler.Ping(ctx)
+	return err
+}
+
 // This is a simple interface which specifies echo.Route addition functions which
 // are present on both echo.Echo and echo.Group, since we want to allow using
 // either of them for path registration
@@ -126,5 +138,6 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 	router.POST(baseURL+"/pages", wrapper.CreatePage)
 	router.PUT(baseURL+"/pages/:id", wrapper.UpdatePage)
 	router.GET(baseURL+"/pages/:pageSlug", wrapper.FindPageBySlug)
+	router.GET(baseURL+"/ping", wrapper.Ping)
 
 }

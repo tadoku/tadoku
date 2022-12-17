@@ -118,3 +118,15 @@ k8s_repositories()
 load("@io_bazel_rules_k8s//k8s:k8s_go_deps.bzl", k8s_go_deps = "deps")
 
 k8s_go_deps()
+
+# Setup OpenAPI
+git_repository(
+    name = "rules_openapi",
+    remote = "https://github.com/matsubara0507/rules_openapi",
+    commit = "60ddbdb2daf93b74d9283da8c4a23cb3eb01b8ae",
+    shallow_since = "1630321831 +0900"
+)
+
+load("@rules_openapi//openapi:toolchain.bzl", rules_openapi_toolchains = "toolchains")
+
+rules_openapi_toolchains(version = "5.2.1")

@@ -31,3 +31,9 @@ func (s *server) UpdatePage(ctx echo.Context, id string) error {
 func (s *server) FindPageBySlug(ctx echo.Context, pageSlug string) error {
 	return ctx.NoContent(http.StatusNotImplemented)
 }
+
+// Checks if service is responsive
+// (GET /ping)
+func (s *server) Ping(ctx echo.Context) error {
+	return ctx.String(http.StatusOK, "pong")
+}

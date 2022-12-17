@@ -22,19 +22,19 @@ spec:
           - name: API_POSTGRES_URL
             value: "postgres://blog:foobar@postgresql-blog/blog?sslmode=disable"
           - name: API_PORT
-            value: "8080"
+            value: "8000"
         readinessProbe:
           httpGet:
             scheme: HTTP
-            path: /health
-            port: 8080
+            path: /ping
+            port: 8000
           initialDelaySeconds: 10
           periodSeconds: 5
         livenessProbe:
           httpGet:
             scheme: HTTP
-            path: /health
-            port: 8080
+            path: /ping
+            port: 8000
           initialDelaySeconds: 10
           periodSeconds: 5
 ---
@@ -47,7 +47,7 @@ metadata:
     service: blog-api
 spec:
   ports:
-  - port: 8080
+  - port: 8000
     name: http
   selector:
     app: blog-api

@@ -31,13 +31,13 @@ spec:
               name: identity-api
               port:
                 number: 4000
-        - path: /api/blog
+        - path: /api/blog/v2
           pathType: Prefix
           backend:
             service:
               name: blog-api
               port:
-                number: 8080
+                number: 8000
         - path: /pgweb
           pathType: Prefix
           backend:

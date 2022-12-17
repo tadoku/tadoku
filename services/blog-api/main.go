@@ -38,7 +38,7 @@ func main() {
 
 	server := rest.NewServer()
 
-	openapi.RegisterHandlersWithBaseURL(e, server, "/v2")
+	openapi.RegisterHandlersWithBaseURL(e, server, "")
 
 	fmt.Printf("blog-api is now available at: http://localhost:%d/v2\n", cfg.Port)
 	e.Logger.Fatal(e.Start(fmt.Sprintf("0.0.0.0:%d", cfg.Port)))

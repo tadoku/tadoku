@@ -15,24 +15,6 @@ def go_deps():
     )
 
     go_repository(
-        name = "com_github_bazelbuild_bazel_gazelle",
-        importpath = "github.com/bazelbuild/bazel-gazelle",
-        sum = "h1:Ks6YN+WkOv2lYWlvf7ksxUpLvrDbBHPBXXUrBFQ3BZM=",
-        version = "v0.23.0",
-    )
-    go_repository(
-        name = "com_github_bazelbuild_buildtools",
-        importpath = "github.com/bazelbuild/buildtools",
-        sum = "h1:Et1IIXrXwhpDvR5wH9REPEZ0sUtzUoJSq19nfmBqzBY=",
-        version = "v0.0.0-20200718160251-b1667ff58f71",
-    )
-    go_repository(
-        name = "com_github_bazelbuild_rules_go",
-        importpath = "github.com/bazelbuild/rules_go",
-        sum = "h1:wzbawlkLtl2ze9w/312NHZ84c7kpUCtlkD8HgFY27sw=",
-        version = "v0.0.0-20190719190356-6dae44dc5cab",
-    )
-    go_repository(
         name = "com_github_bmatcuk_doublestar",
         importpath = "github.com/bmatcuk/doublestar",
         sum = "h1:YroD6BJCZBYx06yYFEWvUuKVWQn3vLLQAVmDmvTSaiQ=",
@@ -82,12 +64,7 @@ def go_deps():
         sum = "h1:pPmn6qI9MuOtCz82WY2Xaw46EQjgvxednXXrP7g5Q2s=",
         version = "v1.12.4",
     )
-    go_repository(
-        name = "com_github_fsnotify_fsnotify",
-        importpath = "github.com/fsnotify/fsnotify",
-        sum = "h1:IXs+QLmnXW2CcXuY+8Mzv/fWEsPGWxqefPtCP5CnV9I=",
-        version = "v1.4.7",
-    )
+
     go_repository(
         name = "com_github_getkin_kin_openapi",
         importpath = "github.com/getkin/kin-openapi",
@@ -199,12 +176,6 @@ def go_deps():
         version = "v0.0.0-20181222135242-d2cdd8c08219",
     )
 
-    go_repository(
-        name = "com_github_google_go_cmp",
-        importpath = "github.com/google/go-cmp",
-        sum = "h1:L8R9j+yAqZuZjsqh/z+F1NCffTKKLShY6zXTItVIZ8M=",
-        version = "v0.5.4",
-    )
     go_repository(
         name = "com_github_google_renameio",
         importpath = "github.com/google/renameio",
@@ -484,12 +455,6 @@ def go_deps():
     )
 
     go_repository(
-        name = "com_github_pelletier_go_toml",
-        importpath = "github.com/pelletier/go-toml",
-        sum = "h1:T5zMGML61Wp+FlcbWjRDT7yAxhJNAiPPLOFECq181zc=",
-        version = "v1.2.0",
-    )
-    go_repository(
         name = "com_github_pelletier_go_toml_v2",
         importpath = "github.com/pelletier/go-toml/v2",
         sum = "h1:ipoSadvV8oGUjnUbMub59IDPPwfxF694nG/jwbMiyQg=",
@@ -730,3 +695,6 @@ def go_deps():
         sum = "h1:nR6NoDBgAf67s68NhaXbsojM+2gxp3S1hWkHDl27pVU=",
         version = "v1.13.0",
     )
+
+def go_dependencies():
+    pass

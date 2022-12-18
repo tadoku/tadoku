@@ -50,7 +50,10 @@ http_archive(
 # Setup golang toolchain
 load("@io_bazel_rules_go//go:deps.bzl", "go_register_toolchains", "go_rules_dependencies")
 load("@bazel_gazelle//:deps.bzl", "gazelle_dependencies")
-load("//:go_third_party.bzl", "go_deps")
+load("//:go_third_party.bzl", "go_dependencies", "go_deps")
+
+# gazelle:repository_macro go_third_party.bzl%go_dependencies
+go_dependencies()
 
 go_rules_dependencies()
 
@@ -106,9 +109,9 @@ rules_pkg_dependencies()
 # Setup k8s
 http_archive(
     name = "io_bazel_rules_k8s",
+    sha256 = "51f0977294699cd547e139ceff2396c32588575588678d2054da167691a227ef",
     strip_prefix = "rules_k8s-0.6",
     urls = ["https://github.com/bazelbuild/rules_k8s/archive/v0.6.tar.gz"],
-    sha256 = "51f0977294699cd547e139ceff2396c32588575588678d2054da167691a227ef",
 )
 
 load("@io_bazel_rules_k8s//k8s:k8s.bzl", "k8s_repositories")
@@ -122,9 +125,9 @@ k8s_go_deps()
 # Setup OpenAPI
 git_repository(
     name = "rules_openapi",
-    remote = "https://github.com/matsubara0507/rules_openapi",
     commit = "60ddbdb2daf93b74d9283da8c4a23cb3eb01b8ae",
-    shallow_since = "1630321831 +0900"
+    remote = "https://github.com/matsubara0507/rules_openapi",
+    shallow_since = "1630321831 +0900",
 )
 
 load("@rules_openapi//openapi:toolchain.bzl", rules_openapi_toolchains = "toolchains")

@@ -76,3 +76,23 @@ oathkeeper:
     mutators:
       noop:
         enabled: true
+
+      id_token:
+        enabled: true
+        config:
+          issuer_url: http://oathkeeper-api/
+          jwks_url: file:///etc/secrets/jwks.json
+          claims: |
+            {
+              "session": {{ .Extra | toJson }}
+            }
+
+deployment:
+  extraVolumes:
+    - name: jwks
+      secret:
+        secretName: oathkeeper-jwks
+  extraVolumeMounts:
+    - name: jwks
+      mountPath: /etc/secrets
+      readOnly: true

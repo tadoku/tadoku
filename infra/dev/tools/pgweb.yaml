@@ -20,6 +20,8 @@ spec:
           ports:
             - containerPort: 8081
           env:
+            - name: SESSIONS
+              value: "true"
             - name: DATABASE_URL
               value: "postgres://reading_contest:foobar@postgres-reading-contest/reading_contest?sslmode=disable"
 ---

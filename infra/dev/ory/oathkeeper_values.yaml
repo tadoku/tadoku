@@ -1,76 +1,78 @@
-log:
-  level: debug
-  format: json
+oathkeeper:
+  config:
+    log:
+      level: debug
+      format: json
 
-serve:
-  proxy:
-    cors:
-      enabled: true
-      allowed_origins:
-        - "*"
-      allowed_methods:
-        - POST
-        - GET
-        - PUT
-        - PATCH
-        - DELETE
-      allowed_headers:
-        - Authorization
-        - Content-Type
-      exposed_headers:
-        - Content-Type
-      allow_credentials: true
-      debug: true
+    serve:
+      proxy:
+        cors:
+          enabled: true
+          allowed_origins:
+            - "*"
+          allowed_methods:
+            - POST
+            - GET
+            - PUT
+            - PATCH
+            - DELETE
+          allowed_headers:
+            - Authorization
+            - Content-Type
+          exposed_headers:
+            - Content-Type
+          allow_credentials: true
+          debug: true
 
-errors:
-  fallback:
-    - json
+    errors:
+      fallback:
+        - json
 
-  handlers:
-    redirect:
-      enabled: true
-      config:
-        to: http://account.langlog.be/
-        when:
-          -
-            error:
-              - unauthorized
-              - forbidden
-            request:
-              header:
-                accept:
-                  - text/html
-    json:
-      enabled: true
-      config:
-        verbose: true
+      handlers:
+        redirect:
+          enabled: true
+          config:
+            to: http://account.langlog.be/
+            when:
+              -
+                error:
+                  - unauthorized
+                  - forbidden
+                request:
+                  header:
+                    accept:
+                      - text/html
+        json:
+          enabled: true
+          config:
+            verbose: true
 
-access_rules:
-  matching_strategy: glob
+    access_rules:
+      matching_strategy: glob
 
-authenticators:
-  anonymous:
-    enabled: true
-    config:
-      subject: guest
+    authenticators:
+      anonymous:
+        enabled: true
+        config:
+          subject: guest
 
-  cookie_session:
-    enabled: true
-    config:
-      check_session_url: http://kratos/sessions/whoami
-      preserve_path: true
-      extra_from: "@this"
-      subject_from: "identity.id"
-      only:
-        - ory_kratos_session
+      cookie_session:
+        enabled: true
+        config:
+          check_session_url: http://kratos/sessions/whoami
+          preserve_path: true
+          extra_from: "@this"
+          subject_from: "identity.id"
+          only:
+            - ory_kratos_session
 
-  noop:
-    enabled: true
+      noop:
+        enabled: true
 
-authorizers:
-  allow:
-    enabled: true
+    authorizers:
+      allow:
+        enabled: true
 
-mutators:
-  noop:
-    enabled: true
+    mutators:
+      noop:
+        enabled: true

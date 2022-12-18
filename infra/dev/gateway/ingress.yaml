@@ -38,6 +38,13 @@ spec:
               name: blog-api
               port:
                 number: 8000
+        - path: /api/oathkeeper
+          pathType: Prefix
+          backend:
+            service:
+              name: oathkeeper-api
+              port:
+                number: 4456
         - path: /pgweb
           pathType: Prefix
           backend:

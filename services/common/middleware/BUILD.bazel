@@ -1,0 +1,19 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "middleware",
+    srcs = [
+        "role.go",
+        "session.go",
+    ],
+    importpath = "github.com/tadoku/tadoku/services/common/middleware",
+    visibility = ["//visibility:public"],
+    deps = [
+        "@com_github_golang_jwt_jwt//:jwt",
+        "@com_github_golang_jwt_jwt_v4//:jwt",
+        "@com_github_labstack_echo_v4//:echo",
+        "@com_github_labstack_echo_v4//middleware",
+        "@com_github_micahparks_keyfunc//:keyfunc",
+        "@in_gopkg_yaml_v3//:yaml_v3",
+    ],
+)

@@ -11,6 +11,7 @@ go_library(
         "//services/blog-api/http/rest",
         "//services/blog-api/http/rest/openapi",
         "//services/blog-api/storage/postgres",
+        "//services/common/middleware",
         "@com_github_go_playground_validator_v10//:validator",
         "@com_github_jackc_pgx_v4//stdlib",
         "@com_github_kelseyhightower_envconfig//:envconfig",

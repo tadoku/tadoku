@@ -11,6 +11,7 @@ import (
 	"github.com/tadoku/tadoku/services/blog-api/http/rest"
 	"github.com/tadoku/tadoku/services/blog-api/http/rest/openapi"
 	"github.com/tadoku/tadoku/services/blog-api/storage/postgres"
+	tadokumiddleware "github.com/tadoku/tadoku/services/common/middleware"
 
 	_ "github.com/jackc/pgx/v4/stdlib"
 	"github.com/labstack/echo/v4"
@@ -39,6 +40,8 @@ func main() {
 
 	e := echo.New()
 	e.Use(echomiddleware.Logger())
+	// TODO: parameterize this
+	e.Use(tadokumiddleware.Session("http://oathkeeper-api:4456/.well-known/jwks.json"))
 
 	pageRepository := postgres.NewPageRepository(psql)
 

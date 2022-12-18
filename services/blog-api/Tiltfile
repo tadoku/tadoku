@@ -21,7 +21,7 @@ custom_build(
       image_target='//services/blog-api:image',
       bazel_image='bazel/services/blog-api:image'
     ),
-  deps=['./'],
+  deps=['./', './../common/'],
 )
 
 k8s_resource('blog-api', labels=["backend"])

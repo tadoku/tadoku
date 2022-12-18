@@ -1,9 +1,12 @@
-load('ext://helm_remote', 'helm_remote')
+load('ext://helm_resource', 'helm_resource', 'helm_repo')
 
 # mailhog
-helm_remote('mailhog',
-            repo_name='codecentric',
-            repo_url='https://codecentric.github.io/helm-charts')
+helm_repo('codecentric', 'https://codecentric.github.io/helm-charts', resource_name='helm-repo-codecentric', labels=["tools"])
+helm_resource('mailhog',
+              'codecentric/mailhog',
+              resource_deps=['helm-repo-codecentric'])
+
+
 k8s_resource("mailhog", labels=["tools"])
 
 # pgweb (postgres client)

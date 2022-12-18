@@ -2,7 +2,6 @@ go 1.19
 
 use (
 	.
-	./services/blog-api
 	./services/identity-api
 	./services/reading-contest-api
 	./services/redirect-naked-domain

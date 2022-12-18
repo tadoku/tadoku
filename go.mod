@@ -5,9 +5,11 @@ go 1.16
 require (
 	github.com/DATA-DOG/go-txdb v0.1.4 // indirect
 	github.com/DavidHuie/gomigrate v0.0.0-20190826182718-4adc4b3de142 // indirect
+	github.com/MicahParks/keyfunc v1.7.0 // indirect
 	github.com/bazelbuild/bazel-gazelle v0.23.0 // indirect
 	github.com/creasty/configo v0.0.0-20170711121124-288b7e8980d2 // indirect
 	github.com/getsentry/sentry-go v0.11.0 // indirect
+	github.com/golang-jwt/jwt/v4 v4.4.3 // indirect
 	github.com/gordonklaus/ineffassign v0.0.0-20210225214923-2e10b2664254 // indirect
 	github.com/jmoiron/sqlx v1.3.4 // indirect
 	github.com/joho/godotenv v1.3.0 // indirect

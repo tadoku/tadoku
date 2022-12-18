@@ -24,7 +24,7 @@ spec:
                 name: identity-api-configmap
           env:
             - name: DATABASE_URL
-              value: "postgres://reading_contest:foobar@postgresql-reading-contest/reading_contest"
+              value: "postgres://reading_contest:foobar@postgres-reading-contest/reading_contest"
           readinessProbe:
             httpGet:
               scheme: HTTP

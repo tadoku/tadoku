@@ -13,14 +13,6 @@ spec:
       labels:
         app: reading-contest-api
     spec:
-      # initContainers:
-      #   - name: migrations
-      #     image: migrate/migrate:latest
-      #     command: ['/migrate']
-      #     args: ['-source', 'github://tadoku/tadoku/services/reading-contest-api/interfaces/repositories/migrations', '-database', '$(DATABASE_URL)', 'up']
-      #     env:
-      #     - name: DATABASE_URL
-      #       value: "postgres://reading_contest:foobar@postgresql-reading-contest/reading_contest?sslmode=disable"
       containers:
         - name: reading-contest-api
           image: reading-contest-api-image
@@ -31,7 +23,7 @@ spec:
                 name: reading-contest-api-configmap
           env:
             - name: DATABASE_URL
-              value: "postgres://reading_contest:foobar@postgresql-reading-contest/reading_contest"
+              value: "postgres://reading_contest:foobar@postgres-reading-contest/reading_contest"
           readinessProbe:
             httpGet:
               scheme: HTTP

@@ -9,11 +9,11 @@ auth:
 nameOverride: "kratos"
 standalone: "standalone"
 
-# The postgres helm chart deployment will be using PVC postgresql-data-claim
+# The postgres helm chart deployment will be using PVC postgres-data-claim
 primary:
   persistence:
     enabled: true
-    existingClaim: "postgresql-kratos-data-claim"
+    existingClaim: "postgres-kratos-data-claim"
 
 volumePermissions:
   enabled: true

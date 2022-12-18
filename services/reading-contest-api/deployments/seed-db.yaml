@@ -23,7 +23,7 @@ spec:
         - name: PGPASSWORD
           value: foobar
         - name: PGHOST
-          value: postgresql-reading-contest
+          value: postgres-reading-contest
         - name: PGDATABASE
           value: reading_contest
       volumes:

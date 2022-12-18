@@ -9,11 +9,11 @@ auth:
 nameOverride: "blog"
 standalone: "standalone"
 
-# The postgres helm chart deployment will be using PVC postgresql-data-claim
+# The postgres helm chart deployment will be using PVC postgres-data-claim
 primary:
   persistence:
     enabled: true
-    existingClaim: "postgresql-blog-data-claim"
+    existingClaim: "postgres-blog-data-claim"
 
 volumePermissions:
   enabled: true

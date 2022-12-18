@@ -20,7 +20,7 @@ spec:
           args: ['-source', 'file:///migrations', '-database', '$(DATABASE_URL)', 'up']
           env:
           - name: DATABASE_URL
-            value: "postgres://blog:foobar@postgresql-blog/blog?sslmode=disable"
+            value: "postgres://blog:foobar@postgres-blog/blog?sslmode=disable"
       containers:
       - name: blog-api
         image: blog-api-image
@@ -28,7 +28,7 @@ spec:
         - containerPort: 8080
         env:
           - name: API_POSTGRES_URL
-            value: "postgres://blog:foobar@postgresql-blog/blog?sslmode=disable"
+            value: "postgres://blog:foobar@postgres-blog/blog?sslmode=disable"
           - name: API_PORT
             value: "8000"
         readinessProbe:

@@ -21,7 +21,7 @@ spec:
             - containerPort: 8081
           env:
             - name: DATABASE_URL
-              value: "postgres://reading_contest:foobar@postgresql-reading-contest/reading_contest?sslmode=disable"
+              value: "postgres://reading_contest:foobar@postgres-reading-contest/reading_contest?sslmode=disable"
 ---
 apiVersion: v1
 kind: Service

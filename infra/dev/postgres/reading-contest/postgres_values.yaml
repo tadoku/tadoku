@@ -9,11 +9,11 @@ auth:
 nameOverride: "reading-contest"
 standalone: "standalone"
 
-# The postgres helm chart deployment will be using PVC postgresql-data-claim
+# The postgres helm chart deployment will be using PVC postgres-data-claim
 primary:
   persistence:
     enabled: true
-    existingClaim: "postgresql-reading-contest-data-claim"
+    existingClaim: "postgres-reading-contest-data-claim"
 
 volumePermissions:
   enabled: true

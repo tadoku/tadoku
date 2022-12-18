@@ -1,11 +1,14 @@
-load('ext://helm_remote', 'helm_remote')
-
-helm_remote('kong',
-            repo_name='kong',
-            repo_url='https://charts.konghq.com',
-            version='2.6.4',
-            set=['ingressController.installCRDs=false'])
+load('ext://helm_resource', 'helm_resource', 'helm_repo')
 
 k8s_yaml('./ingress.yaml')
 
-k8s_resource("kong-kong", labels=["infra"])
+helm_repo('kong', 'https://charts.konghq.com', resource_name='helm-repo-kong', labels=["infra"])
+helm_resource('kong',
+              'kong/kong',
+              flags=[
+                '--version', '2.6.4',
+                '--set', 'ingressController.installCRDs=false'
+              ],
+              resource_deps=['helm-repo-kong'])
+
+k8s_resource("kong", labels=["infra"])

@@ -1,24 +1,41 @@
 module github.com/tadoku/tadoku
 
-go 1.16
+go 1.19
 
 require (
-	github.com/DATA-DOG/go-txdb v0.1.4 // indirect
-	github.com/DavidHuie/gomigrate v0.0.0-20190826182718-4adc4b3de142 // indirect
-	github.com/MicahParks/keyfunc v1.7.0 // indirect
-	github.com/bazelbuild/bazel-gazelle v0.23.0 // indirect
-	github.com/creasty/configo v0.0.0-20170711121124-288b7e8980d2 // indirect
-	github.com/getsentry/sentry-go v0.11.0 // indirect
-	github.com/golang-jwt/jwt/v4 v4.4.3 // indirect
-	github.com/gordonklaus/ineffassign v0.0.0-20210225214923-2e10b2664254 // indirect
-	github.com/jmoiron/sqlx v1.3.4 // indirect
-	github.com/joho/godotenv v1.3.0 // indirect
-	github.com/kelseyhightower/envconfig v1.4.0 // indirect
-	github.com/labstack/echo/v4 v4.3.0 // indirect
-	github.com/lib/pq v1.10.2 // indirect
-	github.com/mattn/go-zglob v0.0.3 // indirect
-	github.com/srvc/fail v4.0.0+incompatible // indirect
-	github.com/testcontainers/testcontainers-go v0.10.0 // indirect
-	golang.org/x/arch v0.0.0-20210502124803-cbf565b21d1e // indirect
-	golang.org/x/net v0.0.0-20210521195947-fe42d452be8f // indirect
+	github.com/MicahParks/keyfunc v1.7.0
+	github.com/deepmap/oapi-codegen v1.12.4
+	github.com/go-playground/validator/v10 v10.11.1
+	github.com/golang-jwt/jwt v3.2.2+incompatible
+	github.com/golang-jwt/jwt/v4 v4.4.3
+	github.com/google/uuid v1.3.0
+	github.com/jackc/pgconn v1.13.0
+	github.com/jackc/pgerrcode v0.0.0-20220416144525-469b46aa5efa
+	github.com/jackc/pgx/v4 v4.17.2
+	github.com/kelseyhightower/envconfig v1.4.0
+	github.com/labstack/echo/v4 v4.9.1
+	gopkg.in/yaml.v3 v3.0.1
+)
+
+require (
+	github.com/apapsch/go-jsonmerge/v2 v2.0.0 // indirect
+	github.com/go-playground/locales v0.14.0 // indirect
+	github.com/go-playground/universal-translator v0.18.0 // indirect
+	github.com/jackc/chunkreader/v2 v2.0.1 // indirect
+	github.com/jackc/pgio v1.0.0 // indirect
+	github.com/jackc/pgpassfile v1.0.0 // indirect
+	github.com/jackc/pgproto3/v2 v2.3.1 // indirect
+	github.com/jackc/pgservicefile v0.0.0-20200714003250-2b9c44734f2b // indirect
+	github.com/jackc/pgtype v1.12.0 // indirect
+	github.com/labstack/gommon v0.4.0 // indirect
+	github.com/leodido/go-urn v1.2.1 // indirect
+	github.com/mattn/go-colorable v0.1.13 // indirect
+	github.com/mattn/go-isatty v0.0.16 // indirect
+	github.com/valyala/bytebufferpool v1.0.0 // indirect
+	github.com/valyala/fasttemplate v1.2.2 // indirect
+	golang.org/x/crypto v0.1.0 // indirect
+	golang.org/x/net v0.2.0 // indirect
+	golang.org/x/sys v0.2.0 // indirect
+	golang.org/x/text v0.4.0 // indirect
+	golang.org/x/time v0.0.0-20220411224347-583f2d630306 // indirect
 )

@@ -3,6 +3,7 @@ oathkeeper:
     log:
       level: debug
       format: json
+      leak_sensitive_values: true
 
     serve:
       proxy:
@@ -59,7 +60,7 @@ oathkeeper:
       cookie_session:
         enabled: true
         config:
-          check_session_url: http://kratos/sessions/whoami
+          check_session_url: http://kratos-public/sessions/whoami
           preserve_path: true
           extra_from: "@this"
           subject_from: "identity.id"
@@ -81,7 +82,7 @@ oathkeeper:
         enabled: true
         config:
           issuer_url: http://oathkeeper-api/
-          jwks_url: file:///etc/secrets/jwks.json
+          jwks_url: file:///etc/secrets/oathkeeper/jwks.json
           claims: |
             {
               "session": {{ .Extra | toJson }}
@@ -94,5 +95,5 @@ deployment:
         secretName: oathkeeper-jwks
   extraVolumeMounts:
     - name: jwks
-      mountPath: /etc/secrets
+      mountPath: /etc/secrets/oathkeeper
       readOnly: true

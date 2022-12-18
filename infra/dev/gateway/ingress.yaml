@@ -4,6 +4,26 @@ metadata:
   name: tadoku
   annotations:
     kubernetes.io/ingress.class: kong
+spec:
+  rules:
+  - host: langlog.be
+    http:
+      paths:
+        # api service mappings are managed in infra/dev/ory/access_rules.yaml
+        - path: /api
+          pathType: Prefix
+          backend:
+            service:
+              name: oathkeeper-proxy
+              port:
+                number: 4455
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: tadoku-stripped-path
+  annotations:
+    kubernetes.io/ingress.class: kong
     konghq.com/strip-path: "true"
 spec:
   rules:
@@ -17,27 +37,6 @@ spec:
               name: frontend-webv2
               port:
                 number: 3000
-        - path: /api/reading-contest
-          pathType: Prefix
-          backend:
-            service:
-              name: reading-contest-api
-              port:
-                number: 4000
-        - path: /api/identity
-          pathType: Prefix
-          backend:
-            service:
-              name: identity-api
-              port:
-                number: 4000
-        - path: /api/blog/v2
-          pathType: Prefix
-          backend:
-            service:
-              name: blog-api
-              port:
-                number: 8000
         - path: /api/oathkeeper
           pathType: Prefix
           backend:

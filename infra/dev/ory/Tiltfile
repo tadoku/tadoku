@@ -26,3 +26,14 @@ helm_resource('oathkeeper',
               resource_deps=['helm-repo-ory'])
 
 k8s_resource("oathkeeper", labels=["auth"])
+
+# keto
+helm_resource('keto',
+              'ory/keto',
+              flags=[
+                '--set', 'keto.config.dsn=memory',
+                '-f', './keto_values.yaml',
+              ],
+              deps=['./keto_values.yaml'],
+              resource_deps=['helm-repo-ory'])
+k8s_resource("keto", labels=["auth"])

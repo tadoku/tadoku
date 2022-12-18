@@ -37,13 +37,27 @@ spec:
               name: frontend-webv2
               port:
                 number: 3000
-        - path: /api/oathkeeper
+        - path: /oathkeeper
           pathType: Prefix
           backend:
             service:
               name: oathkeeper-api
               port:
                 number: 4456
+        - path: /keto/read
+          pathType: Prefix
+          backend:
+            service:
+              name: keto-read
+              port:
+                number: 80
+        - path: /keto/write
+          pathType: Prefix
+          backend:
+            service:
+              name: keto-write
+              port:
+                number: 80
         - path: /pgweb
           pathType: Prefix
           backend:

@@ -1,6 +1,5 @@
 load('ext://configmap', 'configmap_yaml')
 
 k8s_yaml(configmap_yaml('tadoku-permissions', from_file=[
-      'admins.yaml=./admins.yaml',
-      'banned.yaml=./banned.yaml',
+      'roles.yaml=./roles.yaml',
 ]))

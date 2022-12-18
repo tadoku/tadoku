@@ -1,5 +1,9 @@
+load('ext://helm_resource', 'helm_resource', 'helm_repo')
 load('ext://helm_remote', 'helm_remote')
 
+helm_repo('ory', 'https://k8s.ory.sh/helm/charts', resource_name='helm-repo-ory', labels=["auth"])
+
+# kratos
 helm_remote('kratos',
             repo_name='ory',
             repo_url='https://k8s.ory.sh/helm/charts',
@@ -8,3 +12,15 @@ helm_remote('kratos',
 k8s_resource("kratos", labels=["auth"])
 k8s_resource("kratos-courier", labels=["auth"])
 k8s_resource("kratos-automigrate", labels=["auth"])
+
+# oathkeeper
+helm_resource('oathkeeper',
+              'ory/oathkeeper',
+              flags=[
+                '--set-file', 'oathkeeper.accessRules=./access_rules.yaml',
+                '-f', './oathkeeper_values.yaml',
+              ],
+              deps=['./access_rules.yaml', './oathkeeper_values.yaml'],
+              resource_deps=['helm-repo-ory'])
+
+k8s_resource("oathkeeper", labels=["auth"])

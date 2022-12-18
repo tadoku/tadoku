@@ -2,10 +2,7 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library")
 
 go_library(
     name = "pagecreate",
-    srcs = [
-        "page.go",
-        "service.go",
-    ],
+    srcs = ["service.go"],
     importpath = "github.com/tadoku/tadoku/services/blog-api/domain/pagecreate",
     visibility = ["//visibility:public"],
     deps = [

@@ -1,18 +1,18 @@
 load('ext://helm_resource', 'helm_resource', 'helm_repo')
-load('ext://helm_remote', 'helm_remote')
 load('ext://secret', 'secret_yaml_generic')
 
 helm_repo('ory', 'https://k8s.ory.sh/helm/charts', resource_name='helm-repo-ory', labels=["auth"])
 
 # kratos
-helm_remote('kratos',
-            repo_name='ory',
-            repo_url='https://k8s.ory.sh/helm/charts',
-            values='./kratos_values.yaml')
+helm_resource('kratos',
+              'ory/kratos',
+              flags=[
+                '-f', './kratos_values.yaml',
+              ],
+              deps=['./kratos_values.yaml'],
+              resource_deps=['helm-repo-ory'])
 
 k8s_resource("kratos", labels=["auth"])
-k8s_resource("kratos-courier", labels=["auth"])
-k8s_resource("kratos-automigrate", labels=["auth"])
 
 # oathkeeper
 k8s_yaml(secret_yaml_generic('oathkeeper-jwks', from_file=['jwks.json=./jwks-dev.json']))

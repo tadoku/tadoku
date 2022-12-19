@@ -2,7 +2,11 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library")
 
 go_library(
     name = "rest",
-    srcs = ["server.go"],
+    srcs = [
+        "health.go",
+        "pages.go",
+        "server.go",
+    ],
     importpath = "github.com/tadoku/tadoku/services/blog-api/http/rest",
     visibility = ["//visibility:public"],
     deps = [

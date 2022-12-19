@@ -4,6 +4,6 @@
 
 ```
 # cd into this package
-$ cd services/blog-api/storage/postgres
+$ cd services/content-api/storage/postgres
 $ go generate
 ```

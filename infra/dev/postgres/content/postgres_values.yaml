@@ -2,18 +2,18 @@
 auth:
   enablePostgresUser: true
   postgresPassword: "foobar"
-  username: "blog"
+  username: "content"
   password: "foobar"
-  database: "blog"
+  database: "content"
 
-nameOverride: "blog"
+nameOverride: "content"
 standalone: "standalone"
 
 # The postgres helm chart deployment will be using PVC postgres-data-claim
 primary:
   persistence:
     enabled: true
-    existingClaim: "postgres-blog-data-claim"
+    existingClaim: "postgres-content-data-claim"
 
 volumePermissions:
   enabled: true

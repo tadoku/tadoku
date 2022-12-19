@@ -13,7 +13,7 @@
 
   - `reading-contest-api`
   - `identity-api`
-  - `blog-api`
+  - `content-api`
 
 - Frontend
 

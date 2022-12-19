@@ -1,10 +1,10 @@
-- id: "tadoku:blog:api"
+- id: "tadoku:content:api"
   upstream:
     preserve_host: true
-    url: "http://blog-api:80"
-    strip_path: /api/blog/v2
+    url: "http://content-api:80"
+    strip_path: /api/content/
   match:
-    url: "http://langlog.be/api/blog/v2/<**>"
+    url: "http://langlog.be/api/content/<**>"
     methods:
       - GET
       - POST

@@ -54,5 +54,5 @@ jobs:
           cp /home/runner/.docker/config.json /tmp/docker/config.json
 
           # Push images
-          bazel run //services/blog-api:image_push
+          bazel run //services/content-api:image_push
           bazel run //services/redirect-naked-domain:image_push

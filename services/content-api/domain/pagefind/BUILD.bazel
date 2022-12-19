@@ -3,7 +3,7 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library")
 go_library(
     name = "pagefind",
     srcs = ["service.go"],
-    importpath = "github.com/tadoku/tadoku/services/blog-api/domain/pagefind",
+    importpath = "github.com/tadoku/tadoku/services/content-api/domain/pagefind",
     visibility = ["//visibility:public"],
     deps = ["@com_github_google_uuid//:uuid"],
 )

@@ -4,7 +4,7 @@ load("//:build/oapi-codegen.bzl", "oapi_codegen")
 go_library(
     name = "openapi",
     srcs = ["api.gen.go"],
-    importpath = "github.com/tadoku/tadoku/services/blog-api/http/rest/openapi",
+    importpath = "github.com/tadoku/tadoku/services/content-api/http/rest/openapi",
     visibility = ["//visibility:public"],
     deps = [
         "@com_github_deepmap_oapi_codegen//pkg/runtime",

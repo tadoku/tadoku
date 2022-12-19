@@ -24,13 +24,13 @@ helm_resource('postgres-reading-contest',
               resource_deps=['helm-repo-bitnami'])
 k8s_resource("postgres-reading-contest", labels=["infra"])
 
-# blog
-k8s_yaml('./blog/postgres.yaml')
-helm_resource('postgres-blog',
+# content
+k8s_yaml('./content/postgres.yaml')
+helm_resource('postgres-content',
               'bitnami/postgresql',
               flags=[
-                '-f', './blog/postgres_values.yaml',
+                '-f', './content/postgres_values.yaml',
               ],
-              deps=['./blog/postgres_values.yaml'],
+              deps=['./content/postgres_values.yaml'],
               resource_deps=['helm-repo-bitnami'])
-k8s_resource("postgres-blog", labels=["infra"])
+k8s_resource("postgres-content", labels=["infra"])

@@ -7,12 +7,12 @@ go_library(
         "pages.go",
         "server.go",
     ],
-    importpath = "github.com/tadoku/tadoku/services/blog-api/http/rest",
+    importpath = "github.com/tadoku/tadoku/services/content-api/http/rest",
     visibility = ["//visibility:public"],
     deps = [
-        "//services/blog-api/domain/pagecreate",
-        "//services/blog-api/domain/pagefind",
-        "//services/blog-api/http/rest/openapi",
+        "//services/content-api/domain/pagecreate",
+        "//services/content-api/domain/pagefind",
+        "//services/content-api/http/rest/openapi",
         "@com_github_labstack_echo_v4//:echo",
     ],
 )

@@ -1,9 +1,9 @@
 package rest
 
 import (
-	"github.com/tadoku/tadoku/services/blog-api/domain/pagecreate"
-	"github.com/tadoku/tadoku/services/blog-api/domain/pagefind"
-	"github.com/tadoku/tadoku/services/blog-api/http/rest/openapi"
+	"github.com/tadoku/tadoku/services/content-api/domain/pagecreate"
+	"github.com/tadoku/tadoku/services/content-api/domain/pagefind"
+	"github.com/tadoku/tadoku/services/content-api/http/rest/openapi"
 )
 
 // NewServer creates a new server conforming to the OpenAPI spec

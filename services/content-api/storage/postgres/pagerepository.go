@@ -9,8 +9,8 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgconn"
 	"github.com/jackc/pgerrcode"
-	"github.com/tadoku/tadoku/services/blog-api/domain/pagecreate"
-	"github.com/tadoku/tadoku/services/blog-api/domain/pagefind"
+	"github.com/tadoku/tadoku/services/content-api/domain/pagecreate"
+	"github.com/tadoku/tadoku/services/content-api/domain/pagefind"
 )
 
 type PageRepository struct {

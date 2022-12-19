@@ -6,13 +6,13 @@ import (
 
 	"github.com/go-playground/validator/v10"
 	"github.com/kelseyhightower/envconfig"
-	"github.com/tadoku/tadoku/services/blog-api/domain/pagecreate"
-	"github.com/tadoku/tadoku/services/blog-api/domain/pagefind"
-	"github.com/tadoku/tadoku/services/blog-api/http/rest"
-	"github.com/tadoku/tadoku/services/blog-api/http/rest/openapi"
-	"github.com/tadoku/tadoku/services/blog-api/storage/postgres"
 	tadokumiddleware "github.com/tadoku/tadoku/services/common/middleware"
 	"github.com/tadoku/tadoku/services/common/storage/memory"
+	"github.com/tadoku/tadoku/services/content-api/domain/pagecreate"
+	"github.com/tadoku/tadoku/services/content-api/domain/pagefind"
+	"github.com/tadoku/tadoku/services/content-api/http/rest"
+	"github.com/tadoku/tadoku/services/content-api/http/rest/openapi"
+	"github.com/tadoku/tadoku/services/content-api/storage/postgres"
 
 	_ "github.com/jackc/pgx/v4/stdlib"
 	"github.com/labstack/echo/v4"
@@ -57,6 +57,6 @@ func main() {
 
 	openapi.RegisterHandlersWithBaseURL(e, server, "")
 
-	fmt.Printf("blog-api is now available at: http://localhost:%d/v2\n", cfg.Port)
+	fmt.Printf("content-api is now available at: http://localhost:%d/v2\n", cfg.Port)
 	e.Logger.Fatal(e.Start(fmt.Sprintf("0.0.0.0:%d", cfg.Port)))
 }

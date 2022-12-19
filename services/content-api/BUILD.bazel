@@ -1,18 +1,18 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
 
 go_library(
-    name = "blog_api_lib",
+    name = "content_api_lib",
     srcs = ["main.go"],
-    importpath = "github.com/tadoku/tadoku/services/blog-api",
+    importpath = "github.com/tadoku/tadoku/services/content-api",
     visibility = ["//visibility:private"],
     deps = [
-        "//services/blog-api/domain/pagecreate",
-        "//services/blog-api/domain/pagefind",
-        "//services/blog-api/http/rest",
-        "//services/blog-api/http/rest/openapi",
-        "//services/blog-api/storage/postgres",
         "//services/common/middleware",
         "//services/common/storage/memory",
+        "//services/content-api/domain/pagecreate",
+        "//services/content-api/domain/pagefind",
+        "//services/content-api/http/rest",
+        "//services/content-api/http/rest/openapi",
+        "//services/content-api/storage/postgres",
         "@com_github_go_playground_validator_v10//:validator",
         "@com_github_jackc_pgx_v4//stdlib",
         "@com_github_kelseyhightower_envconfig//:envconfig",
@@ -21,8 +21,8 @@ go_library(
 )
 
 go_binary(
-    name = "blog_api",
-    embed = [":blog_api_lib"],
+    name = "content_api",
+    embed = [":content_api_lib"],
     visibility = ["//visibility:public"],
 )
 
@@ -33,7 +33,7 @@ load("@io_bazel_rules_docker//container:container.bzl", "container_push")
 
 go_image(
     name = "base_image",
-    embed = [":blog_api_lib"],
+    embed = [":content_api_lib"],
     goarch = "amd64",
     goos = "linux",
     visibility = ["//visibility:public"],
@@ -50,6 +50,6 @@ container_push(
     format = "Docker",
     image = ":image",
     registry = "ghcr.io",
-    repository = "tadoku/tadoku/blog-api",
+    repository = "tadoku/tadoku/content-api",
     skip_unchanged_digest = True,
 )

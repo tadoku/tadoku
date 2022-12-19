@@ -1,6 +1,6 @@
 openapi: 3.0.3
 info:
-  title: blog-api
+  title: content-api
   license:
     name: MIT
     url: https://github.com/tadoku/tadoku/blob/main/LICENSE
@@ -9,7 +9,7 @@ externalDocs:
   description: Find out more about Tadoku
   url: https://tadoku.github.io/tadoku/
 servers:
-  - url: https://tadoku.app/api/blog/v2
+  - url: https://tadoku.app/api/content/
 paths:
   /pages/{pageSlug}:
     get:

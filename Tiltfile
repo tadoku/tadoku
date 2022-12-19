@@ -9,7 +9,7 @@ include('./infra/dev/permissions/Tiltfile')
 
 # Services
 
-include('./services/blog-api/Tiltfile')
+include('./services/content-api/Tiltfile')
 
 # Frontend
 include('./frontend/Tiltfile')

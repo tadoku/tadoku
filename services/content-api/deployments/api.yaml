@@ -1,34 +1,34 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: blog-api
+  name: content-api
   labels:
-    app: blog-api
+    app: content-api
 spec:
   selector:
     matchLabels:
-      app: blog-api
+      app: content-api
   template:
     metadata:
       labels:
-        app: blog-api
+        app: content-api
     spec:
       initContainers:
         - name: migrations
-          image: blog-api-migrate-image
+          image: content-api-migrate-image
           command: ['/migrate']
           args: ['-source', 'file:///migrations', '-database', '$(DATABASE_URL)', 'up']
           env:
           - name: DATABASE_URL
-            value: "postgres://blog:foobar@postgres-blog/blog?sslmode=disable"
+            value: "postgres://content:foobar@postgres-content/content?sslmode=disable"
       containers:
-      - name: blog-api
-        image: blog-api-image
+      - name: content-api
+        image: content-api-image
         ports:
         - containerPort: 8000
         env:
           - name: API_POSTGRES_URL
-            value: "postgres://blog:foobar@postgres-blog/blog?sslmode=disable"
+            value: "postgres://content:foobar@postgres-content/content?sslmode=disable"
           - name: API_PORT
             value: "8000"
           - name: API_JWKS
@@ -58,14 +58,14 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: blog-api
+  name: content-api
   labels:
-    app: blog-api
-    service: blog-api
+    app: content-api
+    service: content-api
 spec:
   ports:
   - port: 80
     targetPort: 8000
     name: http
   selector:
-    app: blog-api
+    app: content-api

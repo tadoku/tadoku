@@ -25,7 +25,7 @@ spec:
       - name: blog-api
         image: blog-api-image
         ports:
-        - containerPort: 8080
+        - containerPort: 8000
         env:
           - name: API_POSTGRES_URL
             value: "postgres://blog:foobar@postgres-blog/blog?sslmode=disable"
@@ -55,7 +55,8 @@ metadata:
     service: blog-api
 spec:
   ports:
-  - port: 8000
+  - port: 80
+    targetPort: 8000
     name: http
   selector:
     app: blog-api

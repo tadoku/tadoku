@@ -1,7 +1,7 @@
 - id: "tadoku:blog:api"
   upstream:
     preserve_host: true
-    url: "http://blog-api:8000"
+    url: "http://blog-api:80"
     strip_path: /api/blog/v2
   match:
     url: "http://langlog.be/api/blog/v2/<**>"

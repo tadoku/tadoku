@@ -74,10 +74,68 @@ func (r *PageRepository) CreatePage(ctx context.Context, req *pagecommand.PageCr
 	}
 
 	return &pagecommand.PageCreateResponse{
-		ID:    page.ID,
-		Slug:  page.Slug,
-		Title: page.Title,
-		Html:  page.Html,
+		ID:          page.ID,
+		Slug:        page.Slug,
+		Title:       page.Title,
+		Html:        page.Html,
+		PublishedAt: NewTimeFromNullTime(page.PublishedAt),
+	}, nil
+}
+
+func (r *PageRepository) UpdatePage(ctx context.Context, id uuid.UUID, req *pagecommand.PageUpdateRequest) (*pagecommand.PageUpdateResponse, error) {
+	tx, err := r.psql.BeginTx(ctx, nil)
+	if err != nil {
+		return nil, fmt.Errorf("could not create page: %w", err)
+	}
+
+	pageContentID := uuid.New()
+
+	qtx := r.q.WithTx(tx)
+
+	_, err = qtx.UpdatePage(ctx, UpdatePageParams{
+		ID:               id,
+		Slug:             req.Slug,
+		CurrentContentID: pageContentID,
+		PublishedAt:      NewNullTime(req.PublishedAt),
+	})
+	if err != nil {
+		_ = tx.Rollback()
+
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) && pgErr.Code == pgerrcode.UniqueViolation {
+			return nil, pagecommand.ErrPageAlreadyExists
+		}
+
+		return nil, fmt.Errorf("could not create page: %w", err)
+	}
+
+	_, err = qtx.CreatePageContent(ctx, CreatePageContentParams{
+		ID:     pageContentID,
+		PageID: id,
+		Title:  req.Title,
+		Html:   req.Html,
+	})
+	if err != nil {
+		_ = tx.Rollback()
+		return nil, fmt.Errorf("could not create page: %w", err)
+	}
+
+	page, err := qtx.FindPageBySlug(ctx, req.Slug)
+	if err != nil {
+		_ = tx.Rollback()
+		return nil, fmt.Errorf("could not create page: %w", err)
+	}
+
+	if err = tx.Commit(); err != nil {
+		return nil, fmt.Errorf("could not create page: %w", err)
+	}
+
+	return &pagecommand.PageUpdateResponse{
+		ID:          page.ID,
+		Slug:        page.Slug,
+		Title:       page.Title,
+		Html:        page.Html,
+		PublishedAt: NewTimeFromNullTime(page.PublishedAt),
 	}, nil
 }
 

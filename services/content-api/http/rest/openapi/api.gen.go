@@ -19,11 +19,11 @@ const (
 
 // Page defines model for Page.
 type Page struct {
-	Html        string             `json:"html"`
-	Id          openapi_types.UUID `json:"id"`
-	PublishedAt *time.Time         `json:"published_at,omitempty"`
-	Slug        string             `json:"slug"`
-	Title       string             `json:"title"`
+	Html        string              `json:"html"`
+	Id          *openapi_types.UUID `json:"id,omitempty"`
+	PublishedAt *time.Time          `json:"published_at,omitempty"`
+	Slug        string              `json:"slug"`
+	Title       string              `json:"title"`
 }
 
 // PageCreateJSONRequestBody defines body for PageCreate for application/json ContentType.

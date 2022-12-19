@@ -113,3 +113,33 @@ func (q *Queries) FindPageBySlug(ctx context.Context, slug string) (FindPageBySl
 	)
 	return i, err
 }
+
+const updatePage = `-- name: UpdatePage :one
+update pages
+set
+  slug = $1,
+  current_content_id = $2,
+  published_at = $3
+where
+  id = $4
+returning id
+`
+
+type UpdatePageParams struct {
+	Slug             string
+	CurrentContentID uuid.UUID
+	PublishedAt      sql.NullTime
+	ID               uuid.UUID
+}
+
+func (q *Queries) UpdatePage(ctx context.Context, arg UpdatePageParams) (uuid.UUID, error) {
+	row := q.db.QueryRowContext(ctx, updatePage,
+		arg.Slug,
+		arg.CurrentContentID,
+		arg.PublishedAt,
+		arg.ID,
+	)
+	var id uuid.UUID
+	err := row.Scan(&id)
+	return id, err
+}

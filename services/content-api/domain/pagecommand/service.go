@@ -13,27 +13,14 @@ import (
 var ErrPageAlreadyExists = errors.New("page with given id already exists")
 var ErrInvalidPage = errors.New("unable to validate page")
 
-type PageCreateRequest struct {
-	ID          uuid.UUID `validate:"required"`
-	Slug        string    `validate:"required,gt=1,lowercase"`
-	Title       string    `validate:"required"`
-	Html        string    `validate:"required"`
-	PublishedAt *time.Time
-}
-
-type PageCreateResponse struct {
-	ID    uuid.UUID
-	Slug  string
-	Title string
-	Html  string
-}
-
 type PageRepository interface {
 	CreatePage(context.Context, *PageCreateRequest) (*PageCreateResponse, error)
+	UpdatePage(context.Context, uuid.UUID, *PageUpdateRequest) (*PageUpdateResponse, error)
 }
 
 type Service interface {
 	CreatePage(context.Context, *PageCreateRequest) (*PageCreateResponse, error)
+	UpdatePage(context.Context, uuid.UUID, *PageUpdateRequest) (*PageUpdateResponse, error)
 }
 
 type service struct {
@@ -48,6 +35,22 @@ func NewService(pr PageRepository) Service {
 	}
 }
 
+type PageCreateRequest struct {
+	ID          uuid.UUID `validate:"required"`
+	Slug        string    `validate:"required,gt=1,lowercase"`
+	Title       string    `validate:"required"`
+	Html        string    `validate:"required"`
+	PublishedAt *time.Time
+}
+
+type PageCreateResponse struct {
+	ID          uuid.UUID
+	Slug        string
+	Title       string
+	Html        string
+	PublishedAt *time.Time
+}
+
 func (s *service) CreatePage(ctx context.Context, req *PageCreateRequest) (*PageCreateResponse, error) {
 	err := s.validate.Struct(req)
 	if err != nil {
@@ -55,4 +58,28 @@ func (s *service) CreatePage(ctx context.Context, req *PageCreateRequest) (*Page
 	}
 
 	return s.pr.CreatePage(ctx, req)
+}
+
+type PageUpdateRequest struct {
+	Slug        string `validate:"required,gt=1,lowercase"`
+	Title       string `validate:"required"`
+	Html        string `validate:"required"`
+	PublishedAt *time.Time
+}
+
+type PageUpdateResponse struct {
+	ID          uuid.UUID
+	Slug        string
+	Title       string
+	Html        string
+	PublishedAt *time.Time
+}
+
+func (s *service) UpdatePage(ctx context.Context, id uuid.UUID, req *PageUpdateRequest) (*PageUpdateResponse, error) {
+	err := s.validate.Struct(req)
+	if err != nil {
+		return nil, fmt.Errorf("%w: %w", ErrInvalidPage, err)
+	}
+
+	return s.pr.UpdatePage(ctx, id, req)
 }

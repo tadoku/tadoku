@@ -37,3 +37,13 @@ insert into pages_content (
   sqlc.arg('title'),
   sqlc.arg('html')
 ) returning id;
+
+-- name: UpdatePage :one
+update pages
+set
+  slug = sqlc.arg('slug'),
+  current_content_id = sqlc.arg('current_content_id'),
+  published_at = sqlc.arg('published_at')
+where
+  id = sqlc.arg('id')
+returning id;

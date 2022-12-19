@@ -95,7 +95,6 @@ components:
   schemas:
     Page:
       required:
-        - id
         - slug
         - title
         - html

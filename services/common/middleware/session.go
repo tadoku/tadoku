@@ -8,6 +8,7 @@ import (
 	jwtv4 "github.com/golang-jwt/jwt/v4"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
+	"github.com/tadoku/tadoku/services/common/domain"
 )
 
 func SessionJWT(jwksURL string) echo.MiddlewareFunc {
@@ -36,13 +37,6 @@ func SessionJWT(jwksURL string) echo.MiddlewareFunc {
 	})
 }
 
-type SessionToken struct {
-	Subject     string
-	DisplayName string
-	Email       string
-	Role        string
-}
-
 type SessionClaims struct {
 	jwtv4.RegisteredClaims
 	Session struct {
@@ -62,7 +56,7 @@ type RoleRepository interface {
 func Session(repository RoleRepository) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(ctx echo.Context) error {
-			sessionToken := &SessionToken{
+			sessionToken := &domain.SessionToken{
 				Subject: "guest",
 				Role:    "guest",
 			}
@@ -77,7 +71,7 @@ func Session(repository RoleRepository) echo.MiddlewareFunc {
 				sessionToken.Email = claims.Session.Identity.Traits.Email
 				sessionToken.DisplayName = claims.Session.Identity.Traits.DisplayName
 				sessionToken.Subject = claims.Subject
-				sessionToken.Role = repository.GetRole(sessionToken.Email)
+				sessionToken.Role = domain.Role(repository.GetRole(sessionToken.Email))
 			}
 
 			return next(ctx)

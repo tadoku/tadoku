@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/labstack/echo/v4"
+	"github.com/tadoku/tadoku/services/common/domain"
 	"github.com/tadoku/tadoku/services/content-api/domain/pagecreate"
 	"github.com/tadoku/tadoku/services/content-api/domain/pagefind"
 	"github.com/tadoku/tadoku/services/content-api/http/rest/openapi"
@@ -13,6 +14,10 @@ import (
 // Creates a new page
 // (POST /pages)
 func (s *Server) PageCreate(ctx echo.Context) error {
+	if !domain.IsRole(ctx, domain.RoleAdmin) {
+		return ctx.NoContent(http.StatusForbidden)
+	}
+
 	var req openapi.Page
 	if err := ctx.Bind(&req); err != nil {
 		ctx.Echo().Logger.Error("could not process request: ", err)
@@ -47,14 +52,16 @@ func (s *Server) PageCreate(ctx echo.Context) error {
 // Updates an existing page
 // (PUT /pages/{id})
 func (s *Server) PageUpdate(ctx echo.Context, id string) error {
+	if !domain.IsRole(ctx, domain.RoleAdmin) {
+		return ctx.NoContent(http.StatusForbidden)
+	}
+
 	return ctx.NoContent(http.StatusNotImplemented)
 }
 
 // Returns page content for a given slug
 // (GET /pages/{pageSlug})
 func (s *Server) PageFindBySlug(ctx echo.Context, pageSlug string) error {
-	// ctx.Echo().Logger.Error("wtf", ctx.Get("user"))
-
 	page, err := s.pageFindService.FindBySlug(ctx.Request().Context(), pageSlug)
 	if err != nil {
 		if errors.Is(err, pagefind.ErrPageNotFound) {

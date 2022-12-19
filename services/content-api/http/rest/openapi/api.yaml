@@ -11,12 +11,13 @@ externalDocs:
 servers:
   - url: https://tadoku.app/api/content/
 paths:
-  /pages/{pageSlug}:
+  /pages/{slug}:
     get:
       summary: Returns page content for a given slug
       operationId: pageFindBySlug
+      tags: [pages]
       parameters:
-        - name: pageSlug
+        - name: slug
           in: path
           description: Slug of page to return
           required: true
@@ -35,6 +36,7 @@ paths:
     put:
       summary: Updates an existing page
       operationId: pageUpdate
+      tags: [pages]
       security:
         - cookieAuth: []
       requestBody:
@@ -64,6 +66,7 @@ paths:
     post:
       summary: Creates a new page
       operationId: pageCreate
+      tags: [pages]
       security:
         - cookieAuth: []
       requestBody:
@@ -83,6 +86,9 @@ paths:
     get:
       summary: lists all pages
       operationId: pageList
+      tags: [pages]
+      security:
+        - cookieAuth: []
       responses:
         '200':
           description: successful operation
@@ -90,10 +96,94 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Pages'
+  /posts/{slug}:
+    get:
+      summary: Returns page content for a given slug
+      operationId: postFindBySlug
+      tags: [posts]
+      parameters:
+        - name: slug
+          in: path
+          description: Slug of post to return
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Post'    
+        '404':
+          description: Post not found or not published
+  /posts/{id}:
+    put:
+      summary: Updates an existing post
+      operationId: postUpdate
+      tags: [posts]
+      security:
+        - cookieAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Post'
+      parameters:
+        - name: id
+          in: path
+          description: ID of post
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Post'
+        '400':
+          description: Invalid post
+        '404':
+          description: Post does not exist and cannot be updated
+  /posts:
+    post:
+      summary: Creates a new post
+      operationId: postCreate
+      tags: [posts]
+      security:
+        - cookieAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Post'
+      responses:
+        '201':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Post'
+        '400':
+          description: Invalid post
+    get:
+      summary: lists all posts
+      operationId: postList
+      tags: [posts]
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Posts'
   /ping:
     get:
       summary: Checks if service is responsive
       operationId: ping
+      tags: [metadata]
       responses:
         '200':
           description: successful operation
@@ -141,9 +231,68 @@ components:
       properties:
         pages:
           type: array
-          maxItems: 100
           items:
             $ref: "#/components/schemas/Page"
+    Post:
+      type: object
+      required:
+        - slug
+        - title
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: d7e82f70-f7b9-4952-8258-1e4d16f0c244
+        namespace:
+          type: string
+          example: tadoku
+        slug:
+          type: string
+          example: welcome-to-tadoku
+        title:
+          type: string
+          example: Welcome to Tadoku!
+        content:
+          type: string
+          format: markdown
+          example: This an example **with markdown**.
+        published_at:
+          type: string
+          format: date-time
+          example: 2022-12-14T19:48:00Z
+        created_at:
+          type: string
+          format: date-time
+          example: 2022-12-14T19:48:00Z
+        updated_at:
+          type: string
+          format: date-time
+          example: 2022-12-14T19:48:00Z
+    Posts:
+      allOf:
+        - $ref: '#/components/schemas/PaginatedList'
+        - type: object
+          required:
+            - pages
+          properties:
+            pages:
+              type: array
+              maxItems: 50
+              items:
+                $ref: "#/components/schemas/Page"
+    PaginatedList:
+      type: object
+      required:
+        - next_page_token
+        - total_size
+      properties:
+        total_size:
+          type: integer
+          example: 100
+        next_page_token:
+          type: string
+          description: is empty if there's no next page
+          example: "3"
   securitySchemes:
     cookieAuth:
       type: apiKey

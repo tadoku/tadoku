@@ -5,6 +5,7 @@ go_library(
     srcs = [
         "health.go",
         "pages.go",
+        "posts.go",
         "server.go",
     ],
     importpath = "github.com/tadoku/tadoku/services/content-api/http/rest",

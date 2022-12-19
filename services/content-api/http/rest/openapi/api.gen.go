@@ -33,11 +33,44 @@ type Pages struct {
 	Pages []Page `json:"pages"`
 }
 
+// PaginatedList defines model for PaginatedList.
+type PaginatedList struct {
+	// NextPageToken is empty if there's no next page
+	NextPageToken string `json:"next_page_token"`
+	TotalSize     int    `json:"total_size"`
+}
+
+// Post defines model for Post.
+type Post struct {
+	Content     *string             `json:"content,omitempty"`
+	CreatedAt   *time.Time          `json:"created_at,omitempty"`
+	Id          *openapi_types.UUID `json:"id,omitempty"`
+	Namespace   *string             `json:"namespace,omitempty"`
+	PublishedAt *time.Time          `json:"published_at,omitempty"`
+	Slug        string              `json:"slug"`
+	Title       string              `json:"title"`
+	UpdatedAt   *time.Time          `json:"updated_at,omitempty"`
+}
+
+// Posts defines model for Posts.
+type Posts struct {
+	// NextPageToken is empty if there's no next page
+	NextPageToken string `json:"next_page_token"`
+	Pages         []Page `json:"pages"`
+	TotalSize     int    `json:"total_size"`
+}
+
 // PageCreateJSONRequestBody defines body for PageCreate for application/json ContentType.
 type PageCreateJSONRequestBody = Page
 
 // PageUpdateJSONRequestBody defines body for PageUpdate for application/json ContentType.
 type PageUpdateJSONRequestBody = Page
+
+// PostCreateJSONRequestBody defines body for PostCreate for application/json ContentType.
+type PostCreateJSONRequestBody = Post
+
+// PostUpdateJSONRequestBody defines body for PostUpdate for application/json ContentType.
+type PostUpdateJSONRequestBody = Post
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
@@ -51,11 +84,23 @@ type ServerInterface interface {
 	// (PUT /pages/{id})
 	PageUpdate(ctx echo.Context, id string) error
 	// Returns page content for a given slug
-	// (GET /pages/{pageSlug})
-	PageFindBySlug(ctx echo.Context, pageSlug string) error
+	// (GET /pages/{slug})
+	PageFindBySlug(ctx echo.Context, slug string) error
 	// Checks if service is responsive
 	// (GET /ping)
 	Ping(ctx echo.Context) error
+	// lists all posts
+	// (GET /posts)
+	PostList(ctx echo.Context) error
+	// Creates a new post
+	// (POST /posts)
+	PostCreate(ctx echo.Context) error
+	// Updates an existing post
+	// (PUT /posts/{id})
+	PostUpdate(ctx echo.Context, id string) error
+	// Returns page content for a given slug
+	// (GET /posts/{slug})
+	PostFindBySlug(ctx echo.Context, slug string) error
 }
 
 // ServerInterfaceWrapper converts echo contexts to parameters.
@@ -66,6 +111,8 @@ type ServerInterfaceWrapper struct {
 // PageList converts echo context to params.
 func (w *ServerInterfaceWrapper) PageList(ctx echo.Context) error {
 	var err error
+
+	ctx.Set(CookieAuthScopes, []string{""})
 
 	// Invoke the callback with all the unmarshalled arguments
 	err = w.Handler.PageList(ctx)
@@ -104,16 +151,16 @@ func (w *ServerInterfaceWrapper) PageUpdate(ctx echo.Context) error {
 // PageFindBySlug converts echo context to params.
 func (w *ServerInterfaceWrapper) PageFindBySlug(ctx echo.Context) error {
 	var err error
-	// ------------- Path parameter "pageSlug" -------------
-	var pageSlug string
+	// ------------- Path parameter "slug" -------------
+	var slug string
 
-	err = runtime.BindStyledParameterWithLocation("simple", false, "pageSlug", runtime.ParamLocationPath, ctx.Param("pageSlug"), &pageSlug)
+	err = runtime.BindStyledParameterWithLocation("simple", false, "slug", runtime.ParamLocationPath, ctx.Param("slug"), &slug)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter pageSlug: %s", err))
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter slug: %s", err))
 	}
 
 	// Invoke the callback with all the unmarshalled arguments
-	err = w.Handler.PageFindBySlug(ctx, pageSlug)
+	err = w.Handler.PageFindBySlug(ctx, slug)
 	return err
 }
 
@@ -123,6 +170,60 @@ func (w *ServerInterfaceWrapper) Ping(ctx echo.Context) error {
 
 	// Invoke the callback with all the unmarshalled arguments
 	err = w.Handler.Ping(ctx)
+	return err
+}
+
+// PostList converts echo context to params.
+func (w *ServerInterfaceWrapper) PostList(ctx echo.Context) error {
+	var err error
+
+	// Invoke the callback with all the unmarshalled arguments
+	err = w.Handler.PostList(ctx)
+	return err
+}
+
+// PostCreate converts echo context to params.
+func (w *ServerInterfaceWrapper) PostCreate(ctx echo.Context) error {
+	var err error
+
+	ctx.Set(CookieAuthScopes, []string{""})
+
+	// Invoke the callback with all the unmarshalled arguments
+	err = w.Handler.PostCreate(ctx)
+	return err
+}
+
+// PostUpdate converts echo context to params.
+func (w *ServerInterfaceWrapper) PostUpdate(ctx echo.Context) error {
+	var err error
+	// ------------- Path parameter "id" -------------
+	var id string
+
+	err = runtime.BindStyledParameterWithLocation("simple", false, "id", runtime.ParamLocationPath, ctx.Param("id"), &id)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter id: %s", err))
+	}
+
+	ctx.Set(CookieAuthScopes, []string{""})
+
+	// Invoke the callback with all the unmarshalled arguments
+	err = w.Handler.PostUpdate(ctx, id)
+	return err
+}
+
+// PostFindBySlug converts echo context to params.
+func (w *ServerInterfaceWrapper) PostFindBySlug(ctx echo.Context) error {
+	var err error
+	// ------------- Path parameter "slug" -------------
+	var slug string
+
+	err = runtime.BindStyledParameterWithLocation("simple", false, "slug", runtime.ParamLocationPath, ctx.Param("slug"), &slug)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter slug: %s", err))
+	}
+
+	// Invoke the callback with all the unmarshalled arguments
+	err = w.Handler.PostFindBySlug(ctx, slug)
 	return err
 }
 
@@ -157,7 +258,11 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 	router.GET(baseURL+"/pages", wrapper.PageList)
 	router.POST(baseURL+"/pages", wrapper.PageCreate)
 	router.PUT(baseURL+"/pages/:id", wrapper.PageUpdate)
-	router.GET(baseURL+"/pages/:pageSlug", wrapper.PageFindBySlug)
+	router.GET(baseURL+"/pages/:slug", wrapper.PageFindBySlug)
 	router.GET(baseURL+"/ping", wrapper.Ping)
+	router.GET(baseURL+"/posts", wrapper.PostList)
+	router.POST(baseURL+"/posts", wrapper.PostCreate)
+	router.PUT(baseURL+"/posts/:id", wrapper.PostUpdate)
+	router.GET(baseURL+"/posts/:slug", wrapper.PostFindBySlug)
 
 }

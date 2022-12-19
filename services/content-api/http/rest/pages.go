@@ -91,8 +91,8 @@ func (s *Server) PageUpdate(ctx echo.Context, id string) error {
 
 // Returns page content for a given slug
 // (GET /pages/{pageSlug})
-func (s *Server) PageFindBySlug(ctx echo.Context, pageSlug string) error {
-	page, err := s.pageQueryService.FindBySlug(ctx.Request().Context(), pageSlug)
+func (s *Server) PageFindBySlug(ctx echo.Context, slug string) error {
+	page, err := s.pageQueryService.FindBySlug(ctx.Request().Context(), slug)
 	if err != nil {
 		if errors.Is(err, pagequery.ErrPageNotFound) {
 			return ctx.NoContent(http.StatusNotFound)

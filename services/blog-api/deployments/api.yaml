@@ -31,6 +31,8 @@ spec:
             value: "postgres://blog:foobar@postgres-blog/blog?sslmode=disable"
           - name: API_PORT
             value: "8000"
+          - name: API_JWKS
+            value: "http://oathkeeper-api:4456/.well-known/jwks.json"
         readinessProbe:
           httpGet:
             scheme: HTTP

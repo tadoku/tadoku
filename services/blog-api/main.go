@@ -20,6 +20,7 @@ import (
 type Config struct {
 	PostgresURL string `validate:"required" envconfig:"postgres_url"`
 	Port        int64  `validate:"required"`
+	JWKS        string `validate:"required"`
 }
 
 func main() {
@@ -39,8 +40,7 @@ func main() {
 
 	e := echo.New()
 	e.Use(tadokumiddleware.Logger([]string{"/ping"}))
-	// TODO: parameterize this
-	e.Use(tadokumiddleware.Session("http://oathkeeper-api:4456/.well-known/jwks.json"))
+	e.Use(tadokumiddleware.Session(cfg.JWKS))
 
 	pageRepository := postgres.NewPageRepository(psql)
 

@@ -28,3 +28,22 @@ type PagesContent struct {
 	Html      string
 	CreatedAt time.Time
 }
+
+type Post struct {
+	ID               uuid.UUID
+	Namespace        string
+	Slug             string
+	CurrentContentID uuid.UUID
+	PublishedAt      sql.NullTime
+	CreatedAt        time.Time
+	UpdatedAt        time.Time
+	DeletedAt        sql.NullTime
+}
+
+type PostsContent struct {
+	ID        uuid.UUID
+	PostID    uuid.UUID
+	Title     string
+	Content   string
+	CreatedAt time.Time
+}

@@ -90,6 +90,7 @@ func (s *Server) PostList(ctx echo.Context, namespace string, params openapi.Pos
 	}
 
 	for _, post := range list.Posts {
+		post := post
 		res.Posts = append(res.Posts, openapi.Post{
 			Id:          &post.ID,
 			Slug:        post.Slug,

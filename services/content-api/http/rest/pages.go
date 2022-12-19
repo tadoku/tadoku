@@ -128,6 +128,7 @@ func (s *Server) PageList(ctx echo.Context) error {
 	}
 
 	for _, page := range list.Pages {
+		page := page
 		res.Pages = append(res.Pages, openapi.Page{
 			Id:          &page.ID,
 			Slug:        page.Slug,

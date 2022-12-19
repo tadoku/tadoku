@@ -15,7 +15,6 @@ import (
 
 	_ "github.com/jackc/pgx/v4/stdlib"
 	"github.com/labstack/echo/v4"
-	echomiddleware "github.com/labstack/echo/v4/middleware"
 )
 
 type Config struct {
@@ -39,7 +38,7 @@ func main() {
 	}
 
 	e := echo.New()
-	e.Use(echomiddleware.Logger())
+	e.Use(tadokumiddleware.Logger([]string{"/ping"}))
 	// TODO: parameterize this
 	e.Use(tadokumiddleware.Session("http://oathkeeper-api:4456/.well-known/jwks.json"))
 

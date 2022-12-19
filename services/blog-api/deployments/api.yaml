@@ -37,14 +37,14 @@ spec:
             path: /ping
             port: 8000
           initialDelaySeconds: 10
-          periodSeconds: 30
+          periodSeconds: 3
         livenessProbe:
           httpGet:
             scheme: HTTP
             path: /ping
             port: 8000
           initialDelaySeconds: 10
-          periodSeconds: 30
+          periodSeconds: 3
 ---
 apiVersion: v1
 kind: Service

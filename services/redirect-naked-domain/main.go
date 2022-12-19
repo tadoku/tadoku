@@ -19,6 +19,8 @@ func RemoveWWWSubdomain(url *url.URL) *url.URL {
 	return url
 }
 
+// TODO: rename health endpoint to /ping
+// TODO: serve on port :8000
 func main() {
 	http.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprint(w, "ok")

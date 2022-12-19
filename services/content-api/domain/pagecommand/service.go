@@ -1,4 +1,4 @@
-package pagecreate
+package pagecommand
 
 import (
 	"context"

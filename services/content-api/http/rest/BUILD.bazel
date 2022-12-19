@@ -11,7 +11,7 @@ go_library(
     visibility = ["//visibility:public"],
     deps = [
         "//services/common/domain",
-        "//services/content-api/domain/pagecreate",
+        "//services/content-api/domain/pagecommand",
         "//services/content-api/domain/pagefind",
         "//services/content-api/http/rest/openapi",
         "@com_github_labstack_echo_v4//:echo",

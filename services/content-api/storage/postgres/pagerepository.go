@@ -9,7 +9,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgconn"
 	"github.com/jackc/pgerrcode"
-	"github.com/tadoku/tadoku/services/content-api/domain/pagecreate"
+	"github.com/tadoku/tadoku/services/content-api/domain/pagecommand"
 	"github.com/tadoku/tadoku/services/content-api/domain/pagefind"
 )
 
@@ -25,7 +25,7 @@ func NewPageRepository(psql *sql.DB) *PageRepository {
 	}
 }
 
-func (r *PageRepository) CreatePage(ctx context.Context, req *pagecreate.PageCreateRequest) (*pagecreate.PageCreateResponse, error) {
+func (r *PageRepository) CreatePage(ctx context.Context, req *pagecommand.PageCreateRequest) (*pagecommand.PageCreateResponse, error) {
 	tx, err := r.psql.BeginTx(ctx, nil)
 	if err != nil {
 		return nil, fmt.Errorf("could not create page: %w", err)
@@ -46,7 +46,7 @@ func (r *PageRepository) CreatePage(ctx context.Context, req *pagecreate.PageCre
 
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) && pgErr.Code == pgerrcode.UniqueViolation {
-			return nil, pagecreate.ErrPageAlreadyExists
+			return nil, pagecommand.ErrPageAlreadyExists
 		}
 
 		return nil, fmt.Errorf("could not create page: %w", err)
@@ -73,7 +73,7 @@ func (r *PageRepository) CreatePage(ctx context.Context, req *pagecreate.PageCre
 		return nil, fmt.Errorf("could not create page: %w", err)
 	}
 
-	return &pagecreate.PageCreateResponse{
+	return &pagecommand.PageCreateResponse{
 		ID:    page.ID,
 		Slug:  page.Slug,
 		Title: page.Title,

@@ -6,7 +6,7 @@ import (
 
 	"github.com/labstack/echo/v4"
 	"github.com/tadoku/tadoku/services/common/domain"
-	"github.com/tadoku/tadoku/services/content-api/domain/pagecreate"
+	"github.com/tadoku/tadoku/services/content-api/domain/pagecommand"
 	"github.com/tadoku/tadoku/services/content-api/domain/pagefind"
 	"github.com/tadoku/tadoku/services/content-api/http/rest/openapi"
 )
@@ -24,7 +24,7 @@ func (s *Server) PageCreate(ctx echo.Context) error {
 		return ctx.NoContent(http.StatusBadRequest)
 	}
 
-	page, err := s.pageCreateService.CreatePage(ctx.Request().Context(), &pagecreate.PageCreateRequest{
+	page, err := s.pageCommandService.CreatePage(ctx.Request().Context(), &pagecommand.PageCreateRequest{
 		ID:          req.Id,
 		Slug:        req.Slug,
 		Title:       req.Title,
@@ -32,7 +32,7 @@ func (s *Server) PageCreate(ctx echo.Context) error {
 		PublishedAt: req.PublishedAt,
 	})
 	if err != nil {
-		if errors.Is(err, pagecreate.ErrPageAlreadyExists) || errors.Is(err, pagecreate.ErrInvalidPage) {
+		if errors.Is(err, pagecommand.ErrPageAlreadyExists) || errors.Is(err, pagecommand.ErrInvalidPage) {
 			ctx.Echo().Logger.Error("could not process request: ", err)
 			return ctx.NoContent(http.StatusBadRequest)
 		}

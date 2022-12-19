@@ -8,7 +8,7 @@ go_library(
     deps = [
         "//services/common/middleware",
         "//services/common/storage/memory",
-        "//services/content-api/domain/pagecreate",
+        "//services/content-api/domain/pagecommand",
         "//services/content-api/domain/pagefind",
         "//services/content-api/http/rest",
         "//services/content-api/http/rest/openapi",

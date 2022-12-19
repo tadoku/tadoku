@@ -8,7 +8,7 @@ import (
 	"github.com/kelseyhightower/envconfig"
 	tadokumiddleware "github.com/tadoku/tadoku/services/common/middleware"
 	"github.com/tadoku/tadoku/services/common/storage/memory"
-	"github.com/tadoku/tadoku/services/content-api/domain/pagecreate"
+	"github.com/tadoku/tadoku/services/content-api/domain/pagecommand"
 	"github.com/tadoku/tadoku/services/content-api/domain/pagefind"
 	"github.com/tadoku/tadoku/services/content-api/http/rest"
 	"github.com/tadoku/tadoku/services/content-api/http/rest/openapi"
@@ -47,11 +47,11 @@ func main() {
 	e.Use(tadokumiddleware.SessionJWT(cfg.JWKS))
 	e.Use(tadokumiddleware.Session(roleRepository))
 
-	pageCreateService := pagecreate.NewService(pageRepository)
+	pageCommandService := pagecommand.NewService(pageRepository)
 	pageFindService := pagefind.NewService(pageRepository)
 
 	server := rest.NewServer(
-		pageCreateService,
+		pageCommandService,
 		pageFindService,
 	)
 

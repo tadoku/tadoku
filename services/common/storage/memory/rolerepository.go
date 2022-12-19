@@ -1,14 +1,13 @@
-package middleware
+package memory
 
 import (
 	"fmt"
 	"io/ioutil"
 
-	"github.com/labstack/echo/v4"
 	"gopkg.in/yaml.v3"
 )
 
-type RoleChecker struct {
+type RoleRepository struct {
 	userRoles map[string]string // email -> role
 }
 
@@ -19,7 +18,7 @@ type roleConfig struct {
 	} `yaml:"users"`
 }
 
-func NewRoleChecker(path string) *RoleChecker {
+func NewRoleRepository(path string) *RoleRepository {
 	f, err := ioutil.ReadFile(path)
 	if err != nil {
 		panic(fmt.Errorf("unable to load list of user roles"))
@@ -36,13 +35,15 @@ func NewRoleChecker(path string) *RoleChecker {
 		userRoles[user.Email] = user.Role
 	}
 
-	return &RoleChecker{
+	return &RoleRepository{
 		userRoles: userRoles,
 	}
 }
 
-func (c *RoleChecker) Process(next echo.HandlerFunc) echo.HandlerFunc {
-	return func(c echo.Context) error {
-		return nil
+func (c *RoleRepository) GetRole(email string) string {
+	if role, ok := c.userRoles[email]; ok {
+		return role
 	}
+
+	return "user"
 }

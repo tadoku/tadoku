@@ -33,6 +33,9 @@ spec:
             value: "8000"
           - name: API_JWKS
             value: "http://oathkeeper-api:4456/.well-known/jwks.json"
+        volumeMounts:
+        - name: tadoku-permissions
+          mountPath: /etc/tadoku/permissions
         readinessProbe:
           httpGet:
             scheme: HTTP
@@ -47,6 +50,10 @@ spec:
             port: 8000
           initialDelaySeconds: 10
           periodSeconds: 3
+      volumes:
+        - name: tadoku-permissions
+          configMap:
+            name: tadoku-permissions
 ---
 apiVersion: v1
 kind: Service

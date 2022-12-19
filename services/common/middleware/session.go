@@ -25,8 +25,9 @@ func SessionJWT(jwksURL string) echo.MiddlewareFunc {
 		Skipper: func(context echo.Context) bool {
 			return context.Path() == "/ping"
 		},
+		Claims: &SessionClaims{},
 		KeyFunc: func(token *jwt.Token) (interface{}, error) {
-			t, _, err := new(jwtv4.Parser).ParseUnverified(token.Raw, jwtv4.MapClaims{})
+			t, _, err := new(jwtv4.Parser).ParseUnverified(token.Raw, &SessionClaims{})
 			if err != nil {
 				return nil, err
 			}
@@ -42,43 +43,41 @@ type SessionToken struct {
 	Role        string
 }
 
-func Session() echo.MiddlewareFunc {
+type SessionClaims struct {
+	jwtv4.RegisteredClaims
+	Session struct {
+		Identity struct {
+			Traits struct {
+				DisplayName string
+				Email       string
+			}
+		}
+	} `json:"session,omitempty"`
+}
+
+type RoleRepository interface {
+	GetRole(string) string
+}
+
+func Session(repository RoleRepository) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(ctx echo.Context) error {
+			sessionToken := &SessionToken{
+				Subject: "guest",
+				Role:    "guest",
+			}
+			ctx.Set("session", sessionToken)
+
 			if ctx.Get("user") == nil {
 				return next(ctx)
 			}
 
 			token := ctx.Get("user").(*jwt.Token)
-			if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
-				sessionToken := &SessionToken{
-					Subject: "guest",
-					Role:    "guest",
-				}
-				if subject, ok := claims["sub"]; ok {
-					if val, ok := subject.(string); ok {
-						sessionToken.Subject = val
-					}
-				}
-				if session, ok := claims["session"]; ok {
-					if identity, ok := session.(map[string]interface{})["identity"]; ok {
-						if traits, ok := identity.(map[string]interface{})["traits"]; ok {
-							t := traits.(map[string]interface{})
-							if displayName, ok := t["display_name"]; ok {
-								if val, ok := displayName.(string); ok {
-									sessionToken.DisplayName = val
-								}
-							}
-							if email, ok := t["email"]; ok {
-								if val, ok := email.(string); ok {
-									sessionToken.Email = val
-								}
-							}
-						}
-					}
-				}
-
-				ctx.Set("session", sessionToken)
+			if claims, ok := token.Claims.(*SessionClaims); ok && token.Valid {
+				sessionToken.Email = claims.Session.Identity.Traits.Email
+				sessionToken.DisplayName = claims.Session.Identity.Traits.DisplayName
+				sessionToken.Subject = claims.Subject
+				sessionToken.Role = repository.GetRole(sessionToken.Email)
 			}
 
 			return next(ctx)

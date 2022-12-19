@@ -12,6 +12,7 @@ import (
 	"github.com/tadoku/tadoku/services/blog-api/http/rest/openapi"
 	"github.com/tadoku/tadoku/services/blog-api/storage/postgres"
 	tadokumiddleware "github.com/tadoku/tadoku/services/common/middleware"
+	"github.com/tadoku/tadoku/services/common/storage/memory"
 
 	_ "github.com/jackc/pgx/v4/stdlib"
 	"github.com/labstack/echo/v4"
@@ -38,12 +39,13 @@ func main() {
 		panic(err)
 	}
 
+	pageRepository := postgres.NewPageRepository(psql)
+	roleRepository := memory.NewRoleRepository("/etc/tadoku/permissions/roles.yaml")
+
 	e := echo.New()
 	e.Use(tadokumiddleware.Logger([]string{"/ping"}))
 	e.Use(tadokumiddleware.SessionJWT(cfg.JWKS))
-	e.Use(tadokumiddleware.Session())
-
-	pageRepository := postgres.NewPageRepository(psql)
+	e.Use(tadokumiddleware.Session(roleRepository))
 
 	pageCreateService := pagecreate.NewService(pageRepository)
 	pageFindService := pagefind.NewService(pageRepository)

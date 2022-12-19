@@ -12,7 +12,7 @@ import (
 )
 
 // Creates a new post
-// (POST /posts)
+// (POST /posts/{namespace})
 func (s *Server) PostCreate(ctx echo.Context, namespace string) error {
 	if !domain.IsRole(ctx, domain.RoleAdmin) {
 		return ctx.NoContent(http.StatusForbidden)
@@ -52,13 +52,13 @@ func (s *Server) PostCreate(ctx echo.Context, namespace string) error {
 }
 
 // lists all posts
-// (GET /posts)
+// (GET /posts/{namespace})
 func (s *Server) PostList(ctx echo.Context, namespace string) error {
 	return ctx.NoContent(http.StatusNotImplemented)
 }
 
 // Updates an existing post
-// (PUT /posts/{id})
+// (PUT /posts/{namespace}/{id})
 func (s *Server) PostUpdate(ctx echo.Context, namespace string, id string) error {
 	if !domain.IsRole(ctx, domain.RoleAdmin) {
 		return ctx.NoContent(http.StatusForbidden)
@@ -97,7 +97,7 @@ func (s *Server) PostUpdate(ctx echo.Context, namespace string, id string) error
 }
 
 // Returns page content for a given slug
-// (GET /posts/{slug})
+// (GET /posts/{namespace}/{slug})
 func (s *Server) PostFindBySlug(ctx echo.Context, namespace string, slug string) error {
 	return ctx.NoContent(http.StatusNotImplemented)
 }

@@ -30,7 +30,7 @@ func (r *PostRepository) CreatePost(ctx context.Context, req *postcommand.PostCr
 		return nil, fmt.Errorf("could not create post: %w", err)
 	}
 
-	pageContentID := uuid.New()
+	postContentID := uuid.New()
 
 	qtx := r.q.WithTx(tx)
 
@@ -38,7 +38,7 @@ func (r *PostRepository) CreatePost(ctx context.Context, req *postcommand.PostCr
 		req.ID,
 		req.Namespace,
 		req.Slug,
-		pageContentID,
+		postContentID,
 		NewNullTime(req.PublishedAt),
 	}); err != nil {
 		_ = tx.Rollback()
@@ -52,7 +52,7 @@ func (r *PostRepository) CreatePost(ctx context.Context, req *postcommand.PostCr
 	}
 
 	if _, err := qtx.CreatePostContent(ctx, CreatePostContentParams{
-		ID:      pageContentID,
+		ID:      postContentID,
 		PostID:  req.ID,
 		Title:   req.Title,
 		Content: req.Content,
@@ -61,7 +61,7 @@ func (r *PostRepository) CreatePost(ctx context.Context, req *postcommand.PostCr
 		return nil, fmt.Errorf("could not create post: %w", err)
 	}
 
-	page, err := qtx.FindPostBySlug(ctx, FindPostBySlugParams{
+	post, err := qtx.FindPostBySlug(ctx, FindPostBySlugParams{
 		Namespace: req.Namespace,
 		Slug:      req.Slug,
 	})
@@ -75,29 +75,29 @@ func (r *PostRepository) CreatePost(ctx context.Context, req *postcommand.PostCr
 	}
 
 	return &postcommand.PostCreateResponse{
-		ID:          page.ID,
-		Namespace:   page.Namespace,
-		Slug:        page.Slug,
-		Title:       page.Title,
-		Content:     page.Content,
-		PublishedAt: NewTimeFromNullTime(page.PublishedAt),
+		ID:          post.ID,
+		Namespace:   post.Namespace,
+		Slug:        post.Slug,
+		Title:       post.Title,
+		Content:     post.Content,
+		PublishedAt: NewTimeFromNullTime(post.PublishedAt),
 	}, nil
 }
 
 func (r *PostRepository) UpdatePost(ctx context.Context, id uuid.UUID, req *postcommand.PostUpdateRequest) (*postcommand.PostUpdateResponse, error) {
 	tx, err := r.psql.BeginTx(ctx, nil)
 	if err != nil {
-		return nil, fmt.Errorf("could not create page: %w", err)
+		return nil, fmt.Errorf("could not create post: %w", err)
 	}
 
-	pageContentID := uuid.New()
+	postContentID := uuid.New()
 
 	qtx := r.q.WithTx(tx)
 
 	_, err = qtx.UpdatePost(ctx, UpdatePostParams{
 		ID:               id,
 		Slug:             req.Slug,
-		CurrentContentID: pageContentID,
+		CurrentContentID: postContentID,
 		PublishedAt:      NewNullTime(req.PublishedAt),
 	})
 	if err != nil {
@@ -108,38 +108,38 @@ func (r *PostRepository) UpdatePost(ctx context.Context, id uuid.UUID, req *post
 			return nil, postcommand.ErrPostAlreadyExists
 		}
 
-		return nil, fmt.Errorf("could not create page: %w", err)
+		return nil, fmt.Errorf("could not create post: %w", err)
 	}
 
 	_, err = qtx.CreatePostContent(ctx, CreatePostContentParams{
-		ID:      pageContentID,
+		ID:      postContentID,
 		PostID:  id,
 		Title:   req.Title,
 		Content: req.Content,
 	})
 	if err != nil {
 		_ = tx.Rollback()
-		return nil, fmt.Errorf("could not create page: %w", err)
+		return nil, fmt.Errorf("could not create post: %w", err)
 	}
 
-	page, err := qtx.FindPostBySlug(ctx, FindPostBySlugParams{
+	post, err := qtx.FindPostBySlug(ctx, FindPostBySlugParams{
 		Namespace: req.Namespace,
 		Slug:      req.Slug,
 	})
 	if err != nil {
 		_ = tx.Rollback()
-		return nil, fmt.Errorf("could not create page: %w", err)
+		return nil, fmt.Errorf("could not create post: %w", err)
 	}
 
 	if err = tx.Commit(); err != nil {
-		return nil, fmt.Errorf("could not create page: %w", err)
+		return nil, fmt.Errorf("could not create post: %w", err)
 	}
 
 	return &postcommand.PostUpdateResponse{
-		ID:          page.ID,
-		Slug:        page.Slug,
-		Title:       page.Title,
-		Content:     page.Content,
-		PublishedAt: NewTimeFromNullTime(page.PublishedAt),
+		ID:          post.ID,
+		Slug:        post.Slug,
+		Title:       post.Title,
+		Content:     post.Content,
+		PublishedAt: NewTimeFromNullTime(post.PublishedAt),
 	}, nil
 }

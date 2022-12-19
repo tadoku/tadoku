@@ -118,11 +118,7 @@ func (s *Server) PageList(ctx echo.Context) error {
 	}
 
 	list, err := s.pageQueryService.ListPages(ctx.Request().Context())
-	if err != nil {
-		if errors.Is(err, pagequery.ErrPageNotFound) {
-			return ctx.NoContent(http.StatusNotFound)
-		}
-
+	if err != nil && !errors.Is(err, pagequery.ErrPageNotFound) {
 		ctx.Echo().Logger.Error("could not process request: ", err)
 		return ctx.NoContent(http.StatusInternalServerError)
 	}

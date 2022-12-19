@@ -194,6 +194,22 @@ paths:
           required: true
           schema:
             type: string
+        - name: page_size
+          in: query
+          required: false
+          schema:
+            type: integer
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+        - name: include_drafts
+          in: query
+          required: false
+          allowEmptyValue: true
+          schema:
+            type: boolean
       responses:
         '200':
           description: successful operation
@@ -260,6 +276,7 @@ components:
       required:
         - slug
         - title
+        - content
       properties:
         id:
           type: string
@@ -295,13 +312,13 @@ components:
         - $ref: '#/components/schemas/PaginatedList'
         - type: object
           required:
-            - pages
+            - posts
           properties:
-            pages:
+            posts:
               type: array
               maxItems: 50
               items:
-                $ref: "#/components/schemas/Page"
+                $ref: "#/components/schemas/Post"
     PaginatedList:
       type: object
       required:

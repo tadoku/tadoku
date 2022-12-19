@@ -166,3 +166,60 @@ func (r *PostRepository) FindBySlug(ctx context.Context, namespace, slug string)
 		PublishedAt: NewTimeFromNullTime(post.PublishedAt),
 	}, nil
 }
+
+func (r *PostRepository) ListPosts(ctx context.Context, req *postquery.PostListRequest) (*postquery.PostListResponse, error) {
+	tx, err := r.psql.BeginTx(ctx, nil)
+	if err != nil {
+		return nil, fmt.Errorf("could not list posts: %w", err)
+	}
+
+	qtx := r.q.WithTx(tx)
+
+	meta, err := qtx.PostsMetadata(ctx, PostsMetadataParams{
+		IncludeDrafts: req.IncludeDrafts,
+		Namespace:     req.Namespace,
+	})
+	if err != nil {
+		_ = tx.Rollback()
+		return nil, fmt.Errorf("could not lists posts: %w", err)
+	}
+
+	posts, err := qtx.ListPosts(ctx, ListPostsParams{
+		StartFrom:     int32(req.Page * req.PageSize),
+		PageSize:      int32(req.PageSize),
+		Namespace:     req.Namespace,
+		IncludeDrafts: req.IncludeDrafts,
+	})
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+		_ = tx.Rollback()
+		return nil, fmt.Errorf("could not list posts: %w", err)
+	}
+
+	if err = tx.Commit(); err != nil {
+		return nil, fmt.Errorf("could not list posts: %w", err)
+	}
+
+	res := make([]postquery.PostListEntry, len(posts))
+	for i, page := range posts {
+		res[i] = postquery.PostListEntry{
+			ID:          page.ID,
+			Slug:        page.Slug,
+			Title:       page.Title,
+			Content:     page.Content,
+			PublishedAt: NewTimeFromNullTime(page.PublishedAt),
+			CreatedAt:   page.CreatedAt,
+			UpdatedAt:   page.UpdatedAt,
+		}
+	}
+
+	nextPageToken := ""
+	if (req.Page*req.PageSize)+req.PageSize < int(meta.TotalSize) {
+		nextPageToken = fmt.Sprint(req.Page + 1)
+	}
+
+	return &postquery.PostListResponse{
+		Posts:         res,
+		TotalSize:     int(meta.TotalSize),
+		NextPageToken: nextPageToken,
+	}, nil
+}

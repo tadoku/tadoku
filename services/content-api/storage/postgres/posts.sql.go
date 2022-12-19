@@ -134,6 +134,7 @@ select
   "namespace",
   slug,
   posts_content.title,
+  posts_content.content,
   published_at,
   posts.created_at,
   posts.updated_at
@@ -142,16 +143,18 @@ inner join posts_content
   on posts_content.id = posts.current_content_id
 where
   deleted_at is null
-  and "namespace" = $1
+  and ($1::boolean or published_at is not null)
+  and "namespace" = $2
 order by posts.created_at desc
-limit $3
-offset $2
+limit $4
+offset $3
 `
 
 type ListPostsParams struct {
-	Namespace string
-	StartFrom int32
-	PageSize  int32
+	IncludeDrafts bool
+	Namespace     string
+	StartFrom     int32
+	PageSize      int32
 }
 
 type ListPostsRow struct {
@@ -159,13 +162,19 @@ type ListPostsRow struct {
 	Namespace   string
 	Slug        string
 	Title       string
+	Content     string
 	PublishedAt sql.NullTime
 	CreatedAt   time.Time
 	UpdatedAt   time.Time
 }
 
 func (q *Queries) ListPosts(ctx context.Context, arg ListPostsParams) ([]ListPostsRow, error) {
-	rows, err := q.db.QueryContext(ctx, listPosts, arg.Namespace, arg.StartFrom, arg.PageSize)
+	rows, err := q.db.QueryContext(ctx, listPosts,
+		arg.IncludeDrafts,
+		arg.Namespace,
+		arg.StartFrom,
+		arg.PageSize,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -178,6 +187,7 @@ func (q *Queries) ListPosts(ctx context.Context, arg ListPostsParams) ([]ListPos
 			&i.Namespace,
 			&i.Slug,
 			&i.Title,
+			&i.Content,
 			&i.PublishedAt,
 			&i.CreatedAt,
 			&i.UpdatedAt,
@@ -193,6 +203,34 @@ func (q *Queries) ListPosts(ctx context.Context, arg ListPostsParams) ([]ListPos
 		return nil, err
 	}
 	return items, nil
+}
+
+const postsMetadata = `-- name: PostsMetadata :one
+select
+  count(posts.id) as total_size,
+  $1::boolean as drafts_included
+from posts
+where
+  deleted_at is null
+  and ($1::boolean or published_at is not null)
+  and "namespace" = $2
+`
+
+type PostsMetadataParams struct {
+	IncludeDrafts bool
+	Namespace     string
+}
+
+type PostsMetadataRow struct {
+	TotalSize      int64
+	DraftsIncluded bool
+}
+
+func (q *Queries) PostsMetadata(ctx context.Context, arg PostsMetadataParams) (PostsMetadataRow, error) {
+	row := q.db.QueryRowContext(ctx, postsMetadata, arg.IncludeDrafts, arg.Namespace)
+	var i PostsMetadataRow
+	err := row.Scan(&i.TotalSize, &i.DraftsIncluded)
+	return i, err
 }
 
 const updatePost = `-- name: UpdatePost :one

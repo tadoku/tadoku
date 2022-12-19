@@ -6,28 +6,32 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
 )
 
 var ErrPostNotFound = errors.New("post not found")
+var ErrRequestInvalid = errors.New("request is invalid")
 
 type PostRepository interface {
 	FindBySlug(context.Context, string, string) (*PostFindResponse, error)
-	// ListPosts(context.Context) (*PostListResponse, error)
+	ListPosts(context.Context, *PostListRequest) (*PostListResponse, error)
 }
 
 type Service interface {
 	FindBySlug(context.Context, string, string) (*PostFindResponse, error)
-	// ListPosts(context.Context) (*PostListResponse, error)
+	ListPosts(context.Context, *PostListRequest) (*PostListResponse, error)
 }
 
 type service struct {
-	pr PostRepository
+	pr       PostRepository
+	validate *validator.Validate
 }
 
 func NewService(pr PostRepository) Service {
 	return &service{
-		pr: pr,
+		pr:       pr,
+		validate: validator.New(),
 	}
 }
 
@@ -53,19 +57,42 @@ func (s *service) FindBySlug(ctx context.Context, namespace, slug string) (*Post
 	return post, nil
 }
 
-// type PostListResponse struct {
-// 	Posts []PostListEntry
-// }
+type PostListRequest struct {
+	Namespace     string `validate:"required"`
+	IncludeDrafts bool
+	PageSize      int
+	Page          int
+}
 
-// type PostListEntry struct {
-// 	ID          uuid.UUID
-// 	Slug        string
-// 	Title       string
-// 	PublishedAt *time.Time
-// 	CreatedAt   time.Time
-// 	UpdatedAt   time.Time
-// }
+type PostListResponse struct {
+	Posts         []PostListEntry
+	TotalSize     int
+	NextPageToken string
+}
 
-// func (s *service) ListPosts(ctx context.Context) (*PostListResponse, error) {
-// 	return s.pr.ListPosts(ctx)
-// }
+type PostListEntry struct {
+	ID          uuid.UUID
+	Slug        string
+	Title       string
+	Content     string
+	PublishedAt *time.Time
+	CreatedAt   time.Time
+	UpdatedAt   time.Time
+}
+
+func (s *service) ListPosts(ctx context.Context, req *PostListRequest) (*PostListResponse, error) {
+	err := s.validate.Struct(req)
+	if err != nil {
+		return nil, fmt.Errorf("%w: %w", ErrRequestInvalid, err)
+	}
+
+	if req.PageSize == 0 {
+		req.PageSize = 10
+	}
+
+	if req.PageSize > 100 {
+		req.PageSize = 100
+	}
+
+	return s.pr.ListPosts(ctx, req)
+}

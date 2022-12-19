@@ -10,6 +10,7 @@ create table posts (
 );
 
 create unique index posts_slug on posts("namespace", slug);
+create index posts_namespace on posts("namespace");
 
 create table posts_content (
   id uuid primary key default uuid_generate_v4(),

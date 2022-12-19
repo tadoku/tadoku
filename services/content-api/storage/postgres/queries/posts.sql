@@ -20,6 +20,7 @@ select
   "namespace",
   slug,
   posts_content.title,
+  posts_content.content,
   published_at,
   posts.created_at,
   posts.updated_at
@@ -28,6 +29,7 @@ inner join posts_content
   on posts_content.id = posts.current_content_id
 where
   deleted_at is null
+  and (sqlc.arg('include_drafts')::boolean or published_at is not null)
   and "namespace" = sqlc.arg('namespace')
 order by posts.created_at desc
 limit sqlc.arg('page_size')
@@ -72,3 +74,13 @@ where
   id = sqlc.arg('id') and
   deleted_at is null
 returning id;
+
+-- name: PostsMetadata :one
+select
+  count(posts.id) as total_size,
+  sqlc.arg('include_drafts')::boolean as drafts_included
+from posts
+where
+  deleted_at is null
+  and (sqlc.arg('include_drafts')::boolean or published_at is not null)
+  and "namespace" = sqlc.arg('namespace');

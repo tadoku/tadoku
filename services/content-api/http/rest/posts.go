@@ -30,7 +30,7 @@ func (s *Server) PostCreate(ctx echo.Context, namespace string) error {
 		Namespace:   namespace,
 		Slug:        req.Slug,
 		Title:       req.Title,
-		Content:     *req.Content,
+		Content:     req.Content,
 		PublishedAt: req.PublishedAt,
 	})
 	if err != nil {
@@ -47,15 +47,61 @@ func (s *Server) PostCreate(ctx echo.Context, namespace string) error {
 		Id:          &post.ID,
 		Slug:        post.Slug,
 		Title:       post.Title,
-		Content:     &post.Content,
+		Content:     post.Content,
 		PublishedAt: post.PublishedAt,
 	})
 }
 
 // lists all posts
 // (GET /posts/{namespace})
-func (s *Server) PostList(ctx echo.Context, namespace string) error {
-	return ctx.NoContent(http.StatusNotImplemented)
+func (s *Server) PostList(ctx echo.Context, namespace string, params openapi.PostListParams) error {
+	pageSize := 0
+	page := 0
+	includeDrafts := false
+
+	if params.PageSize != nil {
+		pageSize = *params.PageSize
+	}
+	if params.Page != nil {
+		page = *params.Page
+	}
+	if params.IncludeDrafts != nil {
+		if !domain.IsRole(ctx, domain.RoleAdmin) {
+			return ctx.NoContent(http.StatusForbidden)
+		}
+		includeDrafts = *params.IncludeDrafts
+	}
+
+	list, err := s.postQueryService.ListPosts(ctx.Request().Context(), &postquery.PostListRequest{
+		Namespace:     namespace,
+		PageSize:      pageSize,
+		Page:          page,
+		IncludeDrafts: includeDrafts,
+	})
+	if err != nil && !errors.Is(err, postquery.ErrPostNotFound) {
+		ctx.Echo().Logger.Error("could not process request: ", err)
+		return ctx.NoContent(http.StatusInternalServerError)
+	}
+
+	res := openapi.Posts{
+		Posts:         []openapi.Post{},
+		NextPageToken: list.NextPageToken,
+		TotalSize:     list.TotalSize,
+	}
+
+	for _, post := range list.Posts {
+		res.Posts = append(res.Posts, openapi.Post{
+			Id:          &post.ID,
+			Slug:        post.Slug,
+			Title:       post.Title,
+			Content:     post.Content,
+			PublishedAt: post.PublishedAt,
+			CreatedAt:   &post.CreatedAt,
+			UpdatedAt:   &post.UpdatedAt,
+		})
+	}
+
+	return ctx.JSON(http.StatusOK, res)
 }
 
 // Updates an existing post
@@ -75,7 +121,7 @@ func (s *Server) PostUpdate(ctx echo.Context, namespace string, id string) error
 		Slug:        req.Slug,
 		Namespace:   namespace,
 		Title:       req.Title,
-		Content:     *req.Content,
+		Content:     req.Content,
 		PublishedAt: req.PublishedAt,
 	})
 	if err != nil {
@@ -92,7 +138,7 @@ func (s *Server) PostUpdate(ctx echo.Context, namespace string, id string) error
 		Id:          &post.ID,
 		Slug:        post.Slug,
 		Title:       post.Title,
-		Content:     &post.Content,
+		Content:     post.Content,
 		PublishedAt: post.PublishedAt,
 	})
 }
@@ -114,6 +160,6 @@ func (s *Server) PostFindBySlug(ctx echo.Context, namespace string, slug string)
 		Id:      &post.ID,
 		Slug:    post.Slug,
 		Title:   post.Title,
-		Content: &post.Content,
+		Content: post.Content,
 	})
 }

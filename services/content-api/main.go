@@ -9,7 +9,7 @@ import (
 	tadokumiddleware "github.com/tadoku/tadoku/services/common/middleware"
 	"github.com/tadoku/tadoku/services/common/storage/memory"
 	"github.com/tadoku/tadoku/services/content-api/domain/pagecommand"
-	"github.com/tadoku/tadoku/services/content-api/domain/pagefind"
+	"github.com/tadoku/tadoku/services/content-api/domain/pagequery"
 	"github.com/tadoku/tadoku/services/content-api/http/rest"
 	"github.com/tadoku/tadoku/services/content-api/http/rest/openapi"
 	"github.com/tadoku/tadoku/services/content-api/storage/postgres"
@@ -48,11 +48,11 @@ func main() {
 	e.Use(tadokumiddleware.Session(roleRepository))
 
 	pageCommandService := pagecommand.NewService(pageRepository)
-	pageFindService := pagefind.NewService(pageRepository)
+	pageQueryService := pagequery.NewService(pageRepository)
 
 	server := rest.NewServer(
 		pageCommandService,
-		pageFindService,
+		pageQueryService,
 	)
 
 	openapi.RegisterHandlersWithBaseURL(e, server, "")

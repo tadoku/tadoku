@@ -1,4 +1,4 @@
-package pagefind
+package pagequery
 
 import (
 	"context"

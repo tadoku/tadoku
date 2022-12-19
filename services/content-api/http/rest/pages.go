@@ -7,7 +7,7 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/tadoku/tadoku/services/common/domain"
 	"github.com/tadoku/tadoku/services/content-api/domain/pagecommand"
-	"github.com/tadoku/tadoku/services/content-api/domain/pagefind"
+	"github.com/tadoku/tadoku/services/content-api/domain/pagequery"
 	"github.com/tadoku/tadoku/services/content-api/http/rest/openapi"
 )
 
@@ -62,9 +62,9 @@ func (s *Server) PageUpdate(ctx echo.Context, id string) error {
 // Returns page content for a given slug
 // (GET /pages/{pageSlug})
 func (s *Server) PageFindBySlug(ctx echo.Context, pageSlug string) error {
-	page, err := s.pageFindService.FindBySlug(ctx.Request().Context(), pageSlug)
+	page, err := s.pageQueryService.FindBySlug(ctx.Request().Context(), pageSlug)
 	if err != nil {
-		if errors.Is(err, pagefind.ErrPageNotFound) {
+		if errors.Is(err, pagequery.ErrPageNotFound) {
 			return ctx.NoContent(http.StatusNotFound)
 		}
 

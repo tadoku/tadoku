@@ -12,7 +12,7 @@ go_library(
     deps = [
         "//services/common/domain",
         "//services/content-api/domain/pagecommand",
-        "//services/content-api/domain/pagefind",
+        "//services/content-api/domain/pagequery",
         "//services/content-api/http/rest/openapi",
         "@com_github_labstack_echo_v4//:echo",
     ],

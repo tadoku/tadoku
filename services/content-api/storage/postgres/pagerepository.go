@@ -10,7 +10,7 @@ import (
 	"github.com/jackc/pgconn"
 	"github.com/jackc/pgerrcode"
 	"github.com/tadoku/tadoku/services/content-api/domain/pagecommand"
-	"github.com/tadoku/tadoku/services/content-api/domain/pagefind"
+	"github.com/tadoku/tadoku/services/content-api/domain/pagequery"
 )
 
 type PageRepository struct {
@@ -81,17 +81,17 @@ func (r *PageRepository) CreatePage(ctx context.Context, req *pagecommand.PageCr
 	}, nil
 }
 
-func (r *PageRepository) FindBySlug(ctx context.Context, slug string) (*pagefind.PageFindResponse, error) {
+func (r *PageRepository) FindBySlug(ctx context.Context, slug string) (*pagequery.PageFindResponse, error) {
 	page, err := r.q.FindPageBySlug(ctx, slug)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return nil, pagefind.ErrPageNotFound
+			return nil, pagequery.ErrPageNotFound
 		}
 
 		return nil, fmt.Errorf("could not find page: %w", err)
 	}
 
-	return &pagefind.PageFindResponse{
+	return &pagequery.PageFindResponse{
 		ID:          page.ID,
 		Slug:        page.Slug,
 		Title:       page.Title,

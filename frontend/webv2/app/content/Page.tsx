@@ -1,3 +1,4 @@
+import ReactMarkdown from 'react-markdown'
 import { usePage } from '@app/content/api'
 
 interface Props {
@@ -22,7 +23,7 @@ const Page = ({ slug }: Props) => {
   return (
     <>
       <h1 className="title my-4">{page.data.title}</h1>
-      <div dangerouslySetInnerHTML={{ __html: page.data.html }} />
+      <ReactMarkdown children={page.data.html} />
     </>
   )
 }

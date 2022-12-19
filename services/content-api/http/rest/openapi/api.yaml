@@ -80,6 +80,16 @@ paths:
                 $ref: '#/components/schemas/Page'
         '400':
           description: Invalid page
+    get:
+      summary: lists all pages
+      operationId: pageList
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Pages'
   /ping:
     get:
       summary: Checks if service is responsive
@@ -94,11 +104,10 @@ paths:
 components:
   schemas:
     Page:
+      type: object
       required:
         - slug
         - title
-        - html
-      type: object
       properties:
         id:
           type: string
@@ -117,6 +126,24 @@ components:
           type: string
           format: date-time
           example: 2022-12-14T19:48:00Z
+        created_at:
+          type: string
+          format: date-time
+          example: 2022-12-14T19:48:00Z
+        updated_at:
+          type: string
+          format: date-time
+          example: 2022-12-14T19:48:00Z
+    Pages:
+      type: object
+      required:
+        - pages
+      properties:
+        pages:
+          type: array
+          maxItems: 100
+          items:
+            $ref: "#/components/schemas/Page"
   securitySchemes:
     cookieAuth:
       type: apiKey

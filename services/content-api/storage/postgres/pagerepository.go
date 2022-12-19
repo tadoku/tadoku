@@ -157,3 +157,32 @@ func (r *PageRepository) FindBySlug(ctx context.Context, slug string) (*pagequer
 		PublishedAt: NewTimeFromNullTime(page.PublishedAt),
 	}, nil
 }
+
+func (r *PageRepository) ListPages(ctx context.Context) (*pagequery.PageListResponse, error) {
+	pages, err := r.q.ListPages(ctx)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return &pagequery.PageListResponse{
+				Pages: nil,
+			}, nil
+		}
+
+		return nil, fmt.Errorf("could not list pages: %w", err)
+	}
+
+	res := make([]pagequery.PageListEntry, len(pages))
+	for i, page := range pages {
+		res[i] = pagequery.PageListEntry{
+			ID:          page.ID,
+			Slug:        page.Slug,
+			Title:       page.Title,
+			PublishedAt: NewTimeFromNullTime(page.PublishedAt),
+			CreatedAt:   page.CreatedAt,
+			UpdatedAt:   page.UpdatedAt,
+		}
+	}
+
+	return &pagequery.PageListResponse{
+		Pages: res,
+	}, nil
+}

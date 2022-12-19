@@ -29,7 +29,7 @@ func (s *Server) PageCreate(ctx echo.Context) error {
 		ID:          *req.Id,
 		Slug:        req.Slug,
 		Title:       req.Title,
-		Html:        req.Html,
+		Html:        *req.Html,
 		PublishedAt: req.PublishedAt,
 	})
 	if err != nil {
@@ -46,7 +46,7 @@ func (s *Server) PageCreate(ctx echo.Context) error {
 		Id:          &page.ID,
 		Slug:        page.Slug,
 		Title:       page.Title,
-		Html:        page.Html,
+		Html:        &page.Html,
 		PublishedAt: page.PublishedAt,
 	})
 }
@@ -67,7 +67,7 @@ func (s *Server) PageUpdate(ctx echo.Context, id string) error {
 	page, err := s.pageCommandService.UpdatePage(ctx.Request().Context(), uuid.MustParse(id), &pagecommand.PageUpdateRequest{
 		Slug:        req.Slug,
 		Title:       req.Title,
-		Html:        req.Html,
+		Html:        *req.Html,
 		PublishedAt: req.PublishedAt,
 	})
 	if err != nil {
@@ -84,7 +84,7 @@ func (s *Server) PageUpdate(ctx echo.Context, id string) error {
 		Id:          &page.ID,
 		Slug:        page.Slug,
 		Title:       page.Title,
-		Html:        page.Html,
+		Html:        &page.Html,
 		PublishedAt: page.PublishedAt,
 	})
 }
@@ -105,6 +105,40 @@ func (s *Server) PageFindBySlug(ctx echo.Context, pageSlug string) error {
 		Id:    &page.ID,
 		Slug:  page.Slug,
 		Title: page.Title,
-		Html:  page.Html,
+		Html:  &page.Html,
 	})
+}
+
+// lists all pages
+// (GET /pages)
+func (s *Server) PageList(ctx echo.Context) error {
+	if !domain.IsRole(ctx, domain.RoleAdmin) {
+		return ctx.NoContent(http.StatusForbidden)
+	}
+
+	list, err := s.pageQueryService.ListPages(ctx.Request().Context())
+	if err != nil {
+		if errors.Is(err, pagequery.ErrPageNotFound) {
+			return ctx.NoContent(http.StatusNotFound)
+		}
+
+		return ctx.NoContent(http.StatusInternalServerError)
+	}
+
+	res := openapi.Pages{
+		Pages: []openapi.Page{},
+	}
+
+	for _, page := range list.Pages {
+		res.Pages = append(res.Pages, openapi.Page{
+			Id:          &page.ID,
+			Slug:        page.Slug,
+			Title:       page.Title,
+			PublishedAt: page.PublishedAt,
+			CreatedAt:   &page.CreatedAt,
+			UpdatedAt:   &page.UpdatedAt,
+		})
+	}
+
+	return ctx.JSON(http.StatusOK, res)
 }

@@ -19,11 +19,18 @@ const (
 
 // Page defines model for Page.
 type Page struct {
-	Html        string              `json:"html"`
+	CreatedAt   *time.Time          `json:"created_at,omitempty"`
+	Html        *string             `json:"html,omitempty"`
 	Id          *openapi_types.UUID `json:"id,omitempty"`
 	PublishedAt *time.Time          `json:"published_at,omitempty"`
 	Slug        string              `json:"slug"`
 	Title       string              `json:"title"`
+	UpdatedAt   *time.Time          `json:"updated_at,omitempty"`
+}
+
+// Pages defines model for Pages.
+type Pages struct {
+	Pages []Page `json:"pages"`
 }
 
 // PageCreateJSONRequestBody defines body for PageCreate for application/json ContentType.
@@ -34,6 +41,9 @@ type PageUpdateJSONRequestBody = Page
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
+	// lists all pages
+	// (GET /pages)
+	PageList(ctx echo.Context) error
 	// Creates a new page
 	// (POST /pages)
 	PageCreate(ctx echo.Context) error
@@ -51,6 +61,15 @@ type ServerInterface interface {
 // ServerInterfaceWrapper converts echo contexts to parameters.
 type ServerInterfaceWrapper struct {
 	Handler ServerInterface
+}
+
+// PageList converts echo context to params.
+func (w *ServerInterfaceWrapper) PageList(ctx echo.Context) error {
+	var err error
+
+	// Invoke the callback with all the unmarshalled arguments
+	err = w.Handler.PageList(ctx)
+	return err
 }
 
 // PageCreate converts echo context to params.
@@ -135,6 +154,7 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 		Handler: si,
 	}
 
+	router.GET(baseURL+"/pages", wrapper.PageList)
 	router.POST(baseURL+"/pages", wrapper.PageCreate)
 	router.PUT(baseURL+"/pages/:id", wrapper.PageUpdate)
 	router.GET(baseURL+"/pages/:pageSlug", wrapper.PageFindBySlug)

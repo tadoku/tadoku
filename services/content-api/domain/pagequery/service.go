@@ -11,20 +11,14 @@ import (
 
 var ErrPageNotFound = errors.New("page not found")
 
-type PageFindResponse struct {
-	ID          uuid.UUID
-	Slug        string
-	Title       string
-	Html        string
-	PublishedAt *time.Time
-}
-
 type PageRepository interface {
 	FindBySlug(context.Context, string) (*PageFindResponse, error)
+	ListPages(context.Context) (*PageListResponse, error)
 }
 
 type Service interface {
 	FindBySlug(context.Context, string) (*PageFindResponse, error)
+	ListPages(context.Context) (*PageListResponse, error)
 }
 
 type service struct {
@@ -35,6 +29,14 @@ func NewService(pr PageRepository) Service {
 	return &service{
 		pr: pr,
 	}
+}
+
+type PageFindResponse struct {
+	ID          uuid.UUID
+	Slug        string
+	Title       string
+	Html        string
+	PublishedAt *time.Time
 }
 
 func (s *service) FindBySlug(ctx context.Context, slug string) (*PageFindResponse, error) {
@@ -49,4 +51,21 @@ func (s *service) FindBySlug(ctx context.Context, slug string) (*PageFindRespons
 	}
 
 	return page, nil
+}
+
+type PageListResponse struct {
+	Pages []PageListEntry
+}
+
+type PageListEntry struct {
+	ID          uuid.UUID
+	Slug        string
+	Title       string
+	PublishedAt *time.Time
+	CreatedAt   time.Time
+	UpdatedAt   time.Time
+}
+
+func (s *service) ListPages(ctx context.Context) (*PageListResponse, error) {
+	return s.pr.ListPages(ctx)
 }

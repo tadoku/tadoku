@@ -8,6 +8,7 @@ package postgres
 import (
 	"context"
 	"database/sql"
+	"time"
 
 	"github.com/google/uuid"
 )
@@ -114,14 +115,71 @@ func (q *Queries) FindPageBySlug(ctx context.Context, slug string) (FindPageBySl
 	return i, err
 }
 
+const listPages = `-- name: ListPages :many
+select
+  pages.id,
+  slug,
+  pages_content.title,
+  published_at,
+  pages.created_at,
+  pages.updated_at
+from pages
+inner join pages_content
+  on pages_content.id = pages.current_content_id
+where
+  deleted_at is null
+order by pages.created_at desc
+`
+
+type ListPagesRow struct {
+	ID          uuid.UUID
+	Slug        string
+	Title       string
+	PublishedAt sql.NullTime
+	CreatedAt   time.Time
+	UpdatedAt   time.Time
+}
+
+func (q *Queries) ListPages(ctx context.Context) ([]ListPagesRow, error) {
+	rows, err := q.db.QueryContext(ctx, listPages)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListPagesRow
+	for rows.Next() {
+		var i ListPagesRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.Slug,
+			&i.Title,
+			&i.PublishedAt,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const updatePage = `-- name: UpdatePage :one
 update pages
 set
   slug = $1,
   current_content_id = $2,
-  published_at = $3
+  published_at = $3,
+  updated_at = now()
 where
-  id = $4
+  id = $4 and
+  deleted_at is null
 returning id
 `
 

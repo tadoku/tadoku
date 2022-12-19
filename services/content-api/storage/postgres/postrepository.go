@@ -10,6 +10,7 @@ import (
 	"github.com/jackc/pgconn"
 	"github.com/jackc/pgerrcode"
 	"github.com/tadoku/tadoku/services/content-api/domain/postcommand"
+	"github.com/tadoku/tadoku/services/content-api/domain/postquery"
 )
 
 type PostRepository struct {
@@ -136,6 +137,28 @@ func (r *PostRepository) UpdatePost(ctx context.Context, id uuid.UUID, req *post
 	}
 
 	return &postcommand.PostUpdateResponse{
+		ID:          post.ID,
+		Slug:        post.Slug,
+		Title:       post.Title,
+		Content:     post.Content,
+		PublishedAt: NewTimeFromNullTime(post.PublishedAt),
+	}, nil
+}
+
+func (r *PostRepository) FindBySlug(ctx context.Context, namespace, slug string) (*postquery.PostFindResponse, error) {
+	post, err := r.q.FindPostBySlug(ctx, FindPostBySlugParams{
+		Namespace: namespace,
+		Slug:      slug,
+	})
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, postquery.ErrPostNotFound
+		}
+
+		return nil, fmt.Errorf("could not find post: %w", err)
+	}
+
+	return &postquery.PostFindResponse{
 		ID:          post.ID,
 		Slug:        post.Slug,
 		Title:       post.Title,

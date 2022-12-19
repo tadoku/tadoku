@@ -18,6 +18,7 @@ go_library(
         "//services/content-api/domain/pagecommand",
         "//services/content-api/domain/pagequery",
         "//services/content-api/domain/postcommand",
+        "//services/content-api/domain/postquery",
         "@com_github_google_uuid//:uuid",
         "@com_github_jackc_pgconn//:pgconn",
         "@com_github_jackc_pgerrcode//:pgerrcode",

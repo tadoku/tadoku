@@ -11,6 +11,7 @@ import (
 	"github.com/tadoku/tadoku/services/content-api/domain/pagecommand"
 	"github.com/tadoku/tadoku/services/content-api/domain/pagequery"
 	"github.com/tadoku/tadoku/services/content-api/domain/postcommand"
+	"github.com/tadoku/tadoku/services/content-api/domain/postquery"
 	"github.com/tadoku/tadoku/services/content-api/http/rest"
 	"github.com/tadoku/tadoku/services/content-api/http/rest/openapi"
 	"github.com/tadoku/tadoku/services/content-api/storage/postgres"
@@ -53,12 +54,14 @@ func main() {
 	postCommandService := postcommand.NewService(postRepository)
 
 	pageQueryService := pagequery.NewService(pageRepository)
+	postQueryService := postquery.NewService(postRepository)
 
 	server := rest.NewServer(
 		pageCommandService,
 		postCommandService,
 
 		pageQueryService,
+		postQueryService,
 	)
 
 	openapi.RegisterHandlersWithBaseURL(e, server, "")

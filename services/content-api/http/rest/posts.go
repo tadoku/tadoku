@@ -8,6 +8,7 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/tadoku/tadoku/services/common/domain"
 	"github.com/tadoku/tadoku/services/content-api/domain/postcommand"
+	"github.com/tadoku/tadoku/services/content-api/domain/postquery"
 	"github.com/tadoku/tadoku/services/content-api/http/rest/openapi"
 )
 
@@ -99,5 +100,20 @@ func (s *Server) PostUpdate(ctx echo.Context, namespace string, id string) error
 // Returns page content for a given slug
 // (GET /posts/{namespace}/{slug})
 func (s *Server) PostFindBySlug(ctx echo.Context, namespace string, slug string) error {
-	return ctx.NoContent(http.StatusNotImplemented)
+	post, err := s.postQueryService.FindBySlug(ctx.Request().Context(), namespace, slug)
+	if err != nil {
+		if errors.Is(err, postquery.ErrPostNotFound) {
+			return ctx.NoContent(http.StatusNotFound)
+		}
+
+		ctx.Echo().Logger.Error("could not process request: ", err)
+		return ctx.NoContent(http.StatusInternalServerError)
+	}
+
+	return ctx.JSON(http.StatusOK, openapi.Post{
+		Id:      &post.ID,
+		Slug:    post.Slug,
+		Title:   post.Title,
+		Content: &post.Content,
+	})
 }

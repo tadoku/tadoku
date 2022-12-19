@@ -98,6 +98,7 @@ func (s *Server) PageFindBySlug(ctx echo.Context, slug string) error {
 			return ctx.NoContent(http.StatusNotFound)
 		}
 
+		ctx.Echo().Logger.Error("could not process request: ", err)
 		return ctx.NoContent(http.StatusInternalServerError)
 	}
 
@@ -122,6 +123,7 @@ func (s *Server) PageList(ctx echo.Context) error {
 			return ctx.NoContent(http.StatusNotFound)
 		}
 
+		ctx.Echo().Logger.Error("could not process request: ", err)
 		return ctx.NoContent(http.StatusInternalServerError)
 	}
 

@@ -1,7 +1,7 @@
 import type { NextPage } from 'next'
 import Breadcrumb from 'tadoku-ui/components/Breadcrumb'
 import { HomeIcon } from '@heroicons/react/20/solid'
-import Page from '@app/blog/Page'
+import Page from '@app/content/Page'
 
 interface Props {}
 

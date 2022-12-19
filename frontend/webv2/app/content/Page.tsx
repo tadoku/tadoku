@@ -1,12 +1,11 @@
-import { useQuery } from 'react-query'
-import { getPage } from '@app/blog/api'
+import { usePage } from '@app/content/api'
 
 interface Props {
   slug: string
 }
 
 const Page = ({ slug }: Props) => {
-  const page = useQuery(['blog_page', { slug }], getPage)
+  const page = usePage(slug)
 
   if (page.isLoading || page.isIdle) {
     return <p>Loading...</p>

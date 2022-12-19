@@ -90,17 +90,17 @@ type ServerInterface interface {
 	// (GET /ping)
 	Ping(ctx echo.Context) error
 	// lists all posts
-	// (GET /posts)
-	PostList(ctx echo.Context) error
+	// (GET /posts/{namespace})
+	PostList(ctx echo.Context, namespace string) error
 	// Creates a new post
-	// (POST /posts)
-	PostCreate(ctx echo.Context) error
+	// (POST /posts/{namespace})
+	PostCreate(ctx echo.Context, namespace string) error
 	// Updates an existing post
-	// (PUT /posts/{id})
-	PostUpdate(ctx echo.Context, id string) error
+	// (PUT /posts/{namespace}/{id})
+	PostUpdate(ctx echo.Context, namespace string, id string) error
 	// Returns page content for a given slug
-	// (GET /posts/{slug})
-	PostFindBySlug(ctx echo.Context, slug string) error
+	// (GET /posts/{namespace}/{slug})
+	PostFindBySlug(ctx echo.Context, namespace string, slug string) error
 }
 
 // ServerInterfaceWrapper converts echo contexts to parameters.
@@ -176,26 +176,48 @@ func (w *ServerInterfaceWrapper) Ping(ctx echo.Context) error {
 // PostList converts echo context to params.
 func (w *ServerInterfaceWrapper) PostList(ctx echo.Context) error {
 	var err error
+	// ------------- Path parameter "namespace" -------------
+	var namespace string
+
+	err = runtime.BindStyledParameterWithLocation("simple", false, "namespace", runtime.ParamLocationPath, ctx.Param("namespace"), &namespace)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter namespace: %s", err))
+	}
 
 	// Invoke the callback with all the unmarshalled arguments
-	err = w.Handler.PostList(ctx)
+	err = w.Handler.PostList(ctx, namespace)
 	return err
 }
 
 // PostCreate converts echo context to params.
 func (w *ServerInterfaceWrapper) PostCreate(ctx echo.Context) error {
 	var err error
+	// ------------- Path parameter "namespace" -------------
+	var namespace string
+
+	err = runtime.BindStyledParameterWithLocation("simple", false, "namespace", runtime.ParamLocationPath, ctx.Param("namespace"), &namespace)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter namespace: %s", err))
+	}
 
 	ctx.Set(CookieAuthScopes, []string{""})
 
 	// Invoke the callback with all the unmarshalled arguments
-	err = w.Handler.PostCreate(ctx)
+	err = w.Handler.PostCreate(ctx, namespace)
 	return err
 }
 
 // PostUpdate converts echo context to params.
 func (w *ServerInterfaceWrapper) PostUpdate(ctx echo.Context) error {
 	var err error
+	// ------------- Path parameter "namespace" -------------
+	var namespace string
+
+	err = runtime.BindStyledParameterWithLocation("simple", false, "namespace", runtime.ParamLocationPath, ctx.Param("namespace"), &namespace)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter namespace: %s", err))
+	}
+
 	// ------------- Path parameter "id" -------------
 	var id string
 
@@ -207,13 +229,21 @@ func (w *ServerInterfaceWrapper) PostUpdate(ctx echo.Context) error {
 	ctx.Set(CookieAuthScopes, []string{""})
 
 	// Invoke the callback with all the unmarshalled arguments
-	err = w.Handler.PostUpdate(ctx, id)
+	err = w.Handler.PostUpdate(ctx, namespace, id)
 	return err
 }
 
 // PostFindBySlug converts echo context to params.
 func (w *ServerInterfaceWrapper) PostFindBySlug(ctx echo.Context) error {
 	var err error
+	// ------------- Path parameter "namespace" -------------
+	var namespace string
+
+	err = runtime.BindStyledParameterWithLocation("simple", false, "namespace", runtime.ParamLocationPath, ctx.Param("namespace"), &namespace)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter namespace: %s", err))
+	}
+
 	// ------------- Path parameter "slug" -------------
 	var slug string
 
@@ -223,7 +253,7 @@ func (w *ServerInterfaceWrapper) PostFindBySlug(ctx echo.Context) error {
 	}
 
 	// Invoke the callback with all the unmarshalled arguments
-	err = w.Handler.PostFindBySlug(ctx, slug)
+	err = w.Handler.PostFindBySlug(ctx, namespace, slug)
 	return err
 }
 
@@ -260,9 +290,9 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 	router.PUT(baseURL+"/pages/:id", wrapper.PageUpdate)
 	router.GET(baseURL+"/pages/:slug", wrapper.PageFindBySlug)
 	router.GET(baseURL+"/ping", wrapper.Ping)
-	router.GET(baseURL+"/posts", wrapper.PostList)
-	router.POST(baseURL+"/posts", wrapper.PostCreate)
-	router.PUT(baseURL+"/posts/:id", wrapper.PostUpdate)
-	router.GET(baseURL+"/posts/:slug", wrapper.PostFindBySlug)
+	router.GET(baseURL+"/posts/:namespace", wrapper.PostList)
+	router.POST(baseURL+"/posts/:namespace", wrapper.PostCreate)
+	router.PUT(baseURL+"/posts/:namespace/:id", wrapper.PostUpdate)
+	router.GET(baseURL+"/posts/:namespace/:slug", wrapper.PostFindBySlug)
 
 }

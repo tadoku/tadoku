@@ -10,6 +10,7 @@ import (
 	"github.com/tadoku/tadoku/services/common/storage/memory"
 	"github.com/tadoku/tadoku/services/content-api/domain/pagecommand"
 	"github.com/tadoku/tadoku/services/content-api/domain/pagequery"
+	"github.com/tadoku/tadoku/services/content-api/domain/postcommand"
 	"github.com/tadoku/tadoku/services/content-api/http/rest"
 	"github.com/tadoku/tadoku/services/content-api/http/rest/openapi"
 	"github.com/tadoku/tadoku/services/content-api/storage/postgres"
@@ -40,6 +41,7 @@ func main() {
 	}
 
 	pageRepository := postgres.NewPageRepository(psql)
+	postRepository := postgres.NewPostRepository(psql)
 	roleRepository := memory.NewRoleRepository("/etc/tadoku/permissions/roles.yaml")
 
 	e := echo.New()
@@ -48,10 +50,14 @@ func main() {
 	e.Use(tadokumiddleware.Session(roleRepository))
 
 	pageCommandService := pagecommand.NewService(pageRepository)
+	postCommandService := postcommand.NewService(postRepository)
+
 	pageQueryService := pagequery.NewService(pageRepository)
 
 	server := rest.NewServer(
 		pageCommandService,
+		postCommandService,
+
 		pageQueryService,
 	)
 

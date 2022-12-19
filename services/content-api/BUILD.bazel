@@ -10,6 +10,7 @@ go_library(
         "//services/common/storage/memory",
         "//services/content-api/domain/pagecommand",
         "//services/content-api/domain/pagequery",
+        "//services/content-api/domain/postcommand",
         "//services/content-api/http/rest",
         "//services/content-api/http/rest/openapi",
         "//services/content-api/storage/postgres",

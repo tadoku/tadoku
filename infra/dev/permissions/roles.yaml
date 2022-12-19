@@ -1,5 +1,13 @@
 users:
   - email: dev@tadoku.app
     role: admin
+  - email: dev1@tadoku.app
+    role: admin
+  - email: dev2@tadoku.app
+    role: admin
+  - email: dev3@tadoku.app
+    role: admin
+  - email: dev4@tadoku.app
+    role: admin
   - email: banned@tadoku.app
     role: banned

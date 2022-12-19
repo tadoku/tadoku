@@ -15,8 +15,7 @@ var ErrInvalidPost = errors.New("unable to validate page")
 
 type PostRepository interface {
 	CreatePost(context.Context, *PostCreateRequest) (*PostCreateResponse, error)
-
-	// UpdatePost(context.Context, uuid.UUID, *PostUpdateRequest) (*PostUpdateResponse, error)
+	UpdatePost(context.Context, uuid.UUID, *PostUpdateRequest) (*PostUpdateResponse, error)
 }
 
 type Service interface {
@@ -65,6 +64,7 @@ func (s *service) CreatePost(ctx context.Context, req *PostCreateRequest) (*Post
 
 type PostUpdateRequest struct {
 	Slug        string `validate:"required,gt=1,lowercase"`
+	Namespace   string `validate:"required"`
 	Title       string `validate:"required"`
 	Content     string `validate:"required"`
 	PublishedAt *time.Time
@@ -84,5 +84,5 @@ func (s *service) UpdatePost(ctx context.Context, id uuid.UUID, req *PostUpdateR
 		return nil, fmt.Errorf("%w: %w", ErrInvalidPost, err)
 	}
 
-	return nil, nil
+	return s.pr.UpdatePost(ctx, id, req)
 }

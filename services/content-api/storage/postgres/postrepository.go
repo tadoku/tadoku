@@ -83,3 +83,63 @@ func (r *PostRepository) CreatePost(ctx context.Context, req *postcommand.PostCr
 		PublishedAt: NewTimeFromNullTime(page.PublishedAt),
 	}, nil
 }
+
+func (r *PostRepository) UpdatePost(ctx context.Context, id uuid.UUID, req *postcommand.PostUpdateRequest) (*postcommand.PostUpdateResponse, error) {
+	tx, err := r.psql.BeginTx(ctx, nil)
+	if err != nil {
+		return nil, fmt.Errorf("could not create page: %w", err)
+	}
+
+	pageContentID := uuid.New()
+
+	qtx := r.q.WithTx(tx)
+
+	_, err = qtx.UpdatePost(ctx, UpdatePostParams{
+		ID:               id,
+		Slug:             req.Slug,
+		CurrentContentID: pageContentID,
+		PublishedAt:      NewNullTime(req.PublishedAt),
+	})
+	if err != nil {
+		_ = tx.Rollback()
+
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) && pgErr.Code == pgerrcode.UniqueViolation {
+			return nil, postcommand.ErrPostAlreadyExists
+		}
+
+		return nil, fmt.Errorf("could not create page: %w", err)
+	}
+
+	_, err = qtx.CreatePostContent(ctx, CreatePostContentParams{
+		ID:      pageContentID,
+		PostID:  id,
+		Title:   req.Title,
+		Content: req.Content,
+	})
+	if err != nil {
+		_ = tx.Rollback()
+		return nil, fmt.Errorf("could not create page: %w", err)
+	}
+
+	page, err := qtx.FindPostBySlug(ctx, FindPostBySlugParams{
+		Namespace: req.Namespace,
+		Slug:      req.Slug,
+	})
+	if err != nil {
+		_ = tx.Rollback()
+		return nil, fmt.Errorf("could not create page: %w", err)
+	}
+
+	if err = tx.Commit(); err != nil {
+		return nil, fmt.Errorf("could not create page: %w", err)
+	}
+
+	return &postcommand.PostUpdateResponse{
+		ID:          page.ID,
+		Slug:        page.Slug,
+		Title:       page.Title,
+		Content:     page.Content,
+		PublishedAt: NewTimeFromNullTime(page.PublishedAt),
+	}, nil
+}

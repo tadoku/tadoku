@@ -34,7 +34,7 @@ func main() {
 		}
 
 		target := RemoveWWWSubdomain(host)
-		http.Redirect(w, r, target.String(), 301)
+		http.Redirect(w, r, target.String(), http.StatusMovedPermanently)
 	})
 
 	log.Print("Starting server on port 8080")

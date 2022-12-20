@@ -11,6 +11,7 @@ import (
 )
 
 var ErrPostAlreadyExists = errors.New("post with given id already exists")
+var ErrPostNotFound = errors.New("post not found")
 var ErrInvalidPost = errors.New("unable to validate page")
 
 type PostRepository interface {

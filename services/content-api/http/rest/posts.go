@@ -79,6 +79,9 @@ func (s *Server) PostUpdate(ctx echo.Context, namespace string, id string) error
 			ctx.Echo().Logger.Error("could not process request: ", err)
 			return ctx.NoContent(http.StatusBadRequest)
 		}
+		if errors.Is(err, postcommand.ErrPostNotFound) {
+			return ctx.NoContent(http.StatusNotFound)
+		}
 
 		ctx.Echo().Logger.Error("could not process request: ", err)
 		return ctx.NoContent(http.StatusInternalServerError)

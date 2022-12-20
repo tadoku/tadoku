@@ -90,7 +90,7 @@ func (r *PostRepository) CreatePost(ctx context.Context, req *postcommand.PostCr
 func (r *PostRepository) UpdatePost(ctx context.Context, id uuid.UUID, req *postcommand.PostUpdateRequest) (*postcommand.PostUpdateResponse, error) {
 	tx, err := r.psql.BeginTx(ctx, nil)
 	if err != nil {
-		return nil, fmt.Errorf("could not create post: %w", err)
+		return nil, fmt.Errorf("could not update post: %w", err)
 	}
 
 	postContentID := uuid.New()
@@ -106,12 +106,17 @@ func (r *PostRepository) UpdatePost(ctx context.Context, id uuid.UUID, req *post
 	if err != nil {
 		_ = tx.Rollback()
 
+		if err != nil && errors.Is(err, sql.ErrNoRows) {
+			_ = tx.Rollback()
+			return nil, postcommand.ErrPostNotFound
+		}
+
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) && pgErr.Code == pgerrcode.UniqueViolation {
 			return nil, postcommand.ErrPostAlreadyExists
 		}
 
-		return nil, fmt.Errorf("could not create post: %w", err)
+		return nil, fmt.Errorf("could not update post: %w", err)
 	}
 
 	_, err = qtx.CreatePostContent(ctx, CreatePostContentParams{
@@ -122,7 +127,7 @@ func (r *PostRepository) UpdatePost(ctx context.Context, id uuid.UUID, req *post
 	})
 	if err != nil {
 		_ = tx.Rollback()
-		return nil, fmt.Errorf("could not create post: %w", err)
+		return nil, fmt.Errorf("could not update post: %w", err)
 	}
 
 	post, err := qtx.FindPostBySlug(ctx, FindPostBySlugParams{
@@ -131,11 +136,11 @@ func (r *PostRepository) UpdatePost(ctx context.Context, id uuid.UUID, req *post
 	})
 	if err != nil {
 		_ = tx.Rollback()
-		return nil, fmt.Errorf("could not create post: %w", err)
+		return nil, fmt.Errorf("could not update post: %w", err)
 	}
 
 	if err = tx.Commit(); err != nil {
-		return nil, fmt.Errorf("could not create post: %w", err)
+		return nil, fmt.Errorf("could not update post: %w", err)
 	}
 
 	return &postcommand.PostUpdateResponse{

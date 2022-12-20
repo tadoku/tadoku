@@ -25,6 +25,8 @@ func NewPostRepository(psql *sql.DB) *PostRepository {
 	}
 }
 
+// COMMANDS
+
 func (r *PostRepository) CreatePost(ctx context.Context, req *postcommand.PostCreateRequest) (*postcommand.PostCreateResponse, error) {
 	tx, err := r.psql.BeginTx(ctx, nil)
 	if err != nil {
@@ -144,6 +146,8 @@ func (r *PostRepository) UpdatePost(ctx context.Context, id uuid.UUID, req *post
 		PublishedAt: NewTimeFromNullTime(post.PublishedAt),
 	}, nil
 }
+
+// QUERIES
 
 func (r *PostRepository) FindBySlug(ctx context.Context, req *postquery.PostFindRequest) (*postquery.PostFindResponse, error) {
 	post, err := r.q.FindPostBySlug(ctx, FindPostBySlugParams{

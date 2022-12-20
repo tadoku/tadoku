@@ -25,6 +25,8 @@ func NewPageRepository(psql *sql.DB) *PageRepository {
 	}
 }
 
+// COMMANDS
+
 func (r *PageRepository) CreatePage(ctx context.Context, req *pagecommand.PageCreateRequest) (*pagecommand.PageCreateResponse, error) {
 	tx, err := r.psql.BeginTx(ctx, nil)
 	if err != nil {
@@ -145,6 +147,8 @@ func (r *PageRepository) UpdatePage(ctx context.Context, id uuid.UUID, req *page
 		PublishedAt: NewTimeFromNullTime(page.PublishedAt),
 	}, nil
 }
+
+// QUERIES
 
 func (r *PageRepository) FindBySlug(ctx context.Context, req *pagequery.PageFindRequest) (*pagequery.PageFindResponse, error) {
 	page, err := r.q.FindPageBySlug(ctx, FindPageBySlugParams{

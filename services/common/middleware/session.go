@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/MicahParks/keyfunc"
@@ -60,9 +61,9 @@ func Session(repository RoleRepository) echo.MiddlewareFunc {
 				Subject: "guest",
 				Role:    "guest",
 			}
-			ctx.Set("session", sessionToken)
 
 			if ctx.Get("user") == nil {
+				ctx.SetRequest(ctx.Request().WithContext(context.WithValue(ctx.Request().Context(), domain.CtxSessionKey, sessionToken)))
 				return next(ctx)
 			}
 
@@ -74,6 +75,7 @@ func Session(repository RoleRepository) echo.MiddlewareFunc {
 				sessionToken.Role = domain.Role(repository.GetRole(sessionToken.Email))
 			}
 
+			ctx.SetRequest(ctx.Request().WithContext(context.WithValue(ctx.Request().Context(), domain.CtxSessionKey, sessionToken)))
 			return next(ctx)
 		}
 	}

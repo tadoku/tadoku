@@ -44,7 +44,6 @@ go_image(
 container_image(
     name = "image",
     base = ":base_image",
-    stamp = True,
 )
 
 container_push(

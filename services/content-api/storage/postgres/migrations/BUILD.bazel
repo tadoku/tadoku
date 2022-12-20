@@ -11,6 +11,5 @@ pkg_tar(
 container_image(
     name = "image",
     base = "@migrate_docker//image",
-    stamp = True,
     tars = [":tar"],
 )

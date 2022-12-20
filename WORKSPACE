@@ -33,9 +33,8 @@ http_archive(
 
 http_archive(
     name = "io_bazel_rules_docker",
-    sha256 = "59d5b42ac315e7eadffa944e86e90c2990110a1c8075f1cd145f487e999d22b3",
-    strip_prefix = "rules_docker-0.17.0",
-    urls = ["https://github.com/bazelbuild/rules_docker/releases/download/v0.17.0/rules_docker-v0.17.0.tar.gz"],
+    sha256 = "b1e80761a8a8243d03ebca8845e9cc1ba6c82ce7c5179ce2b295cd36f7e394bf",
+    urls = ["https://github.com/bazelbuild/rules_docker/releases/download/v0.25.0/rules_docker-v0.25.0.tar.gz"],
 )
 
 http_archive(
@@ -92,13 +91,6 @@ _go_image_repos()
 
 docker_toolchain_configure(
     name = "docker_config",
-    # Replace this with an absolute path to a directory which has a custom docker
-    # client config.json. Note relative paths are not supported.
-    # Docker allows you to specify custom authentication credentials
-    # in the client configuration JSON file.
-    # See https://docs.docker.com/engine/reference/commandline/cli/#configuration-files
-    # for more details.
-    client_config = "/tmp/docker",
 )
 
 ## Setup file packaging toolchain
@@ -109,18 +101,18 @@ rules_pkg_dependencies()
 # Setup k8s
 http_archive(
     name = "io_bazel_rules_k8s",
-    sha256 = "51f0977294699cd547e139ceff2396c32588575588678d2054da167691a227ef",
-    strip_prefix = "rules_k8s-0.6",
-    urls = ["https://github.com/bazelbuild/rules_k8s/archive/v0.6.tar.gz"],
+    sha256 = "ce5b9bc0926681e2e7f2147b49096f143e6cbc783e71bc1d4f36ca76b00e6f4a",
+    strip_prefix = "rules_k8s-0.7",
+    urls = ["https://github.com/bazelbuild/rules_k8s/archive/refs/tags/v0.7.tar.gz"],
 )
 
 load("@io_bazel_rules_k8s//k8s:k8s.bzl", "k8s_repositories")
 
 k8s_repositories()
 
-load("@io_bazel_rules_k8s//k8s:k8s_go_deps.bzl", k8s_go_deps = "deps")
+# load("@io_bazel_rules_k8s//k8s:k8s_go_deps.bzl", k8s_go_deps = "deps")
 
-k8s_go_deps()
+# k8s_go_deps()
 
 # Setup OpenAPI
 git_repository(

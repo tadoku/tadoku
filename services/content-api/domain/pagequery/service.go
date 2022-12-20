@@ -12,12 +12,12 @@ import (
 var ErrPageNotFound = errors.New("page not found")
 
 type PageRepository interface {
-	FindBySlug(context.Context, string) (*PageFindResponse, error)
+	FindBySlug(context.Context, *PageFindRequest) (*PageFindResponse, error)
 	ListPages(context.Context, *PageListRequest) (*PageListResponse, error)
 }
 
 type Service interface {
-	FindBySlug(context.Context, string) (*PageFindResponse, error)
+	FindBySlug(context.Context, *PageFindRequest) (*PageFindResponse, error)
 	ListPages(context.Context, *PageListRequest) (*PageListResponse, error)
 }
 
@@ -31,6 +31,11 @@ func NewService(pr PageRepository) Service {
 	}
 }
 
+type PageFindRequest struct {
+	Slug      string `validate:"required"`
+	Namespace string `validate:"required"`
+}
+
 type PageFindResponse struct {
 	ID          uuid.UUID
 	Slug        string
@@ -39,8 +44,8 @@ type PageFindResponse struct {
 	PublishedAt *time.Time
 }
 
-func (s *service) FindBySlug(ctx context.Context, slug string) (*PageFindResponse, error) {
-	page, err := s.pr.FindBySlug(ctx, slug)
+func (s *service) FindBySlug(ctx context.Context, req *PageFindRequest) (*PageFindResponse, error) {
+	page, err := s.pr.FindBySlug(ctx, req)
 	if err != nil {
 		return nil, err
 	}
@@ -54,6 +59,7 @@ func (s *service) FindBySlug(ctx context.Context, slug string) (*PageFindRespons
 }
 
 type PageListRequest struct {
+	Namespace     string `validate:"required"`
 	IncludeDrafts bool
 	PageSize      int
 	Page          int

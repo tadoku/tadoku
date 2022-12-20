@@ -2,6 +2,7 @@ create extension if not exists "uuid-ossp";
 
 create table pages (
   id uuid primary key default uuid_generate_v4(),
+  "namespace" varchar(50) not null,
   slug varchar(200) not null,
   current_content_id uuid not null,
   published_at timestamp,
@@ -10,7 +11,8 @@ create table pages (
   deleted_at timestamp
 );
 
-create unique index pages_slug on pages(slug);
+create unique index pages_slug on pages("namespace", slug);
+create index pages_namespace on pages("namespace");
 
 create table pages_content (
   id uuid primary key default uuid_generate_v4(),

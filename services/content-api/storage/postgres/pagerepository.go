@@ -37,6 +37,7 @@ func (r *PageRepository) CreatePage(ctx context.Context, req *pagecommand.PageCr
 
 	_, err = qtx.CreatePage(ctx, CreatePageParams{
 		req.ID,
+		req.Namespace,
 		req.Slug,
 		pageContentID,
 		NewNullTime(req.PublishedAt),
@@ -63,7 +64,10 @@ func (r *PageRepository) CreatePage(ctx context.Context, req *pagecommand.PageCr
 		return nil, fmt.Errorf("could not create page: %w", err)
 	}
 
-	page, err := qtx.FindPageBySlug(ctx, req.Slug)
+	page, err := qtx.FindPageBySlug(ctx, FindPageBySlugParams{
+		Namespace: req.Namespace,
+		Slug:      req.Slug,
+	})
 	if err != nil {
 		_ = tx.Rollback()
 		return nil, fmt.Errorf("could not create page: %w", err)
@@ -120,7 +124,10 @@ func (r *PageRepository) UpdatePage(ctx context.Context, id uuid.UUID, req *page
 		return nil, fmt.Errorf("could not create page: %w", err)
 	}
 
-	page, err := qtx.FindPageBySlug(ctx, req.Slug)
+	page, err := qtx.FindPageBySlug(ctx, FindPageBySlugParams{
+		Namespace: req.Namespace,
+		Slug:      req.Slug,
+	})
 	if err != nil {
 		_ = tx.Rollback()
 		return nil, fmt.Errorf("could not create page: %w", err)
@@ -139,8 +146,11 @@ func (r *PageRepository) UpdatePage(ctx context.Context, id uuid.UUID, req *page
 	}, nil
 }
 
-func (r *PageRepository) FindBySlug(ctx context.Context, slug string) (*pagequery.PageFindResponse, error) {
-	page, err := r.q.FindPageBySlug(ctx, slug)
+func (r *PageRepository) FindBySlug(ctx context.Context, req *pagequery.PageFindRequest) (*pagequery.PageFindResponse, error) {
+	page, err := r.q.FindPageBySlug(ctx, FindPageBySlugParams{
+		Namespace: req.Namespace,
+		Slug:      req.Slug,
+	})
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, pagequery.ErrPageNotFound
@@ -166,7 +176,10 @@ func (r *PageRepository) ListPages(ctx context.Context, req *pagequery.PageListR
 
 	qtx := r.q.WithTx(tx)
 
-	meta, err := qtx.PagesMetadata(ctx, req.IncludeDrafts)
+	meta, err := qtx.PagesMetadata(ctx, PagesMetadataParams{
+		IncludeDrafts: req.IncludeDrafts,
+		Namespace:     req.Namespace,
+	})
 	if err != nil {
 		_ = tx.Rollback()
 		return nil, fmt.Errorf("could not lists pages: %w", err)
@@ -176,6 +189,7 @@ func (r *PageRepository) ListPages(ctx context.Context, req *pagequery.PageListR
 		StartFrom:     int32(req.Page * req.PageSize),
 		PageSize:      int32(req.PageSize),
 		IncludeDrafts: req.IncludeDrafts,
+		Namespace:     req.Namespace,
 	})
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		_ = tx.Rollback()

@@ -13,6 +13,7 @@ import (
 
 type Page struct {
 	ID               uuid.UUID
+	Namespace        string
 	Slug             string
 	CurrentContentID uuid.UUID
 	PublishedAt      sql.NullTime

@@ -92,17 +92,17 @@ type PostUpdateJSONRequestBody = Post
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
 	// lists all pages
-	// (GET /pages)
-	PageList(ctx echo.Context, params PageListParams) error
+	// (GET /pages/{namespace})
+	PageList(ctx echo.Context, namespace string, params PageListParams) error
 	// Creates a new page
-	// (POST /pages)
-	PageCreate(ctx echo.Context) error
+	// (POST /pages/{namespace})
+	PageCreate(ctx echo.Context, namespace string) error
 	// Updates an existing page
-	// (PUT /pages/{id})
-	PageUpdate(ctx echo.Context, id string) error
+	// (PUT /pages/{namespace}/{id})
+	PageUpdate(ctx echo.Context, namespace string, id string) error
 	// Returns page content for a given slug
-	// (GET /pages/{slug})
-	PageFindBySlug(ctx echo.Context, slug string) error
+	// (GET /pages/{namespace}/{slug})
+	PageFindBySlug(ctx echo.Context, namespace string, slug string) error
 	// Checks if service is responsive
 	// (GET /ping)
 	Ping(ctx echo.Context) error
@@ -128,6 +128,13 @@ type ServerInterfaceWrapper struct {
 // PageList converts echo context to params.
 func (w *ServerInterfaceWrapper) PageList(ctx echo.Context) error {
 	var err error
+	// ------------- Path parameter "namespace" -------------
+	var namespace string
+
+	err = runtime.BindStyledParameterWithLocation("simple", false, "namespace", runtime.ParamLocationPath, ctx.Param("namespace"), &namespace)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter namespace: %s", err))
+	}
 
 	ctx.Set(CookieAuthScopes, []string{""})
 
@@ -155,24 +162,39 @@ func (w *ServerInterfaceWrapper) PageList(ctx echo.Context) error {
 	}
 
 	// Invoke the callback with all the unmarshalled arguments
-	err = w.Handler.PageList(ctx, params)
+	err = w.Handler.PageList(ctx, namespace, params)
 	return err
 }
 
 // PageCreate converts echo context to params.
 func (w *ServerInterfaceWrapper) PageCreate(ctx echo.Context) error {
 	var err error
+	// ------------- Path parameter "namespace" -------------
+	var namespace string
+
+	err = runtime.BindStyledParameterWithLocation("simple", false, "namespace", runtime.ParamLocationPath, ctx.Param("namespace"), &namespace)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter namespace: %s", err))
+	}
 
 	ctx.Set(CookieAuthScopes, []string{""})
 
 	// Invoke the callback with all the unmarshalled arguments
-	err = w.Handler.PageCreate(ctx)
+	err = w.Handler.PageCreate(ctx, namespace)
 	return err
 }
 
 // PageUpdate converts echo context to params.
 func (w *ServerInterfaceWrapper) PageUpdate(ctx echo.Context) error {
 	var err error
+	// ------------- Path parameter "namespace" -------------
+	var namespace string
+
+	err = runtime.BindStyledParameterWithLocation("simple", false, "namespace", runtime.ParamLocationPath, ctx.Param("namespace"), &namespace)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter namespace: %s", err))
+	}
+
 	// ------------- Path parameter "id" -------------
 	var id string
 
@@ -184,13 +206,21 @@ func (w *ServerInterfaceWrapper) PageUpdate(ctx echo.Context) error {
 	ctx.Set(CookieAuthScopes, []string{""})
 
 	// Invoke the callback with all the unmarshalled arguments
-	err = w.Handler.PageUpdate(ctx, id)
+	err = w.Handler.PageUpdate(ctx, namespace, id)
 	return err
 }
 
 // PageFindBySlug converts echo context to params.
 func (w *ServerInterfaceWrapper) PageFindBySlug(ctx echo.Context) error {
 	var err error
+	// ------------- Path parameter "namespace" -------------
+	var namespace string
+
+	err = runtime.BindStyledParameterWithLocation("simple", false, "namespace", runtime.ParamLocationPath, ctx.Param("namespace"), &namespace)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter namespace: %s", err))
+	}
+
 	// ------------- Path parameter "slug" -------------
 	var slug string
 
@@ -200,7 +230,7 @@ func (w *ServerInterfaceWrapper) PageFindBySlug(ctx echo.Context) error {
 	}
 
 	// Invoke the callback with all the unmarshalled arguments
-	err = w.Handler.PageFindBySlug(ctx, slug)
+	err = w.Handler.PageFindBySlug(ctx, namespace, slug)
 	return err
 }
 
@@ -348,10 +378,10 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 		Handler: si,
 	}
 
-	router.GET(baseURL+"/pages", wrapper.PageList)
-	router.POST(baseURL+"/pages", wrapper.PageCreate)
-	router.PUT(baseURL+"/pages/:id", wrapper.PageUpdate)
-	router.GET(baseURL+"/pages/:slug", wrapper.PageFindBySlug)
+	router.GET(baseURL+"/pages/:namespace", wrapper.PageList)
+	router.POST(baseURL+"/pages/:namespace", wrapper.PageCreate)
+	router.PUT(baseURL+"/pages/:namespace/:id", wrapper.PageUpdate)
+	router.GET(baseURL+"/pages/:namespace/:slug", wrapper.PageFindBySlug)
 	router.GET(baseURL+"/ping", wrapper.Ping)
 	router.GET(baseURL+"/posts/:namespace", wrapper.PostList)
 	router.POST(baseURL+"/posts/:namespace", wrapper.PostCreate)

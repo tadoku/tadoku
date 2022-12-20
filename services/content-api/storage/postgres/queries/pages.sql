@@ -1,6 +1,7 @@
 -- name: FindPageBySlug :one
 select
   pages.id,
+  "namespace",
   slug,
   pages_content.title,
   pages_content.html,
@@ -10,11 +11,13 @@ inner join pages_content
   on pages_content.id = pages.current_content_id
 where
   deleted_at is null
+  and "namespace" = sqlc.arg('namespace')
   and slug = sqlc.arg('slug');
 
 -- name: ListPages :many
 select
   pages.id,
+  "namespace",
   slug,
   pages_content.title,
   published_at,
@@ -25,6 +28,7 @@ inner join pages_content
   on pages_content.id = pages.current_content_id
 where
   deleted_at is null
+  and "namespace" = sqlc.arg('namespace')
   and (sqlc.arg('include_drafts')::boolean or published_at is not null)
 order by pages.created_at desc
 limit sqlc.arg('page_size')
@@ -33,11 +37,13 @@ offset sqlc.arg('start_from');
 -- name: CreatePage :one
 insert into pages (
   id,
+  "namespace",
   slug,
   current_content_id,
   published_at
 ) values (
   sqlc.arg('id'),
+  sqlc.arg('namespace'),
   sqlc.arg('slug'),
   sqlc.arg('current_content_id'),
   sqlc.arg('published_at')
@@ -75,4 +81,5 @@ select
 from pages
 where
   deleted_at is null
-  and (sqlc.arg('include_drafts')::boolean or published_at is not null);
+  and (sqlc.arg('include_drafts')::boolean or published_at is not null)
+  and "namespace" = sqlc.arg('namespace');

@@ -37,6 +37,7 @@ func NewService(pr PageRepository) Service {
 
 type PageCreateRequest struct {
 	ID          uuid.UUID `validate:"required"`
+	Namespace   string    `validate:"required"`
 	Slug        string    `validate:"required,gt=1,lowercase"`
 	Title       string    `validate:"required"`
 	Html        string    `validate:"required"`
@@ -45,6 +46,7 @@ type PageCreateRequest struct {
 
 type PageCreateResponse struct {
 	ID          uuid.UUID
+	Namespace   string
 	Slug        string
 	Title       string
 	Html        string
@@ -62,6 +64,7 @@ func (s *service) CreatePage(ctx context.Context, req *PageCreateRequest) (*Page
 
 type PageUpdateRequest struct {
 	Slug        string `validate:"required,gt=1,lowercase"`
+	Namespace   string `validate:"required"`
 	Title       string `validate:"required"`
 	Html        string `validate:"required"`
 	PublishedAt *time.Time

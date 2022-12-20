@@ -13,8 +13,8 @@ import (
 )
 
 // Creates a new page
-// (POST /pages)
-func (s *Server) PageCreate(ctx echo.Context) error {
+// (POST /pages/{namespace})
+func (s *Server) PageCreate(ctx echo.Context, namespace string) error {
 	if !domain.IsRole(ctx, domain.RoleAdmin) {
 		return ctx.NoContent(http.StatusForbidden)
 	}
@@ -27,6 +27,7 @@ func (s *Server) PageCreate(ctx echo.Context) error {
 
 	page, err := s.pageCommandService.CreatePage(ctx.Request().Context(), &pagecommand.PageCreateRequest{
 		ID:          *req.Id,
+		Namespace:   namespace,
 		Slug:        req.Slug,
 		Title:       req.Title,
 		Html:        *req.Html,
@@ -52,8 +53,8 @@ func (s *Server) PageCreate(ctx echo.Context) error {
 }
 
 // Updates an existing page
-// (PUT /pages/{id})
-func (s *Server) PageUpdate(ctx echo.Context, id string) error {
+// (PUT /pages/{namespace}/{id})
+func (s *Server) PageUpdate(ctx echo.Context, namespace string, id string) error {
 	if !domain.IsRole(ctx, domain.RoleAdmin) {
 		return ctx.NoContent(http.StatusForbidden)
 	}
@@ -66,6 +67,7 @@ func (s *Server) PageUpdate(ctx echo.Context, id string) error {
 
 	page, err := s.pageCommandService.UpdatePage(ctx.Request().Context(), uuid.MustParse(id), &pagecommand.PageUpdateRequest{
 		Slug:        req.Slug,
+		Namespace:   namespace,
 		Title:       req.Title,
 		Html:        *req.Html,
 		PublishedAt: req.PublishedAt,
@@ -90,9 +92,12 @@ func (s *Server) PageUpdate(ctx echo.Context, id string) error {
 }
 
 // Returns page content for a given slug
-// (GET /pages/{pageSlug})
-func (s *Server) PageFindBySlug(ctx echo.Context, slug string) error {
-	page, err := s.pageQueryService.FindBySlug(ctx.Request().Context(), slug)
+// (GET /pages/{namespace}/{slug})
+func (s *Server) PageFindBySlug(ctx echo.Context, namespace string, slug string) error {
+	page, err := s.pageQueryService.FindBySlug(ctx.Request().Context(), &pagequery.PageFindRequest{
+		Slug:      slug,
+		Namespace: namespace,
+	})
 	if err != nil {
 		if errors.Is(err, pagequery.ErrPageNotFound) {
 			return ctx.NoContent(http.StatusNotFound)
@@ -111,8 +116,8 @@ func (s *Server) PageFindBySlug(ctx echo.Context, slug string) error {
 }
 
 // lists all pages
-// (GET /pages)
-func (s *Server) PageList(ctx echo.Context, params openapi.PageListParams) error {
+// (GET /pages/{namespace})
+func (s *Server) PageList(ctx echo.Context, namespace string, params openapi.PageListParams) error {
 	if !domain.IsRole(ctx, domain.RoleAdmin) {
 		return ctx.NoContent(http.StatusForbidden)
 	}
@@ -132,6 +137,7 @@ func (s *Server) PageList(ctx echo.Context, params openapi.PageListParams) error
 	}
 
 	list, err := s.pageQueryService.ListPages(ctx.Request().Context(), &pagequery.PageListRequest{
+		Namespace:     namespace,
 		PageSize:      pageSize,
 		Page:          page,
 		IncludeDrafts: includeDrafts,

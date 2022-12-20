@@ -16,6 +16,7 @@ import (
 const createPage = `-- name: CreatePage :one
 insert into pages (
   id,
+  "namespace",
   slug,
   current_content_id,
   published_at
@@ -23,12 +24,14 @@ insert into pages (
   $1,
   $2,
   $3,
-  $4
+  $4,
+  $5
 ) returning id
 `
 
 type CreatePageParams struct {
 	ID               uuid.UUID
+	Namespace        string
 	Slug             string
 	CurrentContentID uuid.UUID
 	PublishedAt      sql.NullTime
@@ -37,6 +40,7 @@ type CreatePageParams struct {
 func (q *Queries) CreatePage(ctx context.Context, arg CreatePageParams) (uuid.UUID, error) {
 	row := q.db.QueryRowContext(ctx, createPage,
 		arg.ID,
+		arg.Namespace,
 		arg.Slug,
 		arg.CurrentContentID,
 		arg.PublishedAt,
@@ -82,6 +86,7 @@ func (q *Queries) CreatePageContent(ctx context.Context, arg CreatePageContentPa
 const findPageBySlug = `-- name: FindPageBySlug :one
 select
   pages.id,
+  "namespace",
   slug,
   pages_content.title,
   pages_content.html,
@@ -91,22 +96,30 @@ inner join pages_content
   on pages_content.id = pages.current_content_id
 where
   deleted_at is null
-  and slug = $1
+  and "namespace" = $1
+  and slug = $2
 `
+
+type FindPageBySlugParams struct {
+	Namespace string
+	Slug      string
+}
 
 type FindPageBySlugRow struct {
 	ID          uuid.UUID
+	Namespace   string
 	Slug        string
 	Title       string
 	Html        string
 	PublishedAt sql.NullTime
 }
 
-func (q *Queries) FindPageBySlug(ctx context.Context, slug string) (FindPageBySlugRow, error) {
-	row := q.db.QueryRowContext(ctx, findPageBySlug, slug)
+func (q *Queries) FindPageBySlug(ctx context.Context, arg FindPageBySlugParams) (FindPageBySlugRow, error) {
+	row := q.db.QueryRowContext(ctx, findPageBySlug, arg.Namespace, arg.Slug)
 	var i FindPageBySlugRow
 	err := row.Scan(
 		&i.ID,
+		&i.Namespace,
 		&i.Slug,
 		&i.Title,
 		&i.Html,
@@ -118,6 +131,7 @@ func (q *Queries) FindPageBySlug(ctx context.Context, slug string) (FindPageBySl
 const listPages = `-- name: ListPages :many
 select
   pages.id,
+  "namespace",
   slug,
   pages_content.title,
   published_at,
@@ -128,13 +142,15 @@ inner join pages_content
   on pages_content.id = pages.current_content_id
 where
   deleted_at is null
-  and ($1::boolean or published_at is not null)
+  and "namespace" = $1
+  and ($2::boolean or published_at is not null)
 order by pages.created_at desc
-limit $3
-offset $2
+limit $4
+offset $3
 `
 
 type ListPagesParams struct {
+	Namespace     string
 	IncludeDrafts bool
 	StartFrom     int32
 	PageSize      int32
@@ -142,6 +158,7 @@ type ListPagesParams struct {
 
 type ListPagesRow struct {
 	ID          uuid.UUID
+	Namespace   string
 	Slug        string
 	Title       string
 	PublishedAt sql.NullTime
@@ -150,7 +167,12 @@ type ListPagesRow struct {
 }
 
 func (q *Queries) ListPages(ctx context.Context, arg ListPagesParams) ([]ListPagesRow, error) {
-	rows, err := q.db.QueryContext(ctx, listPages, arg.IncludeDrafts, arg.StartFrom, arg.PageSize)
+	rows, err := q.db.QueryContext(ctx, listPages,
+		arg.Namespace,
+		arg.IncludeDrafts,
+		arg.StartFrom,
+		arg.PageSize,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -160,6 +182,7 @@ func (q *Queries) ListPages(ctx context.Context, arg ListPagesParams) ([]ListPag
 		var i ListPagesRow
 		if err := rows.Scan(
 			&i.ID,
+			&i.Namespace,
 			&i.Slug,
 			&i.Title,
 			&i.PublishedAt,
@@ -187,15 +210,21 @@ from pages
 where
   deleted_at is null
   and ($1::boolean or published_at is not null)
+  and "namespace" = $2
 `
+
+type PagesMetadataParams struct {
+	IncludeDrafts bool
+	Namespace     string
+}
 
 type PagesMetadataRow struct {
 	TotalSize      int64
 	DraftsIncluded bool
 }
 
-func (q *Queries) PagesMetadata(ctx context.Context, includeDrafts bool) (PagesMetadataRow, error) {
-	row := q.db.QueryRowContext(ctx, pagesMetadata, includeDrafts)
+func (q *Queries) PagesMetadata(ctx context.Context, arg PagesMetadataParams) (PagesMetadataRow, error) {
+	row := q.db.QueryRowContext(ctx, pagesMetadata, arg.IncludeDrafts, arg.Namespace)
 	var i PagesMetadataRow
 	err := row.Scan(&i.TotalSize, &i.DraftsIncluded)
 	return i, err

@@ -11,7 +11,7 @@ externalDocs:
 servers:
   - url: https://tadoku.app/api/content/
 paths:
-  /pages/{slug}:
+  /pages/{namespace}/{slug}:
     get:
       summary: Returns page content for a given slug
       operationId: pageFindBySlug
@@ -20,6 +20,11 @@ paths:
         - name: slug
           in: path
           description: Slug of page to return
+          required: true
+          schema:
+            type: string
+        - name: namespace
+          in: path
           required: true
           schema:
             type: string
@@ -32,7 +37,7 @@ paths:
                 $ref: '#/components/schemas/Page'    
         '404':
           description: Page not found or not published
-  /pages/{id}:
+  /pages/{namespace}/{id}:
     put:
       summary: Updates an existing page
       operationId: pageUpdate
@@ -45,6 +50,11 @@ paths:
             schema:
               $ref: '#/components/schemas/Page'
       parameters:
+        - name: namespace
+          in: path
+          required: true
+          schema:
+            type: string
         - name: id
           in: path
           description: ID of page
@@ -62,13 +72,19 @@ paths:
           description: Invalid page
         '404':
           description: Page does not exist and cannot be updated
-  /pages:
+  /pages/{namespace}:
     post:
       summary: Creates a new page
       operationId: pageCreate
       tags: [pages]
       security:
         - cookieAuth: []
+      parameters:
+        - name: namespace
+          in: path
+          required: true
+          schema:
+            type: string
       requestBody:
         content:
           application/json:
@@ -90,6 +106,11 @@ paths:
       security:
         - cookieAuth: []
       parameters:
+        - name: namespace
+          in: path
+          required: true
+          schema:
+            type: string
         - name: page_size
           in: query
           required: false

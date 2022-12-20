@@ -9,6 +9,7 @@ ref. https://github.com/joelparkerhenderson/architecture-decision-record
 ## Index
 
 - [001 - Leaderboard Improvements](adr/001-leaderboard.md)
+- [001 - Define API contracts through OpenAPI](adr/002-api-contracts.md)
 
 ## Template
 

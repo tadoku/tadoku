@@ -6,10 +6,12 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
 )
 
 var ErrPageNotFound = errors.New("page not found")
+var ErrRequestInvalid = errors.New("request is invalid")
 
 type PageRepository interface {
 	FindBySlug(context.Context, *PageFindRequest) (*PageFindResponse, error)
@@ -22,12 +24,14 @@ type Service interface {
 }
 
 type service struct {
-	pr PageRepository
+	pr       PageRepository
+	validate *validator.Validate
 }
 
 func NewService(pr PageRepository) Service {
 	return &service{
-		pr: pr,
+		pr:       pr,
+		validate: validator.New(),
 	}
 }
 
@@ -45,6 +49,11 @@ type PageFindResponse struct {
 }
 
 func (s *service) FindBySlug(ctx context.Context, req *PageFindRequest) (*PageFindResponse, error) {
+	err := s.validate.Struct(req)
+	if err != nil {
+		return nil, fmt.Errorf("%w: %w", ErrRequestInvalid, err)
+	}
+
 	page, err := s.pr.FindBySlug(ctx, req)
 	if err != nil {
 		return nil, err

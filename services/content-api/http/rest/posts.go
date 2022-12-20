@@ -109,6 +109,9 @@ func (s *Server) PostFindBySlug(ctx echo.Context, namespace string, slug string)
 		if errors.Is(err, postquery.ErrPostNotFound) {
 			return ctx.NoContent(http.StatusNotFound)
 		}
+		if errors.Is(err, postquery.ErrRequestInvalid) {
+			return ctx.NoContent(http.StatusBadRequest)
+		}
 
 		ctx.Echo().Logger.Error("could not process request: ", err)
 		return ctx.NoContent(http.StatusInternalServerError)

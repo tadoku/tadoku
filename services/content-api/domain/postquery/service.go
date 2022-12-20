@@ -49,6 +49,11 @@ type PostFindResponse struct {
 }
 
 func (s *service) FindBySlug(ctx context.Context, req *PostFindRequest) (*PostFindResponse, error) {
+	err := s.validate.Struct(req)
+	if err != nil {
+		return nil, fmt.Errorf("%w: %w", ErrRequestInvalid, err)
+	}
+
 	post, err := s.pr.FindBySlug(ctx, req)
 	if err != nil {
 		return nil, err

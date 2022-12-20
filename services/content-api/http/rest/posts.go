@@ -147,7 +147,10 @@ func (s *Server) PostUpdate(ctx echo.Context, namespace string, id string) error
 // Returns page content for a given slug
 // (GET /posts/{namespace}/{slug})
 func (s *Server) PostFindBySlug(ctx echo.Context, namespace string, slug string) error {
-	post, err := s.postQueryService.FindBySlug(ctx.Request().Context(), namespace, slug)
+	post, err := s.postQueryService.FindBySlug(ctx.Request().Context(), &postquery.PostFindRequest{
+		Namespace: namespace,
+		Slug:      slug,
+	})
 	if err != nil {
 		if errors.Is(err, postquery.ErrPostNotFound) {
 			return ctx.NoContent(http.StatusNotFound)

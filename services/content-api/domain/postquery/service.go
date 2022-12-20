@@ -14,12 +14,12 @@ var ErrPostNotFound = errors.New("post not found")
 var ErrRequestInvalid = errors.New("request is invalid")
 
 type PostRepository interface {
-	FindBySlug(context.Context, string, string) (*PostFindResponse, error)
+	FindBySlug(context.Context, *PostFindRequest) (*PostFindResponse, error)
 	ListPosts(context.Context, *PostListRequest) (*PostListResponse, error)
 }
 
 type Service interface {
-	FindBySlug(context.Context, string, string) (*PostFindResponse, error)
+	FindBySlug(context.Context, *PostFindRequest) (*PostFindResponse, error)
 	ListPosts(context.Context, *PostListRequest) (*PostListResponse, error)
 }
 
@@ -35,6 +35,11 @@ func NewService(pr PostRepository) Service {
 	}
 }
 
+type PostFindRequest struct {
+	Slug      string `validate:"required"`
+	Namespace string `validate:"required"`
+}
+
 type PostFindResponse struct {
 	ID          uuid.UUID
 	Slug        string
@@ -43,8 +48,8 @@ type PostFindResponse struct {
 	PublishedAt *time.Time
 }
 
-func (s *service) FindBySlug(ctx context.Context, namespace, slug string) (*PostFindResponse, error) {
-	post, err := s.pr.FindBySlug(ctx, namespace, slug)
+func (s *service) FindBySlug(ctx context.Context, req *PostFindRequest) (*PostFindResponse, error) {
+	post, err := s.pr.FindBySlug(ctx, req)
 	if err != nil {
 		return nil, err
 	}

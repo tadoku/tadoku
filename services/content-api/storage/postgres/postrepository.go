@@ -145,10 +145,10 @@ func (r *PostRepository) UpdatePost(ctx context.Context, id uuid.UUID, req *post
 	}, nil
 }
 
-func (r *PostRepository) FindBySlug(ctx context.Context, namespace, slug string) (*postquery.PostFindResponse, error) {
+func (r *PostRepository) FindBySlug(ctx context.Context, req *postquery.PostFindRequest) (*postquery.PostFindResponse, error) {
 	post, err := r.q.FindPostBySlug(ctx, FindPostBySlugParams{
-		Namespace: namespace,
-		Slug:      slug,
+		Namespace: req.Namespace,
+		Slug:      req.Slug,
 	})
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {

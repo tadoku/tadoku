@@ -200,15 +200,15 @@ func (r *PostRepository) ListPosts(ctx context.Context, req *postquery.PostListR
 	}
 
 	res := make([]postquery.PostListEntry, len(posts))
-	for i, page := range posts {
+	for i, post := range posts {
 		res[i] = postquery.PostListEntry{
-			ID:          page.ID,
-			Slug:        page.Slug,
-			Title:       page.Title,
-			Content:     page.Content,
-			PublishedAt: NewTimeFromNullTime(page.PublishedAt),
-			CreatedAt:   page.CreatedAt,
-			UpdatedAt:   page.UpdatedAt,
+			ID:          post.ID,
+			Slug:        post.Slug,
+			Title:       post.Title,
+			Content:     post.Content,
+			PublishedAt: NewTimeFromNullTime(post.PublishedAt),
+			CreatedAt:   post.CreatedAt,
+			UpdatedAt:   post.UpdatedAt,
 		}
 	}
 

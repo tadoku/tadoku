@@ -158,15 +158,31 @@ func (r *PageRepository) FindBySlug(ctx context.Context, slug string) (*pagequer
 	}, nil
 }
 
-func (r *PageRepository) ListPages(ctx context.Context) (*pagequery.PageListResponse, error) {
-	pages, err := r.q.ListPages(ctx)
+func (r *PageRepository) ListPages(ctx context.Context, req *pagequery.PageListRequest) (*pagequery.PageListResponse, error) {
+	tx, err := r.psql.BeginTx(ctx, nil)
 	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return &pagequery.PageListResponse{
-				Pages: nil,
-			}, nil
-		}
+		return nil, fmt.Errorf("could not list pages: %w", err)
+	}
 
+	qtx := r.q.WithTx(tx)
+
+	meta, err := qtx.PagesMetadata(ctx, req.IncludeDrafts)
+	if err != nil {
+		_ = tx.Rollback()
+		return nil, fmt.Errorf("could not lists pages: %w", err)
+	}
+
+	pages, err := qtx.ListPages(ctx, ListPagesParams{
+		StartFrom:     int32(req.Page * req.PageSize),
+		PageSize:      int32(req.PageSize),
+		IncludeDrafts: req.IncludeDrafts,
+	})
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+		_ = tx.Rollback()
+		return nil, fmt.Errorf("could not list pages: %w", err)
+	}
+
+	if err = tx.Commit(); err != nil {
 		return nil, fmt.Errorf("could not list pages: %w", err)
 	}
 
@@ -182,7 +198,14 @@ func (r *PageRepository) ListPages(ctx context.Context) (*pagequery.PageListResp
 		}
 	}
 
+	nextPageToken := ""
+	if (req.Page*req.PageSize)+req.PageSize < int(meta.TotalSize) {
+		nextPageToken = fmt.Sprint(req.Page + 1)
+	}
+
 	return &pagequery.PageListResponse{
-		Pages: res,
+		Pages:         res,
+		TotalSize:     int(meta.TotalSize),
+		NextPageToken: nextPageToken,
 	}, nil
 }

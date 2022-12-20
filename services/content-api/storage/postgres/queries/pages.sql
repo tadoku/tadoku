@@ -25,7 +25,10 @@ inner join pages_content
   on pages_content.id = pages.current_content_id
 where
   deleted_at is null
-order by pages.created_at desc;
+  and (sqlc.arg('include_drafts')::boolean or published_at is not null)
+order by pages.created_at desc
+limit sqlc.arg('page_size')
+offset sqlc.arg('start_from');
 
 -- name: CreatePage :one
 insert into pages (
@@ -64,3 +67,12 @@ where
   id = sqlc.arg('id') and
   deleted_at is null
 returning id;
+
+-- name: PagesMetadata :one
+select
+  count(pages.id) as total_size,
+  sqlc.arg('include_drafts')::boolean as drafts_included
+from pages
+where
+  deleted_at is null
+  and (sqlc.arg('include_drafts')::boolean or published_at is not null);

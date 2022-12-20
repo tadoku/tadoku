@@ -112,19 +112,39 @@ func (s *Server) PageFindBySlug(ctx echo.Context, slug string) error {
 
 // lists all pages
 // (GET /pages)
-func (s *Server) PageList(ctx echo.Context) error {
+func (s *Server) PageList(ctx echo.Context, params openapi.PageListParams) error {
 	if !domain.IsRole(ctx, domain.RoleAdmin) {
 		return ctx.NoContent(http.StatusForbidden)
 	}
 
-	list, err := s.pageQueryService.ListPages(ctx.Request().Context())
+	pageSize := 0
+	page := 0
+	includeDrafts := true
+
+	if params.PageSize != nil {
+		pageSize = *params.PageSize
+	}
+	if params.Page != nil {
+		page = *params.Page
+	}
+	if params.IncludeDrafts != nil {
+		includeDrafts = *params.IncludeDrafts
+	}
+
+	list, err := s.pageQueryService.ListPages(ctx.Request().Context(), &pagequery.PageListRequest{
+		PageSize:      pageSize,
+		Page:          page,
+		IncludeDrafts: includeDrafts,
+	})
 	if err != nil && !errors.Is(err, pagequery.ErrPageNotFound) {
 		ctx.Echo().Logger.Error("could not process request: ", err)
 		return ctx.NoContent(http.StatusInternalServerError)
 	}
 
 	res := openapi.Pages{
-		Pages: []openapi.Page{},
+		Pages:         []openapi.Page{},
+		NextPageToken: list.NextPageToken,
+		TotalSize:     list.TotalSize,
 	}
 
 	for _, page := range list.Pages {

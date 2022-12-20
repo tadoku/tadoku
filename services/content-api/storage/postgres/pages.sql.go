@@ -128,8 +128,17 @@ inner join pages_content
   on pages_content.id = pages.current_content_id
 where
   deleted_at is null
+  and ($1::boolean or published_at is not null)
 order by pages.created_at desc
+limit $3
+offset $2
 `
+
+type ListPagesParams struct {
+	IncludeDrafts bool
+	StartFrom     int32
+	PageSize      int32
+}
 
 type ListPagesRow struct {
 	ID          uuid.UUID
@@ -140,8 +149,8 @@ type ListPagesRow struct {
 	UpdatedAt   time.Time
 }
 
-func (q *Queries) ListPages(ctx context.Context) ([]ListPagesRow, error) {
-	rows, err := q.db.QueryContext(ctx, listPages)
+func (q *Queries) ListPages(ctx context.Context, arg ListPagesParams) ([]ListPagesRow, error) {
+	rows, err := q.db.QueryContext(ctx, listPages, arg.IncludeDrafts, arg.StartFrom, arg.PageSize)
 	if err != nil {
 		return nil, err
 	}
@@ -168,6 +177,28 @@ func (q *Queries) ListPages(ctx context.Context) ([]ListPagesRow, error) {
 		return nil, err
 	}
 	return items, nil
+}
+
+const pagesMetadata = `-- name: PagesMetadata :one
+select
+  count(pages.id) as total_size,
+  $1::boolean as drafts_included
+from pages
+where
+  deleted_at is null
+  and ($1::boolean or published_at is not null)
+`
+
+type PagesMetadataRow struct {
+	TotalSize      int64
+	DraftsIncluded bool
+}
+
+func (q *Queries) PagesMetadata(ctx context.Context, includeDrafts bool) (PagesMetadataRow, error) {
+	row := q.db.QueryRowContext(ctx, pagesMetadata, includeDrafts)
+	var i PagesMetadataRow
+	err := row.Scan(&i.TotalSize, &i.DraftsIncluded)
+	return i, err
 }
 
 const updatePage = `-- name: UpdatePage :one

@@ -30,7 +30,10 @@ type Page struct {
 
 // Pages defines model for Pages.
 type Pages struct {
-	Pages []Page `json:"pages"`
+	// NextPageToken is empty if there's no next page
+	NextPageToken string `json:"next_page_token"`
+	Pages         []Page `json:"pages"`
+	TotalSize     int    `json:"total_size"`
 }
 
 // PaginatedList defines model for PaginatedList.
@@ -60,6 +63,13 @@ type Posts struct {
 	TotalSize     int    `json:"total_size"`
 }
 
+// PageListParams defines parameters for PageList.
+type PageListParams struct {
+	PageSize      *int  `form:"page_size,omitempty" json:"page_size,omitempty"`
+	Page          *int  `form:"page,omitempty" json:"page,omitempty"`
+	IncludeDrafts *bool `form:"include_drafts,omitempty" json:"include_drafts,omitempty"`
+}
+
 // PostListParams defines parameters for PostList.
 type PostListParams struct {
 	PageSize      *int  `form:"page_size,omitempty" json:"page_size,omitempty"`
@@ -83,7 +93,7 @@ type PostUpdateJSONRequestBody = Post
 type ServerInterface interface {
 	// lists all pages
 	// (GET /pages)
-	PageList(ctx echo.Context) error
+	PageList(ctx echo.Context, params PageListParams) error
 	// Creates a new page
 	// (POST /pages)
 	PageCreate(ctx echo.Context) error
@@ -121,8 +131,31 @@ func (w *ServerInterfaceWrapper) PageList(ctx echo.Context) error {
 
 	ctx.Set(CookieAuthScopes, []string{""})
 
+	// Parameter object where we will unmarshal all parameters from the context
+	var params PageListParams
+	// ------------- Optional query parameter "page_size" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "page_size", ctx.QueryParams(), &params.PageSize)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter page_size: %s", err))
+	}
+
+	// ------------- Optional query parameter "page" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "page", ctx.QueryParams(), &params.Page)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter page: %s", err))
+	}
+
+	// ------------- Optional query parameter "include_drafts" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "include_drafts", ctx.QueryParams(), &params.IncludeDrafts)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter include_drafts: %s", err))
+	}
+
 	// Invoke the callback with all the unmarshalled arguments
-	err = w.Handler.PageList(ctx)
+	err = w.Handler.PageList(ctx, params)
 	return err
 }
 

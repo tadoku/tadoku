@@ -13,12 +13,12 @@ var ErrPageNotFound = errors.New("page not found")
 
 type PageRepository interface {
 	FindBySlug(context.Context, string) (*PageFindResponse, error)
-	ListPages(context.Context) (*PageListResponse, error)
+	ListPages(context.Context, *PageListRequest) (*PageListResponse, error)
 }
 
 type Service interface {
 	FindBySlug(context.Context, string) (*PageFindResponse, error)
-	ListPages(context.Context) (*PageListResponse, error)
+	ListPages(context.Context, *PageListRequest) (*PageListResponse, error)
 }
 
 type service struct {
@@ -53,8 +53,16 @@ func (s *service) FindBySlug(ctx context.Context, slug string) (*PageFindRespons
 	return page, nil
 }
 
+type PageListRequest struct {
+	IncludeDrafts bool
+	PageSize      int
+	Page          int
+}
+
 type PageListResponse struct {
-	Pages []PageListEntry
+	Pages         []PageListEntry
+	TotalSize     int
+	NextPageToken string
 }
 
 type PageListEntry struct {
@@ -66,6 +74,14 @@ type PageListEntry struct {
 	UpdatedAt   time.Time
 }
 
-func (s *service) ListPages(ctx context.Context) (*PageListResponse, error) {
-	return s.pr.ListPages(ctx)
+func (s *service) ListPages(ctx context.Context, req *PageListRequest) (*PageListResponse, error) {
+	if req.PageSize == 0 {
+		req.PageSize = 10
+	}
+
+	if req.PageSize > 100 {
+		req.PageSize = 100
+	}
+
+	return s.pr.ListPages(ctx, req)
 }

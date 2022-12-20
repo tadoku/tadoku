@@ -8,10 +8,12 @@ import (
 
 	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
+	"github.com/tadoku/tadoku/services/common/domain"
 )
 
 var ErrPageNotFound = errors.New("page not found")
 var ErrRequestInvalid = errors.New("request is invalid")
+var ErrForbidden = errors.New("not allowed")
 
 type PageRepository interface {
 	FindBySlug(context.Context, *PageFindRequest) (*PageFindResponse, error)
@@ -90,6 +92,15 @@ type PageListEntry struct {
 }
 
 func (s *service) ListPages(ctx context.Context, req *PageListRequest) (*PageListResponse, error) {
+	if !domain.IsRole(ctx, domain.RoleAdmin) {
+		return nil, ErrForbidden
+	}
+
+	err := s.validate.Struct(req)
+	if err != nil {
+		return nil, fmt.Errorf("%w: %w", ErrRequestInvalid, err)
+	}
+
 	if req.PageSize == 0 {
 		req.PageSize = 10
 	}

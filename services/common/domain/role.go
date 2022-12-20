@@ -1,17 +1,15 @@
 package domain
 
+import "context"
+
 type Role string
 
 var RoleAdmin = Role("admin")
 var RoleUser = Role("user")
 var RoleBanned = Role("banned")
 
-type Gettable interface {
-	Get(string) interface{}
-}
-
-func IsRole(ctx Gettable, role Role) bool {
-	if session, ok := ctx.Get("session").(*SessionToken); ok {
+func IsRole(ctx context.Context, role Role) bool {
+	if session, ok := ctx.Value(CtxSessionKey).(*SessionToken); ok {
 		return session.Role == role
 	}
 

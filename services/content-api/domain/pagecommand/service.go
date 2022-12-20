@@ -8,11 +8,13 @@ import (
 
 	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
+	"github.com/tadoku/tadoku/services/common/domain"
 )
 
 var ErrPageAlreadyExists = errors.New("page with given id already exists")
 var ErrPageNotFound = errors.New("page not found")
 var ErrInvalidPage = errors.New("unable to validate page")
+var ErrForbidden = errors.New("not allowed")
 
 type PageRepository interface {
 	CreatePage(context.Context, *PageCreateRequest) (*PageCreateResponse, error)
@@ -55,6 +57,10 @@ type PageCreateResponse struct {
 }
 
 func (s *service) CreatePage(ctx context.Context, req *PageCreateRequest) (*PageCreateResponse, error) {
+	if !domain.IsRole(ctx, domain.RoleAdmin) {
+		return nil, ErrForbidden
+	}
+
 	err := s.validate.Struct(req)
 	if err != nil {
 		return nil, fmt.Errorf("%w: %w", ErrInvalidPage, err)
@@ -80,6 +86,10 @@ type PageUpdateResponse struct {
 }
 
 func (s *service) UpdatePage(ctx context.Context, id uuid.UUID, req *PageUpdateRequest) (*PageUpdateResponse, error) {
+	if !domain.IsRole(ctx, domain.RoleAdmin) {
+		return nil, ErrForbidden
+	}
+
 	err := s.validate.Struct(req)
 	if err != nil {
 		return nil, fmt.Errorf("%w: %w", ErrInvalidPage, err)

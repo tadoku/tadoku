@@ -6,7 +6,6 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
-	"github.com/tadoku/tadoku/services/common/domain"
 	"github.com/tadoku/tadoku/services/content-api/domain/pagecommand"
 	"github.com/tadoku/tadoku/services/content-api/domain/pagequery"
 	"github.com/tadoku/tadoku/services/content-api/http/rest/openapi"
@@ -17,10 +16,6 @@ import (
 // Creates a new page
 // (POST /pages/{namespace})
 func (s *Server) PageCreate(ctx echo.Context, namespace string) error {
-	if !domain.IsRole(ctx, domain.RoleAdmin) {
-		return ctx.NoContent(http.StatusForbidden)
-	}
-
 	var req openapi.Page
 	if err := ctx.Bind(&req); err != nil {
 		ctx.Echo().Logger.Error("could not process request: ", err)
@@ -36,6 +31,9 @@ func (s *Server) PageCreate(ctx echo.Context, namespace string) error {
 		PublishedAt: req.PublishedAt,
 	})
 	if err != nil {
+		if errors.Is(err, pagecommand.ErrForbidden) {
+			return ctx.NoContent(http.StatusForbidden)
+		}
 		if errors.Is(err, pagecommand.ErrPageAlreadyExists) || errors.Is(err, pagecommand.ErrInvalidPage) {
 			ctx.Echo().Logger.Error("could not process request: ", err)
 			return ctx.NoContent(http.StatusBadRequest)
@@ -57,10 +55,6 @@ func (s *Server) PageCreate(ctx echo.Context, namespace string) error {
 // Updates an existing page
 // (PUT /pages/{namespace}/{id})
 func (s *Server) PageUpdate(ctx echo.Context, namespace string, id string) error {
-	if !domain.IsRole(ctx, domain.RoleAdmin) {
-		return ctx.NoContent(http.StatusForbidden)
-	}
-
 	var req openapi.Page
 	if err := ctx.Bind(&req); err != nil {
 		ctx.Echo().Logger.Error("could not process request: ", err)
@@ -75,6 +69,9 @@ func (s *Server) PageUpdate(ctx echo.Context, namespace string, id string) error
 		PublishedAt: req.PublishedAt,
 	})
 	if err != nil {
+		if errors.Is(err, pagecommand.ErrForbidden) {
+			return ctx.NoContent(http.StatusForbidden)
+		}
 		if errors.Is(err, pagecommand.ErrPageAlreadyExists) || errors.Is(err, pagecommand.ErrInvalidPage) {
 			ctx.Echo().Logger.Error("could not process request: ", err)
 			return ctx.NoContent(http.StatusBadRequest)
@@ -128,10 +125,6 @@ func (s *Server) PageFindBySlug(ctx echo.Context, namespace string, slug string)
 // lists all pages
 // (GET /pages/{namespace})
 func (s *Server) PageList(ctx echo.Context, namespace string, params openapi.PageListParams) error {
-	if !domain.IsRole(ctx, domain.RoleAdmin) {
-		return ctx.NoContent(http.StatusForbidden)
-	}
-
 	pageSize := 0
 	page := 0
 	includeDrafts := true
@@ -152,9 +145,14 @@ func (s *Server) PageList(ctx echo.Context, namespace string, params openapi.Pag
 		Page:          page,
 		IncludeDrafts: includeDrafts,
 	})
-	if err != nil && !errors.Is(err, pagequery.ErrPageNotFound) {
-		ctx.Echo().Logger.Error("could not process request: ", err)
-		return ctx.NoContent(http.StatusInternalServerError)
+	if err != nil {
+		if errors.Is(err, pagequery.ErrForbidden) {
+			return ctx.NoContent(http.StatusForbidden)
+		}
+		if !errors.Is(err, pagequery.ErrPageNotFound) {
+			ctx.Echo().Logger.Error("could not process request: ", err)
+			return ctx.NoContent(http.StatusInternalServerError)
+		}
 	}
 
 	res := openapi.Pages{

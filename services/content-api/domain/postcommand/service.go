@@ -8,11 +8,13 @@ import (
 
 	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
+	"github.com/tadoku/tadoku/services/common/domain"
 )
 
 var ErrPostAlreadyExists = errors.New("post with given id already exists")
 var ErrPostNotFound = errors.New("post not found")
 var ErrInvalidPost = errors.New("unable to validate page")
+var ErrForbidden = errors.New("not allowed")
 
 type PostRepository interface {
 	CreatePost(context.Context, *PostCreateRequest) (*PostCreateResponse, error)
@@ -55,6 +57,10 @@ type PostCreateResponse struct {
 }
 
 func (s *service) CreatePost(ctx context.Context, req *PostCreateRequest) (*PostCreateResponse, error) {
+	if !domain.IsRole(ctx, domain.RoleAdmin) {
+		return nil, ErrForbidden
+	}
+
 	err := s.validate.Struct(req)
 	if err != nil {
 		return nil, fmt.Errorf("%w: %w", ErrInvalidPost, err)
@@ -80,6 +86,10 @@ type PostUpdateResponse struct {
 }
 
 func (s *service) UpdatePost(ctx context.Context, id uuid.UUID, req *PostUpdateRequest) (*PostUpdateResponse, error) {
+	if !domain.IsRole(ctx, domain.RoleAdmin) {
+		return nil, ErrForbidden
+	}
+
 	err := s.validate.Struct(req)
 	if err != nil {
 		return nil, fmt.Errorf("%w: %w", ErrInvalidPost, err)

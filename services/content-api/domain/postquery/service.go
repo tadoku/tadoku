@@ -8,10 +8,12 @@ import (
 
 	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
+	"github.com/tadoku/tadoku/services/common/domain"
 )
 
 var ErrPostNotFound = errors.New("post not found")
 var ErrRequestInvalid = errors.New("request is invalid")
+var ErrForbidden = errors.New("not allowed")
 
 type PostRepository interface {
 	FindBySlug(context.Context, *PostFindRequest) (*PostFindResponse, error)
@@ -94,6 +96,10 @@ func (s *service) ListPosts(ctx context.Context, req *PostListRequest) (*PostLis
 	err := s.validate.Struct(req)
 	if err != nil {
 		return nil, fmt.Errorf("%w: %w", ErrRequestInvalid, err)
+	}
+
+	if req.IncludeDrafts && !domain.IsRole(ctx, domain.RoleAdmin) {
+		return nil, ErrForbidden
 	}
 
 	if req.PageSize == 0 {

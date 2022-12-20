@@ -11,7 +11,6 @@ go_library(
     importpath = "github.com/tadoku/tadoku/services/content-api/http/rest",
     visibility = ["//visibility:public"],
     deps = [
-        "//services/common/domain",
         "//services/content-api/domain/pagecommand",
         "//services/content-api/domain/pagequery",
         "//services/content-api/domain/postcommand",

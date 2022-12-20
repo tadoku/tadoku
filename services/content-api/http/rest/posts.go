@@ -6,7 +6,6 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
-	"github.com/tadoku/tadoku/services/common/domain"
 	"github.com/tadoku/tadoku/services/content-api/domain/postcommand"
 	"github.com/tadoku/tadoku/services/content-api/domain/postquery"
 	"github.com/tadoku/tadoku/services/content-api/http/rest/openapi"
@@ -17,10 +16,6 @@ import (
 // Creates a new post
 // (POST /posts/{namespace})
 func (s *Server) PostCreate(ctx echo.Context, namespace string) error {
-	if !domain.IsRole(ctx, domain.RoleAdmin) {
-		return ctx.NoContent(http.StatusForbidden)
-	}
-
 	var req openapi.PostCreateJSONRequestBody
 	if err := ctx.Bind(&req); err != nil {
 		ctx.Echo().Logger.Error("could not process request: ", err)
@@ -36,6 +31,9 @@ func (s *Server) PostCreate(ctx echo.Context, namespace string) error {
 		PublishedAt: req.PublishedAt,
 	})
 	if err != nil {
+		if errors.Is(err, postcommand.ErrForbidden) {
+			return ctx.NoContent(http.StatusForbidden)
+		}
 		if errors.Is(err, postcommand.ErrPostAlreadyExists) || errors.Is(err, postcommand.ErrInvalidPost) {
 			ctx.Echo().Logger.Error("could not process request: ", err)
 			return ctx.NoContent(http.StatusBadRequest)
@@ -57,10 +55,6 @@ func (s *Server) PostCreate(ctx echo.Context, namespace string) error {
 // Updates an existing post
 // (PUT /posts/{namespace}/{id})
 func (s *Server) PostUpdate(ctx echo.Context, namespace string, id string) error {
-	if !domain.IsRole(ctx, domain.RoleAdmin) {
-		return ctx.NoContent(http.StatusForbidden)
-	}
-
 	var req openapi.PostUpdateJSONRequestBody
 	if err := ctx.Bind(&req); err != nil {
 		ctx.Echo().Logger.Error("could not process request: ", err)
@@ -75,6 +69,9 @@ func (s *Server) PostUpdate(ctx echo.Context, namespace string, id string) error
 		PublishedAt: req.PublishedAt,
 	})
 	if err != nil {
+		if errors.Is(err, postcommand.ErrForbidden) {
+			return ctx.NoContent(http.StatusForbidden)
+		}
 		if errors.Is(err, postcommand.ErrPostAlreadyExists) || errors.Is(err, postcommand.ErrInvalidPost) {
 			ctx.Echo().Logger.Error("could not process request: ", err)
 			return ctx.NoContent(http.StatusBadRequest)
@@ -139,9 +136,6 @@ func (s *Server) PostList(ctx echo.Context, namespace string, params openapi.Pos
 		page = *params.Page
 	}
 	if params.IncludeDrafts != nil {
-		if !domain.IsRole(ctx, domain.RoleAdmin) {
-			return ctx.NoContent(http.StatusForbidden)
-		}
 		includeDrafts = *params.IncludeDrafts
 	}
 
@@ -151,9 +145,14 @@ func (s *Server) PostList(ctx echo.Context, namespace string, params openapi.Pos
 		Page:          page,
 		IncludeDrafts: includeDrafts,
 	})
-	if err != nil && !errors.Is(err, postquery.ErrPostNotFound) {
-		ctx.Echo().Logger.Error("could not process request: ", err)
-		return ctx.NoContent(http.StatusInternalServerError)
+	if err != nil {
+		if errors.Is(err, postquery.ErrForbidden) {
+			return ctx.NoContent(http.StatusForbidden)
+		}
+		if !errors.Is(err, postquery.ErrPostNotFound) {
+			ctx.Echo().Logger.Error("could not process request: ", err)
+			return ctx.NoContent(http.StatusInternalServerError)
+		}
 	}
 
 	res := openapi.Posts{

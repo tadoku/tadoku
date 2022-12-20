@@ -79,6 +79,9 @@ func (s *Server) PageUpdate(ctx echo.Context, namespace string, id string) error
 			ctx.Echo().Logger.Error("could not process request: ", err)
 			return ctx.NoContent(http.StatusBadRequest)
 		}
+		if errors.Is(err, pagecommand.ErrPageNotFound) {
+			return ctx.NoContent(http.StatusNotFound)
+		}
 
 		ctx.Echo().Logger.Error("could not process request: ", err)
 		return ctx.NoContent(http.StatusInternalServerError)

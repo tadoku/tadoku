@@ -11,6 +11,7 @@ import (
 )
 
 var ErrPageAlreadyExists = errors.New("page with given id already exists")
+var ErrPageNotFound = errors.New("page not found")
 var ErrInvalidPage = errors.New("unable to validate page")
 
 type PageRepository interface {

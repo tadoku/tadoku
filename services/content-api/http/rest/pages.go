@@ -12,6 +12,8 @@ import (
 	"github.com/tadoku/tadoku/services/content-api/http/rest/openapi"
 )
 
+// COMMANDS
+
 // Creates a new page
 // (POST /pages/{namespace})
 func (s *Server) PageCreate(ctx echo.Context, namespace string) error {
@@ -90,6 +92,8 @@ func (s *Server) PageUpdate(ctx echo.Context, namespace string, id string) error
 		PublishedAt: page.PublishedAt,
 	})
 }
+
+// QUERIES
 
 // Returns page content for a given slug
 // (GET /pages/{namespace}/{slug})

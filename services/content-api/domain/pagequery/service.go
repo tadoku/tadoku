@@ -28,12 +28,14 @@ type Service interface {
 type service struct {
 	pr       PageRepository
 	validate *validator.Validate
+	clock    domain.Clock
 }
 
-func NewService(pr PageRepository) Service {
+func NewService(pr PageRepository, clock domain.Clock) Service {
 	return &service{
 		pr:       pr,
 		validate: validator.New(),
+		clock:    clock,
 	}
 }
 
@@ -61,8 +63,7 @@ func (s *service) FindBySlug(ctx context.Context, req *PageFindRequest) (*PageFi
 		return nil, err
 	}
 
-	// TODO: Extract out time.Now() into a clock provider so it can be mocked
-	if page.PublishedAt == nil || page.PublishedAt.After(time.Now()) {
+	if page.PublishedAt == nil || page.PublishedAt.After(s.clock.Now()) {
 		return nil, fmt.Errorf("page is not published yet: %w", ErrPageNotFound)
 	}
 

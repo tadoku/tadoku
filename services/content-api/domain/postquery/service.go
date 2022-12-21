@@ -28,12 +28,14 @@ type Service interface {
 type service struct {
 	pr       PostRepository
 	validate *validator.Validate
+	clock    domain.Clock
 }
 
-func NewService(pr PostRepository) Service {
+func NewService(pr PostRepository, clock domain.Clock) Service {
 	return &service{
 		pr:       pr,
 		validate: validator.New(),
+		clock:    clock,
 	}
 }
 
@@ -61,8 +63,7 @@ func (s *service) FindBySlug(ctx context.Context, req *PostFindRequest) (*PostFi
 		return nil, err
 	}
 
-	// TODO: Extract out time.Now() into a clock provider so it can be mocked
-	if post.PublishedAt == nil || post.PublishedAt.After(time.Now()) {
+	if post.PublishedAt == nil || post.PublishedAt.After(s.clock.Now()) {
 		return nil, fmt.Errorf("post is not published yet: %w", ErrPostNotFound)
 	}
 

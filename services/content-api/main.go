@@ -6,6 +6,7 @@ import (
 
 	"github.com/go-playground/validator/v10"
 	"github.com/kelseyhightower/envconfig"
+	"github.com/tadoku/tadoku/services/common/domain"
 	tadokumiddleware "github.com/tadoku/tadoku/services/common/middleware"
 	"github.com/tadoku/tadoku/services/common/storage/memory"
 	"github.com/tadoku/tadoku/services/content-api/domain/pagecommand"
@@ -50,11 +51,16 @@ func main() {
 	e.Use(tadokumiddleware.SessionJWT(cfg.JWKS))
 	e.Use(tadokumiddleware.Session(roleRepository))
 
+	clock, err := domain.NewClock("UTC")
+	if err != nil {
+		panic(err)
+	}
+
 	pageCommandService := pagecommand.NewService(pageRepository)
 	postCommandService := postcommand.NewService(postRepository)
 
-	pageQueryService := pagequery.NewService(pageRepository)
-	postQueryService := postquery.NewService(postRepository)
+	pageQueryService := pagequery.NewService(pageRepository, clock)
+	postQueryService := postquery.NewService(postRepository, clock)
 
 	server := rest.NewServer(
 		pageCommandService,

@@ -3,17 +3,22 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
 go_library(
     name = "domain",
     srcs = [
+        "clock.go",
         "context.go",
         "role.go",
         "session.go",
     ],
     importpath = "github.com/tadoku/tadoku/services/common/domain",
     visibility = ["//visibility:public"],
+    deps = ["@com_github_pkg_errors//:errors"],
 )
 
 go_test(
     name = "domain_test",
-    srcs = ["role_test.go"],
+    srcs = [
+        "clock_mock_test.go",
+        "role_test.go",
+    ],
     deps = [
         ":domain",
         "@com_github_stretchr_testify//assert",

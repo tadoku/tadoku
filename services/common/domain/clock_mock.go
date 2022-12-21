@@ -1,9 +1,7 @@
-package domain_test
+package domain
 
 import (
 	"time"
-
-	"github.com/tadoku/tadoku/services/common/domain"
 )
 
 type mockClock struct {
@@ -15,7 +13,11 @@ func (c *mockClock) Now() time.Time {
 	return c.time
 }
 
+func (c *mockClock) SetTime(newTime time.Time) {
+	c.time = newTime
+}
+
 // NewMock creates a clock that always returns the same time
-func NewClockMock(time time.Time) domain.Clock {
+func NewMockClock(time time.Time) *mockClock {
 	return &mockClock{time: time}
 }

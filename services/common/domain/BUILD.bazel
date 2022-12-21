@@ -4,6 +4,7 @@ go_library(
     name = "domain",
     srcs = [
         "clock.go",
+        "clock_mock.go",
         "context.go",
         "role.go",
         "session.go",
@@ -15,10 +16,7 @@ go_library(
 
 go_test(
     name = "domain_test",
-    srcs = [
-        "clock_mock_test.go",
-        "role_test.go",
-    ],
+    srcs = ["role_test.go"],
     deps = [
         ":domain",
         "@com_github_stretchr_testify//assert",

@@ -1,11 +1,12 @@
-import { usePage } from '@app/content/api'
+import ReactMarkdown from 'react-markdown'
+import { usePost } from '@app/content/api'
 
 interface Props {
   slug: string
 }
 
-export const Page = ({ slug }: Props) => {
-  const page = usePage(slug)
+export const Post = ({ slug }: Props) => {
+  const page = usePost(slug)
 
   if (page.isLoading || page.isIdle) {
     return <p>Loading...</p>
@@ -22,7 +23,7 @@ export const Page = ({ slug }: Props) => {
   return (
     <>
       <h1 className="title my-4">{page.data.title}</h1>
-      <div dangerouslySetInnerHTML={{ __html: page.data.html }} />
+      <ReactMarkdown children={page.data.content} />
     </>
   )
 }

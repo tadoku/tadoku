@@ -115,10 +115,11 @@ func (s *Server) PostFindBySlug(ctx echo.Context, namespace string, slug string)
 	}
 
 	return ctx.JSON(http.StatusOK, openapi.Post{
-		Id:      &post.ID,
-		Slug:    post.Slug,
-		Title:   post.Title,
-		Content: post.Content,
+		Id:          &post.ID,
+		Slug:        post.Slug,
+		Title:       post.Title,
+		Content:     post.Content,
+		PublishedAt: post.PublishedAt,
 	})
 }
 

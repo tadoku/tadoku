@@ -32,7 +32,7 @@ const Post = z
     id: z.string(),
     slug: z.string(),
     title: z.string(),
-    html: z.string(),
+    content: z.string(),
     published_at: z.string().datetime({ offset: true }),
   })
   .transform(post => {
@@ -44,3 +44,15 @@ const Post = z
   })
 
 export type Post = z.infer<typeof Post>
+
+export const usePost = (slug: string) =>
+  useQuery(['content_post', slug], async ({ queryKey }): Promise<Post> => {
+    const [_, slug] = queryKey
+    const response = await fetch(`${root}/posts/tadoku/${slug}`)
+
+    if (response.status !== 200) {
+      throw new Error('could not fetch postOrPage')
+    }
+
+    return Post.parse(await response.json())
+  })

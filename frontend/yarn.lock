@@ -2305,6 +2305,13 @@ next@13.0.6, next@>=12.0.10, next@^13.0.6:
     "@next/swc-win32-ia32-msvc" "13.0.6"
     "@next/swc-win32-x64-msvc" "13.0.6"
 
+nextjs-routes@^1.0.4:
+  version "1.0.4"
+  resolved "https://registry.yarnpkg.com/nextjs-routes/-/nextjs-routes-1.0.4.tgz#b424890e976f8beba67789ea47ceb72f2b2e31c4"
+  integrity sha512-BdlLv1sdiH2+qXWsWrrVfW8N1dR3iV0pjUvpO4JcQyt51fLUwVPX+G5uABA/tLzkWhK3MPUcXUoc3fILfi2cmg==
+  dependencies:
+    chokidar "^3.5.3"
+
 node-releases@^2.0.6:
   version "2.0.6"
   resolved "https://registry.yarnpkg.com/node-releases/-/node-releases-2.0.6.tgz#8a7088c63a55e493845683ebf3c828d8c51c5503"

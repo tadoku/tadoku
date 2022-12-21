@@ -236,7 +236,7 @@
   }
 
   .flash {
-    @apply font-medium pl-4 py-2;
+    @apply font-medium px-4 py-2;
   }
 }
 

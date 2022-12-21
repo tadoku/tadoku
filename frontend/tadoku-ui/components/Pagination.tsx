@@ -4,6 +4,7 @@ import {
   EllipsisHorizontalIcon,
 } from '@heroicons/react/20/solid'
 import classNames from 'classnames'
+import Link from 'next/link'
 import { Dispatch, SetStateAction, useEffect, useState } from 'react'
 import { FieldValues, useForm } from 'react-hook-form'
 import { Input } from './Form'
@@ -151,7 +152,7 @@ const Page = ({
   onClick?: () => void | undefined
 }) => (
   <li className="inline-flex items-center">
-    <a
+    <Link
       href={href}
       className={classNames(
         'reset min-w-[50px] box-border border-b-2 px-4 py-1 h-11 inline-flex items-center justify-center hover:bg-secondary/5 focus:bg-secondary/5',
@@ -164,7 +165,7 @@ const Page = ({
       onClick={onClick}
     >
       {page}
-    </a>
+    </Link>
   </li>
 )
 

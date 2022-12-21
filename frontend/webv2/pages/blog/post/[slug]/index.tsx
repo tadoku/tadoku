@@ -8,7 +8,7 @@ import { usePost } from '@app/content/api'
 interface Props {}
 
 const BlogPost: NextPage<Props> = () => {
-  const router = useRouter<'/blog/[slug]'>()
+  const router = useRouter<'/blog/post/[slug]'>()
   const { slug } = router.query
 
   const post = usePost(slug)

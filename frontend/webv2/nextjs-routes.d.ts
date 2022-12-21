@@ -5,7 +5,8 @@
 // prettier-ignore
 declare module "nextjs-routes" {
   export type Route =
-    | DynamicRoute<"/blog/[slug]", { "slug": string }>
+    | StaticRoute<"/blog/[[...page]]">
+    | DynamicRoute<"/blog/post/[slug]", { "slug": string }>
     | StaticRoute<"/">
     | StaticRoute<"/manual">;
 

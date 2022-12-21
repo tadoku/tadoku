@@ -4,15 +4,29 @@ import { useRouter } from 'next/router'
 import Breadcrumb from 'tadoku-ui/components/Breadcrumb'
 import Pagination from 'tadoku-ui/components/Pagination'
 import { HomeIcon } from '@heroicons/react/24/outline'
+import { useState } from 'react'
 
 interface Props {}
 
 const BlogIndex = () => {
-  const router = useRouter<'/blog/[slug]'>()
-  const { slug } = router.query
+  const router = useRouter<'/blog/[[...page]]'>()
+
+  const [page, setPage] = useState(() => {
+    if (!router.query.page) {
+      return 1
+    }
+
+    const idx = parseInt(router.query.page.toString())
+
+    if (isNaN(idx)) {
+      return 1
+    }
+
+    return idx
+  })
 
   const pageSize = 2
-  const list = usePostList(pageSize, 0)
+  const list = usePostList(pageSize, page - 1)
 
   if (list.isLoading || list.isIdle) {
     return <p>Loading...</p>
@@ -43,7 +57,12 @@ const BlogIndex = () => {
           <PostDetail post={p} key={p.id} />
         ))}
         {totalPages > 1 ? (
-          <Pagination currentPage={0} totalPages={totalPages} />
+          <Pagination
+            currentPage={page}
+            totalPages={totalPages}
+            getHref={page => `/blog/${page}`}
+            onClick={page => setPage(page)}
+          />
         ) : null}
       </div>
     </>

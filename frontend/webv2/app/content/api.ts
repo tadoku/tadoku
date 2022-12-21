@@ -21,7 +21,7 @@ export const usePage = (slug: string) =>
     const response = await fetch(`${root}/pages/tadoku/${slug}`)
 
     if (response.status !== 200) {
-      throw new Error('could not fetch postOrPage')
+      throw new Error('could not fetch page')
     }
 
     return Page.parse(await response.json())
@@ -51,8 +51,46 @@ export const usePost = (slug: string) =>
     const response = await fetch(`${root}/posts/tadoku/${slug}`)
 
     if (response.status !== 200) {
-      throw new Error('could not fetch postOrPage')
+      throw new Error('could not fetch post')
     }
 
     return Post.parse(await response.json())
   })
+
+const PostList = z
+  .object({
+    posts: z.array(Post),
+    next_page_token: z.string(),
+    total_size: z.number(),
+  })
+  .transform(post => {
+    const {
+      next_page_token: nextPageToken,
+      total_size: totalSize,
+      ...rest
+    } = post
+    return {
+      ...rest,
+      nextPageToken,
+      totalSize,
+    }
+  })
+
+export type PostList = z.infer<typeof PostList>
+
+export const usePostList = (pageSize: number, page: number) =>
+  useQuery(
+    ['content_post', 'list', page],
+    async ({ queryKey }): Promise<PostList> => {
+      const page = queryKey[2]
+      const response = await fetch(
+        `${root}/posts/tadoku?page_size=${pageSize}&page=${page}`,
+      )
+
+      if (response.status !== 200) {
+        throw new Error('could not fetch post list')
+      }
+
+      return PostList.parse(await response.json())
+    },
+  )

@@ -52,7 +52,7 @@ const BlogIndex = () => {
           ]}
         />
       </div>
-      <div>
+      <div className="space-y-8">
         {list.data.posts.map(p => (
           <PostDetail post={p} key={p.id} />
         ))}

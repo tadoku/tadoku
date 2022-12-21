@@ -6,8 +6,8 @@ interface Props {
 }
 
 export const PostDetail = ({ post }: Props) => (
-  <>
+  <div>
     <h1 className="title my-4">{post.title}</h1>
     <ReactMarkdown children={post.content} />
-  </>
+  </div>
 )

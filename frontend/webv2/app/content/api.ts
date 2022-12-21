@@ -18,7 +18,7 @@ export type Page = z.infer<typeof Page>
 export const usePage = (slug: string) =>
   useQuery(['content_page', slug], async ({ queryKey }): Promise<Page> => {
     const [_, slug] = queryKey
-    const response = await fetch(`${root}/pages/${slug}`)
+    const response = await fetch(`${root}/pages/tadoku/${slug}`)
 
     if (response.status !== 200) {
       throw new Error('could not fetch postOrPage')

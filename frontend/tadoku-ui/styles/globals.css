@@ -290,7 +290,7 @@
   }
 
   .btn.disabled {
-    @apply opacity-50;
+    @apply opacity-50 select-none pointer-events-none;
   }
 
   .flash.info {

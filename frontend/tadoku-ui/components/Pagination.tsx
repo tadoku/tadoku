@@ -14,7 +14,7 @@ interface Props {
   totalPages: number
   currentPage: number
   getHref?: (page: number) => string
-  onClick?: Dispatch<SetStateAction<number>>
+  onClick?: (page: number) => void
   window?: number
 }
 
@@ -45,7 +45,11 @@ export default function Pagination({
 
   const clickHandler = !onClick
     ? undefined
-    : (page: number) => () => onClick(page)
+    : (page: number): React.MouseEventHandler<HTMLAnchorElement> =>
+        e => {
+          e.preventDefault()
+          onClick(page)
+        }
 
   return (
     <>
@@ -58,7 +62,7 @@ export default function Pagination({
         />
       ) : null}
       <nav className="flex" aria-label="Breadcrumb">
-        <a
+        <Link
           className={classNames('btn ghost', {
             'pointer-events-none disabled': !canGoPrevious,
           })}
@@ -67,7 +71,7 @@ export default function Pagination({
         >
           <ChevronLeftIcon className="w-5 h-5 mr-2" />
           Previous
-        </a>
+        </Link>
         <ol className="inline-flex items-center justify-center space-x-1 md:space-x-3 w-full">
           {start > 1 ? (
             <>
@@ -125,7 +129,7 @@ export default function Pagination({
           ) : null}
         </ol>
 
-        <a
+        <Link
           className={classNames('btn ghost', {
             'pointer-events-none disabled': !canGoNext,
           })}
@@ -134,7 +138,7 @@ export default function Pagination({
         >
           Next
           <ChevronRightIcon className="w-5 h-5 ml-2" />
-        </a>
+        </Link>
       </nav>
     </>
   )
@@ -149,7 +153,7 @@ const Page = ({
   href: string
   page: number
   isActive: boolean
-  onClick?: () => void | undefined
+  onClick?: React.MouseEventHandler<HTMLAnchorElement> | undefined
 }) => (
   <li className="inline-flex items-center">
     <Link
@@ -162,7 +166,7 @@ const Page = ({
             !isActive,
         },
       )}
-      onClick={onClick}
+      onClick={isActive ? undefined : onClick}
     >
       {page}
     </Link>
@@ -190,7 +194,7 @@ const NavigateForm = ({
 }: {
   isOpen: boolean
   setIsOpen: Dispatch<SetStateAction<boolean>>
-  setPage: Dispatch<SetStateAction<number>>
+  setPage: (page: number) => void
   totalPages: number
 }) => {
   const { register, handleSubmit, formState, reset } = useForm()

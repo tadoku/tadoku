@@ -28,6 +28,14 @@ const BlogIndex = () => {
   const pageSize = 2
   const list = usePostList(pageSize, page - 1)
 
+  const navigateToPage = async (page: number) => {
+    setPage(page)
+    await router.push({
+      pathname: `/blog/[[...page]]`,
+      query: { page: page.toString() },
+    })
+  }
+
   if (list.isLoading || list.isIdle) {
     return <p>Loading...</p>
   }
@@ -60,8 +68,7 @@ const BlogIndex = () => {
           <Pagination
             currentPage={page}
             totalPages={totalPages}
-            getHref={page => `/blog/${page}`}
-            onClick={page => setPage(page)}
+            onClick={navigateToPage}
           />
         ) : null}
       </div>

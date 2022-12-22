@@ -5,8 +5,7 @@ import Breadcrumb from 'tadoku-ui/components/Breadcrumb'
 import Pagination from 'tadoku-ui/components/Pagination'
 import { HomeIcon } from '@heroicons/react/24/outline'
 import { useState } from 'react'
-
-interface Props {}
+import Link from 'next/link'
 
 const BlogIndex = () => {
   const router = useRouter<'/blog/[[...page]]'>()
@@ -25,7 +24,7 @@ const BlogIndex = () => {
     return idx
   })
 
-  const pageSize = 2
+  const pageSize = 10
   const list = usePostList(pageSize, page - 1)
 
   const navigateToPage = async (page: number) => {
@@ -61,9 +60,22 @@ const BlogIndex = () => {
         />
       </div>
       <div className="space-y-8">
-        {list.data.posts.map(p => (
-          <PostDetail post={p} key={p.id} />
-        ))}
+        <div className="grid grid-cols-2 gap-8">
+          {list.data.posts.map(p => (
+            <div className="card max-h-96	overflow-hidden relative">
+              <Link
+                href={{
+                  pathname: '/blog/post/[slug]',
+                  query: { slug: p.slug },
+                }}
+                className="absolute left-0 right-0 top-80 h-16 flex justify-center items-center font-bold bg-gradient-to-t from-white via-white to-transparent"
+              >
+                Read more...
+              </Link>
+              <PostDetail post={p} key={p.id} />
+            </div>
+          ))}
+        </div>
         {totalPages > 1 ? (
           <Pagination
             currentPage={page}

@@ -94,23 +94,50 @@ const LogPagesForm = () => {
         <div className="flex-1">
           <CodeBlock
             language="typescript"
-            code={`import { AutocompleteInput } from '@components/Form'
+            code={`import { AutocompleteInput, AutocompleteMultiInput } from '@components/Form'
 import { useForm } from 'react-hook-form'
 
 const AutocompleteForm = () => {
-  const { register, handleSubmit, formState, control } = useForm()
+  const { handleSubmit, formState, control } = useForm()
   const onSubmit = (data: any) => console.log(data, 'submitted')
 
   const tags = ['Book', 'Ebook', 'Fiction', 'Non-fiction', 'Web page', 'Lyric']
+  const activities = [
+    { id: 1, name: 'Reading' },
+    { id: 2, name: 'Listening' },
+    { id: 3, name: 'Speaking' },
+    { id: 4, name: 'Writing' },
+  ]
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="v-stack">
       <AutocompleteInput
-        name="autocomplete"
-        label="Autocomplete"
+        name="tags"
+        label="Tags"
         options={tags}
         control={control}
         rules={{ required: 'Required' }}
+        match={(option, query) =>
+          option
+            .toLowerCase()
+            .replace(/[^a-zA-Z0-9]/g, '')
+            .includes(query.toLowerCase())
+        }
+        format={option => option}
+      />
+      <AutocompleteMultiInput
+        name="activities"
+        label="Activities"
+        options={activities}
+        control={control}
+        match={(option, query) =>
+          option.name
+            .toLowerCase()
+            .replace(/[^a-zA-Z0-9]/g, '')
+            .includes(query.toLowerCase())
+        }
+        getIdForOption={option => option.id}
+        format={option => option.name}
       />
       <button
         type="submit"

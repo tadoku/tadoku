@@ -9,6 +9,8 @@ import {
   TextArea,
 } from '@components/Form'
 import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { z } from 'zod'
 
 export default function Forms() {
   return (
@@ -27,9 +29,24 @@ export default function Forms() {
             language="typescript"
             code={`import { Input, Select } from '@components/Form'
 import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod'
+
+const LogPagesFormSchema = z.object({
+  pagesRead: z
+    .string()
+    .refine(val => !Number.isNaN(parseInt(val, 10)), {
+      message: 'Amount is required',
+    })
+    .transform(v => parseInt(v, 10)),
+  medium: z.number(),
+  description: z.string().optional(),
+})
 
 const LogPagesForm = () => {
-  const { register, handleSubmit, formState } = useForm()
+  const { register, handleSubmit, formState } = useForm({
+    resolver: zodResolver(LogPagesFormSchema),
+  })
   const onSubmit = (data: any) => console.log(data, 'submitted')
 
   return (
@@ -482,8 +499,21 @@ const MiscForm = () => {
   )
 }
 
+const LogPagesFormSchema = z.object({
+  pagesRead: z
+    .string()
+    .refine(val => !Number.isNaN(parseInt(val, 10)), {
+      message: 'Amount is required',
+    })
+    .transform(v => parseInt(v, 10)),
+  medium: z.number(),
+  description: z.string().optional(),
+})
+
 const LogPagesForm = () => {
-  const { register, handleSubmit, formState } = useForm()
+  const { register, handleSubmit, formState } = useForm({
+    resolver: zodResolver(LogPagesFormSchema),
+  })
   const onSubmit = (data: any) => console.log(data, 'submitted')
 
   return (
@@ -496,7 +526,6 @@ const LogPagesForm = () => {
         type="number"
         options={{
           required: 'This field is required',
-          valueAsNumber: true,
         }}
       />
       <Select

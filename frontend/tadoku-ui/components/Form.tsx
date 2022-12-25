@@ -188,11 +188,12 @@ export const AutocompleteInput = <T,>(
     name: string
     options: T[]
     match: (option: T, query: string) => boolean
+    format: (option: T) => string
   } & UseControllerProps,
 ) => {
   const [query, setQuery] = useState('')
 
-  const { name, label, options, match } = props
+  const { name, label, options, match, format } = props
   const {
     field: { value, onChange },
     formState: { errors },
@@ -235,7 +236,7 @@ export const AutocompleteInput = <T,>(
             ) : (
               filtered.map(option => (
                 <Combobox.Option
-                  key={option}
+                  key={format(option)}
                   value={option}
                   className={({ active }) =>
                     `relative cursor-default select-none py-2 pl-10 pr-4 ${
@@ -250,7 +251,7 @@ export const AutocompleteInput = <T,>(
                           selected ? 'font-medium' : 'font-normal'
                         }`}
                       >
-                        {option}
+                        {format(option)}
                       </span>
                       {selected ? (
                         <span

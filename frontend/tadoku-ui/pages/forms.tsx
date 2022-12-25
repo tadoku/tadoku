@@ -559,7 +559,7 @@ const ComposeBlogPostForm = () => {
 }
 
 const AutocompleteForm = () => {
-  const { register, handleSubmit, formState, control } = useForm()
+  const { handleSubmit, formState, control } = useForm()
   const onSubmit = (data: any) => console.log(data, 'submitted')
 
   const tags = ['Book', 'Ebook', 'Fiction', 'Non-fiction', 'Web page', 'Lyric']
@@ -578,6 +578,7 @@ const AutocompleteForm = () => {
             .replace(/[^a-zA-Z0-9]/g, '')
             .includes(query.toLowerCase())
         }
+        format={option => option}
       />
       <button
         type="submit"

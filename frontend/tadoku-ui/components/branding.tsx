@@ -1,6 +1,6 @@
 import Image from 'next/image'
 import TadokuLogo from './logo.svg'
-import TadokuLogoLight from './logo.svg'
+import TadokuLogoLight from './logo-light.svg'
 
 interface LogoProps {
   scale?: number

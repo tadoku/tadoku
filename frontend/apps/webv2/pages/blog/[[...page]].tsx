@@ -8,7 +8,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 
 const BlogIndex = () => {
-  const router = useRouter<'/blog/[[...page]]'>()
+  const router = useRouter()
 
   const [page, setPage] = useState(() => {
     if (!router.query.page) {
@@ -62,7 +62,7 @@ const BlogIndex = () => {
       <div className="space-y-8">
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
           {list.data.posts.map(p => (
-            <div className="card max-h-96	overflow-hidden relative">
+            <div className="card max-h-96	overflow-hidden relative" key={p.id}>
               <Link
                 href={{
                   pathname: '/blog/post/[slug]',

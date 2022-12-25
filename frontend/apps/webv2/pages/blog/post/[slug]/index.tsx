@@ -8,10 +8,10 @@ import { usePost } from '@app/content/api'
 interface Props {}
 
 const BlogPost: NextPage<Props> = () => {
-  const router = useRouter<'/blog/post/[slug]'>()
+  const router = useRouter()
   const { slug } = router.query
 
-  const post = usePost(slug)
+  const post = usePost(slug as string)
 
   if (post.isLoading || post.isIdle) {
     return <p>Loading...</p>

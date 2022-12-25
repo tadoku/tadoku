@@ -11,7 +11,6 @@ const nextConfig = {
   }
 }
 
-const withRoutes = require("nextjs-routes/config")();
 const withTM = require('next-transpile-modules')(['tadoku-ui']);
 
-module.exports = withRoutes(withTM(nextConfig))
+module.exports = withTM(nextConfig)

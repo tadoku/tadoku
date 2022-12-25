@@ -6,6 +6,8 @@ import {
   FieldValues,
   FormState,
   RegisterOptions,
+  useController,
+  UseControllerProps,
   UseFormRegister,
 } from 'react-hook-form'
 
@@ -180,17 +182,24 @@ export function RadioSelect<T extends FieldValues>(props: RadioSelectProps<T>) {
   )
 }
 
-export const AutocompleteInput = ({
-  name,
-  label,
-  options,
-}: {
-  label: string
-  name: string
-  options: string[]
-}) => {
-  const [selected, setSelected] = useState()
+export const AutocompleteInput = (
+  props: {
+    label: string
+    name: string
+    options: string[]
+  } & UseControllerProps,
+) => {
   const [query, setQuery] = useState('')
+
+  const { name, label, options } = props
+  const {
+    field: { value, onChange },
+    formState: { errors },
+  } = useController(props)
+
+  const hasError = errors[name] !== undefined
+  let errorMessage =
+    errors[name]?.message?.toString() || 'This selection is invalid'
 
   const filtered =
     query === ''
@@ -203,9 +212,9 @@ export const AutocompleteInput = ({
         })
 
   return (
-    <label className={`label`} htmlFor={name}>
+    <label className={`label ${hasError ? 'error' : ''}`} htmlFor={name}>
       <span className="label-text">{label}</span>
-      <Combobox value={selected} onChange={setSelected}>
+      <Combobox value={value || null} onChange={onChange}>
         <div className="relative">
           <Combobox.Input onChange={event => setQuery(event.target.value)} />
           <Combobox.Button className="absolute inset-y-0 right-0 flex items-center pr-2">
@@ -266,6 +275,7 @@ export const AutocompleteInput = ({
           </Combobox.Options>
         </Transition>
       </Combobox>
+      <span className="error">{errorMessage}</span>
     </label>
   )
 }

@@ -1,5 +1,6 @@
 import { CodeBlock, Preview, Separator, Title } from '@components/example'
 import {
+  AutocompleteInput,
   Checkbox,
   Input,
   RadioSelect,
@@ -77,6 +78,20 @@ const LogPagesForm = () => {
   )
 }`}
           />
+        </div>
+      </div>
+
+      <Separator />
+
+      <Title>React example: Autocomplete</Title>
+      <div className="h-stack w-full">
+        <div className="w-96">
+          <Preview>
+            <AutocompleteForm />
+          </Preview>
+        </div>
+        <div className="flex-1">
+          <CodeBlock language="typescript" code={``} />
         </div>
       </div>
 
@@ -515,6 +530,31 @@ const ComposeBlogPostForm = () => {
   )
 }
 
+const AutocompleteForm = () => {
+  const { register, handleSubmit, formState, control } = useForm()
+  const onSubmit = (data: any) => console.log(data, 'submitted')
+
+  const tags = ['Book', 'Ebook', 'Fiction', 'Non-fiction', 'Web page', 'Lyric']
+
+  return (
+    <form onSubmit={handleSubmit(onSubmit)} className="v-stack">
+      <AutocompleteInput
+        name="autocomplete"
+        label="Autocomplete"
+        options={tags}
+        control={control}
+        rules={{ required: 'Required' }}
+      />
+      <button
+        type="submit"
+        className="btn primary"
+        disabled={formState.isSubmitting}
+      >
+        Submit
+      </button>
+    </form>
+  )
+}
 const MiscForm = () => {
   const { register, handleSubmit, formState } = useForm()
   const onSubmit = (data: any) => console.log(data, 'submitted')

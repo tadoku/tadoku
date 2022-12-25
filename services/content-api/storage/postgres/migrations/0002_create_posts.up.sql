@@ -1,3 +1,5 @@
+begin;
+
 create table posts (
   id uuid primary key default uuid_generate_v4(),
   "namespace" varchar(50) not null,
@@ -21,3 +23,5 @@ create table posts_content (
 );
 
 create index posts_content_post_id on posts_content(post_id);
+
+commit;

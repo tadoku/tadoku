@@ -1,3 +1,5 @@
+begin;
+
 create extension if not exists "uuid-ossp";
 
 create table pages (
@@ -23,3 +25,5 @@ create table pages_content (
 );
 
 create index pages_content_page_id on pages_content(page_id);
+
+commit;

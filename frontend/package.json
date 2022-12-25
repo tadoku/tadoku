@@ -6,7 +6,8 @@
   "private": true,
   "scripts": {
     "preinstall": "npx only-allow pnpm",
-    "webv2": "yarn workspace webv2 dev",
-    "auth": "yarn workspace auth dev"
+    "webv2": "pnpm workspace webv2 dev",
+    "auth": "pnpm workspace auth dev",
+    "build": "pnpm run -r build"
   }
 }

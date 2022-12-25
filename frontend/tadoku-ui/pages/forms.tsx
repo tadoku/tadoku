@@ -50,7 +50,7 @@ const LogPagesForm = () => {
   const onSubmit = (data: any) => console.log(data, 'submitted')
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="v-stack">
+    <form onSubmit={handleSubmit(onSubmit)} className="v-stack spaced">
       <Input
         name="pagesRead"
         label="Pages read"
@@ -127,7 +127,7 @@ const AutocompleteForm = () => {
   ]
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="v-stack">
+    <form onSubmit={handleSubmit(onSubmit)} className="v-stack spaced">
       <AutocompleteInput
         name="tags"
         label="Tags"
@@ -190,7 +190,7 @@ const ComposeBlogPostForm = () => {
   const onSubmit = (data: any) => console.log(data, 'submitted')
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="v-stack">
+    <form onSubmit={handleSubmit(onSubmit)} className="v-stack spaced">
       <Input
         name="title"
         label="Title"
@@ -261,7 +261,7 @@ const MiscForm = () => {
   const onSubmit = (data: any) => console.log(data, 'submitted')
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="v-stack">
+    <form onSubmit={handleSubmit(onSubmit)} className="v-stack spaced">
       <RadioSelect
         name="cardType"
         label="Card type"
@@ -407,7 +407,7 @@ const MiscForm = () => {
       <div className="h-stack w-full">
         <div className="w-96">
           <Preview>
-            <form className="v-stack">
+            <form className="v-stack spaced">
               <label className="label">
                 <span className="label-text">First name</span>
                 <input type="text" placeholder="John Doe" />
@@ -452,7 +452,7 @@ const MiscForm = () => {
         <div className="flex-1">
           <CodeBlock
             language="html"
-            code={`<form className="v-stack">
+            code={`<form className="v-stack spaced">
 <label className="label">
   <span className="label-text">First name</span>
   <input type="text" placeholder="John Doe" />
@@ -500,48 +500,81 @@ const MiscForm = () => {
 }
 
 const LogPagesFormSchema = z.object({
-  pagesRead: z
-    .string()
-    .refine(val => !Number.isNaN(parseInt(val, 10)), {
-      message: 'Amount is required',
-    })
-    .transform(v => parseInt(v, 10)),
-  medium: z.number(),
+  activity: z.number(),
+  amount: z.number().positive(),
+  unit: z.number(),
+  tags: z
+    .array(z.string())
+    .min(1, 'Must select at least one tag')
+    .max(3, 'Must select three or fewer'),
   description: z.string().optional(),
 })
 
 const LogPagesForm = () => {
-  const { register, handleSubmit, formState } = useForm({
+  const { register, handleSubmit, formState, control } = useForm({
     resolver: zodResolver(LogPagesFormSchema),
   })
   const onSubmit = (data: any) => console.log(data, 'submitted')
 
+  const units = [
+    { value: '1', label: 'Pages' },
+    { value: '2', label: 'Comic pages' },
+  ]
+  const tags = ['Book', 'Ebook', 'Fiction', 'Non-fiction', 'Web page', 'Lyric']
+  const activities = [
+    { value: '1', label: 'Reading' },
+    { value: '2', label: 'Listening' },
+    { value: '3', label: 'Speaking' },
+    { value: '4', label: 'Writing' },
+  ]
+
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="v-stack">
-      <Input
-        name="pagesRead"
-        label="Pages read"
-        register={register}
-        formState={formState}
-        type="number"
-        options={{
-          required: 'This field is required',
-        }}
-      />
+    <form onSubmit={handleSubmit(onSubmit)} className="v-stack spaced">
       <Select
-        name="medium"
-        label="Medium"
+        name="activity"
+        label="Activity"
         register={register}
         formState={formState}
-        options={{
-          required: true,
-          valueAsNumber: true,
-        }}
-        values={[
-          { value: '1', label: 'Book' },
-          { value: '2', label: 'Comic' },
-          { value: '3', label: 'Sentence' },
-        ]}
+        values={activities}
+        options={{ valueAsNumber: true }}
+      />
+      <div className="h-stack spaced">
+        <div className="flex-grow">
+          <Input
+            name="amount"
+            label="Amount"
+            register={register}
+            formState={formState}
+            type="number"
+            defaultValue={0}
+            options={{ valueAsNumber: true }}
+            min={0}
+          />
+        </div>
+        <div className="min-w-[150px]">
+          <Select
+            name="unit"
+            label="Unit"
+            register={register}
+            formState={formState}
+            values={units}
+            options={{ valueAsNumber: true }}
+          />
+        </div>
+      </div>
+      <AutocompleteMultiInput
+        name="tags"
+        label="Tags"
+        options={tags}
+        control={control}
+        match={(option, query) =>
+          option
+            .toLowerCase()
+            .replace(/[^a-zA-Z0-9]/g, '')
+            .includes(query.toLowerCase())
+        }
+        getIdForOption={option => option}
+        format={option => option}
       />
       <Input
         name="description"
@@ -567,7 +600,7 @@ const ComposeBlogPostForm = () => {
   const onSubmit = (data: any) => console.log(data, 'submitted')
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="v-stack">
+    <form onSubmit={handleSubmit(onSubmit)} className="v-stack spaced">
       <Input
         name="title"
         label="Title"
@@ -628,7 +661,7 @@ const AutocompleteForm = () => {
   ]
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="v-stack">
+    <form onSubmit={handleSubmit(onSubmit)} className="v-stack spaced">
       <AutocompleteInput
         name="tags"
         label="Tags"
@@ -673,7 +706,7 @@ const MiscForm = () => {
   const onSubmit = (data: any) => console.log(data, 'submitted')
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="v-stack">
+    <form onSubmit={handleSubmit(onSubmit)} className="v-stack spaced">
       <RadioSelect
         name="cardType"
         label="Card type"

@@ -91,7 +91,37 @@ const LogPagesForm = () => {
           </Preview>
         </div>
         <div className="flex-1">
-          <CodeBlock language="typescript" code={``} />
+          <CodeBlock
+            language="typescript"
+            code={`import { AutocompleteInput } from '@components/Form'
+import { useForm } from 'react-hook-form'
+
+const AutocompleteForm = () => {
+  const { register, handleSubmit, formState, control } = useForm()
+  const onSubmit = (data: any) => console.log(data, 'submitted')
+
+  const tags = ['Book', 'Ebook', 'Fiction', 'Non-fiction', 'Web page', 'Lyric']
+
+  return (
+    <form onSubmit={handleSubmit(onSubmit)} className="v-stack">
+      <AutocompleteInput
+        name="autocomplete"
+        label="Autocomplete"
+        options={tags}
+        control={control}
+        rules={{ required: 'Required' }}
+      />
+      <button
+        type="submit"
+        className="btn primary"
+        disabled={formState.isSubmitting}
+      >
+        Submit
+      </button>
+    </form>
+  )
+}`}
+          />
         </div>
       </div>
 
@@ -553,6 +583,7 @@ const AutocompleteForm = () => {
     </form>
   )
 }
+
 const MiscForm = () => {
   const { register, handleSubmit, formState } = useForm()
   const onSubmit = (data: any) => console.log(data, 'submitted')

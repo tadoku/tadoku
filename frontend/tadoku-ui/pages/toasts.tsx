@@ -18,7 +18,7 @@ export default function Toasts() {
         , please refer to their documentation on how to use it.
       </p>
       <Preview>
-        <div className="h-stack">
+        <div className="h-stack spaced">
           <button className="btn" onClick={() => toast.info('Info toast')}>
             Info toast
           </button>
@@ -44,7 +44,7 @@ export default function Toasts() {
         code={`import { toast } from 'react-toastify'
 
 const ToastExample = () => (
-  <div className="h-stack">
+  <div className="h-stack spaced">
     <button className="btn" onClick={() => toast.info('Info toast')}>
       Info toast
     </button>

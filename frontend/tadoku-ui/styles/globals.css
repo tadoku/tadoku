@@ -198,7 +198,7 @@
   }
 
   .label-inline {
-    @apply h-stack items-center h-8;
+    @apply h-stack items-center h-8 space-x-3;
   }
 
   .btn {

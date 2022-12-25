@@ -14,7 +14,7 @@ export default function Buttons() {
 
       <Title>Buttons</Title>
       <Preview>
-        <div className="h-stack">
+        <div className="h-stack spaced">
           <button className="btn primary">Primary</button>
           <button className="btn secondary">Secondary</button>
           <button className="btn">Tertiary (default)</button>
@@ -24,7 +24,7 @@ export default function Buttons() {
       </Preview>
       <CodeBlock
         language="html"
-        code={`<div className="h-stack">
+        code={`<div className="h-stack spaced">
   <button className="btn primary">Primary</button>
   <button className="btn secondary">Secondary</button>
   <button className="btn">Tertiary (default)</button>
@@ -37,7 +37,7 @@ export default function Buttons() {
 
       <Title>Disabled button</Title>
       <Preview>
-        <div className="h-stack">
+        <div className="h-stack spaced">
           <button className="btn primary" disabled>
             Primary
           </button>
@@ -57,7 +57,7 @@ export default function Buttons() {
       </Preview>
       <CodeBlock
         language="html"
-        code={`<div className="h-stack">
+        code={`<div className="h-stack spaced">
   <button className="btn primary" disabled>Primary</button>
   <button className="btn secondary" disabled>Secondary</button>
   <button className="btn" disabled>Tertiary (default)</button>
@@ -103,7 +103,7 @@ export default function Buttons() {
 
       <Title>Icon buttons</Title>
       <Preview>
-        <div className="h-stack">
+        <div className="h-stack spaced">
           <button className="btn primary">
             <PencilSquareIcon />
             Primary
@@ -128,7 +128,7 @@ export default function Buttons() {
       </Preview>
       <CodeBlock
         language="html"
-        code={`<div className="h-stack">
+        code={`<div className="h-stack spaced">
   <button className="btn primary">
     <PencilSquareIcon />
     Primary

@@ -7,7 +7,7 @@ export default function Templates() {
 
       <Title>Vertical stack</Title>
       <Preview>
-        <div className="v-stack">
+        <div className="v-stack spaced">
           <div className="bg-red-200">one</div>
           <div className="bg-green-200">two</div>
           <div className="bg-blue-200">three</div>
@@ -15,7 +15,7 @@ export default function Templates() {
       </Preview>
       <CodeBlock
         language={'html'}
-        code={`<div className="v-stack">
+        code={`<div className="v-stack spaced">
   <div className="bg-red-200">one</div>
   <div className="bg-green-200">two</div>
   <div className="bg-blue-200">three</div>
@@ -26,7 +26,7 @@ export default function Templates() {
 
       <Title>Horizonal stack</Title>
       <Preview>
-        <div className="h-stack">
+        <div className="h-stack spaced">
           <div className="bg-red-200 h-24">one</div>
           <div className="bg-green-200">two</div>
           <div className="bg-blue-200">three</div>
@@ -34,7 +34,7 @@ export default function Templates() {
       </Preview>
       <CodeBlock
         language={'html'}
-        code={`<div className="h-stack">
+        code={`<div className="h-stack spaced">
   <div className="bg-red-200 h-24">one</div>
   <div className="bg-green-200">two</div>
   <div className="bg-blue-200">three</div>

@@ -207,7 +207,7 @@ const NavigateForm = ({
 
   return (
     <Modal isOpen={isOpen} setIsOpen={setIsOpen}>
-      <form onSubmit={handleSubmit(onSubmit)} className="v-stack">
+      <form onSubmit={handleSubmit(onSubmit)} className="v-stack spaced">
         <Input
           name="page"
           label="Navigate to page"

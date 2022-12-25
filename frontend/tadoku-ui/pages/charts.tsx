@@ -171,7 +171,7 @@ function ReadingActivityChart() {
 
       <Title>Doughnut chart</Title>
 
-      <div className="h-stack w-full">
+      <div className="h-stack spaced w-full">
         <div className="w-96">
           <Preview>
             <Doughnut

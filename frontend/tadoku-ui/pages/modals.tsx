@@ -37,7 +37,7 @@ const StandardModalExample = () => {
 
   return (
     <>
-      <div className="h-stack">
+      <div className="h-stack spaced">
         <button className="btn" onClick={() => setIsOpen(true)}>
           Open modal
         </button>
@@ -81,7 +81,7 @@ const StandardModalExample = () => {
 
   return (
     <>
-      <div className="h-stack">
+      <div className="h-stack spaced">
         <button className="btn" onClick={() => setIsOpen(true)}>
           Open modal
         </button>

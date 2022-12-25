@@ -344,9 +344,7 @@ const MiscForm = () => {
               <label className="label">
                 <span className="label-text">Choose a color</span>
                 <select>
-                  <option value="#ff0000" selected>
-                    Red
-                  </option>
+                  <option value="#ff0000">Red</option>
                   <option value="#00ff00">Green</option>
                   <option value="#0000ff">Blue</option>
                 </select>

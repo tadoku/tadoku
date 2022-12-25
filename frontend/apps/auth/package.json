@@ -14,6 +14,7 @@
     "@heroicons/react": "^2.0.13",
     "@ory/client": "^0.2.0-alpha.48",
     "@ory/integrations": "^0.2.8",
+    "axios": "^1.2.1",
     "jotai": "^1.8.3",
     "next": "^13.0.6",
     "next-transpile-modules": "^10.0.0",

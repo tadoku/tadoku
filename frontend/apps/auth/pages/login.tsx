@@ -98,7 +98,7 @@ const Login: NextPage<Props> = () => {
         // If the previous handler did not catch the error it's most likely a form validation error
         if (err.response?.status === 400) {
           // Yup, it is!
-          setFlow(err.response?.data)
+          setFlow(err.response?.data as SelfServiceLoginFlow | undefined)
           return
         }
 
@@ -136,7 +136,7 @@ const Login: NextPage<Props> = () => {
         </a>
       ) : (
         <div className="h-stack justify-center mt-4 items-center space-x-2 text-xs">
-          <span className="text-gray-500">Don't have an account?</span>
+          <span className="text-gray-500">Don&apos;t have an account?</span>
           <Link href="/register" className="btn ghost small">
             Sign up now
           </Link>

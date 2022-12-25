@@ -1,6 +1,7 @@
 import { CodeBlock, Preview, Separator, Title } from '@components/example'
 import {
   AutocompleteInput,
+  AutocompleteMultiInput,
   Checkbox,
   Input,
   RadioSelect,
@@ -563,12 +564,18 @@ const AutocompleteForm = () => {
   const onSubmit = (data: any) => console.log(data, 'submitted')
 
   const tags = ['Book', 'Ebook', 'Fiction', 'Non-fiction', 'Web page', 'Lyric']
+  const activities = [
+    { id: 1, name: 'Reading' },
+    { id: 2, name: 'Listening' },
+    { id: 3, name: 'Speaking' },
+    { id: 4, name: 'Writing' },
+  ]
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="v-stack">
       <AutocompleteInput
-        name="autocomplete"
-        label="Autocomplete"
+        name="tags"
+        label="Tags"
         options={tags}
         control={control}
         rules={{ required: 'Required' }}
@@ -579,6 +586,21 @@ const AutocompleteForm = () => {
             .includes(query.toLowerCase())
         }
         format={option => option}
+      />
+      <AutocompleteMultiInput
+        name="activities"
+        label="Activities"
+        options={activities}
+        control={control}
+        rules={{ required: 'Required' }}
+        match={(option, query) =>
+          option.name
+            .toLowerCase()
+            .replace(/[^a-zA-Z0-9]/g, '')
+            .includes(query.toLowerCase())
+        }
+        getIdForOption={option => option.id}
+        format={option => option.name}
       />
       <button
         type="submit"

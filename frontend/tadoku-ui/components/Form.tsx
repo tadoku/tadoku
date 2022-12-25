@@ -1,6 +1,11 @@
 import { Combobox, Transition } from '@headlessui/react'
 import { CheckIcon, ChevronUpDownIcon } from '@heroicons/react/20/solid'
-import { Fragment, HTMLInputTypeAttribute, HTMLProps, useState } from 'react'
+import React, {
+  Fragment,
+  HTMLInputTypeAttribute,
+  HTMLProps,
+  useState,
+} from 'react'
 import {
   FieldPath,
   FieldValues,
@@ -182,7 +187,7 @@ export function RadioSelect<T extends FieldValues>(props: RadioSelectProps<T>) {
   )
 }
 
-export const AutocompleteInput = <T,>(
+export function AutocompleteInput<T>(
   props: {
     label: string
     name: string
@@ -190,7 +195,7 @@ export const AutocompleteInput = <T,>(
     match: (option: T, query: string) => boolean
     format: (option: T) => string
   } & UseControllerProps,
-) => {
+) {
   const [query, setQuery] = useState('')
 
   const { name, label, options, match, format } = props
@@ -210,8 +215,125 @@ export const AutocompleteInput = <T,>(
     <label className={`label ${hasError ? 'error' : ''}`} htmlFor={name}>
       <span className="label-text">{label}</span>
       <Combobox value={value || null} onChange={onChange}>
-        <div className="relative">
+        <div className="relative z-0">
           <Combobox.Input onChange={event => setQuery(event.target.value)} />
+          <Combobox.Button className="absolute inset-y-0 right-0 flex items-center pr-2">
+            <ChevronUpDownIcon
+              className="h-5 w-5 text-gray-400"
+              aria-hidden="true"
+            />
+          </Combobox.Button>
+        </div>
+        <Transition
+          as={Fragment}
+          leave="transition ease-in duration-100"
+          leaveFrom="opacity-100"
+          leaveTo="opacity-0"
+          afterLeave={() => setQuery('')}
+        >
+          <Combobox.Options
+            className={`absolute mt-2 z-50 max-h-60 w-full overflow-auto bg-white py-1 shadow-md shadow-slate-500/20 ring-1 ring-secondary ring-opacity-5 focus:outline-none`}
+          >
+            {filtered.length === 0 && query !== '' ? (
+              <div className="relative cursor-default select-none py-2 px-4 text-gray-700">
+                No matches
+              </div>
+            ) : (
+              filtered.map(option => (
+                <Combobox.Option
+                  key={format(option)}
+                  value={option}
+                  className={({ active }) =>
+                    `relative cursor-default select-none py-2 pl-10 pr-4 ${
+                      active ? 'bg-secondary text-white' : ''
+                    }`
+                  }
+                >
+                  {({ selected, active }) => (
+                    <>
+                      <span
+                        className={`block truncate ${
+                          selected ? 'font-medium' : 'font-normal'
+                        }`}
+                      >
+                        {format(option)}
+                      </span>
+                      {selected ? (
+                        <span
+                          className={`absolute inset-y-0 left-0 flex items-center pl-3 ${
+                            active ? 'text-white' : 'text-secondary'
+                          }`}
+                        >
+                          <CheckIcon className="h-5 w-5" aria-hidden="true" />
+                        </span>
+                      ) : null}
+                    </>
+                  )}
+                </Combobox.Option>
+              ))
+            )}
+          </Combobox.Options>
+        </Transition>
+      </Combobox>
+      <span className="error">{errorMessage}</span>
+    </label>
+  )
+}
+
+export function AutocompleteMultiInput<T>(
+  props: {
+    label: string
+    name: string
+    options: T[]
+    match: (option: T, query: string) => boolean
+    format: (option: T) => string
+    getIdForOption: (option: T) => string | number
+  } & UseControllerProps,
+) {
+  const [query, setQuery] = useState('')
+
+  const { name, label, options, match, format, getIdForOption } = props
+  const {
+    field: { value, onChange },
+    formState: { errors },
+  } = useController({ defaultValue: [], ...props })
+
+  const hasError = errors[name] !== undefined
+  let errorMessage =
+    errors[name]?.message?.toString() || 'This selection is invalid'
+
+  const filtered =
+    query === '' ? options : options.filter(option => match(option, query))
+
+  const deduplicateAndUpdate = (options: T[]) => {
+    const count = new Map()
+    options.forEach(v => {
+      const id = getIdForOption(v)
+      count.set(id, count.has(id) ? count.get(id) + 1 : 1)
+    })
+    const filteredOptions = options.filter(
+      v => count.get(getIdForOption(v)) === 1,
+    )
+
+    onChange(filteredOptions)
+  }
+
+  return (
+    <label className={`label ${hasError ? 'error' : ''}`} htmlFor={name}>
+      <span className="label-text">{label}</span>
+      <Combobox
+        value={value || []}
+        onChange={onChange}
+        multiple
+        by={(a, b): boolean => getIdForOption(a) === getIdForOption(b)}
+      >
+        <div className="relative z-0">
+          <Combobox.Input
+            onChange={event => setQuery(event.target.value)}
+            displayValue={selected =>
+              selected?.map(option => format(option as T)).join(', ') ?? ''
+            }
+          />
           <Combobox.Button className="absolute inset-y-0 right-0 flex items-center pr-2">
             <ChevronUpDownIcon
               className="h-5 w-5 text-gray-400"

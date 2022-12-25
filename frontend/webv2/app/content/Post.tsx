@@ -7,7 +7,7 @@ interface Props {
 
 export const PostDetail = ({ post }: Props) => (
   <>
-    <h1 className="title my-4">{post.title}</h1>
+    <h1 className="title mt-0 mb-4">{post.title}</h1>
     <ReactMarkdown children={post.content} />
   </>
 )

@@ -305,19 +305,6 @@ export function AutocompleteMultiInput<T>(
   const filtered =
     query === '' ? options : options.filter(option => match(option, query))
 
-  const deduplicateAndUpdate = (options: T[]) => {
-    const count = new Map()
-    options.forEach(v => {
-      const id = getIdForOption(v)
-      count.set(id, count.has(id) ? count.get(id) + 1 : 1)
-    })
-    const filteredOptions = options.filter(
-      v => count.get(getIdForOption(v)) === 1,
-    )
-
-    onChange(filteredOptions)
-  }
-
   return (
     <label className={`label ${hasError ? 'error' : ''}`} htmlFor={name}>
       <span className="label-text">{label}</span>

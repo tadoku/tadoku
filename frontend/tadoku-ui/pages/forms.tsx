@@ -592,7 +592,6 @@ const AutocompleteForm = () => {
         label="Activities"
         options={activities}
         control={control}
-        rules={{ required: 'Required' }}
         match={(option, query) =>
           option.name
             .toLowerCase()

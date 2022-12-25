@@ -572,6 +572,12 @@ const AutocompleteForm = () => {
         options={tags}
         control={control}
         rules={{ required: 'Required' }}
+        match={(option, query) =>
+          option
+            .toLowerCase()
+            .replace(/[^a-zA-Z0-9]/g, '')
+            .includes(query.toLowerCase())
+        }
       />
       <button
         type="submit"

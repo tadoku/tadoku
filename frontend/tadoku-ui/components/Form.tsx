@@ -182,16 +182,17 @@ export function RadioSelect<T extends FieldValues>(props: RadioSelectProps<T>) {
   )
 }
 
-export const AutocompleteInput = (
+export const AutocompleteInput = <T,>(
   props: {
     label: string
     name: string
-    options: string[]
+    options: T[]
+    match: (option: T, query: string) => boolean
   } & UseControllerProps,
 ) => {
   const [query, setQuery] = useState('')
 
-  const { name, label, options } = props
+  const { name, label, options, match } = props
   const {
     field: { value, onChange },
     formState: { errors },
@@ -202,14 +203,7 @@ export const AutocompleteInput = (
     errors[name]?.message?.toString() || 'This selection is invalid'
 
   const filtered =
-    query === ''
-      ? options
-      : options.filter(option => {
-          return option
-            .toLowerCase()
-            .replace(/[^a-zA-Z0-9]/g, '')
-            .includes(query.toLowerCase())
-        })
+    query === '' ? options : options.filter(option => match(option, query))
 
   return (
     <label className={`label ${hasError ? 'error' : ''}`} htmlFor={name}>

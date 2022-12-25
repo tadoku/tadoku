@@ -1,4 +1,6 @@
-import { HTMLInputTypeAttribute, HTMLProps } from 'react'
+import { Combobox, Transition } from '@headlessui/react'
+import { CheckIcon, ChevronUpDownIcon } from '@heroicons/react/20/solid'
+import { Fragment, HTMLInputTypeAttribute, HTMLProps, useState } from 'react'
 import {
   FieldPath,
   FieldValues,
@@ -175,5 +177,95 @@ export function RadioSelect<T extends FieldValues>(props: RadioSelectProps<T>) {
       ))}
       <span className="error">{errorMessage}</span>
     </div>
+  )
+}
+
+export const AutocompleteInput = ({
+  name,
+  label,
+  options,
+}: {
+  label: string
+  name: string
+  options: string[]
+}) => {
+  const [selected, setSelected] = useState()
+  const [query, setQuery] = useState('')
+
+  const filtered =
+    query === ''
+      ? options
+      : options.filter(option => {
+          return option
+            .toLowerCase()
+            .replace(/[^a-zA-Z0-9]/g, '')
+            .includes(query.toLowerCase())
+        })
+
+  return (
+    <label className={`label`} htmlFor={name}>
+      <span className="label-text">{label}</span>
+      <Combobox value={selected} onChange={setSelected}>
+        <div className="relative">
+          <Combobox.Input onChange={event => setQuery(event.target.value)} />
+          <Combobox.Button className="absolute inset-y-0 right-0 flex items-center pr-2">
+            <ChevronUpDownIcon
+              className="h-5 w-5 text-gray-400"
+              aria-hidden="true"
+            />
+          </Combobox.Button>
+        </div>
+        <Transition
+          as={Fragment}
+          leave="transition ease-in duration-100"
+          leaveFrom="opacity-100"
+          leaveTo="opacity-0"
+          afterLeave={() => setQuery('')}
+        >
+          <Combobox.Options
+            className={`absolute mt-2 z-50 max-h-60 w-full overflow-auto bg-white py-1 shadow-md shadow-slate-500/20 ring-1 ring-secondary ring-opacity-5 focus:outline-none`}
+          >
+            {filtered.length === 0 && query !== '' ? (
+              <div className="relative cursor-default select-none py-2 px-4 text-gray-700">
+                No matches
+              </div>
+            ) : (
+              filtered.map(option => (
+                <Combobox.Option
+                  key={option}
+                  value={option}
+                  className={({ active }) =>
+                    `relative cursor-default select-none py-2 pl-10 pr-4 ${
+                      active ? 'bg-secondary text-white' : ''
+                    }`
+                  }
+                >
+                  {({ selected, active }) => (
+                    <>
+                      <span
+                        className={`block truncate ${
+                          selected ? 'font-medium' : 'font-normal'
+                        }`}
+                      >
+                        {option}
+                      </span>
+                      {selected ? (
+                        <span
+                          className={`absolute inset-y-0 left-0 flex items-center pl-3 ${
+                            active ? 'text-white' : 'text-secondary'
+                          }`}
+                        >
+                          <CheckIcon className="h-5 w-5" aria-hidden="true" />
+                        </span>
+                      ) : null}
+                    </>
+                  )}
+                </Combobox.Option>
+              ))
+            )}
+          </Combobox.Options>
+        </Transition>
+      </Combobox>
+    </label>
   )
 }

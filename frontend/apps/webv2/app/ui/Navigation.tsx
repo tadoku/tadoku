@@ -1,8 +1,9 @@
-import 'tadoku-ui/styles/globals.css'
-import Navbar, {
+import 'ui/styles/globals.css'
+import {
+  Navbar,
   NavigationDropDownProps,
   NavigationLinkProps,
-} from 'tadoku-ui/components/Navbar'
+} from 'ui/components/Navbar'
 import {
   ArrowRightOnRectangleIcon,
   Cog8ToothIcon,

@@ -1,5 +1,5 @@
 import type { NextPage } from 'next'
-import Breadcrumb from 'tadoku-ui/components/Breadcrumb'
+import { Breadcrumb } from 'ui'
 import { HomeIcon } from '@heroicons/react/20/solid'
 import { PostDetail } from '@app/content/Post'
 import { useRouter } from 'next/router'

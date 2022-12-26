@@ -3,8 +3,8 @@ import { sdkServer as ory } from '../src/ory'
 import { Atom, Provider } from 'jotai'
 import { AppContextWithSession, sessionAtom } from '../src/session'
 import { Session } from '@ory/client'
-import ToastContainer from 'tadoku-ui/components/toasts'
-import 'tadoku-ui/styles/globals.css'
+import { ToastContainer } from 'ui'
+import 'ui/styles/globals.css'
 import Navigation from '../src/Navigation'
 
 interface Props {

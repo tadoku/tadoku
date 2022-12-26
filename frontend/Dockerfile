@@ -26,7 +26,6 @@ FROM docker.io/node:16-alpine AS release
 
 ARG PROJECT_NAME
 
-ENV NODE_ENV=production
 ENV PORT=3000
 
 WORKDIR /app

@@ -9,9 +9,8 @@ const nextConfig = {
     authUiUrl: process.env.NEXT_PUBLIC_AUTH_UI_URL,
     homeUrl: process.env.NEXT_PUBLIC_HOME_URL,
     apiEndpoint: process.env.NEXT_PUBLIC_API_ENDPOINT,
-  }
+  },
+  transpilePackages: ['ui'],
 }
 
-const withTM = require('next-transpile-modules')(['ui']);
-
-module.exports = withTM(nextConfig)
+module.exports = nextConfig

@@ -21,7 +21,7 @@ spec:
             - containerPort: 8081
           env:
             - name: PGWEB_DATABASE_URL
-              value: "postgres://content:foobar@postgres-content/content?sslmode=disable"
+              value: "postgres://immersion:foobar@postgres-immersion/immersion?sslmode=disable"
 ---
 apiVersion: v1
 kind: Service

@@ -11,7 +11,7 @@ spec:
   accessModes:
     - ReadWriteOnce
   hostPath:
-    path: "/tmp/immersion-tadoku" # Sets the volume's path
+    path: "/tmp/immersion-tadoku-2" # Sets the volume's path
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim # Create PVC

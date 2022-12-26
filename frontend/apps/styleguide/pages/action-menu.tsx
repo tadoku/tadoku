@@ -1,4 +1,4 @@
-import { ActionMenu } from '@components/ActionMenu'
+import { ActionMenu } from 'ui/components/ActionMenu'
 import { CodeBlock, Preview, Title } from '@components/example'
 import {
   EllipsisVerticalIcon,

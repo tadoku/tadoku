@@ -1,4 +1,4 @@
-import ToastContainer from '@components/toasts'
+import { ToastContainer } from 'ui/compontents/toasts'
 import type { AppProps } from 'next/app'
 import Link from 'next/link'
 import { Fragment } from 'react'

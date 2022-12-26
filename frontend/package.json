@@ -4,8 +4,8 @@
   "license": "MIT",
   "private": true,
   "scripts": {
-    "webv2": "pnpm workspace webv2 dev",
-    "auth": "pnpm workspace auth dev",
+    "webv2": "pnpm --filter 'webv2' dev",
+    "auth": "pnpm --filter 'auth' dev",
     "build": "pnpm run -r build"
   }
 }

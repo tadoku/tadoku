@@ -67,7 +67,7 @@ spec:
             service:
               name: frontend-auth
               port:
-                number: 3001
+                number: 3000
         - path: /kratos
           pathType: Prefix
           backend:

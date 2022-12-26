@@ -1,0 +1,12 @@
+FROM node:16-alpine3.14
+
+WORKDIR /app
+
+RUN npm install -g pnpm && pnpm config set store-dir .pnpm-store
+COPY pnpm-lock.yaml .npmrc* ./
+RUN pnpm fetch
+
+COPY . .
+RUN pnpm install -r --offline
+
+EXPOSE 3000

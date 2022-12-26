@@ -24,4 +24,17 @@ create table contests (
   deleted_at timestamp default null
 );
 
+create table contest_registrations (
+  id uuid primary key default uuid_generate_v4(),
+  contest_id uuid not null,
+
+  user_id uuid,
+  user_display_name varchar(255),
+  language_codes varchar(10)[],
+
+  created_at timestamp not null default now(),
+  updated_at timestamp not null default now(),
+  deleted_at timestamp default null
+);
+
 commit;

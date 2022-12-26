@@ -36,10 +36,7 @@ create table logs (
   id uuid primary key default uuid_generate_v4(),
   group_id uuid not null,
   contest_id uuid,
-
-  -- user
   user_id uuid not null,
-  user_display_name varchar(255) not null,
 
   -- meta
   language_code varchar(10) not null,
@@ -50,11 +47,11 @@ create table logs (
   -- scoring related
   amount real not null,
   modifier real not null,
-  score real generated always as (amount * modifier) stored,
+  score real not null generated always as (amount * modifier) stored,
 
   -- optimize leaderboard fetching
   eligible_official_leaderboard boolean not null,
-  "year" smallint generated always as (extract(year from created_at)) stored,
+  "year" smallint not null generated always as (extract(year from created_at)) stored,
 
   created_at timestamp not null default now(),
   updated_at timestamp not null default now(),

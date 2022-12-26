@@ -5,7 +5,6 @@ export default function Document() {
     <Html>
       <Head>
         <link rel="icon" href="/static/favicon.png" />
-        <title>Tadoku Design System</title>
       </Head>
       <body>
         <Main />

@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { Fragment } from 'react'
 
 import '../styles/globals.css'
+import Head from 'next/head'
 
 interface NavigationBlock {
   title: string
@@ -44,6 +45,9 @@ const navigation: NavigationBlock[] = [
 export default function App({ Component, pageProps }: AppProps) {
   return (
     <div className="flex min-h-screen">
+      <Head>
+        <title>Tadoku Design System</title>
+      </Head>
       <div className="bg-white w-48 p-8">
         <h1 className="text-2xl font-bold mb-4">tadoku-ui</h1>
         {navigation.map((block, i) => (

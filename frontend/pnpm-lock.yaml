@@ -27,9 +27,9 @@ importers:
       react-error-boundary: ^3.1.4
       react-hook-form: ^7.40.0
       react-toastify: ^9.1.1
-      tadoku-ui: ^0.1.0
       tailwindcss: ^3.2.4
       typescript: 4.9.3
+      ui: workspace:*
     dependencies:
       '@headlessui/react': 1.7.7_biqbaboplfbrettd7655fr4n2y
       '@heroicons/react': 2.0.13_react@18.2.0
@@ -44,8 +44,8 @@ importers:
       react-error-boundary: 3.1.4_react@18.2.0
       react-hook-form: 7.41.1_react@18.2.0
       react-toastify: 9.1.1_biqbaboplfbrettd7655fr4n2y
-      tadoku-ui: link:../styleguide
       typescript: 4.9.3
+      ui: link:../../packages/ui
     devDependencies:
       '@types/node': 18.7.18
       '@types/react': 18.0.20
@@ -138,9 +138,9 @@ importers:
       react-markdown: ^8.0.4
       react-query: ^3.39.2
       react-toastify: ^9.1.1
-      tadoku-ui: ^0.1.0
       tailwindcss: ^3.2.4
       typescript: 4.9.3
+      ui: workspace:*
       zod: ^3.20.2
     dependencies:
       '@headlessui/react': 1.7.7_biqbaboplfbrettd7655fr4n2y
@@ -157,8 +157,8 @@ importers:
       react-markdown: 8.0.4_w5j4k42lgipnm43s3brx6h3c34
       react-query: 3.39.2_biqbaboplfbrettd7655fr4n2y
       react-toastify: 9.1.1_biqbaboplfbrettd7655fr4n2y
-      tadoku-ui: link:../styleguide
       typescript: 4.9.3
+      ui: link:../../packages/ui
       zod: 3.20.2
     devDependencies:
       '@types/node': 18.7.18

@@ -1,5 +1,5 @@
 import { CodeBlock, Preview, Title } from '@components/example'
-import Navbar from 'ui/components/Navbar'
+import { Navbar } from 'ui'
 import {
   ArrowRightOnRectangleIcon,
   Cog8ToothIcon,
@@ -43,7 +43,7 @@ export default function Toasts() {
         />
       </Preview>
       <CodeBlock
-        code={`import Navbar from '@components/Navbar'
+        code={`import { Navbar } from 'ui'
 
 const NavigationExample = () => (
   <Navbar

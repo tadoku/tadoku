@@ -1,6 +1,5 @@
 {
   "name": "frontend",
-  "version": "1.0.0",
   "repository": "github.com/tadoku/tadoku/frontend",
   "license": "MIT",
   "private": true,

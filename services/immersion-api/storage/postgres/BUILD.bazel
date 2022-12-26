@@ -3,10 +3,16 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library")
 go_library(
     name = "postgres",
     srcs = [
+        "contests.sql.go",
         "db.go",
         "generate.go",
         "helpers.go",
+        "models.go",
     ],
     importpath = "github.com/tadoku/tadoku/services/immersion-api/storage/postgres",
     visibility = ["//visibility:public"],
+    deps = [
+        "@com_github_google_uuid//:uuid",
+        "@com_github_lib_pq//:pq",
+    ],
 )

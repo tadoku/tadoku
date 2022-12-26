@@ -20,10 +20,8 @@ spec:
           ports:
             - containerPort: 8081
           env:
-            - name: SESSIONS
-              value: "true"
-            - name: DATABASE_URL
-              value: "postgres://reading_contest:foobar@postgres-reading-contest/reading_contest?sslmode=disable"
+            - name: PGWEB_DATABASE_URL
+              value: "postgres://content:foobar@postgres-content/content?sslmode=disable"
 ---
 apiVersion: v1
 kind: Service

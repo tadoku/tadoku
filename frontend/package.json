@@ -5,7 +5,6 @@
   "license": "MIT",
   "private": true,
   "scripts": {
-    "preinstall": "npx only-allow pnpm",
     "webv2": "pnpm workspace webv2 dev",
     "auth": "pnpm workspace auth dev",
     "build": "pnpm run -r build"

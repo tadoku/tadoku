@@ -1,0 +1,12 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "postgres",
+    srcs = [
+        "db.go",
+        "generate.go",
+        "helpers.go",
+    ],
+    importpath = "github.com/tadoku/tadoku/services/immersion-api/storage/postgres",
+    visibility = ["//visibility:public"],
+)

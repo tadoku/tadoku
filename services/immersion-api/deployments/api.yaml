@@ -1,0 +1,71 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: immersion-api
+  labels:
+    app: immersion-api
+spec:
+  selector:
+    matchLabels:
+      app: immersion-api
+  template:
+    metadata:
+      labels:
+        app: immersion-api
+    spec:
+      initContainers:
+        - name: migrations
+          image: immersion-api-migrate-image
+          command: ['/migrate']
+          args: ['-source', 'file:///migrations', '-database', '$(DATABASE_URL)', 'up']
+          env:
+          - name: DATABASE_URL
+            value: "postgres://immersion:foobar@postgres-immersion/immersion?sslmode=disable"
+      containers:
+      - name: immersion-api
+        image: immersion-api-image
+        ports:
+        - containerPort: 8000
+        env:
+          - name: API_POSTGRES_URL
+            value: "postgres://immersion:foobar@postgres-immersion/immersion?sslmode=disable"
+          - name: API_PORT
+            value: "8000"
+          - name: API_JWKS
+            value: "http://oathkeeper-api:4456/.well-known/jwks.json"
+        volumeMounts:
+        - name: tadoku-permissions
+          mountPath: /etc/tadoku/permissions
+        readinessProbe:
+          httpGet:
+            scheme: HTTP
+            path: /ping
+            port: 8000
+          initialDelaySeconds: 10
+          periodSeconds: 3
+        livenessProbe:
+          httpGet:
+            scheme: HTTP
+            path: /ping
+            port: 8000
+          initialDelaySeconds: 10
+          periodSeconds: 3
+      volumes:
+        - name: tadoku-permissions
+          configMap:
+            name: tadoku-permissions
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: immersion-api
+  labels:
+    app: immersion-api
+    service: immersion-api
+spec:
+  ports:
+  - port: 80
+    targetPort: 8000
+    name: http
+  selector:
+    app: immersion-api

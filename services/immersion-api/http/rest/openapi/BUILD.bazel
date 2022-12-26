@@ -1,0 +1,23 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+load("//:build/oapi-codegen.bzl", "oapi_codegen")
+
+go_library(
+    name = "openapi",
+    srcs = ["api.gen.go"],
+    importpath = "github.com/tadoku/tadoku/services/immersion-api/http/rest/openapi",
+    visibility = ["//visibility:public"],
+    deps = ["@com_github_labstack_echo_v4//:echo"],
+)
+
+# OpenAPI
+oapi_codegen(
+    name = "codegen",
+    out = "api.gen.go",
+    generate = [
+        "types",
+        "server",
+    ],
+    package = "openapi",
+    spec = "api.yaml",
+    visibility = ["//visibility:public"],
+)

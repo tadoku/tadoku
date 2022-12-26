@@ -13,16 +13,16 @@ helm_resource('postgres-kratos',
               resource_deps=['helm-repo-bitnami'])
 k8s_resource("postgres-kratos", labels=["infra"])
 
-# reading-contest
-k8s_yaml('./reading-contest/postgres.yaml')
-helm_resource('postgres-reading-contest',
+# immersion
+k8s_yaml('./immersion/postgres.yaml')
+helm_resource('postgres-immersion',
               'bitnami/postgresql',
               flags=[
-                '-f', './reading-contest/postgres_values.yaml',
+                '-f', './immersion/postgres_values.yaml',
               ],
-              deps=['./reading-contest/postgres_values.yaml'],
+              deps=['./immersion/postgres_values.yaml'],
               resource_deps=['helm-repo-bitnami'])
-k8s_resource("postgres-reading-contest", labels=["infra"])
+k8s_resource("postgres-immersion", labels=["infra"])
 
 # content
 k8s_yaml('./content/postgres.yaml')

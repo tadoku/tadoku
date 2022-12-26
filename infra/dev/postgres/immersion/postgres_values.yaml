@@ -2,18 +2,18 @@
 auth:
   enablePostgresUser: true
   postgresPassword: "foobar"
-  username: "reading_contest"
+  username: "immersion"
   password: "foobar"
-  database: "reading_contest"
+  database: "immersion"
 
-nameOverride: "reading-contest"
+nameOverride: "immersion"
 standalone: "standalone"
 
 # The postgres helm chart deployment will be using PVC postgres-data-claim
 primary:
   persistence:
     enabled: true
-    existingClaim: "postgres-reading-contest-data-claim"
+    existingClaim: "postgres-immersion-data-claim"
 
 volumePermissions:
   enabled: true

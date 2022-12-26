@@ -19,6 +19,27 @@
   mutators:
     - handler: id_token
 
+- id: "tadoku:immersion:api"
+  upstream:
+    preserve_host: true
+    url: "http://immersion-api:80"
+    strip_path: /api/immersion/
+  match:
+    url: "http://langlog.be/api/immersion/<**>"
+    methods:
+      - GET
+      - POST
+      - PUT
+      - DELETE
+      - PATCH
+  authenticators:
+    - handler: cookie_session
+    - handler: anonymous
+  authorizer:
+    handler: allow
+  mutators:
+    - handler: id_token
+
 - id: "echo"
   upstream:
     preserve_host: true

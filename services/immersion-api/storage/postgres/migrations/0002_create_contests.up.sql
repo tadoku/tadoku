@@ -28,9 +28,9 @@ create table contest_registrations (
   id uuid primary key default uuid_generate_v4(),
   contest_id uuid not null,
 
-  user_id uuid,
-  user_display_name varchar(255),
-  language_codes varchar(10)[],
+  user_id uuid not null,
+  user_display_name varchar(255) not null,
+  language_codes varchar(10)[] not null,
 
   created_at timestamp not null default now(),
   updated_at timestamp not null default now(),

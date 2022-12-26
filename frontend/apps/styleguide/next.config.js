@@ -5,4 +5,6 @@ const nextConfig = {
   swcMinify: true,
 }
 
-module.exports = nextConfig
+const withTM = require('next-transpile-modules')(['ui']);
+
+module.exports = withTM(nextConfig)

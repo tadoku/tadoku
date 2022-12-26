@@ -1,4 +1,4 @@
-import { ActionMenu } from 'ui/components/ActionMenu'
+import { ActionMenu } from 'ui'
 import { CodeBlock, Preview, Title } from '@components/example'
 import {
   EllipsisVerticalIcon,
@@ -17,7 +17,7 @@ export default function Page() {
         <ExampleMenu />
       </Preview>
       <CodeBlock
-        code={`import { ActionMenu } from '@components/ActionMenu'
+        code={`import { ActionMenu } from 'ui'
 import {
   EllipsisVerticalIcon,
   PencilIcon,

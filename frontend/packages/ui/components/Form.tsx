@@ -1,11 +1,6 @@
 import { Combobox, Transition } from '@headlessui/react'
 import { CheckIcon, ChevronUpDownIcon } from '@heroicons/react/20/solid'
-import React, {
-  Fragment,
-  HTMLInputTypeAttribute,
-  HTMLProps,
-  useState,
-} from 'react'
+import React, { Fragment, HTMLProps, useState } from 'react'
 import {
   FieldPath,
   FieldValues,

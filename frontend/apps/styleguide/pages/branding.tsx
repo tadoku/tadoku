@@ -1,4 +1,4 @@
-import { Logo, LogoInverted } from '@components/branding'
+import { Logo, LogoInverted } from 'ui'
 import { CodeBlock, Preview, Separator, Title } from '@components/example'
 
 export default function Branding() {
@@ -9,7 +9,11 @@ export default function Branding() {
       <Preview>
         <Logo />
       </Preview>
-      <CodeBlock code={`<Logo />`} />
+      <CodeBlock
+        code={`import { Logo } from 'ui'
+
+const example = () => <Logo />`}
+      />
 
       <Separator />
 
@@ -17,7 +21,11 @@ export default function Branding() {
       <Preview dark>
         <LogoInverted />
       </Preview>
-      <CodeBlock code={`<LogoInverted />`} />
+      <CodeBlock
+        code={`import { LogoInverted } from 'ui'
+
+const example = () => <LogoInverted />`}
+      />
     </>
   )
 }

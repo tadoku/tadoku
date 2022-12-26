@@ -8,7 +8,7 @@ import Link from 'next/link'
 import { Dispatch, SetStateAction, useEffect, useState } from 'react'
 import { FieldValues, useForm } from 'react-hook-form'
 import { Input } from './Form'
-import Modal from './Modal'
+import { Modal } from './Modal'
 
 interface Props {
   totalPages: number
@@ -18,7 +18,7 @@ interface Props {
   window?: number
 }
 
-export default function Pagination({
+export function Pagination({
   totalPages: total,
   currentPage: current,
   getHref,

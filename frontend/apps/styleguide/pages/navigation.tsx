@@ -1,5 +1,5 @@
 import { CodeBlock, Preview, Title } from '@components/example'
-import Navbar from '@components/Navbar'
+import Navbar from 'ui/components/Navbar'
 import {
   ArrowRightOnRectangleIcon,
   Cog8ToothIcon,

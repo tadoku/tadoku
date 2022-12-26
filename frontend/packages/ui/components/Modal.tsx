@@ -8,7 +8,7 @@ interface Props {
   children: ReactNode
 }
 
-const Modal = ({ isOpen, setIsOpen, title, children }: Props) => (
+export const Modal = ({ isOpen, setIsOpen, title, children }: Props) => (
   <Transition appear show={isOpen} as={Fragment}>
     <Dialog as="div" className="relative z-10" onClose={() => setIsOpen(false)}>
       <Transition.Child
@@ -51,5 +51,3 @@ const Modal = ({ isOpen, setIsOpen, title, children }: Props) => (
     </Dialog>
   </Transition>
 )
-
-export default Modal

@@ -1,4 +1,4 @@
-import Breadcrumb from '@components/Breadcrumb'
+import { Breadcrumb } from 'ui'
 import { CodeBlock, Preview, Title } from '@components/example'
 import { HomeIcon } from '@heroicons/react/20/solid'
 
@@ -19,7 +19,7 @@ export default function BreadcrumbExample() {
         />
       </Preview>
       <CodeBlock
-        code={`import Breadcrumb from '@components/Breadcrumb'
+        code={`import { Breadcrumb } from 'ui'
 import { HomeIcon } from '@heroicons/react/20/solid'
 
 const Example = () => (

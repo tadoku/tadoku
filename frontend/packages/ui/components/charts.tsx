@@ -26,7 +26,7 @@ export const chartColors = [
   '#B3AD9E',
 ]
 
-export const datasetDefaults = {
+export const chartDatasetDefaults = {
   backgroundColor: chartColors,
   borderWidth: 0,
 }

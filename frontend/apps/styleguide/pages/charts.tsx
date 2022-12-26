@@ -1,4 +1,4 @@
-import { chartColors, datasetDefaults } from '@components/charts'
+import { chartColors, chartDatasetDefaults } from 'ui'
 import { CodeBlock, Preview, Separator, Title } from '@components/example'
 import {
   Chart as ChartJS,
@@ -46,7 +46,7 @@ export default function Typography() {
       </Preview>
       <CodeBlock
         language="html"
-        code={`import { chartColors, datasetDefaults } from '@components/charts'
+        code={`import { chartColors } from 'ui'
 import {
   Chart as ChartJS,
   Tooltip,
@@ -179,7 +179,7 @@ function ReadingActivityChart() {
                 labels: ['Book', 'Comic', 'Sentence', 'News'],
                 datasets: [
                   {
-                    ...datasetDefaults,
+                    ...chartDatasetDefaults,
                     label: 'Score',
                     data: [200, 300, 400, 500],
                     weight: 20,
@@ -191,7 +191,7 @@ function ReadingActivityChart() {
         </div>
         <div className="flex-1">
           <CodeBlock
-            code={`import { datasetDefaults } from '@components/charts'
+            code={`import { chartDatasetDefaults } from 'ui'
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js'
 import { Doughnut } from 'react-chartjs-2'
 
@@ -203,7 +203,7 @@ const Example = () => (
       labels: ['Book', 'Comic', 'Sentence', 'News'],
       datasets: [
         {
-          ...datasetDefaults,
+          ...chartDatasetDefaults,
           label: 'Score',
           data: [200, 300, 400, 500],
           weight: 20,

@@ -31,11 +31,7 @@ interface Props {
   logoHref: string
 }
 
-export default function Navbar({
-  navigation,
-  logoHref,
-  width = 'max-w-7xl',
-}: Props) {
+export function Navbar({ navigation, logoHref, width = 'max-w-7xl' }: Props) {
   const router = useRouter()
 
   return (

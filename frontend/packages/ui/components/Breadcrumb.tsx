@@ -10,7 +10,7 @@ interface Props {
   }[]
 }
 
-export default function Breadcrumb({ links }: Props) {
+export function Breadcrumb({ links }: Props) {
   return (
     <nav className="flex" aria-label="Breadcrumb">
       <ol className="inline-flex items-center space-x-1 md:space-x-3">

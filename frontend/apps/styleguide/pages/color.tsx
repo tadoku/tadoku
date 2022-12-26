@@ -1,6 +1,3 @@
-import { Logo, LogoInverted } from '@components/branding'
-import { CodeBlock, Preview, Separator, Title } from '@components/example'
-
 const colors = [
   ['primary', 'Primary color used in Tadoku'],
   ['secondary', 'Secondary color used in Tadoku'],

@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { CodeBlock, Preview, Title } from '@components/example'
-import Modal from '@components/Modal'
+import { Modal } from 'ui'
 import { toast } from 'react-toastify'
 
 export default function Modals() {

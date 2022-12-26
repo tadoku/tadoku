@@ -1,5 +1,5 @@
 import { CodeBlock, Preview, Title } from '@components/example'
-import Pagination from '@components/Pagination'
+import { Pagination } from 'ui'
 import { useState } from 'react'
 
 export default function Page() {

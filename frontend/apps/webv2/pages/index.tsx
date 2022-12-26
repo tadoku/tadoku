@@ -12,7 +12,7 @@ const Index: NextPage<Props> = () => {
           links={[{ label: 'Home', href: '/', IconComponent: HomeIcon }]}
         />
       </div>
-      <div className="h-stack">
+      <div className="h-stack spaced">
         <div className="card flex flex-col justify-center bg-sky-50">
           <h1 className="title text-xl">Get good at your second language</h1>
           <p>

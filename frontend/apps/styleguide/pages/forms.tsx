@@ -33,49 +33,94 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod'
 
 const LogPagesFormSchema = z.object({
-  pagesRead: z
-    .string()
-    .refine(val => !Number.isNaN(parseInt(val, 10)), {
-      message: 'Amount is required',
-    })
-    .transform(v => parseInt(v, 10)),
-  medium: z.number(),
+  languageCode: z.string(),
+  activity: z.number(),
+  amount: z.number().positive(),
+  unit: z.number(),
+  tags: z
+    .array(z.string())
+    .min(1, 'Must select at least one tag')
+    .max(3, 'Must select three or fewer'),
   description: z.string().optional(),
 })
 
 const LogPagesForm = () => {
-  const { register, handleSubmit, formState } = useForm({
+  const { register, handleSubmit, formState, control } = useForm({
     resolver: zodResolver(LogPagesFormSchema),
   })
   const onSubmit = (data: any) => console.log(data, 'submitted')
 
+  const languages = [
+    { value: 'jpa', label: 'Japanese' },
+    { value: 'zho', label: 'Chinese' },
+    { value: 'kor', label: 'Korean' },
+  ]
+  const units = [
+    { value: '1', label: 'Pages' },
+    { value: '2', label: 'Comic pages' },
+  ]
+  const tags = ['Book', 'Ebook', 'Fiction', 'Non-fiction', 'Web page', 'Lyric']
+  const activities = [
+    { value: '1', label: 'Reading' },
+    { value: '2', label: 'Listening' },
+    { value: '3', label: 'Speaking' },
+    { value: '4', label: 'Writing' },
+  ]
+
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="v-stack spaced">
-      <Input
-        name="pagesRead"
-        label="Pages read"
+      <Select
+        name="languageCode"
+        label="Language"
         register={register}
         formState={formState}
-        type="number"
-        options={{
-          required: 'This field is required',
-          valueAsNumber: true,
-        }}
+        values={languages}
       />
       <Select
-        name="medium"
-        label="Medium"
+        name="activity"
+        label="Activity"
         register={register}
         formState={formState}
-        options={{
-          required: true,
-          valueAsNumber: true,
-        }}
-        values={[
-          { value: '1', label: 'Book' },
-          { value: '2', label: 'Comic' },
-          { value: '3', label: 'Sentence' },
-        ]}
+        values={activities}
+        options={{ valueAsNumber: true }}
+      />
+      <div className="h-stack spaced">
+        <div className="flex-grow">
+          <Input
+            name="amount"
+            label="Amount"
+            register={register}
+            formState={formState}
+            type="number"
+            defaultValue={0}
+            options={{ valueAsNumber: true }}
+            min={0}
+          />
+        </div>
+        <div className="min-w-[150px]">
+          <Select
+            name="unit"
+            label="Unit"
+            register={register}
+            formState={formState}
+            values={units}
+            options={{ valueAsNumber: true }}
+          />
+        </div>
+      </div>
+      <AutocompleteMultiInput
+        name="tags"
+        label="Tags"
+        options={tags}
+        control={control}
+        match={(option, query) =>
+          option
+            .toLowerCase()
+            .replace(/[^a-zA-Z0-9]/g, '')
+            .includes(query.toLowerCase())
+        }
+        getIdForOption={option => option}
+        format={option => option}
       />
       <Input
         name="description"
@@ -500,6 +545,7 @@ const MiscForm = () => {
 }
 
 const LogPagesFormSchema = z.object({
+  languageCode: z.string(),
   activity: z.number(),
   amount: z.number().positive(),
   unit: z.number(),
@@ -516,6 +562,11 @@ const LogPagesForm = () => {
   })
   const onSubmit = (data: any) => console.log(data, 'submitted')
 
+  const languages = [
+    { value: 'jpa', label: 'Japanese' },
+    { value: 'zho', label: 'Chinese' },
+    { value: 'kor', label: 'Korean' },
+  ]
   const units = [
     { value: '1', label: 'Pages' },
     { value: '2', label: 'Comic pages' },
@@ -530,6 +581,13 @@ const LogPagesForm = () => {
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="v-stack spaced">
+      <Select
+        name="languageCode"
+        label="Language"
+        register={register}
+        formState={formState}
+        values={languages}
+      />
       <Select
         name="activity"
         label="Activity"

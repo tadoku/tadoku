@@ -1,0 +1,27 @@
+begin;
+
+create table contests (
+  id uuid primary key default uuid_generate_v4(),
+
+  -- contest owner
+  owner_user_id uuid,
+  owner_user_display_name varchar(255),
+  "private" boolean not null,
+
+  -- contest info
+  contest_start date not null,
+  contest_end date not null,
+  registration_start date not null,
+  registration_end date not null,
+
+  "description" varchar(255) not null,
+  language_code_allow_list varchar(10)[],
+  activity_type_id_allow_list smallint[],
+  official boolean generated always as (owner_user_id is null) stored,
+
+  created_at timestamp not null default now(),
+  updated_at timestamp not null default now(),
+  deleted_at timestamp default null
+);
+
+commit;

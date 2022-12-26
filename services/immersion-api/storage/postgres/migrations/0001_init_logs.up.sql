@@ -35,7 +35,7 @@ create index log_tags_log_activity_type_id on log_tags(log_activity_type_id);
 create table logs (
   id uuid primary key default uuid_generate_v4(),
   group_id uuid not null,
-  contest_id uuid not null,
+  contest_id uuid,
 
   -- user
   user_id uuid not null,

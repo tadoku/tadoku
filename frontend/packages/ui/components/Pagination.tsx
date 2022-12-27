@@ -61,7 +61,7 @@ export function Pagination({
           totalPages={total}
         />
       ) : null}
-      <nav className="flex" aria-label="Breadcrumb">
+      <nav className="flex justify-between" aria-label="breadcrumb">
         <Link
           className={classNames('btn ghost', {
             'pointer-events-none disabled': !canGoPrevious,
@@ -72,7 +72,12 @@ export function Pagination({
           <ChevronLeftIcon className="w-5 h-5 mr-2" />
           Previous
         </Link>
-        <ol className="inline-flex items-center justify-center space-x-1 md:space-x-3 w-full">
+
+        <div className="md:hidden flex align-middle">
+          <Spacer onClick={() => setIsNavigationModalOpen(true)} />
+        </div>
+
+        <ol className="hidden md:inline-flex items-center justify-center space-x-1 md:space-x-3 w-full">
           {start > 1 ? (
             <>
               <Page
@@ -90,7 +95,9 @@ export function Pagination({
                 />
               ) : null}
               {start > 3 ? (
-                <Spacer onClick={() => setIsNavigationModalOpen(true)} />
+                <li>
+                  <Spacer onClick={() => setIsNavigationModalOpen(true)} />
+                </li>
               ) : null}
             </>
           ) : null}
@@ -108,7 +115,9 @@ export function Pagination({
           {end < total ? (
             <>
               {end < total - 2 ? (
-                <Spacer onClick={() => setIsNavigationModalOpen(true)} />
+                <li>
+                  <Spacer onClick={() => setIsNavigationModalOpen(true)} />
+                </li>
               ) : null}
 
               {end === total - 2 ? (
@@ -174,16 +183,14 @@ const Page = ({
 )
 
 const Spacer = ({ onClick }: { onClick?: () => void }) => (
-  <li>
-    <button
-      className={`flex items-center text-gray-300 ${
-        onClick ? 'hover:text-secondary' : 'pointer-events-none'
-      }`}
-      onClick={onClick}
-    >
-      <EllipsisHorizontalIcon className="w-5 h-5" />
-    </button>
-  </li>
+  <button
+    className={`flex items-center text-gray-300 ${
+      onClick ? 'hover:text-secondary' : 'pointer-events-none'
+    }`}
+    onClick={onClick}
+  >
+    <EllipsisHorizontalIcon className="w-5 h-5" />
+  </button>
 )
 
 const NavigateForm = ({

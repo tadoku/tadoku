@@ -168,11 +168,11 @@ const Page = ({
     <Link
       href={href}
       className={classNames(
-        'reset min-w-[50px] box-border border-b-2 px-4 py-1 h-11 inline-flex items-center justify-center hover:bg-secondary/5 focus:bg-secondary/5',
+        'reset min-w-[50px] box-border px-4 py-1 h-11 inline-flex items-center justify-center hover:bg-secondary/5 focus:bg-secondary/5',
         {
-          'border-primary font-bold text-primary hover:text-primary': isActive,
-          'font-medium border-transparent text-secondary !hover:text-secondary':
-            !isActive,
+          'font-bold text-secondary bg-secondary/5 hover:bg-secondary/10':
+            isActive,
+          'font-medium': !isActive,
         },
       )}
       onClick={isActive ? undefined : onClick}

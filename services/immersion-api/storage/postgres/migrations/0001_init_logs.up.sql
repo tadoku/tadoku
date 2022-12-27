@@ -34,7 +34,6 @@ create index log_tags_log_activity_type_id on log_tags(log_activity_type_id);
 
 create table logs (
   id uuid primary key default uuid_generate_v4(),
-  group_id uuid not null,
   contest_id uuid,
   user_id uuid not null,
 
@@ -58,7 +57,6 @@ create table logs (
   deleted_at timestamp default null
 );
 
-create unique index logs_contest_id_group_id on logs(group_id, contest_id);
 create index logs_year on logs(year);
 create index logs_user_id on logs(user_id);
 create index logs_user_id_contest on logs(user_id, contest_id);

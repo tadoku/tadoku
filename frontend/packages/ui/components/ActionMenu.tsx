@@ -37,10 +37,10 @@ export const ActionMenu = ({ children, links }: Props) => (
                     className={classNames(
                       'reset flex-inline items-center px-3 py-2 text-sm flex font-medium',
                       {
-                        'bg-gray-100': active && type === 'normal',
-                        'bg-red-50': active && type === 'danger',
-                        'text-red-600 hover:text-red-700 ': type === 'danger',
-                        'text-gray-700 hover:text-primary': type === 'normal',
+                        'bg-secondary': active && type === 'normal',
+                        'bg-red-700/80': active && type === 'danger',
+                        'text-red-600 hover:text-white ': type === 'danger',
+                        'text-gray-700 hover:text-white': type === 'normal',
                       },
                     )}
                   >

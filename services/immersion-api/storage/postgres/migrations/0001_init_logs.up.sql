@@ -59,8 +59,8 @@ create table logs (
 
 create index logs_year on logs(year);
 create index logs_user_id on logs(user_id);
+create index logs_contest_id on logs(contest_id);
 create index logs_user_id_contest on logs(user_id, contest_id);
-create index logs_group_id on logs(user_id, contest_id);
 
 -- Languages
 insert into languages

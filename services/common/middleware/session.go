@@ -43,7 +43,7 @@ type SessionClaims struct {
 	Session struct {
 		Identity struct {
 			Traits struct {
-				DisplayName string
+				DisplayName string `json:"display_name"`
 				Email       string
 			}
 		}

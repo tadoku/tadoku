@@ -10,7 +10,7 @@ create table languages (
 comment on column languages.code is 'See https://en.wikipedia.org/wiki/Wikipedia:WikiProject_Languages/List_of_ISO_639-3_language_codes_(2019)';
 
 create table log_activity_types (
-  id smallint primary key not null,
+  id integer primary key not null,
   name varchar(100) not null
 );
 

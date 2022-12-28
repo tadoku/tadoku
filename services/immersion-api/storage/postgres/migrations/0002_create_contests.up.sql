@@ -4,8 +4,8 @@ create table contests (
   id uuid primary key default uuid_generate_v4(),
 
   -- contest owner
-  owner_user_id uuid,
-  owner_user_display_name varchar(255),
+  owner_user_id uuid not null,
+  owner_user_display_name varchar(255) not null,
   "private" boolean not null,
 
   -- contest info
@@ -16,8 +16,8 @@ create table contests (
 
   "description" varchar(255) not null,
   language_code_allow_list varchar(10)[],
-  activity_type_id_allow_list smallint[],
-  official boolean generated always as (owner_user_id is null) stored,
+  activity_type_id_allow_list integer[],
+  official boolean not null,
 
   created_at timestamp not null default now(),
   updated_at timestamp not null default now(),

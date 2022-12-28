@@ -4,11 +4,42 @@
 package openapi
 
 import (
+	"time"
+
+	openapi_types "github.com/deepmap/oapi-codegen/pkg/types"
 	"github.com/labstack/echo/v4"
 )
 
+const (
+	CookieAuthScopes = "cookieAuth.Scopes"
+)
+
+// Contest defines model for Contest.
+type Contest struct {
+	ActivityTypeIdAllowList *[]int32            `json:"activity_type_id_allow_list,omitempty"`
+	ContestEnd              openapi_types.Date  `json:"contest_end"`
+	ContestStart            openapi_types.Date  `json:"contest_start"`
+	CreatedAt               *time.Time          `json:"created_at,omitempty"`
+	Description             string              `json:"description"`
+	Id                      *openapi_types.UUID `json:"id,omitempty"`
+	LanguageCodeAllowList   *[]string           `json:"language_code_allow_list,omitempty"`
+	Official                *bool               `json:"official,omitempty"`
+	OwnerUserDisplayName    *string             `json:"owner_user_display_name,omitempty"`
+	OwnerUserId             *openapi_types.UUID `json:"owner_user_id,omitempty"`
+	Private                 *bool               `json:"private,omitempty"`
+	RegistrationEnd         openapi_types.Date  `json:"registration_end"`
+	RegistrationStart       openapi_types.Date  `json:"registration_start"`
+	UpdatedAt               *time.Time          `json:"updated_at,omitempty"`
+}
+
+// ContestCreateJSONRequestBody defines body for ContestCreate for application/json ContentType.
+type ContestCreateJSONRequestBody = Contest
+
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
+	// Creates a new contest
+	// (POST /contests)
+	ContestCreate(ctx echo.Context) error
 	// Checks if service is responsive
 	// (GET /ping)
 	Ping(ctx echo.Context) error
@@ -17,6 +48,17 @@ type ServerInterface interface {
 // ServerInterfaceWrapper converts echo contexts to parameters.
 type ServerInterfaceWrapper struct {
 	Handler ServerInterface
+}
+
+// ContestCreate converts echo context to params.
+func (w *ServerInterfaceWrapper) ContestCreate(ctx echo.Context) error {
+	var err error
+
+	ctx.Set(CookieAuthScopes, []string{""})
+
+	// Invoke the callback with all the unmarshalled arguments
+	err = w.Handler.ContestCreate(ctx)
+	return err
 }
 
 // Ping converts echo context to params.
@@ -56,6 +98,7 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 		Handler: si,
 	}
 
+	router.POST(baseURL+"/contests", wrapper.ContestCreate)
 	router.GET(baseURL+"/ping", wrapper.Ping)
 
 }

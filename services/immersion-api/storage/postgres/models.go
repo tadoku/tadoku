@@ -13,8 +13,8 @@ import (
 
 type Contest struct {
 	ID                      uuid.UUID
-	OwnerUserID             uuid.NullUUID
-	OwnerUserDisplayName    sql.NullString
+	OwnerUserID             uuid.UUID
+	OwnerUserDisplayName    string
 	Private                 bool
 	ContestStart            time.Time
 	ContestEnd              time.Time
@@ -22,8 +22,8 @@ type Contest struct {
 	RegistrationEnd         time.Time
 	Description             string
 	LanguageCodeAllowList   []string
-	ActivityTypeIDAllowList []int16
-	Official                sql.NullBool
+	ActivityTypeIDAllowList []int32
+	Official                bool
 	CreatedAt               time.Time
 	UpdatedAt               time.Time
 	DeletedAt               sql.NullTime
@@ -48,7 +48,6 @@ type Language struct {
 
 type Log struct {
 	ID                          uuid.UUID
-	GroupID                     uuid.UUID
 	ContestID                   uuid.NullUUID
 	UserID                      uuid.UUID
 	LanguageCode                string
@@ -66,7 +65,7 @@ type Log struct {
 }
 
 type LogActivityType struct {
-	ID   int16
+	ID   int32
 	Name string
 }
 

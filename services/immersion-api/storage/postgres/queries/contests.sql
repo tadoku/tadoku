@@ -2,6 +2,7 @@
 insert into contests (
   owner_user_id,
   owner_user_display_name,
+  official,
   "private",
   contest_start,
   contest_end,
@@ -13,6 +14,7 @@ insert into contests (
 ) values (
   sqlc.arg('owner_user_id'),
   sqlc.arg('owner_user_display_name'),
+  sqlc.arg('official'),
   sqlc.arg('private'),
   sqlc.arg('contest_start'),
   sqlc.arg('contest_end'),

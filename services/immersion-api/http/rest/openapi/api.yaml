@@ -11,6 +11,29 @@ externalDocs:
 servers:
   - url: https://tadoku.app/api/immersion/
 paths:
+  /contests:
+    post:
+      summary: Creates a new contest
+      operationId: contestCreate
+      tags: [contests]
+      security:
+        - cookieAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Contest'
+      responses:
+        '201':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Contest'
+        '400':
+          description: Invalid contest
+        '403':
+          description: Not allowed to create this contest
   /ping:
     get:
       summary: Checks if service is responsive
@@ -19,11 +42,69 @@ paths:
       responses:
         '200':
           description: successful operation
-          immersion:
+          content:
             text/plain:
               schema:
                 type: string
 components:
+  schemas:
+    Contest:
+      type: object
+      required:
+        - contest_start
+        - contest_end
+        - registration_start
+        - registration_end
+        - description
+      properties:
+        id:
+          type: string
+          format: uuid
+        description:
+          type: string
+          example: 2023 Round 1
+        contest_start:
+          type: string
+          format: date
+        contest_end:
+          type: string
+          format: date
+        registration_start:
+          type: string
+          format: date
+        registration_end:
+          type: string
+          format: date
+        private:
+          type: boolean
+        official:
+          type: boolean
+          example: false
+        owner_user_id:
+          type: string
+          format: uuid
+        owner_user_display_name:
+          type: string
+          example: "john"
+        language_code_allow_list:
+          type: array
+          items:
+            type: string
+          example: ['jpa', 'zho', 'kor']
+        activity_type_id_allow_list:
+          type: array
+          items:
+            type: integer
+            format: int32
+          example: [1, 2]
+        created_at:
+          type: string
+          format: date-time
+          example: 2022-12-14T19:48:00Z
+        updated_at:
+          type: string
+          format: date-time
+          example: 2022-12-14T19:48:00Z
   securitySchemes:
     cookieAuth:
       type: apiKey

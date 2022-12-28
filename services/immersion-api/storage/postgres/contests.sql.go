@@ -33,6 +33,7 @@ const createContest = `-- name: CreateContest :one
 insert into contests (
   owner_user_id,
   owner_user_display_name,
+  official,
   "private",
   contest_start,
   contest_end,
@@ -51,13 +52,15 @@ insert into contests (
   $7,
   $8,
   $9,
-  $10
+  $10,
+  $11
 ) returning id
 `
 
 type CreateContestParams struct {
-	OwnerUserID             uuid.NullUUID
-	OwnerUserDisplayName    sql.NullString
+	OwnerUserID             uuid.UUID
+	OwnerUserDisplayName    string
+	Official                bool
 	Private                 bool
 	ContestStart            time.Time
 	ContestEnd              time.Time
@@ -65,13 +68,14 @@ type CreateContestParams struct {
 	RegistrationEnd         time.Time
 	Description             string
 	LanguageCodeAllowList   []string
-	ActivityTypeIDAllowList []int16
+	ActivityTypeIDAllowList []int32
 }
 
 func (q *Queries) CreateContest(ctx context.Context, arg CreateContestParams) (uuid.UUID, error) {
 	row := q.db.QueryRowContext(ctx, createContest,
 		arg.OwnerUserID,
 		arg.OwnerUserDisplayName,
+		arg.Official,
 		arg.Private,
 		arg.ContestStart,
 		arg.ContestEnd,
@@ -224,8 +228,8 @@ type ListOfficialContestsRow struct {
 	RegistrationEnd         time.Time
 	Description             string
 	LanguageCodeAllowList   []string
-	ActivityTypeIDAllowList []int16
-	Official                sql.NullBool
+	ActivityTypeIDAllowList []int32
+	Official                bool
 	CreatedAt               time.Time
 	UpdatedAt               time.Time
 	DeletedAt               sql.NullTime

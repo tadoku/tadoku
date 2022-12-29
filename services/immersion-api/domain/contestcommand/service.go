@@ -38,19 +38,19 @@ func NewService(r ContestRepository, clock domain.Clock) Service {
 }
 
 type ContestCreateRequest struct {
-	OwnerUserID          uuid.UUID `validate:"required"`
-	OwnerUserDisplayName string    `validate:"required"`
-	ContestStart         time.Time `validate:"required"`
-	ContestEnd           time.Time `validate:"required"`
-	RegistrationStart    time.Time `validate:"required"`
-	RegistrationEnd      time.Time `validate:"required"`
-	Description          string    `validate:"required,gt=3"`
+	OwnerUserID             uuid.UUID `validate:"required"`
+	OwnerUserDisplayName    string    `validate:"required"`
+	ContestStart            time.Time `validate:"required"`
+	ContestEnd              time.Time `validate:"required"`
+	RegistrationStart       time.Time `validate:"required"`
+	RegistrationEnd         time.Time `validate:"required"`
+	Description             string    `validate:"required,gt=3"`
+	ActivityTypeIDAllowList []int32   `validate:"required,min=1"`
 
 	// Optional
-	Official                bool
-	Private                 bool
-	LanguageCodeAllowList   []string
-	ActivityTypeIDAllowList []int32
+	Official              bool
+	Private               bool
+	LanguageCodeAllowList []string
 }
 
 type ContestCreateResponse struct {
@@ -89,9 +89,6 @@ func (s *service) CreateContest(ctx context.Context, req *ContestCreateRequest) 
 	}
 	req.OwnerUserID = uuid.MustParse(session.Subject)
 	req.OwnerUserDisplayName = session.DisplayName
-
-	fmt.Println(req)
-	fmt.Println(session)
 
 	err := s.validate.Struct(req)
 	if err != nil {

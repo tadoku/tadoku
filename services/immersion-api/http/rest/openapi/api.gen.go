@@ -16,17 +16,17 @@ const (
 
 // Contest defines model for Contest.
 type Contest struct {
-	ActivityTypeIdAllowList *[]int32            `json:"activity_type_id_allow_list,omitempty"`
+	ActivityTypeIdAllowList []int32             `json:"activity_type_id_allow_list"`
 	ContestEnd              openapi_types.Date  `json:"contest_end"`
 	ContestStart            openapi_types.Date  `json:"contest_start"`
 	CreatedAt               *time.Time          `json:"created_at,omitempty"`
 	Description             string              `json:"description"`
 	Id                      *openapi_types.UUID `json:"id,omitempty"`
-	LanguageCodeAllowList   *[]string           `json:"language_code_allow_list,omitempty"`
-	Official                *bool               `json:"official,omitempty"`
+	LanguageCodeAllowList   []string            `json:"language_code_allow_list"`
+	Official                bool                `json:"official"`
 	OwnerUserDisplayName    *string             `json:"owner_user_display_name,omitempty"`
 	OwnerUserId             *openapi_types.UUID `json:"owner_user_id,omitempty"`
-	Private                 *bool               `json:"private,omitempty"`
+	Private                 bool                `json:"private"`
 	RegistrationEnd         openapi_types.Date  `json:"registration_end"`
 	RegistrationStart       openapi_types.Date  `json:"registration_start"`
 	UpdatedAt               *time.Time          `json:"updated_at,omitempty"`

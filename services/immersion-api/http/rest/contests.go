@@ -22,15 +22,15 @@ func (s *Server) ContestCreate(ctx echo.Context) error {
 	}
 
 	contest, err := s.contestCommandService.CreateContest(ctx.Request().Context(), &contestcommand.ContestCreateRequest{
-		Official:                *req.Official,
-		Private:                 *req.Private,
+		Official:                req.Official,
+		Private:                 req.Private,
 		ContestStart:            req.ContestStart.Time,
 		ContestEnd:              req.ContestEnd.Time,
 		RegistrationStart:       req.RegistrationStart.Time,
 		RegistrationEnd:         req.RegistrationEnd.Time,
 		Description:             req.Description,
-		LanguageCodeAllowList:   *req.LanguageCodeAllowList,
-		ActivityTypeIDAllowList: *req.ActivityTypeIdAllowList,
+		LanguageCodeAllowList:   req.LanguageCodeAllowList,
+		ActivityTypeIDAllowList: req.ActivityTypeIdAllowList,
 	})
 	if err != nil {
 		if errors.Is(err, contestcommand.ErrForbidden) {
@@ -57,10 +57,10 @@ func (s *Server) ContestCreate(ctx echo.Context) error {
 		Description:             contest.Description,
 		OwnerUserId:             &contest.OwnerUserID,
 		OwnerUserDisplayName:    &contest.OwnerUserDisplayName,
-		Official:                &contest.Official,
-		Private:                 &contest.Private,
-		LanguageCodeAllowList:   &contest.LanguageCodeAllowList,
-		ActivityTypeIdAllowList: &contest.ActivityTypeIDAllowList,
+		Official:                contest.Official,
+		Private:                 contest.Private,
+		LanguageCodeAllowList:   contest.LanguageCodeAllowList,
+		ActivityTypeIdAllowList: contest.ActivityTypeIDAllowList,
 		CreatedAt:               &contest.CreatedAt,
 		UpdatedAt:               &contest.UpdatedAt,
 	})

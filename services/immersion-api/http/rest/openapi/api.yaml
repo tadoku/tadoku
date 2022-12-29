@@ -56,6 +56,10 @@ components:
         - registration_start
         - registration_end
         - description
+        - private
+        - official
+        - language_code_allow_list
+        - activity_type_id_allow_list
       properties:
         id:
           type: string

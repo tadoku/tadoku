@@ -87,7 +87,7 @@ export function Checkbox<T extends FieldValues>(props: CheckboxProps<T>) {
           {...inputProps}
           {...register(name, options)}
         />
-        <span className="label-text">{label}</span>
+        <span className="label-text text-base font-normal">{label}</span>
       </label>
       <span className="error">{errorMessage}</span>
     </div>
@@ -279,6 +279,7 @@ export function AutocompleteMultiInput<T>(
   props: {
     label: string
     name: string
+    hint?: string
     options: T[]
     match: (option: T, query: string) => boolean
     format: (option: T) => string
@@ -287,7 +288,7 @@ export function AutocompleteMultiInput<T>(
 ) {
   const [query, setQuery] = useState('')
 
-  const { name, label, options, match, format, getIdForOption } = props
+  const { name, label, hint, options, match, format, getIdForOption } = props
   const {
     field: { value, onChange },
     formState: { errors },
@@ -302,7 +303,14 @@ export function AutocompleteMultiInput<T>(
 
   return (
     <label className={`label ${hasError ? 'error' : ''}`} htmlFor={name}>
-      <span className="label-text">{label}</span>
+      <div className="h-stack">
+        <span className="label-text">{label}</span>
+        {hint ? (
+          <span className="text-xs flex justify-end items-center flex-1 text-slate-500">
+            {hint}
+          </span>
+        ) : undefined}
+      </div>
       <Combobox
         value={value || []}
         onChange={onChange}

@@ -14,6 +14,18 @@ const (
 	CookieAuthScopes = "cookieAuth.Scopes"
 )
 
+// Activities defines model for Activities.
+type Activities struct {
+	Activities []Activity `json:"activities"`
+}
+
+// Activity defines model for Activity.
+type Activity struct {
+	Default *bool  `json:"default,omitempty"`
+	Id      *int   `json:"id,omitempty"`
+	Name    string `json:"name"`
+}
+
 // Contest defines model for Contest.
 type Contest struct {
 	ActivityTypeIdAllowList []int32             `json:"activity_type_id_allow_list"`
@@ -32,6 +44,24 @@ type Contest struct {
 	UpdatedAt               *time.Time          `json:"updated_at,omitempty"`
 }
 
+// ContestConfigurationOptions defines model for ContestConfigurationOptions.
+type ContestConfigurationOptions struct {
+	Activities []Activity `json:"activities"`
+	Languages  []Language `json:"languages"`
+}
+
+// Language defines model for Language.
+type Language struct {
+	// Code In ISO-639-3 https://en.wikipedia.org/wiki/Wikipedia:WikiProject_Languages/List_of_ISO_639-3_language_codes_(2019)
+	Code string `json:"code"`
+	Name string `json:"name"`
+}
+
+// Languages defines model for Languages.
+type Languages struct {
+	Languages []Language `json:"languages"`
+}
+
 // ContestCreateJSONRequestBody defines body for ContestCreate for application/json ContentType.
 type ContestCreateJSONRequestBody = Contest
 
@@ -40,6 +70,9 @@ type ServerInterface interface {
 	// Creates a new contest
 	// (POST /contests)
 	ContestCreate(ctx echo.Context) error
+	// Fetches the configuration options for a new contest
+	// (GET /contests/configuration-options)
+	ContestGetConfigurations(ctx echo.Context) error
 	// Checks if service is responsive
 	// (GET /ping)
 	Ping(ctx echo.Context) error
@@ -58,6 +91,17 @@ func (w *ServerInterfaceWrapper) ContestCreate(ctx echo.Context) error {
 
 	// Invoke the callback with all the unmarshalled arguments
 	err = w.Handler.ContestCreate(ctx)
+	return err
+}
+
+// ContestGetConfigurations converts echo context to params.
+func (w *ServerInterfaceWrapper) ContestGetConfigurations(ctx echo.Context) error {
+	var err error
+
+	ctx.Set(CookieAuthScopes, []string{""})
+
+	// Invoke the callback with all the unmarshalled arguments
+	err = w.Handler.ContestGetConfigurations(ctx)
 	return err
 }
 
@@ -99,6 +143,7 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 	}
 
 	router.POST(baseURL+"/contests", wrapper.ContestCreate)
+	router.GET(baseURL+"/contests/configuration-options", wrapper.ContestGetConfigurations)
 	router.GET(baseURL+"/ping", wrapper.Ping)
 
 }

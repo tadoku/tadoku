@@ -65,3 +65,9 @@ func (s *Server) ContestCreate(ctx echo.Context) error {
 		UpdatedAt:               &contest.UpdatedAt,
 	})
 }
+
+// Fetches the configuration options for a new contest
+// (GET /contests/configuration-options)
+func (s *Server) ContestGetConfigurations(ctx echo.Context) error {
+	return nil
+}

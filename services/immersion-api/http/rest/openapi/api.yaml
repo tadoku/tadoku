@@ -34,6 +34,20 @@ paths:
           description: Invalid contest
         '403':
           description: Not allowed to create this contest
+  /contests/configuration-options:
+    get:
+      summary: Fetches the configuration options for a new contest
+      operationId: contestGetConfigurations
+      tags: [contests]
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContestConfigurationOptions'
   /ping:
     get:
       summary: Checks if service is responsive
@@ -48,6 +62,55 @@ paths:
                 type: string
 components:
   schemas:
+    ContestConfigurationOptions:
+      allOf:
+        - $ref: "#/components/schemas/Languages"
+        - $ref: "#/components/schemas/Activities"
+    Language:
+      type: object
+      required:
+        - code
+        - name
+      properties:
+        code:
+          type: string
+          example: jpa
+          description: In ISO-639-3 https://en.wikipedia.org/wiki/Wikipedia:WikiProject_Languages/List_of_ISO_639-3_language_codes_(2019)
+        name:
+          type: string
+          example: Japanese
+    Languages:
+      type: object
+      required:
+        - languages
+      properties:
+        languages:
+          type: array
+          items:
+            $ref: "#/components/schemas/Language"
+    Activity:
+      type: object
+      required:
+        - code
+        - name
+      properties:
+        id:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: Reading
+        default:
+          type: boolean
+    Activities:
+      type: object
+      required:
+        - activities
+      properties:
+        activities:
+          type: array
+          items:
+            $ref: "#/components/schemas/Activity"
     Contest:
       type: object
       required:

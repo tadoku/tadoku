@@ -244,68 +244,70 @@ export function AutocompleteInput<T>(
     <label className={`label ${hasError ? 'error' : ''}`} htmlFor={name}>
       <span className="label-text">{label}</span>
       <Combobox value={value || null} onChange={onChange}>
-        <div className="relative z-0 input">
-          <Combobox.Input
-            onChange={event => setQuery(event.target.value)}
-            className="!pr-7"
-          />
-          <Combobox.Button className="absolute inset-y-0 right-0 flex items-center pr-2">
-            <ChevronUpDownIcon
-              className="h-5 w-5 text-gray-400"
-              aria-hidden="true"
+        <div className="input relative">
+          <div className="z-0">
+            <Combobox.Input
+              onChange={event => setQuery(event.target.value)}
+              className="!pr-7"
             />
-          </Combobox.Button>
-        </div>
-        <Transition
-          as={Fragment}
-          leave="transition ease-in duration-100"
-          leaveFrom="opacity-100"
-          leaveTo="opacity-0"
-          afterLeave={() => setQuery('')}
-        >
-          <Combobox.Options
-            className={`absolute mt-2 z-50 max-h-60 w-full overflow-auto bg-white py-1 shadow-md shadow-slate-500/20 ring-1 ring-secondary ring-opacity-5 focus:outline-none`}
+            <Combobox.Button className="absolute inset-y-0 right-0 flex items-center pr-2">
+              <ChevronUpDownIcon
+                className="h-5 w-5 text-gray-400"
+                aria-hidden="true"
+              />
+            </Combobox.Button>
+          </div>
+          <Transition
+            as={Fragment}
+            leave="transition ease-in duration-100"
+            leaveFrom="opacity-100"
+            leaveTo="opacity-0"
+            afterLeave={() => setQuery('')}
           >
-            {filtered.length === 0 && query !== '' ? (
-              <div className="relative cursor-default select-none py-2 px-4 text-gray-700">
-                No matches
-              </div>
-            ) : (
-              filtered.map(option => (
-                <Combobox.Option
-                  key={format(option)}
-                  value={option}
-                  className={({ active }) =>
-                    `relative cursor-default select-none py-2 pl-10 pr-4 ${
-                      active ? 'bg-secondary text-white' : ''
-                    }`
-                  }
-                >
-                  {({ selected, active }) => (
-                    <>
-                      <span
-                        className={`block truncate ${
-                          selected ? 'font-medium' : 'font-normal'
-                        }`}
-                      >
-                        {format(option)}
-                      </span>
-                      {selected ? (
+            <Combobox.Options
+              className={`absolute mt-2 z-50 max-h-60 w-full overflow-auto bg-white py-1 shadow-md shadow-slate-500/20 ring-1 ring-secondary ring-opacity-5 focus:outline-none`}
+            >
+              {filtered.length === 0 && query !== '' ? (
+                <div className="relative cursor-default select-none py-2 px-4 text-gray-700">
+                  No matches
+                </div>
+              ) : (
+                filtered.map(option => (
+                  <Combobox.Option
+                    key={format(option)}
+                    value={option}
+                    className={({ active }) =>
+                      `relative cursor-default select-none py-2 pl-10 pr-4 ${
+                        active ? 'bg-secondary text-white' : ''
+                      }`
+                    }
+                  >
+                    {({ selected, active }) => (
+                      <>
                         <span
-                          className={`absolute inset-y-0 left-0 flex items-center pl-3 ${
-                            active ? 'text-white' : 'text-secondary'
+                          className={`block truncate ${
+                            selected ? 'font-medium' : 'font-normal'
                           }`}
                         >
-                          <CheckIcon className="h-5 w-5" aria-hidden="true" />
+                          {format(option)}
                         </span>
-                      ) : null}
-                    </>
-                  )}
-                </Combobox.Option>
-              ))
-            )}
-          </Combobox.Options>
-        </Transition>
+                        {selected ? (
+                          <span
+                            className={`absolute inset-y-0 left-0 flex items-center pl-3 ${
+                              active ? 'text-white' : 'text-secondary'
+                            }`}
+                          >
+                            <CheckIcon className="h-5 w-5" aria-hidden="true" />
+                          </span>
+                        ) : null}
+                      </>
+                    )}
+                  </Combobox.Option>
+                ))
+              )}
+            </Combobox.Options>
+          </Transition>
+        </div>
       </Combobox>
       {hint ? <span className="label-hint">{hint}</span> : undefined}
       <span className="error">{errorMessage}</span>
@@ -348,71 +350,73 @@ export function AutocompleteMultiInput<T>(
         multiple
         by={(a, b): boolean => getIdForOption(a) === getIdForOption(b)}
       >
-        <div className="input relative z-0">
-          <Combobox.Input
-            onChange={event => setQuery(event.target.value)}
-            displayValue={selected =>
-              selected?.map(option => format(option as T)).join(', ') ?? ''
-            }
-            className="!pr-7"
-          />
-          <Combobox.Button className="absolute inset-y-0 right-0 flex items-center pr-2">
-            <ChevronUpDownIcon
-              className="h-5 w-5 text-gray-400"
-              aria-hidden="true"
+        <div className="input relative">
+          <div className="z-0">
+            <Combobox.Input
+              onChange={event => setQuery(event.target.value)}
+              displayValue={selected =>
+                selected?.map(option => format(option as T)).join(', ') ?? ''
+              }
+              className="!pr-7"
             />
-          </Combobox.Button>
-        </div>
-        <Transition
-          as={Fragment}
-          leave="transition ease-in duration-100"
-          leaveFrom="opacity-100"
-          leaveTo="opacity-0"
-          afterLeave={() => setQuery('')}
-        >
-          <Combobox.Options
-            className={`absolute mt-2 z-50 max-h-60 w-full overflow-auto bg-white py-1 shadow-md shadow-slate-500/20 ring-1 ring-secondary ring-opacity-5 focus:outline-none`}
+            <Combobox.Button className="absolute inset-y-0 right-0 flex items-center pr-2">
+              <ChevronUpDownIcon
+                className="h-5 w-5 text-gray-400"
+                aria-hidden="true"
+              />
+            </Combobox.Button>
+          </div>
+          <Transition
+            as={Fragment}
+            leave="transition ease-in duration-100"
+            leaveFrom="opacity-100"
+            leaveTo="opacity-0"
+            afterLeave={() => setQuery('')}
           >
-            {filtered.length === 0 && query !== '' ? (
-              <div className="relative cursor-default select-none py-2 px-4 text-gray-700">
-                No matches
-              </div>
-            ) : (
-              filtered.map(option => (
-                <Combobox.Option
-                  key={format(option)}
-                  value={option}
-                  className={({ active }) =>
-                    `relative cursor-default select-none py-2 pl-10 pr-4 ${
-                      active ? 'bg-secondary text-white' : ''
-                    }`
-                  }
-                >
-                  {({ selected, active }) => (
-                    <>
-                      <span
-                        className={`block truncate ${
-                          selected ? 'font-medium' : 'font-normal'
-                        }`}
-                      >
-                        {format(option)}
-                      </span>
-                      {selected ? (
+            <Combobox.Options
+              className={`absolute mt-2 z-50 max-h-60 w-full overflow-auto bg-white py-1 shadow-md shadow-slate-500/20 ring-1 ring-secondary ring-opacity-5 focus:outline-none`}
+            >
+              {filtered.length === 0 && query !== '' ? (
+                <div className="relative cursor-default select-none py-2 px-4 text-gray-700">
+                  No matches
+                </div>
+              ) : (
+                filtered.map(option => (
+                  <Combobox.Option
+                    key={format(option)}
+                    value={option}
+                    className={({ active }) =>
+                      `relative cursor-default select-none py-2 pl-10 pr-4 ${
+                        active ? 'bg-secondary text-white' : ''
+                      }`
+                    }
+                  >
+                    {({ selected, active }) => (
+                      <>
                         <span
-                          className={`absolute inset-y-0 left-0 flex items-center pl-3 ${
-                            active ? 'text-white' : 'text-secondary'
+                          className={`block truncate ${
+                            selected ? 'font-medium' : 'font-normal'
                           }`}
                         >
-                          <CheckIcon className="h-5 w-5" aria-hidden="true" />
+                          {format(option)}
                         </span>
-                      ) : null}
-                    </>
-                  )}
-                </Combobox.Option>
-              ))
-            )}
-          </Combobox.Options>
-        </Transition>
+                        {selected ? (
+                          <span
+                            className={`absolute inset-y-0 left-0 flex items-center pl-3 ${
+                              active ? 'text-white' : 'text-secondary'
+                            }`}
+                          >
+                            <CheckIcon className="h-5 w-5" aria-hidden="true" />
+                          </span>
+                        ) : null}
+                      </>
+                    )}
+                  </Combobox.Option>
+                ))
+              )}
+            </Combobox.Options>
+          </Transition>
+        </div>
       </Combobox>
       {hint ? <span className="label-hint">{hint}</span> : undefined}
       <span className="error">{errorMessage}</span>

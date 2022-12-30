@@ -2,12 +2,13 @@ import { AutocompleteMultiInput, Input, Checkbox } from 'ui'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
+import { date } from '@app/common/regex'
 
 const ContestFormSchema = z.object({
-  contestStart: z.date(),
-  contestEnd: z.date(),
-  registrationStart: z.date(),
-  registrationEnd: z.date(),
+  contestStart: z.string().regex(date),
+  contestEnd: z.string().regex(date),
+  registrationStart: z.string().regex(date),
+  registrationEnd: z.string().regex(date),
   description: z.string(),
   private: z.boolean(),
   official: z.boolean().optional().default(false),
@@ -72,46 +73,44 @@ export const ContestForm = ({}: Props) => {
         <div className="v-stack spaced">
           <h2 className="subtitle">Schedule</h2>
           <div className="v-stack md:h-stack fill spaced">
-            <Input
-              name="contestStart"
-              label="Start date"
-              register={register}
-              formState={formState}
-              type="date"
-            />
-            <Input
-              name="contestEnd"
-              label="End date"
-              register={register}
-              formState={formState}
-              type="date"
-              options={{
-                valueAsDate: true,
-              }}
-            />
+            <div>
+              <Input
+                name="contestStart"
+                label="Start date"
+                register={register}
+                formState={formState}
+                type="date"
+              />
+            </div>
+            <div>
+              <Input
+                name="contestEnd"
+                label="End date"
+                register={register}
+                formState={formState}
+                type="date"
+              />
+            </div>
           </div>
           <div className="v-stack md:h-stack fill spaced">
-            <Input
-              name="registrationStart"
-              label="Sign up start date"
-              register={register}
-              formState={formState}
-              type="date"
-              options={{
-                valueAsDate: true,
-              }}
-            />
-            <Input
-              name="registrationEnd"
-              label="Sign up deadline"
-              register={register}
-              formState={formState}
-              type="date"
-              options={{
-                required: true,
-                valueAsDate: true,
-              }}
-            />
+            <div>
+              <Input
+                name="registrationStart"
+                label="Sign up start date"
+                register={register}
+                formState={formState}
+                type="date"
+              />
+            </div>
+            <div>
+              <Input
+                name="registrationEnd"
+                label="Sign up deadline"
+                register={register}
+                formState={formState}
+                type="date"
+              />
+            </div>
           </div>
         </div>
       </div>

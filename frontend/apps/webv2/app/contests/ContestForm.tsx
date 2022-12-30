@@ -5,29 +5,40 @@ import { z } from 'zod'
 import { date } from '@app/common/regex'
 import { ContestConfigurationOptions } from './api'
 
-const ContestFormSchema = z.object({
-  contestStart: z.string().regex(date),
-  contestEnd: z.string().regex(date),
-  registrationStart: z.string().regex(date),
-  registrationEnd: z.string().regex(date),
-  description: z.string(),
-  private: z.boolean(),
-  official: z.boolean().optional().default(false),
-  languageCodeAllowList: z.array(
-    z.object({
-      code: z.string(),
-      name: z.string(),
-    }),
-  ),
-  activityTypeIdAllowList: z
-    .array(
+const ContestFormSchema = z
+  .object({
+    contestStart: z.string().regex(date),
+    contestEnd: z.string().regex(date),
+    registrationStart: z.string().regex(date),
+    registrationEnd: z.string().regex(date),
+    description: z
+      .string()
+      .min(3, 'Contest name should be at least 3 characters'),
+    private: z.boolean(),
+    official: z.boolean().optional().default(false),
+    languageCodeAllowList: z.array(
       z.object({
-        id: z.number(),
+        code: z.string(),
         name: z.string(),
       }),
-    )
-    .min(1, 'Need to select at least one activity'),
-})
+    ),
+    activityTypeIdAllowList: z
+      .array(
+        z.object({
+          id: z.number(),
+          name: z.string(),
+        }),
+      )
+      .min(1, 'Need to select at least one activity'),
+  })
+  .refine(
+    ({ official, languageCodeAllowList: list }) =>
+      !(official && list.length > 0),
+    {
+      path: ['languageCodeAllowList'],
+      message: 'Official contests cannot limit language selection',
+    },
+  )
 
 interface Props {
   configurationOptions: ContestConfigurationOptions

@@ -46,28 +46,28 @@ create table languages (
 
 comment on column languages.code is 'See https://en.wikipedia.org/wiki/Wikipedia:WikiProject_Languages/List_of_ISO_639-3_language_codes_(2019)';
 
-create table log_activity_types (
+create table log_activities (
   id integer primary key not null,
   name varchar(100) not null
 );
 
 create table log_units (
   id uuid primary key default uuid_generate_v4(),
-  log_activity_type_id smallint not null,
+  log_activity_id smallint not null,
   unit varchar(50) not null,
   modifier real not null,
   language_code varchar(10) -- could be null to indicate it's the fallback option for that language
 );
 
-create index log_units_log_activity_type_id on log_units(log_activity_type_id);
+create index log_units_log_activity_id on log_units(log_activity_id);
 
 create table log_tags (
   id uuid primary key default uuid_generate_v4(),
-  log_activity_type_id smallint not null,
+  log_activity_id smallint not null,
   name varchar(50) not null
 );
 
-create index log_tags_log_activity_type_id on log_tags(log_activity_type_id);
+create index log_tags_log_activity_id on log_tags(log_activity_id);
 
 create table logs (
   id uuid primary key default uuid_generate_v4(),
@@ -75,7 +75,7 @@ create table logs (
 
   -- meta
   language_code varchar(10) not null,
-  log_activity_type_id smallint not null,
+  log_activity_id smallint not null,
   unit_id uuid not null,
   tags varchar(50)[] not null,
 
@@ -139,7 +139,7 @@ values
 	('tur', 'Turkish');
 
 -- Activity types
-insert into log_activity_types
+insert into log_activities
   (id, name)
 values
   (1, 'Reading'),
@@ -150,7 +150,7 @@ values
 
 -- Units
 insert into log_units
-  (log_activity_type_id, unit, modifier, language_code)
+  (log_activity_id, unit, modifier, language_code)
 values
   (1, 'Page', 1, null),
   (1, '2 Column page', 1.6, 'jpa'),
@@ -174,7 +174,7 @@ values
 
 -- Tags
 insert into log_tags
-  (log_activity_type_id, name)
+  (log_activity_id, name)
 values
   (1, 'Book'),
   (1, 'Ebook'),

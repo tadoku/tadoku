@@ -123,6 +123,7 @@ values
 	('deu', 'German'),
 	('ell', 'Greek'),
 	('heb', 'Hebrew'),
+	('hin', 'Hindi'),
 	('hun', 'Hungary'),
 	('gle', 'Irish'),
 	('ita', 'Italian'),
@@ -137,7 +138,8 @@ values
 	('swe', 'Swedish'),
 	('tha', 'Thai'),
 	('tgl', 'Tagalog'),
-	('tur', 'Turkish');
+	('tur', 'Turkish'),
+	('urd', 'Urdu');
 
 -- Activity types
 insert into log_activities

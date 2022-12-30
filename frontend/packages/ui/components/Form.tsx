@@ -245,7 +245,10 @@ export function AutocompleteInput<T>(
       <span className="label-text">{label}</span>
       <Combobox value={value || null} onChange={onChange}>
         <div className="relative z-0 input">
-          <Combobox.Input onChange={event => setQuery(event.target.value)} />
+          <Combobox.Input
+            onChange={event => setQuery(event.target.value)}
+            className="!pr-7"
+          />
           <Combobox.Button className="absolute inset-y-0 right-0 flex items-center pr-2">
             <ChevronUpDownIcon
               className="h-5 w-5 text-gray-400"
@@ -351,6 +354,7 @@ export function AutocompleteMultiInput<T>(
             displayValue={selected =>
               selected?.map(option => format(option as T)).join(', ') ?? ''
             }
+            className="!pr-7"
           />
           <Combobox.Button className="absolute inset-y-0 right-0 flex items-center pr-2">
             <ChevronUpDownIcon

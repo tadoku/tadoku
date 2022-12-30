@@ -22,11 +22,20 @@ interface InputProps<T extends FieldValues>
   extends Props<T>,
     Omit<HTMLProps<HTMLInputElement>, 'name'> {
   label: string
+  hint?: string
 }
 
 export function Input<T extends FieldValues>(props: InputProps<T>) {
-  const { name, register, formState, label, type, options, ...inputProps } =
-    props
+  const {
+    name,
+    register,
+    formState,
+    label,
+    type,
+    options,
+    hint,
+    ...inputProps
+  } = props
   const hasError = formState.errors[name] !== undefined
   const errorMessage =
     formState.errors[name]?.message?.toString() || 'This input is invalid'
@@ -41,6 +50,7 @@ export function Input<T extends FieldValues>(props: InputProps<T>) {
         className={`input ${inputProps?.className ?? ''}`}
         {...register(name, options)}
       />
+      {hint ? <span className="label-hint">{hint}</span> : undefined}
       <span className="error">{errorMessage}</span>
     </label>
   )
@@ -50,10 +60,12 @@ interface TextaAreaProps<T extends FieldValues>
   extends Props<T>,
     Omit<HTMLProps<HTMLTextAreaElement>, 'name'> {
   label: string
+  hint?: string
 }
 
 export function TextArea<T extends FieldValues>(props: TextaAreaProps<T>) {
-  const { name, register, formState, label, options, ...inputProps } = props
+  const { name, register, formState, label, options, hint, ...inputProps } =
+    props
   const hasError = formState.errors[name] !== undefined
   const errorMessage =
     formState.errors[name]?.message?.toString() || 'This input is invalid'
@@ -67,6 +79,7 @@ export function TextArea<T extends FieldValues>(props: TextaAreaProps<T>) {
         className={`input ${inputProps?.className ?? ''}`}
         {...register(name, options)}
       />
+      {hint ? <span className="label-hint">{hint}</span> : undefined}
       <span className="error">{errorMessage}</span>
     </label>
   )
@@ -76,10 +89,12 @@ interface CheckboxProps<T extends FieldValues>
   extends Props<T>,
     Omit<HTMLProps<HTMLInputElement>, 'name' | 'type'> {
   label: string
+  hint?: string
 }
 
 export function Checkbox<T extends FieldValues>(props: CheckboxProps<T>) {
-  const { name, register, formState, label, options, ...inputProps } = props
+  const { name, register, formState, label, options, hint, ...inputProps } =
+    props
   const hasError = formState.errors[name] !== undefined
   const errorMessage =
     formState.errors[name]?.message?.toString() || 'This input is invalid'
@@ -96,6 +111,7 @@ export function Checkbox<T extends FieldValues>(props: CheckboxProps<T>) {
         />
         <span>{label}</span>
       </label>
+      {hint ? <span className="label-hint">{hint}</span> : undefined}
       <span className="error">{errorMessage}</span>
     </div>
   )
@@ -111,6 +127,7 @@ interface SelectProps<T extends FieldValues>
     Omit<HTMLProps<HTMLSelectElement>, 'name'> {
   label: string
   values: Option[]
+  hint?: string
 }
 
 export function Select<T extends FieldValues>(props: SelectProps<T>) {
@@ -122,6 +139,7 @@ export function Select<T extends FieldValues>(props: SelectProps<T>) {
     type,
     options,
     values,
+    hint,
     ...selectProps
   } = props
   const hasError = formState.errors[name] !== undefined
@@ -142,6 +160,7 @@ export function Select<T extends FieldValues>(props: SelectProps<T>) {
           </option>
         ))}
       </select>
+      {hint ? <span className="label-hint">{hint}</span> : undefined}
       <span className="error">{errorMessage}</span>
     </label>
   )
@@ -152,6 +171,7 @@ interface RadioSelectProps<T extends FieldValues>
     Omit<HTMLProps<HTMLInputElement>, 'name'> {
   label: string
   values: Option[]
+  hint?: string
 }
 
 export function RadioSelect<T extends FieldValues>(props: RadioSelectProps<T>) {
@@ -163,6 +183,7 @@ export function RadioSelect<T extends FieldValues>(props: RadioSelectProps<T>) {
     type,
     options,
     values,
+    hint,
     ...selectProps
   } = props
   const hasError = formState.errors[name] !== undefined
@@ -188,6 +209,7 @@ export function RadioSelect<T extends FieldValues>(props: RadioSelectProps<T>) {
           <span>{label}</span>
         </label>
       ))}
+      {hint ? <span className="label-hint">{hint}</span> : undefined}
       <span className="error">{errorMessage}</span>
     </div>
   )
@@ -197,6 +219,7 @@ export function AutocompleteInput<T>(
   props: {
     label: string
     name: string
+    hint?: string
     options: T[]
     match: (option: T, query: string) => boolean
     format: (option: T) => string
@@ -204,7 +227,7 @@ export function AutocompleteInput<T>(
 ) {
   const [query, setQuery] = useState('')
 
-  const { name, label, options, match, format } = props
+  const { name, label, options, match, format, hint } = props
   const {
     field: { value, onChange },
     formState: { errors },
@@ -281,6 +304,7 @@ export function AutocompleteInput<T>(
           </Combobox.Options>
         </Transition>
       </Combobox>
+      {hint ? <span className="label-hint">{hint}</span> : undefined}
       <span className="error">{errorMessage}</span>
     </label>
   )

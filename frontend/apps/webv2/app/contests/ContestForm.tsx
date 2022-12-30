@@ -11,8 +11,20 @@ const ContestFormSchema = z.object({
   description: z.string(),
   private: z.boolean(),
   official: z.boolean().optional().default(false),
-  languageCodeAllowList: z.array(z.string()),
-  activityTypeIdAllowList: z.array(z.number()),
+  languageCodeAllowList: z.array(
+    z.object({
+      code: z.string(),
+      name: z.string(),
+    }),
+  ),
+  activityTypeIdAllowList: z
+    .array(
+      z.object({
+        id: z.number(),
+        name: z.string(),
+      }),
+    )
+    .min(1, 'Need to select at least one activity'),
 })
 
 interface Props {}

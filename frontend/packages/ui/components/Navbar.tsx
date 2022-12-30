@@ -60,10 +60,10 @@ export function Navbar({ navigation, logoHref, width = 'max-w-7xl' }: Props) {
                   <div className="flex flex-shrink-0 items-center">
                     <Link href={logoHref}>
                       <span className="hidden sm:block">
-                        <Logo scale={0.8} />
+                        <Logo scale={0.8} priority />
                       </span>
                       <span className="block sm:hidden">
-                        <Logo scale={0.5} />
+                        <Logo scale={0.5} priority />
                       </span>
                     </Link>
                   </div>

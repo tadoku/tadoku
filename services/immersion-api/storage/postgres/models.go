@@ -69,8 +69,9 @@ type Log struct {
 }
 
 type LogActivity struct {
-	ID   int32
-	Name string
+	ID      int32
+	Name    string
+	Default bool
 }
 
 type LogTag struct {

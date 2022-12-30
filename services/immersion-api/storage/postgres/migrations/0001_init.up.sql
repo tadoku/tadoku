@@ -48,7 +48,8 @@ comment on column languages.code is 'See https://en.wikipedia.org/wiki/Wikipedia
 
 create table log_activities (
   id integer primary key not null,
-  name varchar(100) not null
+  name varchar(100) not null,
+  "default" boolean not null default false
 );
 
 create table log_units (
@@ -140,13 +141,13 @@ values
 
 -- Activity types
 insert into log_activities
-  (id, name)
+  (id, name, "default")
 values
-  (1, 'Reading'),
-  (2, 'Listening'),
-  (3, 'Writing'),
-  (4, 'Speaking'),
-  (5, 'Study');
+  (1, 'Reading', true),
+  (2, 'Listening', true),
+  (3, 'Writing', false),
+  (4, 'Speaking', false),
+  (5, 'Study', false);
 
 -- Units
 insert into log_units

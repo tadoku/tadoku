@@ -11,6 +11,7 @@ go_library(
     visibility = ["//visibility:public"],
     deps = [
         "//services/immersion-api/domain/contestcommand",
+        "//services/immersion-api/domain/contestquery",
         "//services/immersion-api/http/rest/openapi",
         "@com_github_deepmap_oapi_codegen//pkg/types",
         "@com_github_labstack_echo_v4//:echo",

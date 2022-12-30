@@ -91,10 +91,12 @@ components:
     Activity:
       type: object
       required:
-        - code
+        - id
         - name
+        - default
       properties:
         id:
+          format: int32
           type: integer
           example: 1
         name:

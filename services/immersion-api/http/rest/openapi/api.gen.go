@@ -21,8 +21,8 @@ type Activities struct {
 
 // Activity defines model for Activity.
 type Activity struct {
-	Default *bool  `json:"default,omitempty"`
-	Id      *int   `json:"id,omitempty"`
+	Default bool   `json:"default"`
+	Id      int32  `json:"id"`
 	Name    string `json:"name"`
 }
 

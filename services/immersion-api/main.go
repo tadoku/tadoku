@@ -10,6 +10,7 @@ import (
 	tadokumiddleware "github.com/tadoku/tadoku/services/common/middleware"
 	"github.com/tadoku/tadoku/services/common/storage/memory"
 	"github.com/tadoku/tadoku/services/immersion-api/domain/contestcommand"
+	"github.com/tadoku/tadoku/services/immersion-api/domain/contestquery"
 	"github.com/tadoku/tadoku/services/immersion-api/http/rest"
 	"github.com/tadoku/tadoku/services/immersion-api/http/rest/openapi"
 	"github.com/tadoku/tadoku/services/immersion-api/storage/postgres"
@@ -53,7 +54,12 @@ func main() {
 	}
 
 	contestCommandService := contestcommand.NewService(contestRepository, clock)
-	server := rest.NewServer(contestCommandService)
+	contestQueryService := contestquery.NewService(contestRepository)
+
+	server := rest.NewServer(
+		contestCommandService,
+		contestQueryService,
+	)
 
 	openapi.RegisterHandlersWithBaseURL(e, server, "")
 

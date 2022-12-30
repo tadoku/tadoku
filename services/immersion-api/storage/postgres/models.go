@@ -29,6 +29,11 @@ type Contest struct {
 	DeletedAt               sql.NullTime
 }
 
+type ContestLog struct {
+	ContestID uuid.UUID
+	LogID     uuid.UUID
+}
+
 type ContestRegistration struct {
 	ID              uuid.UUID
 	ContestID       uuid.UUID
@@ -48,10 +53,9 @@ type Language struct {
 
 type Log struct {
 	ID                          uuid.UUID
-	ContestID                   uuid.NullUUID
 	UserID                      uuid.UUID
 	LanguageCode                string
-	LogActivityTypeID           int16
+	LogActivityID               int16
 	UnitID                      uuid.UUID
 	Tags                        []string
 	Amount                      float32
@@ -64,21 +68,21 @@ type Log struct {
 	DeletedAt                   sql.NullTime
 }
 
-type LogActivityType struct {
+type LogActivity struct {
 	ID   int32
 	Name string
 }
 
 type LogTag struct {
-	ID                uuid.UUID
-	LogActivityTypeID int16
-	Name              string
+	ID            uuid.UUID
+	LogActivityID int16
+	Name          string
 }
 
 type LogUnit struct {
-	ID                uuid.UUID
-	LogActivityTypeID int16
-	Unit              string
-	Modifier          float32
-	LanguageCode      sql.NullString
+	ID            uuid.UUID
+	LogActivityID int16
+	Unit          string
+	Modifier      float32
+	LanguageCode  sql.NullString
 }

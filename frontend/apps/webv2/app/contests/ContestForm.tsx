@@ -45,111 +45,111 @@ export const ContestForm = ({}: Props) => {
   return (
     <form
       onSubmit={handleSubmit(onSubmit, errors => console.log(errors))}
-      className="v-stack spaced"
+      className="v-stack spaced max-w-screen-sm"
     >
-      <div className="h-stack spaced fill">
-        <div className="card">
-          <Input
-            name="description"
-            label="Contest name"
-            register={register}
-            formState={formState}
-            type="text"
-          />
-          <div className="v-stack spaced mt-8">
-            <h2 className="subtitle">Schedule</h2>
-            <div className="h-stack fill spaced">
-              <Input
-                name="contestStart"
-                label="Start date"
-                register={register}
-                formState={formState}
-                type="date"
-              />
-              <Input
-                name="contestEnd"
-                label="End date"
-                register={register}
-                formState={formState}
-                type="date"
-                options={{
-                  valueAsDate: true,
-                }}
-              />
-            </div>
-            <div className="h-stack fill spaced">
-              <Input
-                name="registrationStart"
-                label="Sign up start date"
-                register={register}
-                formState={formState}
-                type="date"
-                options={{
-                  valueAsDate: true,
-                }}
-              />
-              <Input
-                name="registrationEnd"
-                label="Sign up deadline"
-                register={register}
-                formState={formState}
-                type="date"
-                options={{
-                  required: true,
-                  valueAsDate: true,
-                }}
-              />
-            </div>
+      <div className="card">
+        <Input
+          name="description"
+          label="Contest name"
+          register={register}
+          formState={formState}
+          type="text"
+        />
+      </div>
+      <div className="card">
+        <div className="v-stack spaced">
+          <h2 className="subtitle">Schedule</h2>
+          <div className="v-stack md:h-stack fill spaced">
+            <Input
+              name="contestStart"
+              label="Start date"
+              register={register}
+              formState={formState}
+              type="date"
+            />
+            <Input
+              name="contestEnd"
+              label="End date"
+              register={register}
+              formState={formState}
+              type="date"
+              options={{
+                valueAsDate: true,
+              }}
+            />
+          </div>
+          <div className="v-stack md:h-stack fill spaced">
+            <Input
+              name="registrationStart"
+              label="Sign up start date"
+              register={register}
+              formState={formState}
+              type="date"
+              options={{
+                valueAsDate: true,
+              }}
+            />
+            <Input
+              name="registrationEnd"
+              label="Sign up deadline"
+              register={register}
+              formState={formState}
+              type="date"
+              options={{
+                required: true,
+                valueAsDate: true,
+              }}
+            />
           </div>
         </div>
-        <div className="card v-stack spaced">
-          <h2 className="subtitle">Configuration</h2>
-          <AutocompleteMultiInput
-            name="languageCodeAllowList"
-            label="Allowed languages"
-            hint="Leave empty to accept all languages"
-            options={languages}
-            control={control}
-            match={(option, query) =>
-              option.name
-                .toLowerCase()
-                .replace(/[^a-zA-Z0-9]/g, '')
-                .includes(query.toLowerCase())
-            }
-            getIdForOption={option => option.code}
-            format={option => option.name}
+      </div>
+      <div className="card v-stack spaced">
+        <h2 className="subtitle">Configuration</h2>
+        <AutocompleteMultiInput
+          name="languageCodeAllowList"
+          label="Allowed languages"
+          hint="Leave empty to accept all languages"
+          options={languages}
+          control={control}
+          match={(option, query) =>
+            option.name
+              .toLowerCase()
+              .replace(/[^a-zA-Z0-9]/g, '')
+              .includes(query.toLowerCase())
+          }
+          getIdForOption={option => option.code}
+          format={option => option.name}
+        />
+        <AutocompleteMultiInput
+          name="activityTypeIdAllowList"
+          label="Allowed activities"
+          options={activities}
+          control={control}
+          match={(option, query) =>
+            option.name
+              .toLowerCase()
+              .replace(/[^a-zA-Z0-9]/g, '')
+              .includes(query.toLowerCase())
+          }
+          getIdForOption={option => option.id}
+          format={option => option.name}
+        />
+        {!isPrivate && (
+          <Checkbox
+            name="official"
+            label="Official round"
+            register={register}
+            formState={formState}
           />
-          <AutocompleteMultiInput
-            name="activityTypeIdAllowList"
-            label="Allowed activities"
-            options={activities}
-            control={control}
-            match={(option, query) =>
-              option.name
-                .toLowerCase()
-                .replace(/[^a-zA-Z0-9]/g, '')
-                .includes(query.toLowerCase())
-            }
-            getIdForOption={option => option.id}
-            format={option => option.name}
+        )}
+        {!isOfficial && (
+          <Checkbox
+            name="private"
+            label="Only those with link can sign up"
+            register={register}
+            formState={formState}
           />
-          {!isPrivate && (
-            <Checkbox
-              name="official"
-              label="Official round"
-              register={register}
-              formState={formState}
-            />
-          )}
-          {!isOfficial && (
-            <Checkbox
-              name="private"
-              label="Only those with link can sign up"
-              register={register}
-              formState={formState}
-            />
-          )}
-        </div>
+        )}
       </div>
       <div className="h-stack spaced justify-end">
         <a href="/contests" className="btn ghost">

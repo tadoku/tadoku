@@ -38,6 +38,7 @@ export function Input<T extends FieldValues>(props: InputProps<T>) {
         type={type}
         id={name}
         {...inputProps}
+        className={`input ${inputProps?.className ?? ''}`}
         {...register(name, options)}
       />
       <span className="error">{errorMessage}</span>
@@ -60,7 +61,12 @@ export function TextArea<T extends FieldValues>(props: TextaAreaProps<T>) {
   return (
     <label className={`label ${hasError ? 'error' : ''}`} htmlFor={name}>
       <span className="label-text">{label}</span>
-      <textarea id={name} {...inputProps} {...register(name, options)} />
+      <textarea
+        id={name}
+        {...inputProps}
+        className={`input ${inputProps?.className ?? ''}`}
+        {...register(name, options)}
+      />
       <span className="error">{errorMessage}</span>
     </label>
   )
@@ -85,6 +91,7 @@ export function Checkbox<T extends FieldValues>(props: CheckboxProps<T>) {
           type="checkbox"
           id={name}
           {...inputProps}
+          className={`input ${inputProps?.className ?? ''}`}
           {...register(name, options)}
         />
         <span className="label-text text-base font-normal">{label}</span>
@@ -124,7 +131,11 @@ export function Select<T extends FieldValues>(props: SelectProps<T>) {
   return (
     <label className={`label ${hasError ? 'error' : ''}`} htmlFor={name}>
       <span className="label-text">{label}</span>
-      <select {...selectProps} {...register(name, options)}>
+      <select
+        {...selectProps}
+        className={`input ${selectProps?.className ?? ''}`}
+        {...register(name, options)}
+      >
         {values.map(({ value, label }) => (
           <option value={value} key={value}>
             {label}
@@ -210,7 +221,7 @@ export function AutocompleteInput<T>(
     <label className={`label ${hasError ? 'error' : ''}`} htmlFor={name}>
       <span className="label-text">{label}</span>
       <Combobox value={value || null} onChange={onChange}>
-        <div className="relative z-0">
+        <div className="relative z-0 input">
           <Combobox.Input onChange={event => setQuery(event.target.value)} />
           <Combobox.Button className="absolute inset-y-0 right-0 flex items-center pr-2">
             <ChevronUpDownIcon
@@ -303,21 +314,14 @@ export function AutocompleteMultiInput<T>(
 
   return (
     <label className={`label ${hasError ? 'error' : ''}`} htmlFor={name}>
-      <div className="h-stack">
-        <span className="label-text">{label}</span>
-        {hint ? (
-          <span className="text-xs flex justify-end items-center flex-1 text-slate-500">
-            {hint}
-          </span>
-        ) : undefined}
-      </div>
+      <span className="label-text">{label}</span>
       <Combobox
         value={value || []}
         onChange={onChange}
         multiple
         by={(a, b): boolean => getIdForOption(a) === getIdForOption(b)}
       >
-        <div className="relative z-0">
+        <div className="input relative z-0">
           <Combobox.Input
             onChange={event => setQuery(event.target.value)}
             displayValue={selected =>
@@ -382,6 +386,7 @@ export function AutocompleteMultiInput<T>(
           </Combobox.Options>
         </Transition>
       </Combobox>
+      {hint ? <span className="label-hint">{hint}</span> : undefined}
       <span className="error">{errorMessage}</span>
     </label>
   )

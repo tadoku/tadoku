@@ -34,7 +34,7 @@ const MyApp = ({ Component, pageProps }: AppProps<Props>) => {
       <QueryClientProvider client={queryClient}>
         <div>
           <Navigation />
-          <div className="px-8 pb-8 pt-4 mx-auto max-w-7xl">
+          <div className="p-4 md:px-8 md:pb-8 md:pt-4 mx-auto max-w-7xl">
             <Component {...pageProps} />
           </div>
           <ToastContainer />

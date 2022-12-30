@@ -190,15 +190,31 @@
   /* forms */
 
   .label {
-    @apply block space-y-2 relative;
+    @apply grid grid-cols-2 grid-flow-row relative gap-2;
   }
 
-  .label-text {
-    @apply block font-semibold text-lg;
+  .label .label-text {
+    @apply bg-red-200 font-semibold text-lg order-1;
   }
 
-  .label-inline {
-    @apply h-stack items-center space-x-3;
+  .label .input {
+    @apply col-span-2 order-2 md:order-3;
+  }
+
+  .label .label-inline {
+    @apply col-span-2 h-stack space-x-3;
+  }
+
+  .label .label-inline input[type=checkbox] {
+    @apply mt-1;
+  }
+
+  .label .label-inline .label-text {
+    @apply bg-emerald-200 order-2 md:order-3 text-base font-normal;
+  }
+
+  .label-hint {
+    @apply bg-emerald-200 order-3 md:col-start-2 md:col-end-2 md:row-start-1 md:order-2 text-xs md:flex md:justify-end md:items-center md:flex-1 text-slate-500;
   }
 
   .btn {
@@ -220,7 +236,7 @@
   }
 
   .card {
-    @apply p-7 shadow-md shadow-slate-500/10 bg-white;
+    @apply p-4 md:p-7 shadow-md shadow-slate-500/10 bg-white;
   }
 
   .modal-body {
@@ -310,11 +326,11 @@
   }
 
   .v-stack.spaced {
-    @apply space-y-3;
+    @apply space-y-3 space-x-0;
   }
 
   .h-stack.spaced {
-    @apply space-x-3;
+    @apply space-x-3 space-y-0;
   }
 
   .h-stack.fill > * {

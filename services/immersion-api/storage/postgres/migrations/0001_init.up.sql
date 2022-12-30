@@ -71,7 +71,6 @@ create index log_tags_log_activity_type_id on log_tags(log_activity_type_id);
 
 create table logs (
   id uuid primary key default uuid_generate_v4(),
-  contest_id uuid,
   user_id uuid not null,
 
   -- meta
@@ -96,8 +95,14 @@ create table logs (
 
 create index logs_year on logs(year);
 create index logs_user_id on logs(user_id);
-create index logs_contest_id on logs(contest_id);
-create index logs_user_id_contest on logs(user_id, contest_id);
+
+create table contest_logs (
+  contest_id uuid not null,
+  log_id uuid not null
+);
+
+create unique clustered index contest_logs_contest_id on contest_logs(contest_id, log_id);
+create nonclustered index contest_logs_log_id on contest_logs(log_id);
 
 -- Languages
 insert into languages

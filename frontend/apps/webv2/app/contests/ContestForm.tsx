@@ -3,6 +3,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { date } from '@app/common/regex'
+import { ContestConfigurationOptions } from './api'
 
 const ContestFormSchema = z.object({
   contestStart: z.string().regex(date),
@@ -28,25 +29,13 @@ const ContestFormSchema = z.object({
     .min(1, 'Need to select at least one activity'),
 })
 
-interface Props {}
+interface Props {
+  configurationOptions: ContestConfigurationOptions
+}
 
-// TODO: fetch from API
-const languages = [
-  { code: 'jpa', name: 'Japanese' },
-  { code: 'kor', name: 'Korean' },
-  { code: 'zho', name: 'Chinese' },
-  { code: 'ita', name: 'Italian' },
-  { code: 'nld', name: 'Dutch' },
-  { code: 'eng', name: 'English' },
-]
-const activities = [
-  { id: 1, name: 'Reading' },
-  { id: 2, name: 'Listening' },
-  { id: 3, name: 'Speaking' },
-  { id: 4, name: 'Writing' },
-]
-
-export const ContestForm = ({}: Props) => {
+export const ContestForm = ({
+  configurationOptions: { languages, activities },
+}: Props) => {
   const { register, handleSubmit, formState, control, watch } = useForm({
     resolver: zodResolver(ContestFormSchema),
   })

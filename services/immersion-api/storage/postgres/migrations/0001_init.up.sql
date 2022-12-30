@@ -101,8 +101,9 @@ create table contest_logs (
   log_id uuid not null
 );
 
-create unique clustered index contest_logs_contest_id on contest_logs(contest_id, log_id);
-create nonclustered index contest_logs_log_id on contest_logs(log_id);
+create unique index contest_logs_contest_id on contest_logs(contest_id, log_id);
+alter table contest_logs cluster on contest_logs_contest_id;
+create index contest_logs_log_id on contest_logs(log_id);
 
 -- Languages
 insert into languages

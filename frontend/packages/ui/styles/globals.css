@@ -194,15 +194,15 @@
   }
 
   .label .label-text {
-    @apply bg-red-200 font-semibold text-lg order-1;
+    @apply font-semibold text-lg order-1 col-span-full row-span-full;
   }
 
   .label .input {
-    @apply col-span-2 order-2 md:order-3;
+    @apply col-span-3 order-2 md:order-3;
   }
 
   .label .label-inline {
-    @apply col-span-2 h-stack space-x-3;
+    @apply h-stack space-x-3 col-span-full;
   }
 
   .label .label-inline input[type=checkbox] {
@@ -210,11 +210,11 @@
   }
 
   .label .label-inline .label-text {
-    @apply bg-emerald-200 order-2 md:order-3 text-base font-normal;
+    @apply order-2 md:order-3 text-base font-normal;
   }
 
   .label-hint {
-    @apply bg-emerald-200 order-3 md:col-start-2 md:col-end-2 md:row-start-1 md:order-2 text-xs md:flex md:justify-end md:items-center md:flex-1 text-slate-500;
+    @apply order-3 md:order-2 col-span-full md:col-span-1 md:row-span-full text-xs md:flex md:justify-end md:items-center md:flex-1 text-slate-500;
   }
 
   .btn {

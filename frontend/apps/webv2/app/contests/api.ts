@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import getConfig from 'next/config'
-import { useQuery } from 'react-query'
+import { useMutation, useQuery } from 'react-query'
+import { ContestFormSchema } from '@app/contests/ContestForm'
 
 const { publicRuntimeConfig } = getConfig()
 
@@ -39,3 +40,20 @@ export const useContestConfigurationOptions = () =>
       return ContestConfigurationOptions.parse(await response.json())
     },
   )
+
+export const useCreateContest = (onSuccess: (id: string) => void) =>
+  useMutation({
+    mutationFn: async (contest: ContestFormSchema) => {
+      const res = await fetch(root, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(contest),
+      })
+      return await res.json()
+    },
+    onSuccess(data) {
+      onSuccess(data.id)
+    },
+  })

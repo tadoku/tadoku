@@ -3,9 +3,10 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { date } from '@app/common/regex'
-import { ContestConfigurationOptions } from './api'
+import { ContestConfigurationOptions, useCreateContest } from './api'
+import { useRouter } from 'next/router'
 
-const ContestFormSchema = z
+export const ContestFormSchema = z
   .object({
     contestStart: z.string().regex(date),
     contestEnd: z.string().regex(date),
@@ -39,6 +40,28 @@ const ContestFormSchema = z
       message: 'Official contests cannot limit language selection',
     },
   )
+  .transform(contest => {
+    const {
+      contestStart: contest_start,
+      contestEnd: contest_end,
+      registrationStart: registration_start,
+      registrationEnd: registration_end,
+      ...rest
+    } = contest
+    return {
+      ...rest,
+      contest_start,
+      contest_end,
+      registration_start,
+      registration_end,
+      language_code_allow_list: contest.languageCodeAllowList.map(l => l.code),
+      activity_type_id_allow_list: contest.activityTypeIdAllowList.map(
+        a => a.id,
+      ),
+    }
+  })
+
+export type ContestFormSchema = z.infer<typeof ContestFormSchema>
 
 interface Props {
   configurationOptions: ContestConfigurationOptions
@@ -53,7 +76,14 @@ export const ContestForm = ({
   const isOfficial = watch('official')
   const isPrivate = watch('private')
 
-  const onSubmit = (data: any) => console.log(data, 'submitted')
+  const router = useRouter()
+  const createContest = useCreateContest(id =>
+    router.replace(`/contests/${id}/edit`),
+  )
+
+  const onSubmit = (data: any) => {
+    createContest.mutate(data)
+  }
 
   return (
     <form

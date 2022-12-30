@@ -198,7 +198,7 @@
   }
 
   .label-text {
-    @apply font-semibold text-lg order-1 col-span-full row-span-full;
+    @apply font-semibold text-base order-1 col-span-full row-span-full;
   }
 
   .label .input {

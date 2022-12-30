@@ -455,15 +455,15 @@ const MiscForm = () => {
             <form className="v-stack spaced">
               <label className="label">
                 <span className="label-text">First name</span>
-                <input type="text" placeholder="John Doe" />
+                <input className="input" type="text" placeholder="John Doe" />
               </label>
               <label className="label">
                 <span className="label-text">Message</span>
-                <textarea placeholder="Dolor sit amet..." />
+                <textarea className="input" placeholder="Dolor sit amet..." />
               </label>
               <label className="label">
                 <span className="label-text">Choose a color</span>
-                <select>
+                <select className="input">
                   <option value="#ff0000">Red</option>
                   <option value="#00ff00">Green</option>
                   <option value="#0000ff">Blue</option>
@@ -471,22 +471,24 @@ const MiscForm = () => {
               </label>
               <div>
                 <span className="label-text">Choose a color</span>
-                <label className="label-inline">
-                  <input type="radio" name="color-radio" />
-                  <span>Red</span>
-                </label>
-                <label className="label-inline">
-                  <input type="radio" name="color-radio" />
-                  <span>Green</span>
-                </label>
-                <label className="label-inline">
-                  <input type="radio" name="color-radio" />
-                  <span>Blue</span>
-                </label>
+                <div className="v-stack">
+                  <label className="label-inline">
+                    <input type="radio" name="color-radio" className="input" />
+                    <span>Red</span>
+                  </label>
+                  <label className="label-inline">
+                    <input type="radio" name="color-radio" />
+                    <span>Green</span>
+                  </label>
+                  <label className="label-inline">
+                    <input type="radio" name="color-radio" />
+                    <span>Blue</span>
+                  </label>
+                </div>
               </div>
               <label className="label error">
                 <span className="label-text">First name</span>
-                <input type="text" placeholder="John Doe" />
+                <input type="text" placeholder="John Doe" className="input" />
                 <span className="error">
                   Should be at least 1 character long
                 </span>
@@ -500,41 +502,43 @@ const MiscForm = () => {
             code={`<form className="v-stack spaced">
 <label className="label">
   <span className="label-text">First name</span>
-  <input type="text" placeholder="John Doe" />
+  <input className="input" type="text" placeholder="John Doe" />
 </label>
 <label className="label">
   <span className="label-text">Message</span>
-  <textarea placeholder="Dolor sit amet..." />
+  <textarea className="input" placeholder="Dolor sit amet..." />
 </label>
 <label className="label">
   <span className="label-text">Choose a color</span>
-  <select>
-    <option value="#ff0000" selected>
-      Red
-    </option>
+  <select className="input">
+    <option value="#ff0000">Red</option>
     <option value="#00ff00">Green</option>
     <option value="#0000ff">Blue</option>
   </select>
 </label>
 <div>
   <span className="label-text">Choose a color</span>
-  <label className="label-inline">
-    <input type="radio" name="color-radio" />
-    <span>Red</span>
-  </label>
-  <label className="label-inline">
-    <input type="radio" name="color-radio" />
-    <span>Green</span>
-  </label>
-  <label className="label-inline">
-    <input type="radio" name="color-radio" />
-    <span>Blue</span>
-  </label>
+  <div className="v-stack">
+    <label className="label-inline">
+      <input type="radio" name="color-radio" className="input" />
+      <span>Red</span>
+    </label>
+    <label className="label-inline">
+      <input type="radio" name="color-radio" />
+      <span>Green</span>
+    </label>
+    <label className="label-inline">
+      <input type="radio" name="color-radio" />
+      <span>Blue</span>
+    </label>
+  </div>
 </div>
 <label className="label error">
   <span className="label-text">First name</span>
-  <input type="text" placeholder="John Doe" />
-  <span className="error">Should be at least 1 character long</span>
+  <input type="text" placeholder="John Doe" className="input" />
+  <span className="error">
+    Should be at least 1 character long
+  </span>
 </label>
 </form>`}
           />

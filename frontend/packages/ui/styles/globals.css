@@ -138,6 +138,10 @@
     @apply font-semibold;
   }
 
+  input[type=checkbox] + span {
+    @apply order-4;
+  }
+
   input[type=radio] {
     @apply rounded-full h-4 w-4 border border-gray-300 bg-white;
     @apply checked:bg-primary checked:border-primary;
@@ -145,7 +149,7 @@
     @apply cursor-pointer checked:font-bold focus:ring-1 focus:ring-primary text-primary;
   }
 
-  input[type=radio]:checked + span {
+  input[type=radio]:checked + span  {
     @apply font-semibold;
   }
 }
@@ -193,7 +197,7 @@
     @apply grid grid-cols-2 grid-flow-row relative gap-2;
   }
 
-  .label .label-text {
+  .label-text {
     @apply font-semibold text-lg order-1 col-span-full row-span-full;
   }
 
@@ -209,8 +213,16 @@
     @apply mt-1;
   }
 
+  .label-inline input[type=radio] {
+    @apply mr-2;
+  }
+
   .label .label-inline .label-text {
-    @apply order-2 md:order-3 text-base font-normal;
+    @apply order-2 md:order-3 text-base;
+  }
+
+  .label .error {
+    @apply order-4 col-span-full;
   }
 
   .label-hint {

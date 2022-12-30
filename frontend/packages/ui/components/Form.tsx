@@ -94,7 +94,7 @@ export function Checkbox<T extends FieldValues>(props: CheckboxProps<T>) {
           className={`input ${inputProps?.className ?? ''}`}
           {...register(name, options)}
         />
-        <span className="label-text text-base font-normal">{label}</span>
+        <span>{label}</span>
       </label>
       <span className="error">{errorMessage}</span>
     </div>

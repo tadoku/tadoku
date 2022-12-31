@@ -4,6 +4,7 @@ import { HomeIcon } from '@heroicons/react/20/solid'
 import Link from 'next/link'
 import { Contests, useContestList } from '@app/contests/api'
 import { useState } from 'react'
+import { DateTime } from 'luxon'
 
 interface Props {}
 
@@ -58,7 +59,9 @@ const ContestList = ({ list }: { list: Contests }) => {
     <>
       <ul>
         {list.contests.map(c => (
-          <li key={c.id}>{c.description}</li>
+          <li key={c.id}>
+            {c.description} {c.contestStart.toLocaleString(DateTime.DATE_FULL)}
+          </li>
         ))}
       </ul>
     </>

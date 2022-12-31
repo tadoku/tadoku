@@ -2,7 +2,7 @@ import { z } from 'zod'
 import getConfig from 'next/config'
 import { useMutation, useQuery } from 'react-query'
 import { ContestFormSchema } from '@app/contests/ContestForm'
-import { date } from '@app/common/regex'
+import { DateTime } from 'luxon'
 
 const { publicRuntimeConfig } = getConfig()
 
@@ -72,10 +72,10 @@ export const useCreateContest = (onSuccess: (id: string) => void) =>
 const Contest = z
   .object({
     id: z.string(),
-    contest_start: z.date(),
-    contest_end: z.date(),
-    registration_start: z.date(),
-    registration_end: z.date(),
+    contest_start: z.string(),
+    contest_end: z.string(),
+    registration_start: z.string(),
+    registration_end: z.string(),
     description: z.string(),
     private: z.boolean(),
     official: z.boolean(),
@@ -95,10 +95,10 @@ const Contest = z
     } = contest
     return {
       ...rest,
-      contestStart,
-      contestEnd,
-      registrationStart,
-      registrationEnd,
+      contestStart: DateTime.fromISO(contestStart),
+      contestEnd: DateTime.fromISO(contestEnd),
+      registrationStart: DateTime.fromISO(registrationStart),
+      registrationEnd: DateTime.fromISO(registrationEnd),
       languageCodeAllowList,
       activityTypeIdAllowList,
     }

@@ -27,7 +27,7 @@ const Contests: NextPage<Props> = () => {
           ]}
         />
       </div>
-      <div className="h-stack justify-between items-center">
+      <div className="h-stack justify-between items-center mb-4">
         <h1 className="title">Contests</h1>
         <div className="h-stack justify-end">
           <Link href="/contests/new" className="btn secondary">

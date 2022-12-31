@@ -18,6 +18,12 @@ module.exports = {
         sans: ['Open Sans', ...defaultTheme.fontFamily.sans],
         serif: ['Merriweather', ...defaultTheme.fontFamily.serif]
       },
+      minWidth: (theme) => ({
+        ...theme('spacing'),
+      }),
+      minHeight: (theme) => ({
+        ...theme('spacing'),
+      }),
     },
   },
   safelist: [

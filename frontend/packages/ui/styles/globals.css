@@ -266,6 +266,10 @@
   .flash {
     @apply font-medium px-4 py-2;
   }
+
+  .table-container {
+    @apply overflow-x-auto w-full shadow shadow-slate-500/10;
+  }
 }
 
 @layer utilities {
@@ -274,11 +278,11 @@
   }
 
   table th.default {
-    @apply subtitle px-4 h-14 items-center text-left;
+    @apply subtitle px-4 py-2 min-h-12 items-center text-left;
   }
 
   table td.default {
-    @apply px-4 h-14;
+    @apply px-4 py-2 min-h-12;
   }
 
   table tr.link {
@@ -290,7 +294,7 @@
   }
 
   table td.link a {
-    @apply h-14 px-4 flex items-center;
+    @apply px-4 py-2 min-h-12 flex items-center;
   }
 
   .label.error input, .label.error textarea {

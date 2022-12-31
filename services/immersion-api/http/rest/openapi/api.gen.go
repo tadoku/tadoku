@@ -32,6 +32,7 @@ type Contest struct {
 	ContestEnd              openapi_types.Date  `json:"contest_end"`
 	ContestStart            openapi_types.Date  `json:"contest_start"`
 	CreatedAt               *time.Time          `json:"created_at,omitempty"`
+	Deleted                 *bool               `json:"deleted,omitempty"`
 	Description             string              `json:"description"`
 	Id                      *openapi_types.UUID `json:"id,omitempty"`
 	LanguageCodeAllowList   []string            `json:"language_code_allow_list"`

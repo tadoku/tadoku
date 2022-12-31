@@ -28,6 +28,35 @@ func (q *Queries) CancelContest(ctx context.Context, id uuid.UUID) (uuid.UUID, e
 	return id, err
 }
 
+const contestsMetadata = `-- name: ContestsMetadata :one
+select
+  count(contests.id) as total_size,
+  $1::boolean as include_deleted
+from contests
+where
+  ($1::boolean or deleted_at is null)
+  and (owner_user_id = $2 or $2 is null)
+  and (official = $3)
+`
+
+type ContestsMetadataParams struct {
+	IncludeDeleted bool
+	UserID         uuid.NullUUID
+	Official       bool
+}
+
+type ContestsMetadataRow struct {
+	TotalSize      int64
+	IncludeDeleted bool
+}
+
+func (q *Queries) ContestsMetadata(ctx context.Context, arg ContestsMetadataParams) (ContestsMetadataRow, error) {
+	row := q.db.QueryRowContext(ctx, contestsMetadata, arg.IncludeDeleted, arg.UserID, arg.Official)
+	var i ContestsMetadataRow
+	err := row.Scan(&i.TotalSize, &i.IncludeDeleted)
+	return i, err
+}
+
 const createContest = `-- name: CreateContest :one
 insert into contests (
   owner_user_id,

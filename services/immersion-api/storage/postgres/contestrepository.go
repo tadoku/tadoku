@@ -3,6 +3,7 @@ package postgres
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 
 	"github.com/tadoku/tadoku/services/immersion-api/domain/contestcommand"
@@ -112,4 +113,71 @@ func (r *ContestRepository) FetchContestConfigurationOptions(ctx context.Context
 	}
 
 	return &options, err
+}
+
+func (r *ContestRepository) ListContests(ctx context.Context, req *contestquery.ContestListRequest) (*contestquery.ContestListResponse, error) {
+	tx, err := r.psql.BeginTx(ctx, nil)
+	if err != nil {
+		return nil, fmt.Errorf("could not list contests: %w", err)
+	}
+
+	qtx := r.q.WithTx(tx)
+
+	meta, err := qtx.ContestsMetadata(ctx, ContestsMetadataParams{
+		IncludeDeleted: req.IncludeDeleted,
+		UserID:         req.UserID,
+		Official:       req.OfficialOnly,
+	})
+	if err != nil {
+		_ = tx.Rollback()
+		return nil, fmt.Errorf("could not lists contests: %w", err)
+	}
+
+	contests, err := qtx.ListContests(ctx, ListContestsParams{
+		StartFrom:      int32(req.Page * req.PageSize),
+		PageSize:       int32(req.PageSize),
+		IncludeDeleted: req.IncludeDeleted,
+		UserID:         req.UserID,
+		Official:       req.OfficialOnly,
+	})
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+		_ = tx.Rollback()
+		return nil, fmt.Errorf("could not list contests: %w", err)
+	}
+
+	if err = tx.Commit(); err != nil {
+		return nil, fmt.Errorf("could not list contests: %w", err)
+	}
+
+	res := make([]contestquery.ContestListEntry, len(contests))
+	for i, c := range contests {
+		res[i] = contestquery.ContestListEntry{
+			ID:                      c.ID,
+			ContestStart:            c.ContestStart,
+			ContestEnd:              c.ContestEnd,
+			RegistrationStart:       c.RegistrationStart,
+			RegistrationEnd:         c.RegistrationEnd,
+			Description:             c.Description,
+			OwnerUserID:             c.OwnerUserID,
+			OwnerUserDisplayName:    c.OwnerUserDisplayName,
+			Official:                c.Official,
+			Private:                 c.Private,
+			LanguageCodeAllowList:   c.LanguageCodeAllowList,
+			ActivityTypeIDAllowList: c.ActivityTypeIDAllowList,
+			CreatedAt:               c.CreatedAt,
+			UpdatedAt:               c.UpdatedAt,
+			Deleted:                 c.DeletedAt.Valid,
+		}
+	}
+
+	nextPageToken := ""
+	if (req.Page*req.PageSize)+req.PageSize < int(meta.TotalSize) {
+		nextPageToken = fmt.Sprint(req.Page + 1)
+	}
+
+	return &contestquery.ContestListResponse{
+		Contests:      res,
+		TotalSize:     int(meta.TotalSize),
+		NextPageToken: nextPageToken,
+	}, nil
 }

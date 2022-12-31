@@ -5,6 +5,7 @@ import { z } from 'zod'
 import { date } from '@app/common/regex'
 import { ContestConfigurationOptions, useCreateContest } from './api'
 import { useRouter } from 'next/router'
+import { useDebounce } from 'use-debounce'
 
 export const ContestFormSchema = z
   .object({
@@ -77,12 +78,14 @@ export const ContestForm = ({
   const isPrivate = watch('private')
 
   const router = useRouter()
-  const createContest = useCreateContest(id =>
+  const createContestMutation = useCreateContest(id =>
     router.replace(`/contests/${id}/edit`),
   )
 
+  const [createContest] = useDebounce(createContestMutation.mutate, 2500)
+
   const onSubmit = (data: any) => {
-    createContest.mutate(data)
+    createContest(data)
   }
 
   return (

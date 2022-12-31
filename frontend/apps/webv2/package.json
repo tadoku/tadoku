@@ -25,6 +25,7 @@
     "react-toastify": "^9.1.1",
     "typescript": "4.9.3",
     "ui": "workspace:*",
+    "use-debounce": "^9.0.2",
     "zod": "^3.20.2"
   },
   "devDependencies": {

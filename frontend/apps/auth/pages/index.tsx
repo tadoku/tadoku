@@ -90,7 +90,7 @@ const Settings: NextPage<Props> = () => {
     <div>
       <h1 className="title mb-4">Settings</h1>
       <MessagesList messages={flow?.ui.messages} />
-      <div className="v-stack">
+      <div className="v-stack spaced">
         <div className="card">
           <h2 className="subtitle mb-4">Update profile</h2>
           <Flow

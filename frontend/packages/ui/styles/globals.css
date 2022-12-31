@@ -269,6 +269,30 @@
 }
 
 @layer utilities {
+  table.default {
+    @apply w-full border-collapse;
+  }
+
+  table th.default {
+    @apply subtitle px-4 h-14 items-center text-left;
+  }
+
+  table td.default {
+    @apply px-4 h-14;
+  }
+
+  table tr.link {
+    @apply font-semibold text-lg hover:bg-slate-500/10 h-14;
+  }
+
+  table td.link {
+    @apply border-0 p-0;
+  }
+
+  table td.link a {
+    @apply h-14 px-4 flex items-center;
+  }
+
   .label.error input, .label.error textarea {
     @apply border-red-600 focus:ring-red-600/40;
   }

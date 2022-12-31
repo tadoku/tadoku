@@ -56,14 +56,35 @@ export default Contests
 
 const ContestList = ({ list }: { list: Contests }) => {
   return (
-    <>
-      <ul>
+    <table className="default">
+      <thead>
+        <tr>
+          <th className="default">Round</th>
+          <th className="default">Starting date</th>
+          <th className="default">Ending date</th>
+        </tr>
+      </thead>
+      <tbody>
         {list.contests.map(c => (
-          <li key={c.id}>
-            {c.description} {c.contestStart.toLocaleString(DateTime.DATE_FULL)}
-          </li>
+          <tr key={c.id} className="link">
+            <td className="link">
+              <Link href={`/contests/${c.id}`} className="reset">
+                {c.description}
+              </Link>
+            </td>
+            <td className="link">
+              <Link href={`/contests/${c.id}`} className="reset">
+                {c.contestStart.toLocaleString(DateTime.DATE_FULL)}
+              </Link>
+            </td>
+            <td className="link">
+              <Link href={`/contests/${c.id}`} className="reset">
+                {c.contestEnd.toLocaleString(DateTime.DATE_FULL)}
+              </Link>
+            </td>
+          </tr>
         ))}
-      </ul>
-    </>
+      </tbody>
+    </table>
   )
 }

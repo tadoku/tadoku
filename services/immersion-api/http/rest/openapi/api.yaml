@@ -34,11 +34,40 @@ paths:
           description: Invalid contest
         '403':
           description: Not allowed to create this contest
-  /contests/official:
     get:
-      summary: Lists all the official contests, paginated
-      operationId: contestListOfficial
+      summary: Lists all the contests, paginated
+      operationId: contestList
       tags: [contests]
+      parameters:
+        - name: page_size
+          in: query
+          required: false
+          schema:
+            type: integer
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+        - name: include_deleted
+          in: query
+          required: false
+          allowEmptyValue: true
+          schema:
+            type: boolean
+        - name: official
+          in: query
+          required: false
+          allowEmptyValue: true
+          schema:
+            type: boolean
+        - name: user_id
+          in: query
+          required: false
+          allowEmptyValue: true
+          schema:
+            type: string
+            format: uuid
       responses:
         '200':
           description: successful operation

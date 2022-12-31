@@ -4,8 +4,11 @@
 package openapi
 
 import (
+	"fmt"
+	"net/http"
 	"time"
 
+	"github.com/deepmap/oapi-codegen/pkg/runtime"
 	openapi_types "github.com/deepmap/oapi-codegen/pkg/types"
 	"github.com/labstack/echo/v4"
 )
@@ -80,20 +83,29 @@ type PaginatedList struct {
 	TotalSize     int    `json:"total_size"`
 }
 
+// ContestListParams defines parameters for ContestList.
+type ContestListParams struct {
+	PageSize       *int                `form:"page_size,omitempty" json:"page_size,omitempty"`
+	Page           *int                `form:"page,omitempty" json:"page,omitempty"`
+	IncludeDeleted *bool               `form:"include_deleted,omitempty" json:"include_deleted,omitempty"`
+	Official       *bool               `form:"official,omitempty" json:"official,omitempty"`
+	UserId         *openapi_types.UUID `form:"user_id,omitempty" json:"user_id,omitempty"`
+}
+
 // ContestCreateJSONRequestBody defines body for ContestCreate for application/json ContentType.
 type ContestCreateJSONRequestBody = Contest
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
+	// Lists all the contests, paginated
+	// (GET /contests)
+	ContestList(ctx echo.Context, params ContestListParams) error
 	// Creates a new contest
 	// (POST /contests)
 	ContestCreate(ctx echo.Context) error
 	// Fetches the configuration options for a new contest
 	// (GET /contests/configuration-options)
 	ContestGetConfigurations(ctx echo.Context) error
-	// Lists all the official contests, paginated
-	// (GET /contests/official)
-	ContestListOfficial(ctx echo.Context) error
 	// Checks if service is responsive
 	// (GET /ping)
 	Ping(ctx echo.Context) error
@@ -102,6 +114,52 @@ type ServerInterface interface {
 // ServerInterfaceWrapper converts echo contexts to parameters.
 type ServerInterfaceWrapper struct {
 	Handler ServerInterface
+}
+
+// ContestList converts echo context to params.
+func (w *ServerInterfaceWrapper) ContestList(ctx echo.Context) error {
+	var err error
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ContestListParams
+	// ------------- Optional query parameter "page_size" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "page_size", ctx.QueryParams(), &params.PageSize)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter page_size: %s", err))
+	}
+
+	// ------------- Optional query parameter "page" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "page", ctx.QueryParams(), &params.Page)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter page: %s", err))
+	}
+
+	// ------------- Optional query parameter "include_deleted" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "include_deleted", ctx.QueryParams(), &params.IncludeDeleted)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter include_deleted: %s", err))
+	}
+
+	// ------------- Optional query parameter "official" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "official", ctx.QueryParams(), &params.Official)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter official: %s", err))
+	}
+
+	// ------------- Optional query parameter "user_id" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "user_id", ctx.QueryParams(), &params.UserId)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter user_id: %s", err))
+	}
+
+	// Invoke the callback with all the unmarshalled arguments
+	err = w.Handler.ContestList(ctx, params)
+	return err
 }
 
 // ContestCreate converts echo context to params.
@@ -123,15 +181,6 @@ func (w *ServerInterfaceWrapper) ContestGetConfigurations(ctx echo.Context) erro
 
 	// Invoke the callback with all the unmarshalled arguments
 	err = w.Handler.ContestGetConfigurations(ctx)
-	return err
-}
-
-// ContestListOfficial converts echo context to params.
-func (w *ServerInterfaceWrapper) ContestListOfficial(ctx echo.Context) error {
-	var err error
-
-	// Invoke the callback with all the unmarshalled arguments
-	err = w.Handler.ContestListOfficial(ctx)
 	return err
 }
 
@@ -172,9 +221,9 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 		Handler: si,
 	}
 
+	router.GET(baseURL+"/contests", wrapper.ContestList)
 	router.POST(baseURL+"/contests", wrapper.ContestCreate)
 	router.GET(baseURL+"/contests/configuration-options", wrapper.ContestGetConfigurations)
-	router.GET(baseURL+"/contests/official", wrapper.ContestListOfficial)
 	router.GET(baseURL+"/ping", wrapper.Ping)
 
 }

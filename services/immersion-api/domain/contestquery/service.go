@@ -2,11 +2,15 @@ package contestquery
 
 import (
 	"context"
+	"errors"
 	"time"
 
+	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
 	"github.com/tadoku/tadoku/services/common/domain"
 )
+
+var ErrRequestInvalid = errors.New("request is invalid")
 
 type ContestRepository interface {
 	FetchContestConfigurationOptions(ctx context.Context) (*FetchContestConfigurationOptionsResponse, error)
@@ -19,12 +23,14 @@ type Service interface {
 }
 
 type service struct {
-	r ContestRepository
+	r        ContestRepository
+	validate *validator.Validate
 }
 
 func NewService(r ContestRepository) Service {
 	return &service{
-		r: r,
+		r:        r,
+		validate: validator.New(),
 	}
 }
 
@@ -58,8 +64,8 @@ func (s *service) FetchContestConfigurationOptions(ctx context.Context) (*FetchC
 
 type ContestListRequest struct {
 	UserID         uuid.NullUUID
-	OfficialOnly   bool `validate:"required"`
-	IncludeDeleted bool `validated:"required"`
+	OfficialOnly   bool
+	IncludeDeleted bool
 	PageSize       int
 	Page           int
 }
@@ -89,5 +95,13 @@ type ContestListEntry struct {
 }
 
 func (s *service) ListContests(ctx context.Context, req *ContestListRequest) (*ContestListResponse, error) {
-	return nil, nil
+	if req.PageSize == 0 {
+		req.PageSize = 10
+	}
+
+	if req.PageSize > 100 || req.PageSize == 0 {
+		req.PageSize = 100
+	}
+
+	return s.r.ListContests(ctx, req)
 }

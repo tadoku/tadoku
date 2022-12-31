@@ -84,7 +84,7 @@ kratos:
             haveibeenpwned_enabled: false
       flows:
         verification:
-          enabled: true
+          # enabled: true
           ui_url: http://account.langlog.be/verification
 
         recovery:
@@ -101,10 +101,10 @@ kratos:
 
         login:
           ui_url: http://account.langlog.be/login
-          after:
-            password:
-              hooks:
-                - hook: require_verified_address
+          # after:
+          #   password:
+          #     hooks:
+          #       - hook: require_verified_address
 
         settings:
           ui_url: http://account.langlog.be/

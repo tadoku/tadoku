@@ -30,6 +30,7 @@ export function NodeInputDefault<T>(props: NodeInputProps) {
           onClick={onClick}
           type={attributes.type}
           disabled={attributes.disabled || disabled}
+          className="input"
         />
 
         {node.messages.map(({ text, id }, k) => (

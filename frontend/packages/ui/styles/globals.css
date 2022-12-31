@@ -231,8 +231,10 @@
 
   .btn {
     @apply border border-b-2 border-black/10 focus:border-black/40 focus:ring-black/10 focus:ring-2;
-    @apply bg-white px-4 py-1 h-11 transition ease-in-out;
+    @apply bg-white py-1 transition ease-in-out;
     @apply hover:border-black/40 font-bold hover:bg-black/5;
+    @apply px-2 h-10 text-sm;
+    @apply md:px-4 md:h-11 md:text-base;
   }
 
   .btn > svg {

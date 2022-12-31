@@ -2,6 +2,8 @@ package contestquery
 
 import (
 	"context"
+
+	"github.com/tadoku/tadoku/services/common/domain"
 )
 
 type ContestRepository interface {
@@ -34,10 +36,18 @@ type Activity struct {
 }
 
 type FetchContestConfigurationOptionsResponse struct {
-	Languages  []Language
-	Activities []Activity
+	Languages              []Language
+	Activities             []Activity
+	CanCreateOfficialRound bool
 }
 
 func (s *service) FetchContestConfigurationOptions(ctx context.Context) (*FetchContestConfigurationOptionsResponse, error) {
-	return s.r.FetchContestConfigurationOptions(ctx)
+	res, err := s.r.FetchContestConfigurationOptions(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	res.CanCreateOfficialRound = domain.IsRole(ctx, domain.RoleAdmin)
+
+	return res, nil
 }

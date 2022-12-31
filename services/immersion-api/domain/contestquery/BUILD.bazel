@@ -5,4 +5,5 @@ go_library(
     srcs = ["service.go"],
     importpath = "github.com/tadoku/tadoku/services/immersion-api/domain/contestquery",
     visibility = ["//visibility:public"],
+    deps = ["//services/common/domain"],
 )

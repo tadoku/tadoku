@@ -77,8 +77,9 @@ func (s *Server) ContestGetConfigurations(ctx echo.Context) error {
 	}
 
 	res := openapi.ContestConfigurationOptions{
-		Activities: make([]openapi.Activity, len(opts.Activities)),
-		Languages:  make([]openapi.Language, len(opts.Languages)),
+		Activities:             make([]openapi.Activity, len(opts.Activities)),
+		Languages:              make([]openapi.Language, len(opts.Languages)),
+		CanCreateOfficialRound: opts.CanCreateOfficialRound,
 	}
 
 	for i, a := range opts.Activities {

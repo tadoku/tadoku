@@ -66,6 +66,12 @@ components:
       allOf:
         - $ref: "#/components/schemas/Languages"
         - $ref: "#/components/schemas/Activities"
+        - type: object
+          required:
+            - can_create_official_round
+          properties:
+            can_create_official_round:
+              type: boolean
     Language:
       type: object
       required:

@@ -46,8 +46,9 @@ type Contest struct {
 
 // ContestConfigurationOptions defines model for ContestConfigurationOptions.
 type ContestConfigurationOptions struct {
-	Activities []Activity `json:"activities"`
-	Languages  []Language `json:"languages"`
+	Activities             []Activity `json:"activities"`
+	CanCreateOfficialRound bool       `json:"can_create_official_round"`
+	Languages              []Language `json:"languages"`
 }
 
 // Language defines model for Language.

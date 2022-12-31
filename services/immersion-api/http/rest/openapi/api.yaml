@@ -34,6 +34,18 @@ paths:
           description: Invalid contest
         '403':
           description: Not allowed to create this contest
+  /contests/official:
+    get:
+      summary: Lists all the official contests, paginated
+      operationId: contestListOfficial
+      tags: [contests]
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Contests'
   /contests/configuration-options:
     get:
       summary: Fetches the configuration options for a new contest
@@ -180,6 +192,31 @@ components:
           type: string
           format: date-time
           example: 2022-12-14T19:48:00Z
+    Contests:
+      allOf:
+        - $ref: '#/components/schemas/PaginatedList'
+        - type: object
+          required:
+            - contests
+          properties:
+            contests:
+              type: array
+              maxItems: 50
+              items:
+                $ref: "#/components/schemas/Contest"
+    PaginatedList:
+      type: object
+      required:
+        - next_page_token
+        - total_size
+      properties:
+        total_size:
+          type: integer
+          example: 100
+        next_page_token:
+          type: string
+          description: is empty if there's no next page
+          example: "3"
   securitySchemes:
     cookieAuth:
       type: apiKey

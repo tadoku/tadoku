@@ -99,3 +99,9 @@ func (s *Server) ContestGetConfigurations(ctx echo.Context) error {
 
 	return ctx.JSON(http.StatusOK, res)
 }
+
+// Lists all the official contests, paginated
+// (GET /contests/official)
+func (s *Server) ContestListOfficial(ctx echo.Context) error {
+	return nil
+}

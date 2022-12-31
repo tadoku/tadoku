@@ -51,6 +51,15 @@ type ContestConfigurationOptions struct {
 	Languages              []Language `json:"languages"`
 }
 
+// Contests defines model for Contests.
+type Contests struct {
+	Contests []Contest `json:"contests"`
+
+	// NextPageToken is empty if there's no next page
+	NextPageToken string `json:"next_page_token"`
+	TotalSize     int    `json:"total_size"`
+}
+
 // Language defines model for Language.
 type Language struct {
 	// Code In ISO-639-3 https://en.wikipedia.org/wiki/Wikipedia:WikiProject_Languages/List_of_ISO_639-3_language_codes_(2019)
@@ -61,6 +70,13 @@ type Language struct {
 // Languages defines model for Languages.
 type Languages struct {
 	Languages []Language `json:"languages"`
+}
+
+// PaginatedList defines model for PaginatedList.
+type PaginatedList struct {
+	// NextPageToken is empty if there's no next page
+	NextPageToken string `json:"next_page_token"`
+	TotalSize     int    `json:"total_size"`
 }
 
 // ContestCreateJSONRequestBody defines body for ContestCreate for application/json ContentType.
@@ -74,6 +90,9 @@ type ServerInterface interface {
 	// Fetches the configuration options for a new contest
 	// (GET /contests/configuration-options)
 	ContestGetConfigurations(ctx echo.Context) error
+	// Lists all the official contests, paginated
+	// (GET /contests/official)
+	ContestListOfficial(ctx echo.Context) error
 	// Checks if service is responsive
 	// (GET /ping)
 	Ping(ctx echo.Context) error
@@ -103,6 +122,15 @@ func (w *ServerInterfaceWrapper) ContestGetConfigurations(ctx echo.Context) erro
 
 	// Invoke the callback with all the unmarshalled arguments
 	err = w.Handler.ContestGetConfigurations(ctx)
+	return err
+}
+
+// ContestListOfficial converts echo context to params.
+func (w *ServerInterfaceWrapper) ContestListOfficial(ctx echo.Context) error {
+	var err error
+
+	// Invoke the callback with all the unmarshalled arguments
+	err = w.Handler.ContestListOfficial(ctx)
 	return err
 }
 
@@ -145,6 +173,7 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 
 	router.POST(baseURL+"/contests", wrapper.ContestCreate)
 	router.GET(baseURL+"/contests/configuration-options", wrapper.ContestGetConfigurations)
+	router.GET(baseURL+"/contests/official", wrapper.ContestListOfficial)
 	router.GET(baseURL+"/ping", wrapper.Ping)
 
 }

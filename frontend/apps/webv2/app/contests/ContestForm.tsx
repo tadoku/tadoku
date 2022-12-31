@@ -69,7 +69,7 @@ interface Props {
 }
 
 export const ContestForm = ({
-  configurationOptions: { languages, activities },
+  configurationOptions: { languages, activities, canCreateOfficialRound },
 }: Props) => {
   const { register, handleSubmit, formState, control, watch } = useForm({
     resolver: zodResolver(ContestFormSchema),
@@ -178,7 +178,7 @@ export const ContestForm = ({
           getIdForOption={option => option.id}
           format={option => option.name}
         />
-        {!isPrivate && (
+        {canCreateOfficialRound && !isPrivate && (
           <Checkbox
             name="official"
             label="Official round"

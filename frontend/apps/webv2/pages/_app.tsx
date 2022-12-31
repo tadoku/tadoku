@@ -7,6 +7,7 @@ import { ToastContainer } from 'ui/components/toasts'
 import 'ui/styles/globals.css'
 import Navigation from '@app/ui/Navigation'
 import { QueryClient, QueryClientProvider } from 'react-query'
+import Head from 'next/head'
 
 interface Props {
   session: Session | undefined
@@ -32,6 +33,9 @@ const MyApp = ({ Component, pageProps }: AppProps<Props>) => {
   return (
     <Provider initialValues={getInitialValues()}>
       <QueryClientProvider client={queryClient}>
+        <Head>
+          <title>Tadoku</title>
+        </Head>
         <div>
           <Navigation />
           <div className="p-4 md:px-8 md:pb-8 md:pt-4 mx-auto max-w-7xl">

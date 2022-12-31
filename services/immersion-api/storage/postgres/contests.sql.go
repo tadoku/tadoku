@@ -186,16 +186,18 @@ from contests
 where
   ($1::boolean or deleted_at is null)
   and (owner_user_id = $2 or $2 is null)
-  and (official = $3)
+  and official = $3
+  and ("private" = false or ($4::boolean or owner_user_id = $2))
 order by created_at desc
-limit $5
-offset $4
+limit $6
+offset $5
 `
 
 type ListContestsParams struct {
 	IncludeDeleted bool
 	UserID         uuid.NullUUID
 	Official       bool
+	IncludePrivate bool
 	StartFrom      int32
 	PageSize       int32
 }
@@ -205,6 +207,7 @@ func (q *Queries) ListContests(ctx context.Context, arg ListContestsParams) ([]C
 		arg.IncludeDeleted,
 		arg.UserID,
 		arg.Official,
+		arg.IncludePrivate,
 		arg.StartFrom,
 		arg.PageSize,
 	)

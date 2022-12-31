@@ -66,6 +66,7 @@ type ContestListRequest struct {
 	UserID         uuid.NullUUID
 	OfficialOnly   bool
 	IncludeDeleted bool
+	IncludePrivate bool
 	PageSize       int
 	Page           int
 }
@@ -102,6 +103,8 @@ func (s *service) ListContests(ctx context.Context, req *ContestListRequest) (*C
 	if req.PageSize > 100 || req.PageSize == 0 {
 		req.PageSize = 100
 	}
+
+	req.IncludePrivate = domain.IsRole(ctx, domain.RoleAdmin)
 
 	return s.r.ListContests(ctx, req)
 }

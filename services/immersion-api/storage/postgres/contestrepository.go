@@ -137,6 +137,7 @@ func (r *ContestRepository) ListContests(ctx context.Context, req *contestquery.
 		StartFrom:      int32(req.Page * req.PageSize),
 		PageSize:       int32(req.PageSize),
 		IncludeDeleted: req.IncludeDeleted,
+		IncludePrivate: req.IncludePrivate,
 		UserID:         req.UserID,
 		Official:       req.OfficialOnly,
 	})

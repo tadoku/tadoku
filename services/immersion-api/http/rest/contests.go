@@ -138,6 +138,7 @@ func (s *Server) ContestList(ctx echo.Context, params openapi.ContestListParams)
 		Page:           page,
 	})
 	if err != nil {
+		ctx.Echo().Logger.Error(err)
 		return ctx.NoContent(http.StatusInternalServerError)
 	}
 

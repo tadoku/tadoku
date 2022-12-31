@@ -69,7 +69,8 @@ from contests
 where
   (sqlc.arg('include_deleted')::boolean or deleted_at is null)
   and (owner_user_id = sqlc.narg('user_id') or sqlc.narg('user_id') is null)
-  and (official = sqlc.arg('official'))
+  and official = sqlc.arg('official')
+  and ("private" = false or (sqlc.arg('include_private')::boolean or owner_user_id = sqlc.narg('user_id')))
 order by created_at desc
 limit sqlc.arg('page_size')
 offset sqlc.arg('start_from');

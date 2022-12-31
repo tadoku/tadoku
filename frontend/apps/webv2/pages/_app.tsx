@@ -35,6 +35,16 @@ const MyApp = ({ Component, pageProps }: AppProps<Props>) => {
       <QueryClientProvider client={queryClient}>
         <Head>
           <title>Tadoku</title>
+          <link
+            href="/favicon.png"
+            rel="shortcut icon"
+            media="(prefers-color-scheme: light)"
+          />
+          <link
+            href="/favicon-dark.png"
+            rel="shortcut icon"
+            media="(prefers-color-scheme: dark)"
+          />
         </Head>
         <div>
           <Navigation />

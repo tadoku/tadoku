@@ -7,7 +7,6 @@ package postgres
 
 import (
 	"context"
-	"database/sql"
 	"time"
 
 	"github.com/google/uuid"
@@ -155,149 +154,31 @@ select
   updated_at,
   deleted_at
 from contests
-order by created_at desc
-`
-
-func (q *Queries) ListContests(ctx context.Context) ([]Contest, error) {
-	rows, err := q.db.QueryContext(ctx, listContests)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []Contest
-	for rows.Next() {
-		var i Contest
-		if err := rows.Scan(
-			&i.ID,
-			&i.OwnerUserID,
-			&i.OwnerUserDisplayName,
-			&i.Private,
-			&i.ContestStart,
-			&i.ContestEnd,
-			&i.RegistrationStart,
-			&i.RegistrationEnd,
-			&i.Description,
-			pq.Array(&i.LanguageCodeAllowList),
-			pq.Array(&i.ActivityTypeIDAllowList),
-			&i.Official,
-			&i.CreatedAt,
-			&i.UpdatedAt,
-			&i.DeletedAt,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const listOfficialContests = `-- name: ListOfficialContests :many
-select
-  id,
-  "private",
-  contest_start,
-  contest_end,
-  registration_start,
-  registration_end,
-  "description",
-  language_code_allow_list,
-  activity_type_id_allow_list,
-  official,
-  created_at,
-  updated_at,
-  deleted_at
-from contests
 where
-  owner_user_id is null
-  and deleted_at is null
+  ($1::boolean or deleted_at is null)
+  and (owner_user_id = $2 or $2 is null)
+  and (official = $3)
 order by created_at desc
+limit $5
+offset $4
 `
 
-type ListOfficialContestsRow struct {
-	ID                      uuid.UUID
-	Private                 bool
-	ContestStart            time.Time
-	ContestEnd              time.Time
-	RegistrationStart       time.Time
-	RegistrationEnd         time.Time
-	Description             string
-	LanguageCodeAllowList   []string
-	ActivityTypeIDAllowList []int32
-	Official                bool
-	CreatedAt               time.Time
-	UpdatedAt               time.Time
-	DeletedAt               sql.NullTime
+type ListContestsParams struct {
+	IncludeDeleted bool
+	UserID         uuid.NullUUID
+	Official       bool
+	StartFrom      int32
+	PageSize       int32
 }
 
-func (q *Queries) ListOfficialContests(ctx context.Context) ([]ListOfficialContestsRow, error) {
-	rows, err := q.db.QueryContext(ctx, listOfficialContests)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []ListOfficialContestsRow
-	for rows.Next() {
-		var i ListOfficialContestsRow
-		if err := rows.Scan(
-			&i.ID,
-			&i.Private,
-			&i.ContestStart,
-			&i.ContestEnd,
-			&i.RegistrationStart,
-			&i.RegistrationEnd,
-			&i.Description,
-			pq.Array(&i.LanguageCodeAllowList),
-			pq.Array(&i.ActivityTypeIDAllowList),
-			&i.Official,
-			&i.CreatedAt,
-			&i.UpdatedAt,
-			&i.DeletedAt,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const listPublicContests = `-- name: ListPublicContests :many
-select
-  id,
-  owner_user_id,
-  owner_user_display_name,
-  "private",
-  contest_start,
-  contest_end,
-  registration_start,
-  registration_end,
-  "description",
-  language_code_allow_list,
-  activity_type_id_allow_list,
-  official,
-  created_at,
-  updated_at,
-  deleted_at
-from contests
-where
-  "private" = false
-  and deleted_at is null
-order by created_at desc
-`
-
-func (q *Queries) ListPublicContests(ctx context.Context) ([]Contest, error) {
-	rows, err := q.db.QueryContext(ctx, listPublicContests)
+func (q *Queries) ListContests(ctx context.Context, arg ListContestsParams) ([]Contest, error) {
+	rows, err := q.db.QueryContext(ctx, listContests,
+		arg.IncludeDeleted,
+		arg.UserID,
+		arg.Official,
+		arg.StartFrom,
+		arg.PageSize,
+	)
 	if err != nil {
 		return nil, err
 	}

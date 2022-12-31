@@ -66,51 +66,13 @@ select
   updated_at,
   deleted_at
 from contests
-order by created_at desc;
-
--- name: ListPublicContests :many
-select
-  id,
-  owner_user_id,
-  owner_user_display_name,
-  "private",
-  contest_start,
-  contest_end,
-  registration_start,
-  registration_end,
-  "description",
-  language_code_allow_list,
-  activity_type_id_allow_list,
-  official,
-  created_at,
-  updated_at,
-  deleted_at
-from contests
 where
-  "private" = false
-  and deleted_at is null
-order by created_at desc;
-
--- name: ListOfficialContests :many
-select
-  id,
-  "private",
-  contest_start,
-  contest_end,
-  registration_start,
-  registration_end,
-  "description",
-  language_code_allow_list,
-  activity_type_id_allow_list,
-  official,
-  created_at,
-  updated_at,
-  deleted_at
-from contests
-where
-  owner_user_id is null
-  and deleted_at is null
-order by created_at desc;
+  (sqlc.arg('include_deleted')::boolean or deleted_at is null)
+  and (owner_user_id = sqlc.narg('user_id') or sqlc.narg('user_id') is null)
+  and (official = sqlc.arg('official'))
+order by created_at desc
+limit sqlc.arg('page_size')
+offset sqlc.arg('start_from');
 
 -- name: FindContestById :one
 select

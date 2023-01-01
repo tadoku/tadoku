@@ -17,7 +17,7 @@ const Contests: NextPage<Props> = () => {
   const [filters, setFilters] = useState(() => {
     return {
       page: getQueryStringIntParameter(router.query.page, 1),
-      pageSize: 50,
+      pageSize: 25,
       official: true,
       includeDeleted: false,
     }

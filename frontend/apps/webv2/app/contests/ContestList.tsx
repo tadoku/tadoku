@@ -65,8 +65,8 @@ export const ContestList = ({ list, options }: Props) => {
                 <>
                   <td className="default text-ellipsis">
                     {c.languageCodeAllowList
-                      .map(l => languages.get(l))
-                      .join(', ')}
+                      ?.map(l => languages.get(l))
+                      .join(', ') ?? 'No restrictions'}
                   </td>
                   <td className="default text-ellipsis">
                     {c.activityTypeIdAllowList

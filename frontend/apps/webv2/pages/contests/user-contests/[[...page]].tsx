@@ -3,7 +3,10 @@ import { Breadcrumb, Pagination, Tabbar } from 'ui'
 import { HomeIcon } from '@heroicons/react/20/solid'
 import { PlusIcon } from '@heroicons/react/24/solid'
 import Link from 'next/link'
-import { useContestList } from '@app/contests/api'
+import {
+  useContestConfigurationOptions,
+  useContestList,
+} from '@app/contests/api'
 import { useState } from 'react'
 import { useRouter } from 'next/router'
 import { getQueryStringIntParameter } from '@app/common/router'
@@ -17,12 +20,13 @@ const Contests: NextPage<Props> = () => {
   const [filters, setFilters] = useState(() => {
     return {
       page: getQueryStringIntParameter(router.query.page, 1),
-      pageSize: 50,
+      pageSize: 25,
       official: false,
       includeDeleted: false,
     }
   })
-  const list = useContestList(filters)
+  const options = useContestConfigurationOptions()
+  const list = useContestList(filters, { enabled: !!options.data })
 
   return (
     <>
@@ -71,7 +75,7 @@ const Contests: NextPage<Props> = () => {
         ) : null}
         {list.isSuccess ? (
           <>
-            <ContestList list={list.data} />
+            <ContestList list={list.data} options={options.data} />
             {list.data.totalSize / filters.pageSize > 1 ? (
               <div className="mt-8">
                 <Pagination

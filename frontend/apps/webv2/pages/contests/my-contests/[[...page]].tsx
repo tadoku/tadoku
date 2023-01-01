@@ -15,6 +15,7 @@ import { useRouter } from 'next/router'
 import { getQueryStringIntParameter } from '@app/common/router'
 import { useSessionOrRedirect } from '@app/common/session'
 import { number } from 'zod'
+import { EyeSlashIcon } from '@heroicons/react/24/outline'
 
 interface Props {}
 
@@ -147,6 +148,7 @@ const ContestList = ({
             <tr key={c.id} className="link">
               <td className="link">
                 <Link href={`/contests/${c.id}`} className="reset">
+                  {c.private ? <EyeSlashIcon className="w-5 h-5 mr-2" /> : null}
                   {c.description}
                 </Link>
               </td>

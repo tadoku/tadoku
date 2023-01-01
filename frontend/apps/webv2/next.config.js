@@ -11,6 +11,15 @@ const nextConfig = {
     apiEndpoint: process.env.NEXT_PUBLIC_API_ENDPOINT,
   },
   transpilePackages: ['ui'],
+  async redirects() {
+    return [
+      {
+        source: '/contests',
+        destination: '/contests/official',
+        permanent: true,
+      },
+    ]
+  },
 }
 
 module.exports = nextConfig

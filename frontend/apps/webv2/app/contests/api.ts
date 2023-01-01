@@ -137,7 +137,7 @@ export const useContestList = (opts: {
   useQuery(['contest', 'list', opts], async (): Promise<Contests> => {
     const params = {
       page_size: opts.pageSize.toString(),
-      page: opts.page.toString(),
+      page: (opts.page - 1).toString(),
       official: opts.official.toString(),
       include_deleted: opts.includeDeleted.toString(),
       ...(opts.userId ? { user_id: opts.userId.toString() } : {}),

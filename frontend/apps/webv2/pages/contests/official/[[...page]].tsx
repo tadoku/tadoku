@@ -1,20 +1,33 @@
 import type { NextPage } from 'next'
-import { Breadcrumb, Tabbar } from 'ui'
+import { Breadcrumb, Pagination, Tabbar } from 'ui'
 import { HomeIcon } from '@heroicons/react/20/solid'
 import { PlusIcon } from '@heroicons/react/24/solid'
 import Link from 'next/link'
 import { Contests, useContestList } from '@app/contests/api'
 import { useState } from 'react'
 import { DateTime } from 'luxon'
+import { useRouter } from 'next/router'
 
 interface Props {}
 
 const Contests: NextPage<Props> = () => {
-  const [filters, setFilters] = useState({
-    page: 0,
-    pageSize: 100,
-    official: true,
-    includeDeleted: false,
+  const router = useRouter()
+
+  const [filters, setFilters] = useState(() => {
+    let page = 1
+    if (router.query.page) {
+      const queryPage = parseInt(router.query.page.toString())
+      if (!isNaN(queryPage)) {
+        page = queryPage
+      }
+    }
+
+    return {
+      page,
+      pageSize: 50,
+      official: true,
+      includeDeleted: false,
+    }
   })
   const list = useContestList(filters)
 
@@ -40,7 +53,7 @@ const Contests: NextPage<Props> = () => {
       <Tabbar
         links={[
           {
-            href: '/contests',
+            href: '/contests/official',
             label: 'Official contests',
             active: true,
           },
@@ -66,6 +79,18 @@ const Contests: NextPage<Props> = () => {
         {list.isSuccess ? (
           <>
             <ContestList list={list.data} />
+            {list.data.totalSize / filters.pageSize > 1 ? (
+              <div className="mt-8">
+                <Pagination
+                  currentPage={filters.page}
+                  totalPages={Math.ceil(list.data.totalSize / filters.pageSize)}
+                  onClick={page => {
+                    setFilters({ ...filters, page })
+                    router.push(`/contests/official/${page}`)
+                  }}
+                />
+              </div>
+            ) : null}
           </>
         ) : null}
       </div>

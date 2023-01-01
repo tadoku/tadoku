@@ -22,7 +22,7 @@ const Contests: NextPage<Props> = () => {
       pageSize: 50,
       official: false,
       includeDeleted: false,
-      userId: session?.id,
+      userId: session?.identity.id,
     }
   })
   const list = useContestList(filters)

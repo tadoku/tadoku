@@ -5,22 +5,13 @@ import { Breadcrumb, Pagination } from 'ui'
 import { HomeIcon } from '@heroicons/react/24/outline'
 import { useState } from 'react'
 import Link from 'next/link'
+import { getQueryStringIntParameter } from '@app/common/router'
 
 const BlogIndex = () => {
   const router = useRouter()
 
   const [page, setPage] = useState(() => {
-    if (!router.query.page) {
-      return 1
-    }
-
-    const idx = parseInt(router.query.page.toString())
-
-    if (isNaN(idx)) {
-      return 1
-    }
-
-    return idx
+    return getQueryStringIntParameter(router.query.page, 1)
   })
 
   const pageSize = 10

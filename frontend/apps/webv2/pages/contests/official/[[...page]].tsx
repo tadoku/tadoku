@@ -7,6 +7,7 @@ import { Contests, useContestList } from '@app/contests/api'
 import { useState } from 'react'
 import { DateTime } from 'luxon'
 import { useRouter } from 'next/router'
+import { getQueryStringIntParameter } from '@app/common/router'
 
 interface Props {}
 
@@ -14,16 +15,8 @@ const Contests: NextPage<Props> = () => {
   const router = useRouter()
 
   const [filters, setFilters] = useState(() => {
-    let page = 1
-    if (router.query.page) {
-      const queryPage = parseInt(router.query.page.toString())
-      if (!isNaN(queryPage)) {
-        page = queryPage
-      }
-    }
-
     return {
-      page,
+      page: getQueryStringIntParameter(router.query.page, 1),
       pageSize: 50,
       official: true,
       includeDeleted: false,

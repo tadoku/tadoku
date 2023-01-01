@@ -153,9 +153,9 @@ func (r *ContestRepository) ListContests(ctx context.Context, req *contestquery.
 		return nil, fmt.Errorf("could not list contests: %w", err)
 	}
 
-	res := make([]contestquery.ContestListEntry, len(contests))
+	res := make([]contestquery.Contest, len(contests))
 	for i, c := range contests {
-		res[i] = contestquery.ContestListEntry{
+		res[i] = contestquery.Contest{
 			ID:                      c.ID,
 			ContestStart:            c.ContestStart,
 			ContestEnd:              c.ContestEnd,

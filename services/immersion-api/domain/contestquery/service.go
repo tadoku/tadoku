@@ -72,12 +72,12 @@ type ContestListRequest struct {
 }
 
 type ContestListResponse struct {
-	Contests      []ContestListEntry
+	Contests      []Contest
 	TotalSize     int
 	NextPageToken string
 }
 
-type ContestListEntry struct {
+type Contest struct {
 	ID                      uuid.UUID
 	ContestStart            time.Time
 	ContestEnd              time.Time

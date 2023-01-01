@@ -3,11 +3,11 @@ import { Breadcrumb, Pagination, Tabbar } from 'ui'
 import { HomeIcon } from '@heroicons/react/20/solid'
 import { PlusIcon } from '@heroicons/react/24/solid'
 import Link from 'next/link'
-import { Contests, useContestList } from '@app/contests/api'
+import { useContestList } from '@app/contests/api'
 import { useState } from 'react'
-import { DateTime } from 'luxon'
 import { useRouter } from 'next/router'
 import { getQueryStringIntParameter } from '@app/common/router'
+import { ContestList } from '@app/contests/ContestList'
 
 interface Props {}
 
@@ -92,50 +92,3 @@ const Contests: NextPage<Props> = () => {
 }
 
 export default Contests
-
-const ContestList = ({ list }: { list: Contests }) => {
-  return (
-    <div className="table-container">
-      <table className="default">
-        <thead>
-          <tr>
-            <th className="default">Round</th>
-            <th className="default">Starting date</th>
-            <th className="default">Ending date</th>
-          </tr>
-        </thead>
-        <tbody>
-          {list.contests.map(c => (
-            <tr key={c.id} className="link">
-              <td className="link">
-                <Link href={`/contests/${c.id}`} className="reset">
-                  {c.description}
-                </Link>
-              </td>
-              <td className="link">
-                <Link href={`/contests/${c.id}`} className="reset">
-                  {c.contestStart.toLocaleString(DateTime.DATE_FULL)}
-                </Link>
-              </td>
-              <td className="link">
-                <Link href={`/contests/${c.id}`} className="reset">
-                  {c.contestEnd.toLocaleString(DateTime.DATE_FULL)}
-                </Link>
-              </td>
-            </tr>
-          ))}
-          {list.contests.length === 0 ? (
-            <tr>
-              <td
-                colSpan={3}
-                className="default h-32 font-bold text-center text-xl text-slate-400"
-              >
-                No contests founds
-              </td>
-            </tr>
-          ) : null}
-        </tbody>
-      </table>
-    </div>
-  )
-}

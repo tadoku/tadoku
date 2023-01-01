@@ -288,7 +288,7 @@
   }
 
   table tr.link {
-    @apply font-semibold text-lg hover:bg-slate-500/10 h-14;
+    @apply font-semibold  hover:bg-slate-500/10 h-14;
   }
 
   table td.link {

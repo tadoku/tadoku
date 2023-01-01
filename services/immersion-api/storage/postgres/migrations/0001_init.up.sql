@@ -18,7 +18,7 @@ create table contests (
 
   "description" varchar(255) not null,
   language_code_allow_list varchar(10)[],
-  activity_type_id_allow_list integer[],
+  activity_type_id_allow_list integer[] not null,
   official boolean not null,
 
   created_at timestamp not null default now(),

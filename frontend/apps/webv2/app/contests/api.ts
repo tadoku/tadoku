@@ -82,7 +82,7 @@ const Contest = z
     description: z.string(),
     private: z.boolean(),
     official: z.boolean(),
-    language_code_allow_list: z.array(z.string()),
+    language_code_allow_list: z.array(z.string()).nullable(),
     activity_type_id_allow_list: z.array(z.number()),
     deleted: z.boolean(),
   })

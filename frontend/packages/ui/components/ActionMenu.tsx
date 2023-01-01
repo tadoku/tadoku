@@ -16,7 +16,7 @@ interface Props {
 export const ActionMenu = ({ children, links }: Props) => (
   <div className="">
     <Menu as="div" className="relative">
-      <Menu.Button className="btn ghost">{children}</Menu.Button>
+      <Menu.Button className="btn ghost px-0 md:px-2">{children}</Menu.Button>
       <Transition
         as={Fragment}
         enter="transition ease-out duration-100"

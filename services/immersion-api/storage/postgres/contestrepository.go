@@ -118,6 +118,34 @@ func (r *ContestRepository) FetchContestConfigurationOptions(ctx context.Context
 	return &options, err
 }
 
+func (r *ContestRepository) FindByID(ctx context.Context, req *contestquery.FindByIDRequest) (*contestquery.Contest, error) {
+	contest, err := r.q.FindContestById(ctx, FindContestByIdParams{
+		ID:             req.ID,
+		IncludeDeleted: req.IncludeDeleted,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("could not fetch contest: %w", err)
+	}
+
+	return &contestquery.Contest{
+		ID:                      contest.ID,
+		ContestStart:            contest.ContestStart,
+		ContestEnd:              contest.ContestEnd,
+		RegistrationStart:       contest.RegistrationStart,
+		RegistrationEnd:         contest.RegistrationEnd,
+		Description:             contest.Description,
+		OwnerUserID:             contest.OwnerUserID,
+		OwnerUserDisplayName:    contest.OwnerUserDisplayName,
+		Official:                contest.Official,
+		Private:                 contest.Private,
+		LanguageCodeAllowList:   contest.LanguageCodeAllowList,
+		ActivityTypeIDAllowList: contest.ActivityTypeIDAllowList,
+		CreatedAt:               contest.CreatedAt,
+		UpdatedAt:               contest.UpdatedAt,
+		Deleted:                 contest.DeletedAt.Valid,
+	}, nil
+}
+
 func (r *ContestRepository) ListContests(ctx context.Context, req *contestquery.ContestListRequest) (*contestquery.ContestListResponse, error) {
 	tx, err := r.psql.BeginTx(ctx, nil)
 	if err != nil {

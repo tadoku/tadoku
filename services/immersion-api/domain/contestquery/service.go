@@ -14,11 +14,13 @@ var ErrRequestInvalid = errors.New("request is invalid")
 
 type ContestRepository interface {
 	FetchContestConfigurationOptions(ctx context.Context) (*FetchContestConfigurationOptionsResponse, error)
+	FindByID(context.Context, *FindByIDRequest) (*Contest, error)
 	ListContests(context.Context, *ContestListRequest) (*ContestListResponse, error)
 }
 
 type Service interface {
 	FetchContestConfigurationOptions(ctx context.Context) (*FetchContestConfigurationOptionsResponse, error)
+	FindByID(context.Context, *FindByIDRequest) (*Contest, error)
 	ListContests(context.Context, *ContestListRequest) (*ContestListResponse, error)
 }
 
@@ -58,6 +60,22 @@ func (s *service) FetchContestConfigurationOptions(ctx context.Context) (*FetchC
 	}
 
 	res.CanCreateOfficialRound = domain.IsRole(ctx, domain.RoleAdmin)
+
+	return res, nil
+}
+
+type FindByIDRequest struct {
+	ID             uuid.UUID
+	IncludeDeleted bool
+}
+
+func (s *service) FindByID(ctx context.Context, req *FindByIDRequest) (*Contest, error) {
+	req.IncludeDeleted = domain.IsRole(ctx, domain.RoleAdmin)
+
+	res, err := s.r.FindByID(ctx, req)
+	if err != nil {
+		return nil, err
+	}
 
 	return res, nil
 }

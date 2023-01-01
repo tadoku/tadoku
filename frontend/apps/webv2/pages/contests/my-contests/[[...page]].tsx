@@ -25,7 +25,7 @@ const Contests: NextPage<Props> = () => {
       userId: session?.identity.id,
     }
   })
-  const list = useContestList(filters)
+  const list = useContestList(filters, { enabled: !!session })
 
   if (!session) {
     return null

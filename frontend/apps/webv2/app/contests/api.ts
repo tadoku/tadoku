@@ -38,7 +38,9 @@ export type ContestConfigurationOptions = z.infer<
   typeof ContestConfigurationOptions
 >
 
-export const useContestConfigurationOptions = () =>
+export const useContestConfigurationOptions = (options?: {
+  enabled?: boolean
+}) =>
   useQuery(
     ['contest', 'configuration-options'],
     async (): Promise<ContestConfigurationOptions> => {
@@ -50,6 +52,7 @@ export const useContestConfigurationOptions = () =>
 
       return ContestConfigurationOptions.parse(await response.json())
     },
+    options,
   )
 
 export const useCreateContest = (onSuccess: (id: string) => void) =>

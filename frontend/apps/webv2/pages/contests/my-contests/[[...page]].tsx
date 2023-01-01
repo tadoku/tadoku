@@ -3,12 +3,18 @@ import { Breadcrumb, Pagination, Tabbar } from 'ui'
 import { HomeIcon } from '@heroicons/react/20/solid'
 import { PlusIcon } from '@heroicons/react/24/solid'
 import Link from 'next/link'
-import { Contests, useContestList } from '@app/contests/api'
+import {
+  ContestConfigurationOptions,
+  Contests,
+  useContestConfigurationOptions,
+  useContestList,
+} from '@app/contests/api'
 import { useState } from 'react'
 import { DateTime } from 'luxon'
 import { useRouter } from 'next/router'
 import { getQueryStringIntParameter } from '@app/common/router'
 import { useSessionOrRedirect } from '@app/common/session'
+import { number } from 'zod'
 
 interface Props {}
 
@@ -25,7 +31,8 @@ const Contests: NextPage<Props> = () => {
       userId: session?.identity.id,
     }
   })
-  const list = useContestList(filters, { enabled: !!session })
+  const options = useContestConfigurationOptions({ enabled: !!session })
+  const list = useContestList(filters, { enabled: !!options.data })
 
   if (!session) {
     return null
@@ -78,7 +85,7 @@ const Contests: NextPage<Props> = () => {
         ) : null}
         {list.isSuccess ? (
           <>
-            <ContestList list={list.data} />
+            <ContestList list={list.data} options={options.data} />
             {list.data.totalSize / filters.pageSize > 1 ? (
               <div className="mt-8">
                 <Pagination
@@ -100,7 +107,25 @@ const Contests: NextPage<Props> = () => {
 
 export default Contests
 
-const ContestList = ({ list }: { list: Contests }) => {
+const ContestList = ({
+  list,
+  options,
+}: {
+  list: Contests
+  options: ContestConfigurationOptions | undefined
+}) => {
+  const languages = new Map<string, string>()
+  const activities = new Map<number, string>()
+
+  if (options) {
+    options.activities.forEach(a => {
+      activities.set(a.id, a.name)
+    })
+    options.languages.forEach(l => {
+      languages.set(l.code, l.name)
+    })
+  }
+
   return (
     <div className="table-container">
       <table className="default">
@@ -109,6 +134,12 @@ const ContestList = ({ list }: { list: Contests }) => {
             <th className="default">Round</th>
             <th className="default">Starting date</th>
             <th className="default">Ending date</th>
+            {options ? (
+              <>
+                <th className="default">Languages</th>
+                <th className="default">Activities</th>
+              </>
+            ) : null}
           </tr>
         </thead>
         <tbody>
@@ -129,6 +160,20 @@ const ContestList = ({ list }: { list: Contests }) => {
                   {c.contestEnd.toLocaleString(DateTime.DATE_FULL)}
                 </Link>
               </td>
+              {options ? (
+                <>
+                  <td className="default text-ellipsis">
+                    {c.languageCodeAllowList
+                      .map(l => languages.get(l))
+                      .join(', ')}
+                  </td>
+                  <td className="default text-ellipsis">
+                    {c.activityTypeIdAllowList
+                      .map(it => activities.get(it))
+                      .join(', ')}
+                  </td>
+                </>
+              ) : null}
             </tr>
           ))}
           {list.contests.length === 0 ? (

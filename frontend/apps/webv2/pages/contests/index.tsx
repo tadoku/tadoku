@@ -1,5 +1,5 @@
 import type { NextPage } from 'next'
-import { Breadcrumb } from 'ui'
+import { Breadcrumb, Tabbar } from 'ui'
 import { HomeIcon } from '@heroicons/react/20/solid'
 import Link from 'next/link'
 import { Contests, useContestList } from '@app/contests/api'
@@ -35,29 +35,26 @@ const Contests: NextPage<Props> = () => {
           </Link>
         </div>
       </div>
-      <nav className="relative h-12 mb-8 flex space-x-10">
-        <Link
-          href="/contests"
-          className="border-b-4 border-primary h-full flex items-center z-10 font-bold"
-        >
-          Official contests
-        </Link>
-        <Link
-          href="/contests/user-contests"
-          className="border-b-4 border-transparent hover:border-primary h-full inline-flex flex-col justify-center items-center z-10 hover:font-semibold before:content-[attr(data-label)] before:h-0 before:overflow-hidden before:font-bold before:pointer-events-none before:select-none"
-          data-label="User contests"
-        >
-          User contests
-        </Link>
-        <Link
-          href="/contests/my-contests"
-          className="border-b-4 border-transparent hover:border-primary h-full flex items-center z-10 hover:font-bold"
-        >
-          My contests
-        </Link>
-        <div className="border-b-2 absolute border-slate-200 left-0 right-0 bottom-0 z-0"></div>
-      </nav>
-      <div>
+      <Tabbar
+        links={[
+          {
+            href: '/contests',
+            label: 'Official contests',
+            active: true,
+          },
+          {
+            href: '/contests/user-contests',
+            label: 'User contests',
+            active: false,
+          },
+          {
+            href: '/contests/my-contests',
+            label: 'My contests',
+            active: false,
+          },
+        ]}
+      />
+      <div className="mt-8">
         {list.isLoading ? <p>Loading...</p> : null}
         {list.isError ? (
           <span className="flash error">

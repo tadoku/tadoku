@@ -56,7 +56,7 @@ const Contests: NextPage<Props> = () => {
           },
         ]}
       />
-      <div className="mt-8">
+      <div className="mt-2 md:mt-8">
         {list.isLoading ? <p>Loading...</p> : null}
         {list.isError ? (
           <span className="flash error">

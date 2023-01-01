@@ -95,7 +95,7 @@ function ExampleTable() {
                 style={{
                   width: header.getSize() !== 0 ? header.getSize() : undefined,
                 }}
-                className={\`subtitle px-4 h-14 flex-inline items-center text-left \${
+                className={\`subtitle px-4 h-14 inline-flex items-center text-left \${
                   header.column.columnDef.meta?.className
                 }\`}
               >
@@ -209,7 +209,7 @@ function ExampleTable() {
                 style={{
                   width: header.getSize() !== 0 ? header.getSize() : undefined,
                 }}
-                className={`subtitle px-4 h-14 flex-inline items-center text-left ${header.column.columnDef.meta?.className}`}
+                className={`subtitle px-4 h-14 inline-flex items-center text-left ${header.column.columnDef.meta?.className}`}
               >
                 {header.isPlaceholder
                   ? null

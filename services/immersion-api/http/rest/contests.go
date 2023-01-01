@@ -7,6 +7,7 @@ import (
 	"github.com/deepmap/oapi-codegen/pkg/types"
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
+
 	"github.com/tadoku/tadoku/services/immersion-api/domain/contestcommand"
 	"github.com/tadoku/tadoku/services/immersion-api/domain/contestquery"
 	"github.com/tadoku/tadoku/services/immersion-api/http/rest/openapi"
@@ -100,6 +101,40 @@ func (s *Server) ContestGetConfigurations(ctx echo.Context) error {
 	}
 
 	return ctx.JSON(http.StatusOK, res)
+}
+
+// Fetches a contest by id
+// (GET /contests/{id})
+func (s *Server) ContestFindByID(ctx echo.Context, id types.UUID) error {
+	contest, err := s.contestQueryService.FindByID(ctx.Request().Context(), &contestquery.FindByIDRequest{
+		ID: id,
+	})
+	if err != nil {
+		if errors.Is(err, contestquery.ErrNotFound) {
+			return ctx.NoContent(http.StatusNotFound)
+		}
+
+		ctx.Echo().Logger.Error(err)
+		return ctx.NoContent(http.StatusInternalServerError)
+	}
+
+	return ctx.JSON(http.StatusOK, openapi.Contest{
+		Id:                      &contest.ID,
+		ContestStart:            types.Date{Time: contest.ContestStart},
+		ContestEnd:              types.Date{Time: contest.ContestEnd},
+		RegistrationStart:       types.Date{Time: contest.RegistrationStart},
+		RegistrationEnd:         types.Date{Time: contest.RegistrationEnd},
+		Description:             contest.Description,
+		OwnerUserId:             &contest.OwnerUserID,
+		OwnerUserDisplayName:    &contest.OwnerUserDisplayName,
+		Official:                contest.Official,
+		Private:                 contest.Private,
+		LanguageCodeAllowList:   contest.LanguageCodeAllowList,
+		ActivityTypeIdAllowList: contest.ActivityTypeIDAllowList,
+		CreatedAt:               &contest.CreatedAt,
+		UpdatedAt:               &contest.UpdatedAt,
+		Deleted:                 &contest.Deleted,
+	})
 }
 
 // Lists all the contests, paginated

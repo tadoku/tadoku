@@ -11,6 +11,7 @@ import (
 )
 
 var ErrRequestInvalid = errors.New("request is invalid")
+var ErrNotFound = errors.New("not found")
 
 type ContestRepository interface {
 	FetchContestConfigurationOptions(ctx context.Context) (*FetchContestConfigurationOptionsResponse, error)

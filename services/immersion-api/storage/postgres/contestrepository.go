@@ -124,6 +124,11 @@ func (r *ContestRepository) FindByID(ctx context.Context, req *contestquery.Find
 		IncludeDeleted: req.IncludeDeleted,
 	})
 	if err != nil {
+
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, contestquery.ErrNotFound
+		}
+
 		return nil, fmt.Errorf("could not fetch contest: %w", err)
 	}
 

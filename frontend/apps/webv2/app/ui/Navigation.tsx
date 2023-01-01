@@ -67,9 +67,14 @@ export default function Navigation() {
           href: '/',
           current: false,
         },
+        {
+          type: 'link',
+          label: 'Leaderboard',
+          href: '/leaderboard',
+          current: false,
+        },
+        { type: 'link', label: 'Contests', href: '/contests', current: false },
         { type: 'link', label: 'Blog', href: '/blog', current: false },
-        { type: 'link', label: 'Ranking', href: '/ranking', current: false },
-        { type: 'link', label: 'Manual', href: '/manual', current: false },
         {
           type: 'link',
           label: 'Forum',

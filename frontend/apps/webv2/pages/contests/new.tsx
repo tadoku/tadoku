@@ -9,18 +9,6 @@ interface Props {}
 const Contests: NextPage<Props> = () => {
   const options = useContestConfigurationOptions()
 
-  if (options.isLoading || options.isIdle) {
-    return <p>Loading...</p>
-  }
-
-  if (options.isError) {
-    return (
-      <span className="flash error">
-        Could not load page, please try again later.
-      </span>
-    )
-  }
-
   return (
     <>
       <div className="pb-4">
@@ -33,7 +21,15 @@ const Contests: NextPage<Props> = () => {
         />
       </div>
       <h1 className="title mb-4">Create new contest</h1>
-      <ContestForm configurationOptions={options.data} />
+      {options.isLoading ? <p>Loading...</p> : null}
+      {options.isError ? (
+        <span className="flash error">
+          Could not load page, please try again later.
+        </span>
+      ) : null}
+      {options.isSuccess ? (
+        <ContestForm configurationOptions={options.data} />
+      ) : null}
     </>
   )
 }

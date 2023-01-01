@@ -1,5 +1,5 @@
-import { CodeBlock, Preview, Title } from '@components/example'
-import { Navbar } from 'ui'
+import { CodeBlock, Preview, Separator, Title } from '@components/example'
+import { Navbar, Tabbar } from 'ui'
 import {
   ArrowRightOnRectangleIcon,
   Cog8ToothIcon,
@@ -11,7 +11,7 @@ export default function Toasts() {
   return (
     <>
       <h1 className="title mb-8">Navigation</h1>
-      <Title>Example</Title>
+      <Title>Navbar</Title>
       <Preview className="!bg-neutral-100">
         <div className="relative">
           <Navbar
@@ -76,6 +76,56 @@ const NavigationExample = () => (
             IconComponent: ArrowRightOnRectangleIcon,
           },
         ],
+      },
+    ]}
+  />
+)`}
+      />
+
+      <Separator />
+
+      <Title>Navbar</Title>
+      <Preview>
+        <Tabbar
+          links={[
+            {
+              href: '/contests/official',
+              label: 'Official contests',
+              active: false,
+            },
+            {
+              href: '/contests/user-contests',
+              label: 'User contests',
+              active: false,
+            },
+            {
+              href: '/contests/my-contests',
+              label: 'My contests',
+              active: true,
+            },
+          ]}
+        />
+      </Preview>
+      <CodeBlock
+        code={`import { Tabbar } from 'ui'
+
+const TabbarExample = () => (
+  <Tabbar
+    links={[
+      {
+        href: '/contests/official',
+        label: 'Official contests',
+        active: false,
+      },
+      {
+        href: '/contests/user-contests',
+        label: 'User contests',
+        active: false,
+      },
+      {
+        href: '/contests/my-contests',
+        label: 'My contests',
+        active: true,
       },
     ]}
   />

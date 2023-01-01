@@ -13,6 +13,6 @@ export {
 } from './components/Form'
 export { Modal } from './components/Modal'
 export { Navbar } from './components/Navbar'
-// export { Navbar } from './components/Navbar'
+export { Tabbar } from './components/Tabbar'
 export { Pagination } from './components/Pagination'
 export { ToastContainer } from './components/toasts'

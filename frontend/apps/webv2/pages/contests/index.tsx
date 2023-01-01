@@ -1,6 +1,7 @@
 import type { NextPage } from 'next'
 import { Breadcrumb, Tabbar } from 'ui'
 import { HomeIcon } from '@heroicons/react/20/solid'
+import { PlusIcon } from '@heroicons/react/24/solid'
 import Link from 'next/link'
 import { Contests, useContestList } from '@app/contests/api'
 import { useState } from 'react'
@@ -31,6 +32,7 @@ const Contests: NextPage<Props> = () => {
         <h1 className="title">Contests</h1>
         <div className="h-stack justify-end">
           <Link href="/contests/new" className="btn secondary">
+            <PlusIcon className="mr-2" />
             Create contest
           </Link>
         </div>

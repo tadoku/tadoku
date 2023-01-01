@@ -169,6 +169,7 @@ export const ContestForm = ({
           label="Allowed activities"
           options={activities}
           control={control}
+          defaultValue={activities.filter(a => a.default)}
           match={(option, query) =>
             option.name
               .toLowerCase()

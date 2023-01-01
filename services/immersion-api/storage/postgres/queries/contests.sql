@@ -95,7 +95,7 @@ select
 from contests
 where
   id = sqlc.arg('id')
-  and deleted_at is null
+  and (sqlc.arg('include_deleted')::boolean or deleted_at is null)
 order by created_at desc;
 
 -- name: ContestsMetadata :one

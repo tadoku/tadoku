@@ -138,12 +138,17 @@ select
 from contests
 where
   id = $1
-  and deleted_at is null
+  and ($2::boolean or deleted_at is null)
 order by created_at desc
 `
 
-func (q *Queries) FindContestById(ctx context.Context, id uuid.UUID) (Contest, error) {
-	row := q.db.QueryRowContext(ctx, findContestById, id)
+type FindContestByIdParams struct {
+	ID             uuid.UUID
+	IncludeDeleted bool
+}
+
+func (q *Queries) FindContestById(ctx context.Context, arg FindContestByIdParams) (Contest, error) {
+	row := q.db.QueryRowContext(ctx, findContestById, arg.ID, arg.IncludeDeleted)
 	var i Contest
 	err := row.Scan(
 		&i.ID,

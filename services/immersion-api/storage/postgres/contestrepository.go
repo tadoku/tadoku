@@ -51,7 +51,10 @@ func (r *ContestRepository) CreateContest(ctx context.Context, req *contestcomma
 		return nil, fmt.Errorf("could not create contest: %w", err)
 	}
 
-	contest, err := qtx.FindContestById(ctx, id)
+	contest, err := qtx.FindContestById(ctx, FindContestByIdParams{
+		ID:             id,
+		IncludeDeleted: false,
+	})
 	if err != nil {
 		_ = tx.Rollback()
 		return nil, fmt.Errorf("could not create contest: %w", err)

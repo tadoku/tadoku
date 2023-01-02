@@ -1,4 +1,3 @@
-import 'ui/styles/globals.css'
 import {
   Navbar,
   NavigationDropDownProps,

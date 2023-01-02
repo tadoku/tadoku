@@ -8,6 +8,7 @@ import 'ui/styles/globals.css'
 import Navigation from '@app/ui/Navigation'
 import { QueryClient, QueryClientProvider } from 'react-query'
 import Head from 'next/head'
+import Footer from '@app/ui/Footer'
 
 interface Props {
   session: Session | undefined
@@ -51,6 +52,7 @@ const MyApp = ({ Component, pageProps }: AppProps<Props>) => {
           <div className="p-4 md:px-8 md:pb-8 md:pt-4 mx-auto max-w-7xl">
             <Component {...pageProps} />
           </div>
+          <Footer />
           <ToastContainer />
         </div>
       </QueryClientProvider>

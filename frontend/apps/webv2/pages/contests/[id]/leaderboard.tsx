@@ -195,7 +195,12 @@ const Page = () => {
               </div>
             </div>
             <div className="-mx-7 px-4 py-2 border-t-2 border-slate-500/5">
-              Ends in <strong>29 days</strong>
+              Ends in{' '}
+              <strong>
+                {contest.data.contestEnd
+                  .diffNow(['days', 'hours', 'minute'])
+                  .toHuman({ maximumFractionDigits: 0 })}
+              </strong>
             </div>
             <div className="-mx-7 px-4 py-2 border-t-2 border-slate-500/5">
               Tadoku time:{' '}

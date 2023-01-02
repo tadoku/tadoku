@@ -1,5 +1,5 @@
 import { usePostList } from '@app/content/api'
-import { PostBody, PostDetail } from '@app/content/Post'
+import { PostBody } from '@app/content/Post'
 import { ArrowLongRightIcon } from '@heroicons/react/20/solid'
 import { BookOpenIcon } from '@heroicons/react/24/solid'
 import { DateTime, Interval } from 'luxon'
@@ -28,6 +28,24 @@ const scheduledContests = [
   { name: 'Round 4', startMonth: 7, endDay: 31 },
   { name: 'Round 5', startMonth: 9, endDay: 30 },
   { name: 'Round 6', startMonth: 11, endDay: 14 },
+]
+
+const questions = [
+  {
+    question: "I can't find my language in the list, what do I do?",
+    answer:
+      'You can request your language to be added through our Discord server.',
+  },
+  {
+    question: 'Can I join a contest which has already started?',
+    answer:
+      'Contests have a deadline for registration. You can join a contest as long as the registration period has not ended. For official contests registrations will generally close one week before it ends.',
+  },
+  {
+    question: 'How do I prevent others from joining my contest?',
+    answer:
+      "It's possible to mark your contest as private. This means it won't be listed on the website and only those with the link can join it.",
+  },
 ]
 
 const Index: NextPage<Props> = () => {
@@ -131,48 +149,71 @@ const Index: NextPage<Props> = () => {
         </div>
       </div>
       <div className="mt-8 flex flex-row w-full space-x-8">
-        <div className="flex-grow card self-start p-0">
-          <h2 className="title text-xl p-7 pb-4">
-            Contest Schedule for {year}
-          </h2>
-          <table className="default w-full shadow-none">
-            <thead>
-              <tr>
-                <th className="default !pl-7">Round</th>
-                <th className="default">Start</th>
-                <th className="default">End</th>
-                <th className="default">Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {scheduledContests.map(c => {
-                const start = DateTime.utc(year, c.startMonth, 1)
-                const end = DateTime.utc(year, c.startMonth, c.endDay)
-                const interval = Interval.fromDateTimes(start, end)
-                return (
-                  <tr key={c.name}>
-                    <td className="default !pl-7">
-                      <strong>{c.name}</strong>
-                    </td>
-                    <td className="default">{start.toFormat('MMM d')}</td>
-                    <td className="default">{end.toFormat('MMM d')}</td>
-                    <td className="default">
-                      {interval.isAfter(now) ? (
-                        <span>Scheduled</span>
-                      ) : interval.contains(now) ? (
-                        <strong className="text-lime-700">Ongoing</strong>
-                      ) : (
-                        <span className="text-red-700">Ended</span>
-                      )}
-                    </td>
-                  </tr>
-                )
-              })}
-            </tbody>
-          </table>
+        <div className="v-stack flex-grow space-y-8">
+          <div className="card p-0">
+            <h2 className="title text-xl p-7 pb-4">
+              Contest Schedule for {year}
+            </h2>
+            <table className="default w-full shadow-none">
+              <thead>
+                <tr>
+                  <th className="default !pl-7">Round</th>
+                  <th className="default">Start</th>
+                  <th className="default">End</th>
+                  <th className="default">Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {scheduledContests.map(c => {
+                  const start = DateTime.utc(year, c.startMonth, 1)
+                  const end = DateTime.utc(year, c.startMonth, c.endDay)
+                  const interval = Interval.fromDateTimes(start, end)
+                  return (
+                    <tr key={c.name}>
+                      <td className="default !pl-7">
+                        <strong>{c.name}</strong>
+                      </td>
+                      <td className="default">{start.toFormat('MMM d')}</td>
+                      <td className="default">{end.toFormat('MMM d')}</td>
+                      <td className="default">
+                        {interval.isAfter(now) ? (
+                          <span>Scheduled</span>
+                        ) : interval.contains(now) ? (
+                          <strong className="text-lime-700">Ongoing</strong>
+                        ) : (
+                          <span className="text-red-700">Ended</span>
+                        )}
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
+          <div className="card">
+            <div className="h-stack w-full items-center justify-between mb-4">
+              <h2 className="title text-xl">
+                <Link href={`/pages/faq`}>Frequently Asked Questions</Link>
+              </h2>
+              <Link href="/blog" className="btn">
+                More answers
+                <ArrowLongRightIcon className="ml-2" />
+              </Link>
+            </div>
+            <div>
+              <ul className="space-y-4">
+                {questions.map((it, i) => (
+                  <li key={i}>
+                    <div className="font-bold text-lg">{it.question}</div>
+                    <div className="mt-2">{it.answer}</div>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
         </div>
         {posts.data?.posts[0] ? (
-          <div className="w-3/6">
+          <div className="w-3/6 flex-shrink-0">
             <div className="card auto-format">
               <div className="h-stack w-full items-center justify-between">
                 <h2 className="title text-xl">

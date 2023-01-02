@@ -1,31 +1,22 @@
+import { useCurrentLocation, useInterval } from '@app/common/hooks'
+import { useSession } from '@app/common/session'
 import { useContest } from '@app/contests/api'
 import { CheckBadgeIcon } from '@heroicons/react/20/solid'
 import { ArrowRightIcon } from '@heroicons/react/24/outline'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
 import { Pagination, Tabbar } from 'ui'
+import getConfig from 'next/config'
+import { DateTime, Interval } from 'luxon'
+import { useState } from 'react'
+
+const { publicRuntimeConfig } = getConfig()
 
 const data = [
   { rank: '1', user: 'powz', score: 5054.25054 },
   { rank: '2', user: 'Bijak', score: 3605.23605 },
   { rank: '3', user: 'ShockOLatte', score: 2518.72518 },
   { rank: '4', user: 'Ludie', score: 2517.32517 },
-  { rank: '5', user: 'Chamsae', score: 2434.42434 },
-  { rank: '6', user: 'Salome', score: 2107.12107 },
-  { rank: '7', user: 'mmmm', score: 2060.1206 },
-  { rank: '8', user: 'Yaku', score: 1667.21667 },
-  { rank: '9', user: 'Socks', score: 1635.81635 },
-  { rank: '10', user: 'clair', score: 1592.91592 },
-  { rank: '1', user: 'powz', score: 5054.25054 },
-  { rank: '2', user: 'Bijak', score: 3605.23605 },
-  { rank: '3', user: 'ShockOLatte', score: 2518.72518 },
-  { rank: '4', user: 'Ludie', score: 2517.32517 },
-  { rank: '5', user: 'Chamsae', score: 2434.42434 },
-  { rank: '6', user: 'Salome', score: 2107.12107 },
-  { rank: '7', user: 'mmmm', score: 2060.1206 },
-  { rank: '8', user: 'Yaku', score: 1667.21667 },
-  { rank: '9', user: 'Socks', score: 1635.81635 },
-  { rank: '10', user: 'clair', score: 1592.91592 },
   { rank: '5', user: 'Chamsae', score: 2434.42434 },
   { rank: '6', user: 'Salome', score: 2107.12107 },
   { rank: '7', user: 'mmmm', score: 2060.1206 },
@@ -57,7 +48,12 @@ const Page = () => {
   const router = useRouter()
   const id = router.query['id']?.toString() ?? ''
 
+  const [now, setNow] = useState(() => DateTime.utc())
+  useInterval(() => setNow(DateTime.utc()), 1000)
+
   const contest = useContest(id)
+  const [session] = useSession()
+  const currentUrl = useCurrentLocation()
 
   if (contest.isLoading || contest.isIdle) {
     return <p>Loading...</p>
@@ -70,6 +66,11 @@ const Page = () => {
       </span>
     )
   }
+
+  const hasEnded = Interval.fromDateTimes(
+    contest.data.contestStart,
+    contest.data.contestEnd,
+  ).isBefore(now)
 
   return (
     <>
@@ -113,12 +114,16 @@ const Page = () => {
         ]}
       />
 
-      <Link
-        href={'#'}
-        className="reset block flash warning mt-4 hover:bg-amber-300 transition-all ease-in"
-      >
-        You need to log in to participate in this contest.
-      </Link>
+      {!session && !hasEnded ? (
+        <Link
+          href={
+            publicRuntimeConfig.authUiUrl + `/login?return_to=${currentUrl}`
+          }
+          className="reset block flash warning mt-4 hover:bg-amber-300 transition-all ease-in"
+        >
+          You need to log in to participate in this contest.
+        </Link>
+      ) : null}
       <div className="flex mt-4 space-x-4">
         <div className="flex-grow">
           <div className="table-container">
@@ -225,7 +230,7 @@ const Page = () => {
               <h3 className="subtitle text-sm">Recent updates</h3>
               <ul className="divide-y-2 divide-slate-500/5 -mx-4">
                 {updates.map(u => (
-                  <li key={u[0]}>
+                  <li key={`${u[0]}-${u[1]}`}>
                     <Link
                       href="#"
                       className="reset px-4 py-2 flex justify-between items-center hover:bg-slate-500/5"

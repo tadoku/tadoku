@@ -79,7 +79,7 @@ export const ContestForm = ({
 
   const router = useRouter()
   const createContestMutation = useCreateContest(id =>
-    router.replace(`/contests/${id}/edit`),
+    router.replace(`/contests/${id}/leaderboard`),
   )
 
   const [createContest] = useDebounce(createContestMutation.mutate, 2500)

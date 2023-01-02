@@ -8,8 +8,8 @@ import {
   Cog8ToothIcon,
 } from '@heroicons/react/20/solid'
 import { useLogoutHandler, useSession } from '@app/common/session'
-import getConfig from 'next/config'
 import { useCurrentLocation } from '@app/common/hooks'
+import getConfig from 'next/config'
 
 const { publicRuntimeConfig } = getConfig()
 

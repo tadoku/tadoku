@@ -1,5 +1,5 @@
 import { useRouter } from 'next/router'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 export const useCurrentLocation = () => {
   const router = useRouter()
@@ -14,4 +14,24 @@ export const useCurrentLocation = () => {
   }, [router.isReady])
 
   return location
+}
+
+// See https://overreacted.io/making-setinterval-declarative-with-react-hooks/
+export const useInterval = (callback: () => void, delay: number | 'pause') => {
+  const savedCallback = useRef<() => void>()
+
+  // Keep reference to the callback
+  useEffect(() => {
+    savedCallback.current = callback
+  }, [callback])
+
+  // Set up interval
+  useEffect(() => {
+    const tick = () => savedCallback.current?.()
+
+    if (delay !== 'pause') {
+      const id = setInterval(tick, delay)
+      return () => clearInterval(id)
+    }
+  }, [delay])
 }

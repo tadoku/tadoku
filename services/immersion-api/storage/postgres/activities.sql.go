@@ -7,6 +7,8 @@ package postgres
 
 import (
 	"context"
+
+	"github.com/google/uuid"
 )
 
 const listActivities = `-- name: ListActivities :many
@@ -28,6 +30,48 @@ func (q *Queries) ListActivities(ctx context.Context) ([]LogActivity, error) {
 	for rows.Next() {
 		var i LogActivity
 		if err := rows.Scan(&i.ID, &i.Name, &i.Default); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listActivitiesForContest = `-- name: ListActivitiesForContest :many
+select
+  id,
+  name
+from log_activities
+where
+  id = any((
+    select activity_type_id_allow_list
+    from contests
+    where contests.id = $1
+  )::integer[])
+order by name asc
+`
+
+type ListActivitiesForContestRow struct {
+	ID   int32
+	Name string
+}
+
+func (q *Queries) ListActivitiesForContest(ctx context.Context, contestID uuid.UUID) ([]ListActivitiesForContestRow, error) {
+	rows, err := q.db.QueryContext(ctx, listActivitiesForContest, contestID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListActivitiesForContestRow
+	for rows.Next() {
+		var i ListActivitiesForContestRow
+		if err := rows.Scan(&i.ID, &i.Name); err != nil {
 			return nil, err
 		}
 		items = append(items, i)

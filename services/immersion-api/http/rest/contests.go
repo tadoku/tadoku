@@ -119,6 +119,22 @@ func (s *Server) ContestFindByID(ctx echo.Context, id types.UUID) error {
 		return ctx.NoContent(http.StatusInternalServerError)
 	}
 
+	langs := make([]openapi.Language, len(contest.AllowedLanguages))
+	for i, it := range contest.AllowedLanguages {
+		langs[i] = openapi.Language{
+			Code: it.Code,
+			Name: it.Name,
+		}
+	}
+
+	acts := make([]openapi.Activity, len(contest.AllowedActivities))
+	for i, it := range contest.AllowedActivities {
+		acts[i] = openapi.Activity{
+			Id:   it.ID,
+			Name: it.Name,
+		}
+	}
+
 	return ctx.JSON(http.StatusOK, openapi.ContestView{
 		Id:                   &contest.ID,
 		ContestStart:         types.Date{Time: contest.ContestStart},
@@ -130,6 +146,8 @@ func (s *Server) ContestFindByID(ctx echo.Context, id types.UUID) error {
 		OwnerUserDisplayName: &contest.OwnerUserDisplayName,
 		Official:             contest.Official,
 		Private:              contest.Private,
+		AllowedLanguages:     langs,
+		AllowedActivities:    acts,
 		CreatedAt:            &contest.CreatedAt,
 		UpdatedAt:            &contest.UpdatedAt,
 		Deleted:              &contest.Deleted,

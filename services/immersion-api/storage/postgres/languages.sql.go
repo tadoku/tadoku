@@ -7,6 +7,8 @@ package postgres
 
 import (
 	"context"
+
+	"github.com/google/uuid"
 )
 
 const listLanguages = `-- name: ListLanguages :many
@@ -19,6 +21,43 @@ order by name asc
 
 func (q *Queries) ListLanguages(ctx context.Context) ([]Language, error) {
 	rows, err := q.db.QueryContext(ctx, listLanguages)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Language
+	for rows.Next() {
+		var i Language
+		if err := rows.Scan(&i.Code, &i.Name); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listLanguagesForContest = `-- name: ListLanguagesForContest :many
+select
+  code,
+  name
+from languages
+where
+  code = any((
+    select language_code_allow_list
+    from contests
+    where id = $1
+  )::varchar[])
+order by name asc
+`
+
+func (q *Queries) ListLanguagesForContest(ctx context.Context, contestID uuid.UUID) ([]Language, error) {
+	rows, err := q.db.QueryContext(ctx, listLanguagesForContest, contestID)
 	if err != nil {
 		return nil, err
 	}

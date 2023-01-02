@@ -15,13 +15,13 @@ var ErrNotFound = errors.New("not found")
 
 type ContestRepository interface {
 	FetchContestConfigurationOptions(ctx context.Context) (*FetchContestConfigurationOptionsResponse, error)
-	FindByID(context.Context, *FindByIDRequest) (*Contest, error)
+	FindByID(context.Context, *FindByIDRequest) (*ContestView, error)
 	ListContests(context.Context, *ContestListRequest) (*ContestListResponse, error)
 }
 
 type Service interface {
 	FetchContestConfigurationOptions(ctx context.Context) (*FetchContestConfigurationOptionsResponse, error)
-	FindByID(context.Context, *FindByIDRequest) (*Contest, error)
+	FindByID(context.Context, *FindByIDRequest) (*ContestView, error)
 	ListContests(context.Context, *ContestListRequest) (*ContestListResponse, error)
 }
 
@@ -70,7 +70,25 @@ type FindByIDRequest struct {
 	IncludeDeleted bool
 }
 
-func (s *service) FindByID(ctx context.Context, req *FindByIDRequest) (*Contest, error) {
+type ContestView struct {
+	ID                   uuid.UUID
+	ContestStart         time.Time
+	ContestEnd           time.Time
+	RegistrationStart    time.Time
+	RegistrationEnd      time.Time
+	Description          string
+	OwnerUserID          uuid.UUID
+	OwnerUserDisplayName string
+	Official             bool
+	Private              bool
+	AllowedLanguages     []Language
+	AllowedActivities    []Activity
+	CreatedAt            time.Time
+	UpdatedAt            time.Time
+	Deleted              bool
+}
+
+func (s *service) FindByID(ctx context.Context, req *FindByIDRequest) (*ContestView, error) {
 	req.IncludeDeleted = domain.IsRole(ctx, domain.RoleAdmin)
 
 	res, err := s.r.FindByID(ctx, req)

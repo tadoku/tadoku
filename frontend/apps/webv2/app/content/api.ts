@@ -78,7 +78,13 @@ const PostList = z
 
 export type PostList = z.infer<typeof PostList>
 
-export const usePostList = (pageSize: number, page: number) =>
+export const usePostList = ({
+  pageSize,
+  page,
+}: {
+  pageSize: number
+  page: number
+}) =>
   useQuery(
     ['content_post', 'list', page],
     async ({ queryKey }): Promise<PostList> => {

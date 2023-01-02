@@ -1,3 +1,5 @@
+import { usePostList } from '@app/content/api'
+import { PostDetail } from '@app/content/Post'
 import { ArrowLongRightIcon } from '@heroicons/react/20/solid'
 import { BookOpenIcon } from '@heroicons/react/24/solid'
 import type { NextPage } from 'next'
@@ -19,6 +21,8 @@ const data = [
 ]
 
 const Index: NextPage<Props> = () => {
+  const posts = usePostList({ pageSize: 1, page: 0 })
+
   return (
     <>
       <div className="w-full min-h-screen absolute -top-16 left-0 right-0 bg-[url('/img/header.jpg')] bg-no-repeat bg-top z-0"></div>
@@ -113,6 +117,13 @@ const Index: NextPage<Props> = () => {
             </div>
           </div>
         </div>
+      </div>
+      <div className="mt-8">
+        {posts.data?.posts[0] ? (
+          <div className="card">
+            <PostDetail post={posts.data.posts[0]} />
+          </div>
+        ) : null}
       </div>
     </>
   )

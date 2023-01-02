@@ -15,7 +15,7 @@ const BlogIndex = () => {
   })
 
   const pageSize = 10
-  const list = usePostList(pageSize, page - 1)
+  const list = usePostList({ pageSize, page: page - 1 })
 
   const navigateToPage = async (page: number) => {
     setPage(page)

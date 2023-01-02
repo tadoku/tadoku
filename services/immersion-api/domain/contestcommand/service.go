@@ -112,9 +112,11 @@ func (s *service) CreateContest(ctx context.Context, req *ContestCreateRequest) 
 		return nil, fmt.Errorf("contest cannot start before registrations have opened: %w", ErrInvalidContest)
 	}
 
-	now := s.clock.Now()
-	if now.After(req.ContestEnd) || now.After(req.ContestStart) {
-		return nil, fmt.Errorf("contest cannot be in the past or already have started: %w", ErrInvalidContest)
+	if !domain.IsRole(ctx, domain.RoleAdmin) {
+		now := s.clock.Now()
+		if now.After(req.ContestEnd) || now.After(req.ContestStart) {
+			return nil, fmt.Errorf("contest cannot be in the past or already have started: %w", ErrInvalidContest)
+		}
 	}
 
 	return s.r.CreateContest(ctx, req)

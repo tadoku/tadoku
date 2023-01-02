@@ -198,7 +198,10 @@ const Page = () => {
               Ends in <strong>29 days</strong>
             </div>
             <div className="-mx-7 px-4 py-2 border-t-2 border-slate-500/5">
-              Tadoku time: <strong>Jan 2nd 2023 04:57:38</strong>
+              Tadoku time:{' '}
+              <strong>
+                {now.toLocaleString(DateTime.DATETIME_MED_WITH_SECONDS)}
+              </strong>
             </div>
             <div className="-mx-7 -mb-7 px-4 py-2 bg-slate-500/5 flex items-center space-x-1">
               <span>Administered by</span>

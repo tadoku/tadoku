@@ -275,15 +275,18 @@
 }
 
 @layer utilities {
-  table.default {
+  table.default,
+  .auto-format table {
     @apply w-full border-collapse;
   }
 
-  table th.default {
+  table th.default,
+  .auto-format table th {
     @apply subtitle px-4 py-2 min-h-12 items-center text-left;
   }
 
-  table td.default {
+  table td.default ,
+  .auto-format table td{
     @apply px-4 py-2 min-h-12;
   }
 

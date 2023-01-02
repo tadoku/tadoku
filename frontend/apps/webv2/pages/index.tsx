@@ -2,6 +2,7 @@ import { usePostList } from '@app/content/api'
 import { PostDetail } from '@app/content/Post'
 import { ArrowLongRightIcon } from '@heroicons/react/20/solid'
 import { BookOpenIcon } from '@heroicons/react/24/solid'
+import { DateTime, Interval } from 'luxon'
 import type { NextPage } from 'next'
 import Link from 'next/link'
 
@@ -20,8 +21,19 @@ const data = [
   { rank: '10', user: 'clair', score: 1592.91592 },
 ]
 
+const scheduledContests = [
+  { name: 'Round 1', startMonth: 1, endDay: 31 },
+  { name: 'Round 2', startMonth: 3, endDay: 31 },
+  { name: 'Round 3', startMonth: 5, endDay: 14 },
+  { name: 'Round 4', startMonth: 7, endDay: 31 },
+  { name: 'Round 5', startMonth: 9, endDay: 30 },
+  { name: 'Round 6', startMonth: 11, endDay: 14 },
+]
+
 const Index: NextPage<Props> = () => {
   const posts = usePostList({ pageSize: 1, page: 0 })
+  const now = DateTime.utc()
+  const year = now.year
 
   return (
     <>
@@ -58,7 +70,7 @@ const Index: NextPage<Props> = () => {
         <div className="flex-grow">
           <div className="card p-0">
             <div className="h-stack w-full items-center justify-between p-7 pb-4">
-              <h2 className="text-xl">2022 Leaderboard Top 10</h2>
+              <h2 className="text-xl">{year} Leaderboard Top 10</h2>
               <Link href="#" className="btn">
                 See more
                 <ArrowLongRightIcon className="ml-2" />
@@ -118,12 +130,50 @@ const Index: NextPage<Props> = () => {
           </div>
         </div>
       </div>
-      <div className="mt-8">
+      <div className="mt-8 flex flex-row w-full space-x-8">
         {posts.data?.posts[0] ? (
-          <div className="card">
+          <div className="flex-grow">
             <PostDetail post={posts.data.posts[0]} />
           </div>
         ) : null}
+        <div className="w-3/6 card self-start p-0">
+          <h2 className="text-xl p-7 pb-4">Contest Schedule for {year}</h2>
+          <table className="default w-full shadow-none">
+            <thead>
+              <tr>
+                <th className="default !pl-7">Round</th>
+                <th className="default">Start</th>
+                <th className="default">End</th>
+                <th className="default">Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {scheduledContests.map(c => {
+                const start = DateTime.utc(year, c.startMonth, 1)
+                const end = DateTime.utc(year, c.startMonth, c.endDay)
+                const interval = Interval.fromDateTimes(start, end)
+                return (
+                  <tr>
+                    <td className="default !pl-7">
+                      <strong>{c.name}</strong>
+                    </td>
+                    <td className="default">{start.toFormat('MMM d')}</td>
+                    <td className="default">{end.toFormat('MMM d')}</td>
+                    <td className="default">
+                      {interval.isAfter(now) ? (
+                        <span>Scheduled</span>
+                      ) : interval.contains(now) ? (
+                        <strong className="text-lime-700">Ongoing</strong>
+                      ) : (
+                        <span className="text-red-700">Ended</span>
+                      )}
+                    </td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
+        </div>
       </div>
     </>
   )

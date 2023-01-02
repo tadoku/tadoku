@@ -275,8 +275,11 @@
 }
 
 @layer utilities {
-  table.default,
   .auto-format table {
+    @apply my-8 border-collapse w-full;
+  }
+
+  table.default {
     @apply w-full border-collapse;
   }
 

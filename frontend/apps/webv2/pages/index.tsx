@@ -1,5 +1,5 @@
 import { usePostList } from '@app/content/api'
-import { PostDetail } from '@app/content/Post'
+import { PostBody, PostDetail } from '@app/content/Post'
 import { ArrowLongRightIcon } from '@heroicons/react/20/solid'
 import { BookOpenIcon } from '@heroicons/react/24/solid'
 import { DateTime, Interval } from 'luxon'
@@ -37,10 +37,10 @@ const Index: NextPage<Props> = () => {
 
   return (
     <>
-      <div className="w-full min-h-screen absolute -top-16 left-0 right-0 bg-[url('/img/header.jpg')] bg-no-repeat bg-top z-0"></div>
+      <div className="w-full min-h-screen absolute top-0 left-0 right-0 bg-[url('/img/header.jpg')] bg-no-repeat bg-top z-0 pointer-events-none"></div>
       <div className="relative h-stack space-x-8 z-10">
         <div className="w-2/6 v-stack space-y-8">
-          <div className="card flex flex-col justify-center bg-sky-50">
+          <div className="card flex-grow flex flex-col justify-center bg-sky-50">
             <h1 className="title text-xl">Get good at your second language</h1>
             <p>
               Tadoku is a friendly foreign-language immersion contest and
@@ -70,7 +70,7 @@ const Index: NextPage<Props> = () => {
         <div className="flex-grow">
           <div className="card p-0">
             <div className="h-stack w-full items-center justify-between p-7 pb-4">
-              <h2 className="text-xl">{year} Leaderboard Top 10</h2>
+              <h2 className="title text-xl">{year} Leaderboard Top 10</h2>
               <Link href="#" className="btn">
                 See more
                 <ArrowLongRightIcon className="ml-2" />
@@ -131,13 +131,10 @@ const Index: NextPage<Props> = () => {
         </div>
       </div>
       <div className="mt-8 flex flex-row w-full space-x-8">
-        {posts.data?.posts[0] ? (
-          <div className="flex-grow">
-            <PostDetail post={posts.data.posts[0]} />
-          </div>
-        ) : null}
-        <div className="w-3/6 card self-start p-0">
-          <h2 className="text-xl p-7 pb-4">Contest Schedule for {year}</h2>
+        <div className="flex-grow card self-start p-0">
+          <h2 className="title text-xl p-7 pb-4">
+            Contest Schedule for {year}
+          </h2>
           <table className="default w-full shadow-none">
             <thead>
               <tr>
@@ -153,7 +150,7 @@ const Index: NextPage<Props> = () => {
                 const end = DateTime.utc(year, c.startMonth, c.endDay)
                 const interval = Interval.fromDateTimes(start, end)
                 return (
-                  <tr>
+                  <tr key={c.name}>
                     <td className="default !pl-7">
                       <strong>{c.name}</strong>
                     </td>
@@ -174,6 +171,24 @@ const Index: NextPage<Props> = () => {
             </tbody>
           </table>
         </div>
+        {posts.data?.posts[0] ? (
+          <div className="w-3/6">
+            <div className="card auto-format p-0 [&>p]:px-7">
+              <div className="h-stack w-full items-center justify-between p-7 pb-4">
+                <h2 className="title text-xl">
+                  <Link href={`/blog/posts/${posts.data.posts[0].slug}`}>
+                    {posts.data.posts[0].title}
+                  </Link>
+                </h2>
+                <Link href="/blog" className="btn">
+                  More posts
+                  <ArrowLongRightIcon className="ml-2" />
+                </Link>
+              </div>
+              <PostBody post={posts.data.posts[0]} />
+            </div>
+          </div>
+        ) : null}
       </div>
     </>
   )

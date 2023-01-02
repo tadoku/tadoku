@@ -55,7 +55,7 @@ const BlogIndex = () => {
             <div className="card max-h-96	overflow-hidden relative" key={p.id}>
               <Link
                 href={{
-                  pathname: '/blog/post/[slug]',
+                  pathname: '/blog/posts/[slug]',
                   query: { slug: p.slug },
                 }}
                 className="absolute left-0 right-0 top-80 h-16 flex justify-center items-center font-bold bg-gradient-to-t from-white via-white to-transparent"

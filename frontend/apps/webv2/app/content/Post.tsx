@@ -9,6 +9,10 @@ interface Props {
 export const PostDetail = ({ post }: Props) => (
   <div className={`auto-format`}>
     <h1 className="title mt-0 mb-4">{post.title}</h1>
-    <ReactMarkdown children={post.content} remarkPlugins={[remarkGfm]} />
+    <PostBody post={post} />
   </div>
+)
+
+export const PostBody = ({ post }: Props) => (
+  <ReactMarkdown children={post.content} remarkPlugins={[remarkGfm]} />
 )

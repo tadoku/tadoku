@@ -1,6 +1,21 @@
+import { ArrowLongRightIcon } from '@heroicons/react/20/solid'
 import type { NextPage } from 'next'
+import Link from 'next/link'
 
 interface Props {}
+
+const data = [
+  { rank: '1', user: 'powz', score: 5054.25054 },
+  { rank: '2', user: 'Bijak', score: 3605.23605 },
+  { rank: '3', user: 'ShockOLatte', score: 2518.72518 },
+  { rank: '4', user: 'Ludie', score: 2517.32517 },
+  { rank: '5', user: 'Chamsae', score: 2434.42434 },
+  { rank: '6', user: 'Salome', score: 2107.12107 },
+  { rank: '7', user: 'mmmm', score: 2060.1206 },
+  { rank: '8', user: 'Yaku', score: 1667.21667 },
+  { rank: '9', user: 'Socks', score: 1635.81635 },
+  { rank: '10', user: 'clair', score: 1592.91592 },
+]
 
 const Index: NextPage<Props> = () => {
   return (
@@ -30,8 +45,65 @@ const Index: NextPage<Props> = () => {
           </div>
         </div>
         <div className="flex-grow">
-          <div className="card">
-            <h2>All-Time Leaderboard</h2>
+          <div className="card p-0">
+            <div className="h-stack w-full items-center justify-between p-7 pb-4">
+              <h2 className="text-xl">2022 Leaderboard Top 10</h2>
+              <Link href="#" className="btn">
+                See more
+                <ArrowLongRightIcon className="ml-2" />
+              </Link>
+            </div>
+            <div className="table-container shadow-transparent w-auto">
+              <table className="default shadow-transparent">
+                <thead>
+                  <tr>
+                    <th className="default !pl-7">Rank</th>
+                    <th className="default">Nickname</th>
+                    <th className="default !text-right !pr-7">Score</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {data.map(u => (
+                    <tr key={u.rank} className="link">
+                      <td className="link w-10">
+                        <Link
+                          href={`/profile/${u.user}`}
+                          className="reset justify-center"
+                        >
+                          {u.rank}
+                        </Link>
+                      </td>
+                      <td className="link">
+                        <Link
+                          href={`/profile/${u.user}`}
+                          className="reset text-lg"
+                        >
+                          {u.user}
+                        </Link>
+                      </td>
+                      <td className="link">
+                        <Link
+                          href={`/profile/${u.user}`}
+                          className="reset justify-end text-lg !pr-7"
+                        >
+                          {Math.round(u.score * 10) / 10}
+                        </Link>
+                      </td>
+                    </tr>
+                  ))}
+                  {data.length === 0 ? (
+                    <tr>
+                      <td
+                        colSpan={3}
+                        className="default h-32 font-bold text-center text-xl text-slate-400"
+                      >
+                        No partipants yet, be the first to sign up!
+                      </td>
+                    </tr>
+                  ) : null}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       </div>

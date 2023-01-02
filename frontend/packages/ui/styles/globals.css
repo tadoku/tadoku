@@ -29,7 +29,7 @@
     --toastify-color-dark: theme('colors.slate.900');
     --toastify-color-info: theme('colors.primary');
     --toastify-color-success: theme('colors.emerald.600');
-    --toastify-color-warning: theme('colors.orange.600');
+    --toastify-color-warning: theme('colors.amber.400');
     --toastify-color-error: theme('colors.red.600');
     --toastify-color-progress-light: theme('colors.secondary');
   }
@@ -266,7 +266,7 @@
   }
 
   .flash {
-    @apply font-medium px-4 py-2;
+    @apply font-medium px-4 py-2 shadow shadow-slate-500/10;
   }
 
   .table-container {
@@ -360,7 +360,7 @@
   }
 
   .flash.warning {
-    @apply bg-orange-700 text-white;
+    @apply bg-amber-200 text-secondary;
   }
 
   .flash.error {

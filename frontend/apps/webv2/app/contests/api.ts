@@ -160,3 +160,67 @@ export const useContestList = (
     },
     options,
   )
+
+const ContestView = z
+  .object({
+    id: z.string(),
+    contest_start: z.string(),
+    contest_end: z.string(),
+    registration_start: z.string(),
+    registration_end: z.string(),
+    description: z.string(),
+    private: z.boolean(),
+    official: z.boolean(),
+    allowed_languages: z
+      .array(
+        z.object({
+          code: z.string(),
+          name: z.string(),
+        }),
+      )
+      .nullable(),
+    allowed_activities: z.array(
+      z.object({
+        id: z.number(),
+        name: z.string(),
+      }),
+    ),
+    deleted: z.boolean(),
+  })
+  .transform(contest => {
+    const {
+      contest_start: contestStart,
+      contest_end: contestEnd,
+      registration_start: registrationStart,
+      registration_end: registrationEnd,
+      allowed_languages: allowedLanguages,
+      allowed_activities: allowedActivities,
+      ...rest
+    } = contest
+    return {
+      ...rest,
+      contestStart: DateTime.fromISO(contestStart),
+      contestEnd: DateTime.fromISO(contestEnd),
+      registrationStart: DateTime.fromISO(registrationStart),
+      registrationEnd: DateTime.fromISO(registrationEnd),
+      allowedLanguages,
+      allowedActivities,
+    }
+  })
+
+export type ContestView = z.infer<typeof ContestView>
+
+export const useContest = (id: string, options?: { enabled?: boolean }) =>
+  useQuery(
+    ['contest', 'findByID', id],
+    async (): Promise<ContestView> => {
+      const response = await fetch(`${root}/${id}`)
+
+      if (response.status !== 200) {
+        throw new Error('could not fetch page')
+      }
+
+      return ContestView.parse(await response.json())
+    },
+    options,
+  )

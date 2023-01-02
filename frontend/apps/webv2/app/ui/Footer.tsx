@@ -4,11 +4,11 @@ import { DiscordIcon, GitHubIcon, TwitterIcon } from './Icons'
 
 export default function Footer() {
   return (
-    <div className="w-full h-60 bg-[url('/img/footer.png')] bg-no-repeat bg-top bg-[#1A1A1A]">
-      <div className="max-w-7xl mx-auto p-4 md:p-8 flex justify-between h-full">
-        <div className="flex flex-col space-y-4">
-          <LogoInverted />
-          <div className="text-white flex-grow">
+    <div className="w-full md:bg-[url('/img/footer.png')] bg-no-repeat bg-top bg-[#1A1A1A]">
+      <div className="max-w-7xl mx-auto p-8 flex flex-col-reverse md:flex-row space-y-8 space-y-reverse md:space-y-0 justify-between h-full">
+        <div className="flex flex-col space-y-4 md:space-y-8 text-center items-center md:items-start">
+          <LogoInverted className="hidden md:block" />
+          <div className="hidden md:block text-white md:flex-grow">
             Built by{' '}
             <a
               href="https://antonve.be"
@@ -45,7 +45,7 @@ export default function Footer() {
             </a>
           </div>
         </div>
-        <div className="flex space-x-16">
+        <div className="md:space-x-16 flex flex-row justify-between">
           <div className="flex flex-col items-start">
             <h2 className="text-white border-b-2 border-primary mb-2">
               Get started

@@ -47,9 +47,9 @@ const MyApp = ({ Component, pageProps }: AppProps<Props>) => {
             media="(prefers-color-scheme: dark)"
           />
         </Head>
-        <div>
+        <div className="min-h-screen flex flex-col">
           <Navigation />
-          <div className="p-4 md:px-8 md:pb-8 md:pt-4 mx-auto max-w-7xl">
+          <div className="p-4 md:px-8 md:pb-8 md:pt-4 mx-auto w-full max-w-7xl mb-auto">
             <Component {...pageProps} />
           </div>
           <Footer />

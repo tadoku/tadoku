@@ -276,7 +276,7 @@
 
 @layer utilities {
   .auto-format table {
-    @apply my-8 border-collapse w-full;
+    @apply my-4 border-collapse w-full;
   }
 
   table.default {

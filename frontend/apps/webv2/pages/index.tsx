@@ -173,8 +173,8 @@ const Index: NextPage<Props> = () => {
         </div>
         {posts.data?.posts[0] ? (
           <div className="w-3/6">
-            <div className="card auto-format p-0 [&>p]:px-7">
-              <div className="h-stack w-full items-center justify-between p-7 pb-4">
+            <div className="card auto-format">
+              <div className="h-stack w-full items-center justify-between">
                 <h2 className="title text-xl">
                   <Link href={`/blog/posts/${posts.data.posts[0].slug}`}>
                     {posts.data.posts[0].title}

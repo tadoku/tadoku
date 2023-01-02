@@ -45,26 +45,59 @@ export default function Footer() {
             </a>
           </div>
         </div>
-        <div className="">
+        <div className="flex space-x-16">
           <div className="flex flex-col items-start">
             <h2 className="text-white border-b-2 border-primary mb-2">
               Get started
             </h2>
             <ul className="[&>li>a]:text-white space-y-1">
               <li>
-                <Link href="/pages/manual">Manual</Link>
+                <Link href="/">Homepage</Link>
               </li>
               <li>
                 <Link href="/leaderboard">Leaderboard</Link>
               </li>
               <li>
-                <Link href="/pages/faq">FAQ</Link>
+                <Link href="/contests">Contests</Link>
+              </li>
+              <li>
+                <Link href="/blog">Blog</Link>
               </li>
               <li>
                 <Link href="https://forum.tadoku.app/">Forum</Link>
               </li>
+            </ul>
+          </div>
+          <div className="flex flex-col items-start">
+            <h2 className="text-white border-b-2 border-primary mb-2">
+              Resources
+            </h2>
+            <ul className="[&>li>a]:text-white space-y-1">
               <li>
-                <Link href="/blog">Blog</Link>
+                <Link href="/pages/manual">Manual</Link>
+              </li>
+              <li>
+                <Link href="/pages/rules">Rules</Link>
+              </li>
+              <li>
+                <Link href="/pages/faq">FAQ</Link>
+              </li>
+              <li>
+                <Link href="#">Page counter</Link>
+              </li>
+              <li>
+                <Link href="#">Text Reader</Link>
+              </li>
+            </ul>
+          </div>
+          <div className="flex flex-col items-start">
+            <h2 className="text-white border-b-2 border-primary mb-2">Legal</h2>
+            <ul className="[&>li>a]:text-white space-y-1">
+              <li>
+                <Link href="/pages/privacy">Privacy</Link>
+              </li>
+              <li>
+                <Link href="/pages/contact">Contact</Link>
               </li>
             </ul>
           </div>

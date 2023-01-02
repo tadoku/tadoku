@@ -101,11 +101,13 @@ const Page = () => {
             active: false,
             href: `/contests/${id}/statistics`,
             label: 'Statistics',
+            disabled: true,
           },
           {
             active: false,
             href: `/contests/${id}/logs`,
             label: 'Logs',
+            disabled: true,
           },
         ]}
       />

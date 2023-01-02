@@ -13,6 +13,7 @@ interface Link {
   href: string
   active: boolean
   IconComponent?: ComponentType<any>
+  disabled?: boolean
 }
 
 export function Tabbar({ links }: Props) {
@@ -56,7 +57,13 @@ export function Tabbar({ links }: Props) {
   )
 }
 
-const TabbarButtonLink = ({ href, IconComponent, label, active }: Link) => (
+const TabbarButtonLink = ({
+  href,
+  IconComponent,
+  label,
+  active,
+  disabled,
+}: Link) => (
   <Link
     href={href}
     className={classNames(
@@ -64,6 +71,7 @@ const TabbarButtonLink = ({ href, IconComponent, label, active }: Link) => (
       {
         'border-primary font-semibold': active,
         'border-transparent': !active,
+        'pointer-events-none opacity-50': disabled,
       },
     )}
     data-label={label}

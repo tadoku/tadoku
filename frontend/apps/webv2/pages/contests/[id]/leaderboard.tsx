@@ -1,4 +1,5 @@
 import { useContest } from '@app/contests/api'
+import { CheckBadgeIcon } from '@heroicons/react/20/solid'
 import { ArrowRightIcon } from '@heroicons/react/24/outline'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
@@ -191,8 +192,24 @@ const Page = () => {
             <div className="-mx-7 px-4 py-2 border-t-2 border-slate-500/5">
               Ends in <strong>29 days</strong>
             </div>
-            <div className="-mx-7 -mb-7 px-4 py-2 border-t-2 border-slate-500/5">
+            <div className="-mx-7 px-4 py-2 border-t-2 border-slate-500/5">
               Tadoku time: <strong>Jan 2nd 2023 04:57:38</strong>
+            </div>
+            <div className="-mx-7 -mb-7 px-4 py-2 bg-slate-500/5 flex items-center space-x-1">
+              <span>Administered by</span>
+              {contest.data.official ? (
+                <div className="flex items-center">
+                  <strong>Tadoku</strong>
+                  <CheckBadgeIcon className="ml-1 w-4 h-4 text-lime-700" />
+                </div>
+              ) : (
+                <Link
+                  href={`/profile/${contest.data.ownerUserId}`}
+                  className="font-bold"
+                >
+                  {contest.data.ownerUserDisplayName}
+                </Link>
+              )}
             </div>
           </div>
 

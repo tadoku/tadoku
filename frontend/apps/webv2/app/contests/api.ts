@@ -171,6 +171,8 @@ const ContestView = z
     description: z.string(),
     private: z.boolean(),
     official: z.boolean(),
+    owner_user_id: z.string(),
+    owner_user_display_name: z.string(),
     allowed_languages: z
       .array(
         z.object({
@@ -195,6 +197,8 @@ const ContestView = z
       registration_end: registrationEnd,
       allowed_languages: allowedLanguages,
       allowed_activities: allowedActivities,
+      owner_user_id: ownerUserId,
+      owner_user_display_name: ownerUserDisplayName,
       ...rest
     } = contest
     return {
@@ -205,6 +209,8 @@ const ContestView = z
       registrationEnd: DateTime.fromISO(registrationEnd),
       allowedLanguages,
       allowedActivities,
+      ownerUserId,
+      ownerUserDisplayName,
     }
   })
 

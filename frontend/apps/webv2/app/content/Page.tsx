@@ -1,4 +1,6 @@
 import { usePage } from '@app/content/api'
+import { HomeIcon } from '@heroicons/react/20/solid'
+import { Breadcrumb } from 'ui'
 
 interface Props {
   slug: string
@@ -21,6 +23,14 @@ export const Page = ({ slug }: Props) => {
 
   return (
     <>
+      <div className="pb-4">
+        <Breadcrumb
+          links={[
+            { label: 'Home', href: '/', IconComponent: HomeIcon },
+            { label: page.data.title, href: `/pages/${slug}` },
+          ]}
+        />
+      </div>
       <h1 className="title my-4">{page.data.title}</h1>
       <div dangerouslySetInnerHTML={{ __html: page.data.html }} />
     </>

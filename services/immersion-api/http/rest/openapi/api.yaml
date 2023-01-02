@@ -94,7 +94,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Contest'
+                $ref: '#/components/schemas/ContestView'
         '404':
           description: not found
   /contests/configuration-options:
@@ -162,7 +162,6 @@ components:
       required:
         - id
         - name
-        - default
       properties:
         id:
           format: int32
@@ -182,7 +181,7 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/Activity"
-    Contest:
+    ContestBase:
       type: object
       required:
         - contest_start
@@ -192,8 +191,6 @@ components:
         - description
         - private
         - official
-        - language_code_allow_list
-        - activity_type_id_allow_list
       properties:
         id:
           type: string
@@ -224,17 +221,6 @@ components:
         owner_user_display_name:
           type: string
           example: "john"
-        language_code_allow_list:
-          type: array
-          items:
-            type: string
-          example: ['jpa', 'zho', 'kor']
-        activity_type_id_allow_list:
-          type: array
-          items:
-            type: integer
-            format: int32
-          example: [1, 2]
         created_at:
           type: string
           format: date-time
@@ -245,6 +231,44 @@ components:
           example: 2022-12-14T19:48:00Z
         deleted:
           type: boolean
+    Contest:
+      allOf:
+        - $ref: '#/components/schemas/ContestBase'
+        - type: object
+          required:
+            - language_code_allow_list
+            - activity_type_id_allow_list
+          properties:
+            owner_user_display_name:
+              type: string
+              example: "john"
+            language_code_allow_list:
+              type: array
+              items:
+                type: string
+              example: ['jpa', 'zho', 'kor']
+            activity_type_id_allow_list:
+              type: array
+              items:
+                type: integer
+                format: int32
+              example: [1, 2]
+    ContestView:
+      allOf:
+        - $ref: '#/components/schemas/ContestBase'
+        - type: object
+          required:
+            - allowed_languages
+            - allowed_activities
+          properties:
+            allowed_languages:
+              type: array
+              items:
+                $ref: "#/components/schemas/Language"
+            allowed_activities:
+              type: array
+              items:
+                $ref: "#/components/schemas/Activity"
     Contests:
       allOf:
         - $ref: '#/components/schemas/PaginatedList'

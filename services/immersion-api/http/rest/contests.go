@@ -86,10 +86,11 @@ func (s *Server) ContestGetConfigurations(ctx echo.Context) error {
 	}
 
 	for i, a := range opts.Activities {
+		a := a
 		res.Activities[i] = openapi.Activity{
 			Id:      a.ID,
 			Name:    a.Name,
-			Default: a.Default,
+			Default: &a.Default,
 		}
 	}
 
@@ -118,22 +119,20 @@ func (s *Server) ContestFindByID(ctx echo.Context, id types.UUID) error {
 		return ctx.NoContent(http.StatusInternalServerError)
 	}
 
-	return ctx.JSON(http.StatusOK, openapi.Contest{
-		Id:                      &contest.ID,
-		ContestStart:            types.Date{Time: contest.ContestStart},
-		ContestEnd:              types.Date{Time: contest.ContestEnd},
-		RegistrationStart:       types.Date{Time: contest.RegistrationStart},
-		RegistrationEnd:         types.Date{Time: contest.RegistrationEnd},
-		Description:             contest.Description,
-		OwnerUserId:             &contest.OwnerUserID,
-		OwnerUserDisplayName:    &contest.OwnerUserDisplayName,
-		Official:                contest.Official,
-		Private:                 contest.Private,
-		LanguageCodeAllowList:   contest.LanguageCodeAllowList,
-		ActivityTypeIdAllowList: contest.ActivityTypeIDAllowList,
-		CreatedAt:               &contest.CreatedAt,
-		UpdatedAt:               &contest.UpdatedAt,
-		Deleted:                 &contest.Deleted,
+	return ctx.JSON(http.StatusOK, openapi.ContestView{
+		Id:                   &contest.ID,
+		ContestStart:         types.Date{Time: contest.ContestStart},
+		ContestEnd:           types.Date{Time: contest.ContestEnd},
+		RegistrationStart:    types.Date{Time: contest.RegistrationStart},
+		RegistrationEnd:      types.Date{Time: contest.RegistrationEnd},
+		Description:          contest.Description,
+		OwnerUserId:          &contest.OwnerUserID,
+		OwnerUserDisplayName: &contest.OwnerUserDisplayName,
+		Official:             contest.Official,
+		Private:              contest.Private,
+		CreatedAt:            &contest.CreatedAt,
+		UpdatedAt:            &contest.UpdatedAt,
+		Deleted:              &contest.Deleted,
 	})
 }
 

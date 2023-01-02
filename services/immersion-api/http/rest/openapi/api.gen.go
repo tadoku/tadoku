@@ -24,7 +24,7 @@ type Activities struct {
 
 // Activity defines model for Activity.
 type Activity struct {
-	Default bool   `json:"default"`
+	Default *bool  `json:"default,omitempty"`
 	Id      int32  `json:"id"`
 	Name    string `json:"name"`
 }
@@ -48,11 +48,47 @@ type Contest struct {
 	UpdatedAt               *time.Time          `json:"updated_at,omitempty"`
 }
 
+// ContestBase defines model for ContestBase.
+type ContestBase struct {
+	ContestEnd           openapi_types.Date  `json:"contest_end"`
+	ContestStart         openapi_types.Date  `json:"contest_start"`
+	CreatedAt            *time.Time          `json:"created_at,omitempty"`
+	Deleted              *bool               `json:"deleted,omitempty"`
+	Description          string              `json:"description"`
+	Id                   *openapi_types.UUID `json:"id,omitempty"`
+	Official             bool                `json:"official"`
+	OwnerUserDisplayName *string             `json:"owner_user_display_name,omitempty"`
+	OwnerUserId          *openapi_types.UUID `json:"owner_user_id,omitempty"`
+	Private              bool                `json:"private"`
+	RegistrationEnd      openapi_types.Date  `json:"registration_end"`
+	RegistrationStart    openapi_types.Date  `json:"registration_start"`
+	UpdatedAt            *time.Time          `json:"updated_at,omitempty"`
+}
+
 // ContestConfigurationOptions defines model for ContestConfigurationOptions.
 type ContestConfigurationOptions struct {
 	Activities             []Activity `json:"activities"`
 	CanCreateOfficialRound bool       `json:"can_create_official_round"`
 	Languages              []Language `json:"languages"`
+}
+
+// ContestView defines model for ContestView.
+type ContestView struct {
+	AllowedActivities    []Activity          `json:"allowed_activities"`
+	AllowedLanguages     []Language          `json:"allowed_languages"`
+	ContestEnd           openapi_types.Date  `json:"contest_end"`
+	ContestStart         openapi_types.Date  `json:"contest_start"`
+	CreatedAt            *time.Time          `json:"created_at,omitempty"`
+	Deleted              *bool               `json:"deleted,omitempty"`
+	Description          string              `json:"description"`
+	Id                   *openapi_types.UUID `json:"id,omitempty"`
+	Official             bool                `json:"official"`
+	OwnerUserDisplayName *string             `json:"owner_user_display_name,omitempty"`
+	OwnerUserId          *openapi_types.UUID `json:"owner_user_id,omitempty"`
+	Private              bool                `json:"private"`
+	RegistrationEnd      openapi_types.Date  `json:"registration_end"`
+	RegistrationStart    openapi_types.Date  `json:"registration_start"`
+	UpdatedAt            *time.Time          `json:"updated_at,omitempty"`
 }
 
 // Contests defines model for Contests.

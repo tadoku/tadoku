@@ -56,8 +56,8 @@ const Index: NextPage<Props> = () => {
   return (
     <>
       <div className="w-full min-h-screen absolute top-0 left-0 right-0 bg-[url('/img/header.jpg')] bg-no-repeat bg-top z-0 pointer-events-none"></div>
-      <div className="relative h-stack space-x-8 z-10">
-        <div className="w-2/6 v-stack space-y-8">
+      <div className="relative flex flex-col lg:h-stack space-y-4 lg:space-y-0 lg:space-x-8 z-10">
+        <div className="lg:w-2/6 v-stack space-y-4 lg:space-y-8">
           <div className="card flex-grow flex flex-col justify-center bg-sky-50">
             <h1 className="title text-xl">Get good at your second language</h1>
             <p>
@@ -87,10 +87,11 @@ const Index: NextPage<Props> = () => {
         </div>
         <div className="flex-grow">
           <div className="card p-0">
-            <div className="h-stack w-full items-center justify-between p-7 pb-4">
+            <div className="h-stack w-full items-center justify-between p-4 pb-2 lg:p-7 lg:pb-4">
               <h2 className="title text-xl">{year} Leaderboard Top 10</h2>
               <Link href="#" className="btn">
-                See more
+                <span className="hidden md:inline">See more</span>
+                <span className="inline md:hidden">More</span>
                 <ArrowLongRightIcon className="ml-2" />
               </Link>
             </div>
@@ -98,9 +99,11 @@ const Index: NextPage<Props> = () => {
               <table className="default shadow-transparent">
                 <thead>
                   <tr>
-                    <th className="default !pl-7">Rank</th>
+                    <th className="default !pl-4 lg:!pl-7">Rank</th>
                     <th className="default">Nickname</th>
-                    <th className="default !text-right !pr-7">Score</th>
+                    <th className="default !text-right !pr-4 lg:!pr-7">
+                      Score
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
@@ -125,7 +128,7 @@ const Index: NextPage<Props> = () => {
                       <td className="link">
                         <Link
                           href={`/profile/${u.user}`}
-                          className="reset justify-end text-lg !pr-7"
+                          className="reset justify-end text-lg !pr-4 lg:!pr-7"
                         >
                           {Math.round(u.score * 10) / 10}
                         </Link>
@@ -148,16 +151,16 @@ const Index: NextPage<Props> = () => {
           </div>
         </div>
       </div>
-      <div className="mt-8 flex flex-row w-full space-x-8">
-        <div className="v-stack flex-grow space-y-8">
+      <div className="mt-4 lg:mt-8 flex flex-col lg:flex-row w-full space-y-4 lg:space-y-0 lg:space-x-8">
+        <div className="v-stack flex-grow space-y-4 lg:space-y-8">
           <div className="card p-0">
-            <h2 className="title text-xl p-7 pb-4">
+            <h2 className="title text-xl p-4 pb-2 lg:p-7 lg:pb-4">
               Contest Schedule for {year}
             </h2>
             <table className="default w-full shadow-none">
               <thead>
                 <tr>
-                  <th className="default !pl-7">Round</th>
+                  <th className="default !pl-4">Round</th>
                   <th className="default">Start</th>
                   <th className="default">End</th>
                   <th className="default">Status</th>
@@ -196,7 +199,8 @@ const Index: NextPage<Props> = () => {
                 <Link href={`/pages/faq`}>Frequently Asked Questions</Link>
               </h2>
               <Link href="/blog" className="btn">
-                More answers
+                <span className="hidden md:inline">More answers</span>
+                <span className="inline md:hidden">More</span>
                 <ArrowLongRightIcon className="ml-2" />
               </Link>
             </div>
@@ -213,7 +217,7 @@ const Index: NextPage<Props> = () => {
           </div>
         </div>
         {posts.data?.posts[0] ? (
-          <div className="w-3/6 flex-shrink-0">
+          <div className="lg:w-3/6 flex-shrink-0">
             <div className="card auto-format">
               <div className="h-stack w-full items-center justify-between">
                 <h2 className="title text-xl">
@@ -222,7 +226,8 @@ const Index: NextPage<Props> = () => {
                   </Link>
                 </h2>
                 <Link href="/blog" className="btn">
-                  More posts
+                  <span className="hidden md:inline">More posts</span>
+                  <span className="inline md:hidden">More</span>
                   <ArrowLongRightIcon className="ml-2" />
                 </Link>
               </div>

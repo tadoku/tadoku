@@ -74,6 +74,9 @@ export default function Footer() {
             </h2>
             <ul className="[&>li>a]:text-white space-y-1">
               <li>
+                <Link href="/pages/about">About</Link>
+              </li>
+              <li>
                 <Link href="/pages/manual">Manual</Link>
               </li>
               <li>
@@ -84,9 +87,6 @@ export default function Footer() {
               </li>
               <li>
                 <Link href="#">Page counter</Link>
-              </li>
-              <li>
-                <Link href="#">Text Reader</Link>
               </li>
             </ul>
           </div>

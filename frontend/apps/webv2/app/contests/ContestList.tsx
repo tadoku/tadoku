@@ -80,7 +80,7 @@ export const ContestList = ({ list, options }: Props) => {
           {list.contests.length === 0 ? (
             <tr>
               <td
-                colSpan={3}
+                colSpan={options ? 5 : 3}
                 className="default h-32 font-bold text-center text-xl text-slate-400"
               >
                 No contests founds

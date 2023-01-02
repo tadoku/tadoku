@@ -1,4 +1,5 @@
 import { ArrowLongRightIcon } from '@heroicons/react/20/solid'
+import { BookOpenIcon } from '@heroicons/react/24/solid'
 import type { NextPage } from 'next'
 import Link from 'next/link'
 
@@ -38,10 +39,16 @@ const Index: NextPage<Props> = () => {
               to improve your understanding of the language you&apos;re
               learning. There are many benefits to doing so: it builds
               vocabulary, reinforces grammar patterns, and you learn about the
-              culture where your language is spoken. As you track your progress
-              over time you will notice that you can understand more and more of
-              the language you're learning.
+              culture where your language is spoken.
             </p>
+            <p>
+              As you track your progress over time you will notice that you can
+              understand more and more of the language you're learning.
+            </p>
+            <Link href="#" className="mt-4 btn primary block !w-full">
+              Join Tadoku
+              <BookOpenIcon className="ml-2" />
+            </Link>
           </div>
         </div>
         <div className="flex-grow">

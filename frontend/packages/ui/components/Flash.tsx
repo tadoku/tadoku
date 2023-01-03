@@ -3,7 +3,7 @@ import Link from 'next/link'
 
 interface Props {
   style: 'success' | 'warning' | 'error' | 'info'
-  label: ReactNode
+  children: ReactNode
   IconComponent?: ComponentType<any>
   href?: string
   onClick?: () => void
@@ -12,7 +12,7 @@ interface Props {
 
 export const Flash = ({
   style,
-  label,
+  children,
   IconComponent,
   href,
   onClick,
@@ -25,15 +25,15 @@ export const Flash = ({
         onClick={onClick}
         className={`flash ${style} ${className ?? ''}`}
       >
-        {IconComponent ? <IconComponent className="mr-2 w-5 h-5" /> : null}
-        {label}
+        {IconComponent ? <IconComponent className="mr-2 h-5" /> : null}
+        {children}
       </Link>
     )
   }
   return (
     <div className={`flash ${style} ${className ?? ''}`}>
-      {IconComponent ? <IconComponent className="mr-2 w-5 h-5" /> : null}
-      {label}
+      {IconComponent ? <IconComponent className="mr-2 h-5" /> : null}
+      {children}
     </div>
   )
 }

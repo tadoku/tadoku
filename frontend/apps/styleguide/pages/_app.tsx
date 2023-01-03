@@ -32,6 +32,7 @@ const navigation: NavigationBlock[] = [
       { title: 'Buttons', href: '/buttons' },
       { title: 'Navigation', href: '/navigation' },
       { title: 'Toasts', href: '/toasts' },
+      { title: 'Flash messages', href: '/flash' },
       { title: 'Charts', href: '/charts' },
       { title: 'Modals', href: '/modals' },
       { title: 'Tables', href: '/tables' },
@@ -48,7 +49,7 @@ export default function App({ Component, pageProps }: AppProps) {
       <Head>
         <title>Tadoku Design System</title>
       </Head>
-      <div className="bg-white w-48 p-8">
+      <div className="bg-white w-52 p-8">
         <h1 className="text-2xl font-bold mb-4">tadoku-ui</h1>
         {navigation.map((block, i) => (
           <Fragment key={i}>

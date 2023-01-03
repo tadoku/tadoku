@@ -24,5 +24,5 @@ select
   name
 from languages
 where
-  code = any(sqlc.arg('language_codes')::varchar[])::varchar[]
+  code = any(sqlc.arg('language_codes')::varchar[])
 order by name asc;

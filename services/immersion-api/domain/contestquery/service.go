@@ -153,17 +153,21 @@ type FindRegistrationForUserRequest struct {
 }
 
 type ContestRegistration struct {
-	ID               uuid.UUID
-	ContestID        uuid.UUID
-	UserID           uuid.UUID
-	UserDisplayName  string
-	AllowedLanguages []Language
+	ID              uuid.UUID
+	ContestID       uuid.UUID
+	UserID          uuid.UUID
+	UserDisplayName string
+	Languages       []Language
 }
 
 func (s *service) FindRegistrationForUser(ctx context.Context, req *FindRegistrationForUserRequest) (*ContestRegistration, error) {
-	if domain.IsRole(ctx, domain.RoleGuest) || domain.IsRole(ctx, domain.RoleBanned) {
+	session := domain.ParseSession(ctx)
+
+	if domain.IsRole(ctx, domain.RoleGuest) || domain.IsRole(ctx, domain.RoleBanned) || session == nil {
 		return nil, ErrUnauthorized
 	}
+
+	req.UserID = uuid.MustParse(session.Subject)
 
 	res, err := s.r.FindRegistrationForUser(ctx, req)
 	if err != nil {

@@ -271,10 +271,10 @@ func (r *ContestRepository) FindRegistrationForUser(ctx context.Context, req *co
 	}
 
 	return &contestquery.ContestRegistration{
-		ID:               reg.ID,
-		ContestID:        reg.ContestID,
-		UserID:           req.UserID,
-		UserDisplayName:  reg.UserDisplayName,
-		AllowedLanguages: langs,
+		ID:              reg.ID,
+		ContestID:       reg.ContestID,
+		UserID:          req.UserID,
+		UserDisplayName: reg.UserDisplayName,
+		Languages:       langs,
 	}, nil
 }

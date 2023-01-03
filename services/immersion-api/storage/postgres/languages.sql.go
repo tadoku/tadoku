@@ -18,7 +18,7 @@ select
   name
 from languages
 where
-  code = any($1::varchar[])::varchar[]
+  code = any($1::varchar[])
 order by name asc
 `
 

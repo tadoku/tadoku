@@ -63,15 +63,19 @@ export const ContestList = ({ list, options }: Props) => {
               </td>
               {options ? (
                 <>
-                  <td className="default text-ellipsis">
-                    {c.languageCodeAllowList
-                      ?.map(l => languages.get(l))
-                      .join(', ') ?? 'No restrictions'}
+                  <td className="link text-ellipsis">
+                    <Link href={`/contests/${c.id}`} className="reset">
+                      {c.languageCodeAllowList
+                        ?.map(l => languages.get(l))
+                        .join(', ') ?? 'No restrictions'}
+                    </Link>
                   </td>
-                  <td className="default text-ellipsis">
-                    {c.activityTypeIdAllowList
-                      .map(it => activities.get(it))
-                      .join(', ')}
+                  <td className="link text-ellipsis">
+                    <Link href={`/contests/${c.id}`} className="reset">
+                      {c.activityTypeIdAllowList
+                        .map(it => activities.get(it))
+                        .join(', ')}
+                    </Link>
                   </td>
                 </>
               ) : null}

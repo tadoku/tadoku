@@ -7,6 +7,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/router'
 import { getQueryStringIntParameter } from '@app/common/router'
 import { ContestList } from '@app/contests/ContestList'
+import { useSession } from '@app/common/session'
 
 interface Props {}
 
@@ -22,6 +23,7 @@ const Contests: NextPage<Props> = () => {
     }
   })
   const list = useContestList(filters)
+  const [session] = useSession()
 
   return (
     <>
@@ -44,6 +46,7 @@ const Contests: NextPage<Props> = () => {
                 label: 'Create contest',
                 style: 'secondary',
                 IconComponent: PlusIcon,
+                visible: !!session,
               },
             ]}
           />

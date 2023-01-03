@@ -211,6 +211,7 @@ const Page = () => {
 
           <div className="card">
             <div className="-m-7 py-4 px-4 text-sm">
+              <h3 className="subtitle text-sm mb-2">Contest summary</h3>
               <strong>100</strong> participants immersing in <strong>12</strong>{' '}
               languages for a total score of <strong>9000</strong>.
             </div>

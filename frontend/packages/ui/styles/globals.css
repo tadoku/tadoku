@@ -346,7 +346,7 @@
   }
 
   .btn.ghost {
-    @apply bg-transparent border-0 focus:ring-0 hover:bg-secondary/5 focus:bg-secondary/5;
+    @apply bg-transparent border-0 focus:ring-0 hover:bg-secondary/5 group-hover:bg-secondary/5 focus:bg-secondary/5 ;
   }
 
   .btn.ghost:disabled {

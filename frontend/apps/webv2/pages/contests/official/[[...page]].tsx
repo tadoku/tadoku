@@ -1,8 +1,7 @@
 import type { NextPage } from 'next'
-import { Breadcrumb, Pagination, Tabbar } from 'ui'
+import { Breadcrumb, ButtonGroup, Pagination, Tabbar } from 'ui'
 import { HomeIcon } from '@heroicons/react/20/solid'
 import { PlusIcon } from '@heroicons/react/24/solid'
-import Link from 'next/link'
 import { useContestList } from '@app/contests/api'
 import { useState } from 'react'
 import { useRouter } from 'next/router'
@@ -37,10 +36,17 @@ const Contests: NextPage<Props> = () => {
       <div className="h-stack justify-between items-center mb-4">
         <h1 className="title">Contests</h1>
         <div className="h-stack justify-end">
-          <Link href="/contests/new" className="btn secondary">
-            <PlusIcon className="mr-2" />
-            Create contest
-          </Link>
+          <ButtonGroup
+            orientation="right"
+            actions={[
+              {
+                href: '/contests/new',
+                label: 'Create contest',
+                style: 'secondary',
+                IconComponent: PlusIcon,
+              },
+            ]}
+          />
         </div>
       </div>
       <Tabbar

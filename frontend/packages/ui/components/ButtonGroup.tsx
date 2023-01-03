@@ -5,10 +5,11 @@ import { ActionMenu } from './ActionMenu'
 
 interface Props {
   actions: Action[]
+  orientation?: 'left' | 'right'
 }
 
 interface Action {
-  label: string
+  label: React.ReactNode
   href: string
   onClick?: () => void
   IconComponent?: ComponentType<any>
@@ -16,7 +17,7 @@ interface Action {
   style?: 'primary' | 'secondary' | 'default' | 'danger' | 'ghost'
 }
 
-export function ButtonGroup({ actions }: Props) {
+export function ButtonGroup({ actions, orientation }: Props) {
   return (
     <>
       <div className="block lg:hidden">
@@ -25,6 +26,7 @@ export function ButtonGroup({ actions }: Props) {
             ...a,
             type: a.style === 'danger' ? 'danger' : 'normal',
           }))}
+          orientation={orientation}
         >
           Actions <ChevronDownIcon className="w-4 h-4" />
         </ActionMenu>

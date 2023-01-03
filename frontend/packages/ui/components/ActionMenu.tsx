@@ -4,8 +4,9 @@ import classNames from 'classnames'
 
 interface Props {
   children: ReactNode
+  orientation?: 'left' | 'right'
   links: {
-    label: string
+    label: React.ReactNode
     href: string
     IconComponent?: ComponentType<any>
     onClick?: () => void
@@ -13,9 +14,13 @@ interface Props {
   }[]
 }
 
-export const ActionMenu = ({ children, links }: Props) => (
+export const ActionMenu = ({
+  children,
+  links,
+  orientation = 'left',
+}: Props) => (
   <div className="">
-    <Menu as="div" className="relative">
+    <Menu as="div" className="relative group">
       <Menu.Button className="btn ghost px-0 md:px-2">{children}</Menu.Button>
       <Transition
         as={Fragment}
@@ -26,7 +31,9 @@ export const ActionMenu = ({ children, links }: Props) => (
         leaveFrom="transform opacity-100 scale-100"
         leaveTo="transform opacity-0 scale-95"
       >
-        <Menu.Items className="absolute left-0 z-10 mt-2 min-w-[150px] origin-top-right bg-white py-1 shadow-md shadow-slate-500/20 ring-1 ring-secondary ring-opacity-5 focus:outline-none">
+        <Menu.Items
+          className={`absolute ${orientation}-0 z-10 min-w-[150px] origin-top-right bg-white py-1 shadow-md shadow-slate-500/20 ring-1 ring-secondary ring-opacity-5 focus:outline-none`}
+        >
           {links.map(
             ({ label, href, IconComponent, onClick, type = 'normal' }, i) => (
               <Menu.Item key={i}>

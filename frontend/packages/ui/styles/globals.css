@@ -40,7 +40,6 @@
   }
 
   a:not(.reset):not(.flash):not(.btn) {
-    color: theme('colors.neutral.800');
     text-decoration: none;
     transition: color 0.2s ease;
   }

@@ -8,6 +8,7 @@ interface Props {
   href?: string
   onClick?: () => void
   className?: string
+  visible?: boolean
 }
 
 export const Flash = ({
@@ -17,7 +18,12 @@ export const Flash = ({
   href,
   onClick,
   className,
+  visible = true,
 }: Props) => {
+  if (!visible) {
+    return null
+  }
+
   if (onClick || href) {
     return (
       <Link

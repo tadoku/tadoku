@@ -1,3 +1,4 @@
+import { DateTime } from 'luxon'
 import { useRouter } from 'next/router'
 import { useEffect, useRef, useState } from 'react'
 
@@ -34,4 +35,11 @@ export const useInterval = (callback: () => void, delay: number | 'pause') => {
       return () => clearInterval(id)
     }
   }, [delay])
+}
+
+export const useCurrentDateTime = () => {
+  const [now, setNow] = useState(() => DateTime.utc())
+  useInterval(() => setNow(DateTime.utc()), 1000)
+
+  return now
 }

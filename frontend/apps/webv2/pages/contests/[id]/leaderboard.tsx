@@ -1,14 +1,19 @@
-import { useCurrentLocation, useInterval } from '@app/common/hooks'
+import {
+  useCurrentDateTime,
+  useCurrentLocation,
+  useInterval,
+} from '@app/common/hooks'
 import { useSession } from '@app/common/session'
 import { useContest, useContestRegistration } from '@app/contests/api'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
-import { ButtonGroup, Flash, Pagination, Tabbar } from 'ui'
+import { Breadcrumb, ButtonGroup, Flash, Pagination, Tabbar } from 'ui'
 import { DateTime, Interval } from 'luxon'
 import { useState } from 'react'
 import { ContestOverview } from '@app/contests/ContestOverview'
 import {
   ExclamationCircleIcon,
+  HomeIcon,
   InformationCircleIcon,
 } from '@heroicons/react/20/solid'
 import { ContestConfiguration } from '@app/contests/ContestConfiguration'
@@ -51,8 +56,7 @@ const Page = () => {
   const router = useRouter()
   const id = router.query['id']?.toString() ?? ''
 
-  const [now, setNow] = useState(() => DateTime.utc())
-  useInterval(() => setNow(DateTime.utc()), 1000)
+  const now = useCurrentDateTime()
 
   const contest = useContest(id)
   const [session] = useSession()
@@ -86,6 +90,25 @@ const Page = () => {
 
   return (
     <>
+      <div className="pb-4">
+        <Breadcrumb
+          links={[
+            { label: 'Home', href: routes.home(), IconComponent: HomeIcon },
+            {
+              label: contest.data.official
+                ? 'Official contests'
+                : 'User contests',
+              href: contest.data.official
+                ? routes.contestListOfficial()
+                : routes.contestListUserContests(),
+            },
+            {
+              label: contest.data.description,
+              href: routes.contestLeaderboard(id),
+            },
+          ]}
+        />
+      </div>
       <div className="h-stack justify-between items-center w-full">
         <div>
           <h1 className="title">Contest</h1>
@@ -134,27 +157,23 @@ const Page = () => {
           },
         ]}
       />
-
-      {!session && !hasEnded ? (
-        <Flash
-          style="info"
-          href={routes.authLogin(currentUrl)}
-          IconComponent={InformationCircleIcon}
-          className="mt-4"
-        >
-          You need to log in to participate in this contest.
-        </Flash>
-      ) : null}
-      {hasEnded ? (
-        <Flash
-          style="warning"
-          IconComponent={ExclamationCircleIcon}
-          className="mt-4"
-        >
-          This contest has already ended and does not accept any new
-          participants.
-        </Flash>
-      ) : null}
+      <Flash
+        style="info"
+        href={routes.authLogin(currentUrl)}
+        IconComponent={InformationCircleIcon}
+        className="mt-4"
+        visible={!session && !hasEnded}
+      >
+        You need to log in to participate in this contest.
+      </Flash>
+      <Flash
+        style="warning"
+        IconComponent={ExclamationCircleIcon}
+        className="mt-4"
+        visible={hasEnded}
+      >
+        This contest has already ended and does not accept any new participants.
+      </Flash>
       <div className="flex mt-4 space-x-4">
         <div className="flex-grow">
           <div className="table-container">

@@ -20,7 +20,7 @@ export const ContestOverview = ({
   now,
 }: Props) => (
   <div className="card text-sm">
-    <div className="-mx-7 -mt-7 py-4 px-4 h-stack justify-between items-center">
+    <div className="-mx-7 -mt-7 pt-4 pb-2 px-4 h-stack justify-between items-center">
       <div>
         <div className="subtitle text-sm">
           {hasStarted ? 'Started' : 'Starting'}
@@ -37,9 +37,9 @@ export const ContestOverview = ({
         </div>
       </div>
     </div>
-    <div className="-mx-7 px-4 py-2 border-t-2 border-slate-500/5">
+    <div className="-mx-7 px-4 py-2 flex flex-col space-y-2">
       {!hasStarted ? (
-        <>
+        <div>
           Starting in{' '}
           <strong>
             {contest.contestStart.diffNow(['days', 'hours', 'minute']).toHuman({
@@ -47,14 +47,14 @@ export const ContestOverview = ({
               unitDisplay: 'short',
             })}
           </strong>
-        </>
+        </div>
       ) : hasEnded ? (
-        <>
+        <div>
           Contest has <strong>ended</strong>
-        </>
+        </div>
       ) : (
         <>
-          <div className="mb-2">
+          <div>
             Ending in{' '}
             <strong>
               {contest.contestEnd
@@ -71,7 +71,7 @@ export const ContestOverview = ({
             <div>No longer accepting new participants</div>
           ) : (
             <div>
-              Registration open until{' '}
+              Registrations open until{' '}
               <strong>
                 {contest.registrationEnd.toLocaleString(DateTime.DATE_MED)}
               </strong>
@@ -79,10 +79,12 @@ export const ContestOverview = ({
           )}
         </>
       )}
-    </div>
-    <div className="-mx-7 px-4 py-2 border-t-2 border-slate-500/5">
-      Tadoku time:{' '}
-      <strong>{now.toLocaleString(DateTime.DATETIME_MED_WITH_SECONDS)}</strong>
+      <div>
+        Tadoku time:{' '}
+        <strong>
+          {now.toLocaleString(DateTime.DATETIME_MED_WITH_SECONDS)}
+        </strong>
+      </div>
     </div>
     <div className="-mx-7 -mb-7 px-4 py-2 bg-slate-500/5 flex items-center space-x-1">
       <span>Administered by</span>

@@ -224,3 +224,55 @@ export const useContest = (id: string, options?: { enabled?: boolean }) =>
     },
     options,
   )
+
+const ContestRegistrationView = z
+  .object({
+    id: z.string(),
+    contest_id: z.string(),
+    user_id: z.string(),
+    user_display_name: z.string(),
+    languages: z.array(
+      z.object({
+        code: z.string(),
+        name: z.string(),
+      }),
+    ),
+  })
+  .transform(reg => {
+    const {
+      contest_id: contestId,
+      user_id: userId,
+      user_display_name: userDisplayName,
+      ...rest
+    } = reg
+    return {
+      ...rest,
+      contestId,
+      userId,
+      userDisplayName,
+    }
+  })
+
+export type ContestRegistrationView = z.infer<typeof ContestRegistrationView>
+
+export const useContestRegistration = (
+  id: string,
+  options?: { enabled?: boolean },
+) =>
+  useQuery(
+    ['contest', 'findContestRegistrationForUser', id],
+    async (): Promise<ContestRegistrationView | undefined> => {
+      const response = await fetch(`${root}/${id}/registration`)
+
+      if (response.status === 404) {
+        return undefined
+      }
+
+      if (response.status !== 200) {
+        throw new Error('could not fetch page')
+      }
+
+      return ContestRegistrationView.parse(await response.json())
+    },
+    options,
+  )

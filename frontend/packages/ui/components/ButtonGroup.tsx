@@ -15,14 +15,16 @@ interface Action {
   IconComponent?: ComponentType<any>
   disabled?: boolean
   style?: 'primary' | 'secondary' | 'default' | 'danger' | 'ghost'
+  visible?: boolean
 }
 
 export function ButtonGroup({ actions, orientation }: Props) {
+  const filtered = actions.filter(it => it.visible !== false)
   return (
     <>
       <div className="block lg:hidden">
         <ActionMenu
-          links={actions.map(a => ({
+          links={filtered.map(a => ({
             ...a,
             type: a.style === 'danger' ? 'danger' : 'normal',
           }))}
@@ -33,7 +35,7 @@ export function ButtonGroup({ actions, orientation }: Props) {
       </div>
 
       <div className="hidden lg:flex h-full space-x-3">
-        {actions.map((link, i) => (
+        {filtered.map(link => (
           <TabbarButtonLink key={`${link.href}-${link.label}`} {...link} />
         ))}
       </div>

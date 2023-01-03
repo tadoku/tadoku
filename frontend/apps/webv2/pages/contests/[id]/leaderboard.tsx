@@ -1,9 +1,9 @@
 import { useCurrentLocation, useInterval } from '@app/common/hooks'
 import { useSession } from '@app/common/session'
-import { useContest } from '@app/contests/api'
+import { useContest, useContestRegistration } from '@app/contests/api'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
-import { Flash, Pagination, Tabbar } from 'ui'
+import { ButtonGroup, Flash, Pagination, Tabbar } from 'ui'
 import getConfig from 'next/config'
 import { DateTime, Interval } from 'luxon'
 import { useState } from 'react'
@@ -13,6 +13,7 @@ import {
   InformationCircleIcon,
 } from '@heroicons/react/20/solid'
 import { ContestConfiguration } from '@app/contests/ContestConfiguration'
+import { PencilSquareIcon, PlusIcon } from '@heroicons/react/24/solid'
 
 const { publicRuntimeConfig } = getConfig()
 
@@ -59,6 +60,8 @@ const Page = () => {
   const [session] = useSession()
   const currentUrl = useCurrentLocation()
 
+  const registration = useContestRegistration(id, { enabled: !!session })
+
   if (contest.isLoading || contest.isIdle) {
     return <p>Loading...</p>
   }
@@ -77,6 +80,7 @@ const Page = () => {
   )
   const hasEnded = contestInterval.isBefore(now)
   const hasStarted = contestInterval.contains(now) || hasEnded
+  const isOngoing = hasStarted && !hasEnded
 
   return (
     <>
@@ -86,16 +90,25 @@ const Page = () => {
           <h2 className="subtitle">{contest.data.description}</h2>
         </div>
         <div>
-          {true ? (
-            <a href="#" className="btn primary">
-              Join contest
-            </a>
-          ) : null}
-          {false ? (
-            <a href="#" className="btn secondary">
-              Submit log
-            </a>
-          ) : null}
+          <ButtonGroup
+            actions={[
+              {
+                href: `/contests/${id}/join`,
+                label: 'Join contest',
+                IconComponent: PlusIcon,
+                style: 'primary',
+                visible: !hasEnded && registration.data === undefined,
+              },
+              {
+                href: `/contests/${id}/log`,
+                label: 'Log update',
+                IconComponent: PencilSquareIcon,
+                style: 'secondary',
+                visible: isOngoing && registration.data !== undefined,
+              },
+            ]}
+            orientation="right"
+          />
         </div>
       </div>
       <Tabbar

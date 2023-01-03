@@ -4,7 +4,6 @@ import { useContest, useContestRegistration } from '@app/contests/api'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
 import { ButtonGroup, Flash, Pagination, Tabbar } from 'ui'
-import getConfig from 'next/config'
 import { DateTime, Interval } from 'luxon'
 import { useState } from 'react'
 import { ContestOverview } from '@app/contests/ContestOverview'
@@ -14,8 +13,7 @@ import {
 } from '@heroicons/react/20/solid'
 import { ContestConfiguration } from '@app/contests/ContestConfiguration'
 import { PencilSquareIcon, PlusIcon } from '@heroicons/react/24/solid'
-
-const { publicRuntimeConfig } = getConfig()
+import { routes } from '@app/common/routes'
 
 const data = [
   { rank: '1', user: 'powz', score: 5054.25054 },
@@ -97,14 +95,14 @@ const Page = () => {
           <ButtonGroup
             actions={[
               {
-                href: `/contests/${id}/join`,
+                href: routes.contestJoin(id),
                 label: 'Join contest',
                 IconComponent: PlusIcon,
                 style: 'primary',
                 visible: !hasEnded && registration.data === undefined,
               },
               {
-                href: `/contests/${id}/log`,
+                href: routes.contestLog(),
                 label: 'Log update',
                 IconComponent: PencilSquareIcon,
                 style: 'secondary',
@@ -119,18 +117,18 @@ const Page = () => {
         links={[
           {
             active: true,
-            href: `/contests/${id}/leaderboard`,
+            href: routes.contestLeaderboard(id),
             label: 'Leaderboard',
           },
           {
             active: false,
-            href: `/contests/${id}/statistics`,
+            href: routes.contestLeaderboard(id),
             label: 'Statistics',
             disabled: true,
           },
           {
             active: false,
-            href: `/contests/${id}/logs`,
+            href: routes.contestLeaderboard(id),
             label: 'Logs',
             disabled: true,
           },
@@ -140,9 +138,7 @@ const Page = () => {
       {!session && !hasEnded ? (
         <Flash
           style="info"
-          href={
-            publicRuntimeConfig.authUiUrl + `/login?return_to=${currentUrl}`
-          }
+          href={routes.authLogin(currentUrl)}
           IconComponent={InformationCircleIcon}
           className="mt-4"
         >
@@ -175,7 +171,7 @@ const Page = () => {
                   <tr key={u.rank} className="link">
                     <td className="link w-10">
                       <Link
-                        href={`/contests/${id}/user/${u.user}`}
+                        href={routes.contestUserProfile(id, u.user)}
                         className="reset justify-center text-lg"
                       >
                         {u.rank}
@@ -183,7 +179,7 @@ const Page = () => {
                     </td>
                     <td className="link">
                       <Link
-                        href={`/contests/${id}/user/${u.user}`}
+                        href={routes.contestUserProfile(id, u.user)}
                         className="reset text-lg"
                       >
                         {u.user}
@@ -191,7 +187,7 @@ const Page = () => {
                     </td>
                     <td className="link">
                       <Link
-                        href={`/contests/${id}/user/${u.user}`}
+                        href={routes.contestUserProfile(id, u.user)}
                         className="reset justify-end text-lg"
                       >
                         {Math.round(u.score * 10) / 10}

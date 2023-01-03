@@ -3,6 +3,7 @@ import { Breadcrumb } from 'ui'
 import { HomeIcon } from '@heroicons/react/20/solid'
 import { ContestForm } from '@app/contests/ContestForm'
 import { useContestConfigurationOptions } from '@app/contests/api'
+import { routes } from '@app/common/routes'
 
 interface Props {}
 
@@ -14,9 +15,9 @@ const Contests: NextPage<Props> = () => {
       <div className="pb-4">
         <Breadcrumb
           links={[
-            { label: 'Home', href: '/', IconComponent: HomeIcon },
-            { label: 'Contests', href: '/contests' },
-            { label: 'Create new contest', href: '/contests/new' },
+            { label: 'Home', href: routes.home(), IconComponent: HomeIcon },
+            { label: 'Contests', href: routes.contestListOfficial() },
+            { label: 'Create new contest', href: routes.contestNew() },
           ]}
         />
       </div>

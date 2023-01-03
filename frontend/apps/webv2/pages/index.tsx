@@ -1,3 +1,4 @@
+import { routes } from '@app/common/routes'
 import { usePostList } from '@app/content/api'
 import { PostBody } from '@app/content/Post'
 import { ArrowLongRightIcon } from '@heroicons/react/20/solid'
@@ -196,9 +197,11 @@ const Index: NextPage<Props> = () => {
           <div className="card">
             <div className="h-stack w-full items-center justify-between mb-4">
               <h2 className="title text-xl">
-                <Link href={`/pages/faq`}>Frequently Asked Questions</Link>
+                <Link href={routes.blogPage('faq')}>
+                  Frequently Asked Questions
+                </Link>
               </h2>
-              <Link href="/blog" className="btn">
+              <Link href={routes.blogPage('faq')} className="btn">
                 <span className="hidden md:inline">More answers</span>
                 <span className="inline md:hidden">More</span>
                 <ArrowLongRightIcon className="ml-2" />
@@ -222,11 +225,11 @@ const Index: NextPage<Props> = () => {
               <div className="h-stack w-full items-center justify-between space-x-4">
                 <h2 className="title text-xl">
                   Latest blog post:{' '}
-                  <Link href={`/blog/posts/${posts.data.posts[0].slug}`}>
+                  <Link href={routes.blogPost(posts.data.posts[0].slug)}>
                     {posts.data.posts[0].title}
                   </Link>
                 </h2>
-                <Link href="/blog" className="btn flex-shrink-0">
+                <Link href={routes.blogList()} className="btn flex-shrink-0">
                   <span className="hidden md:inline">More posts</span>
                   <span className="inline md:hidden">More</span>
                   <ArrowLongRightIcon className="ml-2" />

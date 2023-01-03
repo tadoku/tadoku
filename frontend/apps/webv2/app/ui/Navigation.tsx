@@ -10,6 +10,7 @@ import {
 import { useLogoutHandler, useSession } from '@app/common/session'
 import { useCurrentLocation } from '@app/common/hooks'
 import getConfig from 'next/config'
+import { routes } from '@app/common/routes'
 
 const { publicRuntimeConfig } = getConfig()
 
@@ -27,8 +28,7 @@ export default function Navigation() {
             links: [
               {
                 label: 'Account settings',
-                href:
-                  publicRuntimeConfig.authUiUrl + `/?return_to=${currentUrl}`,
+                href: routes.authSettings(currentUrl),
                 IconComponent: Cog8ToothIcon,
               },
               {
@@ -44,40 +44,47 @@ export default function Navigation() {
           {
             type: 'link',
             label: 'Log in',
-            href:
-              publicRuntimeConfig.authUiUrl + `/login?return_to=${currentUrl}`,
+            href: routes.authLogin(currentUrl),
           },
           {
             type: 'link',
             label: 'Sign up',
-            href:
-              publicRuntimeConfig.authUiUrl +
-              `/register?return_to=${currentUrl}`,
+            href: routes.authSignup(currentUrl),
           },
         ]
 
   return (
     <Navbar
-      logoHref="/"
+      logoHref={routes.home()}
       navigation={[
         {
           type: 'link',
           label: 'Home',
-          href: '/',
+          href: routes.home(),
           current: false,
         },
         {
           type: 'link',
           label: 'Leaderboard',
-          href: '/leaderboard',
+          href: routes.leaderboard(),
           current: false,
         },
-        { type: 'link', label: 'Contests', href: '/contests', current: false },
-        { type: 'link', label: 'Blog', href: '/blog', current: false },
+        {
+          type: 'link',
+          label: 'Contests',
+          href: routes.contestListOfficial(),
+          current: false,
+        },
+        {
+          type: 'link',
+          label: 'Blog',
+          href: routes.blogList(),
+          current: false,
+        },
         {
           type: 'link',
           label: 'Forum',
-          href: 'https://forum.tadoku.app',
+          href: routes.forum(),
           current: false,
         },
         ...userNavigation,

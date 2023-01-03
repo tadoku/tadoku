@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { ContestConfigurationOptions, Contests } from '@app/contests/api'
 import { DateTime } from 'luxon'
 import { EyeSlashIcon } from '@heroicons/react/24/outline'
+import { routes } from '@app/common/routes'
 
 interface Props {
   list: Contests
@@ -41,7 +42,7 @@ export const ContestList = ({ list, options }: Props) => {
           {list.contests.map(c => (
             <tr key={c.id} className="link">
               <td className="link">
-                <Link href={`/contests/${c.id}`} className="reset">
+                <Link href={routes.contestLeaderboard(c.id)} className="reset">
                   {c.private ? (
                     <EyeSlashIcon
                       className="w-5 h-5 mr-2"
@@ -52,26 +53,32 @@ export const ContestList = ({ list, options }: Props) => {
                 </Link>
               </td>
               <td className="link">
-                <Link href={`/contests/${c.id}`} className="reset">
+                <Link href={routes.contestLeaderboard(c.id)} className="reset">
                   {c.contestStart.toLocaleString(DateTime.DATE_FULL)}
                 </Link>
               </td>
               <td className="link">
-                <Link href={`/contests/${c.id}`} className="reset">
+                <Link href={routes.contestLeaderboard(c.id)} className="reset">
                   {c.contestEnd.toLocaleString(DateTime.DATE_FULL)}
                 </Link>
               </td>
               {options ? (
                 <>
                   <td className="link text-ellipsis">
-                    <Link href={`/contests/${c.id}`} className="reset">
+                    <Link
+                      href={routes.contestLeaderboard(c.id)}
+                      className="reset"
+                    >
                       {c.languageCodeAllowList
                         ?.map(l => languages.get(l))
                         .join(', ') ?? 'No restrictions'}
                     </Link>
                   </td>
                   <td className="link text-ellipsis">
-                    <Link href={`/contests/${c.id}`} className="reset">
+                    <Link
+                      href={routes.contestLeaderboard(c.id)}
+                      className="reset"
+                    >
                       {c.activityTypeIdAllowList
                         .map(it => activities.get(it))
                         .join(', ')}

@@ -6,6 +6,7 @@ import { date } from '@app/common/regex'
 import { ContestConfigurationOptions, useCreateContest } from './api'
 import { useRouter } from 'next/router'
 import { useDebounce } from 'use-debounce'
+import { routes } from '@app/common/routes'
 
 export const ContestFormSchema = z
   .object({
@@ -181,7 +182,7 @@ export const ContestForm = ({
         )}
       </div>
       <div className="h-stack spaced justify-end">
-        <a href="/contests" className="btn ghost">
+        <a href={routes.contestListOfficial()} className="btn ghost">
           Cancel
         </a>
         <button

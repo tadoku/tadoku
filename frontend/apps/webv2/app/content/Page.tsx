@@ -1,3 +1,4 @@
+import { routes } from '@app/common/routes'
 import { usePage } from '@app/content/api'
 import { HomeIcon } from '@heroicons/react/20/solid'
 import { Breadcrumb } from 'ui'
@@ -26,8 +27,8 @@ export const Page = ({ slug }: Props) => {
       <div className="pb-4">
         <Breadcrumb
           links={[
-            { label: 'Home', href: '/', IconComponent: HomeIcon },
-            { label: page.data.title, href: `/pages/${slug}` },
+            { label: 'Home', href: routes.home(), IconComponent: HomeIcon },
+            { label: page.data.title, href: routes.blogPage(slug) },
           ]}
         />
       </div>

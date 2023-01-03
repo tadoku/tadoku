@@ -4,6 +4,7 @@ import { HomeIcon } from '@heroicons/react/20/solid'
 import { PostDetail } from '@app/content/Post'
 import { useRouter } from 'next/router'
 import { usePost } from '@app/content/api'
+import { routes } from '@app/common/routes'
 
 interface Props {}
 
@@ -30,9 +31,9 @@ const BlogPost: NextPage<Props> = () => {
       <div className="pb-4">
         <Breadcrumb
           links={[
-            { label: 'Home', href: '/', IconComponent: HomeIcon },
-            { label: 'Blog', href: '/blog' },
-            { label: post.data.title, href: `/blog/${post.data.slug}` },
+            { label: 'Home', href: routes.home(), IconComponent: HomeIcon },
+            { label: 'Blog', href: routes.blogList() },
+            { label: post.data.title, href: routes.blogPost(post.data.slug) },
           ]}
         />
       </div>

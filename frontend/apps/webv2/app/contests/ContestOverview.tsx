@@ -3,6 +3,7 @@ import { CheckBadgeIcon } from '@heroicons/react/20/solid'
 import { ArrowRightIcon } from '@heroicons/react/24/outline'
 import Link from 'next/link'
 import { DateTime, Duration } from 'luxon'
+import { routes } from '@app/common/routes'
 
 interface Props {
   contest: ContestView
@@ -94,7 +95,10 @@ export const ContestOverview = ({
           <CheckBadgeIcon className="ml-1 w-4 h-4 text-lime-700" />
         </div>
       ) : (
-        <Link href={`/profile/${contest.ownerUserId}`} className="font-bold">
+        <Link
+          href={routes.userProfile(contest.ownerUserId)}
+          className="font-bold"
+        >
           {contest.ownerUserDisplayName}
         </Link>
       )}

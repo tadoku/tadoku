@@ -1,3 +1,4 @@
+import { routes } from '@app/common/routes'
 import Link from 'next/link'
 import { LogoInverted } from 'ui'
 import { DiscordIcon, GitHubIcon, TwitterIcon } from './Icons'
@@ -11,7 +12,7 @@ export default function Footer() {
           <div className="mt-8 md:mt-0 text-white md:flex-grow">
             Built by{' '}
             <a
-              href="https://antonve.be"
+              href={routes.personalWebsite()}
               className="reset text-white hover:text-primary border-b-2 border-primary transition-all"
             >
               antonve
@@ -20,7 +21,7 @@ export default function Footer() {
 
           <div className="space-x-4 flex">
             <a
-              href="https://twitter.com/tadoku_app"
+              href={routes.twitter()}
               target="_blank"
               rel="noopener noreferrer"
               className="reset bg-white/80 hover:bg-primary/80 p-2"
@@ -28,7 +29,7 @@ export default function Footer() {
               <TwitterIcon className="w-8 h-8" />
             </a>
             <a
-              href="https://github.com/tadoku"
+              href={routes.github()}
               target="_blank"
               rel="noopener noreferrer"
               className="reset bg-white/80 hover:bg-primary/80 p-2"
@@ -36,7 +37,7 @@ export default function Footer() {
               <GitHubIcon className="w-8 h-8" />
             </a>
             <a
-              href="https://discord.gg/Dd8t9WB"
+              href={routes.discord()}
               target="_blank"
               rel="noopener noreferrer"
               className="reset bg-white/80 hover:bg-primary/80 p-2"
@@ -52,19 +53,19 @@ export default function Footer() {
             </h2>
             <ul className="[&>li>a]:text-white space-y-1">
               <li>
-                <Link href="/">Homepage</Link>
+                <Link href={routes.home()}>Homepage</Link>
               </li>
               <li>
-                <Link href="/leaderboard">Leaderboard</Link>
+                <Link href={routes.leaderboard()}>Leaderboard</Link>
               </li>
               <li>
-                <Link href="/contests">Contests</Link>
+                <Link href={routes.contestListOfficial()}>Contests</Link>
               </li>
               <li>
-                <Link href="/blog">Blog</Link>
+                <Link href={routes.blogList()}>Blog</Link>
               </li>
               <li>
-                <Link href="https://forum.tadoku.app/">Forum</Link>
+                <Link href={routes.forum()}>Forum</Link>
               </li>
             </ul>
           </div>
@@ -74,16 +75,16 @@ export default function Footer() {
             </h2>
             <ul className="[&>li>a]:text-white space-y-1">
               <li>
-                <Link href="/pages/about">About</Link>
+                <Link href={routes.blogPage('about')}>About</Link>
               </li>
               <li>
-                <Link href="/pages/manual">Manual</Link>
+                <Link href={routes.blogPage('manual')}>Manual</Link>
               </li>
               <li>
-                <Link href="/pages/rules">Rules</Link>
+                <Link href={routes.blogPage('rules')}>Rules</Link>
               </li>
               <li>
-                <Link href="/pages/faq">FAQ</Link>
+                <Link href={routes.blogPage('faq')}>FAQ</Link>
               </li>
               <li>
                 <Link href="#">Page counter</Link>
@@ -94,10 +95,10 @@ export default function Footer() {
             <h2 className="text-white border-b-2 border-primary mb-2">Legal</h2>
             <ul className="[&>li>a]:text-white space-y-1">
               <li>
-                <Link href="/pages/privacy">Privacy</Link>
+                <Link href={routes.blogPage('privacy')}>Privacy</Link>
               </li>
               <li>
-                <Link href="/pages/contact">Contact</Link>
+                <Link href={routes.blogPage('contact')}>Contact</Link>
               </li>
             </ul>
           </div>

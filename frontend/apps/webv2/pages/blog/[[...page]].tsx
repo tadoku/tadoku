@@ -6,6 +6,7 @@ import { HomeIcon } from '@heroicons/react/24/outline'
 import { useState } from 'react'
 import Link from 'next/link'
 import { getQueryStringIntParameter } from '@app/common/router'
+import { routes } from '@app/common/routes'
 
 const BlogIndex = () => {
   const router = useRouter()
@@ -44,8 +45,8 @@ const BlogIndex = () => {
       <div className="pb-4">
         <Breadcrumb
           links={[
-            { label: 'Home', href: '/', IconComponent: HomeIcon },
-            { label: 'Blog', href: '/blog' },
+            { label: 'Home', href: routes.home(), IconComponent: HomeIcon },
+            { label: 'Blog', href: routes.blogList() },
           ]}
         />
       </div>

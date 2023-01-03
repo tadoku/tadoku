@@ -11,6 +11,7 @@ import { useRouter } from 'next/router'
 import { getQueryStringIntParameter } from '@app/common/router'
 import { useSessionOrRedirect } from '@app/common/session'
 import { ContestList } from '@app/contests/ContestList'
+import { routes } from '@app/common/routes'
 
 interface Props {}
 
@@ -39,8 +40,8 @@ const Contests: NextPage<Props> = () => {
       <div className="pb-4">
         <Breadcrumb
           links={[
-            { label: 'Home', href: '/', IconComponent: HomeIcon },
-            { label: 'Contests', href: '/contests' },
+            { label: 'Home', href: routes.home(), IconComponent: HomeIcon },
+            { label: 'My contests', href: routes.contestListMyContests() },
           ]}
         />
       </div>
@@ -51,7 +52,7 @@ const Contests: NextPage<Props> = () => {
             orientation="right"
             actions={[
               {
-                href: '/contests/new',
+                href: routes.contestNew(),
                 label: 'Create contest',
                 style: 'secondary',
                 IconComponent: PlusIcon,
@@ -63,17 +64,17 @@ const Contests: NextPage<Props> = () => {
       <Tabbar
         links={[
           {
-            href: '/contests/official',
+            href: routes.contestListOfficial(),
             label: 'Official contests',
             active: false,
           },
           {
-            href: '/contests/user-contests',
+            href: routes.contestListUserContests(),
             label: 'User contests',
             active: false,
           },
           {
-            href: '/contests/my-contests',
+            href: routes.contestListMyContests(),
             label: 'My contests',
             active: true,
           },

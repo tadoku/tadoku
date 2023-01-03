@@ -8,6 +8,7 @@ interface Props {
   contest: ContestView
   hasStarted: boolean
   hasEnded: boolean
+  registrationClosed: boolean
   now: DateTime
 }
 
@@ -15,6 +16,7 @@ export const ContestOverview = ({
   contest,
   hasStarted,
   hasEnded,
+  registrationClosed,
   now,
 }: Props) => (
   <div className="card text-sm">
@@ -52,16 +54,29 @@ export const ContestOverview = ({
         </>
       ) : (
         <>
-          Ending in{' '}
-          <strong>
-            {contest.contestEnd
-              .plus(Duration.fromObject({ days: 1 }))
-              .diffNow(['days', 'hours', 'minute'])
-              .toHuman({
-                maximumFractionDigits: 0,
-                unitDisplay: 'short',
-              })}
-          </strong>
+          <div className="mb-2">
+            Ending in{' '}
+            <strong>
+              {contest.contestEnd
+                .plus(Duration.fromObject({ days: 1 }))
+                .diffNow(['days', 'hours', 'minute'])
+                .toHuman({
+                  maximumFractionDigits: 0,
+                  unitDisplay: 'short',
+                })}
+            </strong>
+          </div>
+
+          {registrationClosed ? (
+            <div>No longer accepting new participants</div>
+          ) : (
+            <div>
+              Registration open until{' '}
+              <strong>
+                {contest.registrationEnd.toLocaleString(DateTime.DATE_MED)}
+              </strong>
+            </div>
+          )}
         </>
       )}
     </div>

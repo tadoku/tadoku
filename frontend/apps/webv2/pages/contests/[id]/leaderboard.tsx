@@ -81,6 +81,10 @@ const Page = () => {
   const hasEnded = contestInterval.isBefore(now)
   const hasStarted = contestInterval.contains(now) || hasEnded
   const isOngoing = hasStarted && !hasEnded
+  const registrationClosed = Interval.fromDateTimes(
+    contest.data.contestStart,
+    contest.data.registrationEnd,
+  ).isBefore(now)
 
   return (
     <>
@@ -217,6 +221,7 @@ const Page = () => {
             contest={contest.data}
             hasStarted={hasStarted}
             hasEnded={hasEnded}
+            registrationClosed={registrationClosed}
             now={now}
           />
 

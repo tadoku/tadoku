@@ -12,6 +12,7 @@ import {
   ExclamationCircleIcon,
   InformationCircleIcon,
 } from '@heroicons/react/20/solid'
+import { ContestConfiguration } from '@app/contests/ContestConfiguration'
 
 const { publicRuntimeConfig } = getConfig()
 
@@ -205,6 +206,8 @@ const Page = () => {
             hasEnded={hasEnded}
             now={now}
           />
+
+          <ContestConfiguration contest={contest.data} />
 
           <div className="card">
             <div className="-m-7 py-4 px-4 text-sm">

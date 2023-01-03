@@ -39,7 +39,7 @@
     color: theme('colors.neutral.50');
   }
 
-  a:not(.reset) {
+  a:not(.reset):not(.flash):not(.btn) {
     color: theme('colors.neutral.800');
     text-decoration: none;
     transition: color 0.2s ease;
@@ -57,9 +57,9 @@
     @apply border border-slate-300 bg-slate-100 rounded-sm p-1 text-indigo-700;
   }
 
-  a:not(.reset):not(.flash):hover,
-  a:not(.reset):not(.flash):active,
-  a:not(.reset):not(.flash):focus {
+  a:not(.reset):not(.flash):not(.btn):hover,
+  a:not(.reset):not(.flash):not(.btn):active,
+  a:not(.reset):not(.flash):not(.btn):focus {
     color: theme('colors.primary');
   }
 

@@ -8,7 +8,7 @@ import {
   Select,
   TextArea,
 } from 'ui'
-import { useForm } from 'react-hook-form'
+import { FormProvider, useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 
@@ -28,7 +28,7 @@ export default function Forms() {
           <CodeBlock
             language="typescript"
             code={`import { Input, Select } from '@components/Form'
-import { useForm } from 'react-hook-form'
+import { FormProvider, useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod'
 
@@ -45,7 +45,7 @@ const LogPagesFormSchema = z.object({
 })
 
 const LogPagesForm = () => {
-  const { register, handleSubmit, formState, control } = useForm({
+  const methods = useForm({
     resolver: zodResolver(LogPagesFormSchema),
   })
   const onSubmit = (data: any) => console.log(data, 'submitted')
@@ -68,76 +68,66 @@ const LogPagesForm = () => {
   ]
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="v-stack spaced">
-      <Select
-        name="languageCode"
-        label="Language"
-        register={register}
-        formState={formState}
-        values={languages}
-      />
-      <Select
-        name="activity"
-        label="Activity"
-        register={register}
-        formState={formState}
-        values={activities}
-        options={{ valueAsNumber: true }}
-      />
-      <div className="h-stack spaced">
-        <div className="flex-grow">
-          <Input
-            name="amount"
-            label="Amount"
-            register={register}
-            formState={formState}
-            type="number"
-            defaultValue={0}
-            options={{ valueAsNumber: true }}
-            min={0}
-          />
-        </div>
-        <div className="min-w-[150px]">
-          <Select
-            name="unit"
-            label="Unit"
-            register={register}
-            formState={formState}
-            values={units}
-            options={{ valueAsNumber: true }}
-          />
-        </div>
-      </div>
-      <AutocompleteMultiInput
-        name="tags"
-        label="Tags"
-        options={tags}
-        control={control}
-        match={(option, query) =>
-          option
-            .toLowerCase()
-            .replace(/[^a-zA-Z0-9]/g, '')
-            .includes(query.toLowerCase())
-        }
-        getIdForOption={option => option}
-        format={option => option}
-      />
-      <Input
-        name="description"
-        label="Description"
-        register={register}
-        formState={formState}
-        type="text"
-        placeholder="e.g. One Piece volume 45"
-      />
-      <button
-        type="submit"
-        className="btn primary"
-        disabled={formState.isSubmitting}
+    <FormProvider {...methods}>
+      <form
+        onSubmit={methods.handleSubmit(onSubmit)}
+        className="v-stack spaced"
       >
-        Save changes
-      </button>
-    </form>
+        <Select name="languageCode" label="Language" values={languages} />
+        <Select
+          name="activity"
+          label="Activity"
+          values={activities}
+          options={{ valueAsNumber: true }}
+        />
+        <div className="h-stack spaced">
+          <div className="flex-grow">
+            <Input
+              name="amount"
+              label="Amount"
+              type="number"
+              defaultValue={0}
+              options={{ valueAsNumber: true }}
+              min={0}
+            />
+          </div>
+          <div className="min-w-[150px]">
+            <Select
+              name="unit"
+              label="Unit"
+              values={units}
+              options={{ valueAsNumber: true }}
+            />
+          </div>
+        </div>
+        <AutocompleteMultiInput
+          name="tags"
+          label="Tags"
+          options={tags}
+          match={(option, query) =>
+            option
+              .toLowerCase()
+              .replace(/[^a-zA-Z0-9]/g, '')
+              .includes(query.toLowerCase())
+          }
+          getIdForOption={option => option}
+          format={option => option}
+        />
+        <Input
+          name="description"
+          label="Description"
+          type="text"
+          placeholder="e.g. One Piece volume 45"
+        />
+        <button
+          type="submit"
+          className="btn primary"
+          disabled={methods.formState.isSubmitting}
+        >
+          Save changes
+        </button>
+      </form>
+    </FormProvider>
   )
 }`}
           />
@@ -157,10 +147,11 @@ const LogPagesForm = () => {
           <CodeBlock
             language="typescript"
             code={`import { AutocompleteInput, AutocompleteMultiInput } from '@components/Form'
-import { useForm } from 'react-hook-form'
+import { FormProvider, useForm } from 'react-hook-form'
+
 
 const AutocompleteForm = () => {
-  const { handleSubmit, formState, control } = useForm()
+  const methods = useForm()
   const onSubmit = (data: any) => console.log(data, 'submitted')
 
   const tags = ['Book', 'Ebook', 'Fiction', 'Non-fiction', 'Web page', 'Lyric']
@@ -172,43 +163,45 @@ const AutocompleteForm = () => {
   ]
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="v-stack spaced">
-      <AutocompleteInput
-        name="tags"
-        label="Tags"
-        options={tags}
-        control={control}
-        rules={{ required: 'Required' }}
-        match={(option, query) =>
-          option
-            .toLowerCase()
-            .replace(/[^a-zA-Z0-9]/g, '')
-            .includes(query.toLowerCase())
-        }
-        format={option => option}
-      />
-      <AutocompleteMultiInput
-        name="activities"
-        label="Activities"
-        options={activities}
-        control={control}
-        match={(option, query) =>
-          option.name
-            .toLowerCase()
-            .replace(/[^a-zA-Z0-9]/g, '')
-            .includes(query.toLowerCase())
-        }
-        getIdForOption={option => option.id}
-        format={option => option.name}
-      />
-      <button
-        type="submit"
-        className="btn primary"
-        disabled={formState.isSubmitting}
+    <FormProvider {...methods}>
+      <form
+        onSubmit={methods.handleSubmit(onSubmit)}
+        className="v-stack spaced"
       >
-        Submit
-      </button>
-    </form>
+        <AutocompleteInput
+          name="tags"
+          label="Tags"
+          options={tags}
+          match={(option, query) =>
+            option
+              .toLowerCase()
+              .replace(/[^a-zA-Z0-9]/g, '')
+              .includes(query.toLowerCase())
+          }
+          format={option => option}
+        />
+        <AutocompleteMultiInput
+          name="activities"
+          label="Activities"
+          options={activities}
+          match={(option, query) =>
+            option.name
+              .toLowerCase()
+              .replace(/[^a-zA-Z0-9]/g, '')
+              .includes(query.toLowerCase())
+          }
+          getIdForOption={option => option.id}
+          format={option => option.name}
+        />
+        <button
+          type="submit"
+          className="btn primary"
+          disabled={methods.formState.isSubmitting}
+        >
+          Submit
+        </button>
+      </form>
+    </FormProvider>
   )
 }`}
           />
@@ -228,58 +221,52 @@ const AutocompleteForm = () => {
           <CodeBlock
             language="typescript"
             code={`import { Checkbox, Input, TextArea } from '@components/Form'
-import { useForm } from 'react-hook-form'
+import { FormProvider, useForm } from 'react-hook-form'
 
 const ComposeBlogPostForm = () => {
-  const { register, handleSubmit, formState } = useForm()
+  const methods = useForm()
   const onSubmit = (data: any) => console.log(data, 'submitted')
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="v-stack spaced">
-      <Input
-        name="title"
-        label="Title"
-        register={register}
-        formState={formState}
-        type="text"
-        options={{
-          required: true,
-        }}
-      />
-      <TextArea
-        name="content"
-        label="Content"
-        register={register}
-        formState={formState}
-        options={{
-          required: true,
-        }}
-      />
-      <Input
-        name="publishedAt"
-        label="Published at"
-        register={register}
-        formState={formState}
-        type="date"
-        options={{
-          required: true,
-          valueAsDate: true,
-        }}
-      />
-      <Checkbox
-        name="isPublished"
-        label="Published"
-        register={register}
-        formState={formState}
-      />
-      <button
-        type="submit"
-        className="btn primary"
-        disabled={formState.isSubmitting}
+    <FormProvider {...methods}>
+      <form
+        onSubmit={methods.handleSubmit(onSubmit)}
+        className="v-stack spaced"
       >
-        Save
-      </button>
-    </form>
+        <Input
+          name="title"
+          label="Title"
+          type="text"
+          options={{
+            required: true,
+          }}
+        />
+        <TextArea
+          name="content"
+          label="Content"
+          options={{
+            required: true,
+          }}
+        />
+        <Input
+          name="publishedAt"
+          label="Published at"
+          type="date"
+          options={{
+            required: true,
+            valueAsDate: true,
+          }}
+        />
+        <Checkbox name="isPublished" label="Published" />
+        <button
+          type="submit"
+          className="btn primary"
+          disabled={methods.formState.isSubmitting}
+        >
+          Save
+        </button>
+      </form>
+    </FormProvider>
   )
 }`}
           />
@@ -299,147 +286,128 @@ const ComposeBlogPostForm = () => {
           <CodeBlock
             language="typescript"
             code={`import { RadioSelect } from '@components/Form'
-import { useForm } from 'react-hook-form'
+import { FormProvider, useForm } from 'react-hook-form'
 
 const MiscForm = () => {
-  const { register, handleSubmit, formState } = useForm()
+  const methods = useForm()
   const onSubmit = (data: any) => console.log(data, 'submitted')
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="v-stack spaced">
-      <RadioSelect
-        name="cardType"
-        label="Card type"
-        register={register}
-        formState={formState}
-        options={{
-          required: true,
-          valueAsNumber: true,
-        }}
-        values={[
-          { value: '1', label: 'Sentence card' },
-          { value: '2', label: 'Vocab card' },
-        ]}
-      />
-      <Input
-        name="datetime"
-        label="Datetime"
-        register={register}
-        formState={formState}
-        type="datetime-local"
-        options={{
-          required: true,
-          valueAsDate: true,
-        }}
-      />
-      <Input
-        name="time"
-        label="Time"
-        register={register}
-        formState={formState}
-        type="time"
-        options={{
-          required: true,
-        }}
-      />
-      <Input
-        name="week"
-        label="Week"
-        register={register}
-        formState={formState}
-        type="week"
-        options={{
-          required: true,
-        }}
-      />
-      <Input
-        name="month"
-        label="Month"
-        register={register}
-        formState={formState}
-        type="month"
-        options={{
-          required: true,
-        }}
-      />
-      <Input
-        name="color"
-        label="Color"
-        register={register}
-        formState={formState}
-        type="color"
-        options={{
-          required: true,
-        }}
-      />
-      <Input
-        name="email"
-        label="Email"
-        register={register}
-        formState={formState}
-        type="email"
-        options={{
-          required: true,
-        }}
-      />
-      <Input
-        name="file"
-        label="File"
-        register={register}
-        formState={formState}
-        type="file"
-        options={{
-          required: true,
-        }}
-      />
-      <Input
-        name="range"
-        label="Range"
-        register={register}
-        formState={formState}
-        type="range"
-        options={{
-          required: true,
-        }}
-      />
-      <Input
-        name="search"
-        label="Search"
-        register={register}
-        formState={formState}
-        type="search"
-        options={{
-          required: true,
-        }}
-      />
-      <Input
-        name="tel"
-        label="tel"
-        register={register}
-        formState={formState}
-        type="tel"
-        options={{
-          required: true,
-        }}
-      />
-      <Input
-        name="url"
-        label="url"
-        register={register}
-        formState={formState}
-        type="url"
-        options={{
-          required: true,
-        }}
-      />
-      <button
-        type="submit"
-        className="btn primary"
-        disabled={formState.isSubmitting}
+    <FormProvider {...methods}>
+      <form
+        onSubmit={methods.handleSubmit(onSubmit)}
+        className="v-stack spaced"
       >
-        Submit
-      </button>
-    </form>
+        <RadioSelect
+          name="cardType"
+          label="Card type"
+          options={{
+            required: true,
+            valueAsNumber: true,
+          }}
+          values={[
+            { value: '1', label: 'Sentence card' },
+            { value: '2', label: 'Vocab card' },
+          ]}
+        />
+        <Input
+          name="datetime"
+          label="Datetime"
+          type="datetime-local"
+          options={{
+            required: true,
+            valueAsDate: true,
+          }}
+        />
+        <Input
+          name="time"
+          label="Time"
+          type="time"
+          options={{
+            required: true,
+          }}
+        />
+        <Input
+          name="week"
+          label="Week"
+          type="week"
+          options={{
+            required: true,
+          }}
+        />
+        <Input
+          name="month"
+          label="Month"
+          type="month"
+          options={{
+            required: true,
+          }}
+        />
+        <Input
+          name="color"
+          label="Color"
+          type="color"
+          options={{
+            required: true,
+          }}
+        />
+        <Input
+          name="email"
+          label="Email"
+          type="email"
+          options={{
+            required: true,
+          }}
+        />
+        <Input
+          name="file"
+          label="File"
+          type="file"
+          options={{
+            required: true,
+          }}
+        />
+        <Input
+          name="range"
+          label="Range"
+          type="range"
+          options={{
+            required: true,
+          }}
+        />
+        <Input
+          name="search"
+          label="Search"
+          type="search"
+          options={{
+            required: true,
+          }}
+        />
+        <Input
+          name="tel"
+          label="tel"
+          type="tel"
+          options={{
+            required: true,
+          }}
+        />
+        <Input
+          name="url"
+          label="url"
+          type="url"
+          options={{
+            required: true,
+          }}
+        />
+        <button
+          type="submit"
+          className="btn primary"
+          disabled={methods.formState.isSubmitting}
+        >
+          Submit
+        </button>
+      </form>
+    </FormProvider>
   )
 }`}
           />
@@ -561,7 +529,7 @@ const LogPagesFormSchema = z.object({
 })
 
 const LogPagesForm = () => {
-  const { register, handleSubmit, formState, control } = useForm({
+  const methods = useForm({
     resolver: zodResolver(LogPagesFormSchema),
   })
   const onSubmit = (data: any) => console.log(data, 'submitted')
@@ -584,134 +552,118 @@ const LogPagesForm = () => {
   ]
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="v-stack spaced">
-      <Select
-        name="languageCode"
-        label="Language"
-        register={register}
-        formState={formState}
-        values={languages}
-      />
-      <Select
-        name="activity"
-        label="Activity"
-        register={register}
-        formState={formState}
-        values={activities}
-        options={{ valueAsNumber: true }}
-      />
-      <div className="h-stack spaced">
-        <div className="flex-grow">
-          <Input
-            name="amount"
-            label="Amount"
-            register={register}
-            formState={formState}
-            type="number"
-            defaultValue={0}
-            options={{ valueAsNumber: true }}
-            min={0}
-          />
-        </div>
-        <div className="min-w-[150px]">
-          <Select
-            name="unit"
-            label="Unit"
-            register={register}
-            formState={formState}
-            values={units}
-            options={{ valueAsNumber: true }}
-          />
-        </div>
-      </div>
-      <AutocompleteMultiInput
-        name="tags"
-        label="Tags"
-        options={tags}
-        control={control}
-        match={(option, query) =>
-          option
-            .toLowerCase()
-            .replace(/[^a-zA-Z0-9]/g, '')
-            .includes(query.toLowerCase())
-        }
-        getIdForOption={option => option}
-        format={option => option}
-      />
-      <Input
-        name="description"
-        label="Description"
-        register={register}
-        formState={formState}
-        type="text"
-        placeholder="e.g. One Piece volume 45"
-      />
-      <button
-        type="submit"
-        className="btn primary"
-        disabled={formState.isSubmitting}
+    <FormProvider {...methods}>
+      <form
+        onSubmit={methods.handleSubmit(onSubmit)}
+        className="v-stack spaced"
       >
-        Save changes
-      </button>
-    </form>
+        <Select name="languageCode" label="Language" values={languages} />
+        <Select
+          name="activity"
+          label="Activity"
+          values={activities}
+          options={{ valueAsNumber: true }}
+        />
+        <div className="h-stack spaced">
+          <div className="flex-grow">
+            <Input
+              name="amount"
+              label="Amount"
+              type="number"
+              defaultValue={0}
+              options={{ valueAsNumber: true }}
+              min={0}
+            />
+          </div>
+          <div className="min-w-[150px]">
+            <Select
+              name="unit"
+              label="Unit"
+              values={units}
+              options={{ valueAsNumber: true }}
+            />
+          </div>
+        </div>
+        <AutocompleteMultiInput
+          name="tags"
+          label="Tags"
+          options={tags}
+          match={(option, query) =>
+            option
+              .toLowerCase()
+              .replace(/[^a-zA-Z0-9]/g, '')
+              .includes(query.toLowerCase())
+          }
+          getIdForOption={option => option}
+          format={option => option}
+        />
+        <Input
+          name="description"
+          label="Description"
+          type="text"
+          placeholder="e.g. One Piece volume 45"
+        />
+        <button
+          type="submit"
+          className="btn primary"
+          disabled={methods.formState.isSubmitting}
+        >
+          Save changes
+        </button>
+      </form>
+    </FormProvider>
   )
 }
 
 const ComposeBlogPostForm = () => {
-  const { register, handleSubmit, formState } = useForm()
+  const methods = useForm()
   const onSubmit = (data: any) => console.log(data, 'submitted')
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="v-stack spaced">
-      <Input
-        name="title"
-        label="Title"
-        register={register}
-        formState={formState}
-        type="text"
-        options={{
-          required: true,
-        }}
-      />
-      <TextArea
-        name="content"
-        label="Content"
-        register={register}
-        formState={formState}
-        options={{
-          required: true,
-        }}
-      />
-      <Input
-        name="publishedAt"
-        label="Published at"
-        register={register}
-        formState={formState}
-        type="date"
-        options={{
-          required: true,
-          valueAsDate: true,
-        }}
-      />
-      <Checkbox
-        name="isPublished"
-        label="Published"
-        register={register}
-        formState={formState}
-      />
-      <button
-        type="submit"
-        className="btn primary"
-        disabled={formState.isSubmitting}
+    <FormProvider {...methods}>
+      <form
+        onSubmit={methods.handleSubmit(onSubmit)}
+        className="v-stack spaced"
       >
-        Save
-      </button>
-    </form>
+        <Input
+          name="title"
+          label="Title"
+          type="text"
+          options={{
+            required: true,
+          }}
+        />
+        <TextArea
+          name="content"
+          label="Content"
+          options={{
+            required: true,
+          }}
+        />
+        <Input
+          name="publishedAt"
+          label="Published at"
+          type="date"
+          options={{
+            required: true,
+            valueAsDate: true,
+          }}
+        />
+        <Checkbox name="isPublished" label="Published" />
+        <button
+          type="submit"
+          className="btn primary"
+          disabled={methods.formState.isSubmitting}
+        >
+          Save
+        </button>
+      </form>
+    </FormProvider>
   )
 }
 
 const AutocompleteForm = () => {
-  const { handleSubmit, formState, control } = useForm()
+  const methods = useForm()
   const onSubmit = (data: any) => console.log(data, 'submitted')
 
   const tags = ['Book', 'Ebook', 'Fiction', 'Non-fiction', 'Web page', 'Lyric']
@@ -723,184 +675,167 @@ const AutocompleteForm = () => {
   ]
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="v-stack spaced">
-      <AutocompleteInput
-        name="tags"
-        label="Tags"
-        options={tags}
-        control={control}
-        rules={{ required: 'Required' }}
-        match={(option, query) =>
-          option
-            .toLowerCase()
-            .replace(/[^a-zA-Z0-9]/g, '')
-            .includes(query.toLowerCase())
-        }
-        format={option => option}
-      />
-      <AutocompleteMultiInput
-        name="activities"
-        label="Activities"
-        options={activities}
-        control={control}
-        match={(option, query) =>
-          option.name
-            .toLowerCase()
-            .replace(/[^a-zA-Z0-9]/g, '')
-            .includes(query.toLowerCase())
-        }
-        getIdForOption={option => option.id}
-        format={option => option.name}
-      />
-      <button
-        type="submit"
-        className="btn primary"
-        disabled={formState.isSubmitting}
+    <FormProvider {...methods}>
+      <form
+        onSubmit={methods.handleSubmit(onSubmit)}
+        className="v-stack spaced"
       >
-        Submit
-      </button>
-    </form>
+        <AutocompleteInput
+          name="tags"
+          label="Tags"
+          options={tags}
+          match={(option, query) =>
+            option
+              .toLowerCase()
+              .replace(/[^a-zA-Z0-9]/g, '')
+              .includes(query.toLowerCase())
+          }
+          format={option => option}
+        />
+        <AutocompleteMultiInput
+          name="activities"
+          label="Activities"
+          options={activities}
+          match={(option, query) =>
+            option.name
+              .toLowerCase()
+              .replace(/[^a-zA-Z0-9]/g, '')
+              .includes(query.toLowerCase())
+          }
+          getIdForOption={option => option.id}
+          format={option => option.name}
+        />
+        <button
+          type="submit"
+          className="btn primary"
+          disabled={methods.formState.isSubmitting}
+        >
+          Submit
+        </button>
+      </form>
+    </FormProvider>
   )
 }
 
 const MiscForm = () => {
-  const { register, handleSubmit, formState } = useForm()
+  const methods = useForm()
   const onSubmit = (data: any) => console.log(data, 'submitted')
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="v-stack spaced">
-      <RadioSelect
-        name="cardType"
-        label="Card type"
-        register={register}
-        formState={formState}
-        options={{
-          required: true,
-          valueAsNumber: true,
-        }}
-        values={[
-          { value: '1', label: 'Sentence card' },
-          { value: '2', label: 'Vocab card' },
-        ]}
-      />
-      <Input
-        name="datetime"
-        label="Datetime"
-        register={register}
-        formState={formState}
-        type="datetime-local"
-        options={{
-          required: true,
-          valueAsDate: true,
-        }}
-      />
-      <Input
-        name="time"
-        label="Time"
-        register={register}
-        formState={formState}
-        type="time"
-        options={{
-          required: true,
-        }}
-      />
-      <Input
-        name="week"
-        label="Week"
-        register={register}
-        formState={formState}
-        type="week"
-        options={{
-          required: true,
-        }}
-      />
-      <Input
-        name="month"
-        label="Month"
-        register={register}
-        formState={formState}
-        type="month"
-        options={{
-          required: true,
-        }}
-      />
-      <Input
-        name="color"
-        label="Color"
-        register={register}
-        formState={formState}
-        type="color"
-        options={{
-          required: true,
-        }}
-      />
-      <Input
-        name="email"
-        label="Email"
-        register={register}
-        formState={formState}
-        type="email"
-        options={{
-          required: true,
-        }}
-      />
-      <Input
-        name="file"
-        label="File"
-        register={register}
-        formState={formState}
-        type="file"
-        options={{
-          required: true,
-        }}
-      />
-      <Input
-        name="range"
-        label="Range"
-        register={register}
-        formState={formState}
-        type="range"
-        options={{
-          required: true,
-        }}
-      />
-      <Input
-        name="search"
-        label="Search"
-        register={register}
-        formState={formState}
-        type="search"
-        options={{
-          required: true,
-        }}
-      />
-      <Input
-        name="tel"
-        label="tel"
-        register={register}
-        formState={formState}
-        type="tel"
-        options={{
-          required: true,
-        }}
-      />
-      <Input
-        name="url"
-        label="url"
-        register={register}
-        formState={formState}
-        type="url"
-        options={{
-          required: true,
-        }}
-      />
-      <button
-        type="submit"
-        className="btn primary"
-        disabled={formState.isSubmitting}
+    <FormProvider {...methods}>
+      <form
+        onSubmit={methods.handleSubmit(onSubmit)}
+        className="v-stack spaced"
       >
-        Submit
-      </button>
-    </form>
+        <RadioSelect
+          name="cardType"
+          label="Card type"
+          options={{
+            required: true,
+            valueAsNumber: true,
+          }}
+          values={[
+            { value: '1', label: 'Sentence card' },
+            { value: '2', label: 'Vocab card' },
+          ]}
+        />
+        <Input
+          name="datetime"
+          label="Datetime"
+          type="datetime-local"
+          options={{
+            required: true,
+            valueAsDate: true,
+          }}
+        />
+        <Input
+          name="time"
+          label="Time"
+          type="time"
+          options={{
+            required: true,
+          }}
+        />
+        <Input
+          name="week"
+          label="Week"
+          type="week"
+          options={{
+            required: true,
+          }}
+        />
+        <Input
+          name="month"
+          label="Month"
+          type="month"
+          options={{
+            required: true,
+          }}
+        />
+        <Input
+          name="color"
+          label="Color"
+          type="color"
+          options={{
+            required: true,
+          }}
+        />
+        <Input
+          name="email"
+          label="Email"
+          type="email"
+          options={{
+            required: true,
+          }}
+        />
+        <Input
+          name="file"
+          label="File"
+          type="file"
+          options={{
+            required: true,
+          }}
+        />
+        <Input
+          name="range"
+          label="Range"
+          type="range"
+          options={{
+            required: true,
+          }}
+        />
+        <Input
+          name="search"
+          label="Search"
+          type="search"
+          options={{
+            required: true,
+          }}
+        />
+        <Input
+          name="tel"
+          label="tel"
+          type="tel"
+          options={{
+            required: true,
+          }}
+        />
+        <Input
+          name="url"
+          label="url"
+          type="url"
+          options={{
+            required: true,
+          }}
+        />
+        <button
+          type="submit"
+          className="btn primary"
+          disabled={methods.formState.isSubmitting}
+        >
+          Submit
+        </button>
+      </form>
+    </FormProvider>
   )
 }

@@ -4,18 +4,13 @@ import React, { Fragment, HTMLProps, useState } from 'react'
 import {
   FieldPath,
   FieldValues,
-  FormState,
   RegisterOptions,
   useController,
-  UseControllerProps,
   useFormContext,
-  UseFormRegister,
 } from 'react-hook-form'
 
 interface Props<T extends FieldValues> {
   name: FieldPath<T>
-  register: UseFormRegister<T>
-  formState: FormState<T>
   options?: RegisterOptions
 }
 
@@ -27,19 +22,16 @@ interface InputProps<T extends FieldValues>
 }
 
 export function Input<T extends FieldValues>(props: InputProps<T>) {
+  const { name, label, type, options, hint, ...inputProps } = props
+
   const {
-    name,
     register,
-    formState,
-    label,
-    type,
-    options,
-    hint,
-    ...inputProps
-  } = props
-  const hasError = formState.errors[name] !== undefined
+    formState: { errors },
+  } = useFormContext()
+
+  const hasError = errors[name] !== undefined
   const errorMessage =
-    formState.errors[name]?.message?.toString() || 'This input is invalid'
+    errors[name]?.message?.toString() || 'This input is invalid'
 
   return (
     <label className={`label ${hasError ? 'error' : ''}`} htmlFor={name}>
@@ -65,11 +57,16 @@ interface TextaAreaProps<T extends FieldValues>
 }
 
 export function TextArea<T extends FieldValues>(props: TextaAreaProps<T>) {
-  const { name, register, formState, label, options, hint, ...inputProps } =
-    props
-  const hasError = formState.errors[name] !== undefined
+  const { name, label, options, hint, ...inputProps } = props
+
+  const {
+    register,
+    formState: { errors },
+  } = useFormContext()
+
+  const hasError = errors[name] !== undefined
   const errorMessage =
-    formState.errors[name]?.message?.toString() || 'This input is invalid'
+    errors[name]?.message?.toString() || 'This input is invalid'
 
   return (
     <label className={`label ${hasError ? 'error' : ''}`} htmlFor={name}>
@@ -94,11 +91,16 @@ interface CheckboxProps<T extends FieldValues>
 }
 
 export function Checkbox<T extends FieldValues>(props: CheckboxProps<T>) {
-  const { name, register, formState, label, options, hint, ...inputProps } =
-    props
-  const hasError = formState.errors[name] !== undefined
+  const { name, label, options, hint, ...inputProps } = props
+
+  const {
+    register,
+    formState: { errors },
+  } = useFormContext()
+
+  const hasError = errors[name] !== undefined
   const errorMessage =
-    formState.errors[name]?.message?.toString() || 'This input is invalid'
+    errors[name]?.message?.toString() || 'This input is invalid'
 
   return (
     <div className={`label ${hasError ? 'error' : ''}`}>
@@ -132,20 +134,16 @@ interface SelectProps<T extends FieldValues>
 }
 
 export function Select<T extends FieldValues>(props: SelectProps<T>) {
+  const { name, label, type, options, values, hint, ...selectProps } = props
+
   const {
-    name,
     register,
-    formState,
-    label,
-    type,
-    options,
-    values,
-    hint,
-    ...selectProps
-  } = props
-  const hasError = formState.errors[name] !== undefined
+    formState: { errors },
+  } = useFormContext()
+
+  const hasError = errors[name] !== undefined
   const errorMessage =
-    formState.errors[name]?.message?.toString() || 'This selection is invalid'
+    errors[name]?.message?.toString() || 'This selection is invalid'
 
   return (
     <label className={`label ${hasError ? 'error' : ''}`} htmlFor={name}>
@@ -176,20 +174,16 @@ interface RadioSelectProps<T extends FieldValues>
 }
 
 export function RadioSelect<T extends FieldValues>(props: RadioSelectProps<T>) {
+  const { name, label, type, options, values, hint, ...selectProps } = props
+
   const {
-    name,
     register,
-    formState,
-    label,
-    type,
-    options,
-    values,
-    hint,
-    ...selectProps
-  } = props
-  const hasError = formState.errors[name] !== undefined
+    formState: { errors },
+  } = useFormContext()
+
+  const hasError = errors[name] !== undefined
   let errorMessage =
-    formState.errors[name]?.message?.toString() || 'This selection is invalid'
+    errors[name]?.message?.toString() || 'This selection is invalid'
 
   return (
     <div className={`label ${hasError ? 'error' : ''}`}>
@@ -216,23 +210,22 @@ export function RadioSelect<T extends FieldValues>(props: RadioSelectProps<T>) {
   )
 }
 
-export function AutocompleteInput<T>(
-  props: {
-    label: string
-    name: string
-    hint?: string
-    options: T[]
-    match: (option: T, query: string) => boolean
-    format: (option: T) => string
-  } & UseControllerProps,
-) {
+export function AutocompleteInput<T>(props: {
+  label: string
+  name: string
+  hint?: string
+  options: T[]
+  match: (option: T, query: string) => boolean
+  format: (option: T) => string
+}) {
   const [query, setQuery] = useState('')
 
   const { name, label, options, match, format, hint } = props
+  const { control } = useFormContext()
   const {
     field: { value, onChange },
     formState: { errors },
-  } = useController(props)
+  } = useController({ name, control })
 
   const hasError = errors[name] !== undefined
   let errorMessage =

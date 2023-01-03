@@ -50,7 +50,7 @@ const TabbarButtonLink = ({
 }: Action) => (
   <Link
     href={href}
-    className={`btn ${style} ${disabled ? 'pointer-events-none' : ''}`}
+    className={`reset btn ${style} ${disabled ? 'pointer-events-none' : ''}`}
   >
     {IconComponent ? <IconComponent className="w-4 h-4 mr-2" /> : null}
     {label}

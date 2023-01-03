@@ -65,7 +65,6 @@ insert into contests (
   "private",
   contest_start,
   contest_end,
-  registration_start,
   registration_end,
   "description",
   language_code_allow_list,
@@ -80,8 +79,7 @@ insert into contests (
   $7,
   $8,
   $9,
-  $10,
-  $11
+  $10
 ) returning id
 `
 
@@ -92,7 +90,6 @@ type CreateContestParams struct {
 	Private                 bool
 	ContestStart            time.Time
 	ContestEnd              time.Time
-	RegistrationStart       time.Time
 	RegistrationEnd         time.Time
 	Description             string
 	LanguageCodeAllowList   []string
@@ -107,7 +104,6 @@ func (q *Queries) CreateContest(ctx context.Context, arg CreateContestParams) (u
 		arg.Private,
 		arg.ContestStart,
 		arg.ContestEnd,
-		arg.RegistrationStart,
 		arg.RegistrationEnd,
 		arg.Description,
 		pq.Array(arg.LanguageCodeAllowList),
@@ -126,7 +122,6 @@ select
   "private",
   contest_start,
   contest_end,
-  registration_start,
   registration_end,
   "description",
   language_code_allow_list,
@@ -157,7 +152,6 @@ func (q *Queries) FindContestById(ctx context.Context, arg FindContestByIdParams
 		&i.Private,
 		&i.ContestStart,
 		&i.ContestEnd,
-		&i.RegistrationStart,
 		&i.RegistrationEnd,
 		&i.Description,
 		pq.Array(&i.LanguageCodeAllowList),
@@ -178,7 +172,6 @@ select
   "private",
   contest_start,
   contest_end,
-  registration_start,
   registration_end,
   "description",
   language_code_allow_list,
@@ -230,7 +223,6 @@ func (q *Queries) ListContests(ctx context.Context, arg ListContestsParams) ([]C
 			&i.Private,
 			&i.ContestStart,
 			&i.ContestEnd,
-			&i.RegistrationStart,
 			&i.RegistrationEnd,
 			&i.Description,
 			pq.Array(&i.LanguageCodeAllowList),
@@ -259,24 +251,22 @@ set
   "private" = $1,
   contest_start = $2,
   contest_end = $3,
-  registration_start = $4,
-  registration_end = $5,
-  "description" = $6,
+  registration_end = $4,
+  "description" = $5,
   updated_at = now()
 where
-  id = $7
+  id = $6
   and deleted_at is null
 returning id
 `
 
 type UpdateContestParams struct {
-	Private           bool
-	ContestStart      time.Time
-	ContestEnd        time.Time
-	RegistrationStart time.Time
-	RegistrationEnd   time.Time
-	Description       string
-	ID                uuid.UUID
+	Private         bool
+	ContestStart    time.Time
+	ContestEnd      time.Time
+	RegistrationEnd time.Time
+	Description     string
+	ID              uuid.UUID
 }
 
 func (q *Queries) UpdateContest(ctx context.Context, arg UpdateContestParams) (uuid.UUID, error) {
@@ -284,7 +274,6 @@ func (q *Queries) UpdateContest(ctx context.Context, arg UpdateContestParams) (u
 		arg.Private,
 		arg.ContestStart,
 		arg.ContestEnd,
-		arg.RegistrationStart,
 		arg.RegistrationEnd,
 		arg.Description,
 		arg.ID,

@@ -13,7 +13,6 @@ create table contests (
   -- contest info
   contest_start date not null,
   contest_end date not null,
-  registration_start date not null,
   registration_end date not null,
 
   "description" varchar(255) not null,

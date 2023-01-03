@@ -74,7 +74,6 @@ type ContestView struct {
 	ID                   uuid.UUID
 	ContestStart         time.Time
 	ContestEnd           time.Time
-	RegistrationStart    time.Time
 	RegistrationEnd      time.Time
 	Description          string
 	OwnerUserID          uuid.UUID
@@ -118,7 +117,6 @@ type Contest struct {
 	ID                      uuid.UUID
 	ContestStart            time.Time
 	ContestEnd              time.Time
-	RegistrationStart       time.Time
 	RegistrationEnd         time.Time
 	Description             string
 	OwnerUserID             uuid.UUID

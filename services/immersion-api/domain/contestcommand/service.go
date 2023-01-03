@@ -42,7 +42,6 @@ type ContestCreateRequest struct {
 	OwnerUserDisplayName    string    `validate:"required"`
 	ContestStart            time.Time `validate:"required"`
 	ContestEnd              time.Time `validate:"required"`
-	RegistrationStart       time.Time `validate:"required"`
 	RegistrationEnd         time.Time `validate:"required"`
 	Description             string    `validate:"required,gt=3"`
 	ActivityTypeIDAllowList []int32   `validate:"required,min=1"`
@@ -57,7 +56,6 @@ type ContestCreateResponse struct {
 	ID                      uuid.UUID
 	ContestStart            time.Time
 	ContestEnd              time.Time
-	RegistrationStart       time.Time
 	RegistrationEnd         time.Time
 	Description             string
 	OwnerUserID             uuid.UUID
@@ -104,12 +102,8 @@ func (s *service) CreateContest(ctx context.Context, req *ContestCreateRequest) 
 		return nil, fmt.Errorf("official rounds cannot limit language choice: %w", ErrInvalidContest)
 	}
 
-	if req.ContestStart.After(req.ContestEnd) || req.RegistrationStart.After(req.RegistrationEnd) {
-		return nil, fmt.Errorf("contest or registration cannot start after it has ended: %w", ErrInvalidContest)
-	}
-
-	if req.ContestStart.Before(req.RegistrationStart) {
-		return nil, fmt.Errorf("contest cannot start before registrations have opened: %w", ErrInvalidContest)
+	if req.ContestStart.After(req.ContestEnd) {
+		return nil, fmt.Errorf("contest cannot start after it has ended: %w", ErrInvalidContest)
 	}
 
 	if !domain.IsRole(ctx, domain.RoleAdmin) {

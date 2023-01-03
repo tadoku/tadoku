@@ -47,7 +47,6 @@ func TestCreateContest(t *testing.T) {
 			&contestcommand.ContestCreateRequest{
 				ContestStart:            clock.Now().Add(30 * 24 * time.Hour),
 				ContestEnd:              clock.Now().Add(45 * 24 * time.Hour),
-				RegistrationStart:       clock.Now().Add(1 * 24 * time.Hour),
 				RegistrationEnd:         clock.Now().Add(40 * 24 * time.Hour),
 				Official:                true,
 				Private:                 false,
@@ -61,7 +60,6 @@ func TestCreateContest(t *testing.T) {
 			&contestcommand.ContestCreateRequest{
 				ContestStart:            clock.Now().Add(30 * 24 * time.Hour),
 				ContestEnd:              clock.Now().Add(45 * 24 * time.Hour),
-				RegistrationStart:       clock.Now().Add(1 * 24 * time.Hour),
 				RegistrationEnd:         clock.Now().Add(40 * 24 * time.Hour),
 				Official:                true,
 				Private:                 true,
@@ -75,7 +73,6 @@ func TestCreateContest(t *testing.T) {
 			&contestcommand.ContestCreateRequest{
 				ContestStart:            clock.Now().Add(30 * 24 * time.Hour),
 				ContestEnd:              clock.Now().Add(45 * 24 * time.Hour),
-				RegistrationStart:       clock.Now().Add(1 * 24 * time.Hour),
 				RegistrationEnd:         clock.Now().Add(40 * 24 * time.Hour),
 				Official:                true,
 				Private:                 false,
@@ -90,7 +87,6 @@ func TestCreateContest(t *testing.T) {
 			&contestcommand.ContestCreateRequest{
 				ContestStart:            clock.Now().Add(-30 * 24 * time.Hour),
 				ContestEnd:              clock.Now().Add(0),
-				RegistrationStart:       clock.Now().Add(-35 * 24 * time.Hour),
 				RegistrationEnd:         clock.Now().Add(-4 * 24 * time.Hour),
 				Official:                false,
 				Private:                 false,
@@ -104,7 +100,6 @@ func TestCreateContest(t *testing.T) {
 			&contestcommand.ContestCreateRequest{
 				ContestStart:            clock.Now().Add(-30 * 24 * time.Hour),
 				ContestEnd:              clock.Now().Add(0),
-				RegistrationStart:       clock.Now().Add(-35 * 24 * time.Hour),
 				RegistrationEnd:         clock.Now().Add(-4 * 24 * time.Hour),
 				Official:                false,
 				Private:                 false,
@@ -114,25 +109,10 @@ func TestCreateContest(t *testing.T) {
 			domain.RoleAdmin,
 			nil,
 		}, {
-			"registration should open before contest starts",
-			&contestcommand.ContestCreateRequest{
-				ContestStart:            clock.Now().Add(30 * 24 * time.Hour),
-				ContestEnd:              clock.Now().Add(45 * 24 * time.Hour),
-				RegistrationStart:       clock.Now().Add(60 * 24 * time.Hour),
-				RegistrationEnd:         clock.Now().Add(80 * 24 * time.Hour),
-				Official:                false,
-				Private:                 false,
-				Description:             "test round",
-				ActivityTypeIDAllowList: []int32{1, 2},
-			},
-			domain.RoleUser,
-			contestcommand.ErrInvalidContest,
-		}, {
 			"needs to start before ending",
 			&contestcommand.ContestCreateRequest{
 				ContestStart:            clock.Now().Add(45 * 24 * time.Hour),
 				ContestEnd:              clock.Now().Add(30 * 24 * time.Hour),
-				RegistrationStart:       clock.Now().Add(1 * 24 * time.Hour),
 				RegistrationEnd:         clock.Now().Add(10 * 24 * time.Hour),
 				Official:                false,
 				Private:                 false,
@@ -146,7 +126,6 @@ func TestCreateContest(t *testing.T) {
 			&contestcommand.ContestCreateRequest{
 				ContestStart:            clock.Now().Add(30 * 24 * time.Hour),
 				ContestEnd:              clock.Now().Add(45 * 24 * time.Hour),
-				RegistrationStart:       clock.Now().Add(1 * 24 * time.Hour),
 				RegistrationEnd:         clock.Now().Add(40 * 24 * time.Hour),
 				Official:                false,
 				Private:                 false,
@@ -160,7 +139,6 @@ func TestCreateContest(t *testing.T) {
 			&contestcommand.ContestCreateRequest{
 				ContestStart:            clock.Now().Add(30 * 24 * time.Hour),
 				ContestEnd:              clock.Now().Add(45 * 24 * time.Hour),
-				RegistrationStart:       clock.Now().Add(1 * 24 * time.Hour),
 				RegistrationEnd:         clock.Now().Add(40 * 24 * time.Hour),
 				Official:                true,
 				Private:                 false,
@@ -174,7 +152,6 @@ func TestCreateContest(t *testing.T) {
 			&contestcommand.ContestCreateRequest{
 				ContestStart:            clock.Now().Add(30 * 24 * time.Hour),
 				ContestEnd:              clock.Now().Add(45 * 24 * time.Hour),
-				RegistrationStart:       clock.Now().Add(1 * 24 * time.Hour),
 				RegistrationEnd:         clock.Now().Add(40 * 24 * time.Hour),
 				Official:                false,
 				Private:                 false,

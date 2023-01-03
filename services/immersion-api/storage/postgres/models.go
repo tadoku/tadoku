@@ -18,7 +18,6 @@ type Contest struct {
 	Private                 bool
 	ContestStart            time.Time
 	ContestEnd              time.Time
-	RegistrationStart       time.Time
 	RegistrationEnd         time.Time
 	Description             string
 	LanguageCodeAllowList   []string

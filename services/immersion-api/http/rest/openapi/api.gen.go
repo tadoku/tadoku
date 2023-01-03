@@ -44,7 +44,6 @@ type Contest struct {
 	OwnerUserId             *openapi_types.UUID `json:"owner_user_id,omitempty"`
 	Private                 bool                `json:"private"`
 	RegistrationEnd         openapi_types.Date  `json:"registration_end"`
-	RegistrationStart       openapi_types.Date  `json:"registration_start"`
 	UpdatedAt               *time.Time          `json:"updated_at,omitempty"`
 }
 
@@ -61,7 +60,6 @@ type ContestBase struct {
 	OwnerUserId          *openapi_types.UUID `json:"owner_user_id,omitempty"`
 	Private              bool                `json:"private"`
 	RegistrationEnd      openapi_types.Date  `json:"registration_end"`
-	RegistrationStart    openapi_types.Date  `json:"registration_start"`
 	UpdatedAt            *time.Time          `json:"updated_at,omitempty"`
 }
 
@@ -87,7 +85,6 @@ type ContestView struct {
 	OwnerUserId          *openapi_types.UUID `json:"owner_user_id,omitempty"`
 	Private              bool                `json:"private"`
 	RegistrationEnd      openapi_types.Date  `json:"registration_end"`
-	RegistrationStart    openapi_types.Date  `json:"registration_start"`
 	UpdatedAt            *time.Time          `json:"updated_at,omitempty"`
 }
 

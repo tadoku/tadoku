@@ -11,7 +11,6 @@ export const ContestFormSchema = z
   .object({
     contestStart: z.string().regex(date),
     contestEnd: z.string().regex(date),
-    registrationStart: z.string().regex(date),
     registrationEnd: z.string().regex(date),
     description: z
       .string()
@@ -45,7 +44,6 @@ export const ContestFormSchema = z
     const {
       contestStart: contest_start,
       contestEnd: contest_end,
-      registrationStart: registration_start,
       registrationEnd: registration_end,
       ...rest
     } = contest
@@ -53,7 +51,6 @@ export const ContestFormSchema = z
       ...rest,
       contest_start,
       contest_end,
-      registration_start,
       registration_end,
       language_code_allow_list: contest.languageCodeAllowList.map(l => l.code),
       activity_type_id_allow_list: contest.activityTypeIdAllowList.map(
@@ -125,26 +122,13 @@ export const ContestForm = ({
               />
             </div>
           </div>
-          <div className="v-stack md:h-stack fill spaced">
-            <div>
-              <Input
-                name="registrationStart"
-                label="Sign up start date"
-                register={register}
-                formState={formState}
-                type="date"
-              />
-            </div>
-            <div>
-              <Input
-                name="registrationEnd"
-                label="Sign up deadline"
-                register={register}
-                formState={formState}
-                type="date"
-              />
-            </div>
-          </div>
+          <Input
+            name="registrationEnd"
+            label="Sign up deadline"
+            register={register}
+            formState={formState}
+            type="date"
+          />
         </div>
       </div>
       <div className="card v-stack spaced">

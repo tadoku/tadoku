@@ -186,7 +186,6 @@ components:
       required:
         - contest_start
         - contest_end
-        - registration_start
         - registration_end
         - description
         - private
@@ -202,9 +201,6 @@ components:
           type: string
           format: date
         contest_end:
-          type: string
-          format: date
-        registration_start:
           type: string
           format: date
         registration_end:

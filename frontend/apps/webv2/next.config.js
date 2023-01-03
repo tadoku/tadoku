@@ -18,11 +18,6 @@ const nextConfig = {
         destination: '/contests/official',
         permanent: true,
       },
-      {
-        source: '/contests/:id',
-        destination: '/contests/:id/leaderboard',
-        permanent: true,
-      },
     ]
   },
 }

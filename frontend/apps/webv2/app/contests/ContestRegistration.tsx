@@ -73,7 +73,7 @@ export const ContestRegistrationForm = ({ contest, data }: Props) => {
 
   const methods = useForm<ContestRegistrationFormSchema>({
     resolver: zodResolver(ContestRegistrationFormSchema),
-    defaultValues: ContestRegistrationFormSchema.parse(defaultValues),
+    defaultValues,
   })
 
   const router = useRouter()
@@ -135,7 +135,9 @@ export const ContestRegistrationForm = ({ contest, data }: Props) => {
           <button
             type="submit"
             className="btn primary"
-            disabled={methods.formState.isSubmitting}
+            disabled={
+              methods.formState.isSubmitting || !methods.formState.isValid
+            }
           >
             {defaultValues ? 'Register' : 'Update registration'}
           </button>

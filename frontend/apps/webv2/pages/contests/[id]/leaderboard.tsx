@@ -3,12 +3,15 @@ import { useSession } from '@app/common/session'
 import { useContest } from '@app/contests/api'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
-import { Pagination, Tabbar } from 'ui'
+import { Flash, Pagination, Tabbar } from 'ui'
 import getConfig from 'next/config'
 import { DateTime, Interval } from 'luxon'
 import { useState } from 'react'
 import { ContestOverview } from '@app/contests/ContestOverview'
-import { InformationCircleIcon } from '@heroicons/react/20/solid'
+import {
+  ExclamationCircleIcon,
+  InformationCircleIcon,
+} from '@heroicons/react/20/solid'
 
 const { publicRuntimeConfig } = getConfig()
 
@@ -117,22 +120,26 @@ const Page = () => {
       />
 
       {!session && !hasEnded ? (
-        <Link
+        <Flash
+          style="info"
           href={
             publicRuntimeConfig.authUiUrl + `/login?return_to=${currentUrl}`
           }
-          className="flash warning mt-4"
+          IconComponent={InformationCircleIcon}
+          className="mt-4"
         >
-          <InformationCircleIcon className="mr-2 w-5 h-5" />
           You need to log in to participate in this contest.
-        </Link>
+        </Flash>
       ) : null}
       {hasEnded ? (
-        <div className="flash warning mt-4">
-          <InformationCircleIcon className="mr-2 w-5 h-5" />
+        <Flash
+          style="warning"
+          IconComponent={ExclamationCircleIcon}
+          className="mt-4"
+        >
           This contest has already ended and does not accept any new
           participants.
-        </div>
+        </Flash>
       ) : null}
       <div className="flex mt-4 space-x-4">
         <div className="flex-grow">

@@ -219,3 +219,9 @@ func (s *Server) ContestList(ctx echo.Context, params openapi.ContestListParams)
 
 	return ctx.JSON(http.StatusOK, res)
 }
+
+// Fetches a contest registration if it exists
+// (GET /contests/{id}/registration)
+func (s *Server) ContestFindRegistration(ctx echo.Context, id types.UUID) error {
+	return ctx.NoContent(http.StatusNotImplemented)
+}

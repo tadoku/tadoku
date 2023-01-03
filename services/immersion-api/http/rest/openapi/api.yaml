@@ -97,6 +97,29 @@ paths:
                 $ref: '#/components/schemas/ContestView'
         '404':
           description: not found
+  /contests/{id}/registration:
+    get:
+      summary: Fetches a contest registration if it exists
+      operationId: contestFindRegistration
+      tags: [contests]
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContestRegistration'
+        '404':
+          description: not found
   /contests/configuration-options:
     get:
       summary: Fetches the configuration options for a new contest
@@ -274,6 +297,30 @@ components:
               maxItems: 50
               items:
                 $ref: "#/components/schemas/Contest"
+    ContestRegistration:
+      type: object
+      required:
+        - contest_id
+        - user_id
+        - user_display_name
+        - languages
+      properties:
+        id:
+          type: string
+          format: uuid
+        contest_id:
+          type: string
+          format: uuid
+        user_id:
+          type: string
+          format: uuid
+        user_display_name:
+          type: string
+          example: "john"
+        languages:
+          type: array
+          items:
+            $ref: "#/components/schemas/Language"
     PaginatedList:
       type: object
       required:

@@ -219,13 +219,14 @@ const Index: NextPage<Props> = () => {
         {posts.data?.posts[0] ? (
           <div className="lg:w-3/6 flex-shrink-0">
             <div className="card auto-format">
-              <div className="h-stack w-full items-center justify-between">
+              <div className="h-stack w-full items-center justify-between space-x-4">
                 <h2 className="title text-xl">
+                  Latest blog post:{' '}
                   <Link href={`/blog/posts/${posts.data.posts[0].slug}`}>
                     {posts.data.posts[0].title}
                   </Link>
                 </h2>
-                <Link href="/blog" className="btn">
+                <Link href="/blog" className="btn flex-shrink-0">
                   <span className="hidden md:inline">More posts</span>
                   <span className="inline md:hidden">More</span>
                   <ArrowLongRightIcon className="ml-2" />

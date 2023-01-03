@@ -3,6 +3,7 @@ export { Logo, LogoInverted } from './components/branding'
 export { Breadcrumb } from './components/Breadcrumb'
 export { ButtonGroup } from './components/ButtonGroup'
 export { chartColors, chartDatasetDefaults } from './components/charts'
+export { Flash } from './components/Flash'
 export {
   Input,
   TextArea,

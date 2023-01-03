@@ -7,7 +7,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/router'
 import { Pagination, Tabbar } from 'ui'
 import getConfig from 'next/config'
-import { DateTime, Interval } from 'luxon'
+import { DateTime, Duration, Interval } from 'luxon'
 import { useState } from 'react'
 
 const { publicRuntimeConfig } = getConfig()
@@ -67,10 +67,12 @@ const Page = () => {
     )
   }
 
-  const hasEnded = Interval.fromDateTimes(
+  const contestInterval = Interval.fromDateTimes(
     contest.data.contestStart,
     contest.data.contestEnd,
-  ).isBefore(now)
+  )
+  const hasEnded = contestInterval.isBefore(now)
+  const hasStarted = contestInterval.contains(now) || hasEnded
 
   return (
     <>
@@ -195,12 +197,37 @@ const Page = () => {
               </div>
             </div>
             <div className="-mx-7 px-4 py-2 border-t-2 border-slate-500/5">
-              Ends in{' '}
-              <strong>
-                {contest.data.contestEnd
-                  .diffNow(['days', 'hours', 'minute'])
-                  .toHuman({ maximumFractionDigits: 0 })}
-              </strong>
+              {!hasStarted ? (
+                <>
+                  Starting in{' '}
+                  <strong>
+                    {contest.data.contestEnd
+                      .plus(Duration.fromObject({ days: 1 }))
+                      .diffNow(['days', 'hours', 'minute'])
+                      .toHuman({
+                        maximumFractionDigits: 0,
+                        unitDisplay: 'short',
+                      })}
+                  </strong>
+                </>
+              ) : hasEnded ? (
+                <>
+                  Contest has <strong>ended</strong>
+                </>
+              ) : (
+                <>
+                  Ending in{' '}
+                  <strong>
+                    {contest.data.contestEnd
+                      .plus(Duration.fromObject({ days: 1 }))
+                      .diffNow(['days', 'hours', 'minute'])
+                      .toHuman({
+                        maximumFractionDigits: 0,
+                        unitDisplay: 'short',
+                      })}
+                  </strong>
+                </>
+              )}
             </div>
             <div className="-mx-7 px-4 py-2 border-t-2 border-slate-500/5">
               Tadoku time:{' '}

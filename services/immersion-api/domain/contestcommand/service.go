@@ -17,10 +17,12 @@ var ErrUnauthorized = errors.New("unauthorized")
 
 type ContestRepository interface {
 	CreateContest(context.Context, *ContestCreateRequest) (*ContestCreateResponse, error)
+	CreateOrUpdateContestRegistration(context.Context, *ContestRegistrationCreateOrUpdateRequest) error
 }
 
 type Service interface {
 	CreateContest(context.Context, *ContestCreateRequest) (*ContestCreateResponse, error)
+	// CreateOrUpdateContestRegistration(context.Context, *ContestRegistrationCreateOrUpdateRequest) error
 }
 
 type service struct {
@@ -114,4 +116,12 @@ func (s *service) CreateContest(ctx context.Context, req *ContestCreateRequest) 
 	}
 
 	return s.r.CreateContest(ctx, req)
+}
+
+type ContestRegistrationCreateOrUpdateRequest struct {
+	ID              uuid.UUID `validate:"required"`
+	ContestID       uuid.UUID `validate:"required"`
+	UserID          uuid.UUID `validate:"required"`
+	UserDisplayName string    `validate:"required"`
+	LanguageCodes   []string  `validate:"required"`
 }

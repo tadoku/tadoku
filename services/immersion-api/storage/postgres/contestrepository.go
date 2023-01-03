@@ -80,6 +80,22 @@ func (r *ContestRepository) CreateContest(ctx context.Context, req *contestcomma
 	}, nil
 }
 
+func (r *ContestRepository) CreateOrUpdateContestRegistration(ctx context.Context, req *contestcommand.ContestRegistrationCreateOrUpdateRequest) error {
+	_, err := r.q.UpsertContestRegistration(ctx, UpsertContestRegistrationParams{
+		ID:              req.ID,
+		ContestID:       req.ContestID,
+		UserID:          req.UserID,
+		UserDisplayName: req.UserDisplayName,
+		LanguageCodes:   req.LanguageCodes,
+	})
+
+	if err != nil {
+		return fmt.Errorf("could not create or update contest registration: %w", err)
+	}
+
+	return nil
+}
+
 // QUERIES
 
 func (r *ContestRepository) FetchContestConfigurationOptions(ctx context.Context) (*contestquery.FetchContestConfigurationOptionsResponse, error) {

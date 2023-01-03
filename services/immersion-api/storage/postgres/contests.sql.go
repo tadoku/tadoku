@@ -164,6 +164,46 @@ func (q *Queries) FindContestById(ctx context.Context, arg FindContestByIdParams
 	return i, err
 }
 
+const findContestRegistrationForUser = `-- name: FindContestRegistrationForUser :one
+select
+  id,
+  contest_id,
+  user_id,
+  user_display_name,
+  language_codes
+from contest_registrations
+where
+  user_id = $1
+  and contest_id = $2
+  and deleted_at is null
+`
+
+type FindContestRegistrationForUserParams struct {
+	UserID    uuid.UUID
+	ContestID uuid.UUID
+}
+
+type FindContestRegistrationForUserRow struct {
+	ID              uuid.UUID
+	ContestID       uuid.UUID
+	UserID          uuid.UUID
+	UserDisplayName string
+	LanguageCodes   []string
+}
+
+func (q *Queries) FindContestRegistrationForUser(ctx context.Context, arg FindContestRegistrationForUserParams) (FindContestRegistrationForUserRow, error) {
+	row := q.db.QueryRowContext(ctx, findContestRegistrationForUser, arg.UserID, arg.ContestID)
+	var i FindContestRegistrationForUserRow
+	err := row.Scan(
+		&i.ID,
+		&i.ContestID,
+		&i.UserID,
+		&i.UserDisplayName,
+		pq.Array(&i.LanguageCodes),
+	)
+	return i, err
+}
+
 const listContests = `-- name: ListContests :many
 select
   id,

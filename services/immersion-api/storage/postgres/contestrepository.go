@@ -122,7 +122,6 @@ func (r *ContestRepository) FindByID(ctx context.Context, req *contestquery.Find
 		IncludeDeleted: req.IncludeDeleted,
 	})
 	if err != nil {
-
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, contestquery.ErrNotFound
 		}
@@ -242,5 +241,40 @@ func (r *ContestRepository) ListContests(ctx context.Context, req *contestquery.
 		Contests:      res,
 		TotalSize:     int(meta.TotalSize),
 		NextPageToken: nextPageToken,
+	}, nil
+}
+
+func (r *ContestRepository) FindRegistrationForUser(ctx context.Context, req *contestquery.FindRegistrationForUserRequest) (*contestquery.ContestRegistration, error) {
+	reg, err := r.q.FindContestRegistrationForUser(ctx, FindContestRegistrationForUserParams{
+		UserID:    req.UserID,
+		ContestID: req.ContestID,
+	})
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, contestquery.ErrNotFound
+		}
+
+		return nil, fmt.Errorf("could not fetch contest registration: %w", err)
+	}
+
+	languages, err := r.q.GetLanguagesByCode(ctx, reg.LanguageCodes)
+	if err != nil {
+		return nil, fmt.Errorf("could not fetch contest registration: %w", err)
+	}
+
+	langs := make([]contestquery.Language, len(languages))
+	for i, a := range languages {
+		langs[i] = contestquery.Language{
+			Code: a.Code,
+			Name: a.Name,
+		}
+	}
+
+	return &contestquery.ContestRegistration{
+		ID:               reg.ID,
+		ContestID:        reg.ContestID,
+		UserID:           req.UserID,
+		UserDisplayName:  reg.UserDisplayName,
+		AllowedLanguages: langs,
 	}, nil
 }

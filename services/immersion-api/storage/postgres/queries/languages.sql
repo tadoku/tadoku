@@ -17,3 +17,12 @@ where
     where id = sqlc.arg('contest_id')
   )::varchar[])
 order by name asc;
+
+-- name: GetLanguagesByCode :many
+select
+  code,
+  name
+from languages
+where
+  code = any(sqlc.arg('language_codes')::varchar[])::varchar[]
+order by name asc;

@@ -12,17 +12,20 @@ import (
 
 var ErrRequestInvalid = errors.New("request is invalid")
 var ErrNotFound = errors.New("not found")
+var ErrUnauthorized = errors.New("unauthorized")
 
 type ContestRepository interface {
 	FetchContestConfigurationOptions(ctx context.Context) (*FetchContestConfigurationOptionsResponse, error)
 	FindByID(context.Context, *FindByIDRequest) (*ContestView, error)
 	ListContests(context.Context, *ContestListRequest) (*ContestListResponse, error)
+	FindRegistrationForUser(context.Context, *FindRegistrationForUserRequest) (*ContestRegistration, error)
 }
 
 type Service interface {
 	FetchContestConfigurationOptions(ctx context.Context) (*FetchContestConfigurationOptionsResponse, error)
 	FindByID(context.Context, *FindByIDRequest) (*ContestView, error)
 	ListContests(context.Context, *ContestListRequest) (*ContestListResponse, error)
+	FindRegistrationForUser(context.Context, *FindRegistrationForUserRequest) (*ContestRegistration, error)
 }
 
 type service struct {
@@ -142,4 +145,30 @@ func (s *service) ListContests(ctx context.Context, req *ContestListRequest) (*C
 	req.IncludePrivate = domain.IsRole(ctx, domain.RoleAdmin)
 
 	return s.r.ListContests(ctx, req)
+}
+
+type FindRegistrationForUserRequest struct {
+	UserID    uuid.UUID
+	ContestID uuid.UUID
+}
+
+type ContestRegistration struct {
+	ID               uuid.UUID
+	ContestID        uuid.UUID
+	UserID           uuid.UUID
+	UserDisplayName  string
+	AllowedLanguages []Language
+}
+
+func (s *service) FindRegistrationForUser(ctx context.Context, req *FindRegistrationForUserRequest) (*ContestRegistration, error) {
+	if domain.IsRole(ctx, domain.RoleGuest) || domain.IsRole(ctx, domain.RoleBanned) {
+		return nil, ErrUnauthorized
+	}
+
+	res, err := s.r.FindRegistrationForUser(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+
+	return res, nil
 }

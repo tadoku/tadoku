@@ -9,7 +9,41 @@ import (
 	"context"
 
 	"github.com/google/uuid"
+	"github.com/lib/pq"
 )
+
+const getLanguagesByCode = `-- name: GetLanguagesByCode :many
+select
+  code,
+  name
+from languages
+where
+  code = any($1::varchar[])::varchar[]
+order by name asc
+`
+
+func (q *Queries) GetLanguagesByCode(ctx context.Context, languageCodes []string) ([]Language, error) {
+	rows, err := q.db.QueryContext(ctx, getLanguagesByCode, pq.Array(languageCodes))
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Language
+	for rows.Next() {
+		var i Language
+		if err := rows.Scan(&i.Code, &i.Name); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
 
 const listLanguages = `-- name: ListLanguages :many
 select

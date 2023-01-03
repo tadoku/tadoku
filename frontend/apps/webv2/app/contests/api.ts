@@ -274,5 +274,5 @@ export const useContestRegistration = (
 
       return ContestRegistrationView.parse(await response.json())
     },
-    options,
+    { ...options, retry: false },
   )

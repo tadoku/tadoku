@@ -125,6 +125,10 @@ func (s *Server) ContestFindByID(ctx echo.Context, id types.UUID) error {
 		}
 	}
 
+	if len(langs) == 0 {
+		langs = nil
+	}
+
 	acts := make([]openapi.Activity, len(contest.AllowedActivities))
 	for i, it := range contest.AllowedActivities {
 		acts[i] = openapi.Activity{

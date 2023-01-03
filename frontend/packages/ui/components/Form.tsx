@@ -8,6 +8,7 @@ import {
   RegisterOptions,
   useController,
   UseControllerProps,
+  useFormContext,
   UseFormRegister,
 } from 'react-hook-form'
 
@@ -315,24 +316,23 @@ export function AutocompleteInput<T>(
   )
 }
 
-export function AutocompleteMultiInput<T>(
-  props: {
-    label: string
-    name: string
-    hint?: string
-    options: T[]
-    match: (option: T, query: string) => boolean
-    format: (option: T) => string
-    getIdForOption: (option: T) => string | number
-  } & UseControllerProps,
-) {
+export function AutocompleteMultiInput<T>(props: {
+  label: string
+  name: string
+  hint?: string
+  options: T[]
+  match: (option: T, query: string) => boolean
+  format: (option: T) => string
+  getIdForOption: (option: T) => string | number
+}) {
   const [query, setQuery] = useState('')
 
   const { name, label, hint, options, match, format, getIdForOption } = props
+  const { control } = useFormContext()
   const {
     field: { value, onChange },
     formState: { errors },
-  } = useController({ defaultValue: [], ...props })
+  } = useController({ defaultValue: [], name: props.name, control })
 
   const hasError = errors[name] !== undefined
   let errorMessage =

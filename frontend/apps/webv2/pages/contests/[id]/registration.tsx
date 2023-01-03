@@ -2,6 +2,7 @@ import { useCurrentDateTime, useCurrentLocation } from '@app/common/hooks'
 import { routes } from '@app/common/routes'
 import { useSession } from '@app/common/session'
 import { useContest, useContestRegistration } from '@app/contests/api'
+import { ContestRegistrationForm } from '@app/contests/ContestRegistration'
 import { ExclamationCircleIcon, HomeIcon } from '@heroicons/react/20/solid'
 import { Interval } from 'luxon'
 import { useRouter } from 'next/router'
@@ -58,7 +59,7 @@ const Page = () => {
               label: contest.data.description,
               href: routes.contestLeaderboard(id),
             },
-            { label: 'Join', href: routes.contestJoin(id) },
+            { label: 'Registration', href: routes.contestJoin(id) },
           ]}
         />
       </div>
@@ -69,6 +70,11 @@ const Page = () => {
       >
         Unfortunately, registrations for this contest have ended.
       </Flash>
+
+      <ContestRegistrationForm
+        contest={contest.data}
+        data={registration.data}
+      />
     </>
   )
 }

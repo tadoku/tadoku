@@ -20,7 +20,6 @@ export const ContestConfiguration = ({ contest }: Props) => (
             <strong>No restrictions</strong>
           ) : (
             <ul>
-              {JSON.stringify(contest)}
               {contest.allowedLanguages.map(it => (
                 <li key={it.code}>
                   <strong>{it.name}</strong>

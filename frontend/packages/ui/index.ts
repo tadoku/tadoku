@@ -1,6 +1,7 @@
 export { ActionMenu } from './components/ActionMenu'
 export { Logo, LogoInverted } from './components/branding'
 export { Breadcrumb } from './components/Breadcrumb'
+export { ButtonGroup } from './components/ButtonGroup'
 export { chartColors, chartDatasetDefaults } from './components/charts'
 export {
   Input,

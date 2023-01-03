@@ -6,6 +6,7 @@ import {
   ChevronLeftIcon,
   UserIcon,
 } from '@heroicons/react/24/solid'
+import { ButtonGroup } from 'ui'
 
 export default function Buttons() {
   return (
@@ -202,6 +203,36 @@ export default function Buttons() {
     <ChevronLeftIcon />
     Ghost
   </a>
+</div>`}
+      />
+
+      <Separator />
+
+      <Title>Button group</Title>
+      <Preview>
+        <ButtonGroup
+          actions={[
+            {
+              href: '#',
+              onClick: () => console.log('pressed'),
+              label: 'Primary',
+              style: 'primary',
+            },
+            { href: '#', label: 'Secondary', style: 'secondary' },
+            { href: '#', label: 'Tertiary (default)' },
+            { href: '#', label: 'Danger', style: 'danger' },
+            { href: '#', label: 'Ghost', style: 'ghost' },
+          ]}
+        />
+      </Preview>
+      <CodeBlock
+        language="html"
+        code={`<div className="space-x-3">
+  <a href="#" className="btn primary">Primary</a>
+  <a href="#" className="btn secondary">Secondary</a>
+  <a href="#" className="btn">Tertiary (default)</a>
+  <a href="#" className="btn danger">Danger</a>
+  <a href="#" className="btn ghost">Ghost</a>
 </div>`}
       />
     </>

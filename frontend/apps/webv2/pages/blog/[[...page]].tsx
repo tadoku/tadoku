@@ -20,10 +20,7 @@ const BlogIndex = () => {
 
   const navigateToPage = async (page: number) => {
     setPage(page)
-    await router.push({
-      pathname: `/blog/[[...page]]`,
-      query: { page: page.toString() },
-    })
+    await router.push(routes.blogList(page))
   }
 
   if (list.isLoading || list.isIdle) {

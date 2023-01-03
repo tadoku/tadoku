@@ -97,7 +97,7 @@ const Contests: NextPage<Props> = () => {
                   totalPages={Math.ceil(list.data.totalSize / filters.pageSize)}
                   onClick={page => {
                     setFilters({ ...filters, page })
-                    router.push(`/contests/my-contests/${page}`)
+                    router.push(routes.contestListMyContests(page))
                   }}
                 />
               </div>

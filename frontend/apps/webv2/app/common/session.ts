@@ -8,6 +8,7 @@ import { AppContext } from 'next/app'
 import { NextPageContext } from 'next'
 import getConfig from 'next/config'
 import { useCurrentLocation } from '@app/common/hooks'
+import { routes } from './routes'
 
 const { publicRuntimeConfig } = getConfig()
 
@@ -26,9 +27,7 @@ export const useSessionOrRedirect = () => {
 
   useEffect(() => {
     if (!session) {
-      router.push(
-        publicRuntimeConfig.authUiUrl + `/login?return_to=${currentUrl}`,
-      )
+      router.push(routes.authLogin(currentUrl))
     }
   })
 
@@ -73,7 +72,7 @@ export const useLogoutHandler = (deps?: DependencyList) => {
         .submitSelfServiceLogoutFlow(logoutToken, undefined, {
           withCredentials: true,
         })
-        .then(() => router.push('/login'))
+        .then(() => router.push(routes.authLogin()))
         .then(() => router.reload())
     }
   }

@@ -57,7 +57,9 @@
     @apply border border-slate-300 bg-slate-100 rounded-sm p-1 text-indigo-700;
   }
 
-  a:not(.reset):hover, a:not(.reset):active, a:not(.reset):focus {
+  a:not(.reset):not(.flash):hover,
+  a:not(.reset):not(.flash):active,
+  a:not(.reset):not(.flash):focus {
     color: theme('colors.primary');
   }
 
@@ -266,7 +268,11 @@
   }
 
   .flash {
-    @apply font-medium px-4 py-2 shadow shadow-slate-500/10;
+    @apply font-medium px-4 py-2 shadow shadow-slate-500/10 flex items-center;
+  }
+
+  a.flash {
+    @apply transition-all ease-in;
   }
 
   .table-container {
@@ -358,19 +364,35 @@
   }
 
   .flash.info {
-    @apply bg-blue-700 text-white;
+    @apply bg-blue-200 text-blue-900;
+  }
+
+  a.flash.info {
+    @apply hover:bg-blue-300;
   }
 
   .flash.success {
-    @apply bg-emerald-700 text-white;
+    @apply bg-lime-200 text-lime-900;
+  }
+
+  a.flash.success {
+    @apply hover:bg-lime-300;
   }
 
   .flash.warning {
-    @apply bg-amber-200 text-secondary;
+    @apply bg-amber-200 text-amber-900;
+  }
+
+  a.flash.warning {
+    @apply hover:bg-amber-300;
   }
 
   .flash.error {
-    @apply bg-red-700 text-white;
+    @apply bg-red-200 text-red-900;
+  }
+
+  a.flash.error {
+    @apply hover:bg-red-300;
   }
 
   .v-stack.spaced {

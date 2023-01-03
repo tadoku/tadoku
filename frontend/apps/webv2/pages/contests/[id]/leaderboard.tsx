@@ -8,6 +8,7 @@ import getConfig from 'next/config'
 import { DateTime, Interval } from 'luxon'
 import { useState } from 'react'
 import { ContestOverview } from '@app/contests/ContestOverview'
+import { InformationCircleIcon } from '@heroicons/react/20/solid'
 
 const { publicRuntimeConfig } = getConfig()
 
@@ -120,10 +121,18 @@ const Page = () => {
           href={
             publicRuntimeConfig.authUiUrl + `/login?return_to=${currentUrl}`
           }
-          className="reset block flash warning mt-4 hover:bg-amber-300 transition-all ease-in"
+          className="flash warning mt-4"
         >
+          <InformationCircleIcon className="mr-2 w-5 h-5" />
           You need to log in to participate in this contest.
         </Link>
+      ) : null}
+      {hasEnded ? (
+        <div className="flash warning mt-4">
+          <InformationCircleIcon className="mr-2 w-5 h-5" />
+          This contest has already ended and does not accept any new
+          participants.
+        </div>
       ) : null}
       <div className="flex mt-4 space-x-4">
         <div className="flex-grow">

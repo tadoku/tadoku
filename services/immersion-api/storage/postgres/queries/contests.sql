@@ -115,3 +115,22 @@ where
   user_id = sqlc.arg('user_id')
   and contest_id = sqlc.arg('contest_id')
   and deleted_at is null;
+
+-- name: UpsertContestRegistration :one
+insert into contest_registrations (
+  id,
+  contest_id,
+  user_id,
+  user_display_name,
+  language_codes
+) values (
+  sqlc.arg('id'),
+  sqlc.arg('contest_id'),
+  sqlc.arg('user_id'),
+  sqlc.arg('user_display_name'),
+  sqlc.arg('language_codes')
+) on conflict (id) do
+update set
+  language_codes = sqlc.arg('language_codes'),
+  updated_at = now()
+returning id;

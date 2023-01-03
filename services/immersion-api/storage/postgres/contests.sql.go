@@ -322,3 +322,44 @@ func (q *Queries) UpdateContest(ctx context.Context, arg UpdateContestParams) (u
 	err := row.Scan(&id)
 	return id, err
 }
+
+const upsertContestRegistration = `-- name: UpsertContestRegistration :one
+insert into contest_registrations (
+  id,
+  contest_id,
+  user_id,
+  user_display_name,
+  language_codes
+) values (
+  $1,
+  $2,
+  $3,
+  $4,
+  $5
+) on conflict (id) do
+update set
+  language_codes = $5,
+  updated_at = now()
+returning id
+`
+
+type UpsertContestRegistrationParams struct {
+	ID              uuid.UUID
+	ContestID       uuid.UUID
+	UserID          uuid.UUID
+	UserDisplayName string
+	LanguageCodes   []string
+}
+
+func (q *Queries) UpsertContestRegistration(ctx context.Context, arg UpsertContestRegistrationParams) (uuid.UUID, error) {
+	row := q.db.QueryRowContext(ctx, upsertContestRegistration,
+		arg.ID,
+		arg.ContestID,
+		arg.UserID,
+		arg.UserDisplayName,
+		pq.Array(arg.LanguageCodes),
+	)
+	var id uuid.UUID
+	err := row.Scan(&id)
+	return id, err
+}

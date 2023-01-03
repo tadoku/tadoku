@@ -187,13 +187,21 @@ const Page = () => {
           <div className="card text-sm">
             <div className="-mx-7 -mt-7 py-4 px-4 h-stack justify-between items-center">
               <div>
-                <div className="subtitle text-sm">Started</div>
-                <div className="font-bold">January 1, 2022</div>
+                <div className="subtitle text-sm">
+                  {hasStarted ? 'Started' : 'Starting'}
+                </div>
+                <div className="font-bold">
+                  {contest.data.contestStart.toLocaleString(DateTime.DATE_MED)}
+                </div>
               </div>
               <ArrowRightIcon className="w-7 h-7 text-slate-500/30" />
               <div>
-                <div className="subtitle text-sm">Ending</div>
-                <div className="font-bold">January 31, 2022</div>
+                <div className="subtitle text-sm">
+                  {hasEnded ? 'Ended' : 'Ending'}
+                </div>
+                <div className="font-bold">
+                  {contest.data.contestEnd.toLocaleString(DateTime.DATE_MED)}
+                </div>
               </div>
             </div>
             <div className="-mx-7 px-4 py-2 border-t-2 border-slate-500/5">

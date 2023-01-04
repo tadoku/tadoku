@@ -43,9 +43,13 @@ export const ContestRegistrationFormSchema = z
       const previousLangs = registration.languages.map(it => it.code)
       const newLangs = new Set(registration.newLanguages.map(it => it.code))
 
-      return (
-        previousLangs.map(it => newLangs.has(it)).filter(it => it).length > 0
-      )
+      for (const lang of previousLangs) {
+        if (!newLangs.has(lang)) {
+          return false
+        }
+      }
+
+      return true
     },
     {
       path: ['newLanguages'],
@@ -135,9 +139,7 @@ export const ContestRegistrationForm = ({ contest, data }: Props) => {
           <button
             type="submit"
             className="btn primary"
-            disabled={
-              methods.formState.isSubmitting || !methods.formState.isValid
-            }
+            disabled={methods.formState.isSubmitting}
           >
             {defaultValues ? 'Register' : 'Update registration'}
           </button>

@@ -161,9 +161,7 @@ export const ContestForm = ({
           <button
             type="submit"
             className="btn primary"
-            disabled={
-              methods.formState.isSubmitting || !methods.formState.isValid
-            }
+            disabled={methods.formState.isSubmitting}
           >
             Create
           </button>

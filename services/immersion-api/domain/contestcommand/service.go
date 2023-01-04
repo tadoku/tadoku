@@ -18,13 +18,13 @@ var ErrUnauthorized = errors.New("unauthorized")
 
 type ContestRepository interface {
 	CreateContest(context.Context, *ContestCreateRequest) (*ContestCreateResponse, error)
-	CreateOrUpdateContestRegistration(context.Context, *ContestRegistrationCreateOrUpdateRequest) error
+	UpsertContestRegistration(context.Context, *UpsertContestRegistrationRequest) error
 	FindRegistrationForUser(context.Context, *contestquery.FindRegistrationForUserRequest) (*contestquery.ContestRegistration, error)
 }
 
 type Service interface {
 	CreateContest(context.Context, *ContestCreateRequest) (*ContestCreateResponse, error)
-	CreateOrUpdateContestRegistration(context.Context, *ContestRegistrationCreateOrUpdateRequest) error
+	UpsertContestRegistration(context.Context, *UpsertContestRegistrationRequest) error
 }
 
 type service struct {
@@ -120,14 +120,24 @@ func (s *service) CreateContest(ctx context.Context, req *ContestCreateRequest) 
 	return s.r.CreateContest(ctx, req)
 }
 
-type ContestRegistrationCreateOrUpdateRequest struct {
-	ID              uuid.UUID `validate:"required"`
-	ContestID       uuid.UUID `validate:"required"`
-	UserID          uuid.UUID `validate:"required"`
-	UserDisplayName string    `validate:"required"`
-	LanguageCodes   []string  `validate:"required"`
+type UpsertContestRegistrationRequest struct {
+	ID              uuid.UUID
+	ContestID       uuid.UUID
+	UserID          uuid.UUID
+	UserDisplayName string
+	LanguageCodes   []string
 }
 
-func (s *service) CreateOrUpdateContestRegistration(context.Context, *ContestRegistrationCreateOrUpdateRequest) error {
+func (s *service) UpsertContestRegistration(context.Context, *UpsertContestRegistrationRequest) error {
+	// check languages length: 1 <= len <= 3
+
+	// check if languages are allowed by contest
+
+	// check if existing registration
+
+	// check if previous languages are included in new set
+
+	// return new registration
+
 	return nil
 }

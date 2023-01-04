@@ -80,7 +80,7 @@ func (r *ContestRepository) CreateContest(ctx context.Context, req *contestcomma
 	}, nil
 }
 
-func (r *ContestRepository) CreateOrUpdateContestRegistration(ctx context.Context, req *contestcommand.ContestRegistrationCreateOrUpdateRequest) error {
+func (r *ContestRepository) UpsertContestRegistration(ctx context.Context, req *contestcommand.UpsertContestRegistrationRequest) error {
 	_, err := r.q.UpsertContestRegistration(ctx, UpsertContestRegistrationParams{
 		ID:              req.ID,
 		ContestID:       req.ContestID,

@@ -134,11 +134,16 @@ type ContestListParams struct {
 	UserId         *openapi_types.UUID `form:"user_id,omitempty" json:"user_id,omitempty"`
 }
 
+// ContestRegistrationUpsertJSONBody defines parameters for ContestRegistrationUpsert.
+type ContestRegistrationUpsertJSONBody struct {
+	Languages *[]string `json:"languages,omitempty"`
+}
+
 // ContestCreateJSONRequestBody defines body for ContestCreate for application/json ContentType.
 type ContestCreateJSONRequestBody = Contest
 
 // ContestRegistrationUpsertJSONRequestBody defines body for ContestRegistrationUpsert for application/json ContentType.
-type ContestRegistrationUpsertJSONRequestBody = Languages
+type ContestRegistrationUpsertJSONRequestBody ContestRegistrationUpsertJSONBody
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {

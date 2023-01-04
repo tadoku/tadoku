@@ -137,7 +137,17 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Languages'
+              type: object
+              required:
+                - language_codes
+              properties:
+                languages:
+                  type: array
+                  items:
+                    type: string
+      responses:
+        '200':
+          description: successful operation
   /contests/configuration-options:
     get:
       summary: Fetches the configuration options for a new contest

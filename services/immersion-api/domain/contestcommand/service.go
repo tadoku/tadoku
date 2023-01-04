@@ -9,6 +9,7 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
 	"github.com/tadoku/tadoku/services/common/domain"
+	"github.com/tadoku/tadoku/services/immersion-api/domain/contestquery"
 )
 
 var ErrInvalidContest = errors.New("unable to validate contest")
@@ -18,11 +19,12 @@ var ErrUnauthorized = errors.New("unauthorized")
 type ContestRepository interface {
 	CreateContest(context.Context, *ContestCreateRequest) (*ContestCreateResponse, error)
 	CreateOrUpdateContestRegistration(context.Context, *ContestRegistrationCreateOrUpdateRequest) error
+	FindRegistrationForUser(context.Context, *contestquery.FindRegistrationForUserRequest) (*contestquery.ContestRegistration, error)
 }
 
 type Service interface {
 	CreateContest(context.Context, *ContestCreateRequest) (*ContestCreateResponse, error)
-	// CreateOrUpdateContestRegistration(context.Context, *ContestRegistrationCreateOrUpdateRequest) error
+	CreateOrUpdateContestRegistration(context.Context, *ContestRegistrationCreateOrUpdateRequest) error
 }
 
 type service struct {
@@ -124,4 +126,8 @@ type ContestRegistrationCreateOrUpdateRequest struct {
 	UserID          uuid.UUID `validate:"required"`
 	UserDisplayName string    `validate:"required"`
 	LanguageCodes   []string  `validate:"required"`
+}
+
+func (s *service) CreateOrUpdateContestRegistration(context.Context, *ContestRegistrationCreateOrUpdateRequest) error {
+	return nil
 }

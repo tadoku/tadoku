@@ -136,7 +136,7 @@ type ContestListParams struct {
 
 // ContestRegistrationUpsertJSONBody defines parameters for ContestRegistrationUpsert.
 type ContestRegistrationUpsertJSONBody struct {
-	Languages *[]string `json:"languages,omitempty"`
+	LanguageCodes []string `json:"language_codes"`
 }
 
 // ContestCreateJSONRequestBody defines body for ContestCreate for application/json ContentType.

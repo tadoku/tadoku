@@ -13,13 +13,15 @@ import (
 )
 
 var ErrInvalidContest = errors.New("unable to validate contest")
+var ErrInvalidContestRegistration = errors.New("language selection is not valid for contest")
 var ErrForbidden = errors.New("not allowed")
 var ErrUnauthorized = errors.New("unauthorized")
 
 type ContestRepository interface {
 	CreateContest(context.Context, *ContestCreateRequest) (*ContestCreateResponse, error)
 	UpsertContestRegistration(context.Context, *UpsertContestRegistrationRequest) error
-	FindRegistrationForUser(context.Context, *contestquery.FindRegistrationForUserRequest) (*contestquery.ContestRegistration, error)
+
+	contestquery.ContestRepository
 }
 
 type Service interface {
@@ -128,16 +130,73 @@ type UpsertContestRegistrationRequest struct {
 	LanguageCodes   []string
 }
 
-func (s *service) UpsertContestRegistration(context.Context, *UpsertContestRegistrationRequest) error {
-	// check languages length: 1 <= len <= 3
+func (s *service) UpsertContestRegistration(ctx context.Context, req *UpsertContestRegistrationRequest) error {
+	if domain.IsRole(ctx, domain.RoleBanned) {
+		return ErrForbidden
+	}
+	if domain.IsRole(ctx, domain.RoleGuest) {
+		return ErrUnauthorized
+	}
+
+	// Enrich request with session
+	session := domain.ParseSession(ctx)
+	if session == nil {
+		return ErrUnauthorized
+	}
+	req.UserID = uuid.MustParse(session.Subject)
+	req.UserDisplayName = session.DisplayName
+	req.ID = uuid.New()
+
+	// TODO: should rename to FindContestByID
+	contest, err := s.r.FindByID(ctx, &contestquery.FindByIDRequest{
+		ID:             req.ContestID,
+		IncludeDeleted: false,
+	})
+	if err != nil {
+		return fmt.Errorf("could not find contest: %w", err)
+	}
+
+	if len(req.LanguageCodes) < 1 || len(req.LanguageCodes) > 3 {
+		return fmt.Errorf("invalid language code length: %w", ErrInvalidContestRegistration)
+	}
 
 	// check if languages are allowed by contest
+	if len(contest.AllowedLanguages) > 0 {
+		langs := map[string]bool{}
+		for _, lang := range contest.AllowedLanguages {
+			langs[lang.Code] = true
+		}
+		for _, code := range req.LanguageCodes {
+			if _, ok := langs[code]; !ok {
+				return fmt.Errorf("language %s is not allowed by contest: %w", code, ErrInvalidContestRegistration)
+			}
+		}
+	}
 
 	// check if existing registration
+	registration, err := s.r.FindRegistrationForUser(ctx, &contestquery.FindRegistrationForUserRequest{
+		UserID:    req.UserID,
+		ContestID: req.ContestID,
+	})
+	if err != nil && !errors.Is(err, contestquery.ErrNotFound) {
+		return err
+	}
 
 	// check if previous languages are included in new set
+	if registration != nil {
+		req.ID = registration.ID
 
-	// return new registration
+		langs := map[string]bool{}
+		for _, lang := range req.LanguageCodes {
+			langs[lang] = true
+		}
+		fmt.Println(registration.Languages, langs)
+		for _, lang := range registration.Languages {
+			if _, ok := langs[lang.Code]; !ok {
+				return fmt.Errorf("language %s is missing but was previously registered: %w", lang.Code, ErrInvalidContestRegistration)
+			}
+		}
+	}
 
-	return nil
+	return s.r.UpsertContestRegistration(ctx, req)
 }

@@ -70,7 +70,29 @@ func (s *Server) ContestCreate(ctx echo.Context) error {
 // Creates or updates a registration for a contest
 // (POST /contests/{id}/registration)
 func (s *Server) ContestRegistrationUpsert(ctx echo.Context, id types.UUID) error {
-	return nil
+	var req openapi.ContestRegistrationUpsertJSONBody
+	if err := ctx.Bind(&req); err != nil {
+		ctx.Echo().Logger.Error("could not process request: ", err)
+		return ctx.NoContent(http.StatusBadRequest)
+	}
+
+	err := s.contestCommandService.UpsertContestRegistration(ctx.Request().Context(), &contestcommand.UpsertContestRegistrationRequest{
+		ContestID:     id,
+		LanguageCodes: req.LanguageCodes,
+	})
+	if err != nil {
+		if errors.Is(err, contestquery.ErrNotFound) {
+			return ctx.NoContent(http.StatusNotFound)
+		}
+		if errors.Is(err, contestcommand.ErrInvalidContestRegistration) {
+			return ctx.NoContent(http.StatusBadRequest)
+		}
+
+		ctx.Echo().Logger.Error(err)
+		return ctx.NoContent(http.StatusInternalServerError)
+	}
+
+	return ctx.NoContent(http.StatusOK)
 }
 
 // QUERIES

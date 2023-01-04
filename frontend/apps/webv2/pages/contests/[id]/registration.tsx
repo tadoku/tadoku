@@ -71,10 +71,14 @@ const Page = () => {
         Unfortunately, registrations for this contest have ended.
       </Flash>
 
-      <ContestRegistrationForm
-        contest={contest.data}
-        data={registration.data}
-      />
+      {registration.isLoading ? (
+        'Loading...'
+      ) : (
+        <ContestRegistrationForm
+          contest={contest.data}
+          data={registration.data}
+        />
+      )}
     </>
   )
 }

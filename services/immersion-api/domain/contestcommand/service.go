@@ -190,7 +190,6 @@ func (s *service) UpsertContestRegistration(ctx context.Context, req *UpsertCont
 		for _, lang := range req.LanguageCodes {
 			langs[lang] = true
 		}
-		fmt.Println(registration.Languages, langs)
 		for _, lang := range registration.Languages {
 			if _, ok := langs[lang.Code]; !ok {
 				return fmt.Errorf("language %s is missing but was previously registered: %w", lang.Code, ErrInvalidContestRegistration)

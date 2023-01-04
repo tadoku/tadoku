@@ -6,7 +6,7 @@ import {
 import classNames from 'classnames'
 import Link from 'next/link'
 import { Dispatch, SetStateAction, useEffect, useState } from 'react'
-import { FieldValues, useForm } from 'react-hook-form'
+import { FieldValues, FormProvider, useForm } from 'react-hook-form'
 import { Input } from './Form'
 import { Modal } from './Modal'
 
@@ -204,49 +204,52 @@ const NavigateForm = ({
   setPage: (page: number) => void
   totalPages: number
 }) => {
-  const { register, handleSubmit, formState, reset } = useForm()
+  const methods = useForm()
   const onSubmit = ({ page }: FieldValues) => {
     setPage(page)
     setIsOpen(false)
   }
 
-  useEffect(() => reset(), [isOpen])
+  useEffect(() => methods.reset(), [isOpen])
 
   return (
     <Modal isOpen={isOpen} setIsOpen={setIsOpen}>
-      <form onSubmit={handleSubmit(onSubmit)} className="v-stack spaced">
-        <Input
-          name="page"
-          label="Navigate to page"
-          register={register}
-          formState={formState}
-          type="number"
-          options={{
-            required: 'This field is required',
-            valueAsNumber: true,
-          }}
-          min={1}
-          max={total}
-        />
-        <p className="modal-body"></p>
+      <FormProvider {...methods}>
+        <form
+          onSubmit={methods.handleSubmit(onSubmit)}
+          className="v-stack spaced"
+        >
+          <Input
+            name="page"
+            label="Navigate to page"
+            type="number"
+            options={{
+              required: 'This field is required',
+              valueAsNumber: true,
+            }}
+            min={1}
+            max={total}
+          />
+          <p className="modal-body"></p>
 
-        <div className="modal-actions">
-          <button
-            type="submit"
-            className="btn secondary"
-            disabled={formState.isSubmitting}
-          >
-            Go
-          </button>
-          <button
-            type="button"
-            className="btn ghost"
-            onClick={() => setIsOpen(false)}
-          >
-            Cancel
-          </button>
-        </div>
-      </form>
+          <div className="modal-actions">
+            <button
+              type="submit"
+              className="btn secondary"
+              disabled={methods.formState.isSubmitting}
+            >
+              Go
+            </button>
+            <button
+              type="button"
+              className="btn ghost"
+              onClick={() => setIsOpen(false)}
+            >
+              Cancel
+            </button>
+          </div>
+        </form>
+      </FormProvider>
     </Modal>
   )
 }

@@ -3,6 +3,7 @@ import getConfig from 'next/config'
 import { useMutation, useQuery, UseQueryOptions } from 'react-query'
 import { ContestFormSchema } from '@app/contests/ContestForm'
 import { DateTime } from 'luxon'
+import { ContestRegistrationFormSchema } from './ContestRegistration'
 
 const { publicRuntimeConfig } = getConfig()
 
@@ -276,3 +277,25 @@ export const useContestRegistration = (
     },
     { ...options, retry: false },
   )
+
+export const useContestRegistrationUpdate = (onSuccess: () => void) =>
+  useMutation({
+    mutationFn: async (registration: ContestRegistrationFormSchema) => {
+      const res = await fetch(
+        `${root}/${registration.contestId}/registration`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            language_codes: registration.newLanguages.map(it => it.code),
+          }),
+        },
+      )
+      return
+    },
+    onSuccess() {
+      onSuccess()
+    },
+  })

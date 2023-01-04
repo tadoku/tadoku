@@ -6,6 +6,7 @@ import {
   ContestRegistrationView,
   ContestView,
   useContestConfigurationOptions,
+  useContestRegistrationUpdate,
   useCreateContest,
 } from '@app/contests/api'
 import { useRouter } from 'next/router'
@@ -15,6 +16,7 @@ import { ExclamationCircleIcon } from '@heroicons/react/20/solid'
 
 export const ContestRegistrationFormSchema = z
   .object({
+    contestId: z.string(),
     newLanguages: z
       .array(
         z.object({
@@ -71,6 +73,7 @@ export const ContestRegistrationForm = ({ contest, data }: Props) => {
   const options = useContestConfigurationOptions({ enabled: allLanguages })
 
   const defaultValues = {
+    contestId: contest.id,
     languages: data?.languages,
     newLanguages: data?.languages ?? [],
   }
@@ -82,15 +85,14 @@ export const ContestRegistrationForm = ({ contest, data }: Props) => {
 
   const router = useRouter()
 
-  // TODO: make update and create mutation
-  const createRegistrationMutation = useCreateContest(id =>
-    router.replace(routes.contestLeaderboard(id)),
+  const createRegistrationMutation = useContestRegistrationUpdate(() =>
+    router.replace(routes.contestLeaderboard(contest.id)),
   )
 
   const [createContest] = useDebounce(createRegistrationMutation.mutate, 2500)
 
   const onSubmit = (data: ContestRegistrationFormSchema) => {
-    console.log(data.newLanguages.map(it => it.code))
+    createRegistrationMutation.mutate(data)
   }
 
   if (allLanguages && options.isError) {

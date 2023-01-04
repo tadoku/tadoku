@@ -38,6 +38,8 @@ create table contest_registrations (
   deleted_at timestamp default null
 );
 
+create unique index contest_registrations_user_id_contest_id on contest_registrations(user_id, contest_id);
+
 create table languages (
   code varchar(10) primary key not null,
   name varchar(100) not null

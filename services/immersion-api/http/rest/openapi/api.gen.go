@@ -137,6 +137,9 @@ type ContestListParams struct {
 // ContestCreateJSONRequestBody defines body for ContestCreate for application/json ContentType.
 type ContestCreateJSONRequestBody = Contest
 
+// ContestRegistrationUpsertJSONRequestBody defines body for ContestRegistrationUpsert for application/json ContentType.
+type ContestRegistrationUpsertJSONRequestBody = Languages
+
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
 	// Lists all the contests, paginated
@@ -154,6 +157,9 @@ type ServerInterface interface {
 	// Fetches a contest registration if it exists
 	// (GET /contests/{id}/registration)
 	ContestFindRegistration(ctx echo.Context, id openapi_types.UUID) error
+	// Creates or updates a registration for a contest
+	// (POST /contests/{id}/registration)
+	ContestRegistrationUpsert(ctx echo.Context, id openapi_types.UUID) error
 	// Checks if service is responsive
 	// (GET /ping)
 	Ping(ctx echo.Context) error
@@ -266,6 +272,24 @@ func (w *ServerInterfaceWrapper) ContestFindRegistration(ctx echo.Context) error
 	return err
 }
 
+// ContestRegistrationUpsert converts echo context to params.
+func (w *ServerInterfaceWrapper) ContestRegistrationUpsert(ctx echo.Context) error {
+	var err error
+	// ------------- Path parameter "id" -------------
+	var id openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithLocation("simple", false, "id", runtime.ParamLocationPath, ctx.Param("id"), &id)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter id: %s", err))
+	}
+
+	ctx.Set(CookieAuthScopes, []string{""})
+
+	// Invoke the callback with all the unmarshalled arguments
+	err = w.Handler.ContestRegistrationUpsert(ctx, id)
+	return err
+}
+
 // Ping converts echo context to params.
 func (w *ServerInterfaceWrapper) Ping(ctx echo.Context) error {
 	var err error
@@ -308,6 +332,7 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 	router.GET(baseURL+"/contests/configuration-options", wrapper.ContestGetConfigurations)
 	router.GET(baseURL+"/contests/:id", wrapper.ContestFindByID)
 	router.GET(baseURL+"/contests/:id/registration", wrapper.ContestFindRegistration)
+	router.POST(baseURL+"/contests/:id/registration", wrapper.ContestRegistrationUpsert)
 	router.GET(baseURL+"/ping", wrapper.Ping)
 
 }

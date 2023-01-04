@@ -120,6 +120,24 @@ paths:
                 $ref: '#/components/schemas/ContestRegistration'
         '404':
           description: not found
+    post:
+      summary: Creates or updates a registration for a contest
+      operationId: contestRegistrationUpsert
+      tags: [contests]
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Languages'
   /contests/configuration-options:
     get:
       summary: Fetches the configuration options for a new contest

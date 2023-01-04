@@ -67,6 +67,12 @@ func (s *Server) ContestCreate(ctx echo.Context) error {
 	})
 }
 
+// Creates or updates a registration for a contest
+// (POST /contests/{id}/registration)
+func (s *Server) ContestRegistrationUpsert(ctx echo.Context, id types.UUID) error {
+	return nil
+}
+
 // QUERIES
 
 // Fetches the configuration options for a new contest

@@ -118,6 +118,23 @@ type Languages struct {
 	Languages []Language `json:"languages"`
 }
 
+// Leaderboard defines model for Leaderboard.
+type Leaderboard struct {
+	Entries []LeaderboardEntry `json:"entries"`
+
+	// NextPageToken is empty if there's no next page
+	NextPageToken string `json:"next_page_token"`
+	TotalSize     int    `json:"total_size"`
+}
+
+// LeaderboardEntry defines model for LeaderboardEntry.
+type LeaderboardEntry struct {
+	Rank            int                `json:"rank"`
+	Score           int                `json:"score"`
+	UserDisplayName string             `json:"user_display_name"`
+	UserId          openapi_types.UUID `json:"user_id"`
+}
+
 // PaginatedList defines model for PaginatedList.
 type PaginatedList struct {
 	// NextPageToken is empty if there's no next page
@@ -132,6 +149,12 @@ type ContestListParams struct {
 	IncludeDeleted *bool               `form:"include_deleted,omitempty" json:"include_deleted,omitempty"`
 	Official       *bool               `form:"official,omitempty" json:"official,omitempty"`
 	UserId         *openapi_types.UUID `form:"user_id,omitempty" json:"user_id,omitempty"`
+}
+
+// ContestFetchLeaderboardParams defines parameters for ContestFetchLeaderboard.
+type ContestFetchLeaderboardParams struct {
+	PageSize *int `form:"page_size,omitempty" json:"page_size,omitempty"`
+	Page     *int `form:"page,omitempty" json:"page,omitempty"`
 }
 
 // ContestRegistrationUpsertJSONBody defines parameters for ContestRegistrationUpsert.
@@ -159,6 +182,9 @@ type ServerInterface interface {
 	// Fetches a contest by id
 	// (GET /contests/{id})
 	ContestFindByID(ctx echo.Context, id openapi_types.UUID) error
+	// Fetches the leaderboard for a contest
+	// (GET /contests/{id}/leaderboard)
+	ContestFetchLeaderboard(ctx echo.Context, id openapi_types.UUID, params ContestFetchLeaderboardParams) error
 	// Fetches a contest registration if it exists
 	// (GET /contests/{id}/registration)
 	ContestFindRegistration(ctx echo.Context, id openapi_types.UUID) error
@@ -259,6 +285,40 @@ func (w *ServerInterfaceWrapper) ContestFindByID(ctx echo.Context) error {
 	return err
 }
 
+// ContestFetchLeaderboard converts echo context to params.
+func (w *ServerInterfaceWrapper) ContestFetchLeaderboard(ctx echo.Context) error {
+	var err error
+	// ------------- Path parameter "id" -------------
+	var id openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithLocation("simple", false, "id", runtime.ParamLocationPath, ctx.Param("id"), &id)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter id: %s", err))
+	}
+
+	ctx.Set(CookieAuthScopes, []string{""})
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ContestFetchLeaderboardParams
+	// ------------- Optional query parameter "page_size" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "page_size", ctx.QueryParams(), &params.PageSize)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter page_size: %s", err))
+	}
+
+	// ------------- Optional query parameter "page" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "page", ctx.QueryParams(), &params.Page)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter page: %s", err))
+	}
+
+	// Invoke the callback with all the unmarshalled arguments
+	err = w.Handler.ContestFetchLeaderboard(ctx, id, params)
+	return err
+}
+
 // ContestFindRegistration converts echo context to params.
 func (w *ServerInterfaceWrapper) ContestFindRegistration(ctx echo.Context) error {
 	var err error
@@ -336,6 +396,7 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 	router.POST(baseURL+"/contests", wrapper.ContestCreate)
 	router.GET(baseURL+"/contests/configuration-options", wrapper.ContestGetConfigurations)
 	router.GET(baseURL+"/contests/:id", wrapper.ContestFindByID)
+	router.GET(baseURL+"/contests/:id/leaderboard", wrapper.ContestFetchLeaderboard)
 	router.GET(baseURL+"/contests/:id/registration", wrapper.ContestFindRegistration)
 	router.POST(baseURL+"/contests/:id/registration", wrapper.ContestRegistrationUpsert)
 	router.GET(baseURL+"/ping", wrapper.Ping)

@@ -283,3 +283,9 @@ func (s *Server) ContestFindRegistration(ctx echo.Context, id types.UUID) error 
 		Languages:       langs,
 	})
 }
+
+// Fetches the leaderboard for a contest
+// (GET /contests/{id}/leaderboard)
+func (s *Server) ContestFetchLeaderboard(ctx echo.Context, id types.UUID, params openapi.ContestFetchLeaderboardParams) error {
+	return nil
+}

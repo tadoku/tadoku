@@ -21,7 +21,7 @@ with leaderboard as (
     and deleted_at is null
 )
 select
-  rank() over(order by score) as rank,
+  rank() over(order by score desc) as rank,
   registrations.user_id,
   registrations.user_display_name,
   coalesce(leaderboard.score, 0) as score
@@ -29,4 +29,6 @@ from registrations
 left join leaderboard using(user_id)
 order by
   score desc,
-  registrations.user_id asc;
+  registrations.user_id asc
+limit sqlc.arg('page_size')
+offset sqlc.arg('start_from');

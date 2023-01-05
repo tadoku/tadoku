@@ -6,7 +6,7 @@ import {
   useContestConfigurationOptions,
   useContestList,
 } from '@app/contests/api'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/router'
 import { getQueryStringIntParameter } from '@app/common/router'
 import { useSessionOrRedirect } from '@app/common/session'
@@ -19,7 +19,7 @@ const Contests: NextPage<Props> = () => {
   const router = useRouter()
   const [session, _] = useSessionOrRedirect()
 
-  const [filters, setFilters] = useState(() => {
+  const newFilter = () => {
     return {
       page: getQueryStringIntParameter(router.query.page, 1),
       pageSize: 25,
@@ -27,7 +27,12 @@ const Contests: NextPage<Props> = () => {
       includeDeleted: false,
       userId: session?.identity.id,
     }
-  })
+  }
+  const [filters, setFilters] = useState(() => newFilter())
+  useEffect(() => {
+    setFilters(newFilter())
+  }, [router.asPath])
+
   const options = useContestConfigurationOptions({ enabled: !!session })
   const list = useContestList(filters, { enabled: !!options.data })
 
@@ -96,7 +101,6 @@ const Contests: NextPage<Props> = () => {
                   currentPage={filters.page}
                   totalPages={Math.ceil(list.data.totalSize / filters.pageSize)}
                   onClick={page => {
-                    setFilters({ ...filters, page })
                     router.push(routes.contestListMyContests(page))
                   }}
                 />

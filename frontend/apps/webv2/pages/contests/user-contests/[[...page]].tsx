@@ -6,7 +6,7 @@ import {
   useContestConfigurationOptions,
   useContestList,
 } from '@app/contests/api'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/router'
 import { getQueryStringIntParameter } from '@app/common/router'
 import { ContestList } from '@app/contests/ContestList'
@@ -18,14 +18,19 @@ interface Props {}
 const Contests: NextPage<Props> = () => {
   const router = useRouter()
 
-  const [filters, setFilters] = useState(() => {
+  const newFilter = () => {
     return {
       page: getQueryStringIntParameter(router.query.page, 1),
       pageSize: 25,
       official: false,
       includeDeleted: false,
     }
-  })
+  }
+  const [filters, setFilters] = useState(() => newFilter())
+  useEffect(() => {
+    setFilters(newFilter())
+  }, [router.asPath])
+
   const options = useContestConfigurationOptions()
   const list = useContestList(filters, { enabled: !!options.data })
   const [session] = useSession()
@@ -92,7 +97,6 @@ const Contests: NextPage<Props> = () => {
                   currentPage={filters.page}
                   totalPages={Math.ceil(list.data.totalSize / filters.pageSize)}
                   onClick={page => {
-                    setFilters({ ...filters, page })
                     router.push(routes.contestListUserContests(page))
                   }}
                 />

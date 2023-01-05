@@ -3,7 +3,7 @@ import { Breadcrumb, ButtonGroup, Pagination, Tabbar } from 'ui'
 import { HomeIcon } from '@heroicons/react/20/solid'
 import { PlusIcon } from '@heroicons/react/24/solid'
 import { useContestList } from '@app/contests/api'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/router'
 import { getQueryStringIntParameter } from '@app/common/router'
 import { ContestList } from '@app/contests/ContestList'
@@ -15,14 +15,19 @@ interface Props {}
 const Contests: NextPage<Props> = () => {
   const router = useRouter()
 
-  const [filters, setFilters] = useState(() => {
+  const newFilter = () => {
     return {
       page: getQueryStringIntParameter(router.query.page, 1),
       pageSize: 25,
       official: true,
       includeDeleted: false,
     }
-  })
+  }
+  const [filters, setFilters] = useState(() => newFilter())
+  useEffect(() => {
+    setFilters(newFilter())
+  }, [router.asPath])
+
   const list = useContestList(filters)
   const [session] = useSession()
 
@@ -88,7 +93,6 @@ const Contests: NextPage<Props> = () => {
                   currentPage={filters.page}
                   totalPages={Math.ceil(list.data.totalSize / filters.pageSize)}
                   onClick={page => {
-                    setFilters({ ...filters, page })
                     router.push(routes.contestListOfficial(page))
                   }}
                 />

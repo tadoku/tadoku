@@ -287,22 +287,23 @@ func (s *Server) ContestFindRegistration(ctx echo.Context, id types.UUID) error 
 // Fetches the leaderboard for a contest
 // (GET /contests/{id}/leaderboard)
 func (s *Server) ContestFetchLeaderboard(ctx echo.Context, id types.UUID, params openapi.ContestFetchLeaderboardParams) error {
-	pageSize := 0
-	page := 0
+	req := &contestquery.FetchContestLeaderboardRequest{
+		ContestID:    id,
+		LanguageCode: params.LanguageCode,
+	}
 
 	if params.PageSize != nil {
-		pageSize = *params.PageSize
+		req.PageSize = *params.PageSize
 	}
 	if params.Page != nil {
-		page = *params.Page
+		req.Page = *params.Page
+	}
+	if params.ActivityId != nil {
+		id := int32(*params.ActivityId)
+		req.ActivityID = &id
 	}
 
-	// TODO: add filters for language/activity
-	leaderboard, err := s.contestQueryService.FetchContestLeaderboard(ctx.Request().Context(), &contestquery.FetchContestLeaderboardRequest{
-		ContestID: id,
-		PageSize:  pageSize,
-		Page:      page,
-	})
+	leaderboard, err := s.contestQueryService.FetchContestLeaderboard(ctx.Request().Context(), req)
 	if err != nil {
 		if errors.Is(err, contestquery.ErrNotFound) {
 			return ctx.NoContent(http.StatusNotFound)

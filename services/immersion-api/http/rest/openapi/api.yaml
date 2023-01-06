@@ -176,6 +176,16 @@ paths:
           required: false
           schema:
             type: integer
+        - name: language_code
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: activity_id
+          in: query
+          required: false
+          schema:
+            type: integer
       responses:
         '200':
           description: successful operation

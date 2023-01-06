@@ -153,8 +153,10 @@ type ContestListParams struct {
 
 // ContestFetchLeaderboardParams defines parameters for ContestFetchLeaderboard.
 type ContestFetchLeaderboardParams struct {
-	PageSize *int `form:"page_size,omitempty" json:"page_size,omitempty"`
-	Page     *int `form:"page,omitempty" json:"page,omitempty"`
+	PageSize     *int    `form:"page_size,omitempty" json:"page_size,omitempty"`
+	Page         *int    `form:"page,omitempty" json:"page,omitempty"`
+	LanguageCode *string `form:"language_code,omitempty" json:"language_code,omitempty"`
+	ActivityId   *int    `form:"activity_id,omitempty" json:"activity_id,omitempty"`
 }
 
 // ContestRegistrationUpsertJSONBody defines parameters for ContestRegistrationUpsert.
@@ -312,6 +314,20 @@ func (w *ServerInterfaceWrapper) ContestFetchLeaderboard(ctx echo.Context) error
 	err = runtime.BindQueryParameter("form", true, false, "page", ctx.QueryParams(), &params.Page)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter page: %s", err))
+	}
+
+	// ------------- Optional query parameter "language_code" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "language_code", ctx.QueryParams(), &params.LanguageCode)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter language_code: %s", err))
+	}
+
+	// ------------- Optional query parameter "activity_id" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "activity_id", ctx.QueryParams(), &params.ActivityId)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter activity_id: %s", err))
 	}
 
 	// Invoke the callback with all the unmarshalled arguments

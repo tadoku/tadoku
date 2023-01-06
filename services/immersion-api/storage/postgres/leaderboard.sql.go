@@ -48,10 +48,10 @@ select
   registrations.user_id,
   registrations.user_display_name,
   coalesce(ranked_leaderboard.score, 0)::real as score,
-  (
+  coalesce((
     "rank" = lag("rank", 1, -1::bigint) over (order by "rank")
     or "rank" = lead("rank", 1, -1::bigint) over (order by "rank")
-  )::boolean as is_tie,
+  ), false)::boolean as is_tie,
   (select count(registrations.user_id) from registrations) as total_size
 from registrations
 left join ranked_leaderboard using(user_id)

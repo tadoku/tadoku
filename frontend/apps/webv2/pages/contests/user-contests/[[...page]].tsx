@@ -96,9 +96,7 @@ const Contests: NextPage<Props> = () => {
                 <Pagination
                   currentPage={filters.page}
                   totalPages={Math.ceil(list.data.totalSize / filters.pageSize)}
-                  onClick={page => {
-                    router.push(routes.contestListUserContests(page))
-                  }}
+                  getHref={page => routes.contestListUserContests(page)}
                 />
               </div>
             ) : null}

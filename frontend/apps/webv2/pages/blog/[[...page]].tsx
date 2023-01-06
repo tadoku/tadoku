@@ -8,6 +8,7 @@ import Link from 'next/link'
 import { getQueryStringIntParameter } from '@app/common/router'
 import { routes } from '@app/common/routes'
 
+// TODO: Rewrite page and navigation logic
 const BlogIndex = () => {
   const router = useRouter()
 

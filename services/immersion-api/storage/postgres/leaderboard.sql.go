@@ -7,6 +7,7 @@ package postgres
 
 import (
 	"context"
+	"database/sql"
 
 	"github.com/google/uuid"
 )
@@ -22,6 +23,8 @@ with leaderboard as (
   where
     contest_logs.contest_id = $3
     and logs.deleted_at is null
+    and (logs.language_code = $4 or $4 is null)
+    and (logs.log_activity_id = $5 or $5 is null)
   group by user_id
 ), registrations as (
   select
@@ -32,6 +35,7 @@ with leaderboard as (
   where
     contest_id = $3
     and deleted_at is null
+    and ($4 = any(language_codes) or $4 is null)
 )
 select
   rank() over(order by score desc) as rank,
@@ -48,9 +52,11 @@ offset $1
 `
 
 type LeaderboardForContestParams struct {
-	StartFrom int32
-	PageSize  int32
-	ContestID uuid.UUID
+	StartFrom    int32
+	PageSize     int32
+	ContestID    uuid.UUID
+	LanguageCode sql.NullString
+	ActivityID   sql.NullInt16
 }
 
 type LeaderboardForContestRow struct {
@@ -61,7 +67,13 @@ type LeaderboardForContestRow struct {
 }
 
 func (q *Queries) LeaderboardForContest(ctx context.Context, arg LeaderboardForContestParams) ([]LeaderboardForContestRow, error) {
-	rows, err := q.db.QueryContext(ctx, leaderboardForContest, arg.StartFrom, arg.PageSize, arg.ContestID)
+	rows, err := q.db.QueryContext(ctx, leaderboardForContest,
+		arg.StartFrom,
+		arg.PageSize,
+		arg.ContestID,
+		arg.LanguageCode,
+		arg.ActivityID,
+	)
 	if err != nil {
 		return nil, err
 	}

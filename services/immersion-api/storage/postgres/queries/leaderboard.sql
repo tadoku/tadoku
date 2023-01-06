@@ -9,6 +9,8 @@ with leaderboard as (
   where
     contest_logs.contest_id = sqlc.arg('contest_id')
     and logs.deleted_at is null
+    and (logs.language_code = sqlc.narg('language_code') or sqlc.narg('language_code') is null)
+    and (logs.log_activity_id = sqlc.narg('activity_id') or sqlc.narg('activity_id') is null)
   group by user_id
 ), registrations as (
   select
@@ -19,6 +21,7 @@ with leaderboard as (
   where
     contest_id = sqlc.arg('contest_id')
     and deleted_at is null
+    and (sqlc.narg('language_code') = any(language_codes) or sqlc.narg('language_code') is null)
 )
 select
   rank() over(order by score desc) as rank,

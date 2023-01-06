@@ -1,15 +1,15 @@
-import {
-  useCurrentDateTime,
-  useCurrentLocation,
-  useInterval,
-} from '@app/common/hooks'
+import { useCurrentDateTime, useCurrentLocation } from '@app/common/hooks'
 import { useSession } from '@app/common/session'
-import { useContest, useContestRegistration } from '@app/contests/api'
+import {
+  useContest,
+  useContestLeaderboard,
+  useContestRegistration,
+} from '@app/contests/api'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
 import { Breadcrumb, ButtonGroup, Flash, Pagination, Tabbar } from 'ui'
-import { DateTime, Interval } from 'luxon'
-import { useState } from 'react'
+import { Interval } from 'luxon'
+import { useEffect, useState } from 'react'
 import { ContestOverview } from '@app/contests/ContestOverview'
 import {
   ExclamationCircleIcon,
@@ -19,38 +19,8 @@ import {
 import { ContestConfiguration } from '@app/contests/ContestConfiguration'
 import { PencilSquareIcon, PlusIcon } from '@heroicons/react/24/solid'
 import { routes } from '@app/common/routes'
-
-const data = [
-  { rank: '1', user: 'powz', score: 5054.25054 },
-  { rank: '2', user: 'Bijak', score: 3605.23605 },
-  { rank: '3', user: 'ShockOLatte', score: 2518.72518 },
-  { rank: '4', user: 'Ludie', score: 2517.32517 },
-  { rank: '5', user: 'Chamsae', score: 2434.42434 },
-  { rank: '6', user: 'Salome', score: 2107.12107 },
-  { rank: '7', user: 'mmmm', score: 2060.1206 },
-  { rank: '8', user: 'Yaku', score: 1667.21667 },
-  { rank: '9', user: 'Socks', score: 1635.81635 },
-  { rank: '10', user: 'clair', score: 1592.91592 },
-]
-
-const updates = [
-  ['antonve', 30],
-  ['sheodox', 44],
-  ['Pokemod97', 32.2],
-  ['Salome', 10.5],
-  ['clair', 65],
-  ['Yaku', 111],
-  ['mmmm', 20],
-  ['mmmm', 33],
-  ['ShockOLatte', 1],
-  ['antonve', 2],
-  ['Bijak', 287],
-  ['Bijak', 121],
-  ['powz', 202],
-  ['powz', 321],
-  ['Ludie', 203],
-  ['Chamsae', 140],
-]
+import { getQueryStringIntParameter } from '@app/common/router'
+import { Leaderboard } from '@app/contests/Leaderboard'
 
 const Page = () => {
   const router = useRouter()
@@ -63,6 +33,21 @@ const Page = () => {
   const currentUrl = useCurrentLocation()
 
   const registration = useContestRegistration(id, { enabled: !!session })
+
+  const newFilter = () => {
+    return {
+      contestId: id,
+      page: getQueryStringIntParameter(router.query.page, 1),
+      pageSize: 50,
+    }
+  }
+
+  const [filters, setFilters] = useState(() => newFilter())
+  const leaderboard = useContestLeaderboard(filters)
+
+  useEffect(() => {
+    setFilters(newFilter())
+  }, [router.asPath])
 
   if (contest.isLoading || contest.isIdle) {
     return <p>Loading...</p>
@@ -176,57 +161,7 @@ const Page = () => {
       </Flash>
       <div className="flex mt-4 space-x-4">
         <div className="flex-grow">
-          <div className="table-container">
-            <table className="default">
-              <thead>
-                <tr>
-                  <th className="default !text-center">Rank</th>
-                  <th className="default">Nickname</th>
-                  <th className="default !text-right">Score</th>
-                </tr>
-              </thead>
-              <tbody>
-                {data.map(u => (
-                  <tr key={u.rank} className="link">
-                    <td className="link w-10">
-                      <Link
-                        href={routes.contestUserProfile(id, u.user)}
-                        className="reset justify-center text-lg"
-                      >
-                        {u.rank}
-                      </Link>
-                    </td>
-                    <td className="link">
-                      <Link
-                        href={routes.contestUserProfile(id, u.user)}
-                        className="reset text-lg"
-                      >
-                        {u.user}
-                      </Link>
-                    </td>
-                    <td className="link">
-                      <Link
-                        href={routes.contestUserProfile(id, u.user)}
-                        className="reset justify-end text-lg"
-                      >
-                        {Math.round(u.score * 10) / 10}
-                      </Link>
-                    </td>
-                  </tr>
-                ))}
-                {data.length === 0 ? (
-                  <tr>
-                    <td
-                      colSpan={3}
-                      className="default h-32 font-bold text-center text-xl text-slate-400"
-                    >
-                      No partipants yet, be the first to sign up!
-                    </td>
-                  </tr>
-                ) : null}
-              </tbody>
-            </table>
-          </div>
+          <Leaderboard contestId={id} leaderboard={leaderboard} />
           <div className="mt-4">
             <Pagination currentPage={1} totalPages={4} onClick={() => {}} />
           </div>
@@ -254,7 +189,7 @@ const Page = () => {
             <div className="-m-7 pt-4 px-4 text-sm">
               <h3 className="subtitle text-sm">Recent updates</h3>
               <ul className="divide-y-2 divide-slate-500/5 -mx-4">
-                {updates.map(u => (
+                {[].map(u => (
                   <li key={`${u[0]}-${u[1]}`}>
                     <Link
                       href="#"

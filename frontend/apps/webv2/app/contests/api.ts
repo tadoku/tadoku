@@ -299,3 +299,81 @@ export const useContestRegistrationUpdate = (onSuccess: () => void) =>
       onSuccess()
     },
   })
+
+const LeaderboardEntry = z
+  .object({
+    rank: z.number(),
+    user_id: z.string(),
+    user_display_name: z.string(),
+    score: z.number(),
+    is_tie: z.boolean(),
+  })
+  .transform(entry => {
+    const {
+      user_id: userId,
+      user_display_name: userDisplayName,
+      is_tie: isTie,
+      ...rest
+    } = entry
+    return {
+      ...rest,
+      userId,
+      userDisplayName,
+      isTie,
+    }
+  })
+
+export type LeaderboardEntry = z.infer<typeof LeaderboardEntry>
+
+const Leaderboard = z
+  .object({
+    entries: z.array(LeaderboardEntry),
+    total_size: z.number(),
+    next_page_token: z.string(),
+  })
+  .transform(post => {
+    const {
+      next_page_token: nextPageToken,
+      total_size: totalSize,
+      ...rest
+    } = post
+    return {
+      ...rest,
+      nextPageToken,
+      totalSize,
+    }
+  })
+
+export type Leaderboard = z.infer<typeof Leaderboard>
+
+export const useContestLeaderboard = (
+  opts: {
+    contestId: string
+    pageSize: number
+    page: number
+    languageCode?: string
+    activityId?: number
+  },
+  options?: { enabled?: boolean },
+) =>
+  useQuery(
+    ['contest', 'leaderboard', opts],
+    async (): Promise<Leaderboard> => {
+      const params = {
+        page_size: opts.pageSize.toString(),
+        page: (opts.page - 1).toString(),
+        ...(opts.languageCode ? { language_code: opts.languageCode } : {}),
+        ...(opts.activityId ? { activity_id: opts.activityId.toString() } : {}),
+      }
+      const response = await fetch(
+        `${root}/${opts.contestId}/leaderboard?${new URLSearchParams(params)}`,
+      )
+
+      if (response.status !== 200) {
+        throw new Error('could not fetch leaderboard')
+      }
+
+      return Leaderboard.parse(await response.json())
+    },
+    options,
+  )

@@ -309,7 +309,7 @@ func (r *ContestRepository) FetchContestLeaderboard(ctx context.Context, req *co
 		ContestID:    req.ContestID,
 		LanguageCode: NewNullString(req.LanguageCode),
 		ActivityID:   NewNullInt32(req.ActivityID),
-		StartFrom:    int32(req.Page),
+		StartFrom:    int32(req.Page * req.PageSize),
 		PageSize:     int32(req.PageSize),
 	})
 	if err != nil {

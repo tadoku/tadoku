@@ -287,5 +287,46 @@ func (s *Server) ContestFindRegistration(ctx echo.Context, id types.UUID) error 
 // Fetches the leaderboard for a contest
 // (GET /contests/{id}/leaderboard)
 func (s *Server) ContestFetchLeaderboard(ctx echo.Context, id types.UUID, params openapi.ContestFetchLeaderboardParams) error {
-	return nil
+	pageSize := 0
+	page := 0
+
+	if params.PageSize != nil {
+		pageSize = *params.PageSize
+	}
+	if params.Page != nil {
+		page = *params.Page
+	}
+
+	// TODO: add filters for language/activity
+	leaderboard, err := s.contestQueryService.FetchContestLeaderboard(ctx.Request().Context(), &contestquery.FetchContestLeaderboardRequest{
+		ContestID: id,
+		PageSize:  pageSize,
+		Page:      page,
+	})
+	if err != nil {
+		if errors.Is(err, contestquery.ErrNotFound) {
+			return ctx.NoContent(http.StatusNotFound)
+		}
+
+		ctx.Echo().Logger.Error(err)
+		return ctx.NoContent(http.StatusInternalServerError)
+	}
+
+	res := openapi.Leaderboard{
+		Entries:       make([]openapi.LeaderboardEntry, len(leaderboard.Entries)),
+		NextPageToken: leaderboard.NextPageToken,
+		TotalSize:     leaderboard.TotalSize,
+	}
+
+	for i, entry := range leaderboard.Entries {
+		entry := entry
+		res.Entries[i] = openapi.LeaderboardEntry{
+			Rank:            entry.Rank,
+			UserId:          entry.UserID,
+			UserDisplayName: entry.UserDisplayName,
+			Score:           int(entry.Score),
+		}
+	}
+
+	return ctx.JSON(http.StatusOK, res)
 }

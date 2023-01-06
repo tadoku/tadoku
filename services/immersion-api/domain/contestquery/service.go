@@ -27,6 +27,7 @@ type Service interface {
 	FindByID(context.Context, *FindByIDRequest) (*ContestView, error)
 	ListContests(context.Context, *ContestListRequest) (*ContestListResponse, error)
 	FindRegistrationForUser(context.Context, *FindRegistrationForUserRequest) (*ContestRegistration, error)
+	FetchContestLeaderboard(context.Context, *FetchContestLeaderboardRequest) (*Leaderboard, error)
 }
 
 type service struct {
@@ -197,4 +198,16 @@ type LeaderboardEntry struct {
 	UserID          uuid.UUID
 	UserDisplayName string
 	Score           float32
+}
+
+func (s *service) FetchContestLeaderboard(ctx context.Context, req *FetchContestLeaderboardRequest) (*Leaderboard, error) {
+	if req.PageSize == 0 {
+		req.PageSize = 25
+	}
+
+	if req.PageSize > 100 || req.PageSize == 0 {
+		req.PageSize = 100
+	}
+
+	return s.r.FetchContestLeaderboard(ctx, req)
 }

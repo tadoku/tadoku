@@ -296,6 +296,15 @@ func (r *ContestRepository) FindRegistrationForUser(ctx context.Context, req *co
 }
 
 func (r *ContestRepository) FetchContestLeaderboard(ctx context.Context, req *contestquery.FetchContestLeaderboardRequest) (*contestquery.Leaderboard, error) {
+	_, err := r.q.FindContestById(ctx, FindContestByIdParams{ID: req.ContestID, IncludeDeleted: false})
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, contestquery.ErrNotFound
+		}
+
+		return nil, fmt.Errorf("could not fetch leaderboard for contest: %w", err)
+	}
+
 	entries, err := r.q.LeaderboardForContest(ctx, LeaderboardForContestParams{
 		ContestID:    req.ContestID,
 		LanguageCode: NewNullString(req.LanguageCode),

@@ -294,3 +294,46 @@ func (r *ContestRepository) FindRegistrationForUser(ctx context.Context, req *co
 		Languages:       langs,
 	}, nil
 }
+
+func (r *ContestRepository) FetchContestLeaderboard(ctx context.Context, req *contestquery.FetchContestLeaderboardRequest) (*contestquery.Leaderboard, error) {
+	entries, err := r.q.LeaderboardForContest(ctx, LeaderboardForContestParams{
+		ContestID:    req.ContestID,
+		LanguageCode: NewNullString(req.LanguageCode),
+		ActivityID:   NewNullInt32(req.ActivityID),
+		StartFrom:    int32(req.Page),
+		PageSize:     int32(req.PageSize),
+	})
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return &contestquery.Leaderboard{
+				Entries:       []contestquery.LeaderboardEntry{},
+				TotalSize:     0,
+				NextPageToken: "",
+			}, nil
+		}
+
+		return nil, fmt.Errorf("could not fetch leaderboard for contest: %w", err)
+	}
+
+	res := make([]contestquery.LeaderboardEntry, len(entries))
+	for i, e := range entries {
+		res[i] = contestquery.LeaderboardEntry{
+			Rank:            int(e.Rank),
+			UserID:          e.UserID,
+			UserDisplayName: e.UserDisplayName,
+			Score:           e.Score,
+		}
+	}
+
+	totalSize := entries[0].TotalSize
+	nextPageToken := ""
+	if (req.Page*req.PageSize)+req.PageSize < int(totalSize) {
+		nextPageToken = fmt.Sprint(req.Page + 1)
+	}
+
+	return &contestquery.Leaderboard{
+		Entries:       res,
+		TotalSize:     int(totalSize),
+		NextPageToken: nextPageToken,
+	}, nil
+}

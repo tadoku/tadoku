@@ -19,6 +19,7 @@ type ContestRepository interface {
 	FindByID(context.Context, *FindByIDRequest) (*ContestView, error)
 	ListContests(context.Context, *ContestListRequest) (*ContestListResponse, error)
 	FindRegistrationForUser(context.Context, *FindRegistrationForUserRequest) (*ContestRegistration, error)
+	FetchContestLeaderboard(context.Context, *FetchContestLeaderboardRequest) (*Leaderboard, error)
 }
 
 type Service interface {
@@ -175,4 +176,25 @@ func (s *service) FindRegistrationForUser(ctx context.Context, req *FindRegistra
 	}
 
 	return res, nil
+}
+
+type FetchContestLeaderboardRequest struct {
+	ContestID    uuid.UUID
+	LanguageCode *string
+	ActivityID   *int32
+	PageSize     int
+	Page         int
+}
+
+type Leaderboard struct {
+	Entries       []LeaderboardEntry
+	TotalSize     int
+	NextPageToken string
+}
+
+type LeaderboardEntry struct {
+	Rank            int
+	UserID          uuid.UUID
+	UserDisplayName string
+	Score           float32
 }

@@ -24,7 +24,7 @@ with leaderboard as (
     contest_logs.contest_id = $3
     and logs.deleted_at is null
     and (logs.language_code = $4 or $4 is null)
-    and (logs.log_activity_id = $5 or $5 is null)
+    and (logs.log_activity_id = $5::integer or $5 is null)
   group by user_id
 ), registrations as (
   select
@@ -41,7 +41,8 @@ select
   rank() over(order by score desc) as rank,
   registrations.user_id,
   registrations.user_display_name,
-  coalesce(leaderboard.score, 0) as score
+  coalesce(leaderboard.score, 0)::real as score,
+  (select count(registrations.user_id) from registrations) as total_size
 from registrations
 left join leaderboard using(user_id)
 order by
@@ -56,14 +57,15 @@ type LeaderboardForContestParams struct {
 	PageSize     int32
 	ContestID    uuid.UUID
 	LanguageCode sql.NullString
-	ActivityID   sql.NullInt16
+	ActivityID   sql.NullInt32
 }
 
 type LeaderboardForContestRow struct {
 	Rank            int64
 	UserID          uuid.UUID
 	UserDisplayName string
-	Score           int64
+	Score           float32
+	TotalSize       int64
 }
 
 func (q *Queries) LeaderboardForContest(ctx context.Context, arg LeaderboardForContestParams) ([]LeaderboardForContestRow, error) {
@@ -86,6 +88,7 @@ func (q *Queries) LeaderboardForContest(ctx context.Context, arg LeaderboardForC
 			&i.UserID,
 			&i.UserDisplayName,
 			&i.Score,
+			&i.TotalSize,
 		); err != nil {
 			return nil, err
 		}

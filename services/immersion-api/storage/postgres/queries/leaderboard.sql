@@ -10,7 +10,7 @@ with leaderboard as (
     contest_logs.contest_id = sqlc.arg('contest_id')
     and logs.deleted_at is null
     and (logs.language_code = sqlc.narg('language_code') or sqlc.narg('language_code') is null)
-    and (logs.log_activity_id = sqlc.narg('activity_id') or sqlc.narg('activity_id') is null)
+    and (logs.log_activity_id = sqlc.narg('activity_id')::integer or sqlc.narg('activity_id') is null)
   group by user_id
 ), registrations as (
   select
@@ -27,7 +27,8 @@ select
   rank() over(order by score desc) as rank,
   registrations.user_id,
   registrations.user_display_name,
-  coalesce(leaderboard.score, 0) as score
+  coalesce(leaderboard.score, 0)::real as score,
+  (select count(registrations.user_id) from registrations) as total_size
 from registrations
 left join leaderboard using(user_id)
 order by

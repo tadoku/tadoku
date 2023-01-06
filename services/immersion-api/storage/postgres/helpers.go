@@ -5,8 +5,8 @@ import (
 	"time"
 )
 
-func NewNullTime(t *time.Time) sql.NullTime {
-	if t == nil {
+func NewNullTime(val *time.Time) sql.NullTime {
+	if val == nil {
 		return sql.NullTime{
 			Valid: false,
 		}
@@ -14,7 +14,7 @@ func NewNullTime(t *time.Time) sql.NullTime {
 
 	return sql.NullTime{
 		Valid: true,
-		Time:  *t,
+		Time:  *val,
 	}
 }
 
@@ -24,4 +24,30 @@ func NewTimeFromNullTime(t sql.NullTime) *time.Time {
 	}
 
 	return &t.Time
+}
+
+func NewNullString(val *string) sql.NullString {
+	if val == nil {
+		return sql.NullString{
+			Valid: false,
+		}
+	}
+
+	return sql.NullString{
+		Valid:  true,
+		String: *val,
+	}
+}
+
+func NewNullInt32(val *int32) sql.NullInt32 {
+	if val == nil {
+		return sql.NullInt32{
+			Valid: false,
+		}
+	}
+
+	return sql.NullInt32{
+		Valid: true,
+		Int32: *val,
+	}
 }

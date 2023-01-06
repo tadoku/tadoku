@@ -10,6 +10,7 @@ go_library(
         "generate.go",
         "helpers.go",
         "languages.sql.go",
+        "leaderboard.sql.go",
         "models.go",
     ],
     importpath = "github.com/tadoku/tadoku/services/immersion-api/storage/postgres",

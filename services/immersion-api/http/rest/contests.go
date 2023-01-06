@@ -336,5 +336,61 @@ func (s *Server) ContestFetchLeaderboard(ctx echo.Context, id types.UUID, params
 // Fetches all the ongoing contest registrations of the logged in user, always in a single page
 // (GET /contests/configuration-options)
 func (s *Server) ContestFindOngoingRegistrations(ctx echo.Context) error {
-	return nil
+	regs, err := s.contestQueryService.FetchOngoingContestRegistrations(ctx.Request().Context(), &contestquery.FetchOngoingContestRegistrationsRequest{})
+	if err != nil {
+		if errors.Is(err, contestquery.ErrUnauthorized) {
+			return ctx.NoContent(http.StatusUnauthorized)
+		}
+
+		ctx.Echo().Logger.Error(err)
+		return ctx.NoContent(http.StatusInternalServerError)
+	}
+
+	res := &openapi.ContestRegistrations{
+		TotalSize:     regs.TotalSize,
+		NextPageToken: regs.NextPageToken,
+		Registrations: make([]openapi.ContestRegistration, len(regs.Registrations)),
+	}
+
+	for i, r := range regs.Registrations {
+		r := r
+		contest := openapi.ContestView{
+			Id:                &r.ContestID,
+			ContestStart:      types.Date{Time: r.Contest.ContestStart},
+			ContestEnd:        types.Date{Time: r.Contest.ContestEnd},
+			RegistrationEnd:   types.Date{Time: r.Contest.RegistrationEnd},
+			Description:       r.Contest.Description,
+			Official:          r.Contest.Official,
+			Private:           r.Contest.Private,
+			AllowedLanguages:  []openapi.Language{},
+			AllowedActivities: make([]openapi.Activity, len(r.Contest.AllowedActivities)),
+		}
+
+		for i, a := range r.Contest.AllowedActivities {
+			contest.AllowedActivities[i] = openapi.Activity{
+				Id:   a.ID,
+				Name: a.Name,
+			}
+		}
+
+		registration := openapi.ContestRegistration{
+			ContestId:       r.ContestID,
+			Id:              &r.ID,
+			Languages:       make([]openapi.Language, len(r.Languages)),
+			UserId:          r.UserID,
+			UserDisplayName: r.UserDisplayName,
+			Contest:         &contest,
+		}
+
+		for i, lang := range r.Languages {
+			registration.Languages[i] = openapi.Language{
+				Code: lang.Code,
+				Name: lang.Name,
+			}
+		}
+
+		res.Registrations[i] = registration
+	}
+
+	return ctx.JSON(http.StatusOK, res)
 }

@@ -224,7 +224,7 @@ where
   user_id = $1
   and contests.contest_start <= $2::timestamp
   and (contests.contest_end + '1 day'::interval) > $2::timestamp
-  and deleted_at is null
+  and contest_registrations.deleted_at is null
 `
 
 type FindOngoingContestRegistrationForUserParams struct {

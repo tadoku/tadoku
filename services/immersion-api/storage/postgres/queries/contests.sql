@@ -155,4 +155,4 @@ where
   user_id = sqlc.arg('user_id')
   and contests.contest_start <= sqlc.arg('now')::timestamp
   and (contests.contest_end + '1 day'::interval) > sqlc.arg('now')::timestamp
-  and deleted_at is null;
+  and contest_registrations.deleted_at is null;

@@ -332,3 +332,9 @@ func (s *Server) ContestFetchLeaderboard(ctx echo.Context, id types.UUID, params
 
 	return ctx.JSON(http.StatusOK, res)
 }
+
+// Fetches all the ongoing contest registrations of the logged in user, always in a single page
+// (GET /contests/configuration-options)
+func (s *Server) ContestFindOngoingRegistrations(ctx echo.Context) error {
+	return nil
+}

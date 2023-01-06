@@ -195,6 +195,20 @@ paths:
                 $ref: '#/components/schemas/Leaderboard'
         '404':
           description: not found
+  /contests/ongoing-registrations:
+    get:
+      summary: Fetches all the ongoing contest registrations of the logged in user, always in a single page
+      operationId: contestFindOngoingRegistrations
+      tags: [contests]
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContestRegistrations'
   /contests/configuration-options:
     get:
       summary: Fetches the configuration options for a new contest
@@ -396,6 +410,20 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/Language"
+        contest:
+          $ref: "#/components/schemas/ContestView"
+    ContestRegistrations:
+      allOf:
+        - $ref: '#/components/schemas/PaginatedList'
+        - type: object
+          required:
+            - registrations
+          properties:
+            registrations:
+              type: array
+              maxItems: 50
+              items:
+                $ref: "#/components/schemas/ContestRegistration"
     LeaderboardEntry:
       type: object
       required:

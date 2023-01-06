@@ -72,11 +72,20 @@ type ContestConfigurationOptions struct {
 
 // ContestRegistration defines model for ContestRegistration.
 type ContestRegistration struct {
+	Contest         *ContestView        `json:"contest,omitempty"`
 	ContestId       openapi_types.UUID  `json:"contest_id"`
 	Id              *openapi_types.UUID `json:"id,omitempty"`
 	Languages       []Language          `json:"languages"`
 	UserDisplayName string              `json:"user_display_name"`
 	UserId          openapi_types.UUID  `json:"user_id"`
+}
+
+// ContestRegistrations defines model for ContestRegistrations.
+type ContestRegistrations struct {
+	// NextPageToken is empty if there's no next page
+	NextPageToken string                `json:"next_page_token"`
+	Registrations []ContestRegistration `json:"registrations"`
+	TotalSize     int                   `json:"total_size"`
 }
 
 // ContestView defines model for ContestView.
@@ -182,6 +191,9 @@ type ServerInterface interface {
 	// Fetches the configuration options for a new contest
 	// (GET /contests/configuration-options)
 	ContestGetConfigurations(ctx echo.Context) error
+	// Fetches all the ongoing contest registrations of the logged in user, always in a single page
+	// (GET /contests/ongoing-registrations)
+	ContestFindOngoingRegistrations(ctx echo.Context) error
 	// Fetches a contest by id
 	// (GET /contests/{id})
 	ContestFindByID(ctx echo.Context, id openapi_types.UUID) error
@@ -269,6 +281,17 @@ func (w *ServerInterfaceWrapper) ContestGetConfigurations(ctx echo.Context) erro
 
 	// Invoke the callback with all the unmarshalled arguments
 	err = w.Handler.ContestGetConfigurations(ctx)
+	return err
+}
+
+// ContestFindOngoingRegistrations converts echo context to params.
+func (w *ServerInterfaceWrapper) ContestFindOngoingRegistrations(ctx echo.Context) error {
+	var err error
+
+	ctx.Set(CookieAuthScopes, []string{""})
+
+	// Invoke the callback with all the unmarshalled arguments
+	err = w.Handler.ContestFindOngoingRegistrations(ctx)
 	return err
 }
 
@@ -412,6 +435,7 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 	router.GET(baseURL+"/contests", wrapper.ContestList)
 	router.POST(baseURL+"/contests", wrapper.ContestCreate)
 	router.GET(baseURL+"/contests/configuration-options", wrapper.ContestGetConfigurations)
+	router.GET(baseURL+"/contests/ongoing-registrations", wrapper.ContestFindOngoingRegistrations)
 	router.GET(baseURL+"/contests/:id", wrapper.ContestFindByID)
 	router.GET(baseURL+"/contests/:id/leaderboard", wrapper.ContestFetchLeaderboard)
 	router.GET(baseURL+"/contests/:id/registration", wrapper.ContestFindRegistration)

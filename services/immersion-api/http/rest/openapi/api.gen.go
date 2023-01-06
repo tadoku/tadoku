@@ -129,6 +129,7 @@ type Leaderboard struct {
 
 // LeaderboardEntry defines model for LeaderboardEntry.
 type LeaderboardEntry struct {
+	IsTie           bool               `json:"is_tie"`
 	Rank            int                `json:"rank"`
 	Score           int                `json:"score"`
 	UserDisplayName string             `json:"user_display_name"`

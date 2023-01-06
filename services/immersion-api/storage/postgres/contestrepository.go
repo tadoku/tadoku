@@ -331,6 +331,7 @@ func (r *ContestRepository) FetchContestLeaderboard(ctx context.Context, req *co
 			UserID:          e.UserID,
 			UserDisplayName: e.UserDisplayName,
 			Score:           e.Score,
+			IsTie:           e.IsTie,
 		}
 	}
 

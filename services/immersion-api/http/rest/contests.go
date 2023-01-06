@@ -326,6 +326,7 @@ func (s *Server) ContestFetchLeaderboard(ctx echo.Context, id types.UUID, params
 			UserId:          entry.UserID,
 			UserDisplayName: entry.UserDisplayName,
 			Score:           int(entry.Score),
+			IsTie:           entry.IsTie,
 		}
 	}
 

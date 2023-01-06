@@ -26,6 +26,12 @@ with leaderboard as (
     and (logs.language_code = $4 or $4 is null)
     and (logs.log_activity_id = $5::integer or $5 is null)
   group by user_id
+), ranked_leaderboard as (
+  select
+    user_id,
+    score,
+    rank() over(order by score desc) as "rank"
+  from leaderboard
 ), registrations as (
   select
     id,
@@ -38,13 +44,17 @@ with leaderboard as (
     and ($4 = any(language_codes) or $4 is null)
 )
 select
-  rank() over(order by score desc) as rank,
+  rank() over(order by score desc) as "rank",
   registrations.user_id,
   registrations.user_display_name,
-  coalesce(leaderboard.score, 0)::real as score,
+  coalesce(ranked_leaderboard.score, 0)::real as score,
+  (
+    "rank" = lag("rank", 1, -1::bigint) over (order by "rank")
+    or "rank" = lead("rank", 1, -1::bigint) over (order by "rank")
+  )::boolean as is_tie,
   (select count(registrations.user_id) from registrations) as total_size
 from registrations
-left join leaderboard using(user_id)
+left join ranked_leaderboard using(user_id)
 order by
   score desc,
   registrations.user_id asc
@@ -65,6 +75,7 @@ type LeaderboardForContestRow struct {
 	UserID          uuid.UUID
 	UserDisplayName string
 	Score           float32
+	IsTie           bool
 	TotalSize       int64
 }
 
@@ -88,6 +99,7 @@ func (q *Queries) LeaderboardForContest(ctx context.Context, arg LeaderboardForC
 			&i.UserID,
 			&i.UserDisplayName,
 			&i.Score,
+			&i.IsTie,
 			&i.TotalSize,
 		); err != nil {
 			return nil, err

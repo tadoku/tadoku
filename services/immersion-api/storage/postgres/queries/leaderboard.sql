@@ -12,6 +12,12 @@ with leaderboard as (
     and (logs.language_code = sqlc.narg('language_code') or sqlc.narg('language_code') is null)
     and (logs.log_activity_id = sqlc.narg('activity_id')::integer or sqlc.narg('activity_id') is null)
   group by user_id
+), ranked_leaderboard as (
+  select
+    user_id,
+    score,
+    rank() over(order by score desc) as "rank"
+  from leaderboard
 ), registrations as (
   select
     id,
@@ -24,13 +30,17 @@ with leaderboard as (
     and (sqlc.narg('language_code') = any(language_codes) or sqlc.narg('language_code') is null)
 )
 select
-  rank() over(order by score desc) as rank,
+  rank() over(order by score desc) as "rank",
   registrations.user_id,
   registrations.user_display_name,
-  coalesce(leaderboard.score, 0)::real as score,
+  coalesce(ranked_leaderboard.score, 0)::real as score,
+  (
+    "rank" = lag("rank", 1, -1::bigint) over (order by "rank")
+    or "rank" = lead("rank", 1, -1::bigint) over (order by "rank")
+  )::boolean as is_tie,
   (select count(registrations.user_id) from registrations) as total_size
 from registrations
-left join leaderboard using(user_id)
+left join ranked_leaderboard using(user_id)
 order by
   score desc,
   registrations.user_id asc

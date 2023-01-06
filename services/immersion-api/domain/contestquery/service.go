@@ -198,6 +198,7 @@ type LeaderboardEntry struct {
 	UserID          uuid.UUID
 	UserDisplayName string
 	Score           float32
+	IsTie           bool
 }
 
 func (s *service) FetchContestLeaderboard(ctx context.Context, req *FetchContestLeaderboardRequest) (*Leaderboard, error) {

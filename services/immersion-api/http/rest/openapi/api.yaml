@@ -403,6 +403,7 @@ components:
         - user_id
         - user_display_name
         - score
+        - is_tie
       properties:
         rank:
           type: integer
@@ -414,6 +415,8 @@ components:
           example: "john"
         score:
           type: integer
+        is_tie:
+          type: boolean
     Leaderboard:
       allOf:
         - $ref: '#/components/schemas/PaginatedList'

@@ -204,6 +204,83 @@ func (q *Queries) FindContestRegistrationForUser(ctx context.Context, arg FindCo
 	return i, err
 }
 
+const findOngoingContestRegistrationForUser = `-- name: FindOngoingContestRegistrationForUser :many
+select
+  contest_registrations.id,
+  contest_registrations.contest_id,
+  contest_registrations.user_id,
+  contest_registrations.user_display_name,
+  contest_registrations.language_codes,
+  contests.activity_type_id_allow_list,
+  contests.registration_end,
+  contests.contest_start,
+  contests.contest_end,
+  contests.private,
+  contests.description
+from contest_registrations
+inner join contests
+  on contests.id = contest_registrations.contest_id
+where
+  user_id = $1
+  and contests.contest_start <= $2::timestamp
+  and (contests.contest_end + '1 day'::interval) > $2::timestamp
+  and deleted_at is null
+`
+
+type FindOngoingContestRegistrationForUserParams struct {
+	UserID uuid.UUID
+	Now    time.Time
+}
+
+type FindOngoingContestRegistrationForUserRow struct {
+	ID                      uuid.UUID
+	ContestID               uuid.UUID
+	UserID                  uuid.UUID
+	UserDisplayName         string
+	LanguageCodes           []string
+	ActivityTypeIDAllowList []int32
+	RegistrationEnd         time.Time
+	ContestStart            time.Time
+	ContestEnd              time.Time
+	Private                 bool
+	Description             string
+}
+
+func (q *Queries) FindOngoingContestRegistrationForUser(ctx context.Context, arg FindOngoingContestRegistrationForUserParams) ([]FindOngoingContestRegistrationForUserRow, error) {
+	rows, err := q.db.QueryContext(ctx, findOngoingContestRegistrationForUser, arg.UserID, arg.Now)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []FindOngoingContestRegistrationForUserRow
+	for rows.Next() {
+		var i FindOngoingContestRegistrationForUserRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.ContestID,
+			&i.UserID,
+			&i.UserDisplayName,
+			pq.Array(&i.LanguageCodes),
+			pq.Array(&i.ActivityTypeIDAllowList),
+			&i.RegistrationEnd,
+			&i.ContestStart,
+			&i.ContestEnd,
+			&i.Private,
+			&i.Description,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listContests = `-- name: ListContests :many
 select
   id,

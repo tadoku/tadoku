@@ -185,26 +185,28 @@ const Page = () => {
             </div>
           </div>
 
-          <div className="card">
-            <div className="-m-7 pt-4 px-4 text-sm">
-              <h3 className="subtitle text-sm">Recent updates</h3>
-              <ul className="divide-y-2 divide-slate-500/5 -mx-4">
-                {[].map(u => (
-                  <li key={`${u[0]}-${u[1]}`}>
-                    <Link
-                      href="#"
-                      className="reset px-4 py-2 flex justify-between items-center hover:bg-slate-500/5"
-                    >
-                      <span className="font-bold text-base">{u[0]}</span>
-                      <span className="font-bold text-lime-700 text-lg">
-                        +{u[1]}
-                      </span>
-                    </Link>
-                  </li>
-                ))}
-              </ul>
+          {hasStarted && !hasEnded && false ? (
+            <div className="card">
+              <div className="-m-7 pt-4 px-4 text-sm">
+                <h3 className="subtitle text-sm">Recent updates</h3>
+                <ul className="divide-y-2 divide-slate-500/5 -mx-4">
+                  {[].map(u => (
+                    <li key={`${u[0]}-${u[1]}`}>
+                      <Link
+                        href="#"
+                        className="reset px-4 py-2 flex justify-between items-center hover:bg-slate-500/5"
+                      >
+                        <span className="font-bold text-base">{u[0]}</span>
+                        <span className="font-bold text-lime-700 text-lg">
+                          +{u[1]}
+                        </span>
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </div>
             </div>
-          </div>
+          ) : null}
         </div>
       </div>
     </>

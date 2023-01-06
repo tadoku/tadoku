@@ -162,9 +162,17 @@ const Page = () => {
       <div className="flex mt-4 space-x-4">
         <div className="flex-grow">
           <Leaderboard contestId={id} leaderboard={leaderboard} />
-          <div className="mt-4">
-            <Pagination currentPage={1} totalPages={4} onClick={() => {}} />
-          </div>
+          {leaderboard.data ? (
+            <div className="mt-4">
+              <Pagination
+                currentPage={filters.page}
+                totalPages={Math.ceil(
+                  leaderboard.data.totalSize / filters.pageSize,
+                )}
+                getHref={page => routes.contestLeaderboard(id, page)}
+              />
+            </div>
+          ) : null}
         </div>
         <div className="w-[25%] space-y-4">
           <ContestOverview

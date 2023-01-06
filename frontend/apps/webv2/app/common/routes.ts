@@ -17,13 +17,14 @@ export const routes = {
   contestListMyContests: (page?: Page) =>
     `/contests/my-contests/${page ?? '1'}`,
   contestNew: () => `/contests/new`,
-  contestLeaderboard: (id: string) => `/contests/${id}/leaderboard`,
+  contestLeaderboard: (id: string, page?: Page) =>
+    `/contests/${id}/leaderboard/${page ?? '1'}`,
   contestJoin: (id: string) => `/contests/${id}/registration`,
   contestUserProfile: (contest_id: string, user_id: string) =>
     `/contests/${contest_id}/profile/${user_id}`,
   contestLog: () => `/contests/log`,
 
-  leaderboard: () => `/leaderboard`,
+  leaderboard: (page?: Page) => `/leaderboard/${page ?? '1'}`,
 
   userProfile: (id: string) => `/profile/${id}`,
 

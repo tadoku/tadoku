@@ -347,3 +347,7 @@ func (r *ContestRepository) FetchContestLeaderboard(ctx context.Context, req *co
 		NextPageToken: nextPageToken,
 	}, nil
 }
+
+func (r *ContestRepository) FetchOngoingContestRegistrations(ctx context.Context, req *contestquery.FetchOngoingContestRegistrationsRequest) (*contestquery.ContestRegistrations, error) {
+	return nil, nil
+}

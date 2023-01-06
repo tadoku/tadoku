@@ -20,6 +20,7 @@ type ContestRepository interface {
 	ListContests(context.Context, *ContestListRequest) (*ContestListResponse, error)
 	FindRegistrationForUser(context.Context, *FindRegistrationForUserRequest) (*ContestRegistration, error)
 	FetchContestLeaderboard(context.Context, *FetchContestLeaderboardRequest) (*Leaderboard, error)
+	FetchOngoingContestRegistrations(context.Context, *FetchOngoingContestRegistrationsRequest) (*ContestRegistrations, error)
 }
 
 type Service interface {
@@ -28,17 +29,20 @@ type Service interface {
 	ListContests(context.Context, *ContestListRequest) (*ContestListResponse, error)
 	FindRegistrationForUser(context.Context, *FindRegistrationForUserRequest) (*ContestRegistration, error)
 	FetchContestLeaderboard(context.Context, *FetchContestLeaderboardRequest) (*Leaderboard, error)
+	FetchOngoingContestRegistrations(context.Context, *FetchOngoingContestRegistrationsRequest) (*ContestRegistrations, error)
 }
 
 type service struct {
 	r        ContestRepository
 	validate *validator.Validate
+	clock    domain.Clock
 }
 
-func NewService(r ContestRepository) Service {
+func NewService(r ContestRepository, clock domain.Clock) Service {
 	return &service{
 		r:        r,
 		validate: validator.New(),
+		clock:    clock,
 	}
 }
 
@@ -211,4 +215,27 @@ func (s *service) FetchContestLeaderboard(ctx context.Context, req *FetchContest
 	}
 
 	return s.r.FetchContestLeaderboard(ctx, req)
+}
+
+type FetchOngoingContestRegistrationsRequest struct {
+	UserID uuid.UUID
+	Now    time.Time
+}
+
+type ContestRegistrations struct {
+	Registrations []ContestRegistration
+	TotalSize     int
+	NextPageToken string
+}
+
+func (s *service) FetchOngoingContestRegistrations(ctx context.Context, req *FetchOngoingContestRegistrationsRequest) (*ContestRegistrations, error) {
+	if domain.IsRole(ctx, domain.RoleGuest) {
+		return nil, ErrUnauthorized
+	}
+
+	session := domain.ParseSession(ctx)
+	req.UserID = uuid.MustParse(session.Subject)
+	req.Now = s.clock.Now()
+
+	return s.r.FetchOngoingContestRegistrations(ctx, req)
 }

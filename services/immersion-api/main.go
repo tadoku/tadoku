@@ -54,7 +54,7 @@ func main() {
 	}
 
 	contestCommandService := contestcommand.NewService(contestRepository, clock)
-	contestQueryService := contestquery.NewService(contestRepository)
+	contestQueryService := contestquery.NewService(contestRepository, clock)
 
 	server := rest.NewServer(
 		contestCommandService,

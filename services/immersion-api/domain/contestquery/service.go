@@ -164,6 +164,7 @@ type ContestRegistration struct {
 	UserID          uuid.UUID
 	UserDisplayName string
 	Languages       []Language
+	Contest         *ContestView
 }
 
 func (s *service) FindRegistrationForUser(ctx context.Context, req *FindRegistrationForUserRequest) (*ContestRegistration, error) {

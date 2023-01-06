@@ -349,5 +349,86 @@ func (r *ContestRepository) FetchContestLeaderboard(ctx context.Context, req *co
 }
 
 func (r *ContestRepository) FetchOngoingContestRegistrations(ctx context.Context, req *contestquery.FetchOngoingContestRegistrationsRequest) (*contestquery.ContestRegistrations, error) {
-	return nil, nil
+	regs, err := r.q.FindOngoingContestRegistrationForUser(ctx, FindOngoingContestRegistrationForUserParams{
+		UserID: req.UserID,
+		Now:    req.Now,
+	})
+
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return &contestquery.ContestRegistrations{
+				Registrations: []contestquery.ContestRegistration{},
+				TotalSize:     0,
+				NextPageToken: "",
+			}, nil
+		}
+		return nil, fmt.Errorf("could not fetch ongoing contest registrations: %w", err)
+	}
+
+	languages, err := r.q.ListLanguages(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("could not fetch ongoing contest registrations: %w", err)
+	}
+
+	activities, err := r.q.ListActivities(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("could not fetch ongoing contest registrations: %w", err)
+	}
+
+	langs := map[string]string{}
+	acts := map[int32]string{}
+
+	for _, l := range languages {
+		langs[l.Code] = l.Name
+	}
+	for _, a := range activities {
+		acts[a.ID] = a.Name
+	}
+
+	res := &contestquery.ContestRegistrations{
+		Registrations: make([]contestquery.ContestRegistration, len(regs)),
+		TotalSize:     len(regs),
+		NextPageToken: "",
+	}
+	for i, r := range regs {
+		r := r
+
+		contest := &contestquery.ContestView{
+			ID:                r.ContestID,
+			ContestStart:      r.ContestStart,
+			ContestEnd:        r.ContestEnd,
+			RegistrationEnd:   r.RegistrationEnd,
+			Description:       r.Description,
+			Private:           r.Private,
+			AllowedLanguages:  make([]contestquery.Language, 0),
+			AllowedActivities: make([]contestquery.Activity, len(r.ActivityTypeIDAllowList)),
+		}
+
+		for i, a := range r.ActivityTypeIDAllowList {
+			contest.AllowedActivities[i] = contestquery.Activity{
+				ID:   a,
+				Name: acts[a],
+			}
+		}
+
+		reg := contestquery.ContestRegistration{
+			ID:              r.ID,
+			ContestID:       r.ContestID,
+			UserID:          r.UserID,
+			UserDisplayName: r.UserDisplayName,
+			Languages:       make([]contestquery.Language, len(r.LanguageCodes)),
+			Contest:         contest,
+		}
+
+		for i, code := range r.LanguageCodes {
+			reg.Languages[i] = contestquery.Language{
+				Code: code,
+				Name: langs[code],
+			}
+		}
+
+		res.Registrations[i] = reg
+	}
+
+	return res, nil
 }

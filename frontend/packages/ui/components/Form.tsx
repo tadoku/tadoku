@@ -253,6 +253,13 @@ export function AutocompleteInput<T>(props: {
             <Combobox.Input
               id={`${name}-search`}
               onChange={event => setQuery(event.target.value)}
+              displayValue={selected => {
+                if (!selected) {
+                  return ''
+                }
+
+                return format(selected as T)
+              }}
               className="!pr-7"
             />
             <Combobox.Button className="absolute inset-y-0 right-0 flex items-center pr-2">
@@ -478,7 +485,7 @@ export function RadioGroup({
           <HeadlessRadioGroup.Option
             value={opt.value}
             key={opt.value.toString()}
-            className="input-frame px-4 py-2 ui-checked:border-primary cursor-pointer"
+            className="input-frame px-4 py-2 ui-checked:border-primary cursor-pointer select-none"
           >
             <div className="h-stack text-secondary items-center w-full">
               {opt.IconComponent ? (

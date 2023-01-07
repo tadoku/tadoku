@@ -4,7 +4,7 @@ select
   name,
   "default"
 from log_activities
-order by name asc;
+order by id asc;
 
 -- name: ListActivitiesForContest :many
 select

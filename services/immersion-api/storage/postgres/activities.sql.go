@@ -17,7 +17,7 @@ select
   name,
   "default"
 from log_activities
-order by name asc
+order by id asc
 `
 
 func (q *Queries) ListActivities(ctx context.Context) ([]LogActivity, error) {

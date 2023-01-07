@@ -1,15 +1,18 @@
 import type { NextPage } from 'next'
 import { Breadcrumb } from 'ui'
 import { HomeIcon } from '@heroicons/react/20/solid'
-import { ContestForm } from '@app/contests/ContestForm'
-import { useContestConfigurationOptions } from '@app/contests/api'
+import {
+  useLogConfigurationOptions,
+  useOngoingContestRegistrations,
+} from '@app/contests/api'
 import { routes } from '@app/common/routes'
+import { LogForm } from '@app/contests/LogForm'
 
 interface Props {}
 
 const Page: NextPage<Props> = () => {
-  const options = useContestConfigurationOptions()
-
+  const registrations = useOngoingContestRegistrations()
+  const options = useLogConfigurationOptions()
   return (
     <>
       <div className="pb-4">
@@ -22,14 +25,14 @@ const Page: NextPage<Props> = () => {
         />
       </div>
       <h1 className="title mb-4">New log</h1>
-      {options.isLoading ? <p>Loading...</p> : null}
-      {options.isError ? (
+      {options.isLoading || registrations.isLoading ? <p>Loading...</p> : null}
+      {options.isError || registrations.isError ? (
         <span className="flash error">
           Could not load page, please try again later.
         </span>
       ) : null}
-      {options.isSuccess ? (
-        <ContestForm configurationOptions={options.data} />
+      {options.isSuccess && registrations.isSuccess ? (
+        <LogForm registrations={registrations.data} options={options.data} />
       ) : null}
     </>
   )

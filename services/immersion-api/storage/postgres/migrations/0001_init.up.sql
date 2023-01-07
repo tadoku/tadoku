@@ -125,7 +125,7 @@ values
 	('ell', 'Greek'),
 	('heb', 'Hebrew'),
 	('hin', 'Hindi'),
-	('hun', 'Hungary'),
+	('hun', 'Hungarian'),
 	('gle', 'Irish'),
 	('ita', 'Italian'),
 	('jpn', 'Japanese'),

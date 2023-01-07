@@ -449,19 +449,12 @@ interface RadioProps {
   }[]
 }
 
-export function RadioGroup({
-  name,
-  label,
-  hint,
-  defaultValue,
-  options,
-}: RadioProps) {
+export function RadioGroup({ name, label, hint, options }: RadioProps) {
   const { control } = useFormContext()
   const {
     field: { value, onChange },
     formState: { errors },
   } = useController({
-    defaultValue: defaultValue ?? '',
     name,
     control,
     rules: { required: true },

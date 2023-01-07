@@ -9,16 +9,20 @@ const { publicRuntimeConfig } = getConfig()
 
 const root = `${publicRuntimeConfig.apiEndpoint}/immersion/contests`
 
-const Language = z.object({
+export const Language = z.object({
   code: z.string(),
   name: z.string(),
 })
 
-const Activity = z.object({
+export type Language = z.infer<typeof Language>
+
+export const Activity = z.object({
   id: z.number(),
   name: z.string(),
   default: z.boolean().nullable().optional(),
 })
+
+export type Activity = z.infer<typeof Activity>
 
 const ContestConfigurationOptions = z
   .object({
@@ -214,7 +218,7 @@ export const useContest = (id: string, options?: { enabled?: boolean }) =>
     options,
   )
 
-const ContestRegistrationView = z
+export const ContestRegistrationView = z
   .object({
     id: z.string(),
     contest_id: z.string(),
@@ -367,19 +371,44 @@ export const useContestLeaderboard = (
     options,
   )
 
-const Unit = z.object({
-  id: z.string(),
-  log_activity_id: z.number(),
-  name: z.string(),
-  modifier: z.number(),
-  language_code: z.string().nullable().optional(),
-})
+export const Unit = z
+  .object({
+    id: z.string(),
+    log_activity_id: z.number(),
+    name: z.string(),
+    modifier: z.number(),
+    language_code: z.string().nullable().optional(),
+  })
+  .transform(it => {
+    const {
+      log_activity_id: logActivityId,
+      language_code: languageCode,
+      ...rest
+    } = it
+    return {
+      languageCode,
+      logActivityId,
+      ...rest,
+    }
+  })
 
-const Tag = z.object({
-  id: z.string(),
-  log_activity_id: z.number(),
-  name: z.string(),
-})
+export type Unit = z.infer<typeof Unit>
+
+export const Tag = z
+  .object({
+    id: z.string(),
+    log_activity_id: z.number(),
+    name: z.string(),
+  })
+  .transform(it => {
+    const { log_activity_id: logActivityId, ...rest } = it
+    return {
+      logActivityId,
+      ...rest,
+    }
+  })
+
+export type Tag = z.infer<typeof Tag>
 
 const LogConfigurationOptions = z.object({
   languages: z.array(Language),

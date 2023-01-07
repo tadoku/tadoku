@@ -3,14 +3,17 @@ import {
   AutocompleteMultiInput,
   Input,
   RadioGroup,
-  Select,
 } from 'ui'
 import { FormProvider, useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import {
+  Activity,
   ContestRegistrationsView,
+  ContestRegistrationView,
+  Language,
   LogConfigurationOptions,
+  Unit,
 } from '@app/contests/api'
 import { useRouter } from 'next/router'
 import { routes } from '@app/common/routes'
@@ -21,12 +24,13 @@ import {
 } from '@heroicons/react/20/solid'
 
 export const LogFormSchema = z.object({
-  trackingModeSelection: z.enum(['automatic', 'manual', 'personal']),
-  contests: z.any(),
-  languageCode: z.string(),
-  activity: z.number(),
+  trackingMode: z.enum(['automatic', 'manual', 'personal']),
+  registrations: z.array(ContestRegistrationView),
+  selectedRegistrations: z.array(ContestRegistrationView),
+  language: Language,
+  activity: Activity,
   amount: z.number().positive(),
-  unit: z.number(),
+  unit: Unit,
   tags: z
     .array(z.string())
     .min(1, 'Must select at least one tag')
@@ -41,13 +45,76 @@ interface Props {
   options: LogConfigurationOptions
 }
 
-export const LogForm = ({ registrations, options }: Props) => {
-  const defaultValues: Partial<LogFormSchema> = {}
+const filterUnits = (
+  units: Unit[],
+  activity: Activity | undefined,
+  language: Language | undefined,
+) => {
+  if (!activity) {
+    return []
+  }
+
+  const base = units.filter(it => {
+    return it.logActivityId == activity.id
+  })
+
+  const grouped = base.reduce((acc, unit) => {
+    if (!acc.has(unit.name)) {
+      acc.set(unit.name, [])
+    }
+
+    acc.get(unit.name)?.push(unit)
+
+    return acc
+  }, new Map<string, Unit[]>())
+
+  const filteredUnits = []
+  for (const units of grouped.values()) {
+    const unitForCurrentLanguage = units.find(
+      it => it.languageCode === language?.code,
+    )
+    const fallback = units.find(it => it.languageCode === undefined)
+
+    if (units.length > 1 && unitForCurrentLanguage) {
+      filteredUnits.push(unitForCurrentLanguage)
+    } else if (fallback) {
+      filteredUnits.push(fallback)
+    }
+  }
+
+  return filteredUnits
+}
+
+export const LogForm = ({
+  registrations: { registrations },
+  options,
+}: Props) => {
+  const defaultValues: Partial<LogFormSchema> = {
+    activity: options.activities[0],
+    trackingMode: registrations.length > 0 ? 'automatic' : 'personal',
+    language:
+      registrations.length > 0 ? registrations[0].languages[0] : undefined,
+    unit: options.units.filter(
+      it => it.logActivityId === options.activities[0].id,
+    )[0],
+  }
 
   const methods = useForm({
     resolver: zodResolver(LogFormSchema),
     defaultValues,
   })
+
+  const trackingMode = methods.watch('trackingMode')
+  const activity = methods.watch('activity')
+  const language = methods.watch('language')
+
+  const languages =
+    trackingMode === 'personal'
+      ? options.languages
+      : registrations.flatMap(it => it.languages)
+  const tags = options.tags
+  const units = filterUnits(options.units, activity, language)
+  const activities = options.activities
 
   const router = useRouter()
   // const createContestMutation = useCreateContest(id =>
@@ -60,11 +127,6 @@ export const LogForm = ({ registrations, options }: Props) => {
     console.log(data)
     // createContest(data)
   }
-
-  const tags = options.tags
-  const activities = options.activities
-  const units = options.units
-  const languages = options.languages
 
   return (
     <FormProvider {...methods}>
@@ -95,12 +157,11 @@ export const LogForm = ({ registrations, options }: Props) => {
               },
             ]}
             label="Contests"
-            name="trackingModeSelection"
-            defaultValue="automatic"
+            name="trackingMode"
           />
           <div className="max-w-md v-stack spaced">
             <AutocompleteInput
-              name="languageCode"
+              name="language"
               label="Language"
               options={languages}
               match={(option, query) =>

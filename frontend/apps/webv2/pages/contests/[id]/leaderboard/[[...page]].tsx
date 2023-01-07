@@ -73,6 +73,9 @@ const Page = () => {
     contest.data.registrationEnd,
   ).isBefore(now)
 
+  const showPagination =
+    leaderboard.data && leaderboard.data.totalSize > filters.pageSize
+
   return (
     <>
       <div className="pb-4">
@@ -162,7 +165,7 @@ const Page = () => {
       <div className="flex mt-4 space-x-4">
         <div className="flex-grow">
           <Leaderboard contestId={id} leaderboard={leaderboard} />
-          {leaderboard.data ? (
+          {showPagination ? (
             <div className="mt-4">
               <Pagination
                 currentPage={filters.page}

@@ -223,6 +223,20 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ContestConfigurationOptions'
+  /contests/log/configuration-options:
+    get:
+      summary: Fetches the configuration options for a log
+      operationId: contestLogGetConfigurations
+      tags: [contests]
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LogConfigurationOptions'
   /ping:
     get:
       summary: Checks if service is responsive
@@ -237,6 +251,67 @@ paths:
                 type: string
 components:
   schemas:
+    LogConfigurationOptions:
+      allOf:
+        - $ref: "#/components/schemas/Languages"
+        - $ref: "#/components/schemas/Activities"
+        - $ref: "#/components/schemas/Units"
+        - $ref: "#/components/schemas/Tags"
+    Unit:
+      type: object
+      required:
+        - id
+        - log_activity_id
+        - unit
+        - modifier
+      properties:
+        id:
+          type: string
+          format: uuid
+        log_activity_id:
+          type: integer
+        unit:
+          type: string
+          example: Page
+        modifier:
+          type: number
+          example: 3.14
+        language_code:
+          type: string
+          example: jpa
+    Units:
+      type: object
+      required:
+        - units
+      properties:
+        units:
+          type: array
+          items:
+            $ref: "#/components/schemas/Unit"
+    Tag:
+      type: object
+      required:
+        - id
+        - log_activity_id
+        - name
+      properties:
+        id:
+          type: string
+          format: uuid
+        log_activity_id:
+          type: integer
+        name:
+          type: string
+          example: Book
+    Tags:
+      type: object
+      required:
+        - tags
+      properties:
+        tags:
+          type: array
+          items:
+            $ref: "#/components/schemas/Tag"
     ContestConfigurationOptions:
       allOf:
         - $ref: "#/components/schemas/Languages"

@@ -394,3 +394,9 @@ func (s *Server) ContestFindOngoingRegistrations(ctx echo.Context) error {
 
 	return ctx.JSON(http.StatusOK, res)
 }
+
+// Fetches the configuration options for a log
+// (GET /contests/log/configuration-options)
+func (s *Server) ContestLogGetConfigurations(ctx echo.Context) error {
+	return nil
+}

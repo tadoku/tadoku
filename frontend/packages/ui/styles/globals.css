@@ -194,7 +194,7 @@
   /* forms */
 
   .label {
-    @apply grid grid-cols-fill-48 grid-flow-row relative gap-2;
+    @apply grid grid-flow-row relative gap-2;
   }
 
   .label-text {
@@ -286,6 +286,7 @@
   .input-frame {
       @apply border border-b-2 border-black/10 focus:border-primary focus:ring-primary/40 focus:ring-2;
       @apply bg-white transition ease-in-out;
+      @apply aria-disabled:focus:ring-0 aria-disabled:focus:ring-offset-0 aria-disabled:focus:border-black/10;
   }
 
   table.default {

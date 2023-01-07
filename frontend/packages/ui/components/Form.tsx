@@ -395,7 +395,7 @@ export function AutocompleteMultiInput<T>(props: {
               ) : (
                 filtered.map(option => (
                   <Combobox.Option
-                    key={format(option)}
+                    key={getIdForOption(option)}
                     value={option}
                     className={({ active }) =>
                       `relative cursor-default select-none py-2 pl-10 pr-4 ${
@@ -436,7 +436,7 @@ export function AutocompleteMultiInput<T>(props: {
   )
 }
 
-interface RadioProps {
+export interface RadioProps {
   name: string
   label: string
   hint?: string
@@ -446,6 +446,8 @@ interface RadioProps {
     description: string
     IconComponent?: ComponentType<any>
     value: any
+    disabled?: boolean
+    title?: string | undefined
   }[]
 }
 
@@ -479,8 +481,16 @@ export function RadioGroup({ name, label, hint, options }: RadioProps) {
             value={opt.value}
             key={opt.value.toString()}
             className="input-frame px-4 py-2 ui-checked:border-primary cursor-pointer select-none"
+            disabled={opt.disabled}
+            title={opt.title}
           >
-            <div className="h-stack text-secondary items-center w-full">
+            <div
+              className={`h-stack  items-center w-full ${
+                opt.disabled
+                  ? 'pointer-events-none text-secondary/30'
+                  : 'text-secondary'
+              }`}
+            >
               {opt.IconComponent ? (
                 <opt.IconComponent className="w-4 h-4 mr-2" />
               ) : null}
@@ -489,7 +499,11 @@ export function RadioGroup({ name, label, hint, options }: RadioProps) {
                 <CheckIcon className="w-3 h-3" />
               </span>
             </div>
-            <div className={`mt-2 text-xs text-gray-600`}>
+            <div
+              className={`mt-2 text-xs ${
+                opt.disabled ? ' text-secondary/30' : 'text-gray-600'
+              }`}
+            >
               {opt.description}
             </div>
           </HeadlessRadioGroup.Option>

@@ -13,6 +13,7 @@ import {
   ContestRegistrationView,
   Language,
   LogConfigurationOptions,
+  Tag,
   Unit,
 } from '@app/contests/api'
 import { useRouter } from 'next/router'
@@ -22,6 +23,7 @@ import {
   LinkIcon,
   UserIcon,
 } from '@heroicons/react/20/solid'
+import { RadioProps } from 'ui/components/Form'
 
 export const LogFormSchema = z.object({
   trackingMode: z.enum(['automatic', 'manual', 'personal']),
@@ -85,6 +87,43 @@ const filterUnits = (
   return filteredUnits
 }
 
+const filterTags = (tags: Tag[], activity: Activity | undefined) => {
+  if (!activity) {
+    return []
+  }
+
+  return tags.filter(it => it.logActivityId === activity.id)
+}
+
+const trackingModesForRegistrations = (registrationCount: number) => {
+  const personalOnly = registrationCount === 0
+
+  return [
+    {
+      value: 'automatic',
+      label: 'Automatic',
+      description: 'Submit log to all eligible contests',
+      IconComponent: LinkIcon,
+      disabled: personalOnly,
+      title: personalOnly ? 'No eligible contests found' : undefined,
+    },
+    {
+      value: 'manual',
+      label: 'Manual',
+      description: 'Choose which contests to submit to',
+      IconComponent: AdjustmentsHorizontalIcon,
+      disabled: personalOnly,
+      title: personalOnly ? 'No eligible contests found' : undefined,
+    },
+    {
+      value: 'personal',
+      label: 'Personal',
+      description: 'Do not submit to any contests',
+      IconComponent: UserIcon,
+    },
+  ] satisfies RadioProps['options']
+}
+
 export const LogForm = ({
   registrations: { registrations },
   options,
@@ -112,7 +151,7 @@ export const LogForm = ({
     trackingMode === 'personal'
       ? options.languages
       : registrations.flatMap(it => it.languages)
-  const tags = options.tags
+  const tags = filterTags(options.tags, activity)
   const units = filterUnits(options.units, activity, language)
   const activities = options.activities
 
@@ -132,34 +171,17 @@ export const LogForm = ({
     <FormProvider {...methods}>
       <form
         onSubmit={methods.handleSubmit(onSubmit, errors => console.log(errors))}
-        className="v-stack spaced max-w-screen-md"
+        className="v-stack spaced max-w-4xl"
       >
-        <div className="card v-stack spaced">
-          <RadioGroup
-            options={[
-              {
-                value: 'automatic',
-                label: 'Automatic',
-                description: 'Submit log to all eligible contests',
-                IconComponent: LinkIcon,
-              },
-              {
-                value: 'manual',
-                label: 'Manual',
-                description: 'Choose which contests to submit to',
-                IconComponent: AdjustmentsHorizontalIcon,
-              },
-              {
-                value: 'personal',
-                label: 'Personal',
-                description: 'Do not submit to any contests',
-                IconComponent: UserIcon,
-              },
-            ]}
-            label="Contests"
-            name="trackingMode"
-          />
-          <div className="max-w-md v-stack spaced">
+        <div className="card v-stack spaced lg:h-stack lg:!space-x-8 w-full">
+          <div className="flex-grow">
+            <RadioGroup
+              options={trackingModesForRegistrations(registrations.length)}
+              label="Contests"
+              name="trackingMode"
+            />
+          </div>
+          <div className="v-stack spaced">
             <AutocompleteInput
               name="language"
               label="Language"

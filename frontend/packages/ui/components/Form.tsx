@@ -430,6 +430,7 @@ export function AutocompleteMultiInput<T>(props: {
 interface RadioProps {
   name: string
   label: string
+  hint?: string
   options: {
     label: string
     description: string
@@ -438,15 +439,27 @@ interface RadioProps {
   }[]
 }
 
-export const RadioGroup = ({ name, label, options }: RadioProps) => {
-  let [value, setValue] = useState(() => options[0].value)
+export const RadioGroup = ({ name, label, hint, options }: RadioProps) => {
+  const { control } = useFormContext()
+  const {
+    field: { value, onChange },
+    formState: { errors },
+  } = useController({ name, control })
+
+  const hasError = errors[name] !== undefined
+  let errorMessage =
+    errors[name]?.message?.toString() || 'This selection is invalid'
 
   return (
-    <HeadlessRadioGroup value={value} onChange={setValue} className="label">
+    <HeadlessRadioGroup
+      value={value}
+      onChange={onChange}
+      className={`label ${hasError ? 'error' : ''}`}
+    >
       <HeadlessRadioGroup.Label className="label-text">
         {label}
       </HeadlessRadioGroup.Label>
-      <div className="col-span-2 grid gap-2 grid-cols-fill-48 w-full">
+      <div className="col-span-full grid gap-2 grid-cols-fill-48 w-full">
         {options.map(opt => (
           <HeadlessRadioGroup.Option
             value={opt.value}
@@ -468,6 +481,8 @@ export const RadioGroup = ({ name, label, options }: RadioProps) => {
           </HeadlessRadioGroup.Option>
         ))}
       </div>
+      {hint ? <span className="label-hint">{hint}</span> : undefined}
+      <span className="error">{errorMessage}</span>
     </HeadlessRadioGroup>
   )
 }

@@ -734,6 +734,7 @@ const AutocompleteForm = () => {
           }
           getIdForOption={option => option.id}
           format={option => option.name}
+          hint="Select 3 at most"
         />
         <button
           type="submit"

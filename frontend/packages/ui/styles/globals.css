@@ -194,11 +194,11 @@
   /* forms */
 
   .label {
-    @apply grid grid-cols-2 grid-flow-row relative gap-2;
+    @apply grid grid-cols-fill-48 grid-flow-row relative gap-2;
   }
 
   .label-text {
-    @apply font-semibold text-base order-1 col-span-full row-span-full;
+    @apply font-semibold text-base order-1 row-span-full col-span-full md:col-auto;
   }
 
   .label .input {

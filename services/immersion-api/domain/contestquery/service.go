@@ -16,6 +16,7 @@ var ErrUnauthorized = errors.New("unauthorized")
 
 type ContestRepository interface {
 	FetchContestConfigurationOptions(ctx context.Context) (*FetchContestConfigurationOptionsResponse, error)
+	FetchLogConfigurationOptions(ctx context.Context) (*FetchLogConfigurationOptionsResponse, error)
 	FindByID(context.Context, *FindByIDRequest) (*ContestView, error)
 	ListContests(context.Context, *ContestListRequest) (*ContestListResponse, error)
 	FindRegistrationForUser(context.Context, *FindRegistrationForUserRequest) (*ContestRegistration, error)
@@ -25,6 +26,7 @@ type ContestRepository interface {
 
 type Service interface {
 	FetchContestConfigurationOptions(ctx context.Context) (*FetchContestConfigurationOptionsResponse, error)
+	FetchLogConfigurationOptions(ctx context.Context) (*FetchLogConfigurationOptionsResponse, error)
 	FindByID(context.Context, *FindByIDRequest) (*ContestView, error)
 	ListContests(context.Context, *ContestListRequest) (*ContestListResponse, error)
 	FindRegistrationForUser(context.Context, *FindRegistrationForUserRequest) (*ContestRegistration, error)
@@ -239,4 +241,29 @@ func (s *service) FetchOngoingContestRegistrations(ctx context.Context, req *Fet
 	req.Now = s.clock.Now()
 
 	return s.r.FetchOngoingContestRegistrations(ctx, req)
+}
+
+type Unit struct {
+	ID            uuid.UUID
+	LogActivityID int
+	Name          string
+	Modifier      float32
+	LanguageCode  *string
+}
+
+type Tag struct {
+	ID            uuid.UUID
+	LogActivityID int
+	Name          string
+}
+
+type FetchLogConfigurationOptionsResponse struct {
+	Languages  []Language
+	Activities []Activity
+	Units      []Unit
+	Tags       []Tag
+}
+
+func (s *service) FetchLogConfigurationOptions(ctx context.Context) (*FetchLogConfigurationOptionsResponse, error) {
+	return nil, nil
 }

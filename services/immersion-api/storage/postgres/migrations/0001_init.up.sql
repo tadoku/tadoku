@@ -56,7 +56,7 @@ create table log_activities (
 create table log_units (
   id uuid primary key default uuid_generate_v4(),
   log_activity_id smallint not null,
-  unit varchar(50) not null,
+  name varchar(50) not null,
   modifier real not null,
   language_code varchar(10) -- could be null to indicate it's the fallback option for that language
 );

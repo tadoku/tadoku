@@ -132,6 +132,70 @@ func (r *ContestRepository) FetchContestConfigurationOptions(ctx context.Context
 	return &options, err
 }
 
+func (r *ContestRepository) FetchLogConfigurationOptions(ctx context.Context) (*contestquery.FetchLogConfigurationOptionsResponse, error) {
+	langs, err := r.q.ListLanguages(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("could not fetch log configuration options: %w", err)
+	}
+
+	acts, err := r.q.ListActivities(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("could not fetch log configuration options: %w", err)
+	}
+
+	units, err := r.q.ListUnits(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("could not fetch log configuration options: %w", err)
+	}
+
+	tags, err := r.q.ListTags(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("could not fetch log configuration options: %w", err)
+	}
+
+	options := contestquery.FetchLogConfigurationOptionsResponse{
+		Languages:  make([]contestquery.Language, len(langs)),
+		Activities: make([]contestquery.Activity, len(acts)),
+		Units:      make([]contestquery.Unit, len(units)),
+		Tags:       make([]contestquery.Tag, len(tags)),
+	}
+
+	for i, l := range langs {
+		options.Languages[i] = contestquery.Language{
+			Code: l.Code,
+			Name: l.Name,
+		}
+	}
+
+	for i, a := range acts {
+		options.Activities[i] = contestquery.Activity{
+			ID:      a.ID,
+			Name:    a.Name,
+			Default: a.Default,
+		}
+	}
+
+	for i, u := range units {
+		options.Units[i] = contestquery.Unit{
+			ID:            u.ID,
+			LogActivityID: int(u.LogActivityID),
+			Name:          u.Name,
+			Modifier:      u.Modifier,
+			LanguageCode:  NewStringFromNullString(u.LanguageCode),
+		}
+	}
+
+	for i, t := range tags {
+		options.Tags[i] = contestquery.Tag{
+			ID:            t.ID,
+			LogActivityID: int(t.LogActivityID),
+			Name:          t.Name,
+		}
+	}
+
+	return &options, err
+}
+
 func (r *ContestRepository) FindByID(ctx context.Context, req *contestquery.FindByIDRequest) (*contestquery.ContestView, error) {
 	contest, err := r.q.FindContestById(ctx, FindContestByIdParams{
 		ID:             req.ID,

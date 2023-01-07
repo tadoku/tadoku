@@ -178,7 +178,7 @@ type Unit struct {
 	LanguageCode  *string            `json:"language_code,omitempty"`
 	LogActivityId int                `json:"log_activity_id"`
 	Modifier      float32            `json:"modifier"`
-	Unit          string             `json:"unit"`
+	Name          string             `json:"name"`
 }
 
 // Units defines model for Units.

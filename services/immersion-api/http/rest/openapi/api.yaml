@@ -262,7 +262,7 @@ components:
       required:
         - id
         - log_activity_id
-        - unit
+        - name
         - modifier
       properties:
         id:
@@ -270,7 +270,7 @@ components:
           format: uuid
         log_activity_id:
           type: integer
-        unit:
+        name:
           type: string
           example: Page
         modifier:

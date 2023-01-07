@@ -82,7 +82,7 @@ type LogTag struct {
 type LogUnit struct {
 	ID            uuid.UUID
 	LogActivityID int16
-	Unit          string
+	Name          string
 	Modifier      float32
 	LanguageCode  sql.NullString
 }

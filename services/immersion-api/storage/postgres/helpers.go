@@ -39,6 +39,14 @@ func NewNullString(val *string) sql.NullString {
 	}
 }
 
+func NewStringFromNullString(val sql.NullString) *string {
+	if !val.Valid {
+		return nil
+	}
+
+	return &val.String
+}
+
 func NewNullInt32(val *int32) sql.NullInt32 {
 	if val == nil {
 		return sql.NullInt32{

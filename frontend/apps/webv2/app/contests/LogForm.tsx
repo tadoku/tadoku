@@ -196,107 +196,112 @@ export const LogForm = ({
         onSubmit={methods.handleSubmit(onSubmit, errors => console.log(errors))}
         className="v-stack spaced max-w-4xl"
       >
-        <div className="card v-stack spaced lg:h-stack lg:!space-x-8 w-full">
-          <div className="flex-grow v-stack spaced">
-            <RadioGroup
-              options={trackingModesForRegistrations(registrations.length)}
-              label="Contests"
-              name="trackingMode"
-            />
-            {trackingMode === 'manual' ? (
-              <AutocompleteMultiInput
-                name="selectedRegistrations"
-                label="Contest selection"
-                options={registrations}
-                match={(option, query) =>
-                  option.contest?.description
-                    .toLowerCase()
-                    .replace(/[^a-zA-Z0-9]/g, '')
-                    .includes(query.toLowerCase()) ?? false
-                }
-                getIdForOption={option => option.id}
-                format={option =>
-                  `${option.contest!.private ? '' : 'Official: '}${
-                    option.contest?.description ?? option.contestId
-                  } (${option.contest!.contestStart.toLocaleString(
-                    DateTime.DATE_MED,
-                  )} ~ ${option.contest!.contestEnd.toLocaleString(
-                    DateTime.DATE_MED,
-                  )})`
-                }
+        <div className="card">
+          <div className="v-stack spaced lg:h-stack lg:!space-x-8 w-full">
+            <div className="flex-grow v-stack spaced">
+              <RadioGroup
+                options={trackingModesForRegistrations(registrations.length)}
+                label="Contests"
+                name="trackingMode"
               />
-            ) : null}
-          </div>
-          <div className="v-stack spaced">
-            <AutocompleteInput
-              name="language"
-              label="Language"
-              options={languages}
-              match={(option, query) =>
-                option.name
-                  .toLowerCase()
-                  .replace(/[^a-zA-Z0-9]/g, '')
-                  .includes(query.toLowerCase())
-              }
-              format={option => option.name}
-            />
-            <AutocompleteInput
-              name="activity"
-              label="Activity"
-              options={activities}
-              match={(option, query) =>
-                option.name
-                  .toLowerCase()
-                  .replace(/[^a-zA-Z0-9]/g, '')
-                  .includes(query.toLowerCase())
-              }
-              format={option => option.name}
-            />
-            <div className="h-stack spaced">
-              <div className="flex-grow">
-                <Input
-                  name="amount"
-                  label="Amount"
-                  type="number"
-                  defaultValue={0}
-                  options={{ valueAsNumber: true }}
-                  min={0}
-                />
-              </div>
-              <div className="min-w-[150px]">
-                <AutocompleteInput
-                  name="unit"
-                  label="Unit"
-                  options={units}
+              {trackingMode === 'manual' ? (
+                <AutocompleteMultiInput
+                  name="selectedRegistrations"
+                  label="Contest selection"
+                  options={registrations}
                   match={(option, query) =>
-                    option.name
+                    option.contest?.description
                       .toLowerCase()
                       .replace(/[^a-zA-Z0-9]/g, '')
-                      .includes(query.toLowerCase())
+                      .includes(query.toLowerCase()) ?? false
                   }
-                  format={option => option.name}
+                  getIdForOption={option => option.id}
+                  format={option =>
+                    `${option.contest!.private ? '' : 'Official: '}${
+                      option.contest?.description ?? option.contestId
+                    } (${option.contest!.contestStart.toLocaleString(
+                      DateTime.DATE_MED,
+                    )} ~ ${option.contest!.contestEnd.toLocaleString(
+                      DateTime.DATE_MED,
+                    )})`
+                  }
                 />
-              </div>
+              ) : null}
             </div>
-            <AutocompleteMultiInput
-              name="tags"
-              label="Tags"
-              options={tags}
-              match={(option, query) =>
-                option.name
-                  .toLowerCase()
-                  .replace(/[^a-zA-Z0-9]/g, '')
-                  .includes(query.toLowerCase())
-              }
-              getIdForOption={option => option.id}
-              format={option => option.name}
-            />
-            <Input
-              name="description"
-              label="Description"
-              type="text"
-              placeholder="e.g. One Piece volume 45"
-            />
+            <div className="v-stack spaced">
+              <AutocompleteInput
+                name="language"
+                label="Language"
+                options={languages}
+                match={(option, query) =>
+                  option.name
+                    .toLowerCase()
+                    .replace(/[^a-zA-Z0-9]/g, '')
+                    .includes(query.toLowerCase())
+                }
+                format={option => option.name}
+              />
+              <AutocompleteInput
+                name="activity"
+                label="Activity"
+                options={activities}
+                match={(option, query) =>
+                  option.name
+                    .toLowerCase()
+                    .replace(/[^a-zA-Z0-9]/g, '')
+                    .includes(query.toLowerCase())
+                }
+                format={option => option.name}
+              />
+              <div className="h-stack spaced">
+                <div className="flex-grow">
+                  <Input
+                    name="amount"
+                    label="Amount"
+                    type="number"
+                    defaultValue={0}
+                    options={{ valueAsNumber: true }}
+                    min={0}
+                  />
+                </div>
+                <div className="min-w-[150px]">
+                  <AutocompleteInput
+                    name="unit"
+                    label="Unit"
+                    options={units}
+                    match={(option, query) =>
+                      option.name
+                        .toLowerCase()
+                        .replace(/[^a-zA-Z0-9]/g, '')
+                        .includes(query.toLowerCase())
+                    }
+                    format={option => option.name}
+                  />
+                </div>
+              </div>
+              <AutocompleteMultiInput
+                name="tags"
+                label="Tags"
+                options={tags}
+                match={(option, query) =>
+                  option.name
+                    .toLowerCase()
+                    .replace(/[^a-zA-Z0-9]/g, '')
+                    .includes(query.toLowerCase())
+                }
+                getIdForOption={option => option.id}
+                format={option => option.name}
+              />
+              <Input
+                name="description"
+                label="Description"
+                type="text"
+                placeholder="e.g. One Piece volume 45"
+              />
+            </div>
+          </div>
+          <div className="-mx-4 -mb-4 mt-4 px-4 py-2 md:-mx-7 md:-mb-7 md:px-7 md:py-2 bg-slate-500/5 text-center lg:text-right font-mono">
+            Estimated score: <strong>0</strong>
           </div>
         </div>
         <div className="h-stack spaced justify-end">

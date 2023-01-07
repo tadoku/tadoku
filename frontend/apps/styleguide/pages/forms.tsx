@@ -11,6 +11,12 @@ import {
 import { FormProvider, useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
+import { RadioGroup } from 'ui/components/Form'
+import {
+  AdjustmentsHorizontalIcon,
+  LinkIcon,
+  UserIcon,
+} from '@heroicons/react/20/solid'
 
 export default function Forms() {
   return (
@@ -18,13 +24,13 @@ export default function Forms() {
       <h1 className="title mb-8">Forms</h1>
 
       <Title>React example: Log pages form</Title>
-      <div className="h-stack w-full">
-        <div className="w-96">
+      <div className="w-full">
+        <div className="w-full max-w-xl">
           <Preview>
             <LogPagesForm />
           </Preview>
         </div>
-        <div className="flex-1">
+        <div>
           <CodeBlock
             language="typescript"
             code={`import { Input, Select } from '@components/Form'
@@ -557,6 +563,30 @@ const LogPagesForm = () => {
         onSubmit={methods.handleSubmit(onSubmit)}
         className="v-stack spaced"
       >
+        <RadioGroup
+          options={[
+            {
+              value: 'automatic',
+              label: 'Automatic',
+              description: 'Submit log to all eligible contests',
+              IconComponent: LinkIcon,
+            },
+            {
+              value: 'manual',
+              label: 'Manual',
+              description: 'Choose which contests to submit to',
+              IconComponent: AdjustmentsHorizontalIcon,
+            },
+            {
+              value: 'personal',
+              label: 'Personal',
+              description: 'Do not submit to any contests',
+              IconComponent: UserIcon,
+            },
+          ]}
+          label="Where to track?"
+          name="trackingModeSelection"
+        />
         <Select name="languageCode" label="Language" values={languages} />
         <Select
           name="activity"

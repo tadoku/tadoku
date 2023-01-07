@@ -438,7 +438,7 @@ func (s *Server) ContestLogGetConfigurations(ctx echo.Context) error {
 		}
 	}
 
-	for i, it := range opts.Units {
+	for i, it := range opts.Tags {
 		res.Tags[i] = openapi.Tag{
 			Id:            it.ID,
 			LogActivityId: it.LogActivityID,

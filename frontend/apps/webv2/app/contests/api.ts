@@ -368,16 +368,16 @@ export const useContestLeaderboard = (
   )
 
 const Unit = z.object({
-  id: z.number(),
-  activity_id: z.number(),
+  id: z.string(),
+  log_activity_id: z.number(),
   name: z.string(),
   modifier: z.number(),
-  language_code: z.string().nullable(),
+  language_code: z.string().nullable().optional(),
 })
 
 const Tag = z.object({
-  id: z.number(),
-  activity_id: z.number(),
+  id: z.string(),
+  log_activity_id: z.number(),
   name: z.string(),
 })
 

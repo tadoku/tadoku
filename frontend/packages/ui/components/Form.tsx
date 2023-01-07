@@ -251,6 +251,7 @@ export function AutocompleteInput<T>(props: {
         <div className="input relative">
           <div className="z-0">
             <Combobox.Input
+              id={`${name}-search`}
               onChange={event => setQuery(event.target.value)}
               className="!pr-7"
             />
@@ -356,6 +357,7 @@ export function AutocompleteMultiInput<T>(props: {
         <div className="input relative">
           <div className="z-0">
             <Combobox.Input
+              id={`${name}-search`}
               onChange={event => setQuery(event.target.value)}
               displayValue={selected =>
                 selected?.map(option => format(option as T)).join(', ') ?? ''

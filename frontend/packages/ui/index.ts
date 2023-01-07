@@ -12,6 +12,7 @@ export {
   RadioSelect,
   AutocompleteInput,
   AutocompleteMultiInput,
+  RadioGroup,
 } from './components/Form'
 export { Modal } from './components/Modal'
 export { Navbar } from './components/Navbar'

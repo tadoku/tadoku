@@ -12,6 +12,8 @@ go_library(
         "languages.sql.go",
         "leaderboard.sql.go",
         "models.go",
+        "tags.sql.go",
+        "units.sql.go",
     ],
     importpath = "github.com/tadoku/tadoku/services/immersion-api/storage/postgres",
     visibility = ["//visibility:public"],

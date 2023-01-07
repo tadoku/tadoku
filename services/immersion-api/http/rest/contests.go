@@ -398,5 +398,53 @@ func (s *Server) ContestFindOngoingRegistrations(ctx echo.Context) error {
 // Fetches the configuration options for a log
 // (GET /contests/log/configuration-options)
 func (s *Server) ContestLogGetConfigurations(ctx echo.Context) error {
-	return nil
+	opts, err := s.contestQueryService.FetchLogConfigurationOptions(ctx.Request().Context())
+	if err != nil {
+		if errors.Is(err, contestquery.ErrUnauthorized) {
+			return ctx.NoContent(http.StatusUnauthorized)
+		}
+		return ctx.NoContent(http.StatusInternalServerError)
+	}
+
+	res := openapi.LogConfigurationOptions{
+		Activities: make([]openapi.Activity, len(opts.Activities)),
+		Languages:  make([]openapi.Language, len(opts.Languages)),
+		Units:      make([]openapi.Unit, len(opts.Units)),
+		Tags:       make([]openapi.Tag, len(opts.Tags)),
+	}
+
+	for i, it := range opts.Activities {
+		it := it
+		res.Activities[i] = openapi.Activity{
+			Id:   it.ID,
+			Name: it.Name,
+		}
+	}
+
+	for i, it := range opts.Languages {
+		res.Languages[i] = openapi.Language{
+			Code: it.Code,
+			Name: it.Name,
+		}
+	}
+
+	for i, it := range opts.Units {
+		res.Units[i] = openapi.Unit{
+			Id:            it.ID,
+			LogActivityId: it.LogActivityID,
+			Name:          it.Name,
+			Modifier:      it.Modifier,
+			LanguageCode:  it.LanguageCode,
+		}
+	}
+
+	for i, it := range opts.Units {
+		res.Tags[i] = openapi.Tag{
+			Id:            it.ID,
+			LogActivityId: it.LogActivityID,
+			Name:          it.Name,
+		}
+	}
+
+	return ctx.JSON(http.StatusOK, res)
 }

@@ -265,5 +265,9 @@ type FetchLogConfigurationOptionsResponse struct {
 }
 
 func (s *service) FetchLogConfigurationOptions(ctx context.Context) (*FetchLogConfigurationOptionsResponse, error) {
-	return nil, nil
+	if domain.IsRole(ctx, domain.RoleGuest) {
+		return nil, ErrUnauthorized
+	}
+
+	return s.r.FetchLogConfigurationOptions(ctx)
 }

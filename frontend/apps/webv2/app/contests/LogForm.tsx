@@ -24,6 +24,7 @@ import {
   UserIcon,
 } from '@heroicons/react/20/solid'
 import { RadioProps } from 'ui/components/Form'
+import { DateTime, Duration, Interval } from 'luxon'
 
 export const LogFormSchema = z.object({
   trackingMode: z.enum(['automatic', 'manual', 'personal']),
@@ -196,12 +197,35 @@ export const LogForm = ({
         className="v-stack spaced max-w-4xl"
       >
         <div className="card v-stack spaced lg:h-stack lg:!space-x-8 w-full">
-          <div className="flex-grow">
+          <div className="flex-grow v-stack spaced">
             <RadioGroup
               options={trackingModesForRegistrations(registrations.length)}
               label="Contests"
               name="trackingMode"
             />
+            {trackingMode === 'manual' ? (
+              <AutocompleteMultiInput
+                name="selectedRegistrations"
+                label="Contest selection"
+                options={registrations}
+                match={(option, query) =>
+                  option.contest?.description
+                    .toLowerCase()
+                    .replace(/[^a-zA-Z0-9]/g, '')
+                    .includes(query.toLowerCase()) ?? false
+                }
+                getIdForOption={option => option.id}
+                format={option =>
+                  `${option.contest!.private ? '' : 'Official: '}${
+                    option.contest?.description ?? option.contestId
+                  } (${option.contest!.contestStart.toLocaleString(
+                    DateTime.DATE_MED,
+                  )} ~ ${option.contest!.contestEnd.toLocaleString(
+                    DateTime.DATE_MED,
+                  )})`
+                }
+              />
+            ) : null}
           </div>
           <div className="v-stack spaced">
             <AutocompleteInput

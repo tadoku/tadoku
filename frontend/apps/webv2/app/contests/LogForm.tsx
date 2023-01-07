@@ -95,6 +95,24 @@ const filterTags = (tags: Tag[], activity: Activity | undefined) => {
   return tags.filter(it => it.logActivityId === activity.id)
 }
 
+const filterActivities = (
+  activities: Activity[],
+  registrations: ContestRegistrationsView['registrations'],
+  trackingMode: LogFormSchema['trackingMode'],
+) => {
+  if (trackingMode === 'personal') {
+    return activities
+  }
+
+  const acts = []
+
+  const ids = new Set(
+    registrations.flatMap(it => it.contest?.allowedActivities.map(it => it.id)),
+  )
+
+  return activities.filter(it => ids.has(it.id))
+}
+
 const trackingModesForRegistrations = (registrationCount: number) => {
   const personalOnly = registrationCount === 0
 
@@ -143,7 +161,7 @@ export const LogForm = ({
     defaultValues,
   })
 
-  const trackingMode = methods.watch('trackingMode')
+  const trackingMode = methods.watch('trackingMode') ?? 'personal'
   const activity = methods.watch('activity')
   const language = methods.watch('language')
 
@@ -153,7 +171,11 @@ export const LogForm = ({
       : registrations.flatMap(it => it.languages)
   const tags = filterTags(options.tags, activity)
   const units = filterUnits(options.units, activity, language)
-  const activities = options.activities
+  const activities = filterActivities(
+    options.activities,
+    registrations,
+    trackingMode,
+  )
 
   const router = useRouter()
   // const createContestMutation = useCreateContest(id =>

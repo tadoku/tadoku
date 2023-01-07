@@ -1,8 +1,4 @@
 import { ContestView } from '@app/contests/api'
-import { CheckBadgeIcon } from '@heroicons/react/20/solid'
-import { ArrowRightIcon } from '@heroicons/react/24/outline'
-import Link from 'next/link'
-import { DateTime, Duration } from 'luxon'
 
 interface Props {
   contest: ContestView

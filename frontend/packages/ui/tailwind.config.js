@@ -24,6 +24,9 @@ module.exports = {
       minHeight: (theme) => ({
         ...theme('spacing'),
       }),
+      gridTemplateColumns: {
+        'fill-48': 'repeat(auto-fill, minmax(12rem, 1fr))',
+      },
     },
   },
   safelist: [

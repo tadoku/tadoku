@@ -446,12 +446,12 @@ export const RadioGroup = ({ name, label, options }: RadioProps) => {
       <HeadlessRadioGroup.Label className="label-text">
         {label}
       </HeadlessRadioGroup.Label>
-      <div className="v-stack space-y-2 lg:h-stack lg:justify-between lg:space-x-4 lg:space-y-0 col-span-2">
+      <div className="col-span-2 grid gap-2 grid-cols-fill-48 w-full">
         {options.map(opt => (
           <HeadlessRadioGroup.Option
             value={opt.value}
             key={opt.value.toString()}
-            className="flex-1 input-frame px-4 py-2 ui-checked:border-primary cursor-pointer"
+            className="input-frame px-4 py-2 ui-checked:border-primary cursor-pointer"
           >
             <div className="h-stack text-secondary items-center w-full">
               {opt.IconComponent ? (

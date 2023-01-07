@@ -431,6 +431,7 @@ interface RadioProps {
   name: string
   label: string
   hint?: string
+  defaultValue?: any
   options: {
     label: string
     description: string
@@ -439,12 +440,23 @@ interface RadioProps {
   }[]
 }
 
-export const RadioGroup = ({ name, label, hint, options }: RadioProps) => {
+export function RadioGroup({
+  name,
+  label,
+  hint,
+  defaultValue,
+  options,
+}: RadioProps) {
   const { control } = useFormContext()
   const {
     field: { value, onChange },
     formState: { errors },
-  } = useController({ name, control })
+  } = useController({
+    defaultValue: defaultValue ?? '',
+    name,
+    control,
+    rules: { required: true },
+  })
 
   const hasError = errors[name] !== undefined
   let errorMessage =

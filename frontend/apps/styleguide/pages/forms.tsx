@@ -523,6 +523,7 @@ const MiscForm = () => {
 }
 
 const LogPagesFormSchema = z.object({
+  trackingModeSelection: z.enum(['automatic', 'manual', 'personal']),
   languageCode: z.string(),
   activity: z.number(),
   amount: z.number().positive(),
@@ -586,6 +587,7 @@ const LogPagesForm = () => {
           ]}
           label="Where to track?"
           name="trackingModeSelection"
+          defaultValue="automatic"
         />
         <Select name="languageCode" label="Language" values={languages} />
         <Select

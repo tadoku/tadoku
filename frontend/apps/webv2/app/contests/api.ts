@@ -9,21 +9,21 @@ const { publicRuntimeConfig } = getConfig()
 
 const root = `${publicRuntimeConfig.apiEndpoint}/immersion/contests`
 
+const Language = z.object({
+  code: z.string(),
+  name: z.string(),
+})
+
+const Activity = z.object({
+  id: z.number(),
+  name: z.string(),
+  default: z.boolean().nullable(),
+})
+
 const ContestConfigurationOptions = z
   .object({
-    languages: z.array(
-      z.object({
-        code: z.string(),
-        name: z.string(),
-      }),
-    ),
-    activities: z.array(
-      z.object({
-        id: z.number(),
-        name: z.string(),
-        default: z.boolean(),
-      }),
-    ),
+    languages: z.array(Language),
+    activities: z.array(Activity),
     can_create_official_round: z.boolean(),
   })
   .transform(data => {
@@ -374,6 +374,44 @@ export const useContestLeaderboard = (
       }
 
       return Leaderboard.parse(await response.json())
+    },
+    options,
+  )
+
+const Unit = z.object({
+  id: z.number(),
+  activity_id: z.number(),
+  name: z.string(),
+  modifier: z.number(),
+  language_code: z.string().nullable(),
+})
+
+const Tag = z.object({
+  id: z.number(),
+  activity_id: z.number(),
+  name: z.string(),
+})
+
+const LogConfigurationOptions = z.object({
+  languages: z.array(Language),
+  activities: z.array(Activity),
+  units: z.array(Unit),
+  tags: z.array(Tag),
+})
+
+export type LogConfigurationOptions = z.infer<typeof LogConfigurationOptions>
+
+export const useLogConfigurationOptions = (options?: { enabled?: boolean }) =>
+  useQuery(
+    ['contest', 'log', 'configuration-options'],
+    async (): Promise<LogConfigurationOptions> => {
+      const response = await fetch(`${root}/log/configuration-options`)
+
+      if (response.status !== 200) {
+        throw new Error('could not fetch page')
+      }
+
+      return LogConfigurationOptions.parse(await response.json())
     },
     options,
   )

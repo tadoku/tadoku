@@ -96,7 +96,7 @@ export const ContestOverview = ({
         </div>
       ) : (
         <Link
-          href={routes.userProfile(contest.ownerUserId)}
+          href={routes.userProfile(contest.ownerUserId!)}
           className="font-bold"
         >
           {contest.ownerUserDisplayName}

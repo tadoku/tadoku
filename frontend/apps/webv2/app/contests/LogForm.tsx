@@ -25,6 +25,7 @@ import {
 } from '@heroicons/react/20/solid'
 import { RadioProps } from 'ui/components/Form'
 import { DateTime, Duration, Interval } from 'luxon'
+import { formatScore } from '@app/common/format'
 
 export const LogFormSchema = z.object({
   trackingMode: z.enum(['automatic', 'manual', 'personal']),
@@ -143,6 +144,14 @@ const trackingModesForRegistrations = (registrationCount: number) => {
   ] satisfies RadioProps['options']
 }
 
+const estimateScore = (amount: number | undefined, unit: Unit | undefined) => {
+  if (!amount || !unit) {
+    return 'N/A'
+  }
+
+  return formatScore(amount * unit.modifier)
+}
+
 export const LogForm = ({
   registrations: { registrations },
   options,
@@ -165,6 +174,8 @@ export const LogForm = ({
   const trackingMode = methods.watch('trackingMode') ?? 'personal'
   const activity = methods.watch('activity')
   const language = methods.watch('language')
+  const unit = methods.watch('unit')
+  const amount = methods.watch('amount')
 
   const languages =
     trackingMode === 'personal'
@@ -301,7 +312,7 @@ export const LogForm = ({
             </div>
           </div>
           <div className="-mx-4 -mb-4 mt-4 px-4 py-2 md:-mx-7 md:-mb-7 md:px-7 md:py-2 bg-slate-500/5 text-center lg:text-right font-mono">
-            Estimated score: <strong>0</strong>
+            Estimated score: <strong>{estimateScore(amount, unit)}</strong>
           </div>
         </div>
         <div className="h-stack spaced justify-end">

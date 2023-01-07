@@ -1,6 +1,16 @@
-import { Combobox, Transition } from '@headlessui/react'
+import {
+  Combobox,
+  Transition,
+  RadioGroup as HeadlessRadioGroup,
+} from '@headlessui/react'
 import { CheckIcon, ChevronUpDownIcon } from '@heroicons/react/20/solid'
-import React, { Fragment, HTMLProps, useState } from 'react'
+import React, {
+  ComponentType,
+  Fragment,
+  HTMLProps,
+  ReactNode,
+  useState,
+} from 'react'
 import {
   FieldPath,
   FieldValues,
@@ -414,5 +424,50 @@ export function AutocompleteMultiInput<T>(props: {
       {hint ? <span className="label-hint">{hint}</span> : undefined}
       <span className="error">{errorMessage}</span>
     </label>
+  )
+}
+
+interface RadioProps {
+  name: string
+  label: string
+  options: {
+    label: string
+    description: string
+    IconComponent?: ComponentType<any>
+    value: any
+  }[]
+}
+
+export const RadioGroup = ({ name, label, options }: RadioProps) => {
+  let [value, setValue] = useState(() => options[0].value)
+
+  return (
+    <HeadlessRadioGroup value={value} onChange={setValue} className="label">
+      <HeadlessRadioGroup.Label className="label-text">
+        {label}
+      </HeadlessRadioGroup.Label>
+      <div className="v-stack space-y-2 lg:h-stack lg:justify-between lg:space-x-4 lg:space-y-0 col-span-2">
+        {options.map(opt => (
+          <HeadlessRadioGroup.Option
+            value={opt.value}
+            key={opt.value.toString()}
+            className="flex-1 input-frame px-4 py-2 ui-checked:border-primary cursor-pointer"
+          >
+            <div className="h-stack text-secondary items-center w-full">
+              {opt.IconComponent ? (
+                <opt.IconComponent className="w-4 h-4 mr-2" />
+              ) : null}
+              <div className={`font-bold mr-4`}>{opt.label}</div>
+              <span className="flex items-center justify-center border border-black/10 rounded-xl w-4 h-4 ml-auto text-transparent ui-checked:bg-primary ui-checked:border-primary ui-checked:text-white">
+                <CheckIcon className="w-3 h-3" />
+              </span>
+            </div>
+            <div className={`mt-2 text-xs text-gray-600`}>
+              {opt.description}
+            </div>
+          </HeadlessRadioGroup.Option>
+        ))}
+      </div>
+    </HeadlessRadioGroup>
   )
 }

@@ -17,7 +17,7 @@ const Language = z.object({
 const Activity = z.object({
   id: z.number(),
   name: z.string(),
-  default: z.boolean().nullable(),
+  default: z.boolean().nullable().optional(),
 })
 
 const ContestConfigurationOptions = z
@@ -161,30 +161,18 @@ export const useContestList = (
 
 const ContestView = z
   .object({
-    id: z.string(),
+    id: z.string().nullable(),
     contest_start: z.string(),
     contest_end: z.string(),
     registration_end: z.string(),
     description: z.string(),
     private: z.boolean(),
     official: z.boolean(),
-    owner_user_id: z.string(),
-    owner_user_display_name: z.string(),
-    allowed_languages: z
-      .array(
-        z.object({
-          code: z.string(),
-          name: z.string(),
-        }),
-      )
-      .nullable(),
-    allowed_activities: z.array(
-      z.object({
-        id: z.number(),
-        name: z.string(),
-      }),
-    ),
-    deleted: z.boolean(),
+    owner_user_id: z.string().nullable().optional(),
+    owner_user_display_name: z.string().nullable().optional(),
+    allowed_languages: z.array(Language),
+    allowed_activities: z.array(Activity),
+    deleted: z.boolean().nullable().optional(),
   })
   .transform(contest => {
     const {
@@ -238,6 +226,7 @@ const ContestRegistrationView = z
         name: z.string(),
       }),
     ),
+    contest: ContestView.nullable(),
   })
   .transform(reg => {
     const {
@@ -412,6 +401,44 @@ export const useLogConfigurationOptions = (options?: { enabled?: boolean }) =>
       }
 
       return LogConfigurationOptions.parse(await response.json())
+    },
+    options,
+  )
+
+const ContestRegistrationsView = z
+  .object({
+    registrations: z.array(ContestRegistrationView),
+    next_page_token: z.string(),
+    total_size: z.number(),
+  })
+  .transform(regs => {
+    const {
+      next_page_token: nextPageToken,
+      total_size: totalSize,
+      ...rest
+    } = regs
+    return {
+      ...rest,
+      nextPageToken,
+      totalSize,
+    }
+  })
+
+export type ContestRegistrationsView = z.infer<typeof ContestRegistrationsView>
+
+export const useOngoingContestRegistrations = (options?: {
+  enabled?: boolean
+}) =>
+  useQuery(
+    ['contest', 'ongoing-contest-registrations'],
+    async (): Promise<ContestRegistrationsView> => {
+      const response = await fetch(`${root}/ongoing-registrations`)
+
+      if (response.status !== 200) {
+        throw new Error('could not fetch page')
+      }
+
+      return ContestRegistrationsView.parse(await response.json())
     },
     options,
   )

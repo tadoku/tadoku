@@ -12,12 +12,12 @@ import {
 } from '@app/contests/api'
 import { useRouter } from 'next/router'
 import { routes } from '@app/common/routes'
-import { DateTime } from 'luxon'
 import {
   estimateScore,
   filterActivities,
   filterTags,
   filterUnits,
+  formatContestLabel,
   LogFormSchema,
   trackingModesForRegistrations,
 } from '@app/contests/LogForm/domain'
@@ -104,15 +104,7 @@ export const LogForm = ({
                       .includes(query.toLowerCase()) ?? false
                   }
                   getIdForOption={option => option.id}
-                  format={option =>
-                    `${option.contest!.private ? '' : 'Official: '}${
-                      option.contest?.description ?? option.contestId
-                    } (${option.contest!.contestStart.toLocaleString(
-                      DateTime.DATE_MED,
-                    )} ~ ${option.contest!.contestEnd.toLocaleString(
-                      DateTime.DATE_MED,
-                    )})`
-                  }
+                  format={option => formatContestLabel(option.contest!)}
                 />
               ) : null}
             </div>

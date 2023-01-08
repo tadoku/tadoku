@@ -3,6 +3,7 @@ import {
   Activity,
   ContestRegistrationsView,
   ContestRegistrationView,
+  ContestView,
   Language,
   Tag,
   Unit,
@@ -13,6 +14,7 @@ import {
   UserIcon,
 } from '@heroicons/react/20/solid'
 import { RadioProps } from 'ui/components/Form'
+import { DateTime, Interval } from 'luxon'
 
 export const LogFormSchema = z.object({
   trackingMode: z.enum(['automatic', 'manual', 'personal']),
@@ -21,10 +23,21 @@ export const LogFormSchema = z.object({
   language: Language,
   activity: Activity,
   amount: z.number().positive(),
-  unit: Unit,
+  unit: z.object({
+    id: z.string(),
+    logActivityId: z.number(),
+    name: z.string(),
+    modifier: z.number(),
+    languageCode: z.string().nullable().optional(),
+  }),
   tags: z
-    .array(z.string())
-    .min(1, 'Must select at least one tag')
+    .array(
+      z.object({
+        id: z.string(),
+        logActivityId: z.number(),
+        name: z.string(),
+      }),
+    )
     .max(3, 'Must select three or fewer'),
   description: z.string().optional(),
 })
@@ -136,3 +149,57 @@ export const estimateScore = (
 
   return amount * unit.modifier
 }
+
+export const contestsForLog = ({
+  registrations,
+  manualContests,
+  trackingMode,
+  language,
+  activity,
+}: {
+  registrations: ContestRegistrationsView['registrations']
+  manualContests: ContestRegistrationsView['registrations']
+  trackingMode: LogFormSchema['trackingMode']
+  language: Language
+  activity: Activity
+}) => {
+  if (trackingMode === 'personal') {
+    return []
+  }
+
+  const eligibleContests = registrations
+    .filter(it => it.contest)
+    .filter(it => it.languages.includes(language))
+    .filter(it => it.contest!.allowedActivities.includes(activity))
+    .filter(it =>
+      Interval.fromDateTimes(
+        it.contest!.contestStart,
+        it.contest!.contestEnd,
+      ).contains(DateTime.now()),
+    )
+
+  const eligibleContestIds = new Set(eligibleContests.map(it => it.contestId))
+
+  if (trackingMode === 'manual') {
+    for (const registration of manualContests) {
+      if (!eligibleContestIds.has(registration.contestId)) {
+        throw Error(
+          `Contest "${formatContestLabel(
+            registration.contest!,
+          )}" is does not allow this log to be submitted`,
+        )
+      }
+    }
+
+    return manualContests
+  }
+
+  return eligibleContests
+}
+
+export const formatContestLabel = (contest: ContestView) =>
+  `${contest.private ? '' : 'Official: '}${
+    contest.description
+  } (${contest.contestStart.toLocaleString(
+    DateTime.DATE_MED,
+  )} ~ ${contest.contestEnd.toLocaleString(DateTime.DATE_MED)})`

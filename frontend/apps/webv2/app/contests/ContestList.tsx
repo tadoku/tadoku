@@ -54,12 +54,16 @@ export const ContestList = ({ list, options }: Props) => {
               </td>
               <td className="link">
                 <Link href={routes.contestLeaderboard(c.id)} className="reset">
-                  {c.contest_start.toLocaleString(DateTime.DATE_FULL)}
+                  {DateTime.fromISO(c.contest_start).toLocaleString(
+                    DateTime.DATE_FULL,
+                  )}
                 </Link>
               </td>
               <td className="link">
                 <Link href={routes.contestLeaderboard(c.id)} className="reset">
-                  {c.contest_end.toLocaleString(DateTime.DATE_FULL)}
+                  {DateTime.fromISO(c.contest_end).toLocaleString(
+                    DateTime.DATE_FULL,
+                  )}
                 </Link>
               </td>
               {options ? (

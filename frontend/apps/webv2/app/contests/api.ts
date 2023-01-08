@@ -78,28 +78,18 @@ export const useCreateContest = (onSuccess: (id: string) => void) =>
     },
   })
 
-const Contest = z
-  .object({
-    id: z.string(),
-    contest_start: z.string(),
-    contest_end: z.string(),
-    registration_end: z.string(),
-    description: z.string(),
-    private: z.boolean(),
-    official: z.boolean(),
-    language_code_allow_list: z.array(z.string()).nullable(),
-    activity_type_id_allow_list: z.array(z.number()),
-    deleted: z.boolean(),
-  })
-  .transform(contest => {
-    const { contest_start, contest_end, registration_end, ...rest } = contest
-    return {
-      ...rest,
-      contest_start: DateTime.fromISO(contest_start),
-      contest_end: DateTime.fromISO(contest_end),
-      registration_end: DateTime.fromISO(registration_end),
-    }
-  })
+const Contest = z.object({
+  id: z.string(),
+  contest_start: z.string(),
+  contest_end: z.string(),
+  registration_end: z.string(),
+  description: z.string(),
+  private: z.boolean(),
+  official: z.boolean(),
+  language_code_allow_list: z.array(z.string()).nullable(),
+  activity_type_id_allow_list: z.array(z.number()),
+  deleted: z.boolean(),
+})
 
 export type Contest = z.infer<typeof Contest>
 
@@ -142,30 +132,20 @@ export const useContestList = (
     options,
   )
 
-const ContestView = z
-  .object({
-    id: z.string().nullable(),
-    contest_start: z.string(),
-    contest_end: z.string(),
-    registration_end: z.string(),
-    description: z.string(),
-    private: z.boolean(),
-    official: z.boolean(),
-    owner_user_id: z.string().nullable().optional(),
-    owner_user_display_name: z.string().nullable().optional(),
-    allowed_languages: z.array(Language),
-    allowed_activities: z.array(Activity),
-    deleted: z.boolean().nullable().optional(),
-  })
-  .transform(contest => {
-    const { contest_start, contest_end, registration_end, ...rest } = contest
-    return {
-      ...rest,
-      contest_start: DateTime.fromISO(contest_start),
-      contest_end: DateTime.fromISO(contest_end),
-      registration_end: DateTime.fromISO(registration_end),
-    }
-  })
+const ContestView = z.object({
+  id: z.string().nullable(),
+  contest_start: z.string(),
+  contest_end: z.string(),
+  registration_end: z.string(),
+  description: z.string(),
+  private: z.boolean(),
+  official: z.boolean(),
+  owner_user_id: z.string().nullable().optional(),
+  owner_user_display_name: z.string().nullable().optional(),
+  allowed_languages: z.array(Language),
+  allowed_activities: z.array(Activity),
+  deleted: z.boolean().nullable().optional(),
+})
 
 export type ContestView = z.infer<typeof ContestView>
 

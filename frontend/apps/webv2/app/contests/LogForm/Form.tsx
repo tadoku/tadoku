@@ -18,6 +18,7 @@ import {
   filterTags,
   filterUnits,
   formatContestLabel,
+  LogAPISchema,
   LogFormSchema,
   trackingModesForRegistrations,
 } from '@app/contests/LogForm/domain'
@@ -76,8 +77,7 @@ export const LogForm = ({
   // const [createContest] = useDebounce(createContestMutation.mutate, 2500)
 
   const onSubmit = (data: any) => {
-    console.log(data)
-    // createContest(data)
+    console.log(LogAPISchema.parse(data), 'test')
   }
 
   return (

@@ -4,7 +4,7 @@ import { useSession } from '@app/common/session'
 import { useContest, useContestRegistration } from '@app/contests/api'
 import { ContestRegistrationForm } from '@app/contests/ContestRegistration'
 import { ExclamationCircleIcon, HomeIcon } from '@heroicons/react/20/solid'
-import { Interval } from 'luxon'
+import { DateTime, Interval } from 'luxon'
 import { useRouter } from 'next/router'
 import { Breadcrumb, Flash } from 'ui'
 
@@ -37,8 +37,8 @@ const Page = () => {
   }
 
   const registrationClosed = Interval.fromDateTimes(
-    contest.data.contest_start,
-    contest.data.registration_end,
+    DateTime.fromISO(contest.data.contest_start),
+    DateTime.fromISO(contest.data.registration_end),
   ).isBefore(now)
 
   return (

@@ -7,7 +7,6 @@ import {
   ContestView,
   useContestConfigurationOptions,
   useContestRegistrationUpdate,
-  useCreateContest,
 } from '@app/contests/api'
 import { useRouter } from 'next/router'
 import { useDebounce } from 'use-debounce'

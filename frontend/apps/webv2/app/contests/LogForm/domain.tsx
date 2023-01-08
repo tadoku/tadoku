@@ -30,7 +30,7 @@ export const LogFormSchema = z
     tags: z.array(Tag).max(3, 'Must select three or fewer'),
     description: z.string().optional(),
   })
-  .refine(log => log.unit.log_activity_id != log.activity.id, {
+  .refine(log => log.unit.log_activity_id === log.activity.id, {
     path: ['unit'],
     message: 'This unit is cannot be used for this activity',
   })
@@ -53,7 +53,7 @@ export const LogFormSchema = z
   })
   .refine(log => log.registration_ids !== undefined, {
     path: ['selected_registrations'],
-    message: 'This unit is cannot be used for this activity',
+    message: 'This log cannot be submitted to one of these contests',
   })
 
 export const LogAPISchema = LogFormSchema.transform(log => ({
@@ -197,8 +197,8 @@ export function contestsForLog({
     .filter(it => it.contest!.allowed_activities.includes(activity))
     .filter(it =>
       Interval.fromDateTimes(
-        it.contest!.contest_start,
-        it.contest!.contest_end,
+        DateTime.fromISO(it.contest!.contest_start),
+        DateTime.fromISO(it.contest!.contest_end),
       ).contains(DateTime.now()),
     )
 
@@ -224,6 +224,8 @@ export function contestsForLog({
 export const formatContestLabel = (contest: ContestView) =>
   `${contest.private ? '' : 'Official: '}${
     contest.description
-  } (${contest.contest_start.toLocaleString(
+  } (${DateTime.fromISO(contest.contest_start).toLocaleString(
     DateTime.DATE_MED,
-  )} ~ ${contest.contest_end.toLocaleString(DateTime.DATE_MED)})`
+  )} ~ ${DateTime.fromISO(contest.contest_end).toLocaleString(
+    DateTime.DATE_MED,
+  )})`

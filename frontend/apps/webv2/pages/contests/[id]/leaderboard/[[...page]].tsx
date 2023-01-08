@@ -8,7 +8,7 @@ import {
 import Link from 'next/link'
 import { useRouter } from 'next/router'
 import { Breadcrumb, ButtonGroup, Flash, Pagination, Tabbar } from 'ui'
-import { Interval } from 'luxon'
+import { DateTime, Interval } from 'luxon'
 import { useEffect, useState } from 'react'
 import { ContestOverview } from '@app/contests/ContestOverview'
 import {
@@ -62,15 +62,15 @@ const Page = () => {
   }
 
   const contestInterval = Interval.fromDateTimes(
-    contest.data.contest_start,
-    contest.data.contest_end,
+    DateTime.fromISO(contest.data.contest_start),
+    DateTime.fromISO(contest.data.contest_end),
   )
   const hasEnded = contestInterval.isBefore(now)
   const hasStarted = contestInterval.contains(now) || hasEnded
   const isOngoing = hasStarted && !hasEnded
   const registrationClosed = Interval.fromDateTimes(
-    contest.data.contest_start,
-    contest.data.registration_end,
+    DateTime.fromISO(contest.data.contest_start),
+    DateTime.fromISO(contest.data.registration_end),
   ).isBefore(now)
 
   const showPagination =

@@ -27,14 +27,18 @@ export const ContestOverview = ({
           {hasStarted ? 'Started' : 'Starting'}
         </div>
         <div className="font-bold">
-          {contest.contest_start.toLocaleString(DateTime.DATE_MED)}
+          {DateTime.fromISO(contest.contest_start).toLocaleString(
+            DateTime.DATE_MED,
+          )}
         </div>
       </div>
       <ArrowRightIcon className="w-7 h-7 text-slate-500/30" />
       <div>
         <div className="subtitle text-sm">{hasEnded ? 'Ended' : 'Ending'}</div>
         <div className="font-bold">
-          {contest.contest_end.toLocaleString(DateTime.DATE_MED)}
+          {DateTime.fromISO(contest.contest_end).toLocaleString(
+            DateTime.DATE_MED,
+          )}
         </div>
       </div>
     </div>
@@ -43,7 +47,7 @@ export const ContestOverview = ({
         <div>
           Starting in{' '}
           <strong>
-            {contest.contest_start
+            {DateTime.fromISO(contest.contest_start)
               .diffNow(['days', 'hours', 'minute'])
               .toHuman({
                 maximumFractionDigits: 0,
@@ -60,7 +64,7 @@ export const ContestOverview = ({
           <div>
             Ending in{' '}
             <strong>
-              {contest.contest_end
+              {DateTime.fromISO(contest.contest_end)
                 .plus(Duration.fromObject({ days: 1 }))
                 .diffNow(['days', 'hours', 'minute'])
                 .toHuman({
@@ -76,7 +80,9 @@ export const ContestOverview = ({
             <div>
               Registrations open until{' '}
               <strong>
-                {contest.registration_end.toLocaleString(DateTime.DATE_MED)}
+                {DateTime.fromISO(contest.registration_end).toLocaleString(
+                  DateTime.DATE_MED,
+                )}
               </strong>
             </div>
           )}

@@ -40,6 +40,8 @@ export const LogForm = ({
     unit: options.units.filter(
       it => it.log_activity_id === options.activities[0].id,
     )[0],
+    registrations,
+    selected_registrations: registrations,
   }
 
   const methods = useForm({

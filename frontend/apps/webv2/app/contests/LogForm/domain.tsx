@@ -16,17 +16,55 @@ import {
 import { RadioProps } from 'ui/components/Form'
 import { DateTime, Interval } from 'luxon'
 
-export const LogFormSchema = z.object({
-  tracking_mode: z.enum(['automatic', 'manual', 'personal']),
-  registrations: z.array(ContestRegistrationView),
-  selected_registrations: z.array(ContestRegistrationView),
-  language: Language,
-  activity: Activity,
-  amount: z.number().positive(),
-  unit: Unit,
-  tags: z.array(Tag).max(3, 'Must select three or fewer'),
-  description: z.string().optional(),
-})
+type TrackingMode = 'automatic' | 'manual' | 'personal'
+
+export const LogFormSchema = z
+  .object({
+    tracking_mode: z.enum(['automatic', 'manual', 'personal']),
+    registrations: z.array(ContestRegistrationView),
+    selected_registrations: z.array(ContestRegistrationView),
+    language: Language,
+    activity: Activity,
+    amount: z.number().positive(),
+    unit: Unit,
+    tags: z.array(Tag).max(3, 'Must select three or fewer'),
+    description: z.string().optional(),
+  })
+  .refine(log => log.unit.log_activity_id != log.activity.id, {
+    path: ['unit'],
+    message: 'This unit is cannot be used for this activity',
+  })
+  .transform(log => {
+    const newLog = {
+      registration_ids: undefined as string[] | undefined,
+      ...log,
+    }
+    try {
+      newLog.registration_ids = contestsForLog({
+        registrations: log.registrations,
+        manualContests: log.selected_registrations,
+        activity: log.activity,
+        language: log.language,
+        trackingMode: log.tracking_mode,
+      }).map(it => it.id)
+    } catch (err) {}
+
+    return newLog
+  })
+  .refine(log => log.registration_ids !== undefined, {
+    path: ['selected_registrations'],
+    message: 'This unit is cannot be used for this activity',
+  })
+
+export const LogAPISchema = LogFormSchema.transform(log => ({
+  registration_ids: log.registration_ids,
+  language_code: log.language.code,
+  activity_id: log.activity.id,
+  amount: log.amount,
+  unit_id: log.unit.id,
+  tags: log.tags.map(it => it.name),
+  description: log.description,
+}))
 
 export type LogFormSchema = z.infer<typeof LogFormSchema>
 
@@ -81,13 +119,11 @@ export const filterTags = (tags: Tag[], activity: Activity | undefined) => {
 export const filterActivities = (
   activities: Activity[],
   registrations: ContestRegistrationsView['registrations'],
-  trackingMode: LogFormSchema['tracking_mode'],
+  trackingMode: TrackingMode,
 ) => {
   if (trackingMode === 'personal') {
     return activities
   }
-
-  const acts = []
 
   const ids = new Set(
     registrations.flatMap(it =>
@@ -138,7 +174,7 @@ export const estimateScore = (
   return amount * unit.modifier
 }
 
-export const contestsForLog = ({
+export function contestsForLog({
   registrations,
   manualContests,
   trackingMode,
@@ -147,10 +183,10 @@ export const contestsForLog = ({
 }: {
   registrations: ContestRegistrationsView['registrations']
   manualContests: ContestRegistrationsView['registrations']
-  trackingMode: LogFormSchema['tracking_mode']
+  trackingMode: TrackingMode
   language: Language
   activity: Activity
-}) => {
+}): ContestRegistrationsView['registrations'] {
   if (trackingMode === 'personal') {
     return []
   }

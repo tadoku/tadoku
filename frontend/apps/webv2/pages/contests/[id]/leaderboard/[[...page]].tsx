@@ -62,19 +62,19 @@ const Page = () => {
   }
 
   const contestInterval = Interval.fromDateTimes(
-    contest.data.contestStart,
-    contest.data.contestEnd,
+    contest.data.contest_start,
+    contest.data.contest_end,
   )
   const hasEnded = contestInterval.isBefore(now)
   const hasStarted = contestInterval.contains(now) || hasEnded
   const isOngoing = hasStarted && !hasEnded
   const registrationClosed = Interval.fromDateTimes(
-    contest.data.contestStart,
-    contest.data.registrationEnd,
+    contest.data.contest_start,
+    contest.data.registration_end,
   ).isBefore(now)
 
   const showPagination =
-    leaderboard.data && leaderboard.data.totalSize > filters.pageSize
+    leaderboard.data && leaderboard.data.total_size > filters.pageSize
 
   return (
     <>
@@ -170,7 +170,7 @@ const Page = () => {
               <Pagination
                 currentPage={filters.page}
                 totalPages={Math.ceil(
-                  leaderboard.data.totalSize / filters.pageSize,
+                  leaderboard.data.total_size / filters.pageSize,
                 )}
                 getHref={page => routes.contestLeaderboard(id, page)}
               />

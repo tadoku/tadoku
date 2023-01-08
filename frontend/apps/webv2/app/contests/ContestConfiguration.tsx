@@ -11,12 +11,12 @@ export const ContestConfiguration = ({ contest }: Props) => (
       <div className="flex mb-2">
         <span className="w-1/2">Languages</span>
         <div>
-          {!contest.allowedLanguages ||
-          contest.allowedLanguages.length === 0 ? (
+          {!contest.allowed_languages ||
+          contest.allowed_languages.length === 0 ? (
             <strong>No restrictions</strong>
           ) : (
             <ul>
-              {contest.allowedLanguages.map(it => (
+              {contest.allowed_languages.map(it => (
                 <li key={it.code}>
                   <strong>{it.name}</strong>
                 </li>
@@ -29,7 +29,7 @@ export const ContestConfiguration = ({ contest }: Props) => (
         <span className="w-1/2">Activities</span>
         <div>
           <ul>
-            {contest.allowedActivities.map(it => (
+            {contest.allowed_activities.map(it => (
               <li className="font-bold" key={it.id}>
                 {it.name}
               </li>

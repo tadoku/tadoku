@@ -34,11 +34,11 @@ export const LogForm = ({
 }: Props) => {
   const defaultValues: Partial<LogFormSchema> = {
     activity: options.activities[0],
-    trackingMode: registrations.length > 0 ? 'automatic' : 'personal',
+    tracking_mode: registrations.length > 0 ? 'automatic' : 'personal',
     language:
       registrations.length > 0 ? registrations[0].languages[0] : undefined,
     unit: options.units.filter(
-      it => it.logActivityId === options.activities[0].id,
+      it => it.log_activity_id === options.activities[0].id,
     )[0],
   }
 
@@ -47,7 +47,7 @@ export const LogForm = ({
     defaultValues,
   })
 
-  const trackingMode = methods.watch('trackingMode') ?? 'personal'
+  const trackingMode = methods.watch('tracking_mode') ?? 'personal'
   const activity = methods.watch('activity')
   const language = methods.watch('language')
   const unit = methods.watch('unit')
@@ -90,11 +90,11 @@ export const LogForm = ({
               <RadioGroup
                 options={trackingModesForRegistrations(registrations.length)}
                 label="Contests"
-                name="trackingMode"
+                name="tracking_mode"
               />
               {trackingMode === 'manual' ? (
                 <AutocompleteMultiInput
-                  name="selectedRegistrations"
+                  name="selected_registrations"
                   label="Contest selection"
                   options={registrations}
                   match={(option, query) =>

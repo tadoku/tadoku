@@ -95,11 +95,13 @@ const Contests: NextPage<Props> = () => {
         {list.isSuccess ? (
           <>
             <ContestList list={list.data} options={options.data} />
-            {list.data.totalSize / filters.pageSize > 1 ? (
+            {list.data.total_size / filters.pageSize > 1 ? (
               <div className="mt-8">
                 <Pagination
                   currentPage={filters.page}
-                  totalPages={Math.ceil(list.data.totalSize / filters.pageSize)}
+                  totalPages={Math.ceil(
+                    list.data.total_size / filters.pageSize,
+                  )}
                   getHref={page => routes.contestListMyContests(page)}
                 />
               </div>

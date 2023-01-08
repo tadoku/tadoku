@@ -27,14 +27,14 @@ export const ContestOverview = ({
           {hasStarted ? 'Started' : 'Starting'}
         </div>
         <div className="font-bold">
-          {contest.contestStart.toLocaleString(DateTime.DATE_MED)}
+          {contest.contest_start.toLocaleString(DateTime.DATE_MED)}
         </div>
       </div>
       <ArrowRightIcon className="w-7 h-7 text-slate-500/30" />
       <div>
         <div className="subtitle text-sm">{hasEnded ? 'Ended' : 'Ending'}</div>
         <div className="font-bold">
-          {contest.contestEnd.toLocaleString(DateTime.DATE_MED)}
+          {contest.contest_end.toLocaleString(DateTime.DATE_MED)}
         </div>
       </div>
     </div>
@@ -43,10 +43,12 @@ export const ContestOverview = ({
         <div>
           Starting in{' '}
           <strong>
-            {contest.contestStart.diffNow(['days', 'hours', 'minute']).toHuman({
-              maximumFractionDigits: 0,
-              unitDisplay: 'short',
-            })}
+            {contest.contest_start
+              .diffNow(['days', 'hours', 'minute'])
+              .toHuman({
+                maximumFractionDigits: 0,
+                unitDisplay: 'short',
+              })}
           </strong>
         </div>
       ) : hasEnded ? (
@@ -58,7 +60,7 @@ export const ContestOverview = ({
           <div>
             Ending in{' '}
             <strong>
-              {contest.contestEnd
+              {contest.contest_end
                 .plus(Duration.fromObject({ days: 1 }))
                 .diffNow(['days', 'hours', 'minute'])
                 .toHuman({
@@ -74,7 +76,7 @@ export const ContestOverview = ({
             <div>
               Registrations open until{' '}
               <strong>
-                {contest.registrationEnd.toLocaleString(DateTime.DATE_MED)}
+                {contest.registration_end.toLocaleString(DateTime.DATE_MED)}
               </strong>
             </div>
           )}
@@ -96,10 +98,10 @@ export const ContestOverview = ({
         </div>
       ) : (
         <Link
-          href={routes.userProfile(contest.ownerUserId!)}
+          href={routes.userProfile(contest.owner_user_id!)}
           className="font-bold"
         >
-          {contest.ownerUserDisplayName}
+          {contest.owner_user_display_name}
         </Link>
       )}
     </div>

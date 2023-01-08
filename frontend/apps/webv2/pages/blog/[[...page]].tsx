@@ -36,7 +36,7 @@ const BlogIndex = () => {
     )
   }
 
-  const totalPages = Math.ceil(list.data.totalSize / pageSize)
+  const totalPages = Math.ceil(list.data.total_size / pageSize)
 
   return (
     <>

@@ -10,21 +10,21 @@ import { routes } from '@app/common/routes'
 
 export const ContestFormSchema = z
   .object({
-    contestStart: z.string().regex(date),
-    contestEnd: z.string().regex(date),
-    registrationEnd: z.string().regex(date),
+    contest_start: z.string().regex(date),
+    contest_end: z.string().regex(date),
+    registration_end: z.string().regex(date),
     description: z
       .string()
       .min(3, 'Contest name should be at least 3 characters'),
     private: z.boolean(),
     official: z.boolean().optional().default(false),
-    languageCodeAllowList: z.array(
+    language_code_allow_list: z.array(
       z.object({
         code: z.string(),
         name: z.string(),
       }),
     ),
-    activityTypeIdAllowList: z
+    activity_type_id_allow_list: z
       .array(
         z.object({
           id: z.number(),
@@ -34,31 +34,13 @@ export const ContestFormSchema = z
       .min(1, 'Need to select at least one activity'),
   })
   .refine(
-    ({ official, languageCodeAllowList: list }) =>
+    ({ official, language_code_allow_list: list }) =>
       !(official && list.length > 0),
     {
-      path: ['languageCodeAllowList'],
+      path: ['language_code_allow_list'],
       message: 'Official contests cannot limit language selection',
     },
   )
-  .transform(contest => {
-    const {
-      contestStart: contest_start,
-      contestEnd: contest_end,
-      registrationEnd: registration_end,
-      ...rest
-    } = contest
-    return {
-      ...rest,
-      contest_start,
-      contest_end,
-      registration_end,
-      language_code_allow_list: contest.languageCodeAllowList.map(l => l.code),
-      activity_type_id_allow_list: contest.activityTypeIdAllowList.map(
-        a => a.id,
-      ),
-    }
-  })
 
 export type ContestFormSchema = z.infer<typeof ContestFormSchema>
 
@@ -67,10 +49,14 @@ interface Props {
 }
 
 export const ContestForm = ({
-  configurationOptions: { languages, activities, canCreateOfficialRound },
+  configurationOptions: {
+    languages,
+    activities,
+    can_create_official_round: canCreateOfficialRound,
+  },
 }: Props) => {
   const defaultValues: Partial<ContestFormSchema> = {
-    activityTypeIdAllowList: activities.filter(a => a.default),
+    activity_type_id_allow_list: activities.filter(a => a.default),
   }
 
   const methods = useForm({
@@ -105,14 +91,14 @@ export const ContestForm = ({
             <h2 className="subtitle">Schedule</h2>
             <div className="v-stack md:h-stack fill spaced">
               <div>
-                <Input name="contestStart" label="Start date" type="date" />
+                <Input name="contest_start" label="Start date" type="date" />
               </div>
               <div>
-                <Input name="contestEnd" label="End date" type="date" />
+                <Input name="contest_end" label="End date" type="date" />
               </div>
             </div>
             <Input
-              name="registrationEnd"
+              name="registration_end"
               label="Sign up deadline"
               type="date"
             />
@@ -121,7 +107,7 @@ export const ContestForm = ({
         <div className="card v-stack spaced">
           <h2 className="subtitle">Configuration</h2>
           <AutocompleteMultiInput
-            name="languageCodeAllowList"
+            name="language_code_allow_list"
             label="Allowed languages"
             hint="Leave empty to accept all languages"
             options={languages}
@@ -135,7 +121,7 @@ export const ContestForm = ({
             format={option => option.name}
           />
           <AutocompleteMultiInput
-            name="activityTypeIdAllowList"
+            name="activity_type_id_allow_list"
             label="Allowed activities"
             options={activities}
             match={(option, query) =>

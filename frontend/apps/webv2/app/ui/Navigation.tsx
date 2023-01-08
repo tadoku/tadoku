@@ -9,10 +9,7 @@ import {
 } from '@heroicons/react/20/solid'
 import { useLogoutHandler, useSession } from '@app/common/session'
 import { useCurrentLocation } from '@app/common/hooks'
-import getConfig from 'next/config'
 import { routes } from '@app/common/routes'
-
-const { publicRuntimeConfig } = getConfig()
 
 export default function Navigation() {
   const [session] = useSession()

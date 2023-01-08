@@ -1,6 +1,6 @@
 import { z } from 'zod'
 import getConfig from 'next/config'
-import { QueryFunctionContext, useQuery } from 'react-query'
+import { useQuery } from 'react-query'
 
 const { publicRuntimeConfig } = getConfig()
 
@@ -27,21 +27,13 @@ export const usePage = (slug: string) =>
     return Page.parse(await response.json())
   })
 
-const Post = z
-  .object({
-    id: z.string(),
-    slug: z.string(),
-    title: z.string(),
-    content: z.string(),
-    published_at: z.string().datetime({ offset: true }),
-  })
-  .transform(post => {
-    const { published_at: publishedAt, ...rest } = post
-    return {
-      ...rest,
-      publishedAt,
-    }
-  })
+const Post = z.object({
+  id: z.string(),
+  slug: z.string(),
+  title: z.string(),
+  content: z.string(),
+  published_at: z.string().datetime({ offset: true }),
+})
 
 export type Post = z.infer<typeof Post>
 
@@ -57,24 +49,11 @@ export const usePost = (slug: string) =>
     return Post.parse(await response.json())
   })
 
-const PostList = z
-  .object({
-    posts: z.array(Post),
-    next_page_token: z.string(),
-    total_size: z.number(),
-  })
-  .transform(post => {
-    const {
-      next_page_token: nextPageToken,
-      total_size: totalSize,
-      ...rest
-    } = post
-    return {
-      ...rest,
-      nextPageToken,
-      totalSize,
-    }
-  })
+const PostList = z.object({
+  posts: z.array(Post),
+  next_page_token: z.string(),
+  total_size: z.number(),
+})
 
 export type PostList = z.infer<typeof PostList>
 

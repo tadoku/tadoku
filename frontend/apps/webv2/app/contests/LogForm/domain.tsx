@@ -17,28 +17,14 @@ import { RadioProps } from 'ui/components/Form'
 import { DateTime, Interval } from 'luxon'
 
 export const LogFormSchema = z.object({
-  trackingMode: z.enum(['automatic', 'manual', 'personal']),
+  tracking_mode: z.enum(['automatic', 'manual', 'personal']),
   registrations: z.array(ContestRegistrationView),
-  selectedRegistrations: z.array(ContestRegistrationView),
+  selected_registrations: z.array(ContestRegistrationView),
   language: Language,
   activity: Activity,
   amount: z.number().positive(),
-  unit: z.object({
-    id: z.string(),
-    logActivityId: z.number(),
-    name: z.string(),
-    modifier: z.number(),
-    languageCode: z.string().nullable().optional(),
-  }),
-  tags: z
-    .array(
-      z.object({
-        id: z.string(),
-        logActivityId: z.number(),
-        name: z.string(),
-      }),
-    )
-    .max(3, 'Must select three or fewer'),
+  unit: Unit,
+  tags: z.array(Tag).max(3, 'Must select three or fewer'),
   description: z.string().optional(),
 })
 
@@ -54,7 +40,7 @@ export const filterUnits = (
   }
 
   const base = units.filter(it => {
-    return it.logActivityId == activity.id
+    return it.log_activity_id == activity.id
   })
 
   const grouped = base.reduce((acc, unit) => {
@@ -70,9 +56,9 @@ export const filterUnits = (
   const filteredUnits = []
   for (const units of grouped.values()) {
     const unitForCurrentLanguage = units.find(
-      it => it.languageCode === language?.code,
+      it => it.language_code === language?.code,
     )
-    const fallback = units.find(it => it.languageCode === undefined)
+    const fallback = units.find(it => it.language_code === undefined)
 
     if (units.length > 1 && unitForCurrentLanguage) {
       filteredUnits.push(unitForCurrentLanguage)
@@ -89,13 +75,13 @@ export const filterTags = (tags: Tag[], activity: Activity | undefined) => {
     return []
   }
 
-  return tags.filter(it => it.logActivityId === activity.id)
+  return tags.filter(it => it.log_activity_id === activity.id)
 }
 
 export const filterActivities = (
   activities: Activity[],
   registrations: ContestRegistrationsView['registrations'],
-  trackingMode: LogFormSchema['trackingMode'],
+  trackingMode: LogFormSchema['tracking_mode'],
 ) => {
   if (trackingMode === 'personal') {
     return activities
@@ -104,7 +90,9 @@ export const filterActivities = (
   const acts = []
 
   const ids = new Set(
-    registrations.flatMap(it => it.contest?.allowedActivities.map(it => it.id)),
+    registrations.flatMap(it =>
+      it.contest?.allowed_activities.map(it => it.id),
+    ),
   )
 
   return activities.filter(it => ids.has(it.id))
@@ -159,7 +147,7 @@ export const contestsForLog = ({
 }: {
   registrations: ContestRegistrationsView['registrations']
   manualContests: ContestRegistrationsView['registrations']
-  trackingMode: LogFormSchema['trackingMode']
+  trackingMode: LogFormSchema['tracking_mode']
   language: Language
   activity: Activity
 }) => {
@@ -170,19 +158,19 @@ export const contestsForLog = ({
   const eligibleContests = registrations
     .filter(it => it.contest)
     .filter(it => it.languages.includes(language))
-    .filter(it => it.contest!.allowedActivities.includes(activity))
+    .filter(it => it.contest!.allowed_activities.includes(activity))
     .filter(it =>
       Interval.fromDateTimes(
-        it.contest!.contestStart,
-        it.contest!.contestEnd,
+        it.contest!.contest_start,
+        it.contest!.contest_end,
       ).contains(DateTime.now()),
     )
 
-  const eligibleContestIds = new Set(eligibleContests.map(it => it.contestId))
+  const eligibleContestIds = new Set(eligibleContests.map(it => it.contest_id))
 
   if (trackingMode === 'manual') {
     for (const registration of manualContests) {
-      if (!eligibleContestIds.has(registration.contestId)) {
+      if (!eligibleContestIds.has(registration.contest_id)) {
         throw Error(
           `Contest "${formatContestLabel(
             registration.contest!,
@@ -200,6 +188,6 @@ export const contestsForLog = ({
 export const formatContestLabel = (contest: ContestView) =>
   `${contest.private ? '' : 'Official: '}${
     contest.description
-  } (${contest.contestStart.toLocaleString(
+  } (${contest.contest_start.toLocaleString(
     DateTime.DATE_MED,
-  )} ~ ${contest.contestEnd.toLocaleString(DateTime.DATE_MED)})`
+  )} ~ ${contest.contest_end.toLocaleString(DateTime.DATE_MED)})`

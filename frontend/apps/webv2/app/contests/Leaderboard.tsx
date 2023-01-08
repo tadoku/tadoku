@@ -40,23 +40,23 @@ export const Leaderboard = ({ contestId, leaderboard }: Props) => {
               <tr key={it.rank} className="link">
                 <td className="link w-10">
                   <Link
-                    href={routes.contestUserProfile(contestId, it.userId)}
+                    href={routes.contestUserProfile(contestId, it.user_id)}
                     className="reset justify-center text-lg"
                   >
-                    {it.isTie ? `T${it.rank}` : it.rank}
+                    {it.is_tie ? `T${it.rank}` : it.rank}
                   </Link>
                 </td>
                 <td className="link">
                   <Link
-                    href={routes.contestUserProfile(contestId, it.userId)}
+                    href={routes.contestUserProfile(contestId, it.user_id)}
                     className="reset text-lg"
                   >
-                    {it.userDisplayName}
+                    {it.user_display_name}
                   </Link>
                 </td>
                 <td className="link">
                   <Link
-                    href={routes.contestUserProfile(contestId, it.userId)}
+                    href={routes.contestUserProfile(contestId, it.user_id)}
                     className="reset justify-end text-lg"
                   >
                     {formatScore(it.score)}

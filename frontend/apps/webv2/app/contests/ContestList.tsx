@@ -54,12 +54,12 @@ export const ContestList = ({ list, options }: Props) => {
               </td>
               <td className="link">
                 <Link href={routes.contestLeaderboard(c.id)} className="reset">
-                  {c.contestStart.toLocaleString(DateTime.DATE_FULL)}
+                  {c.contest_start.toLocaleString(DateTime.DATE_FULL)}
                 </Link>
               </td>
               <td className="link">
                 <Link href={routes.contestLeaderboard(c.id)} className="reset">
-                  {c.contestEnd.toLocaleString(DateTime.DATE_FULL)}
+                  {c.contest_end.toLocaleString(DateTime.DATE_FULL)}
                 </Link>
               </td>
               {options ? (
@@ -69,7 +69,7 @@ export const ContestList = ({ list, options }: Props) => {
                       href={routes.contestLeaderboard(c.id)}
                       className="reset"
                     >
-                      {c.languageCodeAllowList
+                      {c.language_code_allow_list
                         ?.map(l => languages.get(l))
                         .join(', ') ?? 'No restrictions'}
                     </Link>
@@ -79,7 +79,7 @@ export const ContestList = ({ list, options }: Props) => {
                       href={routes.contestLeaderboard(c.id)}
                       className="reset"
                     >
-                      {c.activityTypeIdAllowList
+                      {c.activity_type_id_allow_list
                         .map(it => activities.get(it))
                         .join(', ')}
                     </Link>

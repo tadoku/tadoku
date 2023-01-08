@@ -37,8 +37,8 @@ const Page = () => {
   }
 
   const registrationClosed = Interval.fromDateTimes(
-    contest.data.contestStart,
-    contest.data.registrationEnd,
+    contest.data.contest_start,
+    contest.data.registration_end,
   ).isBefore(now)
 
   return (

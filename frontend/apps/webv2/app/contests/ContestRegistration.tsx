@@ -16,8 +16,8 @@ import { ExclamationCircleIcon } from '@heroicons/react/20/solid'
 
 export const ContestRegistrationFormSchema = z
   .object({
-    contestId: z.string(),
-    newLanguages: z
+    contest_id: z.string(),
+    new_languages: z
       .array(
         z.object({
           code: z.string(),
@@ -43,7 +43,7 @@ export const ContestRegistrationFormSchema = z
 
       // Check if new languages include all the old ones, fail if missing
       const previousLangs = registration.languages.map(it => it.code)
-      const newLangs = new Set(registration.newLanguages.map(it => it.code))
+      const newLangs = new Set(registration.new_languages.map(it => it.code))
 
       for (const lang of previousLangs) {
         if (!newLangs.has(lang)) {
@@ -54,7 +54,7 @@ export const ContestRegistrationFormSchema = z
       return true
     },
     {
-      path: ['newLanguages'],
+      path: ['new_languages'],
       message: "Cannot remove languages you've registered previously.",
     },
   )
@@ -69,7 +69,7 @@ interface Props {
 }
 
 export const ContestRegistrationForm = ({ contest, data }: Props) => {
-  const allLanguages = contest.allowedLanguages === null
+  const allLanguages = contest.allowed_languages === null
   const options = useContestConfigurationOptions({ enabled: allLanguages })
 
   const defaultValues = {
@@ -86,13 +86,13 @@ export const ContestRegistrationForm = ({ contest, data }: Props) => {
   const router = useRouter()
 
   const createRegistrationMutation = useContestRegistrationUpdate(() =>
-    router.replace(routes.contestLeaderboard(contest.id)),
+    router.replace(routes.contestLeaderboard(contest.id!)),
   )
 
   const [createContest] = useDebounce(createRegistrationMutation.mutate, 2500)
 
   const onSubmit = (data: ContestRegistrationFormSchema) => {
-    createRegistrationMutation.mutate(data)
+    createContest(data)
   }
 
   if (allLanguages && options.isError) {
@@ -122,7 +122,7 @@ export const ContestRegistrationForm = ({ contest, data }: Props) => {
             label="Languages"
             hint="Select up to 3 languages"
             options={
-              (contest.allowedLanguages || options.data?.languages) ?? []
+              (contest.allowed_languages || options.data?.languages) ?? []
             }
             match={(option, query) =>
               option.name
@@ -135,7 +135,10 @@ export const ContestRegistrationForm = ({ contest, data }: Props) => {
           />
         </div>
         <div className="h-stack spaced justify-end">
-          <a href={routes.contestLeaderboard(contest.id)} className="btn ghost">
+          <a
+            href={routes.contestLeaderboard(contest.id!)}
+            className="btn ghost"
+          >
             Cancel
           </a>
           <button

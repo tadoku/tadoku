@@ -1,6 +1,6 @@
 import { z } from 'zod'
 import getConfig from 'next/config'
-import { useMutation, useQuery, UseQueryOptions } from 'react-query'
+import { useMutation, useQuery } from 'react-query'
 import { ContestFormSchema } from '@app/contests/ContestForm'
 import { DateTime } from 'luxon'
 import { ContestRegistrationFormSchema } from './ContestRegistration'
@@ -24,20 +24,11 @@ export const Activity = z.object({
 
 export type Activity = z.infer<typeof Activity>
 
-const ContestConfigurationOptions = z
-  .object({
-    languages: z.array(Language),
-    activities: z.array(Activity),
-    can_create_official_round: z.boolean(),
-  })
-  .transform(data => {
-    const { can_create_official_round: canCreateOfficialRound, ...rest } = data
-
-    return {
-      ...rest,
-      canCreateOfficialRound,
-    }
-  })
+const ContestConfigurationOptions = z.object({
+  languages: z.array(Language),
+  activities: z.array(Activity),
+  can_create_official_round: z.boolean(),
+})
 
 export type ContestConfigurationOptions = z.infer<
   typeof ContestConfigurationOptions
@@ -63,12 +54,22 @@ export const useContestConfigurationOptions = (options?: {
 export const useCreateContest = (onSuccess: (id: string) => void) =>
   useMutation({
     mutationFn: async (contest: ContestFormSchema) => {
+      const payload = {
+        ...contest,
+        activity_type_id_allow_list: contest.activity_type_id_allow_list.map(
+          it => it.id,
+        ),
+        language_code_allow_list: contest.language_code_allow_list.map(
+          it => it.code,
+        ),
+      }
+
       const res = await fetch(root, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(contest),
+        body: JSON.stringify(payload),
       })
       return await res.json()
     },
@@ -91,44 +92,22 @@ const Contest = z
     deleted: z.boolean(),
   })
   .transform(contest => {
-    const {
-      contest_start: contestStart,
-      contest_end: contestEnd,
-      registration_end: registrationEnd,
-      language_code_allow_list: languageCodeAllowList,
-      activity_type_id_allow_list: activityTypeIdAllowList,
-      ...rest
-    } = contest
+    const { contest_start, contest_end, registration_end, ...rest } = contest
     return {
       ...rest,
-      contestStart: DateTime.fromISO(contestStart),
-      contestEnd: DateTime.fromISO(contestEnd),
-      registrationEnd: DateTime.fromISO(registrationEnd),
-      languageCodeAllowList,
-      activityTypeIdAllowList,
+      contest_start: DateTime.fromISO(contest_start),
+      contest_end: DateTime.fromISO(contest_end),
+      registration_end: DateTime.fromISO(registration_end),
     }
   })
 
 export type Contest = z.infer<typeof Contest>
 
-const Contests = z
-  .object({
-    contests: z.array(Contest),
-    total_size: z.number(),
-    next_page_token: z.string(),
-  })
-  .transform(post => {
-    const {
-      next_page_token: nextPageToken,
-      total_size: totalSize,
-      ...rest
-    } = post
-    return {
-      ...rest,
-      nextPageToken,
-      totalSize,
-    }
-  })
+const Contests = z.object({
+  contests: z.array(Contest),
+  total_size: z.number(),
+  next_page_token: z.string(),
+})
 
 export type Contests = z.infer<typeof Contests>
 
@@ -179,25 +158,12 @@ const ContestView = z
     deleted: z.boolean().nullable().optional(),
   })
   .transform(contest => {
-    const {
-      contest_start: contestStart,
-      contest_end: contestEnd,
-      registration_end: registrationEnd,
-      allowed_languages: allowedLanguages,
-      allowed_activities: allowedActivities,
-      owner_user_id: ownerUserId,
-      owner_user_display_name: ownerUserDisplayName,
-      ...rest
-    } = contest
+    const { contest_start, contest_end, registration_end, ...rest } = contest
     return {
       ...rest,
-      contestStart: DateTime.fromISO(contestStart),
-      contestEnd: DateTime.fromISO(contestEnd),
-      registrationEnd: DateTime.fromISO(registrationEnd),
-      allowedLanguages,
-      allowedActivities,
-      ownerUserId,
-      ownerUserDisplayName,
+      contest_start: DateTime.fromISO(contest_start),
+      contest_end: DateTime.fromISO(contest_end),
+      registration_end: DateTime.fromISO(registration_end),
     }
   })
 
@@ -218,34 +184,19 @@ export const useContest = (id: string, options?: { enabled?: boolean }) =>
     options,
   )
 
-export const ContestRegistrationView = z
-  .object({
-    id: z.string(),
-    contest_id: z.string(),
-    user_id: z.string(),
-    user_display_name: z.string(),
-    languages: z.array(
-      z.object({
-        code: z.string(),
-        name: z.string(),
-      }),
-    ),
-    contest: ContestView.nullable(),
-  })
-  .transform(reg => {
-    const {
-      contest_id: contestId,
-      user_id: userId,
-      user_display_name: userDisplayName,
-      ...rest
-    } = reg
-    return {
-      ...rest,
-      contestId,
-      userId,
-      userDisplayName,
-    }
-  })
+export const ContestRegistrationView = z.object({
+  id: z.string(),
+  contest_id: z.string(),
+  user_id: z.string(),
+  user_display_name: z.string(),
+  languages: z.array(
+    z.object({
+      code: z.string(),
+      name: z.string(),
+    }),
+  ),
+  contest: ContestView.nullable(),
+})
 
 export type ContestRegistrationView = z.infer<typeof ContestRegistrationView>
 
@@ -275,14 +226,14 @@ export const useContestRegistrationUpdate = (onSuccess: () => void) =>
   useMutation({
     mutationFn: async (registration: ContestRegistrationFormSchema) => {
       const res = await fetch(
-        `${root}/${registration.contestId}/registration`,
+        `${root}/${registration.contest_id}/registration`,
         {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            language_codes: registration.newLanguages.map(it => it.code),
+            language_codes: registration.new_languages.map(it => it.code),
           }),
         },
       )
@@ -293,49 +244,21 @@ export const useContestRegistrationUpdate = (onSuccess: () => void) =>
     },
   })
 
-const LeaderboardEntry = z
-  .object({
-    rank: z.number(),
-    user_id: z.string(),
-    user_display_name: z.string(),
-    score: z.number(),
-    is_tie: z.boolean(),
-  })
-  .transform(entry => {
-    const {
-      user_id: userId,
-      user_display_name: userDisplayName,
-      is_tie: isTie,
-      ...rest
-    } = entry
-    return {
-      ...rest,
-      userId,
-      userDisplayName,
-      isTie,
-    }
-  })
+const LeaderboardEntry = z.object({
+  rank: z.number(),
+  user_id: z.string(),
+  user_display_name: z.string(),
+  score: z.number(),
+  is_tie: z.boolean(),
+})
 
 export type LeaderboardEntry = z.infer<typeof LeaderboardEntry>
 
-const Leaderboard = z
-  .object({
-    entries: z.array(LeaderboardEntry),
-    total_size: z.number(),
-    next_page_token: z.string(),
-  })
-  .transform(post => {
-    const {
-      next_page_token: nextPageToken,
-      total_size: totalSize,
-      ...rest
-    } = post
-    return {
-      ...rest,
-      nextPageToken,
-      totalSize,
-    }
-  })
+const Leaderboard = z.object({
+  entries: z.array(LeaderboardEntry),
+  total_size: z.number(),
+  next_page_token: z.string(),
+})
 
 export type Leaderboard = z.infer<typeof Leaderboard>
 
@@ -371,42 +294,21 @@ export const useContestLeaderboard = (
     options,
   )
 
-export const Unit = z
-  .object({
-    id: z.string(),
-    log_activity_id: z.number(),
-    name: z.string(),
-    modifier: z.number(),
-    language_code: z.string().nullable().optional(),
-  })
-  .transform(it => {
-    const {
-      log_activity_id: logActivityId,
-      language_code: languageCode,
-      ...rest
-    } = it
-    return {
-      languageCode,
-      logActivityId,
-      ...rest,
-    }
-  })
+export const Unit = z.object({
+  id: z.string(),
+  log_activity_id: z.number(),
+  name: z.string(),
+  modifier: z.number(),
+  language_code: z.string().nullable().optional(),
+})
 
 export type Unit = z.infer<typeof Unit>
 
-export const Tag = z
-  .object({
-    id: z.string(),
-    log_activity_id: z.number(),
-    name: z.string(),
-  })
-  .transform(it => {
-    const { log_activity_id: logActivityId, ...rest } = it
-    return {
-      logActivityId,
-      ...rest,
-    }
-  })
+export const Tag = z.object({
+  id: z.string(),
+  log_activity_id: z.number(),
+  name: z.string(),
+})
 
 export type Tag = z.infer<typeof Tag>
 
@@ -434,24 +336,11 @@ export const useLogConfigurationOptions = (options?: { enabled?: boolean }) =>
     options,
   )
 
-const ContestRegistrationsView = z
-  .object({
-    registrations: z.array(ContestRegistrationView),
-    next_page_token: z.string(),
-    total_size: z.number(),
-  })
-  .transform(regs => {
-    const {
-      next_page_token: nextPageToken,
-      total_size: totalSize,
-      ...rest
-    } = regs
-    return {
-      ...rest,
-      nextPageToken,
-      totalSize,
-    }
-  })
+const ContestRegistrationsView = z.object({
+  registrations: z.array(ContestRegistrationView),
+  next_page_token: z.string(),
+  total_size: z.number(),
+})
 
 export type ContestRegistrationsView = z.infer<typeof ContestRegistrationsView>
 

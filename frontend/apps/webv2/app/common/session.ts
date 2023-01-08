@@ -6,11 +6,8 @@ import { AxiosError } from 'axios'
 import ory from '@app/common/ory'
 import { AppContext } from 'next/app'
 import { NextPageContext } from 'next'
-import getConfig from 'next/config'
 import { useCurrentLocation } from '@app/common/hooks'
 import { routes } from './routes'
-
-const { publicRuntimeConfig } = getConfig()
 
 export const sessionAtom = atom(undefined as undefined | Session)
 

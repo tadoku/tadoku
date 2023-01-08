@@ -193,8 +193,10 @@ export function contestsForLog({
 
   const eligibleContests = registrations
     .filter(it => it.contest)
-    .filter(it => it.languages.includes(language))
-    .filter(it => it.contest!.allowed_activities.includes(activity))
+    .filter(it => it.languages.map(it => it.code).includes(language.code))
+    .filter(it =>
+      it.contest!.allowed_activities.map(it => it.id).includes(activity.id),
+    )
     .filter(it =>
       Interval.fromDateTimes(
         DateTime.fromISO(it.contest!.contest_start),

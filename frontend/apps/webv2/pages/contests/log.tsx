@@ -6,7 +6,7 @@ import {
   useOngoingContestRegistrations,
 } from '@app/contests/api'
 import { routes } from '@app/common/routes'
-import { LogForm } from '@app/contests/LogForm'
+import { LogForm } from '@app/contests/LogForm/Form'
 
 interface Props {}
 

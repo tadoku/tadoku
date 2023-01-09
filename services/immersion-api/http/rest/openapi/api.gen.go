@@ -208,11 +208,24 @@ type ContestRegistrationUpsertJSONBody struct {
 	LanguageCodes []string `json:"language_codes"`
 }
 
+// LogCreateLogJSONBody defines parameters for LogCreateLog.
+type LogCreateLogJSONBody struct {
+	ActivityId      openapi_types.UUID   `json:"activity_id"`
+	Amount          float32              `json:"amount"`
+	LanguageCode    string               `json:"language_code"`
+	RegistrationIds []openapi_types.UUID `json:"registration_ids"`
+	Tags            []string             `json:"tags"`
+	UnitId          openapi_types.UUID   `json:"unit_id"`
+}
+
 // ContestCreateJSONRequestBody defines body for ContestCreate for application/json ContentType.
 type ContestCreateJSONRequestBody = Contest
 
 // ContestRegistrationUpsertJSONRequestBody defines body for ContestRegistrationUpsert for application/json ContentType.
 type ContestRegistrationUpsertJSONRequestBody ContestRegistrationUpsertJSONBody
+
+// LogCreateLogJSONRequestBody defines body for LogCreateLog for application/json ContentType.
+type LogCreateLogJSONRequestBody LogCreateLogJSONBody
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {

@@ -5,6 +5,7 @@ go_library(
     srcs = [
         "contests.go",
         "health.go",
+        "logs.go",
         "server.go",
     ],
     importpath = "github.com/tadoku/tadoku/services/immersion-api/http/rest",

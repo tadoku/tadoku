@@ -230,43 +230,46 @@ paths:
       tags: [logs]
       security:
         - cookieAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - registration_ids
+                - language_code
+                - activity_id
+                - amount
+                - unit_id
+                - tags
+              properties:
+                registration_ids:
+                  type: array
+                  items:
+                    type: string
+                    format: uuid
+                language_code:
+                  type: string
+                  example: zho
+                activity_id:
+                  type: string
+                  format: uuid
+                amount:
+                  type: number
+                  format: float
+                unit_id:
+                  type: string
+                  format: uuid
+                tags:
+                  type: array
+                  items:
+                    type: string
+                  example: ['book', 'fiction']
       responses:
         '200':
           description: successful operation
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                  - registration_ids
-                  - language_code
-                  - activity_id
-                  - amount
-                  - unit_id
-                  - tags
-                properties:
-                  registration_ids:
-                    type: array
-                    items:
-                      type: string
-                      format: uuid
-                  language_code:
-                    type: string
-                    example: zho
-                  activity_id:
-                    type: string
-                    format: uuid
-                  amount:
-                    type: number
-                    format: float
-                  unit_id:
-                    type: string
-                    format: uuid
-                  tags:
-                    type: array
-                    items:
-                      type: string
-                    example: ['book', 'fiction']
+        '400':
+          description: invalid submission
   /logs/configuration-options:
     get:
       summary: Fetches the configuration options for a log

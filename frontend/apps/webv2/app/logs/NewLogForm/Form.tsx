@@ -19,7 +19,7 @@ import {
   LogAPISchema,
   LogFormSchema,
   trackingModesForRegistrations,
-} from '@app/logs/LogForm/domain'
+} from '@app/logs/NewLogForm/domain'
 import { formatScore } from '@app/common/format'
 
 interface Props {

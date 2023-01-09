@@ -6,10 +6,8 @@ import {
 } from 'ui'
 import { FormProvider, useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import {
-  ContestRegistrationsView,
-  LogConfigurationOptions,
-} from '@app/contests/api'
+import { ContestRegistrationsView } from '@app/contests/api'
+import { LogConfigurationOptions } from '@app/logs/api'
 import { useRouter } from 'next/router'
 import { routes } from '@app/common/routes'
 import {
@@ -21,7 +19,7 @@ import {
   LogAPISchema,
   LogFormSchema,
   trackingModesForRegistrations,
-} from '@app/contests/LogForm/domain'
+} from '@app/logs/LogForm/domain'
 import { formatScore } from '@app/common/format'
 
 interface Props {

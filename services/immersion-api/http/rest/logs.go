@@ -12,6 +12,10 @@ import (
 
 // COMMANDS
 
+// Submits a new log
+// (POST /logs)
+func (s *Server) LogCreateLog(ctx echo.Context) error { return nil }
+
 // QUERIES
 
 // Fetches the configuration options for a log

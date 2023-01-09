@@ -240,6 +240,9 @@ type ServerInterface interface {
 	// Creates or updates a registration for a contest
 	// (POST /contests/{id}/registration)
 	ContestRegistrationUpsert(ctx echo.Context, id openapi_types.UUID) error
+	// Submits a new log
+	// (POST /logs)
+	LogCreateLog(ctx echo.Context) error
 	// Fetches the configuration options for a log
 	// (GET /logs/configuration-options)
 	LogGetConfigurations(ctx echo.Context) error
@@ -432,6 +435,17 @@ func (w *ServerInterfaceWrapper) ContestRegistrationUpsert(ctx echo.Context) err
 	return err
 }
 
+// LogCreateLog converts echo context to params.
+func (w *ServerInterfaceWrapper) LogCreateLog(ctx echo.Context) error {
+	var err error
+
+	ctx.Set(CookieAuthScopes, []string{""})
+
+	// Invoke the callback with all the unmarshalled arguments
+	err = w.Handler.LogCreateLog(ctx)
+	return err
+}
+
 // LogGetConfigurations converts echo context to params.
 func (w *ServerInterfaceWrapper) LogGetConfigurations(ctx echo.Context) error {
 	var err error
@@ -488,6 +502,7 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 	router.GET(baseURL+"/contests/:id/leaderboard", wrapper.ContestFetchLeaderboard)
 	router.GET(baseURL+"/contests/:id/registration", wrapper.ContestFindRegistration)
 	router.POST(baseURL+"/contests/:id/registration", wrapper.ContestRegistrationUpsert)
+	router.POST(baseURL+"/logs", wrapper.LogCreateLog)
 	router.GET(baseURL+"/logs/configuration-options", wrapper.LogGetConfigurations)
 	router.GET(baseURL+"/ping", wrapper.Ping)
 

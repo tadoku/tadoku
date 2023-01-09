@@ -13,6 +13,7 @@ go_library(
         "leaderboard.sql.go",
         "logrepository.go",
         "models.go",
+        "registrations.sql.go",
         "tags.sql.go",
         "units.sql.go",
     ],

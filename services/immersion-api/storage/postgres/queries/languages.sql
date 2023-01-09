@@ -10,12 +10,10 @@ select
   code,
   name
 from languages
+left join contests
+  on languages.code = any(language_code_allow_list) or language_code_allow_list is null
 where
-  code = any((
-    select language_code_allow_list
-    from contests
-    where id = sqlc.arg('contest_id')
-  )::varchar[])
+  id = sqlc.arg('contest_id')
 order by name asc;
 
 -- name: GetLanguagesByCode :many

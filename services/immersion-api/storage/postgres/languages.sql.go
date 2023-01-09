@@ -81,12 +81,10 @@ select
   code,
   name
 from languages
+left join contests
+  on languages.code = any(language_code_allow_list) or language_code_allow_list is null
 where
-  code = any((
-    select language_code_allow_list
-    from contests
-    where id = $1
-  )::varchar[])
+  id = $1
 order by name asc
 `
 

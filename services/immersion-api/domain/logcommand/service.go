@@ -92,6 +92,7 @@ func (s *service) CreateLog(ctx context.Context, req *LogCreateRequest) error {
 		validContestIDs[r.ID] = r
 	}
 
+	// validate registrations
 	for _, id := range req.RegistrationIDs {
 		registration, ok := validContestIDs[id]
 		if !ok {

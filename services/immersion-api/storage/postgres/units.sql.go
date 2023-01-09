@@ -7,7 +7,43 @@ package postgres
 
 import (
 	"context"
+	"database/sql"
+
+	"github.com/google/uuid"
 )
+
+const findUnitForTracking = `-- name: FindUnitForTracking :one
+select
+  id,
+  log_activity_id,
+  name,
+  modifier,
+  language_code
+from log_units
+where
+  id = $1
+  and log_activity_id = $2
+  and (language_code is null or language_code = $3)
+`
+
+type FindUnitForTrackingParams struct {
+	ID            uuid.UUID
+	LogActivityID int16
+	LanguageCode  sql.NullString
+}
+
+func (q *Queries) FindUnitForTracking(ctx context.Context, arg FindUnitForTrackingParams) (LogUnit, error) {
+	row := q.db.QueryRowContext(ctx, findUnitForTracking, arg.ID, arg.LogActivityID, arg.LanguageCode)
+	var i LogUnit
+	err := row.Scan(
+		&i.ID,
+		&i.LogActivityID,
+		&i.Name,
+		&i.Modifier,
+		&i.LanguageCode,
+	)
+	return i, err
+}
 
 const listUnits = `-- name: ListUnits :many
 select

@@ -3,6 +3,7 @@ package postgres
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 
 	"github.com/tadoku/tadoku/services/immersion-api/domain/logcommand"
@@ -22,7 +23,19 @@ func NewLogRepository(psql *sql.DB) *LogRepository {
 }
 
 // COMMANDS
-func (r *LogRepository) CreateLog(context.Context, *logcommand.LogCreateRequest) error {
+func (r *LogRepository) CreateLog(ctx context.Context, req *logcommand.LogCreateRequest) error {
+	_, err := r.q.FindUnitForTracking(ctx, FindUnitForTrackingParams{
+		ID:            req.UnitID,
+		LogActivityID: int16(req.ActivityID),
+		LanguageCode:  NewNullString(&req.LanguageCode),
+	})
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return fmt.Errorf("invalid unit supplied: %w", logcommand.ErrInvalidLog)
+		}
+		return fmt.Errorf("could not fetch unit for tracking: %w", err)
+	}
+
 	return nil
 }
 

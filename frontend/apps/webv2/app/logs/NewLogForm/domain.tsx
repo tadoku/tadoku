@@ -17,7 +17,7 @@ import { Tag, Unit } from '@app/logs/api'
 
 type TrackingMode = 'automatic' | 'manual' | 'personal'
 
-export const LogFormSchema = z
+export const NewLogFormSchema = z
   .object({
     tracking_mode: z.enum(['automatic', 'manual', 'personal']),
     registrations: z.array(ContestRegistrationView),
@@ -55,7 +55,9 @@ export const LogFormSchema = z
     message: 'This log cannot be submitted to one of these contests',
   })
 
-export const LogAPISchema = LogFormSchema.transform(log => ({
+export type NewLogFormSchema = z.infer<typeof NewLogFormSchema>
+
+export const NewLogAPISchema = NewLogFormSchema.transform(log => ({
   registration_ids: log.registration_ids,
   language_code: log.language.code,
   activity_id: log.activity.id,
@@ -65,7 +67,7 @@ export const LogAPISchema = LogFormSchema.transform(log => ({
   description: log.description,
 }))
 
-export type LogFormSchema = z.infer<typeof LogFormSchema>
+export type NewLogAPISchema = z.infer<typeof NewLogAPISchema>
 
 export const filterUnits = (
   units: Unit[],

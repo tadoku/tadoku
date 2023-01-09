@@ -1,7 +1,8 @@
 import { z } from 'zod'
 import getConfig from 'next/config'
-import { useQuery } from 'react-query'
+import { useMutation, useQuery } from 'react-query'
 import { Activity, Language } from '@app/contests/api'
+import { NewLogAPISchema } from './NewLogForm/domain'
 
 const { publicRuntimeConfig } = getConfig()
 
@@ -48,3 +49,19 @@ export const useLogConfigurationOptions = (options?: { enabled?: boolean }) =>
     },
     options,
   )
+
+export const useCreateLog = (onSuccess: () => void) =>
+  useMutation({
+    mutationFn: async (contest: NewLogAPISchema) => {
+      const res = await fetch(root, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(contest),
+      })
+    },
+    onSuccess() {
+      onSuccess()
+    },
+  })

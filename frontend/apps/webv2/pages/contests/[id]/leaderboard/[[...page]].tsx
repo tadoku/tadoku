@@ -113,7 +113,7 @@ const Page = () => {
                 visible: !hasEnded && registration.data === undefined,
               },
               {
-                href: routes.contestLog(),
+                href: routes.logCreate(),
                 label: 'Log update',
                 IconComponent: PencilSquareIcon,
                 style: 'secondary',

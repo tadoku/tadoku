@@ -7,7 +7,7 @@ import {
 import { FormProvider, useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { ContestRegistrationsView } from '@app/contests/api'
-import { LogConfigurationOptions } from '@app/logs/api'
+import { LogConfigurationOptions, useCreateLog } from '@app/logs/api'
 import { useRouter } from 'next/router'
 import { routes } from '@app/common/routes'
 import {
@@ -16,11 +16,13 @@ import {
   filterTags,
   filterUnits,
   formatContestLabel,
-  LogAPISchema,
-  LogFormSchema,
+  NewLogAPISchema,
+  NewLogFormSchema,
   trackingModesForRegistrations,
 } from '@app/logs/NewLogForm/domain'
 import { formatScore } from '@app/common/format'
+import { useDebounce } from 'use-debounce'
+import { useSessionOrRedirect } from '@app/common/session'
 
 interface Props {
   registrations: ContestRegistrationsView
@@ -31,7 +33,7 @@ export const LogForm = ({
   registrations: { registrations },
   options,
 }: Props) => {
-  const defaultValues: Partial<LogFormSchema> = {
+  const defaultValues: Partial<NewLogFormSchema> = {
     activity: options.activities[0],
     tracking_mode: registrations.length > 0 ? 'automatic' : 'personal',
     language:
@@ -44,9 +46,10 @@ export const LogForm = ({
   }
 
   const methods = useForm({
-    resolver: zodResolver(LogFormSchema),
+    resolver: zodResolver(NewLogFormSchema),
     defaultValues,
   })
+  const [session] = useSessionOrRedirect()
 
   const trackingMode = methods.watch('tracking_mode') ?? 'personal'
   const activity = methods.watch('activity')
@@ -68,14 +71,19 @@ export const LogForm = ({
   const estimatedScore = estimateScore(amount, unit)
 
   const router = useRouter()
-  // const createContestMutation = useCreateContest(id =>
-  //   router.replace(routes.contestLeaderboard(id)),
-  // )
+  const createLogMutation = useCreateLog(() => {
+    const userId = session?.identity.id
+    if (userId) {
+      return router.replace(routes.userProfile(userId))
+    }
 
-  // const [createContest] = useDebounce(createContestMutation.mutate, 2500)
+    router.replace(routes.leaderboard())
+  })
+
+  const [createLog] = useDebounce(createLogMutation.mutate, 2500)
 
   const onSubmit = (data: any) => {
-    console.log(LogAPISchema.parse(data), 'test')
+    createLog(NewLogAPISchema.parse(data))
   }
 
   return (

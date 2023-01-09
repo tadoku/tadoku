@@ -17,8 +17,7 @@ const Page: NextPage<Props> = () => {
         <Breadcrumb
           links={[
             { label: 'Home', href: routes.home(), IconComponent: HomeIcon },
-            { label: 'Contests', href: routes.contestListOfficial() },
-            { label: 'New log', href: routes.contestLog() },
+            { label: 'New log', href: routes.logCreate() },
           ]}
         />
       </div>

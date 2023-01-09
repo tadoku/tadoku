@@ -225,9 +225,6 @@ type ServerInterface interface {
 	// Fetches the configuration options for a new contest
 	// (GET /contests/configuration-options)
 	ContestGetConfigurations(ctx echo.Context) error
-	// Fetches the configuration options for a log
-	// (GET /contests/log/configuration-options)
-	ContestLogGetConfigurations(ctx echo.Context) error
 	// Fetches all the ongoing contest registrations of the logged in user, always in a single page
 	// (GET /contests/ongoing-registrations)
 	ContestFindOngoingRegistrations(ctx echo.Context) error
@@ -243,6 +240,9 @@ type ServerInterface interface {
 	// Creates or updates a registration for a contest
 	// (POST /contests/{id}/registration)
 	ContestRegistrationUpsert(ctx echo.Context, id openapi_types.UUID) error
+	// Fetches the configuration options for a log
+	// (GET /logs/configuration-options)
+	LogGetConfigurations(ctx echo.Context) error
 	// Checks if service is responsive
 	// (GET /ping)
 	Ping(ctx echo.Context) error
@@ -318,17 +318,6 @@ func (w *ServerInterfaceWrapper) ContestGetConfigurations(ctx echo.Context) erro
 
 	// Invoke the callback with all the unmarshalled arguments
 	err = w.Handler.ContestGetConfigurations(ctx)
-	return err
-}
-
-// ContestLogGetConfigurations converts echo context to params.
-func (w *ServerInterfaceWrapper) ContestLogGetConfigurations(ctx echo.Context) error {
-	var err error
-
-	ctx.Set(CookieAuthScopes, []string{""})
-
-	// Invoke the callback with all the unmarshalled arguments
-	err = w.Handler.ContestLogGetConfigurations(ctx)
 	return err
 }
 
@@ -443,6 +432,17 @@ func (w *ServerInterfaceWrapper) ContestRegistrationUpsert(ctx echo.Context) err
 	return err
 }
 
+// LogGetConfigurations converts echo context to params.
+func (w *ServerInterfaceWrapper) LogGetConfigurations(ctx echo.Context) error {
+	var err error
+
+	ctx.Set(CookieAuthScopes, []string{""})
+
+	// Invoke the callback with all the unmarshalled arguments
+	err = w.Handler.LogGetConfigurations(ctx)
+	return err
+}
+
 // Ping converts echo context to params.
 func (w *ServerInterfaceWrapper) Ping(ctx echo.Context) error {
 	var err error
@@ -483,12 +483,12 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 	router.GET(baseURL+"/contests", wrapper.ContestList)
 	router.POST(baseURL+"/contests", wrapper.ContestCreate)
 	router.GET(baseURL+"/contests/configuration-options", wrapper.ContestGetConfigurations)
-	router.GET(baseURL+"/contests/log/configuration-options", wrapper.ContestLogGetConfigurations)
 	router.GET(baseURL+"/contests/ongoing-registrations", wrapper.ContestFindOngoingRegistrations)
 	router.GET(baseURL+"/contests/:id", wrapper.ContestFindByID)
 	router.GET(baseURL+"/contests/:id/leaderboard", wrapper.ContestFetchLeaderboard)
 	router.GET(baseURL+"/contests/:id/registration", wrapper.ContestFindRegistration)
 	router.POST(baseURL+"/contests/:id/registration", wrapper.ContestRegistrationUpsert)
+	router.GET(baseURL+"/logs/configuration-options", wrapper.LogGetConfigurations)
 	router.GET(baseURL+"/ping", wrapper.Ping)
 
 }

@@ -223,11 +223,11 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ContestConfigurationOptions'
-  /contests/log/configuration-options:
+  /logs/configuration-options:
     get:
       summary: Fetches the configuration options for a log
-      operationId: contestLogGetConfigurations
-      tags: [contests]
+      operationId: logGetConfigurations
+      tags: [logs]
       security:
         - cookieAuth: []
       responses:

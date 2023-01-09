@@ -396,8 +396,8 @@ func (s *Server) ContestFindOngoingRegistrations(ctx echo.Context) error {
 }
 
 // Fetches the configuration options for a log
-// (GET /contests/log/configuration-options)
-func (s *Server) ContestLogGetConfigurations(ctx echo.Context) error {
+// (GET /logs/configuration-options)
+func (s *Server) LogGetConfigurations(ctx echo.Context) error {
 	opts, err := s.contestQueryService.FetchLogConfigurationOptions(ctx.Request().Context())
 	if err != nil {
 		if errors.Is(err, contestquery.ErrUnauthorized) {

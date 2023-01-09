@@ -8,6 +8,7 @@ import (
 
 	"github.com/tadoku/tadoku/services/immersion-api/domain/contestcommand"
 	"github.com/tadoku/tadoku/services/immersion-api/domain/contestquery"
+	"github.com/tadoku/tadoku/services/immersion-api/domain/logquery"
 )
 
 type ContestRepository struct {
@@ -132,7 +133,7 @@ func (r *ContestRepository) FetchContestConfigurationOptions(ctx context.Context
 	return &options, err
 }
 
-func (r *ContestRepository) FetchLogConfigurationOptions(ctx context.Context) (*contestquery.FetchLogConfigurationOptionsResponse, error) {
+func (r *ContestRepository) FetchLogConfigurationOptions(ctx context.Context) (*logquery.FetchLogConfigurationOptionsResponse, error) {
 	langs, err := r.q.ListLanguages(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("could not fetch log configuration options: %w", err)
@@ -153,22 +154,22 @@ func (r *ContestRepository) FetchLogConfigurationOptions(ctx context.Context) (*
 		return nil, fmt.Errorf("could not fetch log configuration options: %w", err)
 	}
 
-	options := contestquery.FetchLogConfigurationOptionsResponse{
-		Languages:  make([]contestquery.Language, len(langs)),
-		Activities: make([]contestquery.Activity, len(acts)),
-		Units:      make([]contestquery.Unit, len(units)),
-		Tags:       make([]contestquery.Tag, len(tags)),
+	options := logquery.FetchLogConfigurationOptionsResponse{
+		Languages:  make([]logquery.Language, len(langs)),
+		Activities: make([]logquery.Activity, len(acts)),
+		Units:      make([]logquery.Unit, len(units)),
+		Tags:       make([]logquery.Tag, len(tags)),
 	}
 
 	for i, l := range langs {
-		options.Languages[i] = contestquery.Language{
+		options.Languages[i] = logquery.Language{
 			Code: l.Code,
 			Name: l.Name,
 		}
 	}
 
 	for i, a := range acts {
-		options.Activities[i] = contestquery.Activity{
+		options.Activities[i] = logquery.Activity{
 			ID:      a.ID,
 			Name:    a.Name,
 			Default: a.Default,
@@ -176,7 +177,7 @@ func (r *ContestRepository) FetchLogConfigurationOptions(ctx context.Context) (*
 	}
 
 	for i, u := range units {
-		options.Units[i] = contestquery.Unit{
+		options.Units[i] = logquery.Unit{
 			ID:            u.ID,
 			LogActivityID: int(u.LogActivityID),
 			Name:          u.Name,
@@ -186,7 +187,7 @@ func (r *ContestRepository) FetchLogConfigurationOptions(ctx context.Context) (*
 	}
 
 	for i, t := range tags {
-		options.Tags[i] = contestquery.Tag{
+		options.Tags[i] = logquery.Tag{
 			ID:            t.ID,
 			LogActivityID: int(t.LogActivityID),
 			Name:          t.Name,

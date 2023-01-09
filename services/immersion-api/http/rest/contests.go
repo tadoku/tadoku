@@ -10,6 +10,7 @@ import (
 
 	"github.com/tadoku/tadoku/services/immersion-api/domain/contestcommand"
 	"github.com/tadoku/tadoku/services/immersion-api/domain/contestquery"
+	"github.com/tadoku/tadoku/services/immersion-api/domain/logquery"
 	"github.com/tadoku/tadoku/services/immersion-api/http/rest/openapi"
 )
 
@@ -398,9 +399,9 @@ func (s *Server) ContestFindOngoingRegistrations(ctx echo.Context) error {
 // Fetches the configuration options for a log
 // (GET /logs/configuration-options)
 func (s *Server) LogGetConfigurations(ctx echo.Context) error {
-	opts, err := s.contestQueryService.FetchLogConfigurationOptions(ctx.Request().Context())
+	opts, err := s.logQueryService.FetchLogConfigurationOptions(ctx.Request().Context())
 	if err != nil {
-		if errors.Is(err, contestquery.ErrUnauthorized) {
+		if errors.Is(err, logquery.ErrUnauthorized) {
 			return ctx.NoContent(http.StatusUnauthorized)
 		}
 		return ctx.NoContent(http.StatusInternalServerError)

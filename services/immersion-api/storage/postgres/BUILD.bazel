@@ -12,6 +12,7 @@ go_library(
         "languages.sql.go",
         "leaderboard.sql.go",
         "logrepository.go",
+        "logs.sql.go",
         "models.go",
         "registrations.sql.go",
         "tags.sql.go",

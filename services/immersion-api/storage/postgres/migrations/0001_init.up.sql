@@ -80,6 +80,7 @@ create table logs (
   log_activity_id smallint not null,
   unit_id uuid not null,
   tags varchar(50)[] not null,
+  "description" varchar(255),
 
   -- scoring related
   amount real not null,

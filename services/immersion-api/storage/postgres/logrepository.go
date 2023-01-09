@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/google/uuid"
 	"github.com/tadoku/tadoku/services/immersion-api/domain/logcommand"
 	"github.com/tadoku/tadoku/services/immersion-api/domain/logquery"
 )
@@ -24,7 +25,7 @@ func NewLogRepository(psql *sql.DB) *LogRepository {
 
 // COMMANDS
 func (r *LogRepository) CreateLog(ctx context.Context, req *logcommand.LogCreateRequest) error {
-	_, err := r.q.FindUnitForTracking(ctx, FindUnitForTrackingParams{
+	unit, err := r.q.FindUnitForTracking(ctx, FindUnitForTrackingParams{
 		ID:            req.UnitID,
 		LogActivityID: int16(req.ActivityID),
 		LanguageCode:  NewNullString(&req.LanguageCode),
@@ -34,6 +35,43 @@ func (r *LogRepository) CreateLog(ctx context.Context, req *logcommand.LogCreate
 			return fmt.Errorf("invalid unit supplied: %w", logcommand.ErrInvalidLog)
 		}
 		return fmt.Errorf("could not fetch unit for tracking: %w", err)
+	}
+
+	tx, err := r.psql.BeginTx(ctx, nil)
+	if err != nil {
+		return fmt.Errorf("could not create log: %w", err)
+	}
+	qtx := r.q.WithTx(tx)
+
+	id := uuid.New()
+	if _, err = qtx.CreateLog(ctx, CreateLogParams{
+		ID:                          id,
+		UserID:                      req.UserID,
+		LanguageCode:                req.LanguageCode,
+		LogActivityID:               int16(req.ActivityID),
+		UnitID:                      req.UnitID,
+		Tags:                        req.Tags,
+		Amount:                      req.Amount,
+		Modifier:                    unit.Modifier,
+		EligibleOfficialLeaderboard: req.EligibleOfficialLeaderboard,
+		Description:                 NewNullString(req.Description),
+	}); err != nil {
+		_ = tx.Rollback()
+		return fmt.Errorf("could not create log: %w", err)
+	}
+
+	for _, contestID := range req.RegistrationIDs {
+		if err = qtx.CreateContestLogRelation(ctx, CreateContestLogRelationParams{
+			ContestID: contestID,
+			LogID:     id,
+		}); err != nil {
+			_ = tx.Rollback()
+			return fmt.Errorf("could not create log: %w", err)
+		}
+	}
+
+	if err = tx.Commit(); err != nil {
+		return fmt.Errorf("could not create log: %w", err)
 	}
 
 	return nil

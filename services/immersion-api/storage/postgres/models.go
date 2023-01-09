@@ -57,6 +57,7 @@ type Log struct {
 	LogActivityID               int16
 	UnitID                      uuid.UUID
 	Tags                        []string
+	Description                 sql.NullString
 	Amount                      float32
 	Modifier                    float32
 	Score                       float32

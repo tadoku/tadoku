@@ -56,7 +56,8 @@ type LogCreateRequest struct {
 	Tags            []string
 
 	// Optional
-	Description *string
+	Description                 *string
+	EligibleOfficialLeaderboard bool
 }
 
 func (s *service) CreateLog(ctx context.Context, req *LogCreateRequest) error {
@@ -97,6 +98,10 @@ func (s *service) CreateLog(ctx context.Context, req *LogCreateRequest) error {
 		registration, ok := validContestIDs[id]
 		if !ok {
 			return fmt.Errorf("registration is not found as ongoing for the current user: %w", ErrInvalidLog)
+		}
+
+		if registration.Contest.Official {
+			req.EligibleOfficialLeaderboard = true
 		}
 
 		// validate language is part of registration

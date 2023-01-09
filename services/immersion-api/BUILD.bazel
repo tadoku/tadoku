@@ -11,6 +11,7 @@ go_library(
         "//services/common/storage/memory",
         "//services/immersion-api/domain/contestcommand",
         "//services/immersion-api/domain/contestquery",
+        "//services/immersion-api/domain/logcommand",
         "//services/immersion-api/domain/logquery",
         "//services/immersion-api/http/rest",
         "//services/immersion-api/http/rest/openapi",

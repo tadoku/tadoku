@@ -8,6 +8,7 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
 	"github.com/tadoku/tadoku/services/common/domain"
+	"github.com/tadoku/tadoku/services/immersion-api/domain/contestquery"
 	"github.com/tadoku/tadoku/services/immersion-api/domain/logquery"
 )
 
@@ -15,7 +16,7 @@ var ErrInvalidLog = errors.New("unable to validate log")
 var ErrForbidden = errors.New("not allowed")
 var ErrUnauthorized = errors.New("unauthorized")
 
-type ContestRepository interface {
+type LogRepository interface {
 	CreateLog(context.Context, *LogCreateRequest) error
 
 	logquery.LogRepository
@@ -26,14 +27,20 @@ type Service interface {
 }
 
 type service struct {
-	r        ContestRepository
+	lr       LogRepository
+	cr       contestquery.ContestRepository
 	validate *validator.Validate
 	clock    domain.Clock
 }
 
-func NewService(r ContestRepository, clock domain.Clock) Service {
+func NewService(
+	lr LogRepository,
+	cr contestquery.ContestRepository,
+	clock domain.Clock,
+) Service {
 	return &service{
-		r:        r,
+		lr:       lr,
+		cr:       cr,
 		validate: validator.New(),
 		clock:    clock,
 	}
@@ -71,5 +78,5 @@ func (s *service) CreateLog(ctx context.Context, req *LogCreateRequest) error {
 		return fmt.Errorf("unable to validate: %w", ErrInvalidLog)
 	}
 
-	return s.r.CreateLog(ctx, req)
+	return s.lr.CreateLog(ctx, req)
 }

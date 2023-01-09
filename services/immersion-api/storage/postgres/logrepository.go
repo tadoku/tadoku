@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 
+	"github.com/tadoku/tadoku/services/immersion-api/domain/logcommand"
 	"github.com/tadoku/tadoku/services/immersion-api/domain/logquery"
 )
 
@@ -21,6 +22,9 @@ func NewLogRepository(psql *sql.DB) *LogRepository {
 }
 
 // COMMANDS
+func (r *LogRepository) CreateLog(context.Context, *logcommand.LogCreateRequest) error {
+	return nil
+}
 
 // QUERIES
 

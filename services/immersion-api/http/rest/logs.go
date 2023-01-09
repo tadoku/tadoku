@@ -6,6 +6,7 @@ import (
 
 	"github.com/labstack/echo/v4"
 
+	"github.com/tadoku/tadoku/services/immersion-api/domain/logcommand"
 	"github.com/tadoku/tadoku/services/immersion-api/domain/logquery"
 	"github.com/tadoku/tadoku/services/immersion-api/http/rest/openapi"
 )
@@ -14,7 +15,39 @@ import (
 
 // Submits a new log
 // (POST /logs)
-func (s *Server) LogCreateLog(ctx echo.Context) error { return nil }
+func (s *Server) LogCreateLog(ctx echo.Context) error {
+	var req openapi.LogCreateLogJSONRequestBody
+	if err := ctx.Bind(&req); err != nil {
+		ctx.Echo().Logger.Error("could not process request: ", err)
+		return ctx.NoContent(http.StatusBadRequest)
+	}
+
+	if err := s.logCommandService.CreateLog(ctx.Request().Context(), &logcommand.LogCreateRequest{
+		RegistrationIDs: req.RegistrationIds,
+		UnitID:          req.UnitId,
+		ActivityID:      req.ActivityId,
+		LanguageCode:    req.LanguageCode,
+		Amount:          req.Amount,
+		Tags:            req.Tags,
+		Description:     req.Description,
+	}); err != nil {
+		if errors.Is(err, logcommand.ErrForbidden) {
+			return ctx.NoContent(http.StatusForbidden)
+		}
+		if errors.Is(err, logcommand.ErrUnauthorized) {
+			return ctx.NoContent(http.StatusUnauthorized)
+		}
+		if errors.Is(err, logcommand.ErrInvalidLog) {
+			ctx.Echo().Logger.Error("could not process request: ", err)
+			return ctx.NoContent(http.StatusBadRequest)
+		}
+
+		ctx.Echo().Logger.Error("could not process request: ", err)
+		return ctx.NoContent(http.StatusInternalServerError)
+	}
+
+	return ctx.NoContent(http.StatusOK)
+}
 
 // QUERIES
 

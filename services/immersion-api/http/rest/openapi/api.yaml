@@ -252,8 +252,8 @@ paths:
                   type: string
                   example: zho
                 activity_id:
-                  type: string
-                  format: uuid
+                  format: int32
+                  type: integer
                 amount:
                   type: number
                   format: float
@@ -265,6 +265,8 @@ paths:
                   items:
                     type: string
                   example: ['book', 'fiction']
+                description:
+                  type: string
       responses:
         '200':
           description: successful operation

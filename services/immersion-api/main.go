@@ -42,6 +42,7 @@ func main() {
 	}
 
 	contestRepository := postgres.NewContestRepository(psql)
+	logRepository := postgres.NewLogRepository(psql)
 	roleRepository := memory.NewRoleRepository("/etc/tadoku/permissions/roles.yaml")
 
 	e := echo.New()
@@ -56,7 +57,7 @@ func main() {
 
 	contestCommandService := contestcommand.NewService(contestRepository, clock)
 	contestQueryService := contestquery.NewService(contestRepository, clock)
-	logQueryService := logquery.NewService(contestRepository, clock)
+	logQueryService := logquery.NewService(logRepository, clock)
 
 	server := rest.NewServer(
 		contestCommandService,

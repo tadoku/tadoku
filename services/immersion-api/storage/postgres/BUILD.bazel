@@ -11,6 +11,7 @@ go_library(
         "helpers.go",
         "languages.sql.go",
         "leaderboard.sql.go",
+        "logrepository.go",
         "models.go",
         "tags.sql.go",
         "units.sql.go",

@@ -90,8 +90,8 @@ export const LogForm = ({
 
   useEffect(() => {
     const subscription = methods.watch((value, { name, type }) => {
-      // reset unit if activity was chnged
-      if (name === 'activity' && type === 'change') {
+      // reset unit if activity or language was changed
+      if ((name === 'language' || name === 'activity') && type === 'change') {
         methods.setValue(
           'unit',
           filterUnits(options.units, value.activity?.id, language)?.[0],

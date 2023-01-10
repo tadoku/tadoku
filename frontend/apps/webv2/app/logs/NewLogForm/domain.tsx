@@ -71,15 +71,15 @@ export type NewLogAPISchema = z.infer<typeof NewLogAPISchema>
 
 export const filterUnits = (
   units: Unit[],
-  activity: Activity | undefined,
+  activityId: number | undefined,
   language: Language | undefined,
 ) => {
-  if (!activity) {
+  if (!activityId) {
     return []
   }
 
   const base = units.filter(it => {
-    return it.log_activity_id == activity.id
+    return it.log_activity_id == activityId
   })
 
   const grouped = base.reduce((acc, unit) => {

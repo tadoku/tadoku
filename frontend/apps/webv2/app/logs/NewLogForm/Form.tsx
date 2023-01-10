@@ -23,6 +23,7 @@ import {
 import { formatScore } from '@app/common/format'
 import { useDebounce } from 'use-debounce'
 import { useSessionOrRedirect } from '@app/common/session'
+import { useEffect } from 'react'
 
 interface Props {
   registrations: ContestRegistrationsView
@@ -49,6 +50,7 @@ export const LogForm = ({
     resolver: zodResolver(NewLogFormSchema),
     defaultValues,
   })
+  methods.trigger
   const [session] = useSessionOrRedirect()
 
   const trackingMode = methods.watch('tracking_mode') ?? 'personal'
@@ -62,7 +64,7 @@ export const LogForm = ({
       ? options.languages
       : registrations.flatMap(it => it.languages)
   const tags = filterTags(options.tags, activity)
-  const units = filterUnits(options.units, activity, language)
+  const units = filterUnits(options.units, activity?.id, language)
   const activities = filterActivities(
     options.activities,
     registrations,
@@ -85,6 +87,19 @@ export const LogForm = ({
   const onSubmit = (data: any) => {
     createLog(NewLogAPISchema.parse(data))
   }
+
+  useEffect(() => {
+    const subscription = methods.watch((value, { name, type }) => {
+      // reset unit if activity was chnged
+      if (name === 'activity' && type === 'change') {
+        methods.setValue(
+          'unit',
+          filterUnits(options.units, value.activity?.id, language)?.[0],
+        )
+      }
+    })
+    return () => subscription.unsubscribe()
+  }, [methods.watch])
 
   return (
     <FormProvider {...methods}>

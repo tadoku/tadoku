@@ -71,10 +71,18 @@ export const ContestRegistrationForm = ({ contest, data }: Props) => {
   const allLanguages = contest.allowed_languages === null
   const options = useContestConfigurationOptions({ enabled: allLanguages })
 
+  if (!contest.id) {
+    return (
+      <Flash style="error" IconComponent={ExclamationCircleIcon}>
+        Could not load contest.
+      </Flash>
+    )
+  }
+
   const defaultValues = {
-    contestId: contest.id,
+    contest_id: contest.id,
     languages: data?.languages,
-    newLanguages: data?.languages ?? [],
+    new_languages: data?.languages ?? [],
   }
 
   const methods = useForm<ContestRegistrationFormSchema>({
@@ -97,7 +105,7 @@ export const ContestRegistrationForm = ({ contest, data }: Props) => {
   if (allLanguages && options.isError) {
     return (
       <Flash style="error" IconComponent={ExclamationCircleIcon}>
-        Could not fetch contest configuration, please try again later.
+        Could not load contest configuration, please try again later.
       </Flash>
     )
   }
@@ -117,7 +125,7 @@ export const ContestRegistrationForm = ({ contest, data }: Props) => {
             Contest registration: {contest.description}
           </h2>
           <AutocompleteMultiInput
-            name="newLanguages"
+            name="new_languages"
             label="Languages"
             hint="Select up to 3 languages"
             options={

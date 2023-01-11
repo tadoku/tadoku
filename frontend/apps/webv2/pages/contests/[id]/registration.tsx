@@ -71,7 +71,7 @@ const Page = () => {
         Unfortunately, registrations for this contest have ended.
       </Flash>
 
-      {registration.isLoading ? (
+      {registration.isLoading || registration.isIdle ? (
         'Loading...'
       ) : (
         <ContestRegistrationForm

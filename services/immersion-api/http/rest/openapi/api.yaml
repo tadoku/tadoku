@@ -97,6 +97,20 @@ paths:
                 $ref: '#/components/schemas/ContestView'
         '404':
           description: not found
+  /contests/latest-official:
+    get:
+      summary: Fetches the latest official contest
+      operationId: contestFindLatestOfficial
+      tags: [contests]
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContestView'
+        '404':
+          description: not found
   /contests/{id}/registration:
     get:
       summary: Fetches a contest registration if it exists

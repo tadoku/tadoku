@@ -239,6 +239,9 @@ type ServerInterface interface {
 	// Fetches the configuration options for a new contest
 	// (GET /contests/configuration-options)
 	ContestGetConfigurations(ctx echo.Context) error
+	// Fetches the latest official contest
+	// (GET /contests/latest-official)
+	ContestFindLatestOfficial(ctx echo.Context) error
 	// Fetches all the ongoing contest registrations of the logged in user, always in a single page
 	// (GET /contests/ongoing-registrations)
 	ContestFindOngoingRegistrations(ctx echo.Context) error
@@ -335,6 +338,15 @@ func (w *ServerInterfaceWrapper) ContestGetConfigurations(ctx echo.Context) erro
 
 	// Invoke the callback with all the unmarshalled arguments
 	err = w.Handler.ContestGetConfigurations(ctx)
+	return err
+}
+
+// ContestFindLatestOfficial converts echo context to params.
+func (w *ServerInterfaceWrapper) ContestFindLatestOfficial(ctx echo.Context) error {
+	var err error
+
+	// Invoke the callback with all the unmarshalled arguments
+	err = w.Handler.ContestFindLatestOfficial(ctx)
 	return err
 }
 
@@ -511,6 +523,7 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 	router.GET(baseURL+"/contests", wrapper.ContestList)
 	router.POST(baseURL+"/contests", wrapper.ContestCreate)
 	router.GET(baseURL+"/contests/configuration-options", wrapper.ContestGetConfigurations)
+	router.GET(baseURL+"/contests/latest-official", wrapper.ContestFindLatestOfficial)
 	router.GET(baseURL+"/contests/ongoing-registrations", wrapper.ContestFindOngoingRegistrations)
 	router.GET(baseURL+"/contests/:id", wrapper.ContestFindByID)
 	router.GET(baseURL+"/contests/:id/leaderboard", wrapper.ContestFetchLeaderboard)

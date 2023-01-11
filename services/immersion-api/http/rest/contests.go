@@ -394,3 +394,9 @@ func (s *Server) ContestFindOngoingRegistrations(ctx echo.Context) error {
 
 	return ctx.JSON(http.StatusOK, res)
 }
+
+// Fetches the latest official contest
+// (GET /contests/latest-official)
+func (s *Server) ContestFindLatestOfficial(ctx echo.Context) error {
+	return nil
+}

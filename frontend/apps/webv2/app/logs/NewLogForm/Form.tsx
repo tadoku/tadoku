@@ -79,7 +79,7 @@ export const LogForm = ({
       return router.replace(routes.userProfile(userId))
     }
 
-    router.replace(routes.leaderboard())
+    router.replace(routes.leaderboardLatestOfficial())
   })
 
   const [createLog] = useDebounce(createLogMutation.mutate, 2500)

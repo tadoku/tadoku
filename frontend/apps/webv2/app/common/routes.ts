@@ -25,7 +25,8 @@ export const routes = {
 
   logCreate: () => `/logs/new`,
 
-  leaderboard: (page?: Page) => `/leaderboard/${page ?? '1'}`,
+  leaderboardLatestOfficial: (page?: Page) =>
+    `/leaderboard/latest/${page ?? '1'}`,
 
   userProfile: (id: string) => `/profile/${id}`,
 

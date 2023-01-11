@@ -56,7 +56,9 @@ export default function Footer() {
                 <Link href={routes.home()}>Homepage</Link>
               </li>
               <li>
-                <Link href={routes.leaderboard()}>Leaderboard</Link>
+                <Link href={routes.leaderboardLatestOfficial()}>
+                  Leaderboard
+                </Link>
               </li>
               <li>
                 <Link href={routes.contestListOfficial()}>Contests</Link>

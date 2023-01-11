@@ -70,7 +70,7 @@ export default function Navigation() {
         {
           type: 'link',
           label: 'Leaderboard',
-          href: routes.leaderboard(),
+          href: routes.leaderboardLatestOfficial(),
           current: false,
         },
         {

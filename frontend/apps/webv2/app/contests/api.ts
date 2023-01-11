@@ -164,6 +164,21 @@ export const useContest = (id: string, options?: { enabled?: boolean }) =>
     options,
   )
 
+export const useLatestOfficialContest = (options?: { enabled?: boolean }) =>
+  useQuery(
+    ['contest', 'findLatestOfficial'],
+    async (): Promise<ContestView> => {
+      const response = await fetch(`${root}/latest-official`)
+
+      if (response.status !== 200) {
+        throw new Error('could not fetch page')
+      }
+
+      return ContestView.parse(await response.json())
+    },
+    options,
+  )
+
 export const ContestRegistrationView = z.object({
   id: z.string(),
   contest_id: z.string(),

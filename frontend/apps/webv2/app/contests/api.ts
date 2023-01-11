@@ -175,7 +175,7 @@ export const ContestRegistrationView = z.object({
       name: z.string(),
     }),
   ),
-  contest: ContestView.nullable(),
+  contest: ContestView.nullable().optional(),
 })
 
 export type ContestRegistrationView = z.infer<typeof ContestRegistrationView>

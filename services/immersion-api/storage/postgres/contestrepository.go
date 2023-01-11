@@ -132,6 +132,10 @@ func (r *ContestRepository) FetchContestConfigurationOptions(ctx context.Context
 	return &options, err
 }
 
+func (r *ContestRepository) FindLatestOfficial(context.Context) (*contestquery.ContestView, error) {
+	return nil, nil
+}
+
 func (r *ContestRepository) FindByID(ctx context.Context, req *contestquery.FindByIDRequest) (*contestquery.ContestView, error) {
 	contest, err := r.q.FindContestById(ctx, FindContestByIdParams{
 		ID:             req.ID,

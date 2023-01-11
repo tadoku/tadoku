@@ -17,6 +17,7 @@ var ErrUnauthorized = errors.New("unauthorized")
 type ContestRepository interface {
 	FetchContestConfigurationOptions(ctx context.Context) (*FetchContestConfigurationOptionsResponse, error)
 	FindByID(context.Context, *FindByIDRequest) (*ContestView, error)
+	FindLatestOfficial(context.Context) (*ContestView, error)
 	ListContests(context.Context, *ContestListRequest) (*ContestListResponse, error)
 	FindRegistrationForUser(context.Context, *FindRegistrationForUserRequest) (*ContestRegistration, error)
 	FetchContestLeaderboard(context.Context, *FetchContestLeaderboardRequest) (*Leaderboard, error)
@@ -26,6 +27,7 @@ type ContestRepository interface {
 type Service interface {
 	FetchContestConfigurationOptions(ctx context.Context) (*FetchContestConfigurationOptionsResponse, error)
 	FindByID(context.Context, *FindByIDRequest) (*ContestView, error)
+	FindLatestOfficial(context.Context) (*ContestView, error)
 	ListContests(context.Context, *ContestListRequest) (*ContestListResponse, error)
 	FindRegistrationForUser(context.Context, *FindRegistrationForUserRequest) (*ContestRegistration, error)
 	FetchContestLeaderboard(context.Context, *FetchContestLeaderboardRequest) (*Leaderboard, error)
@@ -239,4 +241,8 @@ func (s *service) FetchOngoingContestRegistrations(ctx context.Context, req *Fet
 	req.Now = s.clock.Now()
 
 	return s.r.FetchOngoingContestRegistrations(ctx, req)
+}
+
+func (s *service) FindLatestOfficial(ctx context.Context) (*ContestView, error) {
+	return s.r.FindLatestOfficial(ctx)
 }

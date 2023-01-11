@@ -164,6 +164,51 @@ func (q *Queries) FindContestById(ctx context.Context, arg FindContestByIdParams
 	return i, err
 }
 
+const findLatestOfficialContest = `-- name: FindLatestOfficialContest :one
+select
+  id,
+  owner_user_id,
+  owner_user_display_name,
+  "private",
+  contest_start,
+  contest_end,
+  registration_end,
+  "description",
+  language_code_allow_list,
+  activity_type_id_allow_list,
+  official,
+  created_at,
+  updated_at,
+  deleted_at
+from contests
+where
+  official = true
+order by contest_start desc
+limit 1
+`
+
+func (q *Queries) FindLatestOfficialContest(ctx context.Context) (Contest, error) {
+	row := q.db.QueryRowContext(ctx, findLatestOfficialContest)
+	var i Contest
+	err := row.Scan(
+		&i.ID,
+		&i.OwnerUserID,
+		&i.OwnerUserDisplayName,
+		&i.Private,
+		&i.ContestStart,
+		&i.ContestEnd,
+		&i.RegistrationEnd,
+		&i.Description,
+		pq.Array(&i.LanguageCodeAllowList),
+		pq.Array(&i.ActivityTypeIDAllowList),
+		&i.Official,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.DeletedAt,
+	)
+	return i, err
+}
+
 const listContests = `-- name: ListContests :many
 select
   id,

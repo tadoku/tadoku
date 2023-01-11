@@ -102,3 +102,25 @@ where
   (sqlc.arg('include_deleted')::boolean or deleted_at is null)
   and (owner_user_id = sqlc.narg('user_id') or sqlc.narg('user_id') is null)
   and (official = sqlc.arg('official'));
+
+-- name: FindLatestOfficialContest :one
+select
+  id,
+  owner_user_id,
+  owner_user_display_name,
+  "private",
+  contest_start,
+  contest_end,
+  registration_end,
+  "description",
+  language_code_allow_list,
+  activity_type_id_allow_list,
+  official,
+  created_at,
+  updated_at,
+  deleted_at
+from contests
+where
+  official = true
+order by contest_start desc
+limit 1;

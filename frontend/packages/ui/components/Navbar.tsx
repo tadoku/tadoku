@@ -15,6 +15,7 @@ export interface NavigationDropDownProps {
     href: string
     IconComponent?: ComponentType<any>
     onClick?: () => void
+    divider?: boolean
   }[]
 }
 
@@ -166,15 +167,18 @@ const DropDown = ({ label, links }: NavigationDropDownProps) => (
         leaveTo="transform opacity-0 scale-95"
       >
         <Menu.Items className="absolute right-0 z-10 mt-2 origin-top-right bg-white py-1 shadow-md shadow-slate-500/20 ring-1 ring-secondary ring-opacity-5 focus:outline-none">
-          {links.map(({ label, href, IconComponent, onClick }, i) => (
+          {links.map(({ label, href, IconComponent, onClick, divider }, i) => (
             <Menu.Item key={i}>
               {({ active }) => (
                 <Link
                   href={href}
                   onClick={onClick}
                   className={classNames(
-                    active ? 'bg-secondary !text-white' : '',
                     'reset whitespace-nowrap flex-inline transition-[background-color] items-center px-3 py-2 text-sm text-gray-700 flex font-bold',
+                    {
+                      'bg-secondary !text-white': active,
+                      'border-b border-slate-500/20': !!divider,
+                    },
                   )}
                 >
                   {IconComponent && <IconComponent className="w-4 h-4 mr-3" />}{' '}

@@ -47,23 +47,15 @@ const Page = () => {
           links={[
             { label: 'Home', href: routes.home(), IconComponent: HomeIcon },
             {
-              label: contest.data.official
-                ? 'Official contests'
-                : 'User contests',
-              href: contest.data.official
-                ? routes.contestListOfficial()
-                : routes.contestListUserContests(),
-            },
-            {
-              label: contest.data.description,
-              href: routes.contestLeaderboard(id),
+              label: 'Leaderboard',
+              href: routes.leaderboardLatestOfficial(),
             },
           ]}
         />
       </div>
       <div className="h-stack justify-between items-center w-full">
         <div>
-          <h1 className="title">Contest</h1>
+          <h1 className="title">Leaderboard</h1>
           <h2 className="subtitle">{contest.data.description}</h2>
         </div>
         <div>
@@ -92,19 +84,19 @@ const Page = () => {
         links={[
           {
             active: true,
-            href: routes.contestLeaderboard(id),
-            label: 'Leaderboard',
+            href: routes.leaderboardLatestOfficial(),
+            label: 'Latest',
           },
           {
             active: false,
-            href: routes.contestLeaderboard(id),
-            label: 'Statistics',
+            href: routes.leaderboardLatestOfficial(),
+            label: 'Yearly',
             disabled: true,
           },
           {
             active: false,
-            href: routes.contestLeaderboard(id),
-            label: 'Logs',
+            href: routes.leaderboardLatestOfficial(),
+            label: 'Overall',
             disabled: true,
           },
         ]}

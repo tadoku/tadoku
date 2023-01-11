@@ -142,7 +142,7 @@ const ContestView = z.object({
   official: z.boolean(),
   owner_user_id: z.string().nullable().optional(),
   owner_user_display_name: z.string().nullable().optional(),
-  allowed_languages: z.array(Language),
+  allowed_languages: z.array(Language).nullable().optional(),
   allowed_activities: z.array(Activity),
   deleted: z.boolean().nullable().optional(),
 })

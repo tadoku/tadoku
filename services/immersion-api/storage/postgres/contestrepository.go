@@ -132,8 +132,62 @@ func (r *ContestRepository) FetchContestConfigurationOptions(ctx context.Context
 	return &options, err
 }
 
-func (r *ContestRepository) FindLatestOfficial(context.Context) (*contestquery.ContestView, error) {
-	return nil, nil
+func (r *ContestRepository) FindLatestOfficial(ctx context.Context) (*contestquery.ContestView, error) {
+	contest, err := r.q.FindLatestOfficialContest(ctx)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, contestquery.ErrNotFound
+		}
+
+		return nil, fmt.Errorf("could not fetch contest: %w", err)
+	}
+
+	activities, err := r.q.ListActivitiesForContest(ctx, contest.ID)
+	if err != nil {
+		return nil, fmt.Errorf("could not fetch contest: %w", err)
+	}
+
+	acts := make([]contestquery.Activity, len(activities))
+	for i, a := range activities {
+		acts[i] = contestquery.Activity{
+			ID:   a.ID,
+			Name: a.Name,
+		}
+	}
+
+	langs := []contestquery.Language{}
+
+	if len(contest.LanguageCodeAllowList) > 0 {
+		languages, err := r.q.ListLanguagesForContest(ctx, contest.ID)
+		if err != nil {
+			return nil, fmt.Errorf("could not fetch contest: %w", err)
+		}
+
+		langs = make([]contestquery.Language, len(languages))
+		for i, a := range languages {
+			langs[i] = contestquery.Language{
+				Code: a.Code,
+				Name: a.Name,
+			}
+		}
+	}
+
+	return &contestquery.ContestView{
+		ID:                   contest.ID,
+		ContestStart:         contest.ContestStart,
+		ContestEnd:           contest.ContestEnd,
+		RegistrationEnd:      contest.RegistrationEnd,
+		Description:          contest.Description,
+		OwnerUserID:          contest.OwnerUserID,
+		OwnerUserDisplayName: contest.OwnerUserDisplayName,
+		Official:             contest.Official,
+		Private:              contest.Private,
+		AllowedLanguages:     langs,
+		AllowedActivities:    acts,
+		CreatedAt:            contest.CreatedAt,
+		UpdatedAt:            contest.UpdatedAt,
+		Deleted:              contest.DeletedAt.Valid,
+	}, nil
 }
 
 func (r *ContestRepository) FindByID(ctx context.Context, req *contestquery.FindByIDRequest) (*contestquery.ContestView, error) {

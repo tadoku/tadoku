@@ -335,7 +335,10 @@ func (r *ContestRepository) FetchContestLeaderboard(ctx context.Context, req *co
 		}
 	}
 
-	totalSize := entries[0].TotalSize
+	var totalSize int64
+	if len(entries) > 0 {
+		totalSize = entries[0].TotalSize
+	}
 	nextPageToken := ""
 	if (req.Page*req.PageSize)+req.PageSize < int(totalSize) {
 		nextPageToken = fmt.Sprint(req.Page + 1)

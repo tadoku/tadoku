@@ -18,18 +18,18 @@ insert into contest_logs (
   contest_id,
   log_id
 ) values (
-  $1,
+  (select contest_id from contest_registrations where id = $1),
   $2
 )
 `
 
 type CreateContestLogRelationParams struct {
-	ContestID uuid.UUID
-	LogID     uuid.UUID
+	RegistrationID uuid.UUID
+	LogID          uuid.UUID
 }
 
 func (q *Queries) CreateContestLogRelation(ctx context.Context, arg CreateContestLogRelationParams) error {
-	_, err := q.db.ExecContext(ctx, createContestLogRelation, arg.ContestID, arg.LogID)
+	_, err := q.db.ExecContext(ctx, createContestLogRelation, arg.RegistrationID, arg.LogID)
 	return err
 }
 

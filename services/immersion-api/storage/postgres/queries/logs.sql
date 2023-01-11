@@ -28,6 +28,6 @@ insert into contest_logs (
   contest_id,
   log_id
 ) values (
-  sqlc.arg('contest_id'),
+  (select contest_id from contest_registrations where id = sqlc.arg('registration_id')),
   sqlc.arg('log_id')
 );

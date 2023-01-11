@@ -60,10 +60,10 @@ func (r *LogRepository) CreateLog(ctx context.Context, req *logcommand.LogCreate
 		return fmt.Errorf("could not create log: %w", err)
 	}
 
-	for _, contestID := range req.RegistrationIDs {
+	for _, registrationID := range req.RegistrationIDs {
 		if err = qtx.CreateContestLogRelation(ctx, CreateContestLogRelationParams{
-			ContestID: contestID,
-			LogID:     id,
+			RegistrationID: registrationID,
+			LogID:          id,
 		}); err != nil {
 			_ = tx.Rollback()
 			return fmt.Errorf("could not create log: %w", err)

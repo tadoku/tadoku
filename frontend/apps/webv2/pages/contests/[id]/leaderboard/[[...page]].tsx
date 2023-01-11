@@ -1,26 +1,13 @@
-import { useCurrentDateTime, useCurrentLocation } from '@app/common/hooks'
+import { useCurrentDateTime } from '@app/common/hooks'
 import { useSession } from '@app/common/session'
-import {
-  useContest,
-  useContestLeaderboard,
-  useContestRegistration,
-} from '@app/contests/api'
-import Link from 'next/link'
+import { useContest, useContestRegistration } from '@app/contests/api'
 import { useRouter } from 'next/router'
-import { Breadcrumb, ButtonGroup, Flash, Pagination, Tabbar } from 'ui'
+import { Breadcrumb, ButtonGroup, Tabbar } from 'ui'
 import { DateTime, Interval } from 'luxon'
-import { useEffect, useState } from 'react'
-import { ContestOverview } from '@app/contests/ContestOverview'
-import {
-  ExclamationCircleIcon,
-  HomeIcon,
-  InformationCircleIcon,
-} from '@heroicons/react/20/solid'
-import { ContestConfiguration } from '@app/contests/ContestConfiguration'
+import { HomeIcon } from '@heroicons/react/20/solid'
 import { PencilSquareIcon, PlusIcon } from '@heroicons/react/24/solid'
 import { routes } from '@app/common/routes'
-import { getQueryStringIntParameter } from '@app/common/router'
-import { Leaderboard } from '@app/contests/Leaderboard'
+import { ContestLeaderboard } from '@app/contests/ContestLeaderboard'
 
 const Page = () => {
   const router = useRouter()
@@ -30,24 +17,8 @@ const Page = () => {
 
   const contest = useContest(id)
   const [session] = useSession()
-  const currentUrl = useCurrentLocation()
 
   const registration = useContestRegistration(id, { enabled: !!session })
-
-  const newFilter = () => {
-    return {
-      contestId: id,
-      page: getQueryStringIntParameter(router.query.page, 1),
-      pageSize: 50,
-    }
-  }
-
-  const [filters, setFilters] = useState(() => newFilter())
-  const leaderboard = useContestLeaderboard(filters)
-
-  useEffect(() => {
-    setFilters(newFilter())
-  }, [router.asPath])
 
   if (contest.isLoading || contest.isIdle) {
     return <p>Loading...</p>
@@ -68,13 +39,6 @@ const Page = () => {
   const hasEnded = contestInterval.isBefore(now)
   const hasStarted = contestInterval.contains(now) || hasEnded
   const isOngoing = hasStarted && !hasEnded
-  const registrationClosed = Interval.fromDateTimes(
-    DateTime.fromISO(contest.data.contest_start),
-    DateTime.fromISO(contest.data.registration_end),
-  ).isBefore(now)
-
-  const showPagination =
-    leaderboard.data && leaderboard.data.total_size > filters.pageSize
 
   return (
     <>
@@ -145,81 +109,11 @@ const Page = () => {
           },
         ]}
       />
-      <Flash
-        style="info"
-        href={routes.authLogin(currentUrl)}
-        IconComponent={InformationCircleIcon}
-        className="mt-4"
-        visible={!session && !hasEnded}
-      >
-        You need to log in to participate in this contest.
-      </Flash>
-      <Flash
-        style="warning"
-        IconComponent={ExclamationCircleIcon}
-        className="mt-4"
-        visible={hasEnded}
-      >
-        This contest has already ended and does not accept any new participants.
-      </Flash>
-      <div className="flex mt-4 space-x-4">
-        <div className="flex-grow">
-          <Leaderboard contestId={id} leaderboard={leaderboard} />
-          {showPagination ? (
-            <div className="mt-4">
-              <Pagination
-                currentPage={filters.page}
-                totalPages={Math.ceil(
-                  leaderboard.data.total_size / filters.pageSize,
-                )}
-                getHref={page => routes.contestLeaderboard(id, page)}
-              />
-            </div>
-          ) : null}
-        </div>
-        <div className="w-[25%] space-y-4">
-          <ContestOverview
-            contest={contest.data}
-            hasStarted={hasStarted}
-            hasEnded={hasEnded}
-            registrationClosed={registrationClosed}
-            now={now}
-          />
-
-          <ContestConfiguration contest={contest.data} />
-
-          <div className="card">
-            <div className="-m-7 py-4 px-4 text-sm">
-              <h3 className="subtitle text-sm mb-2">Contest summary</h3>
-              <strong>100</strong> participants immersing in <strong>12</strong>{' '}
-              languages for a total score of <strong>9000</strong>.
-            </div>
-          </div>
-
-          {hasStarted && !hasEnded && false ? (
-            <div className="card">
-              <div className="-m-7 pt-4 px-4 text-sm">
-                <h3 className="subtitle text-sm">Recent updates</h3>
-                <ul className="divide-y-2 divide-slate-500/5 -mx-4">
-                  {[].map(u => (
-                    <li key={`${u[0]}-${u[1]}`}>
-                      <Link
-                        href="#"
-                        className="reset px-4 py-2 flex justify-between items-center hover:bg-slate-500/5"
-                      >
-                        <span className="font-bold text-base">{u[0]}</span>
-                        <span className="font-bold text-lime-700 text-lg">
-                          +{u[1]}
-                        </span>
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </div>
-          ) : null}
-        </div>
-      </div>
+      <ContestLeaderboard
+        contest={contest.data}
+        id={id}
+        routeForPage={page => routes.contestLeaderboard(id, page)}
+      />
     </>
   )
 }

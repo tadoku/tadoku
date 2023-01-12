@@ -7,6 +7,7 @@ insert into contests (
   contest_start,
   contest_end,
   registration_end,
+  title,
   "description",
   language_code_allow_list,
   activity_type_id_allow_list
@@ -18,6 +19,7 @@ insert into contests (
   sqlc.arg('contest_start'),
   sqlc.arg('contest_end'),
   sqlc.arg('registration_end'),
+  sqlc.arg('title'),
   sqlc.arg('description'),
   sqlc.arg('language_code_allow_list'),
   sqlc.arg('activity_type_id_allow_list')
@@ -30,6 +32,7 @@ set
   contest_start = sqlc.arg('contest_start'),
   contest_end = sqlc.arg('contest_end'),
   registration_end = sqlc.arg('registration_end'),
+  title = sqlc.arg('title'),
   "description" = sqlc.arg('description'),
   updated_at = now()
 where
@@ -54,6 +57,7 @@ select
   contest_start,
   contest_end,
   registration_end,
+  title,
   "description",
   language_code_allow_list,
   activity_type_id_allow_list,
@@ -80,6 +84,7 @@ select
   contest_start,
   contest_end,
   registration_end,
+  title,
   "description",
   language_code_allow_list,
   activity_type_id_allow_list,
@@ -112,6 +117,7 @@ select
   contest_start,
   contest_end,
   registration_end,
+  title,
   "description",
   language_code_allow_list,
   activity_type_id_allow_list,

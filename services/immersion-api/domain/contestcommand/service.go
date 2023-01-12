@@ -49,8 +49,9 @@ type ContestCreateRequest struct {
 	ContestStart            time.Time `validate:"required"`
 	ContestEnd              time.Time `validate:"required"`
 	RegistrationEnd         time.Time `validate:"required"`
-	Description             string    `validate:"required,gt=3"`
-	ActivityTypeIDAllowList []int32   `validate:"required,min=1"`
+	Title                   string    `validate:"required,gt=3"`
+	Description             *string
+	ActivityTypeIDAllowList []int32 `validate:"required,min=1"`
 
 	// Optional
 	Official              bool
@@ -63,7 +64,8 @@ type ContestCreateResponse struct {
 	ContestStart            time.Time
 	ContestEnd              time.Time
 	RegistrationEnd         time.Time
-	Description             string
+	Title                   string
+	Description             *string
 	OwnerUserID             uuid.UUID
 	OwnerUserDisplayName    string
 	Official                bool

@@ -43,6 +43,7 @@ select
   contests.contest_start,
   contests.contest_end,
   contests.private,
+  contests.title,
   contests.description
 from contest_registrations
 inner join contests

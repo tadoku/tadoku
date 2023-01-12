@@ -7,6 +7,7 @@ package postgres
 
 import (
 	"context"
+	"database/sql"
 	"time"
 
 	"github.com/google/uuid"
@@ -65,6 +66,7 @@ select
   contests.contest_start,
   contests.contest_end,
   contests.private,
+  contests.title,
   contests.description
 from contest_registrations
 inner join contests
@@ -92,7 +94,8 @@ type FindOngoingContestRegistrationForUserRow struct {
 	ContestStart            time.Time
 	ContestEnd              time.Time
 	Private                 bool
-	Description             string
+	Title                   string
+	Description             sql.NullString
 }
 
 func (q *Queries) FindOngoingContestRegistrationForUser(ctx context.Context, arg FindOngoingContestRegistrationForUserParams) ([]FindOngoingContestRegistrationForUserRow, error) {
@@ -115,6 +118,7 @@ func (q *Queries) FindOngoingContestRegistrationForUser(ctx context.Context, arg
 			&i.ContestStart,
 			&i.ContestEnd,
 			&i.Private,
+			&i.Title,
 			&i.Description,
 		); err != nil {
 			return nil, err

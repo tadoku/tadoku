@@ -7,6 +7,7 @@ package postgres
 
 import (
 	"context"
+	"database/sql"
 	"time"
 
 	"github.com/google/uuid"
@@ -66,6 +67,7 @@ insert into contests (
   contest_start,
   contest_end,
   registration_end,
+  title,
   "description",
   language_code_allow_list,
   activity_type_id_allow_list
@@ -79,7 +81,8 @@ insert into contests (
   $7,
   $8,
   $9,
-  $10
+  $10,
+  $11
 ) returning id
 `
 
@@ -91,7 +94,8 @@ type CreateContestParams struct {
 	ContestStart            time.Time
 	ContestEnd              time.Time
 	RegistrationEnd         time.Time
-	Description             string
+	Title                   string
+	Description             sql.NullString
 	LanguageCodeAllowList   []string
 	ActivityTypeIDAllowList []int32
 }
@@ -105,6 +109,7 @@ func (q *Queries) CreateContest(ctx context.Context, arg CreateContestParams) (u
 		arg.ContestStart,
 		arg.ContestEnd,
 		arg.RegistrationEnd,
+		arg.Title,
 		arg.Description,
 		pq.Array(arg.LanguageCodeAllowList),
 		pq.Array(arg.ActivityTypeIDAllowList),
@@ -123,6 +128,7 @@ select
   contest_start,
   contest_end,
   registration_end,
+  title,
   "description",
   language_code_allow_list,
   activity_type_id_allow_list,
@@ -153,6 +159,7 @@ func (q *Queries) FindContestById(ctx context.Context, arg FindContestByIdParams
 		&i.ContestStart,
 		&i.ContestEnd,
 		&i.RegistrationEnd,
+		&i.Title,
 		&i.Description,
 		pq.Array(&i.LanguageCodeAllowList),
 		pq.Array(&i.ActivityTypeIDAllowList),
@@ -173,6 +180,7 @@ select
   contest_start,
   contest_end,
   registration_end,
+  title,
   "description",
   language_code_allow_list,
   activity_type_id_allow_list,
@@ -198,6 +206,7 @@ func (q *Queries) FindLatestOfficialContest(ctx context.Context) (Contest, error
 		&i.ContestStart,
 		&i.ContestEnd,
 		&i.RegistrationEnd,
+		&i.Title,
 		&i.Description,
 		pq.Array(&i.LanguageCodeAllowList),
 		pq.Array(&i.ActivityTypeIDAllowList),
@@ -218,6 +227,7 @@ select
   contest_start,
   contest_end,
   registration_end,
+  title,
   "description",
   language_code_allow_list,
   activity_type_id_allow_list,
@@ -269,6 +279,7 @@ func (q *Queries) ListContests(ctx context.Context, arg ListContestsParams) ([]C
 			&i.ContestStart,
 			&i.ContestEnd,
 			&i.RegistrationEnd,
+			&i.Title,
 			&i.Description,
 			pq.Array(&i.LanguageCodeAllowList),
 			pq.Array(&i.ActivityTypeIDAllowList),
@@ -297,10 +308,11 @@ set
   contest_start = $2,
   contest_end = $3,
   registration_end = $4,
-  "description" = $5,
+  title = $5,
+  "description" = $6,
   updated_at = now()
 where
-  id = $6
+  id = $7
   and deleted_at is null
 returning id
 `
@@ -310,7 +322,8 @@ type UpdateContestParams struct {
 	ContestStart    time.Time
 	ContestEnd      time.Time
 	RegistrationEnd time.Time
-	Description     string
+	Title           string
+	Description     sql.NullString
 	ID              uuid.UUID
 }
 
@@ -320,6 +333,7 @@ func (q *Queries) UpdateContest(ctx context.Context, arg UpdateContestParams) (u
 		arg.ContestStart,
 		arg.ContestEnd,
 		arg.RegistrationEnd,
+		arg.Title,
 		arg.Description,
 		arg.ID,
 	)

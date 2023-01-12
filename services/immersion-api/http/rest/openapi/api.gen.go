@@ -36,7 +36,7 @@ type Contest struct {
 	ContestStart            openapi_types.Date  `json:"contest_start"`
 	CreatedAt               *time.Time          `json:"created_at,omitempty"`
 	Deleted                 *bool               `json:"deleted,omitempty"`
-	Description             string              `json:"description"`
+	Description             *string             `json:"description,omitempty"`
 	Id                      *openapi_types.UUID `json:"id,omitempty"`
 	LanguageCodeAllowList   []string            `json:"language_code_allow_list"`
 	Official                bool                `json:"official"`
@@ -44,6 +44,7 @@ type Contest struct {
 	OwnerUserId             *openapi_types.UUID `json:"owner_user_id,omitempty"`
 	Private                 bool                `json:"private"`
 	RegistrationEnd         openapi_types.Date  `json:"registration_end"`
+	Title                   string              `json:"title"`
 	UpdatedAt               *time.Time          `json:"updated_at,omitempty"`
 }
 
@@ -53,13 +54,14 @@ type ContestBase struct {
 	ContestStart         openapi_types.Date  `json:"contest_start"`
 	CreatedAt            *time.Time          `json:"created_at,omitempty"`
 	Deleted              *bool               `json:"deleted,omitempty"`
-	Description          string              `json:"description"`
+	Description          *string             `json:"description,omitempty"`
 	Id                   *openapi_types.UUID `json:"id,omitempty"`
 	Official             bool                `json:"official"`
 	OwnerUserDisplayName *string             `json:"owner_user_display_name,omitempty"`
 	OwnerUserId          *openapi_types.UUID `json:"owner_user_id,omitempty"`
 	Private              bool                `json:"private"`
 	RegistrationEnd      openapi_types.Date  `json:"registration_end"`
+	Title                string              `json:"title"`
 	UpdatedAt            *time.Time          `json:"updated_at,omitempty"`
 }
 
@@ -96,13 +98,14 @@ type ContestView struct {
 	ContestStart         openapi_types.Date  `json:"contest_start"`
 	CreatedAt            *time.Time          `json:"created_at,omitempty"`
 	Deleted              *bool               `json:"deleted,omitempty"`
-	Description          string              `json:"description"`
+	Description          *string             `json:"description,omitempty"`
 	Id                   *openapi_types.UUID `json:"id,omitempty"`
 	Official             bool                `json:"official"`
 	OwnerUserDisplayName *string             `json:"owner_user_display_name,omitempty"`
 	OwnerUserId          *openapi_types.UUID `json:"owner_user_id,omitempty"`
 	Private              bool                `json:"private"`
 	RegistrationEnd      openapi_types.Date  `json:"registration_end"`
+	Title                string              `json:"title"`
 	UpdatedAt            *time.Time          `json:"updated_at,omitempty"`
 }
 

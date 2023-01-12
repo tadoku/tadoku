@@ -19,7 +19,8 @@ type Contest struct {
 	ContestStart            time.Time
 	ContestEnd              time.Time
 	RegistrationEnd         time.Time
-	Description             string
+	Title                   string
+	Description             sql.NullString
 	LanguageCodeAllowList   []string
 	ActivityTypeIDAllowList []int32
 	Official                bool

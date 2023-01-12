@@ -86,7 +86,8 @@ type ContestView struct {
 	ContestStart         time.Time
 	ContestEnd           time.Time
 	RegistrationEnd      time.Time
-	Description          string
+	Title                string
+	Description          *string
 	OwnerUserID          uuid.UUID
 	OwnerUserDisplayName string
 	Official             bool
@@ -129,7 +130,8 @@ type Contest struct {
 	ContestStart            time.Time
 	ContestEnd              time.Time
 	RegistrationEnd         time.Time
-	Description             string
+	Title                   string
+	Description             *string
 	OwnerUserID             uuid.UUID
 	OwnerUserDisplayName    string
 	Official                bool

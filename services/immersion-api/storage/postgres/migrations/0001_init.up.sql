@@ -14,8 +14,8 @@ create table contests (
   contest_start date not null,
   contest_end date not null,
   registration_end date not null,
-
-  "description" varchar(255) not null,
+  title varchar(255) not null,
+  "description" text,
   language_code_allow_list varchar(10)[],
   activity_type_id_allow_list integer[] not null,
   official boolean not null,

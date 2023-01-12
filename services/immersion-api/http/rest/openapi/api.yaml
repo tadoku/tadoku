@@ -437,16 +437,18 @@ components:
         - contest_start
         - contest_end
         - registration_end
-        - description
+        - title
         - private
         - official
       properties:
         id:
           type: string
           format: uuid
-        description:
+        title:
           type: string
           example: 2023 Round 1
+        description:
+          type: string
         contest_start:
           type: string
           format: date

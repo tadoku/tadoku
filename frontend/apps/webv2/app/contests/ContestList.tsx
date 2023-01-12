@@ -49,7 +49,7 @@ export const ContestList = ({ list, options }: Props) => {
                       title="Private contest, only visible to those with the link"
                     />
                   ) : null}
-                  {c.description}
+                  {c.title}
                 </Link>
               </td>
               <td className="link">

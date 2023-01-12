@@ -121,9 +121,7 @@ export const ContestRegistrationForm = ({ contest, data }: Props) => {
         className="v-stack spaced max-w-screen-sm"
       >
         <div className="card v-stack spaced">
-          <h2 className="subtitle">
-            Contest registration: {contest.description}
-          </h2>
+          <h2 className="subtitle">Contest registration: {contest.title}</h2>
           <AutocompleteMultiInput
             name="new_languages"
             label="Languages"

@@ -121,7 +121,7 @@ export const LogForm = ({
                   label="Contest selection"
                   options={registrations}
                   match={(option, query) =>
-                    option.contest?.description
+                    option.contest?.title
                       .toLowerCase()
                       .replace(/[^a-zA-Z0-9]/g, '')
                       .includes(query.toLowerCase()) ?? false

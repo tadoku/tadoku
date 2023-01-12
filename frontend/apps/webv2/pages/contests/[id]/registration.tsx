@@ -56,7 +56,7 @@ const Page = () => {
                 : routes.contestListUserContests(),
             },
             {
-              label: contest.data.description,
+              label: contest.data.title,
               href: routes.contestLeaderboard(id),
             },
             { label: 'Registration', href: routes.contestJoin(id) },

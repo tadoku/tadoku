@@ -7,7 +7,7 @@ interface Props {
 export const ContestConfiguration = ({ contest }: Props) => (
   <div className="card text-sm">
     <div className="-m-7 pt-4 px-4 text-sm">
-      <h3 className="subtitle text-sm mb-2">Contest Configuration</h3>
+      <h3 className="subtitle text-sm mb-2">Configuration</h3>
       <div className="flex mb-2">
         <span className="w-1/2">Languages</span>
         <div>

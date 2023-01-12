@@ -100,11 +100,20 @@ export const ContestLeaderboard = ({ id, contest, routeForPage }: Props) => {
             now={now}
           />
 
+          {contest.description ? (
+            <div className="card">
+              <div className="-m-7 py-4 px-4 text-sm">
+                <h3 className="subtitle text-sm mb-2">Description</h3>
+                {contest.description}
+              </div>
+            </div>
+          ) : null}
+
           <ContestConfiguration contest={contest} />
 
           <div className="card">
             <div className="-m-7 py-4 px-4 text-sm">
-              <h3 className="subtitle text-sm mb-2">Contest summary</h3>
+              <h3 className="subtitle text-sm mb-2">Summary</h3>
               <strong>100</strong> participants immersing in <strong>12</strong>{' '}
               languages for a total score of <strong>9000</strong>.
             </div>

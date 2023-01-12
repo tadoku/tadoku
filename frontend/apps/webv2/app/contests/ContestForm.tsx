@@ -14,7 +14,10 @@ export const ContestFormSchema = z
     contest_end: z.string().regex(date),
     registration_end: z.string().regex(date),
     title: z.string().min(3, 'Title should be at least 3 characters'),
-    description: z.string().nullable().optional(),
+    description: z
+      .string()
+      .max(500, 'Description should be 500 characters or fewer')
+      .optional(),
     private: z.boolean(),
     official: z.boolean().optional().default(false),
     language_code_allow_list: z.array(

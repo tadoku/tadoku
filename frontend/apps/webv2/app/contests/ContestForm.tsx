@@ -1,4 +1,4 @@
-import { AutocompleteMultiInput, Input, Checkbox } from 'ui'
+import { AutocompleteMultiInput, Input, Checkbox, TextArea } from 'ui'
 import { FormProvider, useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -13,9 +13,8 @@ export const ContestFormSchema = z
     contest_start: z.string().regex(date),
     contest_end: z.string().regex(date),
     registration_end: z.string().regex(date),
-    description: z
-      .string()
-      .min(3, 'Contest name should be at least 3 characters'),
+    title: z.string().min(3, 'Title should be at least 3 characters'),
+    description: z.string().nullable().optional(),
     private: z.boolean(),
     official: z.boolean().optional().default(false),
     language_code_allow_list: z.array(
@@ -84,7 +83,16 @@ export const ContestForm = ({
         className="v-stack spaced max-w-screen-sm"
       >
         <div className="card">
-          <Input name="description" label="Contest name" type="text" />
+          <div className="v-stack spaced">
+            <h2 className="subtitle">Contest</h2>
+            <Input name="title" label="Title" type="text" />
+            <TextArea
+              name="description"
+              label="Description"
+              placeholder="Explain any extra rules or details about this contest, this will be visible on the contest leaderboard."
+              hint="Optional"
+            />
+          </div>
         </div>
         <div className="card">
           <div className="v-stack spaced">

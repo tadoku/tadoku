@@ -30,6 +30,7 @@ func (s *Server) ContestCreate(ctx echo.Context) error {
 		ContestStart:            req.ContestStart.Time,
 		ContestEnd:              req.ContestEnd.Time,
 		RegistrationEnd:         req.RegistrationEnd.Time,
+		Title:                   req.Title,
 		Description:             req.Description,
 		LanguageCodeAllowList:   req.LanguageCodeAllowList,
 		ActivityTypeIDAllowList: req.ActivityTypeIdAllowList,

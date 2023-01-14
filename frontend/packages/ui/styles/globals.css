@@ -241,6 +241,10 @@
     @apply h-5 w-5 inline;
   }
 
+  .btn.small > svg {
+    @apply h-4 w-4;
+  }
+
   a.btn {
     @apply inline-flex items-center justify-center w-fit hover:text-inherit active:text-inherit focus:text-inherit;
   }

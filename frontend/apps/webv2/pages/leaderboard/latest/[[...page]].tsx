@@ -1,5 +1,4 @@
 import { useCurrentDateTime } from '@app/common/hooks'
-import { useSession } from '@app/common/session'
 import {
   useContestRegistration,
   useLatestOfficialContest,
@@ -56,7 +55,7 @@ const Page = () => {
       <div className="h-stack justify-between items-center w-full">
         <div>
           <h1 className="title">Leaderboard</h1>
-          <h2 className="subtitle">{contest.data.description}</h2>
+          <h2 className="subtitle">{contest.data.title}</h2>
         </div>
         <div>
           <ButtonGroup

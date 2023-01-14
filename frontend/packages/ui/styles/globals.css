@@ -249,8 +249,12 @@
     @apply hover:border-black/10 hover:bg-inherit focus:ring-0 cursor-not-allowed text-black/40;
   }
 
-  .card {
+  .card:not(.narrow) {
     @apply p-4 md:p-7 shadow-md shadow-slate-500/10 bg-white;
+  }
+
+  .card.narrow {
+    @apply p-4 shadow-md shadow-slate-500/10 bg-white;
   }
 
   .modal-body {

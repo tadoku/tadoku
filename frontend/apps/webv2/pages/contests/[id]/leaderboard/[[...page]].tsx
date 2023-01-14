@@ -55,7 +55,7 @@ const Page = () => {
                 : routes.contestListUserContests(),
             },
             {
-              label: contest.data.description,
+              label: contest.data.title,
               href: routes.contestLeaderboard(id),
             },
           ]}
@@ -64,7 +64,7 @@ const Page = () => {
       <div className="h-stack justify-between items-center w-full">
         <div>
           <h1 className="title">Contest</h1>
-          <h2 className="subtitle">{contest.data.description}</h2>
+          <h2 className="subtitle">{contest.data.title}</h2>
         </div>
         <div>
           <ButtonGroup

@@ -4,6 +4,7 @@ import { HomeIcon } from '@heroicons/react/20/solid'
 import { PencilSquareIcon, PlusIcon } from '@heroicons/react/24/solid'
 import { routes } from '@app/common/routes'
 import { ContestLeaderboard } from '@app/contests/ContestLeaderboard'
+import { ReadingActivityChart } from '@app/contests/ReadingActivityChart'
 
 const Page = () => {
   const router = useRouter()
@@ -49,7 +50,7 @@ const Page = () => {
         <div></div>
       </div>
       <div className="mt-4 space-x-4 flex w-full">
-        <div className="w-1/5 space-y-4">
+        <div className="w-1/5 space-y-4 flex-shrink-0">
           <div className="card narrow">
             <h3 className="subtitle mb-2">Overall score</h3>
             <span className="text-4xl font-bold">3,243</span>
@@ -67,9 +68,10 @@ const Page = () => {
             <span className="text-4xl font-bold">3,243</span>
           </div>
         </div>
-        <div className="flex-grow">
-          <div className="card">
-            <h3 className="subtitle mb-2">Reading activity</h3>
+        <div className="flex-grow flex flex-col card narrow">
+          <h3 className="subtitle mb-2">Reading activity</h3>
+          <div className="flex-1">
+            <ReadingActivityChart />
           </div>
         </div>
       </div>

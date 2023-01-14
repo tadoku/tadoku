@@ -280,7 +280,11 @@
 
 @layer utilities {
   .auto-format table {
-    @apply my-4 border-collapse w-full;
+    @apply border-collapse w-full;
+  }
+
+  .auto-format .table-container {
+    @apply my-4 w-full;
   }
 
   .input-frame {
@@ -295,12 +299,20 @@
 
   table th.default,
   .auto-format table th {
-    @apply subtitle px-4 py-2 min-h-12 items-center text-left;
+    @apply subtitle px-4 py-2 min-h-12 items-center text-left whitespace-nowrap;
   }
 
   table td.default ,
   .auto-format table td{
     @apply px-4 py-2 min-h-12;
+  }
+
+  table tfoot {
+    @apply border-t border-slate-500/20 text-xs;
+  }
+
+  table td.disabled {
+    @apply opacity-50 text-slate-700 italic;
   }
 
   table tr.link {

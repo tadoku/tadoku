@@ -16,16 +16,25 @@ import (
 
 const findContestRegistrationForUser = `-- name: FindContestRegistrationForUser :one
 select
-  id,
-  contest_id,
-  user_id,
-  user_display_name,
-  language_codes
+  contest_registrations.id,
+  contest_registrations.contest_id,
+  contest_registrations.user_id,
+  contest_registrations.user_display_name,
+  contest_registrations.language_codes,
+  contests.activity_type_id_allow_list,
+  contests.registration_end,
+  contests.contest_start,
+  contests.contest_end,
+  contests.private,
+  contests.title,
+  contests.description
 from contest_registrations
+inner join contests
+  on contests.id = contest_registrations.contest_id
 where
   user_id = $1
   and contest_id = $2
-  and deleted_at is null
+  and contest_registrations.deleted_at is null
 `
 
 type FindContestRegistrationForUserParams struct {
@@ -34,11 +43,18 @@ type FindContestRegistrationForUserParams struct {
 }
 
 type FindContestRegistrationForUserRow struct {
-	ID              uuid.UUID
-	ContestID       uuid.UUID
-	UserID          uuid.UUID
-	UserDisplayName string
-	LanguageCodes   []string
+	ID                      uuid.UUID
+	ContestID               uuid.UUID
+	UserID                  uuid.UUID
+	UserDisplayName         string
+	LanguageCodes           []string
+	ActivityTypeIDAllowList []int32
+	RegistrationEnd         time.Time
+	ContestStart            time.Time
+	ContestEnd              time.Time
+	Private                 bool
+	Title                   string
+	Description             sql.NullString
 }
 
 func (q *Queries) FindContestRegistrationForUser(ctx context.Context, arg FindContestRegistrationForUserParams) (FindContestRegistrationForUserRow, error) {
@@ -50,6 +66,13 @@ func (q *Queries) FindContestRegistrationForUser(ctx context.Context, arg FindCo
 		&i.UserID,
 		&i.UserDisplayName,
 		pq.Array(&i.LanguageCodes),
+		pq.Array(&i.ActivityTypeIDAllowList),
+		&i.RegistrationEnd,
+		&i.ContestStart,
+		&i.ContestEnd,
+		&i.Private,
+		&i.Title,
+		&i.Description,
 	)
 	return i, err
 }

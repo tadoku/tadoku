@@ -7,7 +7,6 @@ import (
 )
 
 func contestRegistrationToAPI(r *contestquery.ContestRegistration) *openapi.ContestRegistration {
-
 	registration := openapi.ContestRegistration{
 		ContestId:       r.ContestID,
 		Id:              &r.ID,

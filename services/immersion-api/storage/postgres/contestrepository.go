@@ -339,15 +339,27 @@ func (r *ContestRepository) FindRegistrationForUser(ctx context.Context, req *co
 
 	languages, err := r.q.GetLanguagesByCode(ctx, reg.LanguageCodes)
 	if err != nil {
-		return nil, fmt.Errorf("could not fetch contest registration: %w", err)
+		return nil, fmt.Errorf("could not fetch contest registrations: %w", err)
 	}
 
-	langs := make([]contestquery.Language, len(languages))
-	for i, a := range languages {
-		langs[i] = contestquery.Language{
-			Code: a.Code,
-			Name: a.Name,
+	registrationLanguages := make([]contestquery.Language, len(reg.LanguageCodes))
+	for i, it := range languages {
+		registrationLanguages[i] = contestquery.Language{
+			Code: it.Code,
+			Name: it.Name,
 		}
+	}
+
+	contest := &contestquery.ContestView{
+		ID:                reg.ContestID,
+		ContestStart:      reg.ContestStart,
+		ContestEnd:        reg.ContestEnd,
+		RegistrationEnd:   reg.RegistrationEnd,
+		Title:             reg.Title,
+		Description:       NewStringFromNullString(reg.Description),
+		Private:           reg.Private,
+		AllowedLanguages:  make([]contestquery.Language, 0),
+		AllowedActivities: make([]contestquery.Activity, 0),
 	}
 
 	return &contestquery.ContestRegistration{
@@ -355,7 +367,8 @@ func (r *ContestRepository) FindRegistrationForUser(ctx context.Context, req *co
 		ContestID:       reg.ContestID,
 		UserID:          req.UserID,
 		UserDisplayName: reg.UserDisplayName,
-		Languages:       langs,
+		Languages:       registrationLanguages,
+		Contest:         contest,
 	}, nil
 }
 

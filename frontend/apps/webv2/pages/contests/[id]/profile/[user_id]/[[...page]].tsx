@@ -6,6 +6,7 @@ import { ReadingActivityChart } from '@app/contests/ReadingActivityChart'
 import { DateTime } from 'luxon'
 import Link from 'next/link'
 import { useContestProfileScores } from '@app/contests/api'
+import { formatScore } from '@app/common/format'
 
 function truncate(text: string | undefined, len: number) {
   if (text === undefined) {
@@ -64,6 +65,11 @@ const Page = () => {
     )
   }
 
+  const scores = new Map<string, number>()
+  for (const { language_code, score } of profile.data.scores) {
+    scores.set(language_code, score)
+  }
+
   return (
     <>
       <div className="pb-4">
@@ -98,20 +104,18 @@ const Page = () => {
         <div className="lg:w-1/5 grid gap-4">
           <div className="card narrow">
             <h3 className="subtitle mb-2">Overall score</h3>
-            <span className="text-4xl font-bold">3,243</span>
+            <span className="text-4xl font-bold">
+              {formatScore(profile.data.overall_score)}
+            </span>
           </div>
-          <div className="card narrow">
-            <h3 className="subtitle mb-2">Japanese score</h3>
-            <span className="text-4xl font-bold">3,243</span>
-          </div>
-          <div className="card narrow">
-            <h3 className="subtitle mb-2">Chinese (Mandarin) score</h3>
-            <span className="text-4xl font-bold">3,243</span>
-          </div>
-          <div className="card narrow">
-            <h3 className="subtitle mb-2">Korean score</h3>
-            <span className="text-4xl font-bold">3,243</span>
-          </div>
+          {profile.data.registration.languages.map(({ code, name }) => (
+            <div className="card narrow" key={code}>
+              <h3 className="subtitle mb-2">{name}</h3>
+              <span className="text-4xl font-bold">
+                {scores.get(code) ?? 0}
+              </span>
+            </div>
+          ))}
         </div>
         <div className="mt-4 lg:mt-0 flex-grow flex flex-col card narrow">
           <h3 className="subtitle mb-2">Reading activity</h3>

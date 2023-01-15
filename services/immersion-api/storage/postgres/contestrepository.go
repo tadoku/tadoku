@@ -358,6 +358,7 @@ func (r *ContestRepository) FindRegistrationForUser(ctx context.Context, req *co
 		Title:             reg.Title,
 		Description:       NewStringFromNullString(reg.Description),
 		Private:           reg.Private,
+		Official:          reg.Official,
 		AllowedLanguages:  make([]contestquery.Language, 0),
 		AllowedActivities: make([]contestquery.Activity, 0),
 	}
@@ -481,6 +482,7 @@ func (r *ContestRepository) FetchOngoingContestRegistrations(ctx context.Context
 			Title:             r.Title,
 			Description:       NewStringFromNullString(r.Description),
 			Private:           r.Private,
+			Official:          r.Official,
 			AllowedLanguages:  make([]contestquery.Language, 0),
 			AllowedActivities: make([]contestquery.Activity, len(r.ActivityTypeIDAllowList)),
 		}

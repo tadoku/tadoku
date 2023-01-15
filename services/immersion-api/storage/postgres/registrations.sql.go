@@ -26,6 +26,7 @@ select
   contests.contest_start,
   contests.contest_end,
   contests.private,
+  contests.official,
   contests.title,
   contests.description
 from contest_registrations
@@ -53,6 +54,7 @@ type FindContestRegistrationForUserRow struct {
 	ContestStart            time.Time
 	ContestEnd              time.Time
 	Private                 bool
+	Official                bool
 	Title                   string
 	Description             sql.NullString
 }
@@ -71,6 +73,7 @@ func (q *Queries) FindContestRegistrationForUser(ctx context.Context, arg FindCo
 		&i.ContestStart,
 		&i.ContestEnd,
 		&i.Private,
+		&i.Official,
 		&i.Title,
 		&i.Description,
 	)
@@ -89,6 +92,7 @@ select
   contests.contest_start,
   contests.contest_end,
   contests.private,
+  contests.official,
   contests.title,
   contests.description
 from contest_registrations
@@ -117,6 +121,7 @@ type FindOngoingContestRegistrationForUserRow struct {
 	ContestStart            time.Time
 	ContestEnd              time.Time
 	Private                 bool
+	Official                bool
 	Title                   string
 	Description             sql.NullString
 }
@@ -141,6 +146,7 @@ func (q *Queries) FindOngoingContestRegistrationForUser(ctx context.Context, arg
 			&i.ContestStart,
 			&i.ContestEnd,
 			&i.Private,
+			&i.Official,
 			&i.Title,
 			&i.Description,
 		); err != nil {

@@ -11,6 +11,7 @@ select
   contests.contest_start,
   contests.contest_end,
   contests.private,
+  contests.official,
   contests.title,
   contests.description
 from contest_registrations
@@ -52,6 +53,7 @@ select
   contests.contest_start,
   contests.contest_end,
   contests.private,
+  contests.official,
   contests.title,
   contests.description
 from contest_registrations

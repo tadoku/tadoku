@@ -7,7 +7,6 @@ import (
 
 	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
-	"github.com/tadoku/tadoku/services/common/domain"
 	"github.com/tadoku/tadoku/services/immersion-api/domain/contestquery"
 )
 
@@ -27,14 +26,12 @@ type Service interface {
 type service struct {
 	r        Repository
 	validate *validator.Validate
-	clock    domain.Clock
 }
 
-func NewService(r Repository, clock domain.Clock) Service {
+func NewService(r Repository) Service {
 	return &service{
 		r:        r,
 		validate: validator.New(),
-		clock:    clock,
 	}
 }
 

@@ -13,6 +13,7 @@ go_library(
         "//services/immersion-api/domain/contestquery",
         "//services/immersion-api/domain/logcommand",
         "//services/immersion-api/domain/logquery",
+        "//services/immersion-api/domain/profilequery",
         "//services/immersion-api/http/rest",
         "//services/immersion-api/http/rest/openapi",
         "//services/immersion-api/storage/postgres",

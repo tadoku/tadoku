@@ -4,6 +4,7 @@ go_library(
     name = "postgres",
     srcs = [
         "activities.sql.go",
+        "contest_profile.sql.go",
         "contestrepository.go",
         "contests.sql.go",
         "db.go",

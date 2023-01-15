@@ -10,6 +10,7 @@ import (
 
 	"github.com/tadoku/tadoku/services/immersion-api/domain/contestcommand"
 	"github.com/tadoku/tadoku/services/immersion-api/domain/contestquery"
+	"github.com/tadoku/tadoku/services/immersion-api/domain/profilequery"
 	"github.com/tadoku/tadoku/services/immersion-api/http/rest/openapi"
 )
 
@@ -358,43 +359,7 @@ func (s *Server) ContestFindOngoingRegistrations(ctx echo.Context) error {
 
 	for i, r := range regs.Registrations {
 		r := r
-		contest := openapi.ContestView{
-			Id:                &r.ContestID,
-			ContestStart:      types.Date{Time: r.Contest.ContestStart},
-			ContestEnd:        types.Date{Time: r.Contest.ContestEnd},
-			RegistrationEnd:   types.Date{Time: r.Contest.RegistrationEnd},
-			Title:             r.Contest.Title,
-			Description:       r.Contest.Description,
-			Official:          r.Contest.Official,
-			Private:           r.Contest.Private,
-			AllowedLanguages:  []openapi.Language{},
-			AllowedActivities: make([]openapi.Activity, len(r.Contest.AllowedActivities)),
-		}
-
-		for i, a := range r.Contest.AllowedActivities {
-			contest.AllowedActivities[i] = openapi.Activity{
-				Id:   a.ID,
-				Name: a.Name,
-			}
-		}
-
-		registration := openapi.ContestRegistration{
-			ContestId:       r.ContestID,
-			Id:              &r.ID,
-			Languages:       make([]openapi.Language, len(r.Languages)),
-			UserId:          r.UserID,
-			UserDisplayName: r.UserDisplayName,
-			Contest:         &contest,
-		}
-
-		for i, lang := range r.Languages {
-			registration.Languages[i] = openapi.Language{
-				Code: lang.Code,
-				Name: lang.Name,
-			}
-		}
-
-		res.Registrations[i] = registration
+		res.Registrations[i] = *contestRegistrationToAPI(&r)
 	}
 
 	return ctx.JSON(http.StatusOK, res)
@@ -449,5 +414,35 @@ func (s *Server) ContestFindLatestOfficial(ctx echo.Context) error {
 		CreatedAt:            &contest.CreatedAt,
 		UpdatedAt:            &contest.UpdatedAt,
 		Deleted:              &contest.Deleted,
+	})
+}
+
+// Fetches the scores of a user profile in a contest
+// (GET /contests/{id}/profile/{user_id}/scores)
+func (s *Server) ContestProfileFetchScores(ctx echo.Context, id types.UUID, userId types.UUID) error {
+	profile, err := s.profileQueryService.ContestProfile(ctx.Request().Context(), &profilequery.ContestProfileRequest{
+		UserID:    userId,
+		ContestID: id,
+	})
+	if err != nil {
+		if errors.Is(err, profilequery.ErrNotFound) {
+			return ctx.NoContent(http.StatusNotFound)
+		}
+		ctx.Logger().Errorf("could not fetch profile: %w", err)
+		return ctx.NoContent(http.StatusInternalServerError)
+	}
+
+	scores := make([]openapi.Score, len(profile.Scores))
+	for i, it := range profile.Scores {
+		scores[i] = openapi.Score{
+			LanguageCode: it.LanguageCode,
+			Score:        it.Score,
+		}
+	}
+
+	return ctx.JSON(http.StatusOK, &openapi.ContestProfileScores{
+		OverallScore: profile.OverallScore,
+		Registration: *contestRegistrationToAPI(profile.Registration),
+		Scores:       scores,
 	})
 }

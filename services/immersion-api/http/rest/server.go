@@ -5,6 +5,7 @@ import (
 	"github.com/tadoku/tadoku/services/immersion-api/domain/contestquery"
 	"github.com/tadoku/tadoku/services/immersion-api/domain/logcommand"
 	"github.com/tadoku/tadoku/services/immersion-api/domain/logquery"
+	"github.com/tadoku/tadoku/services/immersion-api/domain/profilequery"
 	"github.com/tadoku/tadoku/services/immersion-api/http/rest/openapi"
 )
 
@@ -14,12 +15,14 @@ func NewServer(
 	contestQueryService contestquery.Service,
 	logCommandService logcommand.Service,
 	logQueryService logquery.Service,
+	profileQueryService profilequery.Service,
 ) openapi.ServerInterface {
 	return &Server{
 		contestCommandService: contestCommandService,
 		contestQueryService:   contestQueryService,
 		logCommandService:     logCommandService,
 		logQueryService:       logQueryService,
+		profileQueryService:   profileQueryService,
 	}
 }
 
@@ -28,4 +31,5 @@ type Server struct {
 	contestQueryService   contestquery.Service
 	logCommandService     logcommand.Service
 	logQueryService       logquery.Service
+	profileQueryService   profilequery.Service
 }

@@ -209,6 +209,33 @@ paths:
                 $ref: '#/components/schemas/Leaderboard'
         '404':
           description: not found
+  /contests/{id}/profile/{user_id}/scores:
+    get:
+      summary: Fetches the scores of a user profile in a contest
+      operationId: contestProfileFetchScores
+      tags: [contests]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: user_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContestProfileScores'
+        '404':
+          description: not found
   /contests/ongoing-registrations:
     get:
       summary: Fetches all the ongoing contest registrations of the logged in user, always in a single page
@@ -596,6 +623,36 @@ components:
               type: array
               items:
                 $ref: "#/components/schemas/LeaderboardEntry"
+    Score:
+      type: object
+      required:
+        - language_code
+        - score
+      properties:
+        language_code:
+          type: string
+          example: zho
+        score:
+          type: number
+          format: float
+    Scores:
+      type: array
+      items:
+        $ref: "#/components/schemas/Score"
+    ContestProfileScores:
+      type: object
+      required:
+        - overall_score
+        - registration
+        - scores
+      properties:
+        overall_score:
+          type: number
+          format: float
+        scores:
+          $ref: "#/components/schemas/Scores"
+        registration:
+          $ref: "#/components/schemas/ContestRegistration"
     PaginatedList:
       type: object
       required:

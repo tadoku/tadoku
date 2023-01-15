@@ -131,6 +131,11 @@ export function ReadingActivityChart({ userId, registration }: Props) {
         ],
       }}
       options={{
+        plugins: {
+          tooltip: {
+            cornerRadius: 0,
+          },
+        },
         maintainAspectRatio: false,
         scales: {
           x: {

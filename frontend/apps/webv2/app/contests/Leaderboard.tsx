@@ -37,7 +37,7 @@ export const Leaderboard = ({ contestId, leaderboard }: Props) => {
           </thead>
           <tbody>
             {leaderboard.data.entries.map(it => (
-              <tr key={it.rank} className="link">
+              <tr key={it.rank} className="link font-bold">
                 <td className="link w-10">
                   <Link
                     href={routes.contestUserProfile(contestId, it.user_id)}

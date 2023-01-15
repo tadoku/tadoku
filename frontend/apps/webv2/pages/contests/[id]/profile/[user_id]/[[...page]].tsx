@@ -1,14 +1,22 @@
 import { useRouter } from 'next/router'
 import { Breadcrumb, ActionMenu } from 'ui'
-import {
-  HomeIcon,
-  PencilIcon,
-  PencilSquareIcon,
-  TrashIcon,
-} from '@heroicons/react/20/solid'
+import { ChevronRightIcon, HomeIcon } from '@heroicons/react/20/solid'
 import { routes } from '@app/common/routes'
 import { ReadingActivityChart } from '@app/contests/ReadingActivityChart'
 import { DateTime } from 'luxon'
+import Link from 'next/link'
+
+function truncate(text: string | undefined, len: number) {
+  if (text === undefined) {
+    return text
+  }
+
+  if (text.length > len - 3) {
+    return text.substring(0, len - 3) + '...'
+  }
+
+  return text
+}
 
 const Page = () => {
   const router = useRouter()
@@ -34,13 +42,14 @@ const Page = () => {
     .reverse()
     .map(day => '2022-12-' + (day + 1).toString().padStart(2, '0'))
     .map(date => ({
+      id: 'abc',
       date: DateTime.fromISO(date),
       language: langs[Math.floor(Math.random() * langs.length)],
       activity: activities[Math.floor(Math.random() * activities.length)],
       description:
         descriptions[Math.floor(Math.random() * descriptions.length)],
-      amount: Math.floor(Math.random() * 100),
-      score: Math.floor(Math.random() * 100),
+      amount: Math.floor(Math.random() * 100000),
+      score: Math.floor(Math.random() * 100000),
       unit: 'page',
     }))
 
@@ -102,7 +111,6 @@ const Page = () => {
           </div>
         </div>
       </div>
-
       <div className="card p-0">
         <div className="h-stack w-full items-center justify-between">
           <h2 className="subtitle p-4">Updates</h2>
@@ -113,45 +121,61 @@ const Page = () => {
               <tr>
                 <th className="default w-36">Date</th>
                 <th className="default w-32">Language</th>
-                <th className="default w-28">Activity</th>
-                <th className="default">Description</th>
-                <th className="default w-36">Amount</th>
-                <th className="default w-36 !text-right">Score</th>
-                <th className="default !text-right">Actions</th>
+                <th className="default w-28 hidden md:table-cell">Activity</th>
+                <th className="default hidden lg:table-cell">Description</th>
+                <th className="default w-36 hidden md:table-cell">Amount</th>
+                <th className="default w-24 !text-right">Score</th>
+                <th className="default"></th>
               </tr>
             </thead>
             <tbody>
               {data.map(it => (
-                <tr key={it.date.toString()}>
-                  <td className="default">
-                    {it.date.toLocaleString(DateTime.DATE_MED)}
+                <tr key={it.date.toString()} className="link">
+                  <td className="default link">
+                    <Link className="reset" href={routes.log(it.id)}>
+                      {it.date.toLocaleString(DateTime.DATE_MED)}
+                    </Link>
                   </td>
-                  <td className="default">{it.language}</td>
-                  <td className="default">{it.activity}</td>
+                  <td className="default link">
+                    <Link className="reset" href={routes.log(it.id)}>
+                      {it.language}
+                    </Link>
+                  </td>
+                  <td className="default link hidden md:table-cell">
+                    <Link className="reset" href={routes.log(it.id)}>
+                      {it.activity}
+                    </Link>
+                  </td>
                   <td
-                    className={`default text-sm ${
+                    className={`default text-sm link hidden lg:table-cell ${
                       !it.description ? 'opacity-50' : ''
                     }`}
                   >
-                    {it.description ?? 'N/A'}
+                    <Link className="reset" href={routes.log(it.id)}>
+                      {truncate(it.description, 38) ?? 'N/A'}
+                    </Link>
                   </td>
-                  <td className="default font-bold">
-                    {it.amount} {it.unit}
-                    {it.amount !== 1 ? 's' : ''}
+                  <td className="default link font-bold hidden md:table-cell">
+                    <Link className="reset" href={routes.log(it.id)}>
+                      {it.amount} {it.unit}
+                      {it.amount !== 1 ? 's' : ''}
+                    </Link>
                   </td>
-                  <td className="text-right default font-bold">{it.score}</td>
-                  <td className="text-right default">
-                    <div className="flex justify-end items-center">
-                      <a href="#" className="btn ghost small">
-                        <PencilSquareIcon />
-                      </a>
-                      <a
-                        href="#"
-                        className="btn ghost text-red-700 hover:!text-red-700/80 small"
-                      >
-                        <TrashIcon />
-                      </a>
-                    </div>
+                  <td className="default link font-bold">
+                    <Link
+                      className="reset justify-end"
+                      href={routes.log(it.id)}
+                    >
+                      {it.score}
+                    </Link>
+                  </td>
+                  <td className="default link w-12">
+                    <Link
+                      className="reset flex-shrink"
+                      href={routes.log(it.id)}
+                    >
+                      <ChevronRightIcon className="w-5 h-5" />
+                    </Link>
                   </td>
                 </tr>
               ))}
@@ -169,6 +193,7 @@ const Page = () => {
           </table>
         </div>
       </div>
+      pagination
     </>
   )
 }

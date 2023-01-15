@@ -306,7 +306,7 @@
   }
 
   table.default {
-    @apply w-full border-collapse;
+    @apply w-full border-collapse h-1;
   }
 
   table th.default,
@@ -328,15 +328,15 @@
   }
 
   table tr.link {
-    @apply font-semibold  hover:bg-slate-500/10 h-14;
+    @apply  hover:bg-slate-500/10 min-h-14;
   }
 
   table td.link {
-    @apply border-0 p-0;
+    @apply border-0 p-0 h-full;
   }
 
   table td.link a {
-    @apply px-4 py-2 min-h-12 flex items-center;
+    @apply px-4 py-2 min-h-14 h-full flex items-center;
   }
 
   .label.error input, .label.error textarea {

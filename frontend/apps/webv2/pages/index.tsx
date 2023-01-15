@@ -109,7 +109,7 @@ const Index: NextPage<Props> = () => {
                 </thead>
                 <tbody>
                   {data.map(u => (
-                    <tr key={u.rank} className="link">
+                    <tr key={u.rank} className="link font-bold">
                       <td className="link w-10">
                         <Link
                           href={`/profile/${u.user}`}

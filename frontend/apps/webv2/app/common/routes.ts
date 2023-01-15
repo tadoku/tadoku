@@ -24,6 +24,7 @@ export const routes = {
     `/contests/${contest_id}/profile/${user_id}`,
 
   logCreate: () => `/logs/new`,
+  log: (id: string) => `/logs/${id}`,
 
   leaderboardLatestOfficial: (page?: Page) =>
     `/leaderboard/latest/${page ?? '1'}`,

@@ -5,6 +5,7 @@ import { routes } from '@app/common/routes'
 import { ReadingActivityChart } from '@app/contests/ReadingActivityChart'
 import { DateTime } from 'luxon'
 import Link from 'next/link'
+import { useContestProfileScores } from '@app/contests/api'
 
 function truncate(text: string | undefined, len: number) {
   if (text === undefined) {
@@ -20,14 +21,10 @@ function truncate(text: string | undefined, len: number) {
 
 const Page = () => {
   const router = useRouter()
-  const id = router.query['id']?.toString() ?? ''
+  const contestId = router.query['id']?.toString() ?? ''
   const userId = router.query['user_id']?.toString() ?? ''
-  const contest = {
-    data: {
-      official: true,
-      title: 'dummy',
-    },
-  }
+
+  const profile = useContestProfileScores({ userId, contestId })
 
   const activities = ['Reading', 'Listening', 'Writing', 'Speaking', 'Study']
   const langs = ['Chinese (Mandarin)', 'Japanese', 'Korean']
@@ -53,6 +50,20 @@ const Page = () => {
       unit: 'page',
     }))
 
+  if (profile.isLoading || profile.isIdle) {
+    return <p>Loading...</p>
+  }
+
+  const contest = profile.data?.registration.contest
+
+  if (profile.isError || !contest) {
+    return (
+      <span className="flash error">
+        Could not load page, please try again later.
+      </span>
+    )
+  }
+
   return (
     <>
       <div className="pb-4">
@@ -60,20 +71,18 @@ const Page = () => {
           links={[
             { label: 'Home', href: routes.home(), IconComponent: HomeIcon },
             {
-              label: contest.data.official
-                ? 'Official contests'
-                : 'User contests',
-              href: contest.data.official
+              label: contest.official ? 'Official contests' : 'User contests',
+              href: contest.official
                 ? routes.contestListOfficial()
                 : routes.contestListUserContests(),
             },
             {
-              label: contest.data.title,
-              href: routes.contestLeaderboard(id),
+              label: contest.title,
+              href: routes.contestLeaderboard(contestId),
             },
             {
-              label: 'User',
-              href: routes.contestUserProfile(id, userId),
+              label: profile.data.registration.user_display_name,
+              href: routes.contestUserProfile(contestId, userId),
             },
           ]}
         />
@@ -81,7 +90,7 @@ const Page = () => {
       <div className="h-stack justify-between items-center w-full">
         <div>
           <h1 className="title">antonve</h1>
-          <h2 className="subtitle">{contest.data.title}</h2>
+          <h2 className="subtitle">{contest.title}</h2>
         </div>
         <div></div>
       </div>

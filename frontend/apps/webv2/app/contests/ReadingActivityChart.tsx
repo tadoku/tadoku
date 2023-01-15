@@ -19,7 +19,7 @@ import {
   ContestRegistrationView,
   useContestProfileReadingActivity,
 } from '@app/contests/api'
-import { Interval } from 'luxon'
+import { DateTime, Duration, Interval } from 'luxon'
 
 ChartJS.register(
   Tooltip,
@@ -57,8 +57,12 @@ export function ReadingActivityChart({ userId, registration }: Props) {
     )
   }
 
+  const end = DateTime.fromISO(registration.contest.contest_end)
+    .plus(Duration.fromObject({ days: 1 }))
+    .toISODate()
+
   const period = Interval.fromISO(
-    `${registration.contest.contest_start}/${registration.contest.contest_end}`,
+    `${registration.contest.contest_start}/${end}`,
   )
   const labels = period.splitBy({ day: 1 }).map(it => it.start.toISODate())
   const indexForLabel = labels.reduce((acc, label, i) => {
@@ -133,7 +137,7 @@ export function ReadingActivityChart({ userId, registration }: Props) {
             stacked: true,
             type: 'time',
             time: {
-              tooltipFormat: 'MMMM d',
+              tooltipFormat: 'MMMM d, yyyy',
               unit: 'day',
               displayFormats: {
                 day: 'MMM dd',

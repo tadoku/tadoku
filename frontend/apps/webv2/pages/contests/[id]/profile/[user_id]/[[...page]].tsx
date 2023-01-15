@@ -85,8 +85,8 @@ const Page = () => {
         </div>
         <div></div>
       </div>
-      <div className="my-4 space-x-4 flex w-full">
-        <div className="w-1/5 space-y-4 flex-shrink-0">
+      <div className="my-4 lg:space-x-4 flex flex-col lg:flex-row w-full">
+        <div className="lg:w-1/5 grid gap-4">
           <div className="card narrow">
             <h3 className="subtitle mb-2">Overall score</h3>
             <span className="text-4xl font-bold">3,243</span>
@@ -104,9 +104,9 @@ const Page = () => {
             <span className="text-4xl font-bold">3,243</span>
           </div>
         </div>
-        <div className="flex-grow flex flex-col card narrow">
+        <div className="mt-4 lg:mt-0 flex-grow flex flex-col card narrow">
           <h3 className="subtitle mb-2">Reading activity</h3>
-          <div className="flex-1">
+          <div className="flex-1 max-h-72 lg:max-h-[28rem]">
             <ReadingActivityChart />
           </div>
         </div>

@@ -353,3 +353,40 @@ export const useContestProfileScores = (
     },
     options,
   )
+
+const ContestProfileReadingActivity = z.object({
+  rows: z.array(
+    z.object({
+      date: z.string(),
+      language_code: z.string(),
+      score: z.number(),
+    }),
+  ),
+})
+
+export type ContestProfileReadingActivity = z.infer<
+  typeof ContestProfileReadingActivity
+>
+
+export const useContestProfileReadingActivity = (
+  opts: {
+    userId: string
+    contestId: string
+  },
+  options?: { enabled?: boolean },
+) =>
+  useQuery(
+    ['contest', opts.contestId, 'profile', opts.userId, 'readingActivity'],
+    async (): Promise<ContestProfileReadingActivity> => {
+      const response = await fetch(
+        `${root}/${opts.contestId}/profile/${opts.userId}/reading-activity`,
+      )
+
+      if (response.status !== 200) {
+        throw new Error('could not fetch page')
+      }
+
+      return ContestProfileReadingActivity.parse(await response.json())
+    },
+    options,
+  )

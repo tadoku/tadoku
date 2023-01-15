@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
@@ -17,10 +18,12 @@ var ErrUnauthorized = errors.New("unauthorized")
 type Repository interface {
 	FindRegistrationForUser(context.Context, *contestquery.FindRegistrationForUserRequest) (*contestquery.ContestRegistration, error)
 	FindScoresForRegistration(context.Context, *ContestProfileRequest) ([]Score, error)
+	ReadingActivityForContestUser(context.Context, *ContestProfileRequest) ([]ReadingActivityRow, error)
 }
 
 type Service interface {
 	ContestProfile(context.Context, *ContestProfileRequest) (*ContestProfileResponse, error)
+	ReadingActivityForContestUser(context.Context, *ContestProfileRequest) (*ReadingActivityResponse, error)
 }
 
 type service struct {
@@ -77,4 +80,18 @@ func (s *service) ContestProfile(ctx context.Context, req *ContestProfileRequest
 	}
 
 	return response, nil
+}
+
+type ReadingActivityResponse struct {
+	Rows []ReadingActivityRow
+}
+
+type ReadingActivityRow struct {
+	Date         time.Time
+	LanguageCode string
+	Score        float32
+}
+
+func (s *service) ReadingActivityForContestUser(ctx context.Context, req *ContestProfileRequest) (*ReadingActivityResponse, error) {
+	return nil, nil
 }

@@ -7,6 +7,7 @@ package postgres
 
 import (
 	"context"
+	"time"
 
 	"github.com/google/uuid"
 )
@@ -46,6 +47,63 @@ func (q *Queries) FetchScoresForContestProfile(ctx context.Context, arg FetchSco
 	for rows.Next() {
 		var i FetchScoresForContestProfileRow
 		if err := rows.Scan(&i.LanguageCode, &i.Score); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const readingActivityPerLanguageForContestProfile = `-- name: ReadingActivityPerLanguageForContestProfile :many
+with eligible_logs as (
+  select
+    created_at::date as "date",
+    language_code,
+    score
+  from logs
+  inner join contest_logs
+    on contest_logs.log_id = logs.id
+  where
+    contest_logs.contest_id = $1
+    and logs.user_id = $2
+    and logs.deleted_at is null
+)
+select
+  "date",
+  language_code,
+  sum(eligible_logs.score)::real as score
+from eligible_logs
+group by language_code, "date"
+order by "date" asc
+`
+
+type ReadingActivityPerLanguageForContestProfileParams struct {
+	ContestID uuid.UUID
+	UserID    uuid.UUID
+}
+
+type ReadingActivityPerLanguageForContestProfileRow struct {
+	Date         time.Time
+	LanguageCode string
+	Score        float32
+}
+
+func (q *Queries) ReadingActivityPerLanguageForContestProfile(ctx context.Context, arg ReadingActivityPerLanguageForContestProfileParams) ([]ReadingActivityPerLanguageForContestProfileRow, error) {
+	rows, err := q.db.QueryContext(ctx, readingActivityPerLanguageForContestProfile, arg.ContestID, arg.UserID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ReadingActivityPerLanguageForContestProfileRow
+	for rows.Next() {
+		var i ReadingActivityPerLanguageForContestProfileRow
+		if err := rows.Scan(&i.Date, &i.LanguageCode, &i.Score); err != nil {
 			return nil, err
 		}
 		items = append(items, i)

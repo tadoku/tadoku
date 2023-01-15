@@ -538,3 +538,27 @@ func (r *ContestRepository) FindScoresForRegistration(ctx context.Context, req *
 
 	return scores, nil
 }
+
+func (r *ContestRepository) ReadingActivityForContestUser(ctx context.Context, req *profilequery.ContestProfileRequest) ([]profilequery.ReadingActivityRow, error) {
+	rows, err := r.q.ReadingActivityPerLanguageForContestProfile(ctx, ReadingActivityPerLanguageForContestProfileParams{
+		ContestID: req.ContestID,
+		UserID:    req.UserID,
+	})
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return []profilequery.ReadingActivityRow{}, nil
+		}
+		return nil, fmt.Errorf("could not fetch reading activity: %w", err)
+	}
+
+	res := make([]profilequery.ReadingActivityRow, len(rows))
+	for i, it := range rows {
+		res[i] = profilequery.ReadingActivityRow{
+			Date:         it.Date,
+			LanguageCode: it.LanguageCode,
+			Score:        it.Score,
+		}
+	}
+
+	return res, nil
+}

@@ -65,7 +65,7 @@ export const ContestOverview = ({
             Ending in{' '}
             <strong>
               {DateTime.fromISO(contest.contest_end)
-                .plus(Duration.fromObject({ days: 1 }))
+                .endOf('day')
                 .diffNow(['days', 'hours', 'minute'])
                 .toHuman({
                   maximumFractionDigits: 0,

@@ -120,7 +120,10 @@ const Page = () => {
         <div className="mt-4 lg:mt-0 flex-grow flex flex-col card narrow">
           <h3 className="subtitle mb-2">Reading activity</h3>
           <div className="flex-1 max-h-72 lg:max-h-[28rem]">
-            <ReadingActivityChart />
+            <ReadingActivityChart
+              userId={userId}
+              registration={profile.data.registration}
+            />
           </div>
         </div>
       </div>

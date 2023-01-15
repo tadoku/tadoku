@@ -15,6 +15,11 @@ import {
 import { Chart } from 'react-chartjs-2'
 import 'chartjs-adapter-luxon'
 import { faker } from '@faker-js/faker'
+import {
+  ContestRegistrationView,
+  useContestProfileReadingActivity,
+} from '@app/contests/api'
+import { Interval } from 'luxon'
 
 ChartJS.register(
   Tooltip,
@@ -29,19 +34,72 @@ ChartJS.register(
   TimeScale,
 )
 
-export function ReadingActivityChart() {
-  const labels = Array.from(Array(14).keys()).map(
-    day => '2022-12-' + (day + 1).toString().padStart(2, '0'),
+interface Props {
+  registration: ContestRegistrationView
+  userId: string
+}
+
+export function ReadingActivityChart({ userId, registration }: Props) {
+  const activity = useContestProfileReadingActivity({
+    userId,
+    contestId: registration.contest_id,
+  })
+
+  if (activity.isLoading || activity.isIdle) {
+    return <p>Loading...</p>
+  }
+
+  if (activity.isError || !registration.contest) {
+    return (
+      <span className="flash error">
+        Could not load page, please try again later.
+      </span>
+    )
+  }
+
+  const period = Interval.fromISO(
+    `${registration.contest.contest_start}/${registration.contest.contest_end}`,
+  )
+  const labels = period.splitBy({ day: 1 }).map(it => it.start.toISODate())
+  const indexForLabel = labels.reduce((acc, label, i) => {
+    acc[label] = i
+    return acc
+  }, {} as { [key: string]: number })
+
+  const datasets = registration.languages.reduce(
+    (acc, language, i) => {
+      acc[language.code] = {
+        code: language.code,
+        label: language.name,
+        data: labels.map(_ => 0),
+        type: 'bar' as const,
+        backgroundColor: chartColors[i],
+        yAxisID: 'yScore',
+      }
+      return acc
+    },
+    {} as {
+      [key: string]: {
+        code: string
+        label: string
+        data: number[]
+        type: 'bar'
+        backgroundColor: string
+        yAxisID: string
+      }
+    },
   )
 
-  const comicData = labels.map(() =>
-    faker.datatype.number({ min: 0, max: 1000 }),
-  )
-  const bookData = labels.map(() =>
-    faker.datatype.number({ min: 0, max: 1000 }),
-  )
-  const cumulativeScore = comicData
-    .map((comic, i) => comic + bookData[i])
+  for (const row of activity.data.rows) {
+    const i = indexForLabel[row.date]
+    datasets[row.language_code].data[i] = row.score
+  }
+
+  const cumulativeScore = Object.values(datasets)
+    .map(it => it.data)
+    .reduce((acc, dataset) => {
+      return acc.map((val, i) => val + dataset[i])
+    }, Array(labels.length).fill(0) as number[])
     .reduce((acc, val) => {
       if (acc.length > 0) {
         val += acc[acc.length - 1]
@@ -65,20 +123,7 @@ export function ReadingActivityChart() {
             data: cumulativeScore,
             yAxisID: 'yCumulative',
           },
-          {
-            type: 'bar' as const,
-            label: 'Comic',
-            backgroundColor: chartColors[0],
-            data: comicData,
-            yAxisID: 'yScore',
-          },
-          {
-            type: 'bar' as const,
-            label: 'Book',
-            backgroundColor: chartColors[1],
-            data: bookData,
-            yAxisID: 'yScore',
-          },
+          ...Object.values(datasets),
         ],
       }}
       options={{

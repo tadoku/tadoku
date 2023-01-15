@@ -177,9 +177,9 @@ type PaginatedList struct {
 
 // ReadingActivityRow defines model for ReadingActivityRow.
 type ReadingActivityRow struct {
-	Date         *openapi_types.Date `json:"date,omitempty"`
-	LanguageCode *string             `json:"language_code,omitempty"`
-	Score        *float32            `json:"score,omitempty"`
+	Date         openapi_types.Date `json:"date"`
+	LanguageCode string             `json:"language_code"`
+	Score        float32            `json:"score"`
 }
 
 // Score defines model for Score.

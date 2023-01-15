@@ -450,5 +450,25 @@ func (s *Server) ContestProfileFetchScores(ctx echo.Context, id types.UUID, user
 // Fetches the reading activity of a user profile in a contest
 // (GET /contests/{id}/profile/{user_id}/reading-activity)
 func (s *Server) ContestProfileFetchReadingActivity(ctx echo.Context, id types.UUID, userId types.UUID) error {
-	return nil
+	stats, err := s.profileQueryService.ReadingActivityForContestUser(ctx.Request().Context(), &profilequery.ContestProfileRequest{
+		UserID:    userId,
+		ContestID: id,
+	})
+	if err != nil {
+		ctx.Echo().Logger.Errorf("could not fetch reading activity: %w", err)
+		return ctx.NoContent(http.StatusInternalServerError)
+	}
+
+	rows := make([]openapi.ReadingActivityRow, len(stats.Rows))
+	for i, it := range stats.Rows {
+		rows[i] = openapi.ReadingActivityRow{
+			Date:         types.Date{Time: it.Date},
+			LanguageCode: it.LanguageCode,
+			Score:        it.Score,
+		}
+	}
+
+	return ctx.JSON(http.StatusOK, &openapi.ContestProfileReadingActivity{
+		Rows: rows,
+	})
 }

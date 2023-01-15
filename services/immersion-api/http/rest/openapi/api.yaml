@@ -691,6 +691,10 @@ components:
             $ref: "#/components/schemas/ReadingActivityRow"
     ReadingActivityRow:
       type: object
+      required:
+        - date
+        - language_code
+        - score
       properties:
         date:
           type: string

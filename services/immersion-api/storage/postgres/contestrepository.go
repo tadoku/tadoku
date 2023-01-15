@@ -8,6 +8,7 @@ import (
 
 	"github.com/tadoku/tadoku/services/immersion-api/domain/contestcommand"
 	"github.com/tadoku/tadoku/services/immersion-api/domain/contestquery"
+	"github.com/tadoku/tadoku/services/immersion-api/domain/profilequery"
 )
 
 type ContestRepository struct {
@@ -498,4 +499,27 @@ func (r *ContestRepository) FetchOngoingContestRegistrations(ctx context.Context
 	}
 
 	return res, nil
+}
+
+func (r *ContestRepository) FindScoresForRegistration(ctx context.Context, req *profilequery.ContestProfileRequest) ([]profilequery.Score, error) {
+	rows, err := r.q.FetchScoresForContestProfile(ctx, FetchScoresForContestProfileParams{
+		ContestID: req.ContestID,
+		UserID:    req.UserID,
+	})
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, profilequery.ErrNotFound
+		}
+		return nil, fmt.Errorf("could not fetch scores: %w", err)
+	}
+
+	scores := make([]profilequery.Score, len(rows))
+	for i, row := range rows {
+		scores[i] = profilequery.Score{
+			LanguageCode: row.LanguageCode,
+			Score:        row.Score,
+		}
+	}
+
+	return scores, nil
 }

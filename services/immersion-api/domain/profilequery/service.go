@@ -68,5 +68,16 @@ func (s *service) ContestProfile(ctx context.Context, req *ContestProfileRequest
 		Registration: reg,
 	}
 
+	scores, err := s.r.FindScoresForRegistration(ctx, req)
+	if err != nil {
+		return nil, fmt.Errorf("could not fetch scores: %w", err)
+	}
+
+	response.Scores = scores
+
+	for _, it := range scores {
+		response.OverallScore += it.Score
+	}
+
 	return response, nil
 }

@@ -213,7 +213,7 @@ paths:
     get:
       summary: Fetches the scores of a user profile in a contest
       operationId: contestProfileFetchScores
-      tags: [contests]
+      tags: [contests_profile]
       parameters:
         - name: id
           in: path
@@ -234,6 +234,33 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ContestProfileScores'
+        '404':
+          description: not found
+  /contests/{id}/profile/{user_id}/reading-activity:
+    get:
+      summary: Fetches the reading activity of a user profile in a contest
+      operationId: contestProfileFetchReadingActivity
+      tags: [contests_profile]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: user_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContestProfileReadingActivity'
         '404':
           description: not found
   /contests/ongoing-registrations:
@@ -653,6 +680,27 @@ components:
           $ref: "#/components/schemas/Scores"
         registration:
           $ref: "#/components/schemas/ContestRegistration"
+    ContestProfileReadingActivity:
+      type: object
+      required:
+        - rows
+      properties:
+        rows:
+          type: array
+          items:
+            $ref: "#/components/schemas/ReadingActivityRow"
+    ReadingActivityRow:
+      type: object
+      properties:
+        date:
+          type: string
+          format: date
+        language_code:
+          type: string
+          example: zho
+        score:
+          type: number
+          format: float
     PaginatedList:
       type: object
       required:

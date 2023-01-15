@@ -446,3 +446,9 @@ func (s *Server) ContestProfileFetchScores(ctx echo.Context, id types.UUID, user
 		Scores:       scores,
 	})
 }
+
+// Fetches the reading activity of a user profile in a contest
+// (GET /contests/{id}/profile/{user_id}/reading-activity)
+func (s *Server) ContestProfileFetchReadingActivity(ctx echo.Context, id types.UUID, userId types.UUID) error {
+	return nil
+}

@@ -93,5 +93,12 @@ type ReadingActivityRow struct {
 }
 
 func (s *service) ReadingActivityForContestUser(ctx context.Context, req *ContestProfileRequest) (*ReadingActivityResponse, error) {
-	return nil, nil
+	rows, err := s.r.ReadingActivityForContestUser(ctx, req)
+	if err != nil {
+		return nil, fmt.Errorf("could not fetch reading activity: %w", err)
+	}
+
+	return &ReadingActivityResponse{
+		Rows: rows,
+	}, nil
 }

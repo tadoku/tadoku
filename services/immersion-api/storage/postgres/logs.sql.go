@@ -92,41 +92,47 @@ func (q *Queries) CreateLog(ctx context.Context, arg CreateLogParams) (uuid.UUID
 }
 
 const listLogsForContestUser = `-- name: ListLogsForContestUser :many
+with eligible_logs as (
+  select
+    logs.id,
+    logs.user_id,
+    logs.language_code,
+    languages.name as language_name,
+    logs.log_activity_id as activity_id,
+    log_activities.name as activity_name,
+    log_units.name as unit_name,
+    logs.tags,
+    logs.amount,
+    logs.modifier,
+    logs.score,
+    logs.created_at,
+    logs.updated_at,
+    logs.deleted_at
+  from contest_logs
+  inner join logs on (logs.id = contest_logs.log_id)
+  inner join languages on (languages.code = logs.language_code)
+  inner join log_activities on (log_activities.id = logs.log_activity_id)
+  inner join log_units on (log_units.id = logs.unit_id)
+  where
+    ($3::boolean or deleted_at is null)
+    and logs.user_id = $4
+    and contest_logs.contest_id = $5
+)
 select
-  logs.id,
-  logs.user_id,
-  logs.language_code,
-  languages.name as language_name,
-  logs.log_activity_id as activity_id,
-  log_activities.name as activity_name,
-  log_units.name as unit_name,
-  logs.tags,
-  logs.amount,
-  logs.modifier,
-  logs.score,
-  logs.created_at,
-  logs.updated_at,
-  logs.deleted_at
-from contest_logs
-inner join logs on (logs.id = contest_logs.log_id)
-inner join languages on (languages.code = logs.language_code)
-inner join log_activities on (log_activities.id = logs.log_activity_id)
-inner join log_units on (log_units.id = logs.unit_id)
-where
-  ($1::boolean or deleted_at is null)
-  and logs.user_id = $2
-  and contest_logs.contest_id = $3
+  id, user_id, language_code, language_name, activity_id, activity_name, unit_name, tags, amount, modifier, score, created_at, updated_at, deleted_at,
+  (select count(eligible_logs.id) from eligible_logs) as total_size
+from eligible_logs
 order by created_at desc
-limit $5
-offset $4
+limit $2
+offset $1
 `
 
 type ListLogsForContestUserParams struct {
+	StartFrom      int32
+	PageSize       int32
 	IncludeDeleted bool
 	UserID         uuid.UUID
 	ContestID      uuid.UUID
-	StartFrom      int32
-	PageSize       int32
 }
 
 type ListLogsForContestUserRow struct {
@@ -144,15 +150,16 @@ type ListLogsForContestUserRow struct {
 	CreatedAt    time.Time
 	UpdatedAt    time.Time
 	DeletedAt    sql.NullTime
+	TotalSize    int64
 }
 
 func (q *Queries) ListLogsForContestUser(ctx context.Context, arg ListLogsForContestUserParams) ([]ListLogsForContestUserRow, error) {
 	rows, err := q.db.QueryContext(ctx, listLogsForContestUser,
+		arg.StartFrom,
+		arg.PageSize,
 		arg.IncludeDeleted,
 		arg.UserID,
 		arg.ContestID,
-		arg.StartFrom,
-		arg.PageSize,
 	)
 	if err != nil {
 		return nil, err
@@ -176,6 +183,7 @@ func (q *Queries) ListLogsForContestUser(ctx context.Context, arg ListLogsForCon
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.DeletedAt,
+			&i.TotalSize,
 		); err != nil {
 			return nil, err
 		}

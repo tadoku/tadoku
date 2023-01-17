@@ -390,3 +390,70 @@ export const useContestProfileReadingActivity = (
     },
     options,
   )
+
+const Log = z.object({
+  id: z.string(),
+  user_id: z.string(),
+  language: Language,
+  activity: Activity,
+  unit_name: z.string(),
+  tags: z.array(z.string()),
+  amount: z.number(),
+  modifier: z.number(),
+  score: z.number(),
+  created_at: z.string(),
+  updated_at: z.string(),
+  deleted: z.boolean(),
+})
+
+export type Log = z.infer<typeof Log>
+
+const Logs = z.object({
+  logs: z.array(Log),
+  total_size: z.number(),
+  next_page_token: z.string(),
+})
+
+export type Logs = z.infer<typeof Logs>
+
+export const useContestProfileLogs = (
+  opts: {
+    pageSize: number
+    page: number
+    includeDeleted: boolean
+    userId: string
+    contestId: string
+  },
+  options?: { enabled?: boolean },
+) =>
+  useQuery(
+    [
+      'contest',
+      opts.contestId,
+      'profile',
+      opts.userId,
+      'logs',
+      opts.pageSize,
+      opts.page,
+      opts.includeDeleted,
+    ],
+    async (): Promise<Logs> => {
+      const params = {
+        page_size: opts.pageSize.toString(),
+        page: (opts.page - 1).toString(),
+        include_deleted: opts.includeDeleted.toString(),
+      }
+      const response = await fetch(
+        `${root}/${opts.contestId}/profile/${
+          opts.userId
+        }/logs?${new URLSearchParams(params)}`,
+      )
+
+      if (response.status !== 200) {
+        throw new Error('could not fetch page')
+      }
+
+      return Logs.parse(await response.json())
+    },
+    options,
+  )

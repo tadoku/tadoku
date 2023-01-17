@@ -172,7 +172,6 @@ type Log struct {
 	Score     float32            `json:"score"`
 	Tags      []string           `json:"tags"`
 	UnitName  string             `json:"unit_name"`
-	UpdatedAt *time.Time         `json:"updated_at,omitempty"`
 	UserId    openapi_types.UUID `json:"user_id"`
 }
 
@@ -261,8 +260,9 @@ type ContestFetchLeaderboardParams struct {
 
 // ContestProfileListLogsParams defines parameters for ContestProfileListLogs.
 type ContestProfileListLogsParams struct {
-	PageSize *int `form:"page_size,omitempty" json:"page_size,omitempty"`
-	Page     *int `form:"page,omitempty" json:"page,omitempty"`
+	IncludeDeleted *bool `form:"include_deleted,omitempty" json:"include_deleted,omitempty"`
+	PageSize       *int  `form:"page_size,omitempty" json:"page_size,omitempty"`
+	Page           *int  `form:"page,omitempty" json:"page,omitempty"`
 }
 
 // ContestRegistrationUpsertJSONBody defines parameters for ContestRegistrationUpsert.
@@ -517,6 +517,13 @@ func (w *ServerInterfaceWrapper) ContestProfileListLogs(ctx echo.Context) error 
 
 	// Parameter object where we will unmarshal all parameters from the context
 	var params ContestProfileListLogsParams
+	// ------------- Optional query parameter "include_deleted" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "include_deleted", ctx.QueryParams(), &params.IncludeDeleted)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter include_deleted: %s", err))
+	}
+
 	// ------------- Optional query parameter "page_size" -------------
 
 	err = runtime.BindQueryParameter("form", true, false, "page_size", ctx.QueryParams(), &params.PageSize)

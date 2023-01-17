@@ -281,6 +281,12 @@ paths:
           schema:
             type: string
             format: uuid
+        - name: include_deleted
+          in: query
+          required: false
+          allowEmptyValue: true
+          schema:
+            type: boolean
         - name: page_size
           in: query
           required: false
@@ -785,9 +791,6 @@ components:
           type: number
           format: float
         created_at:
-          type: string
-          format: date-time
-        updated_at:
           type: string
           format: date-time
         deleted:

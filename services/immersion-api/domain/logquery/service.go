@@ -15,10 +15,12 @@ var ErrNotFound = errors.New("not found")
 var ErrUnauthorized = errors.New("unauthorized")
 
 type LogRepository interface {
+	ListLogsForContestUser(context.Context, *LogListForContestUserRequest) (*LogListResponse, error)
 	FetchLogConfigurationOptions(ctx context.Context) (*FetchLogConfigurationOptionsResponse, error)
 }
 
 type Service interface {
+	ListLogsForContestUser(context.Context, *LogListForContestUserRequest) (*LogListResponse, error)
 	FetchLogConfigurationOptions(ctx context.Context) (*FetchLogConfigurationOptionsResponse, error)
 }
 
@@ -105,4 +107,20 @@ type LogListResponse struct {
 	Logs          []Log
 	TotalSize     int
 	NextPageToken string
+}
+
+func (s *service) ListLogsForContestUser(ctx context.Context, req *LogListForContestUserRequest) (*LogListResponse, error) {
+	if req.PageSize == 0 {
+		req.PageSize = 50
+	}
+
+	if req.PageSize > 100 || req.PageSize < 0 {
+		req.PageSize = 100
+	}
+
+	if req.IncludeDeleted && !domain.IsRole(ctx, domain.RoleAdmin) {
+		return nil, ErrUnauthorized
+	}
+
+	return s.r.ListLogsForContestUser(ctx, req)
 }

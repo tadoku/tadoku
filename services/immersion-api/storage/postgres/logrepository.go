@@ -142,3 +142,67 @@ func (r *LogRepository) FetchLogConfigurationOptions(ctx context.Context) (*logq
 
 	return &options, err
 }
+
+func (r *LogRepository) ListLogsForContestUser(ctx context.Context, req *logquery.LogListForContestUserRequest) (*logquery.LogListResponse, error) {
+	_, err := r.q.FindContestById(ctx, FindContestByIdParams{ID: req.ContestID, IncludeDeleted: false})
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, logquery.ErrNotFound
+		}
+
+		return nil, fmt.Errorf("could not fetch logs list: %w", err)
+	}
+
+	entries, err := r.q.ListLogsForContestUser(ctx, ListLogsForContestUserParams{
+		ContestID:      req.ContestID,
+		UserID:         req.UserID,
+		StartFrom:      int32(req.Page * req.PageSize),
+		PageSize:       int32(req.PageSize),
+		IncludeDeleted: req.IncludeDeleted,
+	})
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return &logquery.LogListResponse{
+				TotalSize:     0,
+				NextPageToken: "",
+			}, nil
+		}
+
+		return nil, fmt.Errorf("could not fetch logs list: %w", err)
+	}
+
+	res := make([]logquery.Log, len(entries))
+	for i, it := range entries {
+		res[i] = logquery.Log{
+			ID:           it.ID,
+			UserID:       it.UserID,
+			LanguageCode: it.LanguageCode,
+			LanguageName: it.LanguageName,
+			ActivityID:   int(it.ActivityID),
+			ActivityName: it.ActivityName,
+			UnitName:     it.UnitName,
+			Tags:         it.Tags,
+			Amount:       it.Amount,
+			Modifier:     it.Modifier,
+			Score:        it.Score,
+			CreatedAt:    it.CreatedAt,
+			UpdatedAt:    it.UpdatedAt,
+			Deleted:      it.DeletedAt.Valid,
+		}
+	}
+
+	var totalSize int64
+	if len(entries) > 0 {
+		totalSize = entries[0].TotalSize
+	}
+	nextPageToken := ""
+	if (req.Page*req.PageSize)+req.PageSize < int(totalSize) {
+		nextPageToken = fmt.Sprint(req.Page + 1)
+	}
+
+	return &logquery.LogListResponse{
+		Logs:          res,
+		TotalSize:     int(totalSize),
+		NextPageToken: nextPageToken,
+	}, nil
+}

@@ -3,6 +3,7 @@ package logquery
 import (
 	"context"
 	"errors"
+	"time"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
@@ -73,4 +74,35 @@ func (s *service) FetchLogConfigurationOptions(ctx context.Context) (*FetchLogCo
 	}
 
 	return s.r.FetchLogConfigurationOptions(ctx)
+}
+
+type LogListForContestUserRequest struct {
+	UserID         uuid.UUID
+	ContestID      uuid.UUID
+	IncludeDeleted bool
+	PageSize       int
+	Page           int
+}
+
+type Log struct {
+	ID           uuid.UUID
+	UserID       uuid.UUID
+	LanguageCode string
+	LanguageName string
+	ActivityID   int
+	ActivityName string
+	UnitName     string
+	Tags         []string
+	Amount       float32
+	Modifier     float32
+	Score        float32
+	CreatedAt    time.Time
+	UpdatedAt    time.Time
+	Deleted      bool
+}
+
+type LogListResponse struct {
+	Logs          []Log
+	TotalSize     int
+	NextPageToken string
 }

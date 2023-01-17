@@ -523,14 +523,15 @@ func (s *Server) ContestProfileListLogs(ctx echo.Context, id types.UUID, userId 
 				Code: it.LanguageCode,
 				Name: it.LanguageName,
 			},
-			Amount:    it.Amount,
-			Modifier:  it.Modifier,
-			Score:     it.Score,
-			Tags:      it.Tags,
-			UnitName:  it.UnitName,
-			UserId:    it.UserID,
-			CreatedAt: it.CreatedAt,
-			Deleted:   it.Deleted,
+			Amount:      it.Amount,
+			Modifier:    it.Modifier,
+			Score:       it.Score,
+			Tags:        it.Tags,
+			UnitName:    it.UnitName,
+			UserId:      it.UserID,
+			CreatedAt:   it.CreatedAt,
+			Deleted:     it.Deleted,
+			Description: it.Description,
 		}
 	}
 

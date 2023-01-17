@@ -176,6 +176,7 @@ func (r *LogRepository) ListLogsForContestUser(ctx context.Context, req *logquer
 		res[i] = logquery.Log{
 			ID:           it.ID,
 			UserID:       it.UserID,
+			Description:  NewStringFromNullString(it.Description),
 			LanguageCode: it.LanguageCode,
 			LanguageName: it.LanguageName,
 			ActivityID:   int(it.ActivityID),

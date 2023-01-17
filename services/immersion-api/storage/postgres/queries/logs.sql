@@ -42,6 +42,7 @@ with eligible_logs as (
     logs.log_activity_id as activity_id,
     log_activities.name as activity_name,
     log_units.name as unit_name,
+    logs.description,
     logs.tags,
     logs.amount,
     logs.modifier,

@@ -89,6 +89,7 @@ type LogListForContestUserRequest struct {
 type Log struct {
 	ID           uuid.UUID
 	UserID       uuid.UUID
+	Description  *string
 	LanguageCode string
 	LanguageName string
 	ActivityID   int

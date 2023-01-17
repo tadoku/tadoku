@@ -769,6 +769,8 @@ components:
         user_id:
           type: string
           format: uuid
+        description:
+          type: string
         language:
           $ref: "#/components/schemas/Language"
         activity:

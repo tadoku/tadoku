@@ -162,17 +162,18 @@ type LeaderboardEntry struct {
 
 // Log defines model for Log.
 type Log struct {
-	Activity  Activity           `json:"activity"`
-	Amount    float32            `json:"amount"`
-	CreatedAt time.Time          `json:"created_at"`
-	Deleted   bool               `json:"deleted"`
-	Id        openapi_types.UUID `json:"id"`
-	Language  Language           `json:"language"`
-	Modifier  float32            `json:"modifier"`
-	Score     float32            `json:"score"`
-	Tags      []string           `json:"tags"`
-	UnitName  string             `json:"unit_name"`
-	UserId    openapi_types.UUID `json:"user_id"`
+	Activity    Activity           `json:"activity"`
+	Amount      float32            `json:"amount"`
+	CreatedAt   time.Time          `json:"created_at"`
+	Deleted     bool               `json:"deleted"`
+	Description *string            `json:"description,omitempty"`
+	Id          openapi_types.UUID `json:"id"`
+	Language    Language           `json:"language"`
+	Modifier    float32            `json:"modifier"`
+	Score       float32            `json:"score"`
+	Tags        []string           `json:"tags"`
+	UnitName    string             `json:"unit_name"`
+	UserId      openapi_types.UUID `json:"user_id"`
 }
 
 // LogConfigurationOptions defines model for LogConfigurationOptions.

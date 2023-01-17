@@ -160,12 +160,37 @@ type LeaderboardEntry struct {
 	UserId          openapi_types.UUID `json:"user_id"`
 }
 
+// Log defines model for Log.
+type Log struct {
+	Activity  Activity           `json:"activity"`
+	Amount    float32            `json:"amount"`
+	CreatedAt time.Time          `json:"created_at"`
+	Deleted   bool               `json:"deleted"`
+	Id        openapi_types.UUID `json:"id"`
+	Language  Language           `json:"language"`
+	Modifier  float32            `json:"modifier"`
+	Score     float32            `json:"score"`
+	Tags      []string           `json:"tags"`
+	UnitName  string             `json:"unit_name"`
+	UpdatedAt *time.Time         `json:"updated_at,omitempty"`
+	UserId    openapi_types.UUID `json:"user_id"`
+}
+
 // LogConfigurationOptions defines model for LogConfigurationOptions.
 type LogConfigurationOptions struct {
 	Activities []Activity `json:"activities"`
 	Languages  []Language `json:"languages"`
 	Tags       []Tag      `json:"tags"`
 	Units      []Unit     `json:"units"`
+}
+
+// Logs defines model for Logs.
+type Logs struct {
+	Logs []Log `json:"logs"`
+
+	// NextPageToken is empty if there's no next page
+	NextPageToken string `json:"next_page_token"`
+	TotalSize     int    `json:"total_size"`
 }
 
 // PaginatedList defines model for PaginatedList.
@@ -234,6 +259,12 @@ type ContestFetchLeaderboardParams struct {
 	ActivityId   *int    `form:"activity_id,omitempty" json:"activity_id,omitempty"`
 }
 
+// ContestProfileListLogsParams defines parameters for ContestProfileListLogs.
+type ContestProfileListLogsParams struct {
+	PageSize *int `form:"page_size,omitempty" json:"page_size,omitempty"`
+	Page     *int `form:"page,omitempty" json:"page,omitempty"`
+}
+
 // ContestRegistrationUpsertJSONBody defines parameters for ContestRegistrationUpsert.
 type ContestRegistrationUpsertJSONBody struct {
 	LanguageCodes []string `json:"language_codes"`
@@ -282,6 +313,9 @@ type ServerInterface interface {
 	// Fetches the leaderboard for a contest
 	// (GET /contests/{id}/leaderboard)
 	ContestFetchLeaderboard(ctx echo.Context, id openapi_types.UUID, params ContestFetchLeaderboardParams) error
+	// Lists the logs of a user profile in a contest
+	// (GET /contests/{id}/profile/{user_id}/logs)
+	ContestProfileListLogs(ctx echo.Context, id openapi_types.UUID, userId openapi_types.UUID, params ContestProfileListLogsParams) error
 	// Fetches the reading activity of a user profile in a contest
 	// (GET /contests/{id}/profile/{user_id}/reading-activity)
 	ContestProfileFetchReadingActivity(ctx echo.Context, id openapi_types.UUID, userId openapi_types.UUID) error
@@ -462,6 +496,46 @@ func (w *ServerInterfaceWrapper) ContestFetchLeaderboard(ctx echo.Context) error
 	return err
 }
 
+// ContestProfileListLogs converts echo context to params.
+func (w *ServerInterfaceWrapper) ContestProfileListLogs(ctx echo.Context) error {
+	var err error
+	// ------------- Path parameter "id" -------------
+	var id openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithLocation("simple", false, "id", runtime.ParamLocationPath, ctx.Param("id"), &id)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter id: %s", err))
+	}
+
+	// ------------- Path parameter "user_id" -------------
+	var userId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithLocation("simple", false, "user_id", runtime.ParamLocationPath, ctx.Param("user_id"), &userId)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter user_id: %s", err))
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ContestProfileListLogsParams
+	// ------------- Optional query parameter "page_size" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "page_size", ctx.QueryParams(), &params.PageSize)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter page_size: %s", err))
+	}
+
+	// ------------- Optional query parameter "page" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "page", ctx.QueryParams(), &params.Page)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter page: %s", err))
+	}
+
+	// Invoke the callback with all the unmarshalled arguments
+	err = w.Handler.ContestProfileListLogs(ctx, id, userId, params)
+	return err
+}
+
 // ContestProfileFetchReadingActivity converts echo context to params.
 func (w *ServerInterfaceWrapper) ContestProfileFetchReadingActivity(ctx echo.Context) error {
 	var err error
@@ -612,6 +686,7 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 	router.GET(baseURL+"/contests/ongoing-registrations", wrapper.ContestFindOngoingRegistrations)
 	router.GET(baseURL+"/contests/:id", wrapper.ContestFindByID)
 	router.GET(baseURL+"/contests/:id/leaderboard", wrapper.ContestFetchLeaderboard)
+	router.GET(baseURL+"/contests/:id/profile/:user_id/logs", wrapper.ContestProfileListLogs)
 	router.GET(baseURL+"/contests/:id/profile/:user_id/reading-activity", wrapper.ContestProfileFetchReadingActivity)
 	router.GET(baseURL+"/contests/:id/profile/:user_id/scores", wrapper.ContestProfileFetchScores)
 	router.GET(baseURL+"/contests/:id/registration", wrapper.ContestFindRegistration)

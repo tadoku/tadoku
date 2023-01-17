@@ -263,6 +263,43 @@ paths:
                 $ref: '#/components/schemas/ContestProfileReadingActivity'
         '404':
           description: not found
+  /contests/{id}/profile/{user_id}/logs:
+    get:
+      summary: Lists the logs of a user profile in a contest
+      operationId: contestProfileListLogs
+      tags: [contests_profile]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: user_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: page_size
+          in: query
+          required: false
+          schema:
+            type: integer
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Logs'
+        '404':
+          description: not found
   /contests/ongoing-registrations:
     get:
       summary: Fetches all the ongoing contest registrations of the logged in user, always in a single page
@@ -705,6 +742,67 @@ components:
         score:
           type: number
           format: float
+    Log:
+      type: object
+      required:
+        - id
+        - user_id
+        - language
+        - activity
+        - unit_name
+        - tags
+        - amount
+        - modifier
+        - score
+        - created_at
+        - deleted
+      properties:
+        id:
+          type: string
+          format: uuid
+        user_id:
+          type: string
+          format: uuid
+        language:
+          $ref: "#/components/schemas/Language"
+        activity:
+          $ref: "#/components/schemas/Activity"
+        unit_name:
+          type: string
+          example: "page"
+        tags:
+          type: array
+          items:
+            type: string
+          example: ['Book', 'Fiction']
+        amount:
+          type: number
+          format: float
+        modifier:
+          type: number
+          format: float
+        score:
+          type: number
+          format: float
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        deleted:
+          type: boolean
+    Logs:
+      allOf:
+        - $ref: '#/components/schemas/PaginatedList'
+        - type: object
+          required:
+            - logs
+          properties:
+            logs:
+              type: array
+              items:
+                $ref: "#/components/schemas/Log"
     PaginatedList:
       type: object
       required:

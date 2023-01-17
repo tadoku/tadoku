@@ -472,3 +472,9 @@ func (s *Server) ContestProfileFetchReadingActivity(ctx echo.Context, id types.U
 		Rows: rows,
 	})
 }
+
+// Lists the logs of a user profile in a contest
+// (GET /contests/{id}/profile/{user_id}/logs)
+func (s *Server) ContestProfileListLogs(ctx echo.Context, id types.UUID, userId types.UUID, params openapi.ContestProfileListLogsParams) error {
+	return nil
+}

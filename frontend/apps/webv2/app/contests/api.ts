@@ -394,6 +394,7 @@ export const useContestProfileReadingActivity = (
 const Log = z.object({
   id: z.string(),
   user_id: z.string(),
+  description: z.string().optional(),
   language: Language,
   activity: Activity,
   unit_name: z.string(),
@@ -402,7 +403,6 @@ const Log = z.object({
   modifier: z.number(),
   score: z.number(),
   created_at: z.string(),
-  updated_at: z.string(),
   deleted: z.boolean(),
 })
 

@@ -5,8 +5,12 @@ import { routes } from '@app/common/routes'
 import { ReadingActivityChart } from '@app/contests/ReadingActivityChart'
 import { DateTime } from 'luxon'
 import Link from 'next/link'
-import { useContestProfileScores } from '@app/contests/api'
+import {
+  useContestProfileLogs,
+  useContestProfileScores,
+} from '@app/contests/api'
 import { formatScore } from '@app/common/format'
+import LogsList from '@app/contests/LogsList'
 
 function truncate(text: string | undefined, len: number) {
   if (text === undefined) {
@@ -26,6 +30,13 @@ const Page = () => {
   const userId = router.query['user_id']?.toString() ?? ''
 
   const profile = useContestProfileScores({ userId, contestId })
+  const logs = useContestProfileLogs({
+    userId,
+    contestId,
+    includeDeleted: false,
+    page: 1,
+    pageSize: 50,
+  })
 
   const activities = ['Reading', 'Listening', 'Writing', 'Speaking', 'Study']
   const langs = ['Chinese (Mandarin)', 'Japanese', 'Korean']
@@ -131,83 +142,7 @@ const Page = () => {
         <div className="h-stack w-full items-center justify-between">
           <h2 className="subtitle p-4">Updates</h2>
         </div>
-        <div className="table-container shadow-transparent w-auto">
-          <table className="default shadow-transparent">
-            <thead>
-              <tr>
-                <th className="default w-36">Date</th>
-                <th className="default w-32">Language</th>
-                <th className="default w-28 hidden md:table-cell">Activity</th>
-                <th className="default hidden lg:table-cell">Description</th>
-                <th className="default w-36 hidden md:table-cell">Amount</th>
-                <th className="default w-24 !text-right">Score</th>
-                <th className="default"></th>
-              </tr>
-            </thead>
-            <tbody>
-              {data.map(it => (
-                <tr key={it.date.toString()} className="link">
-                  <td className="default link">
-                    <Link className="reset" href={routes.log(it.id)}>
-                      {it.date.toLocaleString(DateTime.DATE_MED)}
-                    </Link>
-                  </td>
-                  <td className="default link">
-                    <Link className="reset" href={routes.log(it.id)}>
-                      {it.language}
-                    </Link>
-                  </td>
-                  <td className="default link hidden md:table-cell">
-                    <Link className="reset" href={routes.log(it.id)}>
-                      {it.activity}
-                    </Link>
-                  </td>
-                  <td
-                    className={`default text-sm link hidden lg:table-cell ${
-                      !it.description ? 'opacity-50' : ''
-                    }`}
-                  >
-                    <Link className="reset" href={routes.log(it.id)}>
-                      {truncate(it.description, 38) ?? 'N/A'}
-                    </Link>
-                  </td>
-                  <td className="default link font-bold hidden md:table-cell">
-                    <Link className="reset" href={routes.log(it.id)}>
-                      {it.amount} {it.unit}
-                      {it.amount !== 1 ? 's' : ''}
-                    </Link>
-                  </td>
-                  <td className="default link font-bold">
-                    <Link
-                      className="reset justify-end"
-                      href={routes.log(it.id)}
-                    >
-                      {it.score}
-                    </Link>
-                  </td>
-                  <td className="default link w-12">
-                    <Link
-                      className="reset flex-shrink"
-                      href={routes.log(it.id)}
-                    >
-                      <ChevronRightIcon className="w-5 h-5" />
-                    </Link>
-                  </td>
-                </tr>
-              ))}
-              {data.length === 0 ? (
-                <tr>
-                  <td
-                    colSpan={3}
-                    className="default h-32 font-bold text-center text-xl text-slate-400"
-                  >
-                    No partipants yet, be the first to sign up!
-                  </td>
-                </tr>
-              ) : null}
-            </tbody>
-          </table>
-        </div>
+        <LogsList logs={logs} />
       </div>
       pagination
     </>

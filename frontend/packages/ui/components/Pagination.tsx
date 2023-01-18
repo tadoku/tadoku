@@ -176,6 +176,7 @@ const Page = ({
         },
       )}
       onClick={isActive ? undefined : onClick}
+      scroll={false}
     >
       {page}
     </Link>

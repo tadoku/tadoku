@@ -383,6 +383,28 @@ paths:
           description: successful operation
         '400':
           description: invalid submission
+  /logs/{id}:
+    get:
+      summary: Fetches a log by id
+      operationId: logFindByID
+      tags: [logs]
+      parameters:
+        - name: id
+          in: path
+          description: ID of log to return
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Log'
+        '404':
+          description: not found
   /logs/configuration-options:
     get:
       summary: Fetches the configuration options for a log
@@ -661,6 +683,22 @@ components:
               maxItems: 50
               items:
                 $ref: "#/components/schemas/ContestRegistration"
+    ContestRegistrationReference:
+      type: object
+      required:
+        - contest_id
+        - registration_id
+        - title
+      properties:
+        registration_id:
+          type: string
+          format: uuid
+        contest_id:
+          type: string
+          format: uuid
+        title:
+          type: string
+          example: "January 2026"
     LeaderboardEntry:
       type: object
       required:
@@ -792,6 +830,10 @@ components:
         score:
           type: number
           format: float
+        registrations:
+          type: array
+          items:
+            $ref: "#/components/schemas/ContestRegistrationReference"
         created_at:
           type: string
           format: date-time

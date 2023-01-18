@@ -94,6 +94,13 @@ type ContestRegistration struct {
 	UserId          openapi_types.UUID  `json:"user_id"`
 }
 
+// ContestRegistrationReference defines model for ContestRegistrationReference.
+type ContestRegistrationReference struct {
+	ContestId      openapi_types.UUID `json:"contest_id"`
+	RegistrationId openapi_types.UUID `json:"registration_id"`
+	Title          string             `json:"title"`
+}
+
 // ContestRegistrations defines model for ContestRegistrations.
 type ContestRegistrations struct {
 	// NextPageToken is empty if there's no next page
@@ -162,18 +169,19 @@ type LeaderboardEntry struct {
 
 // Log defines model for Log.
 type Log struct {
-	Activity    Activity           `json:"activity"`
-	Amount      float32            `json:"amount"`
-	CreatedAt   time.Time          `json:"created_at"`
-	Deleted     bool               `json:"deleted"`
-	Description *string            `json:"description,omitempty"`
-	Id          openapi_types.UUID `json:"id"`
-	Language    Language           `json:"language"`
-	Modifier    float32            `json:"modifier"`
-	Score       float32            `json:"score"`
-	Tags        []string           `json:"tags"`
-	UnitName    string             `json:"unit_name"`
-	UserId      openapi_types.UUID `json:"user_id"`
+	Activity      Activity                        `json:"activity"`
+	Amount        float32                         `json:"amount"`
+	CreatedAt     time.Time                       `json:"created_at"`
+	Deleted       bool                            `json:"deleted"`
+	Description   *string                         `json:"description,omitempty"`
+	Id            openapi_types.UUID              `json:"id"`
+	Language      Language                        `json:"language"`
+	Modifier      float32                         `json:"modifier"`
+	Registrations *[]ContestRegistrationReference `json:"registrations,omitempty"`
+	Score         float32                         `json:"score"`
+	Tags          []string                        `json:"tags"`
+	UnitName      string                          `json:"unit_name"`
+	UserId        openapi_types.UUID              `json:"user_id"`
 }
 
 // LogConfigurationOptions defines model for LogConfigurationOptions.
@@ -335,6 +343,9 @@ type ServerInterface interface {
 	// Fetches the configuration options for a log
 	// (GET /logs/configuration-options)
 	LogGetConfigurations(ctx echo.Context) error
+	// Fetches a log by id
+	// (GET /logs/{id})
+	LogFindByID(ctx echo.Context, id openapi_types.UUID) error
 	// Checks if service is responsive
 	// (GET /ping)
 	Ping(ctx echo.Context) error
@@ -650,6 +661,22 @@ func (w *ServerInterfaceWrapper) LogGetConfigurations(ctx echo.Context) error {
 	return err
 }
 
+// LogFindByID converts echo context to params.
+func (w *ServerInterfaceWrapper) LogFindByID(ctx echo.Context) error {
+	var err error
+	// ------------- Path parameter "id" -------------
+	var id openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithLocation("simple", false, "id", runtime.ParamLocationPath, ctx.Param("id"), &id)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter id: %s", err))
+	}
+
+	// Invoke the callback with all the unmarshalled arguments
+	err = w.Handler.LogFindByID(ctx, id)
+	return err
+}
+
 // Ping converts echo context to params.
 func (w *ServerInterfaceWrapper) Ping(ctx echo.Context) error {
 	var err error
@@ -701,6 +728,7 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 	router.POST(baseURL+"/contests/:id/registration", wrapper.ContestRegistrationUpsert)
 	router.POST(baseURL+"/logs", wrapper.LogCreateLog)
 	router.GET(baseURL+"/logs/configuration-options", wrapper.LogGetConfigurations)
+	router.GET(baseURL+"/logs/:id", wrapper.LogFindByID)
 	router.GET(baseURL+"/ping", wrapper.Ping)
 
 }

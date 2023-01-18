@@ -4,6 +4,7 @@ import (
 	"errors"
 	"net/http"
 
+	"github.com/deepmap/oapi-codegen/pkg/types"
 	"github.com/labstack/echo/v4"
 
 	"github.com/tadoku/tadoku/services/immersion-api/domain/logcommand"
@@ -103,4 +104,10 @@ func (s *Server) LogGetConfigurations(ctx echo.Context) error {
 	}
 
 	return ctx.JSON(http.StatusOK, res)
+}
+
+// Fetches a log by id
+// (GET /logs/{id})
+func (s *Server) LogFindByID(ctx echo.Context, id types.UUID) error {
+	return nil
 }

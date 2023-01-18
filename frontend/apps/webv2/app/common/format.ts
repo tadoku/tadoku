@@ -1,3 +1,5 @@
+import { activityColors } from '@app/common/variables'
+
 export const formatScore = (
   amount: number | undefined,
   maximumFractionDigits: number = 1,
@@ -10,3 +12,9 @@ export const formatScore = (
     amount,
   )
 }
+
+export const formatUnit = (amount: number, unit: string) =>
+  `${unit}${amount !== 1 ? 's' : ''}`
+
+export const colorForActivity = (id: number) =>
+  activityColors[id % activityColors.length]

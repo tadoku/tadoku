@@ -4,6 +4,7 @@ import { DateTime } from 'luxon'
 import Link from 'next/link'
 import { Logs } from '@app/contests/api'
 import { UseQueryResult } from 'react-query'
+import { formatUnit } from '@app/common/format'
 
 function truncate(text: string | undefined, len: number) {
   if (text === undefined) {
@@ -75,8 +76,7 @@ const LogsList = ({ logs }: Props) => {
               </td>
               <td className="default link font-bold hidden md:table-cell">
                 <Link className="reset" href={routes.log(it.id)}>
-                  {it.amount} {it.unit_name}
-                  {it.amount !== 1 ? 's' : ''}
+                  {it.amount} {formatUnit(it.amount, it.unit_name)}
                 </Link>
               </td>
               <td className="default link font-bold">

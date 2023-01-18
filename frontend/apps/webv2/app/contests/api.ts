@@ -404,6 +404,7 @@ export type ContestRegistrationReference = z.infer<
 export const Log = z.object({
   id: z.string(),
   user_id: z.string(),
+  user_display_name: z.string().optional(),
   description: z.string().optional(),
   language: Language,
   activity: Activity,

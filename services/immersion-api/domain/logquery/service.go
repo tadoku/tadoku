@@ -144,5 +144,21 @@ type FindLogByIDRequest struct {
 func (s *service) FindLogByID(ctx context.Context, req *FindLogByIDRequest) (*Log, error) {
 	req.IncludeDeleted = domain.IsRole(ctx, domain.RoleAdmin)
 
-	return s.r.FindLogByID(ctx, req)
+	log, err := s.r.FindLogByID(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+
+	session := domain.ParseSession(ctx)
+	if session == nil {
+		return nil, ErrUnauthorized
+	}
+	userID := uuid.MustParse(session.Subject)
+
+	// Needed to prevent leaking private registrations, only show to admins and the owner of the log
+	if !domain.IsRole(ctx, domain.RoleAdmin) && log.UserID != userID {
+		log.Registrations = nil
+	}
+
+	return log, nil
 }

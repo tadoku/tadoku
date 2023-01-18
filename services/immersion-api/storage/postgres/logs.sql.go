@@ -139,6 +139,7 @@ const findLogByID = `-- name: FindLogByID :one
 select
   logs.id,
   logs.user_id,
+  (select user_display_name from contest_registrations where user_id = logs.user_id order by created_at desc limit 1) as user_display_name,
   logs.language_code,
   languages.name as language_name,
   logs.log_activity_id as activity_id,
@@ -167,21 +168,22 @@ type FindLogByIDParams struct {
 }
 
 type FindLogByIDRow struct {
-	ID           uuid.UUID
-	UserID       uuid.UUID
-	LanguageCode string
-	LanguageName string
-	ActivityID   int16
-	ActivityName string
-	UnitName     string
-	Description  sql.NullString
-	Tags         []string
-	Amount       float32
-	Modifier     float32
-	Score        float32
-	CreatedAt    time.Time
-	UpdatedAt    time.Time
-	DeletedAt    sql.NullTime
+	ID              uuid.UUID
+	UserID          uuid.UUID
+	UserDisplayName string
+	LanguageCode    string
+	LanguageName    string
+	ActivityID      int16
+	ActivityName    string
+	UnitName        string
+	Description     sql.NullString
+	Tags            []string
+	Amount          float32
+	Modifier        float32
+	Score           float32
+	CreatedAt       time.Time
+	UpdatedAt       time.Time
+	DeletedAt       sql.NullTime
 }
 
 func (q *Queries) FindLogByID(ctx context.Context, arg FindLogByIDParams) (FindLogByIDRow, error) {
@@ -190,6 +192,7 @@ func (q *Queries) FindLogByID(ctx context.Context, arg FindLogByIDParams) (FindL
 	err := row.Scan(
 		&i.ID,
 		&i.UserID,
+		&i.UserDisplayName,
 		&i.LanguageCode,
 		&i.LanguageName,
 		&i.ActivityID,

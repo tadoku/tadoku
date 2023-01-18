@@ -95,22 +95,23 @@ type ContestRegistrationReference struct {
 }
 
 type Log struct {
-	ID            uuid.UUID
-	UserID        uuid.UUID
-	Description   *string
-	LanguageCode  string
-	LanguageName  string
-	ActivityID    int
-	ActivityName  string
-	UnitName      string
-	Tags          []string
-	Amount        float32
-	Modifier      float32
-	Score         float32
-	Registrations []ContestRegistrationReference
-	CreatedAt     time.Time
-	UpdatedAt     time.Time
-	Deleted       bool
+	ID              uuid.UUID
+	UserID          uuid.UUID
+	UserDisplayName *string
+	Description     *string
+	LanguageCode    string
+	LanguageName    string
+	ActivityID      int
+	ActivityName    string
+	UnitName        string
+	Tags            []string
+	Amount          float32
+	Modifier        float32
+	Score           float32
+	Registrations   []ContestRegistrationReference
+	CreatedAt       time.Time
+	UpdatedAt       time.Time
+	Deleted         bool
 }
 
 type LogListResponse struct {

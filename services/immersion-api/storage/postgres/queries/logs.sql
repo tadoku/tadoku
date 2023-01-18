@@ -72,6 +72,7 @@ offset sqlc.arg('start_from');
 select
   logs.id,
   logs.user_id,
+  (select user_display_name from contest_registrations where user_id = logs.user_id order by created_at desc limit 1) as user_display_name,
   logs.language_code,
   languages.name as language_name,
   logs.log_activity_id as activity_id,

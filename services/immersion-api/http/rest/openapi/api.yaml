@@ -807,6 +807,8 @@ components:
         user_id:
           type: string
           format: uuid
+        user_display_name:
+          type: string
         description:
           type: string
         language:

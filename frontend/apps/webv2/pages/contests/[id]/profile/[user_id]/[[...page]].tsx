@@ -48,30 +48,6 @@ const Page = () => {
   const profile = useContestProfileScores({ userId, contestId })
   const logs = useContestProfileLogs(logListParams)
 
-  const activities = ['Reading', 'Listening', 'Writing', 'Speaking', 'Study']
-  const langs = ['Chinese (Mandarin)', 'Japanese', 'Korean']
-  const descriptions = [
-    undefined,
-    'One piece',
-    '乙女ゲームの破滅フラグしかない悪役令嬢に転生してしまった…２',
-    '今夜、世界からこの涙が消えても',
-  ]
-
-  const data = Array.from(Array(14).keys())
-    .reverse()
-    .map(day => '2022-12-' + (day + 1).toString().padStart(2, '0'))
-    .map(date => ({
-      id: 'abc',
-      date: DateTime.fromISO(date),
-      language: langs[Math.floor(Math.random() * langs.length)],
-      activity: activities[Math.floor(Math.random() * activities.length)],
-      description:
-        descriptions[Math.floor(Math.random() * descriptions.length)],
-      amount: Math.floor(Math.random() * 100000),
-      score: Math.floor(Math.random() * 100000),
-      unit: 'page',
-    }))
-
   if (profile.isLoading || profile.isIdle) {
     return <p>Loading...</p>
   }

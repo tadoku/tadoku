@@ -391,7 +391,17 @@ export const useContestProfileReadingActivity = (
     options,
   )
 
-const Log = z.object({
+const ContestRegistrationReference = z.object({
+  registration_id: z.string(),
+  contest_id: z.string(),
+  title: z.string(),
+})
+
+export type ContestRegistrationReference = z.infer<
+  typeof ContestRegistrationReference
+>
+
+export const Log = z.object({
   id: z.string(),
   user_id: z.string(),
   description: z.string().optional(),
@@ -402,6 +412,7 @@ const Log = z.object({
   amount: z.number(),
   modifier: z.number(),
   score: z.number(),
+  registrations: z.array(ContestRegistrationReference).optional(),
   created_at: z.string(),
   deleted: z.boolean(),
 })

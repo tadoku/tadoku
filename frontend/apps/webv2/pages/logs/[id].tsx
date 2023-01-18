@@ -1,23 +1,19 @@
-import { useCurrentDateTime, useCurrentLocation } from '@app/common/hooks'
 import { routes } from '@app/common/routes'
-import { useSession } from '@app/common/session'
-import { useContest, useContestRegistration } from '@app/contests/api'
-import { ContestRegistrationForm } from '@app/contests/ContestRegistration'
-import { ExclamationCircleIcon, HomeIcon } from '@heroicons/react/20/solid'
-import { DateTime, Interval } from 'luxon'
+import { useLog } from '@app/logs/api'
+import { HomeIcon } from '@heroicons/react/20/solid'
 import { useRouter } from 'next/router'
-import { Breadcrumb, Flash } from 'ui'
+import { Breadcrumb } from 'ui'
 
 const Page = () => {
   const router = useRouter()
   const id = router.query['id']?.toString() ?? ''
-  const contest = useContest(id)
+  const log = useLog(id)
 
-  if (contest.isLoading || contest.isIdle) {
+  if (log.isLoading || log.isIdle) {
     return <p>Loading...</p>
   }
 
-  if (contest.isError) {
+  if (log.isError) {
     return (
       <span className="flash error">
         Could not load page, please try again later.

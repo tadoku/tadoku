@@ -1,7 +1,7 @@
 import { z } from 'zod'
 import getConfig from 'next/config'
 import { useMutation, useQuery } from 'react-query'
-import { Activity, Language } from '@app/contests/api'
+import { Activity, Language, Log } from '@app/contests/api'
 import { NewLogAPISchema } from './NewLogForm/domain'
 
 const { publicRuntimeConfig } = getConfig()
@@ -65,3 +65,18 @@ export const useCreateLog = (onSuccess: () => void) =>
       onSuccess()
     },
   })
+
+export const useLog = (id: string, options?: { enabled?: boolean }) =>
+  useQuery(
+    ['log', 'findByID', id],
+    async (): Promise<Log> => {
+      const response = await fetch(`${root}/${id}`)
+
+      if (response.status !== 200) {
+        throw new Error('could not fetch page')
+      }
+
+      return Log.parse(await response.json())
+    },
+    options,
+  )

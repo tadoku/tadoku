@@ -1,10 +1,8 @@
 import { useRouter } from 'next/router'
-import { Breadcrumb, ActionMenu, Pagination } from 'ui'
-import { ChevronRightIcon, HomeIcon } from '@heroicons/react/20/solid'
+import { Breadcrumb, Pagination } from 'ui'
+import { HomeIcon } from '@heroicons/react/20/solid'
 import { routes } from '@app/common/routes'
 import { ReadingActivityChart } from '@app/contests/ReadingActivityChart'
-import { DateTime } from 'luxon'
-import Link from 'next/link'
 import {
   useContestProfileLogs,
   useContestProfileScores,
@@ -13,18 +11,6 @@ import { formatScore } from '@app/common/format'
 import LogsList from '@app/contests/LogsList'
 import { useEffect, useState } from 'react'
 import { getQueryStringIntParameter } from '@app/common/router'
-
-function truncate(text: string | undefined, len: number) {
-  if (text === undefined) {
-    return text
-  }
-
-  if (text.length > len - 3) {
-    return text.substring(0, len - 3) + '...'
-  }
-
-  return text
-}
 
 const Page = () => {
   const router = useRouter()
@@ -135,11 +121,13 @@ const Page = () => {
         <LogsList logs={logs} />
       </div>
       {logsTotalPages > 1 ? (
-        <Pagination
-          currentPage={logListParams.page}
-          totalPages={logsTotalPages}
-          getHref={page => routes.contestUserProfile(contestId, userId, page)}
-        />
+        <div className="mt-4">
+          <Pagination
+            currentPage={logListParams.page}
+            totalPages={logsTotalPages}
+            getHref={page => routes.contestUserProfile(contestId, userId, page)}
+          />
+        </div>
       ) : null}
     </>
   )

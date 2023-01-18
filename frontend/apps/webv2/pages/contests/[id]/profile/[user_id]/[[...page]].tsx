@@ -1,5 +1,5 @@
 import { useRouter } from 'next/router'
-import { Breadcrumb, ActionMenu } from 'ui'
+import { Breadcrumb, ActionMenu, Pagination } from 'ui'
 import { ChevronRightIcon, HomeIcon } from '@heroicons/react/20/solid'
 import { routes } from '@app/common/routes'
 import { ReadingActivityChart } from '@app/contests/ReadingActivityChart'
@@ -11,6 +11,8 @@ import {
 } from '@app/contests/api'
 import { formatScore } from '@app/common/format'
 import LogsList from '@app/contests/LogsList'
+import { useEffect, useState } from 'react'
+import { getQueryStringIntParameter } from '@app/common/router'
 
 function truncate(text: string | undefined, len: number) {
   if (text === undefined) {
@@ -29,14 +31,22 @@ const Page = () => {
   const contestId = router.query['id']?.toString() ?? ''
   const userId = router.query['user_id']?.toString() ?? ''
 
+  const newLogListParams = () => {
+    return {
+      userId,
+      contestId,
+      includeDeleted: false,
+      page: getQueryStringIntParameter(router.query.page, 1),
+      pageSize: 50,
+    }
+  }
+  const [logListParams, setLogListParams] = useState(() => newLogListParams())
+  useEffect(() => {
+    setLogListParams(newLogListParams())
+  }, [router.asPath])
+
   const profile = useContestProfileScores({ userId, contestId })
-  const logs = useContestProfileLogs({
-    userId,
-    contestId,
-    includeDeleted: false,
-    page: 1,
-    pageSize: 50,
-  })
+  const logs = useContestProfileLogs(logListParams)
 
   const activities = ['Reading', 'Listening', 'Writing', 'Speaking', 'Study']
   const langs = ['Chinese (Mandarin)', 'Japanese', 'Korean']
@@ -80,6 +90,10 @@ const Page = () => {
   for (const { language_code, score } of profile.data.scores) {
     scores.set(language_code, score)
   }
+
+  const logsTotalPages = logs.data
+    ? Math.ceil(logs.data.total_size / logListParams.pageSize)
+    : 0
 
   return (
     <>
@@ -144,7 +158,13 @@ const Page = () => {
         </div>
         <LogsList logs={logs} />
       </div>
-      pagination
+      {logsTotalPages > 1 ? (
+        <Pagination
+          currentPage={logListParams.page}
+          totalPages={logsTotalPages}
+          getHref={page => routes.contestUserProfile(contestId, userId, page)}
+        />
+      ) : null}
     </>
   )
 }

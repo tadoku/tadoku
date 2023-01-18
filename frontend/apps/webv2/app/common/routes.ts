@@ -20,8 +20,8 @@ export const routes = {
   contestLeaderboard: (id: string, page?: Page) =>
     `/contests/${id}/leaderboard/${page ?? '1'}`,
   contestJoin: (id: string) => `/contests/${id}/registration`,
-  contestUserProfile: (contest_id: string, user_id: string) =>
-    `/contests/${contest_id}/profile/${user_id}`,
+  contestUserProfile: (contest_id: string, user_id: string, page?: Page) =>
+    `/contests/${contest_id}/profile/${user_id}/${page ?? '1'}`,
 
   logCreate: () => `/logs/new`,
   log: (id: string) => `/logs/${id}`,

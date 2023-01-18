@@ -68,7 +68,7 @@ order by created_at desc
 limit sqlc.arg('page_size')
 offset sqlc.arg('start_from');
 
--- name: FindLogByID :many
+-- name: FindLogByID :one
 select
   logs.id,
   logs.user_id,

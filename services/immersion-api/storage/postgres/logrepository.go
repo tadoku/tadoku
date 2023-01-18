@@ -209,5 +209,48 @@ func (r *LogRepository) ListLogsForContestUser(ctx context.Context, req *logquer
 }
 
 func (r *LogRepository) FindLogByID(ctx context.Context, req *logquery.FindLogByIDRequest) (*logquery.Log, error) {
-	return nil, nil
+	log, err := r.q.FindLogByID(ctx, FindLogByIDParams{
+		IncludeDeleted: req.IncludeDeleted,
+		ID:             req.ID,
+	})
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, logquery.ErrNotFound
+		}
+
+		return nil, fmt.Errorf("could not fetch log details: %w", err)
+	}
+
+	registrations, err := r.q.FindAttachedContestRegistrationsForLog(ctx, req.ID)
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+		return nil, fmt.Errorf("could not fetch log details: %w", err)
+	}
+
+	refs := make([]logquery.ContestRegistrationReference, len(registrations))
+	for i, it := range registrations {
+		refs[i] = logquery.ContestRegistrationReference{
+			RegistrationID: it.ID,
+			ContestID:      it.ContestID,
+			Title:          it.Title,
+		}
+	}
+
+	return &logquery.Log{
+		ID:            log.ID,
+		UserID:        log.UserID,
+		Description:   NewStringFromNullString(log.Description),
+		LanguageCode:  log.LanguageCode,
+		LanguageName:  log.LanguageName,
+		ActivityID:    int(log.ActivityID),
+		ActivityName:  log.ActivityName,
+		UnitName:      log.UnitName,
+		Tags:          log.Tags,
+		Amount:        log.Amount,
+		Modifier:      log.Modifier,
+		Score:         log.Score,
+		CreatedAt:     log.CreatedAt,
+		UpdatedAt:     log.UpdatedAt,
+		Deleted:       log.DeletedAt.Valid,
+		Registrations: refs,
+	}, nil
 }

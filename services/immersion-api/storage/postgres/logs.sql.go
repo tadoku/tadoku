@@ -135,7 +135,7 @@ func (q *Queries) FindAttachedContestRegistrationsForLog(ctx context.Context, id
 	return items, nil
 }
 
-const findLogByID = `-- name: FindLogByID :many
+const findLogByID = `-- name: FindLogByID :one
 select
   logs.id,
   logs.user_id,
@@ -184,43 +184,27 @@ type FindLogByIDRow struct {
 	DeletedAt    sql.NullTime
 }
 
-func (q *Queries) FindLogByID(ctx context.Context, arg FindLogByIDParams) ([]FindLogByIDRow, error) {
-	rows, err := q.db.QueryContext(ctx, findLogByID, arg.IncludeDeleted, arg.ID)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []FindLogByIDRow
-	for rows.Next() {
-		var i FindLogByIDRow
-		if err := rows.Scan(
-			&i.ID,
-			&i.UserID,
-			&i.LanguageCode,
-			&i.LanguageName,
-			&i.ActivityID,
-			&i.ActivityName,
-			&i.UnitName,
-			&i.Description,
-			pq.Array(&i.Tags),
-			&i.Amount,
-			&i.Modifier,
-			&i.Score,
-			&i.CreatedAt,
-			&i.UpdatedAt,
-			&i.DeletedAt,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
+func (q *Queries) FindLogByID(ctx context.Context, arg FindLogByIDParams) (FindLogByIDRow, error) {
+	row := q.db.QueryRowContext(ctx, findLogByID, arg.IncludeDeleted, arg.ID)
+	var i FindLogByIDRow
+	err := row.Scan(
+		&i.ID,
+		&i.UserID,
+		&i.LanguageCode,
+		&i.LanguageName,
+		&i.ActivityID,
+		&i.ActivityName,
+		&i.UnitName,
+		&i.Description,
+		pq.Array(&i.Tags),
+		&i.Amount,
+		&i.Modifier,
+		&i.Score,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.DeletedAt,
+	)
+	return i, err
 }
 
 const listLogsForContestUser = `-- name: ListLogsForContestUser :many

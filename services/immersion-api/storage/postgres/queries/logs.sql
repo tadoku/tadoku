@@ -67,3 +67,42 @@ from eligible_logs
 order by created_at desc
 limit sqlc.arg('page_size')
 offset sqlc.arg('start_from');
+
+-- name: FindLogByID :many
+select
+  logs.id,
+  logs.user_id,
+  logs.language_code,
+  languages.name as language_name,
+  logs.log_activity_id as activity_id,
+  log_activities.name as activity_name,
+  log_units.name as unit_name,
+  logs.description,
+  logs.tags,
+  logs.amount,
+  logs.modifier,
+  logs.score,
+  logs.created_at,
+  logs.updated_at,
+  logs.deleted_at
+from logs
+inner join languages on (languages.code = logs.language_code)
+inner join log_activities on (log_activities.id = logs.log_activity_id)
+inner join log_units on (log_units.id = logs.unit_id)
+where
+  (sqlc.arg('include_deleted')::boolean or deleted_at is null)
+  and logs.id = sqlc.arg('id');
+
+-- name: FindAttachedContestRegistrationsForLog :many
+select
+  contest_logs.contest_id,
+  contests.title,
+  contest_registrations.id
+from contest_logs
+inner join contests on (contests.id = contest_logs.contest_id)
+inner join logs on (logs.id = contest_logs.log_id)
+inner join contest_registrations on (
+  contest_registrations.contest_id = contest_logs.contest_id
+  and contest_registrations.user_id = logs.user_id
+)
+where log_id = sqlc.arg('id');

@@ -17,11 +17,13 @@ var ErrUnauthorized = errors.New("unauthorized")
 type LogRepository interface {
 	ListLogsForContestUser(context.Context, *LogListForContestUserRequest) (*LogListResponse, error)
 	FetchLogConfigurationOptions(ctx context.Context) (*FetchLogConfigurationOptionsResponse, error)
+	FindLogByID(context.Context, *FindLogByIDRequest) (*Log, error)
 }
 
 type Service interface {
 	ListLogsForContestUser(context.Context, *LogListForContestUserRequest) (*LogListResponse, error)
 	FetchLogConfigurationOptions(ctx context.Context) (*FetchLogConfigurationOptionsResponse, error)
+	FindLogByID(context.Context, *FindLogByIDRequest) (*Log, error)
 }
 
 type service struct {
@@ -86,22 +88,29 @@ type LogListForContestUserRequest struct {
 	Page           int
 }
 
+type ContestRegistrationReference struct {
+	RegistrationID uuid.UUID
+	ContestID      uuid.UUID
+	Title          string
+}
+
 type Log struct {
-	ID           uuid.UUID
-	UserID       uuid.UUID
-	Description  *string
-	LanguageCode string
-	LanguageName string
-	ActivityID   int
-	ActivityName string
-	UnitName     string
-	Tags         []string
-	Amount       float32
-	Modifier     float32
-	Score        float32
-	CreatedAt    time.Time
-	UpdatedAt    time.Time
-	Deleted      bool
+	ID            uuid.UUID
+	UserID        uuid.UUID
+	Description   *string
+	LanguageCode  string
+	LanguageName  string
+	ActivityID    int
+	ActivityName  string
+	UnitName      string
+	Tags          []string
+	Amount        float32
+	Modifier      float32
+	Score         float32
+	Registrations []ContestRegistrationReference
+	CreatedAt     time.Time
+	UpdatedAt     time.Time
+	Deleted       bool
 }
 
 type LogListResponse struct {
@@ -124,4 +133,15 @@ func (s *service) ListLogsForContestUser(ctx context.Context, req *LogListForCon
 	}
 
 	return s.r.ListLogsForContestUser(ctx, req)
+}
+
+type FindLogByIDRequest struct {
+	ID             uuid.UUID
+	IncludeDeleted bool
+}
+
+func (s *service) FindLogByID(ctx context.Context, req *FindLogByIDRequest) (*Log, error) {
+	req.IncludeDeleted = domain.IsRole(ctx, domain.RoleAdmin)
+
+	return s.r.FindLogByID(ctx, req)
 }

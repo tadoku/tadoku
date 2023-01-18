@@ -207,3 +207,7 @@ func (r *LogRepository) ListLogsForContestUser(ctx context.Context, req *logquer
 		NextPageToken: nextPageToken,
 	}, nil
 }
+
+func (r *LogRepository) FindLogByID(ctx context.Context, req *logquery.FindLogByIDRequest) (*logquery.Log, error) {
+	return nil, nil
+}

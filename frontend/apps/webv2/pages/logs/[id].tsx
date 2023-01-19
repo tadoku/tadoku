@@ -38,10 +38,9 @@ const Page = () => {
           ]}
         />
       </div>
-      <h1 className="title">
-        Log by {log.data.user_display_name ?? 'anonymous'}
-      </h1>
+      <h1 className="title">Log details</h1>
       <h2 className="subtitle">
+        By {log.data.user_display_name ?? 'anonymous'},{' '}
         {DateTime.fromISO(log.data.created_at).toLocaleString(
           DateTime.DATETIME_MED,
         )}
@@ -58,7 +57,7 @@ const Page = () => {
               >
                 {log.data.activity.name}
               </span>
-              <span className="py-1 px-3 text-xs items-center flex text-white bg-slate-500">
+              <span className="py-1 px-3 text-xs items-center flex text-white bg-secondary">
                 {log.data.language.name}
               </span>
               {log.data.tags.map(it => (
@@ -83,7 +82,10 @@ const Page = () => {
               </p>
             ) : null}
             {log.data.description ? (
-              <p className="">{log.data.description}</p>
+              <>
+                <h3 className="subtitle my-2">Description</h3>
+                <p className="">{log.data.description}</p>
+              </>
             ) : null}
             <h3 className="subtitle my-2">Score</h3>
             <div className="border-b-2 border-slate-500/20 font-bold text-3xl pb-4 mb-4">

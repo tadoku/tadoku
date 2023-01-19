@@ -57,12 +57,12 @@ const Page = () => {
               >
                 {log.data.activity.name}
               </span>
-              <span className="py-1 px-3 text-xs items-center flex text-white bg-secondary">
+              <span className="py-1 px-3 text-xs items-center flex text-slate-900 bg-slate-200">
                 {log.data.language.name}
               </span>
               {log.data.tags.map(it => (
                 <span
-                  className={`py-1 px-3 text-xs items-center flex text-white bg-secondary`}
+                  className={`py-1 px-3 text-xs items-center flex text-slate-900 bg-slate-200`}
                 >
                   {it}
                 </span>

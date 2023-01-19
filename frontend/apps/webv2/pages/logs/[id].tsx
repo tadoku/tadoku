@@ -72,30 +72,21 @@ const Page = () => {
             {log.data.description ? (
               <p className="">{log.data.description}</p>
             ) : null}
-          </div>
-          <div className="grid card mt-4 w-full ">
-            <h3 className="subtitle mb-2">Score calculation</h3>
-            <div className="grid grid-cols-3 gap-x-4 gap-y-2 w-full">
-              <div className="col-span-2 text-right font-bold text-3xl">
-                {log.data.amount}
-              </div>
-              <div className="flex items-center lowercase font-bold px-4 bg-slate-500 text-white">
-                {formatUnit(log.data.amount, log.data.unit_name)}
-              </div>
-              <div className="flex items-center">
-                <XMarkIcon className="w-6 h-6" />
-              </div>
-              <div className="text-right font-bold text-3xl">
-                {log.data.modifier}
-              </div>
-              <div className="flex items-center lowercase font-bold px-4 bg-slate-500 text-white">
-                Modifier
-              </div>
-              <div className="col-span-2 text-right border-t-2 border-slate-500/20 font-bold text-3xl mt-2 pt-2">
-                {log.data.score}
-              </div>
-              <div className="flex items-center lowercase font-bold px-4 bg-secondary text-white mt-4">
-                Score
+            <h3 className="subtitle my-2">Score</h3>
+
+            <div className="border-b-2 border-slate-500/20 font-bold text-3xl pb-4 mb-4">
+              {log.data.score}
+            </div>
+            <div>
+              <h4 className="subtitle text-sm">Breakdown</h4>
+              <div className="lowercase flex items-center space-x-1 text-sm">
+                <strong className="text-lg">{log.data.amount}</strong>
+                <span className="text-slate-500">
+                  {formatUnit(log.data.amount, log.data.unit_name)}
+                </span>
+                <XMarkIcon className="w-3 h-3 mx-2 text-secondary" />
+                <strong className="text-lg">{log.data.modifier}</strong>
+                <span className="text-slate-500">modifier</span>
               </div>
             </div>
           </div>

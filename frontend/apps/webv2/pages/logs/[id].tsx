@@ -87,20 +87,22 @@ const Page = () => {
                 <p className="">{log.data.description}</p>
               </>
             ) : null}
-            <h3 className="subtitle my-2">Score</h3>
-            <div className="border-b-2 border-slate-500/20 font-bold text-3xl pb-4 mb-4">
-              {log.data.score}
-            </div>
-            <div>
-              <h4 className="subtitle text-sm">Breakdown</h4>
-              <div className="lowercase flex items-center space-x-1 text-sm">
-                <strong className="text-lg">{log.data.amount}</strong>
-                <span className="text-slate-500">
-                  {formatUnit(log.data.amount, log.data.unit_name)}
-                </span>
-                <XMarkIcon className="w-3 h-3 mx-2 text-secondary" />
-                <strong className="text-lg">{log.data.modifier}</strong>
-                <span className="text-slate-500">modifier</span>
+            <div className="h-stack w-full">
+              <div className="w-1/2">
+                <h3 className="subtitle mb-2">Score</h3>
+                <div className="font-bold text-5xl">{log.data.score}</div>
+              </div>
+              <div className="w-1/2 flex flex-col items-end justify-end opacity-80">
+                <h4 className="subtitle text-sm">Breakdown</h4>
+                <div className="lowercase flex items-center space-x-1 text-sm">
+                  <strong className="text-lg">{log.data.amount}</strong>
+                  <span className="text-slate-500">
+                    {formatUnit(log.data.amount, log.data.unit_name)}
+                  </span>
+                  <XMarkIcon className="w-3 h-3 mx-2 text-secondary" />
+                  <strong className="text-lg">{log.data.modifier}</strong>
+                  <span className="text-slate-500">modifier</span>
+                </div>
               </div>
             </div>
           </div>

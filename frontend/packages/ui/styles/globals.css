@@ -44,7 +44,7 @@
     transition: color 0.2s ease;
   }
 
-  p a:not(.reset) {
+  p a:not(.reset):not(.flash):not(.btn) {
     text-decoration: underline;
   }
 

@@ -1,4 +1,4 @@
-import { colorForActivity, formatUnit } from '@app/common/format'
+import { colorForActivity, formatArray, formatUnit } from '@app/common/format'
 import { routes } from '@app/common/routes'
 import { useLog } from '@app/logs/api'
 import { HomeIcon } from '@heroicons/react/20/solid'
@@ -69,11 +69,23 @@ const Page = () => {
                 </span>
               ))}
             </div>
+            {log.data.registrations ? (
+              <p>
+                Submitted to{' '}
+                {formatArray(log.data.registrations, it => (
+                  <Link
+                    href={routes.contestLeaderboard(it.contest_id)}
+                    className="font-bold"
+                  >
+                    {it.title}
+                  </Link>
+                ))}
+              </p>
+            ) : null}
             {log.data.description ? (
               <p className="">{log.data.description}</p>
             ) : null}
             <h3 className="subtitle my-2">Score</h3>
-
             <div className="border-b-2 border-slate-500/20 font-bold text-3xl pb-4 mb-4">
               {log.data.score}
             </div>
@@ -91,25 +103,6 @@ const Page = () => {
             </div>
           </div>
         </div>
-        {log.data.registrations ? (
-          <div>
-            <div className="card w-64 p-0">
-              <h3 className="subtitle px-7 py-4">Contests</h3>
-              <ul className="divide-y-2 divide-slate-500/5 border-t-2 border-slate-500/5">
-                {log.data.registrations.map(it => (
-                  <li>
-                    <Link
-                      href={routes.contestLeaderboard(it.contest_id)}
-                      className="reset px-7 py-2 flex justify-between items-center hover:bg-slate-500/5 font-bold"
-                    >
-                      {it.title}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </div>
-        ) : null}
       </div>
     </>
   )

@@ -18,3 +18,24 @@ export const formatUnit = (amount: number, unit: string) =>
 
 export const colorForActivity = (id: number) =>
   activityColors[id % activityColors.length]
+
+export function formatArray<T>(elements: T[], format: (element: T) => any) {
+  if (elements.length === 0) {
+    return ''
+  }
+  if (elements.length === 1) {
+    return format(elements[0])
+  }
+  if (elements.length === 2) {
+    return [format(elements[0]), ' and ', format(elements[1])]
+  }
+
+  return elements
+    .map(it => format(it))
+    .map((node, i) => [
+      i > 0 && i != elements.length - 1 ? ', ' : null,
+      i === elements.length - 1 ? ', and ' : null,
+      node,
+    ])
+    .filter(it => it != null)
+}

@@ -68,7 +68,7 @@ const Page = () => {
                 </span>
               ))}
             </div>
-            {log.data.registrations ? (
+            {log.data.registrations && log.data.registrations.length >= 1 ? (
               <p>
                 Submitted to{' '}
                 {formatArray(log.data.registrations, it => (
@@ -87,7 +87,7 @@ const Page = () => {
                 <p className="">{log.data.description}</p>
               </>
             ) : null}
-            <div className="h-stack w-full">
+            <div className="h-stack w-full mt-4">
               <div className="w-1/2">
                 <h3 className="subtitle mb-2">Score</h3>
                 <div className="font-bold text-5xl">{log.data.score}</div>

@@ -153,10 +153,10 @@ func (s *service) FindLogByID(ctx context.Context, req *FindLogByIDRequest) (*Lo
 	if session == nil {
 		return nil, ErrUnauthorized
 	}
-	userID := uuid.MustParse(session.Subject)
+	userID, err := uuid.Parse(session.Subject)
 
 	// Needed to prevent leaking private registrations, only show to admins and the owner of the log
-	if !domain.IsRole(ctx, domain.RoleAdmin) && log.UserID != userID {
+	if err != nil || !domain.IsRole(ctx, domain.RoleAdmin) && log.UserID != userID {
 		log.Registrations = nil
 	}
 

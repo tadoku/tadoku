@@ -4,7 +4,7 @@ import { DateTime } from 'luxon'
 import Link from 'next/link'
 import { Logs } from '@app/contests/api'
 import { UseQueryResult } from 'react-query'
-import { formatUnit } from '@app/common/format'
+import { colorForActivity, formatUnit } from '@app/common/format'
 
 function truncate(text: string | undefined, len: number) {
   if (text === undefined) {
@@ -36,9 +36,9 @@ const LogsList = ({ logs }: Props) => {
       <table className="default shadow-transparent">
         <thead>
           <tr>
+            <th className="default w-28 hidden md:table-cell">Activity</th>
             <th className="default w-36">Date</th>
             <th className="default w-32">Language</th>
-            <th className="default w-28 hidden md:table-cell">Activity</th>
             <th className="default hidden lg:table-cell">Description</th>
             <th className="default w-36 hidden md:table-cell">Amount</th>
             <th className="default w-24 !text-right">Score</th>
@@ -48,6 +48,17 @@ const LogsList = ({ logs }: Props) => {
         <tbody>
           {logs.data.logs.map(it => (
             <tr key={it.id} className="link">
+              <td className="default link hidden md:table-cell">
+                <Link className="reset" href={routes.log(it.id)}>
+                  <span
+                    className={`tag bg-${colorForActivity(
+                      it.activity.id,
+                    )}-300 text-${colorForActivity(it.activity.id)}-900`}
+                  >
+                    {it.activity.name}
+                  </span>
+                </Link>
+              </td>
               <td className="default link">
                 <Link className="reset" href={routes.log(it.id)}>
                   {DateTime.fromISO(it.created_at).toLocaleString(
@@ -58,11 +69,6 @@ const LogsList = ({ logs }: Props) => {
               <td className="default link">
                 <Link className="reset" href={routes.log(it.id)}>
                   {it.language.name}
-                </Link>
-              </td>
-              <td className="default link hidden md:table-cell">
-                <Link className="reset" href={routes.log(it.id)}>
-                  {it.activity.name}
                 </Link>
               </td>
               <td

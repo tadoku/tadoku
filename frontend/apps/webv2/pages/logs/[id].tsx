@@ -58,20 +58,14 @@ const Page = () => {
             className={`bg-${logColor}-300 absolute top-0 left-0 right-0 h-2`}
           ></div>
           <div className="h-stack spaced">
-            <span
-              className={`py-1 px-3 text-xs items-center flex bg-${logColor}-300 text-${logColor}-900`}
-            >
+            <span className={`tag bg-${logColor}-300 text-${logColor}-900`}>
               {log.data.activity.name}
             </span>
-            <span className="py-1 px-3 text-xs items-center flex text-slate-900 bg-slate-200">
+            <span className="tag text-slate-900 bg-slate-200">
               {log.data.language.name}
             </span>
             {log.data.tags.map(it => (
-              <span
-                className={`py-1 px-3 text-xs items-center flex text-slate-900 bg-slate-200`}
-              >
-                {it}
-              </span>
+              <span className={`tag text-slate-900 bg-slate-200`}>{it}</span>
             ))}
           </div>
           {log.data.registrations && log.data.registrations.length >= 1 ? (

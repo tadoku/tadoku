@@ -288,6 +288,10 @@
   .table-container {
     @apply overflow-x-auto w-full shadow shadow-slate-500/10;
   }
+
+  .tag {
+    @apply py-1 px-3 text-xs items-center flex;
+  }
 }
 
 @layer utilities {

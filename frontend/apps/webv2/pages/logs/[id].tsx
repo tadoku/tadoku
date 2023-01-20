@@ -34,7 +34,14 @@ const Page = () => {
         <Breadcrumb
           links={[
             { label: 'Home', href: routes.home(), IconComponent: HomeIcon },
-            { label: 'Logs', href: '#' },
+            {
+              label: log.data.user_display_name!,
+              href: routes.userProfile(log.data.user_id),
+            },
+            {
+              label: 'Log details',
+              href: routes.log(log.data.id),
+            },
           ]}
         />
       </div>

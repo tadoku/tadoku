@@ -308,5 +308,5 @@ function HeatmapExample() {
       value: Math.random() < 0.3 ? 0 : Math.random() * 100,
     }))
 
-  return <HeatmapChart year={year} data={data} />
+  return <HeatmapChart year={year} data={data} id="demo" />
 }

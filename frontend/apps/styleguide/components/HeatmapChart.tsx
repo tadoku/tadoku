@@ -1,4 +1,6 @@
 import { DateTime, Interval } from 'luxon'
+import { useRef, useEffect, useState } from 'react'
+import { createPortal } from 'react-dom'
 
 interface Cell {
   x: DateTime
@@ -9,9 +11,18 @@ interface Cell {
 interface Props {
   data: { date: string; value: number }[]
   year: number
+  id: string
 }
 
-function HeatmapChart({ data, year }: Props) {
+const colWidth = 10
+const rowHeight = 10
+const padding = 3
+const offset = {
+  x: 30,
+  y: 15,
+}
+
+function HeatmapChart({ id, data, year }: Props) {
   const start = DateTime.fromObject({ year, month: 1, day: 1 })
   const end = DateTime.fromObject({ year, month: 12, day: 31 })
 
@@ -42,15 +53,8 @@ function HeatmapChart({ data, year }: Props) {
     }
   }
 
-  const maxValue = Math.max(...cols.flatMap(it => it.map(it => it?.value ?? 0)))
-
-  const colWidth = 10
-  const rowHeight = 10
-  const padding = 3
-  const offset = {
-    x: 30,
-    y: 15,
-  }
+  const allValues = cols.flatMap(it => it.map(it => it?.value ?? 0))
+  const maxValue = Math.max(...allValues)
 
   const weekdays = ['Mon', undefined, 'Wed', undefined, 'Fri', undefined, 'Sun']
 
@@ -66,6 +70,8 @@ function HeatmapChart({ data, year }: Props) {
     lastMonth += 1
     return DateTime.fromObject({ month: lastMonth }).toFormat('LLL')
   })
+
+  const tooltipId = `tooltip-${id}`
 
   return (
     <svg
@@ -110,27 +116,157 @@ function HeatmapChart({ data, year }: Props) {
         )
       })}
       {cols.map((rows, col) =>
-        rows.map((cell, row) => {
-          if (!cell) {
-            return null
-          }
-          return (
-            <rect
-              width={colWidth}
-              height={rowHeight}
-              x={offset.x + colWidth * col + padding * col}
-              y={offset.y + rowHeight * row + padding * row}
-              fill={'transparent'}
-              className={`${getCellDepthClass(maxValue, cell.value)}`}
-              strokeWidth={0}
-            >
-              <title>{cell.x.toLocaleString(DateTime.DATE_FULL)}</title>
-            </rect>
-          )
-        }),
+        rows.map((cell, row) => (
+          <Cell
+            value={cell?.value}
+            tooltipId={tooltipId}
+            maxValue={maxValue}
+            col={col}
+            row={row}
+            tooltip={cell?.x.toLocaleString(DateTime.DATE_FULL) ?? ''}
+          />
+        )),
       )}
+      <g id={tooltipId} className="outline-none"></g>
     </svg>
   )
+}
+
+function Cell({
+  value,
+  tooltipId,
+  maxValue,
+  tooltip,
+  row,
+  col,
+}: {
+  value: number | undefined
+  tooltipId: string
+  maxValue: number
+  tooltip: string
+  row: number
+  col: number
+}) {
+  const [mounted, setMounted] = useState(false)
+  const [isActive, setIsActive] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+
+    return () => setMounted(false)
+  }, [])
+
+  if (!mounted || value === undefined) {
+    return null
+  }
+
+  const x = offset.x + colWidth * col + padding * col
+  const y = offset.y + rowHeight * row + padding * row
+
+  const target = mounted ? document.getElementById(tooltipId) : null
+
+  return (
+    <>
+      <rect
+        width={colWidth}
+        height={rowHeight}
+        x={x}
+        y={y}
+        fill={'transparent'}
+        className={`${getCellDepthClass(maxValue, value)}`}
+        strokeWidth={0}
+        onClick={() => setIsActive(!isActive)}
+      ></rect>
+      {target &&
+        createPortal(
+          <Tooltip row={row} col={col} visible={isActive}>
+            {tooltip}
+          </Tooltip>,
+          target,
+        )}
+    </>
+  )
+}
+
+function Tooltip({
+  row,
+  col,
+  children,
+  visible,
+}: {
+  row: number
+  col: number
+  children: React.ReactNode
+  visible: boolean
+}) {
+  const ref = useRef<SVGTextElement>(null)
+  const [tooltipRect, setTooltipRect] = useState({ x: 0, y: 0, w: 0, h: 0 })
+
+  useEffect(() => {
+    if (ref && ref.current) {
+      const textRect = ref.current.getBoundingClientRect()
+      console.log(textRect)
+
+      const w = textRect.width + 12
+      const h = textRect.height + 12
+      const x = offset.x + colWidth * col + padding * col - w / 2
+      const y = offset.y + rowHeight * row + padding * row - h - 2
+
+      setTooltipRect({ x: x, y: y, w: w, h: h })
+    }
+  }, [ref, visible])
+
+  return (
+    <g className={`${visible ? '' : 'hidden'}`}>
+      <rect
+        width={tooltipRect.w}
+        height={tooltipRect.h}
+        x={tooltipRect.x}
+        y={tooltipRect.y}
+        className={`fill-secondary`}
+        style={{
+          filter:
+            'drop-shadow(0 4px 3px rgb(0 0 0 / 0.07)) drop-shadow(0 2px 2px rgb(0 0 0 / 0.06))',
+        }}
+      ></rect>
+      <polygon
+        points={pointsForRect(tooltipRect)}
+        className={`fill-secondary`}
+      />
+      <text
+        fill={'white'}
+        x={tooltipRect.x + 6}
+        y={tooltipRect.y + 8}
+        alignmentBaseline="hanging"
+        ref={ref}
+        className="text-xs"
+      >
+        {children}
+      </text>
+    </g>
+  )
+}
+
+function pointsForRect({
+  x,
+  y,
+  w,
+  h,
+}: {
+  x: number
+  y: number
+  w: number
+  h: number
+}) {
+  const size = 8
+
+  const middle = x + w / 2 + colWidth / 2
+  const left = middle - size / 2
+  const right = middle + size / 2
+  const top = y + h
+  const bottom = top + 4
+
+  return `${left},${top} ${right},${top} ${middle},${bottom}`
 }
 
 function getCellDepthClass(max: number, value: number) {

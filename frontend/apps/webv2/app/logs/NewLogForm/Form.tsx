@@ -76,7 +76,7 @@ export const LogForm = ({
   const createLogMutation = useCreateLog(() => {
     const userId = session?.identity.id
     if (userId) {
-      return router.replace(routes.userProfile(userId))
+      return router.replace(routes.userProfileStatistics(userId))
     }
 
     router.replace(routes.leaderboardLatestOfficial())

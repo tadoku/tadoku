@@ -1,7 +1,9 @@
+import { DateTime } from 'luxon'
 import getConfig from 'next/config'
 
 const { publicRuntimeConfig } = getConfig()
 const kratos = publicRuntimeConfig.authUiUrl
+
 type Page = string | number
 
 export const routes = {
@@ -29,7 +31,8 @@ export const routes = {
   leaderboardLatestOfficial: (page?: Page) =>
     `/leaderboard/latest/${page ?? '1'}`,
 
-  userProfile: (id: string) => `/profile/${id}`,
+  userProfileStatistics: (id: string, year?: Page) =>
+    `/profile/${id}/statistics/${year ?? DateTime.now().year}`,
 
   forum: () => `https://forum.tadoku.app/`,
 

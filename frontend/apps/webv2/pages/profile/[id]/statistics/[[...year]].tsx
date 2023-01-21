@@ -25,6 +25,13 @@ const Page = () => {
           ]}
         />
       </div>
+      <div className="h-stack justify-between items-center w-full">
+        <div>
+          <h1 className="title">Profile</h1>
+          <h2 className="subtitle">antonve</h2>
+        </div>
+        <div></div>
+      </div>
     </>
   )
 }

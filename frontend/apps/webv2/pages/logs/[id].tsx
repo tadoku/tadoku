@@ -36,7 +36,7 @@ const Page = () => {
             { label: 'Home', href: routes.home(), IconComponent: HomeIcon },
             {
               label: log.data.user_display_name!,
-              href: routes.userProfile(log.data.user_id),
+              href: routes.userProfileStatistics(log.data.user_id),
             },
             {
               label: 'Log details',

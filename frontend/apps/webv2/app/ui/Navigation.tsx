@@ -27,7 +27,7 @@ export default function Navigation() {
             links: [
               {
                 label: 'Profile',
-                href: routes.userProfile(session.identity.id),
+                href: routes.userProfileStatistics(session.identity.id),
                 IconComponent: UserIcon,
               },
               {

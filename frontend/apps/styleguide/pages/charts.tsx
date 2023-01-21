@@ -303,10 +303,16 @@ function HeatmapExample() {
   const data = Interval.fromDateTimes(start, end.endOf('day'))
     .splitBy({ day: 1 })
     .map(it => it.start)
-    .map(date => ({
-      date: date.toISODate(),
-      value: Math.random() < 0.3 ? 0 : Math.random() * 100,
-    }))
+    .map(date => {
+      const value = Math.random() < 0.3 ? 0 : Math.random() * 100
+      return {
+        date: date.toISODate(),
+        value,
+        tooltip: `${Math.ceil(value)} points on ${date.toLocaleString(
+          DateTime.DATE_FULL,
+        )}`,
+      }
+    })
 
   return <HeatmapChart year={year} data={data} id="demo" />
 }

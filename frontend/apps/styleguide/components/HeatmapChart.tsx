@@ -6,10 +6,11 @@ interface Cell {
   x: DateTime
   y: number
   value: number
+  tooltip?: string
 }
 
 interface Props {
-  data: { date: string; value: number }[]
+  data: { date: string; value: number; tooltip?: string }[]
   year: number
   id: string
 }
@@ -27,8 +28,12 @@ function HeatmapChart({ id, data, year }: Props) {
   const end = DateTime.fromObject({ year, month: 12, day: 31 })
 
   const values = new Map<string, number>()
-  for (const { date, value } of data) {
+  const tooltips = new Map<string, string>()
+  for (const { date, value, tooltip } of data) {
     values.set(date, value)
+    if (tooltip) {
+      tooltips.set(date, tooltip)
+    }
   }
 
   const dates = Interval.fromDateTimes(start, end.endOf('day'))
@@ -46,6 +51,7 @@ function HeatmapChart({ id, data, year }: Props) {
       x: date,
       y: date.weekday,
       value: values.get(date.toISODate()) ?? 0,
+      tooltip: tooltips.get(date.toISODate()),
     }
 
     if (date.weekday === 7) {
@@ -124,7 +130,7 @@ function HeatmapChart({ id, data, year }: Props) {
             maxValue={maxValue}
             col={col}
             row={row}
-            tooltip={cell?.x.toLocaleString(DateTime.DATE_FULL) ?? ''}
+            tooltip={cell?.tooltip}
           />
         )),
       )}
@@ -144,7 +150,7 @@ function Cell({
   value: number | undefined
   tooltipId: string
   maxValue: number
-  tooltip: string
+  tooltip?: string
   row: number
   col: number
 }) {
@@ -185,6 +191,7 @@ function Cell({
     <>
       {rect}
       {target &&
+        tooltip &&
         createPortal(
           <Tooltip row={row} col={col} visible={isHovered}>
             {tooltip}

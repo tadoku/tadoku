@@ -1,5 +1,5 @@
 import { useRouter } from 'next/router'
-import { Breadcrumb, Tabbar } from 'ui'
+import { Breadcrumb, Tabbar, VerticalTabbar } from 'ui'
 import { HomeIcon } from '@heroicons/react/20/solid'
 import { routes } from '@app/common/routes'
 
@@ -46,6 +46,34 @@ const Page = () => {
           },
         ]}
       />
+      <div className="h-stack mt-4">
+        <div className="w-[100px]">
+          <VerticalTabbar
+            links={[
+              {
+                href: routes.userProfileStatistics(userId, 2023),
+                label: '2023',
+                active: true,
+              },
+              {
+                href: routes.userProfileStatistics(userId, 2022),
+                label: '2022',
+                active: false,
+              },
+              {
+                href: routes.userProfileStatistics(userId, 2021),
+                label: '2021',
+                active: false,
+              },
+              {
+                href: routes.userProfileStatistics(userId, 2020),
+                label: '2020',
+                active: false,
+              },
+            ]}
+          />
+        </div>
+      </div>
     </>
   )
 }

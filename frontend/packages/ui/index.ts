@@ -16,6 +16,6 @@ export {
 } from './components/Form'
 export { Modal } from './components/Modal'
 export { Navbar } from './components/Navbar'
-export { Tabbar } from './components/Tabbar'
+export { Tabbar, VerticalTabbar } from './components/Tabbar'
 export { Pagination } from './components/Pagination'
 export { ToastContainer } from './components/toasts'

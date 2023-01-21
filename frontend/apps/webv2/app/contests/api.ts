@@ -316,7 +316,7 @@ export const useOngoingContestRegistrations = (options?: {
     options,
   )
 
-const Score = z.object({
+export const Score = z.object({
   language_code: z.string(),
   score: z.number(),
 })

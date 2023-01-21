@@ -11,6 +11,7 @@ import { formatScore } from '@app/common/format'
 import LogsList from '@app/contests/LogsList'
 import { useEffect, useState } from 'react'
 import { getQueryStringIntParameter } from '@app/common/router'
+import { ScoreList } from '@app/contests/ScoreList'
 
 const Page = () => {
   const router = useRouter()
@@ -46,11 +47,6 @@ const Page = () => {
         Could not load page, please try again later.
       </span>
     )
-  }
-
-  const scores = new Map<string, number>()
-  for (const { language_code, score } of profile.data.scores) {
-    scores.set(language_code, score)
   }
 
   const logsTotalPages = logs.data
@@ -90,21 +86,11 @@ const Page = () => {
         <div></div>
       </div>
       <div className="my-4 lg:space-x-4 flex flex-col lg:flex-row w-full">
-        <div className="lg:w-1/5 grid gap-4">
-          <div className="card narrow">
-            <h3 className="subtitle mb-2">Overall score</h3>
-            <span className="text-4xl font-bold">
-              {formatScore(profile.data.overall_score)}
-            </span>
-          </div>
-          {profile.data.registration.languages.map(({ code, name }) => (
-            <div className="card narrow" key={code}>
-              <h3 className="subtitle mb-2">{name}</h3>
-              <span className="text-4xl font-bold">
-                {scores.get(code) ?? 0}
-              </span>
-            </div>
-          ))}
+        <div className="lg:w-1/5 grid">
+          <ScoreList
+            languages={profile.data.registration.languages}
+            list={profile.data.scores}
+          />
         </div>
         <div className="mt-4 lg:mt-0 flex-grow flex flex-col card narrow">
           <h3 className="subtitle mb-2">Reading activity</h3>

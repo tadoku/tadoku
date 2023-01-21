@@ -7,6 +7,7 @@ import {
   ArrowRightOnRectangleIcon,
   Cog8ToothIcon,
   PlusIcon,
+  UserIcon,
 } from '@heroicons/react/20/solid'
 import { useLogoutHandler, useSession } from '@app/common/session'
 import { useCurrentLocation } from '@app/common/hooks'
@@ -24,6 +25,11 @@ export default function Navigation() {
             type: 'dropdown',
             label: session.identity.traits.display_name ?? 'User',
             links: [
+              {
+                label: 'Profile',
+                href: routes.userProfile(session.identity.id),
+                IconComponent: UserIcon,
+              },
               {
                 label: 'New log',
                 href: routes.logCreate(),

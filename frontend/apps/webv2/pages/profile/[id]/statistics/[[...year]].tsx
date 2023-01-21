@@ -3,6 +3,7 @@ import { Breadcrumb, Tabbar, VerticalTabbar } from 'ui'
 import { HomeIcon } from '@heroicons/react/20/solid'
 import { routes } from '@app/common/routes'
 import Link from 'next/link'
+import { ScoreList } from '@app/contests/ScoreList'
 
 const Page = () => {
   const router = useRouter()
@@ -47,7 +48,21 @@ const Page = () => {
           },
         ]}
       />
-      <div className="h-stack mt-4 space-x-8">
+      <div className="h-stack mt-4 spaced">
+        <div className="lg:w-1/5">
+          <ScoreList
+            languages={[
+              { code: 'zho', name: 'Chinese (Other)' },
+              { code: 'jpa', name: 'Japanese' },
+              { code: 'kor', name: 'Korean' },
+            ]}
+            list={[
+              { language_code: 'zho', score: 200 },
+              { language_code: 'kor', score: 300 },
+              { language_code: 'jpa', score: 500 },
+            ]}
+          />
+        </div>
         <div className="flex-grow v-stack spaced">
           <div className="card narrow">
             <h3 className="subtitle">525 updates in 2023</h3>
@@ -83,7 +98,7 @@ const Page = () => {
             </div>
           </div>
         </div>
-        <div className="flex-shrink">
+        <div className="flex-shrink pl-3 min-w-32">
           <VerticalTabbar
             links={[
               {

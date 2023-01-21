@@ -86,7 +86,7 @@ const Page = () => {
         <div></div>
       </div>
       <div className="my-4 lg:space-x-4 flex flex-col lg:flex-row w-full">
-        <div className="lg:w-1/5 grid">
+        <div className="lg:w-1/5">
           <ScoreList
             languages={profile.data.registration.languages}
             list={profile.data.scores}

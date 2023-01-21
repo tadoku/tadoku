@@ -15,7 +15,7 @@ export const ScoreList = ({ list, languages }: Props) => {
   }
 
   return (
-    <div className="w-full h-full grid gap-4">
+    <div className="w-full grid gap-4">
       <div className="card narrow">
         <h3 className="subtitle mb-2">Overall score</h3>
         <span className="text-4xl font-bold">{formatScore(total)}</span>

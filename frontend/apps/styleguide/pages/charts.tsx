@@ -18,6 +18,7 @@ import { Chart } from 'react-chartjs-2'
 import { Doughnut } from 'react-chartjs-2'
 import 'chartjs-adapter-luxon'
 import { faker } from '@faker-js/faker'
+import dynamic from 'next/dynamic'
 
 ChartJS.register(
   ArcElement,
@@ -33,10 +34,24 @@ ChartJS.register(
   TimeScale,
 )
 
+const HeatmapChart = dynamic(() => import('../components/HeatmapChart'), {
+  ssr: false,
+})
+
 export default function Typography() {
   return (
     <>
       <h1 className="title mb-8">Charts</h1>
+
+      <Title>Heatmap</Title>
+      <Preview>
+        <div className="max-w-[900px]">
+          <HeatmapChart />
+        </div>
+      </Preview>
+      <CodeBlock language="html" code={``} />
+
+      <Separator />
 
       <Title>Reading activity chart</Title>
       <Preview>

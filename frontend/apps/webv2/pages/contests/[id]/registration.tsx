@@ -67,6 +67,7 @@ const Page = () => {
         visible={registrationClosed}
         style="error"
         IconComponent={ExclamationCircleIcon}
+        className="mb-4"
       >
         Unfortunately, registrations for this contest have ended.
       </Flash>
@@ -77,6 +78,7 @@ const Page = () => {
         <ContestRegistrationForm
           contest={contest.data}
           data={registration.data}
+          isClosed={registrationClosed}
         />
       )}
     </>

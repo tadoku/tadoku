@@ -152,6 +152,10 @@
   input[type=radio]:checked + span  {
     @apply font-semibold;
   }
+
+  fieldset:disabled {
+    @apply opacity-60 pointer-events-none;
+  }
 }
 
 @layer components {

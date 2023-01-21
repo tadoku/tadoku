@@ -64,23 +64,16 @@ export type ContestRegistrationFormSchema = z.infer<
 
 interface Props {
   contest: ContestView
+  isClosed: boolean
   data?: ContestRegistrationView
 }
 
-export const ContestRegistrationForm = ({ contest, data }: Props) => {
+export const ContestRegistrationForm = ({ contest, data, isClosed }: Props) => {
   const allLanguages = contest.allowed_languages === null
   const options = useContestConfigurationOptions({ enabled: allLanguages })
 
-  if (!contest.id) {
-    return (
-      <Flash style="error" IconComponent={ExclamationCircleIcon}>
-        Could not load contest.
-      </Flash>
-    )
-  }
-
   const defaultValues = {
-    contest_id: contest.id,
+    contest_id: contest.id ?? '',
     languages: data?.languages,
     new_languages: data?.languages ?? [],
   }
@@ -102,6 +95,14 @@ export const ContestRegistrationForm = ({ contest, data }: Props) => {
     createContest(data)
   }
 
+  if (!contest.id) {
+    return (
+      <Flash style="error" IconComponent={ExclamationCircleIcon}>
+        Could not load contest.
+      </Flash>
+    )
+  }
+
   if (allLanguages && options.isError) {
     return (
       <Flash style="error" IconComponent={ExclamationCircleIcon}>
@@ -118,42 +119,46 @@ export const ContestRegistrationForm = ({ contest, data }: Props) => {
     <FormProvider {...methods}>
       <form
         onSubmit={methods.handleSubmit(onSubmit, errors => console.log(errors))}
-        className="v-stack spaced max-w-screen-sm"
       >
-        <div className="card v-stack spaced">
-          <h2 className="subtitle">Contest registration: {contest.title}</h2>
-          <AutocompleteMultiInput
-            name="new_languages"
-            label="Languages"
-            hint="Select up to 3 languages"
-            options={
-              (contest.allowed_languages || options.data?.languages) ?? []
-            }
-            match={(option, query) =>
-              option.name
-                .toLowerCase()
-                .replace(/[^a-zA-Z0-9]/g, '')
-                .includes(query.toLowerCase())
-            }
-            getIdForOption={option => option.code}
-            format={option => option.name}
-          />
-        </div>
-        <div className="h-stack spaced justify-end">
-          <a
-            href={routes.contestLeaderboard(contest.id!)}
-            className="btn ghost"
-          >
-            Cancel
-          </a>
-          <button
-            type="submit"
-            className="btn primary"
-            disabled={methods.formState.isSubmitting}
-          >
-            {defaultValues ? 'Register' : 'Update registration'}
-          </button>
-        </div>
+        <fieldset
+          disabled={isClosed}
+          className="v-stack spaced max-w-screen-sm"
+        >
+          <div className="card v-stack spaced">
+            <h2 className="subtitle">Contest registration: {contest.title}</h2>
+            <AutocompleteMultiInput
+              name="new_languages"
+              label="Languages"
+              hint="Select up to 3 languages"
+              options={
+                (contest.allowed_languages || options.data?.languages) ?? []
+              }
+              match={(option, query) =>
+                option.name
+                  .toLowerCase()
+                  .replace(/[^a-zA-Z0-9]/g, '')
+                  .includes(query.toLowerCase())
+              }
+              getIdForOption={option => option.code}
+              format={option => option.name}
+            />
+          </div>
+          <div className="h-stack spaced justify-end">
+            <a
+              href={routes.contestLeaderboard(contest.id!)}
+              className="btn ghost"
+            >
+              Cancel
+            </a>
+            <button
+              type="submit"
+              className="btn primary"
+              disabled={methods.formState.isSubmitting}
+            >
+              {defaultValues ? 'Register' : 'Update registration'}
+            </button>
+          </div>
+        </fieldset>
       </form>
     </FormProvider>
   )

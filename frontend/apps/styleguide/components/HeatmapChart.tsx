@@ -1,40 +1,24 @@
 import { DateTime, Interval } from 'luxon'
 
-function isoDayOfWeek(dt: Date) {
-  let wd = dt.getDay() // 0..6, from sunday
-  wd = ((wd + 6) % 7) + 1 // 1..7 from monday
-  return '' + wd // string so it gets parsed
-}
-
-function generateData() {
-  const data = []
-  const end = new Date(2023, 1, 1, 0, 0, 0, 0)
-  let dt = new Date(2022, 1, 1, 0, 0, 0, 0)
-  while (dt <= end) {
-    const iso = dt.toISOString().substr(0, 10)
-    data.push({
-      x: iso,
-      y: isoDayOfWeek(dt),
-      d: iso,
-      v: Math.random() * 50,
-    })
-    dt = new Date(dt.setDate(dt.getDate() + 1))
-  }
-  return data
-}
-
-const data = generateData()
-
 interface Cell {
   x: DateTime
   y: number
   value: number
 }
 
-function HeatmapChart() {
-  const year = 2022
+interface Props {
+  data: { date: string; value: number }[]
+  year: number
+}
+
+function HeatmapChart({ data, year }: Props) {
   const start = DateTime.fromObject({ year, month: 1, day: 1 })
   const end = DateTime.fromObject({ year, month: 12, day: 31 })
+
+  const values = new Map<string, number>()
+  for (const { date, value } of data) {
+    values.set(date, value)
+  }
 
   const dates = Interval.fromDateTimes(start, end.endOf('day'))
     .splitBy({ day: 1 })
@@ -50,7 +34,7 @@ function HeatmapChart() {
     cols[col][date.weekday - 1] = {
       x: date,
       y: date.weekday,
-      value: Math.random() < 0.3 ? 0 : Math.random() * 100,
+      value: values.get(date.toISODate()) ?? 0,
     }
 
     if (date.weekday === 7) {

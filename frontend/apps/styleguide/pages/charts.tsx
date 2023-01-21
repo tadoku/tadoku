@@ -5,13 +5,10 @@ import { Chart } from 'react-chartjs-2'
 import { Doughnut } from 'react-chartjs-2'
 import 'chartjs-adapter-luxon'
 import { faker } from '@faker-js/faker'
-import dynamic from 'next/dynamic'
+import { DateTime, Interval } from 'luxon'
+import HeatmapChart from '@components/HeatmapChart'
 
 ChartJS.register(...registerables)
-
-const HeatmapChart = dynamic(() => import('../components/HeatmapChart'), {
-  ssr: false,
-})
 
 export default function Typography() {
   return (
@@ -21,7 +18,7 @@ export default function Typography() {
       <Title>Heatmap</Title>
       <Preview>
         <div className="max-w-[900px]">
-          <HeatmapChart />
+          <HeatmapExample />
         </div>
       </Preview>
       <CodeBlock language="html" code={``} />
@@ -296,4 +293,20 @@ function ReadingActivityChart() {
       }}
     />
   )
+}
+
+function HeatmapExample() {
+  const year = 2023
+  const start = DateTime.fromObject({ year, month: 1, day: 1 })
+  const end = DateTime.fromObject({ year, month: 12, day: 31 })
+
+  const data = Interval.fromDateTimes(start, end.endOf('day'))
+    .splitBy({ day: 1 })
+    .map(it => it.start)
+    .map(date => ({
+      date: date.toISODate(),
+      value: Math.random() < 0.3 ? 0 : Math.random() * 100,
+    }))
+
+  return <HeatmapChart year={year} data={data} />
 }

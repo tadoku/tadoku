@@ -1,12 +1,11 @@
 import { useRouter } from 'next/router'
-import { Breadcrumb } from 'ui'
+import { Breadcrumb, Tabbar } from 'ui'
 import { HomeIcon } from '@heroicons/react/20/solid'
 import { routes } from '@app/common/routes'
 
 const Page = () => {
   const router = useRouter()
-  const contestId = router.query['id']?.toString() ?? ''
-  const userId = router.query['user_id']?.toString() ?? ''
+  const userId = router.query['id']?.toString() ?? ''
 
   // if (profile.isError || !contest) {
   //   return (
@@ -32,6 +31,21 @@ const Page = () => {
         </div>
         <div></div>
       </div>
+      <Tabbar
+        links={[
+          {
+            href: routes.userProfileStatistics(userId),
+            label: 'Statistics',
+            active: true,
+          },
+          {
+            href: routes.userProfileUpdates(userId),
+            label: 'Updates',
+            active: false,
+            disabled: true,
+          },
+        ]}
+      />
     </>
   )
 }

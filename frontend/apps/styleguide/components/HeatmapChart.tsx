@@ -50,13 +50,15 @@ function HeatmapChart() {
     cols[col][date.weekday - 1] = {
       x: date,
       y: date.weekday,
-      value: Math.random() * 100,
+      value: Math.random() < 0.3 ? 0 : Math.random() * 100,
     }
 
     if (date.weekday === 7) {
       col += 1
     }
   }
+
+  const maxValue = Math.max(...cols.flatMap(it => it.map(it => it?.value ?? 0)))
 
   const colWidth = 10
   const rowHeight = 10
@@ -135,7 +137,7 @@ function HeatmapChart() {
               x={offset.x + colWidth * col + padding * col}
               y={offset.y + rowHeight * row + padding * row}
               fill={'transparent'}
-              className={`fill-teal-400`}
+              className={`${getCellDepthClass(maxValue, cell.value)}`}
               strokeWidth={0}
             >
               <title>{cell.x.toLocaleString(DateTime.DATE_FULL)}</title>
@@ -145,6 +147,26 @@ function HeatmapChart() {
       )}
     </svg>
   )
+}
+
+function getCellDepthClass(max: number, value: number) {
+  if (value === 0) {
+    return 'fill-stone-200'
+  }
+
+  const ratio = value / max
+
+  if (ratio < 0.25) {
+    return 'fill-teal-100'
+  }
+  if (ratio < 0.5) {
+    return 'fill-teal-300'
+  }
+  if (ratio < 0.75) {
+    return 'fill-teal-500'
+  }
+
+  return 'fill-teal-700'
 }
 
 export default HeatmapChart

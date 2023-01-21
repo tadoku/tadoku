@@ -2,6 +2,7 @@ import { useRouter } from 'next/router'
 import { Breadcrumb, Tabbar, VerticalTabbar } from 'ui'
 import { HomeIcon } from '@heroicons/react/20/solid'
 import { routes } from '@app/common/routes'
+import Link from 'next/link'
 
 const Page = () => {
   const router = useRouter()
@@ -46,8 +47,43 @@ const Page = () => {
           },
         ]}
       />
-      <div className="h-stack mt-4">
-        <div className="w-[100px]">
+      <div className="h-stack mt-4 space-x-8">
+        <div className="flex-grow v-stack spaced">
+          <div className="card narrow">
+            <h3 className="subtitle">525 updates in 2023</h3>
+            <div className="bg-cyan-400 w-full h-28 mt-4"></div>
+          </div>
+          <div className="h-stack spaced flex-grow">
+            <div className="card w-full p-0">
+              <h3 className="subtitle p-4">Contests</h3>
+              <ul className="divide-y-2 divide-slate-500/5 border-t-2 border-slate-500/5">
+                {[
+                  'Contest 1',
+                  'Contest 2',
+                  'Contest 3',
+                  'Contest 4',
+                  'Contest 5',
+                  'Contest 6',
+                  'Contest 7',
+                ].map(u => (
+                  <li key={`${u[0]}-${u[1]}`}>
+                    <Link
+                      href="#"
+                      className="reset px-4 py-2 flex justify-between items-center hover:bg-slate-500/5"
+                    >
+                      <span className="font-bold text-base">{u}</span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div className="card narrow w-full">
+              <h3 className="subtitle">Activities</h3>
+              <div className="bg-lime-400 w-full h-64 mt-4"></div>
+            </div>
+          </div>
+        </div>
+        <div className="flex-shrink">
           <VerticalTabbar
             links={[
               {

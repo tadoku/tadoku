@@ -100,7 +100,7 @@ const LogsList = ({ logs }: Props) => {
           {logs.data.logs.length === 0 ? (
             <tr>
               <td
-                colSpan={3}
+                colSpan={7}
                 className="default h-32 font-bold text-center text-xl text-slate-400"
               >
                 No updates submitted yet

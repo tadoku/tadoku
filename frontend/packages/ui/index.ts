@@ -14,6 +14,7 @@ export {
   AutocompleteMultiInput,
   RadioGroup,
 } from './components/Form'
+export { HeatmapChart } from './components/HeatmapChart'
 export { Modal } from './components/Modal'
 export { Navbar } from './components/Navbar'
 export { Tabbar, VerticalTabbar } from './components/Tabbar'

@@ -1,4 +1,4 @@
-import { chartColors, chartDatasetDefaults } from 'ui'
+import { chartColors, chartDatasetDefaults, HeatmapChart } from 'ui'
 import { CodeBlock, Preview, Separator, Title } from '@components/example'
 import { Chart as ChartJS, registerables } from 'chart.js'
 import { Chart } from 'react-chartjs-2'
@@ -6,7 +6,6 @@ import { Doughnut } from 'react-chartjs-2'
 import 'chartjs-adapter-luxon'
 import { faker } from '@faker-js/faker'
 import { DateTime, Interval } from 'luxon'
-import HeatmapChart from '@components/HeatmapChart'
 
 ChartJS.register(...registerables)
 
@@ -21,7 +20,33 @@ export default function Typography() {
           <HeatmapExample />
         </div>
       </Preview>
-      <CodeBlock language="html" code={``} />
+      <CodeBlock
+        language="javascript"
+        code={`import { DateTime, Interval } from 'luxon'
+import HeatmapChart from '@components/HeatmapChart'
+
+function HeatmapExample() {
+  const year = 2023
+  const start = DateTime.fromObject({ year, month: 1, day: 1 })
+  const end = DateTime.fromObject({ year, month: 12, day: 31 })
+
+  const data = Interval.fromDateTimes(start, end.endOf('day'))
+    .splitBy({ day: 1 })
+    .map(it => it.start)
+    .map(date => {
+      const value = Math.random() < 0.3 ? 0 : Math.random() * 100
+      return {
+        date: date.toISODate(),
+        value,
+        tooltip: \`\${Math.ceil(value)} points on \${date.toLocaleString(
+          DateTime.DATE_FULL,
+        )}\`,
+      }
+    })
+
+  return <HeatmapChart year={year} data={data} id="demo" />
+}`}
+      />
 
       <Separator />
 
@@ -32,7 +57,7 @@ export default function Typography() {
         </div>
       </Preview>
       <CodeBlock
-        language="html"
+        language="javascript"
         code={`import { chartColors } from 'ui'
 import {
   Chart as ChartJS,
@@ -178,6 +203,7 @@ function ReadingActivityChart() {
         </div>
         <div className="flex-1">
           <CodeBlock
+            language="javascript"
             code={`import { chartDatasetDefaults } from 'ui'
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js'
 import { Doughnut } from 'react-chartjs-2'

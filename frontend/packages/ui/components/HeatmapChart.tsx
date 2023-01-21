@@ -23,7 +23,7 @@ const offset = {
   y: 15,
 }
 
-function HeatmapChart({ id, data, year }: Props) {
+export function HeatmapChart({ id, data, year }: Props) {
   const start = DateTime.fromObject({ year, month: 1, day: 1 })
   const end = DateTime.fromObject({ year, month: 12, day: 31 })
 
@@ -332,5 +332,3 @@ function getCellDepthClass(max: number, value: number | undefined) {
 
   return 'fill-teal-700'
 }
-
-export default HeatmapChart

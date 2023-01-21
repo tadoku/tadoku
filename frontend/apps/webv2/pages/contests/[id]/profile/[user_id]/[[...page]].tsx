@@ -82,7 +82,9 @@ const Page = () => {
       </div>
       <div className="h-stack justify-between items-center w-full">
         <div>
-          <h1 className="title">antonve</h1>
+          <h1 className="title">
+            {profile.data.registration.user_display_name}
+          </h1>
           <h2 className="subtitle">{contest.title}</h2>
         </div>
         <div></div>

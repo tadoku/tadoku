@@ -1,5 +1,5 @@
 import { DateTime, Interval } from 'luxon'
-import { useRef, useEffect, useState } from 'react'
+import { useRef, useEffect, useState, MutableRefObject } from 'react'
 import { createPortal } from 'react-dom'
 
 interface Cell {
@@ -77,7 +77,7 @@ function HeatmapChart({ id, data, year }: Props) {
     <svg
       width={weeks * colWidth + (weeks - 1) * padding + offset.x}
       height={7 * rowHeight + 6 * padding + offset.y}
-      className=""
+      className="overflow-visible"
     >
       {weekdays.map((label, row) => {
         if (!label) {
@@ -148,7 +148,7 @@ function Cell({
   col: number
 }) {
   const [mounted, setMounted] = useState(false)
-  const [isActive, setIsActive] = useState(false)
+  const [hoverRef, isHovered] = useHover<SVGRectElement>()
 
   useEffect(() => {
     setMounted(true)
@@ -175,17 +175,39 @@ function Cell({
         fill={'transparent'}
         className={`${getCellDepthClass(maxValue, value)}`}
         strokeWidth={0}
-        onClick={() => setIsActive(!isActive)}
+        ref={hoverRef}
       ></rect>
       {target &&
         createPortal(
-          <Tooltip row={row} col={col} visible={isActive}>
+          <Tooltip row={row} col={col} visible={isHovered}>
             {tooltip}
           </Tooltip>,
           target,
         )}
     </>
   )
+}
+
+function useHover<T>(): [MutableRefObject<T>, boolean] {
+  const [value, setValue] = useState<boolean>(false)
+  const ref: any = useRef<T | null>(null)
+  const handleMouseOver = (): void => setValue(true)
+  const handleMouseOut = (): void => setValue(false)
+  useEffect(
+    () => {
+      const node: any = ref.current
+      if (node) {
+        node.addEventListener('mouseover', handleMouseOver)
+        node.addEventListener('mouseout', handleMouseOut)
+        return () => {
+          node.removeEventListener('mouseover', handleMouseOver)
+          node.removeEventListener('mouseout', handleMouseOut)
+        }
+      }
+    },
+    [ref.current], // Recall only if ref changes
+  )
+  return [ref, value]
 }
 
 function Tooltip({

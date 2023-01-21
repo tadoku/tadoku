@@ -225,10 +225,8 @@ export function contestsForLog({
 }
 
 export const formatContestLabel = (contest: ContestView) =>
-  `${contest.private ? '' : 'Official: '}${
-    contest.description
-  } (${DateTime.fromISO(contest.contest_start).toLocaleString(
-    DateTime.DATE_MED,
-  )} ~ ${DateTime.fromISO(contest.contest_end).toLocaleString(
-    DateTime.DATE_MED,
-  )})`
+  `${contest.private ? '' : 'Official: '}${contest.title} (${DateTime.fromISO(
+    contest.contest_start,
+  ).toLocaleString(DateTime.DATE_MED)} ~ ${DateTime.fromISO(
+    contest.contest_end,
+  ).toLocaleString(DateTime.DATE_MED)})`

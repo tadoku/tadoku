@@ -89,7 +89,7 @@ function HeatmapChart({ id, data, year }: Props) {
             textAnchor="end"
             x={offset.x - padding * 2}
             y={offset.y + rowHeight * row + padding * row}
-            className=""
+            key={label}
             alignmentBaseline="hanging"
             style={{ fontSize: 10 }}
           >
@@ -107,7 +107,7 @@ function HeatmapChart({ id, data, year }: Props) {
             textAnchor="start"
             x={offset.x + colWidth * col + padding * col}
             y={0}
-            className=""
+            key={label}
             alignmentBaseline="hanging"
             style={{ fontSize: 10 }}
           >
@@ -118,6 +118,7 @@ function HeatmapChart({ id, data, year }: Props) {
       {cols.map((rows, col) =>
         rows.map((cell, row) => (
           <Cell
+            key={`${cell}-${row}`}
             value={cell?.value}
             tooltipId={tooltipId}
             maxValue={maxValue}
@@ -150,33 +151,39 @@ function Cell({
   const [mounted, setMounted] = useState(false)
   const [hoverRef, isHovered] = useHover<SVGRectElement>()
 
+  const x = offset.x + colWidth * col + padding * col
+  const y = offset.y + rowHeight * row + padding * row
+
+  const rect = (
+    <rect
+      width={colWidth}
+      height={rowHeight}
+      x={x}
+      y={y}
+      fill={'transparent'}
+      className={`${
+        mounted ? getCellDepthClass(maxValue, value) : 'fill-stone-200'
+      }`}
+      strokeWidth={0}
+      ref={hoverRef}
+    ></rect>
+  )
+
   useEffect(() => {
     setMounted(true)
 
     return () => setMounted(false)
   }, [])
 
-  if (!mounted || value === undefined) {
-    return null
+  if (!mounted || value === undefined || value === 0) {
+    return rect
   }
-
-  const x = offset.x + colWidth * col + padding * col
-  const y = offset.y + rowHeight * row + padding * row
 
   const target = mounted ? document.getElementById(tooltipId) : null
 
   return (
     <>
-      <rect
-        width={colWidth}
-        height={rowHeight}
-        x={x}
-        y={y}
-        fill={'transparent'}
-        className={`${getCellDepthClass(maxValue, value)}`}
-        strokeWidth={0}
-        ref={hoverRef}
-      ></rect>
+      {rect}
       {target &&
         createPortal(
           <Tooltip row={row} col={col} visible={isHovered}>
@@ -199,9 +206,14 @@ function useHover<T>(): [MutableRefObject<T>, boolean] {
       if (node) {
         node.addEventListener('mouseover', handleMouseOver)
         node.addEventListener('mouseout', handleMouseOut)
+        node.addEventListener('touchmove', handleMouseOver)
+        node.addEventListener('touchleave', handleMouseOut)
+
         return () => {
           node.removeEventListener('mouseover', handleMouseOver)
           node.removeEventListener('mouseout', handleMouseOut)
+          node.removeEventListener('touchmove', handleMouseOver)
+          node.removeEventListener('touchleave', handleMouseOut)
         }
       }
     },
@@ -227,7 +239,6 @@ function Tooltip({
   useEffect(() => {
     if (ref && ref.current) {
       const textRect = ref.current.getBoundingClientRect()
-      console.log(textRect)
 
       const w = textRect.width + 12
       const h = textRect.height + 12
@@ -291,7 +302,11 @@ function pointsForRect({
   return `${left},${top} ${right},${top} ${middle},${bottom}`
 }
 
-function getCellDepthClass(max: number, value: number) {
+function getCellDepthClass(max: number, value: number | undefined) {
+  if (value === undefined) {
+    return ''
+  }
+
   if (value === 0) {
     return 'fill-stone-200'
   }

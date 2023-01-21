@@ -1,38 +1,13 @@
 import { chartColors, chartDatasetDefaults } from 'ui'
 import { CodeBlock, Preview, Separator, Title } from '@components/example'
-import {
-  Chart as ChartJS,
-  ArcElement,
-  Tooltip,
-  Legend,
-  LinearScale,
-  CategoryScale,
-  BarElement,
-  PointElement,
-  LineElement,
-  LineController,
-  BarController,
-  TimeScale,
-} from 'chart.js'
+import { Chart as ChartJS, registerables } from 'chart.js'
 import { Chart } from 'react-chartjs-2'
 import { Doughnut } from 'react-chartjs-2'
 import 'chartjs-adapter-luxon'
 import { faker } from '@faker-js/faker'
 import dynamic from 'next/dynamic'
 
-ChartJS.register(
-  ArcElement,
-  Tooltip,
-  Legend,
-  LinearScale,
-  CategoryScale,
-  BarElement,
-  PointElement,
-  LineElement,
-  LineController,
-  BarController,
-  TimeScale,
-)
+ChartJS.register(...registerables)
 
 const HeatmapChart = dynamic(() => import('../components/HeatmapChart'), {
   ssr: false,

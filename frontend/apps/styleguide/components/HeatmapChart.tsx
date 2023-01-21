@@ -14,14 +14,13 @@ function isoDayOfWeek(dt: Date) {
 }
 
 function startOfToday() {
-  const d = new Date()
-  return new Date(d.getFullYear(), d.getMonth(), d.getDate(), 0, 0, 0, 0)
+  return
 }
 
 function generateData() {
   const data = []
-  const end = startOfToday()
-  let dt = new Date(new Date().setDate(end.getDate() - 365))
+  const end = new Date(2023, 1, 1, 0, 0, 0, 0)
+  let dt = new Date(2022, 1, 1, 0, 0, 0, 0)
   while (dt <= end) {
     const iso = dt.toISOString().substr(0, 10)
     data.push({
@@ -124,10 +123,9 @@ function HeatmapChart() {
             time: {
               unit: 'week',
               round: 'week',
-              minUnit: 'month',
 
               displayFormats: {
-                // week: 'MMMM',
+                month: 'MMMM',
               },
             },
             ticks: {

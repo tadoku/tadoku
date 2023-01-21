@@ -39,7 +39,7 @@ interface Props {
   userId: string
 }
 
-export function ReadingActivityChart({ userId, registration }: Props) {
+export function ActivityChart({ userId, registration }: Props) {
   const activity = useContestProfileReadingActivity({
     userId,
     contestId: registration.contest_id,

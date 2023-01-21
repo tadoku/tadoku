@@ -2,12 +2,11 @@ import { useRouter } from 'next/router'
 import { Breadcrumb, Pagination } from 'ui'
 import { HomeIcon } from '@heroicons/react/20/solid'
 import { routes } from '@app/common/routes'
-import { ReadingActivityChart } from '@app/contests/ReadingActivityChart'
+import { ActivityChart } from '@app/contests/ActivityChart'
 import {
   useContestProfileLogs,
   useContestProfileScores,
 } from '@app/contests/api'
-import { formatScore } from '@app/common/format'
 import LogsList from '@app/contests/LogsList'
 import { useEffect, useState } from 'react'
 import { getQueryStringIntParameter } from '@app/common/router'
@@ -93,9 +92,9 @@ const Page = () => {
           />
         </div>
         <div className="mt-4 lg:mt-0 flex-grow flex flex-col card narrow">
-          <h3 className="subtitle mb-2">Reading activity</h3>
+          <h3 className="subtitle mb-2">Activity</h3>
           <div className="flex-1 max-h-72 lg:max-h-[28rem]">
-            <ReadingActivityChart
+            <ActivityChart
               userId={userId}
               registration={profile.data.registration}
             />

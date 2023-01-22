@@ -2,12 +2,11 @@ import { z } from 'zod'
 import getConfig from 'next/config'
 import { useMutation, useQuery } from 'react-query'
 import { ContestFormSchema } from '@app/contests/ContestForm'
-import { DateTime } from 'luxon'
 import { ContestRegistrationFormSchema } from './ContestRegistration'
 
 const { publicRuntimeConfig } = getConfig()
 
-const root = `${publicRuntimeConfig.apiEndpoint}/immersion/contests`
+const root = `${publicRuntimeConfig.apiEndpoint}/immersion`
 
 export const Language = z.object({
   code: z.string(),
@@ -40,7 +39,7 @@ export const useContestConfigurationOptions = (options?: {
   useQuery(
     ['contest', 'configuration-options'],
     async (): Promise<ContestConfigurationOptions> => {
-      const response = await fetch(`${root}/configuration-options`)
+      const response = await fetch(`${root}/contests/configuration-options`)
 
       if (response.status !== 200) {
         throw new Error('could not fetch page')
@@ -64,7 +63,7 @@ export const useCreateContest = (onSuccess: (id: string) => void) =>
         ),
       }
 
-      const res = await fetch(root, {
+      const res = await fetch(`${root}/contests`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -122,7 +121,9 @@ export const useContestList = (
         include_deleted: opts.includeDeleted.toString(),
         ...(opts.userId ? { user_id: opts.userId.toString() } : {}),
       }
-      const response = await fetch(`${root}?${new URLSearchParams(params)}`)
+      const response = await fetch(
+        `${root}/contests?${new URLSearchParams(params)}`,
+      )
 
       if (response.status !== 200) {
         throw new Error('could not fetch page')
@@ -155,7 +156,7 @@ export const useContest = (id: string, options?: { enabled?: boolean }) =>
   useQuery(
     ['contest', 'findByID', id],
     async (): Promise<ContestView> => {
-      const response = await fetch(`${root}/${id}`)
+      const response = await fetch(`${root}/contests/${id}`)
 
       if (response.status !== 200) {
         throw new Error('could not fetch page')
@@ -170,7 +171,7 @@ export const useLatestOfficialContest = (options?: { enabled?: boolean }) =>
   useQuery(
     ['contest', 'findLatestOfficial'],
     async (): Promise<ContestView> => {
-      const response = await fetch(`${root}/latest-official`)
+      const response = await fetch(`${root}/contests/latest-official`)
 
       if (response.status !== 200) {
         throw new Error('could not fetch page')
@@ -204,7 +205,7 @@ export const useContestRegistration = (
   useQuery(
     ['contest', 'findContestRegistrationForUser', id],
     async (): Promise<ContestRegistrationView | undefined> => {
-      const response = await fetch(`${root}/${id}/registration`)
+      const response = await fetch(`${root}/contests/${id}/registration`)
 
       if (response.status === 404) {
         return undefined
@@ -223,7 +224,7 @@ export const useContestRegistrationUpdate = (onSuccess: () => void) =>
   useMutation({
     mutationFn: async (registration: ContestRegistrationFormSchema) => {
       const res = await fetch(
-        `${root}/${registration.contest_id}/registration`,
+        `${root}/contests/${registration.contest_id}/registration`,
         {
           method: 'POST',
           headers: {
@@ -279,7 +280,9 @@ export const useContestLeaderboard = (
         ...(opts.activityId ? { activity_id: opts.activityId.toString() } : {}),
       }
       const response = await fetch(
-        `${root}/${opts.contestId}/leaderboard?${new URLSearchParams(params)}`,
+        `${root}/contests/${opts.contestId}/leaderboard?${new URLSearchParams(
+          params,
+        )}`,
       )
 
       if (response.status !== 200) {
@@ -305,7 +308,7 @@ export const useOngoingContestRegistrations = (options?: {
   useQuery(
     ['contest', 'ongoing-contest-registrations'],
     async (): Promise<ContestRegistrationsView> => {
-      const response = await fetch(`${root}/ongoing-registrations`)
+      const response = await fetch(`${root}/contests/ongoing-registrations`)
 
       if (response.status !== 200) {
         throw new Error('could not fetch page')
@@ -342,7 +345,7 @@ export const useContestProfileScores = (
     ['contest', opts.contestId, 'profile', opts.userId, 'scores'],
     async (): Promise<ContestProfileScores> => {
       const response = await fetch(
-        `${root}/${opts.contestId}/profile/${opts.userId}/scores`,
+        `${root}/contests/${opts.contestId}/profile/${opts.userId}/scores`,
       )
 
       if (response.status !== 200) {
@@ -379,7 +382,7 @@ export const useContestProfileReadingActivity = (
     ['contest', opts.contestId, 'profile', opts.userId, 'readingActivity'],
     async (): Promise<ContestProfileReadingActivity> => {
       const response = await fetch(
-        `${root}/${opts.contestId}/profile/${opts.userId}/reading-activity`,
+        `${root}/contests/${opts.contestId}/profile/${opts.userId}/reading-activity`,
       )
 
       if (response.status !== 200) {
@@ -456,7 +459,7 @@ export const useContestProfileLogs = (
         include_deleted: opts.includeDeleted.toString(),
       }
       const response = await fetch(
-        `${root}/${opts.contestId}/profile/${
+        `${root}/contests/${opts.contestId}/profile/${
           opts.userId
         }/logs?${new URLSearchParams(params)}`,
       )
@@ -466,6 +469,33 @@ export const useContestProfileLogs = (
       }
 
       return Logs.parse(await response.json())
+    },
+    options,
+  )
+
+const UserProfile = z.object({
+  id: z.string(),
+  display_name: z.string(),
+})
+
+export type UserProfile = z.infer<typeof UserProfile>
+
+export const useUserProfile = (
+  opts: {
+    userId: string
+  },
+  options?: { enabled?: boolean },
+) =>
+  useQuery(
+    ['users', opts.userId, 'profile'],
+    async (): Promise<UserProfile> => {
+      const response = await fetch(`${root}/users/${opts.userId}/profile`)
+
+      if (response.status !== 200) {
+        throw new Error('could not fetch page')
+      }
+
+      return UserProfile.parse(await response.json())
     },
     options,
   )

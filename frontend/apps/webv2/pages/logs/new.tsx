@@ -1,10 +1,12 @@
 import type { NextPage } from 'next'
 import { Breadcrumb } from 'ui'
 import { HomeIcon } from '@heroicons/react/20/solid'
-import { useLogConfigurationOptions } from '@app/logs/api'
-import { useOngoingContestRegistrations } from '@app/contests/api'
+import {
+  useLogConfigurationOptions,
+  useOngoingContestRegistrations,
+} from '@app/contests/api'
 import { routes } from '@app/common/routes'
-import { LogForm } from '@app/logs/NewLogForm/Form'
+import { LogForm } from '@app/contests/NewLogForm/Form'
 
 interface Props {}
 

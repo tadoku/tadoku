@@ -1,13 +1,12 @@
 import { colorForActivity, formatArray, formatUnit } from '@app/common/format'
 import { routes } from '@app/common/routes'
-import { useLog } from '@app/logs/api'
+import { useLog } from '@app/contests/api'
 import { HomeIcon } from '@heroicons/react/20/solid'
 import { XMarkIcon } from '@heroicons/react/24/outline'
-import { CalculatorIcon } from '@heroicons/react/24/solid'
 import { DateTime } from 'luxon'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
-import { Breadcrumb, chartColors } from 'ui'
+import { Breadcrumb } from 'ui'
 
 const Page = () => {
   const router = useRouter()

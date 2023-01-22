@@ -5,6 +5,8 @@ import {
   ContestRegistrationView,
   ContestView,
   Language,
+  Tag,
+  Unit,
 } from '@app/contests/api'
 import {
   AdjustmentsHorizontalIcon,
@@ -13,7 +15,6 @@ import {
 } from '@heroicons/react/20/solid'
 import { RadioProps } from 'ui/components/Form'
 import { DateTime, Interval } from 'luxon'
-import { Tag, Unit } from '@app/logs/api'
 
 type TrackingMode = 'automatic' | 'manual' | 'personal'
 

@@ -9,6 +9,7 @@ import (
 	"github.com/tadoku/tadoku/services/common/domain"
 	tadokumiddleware "github.com/tadoku/tadoku/services/common/middleware"
 	"github.com/tadoku/tadoku/services/common/storage/memory"
+	"github.com/tadoku/tadoku/services/immersion-api/client/ory"
 	"github.com/tadoku/tadoku/services/immersion-api/domain/contestcommand"
 	"github.com/tadoku/tadoku/services/immersion-api/domain/contestquery"
 	"github.com/tadoku/tadoku/services/immersion-api/domain/logcommand"
@@ -26,6 +27,7 @@ type Config struct {
 	PostgresURL string `validate:"required" envconfig:"postgres_url"`
 	Port        int64  `validate:"required"`
 	JWKS        string `validate:"required"`
+	KratosURL   string `validate:"required" envconfig:"kratos_url"`
 }
 
 func main() {
@@ -42,6 +44,8 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+
+	kratosClient := ory.NewKratosClient(cfg.KratosURL)
 
 	contestRepository := postgres.NewContestRepository(psql)
 	logRepository := postgres.NewLogRepository(psql)

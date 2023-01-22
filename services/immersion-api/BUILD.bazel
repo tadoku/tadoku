@@ -9,6 +9,7 @@ go_library(
         "//services/common/domain",
         "//services/common/middleware",
         "//services/common/storage/memory",
+        "//services/immersion-api/client/ory",
         "//services/immersion-api/domain/contestcommand",
         "//services/immersion-api/domain/contestquery",
         "//services/immersion-api/domain/logcommand",

@@ -33,6 +33,8 @@ spec:
             value: "8000"
           - name: API_JWKS
             value: "http://oathkeeper-api:4456/.well-known/jwks.json"
+          - name: API_KRATOS_URL
+            value: "http://kratos-admin"
         volumeMounts:
         - name: tadoku-permissions
           mountPath: /etc/tadoku/permissions

@@ -102,3 +102,8 @@ func (s *service) ReadingActivityForContestUser(ctx context.Context, req *Contes
 		Rows: rows,
 	}, nil
 }
+
+type UserTraits struct {
+	UserDisplayName string
+	Email           string
+}

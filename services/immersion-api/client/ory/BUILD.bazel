@@ -1,0 +1,12 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "ory",
+    srcs = ["kratos.go"],
+    importpath = "github.com/tadoku/tadoku/services/immersion-api/client/ory",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//services/immersion-api/domain/profilequery",
+        "@com_github_ory_kratos_client_go//:kratos-client-go",
+    ],
+)

@@ -69,7 +69,7 @@ func main() {
 		clock,
 	)
 	logQueryService := logquery.NewService(logRepository, clock)
-	profileQueryService := profilequery.NewService(contestRepository)
+	profileQueryService := profilequery.NewService(contestRepository, kratosClient)
 
 	server := rest.NewServer(
 		contestCommandService,

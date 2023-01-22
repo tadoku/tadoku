@@ -26,15 +26,21 @@ type Service interface {
 	ReadingActivityForContestUser(context.Context, *ContestProfileRequest) (*ReadingActivityResponse, error)
 }
 
+type KratosClient interface {
+	FetchIdentity(ctx context.Context, id string) (*UserTraits, error)
+}
+
 type service struct {
 	r        Repository
+	kratos   KratosClient
 	validate *validator.Validate
 }
 
-func NewService(r Repository) Service {
+func NewService(r Repository, kratos KratosClient) Service {
 	return &service{
 		r:        r,
 		validate: validator.New(),
+		kratos:   kratos,
 	}
 }
 

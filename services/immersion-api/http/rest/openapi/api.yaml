@@ -441,6 +441,34 @@ paths:
                 $ref: '#/components/schemas/UserProfile'
         '404':
           description: not found
+  /users/{userId}/activity/{year}:
+    get:
+      summary: Fetches a activity summary of a user for a given year
+      operationId: profileYearlyActivityByUserID
+      tags: [profile]
+      parameters:
+        - name: userId
+          in: path
+          description: ID of user to return
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: year
+          in: path
+          description: year of activity to fetch
+          required: true
+          schema:
+            type: number
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserActivity'
+        '404':
+          description: not found
   /ping:
     get:
       summary: Checks if service is responsive
@@ -471,6 +499,31 @@ components:
           type: string
           format: date-time
           example: 2022-12-14T19:48:00Z
+    UserActivityScore:
+      type: object
+      required:
+        - date
+        - score
+      properties:
+        date:
+          type: string
+          format: date-time
+          example: 2022-12-14T19:48:00Z
+        score:
+          type: number
+          format: float
+    UserActivity:
+      type: object
+      required:
+        - total_updates
+        - records
+      properties:
+        total_updates:
+          type: number
+        records:
+          type: array
+          items:
+            $ref: "#/components/schemas/UserActivityScore"
     LogConfigurationOptions:
       allOf:
         - $ref: "#/components/schemas/Languages"

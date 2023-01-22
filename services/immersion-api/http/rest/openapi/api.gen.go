@@ -251,6 +251,18 @@ type Units struct {
 	Units []Unit `json:"units"`
 }
 
+// UserActivity defines model for UserActivity.
+type UserActivity struct {
+	Records      []UserActivityScore `json:"records"`
+	TotalUpdates float32             `json:"total_updates"`
+}
+
+// UserActivityScore defines model for UserActivityScore.
+type UserActivityScore struct {
+	Date  time.Time `json:"date"`
+	Score float32   `json:"score"`
+}
+
 // UserProfile defines model for UserProfile.
 type UserProfile struct {
 	CreatedAt   time.Time          `json:"created_at"`
@@ -357,6 +369,9 @@ type ServerInterface interface {
 	// Checks if service is responsive
 	// (GET /ping)
 	Ping(ctx echo.Context) error
+	// Fetches a activity summary of a user for a given year
+	// (GET /users/{userId}/activity/{year})
+	ProfileYearlyActivityByUserID(ctx echo.Context, userId openapi_types.UUID, year float32) error
 	// Fetches a profile of a user
 	// (GET /users/{userId}/profile)
 	ProfileFindByUserID(ctx echo.Context, userId openapi_types.UUID) error
@@ -697,6 +712,30 @@ func (w *ServerInterfaceWrapper) Ping(ctx echo.Context) error {
 	return err
 }
 
+// ProfileYearlyActivityByUserID converts echo context to params.
+func (w *ServerInterfaceWrapper) ProfileYearlyActivityByUserID(ctx echo.Context) error {
+	var err error
+	// ------------- Path parameter "userId" -------------
+	var userId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithLocation("simple", false, "userId", runtime.ParamLocationPath, ctx.Param("userId"), &userId)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter userId: %s", err))
+	}
+
+	// ------------- Path parameter "year" -------------
+	var year float32
+
+	err = runtime.BindStyledParameterWithLocation("simple", false, "year", runtime.ParamLocationPath, ctx.Param("year"), &year)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter year: %s", err))
+	}
+
+	// Invoke the callback with all the unmarshalled arguments
+	err = w.Handler.ProfileYearlyActivityByUserID(ctx, userId, year)
+	return err
+}
+
 // ProfileFindByUserID converts echo context to params.
 func (w *ServerInterfaceWrapper) ProfileFindByUserID(ctx echo.Context) error {
 	var err error
@@ -757,6 +796,7 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 	router.GET(baseURL+"/logs/configuration-options", wrapper.LogGetConfigurations)
 	router.GET(baseURL+"/logs/:id", wrapper.LogFindByID)
 	router.GET(baseURL+"/ping", wrapper.Ping)
+	router.GET(baseURL+"/users/:userId/activity/:year", wrapper.ProfileYearlyActivityByUserID)
 	router.GET(baseURL+"/users/:userId/profile", wrapper.ProfileFindByUserID)
 
 }

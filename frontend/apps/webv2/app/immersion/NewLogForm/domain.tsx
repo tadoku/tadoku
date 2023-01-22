@@ -7,7 +7,7 @@ import {
   Language,
   Tag,
   Unit,
-} from '@app/contests/api'
+} from '@app/immersion/api'
 import {
   AdjustmentsHorizontalIcon,
   LinkIcon,

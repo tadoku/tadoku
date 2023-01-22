@@ -2,13 +2,13 @@ import { useCurrentDateTime } from '@app/common/hooks'
 import {
   useContestRegistration,
   useLatestOfficialContest,
-} from '@app/contests/api'
+} from '@app/immersion/api'
 import { Breadcrumb, ButtonGroup, Tabbar } from 'ui'
 import { DateTime, Interval } from 'luxon'
 import { HomeIcon } from '@heroicons/react/20/solid'
 import { PencilSquareIcon, PlusIcon } from '@heroicons/react/24/solid'
 import { routes } from '@app/common/routes'
-import { ContestLeaderboard } from '@app/contests/ContestLeaderboard'
+import { ContestLeaderboard } from '@app/immersion/ContestLeaderboard'
 
 const Page = () => {
   const now = useCurrentDateTime()

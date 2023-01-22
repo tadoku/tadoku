@@ -1,4 +1,4 @@
-import { Language, Score } from '@app/contests/api'
+import { Language, Score } from '@app/immersion/api'
 import { formatScore } from '@app/common/format'
 
 interface Props {

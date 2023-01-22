@@ -7,7 +7,7 @@ import {
   ContestView,
   useContestConfigurationOptions,
   useContestRegistrationUpdate,
-} from '@app/contests/api'
+} from '@app/immersion/api'
 import { useRouter } from 'next/router'
 import { useDebounce } from 'use-debounce'
 import { routes } from '@app/common/routes'

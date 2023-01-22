@@ -18,7 +18,7 @@ import { faker } from '@faker-js/faker'
 import {
   ContestRegistrationView,
   useContestProfileReadingActivity,
-} from '@app/contests/api'
+} from '@app/immersion/api'
 import { DateTime, Duration, Interval } from 'luxon'
 
 ChartJS.register(

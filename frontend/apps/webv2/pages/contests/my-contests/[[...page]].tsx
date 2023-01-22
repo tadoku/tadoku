@@ -5,12 +5,12 @@ import { PlusIcon } from '@heroicons/react/24/solid'
 import {
   useContestConfigurationOptions,
   useContestList,
-} from '@app/contests/api'
+} from '@app/immersion/api'
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/router'
 import { getQueryStringIntParameter } from '@app/common/router'
 import { useSessionOrRedirect } from '@app/common/session'
-import { ContestList } from '@app/contests/ContestList'
+import { ContestList } from '@app/immersion/ContestList'
 import { routes } from '@app/common/routes'
 
 interface Props {}

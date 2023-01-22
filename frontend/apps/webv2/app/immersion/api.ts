@@ -1,9 +1,9 @@
 import { z } from 'zod'
 import getConfig from 'next/config'
 import { useMutation, useQuery } from 'react-query'
-import { ContestFormSchema } from '@app/contests/ContestForm'
-import { ContestRegistrationFormSchema } from '@app/contests/ContestRegistration'
-import { NewLogAPISchema } from '@app/contests/NewLogForm/domain'
+import { ContestFormSchema } from '@app/immersion/ContestForm'
+import { ContestRegistrationFormSchema } from '@app/immersion/ContestRegistration'
+import { NewLogAPISchema } from '@app/immersion/NewLogForm/domain'
 
 const { publicRuntimeConfig } = getConfig()
 

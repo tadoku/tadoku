@@ -1,13 +1,13 @@
 import { useCurrentDateTime } from '@app/common/hooks'
 import { useSession } from '@app/common/session'
-import { useContest, useContestRegistration } from '@app/contests/api'
+import { useContest, useContestRegistration } from '@app/immersion/api'
 import { useRouter } from 'next/router'
 import { Breadcrumb, ButtonGroup, Tabbar } from 'ui'
 import { DateTime, Interval } from 'luxon'
 import { HomeIcon } from '@heroicons/react/20/solid'
 import { PencilSquareIcon, PlusIcon } from '@heroicons/react/24/solid'
 import { routes } from '@app/common/routes'
-import { ContestLeaderboard } from '@app/contests/ContestLeaderboard'
+import { ContestLeaderboard } from '@app/immersion/ContestLeaderboard'
 
 const Page = () => {
   const router = useRouter()

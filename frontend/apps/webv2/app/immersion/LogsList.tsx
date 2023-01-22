@@ -2,7 +2,7 @@ import { ChevronRightIcon } from '@heroicons/react/20/solid'
 import { routes } from '@app/common/routes'
 import { DateTime } from 'luxon'
 import Link from 'next/link'
-import { Logs } from '@app/contests/api'
+import { Logs } from '@app/immersion/api'
 import { UseQueryResult } from 'react-query'
 import { colorForActivity, formatUnit } from '@app/common/format'
 

@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { ContestConfigurationOptions, Contests } from '@app/contests/api'
+import { ContestConfigurationOptions, Contests } from '@app/immersion/api'
 import { DateTime } from 'luxon'
 import { EyeSlashIcon } from '@heroicons/react/24/outline'
 import { routes } from '@app/common/routes'

@@ -4,9 +4,9 @@ import { HomeIcon } from '@heroicons/react/20/solid'
 import {
   useLogConfigurationOptions,
   useOngoingContestRegistrations,
-} from '@app/contests/api'
+} from '@app/immersion/api'
 import { routes } from '@app/common/routes'
-import { LogForm } from '@app/contests/NewLogForm/Form'
+import { LogForm } from '@app/immersion/NewLogForm/Form'
 
 interface Props {}
 

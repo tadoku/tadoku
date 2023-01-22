@@ -1,5 +1,5 @@
 import { UseQueryResult } from 'react-query'
-import { Leaderboard as LeaderboardType } from '@app/contests/api'
+import { Leaderboard as LeaderboardType } from '@app/immersion/api'
 import { Flash } from 'ui'
 import { ExclamationCircleIcon } from '@heroicons/react/20/solid'
 import Link from 'next/link'

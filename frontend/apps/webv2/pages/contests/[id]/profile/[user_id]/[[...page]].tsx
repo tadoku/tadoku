@@ -2,15 +2,15 @@ import { useRouter } from 'next/router'
 import { Breadcrumb, Pagination } from 'ui'
 import { HomeIcon } from '@heroicons/react/20/solid'
 import { routes } from '@app/common/routes'
-import { ActivityChart } from '@app/contests/ActivityChart'
+import { ActivityChart } from '@app/immersion/ActivityChart'
 import {
   useContestProfileLogs,
   useContestProfileScores,
-} from '@app/contests/api'
-import LogsList from '@app/contests/LogsList'
+} from '@app/immersion/api'
+import LogsList from '@app/immersion/LogsList'
 import { useEffect, useState } from 'react'
 import { getQueryStringIntParameter } from '@app/common/router'
-import { ScoreList } from '@app/contests/ScoreList'
+import { ScoreList } from '@app/immersion/ScoreList'
 
 const Page = () => {
   const router = useRouter()

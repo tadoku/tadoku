@@ -1,20 +1,20 @@
 import { useCurrentDateTime, useCurrentLocation } from '@app/common/hooks'
 import { useSession } from '@app/common/session'
-import { useContestLeaderboard, ContestView } from '@app/contests/api'
+import { useContestLeaderboard, ContestView } from '@app/immersion/api'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
 import { Flash, Pagination } from 'ui'
 import { DateTime, Interval } from 'luxon'
 import { useEffect, useState } from 'react'
-import { ContestOverview } from '@app/contests/ContestOverview'
+import { ContestOverview } from '@app/immersion/ContestOverview'
 import {
   ExclamationCircleIcon,
   InformationCircleIcon,
 } from '@heroicons/react/20/solid'
-import { ContestConfiguration } from '@app/contests/ContestConfiguration'
+import { ContestConfiguration } from '@app/immersion/ContestConfiguration'
 import { routes } from '@app/common/routes'
 import { getQueryStringIntParameter } from '@app/common/router'
-import { Leaderboard } from '@app/contests/Leaderboard'
+import { Leaderboard } from '@app/immersion/Leaderboard'
 
 interface Props {
   id: string

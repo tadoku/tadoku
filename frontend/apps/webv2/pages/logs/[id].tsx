@@ -1,6 +1,6 @@
 import { colorForActivity, formatArray, formatUnit } from '@app/common/format'
 import { routes } from '@app/common/routes'
-import { useLog } from '@app/contests/api'
+import { useLog } from '@app/immersion/api'
 import { HomeIcon } from '@heroicons/react/20/solid'
 import { XMarkIcon } from '@heroicons/react/24/outline'
 import { DateTime } from 'luxon'

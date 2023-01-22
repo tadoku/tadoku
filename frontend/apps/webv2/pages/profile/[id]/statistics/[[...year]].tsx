@@ -3,7 +3,7 @@ import { Breadcrumb, Tabbar, VerticalTabbar } from 'ui'
 import { HomeIcon } from '@heroicons/react/20/solid'
 import { routes } from '@app/common/routes'
 import Link from 'next/link'
-import { ScoreList } from '@app/contests/ScoreList'
+import { ScoreList } from '@app/immersion/ScoreList'
 
 const Page = () => {
   const router = useRouter()

@@ -1,4 +1,4 @@
-import { ContestView } from '@app/contests/api'
+import { ContestView } from '@app/immersion/api'
 
 interface Props {
   contest: ContestView

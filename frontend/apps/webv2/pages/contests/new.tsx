@@ -1,8 +1,8 @@
 import type { NextPage } from 'next'
 import { Breadcrumb } from 'ui'
 import { HomeIcon } from '@heroicons/react/20/solid'
-import { ContestForm } from '@app/contests/ContestForm'
-import { useContestConfigurationOptions } from '@app/contests/api'
+import { ContestForm } from '@app/immersion/ContestForm'
+import { useContestConfigurationOptions } from '@app/immersion/api'
 import { routes } from '@app/common/routes'
 
 interface Props {}

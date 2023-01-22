@@ -10,7 +10,7 @@ import {
   ContestRegistrationsView,
   LogConfigurationOptions,
   useCreateLog,
-} from '@app/contests/api'
+} from '@app/immersion/api'
 import { useRouter } from 'next/router'
 import { routes } from '@app/common/routes'
 import {
@@ -22,7 +22,7 @@ import {
   NewLogAPISchema,
   NewLogFormSchema,
   trackingModesForRegistrations,
-} from '@app/contests/NewLogForm/domain'
+} from '@app/immersion/NewLogForm/domain'
 import { formatScore } from '@app/common/format'
 import { useDebounce } from 'use-debounce'
 import { useSessionOrRedirect } from '@app/common/session'

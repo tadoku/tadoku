@@ -251,6 +251,12 @@ type Units struct {
 	Units []Unit `json:"units"`
 }
 
+// UserProfile defines model for UserProfile.
+type UserProfile struct {
+	DisplayName string             `json:"display_name"`
+	Id          openapi_types.UUID `json:"id"`
+}
+
 // ContestListParams defines parameters for ContestList.
 type ContestListParams struct {
 	PageSize       *int                `form:"page_size,omitempty" json:"page_size,omitempty"`
@@ -350,6 +356,9 @@ type ServerInterface interface {
 	// Checks if service is responsive
 	// (GET /ping)
 	Ping(ctx echo.Context) error
+	// Fetches a profile of a user
+	// (GET /users/{userId}/profile)
+	ProfileFindByUserID(ctx echo.Context, userId openapi_types.UUID) error
 }
 
 // ServerInterfaceWrapper converts echo contexts to parameters.
@@ -687,6 +696,22 @@ func (w *ServerInterfaceWrapper) Ping(ctx echo.Context) error {
 	return err
 }
 
+// ProfileFindByUserID converts echo context to params.
+func (w *ServerInterfaceWrapper) ProfileFindByUserID(ctx echo.Context) error {
+	var err error
+	// ------------- Path parameter "userId" -------------
+	var userId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithLocation("simple", false, "userId", runtime.ParamLocationPath, ctx.Param("userId"), &userId)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter userId: %s", err))
+	}
+
+	// Invoke the callback with all the unmarshalled arguments
+	err = w.Handler.ProfileFindByUserID(ctx, userId)
+	return err
+}
+
 // This is a simple interface which specifies echo.Route addition functions which
 // are present on both echo.Echo and echo.Group, since we want to allow using
 // either of them for path registration
@@ -731,5 +756,6 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 	router.GET(baseURL+"/logs/configuration-options", wrapper.LogGetConfigurations)
 	router.GET(baseURL+"/logs/:id", wrapper.LogFindByID)
 	router.GET(baseURL+"/ping", wrapper.Ping)
+	router.GET(baseURL+"/users/:userId/profile", wrapper.ProfileFindByUserID)
 
 }

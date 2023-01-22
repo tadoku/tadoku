@@ -419,6 +419,28 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/LogConfigurationOptions'
+  /users/{userId}/profile:
+    get:
+      summary: Fetches a profile of a user
+      operationId: profileFindByUserID
+      tags: [profile]
+      parameters:
+        - name: userId
+          in: path
+          description: ID of user to return
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfile'
+        '404':
+          description: not found
   /ping:
     get:
       summary: Checks if service is responsive
@@ -433,6 +455,17 @@ paths:
                 type: string
 components:
   schemas:
+    UserProfile:
+      type: object
+      required:
+        - id
+        - display_name
+      properties:
+        id:
+          type: string
+          format: uuid
+        display_name:
+          type: string
     LogConfigurationOptions:
       allOf:
         - $ref: "#/components/schemas/Languages"

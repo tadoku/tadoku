@@ -7,6 +7,7 @@ go_library(
         "health.go",
         "logs.go",
         "mappers.go",
+        "profile.go",
         "server.go",
     ],
     importpath = "github.com/tadoku/tadoku/services/immersion-api/http/rest",

@@ -119,3 +119,15 @@ where
   and year = sqlc.arg('year')
 group by "date"
 order by date asc;
+
+-- name: FetchScoresForProfile :many
+select
+  language_code,
+  sum(score)::real as score
+from logs
+where
+  user_id = sqlc.arg('user_id')
+  and user_id = sqlc.arg('user_id')
+  and deleted_at is null
+group by language_code
+order by score desc;

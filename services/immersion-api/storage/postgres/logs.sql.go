@@ -91,6 +91,47 @@ func (q *Queries) CreateLog(ctx context.Context, arg CreateLogParams) (uuid.UUID
 	return id, err
 }
 
+const fetchScoresForProfile = `-- name: FetchScoresForProfile :many
+select
+  language_code,
+  sum(score)::real as score
+from logs
+where
+  user_id = $1
+  and user_id = $1
+  and deleted_at is null
+group by language_code
+order by score desc
+`
+
+type FetchScoresForProfileRow struct {
+	LanguageCode string
+	Score        float32
+}
+
+func (q *Queries) FetchScoresForProfile(ctx context.Context, userID uuid.UUID) ([]FetchScoresForProfileRow, error) {
+	rows, err := q.db.QueryContext(ctx, fetchScoresForProfile, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []FetchScoresForProfileRow
+	for rows.Next() {
+		var i FetchScoresForProfileRow
+		if err := rows.Scan(&i.LanguageCode, &i.Score); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const findAttachedContestRegistrationsForLog = `-- name: FindAttachedContestRegistrationsForLog :many
 select
   contest_logs.contest_id,

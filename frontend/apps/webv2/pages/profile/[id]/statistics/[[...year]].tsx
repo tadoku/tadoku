@@ -4,18 +4,40 @@ import { HomeIcon } from '@heroicons/react/20/solid'
 import { routes } from '@app/common/routes'
 import Link from 'next/link'
 import { ScoreList } from '@app/immersion/ScoreList'
+import { useUserProfile } from '@app/immersion/api'
+import { getQueryStringIntParameter } from '@app/common/router'
+import { DateTime, Interval } from 'luxon'
 
 const Page = () => {
   const router = useRouter()
   const userId = router.query['id']?.toString() ?? ''
+  const year = getQueryStringIntParameter(
+    router.query['year'],
+    new Date().getFullYear(),
+  )
 
-  // if (profile.isError || !contest) {
-  //   return (
-  //     <span className="flash error">
-  //       Could not load page, please try again later.
-  //     </span>
-  //   )
-  // }
+  const profile = useUserProfile({ userId })
+
+  if (profile.isLoading || profile.isIdle) {
+    return <p>Loading...</p>
+  }
+
+  if (profile.isError) {
+    return (
+      <span className="flash error">
+        Could not load page, please try again later.
+      </span>
+    )
+  }
+
+  const years = Interval.fromDateTimes(
+    DateTime.fromISO(profile.data.created_at).startOf('year'),
+    // DateTime.fromObject({ year: 2019, month: 5, day: 4 }).startOf('year'),
+    DateTime.now(),
+  )
+    .splitBy({ year: 1 })
+    .map(it => it.start.year)
+    .reverse()
 
   return (
     <>
@@ -23,13 +45,17 @@ const Page = () => {
         <Breadcrumb
           links={[
             { label: 'Home', href: routes.home(), IconComponent: HomeIcon },
+            {
+              label: `Profile - ${profile.data.display_name}`,
+              href: routes.userProfileStatistics(userId, year),
+            },
           ]}
         />
       </div>
       <div className="h-stack justify-between items-center w-full">
         <div>
           <h1 className="title">Profile</h1>
-          <h2 className="subtitle">antonve</h2>
+          <h2 className="subtitle">{profile.data.display_name}</h2>
         </div>
         <div></div>
       </div>
@@ -100,28 +126,11 @@ const Page = () => {
         </div>
         <div className="flex-shrink pl-3 min-w-32">
           <VerticalTabbar
-            links={[
-              {
-                href: routes.userProfileStatistics(userId, 2023),
-                label: '2023',
-                active: true,
-              },
-              {
-                href: routes.userProfileStatistics(userId, 2022),
-                label: '2022',
-                active: false,
-              },
-              {
-                href: routes.userProfileStatistics(userId, 2021),
-                label: '2021',
-                active: false,
-              },
-              {
-                href: routes.userProfileStatistics(userId, 2020),
-                label: '2020',
-                active: false,
-              },
-            ]}
+            links={years.map(it => ({
+              href: routes.userProfileStatistics(userId, it),
+              label: it.toString(),
+              active: year === it,
+            }))}
           />
         </div>
       </div>

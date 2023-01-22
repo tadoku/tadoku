@@ -477,6 +477,7 @@ export const useContestProfileLogs = (
 const UserProfile = z.object({
   id: z.string(),
   display_name: z.string(),
+  created_at: z.string(),
 })
 
 export type UserProfile = z.infer<typeof UserProfile>

@@ -1,10 +1,10 @@
 import { useRouter } from 'next/router'
-import { Breadcrumb, Tabbar, VerticalTabbar } from 'ui'
+import { Breadcrumb, HeatmapChart, Tabbar, VerticalTabbar } from 'ui'
 import { HomeIcon } from '@heroicons/react/20/solid'
 import { routes } from '@app/common/routes'
 import Link from 'next/link'
 import { ScoreList } from '@app/immersion/ScoreList'
-import { useUserProfile } from '@app/immersion/api'
+import { useUserProfile, useUserYearlyActivity } from '@app/immersion/api'
 import { getQueryStringIntParameter } from '@app/common/router'
 import { DateTime, Interval } from 'luxon'
 
@@ -17,6 +17,7 @@ const Page = () => {
   )
 
   const profile = useUserProfile({ userId })
+  const activitySummary = useUserYearlyActivity({ userId, year })
 
   if (profile.isLoading || profile.isIdle) {
     return <p>Loading...</p>
@@ -32,7 +33,6 @@ const Page = () => {
 
   const years = Interval.fromDateTimes(
     DateTime.fromISO(profile.data.created_at).startOf('year'),
-    // DateTime.fromObject({ year: 2019, month: 5, day: 4 }).startOf('year'),
     DateTime.now(),
   )
     .splitBy({ year: 1 })
@@ -92,21 +92,26 @@ const Page = () => {
         <div className="flex-grow v-stack spaced">
           <div className="card narrow">
             <h3 className="subtitle">525 updates in 2023</h3>
-            <div className="bg-cyan-400 w-full h-28 mt-4"></div>
+            <div className="w-full h-28 mt-4">
+              <HeatmapChart
+                id={`heatmap-${year}-${userId}`}
+                year={year}
+                data={
+                  activitySummary.data
+                    ? activitySummary.data.scores.map(it => ({
+                        date: it.date,
+                        value: it.score,
+                      }))
+                    : []
+                }
+              />
+            </div>
           </div>
           <div className="h-stack spaced flex-grow">
             <div className="card w-full p-0">
               <h3 className="subtitle p-4">Contests</h3>
               <ul className="divide-y-2 divide-slate-500/5 border-t-2 border-slate-500/5">
-                {[
-                  'Contest 1',
-                  'Contest 2',
-                  'Contest 3',
-                  'Contest 4',
-                  'Contest 5',
-                  'Contest 6',
-                  'Contest 7',
-                ].map(u => (
+                {[].map(u => (
                   <li key={`${u[0]}-${u[1]}`}>
                     <Link
                       href="#"

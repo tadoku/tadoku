@@ -259,8 +259,8 @@ type UserActivity struct {
 
 // UserActivityScore defines model for UserActivityScore.
 type UserActivityScore struct {
-	Date  time.Time `json:"date"`
-	Score float32   `json:"score"`
+	Date  openapi_types.Date `json:"date"`
+	Score float32            `json:"score"`
 }
 
 // UserProfile defines model for UserProfile.

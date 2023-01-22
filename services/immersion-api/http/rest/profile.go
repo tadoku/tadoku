@@ -50,7 +50,7 @@ func (s *Server) ProfileYearlyActivityByUserID(ctx echo.Context, userId types.UU
 	scores := make([]openapi.UserActivityScore, len(summary.Scores))
 	for i, it := range summary.Scores {
 		scores[i] = openapi.UserActivityScore{
-			Date:  it.Date,
+			Date:  types.Date{Time: it.Date},
 			Score: it.Score,
 		}
 	}

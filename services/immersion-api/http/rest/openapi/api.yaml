@@ -507,8 +507,8 @@ components:
       properties:
         date:
           type: string
-          format: date-time
-          example: 2022-12-14T19:48:00Z
+          format: date
+          example: 2022-12-14
         score:
           type: number
           format: float

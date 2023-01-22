@@ -98,19 +98,24 @@ select
 from logs
 where
   user_id = $1
-  and user_id = $1
+  and year = $2
   and deleted_at is null
 group by language_code
 order by score desc
 `
+
+type FetchScoresForProfileParams struct {
+	UserID uuid.UUID
+	Year   int16
+}
 
 type FetchScoresForProfileRow struct {
 	LanguageCode string
 	Score        float32
 }
 
-func (q *Queries) FetchScoresForProfile(ctx context.Context, userID uuid.UUID) ([]FetchScoresForProfileRow, error) {
-	rows, err := q.db.QueryContext(ctx, fetchScoresForProfile, userID)
+func (q *Queries) FetchScoresForProfile(ctx context.Context, arg FetchScoresForProfileParams) ([]FetchScoresForProfileRow, error) {
+	rows, err := q.db.QueryContext(ctx, fetchScoresForProfile, arg.UserID, arg.Year)
 	if err != nil {
 		return nil, err
 	}

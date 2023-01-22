@@ -586,3 +586,26 @@ func (r *ContestRepository) YearlyActivityForUser(ctx context.Context, req *prof
 
 	return res, nil
 }
+
+func (r *ContestRepository) YearlyScoresForUser(ctx context.Context, req *profilequery.YearlyScoresForUserRequest) ([]profilequery.Score, error) {
+	rows, err := r.q.FetchScoresForProfile(ctx, FetchScoresForProfileParams{
+		UserID: req.UserID,
+		Year:   int16(req.Year),
+	})
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return []profilequery.Score{}, nil
+		}
+		return nil, fmt.Errorf("could not fetch scores: %w", err)
+	}
+
+	scores := make([]profilequery.Score, len(rows))
+	for i, row := range rows {
+		scores[i] = profilequery.Score{
+			LanguageCode: row.LanguageCode,
+			Score:        row.Score,
+		}
+	}
+
+	return scores, nil
+}

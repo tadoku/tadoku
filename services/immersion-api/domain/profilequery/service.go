@@ -20,6 +20,7 @@ type Repository interface {
 	FindScoresForRegistration(context.Context, *ContestProfileRequest) ([]Score, error)
 	ReadingActivityForContestUser(context.Context, *ContestProfileRequest) ([]ReadingActivityRow, error)
 	YearlyActivityForUser(context.Context, *YearlyActivityForUserRequest) ([]UserActivityScore, error)
+	YearlyScoresForUser(context.Context, *YearlyScoresForUserRequest) ([]Score, error)
 }
 
 type Service interface {
@@ -28,6 +29,7 @@ type Service interface {
 	ReadingActivityForContestUser(context.Context, *ContestProfileRequest) (*ReadingActivityResponse, error)
 	FetchUserProfile(context.Context, uuid.UUID) (*UserProfile, error)
 	YearlyActivityForUser(context.Context, *YearlyActivityForUserRequest) (*YearlyActivityForUserResponse, error)
+	YearlyScoresForUser(context.Context, *YearlyScoresForUserRequest) (*YearlyScoresForUserResponse, error)
 }
 
 type KratosClient interface {
@@ -168,4 +170,31 @@ func (s *service) YearlyActivityForUser(ctx context.Context, req *YearlyActivity
 	}
 
 	return res, nil
+}
+
+type YearlyScoresForUserRequest struct {
+	UserID uuid.UUID
+	Year   int
+}
+
+type YearlyScoresForUserResponse struct {
+	OverallScore float32
+	Scores       []Score
+}
+
+func (s *service) YearlyScoresForUser(ctx context.Context, req *YearlyScoresForUserRequest) (*YearlyScoresForUserResponse, error) {
+	scores, err := s.r.YearlyScoresForUser(ctx, req)
+	if err != nil {
+		return nil, fmt.Errorf("could not fetch scores: %w", err)
+	}
+
+	response := &YearlyScoresForUserResponse{
+		Scores: scores,
+	}
+
+	for _, it := range scores {
+		response.OverallScore += it.Score
+	}
+
+	return response, nil
 }

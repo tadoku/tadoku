@@ -127,7 +127,7 @@ select
 from logs
 where
   user_id = sqlc.arg('user_id')
-  and user_id = sqlc.arg('user_id')
+  and year = sqlc.arg('year')
   and deleted_at is null
 group by language_code
 order by score desc;

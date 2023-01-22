@@ -254,7 +254,7 @@ type Units struct {
 // UserActivity defines model for UserActivity.
 type UserActivity struct {
 	Scores       []UserActivityScore `json:"scores"`
-	TotalUpdates float32             `json:"total_updates"`
+	TotalUpdates int                 `json:"total_updates"`
 }
 
 // UserActivityScore defines model for UserActivityScore.
@@ -371,7 +371,7 @@ type ServerInterface interface {
 	Ping(ctx echo.Context) error
 	// Fetches a activity summary of a user for a given year
 	// (GET /users/{userId}/activity/{year})
-	ProfileYearlyActivityByUserID(ctx echo.Context, userId openapi_types.UUID, year float32) error
+	ProfileYearlyActivityByUserID(ctx echo.Context, userId openapi_types.UUID, year int) error
 	// Fetches a profile of a user
 	// (GET /users/{userId}/profile)
 	ProfileFindByUserID(ctx echo.Context, userId openapi_types.UUID) error
@@ -724,7 +724,7 @@ func (w *ServerInterfaceWrapper) ProfileYearlyActivityByUserID(ctx echo.Context)
 	}
 
 	// ------------- Path parameter "year" -------------
-	var year float32
+	var year int
 
 	err = runtime.BindStyledParameterWithLocation("simple", false, "year", runtime.ParamLocationPath, ctx.Param("year"), &year)
 	if err != nil {

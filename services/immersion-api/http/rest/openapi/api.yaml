@@ -459,7 +459,7 @@ paths:
           description: year of activity to fetch
           required: true
           schema:
-            type: number
+            type: integer
       responses:
         '200':
           description: successful operation
@@ -519,7 +519,7 @@ components:
         - scores
       properties:
         total_updates:
-          type: number
+          type: integer
         scores:
           type: array
           items:

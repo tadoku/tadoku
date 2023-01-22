@@ -37,6 +37,28 @@ func (s *Server) ProfileFindByUserID(ctx echo.Context, userId types.UUID) error 
 
 // Fetches a activity summary of a user for a given year
 // (GET /users/{userId}/activity/{year})
-func (s *Server) ProfileYearlyActivityByUserID(ctx echo.Context, userId types.UUID, year float32) error {
-	return nil
+func (s *Server) ProfileYearlyActivityByUserID(ctx echo.Context, userId types.UUID, year int) error {
+	summary, err := s.profileQueryService.YearlyActivityForUser(ctx.Request().Context(), &profilequery.YearlyActivityForUserRequest{
+		UserID: userId,
+		Year:   year,
+	})
+	if err != nil {
+		ctx.Echo().Logger.Errorf("could not fetch activity summary: %w", err)
+		return ctx.NoContent(http.StatusInternalServerError)
+	}
+
+	scores := make([]openapi.UserActivityScore, len(summary.Scores))
+	for i, it := range summary.Scores {
+		scores[i] = openapi.UserActivityScore{
+			Date:  it.Date,
+			Score: it.Score,
+		}
+	}
+
+	res := &openapi.UserActivity{
+		TotalUpdates: summary.TotalUpdates,
+		Scores:       scores,
+	}
+
+	return ctx.JSON(http.StatusOK, res)
 }

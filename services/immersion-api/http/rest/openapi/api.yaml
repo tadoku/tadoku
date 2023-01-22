@@ -460,12 +460,17 @@ components:
       required:
         - id
         - display_name
+        - created_at
       properties:
         id:
           type: string
           format: uuid
         display_name:
           type: string
+        created_at:
+          type: string
+          format: date-time
+          example: 2022-12-14T19:48:00Z
     LogConfigurationOptions:
       allOf:
         - $ref: "#/components/schemas/Languages"

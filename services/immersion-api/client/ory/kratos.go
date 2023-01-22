@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/http"
 
 	"github.com/google/uuid"
 	kratos "github.com/ory/kratos-client-go"
@@ -30,8 +31,11 @@ type Traits struct {
 
 func (k *KratosClient) FetchIdentity(ctx context.Context, id uuid.UUID) (*profilequery.UserTraits, error) {
 	req := k.client.IdentityApi.GetIdentity(ctx, id.String())
-	identity, _, err := k.client.IdentityApi.GetIdentityExecute(req)
+	identity, res, err := k.client.IdentityApi.GetIdentityExecute(req)
 	if err != nil {
+		if res.StatusCode == http.StatusNotFound {
+			return nil, profilequery.ErrNotFound
+		}
 		return nil, fmt.Errorf("could not fetch identity: %w", err)
 	}
 
@@ -52,5 +56,6 @@ func (k *KratosClient) FetchIdentity(ctx context.Context, id uuid.UUID) (*profil
 	return &profilequery.UserTraits{
 		UserDisplayName: traits.DisplayName,
 		Email:           traits.Email,
+		CreatedAt:       *identity.CreatedAt,
 	}, nil
 }

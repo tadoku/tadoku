@@ -253,6 +253,7 @@ type Units struct {
 
 // UserProfile defines model for UserProfile.
 type UserProfile struct {
+	CreatedAt   time.Time          `json:"created_at"`
 	DisplayName string             `json:"display_name"`
 	Id          openapi_types.UUID `json:"id"`
 }

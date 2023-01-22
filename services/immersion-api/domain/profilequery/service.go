@@ -113,10 +113,12 @@ func (s *service) ReadingActivityForContestUser(ctx context.Context, req *Contes
 type UserTraits struct {
 	UserDisplayName string
 	Email           string
+	CreatedAt       time.Time
 }
 
 type UserProfile struct {
 	DisplayName string
+	CreatedAt   time.Time
 }
 
 func (s *service) FetchUserProfile(ctx context.Context, id uuid.UUID) (*UserProfile, error) {
@@ -127,5 +129,6 @@ func (s *service) FetchUserProfile(ctx context.Context, id uuid.UUID) (*UserProf
 
 	return &UserProfile{
 		DisplayName: traits.UserDisplayName,
+		CreatedAt:   traits.CreatedAt,
 	}, nil
 }

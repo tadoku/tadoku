@@ -322,6 +322,7 @@ export const useOngoingContestRegistrations = (options?: {
 
 export const Score = z.object({
   language_code: z.string(),
+  language_name: z.string().optional(),
   score: z.number(),
 })
 
@@ -608,6 +609,36 @@ export const useUserYearlyActivity = (
       }
 
       return UserActivity.parse(await response.json())
+    },
+    options,
+  )
+
+const ProfileScores = z.object({
+  overall_score: z.number(),
+  scores: z.array(Score),
+})
+
+export type ProfileScores = z.infer<typeof ProfileScores>
+
+export const useProfileScores = (
+  opts: {
+    userId: string
+    year: string | number
+  },
+  options?: { enabled?: boolean },
+) =>
+  useQuery(
+    ['users', opts.userId, 'scores', opts.year],
+    async (): Promise<ProfileScores> => {
+      const response = await fetch(
+        `${root}/users/${opts.userId}/scores/${opts.year}`,
+      )
+
+      if (response.status !== 200) {
+        throw new Error('could not fetch page')
+      }
+
+      return ProfileScores.parse(await response.json())
     },
     options,
   )

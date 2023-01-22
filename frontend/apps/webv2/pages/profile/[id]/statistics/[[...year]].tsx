@@ -4,7 +4,11 @@ import { HomeIcon } from '@heroicons/react/20/solid'
 import { routes } from '@app/common/routes'
 import Link from 'next/link'
 import { ScoreList } from '@app/immersion/ScoreList'
-import { useUserProfile, useUserYearlyActivity } from '@app/immersion/api'
+import {
+  useProfileScores,
+  useUserProfile,
+  useUserYearlyActivity,
+} from '@app/immersion/api'
 import { getQueryStringIntParameter } from '@app/common/router'
 import { DateTime, Interval } from 'luxon'
 import { formatScore } from '@app/common/format'
@@ -19,6 +23,7 @@ const Page = () => {
 
   const profile = useUserProfile({ userId })
   const activitySummary = useUserYearlyActivity({ userId, year })
+  const scores = useProfileScores({ userId, year })
 
   if (profile.isLoading || profile.isIdle) {
     return <p>Loading...</p>
@@ -78,16 +83,13 @@ const Page = () => {
       <div className="h-stack mt-4 spaced">
         <div className="lg:w-1/5">
           <ScoreList
-            languages={[
-              { code: 'zho', name: 'Chinese (Other)' },
-              { code: 'jpa', name: 'Japanese' },
-              { code: 'kor', name: 'Korean' },
-            ]}
-            list={[
-              { language_code: 'zho', score: 200 },
-              { language_code: 'kor', score: 300 },
-              { language_code: 'jpa', score: 500 },
-            ]}
+            languages={
+              scores.data?.scores.map(it => ({
+                code: it.language_code,
+                name: it.language_name ?? '',
+              })) ?? []
+            }
+            list={scores.data?.scores ?? []}
           />
         </div>
         <div className="flex-grow v-stack spaced">

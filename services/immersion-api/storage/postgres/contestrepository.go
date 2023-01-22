@@ -601,8 +601,10 @@ func (r *ContestRepository) YearlyScoresForUser(ctx context.Context, req *profil
 
 	scores := make([]profilequery.Score, len(rows))
 	for i, row := range rows {
+		row := row
 		scores[i] = profilequery.Score{
 			LanguageCode: row.LanguageCode,
+			LanguageName: &row.LanguageName,
 			Score:        row.Score,
 		}
 	}

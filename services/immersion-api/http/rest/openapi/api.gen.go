@@ -225,6 +225,7 @@ type ReadingActivityRow struct {
 // Score defines model for Score.
 type Score struct {
 	LanguageCode string  `json:"language_code"`
+	LanguageName *string `json:"language_name,omitempty"`
 	Score        float32 `json:"score"`
 }
 

@@ -123,11 +123,13 @@ order by date asc;
 -- name: FetchScoresForProfile :many
 select
   language_code,
-  sum(score)::real as score
+  sum(score)::real as score,
+  languages.name as language_name
 from logs
+inner join languages on (languages.code = logs.language_code)
 where
   user_id = sqlc.arg('user_id')
   and year = sqlc.arg('year')
   and deleted_at is null
-group by language_code
+group by language_code, languages.name
 order by score desc;

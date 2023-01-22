@@ -94,13 +94,15 @@ func (q *Queries) CreateLog(ctx context.Context, arg CreateLogParams) (uuid.UUID
 const fetchScoresForProfile = `-- name: FetchScoresForProfile :many
 select
   language_code,
-  sum(score)::real as score
+  sum(score)::real as score,
+  languages.name as language_name
 from logs
+inner join languages on (languages.code = logs.language_code)
 where
   user_id = $1
   and year = $2
   and deleted_at is null
-group by language_code
+group by language_code, languages.name
 order by score desc
 `
 
@@ -112,6 +114,7 @@ type FetchScoresForProfileParams struct {
 type FetchScoresForProfileRow struct {
 	LanguageCode string
 	Score        float32
+	LanguageName string
 }
 
 func (q *Queries) FetchScoresForProfile(ctx context.Context, arg FetchScoresForProfileParams) ([]FetchScoresForProfileRow, error) {
@@ -123,7 +126,7 @@ func (q *Queries) FetchScoresForProfile(ctx context.Context, arg FetchScoresForP
 	var items []FetchScoresForProfileRow
 	for rows.Next() {
 		var i FetchScoresForProfileRow
-		if err := rows.Scan(&i.LanguageCode, &i.Score); err != nil {
+		if err := rows.Scan(&i.LanguageCode, &i.Score, &i.LanguageName); err != nil {
 			return nil, err
 		}
 		items = append(items, i)

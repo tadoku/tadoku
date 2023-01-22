@@ -80,6 +80,7 @@ func (s *Server) ProfileYearlyScoresByUserID(ctx echo.Context, userId types.UUID
 		scores[i] = openapi.Score{
 			LanguageCode: it.LanguageCode,
 			Score:        it.Score,
+			LanguageName: it.LanguageName,
 		}
 	}
 

@@ -859,6 +859,9 @@ components:
         language_code:
           type: string
           example: zho
+        language_name:
+          type: string
+          example: Chinese
         score:
           type: number
           format: float

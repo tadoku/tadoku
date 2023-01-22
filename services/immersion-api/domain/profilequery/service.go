@@ -52,6 +52,7 @@ func NewService(r Repository, kratos KratosClient) Service {
 
 type Score struct {
 	LanguageCode string
+	LanguageName *string
 	Score        float32
 }
 

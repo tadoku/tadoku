@@ -562,3 +562,27 @@ func (r *ContestRepository) ReadingActivityForContestUser(ctx context.Context, r
 
 	return res, nil
 }
+
+func (r *ContestRepository) YearlyActivityForUser(ctx context.Context, req *profilequery.YearlyActivityForUserRequest) ([]profilequery.UserActivityScore, error) {
+	rows, err := r.q.YearlyActivityForUser(ctx, YearlyActivityForUserParams{
+		UserID: req.UserID,
+		Year:   int16(req.Year),
+	})
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return []profilequery.UserActivityScore{}, nil
+		}
+		return nil, fmt.Errorf("could not fetch activity summary: %w", err)
+	}
+
+	res := make([]profilequery.UserActivityScore, len(rows))
+	for i, it := range rows {
+		res[i] = profilequery.UserActivityScore{
+			Date:    it.Date,
+			Score:   it.Score,
+			Updates: int(it.UpdateCount),
+		}
+	}
+
+	return res, nil
+}

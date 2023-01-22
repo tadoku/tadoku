@@ -19,12 +19,15 @@ type Repository interface {
 	FindRegistrationForUser(context.Context, *contestquery.FindRegistrationForUserRequest) (*contestquery.ContestRegistration, error)
 	FindScoresForRegistration(context.Context, *ContestProfileRequest) ([]Score, error)
 	ReadingActivityForContestUser(context.Context, *ContestProfileRequest) ([]ReadingActivityRow, error)
+	YearlyActivityForUser(context.Context, *YearlyActivityForUserRequest) ([]UserActivityScore, error)
 }
 
 type Service interface {
 	ContestProfile(context.Context, *ContestProfileRequest) (*ContestProfileResponse, error)
+	// TODO: Shouldn't include reading prefix
 	ReadingActivityForContestUser(context.Context, *ContestProfileRequest) (*ReadingActivityResponse, error)
 	FetchUserProfile(context.Context, uuid.UUID) (*UserProfile, error)
+	YearlyActivityForUser(context.Context, *YearlyActivityForUserRequest) (*YearlyActivityForUserResponse, error)
 }
 
 type KratosClient interface {
@@ -131,4 +134,38 @@ func (s *service) FetchUserProfile(ctx context.Context, id uuid.UUID) (*UserProf
 		DisplayName: traits.UserDisplayName,
 		CreatedAt:   traits.CreatedAt,
 	}, nil
+}
+
+type UserActivityScore struct {
+	Date    time.Time
+	Score   float32
+	Updates int
+}
+
+type YearlyActivityForUserRequest struct {
+	UserID uuid.UUID
+	Year   int
+}
+
+type YearlyActivityForUserResponse struct {
+	Scores       []UserActivityScore
+	TotalUpdates int
+}
+
+func (s *service) YearlyActivityForUser(ctx context.Context, req *YearlyActivityForUserRequest) (*YearlyActivityForUserResponse, error) {
+	scores, err := s.r.YearlyActivityForUser(ctx, req)
+	if err != nil {
+		return nil, fmt.Errorf("could not fetch activity summary: %w", err)
+	}
+
+	res := &YearlyActivityForUserResponse{
+		Scores:       scores,
+		TotalUpdates: 0,
+	}
+
+	for _, it := range scores {
+		res.TotalUpdates += it.Updates
+	}
+
+	return res, nil
 }

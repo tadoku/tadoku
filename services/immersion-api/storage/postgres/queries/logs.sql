@@ -108,9 +108,9 @@ inner join contest_registrations on (
 )
 where log_id = sqlc.arg('id');
 
--- name: ActivityForUserForYear :many
+-- name: YearlyActivityForUser :many
 select
-  sum(score) as score,
+  sum(score)::real as score,
   count(id) as update_count,
   created_at::date as "date"
 from logs

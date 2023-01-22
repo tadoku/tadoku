@@ -14,53 +14,6 @@ import (
 	"github.com/lib/pq"
 )
 
-const activityForUserForYear = `-- name: ActivityForUserForYear :many
-select
-  sum(score) as score,
-  count(id) as update_count,
-  created_at::date as "date"
-from logs
-where
-  user_id = $1
-  and year = $2
-group by "date"
-order by date asc
-`
-
-type ActivityForUserForYearParams struct {
-	UserID uuid.UUID
-	Year   int16
-}
-
-type ActivityForUserForYearRow struct {
-	Score       int64
-	UpdateCount int64
-	Date        time.Time
-}
-
-func (q *Queries) ActivityForUserForYear(ctx context.Context, arg ActivityForUserForYearParams) ([]ActivityForUserForYearRow, error) {
-	rows, err := q.db.QueryContext(ctx, activityForUserForYear, arg.UserID, arg.Year)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []ActivityForUserForYearRow
-	for rows.Next() {
-		var i ActivityForUserForYearRow
-		if err := rows.Scan(&i.Score, &i.UpdateCount, &i.Date); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
 const createContestLogRelation = `-- name: CreateContestLogRelation :exec
 insert into contest_logs (
   contest_id,
@@ -354,6 +307,53 @@ func (q *Queries) ListLogsForContestUser(ctx context.Context, arg ListLogsForCon
 			&i.DeletedAt,
 			&i.TotalSize,
 		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const yearlyActivityForUser = `-- name: YearlyActivityForUser :many
+select
+  sum(score)::real as score,
+  count(id) as update_count,
+  created_at::date as "date"
+from logs
+where
+  user_id = $1
+  and year = $2
+group by "date"
+order by date asc
+`
+
+type YearlyActivityForUserParams struct {
+	UserID uuid.UUID
+	Year   int16
+}
+
+type YearlyActivityForUserRow struct {
+	Score       float32
+	UpdateCount int64
+	Date        time.Time
+}
+
+func (q *Queries) YearlyActivityForUser(ctx context.Context, arg YearlyActivityForUserParams) ([]YearlyActivityForUserRow, error) {
+	rows, err := q.db.QueryContext(ctx, yearlyActivityForUser, arg.UserID, arg.Year)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []YearlyActivityForUserRow
+	for rows.Next() {
+		var i YearlyActivityForUserRow
+		if err := rows.Scan(&i.Score, &i.UpdateCount, &i.Date); err != nil {
 			return nil, err
 		}
 		items = append(items, i)

@@ -516,11 +516,11 @@ components:
       type: object
       required:
         - total_updates
-        - records
+        - scores
       properties:
         total_updates:
           type: number
-        records:
+        scores:
           type: array
           items:
             $ref: "#/components/schemas/UserActivityScore"

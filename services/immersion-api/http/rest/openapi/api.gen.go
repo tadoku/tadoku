@@ -253,7 +253,7 @@ type Units struct {
 
 // UserActivity defines model for UserActivity.
 type UserActivity struct {
-	Records      []UserActivityScore `json:"records"`
+	Scores       []UserActivityScore `json:"scores"`
 	TotalUpdates float32             `json:"total_updates"`
 }
 

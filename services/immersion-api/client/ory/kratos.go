@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/google/uuid"
 	kratos "github.com/ory/kratos-client-go"
 	"github.com/tadoku/tadoku/services/immersion-api/domain/profilequery"
 )
@@ -27,8 +28,8 @@ type Traits struct {
 	Email       string
 }
 
-func (k *KratosClient) FetchIdentity(ctx context.Context, id string) (*profilequery.UserTraits, error) {
-	req := k.client.IdentityApi.GetIdentity(ctx, id)
+func (k *KratosClient) FetchIdentity(ctx context.Context, id uuid.UUID) (*profilequery.UserTraits, error) {
+	req := k.client.IdentityApi.GetIdentity(ctx, id.String())
 	identity, _, err := k.client.IdentityApi.GetIdentityExecute(req)
 	if err != nil {
 		return nil, fmt.Errorf("could not fetch identity: %w", err)

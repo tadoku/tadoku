@@ -24,10 +24,11 @@ type Repository interface {
 type Service interface {
 	ContestProfile(context.Context, *ContestProfileRequest) (*ContestProfileResponse, error)
 	ReadingActivityForContestUser(context.Context, *ContestProfileRequest) (*ReadingActivityResponse, error)
+	FetchUserProfile(context.Context, uuid.UUID) (*UserProfile, error)
 }
 
 type KratosClient interface {
-	FetchIdentity(ctx context.Context, id string) (*UserTraits, error)
+	FetchIdentity(ctx context.Context, id uuid.UUID) (*UserTraits, error)
 }
 
 type service struct {
@@ -112,4 +113,19 @@ func (s *service) ReadingActivityForContestUser(ctx context.Context, req *Contes
 type UserTraits struct {
 	UserDisplayName string
 	Email           string
+}
+
+type UserProfile struct {
+	DisplayName string
+}
+
+func (s *service) FetchUserProfile(ctx context.Context, id uuid.UUID) (*UserProfile, error) {
+	traits, err := s.kratos.FetchIdentity(ctx, id)
+	if err != nil {
+		return nil, fmt.Errorf("could not fetch user profile: %w", err)
+	}
+
+	return &UserProfile{
+		DisplayName: traits.UserDisplayName,
+	}, nil
 }

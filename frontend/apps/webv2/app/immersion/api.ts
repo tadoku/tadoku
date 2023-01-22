@@ -574,3 +574,40 @@ export const useLog = (id: string, options?: { enabled?: boolean }) =>
     },
     options,
   )
+
+const UserActivityScore = z.object({
+  date: z.string(),
+  score: z.number(),
+})
+
+export type UserActivityScore = z.infer<typeof UserActivityScore>
+
+const UserActivity = z.object({
+  total_updates: z.number(),
+  scores: z.array(UserActivityScore),
+})
+
+export type UserActivity = z.infer<typeof UserActivity>
+
+export const useUserYearlyActivity = (
+  opts: {
+    userId: string
+    year: string | number
+  },
+  options?: { enabled?: boolean },
+) =>
+  useQuery(
+    ['users', opts.userId, 'yearly-activity', opts.year],
+    async (): Promise<UserActivity> => {
+      const response = await fetch(
+        `${root}/users/${opts.userId}/activity/${opts.year}`,
+      )
+
+      if (response.status !== 200) {
+        throw new Error('could not fetch page')
+      }
+
+      return UserActivity.parse(await response.json())
+    },
+    options,
+  )

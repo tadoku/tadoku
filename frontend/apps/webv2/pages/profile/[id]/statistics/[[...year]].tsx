@@ -119,7 +119,7 @@ const Page = () => {
               />
             </div>
           </div>
-          <div className="h-stack spaced flex-grow">
+          <div className="h-stack spaced items-start">
             <div className="card w-full p-0">
               <h3 className="subtitle p-4">Contests</h3>
               <ul className="divide-y-2 divide-slate-500/5 border-t-2 border-slate-500/5">

@@ -92,7 +92,11 @@ const Page = () => {
         </div>
         <div className="flex-grow v-stack spaced">
           <div className="card narrow">
-            <h3 className="subtitle">525 updates in 2023</h3>
+            <h3 className="subtitle">
+              {activitySummary.data
+                ? `${activitySummary.data.total_updates} updates in ${year}`
+                : 'Loading updates...'}
+            </h3>
             <div className="w-full h-28 mt-4">
               <HeatmapChart
                 id={`heatmap-${year}-${userId}`}

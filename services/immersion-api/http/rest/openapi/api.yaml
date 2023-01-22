@@ -469,6 +469,34 @@ paths:
                 $ref: '#/components/schemas/UserActivity'
         '404':
           description: not found
+  /users/{userId}/scores/{year}:
+    get:
+      summary: Fetches the scores of a user for a given year
+      operationId: profileYearlyScoresByUserID
+      tags: [profile]
+      parameters:
+        - name: userId
+          in: path
+          description: ID of user to return
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: year
+          in: path
+          description: year of activity to fetch
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProfileScores'
+        '404':
+          description: not found
   /ping:
     get:
       summary: Checks if service is responsive
@@ -838,11 +866,10 @@ components:
       type: array
       items:
         $ref: "#/components/schemas/Score"
-    ContestProfileScores:
+    ProfileScores:
       type: object
       required:
         - overall_score
-        - registration
         - scores
       properties:
         overall_score:
@@ -850,8 +877,15 @@ components:
           format: float
         scores:
           $ref: "#/components/schemas/Scores"
-        registration:
-          $ref: "#/components/schemas/ContestRegistration"
+    ContestProfileScores:
+      allOf:
+        - $ref: '#/components/schemas/ProfileScores'
+        - type: object
+          required:
+            - registration
+          properties:
+            registration:
+              $ref: "#/components/schemas/ContestRegistration"
     ContestProfileReadingActivity:
       type: object
       required:

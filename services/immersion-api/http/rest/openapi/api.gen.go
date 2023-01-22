@@ -209,6 +209,12 @@ type PaginatedList struct {
 	TotalSize     int    `json:"total_size"`
 }
 
+// ProfileScores defines model for ProfileScores.
+type ProfileScores struct {
+	OverallScore float32 `json:"overall_score"`
+	Scores       Scores  `json:"scores"`
+}
+
 // ReadingActivityRow defines model for ReadingActivityRow.
 type ReadingActivityRow struct {
 	Date         openapi_types.Date `json:"date"`
@@ -375,6 +381,9 @@ type ServerInterface interface {
 	// Fetches a profile of a user
 	// (GET /users/{userId}/profile)
 	ProfileFindByUserID(ctx echo.Context, userId openapi_types.UUID) error
+	// Fetches the scores of a user for a given year
+	// (GET /users/{userId}/scores/{year})
+	ProfileYearlyScoresByUserID(ctx echo.Context, userId openapi_types.UUID, year int) error
 }
 
 // ServerInterfaceWrapper converts echo contexts to parameters.
@@ -752,6 +761,30 @@ func (w *ServerInterfaceWrapper) ProfileFindByUserID(ctx echo.Context) error {
 	return err
 }
 
+// ProfileYearlyScoresByUserID converts echo context to params.
+func (w *ServerInterfaceWrapper) ProfileYearlyScoresByUserID(ctx echo.Context) error {
+	var err error
+	// ------------- Path parameter "userId" -------------
+	var userId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithLocation("simple", false, "userId", runtime.ParamLocationPath, ctx.Param("userId"), &userId)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter userId: %s", err))
+	}
+
+	// ------------- Path parameter "year" -------------
+	var year int
+
+	err = runtime.BindStyledParameterWithLocation("simple", false, "year", runtime.ParamLocationPath, ctx.Param("year"), &year)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter year: %s", err))
+	}
+
+	// Invoke the callback with all the unmarshalled arguments
+	err = w.Handler.ProfileYearlyScoresByUserID(ctx, userId, year)
+	return err
+}
+
 // This is a simple interface which specifies echo.Route addition functions which
 // are present on both echo.Echo and echo.Group, since we want to allow using
 // either of them for path registration
@@ -798,5 +831,6 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 	router.GET(baseURL+"/ping", wrapper.Ping)
 	router.GET(baseURL+"/users/:userId/activity/:year", wrapper.ProfileYearlyActivityByUserID)
 	router.GET(baseURL+"/users/:userId/profile", wrapper.ProfileFindByUserID)
+	router.GET(baseURL+"/users/:userId/scores/:year", wrapper.ProfileYearlyScoresByUserID)
 
 }

@@ -62,3 +62,9 @@ func (s *Server) ProfileYearlyActivityByUserID(ctx echo.Context, userId types.UU
 
 	return ctx.JSON(http.StatusOK, res)
 }
+
+// Fetches the scores of a user for a given year
+// (GET /users/{userId}/scores/{year})
+func (s *Server) ProfileYearlyScoresByUserID(ctx echo.Context, userId types.UUID, year int) error {
+	return nil
+}

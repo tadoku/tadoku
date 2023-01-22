@@ -7,6 +7,7 @@ import { ScoreList } from '@app/immersion/ScoreList'
 import { useUserProfile, useUserYearlyActivity } from '@app/immersion/api'
 import { getQueryStringIntParameter } from '@app/common/router'
 import { DateTime, Interval } from 'luxon'
+import { formatScore } from '@app/common/format'
 
 const Page = () => {
   const router = useRouter()
@@ -101,6 +102,11 @@ const Page = () => {
                     ? activitySummary.data.scores.map(it => ({
                         date: it.date,
                         value: it.score,
+                        tooltip: `${formatScore(
+                          it.score,
+                        )} points on ${DateTime.fromISO(it.date).toLocaleString(
+                          DateTime.DATE_MED,
+                        )}`,
                       }))
                     : []
                 }

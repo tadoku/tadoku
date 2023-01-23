@@ -36,7 +36,7 @@ func (s *ServiceImpl) FetchContestConfigurationOptions(ctx context.Context) (*Fe
 	return res, nil
 }
 
-type FindByIDRequest struct {
+type FindContestByIDRequest struct {
 	ID             uuid.UUID
 	IncludeDeleted bool
 }
@@ -59,10 +59,10 @@ type ContestView struct {
 	Deleted              bool
 }
 
-func (s *ServiceImpl) FindByID(ctx context.Context, req *FindByIDRequest) (*ContestView, error) {
+func (s *ServiceImpl) FindContestByID(ctx context.Context, req *FindContestByIDRequest) (*ContestView, error) {
 	req.IncludeDeleted = domain.IsRole(ctx, domain.RoleAdmin)
 
-	res, err := s.r.FindByID(ctx, req)
+	res, err := s.r.FindContestByID(ctx, req)
 	if err != nil {
 		return nil, err
 	}

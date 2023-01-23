@@ -10,8 +10,7 @@ import (
 	"github.com/tadoku/tadoku/services/immersion-api/storage/postgres"
 )
 
-// TODO: Rename to FindContestByID
-func (r *Repository) FindByID(ctx context.Context, req *query.FindByIDRequest) (*query.ContestView, error) {
+func (r *Repository) FindContestByID(ctx context.Context, req *query.FindContestByIDRequest) (*query.ContestView, error) {
 	contest, err := r.q.FindContestById(ctx, postgres.FindContestByIdParams{
 		ID:             req.ID,
 		IncludeDeleted: req.IncludeDeleted,

@@ -120,8 +120,7 @@ func (s *ServiceImpl) UpsertContestRegistration(ctx context.Context, req *Upsert
 	req.UserDisplayName = session.DisplayName
 	req.ID = uuid.New()
 
-	// TODO: should rename to FindContestByID
-	contest, err := s.r.FindByID(ctx, &query.FindByIDRequest{
+	contest, err := s.r.FindContestByID(ctx, &query.FindContestByIDRequest{
 		ID:             req.ContestID,
 		IncludeDeleted: false,
 	})

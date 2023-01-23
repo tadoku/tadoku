@@ -135,7 +135,7 @@ func (s *Server) ContestGetConfigurations(ctx echo.Context) error {
 // Fetches a contest by id
 // (GET /contests/{id})
 func (s *Server) ContestFindByID(ctx echo.Context, id types.UUID) error {
-	contest, err := s.queryService.FindByID(ctx.Request().Context(), &query.FindByIDRequest{
+	contest, err := s.queryService.FindContestByID(ctx.Request().Context(), &query.FindContestByIDRequest{
 		ID: id,
 	})
 	if err != nil {

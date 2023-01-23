@@ -16,7 +16,7 @@ var ErrUnauthorized = errors.New("unauthorized")
 type Repository interface {
 	// contest
 	FetchContestConfigurationOptions(ctx context.Context) (*FetchContestConfigurationOptionsResponse, error)
-	FindByID(context.Context, *FindByIDRequest) (*ContestView, error)
+	FindContestByID(context.Context, *FindContestByIDRequest) (*ContestView, error)
 	ContestFindLatestOfficial(context.Context) (*ContestView, error)
 	ListContests(context.Context, *ContestListRequest) (*ContestListResponse, error)
 	FindRegistrationForUser(context.Context, *FindRegistrationForUserRequest) (*ContestRegistration, error)
@@ -40,7 +40,7 @@ type Repository interface {
 type Service interface {
 	// contest
 	FetchContestConfigurationOptions(ctx context.Context) (*FetchContestConfigurationOptionsResponse, error)
-	FindByID(context.Context, *FindByIDRequest) (*ContestView, error)
+	FindContestByID(context.Context, *FindContestByIDRequest) (*ContestView, error)
 	FindLatestOfficial(context.Context) (*ContestView, error)
 	ListContests(context.Context, *ContestListRequest) (*ContestListResponse, error)
 	FindRegistrationForUser(context.Context, *FindRegistrationForUserRequest) (*ContestRegistration, error)

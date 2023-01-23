@@ -146,3 +146,19 @@ where
   and year = sqlc.arg('year')
 group by logs.log_activity_id, log_activities.name
 order by score desc;
+
+-- name: DeleteLog :exec
+update logs
+set deleted_at = now()
+where
+  id = sqlc.arg('log_id');
+
+-- name: CheckIfLogCanBeDeleted :one
+select not (true = any(
+  select
+    (contests.contest_end < sqlc.arg('now'))
+  from contest_logs
+  inner join contests on (contests.id = contest_logs.contest_id)
+  where
+    contest_logs.log_id = sqlc.arg('log_id')
+)) as can_be_deleted;

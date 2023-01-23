@@ -14,6 +14,29 @@ import (
 	"github.com/lib/pq"
 )
 
+const checkIfLogCanBeDeleted = `-- name: CheckIfLogCanBeDeleted :one
+select not (true = any(
+  select
+    (contests.contest_end < $1)
+  from contest_logs
+  inner join contests on (contests.id = contest_logs.contest_id)
+  where
+    contest_logs.log_id = $2
+)) as can_be_deleted
+`
+
+type CheckIfLogCanBeDeletedParams struct {
+	Now   time.Time
+	LogID uuid.UUID
+}
+
+func (q *Queries) CheckIfLogCanBeDeleted(ctx context.Context, arg CheckIfLogCanBeDeletedParams) (interface{}, error) {
+	row := q.db.QueryRowContext(ctx, checkIfLogCanBeDeleted, arg.Now, arg.LogID)
+	var can_be_deleted interface{}
+	err := row.Scan(&can_be_deleted)
+	return can_be_deleted, err
+}
+
 const createContestLogRelation = `-- name: CreateContestLogRelation :exec
 insert into contest_logs (
   contest_id,
@@ -89,6 +112,18 @@ func (q *Queries) CreateLog(ctx context.Context, arg CreateLogParams) (uuid.UUID
 	var id uuid.UUID
 	err := row.Scan(&id)
 	return id, err
+}
+
+const deleteLog = `-- name: DeleteLog :exec
+update logs
+set deleted_at = now()
+where
+  id = $1
+`
+
+func (q *Queries) DeleteLog(ctx context.Context, logID uuid.UUID) error {
+	_, err := q.db.ExecContext(ctx, deleteLog, logID)
+	return err
 }
 
 const fetchScoresForProfile = `-- name: FetchScoresForProfile :many

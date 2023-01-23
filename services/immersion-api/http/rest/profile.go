@@ -124,5 +124,27 @@ func (s *Server) ProfileYearlyContestRegistrationsByUserID(ctx echo.Context, use
 // Fetches a activity split summary of a user for a given year
 // (GET /users/{userId}/activity-split/{year})
 func (s *Server) ProfileYearlyActivitySplitByUserID(ctx echo.Context, userId types.UUID, year int) error {
-	return nil
+	summary, err := s.profileQueryService.YearlyActivitySplitForUser(ctx.Request().Context(), &profilequery.YearlyActivitySplitForUserRequest{
+		UserID: userId,
+		Year:   year,
+	})
+	if err != nil {
+		ctx.Echo().Logger.Error(err)
+		return ctx.NoContent(http.StatusInternalServerError)
+	}
+
+	scores := make([]openapi.ActivitySplitScore, len(summary.Activities))
+	for i, it := range summary.Activities {
+		scores[i] = openapi.ActivitySplitScore{
+			ActivityId:   it.ActivityID,
+			ActivityName: it.ActivityName,
+			Score:        it.Score,
+		}
+	}
+
+	res := &openapi.ActivitySplit{
+		Activities: scores,
+	}
+
+	return ctx.JSON(http.StatusOK, res)
 }

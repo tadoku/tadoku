@@ -4,11 +4,11 @@ import { useRouter } from 'next/router'
 
 interface Props {}
 
-const Manual: NextPage<Props> = () => {
+const PageView: NextPage<Props> = () => {
   const router = useRouter()
   const slug = router.query.slug as string
 
   return <Page slug={slug} />
 }
 
-export default Manual
+export default PageView

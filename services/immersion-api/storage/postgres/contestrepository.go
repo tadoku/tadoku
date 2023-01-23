@@ -614,8 +614,9 @@ func (r *ContestRepository) YearlyScoresForUser(ctx context.Context, req *profil
 
 func (r *ContestRepository) YearlyContestRegistrations(ctx context.Context, req *contestquery.YearlyContestRegistrationsRequest) (*contestquery.ContestRegistrations, error) {
 	regs, err := r.q.FindYearlyContestRegistrationForUser(ctx, FindYearlyContestRegistrationForUserParams{
-		UserID: req.UserID,
-		Year:   int32(req.Year),
+		UserID:         req.UserID,
+		Year:           int32(req.Year),
+		IncludePrivate: req.IncludePrivate,
 	})
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {

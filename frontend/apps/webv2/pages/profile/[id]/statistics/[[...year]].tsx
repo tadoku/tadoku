@@ -5,6 +5,7 @@ import {
   ExclamationCircleIcon,
   EyeSlashIcon,
   HomeIcon,
+  InformationCircleIcon,
 } from '@heroicons/react/20/solid'
 import { routes } from '@app/common/routes'
 import Link from 'next/link'
@@ -13,6 +14,7 @@ import {
   useProfileScores,
   useUserProfile,
   useUserYearlyActivity,
+  useUserYearlyActivitySplit,
   useYearlyContestRegistrations,
 } from '@app/immersion/api'
 import { getQueryStringIntParameter } from '@app/common/router'
@@ -31,6 +33,7 @@ const Page = () => {
   const activitySummary = useUserYearlyActivity({ userId, year })
   const scores = useProfileScores({ userId, year })
   const registrations = useYearlyContestRegistrations({ userId, year })
+  const activitySplit = useUserYearlyActivitySplit({ userId, year })
 
   if (profile.isLoading || profile.isIdle) {
     return <p>Loading...</p>
@@ -168,7 +171,23 @@ const Page = () => {
             </div>
             <div className="card narrow w-full">
               <h3 className="subtitle">Activities</h3>
-              <div className="bg-lime-400 w-full h-64 mt-4"></div>
+              {activitySplit.isLoading ? 'Loading...' : null}
+              {activitySplit.data &&
+              activitySplit.data.activities.length > 0 ? (
+                <p>show graph</p>
+              ) : null}
+
+              <Flash
+                style="info"
+                IconComponent={InformationCircleIcon}
+                visible={
+                  activitySplit.data &&
+                  activitySplit.data.activities.length === 0
+                }
+                className="-mx-4 -mb-4"
+              >
+                Not enough data to show activity split
+              </Flash>
             </div>
           </div>
         </div>

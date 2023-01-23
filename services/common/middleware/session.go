@@ -3,6 +3,7 @@ package middleware
 import (
 	"context"
 	"fmt"
+	"net/http"
 
 	"github.com/MicahParks/keyfunc"
 	"github.com/golang-jwt/jwt"
@@ -76,6 +77,11 @@ func Session(repository RoleRepository) echo.MiddlewareFunc {
 			}
 
 			ctx.SetRequest(ctx.Request().WithContext(context.WithValue(ctx.Request().Context(), domain.CtxSessionKey, sessionToken)))
+
+			if sessionToken.Role == domain.RoleBanned {
+				return ctx.NoContent(http.StatusForbidden)
+			}
+
 			return next(ctx)
 		}
 	}

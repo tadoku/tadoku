@@ -7,6 +7,7 @@ go_library(
         "repo_contestfindlatestofficial.go",
         "repo_createcontest.go",
         "repo_createlog.go",
+        "repo_deletelog.go",
         "repo_fetchconfigurationoptions.go",
         "repo_fetchcontestleaderboard.go",
         "repo_fetchlogconfigurationoptions.go",

@@ -382,6 +382,9 @@ type ServerInterface interface {
 	// Fetches the configuration options for a log
 	// (GET /logs/configuration-options)
 	LogGetConfigurations(ctx echo.Context) error
+	// Deletes a log by id
+	// (DELETE /logs/{id})
+	LogDeleteByID(ctx echo.Context, id openapi_types.UUID) error
 	// Fetches a log by id
 	// (GET /logs/{id})
 	LogFindByID(ctx echo.Context, id openapi_types.UUID) error
@@ -715,6 +718,22 @@ func (w *ServerInterfaceWrapper) LogGetConfigurations(ctx echo.Context) error {
 	return err
 }
 
+// LogDeleteByID converts echo context to params.
+func (w *ServerInterfaceWrapper) LogDeleteByID(ctx echo.Context) error {
+	var err error
+	// ------------- Path parameter "id" -------------
+	var id openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithLocation("simple", false, "id", runtime.ParamLocationPath, ctx.Param("id"), &id)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter id: %s", err))
+	}
+
+	// Invoke the callback with all the unmarshalled arguments
+	err = w.Handler.LogDeleteByID(ctx, id)
+	return err
+}
+
 // LogFindByID converts echo context to params.
 func (w *ServerInterfaceWrapper) LogFindByID(ctx echo.Context) error {
 	var err error
@@ -894,6 +913,7 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 	router.POST(baseURL+"/contests/:id/registration", wrapper.ContestRegistrationUpsert)
 	router.POST(baseURL+"/logs", wrapper.LogCreate)
 	router.GET(baseURL+"/logs/configuration-options", wrapper.LogGetConfigurations)
+	router.DELETE(baseURL+"/logs/:id", wrapper.LogDeleteByID)
 	router.GET(baseURL+"/logs/:id", wrapper.LogFindByID)
 	router.GET(baseURL+"/ping", wrapper.Ping)
 	router.GET(baseURL+"/users/:userId/activity-split/:year", wrapper.ProfileYearlyActivitySplitByUserID)

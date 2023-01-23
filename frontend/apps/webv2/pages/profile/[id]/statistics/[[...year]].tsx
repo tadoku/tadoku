@@ -20,6 +20,7 @@ import {
 import { getQueryStringIntParameter } from '@app/common/router'
 import { DateTime, Interval } from 'luxon'
 import { formatScore } from '@app/common/format'
+import { ActivitySplitChart } from '@app/immersion/ActivitySplitChart'
 
 const Page = () => {
   const router = useRouter()
@@ -169,12 +170,14 @@ const Page = () => {
                   : null}
               </ul>
             </div>
-            <div className="card narrow w-full">
+            <div className="card narrow w-full max-w-[300px]">
               <h3 className="subtitle">Activities</h3>
               {activitySplit.isLoading ? 'Loading...' : null}
               {activitySplit.data &&
               activitySplit.data.activities.length > 0 ? (
-                <p>show graph</p>
+                <ActivitySplitChart
+                  activities={activitySplit.data.activities}
+                />
               ) : null}
 
               <Flash

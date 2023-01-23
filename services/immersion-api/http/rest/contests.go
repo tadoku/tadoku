@@ -8,10 +8,8 @@ import (
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 
-	"github.com/tadoku/tadoku/services/immersion-api/domain/contestcommand"
-	"github.com/tadoku/tadoku/services/immersion-api/domain/contestquery"
-	"github.com/tadoku/tadoku/services/immersion-api/domain/logquery"
-	"github.com/tadoku/tadoku/services/immersion-api/domain/profilequery"
+	"github.com/tadoku/tadoku/services/immersion-api/domain/command"
+	"github.com/tadoku/tadoku/services/immersion-api/domain/query"
 	"github.com/tadoku/tadoku/services/immersion-api/http/rest/openapi"
 )
 
@@ -26,7 +24,7 @@ func (s *Server) ContestCreate(ctx echo.Context) error {
 		return ctx.NoContent(http.StatusBadRequest)
 	}
 
-	contest, err := s.contestCommandService.CreateContest(ctx.Request().Context(), &contestcommand.ContestCreateRequest{
+	contest, err := s.commandService.CreateContest(ctx.Request().Context(), &command.ContestCreateRequest{
 		Official:                req.Official,
 		Private:                 req.Private,
 		ContestStart:            req.ContestStart.Time,
@@ -38,13 +36,13 @@ func (s *Server) ContestCreate(ctx echo.Context) error {
 		ActivityTypeIDAllowList: req.ActivityTypeIdAllowList,
 	})
 	if err != nil {
-		if errors.Is(err, contestcommand.ErrForbidden) {
+		if errors.Is(err, command.ErrForbidden) {
 			return ctx.NoContent(http.StatusForbidden)
 		}
-		if errors.Is(err, contestcommand.ErrUnauthorized) {
+		if errors.Is(err, command.ErrUnauthorized) {
 			return ctx.NoContent(http.StatusUnauthorized)
 		}
-		if errors.Is(err, contestcommand.ErrInvalidContest) {
+		if errors.Is(err, command.ErrInvalidContest) {
 			ctx.Echo().Logger.Error("could not process request: ", err)
 			return ctx.NoContent(http.StatusBadRequest)
 		}
@@ -80,15 +78,15 @@ func (s *Server) ContestRegistrationUpsert(ctx echo.Context, id types.UUID) erro
 		return ctx.NoContent(http.StatusBadRequest)
 	}
 
-	err := s.contestCommandService.UpsertContestRegistration(ctx.Request().Context(), &contestcommand.UpsertContestRegistrationRequest{
+	err := s.commandService.UpsertContestRegistration(ctx.Request().Context(), &command.UpsertContestRegistrationRequest{
 		ContestID:     id,
 		LanguageCodes: req.LanguageCodes,
 	})
 	if err != nil {
-		if errors.Is(err, contestquery.ErrNotFound) {
+		if errors.Is(err, query.ErrNotFound) {
 			return ctx.NoContent(http.StatusNotFound)
 		}
-		if errors.Is(err, contestcommand.ErrInvalidContestRegistration) {
+		if errors.Is(err, command.ErrInvalidContestRegistration) {
 			return ctx.NoContent(http.StatusBadRequest)
 		}
 
@@ -104,7 +102,7 @@ func (s *Server) ContestRegistrationUpsert(ctx echo.Context, id types.UUID) erro
 // Fetches the configuration options for a new contest
 // (GET /contests/configuration-options)
 func (s *Server) ContestGetConfigurations(ctx echo.Context) error {
-	opts, err := s.contestQueryService.FetchContestConfigurationOptions(ctx.Request().Context())
+	opts, err := s.queryService.FetchContestConfigurationOptions(ctx.Request().Context())
 	if err != nil {
 		return ctx.NoContent(http.StatusInternalServerError)
 	}
@@ -137,11 +135,11 @@ func (s *Server) ContestGetConfigurations(ctx echo.Context) error {
 // Fetches a contest by id
 // (GET /contests/{id})
 func (s *Server) ContestFindByID(ctx echo.Context, id types.UUID) error {
-	contest, err := s.contestQueryService.FindByID(ctx.Request().Context(), &contestquery.FindByIDRequest{
+	contest, err := s.queryService.FindByID(ctx.Request().Context(), &query.FindByIDRequest{
 		ID: id,
 	})
 	if err != nil {
-		if errors.Is(err, contestquery.ErrNotFound) {
+		if errors.Is(err, query.ErrNotFound) {
 			return ctx.NoContent(http.StatusNotFound)
 		}
 
@@ -216,7 +214,7 @@ func (s *Server) ContestList(ctx echo.Context, params openapi.ContestListParams)
 		}
 	}
 
-	list, err := s.contestQueryService.ListContests(ctx.Request().Context(), &contestquery.ContestListRequest{
+	list, err := s.queryService.ListContests(ctx.Request().Context(), &query.ContestListRequest{
 		UserID:         userID,
 		OfficialOnly:   officialOnly,
 		IncludeDeleted: includeDeleted,
@@ -261,11 +259,11 @@ func (s *Server) ContestList(ctx echo.Context, params openapi.ContestListParams)
 // Fetches a contest registration if it exists
 // (GET /contests/{id}/registration)
 func (s *Server) ContestFindRegistration(ctx echo.Context, id types.UUID) error {
-	reg, err := s.contestQueryService.FindRegistrationForUser(ctx.Request().Context(), &contestquery.FindRegistrationForUserRequest{
+	reg, err := s.queryService.FindRegistrationForUser(ctx.Request().Context(), &query.FindRegistrationForUserRequest{
 		ContestID: id,
 	})
 	if err != nil {
-		if errors.Is(err, contestquery.ErrNotFound) {
+		if errors.Is(err, query.ErrNotFound) {
 			return ctx.NoContent(http.StatusNotFound)
 		}
 
@@ -293,7 +291,7 @@ func (s *Server) ContestFindRegistration(ctx echo.Context, id types.UUID) error 
 // Fetches the leaderboard for a contest
 // (GET /contests/{id}/leaderboard)
 func (s *Server) ContestFetchLeaderboard(ctx echo.Context, id types.UUID, params openapi.ContestFetchLeaderboardParams) error {
-	req := &contestquery.FetchContestLeaderboardRequest{
+	req := &query.FetchContestLeaderboardRequest{
 		ContestID:    id,
 		LanguageCode: params.LanguageCode,
 	}
@@ -309,9 +307,9 @@ func (s *Server) ContestFetchLeaderboard(ctx echo.Context, id types.UUID, params
 		req.ActivityID = &id
 	}
 
-	leaderboard, err := s.contestQueryService.FetchContestLeaderboard(ctx.Request().Context(), req)
+	leaderboard, err := s.queryService.FetchContestLeaderboard(ctx.Request().Context(), req)
 	if err != nil {
-		if errors.Is(err, contestquery.ErrNotFound) {
+		if errors.Is(err, query.ErrNotFound) {
 			return ctx.NoContent(http.StatusNotFound)
 		}
 
@@ -342,9 +340,9 @@ func (s *Server) ContestFetchLeaderboard(ctx echo.Context, id types.UUID, params
 // Fetches all the ongoing contest registrations of the logged in user, always in a single page
 // (GET /contests/configuration-options)
 func (s *Server) ContestFindOngoingRegistrations(ctx echo.Context) error {
-	regs, err := s.contestQueryService.FetchOngoingContestRegistrations(ctx.Request().Context(), &contestquery.FetchOngoingContestRegistrationsRequest{})
+	regs, err := s.queryService.FetchOngoingContestRegistrations(ctx.Request().Context(), &query.FetchOngoingContestRegistrationsRequest{})
 	if err != nil {
-		if errors.Is(err, contestquery.ErrUnauthorized) {
+		if errors.Is(err, query.ErrUnauthorized) {
 			return ctx.NoContent(http.StatusUnauthorized)
 		}
 
@@ -369,9 +367,9 @@ func (s *Server) ContestFindOngoingRegistrations(ctx echo.Context) error {
 // Fetches the latest official contest
 // (GET /contests/latest-official)
 func (s *Server) ContestFindLatestOfficial(ctx echo.Context) error {
-	contest, err := s.contestQueryService.FindLatestOfficial(ctx.Request().Context())
+	contest, err := s.queryService.FindLatestOfficial(ctx.Request().Context())
 	if err != nil {
-		if errors.Is(err, contestquery.ErrNotFound) {
+		if errors.Is(err, query.ErrNotFound) {
 			return ctx.NoContent(http.StatusNotFound)
 		}
 
@@ -421,12 +419,12 @@ func (s *Server) ContestFindLatestOfficial(ctx echo.Context) error {
 // Fetches the scores of a user profile in a contest
 // (GET /contests/{id}/profile/{user_id}/scores)
 func (s *Server) ContestProfileFetchScores(ctx echo.Context, id types.UUID, userId types.UUID) error {
-	profile, err := s.profileQueryService.ContestProfile(ctx.Request().Context(), &profilequery.ContestProfileRequest{
+	profile, err := s.queryService.ContestProfile(ctx.Request().Context(), &query.ContestProfileRequest{
 		UserID:    userId,
 		ContestID: id,
 	})
 	if err != nil {
-		if errors.Is(err, profilequery.ErrNotFound) {
+		if errors.Is(err, query.ErrNotFound) {
 			return ctx.NoContent(http.StatusNotFound)
 		}
 		ctx.Logger().Errorf("could not fetch profile: %w", err)
@@ -451,7 +449,7 @@ func (s *Server) ContestProfileFetchScores(ctx echo.Context, id types.UUID, user
 // Fetches the reading activity of a user profile in a contest
 // (GET /contests/{id}/profile/{user_id}/reading-activity)
 func (s *Server) ContestProfileFetchReadingActivity(ctx echo.Context, id types.UUID, userId types.UUID) error {
-	stats, err := s.profileQueryService.ReadingActivityForContestUser(ctx.Request().Context(), &profilequery.ContestProfileRequest{
+	stats, err := s.queryService.ReadingActivityForContestUser(ctx.Request().Context(), &query.ContestProfileRequest{
 		UserID:    userId,
 		ContestID: id,
 	})
@@ -477,7 +475,7 @@ func (s *Server) ContestProfileFetchReadingActivity(ctx echo.Context, id types.U
 // Lists the logs of a user profile in a contest
 // (GET /contests/{id}/profile/{user_id}/logs)
 func (s *Server) ContestProfileListLogs(ctx echo.Context, id types.UUID, userId types.UUID, params openapi.ContestProfileListLogsParams) error {
-	req := &logquery.LogListForContestUserRequest{
+	req := &query.LogListForContestUserRequest{
 		UserID:         userId,
 		ContestID:      id,
 		IncludeDeleted: false,
@@ -495,9 +493,9 @@ func (s *Server) ContestProfileListLogs(ctx echo.Context, id types.UUID, userId 
 		req.IncludeDeleted = *params.IncludeDeleted
 	}
 
-	list, err := s.logQueryService.ListLogsForContestUser(ctx.Request().Context(), req)
+	list, err := s.queryService.ListLogsForContestUser(ctx.Request().Context(), req)
 	if err != nil {
-		if errors.Is(err, logquery.ErrUnauthorized) {
+		if errors.Is(err, query.ErrUnauthorized) {
 			return ctx.NoContent(http.StatusForbidden)
 		}
 

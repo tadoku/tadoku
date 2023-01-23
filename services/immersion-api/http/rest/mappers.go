@@ -2,11 +2,11 @@ package rest
 
 import (
 	"github.com/deepmap/oapi-codegen/pkg/types"
-	"github.com/tadoku/tadoku/services/immersion-api/domain/contestquery"
+	"github.com/tadoku/tadoku/services/immersion-api/domain/query"
 	"github.com/tadoku/tadoku/services/immersion-api/http/rest/openapi"
 )
 
-func contestRegistrationToAPI(r *contestquery.ContestRegistration) *openapi.ContestRegistration {
+func contestRegistrationToAPI(r *query.ContestRegistration) *openapi.ContestRegistration {
 	registration := openapi.ContestRegistration{
 		ContestId:       r.ContestID,
 		Id:              &r.ID,

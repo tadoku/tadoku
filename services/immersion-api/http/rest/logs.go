@@ -7,8 +7,8 @@ import (
 	"github.com/deepmap/oapi-codegen/pkg/types"
 	"github.com/labstack/echo/v4"
 
-	"github.com/tadoku/tadoku/services/immersion-api/domain/logcommand"
-	"github.com/tadoku/tadoku/services/immersion-api/domain/logquery"
+	"github.com/tadoku/tadoku/services/immersion-api/domain/command"
+	"github.com/tadoku/tadoku/services/immersion-api/domain/query"
 	"github.com/tadoku/tadoku/services/immersion-api/http/rest/openapi"
 )
 
@@ -23,7 +23,7 @@ func (s *Server) LogCreateLog(ctx echo.Context) error {
 		return ctx.NoContent(http.StatusBadRequest)
 	}
 
-	if err := s.logCommandService.CreateLog(ctx.Request().Context(), &logcommand.LogCreateRequest{
+	if err := s.commandService.CreateLog(ctx.Request().Context(), &command.LogCreateRequest{
 		RegistrationIDs: req.RegistrationIds,
 		UnitID:          req.UnitId,
 		ActivityID:      req.ActivityId,
@@ -32,13 +32,13 @@ func (s *Server) LogCreateLog(ctx echo.Context) error {
 		Tags:            req.Tags,
 		Description:     req.Description,
 	}); err != nil {
-		if errors.Is(err, logcommand.ErrForbidden) {
+		if errors.Is(err, command.ErrForbidden) {
 			return ctx.NoContent(http.StatusForbidden)
 		}
-		if errors.Is(err, logcommand.ErrUnauthorized) {
+		if errors.Is(err, command.ErrUnauthorized) {
 			return ctx.NoContent(http.StatusUnauthorized)
 		}
-		if errors.Is(err, logcommand.ErrInvalidLog) {
+		if errors.Is(err, command.ErrInvalidLog) {
 			ctx.Echo().Logger.Error("could not process request: ", err)
 			return ctx.NoContent(http.StatusBadRequest)
 		}
@@ -55,9 +55,9 @@ func (s *Server) LogCreateLog(ctx echo.Context) error {
 // Fetches the configuration options for a log
 // (GET /logs/configuration-options)
 func (s *Server) LogGetConfigurations(ctx echo.Context) error {
-	opts, err := s.logQueryService.FetchLogConfigurationOptions(ctx.Request().Context())
+	opts, err := s.queryService.FetchLogConfigurationOptions(ctx.Request().Context())
 	if err != nil {
-		if errors.Is(err, logquery.ErrUnauthorized) {
+		if errors.Is(err, query.ErrUnauthorized) {
 			return ctx.NoContent(http.StatusUnauthorized)
 		}
 		return ctx.NoContent(http.StatusInternalServerError)
@@ -109,11 +109,11 @@ func (s *Server) LogGetConfigurations(ctx echo.Context) error {
 // Fetches a log by id
 // (GET /logs/{id})
 func (s *Server) LogFindByID(ctx echo.Context, id types.UUID) error {
-	log, err := s.logQueryService.FindLogByID(ctx.Request().Context(), &logquery.FindLogByIDRequest{
+	log, err := s.queryService.FindLogByID(ctx.Request().Context(), &query.FindLogByIDRequest{
 		ID: id,
 	})
 	if err != nil {
-		if errors.Is(err, logquery.ErrNotFound) {
+		if errors.Is(err, query.ErrNotFound) {
 			return ctx.NoContent(http.StatusNotFound)
 		}
 		ctx.Echo().Logger.Error("could not process request: ", err)

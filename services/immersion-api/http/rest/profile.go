@@ -6,8 +6,7 @@ import (
 
 	"github.com/deepmap/oapi-codegen/pkg/types"
 	"github.com/labstack/echo/v4"
-	"github.com/tadoku/tadoku/services/immersion-api/domain/contestquery"
-	"github.com/tadoku/tadoku/services/immersion-api/domain/profilequery"
+	"github.com/tadoku/tadoku/services/immersion-api/domain/query"
 	"github.com/tadoku/tadoku/services/immersion-api/http/rest/openapi"
 )
 
@@ -18,9 +17,9 @@ import (
 // Fetches a profile of a user
 // (GET /users/{userId}/profile)
 func (s *Server) ProfileFindByUserID(ctx echo.Context, userId types.UUID) error {
-	profile, err := s.profileQueryService.FetchUserProfile(ctx.Request().Context(), userId)
+	profile, err := s.queryService.FetchUserProfile(ctx.Request().Context(), userId)
 	if err != nil {
-		if errors.Is(err, profilequery.ErrNotFound) {
+		if errors.Is(err, query.ErrNotFound) {
 			return ctx.NoContent(http.StatusNotFound)
 		}
 		ctx.Echo().Logger.Errorf("could not fetch profile: %w", err)
@@ -39,7 +38,7 @@ func (s *Server) ProfileFindByUserID(ctx echo.Context, userId types.UUID) error 
 // Fetches a activity summary of a user for a given year
 // (GET /users/{userId}/activity/{year})
 func (s *Server) ProfileYearlyActivityByUserID(ctx echo.Context, userId types.UUID, year int) error {
-	summary, err := s.profileQueryService.YearlyActivityForUser(ctx.Request().Context(), &profilequery.YearlyActivityForUserRequest{
+	summary, err := s.queryService.YearlyActivityForUser(ctx.Request().Context(), &query.YearlyActivityForUserRequest{
 		UserID: userId,
 		Year:   year,
 	})
@@ -67,7 +66,7 @@ func (s *Server) ProfileYearlyActivityByUserID(ctx echo.Context, userId types.UU
 // Fetches the scores of a user for a given year
 // (GET /users/{userId}/scores/{year})
 func (s *Server) ProfileYearlyScoresByUserID(ctx echo.Context, userId types.UUID, year int) error {
-	summary, err := s.profileQueryService.YearlyScoresForUser(ctx.Request().Context(), &profilequery.YearlyScoresForUserRequest{
+	summary, err := s.queryService.YearlyScoresForUser(ctx.Request().Context(), &query.YearlyScoresForUserRequest{
 		UserID: userId,
 		Year:   year,
 	})
@@ -94,12 +93,12 @@ func (s *Server) ProfileYearlyScoresByUserID(ctx echo.Context, userId types.UUID
 // Fetches the contest registrations of a user for a given year
 // (GET /users/{userId}/contest-registrations/{year})
 func (s *Server) ProfileYearlyContestRegistrationsByUserID(ctx echo.Context, userId types.UUID, year int) error {
-	regs, err := s.contestQueryService.YearlyContestRegistrations(ctx.Request().Context(), &contestquery.YearlyContestRegistrationsRequest{
+	regs, err := s.queryService.YearlyContestRegistrations(ctx.Request().Context(), &query.YearlyContestRegistrationsRequest{
 		UserID: userId,
 		Year:   year,
 	})
 	if err != nil {
-		if errors.Is(err, contestquery.ErrUnauthorized) {
+		if errors.Is(err, query.ErrUnauthorized) {
 			return ctx.NoContent(http.StatusUnauthorized)
 		}
 
@@ -124,7 +123,7 @@ func (s *Server) ProfileYearlyContestRegistrationsByUserID(ctx echo.Context, use
 // Fetches a activity split summary of a user for a given year
 // (GET /users/{userId}/activity-split/{year})
 func (s *Server) ProfileYearlyActivitySplitByUserID(ctx echo.Context, userId types.UUID, year int) error {
-	summary, err := s.profileQueryService.YearlyActivitySplitForUser(ctx.Request().Context(), &profilequery.YearlyActivitySplitForUserRequest{
+	summary, err := s.queryService.YearlyActivitySplitForUser(ctx.Request().Context(), &query.YearlyActivitySplitForUserRequest{
 		UserID: userId,
 		Year:   year,
 	})

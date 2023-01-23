@@ -209,14 +209,13 @@ func (s *ServiceImpl) FindLatestOfficial(ctx context.Context) (*ContestView, err
 	return s.r.ContestFindLatestOfficial(ctx)
 }
 
-type YearlyContestRegistrationsRequest struct {
+type YearlyContestRegistrationsForUserRequest struct {
 	UserID         uuid.UUID
 	Year           int
 	IncludePrivate bool
 }
 
-func (s *ServiceImpl) YearlyContestRegistrations(ctx context.Context, req *YearlyContestRegistrationsRequest) (*ContestRegistrations, error) {
-
+func (s *ServiceImpl) YearlyContestRegistrationsForUser(ctx context.Context, req *YearlyContestRegistrationsForUserRequest) (*ContestRegistrations, error) {
 	session := domain.ParseSession(ctx)
 	if session == nil {
 		return nil, ErrUnauthorized
@@ -226,5 +225,5 @@ func (s *ServiceImpl) YearlyContestRegistrations(ctx context.Context, req *Yearl
 	sessionMatchesUser := err == nil && userId == req.UserID
 	req.IncludePrivate = domain.IsRole(ctx, domain.RoleAdmin) || sessionMatchesUser
 
-	return s.r.YearlyContestRegistrations(ctx, req)
+	return s.r.YearlyContestRegistrationsForUser(ctx, req)
 }

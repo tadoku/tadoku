@@ -93,7 +93,7 @@ func (s *Server) ProfileYearlyScoresByUserID(ctx echo.Context, userId types.UUID
 // Fetches the contest registrations of a user for a given year
 // (GET /users/{userId}/contest-registrations/{year})
 func (s *Server) ProfileYearlyContestRegistrationsByUserID(ctx echo.Context, userId types.UUID, year int) error {
-	regs, err := s.queryService.YearlyContestRegistrations(ctx.Request().Context(), &query.YearlyContestRegistrationsRequest{
+	regs, err := s.queryService.YearlyContestRegistrationsForUser(ctx.Request().Context(), &query.YearlyContestRegistrationsForUserRequest{
 		UserID: userId,
 		Year:   year,
 	})

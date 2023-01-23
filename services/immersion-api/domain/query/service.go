@@ -22,7 +22,7 @@ type Repository interface {
 	FindRegistrationForUser(context.Context, *FindRegistrationForUserRequest) (*ContestRegistration, error)
 	FetchContestLeaderboard(context.Context, *FetchContestLeaderboardRequest) (*Leaderboard, error)
 	FetchOngoingContestRegistrations(context.Context, *FetchOngoingContestRegistrationsRequest) (*ContestRegistrations, error)
-	YearlyContestRegistrations(context.Context, *YearlyContestRegistrationsRequest) (*ContestRegistrations, error)
+	YearlyContestRegistrationsForUser(context.Context, *YearlyContestRegistrationsForUserRequest) (*ContestRegistrations, error)
 
 	// log
 	ListLogsForContestUser(context.Context, *LogListForContestUserRequest) (*LogListResponse, error)
@@ -46,7 +46,7 @@ type Service interface {
 	FindRegistrationForUser(context.Context, *FindRegistrationForUserRequest) (*ContestRegistration, error)
 	FetchContestLeaderboard(context.Context, *FetchContestLeaderboardRequest) (*Leaderboard, error)
 	FetchOngoingContestRegistrations(context.Context, *FetchOngoingContestRegistrationsRequest) (*ContestRegistrations, error)
-	YearlyContestRegistrations(context.Context, *YearlyContestRegistrationsRequest) (*ContestRegistrations, error)
+	YearlyContestRegistrationsForUser(context.Context, *YearlyContestRegistrationsForUserRequest) (*ContestRegistrations, error)
 
 	// log
 	ListLogsForContestUser(context.Context, *LogListForContestUserRequest) (*LogListResponse, error)

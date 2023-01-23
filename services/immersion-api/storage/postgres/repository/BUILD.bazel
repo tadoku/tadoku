@@ -20,7 +20,7 @@ go_library(
         "repo_upsertcontestregistration.go",
         "repo_yearlyactivityforuser.go",
         "repo_yearlyactivitysplitforuser.go",
-        "repo_yearlycontestregistrations.go",
+        "repo_yearlycontestregistrationsforuser.go",
         "repo_yearlyscoresforuser.go",
         "repository.go",
     ],

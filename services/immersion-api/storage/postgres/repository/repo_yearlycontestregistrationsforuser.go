@@ -10,7 +10,7 @@ import (
 	"github.com/tadoku/tadoku/services/immersion-api/storage/postgres"
 )
 
-func (r *Repository) YearlyContestRegistrations(ctx context.Context, req *query.YearlyContestRegistrationsRequest) (*query.ContestRegistrations, error) {
+func (r *Repository) YearlyContestRegistrationsForUser(ctx context.Context, req *query.YearlyContestRegistrationsForUserRequest) (*query.ContestRegistrations, error) {
 	regs, err := r.q.FindYearlyContestRegistrationForUser(ctx, postgres.FindYearlyContestRegistrationForUserParams{
 		UserID:         req.UserID,
 		Year:           int32(req.Year),

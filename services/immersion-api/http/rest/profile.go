@@ -89,3 +89,9 @@ func (s *Server) ProfileYearlyScoresByUserID(ctx echo.Context, userId types.UUID
 		Scores:       scores,
 	})
 }
+
+// Fetches the contest registrations of a user for a given year
+// (GET /users/{userId}/contest-registrations/{year})
+func (s *Server) ProfileYearlyContestRegistrationsByUserID(ctx echo.Context, userId types.UUID, year int) error {
+	return nil
+}

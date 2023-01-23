@@ -497,6 +497,33 @@ paths:
                 $ref: '#/components/schemas/ProfileScores'
         '404':
           description: not found
+  /users/{userId}/contest-registrations/{year}:
+    get:
+      summary: Fetches the contest registrations of a user for a given year
+      description: Includes private contests for the current user and admins
+      operationId: profileYearlyContestRegistrationsByUserID
+      tags: [profile]
+      parameters:
+        - name: userId
+          in: path
+          description: ID of user to return
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: year
+          in: path
+          description: year of activity to fetch
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContestRegistrations'
   /ping:
     get:
       summary: Checks if service is responsive

@@ -379,6 +379,9 @@ type ServerInterface interface {
 	// Fetches a activity summary of a user for a given year
 	// (GET /users/{userId}/activity/{year})
 	ProfileYearlyActivityByUserID(ctx echo.Context, userId openapi_types.UUID, year int) error
+	// Fetches the contest registrations of a user for a given year
+	// (GET /users/{userId}/contest-registrations/{year})
+	ProfileYearlyContestRegistrationsByUserID(ctx echo.Context, userId openapi_types.UUID, year int) error
 	// Fetches a profile of a user
 	// (GET /users/{userId}/profile)
 	ProfileFindByUserID(ctx echo.Context, userId openapi_types.UUID) error
@@ -746,6 +749,30 @@ func (w *ServerInterfaceWrapper) ProfileYearlyActivityByUserID(ctx echo.Context)
 	return err
 }
 
+// ProfileYearlyContestRegistrationsByUserID converts echo context to params.
+func (w *ServerInterfaceWrapper) ProfileYearlyContestRegistrationsByUserID(ctx echo.Context) error {
+	var err error
+	// ------------- Path parameter "userId" -------------
+	var userId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithLocation("simple", false, "userId", runtime.ParamLocationPath, ctx.Param("userId"), &userId)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter userId: %s", err))
+	}
+
+	// ------------- Path parameter "year" -------------
+	var year int
+
+	err = runtime.BindStyledParameterWithLocation("simple", false, "year", runtime.ParamLocationPath, ctx.Param("year"), &year)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter year: %s", err))
+	}
+
+	// Invoke the callback with all the unmarshalled arguments
+	err = w.Handler.ProfileYearlyContestRegistrationsByUserID(ctx, userId, year)
+	return err
+}
+
 // ProfileFindByUserID converts echo context to params.
 func (w *ServerInterfaceWrapper) ProfileFindByUserID(ctx echo.Context) error {
 	var err error
@@ -831,6 +858,7 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 	router.GET(baseURL+"/logs/:id", wrapper.LogFindByID)
 	router.GET(baseURL+"/ping", wrapper.Ping)
 	router.GET(baseURL+"/users/:userId/activity/:year", wrapper.ProfileYearlyActivityByUserID)
+	router.GET(baseURL+"/users/:userId/contest-registrations/:year", wrapper.ProfileYearlyContestRegistrationsByUserID)
 	router.GET(baseURL+"/users/:userId/profile", wrapper.ProfileFindByUserID)
 	router.GET(baseURL+"/users/:userId/scores/:year", wrapper.ProfileYearlyScoresByUserID)
 

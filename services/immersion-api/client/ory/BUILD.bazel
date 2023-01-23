@@ -6,7 +6,7 @@ go_library(
     importpath = "github.com/tadoku/tadoku/services/immersion-api/client/ory",
     visibility = ["//visibility:public"],
     deps = [
-        "//services/immersion-api/domain/profilequery",
+        "//services/immersion-api/domain/query",
         "@com_github_google_uuid//:uuid",
         "@com_github_ory_kratos_client_go//:kratos-client-go",
     ],

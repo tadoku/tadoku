@@ -1,0 +1,29 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "command",
+    srcs = [
+        "contest.go",
+        "log.go",
+        "service.go",
+    ],
+    importpath = "github.com/tadoku/tadoku/services/immersion-api/domain/command",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//services/common/domain",
+        "//services/immersion-api/domain/query",
+        "@com_github_go_playground_validator_v10//:validator",
+        "@com_github_google_uuid//:uuid",
+    ],
+)
+
+go_test(
+    name = "command_test",
+    srcs = ["contest_test.go"],
+    deps = [
+        ":command",
+        "//services/common/domain",
+        "@com_github_google_uuid//:uuid",
+        "@com_github_stretchr_testify//assert",
+    ],
+)

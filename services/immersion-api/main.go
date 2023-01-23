@@ -10,14 +10,11 @@ import (
 	tadokumiddleware "github.com/tadoku/tadoku/services/common/middleware"
 	"github.com/tadoku/tadoku/services/common/storage/memory"
 	"github.com/tadoku/tadoku/services/immersion-api/client/ory"
-	"github.com/tadoku/tadoku/services/immersion-api/domain/contestcommand"
-	"github.com/tadoku/tadoku/services/immersion-api/domain/contestquery"
-	"github.com/tadoku/tadoku/services/immersion-api/domain/logcommand"
-	"github.com/tadoku/tadoku/services/immersion-api/domain/logquery"
-	"github.com/tadoku/tadoku/services/immersion-api/domain/profilequery"
+	"github.com/tadoku/tadoku/services/immersion-api/domain/command"
+	"github.com/tadoku/tadoku/services/immersion-api/domain/query"
 	"github.com/tadoku/tadoku/services/immersion-api/http/rest"
 	"github.com/tadoku/tadoku/services/immersion-api/http/rest/openapi"
-	"github.com/tadoku/tadoku/services/immersion-api/storage/postgres"
+	"github.com/tadoku/tadoku/services/immersion-api/storage/postgres/repository"
 
 	_ "github.com/jackc/pgx/v4/stdlib"
 	"github.com/labstack/echo/v4"
@@ -47,8 +44,7 @@ func main() {
 
 	kratosClient := ory.NewKratosClient(cfg.KratosURL)
 
-	contestRepository := postgres.NewContestRepository(psql)
-	logRepository := postgres.NewLogRepository(psql)
+	postgresRepository := repository.NewRepository(psql)
 	roleRepository := memory.NewRoleRepository("/etc/tadoku/permissions/roles.yaml")
 
 	e := echo.New()
@@ -61,22 +57,12 @@ func main() {
 		panic(err)
 	}
 
-	contestCommandService := contestcommand.NewService(contestRepository, clock)
-	contestQueryService := contestquery.NewService(contestRepository, clock)
-	logCommandService := logcommand.NewService(
-		logRepository,
-		contestRepository,
-		clock,
-	)
-	logQueryService := logquery.NewService(logRepository, clock)
-	profileQueryService := profilequery.NewService(contestRepository, kratosClient)
+	commandService := command.NewService(postgresRepository, clock)
+	queryService := query.NewService(postgresRepository, clock, kratosClient)
 
 	server := rest.NewServer(
-		contestCommandService,
-		contestQueryService,
-		logCommandService,
-		logQueryService,
-		profileQueryService,
+		commandService,
+		queryService,
 	)
 
 	openapi.RegisterHandlersWithBaseURL(e, server, "")

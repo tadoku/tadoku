@@ -206,7 +206,7 @@ func (s *ServiceImpl) FetchOngoingContestRegistrations(ctx context.Context, req 
 }
 
 func (s *ServiceImpl) FindLatestOfficial(ctx context.Context) (*ContestView, error) {
-	return s.r.FindLatestOfficial(ctx)
+	return s.r.ContestFindLatestOfficial(ctx)
 }
 
 type YearlyContestRegistrationsRequest struct {

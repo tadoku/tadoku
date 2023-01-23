@@ -10,7 +10,7 @@ import (
 	"github.com/tadoku/tadoku/services/immersion-api/storage/postgres"
 )
 
-func (r *Repository) FindLatestOfficial(ctx context.Context) (*query.ContestView, error) {
+func (r *Repository) ContestFindLatestOfficial(ctx context.Context) (*query.ContestView, error) {
 	contest, err := r.q.FindLatestOfficialContest(ctx)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {

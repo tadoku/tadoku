@@ -17,7 +17,7 @@ type Repository interface {
 	// contest
 	FetchContestConfigurationOptions(ctx context.Context) (*FetchContestConfigurationOptionsResponse, error)
 	FindByID(context.Context, *FindByIDRequest) (*ContestView, error)
-	FindLatestOfficial(context.Context) (*ContestView, error)
+	ContestFindLatestOfficial(context.Context) (*ContestView, error)
 	ListContests(context.Context, *ContestListRequest) (*ContestListResponse, error)
 	FindRegistrationForUser(context.Context, *FindRegistrationForUserRequest) (*ContestRegistration, error)
 	FetchContestLeaderboard(context.Context, *FetchContestLeaderboardRequest) (*Leaderboard, error)

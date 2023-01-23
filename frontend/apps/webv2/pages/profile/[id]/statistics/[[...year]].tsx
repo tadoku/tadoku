@@ -170,7 +170,7 @@ const Page = () => {
                   : null}
               </ul>
             </div>
-            <div className="card narrow w-full max-w-[300px]">
+            <div className="card narrow w-full">
               <h3 className="subtitle">Activities</h3>
               {activitySplit.isLoading ? 'Loading...' : null}
               {activitySplit.data &&

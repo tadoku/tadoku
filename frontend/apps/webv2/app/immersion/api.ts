@@ -534,7 +534,7 @@ export const useLogConfigurationOptions = (options?: { enabled?: boolean }) =>
   useQuery(
     ['contest', 'log', 'configuration-options'],
     async (): Promise<LogConfigurationOptions> => {
-      const response = await fetch(`${root}/configuration-options`)
+      const response = await fetch(`${root}/logs/configuration-options`)
 
       if (response.status !== 200) {
         throw new Error('could not fetch page')

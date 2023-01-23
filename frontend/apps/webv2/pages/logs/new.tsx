@@ -7,12 +7,18 @@ import {
 } from '@app/immersion/api'
 import { routes } from '@app/common/routes'
 import { LogForm } from '@app/immersion/NewLogForm/Form'
+import { useRouter } from 'next/router'
+import { getQueryStringIntParameter } from '@app/common/router'
 
 interface Props {}
 
 const Page: NextPage<Props> = () => {
   const registrations = useOngoingContestRegistrations()
   const options = useLogConfigurationOptions()
+
+  const router = useRouter()
+  const amount = getQueryStringIntParameter(router.query['amount'], 0)
+
   return (
     <>
       <div className="pb-4">
@@ -31,7 +37,11 @@ const Page: NextPage<Props> = () => {
         </span>
       ) : null}
       {options.isSuccess && registrations.isSuccess ? (
-        <LogForm registrations={registrations.data} options={options.data} />
+        <LogForm
+          registrations={registrations.data}
+          options={options.data}
+          defaultValues={{ amount }}
+        />
       ) : null}
     </>
   )

@@ -31,13 +31,16 @@ import { useEffect } from 'react'
 interface Props {
   registrations: ContestRegistrationsView
   options: LogConfigurationOptions
+  defaultValues?: Partial<NewLogFormSchema>
 }
 
 export const LogForm = ({
   registrations: { registrations },
   options,
+  defaultValues: originalDefaultValues,
 }: Props) => {
   const defaultValues: Partial<NewLogFormSchema> = {
+    ...originalDefaultValues,
     activity: options.activities[0],
     tracking_mode: registrations.length > 0 ? 'automatic' : 'personal',
     language:

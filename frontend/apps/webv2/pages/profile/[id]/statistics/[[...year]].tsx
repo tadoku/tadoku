@@ -1,6 +1,11 @@
 import { useRouter } from 'next/router'
 import { Breadcrumb, Flash, HeatmapChart, Tabbar, VerticalTabbar } from 'ui'
-import { ExclamationCircleIcon, HomeIcon } from '@heroicons/react/20/solid'
+import {
+  ChevronRightIcon,
+  ExclamationCircleIcon,
+  EyeSlashIcon,
+  HomeIcon,
+} from '@heroicons/react/20/solid'
 import { routes } from '@app/common/routes'
 import Link from 'next/link'
 import { ScoreList } from '@app/immersion/ScoreList'
@@ -142,11 +147,19 @@ const Page = () => {
                       <li key={it.id}>
                         <Link
                           href={routes.contestLeaderboard(it.contest_id)}
-                          className="reset px-4 py-2 flex justify-between items-center hover:bg-slate-500/5"
+                          className="reset px-4 py-2 flex justify-start items-center hover:bg-slate-500/5"
                         >
+                          {it.contest!.private ? (
+                            <EyeSlashIcon
+                              className="w-5 h-5 mr-2"
+                              title="Private contest, only visible to you"
+                            />
+                          ) : null}
                           <span className="font-bold text-base">
                             {it.contest!.title}
                           </span>
+
+                          <ChevronRightIcon className="w-5 h-5 ml-auto" />
                         </Link>
                       </li>
                     ))

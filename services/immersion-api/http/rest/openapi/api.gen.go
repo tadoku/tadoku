@@ -29,6 +29,18 @@ type Activity struct {
 	Name    string `json:"name"`
 }
 
+// ActivitySplit defines model for ActivitySplit.
+type ActivitySplit struct {
+	Activities []ActivitySplitScore `json:"activities"`
+}
+
+// ActivitySplitScore defines model for ActivitySplitScore.
+type ActivitySplitScore struct {
+	ActivityId   int     `json:"activity_id"`
+	ActivityName string  `json:"activity_name"`
+	Score        float32 `json:"score"`
+}
+
 // Contest defines model for Contest.
 type Contest struct {
 	ActivityTypeIdAllowList []int32             `json:"activity_type_id_allow_list"`
@@ -376,6 +388,9 @@ type ServerInterface interface {
 	// Checks if service is responsive
 	// (GET /ping)
 	Ping(ctx echo.Context) error
+	// Fetches a activity split summary of a user for a given year
+	// (GET /users/{userId}/activity-split/{year})
+	ProfileYearlyActivitySplitByUserID(ctx echo.Context, userId openapi_types.UUID, year int) error
 	// Fetches a activity summary of a user for a given year
 	// (GET /users/{userId}/activity/{year})
 	ProfileYearlyActivityByUserID(ctx echo.Context, userId openapi_types.UUID, year int) error
@@ -725,6 +740,30 @@ func (w *ServerInterfaceWrapper) Ping(ctx echo.Context) error {
 	return err
 }
 
+// ProfileYearlyActivitySplitByUserID converts echo context to params.
+func (w *ServerInterfaceWrapper) ProfileYearlyActivitySplitByUserID(ctx echo.Context) error {
+	var err error
+	// ------------- Path parameter "userId" -------------
+	var userId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithLocation("simple", false, "userId", runtime.ParamLocationPath, ctx.Param("userId"), &userId)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter userId: %s", err))
+	}
+
+	// ------------- Path parameter "year" -------------
+	var year int
+
+	err = runtime.BindStyledParameterWithLocation("simple", false, "year", runtime.ParamLocationPath, ctx.Param("year"), &year)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter year: %s", err))
+	}
+
+	// Invoke the callback with all the unmarshalled arguments
+	err = w.Handler.ProfileYearlyActivitySplitByUserID(ctx, userId, year)
+	return err
+}
+
 // ProfileYearlyActivityByUserID converts echo context to params.
 func (w *ServerInterfaceWrapper) ProfileYearlyActivityByUserID(ctx echo.Context) error {
 	var err error
@@ -857,6 +896,7 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 	router.GET(baseURL+"/logs/configuration-options", wrapper.LogGetConfigurations)
 	router.GET(baseURL+"/logs/:id", wrapper.LogFindByID)
 	router.GET(baseURL+"/ping", wrapper.Ping)
+	router.GET(baseURL+"/users/:userId/activity-split/:year", wrapper.ProfileYearlyActivitySplitByUserID)
 	router.GET(baseURL+"/users/:userId/activity/:year", wrapper.ProfileYearlyActivityByUserID)
 	router.GET(baseURL+"/users/:userId/contest-registrations/:year", wrapper.ProfileYearlyContestRegistrationsByUserID)
 	router.GET(baseURL+"/users/:userId/profile", wrapper.ProfileFindByUserID)

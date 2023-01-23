@@ -120,3 +120,9 @@ func (s *Server) ProfileYearlyContestRegistrationsByUserID(ctx echo.Context, use
 
 	return ctx.JSON(http.StatusOK, res)
 }
+
+// Fetches a activity split summary of a user for a given year
+// (GET /users/{userId}/activity-split/{year})
+func (s *Server) ProfileYearlyActivitySplitByUserID(ctx echo.Context, userId types.UUID, year int) error {
+	return nil
+}

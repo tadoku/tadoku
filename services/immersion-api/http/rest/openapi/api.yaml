@@ -4,7 +4,7 @@ info:
   license:
     name: MIT
     url: https://github.com/tadoku/tadoku/blob/main/LICENSE
-  version: 1.0.0
+  version: 2.0.0
 externalDocs:
   description: Find out more about Tadoku
   url: https://tadoku.github.io/tadoku/
@@ -524,6 +524,34 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ContestRegistrations'
+  /users/{userId}/activity-split/{year}:
+    get:
+      summary: Fetches a activity split summary of a user for a given year
+      operationId: profileYearlyActivitySplitByUserID
+      tags: [profile]
+      parameters:
+        - name: userId
+          in: path
+          description: ID of user to return
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: year
+          in: path
+          description: year of activity to fetch
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ActivitySplit'
+        '404':
+          description: not found
   /ping:
     get:
       summary: Checks if service is responsive
@@ -579,6 +607,29 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/UserActivityScore"
+    ActivitySplitScore:
+      type: object
+      required:
+        - activity_id
+        - activity_name
+        - score
+      properties:
+        activity_id:
+          type: integer
+        activity_name:
+          type: string
+        score:
+          type: number
+          format: float
+    ActivitySplit:
+      type: object
+      required:
+        - activities
+      properties:
+        activities:
+          type: array
+          items:
+            $ref: "#/components/schemas/ActivitySplitScore"
     LogConfigurationOptions:
       allOf:
         - $ref: "#/components/schemas/Languages"

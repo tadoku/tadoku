@@ -611,3 +611,90 @@ func (r *ContestRepository) YearlyScoresForUser(ctx context.Context, req *profil
 
 	return scores, nil
 }
+
+func (r *ContestRepository) YearlyContestRegistrations(ctx context.Context, req *contestquery.YearlyContestRegistrationsRequest) (*contestquery.ContestRegistrations, error) {
+	regs, err := r.q.FindYearlyContestRegistrationForUser(ctx, FindYearlyContestRegistrationForUserParams{
+		UserID: req.UserID,
+		Year:   int32(req.Year),
+	})
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return &contestquery.ContestRegistrations{
+				Registrations: []contestquery.ContestRegistration{},
+				TotalSize:     0,
+				NextPageToken: "",
+			}, nil
+		}
+		return nil, fmt.Errorf("could not fetch contest registrations: %w", err)
+	}
+
+	languages, err := r.q.ListLanguages(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("could not fetch contest registrations: %w", err)
+	}
+
+	activities, err := r.q.ListActivities(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("could not fetch contest registrations: %w", err)
+	}
+
+	langs := map[string]string{}
+	acts := map[int32]string{}
+
+	for _, l := range languages {
+		langs[l.Code] = l.Name
+	}
+	for _, a := range activities {
+		acts[a.ID] = a.Name
+	}
+
+	res := &contestquery.ContestRegistrations{
+		Registrations: make([]contestquery.ContestRegistration, len(regs)),
+		TotalSize:     len(regs),
+		NextPageToken: "",
+	}
+	for i, r := range regs {
+		r := r
+
+		// TODO: refactor this out to a mapper
+		contest := &contestquery.ContestView{
+			ID:                r.ContestID,
+			ContestStart:      r.ContestStart,
+			ContestEnd:        r.ContestEnd,
+			RegistrationEnd:   r.RegistrationEnd,
+			Title:             r.Title,
+			Description:       NewStringFromNullString(r.Description),
+			Private:           r.Private,
+			Official:          r.Official,
+			AllowedLanguages:  make([]contestquery.Language, 0),
+			AllowedActivities: make([]contestquery.Activity, len(r.ActivityTypeIDAllowList)),
+		}
+
+		for i, a := range r.ActivityTypeIDAllowList {
+			contest.AllowedActivities[i] = contestquery.Activity{
+				ID:   a,
+				Name: acts[a],
+			}
+		}
+
+		reg := contestquery.ContestRegistration{
+			ID:              r.ID,
+			ContestID:       r.ContestID,
+			UserID:          r.UserID,
+			UserDisplayName: r.UserDisplayName,
+			Languages:       make([]contestquery.Language, len(r.LanguageCodes)),
+			Contest:         contest,
+		}
+
+		for i, code := range r.LanguageCodes {
+			reg.Languages[i] = contestquery.Language{
+				Code: code,
+				Name: langs[code],
+			}
+		}
+
+		res.Registrations[i] = reg
+	}
+
+	return res, nil
+}

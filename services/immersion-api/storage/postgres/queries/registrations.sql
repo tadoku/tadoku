@@ -87,5 +87,5 @@ inner join contests
 where
   user_id = sqlc.arg('user_id')
   and (contests.private != true or sqlc.arg('include_private')::boolean)
-  and extract(year from contests.contest_start) = sqlc.arg('year')
+  and extract(year from contests.contest_start) = sqlc.arg('year')::integer
   and contest_registrations.deleted_at is null;

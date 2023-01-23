@@ -22,6 +22,7 @@ type ContestRepository interface {
 	FindRegistrationForUser(context.Context, *FindRegistrationForUserRequest) (*ContestRegistration, error)
 	FetchContestLeaderboard(context.Context, *FetchContestLeaderboardRequest) (*Leaderboard, error)
 	FetchOngoingContestRegistrations(context.Context, *FetchOngoingContestRegistrationsRequest) (*ContestRegistrations, error)
+	YearlyContestRegistrations(context.Context, *YearlyContestRegistrationsRequest) (*ContestRegistrations, error)
 }
 
 type Service interface {
@@ -32,6 +33,7 @@ type Service interface {
 	FindRegistrationForUser(context.Context, *FindRegistrationForUserRequest) (*ContestRegistration, error)
 	FetchContestLeaderboard(context.Context, *FetchContestLeaderboardRequest) (*Leaderboard, error)
 	FetchOngoingContestRegistrations(context.Context, *FetchOngoingContestRegistrationsRequest) (*ContestRegistrations, error)
+	YearlyContestRegistrations(context.Context, *YearlyContestRegistrationsRequest) (*ContestRegistrations, error)
 }
 
 type service struct {
@@ -247,4 +249,24 @@ func (s *service) FetchOngoingContestRegistrations(ctx context.Context, req *Fet
 
 func (s *service) FindLatestOfficial(ctx context.Context) (*ContestView, error) {
 	return s.r.FindLatestOfficial(ctx)
+}
+
+type YearlyContestRegistrationsRequest struct {
+	UserID         uuid.UUID
+	Year           int
+	IncludePrivate bool
+}
+
+func (s *service) YearlyContestRegistrations(ctx context.Context, req *YearlyContestRegistrationsRequest) (*ContestRegistrations, error) {
+
+	session := domain.ParseSession(ctx)
+	if session == nil {
+		return nil, ErrUnauthorized
+	}
+	userId, err := uuid.Parse(session.Subject)
+
+	sessionMatchesUser := err == nil && userId == req.UserID
+	req.IncludePrivate = domain.IsRole(ctx, domain.RoleAdmin) || sessionMatchesUser
+
+	return s.r.YearlyContestRegistrations(ctx, req)
 }

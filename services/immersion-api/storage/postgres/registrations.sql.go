@@ -184,14 +184,14 @@ inner join contests
 where
   user_id = $1
   and (contests.private != true or $2::boolean)
-  and extract(year from contests.contest_start) = $3
+  and extract(year from contests.contest_start) = $3::integer
   and contest_registrations.deleted_at is null
 `
 
 type FindYearlyContestRegistrationForUserParams struct {
 	UserID         uuid.UUID
 	IncludePrivate bool
-	Year           time.Time
+	Year           int32
 }
 
 type FindYearlyContestRegistrationForUserRow struct {

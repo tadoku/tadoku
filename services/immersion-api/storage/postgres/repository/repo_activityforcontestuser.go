@@ -11,7 +11,7 @@ import (
 )
 
 func (r *Repository) ActivityForContestUser(ctx context.Context, req *query.ActivityForContestUserRequest) ([]query.ActivityForContestUserRow, error) {
-	rows, err := r.q.ReadingActivityPerLanguageForContestProfile(ctx, postgres.ReadingActivityPerLanguageForContestProfileParams{
+	rows, err := r.q.ActivityPerLanguageForContestProfile(ctx, postgres.ActivityPerLanguageForContestProfileParams{
 		ContestID: req.ContestID,
 		UserID:    req.UserID,
 	})

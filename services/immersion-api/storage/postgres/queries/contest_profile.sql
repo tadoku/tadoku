@@ -12,7 +12,7 @@ where
 group by language_code
 order by score desc;
 
--- name: ReadingActivityPerLanguageForContestProfile :many
+-- name: ActivityPerLanguageForContestProfile :many
 with eligible_logs as (
   select
     created_at::date as "date",

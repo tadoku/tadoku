@@ -318,8 +318,8 @@ type ContestRegistrationUpsertJSONBody struct {
 	LanguageCodes []string `json:"language_codes"`
 }
 
-// LogCreateLogJSONBody defines parameters for LogCreateLog.
-type LogCreateLogJSONBody struct {
+// LogCreateJSONBody defines parameters for LogCreate.
+type LogCreateJSONBody struct {
 	ActivityId      int32                `json:"activity_id"`
 	Amount          float32              `json:"amount"`
 	Description     *string              `json:"description,omitempty"`
@@ -335,8 +335,8 @@ type ContestCreateJSONRequestBody = Contest
 // ContestRegistrationUpsertJSONRequestBody defines body for ContestRegistrationUpsert for application/json ContentType.
 type ContestRegistrationUpsertJSONRequestBody ContestRegistrationUpsertJSONBody
 
-// LogCreateLogJSONRequestBody defines body for LogCreateLog for application/json ContentType.
-type LogCreateLogJSONRequestBody LogCreateLogJSONBody
+// LogCreateJSONRequestBody defines body for LogCreate for application/json ContentType.
+type LogCreateJSONRequestBody LogCreateJSONBody
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
@@ -378,7 +378,7 @@ type ServerInterface interface {
 	ContestRegistrationUpsert(ctx echo.Context, id openapi_types.UUID) error
 	// Submits a new log
 	// (POST /logs)
-	LogCreateLog(ctx echo.Context) error
+	LogCreate(ctx echo.Context) error
 	// Fetches the configuration options for a log
 	// (GET /logs/configuration-options)
 	LogGetConfigurations(ctx echo.Context) error
@@ -693,14 +693,14 @@ func (w *ServerInterfaceWrapper) ContestRegistrationUpsert(ctx echo.Context) err
 	return err
 }
 
-// LogCreateLog converts echo context to params.
-func (w *ServerInterfaceWrapper) LogCreateLog(ctx echo.Context) error {
+// LogCreate converts echo context to params.
+func (w *ServerInterfaceWrapper) LogCreate(ctx echo.Context) error {
 	var err error
 
 	ctx.Set(CookieAuthScopes, []string{""})
 
 	// Invoke the callback with all the unmarshalled arguments
-	err = w.Handler.LogCreateLog(ctx)
+	err = w.Handler.LogCreate(ctx)
 	return err
 }
 
@@ -892,7 +892,7 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 	router.GET(baseURL+"/contests/:id/profile/:user_id/scores", wrapper.ContestProfileFetchScores)
 	router.GET(baseURL+"/contests/:id/registration", wrapper.ContestFindRegistration)
 	router.POST(baseURL+"/contests/:id/registration", wrapper.ContestRegistrationUpsert)
-	router.POST(baseURL+"/logs", wrapper.LogCreateLog)
+	router.POST(baseURL+"/logs", wrapper.LogCreate)
 	router.GET(baseURL+"/logs/configuration-options", wrapper.LogGetConfigurations)
 	router.GET(baseURL+"/logs/:id", wrapper.LogFindByID)
 	router.GET(baseURL+"/ping", wrapper.Ping)

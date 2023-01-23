@@ -6,8 +6,6 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-// QUERIES
-
 // Checks if service is responsive
 // (GET /ping)
 func (s *Server) Ping(ctx echo.Context) error {

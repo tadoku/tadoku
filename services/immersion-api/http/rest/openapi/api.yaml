@@ -337,7 +337,7 @@ paths:
   /logs:
     post:
       summary: Submits a new log
-      operationId: logCreateLog
+      operationId: logCreate
       tags: [logs]
       security:
         - cookieAuth: []

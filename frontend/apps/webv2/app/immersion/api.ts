@@ -653,7 +653,7 @@ export const useYearlyContestRegistrations = (
   },
 ) =>
   useQuery(
-    ['users', opts.userId, 'scores', opts.year],
+    ['users', opts.userId, 'contest-registrations', opts.year],
     async (): Promise<ContestRegistrationsView> => {
       const response = await fetch(
         `${root}/users/${opts.userId}/contest-registrations/${opts.year}`,

@@ -1,6 +1,6 @@
 import { useRouter } from 'next/router'
-import { Breadcrumb, HeatmapChart, Tabbar, VerticalTabbar } from 'ui'
-import { HomeIcon } from '@heroicons/react/20/solid'
+import { Breadcrumb, Flash, HeatmapChart, Tabbar, VerticalTabbar } from 'ui'
+import { ExclamationCircleIcon, HomeIcon } from '@heroicons/react/20/solid'
 import { routes } from '@app/common/routes'
 import Link from 'next/link'
 import { ScoreList } from '@app/immersion/ScoreList'
@@ -8,6 +8,7 @@ import {
   useProfileScores,
   useUserProfile,
   useUserYearlyActivity,
+  useYearlyContestRegistrations,
 } from '@app/immersion/api'
 import { getQueryStringIntParameter } from '@app/common/router'
 import { DateTime, Interval } from 'luxon'
@@ -24,6 +25,7 @@ const Page = () => {
   const profile = useUserProfile({ userId })
   const activitySummary = useUserYearlyActivity({ userId, year })
   const scores = useProfileScores({ userId, year })
+  const registrations = useYearlyContestRegistrations({ userId, year })
 
   if (profile.isLoading || profile.isIdle) {
     return <p>Loading...</p>
@@ -122,17 +124,33 @@ const Page = () => {
           <div className="h-stack spaced items-start">
             <div className="card w-full p-0">
               <h3 className="subtitle p-4">Contests</h3>
-              <ul className="divide-y-2 divide-slate-500/5 border-t-2 border-slate-500/5">
-                {[].map(u => (
-                  <li key={`${u[0]}-${u[1]}`}>
-                    <Link
-                      href="#"
-                      className="reset px-4 py-2 flex justify-between items-center hover:bg-slate-500/5"
-                    >
-                      <span className="font-bold text-base">{u}</span>
-                    </Link>
-                  </li>
-                ))}
+              <Flash
+                style="error"
+                IconComponent={ExclamationCircleIcon}
+                visible={registrations.isError}
+              >
+                Could not retrieve contests
+              </Flash>
+              <ul
+                className={`divide-y-2 divide-slate-500/5 border-slate-500/5 ${
+                  !registrations.isError ? 'border-t-2' : ''
+                }`}
+              >
+                {registrations.isLoading ? 'Loading...' : null}
+                {registrations.data
+                  ? registrations.data.registrations.map(it => (
+                      <li key={it.id}>
+                        <Link
+                          href={routes.contestLeaderboard(it.contest_id)}
+                          className="reset px-4 py-2 flex justify-between items-center hover:bg-slate-500/5"
+                        >
+                          <span className="font-bold text-base">
+                            {it.contest!.title}
+                          </span>
+                        </Link>
+                      </li>
+                    ))
+                  : null}
               </ul>
             </div>
             <div className="card narrow w-full">

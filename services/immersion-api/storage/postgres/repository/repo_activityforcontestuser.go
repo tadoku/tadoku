@@ -10,7 +10,7 @@ import (
 	"github.com/tadoku/tadoku/services/immersion-api/storage/postgres"
 )
 
-func (r *Repository) ActivityForContestUser(ctx context.Context, req *query.ContestProfileRequest) ([]query.ActivityForContestUserRow, error) {
+func (r *Repository) ActivityForContestUser(ctx context.Context, req *query.ActivityForContestUserRequest) ([]query.ActivityForContestUserRow, error) {
 	rows, err := r.q.ReadingActivityPerLanguageForContestProfile(ctx, postgres.ReadingActivityPerLanguageForContestProfileParams{
 		ContestID: req.ContestID,
 		UserID:    req.UserID,

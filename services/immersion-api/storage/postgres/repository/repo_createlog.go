@@ -11,7 +11,7 @@ import (
 	"github.com/tadoku/tadoku/services/immersion-api/storage/postgres"
 )
 
-func (r *Repository) CreateLog(ctx context.Context, req *command.LogCreateRequest) error {
+func (r *Repository) CreateLog(ctx context.Context, req *command.CreateLogRequest) error {
 	unit, err := r.q.FindUnitForTracking(ctx, postgres.FindUnitForTrackingParams{
 		ID:            req.UnitID,
 		LogActivityID: int16(req.ActivityID),

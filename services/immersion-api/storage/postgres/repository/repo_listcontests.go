@@ -10,7 +10,7 @@ import (
 	"github.com/tadoku/tadoku/services/immersion-api/storage/postgres"
 )
 
-func (r *Repository) ListContests(ctx context.Context, req *query.ContestListRequest) (*query.ContestListResponse, error) {
+func (r *Repository) ListContests(ctx context.Context, req *query.ListContestsRequest) (*query.ListContestsResponse, error) {
 	tx, err := r.psql.BeginTx(ctx, nil)
 	if err != nil {
 		return nil, fmt.Errorf("could not list contests: %w", err)
@@ -71,7 +71,7 @@ func (r *Repository) ListContests(ctx context.Context, req *query.ContestListReq
 		nextPageToken = fmt.Sprint(req.Page + 1)
 	}
 
-	return &query.ContestListResponse{
+	return &query.ListContestsResponse{
 		Contests:      res,
 		TotalSize:     int(meta.TotalSize),
 		NextPageToken: nextPageToken,

@@ -18,20 +18,20 @@ type Repository interface {
 	FetchContestConfigurationOptions(ctx context.Context) (*FetchContestConfigurationOptionsResponse, error)
 	FindContestByID(context.Context, *FindContestByIDRequest) (*ContestView, error)
 	ContestFindLatestOfficial(context.Context) (*ContestView, error)
-	ListContests(context.Context, *ContestListRequest) (*ContestListResponse, error)
+	ListContests(context.Context, *ListContestsRequest) (*ListContestsResponse, error)
 	FindRegistrationForUser(context.Context, *FindRegistrationForUserRequest) (*ContestRegistration, error)
 	FetchContestLeaderboard(context.Context, *FetchContestLeaderboardRequest) (*Leaderboard, error)
 	FetchOngoingContestRegistrations(context.Context, *FetchOngoingContestRegistrationsRequest) (*ContestRegistrations, error)
 	YearlyContestRegistrationsForUser(context.Context, *YearlyContestRegistrationsForUserRequest) (*ContestRegistrations, error)
 
 	// log
-	ListLogsForContestUser(context.Context, *LogListForContestUserRequest) (*LogListResponse, error)
+	ListLogsForContestUser(context.Context, *ListLogsForContestUserRequest) (*ListLogsForContestUserResponse, error)
 	FetchLogConfigurationOptions(ctx context.Context) (*FetchLogConfigurationOptionsResponse, error)
 	FindLogByID(context.Context, *FindLogByIDRequest) (*Log, error)
 
 	// profile
 	FindScoresForRegistration(context.Context, *ContestProfileRequest) ([]Score, error)
-	ActivityForContestUser(context.Context, *ContestProfileRequest) ([]ActivityForContestUserRow, error)
+	ActivityForContestUser(context.Context, *ActivityForContestUserRequest) ([]ActivityForContestUserRow, error)
 	YearlyActivityForUser(context.Context, *YearlyActivityForUserRequest) ([]UserActivityScore, error)
 	YearlyScoresForUser(context.Context, *YearlyScoresForUserRequest) ([]Score, error)
 	YearlyActivitySplitForUser(context.Context, *YearlyActivitySplitForUserRequest) (*YearlyActivitySplitForUserResponse, error)
@@ -42,20 +42,20 @@ type Service interface {
 	FetchContestConfigurationOptions(ctx context.Context) (*FetchContestConfigurationOptionsResponse, error)
 	FindContestByID(context.Context, *FindContestByIDRequest) (*ContestView, error)
 	FindLatestOfficial(context.Context) (*ContestView, error)
-	ListContests(context.Context, *ContestListRequest) (*ContestListResponse, error)
+	ListContests(context.Context, *ListContestsRequest) (*ListContestsResponse, error)
 	FindRegistrationForUser(context.Context, *FindRegistrationForUserRequest) (*ContestRegistration, error)
 	FetchContestLeaderboard(context.Context, *FetchContestLeaderboardRequest) (*Leaderboard, error)
 	FetchOngoingContestRegistrations(context.Context, *FetchOngoingContestRegistrationsRequest) (*ContestRegistrations, error)
 	YearlyContestRegistrationsForUser(context.Context, *YearlyContestRegistrationsForUserRequest) (*ContestRegistrations, error)
 
 	// log
-	ListLogsForContestUser(context.Context, *LogListForContestUserRequest) (*LogListResponse, error)
+	ListLogsForContestUser(context.Context, *ListLogsForContestUserRequest) (*ListLogsForContestUserResponse, error)
 	FetchLogConfigurationOptions(ctx context.Context) (*FetchLogConfigurationOptionsResponse, error)
 	FindLogByID(context.Context, *FindLogByIDRequest) (*Log, error)
 
 	// profile
 	ContestProfile(context.Context, *ContestProfileRequest) (*ContestProfileResponse, error)
-	ActivityForContestUser(context.Context, *ContestProfileRequest) (*ActivityForContestUserResponse, error)
+	ActivityForContestUser(context.Context, *ActivityForContestUserRequest) (*ActivityForContestUserResponse, error)
 	FetchUserProfile(context.Context, uuid.UUID) (*UserProfile, error)
 	YearlyActivityForUser(context.Context, *YearlyActivityForUserRequest) (*YearlyActivityForUserResponse, error)
 	YearlyScoresForUser(context.Context, *YearlyScoresForUserRequest) (*YearlyScoresForUserResponse, error)

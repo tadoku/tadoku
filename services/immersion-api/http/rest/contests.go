@@ -24,7 +24,7 @@ func (s *Server) ContestCreate(ctx echo.Context) error {
 		return ctx.NoContent(http.StatusBadRequest)
 	}
 
-	contest, err := s.commandService.CreateContest(ctx.Request().Context(), &command.ContestCreateRequest{
+	contest, err := s.commandService.CreateContest(ctx.Request().Context(), &command.CreateContestRequest{
 		Official:                req.Official,
 		Private:                 req.Private,
 		ContestStart:            req.ContestStart.Time,
@@ -214,7 +214,7 @@ func (s *Server) ContestList(ctx echo.Context, params openapi.ContestListParams)
 		}
 	}
 
-	list, err := s.queryService.ListContests(ctx.Request().Context(), &query.ContestListRequest{
+	list, err := s.queryService.ListContests(ctx.Request().Context(), &query.ListContestsRequest{
 		UserID:         userID,
 		OfficialOnly:   officialOnly,
 		IncludeDeleted: includeDeleted,
@@ -449,7 +449,7 @@ func (s *Server) ContestProfileFetchScores(ctx echo.Context, id types.UUID, user
 // Fetches the activity of a user profile in a contest
 // (GET /contests/{id}/profile/{user_id}/activity)
 func (s *Server) ContestProfileFetchActivity(ctx echo.Context, id types.UUID, userId types.UUID) error {
-	stats, err := s.queryService.ActivityForContestUser(ctx.Request().Context(), &query.ContestProfileRequest{
+	stats, err := s.queryService.ActivityForContestUser(ctx.Request().Context(), &query.ActivityForContestUserRequest{
 		UserID:    userId,
 		ContestID: id,
 	})
@@ -475,7 +475,7 @@ func (s *Server) ContestProfileFetchActivity(ctx echo.Context, id types.UUID, us
 // Lists the logs of a user profile in a contest
 // (GET /contests/{id}/profile/{user_id}/logs)
 func (s *Server) ContestProfileListLogs(ctx echo.Context, id types.UUID, userId types.UUID, params openapi.ContestProfileListLogsParams) error {
-	req := &query.LogListForContestUserRequest{
+	req := &query.ListLogsForContestUserRequest{
 		UserID:         userId,
 		ContestID:      id,
 		IncludeDeleted: false,

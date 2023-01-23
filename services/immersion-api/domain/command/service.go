@@ -19,22 +19,22 @@ var ErrUnauthorized = errors.New("unauthorized")
 
 type Repository interface {
 	// contest
-	CreateContest(context.Context, *ContestCreateRequest) (*ContestCreateResponse, error)
+	CreateContest(context.Context, *CreateContestRequest) (*CreateContestResponse, error)
 	UpsertContestRegistration(context.Context, *UpsertContestRegistrationRequest) error
 
 	// log
-	CreateLog(context.Context, *LogCreateRequest) error
+	CreateLog(context.Context, *CreateLogRequest) error
 
 	query.Repository
 }
 
 type Service interface {
 	// contest
-	CreateContest(context.Context, *ContestCreateRequest) (*ContestCreateResponse, error)
+	CreateContest(context.Context, *CreateContestRequest) (*CreateContestResponse, error)
 	UpsertContestRegistration(context.Context, *UpsertContestRegistrationRequest) error
 
 	// log
-	CreateLog(context.Context, *LogCreateRequest) error
+	CreateLog(context.Context, *CreateLogRequest) error
 }
 
 type ServiceImpl struct {

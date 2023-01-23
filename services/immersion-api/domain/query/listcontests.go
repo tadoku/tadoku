@@ -7,7 +7,7 @@ import (
 	"github.com/tadoku/tadoku/services/common/domain"
 )
 
-type ContestListRequest struct {
+type ListContestsRequest struct {
 	UserID         uuid.NullUUID
 	OfficialOnly   bool
 	IncludeDeleted bool
@@ -16,13 +16,13 @@ type ContestListRequest struct {
 	Page           int
 }
 
-type ContestListResponse struct {
+type ListContestsResponse struct {
 	Contests      []Contest
 	TotalSize     int
 	NextPageToken string
 }
 
-func (s *ServiceImpl) ListContests(ctx context.Context, req *ContestListRequest) (*ContestListResponse, error) {
+func (s *ServiceImpl) ListContests(ctx context.Context, req *ListContestsRequest) (*ListContestsResponse, error) {
 	if req.PageSize == 0 {
 		req.PageSize = 10
 	}

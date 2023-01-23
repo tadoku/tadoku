@@ -14,11 +14,11 @@ import (
 type CreateContestRepositoryMock struct {
 	command.Repository
 	isCalled bool
-	result   *command.ContestCreateResponse
+	result   *command.CreateContestResponse
 	err      error
 }
 
-func (r *CreateContestRepositoryMock) CreateContest(context.Context, *command.ContestCreateRequest) (*command.ContestCreateResponse, error) {
+func (r *CreateContestRepositoryMock) CreateContest(context.Context, *command.CreateContestRequest) (*command.CreateContestResponse, error) {
 	r.isCalled = true
 	return r.result, r.err
 }
@@ -38,13 +38,13 @@ func TestCreateContest(t *testing.T) {
 
 	tests := []struct {
 		name    string
-		request *command.ContestCreateRequest
+		request *command.CreateContestRequest
 		role    domain.Role
 		err     error
 	}{
 		{
 			"happy path",
-			&command.ContestCreateRequest{
+			&command.CreateContestRequest{
 				ContestStart:            clock.Now().Add(30 * 24 * time.Hour),
 				ContestEnd:              clock.Now().Add(45 * 24 * time.Hour),
 				RegistrationEnd:         clock.Now().Add(40 * 24 * time.Hour),
@@ -57,7 +57,7 @@ func TestCreateContest(t *testing.T) {
 			nil,
 		}, {
 			"official round cannot be private",
-			&command.ContestCreateRequest{
+			&command.CreateContestRequest{
 				ContestStart:            clock.Now().Add(30 * 24 * time.Hour),
 				ContestEnd:              clock.Now().Add(45 * 24 * time.Hour),
 				RegistrationEnd:         clock.Now().Add(40 * 24 * time.Hour),
@@ -70,7 +70,7 @@ func TestCreateContest(t *testing.T) {
 			command.ErrInvalidContest,
 		}, {
 			"official round cannot restrict language choice",
-			&command.ContestCreateRequest{
+			&command.CreateContestRequest{
 				ContestStart:            clock.Now().Add(30 * 24 * time.Hour),
 				ContestEnd:              clock.Now().Add(45 * 24 * time.Hour),
 				RegistrationEnd:         clock.Now().Add(40 * 24 * time.Hour),
@@ -84,7 +84,7 @@ func TestCreateContest(t *testing.T) {
 			command.ErrInvalidContest,
 		}, {
 			"contest cannot be in the past",
-			&command.ContestCreateRequest{
+			&command.CreateContestRequest{
 				ContestStart:            clock.Now().Add(-30 * 24 * time.Hour),
 				ContestEnd:              clock.Now().Add(0),
 				RegistrationEnd:         clock.Now().Add(-4 * 24 * time.Hour),
@@ -97,7 +97,7 @@ func TestCreateContest(t *testing.T) {
 			command.ErrInvalidContest,
 		}, {
 			"admins can bypass contest cannot be in the past",
-			&command.ContestCreateRequest{
+			&command.CreateContestRequest{
 				ContestStart:            clock.Now().Add(-30 * 24 * time.Hour),
 				ContestEnd:              clock.Now().Add(0),
 				RegistrationEnd:         clock.Now().Add(-4 * 24 * time.Hour),
@@ -110,7 +110,7 @@ func TestCreateContest(t *testing.T) {
 			nil,
 		}, {
 			"needs to start before ending",
-			&command.ContestCreateRequest{
+			&command.CreateContestRequest{
 				ContestStart:            clock.Now().Add(45 * 24 * time.Hour),
 				ContestEnd:              clock.Now().Add(30 * 24 * time.Hour),
 				RegistrationEnd:         clock.Now().Add(10 * 24 * time.Hour),
@@ -123,7 +123,7 @@ func TestCreateContest(t *testing.T) {
 			command.ErrInvalidContest,
 		}, {
 			"user can create non-official contest",
-			&command.ContestCreateRequest{
+			&command.CreateContestRequest{
 				ContestStart:            clock.Now().Add(30 * 24 * time.Hour),
 				ContestEnd:              clock.Now().Add(45 * 24 * time.Hour),
 				RegistrationEnd:         clock.Now().Add(40 * 24 * time.Hour),
@@ -136,7 +136,7 @@ func TestCreateContest(t *testing.T) {
 			nil,
 		}, {
 			"user cannot create official contest",
-			&command.ContestCreateRequest{
+			&command.CreateContestRequest{
 				ContestStart:            clock.Now().Add(30 * 24 * time.Hour),
 				ContestEnd:              clock.Now().Add(45 * 24 * time.Hour),
 				RegistrationEnd:         clock.Now().Add(40 * 24 * time.Hour),
@@ -149,7 +149,7 @@ func TestCreateContest(t *testing.T) {
 			command.ErrForbidden,
 		}, {
 			"non-official contest can restrict languages",
-			&command.ContestCreateRequest{
+			&command.CreateContestRequest{
 				ContestStart:            clock.Now().Add(30 * 24 * time.Hour),
 				ContestEnd:              clock.Now().Add(45 * 24 * time.Hour),
 				RegistrationEnd:         clock.Now().Add(40 * 24 * time.Hour),
@@ -163,7 +163,7 @@ func TestCreateContest(t *testing.T) {
 			nil,
 		}, {
 			"banned user cannot a contest",
-			&command.ContestCreateRequest{},
+			&command.CreateContestRequest{},
 			domain.RoleBanned,
 			command.ErrForbidden,
 		},

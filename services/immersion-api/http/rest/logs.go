@@ -23,7 +23,7 @@ func (s *Server) LogCreateLog(ctx echo.Context) error {
 		return ctx.NoContent(http.StatusBadRequest)
 	}
 
-	if err := s.commandService.CreateLog(ctx.Request().Context(), &command.LogCreateRequest{
+	if err := s.commandService.CreateLog(ctx.Request().Context(), &command.CreateLogRequest{
 		RegistrationIDs: req.RegistrationIds,
 		UnitID:          req.UnitId,
 		ActivityID:      req.ActivityId,

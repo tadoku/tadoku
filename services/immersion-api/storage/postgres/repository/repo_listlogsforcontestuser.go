@@ -10,7 +10,7 @@ import (
 	"github.com/tadoku/tadoku/services/immersion-api/storage/postgres"
 )
 
-func (r *Repository) ListLogsForContestUser(ctx context.Context, req *query.LogListForContestUserRequest) (*query.LogListResponse, error) {
+func (r *Repository) ListLogsForContestUser(ctx context.Context, req *query.ListLogsForContestUserRequest) (*query.ListLogsForContestUserResponse, error) {
 	_, err := r.q.FindContestById(ctx, postgres.FindContestByIdParams{ID: req.ContestID, IncludeDeleted: false})
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -29,7 +29,7 @@ func (r *Repository) ListLogsForContestUser(ctx context.Context, req *query.LogL
 	})
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return &query.LogListResponse{
+			return &query.ListLogsForContestUserResponse{
 				TotalSize:     0,
 				NextPageToken: "",
 			}, nil
@@ -68,7 +68,7 @@ func (r *Repository) ListLogsForContestUser(ctx context.Context, req *query.LogL
 		nextPageToken = fmt.Sprint(req.Page + 1)
 	}
 
-	return &query.LogListResponse{
+	return &query.ListLogsForContestUserResponse{
 		Logs:          res,
 		TotalSize:     int(totalSize),
 		NextPageToken: nextPageToken,

@@ -9,7 +9,7 @@ import (
 	"github.com/tadoku/tadoku/services/immersion-api/domain/query"
 )
 
-type LogCreateRequest struct {
+type CreateLogRequest struct {
 	RegistrationIDs []uuid.UUID `validate:"required"`
 	UnitID          uuid.UUID   `validate:"required"`
 	UserID          uuid.UUID   `validate:"required"`
@@ -23,7 +23,7 @@ type LogCreateRequest struct {
 	EligibleOfficialLeaderboard bool
 }
 
-func (s *ServiceImpl) CreateLog(ctx context.Context, req *LogCreateRequest) error {
+func (s *ServiceImpl) CreateLog(ctx context.Context, req *CreateLogRequest) error {
 	// Make sure the user is authorized to create a contest
 	if domain.IsRole(ctx, domain.RoleGuest) {
 		return ErrUnauthorized

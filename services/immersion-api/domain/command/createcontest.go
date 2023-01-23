@@ -9,7 +9,7 @@ import (
 	"github.com/tadoku/tadoku/services/common/domain"
 )
 
-type ContestCreateRequest struct {
+type CreateContestRequest struct {
 	OwnerUserID             uuid.UUID `validate:"required"`
 	OwnerUserDisplayName    string    `validate:"required"`
 	ContestStart            time.Time `validate:"required"`
@@ -25,7 +25,7 @@ type ContestCreateRequest struct {
 	LanguageCodeAllowList []string
 }
 
-type ContestCreateResponse struct {
+type CreateContestResponse struct {
 	ID                      uuid.UUID
 	ContestStart            time.Time
 	ContestEnd              time.Time
@@ -42,7 +42,7 @@ type ContestCreateResponse struct {
 	UpdatedAt               time.Time
 }
 
-func (s *ServiceImpl) CreateContest(ctx context.Context, req *ContestCreateRequest) (*ContestCreateResponse, error) {
+func (s *ServiceImpl) CreateContest(ctx context.Context, req *CreateContestRequest) (*CreateContestResponse, error) {
 	// Make sure the user is authorized to create a contest
 	if domain.IsRole(ctx, domain.RoleBanned) {
 		return nil, ErrForbidden

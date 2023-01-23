@@ -642,3 +642,28 @@ export const useProfileScores = (
     },
     options,
   )
+
+export const useYearlyContestRegistrations = (
+  opts: {
+    userId: string
+    year: string | number
+  },
+  options?: {
+    enabled?: boolean
+  },
+) =>
+  useQuery(
+    ['users', opts.userId, 'scores', opts.year],
+    async (): Promise<ContestRegistrationsView> => {
+      const response = await fetch(
+        `${root}/users/${opts.userId}/contest-registrations/${opts.year}`,
+      )
+
+      if (response.status !== 200) {
+        throw new Error('could not fetch page')
+      }
+
+      return ContestRegistrationsView.parse(await response.json())
+    },
+    options,
+  )

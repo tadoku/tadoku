@@ -64,3 +64,28 @@ where
   and contests.contest_start <= sqlc.arg('now')::timestamp
   and (contests.contest_end + '1 day'::interval) > sqlc.arg('now')::timestamp
   and contest_registrations.deleted_at is null;
+
+
+-- name: FindYearlyContestRegistrationForUser :many
+select
+  contest_registrations.id,
+  contest_registrations.contest_id,
+  contest_registrations.user_id,
+  contest_registrations.user_display_name,
+  contest_registrations.language_codes,
+  contests.activity_type_id_allow_list,
+  contests.registration_end,
+  contests.contest_start,
+  contests.contest_end,
+  contests.private,
+  contests.official,
+  contests.title,
+  contests.description
+from contest_registrations
+inner join contests
+  on contests.id = contest_registrations.contest_id
+where
+  user_id = sqlc.arg('user_id')
+  and (contests.private != true or sqlc.arg('include_private')::boolean)
+  and extract(year from contests.contest_start) = sqlc.arg('year')
+  and contest_registrations.deleted_at is null;

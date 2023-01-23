@@ -163,6 +163,90 @@ func (q *Queries) FindOngoingContestRegistrationForUser(ctx context.Context, arg
 	return items, nil
 }
 
+const findYearlyContestRegistrationForUser = `-- name: FindYearlyContestRegistrationForUser :many
+select
+  contest_registrations.id,
+  contest_registrations.contest_id,
+  contest_registrations.user_id,
+  contest_registrations.user_display_name,
+  contest_registrations.language_codes,
+  contests.activity_type_id_allow_list,
+  contests.registration_end,
+  contests.contest_start,
+  contests.contest_end,
+  contests.private,
+  contests.official,
+  contests.title,
+  contests.description
+from contest_registrations
+inner join contests
+  on contests.id = contest_registrations.contest_id
+where
+  user_id = $1
+  and (contests.private != true or $2::boolean)
+  and extract(year from contests.contest_start) = $3
+  and contest_registrations.deleted_at is null
+`
+
+type FindYearlyContestRegistrationForUserParams struct {
+	UserID         uuid.UUID
+	IncludePrivate bool
+	Year           time.Time
+}
+
+type FindYearlyContestRegistrationForUserRow struct {
+	ID                      uuid.UUID
+	ContestID               uuid.UUID
+	UserID                  uuid.UUID
+	UserDisplayName         string
+	LanguageCodes           []string
+	ActivityTypeIDAllowList []int32
+	RegistrationEnd         time.Time
+	ContestStart            time.Time
+	ContestEnd              time.Time
+	Private                 bool
+	Official                bool
+	Title                   string
+	Description             sql.NullString
+}
+
+func (q *Queries) FindYearlyContestRegistrationForUser(ctx context.Context, arg FindYearlyContestRegistrationForUserParams) ([]FindYearlyContestRegistrationForUserRow, error) {
+	rows, err := q.db.QueryContext(ctx, findYearlyContestRegistrationForUser, arg.UserID, arg.IncludePrivate, arg.Year)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []FindYearlyContestRegistrationForUserRow
+	for rows.Next() {
+		var i FindYearlyContestRegistrationForUserRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.ContestID,
+			&i.UserID,
+			&i.UserDisplayName,
+			pq.Array(&i.LanguageCodes),
+			pq.Array(&i.ActivityTypeIDAllowList),
+			&i.RegistrationEnd,
+			&i.ContestStart,
+			&i.ContestEnd,
+			&i.Private,
+			&i.Official,
+			&i.Title,
+			&i.Description,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const upsertContestRegistration = `-- name: UpsertContestRegistration :one
 insert into contest_registrations (
   id,

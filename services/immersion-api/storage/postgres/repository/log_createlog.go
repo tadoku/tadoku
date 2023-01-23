@@ -1,0 +1,65 @@
+package repository
+
+import (
+	"context"
+	"database/sql"
+	"errors"
+	"fmt"
+
+	"github.com/google/uuid"
+	"github.com/tadoku/tadoku/services/immersion-api/domain/command"
+	"github.com/tadoku/tadoku/services/immersion-api/storage/postgres"
+)
+
+func (r *Repository) CreateLog(ctx context.Context, req *command.LogCreateRequest) error {
+	unit, err := r.q.FindUnitForTracking(ctx, postgres.FindUnitForTrackingParams{
+		ID:            req.UnitID,
+		LogActivityID: int16(req.ActivityID),
+		LanguageCode:  postgres.NewNullString(&req.LanguageCode),
+	})
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return fmt.Errorf("invalid unit supplied: %w", command.ErrInvalidLog)
+		}
+		return fmt.Errorf("could not fetch unit for tracking: %w", err)
+	}
+
+	tx, err := r.psql.BeginTx(ctx, nil)
+	if err != nil {
+		return fmt.Errorf("could not create log: %w", err)
+	}
+	qtx := r.q.WithTx(tx)
+
+	id := uuid.New()
+	if _, err = qtx.CreateLog(ctx, postgres.CreateLogParams{
+		ID:                          id,
+		UserID:                      req.UserID,
+		LanguageCode:                req.LanguageCode,
+		LogActivityID:               int16(req.ActivityID),
+		UnitID:                      req.UnitID,
+		Tags:                        req.Tags,
+		Amount:                      req.Amount,
+		Modifier:                    unit.Modifier,
+		EligibleOfficialLeaderboard: req.EligibleOfficialLeaderboard,
+		Description:                 postgres.NewNullString(req.Description),
+	}); err != nil {
+		_ = tx.Rollback()
+		return fmt.Errorf("could not create log: %w", err)
+	}
+
+	for _, registrationID := range req.RegistrationIDs {
+		if err = qtx.CreateContestLogRelation(ctx, postgres.CreateContestLogRelationParams{
+			RegistrationID: registrationID,
+			LogID:          id,
+		}); err != nil {
+			_ = tx.Rollback()
+			return fmt.Errorf("could not create log: %w", err)
+		}
+	}
+
+	if err = tx.Commit(); err != nil {
+		return fmt.Errorf("could not create log: %w", err)
+	}
+
+	return nil
+}

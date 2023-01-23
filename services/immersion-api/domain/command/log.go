@@ -1,50 +1,16 @@
-package logcommand
+package command
 
 import (
 	"context"
 	"errors"
 	"fmt"
 
-	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
 	"github.com/tadoku/tadoku/services/common/domain"
-	"github.com/tadoku/tadoku/services/immersion-api/domain/contestquery"
-	"github.com/tadoku/tadoku/services/immersion-api/domain/logquery"
+	"github.com/tadoku/tadoku/services/immersion-api/domain/query"
 )
 
 var ErrInvalidLog = errors.New("unable to validate log")
-var ErrForbidden = errors.New("not allowed")
-var ErrUnauthorized = errors.New("unauthorized")
-
-type LogRepository interface {
-	CreateLog(context.Context, *LogCreateRequest) error
-
-	logquery.LogRepository
-}
-
-type Service interface {
-	CreateLog(context.Context, *LogCreateRequest) error
-}
-
-type service struct {
-	lr       LogRepository
-	cr       contestquery.ContestRepository
-	validate *validator.Validate
-	clock    domain.Clock
-}
-
-func NewService(
-	lr LogRepository,
-	cr contestquery.ContestRepository,
-	clock domain.Clock,
-) Service {
-	return &service{
-		lr:       lr,
-		cr:       cr,
-		validate: validator.New(),
-		clock:    clock,
-	}
-}
 
 type LogCreateRequest struct {
 	RegistrationIDs []uuid.UUID `validate:"required"`
@@ -60,7 +26,7 @@ type LogCreateRequest struct {
 	EligibleOfficialLeaderboard bool
 }
 
-func (s *service) CreateLog(ctx context.Context, req *LogCreateRequest) error {
+func (s *ServiceImpl) CreateLog(ctx context.Context, req *LogCreateRequest) error {
 	// Make sure the user is authorized to create a contest
 	if domain.IsRole(ctx, domain.RoleGuest) {
 		return ErrUnauthorized
@@ -79,7 +45,7 @@ func (s *service) CreateLog(ctx context.Context, req *LogCreateRequest) error {
 		return fmt.Errorf("unable to validate: %w", ErrInvalidLog)
 	}
 
-	registrations, err := s.cr.FetchOngoingContestRegistrations(ctx, &contestquery.FetchOngoingContestRegistrationsRequest{
+	registrations, err := s.r.FetchOngoingContestRegistrations(ctx, &query.FetchOngoingContestRegistrationsRequest{
 		UserID: req.UserID,
 		Now:    s.clock.Now(),
 	})
@@ -88,7 +54,7 @@ func (s *service) CreateLog(ctx context.Context, req *LogCreateRequest) error {
 		return fmt.Errorf("unable to fetch registrations: %w", err)
 	}
 
-	validContestIDs := map[uuid.UUID]contestquery.ContestRegistration{}
+	validContestIDs := map[uuid.UUID]query.ContestRegistration{}
 	for _, r := range registrations.Registrations {
 		validContestIDs[r.ID] = r
 	}
@@ -129,5 +95,5 @@ func (s *service) CreateLog(ctx context.Context, req *LogCreateRequest) error {
 		}
 	}
 
-	return s.lr.CreateLog(ctx, req)
+	return s.r.CreateLog(ctx, req)
 }

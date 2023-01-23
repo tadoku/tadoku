@@ -1,54 +1,12 @@
-package contestquery
+package query
 
 import (
 	"context"
-	"errors"
 	"time"
 
-	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
 	"github.com/tadoku/tadoku/services/common/domain"
 )
-
-var ErrRequestInvalid = errors.New("request is invalid")
-var ErrNotFound = errors.New("not found")
-var ErrUnauthorized = errors.New("unauthorized")
-
-type ContestRepository interface {
-	FetchContestConfigurationOptions(ctx context.Context) (*FetchContestConfigurationOptionsResponse, error)
-	FindByID(context.Context, *FindByIDRequest) (*ContestView, error)
-	FindLatestOfficial(context.Context) (*ContestView, error)
-	ListContests(context.Context, *ContestListRequest) (*ContestListResponse, error)
-	FindRegistrationForUser(context.Context, *FindRegistrationForUserRequest) (*ContestRegistration, error)
-	FetchContestLeaderboard(context.Context, *FetchContestLeaderboardRequest) (*Leaderboard, error)
-	FetchOngoingContestRegistrations(context.Context, *FetchOngoingContestRegistrationsRequest) (*ContestRegistrations, error)
-	YearlyContestRegistrations(context.Context, *YearlyContestRegistrationsRequest) (*ContestRegistrations, error)
-}
-
-type Service interface {
-	FetchContestConfigurationOptions(ctx context.Context) (*FetchContestConfigurationOptionsResponse, error)
-	FindByID(context.Context, *FindByIDRequest) (*ContestView, error)
-	FindLatestOfficial(context.Context) (*ContestView, error)
-	ListContests(context.Context, *ContestListRequest) (*ContestListResponse, error)
-	FindRegistrationForUser(context.Context, *FindRegistrationForUserRequest) (*ContestRegistration, error)
-	FetchContestLeaderboard(context.Context, *FetchContestLeaderboardRequest) (*Leaderboard, error)
-	FetchOngoingContestRegistrations(context.Context, *FetchOngoingContestRegistrationsRequest) (*ContestRegistrations, error)
-	YearlyContestRegistrations(context.Context, *YearlyContestRegistrationsRequest) (*ContestRegistrations, error)
-}
-
-type service struct {
-	r        ContestRepository
-	validate *validator.Validate
-	clock    domain.Clock
-}
-
-func NewService(r ContestRepository, clock domain.Clock) Service {
-	return &service{
-		r:        r,
-		validate: validator.New(),
-		clock:    clock,
-	}
-}
 
 type Language struct {
 	Code string
@@ -67,7 +25,7 @@ type FetchContestConfigurationOptionsResponse struct {
 	CanCreateOfficialRound bool
 }
 
-func (s *service) FetchContestConfigurationOptions(ctx context.Context) (*FetchContestConfigurationOptionsResponse, error) {
+func (s *ServiceImpl) FetchContestConfigurationOptions(ctx context.Context) (*FetchContestConfigurationOptionsResponse, error) {
 	res, err := s.r.FetchContestConfigurationOptions(ctx)
 	if err != nil {
 		return nil, err
@@ -101,7 +59,7 @@ type ContestView struct {
 	Deleted              bool
 }
 
-func (s *service) FindByID(ctx context.Context, req *FindByIDRequest) (*ContestView, error) {
+func (s *ServiceImpl) FindByID(ctx context.Context, req *FindByIDRequest) (*ContestView, error) {
 	req.IncludeDeleted = domain.IsRole(ctx, domain.RoleAdmin)
 
 	res, err := s.r.FindByID(ctx, req)
@@ -145,7 +103,7 @@ type Contest struct {
 	Deleted                 bool
 }
 
-func (s *service) ListContests(ctx context.Context, req *ContestListRequest) (*ContestListResponse, error) {
+func (s *ServiceImpl) ListContests(ctx context.Context, req *ContestListRequest) (*ContestListResponse, error) {
 	if req.PageSize == 0 {
 		req.PageSize = 10
 	}
@@ -173,7 +131,7 @@ type ContestRegistration struct {
 	Contest         *ContestView
 }
 
-func (s *service) FindRegistrationForUser(ctx context.Context, req *FindRegistrationForUserRequest) (*ContestRegistration, error) {
+func (s *ServiceImpl) FindRegistrationForUser(ctx context.Context, req *FindRegistrationForUserRequest) (*ContestRegistration, error) {
 	session := domain.ParseSession(ctx)
 
 	if domain.IsRole(ctx, domain.RoleGuest) || domain.IsRole(ctx, domain.RoleBanned) || session == nil {
@@ -212,7 +170,7 @@ type LeaderboardEntry struct {
 	IsTie           bool
 }
 
-func (s *service) FetchContestLeaderboard(ctx context.Context, req *FetchContestLeaderboardRequest) (*Leaderboard, error) {
+func (s *ServiceImpl) FetchContestLeaderboard(ctx context.Context, req *FetchContestLeaderboardRequest) (*Leaderboard, error) {
 	if req.PageSize == 0 {
 		req.PageSize = 25
 	}
@@ -235,7 +193,7 @@ type ContestRegistrations struct {
 	NextPageToken string
 }
 
-func (s *service) FetchOngoingContestRegistrations(ctx context.Context, req *FetchOngoingContestRegistrationsRequest) (*ContestRegistrations, error) {
+func (s *ServiceImpl) FetchOngoingContestRegistrations(ctx context.Context, req *FetchOngoingContestRegistrationsRequest) (*ContestRegistrations, error) {
 	if domain.IsRole(ctx, domain.RoleGuest) {
 		return nil, ErrUnauthorized
 	}
@@ -247,7 +205,7 @@ func (s *service) FetchOngoingContestRegistrations(ctx context.Context, req *Fet
 	return s.r.FetchOngoingContestRegistrations(ctx, req)
 }
 
-func (s *service) FindLatestOfficial(ctx context.Context) (*ContestView, error) {
+func (s *ServiceImpl) FindLatestOfficial(ctx context.Context) (*ContestView, error) {
 	return s.r.FindLatestOfficial(ctx)
 }
 
@@ -257,7 +215,7 @@ type YearlyContestRegistrationsRequest struct {
 	IncludePrivate bool
 }
 
-func (s *service) YearlyContestRegistrations(ctx context.Context, req *YearlyContestRegistrationsRequest) (*ContestRegistrations, error) {
+func (s *ServiceImpl) YearlyContestRegistrations(ctx context.Context, req *YearlyContestRegistrationsRequest) (*ContestRegistrations, error) {
 
 	session := domain.ParseSession(ctx)
 	if session == nil {

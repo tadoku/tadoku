@@ -1,56 +1,12 @@
-package profilequery
+package query
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"time"
 
-	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
-	"github.com/tadoku/tadoku/services/immersion-api/domain/contestquery"
 )
-
-var ErrRequestInvalid = errors.New("request is invalid")
-var ErrNotFound = errors.New("not found")
-var ErrUnauthorized = errors.New("unauthorized")
-
-type Repository interface {
-	FindRegistrationForUser(context.Context, *contestquery.FindRegistrationForUserRequest) (*contestquery.ContestRegistration, error)
-	FindScoresForRegistration(context.Context, *ContestProfileRequest) ([]Score, error)
-	ReadingActivityForContestUser(context.Context, *ContestProfileRequest) ([]ReadingActivityRow, error)
-	YearlyActivityForUser(context.Context, *YearlyActivityForUserRequest) ([]UserActivityScore, error)
-	YearlyScoresForUser(context.Context, *YearlyScoresForUserRequest) ([]Score, error)
-	YearlyActivitySplitForUser(context.Context, *YearlyActivitySplitForUserRequest) (*YearlyActivitySplitForUserResponse, error)
-}
-
-type Service interface {
-	ContestProfile(context.Context, *ContestProfileRequest) (*ContestProfileResponse, error)
-	// TODO: Shouldn't include reading prefix
-	ReadingActivityForContestUser(context.Context, *ContestProfileRequest) (*ReadingActivityResponse, error)
-	FetchUserProfile(context.Context, uuid.UUID) (*UserProfile, error)
-	YearlyActivityForUser(context.Context, *YearlyActivityForUserRequest) (*YearlyActivityForUserResponse, error)
-	YearlyScoresForUser(context.Context, *YearlyScoresForUserRequest) (*YearlyScoresForUserResponse, error)
-	YearlyActivitySplitForUser(context.Context, *YearlyActivitySplitForUserRequest) (*YearlyActivitySplitForUserResponse, error)
-}
-
-type KratosClient interface {
-	FetchIdentity(ctx context.Context, id uuid.UUID) (*UserTraits, error)
-}
-
-type service struct {
-	r        Repository
-	kratos   KratosClient
-	validate *validator.Validate
-}
-
-func NewService(r Repository, kratos KratosClient) Service {
-	return &service{
-		r:        r,
-		validate: validator.New(),
-		kratos:   kratos,
-	}
-}
 
 type Score struct {
 	LanguageCode string
@@ -64,14 +20,14 @@ type ContestProfileRequest struct {
 }
 
 type ContestProfileResponse struct {
-	Registration *contestquery.ContestRegistration
+	Registration *ContestRegistration
 	OverallScore float32
 	Scores       []Score
 }
 
-func (s *service) ContestProfile(ctx context.Context, req *ContestProfileRequest) (*ContestProfileResponse, error) {
+func (s *ServiceImpl) ContestProfile(ctx context.Context, req *ContestProfileRequest) (*ContestProfileResponse, error) {
 
-	reg, err := s.r.FindRegistrationForUser(ctx, &contestquery.FindRegistrationForUserRequest{
+	reg, err := s.r.FindRegistrationForUser(ctx, &FindRegistrationForUserRequest{
 		UserID:    req.UserID,
 		ContestID: req.ContestID,
 	})
@@ -107,7 +63,7 @@ type ReadingActivityRow struct {
 	Score        float32
 }
 
-func (s *service) ReadingActivityForContestUser(ctx context.Context, req *ContestProfileRequest) (*ReadingActivityResponse, error) {
+func (s *ServiceImpl) ReadingActivityForContestUser(ctx context.Context, req *ContestProfileRequest) (*ReadingActivityResponse, error) {
 	rows, err := s.r.ReadingActivityForContestUser(ctx, req)
 	if err != nil {
 		return nil, fmt.Errorf("could not fetch reading activity: %w", err)
@@ -129,7 +85,7 @@ type UserProfile struct {
 	CreatedAt   time.Time
 }
 
-func (s *service) FetchUserProfile(ctx context.Context, id uuid.UUID) (*UserProfile, error) {
+func (s *ServiceImpl) FetchUserProfile(ctx context.Context, id uuid.UUID) (*UserProfile, error) {
 	traits, err := s.kratos.FetchIdentity(ctx, id)
 	if err != nil {
 		return nil, fmt.Errorf("could not fetch user profile: %w", err)
@@ -157,7 +113,7 @@ type YearlyActivityForUserResponse struct {
 	TotalUpdates int
 }
 
-func (s *service) YearlyActivityForUser(ctx context.Context, req *YearlyActivityForUserRequest) (*YearlyActivityForUserResponse, error) {
+func (s *ServiceImpl) YearlyActivityForUser(ctx context.Context, req *YearlyActivityForUserRequest) (*YearlyActivityForUserResponse, error) {
 	scores, err := s.r.YearlyActivityForUser(ctx, req)
 	if err != nil {
 		return nil, fmt.Errorf("could not fetch activity summary: %w", err)
@@ -185,7 +141,7 @@ type YearlyScoresForUserResponse struct {
 	Scores       []Score
 }
 
-func (s *service) YearlyScoresForUser(ctx context.Context, req *YearlyScoresForUserRequest) (*YearlyScoresForUserResponse, error) {
+func (s *ServiceImpl) YearlyScoresForUser(ctx context.Context, req *YearlyScoresForUserRequest) (*YearlyScoresForUserResponse, error) {
 	scores, err := s.r.YearlyScoresForUser(ctx, req)
 	if err != nil {
 		return nil, fmt.Errorf("could not fetch scores: %w", err)
@@ -217,6 +173,6 @@ type YearlyActivitySplitForUserResponse struct {
 	Activities []ActivityScore
 }
 
-func (s *service) YearlyActivitySplitForUser(ctx context.Context, req *YearlyActivitySplitForUserRequest) (*YearlyActivitySplitForUserResponse, error) {
+func (s *ServiceImpl) YearlyActivitySplitForUser(ctx context.Context, req *YearlyActivitySplitForUserRequest) (*YearlyActivitySplitForUserResponse, error) {
 	return s.r.YearlyActivitySplitForUser(ctx, req)
 }

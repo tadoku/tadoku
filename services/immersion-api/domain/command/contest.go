@@ -1,4 +1,4 @@
-package contestcommand
+package command
 
 import (
 	"context"
@@ -6,42 +6,13 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
 	"github.com/tadoku/tadoku/services/common/domain"
-	"github.com/tadoku/tadoku/services/immersion-api/domain/contestquery"
+	"github.com/tadoku/tadoku/services/immersion-api/domain/query"
 )
 
 var ErrInvalidContest = errors.New("unable to validate contest")
 var ErrInvalidContestRegistration = errors.New("language selection is not valid for contest")
-var ErrForbidden = errors.New("not allowed")
-var ErrUnauthorized = errors.New("unauthorized")
-
-type ContestRepository interface {
-	CreateContest(context.Context, *ContestCreateRequest) (*ContestCreateResponse, error)
-	UpsertContestRegistration(context.Context, *UpsertContestRegistrationRequest) error
-
-	contestquery.ContestRepository
-}
-
-type Service interface {
-	CreateContest(context.Context, *ContestCreateRequest) (*ContestCreateResponse, error)
-	UpsertContestRegistration(context.Context, *UpsertContestRegistrationRequest) error
-}
-
-type service struct {
-	r        ContestRepository
-	validate *validator.Validate
-	clock    domain.Clock
-}
-
-func NewService(r ContestRepository, clock domain.Clock) Service {
-	return &service{
-		r:        r,
-		validate: validator.New(),
-		clock:    clock,
-	}
-}
 
 type ContestCreateRequest struct {
 	OwnerUserID             uuid.UUID `validate:"required"`
@@ -76,7 +47,7 @@ type ContestCreateResponse struct {
 	UpdatedAt               time.Time
 }
 
-func (s *service) CreateContest(ctx context.Context, req *ContestCreateRequest) (*ContestCreateResponse, error) {
+func (s *ServiceImpl) CreateContest(ctx context.Context, req *ContestCreateRequest) (*ContestCreateResponse, error) {
 	// Make sure the user is authorized to create a contest
 	if domain.IsRole(ctx, domain.RoleBanned) {
 		return nil, ErrForbidden
@@ -132,7 +103,7 @@ type UpsertContestRegistrationRequest struct {
 	LanguageCodes   []string
 }
 
-func (s *service) UpsertContestRegistration(ctx context.Context, req *UpsertContestRegistrationRequest) error {
+func (s *ServiceImpl) UpsertContestRegistration(ctx context.Context, req *UpsertContestRegistrationRequest) error {
 	if domain.IsRole(ctx, domain.RoleBanned) {
 		return ErrForbidden
 	}
@@ -150,7 +121,7 @@ func (s *service) UpsertContestRegistration(ctx context.Context, req *UpsertCont
 	req.ID = uuid.New()
 
 	// TODO: should rename to FindContestByID
-	contest, err := s.r.FindByID(ctx, &contestquery.FindByIDRequest{
+	contest, err := s.r.FindByID(ctx, &query.FindByIDRequest{
 		ID:             req.ContestID,
 		IncludeDeleted: false,
 	})
@@ -176,11 +147,11 @@ func (s *service) UpsertContestRegistration(ctx context.Context, req *UpsertCont
 	}
 
 	// check if existing registration
-	registration, err := s.r.FindRegistrationForUser(ctx, &contestquery.FindRegistrationForUserRequest{
+	registration, err := s.r.FindRegistrationForUser(ctx, &query.FindRegistrationForUserRequest{
 		UserID:    req.UserID,
 		ContestID: req.ContestID,
 	})
-	if err != nil && !errors.Is(err, contestquery.ErrNotFound) {
+	if err != nil && !errors.Is(err, query.ErrNotFound) {
 		return err
 	}
 

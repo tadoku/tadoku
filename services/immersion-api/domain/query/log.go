@@ -1,55 +1,12 @@
-package logquery
+package query
 
 import (
 	"context"
-	"errors"
 	"time"
 
-	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
 	"github.com/tadoku/tadoku/services/common/domain"
 )
-
-var ErrRequestInvalid = errors.New("request is invalid")
-var ErrNotFound = errors.New("not found")
-var ErrUnauthorized = errors.New("unauthorized")
-
-type LogRepository interface {
-	ListLogsForContestUser(context.Context, *LogListForContestUserRequest) (*LogListResponse, error)
-	FetchLogConfigurationOptions(ctx context.Context) (*FetchLogConfigurationOptionsResponse, error)
-	FindLogByID(context.Context, *FindLogByIDRequest) (*Log, error)
-}
-
-type Service interface {
-	ListLogsForContestUser(context.Context, *LogListForContestUserRequest) (*LogListResponse, error)
-	FetchLogConfigurationOptions(ctx context.Context) (*FetchLogConfigurationOptionsResponse, error)
-	FindLogByID(context.Context, *FindLogByIDRequest) (*Log, error)
-}
-
-type service struct {
-	r        LogRepository
-	validate *validator.Validate
-	clock    domain.Clock
-}
-
-func NewService(r LogRepository, clock domain.Clock) Service {
-	return &service{
-		r:        r,
-		validate: validator.New(),
-		clock:    clock,
-	}
-}
-
-type Language struct {
-	Code string
-	Name string
-}
-
-type Activity struct {
-	ID      int32
-	Name    string
-	Default bool
-}
 
 type Unit struct {
 	ID            uuid.UUID
@@ -72,7 +29,7 @@ type FetchLogConfigurationOptionsResponse struct {
 	Tags       []Tag
 }
 
-func (s *service) FetchLogConfigurationOptions(ctx context.Context) (*FetchLogConfigurationOptionsResponse, error) {
+func (s *ServiceImpl) FetchLogConfigurationOptions(ctx context.Context) (*FetchLogConfigurationOptionsResponse, error) {
 	if domain.IsRole(ctx, domain.RoleGuest) {
 		return nil, ErrUnauthorized
 	}
@@ -120,7 +77,7 @@ type LogListResponse struct {
 	NextPageToken string
 }
 
-func (s *service) ListLogsForContestUser(ctx context.Context, req *LogListForContestUserRequest) (*LogListResponse, error) {
+func (s *ServiceImpl) ListLogsForContestUser(ctx context.Context, req *LogListForContestUserRequest) (*LogListResponse, error) {
 	if req.PageSize == 0 {
 		req.PageSize = 50
 	}
@@ -141,7 +98,7 @@ type FindLogByIDRequest struct {
 	IncludeDeleted bool
 }
 
-func (s *service) FindLogByID(ctx context.Context, req *FindLogByIDRequest) (*Log, error) {
+func (s *ServiceImpl) FindLogByID(ctx context.Context, req *FindLogByIDRequest) (*Log, error) {
 	req.IncludeDeleted = domain.IsRole(ctx, domain.RoleAdmin)
 
 	log, err := s.r.FindLogByID(ctx, req)

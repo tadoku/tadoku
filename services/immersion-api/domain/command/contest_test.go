@@ -1,4 +1,4 @@
-package contestcommand_test
+package command_test
 
 import (
 	"context"
@@ -8,17 +8,17 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/tadoku/tadoku/services/common/domain"
-	"github.com/tadoku/tadoku/services/immersion-api/domain/contestcommand"
+	"github.com/tadoku/tadoku/services/immersion-api/domain/command"
 )
 
 type ContestRepositoryMock struct {
-	contestcommand.ContestRepository
+	command.Repository
 	isCalled bool
-	result   *contestcommand.ContestCreateResponse
+	result   *command.ContestCreateResponse
 	err      error
 }
 
-func (r *ContestRepositoryMock) CreateContest(context.Context, *contestcommand.ContestCreateRequest) (*contestcommand.ContestCreateResponse, error) {
+func (r *ContestRepositoryMock) CreateContest(context.Context, *command.ContestCreateRequest) (*command.ContestCreateResponse, error) {
 	r.isCalled = true
 	return r.result, r.err
 }
@@ -38,13 +38,13 @@ func TestCreateContest(t *testing.T) {
 
 	tests := []struct {
 		name    string
-		request *contestcommand.ContestCreateRequest
+		request *command.ContestCreateRequest
 		role    domain.Role
 		err     error
 	}{
 		{
 			"happy path",
-			&contestcommand.ContestCreateRequest{
+			&command.ContestCreateRequest{
 				ContestStart:            clock.Now().Add(30 * 24 * time.Hour),
 				ContestEnd:              clock.Now().Add(45 * 24 * time.Hour),
 				RegistrationEnd:         clock.Now().Add(40 * 24 * time.Hour),
@@ -57,7 +57,7 @@ func TestCreateContest(t *testing.T) {
 			nil,
 		}, {
 			"official round cannot be private",
-			&contestcommand.ContestCreateRequest{
+			&command.ContestCreateRequest{
 				ContestStart:            clock.Now().Add(30 * 24 * time.Hour),
 				ContestEnd:              clock.Now().Add(45 * 24 * time.Hour),
 				RegistrationEnd:         clock.Now().Add(40 * 24 * time.Hour),
@@ -67,10 +67,10 @@ func TestCreateContest(t *testing.T) {
 				ActivityTypeIDAllowList: []int32{1, 2},
 			},
 			domain.RoleAdmin,
-			contestcommand.ErrInvalidContest,
+			command.ErrInvalidContest,
 		}, {
 			"official round cannot restrict language choice",
-			&contestcommand.ContestCreateRequest{
+			&command.ContestCreateRequest{
 				ContestStart:            clock.Now().Add(30 * 24 * time.Hour),
 				ContestEnd:              clock.Now().Add(45 * 24 * time.Hour),
 				RegistrationEnd:         clock.Now().Add(40 * 24 * time.Hour),
@@ -81,10 +81,10 @@ func TestCreateContest(t *testing.T) {
 				ActivityTypeIDAllowList: []int32{1, 2},
 			},
 			domain.RoleAdmin,
-			contestcommand.ErrInvalidContest,
+			command.ErrInvalidContest,
 		}, {
 			"contest cannot be in the past",
-			&contestcommand.ContestCreateRequest{
+			&command.ContestCreateRequest{
 				ContestStart:            clock.Now().Add(-30 * 24 * time.Hour),
 				ContestEnd:              clock.Now().Add(0),
 				RegistrationEnd:         clock.Now().Add(-4 * 24 * time.Hour),
@@ -94,10 +94,10 @@ func TestCreateContest(t *testing.T) {
 				ActivityTypeIDAllowList: []int32{1, 2},
 			},
 			domain.RoleUser,
-			contestcommand.ErrInvalidContest,
+			command.ErrInvalidContest,
 		}, {
 			"admins can bypass contest cannot be in the past",
-			&contestcommand.ContestCreateRequest{
+			&command.ContestCreateRequest{
 				ContestStart:            clock.Now().Add(-30 * 24 * time.Hour),
 				ContestEnd:              clock.Now().Add(0),
 				RegistrationEnd:         clock.Now().Add(-4 * 24 * time.Hour),
@@ -110,7 +110,7 @@ func TestCreateContest(t *testing.T) {
 			nil,
 		}, {
 			"needs to start before ending",
-			&contestcommand.ContestCreateRequest{
+			&command.ContestCreateRequest{
 				ContestStart:            clock.Now().Add(45 * 24 * time.Hour),
 				ContestEnd:              clock.Now().Add(30 * 24 * time.Hour),
 				RegistrationEnd:         clock.Now().Add(10 * 24 * time.Hour),
@@ -120,10 +120,10 @@ func TestCreateContest(t *testing.T) {
 				ActivityTypeIDAllowList: []int32{1, 2},
 			},
 			domain.RoleUser,
-			contestcommand.ErrInvalidContest,
+			command.ErrInvalidContest,
 		}, {
 			"user can create non-official contest",
-			&contestcommand.ContestCreateRequest{
+			&command.ContestCreateRequest{
 				ContestStart:            clock.Now().Add(30 * 24 * time.Hour),
 				ContestEnd:              clock.Now().Add(45 * 24 * time.Hour),
 				RegistrationEnd:         clock.Now().Add(40 * 24 * time.Hour),
@@ -136,7 +136,7 @@ func TestCreateContest(t *testing.T) {
 			nil,
 		}, {
 			"user cannot create official contest",
-			&contestcommand.ContestCreateRequest{
+			&command.ContestCreateRequest{
 				ContestStart:            clock.Now().Add(30 * 24 * time.Hour),
 				ContestEnd:              clock.Now().Add(45 * 24 * time.Hour),
 				RegistrationEnd:         clock.Now().Add(40 * 24 * time.Hour),
@@ -146,10 +146,10 @@ func TestCreateContest(t *testing.T) {
 				ActivityTypeIDAllowList: []int32{1, 2},
 			},
 			domain.RoleUser,
-			contestcommand.ErrForbidden,
+			command.ErrForbidden,
 		}, {
 			"non-official contest can restrict languages",
-			&contestcommand.ContestCreateRequest{
+			&command.ContestCreateRequest{
 				ContestStart:            clock.Now().Add(30 * 24 * time.Hour),
 				ContestEnd:              clock.Now().Add(45 * 24 * time.Hour),
 				RegistrationEnd:         clock.Now().Add(40 * 24 * time.Hour),
@@ -163,9 +163,9 @@ func TestCreateContest(t *testing.T) {
 			nil,
 		}, {
 			"banned user cannot a contest",
-			&contestcommand.ContestCreateRequest{},
+			&command.ContestCreateRequest{},
 			domain.RoleBanned,
-			contestcommand.ErrForbidden,
+			command.ErrForbidden,
 		},
 	}
 
@@ -173,7 +173,7 @@ func TestCreateContest(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			ctx := createContext(test.role)
 			repo := &ContestRepositoryMock{}
-			service := contestcommand.NewService(repo, clock)
+			service := command.NewService(repo, clock)
 
 			_, err := service.CreateContest(ctx, test.request)
 

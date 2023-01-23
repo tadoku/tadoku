@@ -15,14 +15,14 @@ import (
 )
 
 const checkIfLogCanBeDeleted = `-- name: CheckIfLogCanBeDeleted :one
-select not (true = any(
+select (not(true = any(
   select
     (contests.contest_end < $1)
   from contest_logs
   inner join contests on (contests.id = contest_logs.contest_id)
   where
     contest_logs.log_id = $2
-)) as can_be_deleted
+)))::boolean as can_be_deleted
 `
 
 type CheckIfLogCanBeDeletedParams struct {
@@ -30,9 +30,9 @@ type CheckIfLogCanBeDeletedParams struct {
 	LogID uuid.UUID
 }
 
-func (q *Queries) CheckIfLogCanBeDeleted(ctx context.Context, arg CheckIfLogCanBeDeletedParams) (interface{}, error) {
+func (q *Queries) CheckIfLogCanBeDeleted(ctx context.Context, arg CheckIfLogCanBeDeletedParams) (bool, error) {
 	row := q.db.QueryRowContext(ctx, checkIfLogCanBeDeleted, arg.Now, arg.LogID)
-	var can_be_deleted interface{}
+	var can_be_deleted bool
 	err := row.Scan(&can_be_deleted)
 	return can_be_deleted, err
 }

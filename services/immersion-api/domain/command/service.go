@@ -24,6 +24,7 @@ type Repository interface {
 
 	// log
 	CreateLog(context.Context, *CreateLogRequest) error
+	DeleteLog(context.Context, *DeleteLogRequest) error
 
 	query.Repository
 }
@@ -35,6 +36,7 @@ type Service interface {
 
 	// log
 	CreateLog(context.Context, *CreateLogRequest) error
+	DeleteLog(context.Context, *DeleteLogRequest) error
 }
 
 type ServiceImpl struct {

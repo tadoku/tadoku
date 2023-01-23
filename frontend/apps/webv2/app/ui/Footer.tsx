@@ -89,7 +89,7 @@ export default function Footer() {
                 <Link href={routes.blogPage('faq')}>FAQ</Link>
               </li>
               <li>
-                <Link href="#">Page counter</Link>
+                <Link href={routes.pageCounter()}>Page counter</Link>
               </li>
             </ul>
           </div>

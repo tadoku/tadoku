@@ -26,6 +26,7 @@ export const routes = {
     `/contests/${contest_id}/profile/${user_id}/${page ?? '1'}`,
 
   logCreate: () => `/logs/new`,
+  logCreateWithAmount: (amount: number) => `/logs/new?amount=${amount}`,
   log: (id: string) => `/logs/${id}`,
 
   leaderboardLatestOfficial: (page?: Page) =>
@@ -44,6 +45,8 @@ export const routes = {
     `${kratos}/login?return_to=${return_url ?? ''}`,
   authSignup: (return_url?: string) =>
     `${kratos}/register?return_to=${return_url ?? ''}`,
+
+  pageCounter: () => `/page-counter`,
 
   // External
 

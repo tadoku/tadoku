@@ -667,3 +667,40 @@ export const useYearlyContestRegistrations = (
     },
     options,
   )
+
+const ActivitySplitScore = z.object({
+  activity_id: z.number(),
+  activity_name: z.string(),
+  score: z.number(),
+})
+
+export type ActivitySplitScore = z.infer<typeof ActivitySplitScore>
+
+const ActivitySplit = z.object({
+  activities: z.array(ActivitySplitScore),
+})
+
+export type ActivitySplit = z.infer<typeof ActivitySplit>
+
+export const useUserYearlyActivitySplit = (
+  opts: {
+    userId: string
+    year: string | number
+  },
+  options?: { enabled?: boolean },
+) =>
+  useQuery(
+    ['users', opts.userId, 'activity-split', opts.year],
+    async (): Promise<ActivitySplit> => {
+      const response = await fetch(
+        `${root}/users/${opts.userId}/activity-split/${opts.year}`,
+      )
+
+      if (response.status !== 200) {
+        throw new Error('could not fetch page')
+      }
+
+      return ActivitySplit.parse(await response.json())
+    },
+    options,
+  )

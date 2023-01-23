@@ -55,7 +55,6 @@ type Service interface {
 
 	// profile
 	ContestProfile(context.Context, *ContestProfileRequest) (*ContestProfileResponse, error)
-	// TODO: Shouldn't include reading prefix
 	ActivityForContestUser(context.Context, *ContestProfileRequest) (*ActivityForContestUserResponse, error)
 	FetchUserProfile(context.Context, uuid.UUID) (*UserProfile, error)
 	YearlyActivityForUser(context.Context, *YearlyActivityForUserRequest) (*YearlyActivityForUserResponse, error)

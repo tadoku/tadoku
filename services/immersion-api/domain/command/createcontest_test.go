@@ -11,14 +11,14 @@ import (
 	"github.com/tadoku/tadoku/services/immersion-api/domain/command"
 )
 
-type ContestRepositoryMock struct {
+type CreateContestRepositoryMock struct {
 	command.Repository
 	isCalled bool
 	result   *command.ContestCreateResponse
 	err      error
 }
 
-func (r *ContestRepositoryMock) CreateContest(context.Context, *command.ContestCreateRequest) (*command.ContestCreateResponse, error) {
+func (r *CreateContestRepositoryMock) CreateContest(context.Context, *command.ContestCreateRequest) (*command.ContestCreateResponse, error) {
 	r.isCalled = true
 	return r.result, r.err
 }
@@ -172,7 +172,7 @@ func TestCreateContest(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			ctx := createContext(test.role)
-			repo := &ContestRepositoryMock{}
+			repo := &CreateContestRepositoryMock{}
 			service := command.NewService(repo, clock)
 
 			_, err := service.CreateContest(ctx, test.request)

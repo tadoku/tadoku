@@ -3,9 +3,10 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
 go_library(
     name = "command",
     srcs = [
-        "contest.go",
-        "log.go",
+        "createcontest.go",
+        "createlog.go",
         "service.go",
+        "upsertcontestregistration.go",
     ],
     importpath = "github.com/tadoku/tadoku/services/immersion-api/domain/command",
     visibility = ["//visibility:public"],
@@ -19,7 +20,7 @@ go_library(
 
 go_test(
     name = "command_test",
-    srcs = ["contest_test.go"],
+    srcs = ["createcontest_test.go"],
     deps = [
         ":command",
         "//services/common/domain",

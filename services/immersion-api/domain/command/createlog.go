@@ -2,15 +2,12 @@ package command
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
 	"github.com/google/uuid"
 	"github.com/tadoku/tadoku/services/common/domain"
 	"github.com/tadoku/tadoku/services/immersion-api/domain/query"
 )
-
-var ErrInvalidLog = errors.New("unable to validate log")
 
 type LogCreateRequest struct {
 	RegistrationIDs []uuid.UUID `validate:"required"`

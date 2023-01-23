@@ -9,6 +9,9 @@ import (
 	"github.com/tadoku/tadoku/services/immersion-api/domain/query"
 )
 
+var ErrInvalidLog = errors.New("unable to validate log")
+var ErrInvalidContest = errors.New("unable to validate contest")
+var ErrInvalidContestRegistration = errors.New("language selection is not valid for contest")
 var ErrRequestInvalid = errors.New("request is invalid")
 var ErrNotFound = errors.New("not found")
 var ErrForbidden = errors.New("not allowed")

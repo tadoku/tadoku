@@ -359,7 +359,7 @@ export const useContestProfileScores = (
     options,
   )
 
-const ContestProfileReadingActivity = z.object({
+const ContestProfileActivity = z.object({
   rows: z.array(
     z.object({
       date: z.string(),
@@ -369,11 +369,9 @@ const ContestProfileReadingActivity = z.object({
   ),
 })
 
-export type ContestProfileReadingActivity = z.infer<
-  typeof ContestProfileReadingActivity
->
+export type ContestProfileActivity = z.infer<typeof ContestProfileActivity>
 
-export const useContestProfileReadingActivity = (
+export const useContestProfileActivity = (
   opts: {
     userId: string
     contestId: string
@@ -382,16 +380,16 @@ export const useContestProfileReadingActivity = (
 ) =>
   useQuery(
     ['contest', opts.contestId, 'profile', opts.userId, 'readingActivity'],
-    async (): Promise<ContestProfileReadingActivity> => {
+    async (): Promise<ContestProfileActivity> => {
       const response = await fetch(
-        `${root}/contests/${opts.contestId}/profile/${opts.userId}/reading-activity`,
+        `${root}/contests/${opts.contestId}/profile/${opts.userId}/activity`,
       )
 
       if (response.status !== 200) {
         throw new Error('could not fetch page')
       }
 
-      return ContestProfileReadingActivity.parse(await response.json())
+      return ContestProfileActivity.parse(await response.json())
     },
     options,
   )
@@ -565,7 +563,7 @@ export const useLog = (id: string, options?: { enabled?: boolean }) =>
   useQuery(
     ['log', 'findByID', id],
     async (): Promise<Log> => {
-      const response = await fetch(`${root}/${id}`)
+      const response = await fetch(`${root}/logs/${id}`)
 
       if (response.status !== 200) {
         throw new Error('could not fetch page')

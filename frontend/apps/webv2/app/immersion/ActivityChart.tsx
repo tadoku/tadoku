@@ -17,7 +17,7 @@ import 'chartjs-adapter-luxon'
 import { faker } from '@faker-js/faker'
 import {
   ContestRegistrationView,
-  useContestProfileReadingActivity,
+  useContestProfileActivity,
 } from '@app/immersion/api'
 import { DateTime, Duration, Interval } from 'luxon'
 
@@ -40,7 +40,7 @@ interface Props {
 }
 
 export function ActivityChart({ userId, registration }: Props) {
-  const activity = useContestProfileReadingActivity({
+  const activity = useContestProfileActivity({
     userId,
     contestId: registration.contest_id,
   })

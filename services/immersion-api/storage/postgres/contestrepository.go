@@ -699,3 +699,32 @@ func (r *ContestRepository) YearlyContestRegistrations(ctx context.Context, req 
 
 	return res, nil
 }
+
+func (r *ContestRepository) YearlyActivitySplitForUser(ctx context.Context, req *profilequery.YearlyActivitySplitForUserRequest) (*profilequery.YearlyActivitySplitForUserResponse, error) {
+	rows, err := r.q.YearlyActivitySplitForUser(ctx, YearlyActivitySplitForUserParams{
+		UserID: req.UserID,
+		Year:   int16(req.Year),
+	})
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return &profilequery.YearlyActivitySplitForUserResponse{
+				Activities: []profilequery.ActivityScore{},
+			}, nil
+		}
+		return nil, fmt.Errorf("could not fetch activity split: %w", err)
+	}
+
+	scores := make([]profilequery.ActivityScore, len(rows))
+	for i, row := range rows {
+		row := row
+		scores[i] = profilequery.ActivityScore{
+			ActivityID:   int(row.LogActivityID),
+			ActivityName: row.LogActivityName,
+			Score:        row.Score,
+		}
+	}
+
+	return &profilequery.YearlyActivitySplitForUserResponse{
+		Activities: scores,
+	}, nil
+}

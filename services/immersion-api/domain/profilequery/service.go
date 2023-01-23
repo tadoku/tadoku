@@ -21,6 +21,7 @@ type Repository interface {
 	ReadingActivityForContestUser(context.Context, *ContestProfileRequest) ([]ReadingActivityRow, error)
 	YearlyActivityForUser(context.Context, *YearlyActivityForUserRequest) ([]UserActivityScore, error)
 	YearlyScoresForUser(context.Context, *YearlyScoresForUserRequest) ([]Score, error)
+	YearlyActivitySplitForUser(context.Context, *YearlyActivitySplitForUserRequest) (*YearlyActivitySplitForUserResponse, error)
 }
 
 type Service interface {
@@ -30,6 +31,7 @@ type Service interface {
 	FetchUserProfile(context.Context, uuid.UUID) (*UserProfile, error)
 	YearlyActivityForUser(context.Context, *YearlyActivityForUserRequest) (*YearlyActivityForUserResponse, error)
 	YearlyScoresForUser(context.Context, *YearlyScoresForUserRequest) (*YearlyScoresForUserResponse, error)
+	YearlyActivitySplitForUser(context.Context, *YearlyActivitySplitForUserRequest) (*YearlyActivitySplitForUserResponse, error)
 }
 
 type KratosClient interface {
@@ -198,4 +200,23 @@ func (s *service) YearlyScoresForUser(ctx context.Context, req *YearlyScoresForU
 	}
 
 	return response, nil
+}
+
+type YearlyActivitySplitForUserRequest struct {
+	UserID uuid.UUID
+	Year   int
+}
+
+type ActivityScore struct {
+	ActivityID   int
+	ActivityName string
+	Score        float32
+}
+
+type YearlyActivitySplitForUserResponse struct {
+	Activities []ActivityScore
+}
+
+func (s *service) YearlyActivitySplitForUser(ctx context.Context, req *YearlyActivitySplitForUserRequest) (*YearlyActivitySplitForUserResponse, error) {
+	return s.r.YearlyActivitySplitForUser(ctx, req)
 }

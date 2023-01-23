@@ -5,6 +5,10 @@ import (
 	"time"
 )
 
+func NewQueries(psql *sql.DB) *Queries {
+	return &Queries{psql}
+}
+
 func NewNullTime(val *time.Time) sql.NullTime {
 	if val == nil {
 		return sql.NullTime{

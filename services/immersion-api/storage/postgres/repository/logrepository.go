@@ -1,4 +1,4 @@
-package postgres
+package repository
 
 import (
 	"context"
@@ -7,32 +7,21 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
-	"github.com/tadoku/tadoku/services/immersion-api/domain/logcommand"
-	"github.com/tadoku/tadoku/services/immersion-api/domain/logquery"
+	"github.com/tadoku/tadoku/services/immersion-api/domain/command"
+	"github.com/tadoku/tadoku/services/immersion-api/domain/query"
+	"github.com/tadoku/tadoku/services/immersion-api/storage/postgres"
 )
 
-type LogRepository struct {
-	psql *sql.DB
-	q    *Queries
-}
-
-func NewLogRepository(psql *sql.DB) *LogRepository {
-	return &LogRepository{
-		psql: psql,
-		q:    &Queries{psql},
-	}
-}
-
 // COMMANDS
-func (r *LogRepository) CreateLog(ctx context.Context, req *logcommand.LogCreateRequest) error {
-	unit, err := r.q.FindUnitForTracking(ctx, FindUnitForTrackingParams{
+func (r *Repository) CreateLog(ctx context.Context, req *command.LogCreateRequest) error {
+	unit, err := r.q.FindUnitForTracking(ctx, postgres.FindUnitForTrackingParams{
 		ID:            req.UnitID,
 		LogActivityID: int16(req.ActivityID),
-		LanguageCode:  NewNullString(&req.LanguageCode),
+		LanguageCode:  postgres.NewNullString(&req.LanguageCode),
 	})
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return fmt.Errorf("invalid unit supplied: %w", logcommand.ErrInvalidLog)
+			return fmt.Errorf("invalid unit supplied: %w", command.ErrInvalidLog)
 		}
 		return fmt.Errorf("could not fetch unit for tracking: %w", err)
 	}
@@ -44,7 +33,7 @@ func (r *LogRepository) CreateLog(ctx context.Context, req *logcommand.LogCreate
 	qtx := r.q.WithTx(tx)
 
 	id := uuid.New()
-	if _, err = qtx.CreateLog(ctx, CreateLogParams{
+	if _, err = qtx.CreateLog(ctx, postgres.CreateLogParams{
 		ID:                          id,
 		UserID:                      req.UserID,
 		LanguageCode:                req.LanguageCode,
@@ -54,14 +43,14 @@ func (r *LogRepository) CreateLog(ctx context.Context, req *logcommand.LogCreate
 		Amount:                      req.Amount,
 		Modifier:                    unit.Modifier,
 		EligibleOfficialLeaderboard: req.EligibleOfficialLeaderboard,
-		Description:                 NewNullString(req.Description),
+		Description:                 postgres.NewNullString(req.Description),
 	}); err != nil {
 		_ = tx.Rollback()
 		return fmt.Errorf("could not create log: %w", err)
 	}
 
 	for _, registrationID := range req.RegistrationIDs {
-		if err = qtx.CreateContestLogRelation(ctx, CreateContestLogRelationParams{
+		if err = qtx.CreateContestLogRelation(ctx, postgres.CreateContestLogRelationParams{
 			RegistrationID: registrationID,
 			LogID:          id,
 		}); err != nil {
@@ -79,7 +68,7 @@ func (r *LogRepository) CreateLog(ctx context.Context, req *logcommand.LogCreate
 
 // QUERIES
 
-func (r *LogRepository) FetchLogConfigurationOptions(ctx context.Context) (*logquery.FetchLogConfigurationOptionsResponse, error) {
+func (r *Repository) FetchLogConfigurationOptions(ctx context.Context) (*query.FetchLogConfigurationOptionsResponse, error) {
 	langs, err := r.q.ListLanguages(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("could not fetch log configuration options: %w", err)
@@ -100,22 +89,22 @@ func (r *LogRepository) FetchLogConfigurationOptions(ctx context.Context) (*logq
 		return nil, fmt.Errorf("could not fetch log configuration options: %w", err)
 	}
 
-	options := logquery.FetchLogConfigurationOptionsResponse{
-		Languages:  make([]logquery.Language, len(langs)),
-		Activities: make([]logquery.Activity, len(acts)),
-		Units:      make([]logquery.Unit, len(units)),
-		Tags:       make([]logquery.Tag, len(tags)),
+	options := query.FetchLogConfigurationOptionsResponse{
+		Languages:  make([]query.Language, len(langs)),
+		Activities: make([]query.Activity, len(acts)),
+		Units:      make([]query.Unit, len(units)),
+		Tags:       make([]query.Tag, len(tags)),
 	}
 
 	for i, l := range langs {
-		options.Languages[i] = logquery.Language{
+		options.Languages[i] = query.Language{
 			Code: l.Code,
 			Name: l.Name,
 		}
 	}
 
 	for i, a := range acts {
-		options.Activities[i] = logquery.Activity{
+		options.Activities[i] = query.Activity{
 			ID:      a.ID,
 			Name:    a.Name,
 			Default: a.Default,
@@ -123,17 +112,17 @@ func (r *LogRepository) FetchLogConfigurationOptions(ctx context.Context) (*logq
 	}
 
 	for i, u := range units {
-		options.Units[i] = logquery.Unit{
+		options.Units[i] = query.Unit{
 			ID:            u.ID,
 			LogActivityID: int(u.LogActivityID),
 			Name:          u.Name,
 			Modifier:      u.Modifier,
-			LanguageCode:  NewStringFromNullString(u.LanguageCode),
+			LanguageCode:  postgres.NewStringFromNullString(u.LanguageCode),
 		}
 	}
 
 	for i, t := range tags {
-		options.Tags[i] = logquery.Tag{
+		options.Tags[i] = query.Tag{
 			ID:            t.ID,
 			LogActivityID: int(t.LogActivityID),
 			Name:          t.Name,
@@ -143,17 +132,17 @@ func (r *LogRepository) FetchLogConfigurationOptions(ctx context.Context) (*logq
 	return &options, err
 }
 
-func (r *LogRepository) ListLogsForContestUser(ctx context.Context, req *logquery.LogListForContestUserRequest) (*logquery.LogListResponse, error) {
-	_, err := r.q.FindContestById(ctx, FindContestByIdParams{ID: req.ContestID, IncludeDeleted: false})
+func (r *Repository) ListLogsForContestUser(ctx context.Context, req *query.LogListForContestUserRequest) (*query.LogListResponse, error) {
+	_, err := r.q.FindContestById(ctx, postgres.FindContestByIdParams{ID: req.ContestID, IncludeDeleted: false})
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return nil, logquery.ErrNotFound
+			return nil, query.ErrNotFound
 		}
 
 		return nil, fmt.Errorf("could not fetch logs list: %w", err)
 	}
 
-	entries, err := r.q.ListLogsForContestUser(ctx, ListLogsForContestUserParams{
+	entries, err := r.q.ListLogsForContestUser(ctx, postgres.ListLogsForContestUserParams{
 		ContestID:      req.ContestID,
 		UserID:         req.UserID,
 		StartFrom:      int32(req.Page * req.PageSize),
@@ -162,7 +151,7 @@ func (r *LogRepository) ListLogsForContestUser(ctx context.Context, req *logquer
 	})
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return &logquery.LogListResponse{
+			return &query.LogListResponse{
 				TotalSize:     0,
 				NextPageToken: "",
 			}, nil
@@ -171,12 +160,12 @@ func (r *LogRepository) ListLogsForContestUser(ctx context.Context, req *logquer
 		return nil, fmt.Errorf("could not fetch logs list: %w", err)
 	}
 
-	res := make([]logquery.Log, len(entries))
+	res := make([]query.Log, len(entries))
 	for i, it := range entries {
-		res[i] = logquery.Log{
+		res[i] = query.Log{
 			ID:           it.ID,
 			UserID:       it.UserID,
-			Description:  NewStringFromNullString(it.Description),
+			Description:  postgres.NewStringFromNullString(it.Description),
 			LanguageCode: it.LanguageCode,
 			LanguageName: it.LanguageName,
 			ActivityID:   int(it.ActivityID),
@@ -201,21 +190,21 @@ func (r *LogRepository) ListLogsForContestUser(ctx context.Context, req *logquer
 		nextPageToken = fmt.Sprint(req.Page + 1)
 	}
 
-	return &logquery.LogListResponse{
+	return &query.LogListResponse{
 		Logs:          res,
 		TotalSize:     int(totalSize),
 		NextPageToken: nextPageToken,
 	}, nil
 }
 
-func (r *LogRepository) FindLogByID(ctx context.Context, req *logquery.FindLogByIDRequest) (*logquery.Log, error) {
-	log, err := r.q.FindLogByID(ctx, FindLogByIDParams{
+func (r *Repository) FindLogByID(ctx context.Context, req *query.FindLogByIDRequest) (*query.Log, error) {
+	log, err := r.q.FindLogByID(ctx, postgres.FindLogByIDParams{
 		IncludeDeleted: req.IncludeDeleted,
 		ID:             req.ID,
 	})
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return nil, logquery.ErrNotFound
+			return nil, query.ErrNotFound
 		}
 
 		return nil, fmt.Errorf("could not fetch log details: %w", err)
@@ -226,20 +215,20 @@ func (r *LogRepository) FindLogByID(ctx context.Context, req *logquery.FindLogBy
 		return nil, fmt.Errorf("could not fetch log details: %w", err)
 	}
 
-	refs := make([]logquery.ContestRegistrationReference, len(registrations))
+	refs := make([]query.ContestRegistrationReference, len(registrations))
 	for i, it := range registrations {
-		refs[i] = logquery.ContestRegistrationReference{
+		refs[i] = query.ContestRegistrationReference{
 			RegistrationID: it.ID,
 			ContestID:      it.ContestID,
 			Title:          it.Title,
 		}
 	}
 
-	return &logquery.Log{
+	return &query.Log{
 		ID:              log.ID,
 		UserID:          log.UserID,
 		UserDisplayName: &log.UserDisplayName,
-		Description:     NewStringFromNullString(log.Description),
+		Description:     postgres.NewStringFromNullString(log.Description),
 		LanguageCode:    log.LanguageCode,
 		LanguageName:    log.LanguageName,
 		ActivityID:      int(log.ActivityID),

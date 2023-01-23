@@ -1,4 +1,4 @@
-package postgres
+package repository
 
 import (
 	"context"
@@ -6,26 +6,14 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/tadoku/tadoku/services/immersion-api/domain/contestcommand"
-	"github.com/tadoku/tadoku/services/immersion-api/domain/contestquery"
-	"github.com/tadoku/tadoku/services/immersion-api/domain/profilequery"
+	"github.com/tadoku/tadoku/services/immersion-api/domain/command"
+	"github.com/tadoku/tadoku/services/immersion-api/domain/query"
+	"github.com/tadoku/tadoku/services/immersion-api/storage/postgres"
 )
-
-type ContestRepository struct {
-	psql *sql.DB
-	q    *Queries
-}
-
-func NewContestRepository(psql *sql.DB) *ContestRepository {
-	return &ContestRepository{
-		psql: psql,
-		q:    &Queries{psql},
-	}
-}
 
 // COMMANDS
 
-func (r *ContestRepository) CreateContest(ctx context.Context, req *contestcommand.ContestCreateRequest) (*contestcommand.ContestCreateResponse, error) {
+func (r *Repository) CreateContest(ctx context.Context, req *command.ContestCreateRequest) (*command.ContestCreateResponse, error) {
 	tx, err := r.psql.BeginTx(ctx, nil)
 	if err != nil {
 		return nil, fmt.Errorf("could not create contest: %w", err)
@@ -33,7 +21,7 @@ func (r *ContestRepository) CreateContest(ctx context.Context, req *contestcomma
 
 	qtx := r.q.WithTx(tx)
 
-	id, err := qtx.CreateContest(ctx, CreateContestParams{
+	id, err := qtx.CreateContest(ctx, postgres.CreateContestParams{
 		OwnerUserID:             req.OwnerUserID,
 		OwnerUserDisplayName:    req.OwnerUserDisplayName,
 		Official:                req.Official,
@@ -42,7 +30,7 @@ func (r *ContestRepository) CreateContest(ctx context.Context, req *contestcomma
 		ContestEnd:              req.ContestEnd,
 		RegistrationEnd:         req.RegistrationEnd,
 		Title:                   req.Title,
-		Description:             NewNullString(req.Description),
+		Description:             postgres.NewNullString(req.Description),
 		LanguageCodeAllowList:   req.LanguageCodeAllowList,
 		ActivityTypeIDAllowList: req.ActivityTypeIDAllowList,
 	})
@@ -52,7 +40,7 @@ func (r *ContestRepository) CreateContest(ctx context.Context, req *contestcomma
 		return nil, fmt.Errorf("could not create contest: %w", err)
 	}
 
-	contest, err := qtx.FindContestById(ctx, FindContestByIdParams{
+	contest, err := qtx.FindContestById(ctx, postgres.FindContestByIdParams{
 		ID:             id,
 		IncludeDeleted: false,
 	})
@@ -65,13 +53,13 @@ func (r *ContestRepository) CreateContest(ctx context.Context, req *contestcomma
 		return nil, fmt.Errorf("could not create contest: %w", err)
 	}
 
-	return &contestcommand.ContestCreateResponse{
+	return &command.ContestCreateResponse{
 		ID:                      contest.ID,
 		ContestStart:            contest.ContestStart,
 		ContestEnd:              contest.ContestEnd,
 		RegistrationEnd:         contest.RegistrationEnd,
 		Title:                   contest.Title,
-		Description:             NewStringFromNullString(contest.Description),
+		Description:             postgres.NewStringFromNullString(contest.Description),
 		OwnerUserID:             contest.OwnerUserID,
 		OwnerUserDisplayName:    contest.OwnerUserDisplayName,
 		Official:                contest.Official,
@@ -83,8 +71,8 @@ func (r *ContestRepository) CreateContest(ctx context.Context, req *contestcomma
 	}, nil
 }
 
-func (r *ContestRepository) UpsertContestRegistration(ctx context.Context, req *contestcommand.UpsertContestRegistrationRequest) error {
-	_, err := r.q.UpsertContestRegistration(ctx, UpsertContestRegistrationParams{
+func (r *Repository) UpsertContestRegistration(ctx context.Context, req *command.UpsertContestRegistrationRequest) error {
+	_, err := r.q.UpsertContestRegistration(ctx, postgres.UpsertContestRegistrationParams{
 		ID:              req.ID,
 		ContestID:       req.ContestID,
 		UserID:          req.UserID,
@@ -101,7 +89,7 @@ func (r *ContestRepository) UpsertContestRegistration(ctx context.Context, req *
 
 // QUERIES
 
-func (r *ContestRepository) FetchContestConfigurationOptions(ctx context.Context) (*contestquery.FetchContestConfigurationOptionsResponse, error) {
+func (r *Repository) FetchContestConfigurationOptions(ctx context.Context) (*query.FetchContestConfigurationOptionsResponse, error) {
 	langs, err := r.q.ListLanguages(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("could not fetch contest configuration options: %w", err)
@@ -112,20 +100,20 @@ func (r *ContestRepository) FetchContestConfigurationOptions(ctx context.Context
 		return nil, fmt.Errorf("could not fetch contest configuration options: %w", err)
 	}
 
-	options := contestquery.FetchContestConfigurationOptionsResponse{
-		Languages:  make([]contestquery.Language, len(langs)),
-		Activities: make([]contestquery.Activity, len(acts)),
+	options := query.FetchContestConfigurationOptionsResponse{
+		Languages:  make([]query.Language, len(langs)),
+		Activities: make([]query.Activity, len(acts)),
 	}
 
 	for i, l := range langs {
-		options.Languages[i] = contestquery.Language{
+		options.Languages[i] = query.Language{
 			Code: l.Code,
 			Name: l.Name,
 		}
 	}
 
 	for i, a := range acts {
-		options.Activities[i] = contestquery.Activity{
+		options.Activities[i] = query.Activity{
 			ID:      a.ID,
 			Name:    a.Name,
 			Default: a.Default,
@@ -135,11 +123,11 @@ func (r *ContestRepository) FetchContestConfigurationOptions(ctx context.Context
 	return &options, err
 }
 
-func (r *ContestRepository) FindLatestOfficial(ctx context.Context) (*contestquery.ContestView, error) {
+func (r *Repository) FindLatestOfficial(ctx context.Context) (*query.ContestView, error) {
 	contest, err := r.q.FindLatestOfficialContest(ctx)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return nil, contestquery.ErrNotFound
+			return nil, query.ErrNotFound
 		}
 
 		return nil, fmt.Errorf("could not fetch contest: %w", err)
@@ -150,15 +138,15 @@ func (r *ContestRepository) FindLatestOfficial(ctx context.Context) (*contestque
 		return nil, fmt.Errorf("could not fetch contest: %w", err)
 	}
 
-	acts := make([]contestquery.Activity, len(activities))
+	acts := make([]query.Activity, len(activities))
 	for i, a := range activities {
-		acts[i] = contestquery.Activity{
+		acts[i] = query.Activity{
 			ID:   a.ID,
 			Name: a.Name,
 		}
 	}
 
-	langs := []contestquery.Language{}
+	langs := []query.Language{}
 
 	if len(contest.LanguageCodeAllowList) > 0 {
 		languages, err := r.q.ListLanguagesForContest(ctx, contest.ID)
@@ -166,22 +154,22 @@ func (r *ContestRepository) FindLatestOfficial(ctx context.Context) (*contestque
 			return nil, fmt.Errorf("could not fetch contest: %w", err)
 		}
 
-		langs = make([]contestquery.Language, len(languages))
+		langs = make([]query.Language, len(languages))
 		for i, a := range languages {
-			langs[i] = contestquery.Language{
+			langs[i] = query.Language{
 				Code: a.Code,
 				Name: a.Name,
 			}
 		}
 	}
 
-	return &contestquery.ContestView{
+	return &query.ContestView{
 		ID:                   contest.ID,
 		ContestStart:         contest.ContestStart,
 		ContestEnd:           contest.ContestEnd,
 		RegistrationEnd:      contest.RegistrationEnd,
 		Title:                contest.Title,
-		Description:          NewStringFromNullString(contest.Description),
+		Description:          postgres.NewStringFromNullString(contest.Description),
 		OwnerUserID:          contest.OwnerUserID,
 		OwnerUserDisplayName: contest.OwnerUserDisplayName,
 		Official:             contest.Official,
@@ -194,14 +182,14 @@ func (r *ContestRepository) FindLatestOfficial(ctx context.Context) (*contestque
 	}, nil
 }
 
-func (r *ContestRepository) FindByID(ctx context.Context, req *contestquery.FindByIDRequest) (*contestquery.ContestView, error) {
-	contest, err := r.q.FindContestById(ctx, FindContestByIdParams{
+func (r *Repository) FindByID(ctx context.Context, req *query.FindByIDRequest) (*query.ContestView, error) {
+	contest, err := r.q.FindContestById(ctx, postgres.FindContestByIdParams{
 		ID:             req.ID,
 		IncludeDeleted: req.IncludeDeleted,
 	})
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return nil, contestquery.ErrNotFound
+			return nil, query.ErrNotFound
 		}
 
 		return nil, fmt.Errorf("could not fetch contest: %w", err)
@@ -212,15 +200,15 @@ func (r *ContestRepository) FindByID(ctx context.Context, req *contestquery.Find
 		return nil, fmt.Errorf("could not fetch contest: %w", err)
 	}
 
-	acts := make([]contestquery.Activity, len(activities))
+	acts := make([]query.Activity, len(activities))
 	for i, a := range activities {
-		acts[i] = contestquery.Activity{
+		acts[i] = query.Activity{
 			ID:   a.ID,
 			Name: a.Name,
 		}
 	}
 
-	langs := []contestquery.Language{}
+	langs := []query.Language{}
 
 	if len(contest.LanguageCodeAllowList) > 0 {
 		languages, err := r.q.ListLanguagesForContest(ctx, contest.ID)
@@ -228,22 +216,22 @@ func (r *ContestRepository) FindByID(ctx context.Context, req *contestquery.Find
 			return nil, fmt.Errorf("could not fetch contest: %w", err)
 		}
 
-		langs = make([]contestquery.Language, len(languages))
+		langs = make([]query.Language, len(languages))
 		for i, a := range languages {
-			langs[i] = contestquery.Language{
+			langs[i] = query.Language{
 				Code: a.Code,
 				Name: a.Name,
 			}
 		}
 	}
 
-	return &contestquery.ContestView{
+	return &query.ContestView{
 		ID:                   contest.ID,
 		ContestStart:         contest.ContestStart,
 		ContestEnd:           contest.ContestEnd,
 		RegistrationEnd:      contest.RegistrationEnd,
 		Title:                contest.Title,
-		Description:          NewStringFromNullString(contest.Description),
+		Description:          postgres.NewStringFromNullString(contest.Description),
 		OwnerUserID:          contest.OwnerUserID,
 		OwnerUserDisplayName: contest.OwnerUserDisplayName,
 		Official:             contest.Official,
@@ -256,7 +244,7 @@ func (r *ContestRepository) FindByID(ctx context.Context, req *contestquery.Find
 	}, nil
 }
 
-func (r *ContestRepository) ListContests(ctx context.Context, req *contestquery.ContestListRequest) (*contestquery.ContestListResponse, error) {
+func (r *Repository) ListContests(ctx context.Context, req *query.ContestListRequest) (*query.ContestListResponse, error) {
 	tx, err := r.psql.BeginTx(ctx, nil)
 	if err != nil {
 		return nil, fmt.Errorf("could not list contests: %w", err)
@@ -264,7 +252,7 @@ func (r *ContestRepository) ListContests(ctx context.Context, req *contestquery.
 
 	qtx := r.q.WithTx(tx)
 
-	meta, err := qtx.ContestsMetadata(ctx, ContestsMetadataParams{
+	meta, err := qtx.ContestsMetadata(ctx, postgres.ContestsMetadataParams{
 		IncludeDeleted: req.IncludeDeleted,
 		UserID:         req.UserID,
 		Official:       req.OfficialOnly,
@@ -274,7 +262,7 @@ func (r *ContestRepository) ListContests(ctx context.Context, req *contestquery.
 		return nil, fmt.Errorf("could not lists contests: %w", err)
 	}
 
-	contests, err := qtx.ListContests(ctx, ListContestsParams{
+	contests, err := qtx.ListContests(ctx, postgres.ListContestsParams{
 		StartFrom:      int32(req.Page * req.PageSize),
 		PageSize:       int32(req.PageSize),
 		IncludeDeleted: req.IncludeDeleted,
@@ -291,15 +279,15 @@ func (r *ContestRepository) ListContests(ctx context.Context, req *contestquery.
 		return nil, fmt.Errorf("could not list contests: %w", err)
 	}
 
-	res := make([]contestquery.Contest, len(contests))
+	res := make([]query.Contest, len(contests))
 	for i, c := range contests {
-		res[i] = contestquery.Contest{
+		res[i] = query.Contest{
 			ID:                      c.ID,
 			ContestStart:            c.ContestStart,
 			ContestEnd:              c.ContestEnd,
 			RegistrationEnd:         c.RegistrationEnd,
 			Title:                   c.Title,
-			Description:             NewStringFromNullString(c.Description),
+			Description:             postgres.NewStringFromNullString(c.Description),
 			OwnerUserID:             c.OwnerUserID,
 			OwnerUserDisplayName:    c.OwnerUserDisplayName,
 			Official:                c.Official,
@@ -317,21 +305,21 @@ func (r *ContestRepository) ListContests(ctx context.Context, req *contestquery.
 		nextPageToken = fmt.Sprint(req.Page + 1)
 	}
 
-	return &contestquery.ContestListResponse{
+	return &query.ContestListResponse{
 		Contests:      res,
 		TotalSize:     int(meta.TotalSize),
 		NextPageToken: nextPageToken,
 	}, nil
 }
 
-func (r *ContestRepository) FindRegistrationForUser(ctx context.Context, req *contestquery.FindRegistrationForUserRequest) (*contestquery.ContestRegistration, error) {
-	reg, err := r.q.FindContestRegistrationForUser(ctx, FindContestRegistrationForUserParams{
+func (r *Repository) FindRegistrationForUser(ctx context.Context, req *query.FindRegistrationForUserRequest) (*query.ContestRegistration, error) {
+	reg, err := r.q.FindContestRegistrationForUser(ctx, postgres.FindContestRegistrationForUserParams{
 		UserID:    req.UserID,
 		ContestID: req.ContestID,
 	})
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return nil, contestquery.ErrNotFound
+			return nil, query.ErrNotFound
 		}
 
 		return nil, fmt.Errorf("could not fetch contest registration: %w", err)
@@ -342,28 +330,28 @@ func (r *ContestRepository) FindRegistrationForUser(ctx context.Context, req *co
 		return nil, fmt.Errorf("could not fetch contest registrations: %w", err)
 	}
 
-	registrationLanguages := make([]contestquery.Language, len(reg.LanguageCodes))
+	registrationLanguages := make([]query.Language, len(reg.LanguageCodes))
 	for i, it := range languages {
-		registrationLanguages[i] = contestquery.Language{
+		registrationLanguages[i] = query.Language{
 			Code: it.Code,
 			Name: it.Name,
 		}
 	}
 
-	contest := &contestquery.ContestView{
+	contest := &query.ContestView{
 		ID:                reg.ContestID,
 		ContestStart:      reg.ContestStart,
 		ContestEnd:        reg.ContestEnd,
 		RegistrationEnd:   reg.RegistrationEnd,
 		Title:             reg.Title,
-		Description:       NewStringFromNullString(reg.Description),
+		Description:       postgres.NewStringFromNullString(reg.Description),
 		Private:           reg.Private,
 		Official:          reg.Official,
-		AllowedLanguages:  make([]contestquery.Language, 0),
-		AllowedActivities: make([]contestquery.Activity, 0),
+		AllowedLanguages:  make([]query.Language, 0),
+		AllowedActivities: make([]query.Activity, 0),
 	}
 
-	return &contestquery.ContestRegistration{
+	return &query.ContestRegistration{
 		ID:              reg.ID,
 		ContestID:       reg.ContestID,
 		UserID:          req.UserID,
@@ -373,27 +361,27 @@ func (r *ContestRepository) FindRegistrationForUser(ctx context.Context, req *co
 	}, nil
 }
 
-func (r *ContestRepository) FetchContestLeaderboard(ctx context.Context, req *contestquery.FetchContestLeaderboardRequest) (*contestquery.Leaderboard, error) {
-	_, err := r.q.FindContestById(ctx, FindContestByIdParams{ID: req.ContestID, IncludeDeleted: false})
+func (r *Repository) FetchContestLeaderboard(ctx context.Context, req *query.FetchContestLeaderboardRequest) (*query.Leaderboard, error) {
+	_, err := r.q.FindContestById(ctx, postgres.FindContestByIdParams{ID: req.ContestID, IncludeDeleted: false})
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return nil, contestquery.ErrNotFound
+			return nil, query.ErrNotFound
 		}
 
 		return nil, fmt.Errorf("could not fetch leaderboard for contest: %w", err)
 	}
 
-	entries, err := r.q.LeaderboardForContest(ctx, LeaderboardForContestParams{
+	entries, err := r.q.LeaderboardForContest(ctx, postgres.LeaderboardForContestParams{
 		ContestID:    req.ContestID,
-		LanguageCode: NewNullString(req.LanguageCode),
-		ActivityID:   NewNullInt32(req.ActivityID),
+		LanguageCode: postgres.NewNullString(req.LanguageCode),
+		ActivityID:   postgres.NewNullInt32(req.ActivityID),
 		StartFrom:    int32(req.Page * req.PageSize),
 		PageSize:     int32(req.PageSize),
 	})
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return &contestquery.Leaderboard{
-				Entries:       []contestquery.LeaderboardEntry{},
+			return &query.Leaderboard{
+				Entries:       []query.LeaderboardEntry{},
 				TotalSize:     0,
 				NextPageToken: "",
 			}, nil
@@ -402,9 +390,9 @@ func (r *ContestRepository) FetchContestLeaderboard(ctx context.Context, req *co
 		return nil, fmt.Errorf("could not fetch leaderboard for contest: %w", err)
 	}
 
-	res := make([]contestquery.LeaderboardEntry, len(entries))
+	res := make([]query.LeaderboardEntry, len(entries))
 	for i, e := range entries {
-		res[i] = contestquery.LeaderboardEntry{
+		res[i] = query.LeaderboardEntry{
 			Rank:            int(e.Rank),
 			UserID:          e.UserID,
 			UserDisplayName: e.UserDisplayName,
@@ -422,23 +410,23 @@ func (r *ContestRepository) FetchContestLeaderboard(ctx context.Context, req *co
 		nextPageToken = fmt.Sprint(req.Page + 1)
 	}
 
-	return &contestquery.Leaderboard{
+	return &query.Leaderboard{
 		Entries:       res,
 		TotalSize:     int(totalSize),
 		NextPageToken: nextPageToken,
 	}, nil
 }
 
-func (r *ContestRepository) FetchOngoingContestRegistrations(ctx context.Context, req *contestquery.FetchOngoingContestRegistrationsRequest) (*contestquery.ContestRegistrations, error) {
-	regs, err := r.q.FindOngoingContestRegistrationForUser(ctx, FindOngoingContestRegistrationForUserParams{
+func (r *Repository) FetchOngoingContestRegistrations(ctx context.Context, req *query.FetchOngoingContestRegistrationsRequest) (*query.ContestRegistrations, error) {
+	regs, err := r.q.FindOngoingContestRegistrationForUser(ctx, postgres.FindOngoingContestRegistrationForUserParams{
 		UserID: req.UserID,
 		Now:    req.Now,
 	})
 
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return &contestquery.ContestRegistrations{
-				Registrations: []contestquery.ContestRegistration{},
+			return &query.ContestRegistrations{
+				Registrations: []query.ContestRegistration{},
 				TotalSize:     0,
 				NextPageToken: "",
 			}, nil
@@ -466,45 +454,45 @@ func (r *ContestRepository) FetchOngoingContestRegistrations(ctx context.Context
 		acts[a.ID] = a.Name
 	}
 
-	res := &contestquery.ContestRegistrations{
-		Registrations: make([]contestquery.ContestRegistration, len(regs)),
+	res := &query.ContestRegistrations{
+		Registrations: make([]query.ContestRegistration, len(regs)),
 		TotalSize:     len(regs),
 		NextPageToken: "",
 	}
 	for i, r := range regs {
 		r := r
 
-		contest := &contestquery.ContestView{
+		contest := &query.ContestView{
 			ID:                r.ContestID,
 			ContestStart:      r.ContestStart,
 			ContestEnd:        r.ContestEnd,
 			RegistrationEnd:   r.RegistrationEnd,
 			Title:             r.Title,
-			Description:       NewStringFromNullString(r.Description),
+			Description:       postgres.NewStringFromNullString(r.Description),
 			Private:           r.Private,
 			Official:          r.Official,
-			AllowedLanguages:  make([]contestquery.Language, 0),
-			AllowedActivities: make([]contestquery.Activity, len(r.ActivityTypeIDAllowList)),
+			AllowedLanguages:  make([]query.Language, 0),
+			AllowedActivities: make([]query.Activity, len(r.ActivityTypeIDAllowList)),
 		}
 
 		for i, a := range r.ActivityTypeIDAllowList {
-			contest.AllowedActivities[i] = contestquery.Activity{
+			contest.AllowedActivities[i] = query.Activity{
 				ID:   a,
 				Name: acts[a],
 			}
 		}
 
-		reg := contestquery.ContestRegistration{
+		reg := query.ContestRegistration{
 			ID:              r.ID,
 			ContestID:       r.ContestID,
 			UserID:          r.UserID,
 			UserDisplayName: r.UserDisplayName,
-			Languages:       make([]contestquery.Language, len(r.LanguageCodes)),
+			Languages:       make([]query.Language, len(r.LanguageCodes)),
 			Contest:         contest,
 		}
 
 		for i, code := range r.LanguageCodes {
-			reg.Languages[i] = contestquery.Language{
+			reg.Languages[i] = query.Language{
 				Code: code,
 				Name: langs[code],
 			}
@@ -516,21 +504,21 @@ func (r *ContestRepository) FetchOngoingContestRegistrations(ctx context.Context
 	return res, nil
 }
 
-func (r *ContestRepository) FindScoresForRegistration(ctx context.Context, req *profilequery.ContestProfileRequest) ([]profilequery.Score, error) {
-	rows, err := r.q.FetchScoresForContestProfile(ctx, FetchScoresForContestProfileParams{
+func (r *Repository) FindScoresForRegistration(ctx context.Context, req *query.ContestProfileRequest) ([]query.Score, error) {
+	rows, err := r.q.FetchScoresForContestProfile(ctx, postgres.FetchScoresForContestProfileParams{
 		ContestID: req.ContestID,
 		UserID:    req.UserID,
 	})
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return nil, profilequery.ErrNotFound
+			return nil, query.ErrNotFound
 		}
 		return nil, fmt.Errorf("could not fetch scores: %w", err)
 	}
 
-	scores := make([]profilequery.Score, len(rows))
+	scores := make([]query.Score, len(rows))
 	for i, row := range rows {
-		scores[i] = profilequery.Score{
+		scores[i] = query.Score{
 			LanguageCode: row.LanguageCode,
 			Score:        row.Score,
 		}
@@ -539,21 +527,21 @@ func (r *ContestRepository) FindScoresForRegistration(ctx context.Context, req *
 	return scores, nil
 }
 
-func (r *ContestRepository) ReadingActivityForContestUser(ctx context.Context, req *profilequery.ContestProfileRequest) ([]profilequery.ReadingActivityRow, error) {
-	rows, err := r.q.ReadingActivityPerLanguageForContestProfile(ctx, ReadingActivityPerLanguageForContestProfileParams{
+func (r *Repository) ReadingActivityForContestUser(ctx context.Context, req *query.ContestProfileRequest) ([]query.ReadingActivityRow, error) {
+	rows, err := r.q.ReadingActivityPerLanguageForContestProfile(ctx, postgres.ReadingActivityPerLanguageForContestProfileParams{
 		ContestID: req.ContestID,
 		UserID:    req.UserID,
 	})
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return []profilequery.ReadingActivityRow{}, nil
+			return []query.ReadingActivityRow{}, nil
 		}
 		return nil, fmt.Errorf("could not fetch reading activity: %w", err)
 	}
 
-	res := make([]profilequery.ReadingActivityRow, len(rows))
+	res := make([]query.ReadingActivityRow, len(rows))
 	for i, it := range rows {
-		res[i] = profilequery.ReadingActivityRow{
+		res[i] = query.ReadingActivityRow{
 			Date:         it.Date,
 			LanguageCode: it.LanguageCode,
 			Score:        it.Score,
@@ -563,21 +551,21 @@ func (r *ContestRepository) ReadingActivityForContestUser(ctx context.Context, r
 	return res, nil
 }
 
-func (r *ContestRepository) YearlyActivityForUser(ctx context.Context, req *profilequery.YearlyActivityForUserRequest) ([]profilequery.UserActivityScore, error) {
-	rows, err := r.q.YearlyActivityForUser(ctx, YearlyActivityForUserParams{
+func (r *Repository) YearlyActivityForUser(ctx context.Context, req *query.YearlyActivityForUserRequest) ([]query.UserActivityScore, error) {
+	rows, err := r.q.YearlyActivityForUser(ctx, postgres.YearlyActivityForUserParams{
 		UserID: req.UserID,
 		Year:   int16(req.Year),
 	})
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return []profilequery.UserActivityScore{}, nil
+			return []query.UserActivityScore{}, nil
 		}
 		return nil, fmt.Errorf("could not fetch activity summary: %w", err)
 	}
 
-	res := make([]profilequery.UserActivityScore, len(rows))
+	res := make([]query.UserActivityScore, len(rows))
 	for i, it := range rows {
-		res[i] = profilequery.UserActivityScore{
+		res[i] = query.UserActivityScore{
 			Date:    it.Date,
 			Score:   it.Score,
 			Updates: int(it.UpdateCount),
@@ -587,22 +575,22 @@ func (r *ContestRepository) YearlyActivityForUser(ctx context.Context, req *prof
 	return res, nil
 }
 
-func (r *ContestRepository) YearlyScoresForUser(ctx context.Context, req *profilequery.YearlyScoresForUserRequest) ([]profilequery.Score, error) {
-	rows, err := r.q.FetchScoresForProfile(ctx, FetchScoresForProfileParams{
+func (r *Repository) YearlyScoresForUser(ctx context.Context, req *query.YearlyScoresForUserRequest) ([]query.Score, error) {
+	rows, err := r.q.FetchScoresForProfile(ctx, postgres.FetchScoresForProfileParams{
 		UserID: req.UserID,
 		Year:   int16(req.Year),
 	})
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return []profilequery.Score{}, nil
+			return []query.Score{}, nil
 		}
 		return nil, fmt.Errorf("could not fetch scores: %w", err)
 	}
 
-	scores := make([]profilequery.Score, len(rows))
+	scores := make([]query.Score, len(rows))
 	for i, row := range rows {
 		row := row
-		scores[i] = profilequery.Score{
+		scores[i] = query.Score{
 			LanguageCode: row.LanguageCode,
 			LanguageName: &row.LanguageName,
 			Score:        row.Score,
@@ -612,16 +600,16 @@ func (r *ContestRepository) YearlyScoresForUser(ctx context.Context, req *profil
 	return scores, nil
 }
 
-func (r *ContestRepository) YearlyContestRegistrations(ctx context.Context, req *contestquery.YearlyContestRegistrationsRequest) (*contestquery.ContestRegistrations, error) {
-	regs, err := r.q.FindYearlyContestRegistrationForUser(ctx, FindYearlyContestRegistrationForUserParams{
+func (r *Repository) YearlyContestRegistrations(ctx context.Context, req *query.YearlyContestRegistrationsRequest) (*query.ContestRegistrations, error) {
+	regs, err := r.q.FindYearlyContestRegistrationForUser(ctx, postgres.FindYearlyContestRegistrationForUserParams{
 		UserID:         req.UserID,
 		Year:           int32(req.Year),
 		IncludePrivate: req.IncludePrivate,
 	})
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return &contestquery.ContestRegistrations{
-				Registrations: []contestquery.ContestRegistration{},
+			return &query.ContestRegistrations{
+				Registrations: []query.ContestRegistration{},
 				TotalSize:     0,
 				NextPageToken: "",
 			}, nil
@@ -649,8 +637,8 @@ func (r *ContestRepository) YearlyContestRegistrations(ctx context.Context, req 
 		acts[a.ID] = a.Name
 	}
 
-	res := &contestquery.ContestRegistrations{
-		Registrations: make([]contestquery.ContestRegistration, len(regs)),
+	res := &query.ContestRegistrations{
+		Registrations: make([]query.ContestRegistration, len(regs)),
 		TotalSize:     len(regs),
 		NextPageToken: "",
 	}
@@ -658,37 +646,37 @@ func (r *ContestRepository) YearlyContestRegistrations(ctx context.Context, req 
 		r := r
 
 		// TODO: refactor this out to a mapper
-		contest := &contestquery.ContestView{
+		contest := &query.ContestView{
 			ID:                r.ContestID,
 			ContestStart:      r.ContestStart,
 			ContestEnd:        r.ContestEnd,
 			RegistrationEnd:   r.RegistrationEnd,
 			Title:             r.Title,
-			Description:       NewStringFromNullString(r.Description),
+			Description:       postgres.NewStringFromNullString(r.Description),
 			Private:           r.Private,
 			Official:          r.Official,
-			AllowedLanguages:  make([]contestquery.Language, 0),
-			AllowedActivities: make([]contestquery.Activity, len(r.ActivityTypeIDAllowList)),
+			AllowedLanguages:  make([]query.Language, 0),
+			AllowedActivities: make([]query.Activity, len(r.ActivityTypeIDAllowList)),
 		}
 
 		for i, a := range r.ActivityTypeIDAllowList {
-			contest.AllowedActivities[i] = contestquery.Activity{
+			contest.AllowedActivities[i] = query.Activity{
 				ID:   a,
 				Name: acts[a],
 			}
 		}
 
-		reg := contestquery.ContestRegistration{
+		reg := query.ContestRegistration{
 			ID:              r.ID,
 			ContestID:       r.ContestID,
 			UserID:          r.UserID,
 			UserDisplayName: r.UserDisplayName,
-			Languages:       make([]contestquery.Language, len(r.LanguageCodes)),
+			Languages:       make([]query.Language, len(r.LanguageCodes)),
 			Contest:         contest,
 		}
 
 		for i, code := range r.LanguageCodes {
-			reg.Languages[i] = contestquery.Language{
+			reg.Languages[i] = query.Language{
 				Code: code,
 				Name: langs[code],
 			}
@@ -700,31 +688,31 @@ func (r *ContestRepository) YearlyContestRegistrations(ctx context.Context, req 
 	return res, nil
 }
 
-func (r *ContestRepository) YearlyActivitySplitForUser(ctx context.Context, req *profilequery.YearlyActivitySplitForUserRequest) (*profilequery.YearlyActivitySplitForUserResponse, error) {
-	rows, err := r.q.YearlyActivitySplitForUser(ctx, YearlyActivitySplitForUserParams{
+func (r *Repository) YearlyActivitySplitForUser(ctx context.Context, req *query.YearlyActivitySplitForUserRequest) (*query.YearlyActivitySplitForUserResponse, error) {
+	rows, err := r.q.YearlyActivitySplitForUser(ctx, postgres.YearlyActivitySplitForUserParams{
 		UserID: req.UserID,
 		Year:   int16(req.Year),
 	})
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return &profilequery.YearlyActivitySplitForUserResponse{
-				Activities: []profilequery.ActivityScore{},
+			return &query.YearlyActivitySplitForUserResponse{
+				Activities: []query.ActivityScore{},
 			}, nil
 		}
 		return nil, fmt.Errorf("could not fetch activity split: %w", err)
 	}
 
-	scores := make([]profilequery.ActivityScore, len(rows))
+	scores := make([]query.ActivityScore, len(rows))
 	for i, row := range rows {
 		row := row
-		scores[i] = profilequery.ActivityScore{
+		scores[i] = query.ActivityScore{
 			ActivityID:   int(row.LogActivityID),
 			ActivityName: row.LogActivityName,
 			Score:        row.Score,
 		}
 	}
 
-	return &profilequery.YearlyActivitySplitForUserResponse{
+	return &query.YearlyActivitySplitForUserResponse{
 		Activities: scores,
 	}, nil
 }

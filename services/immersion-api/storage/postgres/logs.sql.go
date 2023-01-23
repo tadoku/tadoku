@@ -415,3 +415,51 @@ func (q *Queries) YearlyActivityForUser(ctx context.Context, arg YearlyActivityF
 	}
 	return items, nil
 }
+
+const yearlyActivitySplitForUser = `-- name: YearlyActivitySplitForUser :many
+select
+  sum(logs.score)::real as score,
+  logs.log_activity_id,
+  log_activities.name as log_activity_name
+from logs
+inner join log_activities on (log_activities.id = logs.log_activity_id)
+where
+  user_id = $1
+  and year = $2
+group by logs.log_activity_id, log_activities.name
+order by score desc
+`
+
+type YearlyActivitySplitForUserParams struct {
+	UserID uuid.UUID
+	Year   int16
+}
+
+type YearlyActivitySplitForUserRow struct {
+	Score           float32
+	LogActivityID   int16
+	LogActivityName string
+}
+
+func (q *Queries) YearlyActivitySplitForUser(ctx context.Context, arg YearlyActivitySplitForUserParams) ([]YearlyActivitySplitForUserRow, error) {
+	rows, err := q.db.QueryContext(ctx, yearlyActivitySplitForUser, arg.UserID, arg.Year)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []YearlyActivitySplitForUserRow
+	for rows.Next() {
+		var i YearlyActivitySplitForUserRow
+		if err := rows.Scan(&i.Score, &i.LogActivityID, &i.LogActivityName); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}

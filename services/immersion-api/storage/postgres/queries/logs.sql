@@ -133,3 +133,16 @@ where
   and deleted_at is null
 group by language_code, languages.name
 order by score desc;
+
+-- name: YearlyActivitySplitForUser :many
+select
+  sum(logs.score)::real as score,
+  logs.log_activity_id,
+  log_activities.name as log_activity_name
+from logs
+inner join log_activities on (log_activities.id = logs.log_activity_id)
+where
+  user_id = sqlc.arg('user_id')
+  and year = sqlc.arg('year')
+group by logs.log_activity_id, log_activities.name
+order by score desc;

@@ -31,7 +31,7 @@ type Repository interface {
 
 	// profile
 	FindScoresForRegistration(context.Context, *ContestProfileRequest) ([]Score, error)
-	ReadingActivityForContestUser(context.Context, *ContestProfileRequest) ([]ReadingActivityRow, error)
+	ActivityForContestUser(context.Context, *ContestProfileRequest) ([]ActivityForContestUserRow, error)
 	YearlyActivityForUser(context.Context, *YearlyActivityForUserRequest) ([]UserActivityScore, error)
 	YearlyScoresForUser(context.Context, *YearlyScoresForUserRequest) ([]Score, error)
 	YearlyActivitySplitForUser(context.Context, *YearlyActivitySplitForUserRequest) (*YearlyActivitySplitForUserResponse, error)
@@ -56,7 +56,7 @@ type Service interface {
 	// profile
 	ContestProfile(context.Context, *ContestProfileRequest) (*ContestProfileResponse, error)
 	// TODO: Shouldn't include reading prefix
-	ReadingActivityForContestUser(context.Context, *ContestProfileRequest) (*ReadingActivityResponse, error)
+	ActivityForContestUser(context.Context, *ContestProfileRequest) (*ActivityForContestUserResponse, error)
 	FetchUserProfile(context.Context, uuid.UUID) (*UserProfile, error)
 	YearlyActivityForUser(context.Context, *YearlyActivityForUserRequest) (*YearlyActivityForUserResponse, error)
 	YearlyScoresForUser(context.Context, *YearlyScoresForUserRequest) (*YearlyScoresForUserResponse, error)

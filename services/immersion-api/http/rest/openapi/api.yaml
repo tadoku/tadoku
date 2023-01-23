@@ -236,10 +236,10 @@ paths:
                 $ref: '#/components/schemas/ContestProfileScores'
         '404':
           description: not found
-  /contests/{id}/profile/{user_id}/reading-activity:
+  /contests/{id}/profile/{user_id}/activity:
     get:
-      summary: Fetches the reading activity of a user profile in a contest
-      operationId: contestProfileFetchReadingActivity
+      summary: Fetches the activity of a user profile in a contest
+      operationId: contestProfileFetchActivity
       tags: [contests_profile]
       parameters:
         - name: id
@@ -260,7 +260,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ContestProfileReadingActivity'
+                $ref: '#/components/schemas/ContestProfileActivity'
         '404':
           description: not found
   /contests/{id}/profile/{user_id}/logs:
@@ -967,7 +967,7 @@ components:
           properties:
             registration:
               $ref: "#/components/schemas/ContestRegistration"
-    ContestProfileReadingActivity:
+    ContestProfileActivity:
       type: object
       required:
         - rows
@@ -975,8 +975,8 @@ components:
         rows:
           type: array
           items:
-            $ref: "#/components/schemas/ReadingActivityRow"
-    ReadingActivityRow:
+            $ref: "#/components/schemas/ContestProfileActivityRow"
+    ContestProfileActivityRow:
       type: object
       required:
         - date

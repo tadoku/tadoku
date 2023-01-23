@@ -84,9 +84,16 @@ type ContestConfigurationOptions struct {
 	Languages              []Language `json:"languages"`
 }
 
-// ContestProfileReadingActivity defines model for ContestProfileReadingActivity.
-type ContestProfileReadingActivity struct {
-	Rows []ReadingActivityRow `json:"rows"`
+// ContestProfileActivity defines model for ContestProfileActivity.
+type ContestProfileActivity struct {
+	Rows []ContestProfileActivityRow `json:"rows"`
+}
+
+// ContestProfileActivityRow defines model for ContestProfileActivityRow.
+type ContestProfileActivityRow struct {
+	Date         openapi_types.Date `json:"date"`
+	LanguageCode string             `json:"language_code"`
+	Score        float32            `json:"score"`
 }
 
 // ContestProfileScores defines model for ContestProfileScores.
@@ -227,13 +234,6 @@ type ProfileScores struct {
 	Scores       Scores  `json:"scores"`
 }
 
-// ReadingActivityRow defines model for ReadingActivityRow.
-type ReadingActivityRow struct {
-	Date         openapi_types.Date `json:"date"`
-	LanguageCode string             `json:"language_code"`
-	Score        float32            `json:"score"`
-}
-
 // Score defines model for Score.
 type Score struct {
 	LanguageCode string  `json:"language_code"`
@@ -361,12 +361,12 @@ type ServerInterface interface {
 	// Fetches the leaderboard for a contest
 	// (GET /contests/{id}/leaderboard)
 	ContestFetchLeaderboard(ctx echo.Context, id openapi_types.UUID, params ContestFetchLeaderboardParams) error
+	// Fetches the activity of a user profile in a contest
+	// (GET /contests/{id}/profile/{user_id}/activity)
+	ContestProfileFetchActivity(ctx echo.Context, id openapi_types.UUID, userId openapi_types.UUID) error
 	// Lists the logs of a user profile in a contest
 	// (GET /contests/{id}/profile/{user_id}/logs)
 	ContestProfileListLogs(ctx echo.Context, id openapi_types.UUID, userId openapi_types.UUID, params ContestProfileListLogsParams) error
-	// Fetches the reading activity of a user profile in a contest
-	// (GET /contests/{id}/profile/{user_id}/reading-activity)
-	ContestProfileFetchReadingActivity(ctx echo.Context, id openapi_types.UUID, userId openapi_types.UUID) error
 	// Fetches the scores of a user profile in a contest
 	// (GET /contests/{id}/profile/{user_id}/scores)
 	ContestProfileFetchScores(ctx echo.Context, id openapi_types.UUID, userId openapi_types.UUID) error
@@ -562,6 +562,30 @@ func (w *ServerInterfaceWrapper) ContestFetchLeaderboard(ctx echo.Context) error
 	return err
 }
 
+// ContestProfileFetchActivity converts echo context to params.
+func (w *ServerInterfaceWrapper) ContestProfileFetchActivity(ctx echo.Context) error {
+	var err error
+	// ------------- Path parameter "id" -------------
+	var id openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithLocation("simple", false, "id", runtime.ParamLocationPath, ctx.Param("id"), &id)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter id: %s", err))
+	}
+
+	// ------------- Path parameter "user_id" -------------
+	var userId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithLocation("simple", false, "user_id", runtime.ParamLocationPath, ctx.Param("user_id"), &userId)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter user_id: %s", err))
+	}
+
+	// Invoke the callback with all the unmarshalled arguments
+	err = w.Handler.ContestProfileFetchActivity(ctx, id, userId)
+	return err
+}
+
 // ContestProfileListLogs converts echo context to params.
 func (w *ServerInterfaceWrapper) ContestProfileListLogs(ctx echo.Context) error {
 	var err error
@@ -606,30 +630,6 @@ func (w *ServerInterfaceWrapper) ContestProfileListLogs(ctx echo.Context) error 
 
 	// Invoke the callback with all the unmarshalled arguments
 	err = w.Handler.ContestProfileListLogs(ctx, id, userId, params)
-	return err
-}
-
-// ContestProfileFetchReadingActivity converts echo context to params.
-func (w *ServerInterfaceWrapper) ContestProfileFetchReadingActivity(ctx echo.Context) error {
-	var err error
-	// ------------- Path parameter "id" -------------
-	var id openapi_types.UUID
-
-	err = runtime.BindStyledParameterWithLocation("simple", false, "id", runtime.ParamLocationPath, ctx.Param("id"), &id)
-	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter id: %s", err))
-	}
-
-	// ------------- Path parameter "user_id" -------------
-	var userId openapi_types.UUID
-
-	err = runtime.BindStyledParameterWithLocation("simple", false, "user_id", runtime.ParamLocationPath, ctx.Param("user_id"), &userId)
-	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter user_id: %s", err))
-	}
-
-	// Invoke the callback with all the unmarshalled arguments
-	err = w.Handler.ContestProfileFetchReadingActivity(ctx, id, userId)
 	return err
 }
 
@@ -887,8 +887,8 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 	router.GET(baseURL+"/contests/ongoing-registrations", wrapper.ContestFindOngoingRegistrations)
 	router.GET(baseURL+"/contests/:id", wrapper.ContestFindByID)
 	router.GET(baseURL+"/contests/:id/leaderboard", wrapper.ContestFetchLeaderboard)
+	router.GET(baseURL+"/contests/:id/profile/:user_id/activity", wrapper.ContestProfileFetchActivity)
 	router.GET(baseURL+"/contests/:id/profile/:user_id/logs", wrapper.ContestProfileListLogs)
-	router.GET(baseURL+"/contests/:id/profile/:user_id/reading-activity", wrapper.ContestProfileFetchReadingActivity)
 	router.GET(baseURL+"/contests/:id/profile/:user_id/scores", wrapper.ContestProfileFetchScores)
 	router.GET(baseURL+"/contests/:id/registration", wrapper.ContestFindRegistration)
 	router.POST(baseURL+"/contests/:id/registration", wrapper.ContestRegistrationUpsert)

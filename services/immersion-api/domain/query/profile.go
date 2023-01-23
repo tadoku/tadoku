@@ -53,23 +53,23 @@ func (s *ServiceImpl) ContestProfile(ctx context.Context, req *ContestProfileReq
 	return response, nil
 }
 
-type ReadingActivityResponse struct {
-	Rows []ReadingActivityRow
+type ActivityForContestUserResponse struct {
+	Rows []ActivityForContestUserRow
 }
 
-type ReadingActivityRow struct {
+type ActivityForContestUserRow struct {
 	Date         time.Time
 	LanguageCode string
 	Score        float32
 }
 
-func (s *ServiceImpl) ReadingActivityForContestUser(ctx context.Context, req *ContestProfileRequest) (*ReadingActivityResponse, error) {
-	rows, err := s.r.ReadingActivityForContestUser(ctx, req)
+func (s *ServiceImpl) ActivityForContestUser(ctx context.Context, req *ContestProfileRequest) (*ActivityForContestUserResponse, error) {
+	rows, err := s.r.ActivityForContestUser(ctx, req)
 	if err != nil {
-		return nil, fmt.Errorf("could not fetch reading activity: %w", err)
+		return nil, fmt.Errorf("could not fetch activity: %w", err)
 	}
 
-	return &ReadingActivityResponse{
+	return &ActivityForContestUserResponse{
 		Rows: rows,
 	}, nil
 }

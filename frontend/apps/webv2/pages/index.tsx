@@ -1,6 +1,8 @@
 import { routes } from '@app/common/routes'
 import { usePostList } from '@app/content/api'
 import { PostBody } from '@app/content/Post'
+import { useYearlyLeaderboard } from '@app/immersion/api'
+import { Leaderboard } from '@app/immersion/Leaderboard'
 import { ArrowLongRightIcon } from '@heroicons/react/20/solid'
 import { BookOpenIcon } from '@heroicons/react/24/solid'
 import { DateTime, Interval } from 'luxon'
@@ -8,19 +10,6 @@ import type { NextPage } from 'next'
 import Link from 'next/link'
 
 interface Props {}
-
-const data = [
-  { rank: '1', user: 'powz', score: 5054.25054 },
-  { rank: '2', user: 'Bijak', score: 3605.23605 },
-  { rank: '3', user: 'ShockOLatte', score: 2518.72518 },
-  { rank: '4', user: 'Ludie', score: 2517.32517 },
-  { rank: '5', user: 'Chamsae', score: 2434.42434 },
-  { rank: '6', user: 'Salome', score: 2107.12107 },
-  { rank: '7', user: 'mmmm', score: 2060.1206 },
-  { rank: '8', user: 'Yaku', score: 1667.21667 },
-  { rank: '9', user: 'Socks', score: 1635.81635 },
-  { rank: '10', user: 'clair', score: 1592.91592 },
-]
 
 const scheduledContests = [
   { name: 'Round 1', startMonth: 1, endDay: 31 },
@@ -53,6 +42,12 @@ const Index: NextPage<Props> = () => {
   const posts = usePostList({ pageSize: 1, page: 0 })
   const now = DateTime.utc()
   const year = now.year
+
+  const leaderboard = useYearlyLeaderboard({
+    year,
+    pageSize: 10,
+    page: 1,
+  })
 
   return (
     <>
@@ -96,59 +91,12 @@ const Index: NextPage<Props> = () => {
                 <ArrowLongRightIcon className="ml-2" />
               </Link>
             </div>
-            <div className="table-container shadow-transparent w-auto">
-              <table className="default shadow-transparent">
-                <thead>
-                  <tr>
-                    <th className="default !pl-4 lg:!pl-7">Rank</th>
-                    <th className="default">Nickname</th>
-                    <th className="default !text-right !pr-4 lg:!pr-7">
-                      Score
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {data.map(u => (
-                    <tr key={u.rank} className="link font-bold">
-                      <td className="link w-10">
-                        <Link
-                          href={`/profile/${u.user}`}
-                          className="reset justify-center"
-                        >
-                          {u.rank}
-                        </Link>
-                      </td>
-                      <td className="link">
-                        <Link
-                          href={`/profile/${u.user}`}
-                          className="reset text-lg"
-                        >
-                          {u.user}
-                        </Link>
-                      </td>
-                      <td className="link">
-                        <Link
-                          href={`/profile/${u.user}`}
-                          className="reset justify-end text-lg !pr-4 lg:!pr-7"
-                        >
-                          {Math.round(u.score * 10) / 10}
-                        </Link>
-                      </td>
-                    </tr>
-                  ))}
-                  {data.length === 0 ? (
-                    <tr>
-                      <td
-                        colSpan={3}
-                        className="default h-32 font-bold text-center text-xl text-slate-400"
-                      >
-                        No partipants yet, be the first to sign up!
-                      </td>
-                    </tr>
-                  ) : null}
-                </tbody>
-              </table>
-            </div>
+            <Leaderboard
+              leaderboard={leaderboard}
+              urlForRow={userId => routes.userProfileStatistics(userId)}
+              embedded={true}
+              emptyMessage={`No participants yet in ${year}, be the first to submit!`}
+            />
           </div>
         </div>
       </div>

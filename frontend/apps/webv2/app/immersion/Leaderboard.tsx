@@ -7,11 +7,18 @@ import { routes } from '@app/common/routes'
 import { formatScore } from '@app/common/format'
 
 interface Props {
-  contestId: string
   leaderboard: UseQueryResult<LeaderboardType>
+  embedded?: boolean
+  emptyMessage?: string
+  urlForRow: (userId: string) => string
 }
 
-export const Leaderboard = ({ contestId, leaderboard }: Props) => {
+export const Leaderboard = ({
+  leaderboard,
+  urlForRow,
+  embedded = false,
+  emptyMessage = 'No partipants yet, be the first to sign up!',
+}: Props) => {
   if (leaderboard.isLoading || leaderboard.isIdle) {
     return <>Loading...</>
   }
@@ -26,13 +33,27 @@ export const Leaderboard = ({ contestId, leaderboard }: Props) => {
 
   return (
     <>
-      <div className="table-container">
+      <div
+        className={`table-container ${embedded ? 'shadow-transparent' : ''}`}
+      >
         <table className="default">
           <thead>
             <tr>
-              <th className="default !text-center">Rank</th>
+              <th
+                className={`default ${
+                  embedded ? '!pl-4 lg:!pl-7' : '!text-center'
+                }`}
+              >
+                Rank
+              </th>
               <th className="default">User</th>
-              <th className="default !text-right">Score</th>
+              <th
+                className={`default !text-right ${
+                  embedded ? '!pr-4 lg:!pr-7' : ''
+                }`}
+              >
+                Score
+              </th>
             </tr>
           </thead>
           <tbody>
@@ -40,24 +61,23 @@ export const Leaderboard = ({ contestId, leaderboard }: Props) => {
               <tr key={it.rank} className="link font-bold">
                 <td className="link w-10">
                   <Link
-                    href={routes.contestUserProfile(contestId, it.user_id)}
+                    href={urlForRow(it.user_id)}
                     className="reset justify-center text-lg"
                   >
                     {it.is_tie ? `T${it.rank}` : it.rank}
                   </Link>
                 </td>
                 <td className="link">
-                  <Link
-                    href={routes.contestUserProfile(contestId, it.user_id)}
-                    className="reset text-lg"
-                  >
+                  <Link href={urlForRow(it.user_id)} className="reset text-lg">
                     {it.user_display_name}
                   </Link>
                 </td>
                 <td className="link">
                   <Link
-                    href={routes.contestUserProfile(contestId, it.user_id)}
-                    className="reset justify-end text-lg"
+                    href={urlForRow(it.user_id)}
+                    className={`reset justify-end text-lg ${
+                      embedded ? '!pr-4 lg:!pr-7' : ''
+                    }`}
                   >
                     {formatScore(it.score)}
                   </Link>
@@ -70,7 +90,7 @@ export const Leaderboard = ({ contestId, leaderboard }: Props) => {
                   colSpan={3}
                   className="default h-32 font-bold text-center text-xl text-slate-400"
                 >
-                  No partipants yet, be the first to sign up!
+                  {emptyMessage}
                 </td>
               </tr>
             ) : null}

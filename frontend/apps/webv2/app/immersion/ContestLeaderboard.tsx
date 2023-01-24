@@ -78,7 +78,10 @@ export const ContestLeaderboard = ({ id, contest, routeForPage }: Props) => {
 
       <div className="flex mt-4 space-x-4">
         <div className="flex-grow">
-          <Leaderboard contestId={id} leaderboard={leaderboard} />
+          <Leaderboard
+            leaderboard={leaderboard}
+            urlForRow={userId => routes.contestUserProfile(id, userId)}
+          />
           {showPagination ? (
             <div className="mt-4">
               <Pagination

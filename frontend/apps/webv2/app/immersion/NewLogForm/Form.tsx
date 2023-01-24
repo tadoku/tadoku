@@ -79,13 +79,8 @@ export const LogForm = ({
   const estimatedScore = estimateScore(amount, unit)
 
   const router = useRouter()
-  const createLogMutation = useCreateLog(() => {
-    const userId = session?.identity.id
-    if (userId) {
-      return router.replace(routes.userProfileStatistics(userId))
-    }
-
-    router.replace(routes.leaderboardLatestOfficial())
+  const createLogMutation = useCreateLog(id => {
+    router.replace(routes.log(id))
   })
 
   const [createLog] = useDebounce(createLogMutation.mutate, 2500)

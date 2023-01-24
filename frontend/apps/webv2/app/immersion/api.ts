@@ -584,7 +584,7 @@ export const useLogConfigurationOptions = (options?: { enabled?: boolean }) =>
     options,
   )
 
-export const useCreateLog = (onSuccess: () => void) =>
+export const useCreateLog = (onSuccess: (id: string) => void) =>
   useMutation({
     mutationFn: async (contest: NewLogAPISchema) => {
       const res = await fetch(`${root}/logs`, {
@@ -597,9 +597,11 @@ export const useCreateLog = (onSuccess: () => void) =>
       if (res.status !== 200) {
         throw new Error('could not process request')
       }
+
+      return Log.parse(await res.json())
     },
-    onSuccess() {
-      onSuccess()
+    onSuccess(data) {
+      onSuccess(data.id)
     },
   })
 

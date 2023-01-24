@@ -71,6 +71,9 @@ export const useCreateContest = (onSuccess: (id: string) => void) =>
         },
         body: JSON.stringify(payload),
       })
+      if (res.status !== 201) {
+        throw new Error('could not process request')
+      }
       return await res.json()
     },
     onSuccess(data) {
@@ -236,6 +239,9 @@ export const useContestRegistrationUpdate = (onSuccess: () => void) =>
           }),
         },
       )
+      if (res.status !== 200) {
+        throw new Error('could not process request')
+      }
       return
     },
     onSuccess() {
@@ -547,13 +553,16 @@ export const useLogConfigurationOptions = (options?: { enabled?: boolean }) =>
 export const useCreateLog = (onSuccess: () => void) =>
   useMutation({
     mutationFn: async (contest: NewLogAPISchema) => {
-      const res = await fetch(root, {
+      const res = await fetch(`${root}/logs`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(contest),
       })
+      if (res.status !== 200) {
+        throw new Error('could not process request')
+      }
     },
     onSuccess() {
       onSuccess()
@@ -703,3 +712,21 @@ export const useUserYearlyActivitySplit = (
     },
     options,
   )
+
+export const useDeleteLog = (onSuccess: () => void, onError: () => void) =>
+  useMutation({
+    mutationFn: async (id: string) => {
+      const res = await fetch(`${root}/logs/${id}`, {
+        method: 'DELETE',
+      })
+      if (res.status !== 200) {
+        throw new Error('could not process request')
+      }
+    },
+    onSuccess() {
+      onSuccess()
+    },
+    onError() {
+      onError()
+    },
+  })

@@ -2,7 +2,7 @@ import { colorForActivity, formatArray, formatUnit } from '@app/common/format'
 import { useCurrentDateTime } from '@app/common/hooks'
 import { routes } from '@app/common/routes'
 import { useSession } from '@app/common/session'
-import { Log, useLog } from '@app/immersion/api'
+import { Log, useDeleteLog, useLog } from '@app/immersion/api'
 import { HomeIcon, TrashIcon } from '@heroicons/react/20/solid'
 import { XMarkIcon } from '@heroicons/react/24/outline'
 import { DateTime } from 'luxon'
@@ -10,6 +10,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/router'
 import { useState } from 'react'
 import { Breadcrumb, ButtonGroup, Modal } from 'ui'
+import { toast } from 'react-toastify'
 
 const Page = () => {
   const router = useRouter()
@@ -76,6 +77,9 @@ const Page = () => {
             {log.data.tags.map(it => (
               <span className={`tag text-slate-900 bg-slate-200`}>{it}</span>
             ))}
+            {log.data.deleted ? (
+              <span className={`tag text-red-900 bg-red-200`}>Deleted</span>
+            ) : null}
           </div>
           {log.data.registrations && log.data.registrations.length >= 1 ? (
             <p>
@@ -129,6 +133,19 @@ function ActionBar({ log }: { log: Log }) {
   const isOwner = log.user_id === session?.identity.id
 
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
+  const router = useRouter()
+
+  const mutation = useDeleteLog(
+    () => {
+      setIsDeleteModalOpen(false)
+      toast.success('Deletion complete')
+      router.push(routes.userProfileStatistics(log.user_id))
+    },
+    () => {
+      setIsDeleteModalOpen(false)
+      toast.error('Could not process deletion, please try again later.')
+    },
+  )
 
   return (
     <>
@@ -147,7 +164,9 @@ function ActionBar({ log }: { log: Log }) {
             type="button"
             className="btn danger"
             onClick={() => {
-              setIsDeleteModalOpen(false)
+              const id = toast.info('Deleting log...')
+              mutation.mutate(log.id)
+              setTimeout(() => toast.dismiss(id), 200)
             }}
           >
             Yes, delete it

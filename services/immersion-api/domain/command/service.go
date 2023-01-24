@@ -5,6 +5,7 @@ import (
 	"errors"
 
 	"github.com/go-playground/validator/v10"
+	"github.com/google/uuid"
 	"github.com/tadoku/tadoku/services/common/domain"
 	"github.com/tadoku/tadoku/services/immersion-api/domain/query"
 )
@@ -23,7 +24,7 @@ type Repository interface {
 	UpsertContestRegistration(context.Context, *UpsertContestRegistrationRequest) error
 
 	// log
-	CreateLog(context.Context, *CreateLogRequest) error
+	CreateLog(context.Context, *CreateLogRequest) (*uuid.UUID, error)
 	DeleteLog(context.Context, *DeleteLogRequest) error
 
 	query.Repository
@@ -35,7 +36,7 @@ type Service interface {
 	UpsertContestRegistration(context.Context, *UpsertContestRegistrationRequest) error
 
 	// log
-	CreateLog(context.Context, *CreateLogRequest) error
+	CreateLog(context.Context, *CreateLogRequest) (*query.Log, error)
 	DeleteLog(context.Context, *DeleteLogRequest) error
 }
 

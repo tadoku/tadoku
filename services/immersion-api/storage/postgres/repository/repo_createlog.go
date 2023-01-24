@@ -11,7 +11,7 @@ import (
 	"github.com/tadoku/tadoku/services/immersion-api/storage/postgres"
 )
 
-func (r *Repository) CreateLog(ctx context.Context, req *command.CreateLogRequest) error {
+func (r *Repository) CreateLog(ctx context.Context, req *command.CreateLogRequest) (*uuid.UUID, error) {
 	unit, err := r.q.FindUnitForTracking(ctx, postgres.FindUnitForTrackingParams{
 		ID:            req.UnitID,
 		LogActivityID: int16(req.ActivityID),
@@ -19,19 +19,19 @@ func (r *Repository) CreateLog(ctx context.Context, req *command.CreateLogReques
 	})
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return fmt.Errorf("invalid unit supplied: %w", command.ErrInvalidLog)
+			return nil, fmt.Errorf("invalid unit supplied: %w", command.ErrInvalidLog)
 		}
-		return fmt.Errorf("could not fetch unit for tracking: %w", err)
+		return nil, fmt.Errorf("could not fetch unit for tracking: %w", err)
 	}
 
 	tx, err := r.psql.BeginTx(ctx, nil)
 	if err != nil {
-		return fmt.Errorf("could not create log: %w", err)
+		return nil, fmt.Errorf("could not create log: %w", err)
 	}
 	qtx := r.q.WithTx(tx)
 
 	id := uuid.New()
-	if _, err = qtx.CreateLog(ctx, postgres.CreateLogParams{
+	logId, err := qtx.CreateLog(ctx, postgres.CreateLogParams{
 		ID:                          id,
 		UserID:                      req.UserID,
 		LanguageCode:                req.LanguageCode,
@@ -42,9 +42,10 @@ func (r *Repository) CreateLog(ctx context.Context, req *command.CreateLogReques
 		Modifier:                    unit.Modifier,
 		EligibleOfficialLeaderboard: req.EligibleOfficialLeaderboard,
 		Description:                 postgres.NewNullString(req.Description),
-	}); err != nil {
+	})
+	if err != nil {
 		_ = tx.Rollback()
-		return fmt.Errorf("could not create log: %w", err)
+		return nil, fmt.Errorf("could not create log: %w", err)
 	}
 
 	for _, registrationID := range req.RegistrationIDs {
@@ -53,13 +54,13 @@ func (r *Repository) CreateLog(ctx context.Context, req *command.CreateLogReques
 			LogID:          id,
 		}); err != nil {
 			_ = tx.Rollback()
-			return fmt.Errorf("could not create log: %w", err)
+			return nil, fmt.Errorf("could not create log: %w", err)
 		}
 	}
 
 	if err = tx.Commit(); err != nil {
-		return fmt.Errorf("could not create log: %w", err)
+		return nil, fmt.Errorf("could not create log: %w", err)
 	}
 
-	return nil
+	return &logId, nil
 }

@@ -23,23 +23,23 @@ type CreateLogRequest struct {
 	EligibleOfficialLeaderboard bool
 }
 
-func (s *ServiceImpl) CreateLog(ctx context.Context, req *CreateLogRequest) error {
+func (s *ServiceImpl) CreateLog(ctx context.Context, req *CreateLogRequest) (*query.Log, error) {
 	// Make sure the user is authorized to create a contest
 	if domain.IsRole(ctx, domain.RoleGuest) {
-		return ErrUnauthorized
+		return nil, ErrUnauthorized
 	}
 
 	// Enrich request with session
 	session := domain.ParseSession(ctx)
 	if session == nil {
-		return ErrUnauthorized
+		return nil, ErrUnauthorized
 	}
 	req.UserID = uuid.MustParse(session.Subject)
 
 	err := s.validate.Struct(req)
 	if err != nil {
 		fmt.Println(err)
-		return fmt.Errorf("unable to validate: %w", ErrInvalidLog)
+		return nil, fmt.Errorf("unable to validate: %w", ErrInvalidLog)
 	}
 
 	registrations, err := s.r.FetchOngoingContestRegistrations(ctx, &query.FetchOngoingContestRegistrationsRequest{
@@ -48,7 +48,7 @@ func (s *ServiceImpl) CreateLog(ctx context.Context, req *CreateLogRequest) erro
 	})
 	if err != nil {
 		fmt.Println(err)
-		return fmt.Errorf("unable to fetch registrations: %w", err)
+		return nil, fmt.Errorf("unable to fetch registrations: %w", err)
 	}
 
 	validContestIDs := map[uuid.UUID]query.ContestRegistration{}
@@ -60,7 +60,7 @@ func (s *ServiceImpl) CreateLog(ctx context.Context, req *CreateLogRequest) erro
 	for _, id := range req.RegistrationIDs {
 		registration, ok := validContestIDs[id]
 		if !ok {
-			return fmt.Errorf("registration is not found as ongoing for the current user: %w", ErrInvalidLog)
+			return nil, fmt.Errorf("registration is not found as ongoing for the current user: %w", ErrInvalidLog)
 		}
 
 		if registration.Contest.Official {
@@ -76,7 +76,7 @@ func (s *ServiceImpl) CreateLog(ctx context.Context, req *CreateLogRequest) erro
 			}
 		}
 		if !found {
-			return fmt.Errorf("language is not allowed for registration: %w", ErrInvalidLog)
+			return nil, fmt.Errorf("language is not allowed for registration: %w", ErrInvalidLog)
 		}
 
 		// validate activity is allowed by the contest
@@ -88,9 +88,17 @@ func (s *ServiceImpl) CreateLog(ctx context.Context, req *CreateLogRequest) erro
 			}
 		}
 		if !found {
-			return fmt.Errorf("activity is not allowed for registration: %w", ErrInvalidLog)
+			return nil, fmt.Errorf("activity is not allowed for registration: %w", ErrInvalidLog)
 		}
 	}
 
-	return s.r.CreateLog(ctx, req)
+	logId, err := s.r.CreateLog(ctx, req)
+	if err != nil {
+		return nil, fmt.Errorf("could not create log: %w", err)
+	}
+
+	return s.r.FindLogByID(ctx, &query.FindLogByIDRequest{
+		ID:             *logId,
+		IncludeDeleted: false,
+	})
 }

@@ -379,6 +379,10 @@ paths:
       responses:
         '200':
           description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Log'
         '400':
           description: invalid submission
   /logs/{id}:

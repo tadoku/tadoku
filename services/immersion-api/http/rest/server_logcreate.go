@@ -18,7 +18,7 @@ func (s *Server) LogCreate(ctx echo.Context) error {
 		return ctx.NoContent(http.StatusBadRequest)
 	}
 
-	if err := s.commandService.CreateLog(ctx.Request().Context(), &command.CreateLogRequest{
+	log, err := s.commandService.CreateLog(ctx.Request().Context(), &command.CreateLogRequest{
 		RegistrationIDs: req.RegistrationIds,
 		UnitID:          req.UnitId,
 		ActivityID:      req.ActivityId,
@@ -26,7 +26,8 @@ func (s *Server) LogCreate(ctx echo.Context) error {
 		Amount:          req.Amount,
 		Tags:            req.Tags,
 		Description:     req.Description,
-	}); err != nil {
+	})
+	if err != nil {
 		if errors.Is(err, command.ErrForbidden) {
 			return ctx.NoContent(http.StatusForbidden)
 		}
@@ -42,5 +43,5 @@ func (s *Server) LogCreate(ctx echo.Context) error {
 		return ctx.NoContent(http.StatusInternalServerError)
 	}
 
-	return ctx.NoContent(http.StatusOK)
+	return ctx.JSON(http.StatusOK, logToAPI(log))
 }

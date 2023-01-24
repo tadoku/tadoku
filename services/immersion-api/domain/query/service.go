@@ -23,6 +23,7 @@ type Repository interface {
 	FetchContestLeaderboard(context.Context, *FetchContestLeaderboardRequest) (*Leaderboard, error)
 	FetchOngoingContestRegistrations(context.Context, *FetchOngoingContestRegistrationsRequest) (*ContestRegistrations, error)
 	YearlyContestRegistrationsForUser(context.Context, *YearlyContestRegistrationsForUserRequest) (*ContestRegistrations, error)
+	FetchOfficialLeaderboardPreviewForYear(context.Context, *FetchOfficialLeaderboardPreviewForYearRequest) (*Leaderboard, error)
 
 	// log
 	ListLogsForContestUser(context.Context, *ListLogsForContestUserRequest) (*ListLogsForContestUserResponse, error)
@@ -47,6 +48,7 @@ type Service interface {
 	FetchContestLeaderboard(context.Context, *FetchContestLeaderboardRequest) (*Leaderboard, error)
 	FetchOngoingContestRegistrations(context.Context, *FetchOngoingContestRegistrationsRequest) (*ContestRegistrations, error)
 	YearlyContestRegistrationsForUser(context.Context, *YearlyContestRegistrationsForUserRequest) (*ContestRegistrations, error)
+	FetchOfficialLeaderboardPreviewForYear(context.Context, *FetchOfficialLeaderboardPreviewForYearRequest) (*Leaderboard, error)
 
 	// log
 	ListLogsForContestUser(context.Context, *ListLogsForContestUserRequest) (*ListLogsForContestUserResponse, error)

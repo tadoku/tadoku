@@ -114,3 +114,86 @@ func (q *Queries) LeaderboardForContest(ctx context.Context, arg LeaderboardForC
 	}
 	return items, nil
 }
+
+const officialLeaderboardPreviewForYear = `-- name: OfficialLeaderboardPreviewForYear :many
+with leaderboard as (
+  select
+    user_id,
+    sum(score) as score
+  from logs
+  inner join contest_logs
+    on contest_logs.log_id = logs.id
+  where
+    logs.year = $1
+    and eligible_official_leaderboard = true
+    and logs.deleted_at is null
+  group by user_id
+), ranked_leaderboard as (
+  select
+    user_id,
+    score,
+    rank() over(order by score desc) as "rank"
+  from leaderboard
+), registrations as (
+  select
+    id,
+    user_id,
+    user_display_name
+  from contest_registrations
+  where
+    extract(year from created_at) = $1::integer
+    and deleted_at is null
+)
+select
+  rank() over(order by score desc) as "rank",
+  registrations.user_id,
+  registrations.user_display_name,
+  coalesce(ranked_leaderboard.score, 0)::real as score,
+  coalesce((
+    "rank" = lag("rank", 1, -1::bigint) over (order by "rank")
+    or "rank" = lead("rank", 1, -1::bigint) over (order by "rank")
+  ), false)::boolean as is_tie
+from registrations
+left join ranked_leaderboard using(user_id)
+order by
+  score desc,
+  registrations.user_id asc
+limit 10
+`
+
+type OfficialLeaderboardPreviewForYearRow struct {
+	Rank            int64
+	UserID          uuid.UUID
+	UserDisplayName string
+	Score           float32
+	IsTie           bool
+}
+
+func (q *Queries) OfficialLeaderboardPreviewForYear(ctx context.Context, year int16) ([]OfficialLeaderboardPreviewForYearRow, error) {
+	rows, err := q.db.QueryContext(ctx, officialLeaderboardPreviewForYear, year)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []OfficialLeaderboardPreviewForYearRow
+	for rows.Next() {
+		var i OfficialLeaderboardPreviewForYearRow
+		if err := rows.Scan(
+			&i.Rank,
+			&i.UserID,
+			&i.UserDisplayName,
+			&i.Score,
+			&i.IsTie,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}

@@ -40,7 +40,7 @@ export function Navbar({ navigation, logoHref, width = 'max-w-7xl' }: Props) {
       <div className="h-10 sm:h-16 absolute top-0 left-0 right-0 bg-white z-0"></div>
       <Disclosure
         as="nav"
-        className="bg-white sticky top-0 z-50 backdrop-blur bg-white/70 border-b border-black/10 shadow shadow-slate-500/10"
+        className="bg-white sticky top-0 z-40 backdrop-blur bg-white/70 border-b border-black/10 shadow shadow-slate-500/10"
       >
         {({ open }) => (
           <>

@@ -45,6 +45,7 @@ export function ButtonGroup({ actions, orientation }: Props) {
 
 const TabbarButtonLink = ({
   href,
+  onClick,
   IconComponent,
   label,
   disabled,
@@ -53,6 +54,7 @@ const TabbarButtonLink = ({
   <Link
     href={href}
     className={`reset btn ${style} ${disabled ? 'pointer-events-none' : ''}`}
+    onClick={onClick}
   >
     {IconComponent ? <IconComponent className="w-4 h-4 mr-2" /> : null}
     {label}

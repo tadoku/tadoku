@@ -10,7 +10,7 @@ interface Props {
 
 export const Modal = ({ isOpen, setIsOpen, title, children }: Props) => (
   <Transition appear show={isOpen} as={Fragment}>
-    <Dialog as="div" className="relative z-10" onClose={() => setIsOpen(false)}>
+    <Dialog as="div" className="relative z-50" onClose={() => setIsOpen(false)}>
       <Transition.Child
         as={Fragment}
         enter="ease-out duration-300"
@@ -34,7 +34,7 @@ export const Modal = ({ isOpen, setIsOpen, title, children }: Props) => (
             leaveFrom="opacity-100 scale-100"
             leaveTo="opacity-0 scale-95"
           >
-            <Dialog.Panel className="w-full max-w-md transform overflow-hidden card text-left align-middle transition-all">
+            <Dialog.Panel className="w-full max-w-lg transform overflow-hidden card text-left align-middle transition-all">
               {title && (
                 <Dialog.Title
                   as="h3"

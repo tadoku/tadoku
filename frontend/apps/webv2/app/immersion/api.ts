@@ -397,6 +397,7 @@ export const useContestProfileActivity = (
 const ContestRegistrationReference = z.object({
   registration_id: z.string(),
   contest_id: z.string(),
+  contest_end: z.string(),
   title: z.string(),
 })
 

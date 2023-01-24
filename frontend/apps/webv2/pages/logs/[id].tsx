@@ -1,12 +1,15 @@
 import { colorForActivity, formatArray, formatUnit } from '@app/common/format'
+import { useCurrentDateTime } from '@app/common/hooks'
 import { routes } from '@app/common/routes'
-import { useLog } from '@app/immersion/api'
-import { HomeIcon } from '@heroicons/react/20/solid'
+import { useSession } from '@app/common/session'
+import { Log, useLog } from '@app/immersion/api'
+import { HomeIcon, TrashIcon } from '@heroicons/react/20/solid'
 import { XMarkIcon } from '@heroicons/react/24/outline'
 import { DateTime } from 'luxon'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
-import { Breadcrumb } from 'ui'
+import { useState } from 'react'
+import { Breadcrumb, ButtonGroup, Modal } from 'ui'
 
 const Page = () => {
   const router = useRouter()
@@ -44,13 +47,20 @@ const Page = () => {
           ]}
         />
       </div>
-      <h1 className="title">Log details</h1>
-      <h2 className="subtitle">
-        By {log.data.user_display_name ?? 'anonymous'},{' '}
-        {DateTime.fromISO(log.data.created_at).toLocaleString(
-          DateTime.DATETIME_MED,
-        )}
-      </h2>
+      <div className="h-stack justify-between items-center w-full">
+        <div>
+          <h1 className="title">Log details</h1>
+          <h2 className="subtitle">
+            By {log.data.user_display_name ?? 'anonymous'},{' '}
+            {DateTime.fromISO(log.data.created_at).toLocaleString(
+              DateTime.DATETIME_MED,
+            )}
+          </h2>
+        </div>
+        <div>
+          <ActionBar log={log.data} />
+        </div>
+      </div>
       <div className="max-w-2xl mt-4">
         <div className="card w-full relative">
           <div
@@ -106,6 +116,64 @@ const Page = () => {
           </div>
         </div>
       </div>
+    </>
+  )
+}
+
+function ActionBar({ log }: { log: Log }) {
+  const now = useCurrentDateTime()
+  const [session] = useSession()
+  const canBeDeleted = !(log.registrations ?? [])
+    .map(it => now.diff(DateTime.fromISO(it.contest_end)).as('seconds') < 0)
+    .some(it => it === false)
+  const isOwner = log.user_id === session?.identity.id
+
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
+
+  return (
+    <>
+      <Modal
+        isOpen={isDeleteModalOpen}
+        setIsOpen={setIsDeleteModalOpen}
+        title="Are you sure?"
+      >
+        <p className="modal-body">
+          Deletion cannot be undone. The log will be permanently removed from
+          all contests and your personal tracking history.
+        </p>
+
+        <div className="modal-actions spaced">
+          <button
+            type="button"
+            className="btn danger"
+            onClick={() => {
+              setIsDeleteModalOpen(false)
+            }}
+          >
+            Yes, delete it
+          </button>
+          <button
+            type="button"
+            className="btn ghost"
+            onClick={() => setIsDeleteModalOpen(false)}
+          >
+            Go back
+          </button>
+        </div>
+      </Modal>
+      <ButtonGroup
+        actions={[
+          {
+            onClick: () => setIsDeleteModalOpen(true),
+            href: '#',
+            label: 'Delete log',
+            IconComponent: TrashIcon,
+            style: 'ghost',
+            visible: isOwner && canBeDeleted,
+          },
+        ]}
+        orientation="right"
+      />
     </>
   )
 }

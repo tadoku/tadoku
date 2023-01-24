@@ -19,7 +19,7 @@ export const ActionMenu = ({
   links,
   orientation = 'left',
 }: Props) => (
-  <div className="">
+  <div className={links.length === 0 ? `hidden` : ``}>
     <Menu as="div" className="relative group">
       <Menu.Button className="btn ghost px-0 md:px-2">{children}</Menu.Button>
       <Transition

@@ -31,7 +31,7 @@ func NewTimeFromNullTime(t sql.NullTime) *time.Time {
 }
 
 func NewNullString(val *string) sql.NullString {
-	if val == nil {
+	if val == nil || *val == "" {
 		return sql.NullString{
 			Valid: false,
 		}

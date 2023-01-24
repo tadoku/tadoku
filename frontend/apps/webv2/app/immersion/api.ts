@@ -301,6 +301,40 @@ export const useContestLeaderboard = (
     options,
   )
 
+export const useYearlyLeaderboard = (
+  opts: {
+    year: number
+    pageSize: number
+    page: number
+    languageCode?: string
+    activityId?: number
+  },
+  options?: { enabled?: boolean },
+) =>
+  useQuery(
+    ['leaderboard', 'yearly', opts],
+    async (): Promise<Leaderboard> => {
+      const params = {
+        page_size: opts.pageSize.toString(),
+        page: (opts.page - 1).toString(),
+        ...(opts.languageCode ? { language_code: opts.languageCode } : {}),
+        ...(opts.activityId ? { activity_id: opts.activityId.toString() } : {}),
+      }
+      const response = await fetch(
+        `${root}/leaderboard/yearly/${opts.year}?${new URLSearchParams(
+          params,
+        )}`,
+      )
+
+      if (response.status !== 200) {
+        throw new Error('could not fetch leaderboard')
+      }
+
+      return Leaderboard.parse(await response.json())
+    },
+    options,
+  )
+
 const ContestRegistrationsView = z.object({
   registrations: z.array(ContestRegistrationView),
   next_page_token: z.string(),

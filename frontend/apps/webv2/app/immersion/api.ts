@@ -71,10 +71,11 @@ export const useCreateContest = (onSuccess: (id: string) => void) =>
         },
         body: JSON.stringify(payload),
       })
-      if (res.status !== 201) {
+      if (res.status !== 200) {
         throw new Error('could not process request')
       }
-      return await res.json()
+
+      return Contest.parse(await res.json())
     },
     onSuccess(data) {
       onSuccess(data.id)
@@ -92,7 +93,7 @@ const Contest = z.object({
   official: z.boolean(),
   language_code_allow_list: z.array(z.string()).nullable(),
   activity_type_id_allow_list: z.array(z.number()),
-  deleted: z.boolean(),
+  deleted: z.boolean().optional(),
 })
 
 export type Contest = z.infer<typeof Contest>

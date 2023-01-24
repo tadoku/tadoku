@@ -4,10 +4,22 @@ import (
 	"context"
 )
 
-type FetchOfficialLeaderboardPreviewForYearRequest struct {
-	Year int
+type FetchYearlyLeaderboardRequest struct {
+	Year         int
+	LanguageCode *string
+	ActivityID   *int32
+	PageSize     int
+	Page         int
 }
 
-func (s *ServiceImpl) FetchOfficialLeaderboardPreviewForYear(ctx context.Context, req *FetchOfficialLeaderboardPreviewForYearRequest) (*Leaderboard, error) {
-	return s.r.FetchOfficialLeaderboardPreviewForYear(ctx, req)
+func (s *ServiceImpl) FetchYearlyLeaderboard(ctx context.Context, req *FetchYearlyLeaderboardRequest) (*Leaderboard, error) {
+	if req.PageSize == 0 {
+		req.PageSize = 25
+	}
+
+	if req.PageSize > 100 {
+		req.PageSize = 100
+	}
+
+	return s.r.FetchYearlyLeaderboard(ctx, req)
 }

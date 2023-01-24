@@ -19,7 +19,7 @@ func (s *ServiceImpl) FetchContestLeaderboard(ctx context.Context, req *FetchCon
 		req.PageSize = 25
 	}
 
-	if req.PageSize > 100 || req.PageSize == 0 {
+	if req.PageSize > 100 {
 		req.PageSize = 100
 	}
 

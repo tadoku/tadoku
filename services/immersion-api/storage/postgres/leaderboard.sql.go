@@ -115,7 +115,7 @@ func (q *Queries) LeaderboardForContest(ctx context.Context, arg LeaderboardForC
 	return items, nil
 }
 
-const officialLeaderboardPreviewForYear = `-- name: OfficialLeaderboardPreviewForYear :many
+const yearlyLeaderboard = `-- name: YearlyLeaderboard :many
 with leaderboard as (
   select
     user_id,
@@ -124,9 +124,11 @@ with leaderboard as (
   inner join contest_logs
     on contest_logs.log_id = logs.id
   where
-    logs.year = $1
+    logs.year = $3
     and eligible_official_leaderboard = true
     and logs.deleted_at is null
+    and (logs.language_code = $4 or $4 is null)
+    and (logs.log_activity_id = $5::integer or $5 is null)
   group by user_id
 ), ranked_leaderboard as (
   select
@@ -141,8 +143,9 @@ with leaderboard as (
     user_display_name
   from contest_registrations
   where
-    extract(year from created_at) = $1::integer
+    extract(year from created_at) = $3::integer
     and deleted_at is null
+    and ($4 = any(language_codes) or $4 is null)
 )
 select
   rank() over(order by score desc) as "rank",
@@ -152,38 +155,56 @@ select
   coalesce((
     "rank" = lag("rank", 1, -1::bigint) over (order by "rank")
     or "rank" = lead("rank", 1, -1::bigint) over (order by "rank")
-  ), false)::boolean as is_tie
+  ), false)::boolean as is_tie,
+  (select count(registrations.user_id) from registrations) as total_size
 from registrations
 left join ranked_leaderboard using(user_id)
 order by
   score desc,
   registrations.user_id asc
-limit 10
+limit $2
+offset $1
 `
 
-type OfficialLeaderboardPreviewForYearRow struct {
+type YearlyLeaderboardParams struct {
+	StartFrom    int32
+	PageSize     int32
+	Year         int16
+	LanguageCode sql.NullString
+	ActivityID   sql.NullInt32
+}
+
+type YearlyLeaderboardRow struct {
 	Rank            int64
 	UserID          uuid.UUID
 	UserDisplayName string
 	Score           float32
 	IsTie           bool
+	TotalSize       int64
 }
 
-func (q *Queries) OfficialLeaderboardPreviewForYear(ctx context.Context, year int16) ([]OfficialLeaderboardPreviewForYearRow, error) {
-	rows, err := q.db.QueryContext(ctx, officialLeaderboardPreviewForYear, year)
+func (q *Queries) YearlyLeaderboard(ctx context.Context, arg YearlyLeaderboardParams) ([]YearlyLeaderboardRow, error) {
+	rows, err := q.db.QueryContext(ctx, yearlyLeaderboard,
+		arg.StartFrom,
+		arg.PageSize,
+		arg.Year,
+		arg.LanguageCode,
+		arg.ActivityID,
+	)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []OfficialLeaderboardPreviewForYearRow
+	var items []YearlyLeaderboardRow
 	for rows.Next() {
-		var i OfficialLeaderboardPreviewForYearRow
+		var i YearlyLeaderboardRow
 		if err := rows.Scan(
 			&i.Rank,
 			&i.UserID,
 			&i.UserDisplayName,
 			&i.Score,
 			&i.IsTie,
+			&i.TotalSize,
 		); err != nil {
 			return nil, err
 		}

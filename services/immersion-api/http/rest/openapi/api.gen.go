@@ -319,6 +319,14 @@ type ContestRegistrationUpsertJSONBody struct {
 	LanguageCodes []string `json:"language_codes"`
 }
 
+// FetchLeaderboardForYearParams defines parameters for FetchLeaderboardForYear.
+type FetchLeaderboardForYearParams struct {
+	PageSize     *int    `form:"page_size,omitempty" json:"page_size,omitempty"`
+	Page         *int    `form:"page,omitempty" json:"page,omitempty"`
+	LanguageCode *string `form:"language_code,omitempty" json:"language_code,omitempty"`
+	ActivityId   *int    `form:"activity_id,omitempty" json:"activity_id,omitempty"`
+}
+
 // LogCreateJSONBody defines parameters for LogCreate.
 type LogCreateJSONBody struct {
 	ActivityId      int32                `json:"activity_id"`
@@ -377,6 +385,9 @@ type ServerInterface interface {
 	// Creates or updates a registration for a contest
 	// (POST /contests/{id}/registration)
 	ContestRegistrationUpsert(ctx echo.Context, id openapi_types.UUID) error
+	// Fetches the leaderboard for a given year
+	// (GET /leaderboard/yearly/{year})
+	FetchLeaderboardForYear(ctx echo.Context, year int, params FetchLeaderboardForYearParams) error
 	// Submits a new log
 	// (POST /logs)
 	LogCreate(ctx echo.Context) error
@@ -528,8 +539,6 @@ func (w *ServerInterfaceWrapper) ContestFetchLeaderboard(ctx echo.Context) error
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter id: %s", err))
 	}
-
-	ctx.Set(CookieAuthScopes, []string{""})
 
 	// Parameter object where we will unmarshal all parameters from the context
 	var params ContestFetchLeaderboardParams
@@ -694,6 +703,52 @@ func (w *ServerInterfaceWrapper) ContestRegistrationUpsert(ctx echo.Context) err
 
 	// Invoke the callback with all the unmarshalled arguments
 	err = w.Handler.ContestRegistrationUpsert(ctx, id)
+	return err
+}
+
+// FetchLeaderboardForYear converts echo context to params.
+func (w *ServerInterfaceWrapper) FetchLeaderboardForYear(ctx echo.Context) error {
+	var err error
+	// ------------- Path parameter "year" -------------
+	var year int
+
+	err = runtime.BindStyledParameterWithLocation("simple", false, "year", runtime.ParamLocationPath, ctx.Param("year"), &year)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter year: %s", err))
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params FetchLeaderboardForYearParams
+	// ------------- Optional query parameter "page_size" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "page_size", ctx.QueryParams(), &params.PageSize)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter page_size: %s", err))
+	}
+
+	// ------------- Optional query parameter "page" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "page", ctx.QueryParams(), &params.Page)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter page: %s", err))
+	}
+
+	// ------------- Optional query parameter "language_code" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "language_code", ctx.QueryParams(), &params.LanguageCode)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter language_code: %s", err))
+	}
+
+	// ------------- Optional query parameter "activity_id" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "activity_id", ctx.QueryParams(), &params.ActivityId)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter activity_id: %s", err))
+	}
+
+	// Invoke the callback with all the unmarshalled arguments
+	err = w.Handler.FetchLeaderboardForYear(ctx, year, params)
 	return err
 }
 
@@ -912,6 +967,7 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 	router.GET(baseURL+"/contests/:id/profile/:user_id/scores", wrapper.ContestProfileFetchScores)
 	router.GET(baseURL+"/contests/:id/registration", wrapper.ContestFindRegistration)
 	router.POST(baseURL+"/contests/:id/registration", wrapper.ContestRegistrationUpsert)
+	router.GET(baseURL+"/leaderboard/yearly/:year", wrapper.FetchLeaderboardForYear)
 	router.POST(baseURL+"/logs", wrapper.LogCreate)
 	router.GET(baseURL+"/logs/configuration-options", wrapper.LogGetConfigurations)
 	router.DELETE(baseURL+"/logs/:id", wrapper.LogDeleteByID)

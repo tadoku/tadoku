@@ -17,6 +17,7 @@ go_library(
         "server_contestprofilefetchscores.go",
         "server_contestprofilelistlogs.go",
         "server_contestregistrationupsert.go",
+        "server_fetchleaderboardforyear.go",
         "server_logcreate.go",
         "server_logdeletebyid.go",
         "server_logfindbyid.go",

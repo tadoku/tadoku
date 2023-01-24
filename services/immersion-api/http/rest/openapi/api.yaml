@@ -171,8 +171,6 @@ paths:
       summary: Fetches the leaderboard for a contest
       operationId: contestFetchLeaderboard
       tags: [contests]
-      security:
-        - cookieAuth: []
       parameters:
         - name: id
           in: path
@@ -569,6 +567,46 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ActivitySplit'
+        '404':
+          description: not found
+  /leaderboard/yearly/{year}:
+    get:
+      summary: Fetches the leaderboard for a given year
+      operationId: fetchLeaderboardForYear
+      tags: [leaderboard]
+      parameters:
+        - name: year
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: page_size
+          in: query
+          required: false
+          schema:
+            type: integer
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+        - name: language_code
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: activity_id
+          in: query
+          required: false
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Leaderboard'
         '404':
           description: not found
   /ping:

@@ -73,9 +73,13 @@ export const ContestList = ({ list, options }: Props) => {
                       href={routes.contestLeaderboard(c.id)}
                       className="reset"
                     >
-                      {c.language_code_allow_list
-                        ?.map(l => languages.get(l))
-                        .join(', ') ?? 'No restrictions'}
+                      {c.language_code_allow_list?.length ?? 0 > 0
+                        ? c
+                            .language_code_allow_list!.map(l =>
+                              languages.get(l),
+                            )
+                            .join(', ')
+                        : 'No restrictions'}
                     </Link>
                   </td>
                   <td className="link text-ellipsis">

@@ -33,6 +33,7 @@ func (r *Repository) FindLogByID(ctx context.Context, req *query.FindLogByIDRequ
 		refs[i] = query.ContestRegistrationReference{
 			RegistrationID: it.ID,
 			ContestID:      it.ContestID,
+			ContestEnd:     it.ContestEnd,
 			Title:          it.Title,
 		}
 	}

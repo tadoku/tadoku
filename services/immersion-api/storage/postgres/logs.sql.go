@@ -179,7 +179,8 @@ const findAttachedContestRegistrationsForLog = `-- name: FindAttachedContestRegi
 select
   contest_logs.contest_id,
   contests.title,
-  contest_registrations.id
+  contest_registrations.id,
+  contests.contest_end
 from contest_logs
 inner join contests on (contests.id = contest_logs.contest_id)
 inner join logs on (logs.id = contest_logs.log_id)
@@ -191,9 +192,10 @@ where log_id = $1
 `
 
 type FindAttachedContestRegistrationsForLogRow struct {
-	ContestID uuid.UUID
-	Title     string
-	ID        uuid.UUID
+	ContestID  uuid.UUID
+	Title      string
+	ID         uuid.UUID
+	ContestEnd time.Time
 }
 
 func (q *Queries) FindAttachedContestRegistrationsForLog(ctx context.Context, id uuid.UUID) ([]FindAttachedContestRegistrationsForLogRow, error) {
@@ -205,7 +207,12 @@ func (q *Queries) FindAttachedContestRegistrationsForLog(ctx context.Context, id
 	var items []FindAttachedContestRegistrationsForLogRow
 	for rows.Next() {
 		var i FindAttachedContestRegistrationsForLogRow
-		if err := rows.Scan(&i.ContestID, &i.Title, &i.ID); err != nil {
+		if err := rows.Scan(
+			&i.ContestID,
+			&i.Title,
+			&i.ID,
+			&i.ContestEnd,
+		); err != nil {
 			return nil, err
 		}
 		items = append(items, i)

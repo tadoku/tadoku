@@ -903,6 +903,7 @@ components:
       type: object
       required:
         - contest_id
+        - contest_end
         - registration_id
         - title
       properties:
@@ -912,6 +913,9 @@ components:
         contest_id:
           type: string
           format: uuid
+        contest_end:
+          type: string
+          format: date
         title:
           type: string
           example: "January 2026"

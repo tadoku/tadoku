@@ -29,6 +29,7 @@ func (s *Server) LogFindByID(ctx echo.Context, id types.UUID) error {
 	for i, it := range log.Registrations {
 		refs[i] = openapi.ContestRegistrationReference{
 			ContestId:      it.ContestID,
+			ContestEnd:     types.Date{Time: it.ContestEnd},
 			RegistrationId: it.RegistrationID,
 			Title:          it.Title,
 		}

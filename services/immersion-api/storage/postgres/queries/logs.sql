@@ -98,7 +98,8 @@ where
 select
   contest_logs.contest_id,
   contests.title,
-  contest_registrations.id
+  contest_registrations.id,
+  contests.contest_end
 from contest_logs
 inner join contests on (contests.id = contest_logs.contest_id)
 inner join logs on (logs.id = contest_logs.log_id)

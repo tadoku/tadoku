@@ -115,6 +115,7 @@ type ContestRegistration struct {
 
 // ContestRegistrationReference defines model for ContestRegistrationReference.
 type ContestRegistrationReference struct {
+	ContestEnd     openapi_types.Date `json:"contest_end"`
 	ContestId      openapi_types.UUID `json:"contest_id"`
 	RegistrationId openapi_types.UUID `json:"registration_id"`
 	Title          string             `json:"title"`

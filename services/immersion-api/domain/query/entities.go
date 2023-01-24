@@ -146,5 +146,6 @@ type Log struct {
 type ContestRegistrationReference struct {
 	RegistrationID uuid.UUID
 	ContestID      uuid.UUID
+	ContestEnd     time.Time
 	Title          string
 }

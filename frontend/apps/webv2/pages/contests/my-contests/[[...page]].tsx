@@ -12,6 +12,7 @@ import { getQueryStringIntParameter } from '@app/common/router'
 import { useSessionOrRedirect } from '@app/common/session'
 import { ContestList } from '@app/immersion/ContestList'
 import { routes } from '@app/common/routes'
+import Head from 'next/head'
 
 interface Props {}
 
@@ -42,6 +43,9 @@ const Contests: NextPage<Props> = () => {
 
   return (
     <>
+      <Head>
+        <title>My contests - Tadoku</title>
+      </Head>
       <div className="pb-4">
         <Breadcrumb
           links={[

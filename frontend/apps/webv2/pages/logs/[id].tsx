@@ -11,6 +11,7 @@ import { useRouter } from 'next/router'
 import { useState } from 'react'
 import { Breadcrumb, ButtonGroup, Modal } from 'ui'
 import { toast } from 'react-toastify'
+import Head from 'next/head'
 
 const Page = () => {
   const router = useRouter()
@@ -33,6 +34,9 @@ const Page = () => {
 
   return (
     <>
+      <Head>
+        <title>Log details - Tadoku</title>
+      </Head>
       <div className="pb-4">
         <Breadcrumb
           links={[

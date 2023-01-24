@@ -5,6 +5,7 @@ import { useContest, useContestRegistration } from '@app/immersion/api'
 import { ContestRegistrationForm } from '@app/immersion/ContestRegistration'
 import { ExclamationCircleIcon, HomeIcon } from '@heroicons/react/20/solid'
 import { DateTime, Interval } from 'luxon'
+import Head from 'next/head'
 import { useRouter } from 'next/router'
 import { Breadcrumb, Flash } from 'ui'
 
@@ -43,6 +44,9 @@ const Page = () => {
 
   return (
     <>
+      <Head>
+        <title>Contest registration - Tadoku</title>
+      </Head>
       <div className="pb-4">
         <Breadcrumb
           links={[

@@ -8,6 +8,7 @@ import { HomeIcon } from '@heroicons/react/20/solid'
 import { PencilSquareIcon, PlusIcon } from '@heroicons/react/24/solid'
 import { routes } from '@app/common/routes'
 import { ContestLeaderboard } from '@app/immersion/ContestLeaderboard'
+import Head from 'next/head'
 
 const Page = () => {
   const router = useRouter()
@@ -42,6 +43,9 @@ const Page = () => {
 
   return (
     <>
+      <Head>
+        <title>Contest leaderboard - Tadoku</title>
+      </Head>
       <div className="pb-4">
         <Breadcrumb
           links={[

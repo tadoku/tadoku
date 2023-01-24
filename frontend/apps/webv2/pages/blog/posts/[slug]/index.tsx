@@ -5,6 +5,7 @@ import { PostDetail } from '@app/content/Post'
 import { useRouter } from 'next/router'
 import { usePost } from '@app/content/api'
 import { routes } from '@app/common/routes'
+import Head from 'next/head'
 
 interface Props {}
 
@@ -28,6 +29,9 @@ const BlogPost: NextPage<Props> = () => {
 
   return (
     <>
+      <Head>
+        <title>Blog - {post.data.title} - Tadoku</title>
+      </Head>
       <div className="pb-4">
         <Breadcrumb
           links={[

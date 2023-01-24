@@ -9,6 +9,7 @@ import { routes } from '@app/common/routes'
 import { LogForm } from '@app/immersion/NewLogForm/Form'
 import { useRouter } from 'next/router'
 import { getQueryStringIntParameter } from '@app/common/router'
+import Head from 'next/head'
 
 interface Props {}
 
@@ -21,6 +22,9 @@ const Page: NextPage<Props> = () => {
 
   return (
     <>
+      <Head>
+        <title>New log - Tadoku</title>
+      </Head>
       <div className="pb-4">
         <Breadcrumb
           links={[

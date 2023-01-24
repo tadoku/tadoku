@@ -21,6 +21,7 @@ import { getQueryStringIntParameter } from '@app/common/router'
 import { DateTime, Interval } from 'luxon'
 import { formatScore } from '@app/common/format'
 import { ActivitySplitChart } from '@app/immersion/ActivitySplitChart'
+import Head from 'next/head'
 
 const Page = () => {
   const router = useRouter()
@@ -58,6 +59,9 @@ const Page = () => {
 
   return (
     <>
+      <Head>
+        <title>Profile statistics - {profile.data.display_name} - Tadoku</title>
+      </Head>
       <div className="pb-4">
         <Breadcrumb
           links={[

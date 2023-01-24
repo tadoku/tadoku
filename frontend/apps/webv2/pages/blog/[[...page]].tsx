@@ -7,6 +7,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { getQueryStringIntParameter } from '@app/common/router'
 import { routes } from '@app/common/routes'
+import Head from 'next/head'
 
 // TODO: Rewrite page and navigation logic
 const BlogIndex = () => {
@@ -40,6 +41,9 @@ const BlogIndex = () => {
 
   return (
     <>
+      <Head>
+        <title>Blog - page {page} - Tadoku</title>
+      </Head>
       <div className="pb-4">
         <Breadcrumb
           links={[

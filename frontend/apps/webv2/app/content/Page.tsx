@@ -1,6 +1,7 @@
 import { routes } from '@app/common/routes'
 import { usePage } from '@app/content/api'
 import { HomeIcon } from '@heroicons/react/20/solid'
+import Head from 'next/head'
 import { Breadcrumb } from 'ui'
 
 interface Props {
@@ -24,6 +25,9 @@ export const Page = ({ slug }: Props) => {
 
   return (
     <>
+      <Head>
+        <title>{page.data.title} - Tadoku</title>
+      </Head>
       <div className="pb-4">
         <Breadcrumb
           links={[

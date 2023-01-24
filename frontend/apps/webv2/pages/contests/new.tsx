@@ -4,6 +4,7 @@ import { HomeIcon } from '@heroicons/react/20/solid'
 import { ContestForm } from '@app/immersion/ContestForm'
 import { useContestConfigurationOptions } from '@app/immersion/api'
 import { routes } from '@app/common/routes'
+import Head from 'next/head'
 
 interface Props {}
 
@@ -12,6 +13,9 @@ const Contests: NextPage<Props> = () => {
 
   return (
     <>
+      <Head>
+        <title>New contests - Tadoku</title>
+      </Head>
       <div className="pb-4">
         <Breadcrumb
           links={[

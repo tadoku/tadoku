@@ -2,6 +2,7 @@ import { routes } from '@app/common/routes'
 import { HomeIcon, PencilSquareIcon } from '@heroicons/react/20/solid'
 import { MinusCircleIcon, PlusCircleIcon } from '@heroicons/react/24/solid'
 import type { NextPage } from 'next'
+import Head from 'next/head'
 import { useState } from 'react'
 import { Breadcrumb, ButtonGroup } from 'ui'
 
@@ -12,6 +13,9 @@ const Page: NextPage<Props> = () => {
 
   return (
     <>
+      <Head>
+        <title>Page counter - Tadoku</title>
+      </Head>
       <div className="pb-4">
         <Breadcrumb
           links={[

@@ -11,6 +11,7 @@ import LogsList from '@app/immersion/LogsList'
 import { useEffect, useState } from 'react'
 import { getQueryStringIntParameter } from '@app/common/router'
 import { ScoreList } from '@app/immersion/ScoreList'
+import Head from 'next/head'
 
 const Page = () => {
   const router = useRouter()
@@ -54,6 +55,12 @@ const Page = () => {
 
   return (
     <>
+      <Head>
+        <title>
+          Contest profile - {profile.data.registration.user_display_name} -
+          Tadoku
+        </title>
+      </Head>
       <div className="pb-4">
         <Breadcrumb
           links={[

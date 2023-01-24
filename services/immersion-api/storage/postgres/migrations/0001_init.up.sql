@@ -214,6 +214,8 @@ values
   (1, 'Non-fiction'),
   (1, 'Web page'),
   (1, 'Lyric'),
+  (1, 'Game'),
+  (1, 'Comic'),
   (2, 'Audiobook'),
   (2, 'Anime'),
   (2, 'Fiction'),

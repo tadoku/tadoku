@@ -68,7 +68,22 @@ export const LogForm = ({
   const languages =
     trackingMode === 'personal'
       ? options.languages
-      : registrations.flatMap(it => it.languages)
+      : registrations
+          .flatMap(it => it.languages)
+          .filter(
+            ({ code }, index, self) =>
+              index === self.findIndex(it => it.code === code),
+          )
+          .sort((a, b) => {
+            if (a.name < b.name) {
+              return -1
+            }
+            if (a.name > b.name) {
+              return 1
+            }
+            return 0
+          })
+
   const tags = filterTags(options.tags, activity)
   const units = filterUnits(options.units, activity?.id, language)
   const activities = filterActivities(

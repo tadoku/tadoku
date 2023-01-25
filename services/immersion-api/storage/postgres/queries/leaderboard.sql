@@ -22,7 +22,8 @@ with leaderboard as (
   select
     id,
     user_id,
-    user_display_name
+    user_display_name,
+    created_at
   from contest_registrations
   where
     contest_id = sqlc.arg('contest_id')
@@ -30,7 +31,7 @@ with leaderboard as (
     and (sqlc.narg('language_code') = any(language_codes) or sqlc.narg('language_code') is null)
 )
 select
-  rank() over(order by score desc) as "rank",
+  rank() over(order by coalesce(ranked_leaderboard.score, 0) desc) as "rank",
   registrations.user_id,
   registrations.user_display_name,
   coalesce(ranked_leaderboard.score, 0)::real as score,
@@ -43,7 +44,7 @@ from registrations
 left join ranked_leaderboard using(user_id)
 order by
   score desc,
-  registrations.user_id asc
+  registrations.created_at asc
 limit sqlc.arg('page_size')
 offset sqlc.arg('start_from');
 
@@ -72,7 +73,8 @@ with leaderboard as (
   select
     id,
     user_id,
-    user_display_name
+    user_display_name,
+    created_at
   from contest_registrations
   where
     extract(year from created_at) = sqlc.arg('year')::integer
@@ -80,7 +82,7 @@ with leaderboard as (
     and (sqlc.narg('language_code') = any(language_codes) or sqlc.narg('language_code') is null)
 )
 select
-  rank() over(order by score desc) as "rank",
+  rank() over(order by coalesce(ranked_leaderboard.score, 0) desc) as "rank",
   registrations.user_id,
   registrations.user_display_name,
   coalesce(ranked_leaderboard.score, 0)::real as score,
@@ -93,6 +95,6 @@ from registrations
 left join ranked_leaderboard using(user_id)
 order by
   score desc,
-  registrations.user_id asc
+  registrations.created_at asc
 limit sqlc.arg('page_size')
 offset sqlc.arg('start_from');

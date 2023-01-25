@@ -36,7 +36,8 @@ with leaderboard as (
   select
     id,
     user_id,
-    user_display_name
+    user_display_name,
+    created_at
   from contest_registrations
   where
     contest_id = $3
@@ -44,7 +45,7 @@ with leaderboard as (
     and ($4 = any(language_codes) or $4 is null)
 )
 select
-  rank() over(order by score desc) as "rank",
+  rank() over(order by coalesce(ranked_leaderboard.score, 0) desc) as "rank",
   registrations.user_id,
   registrations.user_display_name,
   coalesce(ranked_leaderboard.score, 0)::real as score,
@@ -57,7 +58,7 @@ from registrations
 left join ranked_leaderboard using(user_id)
 order by
   score desc,
-  registrations.user_id asc
+  registrations.created_at asc
 limit $2
 offset $1
 `
@@ -140,7 +141,8 @@ with leaderboard as (
   select
     id,
     user_id,
-    user_display_name
+    user_display_name,
+    created_at
   from contest_registrations
   where
     extract(year from created_at) = $3::integer
@@ -148,7 +150,7 @@ with leaderboard as (
     and ($4 = any(language_codes) or $4 is null)
 )
 select
-  rank() over(order by score desc) as "rank",
+  rank() over(order by coalesce(ranked_leaderboard.score, 0) desc) as "rank",
   registrations.user_id,
   registrations.user_display_name,
   coalesce(ranked_leaderboard.score, 0)::real as score,
@@ -161,7 +163,7 @@ from registrations
 left join ranked_leaderboard using(user_id)
 order by
   score desc,
-  registrations.user_id asc
+  registrations.created_at asc
 limit $2
 offset $1
 `

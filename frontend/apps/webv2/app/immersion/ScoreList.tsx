@@ -23,7 +23,9 @@ export const ScoreList = ({ list, languages }: Props) => {
       {languages.map(({ code, name }) => (
         <div className="card narrow" key={code}>
           <h3 className="subtitle mb-2">{name}</h3>
-          <span className="text-4xl font-bold">{scores.get(code) ?? 0}</span>
+          <span className="text-4xl font-bold">
+            {formatScore(scores.get(code) ?? 0)}
+          </span>
         </div>
       ))}
     </div>

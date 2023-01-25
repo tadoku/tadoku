@@ -15,7 +15,7 @@ send_failure_notification() {
 trap 'send_failure_notification' ERR
 
 export DUMP_FILE=/backup_${PRODUCT_NAME}_$(date +%Y%m%d_%H%M%S).pgdump
-PGPASSWORD=$POSTGRES_PASSWORD pg_dump -d "$POSTGRES_DB" -U "$POSTGRES_USER" -h "$POSTGRES_HOST" -f "$DUMP_FILE"
+PGPASSWORD=$POSTGRES_PASSWORD pg_dump -d "$POSTGRES_DB" -U "$POSTGRES_USER" -h "$POSTGRES_HOST" -f "$DUMP_FILE" --inserts --no-owner --schema=public
 
 # debugging
 if [ "$DEBUG" == 'true' ]

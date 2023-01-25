@@ -143,17 +143,19 @@ with leaderboard as (
   from leaderboard
 ), registrations as (
   select
-    id,
-    user_id,
-    user_display_name,
-    created_at
+    contest_registrations.id,
+    contest_registrations.user_id,
+    contest_registrations.user_display_name,
+    contest_registrations.created_at
   from contest_registrations
+  inner join contests
+    on contests.id = contest_registrations.contest_id
   where
-    extract(year from created_at) = $3::integer
-    and deleted_at is null
+    extract(year from contests.contest_start) = $3::integer
+    and contest_registrations.deleted_at is null
     and ($4 = any(language_codes) or $4 is null)
 ), enriched_leaderboard as (
-select
+  select
     rank() over(order by coalesce(ranked_leaderboard.score, 0) desc) as "rank",
     registrations.user_id,
     registrations.user_display_name,

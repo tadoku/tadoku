@@ -371,6 +371,10 @@
     @apply bg-primary/40;
   }
 
+  .kratos-form .btn.primary + .btn.primary {
+    @apply absolute right-0 text-secondary bg-transparent border-0 focus:ring-0 hover:bg-secondary/5 group-hover:bg-secondary/5 focus:bg-secondary/5 ;
+  }
+
   .btn.secondary {
     @apply text-white hover:text-white active:text-white focus:text-white bg-secondary hover:bg-secondary/90 focus:ring-secondary/40;
   }

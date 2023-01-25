@@ -1,7 +1,9 @@
+import { useFormContext } from 'react-hook-form'
 import { NodeInputProps } from './helpers'
 
 export function NodeInputDefault<T>(props: NodeInputProps) {
-  const { node, attributes, disabled, register } = props
+  const { node, attributes, disabled } = props
+  const { register } = useFormContext()
 
   // Some attributes have dynamic JavaScript - this is for example required for WebAuthn.
   const onClick = () => {
@@ -23,9 +25,7 @@ export function NodeInputDefault<T>(props: NodeInputProps) {
       >
         <span className="label-text">{node.meta.label?.text}</span>
         <input
-          {...register(attributes.name, {
-            required: attributes.required,
-          })}
+          {...register(attributes.name)}
           id={attributes.name}
           onClick={onClick}
           type={attributes.type}

@@ -8,7 +8,7 @@ import {
   UiNodeInputAttributes,
 } from '@ory/client'
 import { isUiNodeInputAttributes, getNodeId } from '@ory/integrations/ui'
-import { useForm } from 'react-hook-form'
+import { FormProvider, useForm } from 'react-hook-form'
 import MessagesList from './MessagesList'
 import Node from './Node'
 
@@ -73,7 +73,7 @@ const Flow = ({ flow, method, onSubmit, hideGlobalMessages }: FlowProps) => {
   const nodes = filterNodes(flow, method)
   const defaultValues = defaultValuesFromNodes(nodes)
 
-  const { register, handleSubmit, formState } = useForm({
+  const methods = useForm({
     defaultValues,
   })
 
@@ -81,23 +81,28 @@ const Flow = ({ flow, method, onSubmit, hideGlobalMessages }: FlowProps) => {
     return null
   }
 
-  const disabled = formState.isSubmitting
+  const disabled = methods.formState.isSubmitting
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)}>
-      {!hideGlobalMessages && <MessagesList messages={flow.ui.messages} />}
-      {nodes.map((node, k) => {
-        const id = getNodeId(node)
-        return (
-          <Node
-            key={`${id}-${k}`}
-            disabled={disabled}
-            node={node}
-            register={register}
-          />
-        )
-      })}
-    </form>
+    <FormProvider {...methods}>
+      <form
+        onSubmit={methods.handleSubmit(onSubmit)}
+        className="kratos-form relative"
+      >
+        {!hideGlobalMessages && <MessagesList messages={flow.ui.messages} />}
+        {nodes.map((node, k) => {
+          const id = getNodeId(node)
+          return (
+            <Node
+              key={`${id}-${k}`}
+              disabled={disabled}
+              node={node}
+              dispatchSubmit={methods.handleSubmit(onSubmit)}
+            />
+          )
+        })}
+      </form>
+    </FormProvider>
   )
 }
 

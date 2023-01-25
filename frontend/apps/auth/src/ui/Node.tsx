@@ -6,7 +6,7 @@ import {
   isUiNodeTextAttributes,
   isUiNodeAnchorAttributes,
 } from '@ory/integrations/ui'
-import { UseFormRegister } from 'react-hook-form'
+import { FormDispatcher, ValueSetter } from './helpers'
 import { NodeAnchor } from './NodeAnchor'
 import { NodeImage } from './NodeImage'
 import { NodeInput } from './NodeInput'
@@ -16,10 +16,10 @@ import { NodeText } from './NodeText'
 interface NodeProps {
   node: UiNode
   disabled: boolean
-  register: UseFormRegister<any>
+  dispatchSubmit: FormDispatcher
 }
 
-export const Node = ({ node, disabled, register }: NodeProps) => {
+export const Node = ({ node, disabled, dispatchSubmit }: NodeProps) => {
   if (isUiNodeImageAttributes(node.attributes)) {
     return <NodeImage node={node} attributes={node.attributes} />
   }
@@ -42,7 +42,7 @@ export const Node = ({ node, disabled, register }: NodeProps) => {
         node={node}
         disabled={disabled}
         attributes={node.attributes}
-        register={register}
+        dispatchSubmit={dispatchSubmit}
       />
     )
   }

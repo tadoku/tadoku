@@ -1,4 +1,5 @@
 import { getNodeLabel } from '@ory/integrations/ui'
+import { useFormContext } from 'react-hook-form'
 
 import { NodeInputProps } from './helpers'
 
@@ -6,8 +7,9 @@ export function NodeInputCheckbox<T>({
   node,
   attributes,
   disabled,
-  register,
 }: NodeInputProps) {
+  const { register } = useFormContext()
+
   // Render a checkbox
   return (
     <div

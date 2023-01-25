@@ -176,7 +176,7 @@ values
 
 -- Units
 insert into log_units
-  (log_activity_id, unit, modifier, language_code)
+  (log_activity_id, name, modifier, language_code)
 values
   (1, 'Page', 1, null),
   (1, '2 Column page', 1.6, 'jpa'),

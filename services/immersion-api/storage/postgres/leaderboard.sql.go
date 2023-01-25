@@ -43,22 +43,26 @@ with leaderboard as (
     contest_id = $3
     and deleted_at is null
     and ($4 = any(language_codes) or $4 is null)
+), enriched_leaderboard as (
+  select
+    rank() over(order by coalesce(ranked_leaderboard.score, 0) desc) as "rank",
+    registrations.user_id,
+    registrations.user_display_name,
+    coalesce(ranked_leaderboard.score, 0)::real as score,
+    (select count(registrations.user_id) from registrations) as total_size
+  from registrations
+  left join ranked_leaderboard using(user_id)
+  order by
+    score desc,
+    registrations.created_at asc
 )
 select
-  rank() over(order by coalesce(ranked_leaderboard.score, 0) desc) as "rank",
-  registrations.user_id,
-  registrations.user_display_name,
-  coalesce(ranked_leaderboard.score, 0)::real as score,
+  rank, user_id, user_display_name, score, total_size,
   coalesce((
     "rank" = lag("rank", 1, -1::bigint) over (order by "rank")
     or "rank" = lead("rank", 1, -1::bigint) over (order by "rank")
-  ), false)::boolean as is_tie,
-  (select count(registrations.user_id) from registrations) as total_size
-from registrations
-left join ranked_leaderboard using(user_id)
-order by
-  score desc,
-  registrations.created_at asc
+  ), false)::boolean as is_tie
+from enriched_leaderboard
 limit $2
 offset $1
 `
@@ -76,8 +80,8 @@ type LeaderboardForContestRow struct {
 	UserID          uuid.UUID
 	UserDisplayName string
 	Score           float32
-	IsTie           bool
 	TotalSize       int64
+	IsTie           bool
 }
 
 func (q *Queries) LeaderboardForContest(ctx context.Context, arg LeaderboardForContestParams) ([]LeaderboardForContestRow, error) {
@@ -100,8 +104,8 @@ func (q *Queries) LeaderboardForContest(ctx context.Context, arg LeaderboardForC
 			&i.UserID,
 			&i.UserDisplayName,
 			&i.Score,
-			&i.IsTie,
 			&i.TotalSize,
+			&i.IsTie,
 		); err != nil {
 			return nil, err
 		}
@@ -148,22 +152,26 @@ with leaderboard as (
     extract(year from created_at) = $3::integer
     and deleted_at is null
     and ($4 = any(language_codes) or $4 is null)
+), enriched_leaderboard as (
+select
+    rank() over(order by coalesce(ranked_leaderboard.score, 0) desc) as "rank",
+    registrations.user_id,
+    registrations.user_display_name,
+    coalesce(ranked_leaderboard.score, 0)::real as score,
+    (select count(registrations.user_id) from registrations) as total_size
+  from registrations
+  left join ranked_leaderboard using(user_id)
+  order by
+    score desc,
+    registrations.created_at asc
 )
 select
-  rank() over(order by coalesce(ranked_leaderboard.score, 0) desc) as "rank",
-  registrations.user_id,
-  registrations.user_display_name,
-  coalesce(ranked_leaderboard.score, 0)::real as score,
+  rank, user_id, user_display_name, score, total_size,
   coalesce((
     "rank" = lag("rank", 1, -1::bigint) over (order by "rank")
     or "rank" = lead("rank", 1, -1::bigint) over (order by "rank")
-  ), false)::boolean as is_tie,
-  (select count(registrations.user_id) from registrations) as total_size
-from registrations
-left join ranked_leaderboard using(user_id)
-order by
-  score desc,
-  registrations.created_at asc
+  ), false)::boolean as is_tie
+from enriched_leaderboard
 limit $2
 offset $1
 `
@@ -181,8 +189,8 @@ type YearlyLeaderboardRow struct {
 	UserID          uuid.UUID
 	UserDisplayName string
 	Score           float32
-	IsTie           bool
 	TotalSize       int64
+	IsTie           bool
 }
 
 func (q *Queries) YearlyLeaderboard(ctx context.Context, arg YearlyLeaderboardParams) ([]YearlyLeaderboardRow, error) {
@@ -205,8 +213,8 @@ func (q *Queries) YearlyLeaderboard(ctx context.Context, arg YearlyLeaderboardPa
 			&i.UserID,
 			&i.UserDisplayName,
 			&i.Score,
-			&i.IsTie,
 			&i.TotalSize,
+			&i.IsTie,
 		); err != nil {
 			return nil, err
 		}

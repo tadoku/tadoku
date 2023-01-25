@@ -58,7 +58,7 @@ export const Leaderboard = ({
           </thead>
           <tbody>
             {leaderboard.data.entries.map(it => (
-              <tr key={it.rank} className="link font-bold">
+              <tr key={it.user_id} className="link font-bold">
                 <td className="link w-10">
                   <Link
                     href={urlForRow(it.user_id)}

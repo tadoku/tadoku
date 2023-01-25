@@ -29,22 +29,26 @@ with leaderboard as (
     contest_id = sqlc.arg('contest_id')
     and deleted_at is null
     and (sqlc.narg('language_code') = any(language_codes) or sqlc.narg('language_code') is null)
+), enriched_leaderboard as (
+  select
+    rank() over(order by coalesce(ranked_leaderboard.score, 0) desc) as "rank",
+    registrations.user_id,
+    registrations.user_display_name,
+    coalesce(ranked_leaderboard.score, 0)::real as score,
+    (select count(registrations.user_id) from registrations) as total_size
+  from registrations
+  left join ranked_leaderboard using(user_id)
+  order by
+    score desc,
+    registrations.created_at asc
 )
 select
-  rank() over(order by coalesce(ranked_leaderboard.score, 0) desc) as "rank",
-  registrations.user_id,
-  registrations.user_display_name,
-  coalesce(ranked_leaderboard.score, 0)::real as score,
+  *,
   coalesce((
     "rank" = lag("rank", 1, -1::bigint) over (order by "rank")
     or "rank" = lead("rank", 1, -1::bigint) over (order by "rank")
-  ), false)::boolean as is_tie,
-  (select count(registrations.user_id) from registrations) as total_size
-from registrations
-left join ranked_leaderboard using(user_id)
-order by
-  score desc,
-  registrations.created_at asc
+  ), false)::boolean as is_tie
+from enriched_leaderboard
 limit sqlc.arg('page_size')
 offset sqlc.arg('start_from');
 
@@ -80,21 +84,25 @@ with leaderboard as (
     extract(year from created_at) = sqlc.arg('year')::integer
     and deleted_at is null
     and (sqlc.narg('language_code') = any(language_codes) or sqlc.narg('language_code') is null)
+), enriched_leaderboard as (
+select
+    rank() over(order by coalesce(ranked_leaderboard.score, 0) desc) as "rank",
+    registrations.user_id,
+    registrations.user_display_name,
+    coalesce(ranked_leaderboard.score, 0)::real as score,
+    (select count(registrations.user_id) from registrations) as total_size
+  from registrations
+  left join ranked_leaderboard using(user_id)
+  order by
+    score desc,
+    registrations.created_at asc
 )
 select
-  rank() over(order by coalesce(ranked_leaderboard.score, 0) desc) as "rank",
-  registrations.user_id,
-  registrations.user_display_name,
-  coalesce(ranked_leaderboard.score, 0)::real as score,
+  *,
   coalesce((
     "rank" = lag("rank", 1, -1::bigint) over (order by "rank")
     or "rank" = lead("rank", 1, -1::bigint) over (order by "rank")
-  ), false)::boolean as is_tie,
-  (select count(registrations.user_id) from registrations) as total_size
-from registrations
-left join ranked_leaderboard using(user_id)
-order by
-  score desc,
-  registrations.created_at asc
+  ), false)::boolean as is_tie
+from enriched_leaderboard
 limit sqlc.arg('page_size')
 offset sqlc.arg('start_from');

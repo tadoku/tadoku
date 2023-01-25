@@ -1,6 +1,6 @@
 import { useRouter } from 'next/router'
-import { Breadcrumb, Pagination } from 'ui'
-import { HomeIcon } from '@heroicons/react/20/solid'
+import { Breadcrumb, ButtonGroup, Pagination } from 'ui'
+import { HomeIcon, UserIcon } from '@heroicons/react/20/solid'
 import { routes } from '@app/common/routes'
 import { ActivityChart } from '@app/immersion/ActivityChart'
 import {
@@ -89,7 +89,19 @@ const Page = () => {
           </h1>
           <h2 className="subtitle">{contest.title}</h2>
         </div>
-        <div></div>
+        <div>
+          <ButtonGroup
+            actions={[
+              {
+                href: routes.userProfileStatistics(userId),
+                label: 'View profile',
+                IconComponent: UserIcon,
+                style: 'secondary',
+              },
+            ]}
+            orientation="right"
+          />
+        </div>
       </div>
       <div className="my-4 lg:space-x-4 flex flex-col lg:flex-row w-full">
         <div className="lg:w-1/5">

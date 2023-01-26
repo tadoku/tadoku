@@ -6,6 +6,7 @@ import { Session } from '@ory/client'
 import { ToastContainer } from 'ui'
 import 'ui/styles/globals.css'
 import Navigation from '../src/Navigation'
+import Head from 'next/head'
 
 interface Props {
   session: Session | undefined
@@ -28,6 +29,19 @@ const MyApp = ({ Component, pageProps }: AppProps<Props>) => {
 
   return (
     <Provider initialValues={getInitialValues()}>
+      <Head>
+        <title>Tadoku</title>
+        <link
+          href="/favicon.png"
+          rel="shortcut icon"
+          media="(prefers-color-scheme: light)"
+        />
+        <link
+          href="/favicon-dark.png"
+          rel="shortcut icon"
+          media="(prefers-color-scheme: dark)"
+        />
+      </Head>
       <div>
         <Navigation />
         <div className="p-8 mx-auto max-w-xl">

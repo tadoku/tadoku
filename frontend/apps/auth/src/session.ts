@@ -5,6 +5,7 @@ import { AxiosError } from 'axios'
 import ory from './ory'
 import { AppContext } from 'next/app'
 import { NextPageContext } from 'next'
+import { useRouter } from 'next/router'
 
 export const sessionAtom = atom(undefined as undefined | Session)
 

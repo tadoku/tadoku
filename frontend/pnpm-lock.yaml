@@ -133,7 +133,7 @@ importers:
       next: ^13.1.1
       postcss: ^8.4.19
       react: ^18.2.0
-      react-chartjs-2: 5.0.1
+      react-chartjs-2: ^5.0.1
       react-dom: ^18.2.0
       react-error-boundary: ^3.1.4
       react-hook-form: ^7.40.0
@@ -157,7 +157,7 @@ importers:
       luxon: 3.1.1
       next: 13.1.1_biqbaboplfbrettd7655fr4n2y
       react: 18.2.0
-      react-chartjs-2: 5.0.1_dxa6kz4w32vmgoazz4fv7vwm2e
+      react-chartjs-2: 5.1.0_dxa6kz4w32vmgoazz4fv7vwm2e
       react-dom: 18.2.0_react@18.2.0
       react-error-boundary: 3.1.4_react@18.2.0
       react-hook-form: 7.41.1_react@18.2.0
@@ -3262,16 +3262,6 @@ packages:
   /quick-lru/5.1.1:
     resolution: {integrity: sha512-WuyALRjWPDGtt/wzJiadO5AXY+8hZ80hVpe6MyivgraREW751X3SbhRvG3eLKOYN+8VEvqLcf3wdnt44Z4S4SA==}
     engines: {node: '>=10'}
-
-  /react-chartjs-2/5.0.1_dxa6kz4w32vmgoazz4fv7vwm2e:
-    resolution: {integrity: sha512-u38C9OxynlNCBp+79grgXRs7DSJ9w8FuQ5/HO5FbYBbri8HSZW+9SWgjVshLkbXBfXnMGWakbHEtvN0nL2UG7Q==}
-    peerDependencies:
-      chart.js: ^4.0.0
-      react: ^16.8.0 || ^17.0.0 || ^18.0.0
-    dependencies:
-      chart.js: 4.1.1
-      react: 18.2.0
-    dev: false
 
   /react-chartjs-2/5.1.0_dxa6kz4w32vmgoazz4fv7vwm2e:
     resolution: {integrity: sha512-Gt76b7+p7nMQq0MvkWfUSNAzIm/TLAnAO32zIpSzrQyc9JWRbVCtq8qOzPJmfpDzPcIJ7Y9Gp5g+VdTRrGITsQ==}

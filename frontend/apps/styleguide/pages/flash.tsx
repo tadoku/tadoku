@@ -4,8 +4,6 @@ import {
   ExclamationTriangleIcon,
   FireIcon,
   InformationCircleIcon,
-  StarIcon,
-  StopIcon,
 } from '@heroicons/react/20/solid'
 import { Flash } from 'ui'
 

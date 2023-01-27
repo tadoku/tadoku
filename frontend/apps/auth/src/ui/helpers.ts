@@ -1,5 +1,5 @@
 import { UiNode, UiNodeInputAttributes } from '@ory/client'
-import { BaseSyntheticEvent, FormEvent } from 'react'
+import { BaseSyntheticEvent } from 'react'
 
 export type ValueSetter = (
   value: string | number | boolean | undefined,

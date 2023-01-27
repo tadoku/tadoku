@@ -1,5 +1,4 @@
 import { getNodeLabel } from '@ory/integrations/ui'
-import { FormEvent } from 'react'
 import { useFormContext } from 'react-hook-form'
 
 import { NodeInputProps } from './helpers'

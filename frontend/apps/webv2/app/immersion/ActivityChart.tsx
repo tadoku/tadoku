@@ -14,7 +14,6 @@ import {
 } from 'chart.js'
 import { Chart } from 'react-chartjs-2'
 import 'chartjs-adapter-luxon'
-import { faker } from '@faker-js/faker'
 import {
   ContestRegistrationView,
   useContestProfileActivity,

@@ -1,6 +1,5 @@
 import { atom, useAtom } from 'jotai'
 import { Session } from '@ory/client'
-import Router, { useRouter } from 'next/router'
 import { useEffect, DependencyList, useState } from 'react'
 import { AxiosError } from 'axios'
 import ory from './ory'

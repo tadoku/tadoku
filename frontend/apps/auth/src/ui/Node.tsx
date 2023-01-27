@@ -6,7 +6,7 @@ import {
   isUiNodeTextAttributes,
   isUiNodeAnchorAttributes,
 } from '@ory/integrations/ui'
-import { FormDispatcher, ValueSetter } from './helpers'
+import { FormDispatcher } from './helpers'
 import { NodeAnchor } from './NodeAnchor'
 import { NodeImage } from './NodeImage'
 import { NodeInput } from './NodeInput'

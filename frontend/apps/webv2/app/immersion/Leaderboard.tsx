@@ -3,7 +3,6 @@ import { Leaderboard as LeaderboardType } from '@app/immersion/api'
 import { Flash } from 'ui'
 import { ExclamationCircleIcon } from '@heroicons/react/20/solid'
 import Link from 'next/link'
-import { routes } from '@app/common/routes'
 import { formatScore } from '@app/common/format'
 
 interface Props {

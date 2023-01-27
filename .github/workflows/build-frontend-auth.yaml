@@ -5,6 +5,7 @@ on:
       - "frontend/apps/auth/**"
       - "frontend/packages/ui/**"
       - ".github/workflows/build-frontend-auth.yaml"
+      - "frontend/pnpm-lock.yaml"
 jobs:
   build:
     name: Build auth

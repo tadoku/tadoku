@@ -5,6 +5,7 @@ on:
       - "frontend/apps/webv2/**"
       - "frontend/packages/ui/**"
       - ".github/workflows/build-frontend-webv2.yaml"
+      - "frontend/pnpm-lock.yaml"
 jobs:
   build:
     name: Build webv2

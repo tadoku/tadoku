@@ -5,6 +5,7 @@ on:
       - "frontend/apps/styleguide/**"
       - "frontend/packages/ui/**"
       - ".github/workflows/build-frontend-styleguide.yaml"
+      - "frontend/pnpm-lock.yaml"
 jobs:
   build:
     name: Build styleguide

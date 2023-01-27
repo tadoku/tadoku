@@ -5,7 +5,7 @@ const nextConfig = {
   swcMinify: true,
   publicRuntimeConfig: {
     // TODO: Figure out why this isn't getting passed to the client despite being opted-out from automatic static optimization
-    kratosPublicEndpoint: process.env.NEXT_PUBLIC_KRATOS_ENDPOINT ?? 'https://account.tadoku.app',
+    kratosPublicEndpoint: process.env.NEXT_PUBLIC_KRATOS_ENDPOINT ?? 'https://account.tadoku.app/kratos',
     kratosInternalEndpoint: process.env.NEXT_PUBLIC_KRATOS_INTERNAL_ENDPOINT,
   },
   transpilePackages: ['ui'],

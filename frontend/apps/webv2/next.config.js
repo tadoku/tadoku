@@ -4,11 +4,12 @@ const nextConfig = {
   reactStrictMode: true,
   swcMinify: true,
   publicRuntimeConfig: {
-    kratosPublicEndpoint: process.env.NEXT_PUBLIC_KRATOS_ENDPOINT,
+    // TODO: Figure out why this isn't getting passed to the client despite being opted-out from automatic static optimization
+    kratosPublicEndpoint: process.env.NEXT_PUBLIC_KRATOS_ENDPOINT ?? 'https://account.tadoku.app/kratos',
     kratosInternalEndpoint: process.env.NEXT_PUBLIC_KRATOS_INTERNAL_ENDPOINT,
-    authUiUrl: process.env.NEXT_PUBLIC_AUTH_UI_URL,
-    homeUrl: process.env.NEXT_PUBLIC_HOME_URL,
-    apiEndpoint: process.env.NEXT_PUBLIC_API_ENDPOINT,
+    authUiUrl: process.env.NEXT_PUBLIC_AUTH_UI_URL ?? 'https://account.tadoku.app',
+    homeUrl: process.env.NEXT_PUBLIC_HOME_URL ?? 'https://staging.tadoku.app',
+    apiEndpoint: process.env.NEXT_PUBLIC_API_ENDPOINT ?? 'https://staging.tadoku.app/api',
   },
   transpilePackages: ['ui'],
   async redirects() {

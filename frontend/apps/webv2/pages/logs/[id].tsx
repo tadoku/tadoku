@@ -79,7 +79,9 @@ const Page = () => {
               {log.data.language.name}
             </span>
             {log.data.tags.map(it => (
-              <span className={`tag text-slate-900 bg-slate-200`}>{it}</span>
+              <span key={it} className={`tag text-slate-900 bg-slate-200`}>
+                {it}
+              </span>
             ))}
             {log.data.deleted ? (
               <span className={`tag text-red-900 bg-red-200`}>Deleted</span>

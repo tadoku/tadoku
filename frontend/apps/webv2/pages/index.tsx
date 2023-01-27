@@ -55,7 +55,7 @@ function AboutSection() {
       </p>
       <p>
         As you track your progress over time you will notice that you can
-        understand more and more of the language you're learning.
+        understand more and more of the language you&apos;re learning.
       </p>
       {session ? null : (
         <Link

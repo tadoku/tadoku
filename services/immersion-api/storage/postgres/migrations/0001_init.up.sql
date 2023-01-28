@@ -179,11 +179,11 @@ insert into log_units
   (log_activity_id, name, modifier, language_code)
 values
   (1, 'Page', 1, null),
-  (1, '2 Column page', 1.6, 'jpa'),
+  (1, '2 Column page', 1.6, 'jpn'),
   (1, 'Comic page', 0.2, null),
   (1, 'Sentence', 0.05, null),
   (1, 'Character', 0.000833333, null),
-  (1, 'Character', 0.0025, 'jpa'),
+  (1, 'Character', 0.0025, 'jpn'),
   (1, 'Character', 0.0025, 'kor'),
   (1, 'Character', 0.0025, 'zho'),
   (1, 'Character', 0.0025, 'cmn'),
@@ -194,7 +194,7 @@ values
   (3, 'Page', 1, null),
   (3, 'Sentence', 0.05, null),
   (3, 'Character', 0.000833333, null),
-  (3, 'Character', 0.0025, 'jpa'),
+  (3, 'Character', 0.0025, 'jpn'),
   (3, 'Character', 0.0025, 'kor'),
   (3, 'Character', 0.0025, 'zho'),
   (3, 'Character', 0.0025, 'cmn'),

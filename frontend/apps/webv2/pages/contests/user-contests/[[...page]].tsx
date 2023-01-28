@@ -32,9 +32,9 @@ const Contests: NextPage<Props> = () => {
     setFilters(newFilter())
   }, [router.asPath])
 
-  const options = useContestConfigurationOptions()
-  const list = useContestList(filters, { enabled: !!options.data })
   const [session] = useSession()
+  const list = useContestList(filters)
+  const options = useContestConfigurationOptions({ enabled: !!session })
 
   return (
     <>

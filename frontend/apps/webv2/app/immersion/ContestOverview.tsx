@@ -64,7 +64,7 @@ export const ContestOverview = ({
           <div>
             Ending in{' '}
             <strong>
-              {DateTime.fromISO(contest.contest_end)
+              {DateTime.fromISO(contest.contest_end, { zone: 'utc' })
                 .endOf('day')
                 .diffNow(['days', 'hours', 'minute'])
                 .toHuman({

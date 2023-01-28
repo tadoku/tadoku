@@ -198,19 +198,15 @@
   /* forms */
 
   .label {
-    @apply grid grid-flow-row relative gap-2;
+    @apply relative flex flex-col space-y-2;
   }
 
   .label-text {
-    @apply font-semibold text-base order-1 row-span-full col-span-full md:col-auto;
-  }
-
-  .label .input {
-    @apply col-span-3 order-2 md:order-3;
+    @apply font-semibold text-base flex;
   }
 
   .label .label-inline {
-    @apply h-stack space-x-3 col-span-full;
+    @apply h-stack space-x-3;
   }
 
   .label .label-inline input[type=checkbox] {
@@ -222,15 +218,11 @@
   }
 
   .label .label-inline .label-text {
-    @apply order-2 md:order-3 text-base;
-  }
-
-  .label .error {
-    @apply order-4 col-span-full;
+    @apply text-base;
   }
 
   .label-hint {
-    @apply order-3 md:order-2 col-span-full md:col-span-1 md:row-span-full text-xs md:flex md:justify-end md:items-center md:flex-1 text-slate-500;
+    @apply text-xs sm:flex sm:justify-end sm:items-center sm:flex-1 text-slate-500 font-normal;
   }
 
   .btn {

@@ -39,7 +39,12 @@ export function Input<T extends FieldValues>(props: InputProps<T>) {
 
   return (
     <label className={`label ${hasError ? 'error' : ''}`} htmlFor={name}>
-      <span className="label-text">{label}</span>
+      <span className="label-text">
+        {label}
+        {hint ? (
+          <span className="label-hint hidden sm:flex">{hint}</span>
+        ) : undefined}
+      </span>
       <input
         type={type}
         id={name}
@@ -47,7 +52,7 @@ export function Input<T extends FieldValues>(props: InputProps<T>) {
         className={`input ${inputProps?.className ?? ''}`}
         {...register(name, options)}
       />
-      {hint ? <span className="label-hint">{hint}</span> : undefined}
+      {hint ? <span className="label-hint sm:hidden">{hint}</span> : undefined}
       <span className="error">{errorMessage}</span>
     </label>
   )
@@ -74,14 +79,19 @@ export function TextArea<T extends FieldValues>(props: TextaAreaProps<T>) {
 
   return (
     <label className={`label ${hasError ? 'error' : ''}`} htmlFor={name}>
-      <span className="label-text">{label}</span>
+      <span className="label-text">
+        {label}
+        {hint ? (
+          <span className="label-hint hidden sm:flex">{hint}</span>
+        ) : undefined}
+      </span>
       <textarea
         id={name}
         {...inputProps}
         className={`input ${inputProps?.className ?? ''}`}
         {...register(name, options)}
       />
-      {hint ? <span className="label-hint">{hint}</span> : undefined}
+      {hint ? <span className="label-hint sm:hidden">{hint}</span> : undefined}
       <span className="error">{errorMessage}</span>
     </label>
   )
@@ -151,7 +161,12 @@ export function Select<T extends FieldValues>(props: SelectProps<T>) {
 
   return (
     <label className={`label ${hasError ? 'error' : ''}`} htmlFor={name}>
-      <span className="label-text">{label}</span>
+      <span className="label-text">
+        {label}
+        {hint ? (
+          <span className="label-hint hidden sm:flex">{hint}</span>
+        ) : undefined}
+      </span>
       <select
         {...selectProps}
         className={`input ${selectProps?.className ?? ''}`}
@@ -163,7 +178,7 @@ export function Select<T extends FieldValues>(props: SelectProps<T>) {
           </option>
         ))}
       </select>
-      {hint ? <span className="label-hint">{hint}</span> : undefined}
+      {hint ? <span className="label-hint sm:hidden">{hint}</span> : undefined}
       <span className="error">{errorMessage}</span>
     </label>
   )
@@ -191,7 +206,12 @@ export function RadioSelect<T extends FieldValues>(props: RadioSelectProps<T>) {
 
   return (
     <div className={`label ${hasError ? 'error' : ''}`}>
-      <span className="label-text">{label}</span>
+      <span className="label-text">
+        {label}
+        {hint ? (
+          <span className="label-hint hidden sm:flex">{hint}</span>
+        ) : undefined}
+      </span>
       {values.map(({ value, label }) => (
         <label
           className="label-inline"
@@ -208,7 +228,7 @@ export function RadioSelect<T extends FieldValues>(props: RadioSelectProps<T>) {
           <span>{label}</span>
         </label>
       ))}
-      {hint ? <span className="label-hint">{hint}</span> : undefined}
+      {hint ? <span className="label-hint sm:hidden">{hint}</span> : undefined}
       <span className="error">{errorMessage}</span>
     </div>
   )
@@ -243,7 +263,12 @@ export function AutocompleteInput<T>(props: {
 
   return (
     <label className={`label ${hasError ? 'error' : ''}`} htmlFor={id}>
-      <span className="label-text">{label}</span>
+      <span className="label-text">
+        {label}
+        {hint ? (
+          <span className="label-hint hidden sm:flex">{hint}</span>
+        ) : undefined}
+      </span>
       <Combobox value={value || null} onChange={onChange}>
         <div className="input relative">
           <div className="z-0">
@@ -318,7 +343,7 @@ export function AutocompleteInput<T>(props: {
           </Transition>
         </div>
       </Combobox>
-      {hint ? <span className="label-hint">{hint}</span> : undefined}
+      {hint ? <span className="label-hint sm:hidden">{hint}</span> : undefined}
       <span className="error">{errorMessage}</span>
     </label>
   )
@@ -354,7 +379,12 @@ export function AutocompleteMultiInput<T>(props: {
 
   return (
     <label className={`label ${hasError ? 'error' : ''}`} htmlFor={id}>
-      <span className="label-text">{label}</span>
+      <span className="label-text">
+        {label}
+        {hint ? (
+          <span className="label-hint hidden sm:flex">{hint}</span>
+        ) : undefined}
+      </span>
       <Combobox
         value={value || []}
         onChange={onChange}
@@ -430,7 +460,7 @@ export function AutocompleteMultiInput<T>(props: {
           </Transition>
         </div>
       </Combobox>
-      {hint ? <span className="label-hint">{hint}</span> : undefined}
+      {hint ? <span className="label-hint sm:hidden">{hint}</span> : undefined}
       <span className="error">{errorMessage}</span>
     </label>
   )

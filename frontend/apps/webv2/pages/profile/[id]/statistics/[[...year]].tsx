@@ -154,7 +154,10 @@ const Page = () => {
                   ? registrations.data.registrations.map(it => (
                       <li key={it.id}>
                         <Link
-                          href={routes.contestLeaderboard(it.contest_id)}
+                          href={routes.contestUserProfile(
+                            it.contest_id,
+                            userId,
+                          )}
                           className="reset px-4 py-2 flex justify-start items-center hover:bg-slate-500/5"
                         >
                           {it.contest!.private ? (

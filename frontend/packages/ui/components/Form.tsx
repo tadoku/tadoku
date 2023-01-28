@@ -4,12 +4,7 @@ import {
   RadioGroup as HeadlessRadioGroup,
 } from '@headlessui/react'
 import { CheckIcon, ChevronUpDownIcon } from '@heroicons/react/20/solid'
-import React, {
-  ComponentType,
-  Fragment,
-  HTMLProps,
-  useState,
-} from 'react'
+import React, { ComponentType, Fragment, HTMLProps, useState } from 'react'
 import {
   FieldPath,
   FieldValues,
@@ -243,14 +238,17 @@ export function AutocompleteInput<T>(props: {
   const filtered =
     query === '' ? options : options.filter(option => match(option, query))
 
+  // Needs to be suffixed with -search so 1password doesn't try to autocomplete...
+  const id = `${name}-search`
+
   return (
-    <label className={`label ${hasError ? 'error' : ''}`} htmlFor={name}>
+    <label className={`label ${hasError ? 'error' : ''}`} htmlFor={id}>
       <span className="label-text">{label}</span>
       <Combobox value={value || null} onChange={onChange}>
         <div className="input relative">
           <div className="z-0">
             <Combobox.Input
-              id={`${name}-search`}
+              id={id}
               onChange={event => setQuery(event.target.value)}
               displayValue={selected => {
                 if (!selected) {
@@ -351,8 +349,11 @@ export function AutocompleteMultiInput<T>(props: {
   const filtered =
     query === '' ? options : options.filter(option => match(option, query))
 
+  // Needs to be suffixed with -search so 1password doesn't try to autocomplete...
+  const id = `${name}-search`
+
   return (
-    <label className={`label ${hasError ? 'error' : ''}`} htmlFor={name}>
+    <label className={`label ${hasError ? 'error' : ''}`} htmlFor={id}>
       <span className="label-text">{label}</span>
       <Combobox
         value={value || []}
@@ -363,7 +364,7 @@ export function AutocompleteMultiInput<T>(props: {
         <div className="input relative">
           <div className="z-0">
             <Combobox.Input
-              id={`${name}-search`}
+              id={id}
               onChange={event => setQuery(event.target.value)}
               displayValue={selected =>
                 selected?.map(option => format(option as T)).join(', ') ?? ''

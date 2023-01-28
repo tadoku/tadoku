@@ -4,7 +4,7 @@ import { DateTime } from 'luxon'
 import Link from 'next/link'
 import { Logs } from '@app/immersion/api'
 import { UseQueryResult } from 'react-query'
-import { colorForActivity, formatUnit } from '@app/common/format'
+import { colorForActivity, formatScore, formatUnit } from '@app/common/format'
 
 function truncate(text: string | undefined, len: number) {
   if (text === undefined) {
@@ -82,12 +82,12 @@ const LogsList = ({ logs }: Props) => {
               </td>
               <td className="default link font-bold hidden md:table-cell">
                 <Link className="reset" href={routes.log(it.id)}>
-                  {it.amount} {formatUnit(it.amount, it.unit_name)}
+                  {formatScore(it.amount)} {formatUnit(it.amount, it.unit_name)}
                 </Link>
               </td>
               <td className="default link font-bold">
                 <Link className="reset justify-end" href={routes.log(it.id)}>
-                  {it.score}
+                  {formatScore(it.score)}
                 </Link>
               </td>
               <td className="default link w-12">

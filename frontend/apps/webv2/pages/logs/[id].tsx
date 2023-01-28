@@ -1,4 +1,9 @@
-import { colorForActivity, formatArray, formatUnit } from '@app/common/format'
+import {
+  colorForActivity,
+  formatArray,
+  formatScore,
+  formatUnit,
+} from '@app/common/format'
 import { useCurrentDateTime } from '@app/common/hooks'
 import { routes } from '@app/common/routes'
 import { useSession } from '@app/common/session'
@@ -109,12 +114,16 @@ const Page = () => {
           <div className="h-stack w-full mt-4 spaced">
             <div className="w-1/2">
               <h3 className="subtitle mb-2">Score</h3>
-              <div className="font-bold text-5xl">{log.data.score}</div>
+              <div className="font-bold text-5xl">
+                {formatScore(log.data.score)}
+              </div>
             </div>
             <div className="w-1/2 flex flex-col items-end justify-end opacity-80">
               <h4 className="subtitle text-sm">Breakdown</h4>
               <div className="lowercase flex items-center space-x-1 text-sm">
-                <strong className="text-lg">{log.data.amount}</strong>
+                <strong className="text-lg">
+                  {formatScore(log.data.amount)}
+                </strong>
                 <span className="text-slate-500">
                   {formatUnit(log.data.amount, log.data.unit_name)}
                 </span>

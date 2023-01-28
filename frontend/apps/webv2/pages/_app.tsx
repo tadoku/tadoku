@@ -9,6 +9,10 @@ import Navigation from '@app/ui/Navigation'
 import { QueryClient, QueryClientProvider } from 'react-query'
 import Head from 'next/head'
 import Footer from '@app/ui/Footer'
+import { Settings } from 'luxon'
+
+// Default timezone for app
+Settings.defaultZone = 'utc'
 
 interface Props {
   session: Session | undefined

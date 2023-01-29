@@ -27,6 +27,15 @@ module.exports = {
       gridTemplateColumns: {
         'fill-48': 'repeat(auto-fill, minmax(12rem, 1fr))',
       },
+      animation: {
+        'gradient-loading': 'gradient-loading 2s infinite normal',
+      },
+      keyframes: {
+        'gradient-loading': {
+          '0%, 100%': { 'background-position': '0% 50%' },
+          '50%': { 'background-position': '100% 0%'},
+        }
+      }
     },
   },
   safelist: [

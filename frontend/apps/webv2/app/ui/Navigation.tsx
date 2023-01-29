@@ -12,8 +12,11 @@ import {
 import { useLogoutHandler, useSession } from '@app/common/session'
 import { useCurrentLocation } from '@app/common/hooks'
 import { routes } from '@app/common/routes'
+import { useIsFetching } from 'react-query'
 
 export default function Navigation() {
+  const isFetching = useIsFetching()
+
   const [session] = useSession()
   const onLogout = useLogoutHandler([session])
   const currentUrl = useCurrentLocation()
@@ -99,6 +102,7 @@ export default function Navigation() {
         },
         ...userNavigation,
       ]}
+      isLoading={!!isFetching}
     />
   )
 }

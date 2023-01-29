@@ -30,9 +30,15 @@ interface Props {
   navigation: (NavigationLinkProps | NavigationDropDownProps)[]
   width?: string
   logoHref: string
+  isLoading?: boolean
 }
 
-export function Navbar({ navigation, logoHref, width = 'max-w-7xl' }: Props) {
+export function Navbar({
+  navigation,
+  logoHref,
+  width = 'max-w-7xl',
+  isLoading = false,
+}: Props) {
   const router = useRouter()
 
   return (
@@ -137,6 +143,11 @@ export function Navbar({ navigation, logoHref, width = 'max-w-7xl' }: Props) {
                 })}
               </div>
             </Disclosure.Panel>
+            <div
+              className={`motion-reduce:hidden ${
+                isLoading ? 'opacity-100' : 'opacity-0'
+              } bg-gradient-to-br from-primary via-cyan-500 to-emerald-300 h-1 absolute left-0 right-0 top-0 animate-gradient-loading transition-all duration-500 bg-[length:400%_400%]`}
+            ></div>
           </>
         )}
       </Disclosure>
@@ -195,7 +206,6 @@ const DropDown = ({ label, links }: NavigationDropDownProps) => (
 
 const DropDownMobile = ({ label, links }: NavigationDropDownProps) => (
   <div className="">
-    {/* Profile dropdown */}
     <Menu as="div" className="relative">
       <div>
         <Menu.Button className="flex items-center justify-between w-full">

@@ -45,12 +45,12 @@ export function ActivityChart({ userId, registration }: Props) {
   })
 
   if (activity.isLoading || activity.isIdle) {
-    return <Loading />
+    return <Loading className="h-full" />
   }
 
   if (activity.isError || !registration.contest) {
     return (
-      <span className="flash error">
+      <span className="flash error -mx-4">
         Could not load page, please try again later.
       </span>
     )

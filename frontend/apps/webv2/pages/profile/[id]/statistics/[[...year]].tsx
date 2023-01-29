@@ -119,26 +119,37 @@ const Page = () => {
             <h3 className="subtitle">
               {activitySummary.data
                 ? `${activitySummary.data.total_updates} updates in ${year}`
-                : 'Loading updates...'}
+                : 'Updates'}
             </h3>
-            <div className="w-full h-28 mt-4">
-              <HeatmapChart
-                id={`heatmap-${year}-${userId}`}
-                year={year}
-                data={
-                  activitySummary.data
-                    ? activitySummary.data.scores.map(it => ({
-                        date: it.date,
-                        value: it.score,
-                        tooltip: `${formatScore(
-                          it.score,
-                        )} points on ${DateTime.fromISO(it.date).toLocaleString(
-                          DateTime.DATE_MED,
-                        )}`,
-                      }))
-                    : []
-                }
-              />
+            <div className="w-full max-h-28 mt-4">
+              <Flash
+                style="error"
+                IconComponent={ExclamationCircleIcon}
+                visible={activitySummary.isError}
+                className="-mx-4 -mb-4"
+              >
+                Could not retrieve updates
+              </Flash>
+              {activitySummary.isLoading ? <Loading /> : null}
+              {activitySummary.isSuccess ? (
+                <HeatmapChart
+                  id={`heatmap-${year}-${userId}`}
+                  year={year}
+                  data={
+                    activitySummary.data
+                      ? activitySummary.data.scores.map(it => ({
+                          date: it.date,
+                          value: it.score,
+                          tooltip: `${formatScore(
+                            it.score,
+                          )} points on ${DateTime.fromISO(
+                            it.date,
+                          ).toLocaleString(DateTime.DATE_MED)}`,
+                        }))
+                      : []
+                  }
+                />
+              ) : null}
             </div>
           </div>
           <div className="h-stack spaced items-start">
@@ -156,7 +167,7 @@ const Page = () => {
                   !registrations.isError ? 'border-t-2' : ''
                 }`}
               >
-                {registrations.isLoading ? <Loading /> : null}
+                {registrations.isLoading ? <Loading className="p-4" /> : null}
                 {registrations.data
                   ? registrations.data.registrations.map(it => (
                       <li key={it.id}>
@@ -185,7 +196,7 @@ const Page = () => {
               </ul>
             </div>
             <div className="card narrow w-full">
-              <h3 className="subtitle">Activities</h3>
+              <h3 className="subtitle mb-4">Activities</h3>
               {activitySplit.isLoading ? <Loading /> : null}
               {activitySplit.data &&
               activitySplit.data.activities.length > 0 ? (
@@ -198,6 +209,7 @@ const Page = () => {
                 style="info"
                 IconComponent={InformationCircleIcon}
                 visible={
+                  !activitySplit.isLoading &&
                   activitySplit.data &&
                   activitySplit.data.activities.length === 0
                 }

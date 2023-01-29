@@ -1,6 +1,9 @@
-export function Loading() {
+export function Loading({ className = '' }: { className?: string }) {
   return (
-    <div role="status" className="flex items-center justify-center">
+    <div
+      role="status"
+      className={`flex items-center justify-center ${className}`}
+    >
       <svg
         aria-hidden="true"
         className="w-5 h-5 text-gray-200 animate-spin dark:text-slate-300 fill-primary"

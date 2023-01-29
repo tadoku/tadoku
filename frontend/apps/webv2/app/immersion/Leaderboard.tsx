@@ -19,7 +19,7 @@ export const Leaderboard = ({
   emptyMessage = 'No partipants yet, be the first to sign up!',
 }: Props) => {
   if (leaderboard.isLoading || leaderboard.isIdle) {
-    return <Loading />
+    return <Loading className="p-5" />
   }
 
   if (leaderboard.isError) {

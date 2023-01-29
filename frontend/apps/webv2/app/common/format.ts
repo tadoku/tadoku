@@ -14,7 +14,7 @@ export const formatScore = (
 }
 
 export const formatUnit = (amount: number, unit: string) =>
-  `${unit}${amount !== 1 ? 's' : ''}`
+  `${unit.toLowerCase()}${amount !== 1 ? 's' : ''}`
 
 export const colorForActivity = (id: number) =>
   activityColors[id % activityColors.length]

@@ -25,7 +25,7 @@ interface Props {
 
 const LogsList = ({ logs }: Props) => {
   if (logs.isLoading || logs.isIdle) {
-    return <Loading />
+    return <Loading className="pb-4" />
   }
 
   if (logs.isError) {

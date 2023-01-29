@@ -42,6 +42,7 @@ export function ActivitySplitChart({ activities }: Props) {
         labels: activities.map(it => it.activity_name),
         datasets: [
           {
+            barThickness: 30,
             ...chartDatasetDefaults,
             label: 'Score',
             data: activities.map(it => it.score),

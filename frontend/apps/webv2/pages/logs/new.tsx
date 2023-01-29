@@ -1,5 +1,5 @@
 import type { NextPage } from 'next'
-import { Breadcrumb } from 'ui'
+import { Breadcrumb, Loading } from 'ui'
 import { HomeIcon } from '@heroicons/react/20/solid'
 import {
   useLogConfigurationOptions,
@@ -34,7 +34,7 @@ const Page: NextPage<Props> = () => {
         />
       </div>
       <h1 className="title mb-4">New log</h1>
-      {options.isLoading || registrations.isLoading ? <p>Loading...</p> : null}
+      {options.isLoading || registrations.isLoading ? <Loading /> : null}
       {options.isError || registrations.isError ? (
         <span className="flash error">
           Could not load page, please try again later.

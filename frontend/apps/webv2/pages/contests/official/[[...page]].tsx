@@ -1,5 +1,5 @@
 import type { NextPage } from 'next'
-import { Breadcrumb, ButtonGroup, Pagination, Tabbar } from 'ui'
+import { Breadcrumb, ButtonGroup, Loading, Pagination, Tabbar } from 'ui'
 import { HomeIcon } from '@heroicons/react/20/solid'
 import { PlusIcon } from '@heroicons/react/24/solid'
 import { useContestList } from '@app/immersion/api'
@@ -82,7 +82,7 @@ const Contests: NextPage<Props> = () => {
         ]}
       />
       <div className="mt-2 md:mt-8">
-        {list.isLoading ? <p>Loading...</p> : null}
+        {list.isLoading ? <Loading /> : null}
         {list.isError ? (
           <span className="flash error">
             Could not load page, please try again later.

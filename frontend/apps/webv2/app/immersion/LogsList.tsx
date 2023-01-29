@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { Logs } from '@app/immersion/api'
 import { UseQueryResult } from 'react-query'
 import { colorForActivity, formatScore, formatUnit } from '@app/common/format'
+import { Loading } from 'ui'
 
 function truncate(text: string | undefined, len: number) {
   if (text === undefined) {
@@ -24,7 +25,7 @@ interface Props {
 
 const LogsList = ({ logs }: Props) => {
   if (logs.isLoading || logs.isIdle) {
-    return <p>Loading...</p>
+    return <Loading />
   }
 
   if (logs.isError) {

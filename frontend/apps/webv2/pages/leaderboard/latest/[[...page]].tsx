@@ -3,7 +3,7 @@ import {
   useContestRegistration,
   useLatestOfficialContest,
 } from '@app/immersion/api'
-import { Breadcrumb, ButtonGroup, Tabbar } from 'ui'
+import { Breadcrumb, ButtonGroup, Loading, Tabbar } from 'ui'
 import { DateTime, Interval } from 'luxon'
 import { HomeIcon } from '@heroicons/react/20/solid'
 import { PencilSquareIcon, PlusIcon } from '@heroicons/react/24/solid'
@@ -21,7 +21,7 @@ const Page = () => {
   })
 
   if (contest.isLoading || contest.isIdle) {
-    return <p>Loading...</p>
+    return <Loading />
   }
 
   if (contest.isError) {

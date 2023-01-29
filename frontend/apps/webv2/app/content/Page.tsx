@@ -2,7 +2,7 @@ import { routes } from '@app/common/routes'
 import { usePage } from '@app/content/api'
 import { HomeIcon } from '@heroicons/react/20/solid'
 import Head from 'next/head'
-import { Breadcrumb } from 'ui'
+import { Breadcrumb, Loading } from 'ui'
 
 interface Props {
   slug: string
@@ -12,7 +12,7 @@ export const Page = ({ slug }: Props) => {
   const page = usePage(slug)
 
   if (page.isLoading || page.isIdle) {
-    return <p>Loading...</p>
+    return <Loading />
   }
 
   if (page.isError) {

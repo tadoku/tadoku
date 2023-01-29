@@ -7,7 +7,7 @@ import { ExclamationCircleIcon, HomeIcon } from '@heroicons/react/20/solid'
 import { DateTime, Interval } from 'luxon'
 import Head from 'next/head'
 import { useRouter } from 'next/router'
-import { Breadcrumb, Flash } from 'ui'
+import { Breadcrumb, Flash, Loading } from 'ui'
 
 const Page = () => {
   const router = useRouter()
@@ -26,7 +26,7 @@ const Page = () => {
   }
 
   if (contest.isLoading || contest.isIdle) {
-    return <p>Loading...</p>
+    return <Loading />
   }
 
   if (contest.isError) {
@@ -77,7 +77,7 @@ const Page = () => {
       </Flash>
 
       {registration.isLoading || registration.isIdle ? (
-        'Loading...'
+        <Loading />
       ) : (
         <ContestRegistrationForm
           contest={contest.data}

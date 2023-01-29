@@ -1,5 +1,5 @@
 import { useRouter } from 'next/router'
-import { Breadcrumb, ButtonGroup, Pagination } from 'ui'
+import { Breadcrumb, ButtonGroup, Loading, Pagination } from 'ui'
 import { HomeIcon, UserIcon } from '@heroicons/react/20/solid'
 import { routes } from '@app/common/routes'
 import { ActivityChart } from '@app/immersion/ActivityChart'
@@ -36,7 +36,7 @@ const Page = () => {
   const logs = useContestProfileLogs(logListParams)
 
   if (profile.isLoading || profile.isIdle) {
-    return <p>Loading...</p>
+    return <Loading />
   }
 
   const contest = profile.data?.registration.contest

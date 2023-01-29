@@ -14,7 +14,7 @@ import { DateTime } from 'luxon'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
 import { useState } from 'react'
-import { Breadcrumb, ButtonGroup, Modal } from 'ui'
+import { Breadcrumb, ButtonGroup, Loading, Modal } from 'ui'
 import { toast } from 'react-toastify'
 import Head from 'next/head'
 
@@ -24,7 +24,7 @@ const Page = () => {
   const log = useLog(id)
 
   if (log.isLoading || log.isIdle) {
-    return <p>Loading...</p>
+    return <Loading />
   }
 
   if (log.isError) {

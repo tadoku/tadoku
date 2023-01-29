@@ -1,5 +1,5 @@
 import type { NextPage } from 'next'
-import { Breadcrumb } from 'ui'
+import { Breadcrumb, Loading } from 'ui'
 import { HomeIcon } from '@heroicons/react/20/solid'
 import { ContestForm } from '@app/immersion/ContestForm'
 import { useContestConfigurationOptions } from '@app/immersion/api'
@@ -26,7 +26,7 @@ const Contests: NextPage<Props> = () => {
         />
       </div>
       <h1 className="title mb-4">Create new contest</h1>
-      {options.isLoading ? <p>Loading...</p> : null}
+      {options.isLoading ? <Loading /> : null}
       {options.isError ? (
         <span className="flash error">
           Could not load page, please try again later.

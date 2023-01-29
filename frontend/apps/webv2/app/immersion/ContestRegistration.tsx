@@ -1,4 +1,4 @@
-import { AutocompleteMultiInput, Flash } from 'ui'
+import { AutocompleteMultiInput, Flash, Loading } from 'ui'
 import { FormProvider, useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -112,7 +112,7 @@ export const ContestRegistrationForm = ({ contest, data, isClosed }: Props) => {
   }
 
   if (allLanguages && !options.data) {
-    return <>Loading...</>
+    return <Loading />
   }
 
   return (

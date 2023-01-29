@@ -1,4 +1,4 @@
-import { chartColors } from 'ui'
+import { chartColors, Loading } from 'ui'
 import {
   Chart as ChartJS,
   Tooltip,
@@ -45,7 +45,7 @@ export function ActivityChart({ userId, registration }: Props) {
   })
 
   if (activity.isLoading || activity.isIdle) {
-    return <p>Loading...</p>
+    return <Loading />
   }
 
   if (activity.isError || !registration.contest) {

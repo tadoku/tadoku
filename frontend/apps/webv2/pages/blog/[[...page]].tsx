@@ -1,7 +1,7 @@
 import { usePostList } from '@app/content/api'
 import { PostDetail } from '@app/content/Post'
 import { useRouter } from 'next/router'
-import { Breadcrumb, Pagination } from 'ui'
+import { Breadcrumb, Loading, Pagination } from 'ui'
 import { HomeIcon } from '@heroicons/react/24/outline'
 import { useState } from 'react'
 import Link from 'next/link'
@@ -26,7 +26,7 @@ const BlogIndex = () => {
   }
 
   if (list.isLoading || list.isIdle) {
-    return <p>Loading...</p>
+    return <Loading />
   }
 
   if (list.isError) {

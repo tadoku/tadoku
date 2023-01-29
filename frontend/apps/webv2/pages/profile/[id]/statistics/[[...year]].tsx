@@ -1,5 +1,12 @@
 import { useRouter } from 'next/router'
-import { Breadcrumb, Flash, HeatmapChart, Tabbar, VerticalTabbar } from 'ui'
+import {
+  Breadcrumb,
+  Flash,
+  HeatmapChart,
+  Loading,
+  Tabbar,
+  VerticalTabbar,
+} from 'ui'
 import {
   ChevronRightIcon,
   ExclamationCircleIcon,
@@ -38,7 +45,7 @@ const Page = () => {
   const activitySplit = useUserYearlyActivitySplit({ userId, year })
 
   if (profile.isLoading || profile.isIdle) {
-    return <p>Loading...</p>
+    return <Loading />
   }
 
   if (profile.isError) {
@@ -149,7 +156,7 @@ const Page = () => {
                   !registrations.isError ? 'border-t-2' : ''
                 }`}
               >
-                {registrations.isLoading ? 'Loading...' : null}
+                {registrations.isLoading ? <Loading /> : null}
                 {registrations.data
                   ? registrations.data.registrations.map(it => (
                       <li key={it.id}>
@@ -179,7 +186,7 @@ const Page = () => {
             </div>
             <div className="card narrow w-full">
               <h3 className="subtitle">Activities</h3>
-              {activitySplit.isLoading ? 'Loading...' : null}
+              {activitySplit.isLoading ? <Loading /> : null}
               {activitySplit.data &&
               activitySplit.data.activities.length > 0 ? (
                 <ActivitySplitChart

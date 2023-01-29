@@ -1,6 +1,6 @@
 import { UseQueryResult } from 'react-query'
 import { Leaderboard as LeaderboardType } from '@app/immersion/api'
-import { Flash } from 'ui'
+import { Flash, Loading } from 'ui'
 import { ExclamationCircleIcon } from '@heroicons/react/20/solid'
 import Link from 'next/link'
 import { formatScore } from '@app/common/format'
@@ -19,7 +19,7 @@ export const Leaderboard = ({
   emptyMessage = 'No partipants yet, be the first to sign up!',
 }: Props) => {
   if (leaderboard.isLoading || leaderboard.isIdle) {
-    return <>Loading...</>
+    return <Loading />
   }
 
   if (leaderboard.isError) {

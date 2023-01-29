@@ -2,7 +2,7 @@ import { useCurrentDateTime } from '@app/common/hooks'
 import { useSession } from '@app/common/session'
 import { useContest, useContestRegistration } from '@app/immersion/api'
 import { useRouter } from 'next/router'
-import { Breadcrumb, ButtonGroup, Tabbar } from 'ui'
+import { Breadcrumb, ButtonGroup, Loading, Tabbar } from 'ui'
 import { DateTime, Interval } from 'luxon'
 import { HomeIcon } from '@heroicons/react/20/solid'
 import { PencilSquareIcon, PlusIcon } from '@heroicons/react/24/solid'
@@ -22,7 +22,7 @@ const Page = () => {
   const registration = useContestRegistration(id, { enabled: !!session })
 
   if (contest.isLoading || contest.isIdle) {
-    return <p>Loading...</p>
+    return <Loading />
   }
 
   if (contest.isError) {

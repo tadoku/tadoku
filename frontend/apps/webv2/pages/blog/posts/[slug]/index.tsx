@@ -1,5 +1,5 @@
 import type { NextPage } from 'next'
-import { Breadcrumb } from 'ui'
+import { Breadcrumb, Loading } from 'ui'
 import { HomeIcon } from '@heroicons/react/20/solid'
 import { PostDetail } from '@app/content/Post'
 import { useRouter } from 'next/router'
@@ -16,7 +16,7 @@ const BlogPost: NextPage<Props> = () => {
   const post = usePost(slug as string)
 
   if (post.isLoading || post.isIdle) {
-    return <p>Loading...</p>
+    return <Loading />
   }
 
   if (post.isError) {

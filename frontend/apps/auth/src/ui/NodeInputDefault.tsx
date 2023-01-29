@@ -16,7 +16,8 @@ export function NodeInputDefault<T>(props: NodeInputProps) {
     }
   }
 
-  const label = node.meta.label?.text === 'ID' ? 'Email' : node.meta.label?.text
+  const isID = node.meta.label?.text === 'ID'
+  const label = isID ? 'Email' : node.meta.label?.text
 
   // Render a generic text input field.
   return (
@@ -30,7 +31,7 @@ export function NodeInputDefault<T>(props: NodeInputProps) {
           {...register(attributes.name)}
           id={attributes.name}
           onClick={onClick}
-          type={attributes.type}
+          type={isID ? 'email' : attributes.type}
           disabled={attributes.disabled || disabled}
           className="input"
         />

@@ -16,6 +16,8 @@ export function NodeInputDefault<T>(props: NodeInputProps) {
     }
   }
 
+  const label = node.meta.label?.text === 'ID' ? 'Email' : node.meta.label?.text
+
   // Render a generic text input field.
   return (
     <>
@@ -23,7 +25,7 @@ export function NodeInputDefault<T>(props: NodeInputProps) {
         htmlFor={attributes.name}
         className={`label ${node.messages.length > 0 ? 'error' : ''}`}
       >
-        <span className="label-text">{node.meta.label?.text}</span>
+        <span className="label-text">{label}</span>
         <input
           {...register(attributes.name)}
           id={attributes.name}

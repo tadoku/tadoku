@@ -2,9 +2,9 @@
   upstream:
     preserve_host: true
     url: "http://content-api:80"
-    strip_path: /api/content/
+    strip_path: /api/internal/content/
   match:
-    url: "http://langlog.be/api/content/<**>"
+    url: "http://langlog.be/api/internal/content/<**>"
     methods:
       - GET
       - POST
@@ -23,9 +23,9 @@
   upstream:
     preserve_host: true
     url: "http://immersion-api:80"
-    strip_path: /api/immersion/
+    strip_path: /api/internal/immersion/
   match:
-    url: "http://langlog.be/api/immersion/<**>"
+    url: "http://langlog.be/api/internal/immersion/<**>"
     methods:
       - GET
       - POST
@@ -44,9 +44,9 @@
   upstream:
     preserve_host: true
     url: "http://echo"
-    strip_path: /api/echo
+    strip_path: /api/internal/echo
   match:
-    url: "http://langlog.be/api/echo/<**>"
+    url: "http://langlog.be/api/internal/echo/<**>"
     methods:
       - GET
       - POST

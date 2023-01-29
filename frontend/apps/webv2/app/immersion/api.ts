@@ -43,7 +43,7 @@ export const useContestConfigurationOptions = (options?: {
       const response = await fetch(`${root}/contests/configuration-options`)
 
       if (response.status !== 200) {
-        throw new Error('could not fetch page')
+        throw new Error(response.status.toString())
       }
 
       return ContestConfigurationOptions.parse(await response.json())
@@ -64,18 +64,18 @@ export const useCreateContest = (onSuccess: (id: string) => void) =>
         ),
       }
 
-      const res = await fetch(`${root}/contests`, {
+      const response = await fetch(`${root}/contests`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(payload),
       })
-      if (res.status !== 200) {
-        throw new Error('could not process request')
+      if (response.status !== 200) {
+        throw new Error(response.status.toString())
       }
 
-      return Contest.parse(await res.json())
+      return Contest.parse(await response.json())
     },
     onSuccess(data) {
       onSuccess(data.id)
@@ -131,7 +131,7 @@ export const useContestList = (
       )
 
       if (response.status !== 200) {
-        throw new Error('could not fetch page')
+        throw new Error(response.status.toString())
       }
 
       return Contests.parse(await response.json())
@@ -164,7 +164,7 @@ export const useContest = (id: string, options?: { enabled?: boolean }) =>
       const response = await fetch(`${root}/contests/${id}`)
 
       if (response.status !== 200) {
-        throw new Error('could not fetch page')
+        throw new Error(response.status.toString())
       }
 
       return ContestView.parse(await response.json())
@@ -179,7 +179,7 @@ export const useLatestOfficialContest = (options?: { enabled?: boolean }) =>
       const response = await fetch(`${root}/contests/latest-official`)
 
       if (response.status !== 200) {
-        throw new Error('could not fetch page')
+        throw new Error(response.status.toString())
       }
 
       return ContestView.parse(await response.json())
@@ -217,7 +217,7 @@ export const useContestRegistration = (
       }
 
       if (response.status !== 200) {
-        throw new Error('could not fetch page')
+        throw new Error(response.status.toString())
       }
 
       return ContestRegistrationView.parse(await response.json())
@@ -228,7 +228,7 @@ export const useContestRegistration = (
 export const useContestRegistrationUpdate = (onSuccess: () => void) =>
   useMutation({
     mutationFn: async (registration: ContestRegistrationFormSchema) => {
-      const res = await fetch(
+      const response = await fetch(
         `${root}/contests/${registration.contest_id}/registration`,
         {
           method: 'POST',
@@ -240,8 +240,8 @@ export const useContestRegistrationUpdate = (onSuccess: () => void) =>
           }),
         },
       )
-      if (res.status !== 200) {
-        throw new Error('could not process request')
+      if (response.status !== 200) {
+        throw new Error(response.status.toString())
       }
       return
     },
@@ -294,7 +294,7 @@ export const useContestLeaderboard = (
       )
 
       if (response.status !== 200) {
-        throw new Error('could not fetch leaderboard')
+        throw new Error(response.status.toString())
       }
 
       return Leaderboard.parse(await response.json())
@@ -328,7 +328,7 @@ export const useYearlyLeaderboard = (
       )
 
       if (response.status !== 200) {
-        throw new Error('could not fetch leaderboard')
+        throw new Error(response.status.toString())
       }
 
       return Leaderboard.parse(await response.json())
@@ -353,7 +353,7 @@ export const useOngoingContestRegistrations = (options?: {
       const response = await fetch(`${root}/contests/ongoing-registrations`)
 
       if (response.status !== 200) {
-        throw new Error('could not fetch page')
+        throw new Error(response.status.toString())
       }
 
       return ContestRegistrationsView.parse(await response.json())
@@ -392,7 +392,7 @@ export const useContestProfileScores = (
       )
 
       if (response.status !== 200) {
-        throw new Error('could not fetch page')
+        throw new Error(response.status.toString())
       }
 
       return ContestProfileScores.parse(await response.json())
@@ -427,7 +427,7 @@ export const useContestProfileActivity = (
       )
 
       if (response.status !== 200) {
-        throw new Error('could not fetch page')
+        throw new Error(response.status.toString())
       }
 
       return ContestProfileActivity.parse(await response.json())
@@ -507,7 +507,7 @@ export const useContestProfileLogs = (
       )
 
       if (response.status !== 200) {
-        throw new Error('could not fetch page')
+        throw new Error(response.status.toString())
       }
 
       return Logs.parse(await response.json())
@@ -535,7 +535,7 @@ export const useUserProfile = (
       const response = await fetch(`${root}/users/${opts.userId}/profile`)
 
       if (response.status !== 200) {
-        throw new Error('could not fetch page')
+        throw new Error(response.status.toString())
       }
 
       return UserProfile.parse(await response.json())
@@ -577,7 +577,7 @@ export const useLogConfigurationOptions = (options?: { enabled?: boolean }) =>
       const response = await fetch(`${root}/logs/configuration-options`)
 
       if (response.status !== 200) {
-        throw new Error('could not fetch page')
+        throw new Error(response.status.toString())
       }
 
       return LogConfigurationOptions.parse(await response.json())
@@ -588,18 +588,18 @@ export const useLogConfigurationOptions = (options?: { enabled?: boolean }) =>
 export const useCreateLog = (onSuccess: (id: string) => void) =>
   useMutation({
     mutationFn: async (contest: NewLogAPISchema) => {
-      const res = await fetch(`${root}/logs`, {
+      const response = await fetch(`${root}/logs`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(contest),
       })
-      if (res.status !== 200) {
-        throw new Error('could not process request')
+      if (response.status !== 200) {
+        throw new Error(response.status.toString())
       }
 
-      return Log.parse(await res.json())
+      return Log.parse(await response.json())
     },
     onSuccess(data) {
       onSuccess(data.id)
@@ -613,7 +613,7 @@ export const useLog = (id: string, options?: { enabled?: boolean }) =>
       const response = await fetch(`${root}/logs/${id}`)
 
       if (response.status !== 200) {
-        throw new Error('could not fetch page')
+        throw new Error(response.status.toString())
       }
 
       return Log.parse(await response.json())
@@ -650,7 +650,7 @@ export const useUserYearlyActivity = (
       )
 
       if (response.status !== 200) {
-        throw new Error('could not fetch page')
+        throw new Error(response.status.toString())
       }
 
       return UserActivity.parse(await response.json())
@@ -680,7 +680,7 @@ export const useProfileScores = (
       )
 
       if (response.status !== 200) {
-        throw new Error('could not fetch page')
+        throw new Error(response.status.toString())
       }
 
       return ProfileScores.parse(await response.json())
@@ -705,7 +705,7 @@ export const useYearlyContestRegistrations = (
       )
 
       if (response.status !== 200) {
-        throw new Error('could not fetch page')
+        throw new Error(response.status.toString())
       }
 
       return ContestRegistrationsView.parse(await response.json())
@@ -742,7 +742,7 @@ export const useUserYearlyActivitySplit = (
       )
 
       if (response.status !== 200) {
-        throw new Error('could not fetch page')
+        throw new Error(response.status.toString())
       }
 
       return ActivitySplit.parse(await response.json())
@@ -753,11 +753,11 @@ export const useUserYearlyActivitySplit = (
 export const useDeleteLog = (onSuccess: () => void, onError: () => void) =>
   useMutation({
     mutationFn: async (id: string) => {
-      const res = await fetch(`${root}/logs/${id}`, {
+      const response = await fetch(`${root}/logs/${id}`, {
         method: 'DELETE',
       })
-      if (res.status !== 200) {
-        throw new Error('could not process request')
+      if (response.status !== 200) {
+        throw new Error(response.status.toString())
       }
     },
     onSuccess() {

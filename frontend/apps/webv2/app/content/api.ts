@@ -21,7 +21,7 @@ export const usePage = (slug: string) =>
     const response = await fetch(`${root}/pages/tadoku/${slug}`)
 
     if (response.status !== 200) {
-      throw new Error('could not fetch page')
+      throw new Error(response.status.toString())
     }
 
     return Page.parse(await response.json())
@@ -43,7 +43,7 @@ export const usePost = (slug: string) =>
     const response = await fetch(`${root}/posts/tadoku/${slug}`)
 
     if (response.status !== 200) {
-      throw new Error('could not fetch post')
+      throw new Error(response.status.toString())
     }
 
     return Post.parse(await response.json())
@@ -73,7 +73,7 @@ export const usePostList = ({
       )
 
       if (response.status !== 200) {
-        throw new Error('could not fetch post list')
+        throw new Error(response.status.toString())
       }
 
       return PostList.parse(await response.json())

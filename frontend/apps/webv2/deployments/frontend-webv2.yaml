@@ -29,7 +29,9 @@ spec:
         - name: NEXT_PUBLIC_HOME_URL
           value: http://langlog.be
         - name: NEXT_PUBLIC_API_ENDPOINT
-          value: http://langlog.be/api
+          value: http://langlog.be/api/internal
+        - name: NEXT_PUBLIC_COOKIE_DOMAIN
+          value: .langlog.be
 ---
 apiVersion: v1
 kind: Service

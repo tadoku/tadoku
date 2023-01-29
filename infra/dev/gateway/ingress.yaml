@@ -10,7 +10,7 @@ spec:
     http:
       paths:
         # api service mappings are managed in infra/dev/ory/access_rules.yaml
-        - path: /api
+        - path: /api/internal
           pathType: Prefix
           backend:
             service:

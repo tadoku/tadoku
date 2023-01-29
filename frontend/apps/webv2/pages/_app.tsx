@@ -6,7 +6,7 @@ import { Session } from '@ory/client'
 import { ToastContainer } from 'ui/components/toasts'
 import 'ui/styles/globals.css'
 import Navigation from '@app/ui/Navigation'
-import { QueryClient, QueryClientProvider } from 'react-query'
+import { QueryCache, QueryClient, QueryClientProvider } from 'react-query'
 import Head from 'next/head'
 import Footer from '@app/ui/Footer'
 import { Settings } from 'luxon'
@@ -18,7 +18,15 @@ interface Props {
   session: Session | undefined
 }
 
-const queryClient = new QueryClient()
+const queryClient = new QueryClient({
+  queryCache: new QueryCache({
+    onError: error => {
+      if ((error as Error).message === '401') {
+        window.location.pathname = '/api/unauthorized'
+      }
+    },
+  }),
+})
 
 const createInitialValues = () => {
   const initialValues: (readonly [Atom<unknown>, unknown])[] = []
@@ -79,9 +87,7 @@ MyApp.getInitialProps = async (ctx: AppContextWithSession) => {
       const { data: session } = await ory.toSession(undefined, cookie)
       props.pageProps.initialState.session = session
       ctx.ctx.session = session
-    } catch (err) {
-      ctx.ctx.res?.setHeader('Set-Cookie', ['ory_kratos_session=0; Max-Age=0'])
-    }
+    } catch (err) {}
   }
 
   const initialAppProps = await App.getInitialProps(ctx)

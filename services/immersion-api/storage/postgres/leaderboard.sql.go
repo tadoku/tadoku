@@ -274,7 +274,7 @@ with leaderboard as (
     and registrations.user_display_name is not null
   order by
     score desc,
-    registrations.created_at asc
+    registrations.user_display_name asc
 )
 select
   rank, user_id, user_display_name, score,

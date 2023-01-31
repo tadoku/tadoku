@@ -92,15 +92,15 @@ const Page = () => {
           },
           {
             active: false,
-            href: routes.leaderboardLatestOfficial(),
+            href: routes.leaderboardYearlyOfficial(),
             label: 'Yearly',
-            disabled: true,
+            disabled: false,
           },
           {
             active: false,
-            href: routes.leaderboardLatestOfficial(),
-            label: 'Overall',
-            disabled: true,
+            href: routes.leaderboardAllTimeOfficial(),
+            label: 'All time',
+            disabled: false,
           },
         ]}
       />

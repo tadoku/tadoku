@@ -31,6 +31,10 @@ export const routes = {
 
   leaderboardLatestOfficial: (page?: Page) =>
     `/leaderboard/latest/${page ?? '1'}`,
+  leaderboardAllTimeOfficial: (page?: Page) =>
+    `/leaderboard/all-time/${page ?? '1'}`,
+  leaderboardYearlyOfficial: (year?: Page, page?: Page) =>
+    `/leaderboard/yearly/${year ?? DateTime.now().year}/${page ?? '1'}`,
 
   userProfileStatistics: (id: string, year?: Page) =>
     `/profile/${id}/statistics/${year ?? DateTime.now().year}`,

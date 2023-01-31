@@ -4,15 +4,14 @@ import (
 	"context"
 )
 
-type FetchLeaderboardRequest struct {
-	Year         *int16
+type FetchGlobalLeaderboardRequest struct {
 	LanguageCode *string
 	ActivityID   *int32
 	PageSize     int
 	Page         int
 }
 
-func (s *ServiceImpl) FetchLeaderboard(ctx context.Context, req *FetchLeaderboardRequest) (*Leaderboard, error) {
+func (s *ServiceImpl) FetchGlobalLeaderboard(ctx context.Context, req *FetchGlobalLeaderboardRequest) (*Leaderboard, error) {
 	if req.PageSize == 0 {
 		req.PageSize = 25
 	}
@@ -21,5 +20,5 @@ func (s *ServiceImpl) FetchLeaderboard(ctx context.Context, req *FetchLeaderboar
 		req.PageSize = 100
 	}
 
-	return s.r.FetchLeaderboard(ctx, req)
+	return s.r.FetchGlobalLeaderboard(ctx, req)
 }

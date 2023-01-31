@@ -12,7 +12,7 @@ import (
 // Fetches the global leaderboard
 // (GET /leaderboard/global)
 func (s *Server) FetchLeaderboardGlobal(ctx echo.Context, params openapi.FetchLeaderboardGlobalParams) error {
-	req := &query.FetchLeaderboardRequest{
+	req := &query.FetchGlobalLeaderboardRequest{
 		LanguageCode: params.LanguageCode,
 	}
 
@@ -27,7 +27,7 @@ func (s *Server) FetchLeaderboardGlobal(ctx echo.Context, params openapi.FetchLe
 		req.ActivityID = &id
 	}
 
-	leaderboard, err := s.queryService.FetchLeaderboard(ctx.Request().Context(), req)
+	leaderboard, err := s.queryService.FetchGlobalLeaderboard(ctx.Request().Context(), req)
 	if err != nil {
 		if errors.Is(err, query.ErrNotFound) {
 			return ctx.NoContent(http.StatusNotFound)

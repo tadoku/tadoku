@@ -12,10 +12,9 @@ import (
 // Fetches the leaderboard for a given year
 // (GET /leaderboard/yearly/{year})
 func (s *Server) FetchLeaderboardForYear(ctx echo.Context, year int, params openapi.FetchLeaderboardForYearParams) error {
-	y := int16(year)
-	req := &query.FetchLeaderboardRequest{
+	req := &query.FetchYearlyLeaderboardRequest{
 		LanguageCode: params.LanguageCode,
-		Year:         &y,
+		Year:         int32(year),
 	}
 
 	if params.PageSize != nil {
@@ -29,7 +28,7 @@ func (s *Server) FetchLeaderboardForYear(ctx echo.Context, year int, params open
 		req.ActivityID = &id
 	}
 
-	leaderboard, err := s.queryService.FetchLeaderboard(ctx.Request().Context(), req)
+	leaderboard, err := s.queryService.FetchYearlyLeaderboard(ctx.Request().Context(), req)
 	if err != nil {
 		if errors.Is(err, query.ErrNotFound) {
 			return ctx.NoContent(http.StatusNotFound)

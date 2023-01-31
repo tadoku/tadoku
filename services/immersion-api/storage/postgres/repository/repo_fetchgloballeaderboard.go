@@ -10,9 +10,8 @@ import (
 	"github.com/tadoku/tadoku/services/immersion-api/storage/postgres"
 )
 
-func (r *Repository) FetchLeaderboard(ctx context.Context, req *query.FetchLeaderboardRequest) (*query.Leaderboard, error) {
-	entries, err := r.q.Leaderboard(ctx, postgres.LeaderboardParams{
-		Year:         postgres.NewNullInt16(req.Year),
+func (r *Repository) FetchGlobalLeaderboard(ctx context.Context, req *query.FetchGlobalLeaderboardRequest) (*query.Leaderboard, error) {
+	entries, err := r.q.GlobalLeaderboard(ctx, postgres.GlobalLeaderboardParams{
 		LanguageCode: postgres.NewNullString(req.LanguageCode),
 		ActivityID:   postgres.NewNullInt32(req.ActivityID),
 		StartFrom:    int32(req.Page * req.PageSize),

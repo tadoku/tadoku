@@ -44,13 +44,13 @@ export const ContestLeaderboard = ({ id, contest, routeForPage }: Props) => {
 
   const contestInterval = Interval.fromDateTimes(
     DateTime.fromISO(contest.contest_start),
-    DateTime.fromISO(contest.contest_end),
+    DateTime.fromISO(contest.contest_end).endOf('day'),
   )
   const hasEnded = contestInterval.isBefore(now)
   const hasStarted = contestInterval.contains(now) || hasEnded
   const registrationClosed = Interval.fromDateTimes(
     DateTime.fromISO(contest.contest_start),
-    DateTime.fromISO(contest.registration_end),
+    DateTime.fromISO(contest.registration_end).endOf('day'),
   ).isBefore(now)
 
   const showPagination =

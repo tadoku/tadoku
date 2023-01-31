@@ -39,7 +39,7 @@ const Page = () => {
 
   const registrationClosed = Interval.fromDateTimes(
     DateTime.fromISO(contest.data.contest_start),
-    DateTime.fromISO(contest.data.registration_end),
+    DateTime.fromISO(contest.data.registration_end).endOf('day'),
   ).isBefore(now)
 
   return (

@@ -204,7 +204,7 @@ function ContestSchedule() {
         <tbody>
           {scheduledContests.map(c => {
             const start = DateTime.utc(year, c.startMonth, 1)
-            const end = DateTime.utc(year, c.startMonth, c.endDay)
+            const end = DateTime.utc(year, c.startMonth, c.endDay).endOf('day')
             const interval = Interval.fromDateTimes(start, end)
             return (
               <tr key={c.name}>

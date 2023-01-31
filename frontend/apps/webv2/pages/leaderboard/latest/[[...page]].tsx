@@ -34,7 +34,7 @@ const Page = () => {
 
   const contestInterval = Interval.fromDateTimes(
     DateTime.fromISO(contest.data.contest_start),
-    DateTime.fromISO(contest.data.contest_end),
+    DateTime.fromISO(contest.data.contest_end).endOf('day'),
   )
   const hasEnded = contestInterval.isBefore(now)
   const hasStarted = contestInterval.contains(now) || hasEnded

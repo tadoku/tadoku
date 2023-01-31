@@ -202,7 +202,7 @@ export function contestsForLog({
     .filter(it =>
       Interval.fromDateTimes(
         DateTime.fromISO(it.contest!.contest_start),
-        DateTime.fromISO(it.contest!.contest_end),
+        DateTime.fromISO(it.contest!.contest_end).endOf('day'),
       ).contains(DateTime.now()),
     )
 

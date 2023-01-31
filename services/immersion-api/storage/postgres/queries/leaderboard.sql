@@ -73,6 +73,7 @@ with leaderboard as (
     score,
     rank() over(order by score desc) as "rank"
   from leaderboard
+  where score > 0
 ), registrations as (
   select
     contest_registrations.id,
@@ -89,12 +90,15 @@ with leaderboard as (
 ), enriched_leaderboard as (
   select
     rank() over(order by coalesce(ranked_leaderboard.score, 0) desc) as "rank",
-    registrations.user_id,
-    registrations.user_display_name,
+    registrations.user_id::uuid as user_id,
+    registrations.user_display_name::varchar as user_display_name,
     coalesce(ranked_leaderboard.score, 0)::real as score,
     (select count(registrations.user_id) from registrations) as total_size
-  from registrations
-  left join ranked_leaderboard using(user_id)
+  from ranked_leaderboard
+  left join registrations using(user_id)
+  where
+    registrations.user is not null
+    and registrations.user_display_name is not null
   order by
     score desc,
     registrations.created_at asc
@@ -130,6 +134,7 @@ with leaderboard as (
     score,
     rank() over(order by score desc) as "rank"
   from leaderboard
+  where score > 0
 ), registrations as (
   select
     contest_registrations.user_id,
@@ -142,12 +147,15 @@ with leaderboard as (
 ), enriched_leaderboard as (
   select
     rank() over(order by coalesce(ranked_leaderboard.score, 0) desc) as "rank",
-    registrations.user_id,
-    registrations.user_display_name,
+    registrations.user_id::uuid as user_id,
+    registrations.user_display_name::varchar as user_display_name,
     coalesce(ranked_leaderboard.score, 0)::real as score,
     (select count(registrations.user_id) from registrations) as total_size
-  from registrations
-  left join ranked_leaderboard using(user_id)
+  from ranked_leaderboard
+  left join registrations using(user_id)
+  where
+    registrations.user is not null
+    and registrations.user_display_name is not null
   order by
     score desc,
     registrations.user_display_name asc

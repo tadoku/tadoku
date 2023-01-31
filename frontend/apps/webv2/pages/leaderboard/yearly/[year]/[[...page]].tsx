@@ -44,7 +44,7 @@ const Page = () => {
   return (
     <>
       <Head>
-        <title>All time leaderboard - Tadoku</title>
+        <title>{year} leaderboard - Tadoku</title>
       </Head>
       <div className="pb-4">
         <Breadcrumb
@@ -52,7 +52,7 @@ const Page = () => {
             { label: 'Home', href: routes.home(), IconComponent: HomeIcon },
             {
               label: 'Leaderboard',
-              href: routes.leaderboardAllTimeOfficial(),
+              href: routes.leaderboardYearlyOfficial(year),
             },
           ]}
         />
@@ -60,7 +60,7 @@ const Page = () => {
       <div className="h-stack justify-between items-center w-full">
         <div>
           <h1 className="title">Leaderboard</h1>
-          <h2 className="subtitle">All time</h2>
+          <h2 className="subtitle">{year}</h2>
         </div>
         <div></div>
       </div>
@@ -72,13 +72,13 @@ const Page = () => {
             label: 'Latest',
           },
           {
-            active: false,
+            active: true,
             href: routes.leaderboardYearlyOfficial(),
             label: 'Yearly',
             disabled: false,
           },
           {
-            active: true,
+            active: false,
             href: routes.leaderboardAllTimeOfficial(),
             label: 'All time',
             disabled: false,

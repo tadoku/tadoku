@@ -9,13 +9,11 @@ import (
 	"github.com/tadoku/tadoku/services/immersion-api/http/rest/openapi"
 )
 
-// Fetches the leaderboard for a given year
-// (GET /leaderboard/yearly/{year})
-func (s *Server) FetchLeaderboardForYear(ctx echo.Context, year int, params openapi.FetchLeaderboardForYearParams) error {
-	y := int16(year)
+// Fetches the global leaderboard
+// (GET /leaderboard/global)
+func (s *Server) FetchLeaderboardGlobal(ctx echo.Context, params openapi.FetchLeaderboardGlobalParams) error {
 	req := &query.FetchLeaderboardRequest{
 		LanguageCode: params.LanguageCode,
-		Year:         &y,
 	}
 
 	if params.PageSize != nil {

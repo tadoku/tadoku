@@ -6,6 +6,27 @@ import (
 	"github.com/tadoku/tadoku/services/immersion-api/http/rest/openapi"
 )
 
+func leaderboardToAPI(leaderboard query.Leaderboard) *openapi.Leaderboard {
+	res := openapi.Leaderboard{
+		Entries:       make([]openapi.LeaderboardEntry, len(leaderboard.Entries)),
+		NextPageToken: leaderboard.NextPageToken,
+		TotalSize:     leaderboard.TotalSize,
+	}
+
+	for i, entry := range leaderboard.Entries {
+		entry := entry
+		res.Entries[i] = openapi.LeaderboardEntry{
+			Rank:            entry.Rank,
+			UserId:          entry.UserID,
+			UserDisplayName: entry.UserDisplayName,
+			Score:           int(entry.Score),
+			IsTie:           entry.IsTie,
+		}
+	}
+
+	return &res
+}
+
 func logToAPI(log *query.Log) *openapi.Log {
 	refs := make([]openapi.ContestRegistrationReference, len(log.Registrations))
 	for i, it := range log.Registrations {

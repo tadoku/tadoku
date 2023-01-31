@@ -98,7 +98,7 @@ const Page = () => {
                 totalPages={Math.ceil(
                   leaderboard.data.total_size / filters.pageSize,
                 )}
-                getHref={page => routes.leaderboardAllTimeOfficial(page)}
+                getHref={page => routes.leaderboardYearlyOfficial(year, page)}
               />
             </div>
           ) : null}

@@ -10,9 +10,9 @@ import (
 	"github.com/tadoku/tadoku/services/immersion-api/storage/postgres"
 )
 
-func (r *Repository) FetchYearlyLeaderboard(ctx context.Context, req *query.FetchYearlyLeaderboardRequest) (*query.Leaderboard, error) {
-	entries, err := r.q.YearlyLeaderboard(ctx, postgres.YearlyLeaderboardParams{
-		Year:         int16(req.Year),
+func (r *Repository) FetchLeaderboard(ctx context.Context, req *query.FetchLeaderboardRequest) (*query.Leaderboard, error) {
+	entries, err := r.q.Leaderboard(ctx, postgres.LeaderboardParams{
+		Year:         postgres.NewNullInt16(req.Year),
 		LanguageCode: postgres.NewNullString(req.LanguageCode),
 		ActivityID:   postgres.NewNullInt32(req.ActivityID),
 		StartFrom:    int32(req.Page * req.PageSize),
@@ -27,7 +27,7 @@ func (r *Repository) FetchYearlyLeaderboard(ctx context.Context, req *query.Fetc
 			}, nil
 		}
 
-		return nil, fmt.Errorf("could not fetch leaderboard for year: %w", err)
+		return nil, fmt.Errorf("could not fetch leaderboard: %w", err)
 	}
 
 	res := make([]query.LeaderboardEntry, len(entries))

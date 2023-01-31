@@ -52,7 +52,7 @@ from enriched_leaderboard
 limit sqlc.arg('page_size')
 offset sqlc.arg('start_from');
 
--- name: YearlyLeaderboard :many
+-- name: Leaderboard :many
 with leaderboard as (
   select
     user_id,
@@ -61,7 +61,7 @@ with leaderboard as (
   inner join contest_logs
     on contest_logs.log_id = logs.id
   where
-    logs.year = sqlc.arg('year')
+    (logs.year = sqlc.narg('year') or sqlc.narg('year') is null)
     and eligible_official_leaderboard = true
     and logs.deleted_at is null
     and (logs.language_code = sqlc.narg('language_code') or sqlc.narg('language_code') is null)
@@ -83,7 +83,7 @@ with leaderboard as (
   inner join contests
     on contests.id = contest_registrations.contest_id
   where
-    extract(year from contests.contest_start) = sqlc.arg('year')::integer
+    (extract(year from contests.contest_start) = sqlc.narg('year')::integer or sqlc.narg('year') is null)
     and contest_registrations.deleted_at is null
     and (sqlc.narg('language_code') = any(language_codes) or sqlc.narg('language_code') is null)
 ), enriched_leaderboard as (

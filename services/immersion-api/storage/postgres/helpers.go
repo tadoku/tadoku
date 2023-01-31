@@ -63,3 +63,16 @@ func NewNullInt32(val *int32) sql.NullInt32 {
 		Int32: *val,
 	}
 }
+
+func NewNullInt16(val *int16) sql.NullInt16 {
+	if val == nil {
+		return sql.NullInt16{
+			Valid: false,
+		}
+	}
+
+	return sql.NullInt16{
+		Valid: true,
+		Int16: *val,
+	}
+}

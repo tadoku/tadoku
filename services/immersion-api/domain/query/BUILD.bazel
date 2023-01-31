@@ -9,7 +9,7 @@ go_library(
         "fetchcontestconfigurationoptions.go",
         "fetchcontestleaderboard.go",
         "fetchlogconfigurationoptions.go",
-        "fetchofficialleaderboardforyear.go",
+        "fetchofficialleaderboard.go",
         "fetchongoingcontestregistrations.go",
         "fetchuserprofile.go",
         "findcontestbyid.go",

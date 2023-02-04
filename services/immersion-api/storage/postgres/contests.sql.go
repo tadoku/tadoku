@@ -31,7 +31,7 @@ func (q *Queries) CancelContest(ctx context.Context, id uuid.UUID) (uuid.UUID, e
 
 const contestSummary = `-- name: ContestSummary :one
 select
-  sum(logs.score) as total_score,
+  sum(logs.score)::real as total_score,
   count(distinct logs.user_id) as participant_count,
   count(distinct logs.language_code) as language_count
 from logs
@@ -40,10 +40,11 @@ inner join contest_logs
 where
   contest_logs.contest_id = $1
   and logs.deleted_at is null
+having sum(logs.score) is not null
 `
 
 type ContestSummaryRow struct {
-	TotalScore       int64
+	TotalScore       float32
 	ParticipantCount int64
 	LanguageCount    int64
 }

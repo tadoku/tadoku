@@ -129,6 +129,13 @@ type ContestRegistrations struct {
 	TotalSize     int                   `json:"total_size"`
 }
 
+// ContestSummary defines model for ContestSummary.
+type ContestSummary struct {
+	LanguageCount    int     `json:"language_count"`
+	ParticipantCount int     `json:"participant_count"`
+	TotalScore       float32 `json:"total_score"`
+}
+
 // ContestView defines model for ContestView.
 type ContestView struct {
 	AllowedActivities    []Activity          `json:"allowed_activities"`
@@ -393,6 +400,9 @@ type ServerInterface interface {
 	// Creates or updates a registration for a contest
 	// (POST /contests/{id}/registration)
 	ContestRegistrationUpsert(ctx echo.Context, id openapi_types.UUID) error
+	// Fetches the summary for a contest
+	// (GET /contests/{id}/summary)
+	ContestFetchSummary(ctx echo.Context, id openapi_types.UUID) error
 	// Fetches the global leaderboard
 	// (GET /leaderboard/global)
 	FetchLeaderboardGlobal(ctx echo.Context, params FetchLeaderboardGlobalParams) error
@@ -717,6 +727,22 @@ func (w *ServerInterfaceWrapper) ContestRegistrationUpsert(ctx echo.Context) err
 	return err
 }
 
+// ContestFetchSummary converts echo context to params.
+func (w *ServerInterfaceWrapper) ContestFetchSummary(ctx echo.Context) error {
+	var err error
+	// ------------- Path parameter "id" -------------
+	var id openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithLocation("simple", false, "id", runtime.ParamLocationPath, ctx.Param("id"), &id)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter id: %s", err))
+	}
+
+	// Invoke the callback with all the unmarshalled arguments
+	err = w.Handler.ContestFetchSummary(ctx, id)
+	return err
+}
+
 // FetchLeaderboardGlobal converts echo context to params.
 func (w *ServerInterfaceWrapper) FetchLeaderboardGlobal(ctx echo.Context) error {
 	var err error
@@ -1017,6 +1043,7 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 	router.GET(baseURL+"/contests/:id/profile/:user_id/scores", wrapper.ContestProfileFetchScores)
 	router.GET(baseURL+"/contests/:id/registration", wrapper.ContestFindRegistration)
 	router.POST(baseURL+"/contests/:id/registration", wrapper.ContestRegistrationUpsert)
+	router.GET(baseURL+"/contests/:id/summary", wrapper.ContestFetchSummary)
 	router.GET(baseURL+"/leaderboard/global", wrapper.FetchLeaderboardGlobal)
 	router.GET(baseURL+"/leaderboard/yearly/:year", wrapper.FetchLeaderboardForYear)
 	router.POST(baseURL+"/logs", wrapper.LogCreate)

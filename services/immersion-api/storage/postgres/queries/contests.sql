@@ -130,3 +130,15 @@ where
   official = true
 order by contest_start desc
 limit 1;
+
+-- name: ContestSummary :one
+select
+  sum(logs.score) as total_score,
+  count(distinct logs.user_id) as participant_count,
+  count(distinct logs.language_code) as language_count
+from logs
+inner join contest_logs
+  on contest_logs.log_id = logs.id
+where
+  contest_logs.contest_id = sqlc.arg('contest_id')
+  and logs.deleted_at is null;

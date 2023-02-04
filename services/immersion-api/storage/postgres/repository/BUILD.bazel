@@ -10,6 +10,7 @@ go_library(
         "repo_deletelog.go",
         "repo_fetchconfigurationoptions.go",
         "repo_fetchcontestleaderboard.go",
+        "repo_fetchcontestsummary.go",
         "repo_fetchgloballeaderboard.go",
         "repo_fetchlogconfigurationoptions.go",
         "repo_fetchongoingregistrations.go",

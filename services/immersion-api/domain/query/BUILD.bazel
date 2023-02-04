@@ -8,6 +8,7 @@ go_library(
         "entities.go",
         "fetchcontestconfigurationoptions.go",
         "fetchcontestleaderboard.go",
+        "fetchcontestsummary.go",
         "fetchgloballeaderboard.go",
         "fetchlogconfigurationoptions.go",
         "fetchongoingcontestregistrations.go",

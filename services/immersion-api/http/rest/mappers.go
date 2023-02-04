@@ -19,7 +19,7 @@ func leaderboardToAPI(leaderboard query.Leaderboard) *openapi.Leaderboard {
 			Rank:            entry.Rank,
 			UserId:          entry.UserID,
 			UserDisplayName: entry.UserDisplayName,
-			Score:           int(entry.Score),
+			Score:           entry.Score,
 			IsTie:           entry.IsTie,
 		}
 	}

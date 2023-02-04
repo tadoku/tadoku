@@ -1014,7 +1014,8 @@ components:
           type: string
           example: "john"
         score:
-          type: integer
+          type: number
+          format: float
         is_tie:
           type: boolean
     Leaderboard:

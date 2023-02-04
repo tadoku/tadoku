@@ -39,22 +39,5 @@ func (s *Server) ContestFetchLeaderboard(ctx echo.Context, id types.UUID, params
 		return ctx.NoContent(http.StatusInternalServerError)
 	}
 
-	res := openapi.Leaderboard{
-		Entries:       make([]openapi.LeaderboardEntry, len(leaderboard.Entries)),
-		NextPageToken: leaderboard.NextPageToken,
-		TotalSize:     leaderboard.TotalSize,
-	}
-
-	for i, entry := range leaderboard.Entries {
-		entry := entry
-		res.Entries[i] = openapi.LeaderboardEntry{
-			Rank:            entry.Rank,
-			UserId:          entry.UserID,
-			UserDisplayName: entry.UserDisplayName,
-			Score:           int(entry.Score),
-			IsTie:           entry.IsTie,
-		}
-	}
-
-	return ctx.JSON(http.StatusOK, res)
+	return ctx.JSON(http.StatusOK, leaderboardToAPI(*leaderboard))
 }

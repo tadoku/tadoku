@@ -182,7 +182,7 @@ type Leaderboard struct {
 type LeaderboardEntry struct {
 	IsTie           bool               `json:"is_tie"`
 	Rank            int                `json:"rank"`
-	Score           int                `json:"score"`
+	Score           float32            `json:"score"`
 	UserDisplayName string             `json:"user_display_name"`
 	UserId          openapi_types.UUID `json:"user_id"`
 }

@@ -146,7 +146,7 @@ func TestCreateContest(t *testing.T) {
 			},
 			domain.RoleUser,
 			nil,
-			0,
+			11,
 		}, {
 			"user cannot create official contest",
 			&command.CreateContestRequest{
@@ -176,13 +176,27 @@ func TestCreateContest(t *testing.T) {
 			domain.RoleUser,
 			nil,
 			0,
+		}, {
+			"user can not create more than 12 contests",
+			&command.CreateContestRequest{
+				ContestStart:            clock.Now().Add(30 * 24 * time.Hour),
+				ContestEnd:              clock.Now().Add(45 * 24 * time.Hour),
+				RegistrationEnd:         clock.Now().Add(40 * 24 * time.Hour),
+				Official:                false,
+				Private:                 false,
+				Title:                   "test round",
+				ActivityTypeIDAllowList: []int32{1, 2},
+			},
+			domain.RoleUser,
+			command.ErrForbidden,
+			12,
 		},
 	}
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			ctx := createContext(test.role)
-			repo := &CreateContestRepositoryMock{}
+			repo := &CreateContestRepositoryMock{userContestCount: test.userContestcount}
 			service := command.NewService(repo, clock)
 
 			_, err := service.CreateContest(ctx, test.request)

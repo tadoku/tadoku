@@ -7,6 +7,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/tadoku/tadoku/services/common/domain"
+	"github.com/tadoku/tadoku/services/immersion-api/domain/query"
 )
 
 type CreateContestRequest struct {
@@ -44,9 +45,6 @@ type CreateContestResponse struct {
 
 func (s *ServiceImpl) CreateContest(ctx context.Context, req *CreateContestRequest) (*CreateContestResponse, error) {
 	// Make sure the user is authorized to create a contest
-	if domain.IsRole(ctx, domain.RoleBanned) {
-		return nil, ErrForbidden
-	}
 	if domain.IsRole(ctx, domain.RoleGuest) {
 		return nil, ErrUnauthorized
 	}
@@ -61,6 +59,18 @@ func (s *ServiceImpl) CreateContest(ctx context.Context, req *CreateContestReque
 	}
 	req.OwnerUserID = uuid.MustParse(session.Subject)
 	req.OwnerUserDisplayName = session.DisplayName
+
+	// Check if user has permission to create contest
+	if !domain.IsRole(ctx, domain.RoleAdmin) {
+		contestCount, err := s.r.GetContestsByUserCountForYear(ctx, s.clock.Now(), req.OwnerUserID)
+		if err != nil {
+			return nil, fmt.Errorf("could not check permission for contest creation: %w", err)
+		}
+
+		if contestCount >= query.UserCreateContestYearlyLimit {
+			return nil, fmt.Errorf("hit limit of created contests: %w", ErrForbidden)
+		}
+	}
 
 	err := s.validate.Struct(req)
 	if err != nil {

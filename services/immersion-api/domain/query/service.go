@@ -3,6 +3,7 @@ package query
 import (
 	"context"
 	"errors"
+	"time"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
@@ -26,6 +27,7 @@ type Repository interface {
 	FetchYearlyLeaderboard(context.Context, *FetchYearlyLeaderboardRequest) (*Leaderboard, error)
 	FetchGlobalLeaderboard(context.Context, *FetchGlobalLeaderboardRequest) (*Leaderboard, error)
 	FetchContestSummary(context.Context, *FetchContestSummaryRequest) (*FetchContestSummaryResponse, error)
+	GetContestsByUserCountForYear(context.Context, time.Time, uuid.UUID) (int32, error)
 
 	// log
 	ListLogsForContestUser(context.Context, *ListLogsForContestUserRequest) (*ListLogsForContestUserResponse, error)
@@ -53,6 +55,7 @@ type Service interface {
 	FetchYearlyLeaderboard(context.Context, *FetchYearlyLeaderboardRequest) (*Leaderboard, error)
 	FetchGlobalLeaderboard(context.Context, *FetchGlobalLeaderboardRequest) (*Leaderboard, error)
 	FetchContestSummary(context.Context, *FetchContestSummaryRequest) (*FetchContestSummaryResponse, error)
+	CreateContestPermissionCheck(context.Context, *CreateContestPermissionCheckRequest) (error)
 
 	// log
 	ListLogsForContestUser(context.Context, *ListLogsForContestUserRequest) (*ListLogsForContestUserResponse, error)

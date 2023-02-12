@@ -82,6 +82,21 @@ export const useCreateContest = (onSuccess: (id: string) => void) =>
     },
   })
 
+export const useContestCreatePermissionCheck = (options?: {
+  enabled?: boolean
+}) =>
+  useQuery(
+    ['contest', 'createPermissionCheck'],
+    async (): Promise<void | undefined> => {
+      const response = await fetch(`${root}/contests/create-permissions`)
+
+      if (response.status !== 200) {
+        throw new Error(response.status.toString())
+      }
+    },
+    { ...options, retry: false },
+  )
+
 const Contest = z.object({
   id: z.string(),
   contest_start: z.string(),

@@ -2,7 +2,10 @@ import type { NextPage } from 'next'
 import { Breadcrumb, ButtonGroup, Loading, Pagination, Tabbar } from 'ui'
 import { HomeIcon } from '@heroicons/react/20/solid'
 import { PlusIcon } from '@heroicons/react/24/solid'
-import { useContestList } from '@app/immersion/api'
+import {
+  useContestCreatePermissionCheck,
+  useContestList,
+} from '@app/immersion/api'
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/router'
 import { getQueryStringIntParameter } from '@app/common/router'
@@ -31,6 +34,9 @@ const Contests: NextPage<Props> = () => {
 
   const list = useContestList(filters)
   const [session] = useSession()
+  const createContestPermission = useContestCreatePermissionCheck({
+    enabled: !!session,
+  })
 
   return (
     <>
@@ -56,7 +62,7 @@ const Contests: NextPage<Props> = () => {
                 label: 'Create contest',
                 style: 'secondary',
                 IconComponent: PlusIcon,
-                visible: !!session,
+                visible: createContestPermission.isSuccess,
               },
             ]}
           />

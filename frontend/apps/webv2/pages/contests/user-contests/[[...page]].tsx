@@ -4,6 +4,7 @@ import { HomeIcon } from '@heroicons/react/20/solid'
 import { PlusIcon } from '@heroicons/react/24/solid'
 import {
   useContestConfigurationOptions,
+  useContestCreatePermissionCheck,
   useContestList,
 } from '@app/immersion/api'
 import { useEffect, useState } from 'react'
@@ -35,6 +36,9 @@ const Contests: NextPage<Props> = () => {
   const [session] = useSession()
   const list = useContestList(filters)
   const options = useContestConfigurationOptions({ enabled: !!session })
+  const createContestPermission = useContestCreatePermissionCheck({
+    enabled: !!session,
+  })
 
   return (
     <>
@@ -60,7 +64,7 @@ const Contests: NextPage<Props> = () => {
                 label: 'Create contest',
                 style: 'secondary',
                 IconComponent: PlusIcon,
-                visible: !!session,
+                visible: createContestPermission.isSuccess,
               },
             ]}
           />

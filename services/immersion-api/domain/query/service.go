@@ -13,6 +13,7 @@ import (
 var ErrRequestInvalid = errors.New("request is invalid")
 var ErrNotFound = errors.New("not found")
 var ErrUnauthorized = errors.New("unauthorized")
+var ErrForbidden = errors.New("forbidden")
 
 type Repository interface {
 	// contest
@@ -55,7 +56,7 @@ type Service interface {
 	FetchYearlyLeaderboard(context.Context, *FetchYearlyLeaderboardRequest) (*Leaderboard, error)
 	FetchGlobalLeaderboard(context.Context, *FetchGlobalLeaderboardRequest) (*Leaderboard, error)
 	FetchContestSummary(context.Context, *FetchContestSummaryRequest) (*FetchContestSummaryResponse, error)
-	CreateContestPermissionCheck(context.Context, *CreateContestPermissionCheckRequest) (error)
+	CreateContestPermissionCheck(context.Context) error
 
 	// log
 	ListLogsForContestUser(context.Context, *ListLogsForContestUserRequest) (*ListLogsForContestUserResponse, error)

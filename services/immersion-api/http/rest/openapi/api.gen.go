@@ -373,6 +373,9 @@ type ServerInterface interface {
 	// Fetches the configuration options for a new contest
 	// (GET /contests/configuration-options)
 	ContestGetConfigurations(ctx echo.Context) error
+	// Check if user has permission to create a new contest
+	// (GET /contests/create-permissions)
+	ContestCreatePermissionCheck(ctx echo.Context) error
 	// Fetches the latest official contest
 	// (GET /contests/latest-official)
 	ContestFindLatestOfficial(ctx echo.Context) error
@@ -511,6 +514,17 @@ func (w *ServerInterfaceWrapper) ContestGetConfigurations(ctx echo.Context) erro
 
 	// Invoke the callback with all the unmarshalled arguments
 	err = w.Handler.ContestGetConfigurations(ctx)
+	return err
+}
+
+// ContestCreatePermissionCheck converts echo context to params.
+func (w *ServerInterfaceWrapper) ContestCreatePermissionCheck(ctx echo.Context) error {
+	var err error
+
+	ctx.Set(CookieAuthScopes, []string{""})
+
+	// Invoke the callback with all the unmarshalled arguments
+	err = w.Handler.ContestCreatePermissionCheck(ctx)
 	return err
 }
 
@@ -1034,6 +1048,7 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 	router.GET(baseURL+"/contests", wrapper.ContestList)
 	router.POST(baseURL+"/contests", wrapper.ContestCreate)
 	router.GET(baseURL+"/contests/configuration-options", wrapper.ContestGetConfigurations)
+	router.GET(baseURL+"/contests/create-permissions", wrapper.ContestCreatePermissionCheck)
 	router.GET(baseURL+"/contests/latest-official", wrapper.ContestFindLatestOfficial)
 	router.GET(baseURL+"/contests/ongoing-registrations", wrapper.ContestFindOngoingRegistrations)
 	router.GET(baseURL+"/contests/:id", wrapper.ContestFindByID)

@@ -75,6 +75,18 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Contests"
+  /contests/create-permissions:
+    get:
+      summary: Check if user has permission to create a new contest
+      operationId: contestCreatePermissionCheck
+      tags: [contests]
+      security:
+        - cookieAuth: []
+      responses:
+        "200":
+          description: Allowed to create a contest
+        "403":
+          description: Not allowed to create a contest
   /contests/{id}:
     get:
       summary: Fetches a contest by id

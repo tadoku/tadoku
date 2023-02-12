@@ -6,6 +6,7 @@ go_library(
         "mappers.go",
         "server.go",
         "server_contestcreate.go",
+        "server_contestcreatepermissioncheck.go",
         "server_contestfetchleaderboard.go",
         "server_contestfetchsummary.go",
         "server_contestfindbyid.go",

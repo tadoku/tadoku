@@ -22,17 +22,17 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Contest'
+              $ref: "#/components/schemas/Contest"
       responses:
-        '200':
+        "200":
           description: successful operation
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Contest'
-        '400':
+                $ref: "#/components/schemas/Contest"
+        "400":
           description: Invalid contest
-        '403':
+        "403":
           description: Not allowed to create this contest
     get:
       summary: Lists all the contests, paginated
@@ -69,12 +69,12 @@ paths:
             type: string
             format: uuid
       responses:
-        '200':
+        "200":
           description: successful operation
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Contests'
+                $ref: "#/components/schemas/Contests"
   /contests/{id}:
     get:
       summary: Fetches a contest by id
@@ -89,13 +89,13 @@ paths:
             type: string
             format: uuid
       responses:
-        '200':
+        "200":
           description: successful operation
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ContestView'
-        '404':
+                $ref: "#/components/schemas/ContestView"
+        "404":
           description: not found
   /contests/latest-official:
     get:
@@ -103,13 +103,13 @@ paths:
       operationId: contestFindLatestOfficial
       tags: [contests]
       responses:
-        '200':
+        "200":
           description: successful operation
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ContestView'
-        '404':
+                $ref: "#/components/schemas/ContestView"
+        "404":
           description: not found
   /contests/{id}/registration:
     get:
@@ -126,13 +126,13 @@ paths:
             type: string
             format: uuid
       responses:
-        '200':
+        "200":
           description: successful operation
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ContestRegistration'
-        '404':
+                $ref: "#/components/schemas/ContestRegistration"
+        "404":
           description: not found
     post:
       summary: Creates or updates a registration for a contest
@@ -160,11 +160,11 @@ paths:
                   items:
                     type: string
       responses:
-        '200':
+        "200":
           description: successful operation
-        '400':
+        "400":
           description: language combination is invalid
-        '404':
+        "404":
           description: contest not found
   /contests/{id}/leaderboard:
     get:
@@ -199,15 +199,15 @@ paths:
           schema:
             type: integer
       responses:
-        '200':
+        "200":
           description: successful operation
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Leaderboard'
-        '404':
+                $ref: "#/components/schemas/Leaderboard"
+        "404":
           description: not found
-  /contests/{id}/summary: 
+  /contests/{id}/summary:
     get:
       summary: Fetches the summary for a contest
       operationId: contestFetchSummary
@@ -220,13 +220,13 @@ paths:
             type: string
             format: uuid
       responses:
-        '200':
+        "200":
           description: successful operation
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ContestSummary'
-        '404':
+                $ref: "#/components/schemas/ContestSummary"
+        "404":
           description: not found
   /contests/{id}/profile/{user_id}/scores:
     get:
@@ -247,13 +247,13 @@ paths:
             type: string
             format: uuid
       responses:
-        '200':
+        "200":
           description: successful operation
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ContestProfileScores'
-        '404':
+                $ref: "#/components/schemas/ContestProfileScores"
+        "404":
           description: not found
   /contests/{id}/profile/{user_id}/activity:
     get:
@@ -274,13 +274,13 @@ paths:
             type: string
             format: uuid
       responses:
-        '200':
+        "200":
           description: successful operation
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ContestProfileActivity'
-        '404':
+                $ref: "#/components/schemas/ContestProfileActivity"
+        "404":
           description: not found
   /contests/{id}/profile/{user_id}/logs:
     get:
@@ -317,13 +317,13 @@ paths:
           schema:
             type: integer
       responses:
-        '200':
+        "200":
           description: successful operation
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Logs'
-        '404':
+                $ref: "#/components/schemas/Logs"
+        "404":
           description: not found
   /contests/ongoing-registrations:
     get:
@@ -333,12 +333,12 @@ paths:
       security:
         - cookieAuth: []
       responses:
-        '200':
+        "200":
           description: successful operation
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ContestRegistrations'
+                $ref: "#/components/schemas/ContestRegistrations"
   /contests/configuration-options:
     get:
       summary: Fetches the configuration options for a new contest
@@ -347,12 +347,12 @@ paths:
       security:
         - cookieAuth: []
       responses:
-        '200':
+        "200":
           description: successful operation
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ContestConfigurationOptions'
+                $ref: "#/components/schemas/ContestConfigurationOptions"
   /logs:
     post:
       summary: Submits a new log
@@ -394,17 +394,17 @@ paths:
                   type: array
                   items:
                     type: string
-                  example: ['book', 'fiction']
+                  example: ["book", "fiction"]
                 description:
                   type: string
       responses:
-        '200':
+        "200":
           description: successful operation
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Log'
-        '400':
+                $ref: "#/components/schemas/Log"
+        "400":
           description: invalid submission
   /logs/{id}:
     get:
@@ -420,13 +420,13 @@ paths:
             type: string
             format: uuid
       responses:
-        '200':
+        "200":
           description: successful operation
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Log'
-        '404':
+                $ref: "#/components/schemas/Log"
+        "404":
           description: not found
     delete:
       summary: Deletes a log by id
@@ -441,11 +441,11 @@ paths:
             type: string
             format: uuid
       responses:
-        '200':
+        "200":
           description: successful operation
-        '403':
+        "403":
           description: forbidden
-        '404':
+        "404":
           description: not found
   /logs/configuration-options:
     get:
@@ -455,12 +455,12 @@ paths:
       security:
         - cookieAuth: []
       responses:
-        '200':
+        "200":
           description: successful operation
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/LogConfigurationOptions'
+                $ref: "#/components/schemas/LogConfigurationOptions"
   /users/{userId}/profile:
     get:
       summary: Fetches a profile of a user
@@ -475,13 +475,13 @@ paths:
             type: string
             format: uuid
       responses:
-        '200':
+        "200":
           description: successful operation
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/UserProfile'
-        '404':
+                $ref: "#/components/schemas/UserProfile"
+        "404":
           description: not found
   /users/{userId}/activity/{year}:
     get:
@@ -503,13 +503,13 @@ paths:
           schema:
             type: integer
       responses:
-        '200':
+        "200":
           description: successful operation
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/UserActivity'
-        '404':
+                $ref: "#/components/schemas/UserActivity"
+        "404":
           description: not found
   /users/{userId}/scores/{year}:
     get:
@@ -531,13 +531,13 @@ paths:
           schema:
             type: integer
       responses:
-        '200':
+        "200":
           description: successful operation
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ProfileScores'
-        '404':
+                $ref: "#/components/schemas/ProfileScores"
+        "404":
           description: not found
   /users/{userId}/contest-registrations/{year}:
     get:
@@ -560,12 +560,12 @@ paths:
           schema:
             type: integer
       responses:
-        '200':
+        "200":
           description: successful operation
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ContestRegistrations'
+                $ref: "#/components/schemas/ContestRegistrations"
   /users/{userId}/activity-split/{year}:
     get:
       summary: Fetches a activity split summary of a user for a given year
@@ -586,13 +586,13 @@ paths:
           schema:
             type: integer
       responses:
-        '200':
+        "200":
           description: successful operation
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ActivitySplit'
-        '404':
+                $ref: "#/components/schemas/ActivitySplit"
+        "404":
           description: not found
   /leaderboard/yearly/{year}:
     get:
@@ -626,13 +626,13 @@ paths:
           schema:
             type: integer
       responses:
-        '200':
+        "200":
           description: successful operation
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Leaderboard'
-        '404':
+                $ref: "#/components/schemas/Leaderboard"
+        "404":
           description: not found
   /leaderboard/global:
     get:
@@ -661,13 +661,13 @@ paths:
           schema:
             type: integer
       responses:
-        '200':
+        "200":
           description: successful operation
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Leaderboard'
-        '404':
+                $ref: "#/components/schemas/Leaderboard"
+        "404":
           description: not found
   /ping:
     get:
@@ -675,7 +675,7 @@ paths:
       operationId: ping
       tags: [metadata]
       responses:
-        '200':
+        "200":
           description: successful operation
           content:
             text/plain:
@@ -914,7 +914,7 @@ components:
           type: boolean
     Contest:
       allOf:
-        - $ref: '#/components/schemas/ContestBase'
+        - $ref: "#/components/schemas/ContestBase"
         - type: object
           required:
             - language_code_allow_list
@@ -924,7 +924,7 @@ components:
               type: array
               items:
                 type: string
-              example: ['jpa', 'zho', 'kor']
+              example: ["jpa", "zho", "kor"]
             activity_type_id_allow_list:
               type: array
               items:
@@ -933,7 +933,7 @@ components:
               example: [1, 2]
     ContestView:
       allOf:
-        - $ref: '#/components/schemas/ContestBase'
+        - $ref: "#/components/schemas/ContestBase"
         - type: object
           required:
             - allowed_languages
@@ -949,7 +949,7 @@ components:
                 $ref: "#/components/schemas/Activity"
     Contests:
       allOf:
-        - $ref: '#/components/schemas/PaginatedList'
+        - $ref: "#/components/schemas/PaginatedList"
         - type: object
           required:
             - contests
@@ -1001,7 +1001,7 @@ components:
           $ref: "#/components/schemas/ContestView"
     ContestRegistrations:
       allOf:
-        - $ref: '#/components/schemas/PaginatedList'
+        - $ref: "#/components/schemas/PaginatedList"
         - type: object
           required:
             - registrations
@@ -1055,7 +1055,7 @@ components:
           type: boolean
     Leaderboard:
       allOf:
-        - $ref: '#/components/schemas/PaginatedList'
+        - $ref: "#/components/schemas/PaginatedList"
         - type: object
           required:
             - entries
@@ -1096,7 +1096,7 @@ components:
           $ref: "#/components/schemas/Scores"
     ContestProfileScores:
       allOf:
-        - $ref: '#/components/schemas/ProfileScores'
+        - $ref: "#/components/schemas/ProfileScores"
         - type: object
           required:
             - registration
@@ -1164,7 +1164,7 @@ components:
           type: array
           items:
             type: string
-          example: ['Book', 'Fiction']
+          example: ["Book", "Fiction"]
         amount:
           type: number
           format: float
@@ -1185,7 +1185,7 @@ components:
           type: boolean
     Logs:
       allOf:
-        - $ref: '#/components/schemas/PaginatedList'
+        - $ref: "#/components/schemas/PaginatedList"
         - type: object
           required:
             - logs

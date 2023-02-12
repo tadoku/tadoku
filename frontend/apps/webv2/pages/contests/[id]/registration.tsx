@@ -8,6 +8,7 @@ import { DateTime, Interval } from 'luxon'
 import Head from 'next/head'
 import { useRouter } from 'next/router'
 import { Breadcrumb, Flash, Loading } from 'ui'
+import { useEffect } from 'react'
 
 const Page = () => {
   const router = useRouter()
@@ -21,11 +22,13 @@ const Page = () => {
 
   const registration = useContestRegistration(id, { enabled: !!session })
 
-  if (!session) {
-    router.push(routes.authLogin(currentUrl))
-  }
+  useEffect(() => {
+    if (!session) {
+      router.push(routes.authLogin(currentUrl))
+    }
+  }, [session])
 
-  if (contest.isLoading || contest.isIdle) {
+  if (!session || contest.isLoading || contest.isIdle) {
     return <Loading />
   }
 

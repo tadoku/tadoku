@@ -208,7 +208,7 @@ const Page = () => {
                   }
                   className="-mt-0"
                 >
-                  Hasn't participated in any contests
+                  Hasn&apos;t participated in any contests
                 </Flash>
               </ul>
             </div>

@@ -10,7 +10,7 @@ import { DateTime, Interval } from 'luxon'
 import type { NextPage } from 'next'
 import Link from 'next/link'
 
-interface Props {}
+interface Props { }
 
 const Index: NextPage<Props> = () => (
   <>
@@ -113,7 +113,7 @@ function Top10Leaderboard() {
     <div className="card p-0">
       <div className="h-stack w-full items-center justify-between p-4 pb-2 lg:p-7 lg:pb-4">
         <h2 className="title text-xl">{year} Leaderboard Top 10</h2>
-        <Link href="#" className="btn">
+        <Link href={routes.leaderboardYearlyOfficial()} className="btn">
           <span className="hidden md:inline">See more</span>
           <span className="inline md:hidden">More</span>
           <ArrowLongRightIcon className="ml-2" />

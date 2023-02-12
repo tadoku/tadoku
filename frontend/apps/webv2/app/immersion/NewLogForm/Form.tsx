@@ -57,7 +57,8 @@ export const LogForm = ({
     defaultValues,
   })
   methods.trigger
-  const [session] = useSessionOrRedirect()
+
+  useSessionOrRedirect()
 
   const trackingMode = methods.watch('tracking_mode') ?? 'personal'
   const activity = methods.watch('activity')
@@ -69,20 +70,20 @@ export const LogForm = ({
     trackingMode === 'personal'
       ? options.languages
       : registrations
-          .flatMap(it => it.languages)
-          .filter(
-            ({ code }, index, self) =>
-              index === self.findIndex(it => it.code === code),
-          )
-          .sort((a, b) => {
-            if (a.name < b.name) {
-              return -1
-            }
-            if (a.name > b.name) {
-              return 1
-            }
-            return 0
-          })
+        .flatMap(it => it.languages)
+        .filter(
+          ({ code }, index, self) =>
+            index === self.findIndex(it => it.code === code),
+        )
+        .sort((a, b) => {
+          if (a.name < b.name) {
+            return -1
+          }
+          if (a.name > b.name) {
+            return 1
+          }
+          return 0
+        })
 
   const tags = filterTags(options.tags, activity)
   const units = filterUnits(options.units, activity?.id, language)
@@ -181,6 +182,7 @@ export const LogForm = ({
                     defaultValue={0}
                     options={{ valueAsNumber: true }}
                     min={0}
+                    step="any"
                   />
                 </div>
                 <div className="min-w-[150px]">

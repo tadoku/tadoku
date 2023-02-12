@@ -47,7 +47,7 @@ export const NewLogFormSchema = z
         language: log.language,
         trackingMode: log.tracking_mode,
       }).map(it => it.id)
-    } catch (err) {}
+    } catch (err) { }
 
     return newLog
   })
@@ -162,7 +162,7 @@ export const trackingModesForRegistrations = (registrationCount: number) => {
       description: 'Do not submit to any contests',
       IconComponent: UserIcon,
     },
-  ] satisfies RadioProps['options']
+  ]satisfies RadioProps['options']
 }
 
 export const estimateScore = (

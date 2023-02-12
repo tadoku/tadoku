@@ -25,6 +25,13 @@ insert into contests (
   sqlc.arg('activity_type_id_allow_list')
 ) returning id;
 
+-- name: GetContestsByUserCountForYear :one
+select count(id) as count
+from contests
+where
+  owner_user_id = sqlc.arg('user_id')
+  and extract(year from contests.created_at) = sqlc.arg('year')::integer;
+
 -- name: UpdateContest :one
 update contests
 set

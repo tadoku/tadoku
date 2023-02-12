@@ -245,6 +245,26 @@ func (q *Queries) FindLatestOfficialContest(ctx context.Context) (Contest, error
 	return i, err
 }
 
+const getContestsByUserCountForYear = `-- name: GetContestsByUserCountForYear :one
+select count(id) as count
+from contests
+where
+  owner_user_id = $1
+  and extract(year from contests.created_at) = $2::integer
+`
+
+type GetContestsByUserCountForYearParams struct {
+	UserID uuid.UUID
+	Year   int32
+}
+
+func (q *Queries) GetContestsByUserCountForYear(ctx context.Context, arg GetContestsByUserCountForYearParams) (int64, error) {
+	row := q.db.QueryRowContext(ctx, getContestsByUserCountForYear, arg.UserID, arg.Year)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const listContests = `-- name: ListContests :many
 select
   id,

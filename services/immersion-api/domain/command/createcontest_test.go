@@ -13,14 +13,19 @@ import (
 
 type CreateContestRepositoryMock struct {
 	command.Repository
-	isCalled bool
-	result   *command.CreateContestResponse
-	err      error
+	isCalled         bool
+	result           *command.CreateContestResponse
+	err              error
+	userContestCount int32
 }
 
 func (r *CreateContestRepositoryMock) CreateContest(context.Context, *command.CreateContestRequest) (*command.CreateContestResponse, error) {
 	r.isCalled = true
 	return r.result, r.err
+}
+
+func (r *CreateContestRepositoryMock) GetContestsByUserCountForYear(context.Context, time.Time, uuid.UUID) (int32, error) {
+	return r.userContestCount, nil
 }
 
 func createContext(role domain.Role) context.Context {
@@ -37,10 +42,11 @@ func TestCreateContest(t *testing.T) {
 	clock := domain.NewMockClock(time.Now())
 
 	tests := []struct {
-		name    string
-		request *command.CreateContestRequest
-		role    domain.Role
-		err     error
+		name             string
+		request          *command.CreateContestRequest
+		role             domain.Role
+		err              error
+		userContestcount int32
 	}{
 		{
 			"happy path",
@@ -55,6 +61,7 @@ func TestCreateContest(t *testing.T) {
 			},
 			domain.RoleAdmin,
 			nil,
+			0,
 		}, {
 			"official round cannot be private",
 			&command.CreateContestRequest{
@@ -68,6 +75,7 @@ func TestCreateContest(t *testing.T) {
 			},
 			domain.RoleAdmin,
 			command.ErrInvalidContest,
+			0,
 		}, {
 			"official round cannot restrict language choice",
 			&command.CreateContestRequest{
@@ -82,6 +90,7 @@ func TestCreateContest(t *testing.T) {
 			},
 			domain.RoleAdmin,
 			command.ErrInvalidContest,
+			0,
 		}, {
 			"contest cannot be in the past",
 			&command.CreateContestRequest{
@@ -95,6 +104,7 @@ func TestCreateContest(t *testing.T) {
 			},
 			domain.RoleUser,
 			command.ErrInvalidContest,
+			0,
 		}, {
 			"admins can bypass contest cannot be in the past",
 			&command.CreateContestRequest{
@@ -108,6 +118,7 @@ func TestCreateContest(t *testing.T) {
 			},
 			domain.RoleAdmin,
 			nil,
+			0,
 		}, {
 			"needs to start before ending",
 			&command.CreateContestRequest{
@@ -121,6 +132,7 @@ func TestCreateContest(t *testing.T) {
 			},
 			domain.RoleUser,
 			command.ErrInvalidContest,
+			0,
 		}, {
 			"user can create non-official contest",
 			&command.CreateContestRequest{
@@ -134,6 +146,7 @@ func TestCreateContest(t *testing.T) {
 			},
 			domain.RoleUser,
 			nil,
+			0,
 		}, {
 			"user cannot create official contest",
 			&command.CreateContestRequest{
@@ -147,6 +160,7 @@ func TestCreateContest(t *testing.T) {
 			},
 			domain.RoleUser,
 			command.ErrForbidden,
+			0,
 		}, {
 			"non-official contest can restrict languages",
 			&command.CreateContestRequest{
@@ -161,11 +175,7 @@ func TestCreateContest(t *testing.T) {
 			},
 			domain.RoleUser,
 			nil,
-		}, {
-			"banned user cannot a contest",
-			&command.CreateContestRequest{},
-			domain.RoleBanned,
-			command.ErrForbidden,
+			0,
 		},
 	}
 

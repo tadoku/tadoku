@@ -25,7 +25,7 @@ export const NewLogFormSchema = z
     selected_registrations: z.array(ContestRegistrationView),
     language: Language,
     activity: Activity,
-    amount: z.number().positive(),
+    amount: z.number({ invalid_type_error: "Please enter a number" }).positive(),
     unit: Unit,
     tags: z.array(Tag).max(3, 'Must select three or fewer'),
     description: z.string().optional(),

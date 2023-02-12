@@ -10,12 +10,15 @@ import { LogForm } from '@app/immersion/NewLogForm/Form'
 import { useRouter } from 'next/router'
 import { getQueryStringIntParameter } from '@app/common/router'
 import Head from 'next/head'
+import { useSessionOrRedirect } from '@app/common/session'
 
-interface Props {}
+interface Props { }
 
 const Page: NextPage<Props> = () => {
   const registrations = useOngoingContestRegistrations()
   const options = useLogConfigurationOptions()
+
+  useSessionOrRedirect()
 
   const router = useRouter()
   const amount = getQueryStringIntParameter(router.query['amount'], 0)

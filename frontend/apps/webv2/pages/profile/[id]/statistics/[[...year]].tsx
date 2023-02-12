@@ -164,7 +164,13 @@ const Page = () => {
               </Flash>
               <ul
                 className={`divide-y-2 divide-slate-500/5 border-slate-500/5 ${
-                  !registrations.isError ? 'border-t-2' : ''
+                  !registrations.isError &&
+                  !(
+                    registrations.isSuccess &&
+                    registrations.data.total_size === 0
+                  )
+                    ? 'border-t-2'
+                    : ''
                 }`}
               >
                 {registrations.isLoading ? <Loading className="p-4" /> : null}
@@ -193,6 +199,17 @@ const Page = () => {
                       </li>
                     ))
                   : null}
+                <Flash
+                  style="info"
+                  IconComponent={InformationCircleIcon}
+                  visible={
+                    registrations.isSuccess &&
+                    registrations.data.total_size === 0
+                  }
+                  className="-mt-0"
+                >
+                  Hasn't participated in any contests
+                </Flash>
               </ul>
             </div>
             <div className="card narrow w-full">

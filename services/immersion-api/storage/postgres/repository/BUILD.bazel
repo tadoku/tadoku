@@ -19,6 +19,7 @@ go_library(
         "repo_findlogbyid.go",
         "repo_findregistrationforuser.go",
         "repo_findscoresforregistration.go",
+        "repo_getcontestsbyusercountforyear.go",
         "repo_listcontests.go",
         "repo_listlogsforcontestuser.go",
         "repo_upsertcontestregistration.go",

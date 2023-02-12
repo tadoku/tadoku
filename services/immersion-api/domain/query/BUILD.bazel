@@ -5,6 +5,7 @@ go_library(
     srcs = [
         "activityforcontestuser.go",
         "contestprofile.go",
+        "createcontestpermissioncheck.go",
         "entities.go",
         "fetchcontestconfigurationoptions.go",
         "fetchcontestleaderboard.go",

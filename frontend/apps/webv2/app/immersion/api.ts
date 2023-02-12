@@ -225,6 +225,36 @@ export const useContestRegistration = (
     { ...options, retry: false },
   )
 
+export const ContestSummary = z.object({
+  participant_count: z.number(),
+  language_count: z.number(),
+  total_score: z.number(),
+})
+
+export type ContestSummary = z.infer<typeof ContestSummary>
+
+export const useContestSummary = (
+  id: string,
+  options?: { enabled?: boolean },
+) =>
+  useQuery(
+    ['contest', 'findContestSummary', id],
+    async (): Promise<ContestSummary | undefined> => {
+      const response = await fetch(`${root}/contests/${id}/summary`)
+
+      if (response.status === 404) {
+        return undefined
+      }
+
+      if (response.status !== 200) {
+        throw new Error(response.status.toString())
+      }
+
+      return ContestSummary.parse(await response.json())
+    },
+    { ...options, retry: false },
+  )
+
 export const useContestRegistrationUpdate = (onSuccess: () => void) =>
   useMutation({
     mutationFn: async (registration: ContestRegistrationFormSchema) => {

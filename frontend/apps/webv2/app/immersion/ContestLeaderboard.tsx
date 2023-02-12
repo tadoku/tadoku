@@ -1,6 +1,10 @@
 import { useCurrentDateTime, useCurrentLocation } from '@app/common/hooks'
 import { useSession } from '@app/common/session'
-import { useContestLeaderboard, ContestView } from '@app/immersion/api'
+import {
+  useContestLeaderboard,
+  ContestView,
+  useContestSummary,
+} from '@app/immersion/api'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
 import { Flash, Pagination } from 'ui'
@@ -15,6 +19,7 @@ import { ContestConfiguration } from '@app/immersion/ContestConfiguration'
 import { routes } from '@app/common/routes'
 import { getQueryStringIntParameter } from '@app/common/router'
 import { Leaderboard } from '@app/immersion/Leaderboard'
+import { formatScore } from '@app/common/format'
 
 interface Props {
   id: string
@@ -37,6 +42,7 @@ export const ContestLeaderboard = ({ id, contest, routeForPage }: Props) => {
   const currentUrl = useCurrentLocation()
   const [filters, setFilters] = useState(() => newFilter())
   const leaderboard = useContestLeaderboard(filters)
+  const summary = useContestSummary(id)
 
   useEffect(() => {
     setFilters(newFilter())
@@ -114,13 +120,18 @@ export const ContestLeaderboard = ({ id, contest, routeForPage }: Props) => {
 
           <ContestConfiguration contest={contest} />
 
-          <div className="card">
-            <div className="-m-7 py-4 px-4 text-sm">
-              <h3 className="subtitle text-sm mb-2">Summary</h3>
-              <strong>100</strong> participants immersing in <strong>12</strong>{' '}
-              languages for a total score of <strong>9000</strong>.
+          {summary.data ? (
+            <div className="card">
+              <div className="-m-7 py-4 px-4 text-sm">
+                <h3 className="subtitle text-sm mb-2">Summary</h3>
+                <strong>{summary.data.participant_count}</strong> participant
+                {summary.data.participant_count != 1 ? 's' : ''} immersing in{' '}
+                <strong>{summary.data.language_count}</strong> language
+                {summary.data.language_count != 1 ? 's' : ''} for a total score
+                of <strong>{formatScore(summary.data.total_score)}</strong>.
+              </div>
             </div>
-          </div>
+          ) : null}
 
           {hasStarted && !hasEnded && false ? (
             <div className="card">

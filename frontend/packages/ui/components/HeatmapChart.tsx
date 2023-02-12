@@ -96,7 +96,7 @@ export function HeatmapChart({ id, data, year }: Props) {
             x={offset.x - padding * 2}
             y={offset.y + rowHeight * row + padding * row}
             key={label}
-            alignmentBaseline="hanging"
+            dominantBaseline="hanging"
             style={{ fontSize: 10 }}
           >
             {label}
@@ -114,7 +114,7 @@ export function HeatmapChart({ id, data, year }: Props) {
             x={offset.x + colWidth * col + padding * col}
             y={0}
             key={label}
-            alignmentBaseline="hanging"
+            dominantBaseline="hanging"
             style={{ fontSize: 10 }}
           >
             {label}
@@ -167,9 +167,8 @@ function Cell({
       x={x}
       y={y}
       fill={'transparent'}
-      className={`${
-        mounted ? getCellDepthClass(maxValue, value) : 'fill-stone-200'
-      }`}
+      className={`${mounted ? getCellDepthClass(maxValue, value) : 'fill-stone-200'
+        }`}
       strokeWidth={0}
       ref={hoverRef}
     ></rect>
@@ -277,7 +276,7 @@ function Tooltip({
         fill={'white'}
         x={tooltipRect.x + 6}
         y={tooltipRect.y + 8}
-        alignmentBaseline="hanging"
+        dominantBaseline="hanging"
         ref={ref}
         className="text-xs"
       >

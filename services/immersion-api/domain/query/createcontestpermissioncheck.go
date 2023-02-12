@@ -12,7 +12,7 @@ type CreateContestPermissionCheckRequest struct {
 	UserID    uuid.UUID
 }
 
-var contestLimit int32 = 12
+var UserCreateContestYearlyLimit int32 = 12
 
 func (s *ServiceImpl) CreateContestPermissionCheck(ctx context.Context, req *CreateContestPermissionCheckRequest) (error) {
 	// Admins are allowed to bypass this check
@@ -25,7 +25,7 @@ func (s *ServiceImpl) CreateContestPermissionCheck(ctx context.Context, req *Cre
 		return fmt.Errorf("could not check permission for contest creation: %w", err)
 	}
 
-	if contestCount > contestLimit {
+	if contestCount > UserCreateContestYearlyLimit {
 		return fmt.Errorf("hit limit of created contests")
 	}
 

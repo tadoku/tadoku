@@ -1,5 +1,6 @@
 import { ArrowUturnLeftIcon, ChevronRightIcon } from '@heroicons/react/20/solid'
 import classNames from 'classnames'
+import Link from 'next/link'
 import { ComponentType } from 'react'
 
 interface Props {
@@ -48,7 +49,7 @@ const BreadcrumbLink = ({
   label,
   isLast,
 }: BreadcrumbLinkProps) => (
-  <a
+  <Link
     href={href}
     className={classNames(
       'reset inline-flex items-center text-sm font-medium',
@@ -60,5 +61,5 @@ const BreadcrumbLink = ({
   >
     {IconComponent ? <IconComponent className="w-4 h-4 mr-2" /> : null}
     {label}
-  </a>
+  </Link>
 )

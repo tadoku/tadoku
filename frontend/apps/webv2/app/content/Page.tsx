@@ -36,9 +36,12 @@ export const Page = ({ slug }: Props) => {
           ]}
         />
       </div>
-      <h1 className="title my-4">{page.data.title}</h1>
-      <div className="auto-format">
-        <div dangerouslySetInnerHTML={{ __html: page.data.html }} />
+
+      <div className="max-w-3xl">
+        <h1 className="title my-4">{page.data.title}</h1>
+        <div className="auto-format">
+          <div dangerouslySetInnerHTML={{ __html: page.data.html }} />
+        </div>
       </div>
     </>
   )

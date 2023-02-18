@@ -20,8 +20,8 @@ export const ContestOverview = ({
   registrationClosed,
   now,
 }: Props) => (
-  <div className="card text-sm">
-    <div className="-mx-7 -mt-7 pt-4 pb-2 px-4 h-stack justify-between items-center">
+  <div className="card narrow text-sm">
+    <div className="h-stack justify-between items-center max-w-[300px]">
       <div>
         <div className="subtitle text-sm">
           {hasStarted ? 'Started' : 'Starting'}
@@ -42,7 +42,7 @@ export const ContestOverview = ({
         </div>
       </div>
     </div>
-    <div className="-mx-7 px-4 py-2 flex flex-col space-y-2">
+    <div className="py-2 flex flex-col space-y-2">
       {!hasStarted ? (
         <div>
           Starting in{' '}
@@ -95,7 +95,7 @@ export const ContestOverview = ({
         </strong>
       </div>
     </div>
-    <div className="-mx-7 -mb-7 px-4 py-2 bg-slate-500/5 flex items-center space-x-1">
+    <div className="-mx-4 -mb-4 px-4 py-2 bg-slate-500/5 flex items-center space-x-1">
       <span>Administered by</span>
       {contest.official ? (
         <div className="flex items-center">

@@ -19,6 +19,17 @@ func (s *ServiceImpl) CreateContestPermissionCheck(ctx context.Context) error {
 	session := domain.ParseSession(ctx)
 	userID := uuid.MustParse(session.Subject)
 
+	traits, err := s.kratos.FetchIdentity(ctx, userID)
+	if err != nil {
+		return fmt.Errorf("could not check permission for contest creation: %w", err)
+	}
+
+	oneMonthAgo := s.clock.Now().AddDate(0, -1, 0)
+
+	if traits.CreatedAt.After(oneMonthAgo) {
+		return fmt.Errorf("account too young")
+	}
+
 	contestCount, err := s.r.GetContestsByUserCountForYear(ctx, s.clock.Now(), userID)
 	if err != nil {
 		return fmt.Errorf("could not check permission for contest creation: %w", err)

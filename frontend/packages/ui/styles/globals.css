@@ -299,6 +299,22 @@
     @apply my-4 w-full;
   }
 
+  .auto-format ul {
+    @apply list-disc ml-5 my-4 space-y-2;
+  }
+
+  .auto-format a {
+    @apply !underline;
+  }
+
+  .auto-format h2 {
+    @apply text-lg my-4;
+  }
+
+  .auto-format h3 {
+    @apply subtitle my-2;
+  }
+
   .input-frame {
       @apply border border-b-2 border-black/10 focus:border-primary focus:ring-primary/40 focus:ring-2;
       @apply bg-white transition ease-in-out placeholder-gray-400;

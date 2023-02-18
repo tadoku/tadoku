@@ -193,7 +193,7 @@ const Page: NextPage<Props> = () => (
         listening is allowed in official contests as long as you&apos;re paying
         attention to it and can understand what&apos;s going on. You could track
         listening while doing the dishes, but tracking audio you&apos;re
-        "listening" to while sleeping would not count.
+        &quot;listening&quot; to while sleeping would not count.
       </p>
 
       <div className="table-container">

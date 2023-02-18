@@ -1,5 +1,6 @@
 import { useRouter } from 'next/router'
 import {
+  ActionMenu,
   Breadcrumb,
   Flash,
   HeatmapChart,
@@ -8,6 +9,7 @@ import {
   VerticalTabbar,
 } from 'ui'
 import {
+  ChevronDownIcon,
   ChevronRightIcon,
   ExclamationCircleIcon,
   EyeSlashIcon,
@@ -64,6 +66,12 @@ const Page = () => {
     .map(it => it.start.year)
     .reverse()
 
+  const yearLinks = years.map(it => ({
+    href: routes.userProfileStatistics(userId, it),
+    label: it.toString(),
+    active: year === it,
+  }))
+
   return (
     <>
       <Head>
@@ -85,7 +93,14 @@ const Page = () => {
           <h1 className="title">Profile</h1>
           <h2 className="subtitle">{profile.data.display_name}</h2>
         </div>
-        <div></div>
+        <div>
+          <div className="block lg:hidden">
+            <ActionMenu links={yearLinks} orientation="right">
+              {year}
+              <ChevronDownIcon className="w-5 h-5" />
+            </ActionMenu>
+          </div>
+        </div>
       </div>
       <Tabbar
         links={[
@@ -102,7 +117,7 @@ const Page = () => {
           },
         ]}
       />
-      <div className="h-stack mt-4 spaced">
+      <div className="lg:h-stack v-stack mt-4 spaced">
         <div className="lg:w-1/5">
           <ScoreList
             languages={
@@ -121,7 +136,7 @@ const Page = () => {
                 ? `${activitySummary.data.total_updates} updates in ${year}`
                 : 'Updates'}
             </h3>
-            <div className="w-full max-h-28 mt-4">
+            <div className="w-full max-h-28 mt-4 overflow-hidden flex justify-end md:justify-start">
               <Flash
                 style="error"
                 IconComponent={ExclamationCircleIcon}
@@ -152,7 +167,7 @@ const Page = () => {
               ) : null}
             </div>
           </div>
-          <div className="h-stack spaced items-start">
+          <div className="v-stack md:h-stack spaced items-start">
             <div className="card w-full p-0">
               <h3 className="subtitle p-4">Contests</h3>
               <Flash
@@ -237,14 +252,8 @@ const Page = () => {
             </div>
           </div>
         </div>
-        <div className="flex-shrink pl-3 min-w-32">
-          <VerticalTabbar
-            links={years.map(it => ({
-              href: routes.userProfileStatistics(userId, it),
-              label: it.toString(),
-              active: year === it,
-            }))}
-          />
+        <div className="flex-shrink pl-3 min-w-32 hidden lg:block">
+          <VerticalTabbar links={yearLinks} />
         </div>
       </div>
     </>

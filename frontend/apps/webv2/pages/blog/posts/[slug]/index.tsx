@@ -41,7 +41,7 @@ const BlogPost: NextPage<Props> = () => {
           ]}
         />
       </div>
-      <div>
+      <div className="max-w-3xl">
         <PostDetail post={post.data} />
       </div>
     </>

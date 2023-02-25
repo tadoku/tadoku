@@ -79,10 +79,14 @@ export function HeatmapChart({ id, data, year }: Props) {
 
   const tooltipId = `tooltip-${id}`
 
+  const width = weeks * colWidth + (weeks - 1) * padding + offset.x
+  const height = 7 * rowHeight + 6 * padding + offset.y
+
   return (
     <svg
-      width={weeks * colWidth + (weeks - 1) * padding + offset.x}
-      height={7 * rowHeight + 6 * padding + offset.y}
+      width={width}
+      height={height}
+      viewBox={`0 0 ${width} ${height}`}
       className="overflow-visible"
     >
       {weekdays.map((label, row) => {
@@ -167,8 +171,9 @@ function Cell({
       x={x}
       y={y}
       fill={'transparent'}
-      className={`${mounted ? getCellDepthClass(maxValue, value) : 'fill-stone-200'
-        }`}
+      className={`${
+        mounted ? getCellDepthClass(maxValue, value) : 'fill-stone-200'
+      }`}
       strokeWidth={0}
       ref={hoverRef}
     ></rect>

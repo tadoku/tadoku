@@ -119,6 +119,7 @@ update logs
 set deleted_at = now()
 where
   id = $1
+  and deleted_at is null
 `
 
 func (q *Queries) DeleteLog(ctx context.Context, logID uuid.UUID) error {
@@ -420,6 +421,7 @@ from logs
 where
   user_id = $1
   and year = $2
+  and deleted_at is null
 group by "date"
 order by date asc
 `
@@ -468,6 +470,7 @@ inner join log_activities on (log_activities.id = logs.log_activity_id)
 where
   user_id = $1
   and year = $2
+  and deleted_at is null
 group by logs.log_activity_id, log_activities.name
 order by score desc
 `

@@ -118,6 +118,7 @@ from logs
 where
   user_id = sqlc.arg('user_id')
   and year = sqlc.arg('year')
+  and deleted_at is null
 group by "date"
 order by date asc;
 
@@ -145,6 +146,7 @@ inner join log_activities on (log_activities.id = logs.log_activity_id)
 where
   user_id = sqlc.arg('user_id')
   and year = sqlc.arg('year')
+  and deleted_at is null
 group by logs.log_activity_id, log_activities.name
 order by score desc;
 
@@ -152,7 +154,8 @@ order by score desc;
 update logs
 set deleted_at = now()
 where
-  id = sqlc.arg('log_id');
+  id = sqlc.arg('log_id')
+  and deleted_at is null;
 
 -- name: CheckIfLogCanBeDeleted :one
 select (not(true = any(

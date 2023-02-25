@@ -130,13 +130,13 @@ const Page = () => {
           />
         </div>
         <div className="flex-grow v-stack spaced">
-          <div className="card narrow">
+          <div className="card narrow overflow-x-auto">
             <h3 className="subtitle">
               {activitySummary.data
                 ? `${activitySummary.data.total_updates} updates in ${year}`
                 : 'Updates'}
             </h3>
-            <div className="w-full max-h-28 mt-4 overflow-y-scroll">
+            <div className="w-full max-h-28 mt-4">
               <Flash
                 style="error"
                 IconComponent={ExclamationCircleIcon}

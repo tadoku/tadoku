@@ -79,7 +79,7 @@ export function HeatmapChart({ id, data, year }: Props) {
 
   const tooltipId = `tooltip-${id}`
 
-  const width = weeks * colWidth + (weeks - 1) * padding + offset.x
+  const width = weeks * colWidth + (weeks - 1) * padding + offset.x + 10 // 10 for extra space on the right
   const height = 7 * rowHeight + 6 * padding + offset.y
 
   return (
@@ -135,6 +135,8 @@ export function HeatmapChart({ id, data, year }: Props) {
             col={col}
             row={row}
             tooltip={cell?.tooltip}
+            parentHeight={height}
+            parentWidth={width}
           />
         )),
       )}
@@ -150,6 +152,7 @@ function Cell({
   tooltip,
   row,
   col,
+  parentWidth,
 }: {
   value: number | undefined
   tooltipId: string
@@ -157,6 +160,8 @@ function Cell({
   tooltip?: string
   row: number
   col: number
+  parentWidth: number
+  parentHeight: number
 }) {
   const [mounted, setMounted] = useState(false)
   const [hoverRef, isHovered] = useHover<SVGRectElement>()
@@ -197,7 +202,12 @@ function Cell({
       {target &&
         tooltip &&
         createPortal(
-          <Tooltip row={row} col={col} visible={isHovered}>
+          <Tooltip
+            row={row}
+            col={col}
+            visible={isHovered}
+            parentWidth={parentWidth}
+          >
             {tooltip}
           </Tooltip>,
           target,
@@ -238,14 +248,22 @@ function Tooltip({
   col,
   children,
   visible,
+  parentWidth,
 }: {
   row: number
   col: number
   children: React.ReactNode
   visible: boolean
+  parentWidth: number
 }) {
   const ref = useRef<SVGTextElement>(null)
-  const [tooltipRect, setTooltipRect] = useState({ x: 0, y: 0, w: 0, h: 0 })
+  const [tooltipRect, setTooltipRect] = useState({
+    x: 0,
+    y: 0,
+    w: 0,
+    h: 0,
+    arrowX: 0,
+  })
 
   useEffect(() => {
     if (ref && ref.current) {
@@ -253,10 +271,20 @@ function Tooltip({
 
       const w = textRect.width + 12
       const h = textRect.height + 12
-      const x = offset.x + colWidth * col + padding * col - w / 2
+      const arrowX = offset.x + colWidth * col + padding * col - w / 2
       const y = offset.y + rowHeight * row + padding * row - h - 2
+      let x = arrowX
 
-      setTooltipRect({ x: x, y: y, w: w, h: h })
+      if (x < 0) {
+        x = 20
+      }
+      if (x + w > parentWidth) {
+        x = parentWidth - w
+      }
+
+      console.log({ x: x, y: y, w: w, h: h })
+
+      setTooltipRect({ x, y, w, h, arrowX })
     }
   }, [ref, visible])
 
@@ -296,19 +324,21 @@ function pointsForRect({
   y,
   w,
   h,
+  arrowX,
 }: {
   x: number
   y: number
   w: number
   h: number
+  arrowX: number
 }) {
   const size = 8
 
-  const middle = x + w / 2 + colWidth / 2
+  const middle = arrowX + w / 2 + colWidth / 2
   const left = middle - size / 2
   const right = middle + size / 2
-  const top = y + h
-  const bottom = top + 4
+  const top = y + h - 1
+  const bottom = top + 5
 
   return `${left},${top} ${right},${top} ${middle},${bottom}`
 }

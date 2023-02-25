@@ -355,14 +355,14 @@ function getCellDepthClass(max: number, value: number | undefined) {
   const ratio = value / max
 
   if (ratio < 0.25) {
-    return 'fill-teal-200'
+    return 'fill-teal-300'
   }
   if (ratio < 0.5) {
-    return 'fill-teal-400'
-  }
-  if (ratio < 0.75) {
     return 'fill-teal-500'
   }
+  if (ratio < 0.75) {
+    return 'fill-teal-700'
+  }
 
-  return 'fill-teal-700'
+  return 'fill-teal-900'
 }

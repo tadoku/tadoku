@@ -25,7 +25,9 @@ export const NewLogFormSchema = z
     selected_registrations: z.array(ContestRegistrationView),
     language: Language,
     activity: Activity,
-    amount: z.number({ invalid_type_error: "Please enter a number" }).positive(),
+    amount: z
+      .number({ invalid_type_error: 'Please enter a number' })
+      .positive(),
     unit: Unit,
     tags: z.array(Tag).max(3, 'Must select three or fewer'),
     description: z.string().optional(),
@@ -47,7 +49,7 @@ export const NewLogFormSchema = z
         language: log.language,
         trackingMode: log.tracking_mode,
       }).map(it => it.id)
-    } catch (err) { }
+    } catch (err) {}
 
     return newLog
   })
@@ -100,7 +102,7 @@ export const filterUnits = (
     )
     const fallback = units.find(it => it.language_code === undefined)
 
-    if (units.length > 1 && unitForCurrentLanguage) {
+    if (unitForCurrentLanguage) {
       filteredUnits.push(unitForCurrentLanguage)
     } else if (fallback) {
       filteredUnits.push(fallback)
@@ -162,7 +164,7 @@ export const trackingModesForRegistrations = (registrationCount: number) => {
       description: 'Do not submit to any contests',
       IconComponent: UserIcon,
     },
-  ]satisfies RadioProps['options']
+  ] satisfies RadioProps['options']
 }
 
 export const estimateScore = (

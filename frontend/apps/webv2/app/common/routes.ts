@@ -38,8 +38,8 @@ export const routes = {
 
   userProfileStatistics: (id: string, year?: Page) =>
     `/profile/${id}/statistics/${year ?? DateTime.now().year}`,
-  userProfileUpdates: (id: string, year?: Page, page?: Page) =>
-    `/profile/${id}/updates/${year ?? DateTime.now().year}/${page ?? '1'}`,
+  userProfileUpdates: (id: string, page?: Page) =>
+    `/profile/${id}/updates/${page ?? '1'}`,
 
   forum: () => `https://forum.tadoku.app/`,
 

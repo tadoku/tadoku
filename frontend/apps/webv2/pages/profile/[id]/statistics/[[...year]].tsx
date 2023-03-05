@@ -113,7 +113,6 @@ const Page = () => {
             href: routes.userProfileUpdates(userId),
             label: 'Updates',
             active: false,
-            disabled: true,
           },
         ]}
       />

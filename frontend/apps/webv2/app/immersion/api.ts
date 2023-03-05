@@ -591,6 +591,43 @@ export const useContestProfileLogs = (
     options,
   )
 
+export const useProfileLogs = (
+  opts: {
+    pageSize: number
+    page: number
+    includeDeleted: boolean
+    userId: string
+  },
+  options?: { enabled?: boolean },
+) =>
+  useQuery(
+    [
+      'profile',
+      opts.userId,
+      'logs',
+      opts.pageSize,
+      opts.page,
+      opts.includeDeleted,
+    ],
+    async (): Promise<Logs> => {
+      const params = {
+        page_size: opts.pageSize.toString(),
+        page: (opts.page - 1).toString(),
+        include_deleted: opts.includeDeleted.toString(),
+      }
+      const response = await fetch(
+        `${root}/users/${opts.userId}/logs?${new URLSearchParams(params)}`,
+      )
+
+      if (response.status !== 200) {
+        throw new Error(response.status.toString())
+      }
+
+      return Logs.parse(await response.json())
+    },
+    options,
+  )
+
 const UserProfile = z.object({
   id: z.string(),
   display_name: z.string(),

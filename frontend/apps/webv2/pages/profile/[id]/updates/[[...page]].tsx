@@ -1,5 +1,5 @@
 import { useRouter } from 'next/router'
-import { Breadcrumb, Loading, Tabbar } from 'ui'
+import { Breadcrumb, Loading, Pagination, Tabbar } from 'ui'
 import { HomeIcon } from '@heroicons/react/20/solid'
 import { routes } from '@app/common/routes'
 import { useProfileLogs, useUserProfile } from '@app/immersion/api'
@@ -40,6 +40,10 @@ const Page = () => {
       </span>
     )
   }
+
+  const logsTotalPages = logs.data
+    ? Math.ceil(logs.data.total_size / filters.pageSize)
+    : 0
 
   return (
     <>
@@ -82,6 +86,16 @@ const Page = () => {
       <div className="card p-0 mt-4">
         <LogsList logs={logs} />
       </div>
+
+      {logsTotalPages > 1 ? (
+        <div className="mt-4">
+          <Pagination
+            currentPage={filters.page}
+            totalPages={logsTotalPages}
+            getHref={page => routes.userProfileUpdates(userId, page)}
+          />
+        </div>
+      ) : null}
     </>
   )
 }

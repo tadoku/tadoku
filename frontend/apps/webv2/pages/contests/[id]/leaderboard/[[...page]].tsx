@@ -81,18 +81,17 @@ const Page = () => {
                 visible: !hasEnded && registration.data === undefined,
               },
               {
+                href: routes.contestJoin(id),
+                label: 'Update registration',
+                style: 'secondary',
+                visible: !hasEnded && registration.data !== undefined,
+              },
+              {
                 href: routes.logCreate(),
                 label: 'Log update',
                 IconComponent: PencilSquareIcon,
                 style: 'primary',
                 visible: isOngoing && registration.data !== undefined,
-              },
-
-              {
-                href: routes.contestJoin(id),
-                label: 'Update registration',
-                style: 'secondary',
-                visible: !hasEnded && registration.data !== undefined,
               },
             ]}
             orientation="right"

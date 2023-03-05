@@ -5,6 +5,7 @@ import {
 } from '@heroicons/react/20/solid'
 import classNames from 'classnames'
 import Link from 'next/link'
+import { useRouter } from 'next/router'
 import { Dispatch, SetStateAction, useEffect, useState } from 'react'
 import { FieldValues, FormProvider, useForm } from 'react-hook-form'
 import { Input } from './Form'
@@ -26,6 +27,7 @@ export function Pagination({
   window = 4,
 }: Props) {
   const [isNavigationModalOpen, setIsNavigationModalOpen] = useState(false)
+  const router = useRouter()
 
   const canGoPrevious = current > 1
   const canGoNext = current < total
@@ -51,13 +53,20 @@ export function Pagination({
           onClick(page)
         }
 
+  const onClickFallback = (page: number) => {
+    const url = getHref?.(page)
+    if (url) {
+      router.push(url)
+    }
+  }
+
   return (
     <>
-      {onClick ? (
+      {onClick || getHref ? (
         <NavigateForm
           isOpen={isNavigationModalOpen}
           setIsOpen={setIsNavigationModalOpen}
-          setPage={onClick}
+          setPage={onClick ?? onClickFallback}
           totalPages={total}
         />
       ) : null}

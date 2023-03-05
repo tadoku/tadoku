@@ -551,6 +551,43 @@ paths:
                 $ref: "#/components/schemas/ProfileScores"
         "404":
           description: not found
+  /users/{user_id}/logs:
+    get:
+      summary: Lists the logs of a user
+      operationId: profileListLogs
+      tags: [profile]
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: include_deleted
+          in: query
+          required: false
+          allowEmptyValue: true
+          schema:
+            type: boolean
+        - name: page_size
+          in: query
+          required: false
+          schema:
+            type: integer
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Logs"
+        "404":
+          description: not found
   /users/{userId}/contest-registrations/{year}:
     get:
       summary: Fetches the contest registrations of a user for a given year

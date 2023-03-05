@@ -68,6 +68,40 @@ order by created_at desc
 limit sqlc.arg('page_size')
 offset sqlc.arg('start_from');
 
+-- name: ListLogsForUser :many
+with eligible_logs as (
+  select
+    logs.id,
+    logs.user_id,
+    logs.language_code,
+    languages.name as language_name,
+    logs.log_activity_id as activity_id,
+    log_activities.name as activity_name,
+    log_units.name as unit_name,
+    logs.description,
+    logs.tags,
+    logs.amount,
+    logs.modifier,
+    logs.score,
+    logs.created_at,
+    logs.updated_at,
+    logs.deleted_at
+  from logs
+  inner join languages on (languages.code = logs.language_code)
+  inner join log_activities on (log_activities.id = logs.log_activity_id)
+  inner join log_units on (log_units.id = logs.unit_id)
+  where
+    (sqlc.arg('include_deleted')::boolean or deleted_at is null)
+    and logs.user_id = sqlc.arg('user_id')
+)
+select
+  *,
+  (select count(eligible_logs.id) from eligible_logs) as total_size
+from eligible_logs
+order by created_at desc
+limit sqlc.arg('page_size')
+offset sqlc.arg('start_from');
+
 -- name: FindLogByID :one
 select
   logs.id,

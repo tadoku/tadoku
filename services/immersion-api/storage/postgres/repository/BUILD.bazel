@@ -22,6 +22,7 @@ go_library(
         "repo_getcontestsbyusercountforyear.go",
         "repo_listcontests.go",
         "repo_listlogsforcontestuser.go",
+        "repo_listlogsforuser.go",
         "repo_upsertcontestregistration.go",
         "repo_yearlyactivityforuser.go",
         "repo_yearlyactivitysplitforuser.go",

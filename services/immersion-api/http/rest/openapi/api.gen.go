@@ -353,6 +353,13 @@ type LogCreateJSONBody struct {
 	UnitId          openapi_types.UUID   `json:"unit_id"`
 }
 
+// ProfileListLogsParams defines parameters for ProfileListLogs.
+type ProfileListLogsParams struct {
+	IncludeDeleted *bool `form:"include_deleted,omitempty" json:"include_deleted,omitempty"`
+	PageSize       *int  `form:"page_size,omitempty" json:"page_size,omitempty"`
+	Page           *int  `form:"page,omitempty" json:"page,omitempty"`
+}
+
 // ContestCreateJSONRequestBody defines body for ContestCreate for application/json ContentType.
 type ContestCreateJSONRequestBody = Contest
 
@@ -442,6 +449,9 @@ type ServerInterface interface {
 	// Fetches the scores of a user for a given year
 	// (GET /users/{userId}/scores/{year})
 	ProfileYearlyScoresByUserID(ctx echo.Context, userId openapi_types.UUID, year int) error
+	// Lists the logs of a user
+	// (GET /{user_id}/logs)
+	ProfileListLogs(ctx echo.Context, userId openapi_types.UUID, params ProfileListLogsParams) error
 }
 
 // ServerInterfaceWrapper converts echo contexts to parameters.
@@ -1017,6 +1027,45 @@ func (w *ServerInterfaceWrapper) ProfileYearlyScoresByUserID(ctx echo.Context) e
 	return err
 }
 
+// ProfileListLogs converts echo context to params.
+func (w *ServerInterfaceWrapper) ProfileListLogs(ctx echo.Context) error {
+	var err error
+	// ------------- Path parameter "user_id" -------------
+	var userId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithLocation("simple", false, "user_id", runtime.ParamLocationPath, ctx.Param("user_id"), &userId)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter user_id: %s", err))
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ProfileListLogsParams
+	// ------------- Optional query parameter "include_deleted" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "include_deleted", ctx.QueryParams(), &params.IncludeDeleted)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter include_deleted: %s", err))
+	}
+
+	// ------------- Optional query parameter "page_size" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "page_size", ctx.QueryParams(), &params.PageSize)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter page_size: %s", err))
+	}
+
+	// ------------- Optional query parameter "page" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "page", ctx.QueryParams(), &params.Page)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter page: %s", err))
+	}
+
+	// Invoke the callback with all the unmarshalled arguments
+	err = w.Handler.ProfileListLogs(ctx, userId, params)
+	return err
+}
+
 // This is a simple interface which specifies echo.Route addition functions which
 // are present on both echo.Echo and echo.Group, since we want to allow using
 // either of them for path registration
@@ -1071,5 +1120,6 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 	router.GET(baseURL+"/users/:userId/contest-registrations/:year", wrapper.ProfileYearlyContestRegistrationsByUserID)
 	router.GET(baseURL+"/users/:userId/profile", wrapper.ProfileFindByUserID)
 	router.GET(baseURL+"/users/:userId/scores/:year", wrapper.ProfileYearlyScoresByUserID)
+	router.GET(baseURL+"/:user_id/logs", wrapper.ProfileListLogs)
 
 }

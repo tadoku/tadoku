@@ -412,6 +412,112 @@ func (q *Queries) ListLogsForContestUser(ctx context.Context, arg ListLogsForCon
 	return items, nil
 }
 
+const listLogsForUser = `-- name: ListLogsForUser :many
+with eligible_logs as (
+  select
+    logs.id,
+    logs.user_id,
+    logs.language_code,
+    languages.name as language_name,
+    logs.log_activity_id as activity_id,
+    log_activities.name as activity_name,
+    log_units.name as unit_name,
+    logs.description,
+    logs.tags,
+    logs.amount,
+    logs.modifier,
+    logs.score,
+    logs.created_at,
+    logs.updated_at,
+    logs.deleted_at
+  from logs
+  inner join languages on (languages.code = logs.language_code)
+  inner join log_activities on (log_activities.id = logs.log_activity_id)
+  inner join log_units on (log_units.id = logs.unit_id)
+  where
+    ($3::boolean or deleted_at is null)
+    and logs.user_id = $4
+)
+select
+  id, user_id, language_code, language_name, activity_id, activity_name, unit_name, description, tags, amount, modifier, score, created_at, updated_at, deleted_at,
+  (select count(eligible_logs.id) from eligible_logs) as total_size
+from eligible_logs
+order by created_at desc
+limit $2
+offset $1
+`
+
+type ListLogsForUserParams struct {
+	StartFrom      int32
+	PageSize       int32
+	IncludeDeleted bool
+	UserID         uuid.UUID
+}
+
+type ListLogsForUserRow struct {
+	ID           uuid.UUID
+	UserID       uuid.UUID
+	LanguageCode string
+	LanguageName string
+	ActivityID   int16
+	ActivityName string
+	UnitName     string
+	Description  sql.NullString
+	Tags         []string
+	Amount       float32
+	Modifier     float32
+	Score        float32
+	CreatedAt    time.Time
+	UpdatedAt    time.Time
+	DeletedAt    sql.NullTime
+	TotalSize    int64
+}
+
+func (q *Queries) ListLogsForUser(ctx context.Context, arg ListLogsForUserParams) ([]ListLogsForUserRow, error) {
+	rows, err := q.db.QueryContext(ctx, listLogsForUser,
+		arg.StartFrom,
+		arg.PageSize,
+		arg.IncludeDeleted,
+		arg.UserID,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListLogsForUserRow
+	for rows.Next() {
+		var i ListLogsForUserRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.UserID,
+			&i.LanguageCode,
+			&i.LanguageName,
+			&i.ActivityID,
+			&i.ActivityName,
+			&i.UnitName,
+			&i.Description,
+			pq.Array(&i.Tags),
+			&i.Amount,
+			&i.Modifier,
+			&i.Score,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.DeletedAt,
+			&i.TotalSize,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const yearlyActivityForUser = `-- name: YearlyActivityForUser :many
 select
   sum(score)::real as score,

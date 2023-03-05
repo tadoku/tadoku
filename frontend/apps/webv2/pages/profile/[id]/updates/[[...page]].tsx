@@ -44,7 +44,7 @@ const Page = () => {
   return (
     <>
       <Head>
-        <title>Profile statistics - {profile.data.display_name} - Tadoku</title>
+        <title>Profile updates - {profile.data.display_name} - Tadoku</title>
       </Head>
       <div className="pb-4">
         <Breadcrumb

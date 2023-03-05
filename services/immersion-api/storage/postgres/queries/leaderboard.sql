@@ -58,8 +58,6 @@ with leaderboard as (
     user_id,
     sum(score) as score
   from logs
-  inner join contest_logs
-    on contest_logs.log_id = logs.id
   where
     logs.year = sqlc.arg('year')
     and eligible_official_leaderboard = true
@@ -118,8 +116,6 @@ with leaderboard as (
     user_id,
     sum(score) as score
   from logs
-  inner join contest_logs
-    on contest_logs.log_id = logs.id
   where
     eligible_official_leaderboard = true
     and logs.deleted_at is null

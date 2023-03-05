@@ -15,10 +15,13 @@ go_library(
         "//services/immersion-api/http/rest",
         "//services/immersion-api/http/rest/openapi",
         "//services/immersion-api/storage/postgres/repository",
+        "@com_github_getsentry_sentry_go//:sentry-go",
+        "@com_github_getsentry_sentry_go//echo",
         "@com_github_go_playground_validator_v10//:validator",
         "@com_github_jackc_pgx_v4//stdlib",
         "@com_github_kelseyhightower_envconfig//:envconfig",
         "@com_github_labstack_echo_v4//:echo",
+        "@com_github_labstack_echo_v4//middleware",
     ],
 )
 

@@ -19,7 +19,7 @@ go_library(
         "findlogbyid.go",
         "findregistrationforuser.go",
         "listcontests.go",
-        "listlogsforcontestuser.go",
+        "listlogsforcontest.go",
         "listlogsforuser.go",
         "service.go",
         "yearlyactivityforuser.go",

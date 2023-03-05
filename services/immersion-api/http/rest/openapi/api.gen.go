@@ -314,11 +314,12 @@ type ContestFetchLeaderboardParams struct {
 	ActivityId   *int    `form:"activity_id,omitempty" json:"activity_id,omitempty"`
 }
 
-// ContestProfileListLogsParams defines parameters for ContestProfileListLogs.
-type ContestProfileListLogsParams struct {
-	IncludeDeleted *bool `form:"include_deleted,omitempty" json:"include_deleted,omitempty"`
-	PageSize       *int  `form:"page_size,omitempty" json:"page_size,omitempty"`
-	Page           *int  `form:"page,omitempty" json:"page,omitempty"`
+// ContestListLogsParams defines parameters for ContestListLogs.
+type ContestListLogsParams struct {
+	IncludeDeleted *bool               `form:"include_deleted,omitempty" json:"include_deleted,omitempty"`
+	PageSize       *int                `form:"page_size,omitempty" json:"page_size,omitempty"`
+	Page           *int                `form:"page,omitempty" json:"page,omitempty"`
+	UserId         *openapi_types.UUID `form:"user_id,omitempty" json:"user_id,omitempty"`
 }
 
 // ContestRegistrationUpsertJSONBody defines parameters for ContestRegistrationUpsert.
@@ -395,12 +396,12 @@ type ServerInterface interface {
 	// Fetches the leaderboard for a contest
 	// (GET /contests/{id}/leaderboard)
 	ContestFetchLeaderboard(ctx echo.Context, id openapi_types.UUID, params ContestFetchLeaderboardParams) error
+	// Lists the logs attached to a contest
+	// (GET /contests/{id}/logs)
+	ContestListLogs(ctx echo.Context, id openapi_types.UUID, params ContestListLogsParams) error
 	// Fetches the activity of a user profile in a contest
 	// (GET /contests/{id}/profile/{user_id}/activity)
 	ContestProfileFetchActivity(ctx echo.Context, id openapi_types.UUID, userId openapi_types.UUID) error
-	// Lists the logs of a user profile in a contest
-	// (GET /contests/{id}/profile/{user_id}/logs)
-	ContestProfileListLogs(ctx echo.Context, id openapi_types.UUID, userId openapi_types.UUID, params ContestProfileListLogsParams) error
 	// Fetches the scores of a user profile in a contest
 	// (GET /contests/{id}/profile/{user_id}/scores)
 	ContestProfileFetchScores(ctx echo.Context, id openapi_types.UUID, userId openapi_types.UUID) error
@@ -450,7 +451,7 @@ type ServerInterface interface {
 	// (GET /users/{userId}/scores/{year})
 	ProfileYearlyScoresByUserID(ctx echo.Context, userId openapi_types.UUID, year int) error
 	// Lists the logs of a user
-	// (GET /{user_id}/logs)
+	// (GET /users/{user_id}/logs)
 	ProfileListLogs(ctx echo.Context, userId openapi_types.UUID, params ProfileListLogsParams) error
 }
 
@@ -620,8 +621,8 @@ func (w *ServerInterfaceWrapper) ContestFetchLeaderboard(ctx echo.Context) error
 	return err
 }
 
-// ContestProfileFetchActivity converts echo context to params.
-func (w *ServerInterfaceWrapper) ContestProfileFetchActivity(ctx echo.Context) error {
+// ContestListLogs converts echo context to params.
+func (w *ServerInterfaceWrapper) ContestListLogs(ctx echo.Context) error {
 	var err error
 	// ------------- Path parameter "id" -------------
 	var id openapi_types.UUID
@@ -629,42 +630,10 @@ func (w *ServerInterfaceWrapper) ContestProfileFetchActivity(ctx echo.Context) e
 	err = runtime.BindStyledParameterWithLocation("simple", false, "id", runtime.ParamLocationPath, ctx.Param("id"), &id)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter id: %s", err))
-	}
-
-	// ------------- Path parameter "user_id" -------------
-	var userId openapi_types.UUID
-
-	err = runtime.BindStyledParameterWithLocation("simple", false, "user_id", runtime.ParamLocationPath, ctx.Param("user_id"), &userId)
-	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter user_id: %s", err))
-	}
-
-	// Invoke the callback with all the unmarshalled arguments
-	err = w.Handler.ContestProfileFetchActivity(ctx, id, userId)
-	return err
-}
-
-// ContestProfileListLogs converts echo context to params.
-func (w *ServerInterfaceWrapper) ContestProfileListLogs(ctx echo.Context) error {
-	var err error
-	// ------------- Path parameter "id" -------------
-	var id openapi_types.UUID
-
-	err = runtime.BindStyledParameterWithLocation("simple", false, "id", runtime.ParamLocationPath, ctx.Param("id"), &id)
-	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter id: %s", err))
-	}
-
-	// ------------- Path parameter "user_id" -------------
-	var userId openapi_types.UUID
-
-	err = runtime.BindStyledParameterWithLocation("simple", false, "user_id", runtime.ParamLocationPath, ctx.Param("user_id"), &userId)
-	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter user_id: %s", err))
 	}
 
 	// Parameter object where we will unmarshal all parameters from the context
-	var params ContestProfileListLogsParams
+	var params ContestListLogsParams
 	// ------------- Optional query parameter "include_deleted" -------------
 
 	err = runtime.BindQueryParameter("form", true, false, "include_deleted", ctx.QueryParams(), &params.IncludeDeleted)
@@ -686,8 +655,39 @@ func (w *ServerInterfaceWrapper) ContestProfileListLogs(ctx echo.Context) error 
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter page: %s", err))
 	}
 
+	// ------------- Optional query parameter "user_id" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "user_id", ctx.QueryParams(), &params.UserId)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter user_id: %s", err))
+	}
+
 	// Invoke the callback with all the unmarshalled arguments
-	err = w.Handler.ContestProfileListLogs(ctx, id, userId, params)
+	err = w.Handler.ContestListLogs(ctx, id, params)
+	return err
+}
+
+// ContestProfileFetchActivity converts echo context to params.
+func (w *ServerInterfaceWrapper) ContestProfileFetchActivity(ctx echo.Context) error {
+	var err error
+	// ------------- Path parameter "id" -------------
+	var id openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithLocation("simple", false, "id", runtime.ParamLocationPath, ctx.Param("id"), &id)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter id: %s", err))
+	}
+
+	// ------------- Path parameter "user_id" -------------
+	var userId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithLocation("simple", false, "user_id", runtime.ParamLocationPath, ctx.Param("user_id"), &userId)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter user_id: %s", err))
+	}
+
+	// Invoke the callback with all the unmarshalled arguments
+	err = w.Handler.ContestProfileFetchActivity(ctx, id, userId)
 	return err
 }
 
@@ -1102,8 +1102,8 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 	router.GET(baseURL+"/contests/ongoing-registrations", wrapper.ContestFindOngoingRegistrations)
 	router.GET(baseURL+"/contests/:id", wrapper.ContestFindByID)
 	router.GET(baseURL+"/contests/:id/leaderboard", wrapper.ContestFetchLeaderboard)
+	router.GET(baseURL+"/contests/:id/logs", wrapper.ContestListLogs)
 	router.GET(baseURL+"/contests/:id/profile/:user_id/activity", wrapper.ContestProfileFetchActivity)
-	router.GET(baseURL+"/contests/:id/profile/:user_id/logs", wrapper.ContestProfileListLogs)
 	router.GET(baseURL+"/contests/:id/profile/:user_id/scores", wrapper.ContestProfileFetchScores)
 	router.GET(baseURL+"/contests/:id/registration", wrapper.ContestFindRegistration)
 	router.POST(baseURL+"/contests/:id/registration", wrapper.ContestRegistrationUpsert)
@@ -1120,6 +1120,6 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 	router.GET(baseURL+"/users/:userId/contest-registrations/:year", wrapper.ProfileYearlyContestRegistrationsByUserID)
 	router.GET(baseURL+"/users/:userId/profile", wrapper.ProfileFindByUserID)
 	router.GET(baseURL+"/users/:userId/scores/:year", wrapper.ProfileYearlyScoresByUserID)
-	router.GET(baseURL+"/:user_id/logs", wrapper.ProfileListLogs)
+	router.GET(baseURL+"/users/:user_id/logs", wrapper.ProfileListLogs)
 
 }

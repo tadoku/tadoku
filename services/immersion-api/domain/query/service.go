@@ -31,8 +31,8 @@ type Repository interface {
 	GetContestsByUserCountForYear(context.Context, time.Time, uuid.UUID) (int32, error)
 
 	// log
-	ListLogsForContestUser(context.Context, *ListLogsForContestUserRequest) (*ListLogsForContestUserResponse, error)
 	ListLogsForUser(context.Context, *ListLogsForUserRequest) (*ListLogsForUserResponse, error)
+	ListLogsForContest(context.Context, *ListLogsForContestRequest) (*ListLogsForContestResponse, error)
 	FetchLogConfigurationOptions(ctx context.Context) (*FetchLogConfigurationOptionsResponse, error)
 	FindLogByID(context.Context, *FindLogByIDRequest) (*Log, error)
 
@@ -60,8 +60,8 @@ type Service interface {
 	CreateContestPermissionCheck(context.Context) error
 
 	// log
-	ListLogsForContestUser(context.Context, *ListLogsForContestUserRequest) (*ListLogsForContestUserResponse, error)
 	ListLogsForUser(context.Context, *ListLogsForUserRequest) (*ListLogsForUserResponse, error)
+	ListLogsForContest(context.Context, *ListLogsForContestRequest) (*ListLogsForContestResponse, error)
 	FetchLogConfigurationOptions(ctx context.Context) (*FetchLogConfigurationOptionsResponse, error)
 	FindLogByID(context.Context, *FindLogByIDRequest) (*Log, error)
 

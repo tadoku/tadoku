@@ -240,6 +240,50 @@ paths:
                 $ref: "#/components/schemas/ContestSummary"
         "404":
           description: not found
+  /contests/{id}/logs:
+    get:
+      summary: Lists the logs attached to a contest
+      operationId: contestListLogs
+      tags: [contests]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: include_deleted
+          in: query
+          required: false
+          allowEmptyValue: true
+          schema:
+            type: boolean
+        - name: page_size
+          in: query
+          required: false
+          schema:
+            type: integer
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+        - name: user_id
+          in: query
+          required: false
+          allowEmptyValue: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Logs"
+        "404":
+          description: not found
   /contests/{id}/profile/{user_id}/scores:
     get:
       summary: Fetches the scores of a user profile in a contest
@@ -292,49 +336,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ContestProfileActivity"
-        "404":
-          description: not found
-  /contests/{id}/profile/{user_id}/logs:
-    get:
-      summary: Lists the logs of a user profile in a contest
-      operationId: contestProfileListLogs
-      tags: [contests_profile]
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-        - name: user_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-        - name: include_deleted
-          in: query
-          required: false
-          allowEmptyValue: true
-          schema:
-            type: boolean
-        - name: page_size
-          in: query
-          required: false
-          schema:
-            type: integer
-        - name: page
-          in: query
-          required: false
-          schema:
-            type: integer
-      responses:
-        "200":
-          description: successful operation
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Logs"
         "404":
           description: not found
   /contests/ongoing-registrations:

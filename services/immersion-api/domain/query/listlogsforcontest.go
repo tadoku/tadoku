@@ -7,21 +7,21 @@ import (
 	"github.com/tadoku/tadoku/services/common/domain"
 )
 
-type ListLogsForContestUserRequest struct {
-	UserID         uuid.UUID
+type ListLogsForContestRequest struct {
+	UserID         uuid.NullUUID
 	ContestID      uuid.UUID
 	IncludeDeleted bool
 	PageSize       int
 	Page           int
 }
 
-type ListLogsForContestUserResponse struct {
+type ListLogsForContestResponse struct {
 	Logs          []Log
 	TotalSize     int
 	NextPageToken string
 }
 
-func (s *ServiceImpl) ListLogsForContestUser(ctx context.Context, req *ListLogsForContestUserRequest) (*ListLogsForContestUserResponse, error) {
+func (s *ServiceImpl) ListLogsForContest(ctx context.Context, req *ListLogsForContestRequest) (*ListLogsForContestResponse, error) {
 	if req.PageSize == 0 {
 		req.PageSize = 50
 	}
@@ -34,5 +34,5 @@ func (s *ServiceImpl) ListLogsForContestUser(ctx context.Context, req *ListLogsF
 		return nil, ErrUnauthorized
 	}
 
-	return s.r.ListLogsForContestUser(ctx, req)
+	return s.r.ListLogsForContest(ctx, req)
 }

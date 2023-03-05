@@ -302,7 +302,7 @@ func (q *Queries) FindLogByID(ctx context.Context, arg FindLogByIDParams) (FindL
 	return i, err
 }
 
-const listLogsForContestUser = `-- name: ListLogsForContestUser :many
+const listLogsForContest = `-- name: ListLogsForContest :many
 with eligible_logs as (
   select
     logs.id,
@@ -327,7 +327,7 @@ with eligible_logs as (
   inner join log_units on (log_units.id = logs.unit_id)
   where
     ($3::boolean or deleted_at is null)
-    and logs.user_id = $4
+    and (logs.user_id = $4 or $4 is null)
     and contest_logs.contest_id = $5
 )
 select
@@ -339,15 +339,15 @@ limit $2
 offset $1
 `
 
-type ListLogsForContestUserParams struct {
+type ListLogsForContestParams struct {
 	StartFrom      int32
 	PageSize       int32
 	IncludeDeleted bool
-	UserID         uuid.UUID
+	UserID         uuid.NullUUID
 	ContestID      uuid.UUID
 }
 
-type ListLogsForContestUserRow struct {
+type ListLogsForContestRow struct {
 	ID           uuid.UUID
 	UserID       uuid.UUID
 	LanguageCode string
@@ -366,8 +366,8 @@ type ListLogsForContestUserRow struct {
 	TotalSize    int64
 }
 
-func (q *Queries) ListLogsForContestUser(ctx context.Context, arg ListLogsForContestUserParams) ([]ListLogsForContestUserRow, error) {
-	rows, err := q.db.QueryContext(ctx, listLogsForContestUser,
+func (q *Queries) ListLogsForContest(ctx context.Context, arg ListLogsForContestParams) ([]ListLogsForContestRow, error) {
+	rows, err := q.db.QueryContext(ctx, listLogsForContest,
 		arg.StartFrom,
 		arg.PageSize,
 		arg.IncludeDeleted,
@@ -378,9 +378,9 @@ func (q *Queries) ListLogsForContestUser(ctx context.Context, arg ListLogsForCon
 		return nil, err
 	}
 	defer rows.Close()
-	var items []ListLogsForContestUserRow
+	var items []ListLogsForContestRow
 	for rows.Next() {
-		var i ListLogsForContestUserRow
+		var i ListLogsForContestRow
 		if err := rows.Scan(
 			&i.ID,
 			&i.UserID,

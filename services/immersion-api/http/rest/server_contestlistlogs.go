@@ -5,16 +5,17 @@ import (
 	"net/http"
 
 	"github.com/deepmap/oapi-codegen/pkg/types"
+	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 	"github.com/tadoku/tadoku/services/immersion-api/domain/query"
 	"github.com/tadoku/tadoku/services/immersion-api/http/rest/openapi"
 )
 
-// Lists the logs of a user profile in a contest
-// (GET /contests/{id}/profile/{user_id}/logs)
-func (s *Server) ContestProfileListLogs(ctx echo.Context, id types.UUID, userId types.UUID, params openapi.ContestProfileListLogsParams) error {
-	req := &query.ListLogsForContestUserRequest{
-		UserID:         userId,
+// Lists the logs attached to a contest
+// (GET /contests/{id}/logs)
+func (s *Server) ContestListLogs(ctx echo.Context, id types.UUID, params openapi.ContestListLogsParams) error {
+	req := &query.ListLogsForContestRequest{
+		UserID:         uuid.NullUUID{},
 		ContestID:      id,
 		IncludeDeleted: false,
 		PageSize:       0,
@@ -30,8 +31,14 @@ func (s *Server) ContestProfileListLogs(ctx echo.Context, id types.UUID, userId 
 	if params.IncludeDeleted != nil {
 		req.IncludeDeleted = *params.IncludeDeleted
 	}
+	if params.UserId != nil {
+		req.UserID = uuid.NullUUID{
+			UUID:  *params.UserId,
+			Valid: true,
+		}
+	}
 
-	list, err := s.queryService.ListLogsForContestUser(ctx.Request().Context(), req)
+	list, err := s.queryService.ListLogsForContest(ctx.Request().Context(), req)
 	if err != nil {
 		if errors.Is(err, query.ErrUnauthorized) {
 			return ctx.NoContent(http.StatusForbidden)

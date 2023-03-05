@@ -32,7 +32,7 @@ insert into contest_logs (
   sqlc.arg('log_id')
 );
 
--- name: ListLogsForContestUser :many
+-- name: ListLogsForContest :many
 with eligible_logs as (
   select
     logs.id,
@@ -57,7 +57,7 @@ with eligible_logs as (
   inner join log_units on (log_units.id = logs.unit_id)
   where
     (sqlc.arg('include_deleted')::boolean or deleted_at is null)
-    and logs.user_id = sqlc.arg('user_id')
+    and (logs.user_id = sqlc.narg('user_id') or sqlc.narg('user_id') is null)
     and contest_logs.contest_id = sqlc.arg('contest_id')
 )
 select

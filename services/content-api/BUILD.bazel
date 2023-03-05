@@ -16,10 +16,13 @@ go_library(
         "//services/content-api/http/rest",
         "//services/content-api/http/rest/openapi",
         "//services/content-api/storage/postgres",
+        "@com_github_getsentry_sentry_go//:sentry-go",
+        "@com_github_getsentry_sentry_go//echo",
         "@com_github_go_playground_validator_v10//:validator",
         "@com_github_jackc_pgx_v4//stdlib",
         "@com_github_kelseyhightower_envconfig//:envconfig",
         "@com_github_labstack_echo_v4//:echo",
+        "@com_github_labstack_echo_v4//middleware",
     ],
 )
 

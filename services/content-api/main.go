@@ -17,14 +17,19 @@ import (
 	"github.com/tadoku/tadoku/services/content-api/http/rest/openapi"
 	"github.com/tadoku/tadoku/services/content-api/storage/postgres"
 
+	"github.com/getsentry/sentry-go"
+	sentryecho "github.com/getsentry/sentry-go/echo"
 	_ "github.com/jackc/pgx/v4/stdlib"
 	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
 )
 
 type Config struct {
-	PostgresURL string `validate:"required" envconfig:"postgres_url"`
-	Port        int64  `validate:"required"`
-	JWKS        string `validate:"required"`
+	PostgresURL            string  `validate:"required" envconfig:"postgres_url"`
+	Port                   int64   `validate:"required"`
+	JWKS                   string  `validate:"required"`
+	SentryDSN              string  `envconfig:"sentry_dns"`
+	SentryTracesSampleRate float64 `validate:"required_with=SentryDSN" envconfig:"sentry_traces_sample_rate"`
 }
 
 func main() {
@@ -50,6 +55,17 @@ func main() {
 	e.Use(tadokumiddleware.Logger([]string{"/ping"}))
 	e.Use(tadokumiddleware.SessionJWT(cfg.JWKS))
 	e.Use(tadokumiddleware.Session(roleRepository))
+	e.Use(middleware.Recover())
+
+	if cfg.SentryDSN != "" {
+		if err := sentry.Init(sentry.ClientOptions{
+			Dsn:              cfg.SentryDSN,
+			TracesSampleRate: cfg.SentryTracesSampleRate,
+		}); err != nil {
+			panic(fmt.Errorf("sentry initialization failed: %v", err))
+		}
+		e.Use(sentryecho.New(sentryecho.Options{}))
+	}
 
 	clock, err := domain.NewClock("UTC")
 	if err != nil {

@@ -549,12 +549,12 @@ const Logs = z.object({
 
 export type Logs = z.infer<typeof Logs>
 
-export const useContestProfileLogs = (
+export const useContestLogs = (
   opts: {
     pageSize: number
     page: number
     includeDeleted: boolean
-    userId: string
+    userId?: string
     contestId: string
   },
   options?: { enabled?: boolean },
@@ -575,11 +575,12 @@ export const useContestProfileLogs = (
         page_size: opts.pageSize.toString(),
         page: (opts.page - 1).toString(),
         include_deleted: opts.includeDeleted.toString(),
+        ...(opts.userId ? { user_id: opts.userId } : {}),
       }
       const response = await fetch(
-        `${root}/contests/${opts.contestId}/profile/${
-          opts.userId
-        }/logs?${new URLSearchParams(params)}`,
+        `${root}/contests/${opts.contestId}/logs?${new URLSearchParams(
+          params,
+        )}`,
       )
 
       if (response.status !== 200) {

@@ -3,10 +3,7 @@ import { Breadcrumb, ButtonGroup, Loading, Pagination } from 'ui'
 import { HomeIcon, UserIcon } from '@heroicons/react/20/solid'
 import { routes } from '@app/common/routes'
 import { ActivityChart } from '@app/immersion/ActivityChart'
-import {
-  useContestProfileLogs,
-  useContestProfileScores,
-} from '@app/immersion/api'
+import { useContestLogs, useContestProfileScores } from '@app/immersion/api'
 import LogsList from '@app/immersion/LogsList'
 import { useEffect, useState } from 'react'
 import { getQueryStringIntParameter } from '@app/common/router'
@@ -33,7 +30,7 @@ const Page = () => {
   }, [router.asPath])
 
   const profile = useContestProfileScores({ userId, contestId })
-  const logs = useContestProfileLogs(logListParams)
+  const logs = useContestLogs(logListParams)
 
   if (profile.isLoading || profile.isIdle) {
     return <Loading />

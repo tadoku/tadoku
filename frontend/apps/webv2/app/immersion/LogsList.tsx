@@ -21,7 +21,7 @@ function truncate(text: string | undefined, len: number) {
 
 interface Props {
   logs: UseQueryResult<Logs>
-  showUsername: boolean
+  showUsername?: boolean
 }
 
 const LogsList = ({ logs, showUsername = false }: Props) => {

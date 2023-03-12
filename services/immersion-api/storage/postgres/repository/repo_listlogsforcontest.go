@@ -40,22 +40,24 @@ func (r *Repository) ListLogsForContest(ctx context.Context, req *query.ListLogs
 
 	res := make([]query.Log, len(entries))
 	for i, it := range entries {
+		it := it
 		res[i] = query.Log{
-			ID:           it.ID,
-			UserID:       it.UserID,
-			Description:  postgres.NewStringFromNullString(it.Description),
-			LanguageCode: it.LanguageCode,
-			LanguageName: it.LanguageName,
-			ActivityID:   int(it.ActivityID),
-			ActivityName: it.ActivityName,
-			UnitName:     it.UnitName,
-			Tags:         it.Tags,
-			Amount:       it.Amount,
-			Modifier:     it.Modifier,
-			Score:        it.Score,
-			CreatedAt:    it.CreatedAt,
-			UpdatedAt:    it.UpdatedAt,
-			Deleted:      it.DeletedAt.Valid,
+			ID:              it.ID,
+			UserID:          it.UserID,
+			UserDisplayName: &it.UserDisplayName,
+			Description:     postgres.NewStringFromNullString(it.Description),
+			LanguageCode:    it.LanguageCode,
+			LanguageName:    it.LanguageName,
+			ActivityID:      int(it.ActivityID),
+			ActivityName:    it.ActivityName,
+			UnitName:        it.UnitName,
+			Tags:            it.Tags,
+			Amount:          it.Amount,
+			Modifier:        it.Modifier,
+			Score:           it.Score,
+			CreatedAt:       it.CreatedAt,
+			UpdatedAt:       it.UpdatedAt,
+			Deleted:         it.DeletedAt.Valid,
 		}
 	}
 

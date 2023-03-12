@@ -319,19 +319,24 @@ with eligible_logs as (
     logs.score,
     logs.created_at,
     logs.updated_at,
-    logs.deleted_at
+    logs.deleted_at,
+    contest_registrations.user_display_name
   from contest_logs
   inner join logs on (logs.id = contest_logs.log_id)
   inner join languages on (languages.code = logs.language_code)
   inner join log_activities on (log_activities.id = logs.log_activity_id)
   inner join log_units on (log_units.id = logs.unit_id)
+  inner join contest_registrations on (
+    contest_registrations.contest_id = $3
+    and contest_registrations.user_id = logs.user_id
+  )
   where
-    ($3::boolean or deleted_at is null)
-    and (logs.user_id = $4 or $4 is null)
-    and contest_logs.contest_id = $5
+    ($4::boolean or logs.deleted_at is null)
+    and (logs.user_id = $5 or $5 is null)
+    and contest_logs.contest_id = $3
 )
 select
-  id, user_id, language_code, language_name, activity_id, activity_name, unit_name, description, tags, amount, modifier, score, created_at, updated_at, deleted_at,
+  id, user_id, language_code, language_name, activity_id, activity_name, unit_name, description, tags, amount, modifier, score, created_at, updated_at, deleted_at, user_display_name,
   (select count(eligible_logs.id) from eligible_logs) as total_size
 from eligible_logs
 order by created_at desc
@@ -342,37 +347,38 @@ offset $1
 type ListLogsForContestParams struct {
 	StartFrom      int32
 	PageSize       int32
+	ContestID      uuid.UUID
 	IncludeDeleted bool
 	UserID         uuid.NullUUID
-	ContestID      uuid.UUID
 }
 
 type ListLogsForContestRow struct {
-	ID           uuid.UUID
-	UserID       uuid.UUID
-	LanguageCode string
-	LanguageName string
-	ActivityID   int16
-	ActivityName string
-	UnitName     string
-	Description  sql.NullString
-	Tags         []string
-	Amount       float32
-	Modifier     float32
-	Score        float32
-	CreatedAt    time.Time
-	UpdatedAt    time.Time
-	DeletedAt    sql.NullTime
-	TotalSize    int64
+	ID              uuid.UUID
+	UserID          uuid.UUID
+	LanguageCode    string
+	LanguageName    string
+	ActivityID      int16
+	ActivityName    string
+	UnitName        string
+	Description     sql.NullString
+	Tags            []string
+	Amount          float32
+	Modifier        float32
+	Score           float32
+	CreatedAt       time.Time
+	UpdatedAt       time.Time
+	DeletedAt       sql.NullTime
+	UserDisplayName string
+	TotalSize       int64
 }
 
 func (q *Queries) ListLogsForContest(ctx context.Context, arg ListLogsForContestParams) ([]ListLogsForContestRow, error) {
 	rows, err := q.db.QueryContext(ctx, listLogsForContest,
 		arg.StartFrom,
 		arg.PageSize,
+		arg.ContestID,
 		arg.IncludeDeleted,
 		arg.UserID,
-		arg.ContestID,
 	)
 	if err != nil {
 		return nil, err
@@ -397,6 +403,7 @@ func (q *Queries) ListLogsForContest(ctx context.Context, arg ListLogsForContest
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.DeletedAt,
+			&i.UserDisplayName,
 			&i.TotalSize,
 		); err != nil {
 			return nil, err

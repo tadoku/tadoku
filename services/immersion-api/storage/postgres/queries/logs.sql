@@ -49,14 +49,19 @@ with eligible_logs as (
     logs.score,
     logs.created_at,
     logs.updated_at,
-    logs.deleted_at
+    logs.deleted_at,
+    contest_registrations.user_display_name
   from contest_logs
   inner join logs on (logs.id = contest_logs.log_id)
   inner join languages on (languages.code = logs.language_code)
   inner join log_activities on (log_activities.id = logs.log_activity_id)
   inner join log_units on (log_units.id = logs.unit_id)
+  inner join contest_registrations on (
+    contest_registrations.contest_id = sqlc.arg(contest_id)
+    and contest_registrations.user_id = logs.user_id
+  )
   where
-    (sqlc.arg('include_deleted')::boolean or deleted_at is null)
+    (sqlc.arg('include_deleted')::boolean or logs.deleted_at is null)
     and (logs.user_id = sqlc.narg('user_id') or sqlc.narg('user_id') is null)
     and contest_logs.contest_id = sqlc.arg('contest_id')
 )

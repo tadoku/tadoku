@@ -154,7 +154,7 @@ export const ContestLeaderboard = ({ id, contest, routeForPage }: Props) => {
                         {log.user_display_name ?? 'Unknown user'}
                       </span>
                       <span className="font-bold text-lime-700 text-lg">
-                        + {log.score}
+                        + {formatScore(log.score)}
                       </span>
                     </Link>
                   </li>

@@ -21,9 +21,10 @@ function truncate(text: string | undefined, len: number) {
 
 interface Props {
   logs: UseQueryResult<Logs>
+  showUsername: boolean
 }
 
-const LogsList = ({ logs }: Props) => {
+const LogsList = ({ logs, showUsername = false }: Props) => {
   if (logs.isLoading || logs.isIdle) {
     return <Loading className="pb-4" />
   }
@@ -37,6 +38,9 @@ const LogsList = ({ logs }: Props) => {
       <table className="default shadow-transparent">
         <thead>
           <tr>
+            {showUsername ? (
+              <th className="default w-36">Participant</th>
+            ) : null}
             <th className="default w-28 hidden md:table-cell">Activity</th>
             <th className="default w-36">Date</th>
             <th className="default w-32">Language</th>
@@ -49,6 +53,13 @@ const LogsList = ({ logs }: Props) => {
         <tbody>
           {logs.data.logs.map(it => (
             <tr key={it.id} className="link">
+              {showUsername ? (
+                <td className="default link">
+                  <Link className="reset" href={routes.log(it.id)}>
+                    {it.user_display_name ?? 'Unknown user'}
+                  </Link>
+                </td>
+              ) : null}
               <td className="default link hidden md:table-cell">
                 <Link className="reset" href={routes.log(it.id)}>
                   <span

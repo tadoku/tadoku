@@ -1,5 +1,5 @@
 import { useRouter } from 'next/router'
-import { Breadcrumb, ButtonGroup, Flash, Loading, Pagination, Tabbar } from 'ui'
+import { Breadcrumb, ButtonGroup, Loading, Pagination, Tabbar } from 'ui'
 import { HomeIcon } from '@heroicons/react/20/solid'
 import { PencilSquareIcon, PlusIcon } from '@heroicons/react/24/solid'
 import { routes } from '@app/common/routes'
@@ -145,11 +145,8 @@ const Page = () => {
         ]}
       />
 
-      <Flash style="info" className="mt-4">
-        This page does not show the username yet, it will be added soon.
-      </Flash>
       <div className="card p-0 mt-4">
-        <LogsList logs={logs} />
+        <LogsList logs={logs} showUsername={true} />
       </div>
 
       {logsTotalPages > 1 ? (

@@ -4,6 +4,7 @@ import {
   useContestLeaderboard,
   ContestView,
   useContestSummary,
+  useContestLogs,
 } from '@app/immersion/api'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
@@ -61,6 +62,16 @@ export const ContestLeaderboard = ({ id, contest, routeForPage }: Props) => {
 
   const showPagination =
     leaderboard.data && leaderboard.data.total_size > filters.pageSize
+
+  const logs = useContestLogs(
+    {
+      contestId: id,
+      includeDeleted: false,
+      page: 1,
+      pageSize: 10,
+    },
+    { enabled: hasStarted && !hasEnded },
+  )
 
   return (
     <>
@@ -129,19 +140,21 @@ export const ContestLeaderboard = ({ id, contest, routeForPage }: Props) => {
             </div>
           ) : null}
 
-          {hasStarted && !hasEnded && false ? (
+          {logs.data?.logs.length ?? 0 > 0 ? (
             <div className="card narrow text-sm">
               <h3 className="subtitle">Recent updates</h3>
               <ul className="divide-y-2 divide-slate-500/5 -mx-4">
-                {[].map(u => (
-                  <li key={`${u[0]}-${u[1]}`}>
+                {logs.data!.logs.map(log => (
+                  <li key={log.id}>
                     <Link
-                      href="#"
+                      href={routes.log(log.id)}
                       className="reset px-4 py-2 flex justify-between items-center hover:bg-slate-500/5"
                     >
-                      <span className="font-bold text-base">{u[0]}</span>
+                      <span className="font-bold text-base">
+                        {log.activity.name}
+                      </span>
                       <span className="font-bold text-lime-700 text-lg">
-                        +{u[1]}
+                        + {log.score}
                       </span>
                     </Link>
                   </li>

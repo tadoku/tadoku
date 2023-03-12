@@ -151,7 +151,7 @@ export const ContestLeaderboard = ({ id, contest, routeForPage }: Props) => {
                       className="reset px-4 py-2 flex justify-between items-center hover:bg-slate-500/5"
                     >
                       <span className="font-bold text-base">
-                        {log.activity.name}
+                        {log.user_display_name ?? 'Unknown user'}
                       </span>
                       <span className="font-bold text-lime-700 text-lg">
                         + {log.score}

@@ -40,6 +40,13 @@ def go_deps():
         version = "v1.2.0",
     )
     go_repository(
+        name = "com_github_bwmarrin_discordgo",
+        importpath = "github.com/bwmarrin/discordgo",
+        sum = "h1:ib9AIc/dom1E/fSIulrBwnez0CToJE113ZGt4HoliGY=",
+        version = "v0.27.1",
+    )
+
+    go_repository(
         name = "com_github_cloudykit_fastprinter",
         importpath = "github.com/CloudyKit/fastprinter",
         sum = "h1:sR+/8Yb4slttB4vD+b9btVEnWgL3Q00OBTzVT8B9C0c=",
@@ -293,6 +300,13 @@ def go_deps():
         sum = "h1:i40aqfkR1h2SlN9hojwV5ZA91wcXFOvkdNIeFDP5koI=",
         version = "v1.8.0",
     )
+    go_repository(
+        name = "com_github_gorilla_websocket",
+        importpath = "github.com/gorilla/websocket",
+        sum = "h1:+/TMaTYc4QFitKJxsQ7Yye35DkWvkdLcvGKqM+x0Ufc=",
+        version = "v1.4.2",
+    )
+
     go_repository(
         name = "com_github_invopop_yaml",
         importpath = "github.com/invopop/yaml",

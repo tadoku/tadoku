@@ -40,6 +40,8 @@ const Page = () => {
   const hasEnded = contestInterval.isBefore(now)
   const hasStarted = contestInterval.contains(now) || hasEnded
   const isOngoing = hasStarted && !hasEnded
+  const registrationsOpen =
+    DateTime.fromISO(contest.data.registration_end) > now
 
   return (
     <>
@@ -84,7 +86,7 @@ const Page = () => {
                 href: routes.contestJoin(id),
                 label: 'Update registration',
                 style: 'secondary',
-                visible: !hasEnded && registration.data !== undefined,
+                visible: registrationsOpen && registration.data !== undefined,
               },
               {
                 href: routes.logCreate(),

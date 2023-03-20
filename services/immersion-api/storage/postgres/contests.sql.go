@@ -148,9 +148,9 @@ func (q *Queries) CreateContest(ctx context.Context, arg CreateContestParams) (u
 
 const findContestById = `-- name: FindContestById :one
 select
-  id,
+  contests.id,
   owner_user_id,
-  owner_user_display_name,
+  users.display_name as owner_user_display_name,
   "private",
   contest_start,
   contest_end,
@@ -160,12 +160,13 @@ select
   language_code_allow_list,
   activity_type_id_allow_list,
   official,
-  created_at,
-  updated_at,
-  deleted_at
+  contests.created_at,
+  contests.updated_at,
+  contests.deleted_at
 from contests
+inner join users on users.id = contests.owner_user_id
 where
-  id = $1
+  contests.id = $1
   and ($2::boolean or deleted_at is null)
 order by created_at desc
 `
@@ -175,9 +176,27 @@ type FindContestByIdParams struct {
 	IncludeDeleted bool
 }
 
-func (q *Queries) FindContestById(ctx context.Context, arg FindContestByIdParams) (Contest, error) {
+type FindContestByIdRow struct {
+	ID                      uuid.UUID
+	OwnerUserID             uuid.UUID
+	OwnerUserDisplayName    string
+	Private                 bool
+	ContestStart            time.Time
+	ContestEnd              time.Time
+	RegistrationEnd         time.Time
+	Title                   string
+	Description             sql.NullString
+	LanguageCodeAllowList   []string
+	ActivityTypeIDAllowList []int32
+	Official                bool
+	CreatedAt               time.Time
+	UpdatedAt               time.Time
+	DeletedAt               sql.NullTime
+}
+
+func (q *Queries) FindContestById(ctx context.Context, arg FindContestByIdParams) (FindContestByIdRow, error) {
 	row := q.db.QueryRowContext(ctx, findContestById, arg.ID, arg.IncludeDeleted)
-	var i Contest
+	var i FindContestByIdRow
 	err := row.Scan(
 		&i.ID,
 		&i.OwnerUserID,
@@ -200,9 +219,9 @@ func (q *Queries) FindContestById(ctx context.Context, arg FindContestByIdParams
 
 const findLatestOfficialContest = `-- name: FindLatestOfficialContest :one
 select
-  id,
+  contests.id,
   owner_user_id,
-  owner_user_display_name,
+  users.display_name as owner_user_display_name,
   "private",
   contest_start,
   contest_end,
@@ -212,19 +231,38 @@ select
   language_code_allow_list,
   activity_type_id_allow_list,
   official,
-  created_at,
-  updated_at,
-  deleted_at
+  contests.created_at,
+  contests.updated_at,
+  contests.deleted_at
 from contests
+inner join users on users.id = contests.owner_user_id
 where
   official = true
 order by contest_start desc
 limit 1
 `
 
-func (q *Queries) FindLatestOfficialContest(ctx context.Context) (Contest, error) {
+type FindLatestOfficialContestRow struct {
+	ID                      uuid.UUID
+	OwnerUserID             uuid.UUID
+	OwnerUserDisplayName    string
+	Private                 bool
+	ContestStart            time.Time
+	ContestEnd              time.Time
+	RegistrationEnd         time.Time
+	Title                   string
+	Description             sql.NullString
+	LanguageCodeAllowList   []string
+	ActivityTypeIDAllowList []int32
+	Official                bool
+	CreatedAt               time.Time
+	UpdatedAt               time.Time
+	DeletedAt               sql.NullTime
+}
+
+func (q *Queries) FindLatestOfficialContest(ctx context.Context) (FindLatestOfficialContestRow, error) {
 	row := q.db.QueryRowContext(ctx, findLatestOfficialContest)
-	var i Contest
+	var i FindLatestOfficialContestRow
 	err := row.Scan(
 		&i.ID,
 		&i.OwnerUserID,
@@ -267,9 +305,9 @@ func (q *Queries) GetContestsByUserCountForYear(ctx context.Context, arg GetCont
 
 const listContests = `-- name: ListContests :many
 select
-  id,
+  contests.id,
   owner_user_id,
-  owner_user_display_name,
+  users.display_name as owner_user_display_name,
   "private",
   contest_start,
   contest_end,
@@ -279,10 +317,11 @@ select
   language_code_allow_list,
   activity_type_id_allow_list,
   official,
-  created_at,
-  updated_at,
-  deleted_at
+  contests.created_at,
+  contests.updated_at,
+  contests.deleted_at
 from contests
+inner join users on users.id = contests.owner_user_id
 where
   ($1::boolean or deleted_at is null)
   and (owner_user_id = $2 or $2 is null)
@@ -302,7 +341,25 @@ type ListContestsParams struct {
 	PageSize       int32
 }
 
-func (q *Queries) ListContests(ctx context.Context, arg ListContestsParams) ([]Contest, error) {
+type ListContestsRow struct {
+	ID                      uuid.UUID
+	OwnerUserID             uuid.UUID
+	OwnerUserDisplayName    string
+	Private                 bool
+	ContestStart            time.Time
+	ContestEnd              time.Time
+	RegistrationEnd         time.Time
+	Title                   string
+	Description             sql.NullString
+	LanguageCodeAllowList   []string
+	ActivityTypeIDAllowList []int32
+	Official                bool
+	CreatedAt               time.Time
+	UpdatedAt               time.Time
+	DeletedAt               sql.NullTime
+}
+
+func (q *Queries) ListContests(ctx context.Context, arg ListContestsParams) ([]ListContestsRow, error) {
 	rows, err := q.db.QueryContext(ctx, listContests,
 		arg.IncludeDeleted,
 		arg.UserID,
@@ -315,9 +372,9 @@ func (q *Queries) ListContests(ctx context.Context, arg ListContestsParams) ([]C
 		return nil, err
 	}
 	defer rows.Close()
-	var items []Contest
+	var items []ListContestsRow
 	for rows.Next() {
-		var i Contest
+		var i ListContestsRow
 		if err := rows.Scan(
 			&i.ID,
 			&i.OwnerUserID,

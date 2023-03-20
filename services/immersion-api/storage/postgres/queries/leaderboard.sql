@@ -20,11 +20,12 @@ with leaderboard as (
   from leaderboard
 ), registrations as (
   select
-    id,
+    contest_registrations.id,
     user_id,
-    user_display_name,
-    created_at
+    users.display_name as user_display_name,
+    contest_registrations.created_at
   from contest_registrations
+  inner join users on users.id = contest_registrations.user_id
   where
     contest_id = sqlc.arg('contest_id')
     and deleted_at is null
@@ -71,32 +72,17 @@ with leaderboard as (
     score,
     rank() over(order by score desc) as "rank"
   from leaderboard
-), registrations as (
-  select
-    contest_registrations.user_id,
-    max(contest_registrations.user_display_name)::varchar as user_display_name
-  from contest_registrations
-  inner join contests
-    on contests.id = contest_registrations.contest_id
-  where
-    extract(year from contests.contest_start) = sqlc.arg('year')::integer
-    and contest_registrations.deleted_at is null
-    and (sqlc.narg('language_code') = any(language_codes) or sqlc.narg('language_code') is null)
-  group by contest_registrations.user_id
 ), enriched_leaderboard as (
   select
     rank() over(order by coalesce(ranked_leaderboard.score, 0) desc) as "rank",
-    registrations.user_id::uuid as user_id,
-    registrations.user_display_name::varchar as user_display_name,
+    ranked_leaderboard.user_id,
+    users.display_name::varchar as user_display_name,
     coalesce(ranked_leaderboard.score, 0)::real as score
   from ranked_leaderboard
-  inner join registrations using(user_id)
-  where
-    registrations.user_id is not null
-    and registrations.user_display_name is not null
+  inner join users on users.id = ranked_leaderboard.user_id
   order by
     score desc,
-    registrations.user_display_name asc
+    user_display_name asc
 )
 select
   *,
@@ -108,7 +94,6 @@ select
 from enriched_leaderboard
 limit sqlc.arg('page_size')
 offset sqlc.arg('start_from');
-
 
 -- name: GlobalLeaderboard :many
 with leaderboard as (
@@ -129,29 +114,17 @@ with leaderboard as (
     rank() over(order by score desc) as "rank"
   from leaderboard
   where score > 0
-), registrations as (
-  select
-    contest_registrations.user_id,
-    max(contest_registrations.user_display_name)::varchar as user_display_name
-  from contest_registrations
-  where
-    contest_registrations.deleted_at is null
-    and (sqlc.narg('language_code') = any(language_codes) or sqlc.narg('language_code') is null)
-  group by contest_registrations.user_id
 ), enriched_leaderboard as (
   select
     rank() over(order by coalesce(ranked_leaderboard.score, 0) desc) as "rank",
-    registrations.user_id::uuid as user_id,
-    registrations.user_display_name::varchar as user_display_name,
+    ranked_leaderboard.user_id,
+    users.display_name::varchar as user_display_name,
     coalesce(ranked_leaderboard.score, 0)::real as score
   from ranked_leaderboard
-  inner join registrations using(user_id)
-  where
-    registrations.user_id is not null
-    and registrations.user_display_name is not null
+  inner join users on users.id = ranked_leaderboard.user_id
   order by
     score desc,
-    registrations.user_display_name asc
+    user_display_name asc
 )
 select
   *,

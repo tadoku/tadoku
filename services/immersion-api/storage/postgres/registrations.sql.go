@@ -19,8 +19,8 @@ select
   contest_registrations.id,
   contest_registrations.contest_id,
   contest_registrations.user_id,
-  contest_registrations.user_display_name,
   contest_registrations.language_codes,
+  users.display_name as user_display_name,
   contests.activity_type_id_allow_list,
   contests.registration_end,
   contests.contest_start,
@@ -32,6 +32,8 @@ select
 from contest_registrations
 inner join contests
   on contests.id = contest_registrations.contest_id
+inner join users
+  on users.id = contest_registrations.user_id
 where
   user_id = $1
   and contest_id = $2
@@ -47,8 +49,8 @@ type FindContestRegistrationForUserRow struct {
 	ID                      uuid.UUID
 	ContestID               uuid.UUID
 	UserID                  uuid.UUID
-	UserDisplayName         string
 	LanguageCodes           []string
+	UserDisplayName         string
 	ActivityTypeIDAllowList []int32
 	RegistrationEnd         time.Time
 	ContestStart            time.Time
@@ -66,8 +68,8 @@ func (q *Queries) FindContestRegistrationForUser(ctx context.Context, arg FindCo
 		&i.ID,
 		&i.ContestID,
 		&i.UserID,
-		&i.UserDisplayName,
 		pq.Array(&i.LanguageCodes),
+		&i.UserDisplayName,
 		pq.Array(&i.ActivityTypeIDAllowList),
 		&i.RegistrationEnd,
 		&i.ContestStart,
@@ -85,8 +87,8 @@ select
   contest_registrations.id,
   contest_registrations.contest_id,
   contest_registrations.user_id,
-  contest_registrations.user_display_name,
   contest_registrations.language_codes,
+  users.display_name as user_display_name,
   contests.activity_type_id_allow_list,
   contests.registration_end,
   contests.contest_start,
@@ -98,6 +100,8 @@ select
 from contest_registrations
 inner join contests
   on contests.id = contest_registrations.contest_id
+inner join users
+  on users.id = contest_registrations.user_id
 where
   user_id = $1
   and contests.contest_start <= $2::timestamp
@@ -114,8 +118,8 @@ type FindOngoingContestRegistrationForUserRow struct {
 	ID                      uuid.UUID
 	ContestID               uuid.UUID
 	UserID                  uuid.UUID
-	UserDisplayName         string
 	LanguageCodes           []string
+	UserDisplayName         string
 	ActivityTypeIDAllowList []int32
 	RegistrationEnd         time.Time
 	ContestStart            time.Time
@@ -139,8 +143,8 @@ func (q *Queries) FindOngoingContestRegistrationForUser(ctx context.Context, arg
 			&i.ID,
 			&i.ContestID,
 			&i.UserID,
-			&i.UserDisplayName,
 			pq.Array(&i.LanguageCodes),
+			&i.UserDisplayName,
 			pq.Array(&i.ActivityTypeIDAllowList),
 			&i.RegistrationEnd,
 			&i.ContestStart,
@@ -168,8 +172,8 @@ select
   contest_registrations.id,
   contest_registrations.contest_id,
   contest_registrations.user_id,
-  contest_registrations.user_display_name,
   contest_registrations.language_codes,
+  users.display_name as user_display_name,
   contests.activity_type_id_allow_list,
   contests.registration_end,
   contests.contest_start,
@@ -181,6 +185,8 @@ select
 from contest_registrations
 inner join contests
   on contests.id = contest_registrations.contest_id
+inner join users
+  on users.id = contest_registrations.user_id
 where
   user_id = $1
   and (contests.private != true or $2::boolean)
@@ -198,8 +204,8 @@ type FindYearlyContestRegistrationForUserRow struct {
 	ID                      uuid.UUID
 	ContestID               uuid.UUID
 	UserID                  uuid.UUID
-	UserDisplayName         string
 	LanguageCodes           []string
+	UserDisplayName         string
 	ActivityTypeIDAllowList []int32
 	RegistrationEnd         time.Time
 	ContestStart            time.Time
@@ -223,8 +229,8 @@ func (q *Queries) FindYearlyContestRegistrationForUser(ctx context.Context, arg 
 			&i.ID,
 			&i.ContestID,
 			&i.UserID,
-			&i.UserDisplayName,
 			pq.Array(&i.LanguageCodes),
+			&i.UserDisplayName,
 			pq.Array(&i.ActivityTypeIDAllowList),
 			&i.RegistrationEnd,
 			&i.ContestStart,

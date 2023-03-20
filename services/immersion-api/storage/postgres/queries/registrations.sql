@@ -4,8 +4,8 @@ select
   contest_registrations.id,
   contest_registrations.contest_id,
   contest_registrations.user_id,
-  contest_registrations.user_display_name,
   contest_registrations.language_codes,
+  users.display_name as user_display_name,
   contests.activity_type_id_allow_list,
   contests.registration_end,
   contests.contest_start,
@@ -17,6 +17,8 @@ select
 from contest_registrations
 inner join contests
   on contests.id = contest_registrations.contest_id
+inner join users
+  on users.id = contest_registrations.user_id
 where
   user_id = sqlc.arg('user_id')
   and contest_id = sqlc.arg('contest_id')
@@ -46,8 +48,8 @@ select
   contest_registrations.id,
   contest_registrations.contest_id,
   contest_registrations.user_id,
-  contest_registrations.user_display_name,
   contest_registrations.language_codes,
+  users.display_name as user_display_name,
   contests.activity_type_id_allow_list,
   contests.registration_end,
   contests.contest_start,
@@ -59,6 +61,8 @@ select
 from contest_registrations
 inner join contests
   on contests.id = contest_registrations.contest_id
+inner join users
+  on users.id = contest_registrations.user_id
 where
   user_id = sqlc.arg('user_id')
   and contests.contest_start <= sqlc.arg('now')::timestamp
@@ -71,8 +75,8 @@ select
   contest_registrations.id,
   contest_registrations.contest_id,
   contest_registrations.user_id,
-  contest_registrations.user_display_name,
   contest_registrations.language_codes,
+  users.display_name as user_display_name,
   contests.activity_type_id_allow_list,
   contests.registration_end,
   contests.contest_start,
@@ -84,6 +88,8 @@ select
 from contest_registrations
 inner join contests
   on contests.id = contest_registrations.contest_id
+inner join users
+  on users.id = contest_registrations.user_id
 where
   user_id = sqlc.arg('user_id')
   and (contests.private != true or sqlc.arg('include_private')::boolean)

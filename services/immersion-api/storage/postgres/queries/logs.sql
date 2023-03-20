@@ -111,7 +111,7 @@ offset sqlc.arg('start_from');
 select
   logs.id,
   logs.user_id,
-  (select user_display_name from contest_registrations where user_id = logs.user_id order by created_at desc limit 1) as user_display_name,
+  users.display_name as user_display_name,
   logs.language_code,
   languages.name as language_name,
   logs.log_activity_id as activity_id,
@@ -129,6 +129,7 @@ from logs
 inner join languages on (languages.code = logs.language_code)
 inner join log_activities on (log_activities.id = logs.log_activity_id)
 inner join log_units on (log_units.id = logs.unit_id)
+inner join users on (users.id = logs.user_id)
 where
   (sqlc.arg('include_deleted')::boolean or deleted_at is null)
   and logs.id = sqlc.arg('id');

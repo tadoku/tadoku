@@ -11,11 +11,10 @@ import (
 )
 
 type UpsertContestRegistrationRequest struct {
-	ID              uuid.UUID
-	ContestID       uuid.UUID
-	UserID          uuid.UUID
-	UserDisplayName string
-	LanguageCodes   []string
+	ID            uuid.UUID
+	ContestID     uuid.UUID
+	UserID        uuid.UUID
+	LanguageCodes []string
 }
 
 func (s *ServiceImpl) UpsertContestRegistration(ctx context.Context, req *UpsertContestRegistrationRequest) error {
@@ -37,7 +36,6 @@ func (s *ServiceImpl) UpsertContestRegistration(ctx context.Context, req *Upsert
 		return ErrUnauthorized
 	}
 	req.UserID = uuid.MustParse(session.Subject)
-	req.UserDisplayName = session.DisplayName
 	req.ID = uuid.New()
 
 	contest, err := s.r.FindContestByID(ctx, &query.FindContestByIDRequest{

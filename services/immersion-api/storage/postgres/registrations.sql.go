@@ -258,27 +258,24 @@ insert into contest_registrations (
   id,
   contest_id,
   user_id,
-  user_display_name,
   language_codes
 ) values (
   $1,
   $2,
   $3,
-  $4,
-  $5
+  $4
 ) on conflict (id) do
 update set
-  language_codes = $5,
+  language_codes = $4,
   updated_at = now()
 returning id
 `
 
 type UpsertContestRegistrationParams struct {
-	ID              uuid.UUID
-	ContestID       uuid.UUID
-	UserID          uuid.UUID
-	UserDisplayName string
-	LanguageCodes   []string
+	ID            uuid.UUID
+	ContestID     uuid.UUID
+	UserID        uuid.UUID
+	LanguageCodes []string
 }
 
 func (q *Queries) UpsertContestRegistration(ctx context.Context, arg UpsertContestRegistrationParams) (uuid.UUID, error) {
@@ -286,7 +283,6 @@ func (q *Queries) UpsertContestRegistration(ctx context.Context, arg UpsertConte
 		arg.ID,
 		arg.ContestID,
 		arg.UserID,
-		arg.UserDisplayName,
 		pq.Array(arg.LanguageCodes),
 	)
 	var id uuid.UUID

@@ -35,14 +35,13 @@ type ContestLog struct {
 }
 
 type ContestRegistration struct {
-	ID              uuid.UUID
-	ContestID       uuid.UUID
-	UserID          uuid.UUID
-	UserDisplayName string
-	LanguageCodes   []string
-	CreatedAt       time.Time
-	UpdatedAt       time.Time
-	DeletedAt       sql.NullTime
+	ID            uuid.UUID
+	ContestID     uuid.UUID
+	UserID        uuid.UUID
+	LanguageCodes []string
+	CreatedAt     time.Time
+	UpdatedAt     time.Time
+	DeletedAt     sql.NullTime
 }
 
 type Language struct {

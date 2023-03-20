@@ -321,20 +321,17 @@ with eligible_logs as (
     logs.created_at,
     logs.updated_at,
     logs.deleted_at,
-    contest_registrations.user_display_name
+    users.display_name as user_display_name
   from contest_logs
   inner join logs on (logs.id = contest_logs.log_id)
   inner join languages on (languages.code = logs.language_code)
   inner join log_activities on (log_activities.id = logs.log_activity_id)
   inner join log_units on (log_units.id = logs.unit_id)
-  inner join contest_registrations on (
-    contest_registrations.contest_id = $3
-    and contest_registrations.user_id = logs.user_id
-  )
+  inner join users on (users.id = logs.user_id)
   where
-    ($4::boolean or logs.deleted_at is null)
-    and (logs.user_id = $5 or $5 is null)
-    and contest_logs.contest_id = $3
+    ($3::boolean or logs.deleted_at is null)
+    and (logs.user_id = $4 or $4 is null)
+    and contest_logs.contest_id = $5
 )
 select
   id, user_id, language_code, language_name, activity_id, activity_name, unit_name, description, tags, amount, modifier, score, created_at, updated_at, deleted_at, user_display_name,
@@ -348,9 +345,9 @@ offset $1
 type ListLogsForContestParams struct {
 	StartFrom      int32
 	PageSize       int32
-	ContestID      uuid.UUID
 	IncludeDeleted bool
 	UserID         uuid.NullUUID
+	ContestID      uuid.UUID
 }
 
 type ListLogsForContestRow struct {
@@ -377,9 +374,9 @@ func (q *Queries) ListLogsForContest(ctx context.Context, arg ListLogsForContest
 	rows, err := q.db.QueryContext(ctx, listLogsForContest,
 		arg.StartFrom,
 		arg.PageSize,
-		arg.ContestID,
 		arg.IncludeDeleted,
 		arg.UserID,
+		arg.ContestID,
 	)
 	if err != nil {
 		return nil, err

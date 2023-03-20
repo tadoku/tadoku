@@ -8,6 +8,7 @@ go_library(
         "deletelog.go",
         "service.go",
         "upsertcontestregistration.go",
+        "upsertuser.go",
     ],
     importpath = "github.com/tadoku/tadoku/services/immersion-api/domain/command",
     visibility = ["//visibility:public"],

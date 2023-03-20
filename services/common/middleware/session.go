@@ -74,6 +74,7 @@ func Session(repository RoleRepository) echo.MiddlewareFunc {
 				sessionToken.DisplayName = claims.Session.Identity.Traits.DisplayName
 				sessionToken.Subject = claims.Subject
 				sessionToken.Role = domain.Role(repository.GetRole(sessionToken.Email))
+				sessionToken.CreatedAt = claims.IssuedAt.Time
 			}
 
 			ctx.SetRequest(ctx.Request().WithContext(context.WithValue(ctx.Request().Context(), domain.CtxSessionKey, sessionToken)))

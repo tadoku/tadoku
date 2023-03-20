@@ -88,3 +88,10 @@ type LogUnit struct {
 	Modifier      float32
 	LanguageCode  sql.NullString
 }
+
+type User struct {
+	ID          uuid.UUID
+	DisplayName string
+	CreatedAt   time.Time
+	UpdatedAt   time.Time
+}

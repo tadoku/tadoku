@@ -27,6 +27,8 @@ type Repository interface {
 	CreateLog(context.Context, *CreateLogRequest) (*uuid.UUID, error)
 	DeleteLog(context.Context, *DeleteLogRequest) error
 
+	UpsertUser(context.Context, *UpsertUserRequest) error
+
 	query.Repository
 }
 
@@ -38,6 +40,8 @@ type Service interface {
 	// log
 	CreateLog(context.Context, *CreateLogRequest) (*query.Log, error)
 	DeleteLog(context.Context, *DeleteLogRequest) error
+
+	UpdateUserMetadataFromSession(context.Context) error
 }
 
 type ServiceImpl struct {

@@ -2,6 +2,7 @@ package domain
 
 import (
 	"context"
+	"time"
 )
 
 type SessionToken struct {
@@ -9,6 +10,7 @@ type SessionToken struct {
 	DisplayName string
 	Email       string
 	Role        Role
+	CreatedAt   time.Time
 }
 
 func ParseSession(ctx context.Context) *SessionToken {

@@ -26,6 +26,11 @@ func (s *ServiceImpl) UpsertContestRegistration(ctx context.Context, req *Upsert
 		return ErrUnauthorized
 	}
 
+	if err := s.UpdateUserMetadataFromSession(ctx); err != nil {
+		fmt.Println(err)
+		return fmt.Errorf("could not update user: %w", err)
+	}
+
 	// Enrich request with session
 	session := domain.ParseSession(ctx)
 	if session == nil {

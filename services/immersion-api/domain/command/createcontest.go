@@ -52,6 +52,11 @@ func (s *ServiceImpl) CreateContest(ctx context.Context, req *CreateContestReque
 		return nil, ErrForbidden
 	}
 
+	if err := s.UpdateUserMetadataFromSession(ctx); err != nil {
+		fmt.Println(err)
+		return nil, fmt.Errorf("could not update user: %w", err)
+	}
+
 	// Enrich request with session
 	session := domain.ParseSession(ctx)
 	if session == nil {

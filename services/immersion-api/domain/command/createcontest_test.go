@@ -28,6 +28,10 @@ func (r *CreateContestRepositoryMock) GetContestsByUserCountForYear(context.Cont
 	return r.userContestCount, nil
 }
 
+func (r *CreateContestRepositoryMock) UpsertUser(ctx context.Context, req *command.UpsertUserRequest) error {
+	return nil
+}
+
 func createContext(role domain.Role) context.Context {
 	token := &domain.SessionToken{
 		Role:        role,

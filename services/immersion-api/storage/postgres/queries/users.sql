@@ -10,4 +10,4 @@ update set
   display_name = sqlc.arg('display_name'),
   updated_at = now()
 where
-    updated_at < sqlc.arg('session_created_at');
+    users.updated_at < sqlc.arg('session_created_at');

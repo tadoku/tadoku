@@ -29,6 +29,11 @@ func (s *ServiceImpl) CreateLog(ctx context.Context, req *CreateLogRequest) (*qu
 		return nil, ErrUnauthorized
 	}
 
+	if err := s.UpdateUserMetadataFromSession(ctx); err != nil {
+		fmt.Println(err)
+		return nil, fmt.Errorf("could not update user: %w", err)
+	}
+
 	// Enrich request with session
 	session := domain.ParseSession(ctx)
 	if session == nil {

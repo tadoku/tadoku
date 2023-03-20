@@ -24,7 +24,7 @@ update set
   display_name = $2,
   updated_at = now()
 where
-    updated_at < $3
+    users.updated_at < $3
 `
 
 type UpsertUserParams struct {

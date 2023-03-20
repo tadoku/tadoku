@@ -2,7 +2,6 @@ package command
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"github.com/google/uuid"
@@ -28,8 +27,5 @@ func (s *ServiceImpl) UpdateUserMetadataFromSession(ctx context.Context) error {
 		SessionCreatedAt: session.CreatedAt,
 	}
 
-	//TODO: process request
-	fmt.Println(req)
-
-	return nil
+	return s.r.UpsertUser(ctx, req)
 }

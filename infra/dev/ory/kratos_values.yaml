@@ -89,6 +89,7 @@ kratos:
 
         recovery:
           enabled: true
+          use: link
           ui_url: http://account.langlog.be/account-recovery
 
         registration:

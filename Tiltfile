@@ -14,3 +14,8 @@ include('./services/content-api/Tiltfile')
 
 # Frontend
 include('./frontend/Tiltfile')
+
+# Private
+private_infra_path = '../tadoku-private/Tiltfile'
+if os.path.exists(private_infra_path):
+    include(private_infra_path)

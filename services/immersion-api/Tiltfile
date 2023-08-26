@@ -21,7 +21,7 @@ custom_build(
       image_target='//services/immersion-api:image',
       bazel_image='bazel/services/immersion-api:image'
     ),
-  deps=['./', './../common/', './../../dev/permissions/'],
+  deps=['./', './../common/', './../../infra/dev/permissions/'],
 )
 
 k8s_resource('immersion-api', labels=["backend"])

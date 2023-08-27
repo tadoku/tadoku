@@ -66,9 +66,6 @@ export default function Footer() {
               <li>
                 <Link href={routes.blogList()}>Blog</Link>
               </li>
-              <li>
-                <Link href={routes.forum()}>Forum</Link>
-              </li>
             </ul>
           </div>
           <div className="flex flex-col items-start">

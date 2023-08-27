@@ -21,7 +21,6 @@ export default function Toasts() {
               { type: 'link', label: 'Blog', href: '#', current: false },
               { type: 'link', label: 'Ranking', href: '#', current: false },
               { type: 'link', label: 'Manual', href: '#', current: false },
-              { type: 'link', label: 'Forum', href: '#', current: false },
               {
                 type: 'dropdown',
                 label: 'John Doe',
@@ -58,7 +57,6 @@ const NavigationExample = () => (
       { type: 'link', label: 'Blog', href: '#', current: false },
       { type: 'link', label: 'Ranking', href: '#', current: false },
       { type: 'link', label: 'Manual', href: '#', current: false },
-      { type: 'link', label: 'Forum', href: '#', current: false },
       {
         type: 'dropdown',
         label: 'John Doe',

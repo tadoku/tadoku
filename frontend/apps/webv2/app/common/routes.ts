@@ -43,8 +43,6 @@ export const routes = {
   userProfileUpdates: (id: string, page?: Page) =>
     `/profile/${id}/updates/${page ?? '1'}`,
 
-  forum: () => `https://forum.tadoku.app/`,
-
   authSettings: (return_url?: string) =>
     `${kratos}/?return_to=${return_url ?? ''}`,
   authLogin: (return_url?: string) =>

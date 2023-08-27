@@ -94,12 +94,6 @@ export default function Navigation() {
           href: routes.blogList(),
           current: false,
         },
-        {
-          type: 'link',
-          label: 'Forum',
-          href: routes.forum(),
-          current: false,
-        },
         ...userNavigation,
       ]}
       isLoading={!!isFetching}

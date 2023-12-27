@@ -216,8 +216,8 @@ const Page: NextPage<Props> = () => (
           <tbody>
             <tr>
               <td className="font-bold">All languages</td>
-              <td>0.5</td>
-              <td>0.7</td>
+              <td>0.4</td>
+              <td>0.6</td>
             </tr>
           </tbody>
         </table>

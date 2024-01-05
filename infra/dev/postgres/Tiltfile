@@ -1,5 +1,6 @@
 load('ext://helm_resource', 'helm_resource', 'helm_repo')
 
+# https://artifacthub.io/packages/helm/bitnami/postgresql/
 helm_repo('bitnami', 'https://charts.bitnami.com/bitnami', resource_name='helm-repo-bitnami', labels=["infra"])
 
 # kratos
@@ -8,6 +9,7 @@ helm_resource('postgres-kratos',
               'bitnami/postgresql',
               flags=[
                 '-f', './kratos/postgres_values.yaml',
+                '--version=12.12.10',
               ],
               deps=['./kratos/postgres_values.yaml'],
               resource_deps=['helm-repo-bitnami'])
@@ -19,6 +21,7 @@ helm_resource('postgres-immersion',
               'bitnami/postgresql',
               flags=[
                 '-f', './immersion/postgres_values.yaml',
+                '--version=12.12.10',
               ],
               deps=['./immersion/postgres_values.yaml'],
               resource_deps=['helm-repo-bitnami'])
@@ -30,6 +33,7 @@ helm_resource('postgres-content',
               'bitnami/postgresql',
               flags=[
                 '-f', './content/postgres_values.yaml',
+                '--version=12.12.10',
               ],
               deps=['./content/postgres_values.yaml'],
               resource_deps=['helm-repo-bitnami'])

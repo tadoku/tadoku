@@ -54,7 +54,7 @@ function LogList() {
           score: 40,
           unit: 'pages',
           description: 'Sword Art Online v15 ch7',
-          tags: ['light novel', 'fiction'],
+          tags: ['lightnovel', 'fiction'],
         },
       ],
     },
@@ -179,8 +179,8 @@ function LogList() {
                       {log.amount} {log.unit}
                     </span>
                     {(log.tags ?? []).length > 0 ? (
-                      <span className="opacity-50">
-                        {log.tags!!.join(', ')}
+                      <span className="opacity-50 items-center flex">
+                        {log.tags!!.map(it => `#${it}`).join(' ')}
                       </span>
                     ) : null}
                   </td>

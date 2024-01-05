@@ -1,5 +1,5 @@
 import { Title } from '@components/example'
-import { PencilSquareIcon, PlusIcon } from '@heroicons/react/24/solid'
+import { PlusIcon } from '@heroicons/react/24/solid'
 import { useState } from 'react'
 
 export default function Page() {
@@ -11,7 +11,7 @@ export default function Page() {
 
       <Title>Logs overview</Title>
       <LogList />
-      <LogButton onClick={() => setFormActive(true)} />
+      {!formActive ? <LogButton onClick={() => setFormActive(true)} /> : null}
     </>
   )
 }

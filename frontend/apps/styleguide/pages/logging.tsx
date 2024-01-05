@@ -1,13 +1,31 @@
-import { CodeBlock, Preview, Title } from '@components/example'
+import { Title } from '@components/example'
+import { PencilSquareIcon, PlusIcon } from '@heroicons/react/24/solid'
+import { useState } from 'react'
 
 export default function Page() {
+  const [formActive, setFormActive] = useState(false)
+
   return (
     <>
       <h1 className="title mb-8">Logging flow</h1>
 
       <Title>Logs overview</Title>
       <LogList />
+      <LogButton onClick={() => setFormActive(true)} />
     </>
+  )
+}
+
+function LogButton({ onClick }: { onClick: () => void }) {
+  return (
+    <div className="absolute right-10 bottom-10 group drop-shadow-lg">
+      <button className={`reset btn secondary relative z-10`} onClick={onClick}>
+        <PlusIcon className="w-4 h-4" />
+      </button>
+      <span className="absolute overflow-hidden right-[100%] z-0 top-0 bottom-0 px-4 whitespace-nowrap bg-secondary text-white font-bold flex items-center transition-all w-0 opacity-0 group-hover:w-auto group-hover:opacity-100 group-hover:translate-x-0 translate-x-12">
+        Log update
+      </span>
+    </div>
   )
 }
 

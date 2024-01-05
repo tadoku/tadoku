@@ -18,7 +18,7 @@ export default function Page() {
 
 function LogButton({ onClick }: { onClick: () => void }) {
   return (
-    <div className="absolute right-10 bottom-10 group drop-shadow-lg">
+    <div className="absolute right-8 bottom-8 group drop-shadow-lg">
       <button className={`reset btn secondary relative z-10`} onClick={onClick}>
         <PlusIcon className="w-4 h-4" />
       </button>

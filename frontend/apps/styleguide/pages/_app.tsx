@@ -41,6 +41,10 @@ const navigation: NavigationBlock[] = [
       { title: 'Pagination', href: '/pagination' },
     ],
   },
+  {
+    title: 'Interactions',
+    links: [{ title: 'Logging flow', href: '/logging' }],
+  },
 ]
 
 export default function App({ Component, pageProps }: AppProps) {

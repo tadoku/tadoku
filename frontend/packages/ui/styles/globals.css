@@ -87,7 +87,7 @@
     @apply border-b-2 border-slate-500/20;
   }
 
-  table tbody tr:nth-child(2n+1) {
+  table.zebra tbody tr:nth-child(2n+1) {
     @apply bg-slate-500/5
   }
 

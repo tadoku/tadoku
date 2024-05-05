@@ -143,7 +143,12 @@ function ActionBar({ log }: { log: Log }) {
   const now = useCurrentDateTime()
   const [session] = useSession()
   const canBeDeleted = !(log.registrations ?? [])
-    .map(it => now.diff(DateTime.fromISO(it.contest_end)).as('seconds') < 0)
+    .map(it => {
+      const end = DateTime.fromISO(it.contest_end).endOf('day')
+      const hasEnded = now.diff(end).as('seconds') < 0
+
+      return hasEnded
+    })
     .some(it => it === false)
   const isOwner = log.user_id === session?.identity.id
 

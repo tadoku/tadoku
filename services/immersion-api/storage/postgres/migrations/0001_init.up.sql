@@ -133,6 +133,7 @@ values
 	('fra', 'French'),
 	('deu', 'German'),
 	('ell', 'Greek'),
+	('fas', 'Persian'),
   ('hau', 'Hausa'),
 	('heb', 'Hebrew'),
 	('hin', 'Hindi'),

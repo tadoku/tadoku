@@ -1,5 +1,7 @@
 # -*- mode: Python -*-
 
+allow_k8s_contexts('orbstack')
+
 # Infra
 include('./infra/dev/gateway/Tiltfile')
 include('./infra/dev/ory/Tiltfile')

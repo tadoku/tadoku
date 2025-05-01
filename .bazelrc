@@ -1,0 +1,2 @@
+# temporary until migrated to bzlmod
+common --enable_workspace=true

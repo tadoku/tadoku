@@ -1,9 +1,7 @@
-###############################################################################
-# Bazel now uses Bzlmod by default to manage external dependencies.
-# Please consider migrating your external dependencies from WORKSPACE to MODULE.bazel.
-#
-# For more details, please check https://github.com/bazelbuild/bazel/issues/18958
-###############################################################################
+module(
+    name = "tadoku",
+    version = "1.0.0",
+)
 
 # Golang
 
@@ -20,3 +18,18 @@ go_deps.from_file(go_mod = "//:go.mod")
 
 ## All *direct* Go dependencies of the module have to be listed explicitly.
 use_repo(go_deps)
+
+# Containers
+
+bazel_dep(name = "rules_oci", version = "2.2.6")
+
+oci = use_extension("@rules_oci//oci:extensions.bzl", "oci")
+
+## Migrator image
+oci.pull(
+    name = "migrate_docker",
+    registry = "index.docker.io",
+    repository = "migrate/migrate",
+    tag = "4",
+)
+use_repo(oci, "migrate_docker")

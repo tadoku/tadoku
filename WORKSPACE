@@ -34,29 +34,6 @@ rules_proto_dependencies()
 
 rules_proto_toolchains()
 
-## Setup Docker toolchain
-load(
-    "@io_bazel_rules_docker//repositories:repositories.bzl",
-    container_repositories = "repositories",
-)
-load(
-    "@io_bazel_rules_docker//toolchains/docker:toolchain.bzl",
-    docker_toolchain_configure = "toolchain_configure",
-)
-
-container_repositories()
-
-load(
-    "@io_bazel_rules_docker//go:image.bzl",
-    _go_image_repos = "repositories",
-)
-
-_go_image_repos()
-
-docker_toolchain_configure(
-    name = "docker_config",
-)
-
 ## Setup file packaging toolchain
 load("@rules_pkg//:deps.bzl", "rules_pkg_dependencies")
 
@@ -89,13 +66,3 @@ git_repository(
 load("@rules_openapi//openapi:toolchain.bzl", rules_openapi_toolchains = "toolchains")
 
 rules_openapi_toolchains(version = "5.2.1")
-
-# Pull required docker images
-load("@io_bazel_rules_docker//container:pull.bzl", "container_pull")
-
-container_pull(
-    name = "migrate_docker",
-    registry = "index.docker.io",
-    repository = "migrate/migrate",
-    tag = "4",
-)

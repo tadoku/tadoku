@@ -5,8 +5,8 @@ module(
 
 # Golang
 
-bazel_dep(name = "rules_go", version = "0.39.1", repo_name = "io_bazel_rules_go")
-bazel_dep(name = "gazelle", version = "0.31.0", repo_name = "bazel_gazelle")
+bazel_dep(name = "rules_go", version = "0.54.0", repo_name = "io_bazel_rules_go")
+bazel_dep(name = "gazelle", version = "0.36.0", repo_name = "bazel_gazelle")
 
 ## Go version
 go_sdk = use_extension("@io_bazel_rules_go//go:extensions.bzl", "go_sdk")
@@ -19,17 +19,27 @@ go_deps.from_file(go_mod = "//:go.mod")
 ## All *direct* Go dependencies of the module have to be listed explicitly.
 use_repo(go_deps)
 
+# Packaging
+
+bazel_dep(name = "rules_pkg", version = "1.1.0")
+
 # Containers
 
 bazel_dep(name = "rules_oci", version = "2.2.6")
 
 oci = use_extension("@rules_oci//oci:extensions.bzl", "oci")
 
-## Migrator image
+oci.pull(
+    name = "distroless_base",
+    digest = "sha256:ccaef5ee2f1850270d453fdf700a5392534f8d1a8ca2acda391fbb6a06b81c86",
+    image = "gcr.io/distroless/base",
+    platforms = [
+        "linux/amd64",
+    ],
+)
 oci.pull(
     name = "migrate_docker",
-    registry = "index.docker.io",
-    repository = "migrate/migrate",
+    image = "index.docker.io/migrate/migrate",
     tag = "4",
 )
-use_repo(oci, "migrate_docker")
+use_repo(oci, "migrate_docker", "distroless_base", "distroless_base_linux_amd64")

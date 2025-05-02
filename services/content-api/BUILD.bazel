@@ -1,7 +1,9 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
+load("@rules_oci//oci:defs.bzl", "oci_image", "oci_load", "oci_push")
+load("@rules_pkg//:pkg.bzl", "pkg_tar")
 
 go_library(
-    name = "content_api_lib",
+    name = "app_lib",
     srcs = ["main.go"],
     importpath = "github.com/tadoku/tadoku/services/content-api",
     visibility = ["//visibility:private"],
@@ -27,34 +29,34 @@ go_library(
 )
 
 go_binary(
-    name = "content_api",
-    embed = [":content_api_lib"],
+    name = "app",
+    embed = [":app_lib"],
     visibility = ["//visibility:public"],
 )
 
-# Docker image
-load("@io_bazel_rules_docker//go:image.bzl", "go_image")
-load("@io_bazel_rules_docker//container:container.bzl", "container_image")
-load("@io_bazel_rules_docker//container:container.bzl", "container_push")
-
-go_image(
-    name = "base_image",
-    embed = [":content_api_lib"],
-    goarch = "amd64",
-    goos = "linux",
-    visibility = ["//visibility:public"],
+pkg_tar(
+    name = "app_layer",
+    srcs = [":app"],
 )
 
-container_image(
+oci_image(
     name = "image",
-    base = ":base_image",
+    # This is defined by an oci.pull() call in /MODULE.bazel
+    base = "@distroless_base_linux_amd64",
+    entrypoint = ["/app"],
+    tars = [":app_layer"],
 )
 
-container_push(
-    name = "image_push",
-    format = "Docker",
+oci_load(
+    name = "load",
+    # Use the image built for the target platform
     image = ":image",
-    registry = "ghcr.io",
-    repository = "tadoku/tadoku/content-api",
-    skip_unchanged_digest = True,
+    repo_tags = ["gcr.io/example:latest"],
+)
+
+oci_push(
+    name = "push",
+    image = ":image",
+    remote_tags = ["latest"],
+    repository = "ghcr.io/tadoku/tadoku/content-api",
 )

@@ -3,41 +3,21 @@ workspace(name = "tadoku")
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
 
-http_archive(
-    name = "rules_proto",
-    sha256 = "80d3a4ec17354cccc898bfe32118edd934f851b03029d63ef3fc7c8663a7415c",
-    strip_prefix = "rules_proto-5.3.0-21.5",
-    urls = [
-        "https://github.com/bazelbuild/rules_proto/archive/refs/tags/5.3.0-21.5.tar.gz",
-    ],
-)
+# http_archive(
+#     name = "rules_proto",
+#     sha256 = "80d3a4ec17354cccc898bfe32118edd934f851b03029d63ef3fc7c8663a7415c",
+#     strip_prefix = "rules_proto-5.3.0-21.5",
+#     urls = [
+#         "https://github.com/bazelbuild/rules_proto/archive/refs/tags/5.3.0-21.5.tar.gz",
+#     ],
+# )
 
-http_archive(
-    name = "io_bazel_rules_docker",
-    sha256 = "b1e80761a8a8243d03ebca8845e9cc1ba6c82ce7c5179ce2b295cd36f7e394bf",
-    urls = ["https://github.com/bazelbuild/rules_docker/releases/download/v0.25.0/rules_docker-v0.25.0.tar.gz"],
-)
+# ## Setup protobuf toolchain
+# load("@rules_proto//proto:repositories.bzl", "rules_proto_dependencies", "rules_proto_toolchains")
 
-http_archive(
-    name = "rules_pkg",
-    sha256 = "038f1caa773a7e35b3663865ffb003169c6a71dc995e39bf4815792f385d837d",
-    urls = [
-        "https://mirror.bazel.build/github.com/bazelbuild/rules_pkg/releases/download/0.4.0/rules_pkg-0.4.0.tar.gz",
-        "https://github.com/bazelbuild/rules_pkg/releases/download/0.4.0/rules_pkg-0.4.0.tar.gz",
-    ],
-)
+# rules_proto_dependencies()
 
-## Setup protobuf toolchain
-load("@rules_proto//proto:repositories.bzl", "rules_proto_dependencies", "rules_proto_toolchains")
-
-rules_proto_dependencies()
-
-rules_proto_toolchains()
-
-## Setup file packaging toolchain
-load("@rules_pkg//:deps.bzl", "rules_pkg_dependencies")
-
-rules_pkg_dependencies()
+# rules_proto_toolchains()
 
 # Setup k8s
 http_archive(
@@ -54,15 +34,3 @@ k8s_repositories()
 # load("@io_bazel_rules_k8s//k8s:k8s_go_deps.bzl", k8s_go_deps = "deps")
 
 # k8s_go_deps()
-
-# Setup OpenAPI
-git_repository(
-    name = "rules_openapi",
-    commit = "60ddbdb2daf93b74d9283da8c4a23cb3eb01b8ae",
-    remote = "https://github.com/matsubara0507/rules_openapi",
-    shallow_since = "1630321831 +0900",
-)
-
-load("@rules_openapi//openapi:toolchain.bzl", rules_openapi_toolchains = "toolchains")
-
-rules_openapi_toolchains(version = "5.2.1")

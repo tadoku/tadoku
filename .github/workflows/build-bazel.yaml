@@ -54,5 +54,5 @@ jobs:
           cp /home/runner/.docker/config.json /tmp/docker/config.json
 
           # Push images
-          bazel run //services/content-api:image_push
-          bazel run //services/immersion-api:image_push
+          bazel run //services/content-api:push
+          bazel run //services/immersion-api:push

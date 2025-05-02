@@ -1,4 +1,6 @@
 load("@rules_go//go:def.bzl", "go_binary", "go_library")
+load("@rules_oci//oci:defs.bzl", "oci_image", "oci_load", "oci_push")
+load("@rules_pkg//:pkg.bzl", "pkg_tar")
 
 go_library(
     name = "immersion-api_lib",
@@ -29,4 +31,31 @@ go_binary(
     name = "immersion-api",
     embed = [":immersion-api_lib"],
     visibility = ["//visibility:public"],
+)
+
+pkg_tar(
+    name = "app_layer",
+    srcs = [":immersion-api"],
+)
+
+oci_image(
+    name = "image",
+    # This is defined by an oci.pull() call in /MODULE.bazel
+    base = "@distroless_base_linux_amd64",
+    entrypoint = ["/immersion-api"],
+    tars = [":app_layer"],
+)
+
+oci_load(
+    name = "load",
+    # Use the image built for the target platform
+    image = ":image",
+    repo_tags = ["ghcr.io/tadoku/tadoku/immersion-api:latest"],
+)
+
+oci_push(
+    name = "push",
+    image = ":image",
+    remote_tags = ["latest"],
+    repository = "ghcr.io/tadoku/tadoku/immersion-api",
 )

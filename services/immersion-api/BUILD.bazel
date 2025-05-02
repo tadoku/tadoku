@@ -1,7 +1,7 @@
-load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
+load("@rules_go//go:def.bzl", "go_binary", "go_library")
 
 go_library(
-    name = "immersion_api_lib",
+    name = "immersion-api_lib",
     srcs = ["main.go"],
     importpath = "github.com/tadoku/tadoku/services/immersion-api",
     visibility = ["//visibility:private"],
@@ -26,34 +26,7 @@ go_library(
 )
 
 go_binary(
-    name = "immersion_api",
-    embed = [":immersion_api_lib"],
+    name = "immersion-api",
+    embed = [":immersion-api_lib"],
     visibility = ["//visibility:public"],
-)
-
-# Docker image
-load("@io_bazel_rules_docker//go:image.bzl", "go_image")
-load("@io_bazel_rules_docker//container:container.bzl", "container_image")
-load("@io_bazel_rules_docker//container:container.bzl", "container_push")
-
-go_image(
-    name = "base_image",
-    embed = [":immersion_api_lib"],
-    goarch = "amd64",
-    goos = "linux",
-    visibility = ["//visibility:public"],
-)
-
-container_image(
-    name = "image",
-    base = ":base_image",
-)
-
-container_push(
-    name = "image_push",
-    format = "Docker",
-    image = ":image",
-    registry = "ghcr.io",
-    repository = "tadoku/tadoku/immersion-api",
-    skip_unchanged_digest = True,
 )

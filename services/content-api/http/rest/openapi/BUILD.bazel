@@ -1,5 +1,4 @@
-load("@io_bazel_rules_go//go:def.bzl", "go_library")
-load("//:build/oapi-codegen.bzl", "oapi_codegen")
+load("@rules_go//go:def.bzl", "go_library")
 
 go_library(
     name = "openapi",
@@ -11,17 +10,4 @@ go_library(
         "@com_github_deepmap_oapi_codegen//pkg/types",
         "@com_github_labstack_echo_v4//:echo",
     ],
-)
-
-# OpenAPI
-oapi_codegen(
-    name = "codegen",
-    out = "api.gen.go",
-    generate = [
-        "types",
-        "server",
-    ],
-    package = "openapi",
-    spec = "api.yaml",
-    visibility = ["//visibility:public"],
 )

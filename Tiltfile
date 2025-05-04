@@ -15,7 +15,7 @@ include('./services/immersion-api/Tiltfile')
 include('./services/content-api/Tiltfile')
 
 # Frontend
-# include('./frontend/Tiltfile')
+include('./frontend/Tiltfile')
 
 # Private
 # private_infra_path = '../tadoku-private/Tiltfile'

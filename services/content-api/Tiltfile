@@ -1,26 +1,30 @@
 # Api container
 watch_file('./deployments/api.yaml')
-k8s_yaml(local('bazel run //services/content-api/deployments:api'))
+k8s_yaml(local('cat ./deployments/api.yaml'))
 
-custom_build(
-  ref='content-api-migrate-image',
-  command=(
-    'bazel run --platforms=@io_bazel_rules_go//go/toolchain:linux_amd64 {image_target} -- --norun && ' +
-    'docker tag {bazel_image} $EXPECTED_REF').format(
-      image_target='//services/content-api/storage/postgres/migrations:image',
-      bazel_image='bazel/services/content-api/storage/postgres/migrations:image'
-    ),
-  deps=['./storage/postgres/migrations/'],
+def bazel_build(image, target, deps):
+  dest = target.replace('//', 'bazel/').replace(':load', ":latest")
+  custom_build(
+    ref=image,
+    disable_push=True,
+    command=(
+      'bazel run --platforms=@rules_go//go/toolchain:linux_amd64 {image_target} && ' +
+      'docker tag {bazel_image} $EXPECTED_REF').format(
+        image_target=target,
+        bazel_image=dest,
+      ),
+    deps=deps,
 )
 
-custom_build(
-  ref='content-api-image',
-  command=(
-    'bazel run --platforms=@io_bazel_rules_go//go/toolchain:linux_amd64 {image_target} -- --norun && ' +
-    'docker tag {bazel_image} $EXPECTED_REF').format(
-      image_target='//services/content-api:image',
-      bazel_image='bazel/services/content-api:image'
-    ),
+bazel_build(
+  'content-api-migrate-image',
+  '//services/content-api/storage/postgres/migrations:load',
+  ['./storage/postgres/migrations/'],
+)
+
+bazel_build(
+  'content-api-image',
+  '//services/content-api:load',
   deps=['./', './../common/', './../../infra/dev/permissions/'],
 )
 

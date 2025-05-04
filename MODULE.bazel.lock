@@ -655,7 +655,7 @@
     "@@rules_oci+//oci:extensions.bzl%oci": {
       "general": {
         "bzlTransitiveDigest": "vanqorv5uSAUzWdiofsrm3KqS6w5aFojwH+nl9U1nUw=",
-        "usagesDigest": "IFuyGLr+DuG8l1h6/ebpp7w7FQ1tNoM/NI7JMc5JkZo=",
+        "usagesDigest": "3ZI1i2U7dMdppzZQ5GRjG9RBOVU3jDdwgdTfyYYEVxk=",
         "recordedFileInputs": {},
         "recordedDirentsInputs": {},
         "envVariables": {},
@@ -689,7 +689,7 @@
               "reproducible": true
             }
           },
-          "migrate_docker_single": {
+          "go_migrate_linux_amd64": {
             "repoRuleId": "@@rules_oci+//oci/private:pull.bzl%oci_pull",
             "attributes": {
               "www_authenticate_challenges": {},
@@ -697,22 +697,24 @@
               "registry": "index.docker.io",
               "repository": "migrate/migrate",
               "identifier": "4",
-              "target_name": "migrate_docker_single",
+              "platform": "linux/amd64",
+              "target_name": "go_migrate_linux_amd64",
               "bazel_tags": []
             }
           },
-          "migrate_docker": {
+          "go_migrate": {
             "repoRuleId": "@@rules_oci+//oci/private:pull.bzl%oci_alias",
             "attributes": {
-              "target_name": "migrate_docker",
+              "target_name": "go_migrate",
               "www_authenticate_challenges": {},
               "scheme": "https",
               "registry": "index.docker.io",
               "repository": "migrate/migrate",
               "identifier": "4",
-              "platforms": {},
-              "platform": "@@rules_oci+//oci:migrate_docker_single",
-              "bzlmod_repository": "migrate_docker",
+              "platforms": {
+                "@@platforms//cpu:x86_64": "@go_migrate_linux_amd64"
+              },
+              "bzlmod_repository": "go_migrate",
               "reproducible": true
             }
           },
@@ -834,7 +836,8 @@
           "explicitRootModuleDirectDeps": [
             "distroless_base",
             "distroless_base_linux_amd64",
-            "migrate_docker"
+            "go_migrate",
+            "go_migrate_linux_amd64"
           ],
           "explicitRootModuleDirectDevDeps": [],
           "useAllRepos": "NO",

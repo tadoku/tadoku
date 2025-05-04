@@ -51,7 +51,7 @@ oci_load(
     name = "load",
     # Use the image built for the target platform
     image = ":image",
-    repo_tags = ["ghcr.io/tadoku/tadoku/content-api:latest"],
+    repo_tags = ["ghcr.io/tadoku/tadoku/content-api:latest", "bazel/services/content-api:latest"],
 )
 
 oci_push(

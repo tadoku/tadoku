@@ -1,20 +1,8 @@
+load("./../../infra/dev/build/Tiltfile", "bazel_build")
+
 # Api container
 watch_file('./deployments/api.yaml')
 k8s_yaml(local('cat ./deployments/api.yaml'))
-
-def bazel_build(image, target, deps):
-  dest = target.replace('//', 'bazel/').replace(':load', ":latest")
-  custom_build(
-    ref=image,
-    disable_push=True,
-    command=(
-      'bazel run --platforms=@rules_go//go/toolchain:linux_amd64 {image_target} && ' +
-      'docker tag {bazel_image} $EXPECTED_REF').format(
-        image_target=target,
-        bazel_image=dest,
-      ),
-    deps=deps,
-)
 
 bazel_build(
   'content-api-migrate-image',

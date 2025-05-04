@@ -11,7 +11,7 @@ include('./infra/dev/permissions/Tiltfile')
 
 # Services
 
-# include('./services/immersion-api/Tiltfile')
+include('./services/immersion-api/Tiltfile')
 include('./services/content-api/Tiltfile')
 
 # Frontend

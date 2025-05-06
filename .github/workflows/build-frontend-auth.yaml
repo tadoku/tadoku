@@ -1,5 +1,9 @@
 name: build-frontend-auth
 on:
+  schedule:
+    # monthly at 10th of every month
+    - cron: "0 0 10 * *"
+
   push:
     paths:
       - "frontend/apps/auth/**"

@@ -1,5 +1,9 @@
 name: build-frontend-webv2
 on:
+  schedule:
+    # monthly at 10th of every month
+    - cron: "0 0 10 * *"
+
   push:
     paths:
       - "frontend/apps/webv2/**"

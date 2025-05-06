@@ -1,5 +1,9 @@
 name: build-bazel
 on:
+  schedule:
+    # monthly at 5th of every month
+    - cron: "0 0 5 * *"
+
   workflow_dispatch:
   push:
     paths:

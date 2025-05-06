@@ -1,4 +1,4 @@
-load("@io_bazel_rules_docker//container:container.bzl", "container_image")
+load("@rules_oci//oci:defs.bzl", "oci_image", "oci_load")
 load("@rules_pkg//:pkg.bzl", "pkg_tar")
 
 pkg_tar(
@@ -8,8 +8,14 @@ pkg_tar(
     package_dir = "/migrations",
 )
 
-container_image(
+oci_image(
     name = "image",
-    base = "@migrate_docker//image",
+    base = "@go_migrate_linux_amd64",
     tars = [":tar"],
+)
+
+oci_load(
+    name = "load",
+    image = ":image",
+    repo_tags = ["bazel/services/content-api/storage/postgres/migrations:latest"],
 )

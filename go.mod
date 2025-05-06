@@ -1,10 +1,12 @@
 module github.com/tadoku/tadoku
 
-go 1.19
+go 1.23.1
 
 require (
 	github.com/MicahParks/keyfunc v1.7.0
+	github.com/bwmarrin/discordgo v0.27.1
 	github.com/deepmap/oapi-codegen v1.12.4
+	github.com/getsentry/sentry-go v0.18.0
 	github.com/go-playground/validator/v10 v10.11.1
 	github.com/golang-jwt/jwt v3.2.2+incompatible
 	github.com/golang-jwt/jwt/v4 v4.4.3
@@ -23,9 +25,7 @@ require (
 
 require (
 	github.com/apapsch/go-jsonmerge/v2 v2.0.0 // indirect
-	github.com/bwmarrin/discordgo v0.27.1 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
-	github.com/getsentry/sentry-go v0.18.0 // indirect
 	github.com/go-playground/locales v0.14.0 // indirect
 	github.com/go-playground/universal-translator v0.18.0 // indirect
 	github.com/golang/protobuf v1.5.2 // indirect

@@ -4,11 +4,13 @@ on:
   push:
     paths:
       - "services/**"
-      - "BUILD"
-      - "go_third_party.bzl"
+      - "BUILD.bazel"
+      - ".bazelversion"
+      - ".bazelrc"
+      - "MODULE.bazel"
+      - "MODULE.bazel.lock"
       - "go.mod"
       - "go.sum"
-      - "WORKSPACE"
       - ".github/workflows/build-bazel.yaml"
       - "!frontend/**"
 jobs:
@@ -23,7 +25,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: "/home/runner/.cache/bazel"
-          key: bazel
+          key: bazel-v4
 
       - name: Build
         run: bazel build //...
@@ -44,7 +46,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: "/home/runner/.cache/bazel"
-          key: bazel
+          key: bazel-v4
 
       - name: Push images
         run: |
@@ -54,5 +56,5 @@ jobs:
           cp /home/runner/.docker/config.json /tmp/docker/config.json
 
           # Push images
-          bazel run //services/content-api:image_push
-          bazel run //services/immersion-api:image_push
+          bazel run //services/content-api:push
+          bazel run //services/immersion-api:push

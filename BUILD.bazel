@@ -1,16 +1,4 @@
-load("@bazel_gazelle//:def.bzl", "gazelle")
+load("@gazelle//:def.bzl", "gazelle")
 
 # gazelle:prefix github.com/tadoku/tadoku
-gazelle(
-    name = "gazelle",
-)
-
-gazelle(
-    name = "gazelle-update-repos",
-    args = [
-        "-from_file=go.mod",
-        "-to_macro=go_third_party.bzl%go_deps",
-        "-prune",
-    ],
-    command = "update-repos",
-)
+gazelle(name = "gazelle")

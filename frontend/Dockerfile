@@ -6,7 +6,7 @@ ARG PROJECT_NAME
 WORKDIR /app
 
 # Set up pnpm
-RUN npm install -g pnpm@7.32.2 && pnpm config set store-dir .pnpm-store
+RUN npm install -g pnpm@10.10.0 && pnpm config set store-dir .pnpm-store
 COPY pnpm-lock.yaml .npmrc* ./
 RUN pnpm fetch
 

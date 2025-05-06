@@ -181,6 +181,7 @@ function LogList() {
               </tr>
               {summary.logs.map((log, idx) => (
                 <tr
+                  key={idx}
                   className={`text-sm bg-slate-500/5 border-slate-500/5 ${
                     idx === summary.logs.length - 1 ? 'border-b-2' : 'border-b'
                   }`}

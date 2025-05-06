@@ -14,5 +14,5 @@ export const PostDetail = ({ post }: Props) => (
 )
 
 export const PostBody = ({ post }: Props) => (
-  <ReactMarkdown children={post.content} remarkPlugins={[remarkGfm]} />
+  <ReactMarkdown remarkPlugins={[remarkGfm]}>{post.content}</ReactMarkdown>
 )

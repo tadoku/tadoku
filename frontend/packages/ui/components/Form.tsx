@@ -396,8 +396,8 @@ export function AutocompleteMultiInput<T>(props: {
             <Combobox.Input
               id={id}
               onChange={event => setQuery(event.target.value)}
-              displayValue={selected =>
-                selected?.map(option => format(option as T)).join(', ') ?? ''
+              displayValue={(selected: T[]) =>
+                selected?.map(option => format(option)).join(', ') ?? ''
               }
               className="!pr-7"
             />

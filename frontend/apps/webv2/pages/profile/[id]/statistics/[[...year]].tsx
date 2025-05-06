@@ -63,7 +63,7 @@ const Page = () => {
     DateTime.now(),
   )
     .splitBy({ year: 1 })
-    .map(it => it.start.year)
+    .map(it => it.start!!.year)
     .reverse()
 
   const yearLinks = years.map(it => ({

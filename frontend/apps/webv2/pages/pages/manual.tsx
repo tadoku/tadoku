@@ -95,7 +95,7 @@ const Page: NextPage<Props> = () => (
                 Character{' '}
                 <sup
                   className="text-primary"
-                  title="400 characters per page for Japanese, Chinese, and Korean. 1800 characters per page for all other languages."
+                  title="400 characters per page for Japanese, Chinese, and Korean. 1200 characters per page for all other languages."
                 >
                   2
                 </sup>

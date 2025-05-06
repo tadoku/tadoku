@@ -63,7 +63,8 @@ export function ActivityChart({ userId, registration }: Props) {
   const period = Interval.fromISO(
     `${registration.contest.contest_start}/${end}`,
   )
-  const labels = period.splitBy({ day: 1 }).map(it => it.start.toISODate())
+  const labels = period.splitBy({ day: 1 }).map(it => it.start!!.toISODate())
+
   const indexForLabel = labels.reduce((acc, label, i) => {
     acc[label] = i
     return acc

@@ -47,6 +47,10 @@ export function HeatmapChart({ id, data, year }: Props) {
 
   let col = 0
   for (const date of dates) {
+    if (date === null) {
+      continue
+    }
+
     cols[col][date.weekday - 1] = {
       x: date,
       y: date.weekday,

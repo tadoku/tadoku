@@ -332,11 +332,11 @@ function HeatmapExample() {
     .map(date => {
       const value = Math.random() < 0.3 ? 0 : Math.random() * 100
       return {
-        date: date.toISODate(),
+        date: date?.toISODate() ?? 'unknown',
         value,
-        tooltip: `${Math.ceil(value)} points on ${date.toLocaleString(
-          DateTime.DATE_FULL,
-        )}`,
+        tooltip: `${Math.ceil(value)} points on ${
+          date?.toLocaleString(DateTime.DATE_FULL) ?? 'unknown'
+        }`,
       }
     })
 

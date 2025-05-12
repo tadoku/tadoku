@@ -142,7 +142,7 @@ const Page: NextPage<Props> = () => (
         <li>Only available for Japanese</li>
         <li>
           400 characters per page for Japanese, Chinese, and Korean. <br />
-          1800 characters per page for all other languages.
+          1200 characters per page for all other languages.
         </li>
       </ol>
 

@@ -36,6 +36,8 @@ COPY --from=build --chown=nextjs:nodejs /app/apps/${PROJECT_NAME}/.next/standalo
 COPY --from=build --chown=nextjs:nodejs /app/apps/${PROJECT_NAME}/.next/static* ./.next/static
 COPY --from=build --chown=nextjs:nodejs /app/apps/${PROJECT_NAME}/public* ./public
 
+RUN ln -s /app/apps/${PROJECT_NAME}/server.js /app/server.js
+
 USER nextjs
 
 EXPOSE 3000

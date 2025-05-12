@@ -36,11 +36,6 @@ COPY --from=build --chown=nextjs:nodejs /app/apps/${PROJECT_NAME}/.next/standalo
 COPY --from=build --chown=nextjs:nodejs /app/apps/${PROJECT_NAME}/.next/static* ./.next/static
 COPY --from=build --chown=nextjs:nodejs /app/apps/${PROJECT_NAME}/public* ./public
 
-# WORKAROUND FOR: https://github.com/vercel/next.js/discussions/39432
-RUN rm -rf ./node_modules
-COPY --from=build /app/node_modules_temp ./node_modules
-# END WORKAROUND
-
 USER nextjs
 
 EXPOSE 3000

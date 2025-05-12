@@ -11,6 +11,7 @@ on:
       - ".github/workflows/build-frontend-auth.yaml"
       - "frontend/pnpm-lock.yaml"
       - "frontend/Dockerfile"
+      - "frontend/.npmrc"
 jobs:
   build:
     name: Build auth

@@ -33,8 +33,8 @@ RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 
 COPY --from=build --chown=nextjs:nodejs /app/apps/${PROJECT_NAME}/.next/standalone ./
-COPY --from=build --chown=nextjs:nodejs /app/apps/${PROJECT_NAME}/.next/static* ./.next/static
-COPY --from=build --chown=nextjs:nodejs /app/apps/${PROJECT_NAME}/public* ./public
+COPY --from=build --chown=nextjs:nodejs /app/apps/${PROJECT_NAME}/.next/static* ./apps/${PROJECT_NAME}/.next/static
+COPY --from=build --chown=nextjs:nodejs /app/apps/${PROJECT_NAME}/public* ./apps/${PROJECT_NAME}/public
 
 RUN ln -s /app/apps/${PROJECT_NAME}/server.js /app/server.js
 

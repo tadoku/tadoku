@@ -655,7 +655,7 @@
     "@@rules_oci+//oci:extensions.bzl%oci": {
       "general": {
         "bzlTransitiveDigest": "vanqorv5uSAUzWdiofsrm3KqS6w5aFojwH+nl9U1nUw=",
-        "usagesDigest": "3ZI1i2U7dMdppzZQ5GRjG9RBOVU3jDdwgdTfyYYEVxk=",
+        "usagesDigest": "amPFAm+dxXSPPXoMd15f3TPv8ncSQecnzDx83f+1p7c=",
         "recordedFileInputs": {},
         "recordedDirentsInputs": {},
         "envVariables": {},
@@ -666,8 +666,8 @@
               "www_authenticate_challenges": {},
               "scheme": "https",
               "registry": "gcr.io",
-              "repository": "distroless/base",
-              "identifier": "sha256:ccaef5ee2f1850270d453fdf700a5392534f8d1a8ca2acda391fbb6a06b81c86",
+              "repository": "distroless/base-debian12",
+              "identifier": "sha256:27769871031f67460f1545a52dfacead6d18a9f197db77110cfc649ca2a91f44",
               "platform": "linux/amd64",
               "target_name": "distroless_base_linux_amd64",
               "bazel_tags": []
@@ -680,8 +680,8 @@
               "www_authenticate_challenges": {},
               "scheme": "https",
               "registry": "gcr.io",
-              "repository": "distroless/base",
-              "identifier": "sha256:ccaef5ee2f1850270d453fdf700a5392534f8d1a8ca2acda391fbb6a06b81c86",
+              "repository": "distroless/base-debian12",
+              "identifier": "sha256:27769871031f67460f1545a52dfacead6d18a9f197db77110cfc649ca2a91f44",
               "platforms": {
                 "@@platforms//cpu:x86_64": "@distroless_base_linux_amd64"
               },

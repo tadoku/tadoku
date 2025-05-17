@@ -64,5 +64,5 @@ values
     5432,
     'tadoku_prod_immersion',
     'postgres'
-  ;
+  );
 ```

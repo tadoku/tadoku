@@ -11,15 +11,16 @@ ref. https://github.com/joelparkerhenderson/architecture-decision-record
 - [001 - Leaderboard Improvements](adr/001-leaderboard.md)
 - [002 - Define API contracts through OpenAPI](adr/002-api-contracts.md)
 - [003 - Zod as a request parser](adr/003-zod.md)
+- [004 - Automating contest scheduling](adr/004-scheduling-contests.md)
 
 ## Template
 
 ```markdown
 # [id] Title
 
-* Status: [proposed | rejected | accepted | deprecated | ... | superseded by ADR-002]
-* Author: @githubhandle
-* Date: YYYY-MM-DD
+- Status: [proposed | rejected | accepted | deprecated | ... | superseded by ADR-002]
+- Author: @githubhandle
+- Date: YYYY-MM-DD
 
 ## Context
 

@@ -6,15 +6,19 @@
 - Development
 
   - [Architectural Decision Records](adr.md)
-  <!-- - [Bazel](bazel.md) -->
   - [Local Environment](/local_environment.md)
 
 - Services
 
-  - `reading-contest-api`
-  - `identity-api`
+  - `immersion-api`
   - `content-api`
 
 - Frontend
 
-  - `tadoku-web`
+  - `auth`
+  - `styleguide`
+  - `webv2`
+
+- Jobs
+
+  - `postgres-backup`

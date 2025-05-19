@@ -20,4 +20,4 @@ It's possible that the containers for a particular service or database have been
 
 ## Connecting to a database within Tilt
 
-We have configured a [pgweb instance](https://github.com/sosedoff/pgweb) for access to our PostgreSQL databases. The connection details can be found from Kubernetes.
+We have configured a [pgweb instance](https://github.com/sosedoff/pgweb) for access to our PostgreSQL databases. The connection details can be found from the Kubernetes secrets and/or manifest files.

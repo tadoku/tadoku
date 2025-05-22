@@ -53,7 +53,7 @@ export default function App({ Component, pageProps }: AppProps) {
       <Head>
         <title>Tadoku Design System</title>
       </Head>
-      <div className="bg-white w-52 p-8 hidden">
+      <div className="bg-white w-52 p-8">
         <h1 className="text-2xl font-bold mb-4">tadoku-ui</h1>
         {navigation.map((block, i) => (
           <Fragment key={i}>

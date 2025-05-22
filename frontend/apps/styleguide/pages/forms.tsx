@@ -601,10 +601,17 @@ const LogPagesForm = () => {
             label="Amount"
             name="amount"
             units={units}
+            unitsLabel="Unit"
             defaultValue={0}
             min={0}
           />
         </div>
+        <Input
+          name="description"
+          label="Description"
+          type="text"
+          placeholder="e.g. One Piece volume 45"
+        />
         <AutocompleteMultiInput
           name="tags"
           label="Tags"
@@ -617,12 +624,6 @@ const LogPagesForm = () => {
           }
           getIdForOption={option => option}
           format={option => option}
-        />
-        <Input
-          name="description"
-          label="Description"
-          type="text"
-          placeholder="e.g. One Piece volume 45"
         />
         <button
           type="submit"

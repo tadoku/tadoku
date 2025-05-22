@@ -11,7 +11,7 @@ import {
 import { FormProvider, useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { AmountWithUnit, InputWithSelect, RadioGroup } from 'ui/components/Form'
+import { AmountWithUnit, RadioGroup } from 'ui/components/Form'
 import {
   AdjustmentsHorizontalIcon,
   LinkIcon,

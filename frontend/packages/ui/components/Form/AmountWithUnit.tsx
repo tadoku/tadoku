@@ -1,22 +1,24 @@
-import React from 'react';
-import { useFormContext } from 'react-hook-form';
-import { Option } from '../Form';
+import React from 'react'
+import { useFormContext } from 'react-hook-form'
+import { Option } from './types'
 
 interface AmountWithUnitProps {
-  label: string;
-  name: string;
-  units: Option[];
+  label: string
+  name: string
+  units: Option[]
 }
 
 export const AmountWithUnit = ({ label, name, units }: AmountWithUnitProps) => {
   const {
-    register, formState: { errors },
-  } = useFormContext();
+    register,
+    formState: { errors },
+  } = useFormContext()
 
-  const fieldError = errors?.[name as keyof typeof errors] as any;
+  const fieldError = errors?.[name as keyof typeof errors] as any
 
-  const hasError = fieldError !== undefined;
-  const errorMessage = fieldError?.message?.toString() || 'This input is invalid';
+  const hasError = fieldError !== undefined
+  const errorMessage =
+    fieldError?.message?.toString() || 'This input is invalid'
 
   return (
     <div className="w-full">
@@ -33,7 +35,8 @@ export const AmountWithUnit = ({ label, name, units }: AmountWithUnitProps) => {
           id={`${name}.value`}
           {...register(`${name}.value`, { valueAsNumber: true })}
           className="!border-l-0 !border-t-0 !border-b-0 !border-r border-black/10 focus:!border-black/10 !h-10 !bg-none focus:!ring-0 focus:!outline-none w-full"
-          placeholder="Enter amount" />
+          placeholder="Enter amount"
+        />
         <select
           {...register(`${name}.unit`)}
           className="w-auto !h-10 px-2 pr-8 border-none focus:!ring-0 focus:!outline-none bg-transparent"
@@ -49,5 +52,5 @@ export const AmountWithUnit = ({ label, name, units }: AmountWithUnitProps) => {
         <p className="text-sm text-red-600 mt-1">{errorMessage}</p>
       ) : null}
     </div>
-  );
-};
+  )
+}

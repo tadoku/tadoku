@@ -13,7 +13,7 @@ import {
   LinkIcon,
   UserIcon,
 } from '@heroicons/react/20/solid'
-import { RadioProps } from 'ui/components/Form'
+import { RadioProps } from 'ui/components/Form/RadioGroup'
 import { DateTime, Interval } from 'luxon'
 
 type TrackingMode = 'automatic' | 'manual' | 'personal'

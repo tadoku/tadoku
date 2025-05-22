@@ -526,8 +526,8 @@ const LogPagesFormSchema = z.object({
   trackingModeSelection: z.enum(['automatic', 'manual', 'personal']),
   languageCode: z.string(),
   activity: z.number(),
-  amount: z.number().positive(),
-  unit: z.number(),
+  amountValue: z.number().positive(),
+  amountUnit: z.number(),
   tags: z
     .array(z.string())
     .min(1, 'Must select at least one tag')
@@ -603,7 +603,7 @@ const LogPagesForm = () => {
             units={units}
             unitsLabel="Unit"
             defaultValue={0}
-            min={0}
+            min={-1}
           />
         </div>
         <Input

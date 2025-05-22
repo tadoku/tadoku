@@ -20,17 +20,23 @@ export function AmountWithUnit<T extends FieldValues>(
     formState: { errors },
   } = useFormContext()
 
-  const fieldError = errors?.[name as keyof typeof errors] as any
+  const amountFieldError = errors?.[
+    `${name}Value` as keyof typeof errors
+  ] as any
+  const unitFieldError = errors?.[`${name}Unit` as keyof typeof errors] as any
 
-  const hasError = fieldError !== undefined
+  const amountFieldHasError = amountFieldError !== undefined
+  const unitFieldHasError = unitFieldError !== undefined
   const errorMessage =
-    fieldError?.message?.toString() || 'This input is invalid'
+    amountFieldError?.message?.toString() ||
+    unitFieldError?.message?.toString() ||
+    'This input is invalid'
 
   return (
     <div className="w-full">
       <label
         className="label mb-2"
-        htmlFor={`${name}-value`}
+        htmlFor={`${name}Value`}
         id={`${name}-label`}
       >
         <span className="label-text">{label}</span>
@@ -43,16 +49,18 @@ export function AmountWithUnit<T extends FieldValues>(
         <input
           type="number"
           {...inputProps}
-          id={`${name}-value`}
-          {...register(`${name}-value`, { valueAsNumber: true })}
+          id={`${name}Value`}
+          {...register(`${name}Value`, { valueAsNumber: true })}
           className="!border-l-0 !border-t-0 !border-b-0 !border-r border-black/10 focus:!border-black/10 !h-full !bg-none focus:!ring-0 focus:!outline-none w-full"
-          aria-invalid={hasError ? 'true' : 'false'}
-          aria-describedby={hasError ? `${name}-error` : undefined}
+          aria-invalid={amountFieldHasError ? 'true' : 'false'}
+          aria-describedby={amountFieldHasError ? `${name}-error` : undefined}
         />
         <select
-          {...register(`${name}-unit`)}
+          {...register(`${name}Unit`)}
           className="w-auto !h-full px-2 pr-8 border-none bg-black/5 focus:!ring-0 focus:!outline-none focus:bg-transparent"
           aria-label={unitsLabel || `Unit for ${label.toLocaleLowerCase()}`}
+          aria-invalid={unitFieldHasError ? 'true' : 'false'}
+          aria-describedby={unitFieldHasError ? `${name}-error` : undefined}
         >
           {units.map(unit => (
             <option key={unit.value} value={unit.value}>
@@ -61,7 +69,7 @@ export function AmountWithUnit<T extends FieldValues>(
           ))}
         </select>
       </div>
-      {hasError ? (
+      {amountFieldHasError || unitFieldHasError ? (
         <p
           id={`${name}-error`}
           className="text-sm text-red-600 mt-1"

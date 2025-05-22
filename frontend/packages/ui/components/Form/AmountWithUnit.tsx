@@ -1,14 +1,19 @@
-import React from 'react'
-import { useFormContext } from 'react-hook-form'
-import { Option } from './types'
+import React, { HTMLProps } from 'react'
+import { FieldValues, useFormContext } from 'react-hook-form'
+import { FormElementProps, Option } from './types'
 
-interface AmountWithUnitProps {
+interface AmountWithUnitProps<T extends FieldValues>
+  extends FormElementProps<T>,
+    Omit<HTMLProps<HTMLInputElement>, 'name' | 'type'> {
   label: string
-  name: string
   units: Option[]
 }
 
-export const AmountWithUnit = ({ label, name, units }: AmountWithUnitProps) => {
+export function AmountWithUnit<T extends FieldValues>(
+  props: AmountWithUnitProps<T>,
+) {
+  const { name, label, units, ...inputProps } = props
+
   const {
     register,
     formState: { errors },
@@ -32,10 +37,10 @@ export const AmountWithUnit = ({ label, name, units }: AmountWithUnitProps) => {
         <input
           type="number"
           step="any"
+          {...inputProps}
           id={`${name}.value`}
           {...register(`${name}.value`, { valueAsNumber: true })}
           className="!border-l-0 !border-t-0 !border-b-0 !border-r border-black/10 focus:!border-black/10 !h-10 !bg-none focus:!ring-0 focus:!outline-none w-full"
-          placeholder="Enter amount"
         />
         <select
           {...register(`${name}.unit`)}

@@ -597,7 +597,13 @@ const LogPagesForm = () => {
           options={{ valueAsNumber: true }}
         />
         <div className="h-stack overflow-visible">
-          <AmountWithUnit label="Amount" name="amount" units={units} />
+          <AmountWithUnit
+            label="Amount"
+            name="amount"
+            units={units}
+            defaultValue={0}
+            min={0}
+          />
         </div>
         <AutocompleteMultiInput
           name="tags"

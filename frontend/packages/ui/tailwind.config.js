@@ -1,12 +1,12 @@
 /** @type {import('tailwindcss').Config} */
-const defaultTheme = require('tailwindcss/defaultTheme');
+const defaultTheme = require('tailwindcss/defaultTheme')
 
 module.exports = {
   content: [
-    "./pages/**/*.{js,ts,jsx,tsx}", 
-    "./components/**/*.{js,ts,jsx,tsx}",
-    "./src/**/*.{js,ts,jsx,tsx}",
-    "./app/**/*.{js,ts,jsx,tsx}",
+    './pages/**/*.{js,ts,jsx,tsx}',
+    './components/**/*.{js,ts,jsx,tsx}',
+    './src/**/*.{js,ts,jsx,tsx}',
+    './app/**/*.{js,ts,jsx,tsx}',
   ],
   theme: {
     extend: {
@@ -16,12 +16,12 @@ module.exports = {
       },
       fontFamily: {
         sans: ['Open Sans', ...defaultTheme.fontFamily.sans],
-        serif: ['Merriweather', ...defaultTheme.fontFamily.serif]
+        serif: ['Merriweather', ...defaultTheme.fontFamily.serif],
       },
-      minWidth: (theme) => ({
+      minWidth: theme => ({
         ...theme('spacing'),
       }),
-      minHeight: (theme) => ({
+      minHeight: theme => ({
         ...theme('spacing'),
       }),
       gridTemplateColumns: {
@@ -33,9 +33,9 @@ module.exports = {
       keyframes: {
         'gradient-loading': {
           '0%, 100%': { 'background-position': '0% 50%' },
-          '50%': { 'background-position': '100% 0%'},
-        }
-      }
+          '50%': { 'background-position': '100% 0%' },
+        },
+      },
     },
   },
   safelist: [
@@ -47,8 +47,5 @@ module.exports = {
     'bg-neutral-100',
     'bg-neutral-900',
   ],
-  plugins: [
-    require('@tailwindcss/forms'),
-    require('@headlessui/tailwindcss'),
-  ],
+  plugins: [require('@tailwindcss/forms'), require('@headlessui/tailwindcss')],
 }

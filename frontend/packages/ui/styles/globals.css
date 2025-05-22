@@ -316,9 +316,9 @@
   }
 
   .input-frame {
-      @apply border border-b-2 border-black/10 focus:border-primary focus:ring-primary/40 focus:ring-2;
-      @apply bg-white transition ease-in-out placeholder-gray-400;
-      @apply aria-disabled:focus:ring-0 aria-disabled:focus:ring-offset-0 aria-disabled:focus:border-black/10;
+    @apply border border-b-2 border-black/10 bg-white transition ease-in-out placeholder-gray-400;
+    @apply aria-disabled:focus:ring-0 aria-disabled:focus:ring-offset-0 aria-disabled:focus:border-black/10;
+    @apply focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/40;
   }
 
   table.default {

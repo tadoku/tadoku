@@ -11,7 +11,7 @@ import {
 import { FormProvider, useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { RadioGroup } from 'ui/components/Form'
+import { AmountWithUnit, InputWithSelect, RadioGroup } from 'ui/components/Form'
 import {
   AdjustmentsHorizontalIcon,
   LinkIcon,
@@ -596,25 +596,8 @@ const LogPagesForm = () => {
           values={activities}
           options={{ valueAsNumber: true }}
         />
-        <div className="h-stack spaced">
-          <div className="flex-grow">
-            <Input
-              name="amount"
-              label="Amount"
-              type="number"
-              defaultValue={0}
-              options={{ valueAsNumber: true }}
-              min={0}
-            />
-          </div>
-          <div className="min-w-[150px]">
-            <Select
-              name="unit"
-              label="Unit"
-              values={units}
-              options={{ valueAsNumber: true }}
-            />
-          </div>
+        <div className="h-stack overflow-visible">
+          <AmountWithUnit label="Amount" name="amount" units={units} />
         </div>
         <AutocompleteMultiInput
           name="tags"

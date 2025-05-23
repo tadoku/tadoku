@@ -1,5 +1,5 @@
 -- Create main contest function
-create function data.create_official_contest(contest_start date, contest_end date, contest_number int)
+create function create_official_contest(contest_start date, contest_end date, contest_number int)
   returns uuid
   language plpgsql
 as
@@ -23,7 +23,7 @@ begin
   -- Lookup admin user
   select id, display_name
   into owner_id, owner_display_name
-  from data.users
+  from users
   where display_name = 'antonve'
   limit 1;
 
@@ -35,7 +35,7 @@ begin
 
   -- Insert contest
   begin
-    insert into data.contests (
+    insert into contests (
       owner_user_id, owner_user_display_name, private,
       contest_start, contest_end, registration_end,
       title, activity_type_id_allow_list, official
@@ -59,7 +59,7 @@ end;
 $$;
 
 -- Create helper to generate contest rounds
-create function data.create_contest_round(round_number int, contest_year int)
+create function create_contest_round(round_number int, contest_year int)
 returns void as
 $$
 declare
@@ -89,6 +89,6 @@ begin
       raise exception 'Invalid round number: %', round_number;
   end case;
 
-  perform data.create_official_contest(contest_start, contest_end, round_number);
+  perform create_official_contest(contest_start, contest_end, round_number);
 end;
 $$ language plpgsql;

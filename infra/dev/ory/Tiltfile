@@ -7,6 +7,7 @@ helm_repo('ory', 'https://k8s.ory.sh/helm/charts', resource_name='helm-repo-ory'
 helm_resource('kratos',
               'ory/kratos',
               flags=[
+                '--version=0.32.0',
                 '-f', './kratos_values.yaml',
               ],
               deps=['./kratos_values.yaml'],

@@ -29,9 +29,20 @@ export const NewLogFormSchema = z
       .number({ invalid_type_error: 'Please enter a number' })
       .positive(),
     amountUnit: z.string(),
+    allUnits: z.array(Unit),
     tags: z.array(Tag).max(3, 'Must select three or fewer'),
     description: z.string().optional(),
   })
+  .refine(
+    log => {
+      const unit = log.allUnits.find(it => it.id === log.amountUnit)
+      return unit?.log_activity_id === log.activity.id
+    },
+    {
+      path: ['amountUnit'],
+      message: 'This unit is cannot be used for this activity',
+    },
+  )
   .transform(log => {
     const newLog = {
       registration_ids: undefined as string[] | undefined,

@@ -51,6 +51,7 @@ export const LogForm = ({
     )[0]?.id,
     registrations,
     selected_registrations: registrations,
+    allUnits: options.units,
   }
 
   const methods = useForm({

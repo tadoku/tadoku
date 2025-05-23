@@ -160,7 +160,7 @@ export const LogForm = ({
                 />
               ) : null}
             </div>
-            <div className="v-stack spaced">
+            <div className="v-stack spaced flex-grow">
               <AutocompleteInput
                 name="language"
                 label="Language"

@@ -25,16 +25,12 @@ export const NewLogFormSchema = z
     selected_registrations: z.array(ContestRegistrationView),
     language: Language,
     activity: Activity,
-    amount: z
+    amountValue: z
       .number({ invalid_type_error: 'Please enter a number' })
       .positive(),
-    unit: Unit,
+    amountUnit: z.string(),
     tags: z.array(Tag).max(3, 'Must select three or fewer'),
     description: z.string().optional(),
-  })
-  .refine(log => log.unit.log_activity_id === log.activity.id, {
-    path: ['unit'],
-    message: 'This unit is cannot be used for this activity',
   })
   .transform(log => {
     const newLog = {
@@ -64,8 +60,8 @@ export const NewLogAPISchema = NewLogFormSchema.transform(log => ({
   registration_ids: log.registration_ids,
   language_code: log.language.code,
   activity_id: log.activity.id,
-  amount: log.amount,
-  unit_id: log.unit.id,
+  amount: log.amountValue,
+  unit_id: log.amountUnit,
   tags: log.tags.map(it => it.name),
   description: log.description,
 }))

@@ -27,6 +27,7 @@ import { formatScore } from '@app/common/format'
 import { useDebouncedCallback } from 'use-debounce'
 import { useSessionOrRedirect } from '@app/common/session'
 import { useEffect } from 'react'
+import { AmountWithUnit, Option } from 'ui/components/Form'
 
 interface Props {
   registrations: ContestRegistrationsView
@@ -45,9 +46,9 @@ export const LogForm = ({
     tracking_mode: registrations.length > 0 ? 'automatic' : 'personal',
     language:
       registrations.length > 0 ? registrations[0].languages[0] : undefined,
-    unit: options.units.filter(
+    amountUnit: options.units.filter(
       it => it.log_activity_id === options.activities[0].id,
-    )[0],
+    )[0]?.id,
     registrations,
     selected_registrations: registrations,
   }
@@ -63,8 +64,8 @@ export const LogForm = ({
   const trackingMode = methods.watch('tracking_mode') ?? 'personal'
   const activity = methods.watch('activity')
   const language = methods.watch('language')
-  const unit = methods.watch('unit')
-  const amount = methods.watch('amount')
+  const unitId = methods.watch('amountUnit')
+  const amount = methods.watch('amountValue')
 
   const languages =
     trackingMode === 'personal'
@@ -87,12 +88,17 @@ export const LogForm = ({
 
   const tags = filterTags(options.tags, activity)
   const units = filterUnits(options.units, activity?.id, language)
+  const unitsAsOptions: Option[] = units.map(it => ({
+    value: it.id,
+    label: it.name,
+  }))
+  const currentSelectedUnit = units.find(it => it.id === unitId)
   const activities = filterActivities(
     options.activities,
     registrations,
     trackingMode,
   )
-  const estimatedScore = estimateScore(amount, unit)
+  const estimatedScore = estimateScore(amount, currentSelectedUnit)
 
   const router = useRouter()
   const createLogMutation = useCreateLog(id => {
@@ -112,10 +118,12 @@ export const LogForm = ({
     const subscription = methods.watch((value, { name, type }) => {
       // reset unit if activity or language was changed
       if ((name === 'language' || name === 'activity') && type === 'change') {
-        methods.setValue(
-          'unit',
-          filterUnits(options.units, value.activity?.id, language)?.[0],
-        )
+        // sus
+        const id = filterUnits(options.units, value.activity?.id, language)?.[0]
+          .id
+        if (id !== methods.getValues('amountUnit')) {
+          methods.setValue('amountUnit', id)
+        }
       }
     })
     return () => subscription.unsubscribe()
@@ -177,31 +185,15 @@ export const LogForm = ({
                 format={option => option.name}
               />
               <div className="h-stack spaced">
-                <div className="flex-grow">
-                  <Input
-                    name="amount"
-                    label="Amount"
-                    type="number"
-                    defaultValue={0}
-                    options={{ valueAsNumber: true }}
-                    min={0}
-                    step="any"
-                  />
-                </div>
-                <div className="min-w-[150px]">
-                  <AutocompleteInput
-                    name="unit"
-                    label="Unit"
-                    options={units}
-                    match={(option, query) =>
-                      option.name
-                        .toLowerCase()
-                        .replace(/[^a-zA-Z0-9]/g, '')
-                        .includes(query.toLowerCase())
-                    }
-                    format={option => option.name}
-                  />
-                </div>
+                <AmountWithUnit
+                  label="Amount"
+                  name="amount"
+                  defaultValue={0}
+                  min={0}
+                  step="any"
+                  units={unitsAsOptions}
+                  unitsLabel="Unit"
+                />
               </div>
               <AutocompleteMultiInput
                 name="tags"

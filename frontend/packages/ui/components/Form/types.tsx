@@ -4,6 +4,7 @@ export interface FormElementProps<T extends FieldValues> {
   name: FieldPath<T>
   options?: RegisterOptions
 }
+
 export interface Option {
   value: string
   label: string

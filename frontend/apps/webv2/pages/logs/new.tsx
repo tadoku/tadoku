@@ -12,7 +12,7 @@ import { getQueryStringIntParameter } from '@app/common/router'
 import Head from 'next/head'
 import { useSessionOrRedirect } from '@app/common/session'
 
-interface Props { }
+interface Props {}
 
 const Page: NextPage<Props> = () => {
   const registrations = useOngoingContestRegistrations()
@@ -47,7 +47,7 @@ const Page: NextPage<Props> = () => {
         <LogForm
           registrations={registrations.data}
           options={options.data}
-          defaultValues={{ amount }}
+          defaultValues={{ amountValue: amount }}
         />
       ) : null}
     </>

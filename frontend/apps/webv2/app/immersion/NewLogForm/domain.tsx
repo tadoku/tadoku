@@ -24,7 +24,7 @@ export const NewLogFormSchema = z
     registrations: z.array(ContestRegistrationView),
     selected_registrations: z.array(ContestRegistrationView),
     language: Language,
-    activity: Activity,
+    activityId: z.number(),
     amountValue: z
       .number({ invalid_type_error: 'Please enter a number' })
       .positive(),
@@ -36,7 +36,7 @@ export const NewLogFormSchema = z
   .refine(
     log => {
       const unit = log.allUnits.find(it => it.id === log.amountUnit)
-      return unit?.log_activity_id === log.activity.id
+      return unit?.log_activity_id === log.activityId
     },
     {
       path: ['amountUnit'],
@@ -52,7 +52,7 @@ export const NewLogFormSchema = z
       newLog.registration_ids = contestsForLog({
         registrations: log.registrations,
         manualContests: log.selected_registrations,
-        activity: log.activity,
+        activityId: log.activityId,
         language: log.language,
         trackingMode: log.tracking_mode,
       }).map(it => it.id)
@@ -70,7 +70,7 @@ export type NewLogFormSchema = z.infer<typeof NewLogFormSchema>
 export const NewLogAPISchema = NewLogFormSchema.transform(log => ({
   registration_ids: log.registration_ids,
   language_code: log.language.code,
-  activity_id: log.activity.id,
+  activity_id: log.activityId,
   amount: log.amountValue,
   unit_id: log.amountUnit,
   tags: log.tags.map(it => it.name),
@@ -190,13 +190,13 @@ export function contestsForLog({
   manualContests,
   trackingMode,
   language,
-  activity,
+  activityId,
 }: {
   registrations: ContestRegistrationsView['registrations']
   manualContests: ContestRegistrationsView['registrations']
   trackingMode: TrackingMode
   language: Language
-  activity: Activity
+  activityId: number
 }): ContestRegistrationsView['registrations'] {
   if (trackingMode === 'personal') {
     return []
@@ -206,7 +206,7 @@ export function contestsForLog({
     .filter(it => it.contest)
     .filter(it => it.languages.map(it => it.code).includes(language.code))
     .filter(it =>
-      it.contest!.allowed_activities.map(it => it.id).includes(activity.id),
+      it.contest!.allowed_activities.map(it => it.id).includes(activityId),
     )
     .filter(it =>
       Interval.fromDateTimes(

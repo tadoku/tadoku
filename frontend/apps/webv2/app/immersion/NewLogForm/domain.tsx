@@ -23,7 +23,7 @@ export const NewLogFormSchema = z
     tracking_mode: z.enum(['automatic', 'manual', 'personal']),
     registrations: z.array(ContestRegistrationView),
     selected_registrations: z.array(ContestRegistrationView),
-    language: Language,
+    languageCode: z.string().length(3, 'invalid language'),
     activityId: z.number(),
     amountValue: z
       .number({ invalid_type_error: 'Please enter a number' })
@@ -53,7 +53,7 @@ export const NewLogFormSchema = z
         registrations: log.registrations,
         manualContests: log.selected_registrations,
         activityId: log.activityId,
-        language: log.language,
+        languageCode: log.languageCode,
         trackingMode: log.tracking_mode,
       }).map(it => it.id)
     } catch (err) {}
@@ -69,7 +69,7 @@ export type NewLogFormSchema = z.infer<typeof NewLogFormSchema>
 
 export const NewLogAPISchema = NewLogFormSchema.transform(log => ({
   registration_ids: log.registration_ids,
-  language_code: log.language.code,
+  language_code: log.languageCode,
   activity_id: log.activityId,
   amount: log.amountValue,
   unit_id: log.amountUnit,
@@ -82,7 +82,7 @@ export type NewLogAPISchema = z.infer<typeof NewLogAPISchema>
 export const filterUnits = (
   units: Unit[],
   activityId: number | undefined,
-  language: Language | undefined,
+  languageCode: string | undefined,
 ) => {
   if (!activityId) {
     return []
@@ -105,7 +105,7 @@ export const filterUnits = (
   const filteredUnits = []
   for (const units of grouped.values()) {
     const unitForCurrentLanguage = units.find(
-      it => it.language_code === language?.code,
+      it => it.language_code === languageCode,
     )
     const fallback = units.find(it => it.language_code === undefined)
 
@@ -189,13 +189,13 @@ export function contestsForLog({
   registrations,
   manualContests,
   trackingMode,
-  language,
+  languageCode,
   activityId,
 }: {
   registrations: ContestRegistrationsView['registrations']
   manualContests: ContestRegistrationsView['registrations']
   trackingMode: TrackingMode
-  language: Language
+  languageCode: string
   activityId: number
 }): ContestRegistrationsView['registrations'] {
   if (trackingMode === 'personal') {
@@ -204,7 +204,7 @@ export function contestsForLog({
 
   const eligibleContests = registrations
     .filter(it => it.contest)
-    .filter(it => it.languages.map(it => it.code).includes(language.code))
+    .filter(it => it.languages.map(it => it.code).includes(languageCode))
     .filter(it =>
       it.contest!.allowed_activities.map(it => it.id).includes(activityId),
     )

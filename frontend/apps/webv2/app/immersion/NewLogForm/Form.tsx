@@ -44,8 +44,8 @@ export const LogForm = ({
     ...originalDefaultValues,
     activityId: options.activities[0].id,
     tracking_mode: registrations.length > 0 ? 'automatic' : 'personal',
-    language:
-      registrations.length > 0 ? registrations[0].languages[0] : undefined,
+    languageCode:
+      registrations.length > 0 ? registrations[0].languages[0].code : undefined,
     amountUnit: options.units.filter(
       it => it.log_activity_id === options.activities[0].id,
     )[0]?.id,
@@ -64,7 +64,7 @@ export const LogForm = ({
 
   const trackingMode = methods.watch('tracking_mode') ?? 'personal'
   const activityId = methods.watch('activityId')
-  const language = methods.watch('language')
+  const languageCode = methods.watch('languageCode')
   const unitId = methods.watch('amountUnit')
   const amount = methods.watch('amountValue')
 
@@ -86,10 +86,14 @@ export const LogForm = ({
             }
             return 0
           })
+  const languagesAsOptions: Option[] = languages.map(it => ({
+    value: it.code,
+    label: it.name,
+  }))
 
   const activity = options.activities.find(it => it.id === activityId)
   const tags = filterTags(options.tags, activity)
-  const units = filterUnits(options.units, activity?.id, language)
+  const units = filterUnits(options.units, activity?.id, languageCode)
   const unitsAsOptions: Option[] = units.map(it => ({
     value: it.id,
     label: it.name,
@@ -123,10 +127,16 @@ export const LogForm = ({
   useEffect(() => {
     const subscription = methods.watch((value, { name, type }) => {
       // reset unit if activity or language was changed
-      if ((name === 'language' || name === 'activityId') && type === 'change') {
+      if (
+        (name === 'languageCode' || name === 'activityId') &&
+        type === 'change'
+      ) {
         // sus
-        const id = filterUnits(options.units, value.activityId, language)?.[0]
-          .id
+        const id = filterUnits(
+          options.units,
+          value.activityId,
+          languageCode,
+        )?.[0].id
         if (id !== methods.getValues('amountUnit')) {
           methods.setValue('amountUnit', id)
         }
@@ -166,17 +176,10 @@ export const LogForm = ({
               ) : null}
             </div>
             <div className="v-stack spaced lg:w-3/5">
-              <AutocompleteInput
-                name="language"
+              <Select
+                name="languageCode"
                 label="Language"
-                options={languages}
-                match={(option, query) =>
-                  option.name
-                    .toLowerCase()
-                    .replace(/[^a-zA-Z0-9]/g, '')
-                    .includes(query.toLowerCase())
-                }
-                format={option => option.name}
+                values={languagesAsOptions}
               />
               <Select
                 name="activityId"

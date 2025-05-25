@@ -5,20 +5,20 @@
 
 - Development
 
-  - [Architectural Decision Records](adr.md)
+  - [Architectural Decision Records](/adr.md)
   - [Local Environment](/local_environment.md)
 
 - Services
 
-  - `immersion-api`
-  - `content-api`
+  - [immersion-api](/services/immersion-api.md)
+  - [content-api](/services/content-api.md)
 
 - Frontend
 
-  - `auth`
-  - `styleguide`
-  - `webv2`
+  - [auth](frontend/auth.md)
+  - [styleguide](frontend/styleguide.md)
+  - [webv2](frontend/webv2.md)
 
 - Jobs
 
-  - `postgres-backup`
+  - [postgres-backup](/jobs/postgres-backup.md)

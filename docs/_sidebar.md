@@ -5,6 +5,7 @@
 
 - Development
 
+  - [System Architecture](/architecture.md)
   - [Architectural Decision Records](/adr.md)
   - [Local Environment](/local_environment.md)
 

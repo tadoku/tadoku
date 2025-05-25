@@ -2,7 +2,7 @@
 
 ## Overview
 
-The Tadoku app consists of the following backend services & frontends:
+The Tadoku app consists of several backend services & frontends deployed to a Kubernetes cluster. For development we use [Tilt](https://tilt.dev/) to spin up a [local environment](/local_environment.md) which mimics the production deployment.
 
 ### Backend services
 

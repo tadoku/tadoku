@@ -496,6 +496,43 @@ paths:
                 $ref: "#/components/schemas/UserProfile"
         "404":
           description: not found
+  /users/{userId}/tags:
+    get:
+      summary: Get user's tags
+      description: Returns a list of the top 20 most frequently used tags by the user that match the given prefix
+      operationId: getUserTags
+      tags: [user]
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: prefix
+          in: query
+          required: false
+          description: Filter tags that start with this prefix
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of user tags
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  tags:
+                    type: array
+                    items:
+                      type: string
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
   /users/{userId}/activity/{year}:
     get:
       summary: Fetches a activity summary of a user for a given year

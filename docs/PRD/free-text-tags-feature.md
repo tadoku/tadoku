@@ -13,7 +13,7 @@ During implementation, we will use a dual storage approach to maintain backward 
 
 ## Steps
 
-### Step 1: Create API Endpoint for Tag Retrieval [NOT STARTED]
+### Step 1: Create API Endpoint for Tag Retrieval [COMPLETE]
 
 Location:
 `services/immersion-api/http/rest/openapi/api.yaml`
@@ -23,7 +23,7 @@ Add a new endpoint to retrieve a user's previously used tags. This will support 
 
 - Create a GET endpoint at `/users/{userId}/tags` that returns an array of tag strings
 - Ensure the endpoint is authenticated and only returns tags for the authenticated user
-- Add pagination support to handle potentially large numbers of tags
+- Return only the top 20 most frequently used tags
 - Tags should be returned in order of frequency (most used first)
 - Add prefix filtering to support efficient autocomplete
 
@@ -39,7 +39,7 @@ paths:
   /users/{userId}/tags:
     get:
       summary: Get user's tags
-      description: Returns a list of tags previously used by the user
+      description: Returns a list of the top 20 most frequently used tags by the user that match the given prefix
       operationId: getUserTags
       parameters:
         - name: userId
@@ -53,18 +53,6 @@ paths:
           description: Filter tags that start with this prefix
           schema:
             type: string
-        - name: limit
-          in: query
-          required: false
-          schema:
-            type: integer
-            default: 50
-        - name: offset
-          in: query
-          required: false
-          schema:
-            type: integer
-            default: 0
       responses:
         "200":
           description: List of user tags
@@ -77,12 +65,10 @@ paths:
                     type: array
                     items:
                       type: string
-                  total:
-                    type: integer
         "401":
-          $ref: "#/components/responses/Unauthorized"
+          description: Unauthorized
         "403":
-          $ref: "#/components/responses/Forbidden"
+          description: Forbidden
 ```
 
 Notes:

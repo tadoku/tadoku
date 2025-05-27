@@ -77,22 +77,64 @@ Notes:
 - Tags will be lowercased when written to the database, not when retrieved
 - The prefix filter parameter will enable efficient autocomplete functionality
 
-### Step 2: Implement Tag Storage and Retrieval in Backend [NOT STARTED]
+### Step 2: Create Copy of Existing `log_tags` Table as `log_tags_legacy` [NOT STARTED]
 
 Location:
 `services/immersion-api/storage/postgres/migrations/`
 
 Change description:
-Create a database migration to ensure tags are properly stored and can be efficiently queried. Implement a dual storage approach to maintain compatibility with existing features.
+Before implementing the new tag storage system, create a copy of the existing `log_tags` table as `log_tags_legacy`. This approach supports gradual feature rollout by preserving the existing table while we develop and test the new implementation.
 
-- Create a new `log_tags` table to store tags while keeping the existing array in the `logs` table
-- Create indexes for efficient tag retrieval
-- Modify existing tag-related queries to write to both storage mechanisms
+- Create a migration to copy the existing `log_tags` table structure and data to `log_tags_legacy`
+- Create necessary indexes and constraints on the new table
+- Keep the original `log_tags` table intact to maintain existing functionality during development
 
 References:
 
 - `services/immersion-api/storage/postgres/migrations/`
 - `services/immersion-api/storage/postgres/queries/`
+- `services/immersion-api/http/rest/handlers/`
+
+Change snippet:
+
+```sql
+-- Example migration
+create table if not exists log_tags_legacy as table log_tags;
+
+-- Recreate primary key
+alter table log_tags_legacy add primary key (log_id, tag);
+
+-- Recreate indexes (adjust based on actual existing indexes)
+create index if not exists idx_log_tags_legacy_tag on log_tags_legacy(tag);
+create index if not exists idx_log_tags_legacy_user on log_tags_legacy(user_id, tag);
+
+-- Recreate foreign key constraints
+alter table log_tags_legacy add constraint log_tags_legacy_log_id_fkey
+  foreign key (log_id) references logs(id) on delete cascade;
+```
+
+Notes:
+
+- This approach maintains the existing `log_tags` table for current functionality
+- The copied table allows us to safely develop and test the new implementation
+- Enables gradual rollout of features without breaking existing functionality
+- Consider adding a comment to the legacy table to document its purpose for future maintenance
+- Include appropriate logging and monitoring during the migration process
+
+### Step 3: Create Migration for New `log_tags` Table [NOT STARTED]
+
+Location:
+`services/immersion-api/storage/postgres/migrations/`
+
+Change description:
+Create a database migration to add the new `log_tags` table and necessary indexes for efficient querying.
+
+- Create a new `log_tags` table to store tags
+- Create indexes for efficient tag retrieval
+
+References:
+
+- `services/immersion-api/storage/postgres/migrations/`
 
 Change snippet:
 
@@ -110,57 +152,11 @@ create index idx_log_tags_user on log_tags(user_id, tag);
 
 Notes:
 
-- Ensure tags are stored in lowercase in both the database table and the array
-- Consider performance implications of tag queries, especially for users with many logs
-- Implement transactions to ensure consistency between both storage mechanisms
+- Ensure proper foreign key constraints are in place
+- Create appropriate indexes for performance optimization
+- Consider adding constraints for tag length or format if needed
 
-### Step 3: Implement Backend Tag Endpoints [NOT STARTED]
-
-Location:
-`services/immersion-api/http/rest/handlers/`
-
-Change description:
-Implement the handler for the new tag endpoint and update existing log submission endpoints to handle free text tags.
-
-- Create handler for GET `/users/{userId}/tags` using the new `log_tags` table
-- Update log submission/update handlers to process free text tags and write to both storage mechanisms
-
-References:
-
-- `services/immersion-api/http/rest/handlers/`
-- `services/immersion-api/storage/postgres/queries/`
-
-Notes:
-
-- Consider adding rate limiting for tag-related endpoints
-- Ensure transactions are used to maintain consistency between both tag storage mechanisms
-
-### Step 4: Update Log Submission Endpoints [NOT STARTED]
-
-Location:
-`services/immersion-api/http/rest/handlers/logs.go`
-
-Change description:
-Enhance the existing log submission endpoints to properly handle the new free text tags format.
-
-- Update log creation and update endpoints to normalize tags to lowercase
-- Add validation to prevent excessively long tags or too many tags per log
-- Implement writing to both the array in the `logs` table and the new `log_tags` table
-- Ensure proper transaction handling for data consistency
-
-References:
-
-- `services/immersion-api/http/rest/handlers/logs.go`
-- `services/immersion-api/storage/postgres/queries/logs.sql`
-
-Notes:
-
-- Consider implementing a maximum length for tags (e.g., 50 characters)
-- Consider implementing a maximum number of tags per log (e.g., 10 tags)
-- Add validation to reject tags with special characters if needed
-- Ensure both storage methods are updated within the same transaction
-
-### Step 5: Create Data Migration for Existing Tags [NOT STARTED]
+### Step 4: Create Migration to Copy Existing Tag Data [NOT STARTED]
 
 Location:
 `services/immersion-api/storage/postgres/migrations/`
@@ -194,7 +190,112 @@ Notes:
 - Add monitoring to track migration progress
 - Have a rollback plan in case of issues
 
-### Step 6: Create Tag Input Component [NOT STARTED]
+### Step 5: Update Tag-Related Queries to Use Both Storage Mechanisms [NOT STARTED]
+
+Location:
+`services/immersion-api/storage/postgres/queries/`
+`services/immersion-api/http/rest/handlers/`
+
+Change description:
+Modify existing tag-related queries to write to both the array in the `logs` table and the new `log_tags` table.
+
+- Update tag create/update/delete operations to maintain both storage systems
+- Ensure transactions are used for data consistency
+- Implement error handling for cases where one storage mechanism fails
+
+References:
+
+- `services/immersion-api/storage/postgres/queries/`
+- `services/immersion-api/http/rest/handlers/`
+
+Notes:
+
+- Use database transactions to ensure atomicity
+- Consider performance implications of writing to both storage mechanisms
+- Implement proper error handling and logging
+- Consider gradually transitioning read operations to use the new table
+
+### Step 6: Implement Backend Tag Endpoints [NOT STARTED]
+
+Location:
+`services/immersion-api/http/rest/handlers/`
+
+Change description:
+Implement the handler for the new tag endpoint and update existing log submission endpoints to handle free text tags.
+
+- Create handler for GET `/users/{userId}/tags` using the new `log_tags` table
+- Update log submission/update handlers to process free text tags and write to both storage mechanisms
+
+References:
+
+- `services/immersion-api/http/rest/handlers/`
+- `services/immersion-api/storage/postgres/queries/`
+
+Notes:
+
+- Consider adding rate limiting for tag-related endpoints
+- Ensure transactions are used to maintain consistency between both tag storage mechanisms
+
+### Step 7: Update Log Submission Endpoints [NOT STARTED]
+
+Location:
+`services/immersion-api/http/rest/handlers/logs.go`
+
+Change description:
+Enhance the existing log submission endpoints to properly handle the new free text tags format.
+
+- Update log creation and update endpoints to normalize tags to lowercase
+- Add validation to prevent excessively long tags or too many tags per log
+- Implement writing to both the array in the `logs` table and the new `log_tags` table
+- Ensure proper transaction handling for data consistency
+
+References:
+
+- `services/immersion-api/http/rest/handlers/logs.go`
+- `services/immersion-api/storage/postgres/queries/logs.sql`
+
+Notes:
+
+- Consider implementing a maximum length for tags (e.g., 50 characters)
+- Consider implementing a maximum number of tags per log (e.g., 10 tags)
+- Add validation to reject tags with special characters if needed
+- Ensure both storage methods are updated within the same transaction
+
+### Step 8: Create Data Migration for Existing Tags [NOT STARTED]
+
+Location:
+`services/immersion-api/storage/postgres/migrations/`
+
+Change description:
+Create a migration script to copy existing tags from the array in the `logs` table to the new `log_tags` table.
+
+- Implement a migration that reads all existing logs
+- Extract tags from the array and insert them into the `log_tags` table
+- Ensure tags are converted to lowercase during migration
+- Process in batches to minimize database load
+
+References:
+
+- `services/immersion-api/storage/postgres/migrations/`
+
+Change snippet:
+
+```sql
+-- Example migration to copy existing tags (implement in batches for production)
+insert into log_tags (log_id, user_id, tag)
+select l.id, l.user_id, lower(t) as tag
+from logs l, unnest(l.tags) as t
+on conflict do nothing;
+```
+
+Notes:
+
+- Consider running this migration during off-peak hours
+- Implement batching for large datasets
+- Add monitoring to track migration progress
+- Have a rollback plan in case of issues
+
+### Step 9: Create Tag Input Component [NOT STARTED]
 
 Location:
 `frontend/packages/ui/src/components/`
@@ -258,7 +359,7 @@ Notes:
 - Test thoroughly on mobile devices
 - Consider keyboard navigation and focus management
 
-### Step 7: Implement Tag Fetching Hook [NOT STARTED]
+### Step 10: Implement Tag Fetching Hook [NOT STARTED]
 
 Location:
 `frontend/apps/webv2/src/hooks/`
@@ -309,7 +410,7 @@ Notes:
 - Consider debouncing search queries to prevent excessive API calls
 - Implement proper error handling and loading states
 
-### Step 8: Update Log Form to Use New Tag Component [NOT STARTED]
+### Step 11: Update Log Form to Use New Tag Component [NOT STARTED]
 
 Location:
 `frontend/apps/webv2/src/components/logs/`
@@ -332,7 +433,7 @@ Notes:
 - Ensure backward compatibility with existing logs
 - Consider adding a migration path for users with existing logs
 
-### Step 9: Update Log Display Components [NOT STARTED]
+### Step 12: Update Log Display Components [NOT STARTED]
 
 Location:
 `frontend/apps/webv2/src/components/logs/`
@@ -352,7 +453,7 @@ Notes:
 - Consider adding a way to search/filter logs by tag
 - Ensure tag display is consistent across all views
 
-### Step 10: Update Tag-Dependent Features to Use New Table [NOT STARTED]
+### Step 13: Update Tag-Dependent Features to Use New Table [NOT STARTED]
 
 Location:
 Various backend and frontend files
@@ -376,7 +477,7 @@ Notes:
 - Maintain backward compatibility during the transition
 - Add feature flags if needed to control which implementation is used
 
-### Step 11: Testing and Validation [NOT STARTED]
+### Step 14: Testing and Validation [NOT STARTED]
 
 Change description:
 Implement comprehensive testing for both frontend and backend components.
@@ -396,7 +497,7 @@ Notes:
 - Test with keyboard-only navigation
 - Test on various mobile devices and screen sizes
 
-### Step 12: Clean Up Legacy Tag Implementation [NOT STARTED]
+### Step 15: Clean Up Legacy Tag Implementation [NOT STARTED]
 
 Location:
 Various backend and frontend files

@@ -327,6 +327,11 @@ type ContestRegistrationUpsertJSONBody struct {
 	LanguageCodes []string `json:"language_codes"`
 }
 
+// ContestModerationDetachLogJSONBody defines parameters for ContestModerationDetachLog.
+type ContestModerationDetachLogJSONBody struct {
+	Reason string `json:"reason"`
+}
+
 // FetchLeaderboardGlobalParams defines parameters for FetchLeaderboardGlobal.
 type FetchLeaderboardGlobalParams struct {
 	PageSize     *int    `form:"page_size,omitempty" json:"page_size,omitempty"`
@@ -364,6 +369,9 @@ type ProfileListLogsParams struct {
 // ContestCreateJSONRequestBody defines body for ContestCreate for application/json ContentType.
 type ContestCreateJSONRequestBody = Contest
 
+// ContestModerationDetachLogJSONRequestBody defines body for ContestModerationDetachLog for application/json ContentType.
+type ContestModerationDetachLogJSONRequestBody ContestModerationDetachLogJSONBody
+
 // ContestRegistrationUpsertJSONRequestBody defines body for ContestRegistrationUpsert for application/json ContentType.
 type ContestRegistrationUpsertJSONRequestBody ContestRegistrationUpsertJSONBody
 
@@ -399,6 +407,9 @@ type ServerInterface interface {
 	// Lists the logs attached to a contest
 	// (GET /contests/{id}/logs)
 	ContestListLogs(ctx echo.Context, id openapi_types.UUID, params ContestListLogsParams) error
+	// Detaches a log from a contest (moderation action)
+	// (POST /contests/{id}/moderation/detach/{log_id})
+	ContestModerationDetachLog(ctx echo.Context, id openapi_types.UUID, logId openapi_types.UUID) error
 	// Fetches the activity of a user profile in a contest
 	// (GET /contests/{id}/profile/{user_id}/activity)
 	ContestProfileFetchActivity(ctx echo.Context, id openapi_types.UUID, userId openapi_types.UUID) error
@@ -664,6 +675,32 @@ func (w *ServerInterfaceWrapper) ContestListLogs(ctx echo.Context) error {
 
 	// Invoke the callback with all the unmarshalled arguments
 	err = w.Handler.ContestListLogs(ctx, id, params)
+	return err
+}
+
+// ContestModerationDetachLog converts echo context to params.
+func (w *ServerInterfaceWrapper) ContestModerationDetachLog(ctx echo.Context) error {
+	var err error
+	// ------------- Path parameter "id" -------------
+	var id openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithLocation("simple", false, "id", runtime.ParamLocationPath, ctx.Param("id"), &id)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter id: %s", err))
+	}
+
+	// ------------- Path parameter "log_id" -------------
+	var logId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithLocation("simple", false, "log_id", runtime.ParamLocationPath, ctx.Param("log_id"), &logId)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter log_id: %s", err))
+	}
+
+	ctx.Set(CookieAuthScopes, []string{""})
+
+	// Invoke the callback with all the unmarshalled arguments
+	err = w.Handler.ContestModerationDetachLog(ctx, id, logId)
 	return err
 }
 
@@ -1103,6 +1140,7 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 	router.GET(baseURL+"/contests/:id", wrapper.ContestFindByID)
 	router.GET(baseURL+"/contests/:id/leaderboard", wrapper.ContestFetchLeaderboard)
 	router.GET(baseURL+"/contests/:id/logs", wrapper.ContestListLogs)
+	router.POST(baseURL+"/contests/:id/moderation/detach/:log_id", wrapper.ContestModerationDetachLog)
 	router.GET(baseURL+"/contests/:id/profile/:user_id/activity", wrapper.ContestProfileFetchActivity)
 	router.GET(baseURL+"/contests/:id/profile/:user_id/scores", wrapper.ContestProfileFetchScores)
 	router.GET(baseURL+"/contests/:id/registration", wrapper.ContestFindRegistration)

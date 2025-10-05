@@ -203,3 +203,8 @@ select (not(true = any(
   where
     contest_logs.log_id = sqlc.arg('log_id')
 )))::boolean as can_be_deleted;
+
+-- name: DetachLogFromContest :exec
+delete from contest_logs
+where contest_id = sqlc.arg('contest_id')
+  and log_id = sqlc.arg('log_id');

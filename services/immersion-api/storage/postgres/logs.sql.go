@@ -127,6 +127,22 @@ func (q *Queries) DeleteLog(ctx context.Context, logID uuid.UUID) error {
 	return err
 }
 
+const detachLogFromContest = `-- name: DetachLogFromContest :exec
+delete from contest_logs
+where contest_id = $1
+  and log_id = $2
+`
+
+type DetachLogFromContestParams struct {
+	ContestID uuid.UUID
+	LogID     uuid.UUID
+}
+
+func (q *Queries) DetachLogFromContest(ctx context.Context, arg DetachLogFromContestParams) error {
+	_, err := q.db.ExecContext(ctx, detachLogFromContest, arg.ContestID, arg.LogID)
+	return err
+}
+
 const fetchScoresForProfile = `-- name: FetchScoresForProfile :many
 select
   language_code,

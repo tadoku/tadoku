@@ -26,6 +26,7 @@ type Repository interface {
 	// log
 	CreateLog(context.Context, *CreateLogRequest) (*uuid.UUID, error)
 	DeleteLog(context.Context, *DeleteLogRequest) error
+	DetachLogFromContest(context.Context, *DetachLogFromContestRequest, uuid.UUID) error
 
 	UpsertUser(context.Context, *UpsertUserRequest) error
 
@@ -40,6 +41,7 @@ type Service interface {
 	// log
 	CreateLog(context.Context, *CreateLogRequest) (*query.Log, error)
 	DeleteLog(context.Context, *DeleteLogRequest) error
+	DetachLogFromContest(context.Context, *DetachLogFromContestRequest) error
 
 	UpdateUserMetadataFromSession(context.Context) error
 }

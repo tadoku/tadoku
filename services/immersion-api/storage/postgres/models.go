@@ -6,6 +6,7 @@ package postgres
 
 import (
 	"database/sql"
+	"encoding/json"
 	"time"
 
 	"github.com/google/uuid"
@@ -86,6 +87,15 @@ type LogUnit struct {
 	Name          string
 	Modifier      float32
 	LanguageCode  sql.NullString
+}
+
+type ModerationAuditLog struct {
+	ID          uuid.UUID
+	UserID      uuid.UUID
+	Action      string
+	Metadata    json.RawMessage
+	Description sql.NullString
+	CreatedAt   time.Time
 }
 
 type User struct {

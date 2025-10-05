@@ -6,6 +6,7 @@ go_library(
         "createcontest.go",
         "createlog.go",
         "deletelog.go",
+        "detachlogfromcontest.go",
         "service.go",
         "upsertcontestregistration.go",
         "upsertuser.go",
@@ -22,10 +23,14 @@ go_library(
 
 go_test(
     name = "command_test",
-    srcs = ["createcontest_test.go"],
+    srcs = [
+        "createcontest_test.go",
+        "detachlogfromcontest_test.go",
+    ],
     deps = [
         ":command",
         "//services/common/domain",
+        "//services/immersion-api/domain/query",
         "@com_github_google_uuid//:uuid",
         "@com_github_stretchr_testify//assert",
     ],

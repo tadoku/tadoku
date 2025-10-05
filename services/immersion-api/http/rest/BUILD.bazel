@@ -16,6 +16,7 @@ go_library(
         "server_contestgetconfigurations.go",
         "server_contestlist.go",
         "server_contestlistlogs.go",
+        "server_contestmoderationdetachlog.go",
         "server_contestprofilefetchactivity.go",
         "server_contestprofilefetchscores.go",
         "server_contestregistrationupsert.go",

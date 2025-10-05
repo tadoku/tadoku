@@ -1,40 +1,35 @@
 load('ext://helm_resource', 'helm_resource', 'helm_repo')
 
-# https://artifacthub.io/packages/helm/bitnami/postgresql/
-helm_repo('bitnami', 'https://charts.bitnami.com/bitnami', resource_name='helm-repo-bitnami', labels=["infra"])
+# https://github.com/hansehe/postgres-helm/
+helm_repo('postgres', 'https://raw.githubusercontent.com/hansehe/postgres-helm/master/helm/charts/postgres', resource_name='helm-repo-postgres', labels=["infra"])
 
 # kratos
-k8s_yaml('./kratos/postgres.yaml')
 helm_resource('postgres-kratos',
-              'bitnami/postgresql',
+              'postgres/postgres',
               flags=[
-                '-f', './kratos/postgres_values.yaml',
-                '--version=12.12.10',
+                '-f', './kratos_values.yaml',
               ],
-              deps=['./kratos/postgres_values.yaml'],
-              resource_deps=['helm-repo-bitnami'])
+              deps=['./kratos_values.yaml'],
+              resource_deps=['helm-repo-postgres'])
 k8s_resource("postgres-kratos", labels=["infra"])
 
-# immersion
-k8s_yaml('./immersion/postgres.yaml')
+
+# content
 helm_resource('postgres-immersion',
-              'bitnami/postgresql',
+              'postgres/postgres',
               flags=[
-                '-f', './immersion/postgres_values.yaml',
-                '--version=12.12.10',
+                '-f', './immersion_values.yaml',
               ],
-              deps=['./immersion/postgres_values.yaml'],
-              resource_deps=['helm-repo-bitnami'])
+              deps=['./immersion_values.yaml'],
+              resource_deps=['helm-repo-postgres'])
 k8s_resource("postgres-immersion", labels=["infra"])
 
 # content
-k8s_yaml('./content/postgres.yaml')
 helm_resource('postgres-content',
-              'bitnami/postgresql',
+              'postgres/postgres',
               flags=[
-                '-f', './content/postgres_values.yaml',
-                '--version=12.12.10',
+                '-f', './content_values.yaml',
               ],
-              deps=['./content/postgres_values.yaml'],
-              resource_deps=['helm-repo-bitnami'])
+              deps=['./content_values.yaml'],
+              resource_deps=['helm-repo-postgres'])
 k8s_resource("postgres-content", labels=["infra"])

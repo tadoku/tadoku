@@ -286,8 +286,6 @@ function Tooltip({
         x = parentWidth - w
       }
 
-      console.log({ x: x, y: y, w: w, h: h })
-
       setTooltipRect({ x, y, w, h, arrowX })
     }
   }, [ref, visible])

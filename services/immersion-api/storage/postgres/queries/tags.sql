@@ -3,5 +3,5 @@ select
   id,
   log_activity_id,
   name
-from log_tags
+from log_default_tags
 order by log_activity_id asc;

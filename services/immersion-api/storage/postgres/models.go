@@ -75,7 +75,7 @@ type LogActivity struct {
 	Default bool
 }
 
-type LogTag struct {
+type LogDefaultTag struct {
 	ID            uuid.UUID
 	LogActivityID int16
 	Name          string

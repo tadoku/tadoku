@@ -14,19 +14,19 @@ select
   id,
   log_activity_id,
   name
-from log_tags
+from log_default_tags
 order by log_activity_id asc
 `
 
-func (q *Queries) ListTags(ctx context.Context) ([]LogTag, error) {
+func (q *Queries) ListTags(ctx context.Context) ([]LogDefaultTag, error) {
 	rows, err := q.db.QueryContext(ctx, listTags)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []LogTag
+	var items []LogDefaultTag
 	for rows.Next() {
-		var i LogTag
+		var i LogDefaultTag
 		if err := rows.Scan(&i.ID, &i.LogActivityID, &i.Name); err != nil {
 			return nil, err
 		}

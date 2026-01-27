@@ -1,11 +1,24 @@
-import { ChevronRightIcon } from '@heroicons/react/20/solid'
+import {
+  ChevronRightIcon,
+  EllipsisVerticalIcon,
+  TrashIcon,
+} from '@heroicons/react/20/solid'
 import { routes } from '@app/common/routes'
 import { DateTime } from 'luxon'
 import Link from 'next/link'
-import { Logs } from '@app/immersion/api'
-import { UseQueryResult } from 'react-query'
+import {
+  Logs,
+  Log,
+  useContest,
+  useDetachLogFromContest,
+  getContestLogsQueryKey,
+} from '@app/immersion/api'
+import { UseQueryResult, useQueryClient } from 'react-query'
 import { colorForActivity, formatScore, formatUnit } from '@app/common/format'
-import { Loading } from 'ui'
+import { Loading, ActionMenu, Modal } from 'ui'
+import { useState } from 'react'
+import { useSession } from '@app/common/session'
+import { toast } from 'react-toastify'
 
 function truncate(text: string | undefined, len: number) {
   if (text === undefined) {
@@ -22,9 +35,49 @@ function truncate(text: string | undefined, len: number) {
 interface Props {
   logs: UseQueryResult<Logs>
   showUsername?: boolean
+  contestId?: string
 }
 
-const LogsList = ({ logs, showUsername = false }: Props) => {
+const LogsList = ({ logs, showUsername = false, contestId }: Props) => {
+  const [session] = useSession()
+  const contest = useContest(contestId ?? '', { enabled: !!contestId })
+  const queryClient = useQueryClient()
+  const [modalOpen, setModalOpen] = useState(false)
+  const [selectedLog, setSelectedLog] = useState<Log | null>(null)
+  const [reason, setReason] = useState('')
+
+  const canModerate =
+    contestId &&
+    contest.data?.owner_user_id &&
+    session?.identity?.id === contest.data.owner_user_id
+
+  const detachMutation = useDetachLogFromContest(
+    () => {
+      toast.success('Log removed from contest')
+      if (contestId && logs.data) {
+        queryClient.invalidateQueries(
+          getContestLogsQueryKey({
+            contestId,
+            pageSize: logs.data.total_size,
+            page: 1,
+            includeDeleted: false,
+          }),
+        )
+      }
+      setModalOpen(false)
+      setReason('')
+      setSelectedLog(null)
+    },
+    () => {
+      toast.error('Failed to remove log')
+    },
+  )
+
+  const handleDetach = () => {
+    if (!selectedLog || !contestId || !reason.trim()) return
+    detachMutation.mutate({ contestId, logId: selectedLog.id, reason })
+  }
+
   if (logs.isLoading || logs.isIdle) {
     return <Loading className="pb-4" />
   }
@@ -103,16 +156,35 @@ const LogsList = ({ logs, showUsername = false }: Props) => {
                 </Link>
               </td>
               <td className="default link w-12">
-                <Link className="reset flex-shrink" href={routes.log(it.id)}>
-                  <ChevronRightIcon className="w-5 h-5" />
-                </Link>
+                {canModerate ? (
+                  <ActionMenu
+                    links={[
+                      {
+                        label: 'Remove from contest',
+                        href: '#',
+                        IconComponent: TrashIcon,
+                        type: 'danger',
+                        onClick: () => {
+                          setSelectedLog(it)
+                          setModalOpen(true)
+                        },
+                      },
+                    ]}
+                  >
+                    <EllipsisVerticalIcon className="w-5 h-5" />
+                  </ActionMenu>
+                ) : (
+                  <Link className="reset flex-shrink" href={routes.log(it.id)}>
+                    <ChevronRightIcon className="w-5 h-5" />
+                  </Link>
+                )}
               </td>
             </tr>
           ))}
           {logs.data.logs.length === 0 ? (
             <tr>
               <td
-                colSpan={7}
+                colSpan={(showUsername ? 8 : 7) + (canModerate ? 1 : 0)}
                 className="default h-32 font-bold text-center text-xl text-slate-400"
               >
                 No updates submitted yet
@@ -121,6 +193,49 @@ const LogsList = ({ logs, showUsername = false }: Props) => {
           ) : null}
         </tbody>
       </table>
+      <Modal
+        isOpen={modalOpen}
+        setIsOpen={setModalOpen}
+        title="Remove log from contest"
+      >
+        <p className="modal-body">
+          Why are you removing this log from the contest? Please provide a
+          reason.
+        </p>
+        <div className="modal-body">
+          <label className="label">
+            <span className="label-text">Reason</span>
+            <textarea
+              className="input"
+              value={reason}
+              onChange={e => setReason(e.target.value)}
+              placeholder="e.g. Duplicate entry, incorrect data..."
+              rows={4}
+            />
+          </label>
+        </div>
+        <div className="modal-actions">
+          <button
+            type="button"
+            className="btn danger"
+            onClick={handleDetach}
+            disabled={!reason.trim() || detachMutation.isLoading}
+          >
+            {detachMutation.isLoading ? 'Removing...' : 'Yes, remove it'}
+          </button>
+          <button
+            type="button"
+            className="btn ghost"
+            onClick={() => {
+              setModalOpen(false)
+              setReason('')
+              setSelectedLog(null)
+            }}
+          >
+            Cancel
+          </button>
+        </div>
+      </Modal>
     </div>
   )
 }

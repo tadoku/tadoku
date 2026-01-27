@@ -3,6 +3,12 @@
   "repository": "github.com/tadoku/tadoku/frontend",
   "license": "MIT",
   "private": true,
+  "pnpm": {
+    "overrides": {
+      "react": "18.2.0",
+      "react-dom": "18.2.0"
+    }
+  },
   "scripts": {
     "webv2": "pnpm --filter 'webv2' dev",
     "auth": "pnpm --filter 'auth' dev",

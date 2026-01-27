@@ -549,6 +549,23 @@ const Logs = z.object({
 
 export type Logs = z.infer<typeof Logs>
 
+export const getContestLogsQueryKey = (opts: {
+  pageSize: number
+  page: number
+  includeDeleted: boolean
+  userId?: string
+  contestId: string
+}) => [
+  'contest',
+  opts.contestId,
+  'profile',
+  opts.userId,
+  'logs',
+  opts.pageSize,
+  opts.page,
+  opts.includeDeleted,
+]
+
 export const useContestLogs = (
   opts: {
     pageSize: number
@@ -560,16 +577,7 @@ export const useContestLogs = (
   options?: { enabled?: boolean },
 ) =>
   useQuery(
-    [
-      'contest',
-      opts.contestId,
-      'profile',
-      opts.userId,
-      'logs',
-      opts.pageSize,
-      opts.page,
-      opts.includeDeleted,
-    ],
+    getContestLogsQueryKey(opts),
     async (): Promise<Logs> => {
       const params = {
         page_size: opts.pageSize.toString(),
@@ -880,4 +888,34 @@ export const useDeleteLog = (onSuccess: () => void, onError: () => void) =>
     onError() {
       onError()
     },
+  })
+
+export const useDetachLogFromContest = (
+  onSuccess: () => void,
+  onError: () => void,
+) =>
+  useMutation({
+    mutationFn: async ({
+      contestId,
+      logId,
+      reason,
+    }: {
+      contestId: string
+      logId: string
+      reason: string
+    }) => {
+      const response = await fetch(
+        `${root}/contests/${contestId}/moderation/detach/${logId}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ reason }),
+        },
+      )
+      if (response.status !== 200) {
+        throw new Error(response.status.toString())
+      }
+    },
+    onSuccess,
+    onError,
   })

@@ -148,7 +148,7 @@ const Page = () => {
       />
 
       <div className="card p-0 mt-4">
-        <LogsList logs={logs} showUsername={true} />
+        <LogsList logs={logs} showUsername={true} contestId={id} />
       </div>
 
       {logsTotalPages > 1 ? (

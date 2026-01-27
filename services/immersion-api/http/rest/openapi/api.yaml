@@ -761,6 +761,22 @@ paths:
                 $ref: "#/components/schemas/Leaderboard"
         "404":
           description: not found
+  /current-user/role:
+    get:
+      summary: Fetches the role of the current user
+      operationId: getCurrentUserRole
+      tags: [current_user]
+      security:
+        - cookieAuth: []
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserRole"
+        "401":
+          description: unauthorized
   /ping:
     get:
       summary: Checks if service is responsive
@@ -775,6 +791,13 @@ paths:
                 type: string
 components:
   schemas:
+    UserRole:
+      type: object
+      required:
+        - role
+      properties:
+        role:
+          type: string
     UserProfile:
       type: object
       required:

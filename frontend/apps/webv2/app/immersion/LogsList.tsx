@@ -17,7 +17,7 @@ import { UseQueryResult, useQueryClient } from 'react-query'
 import { colorForActivity, formatScore, formatUnit } from '@app/common/format'
 import { Loading, ActionMenu, Modal } from 'ui'
 import { useState } from 'react'
-import { useSession } from '@app/common/session'
+import { useSession, useUserRole } from '@app/common/session'
 import { toast } from 'react-toastify'
 
 function truncate(text: string | undefined, len: number) {
@@ -40,16 +40,18 @@ interface Props {
 
 const LogsList = ({ logs, showUsername = false, contestId }: Props) => {
   const [session] = useSession()
+  const role = useUserRole()
   const contest = useContest(contestId ?? '', { enabled: !!contestId })
   const queryClient = useQueryClient()
   const [modalOpen, setModalOpen] = useState(false)
   const [selectedLog, setSelectedLog] = useState<Log | null>(null)
   const [reason, setReason] = useState('')
 
-  const canModerate =
+  const isContestOwner =
     contestId &&
     contest.data?.owner_user_id &&
     session?.identity?.id === contest.data.owner_user_id
+  const canModerate = isContestOwner || role === 'admin'
 
   const detachMutation = useDetachLogFromContest(
     () => {

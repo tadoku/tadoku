@@ -20,6 +20,13 @@ All core functionality should live in this service.
 - sqlc is used to generate Golang glue code for raw sql queries.
   - New queries should be written in `services/immersion-api/storage/postgres/queries`
   - Run the following command to generate code for the query: `cd services/immersion-api/storage/postgres && go generate`
+- After changing the OpenAPI spec, regenerate the Go server code:
+  ```
+  go install github.com/deepmap/oapi-codegen/cmd/oapi-codegen@v1.12.4
+  oapi-codegen -package openapi -generate types,server \
+    services/immersion-api/http/rest/openapi/api.yaml \
+    > services/immersion-api/http/rest/openapi/api.gen.go
+  ```
 - Migrations use `services/immersion-api/http/rest/openapi/api.yaml`
   - Migrations are stored in `services/immersion-api/storage/postgres/migrations`
   - Refer to [these instructions](https://github.com/golang-migrate/migrate/blob/master/MIGRATIONS.md) for a reference on how to write migrations.

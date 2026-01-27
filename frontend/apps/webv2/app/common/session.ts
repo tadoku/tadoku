@@ -1,15 +1,27 @@
 import { atom, useAtom } from 'jotai'
 import { Session } from '@ory/client'
 import { useRouter } from 'next/router'
-import { useEffect, DependencyList } from 'react'
+import { useEffect, useRef, DependencyList } from 'react'
 import { AxiosError } from 'axios'
+import { z } from 'zod'
+import getConfig from 'next/config'
 import ory from '@app/common/ory'
 import { AppContext } from 'next/app'
 import { NextPageContext } from 'next'
 import { useCurrentLocation } from '@app/common/hooks'
 import { routes } from './routes'
 
+const { publicRuntimeConfig } = getConfig()
+const root = `${publicRuntimeConfig.apiEndpoint}/immersion`
+
+export type Role = 'admin' | 'user' | 'guest' | 'banned'
+
+const UserRoleResponse = z.object({
+  role: z.enum(['admin', 'user', 'guest', 'banned']),
+})
+
 export const sessionAtom = atom(undefined as undefined | Session)
+export const userRoleAtom = atom(undefined as undefined | Role)
 
 export const useSession = () => {
   return useAtom(sessionAtom)
@@ -73,6 +85,42 @@ export const useLogoutHandler = (deps?: DependencyList) => {
         .then(() => router.reload())
     }
   }
+}
+
+export const useUserRole = () => {
+  const [session] = useAtom(sessionAtom)
+  const [role, setRole] = useAtom(userRoleAtom)
+  const prevUserIdRef = useRef<string | undefined>(undefined)
+
+  const userId = session?.identity?.id
+
+  useEffect(() => {
+    if (!userId) {
+      prevUserIdRef.current = undefined
+      setRole(undefined)
+      return
+    }
+
+    if (userId === prevUserIdRef.current) {
+      return
+    }
+
+    prevUserIdRef.current = userId
+
+    fetch(`${root}/current-user/role`)
+      .then(async response => {
+        if (response.status !== 200) {
+          throw new Error(response.status.toString())
+        }
+        const data = UserRoleResponse.parse(await response.json())
+        setRole(data.role)
+      })
+      .catch(() => {
+        setRole(undefined)
+      })
+  }, [userId, setRole])
+
+  return role
 }
 
 export interface AppContextWithSession extends AppContext {

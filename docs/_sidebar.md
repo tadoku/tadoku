@@ -23,3 +23,7 @@
 - Jobs
 
   - [postgres-backup](/jobs/postgres-backup.md)
+
+- Administration
+
+  - [Account Deletion](/account-deletion.md)

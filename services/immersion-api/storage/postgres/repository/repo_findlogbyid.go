@@ -48,7 +48,7 @@ func (r *Repository) FindLogByID(ctx context.Context, req *query.FindLogByIDRequ
 		ActivityID:      int(log.ActivityID),
 		ActivityName:    log.ActivityName,
 		UnitName:        log.UnitName,
-		Tags:            log.Tags,
+		Tags:            postgres.TagsFromInterface(log.Tags),
 		Amount:          log.Amount,
 		Modifier:        log.Modifier,
 		Score:           log.Score,

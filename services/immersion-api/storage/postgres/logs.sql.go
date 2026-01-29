@@ -254,7 +254,10 @@ select
   log_activities.name as activity_name,
   log_units.name as unit_name,
   logs.description,
-  logs.tags,
+  coalesce(
+    (select array_agg(lt.tag order by lt.tag) from log_tags lt where lt.log_id = logs.id),
+    '{}'::varchar[]
+  ) as tags,
   logs.amount,
   logs.modifier,
   logs.score,
@@ -286,7 +289,7 @@ type FindLogByIDRow struct {
 	ActivityName    string
 	UnitName        string
 	Description     sql.NullString
-	Tags            []string
+	Tags            interface{}
 	Amount          float32
 	Modifier        float32
 	Score           float32
@@ -308,7 +311,7 @@ func (q *Queries) FindLogByID(ctx context.Context, arg FindLogByIDParams) (FindL
 		&i.ActivityName,
 		&i.UnitName,
 		&i.Description,
-		pq.Array(&i.Tags),
+		&i.Tags,
 		&i.Amount,
 		&i.Modifier,
 		&i.Score,
@@ -317,6 +320,23 @@ func (q *Queries) FindLogByID(ctx context.Context, arg FindLogByIDParams) (FindL
 		&i.DeletedAt,
 	)
 	return i, err
+}
+
+const insertLogTag = `-- name: InsertLogTag :exec
+insert into log_tags (log_id, user_id, tag)
+values ($1, $2, $3)
+on conflict do nothing
+`
+
+type InsertLogTagParams struct {
+	LogID  uuid.UUID
+	UserID uuid.UUID
+	Tag    string
+}
+
+func (q *Queries) InsertLogTag(ctx context.Context, arg InsertLogTagParams) error {
+	_, err := q.db.ExecContext(ctx, insertLogTag, arg.LogID, arg.UserID, arg.Tag)
+	return err
 }
 
 const listLogsForContest = `-- name: ListLogsForContest :many
@@ -330,7 +350,10 @@ with eligible_logs as (
     log_activities.name as activity_name,
     log_units.name as unit_name,
     logs.description,
-    logs.tags,
+    coalesce(
+      (select array_agg(lt.tag order by lt.tag) from log_tags lt where lt.log_id = logs.id),
+      '{}'::varchar[]
+    ) as tags,
     logs.amount,
     logs.modifier,
     logs.score,
@@ -375,7 +398,7 @@ type ListLogsForContestRow struct {
 	ActivityName    string
 	UnitName        string
 	Description     sql.NullString
-	Tags            []string
+	Tags            interface{}
 	Amount          float32
 	Modifier        float32
 	Score           float32
@@ -410,7 +433,7 @@ func (q *Queries) ListLogsForContest(ctx context.Context, arg ListLogsForContest
 			&i.ActivityName,
 			&i.UnitName,
 			&i.Description,
-			pq.Array(&i.Tags),
+			&i.Tags,
 			&i.Amount,
 			&i.Modifier,
 			&i.Score,
@@ -444,7 +467,10 @@ with eligible_logs as (
     log_activities.name as activity_name,
     log_units.name as unit_name,
     logs.description,
-    logs.tags,
+    coalesce(
+      (select array_agg(lt.tag order by lt.tag) from log_tags lt where lt.log_id = logs.id),
+      '{}'::varchar[]
+    ) as tags,
     logs.amount,
     logs.modifier,
     logs.score,
@@ -484,7 +510,7 @@ type ListLogsForUserRow struct {
 	ActivityName string
 	UnitName     string
 	Description  sql.NullString
-	Tags         []string
+	Tags         interface{}
 	Amount       float32
 	Modifier     float32
 	Score        float32
@@ -517,7 +543,7 @@ func (q *Queries) ListLogsForUser(ctx context.Context, arg ListLogsForUserParams
 			&i.ActivityName,
 			&i.UnitName,
 			&i.Description,
-			pq.Array(&i.Tags),
+			&i.Tags,
 			&i.Amount,
 			&i.Modifier,
 			&i.Score,

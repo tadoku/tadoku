@@ -32,6 +32,11 @@ insert into contest_logs (
   sqlc.arg('log_id')
 );
 
+-- name: InsertLogTag :exec
+insert into log_tags (log_id, user_id, tag)
+values (sqlc.arg('log_id'), sqlc.arg('user_id'), sqlc.arg('tag'))
+on conflict do nothing;
+
 -- name: ListLogsForContest :many
 with eligible_logs as (
   select
@@ -43,7 +48,10 @@ with eligible_logs as (
     log_activities.name as activity_name,
     log_units.name as unit_name,
     logs.description,
-    logs.tags,
+    coalesce(
+      (select array_agg(lt.tag order by lt.tag) from log_tags lt where lt.log_id = logs.id),
+      '{}'::varchar[]
+    ) as tags,
     logs.amount,
     logs.modifier,
     logs.score,
@@ -81,7 +89,10 @@ with eligible_logs as (
     log_activities.name as activity_name,
     log_units.name as unit_name,
     logs.description,
-    logs.tags,
+    coalesce(
+      (select array_agg(lt.tag order by lt.tag) from log_tags lt where lt.log_id = logs.id),
+      '{}'::varchar[]
+    ) as tags,
     logs.amount,
     logs.modifier,
     logs.score,
@@ -115,7 +126,10 @@ select
   log_activities.name as activity_name,
   log_units.name as unit_name,
   logs.description,
-  logs.tags,
+  coalesce(
+    (select array_agg(lt.tag order by lt.tag) from log_tags lt where lt.log_id = logs.id),
+    '{}'::varchar[]
+  ) as tags,
   logs.amount,
   logs.modifier,
   logs.score,

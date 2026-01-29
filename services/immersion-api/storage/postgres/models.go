@@ -81,6 +81,12 @@ type LogDefaultTag struct {
 	Name          string
 }
 
+type LogTag struct {
+	LogID  uuid.UUID
+	UserID uuid.UUID
+	Tag    string
+}
+
 type LogUnit struct {
 	ID            uuid.UUID
 	LogActivityID int16

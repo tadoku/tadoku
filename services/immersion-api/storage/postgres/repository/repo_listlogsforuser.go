@@ -39,7 +39,7 @@ func (r *Repository) ListLogsForUser(ctx context.Context, req *query.ListLogsFor
 			ActivityID:   int(it.ActivityID),
 			ActivityName: it.ActivityName,
 			UnitName:     it.UnitName,
-			Tags:         it.Tags,
+			Tags:         postgres.TagsFromInterface(it.Tags),
 			Amount:       it.Amount,
 			Modifier:     it.Modifier,
 			Score:        it.Score,

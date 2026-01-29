@@ -51,7 +51,7 @@ func (r *Repository) ListLogsForContest(ctx context.Context, req *query.ListLogs
 			ActivityID:      int(it.ActivityID),
 			ActivityName:    it.ActivityName,
 			UnitName:        it.UnitName,
-			Tags:            it.Tags,
+			Tags:            postgres.TagsFromInterface(it.Tags),
 			Amount:          it.Amount,
 			Modifier:        it.Modifier,
 			Score:           it.Score,

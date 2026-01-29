@@ -687,7 +687,6 @@ const LogConfigurationOptions = z.object({
   languages: z.array(Language),
   activities: z.array(Activity),
   units: z.array(Unit),
-  tags: z.array(Tag),
 })
 
 export type LogConfigurationOptions = z.infer<typeof LogConfigurationOptions>
@@ -919,3 +918,48 @@ export const useDetachLogFromContest = (
     onSuccess,
     onError,
   })
+
+const UserTagItem = z.object({
+  tag: z.string(),
+  usage_count: z.number(),
+})
+
+export type UserTagItem = z.infer<typeof UserTagItem>
+
+const UserTags = z.object({
+  tags: z.array(UserTagItem),
+  default_tags: z.array(z.string()),
+})
+
+export type UserTags = z.infer<typeof UserTags>
+
+export const useUserTags = (
+  opts: {
+    userId: string
+    prefix?: string
+    limit?: number
+  },
+  options?: { enabled?: boolean },
+) =>
+  useQuery(
+    ['users', opts.userId, 'tags', opts.prefix, opts.limit],
+    async (): Promise<UserTags> => {
+      const params: Record<string, string> = {}
+      if (opts.prefix) {
+        params.prefix = opts.prefix
+      }
+      if (opts.limit) {
+        params.limit = opts.limit.toString()
+      }
+      const response = await fetch(
+        `${root}/users/${opts.userId}/tags?${new URLSearchParams(params)}`,
+      )
+
+      if (response.status !== 200) {
+        throw new Error(response.status.toString())
+      }
+
+      return UserTags.parse(await response.json())
+    },
+    options,
+  )

@@ -1,8 +1,8 @@
 import {
-  AutocompleteInput,
   AutocompleteMultiInput,
   Input,
   RadioGroup,
+  TagInput,
 } from 'ui'
 import { FormProvider, useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -10,13 +10,13 @@ import {
   ContestRegistrationsView,
   LogConfigurationOptions,
   useCreateLog,
+  useUserTags,
 } from '@app/immersion/api'
 import { useRouter } from 'next/router'
 import { routes } from '@app/common/routes'
 import {
   estimateScore,
   filterActivities,
-  filterTags,
   filterUnits,
   formatContestLabel,
   NewLogAPISchema,
@@ -60,7 +60,8 @@ export const LogForm = ({
   })
   methods.trigger
 
-  useSessionOrRedirect()
+  const [session] = useSessionOrRedirect()
+  const userId = session?.identity?.id
 
   const trackingMode = methods.watch('tracking_mode') ?? 'personal'
   const activityId = methods.watch('activityId')
@@ -92,7 +93,6 @@ export const LogForm = ({
   }))
 
   const activity = options.activities.find(it => it.id === activityId)
-  const tags = filterTags(options.tags, activity)
   const units = filterUnits(options.units, activity?.id, languageCode)
   const unitsAsOptions: Option[] = units.map(it => ({
     value: it.id,
@@ -109,6 +109,14 @@ export const LogForm = ({
     label: it.name,
   }))
   const estimatedScore = estimateScore(amount, currentSelectedUnit)
+
+  const { data: userTagsData } = useUserTags(
+    { userId: userId ?? '', limit: 50 },
+    { enabled: !!userId },
+  )
+  const userTags = userTagsData?.tags.map(t => t.tag) ?? []
+  const defaultTags = userTagsData?.default_tags ?? []
+  const tagSuggestions = [...new Set([...userTags, ...defaultTags])]
 
   const router = useRouter()
   const createLogMutation = useCreateLog(id => {
@@ -198,18 +206,11 @@ export const LogForm = ({
                   unitsLabel="Unit"
                 />
               </div>
-              <AutocompleteMultiInput
+              <TagInput
                 name="tags"
                 label="Tags"
-                options={tags}
-                match={(option, query) =>
-                  option.name
-                    .toLowerCase()
-                    .replace(/[^a-zA-Z0-9]/g, '')
-                    .includes(query.toLowerCase())
-                }
-                getIdForOption={option => option.id}
-                format={option => option.name}
+                suggestions={tagSuggestions}
+                hint="Add tags to categorize your log"
               />
               <Input
                 name="description"

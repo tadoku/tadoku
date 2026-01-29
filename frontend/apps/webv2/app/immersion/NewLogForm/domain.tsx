@@ -4,8 +4,6 @@ import {
   ContestRegistrationsView,
   ContestRegistrationView,
   ContestView,
-  Language,
-  Tag,
   Unit,
 } from '@app/immersion/api'
 import {
@@ -30,7 +28,7 @@ export const NewLogFormSchema = z
       .positive(),
     amountUnit: z.string(),
     allUnits: z.array(Unit),
-    tags: z.array(Tag).max(3, 'Must select three or fewer'),
+    tags: z.array(z.string().max(50)).max(10, 'Maximum 10 tags allowed'),
     description: z.string().optional(),
   })
   .refine(
@@ -73,7 +71,7 @@ export const NewLogAPISchema = NewLogFormSchema.transform(log => ({
   activity_id: log.activityId,
   amount: log.amountValue,
   unit_id: log.amountUnit,
-  tags: log.tags.map(it => it.name),
+  tags: log.tags,
   description: log.description,
 }))
 
@@ -119,13 +117,6 @@ export const filterUnits = (
   return filteredUnits
 }
 
-export const filterTags = (tags: Tag[], activity: Activity | undefined) => {
-  if (!activity) {
-    return []
-  }
-
-  return tags.filter(it => it.log_activity_id === activity.id)
-}
 
 export const filterActivities = (
   activities: Activity[],

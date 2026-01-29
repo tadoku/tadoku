@@ -25,6 +25,7 @@ go_test(
     name = "command_test",
     srcs = [
         "createcontest_test.go",
+        "createlog_test.go",
         "detachlogfromcontest_test.go",
     ],
     deps = [

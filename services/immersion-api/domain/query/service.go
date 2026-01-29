@@ -35,6 +35,7 @@ type Repository interface {
 	ListLogsForContest(context.Context, *ListLogsForContestRequest) (*ListLogsForContestResponse, error)
 	FetchLogConfigurationOptions(ctx context.Context) (*FetchLogConfigurationOptionsResponse, error)
 	FindLogByID(context.Context, *FindLogByIDRequest) (*Log, error)
+	FetchUserTags(context.Context, *FetchUserTagsRequest) (*FetchUserTagsResponse, error)
 
 	// profile
 	FindScoresForRegistration(context.Context, *ContestProfileRequest) ([]Score, error)
@@ -64,6 +65,7 @@ type Service interface {
 	ListLogsForContest(context.Context, *ListLogsForContestRequest) (*ListLogsForContestResponse, error)
 	FetchLogConfigurationOptions(ctx context.Context) (*FetchLogConfigurationOptionsResponse, error)
 	FindLogByID(context.Context, *FindLogByIDRequest) (*Log, error)
+	FetchUserTags(context.Context, *FetchUserTagsRequest) (*FetchUserTagsResponse, error)
 
 	// profile
 	ContestProfile(context.Context, *ContestProfileRequest) (*ContestProfileResponse, error)

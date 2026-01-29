@@ -15,6 +15,7 @@ go_library(
         "repo_fetchgloballeaderboard.go",
         "repo_fetchlogconfigurationoptions.go",
         "repo_fetchongoingregistrations.go",
+        "repo_fetchusertags.go",
         "repo_fetchyearlyleaderboard.go",
         "repo_findcontestbyid.go",
         "repo_findlogbyid.go",

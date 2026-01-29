@@ -302,6 +302,18 @@ type UserRole struct {
 	Role string `json:"role"`
 }
 
+// UserTagItem defines model for UserTagItem.
+type UserTagItem struct {
+	Tag        string `json:"tag"`
+	UsageCount int    `json:"usage_count"`
+}
+
+// UserTags defines model for UserTags.
+type UserTags struct {
+	DefaultTags []string      `json:"default_tags"`
+	Tags        []UserTagItem `json:"tags"`
+}
+
 // ContestListParams defines parameters for ContestList.
 type ContestListParams struct {
 	PageSize       *int                `form:"page_size,omitempty" json:"page_size,omitempty"`
@@ -369,6 +381,14 @@ type ProfileListLogsParams struct {
 	IncludeDeleted *bool `form:"include_deleted,omitempty" json:"include_deleted,omitempty"`
 	PageSize       *int  `form:"page_size,omitempty" json:"page_size,omitempty"`
 	Page           *int  `form:"page,omitempty" json:"page,omitempty"`
+}
+
+// GetUserTagsParams defines parameters for GetUserTags.
+type GetUserTagsParams struct {
+	// Prefix Filter tags by prefix
+	Prefix   *string `form:"prefix,omitempty" json:"prefix,omitempty"`
+	PageSize *int    `form:"page_size,omitempty" json:"page_size,omitempty"`
+	Page     *int    `form:"page,omitempty" json:"page,omitempty"`
 }
 
 // ContestCreateJSONRequestBody defines body for ContestCreate for application/json ContentType.
@@ -472,6 +492,9 @@ type ServerInterface interface {
 	// Lists the logs of a user
 	// (GET /users/{user_id}/logs)
 	ProfileListLogs(ctx echo.Context, userId openapi_types.UUID, params ProfileListLogsParams) error
+	// Fetches the tags used by a user, combined with default tags
+	// (GET /users/{user_id}/tags)
+	GetUserTags(ctx echo.Context, userId openapi_types.UUID, params GetUserTagsParams) error
 }
 
 // ServerInterfaceWrapper converts echo contexts to parameters.
@@ -1122,6 +1145,47 @@ func (w *ServerInterfaceWrapper) ProfileListLogs(ctx echo.Context) error {
 	return err
 }
 
+// GetUserTags converts echo context to params.
+func (w *ServerInterfaceWrapper) GetUserTags(ctx echo.Context) error {
+	var err error
+	// ------------- Path parameter "user_id" -------------
+	var userId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithLocation("simple", false, "user_id", runtime.ParamLocationPath, ctx.Param("user_id"), &userId)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter user_id: %s", err))
+	}
+
+	ctx.Set(CookieAuthScopes, []string{""})
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetUserTagsParams
+	// ------------- Optional query parameter "prefix" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "prefix", ctx.QueryParams(), &params.Prefix)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter prefix: %s", err))
+	}
+
+	// ------------- Optional query parameter "page_size" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "page_size", ctx.QueryParams(), &params.PageSize)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter page_size: %s", err))
+	}
+
+	// ------------- Optional query parameter "page" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "page", ctx.QueryParams(), &params.Page)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter page: %s", err))
+	}
+
+	// Invoke the callback with all the unmarshalled arguments
+	err = w.Handler.GetUserTags(ctx, userId, params)
+	return err
+}
+
 // This is a simple interface which specifies echo.Route addition functions which
 // are present on both echo.Echo and echo.Group, since we want to allow using
 // either of them for path registration
@@ -1179,5 +1243,6 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 	router.GET(baseURL+"/users/:userId/profile", wrapper.ProfileFindByUserID)
 	router.GET(baseURL+"/users/:userId/scores/:year", wrapper.ProfileYearlyScoresByUserID)
 	router.GET(baseURL+"/users/:user_id/logs", wrapper.ProfileListLogs)
+	router.GET(baseURL+"/users/:user_id/tags", wrapper.GetUserTags)
 
 }

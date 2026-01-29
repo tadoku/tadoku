@@ -631,6 +631,47 @@ paths:
                 $ref: "#/components/schemas/Logs"
         "404":
           description: not found
+  /users/{user_id}/tags:
+    get:
+      summary: Fetches the tags used by a user, combined with default tags
+      operationId: getUserTags
+      tags: [profile]
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: prefix
+          in: query
+          required: false
+          description: Filter tags by prefix
+          schema:
+            type: string
+        - name: page_size
+          in: query
+          required: false
+          schema:
+            type: integer
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserTags"
+        "401":
+          description: unauthorized
+        "404":
+          description: not found
   /users/{userId}/contest-registrations/{year}:
     get:
       summary: Fetches the contest registrations of a user for a given year
@@ -862,6 +903,33 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/ActivitySplitScore"
+    UserTagItem:
+      type: object
+      required:
+        - tag
+        - usage_count
+      properties:
+        tag:
+          type: string
+          example: "book"
+        usage_count:
+          type: integer
+          example: 42
+    UserTags:
+      type: object
+      required:
+        - tags
+        - default_tags
+      properties:
+        tags:
+          type: array
+          items:
+            $ref: "#/components/schemas/UserTagItem"
+        default_tags:
+          type: array
+          items:
+            type: string
+          example: ["book", "fiction", "non-fiction"]
     LogConfigurationOptions:
       allOf:
         - $ref: "#/components/schemas/Languages"

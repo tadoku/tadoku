@@ -6,6 +6,7 @@ import {
   Input,
   RadioSelect,
   Select,
+  TagInput,
   TextArea,
 } from 'ui'
 import { FormProvider, useForm } from 'react-hook-form'
@@ -204,6 +205,55 @@ const AutocompleteForm = () => {
           className="btn primary"
           disabled={methods.formState.isSubmitting}
         >
+          Submit
+        </button>
+      </form>
+    </FormProvider>
+  )
+}`}
+          />
+        </div>
+      </div>
+
+      <Separator />
+
+      <Title>React example: TagInput (free-text tags)</Title>
+      <div className="h-stack w-full">
+        <div className="w-96">
+          <Preview>
+            <TagInputForm />
+          </Preview>
+        </div>
+        <div className="flex-1">
+          <CodeBlock
+            language="typescript"
+            code={`import { TagInput } from 'ui'
+import { FormProvider, useForm } from 'react-hook-form'
+import { z } from 'zod'
+import { zodResolver } from '@hookform/resolvers/zod'
+
+const TagInputFormSchema = z.object({
+  tags: z.array(z.string().max(50)).max(10),
+})
+
+const TagInputForm = () => {
+  const methods = useForm({
+    resolver: zodResolver(TagInputFormSchema),
+  })
+  const onSubmit = (data: any) => console.log(data, 'submitted')
+
+  const suggestions = ['book', 'fiction', 'non-fiction', 'manga', 'novel', 'textbook']
+
+  return (
+    <FormProvider {...methods}>
+      <form onSubmit={methods.handleSubmit(onSubmit)} className="v-stack spaced">
+        <TagInput
+          name="tags"
+          label="Tags"
+          suggestions={suggestions}
+          hint="Max 10 tags, 50 chars each"
+        />
+        <button type="submit" className="btn primary">
           Submit
         </button>
       </form>
@@ -850,6 +900,49 @@ const MiscForm = () => {
           options={{
             required: true,
           }}
+        />
+        <button
+          type="submit"
+          className="btn primary"
+          disabled={methods.formState.isSubmitting}
+        >
+          Submit
+        </button>
+      </form>
+    </FormProvider>
+  )
+}
+
+const TagInputFormSchema = z.object({
+  tags: z.array(z.string().max(50)).max(10),
+})
+
+const TagInputForm = () => {
+  const methods = useForm({
+    resolver: zodResolver(TagInputFormSchema),
+  })
+  const onSubmit = (data: any) => console.log(data, 'submitted')
+
+  const suggestions = [
+    'book',
+    'fiction',
+    'non-fiction',
+    'manga',
+    'novel',
+    'textbook',
+  ]
+
+  return (
+    <FormProvider {...methods}>
+      <form
+        onSubmit={methods.handleSubmit(onSubmit)}
+        className="v-stack spaced"
+      >
+        <TagInput
+          name="tags"
+          label="Tags"
+          suggestions={suggestions}
+          hint="Max 10 tags, 50 chars each"
         />
         <button
           type="submit"

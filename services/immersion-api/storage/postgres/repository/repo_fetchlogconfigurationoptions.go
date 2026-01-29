@@ -24,16 +24,10 @@ func (r *Repository) FetchLogConfigurationOptions(ctx context.Context) (*query.F
 		return nil, fmt.Errorf("could not fetch log configuration options: %w", err)
 	}
 
-	tags, err := r.q.ListTags(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("could not fetch log configuration options: %w", err)
-	}
-
 	options := query.FetchLogConfigurationOptionsResponse{
 		Languages:  make([]query.Language, len(langs)),
 		Activities: make([]query.Activity, len(acts)),
 		Units:      make([]query.Unit, len(units)),
-		Tags:       make([]query.Tag, len(tags)),
 	}
 
 	for i, l := range langs {
@@ -58,14 +52,6 @@ func (r *Repository) FetchLogConfigurationOptions(ctx context.Context) (*query.F
 			Name:          u.Name,
 			Modifier:      u.Modifier,
 			LanguageCode:  postgres.NewStringFromNullString(u.LanguageCode),
-		}
-	}
-
-	for i, t := range tags {
-		options.Tags[i] = query.Tag{
-			ID:            t.ID,
-			LogActivityID: int(t.LogActivityID),
-			Name:          t.Name,
 		}
 	}
 

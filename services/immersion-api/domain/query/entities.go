@@ -117,12 +117,6 @@ type Unit struct {
 	LanguageCode  *string
 }
 
-type Tag struct {
-	ID            uuid.UUID
-	LogActivityID int
-	Name          string
-}
-
 type Log struct {
 	ID              uuid.UUID
 	UserID          uuid.UUID

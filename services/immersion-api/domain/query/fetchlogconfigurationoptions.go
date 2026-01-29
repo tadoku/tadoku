@@ -10,7 +10,6 @@ type FetchLogConfigurationOptionsResponse struct {
 	Languages  []Language
 	Activities []Activity
 	Units      []Unit
-	Tags       []Tag
 }
 
 func (s *ServiceImpl) FetchLogConfigurationOptions(ctx context.Context) (*FetchLogConfigurationOptionsResponse, error) {

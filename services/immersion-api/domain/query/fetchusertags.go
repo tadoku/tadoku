@@ -25,7 +25,13 @@ type FetchUserTagsResponse struct {
 }
 
 func (s *ServiceImpl) FetchUserTags(ctx context.Context, req *FetchUserTagsRequest) (*FetchUserTagsResponse, error) {
-	if domain.IsRole(ctx, domain.RoleGuest) {
+	session := domain.ParseSession(ctx)
+	if session == nil {
+		return nil, ErrUnauthorized
+	}
+
+	sessionUserID, err := uuid.Parse(session.Subject)
+	if err != nil || sessionUserID != req.UserID {
 		return nil, ErrUnauthorized
 	}
 

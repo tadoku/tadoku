@@ -216,7 +216,6 @@ type Log struct {
 type LogConfigurationOptions struct {
 	Activities []Activity `json:"activities"`
 	Languages  []Language `json:"languages"`
-	Tags       []Tag      `json:"tags"`
 	Units      []Unit     `json:"units"`
 }
 

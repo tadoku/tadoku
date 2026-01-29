@@ -3,11 +3,38 @@ package command
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/google/uuid"
 	"github.com/tadoku/tadoku/services/common/domain"
 	"github.com/tadoku/tadoku/services/immersion-api/domain/query"
 )
+
+const (
+	MaxTagsPerLog   = 10
+	MaxTagLength    = 50
+)
+
+// ValidateAndNormalizeTags validates and normalizes tags:
+// - Trims whitespace and converts to lowercase
+// - Removes empty and duplicate tags
+// - Enforces max 10 tags, 50 chars each
+func ValidateAndNormalizeTags(tags []string) ([]string, error) {
+	seen := make(map[string]bool)
+	result := make([]string, 0, len(tags))
+	for _, tag := range tags {
+		normalized := strings.ToLower(strings.TrimSpace(tag))
+		if normalized == "" || len(normalized) > MaxTagLength || seen[normalized] {
+			continue
+		}
+		seen[normalized] = true
+		result = append(result, normalized)
+	}
+	if len(result) > MaxTagsPerLog {
+		return nil, fmt.Errorf("maximum %d tags allowed", MaxTagsPerLog)
+	}
+	return result, nil
+}
 
 type CreateLogRequest struct {
 	RegistrationIDs []uuid.UUID `validate:"required"`
@@ -45,6 +72,12 @@ func (s *ServiceImpl) CreateLog(ctx context.Context, req *CreateLogRequest) (*qu
 	if err != nil {
 		fmt.Println(err)
 		return nil, fmt.Errorf("unable to validate: %w", ErrInvalidLog)
+	}
+
+	// Validate and normalize tags
+	req.Tags, err = ValidateAndNormalizeTags(req.Tags)
+	if err != nil {
+		return nil, fmt.Errorf("invalid tags: %w", ErrInvalidLog)
 	}
 
 	registrations, err := s.r.FetchOngoingContestRegistrations(ctx, &query.FetchOngoingContestRegistrationsRequest{

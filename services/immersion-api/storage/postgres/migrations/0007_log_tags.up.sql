@@ -10,6 +10,26 @@ create table log_tags (
 create index idx_log_tags_user_tag on log_tags (user_id, tag);
 create index idx_log_tags_user_prefix on log_tags (user_id, tag text_pattern_ops);
 
+-- create default tags table
+create table log_default_tags (
+  name varchar(50) not null primary key
+);
+
+-- insert default tags
+insert into log_default_tags (name) values
+  ('book'),
+  ('ebook'),
+  ('audiobook'),
+  ('manga'),
+  ('visual novel'),
+  ('video'),
+  ('anime'),
+  ('podcast'),
+  ('music'),
+  ('game'),
+  ('news'),
+  ('article');
+
 -- migrate existing tags
 insert into log_tags (log_id, user_id, tag)
 select l.id, l.user_id, lower(trim(unnest(l.tags)))

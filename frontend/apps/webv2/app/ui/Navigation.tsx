@@ -8,8 +8,9 @@ import {
   Cog8ToothIcon,
   PlusIcon,
   UserIcon,
+  WrenchScrewdriverIcon,
 } from '@heroicons/react/20/solid'
-import { useLogoutHandler, useSession } from '@app/common/session'
+import { useLogoutHandler, useSession, useUserRole } from '@app/common/session'
 import { useCurrentLocation } from '@app/common/hooks'
 import { routes } from '@app/common/routes'
 import { useIsFetching } from 'react-query'
@@ -18,6 +19,8 @@ export default function Navigation() {
   const isFetching = useIsFetching()
 
   const [session] = useSession()
+  const role = useUserRole()
+  const isAdmin = role === 'admin'
   const onLogout = useLogoutHandler([session])
   const currentUrl = useCurrentLocation()
 
@@ -37,8 +40,18 @@ export default function Navigation() {
                 label: 'New log',
                 href: routes.logCreate(),
                 IconComponent: PlusIcon,
-                divider: true,
+                divider: !isAdmin,
               },
+              ...(isAdmin
+                ? [
+                    {
+                      label: 'Admin',
+                      href: routes.manage(),
+                      IconComponent: WrenchScrewdriverIcon,
+                      divider: true,
+                    },
+                  ]
+                : []),
               {
                 label: 'Account settings',
                 href: routes.authSettings(currentUrl),

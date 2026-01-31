@@ -51,6 +51,7 @@ export const routes = {
     `${kratos}/register?return_to=${return_url ?? ''}`,
 
   pageCounter: () => `/page-counter`,
+  manage: () => `/manage`,
 
   // External
 

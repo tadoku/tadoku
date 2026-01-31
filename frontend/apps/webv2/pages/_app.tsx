@@ -1,4 +1,6 @@
 import App, { AppProps } from 'next/app'
+import { NextPage } from 'next'
+import { ReactElement, ReactNode } from 'react'
 import { sdkServer as ory } from '@app/common/ory'
 import { Atom, Provider } from 'jotai'
 import { AppContextWithSession, sessionAtom } from '@app/common/session'
@@ -16,6 +18,14 @@ Settings.defaultZone = 'utc'
 
 interface Props {
   session: Session | undefined
+}
+
+export type NextPageWithLayout<P = {}, IP = P> = NextPage<P, IP> & {
+  getLayout?: (page: ReactElement) => ReactNode
+}
+
+type AppPropsWithLayout = AppProps<Props> & {
+  Component: NextPageWithLayout<Props>
 }
 
 const queryClient = new QueryClient({
@@ -37,11 +47,13 @@ const createInitialValues = () => {
   return { get, set }
 }
 
-const MyApp = ({ Component, pageProps }: AppProps<Props>) => {
+const MyApp = ({ Component, pageProps }: AppPropsWithLayout) => {
   const initialState = pageProps
   const { get: getInitialValues, set: setInitialValues } = createInitialValues()
 
   setInitialValues(sessionAtom, initialState.session)
+
+  const getLayout = Component.getLayout ?? ((page) => page)
 
   return (
     <Provider initialValues={getInitialValues()}>
@@ -62,7 +74,7 @@ const MyApp = ({ Component, pageProps }: AppProps<Props>) => {
         <div className="min-h-screen flex flex-col">
           <Navigation />
           <div className="p-4 md:px-8 md:pb-8 md:pt-4 mx-auto w-full max-w-7xl mb-auto">
-            <Component {...pageProps} />
+            {getLayout(<Component {...pageProps} />)}
           </div>
           <Footer />
           <ToastContainer />

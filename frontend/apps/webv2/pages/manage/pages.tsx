@@ -1,12 +1,11 @@
 import { routes } from '@app/common/routes'
-import { DocumentDuplicateIcon, DocumentTextIcon, HomeIcon } from '@heroicons/react/20/solid'
-import type { NextPage } from 'next'
+import { HomeIcon } from '@heroicons/react/20/solid'
 import Head from 'next/head'
-import { Breadcrumb, Sidebar } from 'ui'
+import { Breadcrumb } from 'ui'
+import { NextPageWithLayout } from '../_app'
+import { getAdminLayout } from '@app/manage/AdminLayout'
 
-interface Props {}
-
-const Page: NextPage<Props> = () => {
+const Page: NextPageWithLayout = () => {
   return (
     <>
       <Head>
@@ -27,35 +26,11 @@ const Page: NextPage<Props> = () => {
           ]}
         />
       </div>
-      <div className="flex gap-8">
-        <div className="w-64 flex-shrink-0">
-          <Sidebar
-            sections={[
-              {
-                title: 'Content management',
-                links: [
-                  {
-                    href: routes.managePosts(),
-                    label: 'Posts',
-                    IconComponent: DocumentTextIcon,
-                  },
-                  {
-                    href: routes.managePages(),
-                    label: 'Pages',
-                    active: true,
-                    IconComponent: DocumentDuplicateIcon,
-                  },
-                ],
-              },
-            ]}
-          />
-        </div>
-        <div className="flex-1">
-          <h1 className="title">Pages</h1>
-        </div>
-      </div>
+      <h1 className="title">Pages</h1>
     </>
   )
 }
+
+Page.getLayout = getAdminLayout('pages')
 
 export default Page

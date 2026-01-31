@@ -1,6 +1,12 @@
-import { Combobox, Transition } from '@headlessui/react'
+import {
+  Combobox,
+  ComboboxInput,
+  ComboboxButton,
+  ComboboxOptions,
+  ComboboxOption,
+} from '@headlessui/react'
 import { CheckIcon, ChevronUpDownIcon } from '@heroicons/react/20/solid'
-import React, { Fragment, useState } from 'react'
+import React, { useState } from 'react'
 import { useController, useFormContext } from 'react-hook-form'
 
 export function AutocompleteMultiInput<T>(props: {
@@ -42,12 +48,13 @@ export function AutocompleteMultiInput<T>(props: {
       <Combobox
         value={value || []}
         onChange={onChange}
+        onClose={() => setQuery('')}
         multiple
-        by={(a, b): boolean => getIdForOption(a) === getIdForOption(b)}
+        by={(a: T, b: T): boolean => getIdForOption(a) === getIdForOption(b)}
       >
         <div className="input relative">
           <div className="z-0">
-            <Combobox.Input
+            <ComboboxInput
               id={id}
               onChange={event => setQuery(event.target.value)}
               displayValue={(selected: T[]) =>
@@ -55,63 +62,48 @@ export function AutocompleteMultiInput<T>(props: {
               }
               className="!pr-7"
             />
-            <Combobox.Button className="absolute inset-y-0 right-0 flex items-center pr-2">
+            <ComboboxButton className="absolute inset-y-0 right-0 flex items-center pr-2">
               <ChevronUpDownIcon
                 className="h-5 w-5 text-gray-400"
                 aria-hidden="true"
               />
-            </Combobox.Button>
+            </ComboboxButton>
           </div>
-          <Transition
-            as={Fragment}
-            leave="transition ease-in duration-100"
-            leaveFrom="opacity-100"
-            leaveTo="opacity-0"
-            afterLeave={() => setQuery('')}
+          <ComboboxOptions
+            transition
+            className={`absolute mt-2 z-50 max-h-60 w-full overflow-auto bg-white py-1 shadow-md shadow-slate-500/20 ring-1 ring-secondary ring-opacity-5 focus:outline-none transition ease-in duration-100 data-[closed]:opacity-0`}
           >
-            <Combobox.Options
-              className={`absolute mt-2 z-50 max-h-60 w-full overflow-auto bg-white py-1 shadow-md shadow-slate-500/20 ring-1 ring-secondary ring-opacity-5 focus:outline-none`}
-            >
-              {filtered.length === 0 && query !== '' ? (
-                <div className="relative cursor-default select-none py-2 px-4 text-gray-700">
-                  No matches
-                </div>
-              ) : (
-                filtered.map(option => (
-                  <Combobox.Option
-                    key={getIdForOption(option)}
-                    value={option}
-                    className={({ active }) =>
-                      `relative cursor-default select-none py-2 pl-10 pr-4 ${
-                        active ? 'bg-secondary text-white' : ''
-                      }`
-                    }
-                  >
-                    {({ selected, active }) => (
-                      <>
-                        <span
-                          className={`block truncate ${
-                            selected ? 'font-medium' : 'font-normal'
-                          }`}
-                        >
-                          {format(option)}
+            {filtered.length === 0 && query !== '' ? (
+              <div className="relative cursor-default select-none py-2 px-4 text-gray-700">
+                No matches
+              </div>
+            ) : (
+              filtered.map(option => (
+                <ComboboxOption
+                  key={getIdForOption(option)}
+                  value={option}
+                  className="relative cursor-default select-none py-2 pl-10 pr-4 data-[focus]:bg-secondary data-[focus]:text-white"
+                >
+                  {({ selected }) => (
+                    <>
+                      <span
+                        className={`block truncate ${
+                          selected ? 'font-medium' : 'font-normal'
+                        }`}
+                      >
+                        {format(option)}
+                      </span>
+                      {selected ? (
+                        <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-secondary data-[focus]:text-white">
+                          <CheckIcon className="h-5 w-5" aria-hidden="true" />
                         </span>
-                        {selected ? (
-                          <span
-                            className={`absolute inset-y-0 left-0 flex items-center pl-3 ${
-                              active ? 'text-white' : 'text-secondary'
-                            }`}
-                          >
-                            <CheckIcon className="h-5 w-5" aria-hidden="true" />
-                          </span>
-                        ) : null}
-                      </>
-                    )}
-                  </Combobox.Option>
-                ))
-              )}
-            </Combobox.Options>
-          </Transition>
+                      ) : null}
+                    </>
+                  )}
+                </ComboboxOption>
+              ))
+            )}
+          </ComboboxOptions>
         </div>
       </Combobox>
       {hint ? <span className="label-hint sm:hidden">{hint}</span> : undefined}

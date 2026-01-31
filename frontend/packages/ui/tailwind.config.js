@@ -47,5 +47,5 @@ module.exports = {
     'bg-neutral-100',
     'bg-neutral-900',
   ],
-  plugins: [require('@tailwindcss/forms'), require('@headlessui/tailwindcss')],
+  plugins: [require('@tailwindcss/forms')],
 }

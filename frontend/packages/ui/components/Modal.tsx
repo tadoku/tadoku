@@ -1,5 +1,5 @@
 import { Dispatch, Fragment, ReactNode, SetStateAction } from 'react'
-import { Dialog, Transition } from '@headlessui/react'
+import { Dialog, DialogPanel, DialogTitle, Transition, TransitionChild } from '@headlessui/react'
 
 interface Props {
   isOpen: boolean
@@ -11,7 +11,7 @@ interface Props {
 export const Modal = ({ isOpen, setIsOpen, title, children }: Props) => (
   <Transition appear show={isOpen} as={Fragment}>
     <Dialog as="div" className="relative z-50" onClose={() => setIsOpen(false)}>
-      <Transition.Child
+      <TransitionChild
         as={Fragment}
         enter="ease-out duration-300"
         enterFrom="opacity-0"
@@ -21,11 +21,11 @@ export const Modal = ({ isOpen, setIsOpen, title, children }: Props) => (
         leaveTo="opacity-0"
       >
         <div className="fixed inset-0 bg-black bg-opacity-25" />
-      </Transition.Child>
+      </TransitionChild>
 
       <div className="fixed inset-0 overflow-y-auto">
         <div className="flex min-h-full items-center justify-center p-4 text-center">
-          <Transition.Child
+          <TransitionChild
             as={Fragment}
             enter="ease-out duration-300"
             enterFrom="opacity-0 scale-95"
@@ -34,18 +34,18 @@ export const Modal = ({ isOpen, setIsOpen, title, children }: Props) => (
             leaveFrom="opacity-100 scale-100"
             leaveTo="opacity-0 scale-95"
           >
-            <Dialog.Panel className="w-full max-w-lg transform overflow-hidden card text-left align-middle transition-all">
+            <DialogPanel className="w-full max-w-lg transform overflow-hidden card text-left align-middle transition-all">
               {title && (
-                <Dialog.Title
+                <DialogTitle
                   as="h3"
                   className="text-lg font-medium leading-6 text-secondary mb-2"
                 >
                   {title}
-                </Dialog.Title>
+                </DialogTitle>
               )}
               {children}
-            </Dialog.Panel>
-          </Transition.Child>
+            </DialogPanel>
+          </TransitionChild>
         </div>
       </div>
     </Dialog>

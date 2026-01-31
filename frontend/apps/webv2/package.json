@@ -10,7 +10,7 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@headlessui/react": "^1.7.5",
+    "@headlessui/react": "^2.2.0",
     "@heroicons/react": "^2.0.13",
     "@hookform/resolvers": "^2.9.10",
     "@ory/client": "^0.2.0-alpha.48",

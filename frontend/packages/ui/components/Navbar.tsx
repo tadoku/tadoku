@@ -1,5 +1,13 @@
-import { ComponentType, Fragment } from 'react'
-import { Disclosure, Menu, Transition } from '@headlessui/react'
+import { ComponentType } from 'react'
+import {
+  Disclosure,
+  DisclosureButton,
+  DisclosurePanel,
+  Menu,
+  MenuButton,
+  MenuItems,
+  MenuItem,
+} from '@headlessui/react'
 import { Bars3Icon, XMarkIcon } from '@heroicons/react/24/outline'
 import { Logo } from './branding'
 import { ChevronDownIcon } from '@heroicons/react/24/solid'
@@ -54,14 +62,14 @@ export function Navbar({
               <div className="relative flex h-10 sm:h-16 items-center justify-between">
                 <div className="absolute inset-y-0 left-0 flex items-center sm:hidden">
                   {/* Mobile menu button*/}
-                  <Disclosure.Button className="inline-flex items-center justify-center p-2 text-secondary hover:bg-secondary hover:text-white focus:outline-none focus:ring-3 focus:ring-inset focus:ring-white">
+                  <DisclosureButton className="inline-flex items-center justify-center p-2 text-secondary hover:bg-secondary hover:text-white focus:outline-none focus:ring-3 focus:ring-inset focus:ring-white">
                     <span className="sr-only">Open main menu</span>
                     {open ? (
                       <XMarkIcon className="block h-6 w-6" aria-hidden="true" />
                     ) : (
                       <Bars3Icon className="block h-6 w-6" aria-hidden="true" />
                     )}
-                  </Disclosure.Button>
+                  </DisclosureButton>
                 </div>
                 <div className="flex flex-1 items-center justify-center sm:items-stretch sm:justify-between">
                   <div className="flex flex-shrink-0 items-center">
@@ -105,7 +113,7 @@ export function Navbar({
               </div>
             </div>
 
-            <Disclosure.Panel className="sm:hidden">
+            <DisclosurePanel className="sm:hidden">
               <div className="space-y-1 px-2 pt-2 pb-3">
                 {navigation.map(item => {
                   if (item.type === 'dropdown') {
@@ -124,7 +132,7 @@ export function Navbar({
 
                   if (item.type === 'link') {
                     return (
-                      <Disclosure.Button
+                      <DisclosureButton
                         key={item.label}
                         as={Link}
                         href={item.href}
@@ -137,12 +145,12 @@ export function Navbar({
                         aria-current={item.current ? 'page' : undefined}
                       >
                         {item.label}
-                      </Disclosure.Button>
+                      </DisclosureButton>
                     )
                   }
                 })}
               </div>
-            </Disclosure.Panel>
+            </DisclosurePanel>
             <div
               className={`motion-reduce:hidden ${
                 isLoading ? 'opacity-100' : 'opacity-0'
@@ -159,47 +167,39 @@ const DropDown = ({ label, links }: NavigationDropDownProps) => (
   <div className="">
     <Menu as="div" className="relative">
       <div>
-        <Menu.Button className="text-secondary hover:bg-secondary hover:text-white text-xs px-2 py-1 md:px-3 md:py-2 md:text-sm font-bold flex items-center justify-center">
+        <MenuButton className="text-secondary hover:bg-secondary hover:text-white text-xs px-2 py-1 md:px-3 md:py-2 md:text-sm font-bold flex items-center justify-center">
           <span className="sr-only">Open navigation menu</span>
           {label}
           <ChevronDownIcon
             className="ml-2 h-4 w-3 md:h-5 md:w-4"
             aria-hidden="true"
           />
-        </Menu.Button>
+        </MenuButton>
       </div>
-      <Transition
-        as={Fragment}
-        enter="transition ease-out duration-100"
-        enterFrom="transform opacity-0 scale-95"
-        enterTo="transform opacity-100 scale-100"
-        leave="transition ease-in duration-75"
-        leaveFrom="transform opacity-100 scale-100"
-        leaveTo="transform opacity-0 scale-95"
+      <MenuItems
+        anchor="bottom end"
+        modal={false}
+        transition
+        className="z-50 mt-2 origin-top-right bg-white py-1 shadow-md shadow-slate-500/20 ring-1 ring-secondary ring-opacity-5 focus:outline-none transition ease-out duration-100 data-[closed]:scale-95 data-[closed]:opacity-0"
       >
-        <Menu.Items className="absolute right-0 z-10 mt-2 origin-top-right bg-white py-1 shadow-md shadow-slate-500/20 ring-1 ring-secondary ring-opacity-5 focus:outline-none">
-          {links.map(({ label, href, IconComponent, onClick, divider }, i) => (
-            <Menu.Item key={i}>
-              {({ active }) => (
-                <Link
-                  href={href}
-                  onClick={onClick}
-                  className={classNames(
-                    'reset whitespace-nowrap flex-inline transition-[background-color] items-center px-3 py-2 text-sm text-gray-700 flex font-bold',
-                    {
-                      'bg-secondary !text-white': active,
-                      'border-b border-slate-500/20': !!divider,
-                    },
-                  )}
-                >
-                  {IconComponent && <IconComponent className="w-4 h-4 mr-3" />}{' '}
-                  {label}
-                </Link>
+        {links.map(({ label, href, IconComponent, onClick, divider }, i) => (
+          <MenuItem key={i}>
+            <Link
+              href={href}
+              onClick={onClick}
+              className={classNames(
+                'reset whitespace-nowrap flex-inline transition-[background-color] items-center px-3 py-2 text-sm text-gray-700 flex font-bold data-[focus]:bg-secondary data-[focus]:text-white',
+                {
+                  'border-b border-slate-500/20': !!divider,
+                },
               )}
-            </Menu.Item>
-          ))}
-        </Menu.Items>
-      </Transition>
+            >
+              {IconComponent && <IconComponent className="w-4 h-4 mr-3" />}{' '}
+              {label}
+            </Link>
+          </MenuItem>
+        ))}
+      </MenuItems>
     </Menu>
   </div>
 )
@@ -208,45 +208,35 @@ const DropDownMobile = ({ label, links }: NavigationDropDownProps) => (
   <div className="">
     <Menu as="div" className="relative">
       <div>
-        <Menu.Button className="flex items-center justify-between w-full">
+        <MenuButton className="flex items-center justify-between w-full">
           <span className="sr-only">Open navigation menu</span>
           {label}
           <ChevronDownIcon
             className="ml-2 h-4 w-3 md:h-5 md:w-4"
             aria-hidden="true"
           />
-        </Menu.Button>
+        </MenuButton>
       </div>
-      <Transition
-        as={Fragment}
-        enter="transition ease-out duration-100"
-        enterFrom="transform opacity-0 scale-95"
-        enterTo="transform opacity-100 scale-100"
-        leave="transition ease-in duration-75"
-        leaveFrom="transform opacity-100 scale-100"
-        leaveTo="transform opacity-0 scale-95"
+      <MenuItems
+        anchor="bottom"
+        modal={false}
+        transition
+        className="absolute left-0 right-0 z-50 mt-2 min-w-48 origin-top-right bg-white py-1 shadow-md shadow-slate-500/20 ring-1 ring-secondary ring-opacity-5 focus:outline-none transition ease-out duration-100 data-[closed]:scale-95 data-[closed]:opacity-0"
       >
-        <Menu.Items className="absolute left-0 right-0 z-10 mt-2 min-w-48 origin-top-right bg-white py-1 shadow-md shadow-slate-500/20 ring-1 ring-secondary ring-opacity-5 focus:outline-none">
-          {links.map(({ label, href, IconComponent, onClick }, i) => (
-            <Menu.Item key={i}>
-              {({ active }) => (
-                <Disclosure.Button
-                  as={Link}
-                  href={href}
-                  onClick={onClick}
-                  className={classNames(
-                    active ? 'bg-secondary !text-white' : '',
-                    'reset transition-[background-color] flex-inline items-center px-3 py-4 text-sm text-gray-700 flex font-bold',
-                  )}
-                >
-                  {IconComponent && <IconComponent className="w-4 h-4 mr-3" />}{' '}
-                  {label}
-                </Disclosure.Button>
-              )}
-            </Menu.Item>
-          ))}
-        </Menu.Items>
-      </Transition>
+        {links.map(({ label, href, IconComponent, onClick }, i) => (
+          <MenuItem key={i}>
+            <DisclosureButton
+              as={Link}
+              href={href}
+              onClick={onClick}
+              className="reset transition-[background-color] flex-inline items-center px-3 py-4 text-sm text-gray-700 flex font-bold data-[focus]:bg-secondary data-[focus]:text-white"
+            >
+              {IconComponent && <IconComponent className="w-4 h-4 mr-3" />}{' '}
+              {label}
+            </DisclosureButton>
+          </MenuItem>
+        ))}
+      </MenuItems>
     </Menu>
   </div>
 )

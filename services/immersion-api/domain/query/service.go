@@ -78,10 +78,22 @@ type Service interface {
 }
 
 type ServiceImpl struct {
-	r        Repository
-	validate *validator.Validate
-	kratos   KratosClient
-	clock    domain.Clock
+	r         Repository
+	validate  *validator.Validate
+	kratos    KratosClient
+	clock     domain.Clock
+	userCache UserCache
+}
+
+type UserCache interface {
+	Search(query string, limit, offset int) ([]UserEntry, bool)
+}
+
+type UserEntry struct {
+	ID          string
+	DisplayName string
+	Email       string
+	CreatedAt   string
 }
 
 type KratosClient interface {
@@ -101,11 +113,12 @@ type IdentityInfo struct {
 	CreatedAt   string
 }
 
-func NewService(r Repository, clock domain.Clock, kratos KratosClient) Service {
+func NewService(r Repository, clock domain.Clock, kratos KratosClient, userCache UserCache) Service {
 	return &ServiceImpl{
-		r:        r,
-		validate: validator.New(),
-		clock:    clock,
-		kratos:   kratos,
+		r:         r,
+		validate:  validator.New(),
+		clock:     clock,
+		kratos:    kratos,
+		userCache: userCache,
 	}
 }

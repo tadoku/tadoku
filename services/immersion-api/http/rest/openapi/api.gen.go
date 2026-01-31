@@ -380,9 +380,11 @@ type LogCreateJSONBody struct {
 
 // UsersListParams defines parameters for UsersList.
 type UsersListParams struct {
-	PageSize *int    `form:"page_size,omitempty" json:"page_size,omitempty"`
-	Page     *int    `form:"page,omitempty" json:"page,omitempty"`
-	Email    *string `form:"email,omitempty" json:"email,omitempty"`
+	PageSize *int `form:"page_size,omitempty" json:"page_size,omitempty"`
+	Page     *int `form:"page,omitempty" json:"page,omitempty"`
+
+	// Query Fuzzy search on display name and email
+	Query *string `form:"query,omitempty" json:"query,omitempty"`
 }
 
 // ProfileListLogsParams defines parameters for ProfileListLogs.
@@ -1017,11 +1019,11 @@ func (w *ServerInterfaceWrapper) UsersList(ctx echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter page: %s", err))
 	}
 
-	// ------------- Optional query parameter "email" -------------
+	// ------------- Optional query parameter "query" -------------
 
-	err = runtime.BindQueryParameter("form", true, false, "email", ctx.QueryParams(), &params.Email)
+	err = runtime.BindQueryParameter("form", true, false, "query", ctx.QueryParams(), &params.Query)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter email: %s", err))
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter query: %s", err))
 	}
 
 	// Invoke the callback with all the unmarshalled arguments

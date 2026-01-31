@@ -942,7 +942,7 @@ export const useUserList = (
   opts: {
     pageSize: number
     page: number
-    email?: string
+    query?: string
   },
   options?: { enabled?: boolean },
 ) =>
@@ -953,8 +953,8 @@ export const useUserList = (
         page_size: opts.pageSize.toString(),
         page: opts.page.toString(),
       }
-      if (opts.email) {
-        params.email = opts.email
+      if (opts.query) {
+        params.query = opts.query
       }
       const response = await fetch(
         `${root}/users?${new URLSearchParams(params)}`,

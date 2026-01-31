@@ -1,14 +1,17 @@
 package main
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
+	"time"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/kelseyhightower/envconfig"
 	"github.com/tadoku/tadoku/services/common/domain"
 	tadokumiddleware "github.com/tadoku/tadoku/services/common/middleware"
 	"github.com/tadoku/tadoku/services/common/storage/memory"
+	"github.com/tadoku/tadoku/services/immersion-api/cache"
 	"github.com/tadoku/tadoku/services/immersion-api/client/ory"
 	"github.com/tadoku/tadoku/services/immersion-api/domain/command"
 	"github.com/tadoku/tadoku/services/immersion-api/domain/query"
@@ -48,6 +51,8 @@ func main() {
 	}
 
 	kratosClient := ory.NewKratosClient(cfg.KratosURL)
+	userCache := cache.NewUserCache(kratosClient, 15*time.Minute)
+	go userCache.Start(context.Background())
 
 	postgresRepository := repository.NewRepository(psql)
 	roleRepository := memory.NewRoleRepository("/etc/tadoku/permissions/roles.yaml")
@@ -74,7 +79,7 @@ func main() {
 	}
 
 	commandService := command.NewService(postgresRepository, clock)
-	queryService := query.NewService(postgresRepository, clock, kratosClient)
+	queryService := query.NewService(postgresRepository, clock, kratosClient, userCache)
 
 	server := rest.NewServer(
 		commandService,

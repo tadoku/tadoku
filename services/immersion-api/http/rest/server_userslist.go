@@ -14,7 +14,7 @@ import (
 func (s *Server) UsersList(ctx echo.Context, params openapi.UsersListParams) error {
 	perPage := int64(20)
 	page := int64(0)
-	email := ""
+	queryStr := ""
 
 	if params.PageSize != nil {
 		perPage = int64(*params.PageSize)
@@ -22,14 +22,14 @@ func (s *Server) UsersList(ctx echo.Context, params openapi.UsersListParams) err
 	if params.Page != nil {
 		page = int64(*params.Page)
 	}
-	if params.Email != nil {
-		email = *params.Email
+	if params.Query != nil {
+		queryStr = *params.Query
 	}
 
 	result, err := s.queryService.ListUsers(ctx.Request().Context(), &query.ListUsersRequest{
 		PerPage: perPage,
 		Page:    page,
-		Email:   email,
+		Query:   queryStr,
 	})
 	if err != nil {
 		if errors.Is(err, query.ErrUnauthorized) {

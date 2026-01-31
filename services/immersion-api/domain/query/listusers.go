@@ -2,7 +2,6 @@ package query
 
 import (
 	"context"
-	"strings"
 
 	"github.com/tadoku/tadoku/services/common/domain"
 )
@@ -10,7 +9,7 @@ import (
 type ListUsersRequest struct {
 	PerPage int64
 	Page    int64
-	Email   string
+	Query   string
 }
 
 type ListUsersResponse struct {
@@ -34,7 +33,7 @@ func (s *ServiceImpl) ListUsers(ctx context.Context, req *ListUsersRequest) (*Li
 		return nil, ErrForbidden
 	}
 
-	perPage := req.PerPage
+	perPage := int(req.PerPage)
 	if perPage <= 0 {
 		perPage = 20
 	}
@@ -42,33 +41,26 @@ func (s *ServiceImpl) ListUsers(ctx context.Context, req *ListUsersRequest) (*Li
 		perPage = 100
 	}
 
-	page := req.Page
+	page := int(req.Page)
 	if page < 0 {
 		page = 0
 	}
 
-	result, err := s.kratos.ListIdentities(ctx, perPage, page)
-	if err != nil {
-		return nil, err
-	}
+	offset := page * perPage
+	cacheUsers, hasMore := s.userCache.Search(req.Query, perPage, offset)
 
-	users := make([]UserListEntry, 0, len(result.Identities))
-	for _, identity := range result.Identities {
-		// Filter by email if specified (case-insensitive contains)
-		if req.Email != "" && !strings.Contains(strings.ToLower(identity.Email), strings.ToLower(req.Email)) {
-			continue
-		}
-
+	users := make([]UserListEntry, 0, len(cacheUsers))
+	for _, u := range cacheUsers {
 		users = append(users, UserListEntry{
-			ID:          identity.ID,
-			DisplayName: identity.DisplayName,
-			Email:       identity.Email,
-			CreatedAt:   identity.CreatedAt,
+			ID:          u.ID,
+			DisplayName: u.DisplayName,
+			Email:       u.Email,
+			CreatedAt:   u.CreatedAt,
 		})
 	}
 
 	nextPageToken := ""
-	if result.HasMore {
+	if hasMore {
 		nextPageToken = "has_more"
 	}
 

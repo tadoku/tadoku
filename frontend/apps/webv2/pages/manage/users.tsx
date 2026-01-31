@@ -18,7 +18,7 @@ const Page: NextPageWithLayout = () => {
     {
       pageSize,
       page,
-      email: search || undefined,
+      query: search || undefined,
     },
     { enabled: true },
   )
@@ -57,7 +57,7 @@ const Page: NextPageWithLayout = () => {
         <input
           type="text"
           className="input flex-1"
-          placeholder="Search by email..."
+          placeholder="Search by name or email..."
           value={searchInput}
           onChange={e => setSearchInput(e.target.value)}
         />

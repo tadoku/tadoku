@@ -807,11 +807,12 @@ paths:
           required: false
           schema:
             type: integer
-        - name: email
+        - name: query
           in: query
           required: false
           schema:
             type: string
+          description: Fuzzy search on display name and email
       responses:
         "200":
           description: successful operation

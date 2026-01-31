@@ -1,9 +1,13 @@
 import { ReactElement } from 'react'
 import { routes } from '@app/common/routes'
-import { DocumentDuplicateIcon, DocumentTextIcon } from '@heroicons/react/20/solid'
+import {
+  DocumentDuplicateIcon,
+  DocumentTextIcon,
+  UsersIcon,
+} from '@heroicons/react/20/solid'
 import { Sidebar } from 'ui'
 
-type ActiveLink = 'posts' | 'pages'
+type ActiveLink = 'posts' | 'pages' | 'users'
 
 interface Props {
   children: React.ReactNode
@@ -13,11 +17,11 @@ interface Props {
 export function AdminLayout({ children, activeLink }: Props) {
   return (
     <div className="flex gap-8">
-      <div className="w-64 flex-shrink-0">
+      <div className="w-48 flex-shrink-0">
         <Sidebar
           sections={[
             {
-              title: 'Content management',
+              title: 'Content',
               links: [
                 {
                   href: routes.managePosts(),
@@ -30,6 +34,17 @@ export function AdminLayout({ children, activeLink }: Props) {
                   label: 'Pages',
                   active: activeLink === 'pages',
                   IconComponent: DocumentDuplicateIcon,
+                },
+              ],
+            },
+            {
+              title: 'Moderation',
+              links: [
+                {
+                  href: routes.manageUsers(),
+                  label: 'Users',
+                  active: activeLink === 'users',
+                  IconComponent: UsersIcon,
                 },
               ],
             },

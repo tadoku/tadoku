@@ -72,6 +72,9 @@ type Service interface {
 	YearlyActivityForUser(context.Context, *YearlyActivityForUserRequest) (*YearlyActivityForUserResponse, error)
 	YearlyScoresForUser(context.Context, *YearlyScoresForUserRequest) (*YearlyScoresForUserResponse, error)
 	YearlyActivitySplitForUser(context.Context, *YearlyActivitySplitForUserRequest) (*YearlyActivitySplitForUserResponse, error)
+
+	// admin
+	ListUsers(context.Context, *ListUsersRequest) (*ListUsersResponse, error)
 }
 
 type ServiceImpl struct {
@@ -83,6 +86,19 @@ type ServiceImpl struct {
 
 type KratosClient interface {
 	FetchIdentity(ctx context.Context, id uuid.UUID) (*UserTraits, error)
+	ListIdentities(ctx context.Context, perPage int64, page int64) (*ListIdentitiesResult, error)
+}
+
+type ListIdentitiesResult struct {
+	Identities []IdentityInfo
+	HasMore    bool
+}
+
+type IdentityInfo struct {
+	ID          string
+	DisplayName string
+	Email       string
+	CreatedAt   string
 }
 
 func NewService(r Repository, clock domain.Clock, kratos KratosClient) Service {

@@ -21,6 +21,7 @@ go_library(
         "listcontests.go",
         "listlogsforcontest.go",
         "listlogsforuser.go",
+        "listusers.go",
         "service.go",
         "yearlyactivityforuser.go",
         "yearlyactivitysplitforuser.go",

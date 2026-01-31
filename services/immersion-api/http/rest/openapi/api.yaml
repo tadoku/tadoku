@@ -789,6 +789,40 @@ paths:
             text/plain:
               schema:
                 type: string
+  /users:
+    get:
+      summary: Lists all users (admin only)
+      operationId: usersList
+      tags: [admin]
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: page_size
+          in: query
+          required: false
+          schema:
+            type: integer
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+        - name: email
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserList"
+        "401":
+          description: unauthorized
+        "403":
+          description: forbidden (not admin)
 components:
   schemas:
     UserRole:
@@ -797,6 +831,34 @@ components:
         - role
       properties:
         role:
+          type: string
+    UserList:
+      type: object
+      required:
+        - users
+        - next_page_token
+      properties:
+        users:
+          type: array
+          items:
+            $ref: "#/components/schemas/UserListEntry"
+        next_page_token:
+          type: string
+    UserListEntry:
+      type: object
+      required:
+        - id
+        - display_name
+        - email
+        - created_at
+      properties:
+        id:
+          type: string
+        display_name:
+          type: string
+        email:
+          type: string
+        created_at:
           type: string
     UserProfile:
       type: object

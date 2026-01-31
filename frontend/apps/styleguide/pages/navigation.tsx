@@ -1,8 +1,12 @@
 import { CodeBlock, Preview, Separator, Title } from '@components/example'
-import { Navbar, Tabbar } from 'ui'
+import { Navbar, Sidebar, Tabbar } from 'ui'
 import {
   ArrowRightOnRectangleIcon,
+  BookOpenIcon,
   Cog8ToothIcon,
+  HomeIcon,
+  TrophyIcon,
+  UserGroupIcon,
   UserIcon,
   WrenchScrewdriverIcon,
 } from '@heroicons/react/20/solid'
@@ -124,6 +128,94 @@ const TabbarExample = () => (
         href: '/contests/my-contests',
         label: 'My contests',
         active: true,
+      },
+    ]}
+  />
+)`}
+      />
+
+      <Separator />
+
+      <Title>Sidebar</Title>
+      <Preview>
+        <div className="w-64">
+          <Sidebar
+            sections={[
+              {
+                title: 'Getting Started',
+                links: [
+                  {
+                    href: '#',
+                    label: 'Home',
+                    active: true,
+                    IconComponent: HomeIcon,
+                  },
+                  {
+                    href: '#',
+                    label: 'Documentation',
+                    IconComponent: BookOpenIcon,
+                  },
+                ],
+              },
+              {
+                title: 'Contests',
+                links: [
+                  {
+                    href: '#',
+                    label: 'Browse Contests',
+                    IconComponent: TrophyIcon,
+                  },
+                  {
+                    href: '#',
+                    label: 'Leaderboard',
+                    IconComponent: UserGroupIcon,
+                  },
+                  {
+                    href: '#',
+                    label: 'Disabled Link',
+                    disabled: true,
+                  },
+                ],
+              },
+              {
+                title: 'Account',
+                links: [
+                  { href: '#', label: 'Settings', IconComponent: Cog8ToothIcon },
+                  { href: '#', label: 'Profile', IconComponent: UserIcon },
+                ],
+              },
+            ]}
+          />
+        </div>
+      </Preview>
+      <CodeBlock
+        code={`import { Sidebar } from 'ui'
+import { HomeIcon, BookOpenIcon, TrophyIcon } from '@heroicons/react/20/solid'
+
+const SidebarExample = () => (
+  <Sidebar
+    sections={[
+      {
+        title: 'Getting Started',
+        links: [
+          { href: '/home', label: 'Home', active: true, IconComponent: HomeIcon },
+          { href: '/docs', label: 'Documentation', IconComponent: BookOpenIcon },
+        ],
+      },
+      {
+        title: 'Contests',
+        links: [
+          { href: '/contests', label: 'Browse Contests', IconComponent: TrophyIcon },
+          { href: '/leaderboard', label: 'Leaderboard' },
+          { href: '/disabled', label: 'Disabled Link', disabled: true },
+        ],
+      },
+      {
+        title: 'Account',
+        links: [
+          { href: '/settings', label: 'Settings' },
+          { href: '/profile', label: 'Profile' },
+        ],
       },
     ]}
   />

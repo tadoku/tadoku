@@ -17,6 +17,7 @@ export {
 export { HeatmapChart } from './components/HeatmapChart'
 export { Modal } from './components/Modal'
 export { Navbar } from './components/Navbar'
+export { Sidebar } from './components/Sidebar'
 export { Tabbar, VerticalTabbar } from './components/Tabbar'
 export { Pagination } from './components/Pagination'
 export { ToastContainer } from './components/toasts'

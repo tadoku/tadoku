@@ -10,7 +10,7 @@ const Page: NextPage<Props> = () => {
   return (
     <>
       <Head>
-        <title>Admin - Tadoku</title>
+        <title>Posts - Admin - Tadoku</title>
       </Head>
       <div className="pb-4">
         <Breadcrumb
@@ -19,6 +19,10 @@ const Page: NextPage<Props> = () => {
             {
               label: 'Admin',
               href: routes.manage(),
+            },
+            {
+              label: 'Posts',
+              href: routes.managePosts(),
             },
           ]}
         />
@@ -33,6 +37,7 @@ const Page: NextPage<Props> = () => {
                   {
                     href: routes.managePosts(),
                     label: 'Posts',
+                    active: true,
                     IconComponent: DocumentTextIcon,
                   },
                   {
@@ -46,7 +51,7 @@ const Page: NextPage<Props> = () => {
           />
         </div>
         <div className="flex-1">
-          <h1 className="title">Admin</h1>
+          <h1 className="title">Posts</h1>
         </div>
       </div>
     </>

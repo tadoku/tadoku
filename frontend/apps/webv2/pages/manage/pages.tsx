@@ -10,7 +10,7 @@ const Page: NextPage<Props> = () => {
   return (
     <>
       <Head>
-        <title>Admin - Tadoku</title>
+        <title>Pages - Admin - Tadoku</title>
       </Head>
       <div className="pb-4">
         <Breadcrumb
@@ -19,6 +19,10 @@ const Page: NextPage<Props> = () => {
             {
               label: 'Admin',
               href: routes.manage(),
+            },
+            {
+              label: 'Pages',
+              href: routes.managePages(),
             },
           ]}
         />
@@ -38,6 +42,7 @@ const Page: NextPage<Props> = () => {
                   {
                     href: routes.managePages(),
                     label: 'Pages',
+                    active: true,
                     IconComponent: DocumentDuplicateIcon,
                   },
                 ],
@@ -46,7 +51,7 @@ const Page: NextPage<Props> = () => {
           />
         </div>
         <div className="flex-1">
-          <h1 className="title">Admin</h1>
+          <h1 className="title">Pages</h1>
         </div>
       </div>
     </>

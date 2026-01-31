@@ -52,6 +52,8 @@ export const routes = {
 
   pageCounter: () => `/page-counter`,
   manage: () => `/manage`,
+  managePosts: () => `/manage/posts`,
+  managePages: () => `/manage/pages`,
 
   // External
 

@@ -1,5 +1,5 @@
 import { routes } from '@app/common/routes'
-import { HomeIcon } from '@heroicons/react/20/solid'
+import { DocumentTextIcon } from '@heroicons/react/20/solid'
 import Head from 'next/head'
 import { Breadcrumb } from 'ui'
 import { NextPageWithLayout } from '../_app'
@@ -14,14 +14,10 @@ const Page: NextPageWithLayout = () => {
       <div className="pb-4">
         <Breadcrumb
           links={[
-            { label: 'Home', href: routes.home(), IconComponent: HomeIcon },
-            {
-              label: 'Admin',
-              href: routes.manage(),
-            },
             {
               label: 'Posts',
               href: routes.managePosts(),
+              IconComponent: DocumentTextIcon,
             },
           ]}
         />

@@ -1,32 +1,15 @@
+import { GetServerSideProps } from 'next'
 import { routes } from '@app/common/routes'
-import { HomeIcon } from '@heroicons/react/20/solid'
-import Head from 'next/head'
-import { Breadcrumb } from 'ui'
-import { NextPageWithLayout } from './_app'
-import { getAdminLayout } from '@app/manage/AdminLayout'
 
-const Page: NextPageWithLayout = () => {
-  return (
-    <>
-      <Head>
-        <title>Admin - Tadoku</title>
-      </Head>
-      <div className="pb-4">
-        <Breadcrumb
-          links={[
-            { label: 'Home', href: routes.home(), IconComponent: HomeIcon },
-            {
-              label: 'Admin',
-              href: routes.manage(),
-            },
-          ]}
-        />
-      </div>
-      <h1 className="title">Admin</h1>
-    </>
-  )
+export const getServerSideProps: GetServerSideProps = async () => {
+  return {
+    redirect: {
+      destination: routes.managePosts(),
+      permanent: false,
+    },
+  }
 }
 
-Page.getLayout = getAdminLayout()
+const Page = () => null
 
 export default Page

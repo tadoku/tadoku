@@ -11,8 +11,8 @@ import (
 )
 
 const (
-	MaxTagsPerLog   = 10
-	MaxTagLength    = 50
+	MaxTagsPerLog = 10
+	MaxTagLength  = 50
 )
 
 // ValidateAndNormalizeTags validates and normalizes tags:

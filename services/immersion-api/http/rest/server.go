@@ -13,12 +13,14 @@ func NewServer(
 	queryService query.Service,
 	contestConfigurationOptions *domain.ContestConfigurationOptions,
 	logConfigurationOptions *domain.LogConfigurationOptions,
+	contestFindLatestOfficial *domain.ContestFindLatestOfficial,
 ) openapi.ServerInterface {
 	return &Server{
 		commandService:              commandService,
 		queryService:                queryService,
 		contestConfigurationOptions: contestConfigurationOptions,
 		logConfigurationOptions:     logConfigurationOptions,
+		contestFindLatestOfficial:   contestFindLatestOfficial,
 	}
 }
 
@@ -29,4 +31,5 @@ type Server struct {
 	// Service-per-function services
 	contestConfigurationOptions *domain.ContestConfigurationOptions
 	logConfigurationOptions     *domain.LogConfigurationOptions
+	contestFindLatestOfficial   *domain.ContestFindLatestOfficial
 }

@@ -6,16 +6,16 @@ import (
 
 	"github.com/deepmap/oapi-codegen/pkg/types"
 	"github.com/labstack/echo/v4"
-	"github.com/tadoku/tadoku/services/immersion-api/domain/query"
+	"github.com/tadoku/tadoku/services/immersion-api/domain"
 	"github.com/tadoku/tadoku/services/immersion-api/http/rest/openapi"
 )
 
 // Fetches the latest official contest
 // (GET /contests/latest-official)
 func (s *Server) ContestFindLatestOfficial(ctx echo.Context) error {
-	contest, err := s.queryService.FindLatestOfficial(ctx.Request().Context())
+	contest, err := s.contestFindLatestOfficial.Execute(ctx.Request().Context())
 	if err != nil {
-		if errors.Is(err, query.ErrNotFound) {
+		if errors.Is(err, domain.ErrNotFound) {
 			return ctx.NoContent(http.StatusNotFound)
 		}
 

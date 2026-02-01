@@ -24,7 +24,3 @@ func (s *ServiceImpl) FetchOngoingContestRegistrations(ctx context.Context, req 
 
 	return s.r.FetchOngoingContestRegistrations(ctx, req)
 }
-
-func (s *ServiceImpl) FindLatestOfficial(ctx context.Context) (*ContestView, error) {
-	return s.r.ContestFindLatestOfficial(ctx)
-}

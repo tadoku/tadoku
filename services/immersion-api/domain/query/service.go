@@ -23,7 +23,7 @@ type Repository interface {
 	ContestFindLatestOfficial(context.Context) (*immersiondomain.ContestView, error)
 	ListContests(context.Context, *immersiondomain.ContestListRequest) (*immersiondomain.ContestListResponse, error)
 	FindRegistrationForUser(context.Context, *immersiondomain.RegistrationFindRequest) (*immersiondomain.ContestRegistration, error)
-	FetchContestLeaderboard(context.Context, *FetchContestLeaderboardRequest) (*Leaderboard, error)
+	FetchContestLeaderboard(context.Context, *immersiondomain.ContestLeaderboardFetchRequest) (*immersiondomain.Leaderboard, error)
 	FetchOngoingContestRegistrations(context.Context, *FetchOngoingContestRegistrationsRequest) (*ContestRegistrations, error)
 	YearlyContestRegistrationsForUser(context.Context, *immersiondomain.RegistrationListYearlyRequest) (*immersiondomain.ContestRegistrations, error)
 	FetchYearlyLeaderboard(context.Context, *FetchYearlyLeaderboardRequest) (*Leaderboard, error)
@@ -47,7 +47,6 @@ type Repository interface {
 
 type Service interface {
 	// contest
-	FetchContestLeaderboard(context.Context, *FetchContestLeaderboardRequest) (*Leaderboard, error)
 	FetchOngoingContestRegistrations(context.Context, *FetchOngoingContestRegistrationsRequest) (*ContestRegistrations, error)
 	FetchYearlyLeaderboard(context.Context, *FetchYearlyLeaderboardRequest) (*Leaderboard, error)
 	FetchGlobalLeaderboard(context.Context, *FetchGlobalLeaderboardRequest) (*Leaderboard, error)

@@ -38,5 +38,5 @@ func (s *Server) FetchLeaderboardForYear(ctx echo.Context, year int, params open
 		return ctx.NoContent(http.StatusInternalServerError)
 	}
 
-	return ctx.JSON(http.StatusOK, leaderboardToAPI(*leaderboard))
+	return ctx.JSON(http.StatusOK, queryLeaderboardToAPI(*leaderboard))
 }

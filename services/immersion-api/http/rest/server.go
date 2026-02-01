@@ -23,6 +23,7 @@ func NewServer(
 	logListForContest *domain.LogListForContest,
 	registrationFind *domain.RegistrationFind,
 	registrationListYearly *domain.RegistrationListYearly,
+	contestLeaderboardFetch *domain.ContestLeaderboardFetch,
 ) openapi.ServerInterface {
 	return &Server{
 		commandService:              commandService,
@@ -39,6 +40,7 @@ func NewServer(
 		logListForContest:           logListForContest,
 		registrationFind:            registrationFind,
 		registrationListYearly:      registrationListYearly,
+		contestLeaderboardFetch:     contestLeaderboardFetch,
 	}
 }
 
@@ -59,4 +61,5 @@ type Server struct {
 	logListForContest           *domain.LogListForContest
 	registrationFind            *domain.RegistrationFind
 	registrationListYearly      *domain.RegistrationListYearly
+	contestLeaderboardFetch     *domain.ContestLeaderboardFetch
 }

@@ -6,15 +6,15 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/tadoku/tadoku/services/immersion-api/domain/query"
+	"github.com/tadoku/tadoku/services/immersion-api/domain"
 	"github.com/tadoku/tadoku/services/immersion-api/storage/postgres"
 )
 
-func (r *Repository) FetchContestLeaderboard(ctx context.Context, req *query.FetchContestLeaderboardRequest) (*query.Leaderboard, error) {
+func (r *Repository) FetchContestLeaderboard(ctx context.Context, req *domain.ContestLeaderboardFetchRequest) (*domain.Leaderboard, error) {
 	_, err := r.q.FindContestById(ctx, postgres.FindContestByIdParams{ID: req.ContestID, IncludeDeleted: false})
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return nil, query.ErrNotFound
+			return nil, domain.ErrNotFound
 		}
 
 		return nil, fmt.Errorf("could not fetch leaderboard for contest: %w", err)
@@ -29,8 +29,8 @@ func (r *Repository) FetchContestLeaderboard(ctx context.Context, req *query.Fet
 	})
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return &query.Leaderboard{
-				Entries:       []query.LeaderboardEntry{},
+			return &domain.Leaderboard{
+				Entries:       []domain.LeaderboardEntry{},
 				TotalSize:     0,
 				NextPageToken: "",
 			}, nil
@@ -39,9 +39,9 @@ func (r *Repository) FetchContestLeaderboard(ctx context.Context, req *query.Fet
 		return nil, fmt.Errorf("could not fetch leaderboard for contest: %w", err)
 	}
 
-	res := make([]query.LeaderboardEntry, len(entries))
+	res := make([]domain.LeaderboardEntry, len(entries))
 	for i, e := range entries {
-		res[i] = query.LeaderboardEntry{
+		res[i] = domain.LeaderboardEntry{
 			Rank:            int(e.Rank),
 			UserID:          e.UserID,
 			UserDisplayName: e.UserDisplayName,
@@ -59,7 +59,7 @@ func (r *Repository) FetchContestLeaderboard(ctx context.Context, req *query.Fet
 		nextPageToken = fmt.Sprint(req.Page + 1)
 	}
 
-	return &query.Leaderboard{
+	return &domain.Leaderboard{
 		Entries:       res,
 		TotalSize:     int(totalSize),
 		NextPageToken: nextPageToken,

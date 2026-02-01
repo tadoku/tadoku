@@ -98,6 +98,7 @@ func main() {
 	logListForContest := immersiondomain.NewLogListForContest(postgresRepository)
 	registrationFind := immersiondomain.NewRegistrationFind(postgresRepository)
 	registrationListYearly := immersiondomain.NewRegistrationListYearly(postgresRepository)
+	contestLeaderboardFetch := immersiondomain.NewContestLeaderboardFetch(postgresRepository)
 
 	server := rest.NewServer(
 		commandService,
@@ -114,6 +115,7 @@ func main() {
 		logListForContest,
 		registrationFind,
 		registrationListYearly,
+		contestLeaderboardFetch,
 	)
 
 	openapi.RegisterHandlersWithBaseURL(e, server, "")

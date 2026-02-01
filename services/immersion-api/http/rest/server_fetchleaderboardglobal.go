@@ -37,5 +37,5 @@ func (s *Server) FetchLeaderboardGlobal(ctx echo.Context, params openapi.FetchLe
 		return ctx.NoContent(http.StatusInternalServerError)
 	}
 
-	return ctx.JSON(http.StatusOK, leaderboardToAPI(*leaderboard))
+	return ctx.JSON(http.StatusOK, queryLeaderboardToAPI(*leaderboard))
 }

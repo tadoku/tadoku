@@ -35,7 +35,7 @@ bazel test //services/immersion-api/domain/command:command_test --test_filter=Te
 # 4. Format before committing
 gofmt -w services/
 
-# 5. Regenerate BUILD.bazel files (after adding/removing Go files or changing imports)
+# 5. Regenerate BUILD.bazel files (after adding/removing Go files or changing deps/imports)
 bazel run //:gazelle
 
 # 6. Regenerate sqlc code (after modifying SQL queries)

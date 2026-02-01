@@ -9,10 +9,14 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgconn"
 	"github.com/jackc/pgerrcode"
-	"github.com/tadoku/tadoku/services/content-api/domain/postcommand"
-	"github.com/tadoku/tadoku/services/content-api/domain/postquery"
+	"github.com/tadoku/tadoku/services/content-api/domain"
 )
 
+// PostRepository implements all post-related domain interfaces:
+// - domain.PostCreateRepository
+// - domain.PostUpdateRepository
+// - domain.PostFindRepository
+// - domain.PostListRepository
 type PostRepository struct {
 	psql *sql.DB
 	q    *Queries
@@ -25,72 +29,80 @@ func NewPostRepository(psql *sql.DB) *PostRepository {
 	}
 }
 
-// COMMANDS
-
-func (r *PostRepository) CreatePost(ctx context.Context, req *postcommand.PostCreateRequest) (*postcommand.PostCreateResponse, error) {
+// CreatePost implements domain.PostCreateRepository
+func (r *PostRepository) CreatePost(ctx context.Context, post *domain.Post) error {
 	tx, err := r.psql.BeginTx(ctx, nil)
 	if err != nil {
-		return nil, fmt.Errorf("could not create post: %w", err)
+		return fmt.Errorf("could not create post: %w", err)
 	}
 
 	postContentID := uuid.New()
 
 	qtx := r.q.WithTx(tx)
 
-	if _, err := qtx.CreatePost(ctx, CreatePostParams{
-		req.ID,
-		req.Namespace,
-		req.Slug,
-		postContentID,
-		NewNullTime(req.PublishedAt),
-	}); err != nil {
+	_, err = qtx.CreatePost(ctx, CreatePostParams{
+		ID:               post.ID,
+		Namespace:        post.Namespace,
+		Slug:             post.Slug,
+		CurrentContentID: postContentID,
+		PublishedAt:      NewNullTime(post.PublishedAt),
+	})
+	if err != nil {
 		_ = tx.Rollback()
 
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) && pgErr.Code == pgerrcode.UniqueViolation {
-			return nil, postcommand.ErrPostAlreadyExists
+			return domain.ErrPostAlreadyExists
 		}
 
-		return nil, fmt.Errorf("could not create post: %w", err)
+		return fmt.Errorf("could not create post: %w", err)
 	}
 
-	if _, err := qtx.CreatePostContent(ctx, CreatePostContentParams{
+	_, err = qtx.CreatePostContent(ctx, CreatePostContentParams{
 		ID:      postContentID,
-		PostID:  req.ID,
-		Title:   req.Title,
-		Content: req.Content,
-	}); err != nil {
-		_ = tx.Rollback()
-		return nil, fmt.Errorf("could not create post: %w", err)
-	}
-
-	post, err := qtx.FindPostBySlug(ctx, FindPostBySlugParams{
-		Namespace: req.Namespace,
-		Slug:      req.Slug,
+		PostID:  post.ID,
+		Title:   post.Title,
+		Content: post.Content,
 	})
 	if err != nil {
 		_ = tx.Rollback()
-		return nil, fmt.Errorf("could not create post: %w", err)
+		return fmt.Errorf("could not create post: %w", err)
 	}
 
 	if err = tx.Commit(); err != nil {
-		return nil, fmt.Errorf("could not create post: %w", err)
+		return fmt.Errorf("could not create post: %w", err)
 	}
 
-	return &postcommand.PostCreateResponse{
+	return nil
+}
+
+// GetPostByID implements domain.PostUpdateRepository
+func (r *PostRepository) GetPostByID(ctx context.Context, id uuid.UUID) (*domain.Post, error) {
+	post, err := r.q.FindPostByID(ctx, id)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, domain.ErrPostNotFound
+		}
+		return nil, fmt.Errorf("could not find post: %w", err)
+	}
+
+	return &domain.Post{
 		ID:          post.ID,
 		Namespace:   post.Namespace,
 		Slug:        post.Slug,
 		Title:       post.Title,
 		Content:     post.Content,
 		PublishedAt: NewTimeFromNullTime(post.PublishedAt),
+		CreatedAt:   post.CreatedAt,
+		UpdatedAt:   post.UpdatedAt,
 	}, nil
 }
 
-func (r *PostRepository) UpdatePost(ctx context.Context, id uuid.UUID, req *postcommand.PostUpdateRequest) (*postcommand.PostUpdateResponse, error) {
+// UpdatePost implements domain.PostUpdateRepository
+func (r *PostRepository) UpdatePost(ctx context.Context, post *domain.Post) error {
 	tx, err := r.psql.BeginTx(ctx, nil)
 	if err != nil {
-		return nil, fmt.Errorf("could not update post: %w", err)
+		return fmt.Errorf("could not update post: %w", err)
 	}
 
 	postContentID := uuid.New()
@@ -98,85 +110,72 @@ func (r *PostRepository) UpdatePost(ctx context.Context, id uuid.UUID, req *post
 	qtx := r.q.WithTx(tx)
 
 	_, err = qtx.UpdatePost(ctx, UpdatePostParams{
-		ID:               id,
-		Slug:             req.Slug,
+		ID:               post.ID,
+		Slug:             post.Slug,
 		CurrentContentID: postContentID,
-		PublishedAt:      NewNullTime(req.PublishedAt),
+		PublishedAt:      NewNullTime(post.PublishedAt),
 	})
 	if err != nil {
 		_ = tx.Rollback()
 
-		if err != nil && errors.Is(err, sql.ErrNoRows) {
-			_ = tx.Rollback()
-			return nil, postcommand.ErrPostNotFound
+		if errors.Is(err, sql.ErrNoRows) {
+			return domain.ErrPostNotFound
 		}
 
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) && pgErr.Code == pgerrcode.UniqueViolation {
-			return nil, postcommand.ErrPostAlreadyExists
+			return domain.ErrPostAlreadyExists
 		}
 
-		return nil, fmt.Errorf("could not update post: %w", err)
+		return fmt.Errorf("could not update post: %w", err)
 	}
 
 	_, err = qtx.CreatePostContent(ctx, CreatePostContentParams{
 		ID:      postContentID,
-		PostID:  id,
-		Title:   req.Title,
-		Content: req.Content,
+		PostID:  post.ID,
+		Title:   post.Title,
+		Content: post.Content,
 	})
 	if err != nil {
 		_ = tx.Rollback()
-		return nil, fmt.Errorf("could not update post: %w", err)
-	}
-
-	post, err := qtx.FindPostBySlug(ctx, FindPostBySlugParams{
-		Namespace: req.Namespace,
-		Slug:      req.Slug,
-	})
-	if err != nil {
-		_ = tx.Rollback()
-		return nil, fmt.Errorf("could not update post: %w", err)
+		return fmt.Errorf("could not update post: %w", err)
 	}
 
 	if err = tx.Commit(); err != nil {
-		return nil, fmt.Errorf("could not update post: %w", err)
+		return fmt.Errorf("could not update post: %w", err)
 	}
 
-	return &postcommand.PostUpdateResponse{
-		ID:          post.ID,
-		Slug:        post.Slug,
-		Title:       post.Title,
-		Content:     post.Content,
-		PublishedAt: NewTimeFromNullTime(post.PublishedAt),
-	}, nil
+	return nil
 }
 
-// QUERIES
-
-func (r *PostRepository) FindBySlug(ctx context.Context, req *postquery.PostFindRequest) (*postquery.PostFindResponse, error) {
+// FindPostBySlug implements domain.PostFindRepository
+func (r *PostRepository) FindPostBySlug(ctx context.Context, namespace, slug string) (*domain.Post, error) {
 	post, err := r.q.FindPostBySlug(ctx, FindPostBySlugParams{
-		Namespace: req.Namespace,
-		Slug:      req.Slug,
+		Namespace: namespace,
+		Slug:      slug,
 	})
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return nil, postquery.ErrPostNotFound
+			return nil, domain.ErrPostNotFound
 		}
 
 		return nil, fmt.Errorf("could not find post: %w", err)
 	}
 
-	return &postquery.PostFindResponse{
+	return &domain.Post{
 		ID:          post.ID,
+		Namespace:   post.Namespace,
 		Slug:        post.Slug,
 		Title:       post.Title,
 		Content:     post.Content,
 		PublishedAt: NewTimeFromNullTime(post.PublishedAt),
+		CreatedAt:   post.CreatedAt,
+		UpdatedAt:   post.UpdatedAt,
 	}, nil
 }
 
-func (r *PostRepository) ListPosts(ctx context.Context, req *postquery.PostListRequest) (*postquery.PostListResponse, error) {
+// ListPosts implements domain.PostListRepository
+func (r *PostRepository) ListPosts(ctx context.Context, namespace string, includeDrafts bool, pageSize, page int) (*domain.PostListResult, error) {
 	tx, err := r.psql.BeginTx(ctx, nil)
 	if err != nil {
 		return nil, fmt.Errorf("could not list posts: %w", err)
@@ -185,19 +184,19 @@ func (r *PostRepository) ListPosts(ctx context.Context, req *postquery.PostListR
 	qtx := r.q.WithTx(tx)
 
 	meta, err := qtx.PostsMetadata(ctx, PostsMetadataParams{
-		IncludeDrafts: req.IncludeDrafts,
-		Namespace:     req.Namespace,
+		IncludeDrafts: includeDrafts,
+		Namespace:     namespace,
 	})
 	if err != nil {
 		_ = tx.Rollback()
-		return nil, fmt.Errorf("could not lists posts: %w", err)
+		return nil, fmt.Errorf("could not list posts: %w", err)
 	}
 
 	posts, err := qtx.ListPosts(ctx, ListPostsParams{
-		StartFrom:     int32(req.Page * req.PageSize),
-		PageSize:      int32(req.PageSize),
-		Namespace:     req.Namespace,
-		IncludeDrafts: req.IncludeDrafts,
+		StartFrom:     int32(page * pageSize),
+		PageSize:      int32(pageSize),
+		Namespace:     namespace,
+		IncludeDrafts: includeDrafts,
 	})
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		_ = tx.Rollback()
@@ -208,26 +207,27 @@ func (r *PostRepository) ListPosts(ctx context.Context, req *postquery.PostListR
 		return nil, fmt.Errorf("could not list posts: %w", err)
 	}
 
-	res := make([]postquery.PostListEntry, len(posts))
-	for i, post := range posts {
-		res[i] = postquery.PostListEntry{
-			ID:          post.ID,
-			Slug:        post.Slug,
-			Title:       post.Title,
-			Content:     post.Content,
-			PublishedAt: NewTimeFromNullTime(post.PublishedAt),
-			CreatedAt:   post.CreatedAt,
-			UpdatedAt:   post.UpdatedAt,
+	result := make([]domain.Post, len(posts))
+	for i, p := range posts {
+		result[i] = domain.Post{
+			ID:          p.ID,
+			Namespace:   p.Namespace,
+			Slug:        p.Slug,
+			Title:       p.Title,
+			Content:     p.Content,
+			PublishedAt: NewTimeFromNullTime(p.PublishedAt),
+			CreatedAt:   p.CreatedAt,
+			UpdatedAt:   p.UpdatedAt,
 		}
 	}
 
 	nextPageToken := ""
-	if (req.Page*req.PageSize)+req.PageSize < int(meta.TotalSize) {
-		nextPageToken = fmt.Sprint(req.Page + 1)
+	if (page*pageSize)+pageSize < int(meta.TotalSize) {
+		nextPageToken = fmt.Sprint(page + 1)
 	}
 
-	return &postquery.PostListResponse{
-		Posts:         res,
+	return &domain.PostListResult{
+		Posts:         result,
 		TotalSize:     int(meta.TotalSize),
 		NextPageToken: nextPageToken,
 	}, nil

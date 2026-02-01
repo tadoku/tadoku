@@ -34,6 +34,7 @@ func NewServer(
 	registrationListOngoing *domain.RegistrationListOngoing,
 	contestPermissionCheck *domain.ContestPermissionCheck,
 	userList *domain.UserList,
+	logDelete *domain.LogDelete,
 ) openapi.ServerInterface {
 	return &Server{
 		commandService:              commandService,
@@ -61,6 +62,7 @@ func NewServer(
 		registrationListOngoing:     registrationListOngoing,
 		contestPermissionCheck:      contestPermissionCheck,
 		userList:                    userList,
+		logDelete:                   logDelete,
 	}
 }
 
@@ -92,4 +94,5 @@ type Server struct {
 	registrationListOngoing     *domain.RegistrationListOngoing
 	contestPermissionCheck      *domain.ContestPermissionCheck
 	userList                    *domain.UserList
+	logDelete                   *domain.LogDelete
 }

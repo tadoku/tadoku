@@ -4,11 +4,11 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/tadoku/tadoku/services/immersion-api/domain/command"
+	"github.com/tadoku/tadoku/services/immersion-api/domain"
 	"github.com/tadoku/tadoku/services/immersion-api/storage/postgres"
 )
 
-func (r *Repository) DeleteLog(ctx context.Context, req *command.DeleteLogRequest) error {
+func (r *Repository) DeleteLog(ctx context.Context, req *domain.LogDeleteRequest) error {
 	isValid, err := r.q.CheckIfLogCanBeDeleted(ctx, postgres.CheckIfLogCanBeDeletedParams{
 		Now:   req.Now,
 		LogID: req.LogID,
@@ -18,7 +18,7 @@ func (r *Repository) DeleteLog(ctx context.Context, req *command.DeleteLogReques
 	}
 
 	if !isValid {
-		return command.ErrForbidden
+		return domain.ErrForbidden
 	}
 
 	if err := r.q.DeleteLog(ctx, req.LogID); err != nil {

@@ -27,7 +27,7 @@ type Repository interface {
 
 	// log
 	CreateLog(context.Context, *CreateLogRequest) (*uuid.UUID, error)
-	DeleteLog(context.Context, *DeleteLogRequest) error
+	DeleteLog(context.Context, *immersiondomain.LogDeleteRequest) error
 	DetachLogFromContest(context.Context, *DetachLogFromContestRequest, uuid.UUID) error
 
 	UpsertUser(context.Context, *immersiondomain.UserUpsertRequest) error
@@ -42,7 +42,6 @@ type Service interface {
 
 	// log
 	CreateLog(context.Context, *CreateLogRequest) (*immersiondomain.Log, error)
-	DeleteLog(context.Context, *DeleteLogRequest) error
 	DetachLogFromContest(context.Context, *DetachLogFromContestRequest) error
 }
 

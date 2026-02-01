@@ -5,7 +5,6 @@ go_library(
     srcs = [
         "createcontest.go",
         "createlog.go",
-        "deletelog.go",
         "detachlogfromcontest.go",
         "service.go",
         "upsertcontestregistration.go",

@@ -7,6 +7,8 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	contentdomain "github.com/tadoku/tadoku/services/content-api/domain"
 )
 
@@ -51,12 +53,8 @@ func TestPostFind_Execute(t *testing.T) {
 			Slug:      "hello-world",
 		})
 
-		if err != nil {
-			t.Fatalf("unexpected error: %v", err)
-		}
-		if resp.Post.Title != "Hello World" {
-			t.Errorf("expected title 'Hello World', got %q", resp.Post.Title)
-		}
+		require.NoError(t, err)
+		assert.Equal(t, "Hello World", resp.Post.Title)
 	})
 
 	t.Run("returns not found for unpublished post", func(t *testing.T) {
@@ -84,9 +82,7 @@ func TestPostFind_Execute(t *testing.T) {
 			Slug:      "draft",
 		})
 
-		if !errors.Is(err, contentdomain.ErrPostNotFound) {
-			t.Errorf("expected ErrPostNotFound, got %v", err)
-		}
+		assert.ErrorIs(t, err, contentdomain.ErrPostNotFound)
 	})
 
 	t.Run("returns not found for future published post", func(t *testing.T) {
@@ -115,9 +111,7 @@ func TestPostFind_Execute(t *testing.T) {
 			Slug:      "scheduled",
 		})
 
-		if !errors.Is(err, contentdomain.ErrPostNotFound) {
-			t.Errorf("expected ErrPostNotFound, got %v", err)
-		}
+		assert.ErrorIs(t, err, contentdomain.ErrPostNotFound)
 	})
 
 	t.Run("returns error on invalid request - missing namespace", func(t *testing.T) {
@@ -128,9 +122,7 @@ func TestPostFind_Execute(t *testing.T) {
 			Slug: "hello-world",
 		})
 
-		if !errors.Is(err, contentdomain.ErrRequestInvalid) {
-			t.Errorf("expected ErrRequestInvalid, got %v", err)
-		}
+		assert.ErrorIs(t, err, contentdomain.ErrRequestInvalid)
 	})
 
 	t.Run("returns error on invalid request - missing slug", func(t *testing.T) {
@@ -141,9 +133,7 @@ func TestPostFind_Execute(t *testing.T) {
 			Namespace: "blog",
 		})
 
-		if !errors.Is(err, contentdomain.ErrRequestInvalid) {
-			t.Errorf("expected ErrRequestInvalid, got %v", err)
-		}
+		assert.ErrorIs(t, err, contentdomain.ErrRequestInvalid)
 	})
 
 	t.Run("returns repository error", func(t *testing.T) {
@@ -162,9 +152,7 @@ func TestPostFind_Execute(t *testing.T) {
 			Slug:      "hello-world",
 		})
 
-		if err != repoErr {
-			t.Errorf("expected repository error, got %v", err)
-		}
+		assert.ErrorIs(t, err, repoErr)
 	})
 
 	t.Run("returns post not found from repository", func(t *testing.T) {
@@ -182,8 +170,6 @@ func TestPostFind_Execute(t *testing.T) {
 			Slug:      "nonexistent",
 		})
 
-		if !errors.Is(err, contentdomain.ErrPostNotFound) {
-			t.Errorf("expected ErrPostNotFound, got %v", err)
-		}
+		assert.ErrorIs(t, err, contentdomain.ErrPostNotFound)
 	})
 }

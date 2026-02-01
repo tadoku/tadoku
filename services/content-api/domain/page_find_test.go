@@ -7,6 +7,8 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	contentdomain "github.com/tadoku/tadoku/services/content-api/domain"
 )
 
@@ -59,12 +61,8 @@ func TestPageFind_Execute(t *testing.T) {
 			Slug:      "hello-world",
 		})
 
-		if err != nil {
-			t.Fatalf("unexpected error: %v", err)
-		}
-		if resp.Page.Title != "Hello World" {
-			t.Errorf("expected title 'Hello World', got %q", resp.Page.Title)
-		}
+		require.NoError(t, err)
+		assert.Equal(t, "Hello World", resp.Page.Title)
 	})
 
 	t.Run("returns not found for unpublished page", func(t *testing.T) {
@@ -92,9 +90,7 @@ func TestPageFind_Execute(t *testing.T) {
 			Slug:      "draft",
 		})
 
-		if !errors.Is(err, contentdomain.ErrPageNotFound) {
-			t.Errorf("expected ErrPageNotFound, got %v", err)
-		}
+		assert.ErrorIs(t, err, contentdomain.ErrPageNotFound)
 	})
 
 	t.Run("returns not found for future published page", func(t *testing.T) {
@@ -123,9 +119,7 @@ func TestPageFind_Execute(t *testing.T) {
 			Slug:      "scheduled",
 		})
 
-		if !errors.Is(err, contentdomain.ErrPageNotFound) {
-			t.Errorf("expected ErrPageNotFound, got %v", err)
-		}
+		assert.ErrorIs(t, err, contentdomain.ErrPageNotFound)
 	})
 
 	t.Run("returns error on invalid request - missing namespace", func(t *testing.T) {
@@ -136,9 +130,7 @@ func TestPageFind_Execute(t *testing.T) {
 			Slug: "hello-world",
 		})
 
-		if !errors.Is(err, contentdomain.ErrRequestInvalid) {
-			t.Errorf("expected ErrRequestInvalid, got %v", err)
-		}
+		assert.ErrorIs(t, err, contentdomain.ErrRequestInvalid)
 	})
 
 	t.Run("returns error on invalid request - missing slug", func(t *testing.T) {
@@ -149,9 +141,7 @@ func TestPageFind_Execute(t *testing.T) {
 			Namespace: "blog",
 		})
 
-		if !errors.Is(err, contentdomain.ErrRequestInvalid) {
-			t.Errorf("expected ErrRequestInvalid, got %v", err)
-		}
+		assert.ErrorIs(t, err, contentdomain.ErrRequestInvalid)
 	})
 
 	t.Run("returns repository error", func(t *testing.T) {
@@ -170,9 +160,7 @@ func TestPageFind_Execute(t *testing.T) {
 			Slug:      "hello-world",
 		})
 
-		if err != repoErr {
-			t.Errorf("expected repository error, got %v", err)
-		}
+		assert.ErrorIs(t, err, repoErr)
 	})
 
 	t.Run("returns page not found from repository", func(t *testing.T) {
@@ -190,8 +178,6 @@ func TestPageFind_Execute(t *testing.T) {
 			Slug:      "nonexistent",
 		})
 
-		if !errors.Is(err, contentdomain.ErrPageNotFound) {
-			t.Errorf("expected ErrPageNotFound, got %v", err)
-		}
+		assert.ErrorIs(t, err, contentdomain.ErrPageNotFound)
 	})
 }

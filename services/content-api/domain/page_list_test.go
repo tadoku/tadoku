@@ -7,6 +7,8 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	contentdomain "github.com/tadoku/tadoku/services/content-api/domain"
 )
 
@@ -57,15 +59,9 @@ func TestPageList_Execute(t *testing.T) {
 			Namespace: "blog",
 		})
 
-		if err != nil {
-			t.Fatalf("unexpected error: %v", err)
-		}
-		if len(resp.Pages) != 2 {
-			t.Errorf("expected 2 pages, got %d", len(resp.Pages))
-		}
-		if resp.TotalSize != 2 {
-			t.Errorf("expected total size 2, got %d", resp.TotalSize)
-		}
+		require.NoError(t, err)
+		assert.Len(t, resp.Pages, 2)
+		assert.Equal(t, 2, resp.TotalSize)
 	})
 
 	t.Run("returns forbidden when not admin", func(t *testing.T) {
@@ -76,9 +72,7 @@ func TestPageList_Execute(t *testing.T) {
 			Namespace: "blog",
 		})
 
-		if !errors.Is(err, contentdomain.ErrForbidden) {
-			t.Errorf("expected ErrForbidden, got %v", err)
-		}
+		assert.ErrorIs(t, err, contentdomain.ErrForbidden)
 	})
 
 	t.Run("returns forbidden when no session", func(t *testing.T) {
@@ -89,9 +83,7 @@ func TestPageList_Execute(t *testing.T) {
 			Namespace: "blog",
 		})
 
-		if !errors.Is(err, contentdomain.ErrForbidden) {
-			t.Errorf("expected ErrForbidden, got %v", err)
-		}
+		assert.ErrorIs(t, err, contentdomain.ErrForbidden)
 	})
 
 	t.Run("returns error on invalid request - missing namespace", func(t *testing.T) {
@@ -100,9 +92,7 @@ func TestPageList_Execute(t *testing.T) {
 
 		_, err := svc.Execute(adminContext(), &contentdomain.PageListRequest{})
 
-		if !errors.Is(err, contentdomain.ErrRequestInvalid) {
-			t.Errorf("expected ErrRequestInvalid, got %v", err)
-		}
+		assert.ErrorIs(t, err, contentdomain.ErrRequestInvalid)
 	})
 
 	t.Run("uses default page size when not specified", func(t *testing.T) {
@@ -123,12 +113,8 @@ func TestPageList_Execute(t *testing.T) {
 			Namespace: "blog",
 		})
 
-		if err != nil {
-			t.Fatalf("unexpected error: %v", err)
-		}
-		if capturedPageSize != 10 {
-			t.Errorf("expected default page size 10, got %d", capturedPageSize)
-		}
+		require.NoError(t, err)
+		assert.Equal(t, 10, capturedPageSize)
 	})
 
 	t.Run("caps page size at 100", func(t *testing.T) {
@@ -150,12 +136,8 @@ func TestPageList_Execute(t *testing.T) {
 			PageSize:  500,
 		})
 
-		if err != nil {
-			t.Fatalf("unexpected error: %v", err)
-		}
-		if capturedPageSize != 100 {
-			t.Errorf("expected capped page size 100, got %d", capturedPageSize)
-		}
+		require.NoError(t, err)
+		assert.Equal(t, 100, capturedPageSize)
 	})
 
 	t.Run("passes include drafts flag", func(t *testing.T) {
@@ -177,12 +159,8 @@ func TestPageList_Execute(t *testing.T) {
 			IncludeDrafts: true,
 		})
 
-		if err != nil {
-			t.Fatalf("unexpected error: %v", err)
-		}
-		if !capturedIncludeDrafts {
-			t.Error("expected includeDrafts to be true")
-		}
+		require.NoError(t, err)
+		assert.True(t, capturedIncludeDrafts)
 	})
 
 	t.Run("returns repository error", func(t *testing.T) {
@@ -199,9 +177,7 @@ func TestPageList_Execute(t *testing.T) {
 			Namespace: "blog",
 		})
 
-		if err != repoErr {
-			t.Errorf("expected repository error, got %v", err)
-		}
+		assert.ErrorIs(t, err, repoErr)
 	})
 
 	t.Run("returns next page token for pagination", func(t *testing.T) {
@@ -222,11 +198,7 @@ func TestPageList_Execute(t *testing.T) {
 			PageSize:  10,
 		})
 
-		if err != nil {
-			t.Fatalf("unexpected error: %v", err)
-		}
-		if resp.NextPageToken != "next-page-token" {
-			t.Errorf("expected next page token 'next-page-token', got %q", resp.NextPageToken)
-		}
+		require.NoError(t, err)
+		assert.Equal(t, "next-page-token", resp.NextPageToken)
 	})
 }

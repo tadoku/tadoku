@@ -35,6 +35,13 @@ bazel test //services/immersion-api/domain/command:command_test --test_filter=Te
 # 4. Format before committing
 gofmt -w services/
 
-# 5. Before creating PR
+# 5. Regenerate BUILD.bazel files (after adding/removing Go files or changing imports)
+bazel run //:gazelle
+
+# 6. Regenerate sqlc code (after modifying SQL queries)
+cd services/immersion-api/storage/postgres && go generate
+cd services/content-api/storage/postgres && go generate
+
+# 7. Before creating PR
 bazel build //services/... && bazel test //services/...
 ```

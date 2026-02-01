@@ -6,19 +6,19 @@ import (
 
 	"github.com/deepmap/oapi-codegen/pkg/types"
 	"github.com/labstack/echo/v4"
-	"github.com/tadoku/tadoku/services/immersion-api/domain/query"
+	"github.com/tadoku/tadoku/services/immersion-api/domain"
 	"github.com/tadoku/tadoku/services/immersion-api/http/rest/openapi"
 )
 
 // Fetches the contest registrations of a user for a given year
 // (GET /users/{userId}/contest-registrations/{year})
 func (s *Server) ProfileYearlyContestRegistrationsByUserID(ctx echo.Context, userId types.UUID, year int) error {
-	regs, err := s.queryService.YearlyContestRegistrationsForUser(ctx.Request().Context(), &query.YearlyContestRegistrationsForUserRequest{
+	regs, err := s.registrationListYearly.Execute(ctx.Request().Context(), &domain.RegistrationListYearlyRequest{
 		UserID: userId,
 		Year:   year,
 	})
 	if err != nil {
-		if errors.Is(err, query.ErrUnauthorized) {
+		if errors.Is(err, domain.ErrUnauthorized) {
 			return ctx.NoContent(http.StatusUnauthorized)
 		}
 
@@ -33,8 +33,7 @@ func (s *Server) ProfileYearlyContestRegistrationsByUserID(ctx echo.Context, use
 	}
 
 	for i, it := range regs.Registrations {
-		it := it
-		res.Registrations[i] = *queryContestRegistrationToAPI(&it)
+		res.Registrations[i] = *contestRegistrationToAPI(&it)
 	}
 
 	return ctx.JSON(http.StatusOK, res)

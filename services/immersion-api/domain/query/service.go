@@ -25,7 +25,7 @@ type Repository interface {
 	FindRegistrationForUser(context.Context, *immersiondomain.RegistrationFindRequest) (*immersiondomain.ContestRegistration, error)
 	FetchContestLeaderboard(context.Context, *FetchContestLeaderboardRequest) (*Leaderboard, error)
 	FetchOngoingContestRegistrations(context.Context, *FetchOngoingContestRegistrationsRequest) (*ContestRegistrations, error)
-	YearlyContestRegistrationsForUser(context.Context, *YearlyContestRegistrationsForUserRequest) (*ContestRegistrations, error)
+	YearlyContestRegistrationsForUser(context.Context, *immersiondomain.RegistrationListYearlyRequest) (*immersiondomain.ContestRegistrations, error)
 	FetchYearlyLeaderboard(context.Context, *FetchYearlyLeaderboardRequest) (*Leaderboard, error)
 	FetchGlobalLeaderboard(context.Context, *FetchGlobalLeaderboardRequest) (*Leaderboard, error)
 	FetchContestSummary(context.Context, *immersiondomain.ContestSummaryFetchRequest) (*immersiondomain.ContestSummaryFetchResponse, error)
@@ -49,7 +49,6 @@ type Service interface {
 	// contest
 	FetchContestLeaderboard(context.Context, *FetchContestLeaderboardRequest) (*Leaderboard, error)
 	FetchOngoingContestRegistrations(context.Context, *FetchOngoingContestRegistrationsRequest) (*ContestRegistrations, error)
-	YearlyContestRegistrationsForUser(context.Context, *YearlyContestRegistrationsForUserRequest) (*ContestRegistrations, error)
 	FetchYearlyLeaderboard(context.Context, *FetchYearlyLeaderboardRequest) (*Leaderboard, error)
 	FetchGlobalLeaderboard(context.Context, *FetchGlobalLeaderboardRequest) (*Leaderboard, error)
 	CreateContestPermissionCheck(context.Context) error

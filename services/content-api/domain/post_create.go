@@ -30,12 +30,14 @@ type PostCreateResponse struct {
 type PostCreate struct {
 	repo     PostCreateRepository
 	validate *validator.Validate
+	clock    commondomain.Clock
 }
 
-func NewPostCreate(repo PostCreateRepository) *PostCreate {
+func NewPostCreate(repo PostCreateRepository, clock commondomain.Clock) *PostCreate {
 	return &PostCreate{
 		repo:     repo,
 		validate: validator.New(),
+		clock:    clock,
 	}
 }
 
@@ -48,7 +50,7 @@ func (s *PostCreate) Execute(ctx context.Context, req *PostCreateRequest) (*Post
 		return nil, fmt.Errorf("%w: %v", ErrInvalidPost, err)
 	}
 
-	now := time.Now()
+	now := s.clock.Now()
 	post := &Post{
 		ID:          req.ID,
 		Namespace:   req.Namespace,

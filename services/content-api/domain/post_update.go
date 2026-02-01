@@ -30,12 +30,14 @@ type PostUpdateResponse struct {
 type PostUpdate struct {
 	repo     PostUpdateRepository
 	validate *validator.Validate
+	clock    commondomain.Clock
 }
 
-func NewPostUpdate(repo PostUpdateRepository) *PostUpdate {
+func NewPostUpdate(repo PostUpdateRepository, clock commondomain.Clock) *PostUpdate {
 	return &PostUpdate{
 		repo:     repo,
 		validate: validator.New(),
+		clock:    clock,
 	}
 }
 
@@ -58,7 +60,7 @@ func (s *PostUpdate) Execute(ctx context.Context, id uuid.UUID, req *PostUpdateR
 	post.Title = req.Title
 	post.Content = req.Content
 	post.PublishedAt = req.PublishedAt
-	post.UpdatedAt = time.Now()
+	post.UpdatedAt = s.clock.Now()
 
 	if err := s.repo.UpdatePost(ctx, post); err != nil {
 		return nil, err

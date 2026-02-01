@@ -30,12 +30,14 @@ type PageUpdateResponse struct {
 type PageUpdate struct {
 	repo     PageUpdateRepository
 	validate *validator.Validate
+	clock    commondomain.Clock
 }
 
-func NewPageUpdate(repo PageUpdateRepository) *PageUpdate {
+func NewPageUpdate(repo PageUpdateRepository, clock commondomain.Clock) *PageUpdate {
 	return &PageUpdate{
 		repo:     repo,
 		validate: validator.New(),
+		clock:    clock,
 	}
 }
 
@@ -58,7 +60,7 @@ func (s *PageUpdate) Execute(ctx context.Context, id uuid.UUID, req *PageUpdateR
 	page.Title = req.Title
 	page.HTML = req.HTML
 	page.PublishedAt = req.PublishedAt
-	page.UpdatedAt = time.Now()
+	page.UpdatedAt = s.clock.Now()
 
 	if err := s.repo.UpdatePage(ctx, page); err != nil {
 		return nil, err

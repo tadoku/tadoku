@@ -30,12 +30,14 @@ type PageCreateResponse struct {
 type PageCreate struct {
 	repo     PageCreateRepository
 	validate *validator.Validate
+	clock    commondomain.Clock
 }
 
-func NewPageCreate(repo PageCreateRepository) *PageCreate {
+func NewPageCreate(repo PageCreateRepository, clock commondomain.Clock) *PageCreate {
 	return &PageCreate{
 		repo:     repo,
 		validate: validator.New(),
+		clock:    clock,
 	}
 }
 
@@ -48,7 +50,7 @@ func (s *PageCreate) Execute(ctx context.Context, req *PageCreateRequest) (*Page
 		return nil, fmt.Errorf("%w: %v", ErrInvalidPage, err)
 	}
 
-	now := time.Now()
+	now := s.clock.Now()
 	page := &Page{
 		ID:          req.ID,
 		Namespace:   req.Namespace,

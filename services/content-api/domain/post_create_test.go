@@ -22,6 +22,8 @@ func (m *mockPostCreateRepo) CreatePost(ctx context.Context, post *contentdomain
 }
 
 func TestPostCreate_Execute(t *testing.T) {
+	clock := &mockClock{now: time.Date(2024, 1, 15, 10, 30, 0, 0, time.UTC)}
+
 	t.Run("creates post successfully", func(t *testing.T) {
 		var savedPost *contentdomain.Post
 		repo := &mockPostCreateRepo{
@@ -31,7 +33,7 @@ func TestPostCreate_Execute(t *testing.T) {
 			},
 		}
 
-		svc := contentdomain.NewPostCreate(repo)
+		svc := contentdomain.NewPostCreate(repo, clock)
 		id := uuid.New()
 		publishedAt := time.Now()
 
@@ -72,7 +74,7 @@ func TestPostCreate_Execute(t *testing.T) {
 
 	t.Run("returns forbidden when not admin", func(t *testing.T) {
 		repo := &mockPostCreateRepo{}
-		svc := contentdomain.NewPostCreate(repo)
+		svc := contentdomain.NewPostCreate(repo, clock)
 
 		_, err := svc.Execute(userContext(), &contentdomain.PostCreateRequest{
 			ID:        uuid.New(),
@@ -89,7 +91,7 @@ func TestPostCreate_Execute(t *testing.T) {
 
 	t.Run("returns error on invalid request - missing slug", func(t *testing.T) {
 		repo := &mockPostCreateRepo{}
-		svc := contentdomain.NewPostCreate(repo)
+		svc := contentdomain.NewPostCreate(repo, clock)
 
 		_, err := svc.Execute(adminContext(), &contentdomain.PostCreateRequest{
 			ID:        uuid.New(),
@@ -105,7 +107,7 @@ func TestPostCreate_Execute(t *testing.T) {
 
 	t.Run("returns error on invalid request - uppercase slug", func(t *testing.T) {
 		repo := &mockPostCreateRepo{}
-		svc := contentdomain.NewPostCreate(repo)
+		svc := contentdomain.NewPostCreate(repo, clock)
 
 		_, err := svc.Execute(adminContext(), &contentdomain.PostCreateRequest{
 			ID:        uuid.New(),
@@ -128,7 +130,7 @@ func TestPostCreate_Execute(t *testing.T) {
 			},
 		}
 
-		svc := contentdomain.NewPostCreate(repo)
+		svc := contentdomain.NewPostCreate(repo, clock)
 
 		_, err := svc.Execute(adminContext(), &contentdomain.PostCreateRequest{
 			ID:        uuid.New(),
@@ -150,7 +152,7 @@ func TestPostCreate_Execute(t *testing.T) {
 			},
 		}
 
-		svc := contentdomain.NewPostCreate(repo)
+		svc := contentdomain.NewPostCreate(repo, clock)
 
 		_, err := svc.Execute(adminContext(), &contentdomain.PostCreateRequest{
 			ID:        uuid.New(),
@@ -174,7 +176,7 @@ func TestPostCreate_Execute(t *testing.T) {
 			},
 		}
 
-		svc := contentdomain.NewPostCreate(repo)
+		svc := contentdomain.NewPostCreate(repo, clock)
 
 		resp, err := svc.Execute(adminContext(), &contentdomain.PostCreateRequest{
 			ID:        uuid.New(),

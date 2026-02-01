@@ -33,6 +33,8 @@ func userContext() context.Context {
 }
 
 func TestPageCreate_Execute(t *testing.T) {
+	clock := &mockClock{now: time.Date(2024, 1, 15, 10, 30, 0, 0, time.UTC)}
+
 	t.Run("creates page successfully", func(t *testing.T) {
 		var savedPage *contentdomain.Page
 		repo := &mockPageCreateRepo{
@@ -42,7 +44,7 @@ func TestPageCreate_Execute(t *testing.T) {
 			},
 		}
 
-		svc := contentdomain.NewPageCreate(repo)
+		svc := contentdomain.NewPageCreate(repo, clock)
 		id := uuid.New()
 		publishedAt := time.Now()
 
@@ -86,7 +88,7 @@ func TestPageCreate_Execute(t *testing.T) {
 
 	t.Run("returns forbidden when not admin", func(t *testing.T) {
 		repo := &mockPageCreateRepo{}
-		svc := contentdomain.NewPageCreate(repo)
+		svc := contentdomain.NewPageCreate(repo, clock)
 
 		_, err := svc.Execute(userContext(), &contentdomain.PageCreateRequest{
 			ID:        uuid.New(),
@@ -103,7 +105,7 @@ func TestPageCreate_Execute(t *testing.T) {
 
 	t.Run("returns forbidden when no session", func(t *testing.T) {
 		repo := &mockPageCreateRepo{}
-		svc := contentdomain.NewPageCreate(repo)
+		svc := contentdomain.NewPageCreate(repo, clock)
 
 		_, err := svc.Execute(context.Background(), &contentdomain.PageCreateRequest{
 			ID:        uuid.New(),
@@ -120,7 +122,7 @@ func TestPageCreate_Execute(t *testing.T) {
 
 	t.Run("returns error on invalid request - missing ID", func(t *testing.T) {
 		repo := &mockPageCreateRepo{}
-		svc := contentdomain.NewPageCreate(repo)
+		svc := contentdomain.NewPageCreate(repo, clock)
 
 		_, err := svc.Execute(adminContext(), &contentdomain.PageCreateRequest{
 			Namespace: "blog",
@@ -136,7 +138,7 @@ func TestPageCreate_Execute(t *testing.T) {
 
 	t.Run("returns error on invalid request - missing namespace", func(t *testing.T) {
 		repo := &mockPageCreateRepo{}
-		svc := contentdomain.NewPageCreate(repo)
+		svc := contentdomain.NewPageCreate(repo, clock)
 
 		_, err := svc.Execute(adminContext(), &contentdomain.PageCreateRequest{
 			ID:    uuid.New(),
@@ -152,7 +154,7 @@ func TestPageCreate_Execute(t *testing.T) {
 
 	t.Run("returns error on invalid request - missing slug", func(t *testing.T) {
 		repo := &mockPageCreateRepo{}
-		svc := contentdomain.NewPageCreate(repo)
+		svc := contentdomain.NewPageCreate(repo, clock)
 
 		_, err := svc.Execute(adminContext(), &contentdomain.PageCreateRequest{
 			ID:        uuid.New(),
@@ -168,7 +170,7 @@ func TestPageCreate_Execute(t *testing.T) {
 
 	t.Run("returns error on invalid request - uppercase slug", func(t *testing.T) {
 		repo := &mockPageCreateRepo{}
-		svc := contentdomain.NewPageCreate(repo)
+		svc := contentdomain.NewPageCreate(repo, clock)
 
 		_, err := svc.Execute(adminContext(), &contentdomain.PageCreateRequest{
 			ID:        uuid.New(),
@@ -185,7 +187,7 @@ func TestPageCreate_Execute(t *testing.T) {
 
 	t.Run("returns error on invalid request - missing title", func(t *testing.T) {
 		repo := &mockPageCreateRepo{}
-		svc := contentdomain.NewPageCreate(repo)
+		svc := contentdomain.NewPageCreate(repo, clock)
 
 		_, err := svc.Execute(adminContext(), &contentdomain.PageCreateRequest{
 			ID:        uuid.New(),
@@ -201,7 +203,7 @@ func TestPageCreate_Execute(t *testing.T) {
 
 	t.Run("returns error on invalid request - missing HTML", func(t *testing.T) {
 		repo := &mockPageCreateRepo{}
-		svc := contentdomain.NewPageCreate(repo)
+		svc := contentdomain.NewPageCreate(repo, clock)
 
 		_, err := svc.Execute(adminContext(), &contentdomain.PageCreateRequest{
 			ID:        uuid.New(),
@@ -223,7 +225,7 @@ func TestPageCreate_Execute(t *testing.T) {
 			},
 		}
 
-		svc := contentdomain.NewPageCreate(repo)
+		svc := contentdomain.NewPageCreate(repo, clock)
 
 		_, err := svc.Execute(adminContext(), &contentdomain.PageCreateRequest{
 			ID:        uuid.New(),
@@ -245,7 +247,7 @@ func TestPageCreate_Execute(t *testing.T) {
 			},
 		}
 
-		svc := contentdomain.NewPageCreate(repo)
+		svc := contentdomain.NewPageCreate(repo, clock)
 
 		_, err := svc.Execute(adminContext(), &contentdomain.PageCreateRequest{
 			ID:        uuid.New(),
@@ -269,7 +271,7 @@ func TestPageCreate_Execute(t *testing.T) {
 			},
 		}
 
-		svc := contentdomain.NewPageCreate(repo)
+		svc := contentdomain.NewPageCreate(repo, clock)
 
 		resp, err := svc.Execute(adminContext(), &contentdomain.PageCreateRequest{
 			ID:        uuid.New(),

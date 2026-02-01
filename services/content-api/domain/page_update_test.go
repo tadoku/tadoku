@@ -30,6 +30,8 @@ func (m *mockPageUpdateRepo) UpdatePage(ctx context.Context, page *contentdomain
 }
 
 func TestPageUpdate_Execute(t *testing.T) {
+	clock := &mockClock{now: time.Date(2024, 1, 15, 10, 30, 0, 0, time.UTC)}
+
 	t.Run("updates page successfully", func(t *testing.T) {
 		id := uuid.New()
 		existingPage := &contentdomain.Page{
@@ -53,7 +55,7 @@ func TestPageUpdate_Execute(t *testing.T) {
 			},
 		}
 
-		svc := contentdomain.NewPageUpdate(repo)
+		svc := contentdomain.NewPageUpdate(repo, clock)
 		publishedAt := time.Now()
 
 		resp, err := svc.Execute(adminContext(), id, &contentdomain.PageUpdateRequest{
@@ -83,7 +85,7 @@ func TestPageUpdate_Execute(t *testing.T) {
 
 	t.Run("returns forbidden when not admin", func(t *testing.T) {
 		repo := &mockPageUpdateRepo{}
-		svc := contentdomain.NewPageUpdate(repo)
+		svc := contentdomain.NewPageUpdate(repo, clock)
 
 		_, err := svc.Execute(userContext(), uuid.New(), &contentdomain.PageUpdateRequest{
 			Namespace: "blog",
@@ -99,7 +101,7 @@ func TestPageUpdate_Execute(t *testing.T) {
 
 	t.Run("returns error on invalid request - missing slug", func(t *testing.T) {
 		repo := &mockPageUpdateRepo{}
-		svc := contentdomain.NewPageUpdate(repo)
+		svc := contentdomain.NewPageUpdate(repo, clock)
 
 		_, err := svc.Execute(adminContext(), uuid.New(), &contentdomain.PageUpdateRequest{
 			Namespace: "blog",
@@ -119,7 +121,7 @@ func TestPageUpdate_Execute(t *testing.T) {
 			},
 		}
 
-		svc := contentdomain.NewPageUpdate(repo)
+		svc := contentdomain.NewPageUpdate(repo, clock)
 
 		_, err := svc.Execute(adminContext(), uuid.New(), &contentdomain.PageUpdateRequest{
 			Namespace: "blog",
@@ -153,7 +155,7 @@ func TestPageUpdate_Execute(t *testing.T) {
 			},
 		}
 
-		svc := contentdomain.NewPageUpdate(repo)
+		svc := contentdomain.NewPageUpdate(repo, clock)
 
 		_, err := svc.Execute(adminContext(), id, &contentdomain.PageUpdateRequest{
 			Namespace: "blog",
@@ -190,7 +192,7 @@ func TestPageUpdate_Execute(t *testing.T) {
 			},
 		}
 
-		svc := contentdomain.NewPageUpdate(repo)
+		svc := contentdomain.NewPageUpdate(repo, clock)
 
 		resp, err := svc.Execute(adminContext(), id, &contentdomain.PageUpdateRequest{
 			Namespace:   "blog",

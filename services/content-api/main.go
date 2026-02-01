@@ -70,14 +70,14 @@ func main() {
 	}
 
 	// Page services
-	pageCreate := domain.NewPageCreate(pageRepository)
-	pageUpdate := domain.NewPageUpdate(pageRepository)
+	pageCreate := domain.NewPageCreate(pageRepository, clock)
+	pageUpdate := domain.NewPageUpdate(pageRepository, clock)
 	pageFind := domain.NewPageFind(pageRepository, clock)
 	pageList := domain.NewPageList(pageRepository)
 
 	// Post services
-	postCreate := domain.NewPostCreate(postRepository)
-	postUpdate := domain.NewPostUpdate(postRepository)
+	postCreate := domain.NewPostCreate(postRepository, clock)
+	postUpdate := domain.NewPostUpdate(postRepository, clock)
 	postFind := domain.NewPostFind(postRepository, clock)
 	postList := domain.NewPostList(postRepository)
 

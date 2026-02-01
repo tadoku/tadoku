@@ -27,6 +27,7 @@ func NewServer(
 	leaderboardYearly *domain.LeaderboardYearly,
 	leaderboardGlobal *domain.LeaderboardGlobal,
 	profileContest *domain.ProfileContest,
+	profileContestActivity *domain.ProfileContestActivity,
 ) openapi.ServerInterface {
 	return &Server{
 		commandService:              commandService,
@@ -47,6 +48,7 @@ func NewServer(
 		leaderboardYearly:           leaderboardYearly,
 		leaderboardGlobal:           leaderboardGlobal,
 		profileContest:              profileContest,
+		profileContestActivity:      profileContestActivity,
 	}
 }
 
@@ -71,4 +73,5 @@ type Server struct {
 	leaderboardYearly           *domain.LeaderboardYearly
 	leaderboardGlobal           *domain.LeaderboardGlobal
 	profileContest              *domain.ProfileContest
+	profileContestActivity      *domain.ProfileContestActivity
 }

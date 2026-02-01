@@ -5,14 +5,14 @@ import (
 
 	"github.com/deepmap/oapi-codegen/pkg/types"
 	"github.com/labstack/echo/v4"
-	"github.com/tadoku/tadoku/services/immersion-api/domain/query"
+	"github.com/tadoku/tadoku/services/immersion-api/domain"
 	"github.com/tadoku/tadoku/services/immersion-api/http/rest/openapi"
 )
 
 // Fetches the activity of a user profile in a contest
 // (GET /contests/{id}/profile/{user_id}/activity)
 func (s *Server) ContestProfileFetchActivity(ctx echo.Context, id types.UUID, userId types.UUID) error {
-	stats, err := s.queryService.ActivityForContestUser(ctx.Request().Context(), &query.ActivityForContestUserRequest{
+	stats, err := s.profileContestActivity.Execute(ctx.Request().Context(), &domain.ProfileContestActivityRequest{
 		UserID:    userId,
 		ContestID: id,
 	})

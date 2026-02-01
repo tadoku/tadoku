@@ -39,7 +39,7 @@ type Repository interface {
 
 	// profile
 	FindScoresForRegistration(context.Context, *immersiondomain.ProfileContestRequest) ([]immersiondomain.Score, error)
-	ActivityForContestUser(context.Context, *ActivityForContestUserRequest) ([]ActivityForContestUserRow, error)
+	ActivityForContestUser(context.Context, *immersiondomain.ProfileContestActivityRequest) ([]immersiondomain.ProfileContestActivityRow, error)
 	YearlyActivityForUser(context.Context, *YearlyActivityForUserRequest) ([]UserActivityScore, error)
 	YearlyScoresForUser(context.Context, *YearlyScoresForUserRequest) ([]Score, error)
 	YearlyActivitySplitForUser(context.Context, *immersiondomain.ProfileYearlyActivitySplitRequest) (*immersiondomain.ProfileYearlyActivitySplitResponse, error)
@@ -51,7 +51,6 @@ type Service interface {
 	CreateContestPermissionCheck(context.Context) error
 
 	// profile
-	ActivityForContestUser(context.Context, *ActivityForContestUserRequest) (*ActivityForContestUserResponse, error)
 	FetchUserProfile(context.Context, uuid.UUID) (*UserProfile, error)
 	YearlyActivityForUser(context.Context, *YearlyActivityForUserRequest) (*YearlyActivityForUserResponse, error)
 	YearlyScoresForUser(context.Context, *YearlyScoresForUserRequest) (*YearlyScoresForUserResponse, error)

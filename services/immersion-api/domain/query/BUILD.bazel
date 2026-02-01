@@ -21,7 +21,6 @@ go_library(
         "listusers.go",
         "service.go",
         "yearlyactivityforuser.go",
-        "yearlyactivitysplitforuser.go",
         "yearlycontestregistrationsforuser.go",
         "yearlyscoresforuser.go",
     ],

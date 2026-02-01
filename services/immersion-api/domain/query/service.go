@@ -42,7 +42,7 @@ type Repository interface {
 	ActivityForContestUser(context.Context, *ActivityForContestUserRequest) ([]ActivityForContestUserRow, error)
 	YearlyActivityForUser(context.Context, *YearlyActivityForUserRequest) ([]UserActivityScore, error)
 	YearlyScoresForUser(context.Context, *YearlyScoresForUserRequest) ([]Score, error)
-	YearlyActivitySplitForUser(context.Context, *YearlyActivitySplitForUserRequest) (*YearlyActivitySplitForUserResponse, error)
+	YearlyActivitySplitForUser(context.Context, *immersiondomain.ProfileYearlyActivitySplitRequest) (*immersiondomain.ProfileYearlyActivitySplitResponse, error)
 }
 
 type Service interface {
@@ -68,7 +68,6 @@ type Service interface {
 	FetchUserProfile(context.Context, uuid.UUID) (*UserProfile, error)
 	YearlyActivityForUser(context.Context, *YearlyActivityForUserRequest) (*YearlyActivityForUserResponse, error)
 	YearlyScoresForUser(context.Context, *YearlyScoresForUserRequest) (*YearlyScoresForUserResponse, error)
-	YearlyActivitySplitForUser(context.Context, *YearlyActivitySplitForUserRequest) (*YearlyActivitySplitForUserResponse, error)
 
 	// admin
 	ListUsers(context.Context, *ListUsersRequest) (*ListUsersResponse, error)

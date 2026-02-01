@@ -1,0 +1,75 @@
+package domain
+
+import (
+	"context"
+	"fmt"
+	"time"
+
+	"github.com/go-playground/validator/v10"
+	"github.com/google/uuid"
+	commondomain "github.com/tadoku/tadoku/services/common/domain"
+)
+
+// PostCreateRepository defines the repository interface for creating posts.
+type PostCreateRepository interface {
+	CreatePost(ctx context.Context, post *Post) error
+}
+
+// PostCreateRequest contains the input data for creating a post.
+type PostCreateRequest struct {
+	ID          uuid.UUID `validate:"required"`
+	Namespace   string    `validate:"required"`
+	Slug        string    `validate:"required,gt=1,lowercase"`
+	Title       string    `validate:"required"`
+	Content     string    `validate:"required"`
+	PublishedAt *time.Time
+}
+
+// PostCreateResponse contains the result of creating a post.
+type PostCreateResponse struct {
+	Post *Post
+}
+
+// PostCreate is the service for creating posts.
+type PostCreate struct {
+	repo     PostCreateRepository
+	validate *validator.Validate
+}
+
+// NewPostCreate creates a new PostCreate service.
+func NewPostCreate(repo PostCreateRepository) *PostCreate {
+	return &PostCreate{
+		repo:     repo,
+		validate: validator.New(),
+	}
+}
+
+// Execute creates a new post.
+// It validates the request, checks authorization, and persists the post.
+func (s *PostCreate) Execute(ctx context.Context, req *PostCreateRequest) (*PostCreateResponse, error) {
+	if !commondomain.IsRole(ctx, commondomain.RoleAdmin) {
+		return nil, ErrForbidden
+	}
+
+	if err := s.validate.Struct(req); err != nil {
+		return nil, fmt.Errorf("%w: %v", ErrInvalidPost, err)
+	}
+
+	now := time.Now()
+	post := &Post{
+		ID:          req.ID,
+		Namespace:   req.Namespace,
+		Slug:        req.Slug,
+		Title:       req.Title,
+		Content:     req.Content,
+		PublishedAt: req.PublishedAt,
+		CreatedAt:   now,
+		UpdatedAt:   now,
+	}
+
+	if err := s.repo.CreatePost(ctx, post); err != nil {
+		return nil, err
+	}
+
+	return &PostCreateResponse{Post: post}, nil
+}

@@ -6,13 +6,10 @@ import (
 
 	"github.com/go-playground/validator/v10"
 	"github.com/kelseyhightower/envconfig"
-	"github.com/tadoku/tadoku/services/common/domain"
+	commondomain "github.com/tadoku/tadoku/services/common/domain"
 	tadokumiddleware "github.com/tadoku/tadoku/services/common/middleware"
 	"github.com/tadoku/tadoku/services/common/storage/memory"
-	"github.com/tadoku/tadoku/services/content-api/domain/pagecommand"
-	"github.com/tadoku/tadoku/services/content-api/domain/pagequery"
-	"github.com/tadoku/tadoku/services/content-api/domain/postcommand"
-	"github.com/tadoku/tadoku/services/content-api/domain/postquery"
+	"github.com/tadoku/tadoku/services/content-api/domain"
 	"github.com/tadoku/tadoku/services/content-api/http/rest"
 	"github.com/tadoku/tadoku/services/content-api/http/rest/openapi"
 	"github.com/tadoku/tadoku/services/content-api/storage/postgres"
@@ -67,23 +64,32 @@ func main() {
 		e.Use(sentryecho.New(sentryecho.Options{}))
 	}
 
-	clock, err := domain.NewClock("UTC")
+	clock, err := commondomain.NewClock("UTC")
 	if err != nil {
 		panic(err)
 	}
 
-	pageCommandService := pagecommand.NewService(pageRepository)
-	postCommandService := postcommand.NewService(postRepository)
+	// Page services
+	pageCreate := domain.NewPageCreate(pageRepository)
+	pageUpdate := domain.NewPageUpdate(pageRepository)
+	pageFind := domain.NewPageFind(pageRepository, clock)
+	pageList := domain.NewPageList(pageRepository)
 
-	pageQueryService := pagequery.NewService(pageRepository, clock)
-	postQueryService := postquery.NewService(postRepository, clock)
+	// Post services
+	postCreate := domain.NewPostCreate(postRepository)
+	postUpdate := domain.NewPostUpdate(postRepository)
+	postFind := domain.NewPostFind(postRepository, clock)
+	postList := domain.NewPostList(postRepository)
 
 	server := rest.NewServer(
-		pageCommandService,
-		postCommandService,
-
-		pageQueryService,
-		postQueryService,
+		pageCreate,
+		pageUpdate,
+		pageFind,
+		pageList,
+		postCreate,
+		postUpdate,
+		postFind,
+		postList,
 	)
 
 	openapi.RegisterHandlersWithBaseURL(e, server, "")

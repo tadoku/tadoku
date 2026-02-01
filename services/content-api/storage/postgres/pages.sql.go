@@ -90,7 +90,9 @@ select
   slug,
   pages_content.title,
   pages_content.html,
-  published_at
+  published_at,
+  pages.created_at,
+  pages.updated_at
 from pages
 inner join pages_content
   on pages_content.id = pages.current_content_id
@@ -99,6 +101,51 @@ where
   and "namespace" = $1
   and slug = $2
 `
+
+const findPageByID = `-- name: FindPageByID :one
+select
+  pages.id,
+  "namespace",
+  slug,
+  pages_content.title,
+  pages_content.html,
+  published_at,
+  pages.created_at,
+  pages.updated_at
+from pages
+inner join pages_content
+  on pages_content.id = pages.current_content_id
+where
+  deleted_at is null
+  and pages.id = $1
+`
+
+type FindPageByIDRow struct {
+	ID          uuid.UUID
+	Namespace   string
+	Slug        string
+	Title       string
+	Html        string
+	PublishedAt sql.NullTime
+	CreatedAt   time.Time
+	UpdatedAt   time.Time
+}
+
+func (q *Queries) FindPageByID(ctx context.Context, id uuid.UUID) (FindPageByIDRow, error) {
+	row := q.db.QueryRowContext(ctx, findPageByID, id)
+	var i FindPageByIDRow
+	err := row.Scan(
+		&i.ID,
+		&i.Namespace,
+		&i.Slug,
+		&i.Title,
+		&i.Html,
+		&i.PublishedAt,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
 
 type FindPageBySlugParams struct {
 	Namespace string
@@ -112,6 +159,8 @@ type FindPageBySlugRow struct {
 	Title       string
 	Html        string
 	PublishedAt sql.NullTime
+	CreatedAt   time.Time
+	UpdatedAt   time.Time
 }
 
 func (q *Queries) FindPageBySlug(ctx context.Context, arg FindPageBySlugParams) (FindPageBySlugRow, error) {
@@ -124,6 +173,8 @@ func (q *Queries) FindPageBySlug(ctx context.Context, arg FindPageBySlugParams) 
 		&i.Title,
 		&i.Html,
 		&i.PublishedAt,
+		&i.CreatedAt,
+		&i.UpdatedAt,
 	)
 	return i, err
 }
@@ -134,6 +185,7 @@ select
   "namespace",
   slug,
   pages_content.title,
+  pages_content.html,
   published_at,
   pages.created_at,
   pages.updated_at
@@ -161,6 +213,7 @@ type ListPagesRow struct {
 	Namespace   string
 	Slug        string
 	Title       string
+	Html        string
 	PublishedAt sql.NullTime
 	CreatedAt   time.Time
 	UpdatedAt   time.Time
@@ -185,6 +238,7 @@ func (q *Queries) ListPages(ctx context.Context, arg ListPagesParams) ([]ListPag
 			&i.Namespace,
 			&i.Slug,
 			&i.Title,
+			&i.Html,
 			&i.PublishedAt,
 			&i.CreatedAt,
 			&i.UpdatedAt,

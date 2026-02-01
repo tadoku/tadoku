@@ -6,8 +6,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
-	"github.com/tadoku/tadoku/services/content-api/domain/postcommand"
-	"github.com/tadoku/tadoku/services/content-api/domain/postquery"
+	"github.com/tadoku/tadoku/services/content-api/domain"
 	"github.com/tadoku/tadoku/services/content-api/http/rest/openapi"
 )
 
@@ -22,7 +21,7 @@ func (s *Server) PostCreate(ctx echo.Context, namespace string) error {
 		return ctx.NoContent(http.StatusBadRequest)
 	}
 
-	post, err := s.postCommandService.CreatePost(ctx.Request().Context(), &postcommand.PostCreateRequest{
+	resp, err := s.postCreate.Execute(ctx.Request().Context(), &domain.PostCreateRequest{
 		ID:          *req.Id,
 		Namespace:   namespace,
 		Slug:        req.Slug,
@@ -31,10 +30,10 @@ func (s *Server) PostCreate(ctx echo.Context, namespace string) error {
 		PublishedAt: req.PublishedAt,
 	})
 	if err != nil {
-		if errors.Is(err, postcommand.ErrForbidden) {
+		if errors.Is(err, domain.ErrForbidden) {
 			return ctx.NoContent(http.StatusForbidden)
 		}
-		if errors.Is(err, postcommand.ErrPostAlreadyExists) || errors.Is(err, postcommand.ErrInvalidPost) {
+		if errors.Is(err, domain.ErrPostAlreadyExists) || errors.Is(err, domain.ErrInvalidPost) {
 			ctx.Echo().Logger.Error("could not process request: ", err)
 			return ctx.NoContent(http.StatusBadRequest)
 		}
@@ -44,11 +43,11 @@ func (s *Server) PostCreate(ctx echo.Context, namespace string) error {
 	}
 
 	return ctx.JSON(http.StatusOK, openapi.Post{
-		Id:          &post.ID,
-		Slug:        post.Slug,
-		Title:       post.Title,
-		Content:     post.Content,
-		PublishedAt: post.PublishedAt,
+		Id:          &resp.Post.ID,
+		Slug:        resp.Post.Slug,
+		Title:       resp.Post.Title,
+		Content:     resp.Post.Content,
+		PublishedAt: resp.Post.PublishedAt,
 	})
 }
 
@@ -61,7 +60,7 @@ func (s *Server) PostUpdate(ctx echo.Context, namespace string, id string) error
 		return ctx.NoContent(http.StatusBadRequest)
 	}
 
-	post, err := s.postCommandService.UpdatePost(ctx.Request().Context(), uuid.MustParse(id), &postcommand.PostUpdateRequest{
+	resp, err := s.postUpdate.Execute(ctx.Request().Context(), uuid.MustParse(id), &domain.PostUpdateRequest{
 		Slug:        req.Slug,
 		Namespace:   namespace,
 		Title:       req.Title,
@@ -69,14 +68,14 @@ func (s *Server) PostUpdate(ctx echo.Context, namespace string, id string) error
 		PublishedAt: req.PublishedAt,
 	})
 	if err != nil {
-		if errors.Is(err, postcommand.ErrForbidden) {
+		if errors.Is(err, domain.ErrForbidden) {
 			return ctx.NoContent(http.StatusForbidden)
 		}
-		if errors.Is(err, postcommand.ErrPostAlreadyExists) || errors.Is(err, postcommand.ErrInvalidPost) {
+		if errors.Is(err, domain.ErrPostAlreadyExists) || errors.Is(err, domain.ErrInvalidPost) {
 			ctx.Echo().Logger.Error("could not process request: ", err)
 			return ctx.NoContent(http.StatusBadRequest)
 		}
-		if errors.Is(err, postcommand.ErrPostNotFound) {
+		if errors.Is(err, domain.ErrPostNotFound) {
 			return ctx.NoContent(http.StatusNotFound)
 		}
 
@@ -85,11 +84,11 @@ func (s *Server) PostUpdate(ctx echo.Context, namespace string, id string) error
 	}
 
 	return ctx.JSON(http.StatusOK, openapi.Post{
-		Id:          &post.ID,
-		Slug:        post.Slug,
-		Title:       post.Title,
-		Content:     post.Content,
-		PublishedAt: post.PublishedAt,
+		Id:          &resp.Post.ID,
+		Slug:        resp.Post.Slug,
+		Title:       resp.Post.Title,
+		Content:     resp.Post.Content,
+		PublishedAt: resp.Post.PublishedAt,
 	})
 }
 
@@ -98,15 +97,15 @@ func (s *Server) PostUpdate(ctx echo.Context, namespace string, id string) error
 // Returns page content for a given slug
 // (GET /posts/{namespace}/{slug})
 func (s *Server) PostFindBySlug(ctx echo.Context, namespace string, slug string) error {
-	post, err := s.postQueryService.FindBySlug(ctx.Request().Context(), &postquery.PostFindRequest{
+	resp, err := s.postFind.Execute(ctx.Request().Context(), &domain.PostFindRequest{
 		Namespace: namespace,
 		Slug:      slug,
 	})
 	if err != nil {
-		if errors.Is(err, postquery.ErrPostNotFound) {
+		if errors.Is(err, domain.ErrPostNotFound) {
 			return ctx.NoContent(http.StatusNotFound)
 		}
-		if errors.Is(err, postquery.ErrRequestInvalid) {
+		if errors.Is(err, domain.ErrRequestInvalid) {
 			return ctx.NoContent(http.StatusBadRequest)
 		}
 
@@ -115,11 +114,11 @@ func (s *Server) PostFindBySlug(ctx echo.Context, namespace string, slug string)
 	}
 
 	return ctx.JSON(http.StatusOK, openapi.Post{
-		Id:          &post.ID,
-		Slug:        post.Slug,
-		Title:       post.Title,
-		Content:     post.Content,
-		PublishedAt: post.PublishedAt,
+		Id:          &resp.Post.ID,
+		Slug:        resp.Post.Slug,
+		Title:       resp.Post.Title,
+		Content:     resp.Post.Content,
+		PublishedAt: resp.Post.PublishedAt,
 	})
 }
 
@@ -140,17 +139,17 @@ func (s *Server) PostList(ctx echo.Context, namespace string, params openapi.Pos
 		includeDrafts = *params.IncludeDrafts
 	}
 
-	list, err := s.postQueryService.ListPosts(ctx.Request().Context(), &postquery.PostListRequest{
+	resp, err := s.postList.Execute(ctx.Request().Context(), &domain.PostListRequest{
 		Namespace:     namespace,
 		PageSize:      pageSize,
 		Page:          page,
 		IncludeDrafts: includeDrafts,
 	})
 	if err != nil {
-		if errors.Is(err, postquery.ErrForbidden) {
+		if errors.Is(err, domain.ErrForbidden) {
 			return ctx.NoContent(http.StatusForbidden)
 		}
-		if !errors.Is(err, postquery.ErrPostNotFound) {
+		if !errors.Is(err, domain.ErrPostNotFound) {
 			ctx.Echo().Logger.Error("could not process request: ", err)
 			return ctx.NoContent(http.StatusInternalServerError)
 		}
@@ -158,20 +157,20 @@ func (s *Server) PostList(ctx echo.Context, namespace string, params openapi.Pos
 
 	res := openapi.Posts{
 		Posts:         []openapi.Post{},
-		NextPageToken: list.NextPageToken,
-		TotalSize:     list.TotalSize,
+		NextPageToken: resp.NextPageToken,
+		TotalSize:     resp.TotalSize,
 	}
 
-	for _, post := range list.Posts {
-		post := post
+	for _, p := range resp.Posts {
+		p := p
 		res.Posts = append(res.Posts, openapi.Post{
-			Id:          &post.ID,
-			Slug:        post.Slug,
-			Title:       post.Title,
-			Content:     post.Content,
-			PublishedAt: post.PublishedAt,
-			CreatedAt:   &post.CreatedAt,
-			UpdatedAt:   &post.UpdatedAt,
+			Id:          &p.ID,
+			Slug:        p.Slug,
+			Title:       p.Title,
+			Content:     p.Content,
+			PublishedAt: p.PublishedAt,
+			CreatedAt:   &p.CreatedAt,
+			UpdatedAt:   &p.UpdatedAt,
 		})
 	}
 

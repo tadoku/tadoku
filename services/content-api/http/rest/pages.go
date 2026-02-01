@@ -6,8 +6,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
-	"github.com/tadoku/tadoku/services/content-api/domain/pagecommand"
-	"github.com/tadoku/tadoku/services/content-api/domain/pagequery"
+	"github.com/tadoku/tadoku/services/content-api/domain"
 	"github.com/tadoku/tadoku/services/content-api/http/rest/openapi"
 )
 
@@ -22,19 +21,19 @@ func (s *Server) PageCreate(ctx echo.Context, namespace string) error {
 		return ctx.NoContent(http.StatusBadRequest)
 	}
 
-	page, err := s.pageCommandService.CreatePage(ctx.Request().Context(), &pagecommand.PageCreateRequest{
+	resp, err := s.pageCreate.Execute(ctx.Request().Context(), &domain.PageCreateRequest{
 		ID:          *req.Id,
 		Namespace:   namespace,
 		Slug:        req.Slug,
 		Title:       req.Title,
-		Html:        *req.Html,
+		HTML:        *req.Html,
 		PublishedAt: req.PublishedAt,
 	})
 	if err != nil {
-		if errors.Is(err, pagecommand.ErrForbidden) {
+		if errors.Is(err, domain.ErrForbidden) {
 			return ctx.NoContent(http.StatusForbidden)
 		}
-		if errors.Is(err, pagecommand.ErrPageAlreadyExists) || errors.Is(err, pagecommand.ErrInvalidPage) {
+		if errors.Is(err, domain.ErrPageAlreadyExists) || errors.Is(err, domain.ErrInvalidPage) {
 			ctx.Echo().Logger.Error("could not process request: ", err)
 			return ctx.NoContent(http.StatusBadRequest)
 		}
@@ -44,11 +43,11 @@ func (s *Server) PageCreate(ctx echo.Context, namespace string) error {
 	}
 
 	return ctx.JSON(http.StatusOK, openapi.Page{
-		Id:          &page.ID,
-		Slug:        page.Slug,
-		Title:       page.Title,
-		Html:        &page.Html,
-		PublishedAt: page.PublishedAt,
+		Id:          &resp.Page.ID,
+		Slug:        resp.Page.Slug,
+		Title:       resp.Page.Title,
+		Html:        &resp.Page.HTML,
+		PublishedAt: resp.Page.PublishedAt,
 	})
 }
 
@@ -61,22 +60,22 @@ func (s *Server) PageUpdate(ctx echo.Context, namespace string, id string) error
 		return ctx.NoContent(http.StatusBadRequest)
 	}
 
-	page, err := s.pageCommandService.UpdatePage(ctx.Request().Context(), uuid.MustParse(id), &pagecommand.PageUpdateRequest{
+	resp, err := s.pageUpdate.Execute(ctx.Request().Context(), uuid.MustParse(id), &domain.PageUpdateRequest{
 		Slug:        req.Slug,
 		Namespace:   namespace,
 		Title:       req.Title,
-		Html:        *req.Html,
+		HTML:        *req.Html,
 		PublishedAt: req.PublishedAt,
 	})
 	if err != nil {
-		if errors.Is(err, pagecommand.ErrForbidden) {
+		if errors.Is(err, domain.ErrForbidden) {
 			return ctx.NoContent(http.StatusForbidden)
 		}
-		if errors.Is(err, pagecommand.ErrPageAlreadyExists) || errors.Is(err, pagecommand.ErrInvalidPage) {
+		if errors.Is(err, domain.ErrPageAlreadyExists) || errors.Is(err, domain.ErrInvalidPage) {
 			ctx.Echo().Logger.Error("could not process request: ", err)
 			return ctx.NoContent(http.StatusBadRequest)
 		}
-		if errors.Is(err, pagecommand.ErrPageNotFound) {
+		if errors.Is(err, domain.ErrPageNotFound) {
 			return ctx.NoContent(http.StatusNotFound)
 		}
 
@@ -85,11 +84,11 @@ func (s *Server) PageUpdate(ctx echo.Context, namespace string, id string) error
 	}
 
 	return ctx.JSON(http.StatusOK, openapi.Page{
-		Id:          &page.ID,
-		Slug:        page.Slug,
-		Title:       page.Title,
-		Html:        &page.Html,
-		PublishedAt: page.PublishedAt,
+		Id:          &resp.Page.ID,
+		Slug:        resp.Page.Slug,
+		Title:       resp.Page.Title,
+		Html:        &resp.Page.HTML,
+		PublishedAt: resp.Page.PublishedAt,
 	})
 }
 
@@ -98,15 +97,15 @@ func (s *Server) PageUpdate(ctx echo.Context, namespace string, id string) error
 // Returns page content for a given slug
 // (GET /pages/{namespace}/{slug})
 func (s *Server) PageFindBySlug(ctx echo.Context, namespace string, slug string) error {
-	page, err := s.pageQueryService.FindBySlug(ctx.Request().Context(), &pagequery.PageFindRequest{
+	resp, err := s.pageFind.Execute(ctx.Request().Context(), &domain.PageFindRequest{
 		Slug:      slug,
 		Namespace: namespace,
 	})
 	if err != nil {
-		if errors.Is(err, pagequery.ErrPageNotFound) {
+		if errors.Is(err, domain.ErrPageNotFound) {
 			return ctx.NoContent(http.StatusNotFound)
 		}
-		if errors.Is(err, pagequery.ErrRequestInvalid) {
+		if errors.Is(err, domain.ErrRequestInvalid) {
 			return ctx.NoContent(http.StatusBadRequest)
 		}
 
@@ -115,10 +114,10 @@ func (s *Server) PageFindBySlug(ctx echo.Context, namespace string, slug string)
 	}
 
 	return ctx.JSON(http.StatusOK, openapi.Page{
-		Id:    &page.ID,
-		Slug:  page.Slug,
-		Title: page.Title,
-		Html:  &page.Html,
+		Id:    &resp.Page.ID,
+		Slug:  resp.Page.Slug,
+		Title: resp.Page.Title,
+		Html:  &resp.Page.HTML,
 	})
 }
 
@@ -139,17 +138,17 @@ func (s *Server) PageList(ctx echo.Context, namespace string, params openapi.Pag
 		includeDrafts = *params.IncludeDrafts
 	}
 
-	list, err := s.pageQueryService.ListPages(ctx.Request().Context(), &pagequery.PageListRequest{
+	resp, err := s.pageList.Execute(ctx.Request().Context(), &domain.PageListRequest{
 		Namespace:     namespace,
 		PageSize:      pageSize,
 		Page:          page,
 		IncludeDrafts: includeDrafts,
 	})
 	if err != nil {
-		if errors.Is(err, pagequery.ErrForbidden) {
+		if errors.Is(err, domain.ErrForbidden) {
 			return ctx.NoContent(http.StatusForbidden)
 		}
-		if !errors.Is(err, pagequery.ErrPageNotFound) {
+		if !errors.Is(err, domain.ErrPageNotFound) {
 			ctx.Echo().Logger.Error("could not process request: ", err)
 			return ctx.NoContent(http.StatusInternalServerError)
 		}
@@ -157,19 +156,19 @@ func (s *Server) PageList(ctx echo.Context, namespace string, params openapi.Pag
 
 	res := openapi.Pages{
 		Pages:         []openapi.Page{},
-		NextPageToken: list.NextPageToken,
-		TotalSize:     list.TotalSize,
+		NextPageToken: resp.NextPageToken,
+		TotalSize:     resp.TotalSize,
 	}
 
-	for _, page := range list.Pages {
-		page := page
+	for _, p := range resp.Pages {
+		p := p
 		res.Pages = append(res.Pages, openapi.Page{
-			Id:          &page.ID,
-			Slug:        page.Slug,
-			Title:       page.Title,
-			PublishedAt: page.PublishedAt,
-			CreatedAt:   &page.CreatedAt,
-			UpdatedAt:   &page.UpdatedAt,
+			Id:          &p.ID,
+			Slug:        p.Slug,
+			Title:       p.Title,
+			PublishedAt: p.PublishedAt,
+			CreatedAt:   &p.CreatedAt,
+			UpdatedAt:   &p.UpdatedAt,
 		})
 	}
 

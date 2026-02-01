@@ -1,32 +1,41 @@
 package rest
 
 import (
-	"github.com/tadoku/tadoku/services/content-api/domain/pagecommand"
-	"github.com/tadoku/tadoku/services/content-api/domain/pagequery"
-	"github.com/tadoku/tadoku/services/content-api/domain/postcommand"
-	"github.com/tadoku/tadoku/services/content-api/domain/postquery"
+	"github.com/tadoku/tadoku/services/content-api/domain"
 	"github.com/tadoku/tadoku/services/content-api/http/rest/openapi"
 )
 
 // NewServer creates a new server conforming to the OpenAPI spec
 func NewServer(
-	pageCommandService pagecommand.Service,
-	postCommandService postcommand.Service,
-	pageQueryService pagequery.Service,
-	postQueryService postquery.Service,
+	pageCreate *domain.PageCreate,
+	pageUpdate *domain.PageUpdate,
+	pageFind *domain.PageFind,
+	pageList *domain.PageList,
+	postCreate *domain.PostCreate,
+	postUpdate *domain.PostUpdate,
+	postFind *domain.PostFind,
+	postList *domain.PostList,
 ) openapi.ServerInterface {
 	return &Server{
-		pageCommandService: pageCommandService,
-		postCommandService: postCommandService,
-		pageQueryService:   pageQueryService,
-		postQueryService:   postQueryService,
+		pageCreate: pageCreate,
+		pageUpdate: pageUpdate,
+		pageFind:   pageFind,
+		pageList:   pageList,
+		postCreate: postCreate,
+		postUpdate: postUpdate,
+		postFind:   postFind,
+		postList:   postList,
 	}
 }
 
 type Server struct {
-	pageCommandService pagecommand.Service
-	postCommandService postcommand.Service
+	pageCreate *domain.PageCreate
+	pageUpdate *domain.PageUpdate
+	pageFind   *domain.PageFind
+	pageList   *domain.PageList
 
-	pageQueryService pagequery.Service
-	postQueryService postquery.Service
+	postCreate *domain.PostCreate
+	postUpdate *domain.PostUpdate
+	postFind   *domain.PostFind
+	postList   *domain.PostList
 }

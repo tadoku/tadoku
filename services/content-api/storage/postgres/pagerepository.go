@@ -9,10 +9,14 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgconn"
 	"github.com/jackc/pgerrcode"
-	"github.com/tadoku/tadoku/services/content-api/domain/pagecommand"
-	"github.com/tadoku/tadoku/services/content-api/domain/pagequery"
+	"github.com/tadoku/tadoku/services/content-api/domain"
 )
 
+// PageRepository implements all page-related domain interfaces:
+// - domain.PageCreateRepository
+// - domain.PageUpdateRepository
+// - domain.PageFindRepository
+// - domain.PageListRepository
 type PageRepository struct {
 	psql *sql.DB
 	q    *Queries
@@ -25,12 +29,11 @@ func NewPageRepository(psql *sql.DB) *PageRepository {
 	}
 }
 
-// COMMANDS
-
-func (r *PageRepository) CreatePage(ctx context.Context, req *pagecommand.PageCreateRequest) (*pagecommand.PageCreateResponse, error) {
+// CreatePage implements domain.PageCreateRepository
+func (r *PageRepository) CreatePage(ctx context.Context, page *domain.Page) error {
 	tx, err := r.psql.BeginTx(ctx, nil)
 	if err != nil {
-		return nil, fmt.Errorf("could not create page: %w", err)
+		return fmt.Errorf("could not create page: %w", err)
 	}
 
 	pageContentID := uuid.New()
@@ -38,60 +41,68 @@ func (r *PageRepository) CreatePage(ctx context.Context, req *pagecommand.PageCr
 	qtx := r.q.WithTx(tx)
 
 	_, err = qtx.CreatePage(ctx, CreatePageParams{
-		req.ID,
-		req.Namespace,
-		req.Slug,
-		pageContentID,
-		NewNullTime(req.PublishedAt),
+		ID:               page.ID,
+		Namespace:        page.Namespace,
+		Slug:             page.Slug,
+		CurrentContentID: pageContentID,
+		PublishedAt:      NewNullTime(page.PublishedAt),
 	})
 	if err != nil {
 		_ = tx.Rollback()
 
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) && pgErr.Code == pgerrcode.UniqueViolation {
-			return nil, pagecommand.ErrPageAlreadyExists
+			return domain.ErrPageAlreadyExists
 		}
 
-		return nil, fmt.Errorf("could not create page: %w", err)
+		return fmt.Errorf("could not create page: %w", err)
 	}
 
 	_, err = qtx.CreatePageContent(ctx, CreatePageContentParams{
 		ID:     pageContentID,
-		PageID: req.ID,
-		Title:  req.Title,
-		Html:   req.Html,
+		PageID: page.ID,
+		Title:  page.Title,
+		Html:   page.HTML,
 	})
 	if err != nil {
 		_ = tx.Rollback()
-		return nil, fmt.Errorf("could not create page: %w", err)
-	}
-
-	page, err := qtx.FindPageBySlug(ctx, FindPageBySlugParams{
-		Namespace: req.Namespace,
-		Slug:      req.Slug,
-	})
-	if err != nil {
-		_ = tx.Rollback()
-		return nil, fmt.Errorf("could not create page: %w", err)
+		return fmt.Errorf("could not create page: %w", err)
 	}
 
 	if err = tx.Commit(); err != nil {
-		return nil, fmt.Errorf("could not create page: %w", err)
+		return fmt.Errorf("could not create page: %w", err)
 	}
 
-	return &pagecommand.PageCreateResponse{
+	return nil
+}
+
+// GetPageByID implements domain.PageUpdateRepository
+func (r *PageRepository) GetPageByID(ctx context.Context, id uuid.UUID) (*domain.Page, error) {
+	page, err := r.q.FindPageByID(ctx, id)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, domain.ErrPageNotFound
+		}
+		return nil, fmt.Errorf("could not find page: %w", err)
+	}
+
+	return &domain.Page{
 		ID:          page.ID,
+		Namespace:   page.Namespace,
 		Slug:        page.Slug,
 		Title:       page.Title,
-		Html:        page.Html,
+		HTML:        page.Html,
 		PublishedAt: NewTimeFromNullTime(page.PublishedAt),
+		CreatedAt:   page.CreatedAt,
+		UpdatedAt:   page.UpdatedAt,
 	}, nil
 }
 
-func (r *PageRepository) UpdatePage(ctx context.Context, id uuid.UUID, req *pagecommand.PageUpdateRequest) (*pagecommand.PageUpdateResponse, error) {
+// UpdatePage implements domain.PageUpdateRepository
+func (r *PageRepository) UpdatePage(ctx context.Context, page *domain.Page) error {
 	tx, err := r.psql.BeginTx(ctx, nil)
 	if err != nil {
-		return nil, fmt.Errorf("could not update page: %w", err)
+		return fmt.Errorf("could not update page: %w", err)
 	}
 
 	pageContentID := uuid.New()
@@ -99,85 +110,72 @@ func (r *PageRepository) UpdatePage(ctx context.Context, id uuid.UUID, req *page
 	qtx := r.q.WithTx(tx)
 
 	_, err = qtx.UpdatePage(ctx, UpdatePageParams{
-		ID:               id,
-		Slug:             req.Slug,
+		ID:               page.ID,
+		Slug:             page.Slug,
 		CurrentContentID: pageContentID,
-		PublishedAt:      NewNullTime(req.PublishedAt),
+		PublishedAt:      NewNullTime(page.PublishedAt),
 	})
 	if err != nil {
 		_ = tx.Rollback()
 
-		if err != nil && errors.Is(err, sql.ErrNoRows) {
-			_ = tx.Rollback()
-			return nil, pagecommand.ErrPageNotFound
+		if errors.Is(err, sql.ErrNoRows) {
+			return domain.ErrPageNotFound
 		}
 
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) && pgErr.Code == pgerrcode.UniqueViolation {
-			return nil, pagecommand.ErrPageAlreadyExists
+			return domain.ErrPageAlreadyExists
 		}
 
-		return nil, fmt.Errorf("could not update page: %w", err)
+		return fmt.Errorf("could not update page: %w", err)
 	}
 
 	_, err = qtx.CreatePageContent(ctx, CreatePageContentParams{
 		ID:     pageContentID,
-		PageID: id,
-		Title:  req.Title,
-		Html:   req.Html,
+		PageID: page.ID,
+		Title:  page.Title,
+		Html:   page.HTML,
 	})
 	if err != nil {
 		_ = tx.Rollback()
-		return nil, fmt.Errorf("could not update page: %w", err)
-	}
-
-	page, err := qtx.FindPageBySlug(ctx, FindPageBySlugParams{
-		Namespace: req.Namespace,
-		Slug:      req.Slug,
-	})
-	if err != nil {
-		_ = tx.Rollback()
-		return nil, fmt.Errorf("could not update page: %w", err)
+		return fmt.Errorf("could not update page: %w", err)
 	}
 
 	if err = tx.Commit(); err != nil {
-		return nil, fmt.Errorf("could not update page: %w", err)
+		return fmt.Errorf("could not update page: %w", err)
 	}
 
-	return &pagecommand.PageUpdateResponse{
-		ID:          page.ID,
-		Slug:        page.Slug,
-		Title:       page.Title,
-		Html:        page.Html,
-		PublishedAt: NewTimeFromNullTime(page.PublishedAt),
-	}, nil
+	return nil
 }
 
-// QUERIES
-
-func (r *PageRepository) FindBySlug(ctx context.Context, req *pagequery.PageFindRequest) (*pagequery.PageFindResponse, error) {
+// FindPageBySlug implements domain.PageFindRepository
+func (r *PageRepository) FindPageBySlug(ctx context.Context, namespace, slug string) (*domain.Page, error) {
 	page, err := r.q.FindPageBySlug(ctx, FindPageBySlugParams{
-		Namespace: req.Namespace,
-		Slug:      req.Slug,
+		Namespace: namespace,
+		Slug:      slug,
 	})
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return nil, pagequery.ErrPageNotFound
+			return nil, domain.ErrPageNotFound
 		}
 
 		return nil, fmt.Errorf("could not find page: %w", err)
 	}
 
-	return &pagequery.PageFindResponse{
+	return &domain.Page{
 		ID:          page.ID,
+		Namespace:   page.Namespace,
 		Slug:        page.Slug,
 		Title:       page.Title,
-		Html:        page.Html,
+		HTML:        page.Html,
 		PublishedAt: NewTimeFromNullTime(page.PublishedAt),
+		CreatedAt:   page.CreatedAt,
+		UpdatedAt:   page.UpdatedAt,
 	}, nil
 }
 
-func (r *PageRepository) ListPages(ctx context.Context, req *pagequery.PageListRequest) (*pagequery.PageListResponse, error) {
+// ListPages implements domain.PageListRepository
+func (r *PageRepository) ListPages(ctx context.Context, namespace string, includeDrafts bool, pageSize, page int) (*domain.PageListResult, error) {
 	tx, err := r.psql.BeginTx(ctx, nil)
 	if err != nil {
 		return nil, fmt.Errorf("could not list pages: %w", err)
@@ -186,19 +184,19 @@ func (r *PageRepository) ListPages(ctx context.Context, req *pagequery.PageListR
 	qtx := r.q.WithTx(tx)
 
 	meta, err := qtx.PagesMetadata(ctx, PagesMetadataParams{
-		IncludeDrafts: req.IncludeDrafts,
-		Namespace:     req.Namespace,
+		IncludeDrafts: includeDrafts,
+		Namespace:     namespace,
 	})
 	if err != nil {
 		_ = tx.Rollback()
-		return nil, fmt.Errorf("could not lists pages: %w", err)
+		return nil, fmt.Errorf("could not list pages: %w", err)
 	}
 
 	pages, err := qtx.ListPages(ctx, ListPagesParams{
-		StartFrom:     int32(req.Page * req.PageSize),
-		PageSize:      int32(req.PageSize),
-		IncludeDrafts: req.IncludeDrafts,
-		Namespace:     req.Namespace,
+		StartFrom:     int32(page * pageSize),
+		PageSize:      int32(pageSize),
+		IncludeDrafts: includeDrafts,
+		Namespace:     namespace,
 	})
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		_ = tx.Rollback()
@@ -209,25 +207,27 @@ func (r *PageRepository) ListPages(ctx context.Context, req *pagequery.PageListR
 		return nil, fmt.Errorf("could not list pages: %w", err)
 	}
 
-	res := make([]pagequery.PageListEntry, len(pages))
-	for i, page := range pages {
-		res[i] = pagequery.PageListEntry{
-			ID:          page.ID,
-			Slug:        page.Slug,
-			Title:       page.Title,
-			PublishedAt: NewTimeFromNullTime(page.PublishedAt),
-			CreatedAt:   page.CreatedAt,
-			UpdatedAt:   page.UpdatedAt,
+	result := make([]domain.Page, len(pages))
+	for i, p := range pages {
+		result[i] = domain.Page{
+			ID:          p.ID,
+			Namespace:   p.Namespace,
+			Slug:        p.Slug,
+			Title:       p.Title,
+			HTML:        p.Html,
+			PublishedAt: NewTimeFromNullTime(p.PublishedAt),
+			CreatedAt:   p.CreatedAt,
+			UpdatedAt:   p.UpdatedAt,
 		}
 	}
 
 	nextPageToken := ""
-	if (req.Page*req.PageSize)+req.PageSize < int(meta.TotalSize) {
-		nextPageToken = fmt.Sprint(req.Page + 1)
+	if (page*pageSize)+pageSize < int(meta.TotalSize) {
+		nextPageToken = fmt.Sprint(page + 1)
 	}
 
-	return &pagequery.PageListResponse{
-		Pages:         res,
+	return &domain.PageListResult{
+		Pages:         result,
 		TotalSize:     int(meta.TotalSize),
 		NextPageToken: nextPageToken,
 	}, nil

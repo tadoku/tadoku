@@ -16,7 +16,7 @@ func (s *Server) ProfileFindByUserID(ctx echo.Context, userId types.UUID) error 
 		UserID: userId,
 	})
 	if err != nil {
-		ctx.Echo().Logger.Errorf("could not fetch profile: %w", err)
+		ctx.Echo().Logger.Errorf("could not fetch profile: %v", err)
 		return ctx.NoContent(http.StatusInternalServerError)
 	}
 

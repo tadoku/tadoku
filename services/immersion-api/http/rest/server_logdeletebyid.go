@@ -22,7 +22,7 @@ func (s *Server) LogDeleteByID(ctx echo.Context, id types.UUID) error {
 			return ctx.NoContent(http.StatusUnauthorized)
 		}
 
-		ctx.Echo().Logger.Errorf("could not delete log: %w", err)
+		ctx.Echo().Logger.Errorf("could not delete log: %v", err)
 		return ctx.NoContent(http.StatusInternalServerError)
 	}
 

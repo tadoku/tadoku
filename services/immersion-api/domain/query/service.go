@@ -86,7 +86,7 @@ type ServiceImpl struct {
 }
 
 type UserCache interface {
-	Search(query string, limit, offset int) ([]UserEntry, int)
+	GetUsers() []UserEntry
 }
 
 type UserEntry struct {

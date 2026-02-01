@@ -76,127 +76,32 @@ func createCacheWithUsers(t *testing.T, identities []query.IdentityInfo) *cache.
 	return c
 }
 
-func TestSearch_EmptyQuery_ReturnsPaginatedResults(t *testing.T) {
-	users := testUsers("Alice", "Bob", "Charlie", "Diana", "Eve")
-	c := createCacheWithUsers(t, users)
-
-	// First page
-	results, total := c.Search("", 2, 0)
-	assert.Equal(t, 5, total)
-	assert.Len(t, results, 2)
-	assert.Equal(t, "Alice", results[0].DisplayName)
-	assert.Equal(t, "Bob", results[1].DisplayName)
-
-	// Second page
-	results, total = c.Search("", 2, 2)
-	assert.Equal(t, 5, total)
-	assert.Len(t, results, 2)
-	assert.Equal(t, "Charlie", results[0].DisplayName)
-	assert.Equal(t, "Diana", results[1].DisplayName)
-
-	// Third page (partial)
-	results, total = c.Search("", 2, 4)
-	assert.Equal(t, 5, total)
-	assert.Len(t, results, 1)
-	assert.Equal(t, "Eve", results[0].DisplayName)
-
-	// Past end
-	results, total = c.Search("", 2, 10)
-	assert.Equal(t, 5, total)
-	assert.Len(t, results, 0)
-}
-
-func TestSearch_FuzzyMatchDisplayName(t *testing.T) {
-	users := testUsers("Alice", "Bob", "Zara", "Alice Smith")
-	c := createCacheWithUsers(t, users)
-
-	results, total := c.Search("alice", 10, 0)
-	assert.GreaterOrEqual(t, total, 2)
-	assert.GreaterOrEqual(t, len(results), 2)
-
-	// Both Alice entries should be in the results (they match best)
-	names := make([]string, len(results))
-	for i, r := range results {
-		names[i] = r.DisplayName
-	}
-	assert.Contains(t, names, "Alice")
-	assert.Contains(t, names, "Alice Smith")
-}
-
-func TestSearch_FuzzyMatchEmail(t *testing.T) {
-	users := testUsers("Alice", "Bob", "Zara")
-	c := createCacheWithUsers(t, users)
-
-	// Search for a unique email pattern
-	results, total := c.Search("alice@test", 10, 0)
-	assert.GreaterOrEqual(t, total, 1)
-	assert.GreaterOrEqual(t, len(results), 1)
-	// Alice should be the best match
-	assert.Equal(t, "Alice", results[0].DisplayName)
-	assert.Equal(t, "Alice@test.com", results[0].Email)
-}
-
-func TestSearch_FuzzyWithPagination(t *testing.T) {
-	// Create users where several match "test"
-	users := testUsers("TestUser1", "TestUser2", "TestUser3", "TestUser4", "TestUser5", "Other", "Another")
-	c := createCacheWithUsers(t, users)
-
-	// First page of matches
-	results, total := c.Search("testuser", 2, 0)
-	assert.Equal(t, 5, total) // 5 users match "testuser"
-	assert.Len(t, results, 2)
-
-	// Second page
-	results, total = c.Search("testuser", 2, 2)
-	assert.Equal(t, 5, total)
-	assert.Len(t, results, 2)
-
-	// Third page (partial)
-	results, total = c.Search("testuser", 2, 4)
-	assert.Equal(t, 5, total)
-	assert.Len(t, results, 1)
-}
-
-func TestSearch_NoMatches(t *testing.T) {
+func TestGetUsers_ReturnsUsers(t *testing.T) {
 	users := testUsers("Alice", "Bob", "Charlie")
 	c := createCacheWithUsers(t, users)
 
-	results, total := c.Search("xyz123nonexistent", 10, 0)
-	assert.Equal(t, 0, total)
-	assert.Len(t, results, 0)
+	result := c.GetUsers()
+	assert.Len(t, result, 3)
+	assert.Equal(t, "Alice", result[0].DisplayName)
+	assert.Equal(t, "Bob", result[1].DisplayName)
+	assert.Equal(t, "Charlie", result[2].DisplayName)
 }
 
-func TestSearch_EmptyCache(t *testing.T) {
+func TestGetUsers_EmptyCache(t *testing.T) {
 	c := createCacheWithUsers(t, []query.IdentityInfo{})
 
-	results, total := c.Search("", 10, 0)
-	assert.Equal(t, 0, total)
-	assert.Len(t, results, 0)
-
-	results, total = c.Search("alice", 10, 0)
-	assert.Equal(t, 0, total)
-	assert.Len(t, results, 0)
+	result := c.GetUsers()
+	assert.Len(t, result, 0)
 }
 
-func TestSearch_CaseInsensitive(t *testing.T) {
-	users := testUsers("Alice", "ALICE", "alice")
+func TestGetUsers_ReturnsCopy(t *testing.T) {
+	users := testUsers("Alice", "Bob")
 	c := createCacheWithUsers(t, users)
 
-	// Search with different cases should find all
-	results, total := c.Search("ALICE", 10, 0)
-	assert.Equal(t, 3, total)
-	assert.Len(t, results, 3)
+	result1 := c.GetUsers()
+	result2 := c.GetUsers()
 
-	results, total = c.Search("alice", 10, 0)
-	assert.Equal(t, 3, total)
-	assert.Len(t, results, 3)
-}
-
-func TestSearch_PartialMatch(t *testing.T) {
-	users := testUsers("Alexander", "Alexandra", "Alex")
-	c := createCacheWithUsers(t, users)
-
-	results, total := c.Search("alex", 10, 0)
-	assert.Equal(t, 3, total)
-	assert.Len(t, results, 3)
+	// Modify result1 and verify result2 is unaffected
+	result1[0].DisplayName = "Modified"
+	assert.Equal(t, "Alice", result2[0].DisplayName)
 }

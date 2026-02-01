@@ -7,7 +7,6 @@ go_library(
     visibility = ["//visibility:public"],
     deps = [
         "//services/immersion-api/domain/query",
-        "@com_github_sahilm_fuzzy//:fuzzy",
     ],
 )
 

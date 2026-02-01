@@ -3,11 +3,9 @@ package cache
 import (
 	"context"
 	"log"
-	"strings"
 	"sync"
 	"time"
 
-	"github.com/sahilm/fuzzy"
 	"github.com/tadoku/tadoku/services/immersion-api/domain/query"
 )
 
@@ -110,63 +108,11 @@ func (c *UserCache) refreshUsers(ctx context.Context) error {
 	return nil
 }
 
-// userSearchSource implements fuzzy.Source for fuzzy matching on users
-type userSearchSource struct {
-	users []query.UserEntry
-}
-
-func (s userSearchSource) String(i int) string {
-	u := s.users[i]
-	return strings.ToLower(u.DisplayName + " " + u.Email)
-}
-
-func (s userSearchSource) Len() int {
-	return len(s.users)
-}
-
-// Search performs fuzzy search on display name and email
-// Returns matching users sorted by match score, with pagination and total count
-func (c *UserCache) Search(queryStr string, limit, offset int) ([]query.UserEntry, int) {
+// GetUsers returns a copy of all cached users
+func (c *UserCache) GetUsers() []query.UserEntry {
 	c.mu.RLock()
-	users := c.users
-	c.mu.RUnlock()
-
-	if queryStr == "" {
-		// No search query - return paginated results
-		total := len(users)
-		start := offset
-		if start >= total {
-			return []query.UserEntry{}, total
-		}
-		end := start + limit
-		if end > total {
-			end = total
-		}
-		return users[start:end], total
-	}
-
-	// Fuzzy search
-	source := userSearchSource{users: users}
-	matches := fuzzy.FindFrom(strings.ToLower(queryStr), source)
-
-	total := len(matches)
-
-	// Apply pagination to matches
-	start := offset
-	if start >= total {
-		return []query.UserEntry{}, total
-	}
-	end := start + limit
-	if end > total {
-		end = total
-	}
-	matches = matches[start:end]
-
-	// Extract matched users in score order
-	matchedUsers := make([]query.UserEntry, 0, len(matches))
-	for _, match := range matches {
-		matchedUsers = append(matchedUsers, users[match.Index])
-	}
-
-	return matchedUsers, total
+	defer c.mu.RUnlock()
+	result := make([]query.UserEntry, len(c.users))
+	copy(result, c.users)
+	return result
 }

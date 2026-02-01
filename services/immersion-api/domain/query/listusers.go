@@ -2,9 +2,25 @@ package query
 
 import (
 	"context"
+	"strings"
 
+	"github.com/sahilm/fuzzy"
 	"github.com/tadoku/tadoku/services/common/domain"
 )
+
+// userSearchSource implements fuzzy.Source for fuzzy matching on users
+type userSearchSource struct {
+	users []UserEntry
+}
+
+func (s userSearchSource) String(i int) string {
+	u := s.users[i]
+	return strings.ToLower(u.DisplayName + " " + u.Email)
+}
+
+func (s userSearchSource) Len() int {
+	return len(s.users)
+}
 
 type ListUsersRequest struct {
 	PerPage int64
@@ -47,10 +63,47 @@ func (s *ServiceImpl) ListUsers(ctx context.Context, req *ListUsersRequest) (*Li
 	}
 
 	offset := page * perPage
-	cacheUsers, totalSize := s.userCache.Search(req.Query, perPage, offset)
+	allUsers := s.userCache.GetUsers()
 
-	users := make([]UserListEntry, 0, len(cacheUsers))
-	for _, u := range cacheUsers {
+	var matchedUsers []UserEntry
+	var totalSize int
+
+	if req.Query == "" {
+		// No search - paginate full list
+		totalSize = len(allUsers)
+		start := offset
+		if start >= totalSize {
+			matchedUsers = []UserEntry{}
+		} else {
+			end := start + perPage
+			if end > totalSize {
+				end = totalSize
+			}
+			matchedUsers = allUsers[start:end]
+		}
+	} else {
+		// Fuzzy search
+		source := userSearchSource{users: allUsers}
+		matches := fuzzy.FindFrom(strings.ToLower(req.Query), source)
+		totalSize = len(matches)
+
+		start := offset
+		if start >= totalSize {
+			matchedUsers = []UserEntry{}
+		} else {
+			end := start + perPage
+			if end > totalSize {
+				end = totalSize
+			}
+			matchedUsers = make([]UserEntry, 0, end-start)
+			for _, match := range matches[start:end] {
+				matchedUsers = append(matchedUsers, allUsers[match.Index])
+			}
+		}
+	}
+
+	users := make([]UserListEntry, 0, len(matchedUsers))
+	for _, u := range matchedUsers {
 		users = append(users, UserListEntry{
 			ID:          u.ID,
 			DisplayName: u.DisplayName,

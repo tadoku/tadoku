@@ -9,6 +9,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/tadoku/tadoku/services/common/domain"
+	immersiondomain "github.com/tadoku/tadoku/services/immersion-api/domain"
 	"github.com/tadoku/tadoku/services/immersion-api/domain/command"
 	"github.com/tadoku/tadoku/services/immersion-api/domain/query"
 )
@@ -17,7 +18,7 @@ type DetachLogFromContestRepositoryMock struct {
 	command.Repository
 	detachCalled  bool
 	detachErr     error
-	contest       *query.ContestView
+	contest       *immersiondomain.ContestView
 	contestErr    error
 	log           *query.Log
 	logErr        error
@@ -25,7 +26,7 @@ type DetachLogFromContestRepositoryMock struct {
 	detachRequest *command.DetachLogFromContestRequest
 }
 
-func (r *DetachLogFromContestRepositoryMock) FindContestByID(ctx context.Context, req *query.FindContestByIDRequest) (*query.ContestView, error) {
+func (r *DetachLogFromContestRepositoryMock) FindContestByID(ctx context.Context, req *immersiondomain.ContestFindRequest) (*immersiondomain.ContestView, error) {
 	return r.contest, r.contestErr
 }
 
@@ -51,7 +52,7 @@ func TestDetachLogFromContest(t *testing.T) {
 	contestID := uuid.New()
 	logID := uuid.New()
 
-	validContest := &query.ContestView{
+	validContest := &immersiondomain.ContestView{
 		ID:          contestID,
 		OwnerUserID: contestOwnerID,
 		Title:       "Test Contest",
@@ -67,7 +68,7 @@ func TestDetachLogFromContest(t *testing.T) {
 		request      *command.DetachLogFromContestRequest
 		userID       uuid.UUID
 		role         domain.Role
-		contest      *query.ContestView
+		contest      *immersiondomain.ContestView
 		contestErr   error
 		log          *query.Log
 		logErr       error

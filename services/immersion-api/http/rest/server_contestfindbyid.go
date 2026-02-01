@@ -6,18 +6,18 @@ import (
 
 	"github.com/deepmap/oapi-codegen/pkg/types"
 	"github.com/labstack/echo/v4"
-	"github.com/tadoku/tadoku/services/immersion-api/domain/query"
+	"github.com/tadoku/tadoku/services/immersion-api/domain"
 	"github.com/tadoku/tadoku/services/immersion-api/http/rest/openapi"
 )
 
 // Fetches a contest by id
 // (GET /contests/{id})
 func (s *Server) ContestFindByID(ctx echo.Context, id types.UUID) error {
-	contest, err := s.queryService.FindContestByID(ctx.Request().Context(), &query.FindContestByIDRequest{
+	contest, err := s.contestFind.Execute(ctx.Request().Context(), &domain.ContestFindRequest{
 		ID: id,
 	})
 	if err != nil {
-		if errors.Is(err, query.ErrNotFound) {
+		if errors.Is(err, domain.ErrNotFound) {
 			return ctx.NoContent(http.StatusNotFound)
 		}
 

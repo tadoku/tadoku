@@ -6,18 +6,18 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/tadoku/tadoku/services/immersion-api/domain/query"
+	"github.com/tadoku/tadoku/services/immersion-api/domain"
 	"github.com/tadoku/tadoku/services/immersion-api/storage/postgres"
 )
 
-func (r *Repository) FindContestByID(ctx context.Context, req *query.FindContestByIDRequest) (*query.ContestView, error) {
+func (r *Repository) FindContestByID(ctx context.Context, req *domain.ContestFindRequest) (*domain.ContestView, error) {
 	contest, err := r.q.FindContestById(ctx, postgres.FindContestByIdParams{
 		ID:             req.ID,
 		IncludeDeleted: req.IncludeDeleted,
 	})
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return nil, query.ErrNotFound
+			return nil, domain.ErrNotFound
 		}
 
 		return nil, fmt.Errorf("could not fetch contest: %w", err)
@@ -28,15 +28,15 @@ func (r *Repository) FindContestByID(ctx context.Context, req *query.FindContest
 		return nil, fmt.Errorf("could not fetch contest: %w", err)
 	}
 
-	acts := make([]query.Activity, len(activities))
+	acts := make([]domain.Activity, len(activities))
 	for i, a := range activities {
-		acts[i] = query.Activity{
+		acts[i] = domain.Activity{
 			ID:   a.ID,
 			Name: a.Name,
 		}
 	}
 
-	langs := []query.Language{}
+	langs := []domain.Language{}
 
 	if len(contest.LanguageCodeAllowList) > 0 {
 		languages, err := r.q.ListLanguagesForContest(ctx, contest.ID)
@@ -44,16 +44,16 @@ func (r *Repository) FindContestByID(ctx context.Context, req *query.FindContest
 			return nil, fmt.Errorf("could not fetch contest: %w", err)
 		}
 
-		langs = make([]query.Language, len(languages))
+		langs = make([]domain.Language, len(languages))
 		for i, a := range languages {
-			langs[i] = query.Language{
+			langs[i] = domain.Language{
 				Code: a.Code,
 				Name: a.Name,
 			}
 		}
 	}
 
-	return &query.ContestView{
+	return &domain.ContestView{
 		ID:                   contest.ID,
 		ContestStart:         contest.ContestStart,
 		ContestEnd:           contest.ContestEnd,

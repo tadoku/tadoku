@@ -19,7 +19,7 @@ var ErrForbidden = errors.New("forbidden")
 type Repository interface {
 	// contest
 	FetchContestConfigurationOptions(ctx context.Context) (*immersiondomain.ContestConfigurationOptionsResponse, error)
-	FindContestByID(context.Context, *FindContestByIDRequest) (*ContestView, error)
+	FindContestByID(context.Context, *immersiondomain.ContestFindRequest) (*immersiondomain.ContestView, error)
 	ContestFindLatestOfficial(context.Context) (*immersiondomain.ContestView, error)
 	ListContests(context.Context, *ListContestsRequest) (*ListContestsResponse, error)
 	FindRegistrationForUser(context.Context, *FindRegistrationForUserRequest) (*ContestRegistration, error)
@@ -47,7 +47,6 @@ type Repository interface {
 
 type Service interface {
 	// contest
-	FindContestByID(context.Context, *FindContestByIDRequest) (*ContestView, error)
 	ListContests(context.Context, *ListContestsRequest) (*ListContestsResponse, error)
 	FindRegistrationForUser(context.Context, *FindRegistrationForUserRequest) (*ContestRegistration, error)
 	FetchContestLeaderboard(context.Context, *FetchContestLeaderboardRequest) (*Leaderboard, error)

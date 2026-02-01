@@ -7,6 +7,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/tadoku/tadoku/services/common/domain"
+	immersiondomain "github.com/tadoku/tadoku/services/immersion-api/domain"
 	"github.com/tadoku/tadoku/services/immersion-api/domain/query"
 )
 
@@ -38,7 +39,7 @@ func (s *ServiceImpl) UpsertContestRegistration(ctx context.Context, req *Upsert
 	req.UserID = uuid.MustParse(session.Subject)
 	req.ID = uuid.New()
 
-	contest, err := s.r.FindContestByID(ctx, &query.FindContestByIDRequest{
+	contest, err := s.r.FindContestByID(ctx, &immersiondomain.ContestFindRequest{
 		ID:             req.ContestID,
 		IncludeDeleted: false,
 	})

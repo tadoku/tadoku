@@ -103,6 +103,7 @@ func main() {
 	leaderboardGlobal := immersiondomain.NewLeaderboardGlobal(postgresRepository)
 	profileContest := immersiondomain.NewProfileContest(postgresRepository)
 	profileContestActivity := immersiondomain.NewProfileContestActivity(postgresRepository)
+	profileYearlyActivity := immersiondomain.NewProfileYearlyActivity(postgresRepository)
 
 	server := rest.NewServer(
 		commandService,
@@ -124,6 +125,7 @@ func main() {
 		leaderboardGlobal,
 		profileContest,
 		profileContestActivity,
+		profileYearlyActivity,
 	)
 
 	openapi.RegisterHandlersWithBaseURL(e, server, "")

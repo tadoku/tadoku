@@ -9,7 +9,6 @@ go_library(
         "fetchuserprofile.go",
         "listusers.go",
         "service.go",
-        "yearlyactivityforuser.go",
         "yearlyscoresforuser.go",
     ],
     importpath = "github.com/tadoku/tadoku/services/immersion-api/domain/query",

@@ -24,7 +24,6 @@ type Repository interface {
 	ListContests(context.Context, *immersiondomain.ContestListRequest) (*immersiondomain.ContestListResponse, error)
 	FindRegistrationForUser(context.Context, *immersiondomain.RegistrationFindRequest) (*immersiondomain.ContestRegistration, error)
 	FetchContestLeaderboard(context.Context, *immersiondomain.ContestLeaderboardFetchRequest) (*immersiondomain.Leaderboard, error)
-	FetchOngoingContestRegistrations(context.Context, *FetchOngoingContestRegistrationsRequest) (*ContestRegistrations, error)
 	YearlyContestRegistrationsForUser(context.Context, *immersiondomain.RegistrationListYearlyRequest) (*immersiondomain.ContestRegistrations, error)
 	FetchYearlyLeaderboard(context.Context, *immersiondomain.LeaderboardYearlyRequest) (*immersiondomain.Leaderboard, error)
 	FetchGlobalLeaderboard(context.Context, *immersiondomain.LeaderboardGlobalRequest) (*immersiondomain.Leaderboard, error)
@@ -47,11 +46,7 @@ type Repository interface {
 
 type Service interface {
 	// contest
-	FetchOngoingContestRegistrations(context.Context, *FetchOngoingContestRegistrationsRequest) (*ContestRegistrations, error)
 	CreateContestPermissionCheck(context.Context) error
-
-	// profile
-	FetchUserProfile(context.Context, uuid.UUID) (*UserProfile, error)
 
 	// admin
 	ListUsers(context.Context, *ListUsersRequest) (*ListUsersResponse, error)
@@ -77,7 +72,7 @@ type UserEntry struct {
 }
 
 type KratosClient interface {
-	FetchIdentity(ctx context.Context, id uuid.UUID) (*UserTraits, error)
+	FetchIdentity(ctx context.Context, id uuid.UUID) (*immersiondomain.UserTraits, error)
 	ListIdentities(ctx context.Context, perPage int64, page int64) (*ListIdentitiesResult, error)
 }
 

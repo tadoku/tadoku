@@ -23,6 +23,7 @@ type Repository interface {
 	// contest
 	CreateContest(context.Context, *CreateContestRequest) (*CreateContestResponse, error)
 	UpsertContestRegistration(context.Context, *UpsertContestRegistrationRequest) error
+	FetchOngoingContestRegistrations(context.Context, *immersiondomain.RegistrationListOngoingRequest) (*immersiondomain.ContestRegistrations, error)
 
 	// log
 	CreateLog(context.Context, *CreateLogRequest) (*uuid.UUID, error)

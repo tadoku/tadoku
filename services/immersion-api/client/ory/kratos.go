@@ -8,6 +8,7 @@ import (
 
 	"github.com/google/uuid"
 	kratos "github.com/ory/kratos-client-go"
+	"github.com/tadoku/tadoku/services/immersion-api/domain"
 	"github.com/tadoku/tadoku/services/immersion-api/domain/query"
 )
 
@@ -29,12 +30,12 @@ type Traits struct {
 	Email       string
 }
 
-func (k *KratosClient) FetchIdentity(ctx context.Context, id uuid.UUID) (*query.UserTraits, error) {
+func (k *KratosClient) FetchIdentity(ctx context.Context, id uuid.UUID) (*domain.UserTraits, error) {
 	req := k.client.IdentityApi.GetIdentity(ctx, id.String())
 	identity, res, err := k.client.IdentityApi.GetIdentityExecute(req)
 	if err != nil {
 		if res.StatusCode == http.StatusNotFound {
-			return nil, query.ErrNotFound
+			return nil, domain.ErrNotFound
 		}
 		return nil, fmt.Errorf("could not fetch identity: %w", err)
 	}
@@ -53,7 +54,7 @@ func (k *KratosClient) FetchIdentity(ctx context.Context, id uuid.UUID) (*query.
 		return nil, fmt.Errorf("could not fetch identity: %w", err)
 	}
 
-	return &query.UserTraits{
+	return &domain.UserTraits{
 		UserDisplayName: traits.DisplayName,
 		Email:           traits.Email,
 		CreatedAt:       *identity.CreatedAt,

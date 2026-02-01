@@ -7,7 +7,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/tadoku/tadoku/services/common/domain"
 	immersiondomain "github.com/tadoku/tadoku/services/immersion-api/domain"
-	"github.com/tadoku/tadoku/services/immersion-api/domain/query"
 )
 
 type CreateLogRequest struct {
@@ -48,7 +47,7 @@ func (s *ServiceImpl) CreateLog(ctx context.Context, req *CreateLogRequest) (*im
 		return nil, fmt.Errorf("unable to validate: %w", ErrInvalidLog)
 	}
 
-	registrations, err := s.r.FetchOngoingContestRegistrations(ctx, &query.FetchOngoingContestRegistrationsRequest{
+	registrations, err := s.r.FetchOngoingContestRegistrations(ctx, &immersiondomain.RegistrationListOngoingRequest{
 		UserID: req.UserID,
 		Now:    s.clock.Now(),
 	})
@@ -57,7 +56,7 @@ func (s *ServiceImpl) CreateLog(ctx context.Context, req *CreateLogRequest) (*im
 		return nil, fmt.Errorf("unable to fetch registrations: %w", err)
 	}
 
-	validContestIDs := map[uuid.UUID]query.ContestRegistration{}
+	validContestIDs := map[uuid.UUID]immersiondomain.ContestRegistration{}
 	for _, r := range registrations.Registrations {
 		validContestIDs[r.ID] = r
 	}

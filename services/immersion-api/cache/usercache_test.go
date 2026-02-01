@@ -5,11 +5,11 @@ import (
 	"testing"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/tadoku/tadoku/services/immersion-api/cache"
+	"github.com/tadoku/tadoku/services/immersion-api/domain"
 	"github.com/tadoku/tadoku/services/immersion-api/domain/query"
-
-	"github.com/google/uuid"
 )
 
 // mockKratosClient implements query.KratosClient for testing
@@ -19,7 +19,7 @@ type mockKratosClient struct {
 	callCount  int
 }
 
-func (m *mockKratosClient) FetchIdentity(ctx context.Context, id uuid.UUID) (*query.UserTraits, error) {
+func (m *mockKratosClient) FetchIdentity(ctx context.Context, id uuid.UUID) (*domain.UserTraits, error) {
 	return nil, nil // Not used by cache
 }
 

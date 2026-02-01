@@ -104,6 +104,7 @@ func main() {
 	profileContest := immersiondomain.NewProfileContest(postgresRepository)
 	profileContestActivity := immersiondomain.NewProfileContestActivity(postgresRepository)
 	profileYearlyActivity := immersiondomain.NewProfileYearlyActivity(postgresRepository)
+	profileYearlyScores := immersiondomain.NewProfileYearlyScores(postgresRepository)
 
 	server := rest.NewServer(
 		commandService,
@@ -126,6 +127,7 @@ func main() {
 		profileContest,
 		profileContestActivity,
 		profileYearlyActivity,
+		profileYearlyScores,
 	)
 
 	openapi.RegisterHandlersWithBaseURL(e, server, "")

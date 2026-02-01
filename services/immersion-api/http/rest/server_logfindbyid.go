@@ -7,17 +7,17 @@ import (
 	"github.com/deepmap/oapi-codegen/pkg/types"
 	"github.com/labstack/echo/v4"
 
-	"github.com/tadoku/tadoku/services/immersion-api/domain/query"
+	"github.com/tadoku/tadoku/services/immersion-api/domain"
 )
 
 // Fetches a log by id
 // (GET /logs/{id})
 func (s *Server) LogFindByID(ctx echo.Context, id types.UUID) error {
-	log, err := s.queryService.FindLogByID(ctx.Request().Context(), &query.FindLogByIDRequest{
+	log, err := s.logFind.Execute(ctx.Request().Context(), &domain.LogFindRequest{
 		ID: id,
 	})
 	if err != nil {
-		if errors.Is(err, query.ErrNotFound) {
+		if errors.Is(err, domain.ErrNotFound) {
 			return ctx.NoContent(http.StatusNotFound)
 		}
 		ctx.Echo().Logger.Error("could not process request: ", err)

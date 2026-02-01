@@ -6,6 +6,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/tadoku/tadoku/services/common/domain"
+	immersiondomain "github.com/tadoku/tadoku/services/immersion-api/domain"
 	"github.com/tadoku/tadoku/services/immersion-api/domain/query"
 )
 
@@ -23,7 +24,7 @@ type CreateLogRequest struct {
 	EligibleOfficialLeaderboard bool
 }
 
-func (s *ServiceImpl) CreateLog(ctx context.Context, req *CreateLogRequest) (*query.Log, error) {
+func (s *ServiceImpl) CreateLog(ctx context.Context, req *CreateLogRequest) (*immersiondomain.Log, error) {
 	// Make sure the user is authorized to create a contest
 	if domain.IsRole(ctx, domain.RoleGuest) {
 		return nil, ErrUnauthorized
@@ -102,7 +103,7 @@ func (s *ServiceImpl) CreateLog(ctx context.Context, req *CreateLogRequest) (*qu
 		return nil, fmt.Errorf("could not create log: %w", err)
 	}
 
-	return s.r.FindLogByID(ctx, &query.FindLogByIDRequest{
+	return s.r.FindLogByID(ctx, &immersiondomain.LogFindRequest{
 		ID:             *logId,
 		IncludeDeleted: false,
 	})

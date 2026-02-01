@@ -2,6 +2,7 @@ package rest
 
 import (
 	"github.com/deepmap/oapi-codegen/pkg/types"
+	"github.com/tadoku/tadoku/services/immersion-api/domain"
 	"github.com/tadoku/tadoku/services/immersion-api/domain/query"
 	"github.com/tadoku/tadoku/services/immersion-api/http/rest/openapi"
 )
@@ -27,7 +28,7 @@ func leaderboardToAPI(leaderboard query.Leaderboard) *openapi.Leaderboard {
 	return &res
 }
 
-func logToAPI(log *query.Log) *openapi.Log {
+func logToAPI(log *domain.Log) *openapi.Log {
 	refs := make([]openapi.ContestRegistrationReference, len(log.Registrations))
 	for i, it := range log.Registrations {
 		refs[i] = openapi.ContestRegistrationReference{

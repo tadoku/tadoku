@@ -7,6 +7,7 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
 	"github.com/tadoku/tadoku/services/common/domain"
+	immersiondomain "github.com/tadoku/tadoku/services/immersion-api/domain"
 	"github.com/tadoku/tadoku/services/immersion-api/domain/query"
 )
 
@@ -39,7 +40,7 @@ type Service interface {
 	UpsertContestRegistration(context.Context, *UpsertContestRegistrationRequest) error
 
 	// log
-	CreateLog(context.Context, *CreateLogRequest) (*query.Log, error)
+	CreateLog(context.Context, *CreateLogRequest) (*immersiondomain.Log, error)
 	DeleteLog(context.Context, *DeleteLogRequest) error
 	DetachLogFromContest(context.Context, *DetachLogFromContestRequest) error
 

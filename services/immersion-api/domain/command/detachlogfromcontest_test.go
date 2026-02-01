@@ -11,7 +11,6 @@ import (
 	"github.com/tadoku/tadoku/services/common/domain"
 	immersiondomain "github.com/tadoku/tadoku/services/immersion-api/domain"
 	"github.com/tadoku/tadoku/services/immersion-api/domain/command"
-	"github.com/tadoku/tadoku/services/immersion-api/domain/query"
 )
 
 type DetachLogFromContestRepositoryMock struct {
@@ -20,7 +19,7 @@ type DetachLogFromContestRepositoryMock struct {
 	detachErr     error
 	contest       *immersiondomain.ContestView
 	contestErr    error
-	log           *query.Log
+	log           *immersiondomain.Log
 	logErr        error
 	detachUserID  uuid.UUID
 	detachRequest *command.DetachLogFromContestRequest
@@ -30,7 +29,7 @@ func (r *DetachLogFromContestRepositoryMock) FindContestByID(ctx context.Context
 	return r.contest, r.contestErr
 }
 
-func (r *DetachLogFromContestRepositoryMock) FindLogByID(ctx context.Context, req *query.FindLogByIDRequest) (*query.Log, error) {
+func (r *DetachLogFromContestRepositoryMock) FindLogByID(ctx context.Context, req *immersiondomain.LogFindRequest) (*immersiondomain.Log, error) {
 	return r.log, r.logErr
 }
 
@@ -58,7 +57,7 @@ func TestDetachLogFromContest(t *testing.T) {
 		Title:       "Test Contest",
 	}
 
-	validLog := &query.Log{
+	validLog := &immersiondomain.Log{
 		ID:     logID,
 		UserID: otherUserID,
 	}
@@ -70,7 +69,7 @@ func TestDetachLogFromContest(t *testing.T) {
 		role         domain.Role
 		contest      *immersiondomain.ContestView
 		contestErr   error
-		log          *query.Log
+		log          *immersiondomain.Log
 		logErr       error
 		detachErr    error
 		expectedErr  error
@@ -151,8 +150,8 @@ func TestDetachLogFromContest(t *testing.T) {
 			},
 			userID:       contestOwnerID,
 			role:         domain.RoleUser,
-			contestErr:   query.ErrNotFound,
-			expectedErr:  query.ErrNotFound,
+			contestErr:   immersiondomain.ErrNotFound,
+			expectedErr:  immersiondomain.ErrNotFound,
 			shouldDetach: false,
 		},
 		{
@@ -165,8 +164,8 @@ func TestDetachLogFromContest(t *testing.T) {
 			userID:       contestOwnerID,
 			role:         domain.RoleUser,
 			contest:      validContest,
-			logErr:       query.ErrNotFound,
-			expectedErr:  query.ErrNotFound,
+			logErr:       immersiondomain.ErrNotFound,
+			expectedErr:  immersiondomain.ErrNotFound,
 			shouldDetach: false,
 		},
 		{
@@ -214,7 +213,7 @@ func TestDetachLogFromContest(t *testing.T) {
 				assert.Error(t, err)
 				if errors.Is(test.expectedErr, command.ErrUnauthorized) ||
 					errors.Is(test.expectedErr, command.ErrForbidden) ||
-					errors.Is(test.expectedErr, query.ErrNotFound) {
+					errors.Is(test.expectedErr, immersiondomain.ErrNotFound) {
 					assert.ErrorIs(t, err, test.expectedErr)
 				}
 			} else {

@@ -7,7 +7,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/tadoku/tadoku/services/common/domain"
 	immersiondomain "github.com/tadoku/tadoku/services/immersion-api/domain"
-	"github.com/tadoku/tadoku/services/immersion-api/domain/query"
 )
 
 type DetachLogFromContestRequest struct {
@@ -51,7 +50,7 @@ func (s *ServiceImpl) DetachLogFromContest(ctx context.Context, req *DetachLogFr
 	}
 
 	// Verify log exists
-	_, err = s.r.FindLogByID(ctx, &query.FindLogByIDRequest{
+	_, err = s.r.FindLogByID(ctx, &immersiondomain.LogFindRequest{
 		ID:             req.LogID,
 		IncludeDeleted: false,
 	})

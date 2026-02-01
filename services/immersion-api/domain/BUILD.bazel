@@ -9,6 +9,7 @@ go_library(
         "contest_summary_fetch.go",
         "errors.go",
         "log_configuration_options.go",
+        "log_find.go",
         "models.go",
         "profile_yearly_activity_split.go",
     ],
@@ -28,6 +29,7 @@ go_test(
         "contest_find_test.go",
         "contest_summary_fetch_test.go",
         "log_configuration_options_test.go",
+        "log_find_test.go",
         "profile_yearly_activity_split_test.go",
     ],
     deps = [

@@ -7,7 +7,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/tadoku/tadoku/services/common/domain"
-	"github.com/tadoku/tadoku/services/immersion-api/domain/query"
+	immersiondomain "github.com/tadoku/tadoku/services/immersion-api/domain"
 )
 
 type DeleteLogRequest struct {
@@ -26,7 +26,7 @@ func (s *ServiceImpl) DeleteLog(ctx context.Context, req *DeleteLogRequest) erro
 		return ErrUnauthorized
 	}
 
-	log, err := s.r.FindLogByID(ctx, &query.FindLogByIDRequest{
+	log, err := s.r.FindLogByID(ctx, &immersiondomain.LogFindRequest{
 		ID:             req.LogID,
 		IncludeDeleted: false,
 	})

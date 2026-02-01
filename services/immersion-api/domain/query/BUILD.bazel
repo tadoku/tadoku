@@ -12,7 +12,6 @@ go_library(
         "fetchongoingcontestregistrations.go",
         "fetchuserprofile.go",
         "fetchyearlyleaderboard.go",
-        "findlogbyid.go",
         "findregistrationforuser.go",
         "listcontests.go",
         "listlogsforcontest.go",

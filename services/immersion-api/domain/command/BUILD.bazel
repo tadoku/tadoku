@@ -32,7 +32,6 @@ go_test(
         ":command",
         "//services/common/domain",
         "//services/immersion-api/domain",
-        "//services/immersion-api/domain/query",
         "@com_github_google_uuid//:uuid",
         "@com_github_stretchr_testify//assert",
     ],

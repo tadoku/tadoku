@@ -5,7 +5,6 @@ go_library(
     srcs = [
         "createcontest.go",
         "createlog.go",
-        "detachlogfromcontest.go",
         "service.go",
         "upsertcontestregistration.go",
     ],
@@ -22,10 +21,7 @@ go_library(
 
 go_test(
     name = "command_test",
-    srcs = [
-        "createcontest_test.go",
-        "detachlogfromcontest_test.go",
-    ],
+    srcs = ["createcontest_test.go"],
     deps = [
         ":command",
         "//services/common/domain",

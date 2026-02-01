@@ -110,6 +110,7 @@ func main() {
 	contestPermissionCheck := immersiondomain.NewContestPermissionCheck(postgresRepository, kratosClient, clock)
 	userList := immersiondomain.NewUserList(userCache)
 	logDelete := immersiondomain.NewLogDelete(postgresRepository, clock)
+	contestModerationDetachLog := immersiondomain.NewContestModerationDetachLog(postgresRepository)
 
 	server := rest.NewServer(
 		commandService,
@@ -138,6 +139,7 @@ func main() {
 		contestPermissionCheck,
 		userList,
 		logDelete,
+		contestModerationDetachLog,
 	)
 
 	openapi.RegisterHandlersWithBaseURL(e, server, "")

@@ -33,6 +33,10 @@ func (r *CreateContestRepositoryMock) UpsertUser(ctx context.Context, req *immer
 	return nil
 }
 
+func (r *CreateContestRepositoryMock) DetachLogFromContest(ctx context.Context, req *immersiondomain.ContestModerationDetachLogRequest, userID uuid.UUID) error {
+	return nil
+}
+
 func createContext(role domain.Role) context.Context {
 	token := &domain.SessionToken{
 		Role:        role,

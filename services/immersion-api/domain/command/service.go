@@ -28,7 +28,7 @@ type Repository interface {
 	// log
 	CreateLog(context.Context, *CreateLogRequest) (*uuid.UUID, error)
 	DeleteLog(context.Context, *immersiondomain.LogDeleteRequest) error
-	DetachLogFromContest(context.Context, *DetachLogFromContestRequest, uuid.UUID) error
+	DetachLogFromContest(context.Context, *immersiondomain.ContestModerationDetachLogRequest, uuid.UUID) error
 
 	UpsertUser(context.Context, *immersiondomain.UserUpsertRequest) error
 
@@ -42,7 +42,6 @@ type Service interface {
 
 	// log
 	CreateLog(context.Context, *CreateLogRequest) (*immersiondomain.Log, error)
-	DetachLogFromContest(context.Context, *DetachLogFromContestRequest) error
 }
 
 type ServiceImpl struct {

@@ -35,6 +35,7 @@ func NewServer(
 	contestPermissionCheck *domain.ContestPermissionCheck,
 	userList *domain.UserList,
 	logDelete *domain.LogDelete,
+	contestModerationDetachLog *domain.ContestModerationDetachLog,
 ) openapi.ServerInterface {
 	return &Server{
 		commandService:              commandService,
@@ -63,6 +64,7 @@ func NewServer(
 		contestPermissionCheck:      contestPermissionCheck,
 		userList:                    userList,
 		logDelete:                   logDelete,
+		contestModerationDetachLog:  contestModerationDetachLog,
 	}
 }
 
@@ -95,4 +97,5 @@ type Server struct {
 	contestPermissionCheck      *domain.ContestPermissionCheck
 	userList                    *domain.UserList
 	logDelete                   *domain.LogDelete
+	contestModerationDetachLog  *domain.ContestModerationDetachLog
 }

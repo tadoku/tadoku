@@ -18,6 +18,7 @@ func NewServer(
 	profileYearlyActivitySplit *domain.ProfileYearlyActivitySplit,
 	contestFind *domain.ContestFind,
 	logFind *domain.LogFind,
+	contestList *domain.ContestList,
 ) openapi.ServerInterface {
 	return &Server{
 		commandService:              commandService,
@@ -29,6 +30,7 @@ func NewServer(
 		profileYearlyActivitySplit:  profileYearlyActivitySplit,
 		contestFind:                 contestFind,
 		logFind:                     logFind,
+		contestList:                 contestList,
 	}
 }
 
@@ -44,4 +46,5 @@ type Server struct {
 	profileYearlyActivitySplit  *domain.ProfileYearlyActivitySplit
 	contestFind                 *domain.ContestFind
 	logFind                     *domain.LogFind
+	contestList                 *domain.ContestList
 }

@@ -6,11 +6,11 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/tadoku/tadoku/services/immersion-api/domain/query"
+	"github.com/tadoku/tadoku/services/immersion-api/domain"
 	"github.com/tadoku/tadoku/services/immersion-api/storage/postgres"
 )
 
-func (r *Repository) ListContests(ctx context.Context, req *query.ListContestsRequest) (*query.ListContestsResponse, error) {
+func (r *Repository) ListContests(ctx context.Context, req *domain.ContestListRequest) (*domain.ContestListResponse, error) {
 	tx, err := r.psql.BeginTx(ctx, nil)
 	if err != nil {
 		return nil, fmt.Errorf("could not list contests: %w", err)
@@ -45,9 +45,9 @@ func (r *Repository) ListContests(ctx context.Context, req *query.ListContestsRe
 		return nil, fmt.Errorf("could not list contests: %w", err)
 	}
 
-	res := make([]query.Contest, len(contests))
+	res := make([]domain.Contest, len(contests))
 	for i, c := range contests {
-		res[i] = query.Contest{
+		res[i] = domain.Contest{
 			ID:                      c.ID,
 			ContestStart:            c.ContestStart,
 			ContestEnd:              c.ContestEnd,
@@ -71,7 +71,7 @@ func (r *Repository) ListContests(ctx context.Context, req *query.ListContestsRe
 		nextPageToken = fmt.Sprint(req.Page + 1)
 	}
 
-	return &query.ListContestsResponse{
+	return &domain.ContestListResponse{
 		Contests:      res,
 		TotalSize:     int(meta.TotalSize),
 		NextPageToken: nextPageToken,

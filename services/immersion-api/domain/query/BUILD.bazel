@@ -13,7 +13,6 @@ go_library(
         "fetchuserprofile.go",
         "fetchyearlyleaderboard.go",
         "findregistrationforuser.go",
-        "listcontests.go",
         "listlogsforcontest.go",
         "listlogsforuser.go",
         "listusers.go",

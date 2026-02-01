@@ -6,7 +6,7 @@ import (
 	"github.com/deepmap/oapi-codegen/pkg/types"
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
-	"github.com/tadoku/tadoku/services/immersion-api/domain/query"
+	"github.com/tadoku/tadoku/services/immersion-api/domain"
 	"github.com/tadoku/tadoku/services/immersion-api/http/rest/openapi"
 )
 
@@ -38,7 +38,7 @@ func (s *Server) ContestList(ctx echo.Context, params openapi.ContestListParams)
 		}
 	}
 
-	list, err := s.queryService.ListContests(ctx.Request().Context(), &query.ListContestsRequest{
+	list, err := s.contestList.Execute(ctx.Request().Context(), &domain.ContestListRequest{
 		UserID:         userID,
 		OfficialOnly:   officialOnly,
 		IncludeDeleted: includeDeleted,
@@ -57,7 +57,6 @@ func (s *Server) ContestList(ctx echo.Context, params openapi.ContestListParams)
 	}
 
 	for i, contest := range list.Contests {
-		contest := contest
 		res.Contests[i] = openapi.Contest{
 			Id:                      &contest.ID,
 			ContestStart:            types.Date{Time: contest.ContestStart},

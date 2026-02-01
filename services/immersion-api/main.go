@@ -93,6 +93,7 @@ func main() {
 	profileYearlyActivitySplit := immersiondomain.NewProfileYearlyActivitySplit(postgresRepository)
 	contestFind := immersiondomain.NewContestFind(postgresRepository)
 	logFind := immersiondomain.NewLogFind(postgresRepository)
+	contestList := immersiondomain.NewContestList(postgresRepository)
 
 	server := rest.NewServer(
 		commandService,
@@ -104,6 +105,7 @@ func main() {
 		profileYearlyActivitySplit,
 		contestFind,
 		logFind,
+		contestList,
 	)
 
 	openapi.RegisterHandlersWithBaseURL(e, server, "")

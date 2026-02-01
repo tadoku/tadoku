@@ -55,6 +55,7 @@ go_test(
         "contest_find_test.go",
         "contest_leaderboard_fetch_test.go",
         "contest_list_test.go",
+        "contest_moderation_detach_log_test.go",
         "contest_permission_check_test.go",
         "contest_summary_fetch_test.go",
         "leaderboard_global_test.go",

@@ -269,21 +269,104 @@ If needed later:
 - Webhook integration with SES for bounce/complaint handling
 - Store delivery events in separate table
 
+## Service-to-Service Authentication
+
+Services authenticate using short-lived internal JWTs signed with a shared secret.
+
+### How It Works
+
+```
+┌─────────────────┐                              ┌───────────────────┐
+│  immersion-api  │                              │  notification-api │
+│                 │                              │                   │
+│  1. Create JWT  │   2. Request + JWT           │  3. Validate JWT  │
+│     (signed)    │ ────────────────────────────▶│     (verify sig)  │
+│                 │   Authorization: Bearer ...  │                   │
+└─────────────────┘                              └───────────────────┘
+```
+
+### JWT Structure
+
+```json
+{
+  "header": {
+    "alg": "HS256",
+    "typ": "JWT"
+  },
+  "payload": {
+    "iss": "immersion-api",
+    "sub": "service",
+    "aud": "notification-api",
+    "iat": 1706792400,
+    "exp": 1706792700
+  }
+}
+```
+
+| Claim | Purpose |
+|-------|---------|
+| `iss` | Issuing service (caller identity) |
+| `sub` | `"service"` - distinguishes from user JWTs |
+| `aud` | Target service (prevents token reuse) |
+| `iat` | Issued at timestamp |
+| `exp` | Expiry: **5 minutes** from issue |
+
+### Shared Auth Package
+
+A shared package in `services/common/serviceauth` provides:
+
+```go
+// TokenGenerator - used by calling services
+type TokenGenerator struct {
+    serviceName string
+    secret      []byte
+}
+
+func (g *TokenGenerator) Generate(targetService string) (string, error)
+
+// TokenValidator - used by receiving services
+type TokenValidator struct {
+    serviceName string
+    secret      []byte
+}
+
+func (v *TokenValidator) Validate(tokenString string) (callingService string, err error)
+```
+
+### Configuration
+
+```yaml
+# Shared across all internal services
+SERVICE_AUTH_SECRET: "<256-bit-secret>"
+
+# Per service
+SERVICE_NAME: "immersion-api"
+```
+
+### Why 5 Minutes?
+
+- Short enough to limit replay attack window
+- Long enough to handle clock skew between services
+- Allows retries without regenerating tokens
+- Simpler than API keys to manage at scale (one secret vs N×M keys)
+
 ## Security Considerations
 
 1. **Internal Only**: This API should only be accessible from internal services (not public)
-2. **Rate Limiting**: Implement per-service rate limits
-3. **Input Validation**: Validate email addresses, sanitize HTML
-4. **Idempotency**: Prevent duplicate sends with idempotency keys
-5. **Secrets**: AWS credentials via environment variables or IAM roles
+2. **Service Auth**: All requests must include valid internal JWT
+3. **Rate Limiting**: Implement per-service rate limits
+4. **Input Validation**: Validate email addresses, sanitize HTML
+5. **Idempotency**: Prevent duplicate sends with idempotency keys
+6. **Secrets**: AWS credentials and auth secret via environment variables or IAM roles
 
 ## Implementation Phases
 
 ### Phase 1: Core Infrastructure ✨ (Current Focus)
 - [ ] Project scaffolding
+- [ ] Service auth package (`services/common/serviceauth`)
 - [ ] Database schema and migrations
 - [ ] Email queue repository
-- [ ] HTTP API for enqueueing
+- [ ] HTTP API for enqueueing (with JWT auth middleware)
 - [ ] Worker for processing queue
 - [ ] AWS SES integration
 - [ ] Basic error handling and retries

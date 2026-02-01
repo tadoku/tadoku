@@ -1,0 +1,286 @@
+package domain_test
+
+import (
+	"context"
+	"testing"
+	"time"
+
+	"github.com/google/uuid"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	commondomain "github.com/tadoku/tadoku/services/common/domain"
+	"github.com/tadoku/tadoku/services/immersion-api/domain"
+)
+
+type mockLogCreateRepository struct {
+	registrations    *domain.ContestRegistrations
+	fetchRegErr      error
+	createdLogID     *uuid.UUID
+	createErr        error
+	log              *domain.Log
+	findErr          error
+	createCalled     bool
+	createCalledWith *domain.LogCreateRequest
+}
+
+func (m *mockLogCreateRepository) FetchOngoingContestRegistrations(ctx context.Context, req *domain.RegistrationListOngoingRequest) (*domain.ContestRegistrations, error) {
+	return m.registrations, m.fetchRegErr
+}
+
+func (m *mockLogCreateRepository) CreateLog(ctx context.Context, req *domain.LogCreateRequest) (*uuid.UUID, error) {
+	m.createCalled = true
+	m.createCalledWith = req
+	return m.createdLogID, m.createErr
+}
+
+func (m *mockLogCreateRepository) FindLogByID(ctx context.Context, req *domain.LogFindRequest) (*domain.Log, error) {
+	return m.log, m.findErr
+}
+
+type mockUserUpsertRepositoryForLog struct {
+	err error
+}
+
+func (m *mockUserUpsertRepositoryForLog) UpsertUser(ctx context.Context, req *domain.UserUpsertRequest) error {
+	return m.err
+}
+
+func TestLogCreate_Execute(t *testing.T) {
+	userID := uuid.New()
+	logID := uuid.New()
+	registrationID := uuid.New()
+	contestID := uuid.New()
+	unitID := uuid.New()
+	now := time.Now()
+
+	validRegistrations := &domain.ContestRegistrations{
+		Registrations: []domain.ContestRegistration{
+			{
+				ID:        registrationID,
+				ContestID: contestID,
+				UserID:    userID,
+				Languages: []domain.Language{{Code: "jpn", Name: "Japanese"}},
+				Contest: &domain.ContestView{
+					ID:       contestID,
+					Official: false,
+					AllowedActivities: []domain.Activity{
+						{ID: 1, Name: "Reading"},
+					},
+				},
+			},
+		},
+	}
+
+	createdLog := &domain.Log{
+		ID:           logID,
+		UserID:       userID,
+		LanguageCode: "jpn",
+		ActivityID:   1,
+		Amount:       100,
+	}
+
+	t.Run("returns unauthorized for guest", func(t *testing.T) {
+		userRepo := &mockUserUpsertRepositoryForLog{}
+		userUpsert := domain.NewUserUpsert(userRepo)
+		repo := &mockLogCreateRepository{}
+		clock := commondomain.NewMockClock(now)
+		svc := domain.NewLogCreate(repo, clock, userUpsert)
+
+		ctx := context.WithValue(context.Background(), commondomain.CtxSessionKey, &commondomain.SessionToken{
+			Role:    commondomain.RoleGuest,
+			Subject: userID.String(),
+		})
+
+		_, err := svc.Execute(ctx, &domain.LogCreateRequest{})
+
+		assert.ErrorIs(t, err, domain.ErrUnauthorized)
+		assert.False(t, repo.createCalled)
+	})
+
+	t.Run("returns unauthorized for nil session", func(t *testing.T) {
+		userRepo := &mockUserUpsertRepositoryForLog{}
+		userUpsert := domain.NewUserUpsert(userRepo)
+		repo := &mockLogCreateRepository{}
+		clock := commondomain.NewMockClock(now)
+		svc := domain.NewLogCreate(repo, clock, userUpsert)
+
+		_, err := svc.Execute(context.Background(), &domain.LogCreateRequest{})
+
+		assert.ErrorIs(t, err, domain.ErrUnauthorized)
+		assert.False(t, repo.createCalled)
+	})
+
+	t.Run("returns error for invalid request (missing required fields)", func(t *testing.T) {
+		userRepo := &mockUserUpsertRepositoryForLog{}
+		userUpsert := domain.NewUserUpsert(userRepo)
+		repo := &mockLogCreateRepository{}
+		clock := commondomain.NewMockClock(now)
+		svc := domain.NewLogCreate(repo, clock, userUpsert)
+
+		ctx := context.WithValue(context.Background(), commondomain.CtxSessionKey, &commondomain.SessionToken{
+			Role:    commondomain.RoleUser,
+			Subject: userID.String(),
+		})
+
+		_, err := svc.Execute(ctx, &domain.LogCreateRequest{
+			// Missing required fields
+		})
+
+		assert.ErrorIs(t, err, domain.ErrInvalidLog)
+		assert.False(t, repo.createCalled)
+	})
+
+	t.Run("returns error when registration not found for user", func(t *testing.T) {
+		userRepo := &mockUserUpsertRepositoryForLog{}
+		userUpsert := domain.NewUserUpsert(userRepo)
+		repo := &mockLogCreateRepository{
+			registrations: &domain.ContestRegistrations{Registrations: []domain.ContestRegistration{}},
+		}
+		clock := commondomain.NewMockClock(now)
+		svc := domain.NewLogCreate(repo, clock, userUpsert)
+
+		ctx := context.WithValue(context.Background(), commondomain.CtxSessionKey, &commondomain.SessionToken{
+			Role:    commondomain.RoleUser,
+			Subject: userID.String(),
+		})
+
+		_, err := svc.Execute(ctx, &domain.LogCreateRequest{
+			RegistrationIDs: []uuid.UUID{registrationID},
+			UnitID:          unitID,
+			ActivityID:      1,
+			LanguageCode:    "jpn",
+			Amount:          100,
+		})
+
+		assert.ErrorIs(t, err, domain.ErrInvalidLog)
+		assert.False(t, repo.createCalled)
+	})
+
+	t.Run("returns error when language not allowed by registration", func(t *testing.T) {
+		userRepo := &mockUserUpsertRepositoryForLog{}
+		userUpsert := domain.NewUserUpsert(userRepo)
+		repo := &mockLogCreateRepository{
+			registrations: validRegistrations,
+		}
+		clock := commondomain.NewMockClock(now)
+		svc := domain.NewLogCreate(repo, clock, userUpsert)
+
+		ctx := context.WithValue(context.Background(), commondomain.CtxSessionKey, &commondomain.SessionToken{
+			Role:    commondomain.RoleUser,
+			Subject: userID.String(),
+		})
+
+		_, err := svc.Execute(ctx, &domain.LogCreateRequest{
+			RegistrationIDs: []uuid.UUID{registrationID},
+			UnitID:          unitID,
+			ActivityID:      1,
+			LanguageCode:    "kor", // Not in registration
+			Amount:          100,
+		})
+
+		assert.ErrorIs(t, err, domain.ErrInvalidLog)
+		assert.False(t, repo.createCalled)
+	})
+
+	t.Run("returns error when activity not allowed by contest", func(t *testing.T) {
+		userRepo := &mockUserUpsertRepositoryForLog{}
+		userUpsert := domain.NewUserUpsert(userRepo)
+		repo := &mockLogCreateRepository{
+			registrations: validRegistrations,
+		}
+		clock := commondomain.NewMockClock(now)
+		svc := domain.NewLogCreate(repo, clock, userUpsert)
+
+		ctx := context.WithValue(context.Background(), commondomain.CtxSessionKey, &commondomain.SessionToken{
+			Role:    commondomain.RoleUser,
+			Subject: userID.String(),
+		})
+
+		_, err := svc.Execute(ctx, &domain.LogCreateRequest{
+			RegistrationIDs: []uuid.UUID{registrationID},
+			UnitID:          unitID,
+			ActivityID:      999, // Not allowed
+			LanguageCode:    "jpn",
+			Amount:          100,
+		})
+
+		assert.ErrorIs(t, err, domain.ErrInvalidLog)
+		assert.False(t, repo.createCalled)
+	})
+
+	t.Run("successfully creates log", func(t *testing.T) {
+		userRepo := &mockUserUpsertRepositoryForLog{}
+		userUpsert := domain.NewUserUpsert(userRepo)
+		repo := &mockLogCreateRepository{
+			registrations: validRegistrations,
+			createdLogID:  &logID,
+			log:           createdLog,
+		}
+		clock := commondomain.NewMockClock(now)
+		svc := domain.NewLogCreate(repo, clock, userUpsert)
+
+		ctx := context.WithValue(context.Background(), commondomain.CtxSessionKey, &commondomain.SessionToken{
+			Role:    commondomain.RoleUser,
+			Subject: userID.String(),
+		})
+
+		result, err := svc.Execute(ctx, &domain.LogCreateRequest{
+			RegistrationIDs: []uuid.UUID{registrationID},
+			UnitID:          unitID,
+			ActivityID:      1,
+			LanguageCode:    "jpn",
+			Amount:          100,
+		})
+
+		require.NoError(t, err)
+		assert.True(t, repo.createCalled)
+		assert.Equal(t, logID, result.ID)
+		assert.Equal(t, userID, repo.createCalledWith.UserID)
+	})
+
+	t.Run("sets EligibleOfficialLeaderboard for official contest", func(t *testing.T) {
+		officialRegistrations := &domain.ContestRegistrations{
+			Registrations: []domain.ContestRegistration{
+				{
+					ID:        registrationID,
+					ContestID: contestID,
+					UserID:    userID,
+					Languages: []domain.Language{{Code: "jpn", Name: "Japanese"}},
+					Contest: &domain.ContestView{
+						ID:       contestID,
+						Official: true,
+						AllowedActivities: []domain.Activity{
+							{ID: 1, Name: "Reading"},
+						},
+					},
+				},
+			},
+		}
+
+		userRepo := &mockUserUpsertRepositoryForLog{}
+		userUpsert := domain.NewUserUpsert(userRepo)
+		repo := &mockLogCreateRepository{
+			registrations: officialRegistrations,
+			createdLogID:  &logID,
+			log:           createdLog,
+		}
+		clock := commondomain.NewMockClock(now)
+		svc := domain.NewLogCreate(repo, clock, userUpsert)
+
+		ctx := context.WithValue(context.Background(), commondomain.CtxSessionKey, &commondomain.SessionToken{
+			Role:    commondomain.RoleUser,
+			Subject: userID.String(),
+		})
+
+		_, err := svc.Execute(ctx, &domain.LogCreateRequest{
+			RegistrationIDs: []uuid.UUID{registrationID},
+			UnitID:          unitID,
+			ActivityID:      1,
+			LanguageCode:    "jpn",
+			Amount:          100,
+		})
+
+		require.NoError(t, err)
+		assert.True(t, repo.createCalledWith.EligibleOfficialLeaderboard)
+	})
+}

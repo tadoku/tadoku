@@ -60,6 +60,7 @@ go_test(
         "leaderboard_global_test.go",
         "leaderboard_yearly_test.go",
         "log_configuration_options_test.go",
+        "log_create_test.go",
         "log_delete_test.go",
         "log_find_test.go",
         "log_list_for_contest_test.go",

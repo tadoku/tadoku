@@ -11,6 +11,7 @@ go_library(
         "//services/common/domain",
         "//services/common/middleware",
         "//services/common/storage/memory",
+        "//services/immersion-api/cache",
         "//services/immersion-api/client/ory",
         "//services/immersion-api/domain/command",
         "//services/immersion-api/domain/query",

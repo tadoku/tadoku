@@ -919,3 +919,58 @@ export const useDetachLogFromContest = (
     onSuccess,
     onError,
   })
+
+// Admin
+
+const UserListEntry = z.object({
+  id: z.string(),
+  display_name: z.string(),
+  email: z.string(),
+  created_at: z.string(),
+})
+
+export type UserListEntry = z.infer<typeof UserListEntry>
+
+const UserList = z.object({
+  users: z.array(UserListEntry),
+  total_size: z.number(),
+})
+
+export type UserList = z.infer<typeof UserList>
+
+export const useUserList = (
+  opts: {
+    pageSize: number
+    page: number
+    query?: string
+  },
+  options?: { enabled?: boolean },
+) =>
+  useQuery(
+    ['users', 'list', opts],
+    async (): Promise<UserList> => {
+      const params: Record<string, string> = {
+        page_size: opts.pageSize.toString(),
+        page: opts.page.toString(),
+      }
+      if (opts.query) {
+        params.query = opts.query
+      }
+      const response = await fetch(
+        `${root}/users?${new URLSearchParams(params)}`,
+      )
+
+      if (response.status === 401) {
+        throw new Error('401')
+      }
+      if (response.status === 403) {
+        throw new Error('403')
+      }
+      if (response.status !== 200) {
+        throw new Error(response.status.toString())
+      }
+
+      return UserList.parse(await response.json())
+    },
+    { ...options, retry: false },
+  )

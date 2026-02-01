@@ -1,14 +1,20 @@
 package main
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/kelseyhightower/envconfig"
 	"github.com/tadoku/tadoku/services/common/domain"
 	tadokumiddleware "github.com/tadoku/tadoku/services/common/middleware"
 	"github.com/tadoku/tadoku/services/common/storage/memory"
+	"github.com/tadoku/tadoku/services/immersion-api/cache"
 	"github.com/tadoku/tadoku/services/immersion-api/client/ory"
 	"github.com/tadoku/tadoku/services/immersion-api/domain/command"
 	"github.com/tadoku/tadoku/services/immersion-api/domain/query"
@@ -48,6 +54,8 @@ func main() {
 	}
 
 	kratosClient := ory.NewKratosClient(cfg.KratosURL)
+	userCache := cache.NewUserCache(kratosClient, 5*time.Minute)
+	userCache.Start()
 
 	postgresRepository := repository.NewRepository(psql)
 	roleRepository := memory.NewRoleRepository("/etc/tadoku/permissions/roles.yaml")
@@ -74,7 +82,7 @@ func main() {
 	}
 
 	commandService := command.NewService(postgresRepository, clock)
-	queryService := query.NewService(postgresRepository, clock, kratosClient)
+	queryService := query.NewService(postgresRepository, clock, kratosClient, userCache)
 
 	server := rest.NewServer(
 		commandService,
@@ -83,6 +91,25 @@ func main() {
 
 	openapi.RegisterHandlersWithBaseURL(e, server, "")
 
-	fmt.Printf("immersion-api is now available at: http://localhost:%d/v2\n", cfg.Port)
-	e.Logger.Fatal(e.Start(fmt.Sprintf("0.0.0.0:%d", cfg.Port)))
+	// Start server in goroutine
+	go func() {
+		fmt.Printf("immersion-api is now available at: http://localhost:%d/v2\n", cfg.Port)
+		if err := e.Start(fmt.Sprintf("0.0.0.0:%d", cfg.Port)); err != nil {
+			e.Logger.Info("shutting down the server")
+		}
+	}()
+
+	// Wait for interrupt signal
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	<-quit
+
+	// Graceful shutdown
+	userCache.Stop()
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	if err := e.Shutdown(ctx); err != nil {
+		e.Logger.Fatal(err)
+	}
 }

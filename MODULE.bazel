@@ -35,6 +35,7 @@ use_repo(
     "com_github_micahparks_keyfunc",
     "com_github_ory_kratos_client_go",
     "com_github_pkg_errors",
+    "com_github_sahilm_fuzzy",
     "com_github_stretchr_testify",
     "in_gopkg_yaml_v3",
 )

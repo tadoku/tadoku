@@ -290,6 +290,20 @@ type UserActivityScore struct {
 	Score float32            `json:"score"`
 }
 
+// UserList defines model for UserList.
+type UserList struct {
+	TotalSize int             `json:"total_size"`
+	Users     []UserListEntry `json:"users"`
+}
+
+// UserListEntry defines model for UserListEntry.
+type UserListEntry struct {
+	CreatedAt   string `json:"created_at"`
+	DisplayName string `json:"display_name"`
+	Email       string `json:"email"`
+	Id          string `json:"id"`
+}
+
 // UserProfile defines model for UserProfile.
 type UserProfile struct {
 	CreatedAt   time.Time          `json:"created_at"`
@@ -362,6 +376,15 @@ type LogCreateJSONBody struct {
 	RegistrationIds []openapi_types.UUID `json:"registration_ids"`
 	Tags            []string             `json:"tags"`
 	UnitId          openapi_types.UUID   `json:"unit_id"`
+}
+
+// UsersListParams defines parameters for UsersList.
+type UsersListParams struct {
+	PageSize *int `form:"page_size,omitempty" json:"page_size,omitempty"`
+	Page     *int `form:"page,omitempty" json:"page,omitempty"`
+
+	// Query Fuzzy search on display name and email
+	Query *string `form:"query,omitempty" json:"query,omitempty"`
 }
 
 // ProfileListLogsParams defines parameters for ProfileListLogs.
@@ -454,6 +477,9 @@ type ServerInterface interface {
 	// Checks if service is responsive
 	// (GET /ping)
 	Ping(ctx echo.Context) error
+	// Lists all users (admin only)
+	// (GET /users)
+	UsersList(ctx echo.Context, params UsersListParams) error
 	// Fetches a activity split summary of a user for a given year
 	// (GET /users/{userId}/activity-split/{year})
 	ProfileYearlyActivitySplitByUserID(ctx echo.Context, userId openapi_types.UUID, year int) error
@@ -971,6 +997,40 @@ func (w *ServerInterfaceWrapper) Ping(ctx echo.Context) error {
 	return err
 }
 
+// UsersList converts echo context to params.
+func (w *ServerInterfaceWrapper) UsersList(ctx echo.Context) error {
+	var err error
+
+	ctx.Set(CookieAuthScopes, []string{""})
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params UsersListParams
+	// ------------- Optional query parameter "page_size" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "page_size", ctx.QueryParams(), &params.PageSize)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter page_size: %s", err))
+	}
+
+	// ------------- Optional query parameter "page" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "page", ctx.QueryParams(), &params.Page)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter page: %s", err))
+	}
+
+	// ------------- Optional query parameter "query" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "query", ctx.QueryParams(), &params.Query)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter query: %s", err))
+	}
+
+	// Invoke the callback with all the unmarshalled arguments
+	err = w.Handler.UsersList(ctx, params)
+	return err
+}
+
 // ProfileYearlyActivitySplitByUserID converts echo context to params.
 func (w *ServerInterfaceWrapper) ProfileYearlyActivitySplitByUserID(ctx echo.Context) error {
 	var err error
@@ -1173,6 +1233,7 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 	router.DELETE(baseURL+"/logs/:id", wrapper.LogDeleteByID)
 	router.GET(baseURL+"/logs/:id", wrapper.LogFindByID)
 	router.GET(baseURL+"/ping", wrapper.Ping)
+	router.GET(baseURL+"/users", wrapper.UsersList)
 	router.GET(baseURL+"/users/:userId/activity-split/:year", wrapper.ProfileYearlyActivitySplitByUserID)
 	router.GET(baseURL+"/users/:userId/activity/:year", wrapper.ProfileYearlyActivityByUserID)
 	router.GET(baseURL+"/users/:userId/contest-registrations/:year", wrapper.ProfileYearlyContestRegistrationsByUserID)

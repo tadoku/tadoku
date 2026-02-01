@@ -1,0 +1,22 @@
+load("@rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "cache",
+    srcs = ["usercache.go"],
+    importpath = "github.com/tadoku/tadoku/services/immersion-api/cache",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//services/immersion-api/domain/query",
+    ],
+)
+
+go_test(
+    name = "cache_test",
+    srcs = ["usercache_test.go"],
+    deps = [
+        ":cache",
+        "//services/immersion-api/domain/query",
+        "@com_github_google_uuid//:uuid",
+        "@com_github_stretchr_testify//assert",
+    ],
+)

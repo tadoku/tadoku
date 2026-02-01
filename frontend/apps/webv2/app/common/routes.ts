@@ -54,6 +54,7 @@ export const routes = {
   manage: () => `/manage`,
   managePosts: () => `/manage/posts`,
   managePages: () => `/manage/pages`,
+  manageUsers: () => `/manage/users`,
 
   // External
 

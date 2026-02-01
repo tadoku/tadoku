@@ -10,7 +10,7 @@ import (
 // Fetches the configuration options for a new contest
 // (GET /contests/configuration-options)
 func (s *Server) ContestGetConfigurations(ctx echo.Context) error {
-	opts, err := s.queryService.FetchContestConfigurationOptions(ctx.Request().Context())
+	opts, err := s.contestConfigurationOptions.Execute(ctx.Request().Context())
 	if err != nil {
 		return ctx.NoContent(http.StatusInternalServerError)
 	}

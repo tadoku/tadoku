@@ -4,11 +4,11 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/tadoku/tadoku/services/immersion-api/domain/command"
+	"github.com/tadoku/tadoku/services/immersion-api/domain"
 	"github.com/tadoku/tadoku/services/immersion-api/storage/postgres"
 )
 
-func (r *Repository) CreateContest(ctx context.Context, req *command.CreateContestRequest) (*command.CreateContestResponse, error) {
+func (r *Repository) CreateContest(ctx context.Context, req *domain.ContestCreateRequest) (*domain.ContestCreateResponse, error) {
 	tx, err := r.psql.BeginTx(ctx, nil)
 	if err != nil {
 		return nil, fmt.Errorf("could not create contest: %w", err)
@@ -48,7 +48,7 @@ func (r *Repository) CreateContest(ctx context.Context, req *command.CreateConte
 		return nil, fmt.Errorf("could not create contest: %w", err)
 	}
 
-	return &command.CreateContestResponse{
+	return &domain.ContestCreateResponse{
 		ID:                      contest.ID,
 		ContestStart:            contest.ContestStart,
 		ContestEnd:              contest.ContestEnd,

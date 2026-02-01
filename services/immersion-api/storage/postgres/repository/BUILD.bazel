@@ -35,8 +35,7 @@ go_library(
     importpath = "github.com/tadoku/tadoku/services/immersion-api/storage/postgres/repository",
     visibility = ["//visibility:public"],
     deps = [
-        "//services/immersion-api/domain/command",
-        "//services/immersion-api/domain/query",
+        "//services/immersion-api/domain",
         "//services/immersion-api/storage/postgres",
         "@com_github_google_uuid//:uuid",
     ],

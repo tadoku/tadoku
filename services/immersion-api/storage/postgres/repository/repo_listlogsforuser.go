@@ -6,11 +6,11 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/tadoku/tadoku/services/immersion-api/domain/query"
+	"github.com/tadoku/tadoku/services/immersion-api/domain"
 	"github.com/tadoku/tadoku/services/immersion-api/storage/postgres"
 )
 
-func (r *Repository) ListLogsForUser(ctx context.Context, req *query.ListLogsForUserRequest) (*query.ListLogsForUserResponse, error) {
+func (r *Repository) ListLogsForUser(ctx context.Context, req *domain.LogListForUserRequest) (*domain.LogListForUserResponse, error) {
 	entries, err := r.q.ListLogsForUser(ctx, postgres.ListLogsForUserParams{
 		UserID:         req.UserID,
 		StartFrom:      int32(req.Page * req.PageSize),
@@ -19,7 +19,7 @@ func (r *Repository) ListLogsForUser(ctx context.Context, req *query.ListLogsFor
 	})
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return &query.ListLogsForUserResponse{
+			return &domain.LogListForUserResponse{
 				TotalSize:     0,
 				NextPageToken: "",
 			}, nil
@@ -28,9 +28,9 @@ func (r *Repository) ListLogsForUser(ctx context.Context, req *query.ListLogsFor
 		return nil, fmt.Errorf("could not fetch logs list: %w", err)
 	}
 
-	res := make([]query.Log, len(entries))
+	res := make([]domain.Log, len(entries))
 	for i, it := range entries {
-		res[i] = query.Log{
+		res[i] = domain.Log{
 			ID:           it.ID,
 			UserID:       it.UserID,
 			Description:  postgres.NewStringFromNullString(it.Description),
@@ -58,7 +58,7 @@ func (r *Repository) ListLogsForUser(ctx context.Context, req *query.ListLogsFor
 		nextPageToken = fmt.Sprint(req.Page + 1)
 	}
 
-	return &query.ListLogsForUserResponse{
+	return &domain.LogListForUserResponse{
 		Logs:          res,
 		TotalSize:     int(totalSize),
 		NextPageToken: nextPageToken,

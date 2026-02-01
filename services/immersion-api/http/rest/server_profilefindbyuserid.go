@@ -1,24 +1,22 @@
 package rest
 
 import (
-	"errors"
 	"net/http"
 
 	"github.com/deepmap/oapi-codegen/pkg/types"
 	"github.com/labstack/echo/v4"
-	"github.com/tadoku/tadoku/services/immersion-api/domain/query"
+	"github.com/tadoku/tadoku/services/immersion-api/domain"
 	"github.com/tadoku/tadoku/services/immersion-api/http/rest/openapi"
 )
 
 // Fetches a profile of a user
 // (GET /users/{userId}/profile)
 func (s *Server) ProfileFindByUserID(ctx echo.Context, userId types.UUID) error {
-	profile, err := s.queryService.FetchUserProfile(ctx.Request().Context(), userId)
+	profile, err := s.profileFetch.Execute(ctx.Request().Context(), &domain.ProfileFetchRequest{
+		UserID: userId,
+	})
 	if err != nil {
-		if errors.Is(err, query.ErrNotFound) {
-			return ctx.NoContent(http.StatusNotFound)
-		}
-		ctx.Echo().Logger.Errorf("could not fetch profile: %w", err)
+		ctx.Echo().Logger.Errorf("could not fetch profile: %v", err)
 		return ctx.NoContent(http.StatusInternalServerError)
 	}
 

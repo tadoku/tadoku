@@ -6,8 +6,7 @@ import (
 
 	"github.com/deepmap/oapi-codegen/pkg/types"
 	"github.com/labstack/echo/v4"
-	"github.com/tadoku/tadoku/services/immersion-api/domain/command"
-	"github.com/tadoku/tadoku/services/immersion-api/domain/query"
+	"github.com/tadoku/tadoku/services/immersion-api/domain"
 	"github.com/tadoku/tadoku/services/immersion-api/http/rest/openapi"
 )
 
@@ -20,19 +19,19 @@ func (s *Server) ContestModerationDetachLog(ctx echo.Context, id types.UUID, log
 		return ctx.NoContent(http.StatusBadRequest)
 	}
 
-	err := s.commandService.DetachLogFromContest(ctx.Request().Context(), &command.DetachLogFromContestRequest{
+	err := s.contestModerationDetachLog.Execute(ctx.Request().Context(), &domain.ContestModerationDetachLogRequest{
 		ContestID: id,
 		LogID:     logId,
 		Reason:    req.Reason,
 	})
 	if err != nil {
-		if errors.Is(err, query.ErrNotFound) {
+		if errors.Is(err, domain.ErrNotFound) {
 			return ctx.NoContent(http.StatusNotFound)
 		}
-		if errors.Is(err, command.ErrForbidden) {
+		if errors.Is(err, domain.ErrForbidden) {
 			return ctx.NoContent(http.StatusForbidden)
 		}
-		if errors.Is(err, command.ErrUnauthorized) {
+		if errors.Is(err, domain.ErrUnauthorized) {
 			return ctx.NoContent(http.StatusUnauthorized)
 		}
 

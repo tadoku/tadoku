@@ -2,11 +2,11 @@ package rest
 
 import (
 	"github.com/deepmap/oapi-codegen/pkg/types"
-	"github.com/tadoku/tadoku/services/immersion-api/domain/query"
+	"github.com/tadoku/tadoku/services/immersion-api/domain"
 	"github.com/tadoku/tadoku/services/immersion-api/http/rest/openapi"
 )
 
-func leaderboardToAPI(leaderboard query.Leaderboard) *openapi.Leaderboard {
+func domainLeaderboardToAPI(leaderboard domain.Leaderboard) *openapi.Leaderboard {
 	res := openapi.Leaderboard{
 		Entries:       make([]openapi.LeaderboardEntry, len(leaderboard.Entries)),
 		NextPageToken: leaderboard.NextPageToken,
@@ -14,7 +14,6 @@ func leaderboardToAPI(leaderboard query.Leaderboard) *openapi.Leaderboard {
 	}
 
 	for i, entry := range leaderboard.Entries {
-		entry := entry
 		res.Entries[i] = openapi.LeaderboardEntry{
 			Rank:            entry.Rank,
 			UserId:          entry.UserID,
@@ -27,7 +26,7 @@ func leaderboardToAPI(leaderboard query.Leaderboard) *openapi.Leaderboard {
 	return &res
 }
 
-func logToAPI(log *query.Log) *openapi.Log {
+func logToAPI(log *domain.Log) *openapi.Log {
 	refs := make([]openapi.ContestRegistrationReference, len(log.Registrations))
 	for i, it := range log.Registrations {
 		refs[i] = openapi.ContestRegistrationReference{
@@ -62,7 +61,7 @@ func logToAPI(log *query.Log) *openapi.Log {
 	}
 }
 
-func contestRegistrationToAPI(r *query.ContestRegistration) *openapi.ContestRegistration {
+func contestRegistrationToAPI(r *domain.ContestRegistration) *openapi.ContestRegistration {
 	registration := openapi.ContestRegistration{
 		ContestId:       r.ContestID,
 		Id:              &r.ID,

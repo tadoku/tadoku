@@ -6,18 +6,18 @@ import (
 
 	"github.com/deepmap/oapi-codegen/pkg/types"
 	"github.com/labstack/echo/v4"
-	"github.com/tadoku/tadoku/services/immersion-api/domain/query"
+	"github.com/tadoku/tadoku/services/immersion-api/domain"
 	"github.com/tadoku/tadoku/services/immersion-api/http/rest/openapi"
 )
 
 // Fetches the summary for a contest
 // (GET /contests/{id}/summary)
 func (s *Server) ContestFetchSummary(ctx echo.Context, id types.UUID) error {
-	summary, err := s.queryService.FetchContestSummary(ctx.Request().Context(), &query.FetchContestSummaryRequest{
+	summary, err := s.contestSummaryFetch.Execute(ctx.Request().Context(), &domain.ContestSummaryFetchRequest{
 		ContestID: id,
 	})
 	if err != nil {
-		if errors.Is(err, query.ErrNotFound) {
+		if errors.Is(err, domain.ErrNotFound) {
 			return ctx.NoContent(http.StatusNotFound)
 		}
 		ctx.Echo().Logger.Errorf("could not fetch summary: %w", err)

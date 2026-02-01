@@ -5,14 +5,14 @@ import (
 
 	"github.com/deepmap/oapi-codegen/pkg/types"
 	"github.com/labstack/echo/v4"
-	"github.com/tadoku/tadoku/services/immersion-api/domain/query"
+	"github.com/tadoku/tadoku/services/immersion-api/domain"
 	"github.com/tadoku/tadoku/services/immersion-api/http/rest/openapi"
 )
 
 // Fetches the scores of a user for a given year
 // (GET /users/{userId}/scores/{year})
 func (s *Server) ProfileYearlyScoresByUserID(ctx echo.Context, userId types.UUID, year int) error {
-	summary, err := s.queryService.YearlyScoresForUser(ctx.Request().Context(), &query.YearlyScoresForUserRequest{
+	summary, err := s.profileYearlyScores.Execute(ctx.Request().Context(), &domain.ProfileYearlyScoresRequest{
 		UserID: userId,
 		Year:   year,
 	})

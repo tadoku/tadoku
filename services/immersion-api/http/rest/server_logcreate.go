@@ -5,7 +5,7 @@ import (
 	"net/http"
 
 	"github.com/labstack/echo/v4"
-	"github.com/tadoku/tadoku/services/immersion-api/domain/command"
+	"github.com/tadoku/tadoku/services/immersion-api/domain"
 	"github.com/tadoku/tadoku/services/immersion-api/http/rest/openapi"
 )
 
@@ -18,7 +18,7 @@ func (s *Server) LogCreate(ctx echo.Context) error {
 		return ctx.NoContent(http.StatusBadRequest)
 	}
 
-	log, err := s.commandService.CreateLog(ctx.Request().Context(), &command.CreateLogRequest{
+	log, err := s.logCreate.Execute(ctx.Request().Context(), &domain.LogCreateRequest{
 		RegistrationIDs: req.RegistrationIds,
 		UnitID:          req.UnitId,
 		ActivityID:      req.ActivityId,
@@ -28,13 +28,13 @@ func (s *Server) LogCreate(ctx echo.Context) error {
 		Description:     req.Description,
 	})
 	if err != nil {
-		if errors.Is(err, command.ErrForbidden) {
+		if errors.Is(err, domain.ErrForbidden) {
 			return ctx.NoContent(http.StatusForbidden)
 		}
-		if errors.Is(err, command.ErrUnauthorized) {
+		if errors.Is(err, domain.ErrUnauthorized) {
 			return ctx.NoContent(http.StatusUnauthorized)
 		}
-		if errors.Is(err, command.ErrInvalidLog) {
+		if errors.Is(err, domain.ErrInvalidLog) {
 			ctx.Echo().Logger.Error("could not process request: ", err)
 			return ctx.NoContent(http.StatusBadRequest)
 		}

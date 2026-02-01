@@ -5,25 +5,24 @@ import (
 	"testing"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/tadoku/tadoku/services/immersion-api/cache"
-	"github.com/tadoku/tadoku/services/immersion-api/domain/query"
-
-	"github.com/google/uuid"
+	"github.com/tadoku/tadoku/services/immersion-api/domain"
 )
 
-// mockKratosClient implements query.KratosClient for testing
+// mockKratosClient implements domain.KratosClient for testing
 type mockKratosClient struct {
-	identities []query.IdentityInfo
+	identities []domain.IdentityInfo
 	err        error
 	callCount  int
 }
 
-func (m *mockKratosClient) FetchIdentity(ctx context.Context, id uuid.UUID) (*query.UserTraits, error) {
+func (m *mockKratosClient) FetchIdentity(ctx context.Context, id uuid.UUID) (*domain.UserTraits, error) {
 	return nil, nil // Not used by cache
 }
 
-func (m *mockKratosClient) ListIdentities(ctx context.Context, perPage int64, page int64) (*query.ListIdentitiesResult, error) {
+func (m *mockKratosClient) ListIdentities(ctx context.Context, perPage int64, page int64) (*domain.ListIdentitiesResult, error) {
 	m.callCount++
 	if m.err != nil {
 		return nil, m.err
@@ -31,7 +30,7 @@ func (m *mockKratosClient) ListIdentities(ctx context.Context, perPage int64, pa
 
 	start := int(page * perPage)
 	if start >= len(m.identities) {
-		return &query.ListIdentitiesResult{Identities: nil, HasMore: false}, nil
+		return &domain.ListIdentitiesResult{Identities: nil, HasMore: false}, nil
 	}
 
 	end := start + int(perPage)
@@ -40,15 +39,15 @@ func (m *mockKratosClient) ListIdentities(ctx context.Context, perPage int64, pa
 		end = len(m.identities)
 	}
 
-	return &query.ListIdentitiesResult{
+	return &domain.ListIdentitiesResult{
 		Identities: m.identities[start:end],
 		HasMore:    hasMore,
 	}, nil
 }
 
 // testUser creates a test IdentityInfo with a display name and email derived from it
-func testUser(displayName string) query.IdentityInfo {
-	return query.IdentityInfo{
+func testUser(displayName string) domain.IdentityInfo {
+	return domain.IdentityInfo{
 		ID:          uuid.New().String(),
 		DisplayName: displayName,
 		Email:       displayName + "@test.com",
@@ -57,8 +56,8 @@ func testUser(displayName string) query.IdentityInfo {
 }
 
 // testUsers creates multiple test users from display names
-func testUsers(names ...string) []query.IdentityInfo {
-	users := make([]query.IdentityInfo, len(names))
+func testUsers(names ...string) []domain.IdentityInfo {
+	users := make([]domain.IdentityInfo, len(names))
 	for i, name := range names {
 		users[i] = testUser(name)
 	}
@@ -66,7 +65,7 @@ func testUsers(names ...string) []query.IdentityInfo {
 }
 
 // createCacheWithUsers creates a UserCache with the given identities, starts it, waits for load, and stops it
-func createCacheWithUsers(t *testing.T, identities []query.IdentityInfo) *cache.UserCache {
+func createCacheWithUsers(t *testing.T, identities []domain.IdentityInfo) *cache.UserCache {
 	mock := &mockKratosClient{identities: identities}
 	c := cache.NewUserCache(mock, time.Hour) // long refresh to prevent auto-refresh during test
 	c.Start()
@@ -88,7 +87,7 @@ func TestGetUsers_ReturnsUsers(t *testing.T) {
 }
 
 func TestGetUsers_EmptyCache(t *testing.T) {
-	c := createCacheWithUsers(t, []query.IdentityInfo{})
+	c := createCacheWithUsers(t, []domain.IdentityInfo{})
 
 	result := c.GetUsers()
 	assert.Len(t, result, 0)

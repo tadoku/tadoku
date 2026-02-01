@@ -6,14 +6,14 @@ import (
 
 	"github.com/deepmap/oapi-codegen/pkg/types"
 	"github.com/labstack/echo/v4"
-	"github.com/tadoku/tadoku/services/immersion-api/domain/query"
+	"github.com/tadoku/tadoku/services/immersion-api/domain"
 	"github.com/tadoku/tadoku/services/immersion-api/http/rest/openapi"
 )
 
 // Lists the logs of a user
 // (GET /users/{user_id}/logs)
 func (s *Server) ProfileListLogs(ctx echo.Context, userId types.UUID, params openapi.ProfileListLogsParams) error {
-	req := &query.ListLogsForUserRequest{
+	req := &domain.LogListForUserRequest{
 		UserID:         userId,
 		IncludeDeleted: false,
 		PageSize:       0,
@@ -30,9 +30,9 @@ func (s *Server) ProfileListLogs(ctx echo.Context, userId types.UUID, params ope
 		req.IncludeDeleted = *params.IncludeDeleted
 	}
 
-	list, err := s.queryService.ListLogsForUser(ctx.Request().Context(), req)
+	list, err := s.logListForUser.Execute(ctx.Request().Context(), req)
 	if err != nil {
-		if errors.Is(err, query.ErrUnauthorized) {
+		if errors.Is(err, domain.ErrUnauthorized) {
 			return ctx.NoContent(http.StatusForbidden)
 		}
 
@@ -47,7 +47,6 @@ func (s *Server) ProfileListLogs(ctx echo.Context, userId types.UUID, params ope
 	}
 
 	for i, it := range list.Logs {
-		it := it
 		res.Logs[i] = openapi.Log{
 			Id: it.ID,
 			Activity: openapi.Activity{

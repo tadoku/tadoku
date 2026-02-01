@@ -16,8 +16,7 @@ import (
 	"github.com/tadoku/tadoku/services/common/storage/memory"
 	"github.com/tadoku/tadoku/services/immersion-api/cache"
 	"github.com/tadoku/tadoku/services/immersion-api/client/ory"
-	"github.com/tadoku/tadoku/services/immersion-api/domain/command"
-	"github.com/tadoku/tadoku/services/immersion-api/domain/query"
+	immersiondomain "github.com/tadoku/tadoku/services/immersion-api/domain"
 	"github.com/tadoku/tadoku/services/immersion-api/http/rest"
 	"github.com/tadoku/tadoku/services/immersion-api/http/rest/openapi"
 	"github.com/tadoku/tadoku/services/immersion-api/storage/postgres/repository"
@@ -81,12 +80,66 @@ func main() {
 		panic(err)
 	}
 
-	commandService := command.NewService(postgresRepository, clock)
-	queryService := query.NewService(postgresRepository, clock, kratosClient, userCache)
+	// Service-per-function services
+	contestConfigurationOptions := immersiondomain.NewContestConfigurationOptions(postgresRepository)
+	logConfigurationOptions := immersiondomain.NewLogConfigurationOptions(postgresRepository)
+	contestFindLatestOfficial := immersiondomain.NewContestFindLatestOfficial(postgresRepository)
+	contestSummaryFetch := immersiondomain.NewContestSummaryFetch(postgresRepository)
+	profileYearlyActivitySplit := immersiondomain.NewProfileYearlyActivitySplit(postgresRepository)
+	contestFind := immersiondomain.NewContestFind(postgresRepository)
+	logFind := immersiondomain.NewLogFind(postgresRepository)
+	contestList := immersiondomain.NewContestList(postgresRepository)
+	logListForUser := immersiondomain.NewLogListForUser(postgresRepository)
+	logListForContest := immersiondomain.NewLogListForContest(postgresRepository)
+	registrationFind := immersiondomain.NewRegistrationFind(postgresRepository)
+	registrationListYearly := immersiondomain.NewRegistrationListYearly(postgresRepository)
+	contestLeaderboardFetch := immersiondomain.NewContestLeaderboardFetch(postgresRepository)
+	leaderboardYearly := immersiondomain.NewLeaderboardYearly(postgresRepository)
+	leaderboardGlobal := immersiondomain.NewLeaderboardGlobal(postgresRepository)
+	profileContest := immersiondomain.NewProfileContest(postgresRepository)
+	profileContestActivity := immersiondomain.NewProfileContestActivity(postgresRepository)
+	profileYearlyActivity := immersiondomain.NewProfileYearlyActivity(postgresRepository)
+	profileYearlyScores := immersiondomain.NewProfileYearlyScores(postgresRepository)
+	profileFetch := immersiondomain.NewProfileFetch(kratosClient)
+	registrationListOngoing := immersiondomain.NewRegistrationListOngoing(postgresRepository, clock)
+	contestPermissionCheck := immersiondomain.NewContestPermissionCheck(postgresRepository, kratosClient, clock)
+	userList := immersiondomain.NewUserList(userCache)
+	logDelete := immersiondomain.NewLogDelete(postgresRepository, clock)
+	contestModerationDetachLog := immersiondomain.NewContestModerationDetachLog(postgresRepository)
+	userUpsert := immersiondomain.NewUserUpsert(postgresRepository)
+	registrationUpsert := immersiondomain.NewRegistrationUpsert(postgresRepository, userUpsert)
+	logCreate := immersiondomain.NewLogCreate(postgresRepository, clock, userUpsert)
+	contestCreate := immersiondomain.NewContestCreate(postgresRepository, clock, userUpsert)
 
 	server := rest.NewServer(
-		commandService,
-		queryService,
+		contestConfigurationOptions,
+		logConfigurationOptions,
+		contestFindLatestOfficial,
+		contestSummaryFetch,
+		profileYearlyActivitySplit,
+		contestFind,
+		logFind,
+		contestList,
+		logListForUser,
+		logListForContest,
+		registrationFind,
+		registrationListYearly,
+		contestLeaderboardFetch,
+		leaderboardYearly,
+		leaderboardGlobal,
+		profileContest,
+		profileContestActivity,
+		profileYearlyActivity,
+		profileYearlyScores,
+		profileFetch,
+		registrationListOngoing,
+		contestPermissionCheck,
+		userList,
+		logDelete,
+		contestModerationDetachLog,
+		registrationUpsert,
+		logCreate,
+		contestCreate,
 	)
 
 	openapi.RegisterHandlersWithBaseURL(e, server, "")

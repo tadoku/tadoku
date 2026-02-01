@@ -5,16 +5,16 @@ import (
 	"net/http"
 
 	"github.com/labstack/echo/v4"
-	"github.com/tadoku/tadoku/services/immersion-api/domain/query"
+	"github.com/tadoku/tadoku/services/immersion-api/domain"
 	"github.com/tadoku/tadoku/services/immersion-api/http/rest/openapi"
 )
 
 // Fetches all the ongoing contest registrations of the logged in user, always in a single page
 // (GET /contests/configuration-options)
 func (s *Server) ContestFindOngoingRegistrations(ctx echo.Context) error {
-	regs, err := s.queryService.FetchOngoingContestRegistrations(ctx.Request().Context(), &query.FetchOngoingContestRegistrationsRequest{})
+	regs, err := s.registrationListOngoing.Execute(ctx.Request().Context())
 	if err != nil {
-		if errors.Is(err, query.ErrUnauthorized) {
+		if errors.Is(err, domain.ErrUnauthorized) {
 			return ctx.NoContent(http.StatusUnauthorized)
 		}
 

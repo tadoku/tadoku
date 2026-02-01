@@ -40,8 +40,7 @@ go_library(
     visibility = ["//visibility:public"],
     deps = [
         "//services/common/domain",
-        "//services/immersion-api/domain/command",
-        "//services/immersion-api/domain/query",
+        "//services/immersion-api/domain",
         "//services/immersion-api/http/rest/openapi",
         "@com_github_deepmap_oapi_codegen//pkg/types",
         "@com_github_google_uuid//:uuid",

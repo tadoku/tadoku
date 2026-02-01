@@ -7,7 +7,7 @@ import (
 	"github.com/deepmap/oapi-codegen/pkg/types"
 	"github.com/labstack/echo/v4"
 
-	"github.com/tadoku/tadoku/services/immersion-api/domain/command"
+	"github.com/tadoku/tadoku/services/immersion-api/domain"
 	"github.com/tadoku/tadoku/services/immersion-api/http/rest/openapi"
 )
 
@@ -20,7 +20,7 @@ func (s *Server) ContestCreate(ctx echo.Context) error {
 		return ctx.NoContent(http.StatusBadRequest)
 	}
 
-	contest, err := s.commandService.CreateContest(ctx.Request().Context(), &command.CreateContestRequest{
+	contest, err := s.contestCreate.Execute(ctx.Request().Context(), &domain.ContestCreateRequest{
 		Official:                req.Official,
 		Private:                 req.Private,
 		ContestStart:            req.ContestStart.Time,
@@ -32,13 +32,13 @@ func (s *Server) ContestCreate(ctx echo.Context) error {
 		ActivityTypeIDAllowList: req.ActivityTypeIdAllowList,
 	})
 	if err != nil {
-		if errors.Is(err, command.ErrForbidden) {
+		if errors.Is(err, domain.ErrForbidden) {
 			return ctx.NoContent(http.StatusForbidden)
 		}
-		if errors.Is(err, command.ErrUnauthorized) {
+		if errors.Is(err, domain.ErrUnauthorized) {
 			return ctx.NoContent(http.StatusUnauthorized)
 		}
-		if errors.Is(err, command.ErrInvalidContest) {
+		if errors.Is(err, domain.ErrInvalidContest) {
 			ctx.Echo().Logger.Error("could not process request: ", err)
 			return ctx.NoContent(http.StatusBadRequest)
 		}

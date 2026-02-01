@@ -1,0 +1,284 @@
+package domain_test
+
+import (
+	"context"
+	"testing"
+	"time"
+
+	"github.com/google/uuid"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	commondomain "github.com/tadoku/tadoku/services/common/domain"
+	"github.com/tadoku/tadoku/services/immersion-api/domain"
+)
+
+type mockRegistrationUpsertRepository struct {
+	contest          *domain.ContestView
+	findContestErr   error
+	registration     *domain.ContestRegistration
+	findRegErr       error
+	upsertErr        error
+	upsertCalled     bool
+	upsertCalledWith *domain.RegistrationUpsertRequest
+}
+
+func (m *mockRegistrationUpsertRepository) FindContestByID(ctx context.Context, req *domain.ContestFindRequest) (*domain.ContestView, error) {
+	return m.contest, m.findContestErr
+}
+
+func (m *mockRegistrationUpsertRepository) FindRegistrationForUser(ctx context.Context, req *domain.RegistrationFindRequest) (*domain.ContestRegistration, error) {
+	return m.registration, m.findRegErr
+}
+
+func (m *mockRegistrationUpsertRepository) UpsertContestRegistration(ctx context.Context, req *domain.RegistrationUpsertRequest) error {
+	m.upsertCalled = true
+	m.upsertCalledWith = req
+	return m.upsertErr
+}
+
+type mockUserUpsertRepositoryForReg struct {
+	err error
+}
+
+func (m *mockUserUpsertRepositoryForReg) UpsertUser(ctx context.Context, req *domain.UserUpsertRequest) error {
+	return m.err
+}
+
+func TestRegistrationUpsert_Execute(t *testing.T) {
+	userID := uuid.New()
+	contestID := uuid.New()
+	now := time.Now()
+
+	validContest := &domain.ContestView{
+		ID:               contestID,
+		ContestStart:     now.Add(-time.Hour),
+		ContestEnd:       now.Add(time.Hour * 24),
+		RegistrationEnd:  now.Add(time.Hour * 12),
+		Title:            "Test Contest",
+		OwnerUserID:      uuid.New(),
+		AllowedLanguages: []domain.Language{},
+	}
+
+	t.Run("returns forbidden for banned user", func(t *testing.T) {
+		userRepo := &mockUserUpsertRepositoryForReg{}
+		userUpsert := domain.NewUserUpsert(userRepo)
+		repo := &mockRegistrationUpsertRepository{}
+		svc := domain.NewRegistrationUpsert(repo, userUpsert)
+
+		ctx := context.WithValue(context.Background(), commondomain.CtxSessionKey, &commondomain.SessionToken{
+			Role:    commondomain.RoleBanned,
+			Subject: userID.String(),
+		})
+
+		err := svc.Execute(ctx, &domain.RegistrationUpsertRequest{
+			ContestID:     contestID,
+			LanguageCodes: []string{"jpn"},
+		})
+
+		assert.ErrorIs(t, err, domain.ErrForbidden)
+		assert.False(t, repo.upsertCalled)
+	})
+
+	t.Run("returns unauthorized for guest", func(t *testing.T) {
+		userRepo := &mockUserUpsertRepositoryForReg{}
+		userUpsert := domain.NewUserUpsert(userRepo)
+		repo := &mockRegistrationUpsertRepository{}
+		svc := domain.NewRegistrationUpsert(repo, userUpsert)
+
+		ctx := context.WithValue(context.Background(), commondomain.CtxSessionKey, &commondomain.SessionToken{
+			Role:    commondomain.RoleGuest,
+			Subject: userID.String(),
+		})
+
+		err := svc.Execute(ctx, &domain.RegistrationUpsertRequest{
+			ContestID:     contestID,
+			LanguageCodes: []string{"jpn"},
+		})
+
+		assert.ErrorIs(t, err, domain.ErrUnauthorized)
+		assert.False(t, repo.upsertCalled)
+	})
+
+	t.Run("returns unauthorized for nil session", func(t *testing.T) {
+		userRepo := &mockUserUpsertRepositoryForReg{}
+		userUpsert := domain.NewUserUpsert(userRepo)
+		repo := &mockRegistrationUpsertRepository{}
+		svc := domain.NewRegistrationUpsert(repo, userUpsert)
+
+		err := svc.Execute(context.Background(), &domain.RegistrationUpsertRequest{
+			ContestID:     contestID,
+			LanguageCodes: []string{"jpn"},
+		})
+
+		assert.ErrorIs(t, err, domain.ErrUnauthorized)
+		assert.False(t, repo.upsertCalled)
+	})
+
+	t.Run("returns error for invalid language count (zero)", func(t *testing.T) {
+		userRepo := &mockUserUpsertRepositoryForReg{}
+		userUpsert := domain.NewUserUpsert(userRepo)
+		repo := &mockRegistrationUpsertRepository{
+			contest:    validContest,
+			findRegErr: domain.ErrNotFound,
+		}
+		svc := domain.NewRegistrationUpsert(repo, userUpsert)
+
+		ctx := context.WithValue(context.Background(), commondomain.CtxSessionKey, &commondomain.SessionToken{
+			Role:    commondomain.RoleUser,
+			Subject: userID.String(),
+		})
+
+		err := svc.Execute(ctx, &domain.RegistrationUpsertRequest{
+			ContestID:     contestID,
+			LanguageCodes: []string{},
+		})
+
+		assert.ErrorIs(t, err, domain.ErrInvalidContestRegistration)
+		assert.False(t, repo.upsertCalled)
+	})
+
+	t.Run("returns error for invalid language count (more than 3)", func(t *testing.T) {
+		userRepo := &mockUserUpsertRepositoryForReg{}
+		userUpsert := domain.NewUserUpsert(userRepo)
+		repo := &mockRegistrationUpsertRepository{
+			contest:    validContest,
+			findRegErr: domain.ErrNotFound,
+		}
+		svc := domain.NewRegistrationUpsert(repo, userUpsert)
+
+		ctx := context.WithValue(context.Background(), commondomain.CtxSessionKey, &commondomain.SessionToken{
+			Role:    commondomain.RoleUser,
+			Subject: userID.String(),
+		})
+
+		err := svc.Execute(ctx, &domain.RegistrationUpsertRequest{
+			ContestID:     contestID,
+			LanguageCodes: []string{"jpn", "kor", "zho", "eng"},
+		})
+
+		assert.ErrorIs(t, err, domain.ErrInvalidContestRegistration)
+		assert.False(t, repo.upsertCalled)
+	})
+
+	t.Run("returns error when language not allowed by contest", func(t *testing.T) {
+		userRepo := &mockUserUpsertRepositoryForReg{}
+		userUpsert := domain.NewUserUpsert(userRepo)
+		contestWithAllowList := &domain.ContestView{
+			ID:               contestID,
+			ContestStart:     now.Add(-time.Hour),
+			ContestEnd:       now.Add(time.Hour * 24),
+			RegistrationEnd:  now.Add(time.Hour * 12),
+			Title:            "Test Contest",
+			OwnerUserID:      uuid.New(),
+			AllowedLanguages: []domain.Language{{Code: "jpn", Name: "Japanese"}},
+		}
+		repo := &mockRegistrationUpsertRepository{
+			contest:    contestWithAllowList,
+			findRegErr: domain.ErrNotFound,
+		}
+		svc := domain.NewRegistrationUpsert(repo, userUpsert)
+
+		ctx := context.WithValue(context.Background(), commondomain.CtxSessionKey, &commondomain.SessionToken{
+			Role:    commondomain.RoleUser,
+			Subject: userID.String(),
+		})
+
+		err := svc.Execute(ctx, &domain.RegistrationUpsertRequest{
+			ContestID:     contestID,
+			LanguageCodes: []string{"kor"},
+		})
+
+		assert.ErrorIs(t, err, domain.ErrInvalidContestRegistration)
+		assert.False(t, repo.upsertCalled)
+	})
+
+	t.Run("returns error when removing previously registered language", func(t *testing.T) {
+		userRepo := &mockUserUpsertRepositoryForReg{}
+		userUpsert := domain.NewUserUpsert(userRepo)
+		existingRegistration := &domain.ContestRegistration{
+			ID:        uuid.New(),
+			ContestID: contestID,
+			UserID:    userID,
+			Languages: []domain.Language{
+				{Code: "jpn", Name: "Japanese"},
+				{Code: "kor", Name: "Korean"},
+			},
+		}
+		repo := &mockRegistrationUpsertRepository{
+			contest:      validContest,
+			registration: existingRegistration,
+		}
+		svc := domain.NewRegistrationUpsert(repo, userUpsert)
+
+		ctx := context.WithValue(context.Background(), commondomain.CtxSessionKey, &commondomain.SessionToken{
+			Role:    commondomain.RoleUser,
+			Subject: userID.String(),
+		})
+
+		err := svc.Execute(ctx, &domain.RegistrationUpsertRequest{
+			ContestID:     contestID,
+			LanguageCodes: []string{"jpn"}, // Missing "kor"
+		})
+
+		assert.ErrorIs(t, err, domain.ErrInvalidContestRegistration)
+		assert.False(t, repo.upsertCalled)
+	})
+
+	t.Run("successfully creates new registration", func(t *testing.T) {
+		userRepo := &mockUserUpsertRepositoryForReg{}
+		userUpsert := domain.NewUserUpsert(userRepo)
+		repo := &mockRegistrationUpsertRepository{
+			contest:    validContest,
+			findRegErr: domain.ErrNotFound,
+		}
+		svc := domain.NewRegistrationUpsert(repo, userUpsert)
+
+		ctx := context.WithValue(context.Background(), commondomain.CtxSessionKey, &commondomain.SessionToken{
+			Role:    commondomain.RoleUser,
+			Subject: userID.String(),
+		})
+
+		err := svc.Execute(ctx, &domain.RegistrationUpsertRequest{
+			ContestID:     contestID,
+			LanguageCodes: []string{"jpn", "kor"},
+		})
+
+		require.NoError(t, err)
+		assert.True(t, repo.upsertCalled)
+		assert.Equal(t, userID, repo.upsertCalledWith.UserID)
+		assert.Equal(t, contestID, repo.upsertCalledWith.ContestID)
+	})
+
+	t.Run("successfully updates existing registration with additional language", func(t *testing.T) {
+		userRepo := &mockUserUpsertRepositoryForReg{}
+		userUpsert := domain.NewUserUpsert(userRepo)
+		existingRegID := uuid.New()
+		existingRegistration := &domain.ContestRegistration{
+			ID:        existingRegID,
+			ContestID: contestID,
+			UserID:    userID,
+			Languages: []domain.Language{
+				{Code: "jpn", Name: "Japanese"},
+			},
+		}
+		repo := &mockRegistrationUpsertRepository{
+			contest:      validContest,
+			registration: existingRegistration,
+		}
+		svc := domain.NewRegistrationUpsert(repo, userUpsert)
+
+		ctx := context.WithValue(context.Background(), commondomain.CtxSessionKey, &commondomain.SessionToken{
+			Role:    commondomain.RoleUser,
+			Subject: userID.String(),
+		})
+
+		err := svc.Execute(ctx, &domain.RegistrationUpsertRequest{
+			ContestID:     contestID,
+			LanguageCodes: []string{"jpn", "kor"},
+		})
+
+		require.NoError(t, err)
+		assert.True(t, repo.upsertCalled)
+		assert.Equal(t, existingRegID, repo.upsertCalledWith.ID)
+	})
+}

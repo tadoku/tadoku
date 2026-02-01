@@ -6,18 +6,18 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/tadoku/tadoku/services/immersion-api/domain/query"
+	"github.com/tadoku/tadoku/services/immersion-api/domain"
 	"github.com/tadoku/tadoku/services/immersion-api/storage/postgres"
 )
 
-func (r *Repository) FindLogByID(ctx context.Context, req *query.FindLogByIDRequest) (*query.Log, error) {
+func (r *Repository) FindLogByID(ctx context.Context, req *domain.LogFindRequest) (*domain.Log, error) {
 	log, err := r.q.FindLogByID(ctx, postgres.FindLogByIDParams{
 		IncludeDeleted: req.IncludeDeleted,
 		ID:             req.ID,
 	})
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return nil, query.ErrNotFound
+			return nil, domain.ErrNotFound
 		}
 
 		return nil, fmt.Errorf("could not fetch log details: %w", err)
@@ -28,9 +28,9 @@ func (r *Repository) FindLogByID(ctx context.Context, req *query.FindLogByIDRequ
 		return nil, fmt.Errorf("could not fetch log details: %w", err)
 	}
 
-	refs := make([]query.ContestRegistrationReference, len(registrations))
+	refs := make([]domain.ContestRegistrationReference, len(registrations))
 	for i, it := range registrations {
-		refs[i] = query.ContestRegistrationReference{
+		refs[i] = domain.ContestRegistrationReference{
 			RegistrationID: it.ID,
 			ContestID:      it.ContestID,
 			ContestEnd:     it.ContestEnd,
@@ -38,7 +38,7 @@ func (r *Repository) FindLogByID(ctx context.Context, req *query.FindLogByIDRequ
 		}
 	}
 
-	return &query.Log{
+	return &domain.Log{
 		ID:              log.ID,
 		UserID:          log.UserID,
 		UserDisplayName: &log.UserDisplayName,

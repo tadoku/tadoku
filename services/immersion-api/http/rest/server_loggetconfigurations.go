@@ -5,16 +5,16 @@ import (
 	"net/http"
 
 	"github.com/labstack/echo/v4"
-	"github.com/tadoku/tadoku/services/immersion-api/domain/query"
+	"github.com/tadoku/tadoku/services/immersion-api/domain"
 	"github.com/tadoku/tadoku/services/immersion-api/http/rest/openapi"
 )
 
 // Fetches the configuration options for a log
 // (GET /logs/configuration-options)
 func (s *Server) LogGetConfigurations(ctx echo.Context) error {
-	opts, err := s.queryService.FetchLogConfigurationOptions(ctx.Request().Context())
+	opts, err := s.logConfigurationOptions.Execute(ctx.Request().Context())
 	if err != nil {
-		if errors.Is(err, query.ErrUnauthorized) {
+		if errors.Is(err, domain.ErrUnauthorized) {
 			return ctx.NoContent(http.StatusUnauthorized)
 		}
 		return ctx.NoContent(http.StatusInternalServerError)

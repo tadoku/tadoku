@@ -6,11 +6,11 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/tadoku/tadoku/services/immersion-api/domain/query"
+	"github.com/tadoku/tadoku/services/immersion-api/domain"
 	"github.com/tadoku/tadoku/services/immersion-api/storage/postgres"
 )
 
-func (r *Repository) FetchYearlyLeaderboard(ctx context.Context, req *query.FetchYearlyLeaderboardRequest) (*query.Leaderboard, error) {
+func (r *Repository) FetchYearlyLeaderboard(ctx context.Context, req *domain.LeaderboardYearlyRequest) (*domain.Leaderboard, error) {
 	entries, err := r.q.YearlyLeaderboard(ctx, postgres.YearlyLeaderboardParams{
 		Year:         int16(req.Year),
 		LanguageCode: postgres.NewNullString(req.LanguageCode),
@@ -20,8 +20,8 @@ func (r *Repository) FetchYearlyLeaderboard(ctx context.Context, req *query.Fetc
 	})
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return &query.Leaderboard{
-				Entries:       []query.LeaderboardEntry{},
+			return &domain.Leaderboard{
+				Entries:       []domain.LeaderboardEntry{},
 				TotalSize:     0,
 				NextPageToken: "",
 			}, nil
@@ -30,9 +30,9 @@ func (r *Repository) FetchYearlyLeaderboard(ctx context.Context, req *query.Fetc
 		return nil, fmt.Errorf("could not fetch leaderboard: %w", err)
 	}
 
-	res := make([]query.LeaderboardEntry, len(entries))
+	res := make([]domain.LeaderboardEntry, len(entries))
 	for i, e := range entries {
-		res[i] = query.LeaderboardEntry{
+		res[i] = domain.LeaderboardEntry{
 			Rank:            int(e.Rank),
 			UserID:          e.UserID,
 			UserDisplayName: e.UserDisplayName,
@@ -50,7 +50,7 @@ func (r *Repository) FetchYearlyLeaderboard(ctx context.Context, req *query.Fetc
 		nextPageToken = fmt.Sprint(req.Page + 1)
 	}
 
-	return &query.Leaderboard{
+	return &domain.Leaderboard{
 		Entries:       res,
 		TotalSize:     int(totalSize),
 		NextPageToken: nextPageToken,

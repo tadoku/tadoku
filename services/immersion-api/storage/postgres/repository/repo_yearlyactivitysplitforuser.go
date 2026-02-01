@@ -6,35 +6,34 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/tadoku/tadoku/services/immersion-api/domain/query"
+	"github.com/tadoku/tadoku/services/immersion-api/domain"
 	"github.com/tadoku/tadoku/services/immersion-api/storage/postgres"
 )
 
-func (r *Repository) YearlyActivitySplitForUser(ctx context.Context, req *query.YearlyActivitySplitForUserRequest) (*query.YearlyActivitySplitForUserResponse, error) {
+func (r *Repository) YearlyActivitySplitForUser(ctx context.Context, req *domain.ProfileYearlyActivitySplitRequest) (*domain.ProfileYearlyActivitySplitResponse, error) {
 	rows, err := r.q.YearlyActivitySplitForUser(ctx, postgres.YearlyActivitySplitForUserParams{
 		UserID: req.UserID,
 		Year:   int16(req.Year),
 	})
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return &query.YearlyActivitySplitForUserResponse{
-				Activities: []query.ActivityScore{},
+			return &domain.ProfileYearlyActivitySplitResponse{
+				Activities: []domain.ActivityScore{},
 			}, nil
 		}
 		return nil, fmt.Errorf("could not fetch activity split: %w", err)
 	}
 
-	scores := make([]query.ActivityScore, len(rows))
+	scores := make([]domain.ActivityScore, len(rows))
 	for i, row := range rows {
-		row := row
-		scores[i] = query.ActivityScore{
+		scores[i] = domain.ActivityScore{
 			ActivityID:   int(row.LogActivityID),
 			ActivityName: row.LogActivityName,
 			Score:        row.Score,
 		}
 	}
 
-	return &query.YearlyActivitySplitForUserResponse{
+	return &domain.ProfileYearlyActivitySplitResponse{
 		Activities: scores,
 	}, nil
 }

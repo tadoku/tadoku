@@ -6,8 +6,7 @@ import (
 
 	"github.com/deepmap/oapi-codegen/pkg/types"
 	"github.com/labstack/echo/v4"
-	"github.com/tadoku/tadoku/services/immersion-api/domain/command"
-	"github.com/tadoku/tadoku/services/immersion-api/domain/query"
+	"github.com/tadoku/tadoku/services/immersion-api/domain"
 	"github.com/tadoku/tadoku/services/immersion-api/http/rest/openapi"
 )
 
@@ -20,15 +19,21 @@ func (s *Server) ContestRegistrationUpsert(ctx echo.Context, id types.UUID) erro
 		return ctx.NoContent(http.StatusBadRequest)
 	}
 
-	err := s.commandService.UpsertContestRegistration(ctx.Request().Context(), &command.UpsertContestRegistrationRequest{
+	err := s.registrationUpsert.Execute(ctx.Request().Context(), &domain.RegistrationUpsertRequest{
 		ContestID:     id,
 		LanguageCodes: req.LanguageCodes,
 	})
 	if err != nil {
-		if errors.Is(err, query.ErrNotFound) {
+		if errors.Is(err, domain.ErrUnauthorized) {
+			return ctx.NoContent(http.StatusUnauthorized)
+		}
+		if errors.Is(err, domain.ErrForbidden) {
+			return ctx.NoContent(http.StatusForbidden)
+		}
+		if errors.Is(err, domain.ErrNotFound) {
 			return ctx.NoContent(http.StatusNotFound)
 		}
-		if errors.Is(err, command.ErrInvalidContestRegistration) {
+		if errors.Is(err, domain.ErrInvalidContestRegistration) {
 			return ctx.NoContent(http.StatusBadRequest)
 		}
 

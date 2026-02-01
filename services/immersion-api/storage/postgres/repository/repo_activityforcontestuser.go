@@ -6,25 +6,25 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/tadoku/tadoku/services/immersion-api/domain/query"
+	"github.com/tadoku/tadoku/services/immersion-api/domain"
 	"github.com/tadoku/tadoku/services/immersion-api/storage/postgres"
 )
 
-func (r *Repository) ActivityForContestUser(ctx context.Context, req *query.ActivityForContestUserRequest) ([]query.ActivityForContestUserRow, error) {
+func (r *Repository) ActivityForContestUser(ctx context.Context, req *domain.ProfileContestActivityRequest) ([]domain.ProfileContestActivityRow, error) {
 	rows, err := r.q.ActivityPerLanguageForContestProfile(ctx, postgres.ActivityPerLanguageForContestProfileParams{
 		ContestID: req.ContestID,
 		UserID:    req.UserID,
 	})
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return []query.ActivityForContestUserRow{}, nil
+			return []domain.ProfileContestActivityRow{}, nil
 		}
 		return nil, fmt.Errorf("could not fetch activity: %w", err)
 	}
 
-	res := make([]query.ActivityForContestUserRow, len(rows))
+	res := make([]domain.ProfileContestActivityRow, len(rows))
 	for i, it := range rows {
-		res[i] = query.ActivityForContestUserRow{
+		res[i] = domain.ProfileContestActivityRow{
 			Date:         it.Date,
 			LanguageCode: it.LanguageCode,
 			Score:        it.Score,

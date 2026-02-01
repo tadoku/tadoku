@@ -4,11 +4,11 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/tadoku/tadoku/services/immersion-api/domain/query"
+	"github.com/tadoku/tadoku/services/immersion-api/domain"
 	"github.com/tadoku/tadoku/services/immersion-api/storage/postgres"
 )
 
-func (r *Repository) FetchLogConfigurationOptions(ctx context.Context) (*query.FetchLogConfigurationOptionsResponse, error) {
+func (r *Repository) FetchLogConfigurationOptions(ctx context.Context) (*domain.LogConfigurationOptionsResponse, error) {
 	langs, err := r.q.ListLanguages(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("could not fetch log configuration options: %w", err)
@@ -29,22 +29,22 @@ func (r *Repository) FetchLogConfigurationOptions(ctx context.Context) (*query.F
 		return nil, fmt.Errorf("could not fetch log configuration options: %w", err)
 	}
 
-	options := query.FetchLogConfigurationOptionsResponse{
-		Languages:  make([]query.Language, len(langs)),
-		Activities: make([]query.Activity, len(acts)),
-		Units:      make([]query.Unit, len(units)),
-		Tags:       make([]query.Tag, len(tags)),
+	options := domain.LogConfigurationOptionsResponse{
+		Languages:  make([]domain.Language, len(langs)),
+		Activities: make([]domain.Activity, len(acts)),
+		Units:      make([]domain.Unit, len(units)),
+		Tags:       make([]domain.Tag, len(tags)),
 	}
 
 	for i, l := range langs {
-		options.Languages[i] = query.Language{
+		options.Languages[i] = domain.Language{
 			Code: l.Code,
 			Name: l.Name,
 		}
 	}
 
 	for i, a := range acts {
-		options.Activities[i] = query.Activity{
+		options.Activities[i] = domain.Activity{
 			ID:      a.ID,
 			Name:    a.Name,
 			Default: a.Default,
@@ -52,7 +52,7 @@ func (r *Repository) FetchLogConfigurationOptions(ctx context.Context) (*query.F
 	}
 
 	for i, u := range units {
-		options.Units[i] = query.Unit{
+		options.Units[i] = domain.Unit{
 			ID:            u.ID,
 			LogActivityID: int(u.LogActivityID),
 			Name:          u.Name,
@@ -62,7 +62,7 @@ func (r *Repository) FetchLogConfigurationOptions(ctx context.Context) (*query.F
 	}
 
 	for i, t := range tags {
-		options.Tags[i] = query.Tag{
+		options.Tags[i] = domain.Tag{
 			ID:            t.ID,
 			LogActivityID: int(t.LogActivityID),
 			Name:          t.Name,

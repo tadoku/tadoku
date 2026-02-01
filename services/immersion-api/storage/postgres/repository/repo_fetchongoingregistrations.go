@@ -6,11 +6,11 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/tadoku/tadoku/services/immersion-api/domain/query"
+	"github.com/tadoku/tadoku/services/immersion-api/domain"
 	"github.com/tadoku/tadoku/services/immersion-api/storage/postgres"
 )
 
-func (r *Repository) FetchOngoingContestRegistrations(ctx context.Context, req *query.FetchOngoingContestRegistrationsRequest) (*query.ContestRegistrations, error) {
+func (r *Repository) FetchOngoingContestRegistrations(ctx context.Context, req *domain.RegistrationListOngoingRequest) (*domain.ContestRegistrations, error) {
 	regs, err := r.q.FindOngoingContestRegistrationForUser(ctx, postgres.FindOngoingContestRegistrationForUserParams{
 		UserID: req.UserID,
 		Now:    req.Now,
@@ -18,8 +18,8 @@ func (r *Repository) FetchOngoingContestRegistrations(ctx context.Context, req *
 
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return &query.ContestRegistrations{
-				Registrations: []query.ContestRegistration{},
+			return &domain.ContestRegistrations{
+				Registrations: []domain.ContestRegistration{},
 				TotalSize:     0,
 				NextPageToken: "",
 			}, nil
@@ -47,15 +47,15 @@ func (r *Repository) FetchOngoingContestRegistrations(ctx context.Context, req *
 		acts[a.ID] = a.Name
 	}
 
-	res := &query.ContestRegistrations{
-		Registrations: make([]query.ContestRegistration, len(regs)),
+	res := &domain.ContestRegistrations{
+		Registrations: make([]domain.ContestRegistration, len(regs)),
 		TotalSize:     len(regs),
 		NextPageToken: "",
 	}
 	for i, r := range regs {
 		r := r
 
-		contest := &query.ContestView{
+		contest := &domain.ContestView{
 			ID:                r.ContestID,
 			ContestStart:      r.ContestStart,
 			ContestEnd:        r.ContestEnd,
@@ -64,28 +64,28 @@ func (r *Repository) FetchOngoingContestRegistrations(ctx context.Context, req *
 			Description:       postgres.NewStringFromNullString(r.Description),
 			Private:           r.Private,
 			Official:          r.Official,
-			AllowedLanguages:  make([]query.Language, 0),
-			AllowedActivities: make([]query.Activity, len(r.ActivityTypeIDAllowList)),
+			AllowedLanguages:  make([]domain.Language, 0),
+			AllowedActivities: make([]domain.Activity, len(r.ActivityTypeIDAllowList)),
 		}
 
 		for i, a := range r.ActivityTypeIDAllowList {
-			contest.AllowedActivities[i] = query.Activity{
+			contest.AllowedActivities[i] = domain.Activity{
 				ID:   a,
 				Name: acts[a],
 			}
 		}
 
-		reg := query.ContestRegistration{
+		reg := domain.ContestRegistration{
 			ID:              r.ID,
 			ContestID:       r.ContestID,
 			UserID:          r.UserID,
 			UserDisplayName: r.UserDisplayName,
-			Languages:       make([]query.Language, len(r.LanguageCodes)),
+			Languages:       make([]domain.Language, len(r.LanguageCodes)),
 			Contest:         contest,
 		}
 
 		for i, code := range r.LanguageCodes {
-			reg.Languages[i] = query.Language{
+			reg.Languages[i] = domain.Language{
 				Code: code,
 				Name: langs[code],
 			}

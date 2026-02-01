@@ -8,11 +8,11 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
-	"github.com/tadoku/tadoku/services/immersion-api/domain/command"
+	"github.com/tadoku/tadoku/services/immersion-api/domain"
 	"github.com/tadoku/tadoku/services/immersion-api/storage/postgres"
 )
 
-func (r *Repository) DetachLogFromContest(ctx context.Context, req *command.DetachLogFromContestRequest, moderatorUserID uuid.UUID) error {
+func (r *Repository) DetachLogFromContest(ctx context.Context, req *domain.ContestModerationDetachLogRequest, moderatorUserID uuid.UUID) error {
 	// Start transaction
 	tx, err := r.psql.BeginTx(ctx, nil)
 	if err != nil {
@@ -50,7 +50,7 @@ func (r *Repository) DetachLogFromContest(ctx context.Context, req *command.Deta
 	if err != nil {
 		_ = tx.Rollback()
 		if errors.Is(err, sql.ErrNoRows) {
-			return command.ErrNotFound
+			return domain.ErrNotFound
 		}
 		return fmt.Errorf("could not detach log from contest: %w", err)
 	}

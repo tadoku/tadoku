@@ -7,11 +7,11 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
-	"github.com/tadoku/tadoku/services/immersion-api/domain/command"
+	"github.com/tadoku/tadoku/services/immersion-api/domain"
 	"github.com/tadoku/tadoku/services/immersion-api/storage/postgres"
 )
 
-func (r *Repository) CreateLog(ctx context.Context, req *command.CreateLogRequest) (*uuid.UUID, error) {
+func (r *Repository) CreateLog(ctx context.Context, req *domain.LogCreateRequest) (*uuid.UUID, error) {
 	unit, err := r.q.FindUnitForTracking(ctx, postgres.FindUnitForTrackingParams{
 		ID:            req.UnitID,
 		LogActivityID: int16(req.ActivityID),
@@ -19,7 +19,7 @@ func (r *Repository) CreateLog(ctx context.Context, req *command.CreateLogReques
 	})
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return nil, fmt.Errorf("invalid unit supplied: %w", command.ErrInvalidLog)
+			return nil, fmt.Errorf("invalid unit supplied: %w", domain.ErrInvalidLog)
 		}
 		return nil, fmt.Errorf("could not fetch unit for tracking: %w", err)
 	}

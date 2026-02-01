@@ -19,6 +19,7 @@ func NewServer(
 	contestFind *domain.ContestFind,
 	logFind *domain.LogFind,
 	contestList *domain.ContestList,
+	logListForUser *domain.LogListForUser,
 ) openapi.ServerInterface {
 	return &Server{
 		commandService:              commandService,
@@ -31,6 +32,7 @@ func NewServer(
 		contestFind:                 contestFind,
 		logFind:                     logFind,
 		contestList:                 contestList,
+		logListForUser:              logListForUser,
 	}
 }
 
@@ -47,4 +49,5 @@ type Server struct {
 	contestFind                 *domain.ContestFind
 	logFind                     *domain.LogFind
 	contestList                 *domain.ContestList
+	logListForUser              *domain.LogListForUser
 }

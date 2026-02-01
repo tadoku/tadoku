@@ -271,7 +271,7 @@ If needed later:
 
 ## Service-to-Service Authentication
 
-Services authenticate using short-lived internal JWTs signed with a shared secret.
+Services authenticate using short-lived internal JWTs signed with per-service ECDSA keys (ES256).
 
 ### How It Works
 
@@ -279,18 +279,23 @@ Services authenticate using short-lived internal JWTs signed with a shared secre
 ┌─────────────────┐                              ┌───────────────────┐
 │  immersion-api  │                              │  notification-api │
 │                 │                              │                   │
-│  1. Create JWT  │   2. Request + JWT           │  3. Validate JWT  │
-│     (signed)    │ ────────────────────────────▶│     (verify sig)  │
-│                 │   Authorization: Bearer ...  │                   │
+│  signs with     │   JWT (ES256)                │  verifies with    │
+│  own PRIVATE    │ ────────────────────────────▶│  caller's PUBLIC  │
+│  key            │   Authorization: Bearer ...  │  key              │
 └─────────────────┘                              └───────────────────┘
 ```
+
+**Security properties:**
+- Each service has its own key pair
+- Receiving services only have public keys (cannot forge tokens)
+- Compromised service can only impersonate itself, not others
 
 ### JWT Structure
 
 ```json
 {
   "header": {
-    "alg": "HS256",
+    "alg": "ES256",
     "typ": "JWT"
   },
   "payload": {
@@ -298,7 +303,7 @@ Services authenticate using short-lived internal JWTs signed with a shared secre
     "sub": "service",
     "aud": "notification-api",
     "iat": 1706792400,
-    "exp": 1706792700
+    "exp": 1706793000
   }
 }
 ```
@@ -311,6 +316,97 @@ Services authenticate using short-lived internal JWTs signed with a shared secre
 | `iat` | Issued at timestamp |
 | `exp` | Expiry: **5 minutes** from issue |
 
+### Generating Key Pairs
+
+Generate an ECDSA P-256 key pair for each calling service:
+
+```bash
+# Generate private key (keep secret!)
+openssl ecparam -name prime256v1 -genkey -noout -out immersion-api.key
+
+# Extract public key (safe to distribute)
+openssl ec -in immersion-api.key -pubout -out immersion-api.pub
+
+# Repeat for each service
+openssl ecparam -name prime256v1 -genkey -noout -out content-api.key
+openssl ec -in content-api.key -pubout -out content-api.pub
+```
+
+### Key Storage in Kubernetes
+
+**Option 1: Sealed Secrets (Recommended for GitOps)**
+
+Use [Bitnami Sealed Secrets](https://github.com/bitnami-labs/sealed-secrets) to encrypt secrets for git storage:
+
+```bash
+# Install kubeseal CLI
+brew install kubeseal
+
+# Create a regular secret
+kubectl create secret generic immersion-api-service-key \
+  --from-file=private.key=immersion-api.key \
+  --dry-run=client -o yaml > secret.yaml
+
+# Encrypt it (only your cluster can decrypt)
+kubeseal --format yaml < secret.yaml > sealed-secret.yaml
+
+# sealed-secret.yaml is safe to commit to git
+```
+
+The sealed secret looks like:
+```yaml
+apiVersion: bitnami.com/v1alpha1
+kind: SealedSecret
+metadata:
+  name: immersion-api-service-key
+spec:
+  encryptedData:
+    private.key: AgBy8hCi8... # encrypted, safe for git
+```
+
+**Option 2: Plain Secrets (Private Repo)**
+
+If your ArgoCD repo is private and you accept the risk:
+
+```yaml
+# k8s/secrets/immersion-api-service-key.yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: immersion-api-service-key
+type: Opaque
+stringData:
+  private.key: |
+    -----BEGIN EC PRIVATE KEY-----
+    MHQCAQEEIOf...
+    -----END EC PRIVATE KEY-----
+```
+
+⚠️ **Risks of plain secrets in git (even private repos):**
+- Git history is permanent (secrets persist even after deletion)
+- Anyone with repo access has all secrets
+- Repo could be accidentally made public
+- CI/CD logs might expose secrets
+
+**Public keys are safe in git** (they're meant to be public):
+
+```yaml
+# k8s/configmaps/service-public-keys.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: service-public-keys
+data:
+  immersion-api.pub: |
+    -----BEGIN PUBLIC KEY-----
+    MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAE...
+    -----END PUBLIC KEY-----
+  content-api.pub: |
+    -----BEGIN PUBLIC KEY-----
+    MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAE...
+    -----END PUBLIC KEY-----
+```
+
 ### Shared Auth Package
 
 A shared package in `services/common/serviceauth` provides:
@@ -319,36 +415,89 @@ A shared package in `services/common/serviceauth` provides:
 // TokenGenerator - used by calling services
 type TokenGenerator struct {
     serviceName string
-    secret      []byte
+    privateKey  *ecdsa.PrivateKey
 }
 
+func NewTokenGenerator(serviceName string, privateKeyPEM []byte) (*TokenGenerator, error)
 func (g *TokenGenerator) Generate(targetService string) (string, error)
 
 // TokenValidator - used by receiving services
 type TokenValidator struct {
     serviceName string
-    secret      []byte
+    publicKeys  map[string]*ecdsa.PublicKey  // service name → public key
 }
 
+func NewTokenValidator(serviceName string, publicKeyDir string) (*TokenValidator, error)
 func (v *TokenValidator) Validate(tokenString string) (callingService string, err error)
 ```
 
 ### Configuration
 
 ```yaml
-# Shared across all internal services
-SERVICE_AUTH_SECRET: "<256-bit-secret>"
-
-# Per service
+# Calling service (immersion-api)
 SERVICE_NAME: "immersion-api"
+SERVICE_PRIVATE_KEY_PATH: "/etc/secrets/service-key/private.key"
+
+# Receiving service (notification-api)
+SERVICE_NAME: "notification-api"
+SERVICE_PUBLIC_KEYS_DIR: "/etc/secrets/public-keys/"
 ```
+
+### Kubernetes Deployment
+
+```yaml
+# immersion-api (caller)
+spec:
+  containers:
+  - name: immersion-api
+    env:
+    - name: SERVICE_NAME
+      value: "immersion-api"
+    - name: SERVICE_PRIVATE_KEY_PATH
+      value: "/etc/secrets/service-key/private.key"
+    volumeMounts:
+    - name: service-key
+      mountPath: /etc/secrets/service-key
+      readOnly: true
+  volumes:
+  - name: service-key
+    secret:
+      secretName: immersion-api-service-key
+
+---
+# notification-api (receiver)
+spec:
+  containers:
+  - name: notification-api
+    env:
+    - name: SERVICE_NAME
+      value: "notification-api"
+    - name: SERVICE_PUBLIC_KEYS_DIR
+      value: "/etc/secrets/public-keys/"
+    volumeMounts:
+    - name: public-keys
+      mountPath: /etc/secrets/public-keys
+      readOnly: true
+  volumes:
+  - name: public-keys
+    configMap:
+      name: service-public-keys
+```
+
+### Key Rotation
+
+1. Generate new key pair for the service
+2. Add new public key to notification-api's ConfigMap
+3. Deploy notification-api (now accepts both old and new)
+4. Update calling service's Secret with new private key
+5. Deploy calling service
+6. Remove old public key from ConfigMap (cleanup)
 
 ### Why 5 Minutes?
 
 - Short enough to limit replay attack window
 - Long enough to handle clock skew between services
 - Allows retries without regenerating tokens
-- Simpler than API keys to manage at scale (one secret vs N×M keys)
 
 ## Security Considerations
 

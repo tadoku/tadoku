@@ -7,14 +7,14 @@ import (
 	"github.com/deepmap/oapi-codegen/pkg/types"
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
-	"github.com/tadoku/tadoku/services/immersion-api/domain/query"
+	"github.com/tadoku/tadoku/services/immersion-api/domain"
 	"github.com/tadoku/tadoku/services/immersion-api/http/rest/openapi"
 )
 
 // Lists the logs attached to a contest
 // (GET /contests/{id}/logs)
 func (s *Server) ContestListLogs(ctx echo.Context, id types.UUID, params openapi.ContestListLogsParams) error {
-	req := &query.ListLogsForContestRequest{
+	req := &domain.LogListForContestRequest{
 		UserID:         uuid.NullUUID{},
 		ContestID:      id,
 		IncludeDeleted: false,
@@ -38,9 +38,9 @@ func (s *Server) ContestListLogs(ctx echo.Context, id types.UUID, params openapi
 		}
 	}
 
-	list, err := s.queryService.ListLogsForContest(ctx.Request().Context(), req)
+	list, err := s.logListForContest.Execute(ctx.Request().Context(), req)
 	if err != nil {
-		if errors.Is(err, query.ErrUnauthorized) {
+		if errors.Is(err, domain.ErrUnauthorized) {
 			return ctx.NoContent(http.StatusForbidden)
 		}
 
@@ -55,7 +55,6 @@ func (s *Server) ContestListLogs(ctx echo.Context, id types.UUID, params openapi
 	}
 
 	for i, it := range list.Logs {
-		it := it
 		res.Logs[i] = openapi.Log{
 			Id: it.ID,
 			Activity: openapi.Activity{

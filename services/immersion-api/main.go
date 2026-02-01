@@ -95,6 +95,7 @@ func main() {
 	logFind := immersiondomain.NewLogFind(postgresRepository)
 	contestList := immersiondomain.NewContestList(postgresRepository)
 	logListForUser := immersiondomain.NewLogListForUser(postgresRepository)
+	logListForContest := immersiondomain.NewLogListForContest(postgresRepository)
 
 	server := rest.NewServer(
 		commandService,
@@ -108,6 +109,7 @@ func main() {
 		logFind,
 		contestList,
 		logListForUser,
+		logListForContest,
 	)
 
 	openapi.RegisterHandlersWithBaseURL(e, server, "")

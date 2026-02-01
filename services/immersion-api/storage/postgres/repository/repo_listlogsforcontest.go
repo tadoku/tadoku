@@ -6,15 +6,15 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/tadoku/tadoku/services/immersion-api/domain/query"
+	"github.com/tadoku/tadoku/services/immersion-api/domain"
 	"github.com/tadoku/tadoku/services/immersion-api/storage/postgres"
 )
 
-func (r *Repository) ListLogsForContest(ctx context.Context, req *query.ListLogsForContestRequest) (*query.ListLogsForContestResponse, error) {
+func (r *Repository) ListLogsForContest(ctx context.Context, req *domain.LogListForContestRequest) (*domain.LogListForContestResponse, error) {
 	_, err := r.q.FindContestById(ctx, postgres.FindContestByIdParams{ID: req.ContestID, IncludeDeleted: false})
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return nil, query.ErrNotFound
+			return nil, domain.ErrNotFound
 		}
 
 		return nil, fmt.Errorf("could not fetch logs list: %w", err)
@@ -29,7 +29,7 @@ func (r *Repository) ListLogsForContest(ctx context.Context, req *query.ListLogs
 	})
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return &query.ListLogsForContestResponse{
+			return &domain.LogListForContestResponse{
 				TotalSize:     0,
 				NextPageToken: "",
 			}, nil
@@ -38,10 +38,9 @@ func (r *Repository) ListLogsForContest(ctx context.Context, req *query.ListLogs
 		return nil, fmt.Errorf("could not fetch logs list: %w", err)
 	}
 
-	res := make([]query.Log, len(entries))
+	res := make([]domain.Log, len(entries))
 	for i, it := range entries {
-		it := it
-		res[i] = query.Log{
+		res[i] = domain.Log{
 			ID:              it.ID,
 			UserID:          it.UserID,
 			UserDisplayName: &it.UserDisplayName,
@@ -70,7 +69,7 @@ func (r *Repository) ListLogsForContest(ctx context.Context, req *query.ListLogs
 		nextPageToken = fmt.Sprint(req.Page + 1)
 	}
 
-	return &query.ListLogsForContestResponse{
+	return &domain.LogListForContestResponse{
 		Logs:          res,
 		TotalSize:     int(totalSize),
 		NextPageToken: nextPageToken,

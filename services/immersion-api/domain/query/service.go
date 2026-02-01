@@ -33,7 +33,7 @@ type Repository interface {
 
 	// log
 	ListLogsForUser(context.Context, *immersiondomain.LogListForUserRequest) (*immersiondomain.LogListForUserResponse, error)
-	ListLogsForContest(context.Context, *ListLogsForContestRequest) (*ListLogsForContestResponse, error)
+	ListLogsForContest(context.Context, *immersiondomain.LogListForContestRequest) (*immersiondomain.LogListForContestResponse, error)
 	FetchLogConfigurationOptions(ctx context.Context) (*immersiondomain.LogConfigurationOptionsResponse, error)
 	FindLogByID(context.Context, *immersiondomain.LogFindRequest) (*immersiondomain.Log, error)
 
@@ -54,9 +54,6 @@ type Service interface {
 	FetchYearlyLeaderboard(context.Context, *FetchYearlyLeaderboardRequest) (*Leaderboard, error)
 	FetchGlobalLeaderboard(context.Context, *FetchGlobalLeaderboardRequest) (*Leaderboard, error)
 	CreateContestPermissionCheck(context.Context) error
-
-	// log
-	ListLogsForContest(context.Context, *ListLogsForContestRequest) (*ListLogsForContestResponse, error)
 
 	// profile
 	ContestProfile(context.Context, *ContestProfileRequest) (*ContestProfileResponse, error)

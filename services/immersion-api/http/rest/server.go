@@ -37,6 +37,7 @@ func NewServer(
 	logDelete *domain.LogDelete,
 	contestModerationDetachLog *domain.ContestModerationDetachLog,
 	registrationUpsert *domain.RegistrationUpsert,
+	logCreate *domain.LogCreate,
 ) openapi.ServerInterface {
 	return &Server{
 		commandService:              commandService,
@@ -67,6 +68,7 @@ func NewServer(
 		logDelete:                   logDelete,
 		contestModerationDetachLog:  contestModerationDetachLog,
 		registrationUpsert:          registrationUpsert,
+		logCreate:                   logCreate,
 	}
 }
 
@@ -101,4 +103,5 @@ type Server struct {
 	logDelete                   *domain.LogDelete
 	contestModerationDetachLog  *domain.ContestModerationDetachLog
 	registrationUpsert          *domain.RegistrationUpsert
+	logCreate                   *domain.LogCreate
 }

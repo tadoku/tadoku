@@ -4,7 +4,6 @@ go_library(
     name = "command",
     srcs = [
         "createcontest.go",
-        "createlog.go",
         "service.go",
     ],
     importpath = "github.com/tadoku/tadoku/services/immersion-api/domain/command",

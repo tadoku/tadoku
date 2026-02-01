@@ -1,15 +1,21 @@
-package command
+package domain
 
 import (
 	"context"
 	"fmt"
 
+	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
-	"github.com/tadoku/tadoku/services/common/domain"
-	immersiondomain "github.com/tadoku/tadoku/services/immersion-api/domain"
+	commondomain "github.com/tadoku/tadoku/services/common/domain"
 )
 
-type CreateLogRequest struct {
+type LogCreateRepository interface {
+	FetchOngoingContestRegistrations(context.Context, *RegistrationListOngoingRequest) (*ContestRegistrations, error)
+	CreateLog(context.Context, *LogCreateRequest) (*uuid.UUID, error)
+	FindLogByID(context.Context, *LogFindRequest) (*Log, error)
+}
+
+type LogCreateRequest struct {
 	RegistrationIDs []uuid.UUID `validate:"required"`
 	UnitID          uuid.UUID   `validate:"required"`
 	UserID          uuid.UUID   `validate:"required"`
@@ -23,19 +29,34 @@ type CreateLogRequest struct {
 	EligibleOfficialLeaderboard bool
 }
 
-func (s *ServiceImpl) CreateLog(ctx context.Context, req *CreateLogRequest) (*immersiondomain.Log, error) {
-	// Make sure the user is authorized to create a contest
-	if domain.IsRole(ctx, domain.RoleGuest) {
+type LogCreate struct {
+	repo       LogCreateRepository
+	clock      commondomain.Clock
+	validate   *validator.Validate
+	userUpsert *UserUpsert
+}
+
+func NewLogCreate(repo LogCreateRepository, clock commondomain.Clock, userUpsert *UserUpsert) *LogCreate {
+	return &LogCreate{
+		repo:       repo,
+		clock:      clock,
+		validate:   validator.New(),
+		userUpsert: userUpsert,
+	}
+}
+
+func (s *LogCreate) Execute(ctx context.Context, req *LogCreateRequest) (*Log, error) {
+	// Make sure the user is authorized to create a log
+	if commondomain.IsRole(ctx, commondomain.RoleGuest) {
 		return nil, ErrUnauthorized
 	}
 
-	if err := s.UpdateUserMetadataFromSession(ctx); err != nil {
-		fmt.Println(err)
+	if err := s.userUpsert.Execute(ctx); err != nil {
 		return nil, fmt.Errorf("could not update user: %w", err)
 	}
 
 	// Enrich request with session
-	session := domain.ParseSession(ctx)
+	session := commondomain.ParseSession(ctx)
 	if session == nil {
 		return nil, ErrUnauthorized
 	}
@@ -43,20 +64,18 @@ func (s *ServiceImpl) CreateLog(ctx context.Context, req *CreateLogRequest) (*im
 
 	err := s.validate.Struct(req)
 	if err != nil {
-		fmt.Println(err)
 		return nil, fmt.Errorf("unable to validate: %w", ErrInvalidLog)
 	}
 
-	registrations, err := s.r.FetchOngoingContestRegistrations(ctx, &immersiondomain.RegistrationListOngoingRequest{
+	registrations, err := s.repo.FetchOngoingContestRegistrations(ctx, &RegistrationListOngoingRequest{
 		UserID: req.UserID,
 		Now:    s.clock.Now(),
 	})
 	if err != nil {
-		fmt.Println(err)
 		return nil, fmt.Errorf("unable to fetch registrations: %w", err)
 	}
 
-	validContestIDs := map[uuid.UUID]immersiondomain.ContestRegistration{}
+	validContestIDs := map[uuid.UUID]ContestRegistration{}
 	for _, r := range registrations.Registrations {
 		validContestIDs[r.ID] = r
 	}
@@ -97,12 +116,12 @@ func (s *ServiceImpl) CreateLog(ctx context.Context, req *CreateLogRequest) (*im
 		}
 	}
 
-	logId, err := s.r.CreateLog(ctx, req)
+	logId, err := s.repo.CreateLog(ctx, req)
 	if err != nil {
 		return nil, fmt.Errorf("could not create log: %w", err)
 	}
 
-	return s.r.FindLogByID(ctx, &immersiondomain.LogFindRequest{
+	return s.repo.FindLogByID(ctx, &LogFindRequest{
 		ID:             *logId,
 		IncludeDeleted: false,
 	})

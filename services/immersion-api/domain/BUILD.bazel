@@ -15,6 +15,7 @@ go_library(
         "leaderboard_global.go",
         "leaderboard_yearly.go",
         "log_configuration_options.go",
+        "log_create.go",
         "log_delete.go",
         "log_find.go",
         "log_list_for_contest.go",
@@ -37,6 +38,7 @@ go_library(
     visibility = ["//visibility:public"],
     deps = [
         "//services/common/domain",
+        "@com_github_go_playground_validator_v10//:validator",
         "@com_github_google_uuid//:uuid",
         "@com_github_sahilm_fuzzy//:fuzzy",
     ],

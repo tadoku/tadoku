@@ -41,6 +41,10 @@ func (r *CreateContestRepositoryMock) UpsertContestRegistration(ctx context.Cont
 	return nil
 }
 
+func (r *CreateContestRepositoryMock) CreateLog(ctx context.Context, req *immersiondomain.LogCreateRequest) (*uuid.UUID, error) {
+	return nil, nil
+}
+
 func createContext(role domain.Role) context.Context {
 	token := &domain.SessionToken{
 		Role:        role,

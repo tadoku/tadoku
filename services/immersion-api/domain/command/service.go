@@ -26,7 +26,7 @@ type Repository interface {
 	FetchOngoingContestRegistrations(context.Context, *immersiondomain.RegistrationListOngoingRequest) (*immersiondomain.ContestRegistrations, error)
 
 	// log
-	CreateLog(context.Context, *CreateLogRequest) (*uuid.UUID, error)
+	CreateLog(context.Context, *immersiondomain.LogCreateRequest) (*uuid.UUID, error)
 	DeleteLog(context.Context, *immersiondomain.LogDeleteRequest) error
 	DetachLogFromContest(context.Context, *immersiondomain.ContestModerationDetachLogRequest, uuid.UUID) error
 
@@ -38,9 +38,6 @@ type Repository interface {
 type Service interface {
 	// contest
 	CreateContest(context.Context, *CreateContestRequest) (*CreateContestResponse, error)
-
-	// log
-	CreateLog(context.Context, *CreateLogRequest) (*immersiondomain.Log, error)
 }
 
 type ServiceImpl struct {

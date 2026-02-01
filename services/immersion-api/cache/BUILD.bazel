@@ -5,10 +5,7 @@ go_library(
     srcs = ["usercache.go"],
     importpath = "github.com/tadoku/tadoku/services/immersion-api/cache",
     visibility = ["//visibility:public"],
-    deps = [
-        "//services/immersion-api/domain",
-        "//services/immersion-api/domain/query",
-    ],
+    deps = ["//services/immersion-api/domain"],
 )
 
 go_test(
@@ -17,7 +14,6 @@ go_test(
     deps = [
         ":cache",
         "//services/immersion-api/domain",
-        "//services/immersion-api/domain/query",
         "@com_github_google_uuid//:uuid",
         "@com_github_stretchr_testify//assert",
     ],

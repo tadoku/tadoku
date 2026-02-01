@@ -2,87 +2,36 @@ package query
 
 import (
 	"context"
-	"errors"
 	"time"
 
-	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
-	"github.com/tadoku/tadoku/services/common/domain"
-	immersiondomain "github.com/tadoku/tadoku/services/immersion-api/domain"
+	"github.com/tadoku/tadoku/services/immersion-api/domain"
 )
-
-var ErrRequestInvalid = errors.New("request is invalid")
-var ErrNotFound = errors.New("not found")
-var ErrUnauthorized = errors.New("unauthorized")
-var ErrForbidden = errors.New("forbidden")
 
 type Repository interface {
 	// contest
-	FetchContestConfigurationOptions(ctx context.Context) (*immersiondomain.ContestConfigurationOptionsResponse, error)
-	FindContestByID(context.Context, *immersiondomain.ContestFindRequest) (*immersiondomain.ContestView, error)
-	ContestFindLatestOfficial(context.Context) (*immersiondomain.ContestView, error)
-	ListContests(context.Context, *immersiondomain.ContestListRequest) (*immersiondomain.ContestListResponse, error)
-	FindRegistrationForUser(context.Context, *immersiondomain.RegistrationFindRequest) (*immersiondomain.ContestRegistration, error)
-	FetchContestLeaderboard(context.Context, *immersiondomain.ContestLeaderboardFetchRequest) (*immersiondomain.Leaderboard, error)
-	YearlyContestRegistrationsForUser(context.Context, *immersiondomain.RegistrationListYearlyRequest) (*immersiondomain.ContestRegistrations, error)
-	FetchYearlyLeaderboard(context.Context, *immersiondomain.LeaderboardYearlyRequest) (*immersiondomain.Leaderboard, error)
-	FetchGlobalLeaderboard(context.Context, *immersiondomain.LeaderboardGlobalRequest) (*immersiondomain.Leaderboard, error)
-	FetchContestSummary(context.Context, *immersiondomain.ContestSummaryFetchRequest) (*immersiondomain.ContestSummaryFetchResponse, error)
+	FetchContestConfigurationOptions(ctx context.Context) (*domain.ContestConfigurationOptionsResponse, error)
+	FindContestByID(context.Context, *domain.ContestFindRequest) (*domain.ContestView, error)
+	ContestFindLatestOfficial(context.Context) (*domain.ContestView, error)
+	ListContests(context.Context, *domain.ContestListRequest) (*domain.ContestListResponse, error)
+	FindRegistrationForUser(context.Context, *domain.RegistrationFindRequest) (*domain.ContestRegistration, error)
+	FetchContestLeaderboard(context.Context, *domain.ContestLeaderboardFetchRequest) (*domain.Leaderboard, error)
+	YearlyContestRegistrationsForUser(context.Context, *domain.RegistrationListYearlyRequest) (*domain.ContestRegistrations, error)
+	FetchYearlyLeaderboard(context.Context, *domain.LeaderboardYearlyRequest) (*domain.Leaderboard, error)
+	FetchGlobalLeaderboard(context.Context, *domain.LeaderboardGlobalRequest) (*domain.Leaderboard, error)
+	FetchContestSummary(context.Context, *domain.ContestSummaryFetchRequest) (*domain.ContestSummaryFetchResponse, error)
 	GetContestsByUserCountForYear(context.Context, time.Time, uuid.UUID) (int32, error)
 
 	// log
-	ListLogsForUser(context.Context, *immersiondomain.LogListForUserRequest) (*immersiondomain.LogListForUserResponse, error)
-	ListLogsForContest(context.Context, *immersiondomain.LogListForContestRequest) (*immersiondomain.LogListForContestResponse, error)
-	FetchLogConfigurationOptions(ctx context.Context) (*immersiondomain.LogConfigurationOptionsResponse, error)
-	FindLogByID(context.Context, *immersiondomain.LogFindRequest) (*immersiondomain.Log, error)
+	ListLogsForUser(context.Context, *domain.LogListForUserRequest) (*domain.LogListForUserResponse, error)
+	ListLogsForContest(context.Context, *domain.LogListForContestRequest) (*domain.LogListForContestResponse, error)
+	FetchLogConfigurationOptions(ctx context.Context) (*domain.LogConfigurationOptionsResponse, error)
+	FindLogByID(context.Context, *domain.LogFindRequest) (*domain.Log, error)
 
 	// profile
-	FindScoresForRegistration(context.Context, *immersiondomain.ProfileContestRequest) ([]immersiondomain.Score, error)
-	ActivityForContestUser(context.Context, *immersiondomain.ProfileContestActivityRequest) ([]immersiondomain.ProfileContestActivityRow, error)
-	YearlyActivityForUser(context.Context, *immersiondomain.ProfileYearlyActivityRequest) ([]immersiondomain.UserActivityScore, error)
-	YearlyScoresForUser(context.Context, *immersiondomain.ProfileYearlyScoresRequest) ([]immersiondomain.Score, error)
-	YearlyActivitySplitForUser(context.Context, *immersiondomain.ProfileYearlyActivitySplitRequest) (*immersiondomain.ProfileYearlyActivitySplitResponse, error)
-}
-
-type Service interface {
-	// Empty - all methods have been migrated to service-per-function
-}
-
-type ServiceImpl struct {
-	r         Repository
-	validate  *validator.Validate
-	kratos    KratosClient
-	clock     domain.Clock
-	userCache UserCache
-}
-
-type UserCache interface {
-	GetUsers() []immersiondomain.UserCacheEntry
-}
-
-type KratosClient interface {
-	FetchIdentity(ctx context.Context, id uuid.UUID) (*immersiondomain.UserTraits, error)
-	ListIdentities(ctx context.Context, perPage int64, page int64) (*ListIdentitiesResult, error)
-}
-
-type ListIdentitiesResult struct {
-	Identities []IdentityInfo
-	HasMore    bool
-}
-
-type IdentityInfo struct {
-	ID          string
-	DisplayName string
-	Email       string
-	CreatedAt   string
-}
-
-func NewService(r Repository, clock domain.Clock, kratos KratosClient, userCache UserCache) Service {
-	return &ServiceImpl{
-		r:         r,
-		validate:  validator.New(),
-		clock:     clock,
-		kratos:    kratos,
-		userCache: userCache,
-	}
+	FindScoresForRegistration(context.Context, *domain.ProfileContestRequest) ([]domain.Score, error)
+	ActivityForContestUser(context.Context, *domain.ProfileContestActivityRequest) ([]domain.ProfileContestActivityRow, error)
+	YearlyActivityForUser(context.Context, *domain.ProfileYearlyActivityRequest) ([]domain.UserActivityScore, error)
+	YearlyScoresForUser(context.Context, *domain.ProfileYearlyScoresRequest) ([]domain.Score, error)
+	YearlyActivitySplitForUser(context.Context, *domain.ProfileYearlyActivitySplitRequest) (*domain.ProfileYearlyActivitySplitResponse, error)
 }

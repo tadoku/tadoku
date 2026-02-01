@@ -2,15 +2,11 @@ package rest
 
 import (
 	"github.com/tadoku/tadoku/services/immersion-api/domain"
-	"github.com/tadoku/tadoku/services/immersion-api/domain/command"
-	"github.com/tadoku/tadoku/services/immersion-api/domain/query"
 	"github.com/tadoku/tadoku/services/immersion-api/http/rest/openapi"
 )
 
 // NewServer creates a new server conforming to the OpenAPI spec
 func NewServer(
-	commandService command.Service,
-	queryService query.Service,
 	contestConfigurationOptions *domain.ContestConfigurationOptions,
 	logConfigurationOptions *domain.LogConfigurationOptions,
 	contestFindLatestOfficial *domain.ContestFindLatestOfficial,
@@ -41,8 +37,6 @@ func NewServer(
 	contestCreate *domain.ContestCreate,
 ) openapi.ServerInterface {
 	return &Server{
-		commandService:              commandService,
-		queryService:                queryService,
 		contestConfigurationOptions: contestConfigurationOptions,
 		logConfigurationOptions:     logConfigurationOptions,
 		contestFindLatestOfficial:   contestFindLatestOfficial,
@@ -75,10 +69,6 @@ func NewServer(
 }
 
 type Server struct {
-	commandService command.Service
-	queryService   query.Service
-
-	// Service-per-function services
 	contestConfigurationOptions *domain.ContestConfigurationOptions
 	logConfigurationOptions     *domain.LogConfigurationOptions
 	contestFindLatestOfficial   *domain.ContestFindLatestOfficial

@@ -14,8 +14,6 @@ go_library(
         "//services/immersion-api/cache",
         "//services/immersion-api/client/ory",
         "//services/immersion-api/domain",
-        "//services/immersion-api/domain/command",
-        "//services/immersion-api/domain/query",
         "//services/immersion-api/http/rest",
         "//services/immersion-api/http/rest/openapi",
         "//services/immersion-api/storage/postgres/repository",

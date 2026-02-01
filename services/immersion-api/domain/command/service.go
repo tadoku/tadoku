@@ -2,60 +2,24 @@ package command
 
 import (
 	"context"
-	"errors"
 
-	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
-	"github.com/tadoku/tadoku/services/common/domain"
-	immersiondomain "github.com/tadoku/tadoku/services/immersion-api/domain"
+	"github.com/tadoku/tadoku/services/immersion-api/domain"
 	"github.com/tadoku/tadoku/services/immersion-api/domain/query"
 )
 
-var ErrInvalidLog = errors.New("unable to validate log")
-var ErrInvalidContest = errors.New("unable to validate contest")
-var ErrInvalidContestRegistration = errors.New("language selection is not valid for contest")
-var ErrRequestInvalid = errors.New("request is invalid")
-var ErrNotFound = errors.New("not found")
-var ErrForbidden = errors.New("not allowed")
-var ErrUnauthorized = errors.New("unauthorized")
-
 type Repository interface {
 	// contest
-	CreateContest(context.Context, *immersiondomain.ContestCreateRequest) (*immersiondomain.ContestCreateResponse, error)
-	UpsertContestRegistration(context.Context, *immersiondomain.RegistrationUpsertRequest) error
-	FetchOngoingContestRegistrations(context.Context, *immersiondomain.RegistrationListOngoingRequest) (*immersiondomain.ContestRegistrations, error)
+	CreateContest(context.Context, *domain.ContestCreateRequest) (*domain.ContestCreateResponse, error)
+	UpsertContestRegistration(context.Context, *domain.RegistrationUpsertRequest) error
+	FetchOngoingContestRegistrations(context.Context, *domain.RegistrationListOngoingRequest) (*domain.ContestRegistrations, error)
 
 	// log
-	CreateLog(context.Context, *immersiondomain.LogCreateRequest) (*uuid.UUID, error)
-	DeleteLog(context.Context, *immersiondomain.LogDeleteRequest) error
-	DetachLogFromContest(context.Context, *immersiondomain.ContestModerationDetachLogRequest, uuid.UUID) error
+	CreateLog(context.Context, *domain.LogCreateRequest) (*uuid.UUID, error)
+	DeleteLog(context.Context, *domain.LogDeleteRequest) error
+	DetachLogFromContest(context.Context, *domain.ContestModerationDetachLogRequest, uuid.UUID) error
 
-	UpsertUser(context.Context, *immersiondomain.UserUpsertRequest) error
+	UpsertUser(context.Context, *domain.UserUpsertRequest) error
 
 	query.Repository
-}
-
-type Service interface {
-	// Empty - all methods have been migrated to service-per-function
-}
-
-type ServiceImpl struct {
-	r          Repository
-	validate   *validator.Validate
-	clock      domain.Clock
-	userUpsert *immersiondomain.UserUpsert
-}
-
-func NewService(r Repository, clock domain.Clock) Service {
-	return &ServiceImpl{
-		r:          r,
-		validate:   validator.New(),
-		clock:      clock,
-		userUpsert: immersiondomain.NewUserUpsert(r),
-	}
-}
-
-// UpdateUserMetadataFromSession delegates to the UserUpsert service
-func (s *ServiceImpl) UpdateUserMetadataFromSession(ctx context.Context) error {
-	return s.userUpsert.Execute(ctx)
 }

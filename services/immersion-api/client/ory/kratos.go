@@ -9,7 +9,6 @@ import (
 	"github.com/google/uuid"
 	kratos "github.com/ory/kratos-client-go"
 	"github.com/tadoku/tadoku/services/immersion-api/domain"
-	"github.com/tadoku/tadoku/services/immersion-api/domain/query"
 )
 
 type KratosClient struct {
@@ -61,7 +60,7 @@ func (k *KratosClient) FetchIdentity(ctx context.Context, id uuid.UUID) (*domain
 	}, nil
 }
 
-func (k *KratosClient) ListIdentities(ctx context.Context, perPage int64, page int64) (*query.ListIdentitiesResult, error) {
+func (k *KratosClient) ListIdentities(ctx context.Context, perPage int64, page int64) (*domain.ListIdentitiesResult, error) {
 	req := k.client.IdentityApi.ListIdentities(ctx)
 	req = req.PerPage(perPage)
 	req = req.Page(page)
@@ -71,8 +70,8 @@ func (k *KratosClient) ListIdentities(ctx context.Context, perPage int64, page i
 		return nil, fmt.Errorf("could not list identities: %w", err)
 	}
 
-	result := &query.ListIdentitiesResult{
-		Identities: make([]query.IdentityInfo, 0, len(identities)),
+	result := &domain.ListIdentitiesResult{
+		Identities: make([]domain.IdentityInfo, 0, len(identities)),
 		HasMore:    len(identities) == int(perPage),
 	}
 
@@ -96,7 +95,7 @@ func (k *KratosClient) ListIdentities(ctx context.Context, perPage int64, page i
 			createdAt = identity.CreatedAt.Format("2006-01-02T15:04:05Z")
 		}
 
-		result.Identities = append(result.Identities, query.IdentityInfo{
+		result.Identities = append(result.Identities, domain.IdentityInfo{
 			ID:          identity.Id,
 			DisplayName: traits.DisplayName,
 			Email:       traits.Email,

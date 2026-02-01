@@ -7,18 +7,17 @@ import (
 	"time"
 
 	"github.com/tadoku/tadoku/services/immersion-api/domain"
-	"github.com/tadoku/tadoku/services/immersion-api/domain/query"
 )
 
 type UserCache struct {
 	mu      sync.RWMutex
 	users   []domain.UserCacheEntry
-	kratos  query.KratosClient
+	kratos  domain.KratosClient
 	refresh time.Duration
 	cancel  context.CancelFunc
 }
 
-func NewUserCache(kratos query.KratosClient, refresh time.Duration) *UserCache {
+func NewUserCache(kratos domain.KratosClient, refresh time.Duration) *UserCache {
 	return &UserCache{
 		kratos:  kratos,
 		refresh: refresh,

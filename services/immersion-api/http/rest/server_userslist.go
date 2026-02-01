@@ -53,7 +53,7 @@ func (s *Server) UsersList(ctx echo.Context, params openapi.UsersListParams) err
 	}
 
 	return ctx.JSON(http.StatusOK, openapi.UserList{
-		Users:         users,
-		NextPageToken: result.NextPageToken,
+		Users:     users,
+		TotalSize: result.TotalSize,
 	})
 }

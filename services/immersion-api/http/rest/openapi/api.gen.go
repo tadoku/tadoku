@@ -292,8 +292,8 @@ type UserActivityScore struct {
 
 // UserList defines model for UserList.
 type UserList struct {
-	NextPageToken string          `json:"next_page_token"`
-	Users         []UserListEntry `json:"users"`
+	TotalSize int             `json:"total_size"`
+	Users     []UserListEntry `json:"users"`
 }
 
 // UserListEntry defines model for UserListEntry.

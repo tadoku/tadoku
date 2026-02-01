@@ -1,7 +1,7 @@
 import { routes } from '@app/common/routes'
 import { UsersIcon } from '@heroicons/react/20/solid'
 import Head from 'next/head'
-import { Breadcrumb, Loading } from 'ui'
+import { Breadcrumb, Loading, Pagination } from 'ui'
 import { NextPageWithLayout } from '../_app'
 import { getAdminLayout } from '@app/manage/AdminLayout'
 import { useUserList } from '@app/immersion/api'
@@ -64,11 +64,11 @@ const Page: NextPageWithLayout = () => {
         <button type="submit" className="btn secondary">
           Search
         </button>
-        {search && (
+        {search ? (
           <button type="button" className="btn ghost" onClick={handleClearSearch}>
             Clear
           </button>
-        )}
+        ) : null}
       </form>
 
       {users.isError && (
@@ -134,25 +134,15 @@ const Page: NextPageWithLayout = () => {
             </table>
           </div>
 
-          <div className="mt-4 flex justify-between items-center">
-            <button
-              type="button"
-              className="btn ghost"
-              disabled={page === 0}
-              onClick={() => setPage(p => Math.max(0, p - 1))}
-            >
-              Previous
-            </button>
-            <span className="text-sm text-slate-500">Page {page + 1}</span>
-            <button
-              type="button"
-              className="btn ghost"
-              disabled={!users.data.next_page_token}
-              onClick={() => setPage(p => p + 1)}
-            >
-              Next
-            </button>
-          </div>
+          {users.data.total_size / pageSize > 1 ? (
+            <div className="mt-4">
+              <Pagination
+                currentPage={page + 1}
+                totalPages={Math.ceil(users.data.total_size / pageSize)}
+                onClick={p => setPage(p - 1)}
+              />
+            </div>
+          ) : null}
         </div>
       )}
     </>

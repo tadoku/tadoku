@@ -13,8 +13,8 @@ type ListUsersRequest struct {
 }
 
 type ListUsersResponse struct {
-	Users         []UserListEntry
-	NextPageToken string
+	Users     []UserListEntry
+	TotalSize int
 }
 
 type UserListEntry struct {
@@ -47,7 +47,7 @@ func (s *ServiceImpl) ListUsers(ctx context.Context, req *ListUsersRequest) (*Li
 	}
 
 	offset := page * perPage
-	cacheUsers, hasMore := s.userCache.Search(req.Query, perPage, offset)
+	cacheUsers, totalSize := s.userCache.Search(req.Query, perPage, offset)
 
 	users := make([]UserListEntry, 0, len(cacheUsers))
 	for _, u := range cacheUsers {
@@ -59,13 +59,8 @@ func (s *ServiceImpl) ListUsers(ctx context.Context, req *ListUsersRequest) (*Li
 		})
 	}
 
-	nextPageToken := ""
-	if hasMore {
-		nextPageToken = "has_more"
-	}
-
 	return &ListUsersResponse{
-		Users:         users,
-		NextPageToken: nextPageToken,
+		Users:     users,
+		TotalSize: totalSize,
 	}, nil
 }

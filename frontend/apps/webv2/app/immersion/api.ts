@@ -933,7 +933,7 @@ export type UserListEntry = z.infer<typeof UserListEntry>
 
 const UserList = z.object({
   users: z.array(UserListEntry),
-  next_page_token: z.string(),
+  total_size: z.number(),
 })
 
 export type UserList = z.infer<typeof UserList>

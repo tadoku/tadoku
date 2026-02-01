@@ -50,7 +50,7 @@ func (c *UserCache) Start(ctx context.Context) {
 func (c *UserCache) refreshUsers(ctx context.Context) error {
 	var allUsers []query.UserEntry
 	page := int64(0)
-	perPage := int64(100)
+	perPage := int64(500)
 
 	for {
 		result, err := c.kratos.ListIdentities(ctx, perPage, page)
@@ -96,29 +96,35 @@ func (s userSearchSource) Len() int {
 }
 
 // Search performs fuzzy search on display name and email
-// Returns matching users sorted by match score, with pagination
-func (c *UserCache) Search(queryStr string, limit, offset int) ([]query.UserEntry, bool) {
+// Returns matching users sorted by match score, with pagination and total count
+func (c *UserCache) Search(queryStr string, limit, offset int) ([]query.UserEntry, int) {
 	c.mu.RLock()
 	users := c.users
 	c.mu.RUnlock()
 
 	if queryStr == "" {
 		// No search query - return paginated results
+		total := len(users)
 		start := offset
-		if start >= len(users) {
-			return []query.UserEntry{}, false
+		if start >= total {
+			return []query.UserEntry{}, total
 		}
 		end := start + limit
-		hasMore := end < len(users)
-		if end > len(users) {
-			end = len(users)
+		if end > total {
+			end = total
 		}
-		return users[start:end], hasMore
+		return users[start:end], total
 	}
 
 	// Fuzzy search
 	source := userSearchSource{users: users}
 	matches := fuzzy.FindFrom(strings.ToLower(queryStr), source)
+
+	// Limit to first page worth of results to avoid processing too many
+	total := len(matches)
+	if total > limit {
+		matches = matches[:limit]
+	}
 
 	// Extract matched users in score order
 	matchedUsers := make([]query.UserEntry, 0, len(matches))
@@ -126,16 +132,5 @@ func (c *UserCache) Search(queryStr string, limit, offset int) ([]query.UserEntr
 		matchedUsers = append(matchedUsers, users[match.Index])
 	}
 
-	// Apply pagination
-	start := offset
-	if start >= len(matchedUsers) {
-		return []query.UserEntry{}, false
-	}
-	end := start + limit
-	hasMore := end < len(matchedUsers)
-	if end > len(matchedUsers) {
-		end = len(matchedUsers)
-	}
-
-	return matchedUsers[start:end], hasMore
+	return matchedUsers, total
 }

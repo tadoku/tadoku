@@ -837,14 +837,14 @@ components:
       type: object
       required:
         - users
-        - next_page_token
+        - total_size
       properties:
         users:
           type: array
           items:
             $ref: "#/components/schemas/UserListEntry"
-        next_page_token:
-          type: string
+        total_size:
+          type: integer
     UserListEntry:
       type: object
       required:

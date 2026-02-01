@@ -4,6 +4,7 @@ go_library(
     name = "domain",
     srcs = [
         "contest_configuration_options.go",
+        "contest_create.go",
         "contest_find.go",
         "contest_find_latest_official.go",
         "contest_leaderboard_fetch.go",
@@ -48,6 +49,7 @@ go_test(
     name = "domain_test",
     srcs = [
         "contest_configuration_options_test.go",
+        "contest_create_test.go",
         "contest_find_latest_official_test.go",
         "contest_find_test.go",
         "contest_leaderboard_fetch_test.go",

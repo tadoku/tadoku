@@ -21,7 +21,7 @@ var ErrUnauthorized = errors.New("unauthorized")
 
 type Repository interface {
 	// contest
-	CreateContest(context.Context, *CreateContestRequest) (*CreateContestResponse, error)
+	CreateContest(context.Context, *immersiondomain.ContestCreateRequest) (*immersiondomain.ContestCreateResponse, error)
 	UpsertContestRegistration(context.Context, *immersiondomain.RegistrationUpsertRequest) error
 	FetchOngoingContestRegistrations(context.Context, *immersiondomain.RegistrationListOngoingRequest) (*immersiondomain.ContestRegistrations, error)
 
@@ -36,8 +36,7 @@ type Repository interface {
 }
 
 type Service interface {
-	// contest
-	CreateContest(context.Context, *CreateContestRequest) (*CreateContestResponse, error)
+	// Empty - all methods have been migrated to service-per-function
 }
 
 type ServiceImpl struct {

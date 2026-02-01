@@ -36,7 +36,6 @@ go_library(
     visibility = ["//visibility:public"],
     deps = [
         "//services/immersion-api/domain",
-        "//services/immersion-api/domain/command",
         "//services/immersion-api/storage/postgres",
         "@com_github_google_uuid//:uuid",
     ],

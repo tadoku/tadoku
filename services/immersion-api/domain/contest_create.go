@@ -1,16 +1,21 @@
-package command
+package domain
 
 import (
 	"context"
 	"fmt"
 	"time"
 
+	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
-	"github.com/tadoku/tadoku/services/common/domain"
-	immersiondomain "github.com/tadoku/tadoku/services/immersion-api/domain"
+	commondomain "github.com/tadoku/tadoku/services/common/domain"
 )
 
-type CreateContestRequest struct {
+type ContestCreateRepository interface {
+	GetContestsByUserCountForYear(context.Context, time.Time, uuid.UUID) (int32, error)
+	CreateContest(context.Context, *ContestCreateRequest) (*ContestCreateResponse, error)
+}
+
+type ContestCreateRequest struct {
 	OwnerUserID             uuid.UUID `validate:"required"`
 	OwnerUserDisplayName    string    `validate:"required"`
 	ContestStart            time.Time `validate:"required"`
@@ -26,7 +31,7 @@ type CreateContestRequest struct {
 	LanguageCodeAllowList []string
 }
 
-type CreateContestResponse struct {
+type ContestCreateResponse struct {
 	ID                      uuid.UUID
 	ContestStart            time.Time
 	ContestEnd              time.Time
@@ -43,22 +48,37 @@ type CreateContestResponse struct {
 	UpdatedAt               time.Time
 }
 
-func (s *ServiceImpl) CreateContest(ctx context.Context, req *CreateContestRequest) (*CreateContestResponse, error) {
+type ContestCreate struct {
+	repo       ContestCreateRepository
+	clock      commondomain.Clock
+	validate   *validator.Validate
+	userUpsert *UserUpsert
+}
+
+func NewContestCreate(repo ContestCreateRepository, clock commondomain.Clock, userUpsert *UserUpsert) *ContestCreate {
+	return &ContestCreate{
+		repo:       repo,
+		clock:      clock,
+		validate:   validator.New(),
+		userUpsert: userUpsert,
+	}
+}
+
+func (s *ContestCreate) Execute(ctx context.Context, req *ContestCreateRequest) (*ContestCreateResponse, error) {
 	// Make sure the user is authorized to create a contest
-	if domain.IsRole(ctx, domain.RoleGuest) {
+	if commondomain.IsRole(ctx, commondomain.RoleGuest) {
 		return nil, ErrUnauthorized
 	}
-	if req.Official && !domain.IsRole(ctx, domain.RoleAdmin) {
+	if req.Official && !commondomain.IsRole(ctx, commondomain.RoleAdmin) {
 		return nil, ErrForbidden
 	}
 
-	if err := s.UpdateUserMetadataFromSession(ctx); err != nil {
-		fmt.Println(err)
+	if err := s.userUpsert.Execute(ctx); err != nil {
 		return nil, fmt.Errorf("could not update user: %w", err)
 	}
 
 	// Enrich request with session
-	session := domain.ParseSession(ctx)
+	session := commondomain.ParseSession(ctx)
 	if session == nil {
 		return nil, ErrUnauthorized
 	}
@@ -66,20 +86,19 @@ func (s *ServiceImpl) CreateContest(ctx context.Context, req *CreateContestReque
 	req.OwnerUserDisplayName = session.DisplayName
 
 	// Check if user has permission to create contest
-	if !domain.IsRole(ctx, domain.RoleAdmin) {
-		contestCount, err := s.r.GetContestsByUserCountForYear(ctx, s.clock.Now(), req.OwnerUserID)
+	if !commondomain.IsRole(ctx, commondomain.RoleAdmin) {
+		contestCount, err := s.repo.GetContestsByUserCountForYear(ctx, s.clock.Now(), req.OwnerUserID)
 		if err != nil {
 			return nil, fmt.Errorf("could not check permission for contest creation: %w", err)
 		}
 
-		if contestCount >= immersiondomain.UserCreateContestYearlyLimit {
+		if contestCount >= UserCreateContestYearlyLimit {
 			return nil, fmt.Errorf("hit limit of created contests: %w", ErrForbidden)
 		}
 	}
 
 	err := s.validate.Struct(req)
 	if err != nil {
-		fmt.Println(err)
 		return nil, fmt.Errorf("unable to validate: %w", ErrInvalidContest)
 	}
 
@@ -95,12 +114,12 @@ func (s *ServiceImpl) CreateContest(ctx context.Context, req *CreateContestReque
 		return nil, fmt.Errorf("contest cannot start after it has ended: %w", ErrInvalidContest)
 	}
 
-	if !domain.IsRole(ctx, domain.RoleAdmin) {
+	if !commondomain.IsRole(ctx, commondomain.RoleAdmin) {
 		now := s.clock.Now()
 		if now.After(req.ContestEnd) || now.After(req.ContestStart) {
 			return nil, fmt.Errorf("contest cannot be in the past or already have started: %w", ErrInvalidContest)
 		}
 	}
 
-	return s.r.CreateContest(ctx, req)
+	return s.repo.CreateContest(ctx, req)
 }

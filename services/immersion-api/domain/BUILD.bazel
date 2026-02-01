@@ -29,6 +29,7 @@ go_library(
         "registration_find.go",
         "registration_list_ongoing.go",
         "registration_list_yearly.go",
+        "registration_upsert.go",
         "user_list.go",
         "user_upsert.go",
     ],

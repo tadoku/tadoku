@@ -22,7 +22,7 @@ var ErrUnauthorized = errors.New("unauthorized")
 type Repository interface {
 	// contest
 	CreateContest(context.Context, *CreateContestRequest) (*CreateContestResponse, error)
-	UpsertContestRegistration(context.Context, *UpsertContestRegistrationRequest) error
+	UpsertContestRegistration(context.Context, *immersiondomain.RegistrationUpsertRequest) error
 	FetchOngoingContestRegistrations(context.Context, *immersiondomain.RegistrationListOngoingRequest) (*immersiondomain.ContestRegistrations, error)
 
 	// log
@@ -38,7 +38,6 @@ type Repository interface {
 type Service interface {
 	// contest
 	CreateContest(context.Context, *CreateContestRequest) (*CreateContestResponse, error)
-	UpsertContestRegistration(context.Context, *UpsertContestRegistrationRequest) error
 
 	// log
 	CreateLog(context.Context, *CreateLogRequest) (*immersiondomain.Log, error)

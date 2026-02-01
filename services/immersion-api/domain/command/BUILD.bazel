@@ -6,7 +6,6 @@ go_library(
         "createcontest.go",
         "createlog.go",
         "service.go",
-        "upsertcontestregistration.go",
     ],
     importpath = "github.com/tadoku/tadoku/services/immersion-api/domain/command",
     visibility = ["//visibility:public"],

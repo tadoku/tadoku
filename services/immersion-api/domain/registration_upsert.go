@@ -1,4 +1,4 @@
-package command
+package domain
 
 import (
 	"context"
@@ -6,39 +6,52 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
-	"github.com/tadoku/tadoku/services/common/domain"
-	immersiondomain "github.com/tadoku/tadoku/services/immersion-api/domain"
+	commondomain "github.com/tadoku/tadoku/services/common/domain"
 )
 
-type UpsertContestRegistrationRequest struct {
+type RegistrationUpsertRepository interface {
+	FindContestByID(context.Context, *ContestFindRequest) (*ContestView, error)
+	FindRegistrationForUser(context.Context, *RegistrationFindRequest) (*ContestRegistration, error)
+	UpsertContestRegistration(context.Context, *RegistrationUpsertRequest) error
+}
+
+type RegistrationUpsertRequest struct {
 	ID            uuid.UUID
 	ContestID     uuid.UUID
 	UserID        uuid.UUID
 	LanguageCodes []string
 }
 
-func (s *ServiceImpl) UpsertContestRegistration(ctx context.Context, req *UpsertContestRegistrationRequest) error {
-	if domain.IsRole(ctx, domain.RoleBanned) {
+type RegistrationUpsert struct {
+	repo       RegistrationUpsertRepository
+	userUpsert *UserUpsert
+}
+
+func NewRegistrationUpsert(repo RegistrationUpsertRepository, userUpsert *UserUpsert) *RegistrationUpsert {
+	return &RegistrationUpsert{repo: repo, userUpsert: userUpsert}
+}
+
+func (s *RegistrationUpsert) Execute(ctx context.Context, req *RegistrationUpsertRequest) error {
+	if commondomain.IsRole(ctx, commondomain.RoleBanned) {
 		return ErrForbidden
 	}
-	if domain.IsRole(ctx, domain.RoleGuest) {
+	if commondomain.IsRole(ctx, commondomain.RoleGuest) {
 		return ErrUnauthorized
 	}
 
-	if err := s.UpdateUserMetadataFromSession(ctx); err != nil {
-		fmt.Println(err)
+	if err := s.userUpsert.Execute(ctx); err != nil {
 		return fmt.Errorf("could not update user: %w", err)
 	}
 
 	// Enrich request with session
-	session := domain.ParseSession(ctx)
+	session := commondomain.ParseSession(ctx)
 	if session == nil {
 		return ErrUnauthorized
 	}
 	req.UserID = uuid.MustParse(session.Subject)
 	req.ID = uuid.New()
 
-	contest, err := s.r.FindContestByID(ctx, &immersiondomain.ContestFindRequest{
+	contest, err := s.repo.FindContestByID(ctx, &ContestFindRequest{
 		ID:             req.ContestID,
 		IncludeDeleted: false,
 	})
@@ -64,11 +77,11 @@ func (s *ServiceImpl) UpsertContestRegistration(ctx context.Context, req *Upsert
 	}
 
 	// check if existing registration
-	registration, err := s.r.FindRegistrationForUser(ctx, &immersiondomain.RegistrationFindRequest{
+	registration, err := s.repo.FindRegistrationForUser(ctx, &RegistrationFindRequest{
 		UserID:    req.UserID,
 		ContestID: req.ContestID,
 	})
-	if err != nil && !errors.Is(err, immersiondomain.ErrNotFound) {
+	if err != nil && !errors.Is(err, ErrNotFound) {
 		return err
 	}
 
@@ -87,5 +100,5 @@ func (s *ServiceImpl) UpsertContestRegistration(ctx context.Context, req *Upsert
 		}
 	}
 
-	return s.r.UpsertContestRegistration(ctx, req)
+	return s.repo.UpsertContestRegistration(ctx, req)
 }

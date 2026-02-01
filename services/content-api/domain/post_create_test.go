@@ -7,6 +7,8 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	contentdomain "github.com/tadoku/tadoku/services/content-api/domain"
 )
 
@@ -22,7 +24,8 @@ func (m *mockPostCreateRepo) CreatePost(ctx context.Context, post *contentdomain
 }
 
 func TestPostCreate_Execute(t *testing.T) {
-	clock := &mockClock{now: time.Date(2024, 1, 15, 10, 30, 0, 0, time.UTC)}
+	now := time.Date(2024, 1, 15, 10, 30, 0, 0, time.UTC)
+	clock := &mockClock{now: now}
 
 	t.Run("creates post successfully", func(t *testing.T) {
 		var savedPost *contentdomain.Post
@@ -35,7 +38,7 @@ func TestPostCreate_Execute(t *testing.T) {
 
 		svc := contentdomain.NewPostCreate(repo, clock)
 		id := uuid.New()
-		publishedAt := time.Now()
+		publishedAt := time.Date(2024, 1, 10, 0, 0, 0, 0, time.UTC)
 
 		resp, err := svc.Execute(adminContext(), &contentdomain.PostCreateRequest{
 			ID:          id,
@@ -46,30 +49,18 @@ func TestPostCreate_Execute(t *testing.T) {
 			PublishedAt: &publishedAt,
 		})
 
-		if err != nil {
-			t.Fatalf("unexpected error: %v", err)
-		}
-		if resp.Post == nil {
-			t.Fatal("expected post in response")
-		}
-		if resp.Post.ID != id {
-			t.Errorf("expected ID %v, got %v", id, resp.Post.ID)
-		}
-		if resp.Post.Namespace != "blog" {
-			t.Errorf("expected namespace 'blog', got %q", resp.Post.Namespace)
-		}
-		if resp.Post.Slug != "hello-world" {
-			t.Errorf("expected slug 'hello-world', got %q", resp.Post.Slug)
-		}
-		if resp.Post.Title != "Hello World" {
-			t.Errorf("expected title 'Hello World', got %q", resp.Post.Title)
-		}
-		if resp.Post.Content != "Post content here" {
-			t.Errorf("expected Content 'Post content here', got %q", resp.Post.Content)
-		}
-		if savedPost == nil {
-			t.Fatal("expected post to be saved to repository")
-		}
+		require.NoError(t, err)
+		assert.Equal(t, &contentdomain.Post{
+			ID:          id,
+			Namespace:   "blog",
+			Slug:        "hello-world",
+			Title:       "Hello World",
+			Content:     "Post content here",
+			PublishedAt: &publishedAt,
+			CreatedAt:   now,
+			UpdatedAt:   now,
+		}, resp.Post)
+		assert.Equal(t, resp.Post, savedPost)
 	})
 
 	t.Run("returns forbidden when not admin", func(t *testing.T) {
@@ -84,9 +75,7 @@ func TestPostCreate_Execute(t *testing.T) {
 			Content:   "Content",
 		})
 
-		if !errors.Is(err, contentdomain.ErrForbidden) {
-			t.Errorf("expected ErrForbidden, got %v", err)
-		}
+		assert.ErrorIs(t, err, contentdomain.ErrForbidden)
 	})
 
 	t.Run("returns error on invalid request - missing slug", func(t *testing.T) {
@@ -100,9 +89,7 @@ func TestPostCreate_Execute(t *testing.T) {
 			Content:   "Content",
 		})
 
-		if !errors.Is(err, contentdomain.ErrInvalidPost) {
-			t.Errorf("expected ErrInvalidPost, got %v", err)
-		}
+		assert.ErrorIs(t, err, contentdomain.ErrInvalidPost)
 	})
 
 	t.Run("returns error on invalid request - uppercase slug", func(t *testing.T) {
@@ -117,9 +104,7 @@ func TestPostCreate_Execute(t *testing.T) {
 			Content:   "Content",
 		})
 
-		if !errors.Is(err, contentdomain.ErrInvalidPost) {
-			t.Errorf("expected ErrInvalidPost, got %v", err)
-		}
+		assert.ErrorIs(t, err, contentdomain.ErrInvalidPost)
 	})
 
 	t.Run("returns repository error", func(t *testing.T) {
@@ -140,9 +125,7 @@ func TestPostCreate_Execute(t *testing.T) {
 			Content:   "Content",
 		})
 
-		if err != repoErr {
-			t.Errorf("expected repository error, got %v", err)
-		}
+		assert.ErrorIs(t, err, repoErr)
 	})
 
 	t.Run("returns post already exists error", func(t *testing.T) {
@@ -162,9 +145,7 @@ func TestPostCreate_Execute(t *testing.T) {
 			Content:   "Content",
 		})
 
-		if !errors.Is(err, contentdomain.ErrPostAlreadyExists) {
-			t.Errorf("expected ErrPostAlreadyExists, got %v", err)
-		}
+		assert.ErrorIs(t, err, contentdomain.ErrPostAlreadyExists)
 	})
 
 	t.Run("creates post without published date (draft)", func(t *testing.T) {
@@ -177,23 +158,27 @@ func TestPostCreate_Execute(t *testing.T) {
 		}
 
 		svc := contentdomain.NewPostCreate(repo, clock)
+		id := uuid.New()
 
 		resp, err := svc.Execute(adminContext(), &contentdomain.PostCreateRequest{
-			ID:        uuid.New(),
+			ID:        id,
 			Namespace: "blog",
 			Slug:      "draft-post",
 			Title:     "Draft Post",
 			Content:   "Draft content",
 		})
 
-		if err != nil {
-			t.Fatalf("unexpected error: %v", err)
-		}
-		if resp.Post.PublishedAt != nil {
-			t.Error("expected PublishedAt to be nil for draft")
-		}
-		if savedPost.PublishedAt != nil {
-			t.Error("expected saved post PublishedAt to be nil")
-		}
+		require.NoError(t, err)
+		assert.Equal(t, &contentdomain.Post{
+			ID:          id,
+			Namespace:   "blog",
+			Slug:        "draft-post",
+			Title:       "Draft Post",
+			Content:     "Draft content",
+			PublishedAt: nil,
+			CreatedAt:   now,
+			UpdatedAt:   now,
+		}, resp.Post)
+		assert.Equal(t, resp.Post, savedPost)
 	})
 }

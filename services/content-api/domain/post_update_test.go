@@ -7,6 +7,8 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	contentdomain "github.com/tadoku/tadoku/services/content-api/domain"
 )
 
@@ -30,18 +32,20 @@ func (m *mockPostUpdateRepo) UpdatePost(ctx context.Context, post *contentdomain
 }
 
 func TestPostUpdate_Execute(t *testing.T) {
-	clock := &mockClock{now: time.Date(2024, 1, 15, 10, 30, 0, 0, time.UTC)}
+	now := time.Date(2024, 1, 15, 10, 30, 0, 0, time.UTC)
+	clock := &mockClock{now: now}
 
 	t.Run("updates post successfully", func(t *testing.T) {
 		id := uuid.New()
+		createdAt := time.Date(2024, 1, 10, 0, 0, 0, 0, time.UTC)
 		existingPost := &contentdomain.Post{
 			ID:        id,
 			Namespace: "blog",
 			Slug:      "old-slug",
 			Title:     "Old Title",
 			Content:   "Old content",
-			CreatedAt: time.Now().Add(-time.Hour),
-			UpdatedAt: time.Now().Add(-time.Hour),
+			CreatedAt: createdAt,
+			UpdatedAt: createdAt,
 		}
 
 		var updatedPost *contentdomain.Post
@@ -56,7 +60,7 @@ func TestPostUpdate_Execute(t *testing.T) {
 		}
 
 		svc := contentdomain.NewPostUpdate(repo, clock)
-		publishedAt := time.Now()
+		publishedAt := time.Date(2024, 1, 12, 0, 0, 0, 0, time.UTC)
 
 		resp, err := svc.Execute(adminContext(), id, &contentdomain.PostUpdateRequest{
 			Namespace:   "blog",
@@ -66,21 +70,18 @@ func TestPostUpdate_Execute(t *testing.T) {
 			PublishedAt: &publishedAt,
 		})
 
-		if err != nil {
-			t.Fatalf("unexpected error: %v", err)
-		}
-		if resp.Post.Slug != "new-slug" {
-			t.Errorf("expected slug 'new-slug', got %q", resp.Post.Slug)
-		}
-		if resp.Post.Title != "New Title" {
-			t.Errorf("expected title 'New Title', got %q", resp.Post.Title)
-		}
-		if resp.Post.Content != "New content" {
-			t.Errorf("expected Content 'New content', got %q", resp.Post.Content)
-		}
-		if updatedPost == nil {
-			t.Fatal("expected post to be updated in repository")
-		}
+		require.NoError(t, err)
+		assert.Equal(t, &contentdomain.Post{
+			ID:          id,
+			Namespace:   "blog",
+			Slug:        "new-slug",
+			Title:       "New Title",
+			Content:     "New content",
+			PublishedAt: &publishedAt,
+			CreatedAt:   createdAt,
+			UpdatedAt:   now,
+		}, resp.Post)
+		assert.Equal(t, resp.Post, updatedPost)
 	})
 
 	t.Run("returns forbidden when not admin", func(t *testing.T) {
@@ -94,9 +95,7 @@ func TestPostUpdate_Execute(t *testing.T) {
 			Content:   "Content",
 		})
 
-		if !errors.Is(err, contentdomain.ErrForbidden) {
-			t.Errorf("expected ErrForbidden, got %v", err)
-		}
+		assert.ErrorIs(t, err, contentdomain.ErrForbidden)
 	})
 
 	t.Run("returns error on invalid request - missing slug", func(t *testing.T) {
@@ -109,9 +108,7 @@ func TestPostUpdate_Execute(t *testing.T) {
 			Content:   "Content",
 		})
 
-		if !errors.Is(err, contentdomain.ErrInvalidPost) {
-			t.Errorf("expected ErrInvalidPost, got %v", err)
-		}
+		assert.ErrorIs(t, err, contentdomain.ErrInvalidPost)
 	})
 
 	t.Run("returns error when post not found", func(t *testing.T) {
@@ -130,9 +127,7 @@ func TestPostUpdate_Execute(t *testing.T) {
 			Content:   "Content",
 		})
 
-		if !errors.Is(err, contentdomain.ErrPostNotFound) {
-			t.Errorf("expected ErrPostNotFound, got %v", err)
-		}
+		assert.ErrorIs(t, err, contentdomain.ErrPostNotFound)
 	})
 
 	t.Run("returns repository error on update failure", func(t *testing.T) {
@@ -164,14 +159,13 @@ func TestPostUpdate_Execute(t *testing.T) {
 			Content:   "New content",
 		})
 
-		if err != repoErr {
-			t.Errorf("expected repository error, got %v", err)
-		}
+		assert.ErrorIs(t, err, repoErr)
 	})
 
 	t.Run("can unpublish a post", func(t *testing.T) {
 		id := uuid.New()
-		publishedAt := time.Now().Add(-time.Hour)
+		createdAt := time.Date(2024, 1, 10, 0, 0, 0, 0, time.UTC)
+		publishedAt := time.Date(2024, 1, 11, 0, 0, 0, 0, time.UTC)
 		existingPost := &contentdomain.Post{
 			ID:          id,
 			Namespace:   "blog",
@@ -179,6 +173,8 @@ func TestPostUpdate_Execute(t *testing.T) {
 			Title:       "Published Post",
 			Content:     "Content",
 			PublishedAt: &publishedAt,
+			CreatedAt:   createdAt,
+			UpdatedAt:   createdAt,
 		}
 
 		var updatedPost *contentdomain.Post
@@ -202,14 +198,17 @@ func TestPostUpdate_Execute(t *testing.T) {
 			PublishedAt: nil,
 		})
 
-		if err != nil {
-			t.Fatalf("unexpected error: %v", err)
-		}
-		if resp.Post.PublishedAt != nil {
-			t.Error("expected PublishedAt to be nil after unpublishing")
-		}
-		if updatedPost.PublishedAt != nil {
-			t.Error("expected saved post PublishedAt to be nil")
-		}
+		require.NoError(t, err)
+		assert.Equal(t, &contentdomain.Post{
+			ID:          id,
+			Namespace:   "blog",
+			Slug:        "published-post",
+			Title:       "Published Post",
+			Content:     "Content",
+			PublishedAt: nil,
+			CreatedAt:   createdAt,
+			UpdatedAt:   now,
+		}, resp.Post)
+		assert.Equal(t, resp.Post, updatedPost)
 	})
 }

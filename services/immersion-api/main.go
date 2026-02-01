@@ -87,11 +87,13 @@ func main() {
 
 	// Service-per-function services
 	contestConfigurationOptions := immersiondomain.NewContestConfigurationOptions(postgresRepository)
+	logConfigurationOptions := immersiondomain.NewLogConfigurationOptions(postgresRepository)
 
 	server := rest.NewServer(
 		commandService,
 		queryService,
 		contestConfigurationOptions,
+		logConfigurationOptions,
 	)
 
 	openapi.RegisterHandlersWithBaseURL(e, server, "")

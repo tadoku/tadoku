@@ -5,6 +5,7 @@ go_library(
     srcs = [
         "contest_configuration_options.go",
         "errors.go",
+        "log_configuration_options.go",
         "models.go",
     ],
     importpath = "github.com/tadoku/tadoku/services/immersion-api/domain",
@@ -17,10 +18,14 @@ go_library(
 
 go_test(
     name = "domain_test",
-    srcs = ["contest_configuration_options_test.go"],
+    srcs = [
+        "contest_configuration_options_test.go",
+        "log_configuration_options_test.go",
+    ],
     deps = [
         ":domain",
         "//services/common/domain",
+        "@com_github_google_uuid//:uuid",
         "@com_github_stretchr_testify//assert",
         "@com_github_stretchr_testify//require",
     ],

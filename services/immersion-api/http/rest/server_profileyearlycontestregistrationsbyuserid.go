@@ -34,7 +34,7 @@ func (s *Server) ProfileYearlyContestRegistrationsByUserID(ctx echo.Context, use
 
 	for i, it := range regs.Registrations {
 		it := it
-		res.Registrations[i] = *contestRegistrationToAPI(&it)
+		res.Registrations[i] = *queryContestRegistrationToAPI(&it)
 	}
 
 	return ctx.JSON(http.StatusOK, res)

@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
+	immersiondomain "github.com/tadoku/tadoku/services/immersion-api/domain"
 )
 
 type ContestProfileRequest struct {
@@ -13,14 +14,14 @@ type ContestProfileRequest struct {
 }
 
 type ContestProfileResponse struct {
-	Registration *ContestRegistration
+	Registration *immersiondomain.ContestRegistration
 	OverallScore float32
 	Scores       []Score
 }
 
 func (s *ServiceImpl) ContestProfile(ctx context.Context, req *ContestProfileRequest) (*ContestProfileResponse, error) {
 
-	reg, err := s.r.FindRegistrationForUser(ctx, &FindRegistrationForUserRequest{
+	reg, err := s.r.FindRegistrationForUser(ctx, &immersiondomain.RegistrationFindRequest{
 		UserID:    req.UserID,
 		ContestID: req.ContestID,
 	})

@@ -15,6 +15,7 @@ go_library(
         "log_list_for_user.go",
         "models.go",
         "profile_yearly_activity_split.go",
+        "registration_find.go",
     ],
     importpath = "github.com/tadoku/tadoku/services/immersion-api/domain",
     visibility = ["//visibility:public"],
@@ -37,6 +38,7 @@ go_test(
         "log_list_for_contest_test.go",
         "log_list_for_user_test.go",
         "profile_yearly_activity_split_test.go",
+        "registration_find_test.go",
     ],
     deps = [
         ":domain",

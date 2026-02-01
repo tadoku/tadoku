@@ -30,7 +30,7 @@ func (s *Server) ContestFindOngoingRegistrations(ctx echo.Context) error {
 
 	for i, r := range regs.Registrations {
 		r := r
-		res.Registrations[i] = *contestRegistrationToAPI(&r)
+		res.Registrations[i] = *queryContestRegistrationToAPI(&r)
 	}
 
 	return ctx.JSON(http.StatusOK, res)

@@ -8,7 +8,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/tadoku/tadoku/services/common/domain"
 	immersiondomain "github.com/tadoku/tadoku/services/immersion-api/domain"
-	"github.com/tadoku/tadoku/services/immersion-api/domain/query"
 )
 
 type UpsertContestRegistrationRequest struct {
@@ -65,11 +64,11 @@ func (s *ServiceImpl) UpsertContestRegistration(ctx context.Context, req *Upsert
 	}
 
 	// check if existing registration
-	registration, err := s.r.FindRegistrationForUser(ctx, &query.FindRegistrationForUserRequest{
+	registration, err := s.r.FindRegistrationForUser(ctx, &immersiondomain.RegistrationFindRequest{
 		UserID:    req.UserID,
 		ContestID: req.ContestID,
 	})
-	if err != nil && !errors.Is(err, query.ErrNotFound) {
+	if err != nil && !errors.Is(err, immersiondomain.ErrNotFound) {
 		return err
 	}
 

@@ -21,6 +21,7 @@ func NewServer(
 	contestList *domain.ContestList,
 	logListForUser *domain.LogListForUser,
 	logListForContest *domain.LogListForContest,
+	registrationFind *domain.RegistrationFind,
 ) openapi.ServerInterface {
 	return &Server{
 		commandService:              commandService,
@@ -35,6 +36,7 @@ func NewServer(
 		contestList:                 contestList,
 		logListForUser:              logListForUser,
 		logListForContest:           logListForContest,
+		registrationFind:            registrationFind,
 	}
 }
 
@@ -53,4 +55,5 @@ type Server struct {
 	contestList                 *domain.ContestList
 	logListForUser              *domain.LogListForUser
 	logListForContest           *domain.LogListForContest
+	registrationFind            *domain.RegistrationFind
 }

@@ -89,6 +89,7 @@ func main() {
 	contestConfigurationOptions := immersiondomain.NewContestConfigurationOptions(postgresRepository)
 	logConfigurationOptions := immersiondomain.NewLogConfigurationOptions(postgresRepository)
 	contestFindLatestOfficial := immersiondomain.NewContestFindLatestOfficial(postgresRepository)
+	contestSummaryFetch := immersiondomain.NewContestSummaryFetch(postgresRepository)
 
 	server := rest.NewServer(
 		commandService,
@@ -96,6 +97,7 @@ func main() {
 		contestConfigurationOptions,
 		logConfigurationOptions,
 		contestFindLatestOfficial,
+		contestSummaryFetch,
 	)
 
 	openapi.RegisterHandlersWithBaseURL(e, server, "")

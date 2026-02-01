@@ -28,7 +28,7 @@ type Repository interface {
 	YearlyContestRegistrationsForUser(context.Context, *YearlyContestRegistrationsForUserRequest) (*ContestRegistrations, error)
 	FetchYearlyLeaderboard(context.Context, *FetchYearlyLeaderboardRequest) (*Leaderboard, error)
 	FetchGlobalLeaderboard(context.Context, *FetchGlobalLeaderboardRequest) (*Leaderboard, error)
-	FetchContestSummary(context.Context, *FetchContestSummaryRequest) (*FetchContestSummaryResponse, error)
+	FetchContestSummary(context.Context, *immersiondomain.ContestSummaryFetchRequest) (*immersiondomain.ContestSummaryFetchResponse, error)
 	GetContestsByUserCountForYear(context.Context, time.Time, uuid.UUID) (int32, error)
 
 	// log
@@ -55,7 +55,6 @@ type Service interface {
 	YearlyContestRegistrationsForUser(context.Context, *YearlyContestRegistrationsForUserRequest) (*ContestRegistrations, error)
 	FetchYearlyLeaderboard(context.Context, *FetchYearlyLeaderboardRequest) (*Leaderboard, error)
 	FetchGlobalLeaderboard(context.Context, *FetchGlobalLeaderboardRequest) (*Leaderboard, error)
-	FetchContestSummary(context.Context, *FetchContestSummaryRequest) (*FetchContestSummaryResponse, error)
 	CreateContestPermissionCheck(context.Context) error
 
 	// log

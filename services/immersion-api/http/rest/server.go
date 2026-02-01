@@ -14,6 +14,7 @@ func NewServer(
 	contestConfigurationOptions *domain.ContestConfigurationOptions,
 	logConfigurationOptions *domain.LogConfigurationOptions,
 	contestFindLatestOfficial *domain.ContestFindLatestOfficial,
+	contestSummaryFetch *domain.ContestSummaryFetch,
 ) openapi.ServerInterface {
 	return &Server{
 		commandService:              commandService,
@@ -21,6 +22,7 @@ func NewServer(
 		contestConfigurationOptions: contestConfigurationOptions,
 		logConfigurationOptions:     logConfigurationOptions,
 		contestFindLatestOfficial:   contestFindLatestOfficial,
+		contestSummaryFetch:         contestSummaryFetch,
 	}
 }
 
@@ -32,4 +34,5 @@ type Server struct {
 	contestConfigurationOptions *domain.ContestConfigurationOptions
 	logConfigurationOptions     *domain.LogConfigurationOptions
 	contestFindLatestOfficial   *domain.ContestFindLatestOfficial
+	contestSummaryFetch         *domain.ContestSummaryFetch
 }

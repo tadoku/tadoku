@@ -5,6 +5,7 @@ go_library(
     srcs = [
         "contest_configuration_options.go",
         "contest_find_latest_official.go",
+        "contest_summary_fetch.go",
         "errors.go",
         "log_configuration_options.go",
         "models.go",
@@ -22,6 +23,7 @@ go_test(
     srcs = [
         "contest_configuration_options_test.go",
         "contest_find_latest_official_test.go",
+        "contest_summary_fetch_test.go",
         "log_configuration_options_test.go",
     ],
     deps = [

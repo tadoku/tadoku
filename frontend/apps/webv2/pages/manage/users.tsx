@@ -95,8 +95,8 @@ const Page: NextPageWithLayout = () => {
 
       {users.isSuccess ? (
         <div className="mt-4">
-          <div className="table-container shadow-transparent w-auto">
-            <table className="default shadow-transparent">
+          <div className="table-container">
+            <table className="default">
               <thead>
                 <tr>
                   <th className="default">Display Name</th>

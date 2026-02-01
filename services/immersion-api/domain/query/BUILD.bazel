@@ -7,7 +7,6 @@ go_library(
         "contestprofile.go",
         "createcontestpermissioncheck.go",
         "entities.go",
-        "fetchcontestconfigurationoptions.go",
         "fetchcontestleaderboard.go",
         "fetchcontestsummary.go",
         "fetchgloballeaderboard.go",
@@ -32,6 +31,7 @@ go_library(
     visibility = ["//visibility:public"],
     deps = [
         "//services/common/domain",
+        "//services/immersion-api/domain",
         "@com_github_go_playground_validator_v10//:validator",
         "@com_github_google_uuid//:uuid",
         "@com_github_sahilm_fuzzy//:fuzzy",

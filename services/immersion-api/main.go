@@ -16,6 +16,7 @@ import (
 	"github.com/tadoku/tadoku/services/common/storage/memory"
 	"github.com/tadoku/tadoku/services/immersion-api/cache"
 	"github.com/tadoku/tadoku/services/immersion-api/client/ory"
+	immersiondomain "github.com/tadoku/tadoku/services/immersion-api/domain"
 	"github.com/tadoku/tadoku/services/immersion-api/domain/command"
 	"github.com/tadoku/tadoku/services/immersion-api/domain/query"
 	"github.com/tadoku/tadoku/services/immersion-api/http/rest"
@@ -84,9 +85,13 @@ func main() {
 	commandService := command.NewService(postgresRepository, clock)
 	queryService := query.NewService(postgresRepository, clock, kratosClient, userCache)
 
+	// Service-per-function services
+	contestConfigurationOptions := immersiondomain.NewContestConfigurationOptions(postgresRepository)
+
 	server := rest.NewServer(
 		commandService,
 		queryService,
+		contestConfigurationOptions,
 	)
 
 	openapi.RegisterHandlersWithBaseURL(e, server, "")

@@ -8,6 +8,7 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
 	"github.com/tadoku/tadoku/services/common/domain"
+	immersiondomain "github.com/tadoku/tadoku/services/immersion-api/domain"
 )
 
 var ErrRequestInvalid = errors.New("request is invalid")
@@ -17,7 +18,7 @@ var ErrForbidden = errors.New("forbidden")
 
 type Repository interface {
 	// contest
-	FetchContestConfigurationOptions(ctx context.Context) (*FetchContestConfigurationOptionsResponse, error)
+	FetchContestConfigurationOptions(ctx context.Context) (*immersiondomain.ContestConfigurationOptionsResponse, error)
 	FindContestByID(context.Context, *FindContestByIDRequest) (*ContestView, error)
 	ContestFindLatestOfficial(context.Context) (*ContestView, error)
 	ListContests(context.Context, *ListContestsRequest) (*ListContestsResponse, error)
@@ -46,7 +47,6 @@ type Repository interface {
 
 type Service interface {
 	// contest
-	FetchContestConfigurationOptions(ctx context.Context) (*FetchContestConfigurationOptionsResponse, error)
 	FindContestByID(context.Context, *FindContestByIDRequest) (*ContestView, error)
 	FindLatestOfficial(context.Context) (*ContestView, error)
 	ListContests(context.Context, *ListContestsRequest) (*ListContestsResponse, error)

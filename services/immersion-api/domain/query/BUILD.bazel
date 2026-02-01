@@ -10,7 +10,6 @@ go_library(
         "fetchgloballeaderboard.go",
         "fetchongoingcontestregistrations.go",
         "fetchuserprofile.go",
-        "fetchyearlyleaderboard.go",
         "listusers.go",
         "service.go",
         "yearlyactivityforuser.go",

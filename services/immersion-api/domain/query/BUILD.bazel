@@ -4,7 +4,6 @@ go_library(
     name = "query",
     srcs = [
         "activityforcontestuser.go",
-        "contestprofile.go",
         "createcontestpermissioncheck.go",
         "entities.go",
         "fetchongoingcontestregistrations.go",

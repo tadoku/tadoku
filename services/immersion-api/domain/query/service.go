@@ -38,7 +38,7 @@ type Repository interface {
 	FindLogByID(context.Context, *immersiondomain.LogFindRequest) (*immersiondomain.Log, error)
 
 	// profile
-	FindScoresForRegistration(context.Context, *ContestProfileRequest) ([]Score, error)
+	FindScoresForRegistration(context.Context, *immersiondomain.ProfileContestRequest) ([]immersiondomain.Score, error)
 	ActivityForContestUser(context.Context, *ActivityForContestUserRequest) ([]ActivityForContestUserRow, error)
 	YearlyActivityForUser(context.Context, *YearlyActivityForUserRequest) ([]UserActivityScore, error)
 	YearlyScoresForUser(context.Context, *YearlyScoresForUserRequest) ([]Score, error)
@@ -51,7 +51,6 @@ type Service interface {
 	CreateContestPermissionCheck(context.Context) error
 
 	// profile
-	ContestProfile(context.Context, *ContestProfileRequest) (*ContestProfileResponse, error)
 	ActivityForContestUser(context.Context, *ActivityForContestUserRequest) (*ActivityForContestUserResponse, error)
 	FetchUserProfile(context.Context, uuid.UUID) (*UserProfile, error)
 	YearlyActivityForUser(context.Context, *YearlyActivityForUserRequest) (*YearlyActivityForUserResponse, error)

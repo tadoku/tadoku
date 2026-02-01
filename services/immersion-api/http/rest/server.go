@@ -26,6 +26,7 @@ func NewServer(
 	contestLeaderboardFetch *domain.ContestLeaderboardFetch,
 	leaderboardYearly *domain.LeaderboardYearly,
 	leaderboardGlobal *domain.LeaderboardGlobal,
+	profileContest *domain.ProfileContest,
 ) openapi.ServerInterface {
 	return &Server{
 		commandService:              commandService,
@@ -45,6 +46,7 @@ func NewServer(
 		contestLeaderboardFetch:     contestLeaderboardFetch,
 		leaderboardYearly:           leaderboardYearly,
 		leaderboardGlobal:           leaderboardGlobal,
+		profileContest:              profileContest,
 	}
 }
 
@@ -68,4 +70,5 @@ type Server struct {
 	contestLeaderboardFetch     *domain.ContestLeaderboardFetch
 	leaderboardYearly           *domain.LeaderboardYearly
 	leaderboardGlobal           *domain.LeaderboardGlobal
+	profileContest              *domain.ProfileContest
 }

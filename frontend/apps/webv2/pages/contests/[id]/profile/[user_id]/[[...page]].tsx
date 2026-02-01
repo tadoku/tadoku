@@ -121,7 +121,7 @@ const Page = () => {
         <div className="h-stack w-full items-center justify-between">
           <h2 className="subtitle p-4">Updates</h2>
         </div>
-        <LogsList logs={logs} />
+        <LogsList logs={logs} contestId={contestId} />
       </div>
       {logsTotalPages > 1 ? (
         <div className="mt-4">

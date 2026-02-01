@@ -16,6 +16,7 @@ type UserCache struct {
 	users   []query.UserEntry
 	kratos  query.KratosClient
 	refresh time.Duration
+	cancel  context.CancelFunc
 }
 
 func NewUserCache(kratos query.KratosClient, refresh time.Duration) *UserCache {
@@ -26,10 +27,34 @@ func NewUserCache(kratos query.KratosClient, refresh time.Duration) *UserCache {
 	}
 }
 
-func (c *UserCache) Start(ctx context.Context) {
-	// Initial load
-	if err := c.refreshUsers(ctx); err != nil {
-		log.Printf("UserCache: initial load failed: %v", err)
+func (c *UserCache) Start() {
+	ctx, cancel := context.WithCancel(context.Background())
+	c.cancel = cancel
+	go c.run(ctx)
+}
+
+func (c *UserCache) Stop() {
+	if c.cancel != nil {
+		c.cancel()
+	}
+}
+
+func (c *UserCache) run(ctx context.Context) {
+	// Initial load with retry
+	retries := 3
+	for i := 0; i < retries; i++ {
+		if err := c.refreshUsers(ctx); err != nil {
+			log.Printf("UserCache: initial load attempt %d/%d failed: %v", i+1, retries, err)
+			if i < retries-1 {
+				select {
+				case <-ctx.Done():
+					return
+				case <-time.After(time.Duration(i+1) * 5 * time.Second):
+				}
+			}
+		} else {
+			break
+		}
 	}
 
 	ticker := time.NewTicker(c.refresh)
@@ -38,6 +63,7 @@ func (c *UserCache) Start(ctx context.Context) {
 	for {
 		select {
 		case <-ctx.Done():
+			log.Printf("UserCache: shutting down")
 			return
 		case <-ticker.C:
 			if err := c.refreshUsers(ctx); err != nil {
@@ -77,6 +103,9 @@ func (c *UserCache) refreshUsers(ctx context.Context) error {
 	c.users = allUsers
 	c.mu.Unlock()
 
+	if len(allUsers) > 20000 {
+		log.Printf("UserCache: WARNING - cache contains %d users, consider alternative approach", len(allUsers))
+	}
 	log.Printf("UserCache: refreshed with %d users", len(allUsers))
 	return nil
 }
@@ -120,11 +149,18 @@ func (c *UserCache) Search(queryStr string, limit, offset int) ([]query.UserEntr
 	source := userSearchSource{users: users}
 	matches := fuzzy.FindFrom(strings.ToLower(queryStr), source)
 
-	// Limit to first page worth of results to avoid processing too many
 	total := len(matches)
-	if total > limit {
-		matches = matches[:limit]
+
+	// Apply pagination to matches
+	start := offset
+	if start >= total {
+		return []query.UserEntry{}, total
 	}
+	end := start + limit
+	if end > total {
+		end = total
+	}
+	matches = matches[start:end]
 
 	// Extract matched users in score order
 	matchedUsers := make([]query.UserEntry, 0, len(matches))

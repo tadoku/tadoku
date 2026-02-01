@@ -71,7 +71,7 @@ const Page: NextPageWithLayout = () => {
         ) : null}
       </form>
 
-      {users.isError && (
+      {users.isError ? (
         <div className="mt-4">
           {users.error instanceof Error && users.error.message === '403' ? (
             <span className="flash error">
@@ -85,15 +85,15 @@ const Page: NextPageWithLayout = () => {
             <span className="flash error">Could not load users.</span>
           )}
         </div>
-      )}
+      ) : null}
 
-      {users.isLoading && (
+      {users.isLoading ? (
         <div className="mt-4">
           <Loading />
         </div>
-      )}
+      ) : null}
 
-      {users.isSuccess && (
+      {users.isSuccess ? (
         <div className="mt-4">
           <div className="table-container shadow-transparent w-auto">
             <table className="default shadow-transparent">
@@ -120,7 +120,7 @@ const Page: NextPageWithLayout = () => {
                     </td>
                   </tr>
                 ))}
-                {users.data.users.length === 0 && (
+                {users.data.users.length === 0 ? (
                   <tr>
                     <td
                       colSpan={3}
@@ -129,7 +129,7 @@ const Page: NextPageWithLayout = () => {
                       {search ? 'No users found matching your search' : 'No users found'}
                     </td>
                   </tr>
-                )}
+                ) : null}
               </tbody>
             </table>
           </div>
@@ -144,7 +144,7 @@ const Page: NextPageWithLayout = () => {
             </div>
           ) : null}
         </div>
-      )}
+      ) : null}
     </>
   )
 }

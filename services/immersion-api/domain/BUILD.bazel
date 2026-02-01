@@ -28,6 +28,7 @@ go_library(
         "registration_list_ongoing.go",
         "registration_list_yearly.go",
         "user_list.go",
+        "user_upsert.go",
     ],
     importpath = "github.com/tadoku/tadoku/services/immersion-api/domain",
     visibility = ["//visibility:public"],
@@ -64,6 +65,7 @@ go_test(
         "registration_list_ongoing_test.go",
         "registration_list_yearly_test.go",
         "user_list_test.go",
+        "user_upsert_test.go",
     ],
     deps = [
         ":domain",

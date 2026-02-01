@@ -8,6 +8,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/tadoku/tadoku/services/common/domain"
+	immersiondomain "github.com/tadoku/tadoku/services/immersion-api/domain"
 	"github.com/tadoku/tadoku/services/immersion-api/domain/command"
 )
 
@@ -28,7 +29,7 @@ func (r *CreateContestRepositoryMock) GetContestsByUserCountForYear(context.Cont
 	return r.userContestCount, nil
 }
 
-func (r *CreateContestRepositoryMock) UpsertUser(ctx context.Context, req *command.UpsertUserRequest) error {
+func (r *CreateContestRepositoryMock) UpsertUser(ctx context.Context, req *immersiondomain.UserUpsertRequest) error {
 	return nil
 }
 

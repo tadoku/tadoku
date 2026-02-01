@@ -30,7 +30,7 @@ type Repository interface {
 	DeleteLog(context.Context, *DeleteLogRequest) error
 	DetachLogFromContest(context.Context, *DetachLogFromContestRequest, uuid.UUID) error
 
-	UpsertUser(context.Context, *UpsertUserRequest) error
+	UpsertUser(context.Context, *immersiondomain.UserUpsertRequest) error
 
 	query.Repository
 }
@@ -44,20 +44,25 @@ type Service interface {
 	CreateLog(context.Context, *CreateLogRequest) (*immersiondomain.Log, error)
 	DeleteLog(context.Context, *DeleteLogRequest) error
 	DetachLogFromContest(context.Context, *DetachLogFromContestRequest) error
-
-	UpdateUserMetadataFromSession(context.Context) error
 }
 
 type ServiceImpl struct {
-	r        Repository
-	validate *validator.Validate
-	clock    domain.Clock
+	r          Repository
+	validate   *validator.Validate
+	clock      domain.Clock
+	userUpsert *immersiondomain.UserUpsert
 }
 
 func NewService(r Repository, clock domain.Clock) Service {
 	return &ServiceImpl{
-		r:        r,
-		validate: validator.New(),
-		clock:    clock,
+		r:          r,
+		validate:   validator.New(),
+		clock:      clock,
+		userUpsert: immersiondomain.NewUserUpsert(r),
 	}
+}
+
+// UpdateUserMetadataFromSession delegates to the UserUpsert service
+func (s *ServiceImpl) UpdateUserMetadataFromSession(ctx context.Context) error {
+	return s.userUpsert.Execute(ctx)
 }

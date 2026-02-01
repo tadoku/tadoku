@@ -40,7 +40,7 @@ func (r *DetachLogFromContestRepositoryMock) DetachLogFromContest(ctx context.Co
 	return r.detachErr
 }
 
-func (r *DetachLogFromContestRepositoryMock) UpsertUser(ctx context.Context, req *command.UpsertUserRequest) error {
+func (r *DetachLogFromContestRepositoryMock) UpsertUser(ctx context.Context, req *immersiondomain.UserUpsertRequest) error {
 	return nil
 }
 

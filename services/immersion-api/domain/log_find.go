@@ -25,6 +25,17 @@ func NewLogFind(repo LogFindRepository) *LogFind {
 }
 
 func (s *LogFind) Execute(ctx context.Context, req *LogFindRequest) (*Log, error) {
+	// Check authorization before making DB call
+	session := commondomain.ParseSession(ctx)
+	if session == nil {
+		return nil, ErrUnauthorized
+	}
+
+	userID, err := uuid.Parse(session.Subject)
+	if err != nil {
+		return nil, ErrUnauthorized
+	}
+
 	req.IncludeDeleted = commondomain.IsRole(ctx, commondomain.RoleAdmin)
 
 	log, err := s.repo.FindLogByID(ctx, req)
@@ -32,14 +43,10 @@ func (s *LogFind) Execute(ctx context.Context, req *LogFindRequest) (*Log, error
 		return nil, err
 	}
 
-	session := commondomain.ParseSession(ctx)
-	if session == nil {
-		return nil, ErrUnauthorized
-	}
-	userID, err := uuid.Parse(session.Subject)
-
 	// Needed to prevent leaking private registrations, only show to admins and the owner of the log
-	if err != nil || !commondomain.IsRole(ctx, commondomain.RoleAdmin) && log.UserID != userID {
+	isAdmin := commondomain.IsRole(ctx, commondomain.RoleAdmin)
+	isOwner := log.UserID == userID
+	if !isAdmin && !isOwner {
 		log.Registrations = nil
 	}
 

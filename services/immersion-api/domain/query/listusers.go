@@ -79,7 +79,8 @@ func (s *ServiceImpl) ListUsers(ctx context.Context, req *ListUsersRequest) (*Li
 			if end > totalSize {
 				end = totalSize
 			}
-			matchedUsers = allUsers[start:end]
+			matchedUsers = make([]UserEntry, end-start)
+			copy(matchedUsers, allUsers[start:end])
 		}
 	} else {
 		// Fuzzy search

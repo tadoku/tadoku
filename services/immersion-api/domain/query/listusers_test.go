@@ -15,7 +15,9 @@ type mockUserCache struct {
 }
 
 func (m *mockUserCache) GetUsers() []query.UserEntry {
-	return m.users
+	result := make([]query.UserEntry, len(m.users))
+	copy(result, m.users)
+	return result
 }
 
 // testUsers creates test UserEntry slices from display names
@@ -197,4 +199,45 @@ func TestListUsers_Forbidden(t *testing.T) {
 	})
 	_, err := svc.ListUsers(ctx, &query.ListUsersRequest{PerPage: 10, Page: 0, Query: ""})
 	assert.Equal(t, query.ErrForbidden, err)
+}
+
+func TestListUsers_PaginationDefaults(t *testing.T) {
+	// Create 25 users to test default page size of 20
+	names := make([]string, 25)
+	for i := range names {
+		names[i] = "User" + string(rune('A'+i))
+	}
+	cache := &mockUserCache{users: testUsers(names...)}
+	svc := query.NewService(nil, nil, nil, cache)
+
+	// PerPage: 0 should use default of 20
+	resp, err := svc.ListUsers(adminContext(), &query.ListUsersRequest{PerPage: 0, Page: 0, Query: ""})
+	assert.NoError(t, err)
+	assert.Len(t, resp.Users, 20)
+
+	// PerPage: -1 should use default of 20
+	resp, err = svc.ListUsers(adminContext(), &query.ListUsersRequest{PerPage: -1, Page: 0, Query: ""})
+	assert.NoError(t, err)
+	assert.Len(t, resp.Users, 20)
+
+	// Page: -1 should be treated as page 0
+	resp, err = svc.ListUsers(adminContext(), &query.ListUsersRequest{PerPage: 5, Page: -1, Query: ""})
+	assert.NoError(t, err)
+	assert.Len(t, resp.Users, 5)
+	assert.Equal(t, "UserA", resp.Users[0].DisplayName)
+}
+
+func TestListUsers_PaginationMaxPerPage(t *testing.T) {
+	// Create 150 users to test max page size of 100
+	names := make([]string, 150)
+	for i := range names {
+		names[i] = "User" + string(rune('A'+i%26)) + string(rune('0'+i/26))
+	}
+	cache := &mockUserCache{users: testUsers(names...)}
+	svc := query.NewService(nil, nil, nil, cache)
+
+	// PerPage: 200 should be clamped to 100
+	resp, err := svc.ListUsers(adminContext(), &query.ListUsersRequest{PerPage: 200, Page: 0, Query: ""})
+	assert.NoError(t, err)
+	assert.Len(t, resp.Users, 100)
 }

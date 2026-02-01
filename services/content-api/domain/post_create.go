@@ -10,7 +10,6 @@ import (
 	commondomain "github.com/tadoku/tadoku/services/common/domain"
 )
 
-// PostCreateRepository defines the repository interface for PostCreate.
 type PostCreateRepository interface {
 	CreatePost(ctx context.Context, post *Post) error
 }

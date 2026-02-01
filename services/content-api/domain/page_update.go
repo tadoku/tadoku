@@ -10,7 +10,6 @@ import (
 	commondomain "github.com/tadoku/tadoku/services/common/domain"
 )
 
-// PageUpdateRepository defines the repository interface for PageUpdate.
 type PageUpdateRepository interface {
 	GetPageByID(ctx context.Context, id uuid.UUID) (*Page, error)
 	UpdatePage(ctx context.Context, page *Page) error

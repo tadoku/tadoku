@@ -10,7 +10,6 @@ import (
 	commondomain "github.com/tadoku/tadoku/services/common/domain"
 )
 
-// PageCreateRepository defines the repository interface for PageCreate.
 type PageCreateRepository interface {
 	CreatePage(ctx context.Context, page *Page) error
 }

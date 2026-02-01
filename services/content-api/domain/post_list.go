@@ -8,7 +8,6 @@ import (
 	commondomain "github.com/tadoku/tadoku/services/common/domain"
 )
 
-// PostListRepository defines the repository interface for PostList.
 type PostListRepository interface {
 	ListPosts(ctx context.Context, namespace string, includeDrafts bool, pageSize, page int) (*PostListResult, error)
 }

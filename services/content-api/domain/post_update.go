@@ -10,7 +10,6 @@ import (
 	commondomain "github.com/tadoku/tadoku/services/common/domain"
 )
 
-// PostUpdateRepository defines the repository interface for PostUpdate.
 type PostUpdateRepository interface {
 	GetPostByID(ctx context.Context, id uuid.UUID) (*Post, error)
 	UpdatePost(ctx context.Context, post *Post) error

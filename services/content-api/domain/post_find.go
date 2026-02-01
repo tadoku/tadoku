@@ -8,7 +8,6 @@ import (
 	commondomain "github.com/tadoku/tadoku/services/common/domain"
 )
 
-// PostFindRepository defines the repository interface for PostFind.
 type PostFindRepository interface {
 	FindPostBySlug(ctx context.Context, namespace, slug string) (*Post, error)
 }

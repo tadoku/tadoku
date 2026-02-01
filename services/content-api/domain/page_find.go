@@ -8,7 +8,6 @@ import (
 	commondomain "github.com/tadoku/tadoku/services/common/domain"
 )
 
-// PageFindRepository defines the repository interface for PageFind.
 type PageFindRepository interface {
 	FindPageBySlug(ctx context.Context, namespace, slug string) (*Page, error)
 }

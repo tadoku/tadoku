@@ -8,7 +8,6 @@ import (
 	commondomain "github.com/tadoku/tadoku/services/common/domain"
 )
 
-// PageListRepository defines the repository interface for PageList.
 type PageListRepository interface {
 	ListPages(ctx context.Context, namespace string, includeDrafts bool, pageSize, page int) (*PageListResult, error)
 }

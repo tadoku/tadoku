@@ -5,14 +5,14 @@ import (
 	"net/http"
 
 	"github.com/labstack/echo/v4"
-	"github.com/tadoku/tadoku/services/immersion-api/domain/query"
+	"github.com/tadoku/tadoku/services/immersion-api/domain"
 	"github.com/tadoku/tadoku/services/immersion-api/http/rest/openapi"
 )
 
 // Fetches the global leaderboard
 // (GET /leaderboard/global)
 func (s *Server) FetchLeaderboardGlobal(ctx echo.Context, params openapi.FetchLeaderboardGlobalParams) error {
-	req := &query.FetchGlobalLeaderboardRequest{
+	req := &domain.LeaderboardGlobalRequest{
 		LanguageCode: params.LanguageCode,
 	}
 
@@ -23,13 +23,13 @@ func (s *Server) FetchLeaderboardGlobal(ctx echo.Context, params openapi.FetchLe
 		req.Page = *params.Page
 	}
 	if params.ActivityId != nil {
-		id := int32(*params.ActivityId)
-		req.ActivityID = &id
+		activityID := int32(*params.ActivityId)
+		req.ActivityID = &activityID
 	}
 
-	leaderboard, err := s.queryService.FetchGlobalLeaderboard(ctx.Request().Context(), req)
+	leaderboard, err := s.leaderboardGlobal.Execute(ctx.Request().Context(), req)
 	if err != nil {
-		if errors.Is(err, query.ErrNotFound) {
+		if errors.Is(err, domain.ErrNotFound) {
 			return ctx.NoContent(http.StatusNotFound)
 		}
 
@@ -37,5 +37,5 @@ func (s *Server) FetchLeaderboardGlobal(ctx echo.Context, params openapi.FetchLe
 		return ctx.NoContent(http.StatusInternalServerError)
 	}
 
-	return ctx.JSON(http.StatusOK, queryLeaderboardToAPI(*leaderboard))
+	return ctx.JSON(http.StatusOK, domainLeaderboardToAPI(*leaderboard))
 }

@@ -7,7 +7,6 @@ go_library(
         "contestprofile.go",
         "createcontestpermissioncheck.go",
         "entities.go",
-        "fetchgloballeaderboard.go",
         "fetchongoingcontestregistrations.go",
         "fetchuserprofile.go",
         "listusers.go",

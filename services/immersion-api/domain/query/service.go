@@ -27,7 +27,7 @@ type Repository interface {
 	FetchOngoingContestRegistrations(context.Context, *FetchOngoingContestRegistrationsRequest) (*ContestRegistrations, error)
 	YearlyContestRegistrationsForUser(context.Context, *immersiondomain.RegistrationListYearlyRequest) (*immersiondomain.ContestRegistrations, error)
 	FetchYearlyLeaderboard(context.Context, *immersiondomain.LeaderboardYearlyRequest) (*immersiondomain.Leaderboard, error)
-	FetchGlobalLeaderboard(context.Context, *FetchGlobalLeaderboardRequest) (*Leaderboard, error)
+	FetchGlobalLeaderboard(context.Context, *immersiondomain.LeaderboardGlobalRequest) (*immersiondomain.Leaderboard, error)
 	FetchContestSummary(context.Context, *immersiondomain.ContestSummaryFetchRequest) (*immersiondomain.ContestSummaryFetchResponse, error)
 	GetContestsByUserCountForYear(context.Context, time.Time, uuid.UUID) (int32, error)
 
@@ -48,7 +48,6 @@ type Repository interface {
 type Service interface {
 	// contest
 	FetchOngoingContestRegistrations(context.Context, *FetchOngoingContestRegistrationsRequest) (*ContestRegistrations, error)
-	FetchGlobalLeaderboard(context.Context, *FetchGlobalLeaderboardRequest) (*Leaderboard, error)
 	CreateContestPermissionCheck(context.Context) error
 
 	// profile

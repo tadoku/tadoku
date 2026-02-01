@@ -27,28 +27,6 @@ func domainLeaderboardToAPI(leaderboard domain.Leaderboard) *openapi.Leaderboard
 	return &res
 }
 
-// queryLeaderboardToAPI converts query.Leaderboard to API format
-// TODO: Remove this once all leaderboard services are refactored to use domain types
-func queryLeaderboardToAPI(leaderboard query.Leaderboard) *openapi.Leaderboard {
-	res := openapi.Leaderboard{
-		Entries:       make([]openapi.LeaderboardEntry, len(leaderboard.Entries)),
-		NextPageToken: leaderboard.NextPageToken,
-		TotalSize:     leaderboard.TotalSize,
-	}
-
-	for i, entry := range leaderboard.Entries {
-		res.Entries[i] = openapi.LeaderboardEntry{
-			Rank:            entry.Rank,
-			UserId:          entry.UserID,
-			UserDisplayName: entry.UserDisplayName,
-			Score:           entry.Score,
-			IsTie:           entry.IsTie,
-		}
-	}
-
-	return &res
-}
-
 func logToAPI(log *domain.Log) *openapi.Log {
 	refs := make([]openapi.ContestRegistrationReference, len(log.Registrations))
 	for i, it := range log.Registrations {

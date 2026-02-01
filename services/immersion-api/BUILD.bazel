@@ -51,7 +51,10 @@ oci_load(
     name = "load",
     # Use the image built for the target platform
     image = ":image",
-    repo_tags = ["ghcr.io/tadoku/tadoku/immersion-api:latest", "bazel/services/immersion-api:latest"],
+    repo_tags = [
+        "ghcr.io/tadoku/tadoku/immersion-api:latest",
+        "bazel/services/immersion-api:latest",
+    ],
 )
 
 oci_push(

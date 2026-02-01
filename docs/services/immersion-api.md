@@ -22,10 +22,7 @@ All core functionality should live in this service.
   - Run the following command to generate code for the query: `cd services/immersion-api/storage/postgres && go generate`
 - After changing the OpenAPI spec, regenerate the Go server code:
   ```
-  go install github.com/deepmap/oapi-codegen/cmd/oapi-codegen@v1.12.4
-  oapi-codegen -package openapi -generate types,server \
-    services/immersion-api/http/rest/openapi/api.yaml \
-    > services/immersion-api/http/rest/openapi/api.gen.go
+  cd services/immersion-api/http/rest/openapi && go generate
   ```
 - Migrations use `services/immersion-api/http/rest/openapi/api.yaml`
   - Migrations are stored in `services/immersion-api/storage/postgres/migrations`

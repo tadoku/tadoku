@@ -42,6 +42,10 @@ bazel run //:gazelle
 cd services/immersion-api/storage/postgres && go generate
 cd services/content-api/storage/postgres && go generate
 
-# 7. Before creating PR
+# 7. Regenerate OpenAPI code (after modifying OpenAPI specs)
+cd services/immersion-api/http/rest/openapi && go generate
+cd services/content-api/http/rest/openapi && go generate
+
+# 8. Before creating PR
 bazel build //services/... && bazel test //services/...
 ```

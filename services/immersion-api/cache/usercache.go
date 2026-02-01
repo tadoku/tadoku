@@ -6,12 +6,13 @@ import (
 	"sync"
 	"time"
 
+	"github.com/tadoku/tadoku/services/immersion-api/domain"
 	"github.com/tadoku/tadoku/services/immersion-api/domain/query"
 )
 
 type UserCache struct {
 	mu      sync.RWMutex
-	users   []query.UserEntry
+	users   []domain.UserCacheEntry
 	kratos  query.KratosClient
 	refresh time.Duration
 	cancel  context.CancelFunc
@@ -21,7 +22,7 @@ func NewUserCache(kratos query.KratosClient, refresh time.Duration) *UserCache {
 	return &UserCache{
 		kratos:  kratos,
 		refresh: refresh,
-		users:   []query.UserEntry{},
+		users:   []domain.UserCacheEntry{},
 	}
 }
 
@@ -72,7 +73,7 @@ func (c *UserCache) run(ctx context.Context) {
 }
 
 func (c *UserCache) refreshUsers(ctx context.Context) error {
-	var allUsers []query.UserEntry
+	var allUsers []domain.UserCacheEntry
 	page := int64(0)
 	perPage := int64(500)
 
@@ -83,7 +84,7 @@ func (c *UserCache) refreshUsers(ctx context.Context) error {
 		}
 
 		for _, identity := range result.Identities {
-			allUsers = append(allUsers, query.UserEntry{
+			allUsers = append(allUsers, domain.UserCacheEntry{
 				ID:          identity.ID,
 				DisplayName: identity.DisplayName,
 				Email:       identity.Email,
@@ -109,10 +110,10 @@ func (c *UserCache) refreshUsers(ctx context.Context) error {
 }
 
 // GetUsers returns a copy of all cached users
-func (c *UserCache) GetUsers() []query.UserEntry {
+func (c *UserCache) GetUsers() []domain.UserCacheEntry {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
-	result := make([]query.UserEntry, len(c.users))
+	result := make([]domain.UserCacheEntry, len(c.users))
 	copy(result, c.users)
 	return result
 }

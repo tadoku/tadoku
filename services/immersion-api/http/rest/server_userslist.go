@@ -5,7 +5,7 @@ import (
 	"net/http"
 
 	"github.com/labstack/echo/v4"
-	"github.com/tadoku/tadoku/services/immersion-api/domain/query"
+	"github.com/tadoku/tadoku/services/immersion-api/domain"
 	"github.com/tadoku/tadoku/services/immersion-api/http/rest/openapi"
 )
 
@@ -26,16 +26,16 @@ func (s *Server) UsersList(ctx echo.Context, params openapi.UsersListParams) err
 		queryStr = *params.Query
 	}
 
-	result, err := s.queryService.ListUsers(ctx.Request().Context(), &query.ListUsersRequest{
+	result, err := s.userList.Execute(ctx.Request().Context(), &domain.UserListRequest{
 		PerPage: perPage,
 		Page:    page,
 		Query:   queryStr,
 	})
 	if err != nil {
-		if errors.Is(err, query.ErrUnauthorized) {
+		if errors.Is(err, domain.ErrUnauthorized) {
 			return ctx.NoContent(http.StatusUnauthorized)
 		}
-		if errors.Is(err, query.ErrForbidden) {
+		if errors.Is(err, domain.ErrForbidden) {
 			return ctx.NoContent(http.StatusForbidden)
 		}
 		ctx.Echo().Logger.Error(err)

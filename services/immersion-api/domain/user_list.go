@@ -1,16 +1,27 @@
-package query
+package domain
 
 import (
 	"context"
 	"strings"
 
 	"github.com/sahilm/fuzzy"
-	"github.com/tadoku/tadoku/services/common/domain"
+	commondomain "github.com/tadoku/tadoku/services/common/domain"
 )
+
+type UserListCache interface {
+	GetUsers() []UserCacheEntry
+}
+
+type UserCacheEntry struct {
+	ID          string
+	DisplayName string
+	Email       string
+	CreatedAt   string
+}
 
 // userSearchSource implements fuzzy.Source for fuzzy matching on users
 type userSearchSource struct {
-	users []UserEntry
+	users []UserCacheEntry
 }
 
 func (s userSearchSource) String(i int) string {
@@ -22,13 +33,13 @@ func (s userSearchSource) Len() int {
 	return len(s.users)
 }
 
-type ListUsersRequest struct {
+type UserListRequest struct {
 	PerPage int64
 	Page    int64
 	Query   string
 }
 
-type ListUsersResponse struct {
+type UserListResponse struct {
 	Users     []UserListEntry
 	TotalSize int
 }
@@ -40,12 +51,20 @@ type UserListEntry struct {
 	CreatedAt   string
 }
 
-func (s *ServiceImpl) ListUsers(ctx context.Context, req *ListUsersRequest) (*ListUsersResponse, error) {
-	session := domain.ParseSession(ctx)
+type UserList struct {
+	userCache UserListCache
+}
+
+func NewUserList(userCache UserListCache) *UserList {
+	return &UserList{userCache: userCache}
+}
+
+func (s *UserList) Execute(ctx context.Context, req *UserListRequest) (*UserListResponse, error) {
+	session := commondomain.ParseSession(ctx)
 	if session == nil {
 		return nil, ErrUnauthorized
 	}
-	if session.Role != domain.RoleAdmin {
+	if session.Role != commondomain.RoleAdmin {
 		return nil, ErrForbidden
 	}
 
@@ -65,7 +84,7 @@ func (s *ServiceImpl) ListUsers(ctx context.Context, req *ListUsersRequest) (*Li
 	offset := page * perPage
 	allUsers := s.userCache.GetUsers()
 
-	var matchedUsers []UserEntry
+	var matchedUsers []UserCacheEntry
 	var totalSize int
 
 	if req.Query == "" {
@@ -73,13 +92,13 @@ func (s *ServiceImpl) ListUsers(ctx context.Context, req *ListUsersRequest) (*Li
 		totalSize = len(allUsers)
 		start := offset
 		if start >= totalSize {
-			matchedUsers = []UserEntry{}
+			matchedUsers = []UserCacheEntry{}
 		} else {
 			end := start + perPage
 			if end > totalSize {
 				end = totalSize
 			}
-			matchedUsers = make([]UserEntry, end-start)
+			matchedUsers = make([]UserCacheEntry, end-start)
 			copy(matchedUsers, allUsers[start:end])
 		}
 	} else {
@@ -90,13 +109,13 @@ func (s *ServiceImpl) ListUsers(ctx context.Context, req *ListUsersRequest) (*Li
 
 		start := offset
 		if start >= totalSize {
-			matchedUsers = []UserEntry{}
+			matchedUsers = []UserCacheEntry{}
 		} else {
 			end := start + perPage
 			if end > totalSize {
 				end = totalSize
 			}
-			matchedUsers = make([]UserEntry, 0, end-start)
+			matchedUsers = make([]UserCacheEntry, 0, end-start)
 			for _, match := range matches[start:end] {
 				matchedUsers = append(matchedUsers, allUsers[match.Index])
 			}
@@ -113,7 +132,7 @@ func (s *ServiceImpl) ListUsers(ctx context.Context, req *ListUsersRequest) (*Li
 		})
 	}
 
-	return &ListUsersResponse{
+	return &UserListResponse{
 		Users:     users,
 		TotalSize: totalSize,
 	}, nil

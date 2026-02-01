@@ -108,6 +108,7 @@ func main() {
 	profileFetch := immersiondomain.NewProfileFetch(kratosClient)
 	registrationListOngoing := immersiondomain.NewRegistrationListOngoing(postgresRepository, clock)
 	contestPermissionCheck := immersiondomain.NewContestPermissionCheck(postgresRepository, kratosClient, clock)
+	userList := immersiondomain.NewUserList(userCache)
 
 	server := rest.NewServer(
 		commandService,
@@ -134,6 +135,7 @@ func main() {
 		profileFetch,
 		registrationListOngoing,
 		contestPermissionCheck,
+		userList,
 	)
 
 	openapi.RegisterHandlersWithBaseURL(e, server, "")

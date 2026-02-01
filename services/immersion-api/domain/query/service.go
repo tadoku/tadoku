@@ -45,8 +45,7 @@ type Repository interface {
 }
 
 type Service interface {
-	// admin
-	ListUsers(context.Context, *ListUsersRequest) (*ListUsersResponse, error)
+	// Empty - all methods have been migrated to service-per-function
 }
 
 type ServiceImpl struct {
@@ -58,14 +57,7 @@ type ServiceImpl struct {
 }
 
 type UserCache interface {
-	GetUsers() []UserEntry
-}
-
-type UserEntry struct {
-	ID          string
-	DisplayName string
-	Email       string
-	CreatedAt   string
+	GetUsers() []immersiondomain.UserCacheEntry
 }
 
 type KratosClient interface {

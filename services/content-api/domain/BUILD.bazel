@@ -1,0 +1,44 @@
+load("@rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "domain",
+    srcs = [
+        "errors.go",
+        "page.go",
+        "page_create.go",
+        "page_find.go",
+        "page_list.go",
+        "page_update.go",
+        "post.go",
+        "post_create.go",
+        "post_find.go",
+        "post_list.go",
+        "post_update.go",
+    ],
+    importpath = "github.com/tadoku/tadoku/services/content-api/domain",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//services/common/domain",
+        "@com_github_go_playground_validator_v10//:validator",
+        "@com_github_google_uuid//:uuid",
+    ],
+)
+
+go_test(
+    name = "domain_test",
+    srcs = [
+        "page_create_test.go",
+        "page_find_test.go",
+        "page_list_test.go",
+        "page_update_test.go",
+        "post_create_test.go",
+        "post_find_test.go",
+        "post_list_test.go",
+        "post_update_test.go",
+    ],
+    deps = [
+        ":domain",
+        "//services/common/domain",
+        "@com_github_google_uuid//:uuid",
+    ],
+)

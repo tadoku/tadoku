@@ -6,8 +6,7 @@ import (
 	"github.com/google/uuid"
 )
 
-// Post represents a blog post in the domain layer.
-// This is separate from the database model to decouple business logic from storage.
+// Post is a blog post managed by this service.
 type Post struct {
 	ID          uuid.UUID
 	Namespace   string

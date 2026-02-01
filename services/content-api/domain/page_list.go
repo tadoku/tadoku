@@ -8,19 +8,17 @@ import (
 	commondomain "github.com/tadoku/tadoku/services/common/domain"
 )
 
-// PageListRepository defines the repository interface for listing pages.
+// PageListRepository defines the repository interface for PageList.
 type PageListRepository interface {
 	ListPages(ctx context.Context, namespace string, includeDrafts bool, pageSize, page int) (*PageListResult, error)
 }
 
-// PageListResult contains the paginated list of pages from the repository.
 type PageListResult struct {
 	Pages         []Page
 	TotalSize     int
 	NextPageToken string
 }
 
-// PageListRequest contains the input data for listing pages.
 type PageListRequest struct {
 	Namespace     string `validate:"required"`
 	IncludeDrafts bool
@@ -28,20 +26,17 @@ type PageListRequest struct {
 	Page          int
 }
 
-// PageListResponse contains the result of listing pages.
 type PageListResponse struct {
 	Pages         []Page
 	TotalSize     int
 	NextPageToken string
 }
 
-// PageList is the service for listing pages.
 type PageList struct {
 	repo     PageListRepository
 	validate *validator.Validate
 }
 
-// NewPageList creates a new PageList service.
 func NewPageList(repo PageListRepository) *PageList {
 	return &PageList{
 		repo:     repo,
@@ -49,8 +44,6 @@ func NewPageList(repo PageListRepository) *PageList {
 	}
 }
 
-// Execute lists pages for a namespace.
-// Only admins can access this endpoint.
 func (s *PageList) Execute(ctx context.Context, req *PageListRequest) (*PageListResponse, error) {
 	if !commondomain.IsRole(ctx, commondomain.RoleAdmin) {
 		return nil, ErrForbidden
@@ -60,7 +53,6 @@ func (s *PageList) Execute(ctx context.Context, req *PageListRequest) (*PageList
 		return nil, fmt.Errorf("%w: %v", ErrRequestInvalid, err)
 	}
 
-	// Apply defaults
 	pageSize := req.PageSize
 	if pageSize == 0 {
 		pageSize = 10

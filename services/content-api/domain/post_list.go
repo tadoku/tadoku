@@ -8,19 +8,17 @@ import (
 	commondomain "github.com/tadoku/tadoku/services/common/domain"
 )
 
-// PostListRepository defines the repository interface for listing posts.
+// PostListRepository defines the repository interface for PostList.
 type PostListRepository interface {
 	ListPosts(ctx context.Context, namespace string, includeDrafts bool, pageSize, page int) (*PostListResult, error)
 }
 
-// PostListResult contains the paginated list of posts from the repository.
 type PostListResult struct {
 	Posts         []Post
 	TotalSize     int
 	NextPageToken string
 }
 
-// PostListRequest contains the input data for listing posts.
 type PostListRequest struct {
 	Namespace     string `validate:"required"`
 	IncludeDrafts bool
@@ -28,20 +26,17 @@ type PostListRequest struct {
 	Page          int
 }
 
-// PostListResponse contains the result of listing posts.
 type PostListResponse struct {
 	Posts         []Post
 	TotalSize     int
 	NextPageToken string
 }
 
-// PostList is the service for listing posts.
 type PostList struct {
 	repo     PostListRepository
 	validate *validator.Validate
 }
 
-// NewPostList creates a new PostList service.
 func NewPostList(repo PostListRepository) *PostList {
 	return &PostList{
 		repo:     repo,
@@ -49,19 +44,15 @@ func NewPostList(repo PostListRepository) *PostList {
 	}
 }
 
-// Execute lists posts for a namespace.
-// IncludeDrafts requires admin role.
 func (s *PostList) Execute(ctx context.Context, req *PostListRequest) (*PostListResponse, error) {
 	if err := s.validate.Struct(req); err != nil {
 		return nil, fmt.Errorf("%w: %v", ErrRequestInvalid, err)
 	}
 
-	// Only admins can include drafts
 	if req.IncludeDrafts && !commondomain.IsRole(ctx, commondomain.RoleAdmin) {
 		return nil, ErrForbidden
 	}
 
-	// Apply defaults
 	pageSize := req.PageSize
 	if pageSize == 0 {
 		pageSize = 10

@@ -10,13 +10,12 @@ import (
 	commondomain "github.com/tadoku/tadoku/services/common/domain"
 )
 
-// PageUpdateRepository defines the repository interface for updating pages.
+// PageUpdateRepository defines the repository interface for PageUpdate.
 type PageUpdateRepository interface {
 	GetPageByID(ctx context.Context, id uuid.UUID) (*Page, error)
 	UpdatePage(ctx context.Context, page *Page) error
 }
 
-// PageUpdateRequest contains the input data for updating a page.
 type PageUpdateRequest struct {
 	Namespace   string `validate:"required"`
 	Slug        string `validate:"required,gt=1,lowercase"`
@@ -25,18 +24,15 @@ type PageUpdateRequest struct {
 	PublishedAt *time.Time
 }
 
-// PageUpdateResponse contains the result of updating a page.
 type PageUpdateResponse struct {
 	Page *Page
 }
 
-// PageUpdate is the service for updating pages.
 type PageUpdate struct {
 	repo     PageUpdateRepository
 	validate *validator.Validate
 }
 
-// NewPageUpdate creates a new PageUpdate service.
 func NewPageUpdate(repo PageUpdateRepository) *PageUpdate {
 	return &PageUpdate{
 		repo:     repo,
@@ -44,8 +40,6 @@ func NewPageUpdate(repo PageUpdateRepository) *PageUpdate {
 	}
 }
 
-// Execute updates an existing page.
-// It validates the request, checks authorization, and persists the changes.
 func (s *PageUpdate) Execute(ctx context.Context, id uuid.UUID, req *PageUpdateRequest) (*PageUpdateResponse, error) {
 	if !commondomain.IsRole(ctx, commondomain.RoleAdmin) {
 		return nil, ErrForbidden

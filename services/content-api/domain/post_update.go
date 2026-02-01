@@ -10,13 +10,12 @@ import (
 	commondomain "github.com/tadoku/tadoku/services/common/domain"
 )
 
-// PostUpdateRepository defines the repository interface for updating posts.
+// PostUpdateRepository defines the repository interface for PostUpdate.
 type PostUpdateRepository interface {
 	GetPostByID(ctx context.Context, id uuid.UUID) (*Post, error)
 	UpdatePost(ctx context.Context, post *Post) error
 }
 
-// PostUpdateRequest contains the input data for updating a post.
 type PostUpdateRequest struct {
 	Namespace   string `validate:"required"`
 	Slug        string `validate:"required,gt=1,lowercase"`
@@ -25,18 +24,15 @@ type PostUpdateRequest struct {
 	PublishedAt *time.Time
 }
 
-// PostUpdateResponse contains the result of updating a post.
 type PostUpdateResponse struct {
 	Post *Post
 }
 
-// PostUpdate is the service for updating posts.
 type PostUpdate struct {
 	repo     PostUpdateRepository
 	validate *validator.Validate
 }
 
-// NewPostUpdate creates a new PostUpdate service.
 func NewPostUpdate(repo PostUpdateRepository) *PostUpdate {
 	return &PostUpdate{
 		repo:     repo,
@@ -44,8 +40,6 @@ func NewPostUpdate(repo PostUpdateRepository) *PostUpdate {
 	}
 }
 
-// Execute updates an existing post.
-// It validates the request, checks authorization, and persists the changes.
 func (s *PostUpdate) Execute(ctx context.Context, id uuid.UUID, req *PostUpdateRequest) (*PostUpdateResponse, error) {
 	if !commondomain.IsRole(ctx, commondomain.RoleAdmin) {
 		return nil, ErrForbidden

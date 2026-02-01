@@ -10,13 +10,11 @@ import (
 	commondomain "github.com/tadoku/tadoku/services/common/domain"
 )
 
-// PageCreateRepository defines the repository interface for creating pages.
-// This is a minimal interface containing only what PageCreate needs.
+// PageCreateRepository defines the repository interface for PageCreate.
 type PageCreateRepository interface {
 	CreatePage(ctx context.Context, page *Page) error
 }
 
-// PageCreateRequest contains the input data for creating a page.
 type PageCreateRequest struct {
 	ID          uuid.UUID `validate:"required"`
 	Namespace   string    `validate:"required"`
@@ -26,18 +24,15 @@ type PageCreateRequest struct {
 	PublishedAt *time.Time
 }
 
-// PageCreateResponse contains the result of creating a page.
 type PageCreateResponse struct {
 	Page *Page
 }
 
-// PageCreate is the service for creating pages.
 type PageCreate struct {
 	repo     PageCreateRepository
 	validate *validator.Validate
 }
 
-// NewPageCreate creates a new PageCreate service.
 func NewPageCreate(repo PageCreateRepository) *PageCreate {
 	return &PageCreate{
 		repo:     repo,
@@ -45,8 +40,6 @@ func NewPageCreate(repo PageCreateRepository) *PageCreate {
 	}
 }
 
-// Execute creates a new page.
-// It validates the request, checks authorization, and persists the page.
 func (s *PageCreate) Execute(ctx context.Context, req *PageCreateRequest) (*PageCreateResponse, error) {
 	if !commondomain.IsRole(ctx, commondomain.RoleAdmin) {
 		return nil, ErrForbidden

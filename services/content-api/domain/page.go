@@ -6,8 +6,7 @@ import (
 	"github.com/google/uuid"
 )
 
-// Page represents a content page in the domain layer.
-// This is separate from the database model to decouple business logic from storage.
+// Page is a web page whose content is managed by this service.
 type Page struct {
 	ID          uuid.UUID
 	Namespace   string

@@ -32,6 +32,7 @@ func NewServer(
 	profileYearlyScores *domain.ProfileYearlyScores,
 	profileFetch *domain.ProfileFetch,
 	registrationListOngoing *domain.RegistrationListOngoing,
+	contestPermissionCheck *domain.ContestPermissionCheck,
 ) openapi.ServerInterface {
 	return &Server{
 		commandService:              commandService,
@@ -57,6 +58,7 @@ func NewServer(
 		profileYearlyScores:         profileYearlyScores,
 		profileFetch:                profileFetch,
 		registrationListOngoing:     registrationListOngoing,
+		contestPermissionCheck:      contestPermissionCheck,
 	}
 }
 
@@ -86,4 +88,5 @@ type Server struct {
 	profileYearlyScores         *domain.ProfileYearlyScores
 	profileFetch                *domain.ProfileFetch
 	registrationListOngoing     *domain.RegistrationListOngoing
+	contestPermissionCheck      *domain.ContestPermissionCheck
 }

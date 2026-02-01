@@ -7,7 +7,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/tadoku/tadoku/services/common/domain"
-	"github.com/tadoku/tadoku/services/immersion-api/domain/query"
+	immersiondomain "github.com/tadoku/tadoku/services/immersion-api/domain"
 )
 
 type CreateContestRequest struct {
@@ -72,7 +72,7 @@ func (s *ServiceImpl) CreateContest(ctx context.Context, req *CreateContestReque
 			return nil, fmt.Errorf("could not check permission for contest creation: %w", err)
 		}
 
-		if contestCount >= query.UserCreateContestYearlyLimit {
+		if contestCount >= immersiondomain.UserCreateContestYearlyLimit {
 			return nil, fmt.Errorf("hit limit of created contests: %w", ErrForbidden)
 		}
 	}

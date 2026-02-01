@@ -107,6 +107,7 @@ func main() {
 	profileYearlyScores := immersiondomain.NewProfileYearlyScores(postgresRepository)
 	profileFetch := immersiondomain.NewProfileFetch(kratosClient)
 	registrationListOngoing := immersiondomain.NewRegistrationListOngoing(postgresRepository, clock)
+	contestPermissionCheck := immersiondomain.NewContestPermissionCheck(postgresRepository, kratosClient, clock)
 
 	server := rest.NewServer(
 		commandService,
@@ -132,6 +133,7 @@ func main() {
 		profileYearlyScores,
 		profileFetch,
 		registrationListOngoing,
+		contestPermissionCheck,
 	)
 
 	openapi.RegisterHandlersWithBaseURL(e, server, "")

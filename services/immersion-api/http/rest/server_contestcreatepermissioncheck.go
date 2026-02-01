@@ -5,15 +5,15 @@ import (
 	"net/http"
 
 	"github.com/labstack/echo/v4"
-	"github.com/tadoku/tadoku/services/immersion-api/domain/query"
+	"github.com/tadoku/tadoku/services/immersion-api/domain"
 )
 
 // Check if user has permission to create a new contest
 // (GET /contests/create-permissions)
 func (s *Server) ContestCreatePermissionCheck(ctx echo.Context) error {
-	err := s.queryService.CreateContestPermissionCheck(ctx.Request().Context())
+	err := s.contestPermissionCheck.Execute(ctx.Request().Context())
 	if err != nil {
-		if errors.Is(err, query.ErrForbidden) {
+		if errors.Is(err, domain.ErrForbidden) {
 			return ctx.NoContent(http.StatusForbidden)
 		}
 		ctx.Echo().Logger.Errorf("could not fetch create permission check: %w", err)

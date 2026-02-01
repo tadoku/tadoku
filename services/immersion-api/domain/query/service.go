@@ -45,9 +45,6 @@ type Repository interface {
 }
 
 type Service interface {
-	// contest
-	CreateContestPermissionCheck(context.Context) error
-
 	// admin
 	ListUsers(context.Context, *ListUsersRequest) (*ListUsersResponse, error)
 }

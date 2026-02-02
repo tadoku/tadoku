@@ -1,5 +1,5 @@
 # Service keys for inter-service authentication
 
-# Load static YAML files for service keys
-k8s_yaml('./infra/dev/service-keys/configmap.yaml')
-k8s_yaml('./infra/dev/service-keys/secret.yaml')
+# Load static YAML files for service keys (paths relative to this Tiltfile)
+k8s_yaml('./configmap.yaml')
+k8s_yaml('./secret.yaml')

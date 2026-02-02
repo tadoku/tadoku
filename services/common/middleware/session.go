@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/MicahParks/keyfunc"
 	"github.com/golang-jwt/jwt"
@@ -26,7 +27,9 @@ func SessionJWT(jwksURL string) echo.MiddlewareFunc {
 
 	return middleware.JWTWithConfig(middleware.JWTConfig{
 		Skipper: func(context echo.Context) bool {
-			return context.Path() == "/ping"
+			path := context.Path()
+			// Skip public ping and internal service-to-service endpoints
+			return path == "/ping" || strings.HasPrefix(path, "/internal/")
 		},
 		Claims: &SessionClaims{},
 		KeyFunc: func(token *jwt.Token) (interface{}, error) {

@@ -21,6 +21,8 @@ cd frontend && pnpm build
 
 **Always use `bazel`, not `go`.**
 
+**SQL style: always use lowercase keywords** (select, create table, not SELECT, CREATE TABLE)
+
 ```sh
 # 1. Make changes
 

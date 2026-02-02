@@ -17,7 +17,7 @@ interface Props {
 export function DashboardLayout({ children, activeLink }: Props) {
   return (
     <div className="flex min-h-screen">
-      <div className="w-64 flex-shrink-0 bg-slate-50 border-r border-slate-200">
+      <div className="w-64 flex-shrink-0 bg-white border-r border-slate-200 shadow-sm">
         <div className="p-4 border-b border-slate-200">
           <h1 className="text-xl font-bold text-slate-900">Tadoku Admin</h1>
         </div>
@@ -56,8 +56,8 @@ export function DashboardLayout({ children, activeLink }: Props) {
           />
         </div>
       </div>
-      <div className="flex-1 bg-white">
-        <div className="p-8">{children}</div>
+      <div className="flex-1">
+        <div className="p-4 md:p-8">{children}</div>
       </div>
     </div>
   )

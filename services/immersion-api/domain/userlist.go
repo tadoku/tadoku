@@ -12,6 +12,10 @@ type UserListCache interface {
 	GetUsers() []UserCacheEntry
 }
 
+type UserListRoleRepository interface {
+	GetAllUserRoles(ctx context.Context) (map[string]string, error)
+}
+
 type UserCacheEntry struct {
 	ID          string
 	DisplayName string
@@ -49,14 +53,16 @@ type UserListEntry struct {
 	DisplayName string
 	Email       string
 	CreatedAt   string
+	Role        string // "user", "admin", or "banned" - empty string means "user"
 }
 
 type UserList struct {
 	userCache UserListCache
+	roleRepo  UserListRoleRepository
 }
 
-func NewUserList(userCache UserListCache) *UserList {
-	return &UserList{userCache: userCache}
+func NewUserList(userCache UserListCache, roleRepo UserListRoleRepository) *UserList {
+	return &UserList{userCache: userCache, roleRepo: roleRepo}
 }
 
 func (s *UserList) Execute(ctx context.Context, req *UserListRequest) (*UserListResponse, error) {
@@ -122,13 +128,26 @@ func (s *UserList) Execute(ctx context.Context, req *UserListRequest) (*UserList
 		}
 	}
 
+	// Get all user roles from the database
+	roleMap := make(map[string]string)
+	if s.roleRepo != nil {
+		var err error
+		roleMap, err = s.roleRepo.GetAllUserRoles(ctx)
+		if err != nil {
+			// Log error but continue - roles will just be empty
+			roleMap = make(map[string]string)
+		}
+	}
+
 	users := make([]UserListEntry, 0, len(matchedUsers))
 	for _, u := range matchedUsers {
+		role := roleMap[u.ID] // Will be empty string if not found (means "user")
 		users = append(users, UserListEntry{
 			ID:          u.ID,
 			DisplayName: u.DisplayName,
 			Email:       u.Email,
 			CreatedAt:   u.CreatedAt,
+			Role:        role,
 		})
 	}
 

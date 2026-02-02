@@ -103,7 +103,7 @@ func main() {
 	profileFetch := immersiondomain.NewProfileFetch(kratosClient)
 	registrationListOngoing := immersiondomain.NewRegistrationListOngoing(postgresRepository, clock)
 	contestPermissionCheck := immersiondomain.NewContestPermissionCheck(postgresRepository, kratosClient, clock)
-	userList := immersiondomain.NewUserList(userCache)
+	userList := immersiondomain.NewUserList(userCache, postgresRepository)
 	logDelete := immersiondomain.NewLogDelete(postgresRepository, clock)
 	contestModerationDetachLog := immersiondomain.NewContestModerationDetachLog(postgresRepository)
 	userUpsert := immersiondomain.NewUserUpsert(postgresRepository)

@@ -27,7 +27,7 @@ func TestUserList_Execute(t *testing.T) {
 
 	t.Run("returns unauthorized for nil session", func(t *testing.T) {
 		cache := &mockUserListCache{users: users}
-		svc := domain.NewUserList(cache)
+		svc := domain.NewUserList(cache, nil)
 
 		result, err := svc.Execute(context.Background(), &domain.UserListRequest{})
 
@@ -37,7 +37,7 @@ func TestUserList_Execute(t *testing.T) {
 
 	t.Run("returns forbidden for non-admin", func(t *testing.T) {
 		cache := &mockUserListCache{users: users}
-		svc := domain.NewUserList(cache)
+		svc := domain.NewUserList(cache, nil)
 
 		ctx := context.WithValue(context.Background(), commondomain.CtxSessionKey, &commondomain.SessionToken{
 			Role: commondomain.RoleUser,
@@ -51,7 +51,7 @@ func TestUserList_Execute(t *testing.T) {
 
 	t.Run("returns all users for admin", func(t *testing.T) {
 		cache := &mockUserListCache{users: users}
-		svc := domain.NewUserList(cache)
+		svc := domain.NewUserList(cache, nil)
 
 		ctx := context.WithValue(context.Background(), commondomain.CtxSessionKey, &commondomain.SessionToken{
 			Role: commondomain.RoleAdmin,
@@ -66,7 +66,7 @@ func TestUserList_Execute(t *testing.T) {
 
 	t.Run("paginates results", func(t *testing.T) {
 		cache := &mockUserListCache{users: users}
-		svc := domain.NewUserList(cache)
+		svc := domain.NewUserList(cache, nil)
 
 		ctx := context.WithValue(context.Background(), commondomain.CtxSessionKey, &commondomain.SessionToken{
 			Role: commondomain.RoleAdmin,
@@ -82,7 +82,7 @@ func TestUserList_Execute(t *testing.T) {
 
 	t.Run("filters by query with fuzzy search", func(t *testing.T) {
 		cache := &mockUserListCache{users: users}
-		svc := domain.NewUserList(cache)
+		svc := domain.NewUserList(cache, nil)
 
 		ctx := context.WithValue(context.Background(), commondomain.CtxSessionKey, &commondomain.SessionToken{
 			Role: commondomain.RoleAdmin,

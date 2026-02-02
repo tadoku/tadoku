@@ -18,6 +18,7 @@ go_library(
         "tags.sql.go",
         "units.sql.go",
         "user_roles.sql.go",
+        "user_roles_list.sql.go",
         "users.sql.go",
     ],
     importpath = "github.com/tadoku/tadoku/services/immersion-api/storage/postgres",

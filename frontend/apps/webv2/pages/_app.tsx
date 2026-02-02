@@ -3,11 +3,12 @@ import { NextPage } from 'next'
 import { ReactElement, ReactNode } from 'react'
 import { sdkServer as ory } from '@app/common/ory'
 import { Atom, Provider } from 'jotai'
-import { AppContextWithSession, sessionAtom } from '@app/common/session'
+import { AppContextWithSession, sessionAtom, useUserRole } from '@app/common/session'
 import { Session } from '@ory/client'
 import { ToastContainer } from 'ui/components/toasts'
 import 'ui/styles/globals.css'
 import Navigation from '@app/ui/Navigation'
+import BannedScreen from '@app/ui/BannedScreen'
 import { QueryCache, QueryClient, QueryClientProvider } from 'react-query'
 import Head from 'next/head'
 import Footer from '@app/ui/Footer'
@@ -47,6 +48,16 @@ const createInitialValues = () => {
   return { get, set }
 }
 
+const AppContent = ({ children }: { children: ReactNode }) => {
+  const role = useUserRole()
+
+  if (role === 'banned') {
+    return <BannedScreen />
+  }
+
+  return <>{children}</>
+}
+
 const MyApp = ({ Component, pageProps }: AppPropsWithLayout) => {
   const initialState = pageProps
   const { get: getInitialValues, set: setInitialValues } = createInitialValues()
@@ -71,14 +82,16 @@ const MyApp = ({ Component, pageProps }: AppPropsWithLayout) => {
             media="(prefers-color-scheme: dark)"
           />
         </Head>
-        <div className="min-h-screen flex flex-col">
-          <Navigation />
-          <div className="p-4 md:px-8 md:pb-8 md:pt-4 mx-auto w-full max-w-7xl mb-auto">
-            {getLayout(<Component {...pageProps} />)}
+        <AppContent>
+          <div className="min-h-screen flex flex-col">
+            <Navigation />
+            <div className="p-4 md:px-8 md:pb-8 md:pt-4 mx-auto w-full max-w-7xl mb-auto">
+              {getLayout(<Component {...pageProps} />)}
+            </div>
+            <Footer />
+            <ToastContainer />
           </div>
-          <Footer />
-          <ToastContainer />
-        </div>
+        </AppContent>
       </QueryClientProvider>
     </Provider>
   )

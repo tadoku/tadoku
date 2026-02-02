@@ -57,12 +57,12 @@ func main() {
 	userCache.Start()
 
 	postgresRepository := repository.NewRepository(psql)
-	roleRepository := memory.NewRoleRepository("/etc/tadoku/permissions/roles.yaml")
+	configRoleRepository := memory.NewRoleRepository("/etc/tadoku/permissions/roles.yaml")
 
 	e := echo.New()
 	e.Use(tadokumiddleware.Logger([]string{"/ping"}))
 	e.Use(tadokumiddleware.SessionJWT(cfg.JWKS))
-	e.Use(tadokumiddleware.Session(roleRepository))
+	e.Use(tadokumiddleware.Session(configRoleRepository, postgresRepository))
 	e.Use(middleware.Recover())
 
 	if cfg.SentryDSN != "" {

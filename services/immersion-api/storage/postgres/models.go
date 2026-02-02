@@ -104,3 +104,9 @@ type User struct {
 	CreatedAt   time.Time
 	UpdatedAt   time.Time
 }
+
+type UserRole struct {
+	UserID    uuid.UUID
+	Role      string
+	UpdatedAt time.Time
+}

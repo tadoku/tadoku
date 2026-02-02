@@ -1,4 +1,6 @@
 load("@rules_go//go:def.bzl", "go_binary", "go_library")
+load("@rules_oci//oci:defs.bzl", "oci_image", "oci_load", "oci_push")
+load("@rules_pkg//:pkg.bzl", "pkg_tar")
 
 go_library(
     name = "profile-api_lib",
@@ -24,4 +26,32 @@ go_binary(
     name = "profile-api",
     embed = [":profile-api_lib"],
     visibility = ["//visibility:public"],
+)
+
+pkg_tar(
+    name = "app_layer",
+    srcs = [":profile-api"],
+)
+
+oci_image(
+    name = "image",
+    base = "@distroless_base_linux_amd64",
+    entrypoint = ["/profile-api"],
+    tars = [":app_layer"],
+)
+
+oci_load(
+    name = "load",
+    image = ":image",
+    repo_tags = [
+        "ghcr.io/tadoku/tadoku/profile-api:latest",
+        "bazel/services/profile-api:latest",
+    ],
+)
+
+oci_push(
+    name = "push",
+    image = ":image",
+    remote_tags = ["latest"],
+    repository = "ghcr.io/tadoku/tadoku/profile-api",
 )

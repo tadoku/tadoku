@@ -24,34 +24,6 @@ paths:
               schema:
                 type: string
 components:
-  schemas:
-    Profile:
-      type: object
-      required:
-        - user_id
-        - display_name
-      properties:
-        id:
-          type: string
-          format: uuid
-          example: d7e82f70-f7b9-4952-8258-1e4d16f0c244
-        user_id:
-          type: string
-          example: user-123
-        display_name:
-          type: string
-          example: JohnDoe
-        bio:
-          type: string
-          example: Language learning enthusiast
-        created_at:
-          type: string
-          format: date-time
-          example: 2022-12-14T19:48:00Z
-        updated_at:
-          type: string
-          format: date-time
-          example: 2022-12-14T19:48:00Z
   securitySchemes:
     cookieAuth:
       type: apiKey

@@ -19,16 +19,16 @@ import { toast } from 'react-toastify'
 function RoleBadge({ role }: { role?: string }) {
   if (role === 'admin') {
     return (
-      <span className="tag bg-purple-100 text-purple-800 text-center w-16">Admin</span>
+      <span className="tag bg-purple-100 text-purple-800 justify-center w-16">Admin</span>
     )
   }
   if (role === 'banned') {
     return (
-      <span className="tag bg-red-100 text-red-800 text-center w-16">Banned</span>
+      <span className="tag bg-red-100 text-red-800 justify-center w-16">Banned</span>
     )
   }
   return (
-    <span className="tag bg-slate-100 text-slate-600 text-center w-16">User</span>
+    <span className="tag bg-slate-100 text-slate-600 justify-center w-16">User</span>
   )
 }
 

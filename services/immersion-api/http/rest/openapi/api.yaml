@@ -824,6 +824,48 @@ paths:
           description: unauthorized
         "403":
           description: forbidden (not admin)
+  /users/{id}/role:
+    put:
+      summary: Update user role (admin only)
+      operationId: updateUserRole
+      tags: [admin]
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - role
+                - reason
+              properties:
+                role:
+                  type: string
+                  enum: [user, banned]
+                reason:
+                  type: string
+                  minLength: 1
+                  maxLength: 1000
+      responses:
+        "200":
+          description: successful operation
+        "400":
+          description: invalid request
+        "401":
+          description: unauthorized
+        "403":
+          description: forbidden (not admin, or target is admin)
+        "404":
+          description: user not found
 components:
   schemas:
     UserRole:
@@ -860,6 +902,8 @@ components:
         email:
           type: string
         created_at:
+          type: string
+        role:
           type: string
     UserProfile:
       type: object

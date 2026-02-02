@@ -44,12 +44,18 @@ func (s *Server) UsersList(ctx echo.Context, params openapi.UsersListParams) err
 
 	users := make([]openapi.UserListEntry, len(result.Users))
 	for i, u := range result.Users {
-		users[i] = openapi.UserListEntry{
+		entry := openapi.UserListEntry{
 			Id:          u.ID,
 			DisplayName: u.DisplayName,
 			Email:       u.Email,
 			CreatedAt:   u.CreatedAt,
 		}
+		// Only set role if it's not the default "user" role
+		if u.Role != "" {
+			role := u.Role
+			entry.Role = &role
+		}
+		users[i] = entry
 	}
 
 	return ctx.JSON(http.StatusOK, openapi.UserList{

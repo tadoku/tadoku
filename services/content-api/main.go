@@ -46,12 +46,12 @@ func main() {
 
 	pageRepository := postgres.NewPageRepository(psql)
 	postRepository := postgres.NewPostRepository(psql)
-	roleRepository := memory.NewRoleRepository("/etc/tadoku/permissions/roles.yaml")
+	configRoleRepository := memory.NewRoleRepository("/etc/tadoku/permissions/roles.yaml")
 
 	e := echo.New()
 	e.Use(tadokumiddleware.Logger([]string{"/ping"}))
 	e.Use(tadokumiddleware.SessionJWT(cfg.JWKS))
-	e.Use(tadokumiddleware.Session(roleRepository))
+	e.Use(tadokumiddleware.Session(configRoleRepository, nil))
 	e.Use(middleware.Recover())
 
 	if cfg.SentryDSN != "" {

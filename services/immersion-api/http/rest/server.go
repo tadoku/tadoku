@@ -35,6 +35,7 @@ func NewServer(
 	registrationUpsert *domain.RegistrationUpsert,
 	logCreate *domain.LogCreate,
 	contestCreate *domain.ContestCreate,
+	updateUserRole *domain.UpdateUserRole,
 ) openapi.ServerInterface {
 	return &Server{
 		contestConfigurationOptions: contestConfigurationOptions,
@@ -65,6 +66,7 @@ func NewServer(
 		registrationUpsert:          registrationUpsert,
 		logCreate:                   logCreate,
 		contestCreate:               contestCreate,
+		updateUserRole:              updateUserRole,
 	}
 }
 
@@ -97,4 +99,5 @@ type Server struct {
 	registrationUpsert          *domain.RegistrationUpsert
 	logCreate                   *domain.LogCreate
 	contestCreate               *domain.ContestCreate
+	updateUserRole              *domain.UpdateUserRole
 }

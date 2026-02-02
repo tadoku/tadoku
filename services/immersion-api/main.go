@@ -57,12 +57,12 @@ func main() {
 	userCache.Start()
 
 	postgresRepository := repository.NewRepository(psql)
-	roleRepository := memory.NewRoleRepository("/etc/tadoku/permissions/roles.yaml")
+	configRoleRepository := memory.NewRoleRepository("/etc/tadoku/permissions/roles.yaml")
 
 	e := echo.New()
 	e.Use(tadokumiddleware.Logger([]string{"/ping"}))
 	e.Use(tadokumiddleware.SessionJWT(cfg.JWKS))
-	e.Use(tadokumiddleware.Session(roleRepository))
+	e.Use(tadokumiddleware.Session(configRoleRepository, postgresRepository))
 	e.Use(middleware.Recover())
 
 	if cfg.SentryDSN != "" {
@@ -103,13 +103,14 @@ func main() {
 	profileFetch := immersiondomain.NewProfileFetch(kratosClient)
 	registrationListOngoing := immersiondomain.NewRegistrationListOngoing(postgresRepository, clock)
 	contestPermissionCheck := immersiondomain.NewContestPermissionCheck(postgresRepository, kratosClient, clock)
-	userList := immersiondomain.NewUserList(userCache)
+	userList := immersiondomain.NewUserList(userCache, postgresRepository)
 	logDelete := immersiondomain.NewLogDelete(postgresRepository, clock)
 	contestModerationDetachLog := immersiondomain.NewContestModerationDetachLog(postgresRepository)
 	userUpsert := immersiondomain.NewUserUpsert(postgresRepository)
 	registrationUpsert := immersiondomain.NewRegistrationUpsert(postgresRepository, userUpsert)
 	logCreate := immersiondomain.NewLogCreate(postgresRepository, clock, userUpsert)
 	contestCreate := immersiondomain.NewContestCreate(postgresRepository, clock, userUpsert)
+	updateUserRole := immersiondomain.NewUpdateUserRole(postgresRepository)
 
 	server := rest.NewServer(
 		contestConfigurationOptions,
@@ -140,6 +141,7 @@ func main() {
 		registrationUpsert,
 		logCreate,
 		contestCreate,
+		updateUserRole,
 	)
 
 	openapi.RegisterHandlersWithBaseURL(e, server, "")

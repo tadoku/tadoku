@@ -17,6 +17,12 @@ const (
 	CookieAuthScopes = "cookieAuth.Scopes"
 )
 
+// Defines values for UpdateUserRoleJSONBodyRole.
+const (
+	Banned UpdateUserRoleJSONBodyRole = "banned"
+	User   UpdateUserRoleJSONBodyRole = "user"
+)
+
 // Activities defines model for Activities.
 type Activities struct {
 	Activities []Activity `json:"activities"`
@@ -298,10 +304,11 @@ type UserList struct {
 
 // UserListEntry defines model for UserListEntry.
 type UserListEntry struct {
-	CreatedAt   string `json:"created_at"`
-	DisplayName string `json:"display_name"`
-	Email       string `json:"email"`
-	Id          string `json:"id"`
+	CreatedAt   string  `json:"created_at"`
+	DisplayName string  `json:"display_name"`
+	Email       string  `json:"email"`
+	Id          string  `json:"id"`
+	Role        *string `json:"role,omitempty"`
 }
 
 // UserProfile defines model for UserProfile.
@@ -387,6 +394,15 @@ type UsersListParams struct {
 	Query *string `form:"query,omitempty" json:"query,omitempty"`
 }
 
+// UpdateUserRoleJSONBody defines parameters for UpdateUserRole.
+type UpdateUserRoleJSONBody struct {
+	Reason string                     `json:"reason"`
+	Role   UpdateUserRoleJSONBodyRole `json:"role"`
+}
+
+// UpdateUserRoleJSONBodyRole defines parameters for UpdateUserRole.
+type UpdateUserRoleJSONBodyRole string
+
 // ProfileListLogsParams defines parameters for ProfileListLogs.
 type ProfileListLogsParams struct {
 	IncludeDeleted *bool `form:"include_deleted,omitempty" json:"include_deleted,omitempty"`
@@ -405,6 +421,9 @@ type ContestRegistrationUpsertJSONRequestBody ContestRegistrationUpsertJSONBody
 
 // LogCreateJSONRequestBody defines body for LogCreate for application/json ContentType.
 type LogCreateJSONRequestBody LogCreateJSONBody
+
+// UpdateUserRoleJSONRequestBody defines body for UpdateUserRole for application/json ContentType.
+type UpdateUserRoleJSONRequestBody UpdateUserRoleJSONBody
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
@@ -480,6 +499,9 @@ type ServerInterface interface {
 	// Lists all users (admin only)
 	// (GET /users)
 	UsersList(ctx echo.Context, params UsersListParams) error
+	// Update user role (admin only)
+	// (PUT /users/{id}/role)
+	UpdateUserRole(ctx echo.Context, id openapi_types.UUID) error
 	// Fetches a activity split summary of a user for a given year
 	// (GET /users/{userId}/activity-split/{year})
 	ProfileYearlyActivitySplitByUserID(ctx echo.Context, userId openapi_types.UUID, year int) error
@@ -1031,6 +1053,24 @@ func (w *ServerInterfaceWrapper) UsersList(ctx echo.Context) error {
 	return err
 }
 
+// UpdateUserRole converts echo context to params.
+func (w *ServerInterfaceWrapper) UpdateUserRole(ctx echo.Context) error {
+	var err error
+	// ------------- Path parameter "id" -------------
+	var id openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithLocation("simple", false, "id", runtime.ParamLocationPath, ctx.Param("id"), &id)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter id: %s", err))
+	}
+
+	ctx.Set(CookieAuthScopes, []string{""})
+
+	// Invoke the callback with all the unmarshalled arguments
+	err = w.Handler.UpdateUserRole(ctx, id)
+	return err
+}
+
 // ProfileYearlyActivitySplitByUserID converts echo context to params.
 func (w *ServerInterfaceWrapper) ProfileYearlyActivitySplitByUserID(ctx echo.Context) error {
 	var err error
@@ -1234,6 +1274,7 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 	router.GET(baseURL+"/logs/:id", wrapper.LogFindByID)
 	router.GET(baseURL+"/ping", wrapper.Ping)
 	router.GET(baseURL+"/users", wrapper.UsersList)
+	router.PUT(baseURL+"/users/:id/role", wrapper.UpdateUserRole)
 	router.GET(baseURL+"/users/:userId/activity-split/:year", wrapper.ProfileYearlyActivitySplitByUserID)
 	router.GET(baseURL+"/users/:userId/activity/:year", wrapper.ProfileYearlyActivityByUserID)
 	router.GET(baseURL+"/users/:userId/contest-registrations/:year", wrapper.ProfileYearlyContestRegistrationsByUserID)

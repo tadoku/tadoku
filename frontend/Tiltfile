@@ -17,7 +17,7 @@ docker_build(
 k8s_yaml('./apps/auth/deployments/frontend-auth.yaml')
 k8s_resource("frontend-auth", labels=["auth"])
 docker_build(
-  'frontend-auth', 
+  'frontend-auth',
   context='.',
   dockerfile='./Dockerfile.dev',
   live_update=[
@@ -26,4 +26,19 @@ docker_build(
   ],
   build_args={'PROJECT_NAME': 'auth'},
   entrypoint='pnpm run auth',
+)
+
+# admin
+k8s_yaml('./apps/admin/deployments/frontend-admin.yaml')
+k8s_resource("frontend-admin", labels=["frontend"])
+docker_build(
+  'frontend-admin',
+  context='.',
+  dockerfile='./Dockerfile.dev',
+  live_update=[
+    sync('./', '/app'),
+    run('pnpm -r install', trigger=['./apps/admin/package.json', './package.json', './pnpm-lock.yaml']),
+  ],
+  build_args={'PROJECT_NAME': 'admin'},
+  entrypoint='pnpm run admin',
 )

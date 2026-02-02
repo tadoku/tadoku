@@ -1,22 +1,22 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: frontend-webv2
+  name: frontend-admin
   labels:
-    app: frontend-webv2
+    app: frontend-admin
 spec:
   selector:
     matchLabels:
-      app: frontend-webv2
+      app: frontend-admin
   template:
     metadata:
       labels:
-        app: frontend-webv2
+        app: frontend-admin
         tier: web
     spec:
       containers:
-      - name: frontend-webv2
-        image: frontend-webv2
+      - name: frontend-admin
+        image: frontend-admin
         ports:
         - containerPort: 3000
         env:
@@ -32,19 +32,17 @@ spec:
           value: http://langlog.be/api/internal
         - name: NEXT_PUBLIC_COOKIE_DOMAIN
           value: .langlog.be
-        - name: NEXT_PUBLIC_ADMIN_URL
-          value: http://admin.langlog.be
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: frontend-webv2
+  name: frontend-admin
   labels:
-    app: frontend-webv2
+    app: frontend-admin
 spec:
   ports:
     - port: 3000
       targetPort: 3000
       protocol: TCP
   selector:
-    app: frontend-webv2
+    app: frontend-admin

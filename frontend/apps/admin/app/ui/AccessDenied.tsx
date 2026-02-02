@@ -15,7 +15,7 @@ export default function AccessDenied() {
         </p>
         <div className="mt-6">
           <a href={routes.mainApp()} className="btn primary">
-            Return to Main Site
+            Return to Tadoku
           </a>
         </div>
       </div>

@@ -1,0 +1,30 @@
+load("@rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "serviceauth",
+    srcs = [
+        "claims.go",
+        "generator.go",
+        "middleware.go",
+        "validator.go",
+    ],
+    importpath = "github.com/tadoku/tadoku/services/common/serviceauth",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//services/common/domain",
+        "//services/common/middleware",
+        "@com_github_golang_jwt_jwt_v4//:jwt",
+        "@com_github_labstack_echo_v4//:echo",
+    ],
+)
+
+go_test(
+    name = "serviceauth_test",
+    srcs = ["serviceauth_test.go"],
+    deps = [
+        ":serviceauth",
+        "@com_github_labstack_echo_v4//:echo",
+        "@com_github_stretchr_testify//assert",
+        "@com_github_stretchr_testify//require",
+    ],
+)

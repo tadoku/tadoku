@@ -1,9 +1,9 @@
 import App, { AppProps } from 'next/app'
 import { NextPage } from 'next'
-import { ReactElement, ReactNode } from 'react'
+import { ReactElement, ReactNode, useEffect } from 'react'
 import { sdkServer as ory } from '@app/common/ory'
 import { Atom, Provider } from 'jotai'
-import { AppContextWithSession, sessionAtom, useUserRole } from '@app/common/session'
+import { AppContextWithSession, sessionAtom, useUserRole, useCurrentLocation } from '@app/common/session'
 import { Session } from '@ory/client'
 import { ToastContainer } from 'ui/components/toasts'
 import 'ui/styles/globals.css'
@@ -12,6 +12,7 @@ import Head from 'next/head'
 import { Settings } from 'luxon'
 import AccessDenied from '@app/ui/AccessDenied'
 import LoadingScreen from '@app/ui/LoadingScreen'
+import { routes } from '@app/common/routes'
 
 // Default timezone for app
 Settings.defaultZone = 'utc'
@@ -47,6 +48,16 @@ const createInitialValues = () => {
   return { get, set }
 }
 
+const RedirectToLogin = () => {
+  const currentUrl = useCurrentLocation()
+
+  useEffect(() => {
+    window.location.href = routes.authLogin(currentUrl)
+  }, [currentUrl])
+
+  return <LoadingScreen />
+}
+
 const AppContent = ({ children }: { children: ReactNode }) => {
   const role = useUserRole()
 
@@ -71,7 +82,7 @@ const MyApp = ({ Component, pageProps }: AppPropsWithLayout) => {
 
   const getLayout = Component.getLayout ?? ((page) => page)
 
-  // If no session, show loading (will redirect in session hook)
+  // If no session, redirect to login
   if (!initialState.session) {
     return (
       <Provider initialValues={getInitialValues()}>
@@ -88,7 +99,7 @@ const MyApp = ({ Component, pageProps }: AppPropsWithLayout) => {
             media="(prefers-color-scheme: dark)"
           />
         </Head>
-        <LoadingScreen />
+        <RedirectToLogin />
       </Provider>
     )
   }

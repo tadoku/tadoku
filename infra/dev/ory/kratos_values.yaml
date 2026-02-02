@@ -76,6 +76,7 @@ kratos:
       allowed_return_urls:
         - http://account.langlog.be/
         - http://langlog.be/
+        - http://admin.langlog.be/
       methods:
         link:
           enabled: true
@@ -138,6 +139,7 @@ kratos:
           allowed_origins:
             - http://account.langlog.be
             - http://langlog.be
+            - http://admin.langlog.be
           allowed_methods:
             - POST
             - GET

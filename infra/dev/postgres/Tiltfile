@@ -33,3 +33,13 @@ helm_resource('postgres-content',
               deps=['./content_values.yaml'],
               resource_deps=['helm-repo-postgres'])
 k8s_resource("postgres-content", labels=["infra"])
+
+# profile
+helm_resource('postgres-profile',
+              'postgres/postgres',
+              flags=[
+                '-f', './profile_values.yaml',
+              ],
+              deps=['./profile_values.yaml'],
+              resource_deps=['helm-repo-postgres'])
+k8s_resource("postgres-profile", labels=["infra"])

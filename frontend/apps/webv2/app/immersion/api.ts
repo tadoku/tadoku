@@ -927,6 +927,7 @@ const UserListEntry = z.object({
   display_name: z.string(),
   email: z.string(),
   created_at: z.string(),
+  role: z.string().optional(),
 })
 
 export type UserListEntry = z.infer<typeof UserListEntry>
@@ -974,3 +975,30 @@ export const useUserList = (
     },
     { ...options, retry: false },
   )
+
+export const useUpdateUserRole = (
+  onSuccess: () => void,
+  onError: () => void,
+) =>
+  useMutation({
+    mutationFn: async ({
+      userId,
+      role,
+      reason,
+    }: {
+      userId: string
+      role: 'user' | 'banned'
+      reason: string
+    }) => {
+      const response = await fetch(`${root}/users/${userId}/role`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ role, reason }),
+      })
+      if (response.status !== 200) {
+        throw new Error(response.status.toString())
+      }
+    },
+    onSuccess,
+    onError,
+  })

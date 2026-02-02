@@ -7,9 +7,9 @@ import {
 } from '@heroicons/react/20/solid'
 import Head from 'next/head'
 import { ActionMenu, Breadcrumb, Loading, Modal, Pagination } from 'ui'
-import { NextPageWithLayout } from '../_app'
-import { getAdminLayout } from '@app/manage/AdminLayout'
-import { useUserList, useUpdateUserRole, UserListEntry } from '@app/immersion/api'
+import { NextPageWithLayout } from './_app'
+import { getDashboardLayout } from '@app/ui/DashboardLayout'
+import { useUserList, useUpdateUserRole, UserListEntry } from '@app/common/api'
 import { useState } from 'react'
 import { DateTime } from 'luxon'
 import { useQueryClient } from 'react-query'
@@ -101,7 +101,7 @@ const Page: NextPageWithLayout = () => {
           links={[
             {
               label: 'Users',
-              href: routes.manageUsers(),
+              href: routes.users(),
               IconComponent: UsersIcon,
             },
           ]}
@@ -230,7 +230,7 @@ const Page: NextPageWithLayout = () => {
               <Pagination
                 currentPage={page + 1}
                 totalPages={Math.ceil(users.data.total_size / pageSize)}
-                onClick={p => setPage(p - 1)}
+                onClick={(p: number) => setPage(p - 1)}
               />
             </div>
           ) : null}
@@ -295,6 +295,6 @@ const Page: NextPageWithLayout = () => {
   )
 }
 
-Page.getLayout = getAdminLayout('users')
+Page.getLayout = getDashboardLayout('users')
 
 export default Page

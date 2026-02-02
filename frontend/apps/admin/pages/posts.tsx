@@ -2,8 +2,8 @@ import { routes } from '@app/common/routes'
 import { DocumentTextIcon } from '@heroicons/react/20/solid'
 import Head from 'next/head'
 import { Breadcrumb } from 'ui'
-import { NextPageWithLayout } from '../_app'
-import { getAdminLayout } from '@app/manage/AdminLayout'
+import { NextPageWithLayout } from './_app'
+import { getDashboardLayout } from '@app/ui/DashboardLayout'
 
 const Page: NextPageWithLayout = () => {
   return (
@@ -16,17 +16,18 @@ const Page: NextPageWithLayout = () => {
           links={[
             {
               label: 'Posts',
-              href: routes.managePosts(),
+              href: routes.posts(),
               IconComponent: DocumentTextIcon,
             },
           ]}
         />
       </div>
       <h1 className="title">Posts</h1>
+      <p className="mt-2 text-slate-600">Manage blog posts.</p>
     </>
   )
 }
 
-Page.getLayout = getAdminLayout('posts')
+Page.getLayout = getDashboardLayout('posts')
 
 export default Page

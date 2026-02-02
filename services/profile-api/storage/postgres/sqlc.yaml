@@ -1,0 +1,7 @@
+version: 1
+packages:
+  - path: "./"
+    name: "postgres"
+    engine: "postgresql"
+    schema: "./migrations/"
+    queries: "./queries/"

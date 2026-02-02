@@ -1,0 +1,59 @@
+openapi: 3.0.3
+info:
+  title: profile-api
+  license:
+    name: MIT
+    url: https://github.com/tadoku/tadoku/blob/main/LICENSE
+  version: 1.0.0
+externalDocs:
+  description: Find out more about Tadoku
+  url: https://tadoku.github.io/tadoku/
+servers:
+  - url: https://tadoku.app/api/profile/
+paths:
+  /ping:
+    get:
+      summary: Checks if service is responsive
+      operationId: ping
+      tags: [metadata]
+      responses:
+        '200':
+          description: successful operation
+          content:
+            text/plain:
+              schema:
+                type: string
+components:
+  schemas:
+    Profile:
+      type: object
+      required:
+        - user_id
+        - display_name
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: d7e82f70-f7b9-4952-8258-1e4d16f0c244
+        user_id:
+          type: string
+          example: user-123
+        display_name:
+          type: string
+          example: JohnDoe
+        bio:
+          type: string
+          example: Language learning enthusiast
+        created_at:
+          type: string
+          format: date-time
+          example: 2022-12-14T19:48:00Z
+        updated_at:
+          type: string
+          format: date-time
+          example: 2022-12-14T19:48:00Z
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: ory_kratos_session

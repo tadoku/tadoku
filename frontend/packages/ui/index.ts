@@ -13,6 +13,7 @@ export {
   AutocompleteInput,
   AutocompleteMultiInput,
   RadioGroup,
+  TagsInput,
 } from './components/Form'
 export { HeatmapChart } from './components/HeatmapChart'
 export { Modal } from './components/Modal'

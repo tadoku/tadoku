@@ -2,7 +2,7 @@ import App, { AppProps } from 'next/app'
 import { NextPage } from 'next'
 import { ReactElement, ReactNode, useEffect } from 'react'
 import { sdkServer as ory } from '@app/common/ory'
-import { Atom, Provider } from 'jotai'
+import { Atom, Provider, useAtom } from 'jotai'
 import { AppContextWithSession, sessionAtom, useUserRole, useCurrentLocation } from '@app/common/session'
 import { Session } from '@ory/client'
 import { ToastContainer } from 'ui/components/toasts'
@@ -59,7 +59,13 @@ const RedirectToLogin = () => {
 }
 
 const AppContent = ({ children }: { children: ReactNode }) => {
+  const [session] = useAtom(sessionAtom)
   const role = useUserRole()
+
+  // No session - redirect to login
+  if (!session) {
+    return <RedirectToLogin />
+  }
 
   // Still loading role
   if (role === undefined) {
@@ -74,35 +80,23 @@ const AppContent = ({ children }: { children: ReactNode }) => {
   return <>{children}</>
 }
 
+// Store the initial values outside component to persist across navigations
+let initializedSession: Session | undefined = undefined
+let isInitialized = false
+
 const MyApp = ({ Component, pageProps }: AppPropsWithLayout) => {
   const initialState = pageProps
   const { get: getInitialValues, set: setInitialValues } = createInitialValues()
 
-  setInitialValues(sessionAtom, initialState.session)
+  // Only set initial session from SSR on first render
+  if (!isInitialized && initialState.session) {
+    initializedSession = initialState.session
+    isInitialized = true
+  }
+
+  setInitialValues(sessionAtom, initializedSession)
 
   const getLayout = Component.getLayout ?? ((page) => page)
-
-  // If no session, redirect to login
-  if (!initialState.session) {
-    return (
-      <Provider initialValues={getInitialValues()}>
-        <Head>
-          <title>Admin - Tadoku</title>
-          <link
-            href="/favicon.png"
-            rel="shortcut icon"
-            media="(prefers-color-scheme: light)"
-          />
-          <link
-            href="/favicon-dark.png"
-            rel="shortcut icon"
-            media="(prefers-color-scheme: dark)"
-          />
-        </Head>
-        <RedirectToLogin />
-      </Provider>
-    )
-  }
 
   return (
     <Provider initialValues={getInitialValues()}>

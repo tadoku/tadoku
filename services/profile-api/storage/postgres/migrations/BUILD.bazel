@@ -3,7 +3,7 @@ load("@rules_pkg//:pkg.bzl", "pkg_tar")
 
 pkg_tar(
     name = "tar",
-    srcs = glob(["**/*.sql"]),
+    srcs = glob(["**/*.sql"], allow_empty = True),
     mode = "0644",
     package_dir = "/migrations",
 )

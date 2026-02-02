@@ -21,8 +21,8 @@ go_library(
 go_test(
     name = "serviceauth_test",
     srcs = ["serviceauth_test.go"],
+    embed = [":serviceauth"],
     deps = [
-        ":serviceauth",
         "@com_github_labstack_echo_v4//:echo",
         "@com_github_stretchr_testify//assert",
         "@com_github_stretchr_testify//require",

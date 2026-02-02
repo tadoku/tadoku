@@ -5,19 +5,30 @@ import {
   ComboboxOption,
 } from '@headlessui/react'
 import { XMarkIcon } from '@heroicons/react/20/solid'
-import React, { useState } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { useController, useFormContext } from 'react-hook-form'
 
 export function TagsInput(props: {
   label: string
   name: string
   hint?: string
-  getSuggestions: (inputText: string) => string[]
+  getSuggestions: (inputText: string) => string[] | Promise<string[]>
   placeholder?: string
+  debounceMs?: number
 }) {
   const [query, setQuery] = useState('')
+  const [suggestions, setSuggestions] = useState<string[]>([])
+  const [isLoading, setIsLoading] = useState(false)
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  const { name, label, hint, getSuggestions, placeholder } = props
+  const {
+    name,
+    label,
+    hint,
+    getSuggestions,
+    placeholder,
+    debounceMs = 300,
+  } = props
   const { control } = useFormContext()
   const {
     field: { value, onChange },
@@ -29,7 +40,37 @@ export function TagsInput(props: {
   const errorMessage =
     errors[name]?.message?.toString() || 'This selection is invalid'
 
-  const suggestions = getSuggestions(query).filter(s => !tags.includes(s))
+  useEffect(() => {
+    if (debounceRef.current) {
+      clearTimeout(debounceRef.current)
+    }
+
+    if (!query) {
+      setSuggestions([])
+      setIsLoading(false)
+      return
+    }
+
+    setIsLoading(true)
+
+    debounceRef.current = setTimeout(async () => {
+      try {
+        const result = await Promise.resolve(getSuggestions(query))
+        const filtered = result.filter(s => !tags.includes(s))
+        setSuggestions(filtered)
+      } catch {
+        setSuggestions([])
+      } finally {
+        setIsLoading(false)
+      }
+    }, debounceMs)
+
+    return () => {
+      if (debounceRef.current) {
+        clearTimeout(debounceRef.current)
+      }
+    }
+  }, [query, tags, getSuggestions, debounceMs])
 
   const handleSelect = (selected: string | null) => {
     if (selected && !tags.includes(selected)) {
@@ -43,7 +84,7 @@ export function TagsInput(props: {
   }
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter' && query.trim() && suggestions.length === 0) {
+    if (e.key === 'Enter' && query.trim() && suggestions.length === 0 && !isLoading) {
       e.preventDefault()
       if (!tags.includes(query.trim())) {
         onChange([...tags, query.trim()])
@@ -101,7 +142,11 @@ export function TagsInput(props: {
             transition
             className={`absolute mt-2 z-50 max-h-60 w-full overflow-auto bg-white py-1 shadow-md shadow-slate-500/20 ring-1 ring-secondary ring-opacity-5 focus:outline-none transition ease-in duration-100 data-[closed]:opacity-0`}
           >
-            {suggestions.length === 0 && query !== '' ? (
+            {isLoading ? (
+              <div className="relative cursor-default select-none py-2 px-4 text-gray-500">
+                Loading...
+              </div>
+            ) : suggestions.length === 0 && query !== '' ? (
               <div className="relative cursor-default select-none py-2 px-4 text-gray-700">
                 Press Enter to add &quot;{query}&quot;
               </div>

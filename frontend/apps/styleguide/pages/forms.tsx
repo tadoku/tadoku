@@ -40,10 +40,7 @@ export default function Forms() {
 
       <Separator />
 
-      <Showcase
-        title="React example: Tags Input"
-        code={tagsInputCode}
-      >
+      <Showcase title="React example: Tags Input" code={tagsInputCode}>
         <div className="w-96">
           <TagsInputForm />
         </div>
@@ -86,6 +83,7 @@ const TagsInputForm = () => {
   const methods = useForm()
   const onSubmit = (data: any) => console.log(data, 'submitted')
 
+  // Sync example - filter a local array
   const allTags = ['Book', 'Ebook', 'Fiction', 'Non-fiction', 'Web page', 'Lyric', 'Manga', 'Novel']
 
   return (
@@ -115,6 +113,28 @@ const TagsInputForm = () => {
       </form>
     </FormProvider>
   )
+}
+
+// Async example - fetch from API
+const AsyncTagsInputForm = () => {
+  const methods = useForm()
+
+  return (
+    <FormProvider {...methods}>
+      <form className="v-stack spaced">
+        <TagsInput
+          name="tags"
+          label="Tags"
+          placeholder="Search tags..."
+          debounceMs={300}
+          getSuggestions={async (input) => {
+            const res = await fetch(\`/api/tags/search?q=\${input}\`)
+            return res.json()
+          }}
+        />
+      </form>
+    </FormProvider>
+  )
 }`
 
 const TagsInputForm = () => {
@@ -132,6 +152,14 @@ const TagsInputForm = () => {
     'Novel',
   ]
 
+  // Simulated async API call with 500ms delay
+  const fetchTags = async (input: string): Promise<string[]> => {
+    await new Promise(resolve => setTimeout(resolve, 500))
+    return allTags.filter(tag =>
+      tag.toLowerCase().includes(input.toLowerCase())
+    )
+  }
+
   return (
     <FormProvider {...methods}>
       <form
@@ -140,14 +168,10 @@ const TagsInputForm = () => {
       >
         <TagsInput
           name="tags"
-          label="Tags"
+          label="Tags (async)"
           hint="Add up to 5 tags"
           placeholder="Type to search or add tags..."
-          getSuggestions={input =>
-            allTags.filter(tag =>
-              tag.toLowerCase().includes(input.toLowerCase())
-            )
-          }
+          getSuggestions={fetchTags}
         />
         <button
           type="submit"

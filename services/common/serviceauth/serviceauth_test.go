@@ -8,6 +8,7 @@ import (
 	"encoding/pem"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"testing"
 	"time"
 
@@ -262,4 +263,155 @@ func TestClaims(t *testing.T) {
 	assert.Equal(t, now.Unix(), claims.IssuedAt.Unix())
 	assert.Equal(t, now.Unix(), claims.NotBefore.Unix())
 	assert.Equal(t, now.Add(TokenExpiry).Unix(), claims.ExpiresAt.Unix())
+}
+
+func TestInputValidation(t *testing.T) {
+	_, privPEM, _ := generateTestKeyPair(t)
+
+	t.Run("empty service name in generator", func(t *testing.T) {
+		_, err := NewTokenGenerator("", privPEM)
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "service name cannot be empty")
+	})
+
+	t.Run("empty target service in generate", func(t *testing.T) {
+		gen, err := NewTokenGenerator("test-service", privPEM)
+		require.NoError(t, err)
+
+		_, err = gen.Generate("")
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "target service cannot be empty")
+	})
+}
+
+func TestNewTokenGeneratorFromFile(t *testing.T) {
+	_, privPEM, _ := generateTestKeyPair(t)
+
+	t.Run("valid file", func(t *testing.T) {
+		// Create temp file with private key
+		tmpFile, err := os.CreateTemp("", "test-key-*.pem")
+		require.NoError(t, err)
+		defer os.Remove(tmpFile.Name())
+
+		_, err = tmpFile.Write(privPEM)
+		require.NoError(t, err)
+		tmpFile.Close()
+
+		gen, err := NewTokenGeneratorFromFile("test-service", tmpFile.Name())
+		require.NoError(t, err)
+		assert.Equal(t, "test-service", gen.ServiceName())
+	})
+
+	t.Run("non-existent file", func(t *testing.T) {
+		_, err := NewTokenGeneratorFromFile("test-service", "/nonexistent/path/key.pem")
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "failed to read private key file")
+	})
+}
+
+func TestNewTokenValidator(t *testing.T) {
+	_, _, pubPEM := generateTestKeyPair(t)
+
+	t.Run("valid directory with keys", func(t *testing.T) {
+		// Create temp directory with public key
+		tmpDir, err := os.MkdirTemp("", "test-keys-*")
+		require.NoError(t, err)
+		defer os.RemoveAll(tmpDir)
+
+		keyPath := tmpDir + "/caller-service.pub"
+		err = os.WriteFile(keyPath, pubPEM, 0644)
+		require.NoError(t, err)
+
+		validator, err := NewTokenValidator("receiver-service", tmpDir)
+		require.NoError(t, err)
+		assert.NotNil(t, validator)
+	})
+
+	t.Run("empty directory", func(t *testing.T) {
+		tmpDir, err := os.MkdirTemp("", "test-keys-empty-*")
+		require.NoError(t, err)
+		defer os.RemoveAll(tmpDir)
+
+		_, err = NewTokenValidator("receiver-service", tmpDir)
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "no public keys found")
+	})
+
+	t.Run("non-existent directory", func(t *testing.T) {
+		_, err := NewTokenValidator("receiver-service", "/nonexistent/path")
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "failed to read public key directory")
+	})
+
+	t.Run("empty service name", func(t *testing.T) {
+		_, err := NewTokenValidator("", "/some/path")
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "service name cannot be empty")
+	})
+}
+
+func TestServiceOrUserAuthMiddleware(t *testing.T) {
+	privateKey, privPEM, _ := generateTestKeyPair(t)
+
+	gen, err := NewTokenGenerator("caller-service", privPEM)
+	require.NoError(t, err)
+
+	publicKeys := map[string]*ecdsa.PublicKey{
+		"caller-service": &privateKey.PublicKey,
+	}
+	validator := NewTokenValidatorWithKeys("receiver-service", publicKeys)
+
+	handler := func(c echo.Context) error {
+		caller := GetCallingService(c)
+		if caller != "" {
+			return c.String(http.StatusOK, "service: "+caller)
+		}
+		return c.String(http.StatusOK, "user request")
+	}
+
+	t.Run("valid service token", func(t *testing.T) {
+		e := echo.New()
+		req := httptest.NewRequest(http.MethodGet, "/", nil)
+		rec := httptest.NewRecorder()
+
+		token, err := gen.Generate("receiver-service")
+		require.NoError(t, err)
+		req.Header.Set("Authorization", "Bearer "+token)
+
+		c := e.NewContext(req, rec)
+		middleware := ServiceOrUserAuth(validator, nil, nil)
+		err = middleware(handler)(c)
+
+		require.NoError(t, err)
+		assert.Equal(t, http.StatusOK, rec.Code)
+		assert.Equal(t, "service: caller-service", rec.Body.String())
+	})
+
+	t.Run("invalid bearer token rejected", func(t *testing.T) {
+		e := echo.New()
+		req := httptest.NewRequest(http.MethodGet, "/", nil)
+		rec := httptest.NewRecorder()
+		req.Header.Set("Authorization", "Bearer invalid-token")
+
+		c := e.NewContext(req, rec)
+		middleware := ServiceOrUserAuth(validator, nil, nil)
+		err := middleware(handler)(c)
+
+		require.NoError(t, err)
+		assert.Equal(t, http.StatusUnauthorized, rec.Code)
+	})
+
+	t.Run("no bearer token falls through to session", func(t *testing.T) {
+		e := echo.New()
+		req := httptest.NewRequest(http.MethodGet, "/", nil)
+		rec := httptest.NewRecorder()
+
+		c := e.NewContext(req, rec)
+		middleware := ServiceOrUserAuth(validator, nil, nil)
+		err := middleware(handler)(c)
+
+		require.NoError(t, err)
+		assert.Equal(t, http.StatusOK, rec.Code)
+		assert.Equal(t, "user request", rec.Body.String())
+	})
 }

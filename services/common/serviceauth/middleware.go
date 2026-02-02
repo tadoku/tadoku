@@ -66,7 +66,9 @@ func ServiceOrUserAuth(validator *TokenValidator, roleRepo middleware.RoleReposi
 					c.SetRequest(c.Request().WithContext(ctx))
 					return next(c)
 				}
-				// Not a valid service token - fall through to session middleware
+				// Log service token validation failure for debugging
+				// This helps identify expired tokens or misconfigured services
+				log.Printf("service token validation failed (falling through to user auth): %v", err)
 			}
 
 			// Let session middleware handle it (user JWT or no auth)

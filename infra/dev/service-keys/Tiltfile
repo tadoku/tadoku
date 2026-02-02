@@ -1,5 +1,15 @@
 # Service keys for inter-service authentication
+# Generates ConfigMap and Secret from the original key files
 
-# Load static YAML files for service keys (paths relative to this Tiltfile)
-k8s_yaml('./configmap.yaml')
-k8s_yaml('./secret.yaml')
+load('ext://configmap', 'configmap_yaml')
+load('ext://secret', 'secret_yaml')
+
+# ConfigMap with public keys (for validators)
+k8s_yaml(configmap_yaml('service-public-keys', from_file=[
+    'immersion-api.pub=./immersion-api.pub',
+]))
+
+# Secret with private keys (for generators)
+k8s_yaml(secret_yaml('service-private-keys', from_file=[
+    'immersion-api.key=./immersion-api.key',
+]))

@@ -4,8 +4,10 @@ import {
   DocumentDuplicateIcon,
   DocumentTextIcon,
   UsersIcon,
+  ArrowTopRightOnSquareIcon,
 } from '@heroicons/react/20/solid'
-import { Sidebar } from 'ui'
+import { Logo, Sidebar } from 'ui'
+import Link from 'next/link'
 
 type ActiveLink = 'posts' | 'pages' | 'users'
 
@@ -17,11 +19,13 @@ interface Props {
 export function DashboardLayout({ children, activeLink }: Props) {
   return (
     <div className="flex min-h-screen">
-      <div className="w-64 flex-shrink-0 bg-white border-r border-slate-200 shadow-sm">
+      <div className="w-64 flex-shrink-0 bg-white border-r border-slate-200 shadow-sm flex flex-col">
         <div className="p-4 border-b border-slate-200">
-          <h1 className="text-xl font-bold text-slate-900">Tadoku Admin</h1>
+          <Link href={routes.home()}>
+            <Logo scale={0.8} />
+          </Link>
         </div>
-        <div className="p-4">
+        <div className="p-4 flex-1">
           <Sidebar
             sections={[
               {
@@ -54,6 +58,15 @@ export function DashboardLayout({ children, activeLink }: Props) {
               },
             ]}
           />
+        </div>
+        <div className="p-4 border-t border-slate-200">
+          <a
+            href={routes.mainApp()}
+            className="flex items-center gap-2 text-sm text-slate-600 hover:text-slate-900"
+          >
+            <ArrowTopRightOnSquareIcon className="w-4 h-4" />
+            Back to Tadoku
+          </a>
         </div>
       </div>
       <div className="flex-1">

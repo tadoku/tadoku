@@ -25,7 +25,7 @@ export function DashboardLayout({ children, activeLink }: Props) {
             <Logo scale={0.8} />
           </Link>
         </div>
-        <div className="px-4 pb-4 flex-1">
+        <div className="pl-4 pr-0 pb-4 flex-1">
           <Sidebar
             sections={[
               {

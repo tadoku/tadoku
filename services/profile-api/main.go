@@ -47,7 +47,7 @@ func main() {
 	e := echo.New()
 	e.Use(tadokumiddleware.Logger([]string{"/ping"}))
 	e.Use(tadokumiddleware.SessionJWT(cfg.JWKS))
-	e.Use(tadokumiddleware.Session(roleRepository))
+	e.Use(tadokumiddleware.Session(roleRepository, nil))
 	e.Use(middleware.Recover())
 
 	if cfg.SentryDSN != "" {

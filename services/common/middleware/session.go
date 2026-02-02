@@ -28,7 +28,6 @@ func SessionJWT(jwksURL string) echo.MiddlewareFunc {
 	return middleware.JWTWithConfig(middleware.JWTConfig{
 		Skipper: func(context echo.Context) bool {
 			path := context.Path()
-			// Skip public ping and internal service-to-service endpoints
 			return path == "/ping" || strings.HasPrefix(path, "/internal/")
 		},
 		Claims: &SessionClaims{},

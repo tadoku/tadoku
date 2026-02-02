@@ -45,6 +45,7 @@ export const useUserList = (
       }
       const response = await fetch(
         `${root}/users?${new URLSearchParams(params)}`,
+        { credentials: 'include' },
       )
 
       if (response.status === 401) {
@@ -80,6 +81,7 @@ export const useUpdateUserRole = (
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ role, reason }),
+        credentials: 'include',
       })
       if (response.status !== 200) {
         throw new Error(response.status.toString())

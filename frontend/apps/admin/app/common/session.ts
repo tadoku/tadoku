@@ -113,7 +113,7 @@ export const useUserRole = () => {
 
     prevUserIdRef.current = userId
 
-    fetch(`${root}/current-user/role`)
+    fetch(`${root}/current-user/role`, { credentials: 'include' })
       .then(async response => {
         if (response.status !== 200) {
           throw new Error(response.status.toString())

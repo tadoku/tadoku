@@ -30,10 +30,10 @@ export function Sidebar({ sections }: Props) {
               <Link
                 href={link.href}
                 className={classNames(
-                  'border-l-4 pl-4 pr-2 py-2 text-sm inline-flex items-center text-slate-600 hover:bg-neutral-100 transition-colors',
+                  'border-l-4 pl-4 pr-2 py-2 text-sm inline-flex items-center text-slate-600 hover:border-primary hover:bg-neutral-100 transition-colors',
                   {
                     'border-primary font-semibold bg-neutral-100': link.active,
-                    'border-transparent': !link.active,
+                    'border-slate-200': !link.active,
                     'pointer-events-none opacity-50': link.disabled,
                   },
                 )}

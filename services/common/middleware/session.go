@@ -28,6 +28,9 @@ func SessionJWT(jwksURL string) echo.MiddlewareFunc {
 	return middleware.JWTWithConfig(middleware.JWTConfig{
 		Skipper: func(context echo.Context) bool {
 			path := context.Path()
+			// /ping is for k8s health checks (no auth needed)
+			// /internal/* routes use service-to-service auth (ServiceAuth middleware)
+			// which uses different JWTs than user session JWTs validated here
 			return path == "/ping" || strings.HasPrefix(path, "/internal/")
 		},
 		Claims: &SessionClaims{},

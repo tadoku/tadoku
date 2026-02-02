@@ -19,13 +19,11 @@ func NewInternalServer() *InternalServer {
 // Ensure InternalServer implements the generated interface
 var _ internalapi.ServerInterface = (*InternalServer)(nil)
 
-// RegisterInternalRoutes registers internal endpoints with service auth middleware
-func RegisterInternalRoutes(e *echo.Echo, server *InternalServer, validator *serviceauth.TokenValidator) {
-	internal := e.Group("")
-	internal.Use(serviceauth.ServiceAuth(validator))
-
-	// Use the generated handler registration
-	internalapi.RegisterHandlers(internal, server)
+// RegisterInternalRoutes registers internal endpoints on the provided group.
+// The group must have ServiceAuth middleware applied - this is enforced in main.go
+// by creating the group with the middleware, not here, to ensure it can't be bypassed.
+func RegisterInternalRoutes(g *echo.Group, server *InternalServer) {
+	internalapi.RegisterHandlers(g, server)
 }
 
 // InternalPing responds to internal health checks from other services

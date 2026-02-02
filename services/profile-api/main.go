@@ -68,15 +68,19 @@ func main() {
 	server := rest.NewServer()
 	openapi.RegisterHandlersWithBaseURL(e, server, "")
 
-	// Set up internal endpoints with service auth (if configured)
+	// Set up internal service-to-service endpoints (if configured)
 	if cfg.ServicePublicKeysDir != "" {
 		serviceValidator, err := serviceauth.NewTokenValidator(cfg.ServiceName, cfg.ServicePublicKeysDir)
 		if err != nil {
 			panic(fmt.Errorf("failed to initialize service auth: %w", err))
 		}
 
+		// Create a group with ServiceAuth middleware for internal endpoints.
+		// Empty prefix because OpenAPI-generated handlers use full paths (/internal/v1/...).
+		// All /internal/* routes MUST be registered on this group to ensure auth is applied.
+		internal := e.Group("", serviceauth.ServiceAuth(serviceValidator))
 		internalServer := rest.NewInternalServer()
-		rest.RegisterInternalRoutes(e, internalServer, serviceValidator)
+		rest.RegisterInternalRoutes(internal, internalServer)
 	}
 
 	fmt.Printf("profile-api is now available at: http://localhost:%d/v2\n", cfg.Port)

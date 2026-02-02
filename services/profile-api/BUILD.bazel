@@ -9,6 +9,7 @@ go_library(
     visibility = ["//visibility:private"],
     deps = [
         "//services/common/middleware",
+        "//services/common/serviceauth",
         "//services/common/storage/memory",
         "//services/profile-api/http/rest",
         "//services/profile-api/http/rest/openapi",

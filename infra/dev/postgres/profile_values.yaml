@@ -1,0 +1,15 @@
+environmentVariables:
+  POSTGRES_USER: profile
+  POSTGRES_PASSWORD: foobar
+  POSTGRES_DB: profile
+
+nameOverride: "profile"
+standalone: "standalone"
+
+volume:
+  size: 512Mi
+
+image:
+  # This helm chart doesn't support 18.0,
+  # so setting an older version which is proven to work.
+  versionOverride: "13.2"

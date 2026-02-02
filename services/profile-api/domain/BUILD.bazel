@@ -1,0 +1,11 @@
+load("@rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "domain",
+    srcs = [
+        "errors.go",
+        "models.go",
+    ],
+    importpath = "github.com/tadoku/tadoku/services/profile-api/domain",
+    visibility = ["//visibility:public"],
+)

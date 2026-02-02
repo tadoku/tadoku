@@ -62,3 +62,4 @@ jobs:
           # Push images
           bazel run //services/content-api:push
           bazel run //services/immersion-api:push
+          bazel run //services/profile-api:push

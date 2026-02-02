@@ -1,0 +1,19 @@
+load("./../../infra/dev/build/Tiltfile", "bazel_build")
+
+# Api container
+watch_file('./deployments/api.yaml')
+k8s_yaml(local('cat ./deployments/api.yaml'))
+
+bazel_build(
+  'profile-api-migrate-image',
+  '//services/profile-api/storage/postgres/migrations:load',
+  ['./storage/postgres/migrations/'],
+)
+
+bazel_build(
+  'profile-api-image',
+  '//services/profile-api:load',
+  deps=['./', './../common/', './../../infra/dev/permissions/'],
+)
+
+k8s_resource('profile-api', labels=["backend"])

@@ -284,6 +284,30 @@ func TestInputValidation(t *testing.T) {
 	})
 }
 
+func TestWithExpiry(t *testing.T) {
+	privateKey, privPEM, _ := generateTestKeyPair(t)
+
+	t.Run("custom expiry", func(t *testing.T) {
+		gen, err := NewTokenGenerator("caller", privPEM)
+		require.NoError(t, err)
+		gen.WithExpiry(1 * time.Minute)
+
+		// Generate token with custom expiry
+		token, err := gen.Generate("receiver")
+		require.NoError(t, err)
+
+		// Validate the token
+		publicKeys := map[string]*ecdsa.PublicKey{
+			"caller": &privateKey.PublicKey,
+		}
+		validator := NewTokenValidatorWithKeys("receiver", publicKeys)
+
+		caller, err := validator.Validate(token)
+		require.NoError(t, err)
+		assert.Equal(t, "caller", caller)
+	})
+}
+
 func TestNewTokenGeneratorFromFile(t *testing.T) {
 	_, privPEM, _ := generateTestKeyPair(t)
 

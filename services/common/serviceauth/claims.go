@@ -44,6 +44,11 @@ func (c ServiceClaims) Valid() error {
 // NewServiceClaims creates claims for a service-to-service token
 // Per RFC 7523, sub is set to the service name (same as iss)
 func NewServiceClaims(issuer, audience string, now time.Time) ServiceClaims {
+	return NewServiceClaimsWithExpiry(issuer, audience, now, TokenExpiry)
+}
+
+// NewServiceClaimsWithExpiry creates claims with a custom expiry duration
+func NewServiceClaimsWithExpiry(issuer, audience string, now time.Time, expiry time.Duration) ServiceClaims {
 	return ServiceClaims{
 		RegisteredClaims: jwt.RegisteredClaims{
 			Issuer:    issuer,
@@ -51,7 +56,7 @@ func NewServiceClaims(issuer, audience string, now time.Time) ServiceClaims {
 			Audience:  jwt.ClaimStrings{audience},
 			IssuedAt:  jwt.NewNumericDate(now),
 			NotBefore: jwt.NewNumericDate(now),
-			ExpiresAt: jwt.NewNumericDate(now.Add(TokenExpiry)),
+			ExpiresAt: jwt.NewNumericDate(now.Add(expiry)),
 		},
 	}
 }

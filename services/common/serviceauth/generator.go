@@ -16,6 +16,7 @@ type TokenGenerator struct {
 	serviceName string
 	privateKey  *ecdsa.PrivateKey
 	clock       func() time.Time
+	expiry      time.Duration
 }
 
 // NewTokenGenerator creates a new token generator for the given service
@@ -33,7 +34,14 @@ func NewTokenGenerator(serviceName string, privateKeyPEM []byte) (*TokenGenerato
 		serviceName: serviceName,
 		privateKey:  privateKey,
 		clock:       time.Now,
+		expiry:      TokenExpiry,
 	}, nil
+}
+
+// WithExpiry sets a custom token expiry duration
+func (g *TokenGenerator) WithExpiry(expiry time.Duration) *TokenGenerator {
+	g.expiry = expiry
+	return g
 }
 
 // NewTokenGeneratorFromFile creates a new token generator loading the key from a file
@@ -52,7 +60,7 @@ func (g *TokenGenerator) Generate(targetService string) (string, error) {
 		return "", fmt.Errorf("target service cannot be empty")
 	}
 
-	claims := NewServiceClaims(g.serviceName, targetService, g.clock())
+	claims := NewServiceClaimsWithExpiry(g.serviceName, targetService, g.clock(), g.expiry)
 
 	token := jwt.NewWithClaims(jwt.SigningMethodES256, claims)
 	signedToken, err := token.SignedString(g.privateKey)

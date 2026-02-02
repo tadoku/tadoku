@@ -19,6 +19,7 @@ type ServiceClaims struct {
 }
 
 // Valid validates time-based claims with clock skew tolerance
+// This is needed because jwt/v4 doesn't have WithLeeway (that's a v5 feature)
 func (c ServiceClaims) Valid() error {
 	now := time.Now()
 

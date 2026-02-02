@@ -99,9 +99,9 @@ func (v *TokenValidator) Validate(tokenString string) (callingService string, er
 		return "", fmt.Errorf("invalid token claims")
 	}
 
-	// Verify this token is for service-to-service auth
-	if claims.Subject != SubjectService {
-		return "", fmt.Errorf("token is not a service token (subject: %s)", claims.Subject)
+	// Verify subject matches issuer (per RFC 7523 for service tokens)
+	if claims.Subject != claims.Issuer {
+		return "", fmt.Errorf("invalid service token: subject (%s) does not match issuer (%s)", claims.Subject, claims.Issuer)
 	}
 
 	// Verify audience matches this service

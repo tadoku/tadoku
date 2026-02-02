@@ -20,12 +20,12 @@ export function DashboardLayout({ children, activeLink }: Props) {
   return (
     <div className="flex min-h-screen">
       <div className="w-64 flex-shrink-0 bg-white border-r border-slate-200 shadow-sm flex flex-col">
-        <div className="p-4 border-b border-slate-200">
+        <div className="p-4">
           <Link href={routes.home()}>
             <Logo scale={0.8} />
           </Link>
         </div>
-        <div className="p-4 flex-1">
+        <div className="px-4 pb-4 flex-1">
           <Sidebar
             sections={[
               {
@@ -59,7 +59,7 @@ export function DashboardLayout({ children, activeLink }: Props) {
             ]}
           />
         </div>
-        <div className="p-4 border-t border-slate-200">
+        <div className="p-4">
           <a
             href={routes.mainApp()}
             className="flex items-center gap-2 text-sm text-slate-600 hover:text-slate-900"

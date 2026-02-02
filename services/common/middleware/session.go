@@ -66,7 +66,7 @@ func Session(configRepo RoleRepository, dbRepo DatabaseRoleRepository) echo.Midd
 		return func(ctx echo.Context) error {
 			sessionToken := &domain.SessionToken{
 				Subject: "guest",
-				Role:    "guest",
+				Role:    domain.RoleGuest,
 			}
 
 			if ctx.Get("user") == nil {
@@ -90,7 +90,7 @@ func Session(configRepo RoleRepository, dbRepo DatabaseRoleRepository) echo.Midd
 				}
 
 				// Then check database if no special role from config
-				if sessionToken.Role == "" || sessionToken.Role == domain.RoleUser {
+				if sessionToken.Role == "" || sessionToken.Role == domain.RoleUser || sessionToken.Role == domain.RoleGuest {
 					if dbRepo != nil {
 						dbRole, err := dbRepo.GetUserRole(ctx.Request().Context(), sessionToken.Subject)
 						if err == nil && dbRole != "user" {
@@ -100,14 +100,15 @@ func Session(configRepo RoleRepository, dbRepo DatabaseRoleRepository) echo.Midd
 				}
 
 				// Default to user if no special role found
-				if sessionToken.Role == "" {
+				if sessionToken.Role == "" || sessionToken.Role == domain.RoleGuest {
 					sessionToken.Role = domain.RoleUser
 				}
 			}
 
 			ctx.SetRequest(ctx.Request().WithContext(context.WithValue(ctx.Request().Context(), domain.CtxSessionKey, sessionToken)))
 
-			if sessionToken.Role == domain.RoleBanned {
+			// Allow banned users to check their role, but block everything else
+			if sessionToken.Role == domain.RoleBanned && ctx.Path() != "/current-user/role" {
 				return ctx.NoContent(http.StatusForbidden)
 			}
 

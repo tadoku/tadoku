@@ -1,27 +1,5 @@
 # Service keys for inter-service authentication
 
-# Create ConfigMap with service public keys (for validators)
-# The validator expects files named {service-name}.pub
-k8s_yaml(local('''cat <<EOF
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: service-public-keys
-data:
-  immersion-api.pub: |
-$(cat ./infra/dev/service-keys/immersion-api.pub | sed 's/^/    /')
-EOF
-'''))
-
-# Create Secret with service private keys (for generators)
-k8s_yaml(local('''cat <<EOF
-apiVersion: v1
-kind: Secret
-metadata:
-  name: service-private-keys
-type: Opaque
-stringData:
-  immersion-api.key: |
-$(cat ./infra/dev/service-keys/immersion-api.key | sed 's/^/    /')
-EOF
-'''))
+# Load static YAML files for service keys
+k8s_yaml('./infra/dev/service-keys/configmap.yaml')
+k8s_yaml('./infra/dev/service-keys/secret.yaml')

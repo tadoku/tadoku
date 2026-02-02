@@ -4,6 +4,7 @@ go_library(
     name = "serviceauth",
     srcs = [
         "claims.go",
+        "client.go",
         "generator.go",
         "middleware.go",
         "validator.go",

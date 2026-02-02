@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"log"
 	"os"
 	"os/signal"
 	"syscall"
@@ -13,6 +14,7 @@ import (
 	"github.com/kelseyhightower/envconfig"
 	"github.com/tadoku/tadoku/services/common/domain"
 	tadokumiddleware "github.com/tadoku/tadoku/services/common/middleware"
+	"github.com/tadoku/tadoku/services/common/serviceauth"
 	"github.com/tadoku/tadoku/services/common/storage/memory"
 	"github.com/tadoku/tadoku/services/immersion-api/cache"
 	"github.com/tadoku/tadoku/services/immersion-api/client/ory"
@@ -20,6 +22,7 @@ import (
 	"github.com/tadoku/tadoku/services/immersion-api/http/rest"
 	"github.com/tadoku/tadoku/services/immersion-api/http/rest/openapi"
 	"github.com/tadoku/tadoku/services/immersion-api/storage/postgres/repository"
+	profileapi "github.com/tadoku/tadoku/services/profile-api/http/rest/openapi/internalapi"
 
 	"github.com/getsentry/sentry-go"
 	sentryecho "github.com/getsentry/sentry-go/echo"
@@ -35,6 +38,11 @@ type Config struct {
 	KratosURL              string  `validate:"required" envconfig:"kratos_url"`
 	SentryDSN              string  `envconfig:"sentry_dns"`
 	SentryTracesSampleRate float64 `validate:"required_with=SentryDSN" envconfig:"sentry_traces_sample_rate"`
+
+	// Service auth configuration for calling other services
+	ServiceName           string `envconfig:"service_name" default:"immersion-api"`
+	ServicePrivateKeyPath string `envconfig:"service_private_key_path"`
+	ProfileAPIURL         string `envconfig:"profile_api_url"`
 }
 
 func main() {
@@ -55,6 +63,32 @@ func main() {
 	kratosClient := ory.NewKratosClient(cfg.KratosURL)
 	userCache := cache.NewUserCache(kratosClient, 5*time.Minute)
 	userCache.Start()
+
+	// Initialize profile-api client if configured
+	if cfg.ServicePrivateKeyPath != "" && cfg.ProfileAPIURL != "" {
+		generator, err := serviceauth.NewTokenGeneratorFromFile(cfg.ServiceName, cfg.ServicePrivateKeyPath)
+		if err != nil {
+			panic(fmt.Errorf("failed to initialize service auth: %w", err))
+		}
+
+		profileClient, err := profileapi.NewClientWithResponses(
+			cfg.ProfileAPIURL,
+			profileapi.WithRequestEditorFn(serviceauth.WithServiceAuth(generator, "profile-api")),
+		)
+		if err != nil {
+			panic(fmt.Errorf("failed to create profile-api client: %w", err))
+		}
+
+		// Verify connectivity on startup
+		resp, err := profileClient.InternalPingWithResponse(context.Background())
+		if err != nil {
+			log.Printf("WARNING: profile-api ping failed: %v", err)
+		} else if resp.JSON200 != nil {
+			log.Printf("profile-api connected: caller recognized as %s", resp.JSON200.Caller)
+		} else {
+			log.Printf("WARNING: profile-api ping returned status %d", resp.StatusCode())
+		}
+	}
 
 	postgresRepository := repository.NewRepository(psql)
 	configRoleRepository := memory.NewRoleRepository("/etc/tadoku/permissions/roles.yaml")

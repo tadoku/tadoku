@@ -10,6 +10,7 @@ go_library(
     deps = [
         "//services/common/domain",
         "//services/common/middleware",
+        "//services/common/serviceauth",
         "//services/common/storage/memory",
         "//services/immersion-api/cache",
         "//services/immersion-api/client/ory",
@@ -17,6 +18,7 @@ go_library(
         "//services/immersion-api/http/rest",
         "//services/immersion-api/http/rest/openapi",
         "//services/immersion-api/storage/postgres/repository",
+        "//services/profile-api/http/rest/openapi/internalapi",
         "@com_github_getsentry_sentry_go//:sentry-go",
         "@com_github_getsentry_sentry_go//echo",
         "@com_github_go_playground_validator_v10//:validator",

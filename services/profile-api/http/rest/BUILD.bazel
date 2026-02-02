@@ -12,6 +12,7 @@ go_library(
     deps = [
         "//services/common/serviceauth",
         "//services/profile-api/http/rest/openapi",
+        "//services/profile-api/http/rest/openapi/internalapi",
         "@com_github_labstack_echo_v4//:echo",
     ],
 )

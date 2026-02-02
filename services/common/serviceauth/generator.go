@@ -20,6 +20,10 @@ type TokenGenerator struct {
 
 // NewTokenGenerator creates a new token generator for the given service
 func NewTokenGenerator(serviceName string, privateKeyPEM []byte) (*TokenGenerator, error) {
+	if serviceName == "" {
+		return nil, fmt.Errorf("service name cannot be empty")
+	}
+
 	privateKey, err := parseECPrivateKey(privateKeyPEM)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse private key: %w", err)
@@ -44,6 +48,10 @@ func NewTokenGeneratorFromFile(serviceName string, privateKeyPath string) (*Toke
 
 // Generate creates a signed JWT token for the target service
 func (g *TokenGenerator) Generate(targetService string) (string, error) {
+	if targetService == "" {
+		return "", fmt.Errorf("target service cannot be empty")
+	}
+
 	claims := NewServiceClaims(g.serviceName, targetService, g.clock())
 
 	token := jwt.NewWithClaims(jwt.SigningMethodES256, claims)

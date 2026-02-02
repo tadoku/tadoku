@@ -21,6 +21,10 @@ type TokenValidator struct {
 // NewTokenValidator creates a new token validator for the receiving service
 // publicKeyDir should contain files named {service-name}.pub
 func NewTokenValidator(serviceName string, publicKeyDir string) (*TokenValidator, error) {
+	if serviceName == "" {
+		return nil, fmt.Errorf("service name cannot be empty")
+	}
+
 	publicKeys := make(map[string]*ecdsa.PublicKey)
 
 	entries, err := os.ReadDir(publicKeyDir)

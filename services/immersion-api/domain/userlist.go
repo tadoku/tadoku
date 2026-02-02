@@ -53,7 +53,7 @@ type UserListEntry struct {
 	DisplayName string
 	Email       string
 	CreatedAt   string
-	Role        string // "user", "admin", or "banned" - empty string means "user"
+	Role        string // "user", "admin", or "banned"
 }
 
 type UserList struct {
@@ -141,7 +141,10 @@ func (s *UserList) Execute(ctx context.Context, req *UserListRequest) (*UserList
 
 	users := make([]UserListEntry, 0, len(matchedUsers))
 	for _, u := range matchedUsers {
-		role := roleMap[u.ID] // Will be empty string if not found (means "user")
+		role := roleMap[u.ID]
+		if role == "" {
+			role = "user"
+		}
 		users = append(users, UserListEntry{
 			ID:          u.ID,
 			DisplayName: u.DisplayName,

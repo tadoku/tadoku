@@ -70,8 +70,8 @@ func NewTokenValidatorWithKeys(serviceName string, publicKeys map[string]*ecdsa.
 // Validate validates a service token and returns the calling service name
 func (v *TokenValidator) Validate(tokenString string) (callingService string, err error) {
 	token, err := jwt.ParseWithClaims(tokenString, &ServiceClaims{}, func(token *jwt.Token) (any, error) {
-		// Verify signing method
-		if _, ok := token.Method.(*jwt.SigningMethodECDSA); !ok {
+		// Verify signing method is exactly ES256
+		if token.Method != jwt.SigningMethodES256 {
 			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
 		}
 

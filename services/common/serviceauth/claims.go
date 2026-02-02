@@ -10,9 +10,34 @@ import (
 // Short-lived tokens (30s) minimize replay window without needing a JTI cache
 const TokenExpiry = 30 * time.Second
 
+// ClockSkewLeeway is the tolerance for clock drift between services
+const ClockSkewLeeway = 10 * time.Second
+
 // ServiceClaims represents the JWT claims for service-to-service authentication
 type ServiceClaims struct {
 	jwt.RegisteredClaims
+}
+
+// Valid validates time-based claims with clock skew tolerance
+func (c ServiceClaims) Valid() error {
+	now := time.Now()
+
+	// Check expiry with leeway
+	if c.ExpiresAt != nil && now.After(c.ExpiresAt.Add(ClockSkewLeeway)) {
+		return jwt.NewValidationError("token is expired", jwt.ValidationErrorExpired)
+	}
+
+	// Check not-before with leeway
+	if c.NotBefore != nil && now.Before(c.NotBefore.Add(-ClockSkewLeeway)) {
+		return jwt.NewValidationError("token is not valid yet", jwt.ValidationErrorNotValidYet)
+	}
+
+	// Check issued-at with leeway (token shouldn't be from the future)
+	if c.IssuedAt != nil && now.Before(c.IssuedAt.Add(-ClockSkewLeeway)) {
+		return jwt.NewValidationError("token used before issued", jwt.ValidationErrorIssuedAt)
+	}
+
+	return nil
 }
 
 // NewServiceClaims creates claims for a service-to-service token

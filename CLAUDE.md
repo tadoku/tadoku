@@ -4,6 +4,11 @@
 
 **Always use `pnpm`, not `npm`.**
 
+**Use the `ui` package design system** - never write custom button/form styles. Use:
+- Buttons: `className="btn"` with variants `primary`, `secondary`, `danger`, `ghost`
+- Forms: Import `Input`, `Select`, `Checkbox`, etc. from `ui/components/Form`
+- Components: Import from `ui` package (Modal, Flash, Navbar, etc.)
+
 ```sh
 # 1. Make changes
 

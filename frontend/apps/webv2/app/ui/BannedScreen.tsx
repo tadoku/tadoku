@@ -1,3 +1,4 @@
+import { routes } from '@app/common/routes'
 import { useLogoutHandler, useSession } from '@app/common/session'
 
 export default function BannedScreen() {
@@ -12,12 +13,13 @@ export default function BannedScreen() {
         </h1>
         <p className="text-slate-600 mb-6">
           Your account has been suspended. If you believe this is an error,
-          please contact support.
+          please{' '}
+          <a href={routes.discord()} target="_blank" rel="noopener noreferrer">
+            contact us on Discord
+          </a>
+          .
         </p>
-        <button
-          onClick={onLogout}
-          className="px-4 py-2 bg-slate-900 text-white rounded-md hover:bg-slate-800 transition-colors"
-        >
+        <button onClick={onLogout} className="btn primary">
           Log out
         </button>
       </div>

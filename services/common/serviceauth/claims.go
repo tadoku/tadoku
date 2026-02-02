@@ -7,7 +7,8 @@ import (
 )
 
 // TokenExpiry is the default expiry duration for service tokens
-const TokenExpiry = 5 * time.Minute
+// Short-lived tokens (30s) minimize replay window without needing a JTI cache
+const TokenExpiry = 30 * time.Second
 
 // ServiceClaims represents the JWT claims for service-to-service authentication
 type ServiceClaims struct {

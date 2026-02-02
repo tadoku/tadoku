@@ -3,7 +3,7 @@ kind: ConfigMap
 metadata:
   name: service-public-keys
 data:
-  immersion-api.pub: |
+  immersion-api.pub: |-
     -----BEGIN PUBLIC KEY-----
     MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEZK757E+fac5LknjFrZhlNnZEXUlR
     9/CZuFiggSCLaVkENtgLXAIh64s2TkZXcLErnVdgOKZ9H3/6bF03RlYYmQ==

@@ -33,6 +33,7 @@ go_library(
         "registrationlistongoing.go",
         "registrationlistyearly.go",
         "registrationupsert.go",
+        "updateuserrole.go",
         "userlist.go",
         "userupsert.go",
     ],

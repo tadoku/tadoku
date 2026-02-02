@@ -110,6 +110,7 @@ func main() {
 	registrationUpsert := immersiondomain.NewRegistrationUpsert(postgresRepository, userUpsert)
 	logCreate := immersiondomain.NewLogCreate(postgresRepository, clock, userUpsert)
 	contestCreate := immersiondomain.NewContestCreate(postgresRepository, clock, userUpsert)
+	updateUserRole := immersiondomain.NewUpdateUserRole(postgresRepository)
 
 	server := rest.NewServer(
 		contestConfigurationOptions,
@@ -140,6 +141,7 @@ func main() {
 		registrationUpsert,
 		logCreate,
 		contestCreate,
+		updateUserRole,
 	)
 
 	openapi.RegisterHandlersWithBaseURL(e, server, "")

@@ -24,6 +24,7 @@ go_library(
         "repo_listcontests.go",
         "repo_listlogsforcontest.go",
         "repo_listlogsforuser.go",
+        "repo_updateuserrole.go",
         "repo_upsertcontestregistration.go",
         "repo_upsertuser.go",
         "repo_userrole.go",

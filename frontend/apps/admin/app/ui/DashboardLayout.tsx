@@ -12,6 +12,7 @@ import {
 } from '@heroicons/react/20/solid'
 import { Logo, Sidebar } from 'ui'
 import Link from 'next/link'
+import classNames from 'classnames'
 
 type ActiveLink = 'posts' | 'pages' | 'users'
 
@@ -57,7 +58,10 @@ export function DashboardLayout({ children, activeLink }: Props) {
   return (
     <div className="flex min-h-screen">
       {/* Mobile header */}
-      <div className={`fixed top-0 left-0 right-0 z-30 flex items-center justify-between bg-white border-b border-slate-200 p-4 md:hidden ${sidebarOpen ? 'hidden' : ''}`}>
+      <div className={classNames(
+        'fixed top-0 left-0 right-0 z-30 flex items-center justify-between bg-white border-b border-slate-200 p-4 md:hidden',
+        { hidden: sidebarOpen },
+      )}>
         <Link href={routes.home()}>
           <Logo scale={0.7} />
         </Link>
@@ -79,11 +83,11 @@ export function DashboardLayout({ children, activeLink }: Props) {
 
       {/* Sidebar */}
       <div
-        className={`
-          fixed inset-y-0 left-0 z-50 w-64 bg-white border-r border-slate-200 shadow-sm flex flex-col transform transition-transform duration-200 ease-in-out
-          md:relative md:translate-x-0 md:flex-shrink-0 md:z-auto
-          ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
-        `}
+        className={classNames(
+          'fixed inset-y-0 left-0 z-50 w-64 bg-white border-r border-slate-200 shadow-sm flex flex-col transform transition-transform duration-200 ease-in-out',
+          'md:relative md:translate-x-0 md:flex-shrink-0 md:z-auto',
+          sidebarOpen ? 'translate-x-0' : '-translate-x-full',
+        )}
       >
         {/* Sidebar header - desktop */}
         <div className="p-4 hidden md:block">

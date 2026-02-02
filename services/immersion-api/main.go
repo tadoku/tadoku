@@ -65,13 +65,14 @@ func main() {
 	userCache.Start()
 
 	// Initialize profile-api client if configured
+	var profileClient *profileapi.ClientWithResponses
 	if cfg.ServicePrivateKeyPath != "" && cfg.ProfileAPIURL != "" {
 		generator, err := serviceauth.NewTokenGeneratorFromFile(cfg.ServiceName, cfg.ServicePrivateKeyPath)
 		if err != nil {
 			panic(fmt.Errorf("failed to initialize service auth: %w", err))
 		}
 
-		profileClient, err := profileapi.NewClientWithResponses(
+		profileClient, err = profileapi.NewClientWithResponses(
 			cfg.ProfileAPIURL,
 			profileapi.WithRequestEditorFn(serviceauth.WithServiceAuth(generator, "profile-api")),
 		)
@@ -177,6 +178,13 @@ func main() {
 		contestCreate,
 		updateUserRole,
 	)
+
+	// Set profile-api client for service-to-service calls (used in /ping for testing)
+	if profileClient != nil {
+		if s, ok := server.(*rest.Server); ok {
+			s.SetProfileClient(profileClient)
+		}
+	}
 
 	openapi.RegisterHandlersWithBaseURL(e, server, "")
 

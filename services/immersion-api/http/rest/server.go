@@ -3,6 +3,7 @@ package rest
 import (
 	"github.com/tadoku/tadoku/services/immersion-api/domain"
 	"github.com/tadoku/tadoku/services/immersion-api/http/rest/openapi"
+	profileapi "github.com/tadoku/tadoku/services/profile-api/http/rest/openapi/internalapi"
 )
 
 // NewServer creates a new server conforming to the OpenAPI spec
@@ -100,4 +101,12 @@ type Server struct {
 	logCreate                   *domain.LogCreate
 	contestCreate               *domain.ContestCreate
 	updateUserRole              *domain.UpdateUserRole
+
+	// Optional: profile-api client for service-to-service calls
+	profileClient *profileapi.ClientWithResponses
+}
+
+// SetProfileClient sets the profile-api client for service-to-service calls
+func (s *Server) SetProfileClient(client *profileapi.ClientWithResponses) {
+	s.profileClient = client
 }

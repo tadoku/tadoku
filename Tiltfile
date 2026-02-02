@@ -8,6 +8,7 @@ include('./infra/dev/ory/Tiltfile')
 include('./infra/dev/postgres/Tiltfile')
 include('./infra/dev/tools/Tiltfile')
 include('./infra/dev/permissions/Tiltfile')
+include('./infra/dev/service-keys/Tiltfile')
 
 # Services
 

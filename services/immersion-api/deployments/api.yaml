@@ -35,9 +35,19 @@ spec:
             value: "http://oathkeeper-api:4456/.well-known/jwks.json"
           - name: API_KRATOS_URL
             value: "http://kratos-admin"
+          # Service auth configuration
+          - name: API_SERVICE_NAME
+            value: "immersion-api"
+          - name: API_SERVICE_PRIVATE_KEY_PATH
+            value: "/etc/service-keys/private/immersion-api.key"
+          - name: API_PROFILE_API_URL
+            value: "http://profile-api"
         volumeMounts:
         - name: tadoku-permissions
           mountPath: /etc/tadoku/permissions
+        - name: service-private-keys
+          mountPath: /etc/service-keys/private
+          readOnly: true
         readinessProbe:
           httpGet:
             scheme: HTTP
@@ -56,6 +66,9 @@ spec:
         - name: tadoku-permissions
           configMap:
             name: tadoku-permissions
+        - name: service-private-keys
+          secret:
+            secretName: service-private-keys
 ---
 apiVersion: v1
 kind: Service

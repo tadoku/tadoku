@@ -33,9 +33,17 @@ spec:
             value: "8000"
           - name: API_JWKS
             value: "http://oathkeeper-api:4456/.well-known/jwks.json"
+          # Service auth configuration
+          - name: API_SERVICE_NAME
+            value: "profile-api"
+          - name: API_SERVICE_PUBLIC_KEYS_DIR
+            value: "/etc/service-keys/public"
         volumeMounts:
         - name: tadoku-permissions
           mountPath: /etc/tadoku/permissions
+        - name: service-public-keys
+          mountPath: /etc/service-keys/public
+          readOnly: true
         readinessProbe:
           httpGet:
             scheme: HTTP
@@ -54,6 +62,9 @@ spec:
         - name: tadoku-permissions
           configMap:
             name: tadoku-permissions
+        - name: service-public-keys
+          configMap:
+            name: service-public-keys
 ---
 apiVersion: v1
 kind: Service

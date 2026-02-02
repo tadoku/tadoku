@@ -33,20 +33,20 @@ func NewTokenValidator(serviceName string, publicKeyDir string) (*TokenValidator
 			continue
 		}
 
-		serviceName := strings.TrimSuffix(entry.Name(), ".pub")
+		callerName := strings.TrimSuffix(entry.Name(), ".pub")
 		keyPath := filepath.Join(publicKeyDir, entry.Name())
 
 		keyData, err := os.ReadFile(keyPath)
 		if err != nil {
-			return nil, fmt.Errorf("failed to read public key for %s: %w", serviceName, err)
+			return nil, fmt.Errorf("failed to read public key for %s: %w", callerName, err)
 		}
 
 		publicKey, err := parseECPublicKey(keyData)
 		if err != nil {
-			return nil, fmt.Errorf("failed to parse public key for %s: %w", serviceName, err)
+			return nil, fmt.Errorf("failed to parse public key for %s: %w", callerName, err)
 		}
 
-		publicKeys[serviceName] = publicKey
+		publicKeys[callerName] = publicKey
 	}
 
 	if len(publicKeys) == 0 {

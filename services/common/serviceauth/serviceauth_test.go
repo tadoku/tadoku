@@ -260,5 +260,6 @@ func TestClaims(t *testing.T) {
 	assert.Equal(t, "issuer", claims.Subject, "subject should match issuer per RFC 7523")
 	assert.Equal(t, []string{"audience"}, []string(claims.Audience))
 	assert.Equal(t, now.Unix(), claims.IssuedAt.Unix())
+	assert.Equal(t, now.Unix(), claims.NotBefore.Unix())
 	assert.Equal(t, now.Add(TokenExpiry).Unix(), claims.ExpiresAt.Unix())
 }

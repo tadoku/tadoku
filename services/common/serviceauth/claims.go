@@ -23,6 +23,7 @@ func NewServiceClaims(issuer, audience string, now time.Time) ServiceClaims {
 			Subject:   issuer,
 			Audience:  jwt.ClaimStrings{audience},
 			IssuedAt:  jwt.NewNumericDate(now),
+			NotBefore: jwt.NewNumericDate(now),
 			ExpiresAt: jwt.NewNumericDate(now.Add(TokenExpiry)),
 		},
 	}

@@ -4,12 +4,13 @@ import {
   EllipsisVerticalIcon,
   NoSymbolIcon,
   CheckCircleIcon,
+  HomeIcon,
 } from '@heroicons/react/20/solid'
 import Head from 'next/head'
 import { ActionMenu, Breadcrumb, Loading, Modal, Pagination } from 'ui'
-import { NextPageWithLayout } from '../_app'
-import { getAdminLayout } from '@app/manage/AdminLayout'
-import { useUserList, useUpdateUserRole, UserListEntry } from '@app/immersion/api'
+import { NextPageWithLayout } from './_app'
+import { getDashboardLayout } from '@app/ui/DashboardLayout'
+import { useUserList, useUpdateUserRole, UserListEntry } from '@app/common/api'
 import { useState } from 'react'
 import { DateTime } from 'luxon'
 import { useQueryClient } from 'react-query'
@@ -18,16 +19,16 @@ import { toast } from 'react-toastify'
 function RoleBadge({ role }: { role?: string }) {
   if (role === 'admin') {
     return (
-      <span className="tag bg-purple-100 text-purple-800 text-center w-16">Admin</span>
+      <span className="tag bg-purple-100 text-purple-800 justify-center w-16">Admin</span>
     )
   }
   if (role === 'banned') {
     return (
-      <span className="tag bg-red-100 text-red-800 text-center w-16">Banned</span>
+      <span className="tag bg-red-100 text-red-800 justify-center w-16">Banned</span>
     )
   }
   return (
-    <span className="tag bg-slate-100 text-slate-600 text-center w-16">User</span>
+    <span className="tag bg-slate-100 text-slate-600 justify-center w-16">User</span>
   )
 }
 
@@ -100,8 +101,13 @@ const Page: NextPageWithLayout = () => {
         <Breadcrumb
           links={[
             {
+              label: 'Admin',
+              href: routes.home(),
+              IconComponent: HomeIcon,
+            },
+            {
               label: 'Users',
-              href: routes.manageUsers(),
+              href: routes.users(),
               IconComponent: UsersIcon,
             },
           ]}
@@ -182,6 +188,7 @@ const Page: NextPageWithLayout = () => {
                     <td className="default">
                       {user.role !== 'admin' ? (
                         <ActionMenu
+                          orientation="right"
                           links={[
                             user.role === 'banned'
                               ? {
@@ -230,7 +237,7 @@ const Page: NextPageWithLayout = () => {
               <Pagination
                 currentPage={page + 1}
                 totalPages={Math.ceil(users.data.total_size / pageSize)}
-                onClick={p => setPage(p - 1)}
+                onClick={(p: number) => setPage(p - 1)}
               />
             </div>
           ) : null}
@@ -295,6 +302,6 @@ const Page: NextPageWithLayout = () => {
   )
 }
 
-Page.getLayout = getAdminLayout('users')
+Page.getLayout = getDashboardLayout('users')
 
 export default Page

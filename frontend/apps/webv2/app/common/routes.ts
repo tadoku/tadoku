@@ -3,6 +3,7 @@ import getConfig from 'next/config'
 
 const { publicRuntimeConfig } = getConfig()
 const kratos = publicRuntimeConfig.authUiUrl
+const adminUrl = publicRuntimeConfig.adminUrl
 
 type Page = string | number
 
@@ -51,12 +52,10 @@ export const routes = {
     `${kratos}/register?return_to=${return_url ?? ''}`,
 
   pageCounter: () => `/page-counter`,
-  manage: () => `/manage`,
-  managePosts: () => `/manage/posts`,
-  managePages: () => `/manage/pages`,
-  manageUsers: () => `/manage/users`,
 
   // External
+
+  admin: () => adminUrl,
 
   personalWebsite: () => `https://antonve.be`,
   twitter: () => `https://twitter.com/tadoku_app`,

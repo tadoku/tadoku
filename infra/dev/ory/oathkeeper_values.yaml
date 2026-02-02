@@ -10,7 +10,9 @@ oathkeeper:
         cors:
           enabled: true
           allowed_origins:
-            - "*"
+            - http://langlog.be
+            - http://account.langlog.be
+            - http://admin.langlog.be
           allowed_methods:
             - POST
             - GET

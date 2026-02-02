@@ -1,0 +1,80 @@
+name: build-frontend-admin
+on:
+  schedule:
+    # monthly at 10th of every month
+    - cron: "0 0 10 * *"
+
+  push:
+    paths:
+      - "frontend/apps/admin/**"
+      - "frontend/packages/ui/**"
+      - ".github/workflows/build-frontend-admin.yaml"
+      - "frontend/pnpm-lock.yaml"
+      - "frontend/Dockerfile"
+      - "frontend/.npmrc"
+jobs:
+  build:
+    name: Build admin
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Install Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 20
+
+      - uses: pnpm/action-setup@v2
+        name: Install pnpm
+        id: pnpm-install
+        with:
+          version: 10.10.0
+          run_install: false
+
+      - name: Get pnpm store directory
+        id: pnpm-cache
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path)" >> $GITHUB_OUTPUT
+
+      - uses: actions/cache@v3
+        name: Setup pnpm cache
+        with:
+          path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Build project
+        run: pnpm --filter admin run build
+
+  publish:
+    name: Publish Image
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Push images
+        run: |
+          # Setup credentials for GitHub packages
+          echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u tadoku --password-stdin
+
+          # Push images
+          IMAGE_NAME=ghcr.io/tadoku/tadoku/frontend-admin
+          docker build --build-arg PROJECT_NAME=admin -t $IMAGE_NAME:latest .
+          docker tag $IMAGE_NAME:latest $IMAGE_NAME:$GITHUB_SHA
+          docker push $IMAGE_NAME

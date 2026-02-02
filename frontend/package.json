@@ -12,6 +12,7 @@
   "scripts": {
     "webv2": "pnpm --filter 'webv2' dev",
     "auth": "pnpm --filter 'auth' dev",
+    "admin": "pnpm --filter 'admin' dev",
     "styleguide": "pnpm --filter 'styleguide' dev",
     "build": "pnpm run -r build"
   }

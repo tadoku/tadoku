@@ -82,3 +82,13 @@ spec:
               name: kratos-public
               port:
                 number: 80
+  - host: admin.langlog.be
+    http:
+      paths:
+        - path: /
+          pathType: Prefix
+          backend:
+            service:
+              name: frontend-admin
+              port:
+                number: 3000

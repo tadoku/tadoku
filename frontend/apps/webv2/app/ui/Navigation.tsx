@@ -46,7 +46,7 @@ export default function Navigation() {
                 ? [
                     {
                       label: 'Admin',
-                      href: routes.manage(),
+                      href: routes.admin(),
                       IconComponent: WrenchScrewdriverIcon,
                       divider: true,
                     },

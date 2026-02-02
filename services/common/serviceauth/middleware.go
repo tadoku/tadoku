@@ -2,6 +2,7 @@ package serviceauth
 
 import (
 	"context"
+	"log"
 	"net/http"
 	"strings"
 
@@ -31,8 +32,9 @@ func ServiceAuth(validator *TokenValidator) echo.MiddlewareFunc {
 		return func(c echo.Context) error {
 			callingService, err := extractAndValidateServiceToken(c, validator)
 			if err != nil {
+				log.Printf("service auth failed: %v", err)
 				return c.JSON(http.StatusUnauthorized, map[string]string{
-					"error": "unauthorized: " + err.Error(),
+					"error": "unauthorized",
 				})
 			}
 

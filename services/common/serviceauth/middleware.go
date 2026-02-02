@@ -49,29 +49,30 @@ func ServiceAuth(validator *TokenValidator) echo.MiddlewareFunc {
 
 // ServiceOrUserAuth creates middleware that accepts either service JWT or user JWT
 // For service JWTs: validates the token and sets calling service in context
-// For user JWTs: falls through to session middleware behavior
+// For user JWTs: falls through to session middleware behavior (only if no Bearer token)
+// If a Bearer token is present but invalid, the request is rejected
 func ServiceOrUserAuth(validator *TokenValidator, roleRepo middleware.RoleRepository, dbRepo middleware.DatabaseRoleRepository) echo.MiddlewareFunc {
 	sessionMiddleware := middleware.Session(roleRepo, dbRepo)
 
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
-			// Check if this looks like a service token
 			authHeader := c.Request().Header.Get("Authorization")
 			if tokenString, found := strings.CutPrefix(authHeader, "Bearer "); found {
-				// Try to validate as service token
+				// Bearer token present - must validate as service token
 				callingService, err := validator.Validate(tokenString)
-				if err == nil {
-					// Valid service token - store in context and proceed
-					ctx := context.WithValue(c.Request().Context(), callingServiceKey, callingService)
-					c.SetRequest(c.Request().WithContext(ctx))
-					return next(c)
+				if err != nil {
+					log.Printf("service auth failed: %v", err)
+					return c.JSON(http.StatusUnauthorized, map[string]string{
+						"error": "unauthorized",
+					})
 				}
-				// Log service token validation failure for debugging
-				// This helps identify expired tokens or misconfigured services
-				log.Printf("service token validation failed (falling through to user auth): %v", err)
+				// Valid service token - store in context and proceed
+				ctx := context.WithValue(c.Request().Context(), callingServiceKey, callingService)
+				c.SetRequest(c.Request().WithContext(ctx))
+				return next(c)
 			}
 
-			// Let session middleware handle it (user JWT or no auth)
+			// No Bearer token - let session middleware handle it (cookie-based user auth)
 			return sessionMiddleware(next)(c)
 		}
 	}

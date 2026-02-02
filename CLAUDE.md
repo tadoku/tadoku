@@ -49,3 +49,10 @@ cd services/content-api/http/rest/openapi && go generate
 # 8. Before creating PR
 bazel build //services/... && bazel test //services/...
 ```
+
+## Bug Reports
+
+When a bug is reported, follow this process:
+
+1. **Write a failing test first** — Don't start by trying to fix the bug. Instead, write a test that reproduces the bug and confirms it fails.
+2. **Use subagents to fix** — Have subagents attempt to fix the bug and prove the fix by making the test pass.

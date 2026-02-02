@@ -118,7 +118,7 @@ export function DashboardLayout({ children, activeLink }: Props) {
       </div>
 
       {/* Main content */}
-      <div className="flex-1 pt-16 md:pt-0">
+      <div className="flex-1 pt-16 md:pt-0 min-w-0">
         <div className="p-4 md:p-8">{children}</div>
       </div>
     </div>

@@ -4,6 +4,7 @@ import {
   EllipsisVerticalIcon,
   NoSymbolIcon,
   CheckCircleIcon,
+  HomeIcon,
 } from '@heroicons/react/20/solid'
 import Head from 'next/head'
 import { ActionMenu, Breadcrumb, Loading, Modal, Pagination } from 'ui'
@@ -100,6 +101,11 @@ const Page: NextPageWithLayout = () => {
         <Breadcrumb
           links={[
             {
+              label: 'Admin',
+              href: routes.home(),
+              IconComponent: HomeIcon,
+            },
+            {
               label: 'Users',
               href: routes.users(),
               IconComponent: UsersIcon,
@@ -182,6 +188,7 @@ const Page: NextPageWithLayout = () => {
                     <td className="default">
                       {user.role !== 'admin' ? (
                         <ActionMenu
+                          orientation="right"
                           links={[
                             user.role === 'banned'
                               ? {

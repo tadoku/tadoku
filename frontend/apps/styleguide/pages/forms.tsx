@@ -6,6 +6,7 @@ import {
   Input,
   RadioSelect,
   Select,
+  TagsInput,
   TextArea,
 } from 'ui'
 import { FormProvider, useForm } from 'react-hook-form'
@@ -198,6 +199,59 @@ const AutocompleteForm = () => {
           }
           getIdForOption={option => option.id}
           format={option => option.name}
+        />
+        <button
+          type="submit"
+          className="btn primary"
+          disabled={methods.formState.isSubmitting}
+        >
+          Submit
+        </button>
+      </form>
+    </FormProvider>
+  )
+}`}
+          />
+        </div>
+      </div>
+
+      <Separator />
+
+      <Title>React example: Tags Input</Title>
+      <div className="h-stack w-full">
+        <div className="w-96">
+          <Preview>
+            <TagsInputForm />
+          </Preview>
+        </div>
+        <div className="flex-1">
+          <CodeBlock
+            language="typescript"
+            code={`import { TagsInput } from 'ui'
+import { FormProvider, useForm } from 'react-hook-form'
+
+const TagsInputForm = () => {
+  const methods = useForm()
+  const onSubmit = (data: any) => console.log(data, 'submitted')
+
+  const allTags = ['Book', 'Ebook', 'Fiction', 'Non-fiction', 'Web page', 'Lyric', 'Manga', 'Novel']
+
+  return (
+    <FormProvider {...methods}>
+      <form
+        onSubmit={methods.handleSubmit(onSubmit)}
+        className="v-stack spaced"
+      >
+        <TagsInput
+          name="tags"
+          label="Tags"
+          hint="Add up to 5 tags"
+          placeholder="Type to search or add tags..."
+          getSuggestions={(input) =>
+            allTags.filter(tag =>
+              tag.toLowerCase().includes(input.toLowerCase())
+            )
+          }
         />
         <button
           type="submit"
@@ -727,6 +781,50 @@ const AutocompleteForm = () => {
           getIdForOption={option => option.id}
           format={option => option.name}
           hint="Select 3 at most"
+        />
+        <button
+          type="submit"
+          className="btn primary"
+          disabled={methods.formState.isSubmitting}
+        >
+          Submit
+        </button>
+      </form>
+    </FormProvider>
+  )
+}
+
+const TagsInputForm = () => {
+  const methods = useForm()
+  const onSubmit = (data: any) => console.log(data, 'submitted')
+
+  const allTags = [
+    'Book',
+    'Ebook',
+    'Fiction',
+    'Non-fiction',
+    'Web page',
+    'Lyric',
+    'Manga',
+    'Novel',
+  ]
+
+  return (
+    <FormProvider {...methods}>
+      <form
+        onSubmit={methods.handleSubmit(onSubmit)}
+        className="v-stack spaced"
+      >
+        <TagsInput
+          name="tags"
+          label="Tags"
+          hint="Add up to 5 tags"
+          placeholder="Type to search or add tags..."
+          getSuggestions={input =>
+            allTags.filter(tag =>
+              tag.toLowerCase().includes(input.toLowerCase())
+            )
+          }
         />
         <button
           type="submit"

@@ -71,6 +71,9 @@ oathkeeper:
 
       jwt:
         enabled: true
+        config:
+          jwks_urls:
+            - https://kubernetes.default.svc/openid/v1/jwks
 
       noop:
         enabled: true

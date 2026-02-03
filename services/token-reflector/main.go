@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"os"
+	"strings"
 )
 
 type TokenResponse struct {
@@ -15,6 +16,12 @@ type TokenResponse struct {
 func main() {
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		token := r.Header.Get("X-Id-Token")
+		if token == "" {
+			auth := r.Header.Get("Authorization")
+			if strings.HasPrefix(auth, "Bearer ") {
+				token = strings.TrimPrefix(auth, "Bearer ")
+			}
+		}
 		if token == "" {
 			http.Error(w, "missing X-Id-Token header", http.StatusBadRequest)
 			return

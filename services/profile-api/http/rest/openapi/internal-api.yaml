@@ -1,0 +1,45 @@
+openapi: 3.0.3
+info:
+  title: profile-api-internal
+  description: Internal API for service-to-service communication
+  license:
+    name: MIT
+    url: https://github.com/tadoku/tadoku/blob/main/LICENSE
+  version: 1.0.0
+servers:
+  - url: http://profile-api:8080/
+paths:
+  /internal/v1/ping:
+    get:
+      summary: Internal health check for service-to-service calls
+      operationId: internalPing
+      tags: [internal]
+      security:
+        - serviceAuth: []
+      responses:
+        '200':
+          description: successful operation
+          content:
+            text/plain:
+              schema:
+                type: string
+        '401':
+          description: unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+components:
+  schemas:
+    ErrorResponse:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: string
+  securitySchemes:
+    serviceAuth:
+      type: http
+      scheme: bearer
+      description: JWT token for service-to-service authentication (ES256)

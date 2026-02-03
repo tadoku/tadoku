@@ -1,0 +1,37 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: token-reflector
+  labels:
+    app: token-reflector
+spec:
+  selector:
+    matchLabels:
+      app: token-reflector
+  template:
+    metadata:
+      labels:
+        app: token-reflector
+    spec:
+      containers:
+      - name: token-reflector
+        image: token-reflector-image
+        ports:
+        - containerPort: 8080
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 5
+          periodSeconds: 3
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: token-reflector
+spec:
+  ports:
+  - port: 80
+    targetPort: 8080
+  selector:
+    app: token-reflector

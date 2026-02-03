@@ -1,0 +1,12 @@
+load("./../../infra/dev/build/Tiltfile", "bazel_build")
+
+watch_file('./deployments/api.yaml')
+k8s_yaml(local('cat ./deployments/api.yaml'))
+
+bazel_build(
+  'token-reflector-image',
+  '//services/token-reflector:load',
+  deps=['./'],
+)
+
+k8s_resource('token-reflector', labels=["infra"])

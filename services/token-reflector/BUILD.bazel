@@ -1,0 +1,44 @@
+load("@rules_go//go:def.bzl", "go_binary", "go_library")
+load("@rules_oci//oci:defs.bzl", "oci_image", "oci_load", "oci_push")
+load("@rules_pkg//:pkg.bzl", "pkg_tar")
+
+go_library(
+    name = "token-reflector_lib",
+    srcs = ["main.go"],
+    importpath = "github.com/tadoku/tadoku/services/token-reflector",
+    visibility = ["//visibility:private"],
+)
+
+go_binary(
+    name = "token-reflector",
+    embed = [":token-reflector_lib"],
+    visibility = ["//visibility:public"],
+)
+
+pkg_tar(
+    name = "app_layer",
+    srcs = [":token-reflector"],
+)
+
+oci_image(
+    name = "image",
+    base = "@distroless_base_linux_amd64",
+    entrypoint = ["/token-reflector"],
+    tars = [":app_layer"],
+)
+
+oci_load(
+    name = "load",
+    image = ":image",
+    repo_tags = [
+        "ghcr.io/tadoku/tadoku/token-reflector:latest",
+        "bazel/services/token-reflector:latest",
+    ],
+)
+
+oci_push(
+    name = "push",
+    image = ":image",
+    remote_tags = ["latest"],
+    repository = "ghcr.io/tadoku/tadoku/token-reflector",
+)

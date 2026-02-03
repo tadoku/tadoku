@@ -69,10 +69,6 @@ oathkeeper:
           only:
             - ory_kratos_session
 
-      kubernetes_service_account:
-        enabled: true
-        config: {}
-
       noop:
         enabled: true
 

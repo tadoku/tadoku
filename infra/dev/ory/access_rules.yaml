@@ -88,9 +88,12 @@
     methods:
       - GET
   authenticators:
-    - handler: kubernetes_service_account
+    - handler: jwt
       config:
-        allowed_audiences: ["oathkeeper"]
+        jwks_urls:
+          - https://kubernetes.default.svc/openid/v1/jwks
+        target_audience:
+          - oathkeeper
   authorizer:
     handler: allow
   mutators:

@@ -37,7 +37,7 @@ spec:
           - name: API_KRATOS_URL
             value: "http://kratos-admin"
           - name: API_OATHKEEPER_URL
-            value: "http://oathkeeper-api:4456"
+            value: "http://oathkeeper-proxy:4455"
           - name: SERVICE_NAME
             value: "immersion-api"
         volumeMounts:

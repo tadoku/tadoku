@@ -84,7 +84,7 @@
 
 - id: "s2s:immersion-to-profile"
   match:
-    url: "http://oathkeeper-api:4456/token-exchange/profile-api"
+    url: "http://oathkeeper-proxy:4455/token-exchange/profile-api"
     methods:
       - GET
   authenticators:

@@ -35,7 +35,7 @@ spec:
           - name: API_JWKS
             value: "http://oathkeeper-api:4456/.well-known/jwks.json"
           - name: API_OATHKEEPER_URL
-            value: "http://oathkeeper-api:4456"
+            value: "http://oathkeeper-proxy:4455"
           - name: SERVICE_NAME
             value: "profile-api"
         volumeMounts:

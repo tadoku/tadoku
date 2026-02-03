@@ -1,0 +1,8 @@
+load("@rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "s2s",
+    srcs = ["client.go"],
+    importpath = "github.com/tadoku/tadoku/services/common/client/s2s",
+    visibility = ["//visibility:public"],
+)

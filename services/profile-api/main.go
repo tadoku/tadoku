@@ -61,8 +61,10 @@ func main() {
 	}
 
 	server := rest.NewServer()
+	internalServer := rest.NewInternalServer()
 
 	openapi.RegisterHandlersWithBaseURL(e, server, "")
+	rest.RegisterInternalRoutes(e, internalServer)
 
 	fmt.Printf("profile-api is now available at: http://localhost:%d/v2\n", cfg.Port)
 	e.Logger.Fatal(e.Start(fmt.Sprintf("0.0.0.0:%d", cfg.Port)))

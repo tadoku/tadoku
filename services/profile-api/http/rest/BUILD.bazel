@@ -5,11 +5,13 @@ go_library(
     srcs = [
         "health.go",
         "server.go",
+        "server_internal.go",
     ],
     importpath = "github.com/tadoku/tadoku/services/profile-api/http/rest",
     visibility = ["//visibility:public"],
     deps = [
         "//services/profile-api/http/rest/openapi",
+        "//services/profile-api/http/rest/openapi/internalapi",
         "@com_github_labstack_echo_v4//:echo",
     ],
 )

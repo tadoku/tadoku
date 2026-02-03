@@ -3,6 +3,7 @@ load("@rules_go//go:def.bzl", "go_library")
 go_library(
     name = "rest",
     srcs = [
+        "internal_s2s.go",
         "mappers.go",
         "server.go",
         "server_contestcreate.go",
@@ -40,6 +41,7 @@ go_library(
     importpath = "github.com/tadoku/tadoku/services/immersion-api/http/rest",
     visibility = ["//visibility:public"],
     deps = [
+        "//services/common/client/s2s",
         "//services/common/domain",
         "//services/immersion-api/domain",
         "//services/immersion-api/http/rest/openapi",

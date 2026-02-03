@@ -15,7 +15,8 @@ spec:
     spec:
       containers:
       - name: token-reflector
-        image: token-reflector-image
+        image: bazel/services/token-reflector:latest
+        imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 8080
         readinessProbe:

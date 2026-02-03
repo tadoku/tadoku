@@ -13,7 +13,7 @@ spec:
       labels:
         app: immersion-api
     spec:
-      serviceAccountName: default
+      serviceAccountName: immersion-api
       initContainers:
         - name: migrations
           image: immersion-api-migrate-image
@@ -86,3 +86,8 @@ spec:
     name: http
   selector:
     app: immersion-api
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: immersion-api

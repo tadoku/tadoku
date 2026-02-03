@@ -13,7 +13,7 @@ spec:
       labels:
         app: profile-api
     spec:
-      serviceAccountName: default
+      serviceAccountName: profile-api
       initContainers:
         - name: migrations
           image: profile-api-migrate-image
@@ -84,3 +84,8 @@ spec:
     name: http
   selector:
     app: profile-api
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: profile-api

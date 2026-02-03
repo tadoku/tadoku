@@ -13,6 +13,7 @@ spec:
       labels:
         app: content-api
     spec:
+      serviceAccountName: content-api
       initContainers:
         - name: migrations
           image: content-api-migrate-image
@@ -69,3 +70,8 @@ spec:
     name: http
   selector:
     app: content-api
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: content-api

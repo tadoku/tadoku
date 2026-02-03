@@ -1,7 +1,7 @@
 - id: "tadoku:content:api"
   upstream:
     preserve_host: true
-    url: "http://content-api.content-api:80"
+    url: "http://content-api.tdk-content-api:80"
     strip_path: /api/internal/content/
   match:
     url: "http://langlog.be/api/internal/content/<**>"
@@ -22,7 +22,7 @@
 - id: "tadoku:immersion:api"
   upstream:
     preserve_host: true
-    url: "http://immersion-api.immersion-api:80"
+    url: "http://immersion-api.tdk-immersion-api:80"
     strip_path: /api/internal/immersion/
   match:
     url: "http://langlog.be/api/internal/immersion/<**>"
@@ -106,4 +106,4 @@
             "aud": ["profile-api"]
           }
   upstream:
-    url: "http://token-reflector.token-reflector"
+    url: "http://token-reflector.tdk-token-reflector"

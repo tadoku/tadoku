@@ -1,13 +1,13 @@
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: profile-api
+  name: tdk-profile-api
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: profile-api
-  namespace: profile-api
+  namespace: tdk-profile-api
   labels:
     app: profile-api
 spec:
@@ -80,7 +80,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: profile-api
-  namespace: profile-api
+  namespace: tdk-profile-api
   labels:
     app: profile-api
     service: profile-api
@@ -96,4 +96,4 @@ apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: profile-api
-  namespace: profile-api
+  namespace: tdk-profile-api

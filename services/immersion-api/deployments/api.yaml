@@ -1,13 +1,13 @@
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: immersion-api
+  name: tdk-immersion-api
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: immersion-api
-  namespace: immersion-api
+  namespace: tdk-immersion-api
   labels:
     app: immersion-api
 spec:
@@ -45,7 +45,7 @@ spec:
           - name: API_OATHKEEPER_URL
             value: "http://oathkeeper-proxy.default:4455"
           - name: API_PROFILE_API_URL
-            value: "http://profile-api.profile-api"
+            value: "http://profile-api.tdk-profile-api"
           - name: SERVICE_NAME
             value: "immersion-api"
         volumeMounts:
@@ -84,7 +84,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: immersion-api
-  namespace: immersion-api
+  namespace: tdk-immersion-api
   labels:
     app: immersion-api
     service: immersion-api
@@ -100,4 +100,4 @@ apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: immersion-api
-  namespace: immersion-api
+  namespace: tdk-immersion-api

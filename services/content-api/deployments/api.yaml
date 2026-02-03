@@ -1,13 +1,13 @@
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: content-api
+  name: tdk-content-api
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: content-api
-  namespace: content-api
+  namespace: tdk-content-api
   labels:
     app: content-api
 spec:
@@ -66,7 +66,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: content-api
-  namespace: content-api
+  namespace: tdk-content-api
   labels:
     app: content-api
     service: content-api
@@ -82,4 +82,4 @@ apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: content-api
-  namespace: content-api
+  namespace: tdk-content-api

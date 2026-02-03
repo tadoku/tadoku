@@ -1,7 +1,13 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: token-reflector
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: token-reflector
+  namespace: token-reflector
   labels:
     app: token-reflector
 spec:
@@ -13,6 +19,7 @@ spec:
       labels:
         app: token-reflector
     spec:
+      serviceAccountName: token-reflector
       containers:
       - name: token-reflector
         image: bazel/services/token-reflector:latest
@@ -30,9 +37,16 @@ apiVersion: v1
 kind: Service
 metadata:
   name: token-reflector
+  namespace: token-reflector
 spec:
   ports:
   - port: 80
     targetPort: 8080
   selector:
     app: token-reflector
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: token-reflector
+  namespace: token-reflector

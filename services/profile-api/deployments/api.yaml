@@ -1,7 +1,13 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: profile-api
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: profile-api
+  namespace: profile-api
   labels:
     app: profile-api
 spec:
@@ -21,7 +27,7 @@ spec:
           args: ['-source', 'file:///migrations', '-database', '$(DATABASE_URL)', 'up']
           env:
           - name: DATABASE_URL
-            value: "postgres://profile:foobar@postgres-profile/profile?sslmode=disable"
+            value: "postgres://profile:foobar@postgres-profile.default/profile?sslmode=disable"
       containers:
       - name: profile-api
         image: profile-api-image
@@ -29,13 +35,13 @@ spec:
         - containerPort: 8000
         env:
           - name: API_POSTGRES_URL
-            value: "postgres://profile:foobar@postgres-profile/profile?sslmode=disable"
+            value: "postgres://profile:foobar@postgres-profile.default/profile?sslmode=disable"
           - name: API_PORT
             value: "8000"
           - name: API_JWKS
-            value: "http://oathkeeper-api:4456/.well-known/jwks.json"
+            value: "http://oathkeeper-api.default:4456/.well-known/jwks.json"
           - name: API_OATHKEEPER_URL
-            value: "http://oathkeeper-proxy:4455"
+            value: "http://oathkeeper-proxy.default:4455"
           - name: SERVICE_NAME
             value: "profile-api"
         volumeMounts:
@@ -74,6 +80,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: profile-api
+  namespace: profile-api
   labels:
     app: profile-api
     service: profile-api
@@ -89,3 +96,4 @@ apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: profile-api
+  namespace: profile-api

@@ -73,7 +73,7 @@ oathkeeper:
         enabled: true
         config:
           jwks_urls:
-            - http://token-reflector/jwks
+            - http://token-reflector.token-reflector/jwks
 
       noop:
         enabled: true

@@ -24,13 +24,6 @@ type ErrorResponse struct {
 	Error string `json:"error"`
 }
 
-// InternalPingResult defines model for InternalPingResult.
-type InternalPingResult struct {
-	// Caller The name of the calling service
-	Caller string `json:"caller"`
-	Status string `json:"status"`
-}
-
 // RequestEditorFn  is the function signature for the RequestEditor callback function
 type RequestEditorFn func(ctx context.Context, req *http.Request) error
 
@@ -197,7 +190,6 @@ type ClientWithResponsesInterface interface {
 type InternalPingResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *InternalPingResult
 	JSON401      *ErrorResponse
 }
 
@@ -240,13 +232,6 @@ func ParseInternalPingResponse(rsp *http.Response) (*InternalPingResponse, error
 	}
 
 	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest InternalPingResult
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON200 = &dest
-
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
 		var dest ErrorResponse
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {

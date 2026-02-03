@@ -25,11 +25,5 @@ func RegisterInternalRoutes(e *echo.Echo, server *InternalServer) {
 
 // InternalPing responds to internal health checks from other services
 func (s *InternalServer) InternalPing(c echo.Context) error {
-	// For now, caller identification requires service auth middleware
-	// When serviceauth is implemented, use serviceauth.GetCallingService(c)
-	caller := "unknown"
-	return c.JSON(http.StatusOK, internalapi.InternalPingResult{
-		Status: "ok",
-		Caller: caller,
-	})
+	return c.String(http.StatusOK, "pong")
 }

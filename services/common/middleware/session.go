@@ -131,7 +131,7 @@ func handleServiceToken(claims *UnifiedClaims, serviceName string) domain.Identi
 		Subject:   claims.Subject,
 		Name:      name,
 		Namespace: claims.Namespace,
-		Audience:  claims.Audience,
+		Audience:  []string(claims.Audience),
 	}
 }
 

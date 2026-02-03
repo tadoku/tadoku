@@ -101,3 +101,24 @@ kind: ServiceAccount
 metadata:
   name: immersion-api
   namespace: tdk-immersion-api
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: tadoku-permissions
+  namespace: tdk-immersion-api
+data:
+  roles.yaml: |
+    users:
+      - email: dev@tadoku.app
+        role: admin
+      - email: dev1@tadoku.app
+        role: admin
+      - email: dev2@tadoku.app
+        role: admin
+      - email: dev3@tadoku.app
+        role: admin
+      - email: dev4@tadoku.app
+        role: admin
+      - email: banned@tadoku.app
+        role: banned

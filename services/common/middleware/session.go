@@ -123,14 +123,16 @@ func handleServiceToken(claims *UnifiedClaims, serviceName string) domain.Identi
 	}
 
 	name := claims.Subject
+	namespace := claims.Namespace
 	if parts := strings.Split(claims.Subject, ":"); len(parts) == 4 {
+		namespace = parts[2]
 		name = parts[3]
 	}
 
 	return &domain.ServiceIdentity{
 		Subject:   claims.Subject,
 		Name:      name,
-		Namespace: claims.Namespace,
+		Namespace: namespace,
 		Audience:  []string(claims.Audience),
 	}
 }

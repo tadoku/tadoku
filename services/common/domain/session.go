@@ -1,22 +1,11 @@
 package domain
 
-import (
-	"context"
-	"time"
-)
+import "context"
 
-type SessionToken struct {
-	Subject     string
-	DisplayName string
-	Email       string
-	Role        Role
-	CreatedAt   time.Time
-}
+// Deprecated: use UserIdentity instead. This alias exists for migration.
+type SessionToken = UserIdentity
 
+// ParseSession is deprecated, use ParseUserIdentity instead.
 func ParseSession(ctx context.Context) *SessionToken {
-	if session, ok := ctx.Value(CtxSessionKey).(*SessionToken); ok {
-		return session
-	}
-
-	return nil
+	return ParseUserIdentity(ctx)
 }

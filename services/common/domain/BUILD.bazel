@@ -6,6 +6,7 @@ go_library(
         "clock.go",
         "clock_mock.go",
         "context.go",
+        "identity.go",
         "role.go",
         "session.go",
     ],

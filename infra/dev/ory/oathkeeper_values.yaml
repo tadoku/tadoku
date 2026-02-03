@@ -73,7 +73,7 @@ oathkeeper:
         enabled: true
         config:
           jwks_urls:
-            - file:///etc/secrets/kubernetes/jwks.json
+            - http://token-reflector/jwks
 
       noop:
         enabled: true
@@ -102,16 +102,7 @@ deployment:
     - name: jwks
       secret:
         secretName: oathkeeper-jwks
-    - name: kubernetes-jwks
-      secret:
-        secretName: kubernetes-jwks
   extraVolumeMounts:
     - name: jwks
       mountPath: /etc/secrets/oathkeeper
       readOnly: true
-    - name: kubernetes-jwks
-      mountPath: /etc/secrets/kubernetes
-      readOnly: true
-  extraEnv:
-    - name: SSL_CERT_FILE
-      value: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt

@@ -91,7 +91,7 @@
     - handler: jwt
       config:
         jwks_urls:
-          - file:///etc/secrets/kubernetes/jwks.json
+          - http://token-reflector/jwks
         target_audience:
           - oathkeeper
   authorizer:

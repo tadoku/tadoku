@@ -17,7 +17,6 @@ k8s_resource("kratos", labels=["auth"])
 
 # oathkeeper
 k8s_yaml(secret_yaml_generic('oathkeeper-jwks', from_file=['jwks.json=./jwks-dev.json']))
-k8s_yaml(secret_yaml_generic('kubernetes-jwks', from_file=['jwks.json=./kubernetes_jwks.json']))
 helm_resource('oathkeeper',
               'ory/oathkeeper',
               flags=[

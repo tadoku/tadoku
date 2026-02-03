@@ -91,7 +91,7 @@
     - handler: jwt
       config:
         jwks_urls:
-          - https://kubernetes.default.svc/openid/v1/jwks
+          - file:///etc/secrets/kubernetes/jwks.json
         target_audience:
           - oathkeeper
   authorizer:

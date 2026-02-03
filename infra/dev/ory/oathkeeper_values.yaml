@@ -106,3 +106,6 @@ deployment:
     - name: jwks
       mountPath: /etc/secrets/oathkeeper
       readOnly: true
+  extraEnv:
+    - name: SSL_CERT_FILE
+      value: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt

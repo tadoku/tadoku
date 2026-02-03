@@ -13,6 +13,7 @@ spec:
       labels:
         app: profile-api
     spec:
+      serviceAccountName: default
       initContainers:
         - name: migrations
           image: profile-api-migrate-image
@@ -33,9 +34,16 @@ spec:
             value: "8000"
           - name: API_JWKS
             value: "http://oathkeeper-api:4456/.well-known/jwks.json"
+          - name: API_OATHKEEPER_URL
+            value: "http://oathkeeper-api:4456"
+          - name: SERVICE_NAME
+            value: "profile-api"
         volumeMounts:
         - name: tadoku-permissions
           mountPath: /etc/tadoku/permissions
+        - name: k8s-token
+          mountPath: /var/run/secrets/tokens
+          readOnly: true
         readinessProbe:
           httpGet:
             scheme: HTTP
@@ -54,6 +62,13 @@ spec:
         - name: tadoku-permissions
           configMap:
             name: tadoku-permissions
+        - name: k8s-token
+          projected:
+            sources:
+              - serviceAccountToken:
+                  path: token
+                  expirationSeconds: 3600
+                  audience: oathkeeper
 ---
 apiVersion: v1
 kind: Service

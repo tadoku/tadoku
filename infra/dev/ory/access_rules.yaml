@@ -81,3 +81,27 @@
     handler: allow
   mutators:
     - handler: id_token
+
+- id: "s2s:immersion-to-profile"
+  match:
+    url: "http://oathkeeper-api:4456/token-exchange/profile-api"
+    methods:
+      - GET
+  authenticators:
+    - handler: kubernetes_service_account
+      config:
+        allowed_audiences: ["oathkeeper"]
+  authorizer:
+    handler: allow
+  mutators:
+    - handler: id_token
+      config:
+        claims: |
+          {
+            "type": "service",
+            "sub": "{{ .Subject }}",
+            "aud": ["profile-api"],
+            "namespace": "default"
+          }
+  upstream:
+    url: "http://token-reflector"

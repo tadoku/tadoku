@@ -22,7 +22,8 @@ spec:
       serviceAccountName: content-api
       initContainers:
         - name: migrations
-          image: content-api-migrate-image
+          image: bazel/services/content-api/storage/postgres/migrations:latest
+          imagePullPolicy: IfNotPresent
           command: ['/migrate']
           args: ['-source', 'file:///migrations', '-database', '$(DATABASE_URL)', 'up']
           env:
@@ -30,7 +31,8 @@ spec:
             value: "postgres://content:foobar@postgres-content.default/content?sslmode=disable"
       containers:
       - name: content-api
-        image: content-api-image
+        image: bazel/services/content-api:latest
+        imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 8000
         env:

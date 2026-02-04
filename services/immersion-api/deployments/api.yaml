@@ -22,7 +22,8 @@ spec:
       serviceAccountName: immersion-api
       initContainers:
         - name: migrations
-          image: immersion-api-migrate-image
+          image: bazel/services/immersion-api/storage/postgres/migrations:latest
+          imagePullPolicy: IfNotPresent
           command: ['/migrate']
           args: ['-source', 'file:///migrations', '-database', '$(DATABASE_URL)', 'up']
           env:
@@ -30,7 +31,8 @@ spec:
             value: "postgres://immersion:foobar@postgres-immersion.default/immersion?sslmode=disable"
       containers:
       - name: immersion-api
-        image: immersion-api-image
+        image: bazel/services/immersion-api:latest
+        imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 8000
         env:

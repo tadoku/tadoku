@@ -85,7 +85,11 @@ func Session(configRepo RoleRepository, dbRepo DatabaseRoleRepository) echo.Midd
 			if claims, ok := token.Claims.(*UnifiedClaims); ok && token.Valid {
 				switch claims.Type {
 				case "service":
-					identity = handleServiceToken(claims, serviceName)
+					serviceIdentity, ok := handleServiceToken(claims, serviceName)
+					if !ok {
+						return ctx.NoContent(http.StatusForbidden)
+					}
+					identity = serviceIdentity
 				default:
 					identity = handleUserToken(ctx, claims, configRepo, dbRepo)
 				}
@@ -105,7 +109,7 @@ func Session(configRepo RoleRepository, dbRepo DatabaseRoleRepository) echo.Midd
 	}
 }
 
-func handleServiceToken(claims *UnifiedClaims, serviceName string) domain.Identity {
+func handleServiceToken(claims *UnifiedClaims, serviceName string) (domain.Identity, bool) {
 	if serviceName != "" {
 		validAudience := false
 		for _, aud := range claims.Audience {
@@ -115,10 +119,7 @@ func handleServiceToken(claims *UnifiedClaims, serviceName string) domain.Identi
 			}
 		}
 		if !validAudience {
-			return &domain.UserIdentity{
-				Subject: "guest",
-				Role:    domain.RoleGuest,
-			}
+			return nil, false
 		}
 	}
 
@@ -134,7 +135,7 @@ func handleServiceToken(claims *UnifiedClaims, serviceName string) domain.Identi
 		Name:      name,
 		Namespace: namespace,
 		Audience:  []string(claims.Audience),
-	}
+	}, true
 }
 
 func handleUserToken(ctx echo.Context, claims *UnifiedClaims, configRepo RoleRepository, dbRepo DatabaseRoleRepository) *domain.UserIdentity {

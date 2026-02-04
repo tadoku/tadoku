@@ -93,7 +93,7 @@ func TestContestList_Execute(t *testing.T) {
 				Subject:     uuid.New().String(),
 				DisplayName: "TestUser",
 			}
-			ctx := context.WithValue(context.Background(), commondomain.CtxSessionKey, token)
+			ctx := context.WithValue(context.Background(), commondomain.CtxIdentityKey, token)
 
 			repo := &contestListRepositoryMock{
 				response: test.repoResponse,

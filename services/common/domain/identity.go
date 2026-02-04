@@ -63,10 +63,6 @@ func ParseIdentity(ctx context.Context) Identity {
 		return identity
 	}
 
-	if session, ok := ctx.Value(CtxSessionKey).(*UserIdentity); ok && session != nil {
-		return session
-	}
-
 	return nil
 }
 

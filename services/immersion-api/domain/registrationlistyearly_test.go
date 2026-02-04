@@ -100,7 +100,7 @@ func TestRegistrationListYearly_Execute(t *testing.T) {
 					Subject:     test.sessionUserID.String(),
 					DisplayName: "TestUser",
 				}
-				ctx = context.WithValue(context.Background(), commondomain.CtxSessionKey, token)
+				ctx = context.WithValue(context.Background(), commondomain.CtxIdentityKey, token)
 			}
 
 			repo := &registrationListYearlyRepositoryMock{

@@ -66,9 +66,7 @@ type DatabaseRoleRepository interface {
 	GetUserRole(ctx context.Context, userID string) (string, error)
 }
 
-func Session(configRepo RoleRepository, dbRepo DatabaseRoleRepository) echo.MiddlewareFunc {
-	serviceName := getServiceName()
-
+func Identity(configRepo RoleRepository, dbRepo DatabaseRoleRepository) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(ctx echo.Context) error {
 			var identity domain.Identity = &domain.UserIdentity{
@@ -85,11 +83,7 @@ func Session(configRepo RoleRepository, dbRepo DatabaseRoleRepository) echo.Midd
 			if claims, ok := token.Claims.(*UnifiedClaims); ok && token.Valid {
 				switch claims.Type {
 				case "service":
-					serviceIdentity, ok := handleServiceToken(claims, serviceName)
-					if !ok {
-						return ctx.NoContent(http.StatusForbidden)
-					}
-					identity = serviceIdentity
+					identity = handleServiceToken(claims)
 				default:
 					identity = handleUserToken(ctx, claims, configRepo, dbRepo)
 				}
@@ -97,32 +91,12 @@ func Session(configRepo RoleRepository, dbRepo DatabaseRoleRepository) echo.Midd
 
 			setIdentityContext(ctx, identity)
 
-			// Allow banned users to check their role, but block everything else.
-			if user, ok := identity.(*domain.UserIdentity); ok {
-				if user.Role == domain.RoleBanned && ctx.Path() != "/current-user/role" {
-					return ctx.NoContent(http.StatusForbidden)
-				}
-			}
-
 			return next(ctx)
 		}
 	}
 }
 
-func handleServiceToken(claims *UnifiedClaims, serviceName string) (domain.Identity, bool) {
-	if serviceName != "" {
-		validAudience := false
-		for _, aud := range claims.Audience {
-			if aud == serviceName {
-				validAudience = true
-				break
-			}
-		}
-		if !validAudience {
-			return nil, false
-		}
-	}
-
+func handleServiceToken(claims *UnifiedClaims) domain.Identity {
 	name := claims.Subject
 	namespace := claims.Namespace
 	if parts := strings.Split(claims.Subject, ":"); len(parts) == 4 {
@@ -135,7 +109,7 @@ func handleServiceToken(claims *UnifiedClaims, serviceName string) (domain.Ident
 		Name:      name,
 		Namespace: namespace,
 		Audience:  []string(claims.Audience),
-	}, true
+	}
 }
 
 func handleUserToken(ctx echo.Context, claims *UnifiedClaims, configRepo RoleRepository, dbRepo DatabaseRoleRepository) *domain.UserIdentity {
@@ -175,11 +149,6 @@ func handleUserToken(ctx echo.Context, claims *UnifiedClaims, configRepo RoleRep
 func setIdentityContext(ctx echo.Context, identity domain.Identity) {
 	ctx.SetRequest(ctx.Request().WithContext(
 		context.WithValue(ctx.Request().Context(), domain.CtxIdentityKey, identity)))
-
-	if user, ok := identity.(*domain.UserIdentity); ok {
-		ctx.SetRequest(ctx.Request().WithContext(
-			context.WithValue(ctx.Request().Context(), domain.CtxSessionKey, user)))
-	}
 }
 
 func getServiceName() string {
@@ -188,4 +157,42 @@ func getServiceName() string {
 	}
 	// Default to allowing any audience in local/dev.
 	return ""
+}
+
+func RejectBannedUsers() echo.MiddlewareFunc {
+	return func(next echo.HandlerFunc) echo.HandlerFunc {
+		return func(ctx echo.Context) error {
+			if user := domain.ParseUserIdentity(ctx.Request().Context()); user != nil {
+				if user.Role == domain.RoleBanned && ctx.Path() != "/current-user/role" {
+					return ctx.NoContent(http.StatusForbidden)
+				}
+			}
+			return next(ctx)
+		}
+	}
+}
+
+func RequireServiceAudience() echo.MiddlewareFunc {
+	serviceName := getServiceName()
+	if serviceName == "" {
+		return func(next echo.HandlerFunc) echo.HandlerFunc {
+			return func(ctx echo.Context) error {
+				return next(ctx)
+			}
+		}
+	}
+
+	return func(next echo.HandlerFunc) echo.HandlerFunc {
+		return func(ctx echo.Context) error {
+			if service := domain.ParseServiceIdentity(ctx.Request().Context()); service != nil {
+				for _, aud := range service.Audience {
+					if aud == serviceName {
+						return next(ctx)
+					}
+				}
+				return ctx.NoContent(http.StatusForbidden)
+			}
+			return next(ctx)
+		}
+	}
 }

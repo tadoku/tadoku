@@ -40,7 +40,7 @@ func TestLogDelete_Execute(t *testing.T) {
 		clock := commondomain.NewMockClock(now)
 		svc := domain.NewLogDelete(repo, clock)
 
-		ctx := context.WithValue(context.Background(), commondomain.CtxSessionKey, &commondomain.UserIdentity{
+		ctx := context.WithValue(context.Background(), commondomain.CtxIdentityKey, &commondomain.UserIdentity{
 			Role:    commondomain.RoleGuest,
 			Subject: userID.String(),
 		})
@@ -69,7 +69,7 @@ func TestLogDelete_Execute(t *testing.T) {
 		clock := commondomain.NewMockClock(now)
 		svc := domain.NewLogDelete(repo, clock)
 
-		ctx := context.WithValue(context.Background(), commondomain.CtxSessionKey, &commondomain.UserIdentity{
+		ctx := context.WithValue(context.Background(), commondomain.CtxIdentityKey, &commondomain.UserIdentity{
 			Role:    commondomain.RoleUser,
 			Subject: userID.String(),
 		})
@@ -87,7 +87,7 @@ func TestLogDelete_Execute(t *testing.T) {
 		clock := commondomain.NewMockClock(now)
 		svc := domain.NewLogDelete(repo, clock)
 
-		ctx := context.WithValue(context.Background(), commondomain.CtxSessionKey, &commondomain.UserIdentity{
+		ctx := context.WithValue(context.Background(), commondomain.CtxIdentityKey, &commondomain.UserIdentity{
 			Role:    commondomain.RoleUser,
 			Subject: userID.String(),
 		})
@@ -105,7 +105,7 @@ func TestLogDelete_Execute(t *testing.T) {
 		clock := commondomain.NewMockClock(now)
 		svc := domain.NewLogDelete(repo, clock)
 
-		ctx := context.WithValue(context.Background(), commondomain.CtxSessionKey, &commondomain.UserIdentity{
+		ctx := context.WithValue(context.Background(), commondomain.CtxIdentityKey, &commondomain.UserIdentity{
 			Role:    commondomain.RoleAdmin,
 			Subject: userID.String(),
 		})
@@ -123,7 +123,7 @@ func TestLogDelete_Execute(t *testing.T) {
 		clock := commondomain.NewMockClock(now)
 		svc := domain.NewLogDelete(repo, clock)
 
-		ctx := context.WithValue(context.Background(), commondomain.CtxSessionKey, &commondomain.UserIdentity{
+		ctx := context.WithValue(context.Background(), commondomain.CtxIdentityKey, &commondomain.UserIdentity{
 			Role:    commondomain.RoleUser,
 			Subject: userID.String(),
 		})
@@ -142,7 +142,7 @@ func TestLogDelete_Execute(t *testing.T) {
 		clock := commondomain.NewMockClock(now)
 		svc := domain.NewLogDelete(repo, clock)
 
-		ctx := context.WithValue(context.Background(), commondomain.CtxSessionKey, &commondomain.UserIdentity{
+		ctx := context.WithValue(context.Background(), commondomain.CtxIdentityKey, &commondomain.UserIdentity{
 			Role:    commondomain.RoleUser,
 			Subject: userID.String(),
 		})

@@ -53,7 +53,7 @@ func TestContestCreate_Execute(t *testing.T) {
 		userUpsert := domain.NewUserUpsert(repo)
 		svc := domain.NewContestCreate(repo, clock, userUpsert)
 
-		ctx := context.WithValue(context.Background(), commondomain.CtxSessionKey, &commondomain.UserIdentity{
+		ctx := context.WithValue(context.Background(), commondomain.CtxIdentityKey, &commondomain.UserIdentity{
 			Role:    commondomain.RoleGuest,
 			Subject: uuid.NewString(),
 		})
@@ -69,7 +69,7 @@ func TestContestCreate_Execute(t *testing.T) {
 		userUpsert := domain.NewUserUpsert(repo)
 		svc := domain.NewContestCreate(repo, clock, userUpsert)
 
-		ctx := context.WithValue(context.Background(), commondomain.CtxSessionKey, &commondomain.UserIdentity{
+		ctx := context.WithValue(context.Background(), commondomain.CtxIdentityKey, &commondomain.UserIdentity{
 			Role:        commondomain.RoleUser,
 			Subject:     uuid.NewString(),
 			DisplayName: "TestUser",
@@ -96,7 +96,7 @@ func TestContestCreate_Execute(t *testing.T) {
 		userUpsert := domain.NewUserUpsert(repo)
 		svc := domain.NewContestCreate(repo, clock, userUpsert)
 
-		ctx := context.WithValue(context.Background(), commondomain.CtxSessionKey, &commondomain.UserIdentity{
+		ctx := context.WithValue(context.Background(), commondomain.CtxIdentityKey, &commondomain.UserIdentity{
 			Role:        commondomain.RoleAdmin,
 			Subject:     uuid.NewString(),
 			DisplayName: "Admin",
@@ -130,7 +130,7 @@ func TestContestCreate_Execute(t *testing.T) {
 		userUpsert := domain.NewUserUpsert(repo)
 		svc := domain.NewContestCreate(repo, clock, userUpsert)
 
-		ctx := context.WithValue(context.Background(), commondomain.CtxSessionKey, &commondomain.UserIdentity{
+		ctx := context.WithValue(context.Background(), commondomain.CtxIdentityKey, &commondomain.UserIdentity{
 			Role:        commondomain.RoleUser,
 			Subject:     uuid.NewString(),
 			DisplayName: "TestUser",
@@ -150,7 +150,7 @@ func TestContestCreate_Execute(t *testing.T) {
 		userUpsert := domain.NewUserUpsert(repo)
 		svc := domain.NewContestCreate(repo, clock, userUpsert)
 
-		ctx := context.WithValue(context.Background(), commondomain.CtxSessionKey, &commondomain.UserIdentity{
+		ctx := context.WithValue(context.Background(), commondomain.CtxIdentityKey, &commondomain.UserIdentity{
 			Role:        commondomain.RoleUser,
 			Subject:     uuid.NewString(),
 			DisplayName: "TestUser",

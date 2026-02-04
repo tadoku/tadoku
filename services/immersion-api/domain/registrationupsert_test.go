@@ -65,7 +65,7 @@ func TestRegistrationUpsert_Execute(t *testing.T) {
 		repo := &mockRegistrationUpsertRepository{}
 		svc := domain.NewRegistrationUpsert(repo, userUpsert)
 
-		ctx := context.WithValue(context.Background(), commondomain.CtxSessionKey, &commondomain.UserIdentity{
+		ctx := context.WithValue(context.Background(), commondomain.CtxIdentityKey, &commondomain.UserIdentity{
 			Role:    commondomain.RoleBanned,
 			Subject: userID.String(),
 		})
@@ -85,7 +85,7 @@ func TestRegistrationUpsert_Execute(t *testing.T) {
 		repo := &mockRegistrationUpsertRepository{}
 		svc := domain.NewRegistrationUpsert(repo, userUpsert)
 
-		ctx := context.WithValue(context.Background(), commondomain.CtxSessionKey, &commondomain.UserIdentity{
+		ctx := context.WithValue(context.Background(), commondomain.CtxIdentityKey, &commondomain.UserIdentity{
 			Role:    commondomain.RoleGuest,
 			Subject: userID.String(),
 		})
@@ -123,7 +123,7 @@ func TestRegistrationUpsert_Execute(t *testing.T) {
 		}
 		svc := domain.NewRegistrationUpsert(repo, userUpsert)
 
-		ctx := context.WithValue(context.Background(), commondomain.CtxSessionKey, &commondomain.UserIdentity{
+		ctx := context.WithValue(context.Background(), commondomain.CtxIdentityKey, &commondomain.UserIdentity{
 			Role:    commondomain.RoleUser,
 			Subject: userID.String(),
 		})
@@ -146,7 +146,7 @@ func TestRegistrationUpsert_Execute(t *testing.T) {
 		}
 		svc := domain.NewRegistrationUpsert(repo, userUpsert)
 
-		ctx := context.WithValue(context.Background(), commondomain.CtxSessionKey, &commondomain.UserIdentity{
+		ctx := context.WithValue(context.Background(), commondomain.CtxIdentityKey, &commondomain.UserIdentity{
 			Role:    commondomain.RoleUser,
 			Subject: userID.String(),
 		})
@@ -178,7 +178,7 @@ func TestRegistrationUpsert_Execute(t *testing.T) {
 		}
 		svc := domain.NewRegistrationUpsert(repo, userUpsert)
 
-		ctx := context.WithValue(context.Background(), commondomain.CtxSessionKey, &commondomain.UserIdentity{
+		ctx := context.WithValue(context.Background(), commondomain.CtxIdentityKey, &commondomain.UserIdentity{
 			Role:    commondomain.RoleUser,
 			Subject: userID.String(),
 		})
@@ -210,7 +210,7 @@ func TestRegistrationUpsert_Execute(t *testing.T) {
 		}
 		svc := domain.NewRegistrationUpsert(repo, userUpsert)
 
-		ctx := context.WithValue(context.Background(), commondomain.CtxSessionKey, &commondomain.UserIdentity{
+		ctx := context.WithValue(context.Background(), commondomain.CtxIdentityKey, &commondomain.UserIdentity{
 			Role:    commondomain.RoleUser,
 			Subject: userID.String(),
 		})
@@ -233,7 +233,7 @@ func TestRegistrationUpsert_Execute(t *testing.T) {
 		}
 		svc := domain.NewRegistrationUpsert(repo, userUpsert)
 
-		ctx := context.WithValue(context.Background(), commondomain.CtxSessionKey, &commondomain.UserIdentity{
+		ctx := context.WithValue(context.Background(), commondomain.CtxIdentityKey, &commondomain.UserIdentity{
 			Role:    commondomain.RoleUser,
 			Subject: userID.String(),
 		})
@@ -267,7 +267,7 @@ func TestRegistrationUpsert_Execute(t *testing.T) {
 		}
 		svc := domain.NewRegistrationUpsert(repo, userUpsert)
 
-		ctx := context.WithValue(context.Background(), commondomain.CtxSessionKey, &commondomain.UserIdentity{
+		ctx := context.WithValue(context.Background(), commondomain.CtxIdentityKey, &commondomain.UserIdentity{
 			Role:    commondomain.RoleUser,
 			Subject: userID.String(),
 		})

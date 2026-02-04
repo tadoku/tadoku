@@ -89,7 +89,7 @@ func TestRegistrationFind_Execute(t *testing.T) {
 				Subject:     test.userID.String(),
 				DisplayName: "TestUser",
 			}
-			ctx := context.WithValue(context.Background(), commondomain.CtxSessionKey, token)
+			ctx := context.WithValue(context.Background(), commondomain.CtxIdentityKey, token)
 
 			repo := &registrationFindRepositoryMock{
 				registration: test.repoRegistration,

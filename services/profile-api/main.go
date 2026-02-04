@@ -47,7 +47,9 @@ func main() {
 	e := echo.New()
 	e.Use(tadokumiddleware.Logger([]string{"/ping"}))
 	e.Use(tadokumiddleware.SessionJWT(cfg.JWKS))
-	e.Use(tadokumiddleware.Session(roleRepository, nil))
+	e.Use(tadokumiddleware.Identity(roleRepository, nil))
+	e.Use(tadokumiddleware.RequireServiceAudience())
+	e.Use(tadokumiddleware.RejectBannedUsers())
 	e.Use(middleware.Recover())
 
 	if cfg.SentryDSN != "" {

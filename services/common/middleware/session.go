@@ -177,6 +177,9 @@ func RequireServiceAudience() echo.MiddlewareFunc {
 	if serviceName == "" {
 		return func(next echo.HandlerFunc) echo.HandlerFunc {
 			return func(ctx echo.Context) error {
+				if domain.ParseServiceIdentity(ctx.Request().Context()) != nil {
+					return ctx.NoContent(http.StatusForbidden)
+				}
 				return next(ctx)
 			}
 		}

@@ -33,7 +33,7 @@ func (s *LogDelete) Execute(ctx context.Context, req *LogDeleteRequest) error {
 		return ErrUnauthorized
 	}
 
-	session := commondomain.ParseSession(ctx)
+	session := commondomain.ParseUserIdentity(ctx)
 	if session == nil {
 		return ErrUnauthorized
 	}

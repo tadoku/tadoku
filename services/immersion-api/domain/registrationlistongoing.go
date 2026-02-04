@@ -31,7 +31,7 @@ func (s *RegistrationListOngoing) Execute(ctx context.Context) (*ContestRegistra
 		return nil, ErrUnauthorized
 	}
 
-	session := commondomain.ParseSession(ctx)
+	session := commondomain.ParseUserIdentity(ctx)
 	req := &RegistrationListOngoingRequest{
 		UserID: uuid.MustParse(session.Subject),
 		Now:    s.clock.Now(),

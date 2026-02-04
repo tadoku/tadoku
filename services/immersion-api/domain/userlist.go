@@ -66,7 +66,7 @@ func NewUserList(userCache UserListCache, roleRepo UserListRoleRepository) *User
 }
 
 func (s *UserList) Execute(ctx context.Context, req *UserListRequest) (*UserListResponse, error) {
-	session := commondomain.ParseSession(ctx)
+	session := commondomain.ParseUserIdentity(ctx)
 	if session == nil {
 		return nil, ErrUnauthorized
 	}

@@ -26,7 +26,7 @@ func NewLogFind(repo LogFindRepository) *LogFind {
 
 func (s *LogFind) Execute(ctx context.Context, req *LogFindRequest) (*Log, error) {
 	// Check authorization before making DB call
-	session := commondomain.ParseSession(ctx)
+	session := commondomain.ParseUserIdentity(ctx)
 	if session == nil {
 		return nil, ErrUnauthorized
 	}

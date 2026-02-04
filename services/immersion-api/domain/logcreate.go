@@ -56,7 +56,7 @@ func (s *LogCreate) Execute(ctx context.Context, req *LogCreateRequest) (*Log, e
 	}
 
 	// Enrich request with session
-	session := commondomain.ParseSession(ctx)
+	session := commondomain.ParseUserIdentity(ctx)
 	if session == nil {
 		return nil, ErrUnauthorized
 	}

@@ -40,7 +40,7 @@ func (s *UpdateUserRole) Execute(ctx context.Context, req *UpdateUserRoleRequest
 	}
 
 	// Get session to extract moderator user ID
-	session := commondomain.ParseSession(ctx)
+	session := commondomain.ParseUserIdentity(ctx)
 	if session == nil {
 		return ErrUnauthorized
 	}

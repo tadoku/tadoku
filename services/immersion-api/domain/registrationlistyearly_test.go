@@ -95,7 +95,7 @@ func TestRegistrationListYearly_Execute(t *testing.T) {
 			if test.role == commondomain.RoleGuest {
 				ctx = context.Background() // No session for guest
 			} else {
-				token := &commondomain.SessionToken{
+				token := &commondomain.UserIdentity{
 					Role:        test.role,
 					Subject:     test.sessionUserID.String(),
 					DisplayName: "TestUser",

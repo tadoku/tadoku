@@ -25,12 +25,12 @@ func (m *mockPageCreateRepo) CreatePage(ctx context.Context, page *contentdomain
 }
 
 func adminContext() context.Context {
-	session := &domain.SessionToken{Role: domain.RoleAdmin}
+	session := &domain.UserIdentity{Role: domain.RoleAdmin}
 	return context.WithValue(context.Background(), domain.CtxSessionKey, session)
 }
 
 func userContext() context.Context {
-	session := &domain.SessionToken{Role: domain.RoleUser}
+	session := &domain.UserIdentity{Role: domain.RoleUser}
 	return context.WithValue(context.Background(), domain.CtxSessionKey, session)
 }
 

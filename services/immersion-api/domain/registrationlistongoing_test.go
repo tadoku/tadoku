@@ -46,7 +46,7 @@ func TestRegistrationListOngoing_Execute(t *testing.T) {
 		}
 		svc := domain.NewRegistrationListOngoing(repo, clock)
 
-		ctx := context.WithValue(context.Background(), commondomain.CtxSessionKey, &commondomain.SessionToken{
+		ctx := context.WithValue(context.Background(), commondomain.CtxSessionKey, &commondomain.UserIdentity{
 			Subject: userID.String(),
 			Role:    commondomain.RoleUser,
 		})
@@ -61,7 +61,7 @@ func TestRegistrationListOngoing_Execute(t *testing.T) {
 		repo := &mockRegistrationListOngoingRepository{}
 		svc := domain.NewRegistrationListOngoing(repo, clock)
 
-		ctx := context.WithValue(context.Background(), commondomain.CtxSessionKey, &commondomain.SessionToken{
+		ctx := context.WithValue(context.Background(), commondomain.CtxSessionKey, &commondomain.UserIdentity{
 			Subject: "",
 			Role:    commondomain.RoleGuest,
 		})

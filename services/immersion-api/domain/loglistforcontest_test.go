@@ -90,7 +90,7 @@ func TestLogListForContest_Execute(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			token := &commondomain.SessionToken{
+			token := &commondomain.UserIdentity{
 				Role:        test.role,
 				Subject:     uuid.New().String(),
 				DisplayName: "TestUser",

@@ -39,7 +39,7 @@ func TestUserList_Execute(t *testing.T) {
 		cache := &mockUserListCache{users: users}
 		svc := domain.NewUserList(cache, nil)
 
-		ctx := context.WithValue(context.Background(), commondomain.CtxSessionKey, &commondomain.SessionToken{
+		ctx := context.WithValue(context.Background(), commondomain.CtxSessionKey, &commondomain.UserIdentity{
 			Role: commondomain.RoleUser,
 		})
 
@@ -53,7 +53,7 @@ func TestUserList_Execute(t *testing.T) {
 		cache := &mockUserListCache{users: users}
 		svc := domain.NewUserList(cache, nil)
 
-		ctx := context.WithValue(context.Background(), commondomain.CtxSessionKey, &commondomain.SessionToken{
+		ctx := context.WithValue(context.Background(), commondomain.CtxSessionKey, &commondomain.UserIdentity{
 			Role: commondomain.RoleAdmin,
 		})
 
@@ -68,7 +68,7 @@ func TestUserList_Execute(t *testing.T) {
 		cache := &mockUserListCache{users: users}
 		svc := domain.NewUserList(cache, nil)
 
-		ctx := context.WithValue(context.Background(), commondomain.CtxSessionKey, &commondomain.SessionToken{
+		ctx := context.WithValue(context.Background(), commondomain.CtxSessionKey, &commondomain.UserIdentity{
 			Role: commondomain.RoleAdmin,
 		})
 
@@ -84,7 +84,7 @@ func TestUserList_Execute(t *testing.T) {
 		cache := &mockUserListCache{users: users}
 		svc := domain.NewUserList(cache, nil)
 
-		ctx := context.WithValue(context.Background(), commondomain.CtxSessionKey, &commondomain.SessionToken{
+		ctx := context.WithValue(context.Background(), commondomain.CtxSessionKey, &commondomain.UserIdentity{
 			Role: commondomain.RoleAdmin,
 		})
 

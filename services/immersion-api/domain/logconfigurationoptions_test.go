@@ -49,7 +49,7 @@ func TestLogConfigurationOptions_Execute(t *testing.T) {
 		}
 
 		svc := domain.NewLogConfigurationOptions(repo)
-		ctx := context.WithValue(context.Background(), commondomain.CtxSessionKey, &commondomain.SessionToken{Role: commondomain.RoleUser})
+		ctx := context.WithValue(context.Background(), commondomain.CtxSessionKey, &commondomain.UserIdentity{Role: commondomain.RoleUser})
 		resp, err := svc.Execute(ctx)
 
 		require.NoError(t, err)
@@ -67,7 +67,7 @@ func TestLogConfigurationOptions_Execute(t *testing.T) {
 		repo := &mockLogConfigurationOptionsRepo{}
 
 		svc := domain.NewLogConfigurationOptions(repo)
-		ctx := context.WithValue(context.Background(), commondomain.CtxSessionKey, &commondomain.SessionToken{Role: commondomain.RoleGuest})
+		ctx := context.WithValue(context.Background(), commondomain.CtxSessionKey, &commondomain.UserIdentity{Role: commondomain.RoleGuest})
 		_, err := svc.Execute(ctx)
 
 		assert.ErrorIs(t, err, domain.ErrUnauthorized)
@@ -98,7 +98,7 @@ func TestLogConfigurationOptions_Execute(t *testing.T) {
 		}
 
 		svc := domain.NewLogConfigurationOptions(repo)
-		ctx := context.WithValue(context.Background(), commondomain.CtxSessionKey, &commondomain.SessionToken{Role: commondomain.RoleUser})
+		ctx := context.WithValue(context.Background(), commondomain.CtxSessionKey, &commondomain.UserIdentity{Role: commondomain.RoleUser})
 		_, err := svc.Execute(ctx)
 
 		assert.ErrorIs(t, err, repoErr)

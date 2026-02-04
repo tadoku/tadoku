@@ -84,7 +84,7 @@ func TestRegistrationFind_Execute(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			token := &commondomain.SessionToken{
+			token := &commondomain.UserIdentity{
 				Role:        test.role,
 				Subject:     test.userID.String(),
 				DisplayName: "TestUser",

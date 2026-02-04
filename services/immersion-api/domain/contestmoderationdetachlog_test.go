@@ -60,7 +60,7 @@ func TestContestModerationDetachLog_Execute(t *testing.T) {
 		repo := &mockContestModerationDetachLogRepository{}
 		svc := domain.NewContestModerationDetachLog(repo)
 
-		ctx := context.WithValue(context.Background(), commondomain.CtxSessionKey, &commondomain.SessionToken{
+		ctx := context.WithValue(context.Background(), commondomain.CtxSessionKey, &commondomain.UserIdentity{
 			Role:    commondomain.RoleGuest,
 			Subject: userID.String(),
 		})
@@ -79,7 +79,7 @@ func TestContestModerationDetachLog_Execute(t *testing.T) {
 		repo := &mockContestModerationDetachLogRepository{}
 		svc := domain.NewContestModerationDetachLog(repo)
 
-		ctx := context.WithValue(context.Background(), commondomain.CtxSessionKey, &commondomain.SessionToken{
+		ctx := context.WithValue(context.Background(), commondomain.CtxSessionKey, &commondomain.UserIdentity{
 			Role:    commondomain.RoleBanned,
 			Subject: userID.String(),
 		})
@@ -114,7 +114,7 @@ func TestContestModerationDetachLog_Execute(t *testing.T) {
 		}
 		svc := domain.NewContestModerationDetachLog(repo)
 
-		ctx := context.WithValue(context.Background(), commondomain.CtxSessionKey, &commondomain.SessionToken{
+		ctx := context.WithValue(context.Background(), commondomain.CtxSessionKey, &commondomain.UserIdentity{
 			Role:    commondomain.RoleUser,
 			Subject: userID.String(),
 		})
@@ -135,7 +135,7 @@ func TestContestModerationDetachLog_Execute(t *testing.T) {
 		}
 		svc := domain.NewContestModerationDetachLog(repo)
 
-		ctx := context.WithValue(context.Background(), commondomain.CtxSessionKey, &commondomain.SessionToken{
+		ctx := context.WithValue(context.Background(), commondomain.CtxSessionKey, &commondomain.UserIdentity{
 			Role:    commondomain.RoleUser,
 			Subject: otherUserID.String(), // Not the owner
 		})
@@ -157,7 +157,7 @@ func TestContestModerationDetachLog_Execute(t *testing.T) {
 		}
 		svc := domain.NewContestModerationDetachLog(repo)
 
-		ctx := context.WithValue(context.Background(), commondomain.CtxSessionKey, &commondomain.SessionToken{
+		ctx := context.WithValue(context.Background(), commondomain.CtxSessionKey, &commondomain.UserIdentity{
 			Role:    commondomain.RoleUser,
 			Subject: userID.String(),
 		})
@@ -179,7 +179,7 @@ func TestContestModerationDetachLog_Execute(t *testing.T) {
 		}
 		svc := domain.NewContestModerationDetachLog(repo)
 
-		ctx := context.WithValue(context.Background(), commondomain.CtxSessionKey, &commondomain.SessionToken{
+		ctx := context.WithValue(context.Background(), commondomain.CtxSessionKey, &commondomain.UserIdentity{
 			Role:    commondomain.RoleUser,
 			Subject: userID.String(), // Contest owner
 		})
@@ -203,7 +203,7 @@ func TestContestModerationDetachLog_Execute(t *testing.T) {
 		svc := domain.NewContestModerationDetachLog(repo)
 
 		adminID := uuid.New()
-		ctx := context.WithValue(context.Background(), commondomain.CtxSessionKey, &commondomain.SessionToken{
+		ctx := context.WithValue(context.Background(), commondomain.CtxSessionKey, &commondomain.UserIdentity{
 			Role:    commondomain.RoleAdmin,
 			Subject: adminID.String(),
 		})
@@ -227,7 +227,7 @@ func TestContestModerationDetachLog_Execute(t *testing.T) {
 		}
 		svc := domain.NewContestModerationDetachLog(repo)
 
-		ctx := context.WithValue(context.Background(), commondomain.CtxSessionKey, &commondomain.SessionToken{
+		ctx := context.WithValue(context.Background(), commondomain.CtxSessionKey, &commondomain.UserIdentity{
 			Role:    commondomain.RoleUser,
 			Subject: userID.String(),
 		})

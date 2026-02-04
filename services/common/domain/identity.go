@@ -15,7 +15,9 @@ const (
 
 // Identity is the common interface for all identity types.
 type Identity interface {
-	// GetSubject returns the unique subject identifier from the token.
+	// GetSubject returns the token "sub" (subject) claim, which identifies
+	// the principal the token was issued for. It is stable and unique within
+	// the issuer, and is the primary identifier for authorization.
 	GetSubject() string
 	GetType() IdentityType
 	IsUser() bool
@@ -24,7 +26,9 @@ type Identity interface {
 
 // UserIdentity represents a human user authenticated via Kratos.
 type UserIdentity struct {
-	// Subject is the token "sub" claim (unique user ID).
+	// Subject is the token "sub" (subject) claim. For user tokens this is the
+	// stable unique user ID from the identity provider (Kratos), and is the
+	// primary identifier we use for authorization and role lookups.
 	Subject     string
 	DisplayName string
 	Email       string
@@ -39,7 +43,9 @@ func (u *UserIdentity) IsService() bool       { return false }
 
 // ServiceIdentity represents a service authenticated via K8s SA.
 type ServiceIdentity struct {
-	// Subject is the token "sub" claim (full service account name).
+	// Subject is the token "sub" (subject) claim. For service tokens this is
+	// the full Kubernetes service account name in the form:
+	// "system:serviceaccount:<namespace>:<name>".
 	Subject   string
 	Name      string
 	Namespace string

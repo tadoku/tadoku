@@ -22,8 +22,7 @@ spec:
       serviceAccountName: profile-api
       initContainers:
         - name: migrations
-          image: bazel/services/profile-api/storage/postgres/migrations:latest
-          imagePullPolicy: IfNotPresent
+          image: profile-api-migrate-image
           command: ['/migrate']
           args: ['-source', 'file:///migrations', '-database', '$(DATABASE_URL)', 'up']
           env:
@@ -31,8 +30,7 @@ spec:
             value: "postgres://profile:foobar@postgres-profile.default/profile?sslmode=disable"
       containers:
       - name: profile-api
-        image: bazel/services/profile-api:latest
-        imagePullPolicy: IfNotPresent
+        image: profile-api-image
         ports:
         - containerPort: 8000
         env:

@@ -16,4 +16,4 @@ bazel_build(
   deps=['./', './../common/', './../../infra/dev/permissions/'],
 )
 
-k8s_resource('content-api', labels=["backend"])
+k8s_resource('content-api', labels=["backend"], namespace='tdk-content-api')

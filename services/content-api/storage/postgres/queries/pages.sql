@@ -109,3 +109,22 @@ update pages
 set deleted_at = now()
 where id = sqlc.arg('id')
   and deleted_at is null;
+
+-- name: ListPageVersions :many
+select
+  id,
+  title,
+  created_at
+from pages_content
+where page_id = sqlc.arg('page_id')
+order by created_at asc;
+
+-- name: GetPageVersion :one
+select
+  id,
+  title,
+  html,
+  created_at
+from pages_content
+where id = sqlc.arg('id')
+  and page_id = sqlc.arg('page_id');

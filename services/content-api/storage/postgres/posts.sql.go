@@ -191,6 +191,80 @@ func (q *Queries) FindPostBySlug(ctx context.Context, arg FindPostBySlugParams) 
 	return i, err
 }
 
+const getPostVersion = `-- name: GetPostVersion :one
+select
+  id,
+  title,
+  content,
+  created_at
+from posts_content
+where id = $1
+  and post_id = $2
+`
+
+type GetPostVersionParams struct {
+	ID     uuid.UUID
+	PostID uuid.UUID
+}
+
+type GetPostVersionRow struct {
+	ID        uuid.UUID
+	Title     string
+	Content   string
+	CreatedAt time.Time
+}
+
+func (q *Queries) GetPostVersion(ctx context.Context, arg GetPostVersionParams) (GetPostVersionRow, error) {
+	row := q.db.QueryRowContext(ctx, getPostVersion, arg.ID, arg.PostID)
+	var i GetPostVersionRow
+	err := row.Scan(
+		&i.ID,
+		&i.Title,
+		&i.Content,
+		&i.CreatedAt,
+	)
+	return i, err
+}
+
+const listPostVersions = `-- name: ListPostVersions :many
+select
+  id,
+  title,
+  created_at
+from posts_content
+where post_id = $1
+order by created_at asc
+`
+
+type ListPostVersionsRow struct {
+	ID        uuid.UUID
+	Title     string
+	CreatedAt time.Time
+}
+
+func (q *Queries) ListPostVersions(ctx context.Context, postID uuid.UUID) ([]ListPostVersionsRow, error) {
+	rows, err := q.db.QueryContext(ctx, listPostVersions, postID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListPostVersionsRow
+	for rows.Next() {
+		var i ListPostVersionsRow
+		if err := rows.Scan(&i.ID, &i.Title, &i.CreatedAt); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listPosts = `-- name: ListPosts :many
 select
   posts.id,

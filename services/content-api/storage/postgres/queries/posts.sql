@@ -109,3 +109,22 @@ update posts
 set deleted_at = now()
 where id = sqlc.arg('id')
   and deleted_at is null;
+
+-- name: ListPostVersions :many
+select
+  id,
+  title,
+  created_at
+from posts_content
+where post_id = sqlc.arg('post_id')
+order by created_at asc;
+
+-- name: GetPostVersion :one
+select
+  id,
+  title,
+  content,
+  created_at
+from posts_content
+where id = sqlc.arg('id')
+  and post_id = sqlc.arg('post_id');

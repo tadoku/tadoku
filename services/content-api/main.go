@@ -78,6 +78,7 @@ func main() {
 	pageDelete := domain.NewPageDelete(pageRepository)
 	pageFind := domain.NewPageFind(pageRepository, clock)
 	pageList := domain.NewPageList(pageRepository)
+	pageVersionList := domain.NewPageVersionList(pageRepository)
 
 	// Post services
 	postCreate := domain.NewPostCreate(postRepository, clock)
@@ -85,6 +86,7 @@ func main() {
 	postDelete := domain.NewPostDelete(postRepository)
 	postFind := domain.NewPostFind(postRepository, clock)
 	postList := domain.NewPostList(postRepository)
+	postVersionList := domain.NewPostVersionList(postRepository)
 
 	server := rest.NewServer(
 		pageCreate,
@@ -92,11 +94,13 @@ func main() {
 		pageDelete,
 		pageFind,
 		pageList,
+		pageVersionList,
 		postCreate,
 		postUpdate,
 		postDelete,
 		postFind,
 		postList,
+		postVersionList,
 	)
 
 	openapi.RegisterHandlersWithBaseURL(e, server, "")

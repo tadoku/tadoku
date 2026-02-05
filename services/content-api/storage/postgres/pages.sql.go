@@ -191,6 +191,80 @@ func (q *Queries) FindPageBySlug(ctx context.Context, arg FindPageBySlugParams) 
 	return i, err
 }
 
+const getPageVersion = `-- name: GetPageVersion :one
+select
+  id,
+  title,
+  html,
+  created_at
+from pages_content
+where id = $1
+  and page_id = $2
+`
+
+type GetPageVersionParams struct {
+	ID     uuid.UUID
+	PageID uuid.UUID
+}
+
+type GetPageVersionRow struct {
+	ID        uuid.UUID
+	Title     string
+	Html      string
+	CreatedAt time.Time
+}
+
+func (q *Queries) GetPageVersion(ctx context.Context, arg GetPageVersionParams) (GetPageVersionRow, error) {
+	row := q.db.QueryRowContext(ctx, getPageVersion, arg.ID, arg.PageID)
+	var i GetPageVersionRow
+	err := row.Scan(
+		&i.ID,
+		&i.Title,
+		&i.Html,
+		&i.CreatedAt,
+	)
+	return i, err
+}
+
+const listPageVersions = `-- name: ListPageVersions :many
+select
+  id,
+  title,
+  created_at
+from pages_content
+where page_id = $1
+order by created_at asc
+`
+
+type ListPageVersionsRow struct {
+	ID        uuid.UUID
+	Title     string
+	CreatedAt time.Time
+}
+
+func (q *Queries) ListPageVersions(ctx context.Context, pageID uuid.UUID) ([]ListPageVersionsRow, error) {
+	rows, err := q.db.QueryContext(ctx, listPageVersions, pageID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListPageVersionsRow
+	for rows.Next() {
+		var i ListPageVersionsRow
+		if err := rows.Scan(&i.ID, &i.Title, &i.CreatedAt); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listPages = `-- name: ListPages :many
 select
   pages.id,

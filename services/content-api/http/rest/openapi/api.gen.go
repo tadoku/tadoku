@@ -28,6 +28,24 @@ type Page struct {
 	UpdatedAt   *time.Time          `json:"updated_at,omitempty"`
 }
 
+// PageVersion defines model for PageVersion.
+type PageVersion struct {
+	CreatedAt time.Time `json:"created_at"`
+	Html      *string   `json:"html,omitempty"`
+
+	// Id Content ID of this version
+	Id    openapi_types.UUID `json:"id"`
+	Title string             `json:"title"`
+
+	// Version Version number (starting at 1)
+	Version int `json:"version"`
+}
+
+// PageVersions defines model for PageVersions.
+type PageVersions struct {
+	Versions []PageVersion `json:"versions"`
+}
+
 // Pages defines model for Pages.
 type Pages struct {
 	// NextPageToken is empty if there's no next page
@@ -53,6 +71,24 @@ type Post struct {
 	Slug        string              `json:"slug"`
 	Title       string              `json:"title"`
 	UpdatedAt   *time.Time          `json:"updated_at,omitempty"`
+}
+
+// PostVersion defines model for PostVersion.
+type PostVersion struct {
+	Content   *string   `json:"content,omitempty"`
+	CreatedAt time.Time `json:"created_at"`
+
+	// Id Content ID of this version
+	Id    openapi_types.UUID `json:"id"`
+	Title string             `json:"title"`
+
+	// Version Version number (starting at 1)
+	Version int `json:"version"`
+}
+
+// PostVersions defines model for PostVersions.
+type PostVersions struct {
+	Versions []PostVersion `json:"versions"`
 }
 
 // Posts defines model for Posts.
@@ -103,6 +139,12 @@ type ServerInterface interface {
 	// Updates an existing page
 	// (PUT /pages/{namespace}/{id})
 	PageUpdate(ctx echo.Context, namespace string, id string) error
+	// Lists all versions of a page
+	// (GET /pages/{namespace}/{id}/versions)
+	PageVersionList(ctx echo.Context, namespace string, id string) error
+	// Gets a specific version of a page
+	// (GET /pages/{namespace}/{id}/versions/{contentId})
+	PageVersionGet(ctx echo.Context, namespace string, id string, contentId openapi_types.UUID) error
 	// Returns page content for a given slug
 	// (GET /pages/{namespace}/{slug})
 	PageFindBySlug(ctx echo.Context, namespace string, slug string) error
@@ -121,6 +163,12 @@ type ServerInterface interface {
 	// Updates an existing post
 	// (PUT /posts/{namespace}/{id})
 	PostUpdate(ctx echo.Context, namespace string, id string) error
+	// Lists all versions of a post
+	// (GET /posts/{namespace}/{id}/versions)
+	PostVersionList(ctx echo.Context, namespace string, id string) error
+	// Gets a specific version of a post
+	// (GET /posts/{namespace}/{id}/versions/{contentId})
+	PostVersionGet(ctx echo.Context, namespace string, id string, contentId openapi_types.UUID) error
 	// Returns page content for a given slug
 	// (GET /posts/{namespace}/{slug})
 	PostFindBySlug(ctx echo.Context, namespace string, slug string) error
@@ -239,6 +287,66 @@ func (w *ServerInterfaceWrapper) PageUpdate(ctx echo.Context) error {
 
 	// Invoke the callback with all the unmarshalled arguments
 	err = w.Handler.PageUpdate(ctx, namespace, id)
+	return err
+}
+
+// PageVersionList converts echo context to params.
+func (w *ServerInterfaceWrapper) PageVersionList(ctx echo.Context) error {
+	var err error
+	// ------------- Path parameter "namespace" -------------
+	var namespace string
+
+	err = runtime.BindStyledParameterWithLocation("simple", false, "namespace", runtime.ParamLocationPath, ctx.Param("namespace"), &namespace)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter namespace: %s", err))
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id string
+
+	err = runtime.BindStyledParameterWithLocation("simple", false, "id", runtime.ParamLocationPath, ctx.Param("id"), &id)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter id: %s", err))
+	}
+
+	ctx.Set(CookieAuthScopes, []string{""})
+
+	// Invoke the callback with all the unmarshalled arguments
+	err = w.Handler.PageVersionList(ctx, namespace, id)
+	return err
+}
+
+// PageVersionGet converts echo context to params.
+func (w *ServerInterfaceWrapper) PageVersionGet(ctx echo.Context) error {
+	var err error
+	// ------------- Path parameter "namespace" -------------
+	var namespace string
+
+	err = runtime.BindStyledParameterWithLocation("simple", false, "namespace", runtime.ParamLocationPath, ctx.Param("namespace"), &namespace)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter namespace: %s", err))
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id string
+
+	err = runtime.BindStyledParameterWithLocation("simple", false, "id", runtime.ParamLocationPath, ctx.Param("id"), &id)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter id: %s", err))
+	}
+
+	// ------------- Path parameter "contentId" -------------
+	var contentId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithLocation("simple", false, "contentId", runtime.ParamLocationPath, ctx.Param("contentId"), &contentId)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter contentId: %s", err))
+	}
+
+	ctx.Set(CookieAuthScopes, []string{""})
+
+	// Invoke the callback with all the unmarshalled arguments
+	err = w.Handler.PageVersionGet(ctx, namespace, id, contentId)
 	return err
 }
 
@@ -384,6 +492,66 @@ func (w *ServerInterfaceWrapper) PostUpdate(ctx echo.Context) error {
 	return err
 }
 
+// PostVersionList converts echo context to params.
+func (w *ServerInterfaceWrapper) PostVersionList(ctx echo.Context) error {
+	var err error
+	// ------------- Path parameter "namespace" -------------
+	var namespace string
+
+	err = runtime.BindStyledParameterWithLocation("simple", false, "namespace", runtime.ParamLocationPath, ctx.Param("namespace"), &namespace)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter namespace: %s", err))
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id string
+
+	err = runtime.BindStyledParameterWithLocation("simple", false, "id", runtime.ParamLocationPath, ctx.Param("id"), &id)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter id: %s", err))
+	}
+
+	ctx.Set(CookieAuthScopes, []string{""})
+
+	// Invoke the callback with all the unmarshalled arguments
+	err = w.Handler.PostVersionList(ctx, namespace, id)
+	return err
+}
+
+// PostVersionGet converts echo context to params.
+func (w *ServerInterfaceWrapper) PostVersionGet(ctx echo.Context) error {
+	var err error
+	// ------------- Path parameter "namespace" -------------
+	var namespace string
+
+	err = runtime.BindStyledParameterWithLocation("simple", false, "namespace", runtime.ParamLocationPath, ctx.Param("namespace"), &namespace)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter namespace: %s", err))
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id string
+
+	err = runtime.BindStyledParameterWithLocation("simple", false, "id", runtime.ParamLocationPath, ctx.Param("id"), &id)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter id: %s", err))
+	}
+
+	// ------------- Path parameter "contentId" -------------
+	var contentId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithLocation("simple", false, "contentId", runtime.ParamLocationPath, ctx.Param("contentId"), &contentId)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter contentId: %s", err))
+	}
+
+	ctx.Set(CookieAuthScopes, []string{""})
+
+	// Invoke the callback with all the unmarshalled arguments
+	err = w.Handler.PostVersionGet(ctx, namespace, id, contentId)
+	return err
+}
+
 // PostFindBySlug converts echo context to params.
 func (w *ServerInterfaceWrapper) PostFindBySlug(ctx echo.Context) error {
 	var err error
@@ -440,12 +608,16 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 	router.POST(baseURL+"/pages/:namespace", wrapper.PageCreate)
 	router.DELETE(baseURL+"/pages/:namespace/:id", wrapper.PageDelete)
 	router.PUT(baseURL+"/pages/:namespace/:id", wrapper.PageUpdate)
+	router.GET(baseURL+"/pages/:namespace/:id/versions", wrapper.PageVersionList)
+	router.GET(baseURL+"/pages/:namespace/:id/versions/:contentId", wrapper.PageVersionGet)
 	router.GET(baseURL+"/pages/:namespace/:slug", wrapper.PageFindBySlug)
 	router.GET(baseURL+"/ping", wrapper.Ping)
 	router.GET(baseURL+"/posts/:namespace", wrapper.PostList)
 	router.POST(baseURL+"/posts/:namespace", wrapper.PostCreate)
 	router.DELETE(baseURL+"/posts/:namespace/:id", wrapper.PostDelete)
 	router.PUT(baseURL+"/posts/:namespace/:id", wrapper.PostUpdate)
+	router.GET(baseURL+"/posts/:namespace/:id/versions", wrapper.PostVersionList)
+	router.GET(baseURL+"/posts/:namespace/:id/versions/:contentId", wrapper.PostVersionGet)
 	router.GET(baseURL+"/posts/:namespace/:slug", wrapper.PostFindBySlug)
 
 }

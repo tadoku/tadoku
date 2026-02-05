@@ -111,6 +111,62 @@ func (s *Server) PageDelete(ctx echo.Context, namespace string, id string) error
 	return ctx.NoContent(http.StatusNoContent)
 }
 
+// Lists all versions of a page
+// (GET /pages/{namespace}/{id}/versions)
+func (s *Server) PageVersionList(ctx echo.Context, namespace string, id string) error {
+	versions, err := s.pageVersionList.List(ctx.Request().Context(), uuid.MustParse(id))
+	if err != nil {
+		if errors.Is(err, domain.ErrForbidden) {
+			return ctx.NoContent(http.StatusForbidden)
+		}
+		if errors.Is(err, domain.ErrPageNotFound) {
+			return ctx.NoContent(http.StatusNotFound)
+		}
+
+		ctx.Echo().Logger.Error("could not process request: ", err)
+		return ctx.NoContent(http.StatusInternalServerError)
+	}
+
+	res := openapi.PageVersions{
+		Versions: make([]openapi.PageVersion, len(versions)),
+	}
+	for i, v := range versions {
+		res.Versions[i] = openapi.PageVersion{
+			Id:        v.ID,
+			Version:   v.Version,
+			Title:     v.Title,
+			CreatedAt: v.CreatedAt,
+		}
+	}
+
+	return ctx.JSON(http.StatusOK, res)
+}
+
+// Gets a specific version of a page
+// (GET /pages/{namespace}/{id}/versions/{contentId})
+func (s *Server) PageVersionGet(ctx echo.Context, namespace string, id string, contentId uuid.UUID) error {
+	v, err := s.pageVersionList.Get(ctx.Request().Context(), uuid.MustParse(id), contentId)
+	if err != nil {
+		if errors.Is(err, domain.ErrForbidden) {
+			return ctx.NoContent(http.StatusForbidden)
+		}
+		if errors.Is(err, domain.ErrPageNotFound) {
+			return ctx.NoContent(http.StatusNotFound)
+		}
+
+		ctx.Echo().Logger.Error("could not process request: ", err)
+		return ctx.NoContent(http.StatusInternalServerError)
+	}
+
+	return ctx.JSON(http.StatusOK, openapi.PageVersion{
+		Id:        v.ID,
+		Version:   v.Version,
+		Title:     v.Title,
+		Html:      &v.HTML,
+		CreatedAt: v.CreatedAt,
+	})
+}
+
 // QUERIES
 
 // Returns page content for a given slug

@@ -1,7 +1,7 @@
 - id: "tadoku:content:api"
   upstream:
     preserve_host: true
-    url: "http://content-api:80"
+    url: "http://content-api.tdk-content-api:80"
     strip_path: /api/internal/content/
   match:
     url: "http://langlog.be/api/internal/content/<**>"
@@ -22,7 +22,7 @@
 - id: "tadoku:immersion:api"
   upstream:
     preserve_host: true
-    url: "http://immersion-api:80"
+    url: "http://immersion-api.tdk-immersion-api:80"
     strip_path: /api/internal/immersion/
   match:
     url: "http://langlog.be/api/internal/immersion/<**>"
@@ -81,3 +81,29 @@
     handler: allow
   mutators:
     - handler: id_token
+
+- id: "s2s:immersion-to-profile"
+  match:
+    url: "http://oathkeeper-proxy.default:4455/token-exchange/profile-api"
+    methods:
+      - GET
+  authenticators:
+    - handler: jwt
+      config:
+        jwks_urls:
+          - http://token-reflector.tdk-token-reflector/jwks
+        target_audience:
+          - oathkeeper
+  authorizer:
+    handler: allow
+  mutators:
+    - handler: id_token
+      config:
+        claims: |
+          {
+            "type": "service",
+            "sub": "{{ .Subject }}",
+            "aud": ["profile-api"]
+          }
+  upstream:
+    url: "http://token-reflector.tdk-token-reflector"

@@ -1,7 +1,13 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: tdk-profile-api
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: profile-api
+  namespace: tdk-profile-api
   labels:
     app: profile-api
 spec:
@@ -13,6 +19,7 @@ spec:
       labels:
         app: profile-api
     spec:
+      serviceAccountName: profile-api
       initContainers:
         - name: migrations
           image: profile-api-migrate-image
@@ -20,7 +27,7 @@ spec:
           args: ['-source', 'file:///migrations', '-database', '$(DATABASE_URL)', 'up']
           env:
           - name: DATABASE_URL
-            value: "postgres://profile:foobar@postgres-profile/profile?sslmode=disable"
+            value: "postgres://profile:foobar@postgres-profile.default/profile?sslmode=disable"
       containers:
       - name: profile-api
         image: profile-api-image
@@ -28,14 +35,21 @@ spec:
         - containerPort: 8000
         env:
           - name: API_POSTGRES_URL
-            value: "postgres://profile:foobar@postgres-profile/profile?sslmode=disable"
+            value: "postgres://profile:foobar@postgres-profile.default/profile?sslmode=disable"
           - name: API_PORT
             value: "8000"
           - name: API_JWKS
-            value: "http://oathkeeper-api:4456/.well-known/jwks.json"
+            value: "http://oathkeeper-api.default:4456/.well-known/jwks.json"
+          - name: API_OATHKEEPER_URL
+            value: "http://oathkeeper-proxy.default:4455"
+          - name: SERVICE_NAME
+            value: "profile-api"
         volumeMounts:
         - name: tadoku-permissions
           mountPath: /etc/tadoku/permissions
+        - name: k8s-token
+          mountPath: /var/run/secrets/tokens
+          readOnly: true
         readinessProbe:
           httpGet:
             scheme: HTTP
@@ -54,11 +68,19 @@ spec:
         - name: tadoku-permissions
           configMap:
             name: tadoku-permissions
+        - name: k8s-token
+          projected:
+            sources:
+              - serviceAccountToken:
+                  path: token
+                  expirationSeconds: 3600
+                  audience: oathkeeper
 ---
 apiVersion: v1
 kind: Service
 metadata:
   name: profile-api
+  namespace: tdk-profile-api
   labels:
     app: profile-api
     service: profile-api
@@ -69,3 +91,30 @@ spec:
     name: http
   selector:
     app: profile-api
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: profile-api
+  namespace: tdk-profile-api
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: tadoku-permissions
+  namespace: tdk-profile-api
+data:
+  roles.yaml: |
+    users:
+      - email: dev@tadoku.app
+        role: admin
+      - email: dev1@tadoku.app
+        role: admin
+      - email: dev2@tadoku.app
+        role: admin
+      - email: dev3@tadoku.app
+        role: admin
+      - email: dev4@tadoku.app
+        role: admin
+      - email: banned@tadoku.app
+        role: banned

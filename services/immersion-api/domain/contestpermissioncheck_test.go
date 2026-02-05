@@ -40,7 +40,7 @@ func TestContestPermissionCheck_Execute(t *testing.T) {
 		kratos := &mockContestPermissionCheckKratos{}
 		svc := domain.NewContestPermissionCheck(repo, kratos, clock)
 
-		ctx := context.WithValue(context.Background(), commondomain.CtxSessionKey, &commondomain.SessionToken{
+		ctx := context.WithValue(context.Background(), commondomain.CtxIdentityKey, &commondomain.UserIdentity{
 			Subject: userID.String(),
 			Role:    commondomain.RoleAdmin,
 		})
@@ -59,7 +59,7 @@ func TestContestPermissionCheck_Execute(t *testing.T) {
 		}
 		svc := domain.NewContestPermissionCheck(repo, kratos, clock)
 
-		ctx := context.WithValue(context.Background(), commondomain.CtxSessionKey, &commondomain.SessionToken{
+		ctx := context.WithValue(context.Background(), commondomain.CtxIdentityKey, &commondomain.UserIdentity{
 			Subject: userID.String(),
 			Role:    commondomain.RoleUser,
 		})
@@ -78,7 +78,7 @@ func TestContestPermissionCheck_Execute(t *testing.T) {
 		}
 		svc := domain.NewContestPermissionCheck(repo, kratos, clock)
 
-		ctx := context.WithValue(context.Background(), commondomain.CtxSessionKey, &commondomain.SessionToken{
+		ctx := context.WithValue(context.Background(), commondomain.CtxIdentityKey, &commondomain.UserIdentity{
 			Subject: userID.String(),
 			Role:    commondomain.RoleUser,
 		})
@@ -98,7 +98,7 @@ func TestContestPermissionCheck_Execute(t *testing.T) {
 		}
 		svc := domain.NewContestPermissionCheck(repo, kratos, clock)
 
-		ctx := context.WithValue(context.Background(), commondomain.CtxSessionKey, &commondomain.SessionToken{
+		ctx := context.WithValue(context.Background(), commondomain.CtxIdentityKey, &commondomain.UserIdentity{
 			Subject: userID.String(),
 			Role:    commondomain.RoleUser,
 		})
@@ -116,7 +116,7 @@ func TestContestPermissionCheck_Execute(t *testing.T) {
 		}
 		svc := domain.NewContestPermissionCheck(repo, kratos, clock)
 
-		ctx := context.WithValue(context.Background(), commondomain.CtxSessionKey, &commondomain.SessionToken{
+		ctx := context.WithValue(context.Background(), commondomain.CtxIdentityKey, &commondomain.UserIdentity{
 			Subject: userID.String(),
 			Role:    commondomain.RoleUser,
 		})

@@ -78,7 +78,7 @@ func (s *ContestCreate) Execute(ctx context.Context, req *ContestCreateRequest) 
 	}
 
 	// Enrich request with session
-	session := commondomain.ParseSession(ctx)
+	session := commondomain.ParseUserIdentity(ctx)
 	if session == nil {
 		return nil, ErrUnauthorized
 	}

@@ -26,7 +26,7 @@ func NewRegistrationListYearly(repo RegistrationListYearlyRepository) *Registrat
 }
 
 func (s *RegistrationListYearly) Execute(ctx context.Context, req *RegistrationListYearlyRequest) (*ContestRegistrations, error) {
-	session := commondomain.ParseSession(ctx)
+	session := commondomain.ParseUserIdentity(ctx)
 	if session == nil {
 		return nil, ErrUnauthorized
 	}

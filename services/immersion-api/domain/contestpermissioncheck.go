@@ -35,7 +35,7 @@ func (s *ContestPermissionCheck) Execute(ctx context.Context) error {
 		return nil
 	}
 
-	session := commondomain.ParseSession(ctx)
+	session := commondomain.ParseUserIdentity(ctx)
 	userID := uuid.MustParse(session.Subject)
 
 	traits, err := s.kratos.FetchIdentity(ctx, userID)

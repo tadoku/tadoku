@@ -33,6 +33,8 @@ type Config struct {
 	Port                   int64   `validate:"required"`
 	JWKS                   string  `validate:"required"`
 	KratosURL              string  `validate:"required" envconfig:"kratos_url"`
+	OathkeeperURL          string  `validate:"required" envconfig:"oathkeeper_url"`
+	ServiceName            string  `envconfig:"service_name" default:"immersion-api"`
 	SentryDSN              string  `envconfig:"sentry_dns"`
 	SentryTracesSampleRate float64 `validate:"required_with=SentryDSN" envconfig:"sentry_traces_sample_rate"`
 }
@@ -61,8 +63,10 @@ func main() {
 
 	e := echo.New()
 	e.Use(tadokumiddleware.Logger([]string{"/ping"}))
-	e.Use(tadokumiddleware.SessionJWT(cfg.JWKS))
-	e.Use(tadokumiddleware.Session(configRoleRepository, postgresRepository))
+	e.Use(tadokumiddleware.VerifyJWT(cfg.JWKS))
+	e.Use(tadokumiddleware.Identity(configRoleRepository, postgresRepository))
+	e.Use(tadokumiddleware.RequireServiceAudience(cfg.ServiceName))
+	e.Use(tadokumiddleware.RejectBannedUsers())
 	e.Use(middleware.Recover())
 
 	if cfg.SentryDSN != "" {

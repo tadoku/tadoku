@@ -25,6 +25,7 @@ type Config struct {
 	PostgresURL            string  `validate:"required" envconfig:"postgres_url"`
 	Port                   int64   `validate:"required"`
 	JWKS                   string  `validate:"required"`
+	ServiceName            string  `envconfig:"service_name" default:"content-api"`
 	SentryDSN              string  `envconfig:"sentry_dns"`
 	SentryTracesSampleRate float64 `validate:"required_with=SentryDSN" envconfig:"sentry_traces_sample_rate"`
 }
@@ -50,8 +51,10 @@ func main() {
 
 	e := echo.New()
 	e.Use(tadokumiddleware.Logger([]string{"/ping"}))
-	e.Use(tadokumiddleware.SessionJWT(cfg.JWKS))
-	e.Use(tadokumiddleware.Session(configRoleRepository, nil))
+	e.Use(tadokumiddleware.VerifyJWT(cfg.JWKS))
+	e.Use(tadokumiddleware.Identity(configRoleRepository, nil))
+	e.Use(tadokumiddleware.RequireServiceAudience(cfg.ServiceName))
+	e.Use(tadokumiddleware.RejectBannedUsers())
 	e.Use(middleware.Recover())
 
 	if cfg.SentryDSN != "" {

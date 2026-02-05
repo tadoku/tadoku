@@ -39,7 +39,7 @@ func (s *ContestModerationDetachLog) Execute(ctx context.Context, req *ContestMo
 	}
 
 	// Get session to extract user ID
-	session := commondomain.ParseSession(ctx)
+	session := commondomain.ParseUserIdentity(ctx)
 	if session == nil {
 		return ErrUnauthorized
 	}

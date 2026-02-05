@@ -69,6 +69,12 @@ oathkeeper:
           only:
             - ory_kratos_session
 
+      jwt:
+        enabled: true
+        config:
+          jwks_urls:
+            - http://token-reflector.tdk-token-reflector/jwks
+
       noop:
         enabled: true
 
@@ -87,6 +93,7 @@ oathkeeper:
           jwks_url: file:///etc/secrets/oathkeeper/jwks.json
           claims: |
             {
+              "type": "user",
               "session": {{ .Extra | toJson }}
             }
 

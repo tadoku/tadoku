@@ -27,7 +27,7 @@ func NewUserUpsert(repo UserUpsertRepository) *UserUpsert {
 }
 
 func (s *UserUpsert) Execute(ctx context.Context) error {
-	session := commondomain.ParseSession(ctx)
+	session := commondomain.ParseUserIdentity(ctx)
 	if session == nil {
 		return ErrUnauthorized
 	}

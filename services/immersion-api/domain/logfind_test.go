@@ -106,12 +106,12 @@ func TestLogFind_Execute(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			token := &commondomain.SessionToken{
+			token := &commondomain.UserIdentity{
 				Role:        test.role,
 				Subject:     test.userID.String(),
 				DisplayName: "TestUser",
 			}
-			ctx := context.WithValue(context.Background(), commondomain.CtxSessionKey, token)
+			ctx := context.WithValue(context.Background(), commondomain.CtxIdentityKey, token)
 
 			repo := &logFindRepositoryMock{
 				log: test.repoLog,

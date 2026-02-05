@@ -75,7 +75,7 @@ func TestContestFind_Execute(t *testing.T) {
 		}
 
 		svc := domain.NewContestFind(repo)
-		ctx := context.WithValue(context.Background(), commondomain.CtxSessionKey, &commondomain.SessionToken{Role: commondomain.RoleAdmin})
+		ctx := context.WithValue(context.Background(), commondomain.CtxIdentityKey, &commondomain.UserIdentity{Role: commondomain.RoleAdmin})
 		_, err := svc.Execute(ctx, &domain.ContestFindRequest{
 			ID: contestID,
 		})
@@ -96,7 +96,7 @@ func TestContestFind_Execute(t *testing.T) {
 		}
 
 		svc := domain.NewContestFind(repo)
-		ctx := context.WithValue(context.Background(), commondomain.CtxSessionKey, &commondomain.SessionToken{Role: commondomain.RoleUser})
+		ctx := context.WithValue(context.Background(), commondomain.CtxIdentityKey, &commondomain.UserIdentity{Role: commondomain.RoleUser})
 		_, err := svc.Execute(ctx, &domain.ContestFindRequest{
 			ID: contestID,
 		})

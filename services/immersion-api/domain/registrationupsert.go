@@ -44,7 +44,7 @@ func (s *RegistrationUpsert) Execute(ctx context.Context, req *RegistrationUpser
 	}
 
 	// Enrich request with session
-	session := commondomain.ParseSession(ctx)
+	session := commondomain.ParseUserIdentity(ctx)
 	if session == nil {
 		return ErrUnauthorized
 	}

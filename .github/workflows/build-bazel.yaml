@@ -60,6 +60,6 @@ jobs:
           cp /home/runner/.docker/config.json /tmp/docker/config.json
 
           # Push images
-          bazel run //services/content-api:push
-          bazel run //services/immersion-api:push
-          bazel run //services/profile-api:push
+          for target in $(bazel query 'kind("oci_push", //services/...)'); do
+            bazel run "$target"
+          done

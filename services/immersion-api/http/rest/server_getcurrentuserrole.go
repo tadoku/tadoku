@@ -10,7 +10,7 @@ import (
 // Fetches the role of the current user
 // (GET /current-user/role)
 func (s *Server) GetCurrentUserRole(ctx echo.Context) error {
-	session := domain.ParseSession(ctx.Request().Context())
+	session := domain.ParseUserIdentity(ctx.Request().Context())
 	if session == nil {
 		return ctx.NoContent(http.StatusUnauthorized)
 	}

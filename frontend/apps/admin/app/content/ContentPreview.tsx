@@ -37,7 +37,7 @@ interface Props {
 }
 
 export function ContentPreview({ config, id }: Props) {
-  const [namespace] = useNamespace()
+  const namespace = useNamespace()
   const queryClient = useQueryClient()
   const [selectedVersionId, setSelectedVersionId] = useState<string | null>(null)
   const [versionPage, setVersionPage] = useState(0)
@@ -172,7 +172,7 @@ export function ContentPreview({ config, id }: Props) {
               >
                 {data.published_at ? 'Unpublish' : 'Publish'}
               </button>
-              <Link href={config.routes.edit(data.id)} className="btn secondary">
+              <Link href={config.routes.edit(namespace, data.id)} className="btn secondary">
                 <PencilIcon className="w-4 h-4 mr-1 inline" />
                 Edit
               </Link>

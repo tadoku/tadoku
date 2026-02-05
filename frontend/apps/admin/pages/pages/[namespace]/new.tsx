@@ -1,21 +1,20 @@
 import { routes } from '@app/common/routes'
-import { DocumentDuplicateIcon, HomeIcon } from '@heroicons/react/20/solid'
+import { DocumentDuplicateIcon, HomeIcon, PlusIcon } from '@heroicons/react/20/solid'
 import Head from 'next/head'
 import { Breadcrumb } from 'ui'
 import { NextPageWithLayout } from '../../_app'
 import { getDashboardLayout } from '@app/ui/DashboardLayout'
-import { ContentPreview } from '@app/content/ContentPreview'
+import { ContentEditor } from '@app/content/ContentEditor'
 import { pagesConfig } from '@app/content/pages'
-import { useRouter } from 'next/router'
+import { useNamespace } from '@app/content/NamespaceSelector'
 
 const Page: NextPageWithLayout = () => {
-  const router = useRouter()
-  const id = router.query.id as string
+  const namespace = useNamespace()
 
   return (
     <>
       <Head>
-        <title>Page - Admin - Tadoku</title>
+        <title>New Page - Admin - Tadoku</title>
       </Head>
       <div className="pb-4">
         <Breadcrumb
@@ -27,17 +26,19 @@ const Page: NextPageWithLayout = () => {
             },
             {
               label: 'Pages',
-              href: routes.pages(),
+              href: routes.pages(namespace),
               IconComponent: DocumentDuplicateIcon,
             },
             {
-              label: 'View',
-              href: id ? routes.pagePreview(id) : '#',
+              label: 'New Page',
+              href: routes.pageNew(namespace),
+              IconComponent: PlusIcon,
             },
           ]}
         />
       </div>
-      {id ? <ContentPreview config={pagesConfig} id={id} /> : null}
+      <h1 className="title mb-6">New Page</h1>
+      <ContentEditor config={pagesConfig} />
     </>
   )
 }

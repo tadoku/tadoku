@@ -2,6 +2,7 @@
 
 import { ReactElement, useState } from 'react'
 import { routes } from '@app/common/routes'
+import { useNamespace } from '@app/content/NamespaceSelector'
 import {
   DocumentDuplicateIcon,
   DocumentTextIcon,
@@ -21,18 +22,18 @@ interface Props {
   activeLink?: ActiveLink
 }
 
-const sidebarSections = (activeLink?: ActiveLink) => [
+const sidebarSections = (ns: string, activeLink?: ActiveLink) => [
   {
     title: 'Content',
     links: [
       {
-        href: routes.posts(),
+        href: routes.posts(ns),
         label: 'Posts',
         active: activeLink === 'posts',
         IconComponent: DocumentTextIcon,
       },
       {
-        href: routes.pages(),
+        href: routes.pages(ns),
         label: 'Pages',
         active: activeLink === 'pages',
         IconComponent: DocumentDuplicateIcon,
@@ -53,6 +54,7 @@ const sidebarSections = (activeLink?: ActiveLink) => [
 ]
 
 export function DashboardLayout({ children, activeLink }: Props) {
+  const ns = useNamespace()
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
   return (
@@ -108,7 +110,7 @@ export function DashboardLayout({ children, activeLink }: Props) {
           </button>
         </div>
         <div className="pl-4 pr-0 pb-4 mt-4 flex-1">
-          <Sidebar sections={sidebarSections(activeLink)} />
+          <Sidebar sections={sidebarSections(ns, activeLink)} />
         </div>
         <div className="p-4">
           <a

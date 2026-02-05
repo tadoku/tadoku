@@ -14,7 +14,7 @@ interface Props {
 }
 
 export function ContentEditor({ config, id }: Props) {
-  const [namespace] = useNamespace()
+  const namespace = useNamespace()
   const router = useRouter()
   const queryClient = useQueryClient()
   const isNew = !id
@@ -101,7 +101,7 @@ export function ContentEditor({ config, id }: Props) {
       published_at: publishedAt ? new Date(publishedAt).toISOString() : null,
     }
 
-    const onSuccess = () => router.push(config.routes.preview(itemId))
+    const onSuccess = () => router.push(config.routes.preview(namespace, itemId))
 
     if (isNew) {
       createMutation.mutate(input, { onSuccess })

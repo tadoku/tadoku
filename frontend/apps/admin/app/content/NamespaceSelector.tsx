@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react'
+import { useRouter } from 'next/router'
 import { Modal } from 'ui'
 
 const STORAGE_KEY_NAMESPACES = 'admin_namespaces'
-const STORAGE_KEY_SELECTED = 'admin_namespace'
 const DEFAULT_NAMESPACES = ['tadoku']
-const DEFAULT_SELECTED = 'tadoku'
+const DEFAULT_NAMESPACE = 'tadoku'
 
 function loadNamespaces(): string[] {
   if (typeof window === 'undefined') return DEFAULT_NAMESPACES
@@ -18,13 +18,11 @@ function loadNamespaces(): string[] {
   return DEFAULT_NAMESPACES
 }
 
-function loadSelected(): string {
-  if (typeof window === 'undefined') return DEFAULT_SELECTED
-  try {
-    const stored = localStorage.getItem(STORAGE_KEY_SELECTED)
-    if (stored) return stored
-  } catch {}
-  return DEFAULT_SELECTED
+export function useNamespace(): string {
+  const router = useRouter()
+  const ns = router.query.namespace
+  if (typeof ns === 'string' && ns) return ns
+  return DEFAULT_NAMESPACE
 }
 
 interface Props {
@@ -43,9 +41,6 @@ export function NamespaceSelector({ value, onChange }: Props) {
 
   const handleChange = (ns: string) => {
     onChange(ns)
-    try {
-      localStorage.setItem(STORAGE_KEY_SELECTED, ns)
-    } catch {}
   }
 
   const handleAdd = () => {
@@ -131,21 +126,4 @@ export function NamespaceSelector({ value, onChange }: Props) {
       </Modal>
     </>
   )
-}
-
-export function useNamespace() {
-  const [namespace, setNamespace] = useState(DEFAULT_SELECTED)
-
-  useEffect(() => {
-    setNamespace(loadSelected())
-  }, [])
-
-  const handleChange = (ns: string) => {
-    setNamespace(ns)
-    try {
-      localStorage.setItem(STORAGE_KEY_SELECTED, ns)
-    } catch {}
-  }
-
-  return [namespace, handleChange] as const
 }

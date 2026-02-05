@@ -2,7 +2,7 @@ import { routes } from '@app/common/routes'
 import { DocumentTextIcon, HomeIcon, PencilIcon, TrashIcon } from '@heroicons/react/20/solid'
 import Head from 'next/head'
 import { Breadcrumb, Modal } from 'ui'
-import { NextPageWithLayout } from '../../_app'
+import { NextPageWithLayout } from '../../../_app'
 import { getDashboardLayout } from '@app/ui/DashboardLayout'
 import { ContentEditor } from '@app/content/ContentEditor'
 import { postsConfig } from '@app/content/posts'
@@ -17,7 +17,7 @@ const Page: NextPageWithLayout = () => {
   const router = useRouter()
   const queryClient = useQueryClient()
   const id = router.query.id as string
-  const [namespace] = useNamespace()
+  const namespace = useNamespace()
   const [deleteModalOpen, setDeleteModalOpen] = useState(false)
 
   const deleteMutation = useContentDelete(
@@ -26,7 +26,7 @@ const Page: NextPageWithLayout = () => {
     () => {
       toast.success('Post deleted successfully', { position: 'bottom-right' })
       queryClient.invalidateQueries([postsConfig.type])
-      router.push(routes.posts())
+      router.push(routes.posts(namespace))
     },
     () => {
       toast.error('Failed to delete post', { position: 'bottom-right' })
@@ -52,16 +52,16 @@ const Page: NextPageWithLayout = () => {
             },
             {
               label: 'Posts',
-              href: routes.posts(),
+              href: routes.posts(namespace),
               IconComponent: DocumentTextIcon,
             },
             {
               label: 'View',
-              href: id ? routes.postPreview(id) : '#',
+              href: id ? routes.postPreview(namespace, id) : '#',
             },
             {
               label: 'Edit',
-              href: id ? routes.postEdit(id) : '#',
+              href: id ? routes.postEdit(namespace, id) : '#',
               IconComponent: PencilIcon,
             },
           ]}

@@ -6,14 +6,14 @@ const homeUrl = publicRuntimeConfig.homeUrl
 
 export const routes = {
   home: () => `/`,
-  posts: () => `/posts`,
-  postNew: () => `/posts/new`,
-  postPreview: (id: string) => `/posts/${id}`,
-  postEdit: (id: string) => `/posts/${id}/edit`,
-  pages: () => `/pages`,
-  pageNew: () => `/pages/new`,
-  pagePreview: (id: string) => `/pages/${id}`,
-  pageEdit: (id: string) => `/pages/${id}/edit`,
+  posts: (ns: string) => `/posts/${ns}`,
+  postNew: (ns: string) => `/posts/${ns}/new`,
+  postPreview: (ns: string, id: string) => `/posts/${ns}/${id}`,
+  postEdit: (ns: string, id: string) => `/posts/${ns}/${id}/edit`,
+  pages: (ns: string) => `/pages/${ns}`,
+  pageNew: (ns: string) => `/pages/${ns}/new`,
+  pagePreview: (ns: string, id: string) => `/pages/${ns}/${id}`,
+  pageEdit: (ns: string, id: string) => `/pages/${ns}/${id}/edit`,
   users: () => `/users`,
 
   // External

@@ -84,17 +84,17 @@ export function ContentList({ config, namespace }: Props) {
                 {list.data.items.map(item => (
                   <tr key={item.id} className="link">
                     <td className="link">
-                      <Link href={config.routes.preview(item.id)}>
+                      <Link href={config.routes.preview(namespace, item.id)}>
                         {item.title}
                       </Link>
                     </td>
                     <td className="link">
-                      <Link href={config.routes.preview(item.id)}>
+                      <Link href={config.routes.preview(namespace, item.id)}>
                         <StatusBadge item={item} />
                       </Link>
                     </td>
                     <td className="link">
-                      <Link href={config.routes.preview(item.id)}>
+                      <Link href={config.routes.preview(namespace, item.id)}>
                         {item.updated_at
                           ? DateTime.fromISO(item.updated_at).toLocaleString(
                               DateTime.DATE_MED,

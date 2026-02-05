@@ -2,7 +2,7 @@ import { routes } from '@app/common/routes'
 import { DocumentDuplicateIcon, HomeIcon, PencilIcon, TrashIcon } from '@heroicons/react/20/solid'
 import Head from 'next/head'
 import { Breadcrumb, Modal } from 'ui'
-import { NextPageWithLayout } from '../../_app'
+import { NextPageWithLayout } from '../../../_app'
 import { getDashboardLayout } from '@app/ui/DashboardLayout'
 import { ContentEditor } from '@app/content/ContentEditor'
 import { pagesConfig } from '@app/content/pages'
@@ -17,7 +17,7 @@ const Page: NextPageWithLayout = () => {
   const router = useRouter()
   const queryClient = useQueryClient()
   const id = router.query.id as string
-  const [namespace] = useNamespace()
+  const namespace = useNamespace()
   const [deleteModalOpen, setDeleteModalOpen] = useState(false)
 
   const deleteMutation = useContentDelete(
@@ -26,7 +26,7 @@ const Page: NextPageWithLayout = () => {
     () => {
       toast.success('Page deleted successfully', { position: 'bottom-right' })
       queryClient.invalidateQueries([pagesConfig.type])
-      router.push(routes.pages())
+      router.push(routes.pages(namespace))
     },
     () => {
       toast.error('Failed to delete page', { position: 'bottom-right' })
@@ -52,16 +52,16 @@ const Page: NextPageWithLayout = () => {
             },
             {
               label: 'Pages',
-              href: routes.pages(),
+              href: routes.pages(namespace),
               IconComponent: DocumentDuplicateIcon,
             },
             {
               label: 'View',
-              href: id ? routes.pagePreview(id) : '#',
+              href: id ? routes.pagePreview(namespace, id) : '#',
             },
             {
               label: 'Edit',
-              href: id ? routes.pageEdit(id) : '#',
+              href: id ? routes.pageEdit(namespace, id) : '#',
               IconComponent: PencilIcon,
             },
           ]}

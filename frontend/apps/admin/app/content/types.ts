@@ -35,12 +35,12 @@ export interface ContentConfig {
   // How to render the body editor
   renderEditor: (props: { value: string; onChange: (v: string) => void; placeholder?: string }) => ReactNode
 
-  // Route helpers (preview/edit take item ID, not slug)
+  // Route helpers (all take namespace, preview/edit also take item ID)
   routes: {
-    list: () => string
-    preview: (id: string) => string
-    edit: (id: string) => string
-    new: () => string
+    list: (namespace: string) => string
+    preview: (namespace: string, id: string) => string
+    edit: (namespace: string, id: string) => string
+    new: (namespace: string) => string
   }
 
   // UI

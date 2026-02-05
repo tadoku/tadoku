@@ -2,12 +2,15 @@ import { routes } from '@app/common/routes'
 import { DocumentTextIcon, HomeIcon, PlusIcon } from '@heroicons/react/20/solid'
 import Head from 'next/head'
 import { Breadcrumb } from 'ui'
-import { NextPageWithLayout } from '../_app'
+import { NextPageWithLayout } from '../../_app'
 import { getDashboardLayout } from '@app/ui/DashboardLayout'
 import { ContentEditor } from '@app/content/ContentEditor'
 import { postsConfig } from '@app/content/posts'
+import { useNamespace } from '@app/content/NamespaceSelector'
 
 const Page: NextPageWithLayout = () => {
+  const namespace = useNamespace()
+
   return (
     <>
       <Head>
@@ -23,12 +26,12 @@ const Page: NextPageWithLayout = () => {
             },
             {
               label: 'Posts',
-              href: routes.posts(),
+              href: routes.posts(namespace),
               IconComponent: DocumentTextIcon,
             },
             {
               label: 'New Post',
-              href: routes.postNew(),
+              href: routes.postNew(namespace),
               IconComponent: PlusIcon,
             },
           ]}

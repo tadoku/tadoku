@@ -216,75 +216,75 @@ export function ContentPreview({ config, id }: Props) {
                   : 'N/A'}
               </MetadataRow>
             </div>
-          </div>
 
-          {/* Version history */}
-          {versions.data && versions.data.length > 1 ? (() => {
-            const reversed = [...versions.data].reverse()
-            const totalPages = Math.ceil(reversed.length / versionsPerPage)
-            const pageVersions = reversed.slice(
-              versionPage * versionsPerPage,
-              (versionPage + 1) * versionsPerPage,
-            )
-            return (
-              <div className="card mt-4">
-                <span className="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-2 block">
-                  Version History
-                </span>
-                <ul className="flex flex-col gap-1">
-                  {pageVersions.map(v => {
-                    const isSelected = v.id === selectedVersionId
-                    const isCurrent = v.id === versions.data[versions.data.length - 1].id && !isViewingVersion
-                    return (
-                      <li key={v.id}>
-                        <button
-                          type="button"
-                          className={`w-full text-left px-2 py-1.5 text-sm ${
-                            isSelected || (isCurrent && !isViewingVersion)
-                              ? 'bg-indigo-50 text-indigo-700 font-medium'
-                              : 'text-slate-700 hover:bg-slate-50'
-                          }`}
-                          onClick={() =>
-                            setSelectedVersionId(
-                              isCurrent && !isViewingVersion ? null : v.id,
-                            )
-                          }
-                        >
-                          <span>v{v.version}</span>
-                          <span className="text-xs text-slate-400 ml-2">
-                            {DateTime.fromISO(v.created_at).toLocaleString(DateTime.DATE_MED)}
-                          </span>
-                        </button>
-                      </li>
-                    )
-                  })}
-                </ul>
-                {totalPages > 1 ? (
-                  <div className="flex items-center justify-between mt-2 pt-2 border-t border-slate-100">
-                    <button
-                      type="button"
-                      className="text-xs text-slate-500 hover:text-slate-700 disabled:opacity-30 disabled:cursor-default"
-                      disabled={versionPage === 0}
-                      onClick={() => setVersionPage(p => p - 1)}
-                    >
-                      Newer
-                    </button>
-                    <span className="text-xs text-slate-400">
-                      {versionPage + 1} / {totalPages}
-                    </span>
-                    <button
-                      type="button"
-                      className="text-xs text-slate-500 hover:text-slate-700 disabled:opacity-30 disabled:cursor-default"
-                      disabled={versionPage >= totalPages - 1}
-                      onClick={() => setVersionPage(p => p + 1)}
-                    >
-                      Older
-                    </button>
-                  </div>
-                ) : null}
-              </div>
-            )
-          })() : null}
+            {/* Version history */}
+            {versions.data && versions.data.length > 1 ? (() => {
+              const reversed = [...versions.data].reverse()
+              const totalPages = Math.ceil(reversed.length / versionsPerPage)
+              const pageVersions = reversed.slice(
+                versionPage * versionsPerPage,
+                (versionPage + 1) * versionsPerPage,
+              )
+              return (
+                <div className="mt-4 pt-4 border-t border-slate-100">
+                  <span className="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-2 block">
+                    Version History
+                  </span>
+                  <ul className="flex flex-col gap-1">
+                    {pageVersions.map(v => {
+                      const isSelected = v.id === selectedVersionId
+                      const isCurrent = v.id === versions.data[versions.data.length - 1].id && !isViewingVersion
+                      return (
+                        <li key={v.id}>
+                          <button
+                            type="button"
+                            className={`w-full text-left px-2 py-1.5 text-sm ${
+                              isSelected || (isCurrent && !isViewingVersion)
+                                ? 'bg-indigo-50 text-indigo-700 font-medium'
+                                : 'text-slate-700 hover:bg-slate-50'
+                            }`}
+                            onClick={() =>
+                              setSelectedVersionId(
+                                isCurrent && !isViewingVersion ? null : v.id,
+                              )
+                            }
+                          >
+                            <span>v{v.version}</span>
+                            <span className="text-xs text-slate-400 ml-2">
+                              {DateTime.fromISO(v.created_at).toLocaleString(DateTime.DATE_MED)}
+                            </span>
+                          </button>
+                        </li>
+                      )
+                    })}
+                  </ul>
+                  {totalPages > 1 ? (
+                    <div className="flex items-center justify-between mt-2 pt-2 border-t border-slate-100">
+                      <button
+                        type="button"
+                        className="text-xs text-slate-500 hover:text-slate-700 disabled:opacity-30 disabled:cursor-default"
+                        disabled={versionPage === 0}
+                        onClick={() => setVersionPage(p => p - 1)}
+                      >
+                        Newer
+                      </button>
+                      <span className="text-xs text-slate-400">
+                        {versionPage + 1} / {totalPages}
+                      </span>
+                      <button
+                        type="button"
+                        className="text-xs text-slate-500 hover:text-slate-700 disabled:opacity-30 disabled:cursor-default"
+                        disabled={versionPage >= totalPages - 1}
+                        onClick={() => setVersionPage(p => p + 1)}
+                      >
+                        Older
+                      </button>
+                    </div>
+                  ) : null}
+                </div>
+              )
+            })() : null}
+          </div>
         </div>
       </div>
 

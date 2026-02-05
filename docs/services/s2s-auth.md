@@ -5,7 +5,7 @@ This document describes how internal services authenticate with each other using
 ## Overview
 
 - Services use Kubernetes service account (SA) tokens to request a short-lived JWT from Oathkeeper.
-- Oathkeeper validates the SA token, mints a service JWT, and forwards it via the token-reflector.
+- Oathkeeper validates the SA token via the JWT authenticator, mints a service JWT, and forwards it via the token-reflector.
 - Services include the service JWT in `Authorization: Bearer <token>` when calling other internal services.
 - The receiving service validates the JWT and attaches a `ServiceIdentity` to the request context.
 
@@ -16,7 +16,7 @@ The middleware attaches a `domain.Identity` to the request context:
 - `UserIdentity` for human users authenticated via Kratos.
 - `ServiceIdentity` for internal services authenticated via Kubernetes SA.
 
-The `subject` (JWT `sub`) is the primary identifier:
+The `subject` (JWT `sub`, short for "subject") is the primary identifier:
 
 - User: stable unique user ID from the identity provider.
 - Service: `system:serviceaccount:<namespace>:<name>`.
@@ -24,11 +24,12 @@ The `subject` (JWT `sub`) is the primary identifier:
 ## Token Exchange Flow
 
 1. Service reads its projected SA token at `/var/run/secrets/tokens/token`.
-2. Service calls Oathkeeper token exchange endpoint:
+2. Service calls the Oathkeeper token exchange endpoint:
    - `GET http://oathkeeper-proxy.default:4455/token-exchange/<target-service>`
    - `Authorization: Bearer <sa-token>`
-3. Oathkeeper validates the SA token, mints a service JWT, and forwards the request to token-reflector.
-4. Token-reflector returns a JSON response:
+3. Oathkeeper validates the SA token using the JWT authenticator and the Kubernetes JWKS served by token-reflector.
+4. Oathkeeper mints a service JWT and forwards the request to token-reflector.
+5. Token-reflector returns a JSON response:
 
 ```json
 {
@@ -38,7 +39,7 @@ The `subject` (JWT `sub`) is the primary identifier:
 }
 ```
 
-5. Caller uses the JWT to call the target service.
+6. Caller uses the JWT to call the target service.
 
 ## Token Claims
 
@@ -64,8 +65,8 @@ Authn:
 
 Authz:
 
-- `RequireServiceAudience` enforces the service audience.
-  - If `SERVICE_NAME` is unset, service tokens are forbidden.
+- `RequireServiceAudience` enforces the service audience using the configured service name.
+  - Each service sets a default via envconfig: `service_name` defaults to the service's name (for example, `immersion-api`).
 - `RejectBannedUsers` blocks banned users (except `/current-user/role`).
 
 ## Local Development Setup
@@ -73,7 +74,7 @@ Authz:
 - Each service runs in its own namespace prefixed with `tdk-`.
 - Each service has its own ServiceAccount.
 - `token-reflector` runs in `tdk-token-reflector`.
-- Oathkeeper validates JWTs using a JWKS URL served by token-reflector:
+- Oathkeeper validates SA tokens using a JWKS URL served by token-reflector:
   - `http://token-reflector.tdk-token-reflector/jwks`
 
 ## Example: immersion-api -> profile-api
@@ -86,5 +87,5 @@ Authz:
 
 - Invalid audience: `403 Forbidden`
 - Missing/invalid JWT: `401 Unauthorized`
-- Missing `SERVICE_NAME`: service tokens rejected (`403`)
+- Missing service name configuration: service tokens rejected (`403`)
 - Token-reflector unavailable: token exchange returns `502 Bad Gateway`

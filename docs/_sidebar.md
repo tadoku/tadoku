@@ -13,6 +13,7 @@
 
   - [immersion-api](/services/immersion-api.md)
   - [content-api](/services/content-api.md)
+  - [s2s-auth](/services/s2s-auth.md)
 
 - Frontend
 

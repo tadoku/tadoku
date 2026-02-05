@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"os"
 	"strings"
 
 	"github.com/MicahParks/keyfunc"
@@ -151,14 +150,6 @@ func setIdentityContext(ctx echo.Context, identity domain.Identity) {
 		context.WithValue(ctx.Request().Context(), domain.CtxIdentityKey, identity)))
 }
 
-func getServiceName() string {
-	if name := os.Getenv("SERVICE_NAME"); name != "" {
-		return name
-	}
-	// Default to allowing any audience in local/dev.
-	return ""
-}
-
 func RejectBannedUsers() echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(ctx echo.Context) error {
@@ -172,8 +163,7 @@ func RejectBannedUsers() echo.MiddlewareFunc {
 	}
 }
 
-func RequireServiceAudience() echo.MiddlewareFunc {
-	serviceName := getServiceName()
+func RequireServiceAudience(serviceName string) echo.MiddlewareFunc {
 	if serviceName == "" {
 		return func(next echo.HandlerFunc) echo.HandlerFunc {
 			return func(ctx echo.Context) error {

@@ -3,7 +3,6 @@ package main
 import (
 	"database/sql"
 	"fmt"
-	"os"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/kelseyhightower/envconfig"
@@ -26,6 +25,7 @@ type Config struct {
 	PostgresURL            string  `validate:"required" envconfig:"postgres_url"`
 	Port                   int64   `validate:"required"`
 	JWKS                   string  `validate:"required"`
+	ServiceName            string  `envconfig:"service_name"`
 	SentryDSN              string  `envconfig:"sentry_dns"`
 	SentryTracesSampleRate float64 `validate:"required_with=SentryDSN" envconfig:"sentry_traces_sample_rate"`
 }
@@ -40,13 +40,13 @@ func main() {
 		panic(fmt.Errorf("could not configure server: %w", err))
 	}
 
-	if os.Getenv("SERVICE_NAME") == "" {
-		_ = os.Setenv("SERVICE_NAME", "content-api")
-	}
-
 	psql, err := sql.Open("pgx", cfg.PostgresURL)
 	if err != nil {
 		panic(err)
+	}
+
+	if cfg.ServiceName == "" {
+		cfg.ServiceName = "content-api"
 	}
 
 	pageRepository := postgres.NewPageRepository(psql)
@@ -57,7 +57,7 @@ func main() {
 	e.Use(tadokumiddleware.Logger([]string{"/ping"}))
 	e.Use(tadokumiddleware.SessionJWT(cfg.JWKS))
 	e.Use(tadokumiddleware.Identity(configRoleRepository, nil))
-	e.Use(tadokumiddleware.RequireServiceAudience())
+	e.Use(tadokumiddleware.RequireServiceAudience(cfg.ServiceName))
 	e.Use(tadokumiddleware.RejectBannedUsers())
 	e.Use(middleware.Recover())
 

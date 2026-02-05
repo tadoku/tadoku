@@ -89,6 +89,38 @@ Authz:
 2. Initialize the S2S client and fetch a token.
 3. Attach the token to your internal request.
 
+### Using a Generated Internal Client (Preferred)
+
+```go
+import (
+	"net/http"
+
+	"github.com/tadoku/tadoku/services/common/client/s2s"
+	profileclient "github.com/tadoku/tadoku/services/profile-api/http/rest/openapi/internalapi"
+)
+
+s2sClient := s2s.NewClient(cfg.OathkeeperURL)
+httpClient := &http.Client{
+	Transport: s2s.NewAuthTransport(s2sClient, "profile-api", nil),
+}
+
+client, err := profileclient.NewClient(
+	"http://profile-api.tdk-profile-api",
+	profileclient.WithHTTPClient(httpClient),
+)
+if err != nil {
+	return err
+}
+
+resp, err := client.InternalPing(ctx)
+if err != nil {
+	return err
+}
+_ = resp
+```
+
+### Using Raw HTTP (Low-Level)
+
 ```go
 import (
 	"net/http"

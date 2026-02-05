@@ -24,12 +24,12 @@ const Page: NextPageWithLayout = () => {
     pagesConfig,
     namespace,
     () => {
-      toast.success('Page deleted successfully')
+      toast.success('Page deleted successfully', { position: 'bottom-right' })
       queryClient.invalidateQueries([pagesConfig.type])
       router.push(routes.pages())
     },
     () => {
-      toast.error('Failed to delete page')
+      toast.error('Failed to delete page', { position: 'bottom-right' })
     },
   )
 

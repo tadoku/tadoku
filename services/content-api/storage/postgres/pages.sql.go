@@ -401,3 +401,28 @@ func (q *Queries) UpdatePage(ctx context.Context, arg UpdatePageParams) (uuid.UU
 	err := row.Scan(&id)
 	return id, err
 }
+
+const updatePageMetadata = `-- name: UpdatePageMetadata :one
+update pages
+set
+  slug = $1,
+  published_at = $2,
+  updated_at = now()
+where
+  id = $3 and
+  deleted_at is null
+returning id
+`
+
+type UpdatePageMetadataParams struct {
+	Slug        string
+	PublishedAt sql.NullTime
+	ID          uuid.UUID
+}
+
+func (q *Queries) UpdatePageMetadata(ctx context.Context, arg UpdatePageMetadataParams) (uuid.UUID, error) {
+	row := q.db.QueryRowContext(ctx, updatePageMetadata, arg.Slug, arg.PublishedAt, arg.ID)
+	var id uuid.UUID
+	err := row.Scan(&id)
+	return id, err
+}

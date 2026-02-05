@@ -11,13 +11,13 @@ import { useState } from 'react'
 
 function StatusBadge({ item }: { item: ContentItem }) {
   if (!item.published_at) {
-    return <span className="tag bg-amber-100 text-amber-800">Draft</span>
+    return <span className="tag bg-amber-100 text-amber-800 shadow-sm">Draft</span>
   }
   const publishedAt = DateTime.fromISO(item.published_at)
   if (publishedAt > DateTime.now()) {
-    return <span className="tag bg-blue-100 text-blue-800">Scheduled</span>
+    return <span className="tag bg-blue-100 text-blue-800 shadow-sm">Scheduled</span>
   }
-  return <span className="tag bg-emerald-100 text-emerald-800">Published</span>
+  return <span className="tag bg-emerald-100 text-emerald-800 shadow-sm">Published</span>
 }
 
 function MetadataRow({ label, children }: { label: string; children: React.ReactNode }) {
@@ -65,11 +65,13 @@ export function ContentPreview({ config, id }: Props) {
     () => {
       toast.success(
         item.data?.published_at ? 'Unpublished successfully' : 'Published successfully',
+        { position: 'bottom-right' },
       )
+      queryClient.removeQueries([config.type, 'findById', namespace, id])
       queryClient.invalidateQueries([config.type])
     },
     () => {
-      toast.error('Failed to update publish status')
+      toast.error('Failed to update publish status', { position: 'bottom-right' })
     },
   )
 
@@ -77,13 +79,14 @@ export function ContentPreview({ config, id }: Props) {
     config,
     namespace,
     () => {
-      toast.success('Version restored successfully')
+      toast.success('Version restored successfully', { position: 'bottom-right' })
       setSelectedVersionId(null)
+      setVersionPage(0)
       queryClient.removeQueries([config.type, 'findById', namespace, id])
       queryClient.invalidateQueries([config.type])
     },
     () => {
-      toast.error('Failed to restore version')
+      toast.error('Failed to restore version', { position: 'bottom-right' })
     },
   )
 
@@ -133,7 +136,7 @@ export function ContentPreview({ config, id }: Props) {
     <>
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
         <div>
-          <h1 className="title">{previewTitle}</h1>
+          <h1 className="title">{config.label} preview</h1>
           <div className="flex items-center gap-2 mt-1">
             <StatusBadge item={data} />
             <span className="text-sm text-slate-400">/{data.slug}</span>
@@ -185,7 +188,10 @@ export function ContentPreview({ config, id }: Props) {
             {selectedVersion.isLoading ? (
               <Loading />
             ) : (
-              config.renderBody(previewBody)
+              <>
+                <h2 className="text-xl font-bold mb-4">{previewTitle}</h2>
+                {config.renderBody(previewBody)}
+              </>
             )}
           </div>
         </div>
@@ -194,7 +200,6 @@ export function ContentPreview({ config, id }: Props) {
         <div className="w-full lg:w-72 flex-shrink-0">
           <div className="card">
             <div className="flex flex-col gap-4">
-              <StatusBadge item={data} />
               {data.published_at ? (
                 <MetadataRow label="Published">
                   {DateTime.fromISO(data.published_at).toLocaleString(DateTime.DATETIME_FULL)}
@@ -234,7 +239,7 @@ export function ContentPreview({ config, id }: Props) {
                       <li key={v.id}>
                         <button
                           type="button"
-                          className={`w-full text-left px-2 py-1.5 rounded text-sm ${
+                          className={`w-full text-left px-2 py-1.5 text-sm ${
                             isSelected || (isCurrent && !isViewingVersion)
                               ? 'bg-indigo-50 text-indigo-700 font-medium'
                               : 'text-slate-700 hover:bg-slate-50'

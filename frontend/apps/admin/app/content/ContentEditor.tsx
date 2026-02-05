@@ -53,11 +53,11 @@ export function ContentEditor({ config, id }: Props) {
     config,
     namespace,
     () => {
-      toast.success(`${config.label} created successfully`)
+      toast.success(`${config.label} created successfully`, { position: 'bottom-right' })
       queryClient.invalidateQueries([config.type])
     },
     () => {
-      toast.error(`Failed to create ${config.label.toLowerCase()}`)
+      toast.error(`Failed to create ${config.label.toLowerCase()}`, { position: 'bottom-right' })
     },
   )
 
@@ -65,11 +65,11 @@ export function ContentEditor({ config, id }: Props) {
     config,
     namespace,
     () => {
-      toast.success(`${config.label} updated successfully`)
+      toast.success(`${config.label} updated successfully`, { position: 'bottom-right' })
       queryClient.invalidateQueries([config.type])
     },
     () => {
-      toast.error(`Failed to update ${config.label.toLowerCase()}`)
+      toast.error(`Failed to update ${config.label.toLowerCase()}`, { position: 'bottom-right' })
     },
   )
 

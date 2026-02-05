@@ -148,6 +148,29 @@ func (r *PageRepository) UpdatePage(ctx context.Context, page *domain.Page) erro
 	return nil
 }
 
+// UpdatePageMetadata implements domain.PageUpdateRepository
+func (r *PageRepository) UpdatePageMetadata(ctx context.Context, page *domain.Page) error {
+	_, err := r.q.UpdatePageMetadata(ctx, UpdatePageMetadataParams{
+		ID:          page.ID,
+		Slug:        page.Slug,
+		PublishedAt: NewNullTime(page.PublishedAt),
+	})
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return domain.ErrPageNotFound
+		}
+
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) && pgErr.Code == pgerrcode.UniqueViolation {
+			return domain.ErrPageAlreadyExists
+		}
+
+		return fmt.Errorf("could not update page metadata: %w", err)
+	}
+
+	return nil
+}
+
 // DeletePage implements domain.PageDeleteRepository
 func (r *PageRepository) DeletePage(ctx context.Context, id uuid.UUID) error {
 	if err := r.q.DeletePage(ctx, id); err != nil {

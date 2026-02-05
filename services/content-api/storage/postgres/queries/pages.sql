@@ -94,6 +94,17 @@ where
   deleted_at is null
 returning id;
 
+-- name: UpdatePageMetadata :one
+update pages
+set
+  slug = sqlc.arg('slug'),
+  published_at = sqlc.arg('published_at'),
+  updated_at = now()
+where
+  id = sqlc.arg('id') and
+  deleted_at is null
+returning id;
+
 -- name: PagesMetadata :one
 select
   count(pages.id) as total_size,

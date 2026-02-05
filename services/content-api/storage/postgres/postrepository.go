@@ -148,6 +148,29 @@ func (r *PostRepository) UpdatePost(ctx context.Context, post *domain.Post) erro
 	return nil
 }
 
+// UpdatePostMetadata implements domain.PostUpdateRepository
+func (r *PostRepository) UpdatePostMetadata(ctx context.Context, post *domain.Post) error {
+	_, err := r.q.UpdatePostMetadata(ctx, UpdatePostMetadataParams{
+		ID:          post.ID,
+		Slug:        post.Slug,
+		PublishedAt: NewNullTime(post.PublishedAt),
+	})
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return domain.ErrPostNotFound
+		}
+
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) && pgErr.Code == pgerrcode.UniqueViolation {
+			return domain.ErrPostAlreadyExists
+		}
+
+		return fmt.Errorf("could not update post metadata: %w", err)
+	}
+
+	return nil
+}
+
 // DeletePost implements domain.PostDeleteRepository
 func (r *PostRepository) DeletePost(ctx context.Context, id uuid.UUID) error {
 	if err := r.q.DeletePost(ctx, id); err != nil {

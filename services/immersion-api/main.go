@@ -36,7 +36,7 @@ type Config struct {
 	KratosURL              string  `validate:"required" envconfig:"kratos_url"`
 	OathkeeperURL          string  `validate:"required" envconfig:"oathkeeper_url"`
 	ProfileAPIURL          string  `envconfig:"profile_api_url"`
-	ServiceName            string  `envconfig:"service_name"`
+	ServiceName            string  `envconfig:"service_name" default:"immersion-api"`
 	SentryDSN              string  `envconfig:"sentry_dns"`
 	SentryTracesSampleRate float64 `validate:"required_with=SentryDSN" envconfig:"sentry_traces_sample_rate"`
 }
@@ -53,10 +53,6 @@ func main() {
 
 	if cfg.ProfileAPIURL == "" {
 		cfg.ProfileAPIURL = "http://profile-api"
-	}
-
-	if cfg.ServiceName == "" {
-		cfg.ServiceName = "immersion-api"
 	}
 
 	psql, err := sql.Open("pgx", cfg.PostgresURL)

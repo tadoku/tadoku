@@ -22,7 +22,7 @@ type Config struct {
 	PostgresURL            string  `validate:"required" envconfig:"postgres_url"`
 	Port                   int64   `validate:"required"`
 	JWKS                   string  `validate:"required"`
-	ServiceName            string  `envconfig:"service_name"`
+	ServiceName            string  `envconfig:"service_name" default:"profile-api"`
 	SentryDSN              string  `envconfig:"sentry_dns"`
 	SentryTracesSampleRate float64 `validate:"required_with=SentryDSN" envconfig:"sentry_traces_sample_rate"`
 }
@@ -42,10 +42,6 @@ func main() {
 		panic(err)
 	}
 	_ = psql // Will be used when repositories are added
-
-	if cfg.ServiceName == "" {
-		cfg.ServiceName = "profile-api"
-	}
 
 	roleRepository := memory.NewRoleRepository("/etc/tadoku/permissions/roles.yaml")
 

@@ -25,7 +25,7 @@ type Config struct {
 	PostgresURL            string  `validate:"required" envconfig:"postgres_url"`
 	Port                   int64   `validate:"required"`
 	JWKS                   string  `validate:"required"`
-	ServiceName            string  `envconfig:"service_name"`
+	ServiceName            string  `envconfig:"service_name" default:"content-api"`
 	SentryDSN              string  `envconfig:"sentry_dns"`
 	SentryTracesSampleRate float64 `validate:"required_with=SentryDSN" envconfig:"sentry_traces_sample_rate"`
 }
@@ -43,10 +43,6 @@ func main() {
 	psql, err := sql.Open("pgx", cfg.PostgresURL)
 	if err != nil {
 		panic(err)
-	}
-
-	if cfg.ServiceName == "" {
-		cfg.ServiceName = "content-api"
 	}
 
 	pageRepository := postgres.NewPageRepository(psql)

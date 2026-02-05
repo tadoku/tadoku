@@ -1,10 +1,9 @@
 import { Loading, Modal } from 'ui'
 import { ContentConfig, ContentItem } from './types'
-import { useContentFind, useContentUpdate } from './api'
+import { useContentFindById, useContentUpdate } from './api'
 import { useNamespace } from './NamespaceSelector'
 import { DateTime } from 'luxon'
 import Link from 'next/link'
-import { useRouter } from 'next/router'
 import { useState } from 'react'
 import { PencilIcon, TrashIcon } from '@heroicons/react/20/solid'
 import { useQueryClient } from 'react-query'
@@ -34,17 +33,16 @@ function MetadataRow({ label, children }: { label: string; children: React.React
 
 interface Props {
   config: ContentConfig
-  slug: string
+  id: string
 }
 
-export function ContentPreview({ config, slug }: Props) {
+export function ContentPreview({ config, id }: Props) {
   const [namespace] = useNamespace()
-  const router = useRouter()
   const queryClient = useQueryClient()
   const [deleteModalOpen, setDeleteModalOpen] = useState(false)
 
-  const item = useContentFind(config, namespace, slug, {
-    enabled: !!slug && !!namespace,
+  const item = useContentFindById(config, namespace, id, {
+    enabled: !!id && !!namespace,
   })
 
   const togglePublishMutation = useContentUpdate(
@@ -93,7 +91,7 @@ export function ContentPreview({ config, slug }: Props) {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
         <h1 className="title">{data.title}</h1>
         <div className="flex items-center gap-2 flex-shrink-0">
-          <Link href={config.routes.edit(data.slug)} className="btn secondary">
+          <Link href={config.routes.edit(data.id)} className="btn secondary">
             <PencilIcon className="w-4 h-4 mr-1 inline" />
             Edit
           </Link>

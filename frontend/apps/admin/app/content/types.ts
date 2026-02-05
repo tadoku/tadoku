@@ -29,11 +29,11 @@ export interface ContentConfig {
   // How to render the body content in previews
   renderBody: (body: string) => ReactNode
 
-  // Route helpers
+  // Route helpers (preview/edit take item ID, not slug)
   routes: {
     list: () => string
-    preview: (slug: string) => string
-    edit: (slug: string) => string
+    preview: (id: string) => string
+    edit: (id: string) => string
     new: () => string
   }
 

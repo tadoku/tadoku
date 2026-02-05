@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Loading } from 'ui'
-import { ContentConfig, ContentItem } from './types'
-import { useContentCreate, useContentFind, useContentUpdate } from './api'
+import { ContentConfig } from './types'
+import { useContentCreate, useContentFindById, useContentUpdate } from './api'
 import { useNamespace } from './NamespaceSelector'
 import { useRouter } from 'next/router'
 import { useQueryClient } from 'react-query'
@@ -9,14 +9,14 @@ import { toast } from 'react-toastify'
 
 interface Props {
   config: ContentConfig
-  slug?: string // undefined = new item, string = editing existing
+  id?: string // undefined = new item, string = editing existing
 }
 
-export function ContentEditor({ config, slug }: Props) {
+export function ContentEditor({ config, id }: Props) {
   const [namespace] = useNamespace()
   const router = useRouter()
   const queryClient = useQueryClient()
-  const isNew = !slug
+  const isNew = !id
 
   // Form state
   const [title, setTitle] = useState('')
@@ -26,8 +26,8 @@ export function ContentEditor({ config, slug }: Props) {
   const [initialized, setInitialized] = useState(false)
 
   // Load existing item if editing
-  const existing = useContentFind(config, namespace, slug ?? '', {
-    enabled: !isNew && !!slug && !!namespace,
+  const existing = useContentFindById(config, namespace, id ?? '', {
+    enabled: !isNew && !!id && !!namespace,
   })
 
   // Populate form when data loads
@@ -51,7 +51,6 @@ export function ContentEditor({ config, slug }: Props) {
     () => {
       toast.success(`${config.label} created successfully`)
       queryClient.invalidateQueries([config.type])
-      router.push(config.routes.preview(itemSlug))
     },
     () => {
       toast.error(`Failed to create ${config.label.toLowerCase()}`)
@@ -64,7 +63,6 @@ export function ContentEditor({ config, slug }: Props) {
     () => {
       toast.success(`${config.label} updated successfully`)
       queryClient.invalidateQueries([config.type])
-      router.push(config.routes.preview(itemSlug))
     },
     () => {
       toast.error(`Failed to update ${config.label.toLowerCase()}`)
@@ -79,18 +77,21 @@ export function ContentEditor({ config, slug }: Props) {
       return
     }
 
+    const itemId = isNew ? crypto.randomUUID() : existing.data!.id
     const input = {
-      id: isNew ? crypto.randomUUID() : existing.data!.id,
+      id: itemId,
       slug: itemSlug.trim().toLowerCase(),
       title: title.trim(),
       body: body,
       published_at: publishedAt ? new Date(publishedAt).toISOString() : null,
     }
 
+    const onSuccess = () => router.push(config.routes.preview(itemId))
+
     if (isNew) {
-      createMutation.mutate(input)
+      createMutation.mutate(input, { onSuccess })
     } else {
-      updateMutation.mutate(input)
+      updateMutation.mutate(input, { onSuccess })
     }
   }
 
@@ -100,18 +101,21 @@ export function ContentEditor({ config, slug }: Props) {
       return
     }
 
+    const itemId = isNew ? crypto.randomUUID() : existing.data!.id
     const input = {
-      id: isNew ? crypto.randomUUID() : existing.data!.id,
+      id: itemId,
       slug: itemSlug.trim().toLowerCase(),
       title: title.trim(),
       body: body,
       published_at: null,
     }
 
+    const onSuccess = () => router.push(config.routes.preview(itemId))
+
     if (isNew) {
-      createMutation.mutate(input)
+      createMutation.mutate(input, { onSuccess })
     } else {
-      updateMutation.mutate(input)
+      updateMutation.mutate(input, { onSuccess })
     }
   }
 

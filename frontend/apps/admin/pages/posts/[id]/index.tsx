@@ -1,21 +1,21 @@
 import { routes } from '@app/common/routes'
-import { DocumentTextIcon, HomeIcon, PencilIcon } from '@heroicons/react/20/solid'
+import { DocumentTextIcon, HomeIcon } from '@heroicons/react/20/solid'
 import Head from 'next/head'
 import { Breadcrumb } from 'ui'
 import { NextPageWithLayout } from '../../_app'
 import { getDashboardLayout } from '@app/ui/DashboardLayout'
-import { ContentEditor } from '@app/content/ContentEditor'
+import { ContentPreview } from '@app/content/ContentPreview'
 import { postsConfig } from '@app/content/posts'
 import { useRouter } from 'next/router'
 
 const Page: NextPageWithLayout = () => {
   const router = useRouter()
-  const slug = router.query.slug as string
+  const id = router.query.id as string
 
   return (
     <>
       <Head>
-        <title>Edit Post - Admin - Tadoku</title>
+        <title>Post - Admin - Tadoku</title>
       </Head>
       <div className="pb-4">
         <Breadcrumb
@@ -31,19 +31,13 @@ const Page: NextPageWithLayout = () => {
               IconComponent: DocumentTextIcon,
             },
             {
-              label: slug ?? '...',
-              href: slug ? routes.postPreview(slug) : '#',
-            },
-            {
-              label: 'Edit',
-              href: slug ? routes.postEdit(slug) : '#',
-              IconComponent: PencilIcon,
+              label: 'View',
+              href: id ? routes.postPreview(id) : '#',
             },
           ]}
         />
       </div>
-      <h1 className="title mb-6">Edit Post</h1>
-      {slug ? <ContentEditor config={postsConfig} slug={slug} /> : null}
+      {id ? <ContentPreview config={postsConfig} id={id} /> : null}
     </>
   )
 }

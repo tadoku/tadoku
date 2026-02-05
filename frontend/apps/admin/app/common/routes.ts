@@ -8,8 +8,8 @@ export const routes = {
   home: () => `/`,
   posts: () => `/posts`,
   postNew: () => `/posts/new`,
-  postPreview: (slug: string) => `/posts/${slug}`,
-  postEdit: (slug: string) => `/posts/${slug}/edit`,
+  postPreview: (id: string) => `/posts/${id}`,
+  postEdit: (id: string) => `/posts/${id}/edit`,
   pages: () => `/pages`,
   users: () => `/users`,
 

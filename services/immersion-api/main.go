@@ -50,6 +50,10 @@ func main() {
 		panic(fmt.Errorf("could not configure server: %w", err))
 	}
 
+	if os.Getenv("SERVICE_NAME") == "" {
+		_ = os.Setenv("SERVICE_NAME", "immersion-api")
+	}
+
 	if cfg.ProfileAPIURL == "" {
 		cfg.ProfileAPIURL = "http://profile-api"
 	}

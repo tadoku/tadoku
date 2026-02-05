@@ -3,6 +3,7 @@ package main
 import (
 	"database/sql"
 	"fmt"
+	"os"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/kelseyhightower/envconfig"
@@ -34,6 +35,10 @@ func main() {
 	err := validate.Struct(cfg)
 	if err != nil {
 		panic(fmt.Errorf("could not configure server: %w", err))
+	}
+
+	if os.Getenv("SERVICE_NAME") == "" {
+		_ = os.Setenv("SERVICE_NAME", "profile-api")
 	}
 
 	psql, err := sql.Open("pgx", cfg.PostgresURL)

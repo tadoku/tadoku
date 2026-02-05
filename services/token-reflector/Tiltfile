@@ -9,4 +9,4 @@ bazel_build(
   deps=['./'],
 )
 
-k8s_resource('token-reflector', labels=["infra"], namespace='tdk-token-reflector')
+k8s_resource('token-reflector', labels=["infra"])

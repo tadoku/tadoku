@@ -6,14 +6,7 @@ import { useNamespace } from './NamespaceSelector'
 import { useRouter } from 'next/router'
 import { useQueryClient } from 'react-query'
 import { toast } from 'react-toastify'
-
-function generateUUID(): string {
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
-    const r = (Math.random() * 16) | 0
-    const v = c === 'x' ? r : (r & 0x3) | 0x8
-    return v.toString(16)
-  })
-}
+import { v4 as uuidv4 } from 'uuid'
 
 interface Props {
   config: ContentConfig
@@ -85,7 +78,7 @@ export function ContentEditor({ config, id }: Props) {
       return
     }
 
-    const itemId = isNew ? generateUUID() : existing.data!.id
+    const itemId = isNew ? uuidv4() : existing.data!.id
     const input = {
       id: itemId,
       slug: itemSlug.trim().toLowerCase(),
@@ -109,7 +102,7 @@ export function ContentEditor({ config, id }: Props) {
       return
     }
 
-    const itemId = isNew ? generateUUID() : existing.data!.id
+    const itemId = isNew ? uuidv4() : existing.data!.id
     const input = {
       id: itemId,
       slug: itemSlug.trim().toLowerCase(),

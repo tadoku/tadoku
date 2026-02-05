@@ -125,20 +125,8 @@ export function ContentPreview({ config, id }: Props) {
         {/* Metadata panel */}
         <div className="w-full lg:w-72 flex-shrink-0">
           <div className="card">
-            <h2 className="subtitle mb-4">Metadata</h2>
             <div className="flex flex-col gap-4">
-              <MetadataRow label="Status">
-                <StatusBadge item={data} />
-              </MetadataRow>
-              <MetadataRow label="Slug">
-                <code className="text-sm bg-slate-100 px-2 py-0.5">{data.slug}</code>
-              </MetadataRow>
-              <MetadataRow label="Namespace">
-                {data.namespace}
-              </MetadataRow>
-              <MetadataRow label="ID">
-                <code className="text-xs bg-slate-100 px-2 py-0.5 break-all">{data.id}</code>
-              </MetadataRow>
+              <StatusBadge item={data} />
               {data.published_at ? (
                 <MetadataRow label="Published">
                   {DateTime.fromISO(data.published_at).toLocaleString(DateTime.DATETIME_FULL)}

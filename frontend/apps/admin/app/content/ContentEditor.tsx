@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Loading } from 'ui'
+import { Loading, Tabbar } from 'ui'
 import { ContentConfig } from './types'
 import { useContentCreate, useContentFindById, useContentUpdate } from './api'
 import { useNamespace } from './NamespaceSelector'
@@ -18,6 +18,9 @@ export function ContentEditor({ config, id }: Props) {
   const router = useRouter()
   const queryClient = useQueryClient()
   const isNew = !id
+
+  // Mobile tab state
+  const [mobileTab, setMobileTab] = useState<'content' | 'preview'>('content')
 
   // Form state
   const [title, setTitle] = useState('')
@@ -71,12 +74,19 @@ export function ContentEditor({ config, id }: Props) {
   )
 
   const isSaving = createMutation.isLoading || updateMutation.isLoading
+  const [errors, setErrors] = useState<Record<string, string>>({})
 
   const handleSave = () => {
-    if (!title.trim() || !itemSlug.trim() || !body.trim()) {
-      toast.error('Title, slug, and content are required')
+    const newErrors: Record<string, string> = {}
+    if (!title.trim()) newErrors.title = 'Title is required'
+    if (!itemSlug.trim()) newErrors.slug = 'Slug is required'
+    if (!body.trim()) newErrors.body = 'Content is required'
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors)
       return
     }
+    setErrors({})
 
     const itemId = isNew ? uuidv4() : existing.data!.id
     const input = {
@@ -96,43 +106,16 @@ export function ContentEditor({ config, id }: Props) {
     }
   }
 
-  const handleSaveAsDraft = () => {
-    if (!title.trim() || !itemSlug.trim() || !body.trim()) {
-      toast.error('Title, slug, and content are required')
-      return
-    }
-
-    const itemId = isNew ? uuidv4() : existing.data!.id
-    const input = {
-      id: itemId,
-      slug: itemSlug.trim().toLowerCase(),
-      title: title.trim(),
-      body: body,
-      published_at: null,
-    }
-
-    const onSuccess = () => router.push(config.routes.preview(itemId))
-
-    if (isNew) {
-      createMutation.mutate(input, { onSuccess })
-    } else {
-      updateMutation.mutate(input, { onSuccess })
-    }
-  }
-
-  // Auto-generate slug from title for new items
   const handleTitleChange = (value: string) => {
     setTitle(value)
-    if (isNew && !initialized) {
-      setItemSlug(
-        value
-          .toLowerCase()
-          .replace(/[^a-z0-9\s-]/g, '')
-          .replace(/\s+/g, '-')
-          .replace(/-+/g, '-')
-          .replace(/^-|-$/g, ''),
-      )
-    }
+    setItemSlug(
+      value
+        .toLowerCase()
+        .replace(/[^a-z0-9\s-]/g, '')
+        .replace(/\s+/g, '-')
+        .replace(/-+/g, '-')
+        .replace(/^-|-$/g, ''),
+    )
   }
 
   if (!isNew && existing.isLoading) {
@@ -151,24 +134,36 @@ export function ContentEditor({ config, id }: Props) {
 
   return (
     <div className="flex flex-col gap-6">
+      {/* Mobile tab bar */}
+      <div className="lg:hidden">
+        <Tabbar
+          alwaysExpanded
+          links={[
+            { label: 'Content', active: mobileTab === 'content', onClick: () => setMobileTab('content') },
+            { label: 'Preview', active: mobileTab === 'preview', onClick: () => setMobileTab('preview') },
+          ]}
+        />
+      </div>
+
       {/* Editor and preview */}
       <div className="flex flex-col lg:flex-row gap-6">
         {/* Editor */}
-        <div className="flex-1 min-w-0 flex flex-col">
-          <label className="text-sm font-semibold text-slate-600 mb-2">
-            Content
+        <div className={`flex-1 min-w-0 flex-col ${mobileTab === 'preview' ? 'hidden lg:flex' : 'flex'}`}>
+          <label className={`label flex-1 ${errors.body ? 'error' : ''}`}>
+            <span className="label-text">Content</span>
+            <textarea
+              className="input font-mono text-sm flex-1"
+              style={{ minHeight: '500px' }}
+              value={body}
+              onChange={e => setBody(e.target.value)}
+              placeholder={`Write your ${config.label.toLowerCase()} content here...`}
+            />
+            <span className="error">{errors.body}</span>
           </label>
-          <textarea
-            className="input font-mono text-sm flex-1"
-            style={{ minHeight: '500px' }}
-            value={body}
-            onChange={e => setBody(e.target.value)}
-            placeholder={`Write your ${config.label.toLowerCase()} content here...`}
-          />
         </div>
 
         {/* Live preview */}
-        <div className="flex-1 min-w-0 flex flex-col">
+        <div className={`flex-1 min-w-0 flex-col ${mobileTab === 'content' ? 'hidden lg:flex' : 'flex'}`}>
           <span className="text-sm font-semibold text-slate-600 mb-2">
             Preview
           </span>
@@ -188,7 +183,7 @@ export function ContentEditor({ config, id }: Props) {
       <div className="card">
         <h2 className="subtitle mb-4">Metadata</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <label className="label">
+          <label className={`label ${errors.title ? 'error' : ''}`}>
             <span className="label-text">Title</span>
             <input
               type="text"
@@ -197,8 +192,9 @@ export function ContentEditor({ config, id }: Props) {
               onChange={e => handleTitleChange(e.target.value)}
               placeholder="Post title"
             />
+            <span className="error">{errors.title}</span>
           </label>
-          <label className="label">
+          <label className={`label ${errors.slug ? 'error' : ''}`}>
             <span className="label-text">Slug</span>
             <input
               type="text"
@@ -207,9 +203,10 @@ export function ContentEditor({ config, id }: Props) {
               onChange={e => setItemSlug(e.target.value)}
               placeholder="url-friendly-slug"
             />
+            <span className="error">{errors.slug}</span>
           </label>
           <label className="label">
-            <span className="label-text">Publish Date</span>
+            <span className="label-text">Publish Date (UTC)</span>
             <input
               type="datetime-local"
               className="input"
@@ -222,7 +219,14 @@ export function ContentEditor({ config, id }: Props) {
       </div>
 
       {/* Actions */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center justify-end gap-3">
+        <button
+          type="button"
+          className="btn ghost"
+          onClick={() => router.back()}
+        >
+          Cancel
+        </button>
         <button
           type="button"
           className="btn primary"
@@ -230,21 +234,6 @@ export function ContentEditor({ config, id }: Props) {
           disabled={isSaving}
         >
           {isSaving ? 'Saving...' : isNew ? `Create ${config.label}` : `Save ${config.label}`}
-        </button>
-        <button
-          type="button"
-          className="btn secondary"
-          onClick={handleSaveAsDraft}
-          disabled={isSaving}
-        >
-          Save as Draft
-        </button>
-        <button
-          type="button"
-          className="btn ghost"
-          onClick={() => router.back()}
-        >
-          Cancel
         </button>
       </div>
     </div>

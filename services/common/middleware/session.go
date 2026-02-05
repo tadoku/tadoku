@@ -14,7 +14,7 @@ import (
 	"github.com/tadoku/tadoku/services/common/domain"
 )
 
-func SessionJWT(jwksURL string) echo.MiddlewareFunc {
+func VerifyJWT(jwksURL string) echo.MiddlewareFunc {
 	jwks, err := keyfunc.Get(jwksURL, keyfunc.Options{
 		RefreshErrorHandler: func(err error) {
 			panic(fmt.Errorf("unable to refresh jwks: %w", err))

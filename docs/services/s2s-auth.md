@@ -60,7 +60,7 @@ User JWTs include:
 
 Authn:
 
-- `SessionJWT` verifies the JWT signature (JWKS).
+- `VerifyJWT` verifies the JWT signature (JWKS).
 - `Identity` builds `UserIdentity` or `ServiceIdentity` and attaches it to context.
 
 Authz:

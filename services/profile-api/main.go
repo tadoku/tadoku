@@ -47,7 +47,7 @@ func main() {
 
 	e := echo.New()
 	e.Use(tadokumiddleware.Logger([]string{"/ping"}))
-	e.Use(tadokumiddleware.SessionJWT(cfg.JWKS))
+	e.Use(tadokumiddleware.VerifyJWT(cfg.JWKS))
 	e.Use(tadokumiddleware.Identity(roleRepository, nil))
 	e.Use(tadokumiddleware.RequireServiceAudience(cfg.ServiceName))
 	e.Use(tadokumiddleware.RejectBannedUsers())

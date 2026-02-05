@@ -45,7 +45,7 @@ type UnifiedClaims struct {
 	jwtv4.RegisteredClaims
 	Type      string `json:"type,omitempty"`
 	Namespace string `json:"namespace,omitempty"`
-	Session struct {
+	Session   struct {
 		Identity struct {
 			Traits struct {
 				DisplayName string `json:"display_name"`

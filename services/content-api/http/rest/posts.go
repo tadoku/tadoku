@@ -92,6 +92,25 @@ func (s *Server) PostUpdate(ctx echo.Context, namespace string, id string) error
 	})
 }
 
+// Deletes an existing post
+// (DELETE /posts/{namespace}/{id})
+func (s *Server) PostDelete(ctx echo.Context, namespace string, id string) error {
+	err := s.postDelete.Execute(ctx.Request().Context(), uuid.MustParse(id))
+	if err != nil {
+		if errors.Is(err, domain.ErrForbidden) {
+			return ctx.NoContent(http.StatusForbidden)
+		}
+		if errors.Is(err, domain.ErrPostNotFound) {
+			return ctx.NoContent(http.StatusNotFound)
+		}
+
+		ctx.Echo().Logger.Error("could not process request: ", err)
+		return ctx.NoContent(http.StatusInternalServerError)
+	}
+
+	return ctx.NoContent(http.StatusNoContent)
+}
+
 // QUERIES
 
 // Returns page content for a given slug

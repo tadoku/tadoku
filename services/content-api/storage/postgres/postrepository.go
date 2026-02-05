@@ -148,6 +148,14 @@ func (r *PostRepository) UpdatePost(ctx context.Context, post *domain.Post) erro
 	return nil
 }
 
+// DeletePost implements domain.PostDeleteRepository
+func (r *PostRepository) DeletePost(ctx context.Context, id uuid.UUID) error {
+	if err := r.q.DeletePost(ctx, id); err != nil {
+		return fmt.Errorf("could not delete post: %w", err)
+	}
+	return nil
+}
+
 // FindPostBySlug implements domain.PostFindRepository
 func (r *PostRepository) FindPostBySlug(ctx context.Context, namespace, slug string) (*domain.Post, error) {
 	post, err := r.q.FindPostBySlug(ctx, FindPostBySlugParams{

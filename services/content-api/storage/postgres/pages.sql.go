@@ -83,24 +83,17 @@ func (q *Queries) CreatePageContent(ctx context.Context, arg CreatePageContentPa
 	return id, err
 }
 
-const findPageBySlug = `-- name: FindPageBySlug :one
-select
-  pages.id,
-  "namespace",
-  slug,
-  pages_content.title,
-  pages_content.html,
-  published_at,
-  pages.created_at,
-  pages.updated_at
-from pages
-inner join pages_content
-  on pages_content.id = pages.current_content_id
-where
-  deleted_at is null
-  and "namespace" = $1
-  and slug = $2
+const deletePage = `-- name: DeletePage :exec
+update pages
+set deleted_at = now()
+where id = $1
+  and deleted_at is null
 `
+
+func (q *Queries) DeletePage(ctx context.Context, id uuid.UUID) error {
+	_, err := q.db.ExecContext(ctx, deletePage, id)
+	return err
+}
 
 const findPageByID = `-- name: FindPageByID :one
 select
@@ -146,6 +139,25 @@ func (q *Queries) FindPageByID(ctx context.Context, id uuid.UUID) (FindPageByIDR
 	)
 	return i, err
 }
+
+const findPageBySlug = `-- name: FindPageBySlug :one
+select
+  pages.id,
+  "namespace",
+  slug,
+  pages_content.title,
+  pages_content.html,
+  published_at,
+  pages.created_at,
+  pages.updated_at
+from pages
+inner join pages_content
+  on pages_content.id = pages.current_content_id
+where
+  deleted_at is null
+  and "namespace" = $1
+  and slug = $2
+`
 
 type FindPageBySlugParams struct {
 	Namespace string

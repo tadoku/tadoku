@@ -72,6 +72,31 @@ paths:
           description: Invalid page
         '404':
           description: Page does not exist and cannot be updated
+    delete:
+      summary: Deletes an existing page
+      operationId: pageDelete
+      tags: [pages]
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: namespace
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: id
+          in: path
+          description: ID of page
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: successful operation
+        '403':
+          description: Not allowed
+        '404':
+          description: Page not found
   /pages/{namespace}:
     post:
       summary: Creates a new page
@@ -195,6 +220,31 @@ paths:
           description: Invalid post
         '404':
           description: Post does not exist and cannot be updated
+    delete:
+      summary: Deletes an existing post
+      operationId: postDelete
+      tags: [posts]
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: id
+          in: path
+          description: ID of post
+          required: true
+          schema:
+            type: string
+        - name: namespace
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: successful operation
+        '403':
+          description: Not allowed
+        '404':
+          description: Post not found
   /posts/{namespace}:
     post:
       summary: Creates a new post

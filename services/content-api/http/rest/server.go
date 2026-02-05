@@ -9,20 +9,24 @@ import (
 func NewServer(
 	pageCreate *domain.PageCreate,
 	pageUpdate *domain.PageUpdate,
+	pageDelete *domain.PageDelete,
 	pageFind *domain.PageFind,
 	pageList *domain.PageList,
 	postCreate *domain.PostCreate,
 	postUpdate *domain.PostUpdate,
+	postDelete *domain.PostDelete,
 	postFind *domain.PostFind,
 	postList *domain.PostList,
 ) openapi.ServerInterface {
 	return &Server{
 		pageCreate: pageCreate,
 		pageUpdate: pageUpdate,
+		pageDelete: pageDelete,
 		pageFind:   pageFind,
 		pageList:   pageList,
 		postCreate: postCreate,
 		postUpdate: postUpdate,
+		postDelete: postDelete,
 		postFind:   postFind,
 		postList:   postList,
 	}
@@ -31,11 +35,13 @@ func NewServer(
 type Server struct {
 	pageCreate *domain.PageCreate
 	pageUpdate *domain.PageUpdate
+	pageDelete *domain.PageDelete
 	pageFind   *domain.PageFind
 	pageList   *domain.PageList
 
 	postCreate *domain.PostCreate
 	postUpdate *domain.PostUpdate
+	postDelete *domain.PostDelete
 	postFind   *domain.PostFind
 	postList   *domain.PostList
 }

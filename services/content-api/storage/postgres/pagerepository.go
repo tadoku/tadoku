@@ -148,6 +148,14 @@ func (r *PageRepository) UpdatePage(ctx context.Context, page *domain.Page) erro
 	return nil
 }
 
+// DeletePage implements domain.PageDeleteRepository
+func (r *PageRepository) DeletePage(ctx context.Context, id uuid.UUID) error {
+	if err := r.q.DeletePage(ctx, id); err != nil {
+		return fmt.Errorf("could not delete page: %w", err)
+	}
+	return nil
+}
+
 // FindPageBySlug implements domain.PageFindRepository
 func (r *PageRepository) FindPageBySlug(ctx context.Context, namespace, slug string) (*domain.Page, error) {
 	page, err := r.q.FindPageBySlug(ctx, FindPageBySlugParams{

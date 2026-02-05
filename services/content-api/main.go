@@ -75,22 +75,26 @@ func main() {
 	// Page services
 	pageCreate := domain.NewPageCreate(pageRepository, clock)
 	pageUpdate := domain.NewPageUpdate(pageRepository, clock)
+	pageDelete := domain.NewPageDelete(pageRepository)
 	pageFind := domain.NewPageFind(pageRepository, clock)
 	pageList := domain.NewPageList(pageRepository)
 
 	// Post services
 	postCreate := domain.NewPostCreate(postRepository, clock)
 	postUpdate := domain.NewPostUpdate(postRepository, clock)
+	postDelete := domain.NewPostDelete(postRepository)
 	postFind := domain.NewPostFind(postRepository, clock)
 	postList := domain.NewPostList(postRepository)
 
 	server := rest.NewServer(
 		pageCreate,
 		pageUpdate,
+		pageDelete,
 		pageFind,
 		pageList,
 		postCreate,
 		postUpdate,
+		postDelete,
 		postFind,
 		postList,
 	)

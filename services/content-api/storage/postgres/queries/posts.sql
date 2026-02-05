@@ -103,3 +103,9 @@ where
   deleted_at is null
   and (sqlc.arg('include_drafts')::boolean or published_at is not null)
   and "namespace" = sqlc.arg('namespace');
+
+-- name: DeletePost :exec
+update posts
+set deleted_at = now()
+where id = sqlc.arg('id')
+  and deleted_at is null;

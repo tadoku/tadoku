@@ -20,7 +20,7 @@ export function ContentEditor({ config, id }: Props) {
   const isNew = !id
 
   // Mobile tab state
-  const [mobileTab, setMobileTab] = useState<'content' | 'preview'>('content')
+  const [mobileTab, setMobileTab] = useState<'edit' | 'preview'>('edit')
 
   // Form state
   const [title, setTitle] = useState('')
@@ -139,37 +139,87 @@ export function ContentEditor({ config, id }: Props) {
         <Tabbar
           alwaysExpanded
           links={[
-            { label: 'Content', active: mobileTab === 'content', onClick: () => setMobileTab('content') },
+            { label: 'Edit', active: mobileTab === 'edit', onClick: () => setMobileTab('edit') },
             { label: 'Preview', active: mobileTab === 'preview', onClick: () => setMobileTab('preview') },
           ]}
         />
       </div>
 
-      {/* Editor and preview */}
       <div className="flex flex-col lg:flex-row gap-6">
-        {/* Editor */}
+        {/* Edit form */}
         <div className={`flex-1 min-w-0 flex-col ${mobileTab === 'preview' ? 'hidden lg:flex' : 'flex'}`}>
-          <label className={`label flex-1 ${errors.body ? 'error' : ''}`}>
-            <span className="label-text">Content</span>
-            <textarea
-              className="input font-mono text-sm flex-1"
-              style={{ minHeight: '500px' }}
-              value={body}
-              onChange={e => setBody(e.target.value)}
-              placeholder={`Write your ${config.label.toLowerCase()} content here...`}
-            />
-            <span className="error">{errors.body}</span>
-          </label>
+          <div className="card flex flex-col gap-4">
+            <label className={`label ${errors.title ? 'error' : ''}`}>
+              <span className="label-text">Title</span>
+              <input
+                type="text"
+                className="input"
+                value={title}
+                onChange={e => handleTitleChange(e.target.value)}
+                placeholder={`${config.label} title`}
+              />
+              <span className="error">{errors.title}</span>
+            </label>
+            <label className={`label ${errors.slug ? 'error' : ''}`}>
+              <span className="label-text">Slug</span>
+              <input
+                type="text"
+                className="input"
+                value={itemSlug}
+                onChange={e => setItemSlug(e.target.value)}
+                placeholder="url-friendly-slug"
+              />
+              <span className="error">{errors.slug}</span>
+            </label>
+            <label className={`label flex-1 ${errors.body ? 'error' : ''}`}>
+              <span className="label-text">Content</span>
+              <textarea
+                className="input font-mono text-sm flex-1"
+                style={{ minHeight: '400px' }}
+                value={body}
+                onChange={e => setBody(e.target.value)}
+                placeholder={`Write your ${config.label.toLowerCase()} content here...`}
+              />
+              <span className="error">{errors.body}</span>
+            </label>
+            <label className="label">
+              <span className="label-text">Publish Date (UTC)</span>
+              <input
+                type="datetime-local"
+                className="input"
+                value={publishedAt}
+                onChange={e => setPublishedAt(e.target.value)}
+              />
+              <span className="text-xs text-slate-500">Leave empty to save as draft</span>
+            </label>
+            <div className="flex items-center justify-end gap-3 pt-2">
+              <button
+                type="button"
+                className="btn ghost"
+                onClick={() => router.back()}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="btn primary"
+                onClick={handleSave}
+                disabled={isSaving}
+              >
+                {isSaving ? 'Saving...' : isNew ? `Create ${config.label}` : `Save ${config.label}`}
+              </button>
+            </div>
+          </div>
         </div>
 
         {/* Live preview */}
-        <div className={`flex-1 min-w-0 flex-col ${mobileTab === 'content' ? 'hidden lg:flex' : 'flex'}`}>
-          <span className="text-sm font-semibold text-slate-600 mb-2">
-            Preview
-          </span>
+        <div className={`flex-1 min-w-0 flex-col ${mobileTab === 'edit' ? 'hidden lg:flex' : 'flex'}`}>
           <div className="card flex-1 overflow-auto" style={{ minHeight: '500px' }}>
-            {body.trim() ? (
-              config.renderBody(body)
+            {title.trim() || body.trim() ? (
+              <>
+                {title.trim() ? <h2 className="text-xl font-bold mb-4">{title}</h2> : null}
+                {config.renderBody(body)}
+              </>
             ) : (
               <p className="text-sm text-slate-400 italic">
                 Start typing to see a preview...
@@ -177,64 +227,6 @@ export function ContentEditor({ config, id }: Props) {
             )}
           </div>
         </div>
-      </div>
-
-      {/* Metadata */}
-      <div className="card">
-        <h2 className="subtitle mb-4">Metadata</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <label className={`label ${errors.title ? 'error' : ''}`}>
-            <span className="label-text">Title</span>
-            <input
-              type="text"
-              className="input"
-              value={title}
-              onChange={e => handleTitleChange(e.target.value)}
-              placeholder="Post title"
-            />
-            <span className="error">{errors.title}</span>
-          </label>
-          <label className={`label ${errors.slug ? 'error' : ''}`}>
-            <span className="label-text">Slug</span>
-            <input
-              type="text"
-              className="input"
-              value={itemSlug}
-              onChange={e => setItemSlug(e.target.value)}
-              placeholder="url-friendly-slug"
-            />
-            <span className="error">{errors.slug}</span>
-          </label>
-          <label className="label">
-            <span className="label-text">Publish Date (UTC)</span>
-            <input
-              type="datetime-local"
-              className="input"
-              value={publishedAt}
-              onChange={e => setPublishedAt(e.target.value)}
-            />
-            <span className="text-xs text-slate-500">Leave empty to save as draft</span>
-          </label>
-        </div>
-      </div>
-
-      {/* Actions */}
-      <div className="flex items-center justify-end gap-3">
-        <button
-          type="button"
-          className="btn ghost"
-          onClick={() => router.back()}
-        >
-          Cancel
-        </button>
-        <button
-          type="button"
-          className="btn primary"
-          onClick={handleSave}
-          disabled={isSaving}
-        >
-          {isSaving ? 'Saving...' : isNew ? `Create ${config.label}` : `Save ${config.label}`}
-        </button>
       </div>
     </div>
   )

@@ -44,8 +44,6 @@ spec:
             value: "http://kratos-admin.default"
           - name: API_OATHKEEPER_URL
             value: "http://oathkeeper-proxy.default:4455"
-          - name: API_PROFILE_API_URL
-            value: "http://profile-api.tdk-profile-api"
           - name: SERVICE_NAME
             value: "immersion-api"
         volumeMounts:

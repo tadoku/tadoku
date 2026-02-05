@@ -11,7 +11,6 @@ import (
 
 	"github.com/go-playground/validator/v10"
 	"github.com/kelseyhightower/envconfig"
-	"github.com/tadoku/tadoku/services/common/client/s2s"
 	"github.com/tadoku/tadoku/services/common/domain"
 	tadokumiddleware "github.com/tadoku/tadoku/services/common/middleware"
 	"github.com/tadoku/tadoku/services/common/storage/memory"
@@ -35,7 +34,6 @@ type Config struct {
 	JWKS                   string  `validate:"required"`
 	KratosURL              string  `validate:"required" envconfig:"kratos_url"`
 	OathkeeperURL          string  `validate:"required" envconfig:"oathkeeper_url"`
-	ProfileAPIURL          string  `envconfig:"profile_api_url"`
 	ServiceName            string  `envconfig:"service_name" default:"immersion-api"`
 	SentryDSN              string  `envconfig:"sentry_dns"`
 	SentryTracesSampleRate float64 `validate:"required_with=SentryDSN" envconfig:"sentry_traces_sample_rate"`
@@ -49,10 +47,6 @@ func main() {
 	err := validate.Struct(cfg)
 	if err != nil {
 		panic(fmt.Errorf("could not configure server: %w", err))
-	}
-
-	if cfg.ProfileAPIURL == "" {
-		cfg.ProfileAPIURL = "http://profile-api"
 	}
 
 	psql, err := sql.Open("pgx", cfg.PostgresURL)
@@ -155,8 +149,6 @@ func main() {
 	)
 
 	openapi.RegisterHandlersWithBaseURL(e, server, "")
-	s2sClient := s2s.NewClient(cfg.OathkeeperURL)
-	rest.RegisterInternalS2SRoutes(e, s2sClient, cfg.ProfileAPIURL, nil)
 
 	// Start server in goroutine
 	go func() {

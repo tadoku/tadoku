@@ -54,7 +54,7 @@ export function ContentEditor({ config, id }: Props) {
     namespace,
     () => {
       toast.success(`${config.label} created successfully`, { position: 'bottom-right' })
-      queryClient.invalidateQueries([config.type])
+      queryClient.removeQueries([config.type])
     },
     () => {
       toast.error(`Failed to create ${config.label.toLowerCase()}`, { position: 'bottom-right' })
@@ -66,7 +66,7 @@ export function ContentEditor({ config, id }: Props) {
     namespace,
     () => {
       toast.success(`${config.label} updated successfully`, { position: 'bottom-right' })
-      queryClient.invalidateQueries([config.type])
+      queryClient.removeQueries([config.type])
     },
     () => {
       toast.error(`Failed to update ${config.label.toLowerCase()}`, { position: 'bottom-right' })

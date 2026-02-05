@@ -171,17 +171,15 @@ export function ContentEditor({ config, id }: Props) {
               />
               <span className="error">{errors.slug}</span>
             </label>
-            <label className={`label flex-1 ${errors.body ? 'error' : ''}`}>
+            <div className={`label flex-1 ${errors.body ? 'error' : ''}`}>
               <span className="label-text">Content</span>
-              <textarea
-                className="input font-mono text-sm flex-1"
-                style={{ minHeight: '400px' }}
-                value={body}
-                onChange={e => setBody(e.target.value)}
-                placeholder={`Write your ${config.label.toLowerCase()} content here...`}
-              />
+              {config.renderEditor({
+                value: body,
+                onChange: setBody,
+                placeholder: `Write your ${config.label.toLowerCase()} content here...`,
+              })}
               <span className="error">{errors.body}</span>
-            </label>
+            </div>
             <label className="label">
               <span className="label-text">Publish Date (UTC)</span>
               <input

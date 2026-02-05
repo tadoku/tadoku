@@ -29,6 +29,9 @@ export interface ContentConfig {
   // How to render the body content in previews
   renderBody: (body: string) => ReactNode
 
+  // How to render the body editor
+  renderEditor: (props: { value: string; onChange: (v: string) => void; placeholder?: string }) => ReactNode
+
   // Route helpers (preview/edit take item ID, not slug)
   routes: {
     list: () => string

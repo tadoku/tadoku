@@ -1,11 +1,10 @@
-import { Loading, Modal } from 'ui'
+import { Loading } from 'ui'
 import { ContentConfig, ContentItem } from './types'
 import { useContentFindById, useContentUpdate } from './api'
 import { useNamespace } from './NamespaceSelector'
 import { DateTime } from 'luxon'
 import Link from 'next/link'
-import { useState } from 'react'
-import { PencilIcon, TrashIcon } from '@heroicons/react/20/solid'
+import { PencilIcon } from '@heroicons/react/20/solid'
 import { useQueryClient } from 'react-query'
 import { toast } from 'react-toastify'
 
@@ -39,7 +38,6 @@ interface Props {
 export function ContentPreview({ config, id }: Props) {
   const [namespace] = useNamespace()
   const queryClient = useQueryClient()
-  const [deleteModalOpen, setDeleteModalOpen] = useState(false)
 
   const item = useContentFindById(config, namespace, id, {
     enabled: !!id && !!namespace,
@@ -91,26 +89,18 @@ export function ContentPreview({ config, id }: Props) {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
         <h1 className="title">{data.title}</h1>
         <div className="flex items-center gap-2 flex-shrink-0">
-          <Link href={config.routes.edit(data.id)} className="btn secondary">
-            <PencilIcon className="w-4 h-4 mr-1 inline" />
-            Edit
-          </Link>
           <button
             type="button"
-            className="btn ghost"
+            className="btn"
             onClick={handleTogglePublish}
             disabled={togglePublishMutation.isLoading}
           >
             {data.published_at ? 'Unpublish' : 'Publish'}
           </button>
-          <button
-            type="button"
-            className="btn danger"
-            onClick={() => setDeleteModalOpen(true)}
-          >
-            <TrashIcon className="w-4 h-4 mr-1 inline" />
-            Delete
-          </button>
+          <Link href={config.routes.edit(data.id)} className="btn secondary">
+            <PencilIcon className="w-4 h-4 mr-1 inline" />
+            Edit
+          </Link>
         </div>
       </div>
 
@@ -147,25 +137,6 @@ export function ContentPreview({ config, id }: Props) {
         </div>
       </div>
 
-      <Modal
-        isOpen={deleteModalOpen}
-        setIsOpen={setDeleteModalOpen}
-        title={`Delete ${config.label}`}
-      >
-        <p className="modal-body">
-          Are you sure you want to delete &ldquo;{data.title}&rdquo;? This action is not yet
-          supported by the API. Please contact a developer to delete content directly.
-        </p>
-        <div className="modal-actions">
-          <button
-            type="button"
-            className="btn ghost"
-            onClick={() => setDeleteModalOpen(false)}
-          >
-            Close
-          </button>
-        </div>
-      </Modal>
     </>
   )
 }

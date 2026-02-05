@@ -29,6 +29,9 @@ export interface ContentConfig {
   // How to render the body content in previews
   renderBody: (body: string) => ReactNode
 
+  // Format the body content (e.g. via Prettier)
+  formatBody: (body: string) => string
+
   // How to render the body editor
   renderEditor: (props: { value: string; onChange: (v: string) => void; placeholder?: string }) => ReactNode
 

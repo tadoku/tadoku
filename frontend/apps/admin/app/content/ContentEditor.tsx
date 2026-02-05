@@ -39,7 +39,11 @@ export function ContentEditor({ config, id }: Props) {
     if (existing.data && !initialized) {
       setTitle(existing.data.title)
       setItemSlug(existing.data.slug)
-      setBody(existing.data.body)
+      try {
+        setBody(config.formatBody(existing.data.body))
+      } catch {
+        setBody(existing.data.body)
+      }
       setPublishedAt(
         existing.data.published_at
           ? existing.data.published_at.slice(0, 16) // format for datetime-local input
@@ -172,7 +176,25 @@ export function ContentEditor({ config, id }: Props) {
               <span className="error">{errors.slug}</span>
             </label>
             <div className={`label flex-1 ${errors.body ? 'error' : ''}`}>
-              <span className="label-text">Content</span>
+              <div className="flex items-center justify-between">
+                <span className="label-text">Content</span>
+                <button
+                  type="button"
+                  className="btn ghost"
+                  onClick={() => {
+                    try {
+                      setBody(config.formatBody(body))
+                    } catch (e) {
+                      toast.error(
+                        `Format failed: ${e instanceof Error ? e.message : 'unknown error'}`,
+                        { position: 'bottom-right' },
+                      )
+                    }
+                  }}
+                >
+                  Format
+                </button>
+              </div>
               {config.renderEditor({
                 value: body,
                 onChange: setBody,

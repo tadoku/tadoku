@@ -2,10 +2,16 @@ import { routes } from '@app/common/routes'
 import { DocumentDuplicateIcon, HomeIcon } from '@heroicons/react/20/solid'
 import Head from 'next/head'
 import { Breadcrumb } from 'ui'
-import { NextPageWithLayout } from './_app'
+import { NextPageWithLayout } from '../_app'
 import { getDashboardLayout } from '@app/ui/DashboardLayout'
+import { ContentList } from '@app/content/ContentList'
+import { pagesConfig } from '@app/content/pages'
+import { NamespaceSelector, useNamespace } from '@app/content/NamespaceSelector'
+import Link from 'next/link'
 
 const Page: NextPageWithLayout = () => {
+  const [namespace, setNamespace] = useNamespace()
+
   return (
     <>
       <Head>
@@ -27,7 +33,16 @@ const Page: NextPageWithLayout = () => {
           ]}
         />
       </div>
-      <h1 className="title">Pages</h1>
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="title">Pages</h1>
+        <div className="flex items-center gap-2">
+          <NamespaceSelector value={namespace} onChange={setNamespace} />
+          <Link href={pagesConfig.routes.new()} className="btn primary">
+            New {pagesConfig.label}
+          </Link>
+        </div>
+      </div>
+      <ContentList config={pagesConfig} namespace={namespace} />
     </>
   )
 }

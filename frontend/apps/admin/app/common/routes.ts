@@ -11,6 +11,9 @@ export const routes = {
   postPreview: (id: string) => `/posts/${id}`,
   postEdit: (id: string) => `/posts/${id}/edit`,
   pages: () => `/pages`,
+  pageNew: () => `/pages/new`,
+  pagePreview: (id: string) => `/pages/${id}`,
+  pageEdit: (id: string) => `/pages/${id}/edit`,
   users: () => `/users`,
 
   // External

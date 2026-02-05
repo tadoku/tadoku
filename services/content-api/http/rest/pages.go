@@ -185,6 +185,7 @@ func (s *Server) PageList(ctx echo.Context, namespace string, params openapi.Pag
 			Id:          &p.ID,
 			Slug:        p.Slug,
 			Title:       p.Title,
+			Html:        &p.HTML,
 			PublishedAt: p.PublishedAt,
 			CreatedAt:   &p.CreatedAt,
 			UpdatedAt:   &p.UpdatedAt,

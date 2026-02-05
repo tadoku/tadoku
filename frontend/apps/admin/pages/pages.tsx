@@ -28,7 +28,6 @@ const Page: NextPageWithLayout = () => {
         />
       </div>
       <h1 className="title">Pages</h1>
-      <p className="mt-2 text-slate-600">Manage static pages.</p>
     </>
   )
 }

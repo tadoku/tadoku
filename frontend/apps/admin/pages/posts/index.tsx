@@ -29,8 +29,7 @@ const Page: NextPageWithLayout = () => {
           ]}
         />
       </div>
-      <h1 className="title">Posts</h1>
-      <p className="mt-2 mb-6 text-slate-600">Manage blog posts.</p>
+      <h1 className="title mb-6">Posts</h1>
       <ContentList config={postsConfig} />
     </>
   )

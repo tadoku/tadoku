@@ -83,6 +83,41 @@ Authz:
 2. `immersion-api` calls `http://profile-api.tdk-profile-api/internal/v1/ping` with the JWT.
 3. `profile-api` validates the JWT and checks the service audience.
 
+## Quickstart (Calling Another Service)
+
+1. Ensure your config includes `oathkeeper_url` and `service_name` (defaults are set per service).
+2. Initialize the S2S client and fetch a token.
+3. Attach the token to your internal request.
+
+```go
+import (
+	"net/http"
+
+	"github.com/tadoku/tadoku/services/common/client/s2s"
+)
+
+// Example inside your service setup
+s2sClient := s2s.NewClient(cfg.OathkeeperURL)
+
+// Example inside a handler or service call
+token, err := s2sClient.GetToken("profile-api")
+if err != nil {
+	return err
+}
+
+req, err := http.NewRequest("GET", "http://profile-api.tdk-profile-api/internal/v1/ping", nil)
+if err != nil {
+	return err
+}
+req.Header.Set("Authorization", "Bearer "+token)
+
+resp, err := http.DefaultClient.Do(req)
+if err != nil {
+	return err
+}
+defer resp.Body.Close()
+```
+
 ## Failure Modes
 
 - Invalid audience: `403 Forbidden`

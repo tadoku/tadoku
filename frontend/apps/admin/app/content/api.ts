@@ -181,6 +181,31 @@ export function useContentUpdate(
   })
 }
 
+export function useContentDelete(
+  config: ContentConfig,
+  namespace: string,
+  onSuccess: () => void,
+  onError: (error: Error) => void,
+) {
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const response = await fetch(
+        `${root}/${config.type}/${namespace}/${id}`,
+        {
+          method: 'DELETE',
+          credentials: 'include',
+        },
+      )
+      if (response.status === 204) return
+      if (response.status === 403) throw new Error('403')
+      if (response.status === 404) throw new Error('404')
+      if (!response.ok) throw new Error(response.status.toString())
+    },
+    onSuccess,
+    onError,
+  })
+}
+
 // Find by ID: checks cached list data first, falls back to fetching the list.
 // The backend only has a find-by-slug GET endpoint, but the list endpoint returns
 // full item data so we can resolve by ID from list results.

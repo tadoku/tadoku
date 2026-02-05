@@ -6,13 +6,36 @@ import { NextPageWithLayout } from '../../_app'
 import { getDashboardLayout } from '@app/ui/DashboardLayout'
 import { ContentEditor } from '@app/content/ContentEditor'
 import { postsConfig } from '@app/content/posts'
+import { useContentDelete } from '@app/content/api'
+import { useNamespace } from '@app/content/NamespaceSelector'
 import { useRouter } from 'next/router'
 import { useState } from 'react'
+import { useQueryClient } from 'react-query'
+import { toast } from 'react-toastify'
 
 const Page: NextPageWithLayout = () => {
   const router = useRouter()
+  const queryClient = useQueryClient()
   const id = router.query.id as string
+  const [namespace] = useNamespace()
   const [deleteModalOpen, setDeleteModalOpen] = useState(false)
+
+  const deleteMutation = useContentDelete(
+    postsConfig,
+    namespace,
+    () => {
+      toast.success('Post deleted successfully')
+      queryClient.invalidateQueries([postsConfig.type])
+      router.push(routes.posts())
+    },
+    () => {
+      toast.error('Failed to delete post')
+    },
+  )
+
+  const handleDelete = () => {
+    deleteMutation.mutate(id)
+  }
 
   return (
     <>
@@ -62,16 +85,25 @@ const Page: NextPageWithLayout = () => {
         title="Delete Post"
       >
         <p className="modal-body">
-          Are you sure you want to delete this post? This action is not yet
-          supported by the API. Please contact a developer to delete content directly.
+          Are you sure you want to delete this post? This action cannot be
+          undone.
         </p>
-        <div className="modal-actions">
+        <div className="modal-actions justify-end">
           <button
             type="button"
             className="btn ghost"
             onClick={() => setDeleteModalOpen(false)}
+            disabled={deleteMutation.isLoading}
           >
-            Close
+            Cancel
+          </button>
+          <button
+            type="button"
+            className="btn danger"
+            onClick={handleDelete}
+            disabled={deleteMutation.isLoading}
+          >
+            {deleteMutation.isLoading ? 'Deleting...' : 'Delete'}
           </button>
         </div>
       </Modal>

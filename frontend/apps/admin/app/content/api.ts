@@ -206,6 +206,84 @@ export function useContentDelete(
   })
 }
 
+// Version types
+export interface ContentVersion {
+  id: string
+  version: number
+  title: string
+  created_at: string
+}
+
+export interface ContentVersionDetail extends ContentVersion {
+  body: string
+}
+
+export function useContentVersionList(
+  config: ContentConfig,
+  namespace: string,
+  id: string,
+  options?: { enabled?: boolean },
+) {
+  return useQuery(
+    [config.type, 'versions', namespace, id],
+    async (): Promise<ContentVersion[]> => {
+      const response = await fetch(
+        `${root}/${config.type}/${namespace}/${id}/versions`,
+        { credentials: 'include' },
+      )
+      const data = await handleResponse(response)
+      return z
+        .array(
+          z.object({
+            id: z.string(),
+            version: z.number(),
+            title: z.string(),
+            created_at: z.string(),
+          }),
+        )
+        .parse(data.versions)
+    },
+    { ...options, retry: false },
+  )
+}
+
+export function useContentVersionGet(
+  config: ContentConfig,
+  namespace: string,
+  id: string,
+  contentId: string | null,
+  options?: { enabled?: boolean },
+) {
+  return useQuery(
+    [config.type, 'version', namespace, id, contentId],
+    async (): Promise<ContentVersionDetail> => {
+      const response = await fetch(
+        `${root}/${config.type}/${namespace}/${id}/versions/${contentId}`,
+        { credentials: 'include' },
+      )
+      const data = await handleResponse(response)
+      const parsed = z
+        .object({
+          id: z.string(),
+          version: z.number(),
+          title: z.string(),
+          content: z.string().optional(),
+          html: z.string().optional(),
+          created_at: z.string(),
+        })
+        .parse(data)
+      return {
+        id: parsed.id,
+        version: parsed.version,
+        title: parsed.title,
+        body: (config.bodyField === 'content' ? parsed.content : parsed.html) ?? '',
+        created_at: parsed.created_at,
+      }
+    },
+    { ...options, enabled: !!contentId && (options?.enabled ?? true), retry: false },
+  )
+}
+
 // Find by ID: checks cached list data first, falls back to fetching the list.
 // The backend only has a find-by-slug GET endpoint, but the list endpoint returns
 // full item data so we can resolve by ID from list results.

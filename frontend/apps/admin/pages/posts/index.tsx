@@ -6,8 +6,12 @@ import { NextPageWithLayout } from '../_app'
 import { getDashboardLayout } from '@app/ui/DashboardLayout'
 import { ContentList } from '@app/content/ContentList'
 import { postsConfig } from '@app/content/posts'
+import { NamespaceSelector, useNamespace } from '@app/content/NamespaceSelector'
+import Link from 'next/link'
 
 const Page: NextPageWithLayout = () => {
+  const [namespace, setNamespace] = useNamespace()
+
   return (
     <>
       <Head>
@@ -29,8 +33,16 @@ const Page: NextPageWithLayout = () => {
           ]}
         />
       </div>
-      <h1 className="title mb-6">Posts</h1>
-      <ContentList config={postsConfig} />
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="title">Posts</h1>
+        <div className="flex items-center gap-2">
+          <NamespaceSelector value={namespace} onChange={setNamespace} />
+          <Link href={postsConfig.routes.new()} className="btn primary">
+            New {postsConfig.label}
+          </Link>
+        </div>
+      </div>
+      <ContentList config={postsConfig} namespace={namespace} />
     </>
   )
 }

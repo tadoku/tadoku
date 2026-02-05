@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { PlusIcon } from '@heroicons/react/20/solid'
+import { Modal } from 'ui'
 
 const STORAGE_KEY_NAMESPACES = 'admin_namespaces'
 const STORAGE_KEY_SELECTED = 'admin_namespace'
@@ -65,61 +65,71 @@ export function NamespaceSelector({ value, onChange }: Props) {
     setNewNamespace('')
   }
 
+  const ADD_NEW_VALUE = '__add_new__'
+
+  const handleSelectChange = (val: string) => {
+    if (val === ADD_NEW_VALUE) {
+      setAdding(true)
+      return
+    }
+    handleChange(val)
+  }
+
   return (
-    <div className="flex items-center gap-2">
-      <label className="text-sm font-semibold text-slate-600">Namespace:</label>
+    <>
       <select
-        className="input h-9 w-auto min-w-[140px] text-sm"
+        className="input h-10 md:h-11 w-auto min-w-[140px] text-sm md:text-base"
         value={value}
-        onChange={e => handleChange(e.target.value)}
+        onChange={e => handleSelectChange(e.target.value)}
       >
         {namespaces.map(ns => (
           <option key={ns} value={ns}>
             {ns}
           </option>
         ))}
+        <option disabled>──────────</option>
+        <option value={ADD_NEW_VALUE}>Add new...</option>
       </select>
-      {adding ? (
+      <Modal
+        isOpen={adding}
+        setIsOpen={setAdding}
+        title="Add Namespace"
+      >
         <form
-          className="flex items-center gap-1"
           onSubmit={e => {
             e.preventDefault()
             handleAdd()
           }}
         >
-          <input
-            type="text"
-            className="input h-9 w-32 text-sm"
-            placeholder="namespace"
-            value={newNamespace}
-            onChange={e => setNewNamespace(e.target.value)}
-            autoFocus
-          />
-          <button type="submit" className="btn small secondary">
-            Add
-          </button>
-          <button
-            type="button"
-            className="btn small ghost"
-            onClick={() => {
-              setAdding(false)
-              setNewNamespace('')
-            }}
-          >
-            Cancel
-          </button>
+          <label className="label">
+            <span className="label-text">Namespace</span>
+            <input
+              type="text"
+              className="input"
+              placeholder="my-namespace"
+              value={newNamespace}
+              onChange={e => setNewNamespace(e.target.value)}
+              autoFocus
+            />
+          </label>
+          <div className="modal-actions justify-end">
+            <button
+              type="button"
+              className="btn ghost"
+              onClick={() => {
+                setAdding(false)
+                setNewNamespace('')
+              }}
+            >
+              Cancel
+            </button>
+            <button type="submit" className="btn primary">
+              Add
+            </button>
+          </div>
         </form>
-      ) : (
-        <button
-          type="button"
-          className="btn small ghost"
-          onClick={() => setAdding(true)}
-          title="Add namespace"
-        >
-          <PlusIcon className="w-4 h-4" />
-        </button>
-      )}
-    </div>
+      </Modal>
+    </>
   )
 }
 

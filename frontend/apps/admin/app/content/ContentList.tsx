@@ -3,8 +3,7 @@ import { ContentConfig, ContentItem } from './types'
 import { useContentList } from './api'
 import { DateTime } from 'luxon'
 import Link from 'next/link'
-import { useState } from 'react'
-import { NamespaceSelector, useNamespace } from './NamespaceSelector'
+import { useState, useEffect } from 'react'
 
 function StatusBadge({ item }: { item: ContentItem }) {
   if (!item.published_at) {
@@ -31,23 +30,22 @@ function StatusBadge({ item }: { item: ContentItem }) {
 
 interface Props {
   config: ContentConfig
+  namespace: string
 }
 
-export function ContentList({ config }: Props) {
-  const [namespace, setNamespace] = useNamespace()
+export function ContentList({ config, namespace }: Props) {
   const [page, setPage] = useState(0)
   const pageSize = 20
+
+  // Reset to first page when namespace changes
+  useEffect(() => {
+    setPage(0)
+  }, [namespace])
 
   const list = useContentList(config, namespace, { pageSize, page })
 
   return (
     <>
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <NamespaceSelector value={namespace} onChange={ns => { setNamespace(ns); setPage(0) }} />
-        <Link href={config.routes.new()} className="btn primary w-fit">
-          New {config.label}
-        </Link>
-      </div>
 
       {list.isError ? (
         <div className="mt-4">
@@ -78,9 +76,8 @@ export function ContentList({ config }: Props) {
               <thead>
                 <tr>
                   <th className="default">Title</th>
-                  <th className="default w-48">Slug</th>
                   <th className="default w-24">Status</th>
-                  <th className="default w-40">Updated</th>
+                  <th className="default w-32">Updated</th>
                 </tr>
               </thead>
               <tbody>
@@ -93,11 +90,6 @@ export function ContentList({ config }: Props) {
                     </td>
                     <td className="link">
                       <Link href={config.routes.preview(item.id)}>
-                        <code className="text-sm text-slate-500">{item.slug}</code>
-                      </Link>
-                    </td>
-                    <td className="link">
-                      <Link href={config.routes.preview(item.id)}>
                         <StatusBadge item={item} />
                       </Link>
                     </td>
@@ -105,7 +97,7 @@ export function ContentList({ config }: Props) {
                       <Link href={config.routes.preview(item.id)}>
                         {item.updated_at
                           ? DateTime.fromISO(item.updated_at).toLocaleString(
-                              DateTime.DATETIME_SHORT,
+                              DateTime.DATE_MED,
                             )
                           : 'N/A'}
                       </Link>
@@ -115,7 +107,7 @@ export function ContentList({ config }: Props) {
                 {list.data.items.length === 0 ? (
                   <tr>
                     <td
-                      colSpan={4}
+                      colSpan={3}
                       className="default h-32 font-bold text-center text-xl text-slate-400"
                     >
                       No {config.labelPlural.toLowerCase()} found

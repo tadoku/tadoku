@@ -2,8 +2,10 @@ import { routes } from '@app/common/routes'
 import { DocumentTextIcon, HomeIcon } from '@heroicons/react/20/solid'
 import Head from 'next/head'
 import { Breadcrumb } from 'ui'
-import { NextPageWithLayout } from './_app'
+import { NextPageWithLayout } from '../_app'
 import { getDashboardLayout } from '@app/ui/DashboardLayout'
+import { ContentList } from '@app/content/ContentList'
+import { postsConfig } from '@app/content/posts'
 
 const Page: NextPageWithLayout = () => {
   return (
@@ -28,7 +30,8 @@ const Page: NextPageWithLayout = () => {
         />
       </div>
       <h1 className="title">Posts</h1>
-      <p className="mt-2 text-slate-600">Manage blog posts.</p>
+      <p className="mt-2 mb-6 text-slate-600">Manage blog posts.</p>
+      <ContentList config={postsConfig} />
     </>
   )
 }

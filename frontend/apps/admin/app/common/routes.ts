@@ -7,6 +7,9 @@ const homeUrl = publicRuntimeConfig.homeUrl
 export const routes = {
   home: () => `/`,
   posts: () => `/posts`,
+  postNew: () => `/posts/new`,
+  postPreview: (slug: string) => `/posts/${slug}`,
+  postEdit: (slug: string) => `/posts/${slug}/edit`,
   pages: () => `/pages`,
   users: () => `/users`,
 

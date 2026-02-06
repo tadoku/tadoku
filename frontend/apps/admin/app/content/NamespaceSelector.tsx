@@ -3,8 +3,9 @@ import { useRouter } from 'next/router'
 import { Modal } from 'ui'
 
 const STORAGE_KEY_NAMESPACES = 'admin_namespaces'
-const DEFAULT_NAMESPACES = ['tadoku']
-const DEFAULT_NAMESPACE = 'tadoku'
+export const DEFAULT_NAMESPACE = 'tadoku'
+const DEFAULT_NAMESPACES = [DEFAULT_NAMESPACE]
+const NAMESPACE_PATTERN = /^[a-z0-9-]+$/
 
 function loadNamespaces(): string[] {
   if (typeof window === 'undefined') return DEFAULT_NAMESPACES
@@ -21,7 +22,7 @@ function loadNamespaces(): string[] {
 export function useNamespace(): string {
   const router = useRouter()
   const ns = router.query.namespace
-  if (typeof ns === 'string' && ns) return ns
+  if (typeof ns === 'string' && ns && NAMESPACE_PATTERN.test(ns)) return ns
   return DEFAULT_NAMESPACE
 }
 
@@ -45,7 +46,7 @@ export function NamespaceSelector({ value, onChange }: Props) {
 
   const handleAdd = () => {
     const trimmed = newNamespace.trim().toLowerCase()
-    if (!trimmed || namespaces.includes(trimmed)) {
+    if (!trimmed || !NAMESPACE_PATTERN.test(trimmed) || namespaces.includes(trimmed)) {
       setAdding(false)
       setNewNamespace('')
       return

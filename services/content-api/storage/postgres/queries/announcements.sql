@@ -104,4 +104,5 @@ where
   and "namespace" = sqlc.arg('namespace')
   and starts_at <= now()
   and ends_at > now()
-order by starts_at desc;
+order by starts_at desc
+limit 10;

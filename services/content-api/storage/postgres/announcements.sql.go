@@ -158,6 +158,7 @@ where
   and starts_at <= now()
   and ends_at > now()
 order by starts_at desc
+limit 10
 `
 
 type ListActiveAnnouncementsRow struct {

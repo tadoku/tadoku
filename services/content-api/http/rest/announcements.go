@@ -21,8 +21,13 @@ func (s *Server) AnnouncementCreate(ctx echo.Context, namespace string) error {
 		return ctx.NoContent(http.StatusBadRequest)
 	}
 
+	id := uuid.New()
+	if req.Id != nil {
+		id = *req.Id
+	}
+
 	resp, err := s.announcementCreate.Execute(ctx.Request().Context(), &domain.AnnouncementCreateRequest{
-		ID:        *req.Id,
+		ID:        id,
 		Namespace: namespace,
 		Title:     req.Title,
 		Content:   req.Content,

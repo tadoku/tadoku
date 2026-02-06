@@ -1,6 +1,6 @@
 import { Loading } from 'ui'
 import { ContentConfig } from './types'
-import { useContentFindById, useContentUpdate, useContentVersionList, useContentVersionGet } from './api'
+import { ContentVersion, useContentFindById, useContentUpdate, useContentVersionList, useContentVersionGet } from './api'
 import { useNamespace } from './NamespaceSelector'
 import { StatusBadge } from './StatusBadge'
 import { DateTime } from 'luxon'
@@ -9,6 +9,91 @@ import { ArrowUturnLeftIcon, PencilIcon } from '@heroicons/react/20/solid'
 import { useQueryClient } from 'react-query'
 import { toast } from 'react-toastify'
 import { useState } from 'react'
+
+function VersionHistory({
+  versions,
+  selectedVersionId,
+  isViewingVersion,
+  versionsPerPage,
+  versionPage,
+  setVersionPage,
+  setSelectedVersionId,
+}: {
+  versions: ContentVersion[]
+  selectedVersionId: string | null
+  isViewingVersion: boolean
+  versionsPerPage: number
+  versionPage: number
+  setVersionPage: React.Dispatch<React.SetStateAction<number>>
+  setSelectedVersionId: (id: string | null) => void
+}) {
+  const reversed = [...versions].reverse()
+  const totalPages = Math.ceil(reversed.length / versionsPerPage)
+  const pageVersions = reversed.slice(
+    versionPage * versionsPerPage,
+    (versionPage + 1) * versionsPerPage,
+  )
+  const latestId = versions[versions.length - 1].id
+
+  return (
+    <div className="mt-4 pt-4 border-t border-slate-100">
+      <span className="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-2 block">
+        Version History
+      </span>
+      <ul className="flex flex-col gap-1">
+        {pageVersions.map(v => {
+          const isSelected = v.id === selectedVersionId
+          const isCurrent = v.id === latestId && !isViewingVersion
+          return (
+            <li key={v.id}>
+              <button
+                type="button"
+                className={`w-full text-left px-2 py-1.5 text-sm ${
+                  isSelected || (isCurrent && !isViewingVersion)
+                    ? 'bg-indigo-50 text-indigo-700 font-medium'
+                    : 'text-slate-700 hover:bg-slate-50'
+                }`}
+                onClick={() =>
+                  setSelectedVersionId(
+                    isCurrent && !isViewingVersion ? null : v.id,
+                  )
+                }
+              >
+                <span>v{v.version}</span>
+                <span className="text-xs text-slate-400 ml-2">
+                  {DateTime.fromISO(v.created_at).toLocaleString(DateTime.DATE_MED)}
+                </span>
+              </button>
+            </li>
+          )
+        })}
+      </ul>
+      {totalPages > 1 ? (
+        <div className="flex items-center justify-between mt-2 pt-2 border-t border-slate-100">
+          <button
+            type="button"
+            className="text-xs text-slate-500 hover:text-slate-700 disabled:opacity-30 disabled:cursor-default"
+            disabled={versionPage === 0}
+            onClick={() => setVersionPage(p => p - 1)}
+          >
+            Newer
+          </button>
+          <span className="text-xs text-slate-400">
+            {versionPage + 1} / {totalPages}
+          </span>
+          <button
+            type="button"
+            className="text-xs text-slate-500 hover:text-slate-700 disabled:opacity-30 disabled:cursor-default"
+            disabled={versionPage >= totalPages - 1}
+            onClick={() => setVersionPage(p => p + 1)}
+          >
+            Older
+          </button>
+        </div>
+      ) : null}
+    </div>
+  )
+}
 
 function MetadataRow({ label, children }: { label: string; children: React.ReactNode }) {
   return (
@@ -208,72 +293,17 @@ export function ContentPreview({ config, id }: Props) {
             </div>
 
             {/* Version history */}
-            {versions.data && versions.data.length > 1 ? (() => {
-              const reversed = [...versions.data].reverse()
-              const totalPages = Math.ceil(reversed.length / versionsPerPage)
-              const pageVersions = reversed.slice(
-                versionPage * versionsPerPage,
-                (versionPage + 1) * versionsPerPage,
-              )
-              return (
-                <div className="mt-4 pt-4 border-t border-slate-100">
-                  <span className="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-2 block">
-                    Version History
-                  </span>
-                  <ul className="flex flex-col gap-1">
-                    {pageVersions.map(v => {
-                      const isSelected = v.id === selectedVersionId
-                      const isCurrent = v.id === versions.data[versions.data.length - 1].id && !isViewingVersion
-                      return (
-                        <li key={v.id}>
-                          <button
-                            type="button"
-                            className={`w-full text-left px-2 py-1.5 text-sm ${
-                              isSelected || (isCurrent && !isViewingVersion)
-                                ? 'bg-indigo-50 text-indigo-700 font-medium'
-                                : 'text-slate-700 hover:bg-slate-50'
-                            }`}
-                            onClick={() =>
-                              setSelectedVersionId(
-                                isCurrent && !isViewingVersion ? null : v.id,
-                              )
-                            }
-                          >
-                            <span>v{v.version}</span>
-                            <span className="text-xs text-slate-400 ml-2">
-                              {DateTime.fromISO(v.created_at).toLocaleString(DateTime.DATE_MED)}
-                            </span>
-                          </button>
-                        </li>
-                      )
-                    })}
-                  </ul>
-                  {totalPages > 1 ? (
-                    <div className="flex items-center justify-between mt-2 pt-2 border-t border-slate-100">
-                      <button
-                        type="button"
-                        className="text-xs text-slate-500 hover:text-slate-700 disabled:opacity-30 disabled:cursor-default"
-                        disabled={versionPage === 0}
-                        onClick={() => setVersionPage(p => p - 1)}
-                      >
-                        Newer
-                      </button>
-                      <span className="text-xs text-slate-400">
-                        {versionPage + 1} / {totalPages}
-                      </span>
-                      <button
-                        type="button"
-                        className="text-xs text-slate-500 hover:text-slate-700 disabled:opacity-30 disabled:cursor-default"
-                        disabled={versionPage >= totalPages - 1}
-                        onClick={() => setVersionPage(p => p + 1)}
-                      >
-                        Older
-                      </button>
-                    </div>
-                  ) : null}
-                </div>
-              )
-            })() : null}
+            {versions.data && versions.data.length > 1 ? (
+              <VersionHistory
+                versions={versions.data}
+                selectedVersionId={selectedVersionId}
+                isViewingVersion={isViewingVersion}
+                versionsPerPage={versionsPerPage}
+                versionPage={versionPage}
+                setVersionPage={setVersionPage}
+                setSelectedVersionId={setSelectedVersionId}
+              />
+            ) : null}
           </div>
         </div>
       </div>

@@ -15,6 +15,7 @@ import { MarkdownPreview } from '@app/content/MarkdownPreview'
 import { CodeEditor } from '@app/content/CodeEditor'
 import { markdown } from '@codemirror/lang-markdown'
 import { languages } from '@codemirror/language-data'
+import { toUtcISOStringFromLocal } from '@app/common/datetime'
 
 const mdExtensions = [markdown({ codeLanguages: languages })]
 
@@ -108,8 +109,8 @@ export function AnnouncementEditor({ id }: Props) {
       content: content,
       style: style,
       href: href.trim() || null,
-      starts_at: new Date(startsAt).toISOString(),
-      ends_at: new Date(endsAt).toISOString(),
+      starts_at: toUtcISOStringFromLocal(startsAt),
+      ends_at: toUtcISOStringFromLocal(endsAt),
     }
 
     const onSuccess = () => router.push(routes.announcements(namespace))

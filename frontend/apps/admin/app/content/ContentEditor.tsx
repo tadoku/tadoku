@@ -7,6 +7,7 @@ import { useRouter } from 'next/router'
 import { useQueryClient } from 'react-query'
 import { toast } from 'react-toastify'
 import { v4 as uuidv4 } from 'uuid'
+import { toUtcISOStringFromLocal } from '@app/common/datetime'
 
 interface Props {
   config: ContentConfig
@@ -98,7 +99,7 @@ export function ContentEditor({ config, id }: Props) {
       slug: itemSlug.trim().toLowerCase(),
       title: title.trim(),
       body: body,
-      published_at: publishedAt ? new Date(publishedAt).toISOString() : null,
+      published_at: publishedAt ? toUtcISOStringFromLocal(publishedAt) : null,
     }
 
     const onSuccess = () => router.push(config.routes.preview(namespace, itemId))

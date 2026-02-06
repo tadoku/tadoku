@@ -44,8 +44,14 @@ export default function AnnouncementBanner() {
   const [dismissedIds, setDismissedIds] = useState<string[]>([])
 
   useEffect(() => {
-    setDismissedIds(getDismissedIds())
-  }, [])
+    if (!announcements) return
+    const activeIds = new Set(announcements.map(a => a.id))
+    const dismissed = getDismissedIds().filter(id => activeIds.has(id))
+    setDismissedIds(dismissed)
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(dismissed))
+    } catch {}
+  }, [announcements])
 
   const handleDismiss = useCallback((id: string) => {
     dismissAnnouncement(id)

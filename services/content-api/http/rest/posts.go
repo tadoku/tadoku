@@ -189,7 +189,7 @@ func (s *Server) PostVersionGet(ctx echo.Context, namespace string, id string, c
 
 // QUERIES
 
-// Returns page content for a given slug
+// Returns post content for a given slug, falling back to ID lookup
 // (GET /posts/{namespace}/{slug})
 func (s *Server) PostFindBySlug(ctx echo.Context, namespace string, slug string) error {
 	resp, err := s.postFind.Execute(ctx.Request().Context(), &domain.PostFindRequest{
@@ -197,11 +197,27 @@ func (s *Server) PostFindBySlug(ctx echo.Context, namespace string, slug string)
 		Slug:      slug,
 	})
 	if err != nil {
-		if errors.Is(err, domain.ErrPostNotFound) {
+		if errors.Is(err, domain.ErrPostNotFound) || errors.Is(err, domain.ErrRequestInvalid) {
+			// Fall back to finding by ID (for admin usage)
+			parsedID, parseErr := uuid.Parse(slug)
+			if parseErr == nil {
+				post, idErr := s.postFindByID.Execute(ctx.Request().Context(), parsedID)
+				if idErr == nil {
+					return ctx.JSON(http.StatusOK, openapi.Post{
+						Id:          &post.ID,
+						Slug:        post.Slug,
+						Title:       post.Title,
+						Content:     post.Content,
+						PublishedAt: post.PublishedAt,
+						CreatedAt:   &post.CreatedAt,
+						UpdatedAt:   &post.UpdatedAt,
+					})
+				}
+				if errors.Is(idErr, domain.ErrForbidden) {
+					return ctx.NoContent(http.StatusForbidden)
+				}
+			}
 			return ctx.NoContent(http.StatusNotFound)
-		}
-		if errors.Is(err, domain.ErrRequestInvalid) {
-			return ctx.NoContent(http.StatusBadRequest)
 		}
 
 		ctx.Echo().Logger.Error("could not process request: ", err)

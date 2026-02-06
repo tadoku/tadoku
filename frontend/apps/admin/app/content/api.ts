@@ -1,6 +1,6 @@
 import { z } from 'zod'
 import getConfig from 'next/config'
-import { useMutation, useQuery, useQueryClient } from 'react-query'
+import { useMutation, useQuery } from 'react-query'
 import { ContentConfig, ContentItem, ContentListResponse } from './types'
 
 const { publicRuntimeConfig } = getConfig()
@@ -284,47 +284,23 @@ export function useContentVersionGet(
   )
 }
 
-// Find by ID: checks cached list data first, falls back to fetching the list.
-// The backend only has a find-by-slug GET endpoint, but the list endpoint returns
-// full item data so we can resolve by ID from list results.
+// Find by ID: the backend slug endpoint falls back to ID lookup for admins.
 export function useContentFindById(
   config: ContentConfig,
   namespace: string,
   id: string,
   options?: { enabled?: boolean },
 ) {
-  const queryClient = useQueryClient()
-
   return useQuery(
     [config.type, 'findById', namespace, id],
     async (): Promise<ContentItem> => {
-      // Check cached list queries for this item
-      const cachedQueries = queryClient.getQueriesData<ContentListResponse>(
-        [config.type, 'list'],
-      )
-      for (const [, data] of cachedQueries) {
-        if (data) {
-          const item = data.items.find(i => i.id === id)
-          if (item) return item
-        }
-      }
-
-      // Not in cache - fetch the list to find the item
-      const params = new URLSearchParams({
-        page_size: '100',
-        page: '0',
-        include_drafts: 'true',
-      })
       const response = await fetch(
-        `${root}/${config.type}/${namespace}?${params}`,
+        `${root}/${config.type}/${namespace}/${id}`,
         { credentials: 'include' },
       )
       const data = await handleResponse(response)
-      const items = z.array(ContentItemSchema).parse(data[config.type])
-      const parsed = items.map(item => parseItem(item, config.bodyField))
-      const found = parsed.find(i => i.id === id)
-      if (!found) throw new Error('404')
-      return found
+      const item = ContentItemSchema.parse(data)
+      return parseItem(item, config.bodyField)
     },
     { ...options, retry: false },
   )

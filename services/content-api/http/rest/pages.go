@@ -189,7 +189,7 @@ func (s *Server) PageVersionGet(ctx echo.Context, namespace string, id string, c
 
 // QUERIES
 
-// Returns page content for a given slug
+// Returns page content for a given slug, falling back to ID lookup
 // (GET /pages/{namespace}/{slug})
 func (s *Server) PageFindBySlug(ctx echo.Context, namespace string, slug string) error {
 	resp, err := s.pageFind.Execute(ctx.Request().Context(), &domain.PageFindRequest{
@@ -197,11 +197,27 @@ func (s *Server) PageFindBySlug(ctx echo.Context, namespace string, slug string)
 		Namespace: namespace,
 	})
 	if err != nil {
-		if errors.Is(err, domain.ErrPageNotFound) {
+		if errors.Is(err, domain.ErrPageNotFound) || errors.Is(err, domain.ErrRequestInvalid) {
+			// Fall back to finding by ID (for admin usage)
+			parsedID, parseErr := uuid.Parse(slug)
+			if parseErr == nil {
+				page, idErr := s.pageFindByID.Execute(ctx.Request().Context(), parsedID)
+				if idErr == nil {
+					return ctx.JSON(http.StatusOK, openapi.Page{
+						Id:          &page.ID,
+						Slug:        page.Slug,
+						Title:       page.Title,
+						Html:        &page.HTML,
+						PublishedAt: page.PublishedAt,
+						CreatedAt:   &page.CreatedAt,
+						UpdatedAt:   &page.UpdatedAt,
+					})
+				}
+				if errors.Is(idErr, domain.ErrForbidden) {
+					return ctx.NoContent(http.StatusForbidden)
+				}
+			}
 			return ctx.NoContent(http.StatusNotFound)
-		}
-		if errors.Is(err, domain.ErrRequestInvalid) {
-			return ctx.NoContent(http.StatusBadRequest)
 		}
 
 		ctx.Echo().Logger.Error("could not process request: ", err)

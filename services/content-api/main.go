@@ -77,6 +77,7 @@ func main() {
 	pageUpdate := domain.NewPageUpdate(pageRepository, clock)
 	pageDelete := domain.NewPageDelete(pageRepository)
 	pageFind := domain.NewPageFind(pageRepository, clock)
+	pageFindByID := domain.NewPageFindByID(pageRepository)
 	pageList := domain.NewPageList(pageRepository)
 	pageVersionList := domain.NewPageVersionList(pageRepository)
 
@@ -85,6 +86,7 @@ func main() {
 	postUpdate := domain.NewPostUpdate(postRepository, clock)
 	postDelete := domain.NewPostDelete(postRepository)
 	postFind := domain.NewPostFind(postRepository, clock)
+	postFindByID := domain.NewPostFindByID(postRepository)
 	postList := domain.NewPostList(postRepository)
 	postVersionList := domain.NewPostVersionList(postRepository)
 
@@ -93,12 +95,14 @@ func main() {
 		pageUpdate,
 		pageDelete,
 		pageFind,
+		pageFindByID,
 		pageList,
 		pageVersionList,
 		postCreate,
 		postUpdate,
 		postDelete,
 		postFind,
+		postFindByID,
 		postList,
 		postVersionList,
 	)

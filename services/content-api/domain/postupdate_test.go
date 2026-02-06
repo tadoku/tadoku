@@ -13,8 +13,9 @@ import (
 )
 
 type mockPostUpdateRepo struct {
-	getPostByIDFn func(ctx context.Context, id uuid.UUID) (*contentdomain.Post, error)
-	updatePostFn  func(ctx context.Context, post *contentdomain.Post) error
+	getPostByIDFn        func(ctx context.Context, id uuid.UUID) (*contentdomain.Post, error)
+	updatePostFn         func(ctx context.Context, post *contentdomain.Post) error
+	updatePostMetadataFn func(ctx context.Context, post *contentdomain.Post) error
 }
 
 func (m *mockPostUpdateRepo) GetPostByID(ctx context.Context, id uuid.UUID) (*contentdomain.Post, error) {
@@ -27,6 +28,13 @@ func (m *mockPostUpdateRepo) GetPostByID(ctx context.Context, id uuid.UUID) (*co
 func (m *mockPostUpdateRepo) UpdatePost(ctx context.Context, post *contentdomain.Post) error {
 	if m.updatePostFn != nil {
 		return m.updatePostFn(ctx, post)
+	}
+	return nil
+}
+
+func (m *mockPostUpdateRepo) UpdatePostMetadata(ctx context.Context, post *contentdomain.Post) error {
+	if m.updatePostMetadataFn != nil {
+		return m.updatePostMetadataFn(ctx, post)
 	}
 	return nil
 }
@@ -162,6 +170,86 @@ func TestPostUpdate_Execute(t *testing.T) {
 		assert.ErrorIs(t, err, repoErr)
 	})
 
+	t.Run("calls UpdatePost when content changes", func(t *testing.T) {
+		id := uuid.New()
+		existingPost := &contentdomain.Post{
+			ID:        id,
+			Namespace: "blog",
+			Slug:      "test-post",
+			Title:     "Old Title",
+			Content:   "Old content",
+		}
+
+		var calledUpdatePost, calledUpdateMetadata bool
+		repo := &mockPostUpdateRepo{
+			getPostByIDFn: func(ctx context.Context, id uuid.UUID) (*contentdomain.Post, error) {
+				return existingPost, nil
+			},
+			updatePostFn: func(ctx context.Context, post *contentdomain.Post) error {
+				calledUpdatePost = true
+				return nil
+			},
+			updatePostMetadataFn: func(ctx context.Context, post *contentdomain.Post) error {
+				calledUpdateMetadata = true
+				return nil
+			},
+		}
+
+		svc := contentdomain.NewPostUpdate(repo, clock)
+
+		_, err := svc.Execute(adminContext(), id, &contentdomain.PostUpdateRequest{
+			Namespace: "blog",
+			Slug:      "test-post",
+			Title:     "New Title",
+			Content:   "Old content",
+		})
+
+		require.NoError(t, err)
+		assert.True(t, calledUpdatePost, "should call UpdatePost when title changes")
+		assert.False(t, calledUpdateMetadata, "should not call UpdatePostMetadata when content changes")
+	})
+
+	t.Run("calls UpdatePostMetadata when only metadata changes", func(t *testing.T) {
+		id := uuid.New()
+		existingPost := &contentdomain.Post{
+			ID:        id,
+			Namespace: "blog",
+			Slug:      "old-slug",
+			Title:     "Same Title",
+			Content:   "Same content",
+		}
+
+		var calledUpdatePost, calledUpdateMetadata bool
+		repo := &mockPostUpdateRepo{
+			getPostByIDFn: func(ctx context.Context, id uuid.UUID) (*contentdomain.Post, error) {
+				return existingPost, nil
+			},
+			updatePostFn: func(ctx context.Context, post *contentdomain.Post) error {
+				calledUpdatePost = true
+				return nil
+			},
+			updatePostMetadataFn: func(ctx context.Context, post *contentdomain.Post) error {
+				calledUpdateMetadata = true
+				return nil
+			},
+		}
+
+		svc := contentdomain.NewPostUpdate(repo, clock)
+		publishedAt := time.Date(2024, 1, 12, 0, 0, 0, 0, time.UTC)
+
+		_, err := svc.Execute(adminContext(), id, &contentdomain.PostUpdateRequest{
+			Namespace:   "blog",
+			Slug:        "new-slug",
+			Title:       "Same Title",
+			Content:     "Same content",
+			PublishedAt: &publishedAt,
+		})
+
+		require.NoError(t, err)
+		assert.False(t, calledUpdatePost, "should not call UpdatePost when content is unchanged")
+		assert.True(t, calledUpdateMetadata, "should call UpdatePostMetadata when only metadata changes")
+	})
+
 	t.Run("can unpublish a post", func(t *testing.T) {
 		id := uuid.New()
 		createdAt := time.Date(2024, 1, 10, 0, 0, 0, 0, time.UTC)
@@ -182,7 +270,7 @@ func TestPostUpdate_Execute(t *testing.T) {
 			getPostByIDFn: func(ctx context.Context, id uuid.UUID) (*contentdomain.Post, error) {
 				return existingPost, nil
 			},
-			updatePostFn: func(ctx context.Context, post *contentdomain.Post) error {
+			updatePostMetadataFn: func(ctx context.Context, post *contentdomain.Post) error {
 				updatedPost = post
 				return nil
 			},

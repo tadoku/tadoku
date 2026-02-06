@@ -13,8 +13,9 @@ import (
 )
 
 type mockPageUpdateRepo struct {
-	getPageByIDFn func(ctx context.Context, id uuid.UUID) (*contentdomain.Page, error)
-	updatePageFn  func(ctx context.Context, page *contentdomain.Page) error
+	getPageByIDFn        func(ctx context.Context, id uuid.UUID) (*contentdomain.Page, error)
+	updatePageFn         func(ctx context.Context, page *contentdomain.Page) error
+	updatePageMetadataFn func(ctx context.Context, page *contentdomain.Page) error
 }
 
 func (m *mockPageUpdateRepo) GetPageByID(ctx context.Context, id uuid.UUID) (*contentdomain.Page, error) {
@@ -27,6 +28,13 @@ func (m *mockPageUpdateRepo) GetPageByID(ctx context.Context, id uuid.UUID) (*co
 func (m *mockPageUpdateRepo) UpdatePage(ctx context.Context, page *contentdomain.Page) error {
 	if m.updatePageFn != nil {
 		return m.updatePageFn(ctx, page)
+	}
+	return nil
+}
+
+func (m *mockPageUpdateRepo) UpdatePageMetadata(ctx context.Context, page *contentdomain.Page) error {
+	if m.updatePageMetadataFn != nil {
+		return m.updatePageMetadataFn(ctx, page)
 	}
 	return nil
 }
@@ -162,6 +170,86 @@ func TestPageUpdate_Execute(t *testing.T) {
 		assert.ErrorIs(t, err, repoErr)
 	})
 
+	t.Run("calls UpdatePage when content changes", func(t *testing.T) {
+		id := uuid.New()
+		existingPage := &contentdomain.Page{
+			ID:        id,
+			Namespace: "blog",
+			Slug:      "test-page",
+			Title:     "Old Title",
+			HTML:      "<p>Old content</p>",
+		}
+
+		var calledUpdatePage, calledUpdateMetadata bool
+		repo := &mockPageUpdateRepo{
+			getPageByIDFn: func(ctx context.Context, id uuid.UUID) (*contentdomain.Page, error) {
+				return existingPage, nil
+			},
+			updatePageFn: func(ctx context.Context, page *contentdomain.Page) error {
+				calledUpdatePage = true
+				return nil
+			},
+			updatePageMetadataFn: func(ctx context.Context, page *contentdomain.Page) error {
+				calledUpdateMetadata = true
+				return nil
+			},
+		}
+
+		svc := contentdomain.NewPageUpdate(repo, clock)
+
+		_, err := svc.Execute(adminContext(), id, &contentdomain.PageUpdateRequest{
+			Namespace: "blog",
+			Slug:      "test-page",
+			Title:     "New Title",
+			HTML:      "<p>Old content</p>",
+		})
+
+		require.NoError(t, err)
+		assert.True(t, calledUpdatePage, "should call UpdatePage when title changes")
+		assert.False(t, calledUpdateMetadata, "should not call UpdatePageMetadata when content changes")
+	})
+
+	t.Run("calls UpdatePageMetadata when only metadata changes", func(t *testing.T) {
+		id := uuid.New()
+		existingPage := &contentdomain.Page{
+			ID:        id,
+			Namespace: "blog",
+			Slug:      "old-slug",
+			Title:     "Same Title",
+			HTML:      "<p>Same content</p>",
+		}
+
+		var calledUpdatePage, calledUpdateMetadata bool
+		repo := &mockPageUpdateRepo{
+			getPageByIDFn: func(ctx context.Context, id uuid.UUID) (*contentdomain.Page, error) {
+				return existingPage, nil
+			},
+			updatePageFn: func(ctx context.Context, page *contentdomain.Page) error {
+				calledUpdatePage = true
+				return nil
+			},
+			updatePageMetadataFn: func(ctx context.Context, page *contentdomain.Page) error {
+				calledUpdateMetadata = true
+				return nil
+			},
+		}
+
+		svc := contentdomain.NewPageUpdate(repo, clock)
+		publishedAt := time.Date(2024, 1, 12, 0, 0, 0, 0, time.UTC)
+
+		_, err := svc.Execute(adminContext(), id, &contentdomain.PageUpdateRequest{
+			Namespace:   "blog",
+			Slug:        "new-slug",
+			Title:       "Same Title",
+			HTML:        "<p>Same content</p>",
+			PublishedAt: &publishedAt,
+		})
+
+		require.NoError(t, err)
+		assert.False(t, calledUpdatePage, "should not call UpdatePage when content is unchanged")
+		assert.True(t, calledUpdateMetadata, "should call UpdatePageMetadata when only metadata changes")
+	})
+
 	t.Run("can unpublish a page", func(t *testing.T) {
 		id := uuid.New()
 		createdAt := time.Date(2024, 1, 10, 0, 0, 0, 0, time.UTC)
@@ -182,7 +270,7 @@ func TestPageUpdate_Execute(t *testing.T) {
 			getPageByIDFn: func(ctx context.Context, id uuid.UUID) (*contentdomain.Page, error) {
 				return existingPage, nil
 			},
-			updatePageFn: func(ctx context.Context, page *contentdomain.Page) error {
+			updatePageMetadataFn: func(ctx context.Context, page *contentdomain.Page) error {
 				updatedPage = page
 				return nil
 			},

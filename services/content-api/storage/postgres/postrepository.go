@@ -148,6 +148,78 @@ func (r *PostRepository) UpdatePost(ctx context.Context, post *domain.Post) erro
 	return nil
 }
 
+// UpdatePostMetadata implements domain.PostUpdateRepository
+func (r *PostRepository) UpdatePostMetadata(ctx context.Context, post *domain.Post) error {
+	_, err := r.q.UpdatePostMetadata(ctx, UpdatePostMetadataParams{
+		ID:          post.ID,
+		Slug:        post.Slug,
+		PublishedAt: NewNullTime(post.PublishedAt),
+	})
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return domain.ErrPostNotFound
+		}
+
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) && pgErr.Code == pgerrcode.UniqueViolation {
+			return domain.ErrPostAlreadyExists
+		}
+
+		return fmt.Errorf("could not update post metadata: %w", err)
+	}
+
+	return nil
+}
+
+// DeletePost implements domain.PostDeleteRepository
+func (r *PostRepository) DeletePost(ctx context.Context, id uuid.UUID) error {
+	if err := r.q.DeletePost(ctx, id); err != nil {
+		return fmt.Errorf("could not delete post: %w", err)
+	}
+	return nil
+}
+
+// ListPostVersions implements domain.PostVersionListRepository
+func (r *PostRepository) ListPostVersions(ctx context.Context, postID uuid.UUID) ([]domain.PostVersion, error) {
+	rows, err := r.q.ListPostVersions(ctx, postID)
+	if err != nil {
+		return nil, fmt.Errorf("could not list post versions: %w", err)
+	}
+
+	versions := make([]domain.PostVersion, len(rows))
+	for i, row := range rows {
+		versions[i] = domain.PostVersion{
+			ID:        row.ID,
+			Version:   i + 1,
+			Title:     row.Title,
+			CreatedAt: row.CreatedAt,
+		}
+	}
+
+	return versions, nil
+}
+
+// GetPostVersion implements domain.PostVersionListRepository
+func (r *PostRepository) GetPostVersion(ctx context.Context, postID uuid.UUID, contentID uuid.UUID) (*domain.PostVersion, error) {
+	row, err := r.q.GetPostVersion(ctx, GetPostVersionParams{
+		ID:     contentID,
+		PostID: postID,
+	})
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, domain.ErrPostNotFound
+		}
+		return nil, fmt.Errorf("could not get post version: %w", err)
+	}
+
+	return &domain.PostVersion{
+		ID:        row.ID,
+		Title:     row.Title,
+		Content:   row.Content,
+		CreatedAt: row.CreatedAt,
+	}, nil
+}
+
 // FindPostBySlug implements domain.PostFindRepository
 func (r *PostRepository) FindPostBySlug(ctx context.Context, namespace, slug string) (*domain.Post, error) {
 	post, err := r.q.FindPostBySlug(ctx, FindPostBySlugParams{

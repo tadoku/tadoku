@@ -2,10 +2,14 @@ import Head from 'next/head'
 import { NextPageWithLayout } from './_app'
 import { getDashboardLayout } from '@app/ui/DashboardLayout'
 import { useUserList } from '@app/common/api'
+import { useContentList } from '@app/content/api'
+import { postsConfig } from '@app/content/posts'
+import { DEFAULT_NAMESPACE } from '@app/content/NamespaceSelector'
 import { Loading } from 'ui'
 
 const Page: NextPageWithLayout = () => {
   const users = useUserList({ pageSize: 5, page: 0 }, { enabled: true })
+  const posts = useContentList(postsConfig, DEFAULT_NAMESPACE, { pageSize: 1, page: 0 })
 
   return (
     <>
@@ -32,7 +36,15 @@ const Page: NextPageWithLayout = () => {
 
         <div className="bg-slate-50 rounded-lg p-6 border border-slate-200">
           <h2 className="text-lg font-semibold text-slate-900">Posts</h2>
-          <p className="mt-2 text-3xl font-bold text-primary">-</p>
+          {posts.isLoading ? (
+            <Loading />
+          ) : posts.isSuccess ? (
+            <p className="mt-2 text-3xl font-bold text-primary">
+              {posts.data.total_size}
+            </p>
+          ) : (
+            <p className="mt-2 text-slate-500">Unable to load</p>
+          )}
           <p className="mt-1 text-sm text-slate-500">Blog posts</p>
         </div>
 

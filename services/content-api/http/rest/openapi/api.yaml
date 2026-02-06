@@ -72,6 +72,31 @@ paths:
           description: Invalid page
         '404':
           description: Page does not exist and cannot be updated
+    delete:
+      summary: Deletes an existing page
+      operationId: pageDelete
+      tags: [pages]
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: namespace
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: id
+          in: path
+          description: ID of page
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: successful operation
+        '403':
+          description: Not allowed
+        '404':
+          description: Page not found
   /pages/{namespace}:
     post:
       summary: Creates a new page
@@ -134,6 +159,73 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Pages'
+  /pages/{namespace}/{id}/versions:
+    get:
+      summary: Lists all versions of a page
+      operationId: pageVersionList
+      tags: [pages]
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: namespace
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: id
+          in: path
+          description: ID of page
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PageVersions'
+        '403':
+          description: Not allowed
+        '404':
+          description: Page not found
+  /pages/{namespace}/{id}/versions/{contentId}:
+    get:
+      summary: Gets a specific version of a page
+      operationId: pageVersionGet
+      tags: [pages]
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: namespace
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: id
+          in: path
+          description: ID of page
+          required: true
+          schema:
+            type: string
+        - name: contentId
+          in: path
+          description: Content ID of the version
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PageVersion'
+        '403':
+          description: Not allowed
+        '404':
+          description: Page or version not found
   /posts/{namespace}/{slug}:
     get:
       summary: Returns page content for a given slug
@@ -195,6 +287,31 @@ paths:
           description: Invalid post
         '404':
           description: Post does not exist and cannot be updated
+    delete:
+      summary: Deletes an existing post
+      operationId: postDelete
+      tags: [posts]
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: id
+          in: path
+          description: ID of post
+          required: true
+          schema:
+            type: string
+        - name: namespace
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: successful operation
+        '403':
+          description: Not allowed
+        '404':
+          description: Post not found
   /posts/{namespace}:
     post:
       summary: Creates a new post
@@ -255,6 +372,73 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Posts'
+  /posts/{namespace}/{id}/versions:
+    get:
+      summary: Lists all versions of a post
+      operationId: postVersionList
+      tags: [posts]
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: namespace
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: id
+          in: path
+          description: ID of post
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PostVersions'
+        '403':
+          description: Not allowed
+        '404':
+          description: Post not found
+  /posts/{namespace}/{id}/versions/{contentId}:
+    get:
+      summary: Gets a specific version of a post
+      operationId: postVersionGet
+      tags: [posts]
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: namespace
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: id
+          in: path
+          description: ID of post
+          required: true
+          schema:
+            type: string
+        - name: contentId
+          in: path
+          description: Content ID of the version
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PostVersion'
+        '403':
+          description: Not allowed
+        '404':
+          description: Post or version not found
   /ping:
     get:
       summary: Checks if service is responsive
@@ -360,6 +544,70 @@ components:
               maxItems: 50
               items:
                 $ref: "#/components/schemas/Post"
+    PageVersion:
+      type: object
+      required:
+        - id
+        - version
+        - title
+        - created_at
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Content ID of this version
+        version:
+          type: integer
+          example: 1
+          description: Version number (starting at 1)
+        title:
+          type: string
+        html:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+    PageVersions:
+      type: object
+      required:
+        - versions
+      properties:
+        versions:
+          type: array
+          items:
+            $ref: '#/components/schemas/PageVersion'
+    PostVersion:
+      type: object
+      required:
+        - id
+        - version
+        - title
+        - created_at
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Content ID of this version
+        version:
+          type: integer
+          example: 1
+          description: Version number (starting at 1)
+        title:
+          type: string
+        content:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+    PostVersions:
+      type: object
+      required:
+        - versions
+      properties:
+        versions:
+          type: array
+          items:
+            $ref: '#/components/schemas/PostVersion'
     PaginatedList:
       type: object
       required:

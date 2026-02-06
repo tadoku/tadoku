@@ -13,6 +13,7 @@ import (
 type PageUpdateRepository interface {
 	GetPageByID(ctx context.Context, id uuid.UUID) (*Page, error)
 	UpdatePage(ctx context.Context, page *Page) error
+	UpdatePageMetadata(ctx context.Context, page *Page) error
 }
 
 type PageUpdateRequest struct {
@@ -55,6 +56,8 @@ func (s *PageUpdate) Execute(ctx context.Context, id uuid.UUID, req *PageUpdateR
 		return nil, err
 	}
 
+	contentChanged := page.Title != req.Title || page.HTML != req.HTML
+
 	page.Namespace = req.Namespace
 	page.Slug = req.Slug
 	page.Title = req.Title
@@ -62,7 +65,12 @@ func (s *PageUpdate) Execute(ctx context.Context, id uuid.UUID, req *PageUpdateR
 	page.PublishedAt = req.PublishedAt
 	page.UpdatedAt = s.clock.Now()
 
-	if err := s.repo.UpdatePage(ctx, page); err != nil {
+	if contentChanged {
+		err = s.repo.UpdatePage(ctx, page)
+	} else {
+		err = s.repo.UpdatePageMetadata(ctx, page)
+	}
+	if err != nil {
 		return nil, err
 	}
 

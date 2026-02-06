@@ -83,24 +83,17 @@ func (q *Queries) CreatePageContent(ctx context.Context, arg CreatePageContentPa
 	return id, err
 }
 
-const findPageBySlug = `-- name: FindPageBySlug :one
-select
-  pages.id,
-  "namespace",
-  slug,
-  pages_content.title,
-  pages_content.html,
-  published_at,
-  pages.created_at,
-  pages.updated_at
-from pages
-inner join pages_content
-  on pages_content.id = pages.current_content_id
-where
-  deleted_at is null
-  and "namespace" = $1
-  and slug = $2
+const deletePage = `-- name: DeletePage :exec
+update pages
+set deleted_at = now()
+where id = $1
+  and deleted_at is null
 `
+
+func (q *Queries) DeletePage(ctx context.Context, id uuid.UUID) error {
+	_, err := q.db.ExecContext(ctx, deletePage, id)
+	return err
+}
 
 const findPageByID = `-- name: FindPageByID :one
 select
@@ -147,6 +140,25 @@ func (q *Queries) FindPageByID(ctx context.Context, id uuid.UUID) (FindPageByIDR
 	return i, err
 }
 
+const findPageBySlug = `-- name: FindPageBySlug :one
+select
+  pages.id,
+  "namespace",
+  slug,
+  pages_content.title,
+  pages_content.html,
+  published_at,
+  pages.created_at,
+  pages.updated_at
+from pages
+inner join pages_content
+  on pages_content.id = pages.current_content_id
+where
+  deleted_at is null
+  and "namespace" = $1
+  and slug = $2
+`
+
 type FindPageBySlugParams struct {
 	Namespace string
 	Slug      string
@@ -177,6 +189,80 @@ func (q *Queries) FindPageBySlug(ctx context.Context, arg FindPageBySlugParams) 
 		&i.UpdatedAt,
 	)
 	return i, err
+}
+
+const getPageVersion = `-- name: GetPageVersion :one
+select
+  id,
+  title,
+  html,
+  created_at
+from pages_content
+where id = $1
+  and page_id = $2
+`
+
+type GetPageVersionParams struct {
+	ID     uuid.UUID
+	PageID uuid.UUID
+}
+
+type GetPageVersionRow struct {
+	ID        uuid.UUID
+	Title     string
+	Html      string
+	CreatedAt time.Time
+}
+
+func (q *Queries) GetPageVersion(ctx context.Context, arg GetPageVersionParams) (GetPageVersionRow, error) {
+	row := q.db.QueryRowContext(ctx, getPageVersion, arg.ID, arg.PageID)
+	var i GetPageVersionRow
+	err := row.Scan(
+		&i.ID,
+		&i.Title,
+		&i.Html,
+		&i.CreatedAt,
+	)
+	return i, err
+}
+
+const listPageVersions = `-- name: ListPageVersions :many
+select
+  id,
+  title,
+  created_at
+from pages_content
+where page_id = $1
+order by created_at asc
+`
+
+type ListPageVersionsRow struct {
+	ID        uuid.UUID
+	Title     string
+	CreatedAt time.Time
+}
+
+func (q *Queries) ListPageVersions(ctx context.Context, pageID uuid.UUID) ([]ListPageVersionsRow, error) {
+	rows, err := q.db.QueryContext(ctx, listPageVersions, pageID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListPageVersionsRow
+	for rows.Next() {
+		var i ListPageVersionsRow
+		if err := rows.Scan(&i.ID, &i.Title, &i.CreatedAt); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const listPages = `-- name: ListPages :many
@@ -311,6 +397,31 @@ func (q *Queries) UpdatePage(ctx context.Context, arg UpdatePageParams) (uuid.UU
 		arg.PublishedAt,
 		arg.ID,
 	)
+	var id uuid.UUID
+	err := row.Scan(&id)
+	return id, err
+}
+
+const updatePageMetadata = `-- name: UpdatePageMetadata :one
+update pages
+set
+  slug = $1,
+  published_at = $2,
+  updated_at = now()
+where
+  id = $3 and
+  deleted_at is null
+returning id
+`
+
+type UpdatePageMetadataParams struct {
+	Slug        string
+	PublishedAt sql.NullTime
+	ID          uuid.UUID
+}
+
+func (q *Queries) UpdatePageMetadata(ctx context.Context, arg UpdatePageMetadataParams) (uuid.UUID, error) {
+	row := q.db.QueryRowContext(ctx, updatePageMetadata, arg.Slug, arg.PublishedAt, arg.ID)
 	var id uuid.UUID
 	err := row.Scan(&id)
 	return id, err

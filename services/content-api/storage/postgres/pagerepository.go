@@ -148,6 +148,78 @@ func (r *PageRepository) UpdatePage(ctx context.Context, page *domain.Page) erro
 	return nil
 }
 
+// UpdatePageMetadata implements domain.PageUpdateRepository
+func (r *PageRepository) UpdatePageMetadata(ctx context.Context, page *domain.Page) error {
+	_, err := r.q.UpdatePageMetadata(ctx, UpdatePageMetadataParams{
+		ID:          page.ID,
+		Slug:        page.Slug,
+		PublishedAt: NewNullTime(page.PublishedAt),
+	})
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return domain.ErrPageNotFound
+		}
+
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) && pgErr.Code == pgerrcode.UniqueViolation {
+			return domain.ErrPageAlreadyExists
+		}
+
+		return fmt.Errorf("could not update page metadata: %w", err)
+	}
+
+	return nil
+}
+
+// DeletePage implements domain.PageDeleteRepository
+func (r *PageRepository) DeletePage(ctx context.Context, id uuid.UUID) error {
+	if err := r.q.DeletePage(ctx, id); err != nil {
+		return fmt.Errorf("could not delete page: %w", err)
+	}
+	return nil
+}
+
+// ListPageVersions implements domain.PageVersionListRepository
+func (r *PageRepository) ListPageVersions(ctx context.Context, pageID uuid.UUID) ([]domain.PageVersion, error) {
+	rows, err := r.q.ListPageVersions(ctx, pageID)
+	if err != nil {
+		return nil, fmt.Errorf("could not list page versions: %w", err)
+	}
+
+	versions := make([]domain.PageVersion, len(rows))
+	for i, row := range rows {
+		versions[i] = domain.PageVersion{
+			ID:        row.ID,
+			Version:   i + 1,
+			Title:     row.Title,
+			CreatedAt: row.CreatedAt,
+		}
+	}
+
+	return versions, nil
+}
+
+// GetPageVersion implements domain.PageVersionListRepository
+func (r *PageRepository) GetPageVersion(ctx context.Context, pageID uuid.UUID, contentID uuid.UUID) (*domain.PageVersion, error) {
+	row, err := r.q.GetPageVersion(ctx, GetPageVersionParams{
+		ID:     contentID,
+		PageID: pageID,
+	})
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, domain.ErrPageNotFound
+		}
+		return nil, fmt.Errorf("could not get page version: %w", err)
+	}
+
+	return &domain.PageVersion{
+		ID:        row.ID,
+		Title:     row.Title,
+		HTML:      row.Html,
+		CreatedAt: row.CreatedAt,
+	}, nil
+}
+
 // FindPageBySlug implements domain.PageFindRepository
 func (r *PageRepository) FindPageBySlug(ctx context.Context, namespace, slug string) (*domain.Page, error) {
 	page, err := r.q.FindPageBySlug(ctx, FindPageBySlugParams{

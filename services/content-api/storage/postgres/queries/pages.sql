@@ -94,6 +94,17 @@ where
   deleted_at is null
 returning id;
 
+-- name: UpdatePageMetadata :one
+update pages
+set
+  slug = sqlc.arg('slug'),
+  published_at = sqlc.arg('published_at'),
+  updated_at = now()
+where
+  id = sqlc.arg('id') and
+  deleted_at is null
+returning id;
+
 -- name: PagesMetadata :one
 select
   count(pages.id) as total_size,
@@ -103,3 +114,28 @@ where
   deleted_at is null
   and (sqlc.arg('include_drafts')::boolean or published_at is not null)
   and "namespace" = sqlc.arg('namespace');
+
+-- name: DeletePage :exec
+update pages
+set deleted_at = now()
+where id = sqlc.arg('id')
+  and deleted_at is null;
+
+-- name: ListPageVersions :many
+select
+  id,
+  title,
+  created_at
+from pages_content
+where page_id = sqlc.arg('page_id')
+order by created_at asc;
+
+-- name: GetPageVersion :one
+select
+  id,
+  title,
+  html,
+  created_at
+from pages_content
+where id = sqlc.arg('id')
+  and page_id = sqlc.arg('page_id');

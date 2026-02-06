@@ -26,6 +26,8 @@ cd frontend && pnpm build
 
 **Always use `bazel`, not `go`.**
 
+**Always write tests for new backend functionality** — new domain services, repository methods, and HTTP handlers should have corresponding test coverage.
+
 **SQL style: always use lowercase keywords** (select, create table, not SELECT, CREATE TABLE)
 
 ```sh

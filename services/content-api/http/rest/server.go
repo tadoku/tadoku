@@ -9,33 +9,57 @@ import (
 func NewServer(
 	pageCreate *domain.PageCreate,
 	pageUpdate *domain.PageUpdate,
+	pageDelete *domain.PageDelete,
 	pageFind *domain.PageFind,
+	pageFindByID *domain.PageFindByID,
 	pageList *domain.PageList,
+	pageVersionList *domain.PageVersionList,
+	pageVersionGet *domain.PageVersionGet,
 	postCreate *domain.PostCreate,
 	postUpdate *domain.PostUpdate,
+	postDelete *domain.PostDelete,
 	postFind *domain.PostFind,
+	postFindByID *domain.PostFindByID,
 	postList *domain.PostList,
+	postVersionList *domain.PostVersionList,
+	postVersionGet *domain.PostVersionGet,
 ) openapi.ServerInterface {
 	return &Server{
-		pageCreate: pageCreate,
-		pageUpdate: pageUpdate,
-		pageFind:   pageFind,
-		pageList:   pageList,
-		postCreate: postCreate,
-		postUpdate: postUpdate,
-		postFind:   postFind,
-		postList:   postList,
+		pageCreate:      pageCreate,
+		pageUpdate:      pageUpdate,
+		pageDelete:      pageDelete,
+		pageFind:        pageFind,
+		pageFindByID:    pageFindByID,
+		pageList:        pageList,
+		pageVersionList: pageVersionList,
+		pageVersionGet:  pageVersionGet,
+		postCreate:      postCreate,
+		postUpdate:      postUpdate,
+		postDelete:      postDelete,
+		postFind:        postFind,
+		postFindByID:    postFindByID,
+		postList:        postList,
+		postVersionList: postVersionList,
+		postVersionGet:  postVersionGet,
 	}
 }
 
 type Server struct {
-	pageCreate *domain.PageCreate
-	pageUpdate *domain.PageUpdate
-	pageFind   *domain.PageFind
-	pageList   *domain.PageList
+	pageCreate      *domain.PageCreate
+	pageUpdate      *domain.PageUpdate
+	pageDelete      *domain.PageDelete
+	pageFind        *domain.PageFind
+	pageFindByID    *domain.PageFindByID
+	pageList        *domain.PageList
+	pageVersionList *domain.PageVersionList
+	pageVersionGet  *domain.PageVersionGet
 
-	postCreate *domain.PostCreate
-	postUpdate *domain.PostUpdate
-	postFind   *domain.PostFind
-	postList   *domain.PostList
+	postCreate      *domain.PostCreate
+	postUpdate      *domain.PostUpdate
+	postDelete      *domain.PostDelete
+	postFind        *domain.PostFind
+	postFindByID    *domain.PostFindByID
+	postList        *domain.PostList
+	postVersionList *domain.PostVersionList
+	postVersionGet  *domain.PostVersionGet
 }

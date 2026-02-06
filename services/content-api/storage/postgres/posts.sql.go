@@ -83,24 +83,17 @@ func (q *Queries) CreatePostContent(ctx context.Context, arg CreatePostContentPa
 	return id, err
 }
 
-const findPostBySlug = `-- name: FindPostBySlug :one
-select
-  posts.id,
-  "namespace",
-  slug,
-  posts_content.title,
-  posts_content.content,
-  published_at,
-  posts.created_at,
-  posts.updated_at
-from posts
-inner join posts_content
-  on posts_content.id = posts.current_content_id
-where
-  deleted_at is null
-  and "namespace" = $1
-  and slug = $2
+const deletePost = `-- name: DeletePost :exec
+update posts
+set deleted_at = now()
+where id = $1
+  and deleted_at is null
 `
+
+func (q *Queries) DeletePost(ctx context.Context, id uuid.UUID) error {
+	_, err := q.db.ExecContext(ctx, deletePost, id)
+	return err
+}
 
 const findPostByID = `-- name: FindPostByID :one
 select
@@ -120,12 +113,7 @@ where
   and posts.id = $1
 `
 
-type FindPostBySlugParams struct {
-	Namespace string
-	Slug      string
-}
-
-type FindPostBySlugRow struct {
+type FindPostByIDRow struct {
 	ID          uuid.UUID
 	Namespace   string
 	Slug        string
@@ -136,7 +124,47 @@ type FindPostBySlugRow struct {
 	UpdatedAt   time.Time
 }
 
-type FindPostByIDRow struct {
+func (q *Queries) FindPostByID(ctx context.Context, id uuid.UUID) (FindPostByIDRow, error) {
+	row := q.db.QueryRowContext(ctx, findPostByID, id)
+	var i FindPostByIDRow
+	err := row.Scan(
+		&i.ID,
+		&i.Namespace,
+		&i.Slug,
+		&i.Title,
+		&i.Content,
+		&i.PublishedAt,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const findPostBySlug = `-- name: FindPostBySlug :one
+select
+  posts.id,
+  "namespace",
+  slug,
+  posts_content.title,
+  posts_content.content,
+  published_at,
+  posts.created_at,
+  posts.updated_at
+from posts
+inner join posts_content
+  on posts_content.id = posts.current_content_id
+where
+  deleted_at is null
+  and "namespace" = $1
+  and slug = $2
+`
+
+type FindPostBySlugParams struct {
+	Namespace string
+	Slug      string
+}
+
+type FindPostBySlugRow struct {
 	ID          uuid.UUID
 	Namespace   string
 	Slug        string
@@ -163,20 +191,78 @@ func (q *Queries) FindPostBySlug(ctx context.Context, arg FindPostBySlugParams) 
 	return i, err
 }
 
-func (q *Queries) FindPostByID(ctx context.Context, id uuid.UUID) (FindPostByIDRow, error) {
-	row := q.db.QueryRowContext(ctx, findPostByID, id)
-	var i FindPostByIDRow
+const getPostVersion = `-- name: GetPostVersion :one
+select
+  id,
+  title,
+  content,
+  created_at
+from posts_content
+where id = $1
+  and post_id = $2
+`
+
+type GetPostVersionParams struct {
+	ID     uuid.UUID
+	PostID uuid.UUID
+}
+
+type GetPostVersionRow struct {
+	ID        uuid.UUID
+	Title     string
+	Content   string
+	CreatedAt time.Time
+}
+
+func (q *Queries) GetPostVersion(ctx context.Context, arg GetPostVersionParams) (GetPostVersionRow, error) {
+	row := q.db.QueryRowContext(ctx, getPostVersion, arg.ID, arg.PostID)
+	var i GetPostVersionRow
 	err := row.Scan(
 		&i.ID,
-		&i.Namespace,
-		&i.Slug,
 		&i.Title,
 		&i.Content,
-		&i.PublishedAt,
 		&i.CreatedAt,
-		&i.UpdatedAt,
 	)
 	return i, err
+}
+
+const listPostVersions = `-- name: ListPostVersions :many
+select
+  id,
+  title,
+  created_at
+from posts_content
+where post_id = $1
+order by created_at asc
+`
+
+type ListPostVersionsRow struct {
+	ID        uuid.UUID
+	Title     string
+	CreatedAt time.Time
+}
+
+func (q *Queries) ListPostVersions(ctx context.Context, postID uuid.UUID) ([]ListPostVersionsRow, error) {
+	rows, err := q.db.QueryContext(ctx, listPostVersions, postID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListPostVersionsRow
+	for rows.Next() {
+		var i ListPostVersionsRow
+		if err := rows.Scan(&i.ID, &i.Title, &i.CreatedAt); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const listPosts = `-- name: ListPosts :many
@@ -311,6 +397,31 @@ func (q *Queries) UpdatePost(ctx context.Context, arg UpdatePostParams) (uuid.UU
 		arg.PublishedAt,
 		arg.ID,
 	)
+	var id uuid.UUID
+	err := row.Scan(&id)
+	return id, err
+}
+
+const updatePostMetadata = `-- name: UpdatePostMetadata :one
+update posts
+set
+  slug = $1,
+  published_at = $2,
+  updated_at = now()
+where
+  id = $3 and
+  deleted_at is null
+returning id
+`
+
+type UpdatePostMetadataParams struct {
+	Slug        string
+	PublishedAt sql.NullTime
+	ID          uuid.UUID
+}
+
+func (q *Queries) UpdatePostMetadata(ctx context.Context, arg UpdatePostMetadataParams) (uuid.UUID, error) {
+	row := q.db.QueryRowContext(ctx, updatePostMetadata, arg.Slug, arg.PublishedAt, arg.ID)
 	var id uuid.UUID
 	err := row.Scan(&id)
 	return id, err

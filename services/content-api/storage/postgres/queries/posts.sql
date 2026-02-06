@@ -94,6 +94,17 @@ where
   deleted_at is null
 returning id;
 
+-- name: UpdatePostMetadata :one
+update posts
+set
+  slug = sqlc.arg('slug'),
+  published_at = sqlc.arg('published_at'),
+  updated_at = now()
+where
+  id = sqlc.arg('id') and
+  deleted_at is null
+returning id;
+
 -- name: PostsMetadata :one
 select
   count(posts.id) as total_size,
@@ -103,3 +114,28 @@ where
   deleted_at is null
   and (sqlc.arg('include_drafts')::boolean or published_at is not null)
   and "namespace" = sqlc.arg('namespace');
+
+-- name: DeletePost :exec
+update posts
+set deleted_at = now()
+where id = sqlc.arg('id')
+  and deleted_at is null;
+
+-- name: ListPostVersions :many
+select
+  id,
+  title,
+  created_at
+from posts_content
+where post_id = sqlc.arg('post_id')
+order by created_at asc;
+
+-- name: GetPostVersion :one
+select
+  id,
+  title,
+  content,
+  created_at
+from posts_content
+where id = sqlc.arg('id')
+  and post_id = sqlc.arg('post_id');

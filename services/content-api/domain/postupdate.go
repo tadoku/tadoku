@@ -13,6 +13,7 @@ import (
 type PostUpdateRepository interface {
 	GetPostByID(ctx context.Context, id uuid.UUID) (*Post, error)
 	UpdatePost(ctx context.Context, post *Post) error
+	UpdatePostMetadata(ctx context.Context, post *Post) error
 }
 
 type PostUpdateRequest struct {
@@ -55,6 +56,8 @@ func (s *PostUpdate) Execute(ctx context.Context, id uuid.UUID, req *PostUpdateR
 		return nil, err
 	}
 
+	contentChanged := post.Title != req.Title || post.Content != req.Content
+
 	post.Namespace = req.Namespace
 	post.Slug = req.Slug
 	post.Title = req.Title
@@ -62,7 +65,12 @@ func (s *PostUpdate) Execute(ctx context.Context, id uuid.UUID, req *PostUpdateR
 	post.PublishedAt = req.PublishedAt
 	post.UpdatedAt = s.clock.Now()
 
-	if err := s.repo.UpdatePost(ctx, post); err != nil {
+	if contentChanged {
+		err = s.repo.UpdatePost(ctx, post)
+	} else {
+		err = s.repo.UpdatePostMetadata(ctx, post)
+	}
+	if err != nil {
 		return nil, err
 	}
 

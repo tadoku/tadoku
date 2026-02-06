@@ -1,15 +1,20 @@
 import { routes } from '@app/common/routes'
-import { DocumentTextIcon, HomeIcon } from '@heroicons/react/20/solid'
+import { DocumentTextIcon, HomeIcon, PlusIcon } from '@heroicons/react/20/solid'
 import Head from 'next/head'
 import { Breadcrumb } from 'ui'
-import { NextPageWithLayout } from './_app'
+import { NextPageWithLayout } from '../../_app'
 import { getDashboardLayout } from '@app/ui/DashboardLayout'
+import { ContentEditor } from '@app/content/ContentEditor'
+import { postsConfig } from '@app/content/posts'
+import { useNamespace } from '@app/content/NamespaceSelector'
 
 const Page: NextPageWithLayout = () => {
+  const namespace = useNamespace()
+
   return (
     <>
       <Head>
-        <title>Posts - Admin - Tadoku</title>
+        <title>New Post - Admin - Tadoku</title>
       </Head>
       <div className="pb-4">
         <Breadcrumb
@@ -21,14 +26,19 @@ const Page: NextPageWithLayout = () => {
             },
             {
               label: 'Posts',
-              href: routes.posts(),
+              href: routes.posts(namespace),
               IconComponent: DocumentTextIcon,
+            },
+            {
+              label: 'New Post',
+              href: routes.postNew(namespace),
+              IconComponent: PlusIcon,
             },
           ]}
         />
       </div>
-      <h1 className="title">Posts</h1>
-      <p className="mt-2 text-slate-600">Manage blog posts.</p>
+      <h1 className="title mb-6">New Post</h1>
+      <ContentEditor config={postsConfig} />
     </>
   )
 }

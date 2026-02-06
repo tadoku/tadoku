@@ -60,7 +60,12 @@ func (s *Server) PostUpdate(ctx echo.Context, namespace string, id string) error
 		return ctx.NoContent(http.StatusBadRequest)
 	}
 
-	resp, err := s.postUpdate.Execute(ctx.Request().Context(), uuid.MustParse(id), &domain.PostUpdateRequest{
+	parsedID, err := uuid.Parse(id)
+	if err != nil {
+		return ctx.NoContent(http.StatusBadRequest)
+	}
+
+	resp, err := s.postUpdate.Execute(ctx.Request().Context(), parsedID, &domain.PostUpdateRequest{
 		Slug:        req.Slug,
 		Namespace:   namespace,
 		Title:       req.Title,
@@ -92,9 +97,99 @@ func (s *Server) PostUpdate(ctx echo.Context, namespace string, id string) error
 	})
 }
 
+// Deletes an existing post
+// (DELETE /posts/{namespace}/{id})
+func (s *Server) PostDelete(ctx echo.Context, namespace string, id string) error {
+	parsedID, err := uuid.Parse(id)
+	if err != nil {
+		return ctx.NoContent(http.StatusBadRequest)
+	}
+
+	err = s.postDelete.Execute(ctx.Request().Context(), parsedID)
+	if err != nil {
+		if errors.Is(err, domain.ErrForbidden) {
+			return ctx.NoContent(http.StatusForbidden)
+		}
+		if errors.Is(err, domain.ErrPostNotFound) {
+			return ctx.NoContent(http.StatusNotFound)
+		}
+
+		ctx.Echo().Logger.Error("could not process request: ", err)
+		return ctx.NoContent(http.StatusInternalServerError)
+	}
+
+	return ctx.NoContent(http.StatusNoContent)
+}
+
+// Lists all versions of a post
+// (GET /posts/{namespace}/{id}/versions)
+func (s *Server) PostVersionList(ctx echo.Context, namespace string, id string) error {
+	parsedID, err := uuid.Parse(id)
+	if err != nil {
+		return ctx.NoContent(http.StatusBadRequest)
+	}
+
+	versions, err := s.postVersionList.Execute(ctx.Request().Context(), parsedID)
+	if err != nil {
+		if errors.Is(err, domain.ErrForbidden) {
+			return ctx.NoContent(http.StatusForbidden)
+		}
+		if errors.Is(err, domain.ErrPostNotFound) {
+			return ctx.NoContent(http.StatusNotFound)
+		}
+
+		ctx.Echo().Logger.Error("could not process request: ", err)
+		return ctx.NoContent(http.StatusInternalServerError)
+	}
+
+	res := openapi.PostVersions{
+		Versions: make([]openapi.PostVersion, len(versions)),
+	}
+	for i, v := range versions {
+		res.Versions[i] = openapi.PostVersion{
+			Id:        v.ID,
+			Version:   v.Version,
+			Title:     v.Title,
+			CreatedAt: v.CreatedAt,
+		}
+	}
+
+	return ctx.JSON(http.StatusOK, res)
+}
+
+// Gets a specific version of a post
+// (GET /posts/{namespace}/{id}/versions/{contentId})
+func (s *Server) PostVersionGet(ctx echo.Context, namespace string, id string, contentId uuid.UUID) error {
+	parsedID, err := uuid.Parse(id)
+	if err != nil {
+		return ctx.NoContent(http.StatusBadRequest)
+	}
+
+	v, err := s.postVersionGet.Execute(ctx.Request().Context(), parsedID, contentId)
+	if err != nil {
+		if errors.Is(err, domain.ErrForbidden) {
+			return ctx.NoContent(http.StatusForbidden)
+		}
+		if errors.Is(err, domain.ErrPostNotFound) {
+			return ctx.NoContent(http.StatusNotFound)
+		}
+
+		ctx.Echo().Logger.Error("could not process request: ", err)
+		return ctx.NoContent(http.StatusInternalServerError)
+	}
+
+	return ctx.JSON(http.StatusOK, openapi.PostVersion{
+		Id:        v.ID,
+		Version:   v.Version,
+		Title:     v.Title,
+		Content:   &v.Content,
+		CreatedAt: v.CreatedAt,
+	})
+}
+
 // QUERIES
 
-// Returns page content for a given slug
+// Returns post content for a given slug, falling back to ID lookup
 // (GET /posts/{namespace}/{slug})
 func (s *Server) PostFindBySlug(ctx echo.Context, namespace string, slug string) error {
 	resp, err := s.postFind.Execute(ctx.Request().Context(), &domain.PostFindRequest{
@@ -102,11 +197,27 @@ func (s *Server) PostFindBySlug(ctx echo.Context, namespace string, slug string)
 		Slug:      slug,
 	})
 	if err != nil {
-		if errors.Is(err, domain.ErrPostNotFound) {
+		if errors.Is(err, domain.ErrPostNotFound) || errors.Is(err, domain.ErrRequestInvalid) {
+			// Fall back to finding by ID (for admin usage)
+			parsedID, parseErr := uuid.Parse(slug)
+			if parseErr == nil {
+				post, idErr := s.postFindByID.Execute(ctx.Request().Context(), parsedID)
+				if idErr == nil {
+					return ctx.JSON(http.StatusOK, openapi.Post{
+						Id:          &post.ID,
+						Slug:        post.Slug,
+						Title:       post.Title,
+						Content:     post.Content,
+						PublishedAt: post.PublishedAt,
+						CreatedAt:   &post.CreatedAt,
+						UpdatedAt:   &post.UpdatedAt,
+					})
+				}
+				if errors.Is(idErr, domain.ErrForbidden) {
+					return ctx.NoContent(http.StatusForbidden)
+				}
+			}
 			return ctx.NoContent(http.StatusNotFound)
-		}
-		if errors.Is(err, domain.ErrRequestInvalid) {
-			return ctx.NoContent(http.StatusBadRequest)
 		}
 
 		ctx.Echo().Logger.Error("could not process request: ", err)

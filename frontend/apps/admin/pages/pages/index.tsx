@@ -1,4 +1,5 @@
 import { routes } from '@app/common/routes'
+import { DEFAULT_NAMESPACE } from '@app/content/NamespaceSelector'
 
 export default function PagesRedirect() {
   return null
@@ -7,7 +8,7 @@ export default function PagesRedirect() {
 export function getServerSideProps() {
   return {
     redirect: {
-      destination: routes.pages('tadoku'),
+      destination: routes.pages(DEFAULT_NAMESPACE),
       permanent: false,
     },
   }

@@ -4,11 +4,12 @@ import { getDashboardLayout } from '@app/ui/DashboardLayout'
 import { useUserList } from '@app/common/api'
 import { useContentList } from '@app/content/api'
 import { postsConfig } from '@app/content/posts'
+import { DEFAULT_NAMESPACE } from '@app/content/NamespaceSelector'
 import { Loading } from 'ui'
 
 const Page: NextPageWithLayout = () => {
   const users = useUserList({ pageSize: 5, page: 0 }, { enabled: true })
-  const posts = useContentList(postsConfig, 'tadoku', { pageSize: 1, page: 0 })
+  const posts = useContentList(postsConfig, DEFAULT_NAMESPACE, { pageSize: 1, page: 0 })
 
   return (
     <>

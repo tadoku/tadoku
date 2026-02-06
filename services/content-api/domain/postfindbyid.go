@@ -8,7 +8,7 @@ import (
 )
 
 type PostFindByIDRepository interface {
-	GetPostByID(ctx context.Context, id uuid.UUID) (*Post, error)
+	GetPostByID(ctx context.Context, id uuid.UUID, namespace string) (*Post, error)
 }
 
 type PostFindByID struct {
@@ -19,10 +19,10 @@ func NewPostFindByID(repo PostFindByIDRepository) *PostFindByID {
 	return &PostFindByID{repo: repo}
 }
 
-func (s *PostFindByID) Execute(ctx context.Context, id uuid.UUID) (*Post, error) {
+func (s *PostFindByID) Execute(ctx context.Context, id uuid.UUID, namespace string) (*Post, error) {
 	if !commondomain.IsRole(ctx, commondomain.RoleAdmin) {
 		return nil, ErrForbidden
 	}
 
-	return s.repo.GetPostByID(ctx, id)
+	return s.repo.GetPostByID(ctx, id, namespace)
 }

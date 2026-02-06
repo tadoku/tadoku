@@ -77,8 +77,8 @@ func (r *PostRepository) CreatePost(ctx context.Context, post *domain.Post) erro
 }
 
 // GetPostByID implements domain.PostUpdateRepository
-func (r *PostRepository) GetPostByID(ctx context.Context, id uuid.UUID) (*domain.Post, error) {
-	post, err := r.q.FindPostByID(ctx, id)
+func (r *PostRepository) GetPostByID(ctx context.Context, id uuid.UUID, namespace string) (*domain.Post, error) {
+	post, err := r.q.FindPostByID(ctx, id, namespace)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, domain.ErrPostNotFound
@@ -172,8 +172,8 @@ func (r *PostRepository) UpdatePostMetadata(ctx context.Context, post *domain.Po
 }
 
 // DeletePost implements domain.PostDeleteRepository
-func (r *PostRepository) DeletePost(ctx context.Context, id uuid.UUID) error {
-	if err := r.q.DeletePost(ctx, id); err != nil {
+func (r *PostRepository) DeletePost(ctx context.Context, id uuid.UUID, namespace string) error {
+	if err := r.q.DeletePost(ctx, DeletePostParams{ID: id, Namespace: namespace}); err != nil {
 		return fmt.Errorf("could not delete post: %w", err)
 	}
 	return nil

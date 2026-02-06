@@ -88,10 +88,16 @@ update posts
 set deleted_at = now()
 where id = $1
   and deleted_at is null
+  and "namespace" = $2
 `
 
-func (q *Queries) DeletePost(ctx context.Context, id uuid.UUID) error {
-	_, err := q.db.ExecContext(ctx, deletePost, id)
+type DeletePostParams struct {
+	ID        uuid.UUID
+	Namespace string
+}
+
+func (q *Queries) DeletePost(ctx context.Context, arg DeletePostParams) error {
+	_, err := q.db.ExecContext(ctx, deletePost, arg.ID, arg.Namespace)
 	return err
 }
 
@@ -111,6 +117,7 @@ inner join posts_content
 where
   deleted_at is null
   and posts.id = $1
+  and "namespace" = $2
 `
 
 type FindPostByIDRow struct {
@@ -124,8 +131,8 @@ type FindPostByIDRow struct {
 	UpdatedAt   time.Time
 }
 
-func (q *Queries) FindPostByID(ctx context.Context, id uuid.UUID) (FindPostByIDRow, error) {
-	row := q.db.QueryRowContext(ctx, findPostByID, id)
+func (q *Queries) FindPostByID(ctx context.Context, id uuid.UUID, namespace string) (FindPostByIDRow, error) {
+	row := q.db.QueryRowContext(ctx, findPostByID, id, namespace)
 	var i FindPostByIDRow
 	err := row.Scan(
 		&i.ID,

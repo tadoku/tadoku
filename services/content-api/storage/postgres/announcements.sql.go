@@ -83,10 +83,16 @@ update announcements
 set deleted_at = now()
 where id = $1
   and deleted_at is null
+  and "namespace" = $2
 `
 
-func (q *Queries) DeleteAnnouncement(ctx context.Context, id uuid.UUID) error {
-	_, err := q.db.ExecContext(ctx, deleteAnnouncement, id)
+type DeleteAnnouncementParams struct {
+	ID        uuid.UUID
+	Namespace string
+}
+
+func (q *Queries) DeleteAnnouncement(ctx context.Context, arg DeleteAnnouncementParams) error {
+	_, err := q.db.ExecContext(ctx, deleteAnnouncement, arg.ID, arg.Namespace)
 	return err
 }
 
@@ -106,6 +112,7 @@ from announcements
 where
   deleted_at is null
   and id = $1
+  and "namespace" = $2
 `
 
 type FindAnnouncementByIDRow struct {
@@ -121,8 +128,8 @@ type FindAnnouncementByIDRow struct {
 	UpdatedAt time.Time
 }
 
-func (q *Queries) FindAnnouncementByID(ctx context.Context, id uuid.UUID) (FindAnnouncementByIDRow, error) {
-	row := q.db.QueryRowContext(ctx, findAnnouncementByID, id)
+func (q *Queries) FindAnnouncementByID(ctx context.Context, id uuid.UUID, namespace string) (FindAnnouncementByIDRow, error) {
+	row := q.db.QueryRowContext(ctx, findAnnouncementByID, id, namespace)
 	var i FindAnnouncementByIDRow
 	err := row.Scan(
 		&i.ID,

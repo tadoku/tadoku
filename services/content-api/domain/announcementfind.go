@@ -8,7 +8,7 @@ import (
 )
 
 type AnnouncementFindByIDRepository interface {
-	GetAnnouncementByID(ctx context.Context, id uuid.UUID) (*Announcement, error)
+	GetAnnouncementByID(ctx context.Context, id uuid.UUID, namespace string) (*Announcement, error)
 }
 
 type AnnouncementFindByID struct {
@@ -21,10 +21,10 @@ func NewAnnouncementFindByID(repo AnnouncementFindByIDRepository) *AnnouncementF
 	}
 }
 
-func (s *AnnouncementFindByID) Execute(ctx context.Context, id uuid.UUID) (*Announcement, error) {
+func (s *AnnouncementFindByID) Execute(ctx context.Context, id uuid.UUID, namespace string) (*Announcement, error) {
 	if !commondomain.IsRole(ctx, commondomain.RoleAdmin) {
 		return nil, ErrForbidden
 	}
 
-	return s.repo.GetAnnouncementByID(ctx, id)
+	return s.repo.GetAnnouncementByID(ctx, id, namespace)
 }

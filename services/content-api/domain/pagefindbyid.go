@@ -8,7 +8,7 @@ import (
 )
 
 type PageFindByIDRepository interface {
-	GetPageByID(ctx context.Context, id uuid.UUID) (*Page, error)
+	GetPageByID(ctx context.Context, id uuid.UUID, namespace string) (*Page, error)
 }
 
 type PageFindByID struct {
@@ -19,10 +19,10 @@ func NewPageFindByID(repo PageFindByIDRepository) *PageFindByID {
 	return &PageFindByID{repo: repo}
 }
 
-func (s *PageFindByID) Execute(ctx context.Context, id uuid.UUID) (*Page, error) {
+func (s *PageFindByID) Execute(ctx context.Context, id uuid.UUID, namespace string) (*Page, error) {
 	if !commondomain.IsRole(ctx, commondomain.RoleAdmin) {
 		return nil, ErrForbidden
 	}
 
-	return s.repo.GetPageByID(ctx, id)
+	return s.repo.GetPageByID(ctx, id, namespace)
 }

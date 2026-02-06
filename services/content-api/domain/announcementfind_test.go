@@ -12,12 +12,12 @@ import (
 )
 
 type mockAnnouncementFindByIDRepo struct {
-	getAnnouncementByIDFn func(ctx context.Context, id uuid.UUID) (*contentdomain.Announcement, error)
+	getAnnouncementByIDFn func(ctx context.Context, id uuid.UUID, namespace string) (*contentdomain.Announcement, error)
 }
 
-func (m *mockAnnouncementFindByIDRepo) GetAnnouncementByID(ctx context.Context, id uuid.UUID) (*contentdomain.Announcement, error) {
+func (m *mockAnnouncementFindByIDRepo) GetAnnouncementByID(ctx context.Context, id uuid.UUID, namespace string) (*contentdomain.Announcement, error) {
 	if m.getAnnouncementByIDFn != nil {
-		return m.getAnnouncementByIDFn(ctx, id)
+		return m.getAnnouncementByIDFn(ctx, id, namespace)
 	}
 	return &contentdomain.Announcement{}, nil
 }
@@ -38,14 +38,15 @@ func TestAnnouncementFindByID_Execute(t *testing.T) {
 		}
 
 		repo := &mockAnnouncementFindByIDRepo{
-			getAnnouncementByIDFn: func(ctx context.Context, reqID uuid.UUID) (*contentdomain.Announcement, error) {
+			getAnnouncementByIDFn: func(ctx context.Context, reqID uuid.UUID, namespace string) (*contentdomain.Announcement, error) {
 				assert.Equal(t, id, reqID)
+				assert.Equal(t, "tadoku", namespace)
 				return expected, nil
 			},
 		}
 
 		svc := contentdomain.NewAnnouncementFindByID(repo)
-		result, err := svc.Execute(adminContext(), id)
+		result, err := svc.Execute(adminContext(), id, "tadoku")
 
 		require.NoError(t, err)
 		assert.Equal(t, expected, result)
@@ -55,20 +56,20 @@ func TestAnnouncementFindByID_Execute(t *testing.T) {
 		repo := &mockAnnouncementFindByIDRepo{}
 		svc := contentdomain.NewAnnouncementFindByID(repo)
 
-		_, err := svc.Execute(userContext(), id)
+		_, err := svc.Execute(userContext(), id, "tadoku")
 
 		assert.ErrorIs(t, err, contentdomain.ErrForbidden)
 	})
 
 	t.Run("returns not found", func(t *testing.T) {
 		repo := &mockAnnouncementFindByIDRepo{
-			getAnnouncementByIDFn: func(ctx context.Context, reqID uuid.UUID) (*contentdomain.Announcement, error) {
+			getAnnouncementByIDFn: func(ctx context.Context, reqID uuid.UUID, namespace string) (*contentdomain.Announcement, error) {
 				return nil, contentdomain.ErrAnnouncementNotFound
 			},
 		}
 
 		svc := contentdomain.NewAnnouncementFindByID(repo)
-		_, err := svc.Execute(adminContext(), id)
+		_, err := svc.Execute(adminContext(), id, "tadoku")
 
 		assert.ErrorIs(t, err, contentdomain.ErrAnnouncementNotFound)
 	})

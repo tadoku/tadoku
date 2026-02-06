@@ -77,8 +77,8 @@ func (r *PageRepository) CreatePage(ctx context.Context, page *domain.Page) erro
 }
 
 // GetPageByID implements domain.PageUpdateRepository
-func (r *PageRepository) GetPageByID(ctx context.Context, id uuid.UUID) (*domain.Page, error) {
-	page, err := r.q.FindPageByID(ctx, id)
+func (r *PageRepository) GetPageByID(ctx context.Context, id uuid.UUID, namespace string) (*domain.Page, error) {
+	page, err := r.q.FindPageByID(ctx, id, namespace)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, domain.ErrPageNotFound
@@ -172,8 +172,8 @@ func (r *PageRepository) UpdatePageMetadata(ctx context.Context, page *domain.Pa
 }
 
 // DeletePage implements domain.PageDeleteRepository
-func (r *PageRepository) DeletePage(ctx context.Context, id uuid.UUID) error {
-	if err := r.q.DeletePage(ctx, id); err != nil {
+func (r *PageRepository) DeletePage(ctx context.Context, id uuid.UUID, namespace string) error {
+	if err := r.q.DeletePage(ctx, DeletePageParams{ID: id, Namespace: namespace}); err != nil {
 		return fmt.Errorf("could not delete page: %w", err)
 	}
 	return nil

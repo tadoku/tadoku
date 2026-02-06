@@ -8,7 +8,7 @@ import (
 )
 
 type AnnouncementDeleteRepository interface {
-	DeleteAnnouncement(ctx context.Context, id uuid.UUID) error
+	DeleteAnnouncement(ctx context.Context, id uuid.UUID, namespace string) error
 }
 
 type AnnouncementDelete struct {
@@ -21,10 +21,10 @@ func NewAnnouncementDelete(repo AnnouncementDeleteRepository) *AnnouncementDelet
 	}
 }
 
-func (s *AnnouncementDelete) Execute(ctx context.Context, id uuid.UUID) error {
+func (s *AnnouncementDelete) Execute(ctx context.Context, id uuid.UUID, namespace string) error {
 	if !commondomain.IsRole(ctx, commondomain.RoleAdmin) {
 		return ErrForbidden
 	}
 
-	return s.repo.DeleteAnnouncement(ctx, id)
+	return s.repo.DeleteAnnouncement(ctx, id, namespace)
 }

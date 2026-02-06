@@ -13,14 +13,14 @@ import (
 )
 
 type mockPostUpdateRepo struct {
-	getPostByIDFn        func(ctx context.Context, id uuid.UUID) (*contentdomain.Post, error)
+	getPostByIDFn        func(ctx context.Context, id uuid.UUID, namespace string) (*contentdomain.Post, error)
 	updatePostFn         func(ctx context.Context, post *contentdomain.Post) error
 	updatePostMetadataFn func(ctx context.Context, post *contentdomain.Post) error
 }
 
-func (m *mockPostUpdateRepo) GetPostByID(ctx context.Context, id uuid.UUID) (*contentdomain.Post, error) {
+func (m *mockPostUpdateRepo) GetPostByID(ctx context.Context, id uuid.UUID, namespace string) (*contentdomain.Post, error) {
 	if m.getPostByIDFn != nil {
-		return m.getPostByIDFn(ctx, id)
+		return m.getPostByIDFn(ctx, id, namespace)
 	}
 	return nil, nil
 }
@@ -58,7 +58,7 @@ func TestPostUpdate_Execute(t *testing.T) {
 
 		var updatedPost *contentdomain.Post
 		repo := &mockPostUpdateRepo{
-			getPostByIDFn: func(ctx context.Context, id uuid.UUID) (*contentdomain.Post, error) {
+			getPostByIDFn: func(ctx context.Context, id uuid.UUID, namespace string) (*contentdomain.Post, error) {
 				return existingPost, nil
 			},
 			updatePostFn: func(ctx context.Context, post *contentdomain.Post) error {
@@ -121,7 +121,7 @@ func TestPostUpdate_Execute(t *testing.T) {
 
 	t.Run("returns error when post not found", func(t *testing.T) {
 		repo := &mockPostUpdateRepo{
-			getPostByIDFn: func(ctx context.Context, id uuid.UUID) (*contentdomain.Post, error) {
+			getPostByIDFn: func(ctx context.Context, id uuid.UUID, namespace string) (*contentdomain.Post, error) {
 				return nil, contentdomain.ErrPostNotFound
 			},
 		}
@@ -150,7 +150,7 @@ func TestPostUpdate_Execute(t *testing.T) {
 
 		repoErr := errors.New("database connection failed")
 		repo := &mockPostUpdateRepo{
-			getPostByIDFn: func(ctx context.Context, id uuid.UUID) (*contentdomain.Post, error) {
+			getPostByIDFn: func(ctx context.Context, id uuid.UUID, namespace string) (*contentdomain.Post, error) {
 				return existingPost, nil
 			},
 			updatePostFn: func(ctx context.Context, post *contentdomain.Post) error {
@@ -182,7 +182,7 @@ func TestPostUpdate_Execute(t *testing.T) {
 
 		var calledUpdatePost, calledUpdateMetadata bool
 		repo := &mockPostUpdateRepo{
-			getPostByIDFn: func(ctx context.Context, id uuid.UUID) (*contentdomain.Post, error) {
+			getPostByIDFn: func(ctx context.Context, id uuid.UUID, namespace string) (*contentdomain.Post, error) {
 				return existingPost, nil
 			},
 			updatePostFn: func(ctx context.Context, post *contentdomain.Post) error {
@@ -221,7 +221,7 @@ func TestPostUpdate_Execute(t *testing.T) {
 
 		var calledUpdatePost, calledUpdateMetadata bool
 		repo := &mockPostUpdateRepo{
-			getPostByIDFn: func(ctx context.Context, id uuid.UUID) (*contentdomain.Post, error) {
+			getPostByIDFn: func(ctx context.Context, id uuid.UUID, namespace string) (*contentdomain.Post, error) {
 				return existingPost, nil
 			},
 			updatePostFn: func(ctx context.Context, post *contentdomain.Post) error {
@@ -267,7 +267,7 @@ func TestPostUpdate_Execute(t *testing.T) {
 
 		var updatedPost *contentdomain.Post
 		repo := &mockPostUpdateRepo{
-			getPostByIDFn: func(ctx context.Context, id uuid.UUID) (*contentdomain.Post, error) {
+			getPostByIDFn: func(ctx context.Context, id uuid.UUID, namespace string) (*contentdomain.Post, error) {
 				return existingPost, nil
 			},
 			updatePostMetadataFn: func(ctx context.Context, post *contentdomain.Post) error {

@@ -41,8 +41,8 @@ func (r *AnnouncementRepository) CreateAnnouncement(ctx context.Context, a *doma
 	return nil
 }
 
-func (r *AnnouncementRepository) GetAnnouncementByID(ctx context.Context, id uuid.UUID) (*domain.Announcement, error) {
-	row, err := r.q.FindAnnouncementByID(ctx, id)
+func (r *AnnouncementRepository) GetAnnouncementByID(ctx context.Context, id uuid.UUID, namespace string) (*domain.Announcement, error) {
+	row, err := r.q.FindAnnouncementByID(ctx, id, namespace)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, domain.ErrAnnouncementNotFound
@@ -85,8 +85,8 @@ func (r *AnnouncementRepository) UpdateAnnouncement(ctx context.Context, a *doma
 	return nil
 }
 
-func (r *AnnouncementRepository) DeleteAnnouncement(ctx context.Context, id uuid.UUID) error {
-	if err := r.q.DeleteAnnouncement(ctx, id); err != nil {
+func (r *AnnouncementRepository) DeleteAnnouncement(ctx context.Context, id uuid.UUID, namespace string) error {
+	if err := r.q.DeleteAnnouncement(ctx, DeleteAnnouncementParams{ID: id, Namespace: namespace}); err != nil {
 		return fmt.Errorf("could not delete announcement: %w", err)
 	}
 	return nil

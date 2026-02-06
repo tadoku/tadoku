@@ -102,7 +102,7 @@ func (s *Server) AnnouncementDelete(ctx echo.Context, namespace string, id strin
 		return ctx.NoContent(http.StatusBadRequest)
 	}
 
-	err = s.announcementDelete.Execute(ctx.Request().Context(), parsedID)
+	err = s.announcementDelete.Execute(ctx.Request().Context(), parsedID, namespace)
 	if err != nil {
 		if errors.Is(err, domain.ErrForbidden) {
 			return ctx.NoContent(http.StatusForbidden)
@@ -128,7 +128,7 @@ func (s *Server) AnnouncementFindByID(ctx echo.Context, namespace string, id str
 		return ctx.NoContent(http.StatusBadRequest)
 	}
 
-	announcement, err := s.announcementFindByID.Execute(ctx.Request().Context(), parsedID)
+	announcement, err := s.announcementFindByID.Execute(ctx.Request().Context(), parsedID, namespace)
 	if err != nil {
 		if errors.Is(err, domain.ErrForbidden) {
 			return ctx.NoContent(http.StatusForbidden)

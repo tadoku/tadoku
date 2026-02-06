@@ -31,7 +31,8 @@ inner join pages_content
   on pages_content.id = pages.current_content_id
 where
   deleted_at is null
-  and pages.id = sqlc.arg('id');
+  and pages.id = sqlc.arg('id')
+  and "namespace" = sqlc.arg('namespace');
 
 -- name: ListPages :many
 select
@@ -119,7 +120,8 @@ where
 update pages
 set deleted_at = now()
 where id = sqlc.arg('id')
-  and deleted_at is null;
+  and deleted_at is null
+  and "namespace" = sqlc.arg('namespace');
 
 -- name: ListPageVersions :many
 select

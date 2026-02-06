@@ -34,7 +34,8 @@ select
 from announcements
 where
   deleted_at is null
-  and id = sqlc.arg('id');
+  and id = sqlc.arg('id')
+  and "namespace" = sqlc.arg('namespace');
 
 -- name: UpdateAnnouncement :one
 update announcements
@@ -56,7 +57,8 @@ returning id;
 update announcements
 set deleted_at = now()
 where id = sqlc.arg('id')
-  and deleted_at is null;
+  and deleted_at is null
+  and "namespace" = sqlc.arg('namespace');
 
 -- name: ListAnnouncements :many
 select

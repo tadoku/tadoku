@@ -11,7 +11,7 @@ import (
 )
 
 type AnnouncementUpdateRepository interface {
-	GetAnnouncementByID(ctx context.Context, id uuid.UUID) (*Announcement, error)
+	GetAnnouncementByID(ctx context.Context, id uuid.UUID, namespace string) (*Announcement, error)
 	UpdateAnnouncement(ctx context.Context, announcement *Announcement) error
 }
 
@@ -52,7 +52,7 @@ func (s *AnnouncementUpdate) Execute(ctx context.Context, id uuid.UUID, req *Ann
 		return nil, fmt.Errorf("%w: %v", ErrInvalidAnnouncement, err)
 	}
 
-	announcement, err := s.repo.GetAnnouncementByID(ctx, id)
+	announcement, err := s.repo.GetAnnouncementByID(ctx, id, req.Namespace)
 	if err != nil {
 		return nil, err
 	}

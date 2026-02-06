@@ -13,11 +13,11 @@ import (
 )
 
 type mockPageFindByIDRepo struct {
-	getPageByIDFn func(ctx context.Context, id uuid.UUID) (*contentdomain.Page, error)
+	getPageByIDFn func(ctx context.Context, id uuid.UUID, namespace string) (*contentdomain.Page, error)
 }
 
-func (m *mockPageFindByIDRepo) GetPageByID(ctx context.Context, id uuid.UUID) (*contentdomain.Page, error) {
-	return m.getPageByIDFn(ctx, id)
+func (m *mockPageFindByIDRepo) GetPageByID(ctx context.Context, id uuid.UUID, namespace string) (*contentdomain.Page, error) {
+	return m.getPageByIDFn(ctx, id, namespace)
 }
 
 func TestPageFindByID_Execute(t *testing.T) {
@@ -34,14 +34,15 @@ func TestPageFindByID_Execute(t *testing.T) {
 			UpdatedAt: time.Now(),
 		}
 		repo := &mockPageFindByIDRepo{
-			getPageByIDFn: func(ctx context.Context, id uuid.UUID) (*contentdomain.Page, error) {
+			getPageByIDFn: func(ctx context.Context, id uuid.UUID, namespace string) (*contentdomain.Page, error) {
 				assert.Equal(t, pageID, id)
+				assert.Equal(t, "tadoku", namespace)
 				return expected, nil
 			},
 		}
 
 		svc := contentdomain.NewPageFindByID(repo)
-		result, err := svc.Execute(adminContext(), pageID)
+		result, err := svc.Execute(adminContext(), pageID, "tadoku")
 
 		require.NoError(t, err)
 		assert.Equal(t, expected, result)
@@ -51,7 +52,7 @@ func TestPageFindByID_Execute(t *testing.T) {
 		repo := &mockPageFindByIDRepo{}
 		svc := contentdomain.NewPageFindByID(repo)
 
-		_, err := svc.Execute(userContext(), pageID)
+		_, err := svc.Execute(userContext(), pageID, "tadoku")
 
 		assert.ErrorIs(t, err, contentdomain.ErrForbidden)
 	})
@@ -60,7 +61,7 @@ func TestPageFindByID_Execute(t *testing.T) {
 		repo := &mockPageFindByIDRepo{}
 		svc := contentdomain.NewPageFindByID(repo)
 
-		_, err := svc.Execute(context.Background(), pageID)
+		_, err := svc.Execute(context.Background(), pageID, "tadoku")
 
 		assert.ErrorIs(t, err, contentdomain.ErrForbidden)
 	})
@@ -68,13 +69,13 @@ func TestPageFindByID_Execute(t *testing.T) {
 	t.Run("returns repository error", func(t *testing.T) {
 		repoErr := errors.New("database error")
 		repo := &mockPageFindByIDRepo{
-			getPageByIDFn: func(ctx context.Context, id uuid.UUID) (*contentdomain.Page, error) {
+			getPageByIDFn: func(ctx context.Context, id uuid.UUID, namespace string) (*contentdomain.Page, error) {
 				return nil, repoErr
 			},
 		}
 
 		svc := contentdomain.NewPageFindByID(repo)
-		_, err := svc.Execute(adminContext(), pageID)
+		_, err := svc.Execute(adminContext(), pageID, "tadoku")
 
 		assert.ErrorIs(t, err, repoErr)
 	})

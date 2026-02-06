@@ -11,7 +11,7 @@ import (
 )
 
 type PostUpdateRepository interface {
-	GetPostByID(ctx context.Context, id uuid.UUID) (*Post, error)
+	GetPostByID(ctx context.Context, id uuid.UUID, namespace string) (*Post, error)
 	UpdatePost(ctx context.Context, post *Post) error
 	UpdatePostMetadata(ctx context.Context, post *Post) error
 }
@@ -51,7 +51,7 @@ func (s *PostUpdate) Execute(ctx context.Context, id uuid.UUID, req *PostUpdateR
 		return nil, fmt.Errorf("%w: %v", ErrInvalidPost, err)
 	}
 
-	post, err := s.repo.GetPostByID(ctx, id)
+	post, err := s.repo.GetPostByID(ctx, id, req.Namespace)
 	if err != nil {
 		return nil, err
 	}

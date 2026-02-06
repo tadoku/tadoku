@@ -12,13 +12,13 @@ import (
 )
 
 type mockAnnouncementUpdateRepo struct {
-	getAnnouncementByIDFn func(ctx context.Context, id uuid.UUID) (*contentdomain.Announcement, error)
+	getAnnouncementByIDFn func(ctx context.Context, id uuid.UUID, namespace string) (*contentdomain.Announcement, error)
 	updateAnnouncementFn  func(ctx context.Context, a *contentdomain.Announcement) error
 }
 
-func (m *mockAnnouncementUpdateRepo) GetAnnouncementByID(ctx context.Context, id uuid.UUID) (*contentdomain.Announcement, error) {
+func (m *mockAnnouncementUpdateRepo) GetAnnouncementByID(ctx context.Context, id uuid.UUID, namespace string) (*contentdomain.Announcement, error) {
 	if m.getAnnouncementByIDFn != nil {
-		return m.getAnnouncementByIDFn(ctx, id)
+		return m.getAnnouncementByIDFn(ctx, id, namespace)
 	}
 	return &contentdomain.Announcement{}, nil
 }
@@ -52,7 +52,7 @@ func TestAnnouncementUpdate_Execute(t *testing.T) {
 
 		var updated *contentdomain.Announcement
 		repo := &mockAnnouncementUpdateRepo{
-			getAnnouncementByIDFn: func(ctx context.Context, reqID uuid.UUID) (*contentdomain.Announcement, error) {
+			getAnnouncementByIDFn: func(ctx context.Context, reqID uuid.UUID, namespace string) (*contentdomain.Announcement, error) {
 				return existing, nil
 			},
 			updateAnnouncementFn: func(ctx context.Context, a *contentdomain.Announcement) error {
@@ -101,7 +101,7 @@ func TestAnnouncementUpdate_Execute(t *testing.T) {
 
 	t.Run("returns not found when announcement does not exist", func(t *testing.T) {
 		repo := &mockAnnouncementUpdateRepo{
-			getAnnouncementByIDFn: func(ctx context.Context, reqID uuid.UUID) (*contentdomain.Announcement, error) {
+			getAnnouncementByIDFn: func(ctx context.Context, reqID uuid.UUID, namespace string) (*contentdomain.Announcement, error) {
 				return nil, contentdomain.ErrAnnouncementNotFound
 			},
 		}

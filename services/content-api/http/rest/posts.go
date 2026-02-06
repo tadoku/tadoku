@@ -105,7 +105,7 @@ func (s *Server) PostDelete(ctx echo.Context, namespace string, id string) error
 		return ctx.NoContent(http.StatusBadRequest)
 	}
 
-	err = s.postDelete.Execute(ctx.Request().Context(), parsedID)
+	err = s.postDelete.Execute(ctx.Request().Context(), parsedID, namespace)
 	if err != nil {
 		if errors.Is(err, domain.ErrForbidden) {
 			return ctx.NoContent(http.StatusForbidden)
@@ -201,7 +201,7 @@ func (s *Server) PostFindBySlug(ctx echo.Context, namespace string, slug string)
 			// Fall back to finding by ID (for admin usage)
 			parsedID, parseErr := uuid.Parse(slug)
 			if parseErr == nil {
-				post, idErr := s.postFindByID.Execute(ctx.Request().Context(), parsedID)
+				post, idErr := s.postFindByID.Execute(ctx.Request().Context(), parsedID, namespace)
 				if idErr == nil {
 					return ctx.JSON(http.StatusOK, openapi.Post{
 						Id:          &post.ID,

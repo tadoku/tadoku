@@ -88,10 +88,16 @@ update pages
 set deleted_at = now()
 where id = $1
   and deleted_at is null
+  and "namespace" = $2
 `
 
-func (q *Queries) DeletePage(ctx context.Context, id uuid.UUID) error {
-	_, err := q.db.ExecContext(ctx, deletePage, id)
+type DeletePageParams struct {
+	ID        uuid.UUID
+	Namespace string
+}
+
+func (q *Queries) DeletePage(ctx context.Context, arg DeletePageParams) error {
+	_, err := q.db.ExecContext(ctx, deletePage, arg.ID, arg.Namespace)
 	return err
 }
 
@@ -111,6 +117,7 @@ inner join pages_content
 where
   deleted_at is null
   and pages.id = $1
+  and "namespace" = $2
 `
 
 type FindPageByIDRow struct {
@@ -124,8 +131,8 @@ type FindPageByIDRow struct {
 	UpdatedAt   time.Time
 }
 
-func (q *Queries) FindPageByID(ctx context.Context, id uuid.UUID) (FindPageByIDRow, error) {
-	row := q.db.QueryRowContext(ctx, findPageByID, id)
+func (q *Queries) FindPageByID(ctx context.Context, id uuid.UUID, namespace string) (FindPageByIDRow, error) {
+	row := q.db.QueryRowContext(ctx, findPageByID, id, namespace)
 	var i FindPageByIDRow
 	err := row.Scan(
 		&i.ID,

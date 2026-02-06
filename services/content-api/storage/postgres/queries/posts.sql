@@ -31,7 +31,8 @@ inner join posts_content
   on posts_content.id = posts.current_content_id
 where
   deleted_at is null
-  and posts.id = sqlc.arg('id');
+  and posts.id = sqlc.arg('id')
+  and "namespace" = sqlc.arg('namespace');
 
 -- name: ListPosts :many
 select
@@ -119,7 +120,8 @@ where
 update posts
 set deleted_at = now()
 where id = sqlc.arg('id')
-  and deleted_at is null;
+  and deleted_at is null
+  and "namespace" = sqlc.arg('namespace');
 
 -- name: ListPostVersions :many
 select

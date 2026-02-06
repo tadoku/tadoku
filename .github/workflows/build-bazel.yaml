@@ -58,26 +58,8 @@ jobs:
           mkdir /tmp/docker
           echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u tadoku --password-stdin
           cp /home/runner/.docker/config.json /tmp/docker/config.json
-          export DOCKER_CONFIG=/tmp/docker
-
-          # Install crane (for digest checks)
-          CRANE=/tmp/crane
-          curl -sL https://github.com/google/go-containerregistry/releases/download/v0.19.1/crane_linux_amd64.tar.gz | tar -xz -C /tmp crane
 
           # Push images
           for target in $(bazel query 'kind("oci_push", //services/...)'); do
-            image_label=$(bazel cquery "$target" --output=starlark --starlark:expr 'target.attr.image' | tr -d '"')
-            repository=$(bazel cquery "$target" --output=starlark --starlark:expr 'target.attr.repository' | tr -d '"')
-
-            bazel build "${image_label}.digest"
-            digest_file=$(bazel cquery "${image_label}.digest" --output=files | head -n1)
-            local_digest=$(cat "$digest_file" | tr -d '\n')
-            remote_digest=$("$CRANE" digest "${repository}:latest" 2>/dev/null || true)
-
-            if [[ -n "$remote_digest" && "$remote_digest" == "$local_digest" ]]; then
-              echo "Skipping push for ${repository} (digest unchanged)"
-              continue
-            fi
-
-            bazel run --stamp --embed_label="${GITHUB_SHA}" "$target"
+            bazel run "$target"
           done

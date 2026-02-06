@@ -10,7 +10,7 @@ const AnnouncementSchema = z.object({
   namespace: z.string().optional().default(''),
   title: z.string(),
   content: z.string(),
-  style: z.string(),
+  style: z.enum(['success', 'warning', 'error', 'info']),
   href: z.string().nullable().optional().default(null),
   starts_at: z.string(),
   ends_at: z.string(),

@@ -118,7 +118,7 @@ export function useContentCreate(
         title: input.title,
         [config.bodyField]: input.body,
       }
-      if (input.published_at) {
+      if (input.published_at !== undefined) {
         payload.published_at = input.published_at
       }
 
@@ -159,7 +159,7 @@ export function useContentUpdate(
         title: input.title,
         [config.bodyField]: input.body,
       }
-      if (input.published_at) {
+      if (input.published_at !== undefined) {
         payload.published_at = input.published_at
       }
 

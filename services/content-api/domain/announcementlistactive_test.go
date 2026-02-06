@@ -24,7 +24,6 @@ func (m *mockAnnouncementListActiveRepo) ListActiveAnnouncements(ctx context.Con
 
 func TestAnnouncementListActive_Execute(t *testing.T) {
 	now := time.Date(2024, 1, 15, 10, 30, 0, 0, time.UTC)
-	clock := &mockClock{now: now}
 
 	t.Run("lists active announcements successfully", func(t *testing.T) {
 		repo := &mockAnnouncementListActiveRepo{
@@ -43,7 +42,7 @@ func TestAnnouncementListActive_Execute(t *testing.T) {
 			},
 		}
 
-		svc := contentdomain.NewAnnouncementListActive(repo, clock)
+		svc := contentdomain.NewAnnouncementListActive(repo)
 
 		resp, err := svc.Execute(context.Background(), &contentdomain.AnnouncementListActiveRequest{
 			Namespace: "tadoku",
@@ -56,7 +55,7 @@ func TestAnnouncementListActive_Execute(t *testing.T) {
 
 	t.Run("does not require admin role", func(t *testing.T) {
 		repo := &mockAnnouncementListActiveRepo{}
-		svc := contentdomain.NewAnnouncementListActive(repo, clock)
+		svc := contentdomain.NewAnnouncementListActive(repo)
 
 		resp, err := svc.Execute(userContext(), &contentdomain.AnnouncementListActiveRequest{
 			Namespace: "tadoku",
@@ -68,7 +67,7 @@ func TestAnnouncementListActive_Execute(t *testing.T) {
 
 	t.Run("returns error on missing namespace", func(t *testing.T) {
 		repo := &mockAnnouncementListActiveRepo{}
-		svc := contentdomain.NewAnnouncementListActive(repo, clock)
+		svc := contentdomain.NewAnnouncementListActive(repo)
 
 		_, err := svc.Execute(context.Background(), &contentdomain.AnnouncementListActiveRequest{})
 

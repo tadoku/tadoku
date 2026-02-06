@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"github.com/go-playground/validator/v10"
-	commondomain "github.com/tadoku/tadoku/services/common/domain"
 )
 
 type AnnouncementListActiveRepository interface {
@@ -23,14 +22,12 @@ type AnnouncementListActiveResponse struct {
 type AnnouncementListActive struct {
 	repo     AnnouncementListActiveRepository
 	validate *validator.Validate
-	clock    commondomain.Clock
 }
 
-func NewAnnouncementListActive(repo AnnouncementListActiveRepository, clock commondomain.Clock) *AnnouncementListActive {
+func NewAnnouncementListActive(repo AnnouncementListActiveRepository) *AnnouncementListActive {
 	return &AnnouncementListActive{
 		repo:     repo,
 		validate: validator.New(),
-		clock:    clock,
 	}
 }
 

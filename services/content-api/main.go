@@ -99,7 +99,7 @@ func main() {
 	announcementDelete := domain.NewAnnouncementDelete(announcementRepository)
 	announcementFindByID := domain.NewAnnouncementFindByID(announcementRepository)
 	announcementList := domain.NewAnnouncementList(announcementRepository)
-	announcementListActive := domain.NewAnnouncementListActive(announcementRepository, clock)
+	announcementListActive := domain.NewAnnouncementListActive(announcementRepository)
 
 	server := rest.NewServer(
 		pageCreate,

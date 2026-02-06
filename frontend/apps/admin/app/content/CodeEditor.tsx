@@ -60,9 +60,7 @@ export function CodeEditor({ value, onChange, extensions, placeholder }: Props) 
       view.destroy()
       viewRef.current = null
     }
-    // Only run on mount - extensions and placeholder are static per instance
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [extensions, placeholder])
 
   // Sync external value changes into the editor
   useEffect(() => {

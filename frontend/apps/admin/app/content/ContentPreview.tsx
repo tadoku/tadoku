@@ -1,24 +1,14 @@
 import { Loading } from 'ui'
-import { ContentConfig, ContentItem } from './types'
+import { ContentConfig } from './types'
 import { useContentFindById, useContentUpdate, useContentVersionList, useContentVersionGet } from './api'
 import { useNamespace } from './NamespaceSelector'
+import { StatusBadge } from './StatusBadge'
 import { DateTime } from 'luxon'
 import Link from 'next/link'
 import { ArrowUturnLeftIcon, PencilIcon } from '@heroicons/react/20/solid'
 import { useQueryClient } from 'react-query'
 import { toast } from 'react-toastify'
 import { useState } from 'react'
-
-function StatusBadge({ item }: { item: ContentItem }) {
-  if (!item.published_at) {
-    return <span className="tag bg-amber-100 text-amber-800 shadow-sm">Draft</span>
-  }
-  const publishedAt = DateTime.fromISO(item.published_at)
-  if (publishedAt > DateTime.now()) {
-    return <span className="tag bg-blue-100 text-blue-800 shadow-sm">Scheduled</span>
-  }
-  return <span className="tag bg-emerald-100 text-emerald-800 shadow-sm">Published</span>
-}
 
 function MetadataRow({ label, children }: { label: string; children: React.ReactNode }) {
   return (
@@ -138,7 +128,7 @@ export function ContentPreview({ config, id }: Props) {
         <div>
           <h1 className="title">{config.label} preview</h1>
           <div className="flex items-center gap-2 mt-1">
-            <StatusBadge item={data} />
+            <StatusBadge item={data} className="shadow-sm" />
             <span className="text-sm text-slate-400">/{data.slug}</span>
           </div>
         </div>

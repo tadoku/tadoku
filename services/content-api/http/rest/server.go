@@ -14,6 +14,7 @@ func NewServer(
 	pageFindByID *domain.PageFindByID,
 	pageList *domain.PageList,
 	pageVersionList *domain.PageVersionList,
+	pageVersionGet *domain.PageVersionGet,
 	postCreate *domain.PostCreate,
 	postUpdate *domain.PostUpdate,
 	postDelete *domain.PostDelete,
@@ -21,6 +22,7 @@ func NewServer(
 	postFindByID *domain.PostFindByID,
 	postList *domain.PostList,
 	postVersionList *domain.PostVersionList,
+	postVersionGet *domain.PostVersionGet,
 ) openapi.ServerInterface {
 	return &Server{
 		pageCreate:      pageCreate,
@@ -30,6 +32,7 @@ func NewServer(
 		pageFindByID:    pageFindByID,
 		pageList:        pageList,
 		pageVersionList: pageVersionList,
+		pageVersionGet:  pageVersionGet,
 		postCreate:      postCreate,
 		postUpdate:      postUpdate,
 		postDelete:      postDelete,
@@ -37,6 +40,7 @@ func NewServer(
 		postFindByID:    postFindByID,
 		postList:        postList,
 		postVersionList: postVersionList,
+		postVersionGet:  postVersionGet,
 	}
 }
 
@@ -48,6 +52,7 @@ type Server struct {
 	pageFindByID    *domain.PageFindByID
 	pageList        *domain.PageList
 	pageVersionList *domain.PageVersionList
+	pageVersionGet  *domain.PageVersionGet
 
 	postCreate      *domain.PostCreate
 	postUpdate      *domain.PostUpdate
@@ -56,4 +61,5 @@ type Server struct {
 	postFindByID    *domain.PostFindByID
 	postList        *domain.PostList
 	postVersionList *domain.PostVersionList
+	postVersionGet  *domain.PostVersionGet
 }

@@ -129,7 +129,7 @@ func (s *Server) PageVersionList(ctx echo.Context, namespace string, id string) 
 		return ctx.NoContent(http.StatusBadRequest)
 	}
 
-	versions, err := s.pageVersionList.List(ctx.Request().Context(), parsedID)
+	versions, err := s.pageVersionList.Execute(ctx.Request().Context(), parsedID)
 	if err != nil {
 		if errors.Is(err, domain.ErrForbidden) {
 			return ctx.NoContent(http.StatusForbidden)
@@ -165,7 +165,7 @@ func (s *Server) PageVersionGet(ctx echo.Context, namespace string, id string, c
 		return ctx.NoContent(http.StatusBadRequest)
 	}
 
-	v, err := s.pageVersionList.Get(ctx.Request().Context(), parsedID, contentId)
+	v, err := s.pageVersionGet.Execute(ctx.Request().Context(), parsedID, contentId)
 	if err != nil {
 		if errors.Is(err, domain.ErrForbidden) {
 			return ctx.NoContent(http.StatusForbidden)

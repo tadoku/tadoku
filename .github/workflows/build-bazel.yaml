@@ -65,9 +65,8 @@ jobs:
 
           # Push images
           for target in $(bazel query 'kind("oci_push", //services/...)'); do
-            rule=$(bazel query "$target" --output=build)
-            image_label=$(echo "$rule" | sed -n 's/  image = \"\\(.*\\)\",/\\1/p' | head -n1)
-            repository=$(echo "$rule" | sed -n 's/  repository = \"\\(.*\\)\",/\\1/p' | head -n1)
+            image_label=$(bazel cquery "$target" --output=starlark --starlark:expr 'target.attr.image' | tr -d '"')
+            repository=$(bazel cquery "$target" --output=starlark --starlark:expr 'target.attr.repository' | tr -d '"')
 
             bazel build "${image_label}.digest"
             digest_file=$(bazel cquery "${image_label}.digest" --output=files | head -n1)

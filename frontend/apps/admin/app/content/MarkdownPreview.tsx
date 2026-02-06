@@ -5,6 +5,7 @@ import remarkGfm from 'remark-gfm'
 interface ErrorBoundaryProps {
   children: ReactNode
   fallback?: ReactNode
+  resetKey?: string
 }
 
 interface ErrorBoundaryState {
@@ -19,6 +20,12 @@ class MarkdownErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryS
 
   static getDerivedStateFromError() {
     return { hasError: true }
+  }
+
+  componentDidUpdate(prevProps: ErrorBoundaryProps) {
+    if (this.state.hasError && prevProps.resetKey !== this.props.resetKey) {
+      this.setState({ hasError: false })
+    }
   }
 
   render() {
@@ -38,7 +45,7 @@ interface Props {
 
 export function MarkdownPreview({ content, className }: Props) {
   return (
-    <MarkdownErrorBoundary>
+    <MarkdownErrorBoundary resetKey={content}>
       <div className={`auto-format ${className ?? ''}`}>
         <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>
       </div>

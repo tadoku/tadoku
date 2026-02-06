@@ -276,7 +276,7 @@ export function ContentPreview({ config, id }: Props) {
           <div className="card">
             <div className="flex flex-col gap-4">
               {data.published_at ? (
-                <MetadataRow label="Published">
+                <MetadataRow label={DateTime.fromISO(data.published_at) > DateTime.now() ? 'Scheduled to publish on' : 'Published'}>
                   {DateTime.fromISO(data.published_at).toLocaleString(DateTime.DATETIME_FULL)}
                 </MetadataRow>
               ) : null}

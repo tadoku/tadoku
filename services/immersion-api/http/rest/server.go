@@ -36,6 +36,9 @@ func NewServer(
 	logCreate *domain.LogCreate,
 	contestCreate *domain.ContestCreate,
 	updateUserRole *domain.UpdateUserRole,
+	languageList *domain.LanguageList,
+	languageCreate *domain.LanguageCreate,
+	languageUpdate *domain.LanguageUpdate,
 ) openapi.ServerInterface {
 	return &Server{
 		contestConfigurationOptions: contestConfigurationOptions,
@@ -67,6 +70,9 @@ func NewServer(
 		logCreate:                   logCreate,
 		contestCreate:               contestCreate,
 		updateUserRole:              updateUserRole,
+		languageList:                languageList,
+		languageCreate:              languageCreate,
+		languageUpdate:              languageUpdate,
 	}
 }
 
@@ -100,4 +106,7 @@ type Server struct {
 	logCreate                   *domain.LogCreate
 	contestCreate               *domain.ContestCreate
 	updateUserRole              *domain.UpdateUserRole
+	languageList                *domain.LanguageList
+	languageCreate              *domain.LanguageCreate
+	languageUpdate              *domain.LanguageUpdate
 }

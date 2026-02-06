@@ -6,6 +6,7 @@ import { useNamespace } from '@app/content/NamespaceSelector'
 import {
   DocumentDuplicateIcon,
   DocumentTextIcon,
+  LanguageIcon,
   MegaphoneIcon,
   UsersIcon,
   ArrowTopRightOnSquareIcon,
@@ -16,7 +17,7 @@ import { Logo, Sidebar } from 'ui'
 import Link from 'next/link'
 import classNames from 'classnames'
 
-type ActiveLink = 'posts' | 'pages' | 'announcements' | 'users'
+type ActiveLink = 'posts' | 'pages' | 'announcements' | 'users' | 'languages'
 
 interface Props {
   children: React.ReactNode
@@ -44,6 +45,17 @@ const sidebarSections = (ns: string, activeLink?: ActiveLink) => [
         label: 'Announcements',
         active: activeLink === 'announcements',
         IconComponent: MegaphoneIcon,
+      },
+    ],
+  },
+  {
+    title: 'Platform',
+    links: [
+      {
+        href: routes.languages(),
+        label: 'Languages',
+        active: activeLink === 'languages',
+        IconComponent: LanguageIcon,
       },
     ],
   },

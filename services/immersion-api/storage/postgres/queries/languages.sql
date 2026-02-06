@@ -24,3 +24,9 @@ from languages
 where
   code = any(sqlc.arg('language_codes')::varchar[])
 order by name asc;
+
+-- name: CreateLanguage :exec
+insert into languages (code, name) values (sqlc.arg('code'), sqlc.arg('name'));
+
+-- name: UpdateLanguage :exec
+update languages set name = sqlc.arg('name') where code = sqlc.arg('code');

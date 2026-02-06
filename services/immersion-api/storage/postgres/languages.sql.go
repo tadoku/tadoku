@@ -12,6 +12,34 @@ import (
 	"github.com/lib/pq"
 )
 
+const createLanguage = `-- name: CreateLanguage :exec
+insert into languages (code, name) values ($1, $2)
+`
+
+type CreateLanguageParams struct {
+	Code string
+	Name string
+}
+
+func (q *Queries) CreateLanguage(ctx context.Context, arg CreateLanguageParams) error {
+	_, err := q.db.ExecContext(ctx, createLanguage, arg.Code, arg.Name)
+	return err
+}
+
+const updateLanguage = `-- name: UpdateLanguage :exec
+update languages set name = $1 where code = $2
+`
+
+type UpdateLanguageParams struct {
+	Name string
+	Code string
+}
+
+func (q *Queries) UpdateLanguage(ctx context.Context, arg UpdateLanguageParams) error {
+	_, err := q.db.ExecContext(ctx, updateLanguage, arg.Name, arg.Code)
+	return err
+}
+
 const getLanguagesByCode = `-- name: GetLanguagesByCode :many
 select
   code,

@@ -143,6 +143,29 @@ func (q *Queries) DetachLogFromContest(ctx context.Context, arg DetachLogFromCon
 	return err
 }
 
+const detachContestLogsForLanguages = `-- name: DetachContestLogsForLanguages :exec
+delete from contest_logs
+where contest_id = $1
+  and log_id in (
+    select logs.id
+    from logs
+    where logs.user_id = $2
+      and logs.language_code = any($3::varchar[])
+      and logs.deleted_at is null
+  )
+`
+
+type DetachContestLogsForLanguagesParams struct {
+	ContestID     uuid.UUID
+	UserID        uuid.UUID
+	LanguageCodes []string
+}
+
+func (q *Queries) DetachContestLogsForLanguages(ctx context.Context, arg DetachContestLogsForLanguagesParams) error {
+	_, err := q.db.ExecContext(ctx, detachContestLogsForLanguages, arg.ContestID, arg.UserID, pq.Array(arg.LanguageCodes))
+	return err
+}
+
 const fetchScoresForProfile = `-- name: FetchScoresForProfile :many
 select
   language_code,

@@ -1,5 +1,6 @@
 import { Component, ReactNode } from 'react'
 import ReactMarkdown from 'react-markdown'
+import rehypeSanitize from 'rehype-sanitize'
 import remarkGfm from 'remark-gfm'
 
 interface ErrorBoundaryProps {
@@ -47,7 +48,7 @@ export function MarkdownPreview({ content, className }: Props) {
   return (
     <MarkdownErrorBoundary resetKey={content}>
       <div className={`auto-format ${className ?? ''}`}>
-        <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>
+        <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeSanitize]}>{content}</ReactMarkdown>
       </div>
     </MarkdownErrorBoundary>
   )

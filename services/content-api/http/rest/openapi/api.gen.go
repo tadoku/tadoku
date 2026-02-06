@@ -17,6 +17,45 @@ const (
 	CookieAuthScopes = "cookieAuth.Scopes"
 )
 
+// Defines values for AnnouncementStyle.
+const (
+	Error   AnnouncementStyle = "error"
+	Info    AnnouncementStyle = "info"
+	Success AnnouncementStyle = "success"
+	Warning AnnouncementStyle = "warning"
+)
+
+// Announcement defines model for Announcement.
+type Announcement struct {
+	Content   string              `json:"content"`
+	CreatedAt *time.Time          `json:"created_at,omitempty"`
+	EndsAt    time.Time           `json:"ends_at"`
+	Href      *string             `json:"href"`
+	Id        *openapi_types.UUID `json:"id,omitempty"`
+	Namespace *string             `json:"namespace,omitempty"`
+	StartsAt  time.Time           `json:"starts_at"`
+	Style     AnnouncementStyle   `json:"style"`
+	Title     string              `json:"title"`
+	UpdatedAt *time.Time          `json:"updated_at,omitempty"`
+}
+
+// AnnouncementStyle defines model for Announcement.Style.
+type AnnouncementStyle string
+
+// AnnouncementList defines model for AnnouncementList.
+type AnnouncementList struct {
+	Announcements []Announcement `json:"announcements"`
+
+	// NextPageToken is empty if there's no next page
+	NextPageToken string `json:"next_page_token"`
+	TotalSize     int    `json:"total_size"`
+}
+
+// Announcements defines model for Announcements.
+type Announcements struct {
+	Announcements []Announcement `json:"announcements"`
+}
+
 // Page defines model for Page.
 type Page struct {
 	CreatedAt   *time.Time          `json:"created_at,omitempty"`
@@ -99,6 +138,12 @@ type Posts struct {
 	TotalSize     int    `json:"total_size"`
 }
 
+// AnnouncementListParams defines parameters for AnnouncementList.
+type AnnouncementListParams struct {
+	PageSize *int `form:"page_size,omitempty" json:"page_size,omitempty"`
+	Page     *int `form:"page,omitempty" json:"page,omitempty"`
+}
+
 // PageListParams defines parameters for PageList.
 type PageListParams struct {
 	PageSize      *int  `form:"page_size,omitempty" json:"page_size,omitempty"`
@@ -112,6 +157,12 @@ type PostListParams struct {
 	Page          *int  `form:"page,omitempty" json:"page,omitempty"`
 	IncludeDrafts *bool `form:"include_drafts,omitempty" json:"include_drafts,omitempty"`
 }
+
+// AnnouncementCreateJSONRequestBody defines body for AnnouncementCreate for application/json ContentType.
+type AnnouncementCreateJSONRequestBody = Announcement
+
+// AnnouncementUpdateJSONRequestBody defines body for AnnouncementUpdate for application/json ContentType.
+type AnnouncementUpdateJSONRequestBody = Announcement
 
 // PageCreateJSONRequestBody defines body for PageCreate for application/json ContentType.
 type PageCreateJSONRequestBody = Page
@@ -127,6 +178,24 @@ type PostUpdateJSONRequestBody = Post
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
+	// Lists all announcements
+	// (GET /announcements/{namespace})
+	AnnouncementList(ctx echo.Context, namespace string, params AnnouncementListParams) error
+	// Creates a new announcement
+	// (POST /announcements/{namespace})
+	AnnouncementCreate(ctx echo.Context, namespace string) error
+	// Lists currently active announcements
+	// (GET /announcements/{namespace}/active)
+	AnnouncementListActive(ctx echo.Context, namespace string) error
+	// Deletes an existing announcement
+	// (DELETE /announcements/{namespace}/{id})
+	AnnouncementDelete(ctx echo.Context, namespace string, id string) error
+	// Gets an announcement by ID
+	// (GET /announcements/{namespace}/{id})
+	AnnouncementFindByID(ctx echo.Context, namespace string, id string) error
+	// Updates an existing announcement
+	// (PUT /announcements/{namespace}/{id})
+	AnnouncementUpdate(ctx echo.Context, namespace string, id string) error
 	// lists all pages
 	// (GET /pages/{namespace})
 	PageList(ctx echo.Context, namespace string, params PageListParams) error
@@ -177,6 +246,152 @@ type ServerInterface interface {
 // ServerInterfaceWrapper converts echo contexts to parameters.
 type ServerInterfaceWrapper struct {
 	Handler ServerInterface
+}
+
+// AnnouncementList converts echo context to params.
+func (w *ServerInterfaceWrapper) AnnouncementList(ctx echo.Context) error {
+	var err error
+	// ------------- Path parameter "namespace" -------------
+	var namespace string
+
+	err = runtime.BindStyledParameterWithLocation("simple", false, "namespace", runtime.ParamLocationPath, ctx.Param("namespace"), &namespace)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter namespace: %s", err))
+	}
+
+	ctx.Set(CookieAuthScopes, []string{""})
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params AnnouncementListParams
+	// ------------- Optional query parameter "page_size" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "page_size", ctx.QueryParams(), &params.PageSize)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter page_size: %s", err))
+	}
+
+	// ------------- Optional query parameter "page" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "page", ctx.QueryParams(), &params.Page)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter page: %s", err))
+	}
+
+	// Invoke the callback with all the unmarshalled arguments
+	err = w.Handler.AnnouncementList(ctx, namespace, params)
+	return err
+}
+
+// AnnouncementCreate converts echo context to params.
+func (w *ServerInterfaceWrapper) AnnouncementCreate(ctx echo.Context) error {
+	var err error
+	// ------------- Path parameter "namespace" -------------
+	var namespace string
+
+	err = runtime.BindStyledParameterWithLocation("simple", false, "namespace", runtime.ParamLocationPath, ctx.Param("namespace"), &namespace)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter namespace: %s", err))
+	}
+
+	ctx.Set(CookieAuthScopes, []string{""})
+
+	// Invoke the callback with all the unmarshalled arguments
+	err = w.Handler.AnnouncementCreate(ctx, namespace)
+	return err
+}
+
+// AnnouncementListActive converts echo context to params.
+func (w *ServerInterfaceWrapper) AnnouncementListActive(ctx echo.Context) error {
+	var err error
+	// ------------- Path parameter "namespace" -------------
+	var namespace string
+
+	err = runtime.BindStyledParameterWithLocation("simple", false, "namespace", runtime.ParamLocationPath, ctx.Param("namespace"), &namespace)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter namespace: %s", err))
+	}
+
+	// Invoke the callback with all the unmarshalled arguments
+	err = w.Handler.AnnouncementListActive(ctx, namespace)
+	return err
+}
+
+// AnnouncementDelete converts echo context to params.
+func (w *ServerInterfaceWrapper) AnnouncementDelete(ctx echo.Context) error {
+	var err error
+	// ------------- Path parameter "namespace" -------------
+	var namespace string
+
+	err = runtime.BindStyledParameterWithLocation("simple", false, "namespace", runtime.ParamLocationPath, ctx.Param("namespace"), &namespace)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter namespace: %s", err))
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id string
+
+	err = runtime.BindStyledParameterWithLocation("simple", false, "id", runtime.ParamLocationPath, ctx.Param("id"), &id)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter id: %s", err))
+	}
+
+	ctx.Set(CookieAuthScopes, []string{""})
+
+	// Invoke the callback with all the unmarshalled arguments
+	err = w.Handler.AnnouncementDelete(ctx, namespace, id)
+	return err
+}
+
+// AnnouncementFindByID converts echo context to params.
+func (w *ServerInterfaceWrapper) AnnouncementFindByID(ctx echo.Context) error {
+	var err error
+	// ------------- Path parameter "namespace" -------------
+	var namespace string
+
+	err = runtime.BindStyledParameterWithLocation("simple", false, "namespace", runtime.ParamLocationPath, ctx.Param("namespace"), &namespace)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter namespace: %s", err))
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id string
+
+	err = runtime.BindStyledParameterWithLocation("simple", false, "id", runtime.ParamLocationPath, ctx.Param("id"), &id)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter id: %s", err))
+	}
+
+	ctx.Set(CookieAuthScopes, []string{""})
+
+	// Invoke the callback with all the unmarshalled arguments
+	err = w.Handler.AnnouncementFindByID(ctx, namespace, id)
+	return err
+}
+
+// AnnouncementUpdate converts echo context to params.
+func (w *ServerInterfaceWrapper) AnnouncementUpdate(ctx echo.Context) error {
+	var err error
+	// ------------- Path parameter "namespace" -------------
+	var namespace string
+
+	err = runtime.BindStyledParameterWithLocation("simple", false, "namespace", runtime.ParamLocationPath, ctx.Param("namespace"), &namespace)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter namespace: %s", err))
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id string
+
+	err = runtime.BindStyledParameterWithLocation("simple", false, "id", runtime.ParamLocationPath, ctx.Param("id"), &id)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter id: %s", err))
+	}
+
+	ctx.Set(CookieAuthScopes, []string{""})
+
+	// Invoke the callback with all the unmarshalled arguments
+	err = w.Handler.AnnouncementUpdate(ctx, namespace, id)
+	return err
 }
 
 // PageList converts echo context to params.
@@ -604,6 +819,12 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 		Handler: si,
 	}
 
+	router.GET(baseURL+"/announcements/:namespace", wrapper.AnnouncementList)
+	router.POST(baseURL+"/announcements/:namespace", wrapper.AnnouncementCreate)
+	router.GET(baseURL+"/announcements/:namespace/active", wrapper.AnnouncementListActive)
+	router.DELETE(baseURL+"/announcements/:namespace/:id", wrapper.AnnouncementDelete)
+	router.GET(baseURL+"/announcements/:namespace/:id", wrapper.AnnouncementFindByID)
+	router.PUT(baseURL+"/announcements/:namespace/:id", wrapper.AnnouncementUpdate)
 	router.GET(baseURL+"/pages/:namespace", wrapper.PageList)
 	router.POST(baseURL+"/pages/:namespace", wrapper.PageCreate)
 	router.DELETE(baseURL+"/pages/:namespace/:id", wrapper.PageDelete)

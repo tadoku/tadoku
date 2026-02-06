@@ -25,3 +25,24 @@ func NewTimeFromNullTime(t sql.NullTime) *time.Time {
 
 	return &t.Time
 }
+
+func NewNullString(s *string) sql.NullString {
+	if s == nil {
+		return sql.NullString{
+			Valid: false,
+		}
+	}
+
+	return sql.NullString{
+		Valid:  true,
+		String: *s,
+	}
+}
+
+func NewStringFromNullString(s sql.NullString) *string {
+	if !s.Valid {
+		return nil
+	}
+
+	return &s.String
+}

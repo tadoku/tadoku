@@ -14,6 +14,9 @@ export const routes = {
   pageNew: (ns: string) => `/pages/${ns}/new`,
   pagePreview: (ns: string, id: string) => `/pages/${ns}/${id}`,
   pageEdit: (ns: string, id: string) => `/pages/${ns}/${id}/edit`,
+  announcements: (ns: string) => `/announcements/${ns}`,
+  announcementNew: (ns: string) => `/announcements/${ns}/new`,
+  announcementEdit: (ns: string, id: string) => `/announcements/${ns}/${id}/edit`,
   users: () => `/users`,
 
   // External

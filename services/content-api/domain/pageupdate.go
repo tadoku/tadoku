@@ -11,7 +11,7 @@ import (
 )
 
 type PageUpdateRepository interface {
-	GetPageByID(ctx context.Context, id uuid.UUID) (*Page, error)
+	GetPageByID(ctx context.Context, id uuid.UUID, namespace string) (*Page, error)
 	UpdatePage(ctx context.Context, page *Page) error
 	UpdatePageMetadata(ctx context.Context, page *Page) error
 }
@@ -51,7 +51,7 @@ func (s *PageUpdate) Execute(ctx context.Context, id uuid.UUID, req *PageUpdateR
 		return nil, fmt.Errorf("%w: %v", ErrInvalidPage, err)
 	}
 
-	page, err := s.repo.GetPageByID(ctx, id)
+	page, err := s.repo.GetPageByID(ctx, id, req.Namespace)
 	if err != nil {
 		return nil, err
 	}

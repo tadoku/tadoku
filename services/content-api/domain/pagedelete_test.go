@@ -12,11 +12,11 @@ import (
 )
 
 type mockPageDeleteRepo struct {
-	deletePageFn func(ctx context.Context, id uuid.UUID) error
+	deletePageFn func(ctx context.Context, id uuid.UUID, namespace string) error
 }
 
-func (m *mockPageDeleteRepo) DeletePage(ctx context.Context, id uuid.UUID) error {
-	return m.deletePageFn(ctx, id)
+func (m *mockPageDeleteRepo) DeletePage(ctx context.Context, id uuid.UUID, namespace string) error {
+	return m.deletePageFn(ctx, id, namespace)
 }
 
 func TestPageDelete_Execute(t *testing.T) {
@@ -24,14 +24,15 @@ func TestPageDelete_Execute(t *testing.T) {
 
 	t.Run("deletes page successfully", func(t *testing.T) {
 		repo := &mockPageDeleteRepo{
-			deletePageFn: func(ctx context.Context, id uuid.UUID) error {
+			deletePageFn: func(ctx context.Context, id uuid.UUID, namespace string) error {
 				assert.Equal(t, pageID, id)
+				assert.Equal(t, "tadoku", namespace)
 				return nil
 			},
 		}
 
 		svc := contentdomain.NewPageDelete(repo)
-		err := svc.Execute(adminContext(), pageID)
+		err := svc.Execute(adminContext(), pageID, "tadoku")
 
 		require.NoError(t, err)
 	})
@@ -40,7 +41,7 @@ func TestPageDelete_Execute(t *testing.T) {
 		repo := &mockPageDeleteRepo{}
 		svc := contentdomain.NewPageDelete(repo)
 
-		err := svc.Execute(userContext(), pageID)
+		err := svc.Execute(userContext(), pageID, "tadoku")
 
 		assert.ErrorIs(t, err, contentdomain.ErrForbidden)
 	})
@@ -49,7 +50,7 @@ func TestPageDelete_Execute(t *testing.T) {
 		repo := &mockPageDeleteRepo{}
 		svc := contentdomain.NewPageDelete(repo)
 
-		err := svc.Execute(context.Background(), pageID)
+		err := svc.Execute(context.Background(), pageID, "tadoku")
 
 		assert.ErrorIs(t, err, contentdomain.ErrForbidden)
 	})
@@ -57,13 +58,13 @@ func TestPageDelete_Execute(t *testing.T) {
 	t.Run("returns repository error", func(t *testing.T) {
 		repoErr := errors.New("database error")
 		repo := &mockPageDeleteRepo{
-			deletePageFn: func(ctx context.Context, id uuid.UUID) error {
+			deletePageFn: func(ctx context.Context, id uuid.UUID, namespace string) error {
 				return repoErr
 			},
 		}
 
 		svc := contentdomain.NewPageDelete(repo)
-		err := svc.Execute(adminContext(), pageID)
+		err := svc.Execute(adminContext(), pageID, "tadoku")
 
 		assert.ErrorIs(t, err, repoErr)
 	})

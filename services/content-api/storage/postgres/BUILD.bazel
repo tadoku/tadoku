@@ -3,6 +3,8 @@ load("@rules_go//go:def.bzl", "go_library")
 go_library(
     name = "postgres",
     srcs = [
+        "announcementrepository.go",
+        "announcements.sql.go",
         "db.go",
         "generate.go",
         "helpers.go",

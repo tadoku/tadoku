@@ -11,6 +11,20 @@ import (
 	"github.com/google/uuid"
 )
 
+type Announcement struct {
+	ID        uuid.UUID
+	Namespace string
+	Title     string
+	Content   string
+	Style     string
+	Href      sql.NullString
+	StartsAt  time.Time
+	EndsAt    time.Time
+	CreatedAt time.Time
+	UpdatedAt time.Time
+	DeletedAt sql.NullTime
+}
+
 type Page struct {
 	ID               uuid.UUID
 	Namespace        string

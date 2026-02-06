@@ -8,7 +8,7 @@ import (
 )
 
 type PostDeleteRepository interface {
-	DeletePost(ctx context.Context, id uuid.UUID) error
+	DeletePost(ctx context.Context, id uuid.UUID, namespace string) error
 }
 
 type PostDelete struct {
@@ -21,10 +21,10 @@ func NewPostDelete(repo PostDeleteRepository) *PostDelete {
 	}
 }
 
-func (s *PostDelete) Execute(ctx context.Context, id uuid.UUID) error {
+func (s *PostDelete) Execute(ctx context.Context, id uuid.UUID, namespace string) error {
 	if !commondomain.IsRole(ctx, commondomain.RoleAdmin) {
 		return ErrForbidden
 	}
 
-	return s.repo.DeletePost(ctx, id)
+	return s.repo.DeletePost(ctx, id, namespace)
 }

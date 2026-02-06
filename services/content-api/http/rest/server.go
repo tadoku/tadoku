@@ -23,24 +23,36 @@ func NewServer(
 	postList *domain.PostList,
 	postVersionList *domain.PostVersionList,
 	postVersionGet *domain.PostVersionGet,
+	announcementCreate *domain.AnnouncementCreate,
+	announcementUpdate *domain.AnnouncementUpdate,
+	announcementDelete *domain.AnnouncementDelete,
+	announcementFindByID *domain.AnnouncementFindByID,
+	announcementList *domain.AnnouncementList,
+	announcementListActive *domain.AnnouncementListActive,
 ) openapi.ServerInterface {
 	return &Server{
-		pageCreate:      pageCreate,
-		pageUpdate:      pageUpdate,
-		pageDelete:      pageDelete,
-		pageFind:        pageFind,
-		pageFindByID:    pageFindByID,
-		pageList:        pageList,
-		pageVersionList: pageVersionList,
-		pageVersionGet:  pageVersionGet,
-		postCreate:      postCreate,
-		postUpdate:      postUpdate,
-		postDelete:      postDelete,
-		postFind:        postFind,
-		postFindByID:    postFindByID,
-		postList:        postList,
-		postVersionList: postVersionList,
-		postVersionGet:  postVersionGet,
+		pageCreate:             pageCreate,
+		pageUpdate:             pageUpdate,
+		pageDelete:             pageDelete,
+		pageFind:               pageFind,
+		pageFindByID:           pageFindByID,
+		pageList:               pageList,
+		pageVersionList:        pageVersionList,
+		pageVersionGet:         pageVersionGet,
+		postCreate:             postCreate,
+		postUpdate:             postUpdate,
+		postDelete:             postDelete,
+		postFind:               postFind,
+		postFindByID:           postFindByID,
+		postList:               postList,
+		postVersionList:        postVersionList,
+		postVersionGet:         postVersionGet,
+		announcementCreate:     announcementCreate,
+		announcementUpdate:     announcementUpdate,
+		announcementDelete:     announcementDelete,
+		announcementFindByID:   announcementFindByID,
+		announcementList:       announcementList,
+		announcementListActive: announcementListActive,
 	}
 }
 
@@ -62,4 +74,11 @@ type Server struct {
 	postList        *domain.PostList
 	postVersionList *domain.PostVersionList
 	postVersionGet  *domain.PostVersionGet
+
+	announcementCreate     *domain.AnnouncementCreate
+	announcementUpdate     *domain.AnnouncementUpdate
+	announcementDelete     *domain.AnnouncementDelete
+	announcementFindByID   *domain.AnnouncementFindByID
+	announcementList       *domain.AnnouncementList
+	announcementListActive *domain.AnnouncementListActive
 }

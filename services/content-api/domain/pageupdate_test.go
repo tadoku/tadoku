@@ -13,14 +13,14 @@ import (
 )
 
 type mockPageUpdateRepo struct {
-	getPageByIDFn        func(ctx context.Context, id uuid.UUID) (*contentdomain.Page, error)
+	getPageByIDFn        func(ctx context.Context, id uuid.UUID, namespace string) (*contentdomain.Page, error)
 	updatePageFn         func(ctx context.Context, page *contentdomain.Page) error
 	updatePageMetadataFn func(ctx context.Context, page *contentdomain.Page) error
 }
 
-func (m *mockPageUpdateRepo) GetPageByID(ctx context.Context, id uuid.UUID) (*contentdomain.Page, error) {
+func (m *mockPageUpdateRepo) GetPageByID(ctx context.Context, id uuid.UUID, namespace string) (*contentdomain.Page, error) {
 	if m.getPageByIDFn != nil {
-		return m.getPageByIDFn(ctx, id)
+		return m.getPageByIDFn(ctx, id, namespace)
 	}
 	return nil, nil
 }
@@ -58,7 +58,7 @@ func TestPageUpdate_Execute(t *testing.T) {
 
 		var updatedPage *contentdomain.Page
 		repo := &mockPageUpdateRepo{
-			getPageByIDFn: func(ctx context.Context, id uuid.UUID) (*contentdomain.Page, error) {
+			getPageByIDFn: func(ctx context.Context, id uuid.UUID, namespace string) (*contentdomain.Page, error) {
 				return existingPage, nil
 			},
 			updatePageFn: func(ctx context.Context, page *contentdomain.Page) error {
@@ -121,7 +121,7 @@ func TestPageUpdate_Execute(t *testing.T) {
 
 	t.Run("returns error when page not found", func(t *testing.T) {
 		repo := &mockPageUpdateRepo{
-			getPageByIDFn: func(ctx context.Context, id uuid.UUID) (*contentdomain.Page, error) {
+			getPageByIDFn: func(ctx context.Context, id uuid.UUID, namespace string) (*contentdomain.Page, error) {
 				return nil, contentdomain.ErrPageNotFound
 			},
 		}
@@ -150,7 +150,7 @@ func TestPageUpdate_Execute(t *testing.T) {
 
 		repoErr := errors.New("database connection failed")
 		repo := &mockPageUpdateRepo{
-			getPageByIDFn: func(ctx context.Context, id uuid.UUID) (*contentdomain.Page, error) {
+			getPageByIDFn: func(ctx context.Context, id uuid.UUID, namespace string) (*contentdomain.Page, error) {
 				return existingPage, nil
 			},
 			updatePageFn: func(ctx context.Context, page *contentdomain.Page) error {
@@ -182,7 +182,7 @@ func TestPageUpdate_Execute(t *testing.T) {
 
 		var calledUpdatePage, calledUpdateMetadata bool
 		repo := &mockPageUpdateRepo{
-			getPageByIDFn: func(ctx context.Context, id uuid.UUID) (*contentdomain.Page, error) {
+			getPageByIDFn: func(ctx context.Context, id uuid.UUID, namespace string) (*contentdomain.Page, error) {
 				return existingPage, nil
 			},
 			updatePageFn: func(ctx context.Context, page *contentdomain.Page) error {
@@ -221,7 +221,7 @@ func TestPageUpdate_Execute(t *testing.T) {
 
 		var calledUpdatePage, calledUpdateMetadata bool
 		repo := &mockPageUpdateRepo{
-			getPageByIDFn: func(ctx context.Context, id uuid.UUID) (*contentdomain.Page, error) {
+			getPageByIDFn: func(ctx context.Context, id uuid.UUID, namespace string) (*contentdomain.Page, error) {
 				return existingPage, nil
 			},
 			updatePageFn: func(ctx context.Context, page *contentdomain.Page) error {
@@ -267,7 +267,7 @@ func TestPageUpdate_Execute(t *testing.T) {
 
 		var updatedPage *contentdomain.Page
 		repo := &mockPageUpdateRepo{
-			getPageByIDFn: func(ctx context.Context, id uuid.UUID) (*contentdomain.Page, error) {
+			getPageByIDFn: func(ctx context.Context, id uuid.UUID, namespace string) (*contentdomain.Page, error) {
 				return existingPage, nil
 			},
 			updatePageMetadataFn: func(ctx context.Context, page *contentdomain.Page) error {

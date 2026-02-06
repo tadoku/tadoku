@@ -57,6 +57,41 @@ const PostList = z.object({
 
 export type PostList = z.infer<typeof PostList>
 
+const ActiveAnnouncement = z.object({
+  id: z.string(),
+  title: z.string(),
+  content: z.string(),
+  style: z.enum(['success', 'warning', 'error', 'info']),
+  href: z.string().nullable().optional(),
+  starts_at: z.string(),
+  ends_at: z.string(),
+})
+
+export type ActiveAnnouncement = z.infer<typeof ActiveAnnouncement>
+
+const ActiveAnnouncements = z.object({
+  announcements: z.array(ActiveAnnouncement),
+})
+
+export const useActiveAnnouncements = () =>
+  useQuery(
+    ['content_announcements', 'active'],
+    async (): Promise<ActiveAnnouncement[]> => {
+      const response = await fetch(`${root}/announcements/tadoku/active`)
+
+      if (response.status !== 200) {
+        return []
+      }
+
+      const data = ActiveAnnouncements.parse(await response.json())
+      return data.announcements
+    },
+    {
+      staleTime: 60_000,
+      retry: false,
+    },
+  )
+
 export const usePostList = ({
   pageSize,
   page,

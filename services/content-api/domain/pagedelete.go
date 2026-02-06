@@ -8,7 +8,7 @@ import (
 )
 
 type PageDeleteRepository interface {
-	DeletePage(ctx context.Context, id uuid.UUID) error
+	DeletePage(ctx context.Context, id uuid.UUID, namespace string) error
 }
 
 type PageDelete struct {
@@ -21,10 +21,10 @@ func NewPageDelete(repo PageDeleteRepository) *PageDelete {
 	}
 }
 
-func (s *PageDelete) Execute(ctx context.Context, id uuid.UUID) error {
+func (s *PageDelete) Execute(ctx context.Context, id uuid.UUID, namespace string) error {
 	if !commondomain.IsRole(ctx, commondomain.RoleAdmin) {
 		return ErrForbidden
 	}
 
-	return s.repo.DeletePage(ctx, id)
+	return s.repo.DeletePage(ctx, id, namespace)
 }

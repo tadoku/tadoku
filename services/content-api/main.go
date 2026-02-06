@@ -47,6 +47,7 @@ func main() {
 
 	pageRepository := postgres.NewPageRepository(psql)
 	postRepository := postgres.NewPostRepository(psql)
+	announcementRepository := postgres.NewAnnouncementRepository(psql)
 	configRoleRepository := memory.NewRoleRepository("/etc/tadoku/permissions/roles.yaml")
 
 	e := echo.New()
@@ -92,6 +93,14 @@ func main() {
 	postVersionList := domain.NewPostVersionList(postRepository)
 	postVersionGet := domain.NewPostVersionGet(postRepository)
 
+	// Announcement services
+	announcementCreate := domain.NewAnnouncementCreate(announcementRepository, clock)
+	announcementUpdate := domain.NewAnnouncementUpdate(announcementRepository, clock)
+	announcementDelete := domain.NewAnnouncementDelete(announcementRepository)
+	announcementFindByID := domain.NewAnnouncementFindByID(announcementRepository)
+	announcementList := domain.NewAnnouncementList(announcementRepository)
+	announcementListActive := domain.NewAnnouncementListActive(announcementRepository, clock)
+
 	server := rest.NewServer(
 		pageCreate,
 		pageUpdate,
@@ -109,6 +118,12 @@ func main() {
 		postList,
 		postVersionList,
 		postVersionGet,
+		announcementCreate,
+		announcementUpdate,
+		announcementDelete,
+		announcementFindByID,
+		announcementList,
+		announcementListActive,
 	)
 
 	openapi.RegisterHandlersWithBaseURL(e, server, "")

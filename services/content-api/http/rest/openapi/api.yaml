@@ -439,6 +439,169 @@ paths:
           description: Not allowed
         '404':
           description: Post or version not found
+  /announcements/{namespace}/active:
+    get:
+      summary: Lists currently active announcements
+      operationId: announcementListActive
+      tags: [announcements]
+      parameters:
+        - name: namespace
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Announcements'
+  /announcements/{namespace}:
+    post:
+      summary: Creates a new announcement
+      operationId: announcementCreate
+      tags: [announcements]
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: namespace
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Announcement'
+      responses:
+        '201':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Announcement'
+        '400':
+          description: Invalid announcement
+    get:
+      summary: Lists all announcements
+      operationId: announcementList
+      tags: [announcements]
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: namespace
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: page_size
+          in: query
+          required: false
+          schema:
+            type: integer
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AnnouncementList'
+  /announcements/{namespace}/{id}:
+    get:
+      summary: Gets an announcement by ID
+      operationId: announcementFindByID
+      tags: [announcements]
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: namespace
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: id
+          in: path
+          description: ID of announcement
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Announcement'
+        '403':
+          description: Not allowed
+        '404':
+          description: Announcement not found
+    put:
+      summary: Updates an existing announcement
+      operationId: announcementUpdate
+      tags: [announcements]
+      security:
+        - cookieAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Announcement'
+      parameters:
+        - name: namespace
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: id
+          in: path
+          description: ID of announcement
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Announcement'
+        '400':
+          description: Invalid announcement
+        '404':
+          description: Announcement does not exist and cannot be updated
+    delete:
+      summary: Deletes an existing announcement
+      operationId: announcementDelete
+      tags: [announcements]
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: namespace
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: id
+          in: path
+          description: ID of announcement
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: successful operation
+        '403':
+          description: Not allowed
+        '404':
+          description: Announcement not found
   /ping:
     get:
       summary: Checks if service is responsive
@@ -608,6 +771,74 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/PostVersion'
+    Announcement:
+      type: object
+      required:
+        - title
+        - content
+        - style
+        - starts_at
+        - ends_at
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: d7e82f70-f7b9-4952-8258-1e4d16f0c244
+        namespace:
+          type: string
+          example: tadoku
+        title:
+          type: string
+          example: Scheduled Maintenance
+        content:
+          type: string
+          format: markdown
+          example: The site will be down for maintenance on **Friday**.
+        style:
+          type: string
+          enum: [success, warning, error, info]
+          example: warning
+        href:
+          type: string
+          nullable: true
+          example: https://tadoku.app/blog/posts/maintenance
+        starts_at:
+          type: string
+          format: date-time
+          example: 2022-12-14T19:48:00Z
+        ends_at:
+          type: string
+          format: date-time
+          example: 2022-12-15T19:48:00Z
+        created_at:
+          type: string
+          format: date-time
+          example: 2022-12-14T19:48:00Z
+        updated_at:
+          type: string
+          format: date-time
+          example: 2022-12-14T19:48:00Z
+    Announcements:
+      type: object
+      required:
+        - announcements
+      properties:
+        announcements:
+          type: array
+          items:
+            $ref: "#/components/schemas/Announcement"
+    AnnouncementList:
+      allOf:
+        - $ref: '#/components/schemas/PaginatedList'
+        - type: object
+          required:
+            - announcements
+          properties:
+            announcements:
+              type: array
+              maxItems: 50
+              items:
+                $ref: "#/components/schemas/Announcement"
     PaginatedList:
       type: object
       required:

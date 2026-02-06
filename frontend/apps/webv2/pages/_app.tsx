@@ -8,6 +8,7 @@ import { Session } from '@ory/client'
 import { ToastContainer } from 'ui/components/toasts'
 import 'ui/styles/globals.css'
 import Navigation from '@app/ui/Navigation'
+import AnnouncementBanner from '@app/ui/AnnouncementBanner'
 import BannedScreen from '@app/ui/BannedScreen'
 import { QueryCache, QueryClient, QueryClientProvider } from 'react-query'
 import Head from 'next/head'
@@ -85,6 +86,7 @@ const MyApp = ({ Component, pageProps }: AppPropsWithLayout) => {
         <AppContent>
           <div className="min-h-screen flex flex-col">
             <Navigation />
+            <AnnouncementBanner />
             <div className="p-4 md:px-8 md:pb-8 md:pt-4 mx-auto w-full max-w-7xl mb-auto">
               {getLayout(<Component {...pageProps} />)}
             </div>

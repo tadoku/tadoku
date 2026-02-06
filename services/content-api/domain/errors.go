@@ -16,6 +16,12 @@ var (
 	ErrInvalidPost       = errors.New("unable to validate post")
 )
 
+// Announcement errors
+var (
+	ErrAnnouncementNotFound = errors.New("announcement not found")
+	ErrInvalidAnnouncement  = errors.New("unable to validate announcement")
+)
+
 // Common errors
 var (
 	ErrForbidden      = errors.New("not allowed")

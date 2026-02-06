@@ -8,11 +8,13 @@ import { ContentPreview } from '@app/content/ContentPreview'
 import { pagesConfig } from '@app/content/pages'
 import { useRouter } from 'next/router'
 import { useNamespace } from '@app/content/NamespaceSelector'
+import { useContentFindById } from '@app/content/api'
 
 const Page: NextPageWithLayout = () => {
   const router = useRouter()
   const id = router.query.id as string
   const namespace = useNamespace()
+  const item = useContentFindById(pagesConfig, namespace, id, { enabled: !!id })
 
   return (
     <>
@@ -33,7 +35,7 @@ const Page: NextPageWithLayout = () => {
               IconComponent: DocumentDuplicateIcon,
             },
             {
-              label: 'View',
+              label: item.data?.title ?? 'View',
               href: id ? routes.pagePreview(namespace, id) : '#',
             },
           ]}

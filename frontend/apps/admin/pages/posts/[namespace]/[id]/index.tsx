@@ -8,11 +8,13 @@ import { ContentPreview } from '@app/content/ContentPreview'
 import { postsConfig } from '@app/content/posts'
 import { useRouter } from 'next/router'
 import { useNamespace } from '@app/content/NamespaceSelector'
+import { useContentFindById } from '@app/content/api'
 
 const Page: NextPageWithLayout = () => {
   const router = useRouter()
   const id = router.query.id as string
   const namespace = useNamespace()
+  const item = useContentFindById(postsConfig, namespace, id, { enabled: !!id })
 
   return (
     <>
@@ -33,7 +35,7 @@ const Page: NextPageWithLayout = () => {
               IconComponent: DocumentTextIcon,
             },
             {
-              label: 'View',
+              label: item.data?.title ?? 'View',
               href: id ? routes.postPreview(namespace, id) : '#',
             },
           ]}

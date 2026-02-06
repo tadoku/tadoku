@@ -4,7 +4,7 @@ import Head from 'next/head'
 import { Breadcrumb, Modal } from 'ui'
 import { ContentEditor } from './ContentEditor'
 import { ContentConfig } from './types'
-import { useContentDelete } from './api'
+import { useContentDelete, useContentFindById } from './api'
 import { useNamespace } from './NamespaceSelector'
 import { useRouter } from 'next/router'
 import { useState } from 'react'
@@ -20,6 +20,7 @@ export function ContentEditPage({ config }: Props) {
   const queryClient = useQueryClient()
   const id = router.query.id as string
   const namespace = useNamespace()
+  const item = useContentFindById(config, namespace, id, { enabled: !!id })
   const [deleteModalOpen, setDeleteModalOpen] = useState(false)
 
   const deleteMutation = useContentDelete(
@@ -58,7 +59,7 @@ export function ContentEditPage({ config }: Props) {
               IconComponent: config.icon,
             },
             {
-              label: 'View',
+              label: item.data?.title ?? 'View',
               href: id ? config.routes.preview(namespace, id) : '#',
             },
             {

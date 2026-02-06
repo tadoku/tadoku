@@ -1,5 +1,6 @@
 import { routes } from '@app/common/routes'
 import { usePage } from '@app/content/api'
+import DOMPurify from 'dompurify'
 import { HomeIcon } from '@heroicons/react/20/solid'
 import Head from 'next/head'
 import { Breadcrumb, Loading } from 'ui'
@@ -40,7 +41,7 @@ export const Page = ({ slug }: Props) => {
       <div className="max-w-3xl">
         <h1 className="title my-4">{page.data.title}</h1>
         <div className="auto-format">
-          <div dangerouslySetInnerHTML={{ __html: page.data.html }} />
+          <div dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(page.data.html) }} />
         </div>
       </div>
     </>

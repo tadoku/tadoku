@@ -2,6 +2,7 @@ import { useActiveAnnouncements } from '@app/content/api'
 import { Flash } from 'ui/components/Flash'
 import { ArrowTopRightOnSquareIcon, XMarkIcon } from '@heroicons/react/20/solid'
 import ReactMarkdown from 'react-markdown'
+import rehypeSanitize from 'rehype-sanitize'
 import remarkGfm from 'remark-gfm'
 import { useCallback, useEffect, useState } from 'react'
 import { useRouter } from 'next/router'
@@ -78,7 +79,7 @@ export default function AnnouncementBanner() {
             className="pr-10"
           >
             <div className="auto-format text-sm [&_p]:m-0 [&_p+p]:mt-1">
-              <ReactMarkdown remarkPlugins={[remarkGfm]}>
+              <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeSanitize]}>
                 {announcement.content}
               </ReactMarkdown>
               {announcement.href && getPathname(announcement.href) !== asPath ? <span className="inline-flex items-center gap-1 mt-1 underline">Learn more <ArrowTopRightOnSquareIcon className="w-3.5 h-3.5" /></span> : null}

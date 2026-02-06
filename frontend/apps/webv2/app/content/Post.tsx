@@ -1,4 +1,5 @@
 import ReactMarkdown from 'react-markdown'
+import rehypeSanitize from 'rehype-sanitize'
 import remarkGfm from 'remark-gfm'
 import { Post } from '@app/content/api'
 
@@ -14,5 +15,5 @@ export const PostDetail = ({ post }: Props) => (
 )
 
 export const PostBody = ({ post }: Props) => (
-  <ReactMarkdown remarkPlugins={[remarkGfm]}>{post.content}</ReactMarkdown>
+  <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeSanitize]}>{post.content}</ReactMarkdown>
 )

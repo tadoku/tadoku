@@ -49,7 +49,7 @@ func (s *Server) AnnouncementCreate(ctx echo.Context, namespace string) error {
 		return ctx.NoContent(http.StatusInternalServerError)
 	}
 
-	return ctx.JSON(http.StatusOK, announcementToOpenAPI(resp.Announcement))
+	return ctx.JSON(http.StatusCreated, announcementToOpenAPI(resp.Announcement))
 }
 
 // Updates an existing announcement

@@ -110,17 +110,18 @@ export function ContentEditor({ config, id }: Props) {
     }
   }
 
+  const slugify = (value: string) =>
+    value
+      .toLowerCase()
+      .replace(/[^a-z0-9\s-]/g, '')
+      .replace(/\s+/g, '-')
+      .replace(/-+/g, '-')
+      .replace(/^-|-$/g, '')
+
   const handleTitleChange = (value: string) => {
     setTitle(value)
     if (isNew) {
-      setItemSlug(
-        value
-          .toLowerCase()
-          .replace(/[^a-z0-9\s-]/g, '')
-          .replace(/\s+/g, '-')
-          .replace(/-+/g, '-')
-          .replace(/^-|-$/g, ''),
-      )
+      setItemSlug(slugify(value))
     }
   }
 
@@ -166,8 +167,18 @@ export function ContentEditor({ config, id }: Props) {
               />
               <span className="error">{errors.title}</span>
             </label>
-            <label className={`label ${errors.slug ? 'error' : ''}`}>
-              <span className="label-text">Slug</span>
+            <div className={`label ${errors.slug ? 'error' : ''}`}>
+              <div className="flex items-center justify-between">
+                <span className="label-text">Slug</span>
+                <button
+                  type="button"
+                  className="btn ghost"
+                  onClick={() => setItemSlug(slugify(title))}
+                  disabled={!title.trim()}
+                >
+                  Regenerate
+                </button>
+              </div>
               <input
                 type="text"
                 className="input"
@@ -176,7 +187,7 @@ export function ContentEditor({ config, id }: Props) {
                 placeholder="url-friendly-slug"
               />
               <span className="error">{errors.slug}</span>
-            </label>
+            </div>
             <div className={`label flex-1 ${errors.body ? 'error' : ''}`}>
               <div className="flex items-center justify-between">
                 <span className="label-text">Content</span>

@@ -11,13 +11,6 @@ import { useRouter } from 'next/router'
 import { useState, useEffect } from 'react'
 import { DateTime } from 'luxon'
 
-const STYLE_LABELS: Record<string, string> = {
-  info: 'Info',
-  success: 'Success',
-  warning: 'Warning',
-  error: 'Error',
-}
-
 const Page: NextPageWithLayout = () => {
   const router = useRouter()
   const namespace = useNamespace()
@@ -95,10 +88,9 @@ const Page: NextPageWithLayout = () => {
               <thead>
                 <tr>
                   <th className="default">Title</th>
-                  <th className="default w-24">Style</th>
                   <th className="default w-24">Status</th>
-                  <th className="default w-32">Starts</th>
-                  <th className="default w-32">Ends</th>
+                  <th className="default w-40">Starts</th>
+                  <th className="default w-40">Ends</th>
                 </tr>
               </thead>
               <tbody>
@@ -107,13 +99,6 @@ const Page: NextPageWithLayout = () => {
                     <td className="link">
                       <Link href={routes.announcementEdit(namespace, item.id)}>
                         {item.title}
-                      </Link>
-                    </td>
-                    <td className="link">
-                      <Link href={routes.announcementEdit(namespace, item.id)}>
-                        <span className={`label ${item.style}`}>
-                          {STYLE_LABELS[item.style] ?? item.style}
-                        </span>
                       </Link>
                     </td>
                     <td className="link">
@@ -128,13 +113,13 @@ const Page: NextPageWithLayout = () => {
                       </Link>
                     </td>
                     <td className="link">
-                      <Link href={routes.announcementEdit(namespace, item.id)}>
-                        {DateTime.fromISO(item.starts_at).toLocaleString(DateTime.DATETIME_MED)}
+                      <Link href={routes.announcementEdit(namespace, item.id)} title={DateTime.fromISO(item.starts_at).toLocaleString(DateTime.DATETIME_MED)}>
+                        {DateTime.fromISO(item.starts_at).toLocaleString(DateTime.DATE_MED)}
                       </Link>
                     </td>
                     <td className="link">
-                      <Link href={routes.announcementEdit(namespace, item.id)}>
-                        {DateTime.fromISO(item.ends_at).toLocaleString(DateTime.DATETIME_MED)}
+                      <Link href={routes.announcementEdit(namespace, item.id)} title={DateTime.fromISO(item.ends_at).toLocaleString(DateTime.DATETIME_MED)}>
+                        {DateTime.fromISO(item.ends_at).toLocaleString(DateTime.DATE_MED)}
                       </Link>
                     </td>
                   </tr>
@@ -142,7 +127,7 @@ const Page: NextPageWithLayout = () => {
                 {list.data.announcements.length === 0 ? (
                   <tr>
                     <td
-                      colSpan={5}
+                      colSpan={4}
                       className="default h-32 font-bold text-center text-xl text-slate-400"
                     >
                       No announcements found

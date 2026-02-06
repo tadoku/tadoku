@@ -1,9 +1,10 @@
 import { useActiveAnnouncements } from '@app/content/api'
 import { Flash } from 'ui/components/Flash'
-import { XMarkIcon } from '@heroicons/react/20/solid'
+import { ArrowTopRightOnSquareIcon, XMarkIcon } from '@heroicons/react/20/solid'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { useCallback, useEffect, useState } from 'react'
+import { useRouter } from 'next/router'
 
 const STORAGE_KEY = 'dismissed_announcements'
 
@@ -19,6 +20,14 @@ function getDismissedIds(): string[] {
   return []
 }
 
+function getPathname(href: string): string {
+  try {
+    return new URL(href, window.location.origin).pathname
+  } catch {
+    return href
+  }
+}
+
 function dismissAnnouncement(id: string) {
   const dismissed = getDismissedIds()
   if (!dismissed.includes(id)) {
@@ -31,6 +40,7 @@ function dismissAnnouncement(id: string) {
 
 export default function AnnouncementBanner() {
   const { data: announcements } = useActiveAnnouncements()
+  const { asPath } = useRouter()
   const [dismissedIds, setDismissedIds] = useState<string[]>([])
 
   useEffect(() => {
@@ -53,19 +63,20 @@ export default function AnnouncementBanner() {
   }
 
   return (
-    <div className="w-full">
+    <div className="relative z-10 mb-4 space-y-2">
       {visible.map(announcement => (
         <div key={announcement.id} className="relative">
           <Flash
             style={announcement.style}
-            href={announcement.href ?? undefined}
-            className="rounded-none border-x-0 pr-10"
+            href={announcement.href && getPathname(announcement.href) !== asPath ? announcement.href : undefined}
+            className="pr-10"
           >
-            <span className="auto-format text-sm [&_p]:m-0 [&_p]:inline">
+            <div className="auto-format text-sm [&_p]:m-0 [&_p+p]:mt-1">
               <ReactMarkdown remarkPlugins={[remarkGfm]}>
                 {announcement.content}
               </ReactMarkdown>
-            </span>
+              {announcement.href && getPathname(announcement.href) !== asPath ? <span className="inline-flex items-center gap-1 mt-1 underline">Learn more <ArrowTopRightOnSquareIcon className="w-3.5 h-3.5" /></span> : null}
+            </div>
           </Flash>
           <button
             onClick={(e) => {
@@ -73,7 +84,8 @@ export default function AnnouncementBanner() {
               e.stopPropagation()
               handleDismiss(announcement.id)
             }}
-            className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded hover:bg-black/10 transition-colors"
+            className="absolute right-3 top-2 p-1 hover:backdrop-brightness-90 hover:backdrop-saturate-150 transition-colors"
+            title="Dismiss"
             aria-label="Dismiss announcement"
           >
             <XMarkIcon className="w-4 h-4" />

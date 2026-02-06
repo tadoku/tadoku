@@ -5,6 +5,7 @@ import { CodeEditor } from './CodeEditor'
 import { html } from '@codemirror/lang-html'
 import prettier from 'prettier/standalone'
 import parserHtml from 'prettier/parser-html'
+import DOMPurify from 'dompurify'
 
 const htmlExtensions = [html()]
 
@@ -21,7 +22,7 @@ export const pagesConfig: ContentConfig = {
       printWidth: 80,
     }),
   renderBody: (body: string) => (
-    <div className="auto-format" dangerouslySetInnerHTML={{ __html: body }} />
+    <div className="auto-format" dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(body) }} />
   ),
   renderEditor: (props) => (
     <CodeEditor {...props} extensions={htmlExtensions} />

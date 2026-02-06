@@ -3,6 +3,13 @@ load("@rules_go//go:def.bzl", "go_library", "go_test")
 go_library(
     name = "domain",
     srcs = [
+        "announcement.go",
+        "announcementcreate.go",
+        "announcementdelete.go",
+        "announcementfind.go",
+        "announcementlist.go",
+        "announcementlistactive.go",
+        "announcementupdate.go",
         "errors.go",
         "page.go",
         "pagecreate.go",
@@ -35,6 +42,12 @@ go_library(
 go_test(
     name = "domain_test",
     srcs = [
+        "announcementcreate_test.go",
+        "announcementdelete_test.go",
+        "announcementfind_test.go",
+        "announcementlist_test.go",
+        "announcementlistactive_test.go",
+        "announcementupdate_test.go",
         "pagecreate_test.go",
         "pagedelete_test.go",
         "pagefind_test.go",

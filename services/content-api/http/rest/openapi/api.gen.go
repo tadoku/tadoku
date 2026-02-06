@@ -17,43 +17,44 @@ const (
 	CookieAuthScopes = "cookieAuth.Scopes"
 )
 
+// Defines values for AnnouncementStyle.
+const (
+	Error   AnnouncementStyle = "error"
+	Info    AnnouncementStyle = "info"
+	Success AnnouncementStyle = "success"
+	Warning AnnouncementStyle = "warning"
+)
+
 // Announcement defines model for Announcement.
 type Announcement struct {
 	Content   string              `json:"content"`
 	CreatedAt *time.Time          `json:"created_at,omitempty"`
 	EndsAt    time.Time           `json:"ends_at"`
-	Href      *string             `json:"href,omitempty"`
+	Href      *string             `json:"href"`
 	Id        *openapi_types.UUID `json:"id,omitempty"`
 	Namespace *string             `json:"namespace,omitempty"`
 	StartsAt  time.Time           `json:"starts_at"`
-	Style     string              `json:"style"`
+	Style     AnnouncementStyle   `json:"style"`
 	Title     string              `json:"title"`
 	UpdatedAt *time.Time          `json:"updated_at,omitempty"`
 }
 
+// AnnouncementStyle defines model for Announcement.Style.
+type AnnouncementStyle string
+
 // AnnouncementList defines model for AnnouncementList.
 type AnnouncementList struct {
 	Announcements []Announcement `json:"announcements"`
-	NextPageToken string         `json:"next_page_token"`
-	TotalSize     int            `json:"total_size"`
+
+	// NextPageToken is empty if there's no next page
+	NextPageToken string `json:"next_page_token"`
+	TotalSize     int    `json:"total_size"`
 }
 
 // Announcements defines model for Announcements.
 type Announcements struct {
 	Announcements []Announcement `json:"announcements"`
 }
-
-// AnnouncementListParams defines parameters for AnnouncementList.
-type AnnouncementListParams struct {
-	PageSize *int `form:"page_size,omitempty" json:"page_size,omitempty"`
-	Page     *int `form:"page,omitempty" json:"page,omitempty"`
-}
-
-// AnnouncementCreateJSONRequestBody defines body for AnnouncementCreate for application/json ContentType.
-type AnnouncementCreateJSONRequestBody = Announcement
-
-// AnnouncementUpdateJSONRequestBody defines body for AnnouncementUpdate for application/json ContentType.
-type AnnouncementUpdateJSONRequestBody = Announcement
 
 // Page defines model for Page.
 type Page struct {
@@ -137,6 +138,12 @@ type Posts struct {
 	TotalSize     int    `json:"total_size"`
 }
 
+// AnnouncementListParams defines parameters for AnnouncementList.
+type AnnouncementListParams struct {
+	PageSize *int `form:"page_size,omitempty" json:"page_size,omitempty"`
+	Page     *int `form:"page,omitempty" json:"page,omitempty"`
+}
+
 // PageListParams defines parameters for PageList.
 type PageListParams struct {
 	PageSize      *int  `form:"page_size,omitempty" json:"page_size,omitempty"`
@@ -150,6 +157,12 @@ type PostListParams struct {
 	Page          *int  `form:"page,omitempty" json:"page,omitempty"`
 	IncludeDrafts *bool `form:"include_drafts,omitempty" json:"include_drafts,omitempty"`
 }
+
+// AnnouncementCreateJSONRequestBody defines body for AnnouncementCreate for application/json ContentType.
+type AnnouncementCreateJSONRequestBody = Announcement
+
+// AnnouncementUpdateJSONRequestBody defines body for AnnouncementUpdate for application/json ContentType.
+type AnnouncementUpdateJSONRequestBody = Announcement
 
 // PageCreateJSONRequestBody defines body for PageCreate for application/json ContentType.
 type PageCreateJSONRequestBody = Page

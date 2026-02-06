@@ -26,7 +26,7 @@ func (s *Server) AnnouncementCreate(ctx echo.Context, namespace string) error {
 		Namespace: namespace,
 		Title:     req.Title,
 		Content:   req.Content,
-		Style:     req.Style,
+		Style:     string(req.Style),
 		Href:      req.Href,
 		StartsAt:  req.StartsAt,
 		EndsAt:    req.EndsAt,
@@ -65,7 +65,7 @@ func (s *Server) AnnouncementUpdate(ctx echo.Context, namespace string, id strin
 		Namespace: namespace,
 		Title:     req.Title,
 		Content:   req.Content,
-		Style:     req.Style,
+		Style:     string(req.Style),
 		Href:      req.Href,
 		StartsAt:  req.StartsAt,
 		EndsAt:    req.EndsAt,
@@ -173,7 +173,6 @@ func (s *Server) AnnouncementList(ctx echo.Context, namespace string, params ope
 	}
 
 	for _, a := range resp.Announcements {
-		a := a
 		res.Announcements = append(res.Announcements, announcementToOpenAPI(&a))
 	}
 
@@ -196,7 +195,6 @@ func (s *Server) AnnouncementListActive(ctx echo.Context, namespace string) erro
 	}
 
 	for _, a := range resp.Announcements {
-		a := a
 		res.Announcements = append(res.Announcements, announcementToOpenAPI(&a))
 	}
 
@@ -209,7 +207,7 @@ func announcementToOpenAPI(a *domain.Announcement) openapi.Announcement {
 		Namespace: &a.Namespace,
 		Title:     a.Title,
 		Content:   a.Content,
-		Style:     a.Style,
+		Style:     openapi.AnnouncementStyle(a.Style),
 		Href:      a.Href,
 		StartsAt:  a.StartsAt,
 		EndsAt:    a.EndsAt,

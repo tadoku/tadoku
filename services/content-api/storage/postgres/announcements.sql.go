@@ -24,9 +24,9 @@ where
 
 func (q *Queries) AnnouncementsMetadata(ctx context.Context, namespace string) (int64, error) {
 	row := q.db.QueryRowContext(ctx, announcementsMetadata, namespace)
-	var totalSize int64
-	err := row.Scan(&totalSize)
-	return totalSize, err
+	var total_size int64
+	err := row.Scan(&total_size)
+	return total_size, err
 }
 
 const createAnnouncement = `-- name: CreateAnnouncement :one
@@ -248,11 +248,7 @@ type ListAnnouncementsRow struct {
 }
 
 func (q *Queries) ListAnnouncements(ctx context.Context, arg ListAnnouncementsParams) ([]ListAnnouncementsRow, error) {
-	rows, err := q.db.QueryContext(ctx, listAnnouncements,
-		arg.Namespace,
-		arg.StartFrom,
-		arg.PageSize,
-	)
+	rows, err := q.db.QueryContext(ctx, listAnnouncements, arg.Namespace, arg.StartFrom, arg.PageSize)
 	if err != nil {
 		return nil, err
 	}

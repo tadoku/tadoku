@@ -112,14 +112,16 @@ export function ContentEditor({ config, id }: Props) {
 
   const handleTitleChange = (value: string) => {
     setTitle(value)
-    setItemSlug(
-      value
-        .toLowerCase()
-        .replace(/[^a-z0-9\s-]/g, '')
-        .replace(/\s+/g, '-')
-        .replace(/-+/g, '-')
-        .replace(/^-|-$/g, ''),
-    )
+    if (isNew) {
+      setItemSlug(
+        value
+          .toLowerCase()
+          .replace(/[^a-z0-9\s-]/g, '')
+          .replace(/\s+/g, '-')
+          .replace(/-+/g, '-')
+          .replace(/^-|-$/g, ''),
+      )
+    }
   }
 
   if (!isNew && existing.isLoading) {

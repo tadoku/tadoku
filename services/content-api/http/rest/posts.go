@@ -60,7 +60,12 @@ func (s *Server) PostUpdate(ctx echo.Context, namespace string, id string) error
 		return ctx.NoContent(http.StatusBadRequest)
 	}
 
-	resp, err := s.postUpdate.Execute(ctx.Request().Context(), uuid.MustParse(id), &domain.PostUpdateRequest{
+	parsedID, err := uuid.Parse(id)
+	if err != nil {
+		return ctx.NoContent(http.StatusBadRequest)
+	}
+
+	resp, err := s.postUpdate.Execute(ctx.Request().Context(), parsedID, &domain.PostUpdateRequest{
 		Slug:        req.Slug,
 		Namespace:   namespace,
 		Title:       req.Title,
@@ -95,7 +100,12 @@ func (s *Server) PostUpdate(ctx echo.Context, namespace string, id string) error
 // Deletes an existing post
 // (DELETE /posts/{namespace}/{id})
 func (s *Server) PostDelete(ctx echo.Context, namespace string, id string) error {
-	err := s.postDelete.Execute(ctx.Request().Context(), uuid.MustParse(id))
+	parsedID, err := uuid.Parse(id)
+	if err != nil {
+		return ctx.NoContent(http.StatusBadRequest)
+	}
+
+	err = s.postDelete.Execute(ctx.Request().Context(), parsedID)
 	if err != nil {
 		if errors.Is(err, domain.ErrForbidden) {
 			return ctx.NoContent(http.StatusForbidden)
@@ -114,7 +124,12 @@ func (s *Server) PostDelete(ctx echo.Context, namespace string, id string) error
 // Lists all versions of a post
 // (GET /posts/{namespace}/{id}/versions)
 func (s *Server) PostVersionList(ctx echo.Context, namespace string, id string) error {
-	versions, err := s.postVersionList.List(ctx.Request().Context(), uuid.MustParse(id))
+	parsedID, err := uuid.Parse(id)
+	if err != nil {
+		return ctx.NoContent(http.StatusBadRequest)
+	}
+
+	versions, err := s.postVersionList.List(ctx.Request().Context(), parsedID)
 	if err != nil {
 		if errors.Is(err, domain.ErrForbidden) {
 			return ctx.NoContent(http.StatusForbidden)
@@ -145,7 +160,12 @@ func (s *Server) PostVersionList(ctx echo.Context, namespace string, id string) 
 // Gets a specific version of a post
 // (GET /posts/{namespace}/{id}/versions/{contentId})
 func (s *Server) PostVersionGet(ctx echo.Context, namespace string, id string, contentId uuid.UUID) error {
-	v, err := s.postVersionList.Get(ctx.Request().Context(), uuid.MustParse(id), contentId)
+	parsedID, err := uuid.Parse(id)
+	if err != nil {
+		return ctx.NoContent(http.StatusBadRequest)
+	}
+
+	v, err := s.postVersionList.Get(ctx.Request().Context(), parsedID, contentId)
 	if err != nil {
 		if errors.Is(err, domain.ErrForbidden) {
 			return ctx.NoContent(http.StatusForbidden)

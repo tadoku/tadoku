@@ -60,7 +60,12 @@ func (s *Server) PageUpdate(ctx echo.Context, namespace string, id string) error
 		return ctx.NoContent(http.StatusBadRequest)
 	}
 
-	resp, err := s.pageUpdate.Execute(ctx.Request().Context(), uuid.MustParse(id), &domain.PageUpdateRequest{
+	parsedID, err := uuid.Parse(id)
+	if err != nil {
+		return ctx.NoContent(http.StatusBadRequest)
+	}
+
+	resp, err := s.pageUpdate.Execute(ctx.Request().Context(), parsedID, &domain.PageUpdateRequest{
 		Slug:        req.Slug,
 		Namespace:   namespace,
 		Title:       req.Title,
@@ -95,7 +100,12 @@ func (s *Server) PageUpdate(ctx echo.Context, namespace string, id string) error
 // Deletes an existing page
 // (DELETE /pages/{namespace}/{id})
 func (s *Server) PageDelete(ctx echo.Context, namespace string, id string) error {
-	err := s.pageDelete.Execute(ctx.Request().Context(), uuid.MustParse(id))
+	parsedID, err := uuid.Parse(id)
+	if err != nil {
+		return ctx.NoContent(http.StatusBadRequest)
+	}
+
+	err = s.pageDelete.Execute(ctx.Request().Context(), parsedID)
 	if err != nil {
 		if errors.Is(err, domain.ErrForbidden) {
 			return ctx.NoContent(http.StatusForbidden)
@@ -114,7 +124,12 @@ func (s *Server) PageDelete(ctx echo.Context, namespace string, id string) error
 // Lists all versions of a page
 // (GET /pages/{namespace}/{id}/versions)
 func (s *Server) PageVersionList(ctx echo.Context, namespace string, id string) error {
-	versions, err := s.pageVersionList.List(ctx.Request().Context(), uuid.MustParse(id))
+	parsedID, err := uuid.Parse(id)
+	if err != nil {
+		return ctx.NoContent(http.StatusBadRequest)
+	}
+
+	versions, err := s.pageVersionList.List(ctx.Request().Context(), parsedID)
 	if err != nil {
 		if errors.Is(err, domain.ErrForbidden) {
 			return ctx.NoContent(http.StatusForbidden)
@@ -145,7 +160,12 @@ func (s *Server) PageVersionList(ctx echo.Context, namespace string, id string) 
 // Gets a specific version of a page
 // (GET /pages/{namespace}/{id}/versions/{contentId})
 func (s *Server) PageVersionGet(ctx echo.Context, namespace string, id string, contentId uuid.UUID) error {
-	v, err := s.pageVersionList.Get(ctx.Request().Context(), uuid.MustParse(id), contentId)
+	parsedID, err := uuid.Parse(id)
+	if err != nil {
+		return ctx.NoContent(http.StatusBadRequest)
+	}
+
+	v, err := s.pageVersionList.Get(ctx.Request().Context(), parsedID, contentId)
 	if err != nil {
 		if errors.Is(err, domain.ErrForbidden) {
 			return ctx.NoContent(http.StatusForbidden)

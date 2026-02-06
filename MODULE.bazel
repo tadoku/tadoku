@@ -3,8 +3,6 @@ module(
     version = "1.0.0",
 )
 
-bazel_dep(name = "aspect_bazel_lib", version = "2.7.2")
-
 # Golang
 
 bazel_dep(name = "rules_go", version = "0.54.0")

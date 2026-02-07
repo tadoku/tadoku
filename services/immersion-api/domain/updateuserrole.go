@@ -9,9 +9,8 @@ import (
 	commondomain "github.com/tadoku/tadoku/services/common/domain"
 )
 
-type UpdateUserRoleRepository interface {
+type UpdateUserRoleUserRepository interface {
 	UserExists(ctx context.Context, userID uuid.UUID) (bool, error)
-	UpdateUserRole(ctx context.Context, req *UpdateUserRoleRequest, moderatorUserID uuid.UUID) error
 }
 
 type UpdateUserRoleRequest struct {
@@ -21,13 +20,14 @@ type UpdateUserRoleRequest struct {
 }
 
 type UpdateUserRole struct {
-	repo     UpdateUserRoleRepository
+	users    UpdateUserRoleUserRepository
+	audit    ModerationAuditRepository
 	roles    commonroles.Service
 	roleMgmt commonroles.Manager
 }
 
-func NewUpdateUserRole(repo UpdateUserRoleRepository, roles commonroles.Service, roleMgmt commonroles.Manager) *UpdateUserRole {
-	return &UpdateUserRole{repo: repo, roles: roles, roleMgmt: roleMgmt}
+func NewUpdateUserRole(users UpdateUserRoleUserRepository, audit ModerationAuditRepository, roles commonroles.Service, roleMgmt commonroles.Manager) *UpdateUserRole {
+	return &UpdateUserRole{users: users, audit: audit, roles: roles, roleMgmt: roleMgmt}
 }
 
 func (s *UpdateUserRole) Execute(ctx context.Context, req *UpdateUserRoleRequest) error {
@@ -62,7 +62,7 @@ func (s *UpdateUserRole) Execute(ctx context.Context, req *UpdateUserRoleRequest
 	}
 
 	// Verify target user exists
-	exists, err := s.repo.UserExists(ctx, req.UserID)
+	exists, err := s.users.UserExists(ctx, req.UserID)
 	if err != nil {
 		return fmt.Errorf("could not check if user exists: %w", err)
 	}
@@ -94,5 +94,23 @@ func (s *UpdateUserRole) Execute(ctx context.Context, req *UpdateUserRoleRequest
 		return fmt.Errorf("%w: role must be 'user' or 'banned'", ErrRequestInvalid)
 	}
 
-	return s.repo.UpdateUserRole(ctx, req, moderatorUserID)
+	action := "unban_user"
+	if req.Role == "banned" {
+		action = "ban_user"
+	}
+
+	auditReq := &ModerationAuditLogCreateRequest{
+		ModeratorUserID: moderatorUserID,
+		Action:          action,
+		Metadata: map[string]any{
+			"target_user_id": req.UserID.String(),
+			"new_role":       req.Role,
+		},
+		Description: &req.Reason,
+	}
+	if err := s.audit.CreateModerationAuditLog(ctx, auditReq); err != nil {
+		return fmt.Errorf("could not create audit log: %w", err)
+	}
+
+	return nil
 }

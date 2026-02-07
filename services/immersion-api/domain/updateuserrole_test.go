@@ -17,21 +17,19 @@ type mockUpdateUserRoleRepo struct {
 	userExists bool
 	existsErr  error
 
-	updateErr  error
-	updateReq  *domain.UpdateUserRoleRequest
-	updateMod  uuid.UUID
-	updateCall bool
+	auditErr  error
+	auditReq  *domain.ModerationAuditLogCreateRequest
+	auditCall bool
 }
 
 func (m *mockUpdateUserRoleRepo) UserExists(ctx context.Context, userID uuid.UUID) (bool, error) {
 	return m.userExists, m.existsErr
 }
 
-func (m *mockUpdateUserRoleRepo) UpdateUserRole(ctx context.Context, req *domain.UpdateUserRoleRequest, moderatorUserID uuid.UUID) error {
-	m.updateCall = true
-	m.updateReq = req
-	m.updateMod = moderatorUserID
-	return m.updateErr
+func (m *mockUpdateUserRoleRepo) CreateModerationAuditLog(ctx context.Context, req *domain.ModerationAuditLogCreateRequest) error {
+	m.auditCall = true
+	m.auditReq = req
+	return m.auditErr
 }
 
 type mockRoleManager struct {
@@ -72,7 +70,7 @@ func TestUpdateUserRole_Execute(t *testing.T) {
 
 	t.Run("returns unauthorized for guest", func(t *testing.T) {
 		repo := &mockUpdateUserRoleRepo{}
-		svc := domain.NewUpdateUserRole(repo, &mockClaimsService{}, &mockRoleManager{})
+		svc := domain.NewUpdateUserRole(repo, repo, &mockClaimsService{}, &mockRoleManager{})
 
 		err := svc.Execute(ctxWithRole(commondomain.RoleGuest), &domain.UpdateUserRoleRequest{
 			UserID: targetID,
@@ -85,7 +83,7 @@ func TestUpdateUserRole_Execute(t *testing.T) {
 
 	t.Run("returns forbidden for non-admin", func(t *testing.T) {
 		repo := &mockUpdateUserRoleRepo{}
-		svc := domain.NewUpdateUserRole(repo, &mockClaimsService{}, &mockRoleManager{})
+		svc := domain.NewUpdateUserRole(repo, repo, &mockClaimsService{}, &mockRoleManager{})
 
 		err := svc.Execute(ctxWithRole(commondomain.RoleUser), &domain.UpdateUserRoleRequest{
 			UserID: targetID,
@@ -104,7 +102,7 @@ func TestUpdateUserRole_Execute(t *testing.T) {
 				targetID.String(): {Subject: targetID.String(), Authenticated: true, Admin: false, Banned: false},
 			},
 		}
-		svc := domain.NewUpdateUserRole(repo, rolesSvc, roleMgmt)
+		svc := domain.NewUpdateUserRole(repo, repo, rolesSvc, roleMgmt)
 
 		ctx := ctxWithRole(commondomain.RoleAdmin)
 		err := svc.Execute(ctx, &domain.UpdateUserRoleRequest{
@@ -117,8 +115,9 @@ func TestUpdateUserRole_Execute(t *testing.T) {
 		assert.True(t, roleMgmt.setBannedCalled)
 		assert.Equal(t, targetID.String(), roleMgmt.setBannedSubj)
 		assert.True(t, roleMgmt.setBannedVal)
-		assert.True(t, repo.updateCall)
-		assert.Equal(t, uuid.MustParse(testSubjectID), repo.updateMod)
+		assert.True(t, repo.auditCall)
+		require.NotNil(t, repo.auditReq)
+		assert.Equal(t, uuid.MustParse(testSubjectID), repo.auditReq.ModeratorUserID)
 	})
 
 	t.Run("unbans a user via keto and audits", func(t *testing.T) {
@@ -129,7 +128,7 @@ func TestUpdateUserRole_Execute(t *testing.T) {
 				targetID.String(): {Subject: targetID.String(), Authenticated: true, Admin: false, Banned: true},
 			},
 		}
-		svc := domain.NewUpdateUserRole(repo, rolesSvc, roleMgmt)
+		svc := domain.NewUpdateUserRole(repo, repo, rolesSvc, roleMgmt)
 
 		ctx := ctxWithRole(commondomain.RoleAdmin)
 		err := svc.Execute(ctx, &domain.UpdateUserRoleRequest{
@@ -142,7 +141,7 @@ func TestUpdateUserRole_Execute(t *testing.T) {
 		assert.True(t, roleMgmt.setBannedCalled)
 		assert.Equal(t, targetID.String(), roleMgmt.setBannedSubj)
 		assert.False(t, roleMgmt.setBannedVal)
-		assert.True(t, repo.updateCall)
+		assert.True(t, repo.auditCall)
 	})
 
 	t.Run("cannot modify role of an admin target", func(t *testing.T) {
@@ -153,7 +152,7 @@ func TestUpdateUserRole_Execute(t *testing.T) {
 				targetID.String(): {Subject: targetID.String(), Authenticated: true, Admin: true},
 			},
 		}
-		svc := domain.NewUpdateUserRole(repo, rolesSvc, roleMgmt)
+		svc := domain.NewUpdateUserRole(repo, repo, rolesSvc, roleMgmt)
 
 		err := svc.Execute(ctxWithRole(commondomain.RoleAdmin), &domain.UpdateUserRoleRequest{
 			UserID: targetID,
@@ -169,7 +168,7 @@ func TestUpdateUserRole_Execute(t *testing.T) {
 		repo := &mockUpdateUserRoleRepo{userExists: true}
 		roleMgmt := &mockRoleManager{}
 		rolesSvc := &mockClaimsService{err: errors.New("keto down")}
-		svc := domain.NewUpdateUserRole(repo, rolesSvc, roleMgmt)
+		svc := domain.NewUpdateUserRole(repo, repo, rolesSvc, roleMgmt)
 
 		err := svc.Execute(ctxWithRole(commondomain.RoleAdmin), &domain.UpdateUserRoleRequest{
 			UserID: targetID,
@@ -188,7 +187,7 @@ func TestUpdateUserRole_Execute(t *testing.T) {
 				targetID.String(): {Subject: targetID.String(), Authenticated: true, Admin: false},
 			},
 		}
-		svc := domain.NewUpdateUserRole(repo, rolesSvc, roleMgmt)
+		svc := domain.NewUpdateUserRole(repo, repo, rolesSvc, roleMgmt)
 
 		err := svc.Execute(ctxWithRole(commondomain.RoleAdmin), &domain.UpdateUserRoleRequest{
 			UserID: targetID,
@@ -201,7 +200,7 @@ func TestUpdateUserRole_Execute(t *testing.T) {
 
 	t.Run("validates role", func(t *testing.T) {
 		repo := &mockUpdateUserRoleRepo{}
-		svc := domain.NewUpdateUserRole(repo, &mockClaimsService{}, &mockRoleManager{})
+		svc := domain.NewUpdateUserRole(repo, repo, &mockClaimsService{}, &mockRoleManager{})
 
 		err := svc.Execute(ctxWithRole(commondomain.RoleAdmin), &domain.UpdateUserRoleRequest{
 			UserID: targetID,
@@ -212,4 +211,3 @@ func TestUpdateUserRole_Execute(t *testing.T) {
 		assert.ErrorIs(t, err, domain.ErrRequestInvalid)
 	})
 }
-

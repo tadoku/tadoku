@@ -28,6 +28,7 @@ go_library(
         "repo_listlanguages.go",
         "repo_listlogsforcontest.go",
         "repo_listlogsforuser.go",
+        "repo_moderationaudit.go",
         "repo_updatelanguage.go",
         "repo_updateuserrole.go",
         "repo_upsertcontestregistration.go",

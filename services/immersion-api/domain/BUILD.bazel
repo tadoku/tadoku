@@ -26,6 +26,7 @@ go_library(
         "logfind.go",
         "loglistforcontest.go",
         "loglistforuser.go",
+        "moderationaudit.go",
         "models.go",
         "profilecontest.go",
         "profilecontestactivity.go",

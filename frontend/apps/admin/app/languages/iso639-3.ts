@@ -1,3 +1,6 @@
+// Complete ISO 639-3 language list (7,927 entries), sorted alphabetically by name.
+// Source: SIL International — https://iso639-3.sil.org/sites/iso639-3/files/downloads/iso-639-3.tab
+// Generated from the official tab-delimited code table using the Id and Ref_Name columns.
 export const iso639_3: { code: string; name: string }[] = [
   { code: 'alu', name: '\'Are\'are' },
   { code: 'kud', name: '\'Auhelawa' },

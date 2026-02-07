@@ -9,5 +9,6 @@ import (
 // Common errors
 var (
 	ErrForbidden      = commondomain.ErrForbidden
+	ErrAuthzUnavailable = commondomain.ErrAuthzUnavailable
 	ErrRequestInvalid = errors.New("request is invalid")
 )

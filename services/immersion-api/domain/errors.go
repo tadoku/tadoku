@@ -11,6 +11,7 @@ var (
 	ErrRequestInvalid = errors.New("request is invalid")
 	ErrNotFound       = errors.New("not found")
 	ErrForbidden      = commondomain.ErrForbidden
+	ErrAuthzUnavailable = commondomain.ErrAuthzUnavailable
 	ErrUnauthorized   = errors.New("unauthorized")
 	ErrConflict       = errors.New("conflict")
 )

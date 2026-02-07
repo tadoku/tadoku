@@ -56,6 +56,8 @@ func NewClient(readURL, writeURL string) *Client {
 }
 
 // CheckPermission checks if a subject has a relation on an object.
+// Returns (true, nil) if allowed, (false, nil) if denied, or (false, error) on failure.
+// Note: Keto returns HTTP 403 when permission is denied, which is treated as (false, nil).
 func (c *Client) CheckPermission(ctx context.Context, namespace, object, relation string, subject Subject) (bool, error) {
 	req := c.readClient.PermissionApi.CheckPermission(ctx).
 		Namespace(namespace).
@@ -67,6 +69,7 @@ func (c *Client) CheckPermission(ctx context.Context, namespace, object, relatio
 
 	result, res, err := c.readClient.PermissionApi.CheckPermissionExecute(req)
 	if err != nil {
+		// Keto returns 403 when permission is denied (not an error condition)
 		if res != nil && res.StatusCode == http.StatusForbidden {
 			return false, nil
 		}

@@ -77,6 +77,44 @@ func TestCheckPermission(t *testing.T) {
 	}
 }
 
+func TestCheckPermission_subjectSet(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		assert.Equal(t, "/relation-tuples/check/openapi", r.URL.Path)
+		assert.Equal(t, "App", r.URL.Query().Get("namespace"))
+		assert.Equal(t, "global", r.URL.Query().Get("object"))
+		assert.Equal(t, "admins", r.URL.Query().Get("relation"))
+
+		assert.Empty(t, r.URL.Query().Get("subject_id"))
+		assert.Equal(t, "Group", r.URL.Query().Get("subject_set.namespace"))
+		assert.Equal(t, "admins", r.URL.Query().Get("subject_set.object"))
+		assert.Equal(t, "member", r.URL.Query().Get("subject_set.relation"))
+
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(map[string]any{"allowed": true})
+	}))
+	defer server.Close()
+
+	client := NewClient(server.URL, server.URL)
+	allowed, err := client.CheckPermission(
+		context.Background(),
+		"App",
+		"global",
+		"admins",
+		Subject{Set: &SubjectSet{Namespace: "Group", Object: "admins", Relation: "member"}},
+	)
+
+	require.NoError(t, err)
+	assert.True(t, allowed)
+}
+
+func TestCheckPermission_invalidSubject(t *testing.T) {
+	client := NewClient("http://localhost", "http://localhost")
+	allowed, err := client.CheckPermission(context.Background(), "App", "global", "admins", Subject{})
+	require.Error(t, err)
+	assert.False(t, allowed)
+}
+
 func TestAddRelation(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		assert.Equal(t, http.MethodPut, r.Method)
@@ -106,6 +144,50 @@ func TestAddRelation(t *testing.T) {
 	require.NoError(t, err)
 }
 
+func TestAddRelation_subjectSet(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		assert.Equal(t, http.MethodPut, r.Method)
+		assert.Equal(t, "/admin/relation-tuples", r.URL.Path)
+
+		var body map[string]any
+		err := json.NewDecoder(r.Body).Decode(&body)
+		require.NoError(t, err)
+
+		assert.Equal(t, "App", body["namespace"])
+		assert.Equal(t, "global", body["object"])
+		assert.Equal(t, "admins", body["relation"])
+
+		assert.Empty(t, body["subject_id"])
+		subjectSet, ok := body["subject_set"].(map[string]any)
+		require.True(t, ok, "subject_set should be a map")
+		assert.Equal(t, "Group", subjectSet["namespace"])
+		assert.Equal(t, "admins", subjectSet["object"])
+		assert.Equal(t, "member", subjectSet["relation"])
+
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusCreated)
+		json.NewEncoder(w).Encode(body)
+	}))
+	defer server.Close()
+
+	client := NewClient(server.URL, server.URL)
+	err := client.AddRelation(
+		context.Background(),
+		"App",
+		"global",
+		"admins",
+		Subject{Set: &SubjectSet{Namespace: "Group", Object: "admins", Relation: "member"}},
+	)
+
+	require.NoError(t, err)
+}
+
+func TestAddRelation_invalidSubject(t *testing.T) {
+	client := NewClient("http://localhost", "http://localhost")
+	err := client.AddRelation(context.Background(), "App", "global", "admins", Subject{})
+	require.Error(t, err)
+}
+
 func TestDeleteRelation(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		assert.Equal(t, http.MethodDelete, r.Method)
@@ -123,6 +205,41 @@ func TestDeleteRelation(t *testing.T) {
 	err := client.DeleteRelation(context.Background(), "App", "global", "admins", Subject{ID: "test-user-id"})
 
 	require.NoError(t, err)
+}
+
+func TestDeleteRelation_subjectSet(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		assert.Equal(t, http.MethodDelete, r.Method)
+		assert.Equal(t, "/admin/relation-tuples", r.URL.Path)
+		assert.Equal(t, "App", r.URL.Query().Get("namespace"))
+		assert.Equal(t, "global", r.URL.Query().Get("object"))
+		assert.Equal(t, "admins", r.URL.Query().Get("relation"))
+
+		assert.Empty(t, r.URL.Query().Get("subject_id"))
+		assert.Equal(t, "Group", r.URL.Query().Get("subject_set.namespace"))
+		assert.Equal(t, "admins", r.URL.Query().Get("subject_set.object"))
+		assert.Equal(t, "member", r.URL.Query().Get("subject_set.relation"))
+
+		w.WriteHeader(http.StatusNoContent)
+	}))
+	defer server.Close()
+
+	client := NewClient(server.URL, server.URL)
+	err := client.DeleteRelation(
+		context.Background(),
+		"App",
+		"global",
+		"admins",
+		Subject{Set: &SubjectSet{Namespace: "Group", Object: "admins", Relation: "member"}},
+	)
+
+	require.NoError(t, err)
+}
+
+func TestDeleteRelation_invalidSubject(t *testing.T) {
+	client := NewClient("http://localhost", "http://localhost")
+	err := client.DeleteRelation(context.Background(), "App", "global", "admins", Subject{})
+	require.Error(t, err)
 }
 
 func TestCheckPermissions(t *testing.T) {

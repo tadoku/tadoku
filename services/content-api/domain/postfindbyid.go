@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/google/uuid"
-	commondomain "github.com/tadoku/tadoku/services/common/domain"
 )
 
 type PostFindByIDRepository interface {
@@ -20,8 +19,8 @@ func NewPostFindByID(repo PostFindByIDRepository) *PostFindByID {
 }
 
 func (s *PostFindByID) Execute(ctx context.Context, id uuid.UUID, namespace string) (*Post, error) {
-	if !commondomain.IsRole(ctx, commondomain.RoleAdmin) {
-		return nil, ErrForbidden
+	if err := requireAdmin(ctx); err != nil {
+		return nil, err
 	}
 
 	return s.repo.GetPostByID(ctx, id, namespace)

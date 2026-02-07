@@ -33,6 +33,9 @@ func (s *Server) PostCreate(ctx echo.Context, namespace string) error {
 		if errors.Is(err, domain.ErrForbidden) {
 			return ctx.NoContent(http.StatusForbidden)
 		}
+		if errors.Is(err, domain.ErrAuthzUnavailable) {
+			return ctx.NoContent(http.StatusServiceUnavailable)
+		}
 		if errors.Is(err, domain.ErrPostAlreadyExists) || errors.Is(err, domain.ErrInvalidPost) {
 			ctx.Echo().Logger.Error("could not process request: ", err)
 			return ctx.NoContent(http.StatusBadRequest)
@@ -76,6 +79,9 @@ func (s *Server) PostUpdate(ctx echo.Context, namespace string, id string) error
 		if errors.Is(err, domain.ErrForbidden) {
 			return ctx.NoContent(http.StatusForbidden)
 		}
+		if errors.Is(err, domain.ErrAuthzUnavailable) {
+			return ctx.NoContent(http.StatusServiceUnavailable)
+		}
 		if errors.Is(err, domain.ErrPostAlreadyExists) || errors.Is(err, domain.ErrInvalidPost) {
 			ctx.Echo().Logger.Error("could not process request: ", err)
 			return ctx.NoContent(http.StatusBadRequest)
@@ -110,6 +116,9 @@ func (s *Server) PostDelete(ctx echo.Context, namespace string, id string) error
 		if errors.Is(err, domain.ErrForbidden) {
 			return ctx.NoContent(http.StatusForbidden)
 		}
+		if errors.Is(err, domain.ErrAuthzUnavailable) {
+			return ctx.NoContent(http.StatusServiceUnavailable)
+		}
 		if errors.Is(err, domain.ErrPostNotFound) {
 			return ctx.NoContent(http.StatusNotFound)
 		}
@@ -133,6 +142,9 @@ func (s *Server) PostVersionList(ctx echo.Context, namespace string, id string) 
 	if err != nil {
 		if errors.Is(err, domain.ErrForbidden) {
 			return ctx.NoContent(http.StatusForbidden)
+		}
+		if errors.Is(err, domain.ErrAuthzUnavailable) {
+			return ctx.NoContent(http.StatusServiceUnavailable)
 		}
 		if errors.Is(err, domain.ErrPostNotFound) {
 			return ctx.NoContent(http.StatusNotFound)
@@ -169,6 +181,9 @@ func (s *Server) PostVersionGet(ctx echo.Context, namespace string, id string, c
 	if err != nil {
 		if errors.Is(err, domain.ErrForbidden) {
 			return ctx.NoContent(http.StatusForbidden)
+		}
+		if errors.Is(err, domain.ErrAuthzUnavailable) {
+			return ctx.NoContent(http.StatusServiceUnavailable)
 		}
 		if errors.Is(err, domain.ErrPostNotFound) {
 			return ctx.NoContent(http.StatusNotFound)
@@ -259,6 +274,9 @@ func (s *Server) PostList(ctx echo.Context, namespace string, params openapi.Pos
 	if err != nil {
 		if errors.Is(err, domain.ErrForbidden) {
 			return ctx.NoContent(http.StatusForbidden)
+		}
+		if errors.Is(err, domain.ErrAuthzUnavailable) {
+			return ctx.NoContent(http.StatusServiceUnavailable)
 		}
 		if !errors.Is(err, domain.ErrPostNotFound) {
 			ctx.Echo().Logger.Error("could not process request: ", err)

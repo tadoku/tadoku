@@ -40,6 +40,9 @@ func (s *Server) AnnouncementCreate(ctx echo.Context, namespace string) error {
 		if errors.Is(err, domain.ErrForbidden) {
 			return ctx.NoContent(http.StatusForbidden)
 		}
+		if errors.Is(err, domain.ErrAuthzUnavailable) {
+			return ctx.NoContent(http.StatusServiceUnavailable)
+		}
 		if errors.Is(err, domain.ErrInvalidAnnouncement) {
 			ctx.Echo().Logger.Error("could not process request: ", err)
 			return ctx.NoContent(http.StatusBadRequest)
@@ -79,6 +82,9 @@ func (s *Server) AnnouncementUpdate(ctx echo.Context, namespace string, id strin
 		if errors.Is(err, domain.ErrForbidden) {
 			return ctx.NoContent(http.StatusForbidden)
 		}
+		if errors.Is(err, domain.ErrAuthzUnavailable) {
+			return ctx.NoContent(http.StatusServiceUnavailable)
+		}
 		if errors.Is(err, domain.ErrInvalidAnnouncement) {
 			ctx.Echo().Logger.Error("could not process request: ", err)
 			return ctx.NoContent(http.StatusBadRequest)
@@ -107,6 +113,9 @@ func (s *Server) AnnouncementDelete(ctx echo.Context, namespace string, id strin
 		if errors.Is(err, domain.ErrForbidden) {
 			return ctx.NoContent(http.StatusForbidden)
 		}
+		if errors.Is(err, domain.ErrAuthzUnavailable) {
+			return ctx.NoContent(http.StatusServiceUnavailable)
+		}
 		if errors.Is(err, domain.ErrAnnouncementNotFound) {
 			return ctx.NoContent(http.StatusNotFound)
 		}
@@ -132,6 +141,9 @@ func (s *Server) AnnouncementFindByID(ctx echo.Context, namespace string, id str
 	if err != nil {
 		if errors.Is(err, domain.ErrForbidden) {
 			return ctx.NoContent(http.StatusForbidden)
+		}
+		if errors.Is(err, domain.ErrAuthzUnavailable) {
+			return ctx.NoContent(http.StatusServiceUnavailable)
 		}
 		if errors.Is(err, domain.ErrAnnouncementNotFound) {
 			return ctx.NoContent(http.StatusNotFound)
@@ -165,6 +177,9 @@ func (s *Server) AnnouncementList(ctx echo.Context, namespace string, params ope
 	if err != nil {
 		if errors.Is(err, domain.ErrForbidden) {
 			return ctx.NoContent(http.StatusForbidden)
+		}
+		if errors.Is(err, domain.ErrAuthzUnavailable) {
+			return ctx.NoContent(http.StatusServiceUnavailable)
 		}
 
 		ctx.Echo().Logger.Error("could not process request: ", err)

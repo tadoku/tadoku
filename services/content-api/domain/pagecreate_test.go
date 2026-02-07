@@ -9,6 +9,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/tadoku/tadoku/services/common/authz/roles"
 	"github.com/tadoku/tadoku/services/common/domain"
 	contentdomain "github.com/tadoku/tadoku/services/content-api/domain"
 )
@@ -25,13 +26,15 @@ func (m *mockPageCreateRepo) CreatePage(ctx context.Context, page *contentdomain
 }
 
 func adminContext() context.Context {
-	session := &domain.UserIdentity{Role: domain.RoleAdmin}
-	return context.WithValue(context.Background(), domain.CtxIdentityKey, session)
+	session := &domain.UserIdentity{Subject: "kratos-admin-id", Role: domain.RoleAdmin}
+	ctx := context.WithValue(context.Background(), domain.CtxIdentityKey, session)
+	return roles.WithClaims(ctx, roles.Claims{Subject: session.Subject, Authenticated: true, Admin: true})
 }
 
 func userContext() context.Context {
-	session := &domain.UserIdentity{Role: domain.RoleUser}
-	return context.WithValue(context.Background(), domain.CtxIdentityKey, session)
+	session := &domain.UserIdentity{Subject: "kratos-user-id", Role: domain.RoleUser}
+	ctx := context.WithValue(context.Background(), domain.CtxIdentityKey, session)
+	return roles.WithClaims(ctx, roles.Claims{Subject: session.Subject, Authenticated: true, Admin: false})
 }
 
 func TestPageCreate_Execute(t *testing.T) {

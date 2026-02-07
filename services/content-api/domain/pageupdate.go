@@ -43,8 +43,8 @@ func NewPageUpdate(repo PageUpdateRepository, clock commondomain.Clock) *PageUpd
 }
 
 func (s *PageUpdate) Execute(ctx context.Context, id uuid.UUID, req *PageUpdateRequest) (*PageUpdateResponse, error) {
-	if !commondomain.IsRole(ctx, commondomain.RoleAdmin) {
-		return nil, ErrForbidden
+	if err := requireAdmin(ctx); err != nil {
+		return nil, err
 	}
 
 	if err := s.validate.Struct(req); err != nil {

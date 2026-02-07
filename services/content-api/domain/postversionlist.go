@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/google/uuid"
-	commondomain "github.com/tadoku/tadoku/services/common/domain"
 )
 
 type PostVersionListRepository interface {
@@ -22,8 +21,8 @@ func NewPostVersionList(repo PostVersionListRepository) *PostVersionList {
 }
 
 func (s *PostVersionList) Execute(ctx context.Context, postID uuid.UUID) ([]PostVersion, error) {
-	if !commondomain.IsRole(ctx, commondomain.RoleAdmin) {
-		return nil, ErrForbidden
+	if err := requireAdmin(ctx); err != nil {
+		return nil, err
 	}
 
 	return s.repo.ListPostVersions(ctx, postID)

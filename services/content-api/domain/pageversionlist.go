@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/google/uuid"
-	commondomain "github.com/tadoku/tadoku/services/common/domain"
 )
 
 type PageVersionListRepository interface {
@@ -22,8 +21,8 @@ func NewPageVersionList(repo PageVersionListRepository) *PageVersionList {
 }
 
 func (s *PageVersionList) Execute(ctx context.Context, pageID uuid.UUID) ([]PageVersion, error) {
-	if !commondomain.IsRole(ctx, commondomain.RoleAdmin) {
-		return nil, ErrForbidden
+	if err := requireAdmin(ctx); err != nil {
+		return nil, err
 	}
 
 	return s.repo.ListPageVersions(ctx, pageID)

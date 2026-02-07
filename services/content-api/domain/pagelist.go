@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"github.com/go-playground/validator/v10"
-	commondomain "github.com/tadoku/tadoku/services/common/domain"
 )
 
 type PageListRepository interface {
@@ -44,8 +43,8 @@ func NewPageList(repo PageListRepository) *PageList {
 }
 
 func (s *PageList) Execute(ctx context.Context, req *PageListRequest) (*PageListResponse, error) {
-	if !commondomain.IsRole(ctx, commondomain.RoleAdmin) {
-		return nil, ErrForbidden
+	if err := requireAdmin(ctx); err != nil {
+		return nil, err
 	}
 
 	if err := s.validate.Struct(req); err != nil {

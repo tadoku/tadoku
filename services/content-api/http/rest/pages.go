@@ -33,6 +33,9 @@ func (s *Server) PageCreate(ctx echo.Context, namespace string) error {
 		if errors.Is(err, domain.ErrForbidden) {
 			return ctx.NoContent(http.StatusForbidden)
 		}
+		if errors.Is(err, domain.ErrAuthzUnavailable) {
+			return ctx.NoContent(http.StatusServiceUnavailable)
+		}
 		if errors.Is(err, domain.ErrPageAlreadyExists) || errors.Is(err, domain.ErrInvalidPage) {
 			ctx.Echo().Logger.Error("could not process request: ", err)
 			return ctx.NoContent(http.StatusBadRequest)
@@ -76,6 +79,9 @@ func (s *Server) PageUpdate(ctx echo.Context, namespace string, id string) error
 		if errors.Is(err, domain.ErrForbidden) {
 			return ctx.NoContent(http.StatusForbidden)
 		}
+		if errors.Is(err, domain.ErrAuthzUnavailable) {
+			return ctx.NoContent(http.StatusServiceUnavailable)
+		}
 		if errors.Is(err, domain.ErrPageAlreadyExists) || errors.Is(err, domain.ErrInvalidPage) {
 			ctx.Echo().Logger.Error("could not process request: ", err)
 			return ctx.NoContent(http.StatusBadRequest)
@@ -110,6 +116,9 @@ func (s *Server) PageDelete(ctx echo.Context, namespace string, id string) error
 		if errors.Is(err, domain.ErrForbidden) {
 			return ctx.NoContent(http.StatusForbidden)
 		}
+		if errors.Is(err, domain.ErrAuthzUnavailable) {
+			return ctx.NoContent(http.StatusServiceUnavailable)
+		}
 		if errors.Is(err, domain.ErrPageNotFound) {
 			return ctx.NoContent(http.StatusNotFound)
 		}
@@ -133,6 +142,9 @@ func (s *Server) PageVersionList(ctx echo.Context, namespace string, id string) 
 	if err != nil {
 		if errors.Is(err, domain.ErrForbidden) {
 			return ctx.NoContent(http.StatusForbidden)
+		}
+		if errors.Is(err, domain.ErrAuthzUnavailable) {
+			return ctx.NoContent(http.StatusServiceUnavailable)
 		}
 		if errors.Is(err, domain.ErrPageNotFound) {
 			return ctx.NoContent(http.StatusNotFound)
@@ -169,6 +181,9 @@ func (s *Server) PageVersionGet(ctx echo.Context, namespace string, id string, c
 	if err != nil {
 		if errors.Is(err, domain.ErrForbidden) {
 			return ctx.NoContent(http.StatusForbidden)
+		}
+		if errors.Is(err, domain.ErrAuthzUnavailable) {
+			return ctx.NoContent(http.StatusServiceUnavailable)
 		}
 		if errors.Is(err, domain.ErrPageNotFound) {
 			return ctx.NoContent(http.StatusNotFound)
@@ -258,6 +273,9 @@ func (s *Server) PageList(ctx echo.Context, namespace string, params openapi.Pag
 	if err != nil {
 		if errors.Is(err, domain.ErrForbidden) {
 			return ctx.NoContent(http.StatusForbidden)
+		}
+		if errors.Is(err, domain.ErrAuthzUnavailable) {
+			return ctx.NoContent(http.StatusServiceUnavailable)
 		}
 		if !errors.Is(err, domain.ErrPageNotFound) {
 			ctx.Echo().Logger.Error("could not process request: ", err)

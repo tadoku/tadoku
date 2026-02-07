@@ -12,7 +12,6 @@ go_library(
         "//services/common/client/keto",
         "//services/common/domain",
         "//services/common/middleware",
-        "//services/common/storage/memory",
         "//services/immersion-api/cache",
         "//services/immersion-api/client/ory",
         "//services/immersion-api/domain",

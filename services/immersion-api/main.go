@@ -15,7 +15,6 @@ import (
 	ketoclient "github.com/tadoku/tadoku/services/common/client/keto"
 	"github.com/tadoku/tadoku/services/common/domain"
 	tadokumiddleware "github.com/tadoku/tadoku/services/common/middleware"
-	"github.com/tadoku/tadoku/services/common/storage/memory"
 	"github.com/tadoku/tadoku/services/immersion-api/cache"
 	"github.com/tadoku/tadoku/services/immersion-api/client/ory"
 	immersiondomain "github.com/tadoku/tadoku/services/immersion-api/domain"
@@ -62,14 +61,13 @@ func main() {
 	userCache.Start()
 
 	postgresRepository := repository.NewRepository(psql)
-	configRoleRepository := memory.NewRoleRepository("/etc/tadoku/permissions/roles.yaml")
 	ketoClient := ketoclient.NewClient(cfg.KetoReadURL, cfg.KetoReadURL)
 	rolesSvc := commonroles.NewKetoService(ketoClient, "app", "tadoku")
 
 	e := echo.New()
 	e.Use(tadokumiddleware.Logger([]string{"/ping"}))
 	e.Use(tadokumiddleware.VerifyJWT(cfg.JWKS))
-	e.Use(tadokumiddleware.Identity(configRoleRepository, postgresRepository))
+	e.Use(tadokumiddleware.Identity())
 	e.Use(tadokumiddleware.RolesFromKeto(rolesSvc))
 	e.Use(tadokumiddleware.RequireServiceAudience(cfg.ServiceName))
 	e.Use(tadokumiddleware.RejectBannedUsers())

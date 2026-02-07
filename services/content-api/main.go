@@ -10,7 +10,6 @@ import (
 	ketoclient "github.com/tadoku/tadoku/services/common/client/keto"
 	commondomain "github.com/tadoku/tadoku/services/common/domain"
 	tadokumiddleware "github.com/tadoku/tadoku/services/common/middleware"
-	"github.com/tadoku/tadoku/services/common/storage/memory"
 	"github.com/tadoku/tadoku/services/content-api/domain"
 	"github.com/tadoku/tadoku/services/content-api/http/rest"
 	"github.com/tadoku/tadoku/services/content-api/http/rest/openapi"
@@ -51,14 +50,13 @@ func main() {
 	pageRepository := postgres.NewPageRepository(psql)
 	postRepository := postgres.NewPostRepository(psql)
 	announcementRepository := postgres.NewAnnouncementRepository(psql)
-	configRoleRepository := memory.NewRoleRepository("/etc/tadoku/permissions/roles.yaml")
 	ketoClient := ketoclient.NewClient(cfg.KetoReadURL, cfg.KetoReadURL)
 	rolesSvc := commonroles.NewKetoService(ketoClient, "app", "tadoku")
 
 	e := echo.New()
 	e.Use(tadokumiddleware.Logger([]string{"/ping"}))
 	e.Use(tadokumiddleware.VerifyJWT(cfg.JWKS))
-	e.Use(tadokumiddleware.Identity(configRoleRepository, nil))
+	e.Use(tadokumiddleware.Identity())
 	e.Use(tadokumiddleware.RolesFromKeto(rolesSvc))
 	e.Use(tadokumiddleware.RequireServiceAudience(cfg.ServiceName))
 	e.Use(tadokumiddleware.RejectBannedUsers())

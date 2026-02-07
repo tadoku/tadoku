@@ -6,8 +6,9 @@ import (
 
 	"github.com/go-playground/validator/v10"
 	"github.com/kelseyhightower/envconfig"
+	commonroles "github.com/tadoku/tadoku/services/common/authz/roles"
+	ketoclient "github.com/tadoku/tadoku/services/common/client/keto"
 	tadokumiddleware "github.com/tadoku/tadoku/services/common/middleware"
-	"github.com/tadoku/tadoku/services/common/storage/memory"
 	"github.com/tadoku/tadoku/services/profile-api/http/rest"
 	"github.com/tadoku/tadoku/services/profile-api/http/rest/openapi"
 
@@ -22,6 +23,7 @@ type Config struct {
 	PostgresURL            string  `validate:"required" envconfig:"postgres_url"`
 	Port                   int64   `validate:"required"`
 	JWKS                   string  `validate:"required"`
+	KetoReadURL            string  `validate:"required" envconfig:"keto_read_url"`
 	ServiceName            string  `envconfig:"service_name" default:"profile-api"`
 	SentryDSN              string  `envconfig:"sentry_dns"`
 	SentryTracesSampleRate float64 `validate:"required_with=SentryDSN" envconfig:"sentry_traces_sample_rate"`
@@ -43,12 +45,14 @@ func main() {
 	}
 	_ = psql // Will be used when repositories are added
 
-	roleRepository := memory.NewRoleRepository("/etc/tadoku/permissions/roles.yaml")
+	ketoClient := ketoclient.NewClient(cfg.KetoReadURL, cfg.KetoReadURL)
+	rolesSvc := commonroles.NewKetoService(ketoClient, "app", "tadoku")
 
 	e := echo.New()
 	e.Use(tadokumiddleware.Logger([]string{"/ping"}))
 	e.Use(tadokumiddleware.VerifyJWT(cfg.JWKS))
-	e.Use(tadokumiddleware.Identity(roleRepository, nil))
+	e.Use(tadokumiddleware.Identity())
+	e.Use(tadokumiddleware.RolesFromKeto(rolesSvc))
 	e.Use(tadokumiddleware.RequireServiceAudience(cfg.ServiceName))
 	e.Use(tadokumiddleware.RejectBannedUsers())
 	e.Use(middleware.Recover())

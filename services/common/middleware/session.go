@@ -11,6 +11,7 @@ import (
 	jwtv4 "github.com/golang-jwt/jwt/v4"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
+	"github.com/tadoku/tadoku/services/common/authz/roles"
 	"github.com/tadoku/tadoku/services/common/domain"
 )
 
@@ -55,17 +56,7 @@ type UnifiedClaims struct {
 	} `json:"session,omitempty"`
 }
 
-// RoleRepository provides role lookup by email (for config file)
-type RoleRepository interface {
-	GetRole(email string) string
-}
-
-// DatabaseRoleRepository provides role lookup by user ID (for database)
-type DatabaseRoleRepository interface {
-	GetUserRole(ctx context.Context, userID string) (string, error)
-}
-
-func Identity(configRepo RoleRepository, dbRepo DatabaseRoleRepository) echo.MiddlewareFunc {
+func Identity() echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(ctx echo.Context) error {
 			var identity domain.Identity = &domain.UserIdentity{
@@ -84,7 +75,7 @@ func Identity(configRepo RoleRepository, dbRepo DatabaseRoleRepository) echo.Mid
 				case "service":
 					identity = handleServiceToken(claims)
 				default:
-					identity = handleUserToken(ctx, claims, configRepo, dbRepo)
+					identity = handleUserToken(claims)
 				}
 			}
 
@@ -111,35 +102,13 @@ func handleServiceToken(claims *UnifiedClaims) domain.Identity {
 	}
 }
 
-func handleUserToken(ctx echo.Context, claims *UnifiedClaims, configRepo RoleRepository, dbRepo DatabaseRoleRepository) *domain.UserIdentity {
+func handleUserToken(claims *UnifiedClaims) *domain.UserIdentity {
 	user := &domain.UserIdentity{
 		Email:       claims.Session.Identity.Traits.Email,
 		DisplayName: claims.Session.Identity.Traits.DisplayName,
 		Subject:     claims.Subject,
 		CreatedAt:   claims.IssuedAt.Time,
-	}
-
-	// First check config file (for dev/admin overrides).
-	if configRepo != nil {
-		role := configRepo.GetRole(user.Email)
-		if role != "user" {
-			user.Role = domain.Role(role)
-		}
-	}
-
-	// Then check database if no special role from config.
-	if user.Role == "" || user.Role == domain.RoleUser || user.Role == domain.RoleGuest {
-		if dbRepo != nil {
-			dbRole, err := dbRepo.GetUserRole(ctx.Request().Context(), user.Subject)
-			if err == nil && dbRole != "user" {
-				user.Role = domain.Role(dbRole)
-			}
-		}
-	}
-
-	// Default to user if no special role found.
-	if user.Role == "" || user.Role == domain.RoleGuest {
-		user.Role = domain.RoleUser
+		Role:        domain.RoleUser,
 	}
 
 	return user
@@ -153,10 +122,16 @@ func setIdentityContext(ctx echo.Context, identity domain.Identity) {
 func RejectBannedUsers() echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(ctx echo.Context) error {
-			if user := domain.ParseUserIdentity(ctx.Request().Context()); user != nil {
-				if user.Role == domain.RoleBanned && ctx.Path() != "/current-user/role" {
-					return ctx.NoContent(http.StatusForbidden)
-				}
+			if ctx.Path() == "/current-user/role" {
+				return next(ctx)
+			}
+
+			claims := roles.FromContext(ctx.Request().Context())
+			if claims.Authenticated && claims.Err != nil {
+				return ctx.NoContent(http.StatusServiceUnavailable)
+			}
+			if claims.Banned {
+				return ctx.NoContent(http.StatusForbidden)
 			}
 			return next(ctx)
 		}

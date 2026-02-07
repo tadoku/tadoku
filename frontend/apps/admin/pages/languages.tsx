@@ -5,7 +5,7 @@ import {
   PencilSquareIcon,
 } from '@heroicons/react/20/solid'
 import Head from 'next/head'
-import { Breadcrumb, Loading, Modal } from 'ui'
+import { AutocompleteInput, Breadcrumb, Input, Loading, Modal } from 'ui'
 import { NextPageWithLayout } from './_app'
 import { getDashboardLayout } from '@app/ui/DashboardLayout'
 import {
@@ -16,6 +16,7 @@ import {
 } from '@app/languages/api'
 import { iso639_3 } from '@app/languages/iso639-3'
 import { Dispatch, SetStateAction, useState, useMemo, useEffect } from 'react'
+import { FormProvider, useForm } from 'react-hook-form'
 import { useQueryClient } from 'react-query'
 import { toast } from 'react-toastify'
 
@@ -25,7 +26,7 @@ function WikipediaLink({ code }: { code: string }) {
       href={`https://en.wikipedia.org/wiki/ISO_639:${code}`}
       target="_blank"
       rel="noopener noreferrer"
-      className="text-blue-600 hover:text-blue-800 underline"
+      className="tag bg-slate-100 text-slate-600 font-mono hover:bg-slate-200 inline-flex"
     >
       {code}
     </a>
@@ -45,26 +46,23 @@ function LanguageForm({
   editingLanguage,
   existingCodes,
 }: LanguageFormProps) {
-  const [code, setCode] = useState('')
-  const [name, setName] = useState('')
-  const [search, setSearch] = useState('')
-  const [errors, setErrors] = useState<Record<string, string>>({})
   const queryClient = useQueryClient()
   const isEditing = editingLanguage !== null
 
-  const resetForm = () => {
-    setCode('')
-    setName('')
-    setSearch('')
-    setErrors({})
-  }
+  const methods = useForm({
+    defaultValues: {
+      isoLanguage: null as { code: string; name: string } | null,
+      code: '',
+      name: '',
+    },
+  })
 
   const createMutation = useLanguageCreate(
     () => {
-      toast.success(`Language "${name}" created`)
+      toast.success(`Language "${methods.getValues('name')}" created`)
       queryClient.invalidateQueries(['languages', 'list'])
       setIsOpen(false)
-      resetForm()
+      methods.reset()
     },
     error => {
       toast.error(error.message || 'Failed to create language')
@@ -73,73 +71,58 @@ function LanguageForm({
 
   const updateMutation = useLanguageUpdate(
     () => {
-      toast.success(`Language "${name}" updated`)
+      toast.success(`Language "${methods.getValues('name')}" updated`)
       queryClient.invalidateQueries(['languages', 'list'])
       setIsOpen(false)
-      resetForm()
+      methods.reset()
     },
     () => {
       toast.error('Failed to update language')
     },
   )
 
-  // Sync form fields when editingLanguage changes
+  // Sync form when modal opens
   useEffect(() => {
     if (isOpen && editingLanguage) {
-      setCode(editingLanguage.code)
-      setName(editingLanguage.name)
-      setSearch('')
-      setErrors({})
+      methods.reset({
+        isoLanguage: null,
+        code: editingLanguage.code,
+        name: editingLanguage.name,
+      })
     } else if (isOpen && !editingLanguage) {
-      resetForm()
+      methods.reset({ isoLanguage: null, code: '', name: '' })
     }
-  }, [isOpen, editingLanguage])
+  }, [isOpen, editingLanguage, methods])
 
-  // Filter ISO 639-3 suggestions based on search input
-  const suggestions = useMemo(() => {
-    if (isEditing || !search.trim()) return []
-    const query = search.toLowerCase()
-    return iso639_3
-      .filter(
-        lang =>
-          (lang.name.toLowerCase().includes(query) ||
-            lang.code.toLowerCase().includes(query)) &&
-          !existingCodes.has(lang.code),
-      )
-      .slice(0, 8)
-  }, [search, isEditing, existingCodes])
-
-  const handleSelectSuggestion = (lang: { code: string; name: string }) => {
-    setCode(lang.code)
-    setName(lang.name)
-    setSearch('')
-    setErrors({})
-  }
-
-  const handleClose = () => {
-    setIsOpen(false)
-    resetForm()
-  }
-
-  const handleSave = () => {
-    const newErrors: Record<string, string> = {}
-    if (!isEditing && !code.trim()) newErrors.code = 'Code is required'
-    if (!isEditing && code.length > 10) newErrors.code = 'Code must be 10 characters or less'
-    if (!name.trim()) newErrors.name = 'Name is required'
-    if (name.length > 100) newErrors.name = 'Name must be 100 characters or less'
-
-    if (Object.keys(newErrors).length > 0) {
-      setErrors(newErrors)
-      return
+  // When ISO language is selected from autocomplete, populate code and name
+  const isoLanguage = methods.watch('isoLanguage')
+  useEffect(() => {
+    if (isoLanguage) {
+      methods.setValue('code', isoLanguage.code)
+      methods.setValue('name', isoLanguage.name)
     }
-    setErrors({})
+  }, [isoLanguage, methods])
 
+  const availableLanguages = useMemo(
+    () => iso639_3.filter(lang => !existingCodes.has(lang.code)),
+    [existingCodes],
+  )
+
+  const isoCodes = useMemo(
+    () => new Set(iso639_3.map(lang => lang.code)),
+    [],
+  )
+
+  const codeValue = methods.watch('code')
+  const codeNotInISO = !isEditing && codeValue.trim() !== '' && !isoCodes.has(codeValue.trim())
+
+  const handleSave = methods.handleSubmit(data => {
     if (isEditing) {
-      updateMutation.mutate({ code: editingLanguage.code, name: name.trim() })
+      updateMutation.mutate({ code: editingLanguage!.code, name: data.name.trim() })
     } else {
-      createMutation.mutate({ code: code.trim(), name: name.trim() })
+      createMutation.mutate({ code: data.code.trim(), name: data.name.trim() })
     }
-  }
+  })
 
   const isSaving = createMutation.isLoading || updateMutation.isLoading
 
@@ -149,111 +132,104 @@ function LanguageForm({
       setIsOpen={setIsOpen}
       title={isEditing ? 'Edit Language' : 'Add Language'}
     >
-      <div className="modal-body flex flex-col gap-4">
-        {!isEditing && (
-          <div className="relative">
-            <label className="label">
-              <span className="label-text">
-                Search ISO 639-3 languages
+      <FormProvider {...methods}>
+        <div className="modal-body flex flex-col gap-4">
+          {!isEditing && (
+            <AutocompleteInput
+              name="isoLanguage"
+              label="Search ISO 639-3 languages"
+              options={availableLanguages}
+              match={(option, query) =>
+                option.name.toLowerCase().includes(query.toLowerCase()) ||
+                option.code.toLowerCase().includes(query.toLowerCase())
+              }
+              format={option => `${option.name} (${option.code})`}
+            />
+          )}
+
+          <div>
+            <Input
+              name="code"
+              type="text"
+              label="Code (ISO 639-3)"
+              placeholder="e.g. jpn"
+              disabled={isEditing}
+              maxLength={10}
+              className="font-mono"
+              options={
+                !isEditing
+                  ? {
+                      required: 'Code is required',
+                      maxLength: {
+                        value: 10,
+                        message: 'Code must be 10 characters or less',
+                      },
+                    }
+                  : undefined
+              }
+            />
+            {codeNotInISO && (
+              <span className="text-xs text-amber-600 mt-1 block">
+                This code is not in the ISO 639-3 list. Make sure this is intentional.
               </span>
-              <input
-                type="text"
-                className="input"
-                value={search}
-                onChange={e => setSearch(e.target.value)}
-                placeholder="Type a language name or code..."
-              />
-            </label>
-            {suggestions.length > 0 && (
-              <ul className="absolute z-10 left-0 right-0 bg-white border border-slate-200 rounded-md shadow-lg mt-1 max-h-48 overflow-y-auto">
-                {suggestions.map(lang => (
-                  <li key={lang.code}>
-                    <button
-                      type="button"
-                      className="w-full text-left px-3 py-2 hover:bg-slate-100 flex justify-between items-center"
-                      onClick={() => handleSelectSuggestion(lang)}
-                    >
-                      <span>{lang.name}</span>
-                      <span className="text-slate-400 text-sm font-mono">
-                        {lang.code}
-                      </span>
-                    </button>
-                  </li>
-                ))}
-              </ul>
+            )}
+            {codeValue && !isEditing && (
+              <span className="text-xs text-slate-500 mt-1 block">
+                Wikipedia:{' '}
+                <a
+                  href={`https://en.wikipedia.org/wiki/ISO_639:${codeValue}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-600 hover:text-blue-800 underline"
+                >
+                  ISO 639:{codeValue}
+                </a>
+              </span>
             )}
           </div>
-        )}
 
-        <label className={`label ${errors.code ? 'error' : ''}`}>
-          <span className="label-text">Code (ISO 639-3)</span>
-          <input
+          <Input
+            name="name"
             type="text"
-            className="input font-mono"
-            value={code}
-            onChange={e => {
-              setCode(e.target.value)
-              setErrors(prev => ({ ...prev, code: '' }))
-            }}
-            placeholder="e.g. jpn"
-            disabled={isEditing}
-            maxLength={10}
-          />
-          {errors.code && <span className="error">{errors.code}</span>}
-          {code && !isEditing && (
-            <span className="text-xs text-slate-500 mt-1">
-              Wikipedia:{' '}
-              <a
-                href={`https://en.wikipedia.org/wiki/ISO_639:${code}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-blue-600 hover:text-blue-800 underline"
-              >
-                ISO 639:{code}
-              </a>
-            </span>
-          )}
-        </label>
-
-        <label className={`label ${errors.name ? 'error' : ''}`}>
-          <span className="label-text">Display Name</span>
-          <input
-            type="text"
-            className="input"
-            value={name}
-            onChange={e => {
-              setName(e.target.value)
-              setErrors(prev => ({ ...prev, name: '' }))
-            }}
+            label="Display Name"
             placeholder="e.g. Japanese"
             maxLength={100}
+            options={{
+              required: 'Name is required',
+              maxLength: {
+                value: 100,
+                message: 'Name must be 100 characters or less',
+              },
+            }}
           />
-          {errors.name && <span className="error">{errors.name}</span>}
-        </label>
-      </div>
+        </div>
 
-      <div className="modal-actions">
-        <button
-          type="button"
-          className="btn primary"
-          onClick={handleSave}
-          disabled={isSaving}
-        >
-          {isSaving
-            ? 'Saving...'
-            : isEditing
-              ? 'Update Language'
-              : 'Add Language'}
-        </button>
-        <button
-          type="button"
-          className="btn ghost"
-          onClick={handleClose}
-          disabled={isSaving}
-        >
-          Cancel
-        </button>
-      </div>
+        <div className="modal-actions">
+          <button
+            type="button"
+            className="btn primary"
+            onClick={handleSave}
+            disabled={isSaving}
+          >
+            {isSaving
+              ? 'Saving...'
+              : isEditing
+                ? 'Update Language'
+                : 'Add Language'}
+          </button>
+          <button
+            type="button"
+            className="btn ghost"
+            onClick={() => {
+              setIsOpen(false)
+              methods.reset()
+            }}
+            disabled={isSaving}
+          >
+            Cancel
+          </button>
+        </div>
+      </FormProvider>
     </Modal>
   )
 }
@@ -366,18 +342,16 @@ const Page: NextPageWithLayout = () => {
                 <tr>
                   <th className="default w-28">Code</th>
                   <th className="default">Name</th>
-                  <th className="default w-32">Wikipedia</th>
                   <th className="default w-12"></th>
                 </tr>
               </thead>
               <tbody>
                 {filteredLanguages.map(lang => (
                   <tr key={lang.code}>
-                    <td className="default font-mono">{lang.code}</td>
-                    <td className="default font-medium">{lang.name}</td>
                     <td className="default">
                       <WikipediaLink code={lang.code} />
                     </td>
+                    <td className="default font-medium">{lang.name}</td>
                     <td className="default">
                       <button
                         type="button"
@@ -393,7 +367,7 @@ const Page: NextPageWithLayout = () => {
                 {filteredLanguages.length === 0 ? (
                   <tr>
                     <td
-                      colSpan={4}
+                      colSpan={3}
                       className="default h-32 font-bold text-center text-xl text-slate-400"
                     >
                       {filter

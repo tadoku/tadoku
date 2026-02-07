@@ -2,9 +2,7 @@ package repository
 
 import (
 	"context"
-	"database/sql"
 	"encoding/json"
-	"errors"
 	"fmt"
 
 	"github.com/google/uuid"
@@ -65,26 +63,6 @@ func (r *Repository) UpdateUserRole(ctx context.Context, req *domain.UpdateUserR
 	if err != nil {
 		_ = tx.Rollback()
 		return fmt.Errorf("could not create audit log: %w", err)
-	}
-
-	// Update or delete user role
-	if req.Role == "user" {
-		// Delete from user_roles to return to default "user" role
-		err = qtx.DeleteUserRole(ctx, req.UserID)
-		if err != nil && !errors.Is(err, sql.ErrNoRows) {
-			_ = tx.Rollback()
-			return fmt.Errorf("could not delete user role: %w", err)
-		}
-	} else {
-		// Upsert the role (for "banned")
-		err = qtx.UpsertUserRole(ctx, postgres.UpsertUserRoleParams{
-			UserID: req.UserID,
-			Role:   req.Role,
-		})
-		if err != nil {
-			_ = tx.Rollback()
-			return fmt.Errorf("could not upsert user role: %w", err)
-		}
 	}
 
 	// Commit transaction

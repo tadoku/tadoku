@@ -4,6 +4,7 @@ go_library(
     name = "roles",
     srcs = [
         "claims.go",
+        "manager.go",
         "service.go",
     ],
     importpath = "github.com/tadoku/tadoku/services/common/authz/roles",
@@ -24,4 +25,3 @@ go_test(
         "@com_github_stretchr_testify//require",
     ],
 )
-

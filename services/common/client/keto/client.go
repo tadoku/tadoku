@@ -121,8 +121,11 @@ func (c *Client) AddRelation(ctx context.Context, namespace, object, relation st
 	}
 
 	req := c.writeClient.RelationshipApi.CreateRelationship(ctx).CreateRelationshipBody(body)
-	_, _, err := c.writeClient.RelationshipApi.CreateRelationshipExecute(req)
+	_, res, err := c.writeClient.RelationshipApi.CreateRelationshipExecute(req)
 	if err != nil {
+		if res != nil && res.StatusCode == http.StatusConflict {
+			return nil
+		}
 		return fmt.Errorf("failed to create relation: %w", err)
 	}
 
@@ -148,8 +151,11 @@ func (c *Client) DeleteRelation(ctx context.Context, namespace, object, relation
 		return fmt.Errorf("subject must set either ID or Set")
 	}
 
-	_, err := c.writeClient.RelationshipApi.DeleteRelationshipsExecute(req)
+	res, err := c.writeClient.RelationshipApi.DeleteRelationshipsExecute(req)
 	if err != nil {
+		if res != nil && res.StatusCode == http.StatusNotFound {
+			return nil
+		}
 		return fmt.Errorf("failed to delete relation: %w", err)
 	}
 

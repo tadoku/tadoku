@@ -6,6 +6,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	commonroles "github.com/tadoku/tadoku/services/common/authz/roles"
 	commondomain "github.com/tadoku/tadoku/services/common/domain"
 	"github.com/tadoku/tadoku/services/immersion-api/domain"
 )
@@ -18,6 +19,24 @@ func (m *mockUserListCache) GetUsers() []domain.UserCacheEntry {
 	return m.users
 }
 
+type mockRolesService struct {
+	claimsBySubject map[string]commonroles.Claims
+	err             error
+}
+
+func (m *mockRolesService) ClaimsForSubject(ctx context.Context, subjectID string) (commonroles.Claims, error) {
+	if m.err != nil {
+		return commonroles.Claims{Subject: subjectID, Authenticated: true, Err: m.err}, m.err
+	}
+	if m.claimsBySubject == nil {
+		return commonroles.Claims{Subject: subjectID, Authenticated: true}, nil
+	}
+	if c, ok := m.claimsBySubject[subjectID]; ok {
+		return c, nil
+	}
+	return commonroles.Claims{Subject: subjectID, Authenticated: true}, nil
+}
+
 func TestUserList_Execute(t *testing.T) {
 	users := []domain.UserCacheEntry{
 		{ID: "1", DisplayName: "Alice", Email: "alice@test.com"},
@@ -27,7 +46,7 @@ func TestUserList_Execute(t *testing.T) {
 
 	t.Run("returns unauthorized for nil session", func(t *testing.T) {
 		cache := &mockUserListCache{users: users}
-		svc := domain.NewUserList(cache, nil)
+		svc := domain.NewUserList(cache, &mockRolesService{})
 
 		result, err := svc.Execute(context.Background(), &domain.UserListRequest{})
 
@@ -37,7 +56,7 @@ func TestUserList_Execute(t *testing.T) {
 
 	t.Run("returns forbidden for non-admin", func(t *testing.T) {
 		cache := &mockUserListCache{users: users}
-		svc := domain.NewUserList(cache, nil)
+		svc := domain.NewUserList(cache, &mockRolesService{})
 
 		ctx := ctxWithRole(commondomain.RoleUser)
 
@@ -49,7 +68,7 @@ func TestUserList_Execute(t *testing.T) {
 
 	t.Run("returns all users for admin", func(t *testing.T) {
 		cache := &mockUserListCache{users: users}
-		svc := domain.NewUserList(cache, nil)
+		svc := domain.NewUserList(cache, &mockRolesService{})
 
 		ctx := ctxWithRole(commondomain.RoleAdmin)
 
@@ -62,7 +81,7 @@ func TestUserList_Execute(t *testing.T) {
 
 	t.Run("paginates results", func(t *testing.T) {
 		cache := &mockUserListCache{users: users}
-		svc := domain.NewUserList(cache, nil)
+		svc := domain.NewUserList(cache, &mockRolesService{})
 
 		ctx := ctxWithRole(commondomain.RoleAdmin)
 
@@ -76,7 +95,7 @@ func TestUserList_Execute(t *testing.T) {
 
 	t.Run("filters by query with fuzzy search", func(t *testing.T) {
 		cache := &mockUserListCache{users: users}
-		svc := domain.NewUserList(cache, nil)
+		svc := domain.NewUserList(cache, &mockRolesService{})
 
 		ctx := ctxWithRole(commondomain.RoleAdmin)
 

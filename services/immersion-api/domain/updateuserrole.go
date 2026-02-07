@@ -5,12 +5,12 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
+	commonroles "github.com/tadoku/tadoku/services/common/authz/roles"
 	commondomain "github.com/tadoku/tadoku/services/common/domain"
 )
 
 type UpdateUserRoleRepository interface {
 	UserExists(ctx context.Context, userID uuid.UUID) (bool, error)
-	GetUserRole(ctx context.Context, userID string) (string, error)
 	UpdateUserRole(ctx context.Context, req *UpdateUserRoleRequest, moderatorUserID uuid.UUID) error
 }
 
@@ -21,11 +21,13 @@ type UpdateUserRoleRequest struct {
 }
 
 type UpdateUserRole struct {
-	repo UpdateUserRoleRepository
+	repo     UpdateUserRoleRepository
+	roles    commonroles.Service
+	roleMgmt commonroles.Manager
 }
 
-func NewUpdateUserRole(repo UpdateUserRoleRepository) *UpdateUserRole {
-	return &UpdateUserRole{repo: repo}
+func NewUpdateUserRole(repo UpdateUserRoleRepository, roles commonroles.Service, roleMgmt commonroles.Manager) *UpdateUserRole {
+	return &UpdateUserRole{repo: repo, roles: roles, roleMgmt: roleMgmt}
 }
 
 func (s *UpdateUserRole) Execute(ctx context.Context, req *UpdateUserRoleRequest) error {
@@ -69,14 +71,28 @@ func (s *UpdateUserRole) Execute(ctx context.Context, req *UpdateUserRoleRequest
 	}
 
 	// Check if target user is an admin - admins cannot be banned
-	targetRole, err := s.repo.GetUserRole(ctx, req.UserID.String())
+	targetClaims, err := s.roles.ClaimsForSubject(ctx, req.UserID.String())
 	if err != nil {
-		return fmt.Errorf("could not get target user role: %w", err)
+		return ErrAuthzUnavailable
 	}
-	if targetRole == "admin" {
+	if targetClaims.Admin {
 		return fmt.Errorf("%w: cannot modify role of an admin user", ErrForbidden)
 	}
 
-	// Update the role
+	// Update the role in Keto first (source of truth), then audit.
+	switch req.Role {
+	case "banned":
+		if err := s.roleMgmt.SetBanned(ctx, req.UserID.String(), true); err != nil {
+			return ErrAuthzUnavailable
+		}
+	case "user":
+		if err := s.roleMgmt.SetBanned(ctx, req.UserID.String(), false); err != nil {
+			return ErrAuthzUnavailable
+		}
+	default:
+		// Should be impossible due to earlier validation.
+		return fmt.Errorf("%w: role must be 'user' or 'banned'", ErrRequestInvalid)
+	}
+
 	return s.repo.UpdateUserRole(ctx, req, moderatorUserID)
 }

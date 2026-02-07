@@ -36,6 +36,7 @@ type Config struct {
 	KratosURL              string  `validate:"required" envconfig:"kratos_url"`
 	OathkeeperURL          string  `validate:"required" envconfig:"oathkeeper_url"`
 	KetoReadURL            string  `validate:"required" envconfig:"keto_read_url"`
+	KetoWriteURL           string  `validate:"required" envconfig:"keto_write_url"`
 	ServiceName            string  `envconfig:"service_name" default:"immersion-api"`
 	SentryDSN              string  `envconfig:"sentry_dns"`
 	SentryTracesSampleRate float64 `validate:"required_with=SentryDSN" envconfig:"sentry_traces_sample_rate"`
@@ -61,8 +62,9 @@ func main() {
 	userCache.Start()
 
 	postgresRepository := repository.NewRepository(psql)
-	ketoClient := ketoclient.NewClient(cfg.KetoReadURL, cfg.KetoReadURL)
+	ketoClient := ketoclient.NewClient(cfg.KetoReadURL, cfg.KetoWriteURL)
 	rolesSvc := commonroles.NewKetoService(ketoClient, "app", "tadoku")
+	roleMgmt := commonroles.NewKetoManager(ketoClient, "app", "tadoku")
 
 	e := echo.New()
 	e.Use(tadokumiddleware.Logger([]string{"/ping"}))
@@ -111,14 +113,14 @@ func main() {
 	profileFetch := immersiondomain.NewProfileFetch(kratosClient)
 	registrationListOngoing := immersiondomain.NewRegistrationListOngoing(postgresRepository, clock)
 	contestPermissionCheck := immersiondomain.NewContestPermissionCheck(postgresRepository, kratosClient, clock)
-	userList := immersiondomain.NewUserList(userCache, postgresRepository)
+	userList := immersiondomain.NewUserList(userCache, rolesSvc)
 	logDelete := immersiondomain.NewLogDelete(postgresRepository, clock)
 	contestModerationDetachLog := immersiondomain.NewContestModerationDetachLog(postgresRepository)
 	userUpsert := immersiondomain.NewUserUpsert(postgresRepository)
 	registrationUpsert := immersiondomain.NewRegistrationUpsert(postgresRepository, userUpsert)
 	logCreate := immersiondomain.NewLogCreate(postgresRepository, clock, userUpsert)
 	contestCreate := immersiondomain.NewContestCreate(postgresRepository, clock, userUpsert)
-	updateUserRole := immersiondomain.NewUpdateUserRole(postgresRepository)
+	updateUserRole := immersiondomain.NewUpdateUserRole(postgresRepository, rolesSvc, roleMgmt)
 	languageList := immersiondomain.NewLanguageList(postgresRepository)
 	languageCreate := immersiondomain.NewLanguageCreate(postgresRepository)
 	languageUpdate := immersiondomain.NewLanguageUpdate(postgresRepository)

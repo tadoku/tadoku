@@ -54,7 +54,7 @@ func (s *Server) UsersList(ctx echo.Context, params openapi.UsersListParams) err
 			CreatedAt:   u.CreatedAt,
 		}
 		// Only set role if it's not the default "user" role
-		if u.Role != "" {
+		if u.Role != "" && u.Role != "user" {
 			role := u.Role
 			entry.Role = &role
 		}

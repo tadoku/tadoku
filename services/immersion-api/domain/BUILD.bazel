@@ -86,6 +86,7 @@ go_test(
         "registrationlistyearly_test.go",
         "registrationupsert_test.go",
         "roles_context_test.go",
+        "updateuserrole_test.go",
         "userlist_test.go",
         "userupsert_test.go",
     ],

@@ -5,15 +5,12 @@ import (
 	"strings"
 
 	"github.com/sahilm/fuzzy"
+	commonroles "github.com/tadoku/tadoku/services/common/authz/roles"
 	commondomain "github.com/tadoku/tadoku/services/common/domain"
 )
 
 type UserListCache interface {
 	GetUsers() []UserCacheEntry
-}
-
-type UserListRoleRepository interface {
-	GetAllUserRoles(ctx context.Context) (map[string]string, error)
 }
 
 type UserCacheEntry struct {
@@ -58,11 +55,11 @@ type UserListEntry struct {
 
 type UserList struct {
 	userCache UserListCache
-	roleRepo  UserListRoleRepository
+	rolesSvc  commonroles.Service
 }
 
-func NewUserList(userCache UserListCache, roleRepo UserListRoleRepository) *UserList {
-	return &UserList{userCache: userCache, roleRepo: roleRepo}
+func NewUserList(userCache UserListCache, rolesSvc commonroles.Service) *UserList {
+	return &UserList{userCache: userCache, rolesSvc: rolesSvc}
 }
 
 func (s *UserList) Execute(ctx context.Context, req *UserListRequest) (*UserListResponse, error) {
@@ -128,22 +125,17 @@ func (s *UserList) Execute(ctx context.Context, req *UserListRequest) (*UserList
 		}
 	}
 
-	// Get all user roles from the database
-	roleMap := make(map[string]string)
-	if s.roleRepo != nil {
-		var err error
-		roleMap, err = s.roleRepo.GetAllUserRoles(ctx)
-		if err != nil {
-			// Log error but continue - roles will just be empty
-			roleMap = make(map[string]string)
-		}
-	}
-
 	users := make([]UserListEntry, 0, len(matchedUsers))
 	for _, u := range matchedUsers {
-		role := roleMap[u.ID]
-		if role == "" {
-			role = "user"
+		role := "user"
+		claims, err := s.rolesSvc.ClaimsForSubject(ctx, u.ID)
+		if err != nil {
+			return nil, ErrAuthzUnavailable
+		}
+		if claims.Admin {
+			role = "admin"
+		} else if claims.Banned {
+			role = "banned"
 		}
 		users = append(users, UserListEntry{
 			ID:          u.ID,

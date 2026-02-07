@@ -46,6 +46,8 @@ spec:
             value: "http://oathkeeper-proxy.default:4455"
           - name: API_KETO_READ_URL
             value: "http://keto-read.default:4466"
+          - name: API_KETO_WRITE_URL
+            value: "http://keto-write.default:4467"
           - name: SERVICE_NAME
             value: "immersion-api"
         volumeMounts:

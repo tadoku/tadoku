@@ -78,7 +78,7 @@ func (r *PostRepository) CreatePost(ctx context.Context, post *domain.Post) erro
 
 // GetPostByID implements domain.PostUpdateRepository
 func (r *PostRepository) GetPostByID(ctx context.Context, id uuid.UUID, namespace string) (*domain.Post, error) {
-	post, err := r.q.FindPostByID(ctx, id, namespace)
+	post, err := r.q.FindPostByID(ctx, FindPostByIDParams{ID: id, Namespace: namespace})
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, domain.ErrPostNotFound

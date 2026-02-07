@@ -115,6 +115,11 @@ where
   and "namespace" = $2
 `
 
+type FindAnnouncementByIDParams struct {
+	ID        uuid.UUID
+	Namespace string
+}
+
 type FindAnnouncementByIDRow struct {
 	ID        uuid.UUID
 	Namespace string
@@ -128,8 +133,8 @@ type FindAnnouncementByIDRow struct {
 	UpdatedAt time.Time
 }
 
-func (q *Queries) FindAnnouncementByID(ctx context.Context, id uuid.UUID, namespace string) (FindAnnouncementByIDRow, error) {
-	row := q.db.QueryRowContext(ctx, findAnnouncementByID, id, namespace)
+func (q *Queries) FindAnnouncementByID(ctx context.Context, arg FindAnnouncementByIDParams) (FindAnnouncementByIDRow, error) {
+	row := q.db.QueryRowContext(ctx, findAnnouncementByID, arg.ID, arg.Namespace)
 	var i FindAnnouncementByIDRow
 	err := row.Scan(
 		&i.ID,

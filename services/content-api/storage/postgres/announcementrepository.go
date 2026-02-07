@@ -42,7 +42,7 @@ func (r *AnnouncementRepository) CreateAnnouncement(ctx context.Context, a *doma
 }
 
 func (r *AnnouncementRepository) GetAnnouncementByID(ctx context.Context, id uuid.UUID, namespace string) (*domain.Announcement, error) {
-	row, err := r.q.FindAnnouncementByID(ctx, id, namespace)
+	row, err := r.q.FindAnnouncementByID(ctx, FindAnnouncementByIDParams{ID: id, Namespace: namespace})
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, domain.ErrAnnouncementNotFound

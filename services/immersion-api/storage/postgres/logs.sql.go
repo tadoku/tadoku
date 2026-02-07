@@ -127,22 +127,6 @@ func (q *Queries) DeleteLog(ctx context.Context, logID uuid.UUID) error {
 	return err
 }
 
-const detachLogFromContest = `-- name: DetachLogFromContest :exec
-delete from contest_logs
-where contest_id = $1
-  and log_id = $2
-`
-
-type DetachLogFromContestParams struct {
-	ContestID uuid.UUID
-	LogID     uuid.UUID
-}
-
-func (q *Queries) DetachLogFromContest(ctx context.Context, arg DetachLogFromContestParams) error {
-	_, err := q.db.ExecContext(ctx, detachLogFromContest, arg.ContestID, arg.LogID)
-	return err
-}
-
 const detachContestLogsForLanguages = `-- name: DetachContestLogsForLanguages :exec
 delete from contest_logs
 where contest_id = $1
@@ -163,6 +147,22 @@ type DetachContestLogsForLanguagesParams struct {
 
 func (q *Queries) DetachContestLogsForLanguages(ctx context.Context, arg DetachContestLogsForLanguagesParams) error {
 	_, err := q.db.ExecContext(ctx, detachContestLogsForLanguages, arg.ContestID, arg.UserID, pq.Array(arg.LanguageCodes))
+	return err
+}
+
+const detachLogFromContest = `-- name: DetachLogFromContest :exec
+delete from contest_logs
+where contest_id = $1
+  and log_id = $2
+`
+
+type DetachLogFromContestParams struct {
+	ContestID uuid.UUID
+	LogID     uuid.UUID
+}
+
+func (q *Queries) DetachLogFromContest(ctx context.Context, arg DetachLogFromContestParams) error {
+	_, err := q.db.ExecContext(ctx, detachLogFromContest, arg.ContestID, arg.LogID)
 	return err
 }
 

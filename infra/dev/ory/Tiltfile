@@ -43,4 +43,4 @@ helm_resource('keto',
               resource_deps=['helm-repo-ory', 'postgres-keto'])
 
 k8s_resource("keto", labels=["auth"])
-k8s_resource("keto-seed-admin", labels=["auth"], resource_deps=["keto"])
+k8s_resource("keto-seed-admin", labels=["auth"], resource_deps=["kratos", "keto"])

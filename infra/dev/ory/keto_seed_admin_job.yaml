@@ -10,38 +10,103 @@ spec:
       restartPolicy: OnFailure
       containers:
         - name: seed
-          image: curlimages/curl:8.5.0
+          image: python:3.12-alpine
           command: ["/bin/sh", "-c"]
           args:
             - |
               set -euo pipefail
 
-              endpoint="${KETO_WRITE_URL:-http://keto-write:4467}/admin/relation-tuples"
-              payload='{"namespace":"app","object":"global","relation":"admins","subject_id":"dev@tadoku.app"}'
+              python - <<'PY'
+              import json
+              import os
+              import time
+              import urllib.error
+              import urllib.parse
+              import urllib.request
+              import sys
 
-              i=0
-              while [ "$i" -lt 60 ]; do
-                i=$((i + 1))
-                http_code="$(curl -sS -o /tmp/resp -w "%{http_code}" -X PUT "$endpoint" -H "Content-Type: application/json" --data "$payload" || true)"
-                case "$http_code" in
-                  200|201|204)
-                    echo "seeded keto admin"
-                    exit 0
-                    ;;
-                  409)
-                    echo "keto admin already seeded"
-                    exit 0
-                    ;;
-                  000)
-                    # Network/connectivity; keep retrying while keto is coming up.
-                    ;;
-                  *)
-                    echo "seed failed (http ${http_code}):"
-                    cat /tmp/resp || true
-                    ;;
-                esac
-                sleep 2
-              done
+              email = os.getenv("SEED_ADMIN_EMAIL", "dev@tadoku.app")
 
-              echo "seed failed: timed out waiting for keto"
-              exit 1
+              kratos_admin = os.getenv("KRATOS_ADMIN_URL", "http://kratos-admin").rstrip("/")
+              keto_write = os.getenv("KETO_WRITE_URL", "http://keto-write:4467").rstrip("/")
+
+              namespace = os.getenv("KETO_NAMESPACE", "app")
+              obj = os.getenv("KETO_OBJECT", "tadoku")
+              relation = os.getenv("KETO_RELATION", "admins")
+
+              def http_json(method: str, url: str, payload=None, headers=None, timeout=5):
+                data = None
+                if payload is not None:
+                  data = json.dumps(payload).encode("utf-8")
+                req = urllib.request.Request(url, data=data, method=method)
+                for k, v in (headers or {}).items():
+                  req.add_header(k, v)
+                try:
+                  with urllib.request.urlopen(req, timeout=timeout) as resp:
+                    body = resp.read()
+                    return resp.getcode(), body
+                except urllib.error.HTTPError as e:
+                  return e.code, e.read()
+
+              identity_id = None
+              deadline = time.time() + 120
+              page = 1
+              per_page = 250
+              while time.time() < deadline and identity_id is None:
+                url = f"{kratos_admin}/admin/identities?per_page={per_page}&page={page}"
+                try:
+                  code, body = http_json("GET", url, headers={"Accept": "application/json"}, timeout=5)
+                except Exception:
+                  time.sleep(2)
+                  continue
+
+                if code != 200:
+                  time.sleep(2)
+                  continue
+
+                identities = json.loads(body.decode("utf-8") or "[]")
+                if not identities:
+                  # No more identities (or pagination gap); restart from the first page until deadline.
+                  page = 1
+                  time.sleep(2)
+                  continue
+
+                for ident in identities:
+                  traits = ident.get("traits") or {}
+                  if traits.get("email") == email:
+                    identity_id = ident.get("id")
+                    break
+
+                page += 1
+                if page > 50:
+                  page = 1
+                  time.sleep(2)
+
+              if not identity_id:
+                print(f"failed: could not find kratos identity id for email={email}", file=sys.stderr)
+                sys.exit(1)
+
+              payload = {
+                "namespace": namespace,
+                "object": obj,
+                "relation": relation,
+                "subject_id": identity_id,
+              }
+              code, body = http_json(
+                "PUT",
+                f"{keto_write}/admin/relation-tuples",
+                payload=payload,
+                headers={"Content-Type": "application/json", "Accept": "application/json"},
+                timeout=5,
+              )
+
+              if code in (200, 201, 204):
+                print(f"seeded keto admin: {namespace}:{obj}#{relation} @ {identity_id}")
+                sys.exit(0)
+              if code == 409:
+                print(f"keto admin already seeded: {namespace}:{obj}#{relation} @ {identity_id}")
+                sys.exit(0)
+
+              print(f"failed seeding keto admin (http {code}): {body.decode('utf-8', 'replace')}", file=sys.stderr)
+              sys.exit(1)
+              PY

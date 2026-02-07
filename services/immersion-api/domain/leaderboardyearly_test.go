@@ -84,7 +84,6 @@ func TestLeaderboardYearly_Execute(t *testing.T) {
 			})
 
 			if test.expectedErr != nil {
-				assert.Error(t, err)
 				assert.ErrorIs(t, err, test.expectedErr)
 				return
 			}

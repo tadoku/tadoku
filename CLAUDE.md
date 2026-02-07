@@ -9,6 +9,14 @@
 - Forms: Import `Input`, `Select`, `Checkbox`, etc. from `ui/components/Form`
 - Components: Import from `ui` package (Modal, Flash, Navbar, etc.)
 
+**Always use `react-hook-form` for form handling** — never use plain `useState` for form fields. Use:
+- `useForm()` + `<FormProvider>` to set up form context
+- `<Input>`, `<Select>`, `<TextArea>` from the `ui` package (they use `useFormContext()` internally)
+- `useController()` for custom/non-standard form components (e.g. CodeEditor)
+- `methods.handleSubmit()` for form submission with built-in validation
+- `methods.watch()` for reactive field values (e.g. live previews)
+- `methods.reset()` to populate forms with existing data
+
 ```sh
 # 1. Make changes
 

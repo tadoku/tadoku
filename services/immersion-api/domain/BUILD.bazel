@@ -63,6 +63,7 @@ go_test(
         "contestpermissioncheck_test.go",
         "contestsummaryfetch_test.go",
         "languagecreate_test.go",
+        "languagelist_test.go",
         "languageupdate_test.go",
         "leaderboardglobal_test.go",
         "leaderboardyearly_test.go",

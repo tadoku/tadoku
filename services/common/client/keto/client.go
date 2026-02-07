@@ -18,10 +18,29 @@ type Subject struct {
 	Relation  string
 }
 
+// PermissionChecker provides methods for checking permissions.
+type PermissionChecker interface {
+	CheckPermission(ctx context.Context, namespace, object, relation string, subject Subject) (bool, error)
+	CheckPermissions(ctx context.Context, checks []PermissionCheck) []PermissionResult
+}
+
+// RelationManager provides methods for managing relation tuples.
+type RelationManager interface {
+	AddRelation(ctx context.Context, namespace, object, relation string, subject Subject) error
+	DeleteRelation(ctx context.Context, namespace, object, relation string, subject Subject) error
+}
+
+// Client implements PermissionChecker and RelationManager.
 type Client struct {
 	readClient  *keto.APIClient
 	writeClient *keto.APIClient
 }
+
+// Compile-time interface compliance checks.
+var (
+	_ PermissionChecker = (*Client)(nil)
+	_ RelationManager   = (*Client)(nil)
+)
 
 func NewClient(readURL, writeURL string) *Client {
 	readCfg := keto.NewConfiguration()

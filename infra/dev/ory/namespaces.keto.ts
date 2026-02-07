@@ -6,10 +6,10 @@ import { Namespace, Context } from "@ory/keto-namespace-types"
 // User namespace - represents authenticated users
 class User implements Namespace {}
 
-// App namespace - application-level permissions (replaces the current role system)
+// app namespace - application-level permissions (replaces the current role system)
 // Note: "user" is the default state - anyone authenticated who isn't admin or banned.
 // We don't store "users" explicitly; absence of admin/banned implies regular user.
-class App implements Namespace {
+class app implements Namespace {
   related: {
     // Users with admin privileges
     admins: User[]

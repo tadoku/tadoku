@@ -1,0 +1,47 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: keto-seed-admin
+spec:
+  backoffLimit: 10
+  ttlSecondsAfterFinished: 300
+  template:
+    spec:
+      restartPolicy: OnFailure
+      containers:
+        - name: seed
+          image: curlimages/curl:8.5.0
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              set -euo pipefail
+
+              endpoint="${KETO_WRITE_URL:-http://keto-write:4467}/admin/relation-tuples"
+              payload='{"namespace":"app","object":"global","relation":"admins","subject_id":"dev@tadoku.app"}'
+
+              i=0
+              while [ "$i" -lt 60 ]; do
+                i=$((i + 1))
+                http_code="$(curl -sS -o /tmp/resp -w "%{http_code}" -X PUT "$endpoint" -H "Content-Type: application/json" --data "$payload" || true)"
+                case "$http_code" in
+                  200|201|204)
+                    echo "seeded keto admin"
+                    exit 0
+                    ;;
+                  409)
+                    echo "keto admin already seeded"
+                    exit 0
+                    ;;
+                  000)
+                    # Network/connectivity; keep retrying while keto is coming up.
+                    ;;
+                  *)
+                    echo "seed failed (http ${http_code}):"
+                    cat /tmp/resp || true
+                    ;;
+                esac
+                sleep 2
+              done
+
+              echo "seed failed: timed out waiting for keto"
+              exit 1

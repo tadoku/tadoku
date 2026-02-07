@@ -53,7 +53,7 @@ func TestCheckPermission(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				assert.Equal(t, "/relation-tuples/check/openapi", r.URL.Path)
-				assert.Equal(t, "App", r.URL.Query().Get("namespace"))
+				assert.Equal(t, "app", r.URL.Query().Get("namespace"))
 				assert.Equal(t, "global", r.URL.Query().Get("object"))
 				assert.Equal(t, "admins", r.URL.Query().Get("relation"))
 				assert.Equal(t, "test-user-id", r.URL.Query().Get("subject_id"))
@@ -65,7 +65,7 @@ func TestCheckPermission(t *testing.T) {
 			defer server.Close()
 
 			client := NewClient(server.URL, server.URL)
-			result, err := client.CheckPermission(context.Background(), "App", "global", "admins", Subject{ID: "test-user-id"})
+			result, err := client.CheckPermission(context.Background(), "app", "global", "admins", Subject{ID: "test-user-id"})
 
 			if tt.expectError {
 				require.Error(t, err)
@@ -80,7 +80,7 @@ func TestCheckPermission(t *testing.T) {
 func TestCheckPermission_subjectSet(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		assert.Equal(t, "/relation-tuples/check/openapi", r.URL.Path)
-		assert.Equal(t, "App", r.URL.Query().Get("namespace"))
+		assert.Equal(t, "app", r.URL.Query().Get("namespace"))
 		assert.Equal(t, "global", r.URL.Query().Get("object"))
 		assert.Equal(t, "admins", r.URL.Query().Get("relation"))
 
@@ -98,7 +98,7 @@ func TestCheckPermission_subjectSet(t *testing.T) {
 	client := NewClient(server.URL, server.URL)
 	allowed, err := client.CheckPermission(
 		context.Background(),
-		"App",
+		"app",
 		"global",
 		"admins",
 		Subject{Set: &SubjectSet{Namespace: "Group", Object: "admins", Relation: "member"}},
@@ -110,7 +110,7 @@ func TestCheckPermission_subjectSet(t *testing.T) {
 
 func TestCheckPermission_invalidSubject(t *testing.T) {
 	client := NewClient("http://localhost", "http://localhost")
-	allowed, err := client.CheckPermission(context.Background(), "App", "global", "admins", Subject{})
+	allowed, err := client.CheckPermission(context.Background(), "app", "global", "admins", Subject{})
 	require.Error(t, err)
 	assert.False(t, allowed)
 }
@@ -124,7 +124,7 @@ func TestAddRelation(t *testing.T) {
 		err := json.NewDecoder(r.Body).Decode(&body)
 		require.NoError(t, err)
 
-		assert.Equal(t, "App", body["namespace"])
+		assert.Equal(t, "app", body["namespace"])
 		assert.Equal(t, "global", body["object"])
 		assert.Equal(t, "admins", body["relation"])
 
@@ -139,7 +139,7 @@ func TestAddRelation(t *testing.T) {
 	defer server.Close()
 
 	client := NewClient(server.URL, server.URL)
-	err := client.AddRelation(context.Background(), "App", "global", "admins", Subject{ID: "test-user-id"})
+	err := client.AddRelation(context.Background(), "app", "global", "admins", Subject{ID: "test-user-id"})
 
 	require.NoError(t, err)
 }
@@ -153,7 +153,7 @@ func TestAddRelation_subjectSet(t *testing.T) {
 		err := json.NewDecoder(r.Body).Decode(&body)
 		require.NoError(t, err)
 
-		assert.Equal(t, "App", body["namespace"])
+		assert.Equal(t, "app", body["namespace"])
 		assert.Equal(t, "global", body["object"])
 		assert.Equal(t, "admins", body["relation"])
 
@@ -173,7 +173,7 @@ func TestAddRelation_subjectSet(t *testing.T) {
 	client := NewClient(server.URL, server.URL)
 	err := client.AddRelation(
 		context.Background(),
-		"App",
+		"app",
 		"global",
 		"admins",
 		Subject{Set: &SubjectSet{Namespace: "Group", Object: "admins", Relation: "member"}},
@@ -184,7 +184,7 @@ func TestAddRelation_subjectSet(t *testing.T) {
 
 func TestAddRelation_invalidSubject(t *testing.T) {
 	client := NewClient("http://localhost", "http://localhost")
-	err := client.AddRelation(context.Background(), "App", "global", "admins", Subject{})
+	err := client.AddRelation(context.Background(), "app", "global", "admins", Subject{})
 	require.Error(t, err)
 }
 
@@ -192,7 +192,7 @@ func TestDeleteRelation(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		assert.Equal(t, http.MethodDelete, r.Method)
 		assert.Equal(t, "/admin/relation-tuples", r.URL.Path)
-		assert.Equal(t, "App", r.URL.Query().Get("namespace"))
+		assert.Equal(t, "app", r.URL.Query().Get("namespace"))
 		assert.Equal(t, "global", r.URL.Query().Get("object"))
 		assert.Equal(t, "admins", r.URL.Query().Get("relation"))
 		assert.Equal(t, "test-user-id", r.URL.Query().Get("subject_id"))
@@ -202,7 +202,7 @@ func TestDeleteRelation(t *testing.T) {
 	defer server.Close()
 
 	client := NewClient(server.URL, server.URL)
-	err := client.DeleteRelation(context.Background(), "App", "global", "admins", Subject{ID: "test-user-id"})
+	err := client.DeleteRelation(context.Background(), "app", "global", "admins", Subject{ID: "test-user-id"})
 
 	require.NoError(t, err)
 }
@@ -211,7 +211,7 @@ func TestDeleteRelation_subjectSet(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		assert.Equal(t, http.MethodDelete, r.Method)
 		assert.Equal(t, "/admin/relation-tuples", r.URL.Path)
-		assert.Equal(t, "App", r.URL.Query().Get("namespace"))
+		assert.Equal(t, "app", r.URL.Query().Get("namespace"))
 		assert.Equal(t, "global", r.URL.Query().Get("object"))
 		assert.Equal(t, "admins", r.URL.Query().Get("relation"))
 
@@ -227,7 +227,7 @@ func TestDeleteRelation_subjectSet(t *testing.T) {
 	client := NewClient(server.URL, server.URL)
 	err := client.DeleteRelation(
 		context.Background(),
-		"App",
+		"app",
 		"global",
 		"admins",
 		Subject{Set: &SubjectSet{Namespace: "Group", Object: "admins", Relation: "member"}},
@@ -238,7 +238,7 @@ func TestDeleteRelation_subjectSet(t *testing.T) {
 
 func TestDeleteRelation_invalidSubject(t *testing.T) {
 	client := NewClient("http://localhost", "http://localhost")
-	err := client.DeleteRelation(context.Background(), "App", "global", "admins", Subject{})
+	err := client.DeleteRelation(context.Background(), "app", "global", "admins", Subject{})
 	require.Error(t, err)
 }
 
@@ -258,8 +258,8 @@ func TestCheckPermissions(t *testing.T) {
 
 		client := NewClient(server.URL, server.URL)
 		checks := []PermissionCheck{
-			{Namespace: "App", Object: "global", Relation: "admins", Subject: Subject{ID: "user-1"}},
-			{Namespace: "App", Object: "global", Relation: "banned", Subject: Subject{ID: "user-1"}},
+			{Namespace: "app", Object: "global", Relation: "admins", Subject: Subject{ID: "user-1"}},
+			{Namespace: "app", Object: "global", Relation: "banned", Subject: Subject{ID: "user-1"}},
 		}
 
 		results := client.CheckPermissions(context.Background(), checks)
@@ -302,8 +302,8 @@ func TestCheckPermissions(t *testing.T) {
 
 		client := NewClient(server.URL, server.URL)
 		checks := []PermissionCheck{
-			{Namespace: "App", Object: "global", Relation: "admins", Subject: Subject{ID: "user-1"}},
-			{Namespace: "App", Object: "global", Relation: "banned", Subject: Subject{ID: "user-1"}},
+			{Namespace: "app", Object: "global", Relation: "admins", Subject: Subject{ID: "user-1"}},
+			{Namespace: "app", Object: "global", Relation: "banned", Subject: Subject{ID: "user-1"}},
 		}
 
 		results := client.CheckPermissions(context.Background(), checks)

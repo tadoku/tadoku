@@ -4,11 +4,13 @@ go_library(
     name = "middleware",
     srcs = [
         "logger.go",
+        "roles.go",
         "session.go",
     ],
     importpath = "github.com/tadoku/tadoku/services/common/middleware",
     visibility = ["//visibility:public"],
     deps = [
+        "//services/common/authz/roles",
         "//services/common/domain",
         "@com_github_golang_jwt_jwt//:jwt",
         "@com_github_golang_jwt_jwt_v4//:jwt",

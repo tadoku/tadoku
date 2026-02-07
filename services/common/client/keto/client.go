@@ -9,10 +9,21 @@ import (
 	"golang.org/x/sync/errgroup"
 )
 
-// Subject represents the subject of a permission check or relation.
-// For direct subjects, only Namespace and Object are needed.
-// For subject sets (e.g., "members of Group:admins"), Relation is also used.
+// Subject represents the subject of a permission check or relation tuple.
+//
+// Keto supports two encodings:
+// - Direct subject: subject_id
+// - Subject set: subject_set (namespace, object, relation)
+//
+// Exactly one of ID or Set must be provided.
 type Subject struct {
+	// ID is sent as subject_id.
+	ID string
+	// Set is sent as subject_set.*.
+	Set *SubjectSet
+}
+
+type SubjectSet struct {
 	Namespace string
 	Object    string
 	Relation  string
@@ -62,10 +73,19 @@ func (c *Client) CheckPermission(ctx context.Context, namespace, object, relatio
 	req := c.readClient.PermissionApi.CheckPermission(ctx).
 		Namespace(namespace).
 		Object(object).
-		Relation(relation).
-		SubjectSetNamespace(subject.Namespace).
-		SubjectSetObject(subject.Object).
-		SubjectSetRelation(subject.Relation)
+		Relation(relation)
+
+	switch {
+	case subject.ID != "":
+		req = req.SubjectId(subject.ID)
+	case subject.Set != nil:
+		req = req.
+			SubjectSetNamespace(subject.Set.Namespace).
+			SubjectSetObject(subject.Set.Object).
+			SubjectSetRelation(subject.Set.Relation)
+	default:
+		return false, fmt.Errorf("subject must set either ID or Set")
+	}
 
 	result, res, err := c.readClient.PermissionApi.CheckPermissionExecute(req)
 	if err != nil {
@@ -85,11 +105,19 @@ func (c *Client) AddRelation(ctx context.Context, namespace, object, relation st
 		Namespace: &namespace,
 		Object:    &object,
 		Relation:  &relation,
-		SubjectSet: &keto.SubjectSet{
-			Namespace: subject.Namespace,
-			Object:    subject.Object,
-			Relation:  subject.Relation,
-		},
+	}
+
+	switch {
+	case subject.ID != "":
+		body.SubjectId = &subject.ID
+	case subject.Set != nil:
+		body.SubjectSet = &keto.SubjectSet{
+			Namespace: subject.Set.Namespace,
+			Object:    subject.Set.Object,
+			Relation:  subject.Set.Relation,
+		}
+	default:
+		return fmt.Errorf("subject must set either ID or Set")
 	}
 
 	req := c.writeClient.RelationshipApi.CreateRelationship(ctx).CreateRelationshipBody(body)
@@ -106,10 +134,19 @@ func (c *Client) DeleteRelation(ctx context.Context, namespace, object, relation
 	req := c.writeClient.RelationshipApi.DeleteRelationships(ctx).
 		Namespace(namespace).
 		Object(object).
-		Relation(relation).
-		SubjectSetNamespace(subject.Namespace).
-		SubjectSetObject(subject.Object).
-		SubjectSetRelation(subject.Relation)
+		Relation(relation)
+
+	switch {
+	case subject.ID != "":
+		req = req.SubjectId(subject.ID)
+	case subject.Set != nil:
+		req = req.
+			SubjectSetNamespace(subject.Set.Namespace).
+			SubjectSetObject(subject.Set.Object).
+			SubjectSetRelation(subject.Set.Relation)
+	default:
+		return fmt.Errorf("subject must set either ID or Set")
+	}
 
 	_, err := c.writeClient.RelationshipApi.DeleteRelationshipsExecute(req)
 	if err != nil {

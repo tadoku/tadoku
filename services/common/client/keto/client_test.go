@@ -56,7 +56,7 @@ func TestCheckPermission(t *testing.T) {
 				assert.Equal(t, "App", r.URL.Query().Get("namespace"))
 				assert.Equal(t, "global", r.URL.Query().Get("object"))
 				assert.Equal(t, "admins", r.URL.Query().Get("relation"))
-				assert.Equal(t, "User", r.URL.Query().Get("subject_set.namespace"))
+				assert.Equal(t, "test-user-id", r.URL.Query().Get("subject_id"))
 
 				w.Header().Set("Content-Type", "application/json")
 				w.WriteHeader(tt.statusCode)
@@ -65,7 +65,7 @@ func TestCheckPermission(t *testing.T) {
 			defer server.Close()
 
 			client := NewClient(server.URL, server.URL)
-			result, err := client.CheckPermission(context.Background(), "App", "global", "admins", Subject{Namespace: "User", Object: "test-user-id"})
+			result, err := client.CheckPermission(context.Background(), "App", "global", "admins", Subject{ID: "test-user-id"})
 
 			if tt.expectError {
 				require.Error(t, err)
@@ -90,10 +90,9 @@ func TestAddRelation(t *testing.T) {
 		assert.Equal(t, "global", body["object"])
 		assert.Equal(t, "admins", body["relation"])
 
-		subjectSet, ok := body["subject_set"].(map[string]any)
-		require.True(t, ok, "subject_set should be a map")
-		assert.Equal(t, "User", subjectSet["namespace"])
-		assert.Equal(t, "test-user-id", subjectSet["object"])
+		assert.Equal(t, "test-user-id", body["subject_id"])
+		_, ok := body["subject_set"]
+		require.False(t, ok, "subject_set should be omitted when subject_id is set")
 
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusCreated)
@@ -102,7 +101,7 @@ func TestAddRelation(t *testing.T) {
 	defer server.Close()
 
 	client := NewClient(server.URL, server.URL)
-	err := client.AddRelation(context.Background(), "App", "global", "admins", Subject{Namespace: "User", Object: "test-user-id"})
+	err := client.AddRelation(context.Background(), "App", "global", "admins", Subject{ID: "test-user-id"})
 
 	require.NoError(t, err)
 }
@@ -114,15 +113,14 @@ func TestDeleteRelation(t *testing.T) {
 		assert.Equal(t, "App", r.URL.Query().Get("namespace"))
 		assert.Equal(t, "global", r.URL.Query().Get("object"))
 		assert.Equal(t, "admins", r.URL.Query().Get("relation"))
-		assert.Equal(t, "User", r.URL.Query().Get("subject_set.namespace"))
-		assert.Equal(t, "test-user-id", r.URL.Query().Get("subject_set.object"))
+		assert.Equal(t, "test-user-id", r.URL.Query().Get("subject_id"))
 
 		w.WriteHeader(http.StatusNoContent)
 	}))
 	defer server.Close()
 
 	client := NewClient(server.URL, server.URL)
-	err := client.DeleteRelation(context.Background(), "App", "global", "admins", Subject{Namespace: "User", Object: "test-user-id"})
+	err := client.DeleteRelation(context.Background(), "App", "global", "admins", Subject{ID: "test-user-id"})
 
 	require.NoError(t, err)
 }
@@ -143,8 +141,8 @@ func TestCheckPermissions(t *testing.T) {
 
 		client := NewClient(server.URL, server.URL)
 		checks := []PermissionCheck{
-			{Namespace: "App", Object: "global", Relation: "admins", Subject: Subject{Namespace: "User", Object: "user-1"}},
-			{Namespace: "App", Object: "global", Relation: "banned", Subject: Subject{Namespace: "User", Object: "user-1"}},
+			{Namespace: "App", Object: "global", Relation: "admins", Subject: Subject{ID: "user-1"}},
+			{Namespace: "App", Object: "global", Relation: "banned", Subject: Subject{ID: "user-1"}},
 		}
 
 		results := client.CheckPermissions(context.Background(), checks)
@@ -187,8 +185,8 @@ func TestCheckPermissions(t *testing.T) {
 
 		client := NewClient(server.URL, server.URL)
 		checks := []PermissionCheck{
-			{Namespace: "App", Object: "global", Relation: "admins", Subject: Subject{Namespace: "User", Object: "user-1"}},
-			{Namespace: "App", Object: "global", Relation: "banned", Subject: Subject{Namespace: "User", Object: "user-1"}},
+			{Namespace: "App", Object: "global", Relation: "admins", Subject: Subject{ID: "user-1"}},
+			{Namespace: "App", Object: "global", Relation: "banned", Subject: Subject{ID: "user-1"}},
 		}
 
 		results := client.CheckPermissions(context.Background(), checks)

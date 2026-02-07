@@ -7,14 +7,15 @@ import {
   HomeIcon,
 } from '@heroicons/react/20/solid'
 import Head from 'next/head'
-import { ActionMenu, Breadcrumb, Loading, Modal, Pagination } from 'ui'
+import { ActionMenu, Breadcrumb, Loading, Modal, Pagination, TextArea } from 'ui'
 import { NextPageWithLayout } from './_app'
 import { getDashboardLayout } from '@app/ui/DashboardLayout'
 import { useUserList, useUpdateUserRole, UserListEntry } from '@app/common/api'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { DateTime } from 'luxon'
 import { useQueryClient } from 'react-query'
 import { toast } from 'react-toastify'
+import { FormProvider, useForm } from 'react-hook-form'
 
 function RoleBadge({ role }: { role?: string }) {
   if (role === 'admin') {
@@ -35,12 +36,24 @@ function RoleBadge({ role }: { role?: string }) {
 const Page: NextPageWithLayout = () => {
   const [page, setPage] = useState(0)
   const [search, setSearch] = useState('')
-  const [searchInput, setSearchInput] = useState('')
   const [modalOpen, setModalOpen] = useState(false)
   const [selectedUser, setSelectedUser] = useState<UserListEntry | null>(null)
-  const [reason, setReason] = useState('')
   const pageSize = 20
   const queryClient = useQueryClient()
+
+  const searchMethods = useForm({
+    defaultValues: { query: '' },
+  })
+
+  const modalMethods = useForm({
+    defaultValues: { reason: '' },
+  })
+
+  useEffect(() => {
+    if (modalOpen) {
+      modalMethods.reset({ reason: '' })
+    }
+  }, [modalOpen, modalMethods])
 
   const users = useUserList(
     {
@@ -60,7 +73,7 @@ const Page: NextPageWithLayout = () => {
       )
       queryClient.invalidateQueries(['users', 'list'])
       setModalOpen(false)
-      setReason('')
+      modalMethods.reset({ reason: '' })
       setSelectedUser(null)
     },
     () => {
@@ -68,27 +81,26 @@ const Page: NextPageWithLayout = () => {
     },
   )
 
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault()
-    setSearch(searchInput)
+  const handleSearch = searchMethods.handleSubmit(data => {
+    setSearch(data.query)
     setPage(0)
-  }
+  })
 
   const handleClearSearch = () => {
-    setSearchInput('')
+    searchMethods.reset({ query: '' })
     setSearch('')
     setPage(0)
   }
 
-  const handleBanUnban = () => {
-    if (!selectedUser || !reason.trim()) return
+  const handleBanUnban = modalMethods.handleSubmit(data => {
+    if (!selectedUser) return
     const newRole = selectedUser.role === 'banned' ? 'user' : 'banned'
     updateRoleMutation.mutate({
       userId: selectedUser.id,
       role: newRole,
-      reason,
+      reason: data.reason,
     })
-  }
+  })
 
   const isBanning = selectedUser?.role !== 'banned'
 
@@ -115,23 +127,24 @@ const Page: NextPageWithLayout = () => {
       </div>
       <h1 className="title">Users</h1>
 
-      <form onSubmit={handleSearch} className="mt-4 flex gap-2">
-        <input
-          type="text"
-          className="input flex-1"
-          placeholder="Search by name or email..."
-          value={searchInput}
-          onChange={e => setSearchInput(e.target.value)}
-        />
-        <button type="submit" className="btn secondary">
-          Search
-        </button>
-        {search ? (
-          <button type="button" className="btn ghost" onClick={handleClearSearch}>
-            Clear
+      <FormProvider {...searchMethods}>
+        <form onSubmit={handleSearch} className="mt-4 flex gap-2">
+          <input
+            type="text"
+            className="input flex-1"
+            placeholder="Search by name or email..."
+            {...searchMethods.register('query')}
+          />
+          <button type="submit" className="btn secondary">
+            Search
           </button>
-        ) : null}
-      </form>
+          {search ? (
+            <button type="button" className="btn ghost" onClick={handleClearSearch}>
+              Clear
+            </button>
+          ) : null}
+        </form>
+      </FormProvider>
 
       {users.isError ? (
         <div className="mt-4">
@@ -249,54 +262,52 @@ const Page: NextPageWithLayout = () => {
         setIsOpen={setModalOpen}
         title={isBanning ? 'Ban User' : 'Unban User'}
       >
-        <p className="modal-body">
-          {isBanning
-            ? `Are you sure you want to ban ${selectedUser?.display_name || 'this user'}? They will no longer be able to access the site.`
-            : `Are you sure you want to unban ${selectedUser?.display_name || 'this user'}? They will regain access to the site.`}
-        </p>
-        <div className="modal-body">
-          <label className="label">
-            <span className="label-text">Reason</span>
-            <textarea
-              className="input"
-              value={reason}
-              onChange={e => setReason(e.target.value)}
+        <FormProvider {...modalMethods}>
+          <p className="modal-body">
+            {isBanning
+              ? `Are you sure you want to ban ${selectedUser?.display_name || 'this user'}? They will no longer be able to access the site.`
+              : `Are you sure you want to unban ${selectedUser?.display_name || 'this user'}? They will regain access to the site.`}
+          </p>
+          <div className="modal-body">
+            <TextArea
+              name="reason"
+              label="Reason"
               placeholder={
                 isBanning
                   ? 'e.g. Violated community guidelines...'
                   : 'e.g. Appeal accepted, warning issued...'
               }
               rows={4}
+              options={{ required: 'Reason is required' }}
             />
-          </label>
-        </div>
-        <div className="modal-actions">
-          <button
-            type="button"
-            className={isBanning ? 'btn danger' : 'btn primary'}
-            onClick={handleBanUnban}
-            disabled={!reason.trim() || updateRoleMutation.isLoading}
-          >
-            {updateRoleMutation.isLoading
-              ? isBanning
-                ? 'Banning...'
-                : 'Unbanning...'
-              : isBanning
-                ? 'Yes, ban user'
-                : 'Yes, unban user'}
-          </button>
-          <button
-            type="button"
-            className="btn ghost"
-            onClick={() => {
-              setModalOpen(false)
-              setReason('')
-              setSelectedUser(null)
-            }}
-          >
-            Cancel
-          </button>
-        </div>
+          </div>
+          <div className="modal-actions">
+            <button
+              type="button"
+              className={isBanning ? 'btn danger' : 'btn primary'}
+              onClick={handleBanUnban}
+              disabled={updateRoleMutation.isLoading}
+            >
+              {updateRoleMutation.isLoading
+                ? isBanning
+                  ? 'Banning...'
+                  : 'Unbanning...'
+                : isBanning
+                  ? 'Yes, ban user'
+                  : 'Yes, unban user'}
+            </button>
+            <button
+              type="button"
+              className="btn ghost"
+              onClick={() => {
+                setModalOpen(false)
+                setSelectedUser(null)
+              }}
+            >
+              Cancel
+            </button>
+          </div>
+        </FormProvider>
       </Modal>
     </>
   )

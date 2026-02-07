@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
-import { Loading, Tabbar } from 'ui'
+import { FormProvider, useForm, useController } from 'react-hook-form'
+import { Input, Loading, Select, Tabbar } from 'ui'
 import {
   useAnnouncementCreate,
   useAnnouncementFind,
@@ -37,14 +38,27 @@ export function AnnouncementEditor({ id }: Props) {
   const isNew = !id
 
   const [mobileTab, setMobileTab] = useState<'edit' | 'preview'>('edit')
-
-  const [title, setTitle] = useState('')
-  const [content, setContent] = useState('')
-  const [style, setStyle] = useState('info')
-  const [href, setHref] = useState('')
-  const [startsAt, setStartsAt] = useState('')
-  const [endsAt, setEndsAt] = useState('')
   const [initialized, setInitialized] = useState(false)
+
+  const methods = useForm({
+    defaultValues: {
+      title: '',
+      content: '',
+      style: 'info',
+      href: '',
+      startsAt: '',
+      endsAt: '',
+    },
+  })
+
+  const contentController = useController({
+    name: 'content',
+    control: methods.control,
+    rules: { validate: v => v.trim() !== '' || 'Content is required' },
+  })
+
+  const watchedContent = methods.watch('content')
+  const watchedStyle = methods.watch('style')
 
   const existing = useAnnouncementFind(namespace, id ?? '', {
     enabled: !isNew && !!id && !!namespace,
@@ -52,15 +66,17 @@ export function AnnouncementEditor({ id }: Props) {
 
   useEffect(() => {
     if (existing.data && !initialized) {
-      setTitle(existing.data.title)
-      setContent(existing.data.content)
-      setStyle(existing.data.style)
-      setHref(existing.data.href ?? '')
-      setStartsAt(existing.data.starts_at.slice(0, 16))
-      setEndsAt(existing.data.ends_at.slice(0, 16))
+      methods.reset({
+        title: existing.data.title,
+        content: existing.data.content,
+        style: existing.data.style,
+        href: existing.data.href ?? '',
+        startsAt: existing.data.starts_at.slice(0, 16),
+        endsAt: existing.data.ends_at.slice(0, 16),
+      })
       setInitialized(true)
     }
-  }, [existing.data, initialized])
+  }, [existing.data, initialized, methods])
 
   const createMutation = useAnnouncementCreate(
     namespace,
@@ -85,32 +101,16 @@ export function AnnouncementEditor({ id }: Props) {
   )
 
   const isSaving = createMutation.isLoading || updateMutation.isLoading
-  const [errors, setErrors] = useState<Record<string, string>>({})
 
-  const handleSave = () => {
-    const newErrors: Record<string, string> = {}
-    if (!title.trim()) newErrors.title = 'Title is required'
-    if (!content.trim()) newErrors.content = 'Content is required'
-    if (!startsAt) newErrors.startsAt = 'Start date is required'
-    if (!endsAt) newErrors.endsAt = 'End date is required'
-    if (startsAt && endsAt && new Date(endsAt) <= new Date(startsAt)) {
-      newErrors.endsAt = 'End date must be after start date'
-    }
-
-    if (Object.keys(newErrors).length > 0) {
-      setErrors(newErrors)
-      return
-    }
-    setErrors({})
-
+  const handleSave = methods.handleSubmit(data => {
     const input = {
       id: isNew ? uuidv4() : id!,
-      title: title.trim(),
-      content: content,
-      style: style,
-      href: href.trim() || null,
-      starts_at: toUtcISOStringFromLocal(startsAt),
-      ends_at: toUtcISOStringFromLocal(endsAt),
+      title: data.title.trim(),
+      content: data.content,
+      style: data.style,
+      href: data.href.trim() || null,
+      starts_at: toUtcISOStringFromLocal(data.startsAt),
+      ends_at: toUtcISOStringFromLocal(data.endsAt),
     }
 
     const onSuccess = () => router.push(routes.announcements(namespace))
@@ -120,7 +120,7 @@ export function AnnouncementEditor({ id }: Props) {
     } else {
       updateMutation.mutate(input, { onSuccess })
     }
-  }
+  })
 
   if (!isNew && existing.isLoading) {
     return <Loading />
@@ -137,130 +137,83 @@ export function AnnouncementEditor({ id }: Props) {
   }
 
   return (
-    <div className="flex flex-col gap-6">
-      <div className="lg:hidden">
-        <Tabbar
-          alwaysExpanded
-          links={[
-            { label: 'Edit', active: mobileTab === 'edit', onClick: () => setMobileTab('edit') },
-            { label: 'Preview', active: mobileTab === 'preview', onClick: () => setMobileTab('preview') },
-          ]}
-        />
-      </div>
-
-      <div className="flex flex-col lg:flex-row gap-6">
-        <div className={`flex-1 min-w-0 flex-col ${mobileTab === 'preview' ? 'hidden lg:flex' : 'flex'}`}>
-          <div className="card flex flex-col gap-4">
-            <label className={`label ${errors.title ? 'error' : ''}`}>
-              <span className="label-text">Title</span>
-              <input
-                type="text"
-                className="input"
-                value={title}
-                onChange={e => setTitle(e.target.value)}
-                placeholder="Announcement title (admin reference)"
-              />
-              <span className="error">{errors.title}</span>
-            </label>
-
-            <label className="label">
-              <span className="label-text">Style</span>
-              <select
-                className="input"
-                value={style}
-                onChange={e => setStyle(e.target.value)}
-              >
-                {STYLE_OPTIONS.map(opt => (
-                  <option key={opt.value} value={opt.value}>
-                    {opt.label}
-                  </option>
-                ))}
-              </select>
-            </label>
-
-            <label className="label">
-              <span className="label-text">Link URL (optional)</span>
-              <input
-                type="url"
-                className="input"
-                value={href}
-                onChange={e => setHref(e.target.value)}
-                placeholder="https://..."
-              />
-              <span className="text-xs text-slate-500">
-                If set, the announcement will link to this URL
-              </span>
-            </label>
-
-            <div className="flex flex-col sm:flex-row gap-4">
-              <label className={`label flex-1 ${errors.startsAt ? 'error' : ''}`}>
-                <span className="label-text">Starts At (UTC)</span>
-                <input
-                  type="datetime-local"
-                  className="input"
-                  value={startsAt}
-                  onChange={e => setStartsAt(e.target.value)}
-                />
-                <span className="error">{errors.startsAt}</span>
-              </label>
-              <label className={`label flex-1 ${errors.endsAt ? 'error' : ''}`}>
-                <span className="label-text">Ends At (UTC)</span>
-                <input
-                  type="datetime-local"
-                  className="input"
-                  value={endsAt}
-                  onChange={e => setEndsAt(e.target.value)}
-                />
-                <span className="error">{errors.endsAt}</span>
-              </label>
-            </div>
-
-            <div className={`label flex-1 ${errors.content ? 'error' : ''}`}>
-              <span className="label-text">Content (Markdown)</span>
-              <CodeEditor
-                value={content}
-                onChange={setContent}
-                placeholder="Write your announcement content here..."
-                extensions={mdExtensions}
-              />
-              <span className="error">{errors.content}</span>
-            </div>
-
-            <div className="flex items-center justify-end gap-3 pt-2">
-              <button
-                type="button"
-                className="btn ghost"
-                onClick={() => router.back()}
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                className="btn primary"
-                onClick={handleSave}
-                disabled={isSaving}
-              >
-                {isSaving ? 'Saving...' : isNew ? 'Create Announcement' : 'Save Announcement'}
-              </button>
-            </div>
-          </div>
+    <FormProvider {...methods}>
+      <div className="flex flex-col gap-6">
+        <div className="lg:hidden">
+          <Tabbar
+            alwaysExpanded
+            links={[
+              { label: 'Edit', active: mobileTab === 'edit', onClick: () => setMobileTab('edit') },
+              { label: 'Preview', active: mobileTab === 'preview', onClick: () => setMobileTab('preview') },
+            ]}
+          />
         </div>
 
-        <div className={`flex-1 min-w-0 flex-col ${mobileTab === 'edit' ? 'hidden lg:flex' : 'flex'}`}>
-          <div className="card flex-1 overflow-auto" style={{ minHeight: '300px' }}>
-            <p className="text-xs text-slate-500 mb-2 uppercase tracking-wide">Preview</p>
-            {content.trim() ? (
-              <div className={`flash ${style} mb-4`}>
-                <MarkdownPreview content={content} />
+        <div className="flex flex-col lg:flex-row gap-6">
+          <div className={`flex-1 min-w-0 flex-col ${mobileTab === 'preview' ? 'hidden lg:flex' : 'flex'}`}>
+            <div className="card flex flex-col gap-4">
+              <Input name="title" label="Title" placeholder="Announcement title (admin reference)" options={{ required: 'Title is required' }} />
+
+              <Select name="style" label="Style" values={STYLE_OPTIONS} />
+
+              <Input name="href" type="url" label="Link URL (optional)" placeholder="https://..." hint="If set, the announcement will link to this URL" />
+
+              <div className="flex flex-col sm:flex-row gap-4">
+                <div className="flex-1">
+                  <Input name="startsAt" type="datetime-local" label="Starts At (UTC)" options={{ required: 'Start date is required' }} />
+                </div>
+                <div className="flex-1">
+                  <Input name="endsAt" type="datetime-local" label="Ends At (UTC)" options={{ required: 'End date is required', validate: (v) => { const startsAt = methods.getValues('startsAt'); if (startsAt && v && new Date(v) <= new Date(startsAt)) return 'End date must be after start date'; return true; } }} />
+                </div>
               </div>
-            ) : (
-              <p className="text-sm text-slate-400 italic">
-                Start typing to see a preview...
-              </p>
-            )}
+
+              <div className={`label flex-1 ${contentController.fieldState.error ? 'error' : ''}`}>
+                <span className="label-text">Content (Markdown)</span>
+                <CodeEditor
+                  value={contentController.field.value}
+                  onChange={contentController.field.onChange}
+                  placeholder="Write your announcement content here..."
+                  extensions={mdExtensions}
+                />
+                <span className="error">{contentController.fieldState.error?.message}</span>
+              </div>
+
+              <div className="flex items-center justify-end gap-3 pt-2">
+                <button
+                  type="button"
+                  className="btn ghost"
+                  onClick={() => router.back()}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  className="btn primary"
+                  onClick={handleSave}
+                  disabled={isSaving}
+                >
+                  {isSaving ? 'Saving...' : isNew ? 'Create Announcement' : 'Save Announcement'}
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div className={`flex-1 min-w-0 flex-col ${mobileTab === 'edit' ? 'hidden lg:flex' : 'flex'}`}>
+            <div className="card flex-1 overflow-auto" style={{ minHeight: '300px' }}>
+              <p className="text-xs text-slate-500 mb-2 uppercase tracking-wide">Preview</p>
+              {watchedContent.trim() ? (
+                <div className={`flash ${watchedStyle} mb-4`}>
+                  <MarkdownPreview content={watchedContent} />
+                </div>
+              ) : (
+                <p className="text-sm text-slate-400 italic">
+                  Start typing to see a preview...
+                </p>
+              )}
+            </div>
           </div>
         </div>
       </div>
-    </div>
+    </FormProvider>
   )
 }

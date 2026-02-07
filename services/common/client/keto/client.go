@@ -4,9 +4,9 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"sync"
 
 	keto "github.com/ory/keto-client-go"
+	"golang.org/x/sync/errgroup"
 )
 
 // Subject represents the subject of a permission check or relation.
@@ -140,31 +140,29 @@ const DefaultMaxConcurrency = 10
 // CheckPermissions checks multiple permissions in parallel.
 // Returns results in the same order as the input checks.
 // Limits concurrency to DefaultMaxConcurrency to avoid overwhelming the server.
+// Respects context cancellation - cancelled checks will have ctx.Err() in their result.
 func (c *Client) CheckPermissions(ctx context.Context, checks []PermissionCheck) []PermissionResult {
 	results := make([]PermissionResult, len(checks))
 	if len(checks) == 0 {
 		return results
 	}
 
-	var wg sync.WaitGroup
-	sem := make(chan struct{}, DefaultMaxConcurrency)
+	g, ctx := errgroup.WithContext(ctx)
+	g.SetLimit(DefaultMaxConcurrency)
 
 	for i, check := range checks {
-		wg.Add(1)
-		go func(i int, check PermissionCheck) {
-			defer wg.Done()
-			sem <- struct{}{}
-			defer func() { <-sem }()
-
+		i, check := i, check
+		g.Go(func() error {
 			allowed, err := c.CheckPermission(ctx, check.Namespace, check.Object, check.Relation, check.Subject)
 			results[i] = PermissionResult{
 				Check:   check,
 				Allowed: allowed,
 				Err:     err,
 			}
-		}(i, check)
+			return nil // Don't fail-fast; collect all results
+		})
 	}
 
-	wg.Wait()
+	g.Wait()
 	return results
 }

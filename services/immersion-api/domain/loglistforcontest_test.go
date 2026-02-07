@@ -2,7 +2,6 @@ package domain_test
 
 import (
 	"context"
-	"errors"
 	"testing"
 
 	"github.com/google/uuid"
@@ -110,13 +109,7 @@ func TestLogListForContest_Execute(t *testing.T) {
 			})
 
 			if test.expectedErr != nil {
-				assert.Error(t, err)
-				if errors.Is(test.expectedErr, domain.ErrUnauthorized) {
-					assert.ErrorIs(t, err, domain.ErrUnauthorized)
-				}
-				if errors.Is(test.expectedErr, domain.ErrNotFound) {
-					assert.ErrorIs(t, err, domain.ErrNotFound)
-				}
+				assert.ErrorIs(t, err, test.expectedErr)
 				return
 			}
 

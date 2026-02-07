@@ -16,10 +16,11 @@ export function AutocompleteInput<T>(props: {
   options: T[]
   match: (option: T, query: string) => boolean
   format: (option: T) => string
+  maxResults?: number
 }) {
   const [query, setQuery] = useState('')
 
-  const { name, label, options, match, format, hint } = props
+  const { name, label, options, match, format, hint, maxResults = 50 } = props
   const { control } = useFormContext()
   const {
     field: { value, onChange },
@@ -31,7 +32,9 @@ export function AutocompleteInput<T>(props: {
     errors[name]?.message?.toString() || 'This selection is invalid'
 
   const filtered =
-    query === '' ? options : options.filter(option => match(option, query))
+    query === ''
+      ? options.length <= maxResults ? options : []
+      : options.filter(option => match(option, query)).slice(0, maxResults)
 
   // Needs to be suffixed with -search so 1password doesn't try to autocomplete...
   const id = `${name}-search`
@@ -70,9 +73,11 @@ export function AutocompleteInput<T>(props: {
             transition
             className={`absolute mt-2 z-50 max-h-60 w-full overflow-auto bg-white py-1 shadow-md shadow-slate-500/20 ring-1 ring-secondary ring-opacity-5 focus:outline-none transition ease-in duration-100 data-[closed]:opacity-0`}
           >
-            {filtered.length === 0 && query !== '' ? (
+            {filtered.length === 0 ? (
               <div className="relative cursor-default select-none py-2 px-4 text-gray-700">
-                No matches
+                {query === '' && options.length > maxResults
+                  ? 'Start typing to search...'
+                  : 'No matches'}
               </div>
             ) : (
               filtered.map(option => (

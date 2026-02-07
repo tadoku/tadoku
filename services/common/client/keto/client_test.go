@@ -90,7 +90,8 @@ func TestAddRelation(t *testing.T) {
 		assert.Equal(t, "global", body["object"])
 		assert.Equal(t, "admins", body["relation"])
 
-		subjectSet := body["subject_set"].(map[string]any)
+		subjectSet, ok := body["subject_set"].(map[string]any)
+		require.True(t, ok, "subject_set should be a map")
 		assert.Equal(t, "User", subjectSet["namespace"])
 		assert.Equal(t, "test-user-id", subjectSet["object"])
 

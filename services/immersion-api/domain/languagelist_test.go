@@ -23,15 +23,15 @@ func (m *mockLanguageListRepo) ListLanguages(_ context.Context) ([]domain.Langua
 }
 
 func TestLanguageList(t *testing.T) {
-	adminCtx := context.WithValue(context.Background(), commondomain.CtxIdentityKey, &commondomain.UserIdentity{
+	adminCtx := ctxWithToken(&commondomain.UserIdentity{
 		Subject: "00000000-0000-0000-0000-000000000001",
 		Role:    commondomain.RoleAdmin,
 	})
-	userCtx := context.WithValue(context.Background(), commondomain.CtxIdentityKey, &commondomain.UserIdentity{
+	userCtx := ctxWithToken(&commondomain.UserIdentity{
 		Subject: "00000000-0000-0000-0000-000000000002",
 		Role:    commondomain.RoleUser,
 	})
-	guestCtx := context.WithValue(context.Background(), commondomain.CtxIdentityKey, &commondomain.UserIdentity{
+	guestCtx := ctxWithToken(&commondomain.UserIdentity{
 		Subject: "00000000-0000-0000-0000-000000000003",
 		Role:    commondomain.RoleGuest,
 	})

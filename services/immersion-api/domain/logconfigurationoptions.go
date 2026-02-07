@@ -2,8 +2,6 @@ package domain
 
 import (
 	"context"
-
-	commondomain "github.com/tadoku/tadoku/services/common/domain"
 )
 
 type LogConfigurationOptionsRepository interface {
@@ -26,7 +24,7 @@ func NewLogConfigurationOptions(repo LogConfigurationOptionsRepository) *LogConf
 }
 
 func (s *LogConfigurationOptions) Execute(ctx context.Context) (*LogConfigurationOptionsResponse, error) {
-	if commondomain.IsRole(ctx, commondomain.RoleGuest) {
+	if isGuest(ctx) {
 		return nil, ErrUnauthorized
 	}
 

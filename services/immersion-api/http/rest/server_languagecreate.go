@@ -29,6 +29,9 @@ func (s *Server) LanguageCreate(ctx echo.Context) error {
 		if errors.Is(err, domain.ErrForbidden) {
 			return ctx.NoContent(http.StatusForbidden)
 		}
+		if errors.Is(err, domain.ErrAuthzUnavailable) {
+			return ctx.NoContent(http.StatusServiceUnavailable)
+		}
 		if errors.Is(err, domain.ErrRequestInvalid) {
 			return ctx.NoContent(http.StatusBadRequest)
 		}

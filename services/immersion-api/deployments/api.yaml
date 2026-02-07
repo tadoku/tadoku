@@ -44,6 +44,8 @@ spec:
             value: "http://kratos-admin.default"
           - name: API_OATHKEEPER_URL
             value: "http://oathkeeper-proxy.default:4455"
+          - name: API_KETO_READ_URL
+            value: "http://keto-read.default:4466"
           - name: SERVICE_NAME
             value: "immersion-api"
         volumeMounts:

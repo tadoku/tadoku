@@ -18,6 +18,9 @@ func (s *Server) LogDeleteByID(ctx echo.Context, id types.UUID) error {
 		if errors.Is(err, domain.ErrForbidden) {
 			return ctx.NoContent(http.StatusForbidden)
 		}
+		if errors.Is(err, domain.ErrAuthzUnavailable) {
+			return ctx.NoContent(http.StatusServiceUnavailable)
+		}
 		if errors.Is(err, domain.ErrUnauthorized) {
 			return ctx.NoContent(http.StatusUnauthorized)
 		}

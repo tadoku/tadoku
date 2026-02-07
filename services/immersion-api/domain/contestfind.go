@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/google/uuid"
-	commondomain "github.com/tadoku/tadoku/services/common/domain"
 )
 
 type ContestFindRepository interface {
@@ -25,7 +24,7 @@ func NewContestFind(repo ContestFindRepository) *ContestFind {
 }
 
 func (s *ContestFind) Execute(ctx context.Context, req *ContestFindRequest) (*ContestView, error) {
-	req.IncludeDeleted = commondomain.IsRole(ctx, commondomain.RoleAdmin)
+	req.IncludeDeleted = isAdmin(ctx)
 
 	return s.repo.FindContestByID(ctx, req)
 }

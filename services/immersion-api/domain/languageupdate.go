@@ -3,8 +3,6 @@ package domain
 import (
 	"context"
 	"fmt"
-
-	commondomain "github.com/tadoku/tadoku/services/common/domain"
 )
 
 type LanguageUpdateRepository interface {
@@ -26,12 +24,12 @@ func NewLanguageUpdate(repo LanguageUpdateRepository) *LanguageUpdate {
 }
 
 func (s *LanguageUpdate) Execute(ctx context.Context, req *LanguageUpdateRequest) error {
-	if commondomain.IsRole(ctx, commondomain.RoleGuest) {
+	if isGuest(ctx) {
 		return ErrUnauthorized
 	}
 
-	if !commondomain.IsRole(ctx, commondomain.RoleAdmin) {
-		return ErrForbidden
+	if err := requireAdmin(ctx); err != nil {
+		return err
 	}
 
 	if req.Name == "" || len(req.Name) > 100 {

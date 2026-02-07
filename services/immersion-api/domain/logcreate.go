@@ -47,7 +47,7 @@ func NewLogCreate(repo LogCreateRepository, clock commondomain.Clock, userUpsert
 
 func (s *LogCreate) Execute(ctx context.Context, req *LogCreateRequest) (*Log, error) {
 	// Make sure the user is authorized to create a log
-	if commondomain.IsRole(ctx, commondomain.RoleGuest) {
+	if isGuest(ctx) {
 		return nil, ErrUnauthorized
 	}
 

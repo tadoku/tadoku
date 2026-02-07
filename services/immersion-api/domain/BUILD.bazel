@@ -3,6 +3,7 @@ load("@rules_go//go:def.bzl", "go_library", "go_test")
 go_library(
     name = "domain",
     srcs = [
+        "authz.go",
         "contestconfigurationoptions.go",
         "contestcreate.go",
         "contestfind.go",
@@ -43,6 +44,7 @@ go_library(
     importpath = "github.com/tadoku/tadoku/services/immersion-api/domain",
     visibility = ["//visibility:public"],
     deps = [
+        "//services/common/authz/roles",
         "//services/common/domain",
         "@com_github_go_playground_validator_v10//:validator",
         "@com_github_google_uuid//:uuid",
@@ -83,11 +85,13 @@ go_test(
         "registrationlistongoing_test.go",
         "registrationlistyearly_test.go",
         "registrationupsert_test.go",
+        "roles_context_test.go",
         "userlist_test.go",
         "userupsert_test.go",
     ],
     deps = [
         ":domain",
+        "//services/common/authz/roles",
         "//services/common/domain",
         "@com_github_google_uuid//:uuid",
         "@com_github_stretchr_testify//assert",

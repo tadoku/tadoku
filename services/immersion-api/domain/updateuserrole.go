@@ -30,13 +30,13 @@ func NewUpdateUserRole(repo UpdateUserRoleRepository) *UpdateUserRole {
 
 func (s *UpdateUserRole) Execute(ctx context.Context, req *UpdateUserRoleRequest) error {
 	// Check if user is authenticated
-	if commondomain.IsRole(ctx, commondomain.RoleGuest) {
+	if isGuest(ctx) {
 		return ErrUnauthorized
 	}
 
 	// Only admins can update roles
-	if !commondomain.IsRole(ctx, commondomain.RoleAdmin) {
-		return ErrForbidden
+	if err := requireAdmin(ctx); err != nil {
+		return err
 	}
 
 	// Get session to extract moderator user ID

@@ -49,7 +49,7 @@ func TestLogConfigurationOptions_Execute(t *testing.T) {
 		}
 
 		svc := domain.NewLogConfigurationOptions(repo)
-		ctx := context.WithValue(context.Background(), commondomain.CtxIdentityKey, &commondomain.UserIdentity{Role: commondomain.RoleUser})
+		ctx := ctxWithRole(commondomain.RoleUser)
 		resp, err := svc.Execute(ctx)
 
 		require.NoError(t, err)
@@ -67,13 +67,13 @@ func TestLogConfigurationOptions_Execute(t *testing.T) {
 		repo := &mockLogConfigurationOptionsRepo{}
 
 		svc := domain.NewLogConfigurationOptions(repo)
-		ctx := context.WithValue(context.Background(), commondomain.CtxIdentityKey, &commondomain.UserIdentity{Role: commondomain.RoleGuest})
+		ctx := ctxWithRole(commondomain.RoleGuest)
 		_, err := svc.Execute(ctx)
 
 		assert.ErrorIs(t, err, domain.ErrUnauthorized)
 	})
 
-	t.Run("allows access when no session (IsRole returns false for guest check)", func(t *testing.T) {
+	t.Run("returns unauthorized when no session", func(t *testing.T) {
 		repo := &mockLogConfigurationOptionsRepo{
 			fetchFn: func(ctx context.Context) (*domain.LogConfigurationOptionsResponse, error) {
 				return &domain.LogConfigurationOptionsResponse{}, nil
@@ -81,12 +81,9 @@ func TestLogConfigurationOptions_Execute(t *testing.T) {
 		}
 
 		svc := domain.NewLogConfigurationOptions(repo)
-		// Note: In production, middleware always sets a session. This test verifies
-		// that when IsRole returns false (no session), the guest check doesn't trigger.
-		resp, err := svc.Execute(context.Background())
+		_, err := svc.Execute(context.Background())
 
-		require.NoError(t, err)
-		assert.NotNil(t, resp)
+		assert.ErrorIs(t, err, domain.ErrUnauthorized)
 	})
 
 	t.Run("returns repository error", func(t *testing.T) {
@@ -98,7 +95,7 @@ func TestLogConfigurationOptions_Execute(t *testing.T) {
 		}
 
 		svc := domain.NewLogConfigurationOptions(repo)
-		ctx := context.WithValue(context.Background(), commondomain.CtxIdentityKey, &commondomain.UserIdentity{Role: commondomain.RoleUser})
+		ctx := ctxWithRole(commondomain.RoleUser)
 		_, err := svc.Execute(ctx)
 
 		assert.ErrorIs(t, err, repoErr)

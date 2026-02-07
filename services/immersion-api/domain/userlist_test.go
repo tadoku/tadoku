@@ -39,9 +39,7 @@ func TestUserList_Execute(t *testing.T) {
 		cache := &mockUserListCache{users: users}
 		svc := domain.NewUserList(cache, nil)
 
-		ctx := context.WithValue(context.Background(), commondomain.CtxIdentityKey, &commondomain.UserIdentity{
-			Role: commondomain.RoleUser,
-		})
+		ctx := ctxWithRole(commondomain.RoleUser)
 
 		result, err := svc.Execute(ctx, &domain.UserListRequest{})
 
@@ -53,9 +51,7 @@ func TestUserList_Execute(t *testing.T) {
 		cache := &mockUserListCache{users: users}
 		svc := domain.NewUserList(cache, nil)
 
-		ctx := context.WithValue(context.Background(), commondomain.CtxIdentityKey, &commondomain.UserIdentity{
-			Role: commondomain.RoleAdmin,
-		})
+		ctx := ctxWithRole(commondomain.RoleAdmin)
 
 		result, err := svc.Execute(ctx, &domain.UserListRequest{PerPage: 20})
 
@@ -68,9 +64,7 @@ func TestUserList_Execute(t *testing.T) {
 		cache := &mockUserListCache{users: users}
 		svc := domain.NewUserList(cache, nil)
 
-		ctx := context.WithValue(context.Background(), commondomain.CtxIdentityKey, &commondomain.UserIdentity{
-			Role: commondomain.RoleAdmin,
-		})
+		ctx := ctxWithRole(commondomain.RoleAdmin)
 
 		result, err := svc.Execute(ctx, &domain.UserListRequest{PerPage: 2, Page: 0})
 
@@ -84,9 +78,7 @@ func TestUserList_Execute(t *testing.T) {
 		cache := &mockUserListCache{users: users}
 		svc := domain.NewUserList(cache, nil)
 
-		ctx := context.WithValue(context.Background(), commondomain.CtxIdentityKey, &commondomain.UserIdentity{
-			Role: commondomain.RoleAdmin,
-		})
+		ctx := ctxWithRole(commondomain.RoleAdmin)
 
 		result, err := svc.Execute(ctx, &domain.UserListRequest{Query: "bob"})
 

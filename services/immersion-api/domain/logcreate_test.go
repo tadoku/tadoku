@@ -86,7 +86,7 @@ func TestLogCreate_Execute(t *testing.T) {
 		clock := commondomain.NewMockClock(now)
 		svc := domain.NewLogCreate(repo, clock, userUpsert)
 
-		ctx := context.WithValue(context.Background(), commondomain.CtxIdentityKey, &commondomain.UserIdentity{
+		ctx := ctxWithToken(&commondomain.UserIdentity{
 			Role:    commondomain.RoleGuest,
 			Subject: userID.String(),
 		})
@@ -117,7 +117,7 @@ func TestLogCreate_Execute(t *testing.T) {
 		clock := commondomain.NewMockClock(now)
 		svc := domain.NewLogCreate(repo, clock, userUpsert)
 
-		ctx := context.WithValue(context.Background(), commondomain.CtxIdentityKey, &commondomain.UserIdentity{
+		ctx := ctxWithToken(&commondomain.UserIdentity{
 			Role:    commondomain.RoleUser,
 			Subject: userID.String(),
 		})
@@ -139,7 +139,7 @@ func TestLogCreate_Execute(t *testing.T) {
 		clock := commondomain.NewMockClock(now)
 		svc := domain.NewLogCreate(repo, clock, userUpsert)
 
-		ctx := context.WithValue(context.Background(), commondomain.CtxIdentityKey, &commondomain.UserIdentity{
+		ctx := ctxWithToken(&commondomain.UserIdentity{
 			Role:    commondomain.RoleUser,
 			Subject: userID.String(),
 		})
@@ -165,7 +165,7 @@ func TestLogCreate_Execute(t *testing.T) {
 		clock := commondomain.NewMockClock(now)
 		svc := domain.NewLogCreate(repo, clock, userUpsert)
 
-		ctx := context.WithValue(context.Background(), commondomain.CtxIdentityKey, &commondomain.UserIdentity{
+		ctx := ctxWithToken(&commondomain.UserIdentity{
 			Role:    commondomain.RoleUser,
 			Subject: userID.String(),
 		})
@@ -191,7 +191,7 @@ func TestLogCreate_Execute(t *testing.T) {
 		clock := commondomain.NewMockClock(now)
 		svc := domain.NewLogCreate(repo, clock, userUpsert)
 
-		ctx := context.WithValue(context.Background(), commondomain.CtxIdentityKey, &commondomain.UserIdentity{
+		ctx := ctxWithToken(&commondomain.UserIdentity{
 			Role:    commondomain.RoleUser,
 			Subject: userID.String(),
 		})
@@ -219,7 +219,7 @@ func TestLogCreate_Execute(t *testing.T) {
 		clock := commondomain.NewMockClock(now)
 		svc := domain.NewLogCreate(repo, clock, userUpsert)
 
-		ctx := context.WithValue(context.Background(), commondomain.CtxIdentityKey, &commondomain.UserIdentity{
+		ctx := ctxWithToken(&commondomain.UserIdentity{
 			Role:    commondomain.RoleUser,
 			Subject: userID.String(),
 		})
@@ -267,7 +267,7 @@ func TestLogCreate_Execute(t *testing.T) {
 		clock := commondomain.NewMockClock(now)
 		svc := domain.NewLogCreate(repo, clock, userUpsert)
 
-		ctx := context.WithValue(context.Background(), commondomain.CtxIdentityKey, &commondomain.UserIdentity{
+		ctx := ctxWithToken(&commondomain.UserIdentity{
 			Role:    commondomain.RoleUser,
 			Subject: userID.String(),
 		})

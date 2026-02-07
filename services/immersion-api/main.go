@@ -11,6 +11,8 @@ import (
 
 	"github.com/go-playground/validator/v10"
 	"github.com/kelseyhightower/envconfig"
+	commonroles "github.com/tadoku/tadoku/services/common/authz/roles"
+	ketoclient "github.com/tadoku/tadoku/services/common/client/keto"
 	"github.com/tadoku/tadoku/services/common/domain"
 	tadokumiddleware "github.com/tadoku/tadoku/services/common/middleware"
 	"github.com/tadoku/tadoku/services/common/storage/memory"
@@ -34,6 +36,7 @@ type Config struct {
 	JWKS                   string  `validate:"required"`
 	KratosURL              string  `validate:"required" envconfig:"kratos_url"`
 	OathkeeperURL          string  `validate:"required" envconfig:"oathkeeper_url"`
+	KetoReadURL            string  `validate:"required" envconfig:"keto_read_url"`
 	ServiceName            string  `envconfig:"service_name" default:"immersion-api"`
 	SentryDSN              string  `envconfig:"sentry_dns"`
 	SentryTracesSampleRate float64 `validate:"required_with=SentryDSN" envconfig:"sentry_traces_sample_rate"`
@@ -60,11 +63,14 @@ func main() {
 
 	postgresRepository := repository.NewRepository(psql)
 	configRoleRepository := memory.NewRoleRepository("/etc/tadoku/permissions/roles.yaml")
+	ketoClient := ketoclient.NewClient(cfg.KetoReadURL, cfg.KetoReadURL)
+	rolesSvc := commonroles.NewKetoService(ketoClient, "app", "tadoku")
 
 	e := echo.New()
 	e.Use(tadokumiddleware.Logger([]string{"/ping"}))
 	e.Use(tadokumiddleware.VerifyJWT(cfg.JWKS))
 	e.Use(tadokumiddleware.Identity(configRoleRepository, postgresRepository))
+	e.Use(tadokumiddleware.RolesFromKeto(rolesSvc))
 	e.Use(tadokumiddleware.RequireServiceAudience(cfg.ServiceName))
 	e.Use(tadokumiddleware.RejectBannedUsers())
 	e.Use(middleware.Recover())

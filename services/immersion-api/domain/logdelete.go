@@ -29,7 +29,7 @@ func NewLogDelete(repo LogDeleteRepository, clock commondomain.Clock) *LogDelete
 }
 
 func (s *LogDelete) Execute(ctx context.Context, req *LogDeleteRequest) error {
-	if commondomain.IsRole(ctx, commondomain.RoleGuest) {
+	if isGuest(ctx) {
 		return ErrUnauthorized
 	}
 
@@ -47,7 +47,7 @@ func (s *LogDelete) Execute(ctx context.Context, req *LogDeleteRequest) error {
 	}
 
 	isOwner := log.UserID == uuid.MustParse(session.Subject)
-	if !isOwner && !commondomain.IsRole(ctx, commondomain.RoleAdmin) {
+	if !isOwner && !isAdmin(ctx) {
 		return ErrForbidden
 	}
 

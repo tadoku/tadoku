@@ -2,8 +2,6 @@ package domain
 
 import (
 	"context"
-
-	commondomain "github.com/tadoku/tadoku/services/common/domain"
 )
 
 type ContestConfigurationOptionsRepository interface {
@@ -30,7 +28,7 @@ func (s *ContestConfigurationOptions) Execute(ctx context.Context) (*ContestConf
 		return nil, err
 	}
 
-	res.CanCreateOfficialRound = commondomain.IsRole(ctx, commondomain.RoleAdmin)
+	res.CanCreateOfficialRound = isAdmin(ctx)
 
 	return res, nil
 }

@@ -66,11 +66,13 @@ func NewContestCreate(repo ContestCreateRepository, clock commondomain.Clock, us
 
 func (s *ContestCreate) Execute(ctx context.Context, req *ContestCreateRequest) (*ContestCreateResponse, error) {
 	// Make sure the user is authorized to create a contest
-	if commondomain.IsRole(ctx, commondomain.RoleGuest) {
+	if isGuest(ctx) {
 		return nil, ErrUnauthorized
 	}
-	if req.Official && !commondomain.IsRole(ctx, commondomain.RoleAdmin) {
-		return nil, ErrForbidden
+	if req.Official {
+		if err := requireAdmin(ctx); err != nil {
+			return nil, err
+		}
 	}
 
 	if err := s.userUpsert.Execute(ctx); err != nil {
@@ -86,7 +88,7 @@ func (s *ContestCreate) Execute(ctx context.Context, req *ContestCreateRequest) 
 	req.OwnerUserDisplayName = session.DisplayName
 
 	// Check if user has permission to create contest
-	if !commondomain.IsRole(ctx, commondomain.RoleAdmin) {
+	if !isAdmin(ctx) {
 		contestCount, err := s.repo.GetContestsByUserCountForYear(ctx, s.clock.Now(), req.OwnerUserID)
 		if err != nil {
 			return nil, fmt.Errorf("could not check permission for contest creation: %w", err)
@@ -114,7 +116,7 @@ func (s *ContestCreate) Execute(ctx context.Context, req *ContestCreateRequest) 
 		return nil, fmt.Errorf("contest cannot start after it has ended: %w", ErrInvalidContest)
 	}
 
-	if !commondomain.IsRole(ctx, commondomain.RoleAdmin) {
+	if !isAdmin(ctx) {
 		now := s.clock.Now()
 		if now.After(req.ContestEnd) || now.After(req.ContestStart) {
 			return nil, fmt.Errorf("contest cannot be in the past or already have started: %w", ErrInvalidContest)

@@ -38,6 +38,9 @@ func (s *Server) UsersList(ctx echo.Context, params openapi.UsersListParams) err
 		if errors.Is(err, domain.ErrForbidden) {
 			return ctx.NoContent(http.StatusForbidden)
 		}
+		if errors.Is(err, domain.ErrAuthzUnavailable) {
+			return ctx.NoContent(http.StatusServiceUnavailable)
+		}
 		ctx.Echo().Logger.Error(err)
 		return ctx.NoContent(http.StatusInternalServerError)
 	}

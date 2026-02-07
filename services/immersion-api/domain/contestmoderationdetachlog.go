@@ -30,12 +30,12 @@ func NewContestModerationDetachLog(repo ContestModerationDetachLogRepository) *C
 
 func (s *ContestModerationDetachLog) Execute(ctx context.Context, req *ContestModerationDetachLogRequest) error {
 	// Check if user is authenticated
-	if commondomain.IsRole(ctx, commondomain.RoleGuest) {
+	if isGuest(ctx) {
 		return ErrUnauthorized
 	}
 
-	if commondomain.IsRole(ctx, commondomain.RoleBanned) {
-		return ErrForbidden
+	if err := requireNotBanned(ctx); err != nil {
+		return err
 	}
 
 	// Get session to extract user ID
@@ -56,7 +56,7 @@ func (s *ContestModerationDetachLog) Execute(ctx context.Context, req *ContestMo
 
 	// Check authorization: user must be contest owner OR have Admin role
 	isContestOwner := contest.OwnerUserID == userID
-	isAdmin := commondomain.IsRole(ctx, commondomain.RoleAdmin)
+	isAdmin := isAdmin(ctx)
 
 	if !isContestOwner && !isAdmin {
 		return ErrForbidden

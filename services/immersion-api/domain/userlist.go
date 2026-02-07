@@ -70,8 +70,8 @@ func (s *UserList) Execute(ctx context.Context, req *UserListRequest) (*UserList
 	if session == nil {
 		return nil, ErrUnauthorized
 	}
-	if session.Role != commondomain.RoleAdmin {
-		return nil, ErrForbidden
+	if err := requireAdmin(ctx); err != nil {
+		return nil, err
 	}
 
 	perPage := int(req.PerPage)

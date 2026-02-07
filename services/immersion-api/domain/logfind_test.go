@@ -113,7 +113,7 @@ func TestLogFind_Execute(t *testing.T) {
 				Subject:     test.userID.String(),
 				DisplayName: "TestUser",
 			}
-			ctx := context.WithValue(context.Background(), commondomain.CtxIdentityKey, token)
+			ctx := ctxWithToken(token)
 
 			repo := &logFindRepositoryMock{
 				log: test.repoLog,

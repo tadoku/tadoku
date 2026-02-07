@@ -30,6 +30,9 @@ func (s *Server) ContestRegistrationUpsert(ctx echo.Context, id types.UUID) erro
 		if errors.Is(err, domain.ErrForbidden) {
 			return ctx.NoContent(http.StatusForbidden)
 		}
+		if errors.Is(err, domain.ErrAuthzUnavailable) {
+			return ctx.NoContent(http.StatusServiceUnavailable)
+		}
 		if errors.Is(err, domain.ErrNotFound) {
 			return ctx.NoContent(http.StatusNotFound)
 		}

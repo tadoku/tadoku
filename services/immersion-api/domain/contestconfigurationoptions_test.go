@@ -61,7 +61,7 @@ func TestContestConfigurationOptions_Execute(t *testing.T) {
 		}
 
 		svc := domain.NewContestConfigurationOptions(repo)
-		ctx := context.WithValue(context.Background(), commondomain.CtxIdentityKey, &commondomain.UserIdentity{Role: commondomain.RoleAdmin})
+		ctx := ctxWithRole(commondomain.RoleAdmin)
 		resp, err := svc.Execute(ctx)
 
 		require.NoError(t, err)

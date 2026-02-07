@@ -27,7 +27,7 @@ func NewRegistrationListOngoing(repo RegistrationListOngoingRepository, clock co
 }
 
 func (s *RegistrationListOngoing) Execute(ctx context.Context) (*ContestRegistrations, error) {
-	if commondomain.IsRole(ctx, commondomain.RoleGuest) {
+	if isGuest(ctx) {
 		return nil, ErrUnauthorized
 	}
 

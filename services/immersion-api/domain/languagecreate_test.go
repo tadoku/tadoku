@@ -29,11 +29,11 @@ func (m *mockLanguageCreateRepo) LanguageExists(_ context.Context, code string) 
 }
 
 func TestLanguageCreate(t *testing.T) {
-	adminCtx := context.WithValue(context.Background(), commondomain.CtxIdentityKey, &commondomain.UserIdentity{
+	adminCtx := ctxWithToken(&commondomain.UserIdentity{
 		Subject: "00000000-0000-0000-0000-000000000001",
 		Role:    commondomain.RoleAdmin,
 	})
-	userCtx := context.WithValue(context.Background(), commondomain.CtxIdentityKey, &commondomain.UserIdentity{
+	userCtx := ctxWithToken(&commondomain.UserIdentity{
 		Subject: "00000000-0000-0000-0000-000000000002",
 		Role:    commondomain.RoleUser,
 	})

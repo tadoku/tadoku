@@ -36,7 +36,7 @@ func (s *LogFind) Execute(ctx context.Context, req *LogFindRequest) (*Log, error
 		return nil, ErrUnauthorized
 	}
 
-	req.IncludeDeleted = commondomain.IsRole(ctx, commondomain.RoleAdmin)
+	req.IncludeDeleted = isAdmin(ctx)
 
 	log, err := s.repo.FindLogByID(ctx, req)
 	if err != nil {
@@ -44,7 +44,7 @@ func (s *LogFind) Execute(ctx context.Context, req *LogFindRequest) (*Log, error
 	}
 
 	// Needed to prevent leaking private registrations, only show to admins and the owner of the log
-	isAdmin := commondomain.IsRole(ctx, commondomain.RoleAdmin)
+	isAdmin := isAdmin(ctx)
 	isOwner := log.UserID == userID
 	if !isAdmin && !isOwner {
 		log.Registrations = nil

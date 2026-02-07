@@ -13,8 +13,14 @@ import (
 func (s *Server) ContestCreatePermissionCheck(ctx echo.Context) error {
 	err := s.contestPermissionCheck.Execute(ctx.Request().Context())
 	if err != nil {
+		if errors.Is(err, domain.ErrUnauthorized) {
+			return ctx.NoContent(http.StatusUnauthorized)
+		}
 		if errors.Is(err, domain.ErrForbidden) {
 			return ctx.NoContent(http.StatusForbidden)
+		}
+		if errors.Is(err, domain.ErrAuthzUnavailable) {
+			return ctx.NoContent(http.StatusServiceUnavailable)
 		}
 		ctx.Echo().Logger.Errorf("could not fetch create permission check: %w", err)
 		return ctx.NoContent(http.StatusInternalServerError)

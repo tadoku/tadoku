@@ -50,8 +50,7 @@ func main() {
 	pageRepository := postgres.NewPageRepository(psql)
 	postRepository := postgres.NewPostRepository(psql)
 	announcementRepository := postgres.NewAnnouncementRepository(psql)
-	ketoClient := ketoclient.NewClient(cfg.KetoReadURL, cfg.KetoReadURL)
-	rolesSvc := commonroles.NewKetoService(ketoClient, "app", "tadoku")
+	rolesSvc := commonroles.NewKetoService(ketoclient.NewReadClient(cfg.KetoReadURL), "app", "tadoku")
 
 	e := echo.New()
 	e.Use(tadokumiddleware.Logger([]string{"/ping"}))

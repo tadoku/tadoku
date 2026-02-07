@@ -74,6 +74,17 @@ func NewClient(readURL, writeURL string) *Client {
 	}
 }
 
+// NewReadClient creates a client that can only check permissions.
+// Relation operations will return an error.
+func NewReadClient(readURL string) PermissionChecker {
+	readCfg := keto.NewConfiguration()
+	readCfg.Servers = keto.ServerConfigurations{{URL: readURL}}
+
+	return &Client{
+		readClient: keto.NewAPIClient(readCfg),
+	}
+}
+
 // CheckPermission checks if a subject has a relation on an object.
 // Returns (true, nil) if allowed, (false, nil) if denied, or (false, error) on failure.
 // Note: Keto returns HTTP 403 when permission is denied, which is treated as (false, nil).
@@ -109,6 +120,10 @@ func (c *Client) CheckPermission(ctx context.Context, namespace, object, relatio
 
 // AddRelation creates a relation tuple in Keto.
 func (c *Client) AddRelation(ctx context.Context, namespace, object, relation string, subject Subject) error {
+	if c.writeClient == nil {
+		return fmt.Errorf("keto write client not configured")
+	}
+
 	body := keto.CreateRelationshipBody{
 		Namespace: &namespace,
 		Object:    &object,
@@ -142,6 +157,10 @@ func (c *Client) AddRelation(ctx context.Context, namespace, object, relation st
 
 // DeleteRelation removes a relation tuple from Keto.
 func (c *Client) DeleteRelation(ctx context.Context, namespace, object, relation string, subject Subject) error {
+	if c.writeClient == nil {
+		return fmt.Errorf("keto write client not configured")
+	}
+
 	req := c.writeClient.RelationshipApi.DeleteRelationships(ctx).
 		Namespace(namespace).
 		Object(object).

@@ -45,8 +45,7 @@ func main() {
 	}
 	_ = psql // Will be used when repositories are added
 
-	ketoClient := ketoclient.NewClient(cfg.KetoReadURL, cfg.KetoReadURL)
-	rolesSvc := commonroles.NewKetoService(ketoClient, "app", "tadoku")
+	rolesSvc := commonroles.NewKetoService(ketoclient.NewReadClient(cfg.KetoReadURL), "app", "tadoku")
 
 	e := echo.New()
 	e.Use(tadokumiddleware.Logger([]string{"/ping"}))

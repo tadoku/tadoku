@@ -42,9 +42,6 @@ func (s *RegistrationUpsert) Execute(ctx context.Context, req *RegistrationUpser
 	if isGuest(ctx) {
 		return ErrUnauthorized
 	}
-	if err := requireNotBanned(ctx); err != nil {
-		return err
-	}
 
 	if err := s.userUpsert.Execute(ctx); err != nil {
 		return fmt.Errorf("could not update user: %w", err)

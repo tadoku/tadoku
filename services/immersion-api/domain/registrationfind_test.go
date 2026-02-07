@@ -66,13 +66,6 @@ func TestRegistrationFind_Execute(t *testing.T) {
 			expectRepoCalled: false,
 		},
 		{
-			name:             "banned user cannot find registration",
-			role:             commondomain.RoleBanned,
-			userID:           userID,
-			expectedErr:      domain.ErrUnauthorized,
-			expectRepoCalled: false,
-		},
-		{
 			name:             "registration not found",
 			role:             commondomain.RoleUser,
 			userID:           userID,

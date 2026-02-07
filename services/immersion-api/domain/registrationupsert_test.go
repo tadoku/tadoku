@@ -69,26 +69,6 @@ func TestRegistrationUpsert_Execute(t *testing.T) {
 		AllowedLanguages: []domain.Language{},
 	}
 
-	t.Run("returns forbidden for banned user", func(t *testing.T) {
-		userRepo := &mockUserUpsertRepositoryForReg{}
-		userUpsert := domain.NewUserUpsert(userRepo)
-		repo := &mockRegistrationUpsertRepository{}
-		svc := domain.NewRegistrationUpsert(repo, userUpsert)
-
-		ctx := ctxWithToken(&commondomain.UserIdentity{
-			Role:    commondomain.RoleBanned,
-			Subject: userID.String(),
-		})
-
-		err := svc.Execute(ctx, &domain.RegistrationUpsertRequest{
-			ContestID:     contestID,
-			LanguageCodes: []string{"jpn"},
-		})
-
-		assert.ErrorIs(t, err, domain.ErrForbidden)
-		assert.False(t, repo.upsertCalled)
-	})
-
 	t.Run("returns unauthorized for guest", func(t *testing.T) {
 		userRepo := &mockUserUpsertRepositoryForReg{}
 		userUpsert := domain.NewUserUpsert(userRepo)

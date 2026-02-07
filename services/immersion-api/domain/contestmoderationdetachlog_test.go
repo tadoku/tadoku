@@ -75,25 +75,6 @@ func TestContestModerationDetachLog_Execute(t *testing.T) {
 		assert.False(t, repo.detachCalled)
 	})
 
-	t.Run("returns forbidden for banned user", func(t *testing.T) {
-		repo := &mockContestModerationDetachLogRepository{}
-		svc := domain.NewContestModerationDetachLog(repo)
-
-		ctx := ctxWithToken(&commondomain.UserIdentity{
-			Role:    commondomain.RoleBanned,
-			Subject: userID.String(),
-		})
-
-		err := svc.Execute(ctx, &domain.ContestModerationDetachLogRequest{
-			ContestID: contestID,
-			LogID:     logID,
-			Reason:    "test",
-		})
-
-		assert.ErrorIs(t, err, domain.ErrForbidden)
-		assert.False(t, repo.detachCalled)
-	})
-
 	t.Run("returns unauthorized for nil session", func(t *testing.T) {
 		repo := &mockContestModerationDetachLogRepository{}
 		svc := domain.NewContestModerationDetachLog(repo)

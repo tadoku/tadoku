@@ -34,10 +34,6 @@ func (s *ContestModerationDetachLog) Execute(ctx context.Context, req *ContestMo
 		return ErrUnauthorized
 	}
 
-	if err := requireNotBanned(ctx); err != nil {
-		return err
-	}
-
 	// Get session to extract user ID
 	session := commondomain.ParseUserIdentity(ctx)
 	if session == nil {

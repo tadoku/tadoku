@@ -30,9 +30,6 @@ func (s *RegistrationFind) Execute(ctx context.Context, req *RegistrationFindReq
 	if isGuest(ctx) || session == nil {
 		return nil, ErrUnauthorized
 	}
-	if err := requireNotBannedUnauthorized(ctx); err != nil {
-		return nil, err
-	}
 
 	req.UserID = uuid.MustParse(session.Subject)
 

@@ -1,5 +1,5 @@
 import { AutocompleteMultiInput, Flash, Loading } from 'ui'
-import { FormProvider, useForm } from 'react-hook-form'
+import { FormProvider, useForm, useFormContext } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import {
@@ -11,52 +11,31 @@ import {
 import { useRouter } from 'next/router'
 import { useDebounce } from 'use-debounce'
 import { routes } from '@app/common/routes'
-import { ExclamationCircleIcon } from '@heroicons/react/20/solid'
+import {
+  ExclamationCircleIcon,
+  ExclamationTriangleIcon,
+} from '@heroicons/react/20/solid'
 
-export const ContestRegistrationFormSchema = z
-  .object({
-    contest_id: z.string(),
-    new_languages: z
-      .array(
-        z.object({
-          code: z.string(),
-          name: z.string(),
-        }),
-      )
-      .max(3, 'Cannot select more than 3 languages')
-      .min(1, 'Must select at least 1 languages'),
-    languages: z
-      .array(
-        z.object({
-          code: z.string(),
-          name: z.string(),
-        }),
-      )
-      .optional(),
-  })
-  .refine(
-    registration => {
-      if (!registration.languages) {
-        return true
-      }
-
-      // Check if new languages include all the old ones, fail if missing
-      const previousLangs = registration.languages.map(it => it.code)
-      const newLangs = new Set(registration.new_languages.map(it => it.code))
-
-      for (const lang of previousLangs) {
-        if (!newLangs.has(lang)) {
-          return false
-        }
-      }
-
-      return true
-    },
-    {
-      path: ['new_languages'],
-      message: "Cannot remove languages you've registered previously.",
-    },
-  )
+export const ContestRegistrationFormSchema = z.object({
+  contest_id: z.string(),
+  new_languages: z
+    .array(
+      z.object({
+        code: z.string(),
+        name: z.string(),
+      }),
+    )
+    .max(3, 'Cannot select more than 3 languages')
+    .min(1, 'Must select at least 1 languages'),
+  languages: z
+    .array(
+      z.object({
+        code: z.string(),
+        name: z.string(),
+      }),
+    )
+    .optional(),
+})
 
 export type ContestRegistrationFormSchema = z.infer<
   typeof ContestRegistrationFormSchema
@@ -66,6 +45,34 @@ interface Props {
   contest: ContestView
   isClosed: boolean
   data?: ContestRegistrationView
+}
+
+function RemovedLanguagesWarning({
+  previousLanguages,
+}: {
+  previousLanguages?: { code: string; name: string }[]
+}) {
+  const { watch } = useFormContext<ContestRegistrationFormSchema>()
+  const newLanguages = watch('new_languages') ?? []
+
+  if (!previousLanguages || previousLanguages.length === 0) {
+    return null
+  }
+
+  const newCodes = new Set(newLanguages.map(it => it.code))
+  const removed = previousLanguages.filter(lang => !newCodes.has(lang.code))
+
+  if (removed.length === 0) {
+    return null
+  }
+
+  return (
+    <Flash style="warning" IconComponent={ExclamationTriangleIcon}>
+      Removing {removed.map(it => it.name).join(', ')} will also remove any
+      contest logs you&apos;ve submitted in{' '}
+      {removed.length === 1 ? 'that language' : 'those languages'}.
+    </Flash>
+  )
 }
 
 export const ContestRegistrationForm = ({ contest, data, isClosed }: Props) => {
@@ -142,6 +149,7 @@ export const ContestRegistrationForm = ({ contest, data, isClosed }: Props) => {
               getIdForOption={option => option.code}
               format={option => option.name}
             />
+            <RemovedLanguagesWarning previousLanguages={data?.languages} />
           </div>
           <div className="h-stack spaced justify-end">
             <a

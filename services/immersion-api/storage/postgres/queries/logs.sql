@@ -208,3 +208,14 @@ select (not(true = any(
 delete from contest_logs
 where contest_id = sqlc.arg('contest_id')
   and log_id = sqlc.arg('log_id');
+
+-- name: DetachContestLogsForLanguages :exec
+delete from contest_logs
+where contest_id = sqlc.arg('contest_id')
+  and log_id in (
+    select logs.id
+    from logs
+    where logs.user_id = sqlc.arg('user_id')
+      and logs.language_code = any(sqlc.arg('language_codes')::varchar[])
+      and logs.deleted_at is null
+  );

@@ -120,6 +120,11 @@ where
   and "namespace" = $2
 `
 
+type FindPostByIDParams struct {
+	ID        uuid.UUID
+	Namespace string
+}
+
 type FindPostByIDRow struct {
 	ID          uuid.UUID
 	Namespace   string
@@ -131,8 +136,8 @@ type FindPostByIDRow struct {
 	UpdatedAt   time.Time
 }
 
-func (q *Queries) FindPostByID(ctx context.Context, id uuid.UUID, namespace string) (FindPostByIDRow, error) {
-	row := q.db.QueryRowContext(ctx, findPostByID, id, namespace)
+func (q *Queries) FindPostByID(ctx context.Context, arg FindPostByIDParams) (FindPostByIDRow, error) {
+	row := q.db.QueryRowContext(ctx, findPostByID, arg.ID, arg.Namespace)
 	var i FindPostByIDRow
 	err := row.Scan(
 		&i.ID,

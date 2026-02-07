@@ -9,6 +9,7 @@ go_library(
         "repo_createlanguage.go",
         "repo_createlog.go",
         "repo_deletelog.go",
+        "repo_detachcontestlogsforlanguages.go",
         "repo_detachlogfromcontest.go",
         "repo_fetchconfigurationoptions.go",
         "repo_fetchcontestleaderboard.go",

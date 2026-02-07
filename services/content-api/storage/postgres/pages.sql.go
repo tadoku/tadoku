@@ -120,6 +120,11 @@ where
   and "namespace" = $2
 `
 
+type FindPageByIDParams struct {
+	ID        uuid.UUID
+	Namespace string
+}
+
 type FindPageByIDRow struct {
 	ID          uuid.UUID
 	Namespace   string
@@ -131,8 +136,8 @@ type FindPageByIDRow struct {
 	UpdatedAt   time.Time
 }
 
-func (q *Queries) FindPageByID(ctx context.Context, id uuid.UUID, namespace string) (FindPageByIDRow, error) {
-	row := q.db.QueryRowContext(ctx, findPageByID, id, namespace)
+func (q *Queries) FindPageByID(ctx context.Context, arg FindPageByIDParams) (FindPageByIDRow, error) {
+	row := q.db.QueryRowContext(ctx, findPageByID, arg.ID, arg.Namespace)
 	var i FindPageByIDRow
 	err := row.Scan(
 		&i.ID,

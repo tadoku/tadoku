@@ -20,6 +20,10 @@ type mockRegistrationUpsertRepository struct {
 	upsertErr        error
 	upsertCalled     bool
 	upsertCalledWith *domain.RegistrationUpsertRequest
+
+	detachCalled     bool
+	detachCalledWith *domain.DetachContestLogsForLanguagesRequest
+	detachErr        error
 }
 
 func (m *mockRegistrationUpsertRepository) FindContestByID(ctx context.Context, req *domain.ContestFindRequest) (*domain.ContestView, error) {
@@ -34,6 +38,12 @@ func (m *mockRegistrationUpsertRepository) UpsertContestRegistration(ctx context
 	m.upsertCalled = true
 	m.upsertCalledWith = req
 	return m.upsertErr
+}
+
+func (m *mockRegistrationUpsertRepository) DetachContestLogsForLanguages(ctx context.Context, req *domain.DetachContestLogsForLanguagesRequest) error {
+	m.detachCalled = true
+	m.detachCalledWith = req
+	return m.detachErr
 }
 
 type mockUserUpsertRepositoryForReg struct {
@@ -192,11 +202,12 @@ func TestRegistrationUpsert_Execute(t *testing.T) {
 		assert.False(t, repo.upsertCalled)
 	})
 
-	t.Run("returns error when removing previously registered language", func(t *testing.T) {
+	t.Run("detaches logs when removing a previously registered language", func(t *testing.T) {
 		userRepo := &mockUserUpsertRepositoryForReg{}
 		userUpsert := domain.NewUserUpsert(userRepo)
+		existingRegID := uuid.New()
 		existingRegistration := &domain.ContestRegistration{
-			ID:        uuid.New(),
+			ID:        existingRegID,
 			ContestID: contestID,
 			UserID:    userID,
 			Languages: []domain.Language{
@@ -217,11 +228,47 @@ func TestRegistrationUpsert_Execute(t *testing.T) {
 
 		err := svc.Execute(ctx, &domain.RegistrationUpsertRequest{
 			ContestID:     contestID,
-			LanguageCodes: []string{"jpn"}, // Missing "kor"
+			LanguageCodes: []string{"jpn"}, // Removing "kor"
 		})
 
-		assert.ErrorIs(t, err, domain.ErrInvalidContestRegistration)
-		assert.False(t, repo.upsertCalled)
+		require.NoError(t, err)
+		assert.True(t, repo.upsertCalled)
+		assert.True(t, repo.detachCalled)
+		assert.Equal(t, contestID, repo.detachCalledWith.ContestID)
+		assert.Equal(t, []string{"kor"}, repo.detachCalledWith.LanguageCodes)
+	})
+
+	t.Run("does not detach logs when no languages are removed", func(t *testing.T) {
+		userRepo := &mockUserUpsertRepositoryForReg{}
+		userUpsert := domain.NewUserUpsert(userRepo)
+		existingRegID := uuid.New()
+		existingRegistration := &domain.ContestRegistration{
+			ID:        existingRegID,
+			ContestID: contestID,
+			UserID:    userID,
+			Languages: []domain.Language{
+				{Code: "jpn", Name: "Japanese"},
+			},
+		}
+		repo := &mockRegistrationUpsertRepository{
+			contest:      validContest,
+			registration: existingRegistration,
+		}
+		svc := domain.NewRegistrationUpsert(repo, userUpsert)
+
+		ctx := context.WithValue(context.Background(), commondomain.CtxIdentityKey, &commondomain.UserIdentity{
+			Role:    commondomain.RoleUser,
+			Subject: userID.String(),
+		})
+
+		err := svc.Execute(ctx, &domain.RegistrationUpsertRequest{
+			ContestID:     contestID,
+			LanguageCodes: []string{"jpn", "kor"}, // Adding "kor", keeping "jpn"
+		})
+
+		require.NoError(t, err)
+		assert.True(t, repo.upsertCalled)
+		assert.False(t, repo.detachCalled)
 	})
 
 	t.Run("successfully creates new registration", func(t *testing.T) {

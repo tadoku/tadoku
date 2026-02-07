@@ -78,7 +78,7 @@ func (r *PageRepository) CreatePage(ctx context.Context, page *domain.Page) erro
 
 // GetPageByID implements domain.PageUpdateRepository
 func (r *PageRepository) GetPageByID(ctx context.Context, id uuid.UUID, namespace string) (*domain.Page, error) {
-	page, err := r.q.FindPageByID(ctx, id, namespace)
+	page, err := r.q.FindPageByID(ctx, FindPageByIDParams{ID: id, Namespace: namespace})
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, domain.ErrPageNotFound

@@ -13,10 +13,17 @@ type RegistrationUpsertRepository interface {
 	FindContestByID(context.Context, *ContestFindRequest) (*ContestView, error)
 	FindRegistrationForUser(context.Context, *RegistrationFindRequest) (*ContestRegistration, error)
 	UpsertContestRegistration(context.Context, *RegistrationUpsertRequest) error
+	DetachContestLogsForLanguages(context.Context, *DetachContestLogsForLanguagesRequest) error
 }
 
 type RegistrationUpsertRequest struct {
 	ID            uuid.UUID
+	ContestID     uuid.UUID
+	UserID        uuid.UUID
+	LanguageCodes []string
+}
+
+type DetachContestLogsForLanguagesRequest struct {
 	ContestID     uuid.UUID
 	UserID        uuid.UUID
 	LanguageCodes []string
@@ -85,17 +92,30 @@ func (s *RegistrationUpsert) Execute(ctx context.Context, req *RegistrationUpser
 		return err
 	}
 
-	// check if previous languages are included in new set
+	// detach logs for any removed languages
 	if registration != nil {
 		req.ID = registration.ID
 
-		langs := map[string]bool{}
+		newLangs := map[string]bool{}
 		for _, lang := range req.LanguageCodes {
-			langs[lang] = true
+			newLangs[lang] = true
 		}
+
+		var removedLanguages []string
 		for _, lang := range registration.Languages {
-			if _, ok := langs[lang.Code]; !ok {
-				return fmt.Errorf("language %s is missing but was previously registered: %w", lang.Code, ErrInvalidContestRegistration)
+			if _, ok := newLangs[lang.Code]; !ok {
+				removedLanguages = append(removedLanguages, lang.Code)
+			}
+		}
+
+		if len(removedLanguages) > 0 {
+			err := s.repo.DetachContestLogsForLanguages(ctx, &DetachContestLogsForLanguagesRequest{
+				ContestID:     req.ContestID,
+				UserID:        req.UserID,
+				LanguageCodes: removedLanguages,
+			})
+			if err != nil {
+				return fmt.Errorf("could not detach logs for removed languages: %w", err)
 			}
 		}
 	}

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/router'
-import { Modal } from 'ui'
+import { FormProvider, useForm } from 'react-hook-form'
+import { Input, Modal } from 'ui'
 
 const STORAGE_KEY_NAMESPACES = 'admin_namespaces'
 export const DEFAULT_NAMESPACE = 'tadoku'
@@ -34,21 +35,28 @@ interface Props {
 export function NamespaceSelector({ value, onChange }: Props) {
   const [namespaces, setNamespaces] = useState<string[]>(DEFAULT_NAMESPACES)
   const [adding, setAdding] = useState(false)
-  const [newNamespace, setNewNamespace] = useState('')
+  const formMethods = useForm({
+    defaultValues: { namespace: '' },
+  })
 
   useEffect(() => {
     setNamespaces(loadNamespaces())
   }, [])
 
+  useEffect(() => {
+    if (adding) {
+      formMethods.reset({ namespace: '' })
+    }
+  }, [adding, formMethods])
+
   const handleChange = (ns: string) => {
     onChange(ns)
   }
 
-  const handleAdd = () => {
-    const trimmed = newNamespace.trim().toLowerCase()
+  const handleAdd = formMethods.handleSubmit(data => {
+    const trimmed = data.namespace.trim().toLowerCase()
     if (!trimmed || !NAMESPACE_PATTERN.test(trimmed) || namespaces.includes(trimmed)) {
       setAdding(false)
-      setNewNamespace('')
       return
     }
     const updated = [...namespaces, trimmed]
@@ -58,8 +66,7 @@ export function NamespaceSelector({ value, onChange }: Props) {
     } catch {}
     handleChange(trimmed)
     setAdding(false)
-    setNewNamespace('')
-  }
+  })
 
   const ADD_NEW_VALUE = '__add_new__'
 
@@ -86,44 +93,20 @@ export function NamespaceSelector({ value, onChange }: Props) {
         <option disabled>──────────</option>
         <option value={ADD_NEW_VALUE}>Add new...</option>
       </select>
-      <Modal
-        isOpen={adding}
-        setIsOpen={setAdding}
-        title="Add Namespace"
-      >
-        <form
-          onSubmit={e => {
-            e.preventDefault()
-            handleAdd()
-          }}
-        >
-          <label className="label">
-            <span className="label-text">Namespace</span>
-            <input
-              type="text"
-              className="input"
-              placeholder="my-namespace"
-              value={newNamespace}
-              onChange={e => setNewNamespace(e.target.value)}
-              autoFocus
-            />
-          </label>
-          <div className="modal-actions justify-end">
-            <button
-              type="button"
-              className="btn ghost"
-              onClick={() => {
-                setAdding(false)
-                setNewNamespace('')
-              }}
-            >
-              Cancel
-            </button>
-            <button type="submit" className="btn primary">
-              Add
-            </button>
-          </div>
-        </form>
+      <Modal isOpen={adding} setIsOpen={setAdding} title="Add Namespace">
+        <FormProvider {...formMethods}>
+          <form onSubmit={handleAdd}>
+            <Input name="namespace" label="Namespace" type="text" placeholder="my-namespace" autoFocus options={{ required: 'Namespace is required' }} />
+            <div className="modal-actions justify-end">
+              <button type="button" className="btn ghost" onClick={() => setAdding(false)}>
+                Cancel
+              </button>
+              <button type="submit" className="btn primary">
+                Add
+              </button>
+            </div>
+          </form>
+        </FormProvider>
       </Modal>
     </>
   )

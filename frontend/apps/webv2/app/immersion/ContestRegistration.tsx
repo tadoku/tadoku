@@ -68,9 +68,9 @@ function RemovedLanguagesWarning({
 
   return (
     <Flash style="warning" IconComponent={ExclamationTriangleIcon}>
-      Removing {removed.map(it => it.name).join(', ')} will detach any contest
-      logs in {removed.length === 1 ? 'that language' : 'those languages'} from
-      this contest.
+      Removing {removed.map(it => it.name).join(', ')} will also remove any
+      contest logs you've submitted in{' '}
+      {removed.length === 1 ? 'that language' : 'those languages'}.
     </Flash>
   )
 }

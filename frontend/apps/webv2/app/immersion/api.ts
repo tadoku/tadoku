@@ -1,6 +1,6 @@
 import { z } from 'zod'
 import getConfig from 'next/config'
-import { useMutation, useQuery } from 'react-query'
+import { useMutation, useQuery, useQueryClient } from 'react-query'
 import { ContestFormSchema } from '@app/immersion/ContestForm'
 import { ContestRegistrationFormSchema } from '@app/immersion/ContestRegistration'
 import { NewLogAPISchema } from '@app/immersion/NewLogForm/domain'
@@ -270,8 +270,9 @@ export const useContestSummary = (
     { ...options, retry: false },
   )
 
-export const useContestRegistrationUpdate = (onSuccess: () => void) =>
-  useMutation({
+export const useContestRegistrationUpdate = (onSuccess: () => void) => {
+  const queryClient = useQueryClient()
+  return useMutation({
     mutationFn: async (registration: ContestRegistrationFormSchema) => {
       const response = await fetch(
         `${root}/contests/${registration.contest_id}/registration`,
@@ -291,9 +292,11 @@ export const useContestRegistrationUpdate = (onSuccess: () => void) =>
       return
     },
     onSuccess() {
+      queryClient.invalidateQueries(['contest', 'ongoing-contest-registrations'])
       onSuccess()
     },
   })
+}
 
 const LeaderboardEntry = z.object({
   rank: z.number(),

@@ -47,7 +47,7 @@ export function RadioGroup({ name, label, hint, options }: RadioProps) {
           <Radio
             value={opt.value}
             key={opt.value.toString()}
-            className="input-frame px-4 py-2 data-[checked]:border-primary cursor-pointer select-none"
+            className="group input-frame px-4 py-2 data-[checked]:border-primary cursor-pointer select-none"
             disabled={opt.disabled}
             title={opt.title}
           >

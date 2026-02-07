@@ -41,6 +41,13 @@ type RelationManager interface {
 	DeleteRelation(ctx context.Context, namespace, object, relation string, subject Subject) error
 }
 
+// AuthorizationClient can both check permissions and manage relation tuples.
+// It is the interface most callers should use when they need both read + write behavior.
+type AuthorizationClient interface {
+	PermissionChecker
+	RelationManager
+}
+
 // Client implements PermissionChecker and RelationManager.
 type Client struct {
 	readClient  *keto.APIClient
@@ -49,8 +56,9 @@ type Client struct {
 
 // Compile-time interface compliance checks.
 var (
-	_ PermissionChecker = (*Client)(nil)
-	_ RelationManager   = (*Client)(nil)
+	_ PermissionChecker   = (*Client)(nil)
+	_ RelationManager     = (*Client)(nil)
+	_ AuthorizationClient = (*Client)(nil)
 )
 
 func NewClient(readURL, writeURL string) *Client {

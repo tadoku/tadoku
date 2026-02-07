@@ -62,9 +62,9 @@ func main() {
 	userCache.Start()
 
 	postgresRepository := repository.NewRepository(psql)
-	ketoClient := ketoclient.NewClient(cfg.KetoReadURL, cfg.KetoWriteURL)
-	rolesSvc := commonroles.NewKetoService(ketoClient, "app", "tadoku")
-	roleMgmt := commonroles.NewKetoManager(ketoClient, "app", "tadoku")
+	var ketoAuthz ketoclient.AuthorizationClient = ketoclient.NewClient(cfg.KetoReadURL, cfg.KetoWriteURL)
+	rolesSvc := commonroles.NewKetoService(ketoAuthz, "app", "tadoku")
+	roleMgmt := commonroles.NewKetoManager(ketoAuthz, "app", "tadoku")
 
 	e := echo.New()
 	e.Use(tadokumiddleware.Logger([]string{"/ping"}))

@@ -8,6 +8,7 @@ var (
 	ErrNotFound       = errors.New("not found")
 	ErrForbidden      = errors.New("not allowed")
 	ErrUnauthorized   = errors.New("unauthorized")
+	ErrConflict       = errors.New("conflict")
 )
 
 // Log errors

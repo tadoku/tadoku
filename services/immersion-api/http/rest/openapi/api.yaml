@@ -824,6 +824,84 @@ paths:
           description: unauthorized
         "403":
           description: forbidden (not admin)
+  /languages:
+    get:
+      summary: Lists all languages (admin only)
+      operationId: languageList
+      tags: [admin]
+      security:
+        - cookieAuth: []
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Languages"
+        "401":
+          description: unauthorized
+        "403":
+          description: forbidden (not admin)
+    post:
+      summary: Creates a new language (admin only)
+      operationId: languageCreate
+      tags: [admin]
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Language"
+      responses:
+        "200":
+          description: successful operation
+        "400":
+          description: invalid request
+        "401":
+          description: unauthorized
+        "403":
+          description: forbidden (not admin)
+        "409":
+          description: language with this code already exists
+  /languages/{code}:
+    put:
+      summary: Updates an existing language (admin only)
+      operationId: languageUpdate
+      tags: [admin]
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: code
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+              properties:
+                name:
+                  type: string
+                  minLength: 1
+                  maxLength: 100
+      responses:
+        "200":
+          description: successful operation
+        "400":
+          description: invalid request
+        "401":
+          description: unauthorized
+        "403":
+          description: forbidden (not admin)
+        "404":
+          description: language not found
   /users/{id}/role:
     put:
       summary: Update user role (admin only)

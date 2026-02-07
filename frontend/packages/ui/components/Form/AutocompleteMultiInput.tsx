@@ -17,10 +17,11 @@ export function AutocompleteMultiInput<T>(props: {
   match: (option: T, query: string) => boolean
   format: (option: T) => string
   getIdForOption: (option: T) => string | number
+  maxResults?: number
 }) {
   const [query, setQuery] = useState('')
 
-  const { name, label, hint, options, match, format, getIdForOption } = props
+  const { name, label, hint, options, match, format, getIdForOption, maxResults = 50 } = props
   const { control } = useFormContext()
   const {
     field: { value, onChange },
@@ -32,7 +33,9 @@ export function AutocompleteMultiInput<T>(props: {
     errors[name]?.message?.toString() || 'This selection is invalid'
 
   const filtered =
-    query === '' ? options : options.filter(option => match(option, query))
+    query === ''
+      ? options.slice(0, maxResults)
+      : options.filter(option => match(option, query)).slice(0, maxResults)
 
   // Needs to be suffixed with -search so 1password doesn't try to autocomplete...
   const id = `${name}-search`

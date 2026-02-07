@@ -358,6 +358,11 @@ type ContestRegistrationUpsertJSONBody struct {
 	LanguageCodes []string `json:"language_codes"`
 }
 
+// LanguageUpdateJSONBody defines parameters for LanguageUpdate.
+type LanguageUpdateJSONBody struct {
+	Name string `json:"name"`
+}
+
 // FetchLeaderboardGlobalParams defines parameters for FetchLeaderboardGlobal.
 type FetchLeaderboardGlobalParams struct {
 	PageSize     *int    `form:"page_size,omitempty" json:"page_size,omitempty"`
@@ -419,6 +424,12 @@ type ContestModerationDetachLogJSONRequestBody ContestModerationDetachLogJSONBod
 // ContestRegistrationUpsertJSONRequestBody defines body for ContestRegistrationUpsert for application/json ContentType.
 type ContestRegistrationUpsertJSONRequestBody ContestRegistrationUpsertJSONBody
 
+// LanguageCreateJSONRequestBody defines body for LanguageCreate for application/json ContentType.
+type LanguageCreateJSONRequestBody = Language
+
+// LanguageUpdateJSONRequestBody defines body for LanguageUpdate for application/json ContentType.
+type LanguageUpdateJSONRequestBody LanguageUpdateJSONBody
+
 // LogCreateJSONRequestBody defines body for LogCreate for application/json ContentType.
 type LogCreateJSONRequestBody LogCreateJSONBody
 
@@ -475,6 +486,15 @@ type ServerInterface interface {
 	// Fetches the role of the current user
 	// (GET /current-user/role)
 	GetCurrentUserRole(ctx echo.Context) error
+	// Lists all languages (admin only)
+	// (GET /languages)
+	LanguageList(ctx echo.Context) error
+	// Creates a new language (admin only)
+	// (POST /languages)
+	LanguageCreate(ctx echo.Context) error
+	// Updates an existing language (admin only)
+	// (PUT /languages/{code})
+	LanguageUpdate(ctx echo.Context, code string) error
 	// Fetches the global leaderboard
 	// (GET /leaderboard/global)
 	FetchLeaderboardGlobal(ctx echo.Context, params FetchLeaderboardGlobalParams) error
@@ -868,6 +888,46 @@ func (w *ServerInterfaceWrapper) GetCurrentUserRole(ctx echo.Context) error {
 
 	// Invoke the callback with all the unmarshalled arguments
 	err = w.Handler.GetCurrentUserRole(ctx)
+	return err
+}
+
+// LanguageList converts echo context to params.
+func (w *ServerInterfaceWrapper) LanguageList(ctx echo.Context) error {
+	var err error
+
+	ctx.Set(CookieAuthScopes, []string{""})
+
+	// Invoke the callback with all the unmarshalled arguments
+	err = w.Handler.LanguageList(ctx)
+	return err
+}
+
+// LanguageCreate converts echo context to params.
+func (w *ServerInterfaceWrapper) LanguageCreate(ctx echo.Context) error {
+	var err error
+
+	ctx.Set(CookieAuthScopes, []string{""})
+
+	// Invoke the callback with all the unmarshalled arguments
+	err = w.Handler.LanguageCreate(ctx)
+	return err
+}
+
+// LanguageUpdate converts echo context to params.
+func (w *ServerInterfaceWrapper) LanguageUpdate(ctx echo.Context) error {
+	var err error
+	// ------------- Path parameter "code" -------------
+	var code string
+
+	err = runtime.BindStyledParameterWithLocation("simple", false, "code", runtime.ParamLocationPath, ctx.Param("code"), &code)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter code: %s", err))
+	}
+
+	ctx.Set(CookieAuthScopes, []string{""})
+
+	// Invoke the callback with all the unmarshalled arguments
+	err = w.Handler.LanguageUpdate(ctx, code)
 	return err
 }
 
@@ -1266,6 +1326,9 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 	router.POST(baseURL+"/contests/:id/registration", wrapper.ContestRegistrationUpsert)
 	router.GET(baseURL+"/contests/:id/summary", wrapper.ContestFetchSummary)
 	router.GET(baseURL+"/current-user/role", wrapper.GetCurrentUserRole)
+	router.GET(baseURL+"/languages", wrapper.LanguageList)
+	router.POST(baseURL+"/languages", wrapper.LanguageCreate)
+	router.PUT(baseURL+"/languages/:code", wrapper.LanguageUpdate)
 	router.GET(baseURL+"/leaderboard/global", wrapper.FetchLeaderboardGlobal)
 	router.GET(baseURL+"/leaderboard/yearly/:year", wrapper.FetchLeaderboardForYear)
 	router.POST(baseURL+"/logs", wrapper.LogCreate)

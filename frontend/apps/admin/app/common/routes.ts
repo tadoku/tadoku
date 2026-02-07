@@ -18,6 +18,7 @@ export const routes = {
   announcementNew: (ns: string) => `/announcements/${ns}/new`,
   announcementEdit: (ns: string, id: string) => `/announcements/${ns}/${id}/edit`,
   users: () => `/users`,
+  languages: () => `/languages`,
 
   // External
   authSettings: (return_url?: string) =>

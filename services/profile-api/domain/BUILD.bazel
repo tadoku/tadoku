@@ -8,4 +8,5 @@ go_library(
     ],
     importpath = "github.com/tadoku/tadoku/services/profile-api/domain",
     visibility = ["//visibility:public"],
+    deps = ["//services/common/domain"],
 )

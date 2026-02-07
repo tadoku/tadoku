@@ -28,6 +28,8 @@ cd frontend && pnpm build
 
 **Always write tests for new backend functionality** — new domain services, repository methods, and HTTP handlers should have corresponding test coverage.
 
+**Always use `testify` for test assertions** — use `assert` for checks and `require` for fatal preconditions (`github.com/stretchr/testify/assert` and `github.com/stretchr/testify/require`). Never use raw `if err != nil { t.Fatal(...) }` patterns.
+
 **SQL style: always use lowercase keywords** (select, create table, not SELECT, CREATE TABLE)
 
 ```sh

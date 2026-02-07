@@ -4,6 +4,8 @@ import (
 	"context"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	commondomain "github.com/tadoku/tadoku/services/common/domain"
 	"github.com/tadoku/tadoku/services/immersion-api/domain"
 )
@@ -44,12 +46,8 @@ func TestLanguageCreate(t *testing.T) {
 			Code: "jpn",
 			Name: "Japanese",
 		})
-		if err != nil {
-			t.Fatalf("expected no error, got: %v", err)
-		}
-		if repo.languages["jpn"] != "Japanese" {
-			t.Fatal("expected language to be created")
-		}
+		require.NoError(t, err)
+		assert.Equal(t, "Japanese", repo.languages["jpn"])
 	})
 
 	t.Run("non-admin cannot create a language", func(t *testing.T) {
@@ -60,9 +58,7 @@ func TestLanguageCreate(t *testing.T) {
 			Code: "jpn",
 			Name: "Japanese",
 		})
-		if err == nil {
-			t.Fatal("expected error for non-admin")
-		}
+		assert.Error(t, err)
 	})
 
 	t.Run("duplicate code returns conflict", func(t *testing.T) {
@@ -73,9 +69,7 @@ func TestLanguageCreate(t *testing.T) {
 			Code: "jpn",
 			Name: "Japanese",
 		})
-		if err == nil {
-			t.Fatal("expected conflict error")
-		}
+		assert.Error(t, err)
 	})
 
 	t.Run("empty code returns validation error", func(t *testing.T) {
@@ -86,9 +80,7 @@ func TestLanguageCreate(t *testing.T) {
 			Code: "",
 			Name: "Japanese",
 		})
-		if err == nil {
-			t.Fatal("expected validation error for empty code")
-		}
+		assert.Error(t, err)
 	})
 
 	t.Run("empty name returns validation error", func(t *testing.T) {
@@ -99,8 +91,6 @@ func TestLanguageCreate(t *testing.T) {
 			Code: "jpn",
 			Name: "",
 		})
-		if err == nil {
-			t.Fatal("expected validation error for empty name")
-		}
+		assert.Error(t, err)
 	})
 }

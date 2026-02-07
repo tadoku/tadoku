@@ -11,6 +11,8 @@ import (
 	"github.com/tadoku/tadoku/services/immersion-api/domain"
 )
 
+var errLogListForUserDatabase = errors.New("database error")
+
 type logListForUserRepositoryMock struct {
 	response        *domain.LogListForUserResponse
 	err             error
@@ -93,8 +95,8 @@ func TestLogListForUser_Execute(t *testing.T) {
 			name:            "repository error is propagated",
 			role:            commondomain.RoleUser,
 			requestPageSize: 10,
-			repoErr:         errors.New("database error"),
-			expectedErr:     errors.New("database error"),
+			repoErr:         errLogListForUserDatabase,
+			expectedErr:     errLogListForUserDatabase,
 		},
 	}
 
@@ -120,10 +122,7 @@ func TestLogListForUser_Execute(t *testing.T) {
 			})
 
 			if test.expectedErr != nil {
-				assert.Error(t, err)
-				if errors.Is(test.expectedErr, domain.ErrUnauthorized) {
-					assert.ErrorIs(t, err, domain.ErrUnauthorized)
-				}
+				assert.ErrorIs(t, err, test.expectedErr)
 				return
 			}
 

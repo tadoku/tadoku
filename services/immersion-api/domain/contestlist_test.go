@@ -11,6 +11,8 @@ import (
 	"github.com/tadoku/tadoku/services/immersion-api/domain"
 )
 
+var errContestListDatabase = errors.New("database error")
+
 type contestListRepositoryMock struct {
 	response        *domain.ContestListResponse
 	err             error
@@ -81,8 +83,8 @@ func TestContestList_Execute(t *testing.T) {
 			name:            "repository error is propagated",
 			role:            commondomain.RoleUser,
 			requestPageSize: 10,
-			repoErr:         errors.New("database error"),
-			expectedErr:     errors.New("database error"),
+			repoErr:         errContestListDatabase,
+			expectedErr:     errContestListDatabase,
 		},
 	}
 
@@ -106,7 +108,7 @@ func TestContestList_Execute(t *testing.T) {
 			})
 
 			if test.expectedErr != nil {
-				assert.Error(t, err)
+				assert.ErrorIs(t, err, test.expectedErr)
 				return
 			}
 

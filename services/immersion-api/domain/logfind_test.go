@@ -12,6 +12,8 @@ import (
 	"github.com/tadoku/tadoku/services/immersion-api/domain"
 )
 
+var errLogFindDatabase = errors.New("database error")
+
 type logFindRepositoryMock struct {
 	log             *domain.Log
 	err             error
@@ -99,8 +101,8 @@ func TestLogFind_Execute(t *testing.T) {
 			name:        "repository error",
 			userID:      ownerUserID,
 			role:        commondomain.RoleUser,
-			repoErr:     errors.New("database error"),
-			expectedErr: errors.New("database error"),
+			repoErr:     errLogFindDatabase,
+			expectedErr: errLogFindDatabase,
 		},
 	}
 
@@ -122,10 +124,7 @@ func TestLogFind_Execute(t *testing.T) {
 			result, err := service.Execute(ctx, &domain.LogFindRequest{ID: logID})
 
 			if test.expectedErr != nil {
-				assert.Error(t, err)
-				if errors.Is(test.expectedErr, domain.ErrNotFound) {
-					assert.ErrorIs(t, err, domain.ErrNotFound)
-				}
+				assert.ErrorIs(t, err, test.expectedErr)
 				return
 			}
 

@@ -1,0 +1,46 @@
+keto:
+  automigration:
+    enabled: true
+    type: initContainer
+
+  config:
+    dsn: postgres://keto:foobar@postgres-keto:5432/keto?sslmode=disable
+
+    log:
+      level: debug
+      format: json
+      leak_sensitive_values: true
+
+    namespaces:
+      location: file:///etc/config/keto-namespaces/namespaces.keto.ts
+
+    serve:
+      read:
+        host: 0.0.0.0
+        port: 4466
+      write:
+        host: 0.0.0.0
+        port: 4467
+      metrics:
+        host: 0.0.0.0
+        port: 4468
+
+service:
+  read:
+    enabled: true
+    type: ClusterIP
+    port: 4466
+  write:
+    enabled: true
+    type: ClusterIP
+    port: 4467
+
+deployment:
+  extraVolumes:
+    - name: keto-namespaces
+      configMap:
+        name: keto-namespaces
+  extraVolumeMounts:
+    - name: keto-namespaces
+      mountPath: /etc/config/keto-namespaces
+      readOnly: true

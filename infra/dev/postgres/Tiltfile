@@ -43,3 +43,13 @@ helm_resource('postgres-profile',
               deps=['./profile_values.yaml'],
               resource_deps=['helm-repo-postgres'])
 k8s_resource("postgres-profile", labels=["infra"])
+
+# keto
+helm_resource('postgres-keto',
+              'postgres/postgres',
+              flags=[
+                '-f', './keto_values.yaml',
+              ],
+              deps=['./keto_values.yaml'],
+              resource_deps=['helm-repo-postgres'])
+k8s_resource("postgres-keto", labels=["infra"])

@@ -40,6 +40,8 @@ spec:
             value: "8000"
           - name: API_JWKS
             value: "http://oathkeeper-api.default:4456/.well-known/jwks.json"
+          - name: API_KETO_READ_URL
+            value: "http://keto-read.default:4466"
         volumeMounts:
         - name: tadoku-permissions
           mountPath: /etc/tadoku/permissions

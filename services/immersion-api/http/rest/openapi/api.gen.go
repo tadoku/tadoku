@@ -358,6 +358,11 @@ type ContestRegistrationUpsertJSONBody struct {
 	LanguageCodes []string `json:"language_codes"`
 }
 
+// LanguageUpdateJSONBody defines parameters for LanguageUpdate.
+type LanguageUpdateJSONBody struct {
+	Name string `json:"name"`
+}
+
 // FetchLeaderboardGlobalParams defines parameters for FetchLeaderboardGlobal.
 type FetchLeaderboardGlobalParams struct {
 	PageSize     *int    `form:"page_size,omitempty" json:"page_size,omitempty"`
@@ -419,19 +424,14 @@ type ContestModerationDetachLogJSONRequestBody ContestModerationDetachLogJSONBod
 // ContestRegistrationUpsertJSONRequestBody defines body for ContestRegistrationUpsert for application/json ContentType.
 type ContestRegistrationUpsertJSONRequestBody ContestRegistrationUpsertJSONBody
 
-// LogCreateJSONRequestBody defines body for LogCreate for application/json ContentType.
-type LogCreateJSONRequestBody LogCreateJSONBody
-
 // LanguageCreateJSONRequestBody defines body for LanguageCreate for application/json ContentType.
 type LanguageCreateJSONRequestBody = Language
 
-// LanguageUpdateJSONBody defines parameters for LanguageUpdate.
-type LanguageUpdateJSONBody struct {
-	Name string `json:"name"`
-}
-
 // LanguageUpdateJSONRequestBody defines body for LanguageUpdate for application/json ContentType.
 type LanguageUpdateJSONRequestBody LanguageUpdateJSONBody
+
+// LogCreateJSONRequestBody defines body for LogCreate for application/json ContentType.
+type LogCreateJSONRequestBody LogCreateJSONBody
 
 // UpdateUserRoleJSONRequestBody defines body for UpdateUserRole for application/json ContentType.
 type UpdateUserRoleJSONRequestBody UpdateUserRoleJSONBody
@@ -919,7 +919,10 @@ func (w *ServerInterfaceWrapper) LanguageUpdate(ctx echo.Context) error {
 	// ------------- Path parameter "code" -------------
 	var code string
 
-	code = ctx.Param("code")
+	err = runtime.BindStyledParameterWithLocation("simple", false, "code", runtime.ParamLocationPath, ctx.Param("code"), &code)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter code: %s", err))
+	}
 
 	ctx.Set(CookieAuthScopes, []string{""})
 

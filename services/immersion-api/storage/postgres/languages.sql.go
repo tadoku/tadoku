@@ -26,20 +26,6 @@ func (q *Queries) CreateLanguage(ctx context.Context, arg CreateLanguageParams) 
 	return err
 }
 
-const updateLanguage = `-- name: UpdateLanguage :exec
-update languages set name = $1 where code = $2
-`
-
-type UpdateLanguageParams struct {
-	Name string
-	Code string
-}
-
-func (q *Queries) UpdateLanguage(ctx context.Context, arg UpdateLanguageParams) error {
-	_, err := q.db.ExecContext(ctx, updateLanguage, arg.Name, arg.Code)
-	return err
-}
-
 const getLanguagesByCode = `-- name: GetLanguagesByCode :many
 select
   code,
@@ -137,4 +123,18 @@ func (q *Queries) ListLanguagesForContest(ctx context.Context, contestID uuid.UU
 		return nil, err
 	}
 	return items, nil
+}
+
+const updateLanguage = `-- name: UpdateLanguage :exec
+update languages set name = $1 where code = $2
+`
+
+type UpdateLanguageParams struct {
+	Name string
+	Code string
+}
+
+func (q *Queries) UpdateLanguage(ctx context.Context, arg UpdateLanguageParams) error {
+	_, err := q.db.ExecContext(ctx, updateLanguage, arg.Name, arg.Code)
+	return err
 }

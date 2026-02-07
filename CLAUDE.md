@@ -61,6 +61,12 @@ cd services/content-api/http/rest/openapi && go generate
 bazel build //services/... && bazel test //services/...
 ```
 
+## Commit Guidelines
+
+**Commit in atomic diffs** — each commit should represent one logical change. Don't bundle unrelated changes into a single commit.
+
+**For larger refactors spanning many files**, commit in chunks that make sense — e.g. one commit per page, per service, per domain area, etc.
+
 ## Bug Reports
 
 When a bug is reported, follow this process:

@@ -33,11 +33,13 @@ use_repo(
     "com_github_labstack_echo_v4",
     "com_github_lib_pq",
     "com_github_micahparks_keyfunc",
+    "com_github_ory_keto_client_go",
     "com_github_ory_kratos_client_go",
     "com_github_pkg_errors",
     "com_github_sahilm_fuzzy",
     "com_github_stretchr_testify",
     "in_gopkg_yaml_v3",
+    "org_golang_x_sync",
 )
 
 # Packaging
@@ -49,7 +51,6 @@ bazel_dep(name = "rules_pkg", version = "1.1.0")
 bazel_dep(name = "rules_oci", version = "2.2.6")
 
 oci = use_extension("@rules_oci//oci:extensions.bzl", "oci")
-
 oci.pull(
     name = "distroless_base",
     digest = "sha256:27769871031f67460f1545a52dfacead6d18a9f197db77110cfc649ca2a91f44",
@@ -61,15 +62,15 @@ oci.pull(
 oci.pull(
     name = "go_migrate",
     image = "index.docker.io/migrate/migrate",
-    tag = "4",
     platforms = [
         "linux/amd64",
     ],
+    tag = "4",
 )
 use_repo(
     oci,
-    "go_migrate",
-    "go_migrate_linux_amd64",
     "distroless_base",
     "distroless_base_linux_amd64",
+    "go_migrate",
+    "go_migrate_linux_amd64",
 )

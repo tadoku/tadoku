@@ -1,86 +1,119 @@
-import { ToastContainer } from 'ui'
+import { Logo, Sidebar, ToastContainer } from 'ui'
 import type { AppProps } from 'next/app'
+import { useRouter } from 'next/router'
 import Link from 'next/link'
-import { Fragment } from 'react'
 import 'ui/styles/globals.css'
-
 import Head from 'next/head'
+import { ArrowTopRightOnSquareIcon } from '@heroicons/react/20/solid'
 
-interface NavigationBlock {
-  title: string
-  links: {
-    title: string
-    href: string
-    todo?: boolean
-  }[]
-}
-
-const navigation: NavigationBlock[] = [
+const getSidebarSections = (currentPath: string) => [
   {
     title: 'Foundation',
     links: [
-      { title: 'Color', href: '/color' },
-      { title: 'Typography', href: '/typography' },
-      { title: 'Branding', href: '/branding' },
-      { title: 'Templates', href: '/templates' },
+      {
+        label: 'Getting Started',
+        href: '/',
+        active: currentPath === '/',
+      },
+      { label: 'Color', href: '/color', active: currentPath === '/color' },
+      {
+        label: 'Typography',
+        href: '/typography',
+        active: currentPath === '/typography',
+      },
+      {
+        label: 'Branding',
+        href: '/branding',
+        active: currentPath === '/branding',
+      },
+      {
+        label: 'Templates',
+        href: '/templates',
+        active: currentPath === '/templates',
+      },
     ],
   },
   {
     title: 'Components',
     links: [
-      { title: 'Forms', href: '/forms' },
-      { title: 'Buttons', href: '/buttons' },
-      { title: 'Navigation', href: '/navigation' },
-      { title: 'Toasts', href: '/toasts' },
-      { title: 'Flash messages', href: '/flash' },
-      { title: 'Charts', href: '/charts' },
-      { title: 'Modals', href: '/modals' },
-      { title: 'Tables', href: '/tables' },
-      { title: 'Breadcrumb', href: '/breadcrumb' },
-      { title: 'Action menu', href: '/action-menu' },
-      { title: 'Pagination', href: '/pagination' },
+      { label: 'Forms', href: '/forms', active: currentPath === '/forms' },
+      {
+        label: 'Buttons',
+        href: '/buttons',
+        active: currentPath === '/buttons',
+      },
+      {
+        label: 'Navigation',
+        href: '/navigation',
+        active: currentPath === '/navigation',
+      },
+      { label: 'Toasts', href: '/toasts', active: currentPath === '/toasts' },
+      {
+        label: 'Flash messages',
+        href: '/flash',
+        active: currentPath === '/flash',
+      },
+      { label: 'Charts', href: '/charts', active: currentPath === '/charts' },
+      { label: 'Modals', href: '/modals', active: currentPath === '/modals' },
+      { label: 'Tables', href: '/tables', active: currentPath === '/tables' },
+      {
+        label: 'Breadcrumb',
+        href: '/breadcrumb',
+        active: currentPath === '/breadcrumb',
+      },
+      {
+        label: 'Action menu',
+        href: '/action-menu',
+        active: currentPath === '/action-menu',
+      },
+      {
+        label: 'Pagination',
+        href: '/pagination',
+        active: currentPath === '/pagination',
+      },
     ],
   },
   {
     title: 'Interactions',
-    links: [{ title: 'Logging flow', href: '/logging' }],
+    links: [
+      {
+        label: 'Logging flow',
+        href: '/logging',
+        active: currentPath === '/logging',
+      },
+    ],
   },
 ]
 
 export default function App({ Component, pageProps }: AppProps) {
+  const router = useRouter()
+
   return (
     <div className="flex min-h-screen">
       <Head>
         <title>Tadoku Design System</title>
       </Head>
-      <div className="bg-white w-52 p-8">
-        <h1 className="text-2xl font-bold mb-4">tadoku-ui</h1>
-        {navigation.map((block, i) => (
-          <Fragment key={i}>
-            <h2 className="text-l font-semibold">{block.title}</h2>
-            <ul className="mt-2 mb-4">
-              {block.links.map(l => (
-                <li
-                  key={l.href}
-                  className={`border-l-2 border-neutral-200 text-neutral-600 ${
-                    l.todo ? '' : 'hover:border-primary'
-                  }`}
-                >
-                  <Link
-                    href={l.todo ? '#' : l.href}
-                    className={`block pl-4 py-1 ${
-                      l.todo ? 'opacity-40 pointer-events-none' : ''
-                    }`}
-                  >
-                    {l.title}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </Fragment>
-        ))}
+      <div className="w-64 bg-white border-r border-slate-200 shadow-sm flex flex-col flex-shrink-0">
+        <div className="p-4 text-center">
+          <Link href="/" className="inline-block">
+            <Logo scale={0.8} />
+          </Link>
+          <p className="subtitle mt-1">Design System</p>
+        </div>
+        <div className="pl-4 pr-0 pb-4 flex-1">
+          <Sidebar sections={getSidebarSections(router.pathname)} />
+        </div>
+        <div className="p-4">
+          <a
+            href="https://tadoku.app"
+            className="flex items-center gap-2 text-sm text-slate-600 hover:text-slate-900"
+          >
+            <ArrowTopRightOnSquareIcon className="w-4 h-4" />
+            Back to Tadoku
+          </a>
+        </div>
       </div>
-      <div className="p-8 flex-grow">
+      <div className="p-8 flex-grow min-w-0">
         <Component {...pageProps} />
         <ToastContainer />
       </div>

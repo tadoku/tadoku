@@ -1,11 +1,15 @@
-import { CodeBlock, Preview, Separator, Title } from '@components/example'
-import { toast } from 'react-toastify'
+import { Separator } from '@components/example'
+import { Showcase } from '@components/Showcase'
+import { CodeBlock } from '@components/example'
+
+import ToastExample from '@examples/toasts/example'
+import exampleCode from '@examples/toasts/example.tsx?raw'
 
 export default function Toasts() {
   return (
     <>
       <h1 className="title mb-8">Toasts</h1>
-      <Title>Examples</Title>
+
       <p>
         Implemented with{' '}
         <a
@@ -17,59 +21,14 @@ export default function Toasts() {
         </a>
         , please refer to their documentation on how to use it.
       </p>
-      <Preview>
-        <div className="h-stack spaced">
-          <button className="btn" onClick={() => toast.info('Info toast')}>
-            Info toast
-          </button>
-          <button
-            className="btn"
-            onClick={() => toast.success('Success toast')}
-          >
-            Success toast
-          </button>
-          <button
-            className="btn"
-            onClick={() => toast.warning('Warning toast')}
-          >
-            Warning toast
-          </button>
-          <button className="btn" onClick={() => toast.error('Error toast')}>
-            Error toast
-          </button>
-        </div>
-      </Preview>
-      <CodeBlock
-        language="typescript"
-        code={`import { toast } from 'react-toastify'
 
-const ToastExample = () => (
-  <div className="h-stack spaced">
-    <button className="btn" onClick={() => toast.info('Info toast')}>
-      Info toast
-    </button>
-    <button
-      className="btn"
-      onClick={() => toast.success('Success toast')}
-    >
-      Success toast
-    </button>
-    <button
-      className="btn"
-      onClick={() => toast.warning('Warning toast')}
-    >
-      Warning toast
-    </button>
-    <button className="btn" onClick={() => toast.error('Error toast')}>
-      Error toast
-    </button>
-  </div>
-)`}
-      />
+      <Showcase title="Examples" code={exampleCode}>
+        <ToastExample />
+      </Showcase>
 
       <Separator />
 
-      <Title>Setup</Title>
+      <h2 className="font-semibold text-xl my-2">Setup</h2>
       <p>
         In order to use toasts you need to set them up in your{' '}
         <code>_app.tsx</code>.

@@ -1,31 +1,26 @@
-import { Logo, LogoInverted } from 'ui'
-import { CodeBlock, Preview, Separator, Title } from '@components/example'
+import { Separator } from '@components/example'
+import { Showcase } from '@components/Showcase'
+
+import LogoExample from '@examples/branding/logo'
+import logoCode from '@examples/branding/logo.tsx?raw'
+
+import LogoInvertedExample from '@examples/branding/logo-inverted'
+import logoInvertedCode from '@examples/branding/logo-inverted.tsx?raw'
 
 export default function Branding() {
   return (
     <>
       <h1 className="title mb-8">Branding</h1>
-      <Title>Logo</Title>
-      <Preview>
-        <Logo />
-      </Preview>
-      <CodeBlock
-        code={`import { Logo } from 'ui'
 
-const example = () => <Logo />`}
-      />
+      <Showcase title="Logo" code={logoCode}>
+        <LogoExample />
+      </Showcase>
 
       <Separator />
 
-      <Title>Logo for dark backgrounds</Title>
-      <Preview dark>
-        <LogoInverted />
-      </Preview>
-      <CodeBlock
-        code={`import { LogoInverted } from 'ui'
-
-const example = () => <LogoInverted />`}
-      />
+      <Showcase title="Logo for dark backgrounds" code={logoInvertedCode} dark>
+        <LogoInvertedExample />
+      </Showcase>
     </>
   )
 }

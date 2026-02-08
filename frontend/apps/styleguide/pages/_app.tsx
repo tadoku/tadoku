@@ -94,7 +94,7 @@ export default function App({ Component, pageProps }: AppProps) {
           </Link>
           <p className="subtitle mt-1">Design System</p>
         </div>
-        <div className="pl-4 pr-0 pb-4 mt-4 flex-1">
+        <div className="pl-4 pr-0 pb-4 flex-1">
           <Sidebar sections={getSidebarSections(router.pathname)} />
         </div>
       </div>

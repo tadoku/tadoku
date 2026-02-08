@@ -1,7 +1,6 @@
 package rest
 
 import (
-	"errors"
 	"net/http"
 
 	"github.com/deepmap/oapi-codegen/pkg/types"
@@ -18,8 +17,8 @@ func (s *Server) ProfileYearlyContestRegistrationsByUserID(ctx echo.Context, use
 		Year:   year,
 	})
 	if err != nil {
-		if errors.Is(err, domain.ErrUnauthorized) {
-			return ctx.NoContent(http.StatusUnauthorized)
+		if handled, respErr := noContentForCommonDomainError(ctx, err); handled {
+			return respErr
 		}
 
 		ctx.Echo().Logger.Error(err)

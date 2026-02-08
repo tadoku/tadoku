@@ -1,7 +1,6 @@
 package rest
 
 import (
-	"errors"
 	"net/http"
 
 	"github.com/labstack/echo/v4"
@@ -30,8 +29,8 @@ func (s *Server) FetchLeaderboardForYear(ctx echo.Context, year int, params open
 
 	leaderboard, err := s.leaderboardYearly.Execute(ctx.Request().Context(), req)
 	if err != nil {
-		if errors.Is(err, domain.ErrNotFound) {
-			return ctx.NoContent(http.StatusNotFound)
+		if handled, respErr := noContentForCommonDomainError(ctx, err); handled {
+			return respErr
 		}
 
 		ctx.Echo().Logger.Error(err)

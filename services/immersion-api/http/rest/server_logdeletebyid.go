@@ -1,7 +1,6 @@
 package rest
 
 import (
-	"errors"
 	"net/http"
 
 	"github.com/deepmap/oapi-codegen/pkg/types"
@@ -15,14 +14,8 @@ func (s *Server) LogDeleteByID(ctx echo.Context, id types.UUID) error {
 	if err := s.logDelete.Execute(ctx.Request().Context(), &domain.LogDeleteRequest{
 		LogID: id,
 	}); err != nil {
-		if errors.Is(err, domain.ErrForbidden) {
-			return ctx.NoContent(http.StatusForbidden)
-		}
-		if errors.Is(err, domain.ErrAuthzUnavailable) {
-			return ctx.NoContent(http.StatusServiceUnavailable)
-		}
-		if errors.Is(err, domain.ErrUnauthorized) {
-			return ctx.NoContent(http.StatusUnauthorized)
+		if handled, respErr := noContentForCommonDomainError(ctx, err); handled {
+			return respErr
 		}
 
 		ctx.Echo().Logger.Errorf("could not delete log: %v", err)

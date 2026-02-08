@@ -1,7 +1,6 @@
 package rest
 
 import (
-	"errors"
 	"net/http"
 
 	"github.com/deepmap/oapi-codegen/pkg/types"
@@ -17,8 +16,8 @@ func (s *Server) LogFindByID(ctx echo.Context, id types.UUID) error {
 		ID: id,
 	})
 	if err != nil {
-		if errors.Is(err, domain.ErrNotFound) {
-			return ctx.NoContent(http.StatusNotFound)
+		if handled, respErr := noContentForCommonDomainError(ctx, err); handled {
+			return respErr
 		}
 		ctx.Echo().Logger.Error("could not process request: ", err)
 		return ctx.NoContent(http.StatusInternalServerError)

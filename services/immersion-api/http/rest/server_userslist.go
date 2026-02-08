@@ -1,7 +1,6 @@
 package rest
 
 import (
-	"errors"
 	"net/http"
 
 	"github.com/labstack/echo/v4"
@@ -32,14 +31,8 @@ func (s *Server) UsersList(ctx echo.Context, params openapi.UsersListParams) err
 		Query:   queryStr,
 	})
 	if err != nil {
-		if errors.Is(err, domain.ErrUnauthorized) {
-			return ctx.NoContent(http.StatusUnauthorized)
-		}
-		if errors.Is(err, domain.ErrForbidden) {
-			return ctx.NoContent(http.StatusForbidden)
-		}
-		if errors.Is(err, domain.ErrAuthzUnavailable) {
-			return ctx.NoContent(http.StatusServiceUnavailable)
+		if handled, respErr := noContentForCommonDomainError(ctx, err); handled {
+			return respErr
 		}
 		ctx.Echo().Logger.Error(err)
 		return ctx.NoContent(http.StatusInternalServerError)

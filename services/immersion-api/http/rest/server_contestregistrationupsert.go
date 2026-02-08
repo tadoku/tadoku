@@ -24,17 +24,8 @@ func (s *Server) ContestRegistrationUpsert(ctx echo.Context, id types.UUID) erro
 		LanguageCodes: req.LanguageCodes,
 	})
 	if err != nil {
-		if errors.Is(err, domain.ErrUnauthorized) {
-			return ctx.NoContent(http.StatusUnauthorized)
-		}
-		if errors.Is(err, domain.ErrForbidden) {
-			return ctx.NoContent(http.StatusForbidden)
-		}
-		if errors.Is(err, domain.ErrAuthzUnavailable) {
-			return ctx.NoContent(http.StatusServiceUnavailable)
-		}
-		if errors.Is(err, domain.ErrNotFound) {
-			return ctx.NoContent(http.StatusNotFound)
+		if handled, respErr := noContentForCommonDomainError(ctx, err); handled {
+			return respErr
 		}
 		if errors.Is(err, domain.ErrInvalidContestRegistration) {
 			return ctx.NoContent(http.StatusBadRequest)

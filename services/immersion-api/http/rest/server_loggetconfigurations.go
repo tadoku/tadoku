@@ -1,11 +1,9 @@
 package rest
 
 import (
-	"errors"
 	"net/http"
 
 	"github.com/labstack/echo/v4"
-	"github.com/tadoku/tadoku/services/immersion-api/domain"
 	"github.com/tadoku/tadoku/services/immersion-api/http/rest/openapi"
 )
 
@@ -14,8 +12,8 @@ import (
 func (s *Server) LogGetConfigurations(ctx echo.Context) error {
 	opts, err := s.logConfigurationOptions.Execute(ctx.Request().Context())
 	if err != nil {
-		if errors.Is(err, domain.ErrUnauthorized) {
-			return ctx.NoContent(http.StatusUnauthorized)
+		if handled, respErr := noContentForCommonDomainError(ctx, err); handled {
+			return respErr
 		}
 		return ctx.NoContent(http.StatusInternalServerError)
 	}

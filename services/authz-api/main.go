@@ -37,12 +37,16 @@ type Config struct {
 	KetoReadURL            string  `validate:"required" envconfig:"keto_read_url"`
 	KetoWriteURL           string  `validate:"required" envconfig:"keto_write_url"`
 	ServiceName            string  `envconfig:"service_name" default:"authz-api"`
-	InternalAllowedCallers string  `envconfig:"internal_allowed_callers" default:"immersion-api,content-api,profile-api"`
-	PublicPermissionAllowlist string `envconfig:"public_permission_allowlist" default:""`
-	RelationshipMutationAllowlist string `envconfig:"relationship_mutation_allowlist" default:""`
 	SentryDSN              string  `envconfig:"sentry_dns"`
 	SentryTracesSampleRate float64 `validate:"required_with=SentryDSN" envconfig:"sentry_traces_sample_rate"`
 }
+
+const (
+	// Keep these hardcoded until the permission system stabilizes.
+	internalAllowedCallersCSV        = "immersion-api,content-api,profile-api"
+	publicPermissionAllowlistCSV     = "" // start with nothing allowlisted
+	relationshipMutationAllowlistCSV = "" // start with nothing allowlisted
+)
 
 func main() {
 	cfg := Config{}
@@ -53,11 +57,11 @@ func main() {
 		panic(fmt.Errorf("could not configure server: %w", err))
 	}
 
-	publicPermAllowlist, err := domain.ParsePermissionAllowlist(cfg.PublicPermissionAllowlist)
+	publicPermAllowlist, err := domain.ParsePermissionAllowlist(publicPermissionAllowlistCSV)
 	if err != nil {
 		panic(fmt.Errorf("invalid public permission allowlist: %w", err))
 	}
-	relMutationAllowlist, err := domain.ParseRelationshipMutationAllowlist(cfg.RelationshipMutationAllowlist)
+	relMutationAllowlist, err := domain.ParseRelationshipMutationAllowlist(relationshipMutationAllowlistCSV)
 	if err != nil {
 		panic(fmt.Errorf("invalid relationship mutation allowlist: %w", err))
 	}
@@ -92,7 +96,7 @@ func main() {
 	e.Use(tadokumiddleware.VerifyJWT(cfg.JWKS))
 	e.Use(tadokumiddleware.Identity())
 	e.Use(tadokumiddleware.RequireServiceAudience(cfg.ServiceName))
-	e.Use(rest.RequireInternalServiceAuth(domain.ParseServiceAllowlist(cfg.InternalAllowedCallers)))
+	e.Use(rest.RequireInternalServiceAuth(domain.ParseServiceAllowlist(internalAllowedCallersCSV)))
 	e.Use(middleware.Recover())
 
 	if cfg.SentryDSN != "" {
@@ -125,4 +129,3 @@ func main() {
 		e.Logger.Fatal(err)
 	}
 }
-

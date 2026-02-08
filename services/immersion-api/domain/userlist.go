@@ -126,12 +126,19 @@ func (s *UserList) Execute(ctx context.Context, req *UserListRequest) (*UserList
 	}
 
 	users := make([]UserListEntry, 0, len(matchedUsers))
+	subjectIDs := make([]string, 0, len(matchedUsers))
+	for _, u := range matchedUsers {
+		subjectIDs = append(subjectIDs, u.ID)
+	}
+
+	claimsBySubject, err := s.rolesSvc.ClaimsForSubjects(ctx, subjectIDs)
+	if err != nil {
+		return nil, ErrAuthzUnavailable
+	}
+
 	for _, u := range matchedUsers {
 		role := "user"
-		claims, err := s.rolesSvc.ClaimsForSubject(ctx, u.ID)
-		if err != nil {
-			return nil, ErrAuthzUnavailable
-		}
+		claims := claimsBySubject[u.ID]
 		if claims.Admin {
 			role = "admin"
 		} else if claims.Banned {

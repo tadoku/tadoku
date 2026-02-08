@@ -25,11 +25,14 @@ export default function Home() {
 
       <h2 className="subtitle mb-4">Usage</h2>
       <CodeBlock
-        code={`// Import components
-import { Button, Input, Modal, Flash } from 'ui'
+        code={`// Import styles in _app.tsx
+import 'ui/styles/globals.css'
 
-// Import styles in _app.tsx
-import 'ui/styles/globals.css'`}
+// Import components
+import { Input, Modal, Flash, Logo } from 'ui'
+
+// Buttons use CSS classes, not components
+<button className="btn primary">Primary</button>`}
         language="tsx"
       />
     </>

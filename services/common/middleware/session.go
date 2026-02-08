@@ -126,7 +126,14 @@ func RejectBannedUsers() echo.MiddlewareFunc {
 
 			claims := roles.FromContext(ctx.Request().Context())
 			if claims.Authenticated && claims.Err != nil {
-				return ctx.NoContent(http.StatusServiceUnavailable)
+				// Fail-open: allow requests to proceed when authorization evaluation is unavailable.
+				// Admin-only endpoints will still be blocked by roles.RequireAdmin (ErrAuthzUnavailable).
+				ctx.Logger().Errorf(
+					"RejectBannedUsers: authorization unavailable (fail-open): subject=%s err=%v",
+					claims.Subject,
+					claims.Err,
+				)
+				return next(ctx)
 			}
 			if claims.Banned {
 				return ctx.NoContent(http.StatusForbidden)

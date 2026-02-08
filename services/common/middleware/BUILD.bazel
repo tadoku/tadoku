@@ -1,4 +1,4 @@
-load("@rules_go//go:def.bzl", "go_library")
+load("@rules_go//go:def.bzl", "go_library", "go_test")
 
 go_library(
     name = "middleware",
@@ -17,5 +17,15 @@ go_library(
         "@com_github_labstack_echo_v4//:echo",
         "@com_github_labstack_echo_v4//middleware",
         "@com_github_micahparks_keyfunc//:keyfunc",
+    ],
+)
+
+go_test(
+    name = "middleware_test",
+    srcs = ["session_test.go"],
+    embed = [":middleware"],
+    deps = [
+        "//services/common/authz/roles",
+        "@com_github_stretchr_testify//assert",
     ],
 )

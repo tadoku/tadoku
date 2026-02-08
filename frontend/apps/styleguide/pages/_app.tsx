@@ -4,6 +4,7 @@ import { useRouter } from 'next/router'
 import Link from 'next/link'
 import 'ui/styles/globals.css'
 import Head from 'next/head'
+import { ArrowTopRightOnSquareIcon } from '@heroicons/react/20/solid'
 
 const getSidebarSections = (currentPath: string) => [
   {
@@ -96,6 +97,15 @@ export default function App({ Component, pageProps }: AppProps) {
         </div>
         <div className="pl-4 pr-0 pb-4 flex-1">
           <Sidebar sections={getSidebarSections(router.pathname)} />
+        </div>
+        <div className="p-4">
+          <a
+            href="https://tadoku.app"
+            className="flex items-center gap-2 text-sm text-slate-600 hover:text-slate-900"
+          >
+            <ArrowTopRightOnSquareIcon className="w-4 h-4" />
+            Back to Tadoku
+          </a>
         </div>
       </div>
       <div className="p-8 flex-grow min-w-0">

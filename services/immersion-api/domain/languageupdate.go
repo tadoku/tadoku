@@ -24,10 +24,6 @@ func NewLanguageUpdate(repo LanguageUpdateRepository) *LanguageUpdate {
 }
 
 func (s *LanguageUpdate) Execute(ctx context.Context, req *LanguageUpdateRequest) error {
-	if isGuest(ctx) {
-		return ErrUnauthorized
-	}
-
 	if err := requireAdmin(ctx); err != nil {
 		return err
 	}

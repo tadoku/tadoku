@@ -66,13 +66,12 @@ func NewContestCreate(repo ContestCreateRepository, clock commondomain.Clock, us
 
 func (s *ContestCreate) Execute(ctx context.Context, req *ContestCreateRequest) (*ContestCreateResponse, error) {
 	// Make sure the user is authorized to create a contest
-	if isGuest(ctx) {
-		return nil, ErrUnauthorized
-	}
 	if req.Official {
 		if err := requireAdmin(ctx); err != nil {
 			return nil, err
 		}
+	} else if isGuest(ctx) {
+		return nil, ErrUnauthorized
 	}
 
 	if err := s.userUpsert.Execute(ctx); err != nil {

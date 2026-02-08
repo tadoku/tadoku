@@ -31,11 +31,6 @@ func NewUpdateUserRole(users UpdateUserRoleUserRepository, audit ModerationAudit
 }
 
 func (s *UpdateUserRole) Execute(ctx context.Context, req *UpdateUserRoleRequest) error {
-	// Check if user is authenticated
-	if isGuest(ctx) {
-		return ErrUnauthorized
-	}
-
 	// Only admins can update roles
 	if err := requireAdmin(ctx); err != nil {
 		return err

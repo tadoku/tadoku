@@ -18,10 +18,6 @@ func NewLanguageList(repo LanguageListRepository) *LanguageList {
 }
 
 func (s *LanguageList) Execute(ctx context.Context) ([]Language, error) {
-	if isGuest(ctx) {
-		return nil, ErrUnauthorized
-	}
-
 	if err := requireAdmin(ctx); err != nil {
 		return nil, err
 	}

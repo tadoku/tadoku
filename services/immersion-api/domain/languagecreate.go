@@ -24,10 +24,6 @@ func NewLanguageCreate(repo LanguageCreateRepository) *LanguageCreate {
 }
 
 func (s *LanguageCreate) Execute(ctx context.Context, req *LanguageCreateRequest) error {
-	if isGuest(ctx) {
-		return ErrUnauthorized
-	}
-
 	if err := requireAdmin(ctx); err != nil {
 		return err
 	}

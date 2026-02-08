@@ -29,39 +29,24 @@ type SubjectSet struct {
 	Relation  string
 }
 
-// PermissionChecker provides methods for checking permissions.
-type PermissionChecker interface {
+// AuthorizationReader is the read-only interface for authorization checks and lookups.
+type AuthorizationReader interface {
 	CheckPermission(ctx context.Context, namespace, object, relation string, subject Subject) (bool, error)
 	CheckPermissions(ctx context.Context, checks []PermissionCheck) []PermissionResult
-}
 
-// RelationshipReader provides methods for querying relationship tuples.
-type RelationshipReader interface {
 	// ListSubjectIDsForRelation returns all direct subject IDs which have
 	// (namespace, object, relation). Subject sets are ignored.
 	ListSubjectIDsForRelation(ctx context.Context, namespace, object, relation string) ([]string, error)
 }
 
-// ReadClient is the interface most callers should use for read-only authorization.
-type ReadClient interface {
-	PermissionChecker
-	RelationshipReader
-}
-
-// RelationManager provides methods for managing relation tuples.
-type RelationManager interface {
+// AuthorizationClient can both check permissions and manage relation tuples.
+type AuthorizationClient interface {
+	AuthorizationReader
 	AddRelation(ctx context.Context, namespace, object, relation string, subject Subject) error
 	DeleteRelation(ctx context.Context, namespace, object, relation string, subject Subject) error
 }
 
-// AuthorizationClient can both check permissions and manage relation tuples.
-// It is the interface most callers should use when they need both read + write behavior.
-type AuthorizationClient interface {
-	ReadClient
-	RelationManager
-}
-
-// Client implements PermissionChecker and RelationManager.
+// Client implements AuthorizationClient.
 type Client struct {
 	readClient  *keto.APIClient
 	writeClient *keto.APIClient
@@ -69,10 +54,7 @@ type Client struct {
 
 // Compile-time interface compliance checks.
 var (
-	_ PermissionChecker   = (*Client)(nil)
-	_ RelationshipReader  = (*Client)(nil)
-	_ ReadClient          = (*Client)(nil)
-	_ RelationManager     = (*Client)(nil)
+	_ AuthorizationReader = (*Client)(nil)
 	_ AuthorizationClient = (*Client)(nil)
 )
 
@@ -91,7 +73,7 @@ func NewClient(readURL, writeURL string) *Client {
 
 // NewReadClient creates a client that can only check permissions.
 // Relation operations will return an error.
-func NewReadClient(readURL string) ReadClient {
+func NewReadClient(readURL string) AuthorizationReader {
 	readCfg := keto.NewConfiguration()
 	readCfg.Servers = keto.ServerConfigurations{{URL: readURL}}
 

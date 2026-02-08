@@ -15,12 +15,12 @@ type Service interface {
 }
 
 type KetoService struct {
-	keto      ketoclient.ReadClient
+	keto      ketoclient.AuthorizationReader
 	namespace string
 	object    string
 }
 
-func NewKetoService(keto ketoclient.ReadClient, namespace, object string) *KetoService {
+func NewKetoService(keto ketoclient.AuthorizationReader, namespace, object string) *KetoService {
 	return &KetoService{
 		keto:      keto,
 		namespace: namespace,

@@ -13,12 +13,12 @@ type Manager interface {
 }
 
 type KetoManager struct {
-	keto      ketoclient.RelationManager
+	keto      ketoclient.AuthorizationClient
 	namespace string
 	object    string
 }
 
-func NewKetoManager(keto ketoclient.RelationManager, namespace, object string) *KetoManager {
+func NewKetoManager(keto ketoclient.AuthorizationClient, namespace, object string) *KetoManager {
 	return &KetoManager{
 		keto:      keto,
 		namespace: namespace,

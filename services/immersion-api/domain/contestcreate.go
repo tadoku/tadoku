@@ -70,8 +70,8 @@ func (s *ContestCreate) Execute(ctx context.Context, req *ContestCreateRequest) 
 		if err := requireAdmin(ctx); err != nil {
 			return nil, err
 		}
-	} else if isGuest(ctx) {
-		return nil, ErrUnauthorized
+	} else if err := requireAuthentication(ctx); err != nil {
+		return nil, err
 	}
 
 	if err := s.userUpsert.Execute(ctx); err != nil {

@@ -7,5 +7,8 @@ import (
 )
 
 func requireAdmin(ctx context.Context) error { return roles.RequireAdmin(ctx) }
-func isAdmin(ctx context.Context) bool       { return roles.IsAdmin(ctx) }
-func isGuest(ctx context.Context) bool       { return !roles.IsAuthenticated(ctx) }
+func requireAuthentication(ctx context.Context) error {
+	return roles.RequireAuthenticated(ctx)
+}
+func isAdmin(ctx context.Context) bool { return roles.IsAdmin(ctx) }
+func isGuest(ctx context.Context) bool { return !roles.IsAuthenticated(ctx) }

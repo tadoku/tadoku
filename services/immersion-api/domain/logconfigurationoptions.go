@@ -24,8 +24,8 @@ func NewLogConfigurationOptions(repo LogConfigurationOptionsRepository) *LogConf
 }
 
 func (s *LogConfigurationOptions) Execute(ctx context.Context) (*LogConfigurationOptionsResponse, error) {
-	if isGuest(ctx) {
-		return nil, ErrUnauthorized
+	if err := requireAuthentication(ctx); err != nil {
+		return nil, err
 	}
 
 	return s.repo.FetchLogConfigurationOptions(ctx)

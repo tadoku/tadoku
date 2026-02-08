@@ -39,8 +39,8 @@ func NewRegistrationUpsert(repo RegistrationUpsertRepository, userUpsert *UserUp
 }
 
 func (s *RegistrationUpsert) Execute(ctx context.Context, req *RegistrationUpsertRequest) error {
-	if isGuest(ctx) {
-		return ErrUnauthorized
+	if err := requireAuthentication(ctx); err != nil {
+		return err
 	}
 
 	if err := s.userUpsert.Execute(ctx); err != nil {

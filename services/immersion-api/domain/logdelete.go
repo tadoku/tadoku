@@ -29,8 +29,8 @@ func NewLogDelete(repo LogDeleteRepository, clock commondomain.Clock) *LogDelete
 }
 
 func (s *LogDelete) Execute(ctx context.Context, req *LogDeleteRequest) error {
-	if isGuest(ctx) {
-		return ErrUnauthorized
+	if err := requireAuthentication(ctx); err != nil {
+		return err
 	}
 
 	session := commondomain.ParseUserIdentity(ctx)

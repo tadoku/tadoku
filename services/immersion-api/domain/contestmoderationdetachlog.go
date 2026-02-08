@@ -29,9 +29,8 @@ func NewContestModerationDetachLog(repo ContestModerationDetachLogRepository) *C
 }
 
 func (s *ContestModerationDetachLog) Execute(ctx context.Context, req *ContestModerationDetachLogRequest) error {
-	// Check if user is authenticated
-	if isGuest(ctx) {
-		return ErrUnauthorized
+	if err := requireAuthentication(ctx); err != nil {
+		return err
 	}
 
 	// Get session to extract user ID

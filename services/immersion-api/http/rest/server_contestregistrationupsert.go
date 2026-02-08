@@ -24,7 +24,7 @@ func (s *Server) ContestRegistrationUpsert(ctx echo.Context, id types.UUID) erro
 		LanguageCodes: req.LanguageCodes,
 	})
 	if err != nil {
-		if handled, respErr := handleCommonDomainError(ctx, err); handled {
+		if handled, respErr := handleCommonErrors(ctx, err); handled {
 			return respErr
 		}
 		if errors.Is(err, domain.ErrInvalidContestRegistration) {

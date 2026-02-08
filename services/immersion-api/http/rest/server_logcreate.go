@@ -28,7 +28,7 @@ func (s *Server) LogCreate(ctx echo.Context) error {
 		Description:     req.Description,
 	})
 	if err != nil {
-		if handled, respErr := handleCommonDomainError(ctx, err); handled {
+		if handled, respErr := handleCommonErrors(ctx, err); handled {
 			return respErr
 		}
 		if errors.Is(err, domain.ErrInvalidLog) {

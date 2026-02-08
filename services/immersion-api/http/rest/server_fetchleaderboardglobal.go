@@ -28,7 +28,7 @@ func (s *Server) FetchLeaderboardGlobal(ctx echo.Context, params openapi.FetchLe
 
 	leaderboard, err := s.leaderboardGlobal.Execute(ctx.Request().Context(), req)
 	if err != nil {
-		if handled, respErr := handleCommonDomainError(ctx, err); handled {
+		if handled, respErr := handleCommonErrors(ctx, err); handled {
 			return respErr
 		}
 

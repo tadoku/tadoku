@@ -16,7 +16,7 @@ func (s *Server) ContestFetchSummary(ctx echo.Context, id types.UUID) error {
 		ContestID: id,
 	})
 	if err != nil {
-		if handled, respErr := handleCommonDomainError(ctx, err); handled {
+		if handled, respErr := handleCommonErrors(ctx, err); handled {
 			return respErr
 		}
 		ctx.Echo().Logger.Errorf("could not fetch summary: %w", err)

@@ -11,7 +11,7 @@ import (
 func (s *Server) ContestCreatePermissionCheck(ctx echo.Context) error {
 	err := s.contestPermissionCheck.Execute(ctx.Request().Context())
 	if err != nil {
-		if handled, respErr := handleCommonDomainError(ctx, err); handled {
+		if handled, respErr := handleCommonErrors(ctx, err); handled {
 			return respErr
 		}
 		ctx.Echo().Logger.Errorf("could not fetch create permission check: %w", err)

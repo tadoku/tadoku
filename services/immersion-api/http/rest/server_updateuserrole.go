@@ -24,7 +24,7 @@ func (s *Server) UpdateUserRole(ctx echo.Context, id types.UUID) error {
 		Reason: req.Reason,
 	})
 	if err != nil {
-		if handled, respErr := handleCommonDomainError(ctx, err); handled {
+		if handled, respErr := handleCommonErrors(ctx, err); handled {
 			return respErr
 		}
 

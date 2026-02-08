@@ -17,7 +17,7 @@ func (s *Server) ContestProfileFetchScores(ctx echo.Context, id types.UUID, user
 		ContestID: id,
 	})
 	if err != nil {
-		if handled, respErr := handleCommonDomainError(ctx, err); handled {
+		if handled, respErr := handleCommonErrors(ctx, err); handled {
 			return respErr
 		}
 		ctx.Logger().Errorf("could not fetch profile: %w", err)

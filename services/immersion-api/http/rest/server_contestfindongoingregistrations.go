@@ -12,7 +12,7 @@ import (
 func (s *Server) ContestFindOngoingRegistrations(ctx echo.Context) error {
 	regs, err := s.registrationListOngoing.Execute(ctx.Request().Context())
 	if err != nil {
-		if handled, respErr := handleCommonDomainError(ctx, err); handled {
+		if handled, respErr := handleCommonErrors(ctx, err); handled {
 			return respErr
 		}
 

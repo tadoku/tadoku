@@ -31,7 +31,7 @@ func (s *Server) UsersList(ctx echo.Context, params openapi.UsersListParams) err
 		Query:   queryStr,
 	})
 	if err != nil {
-		if handled, respErr := handleCommonDomainError(ctx, err); handled {
+		if handled, respErr := handleCommonErrors(ctx, err); handled {
 			return respErr
 		}
 		ctx.Echo().Logger.Error(err)

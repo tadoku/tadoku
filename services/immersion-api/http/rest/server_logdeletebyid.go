@@ -14,7 +14,7 @@ func (s *Server) LogDeleteByID(ctx echo.Context, id types.UUID) error {
 	if err := s.logDelete.Execute(ctx.Request().Context(), &domain.LogDeleteRequest{
 		LogID: id,
 	}); err != nil {
-		if handled, respErr := handleCommonDomainError(ctx, err); handled {
+		if handled, respErr := handleCommonErrors(ctx, err); handled {
 			return respErr
 		}
 

@@ -24,7 +24,7 @@ func (s *Server) ContestModerationDetachLog(ctx echo.Context, id types.UUID, log
 		Reason:    req.Reason,
 	})
 	if err != nil {
-		if handled, respErr := handleCommonDomainError(ctx, err); handled {
+		if handled, respErr := handleCommonErrors(ctx, err); handled {
 			return respErr
 		}
 

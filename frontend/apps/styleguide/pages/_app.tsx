@@ -88,8 +88,8 @@ export default function App({ Component, pageProps }: AppProps) {
         <title>Tadoku Design System</title>
       </Head>
       <div className="w-64 bg-white border-r border-slate-200 flex flex-col flex-shrink-0">
-        <div className="p-4">
-          <Link href="/">
+        <div className="p-4 text-center">
+          <Link href="/" className="inline-block">
             <Logo scale={0.8} />
           </Link>
           <p className="subtitle mt-1">Design System</p>

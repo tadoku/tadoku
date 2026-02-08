@@ -111,16 +111,20 @@ export function DashboardLayout({ children, activeLink }: Props) {
         )}
       >
         {/* Sidebar header - desktop */}
-        <div className="p-4 hidden md:block">
-          <Link href={routes.home()}>
+        <div className="p-4 hidden md:block text-center">
+          <Link href={routes.home()} className="inline-block">
             <Logo scale={0.8} />
           </Link>
+          <p className="subtitle mt-1">Admin</p>
         </div>
         {/* Sidebar header - mobile */}
         <div className="p-4 flex items-center justify-between md:hidden">
-          <Link href={routes.home()}>
-            <Logo scale={0.7} />
-          </Link>
+          <div>
+            <Link href={routes.home()}>
+              <Logo scale={0.7} />
+            </Link>
+            <p className="subtitle">Admin</p>
+          </div>
           <button
             onClick={() => setSidebarOpen(false)}
             className="p-2 text-slate-600 hover:text-slate-900"
@@ -128,7 +132,7 @@ export function DashboardLayout({ children, activeLink }: Props) {
             <XMarkIcon className="w-6 h-6" />
           </button>
         </div>
-        <div className="pl-4 pr-0 pb-4 mt-4 flex-1">
+        <div className="pl-4 pr-0 pb-4 flex-1">
           <Sidebar sections={sidebarSections(ns, activeLink)} />
         </div>
         <div className="p-4">

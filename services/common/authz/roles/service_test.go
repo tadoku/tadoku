@@ -11,7 +11,9 @@ import (
 )
 
 type fakeKeto struct {
-	results map[string]ketoclient.PermissionResult // keyed by relation
+	results         map[string]ketoclient.PermissionResult // keyed by relation
+	subjectIDsByRel map[string][]string                    // keyed by relation
+	listSubjectsErr error
 }
 
 func (f *fakeKeto) CheckPermission(ctx context.Context, namespace, object, relation string, subject ketoclient.Subject) (bool, error) {
@@ -33,6 +35,13 @@ func (f *fakeKeto) CheckPermissions(ctx context.Context, checks []ketoclient.Per
 		out = append(out, ketoclient.PermissionResult{Check: c, Allowed: r.Allowed, Err: r.Err})
 	}
 	return out
+}
+
+func (f *fakeKeto) ListSubjectIDsForRelation(ctx context.Context, namespace, object, relation string) ([]string, error) {
+	if f.listSubjectsErr != nil {
+		return nil, f.listSubjectsErr
+	}
+	return f.subjectIDsByRel[relation], nil
 }
 
 func TestKetoService_ClaimsForSubject_Guest(t *testing.T) {
@@ -72,3 +81,29 @@ func TestKetoService_ClaimsForSubject_Error(t *testing.T) {
 	assert.Error(t, claims.Err)
 }
 
+func TestKetoService_ClaimsForSubjects(t *testing.T) {
+	svc := NewKetoService(&fakeKeto{
+		subjectIDsByRel: map[string][]string{
+			"admins": {"a"},
+			"banned": {"b"},
+		},
+	}, "app", "tadoku")
+
+	claimsBySubject, err := svc.ClaimsForSubjects(context.Background(), []string{"a", "b", "c", "guest", ""})
+	require.NoError(t, err)
+
+	assert.True(t, claimsBySubject["a"].Authenticated)
+	assert.True(t, claimsBySubject["a"].Admin)
+	assert.False(t, claimsBySubject["a"].Banned)
+
+	assert.True(t, claimsBySubject["b"].Authenticated)
+	assert.False(t, claimsBySubject["b"].Admin)
+	assert.True(t, claimsBySubject["b"].Banned)
+
+	assert.True(t, claimsBySubject["c"].Authenticated)
+	assert.False(t, claimsBySubject["c"].Admin)
+	assert.False(t, claimsBySubject["c"].Banned)
+
+	assert.False(t, claimsBySubject["guest"].Authenticated)
+	assert.False(t, claimsBySubject[""].Authenticated)
+}

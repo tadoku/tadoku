@@ -64,6 +64,21 @@ func (m *mockClaimsService) ClaimsForSubject(ctx context.Context, subjectID stri
 	return commonroles.Claims{Subject: subjectID, Authenticated: true}, nil
 }
 
+func (m *mockClaimsService) ClaimsForSubjects(ctx context.Context, subjectIDs []string) (map[string]commonroles.Claims, error) {
+	if m.err != nil {
+		return nil, m.err
+	}
+	out := make(map[string]commonroles.Claims, len(subjectIDs))
+	for _, id := range subjectIDs {
+		c, err := m.ClaimsForSubject(ctx, id)
+		if err != nil {
+			return nil, err
+		}
+		out[id] = c
+	}
+	return out, nil
+}
+
 func TestUpdateUserRole_Execute(t *testing.T) {
 	targetID := uuid.New()
 

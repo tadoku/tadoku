@@ -35,6 +35,19 @@ type PermissionChecker interface {
 	CheckPermissions(ctx context.Context, checks []PermissionCheck) []PermissionResult
 }
 
+// RelationshipReader provides methods for querying relationship tuples.
+type RelationshipReader interface {
+	// ListSubjectIDsForRelation returns all direct subject IDs which have
+	// (namespace, object, relation). Subject sets are ignored.
+	ListSubjectIDsForRelation(ctx context.Context, namespace, object, relation string) ([]string, error)
+}
+
+// ReadClient is the interface most callers should use for read-only authorization.
+type ReadClient interface {
+	PermissionChecker
+	RelationshipReader
+}
+
 // RelationManager provides methods for managing relation tuples.
 type RelationManager interface {
 	AddRelation(ctx context.Context, namespace, object, relation string, subject Subject) error
@@ -44,7 +57,7 @@ type RelationManager interface {
 // AuthorizationClient can both check permissions and manage relation tuples.
 // It is the interface most callers should use when they need both read + write behavior.
 type AuthorizationClient interface {
-	PermissionChecker
+	ReadClient
 	RelationManager
 }
 
@@ -57,6 +70,8 @@ type Client struct {
 // Compile-time interface compliance checks.
 var (
 	_ PermissionChecker   = (*Client)(nil)
+	_ RelationshipReader  = (*Client)(nil)
+	_ ReadClient          = (*Client)(nil)
 	_ RelationManager     = (*Client)(nil)
 	_ AuthorizationClient = (*Client)(nil)
 )
@@ -76,7 +91,7 @@ func NewClient(readURL, writeURL string) *Client {
 
 // NewReadClient creates a client that can only check permissions.
 // Relation operations will return an error.
-func NewReadClient(readURL string) PermissionChecker {
+func NewReadClient(readURL string) ReadClient {
 	readCfg := keto.NewConfiguration()
 	readCfg.Servers = keto.ServerConfigurations{{URL: readURL}}
 
@@ -116,6 +131,40 @@ func (c *Client) CheckPermission(ctx context.Context, namespace, object, relatio
 	}
 
 	return result.GetAllowed(), nil
+}
+
+const defaultRelationshipPageSize int64 = 500
+
+func (c *Client) ListSubjectIDsForRelation(ctx context.Context, namespace, object, relation string) ([]string, error) {
+	req := c.readClient.RelationshipApi.GetRelationships(ctx).
+		Namespace(namespace).
+		Object(object).
+		Relation(relation).
+		PageSize(defaultRelationshipPageSize)
+
+	subjectIDs := make([]string, 0, 16)
+	pageToken := ""
+	for {
+		if pageToken != "" {
+			req = req.PageToken(pageToken)
+		}
+
+		rels, _, err := c.readClient.RelationshipApi.GetRelationshipsExecute(req)
+		if err != nil {
+			return nil, fmt.Errorf("failed to list relationships: %w", err)
+		}
+
+		for _, t := range rels.GetRelationTuples() {
+			if t.SubjectId != nil && *t.SubjectId != "" {
+				subjectIDs = append(subjectIDs, *t.SubjectId)
+			}
+		}
+
+		pageToken = rels.GetNextPageToken()
+		if pageToken == "" {
+			return subjectIDs, nil
+		}
+	}
 }
 
 // AddRelation creates a relation tuple in Keto.

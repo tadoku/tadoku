@@ -11,15 +11,16 @@ import (
 // Subject IDs are expected to be Kratos identity IDs (token "sub").
 type Service interface {
 	ClaimsForSubject(ctx context.Context, subjectID string) (Claims, error)
+	ClaimsForSubjects(ctx context.Context, subjectIDs []string) (map[string]Claims, error)
 }
 
 type KetoService struct {
-	keto      ketoclient.PermissionChecker
+	keto      ketoclient.ReadClient
 	namespace string
 	object    string
 }
 
-func NewKetoService(keto ketoclient.PermissionChecker, namespace, object string) *KetoService {
+func NewKetoService(keto ketoclient.ReadClient, namespace, object string) *KetoService {
 	return &KetoService{
 		keto:      keto,
 		namespace: namespace,
@@ -79,3 +80,50 @@ func (s *KetoService) ClaimsForSubject(ctx context.Context, subjectID string) (C
 	return claims, nil
 }
 
+func (s *KetoService) ClaimsForSubjects(ctx context.Context, subjectIDs []string) (map[string]Claims, error) {
+	out := make(map[string]Claims, len(subjectIDs))
+	unique := make(map[string]struct{}, len(subjectIDs))
+
+	for _, subjectID := range subjectIDs {
+		if subjectID == "" || subjectID == "guest" {
+			out[subjectID] = Claims{Subject: subjectID, Authenticated: false}
+			continue
+		}
+		unique[subjectID] = struct{}{}
+	}
+	if len(unique) == 0 {
+		return out, nil
+	}
+
+	adminIDs, err := s.keto.ListSubjectIDsForRelation(ctx, s.namespace, s.object, "admins")
+	if err != nil {
+		return nil, fmt.Errorf("keto list admins failed: %w", err)
+	}
+	bannedIDs, err := s.keto.ListSubjectIDsForRelation(ctx, s.namespace, s.object, "banned")
+	if err != nil {
+		return nil, fmt.Errorf("keto list banned failed: %w", err)
+	}
+
+	adminSet := make(map[string]struct{}, len(adminIDs))
+	for _, id := range adminIDs {
+		adminSet[id] = struct{}{}
+	}
+
+	bannedSet := make(map[string]struct{}, len(bannedIDs))
+	for _, id := range bannedIDs {
+		bannedSet[id] = struct{}{}
+	}
+
+	for subjectID := range unique {
+		_, admin := adminSet[subjectID]
+		_, banned := bannedSet[subjectID]
+		out[subjectID] = Claims{
+			Subject:       subjectID,
+			Authenticated: true,
+			Admin:         admin,
+			Banned:        banned,
+		}
+	}
+
+	return out, nil
+}

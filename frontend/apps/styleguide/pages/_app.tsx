@@ -10,6 +10,11 @@ const getSidebarSections = (currentPath: string) => [
   {
     title: 'Foundation',
     links: [
+      {
+        label: 'Getting Started',
+        href: '/',
+        active: currentPath === '/',
+      },
       { label: 'Color', href: '/color', active: currentPath === '/color' },
       {
         label: 'Typography',

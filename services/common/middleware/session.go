@@ -120,10 +120,6 @@ func setIdentityContext(ctx echo.Context, identity domain.Identity) {
 func RejectBannedUsers() echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(ctx echo.Context) error {
-			if ctx.Path() == "/current-user/role" {
-				return next(ctx)
-			}
-
 			claims := roles.FromContext(ctx.Request().Context())
 			if claims.Authenticated && claims.Err != nil {
 				// Fail-open: allow requests to proceed when authorization evaluation is unavailable.

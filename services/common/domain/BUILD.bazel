@@ -8,7 +8,6 @@ go_library(
         "context.go",
         "errors.go",
         "identity.go",
-        "role.go",
     ],
     importpath = "github.com/tadoku/tadoku/services/common/domain",
     visibility = ["//visibility:public"],

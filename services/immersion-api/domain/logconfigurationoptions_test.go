@@ -8,7 +8,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	commondomain "github.com/tadoku/tadoku/services/common/domain"
 	"github.com/tadoku/tadoku/services/immersion-api/domain"
 )
 
@@ -49,7 +48,7 @@ func TestLogConfigurationOptions_Execute(t *testing.T) {
 		}
 
 		svc := domain.NewLogConfigurationOptions(repo)
-		ctx := ctxWithRole(commondomain.RoleUser)
+		ctx := ctxWithUser()
 		resp, err := svc.Execute(ctx)
 
 		require.NoError(t, err)
@@ -67,7 +66,7 @@ func TestLogConfigurationOptions_Execute(t *testing.T) {
 		repo := &mockLogConfigurationOptionsRepo{}
 
 		svc := domain.NewLogConfigurationOptions(repo)
-		ctx := ctxWithRole(commondomain.RoleGuest)
+		ctx := ctxWithGuest()
 		_, err := svc.Execute(ctx)
 
 		assert.ErrorIs(t, err, domain.ErrUnauthorized)
@@ -95,7 +94,7 @@ func TestLogConfigurationOptions_Execute(t *testing.T) {
 		}
 
 		svc := domain.NewLogConfigurationOptions(repo)
-		ctx := ctxWithRole(commondomain.RoleUser)
+		ctx := ctxWithUser()
 		_, err := svc.Execute(ctx)
 
 		assert.ErrorIs(t, err, repoErr)

@@ -9,32 +9,58 @@ import (
 
 const testSubjectID = "11111111-1111-1111-1111-111111111111"
 
-func ctxWithRole(role commondomain.Role) context.Context {
-	return ctxWithToken(&commondomain.UserIdentity{
-		Subject: testSubjectID,
-		Role:    role,
-	})
-}
-
 func ctxWithToken(token *commondomain.UserIdentity) context.Context {
 	if token == nil {
 		return context.Background()
 	}
 
-	ctx := context.WithValue(context.Background(), commondomain.CtxIdentityKey, token)
-
-	// Guest tokens are treated as unauthenticated and do not get role claims.
-	if token.Role == commondomain.RoleGuest || token.Subject == "guest" {
-		return ctx
-	}
-
-	claims := roles.Claims{
-		Subject:       token.Subject,
-		Authenticated: true,
-		Admin:         token.Role == commondomain.RoleAdmin,
-		Banned:        token.Role == commondomain.RoleBanned,
-	}
-
-	return roles.WithClaims(ctx, claims)
+	return context.WithValue(context.Background(), commondomain.CtxIdentityKey, token)
 }
 
+func ctxWithGuest() context.Context {
+	return ctxWithToken(&commondomain.UserIdentity{Subject: "guest"})
+}
+
+func ctxWithUser() context.Context { return ctxWithUserSubject(testSubjectID) }
+
+func ctxWithAdmin() context.Context { return ctxWithAdminSubject(testSubjectID) }
+
+func ctxWithUserSubject(subject string) context.Context {
+	ctx := ctxWithToken(&commondomain.UserIdentity{Subject: subject})
+	return roles.WithClaims(ctx, roles.Claims{
+		Subject:       subject,
+		Authenticated: true,
+	})
+}
+
+func ctxWithAdminSubject(subject string) context.Context {
+	ctx := ctxWithToken(&commondomain.UserIdentity{Subject: subject})
+	return roles.WithClaims(ctx, roles.Claims{
+		Subject:       subject,
+		Authenticated: true,
+		Admin:         true,
+	})
+}
+
+func ctxWithUserIdentity(subject, displayName string) context.Context {
+	ctx := ctxWithToken(&commondomain.UserIdentity{
+		Subject:     subject,
+		DisplayName: displayName,
+	})
+	return roles.WithClaims(ctx, roles.Claims{
+		Subject:       subject,
+		Authenticated: true,
+	})
+}
+
+func ctxWithAdminIdentity(subject, displayName string) context.Context {
+	ctx := ctxWithToken(&commondomain.UserIdentity{
+		Subject:     subject,
+		DisplayName: displayName,
+	})
+	return roles.WithClaims(ctx, roles.Claims{
+		Subject:       subject,
+		Authenticated: true,
+		Admin:         true,
+	})
+}

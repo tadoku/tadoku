@@ -9,7 +9,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	commondomain "github.com/tadoku/tadoku/services/common/domain"
 	"github.com/tadoku/tadoku/services/immersion-api/domain"
 )
 
@@ -75,7 +74,7 @@ func TestContestFind_Execute(t *testing.T) {
 		}
 
 		svc := domain.NewContestFind(repo)
-		ctx := ctxWithRole(commondomain.RoleAdmin)
+		ctx := ctxWithAdmin()
 		_, err := svc.Execute(ctx, &domain.ContestFindRequest{
 			ID: contestID,
 		})
@@ -96,7 +95,7 @@ func TestContestFind_Execute(t *testing.T) {
 		}
 
 		svc := domain.NewContestFind(repo)
-		ctx := ctxWithRole(commondomain.RoleUser)
+		ctx := ctxWithUser()
 		_, err := svc.Execute(ctx, &domain.ContestFindRequest{
 			ID: contestID,
 		})

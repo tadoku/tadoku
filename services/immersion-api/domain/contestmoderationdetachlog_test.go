@@ -9,7 +9,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	commondomain "github.com/tadoku/tadoku/services/common/domain"
 	"github.com/tadoku/tadoku/services/immersion-api/domain"
 )
 
@@ -60,10 +59,7 @@ func TestContestModerationDetachLog_Execute(t *testing.T) {
 		repo := &mockContestModerationDetachLogRepository{}
 		svc := domain.NewContestModerationDetachLog(repo)
 
-		ctx := ctxWithToken(&commondomain.UserIdentity{
-			Role:    commondomain.RoleGuest,
-			Subject: userID.String(),
-		})
+		ctx := ctxWithGuest()
 
 		err := svc.Execute(ctx, &domain.ContestModerationDetachLogRequest{
 			ContestID: contestID,
@@ -95,10 +91,7 @@ func TestContestModerationDetachLog_Execute(t *testing.T) {
 		}
 		svc := domain.NewContestModerationDetachLog(repo)
 
-		ctx := ctxWithToken(&commondomain.UserIdentity{
-			Role:    commondomain.RoleUser,
-			Subject: userID.String(),
-		})
+		ctx := ctxWithUserSubject(userID.String())
 
 		err := svc.Execute(ctx, &domain.ContestModerationDetachLogRequest{
 			ContestID: contestID,
@@ -116,10 +109,7 @@ func TestContestModerationDetachLog_Execute(t *testing.T) {
 		}
 		svc := domain.NewContestModerationDetachLog(repo)
 
-		ctx := ctxWithToken(&commondomain.UserIdentity{
-			Role:    commondomain.RoleUser,
-			Subject: otherUserID.String(), // Not the owner
-		})
+		ctx := ctxWithUserSubject(otherUserID.String()) // Not the owner
 
 		err := svc.Execute(ctx, &domain.ContestModerationDetachLogRequest{
 			ContestID: contestID,
@@ -138,10 +128,7 @@ func TestContestModerationDetachLog_Execute(t *testing.T) {
 		}
 		svc := domain.NewContestModerationDetachLog(repo)
 
-		ctx := ctxWithToken(&commondomain.UserIdentity{
-			Role:    commondomain.RoleUser,
-			Subject: userID.String(),
-		})
+		ctx := ctxWithUserSubject(userID.String())
 
 		err := svc.Execute(ctx, &domain.ContestModerationDetachLogRequest{
 			ContestID: contestID,
@@ -160,10 +147,7 @@ func TestContestModerationDetachLog_Execute(t *testing.T) {
 		}
 		svc := domain.NewContestModerationDetachLog(repo)
 
-		ctx := ctxWithToken(&commondomain.UserIdentity{
-			Role:    commondomain.RoleUser,
-			Subject: userID.String(), // Contest owner
-		})
+		ctx := ctxWithUserSubject(userID.String()) // Contest owner
 
 		err := svc.Execute(ctx, &domain.ContestModerationDetachLogRequest{
 			ContestID: contestID,
@@ -184,10 +168,7 @@ func TestContestModerationDetachLog_Execute(t *testing.T) {
 		svc := domain.NewContestModerationDetachLog(repo)
 
 		adminID := uuid.New()
-		ctx := ctxWithToken(&commondomain.UserIdentity{
-			Role:    commondomain.RoleAdmin,
-			Subject: adminID.String(),
-		})
+		ctx := ctxWithAdminSubject(adminID.String())
 
 		err := svc.Execute(ctx, &domain.ContestModerationDetachLogRequest{
 			ContestID: contestID,
@@ -208,10 +189,7 @@ func TestContestModerationDetachLog_Execute(t *testing.T) {
 		}
 		svc := domain.NewContestModerationDetachLog(repo)
 
-		ctx := ctxWithToken(&commondomain.UserIdentity{
-			Role:    commondomain.RoleUser,
-			Subject: userID.String(),
-		})
+		ctx := ctxWithUserSubject(userID.String())
 
 		err := svc.Execute(ctx, &domain.ContestModerationDetachLogRequest{
 			ContestID: contestID,

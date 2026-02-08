@@ -6,7 +6,6 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
-	commondomain "github.com/tadoku/tadoku/services/common/domain"
 	"github.com/tadoku/tadoku/services/immersion-api/domain"
 )
 
@@ -37,7 +36,8 @@ func TestRegistrationFind_Execute(t *testing.T) {
 
 	tests := []struct {
 		name             string
-		role             commondomain.Role
+		admin            bool
+		guest            bool
 		userID           uuid.UUID
 		repoRegistration *domain.ContestRegistration
 		repoErr          error
@@ -46,28 +46,26 @@ func TestRegistrationFind_Execute(t *testing.T) {
 	}{
 		{
 			name:             "authenticated user can find registration",
-			role:             commondomain.RoleUser,
 			userID:           userID,
 			repoRegistration: validRegistration,
 			expectRepoCalled: true,
 		},
 		{
 			name:             "admin can find registration",
-			role:             commondomain.RoleAdmin,
+			admin:            true,
 			userID:           userID,
 			repoRegistration: validRegistration,
 			expectRepoCalled: true,
 		},
 		{
 			name:             "guest cannot find registration",
-			role:             commondomain.RoleGuest,
+			guest:            true,
 			userID:           userID,
 			expectedErr:      domain.ErrUnauthorized,
 			expectRepoCalled: false,
 		},
 		{
 			name:             "registration not found",
-			role:             commondomain.RoleUser,
 			userID:           userID,
 			repoErr:          domain.ErrNotFound,
 			expectedErr:      domain.ErrNotFound,
@@ -77,12 +75,14 @@ func TestRegistrationFind_Execute(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			token := &commondomain.UserIdentity{
-				Role:        test.role,
-				Subject:     test.userID.String(),
-				DisplayName: "TestUser",
+			var ctx context.Context
+			if test.guest {
+				ctx = ctxWithGuest()
+			} else if test.admin {
+				ctx = ctxWithAdminSubject(test.userID.String())
+			} else {
+				ctx = ctxWithUserSubject(test.userID.String())
 			}
-			ctx := ctxWithToken(token)
 
 			repo := &registrationFindRepositoryMock{
 				registration: test.repoRegistration,

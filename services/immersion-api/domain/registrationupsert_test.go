@@ -8,7 +8,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	commondomain "github.com/tadoku/tadoku/services/common/domain"
 	"github.com/tadoku/tadoku/services/immersion-api/domain"
 )
 
@@ -75,10 +74,7 @@ func TestRegistrationUpsert_Execute(t *testing.T) {
 		repo := &mockRegistrationUpsertRepository{}
 		svc := domain.NewRegistrationUpsert(repo, userUpsert)
 
-		ctx := ctxWithToken(&commondomain.UserIdentity{
-			Role:    commondomain.RoleGuest,
-			Subject: userID.String(),
-		})
+		ctx := ctxWithGuest()
 
 		err := svc.Execute(ctx, &domain.RegistrationUpsertRequest{
 			ContestID:     contestID,
@@ -113,10 +109,7 @@ func TestRegistrationUpsert_Execute(t *testing.T) {
 		}
 		svc := domain.NewRegistrationUpsert(repo, userUpsert)
 
-		ctx := ctxWithToken(&commondomain.UserIdentity{
-			Role:    commondomain.RoleUser,
-			Subject: userID.String(),
-		})
+		ctx := ctxWithUserSubject(userID.String())
 
 		err := svc.Execute(ctx, &domain.RegistrationUpsertRequest{
 			ContestID:     contestID,
@@ -136,10 +129,7 @@ func TestRegistrationUpsert_Execute(t *testing.T) {
 		}
 		svc := domain.NewRegistrationUpsert(repo, userUpsert)
 
-		ctx := ctxWithToken(&commondomain.UserIdentity{
-			Role:    commondomain.RoleUser,
-			Subject: userID.String(),
-		})
+		ctx := ctxWithUserSubject(userID.String())
 
 		err := svc.Execute(ctx, &domain.RegistrationUpsertRequest{
 			ContestID:     contestID,
@@ -168,10 +158,7 @@ func TestRegistrationUpsert_Execute(t *testing.T) {
 		}
 		svc := domain.NewRegistrationUpsert(repo, userUpsert)
 
-		ctx := ctxWithToken(&commondomain.UserIdentity{
-			Role:    commondomain.RoleUser,
-			Subject: userID.String(),
-		})
+		ctx := ctxWithUserSubject(userID.String())
 
 		err := svc.Execute(ctx, &domain.RegistrationUpsertRequest{
 			ContestID:     contestID,
@@ -201,10 +188,7 @@ func TestRegistrationUpsert_Execute(t *testing.T) {
 		}
 		svc := domain.NewRegistrationUpsert(repo, userUpsert)
 
-		ctx := ctxWithToken(&commondomain.UserIdentity{
-			Role:    commondomain.RoleUser,
-			Subject: userID.String(),
-		})
+		ctx := ctxWithUserSubject(userID.String())
 
 		err := svc.Execute(ctx, &domain.RegistrationUpsertRequest{
 			ContestID:     contestID,
@@ -236,10 +220,7 @@ func TestRegistrationUpsert_Execute(t *testing.T) {
 		}
 		svc := domain.NewRegistrationUpsert(repo, userUpsert)
 
-		ctx := ctxWithToken(&commondomain.UserIdentity{
-			Role:    commondomain.RoleUser,
-			Subject: userID.String(),
-		})
+		ctx := ctxWithUserSubject(userID.String())
 
 		err := svc.Execute(ctx, &domain.RegistrationUpsertRequest{
 			ContestID:     contestID,
@@ -260,10 +241,7 @@ func TestRegistrationUpsert_Execute(t *testing.T) {
 		}
 		svc := domain.NewRegistrationUpsert(repo, userUpsert)
 
-		ctx := ctxWithToken(&commondomain.UserIdentity{
-			Role:    commondomain.RoleUser,
-			Subject: userID.String(),
-		})
+		ctx := ctxWithUserSubject(userID.String())
 
 		err := svc.Execute(ctx, &domain.RegistrationUpsertRequest{
 			ContestID:     contestID,
@@ -294,10 +272,7 @@ func TestRegistrationUpsert_Execute(t *testing.T) {
 		}
 		svc := domain.NewRegistrationUpsert(repo, userUpsert)
 
-		ctx := ctxWithToken(&commondomain.UserIdentity{
-			Role:    commondomain.RoleUser,
-			Subject: userID.String(),
-		})
+		ctx := ctxWithUserSubject(userID.String())
 
 		err := svc.Execute(ctx, &domain.RegistrationUpsertRequest{
 			ContestID:     contestID,

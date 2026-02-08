@@ -7,7 +7,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	commonroles "github.com/tadoku/tadoku/services/common/authz/roles"
-	commondomain "github.com/tadoku/tadoku/services/common/domain"
 	"github.com/tadoku/tadoku/services/immersion-api/domain"
 )
 
@@ -58,7 +57,7 @@ func TestUserList_Execute(t *testing.T) {
 		cache := &mockUserListCache{users: users}
 		svc := domain.NewUserList(cache, &mockRolesService{})
 
-		ctx := ctxWithRole(commondomain.RoleUser)
+		ctx := ctxWithUser()
 
 		result, err := svc.Execute(ctx, &domain.UserListRequest{})
 
@@ -70,7 +69,7 @@ func TestUserList_Execute(t *testing.T) {
 		cache := &mockUserListCache{users: users}
 		svc := domain.NewUserList(cache, &mockRolesService{})
 
-		ctx := ctxWithRole(commondomain.RoleAdmin)
+		ctx := ctxWithAdmin()
 
 		result, err := svc.Execute(ctx, &domain.UserListRequest{PerPage: 20})
 
@@ -83,7 +82,7 @@ func TestUserList_Execute(t *testing.T) {
 		cache := &mockUserListCache{users: users}
 		svc := domain.NewUserList(cache, &mockRolesService{})
 
-		ctx := ctxWithRole(commondomain.RoleAdmin)
+		ctx := ctxWithAdmin()
 
 		result, err := svc.Execute(ctx, &domain.UserListRequest{PerPage: 2, Page: 0})
 
@@ -97,7 +96,7 @@ func TestUserList_Execute(t *testing.T) {
 		cache := &mockUserListCache{users: users}
 		svc := domain.NewUserList(cache, &mockRolesService{})
 
-		ctx := ctxWithRole(commondomain.RoleAdmin)
+		ctx := ctxWithAdmin()
 
 		result, err := svc.Execute(ctx, &domain.UserListRequest{Query: "bob"})
 

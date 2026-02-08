@@ -8,7 +8,6 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
-	commondomain "github.com/tadoku/tadoku/services/common/domain"
 	"github.com/tadoku/tadoku/services/immersion-api/domain"
 )
 
@@ -56,7 +55,7 @@ func TestLogFind_Execute(t *testing.T) {
 	tests := []struct {
 		name                   string
 		userID                 uuid.UUID
-		role                   commondomain.Role
+		admin                  bool
 		repoLog                *domain.Log
 		repoErr                error
 		expectedErr            error
@@ -66,7 +65,6 @@ func TestLogFind_Execute(t *testing.T) {
 		{
 			name:                   "owner can see registrations",
 			userID:                 ownerUserID,
-			role:                   commondomain.RoleUser,
 			repoLog:                copyLog(baseLog),
 			expectedErr:            nil,
 			expectIncludeDeleted:   false,
@@ -75,7 +73,7 @@ func TestLogFind_Execute(t *testing.T) {
 		{
 			name:                   "admin can see registrations and deleted logs",
 			userID:                 otherUserID,
-			role:                   commondomain.RoleAdmin,
+			admin:                  true,
 			repoLog:                copyLog(baseLog),
 			expectedErr:            nil,
 			expectIncludeDeleted:   true,
@@ -84,7 +82,6 @@ func TestLogFind_Execute(t *testing.T) {
 		{
 			name:                   "non-owner cannot see registrations",
 			userID:                 otherUserID,
-			role:                   commondomain.RoleUser,
 			repoLog:                copyLog(baseLog),
 			expectedErr:            nil,
 			expectIncludeDeleted:   false,
@@ -93,14 +90,12 @@ func TestLogFind_Execute(t *testing.T) {
 		{
 			name:        "log not found",
 			userID:      ownerUserID,
-			role:        commondomain.RoleUser,
 			repoErr:     domain.ErrNotFound,
 			expectedErr: domain.ErrNotFound,
 		},
 		{
 			name:        "repository error",
 			userID:      ownerUserID,
-			role:        commondomain.RoleUser,
 			repoErr:     errLogFindDatabase,
 			expectedErr: errLogFindDatabase,
 		},
@@ -108,12 +103,12 @@ func TestLogFind_Execute(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			token := &commondomain.UserIdentity{
-				Role:        test.role,
-				Subject:     test.userID.String(),
-				DisplayName: "TestUser",
+			var ctx context.Context
+			if test.admin {
+				ctx = ctxWithAdminSubject(test.userID.String())
+			} else {
+				ctx = ctxWithUserSubject(test.userID.String())
 			}
-			ctx := ctxWithToken(token)
 
 			repo := &logFindRepositoryMock{
 				log: test.repoLog,

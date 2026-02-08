@@ -40,7 +40,6 @@ func TestUserUpsert_Execute(t *testing.T) {
 		createdAt := time.Now()
 		ctx := ctxWithToken(&commondomain.UserIdentity{
 			Subject:     userID.String(),
-			Role:        commondomain.RoleUser,
 			DisplayName: "TestUser",
 			CreatedAt:   createdAt,
 		})

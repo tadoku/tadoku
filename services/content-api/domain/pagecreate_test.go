@@ -26,13 +26,13 @@ func (m *mockPageCreateRepo) CreatePage(ctx context.Context, page *contentdomain
 }
 
 func adminContext() context.Context {
-	session := &domain.UserIdentity{Subject: "kratos-admin-id", Role: domain.RoleAdmin}
+	session := &domain.UserIdentity{Subject: "kratos-admin-id"}
 	ctx := context.WithValue(context.Background(), domain.CtxIdentityKey, session)
 	return roles.WithClaims(ctx, roles.Claims{Subject: session.Subject, Authenticated: true, Admin: true})
 }
 
 func userContext() context.Context {
-	session := &domain.UserIdentity{Subject: "kratos-user-id", Role: domain.RoleUser}
+	session := &domain.UserIdentity{Subject: "kratos-user-id"}
 	ctx := context.WithValue(context.Background(), domain.CtxIdentityKey, session)
 	return roles.WithClaims(ctx, roles.Claims{Subject: session.Subject, Authenticated: true, Admin: false})
 }

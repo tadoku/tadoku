@@ -9,7 +9,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	commonroles "github.com/tadoku/tadoku/services/common/authz/roles"
-	commondomain "github.com/tadoku/tadoku/services/common/domain"
 	"github.com/tadoku/tadoku/services/immersion-api/domain"
 )
 
@@ -72,7 +71,7 @@ func TestUpdateUserRole_Execute(t *testing.T) {
 		repo := &mockUpdateUserRoleRepo{}
 		svc := domain.NewUpdateUserRole(repo, repo, &mockClaimsService{}, &mockRoleManager{})
 
-		err := svc.Execute(ctxWithRole(commondomain.RoleGuest), &domain.UpdateUserRoleRequest{
+		err := svc.Execute(ctxWithGuest(), &domain.UpdateUserRoleRequest{
 			UserID: targetID,
 			Role:   "banned",
 			Reason: "reason",
@@ -85,7 +84,7 @@ func TestUpdateUserRole_Execute(t *testing.T) {
 		repo := &mockUpdateUserRoleRepo{}
 		svc := domain.NewUpdateUserRole(repo, repo, &mockClaimsService{}, &mockRoleManager{})
 
-		err := svc.Execute(ctxWithRole(commondomain.RoleUser), &domain.UpdateUserRoleRequest{
+		err := svc.Execute(ctxWithUser(), &domain.UpdateUserRoleRequest{
 			UserID: targetID,
 			Role:   "banned",
 			Reason: "reason",
@@ -104,7 +103,7 @@ func TestUpdateUserRole_Execute(t *testing.T) {
 		}
 		svc := domain.NewUpdateUserRole(repo, repo, rolesSvc, roleMgmt)
 
-		ctx := ctxWithRole(commondomain.RoleAdmin)
+		ctx := ctxWithAdmin()
 		err := svc.Execute(ctx, &domain.UpdateUserRoleRequest{
 			UserID: targetID,
 			Role:   "banned",
@@ -130,7 +129,7 @@ func TestUpdateUserRole_Execute(t *testing.T) {
 		}
 		svc := domain.NewUpdateUserRole(repo, repo, rolesSvc, roleMgmt)
 
-		ctx := ctxWithRole(commondomain.RoleAdmin)
+		ctx := ctxWithAdmin()
 		err := svc.Execute(ctx, &domain.UpdateUserRoleRequest{
 			UserID: targetID,
 			Role:   "user",
@@ -154,7 +153,7 @@ func TestUpdateUserRole_Execute(t *testing.T) {
 		}
 		svc := domain.NewUpdateUserRole(repo, repo, rolesSvc, roleMgmt)
 
-		err := svc.Execute(ctxWithRole(commondomain.RoleAdmin), &domain.UpdateUserRoleRequest{
+		err := svc.Execute(ctxWithAdmin(), &domain.UpdateUserRoleRequest{
 			UserID: targetID,
 			Role:   "banned",
 			Reason: "reason",
@@ -170,7 +169,7 @@ func TestUpdateUserRole_Execute(t *testing.T) {
 		rolesSvc := &mockClaimsService{err: errors.New("keto down")}
 		svc := domain.NewUpdateUserRole(repo, repo, rolesSvc, roleMgmt)
 
-		err := svc.Execute(ctxWithRole(commondomain.RoleAdmin), &domain.UpdateUserRoleRequest{
+		err := svc.Execute(ctxWithAdmin(), &domain.UpdateUserRoleRequest{
 			UserID: targetID,
 			Role:   "banned",
 			Reason: "reason",
@@ -189,7 +188,7 @@ func TestUpdateUserRole_Execute(t *testing.T) {
 		}
 		svc := domain.NewUpdateUserRole(repo, repo, rolesSvc, roleMgmt)
 
-		err := svc.Execute(ctxWithRole(commondomain.RoleAdmin), &domain.UpdateUserRoleRequest{
+		err := svc.Execute(ctxWithAdmin(), &domain.UpdateUserRoleRequest{
 			UserID: targetID,
 			Role:   "banned",
 			Reason: "reason",
@@ -202,7 +201,7 @@ func TestUpdateUserRole_Execute(t *testing.T) {
 		repo := &mockUpdateUserRoleRepo{}
 		svc := domain.NewUpdateUserRole(repo, repo, &mockClaimsService{}, &mockRoleManager{})
 
-		err := svc.Execute(ctxWithRole(commondomain.RoleAdmin), &domain.UpdateUserRoleRequest{
+		err := svc.Execute(ctxWithAdmin(), &domain.UpdateUserRoleRequest{
 			UserID: targetID,
 			Role:   "nope",
 			Reason: "reason",

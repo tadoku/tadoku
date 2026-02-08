@@ -53,10 +53,7 @@ func TestContestCreate_Execute(t *testing.T) {
 		userUpsert := domain.NewUserUpsert(repo)
 		svc := domain.NewContestCreate(repo, clock, userUpsert)
 
-		ctx := ctxWithToken(&commondomain.UserIdentity{
-			Role:    commondomain.RoleGuest,
-			Subject: uuid.NewString(),
-		})
+		ctx := ctxWithGuest()
 
 		_, err := svc.Execute(ctx, validRequest)
 
@@ -69,11 +66,7 @@ func TestContestCreate_Execute(t *testing.T) {
 		userUpsert := domain.NewUserUpsert(repo)
 		svc := domain.NewContestCreate(repo, clock, userUpsert)
 
-		ctx := ctxWithToken(&commondomain.UserIdentity{
-			Role:        commondomain.RoleUser,
-			Subject:     uuid.NewString(),
-			DisplayName: "TestUser",
-		})
+		ctx := ctxWithUserIdentity(uuid.NewString(), "TestUser")
 
 		officialRequest := &domain.ContestCreateRequest{
 			ContestStart:            now.Add(30 * 24 * time.Hour),
@@ -96,11 +89,7 @@ func TestContestCreate_Execute(t *testing.T) {
 		userUpsert := domain.NewUserUpsert(repo)
 		svc := domain.NewContestCreate(repo, clock, userUpsert)
 
-		ctx := ctxWithToken(&commondomain.UserIdentity{
-			Role:        commondomain.RoleAdmin,
-			Subject:     uuid.NewString(),
-			DisplayName: "Admin",
-		})
+		ctx := ctxWithAdminIdentity(uuid.NewString(), "Admin")
 
 		badRequest := &domain.ContestCreateRequest{
 			ContestStart:            now.Add(30 * 24 * time.Hour),
@@ -130,11 +119,7 @@ func TestContestCreate_Execute(t *testing.T) {
 		userUpsert := domain.NewUserUpsert(repo)
 		svc := domain.NewContestCreate(repo, clock, userUpsert)
 
-		ctx := ctxWithToken(&commondomain.UserIdentity{
-			Role:        commondomain.RoleUser,
-			Subject:     uuid.NewString(),
-			DisplayName: "TestUser",
-		})
+		ctx := ctxWithUserIdentity(uuid.NewString(), "TestUser")
 
 		result, err := svc.Execute(ctx, validRequest)
 
@@ -150,11 +135,7 @@ func TestContestCreate_Execute(t *testing.T) {
 		userUpsert := domain.NewUserUpsert(repo)
 		svc := domain.NewContestCreate(repo, clock, userUpsert)
 
-		ctx := ctxWithToken(&commondomain.UserIdentity{
-			Role:        commondomain.RoleUser,
-			Subject:     uuid.NewString(),
-			DisplayName: "TestUser",
-		})
+		ctx := ctxWithUserIdentity(uuid.NewString(), "TestUser")
 
 		_, err := svc.Execute(ctx, validRequest)
 

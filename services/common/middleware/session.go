@@ -61,7 +61,6 @@ func Identity() echo.MiddlewareFunc {
 		return func(ctx echo.Context) error {
 			var identity domain.Identity = &domain.UserIdentity{
 				Subject: "guest",
-				Role:    domain.RoleGuest,
 			}
 
 			if ctx.Get("user") == nil {
@@ -108,7 +107,6 @@ func handleUserToken(claims *UnifiedClaims) *domain.UserIdentity {
 		DisplayName: claims.Session.Identity.Traits.DisplayName,
 		Subject:     claims.Subject,
 		CreatedAt:   claims.IssuedAt.Time,
-		Role:        domain.RoleUser,
 	}
 
 	return user

@@ -7,7 +7,6 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
-	commondomain "github.com/tadoku/tadoku/services/common/domain"
 	"github.com/tadoku/tadoku/services/immersion-api/domain"
 )
 
@@ -27,7 +26,7 @@ func (m *contestListRepositoryMock) ListContests(ctx context.Context, req *domai
 func TestContestList_Execute(t *testing.T) {
 	tests := []struct {
 		name                   string
-		role                   commondomain.Role
+		admin                  bool
 		requestPageSize        int
 		repoResponse           *domain.ContestListResponse
 		repoErr                error
@@ -37,7 +36,7 @@ func TestContestList_Execute(t *testing.T) {
 	}{
 		{
 			name:            "default page size is 10",
-			role:            commondomain.RoleUser,
+			admin:           false,
 			requestPageSize: 0,
 			repoResponse: &domain.ContestListResponse{
 				Contests:  []domain.Contest{},
@@ -48,7 +47,7 @@ func TestContestList_Execute(t *testing.T) {
 		},
 		{
 			name:            "page size capped at 100",
-			role:            commondomain.RoleUser,
+			admin:           false,
 			requestPageSize: 500,
 			repoResponse: &domain.ContestListResponse{
 				Contests:  []domain.Contest{},
@@ -59,7 +58,7 @@ func TestContestList_Execute(t *testing.T) {
 		},
 		{
 			name:            "custom page size is preserved",
-			role:            commondomain.RoleUser,
+			admin:           false,
 			requestPageSize: 25,
 			repoResponse: &domain.ContestListResponse{
 				Contests:  []domain.Contest{},
@@ -70,7 +69,7 @@ func TestContestList_Execute(t *testing.T) {
 		},
 		{
 			name:            "admin can see private contests",
-			role:            commondomain.RoleAdmin,
+			admin:           true,
 			requestPageSize: 10,
 			repoResponse: &domain.ContestListResponse{
 				Contests:  []domain.Contest{},
@@ -81,7 +80,7 @@ func TestContestList_Execute(t *testing.T) {
 		},
 		{
 			name:            "repository error is propagated",
-			role:            commondomain.RoleUser,
+			admin:           false,
 			requestPageSize: 10,
 			repoErr:         errContestListDatabase,
 			expectedErr:     errContestListDatabase,
@@ -90,12 +89,13 @@ func TestContestList_Execute(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			token := &commondomain.UserIdentity{
-				Role:        test.role,
-				Subject:     uuid.New().String(),
-				DisplayName: "TestUser",
+			subject := uuid.New().String()
+			var ctx context.Context
+			if test.admin {
+				ctx = ctxWithAdminSubject(subject)
+			} else {
+				ctx = ctxWithUserSubject(subject)
 			}
-			ctx := ctxWithToken(token)
 
 			repo := &contestListRepositoryMock{
 				response: test.repoResponse,

@@ -6,7 +6,6 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	commondomain "github.com/tadoku/tadoku/services/common/domain"
 	"github.com/tadoku/tadoku/services/immersion-api/domain"
 )
 
@@ -23,18 +22,9 @@ func (m *mockLanguageListRepo) ListLanguages(_ context.Context) ([]domain.Langua
 }
 
 func TestLanguageList(t *testing.T) {
-	adminCtx := ctxWithToken(&commondomain.UserIdentity{
-		Subject: "00000000-0000-0000-0000-000000000001",
-		Role:    commondomain.RoleAdmin,
-	})
-	userCtx := ctxWithToken(&commondomain.UserIdentity{
-		Subject: "00000000-0000-0000-0000-000000000002",
-		Role:    commondomain.RoleUser,
-	})
-	guestCtx := ctxWithToken(&commondomain.UserIdentity{
-		Subject: "00000000-0000-0000-0000-000000000003",
-		Role:    commondomain.RoleGuest,
-	})
+	adminCtx := ctxWithAdminSubject("00000000-0000-0000-0000-000000000001")
+	userCtx := ctxWithUserSubject("00000000-0000-0000-0000-000000000002")
+	guestCtx := ctxWithGuest()
 
 	t.Run("admin can list languages", func(t *testing.T) {
 		repo := &mockLanguageListRepo{languages: []domain.Language{

@@ -86,10 +86,7 @@ func TestLogCreate_Execute(t *testing.T) {
 		clock := commondomain.NewMockClock(now)
 		svc := domain.NewLogCreate(repo, clock, userUpsert)
 
-		ctx := ctxWithToken(&commondomain.UserIdentity{
-			Role:    commondomain.RoleGuest,
-			Subject: userID.String(),
-		})
+		ctx := ctxWithGuest()
 
 		_, err := svc.Execute(ctx, &domain.LogCreateRequest{})
 
@@ -117,10 +114,7 @@ func TestLogCreate_Execute(t *testing.T) {
 		clock := commondomain.NewMockClock(now)
 		svc := domain.NewLogCreate(repo, clock, userUpsert)
 
-		ctx := ctxWithToken(&commondomain.UserIdentity{
-			Role:    commondomain.RoleUser,
-			Subject: userID.String(),
-		})
+		ctx := ctxWithUserSubject(userID.String())
 
 		_, err := svc.Execute(ctx, &domain.LogCreateRequest{
 			// Missing required fields
@@ -139,10 +133,7 @@ func TestLogCreate_Execute(t *testing.T) {
 		clock := commondomain.NewMockClock(now)
 		svc := domain.NewLogCreate(repo, clock, userUpsert)
 
-		ctx := ctxWithToken(&commondomain.UserIdentity{
-			Role:    commondomain.RoleUser,
-			Subject: userID.String(),
-		})
+		ctx := ctxWithUserSubject(userID.String())
 
 		_, err := svc.Execute(ctx, &domain.LogCreateRequest{
 			RegistrationIDs: []uuid.UUID{registrationID},
@@ -165,10 +156,7 @@ func TestLogCreate_Execute(t *testing.T) {
 		clock := commondomain.NewMockClock(now)
 		svc := domain.NewLogCreate(repo, clock, userUpsert)
 
-		ctx := ctxWithToken(&commondomain.UserIdentity{
-			Role:    commondomain.RoleUser,
-			Subject: userID.String(),
-		})
+		ctx := ctxWithUserSubject(userID.String())
 
 		_, err := svc.Execute(ctx, &domain.LogCreateRequest{
 			RegistrationIDs: []uuid.UUID{registrationID},
@@ -191,10 +179,7 @@ func TestLogCreate_Execute(t *testing.T) {
 		clock := commondomain.NewMockClock(now)
 		svc := domain.NewLogCreate(repo, clock, userUpsert)
 
-		ctx := ctxWithToken(&commondomain.UserIdentity{
-			Role:    commondomain.RoleUser,
-			Subject: userID.String(),
-		})
+		ctx := ctxWithUserSubject(userID.String())
 
 		_, err := svc.Execute(ctx, &domain.LogCreateRequest{
 			RegistrationIDs: []uuid.UUID{registrationID},
@@ -219,10 +204,7 @@ func TestLogCreate_Execute(t *testing.T) {
 		clock := commondomain.NewMockClock(now)
 		svc := domain.NewLogCreate(repo, clock, userUpsert)
 
-		ctx := ctxWithToken(&commondomain.UserIdentity{
-			Role:    commondomain.RoleUser,
-			Subject: userID.String(),
-		})
+		ctx := ctxWithUserSubject(userID.String())
 
 		result, err := svc.Execute(ctx, &domain.LogCreateRequest{
 			RegistrationIDs: []uuid.UUID{registrationID},
@@ -267,10 +249,7 @@ func TestLogCreate_Execute(t *testing.T) {
 		clock := commondomain.NewMockClock(now)
 		svc := domain.NewLogCreate(repo, clock, userUpsert)
 
-		ctx := ctxWithToken(&commondomain.UserIdentity{
-			Role:    commondomain.RoleUser,
-			Subject: userID.String(),
-		})
+		ctx := ctxWithUserSubject(userID.String())
 
 		_, err := svc.Execute(ctx, &domain.LogCreateRequest{
 			RegistrationIDs: []uuid.UUID{registrationID},

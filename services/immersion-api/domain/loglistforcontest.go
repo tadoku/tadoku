@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/google/uuid"
-	commondomain "github.com/tadoku/tadoku/services/common/domain"
 )
 
 type LogListForContestRepository interface {
@@ -42,7 +41,7 @@ func (s *LogListForContest) Execute(ctx context.Context, req *LogListForContestR
 		req.PageSize = 100
 	}
 
-	if req.IncludeDeleted && !commondomain.IsRole(ctx, commondomain.RoleAdmin) {
+	if req.IncludeDeleted && !isAdmin(ctx) {
 		return nil, ErrUnauthorized
 	}
 

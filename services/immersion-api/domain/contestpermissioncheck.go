@@ -31,7 +31,7 @@ func NewContestPermissionCheck(repo ContestPermissionCheckRepository, kratos Con
 
 func (s *ContestPermissionCheck) Execute(ctx context.Context) error {
 	// Admins are allowed to bypass this check
-	if commondomain.IsRole(ctx, commondomain.RoleAdmin) {
+	if isAdmin(ctx) {
 		return nil
 	}
 

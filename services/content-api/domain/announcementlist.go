@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"github.com/go-playground/validator/v10"
-	commondomain "github.com/tadoku/tadoku/services/common/domain"
 )
 
 type AnnouncementListRepository interface {
@@ -43,8 +42,8 @@ func NewAnnouncementList(repo AnnouncementListRepository) *AnnouncementList {
 }
 
 func (s *AnnouncementList) Execute(ctx context.Context, req *AnnouncementListRequest) (*AnnouncementListResponse, error) {
-	if !commondomain.IsRole(ctx, commondomain.RoleAdmin) {
-		return nil, ErrForbidden
+	if err := requireAdmin(ctx); err != nil {
+		return nil, err
 	}
 
 	if err := s.validate.Struct(req); err != nil {

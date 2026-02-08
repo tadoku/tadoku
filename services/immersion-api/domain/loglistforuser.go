@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/google/uuid"
-	commondomain "github.com/tadoku/tadoku/services/common/domain"
 )
 
 type LogListForUserRepository interface {
@@ -41,7 +40,7 @@ func (s *LogListForUser) Execute(ctx context.Context, req *LogListForUserRequest
 		req.PageSize = 100
 	}
 
-	if req.IncludeDeleted && !commondomain.IsRole(ctx, commondomain.RoleAdmin) {
+	if req.IncludeDeleted && !isAdmin(ctx) {
 		return nil, ErrUnauthorized
 	}
 

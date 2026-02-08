@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/google/uuid"
-	commondomain "github.com/tadoku/tadoku/services/common/domain"
 )
 
 type ContestListRepository interface {
@@ -43,7 +42,7 @@ func (s *ContestList) Execute(ctx context.Context, req *ContestListRequest) (*Co
 		req.PageSize = 100
 	}
 
-	req.IncludePrivate = commondomain.IsRole(ctx, commondomain.RoleAdmin)
+	req.IncludePrivate = isAdmin(ctx)
 
 	return s.repo.ListContests(ctx, req)
 }

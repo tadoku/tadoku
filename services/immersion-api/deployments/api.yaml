@@ -44,11 +44,13 @@ spec:
             value: "http://kratos-admin.default"
           - name: API_OATHKEEPER_URL
             value: "http://oathkeeper-proxy.default:4455"
+          - name: API_KETO_READ_URL
+            value: "http://keto-read.default:4466"
+          - name: API_KETO_WRITE_URL
+            value: "http://keto-write.default:4467"
           - name: SERVICE_NAME
             value: "immersion-api"
         volumeMounts:
-        - name: tadoku-permissions
-          mountPath: /etc/tadoku/permissions
         - name: k8s-token
           mountPath: /var/run/secrets/tokens
           readOnly: true
@@ -67,9 +69,6 @@ spec:
           initialDelaySeconds: 10
           periodSeconds: 3
       volumes:
-        - name: tadoku-permissions
-          configMap:
-            name: tadoku-permissions
         - name: k8s-token
           projected:
             sources:
@@ -99,24 +98,3 @@ kind: ServiceAccount
 metadata:
   name: immersion-api
   namespace: tdk-immersion-api
----
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: tadoku-permissions
-  namespace: tdk-immersion-api
-data:
-  roles.yaml: |
-    users:
-      - email: dev@tadoku.app
-        role: admin
-      - email: dev1@tadoku.app
-        role: admin
-      - email: dev2@tadoku.app
-        role: admin
-      - email: dev3@tadoku.app
-        role: admin
-      - email: dev4@tadoku.app
-        role: admin
-      - email: banned@tadoku.app
-        role: banned

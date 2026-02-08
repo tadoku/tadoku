@@ -32,7 +32,6 @@ type UserIdentity struct {
 	Subject     string
 	DisplayName string
 	Email       string
-	Role        Role
 	CreatedAt   time.Time
 }
 

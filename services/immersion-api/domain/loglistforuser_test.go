@@ -7,7 +7,6 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
-	commondomain "github.com/tadoku/tadoku/services/common/domain"
 	"github.com/tadoku/tadoku/services/immersion-api/domain"
 )
 
@@ -27,7 +26,7 @@ func (m *logListForUserRepositoryMock) ListLogsForUser(ctx context.Context, req 
 func TestLogListForUser_Execute(t *testing.T) {
 	tests := []struct {
 		name             string
-		role             commondomain.Role
+		admin            bool
 		requestPageSize  int
 		includeDeleted   bool
 		repoResponse     *domain.LogListForUserResponse
@@ -37,7 +36,7 @@ func TestLogListForUser_Execute(t *testing.T) {
 	}{
 		{
 			name:            "default page size is 50",
-			role:            commondomain.RoleUser,
+			admin:           false,
 			requestPageSize: 0,
 			repoResponse: &domain.LogListForUserResponse{
 				Logs:      []domain.Log{},
@@ -47,7 +46,7 @@ func TestLogListForUser_Execute(t *testing.T) {
 		},
 		{
 			name:            "page size capped at 100",
-			role:            commondomain.RoleUser,
+			admin:           false,
 			requestPageSize: 500,
 			repoResponse: &domain.LogListForUserResponse{
 				Logs:      []domain.Log{},
@@ -57,7 +56,7 @@ func TestLogListForUser_Execute(t *testing.T) {
 		},
 		{
 			name:            "negative page size defaults to 100",
-			role:            commondomain.RoleUser,
+			admin:           false,
 			requestPageSize: -5,
 			repoResponse: &domain.LogListForUserResponse{
 				Logs:      []domain.Log{},
@@ -67,7 +66,7 @@ func TestLogListForUser_Execute(t *testing.T) {
 		},
 		{
 			name:            "custom page size is preserved",
-			role:            commondomain.RoleUser,
+			admin:           false,
 			requestPageSize: 25,
 			repoResponse: &domain.LogListForUserResponse{
 				Logs:      []domain.Log{},
@@ -77,7 +76,7 @@ func TestLogListForUser_Execute(t *testing.T) {
 		},
 		{
 			name:           "admin can include deleted logs",
-			role:           commondomain.RoleAdmin,
+			admin:          true,
 			includeDeleted: true,
 			repoResponse: &domain.LogListForUserResponse{
 				Logs:      []domain.Log{},
@@ -87,13 +86,13 @@ func TestLogListForUser_Execute(t *testing.T) {
 		},
 		{
 			name:           "non-admin cannot include deleted logs",
-			role:           commondomain.RoleUser,
+			admin:          false,
 			includeDeleted: true,
 			expectedErr:    domain.ErrUnauthorized,
 		},
 		{
 			name:            "repository error is propagated",
-			role:            commondomain.RoleUser,
+			admin:           false,
 			requestPageSize: 10,
 			repoErr:         errLogListForUserDatabase,
 			expectedErr:     errLogListForUserDatabase,
@@ -102,12 +101,13 @@ func TestLogListForUser_Execute(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			token := &commondomain.UserIdentity{
-				Role:        test.role,
-				Subject:     uuid.New().String(),
-				DisplayName: "TestUser",
+			subject := uuid.New().String()
+			var ctx context.Context
+			if test.admin {
+				ctx = ctxWithAdminSubject(subject)
+			} else {
+				ctx = ctxWithUserSubject(subject)
 			}
-			ctx := context.WithValue(context.Background(), commondomain.CtxIdentityKey, token)
 
 			repo := &logListForUserRepositoryMock{
 				response: test.repoResponse,

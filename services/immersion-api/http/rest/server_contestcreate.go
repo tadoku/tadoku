@@ -32,11 +32,8 @@ func (s *Server) ContestCreate(ctx echo.Context) error {
 		ActivityTypeIDAllowList: req.ActivityTypeIdAllowList,
 	})
 	if err != nil {
-		if errors.Is(err, domain.ErrForbidden) {
-			return ctx.NoContent(http.StatusForbidden)
-		}
-		if errors.Is(err, domain.ErrUnauthorized) {
-			return ctx.NoContent(http.StatusUnauthorized)
+		if handled, respErr := handleCommonErrors(ctx, err); handled {
+			return respErr
 		}
 		if errors.Is(err, domain.ErrInvalidContest) {
 			ctx.Echo().Logger.Error("could not process request: ", err)

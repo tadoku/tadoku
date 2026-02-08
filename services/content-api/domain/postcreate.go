@@ -42,8 +42,8 @@ func NewPostCreate(repo PostCreateRepository, clock commondomain.Clock) *PostCre
 }
 
 func (s *PostCreate) Execute(ctx context.Context, req *PostCreateRequest) (*PostCreateResponse, error) {
-	if !commondomain.IsRole(ctx, commondomain.RoleAdmin) {
-		return nil, ErrForbidden
+	if err := requireAdmin(ctx); err != nil {
+		return nil, err
 	}
 
 	if err := s.validate.Struct(req); err != nil {

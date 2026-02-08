@@ -6,7 +6,6 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	commondomain "github.com/tadoku/tadoku/services/common/domain"
 	"github.com/tadoku/tadoku/services/immersion-api/domain"
 )
 
@@ -29,14 +28,8 @@ func (m *mockLanguageUpdateRepo) LanguageExists(_ context.Context, code string) 
 }
 
 func TestLanguageUpdate(t *testing.T) {
-	adminCtx := context.WithValue(context.Background(), commondomain.CtxIdentityKey, &commondomain.UserIdentity{
-		Subject: "00000000-0000-0000-0000-000000000001",
-		Role:    commondomain.RoleAdmin,
-	})
-	userCtx := context.WithValue(context.Background(), commondomain.CtxIdentityKey, &commondomain.UserIdentity{
-		Subject: "00000000-0000-0000-0000-000000000002",
-		Role:    commondomain.RoleUser,
-	})
+	adminCtx := ctxWithAdminSubject("00000000-0000-0000-0000-000000000001")
+	userCtx := ctxWithUserSubject("00000000-0000-0000-0000-000000000002")
 
 	t.Run("admin can update a language", func(t *testing.T) {
 		repo := &mockLanguageUpdateRepo{languages: map[string]string{"jpn": "Japanese"}}

@@ -1,11 +1,9 @@
 package rest
 
 import (
-	"errors"
 	"net/http"
 
 	"github.com/labstack/echo/v4"
-	"github.com/tadoku/tadoku/services/immersion-api/domain"
 	"github.com/tadoku/tadoku/services/immersion-api/http/rest/openapi"
 )
 
@@ -14,8 +12,8 @@ import (
 func (s *Server) ContestFindOngoingRegistrations(ctx echo.Context) error {
 	regs, err := s.registrationListOngoing.Execute(ctx.Request().Context())
 	if err != nil {
-		if errors.Is(err, domain.ErrUnauthorized) {
-			return ctx.NoContent(http.StatusUnauthorized)
+		if handled, respErr := handleCommonErrors(ctx, err); handled {
+			return respErr
 		}
 
 		ctx.Echo().Logger.Error(err)

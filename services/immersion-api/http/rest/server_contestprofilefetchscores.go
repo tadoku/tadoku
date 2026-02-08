@@ -1,7 +1,6 @@
 package rest
 
 import (
-	"errors"
 	"net/http"
 
 	"github.com/deepmap/oapi-codegen/pkg/types"
@@ -18,8 +17,8 @@ func (s *Server) ContestProfileFetchScores(ctx echo.Context, id types.UUID, user
 		ContestID: id,
 	})
 	if err != nil {
-		if errors.Is(err, domain.ErrNotFound) {
-			return ctx.NoContent(http.StatusNotFound)
+		if handled, respErr := handleCommonErrors(ctx, err); handled {
+			return respErr
 		}
 		ctx.Logger().Errorf("could not fetch profile: %w", err)
 		return ctx.NoContent(http.StatusInternalServerError)

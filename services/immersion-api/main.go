@@ -11,9 +11,10 @@ import (
 
 	"github.com/go-playground/validator/v10"
 	"github.com/kelseyhightower/envconfig"
+	commonroles "github.com/tadoku/tadoku/services/common/authz/roles"
+	ketoclient "github.com/tadoku/tadoku/services/common/client/keto"
 	"github.com/tadoku/tadoku/services/common/domain"
 	tadokumiddleware "github.com/tadoku/tadoku/services/common/middleware"
-	"github.com/tadoku/tadoku/services/common/storage/memory"
 	"github.com/tadoku/tadoku/services/immersion-api/cache"
 	"github.com/tadoku/tadoku/services/immersion-api/client/ory"
 	immersiondomain "github.com/tadoku/tadoku/services/immersion-api/domain"
@@ -34,6 +35,8 @@ type Config struct {
 	JWKS                   string  `validate:"required"`
 	KratosURL              string  `validate:"required" envconfig:"kratos_url"`
 	OathkeeperURL          string  `validate:"required" envconfig:"oathkeeper_url"`
+	KetoReadURL            string  `validate:"required" envconfig:"keto_read_url"`
+	KetoWriteURL           string  `validate:"required" envconfig:"keto_write_url"`
 	ServiceName            string  `envconfig:"service_name" default:"immersion-api"`
 	SentryDSN              string  `envconfig:"sentry_dns"`
 	SentryTracesSampleRate float64 `validate:"required_with=SentryDSN" envconfig:"sentry_traces_sample_rate"`
@@ -59,12 +62,15 @@ func main() {
 	userCache.Start()
 
 	postgresRepository := repository.NewRepository(psql)
-	configRoleRepository := memory.NewRoleRepository("/etc/tadoku/permissions/roles.yaml")
+	var ketoAuthz ketoclient.AuthorizationClient = ketoclient.NewClient(cfg.KetoReadURL, cfg.KetoWriteURL)
+	rolesSvc := commonroles.NewKetoService(ketoAuthz, "app", "tadoku")
+	roleMgmt := commonroles.NewKetoManager(ketoAuthz, "app", "tadoku")
 
 	e := echo.New()
 	e.Use(tadokumiddleware.Logger([]string{"/ping"}))
 	e.Use(tadokumiddleware.VerifyJWT(cfg.JWKS))
-	e.Use(tadokumiddleware.Identity(configRoleRepository, postgresRepository))
+	e.Use(tadokumiddleware.Identity())
+	e.Use(tadokumiddleware.RolesFromKeto(rolesSvc))
 	e.Use(tadokumiddleware.RequireServiceAudience(cfg.ServiceName))
 	e.Use(tadokumiddleware.RejectBannedUsers())
 	e.Use(middleware.Recover())
@@ -107,14 +113,14 @@ func main() {
 	profileFetch := immersiondomain.NewProfileFetch(kratosClient)
 	registrationListOngoing := immersiondomain.NewRegistrationListOngoing(postgresRepository, clock)
 	contestPermissionCheck := immersiondomain.NewContestPermissionCheck(postgresRepository, kratosClient, clock)
-	userList := immersiondomain.NewUserList(userCache, postgresRepository)
+	userList := immersiondomain.NewUserList(userCache, rolesSvc)
 	logDelete := immersiondomain.NewLogDelete(postgresRepository, clock)
 	contestModerationDetachLog := immersiondomain.NewContestModerationDetachLog(postgresRepository)
 	userUpsert := immersiondomain.NewUserUpsert(postgresRepository)
 	registrationUpsert := immersiondomain.NewRegistrationUpsert(postgresRepository, userUpsert)
 	logCreate := immersiondomain.NewLogCreate(postgresRepository, clock, userUpsert)
 	contestCreate := immersiondomain.NewContestCreate(postgresRepository, clock, userUpsert)
-	updateUserRole := immersiondomain.NewUpdateUserRole(postgresRepository)
+	updateUserRole := immersiondomain.NewUpdateUserRole(postgresRepository, postgresRepository, rolesSvc, roleMgmt)
 	languageList := immersiondomain.NewLanguageList(postgresRepository)
 	languageCreate := immersiondomain.NewLanguageCreate(postgresRepository)
 	languageUpdate := immersiondomain.NewLanguageUpdate(postgresRepository)

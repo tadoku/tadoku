@@ -40,9 +40,8 @@ spec:
             value: "8000"
           - name: API_JWKS
             value: "http://oathkeeper-api.default:4456/.well-known/jwks.json"
-        volumeMounts:
-        - name: tadoku-permissions
-          mountPath: /etc/tadoku/permissions
+          - name: API_KETO_READ_URL
+            value: "http://keto-read.default:4466"
         readinessProbe:
           httpGet:
             scheme: HTTP
@@ -57,10 +56,6 @@ spec:
             port: 8000
           initialDelaySeconds: 10
           periodSeconds: 3
-      volumes:
-        - name: tadoku-permissions
-          configMap:
-            name: tadoku-permissions
 ---
 apiVersion: v1
 kind: Service
@@ -83,24 +78,3 @@ kind: ServiceAccount
 metadata:
   name: content-api
   namespace: tdk-content-api
----
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: tadoku-permissions
-  namespace: tdk-content-api
-data:
-  roles.yaml: |
-    users:
-      - email: dev@tadoku.app
-        role: admin
-      - email: dev1@tadoku.app
-        role: admin
-      - email: dev2@tadoku.app
-        role: admin
-      - email: dev3@tadoku.app
-        role: admin
-      - email: dev4@tadoku.app
-        role: admin
-      - email: banned@tadoku.app
-        role: banned

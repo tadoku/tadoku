@@ -7,7 +7,6 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	commondomain "github.com/tadoku/tadoku/services/common/domain"
 	"github.com/tadoku/tadoku/services/immersion-api/domain"
 )
 
@@ -61,7 +60,7 @@ func TestContestConfigurationOptions_Execute(t *testing.T) {
 		}
 
 		svc := domain.NewContestConfigurationOptions(repo)
-		ctx := context.WithValue(context.Background(), commondomain.CtxIdentityKey, &commondomain.UserIdentity{Role: commondomain.RoleAdmin})
+		ctx := ctxWithAdmin()
 		resp, err := svc.Execute(ctx)
 
 		require.NoError(t, err)

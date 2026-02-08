@@ -9,7 +9,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/tadoku/tadoku/services/common/domain"
+	"github.com/tadoku/tadoku/services/common/testutil/authzctx"
 	contentdomain "github.com/tadoku/tadoku/services/content-api/domain"
 )
 
@@ -25,13 +25,11 @@ func (m *mockPageCreateRepo) CreatePage(ctx context.Context, page *contentdomain
 }
 
 func adminContext() context.Context {
-	session := &domain.UserIdentity{Role: domain.RoleAdmin}
-	return context.WithValue(context.Background(), domain.CtxIdentityKey, session)
+	return authzctx.AdminSubject("kratos-admin-id")
 }
 
 func userContext() context.Context {
-	session := &domain.UserIdentity{Role: domain.RoleUser}
-	return context.WithValue(context.Background(), domain.CtxIdentityKey, session)
+	return authzctx.UserSubject("kratos-user-id")
 }
 
 func TestPageCreate_Execute(t *testing.T) {
@@ -89,7 +87,7 @@ func TestPageCreate_Execute(t *testing.T) {
 		assert.ErrorIs(t, err, contentdomain.ErrForbidden)
 	})
 
-	t.Run("returns forbidden when no session", func(t *testing.T) {
+	t.Run("returns unauthorized when no session", func(t *testing.T) {
 		repo := &mockPageCreateRepo{}
 		svc := contentdomain.NewPageCreate(repo, clock)
 
@@ -101,7 +99,7 @@ func TestPageCreate_Execute(t *testing.T) {
 			HTML:      "<p>Content</p>",
 		})
 
-		assert.ErrorIs(t, err, contentdomain.ErrForbidden)
+		assert.ErrorIs(t, err, contentdomain.ErrUnauthorized)
 	})
 
 	t.Run("returns error on invalid request - missing ID", func(t *testing.T) {

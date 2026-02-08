@@ -13,7 +13,7 @@ bazel_build(
 bazel_build(
   'immersion-api-image',
   '//services/immersion-api:load',
-  deps=['./', './../common/', './../../infra/dev/permissions/'],
+  deps=['./', './../common/'],
 )
 
 k8s_resource('immersion-api', labels=["backend"])

@@ -8,7 +8,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	commondomain "github.com/tadoku/tadoku/services/common/domain"
 	"github.com/tadoku/tadoku/services/immersion-api/domain"
 )
 
@@ -46,10 +45,7 @@ func TestRegistrationListOngoing_Execute(t *testing.T) {
 		}
 		svc := domain.NewRegistrationListOngoing(repo, clock)
 
-		ctx := context.WithValue(context.Background(), commondomain.CtxIdentityKey, &commondomain.UserIdentity{
-			Subject: userID.String(),
-			Role:    commondomain.RoleUser,
-		})
+		ctx := ctxWithUserSubject(userID.String())
 
 		result, err := svc.Execute(ctx)
 
@@ -61,10 +57,7 @@ func TestRegistrationListOngoing_Execute(t *testing.T) {
 		repo := &mockRegistrationListOngoingRepository{}
 		svc := domain.NewRegistrationListOngoing(repo, clock)
 
-		ctx := context.WithValue(context.Background(), commondomain.CtxIdentityKey, &commondomain.UserIdentity{
-			Subject: "",
-			Role:    commondomain.RoleGuest,
-		})
+		ctx := ctxWithGuest()
 
 		result, err := svc.Execute(ctx)
 

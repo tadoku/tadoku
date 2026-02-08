@@ -42,8 +42,8 @@ func NewPageCreate(repo PageCreateRepository, clock commondomain.Clock) *PageCre
 }
 
 func (s *PageCreate) Execute(ctx context.Context, req *PageCreateRequest) (*PageCreateResponse, error) {
-	if !commondomain.IsRole(ctx, commondomain.RoleAdmin) {
-		return nil, ErrForbidden
+	if err := requireAdmin(ctx); err != nil {
+		return nil, err
 	}
 
 	if err := s.validate.Struct(req); err != nil {

@@ -38,7 +38,7 @@ func TestUserUpsert_Execute(t *testing.T) {
 
 		userID := uuid.New()
 		createdAt := time.Now()
-		ctx := context.WithValue(context.Background(), commondomain.CtxIdentityKey, &commondomain.UserIdentity{
+		ctx := ctxWithToken(&commondomain.UserIdentity{
 			Subject:     userID.String(),
 			DisplayName: "TestUser",
 			CreatedAt:   createdAt,

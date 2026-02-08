@@ -44,8 +44,8 @@ func NewAnnouncementUpdate(repo AnnouncementUpdateRepository, clock commondomain
 }
 
 func (s *AnnouncementUpdate) Execute(ctx context.Context, id uuid.UUID, req *AnnouncementUpdateRequest) (*AnnouncementUpdateResponse, error) {
-	if !commondomain.IsRole(ctx, commondomain.RoleAdmin) {
-		return nil, ErrForbidden
+	if err := requireAdmin(ctx); err != nil {
+		return nil, err
 	}
 
 	if err := s.validate.Struct(req); err != nil {

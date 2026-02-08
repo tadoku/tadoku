@@ -8,9 +8,10 @@ go_library(
     importpath = "github.com/tadoku/tadoku/services/content-api",
     visibility = ["//visibility:private"],
     deps = [
+        "//services/common/authz/roles",
+        "//services/common/client/keto",
         "//services/common/domain",
         "//services/common/middleware",
-        "//services/common/storage/memory",
         "//services/content-api/domain",
         "//services/content-api/http/rest",
         "//services/content-api/http/rest/openapi",

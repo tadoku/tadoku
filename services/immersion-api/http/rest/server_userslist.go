@@ -1,7 +1,6 @@
 package rest
 
 import (
-	"errors"
 	"net/http"
 
 	"github.com/labstack/echo/v4"
@@ -32,11 +31,8 @@ func (s *Server) UsersList(ctx echo.Context, params openapi.UsersListParams) err
 		Query:   queryStr,
 	})
 	if err != nil {
-		if errors.Is(err, domain.ErrUnauthorized) {
-			return ctx.NoContent(http.StatusUnauthorized)
-		}
-		if errors.Is(err, domain.ErrForbidden) {
-			return ctx.NoContent(http.StatusForbidden)
+		if handled, respErr := handleCommonErrors(ctx, err); handled {
+			return respErr
 		}
 		ctx.Echo().Logger.Error(err)
 		return ctx.NoContent(http.StatusInternalServerError)
@@ -51,7 +47,7 @@ func (s *Server) UsersList(ctx echo.Context, params openapi.UsersListParams) err
 			CreatedAt:   u.CreatedAt,
 		}
 		// Only set role if it's not the default "user" role
-		if u.Role != "" {
+		if u.Role != "" && u.Role != "user" {
 			role := u.Role
 			entry.Role = &role
 		}

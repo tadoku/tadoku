@@ -4,6 +4,7 @@ go_library(
     name = "rest",
     srcs = [
         "announcements.go",
+        "errors.go",
         "health.go",
         "pages.go",
         "posts.go",
@@ -14,6 +15,7 @@ go_library(
     deps = [
         "//services/content-api/domain",
         "//services/content-api/http/rest/openapi",
+        "//services/common/http/httperr",
         "@com_github_google_uuid//:uuid",
         "@com_github_labstack_echo_v4//:echo",
     ],

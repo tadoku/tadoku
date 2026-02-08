@@ -13,7 +13,7 @@ bazel_build(
 bazel_build(
   'profile-api-image',
   '//services/profile-api:load',
-  deps=['./', './../common/', './../../infra/dev/permissions/'],
+  deps=['./', './../common/'],
 )
 
 k8s_resource('profile-api', labels=["backend"])

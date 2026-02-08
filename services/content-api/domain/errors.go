@@ -1,6 +1,10 @@
 package domain
 
-import "errors"
+import (
+	"errors"
+
+	commondomain "github.com/tadoku/tadoku/services/common/domain"
+)
 
 // Page errors
 var (
@@ -24,6 +28,8 @@ var (
 
 // Common errors
 var (
-	ErrForbidden      = errors.New("not allowed")
-	ErrRequestInvalid = errors.New("request is invalid")
+	ErrForbidden        = commondomain.ErrForbidden
+	ErrAuthzUnavailable = commondomain.ErrAuthzUnavailable
+	ErrRequestInvalid   = commondomain.ErrRequestInvalid
+	ErrUnauthorized     = commondomain.ErrUnauthorized
 )

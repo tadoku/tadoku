@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/google/uuid"
-	commondomain "github.com/tadoku/tadoku/services/common/domain"
 )
 
 type PageDeleteRepository interface {
@@ -22,8 +21,8 @@ func NewPageDelete(repo PageDeleteRepository) *PageDelete {
 }
 
 func (s *PageDelete) Execute(ctx context.Context, id uuid.UUID, namespace string) error {
-	if !commondomain.IsRole(ctx, commondomain.RoleAdmin) {
-		return ErrForbidden
+	if err := requireAdmin(ctx); err != nil {
+		return err
 	}
 
 	return s.repo.DeletePage(ctx, id, namespace)

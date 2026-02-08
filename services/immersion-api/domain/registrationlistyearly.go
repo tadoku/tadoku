@@ -33,7 +33,7 @@ func (s *RegistrationListYearly) Execute(ctx context.Context, req *RegistrationL
 	userID, err := uuid.Parse(session.Subject)
 
 	sessionMatchesUser := err == nil && userID == req.UserID
-	req.IncludePrivate = commondomain.IsRole(ctx, commondomain.RoleAdmin) || sessionMatchesUser
+	req.IncludePrivate = isAdmin(ctx) || sessionMatchesUser
 
 	return s.repo.YearlyContestRegistrationsForUser(ctx, req)
 }

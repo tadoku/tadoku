@@ -1,5 +1,6 @@
 load('ext://helm_resource', 'helm_resource', 'helm_repo')
 load('ext://secret', 'secret_yaml_generic')
+load('ext://configmap', 'configmap_yaml')
 
 helm_repo('ory', 'https://k8s.ory.sh/helm/charts', resource_name='helm-repo-ory', labels=["auth"])
 
@@ -27,3 +28,19 @@ helm_resource('oathkeeper',
               resource_deps=['helm-repo-ory'])
 
 k8s_resource("oathkeeper", labels=["auth"])
+
+# keto
+k8s_yaml(configmap_yaml('keto-namespaces', from_file=[
+  'namespaces.keto.ts=./namespaces.keto.ts',
+]))
+k8s_yaml('./keto_seed_admin_job.yaml')
+helm_resource('keto',
+              'ory/keto',
+              flags=[
+                '-f', './keto_values.yaml',
+              ],
+              deps=['./keto_values.yaml', './namespaces.keto.ts'],
+              resource_deps=['helm-repo-ory', 'postgres-keto'])
+
+k8s_resource("keto", labels=["auth"])
+k8s_resource("keto-seed-admin", labels=["auth"], resource_deps=["kratos", "keto"])

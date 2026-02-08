@@ -1,0 +1,22 @@
+load("@rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "keto",
+    srcs = ["client.go"],
+    importpath = "github.com/tadoku/tadoku/services/common/client/keto",
+    visibility = ["//visibility:public"],
+    deps = [
+        "@com_github_ory_keto_client_go//:keto-client-go",
+        "@org_golang_x_sync//errgroup",
+    ],
+)
+
+go_test(
+    name = "keto_test",
+    srcs = ["client_test.go"],
+    embed = [":keto"],
+    deps = [
+        "@com_github_stretchr_testify//assert",
+        "@com_github_stretchr_testify//require",
+    ],
+)

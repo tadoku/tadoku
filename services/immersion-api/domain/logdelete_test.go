@@ -40,10 +40,7 @@ func TestLogDelete_Execute(t *testing.T) {
 		clock := commondomain.NewMockClock(now)
 		svc := domain.NewLogDelete(repo, clock)
 
-		ctx := context.WithValue(context.Background(), commondomain.CtxIdentityKey, &commondomain.UserIdentity{
-			Role:    commondomain.RoleGuest,
-			Subject: userID.String(),
-		})
+		ctx := ctxWithGuest()
 
 		err := svc.Execute(ctx, &domain.LogDeleteRequest{LogID: logID})
 
@@ -69,10 +66,7 @@ func TestLogDelete_Execute(t *testing.T) {
 		clock := commondomain.NewMockClock(now)
 		svc := domain.NewLogDelete(repo, clock)
 
-		ctx := context.WithValue(context.Background(), commondomain.CtxIdentityKey, &commondomain.UserIdentity{
-			Role:    commondomain.RoleUser,
-			Subject: userID.String(),
-		})
+		ctx := ctxWithUserSubject(userID.String())
 
 		err := svc.Execute(ctx, &domain.LogDeleteRequest{LogID: logID})
 
@@ -87,10 +81,7 @@ func TestLogDelete_Execute(t *testing.T) {
 		clock := commondomain.NewMockClock(now)
 		svc := domain.NewLogDelete(repo, clock)
 
-		ctx := context.WithValue(context.Background(), commondomain.CtxIdentityKey, &commondomain.UserIdentity{
-			Role:    commondomain.RoleUser,
-			Subject: userID.String(),
-		})
+		ctx := ctxWithUserSubject(userID.String())
 
 		err := svc.Execute(ctx, &domain.LogDeleteRequest{LogID: logID})
 
@@ -105,10 +96,7 @@ func TestLogDelete_Execute(t *testing.T) {
 		clock := commondomain.NewMockClock(now)
 		svc := domain.NewLogDelete(repo, clock)
 
-		ctx := context.WithValue(context.Background(), commondomain.CtxIdentityKey, &commondomain.UserIdentity{
-			Role:    commondomain.RoleAdmin,
-			Subject: userID.String(),
-		})
+		ctx := ctxWithAdminSubject(uuid.New().String())
 
 		err := svc.Execute(ctx, &domain.LogDeleteRequest{LogID: logID})
 
@@ -123,10 +111,7 @@ func TestLogDelete_Execute(t *testing.T) {
 		clock := commondomain.NewMockClock(now)
 		svc := domain.NewLogDelete(repo, clock)
 
-		ctx := context.WithValue(context.Background(), commondomain.CtxIdentityKey, &commondomain.UserIdentity{
-			Role:    commondomain.RoleUser,
-			Subject: userID.String(),
-		})
+		ctx := ctxWithUserSubject(userID.String())
 
 		err := svc.Execute(ctx, &domain.LogDeleteRequest{LogID: logID})
 
@@ -142,10 +127,7 @@ func TestLogDelete_Execute(t *testing.T) {
 		clock := commondomain.NewMockClock(now)
 		svc := domain.NewLogDelete(repo, clock)
 
-		ctx := context.WithValue(context.Background(), commondomain.CtxIdentityKey, &commondomain.UserIdentity{
-			Role:    commondomain.RoleUser,
-			Subject: userID.String(),
-		})
+		ctx := ctxWithUserSubject(userID.String())
 
 		err := svc.Execute(ctx, &domain.LogDeleteRequest{LogID: logID})
 

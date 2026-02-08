@@ -39,11 +39,8 @@ func NewRegistrationUpsert(repo RegistrationUpsertRepository, userUpsert *UserUp
 }
 
 func (s *RegistrationUpsert) Execute(ctx context.Context, req *RegistrationUpsertRequest) error {
-	if commondomain.IsRole(ctx, commondomain.RoleGuest) {
-		return ErrUnauthorized
-	}
-	if commondomain.IsRole(ctx, commondomain.RoleBanned) {
-		return ErrForbidden
+	if err := requireAuthentication(ctx); err != nil {
+		return err
 	}
 
 	if err := s.userUpsert.Execute(ctx); err != nil {

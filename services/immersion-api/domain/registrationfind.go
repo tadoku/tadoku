@@ -25,9 +25,12 @@ func NewRegistrationFind(repo RegistrationFindRepository) *RegistrationFind {
 }
 
 func (s *RegistrationFind) Execute(ctx context.Context, req *RegistrationFindRequest) (*ContestRegistration, error) {
-	session := commondomain.ParseUserIdentity(ctx)
+	if err := requireAuthentication(ctx); err != nil {
+		return nil, err
+	}
 
-	if commondomain.IsRole(ctx, commondomain.RoleGuest) || commondomain.IsRole(ctx, commondomain.RoleBanned) || session == nil {
+	session := commondomain.ParseUserIdentity(ctx)
+	if session == nil {
 		return nil, ErrUnauthorized
 	}
 

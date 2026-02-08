@@ -1,7 +1,6 @@
 package rest
 
 import (
-	"errors"
 	"net/http"
 
 	"github.com/deepmap/oapi-codegen/pkg/types"
@@ -25,14 +24,8 @@ func (s *Server) ContestModerationDetachLog(ctx echo.Context, id types.UUID, log
 		Reason:    req.Reason,
 	})
 	if err != nil {
-		if errors.Is(err, domain.ErrNotFound) {
-			return ctx.NoContent(http.StatusNotFound)
-		}
-		if errors.Is(err, domain.ErrForbidden) {
-			return ctx.NoContent(http.StatusForbidden)
-		}
-		if errors.Is(err, domain.ErrUnauthorized) {
-			return ctx.NoContent(http.StatusUnauthorized)
+		if handled, respErr := handleCommonErrors(ctx, err); handled {
+			return respErr
 		}
 
 		ctx.Echo().Logger.Error(err)

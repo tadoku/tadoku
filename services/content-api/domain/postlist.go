@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"github.com/go-playground/validator/v10"
-	commondomain "github.com/tadoku/tadoku/services/common/domain"
 )
 
 type PostListRepository interface {
@@ -48,7 +47,7 @@ func (s *PostList) Execute(ctx context.Context, req *PostListRequest) (*PostList
 		return nil, fmt.Errorf("%w: %v", ErrRequestInvalid, err)
 	}
 
-	if req.IncludeDrafts && !commondomain.IsRole(ctx, commondomain.RoleAdmin) {
+	if req.IncludeDrafts && !isAdmin(ctx) {
 		return nil, ErrForbidden
 	}
 

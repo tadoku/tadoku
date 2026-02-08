@@ -43,8 +43,8 @@ func NewPostUpdate(repo PostUpdateRepository, clock commondomain.Clock) *PostUpd
 }
 
 func (s *PostUpdate) Execute(ctx context.Context, id uuid.UUID, req *PostUpdateRequest) (*PostUpdateResponse, error) {
-	if !commondomain.IsRole(ctx, commondomain.RoleAdmin) {
-		return nil, ErrForbidden
+	if err := requireAdmin(ctx); err != nil {
+		return nil, err
 	}
 
 	if err := s.validate.Struct(req); err != nil {

@@ -10,6 +10,7 @@ go_library(
         "announcementlist.go",
         "announcementlistactive.go",
         "announcementupdate.go",
+        "authz.go",
         "errors.go",
         "page.go",
         "pagecreate.go",
@@ -33,6 +34,7 @@ go_library(
     importpath = "github.com/tadoku/tadoku/services/content-api/domain",
     visibility = ["//visibility:public"],
     deps = [
+        "//services/common/authz/roles",
         "//services/common/domain",
         "@com_github_go_playground_validator_v10//:validator",
         "@com_github_google_uuid//:uuid",
@@ -67,7 +69,9 @@ go_test(
     ],
     deps = [
         ":domain",
+        "//services/common/authz/roles",
         "//services/common/domain",
+        "//services/common/testutil/authzctx",
         "@com_github_google_uuid//:uuid",
         "@com_github_stretchr_testify//assert",
         "@com_github_stretchr_testify//require",

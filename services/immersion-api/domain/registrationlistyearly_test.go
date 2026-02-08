@@ -6,7 +6,6 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
-	commondomain "github.com/tadoku/tadoku/services/common/domain"
 	"github.com/tadoku/tadoku/services/immersion-api/domain"
 )
 
@@ -43,7 +42,8 @@ func TestRegistrationListYearly_Execute(t *testing.T) {
 
 	tests := []struct {
 		name                 string
-		role                 commondomain.Role
+		admin                bool
+		noSession            bool
 		sessionUserID        uuid.UUID
 		requestUserID        uuid.UUID
 		repoRegistrations    *domain.ContestRegistrations
@@ -54,7 +54,6 @@ func TestRegistrationListYearly_Execute(t *testing.T) {
 	}{
 		{
 			name:                 "user can list own registrations with private",
-			role:                 commondomain.RoleUser,
 			sessionUserID:        userID,
 			requestUserID:        userID,
 			repoRegistrations:    validRegistrations,
@@ -63,7 +62,6 @@ func TestRegistrationListYearly_Execute(t *testing.T) {
 		},
 		{
 			name:                 "user cannot see private for other users",
-			role:                 commondomain.RoleUser,
 			sessionUserID:        userID,
 			requestUserID:        otherUserID,
 			repoRegistrations:    validRegistrations,
@@ -72,7 +70,7 @@ func TestRegistrationListYearly_Execute(t *testing.T) {
 		},
 		{
 			name:                 "admin can see private for any user",
-			role:                 commondomain.RoleAdmin,
+			admin:                true,
 			sessionUserID:        userID,
 			requestUserID:        otherUserID,
 			repoRegistrations:    validRegistrations,
@@ -81,7 +79,7 @@ func TestRegistrationListYearly_Execute(t *testing.T) {
 		},
 		{
 			name:             "guest cannot list registrations",
-			role:             commondomain.RoleGuest,
+			noSession:        true,
 			sessionUserID:    userID,
 			requestUserID:    userID,
 			expectedErr:      domain.ErrUnauthorized,
@@ -92,15 +90,12 @@ func TestRegistrationListYearly_Execute(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			var ctx context.Context
-			if test.role == commondomain.RoleGuest {
+			if test.noSession {
 				ctx = context.Background() // No session for guest
+			} else if test.admin {
+				ctx = ctxWithAdminSubject(test.sessionUserID.String())
 			} else {
-				token := &commondomain.UserIdentity{
-					Role:        test.role,
-					Subject:     test.sessionUserID.String(),
-					DisplayName: "TestUser",
-				}
-				ctx = context.WithValue(context.Background(), commondomain.CtxIdentityKey, token)
+				ctx = ctxWithUserSubject(test.sessionUserID.String())
 			}
 
 			repo := &registrationListYearlyRepositoryMock{

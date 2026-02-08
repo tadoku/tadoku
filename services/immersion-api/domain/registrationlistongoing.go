@@ -27,11 +27,14 @@ func NewRegistrationListOngoing(repo RegistrationListOngoingRepository, clock co
 }
 
 func (s *RegistrationListOngoing) Execute(ctx context.Context) (*ContestRegistrations, error) {
-	if commondomain.IsRole(ctx, commondomain.RoleGuest) {
-		return nil, ErrUnauthorized
+	if err := requireAuthentication(ctx); err != nil {
+		return nil, err
 	}
 
 	session := commondomain.ParseUserIdentity(ctx)
+	if session == nil {
+		return nil, ErrUnauthorized
+	}
 	req := &RegistrationListOngoingRequest{
 		UserID: uuid.MustParse(session.Subject),
 		Now:    s.clock.Now(),

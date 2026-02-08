@@ -28,11 +28,8 @@ func (s *Server) LogCreate(ctx echo.Context) error {
 		Description:     req.Description,
 	})
 	if err != nil {
-		if errors.Is(err, domain.ErrForbidden) {
-			return ctx.NoContent(http.StatusForbidden)
-		}
-		if errors.Is(err, domain.ErrUnauthorized) {
-			return ctx.NoContent(http.StatusUnauthorized)
+		if handled, respErr := handleCommonErrors(ctx, err); handled {
+			return respErr
 		}
 		if errors.Is(err, domain.ErrInvalidLog) {
 			ctx.Echo().Logger.Error("could not process request: ", err)

@@ -3,8 +3,6 @@ package domain
 import (
 	"context"
 	"fmt"
-
-	commondomain "github.com/tadoku/tadoku/services/common/domain"
 )
 
 type LanguageListRepository interface {
@@ -20,12 +18,8 @@ func NewLanguageList(repo LanguageListRepository) *LanguageList {
 }
 
 func (s *LanguageList) Execute(ctx context.Context) ([]Language, error) {
-	if commondomain.IsRole(ctx, commondomain.RoleGuest) {
-		return nil, ErrUnauthorized
-	}
-
-	if !commondomain.IsRole(ctx, commondomain.RoleAdmin) {
-		return nil, ErrForbidden
+	if err := requireAdmin(ctx); err != nil {
+		return nil, err
 	}
 
 	languages, err := s.repo.ListLanguages(ctx)

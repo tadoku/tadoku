@@ -3,6 +3,7 @@ load("@rules_go//go:def.bzl", "go_library")
 go_library(
     name = "rest",
     srcs = [
+        "errors.go",
         "mappers.go",
         "server.go",
         "server_contestcreate.go",
@@ -43,7 +44,9 @@ go_library(
     importpath = "github.com/tadoku/tadoku/services/immersion-api/http/rest",
     visibility = ["//visibility:public"],
     deps = [
+        "//services/common/authz/roles",
         "//services/common/domain",
+        "//services/common/http/httperr",
         "//services/immersion-api/domain",
         "//services/immersion-api/http/rest/openapi",
         "@com_github_deepmap_oapi_codegen//pkg/types",

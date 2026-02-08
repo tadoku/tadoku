@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/google/uuid"
-	commondomain "github.com/tadoku/tadoku/services/common/domain"
 )
 
 type PageFindByIDRepository interface {
@@ -20,8 +19,8 @@ func NewPageFindByID(repo PageFindByIDRepository) *PageFindByID {
 }
 
 func (s *PageFindByID) Execute(ctx context.Context, id uuid.UUID, namespace string) (*Page, error) {
-	if !commondomain.IsRole(ctx, commondomain.RoleAdmin) {
-		return nil, ErrForbidden
+	if err := requireAdmin(ctx); err != nil {
+		return nil, err
 	}
 
 	return s.repo.GetPageByID(ctx, id, namespace)

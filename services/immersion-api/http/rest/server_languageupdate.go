@@ -1,7 +1,6 @@
 package rest
 
 import (
-	"errors"
 	"net/http"
 
 	"github.com/labstack/echo/v4"
@@ -23,17 +22,8 @@ func (s *Server) LanguageUpdate(ctx echo.Context, code string) error {
 		Name: req.Name,
 	})
 	if err != nil {
-		if errors.Is(err, domain.ErrUnauthorized) {
-			return ctx.NoContent(http.StatusUnauthorized)
-		}
-		if errors.Is(err, domain.ErrForbidden) {
-			return ctx.NoContent(http.StatusForbidden)
-		}
-		if errors.Is(err, domain.ErrRequestInvalid) {
-			return ctx.NoContent(http.StatusBadRequest)
-		}
-		if errors.Is(err, domain.ErrNotFound) {
-			return ctx.NoContent(http.StatusNotFound)
+		if handled, respErr := handleCommonErrors(ctx, err); handled {
+			return respErr
 		}
 		ctx.Echo().Logger.Error(err)
 		return ctx.NoContent(http.StatusInternalServerError)

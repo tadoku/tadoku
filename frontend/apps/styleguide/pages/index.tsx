@@ -3,7 +3,7 @@ import { CodeBlock, Separator } from '@components/example'
 export default function Home() {
   return (
     <>
-      <h1 className="title mb-4">Getting Started</h1>
+      <h1 className="title mb-8">Getting Started</h1>
       <p className="mb-8">
         The design system powering{' '}
         <a href="https://www.tadoku.app" className="text-link">

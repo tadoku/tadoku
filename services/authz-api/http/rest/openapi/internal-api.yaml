@@ -1,0 +1,182 @@
+openapi: 3.0.3
+info:
+  title: authz-api-internal
+  description: Internal API for service-to-service communication
+  license:
+    name: MIT
+    url: https://github.com/tadoku/tadoku/blob/main/LICENSE
+  version: 1.0.0
+servers:
+  - url: http://authz-api:8080/
+paths:
+  /internal/v1/ping:
+    get:
+      summary: Internal health check for service-to-service calls
+      operationId: internalPing
+      tags: [internal]
+      security:
+        - serviceAuth: []
+      responses:
+        "200":
+          description: successful operation
+          content:
+            text/plain:
+              schema:
+                type: string
+        "401":
+          description: unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /internal/v1/permission/check:
+    post:
+      summary: Checks a permission for an arbitrary subject (no allowlist)
+      operationId: internalPermissionCheck
+      tags: [internal]
+      security:
+        - serviceAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/InternalPermissionCheckRequest"
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PermissionCheckResponse"
+        "400":
+          description: invalid request
+        "401":
+          description: unauthorized
+        "503":
+          description: authorization unavailable
+  /internal/v1/relationships:
+    post:
+      summary: Creates a relation tuple in Keto (allowlisted per-service)
+      operationId: internalRelationshipCreate
+      tags: [internal]
+      security:
+        - serviceAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RelationshipWriteRequest"
+      responses:
+        "200":
+          description: successful operation
+        "400":
+          description: invalid request
+        "401":
+          description: unauthorized
+        "403":
+          description: forbidden (not allowlisted)
+        "503":
+          description: authorization unavailable
+    delete:
+      summary: Deletes a relation tuple in Keto (allowlisted per-service)
+      operationId: internalRelationshipDelete
+      tags: [internal]
+      security:
+        - serviceAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RelationshipWriteRequest"
+      responses:
+        "200":
+          description: successful operation
+        "400":
+          description: invalid request
+        "401":
+          description: unauthorized
+        "403":
+          description: forbidden (not allowlisted)
+        "503":
+          description: authorization unavailable
+components:
+  schemas:
+    ErrorResponse:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: string
+    PermissionCheckResponse:
+      type: object
+      required:
+        - allowed
+      properties:
+        allowed:
+          type: boolean
+    SubjectSet:
+      type: object
+      required:
+        - namespace
+        - object
+        - relation
+      properties:
+        namespace:
+          type: string
+          minLength: 1
+        object:
+          type: string
+          minLength: 1
+        relation:
+          type: string
+          minLength: 1
+    InternalPermissionCheckRequest:
+      type: object
+      required:
+        - namespace
+        - object
+        - relation
+      properties:
+        namespace:
+          type: string
+          minLength: 1
+        object:
+          type: string
+          minLength: 1
+        relation:
+          type: string
+          minLength: 1
+        subject_id:
+          type: string
+        subject_set:
+          $ref: "#/components/schemas/SubjectSet"
+    RelationshipWriteRequest:
+      type: object
+      required:
+        - namespace
+        - object
+        - relation
+      properties:
+        namespace:
+          type: string
+          minLength: 1
+        object:
+          type: string
+          minLength: 1
+        relation:
+          type: string
+          minLength: 1
+        subject_id:
+          type: string
+        subject_set:
+          $ref: "#/components/schemas/SubjectSet"
+  securitySchemes:
+    serviceAuth:
+      type: http
+      scheme: bearer
+      description: JWT token for service-to-service authentication (ES256)
+

@@ -64,7 +64,6 @@ func main() {
 	postgresRepository := repository.NewRepository(psql)
 	var ketoAuthz ketoclient.AuthorizationClient = ketoclient.NewClient(cfg.KetoReadURL, cfg.KetoWriteURL)
 	rolesSvc := commonroles.NewKetoService(ketoAuthz, "app", "tadoku")
-	roleMgmt := commonroles.NewKetoManager(ketoAuthz, "app", "tadoku")
 
 	e := echo.New()
 	e.Use(tadokumiddleware.Logger([]string{"/ping"}))
@@ -120,7 +119,6 @@ func main() {
 	registrationUpsert := immersiondomain.NewRegistrationUpsert(postgresRepository, userUpsert)
 	logCreate := immersiondomain.NewLogCreate(postgresRepository, clock, userUpsert)
 	contestCreate := immersiondomain.NewContestCreate(postgresRepository, clock, userUpsert)
-	updateUserRole := immersiondomain.NewUpdateUserRole(postgresRepository, postgresRepository, rolesSvc, roleMgmt)
 	languageList := immersiondomain.NewLanguageList(postgresRepository)
 	languageCreate := immersiondomain.NewLanguageCreate(postgresRepository)
 	languageUpdate := immersiondomain.NewLanguageUpdate(postgresRepository)
@@ -154,7 +152,6 @@ func main() {
 		registrationUpsert,
 		logCreate,
 		contestCreate,
-		updateUserRole,
 		languageList,
 		languageCreate,
 		languageUpdate,

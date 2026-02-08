@@ -1,0 +1,10 @@
+load("@rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "repository",
+    srcs = ["repository.go"],
+    importpath = "github.com/tadoku/tadoku/services/authz-api/storage/postgres/repository",
+    visibility = ["//visibility:public"],
+    deps = ["//services/authz-api/domain"],
+)
+

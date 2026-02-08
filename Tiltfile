@@ -13,6 +13,7 @@ include('./infra/dev/tools/Tiltfile')
 include('./services/immersion-api/Tiltfile')
 include('./services/content-api/Tiltfile')
 include('./services/profile-api/Tiltfile')
+include('./services/authz-api/Tiltfile')
 
 # Frontend
 include('./frontend/Tiltfile')

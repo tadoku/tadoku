@@ -1,0 +1,88 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: tdk-authz-api
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: authz-api
+  namespace: tdk-authz-api
+  labels:
+    app: authz-api
+spec:
+  selector:
+    matchLabels:
+      app: authz-api
+  template:
+    metadata:
+      labels:
+        app: authz-api
+    spec:
+      serviceAccountName: authz-api
+      initContainers:
+        - name: migrations
+          image: authz-api-migrate-image
+          command: ["/migrate"]
+          args: ["-source", "file:///migrations", "-database", "$(DATABASE_URL)", "up"]
+          env:
+            - name: DATABASE_URL
+              value: "postgres://authz:foobar@postgres-authz.default/authz?sslmode=disable"
+      containers:
+        - name: authz-api
+          image: authz-api-image
+          ports:
+            - containerPort: 8000
+          env:
+            - name: API_POSTGRES_URL
+              value: "postgres://authz:foobar@postgres-authz.default/authz?sslmode=disable"
+            - name: API_PORT
+              value: "8000"
+            - name: API_JWKS
+              value: "http://oathkeeper-api.default:4456/.well-known/jwks.json"
+            - name: API_KRATOS_URL
+              value: "http://kratos-admin.default"
+            - name: API_KETO_READ_URL
+              value: "http://keto-read.default:4466"
+            - name: API_KETO_WRITE_URL
+              value: "http://keto-write.default:4467"
+            - name: SERVICE_NAME
+              value: "authz-api"
+          readinessProbe:
+            httpGet:
+              scheme: HTTP
+              path: /ping
+              port: 8000
+            initialDelaySeconds: 10
+            periodSeconds: 3
+          livenessProbe:
+            httpGet:
+              scheme: HTTP
+              path: /ping
+              port: 8000
+            initialDelaySeconds: 10
+            periodSeconds: 3
+      volumes: []
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: authz-api
+  namespace: tdk-authz-api
+  labels:
+    app: authz-api
+    service: authz-api
+spec:
+  ports:
+    - port: 80
+      targetPort: 8000
+      name: http
+  selector:
+    app: authz-api
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: authz-api
+  namespace: tdk-authz-api
+

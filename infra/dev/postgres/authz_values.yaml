@@ -1,0 +1,14 @@
+environmentVariables:
+  POSTGRES_USER: authz
+  POSTGRES_PASSWORD: foobar
+  POSTGRES_DB: authz
+
+nameOverride: "authz"
+standalone: "standalone"
+
+volume:
+  size: 256Mi
+
+image:
+  versionOverride: "13.2"
+

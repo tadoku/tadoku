@@ -68,6 +68,21 @@ func TestKetoService_ClaimsForSubject_Admin(t *testing.T) {
 	assert.False(t, claims.Banned)
 }
 
+func TestKetoService_ClaimsForSubject_Banned(t *testing.T) {
+	svc := NewKetoService(&fakeKeto{
+		results: map[string]ketoclient.PermissionResult{
+			"admins": {Allowed: false},
+			"banned": {Allowed: true},
+		},
+	}, "app", "tadoku")
+
+	claims, err := svc.ClaimsForSubject(context.Background(), "kratos-id")
+	require.NoError(t, err)
+	assert.True(t, claims.Authenticated)
+	assert.False(t, claims.Admin)
+	assert.True(t, claims.Banned)
+}
+
 func TestKetoService_ClaimsForSubject_Error(t *testing.T) {
 	svc := NewKetoService(&fakeKeto{
 		results: map[string]ketoclient.PermissionResult{

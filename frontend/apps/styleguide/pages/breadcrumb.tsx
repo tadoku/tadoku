@@ -1,38 +1,16 @@
-import { Breadcrumb } from 'ui'
-import { CodeBlock, Preview, Title } from '@components/example'
-import { HomeIcon } from '@heroicons/react/20/solid'
+import { Showcase } from '@components/Showcase'
 
-export default function BreadcrumbExample() {
+import BreadcrumbExample from '@examples/breadcrumb/example'
+import exampleCode from '@examples/breadcrumb/example.tsx?raw'
+
+export default function BreadcrumbPage() {
   return (
     <>
       <h1 className="title mb-8">Breadcrumb</h1>
 
-      <Title>Example</Title>
-      <Preview>
-        <Breadcrumb
-          links={[
-            { label: 'Home', href: '/', IconComponent: HomeIcon },
-            { label: 'Contests', href: '/contests' },
-            { label: '2022 Round 6', href: '/contests/20' },
-            { label: 'antonve', href: '/contests/20/1' },
-          ]}
-        />
-      </Preview>
-      <CodeBlock
-        code={`import { Breadcrumb } from 'ui'
-import { HomeIcon } from '@heroicons/react/20/solid'
-
-const Example = () => (
-  <Breadcrumb
-    links={[
-      { label: 'Home', href: '/', IconComponent: HomeIcon },
-      { label: 'Contests', href: '/contests' },
-      { label: '2022 Round 6', href: '/contests/20' },
-      { label: 'antonve', href: '/contests/20/1' },
-    ]}
-  />
-)`}
-      />
+      <Showcase title="Example" code={exampleCode}>
+        <BreadcrumbExample />
+      </Showcase>
     </>
   )
 }

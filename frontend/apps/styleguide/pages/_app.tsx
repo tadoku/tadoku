@@ -80,7 +80,7 @@ export default function App({ Component, pageProps }: AppProps) {
           </Fragment>
         ))}
       </div>
-      <div className="p-8 flex-grow">
+      <div className="p-8 flex-grow min-w-0">
         <Component {...pageProps} />
         <ToastContainer />
       </div>

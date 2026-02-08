@@ -1,67 +1,16 @@
-import { ActionMenu } from 'ui'
-import { CodeBlock, Preview, Title } from '@components/example'
-import {
-  EllipsisVerticalIcon,
-  PencilIcon,
-  TrashIcon,
-} from '@heroicons/react/20/solid'
-import { toast } from 'react-toastify'
+import { Showcase } from '@components/Showcase'
+
+import ActionMenuExample from '@examples/action-menu/example'
+import exampleCode from '@examples/action-menu/example.tsx?raw'
 
 export default function Page() {
   return (
     <>
       <h1 className="title mb-8">Action Menu</h1>
 
-      <Title>Example</Title>
-      <Preview>
-        <ExampleMenu />
-      </Preview>
-      <CodeBlock
-        code={`import { ActionMenu } from 'ui'
-import {
-  EllipsisVerticalIcon,
-  PencilIcon,
-  TrashIcon,
-} from '@heroicons/react/20/solid'
-
-function ExampleMenu() {
-  return (
-    <ActionMenu
-      links={[
-        { label: 'Edit', href: '#', IconComponent: PencilIcon },
-        {
-          label: 'Delete',
-          href: '#',
-          IconComponent: TrashIcon,
-          type: 'danger',
-          onClick: () => toast.warn('Deleted...'),
-        },
-      ]}
-    >
-      <EllipsisVerticalIcon className="w-4 h-5" />
-    </ActionMenu>
-  )
-}`}
-      />
+      <Showcase title="Example" code={exampleCode}>
+        <ActionMenuExample />
+      </Showcase>
     </>
-  )
-}
-
-function ExampleMenu() {
-  return (
-    <ActionMenu
-      links={[
-        { label: 'Edit', href: '#', IconComponent: PencilIcon },
-        {
-          label: 'Delete',
-          href: '#',
-          IconComponent: TrashIcon,
-          type: 'danger',
-          onClick: () => toast.warn('Deleted...'),
-        },
-      ]}
-    >
-      <EllipsisVerticalIcon className="w-4 h-5" />
-    </ActionMenu>
   )
 }

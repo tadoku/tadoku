@@ -1,49 +1,35 @@
-import { CodeBlock, Preview, Separator, Title } from '@components/example'
+import { Separator } from '@components/example'
+import { Showcase } from '@components/Showcase'
+
+import TitleExample from '@examples/typography/title'
+import titleCode from '@examples/typography/title.tsx?raw'
+
+import SubtitleExample from '@examples/typography/subtitle'
+import subtitleCode from '@examples/typography/subtitle.tsx?raw'
+
+import TextLinkExample from '@examples/typography/text-link'
+import textLinkCode from '@examples/typography/text-link.tsx?raw'
 
 export default function Typography() {
   return (
     <>
       <h1 className="title mb-8">Typography</h1>
-      <Title>Title</Title>
-      <Preview>
-        <h1 className="title">The quick brown fox jumps over the lazy dog</h1>
-      </Preview>
-      <CodeBlock
-        language={'html'}
-        code={`<h1 className="title">
-  The quick brown fox jumps over the lazy dog
-</h1>`}
-      />
+
+      <Showcase title="Title" code={titleCode}>
+        <TitleExample />
+      </Showcase>
 
       <Separator />
 
-      <Title>Subtitle</Title>
-      <Preview>
-        <h1 className="subtitle">
-          The quick brown fox jumps over the lazy dog
-        </h1>
-      </Preview>
-      <CodeBlock
-        language={'html'}
-        code={`<h1 className="subtitle">
-  The quick brown fox jumps over the lazy dog
-</h1>`}
-      />
+      <Showcase title="Subtitle" code={subtitleCode}>
+        <SubtitleExample />
+      </Showcase>
 
       <Separator />
 
-      <Title>Text link</Title>
-      <Preview>
-        <a className="text-link" href="#">
-          A text link
-        </a>
-      </Preview>
-      <CodeBlock
-        language={'html'}
-        code={`<a className="text-link" href="#">
-  A text link
-</a>`}
-      />
+      <Showcase title="Text link" code={textLinkCode}>
+        <TextLinkExample />
+      </Showcase>
     </>
   )
 }

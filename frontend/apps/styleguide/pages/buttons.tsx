@@ -1,240 +1,62 @@
-import { CodeBlock, Preview, Separator, Title } from '@components/example'
-import {
-  PencilSquareIcon,
-  TrashIcon,
-  ArrowDownTrayIcon,
-  ChevronLeftIcon,
-  UserIcon,
-} from '@heroicons/react/24/solid'
-import { ButtonGroup } from 'ui'
+import { Separator } from '@components/example'
+import { Showcase } from '@components/Showcase'
+
+import ButtonVariants from '@examples/buttons/variants'
+import variantsCode from '@examples/buttons/variants.tsx?raw'
+
+import DisabledButtons from '@examples/buttons/disabled'
+import disabledCode from '@examples/buttons/disabled.tsx?raw'
+
+import ButtonLinks from '@examples/buttons/links'
+import linksCode from '@examples/buttons/links.tsx?raw'
+
+import IconButtons from '@examples/buttons/icon-buttons'
+import iconButtonsCode from '@examples/buttons/icon-buttons.tsx?raw'
+
+import IconButtonLinks from '@examples/buttons/icon-links'
+import iconLinksCode from '@examples/buttons/icon-links.tsx?raw'
+
+import ButtonGroupExample from '@examples/buttons/button-group'
+import buttonGroupCode from '@examples/buttons/button-group.tsx?raw'
 
 export default function Buttons() {
   return (
     <>
       <h1 className="title mb-8">Buttons</h1>
 
-      <Title>Buttons</Title>
-      <Preview>
-        <div className="h-stack spaced">
-          <button className="btn primary">Primary</button>
-          <button className="btn secondary">Secondary</button>
-          <button className="btn">Tertiary (default)</button>
-          <button className="btn danger">Danger</button>
-          <button className="btn ghost">Ghost</button>
-        </div>
-      </Preview>
-      <CodeBlock
-        language="html"
-        code={`<div className="h-stack spaced">
-  <button className="btn primary">Primary</button>
-  <button className="btn secondary">Secondary</button>
-  <button className="btn">Tertiary (default)</button>
-  <button className="btn danger">Danger</button>
-  <button className="btn ghost">Ghost</button>
-</div>`}
-      />
+      <Showcase title="Buttons" code={variantsCode}>
+        <ButtonVariants />
+      </Showcase>
 
       <Separator />
 
-      <Title>Disabled button</Title>
-      <Preview>
-        <div className="h-stack spaced">
-          <button className="btn primary" disabled>
-            Primary
-          </button>
-          <button className="btn secondary" disabled>
-            Secondary
-          </button>
-          <button className="btn" disabled>
-            Tertiary (default)
-          </button>
-          <button className="btn danger" disabled>
-            Danger
-          </button>
-          <button className="btn ghost" disabled>
-            Ghost
-          </button>
-        </div>
-      </Preview>
-      <CodeBlock
-        language="html"
-        code={`<div className="h-stack spaced">
-  <button className="btn primary" disabled>Primary</button>
-  <button className="btn secondary" disabled>Secondary</button>
-  <button className="btn" disabled>Tertiary (default)</button>
-  <button className="btn danger" disabled>Danger</button>
-  <button className="btn ghost" disabled>Ghost</button>
-</div>`}
-      />
+      <Showcase title="Disabled button" code={disabledCode}>
+        <DisabledButtons />
+      </Showcase>
 
       <Separator />
 
-      <Title>Button links</Title>
-      <Preview>
-        <div className="space-x-3">
-          <a href="#" className="btn primary">
-            Primary
-          </a>
-          <a href="#" className="btn secondary">
-            Secondary
-          </a>
-          <a href="#" className="btn">
-            Tertiary (default)
-          </a>
-          <a href="#" className="btn danger">
-            Danger
-          </a>
-          <a href="#" className="btn ghost">
-            Ghost
-          </a>
-        </div>
-      </Preview>
-      <CodeBlock
-        language="html"
-        code={`<div className="space-x-3">
-  <a href="#" className="btn primary">Primary</a>
-  <a href="#" className="btn secondary">Secondary</a>
-  <a href="#" className="btn">Tertiary (default)</a>
-  <a href="#" className="btn danger">Danger</a>
-  <a href="#" className="btn ghost">Ghost</a>
-</div>`}
-      />
+      <Showcase title="Button links" code={linksCode}>
+        <ButtonLinks />
+      </Showcase>
 
       <Separator />
 
-      <Title>Icon buttons</Title>
-      <Preview>
-        <div className="h-stack spaced">
-          <button className="btn primary">
-            <PencilSquareIcon />
-            Primary
-          </button>
-          <button className="btn secondary">
-            <UserIcon />
-            Secondary
-          </button>
-          <button className="btn">
-            <ArrowDownTrayIcon />
-            Tertiary
-          </button>
-          <button className="btn danger">
-            <TrashIcon />
-            Danger
-          </button>
-          <button className="btn ghost">
-            <ChevronLeftIcon />
-            Ghost
-          </button>
-        </div>
-      </Preview>
-      <CodeBlock
-        language="html"
-        code={`<div className="h-stack spaced">
-  <button className="btn primary">
-    <PencilSquareIcon />
-    Primary
-  </button>
-  <button className="btn secondary">
-    <TrashIcon />
-    Secondary
-  </button>
-  <button className="btn">
-    <ArrowDownTrayIcon />
-    Tertiary
-  </button>
-  <button className="btn danger">
-    <TrashIcon />
-    Danger
-  </button>
-  <button className="btn ghost">
-    <ChevronLeftIcon />
-    Ghost
-  </button>
-</div>`}
-      />
+      <Showcase title="Icon buttons" code={iconButtonsCode}>
+        <IconButtons />
+      </Showcase>
 
       <Separator />
 
-      <Title>Icon button links</Title>
-      <Preview>
-        <div className="space-x-3">
-          <a href="#" className="btn primary">
-            <PencilSquareIcon />
-            Primary
-          </a>
-          <a href="#" className="btn secondary">
-            <TrashIcon />
-            Secondary
-          </a>
-          <a href="#" className="btn">
-            <ArrowDownTrayIcon />
-            Tertiary
-          </a>
-          <a href="#" className="btn danger">
-            <TrashIcon />
-            Danger
-          </a>
-          <a href="#" className="btn ghost">
-            <ChevronLeftIcon />
-            Ghost
-          </a>
-        </div>
-      </Preview>
-      <CodeBlock
-        language="html"
-        code={`<div className="space-x-3">
-  <a href="#" className="btn primary">
-    <PencilSquareIcon />
-    Primary
-  </a>
-  <a href="#" className="btn secondary">
-    <TrashIcon />
-    Secondary
-  </a>
-  <a href="#" className="btn">
-    <ArrowDownTrayIcon />
-    Tertiary
-  </a>
-  <a href="#" className="btn danger">
-    <TrashIcon />
-    Danger
-  </a>
-  <a href="#" className="btn ghost">
-    <ChevronLeftIcon />
-    Ghost
-  </a>
-</div>`}
-      />
+      <Showcase title="Icon button links" code={iconLinksCode}>
+        <IconButtonLinks />
+      </Showcase>
 
       <Separator />
 
-      <Title>Button group</Title>
-      <Preview>
-        <ButtonGroup
-          actions={[
-            {
-              href: '#',
-              onClick: () => console.log('pressed'),
-              label: 'Primary',
-              style: 'primary',
-            },
-            { href: '#', label: 'Secondary', style: 'secondary' },
-            { href: '#', label: 'Tertiary (default)' },
-            { href: '#', label: 'Danger', style: 'danger' },
-            { href: '#', label: 'Ghost', style: 'ghost' },
-          ]}
-        />
-      </Preview>
-      <CodeBlock
-        language="html"
-        code={`<div className="space-x-3">
-  <a href="#" className="btn primary">Primary</a>
-  <a href="#" className="btn secondary">Secondary</a>
-  <a href="#" className="btn">Tertiary (default)</a>
-  <a href="#" className="btn danger">Danger</a>
-  <a href="#" className="btn ghost">Ghost</a>
-</div>`}
-      />
+      <Showcase title="Button group" code={buttonGroupCode}>
+        <ButtonGroupExample />
+      </Showcase>
     </>
   )
 }

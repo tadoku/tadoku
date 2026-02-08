@@ -16,7 +16,7 @@ func (s *Server) ContestFindRegistration(ctx echo.Context, id types.UUID) error 
 		ContestID: id,
 	})
 	if err != nil {
-		if handled, respErr := noContentForCommonDomainError(ctx, err); handled {
+		if handled, respErr := handleCommonDomainError(ctx, err); handled {
 			return respErr
 		}
 

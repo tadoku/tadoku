@@ -12,7 +12,7 @@ import (
 func (s *Server) LanguageList(ctx echo.Context) error {
 	languages, err := s.languageList.Execute(ctx.Request().Context())
 	if err != nil {
-		if handled, respErr := noContentForCommonDomainError(ctx, err); handled {
+		if handled, respErr := handleCommonDomainError(ctx, err); handled {
 			return respErr
 		}
 		ctx.Echo().Logger.Error(err)

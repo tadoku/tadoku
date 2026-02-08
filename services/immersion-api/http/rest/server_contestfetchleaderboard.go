@@ -30,7 +30,7 @@ func (s *Server) ContestFetchLeaderboard(ctx echo.Context, id types.UUID, params
 
 	leaderboard, err := s.contestLeaderboardFetch.Execute(ctx.Request().Context(), req)
 	if err != nil {
-		if handled, respErr := noContentForCommonDomainError(ctx, err); handled {
+		if handled, respErr := handleCommonDomainError(ctx, err); handled {
 			return respErr
 		}
 

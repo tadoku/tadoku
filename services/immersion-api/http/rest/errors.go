@@ -5,7 +5,7 @@ import (
 	commonhttperr "github.com/tadoku/tadoku/services/common/http/httperr"
 )
 
-func noContentForCommonDomainError(ctx echo.Context, err error) (bool, error) {
+func handleCommonDomainError(ctx echo.Context, err error) (bool, error) {
 	if code, ok := commonhttperr.StatusCode(err); ok {
 		return true, ctx.NoContent(code)
 	}

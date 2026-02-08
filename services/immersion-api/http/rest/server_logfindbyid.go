@@ -16,7 +16,7 @@ func (s *Server) LogFindByID(ctx echo.Context, id types.UUID) error {
 		ID: id,
 	})
 	if err != nil {
-		if handled, respErr := noContentForCommonDomainError(ctx, err); handled {
+		if handled, respErr := handleCommonDomainError(ctx, err); handled {
 			return respErr
 		}
 		ctx.Echo().Logger.Error("could not process request: ", err)

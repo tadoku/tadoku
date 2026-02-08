@@ -32,7 +32,7 @@ func (s *Server) ContestCreate(ctx echo.Context) error {
 		ActivityTypeIDAllowList: req.ActivityTypeIdAllowList,
 	})
 	if err != nil {
-		if handled, respErr := noContentForCommonDomainError(ctx, err); handled {
+		if handled, respErr := handleCommonDomainError(ctx, err); handled {
 			return respErr
 		}
 		if errors.Is(err, domain.ErrInvalidContest) {

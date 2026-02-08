@@ -12,7 +12,7 @@ import (
 func (s *Server) LogGetConfigurations(ctx echo.Context) error {
 	opts, err := s.logConfigurationOptions.Execute(ctx.Request().Context())
 	if err != nil {
-		if handled, respErr := noContentForCommonDomainError(ctx, err); handled {
+		if handled, respErr := handleCommonDomainError(ctx, err); handled {
 			return respErr
 		}
 		return ctx.NoContent(http.StatusInternalServerError)

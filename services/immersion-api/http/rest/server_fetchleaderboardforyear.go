@@ -29,7 +29,7 @@ func (s *Server) FetchLeaderboardForYear(ctx echo.Context, year int, params open
 
 	leaderboard, err := s.leaderboardYearly.Execute(ctx.Request().Context(), req)
 	if err != nil {
-		if handled, respErr := noContentForCommonDomainError(ctx, err); handled {
+		if handled, respErr := handleCommonDomainError(ctx, err); handled {
 			return respErr
 		}
 

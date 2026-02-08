@@ -13,7 +13,7 @@ import (
 func (s *Server) ContestFindLatestOfficial(ctx echo.Context) error {
 	contest, err := s.contestFindLatestOfficial.Execute(ctx.Request().Context())
 	if err != nil {
-		if handled, respErr := noContentForCommonDomainError(ctx, err); handled {
+		if handled, respErr := handleCommonDomainError(ctx, err); handled {
 			return respErr
 		}
 

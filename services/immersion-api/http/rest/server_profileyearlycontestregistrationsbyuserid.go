@@ -17,7 +17,7 @@ func (s *Server) ProfileYearlyContestRegistrationsByUserID(ctx echo.Context, use
 		Year:   year,
 	})
 	if err != nil {
-		if handled, respErr := noContentForCommonDomainError(ctx, err); handled {
+		if handled, respErr := handleCommonDomainError(ctx, err); handled {
 			return respErr
 		}
 

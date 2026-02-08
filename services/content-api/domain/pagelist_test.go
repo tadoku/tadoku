@@ -83,7 +83,7 @@ func TestPageList_Execute(t *testing.T) {
 			Namespace: "blog",
 		})
 
-		assert.ErrorIs(t, err, contentdomain.ErrForbidden)
+		assert.ErrorIs(t, err, contentdomain.ErrUnauthorized)
 	})
 
 	t.Run("returns error on invalid request - missing namespace", func(t *testing.T) {

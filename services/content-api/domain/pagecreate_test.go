@@ -104,7 +104,7 @@ func TestPageCreate_Execute(t *testing.T) {
 			HTML:      "<p>Content</p>",
 		})
 
-		assert.ErrorIs(t, err, contentdomain.ErrForbidden)
+		assert.ErrorIs(t, err, contentdomain.ErrUnauthorized)
 	})
 
 	t.Run("returns error on invalid request - missing ID", func(t *testing.T) {

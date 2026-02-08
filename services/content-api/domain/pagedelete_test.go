@@ -52,7 +52,7 @@ func TestPageDelete_Execute(t *testing.T) {
 
 		err := svc.Execute(context.Background(), pageID, "tadoku")
 
-		assert.ErrorIs(t, err, contentdomain.ErrForbidden)
+		assert.ErrorIs(t, err, contentdomain.ErrUnauthorized)
 	})
 
 	t.Run("returns repository error", func(t *testing.T) {

@@ -44,7 +44,7 @@ func IsBanned(ctx context.Context) bool        { return FromContext(ctx).Banned 
 func RequireAdmin(ctx context.Context) error {
 	c := FromContext(ctx)
 	if !c.Authenticated {
-		return commondomain.ErrForbidden
+		return commondomain.ErrUnauthorized
 	}
 	if c.Err != nil {
 		return commondomain.ErrAuthzUnavailable
@@ -54,4 +54,3 @@ func RequireAdmin(ctx context.Context) error {
 	}
 	return nil
 }
-

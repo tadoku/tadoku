@@ -30,6 +30,9 @@ func (s *Server) PostCreate(ctx echo.Context, namespace string) error {
 		PublishedAt: req.PublishedAt,
 	})
 	if err != nil {
+		if errors.Is(err, domain.ErrUnauthorized) {
+			return ctx.NoContent(http.StatusUnauthorized)
+		}
 		if errors.Is(err, domain.ErrForbidden) {
 			return ctx.NoContent(http.StatusForbidden)
 		}
@@ -76,6 +79,9 @@ func (s *Server) PostUpdate(ctx echo.Context, namespace string, id string) error
 		PublishedAt: req.PublishedAt,
 	})
 	if err != nil {
+		if errors.Is(err, domain.ErrUnauthorized) {
+			return ctx.NoContent(http.StatusUnauthorized)
+		}
 		if errors.Is(err, domain.ErrForbidden) {
 			return ctx.NoContent(http.StatusForbidden)
 		}
@@ -113,6 +119,9 @@ func (s *Server) PostDelete(ctx echo.Context, namespace string, id string) error
 
 	err = s.postDelete.Execute(ctx.Request().Context(), parsedID, namespace)
 	if err != nil {
+		if errors.Is(err, domain.ErrUnauthorized) {
+			return ctx.NoContent(http.StatusUnauthorized)
+		}
 		if errors.Is(err, domain.ErrForbidden) {
 			return ctx.NoContent(http.StatusForbidden)
 		}
@@ -140,6 +149,9 @@ func (s *Server) PostVersionList(ctx echo.Context, namespace string, id string) 
 
 	versions, err := s.postVersionList.Execute(ctx.Request().Context(), parsedID)
 	if err != nil {
+		if errors.Is(err, domain.ErrUnauthorized) {
+			return ctx.NoContent(http.StatusUnauthorized)
+		}
 		if errors.Is(err, domain.ErrForbidden) {
 			return ctx.NoContent(http.StatusForbidden)
 		}
@@ -179,6 +191,9 @@ func (s *Server) PostVersionGet(ctx echo.Context, namespace string, id string, c
 
 	v, err := s.postVersionGet.Execute(ctx.Request().Context(), parsedID, contentId)
 	if err != nil {
+		if errors.Is(err, domain.ErrUnauthorized) {
+			return ctx.NoContent(http.StatusUnauthorized)
+		}
 		if errors.Is(err, domain.ErrForbidden) {
 			return ctx.NoContent(http.StatusForbidden)
 		}
@@ -272,6 +287,9 @@ func (s *Server) PostList(ctx echo.Context, namespace string, params openapi.Pos
 		IncludeDrafts: includeDrafts,
 	})
 	if err != nil {
+		if errors.Is(err, domain.ErrUnauthorized) {
+			return ctx.NoContent(http.StatusUnauthorized)
+		}
 		if errors.Is(err, domain.ErrForbidden) {
 			return ctx.NoContent(http.StatusForbidden)
 		}

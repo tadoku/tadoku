@@ -37,6 +37,9 @@ func (s *Server) AnnouncementCreate(ctx echo.Context, namespace string) error {
 		EndsAt:    req.EndsAt,
 	})
 	if err != nil {
+		if errors.Is(err, domain.ErrUnauthorized) {
+			return ctx.NoContent(http.StatusUnauthorized)
+		}
 		if errors.Is(err, domain.ErrForbidden) {
 			return ctx.NoContent(http.StatusForbidden)
 		}
@@ -79,6 +82,9 @@ func (s *Server) AnnouncementUpdate(ctx echo.Context, namespace string, id strin
 		EndsAt:    req.EndsAt,
 	})
 	if err != nil {
+		if errors.Is(err, domain.ErrUnauthorized) {
+			return ctx.NoContent(http.StatusUnauthorized)
+		}
 		if errors.Is(err, domain.ErrForbidden) {
 			return ctx.NoContent(http.StatusForbidden)
 		}
@@ -110,6 +116,9 @@ func (s *Server) AnnouncementDelete(ctx echo.Context, namespace string, id strin
 
 	err = s.announcementDelete.Execute(ctx.Request().Context(), parsedID, namespace)
 	if err != nil {
+		if errors.Is(err, domain.ErrUnauthorized) {
+			return ctx.NoContent(http.StatusUnauthorized)
+		}
 		if errors.Is(err, domain.ErrForbidden) {
 			return ctx.NoContent(http.StatusForbidden)
 		}
@@ -139,6 +148,9 @@ func (s *Server) AnnouncementFindByID(ctx echo.Context, namespace string, id str
 
 	announcement, err := s.announcementFindByID.Execute(ctx.Request().Context(), parsedID, namespace)
 	if err != nil {
+		if errors.Is(err, domain.ErrUnauthorized) {
+			return ctx.NoContent(http.StatusUnauthorized)
+		}
 		if errors.Is(err, domain.ErrForbidden) {
 			return ctx.NoContent(http.StatusForbidden)
 		}
@@ -175,6 +187,9 @@ func (s *Server) AnnouncementList(ctx echo.Context, namespace string, params ope
 		Page:      page,
 	})
 	if err != nil {
+		if errors.Is(err, domain.ErrUnauthorized) {
+			return ctx.NoContent(http.StatusUnauthorized)
+		}
 		if errors.Is(err, domain.ErrForbidden) {
 			return ctx.NoContent(http.StatusForbidden)
 		}

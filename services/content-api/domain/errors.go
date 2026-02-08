@@ -31,4 +31,5 @@ var (
 	ErrForbidden        = commondomain.ErrForbidden
 	ErrAuthzUnavailable = commondomain.ErrAuthzUnavailable
 	ErrRequestInvalid   = commondomain.ErrRequestInvalid
+	ErrUnauthorized     = commondomain.ErrUnauthorized
 )

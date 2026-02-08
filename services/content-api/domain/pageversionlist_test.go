@@ -57,7 +57,7 @@ func TestPageVersionList_Execute(t *testing.T) {
 
 		_, err := svc.Execute(context.Background(), pageID)
 
-		assert.ErrorIs(t, err, contentdomain.ErrForbidden)
+		assert.ErrorIs(t, err, contentdomain.ErrUnauthorized)
 	})
 
 	t.Run("returns repository error", func(t *testing.T) {

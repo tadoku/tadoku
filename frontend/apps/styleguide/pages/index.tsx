@@ -13,7 +13,13 @@ export default function Home() {
       </p>
 
       <h2 className="subtitle mb-4">Installation</h2>
-      <CodeBlock code={`pnpm add ui`} language="bash" />
+      <p className="mb-4">
+        Add the ui package to your app&apos;s dependencies in{' '}
+        <code className="bg-gray-100 px-1 rounded">package.json</code>:
+      </p>
+      <CodeBlock code={`"dependencies": {
+  "ui": "workspace:*"
+}`} language="json" />
 
       <Separator />
 

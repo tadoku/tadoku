@@ -44,6 +44,16 @@ helm_resource('postgres-profile',
               resource_deps=['helm-repo-postgres'])
 k8s_resource("postgres-profile", labels=["infra"])
 
+# authz
+helm_resource('postgres-authz',
+              'postgres/postgres',
+              flags=[
+                '-f', './authz_values.yaml',
+              ],
+              deps=['./authz_values.yaml'],
+              resource_deps=['helm-repo-postgres'])
+k8s_resource("postgres-authz", labels=["infra"])
+
 # keto
 helm_resource('postgres-keto',
               'postgres/postgres',

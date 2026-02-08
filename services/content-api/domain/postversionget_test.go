@@ -56,7 +56,7 @@ func TestPostVersionGet_Execute(t *testing.T) {
 		assert.ErrorIs(t, err, contentdomain.ErrForbidden)
 	})
 
-	t.Run("returns forbidden when no session", func(t *testing.T) {
+	t.Run("returns unauthorized when no session", func(t *testing.T) {
 		repo := &mockPostVersionGetRepo{}
 		svc := contentdomain.NewPostVersionGet(repo)
 

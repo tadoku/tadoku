@@ -1,0 +1,17 @@
+load("@rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "httperr",
+    srcs = ["httperr.go"],
+    importpath = "github.com/tadoku/tadoku/services/common/http/httperr",
+    visibility = ["//visibility:public"],
+    deps = ["//services/common/domain"],
+)
+
+go_test(
+    name = "httperr_test",
+    srcs = ["httperr_test.go"],
+    embed = [":httperr"],
+    deps = ["@com_github_stretchr_testify//assert"],
+)
+

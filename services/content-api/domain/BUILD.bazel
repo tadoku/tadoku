@@ -71,6 +71,7 @@ go_test(
         ":domain",
         "//services/common/authz/roles",
         "//services/common/domain",
+        "//services/common/testutil/authzctx",
         "@com_github_google_uuid//:uuid",
         "@com_github_stretchr_testify//assert",
         "@com_github_stretchr_testify//require",

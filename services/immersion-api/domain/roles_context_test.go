@@ -3,22 +3,18 @@ package domain_test
 import (
 	"context"
 
-	"github.com/tadoku/tadoku/services/common/authz/roles"
 	commondomain "github.com/tadoku/tadoku/services/common/domain"
+	"github.com/tadoku/tadoku/services/common/testutil/authzctx"
 )
 
 const testSubjectID = "11111111-1111-1111-1111-111111111111"
 
 func ctxWithToken(token *commondomain.UserIdentity) context.Context {
-	if token == nil {
-		return context.Background()
-	}
-
-	return context.WithValue(context.Background(), commondomain.CtxIdentityKey, token)
+	return authzctx.WithUserIdentity(context.Background(), token)
 }
 
 func ctxWithGuest() context.Context {
-	return ctxWithToken(&commondomain.UserIdentity{Subject: "guest"})
+	return authzctx.Guest()
 }
 
 func ctxWithUser() context.Context { return ctxWithUserSubject(testSubjectID) }
@@ -26,41 +22,17 @@ func ctxWithUser() context.Context { return ctxWithUserSubject(testSubjectID) }
 func ctxWithAdmin() context.Context { return ctxWithAdminSubject(testSubjectID) }
 
 func ctxWithUserSubject(subject string) context.Context {
-	ctx := ctxWithToken(&commondomain.UserIdentity{Subject: subject})
-	return roles.WithClaims(ctx, roles.Claims{
-		Subject:       subject,
-		Authenticated: true,
-	})
+	return authzctx.UserSubject(subject)
 }
 
 func ctxWithAdminSubject(subject string) context.Context {
-	ctx := ctxWithToken(&commondomain.UserIdentity{Subject: subject})
-	return roles.WithClaims(ctx, roles.Claims{
-		Subject:       subject,
-		Authenticated: true,
-		Admin:         true,
-	})
+	return authzctx.AdminSubject(subject)
 }
 
 func ctxWithUserIdentity(subject, displayName string) context.Context {
-	ctx := ctxWithToken(&commondomain.UserIdentity{
-		Subject:     subject,
-		DisplayName: displayName,
-	})
-	return roles.WithClaims(ctx, roles.Claims{
-		Subject:       subject,
-		Authenticated: true,
-	})
+	return authzctx.UserIdentity(subject, displayName)
 }
 
 func ctxWithAdminIdentity(subject, displayName string) context.Context {
-	ctx := ctxWithToken(&commondomain.UserIdentity{
-		Subject:     subject,
-		DisplayName: displayName,
-	})
-	return roles.WithClaims(ctx, roles.Claims{
-		Subject:       subject,
-		Authenticated: true,
-		Admin:         true,
-	})
+	return authzctx.AdminIdentity(subject, displayName)
 }

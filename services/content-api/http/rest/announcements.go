@@ -37,14 +37,8 @@ func (s *Server) AnnouncementCreate(ctx echo.Context, namespace string) error {
 		EndsAt:    req.EndsAt,
 	})
 	if err != nil {
-		if errors.Is(err, domain.ErrUnauthorized) {
-			return ctx.NoContent(http.StatusUnauthorized)
-		}
-		if errors.Is(err, domain.ErrForbidden) {
-			return ctx.NoContent(http.StatusForbidden)
-		}
-		if errors.Is(err, domain.ErrAuthzUnavailable) {
-			return ctx.NoContent(http.StatusServiceUnavailable)
+		if handled, respErr := noContentForCommonDomainError(ctx, err); handled {
+			return respErr
 		}
 		if errors.Is(err, domain.ErrInvalidAnnouncement) {
 			ctx.Echo().Logger.Error("could not process request: ", err)
@@ -82,14 +76,8 @@ func (s *Server) AnnouncementUpdate(ctx echo.Context, namespace string, id strin
 		EndsAt:    req.EndsAt,
 	})
 	if err != nil {
-		if errors.Is(err, domain.ErrUnauthorized) {
-			return ctx.NoContent(http.StatusUnauthorized)
-		}
-		if errors.Is(err, domain.ErrForbidden) {
-			return ctx.NoContent(http.StatusForbidden)
-		}
-		if errors.Is(err, domain.ErrAuthzUnavailable) {
-			return ctx.NoContent(http.StatusServiceUnavailable)
+		if handled, respErr := noContentForCommonDomainError(ctx, err); handled {
+			return respErr
 		}
 		if errors.Is(err, domain.ErrInvalidAnnouncement) {
 			ctx.Echo().Logger.Error("could not process request: ", err)
@@ -116,14 +104,8 @@ func (s *Server) AnnouncementDelete(ctx echo.Context, namespace string, id strin
 
 	err = s.announcementDelete.Execute(ctx.Request().Context(), parsedID, namespace)
 	if err != nil {
-		if errors.Is(err, domain.ErrUnauthorized) {
-			return ctx.NoContent(http.StatusUnauthorized)
-		}
-		if errors.Is(err, domain.ErrForbidden) {
-			return ctx.NoContent(http.StatusForbidden)
-		}
-		if errors.Is(err, domain.ErrAuthzUnavailable) {
-			return ctx.NoContent(http.StatusServiceUnavailable)
+		if handled, respErr := noContentForCommonDomainError(ctx, err); handled {
+			return respErr
 		}
 		if errors.Is(err, domain.ErrAnnouncementNotFound) {
 			return ctx.NoContent(http.StatusNotFound)
@@ -148,14 +130,8 @@ func (s *Server) AnnouncementFindByID(ctx echo.Context, namespace string, id str
 
 	announcement, err := s.announcementFindByID.Execute(ctx.Request().Context(), parsedID, namespace)
 	if err != nil {
-		if errors.Is(err, domain.ErrUnauthorized) {
-			return ctx.NoContent(http.StatusUnauthorized)
-		}
-		if errors.Is(err, domain.ErrForbidden) {
-			return ctx.NoContent(http.StatusForbidden)
-		}
-		if errors.Is(err, domain.ErrAuthzUnavailable) {
-			return ctx.NoContent(http.StatusServiceUnavailable)
+		if handled, respErr := noContentForCommonDomainError(ctx, err); handled {
+			return respErr
 		}
 		if errors.Is(err, domain.ErrAnnouncementNotFound) {
 			return ctx.NoContent(http.StatusNotFound)
@@ -187,14 +163,8 @@ func (s *Server) AnnouncementList(ctx echo.Context, namespace string, params ope
 		Page:      page,
 	})
 	if err != nil {
-		if errors.Is(err, domain.ErrUnauthorized) {
-			return ctx.NoContent(http.StatusUnauthorized)
-		}
-		if errors.Is(err, domain.ErrForbidden) {
-			return ctx.NoContent(http.StatusForbidden)
-		}
-		if errors.Is(err, domain.ErrAuthzUnavailable) {
-			return ctx.NoContent(http.StatusServiceUnavailable)
+		if handled, respErr := noContentForCommonDomainError(ctx, err); handled {
+			return respErr
 		}
 
 		ctx.Echo().Logger.Error("could not process request: ", err)

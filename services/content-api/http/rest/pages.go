@@ -30,14 +30,8 @@ func (s *Server) PageCreate(ctx echo.Context, namespace string) error {
 		PublishedAt: req.PublishedAt,
 	})
 	if err != nil {
-		if errors.Is(err, domain.ErrUnauthorized) {
-			return ctx.NoContent(http.StatusUnauthorized)
-		}
-		if errors.Is(err, domain.ErrForbidden) {
-			return ctx.NoContent(http.StatusForbidden)
-		}
-		if errors.Is(err, domain.ErrAuthzUnavailable) {
-			return ctx.NoContent(http.StatusServiceUnavailable)
+		if handled, respErr := noContentForCommonDomainError(ctx, err); handled {
+			return respErr
 		}
 		if errors.Is(err, domain.ErrPageAlreadyExists) || errors.Is(err, domain.ErrInvalidPage) {
 			ctx.Echo().Logger.Error("could not process request: ", err)
@@ -79,14 +73,8 @@ func (s *Server) PageUpdate(ctx echo.Context, namespace string, id string) error
 		PublishedAt: req.PublishedAt,
 	})
 	if err != nil {
-		if errors.Is(err, domain.ErrUnauthorized) {
-			return ctx.NoContent(http.StatusUnauthorized)
-		}
-		if errors.Is(err, domain.ErrForbidden) {
-			return ctx.NoContent(http.StatusForbidden)
-		}
-		if errors.Is(err, domain.ErrAuthzUnavailable) {
-			return ctx.NoContent(http.StatusServiceUnavailable)
+		if handled, respErr := noContentForCommonDomainError(ctx, err); handled {
+			return respErr
 		}
 		if errors.Is(err, domain.ErrPageAlreadyExists) || errors.Is(err, domain.ErrInvalidPage) {
 			ctx.Echo().Logger.Error("could not process request: ", err)
@@ -119,14 +107,8 @@ func (s *Server) PageDelete(ctx echo.Context, namespace string, id string) error
 
 	err = s.pageDelete.Execute(ctx.Request().Context(), parsedID, namespace)
 	if err != nil {
-		if errors.Is(err, domain.ErrUnauthorized) {
-			return ctx.NoContent(http.StatusUnauthorized)
-		}
-		if errors.Is(err, domain.ErrForbidden) {
-			return ctx.NoContent(http.StatusForbidden)
-		}
-		if errors.Is(err, domain.ErrAuthzUnavailable) {
-			return ctx.NoContent(http.StatusServiceUnavailable)
+		if handled, respErr := noContentForCommonDomainError(ctx, err); handled {
+			return respErr
 		}
 		if errors.Is(err, domain.ErrPageNotFound) {
 			return ctx.NoContent(http.StatusNotFound)
@@ -149,14 +131,8 @@ func (s *Server) PageVersionList(ctx echo.Context, namespace string, id string) 
 
 	versions, err := s.pageVersionList.Execute(ctx.Request().Context(), parsedID)
 	if err != nil {
-		if errors.Is(err, domain.ErrUnauthorized) {
-			return ctx.NoContent(http.StatusUnauthorized)
-		}
-		if errors.Is(err, domain.ErrForbidden) {
-			return ctx.NoContent(http.StatusForbidden)
-		}
-		if errors.Is(err, domain.ErrAuthzUnavailable) {
-			return ctx.NoContent(http.StatusServiceUnavailable)
+		if handled, respErr := noContentForCommonDomainError(ctx, err); handled {
+			return respErr
 		}
 		if errors.Is(err, domain.ErrPageNotFound) {
 			return ctx.NoContent(http.StatusNotFound)
@@ -191,14 +167,8 @@ func (s *Server) PageVersionGet(ctx echo.Context, namespace string, id string, c
 
 	v, err := s.pageVersionGet.Execute(ctx.Request().Context(), parsedID, contentId)
 	if err != nil {
-		if errors.Is(err, domain.ErrUnauthorized) {
-			return ctx.NoContent(http.StatusUnauthorized)
-		}
-		if errors.Is(err, domain.ErrForbidden) {
-			return ctx.NoContent(http.StatusForbidden)
-		}
-		if errors.Is(err, domain.ErrAuthzUnavailable) {
-			return ctx.NoContent(http.StatusServiceUnavailable)
+		if handled, respErr := noContentForCommonDomainError(ctx, err); handled {
+			return respErr
 		}
 		if errors.Is(err, domain.ErrPageNotFound) {
 			return ctx.NoContent(http.StatusNotFound)
@@ -244,14 +214,8 @@ func (s *Server) PageFindBySlug(ctx echo.Context, namespace string, slug string)
 					})
 				}
 
-				if errors.Is(idErr, domain.ErrUnauthorized) {
-					return ctx.NoContent(http.StatusUnauthorized)
-				}
-				if errors.Is(idErr, domain.ErrForbidden) {
-					return ctx.NoContent(http.StatusForbidden)
-				}
-				if errors.Is(idErr, domain.ErrAuthzUnavailable) {
-					return ctx.NoContent(http.StatusServiceUnavailable)
+				if handled, respErr := noContentForCommonDomainError(ctx, idErr); handled {
+					return respErr
 				}
 			}
 
@@ -294,14 +258,8 @@ func (s *Server) PageList(ctx echo.Context, namespace string, params openapi.Pag
 		IncludeDrafts: includeDrafts,
 	})
 	if err != nil {
-		if errors.Is(err, domain.ErrUnauthorized) {
-			return ctx.NoContent(http.StatusUnauthorized)
-		}
-		if errors.Is(err, domain.ErrForbidden) {
-			return ctx.NoContent(http.StatusForbidden)
-		}
-		if errors.Is(err, domain.ErrAuthzUnavailable) {
-			return ctx.NoContent(http.StatusServiceUnavailable)
+		if handled, respErr := noContentForCommonDomainError(ctx, err); handled {
+			return respErr
 		}
 		if !errors.Is(err, domain.ErrPageNotFound) {
 			ctx.Echo().Logger.Error("could not process request: ", err)

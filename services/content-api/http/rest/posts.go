@@ -30,14 +30,8 @@ func (s *Server) PostCreate(ctx echo.Context, namespace string) error {
 		PublishedAt: req.PublishedAt,
 	})
 	if err != nil {
-		if errors.Is(err, domain.ErrUnauthorized) {
-			return ctx.NoContent(http.StatusUnauthorized)
-		}
-		if errors.Is(err, domain.ErrForbidden) {
-			return ctx.NoContent(http.StatusForbidden)
-		}
-		if errors.Is(err, domain.ErrAuthzUnavailable) {
-			return ctx.NoContent(http.StatusServiceUnavailable)
+		if handled, respErr := noContentForCommonDomainError(ctx, err); handled {
+			return respErr
 		}
 		if errors.Is(err, domain.ErrPostAlreadyExists) || errors.Is(err, domain.ErrInvalidPost) {
 			ctx.Echo().Logger.Error("could not process request: ", err)
@@ -79,14 +73,8 @@ func (s *Server) PostUpdate(ctx echo.Context, namespace string, id string) error
 		PublishedAt: req.PublishedAt,
 	})
 	if err != nil {
-		if errors.Is(err, domain.ErrUnauthorized) {
-			return ctx.NoContent(http.StatusUnauthorized)
-		}
-		if errors.Is(err, domain.ErrForbidden) {
-			return ctx.NoContent(http.StatusForbidden)
-		}
-		if errors.Is(err, domain.ErrAuthzUnavailable) {
-			return ctx.NoContent(http.StatusServiceUnavailable)
+		if handled, respErr := noContentForCommonDomainError(ctx, err); handled {
+			return respErr
 		}
 		if errors.Is(err, domain.ErrPostAlreadyExists) || errors.Is(err, domain.ErrInvalidPost) {
 			ctx.Echo().Logger.Error("could not process request: ", err)
@@ -119,14 +107,8 @@ func (s *Server) PostDelete(ctx echo.Context, namespace string, id string) error
 
 	err = s.postDelete.Execute(ctx.Request().Context(), parsedID, namespace)
 	if err != nil {
-		if errors.Is(err, domain.ErrUnauthorized) {
-			return ctx.NoContent(http.StatusUnauthorized)
-		}
-		if errors.Is(err, domain.ErrForbidden) {
-			return ctx.NoContent(http.StatusForbidden)
-		}
-		if errors.Is(err, domain.ErrAuthzUnavailable) {
-			return ctx.NoContent(http.StatusServiceUnavailable)
+		if handled, respErr := noContentForCommonDomainError(ctx, err); handled {
+			return respErr
 		}
 		if errors.Is(err, domain.ErrPostNotFound) {
 			return ctx.NoContent(http.StatusNotFound)
@@ -149,14 +131,8 @@ func (s *Server) PostVersionList(ctx echo.Context, namespace string, id string) 
 
 	versions, err := s.postVersionList.Execute(ctx.Request().Context(), parsedID)
 	if err != nil {
-		if errors.Is(err, domain.ErrUnauthorized) {
-			return ctx.NoContent(http.StatusUnauthorized)
-		}
-		if errors.Is(err, domain.ErrForbidden) {
-			return ctx.NoContent(http.StatusForbidden)
-		}
-		if errors.Is(err, domain.ErrAuthzUnavailable) {
-			return ctx.NoContent(http.StatusServiceUnavailable)
+		if handled, respErr := noContentForCommonDomainError(ctx, err); handled {
+			return respErr
 		}
 		if errors.Is(err, domain.ErrPostNotFound) {
 			return ctx.NoContent(http.StatusNotFound)
@@ -191,14 +167,8 @@ func (s *Server) PostVersionGet(ctx echo.Context, namespace string, id string, c
 
 	v, err := s.postVersionGet.Execute(ctx.Request().Context(), parsedID, contentId)
 	if err != nil {
-		if errors.Is(err, domain.ErrUnauthorized) {
-			return ctx.NoContent(http.StatusUnauthorized)
-		}
-		if errors.Is(err, domain.ErrForbidden) {
-			return ctx.NoContent(http.StatusForbidden)
-		}
-		if errors.Is(err, domain.ErrAuthzUnavailable) {
-			return ctx.NoContent(http.StatusServiceUnavailable)
+		if handled, respErr := noContentForCommonDomainError(ctx, err); handled {
+			return respErr
 		}
 		if errors.Is(err, domain.ErrPostNotFound) {
 			return ctx.NoContent(http.StatusNotFound)
@@ -287,14 +257,8 @@ func (s *Server) PostList(ctx echo.Context, namespace string, params openapi.Pos
 		IncludeDrafts: includeDrafts,
 	})
 	if err != nil {
-		if errors.Is(err, domain.ErrUnauthorized) {
-			return ctx.NoContent(http.StatusUnauthorized)
-		}
-		if errors.Is(err, domain.ErrForbidden) {
-			return ctx.NoContent(http.StatusForbidden)
-		}
-		if errors.Is(err, domain.ErrAuthzUnavailable) {
-			return ctx.NoContent(http.StatusServiceUnavailable)
+		if handled, respErr := noContentForCommonDomainError(ctx, err); handled {
+			return respErr
 		}
 		if !errors.Is(err, domain.ErrPostNotFound) {
 			ctx.Echo().Logger.Error("could not process request: ", err)

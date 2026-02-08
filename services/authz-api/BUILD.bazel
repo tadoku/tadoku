@@ -1,0 +1,63 @@
+load("@rules_go//go:def.bzl", "go_binary", "go_library")
+load("@rules_oci//oci:defs.bzl", "oci_image", "oci_load", "oci_push")
+load("@rules_pkg//:pkg.bzl", "pkg_tar")
+
+go_library(
+    name = "authz-api_lib",
+    srcs = ["main.go"],
+    importpath = "github.com/tadoku/tadoku/services/authz-api",
+    visibility = ["//visibility:private"],
+    deps = [
+        "//services/authz-api/client/ory",
+        "//services/authz-api/domain",
+        "//services/authz-api/http/rest",
+        "//services/authz-api/http/rest/openapi",
+        "//services/authz-api/http/rest/openapi/internalapi",
+        "//services/authz-api/storage/postgres/repository",
+        "//services/common/authz/roles",
+        "//services/common/client/keto",
+        "//services/common/middleware",
+        "@com_github_getsentry_sentry_go//:sentry-go",
+        "@com_github_getsentry_sentry_go//echo",
+        "@com_github_go_playground_validator_v10//:validator",
+        "@com_github_jackc_pgx_v4//stdlib",
+        "@com_github_kelseyhightower_envconfig//:envconfig",
+        "@com_github_labstack_echo_v4//:echo",
+        "@com_github_labstack_echo_v4//middleware",
+    ],
+)
+
+go_binary(
+    name = "authz-api",
+    embed = [":authz-api_lib"],
+    visibility = ["//visibility:public"],
+)
+
+pkg_tar(
+    name = "app_layer",
+    srcs = [":authz-api"],
+)
+
+oci_image(
+    name = "image",
+    base = "@distroless_base_linux_amd64",
+    entrypoint = ["/authz-api"],
+    tars = [":app_layer"],
+)
+
+oci_load(
+    name = "load",
+    image = ":image",
+    repo_tags = [
+        "ghcr.io/tadoku/tadoku/authz-api:latest",
+        "bazel/services/authz-api:latest",
+    ],
+)
+
+oci_push(
+    name = "push",
+    image = ":image",
+    remote_tags = ["latest"],
+    repository = "ghcr.io/tadoku/tadoku/authz-api",
+)
+

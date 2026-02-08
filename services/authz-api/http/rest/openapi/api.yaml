@@ -1,0 +1,153 @@
+openapi: 3.0.3
+info:
+  title: authz-api
+  license:
+    name: MIT
+    url: https://github.com/tadoku/tadoku/blob/main/LICENSE
+  version: 1.0.0
+servers:
+  - url: https://tadoku.app/api/authz/
+paths:
+  /ping:
+    get:
+      summary: Checks if service is responsive
+      operationId: ping
+      tags: [metadata]
+      responses:
+        "200":
+          description: successful operation
+          content:
+            text/plain:
+              schema:
+                type: string
+  /current-user/role:
+    get:
+      summary: Fetches the role of the current user
+      operationId: roleGet
+      tags: [role]
+      security:
+        - cookieAuth: []
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserRole"
+        "401":
+          description: unauthorized
+        "503":
+          description: authorization unavailable
+  /users/{id}/role:
+    put:
+      summary: Update user role (admin only)
+      operationId: roleUpdate
+      tags: [admin]
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RoleUpdateRequest"
+      responses:
+        "200":
+          description: successful operation
+        "400":
+          description: invalid request
+        "401":
+          description: unauthorized
+        "403":
+          description: forbidden (not admin, or target is admin)
+        "404":
+          description: user not found
+        "503":
+          description: authorization unavailable
+  /permission/check:
+    post:
+      summary: Checks if the current user has a specific permission
+      operationId: permissionCheck
+      tags: [permissions]
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PermissionCheckRequest"
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PermissionCheckResponse"
+        "400":
+          description: invalid request
+        "401":
+          description: unauthorized
+        "403":
+          description: forbidden (not allowlisted)
+        "503":
+          description: authorization unavailable
+components:
+  schemas:
+    UserRole:
+      type: object
+      required:
+        - role
+      properties:
+        role:
+          type: string
+          enum: [admin, user, guest, banned]
+    RoleUpdateRequest:
+      type: object
+      required:
+        - role
+        - reason
+      properties:
+        role:
+          type: string
+          enum: [user, banned]
+        reason:
+          type: string
+          minLength: 1
+          maxLength: 1000
+    PermissionCheckRequest:
+      type: object
+      required:
+        - namespace
+        - object
+        - relation
+      properties:
+        namespace:
+          type: string
+          minLength: 1
+        object:
+          type: string
+          minLength: 1
+        relation:
+          type: string
+          minLength: 1
+    PermissionCheckResponse:
+      type: object
+      required:
+        - allowed
+      properties:
+        allowed:
+          type: boolean
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: ory_kratos_session
+

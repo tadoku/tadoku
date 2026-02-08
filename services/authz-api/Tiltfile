@@ -1,0 +1,19 @@
+load("./../../infra/dev/build/Tiltfile", "bazel_build")
+
+watch_file("./deployments/api.yaml")
+k8s_yaml(local("cat ./deployments/api.yaml"))
+
+bazel_build(
+  "authz-api-migrate-image",
+  "//services/authz-api/storage/postgres/migrations:load",
+  ["./storage/postgres/migrations/"],
+)
+
+bazel_build(
+  "authz-api-image",
+  "//services/authz-api:load",
+  deps=["./", "./../common/"],
+)
+
+k8s_resource("authz-api", labels=["backend"])
+

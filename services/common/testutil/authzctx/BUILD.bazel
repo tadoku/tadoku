@@ -1,0 +1,13 @@
+load("@rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "authzctx",
+    srcs = ["authzctx.go"],
+    importpath = "github.com/tadoku/tadoku/services/common/testutil/authzctx",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//services/common/authz/roles",
+        "//services/common/domain",
+    ],
+)
+

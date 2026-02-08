@@ -8,12 +8,12 @@ import (
 
 // Common errors
 var (
-	ErrRequestInvalid = errors.New("request is invalid")
-	ErrNotFound       = errors.New("not found")
-	ErrForbidden      = commondomain.ErrForbidden
+	ErrRequestInvalid   = commondomain.ErrRequestInvalid
+	ErrNotFound         = commondomain.ErrNotFound
+	ErrForbidden        = commondomain.ErrForbidden
 	ErrAuthzUnavailable = commondomain.ErrAuthzUnavailable
-	ErrUnauthorized   = errors.New("unauthorized")
-	ErrConflict       = errors.New("conflict")
+	ErrUnauthorized     = commondomain.ErrUnauthorized
+	ErrConflict         = commondomain.ErrConflict
 )
 
 // Log errors

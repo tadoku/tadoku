@@ -1,14 +1,12 @@
 package domain
 
 import (
-	"errors"
-
 	commondomain "github.com/tadoku/tadoku/services/common/domain"
 )
 
 // Common errors
 var (
-	ErrForbidden      = commondomain.ErrForbidden
+	ErrForbidden        = commondomain.ErrForbidden
 	ErrAuthzUnavailable = commondomain.ErrAuthzUnavailable
-	ErrRequestInvalid = errors.New("request is invalid")
+	ErrRequestInvalid   = commondomain.ErrRequestInvalid
 )

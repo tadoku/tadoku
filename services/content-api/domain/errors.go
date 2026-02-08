@@ -28,7 +28,7 @@ var (
 
 // Common errors
 var (
-	ErrForbidden      = commondomain.ErrForbidden
+	ErrForbidden        = commondomain.ErrForbidden
 	ErrAuthzUnavailable = commondomain.ErrAuthzUnavailable
-	ErrRequestInvalid = errors.New("request is invalid")
+	ErrRequestInvalid   = commondomain.ErrRequestInvalid
 )

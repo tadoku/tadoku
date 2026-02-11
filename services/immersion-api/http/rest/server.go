@@ -35,7 +35,6 @@ func NewServer(
 	registrationUpsert *domain.RegistrationUpsert,
 	logCreate *domain.LogCreate,
 	contestCreate *domain.ContestCreate,
-	updateUserRole *domain.UpdateUserRole,
 	languageList *domain.LanguageList,
 	languageCreate *domain.LanguageCreate,
 	languageUpdate *domain.LanguageUpdate,
@@ -69,7 +68,6 @@ func NewServer(
 		registrationUpsert:          registrationUpsert,
 		logCreate:                   logCreate,
 		contestCreate:               contestCreate,
-		updateUserRole:              updateUserRole,
 		languageList:                languageList,
 		languageCreate:              languageCreate,
 		languageUpdate:              languageUpdate,
@@ -105,7 +103,6 @@ type Server struct {
 	registrationUpsert          *domain.RegistrationUpsert
 	logCreate                   *domain.LogCreate
 	contestCreate               *domain.ContestCreate
-	updateUserRole              *domain.UpdateUserRole
 	languageList                *domain.LanguageList
 	languageCreate              *domain.LanguageCreate
 	languageUpdate              *domain.LanguageUpdate

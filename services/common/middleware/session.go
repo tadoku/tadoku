@@ -120,10 +120,6 @@ func setIdentityContext(ctx echo.Context, identity domain.Identity) {
 func RejectBannedUsers() echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(ctx echo.Context) error {
-			if ctx.Path() == "/current-user/role" {
-				return next(ctx)
-			}
-
 			claims := roles.FromContext(ctx.Request().Context())
 			if claims.Authenticated && claims.Err != nil {
 				// Fail-open: allow requests to proceed when authorization evaluation is unavailable.
@@ -164,6 +160,17 @@ func RequireServiceAudience(serviceName string) echo.MiddlewareFunc {
 					}
 				}
 				return ctx.NoContent(http.StatusForbidden)
+			}
+			return next(ctx)
+		}
+	}
+}
+
+func RequireServiceIdentity() echo.MiddlewareFunc {
+	return func(next echo.HandlerFunc) echo.HandlerFunc {
+		return func(ctx echo.Context) error {
+			if domain.ParseServiceIdentity(ctx.Request().Context()) == nil {
+				return ctx.NoContent(http.StatusUnauthorized)
 			}
 			return next(ctx)
 		}

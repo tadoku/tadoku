@@ -3,24 +3,21 @@ package ory
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
-	"net/http"
 
 	"github.com/google/uuid"
-	kratos "github.com/ory/kratos-client-go"
+	commonkratos "github.com/tadoku/tadoku/services/common/client/kratos"
 	"github.com/tadoku/tadoku/services/immersion-api/domain"
 )
 
 type KratosClient struct {
-	client *kratos.APIClient
+	client *commonkratos.Client
 }
 
 func NewKratosClient(kratosURL string) *KratosClient {
-	cfg := kratos.NewConfiguration()
-	cfg.Servers = kratos.ServerConfigurations{{URL: kratosURL}}
-
 	return &KratosClient{
-		client: kratos.NewAPIClient(cfg),
+		client: commonkratos.NewClient(kratosURL),
 	}
 }
 
@@ -30,20 +27,19 @@ type Traits struct {
 }
 
 func (k *KratosClient) FetchIdentity(ctx context.Context, id uuid.UUID) (*domain.UserTraits, error) {
-	req := k.client.IdentityApi.GetIdentity(ctx, id.String())
-	identity, res, err := k.client.IdentityApi.GetIdentityExecute(req)
+	identity, err := k.client.FetchIdentity(ctx, id)
 	if err != nil {
-		if res.StatusCode == http.StatusNotFound {
+		if errors.Is(err, commonkratos.ErrNotFound) {
 			return nil, domain.ErrNotFound
 		}
-		return nil, fmt.Errorf("could not fetch identity: %w", err)
+		return nil, err
 	}
 
-	if identity.SchemaId != "user" {
-		return nil, fmt.Errorf("unexpected schema %s", identity.SchemaId)
+	if identity.GetSchemaId() != "user" {
+		return nil, fmt.Errorf("unexpected schema %s", identity.GetSchemaId())
 	}
 
-	traitsJSON, err := json.Marshal(identity.Traits)
+	traitsJSON, err := json.Marshal(identity.GetTraits())
 	if err != nil {
 		return nil, fmt.Errorf("could not fetch identity: %w", err)
 	}
@@ -56,18 +52,14 @@ func (k *KratosClient) FetchIdentity(ctx context.Context, id uuid.UUID) (*domain
 	return &domain.UserTraits{
 		UserDisplayName: traits.DisplayName,
 		Email:           traits.Email,
-		CreatedAt:       *identity.CreatedAt,
+		CreatedAt:       identity.GetCreatedAt(),
 	}, nil
 }
 
 func (k *KratosClient) ListIdentities(ctx context.Context, perPage int64, page int64) (*domain.ListIdentitiesResult, error) {
-	req := k.client.IdentityApi.ListIdentities(ctx)
-	req = req.PerPage(perPage)
-	req = req.Page(page)
-
-	identities, _, err := k.client.IdentityApi.ListIdentitiesExecute(req)
+	identities, err := k.client.ListIdentities(ctx, perPage, page)
 	if err != nil {
-		return nil, fmt.Errorf("could not list identities: %w", err)
+		return nil, err
 	}
 
 	result := &domain.ListIdentitiesResult{
@@ -76,11 +68,11 @@ func (k *KratosClient) ListIdentities(ctx context.Context, perPage int64, page i
 	}
 
 	for _, identity := range identities {
-		if identity.SchemaId != "user" {
+		if identity.GetSchemaId() != "user" {
 			continue
 		}
 
-		traitsJSON, err := json.Marshal(identity.Traits)
+		traitsJSON, err := json.Marshal(identity.GetTraits())
 		if err != nil {
 			continue
 		}
@@ -92,11 +84,11 @@ func (k *KratosClient) ListIdentities(ctx context.Context, perPage int64, page i
 
 		createdAt := ""
 		if identity.CreatedAt != nil {
-			createdAt = identity.CreatedAt.Format("2006-01-02T15:04:05Z")
+			createdAt = identity.GetCreatedAt().Format("2006-01-02T15:04:05Z")
 		}
 
 		result.Identities = append(result.Identities, domain.IdentityInfo{
-			ID:          identity.Id,
+			ID:          identity.GetId(),
 			DisplayName: traits.DisplayName,
 			Email:       traits.Email,
 			CreatedAt:   createdAt,

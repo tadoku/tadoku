@@ -761,22 +761,6 @@ paths:
                 $ref: "#/components/schemas/Leaderboard"
         "404":
           description: not found
-  /current-user/role:
-    get:
-      summary: Fetches the role of the current user
-      operationId: getCurrentUserRole
-      tags: [current_user]
-      security:
-        - cookieAuth: []
-      responses:
-        "200":
-          description: successful operation
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/UserRole"
-        "401":
-          description: unauthorized
   /ping:
     get:
       summary: Checks if service is responsive
@@ -902,57 +886,8 @@ paths:
           description: forbidden (not admin)
         "404":
           description: language not found
-  /users/{id}/role:
-    put:
-      summary: Update user role (admin only)
-      operationId: updateUserRole
-      tags: [admin]
-      security:
-        - cookieAuth: []
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required:
-                - role
-                - reason
-              properties:
-                role:
-                  type: string
-                  enum: [user, banned]
-                reason:
-                  type: string
-                  minLength: 1
-                  maxLength: 1000
-      responses:
-        "200":
-          description: successful operation
-        "400":
-          description: invalid request
-        "401":
-          description: unauthorized
-        "403":
-          description: forbidden (not admin, or target is admin)
-        "404":
-          description: user not found
 components:
   schemas:
-    UserRole:
-      type: object
-      required:
-        - role
-      properties:
-        role:
-          type: string
     UserList:
       type: object
       required:

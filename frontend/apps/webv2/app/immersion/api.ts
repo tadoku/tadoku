@@ -8,6 +8,7 @@ import { NewLogAPISchema } from '@app/immersion/NewLogForm/domain'
 const { publicRuntimeConfig } = getConfig()
 
 const root = `${publicRuntimeConfig.apiEndpoint}/immersion`
+const authzRoot = `${publicRuntimeConfig.apiEndpoint}/authz`
 
 export const Language = z.object({
   code: z.string(),
@@ -993,7 +994,7 @@ export const useUpdateUserRole = (
       role: 'user' | 'banned'
       reason: string
     }) => {
-      const response = await fetch(`${root}/users/${userId}/role`, {
+      const response = await fetch(`${authzRoot}/users/${userId}/role`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ role, reason }),

@@ -9,51 +9,48 @@ import (
 	commondomain "github.com/tadoku/tadoku/services/common/domain"
 )
 
-type UpdateUserRoleUserRepository interface {
+type RoleUpdateUserDirectory interface {
 	UserExists(ctx context.Context, userID uuid.UUID) (bool, error)
 }
 
-type UpdateUserRoleRequest struct {
+type RoleUpdateRequest struct {
 	UserID uuid.UUID
 	Role   string // "user" or "banned"
 	Reason string
 }
 
-type UpdateUserRole struct {
-	users    UpdateUserRoleUserRepository
+type RoleUpdate struct {
+	users    RoleUpdateUserDirectory
 	audit    ModerationAuditRepository
 	roles    commonroles.Service
 	roleMgmt commonroles.Manager
 }
 
-func NewUpdateUserRole(users UpdateUserRoleUserRepository, audit ModerationAuditRepository, roles commonroles.Service, roleMgmt commonroles.Manager) *UpdateUserRole {
-	return &UpdateUserRole{users: users, audit: audit, roles: roles, roleMgmt: roleMgmt}
+func NewRoleUpdate(users RoleUpdateUserDirectory, audit ModerationAuditRepository, roles commonroles.Service, roleMgmt commonroles.Manager) *RoleUpdate {
+	return &RoleUpdate{users: users, audit: audit, roles: roles, roleMgmt: roleMgmt}
 }
 
-func (s *UpdateUserRole) Execute(ctx context.Context, req *UpdateUserRoleRequest) error {
-	// Only admins can update roles
-	if err := requireAdmin(ctx); err != nil {
+func (s *RoleUpdate) Execute(ctx context.Context, req *RoleUpdateRequest) error {
+	if err := commonroles.RequireAdmin(ctx); err != nil {
 		return err
 	}
 
-	// Get session to extract moderator user ID
-	session := commondomain.ParseUserIdentity(ctx)
-	if session == nil {
-		return ErrUnauthorized
+	moderatorUserID, err := uuid.Parse(commonroles.FromContext(ctx).Subject)
+	if err != nil {
+		return commondomain.ErrUnauthorized
 	}
-	moderatorUserID := uuid.MustParse(session.Subject)
 
 	// Validate role
 	if req.Role != "user" && req.Role != "banned" {
-		return fmt.Errorf("%w: role must be 'user' or 'banned'", ErrRequestInvalid)
+		return fmt.Errorf("%w: role must be 'user' or 'banned'", commondomain.ErrRequestInvalid)
 	}
 
 	// Validate reason
 	if req.Reason == "" {
-		return fmt.Errorf("%w: reason is required", ErrRequestInvalid)
+		return fmt.Errorf("%w: reason is required", commondomain.ErrRequestInvalid)
 	}
 	if len(req.Reason) > 1000 {
-		return fmt.Errorf("%w: reason must be 1000 characters or less", ErrRequestInvalid)
+		return fmt.Errorf("%w: reason must be 1000 characters or less", commondomain.ErrRequestInvalid)
 	}
 
 	// Verify target user exists
@@ -62,31 +59,30 @@ func (s *UpdateUserRole) Execute(ctx context.Context, req *UpdateUserRoleRequest
 		return fmt.Errorf("could not check if user exists: %w", err)
 	}
 	if !exists {
-		return ErrNotFound
+		return commondomain.ErrNotFound
 	}
 
 	// Check if target user is an admin - admins cannot be banned
 	targetClaims, err := s.roles.ClaimsForSubject(ctx, req.UserID.String())
 	if err != nil {
-		return ErrAuthzUnavailable
+		return fmt.Errorf("%w: could not fetch target claims: %w", commondomain.ErrAuthzUnavailable, err)
 	}
 	if targetClaims.Admin {
-		return fmt.Errorf("%w: cannot modify role of an admin user", ErrForbidden)
+		return fmt.Errorf("%w: cannot modify role of an admin user", commondomain.ErrForbidden)
 	}
 
 	// Update the role in Keto first (source of truth), then audit.
 	switch req.Role {
 	case "banned":
 		if err := s.roleMgmt.SetBanned(ctx, req.UserID.String(), true); err != nil {
-			return ErrAuthzUnavailable
+			return fmt.Errorf("%w: could not set banned=true: %w", commondomain.ErrAuthzUnavailable, err)
 		}
 	case "user":
 		if err := s.roleMgmt.SetBanned(ctx, req.UserID.String(), false); err != nil {
-			return ErrAuthzUnavailable
+			return fmt.Errorf("%w: could not set banned=false: %w", commondomain.ErrAuthzUnavailable, err)
 		}
 	default:
-		// Should be impossible due to earlier validation.
-		return fmt.Errorf("%w: role must be 'user' or 'banned'", ErrRequestInvalid)
+		return fmt.Errorf("%w: role must be 'user' or 'banned'", commondomain.ErrRequestInvalid)
 	}
 
 	action := "unban_user"

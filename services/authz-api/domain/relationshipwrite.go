@@ -1,0 +1,51 @@
+package domain
+
+import (
+	"context"
+	"fmt"
+
+	ketoclient "github.com/tadoku/tadoku/services/common/client/keto"
+	commondomain "github.com/tadoku/tadoku/services/common/domain"
+)
+
+type RelationshipWriteRequest struct {
+	Namespace string
+	Object    string
+	Relation  string
+	Subject   ketoclient.Subject
+}
+
+type RelationshipWriter struct {
+	keto      ketoclient.AuthorizationClient
+	allowlist RelationshipMutationAllowlist
+}
+
+func NewRelationshipWriter(keto ketoclient.AuthorizationClient, allowlist RelationshipMutationAllowlist) *RelationshipWriter {
+	return &RelationshipWriter{keto: keto, allowlist: allowlist}
+}
+
+func (s *RelationshipWriter) Create(ctx context.Context, callerService string, req RelationshipWriteRequest) error {
+	if req.Namespace == "" || req.Object == "" || req.Relation == "" {
+		return fmt.Errorf("%w: namespace, object, and relation are required", commondomain.ErrRequestInvalid)
+	}
+	if !s.allowlist.Allows(callerService, req.Namespace, req.Relation) {
+		return commondomain.ErrForbidden
+	}
+	if err := s.keto.AddRelation(ctx, req.Namespace, req.Object, req.Relation, req.Subject); err != nil {
+		return fmt.Errorf("%w: failed to create relationship: %w", commondomain.ErrAuthzUnavailable, err)
+	}
+	return nil
+}
+
+func (s *RelationshipWriter) Delete(ctx context.Context, callerService string, req RelationshipWriteRequest) error {
+	if req.Namespace == "" || req.Object == "" || req.Relation == "" {
+		return fmt.Errorf("%w: namespace, object, and relation are required", commondomain.ErrRequestInvalid)
+	}
+	if !s.allowlist.Allows(callerService, req.Namespace, req.Relation) {
+		return commondomain.ErrForbidden
+	}
+	if err := s.keto.DeleteRelation(ctx, req.Namespace, req.Object, req.Relation, req.Subject); err != nil {
+		return fmt.Errorf("%w: failed to delete relationship: %w", commondomain.ErrAuthzUnavailable, err)
+	}
+	return nil
+}

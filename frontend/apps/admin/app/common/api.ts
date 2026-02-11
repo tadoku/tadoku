@@ -4,7 +4,8 @@ import { useMutation, useQuery } from 'react-query'
 
 const { publicRuntimeConfig } = getConfig()
 
-const root = `${publicRuntimeConfig.apiEndpoint}/immersion`
+const immersionRoot = `${publicRuntimeConfig.apiEndpoint}/immersion`
+const authzRoot = `${publicRuntimeConfig.apiEndpoint}/authz`
 
 // Admin API
 
@@ -44,7 +45,7 @@ export const useUserList = (
         params.query = opts.query
       }
       const response = await fetch(
-        `${root}/users?${new URLSearchParams(params)}`,
+        `${immersionRoot}/users?${new URLSearchParams(params)}`,
         { credentials: 'include' },
       )
 
@@ -77,7 +78,7 @@ export const useUpdateUserRole = (
       role: 'user' | 'banned'
       reason: string
     }) => {
-      const response = await fetch(`${root}/users/${userId}/role`, {
+      const response = await fetch(`${authzRoot}/users/${userId}/role`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ role, reason }),

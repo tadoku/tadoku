@@ -11,7 +11,7 @@ import { NextPageContext } from 'next'
 import { routes } from './routes'
 
 const { publicRuntimeConfig } = getConfig()
-const root = `${publicRuntimeConfig.apiEndpoint}/immersion`
+const root = `${publicRuntimeConfig.apiEndpoint}/authz`
 
 export type Role = 'admin' | 'user' | 'guest' | 'banned'
 

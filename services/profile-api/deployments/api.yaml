@@ -71,7 +71,7 @@ spec:
               - serviceAccountToken:
                   path: token
                   expirationSeconds: 3600
-                  audience: oathkeeper
+                  audience: profile-api
 ---
 apiVersion: v1
 kind: Service

@@ -2,7 +2,6 @@ package domain
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
 	"github.com/google/uuid"
@@ -32,7 +31,7 @@ func NewRoleUpdate(users RoleUpdateUserDirectory, audit ModerationAuditRepositor
 }
 
 func (s *RoleUpdate) Execute(ctx context.Context, req *RoleUpdateRequest) error {
-	if err := requireAdmin(ctx); err != nil {
+	if err := commonroles.RequireAdmin(ctx); err != nil {
 		return err
 	}
 
@@ -104,18 +103,5 @@ func (s *RoleUpdate) Execute(ctx context.Context, req *RoleUpdateRequest) error 
 		return fmt.Errorf("could not create audit log: %w", err)
 	}
 
-	return nil
-}
-
-func requireAdmin(ctx context.Context) error {
-	if err := commonroles.RequireAdmin(ctx); err != nil {
-		if errors.Is(err, commondomain.ErrAuthzUnavailable) {
-			claims := commonroles.FromContext(ctx)
-			if claims.Err != nil {
-				return fmt.Errorf("%w: could not evaluate moderator claims: %w", commondomain.ErrAuthzUnavailable, claims.Err)
-			}
-		}
-		return err
-	}
 	return nil
 }

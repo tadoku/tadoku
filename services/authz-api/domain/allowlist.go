@@ -5,28 +5,6 @@ import (
 	"strings"
 )
 
-// ServiceAllowlist is a set of allowed service names.
-type ServiceAllowlist struct {
-	allowed map[string]struct{}
-}
-
-func ParseServiceAllowlist(csv string) ServiceAllowlist {
-	out := ServiceAllowlist{allowed: map[string]struct{}{}}
-	for _, raw := range strings.Split(csv, ",") {
-		s := strings.TrimSpace(raw)
-		if s == "" {
-			continue
-		}
-		out.allowed[s] = struct{}{}
-	}
-	return out
-}
-
-func (a ServiceAllowlist) Allows(serviceName string) bool {
-	_, ok := a.allowed[serviceName]
-	return ok
-}
-
 type PermissionAllowlist struct {
 	allowed map[string]struct{} // key: namespace + ":" + relation
 }
@@ -98,4 +76,3 @@ func (a RelationshipMutationAllowlist) Allows(serviceName, namespace, relation s
 	_, ok = rels[namespace+":"+relation]
 	return ok
 }
-

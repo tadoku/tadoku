@@ -1,12 +1,34 @@
-load("@rules_go//go:def.bzl", "go_library")
+load("@rules_go//go:def.bzl", "go_library", "go_test")
 
 go_library(
     name = "domain",
     srcs = [
+        "authz.go",
         "errors.go",
+        "interfaces.go",
         "models.go",
+        "userlist.go",
     ],
     importpath = "github.com/tadoku/tadoku/services/profile-api/domain",
     visibility = ["//visibility:public"],
-    deps = ["//services/common/domain"],
+    deps = [
+        "//services/common/authz/roles",
+        "//services/common/domain",
+        "@com_github_sahilm_fuzzy//:fuzzy",
+    ],
+)
+
+go_test(
+    name = "domain_test",
+    srcs = [
+        "roles_context_test.go",
+        "userlist_test.go",
+    ],
+    embed = [":domain"],
+    deps = [
+        "//services/common/authz/roles",
+        "//services/common/testutil/authzctx",
+        "@com_github_stretchr_testify//assert",
+        "@com_github_stretchr_testify//require",
+    ],
 )

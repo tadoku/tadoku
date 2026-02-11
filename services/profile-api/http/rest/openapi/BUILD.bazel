@@ -8,5 +8,8 @@ go_library(
     ],
     importpath = "github.com/tadoku/tadoku/services/profile-api/http/rest/openapi",
     visibility = ["//visibility:public"],
-    deps = ["@com_github_labstack_echo_v4//:echo"],
+    deps = [
+        "@com_github_deepmap_oapi_codegen//pkg/runtime",
+        "@com_github_labstack_echo_v4//:echo",
+    ],
 )

@@ -4,14 +4,49 @@
 package openapi
 
 import (
+	"fmt"
+	"net/http"
+
+	"github.com/deepmap/oapi-codegen/pkg/runtime"
 	"github.com/labstack/echo/v4"
 )
+
+const (
+	CookieAuthScopes = "cookieAuth.Scopes"
+)
+
+// UserList defines model for UserList.
+type UserList struct {
+	TotalSize int             `json:"total_size"`
+	Users     []UserListEntry `json:"users"`
+}
+
+// UserListEntry defines model for UserListEntry.
+type UserListEntry struct {
+	CreatedAt   string  `json:"created_at"`
+	DisplayName string  `json:"display_name"`
+	Email       string  `json:"email"`
+	Id          string  `json:"id"`
+	Role        *string `json:"role,omitempty"`
+}
+
+// UsersListParams defines parameters for UsersList.
+type UsersListParams struct {
+	PageSize *int `form:"page_size,omitempty" json:"page_size,omitempty"`
+	Page     *int `form:"page,omitempty" json:"page,omitempty"`
+
+	// Query Fuzzy search on display name and email
+	Query *string `form:"query,omitempty" json:"query,omitempty"`
+}
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
 	// Checks if service is responsive
 	// (GET /ping)
 	Ping(ctx echo.Context) error
+	// Lists all users (admin only)
+	// (GET /users)
+	UsersList(ctx echo.Context, params UsersListParams) error
 }
 
 // ServerInterfaceWrapper converts echo contexts to parameters.
@@ -25,6 +60,40 @@ func (w *ServerInterfaceWrapper) Ping(ctx echo.Context) error {
 
 	// Invoke the callback with all the unmarshalled arguments
 	err = w.Handler.Ping(ctx)
+	return err
+}
+
+// UsersList converts echo context to params.
+func (w *ServerInterfaceWrapper) UsersList(ctx echo.Context) error {
+	var err error
+
+	ctx.Set(CookieAuthScopes, []string{""})
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params UsersListParams
+	// ------------- Optional query parameter "page_size" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "page_size", ctx.QueryParams(), &params.PageSize)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter page_size: %s", err))
+	}
+
+	// ------------- Optional query parameter "page" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "page", ctx.QueryParams(), &params.Page)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter page: %s", err))
+	}
+
+	// ------------- Optional query parameter "query" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "query", ctx.QueryParams(), &params.Query)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter query: %s", err))
+	}
+
+	// Invoke the callback with all the unmarshalled arguments
+	err = w.Handler.UsersList(ctx, params)
 	return err
 }
 
@@ -57,5 +126,6 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 	}
 
 	router.GET(baseURL+"/ping", wrapper.Ping)
+	router.GET(baseURL+"/users", wrapper.UsersList)
 
 }

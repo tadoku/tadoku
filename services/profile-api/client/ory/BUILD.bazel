@@ -1,0 +1,12 @@
+load("@rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "ory",
+    srcs = ["kratos.go"],
+    importpath = "github.com/tadoku/tadoku/services/profile-api/client/ory",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//services/common/client/kratos",
+        "//services/profile-api/domain",
+    ],
+)

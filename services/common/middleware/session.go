@@ -165,3 +165,14 @@ func RequireServiceAudience(serviceName string) echo.MiddlewareFunc {
 		}
 	}
 }
+
+func RequireServiceIdentity() echo.MiddlewareFunc {
+	return func(next echo.HandlerFunc) echo.HandlerFunc {
+		return func(ctx echo.Context) error {
+			if domain.ParseServiceIdentity(ctx.Request().Context()) == nil {
+				return ctx.NoContent(http.StatusUnauthorized)
+			}
+			return next(ctx)
+		}
+	}
+}

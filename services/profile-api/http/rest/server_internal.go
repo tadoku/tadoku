@@ -18,9 +18,9 @@ func NewInternalServer() *InternalServer {
 var _ internalapi.ServerInterface = (*InternalServer)(nil)
 
 // RegisterInternalRoutes registers internal endpoints
-func RegisterInternalRoutes(e *echo.Echo, server *InternalServer) {
+func RegisterInternalRoutes(router internalapi.EchoRouter, server *InternalServer) {
 	// Use the generated handler registration
-	internalapi.RegisterHandlers(e, server)
+	internalapi.RegisterHandlers(router, server)
 }
 
 // InternalPing responds to internal health checks from other services

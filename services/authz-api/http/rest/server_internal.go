@@ -57,9 +57,6 @@ func (s *Server) InternalRelationshipCreate(ctx echo.Context) error {
 	}
 
 	svc := commondomain.ParseServiceIdentity(ctx.Request().Context())
-	if svc == nil {
-		return ctx.NoContent(http.StatusUnauthorized)
-	}
 
 	subj, err := subjectFromInternal(req.SubjectId, req.SubjectSet)
 	if err != nil {
@@ -92,9 +89,6 @@ func (s *Server) InternalRelationshipDelete(ctx echo.Context) error {
 	}
 
 	svc := commondomain.ParseServiceIdentity(ctx.Request().Context())
-	if svc == nil {
-		return ctx.NoContent(http.StatusUnauthorized)
-	}
 
 	subj, err := subjectFromInternal(req.SubjectId, req.SubjectSet)
 	if err != nil {

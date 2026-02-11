@@ -109,7 +109,8 @@ func main() {
 	}
 
 	openapi.RegisterHandlersWithBaseURL(e, server, "")
-	internalapi.RegisterHandlers(e, server)
+	internal := e.Group("", tadokumiddleware.RequireServiceIdentity())
+	internalapi.RegisterHandlers(internal, server)
 
 	go func() {
 		fmt.Printf("authz-api is now available at: http://localhost:%d\n", cfg.Port)

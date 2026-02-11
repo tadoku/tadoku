@@ -8,7 +8,6 @@ go_library(
     importpath = "github.com/tadoku/tadoku/services/authz-api",
     visibility = ["//visibility:private"],
     deps = [
-        "//services/authz-api/client/ory",
         "//services/authz-api/domain",
         "//services/authz-api/http/rest",
         "//services/authz-api/http/rest/openapi",
@@ -16,6 +15,7 @@ go_library(
         "//services/authz-api/storage/postgres/repository",
         "//services/common/authz/roles",
         "//services/common/client/keto",
+        "//services/common/client/kratos",
         "//services/common/middleware",
         "@com_github_getsentry_sentry_go//:sentry-go",
         "@com_github_getsentry_sentry_go//echo",
@@ -60,4 +60,3 @@ oci_push(
     remote_tags = ["latest"],
     repository = "ghcr.io/tadoku/tadoku/authz-api",
 )
-

@@ -7,11 +7,11 @@ import (
 )
 
 type Server struct {
-	roleGet                *domain.RoleGet
-	roleUpdate             *domain.RoleUpdate
-	publicPermissionCheck  *domain.PublicPermissionCheck
+	roleGet                 *domain.RoleGet
+	roleUpdate              *domain.RoleUpdate
+	publicPermissionCheck   *domain.PublicPermissionCheck
 	internalPermissionCheck *domain.InternalPermissionCheck
-	relationshipWriter     *domain.RelationshipWriter
+	relationshipWriter      *domain.RelationshipWriter
 }
 
 func NewServer(
@@ -22,14 +22,13 @@ func NewServer(
 	relationshipWriter *domain.RelationshipWriter,
 ) *Server {
 	return &Server{
-		roleGet:                roleGet,
-		roleUpdate:             roleUpdate,
-		publicPermissionCheck:  publicPermissionCheck,
+		roleGet:                 roleGet,
+		roleUpdate:              roleUpdate,
+		publicPermissionCheck:   publicPermissionCheck,
 		internalPermissionCheck: internalPermissionCheck,
-		relationshipWriter:     relationshipWriter,
+		relationshipWriter:      relationshipWriter,
 	}
 }
 
 var _ openapi.ServerInterface = (*Server)(nil)
 var _ internalapi.ServerInterface = (*Server)(nil)
-

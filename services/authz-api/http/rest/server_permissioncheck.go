@@ -5,7 +5,6 @@ import (
 
 	"github.com/labstack/echo/v4"
 	"github.com/tadoku/tadoku/services/authz-api/domain"
-	commondomain "github.com/tadoku/tadoku/services/common/domain"
 	"github.com/tadoku/tadoku/services/authz-api/http/rest/openapi"
 )
 
@@ -17,12 +16,7 @@ func (s *Server) PermissionCheck(ctx echo.Context) error {
 		return ctx.NoContent(http.StatusBadRequest)
 	}
 
-	session := commondomain.ParseUserIdentity(ctx.Request().Context())
-	if session == nil {
-		return ctx.NoContent(http.StatusUnauthorized)
-	}
-
-	allowed, err := s.publicPermissionCheck.Execute(ctx.Request().Context(), session.Subject, domain.PermissionCheckRequest{
+	allowed, err := s.publicPermissionCheck.Execute(ctx.Request().Context(), domain.PermissionCheckRequest{
 		Namespace: req.Namespace,
 		Object:    req.Object,
 		Relation:  req.Relation,
@@ -37,4 +31,3 @@ func (s *Server) PermissionCheck(ctx echo.Context) error {
 
 	return ctx.JSON(http.StatusOK, openapi.PermissionCheckResponse{Allowed: allowed})
 }
-

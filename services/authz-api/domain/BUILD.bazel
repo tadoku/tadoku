@@ -19,6 +19,7 @@ go_test(
     deps = [
         ":domain",
         "//services/common/authz/roles",
+        "//services/common/client/keto",
         "//services/common/domain",
         "@com_github_google_uuid//:uuid",
         "@com_github_stretchr_testify//assert",

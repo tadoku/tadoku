@@ -83,8 +83,8 @@ func (m *mockClaimsService) ClaimsForSubjects(ctx context.Context, subjectIDs []
 	return out, nil
 }
 
-func ctxWithUserSubject(subject string) context.Context {
-	return context.WithValue(context.Background(), commondomain.CtxIdentityKey, &commondomain.UserIdentity{Subject: subject})
+func ctxWithClaims(claims commonroles.Claims) context.Context {
+	return commonroles.WithClaims(context.Background(), claims)
 }
 
 func TestRoleUpdate_Execute(t *testing.T) {
@@ -96,7 +96,7 @@ func TestRoleUpdate_Execute(t *testing.T) {
 		audit := &mockAuditRepo{}
 		svc := domain.NewRoleUpdate(users, audit, &mockClaimsService{}, &mockRoleManager{})
 
-		err := svc.Execute(ctxWithUserSubject("guest"), &domain.RoleUpdateRequest{
+		err := svc.Execute(context.Background(), &domain.RoleUpdateRequest{
 			UserID: targetID,
 			Role:   "banned",
 			Reason: "reason",
@@ -115,7 +115,11 @@ func TestRoleUpdate_Execute(t *testing.T) {
 		}
 		svc := domain.NewRoleUpdate(users, audit, rolesSvc, &mockRoleManager{})
 
-		err := svc.Execute(ctxWithUserSubject(moderatorID.String()), &domain.RoleUpdateRequest{
+		err := svc.Execute(ctxWithClaims(commonroles.Claims{
+			Subject:       moderatorID.String(),
+			Authenticated: true,
+			Admin:         false,
+		}), &domain.RoleUpdateRequest{
 			UserID: targetID,
 			Role:   "banned",
 			Reason: "reason",
@@ -130,13 +134,16 @@ func TestRoleUpdate_Execute(t *testing.T) {
 		roleMgmt := &mockRoleManager{}
 		rolesSvc := &mockClaimsService{
 			claims: map[string]commonroles.Claims{
-				moderatorID.String(): {Subject: moderatorID.String(), Authenticated: true, Admin: true},
-				targetID.String():    {Subject: targetID.String(), Authenticated: true, Admin: false, Banned: false},
+				targetID.String(): {Subject: targetID.String(), Authenticated: true, Admin: false, Banned: false},
 			},
 		}
 		svc := domain.NewRoleUpdate(users, audit, rolesSvc, roleMgmt)
 
-		err := svc.Execute(ctxWithUserSubject(moderatorID.String()), &domain.RoleUpdateRequest{
+		err := svc.Execute(ctxWithClaims(commonroles.Claims{
+			Subject:       moderatorID.String(),
+			Authenticated: true,
+			Admin:         true,
+		}), &domain.RoleUpdateRequest{
 			UserID: targetID,
 			Role:   "banned",
 			Reason: "reason",
@@ -158,13 +165,16 @@ func TestRoleUpdate_Execute(t *testing.T) {
 		roleMgmt := &mockRoleManager{}
 		rolesSvc := &mockClaimsService{
 			claims: map[string]commonroles.Claims{
-				moderatorID.String(): {Subject: moderatorID.String(), Authenticated: true, Admin: true},
-				targetID.String():    {Subject: targetID.String(), Authenticated: true, Admin: false, Banned: true},
+				targetID.String(): {Subject: targetID.String(), Authenticated: true, Admin: false, Banned: true},
 			},
 		}
 		svc := domain.NewRoleUpdate(users, audit, rolesSvc, roleMgmt)
 
-		err := svc.Execute(ctxWithUserSubject(moderatorID.String()), &domain.RoleUpdateRequest{
+		err := svc.Execute(ctxWithClaims(commonroles.Claims{
+			Subject:       moderatorID.String(),
+			Authenticated: true,
+			Admin:         true,
+		}), &domain.RoleUpdateRequest{
 			UserID: targetID,
 			Role:   "user",
 			Reason: "reason",
@@ -184,13 +194,16 @@ func TestRoleUpdate_Execute(t *testing.T) {
 		roleMgmt := &mockRoleManager{}
 		rolesSvc := &mockClaimsService{
 			claims: map[string]commonroles.Claims{
-				moderatorID.String(): {Subject: moderatorID.String(), Authenticated: true, Admin: true},
-				targetID.String():    {Subject: targetID.String(), Authenticated: true, Admin: true},
+				targetID.String(): {Subject: targetID.String(), Authenticated: true, Admin: true},
 			},
 		}
 		svc := domain.NewRoleUpdate(users, audit, rolesSvc, roleMgmt)
 
-		err := svc.Execute(ctxWithUserSubject(moderatorID.String()), &domain.RoleUpdateRequest{
+		err := svc.Execute(ctxWithClaims(commonroles.Claims{
+			Subject:       moderatorID.String(),
+			Authenticated: true,
+			Admin:         true,
+		}), &domain.RoleUpdateRequest{
 			UserID: targetID,
 			Role:   "banned",
 			Reason: "reason",
@@ -205,13 +218,15 @@ func TestRoleUpdate_Execute(t *testing.T) {
 		audit := &mockAuditRepo{}
 		roleMgmt := &mockRoleManager{}
 		rolesSvc := &mockClaimsService{
-			claims: map[string]commonroles.Claims{
-				moderatorID.String(): {Subject: moderatorID.String(), Authenticated: true, Admin: true},
-			},
+			claims: map[string]commonroles.Claims{},
 		}
 		svc := domain.NewRoleUpdate(users, audit, rolesSvc, roleMgmt)
 
-		err := svc.Execute(ctxWithUserSubject(moderatorID.String()), &domain.RoleUpdateRequest{
+		err := svc.Execute(ctxWithClaims(commonroles.Claims{
+			Subject:       moderatorID.String(),
+			Authenticated: true,
+			Admin:         true,
+		}), &domain.RoleUpdateRequest{
 			UserID: targetID,
 			Role:   "banned",
 			Reason: "reason",
@@ -219,5 +234,23 @@ func TestRoleUpdate_Execute(t *testing.T) {
 
 		assert.ErrorIs(t, err, commondomain.ErrNotFound)
 	})
-}
 
+	t.Run("returns authz unavailable when role claims prefetch failed", func(t *testing.T) {
+		users := &mockUserDir{}
+		audit := &mockAuditRepo{}
+		svc := domain.NewRoleUpdate(users, audit, &mockClaimsService{}, &mockRoleManager{})
+
+		err := svc.Execute(ctxWithClaims(commonroles.Claims{
+			Subject:       moderatorID.String(),
+			Authenticated: true,
+			Err:           errors.New("keto unavailable"),
+		}), &domain.RoleUpdateRequest{
+			UserID: targetID,
+			Role:   "banned",
+			Reason: "reason",
+		})
+
+		assert.ErrorIs(t, err, commondomain.ErrAuthzUnavailable)
+		assert.Contains(t, err.Error(), "keto unavailable")
+	})
+}

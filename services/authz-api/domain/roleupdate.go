@@ -2,6 +2,7 @@ package domain
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/google/uuid"
@@ -31,21 +32,11 @@ func NewRoleUpdate(users RoleUpdateUserDirectory, audit ModerationAuditRepositor
 }
 
 func (s *RoleUpdate) Execute(ctx context.Context, req *RoleUpdateRequest) error {
-	// Extract moderator user ID
-	session := commondomain.ParseUserIdentity(ctx)
-	if session == nil || session.Subject == "guest" {
-		return commondomain.ErrUnauthorized
+	if err := requireAdmin(ctx); err != nil {
+		return err
 	}
 
-	moderatorClaims, err := s.roles.ClaimsForSubject(ctx, session.Subject)
-	if err != nil {
-		return commondomain.ErrAuthzUnavailable
-	}
-	if !moderatorClaims.Admin {
-		return commondomain.ErrForbidden
-	}
-
-	moderatorUserID, err := uuid.Parse(session.Subject)
+	moderatorUserID, err := uuid.Parse(commonroles.FromContext(ctx).Subject)
 	if err != nil {
 		return commondomain.ErrUnauthorized
 	}
@@ -75,7 +66,7 @@ func (s *RoleUpdate) Execute(ctx context.Context, req *RoleUpdateRequest) error 
 	// Check if target user is an admin - admins cannot be banned
 	targetClaims, err := s.roles.ClaimsForSubject(ctx, req.UserID.String())
 	if err != nil {
-		return commondomain.ErrAuthzUnavailable
+		return fmt.Errorf("%w: could not fetch target claims: %v", commondomain.ErrAuthzUnavailable, err)
 	}
 	if targetClaims.Admin {
 		return fmt.Errorf("%w: cannot modify role of an admin user", commondomain.ErrForbidden)
@@ -85,11 +76,11 @@ func (s *RoleUpdate) Execute(ctx context.Context, req *RoleUpdateRequest) error 
 	switch req.Role {
 	case "banned":
 		if err := s.roleMgmt.SetBanned(ctx, req.UserID.String(), true); err != nil {
-			return commondomain.ErrAuthzUnavailable
+			return fmt.Errorf("%w: could not set banned=true: %v", commondomain.ErrAuthzUnavailable, err)
 		}
 	case "user":
 		if err := s.roleMgmt.SetBanned(ctx, req.UserID.String(), false); err != nil {
-			return commondomain.ErrAuthzUnavailable
+			return fmt.Errorf("%w: could not set banned=false: %v", commondomain.ErrAuthzUnavailable, err)
 		}
 	default:
 		return fmt.Errorf("%w: role must be 'user' or 'banned'", commondomain.ErrRequestInvalid)
@@ -116,3 +107,15 @@ func (s *RoleUpdate) Execute(ctx context.Context, req *RoleUpdateRequest) error 
 	return nil
 }
 
+func requireAdmin(ctx context.Context) error {
+	if err := commonroles.RequireAdmin(ctx); err != nil {
+		if errors.Is(err, commondomain.ErrAuthzUnavailable) {
+			claims := commonroles.FromContext(ctx)
+			if claims.Err != nil {
+				return fmt.Errorf("%w: could not evaluate moderator claims: %v", commondomain.ErrAuthzUnavailable, claims.Err)
+			}
+		}
+		return err
+	}
+	return nil
+}

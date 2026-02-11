@@ -11,13 +11,13 @@ import (
 
 	"github.com/go-playground/validator/v10"
 	"github.com/kelseyhightower/envconfig"
-	"github.com/tadoku/tadoku/services/authz-api/client/ory"
 	"github.com/tadoku/tadoku/services/authz-api/domain"
 	"github.com/tadoku/tadoku/services/authz-api/http/rest"
 	"github.com/tadoku/tadoku/services/authz-api/http/rest/openapi"
 	"github.com/tadoku/tadoku/services/authz-api/http/rest/openapi/internalapi"
 	commonroles "github.com/tadoku/tadoku/services/common/authz/roles"
 	ketoclient "github.com/tadoku/tadoku/services/common/client/keto"
+	kratosclient "github.com/tadoku/tadoku/services/common/client/kratos"
 	tadokumiddleware "github.com/tadoku/tadoku/services/common/middleware"
 
 	"github.com/getsentry/sentry-go"
@@ -43,7 +43,6 @@ type Config struct {
 
 const (
 	// Keep these hardcoded until the permission system stabilizes.
-	internalAllowedCallersCSV        = "immersion-api,content-api,profile-api"
 	publicPermissionAllowlistCSV     = "" // start with nothing allowlisted
 	relationshipMutationAllowlistCSV = "" // start with nothing allowlisted
 )
@@ -71,7 +70,7 @@ func main() {
 		panic(err)
 	}
 
-	kratosClient := ory.NewKratosClient(cfg.KratosURL)
+	kratosClient := kratosclient.NewClient(cfg.KratosURL)
 	ketoAuthz := ketoclient.NewClient(cfg.KetoReadURL, cfg.KetoWriteURL)
 	rolesSvc := commonroles.NewKetoService(ketoAuthz, "app", "tadoku")
 	roleMgmt := commonroles.NewKetoManager(ketoAuthz, "app", "tadoku")
@@ -95,8 +94,8 @@ func main() {
 	e.Use(tadokumiddleware.Logger([]string{"/ping", "/internal/v1/ping"}))
 	e.Use(tadokumiddleware.VerifyJWT(cfg.JWKS))
 	e.Use(tadokumiddleware.Identity())
+	e.Use(tadokumiddleware.RolesFromKeto(rolesSvc))
 	e.Use(tadokumiddleware.RequireServiceAudience(cfg.ServiceName))
-	e.Use(rest.RequireInternalServiceAuth(domain.ParseServiceAllowlist(internalAllowedCallersCSV)))
 	e.Use(middleware.Recover())
 
 	if cfg.SentryDSN != "" {

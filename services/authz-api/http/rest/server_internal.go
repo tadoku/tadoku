@@ -134,4 +134,3 @@ func subjectFromInternal(subjectID *string, subjectSet *internalapi.SubjectSet) 
 		return ketoclient.Subject{}, commondomain.ErrRequestInvalid
 	}
 }
-

@@ -5,10 +5,17 @@ import (
 	"strings"
 )
 
+// PermissionAllowlist controls which permissions may be checked through the
+// public `/permission/check` endpoint.
+// Entries are `namespace:relation`, for example "app:admins"
 type PermissionAllowlist struct {
 	allowed map[string]struct{} // key: namespace + ":" + relation
 }
 
+// ParsePermissionAllowlist parses comma-separated entries of the form:
+// "namespace:relation".
+// Example: "app:view,app:edit,contest:create".
+// Empty entries are ignored and surrounding whitespace is trimmed.
 func ParsePermissionAllowlist(csv string) (PermissionAllowlist, error) {
 	out := PermissionAllowlist{allowed: map[string]struct{}{}}
 	for _, raw := range strings.Split(csv, ",") {
@@ -35,8 +42,10 @@ func (a PermissionAllowlist) Allows(namespace, relation string) bool {
 	return ok
 }
 
-// RelationshipMutationAllowlist restricts which services can create/delete which relations.
-// Entries are keyed by (serviceName, namespace, relation).
+// RelationshipMutationAllowlist controls which service identities may mutate
+// relation tuples via internal `/internal/v1/relationships` endpoints.
+// Entries are service-specific and keyed by (serviceName, namespace, relation)
+// using the `service:namespace:relation` format.
 type RelationshipMutationAllowlist struct {
 	allowed map[string]map[string]struct{} // serviceName -> (namespace:relation) -> {}
 }

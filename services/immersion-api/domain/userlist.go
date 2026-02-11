@@ -2,6 +2,7 @@ package domain
 
 import (
 	"context"
+	"fmt"
 	"strings"
 
 	"github.com/sahilm/fuzzy"
@@ -133,7 +134,7 @@ func (s *UserList) Execute(ctx context.Context, req *UserListRequest) (*UserList
 
 	claimsBySubject, err := s.rolesSvc.ClaimsForSubjects(ctx, subjectIDs)
 	if err != nil {
-		return nil, ErrAuthzUnavailable
+		return nil, fmt.Errorf("%w: could not fetch role claims: %w", ErrAuthzUnavailable, err)
 	}
 
 	for _, u := range matchedUsers {

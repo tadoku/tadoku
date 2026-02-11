@@ -29,7 +29,7 @@ func (s *InternalPermissionCheck) Execute(ctx context.Context, req InternalPermi
 	}
 	allowed, err := s.keto.CheckPermission(ctx, req.Namespace, req.Object, req.Relation, req.Subject)
 	if err != nil {
-		return false, fmt.Errorf("%w: check permission failed: %v", commondomain.ErrAuthzUnavailable, err)
+		return false, fmt.Errorf("%w: check permission failed: %w", commondomain.ErrAuthzUnavailable, err)
 	}
 	return allowed, nil
 }

@@ -41,7 +41,7 @@ func (s *PublicPermissionCheck) Execute(ctx context.Context, req PermissionCheck
 
 	allowed, err := s.keto.CheckPermission(ctx, req.Namespace, req.Object, req.Relation, ketoclient.Subject{ID: subjectID})
 	if err != nil {
-		return false, fmt.Errorf("%w: check permission failed: %v", commondomain.ErrAuthzUnavailable, err)
+		return false, fmt.Errorf("%w: check permission failed: %w", commondomain.ErrAuthzUnavailable, err)
 	}
 	return allowed, nil
 }

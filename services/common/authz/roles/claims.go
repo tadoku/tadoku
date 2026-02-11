@@ -2,6 +2,7 @@ package roles
 
 import (
 	"context"
+	"fmt"
 
 	commondomain "github.com/tadoku/tadoku/services/common/domain"
 )
@@ -48,7 +49,7 @@ func RequireAuthenticated(ctx context.Context) error {
 		return commondomain.ErrUnauthorized
 	}
 	if c.Err != nil {
-		return commondomain.ErrAuthzUnavailable
+		return fmt.Errorf("%w: could not evaluate claims: %w", commondomain.ErrAuthzUnavailable, c.Err)
 	}
 	return nil
 }
@@ -61,7 +62,7 @@ func RequireAdmin(ctx context.Context) error {
 		return commondomain.ErrUnauthorized
 	}
 	if c.Err != nil {
-		return commondomain.ErrAuthzUnavailable
+		return fmt.Errorf("%w: could not evaluate claims: %w", commondomain.ErrAuthzUnavailable, c.Err)
 	}
 	if c.Banned || !c.Admin {
 		return commondomain.ErrForbidden

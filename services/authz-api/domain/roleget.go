@@ -2,6 +2,7 @@ package domain
 
 import (
 	"context"
+	"fmt"
 
 	commonroles "github.com/tadoku/tadoku/services/common/authz/roles"
 	commondomain "github.com/tadoku/tadoku/services/common/domain"
@@ -23,7 +24,7 @@ func (s *RoleGet) Execute(ctx context.Context, subjectID string) (string, error)
 
 	claims, err := s.roles.ClaimsForSubject(ctx, subjectID)
 	if err != nil {
-		return "", commondomain.ErrAuthzUnavailable
+		return "", fmt.Errorf("%w: could not fetch role claims: %w", commondomain.ErrAuthzUnavailable, err)
 	}
 	if claims.Banned {
 		return "banned", nil
@@ -33,4 +34,3 @@ func (s *RoleGet) Execute(ctx context.Context, subjectID string) (string, error)
 	}
 	return "user", nil
 }
-

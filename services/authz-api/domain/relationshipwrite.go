@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	commondomain "github.com/tadoku/tadoku/services/common/domain"
 	ketoclient "github.com/tadoku/tadoku/services/common/client/keto"
+	commondomain "github.com/tadoku/tadoku/services/common/domain"
 )
 
 type RelationshipWriteRequest struct {
@@ -32,7 +32,7 @@ func (s *RelationshipWriter) Create(ctx context.Context, callerService string, r
 		return commondomain.ErrForbidden
 	}
 	if err := s.keto.AddRelation(ctx, req.Namespace, req.Object, req.Relation, req.Subject); err != nil {
-		return commondomain.ErrAuthzUnavailable
+		return fmt.Errorf("%w: failed to create relationship: %w", commondomain.ErrAuthzUnavailable, err)
 	}
 	return nil
 }
@@ -45,8 +45,7 @@ func (s *RelationshipWriter) Delete(ctx context.Context, callerService string, r
 		return commondomain.ErrForbidden
 	}
 	if err := s.keto.DeleteRelation(ctx, req.Namespace, req.Object, req.Relation, req.Subject); err != nil {
-		return commondomain.ErrAuthzUnavailable
+		return fmt.Errorf("%w: failed to delete relationship: %w", commondomain.ErrAuthzUnavailable, err)
 	}
 	return nil
 }
-

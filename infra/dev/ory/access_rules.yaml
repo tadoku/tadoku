@@ -103,7 +103,7 @@
   mutators:
     - handler: id_token
 
-- id: "s2s:immersion-to-profile"
+- id: "s2s:to-profile"
   match:
     url: "http://oathkeeper-proxy.default:4455/token-exchange/profile-api"
     methods:
@@ -114,7 +114,7 @@
         jwks_urls:
           - http://token-reflector.tdk-token-reflector/jwks
         target_audience:
-          - oathkeeper
+          - immersion-api
   authorizer:
     handler: allow
   mutators:
@@ -140,7 +140,9 @@
         jwks_urls:
           - http://token-reflector.tdk-token-reflector/jwks
         target_audience:
-          - oathkeeper
+          - immersion-api
+          - profile-api
+          - content-api
   authorizer:
     handler: allow
   mutators:

@@ -42,6 +42,10 @@ spec:
             value: "http://oathkeeper-api.default:4456/.well-known/jwks.json"
           - name: API_KETO_READ_URL
             value: "http://keto-read.default:4466"
+        volumeMounts:
+        - name: k8s-token
+          mountPath: /var/run/secrets/tokens
+          readOnly: true
         readinessProbe:
           httpGet:
             scheme: HTTP
@@ -56,6 +60,14 @@ spec:
             port: 8000
           initialDelaySeconds: 10
           periodSeconds: 3
+      volumes:
+        - name: k8s-token
+          projected:
+            sources:
+              - serviceAccountToken:
+                  path: token
+                  expirationSeconds: 3600
+                  audience: content-api
 ---
 apiVersion: v1
 kind: Service

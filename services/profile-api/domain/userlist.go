@@ -10,17 +10,6 @@ import (
 	commondomain "github.com/tadoku/tadoku/services/common/domain"
 )
 
-type UserListCache interface {
-	GetUsers() []UserCacheEntry
-}
-
-type UserCacheEntry struct {
-	ID          string
-	DisplayName string
-	Email       string
-	CreatedAt   string
-}
-
 // userSearchSource implements fuzzy.Source for fuzzy matching on users
 type userSearchSource struct {
 	users []UserCacheEntry

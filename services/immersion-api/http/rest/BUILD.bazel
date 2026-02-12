@@ -37,7 +37,6 @@ go_library(
         "server_profileyearlyactivitysplitbyuserid.go",
         "server_profileyearlycontestregistrationsbyuserid.go",
         "server_profileyearlyscoresbyuserid.go",
-        "server_userslist.go",
     ],
     importpath = "github.com/tadoku/tadoku/services/immersion-api/http/rest",
     visibility = ["//visibility:public"],

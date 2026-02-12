@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	commonroles "github.com/tadoku/tadoku/services/common/authz/roles"
-	"github.com/tadoku/tadoku/services/immersion-api/domain"
+	"github.com/tadoku/tadoku/services/profile-api/domain"
 )
 
 type mockUserListCache struct {

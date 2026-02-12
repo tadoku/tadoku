@@ -4,8 +4,8 @@ import (
 	"net/http"
 
 	"github.com/labstack/echo/v4"
-	"github.com/tadoku/tadoku/services/immersion-api/domain"
-	"github.com/tadoku/tadoku/services/immersion-api/http/rest/openapi"
+	"github.com/tadoku/tadoku/services/profile-api/domain"
+	"github.com/tadoku/tadoku/services/profile-api/http/rest/openapi"
 )
 
 // Lists all users (admin only)

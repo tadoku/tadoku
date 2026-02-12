@@ -3,12 +3,16 @@ package main
 import (
 	"database/sql"
 	"fmt"
+	"time"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/kelseyhightower/envconfig"
 	commonroles "github.com/tadoku/tadoku/services/common/authz/roles"
 	ketoclient "github.com/tadoku/tadoku/services/common/client/keto"
 	tadokumiddleware "github.com/tadoku/tadoku/services/common/middleware"
+	"github.com/tadoku/tadoku/services/profile-api/cache"
+	"github.com/tadoku/tadoku/services/profile-api/client/ory"
+	profiledomain "github.com/tadoku/tadoku/services/profile-api/domain"
 	"github.com/tadoku/tadoku/services/profile-api/http/rest"
 	"github.com/tadoku/tadoku/services/profile-api/http/rest/openapi"
 
@@ -23,6 +27,7 @@ type Config struct {
 	PostgresURL            string  `validate:"required" envconfig:"postgres_url"`
 	Port                   int64   `validate:"required"`
 	JWKS                   string  `validate:"required"`
+	KratosURL              string  `validate:"required" envconfig:"kratos_url"`
 	KetoReadURL            string  `validate:"required" envconfig:"keto_read_url"`
 	ServiceName            string  `envconfig:"service_name" default:"profile-api"`
 	SentryDSN              string  `envconfig:"sentry_dns"`
@@ -45,7 +50,13 @@ func main() {
 	}
 	_ = psql // Will be used when repositories are added
 
+	kratosClient := ory.NewKratosClient(cfg.KratosURL)
+	userCache := cache.NewUserCache(kratosClient, 5*time.Minute)
+	userCache.Start()
+
 	rolesSvc := commonroles.NewKetoService(ketoclient.NewReadClient(cfg.KetoReadURL), "app", "tadoku")
+
+	userList := profiledomain.NewUserList(userCache, rolesSvc)
 
 	e := echo.New()
 	e.Use(tadokumiddleware.Logger([]string{"/ping"}))
@@ -66,12 +77,14 @@ func main() {
 		e.Use(sentryecho.New(sentryecho.Options{}))
 	}
 
-	server := rest.NewServer()
+	server := rest.NewServer(userList)
 	internalServer := rest.NewInternalServer()
 
 	openapi.RegisterHandlersWithBaseURL(e, server, "")
 	internal := e.Group("", tadokumiddleware.RequireServiceIdentity())
 	rest.RegisterInternalRoutes(internal, internalServer)
+
+	defer userCache.Stop()
 
 	fmt.Printf("profile-api is now available at: http://localhost:%d/v2\n", cfg.Port)
 	e.Logger.Fatal(e.Start(fmt.Sprintf("0.0.0.0:%d", cfg.Port)))

@@ -61,6 +61,27 @@
   mutators:
     - handler: id_token
 
+- id: "tadoku:profile:api"
+  upstream:
+    preserve_host: true
+    url: "http://profile-api.tdk-profile-api:80"
+    strip_path: /api/internal/profile/
+  match:
+    url: "http://langlog.be/api/internal/profile/<**>"
+    methods:
+      - GET
+      - POST
+      - PUT
+      - DELETE
+      - PATCH
+  authenticators:
+    - handler: cookie_session
+    - handler: anonymous
+  authorizer:
+    handler: allow
+  mutators:
+    - handler: id_token
+
 - id: "tadoku:memory:api"
   upstream:
     preserve_host: true

@@ -3,13 +3,17 @@ load("@rules_go//go:def.bzl", "go_library")
 go_library(
     name = "rest",
     srcs = [
+        "errors.go",
         "health.go",
         "server.go",
         "server_internal.go",
+        "server_userslist.go",
     ],
     importpath = "github.com/tadoku/tadoku/services/profile-api/http/rest",
     visibility = ["//visibility:public"],
     deps = [
+        "//services/common/http/httperr",
+        "//services/profile-api/domain",
         "//services/profile-api/http/rest/openapi",
         "//services/profile-api/http/rest/openapi/internalapi",
         "@com_github_labstack_echo_v4//:echo",

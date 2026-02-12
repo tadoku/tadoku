@@ -1,0 +1,9 @@
+load("@rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "cache",
+    srcs = ["usercache.go"],
+    importpath = "github.com/tadoku/tadoku/services/profile-api/cache",
+    visibility = ["//visibility:public"],
+    deps = ["//services/profile-api/domain"],
+)

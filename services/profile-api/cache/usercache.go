@@ -6,7 +6,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/tadoku/tadoku/services/immersion-api/domain"
+	"github.com/tadoku/tadoku/services/profile-api/domain"
 )
 
 type UserCache struct {

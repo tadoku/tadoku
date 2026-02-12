@@ -29,7 +29,6 @@ func NewServer(
 	profileFetch *domain.ProfileFetch,
 	registrationListOngoing *domain.RegistrationListOngoing,
 	contestPermissionCheck *domain.ContestPermissionCheck,
-	userList *domain.UserList,
 	logDelete *domain.LogDelete,
 	contestModerationDetachLog *domain.ContestModerationDetachLog,
 	registrationUpsert *domain.RegistrationUpsert,
@@ -62,7 +61,6 @@ func NewServer(
 		profileFetch:                profileFetch,
 		registrationListOngoing:     registrationListOngoing,
 		contestPermissionCheck:      contestPermissionCheck,
-		userList:                    userList,
 		logDelete:                   logDelete,
 		contestModerationDetachLog:  contestModerationDetachLog,
 		registrationUpsert:          registrationUpsert,
@@ -97,7 +95,6 @@ type Server struct {
 	profileFetch                *domain.ProfileFetch
 	registrationListOngoing     *domain.RegistrationListOngoing
 	contestPermissionCheck      *domain.ContestPermissionCheck
-	userList                    *domain.UserList
 	logDelete                   *domain.LogDelete
 	contestModerationDetachLog  *domain.ContestModerationDetachLog
 	registrationUpsert          *domain.RegistrationUpsert

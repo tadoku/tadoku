@@ -1,14 +1,19 @@
 package rest
 
 import (
+	"github.com/tadoku/tadoku/services/profile-api/domain"
 	"github.com/tadoku/tadoku/services/profile-api/http/rest/openapi"
 )
 
 // NewServer creates a new server conforming to the OpenAPI spec
-func NewServer() openapi.ServerInterface {
-	return &Server{}
+func NewServer(
+	userList *domain.UserList,
+) openapi.ServerInterface {
+	return &Server{
+		userList: userList,
+	}
 }
 
 type Server struct {
-	// Domain services will be added here as the service grows
+	userList *domain.UserList
 }

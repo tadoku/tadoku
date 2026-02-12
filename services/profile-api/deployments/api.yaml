@@ -42,6 +42,8 @@ spec:
             value: "http://oathkeeper-api.default:4456/.well-known/jwks.json"
           - name: API_KETO_READ_URL
             value: "http://keto-read.default:4466"
+          - name: API_KRATOS_URL
+            value: "http://kratos-admin.default"
           - name: API_OATHKEEPER_URL
             value: "http://oathkeeper-proxy.default:4455"
           - name: SERVICE_NAME

@@ -32,4 +32,3 @@ func (r *Repository) CreateModerationAuditLog(ctx context.Context, req *domain.M
 
 	return nil
 }
-

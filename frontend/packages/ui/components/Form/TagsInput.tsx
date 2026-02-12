@@ -108,26 +108,6 @@ export function TagsInput(props: {
           <span className="label-hint hidden sm:flex">{hint}</span>
         ) : undefined}
       </span>
-      {tags.length > 0 && (
-        <div className="flex flex-wrap gap-2">
-          {tags.map(tag => (
-            <span
-              key={tag}
-              className="tag bg-black/5 text-secondary-900 pr-0 border border-b-2 border-black/5"
-            >
-              {tag}
-              <button
-                type="button"
-                onClick={() => handleRemove(tag)}
-                className="hover:bg-black/5 focus:outline-none px-2 -my-2 py-2 ml-1"
-                aria-label={`Remove ${tag}`}
-              >
-                <XMarkIcon className="h-5 w-5" />
-              </button>
-            </span>
-          ))}
-        </div>
-      )}
       <Combobox
         value={null}
         onChange={handleSelect}
@@ -169,6 +149,26 @@ export function TagsInput(props: {
           </ComboboxOptions>
         </div>
       </Combobox>
+      {tags.length > 0 && (
+        <div className="flex flex-wrap gap-2">
+          {tags.map(tag => (
+            <span
+              key={tag}
+              className="tag bg-black/5 text-secondary-900 pr-0 border border-b-2 border-black/5"
+            >
+              {tag}
+              <button
+                type="button"
+                onClick={() => handleRemove(tag)}
+                className="hover:bg-black/5 focus:outline-none px-2 -my-2 py-2 ml-1"
+                aria-label={`Remove ${tag}`}
+              >
+                <XMarkIcon className="h-5 w-5" />
+              </button>
+            </span>
+          ))}
+        </div>
+      )}
       {hint ? <span className="label-hint sm:hidden">{hint}</span> : undefined}
       <span className="error">{errorMessage}</span>
     </div>

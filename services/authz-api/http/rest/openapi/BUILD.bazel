@@ -14,4 +14,3 @@ go_library(
         "@com_github_labstack_echo_v4//:echo",
     ],
 )
-

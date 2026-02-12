@@ -6,4 +6,3 @@ go_library(
     importpath = "github.com/tadoku/tadoku/services/common/client/authz",
     visibility = ["//visibility:public"],
 )
-

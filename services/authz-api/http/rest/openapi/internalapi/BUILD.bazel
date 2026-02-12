@@ -5,10 +5,5 @@ go_library(
     srcs = ["api.gen.go"],
     importpath = "github.com/tadoku/tadoku/services/authz-api/http/rest/openapi/internalapi",
     visibility = ["//visibility:public"],
-    deps = [
-        "@com_github_deepmap_oapi_codegen//pkg/runtime",
-        "@com_github_deepmap_oapi_codegen//pkg/types",
-        "@com_github_labstack_echo_v4//:echo",
-    ],
+    deps = ["@com_github_labstack_echo_v4//:echo"],
 )
-

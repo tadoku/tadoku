@@ -26,6 +26,7 @@ go_test(
     embed = [":middleware"],
     deps = [
         "//services/common/authz/roles",
+        "@com_github_labstack_echo_v4//:echo",
         "@com_github_stretchr_testify//assert",
     ],
 )

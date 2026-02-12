@@ -7,4 +7,3 @@ go_library(
     visibility = ["//visibility:public"],
     deps = ["//services/authz-api/domain"],
 )
-

@@ -26,8 +26,8 @@ go_library(
         "logfind.go",
         "loglistforcontest.go",
         "loglistforuser.go",
-        "moderationaudit.go",
         "models.go",
+        "moderationaudit.go",
         "profilecontest.go",
         "profilecontestactivity.go",
         "profilefetch.go",
@@ -88,7 +88,6 @@ go_test(
     ],
     deps = [
         ":domain",
-        "//services/common/authz/roles",
         "//services/common/domain",
         "//services/common/testutil/authzctx",
         "@com_github_google_uuid//:uuid",

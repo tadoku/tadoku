@@ -19,4 +19,3 @@ oci_load(
     image = ":image",
     repo_tags = ["bazel/services/authz-api/storage/postgres/migrations:latest"],
 )
-

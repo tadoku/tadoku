@@ -12,6 +12,8 @@ go_test(
     name = "httperr_test",
     srcs = ["httperr_test.go"],
     embed = [":httperr"],
-    deps = ["@com_github_stretchr_testify//assert"],
+    deps = [
+        "//services/common/domain",
+        "@com_github_stretchr_testify//assert",
+    ],
 )
-

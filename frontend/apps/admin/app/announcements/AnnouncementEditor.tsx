@@ -152,7 +152,7 @@ export function AnnouncementEditor({ id }: Props) {
         <div className="flex flex-col lg:flex-row gap-6">
           <div className={`flex-1 min-w-0 flex-col ${mobileTab === 'preview' ? 'hidden lg:flex' : 'flex'}`}>
             <div className="card flex flex-col gap-4">
-              <Input name="title" label="Title" placeholder="Announcement title (admin reference)" options={{ required: 'Title is required' }} />
+              <Input name="title" type="text" label="Title" placeholder="Announcement title (admin reference)" options={{ required: 'Title is required' }} />
 
               <Select name="style" label="Style" values={STYLE_OPTIONS} />
 

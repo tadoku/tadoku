@@ -158,14 +158,8 @@ export function AnnouncementEditor({ id }: Props) {
 
               <Input name="href" type="url" label="Link URL (optional)" placeholder="https://..." hint="If set, the announcement will link to this URL" />
 
-              <div className="flex flex-col sm:flex-row gap-4">
-                <div className="flex-1">
-                  <Input name="startsAt" type="datetime-local" label="Starts At (UTC)" options={{ required: 'Start date is required' }} />
-                </div>
-                <div className="flex-1">
-                  <Input name="endsAt" type="datetime-local" label="Ends At (UTC)" options={{ required: 'End date is required', validate: (v) => { const startsAt = methods.getValues('startsAt'); if (startsAt && v && new Date(v) <= new Date(startsAt)) return 'End date must be after start date'; return true; } }} />
-                </div>
-              </div>
+              <Input name="startsAt" type="datetime-local" label="Starts At (UTC)" options={{ required: 'Start date is required' }} />
+              <Input name="endsAt" type="datetime-local" label="Ends At (UTC)" options={{ required: 'End date is required', validate: (v) => { const startsAt = methods.getValues('startsAt'); if (startsAt && v && new Date(v) <= new Date(startsAt)) return 'End date must be after start date'; return true; } }} />
 
               <div className={`label flex-1 ${contentController.fieldState.error ? 'error' : ''}`}>
                 <span className="label-text">Content (Markdown)</span>

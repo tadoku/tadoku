@@ -4,7 +4,7 @@ import { useMutation, useQuery } from 'react-query'
 
 const { publicRuntimeConfig } = getConfig()
 
-const immersionRoot = `${publicRuntimeConfig.apiEndpoint}/immersion`
+const profileRoot = `${publicRuntimeConfig.apiEndpoint}/profile`
 const authzRoot = `${publicRuntimeConfig.apiEndpoint}/authz`
 
 // Admin API
@@ -45,7 +45,7 @@ export const useUserList = (
         params.query = opts.query
       }
       const response = await fetch(
-        `${immersionRoot}/users?${new URLSearchParams(params)}`,
+        `${profileRoot}/users?${new URLSearchParams(params)}`,
         { credentials: 'include' },
       )
 

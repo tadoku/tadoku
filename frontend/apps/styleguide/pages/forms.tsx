@@ -7,6 +7,9 @@ import logPagesCode from '@examples/forms/log-pages.tsx?raw'
 import AutocompleteForm from '@examples/forms/autocomplete'
 import autocompleteCode from '@examples/forms/autocomplete.tsx?raw'
 
+import TagsInputForm from '@examples/forms/tags-input'
+import tagsInputCode from '@examples/forms/tags-input.tsx?raw'
+
 import ComposeBlogPostForm from '@examples/forms/compose-blog-post'
 import composeBlogPostCode from '@examples/forms/compose-blog-post.tsx?raw'
 
@@ -15,9 +18,6 @@ import miscElementsCode from '@examples/forms/misc-elements.tsx?raw'
 
 import BasicElements from '@examples/forms/basic-elements'
 import basicElementsCode from '@examples/forms/basic-elements.tsx?raw'
-
-import { TagsInput } from 'ui'
-import { FormProvider, useForm } from 'react-hook-form'
 
 export default function Forms() {
   return (
@@ -73,116 +73,5 @@ export default function Forms() {
         </div>
       </Showcase>
     </>
-  )
-}
-
-const tagsInputCode = `import { TagsInput } from 'ui'
-import { FormProvider, useForm } from 'react-hook-form'
-
-const TagsInputForm = () => {
-  const methods = useForm()
-  const onSubmit = (data: any) => console.log(data, 'submitted')
-
-  // Sync example - filter a local array
-  const allTags = ['Book', 'Ebook', 'Fiction', 'Non-fiction', 'Web page', 'Lyric', 'Manga', 'Novel']
-
-  return (
-    <FormProvider {...methods}>
-      <form
-        onSubmit={methods.handleSubmit(onSubmit)}
-        className="v-stack spaced"
-      >
-        <TagsInput
-          name="tags"
-          label="Tags"
-          hint="Add up to 5 tags"
-          placeholder="Type to search or add tags..."
-          maxTags={5}
-          getSuggestions={(input) =>
-            allTags.filter(tag =>
-              tag.toLowerCase().includes(input.toLowerCase())
-            )
-          }
-        />
-        <button
-          type="submit"
-          className="btn primary"
-          disabled={methods.formState.isSubmitting}
-        >
-          Submit
-        </button>
-      </form>
-    </FormProvider>
-  )
-}
-
-// Async example - fetch from API
-const AsyncTagsInputForm = () => {
-  const methods = useForm()
-
-  return (
-    <FormProvider {...methods}>
-      <form className="v-stack spaced">
-        <TagsInput
-          name="tags"
-          label="Tags"
-          placeholder="Search tags..."
-          debounceMs={300}
-          getSuggestions={async (input) => {
-            const res = await fetch(\`/api/tags/search?q=\${input}\`)
-            return res.json()
-          }}
-        />
-      </form>
-    </FormProvider>
-  )
-}`
-
-const TagsInputForm = () => {
-  const methods = useForm()
-  const onSubmit = (data: any) => console.log(data, 'submitted')
-
-  const allTags = [
-    'Book',
-    'Ebook',
-    'Fiction',
-    'Non-fiction',
-    'Web page',
-    'Lyric',
-    'Manga',
-    'Novel',
-  ]
-
-  // Simulated async API call with 500ms delay
-  const fetchTags = async (input: string): Promise<string[]> => {
-    await new Promise(resolve => setTimeout(resolve, 500))
-    return allTags.filter(tag =>
-      tag.toLowerCase().includes(input.toLowerCase())
-    )
-  }
-
-  return (
-    <FormProvider {...methods}>
-      <form
-        onSubmit={methods.handleSubmit(onSubmit)}
-        className="v-stack spaced"
-      >
-        <TagsInput
-          name="tags"
-          label="Tags (async)"
-          hint="Add up to 5 tags"
-          placeholder="Type to search or add tags..."
-          maxTags={5}
-          getSuggestions={fetchTags}
-        />
-        <button
-          type="submit"
-          className="btn primary"
-          disabled={methods.formState.isSubmitting}
-        >
-          Submit
-        </button>
-      </form>
-    </FormProvider>
   )
 }

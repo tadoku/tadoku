@@ -1,4 +1,4 @@
-load("@rules_go//go:def.bzl", "go_library")
+load("@rules_go//go:def.bzl", "go_library", "go_test")
 
 go_library(
     name = "cache",
@@ -6,4 +6,15 @@ go_library(
     importpath = "github.com/tadoku/tadoku/services/profile-api/cache",
     visibility = ["//visibility:public"],
     deps = ["//services/profile-api/domain"],
+)
+
+go_test(
+    name = "cache_test",
+    srcs = ["usercache_test.go"],
+    deps = [
+        ":cache",
+        "//services/profile-api/domain",
+        "@com_github_stretchr_testify//assert",
+        "@com_github_stretchr_testify//require",
+    ],
 )

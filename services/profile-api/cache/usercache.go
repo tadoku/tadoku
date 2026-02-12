@@ -73,6 +73,7 @@ func (c *UserCache) run(ctx context.Context) {
 
 func (c *UserCache) refreshUsers(ctx context.Context) error {
 	var allUsers []domain.UserCacheEntry
+	seen := make(map[string]bool)
 	page := int64(0)
 	perPage := int64(500)
 
@@ -83,6 +84,10 @@ func (c *UserCache) refreshUsers(ctx context.Context) error {
 		}
 
 		for _, identity := range result.Identities {
+			if seen[identity.ID] {
+				continue
+			}
+			seen[identity.ID] = true
 			allUsers = append(allUsers, domain.UserCacheEntry{
 				ID:          identity.ID,
 				DisplayName: identity.DisplayName,

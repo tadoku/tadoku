@@ -286,7 +286,7 @@
   }
 
   .tag {
-    @apply py-1 px-3 text-xs items-center flex;
+    @apply py-2 px-3 text-sm items-center flex;
   }
 }
 

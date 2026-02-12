@@ -113,16 +113,16 @@ export function TagsInput(props: {
           {tags.map(tag => (
             <span
               key={tag}
-              className="tag bg-secondary/20 text-secondary-900 rounded-md"
+              className="tag bg-black/5 text-secondary-900 pr-0 border border-b-2 border-black/5"
             >
               {tag}
               <button
                 type="button"
                 onClick={() => handleRemove(tag)}
-                className="ml-1 hover:text-red-600 focus:outline-none"
+                className="hover:bg-black/5 focus:outline-none px-2 -my-2 py-2 ml-1"
                 aria-label={`Remove ${tag}`}
               >
-                <XMarkIcon className="h-4 w-4" />
+                <XMarkIcon className="h-5 w-5" />
               </button>
             </span>
           ))}

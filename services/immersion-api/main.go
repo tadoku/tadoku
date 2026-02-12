@@ -15,7 +15,6 @@ import (
 	ketoclient "github.com/tadoku/tadoku/services/common/client/keto"
 	"github.com/tadoku/tadoku/services/common/domain"
 	tadokumiddleware "github.com/tadoku/tadoku/services/common/middleware"
-	"github.com/tadoku/tadoku/services/immersion-api/cache"
 	"github.com/tadoku/tadoku/services/immersion-api/client/ory"
 	immersiondomain "github.com/tadoku/tadoku/services/immersion-api/domain"
 	"github.com/tadoku/tadoku/services/immersion-api/http/rest"
@@ -58,8 +57,6 @@ func main() {
 	}
 
 	kratosClient := ory.NewKratosClient(cfg.KratosURL)
-	userCache := cache.NewUserCache(kratosClient, 5*time.Minute)
-	userCache.Start()
 
 	postgresRepository := repository.NewRepository(psql)
 	var ketoAuthz ketoclient.AuthorizationClient = ketoclient.NewClient(cfg.KetoReadURL, cfg.KetoWriteURL)
@@ -112,7 +109,6 @@ func main() {
 	profileFetch := immersiondomain.NewProfileFetch(kratosClient)
 	registrationListOngoing := immersiondomain.NewRegistrationListOngoing(postgresRepository, clock)
 	contestPermissionCheck := immersiondomain.NewContestPermissionCheck(postgresRepository, kratosClient, clock)
-	userList := immersiondomain.NewUserList(userCache, rolesSvc)
 	logDelete := immersiondomain.NewLogDelete(postgresRepository, clock)
 	contestModerationDetachLog := immersiondomain.NewContestModerationDetachLog(postgresRepository)
 	userUpsert := immersiondomain.NewUserUpsert(postgresRepository)
@@ -146,7 +142,6 @@ func main() {
 		profileFetch,
 		registrationListOngoing,
 		contestPermissionCheck,
-		userList,
 		logDelete,
 		contestModerationDetachLog,
 		registrationUpsert,
@@ -173,8 +168,6 @@ func main() {
 	<-quit
 
 	// Graceful shutdown
-	userCache.Stop()
-
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	if err := e.Shutdown(ctx); err != nil {

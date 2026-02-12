@@ -38,7 +38,6 @@ go_library(
         "registrationlistongoing.go",
         "registrationlistyearly.go",
         "registrationupsert.go",
-        "userlist.go",
         "userupsert.go",
     ],
     importpath = "github.com/tadoku/tadoku/services/immersion-api/domain",
@@ -48,7 +47,6 @@ go_library(
         "//services/common/domain",
         "@com_github_go_playground_validator_v10//:validator",
         "@com_github_google_uuid//:uuid",
-        "@com_github_sahilm_fuzzy//:fuzzy",
     ],
 )
 
@@ -86,7 +84,6 @@ go_test(
         "registrationlistyearly_test.go",
         "registrationupsert_test.go",
         "roles_context_test.go",
-        "userlist_test.go",
         "userupsert_test.go",
     ],
     deps = [

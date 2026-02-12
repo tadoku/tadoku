@@ -97,6 +97,7 @@ const TagsInputForm = () => {
           label="Tags"
           hint="Add up to 5 tags"
           placeholder="Type to search or add tags..."
+          maxTags={5}
           getSuggestions={(input) =>
             allTags.filter(tag =>
               tag.toLowerCase().includes(input.toLowerCase())
@@ -171,6 +172,7 @@ const TagsInputForm = () => {
           label="Tags (async)"
           hint="Add up to 5 tags"
           placeholder="Type to search or add tags..."
+          maxTags={5}
           getSuggestions={fetchTags}
         />
         <button

@@ -15,6 +15,7 @@ export function TagsInput(props: {
   getSuggestions: (inputText: string) => string[] | Promise<string[]>
   placeholder?: string
   debounceMs?: number
+  maxTags?: number
 }) {
   const [query, setQuery] = useState('')
   const [suggestions, setSuggestions] = useState<string[]>([])
@@ -28,6 +29,7 @@ export function TagsInput(props: {
     getSuggestions,
     placeholder,
     debounceMs = 300,
+    maxTags,
   } = props
   const { control } = useFormContext()
   const {
@@ -72,8 +74,10 @@ export function TagsInput(props: {
     }
   }, [query, tags, getSuggestions, debounceMs])
 
+  const isAtLimit = maxTags !== undefined && tags.length >= maxTags
+
   const handleSelect = (selected: string | null) => {
-    if (selected && !tags.includes(selected)) {
+    if (selected && !tags.includes(selected) && !isAtLimit) {
       onChange([...tags, selected])
     }
     setQuery('')
@@ -86,7 +90,7 @@ export function TagsInput(props: {
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter' && query.trim() && suggestions.length === 0 && !isLoading) {
       e.preventDefault()
-      if (!tags.includes(query.trim())) {
+      if (!tags.includes(query.trim()) && !isAtLimit) {
         onChange([...tags, query.trim()])
       }
       setQuery('')
@@ -135,7 +139,8 @@ export function TagsInput(props: {
             value={query}
             onChange={event => setQuery(event.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder={placeholder}
+            placeholder={isAtLimit ? 'Maximum tags reached' : placeholder}
+            disabled={isAtLimit}
             className="w-full"
           />
           <ComboboxOptions

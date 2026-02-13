@@ -10,9 +10,28 @@ export default function Footer() {
         <div className="flex flex-col-reverse md:flex-col md:space-y-8 text-center items-center md:items-start">
           <LogoInverted className="hidden md:block" />
           <div className="mt-8 md:mt-0 text-white md:flex-grow">
-            Built by{' '}
+            <a
+              href={routes.github()}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="reset text-white hover:text-primary border-b-2 border-primary transition-all"
+            >
+              Built
+            </a>
+            {' & '}
+            <a
+              href="https://ui.tadoku.app"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="reset text-white hover:text-primary border-b-2 border-primary transition-all"
+            >
+              designed
+            </a>
+            {' by '}
             <a
               href={routes.personalWebsite()}
+              target="_blank"
+              rel="noopener noreferrer"
               className="reset text-white hover:text-primary border-b-2 border-primary transition-all"
             >
               antonve

@@ -996,6 +996,16 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/Tag"
+    TagSuggestion:
+      type: object
+      required:
+        - tag
+        - count
+      properties:
+        tag:
+          type: string
+        count:
+          type: integer
     TagSuggestions:
       type: object
       required:
@@ -1004,8 +1014,7 @@ components:
         suggestions:
           type: array
           items:
-            type: string
-          example: ["book", "fiction", "ebook"]
+            $ref: "#/components/schemas/TagSuggestion"
     ContestConfigurationOptions:
       allOf:
         - $ref: "#/components/schemas/Languages"

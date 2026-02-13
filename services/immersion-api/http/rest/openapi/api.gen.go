@@ -259,9 +259,15 @@ type Tag struct {
 	Name          string             `json:"name"`
 }
 
+// TagSuggestion defines model for TagSuggestion.
+type TagSuggestion struct {
+	Count int    `json:"count"`
+	Tag   string `json:"tag"`
+}
+
 // TagSuggestions defines model for TagSuggestions.
 type TagSuggestions struct {
-	Suggestions []string `json:"suggestions"`
+	Suggestions []TagSuggestion `json:"suggestions"`
 }
 
 // Tags defines model for Tags.

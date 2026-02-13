@@ -711,11 +711,18 @@ export const useLogConfigurationOptions = (options?: { enabled?: boolean }) =>
     options,
   )
 
-const TagSuggestions = z.object({
-  suggestions: z.array(z.string()),
+const TagSuggestion = z.object({
+  tag: z.string(),
+  count: z.number(),
 })
 
-export const fetchTagSuggestions = async (query: string): Promise<string[]> => {
+export type TagSuggestion = z.infer<typeof TagSuggestion>
+
+const TagSuggestions = z.object({
+  suggestions: z.array(TagSuggestion),
+})
+
+export const fetchTagSuggestions = async (query: string): Promise<TagSuggestion[]> => {
   const response = await fetch(
     `${root}/logs/tag-suggestions?query=${encodeURIComponent(query)}`,
   )

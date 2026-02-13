@@ -10,7 +10,7 @@ where user_id = sqlc.arg('user_id')
   and tag ilike '%' || sqlc.arg('query') || '%'
 group by tag
 order by usage_count desc, tag
-limit 20;
+limit 30;
 
 -- name: ListPopularTags :many
 select tag, count(*) as usage_count
@@ -25,7 +25,7 @@ select name as tag
 from log_default_tags
 where name ilike '%' || sqlc.arg('query') || '%'
 order by name
-limit 20;
+limit 30;
 
 -- name: ListTagsForLog :many
 select tag

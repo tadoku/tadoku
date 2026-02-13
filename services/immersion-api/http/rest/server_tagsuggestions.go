@@ -26,7 +26,15 @@ func (s *Server) LogTagSuggestions(ctx echo.Context, params openapi.LogTagSugges
 		return ctx.NoContent(http.StatusInternalServerError)
 	}
 
+	suggestions := make([]openapi.TagSuggestion, len(result.Suggestions))
+	for i, s := range result.Suggestions {
+		suggestions[i] = openapi.TagSuggestion{
+			Tag:   s.Tag,
+			Count: s.Count,
+		}
+	}
+
 	return ctx.JSON(http.StatusOK, openapi.TagSuggestions{
-		Suggestions: result.Suggestions,
+		Suggestions: suggestions,
 	})
 }

@@ -34,7 +34,7 @@ select name as tag
 from log_default_tags
 where name ilike '%' || $1 || '%'
 order by name
-limit 20
+limit 30
 `
 
 func (q *Queries) ListDefaultTagsMatching(ctx context.Context, query sql.NullString) ([]string, error) {
@@ -104,7 +104,7 @@ where user_id = $1
   and tag ilike '%' || $2 || '%'
 group by tag
 order by usage_count desc, tag
-limit 20
+limit 30
 `
 
 type ListTagSuggestionsForUserParams struct {

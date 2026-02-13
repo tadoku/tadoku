@@ -8,17 +8,19 @@ import { XMarkIcon } from '@heroicons/react/20/solid'
 import React, { useState, useEffect, useRef } from 'react'
 import { useController, useFormContext } from 'react-hook-form'
 
-export function TagsInput(props: {
+export function TagsInput<T = string>(props: {
   label: string
   name: string
   hint?: string
-  getSuggestions: (inputText: string) => string[] | Promise<string[]>
+  getSuggestions: (inputText: string) => T[] | Promise<T[]>
+  renderSuggestion?: (item: T) => string
+  getValue?: (item: T) => string
   placeholder?: string
   debounceMs?: number
   maxTags?: number
 }) {
   const [query, setQuery] = useState('')
-  const [suggestions, setSuggestions] = useState<string[]>([])
+  const [suggestions, setSuggestions] = useState<T[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
@@ -27,6 +29,8 @@ export function TagsInput(props: {
     label,
     hint,
     getSuggestions,
+    renderSuggestion = (item: T) => String(item),
+    getValue = (item: T) => String(item),
     placeholder,
     debounceMs = 300,
     maxTags,
@@ -52,7 +56,7 @@ export function TagsInput(props: {
     debounceRef.current = setTimeout(async () => {
       try {
         const result = await Promise.resolve(getSuggestions(query))
-        const filtered = result.filter(s => !tags.includes(s))
+        const filtered = result.filter(s => !tags.includes(getValue(s)))
         setSuggestions(filtered)
       } catch {
         setSuggestions([])
@@ -70,9 +74,12 @@ export function TagsInput(props: {
 
   const isAtLimit = maxTags !== undefined && tags.length >= maxTags
 
-  const handleSelect = (selected: string | null) => {
-    if (selected && !tags.includes(selected) && !isAtLimit) {
-      onChange([...tags, selected])
+  const handleSelect = (selected: T | null) => {
+    if (selected) {
+      const val = getValue(selected)
+      if (!tags.includes(val) && !isAtLimit) {
+        onChange([...tags, val])
+      }
     }
     setQuery('')
   }
@@ -140,11 +147,11 @@ export function TagsInput(props: {
             ) : (
               suggestions.map(suggestion => (
                 <ComboboxOption
-                  key={suggestion}
+                  key={getValue(suggestion)}
                   value={suggestion}
                   className="relative cursor-default select-none py-2 px-4 data-[focus]:bg-secondary data-[focus]:text-white"
                 >
-                  <span className="block truncate">{suggestion}</span>
+                  <span className="block truncate">{renderSuggestion(suggestion)}</span>
                 </ComboboxOption>
               ))
             )}

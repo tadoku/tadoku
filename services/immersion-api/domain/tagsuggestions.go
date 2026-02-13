@@ -8,8 +8,13 @@ import (
 	commondomain "github.com/tadoku/tadoku/services/common/domain"
 )
 
+type TagSuggestion struct {
+	Tag   string
+	Count int
+}
+
 type TagSuggestionsRepository interface {
-	FetchTagSuggestionsForUser(ctx context.Context, userID uuid.UUID, query string) ([]string, error)
+	FetchTagSuggestionsForUser(ctx context.Context, userID uuid.UUID, query string) ([]TagSuggestion, error)
 	FetchDefaultTagsMatching(ctx context.Context, query string) ([]string, error)
 }
 
@@ -18,7 +23,7 @@ type TagSuggestionsRequest struct {
 }
 
 type TagSuggestionsResponse struct {
-	Suggestions []string
+	Suggestions []TagSuggestion
 }
 
 type TagSuggestions struct {
@@ -42,7 +47,7 @@ func (s *TagSuggestions) Execute(ctx context.Context, req *TagSuggestionsRequest
 		}
 	}
 
-	var suggestions []string
+	var suggestions []TagSuggestion
 
 	// If user is authenticated, fetch their previously used tags
 	if userID != nil {
@@ -60,14 +65,14 @@ func (s *TagSuggestions) Execute(ctx context.Context, req *TagSuggestionsRequest
 	}
 
 	seen := make(map[string]struct{})
-	for _, tag := range suggestions {
-		seen[strings.ToLower(tag)] = struct{}{}
+	for _, s := range suggestions {
+		seen[strings.ToLower(s.Tag)] = struct{}{}
 	}
 	for _, tag := range defaultTags {
 		if _, exists := seen[strings.ToLower(tag)]; !exists {
 			seen[strings.ToLower(tag)] = struct{}{}
-			suggestions = append(suggestions, tag)
-			if len(suggestions) >= 20 {
+			suggestions = append(suggestions, TagSuggestion{Tag: tag, Count: 0})
+			if len(suggestions) >= 30 {
 				break
 			}
 		}

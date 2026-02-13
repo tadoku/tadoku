@@ -6,10 +6,11 @@ import (
 	"strings"
 
 	"github.com/google/uuid"
+	"github.com/tadoku/tadoku/services/immersion-api/domain"
 	"github.com/tadoku/tadoku/services/immersion-api/storage/postgres"
 )
 
-func (r *Repository) FetchTagSuggestionsForUser(ctx context.Context, userID uuid.UUID, query string) ([]string, error) {
+func (r *Repository) FetchTagSuggestionsForUser(ctx context.Context, userID uuid.UUID, query string) ([]domain.TagSuggestion, error) {
 	rows, err := r.q.ListTagSuggestionsForUser(ctx, postgres.ListTagSuggestionsForUserParams{
 		UserID: userID,
 		Query:  sql.NullString{String: query, Valid: true},
@@ -18,9 +19,9 @@ func (r *Repository) FetchTagSuggestionsForUser(ctx context.Context, userID uuid
 		return nil, err
 	}
 
-	tags := make([]string, len(rows))
+	tags := make([]domain.TagSuggestion, len(rows))
 	for i, row := range rows {
-		tags[i] = row.Tag
+		tags[i] = domain.TagSuggestion{Tag: row.Tag, Count: int(row.UsageCount)}
 	}
 	return tags, nil
 }

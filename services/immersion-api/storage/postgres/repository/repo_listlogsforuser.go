@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/google/uuid"
 	"github.com/tadoku/tadoku/services/immersion-api/domain"
 	"github.com/tadoku/tadoku/services/immersion-api/storage/postgres"
 )
@@ -29,29 +28,8 @@ func (r *Repository) ListLogsForUser(ctx context.Context, req *domain.LogListFor
 		return nil, fmt.Errorf("could not fetch logs list: %w", err)
 	}
 
-	// Batch fetch tags for all logs
-	logIDs := make([]uuid.UUID, len(entries))
-	for i, it := range entries {
-		logIDs[i] = it.ID
-	}
-
-	tagRows, err := r.q.ListTagsForLogs(ctx, logIDs)
-	if err != nil && !errors.Is(err, sql.ErrNoRows) {
-		return nil, fmt.Errorf("could not fetch log tags: %w", err)
-	}
-
-	// Build a map of log_id -> tags
-	tagsByLogID := make(map[uuid.UUID][]string)
-	for _, row := range tagRows {
-		tagsByLogID[row.LogID] = append(tagsByLogID[row.LogID], row.Tag)
-	}
-
 	res := make([]domain.Log, len(entries))
 	for i, it := range entries {
-		tags := tagsByLogID[it.ID]
-		if tags == nil {
-			tags = []string{}
-		}
 		res[i] = domain.Log{
 			ID:           it.ID,
 			UserID:       it.UserID,
@@ -61,7 +39,7 @@ func (r *Repository) ListLogsForUser(ctx context.Context, req *domain.LogListFor
 			ActivityID:   int(it.ActivityID),
 			ActivityName: it.ActivityName,
 			UnitName:     it.UnitName,
-			Tags:         tags,
+			Tags:         postgres.StringArrayFromInterface(it.Tags),
 			Amount:       it.Amount,
 			Modifier:     it.Modifier,
 			Score:        it.Score,

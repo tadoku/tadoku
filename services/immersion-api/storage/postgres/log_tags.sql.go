@@ -60,43 +60,6 @@ func (q *Queries) ListDefaultTagsMatching(ctx context.Context, query sql.NullStr
 	return items, nil
 }
 
-const listPopularTags = `-- name: ListPopularTags :many
-select tag, count(*) as usage_count
-from log_tags
-where tag ilike '%' || $1 || '%'
-group by tag
-order by usage_count desc
-limit 10
-`
-
-type ListPopularTagsRow struct {
-	Tag        string
-	UsageCount int64
-}
-
-func (q *Queries) ListPopularTags(ctx context.Context, query sql.NullString) ([]ListPopularTagsRow, error) {
-	rows, err := q.db.QueryContext(ctx, listPopularTags, query)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []ListPopularTagsRow
-	for rows.Next() {
-		var i ListPopularTagsRow
-		if err := rows.Scan(&i.Tag, &i.UsageCount); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
 const listTagSuggestionsForUser = `-- name: ListTagSuggestionsForUser :many
 select tag, count(*) as usage_count
 from log_tags
@@ -130,36 +93,6 @@ func (q *Queries) ListTagSuggestionsForUser(ctx context.Context, arg ListTagSugg
 			return nil, err
 		}
 		items = append(items, i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const listTagsForLog = `-- name: ListTagsForLog :many
-select tag
-from log_tags
-where log_id = $1
-order by tag
-`
-
-func (q *Queries) ListTagsForLog(ctx context.Context, logID uuid.UUID) ([]string, error) {
-	rows, err := q.db.QueryContext(ctx, listTagsForLog, logID)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []string
-	for rows.Next() {
-		var tag string
-		if err := rows.Scan(&tag); err != nil {
-			return nil, err
-		}
-		items = append(items, tag)
 	}
 	if err := rows.Close(); err != nil {
 		return nil, err

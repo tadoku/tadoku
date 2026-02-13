@@ -12,14 +12,6 @@ group by tag
 order by usage_count desc, tag
 limit 30;
 
--- name: ListPopularTags :many
-select tag, count(*) as usage_count
-from log_tags
-where tag ilike '%' || sqlc.arg('query') || '%'
-group by tag
-order by usage_count desc
-limit 10;
-
 -- name: ListDefaultTagsMatching :many
 select name as tag
 from log_default_tags
@@ -27,8 +19,3 @@ where name ilike '%' || sqlc.arg('query') || '%'
 order by name
 limit 30;
 
--- name: ListTagsForLog :many
-select tag
-from log_tags
-where log_id = sqlc.arg('log_id')
-order by tag;

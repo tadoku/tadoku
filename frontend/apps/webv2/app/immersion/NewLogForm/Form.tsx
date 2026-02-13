@@ -10,7 +10,6 @@ import {
   ContestRegistrationsView,
   fetchTagSuggestions,
   LogConfigurationOptions,
-  TagSuggestion,
   useCreateLog,
 } from '@app/immersion/api'
 import { useRouter } from 'next/router'
@@ -204,7 +203,7 @@ export const LogForm = ({
                 type="text"
                 placeholder="e.g. One Piece volume 45"
               />
-              <TagsInput<TagSuggestion>
+              <TagsInput
                 name="tags"
                 label="Tags"
                 placeholder="Add tags..."

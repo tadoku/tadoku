@@ -228,7 +228,7 @@ export const useContestRegistration = (
     async (): Promise<ContestRegistrationView | undefined> => {
       const response = await fetch(`${root}/contests/${id}/registration`)
 
-      if (response.status === 404) {
+      if (response.status === 204) {
         return undefined
       }
 

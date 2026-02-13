@@ -259,6 +259,11 @@ type Tag struct {
 	Name          string             `json:"name"`
 }
 
+// TagSuggestions defines model for TagSuggestions.
+type TagSuggestions struct {
+	Suggestions []string `json:"suggestions"`
+}
+
 // Tags defines model for Tags.
 type Tags struct {
 	Tags []Tag `json:"tags"`
@@ -364,6 +369,11 @@ type LogCreateJSONBody struct {
 	UnitId          openapi_types.UUID   `json:"unit_id"`
 }
 
+// LogTagSuggestionsParams defines parameters for LogTagSuggestions.
+type LogTagSuggestionsParams struct {
+	Query *string `form:"query,omitempty" json:"query,omitempty"`
+}
+
 // ProfileListLogsParams defines parameters for ProfileListLogs.
 type ProfileListLogsParams struct {
 	IncludeDeleted *bool `form:"include_deleted,omitempty" json:"include_deleted,omitempty"`
@@ -457,6 +467,9 @@ type ServerInterface interface {
 	// Fetches the configuration options for a log
 	// (GET /logs/configuration-options)
 	LogGetConfigurations(ctx echo.Context) error
+	// Fetches tag suggestions for autocomplete
+	// (GET /logs/tag-suggestions)
+	LogTagSuggestions(ctx echo.Context, params LogTagSuggestionsParams) error
 	// Deletes a log by id
 	// (DELETE /logs/{id})
 	LogDeleteByID(ctx echo.Context, id openapi_types.UUID) error
@@ -971,6 +984,24 @@ func (w *ServerInterfaceWrapper) LogGetConfigurations(ctx echo.Context) error {
 	return err
 }
 
+// LogTagSuggestions converts echo context to params.
+func (w *ServerInterfaceWrapper) LogTagSuggestions(ctx echo.Context) error {
+	var err error
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params LogTagSuggestionsParams
+	// ------------- Optional query parameter "query" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "query", ctx.QueryParams(), &params.Query)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter query: %s", err))
+	}
+
+	// Invoke the callback with all the unmarshalled arguments
+	err = w.Handler.LogTagSuggestions(ctx, params)
+	return err
+}
+
 // LogDeleteByID converts echo context to params.
 func (w *ServerInterfaceWrapper) LogDeleteByID(ctx echo.Context) error {
 	var err error
@@ -1213,6 +1244,7 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 	router.GET(baseURL+"/leaderboard/yearly/:year", wrapper.FetchLeaderboardForYear)
 	router.POST(baseURL+"/logs", wrapper.LogCreate)
 	router.GET(baseURL+"/logs/configuration-options", wrapper.LogGetConfigurations)
+	router.GET(baseURL+"/logs/tag-suggestions", wrapper.LogTagSuggestions)
 	router.DELETE(baseURL+"/logs/:id", wrapper.LogDeleteByID)
 	router.GET(baseURL+"/logs/:id", wrapper.LogFindByID)
 	router.GET(baseURL+"/ping", wrapper.Ping)

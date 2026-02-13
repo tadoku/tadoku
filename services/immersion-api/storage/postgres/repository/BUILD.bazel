@@ -29,6 +29,7 @@ go_library(
         "repo_listlogsforcontest.go",
         "repo_listlogsforuser.go",
         "repo_moderationaudit.go",
+        "repo_tagsuggestions.go",
         "repo_updatelanguage.go",
         "repo_upsertcontestregistration.go",
         "repo_upsertuser.go",

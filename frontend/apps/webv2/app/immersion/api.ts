@@ -711,6 +711,15 @@ export const useLogConfigurationOptions = (options?: { enabled?: boolean }) =>
     options,
   )
 
+export const fetchTagSuggestions = async (query: string): Promise<string[]> => {
+  const response = await fetch(
+    `${root}/logs/tag-suggestions?query=${encodeURIComponent(query)}`,
+  )
+  if (!response.ok) return []
+  const data = await response.json()
+  return data.suggestions ?? []
+}
+
 export const useCreateLog = (onSuccess: (id: string) => void) =>
   useMutation({
     mutationFn: async (contest: NewLogAPISchema) => {

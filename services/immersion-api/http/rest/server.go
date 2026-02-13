@@ -37,6 +37,7 @@ func NewServer(
 	languageList *domain.LanguageList,
 	languageCreate *domain.LanguageCreate,
 	languageUpdate *domain.LanguageUpdate,
+	tagSuggestions *domain.TagSuggestions,
 ) openapi.ServerInterface {
 	return &Server{
 		contestConfigurationOptions: contestConfigurationOptions,
@@ -69,6 +70,7 @@ func NewServer(
 		languageList:                languageList,
 		languageCreate:              languageCreate,
 		languageUpdate:              languageUpdate,
+		tagSuggestions:              tagSuggestions,
 	}
 }
 
@@ -103,4 +105,5 @@ type Server struct {
 	languageList                *domain.LanguageList
 	languageCreate              *domain.LanguageCreate
 	languageUpdate              *domain.LanguageUpdate
+	tagSuggestions              *domain.TagSuggestions
 }

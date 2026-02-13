@@ -25,4 +25,3 @@ func (s *Server) RoleGet(ctx echo.Context) error {
 
 	return ctx.JSON(http.StatusOK, map[string]string{"role": role})
 }
-

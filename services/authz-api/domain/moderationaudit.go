@@ -16,4 +16,3 @@ type ModerationAuditLogCreateRequest struct {
 type ModerationAuditRepository interface {
 	CreateModerationAuditLog(ctx context.Context, req *ModerationAuditLogCreateRequest) error
 }
-

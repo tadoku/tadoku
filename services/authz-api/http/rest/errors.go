@@ -11,4 +11,3 @@ func handleCommonErrors(ctx echo.Context, err error) (bool, error) {
 	}
 	return false, nil
 }
-

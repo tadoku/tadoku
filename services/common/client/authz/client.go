@@ -71,4 +71,3 @@ func (c *Client) CheckPermission(ctx context.Context, req PermissionCheckRequest
 
 	return out.Allowed, nil
 }
-

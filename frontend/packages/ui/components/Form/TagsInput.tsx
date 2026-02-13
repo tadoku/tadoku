@@ -47,12 +47,6 @@ export function TagsInput(props: {
       clearTimeout(debounceRef.current)
     }
 
-    if (!query) {
-      setSuggestions([])
-      setIsLoading(false)
-      return
-    }
-
     setIsLoading(true)
 
     debounceRef.current = setTimeout(async () => {
@@ -134,6 +128,10 @@ export function TagsInput(props: {
             ) : suggestions.length === 0 && query !== '' ? (
               <div className="relative cursor-default select-none py-2 px-4 text-gray-700">
                 Press Enter to add &quot;{query}&quot;
+              </div>
+            ) : suggestions.length === 0 ? (
+              <div className="relative cursor-default select-none py-2 px-4 text-gray-500">
+                No suggestions available
               </div>
             ) : (
               suggestions.map(suggestion => (

@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"database/sql"
 	"strings"
 
 	"github.com/google/uuid"
@@ -9,14 +10,22 @@ import (
 )
 
 func (r *Repository) FetchTagSuggestionsForUser(ctx context.Context, userID uuid.UUID, query string) ([]string, error) {
-	return r.q.ListTagSuggestionsForUser(ctx, postgres.ListTagSuggestionsForUserParams{
+	rows, err := r.q.ListTagSuggestionsForUser(ctx, postgres.ListTagSuggestionsForUserParams{
 		UserID: userID,
-		Query:  postgres.NewNullString(&query),
+		Query:  sql.NullString{String: query, Valid: true},
 	})
+	if err != nil {
+		return nil, err
+	}
+
+	tags := make([]string, len(rows))
+	for i, row := range rows {
+		tags[i] = row.Tag
+	}
+	return tags, nil
 }
 
 func (r *Repository) FetchDefaultTagsMatching(ctx context.Context, query string) ([]string, error) {
-	// Convert query to lowercase for case-insensitive matching
 	query = strings.ToLower(query)
-	return r.q.ListDefaultTagsMatching(ctx, postgres.NewNullString(&query))
+	return r.q.ListDefaultTagsMatching(ctx, sql.NullString{String: query, Valid: true})
 }

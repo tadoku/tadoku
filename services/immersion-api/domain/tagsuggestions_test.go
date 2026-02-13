@@ -44,7 +44,7 @@ func TestTagSuggestions_Execute(t *testing.T) {
 		assert.Contains(t, result.Suggestions, "fiction")
 	})
 
-	t.Run("adds default tags when user tags are insufficient", func(t *testing.T) {
+	t.Run("appends default tags after user tags", func(t *testing.T) {
 		repo := &mockTagSuggestionsRepository{
 			userTags:    []string{"book"},
 			defaultTags: []string{"fiction", "non-fiction"},
@@ -56,15 +56,13 @@ func TestTagSuggestions_Execute(t *testing.T) {
 		result, err := svc.Execute(ctx, &domain.TagSuggestionsRequest{Query: ""})
 
 		require.NoError(t, err)
-		assert.Contains(t, result.Suggestions, "book")
-		assert.Contains(t, result.Suggestions, "fiction")
-		assert.Contains(t, result.Suggestions, "non-fiction")
+		assert.Equal(t, []string{"book", "fiction", "non-fiction"}, result.Suggestions)
 	})
 
-	t.Run("deduplicates suggestions", func(t *testing.T) {
+	t.Run("deduplicates suggestions case-insensitively", func(t *testing.T) {
 		repo := &mockTagSuggestionsRepository{
-			userTags:    []string{"book", "fiction"},
-			defaultTags: []string{"book", "ebook"}, // "book" is duplicate
+			userTags:    []string{"Book", "fiction"},
+			defaultTags: []string{"book", "ebook"}, // "book" is case-insensitive duplicate of "Book"
 		}
 		svc := domain.NewTagSuggestions(repo)
 
@@ -73,15 +71,7 @@ func TestTagSuggestions_Execute(t *testing.T) {
 		result, err := svc.Execute(ctx, &domain.TagSuggestionsRequest{Query: ""})
 
 		require.NoError(t, err)
-		// Count occurrences of "book"
-		bookCount := 0
-		for _, s := range result.Suggestions {
-			if s == "book" {
-				bookCount++
-			}
-		}
-		assert.Equal(t, 1, bookCount)
-		assert.Contains(t, result.Suggestions, "ebook")
+		assert.Equal(t, []string{"Book", "fiction", "ebook"}, result.Suggestions)
 	})
 
 	t.Run("returns only default tags for unauthenticated user", func(t *testing.T) {

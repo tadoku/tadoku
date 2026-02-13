@@ -2,6 +2,7 @@ package domain
 
 import (
 	"context"
+	"strings"
 
 	"github.com/google/uuid"
 	commondomain "github.com/tadoku/tadoku/services/common/domain"
@@ -52,24 +53,22 @@ func (s *TagSuggestions) Execute(ctx context.Context, req *TagSuggestionsRequest
 		suggestions = userTags
 	}
 
-	// If we don't have enough suggestions, add default tags
-	if len(suggestions) < 10 {
-		defaultTags, err := s.repo.FetchDefaultTagsMatching(ctx, req.Query)
-		if err != nil {
-			return nil, err
-		}
+	// Append default tags, deduplicating against user tags
+	defaultTags, err := s.repo.FetchDefaultTagsMatching(ctx, req.Query)
+	if err != nil {
+		return nil, err
+	}
 
-		// Deduplicate: add default tags not already in suggestions
-		seen := make(map[string]struct{})
-		for _, tag := range suggestions {
-			seen[tag] = struct{}{}
-		}
-		for _, tag := range defaultTags {
-			if _, exists := seen[tag]; !exists {
-				suggestions = append(suggestions, tag)
-				if len(suggestions) >= 20 {
-					break
-				}
+	seen := make(map[string]struct{})
+	for _, tag := range suggestions {
+		seen[strings.ToLower(tag)] = struct{}{}
+	}
+	for _, tag := range defaultTags {
+		if _, exists := seen[strings.ToLower(tag)]; !exists {
+			seen[strings.ToLower(tag)] = struct{}{}
+			suggestions = append(suggestions, tag)
+			if len(suggestions) >= 20 {
+				break
 			}
 		}
 	}

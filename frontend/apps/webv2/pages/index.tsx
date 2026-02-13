@@ -79,8 +79,8 @@ function LatestBlogPost() {
 
   return (
     <div className="lg:w-3/6 flex-shrink-0">
-      <div className="card auto-format">
-        <div className="h-stack w-full items-center justify-between space-x-4">
+      <div className="card">
+        <div className="h-stack w-full items-center justify-between space-x-4 mb-4">
           <h2 className="title text-xl">
             Latest blog post:{' '}
             <Link href={routes.blogPost(posts.data.posts[0].slug)}>
@@ -93,7 +93,9 @@ function LatestBlogPost() {
             <ArrowLongRightIcon className="ml-2" />
           </Link>
         </div>
-        <PostBody post={posts.data.posts[0]} />
+        <div className="auto-format">
+          <PostBody post={posts.data.posts[0]} />
+        </div>
       </div>
     </div>
   )

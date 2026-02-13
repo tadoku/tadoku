@@ -20,6 +20,7 @@ import (
 	"github.com/tadoku/tadoku/services/immersion-api/http/rest"
 	"github.com/tadoku/tadoku/services/immersion-api/http/rest/openapi"
 	"github.com/tadoku/tadoku/services/immersion-api/storage/postgres/repository"
+	valkeystore "github.com/tadoku/tadoku/services/immersion-api/storage/valkey"
 
 	"github.com/getsentry/sentry-go"
 	sentryecho "github.com/getsentry/sentry-go/echo"
@@ -74,6 +75,8 @@ func main() {
 	}
 	defer valkeyClient.Close()
 
+	leaderboardStore := valkeystore.NewLeaderboardStore(valkeyClient)
+
 	e := echo.New()
 	e.Use(tadokumiddleware.Logger([]string{"/ping"}))
 	e.Use(tadokumiddleware.VerifyJWT(cfg.JWKS))
@@ -125,7 +128,7 @@ func main() {
 	contestModerationDetachLog := immersiondomain.NewContestModerationDetachLog(postgresRepository)
 	userUpsert := immersiondomain.NewUserUpsert(postgresRepository)
 	registrationUpsert := immersiondomain.NewRegistrationUpsert(postgresRepository, userUpsert)
-	logCreate := immersiondomain.NewLogCreate(postgresRepository, clock, userUpsert)
+	logCreate := immersiondomain.NewLogCreate(postgresRepository, clock, userUpsert, leaderboardStore, postgresRepository)
 	contestCreate := immersiondomain.NewContestCreate(postgresRepository, clock, userUpsert)
 	languageList := immersiondomain.NewLanguageList(postgresRepository)
 	languageCreate := immersiondomain.NewLanguageCreate(postgresRepository)

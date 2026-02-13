@@ -1,0 +1,15 @@
+load("@rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "valkey",
+    srcs = [
+        "leaderboard.go",
+    ],
+    importpath = "github.com/tadoku/tadoku/services/immersion-api/storage/valkey",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//services/immersion-api/domain",
+        "@com_github_google_uuid//:uuid",
+        "@com_github_valkey_io_valkey_go//:valkey-go",
+    ],
+)

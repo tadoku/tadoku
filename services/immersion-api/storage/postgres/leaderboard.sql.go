@@ -12,6 +12,136 @@ import (
 	"github.com/google/uuid"
 )
 
+const contestLeaderboardAllScores = `-- name: ContestLeaderboardAllScores :many
+select
+  cr.user_id,
+  coalesce(scores.score, 0)::real as score
+from contest_registrations cr
+left join (
+  select
+    logs.user_id,
+    sum(logs.score) as score
+  from logs
+  inner join contest_logs on contest_logs.log_id = logs.id
+  where
+    contest_logs.contest_id = $1
+    and logs.deleted_at is null
+  group by logs.user_id
+) scores on scores.user_id = cr.user_id
+where
+  cr.contest_id = $1
+  and cr.deleted_at is null
+`
+
+type ContestLeaderboardAllScoresRow struct {
+	UserID uuid.UUID
+	Score  float32
+}
+
+func (q *Queries) ContestLeaderboardAllScores(ctx context.Context, contestID uuid.UUID) ([]ContestLeaderboardAllScoresRow, error) {
+	rows, err := q.db.QueryContext(ctx, contestLeaderboardAllScores, contestID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ContestLeaderboardAllScoresRow
+	for rows.Next() {
+		var i ContestLeaderboardAllScoresRow
+		if err := rows.Scan(&i.UserID, &i.Score); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const yearlyLeaderboardAllScores = `-- name: YearlyLeaderboardAllScores :many
+select
+  user_id,
+  sum(score)::real as score
+from logs
+where
+  year = $1
+  and eligible_official_leaderboard = true
+  and deleted_at is null
+group by user_id
+having sum(score) > 0
+`
+
+type YearlyLeaderboardAllScoresRow struct {
+	UserID uuid.UUID
+	Score  float32
+}
+
+func (q *Queries) YearlyLeaderboardAllScores(ctx context.Context, year int16) ([]YearlyLeaderboardAllScoresRow, error) {
+	rows, err := q.db.QueryContext(ctx, yearlyLeaderboardAllScores, year)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []YearlyLeaderboardAllScoresRow
+	for rows.Next() {
+		var i YearlyLeaderboardAllScoresRow
+		if err := rows.Scan(&i.UserID, &i.Score); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const globalLeaderboardAllScores = `-- name: GlobalLeaderboardAllScores :many
+select
+  user_id,
+  sum(score)::real as score
+from logs
+where
+  eligible_official_leaderboard = true
+  and deleted_at is null
+group by user_id
+having sum(score) > 0
+`
+
+type GlobalLeaderboardAllScoresRow struct {
+	UserID uuid.UUID
+	Score  float32
+}
+
+func (q *Queries) GlobalLeaderboardAllScores(ctx context.Context) ([]GlobalLeaderboardAllScoresRow, error) {
+	rows, err := q.db.QueryContext(ctx, globalLeaderboardAllScores)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GlobalLeaderboardAllScoresRow
+	for rows.Next() {
+		var i GlobalLeaderboardAllScoresRow
+		if err := rows.Scan(&i.UserID, &i.Score); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const globalLeaderboard = `-- name: GlobalLeaderboard :many
 with leaderboard as (
   select

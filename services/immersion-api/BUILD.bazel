@@ -17,6 +17,7 @@ go_library(
         "//services/immersion-api/http/rest",
         "//services/immersion-api/http/rest/openapi",
         "//services/immersion-api/storage/postgres/repository",
+        "//services/immersion-api/storage/valkey",
         "@com_github_getsentry_sentry_go//:sentry-go",
         "@com_github_getsentry_sentry_go//echo",
         "@com_github_go_playground_validator_v10//:validator",

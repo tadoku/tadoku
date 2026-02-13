@@ -95,6 +95,55 @@ from enriched_leaderboard
 limit sqlc.arg('page_size')
 offset sqlc.arg('start_from');
 
+-- name: ContestLeaderboardAllScores :many
+-- Returns all user scores for a contest without pagination/ranking.
+-- Used for rebuilding the Redis leaderboard sorted set.
+select
+  cr.user_id,
+  coalesce(scores.score, 0)::real as score
+from contest_registrations cr
+left join (
+  select
+    logs.user_id,
+    sum(logs.score) as score
+  from logs
+  inner join contest_logs on contest_logs.log_id = logs.id
+  where
+    contest_logs.contest_id = sqlc.arg('contest_id')
+    and logs.deleted_at is null
+  group by logs.user_id
+) scores on scores.user_id = cr.user_id
+where
+  cr.contest_id = sqlc.arg('contest_id')
+  and cr.deleted_at is null;
+
+-- name: YearlyLeaderboardAllScores :many
+-- Returns all user scores for a year without pagination/ranking.
+-- Used for rebuilding the Redis leaderboard sorted set.
+select
+  user_id,
+  sum(score)::real as score
+from logs
+where
+  year = sqlc.arg('year')
+  and eligible_official_leaderboard = true
+  and deleted_at is null
+group by user_id
+having sum(score) > 0;
+
+-- name: GlobalLeaderboardAllScores :many
+-- Returns all user scores globally without pagination/ranking.
+-- Used for rebuilding the Redis leaderboard sorted set.
+select
+  user_id,
+  sum(score)::real as score
+from logs
+where
+  eligible_official_leaderboard = true
+  and deleted_at is null
+group by user_id
+having sum(score) > 0;
+
 -- name: GlobalLeaderboard :many
 with leaderboard as (
   select

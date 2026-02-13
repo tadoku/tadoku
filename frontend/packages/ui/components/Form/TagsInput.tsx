@@ -88,6 +88,7 @@ export function TagsInput(props: {
         onChange([...tags, query.trim()])
       }
       setQuery('')
+      e.currentTarget.blur()
     }
   }
 

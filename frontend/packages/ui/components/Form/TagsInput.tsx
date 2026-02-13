@@ -74,10 +74,12 @@ export function TagsInput<T = string>(props: {
 
   const isAtLimit = maxTags !== undefined && tags.length >= maxTags
 
+  const normalize = (s: string) => s.trim().toLowerCase()
+
   const handleSelect = (selected: T | null) => {
     if (selected) {
-      const val = getValue(selected)
-      if (!tags.includes(val) && !isAtLimit) {
+      const val = normalize(getValue(selected))
+      if (val && !tags.includes(val) && !isAtLimit) {
         onChange([...tags, val])
       }
     }
@@ -91,8 +93,9 @@ export function TagsInput<T = string>(props: {
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter' && query.trim() && suggestions.length === 0 && !isLoading) {
       e.preventDefault()
-      if (!tags.includes(query.trim()) && !isAtLimit) {
-        onChange([...tags, query.trim()])
+      const val = normalize(query)
+      if (val && !tags.includes(val) && !isAtLimit) {
+        onChange([...tags, val])
       }
       setQuery('')
       e.currentTarget.blur()

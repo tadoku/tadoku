@@ -48,6 +48,10 @@ func (r *Repository) ListLogsForUser(ctx context.Context, req *domain.LogListFor
 
 	res := make([]domain.Log, len(entries))
 	for i, it := range entries {
+		tags := tagsByLogID[it.ID]
+		if tags == nil {
+			tags = []string{}
+		}
 		res[i] = domain.Log{
 			ID:           it.ID,
 			UserID:       it.UserID,
@@ -57,7 +61,7 @@ func (r *Repository) ListLogsForUser(ctx context.Context, req *domain.LogListFor
 			ActivityID:   int(it.ActivityID),
 			ActivityName: it.ActivityName,
 			UnitName:     it.UnitName,
-			Tags:         tagsByLogID[it.ID],
+			Tags:         tags,
 			Amount:       it.Amount,
 			Modifier:     it.Modifier,
 			Score:        it.Score,

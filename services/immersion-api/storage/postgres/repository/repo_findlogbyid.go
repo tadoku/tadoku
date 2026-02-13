@@ -32,6 +32,9 @@ func (r *Repository) FindLogByID(ctx context.Context, req *domain.LogFindRequest
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		return nil, fmt.Errorf("could not fetch log tags: %w", err)
 	}
+	if tags == nil {
+		tags = []string{}
+	}
 
 	refs := make([]domain.ContestRegistrationReference, len(registrations))
 	for i, it := range registrations {

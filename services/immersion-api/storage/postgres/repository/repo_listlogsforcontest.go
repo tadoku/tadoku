@@ -58,6 +58,10 @@ func (r *Repository) ListLogsForContest(ctx context.Context, req *domain.LogList
 
 	res := make([]domain.Log, len(entries))
 	for i, it := range entries {
+		tags := tagsByLogID[it.ID]
+		if tags == nil {
+			tags = []string{}
+		}
 		res[i] = domain.Log{
 			ID:              it.ID,
 			UserID:          it.UserID,
@@ -68,7 +72,7 @@ func (r *Repository) ListLogsForContest(ctx context.Context, req *domain.LogList
 			ActivityID:      int(it.ActivityID),
 			ActivityName:    it.ActivityName,
 			UnitName:        it.UnitName,
-			Tags:            tagsByLogID[it.ID],
+			Tags:            tags,
 			Amount:          it.Amount,
 			Modifier:        it.Modifier,
 			Score:           it.Score,

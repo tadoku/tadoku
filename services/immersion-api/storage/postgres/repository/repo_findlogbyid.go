@@ -28,6 +28,11 @@ func (r *Repository) FindLogByID(ctx context.Context, req *domain.LogFindRequest
 		return nil, fmt.Errorf("could not fetch log details: %w", err)
 	}
 
+	tags, err := r.q.ListTagsForLog(ctx, req.ID)
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+		return nil, fmt.Errorf("could not fetch log tags: %w", err)
+	}
+
 	refs := make([]domain.ContestRegistrationReference, len(registrations))
 	for i, it := range registrations {
 		refs[i] = domain.ContestRegistrationReference{
@@ -48,7 +53,7 @@ func (r *Repository) FindLogByID(ctx context.Context, req *domain.LogFindRequest
 		ActivityID:      int(log.ActivityID),
 		ActivityName:    log.ActivityName,
 		UnitName:        log.UnitName,
-		Tags:            log.Tags,
+		Tags:            tags,
 		Amount:          log.Amount,
 		Modifier:        log.Modifier,
 		Score:           log.Score,

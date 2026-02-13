@@ -277,7 +277,6 @@ select
   log_activities.name as activity_name,
   log_units.name as unit_name,
   logs.description,
-  logs.tags,
   logs.amount,
   logs.modifier,
   logs.score,
@@ -309,7 +308,6 @@ type FindLogByIDRow struct {
 	ActivityName    string
 	UnitName        string
 	Description     sql.NullString
-	Tags            []string
 	Amount          float32
 	Modifier        float32
 	Score           float32
@@ -331,7 +329,6 @@ func (q *Queries) FindLogByID(ctx context.Context, arg FindLogByIDParams) (FindL
 		&i.ActivityName,
 		&i.UnitName,
 		&i.Description,
-		pq.Array(&i.Tags),
 		&i.Amount,
 		&i.Modifier,
 		&i.Score,
@@ -353,7 +350,6 @@ with eligible_logs as (
     log_activities.name as activity_name,
     log_units.name as unit_name,
     logs.description,
-    logs.tags,
     logs.amount,
     logs.modifier,
     logs.score,
@@ -373,7 +369,7 @@ with eligible_logs as (
     and contest_logs.contest_id = $5
 )
 select
-  id, user_id, language_code, language_name, activity_id, activity_name, unit_name, description, tags, amount, modifier, score, created_at, updated_at, deleted_at, user_display_name,
+  id, user_id, language_code, language_name, activity_id, activity_name, unit_name, description, amount, modifier, score, created_at, updated_at, deleted_at, user_display_name,
   (select count(eligible_logs.id) from eligible_logs) as total_size
 from eligible_logs
 order by created_at desc
@@ -398,7 +394,6 @@ type ListLogsForContestRow struct {
 	ActivityName    string
 	UnitName        string
 	Description     sql.NullString
-	Tags            []string
 	Amount          float32
 	Modifier        float32
 	Score           float32
@@ -433,7 +428,6 @@ func (q *Queries) ListLogsForContest(ctx context.Context, arg ListLogsForContest
 			&i.ActivityName,
 			&i.UnitName,
 			&i.Description,
-			pq.Array(&i.Tags),
 			&i.Amount,
 			&i.Modifier,
 			&i.Score,
@@ -467,7 +461,6 @@ with eligible_logs as (
     log_activities.name as activity_name,
     log_units.name as unit_name,
     logs.description,
-    logs.tags,
     logs.amount,
     logs.modifier,
     logs.score,
@@ -483,7 +476,7 @@ with eligible_logs as (
     and logs.user_id = $4
 )
 select
-  id, user_id, language_code, language_name, activity_id, activity_name, unit_name, description, tags, amount, modifier, score, created_at, updated_at, deleted_at,
+  id, user_id, language_code, language_name, activity_id, activity_name, unit_name, description, amount, modifier, score, created_at, updated_at, deleted_at,
   (select count(eligible_logs.id) from eligible_logs) as total_size
 from eligible_logs
 order by created_at desc
@@ -507,7 +500,6 @@ type ListLogsForUserRow struct {
 	ActivityName string
 	UnitName     string
 	Description  sql.NullString
-	Tags         []string
 	Amount       float32
 	Modifier     float32
 	Score        float32
@@ -540,7 +532,6 @@ func (q *Queries) ListLogsForUser(ctx context.Context, arg ListLogsForUserParams
 			&i.ActivityName,
 			&i.UnitName,
 			&i.Description,
-			pq.Array(&i.Tags),
 			&i.Amount,
 			&i.Modifier,
 			&i.Score,

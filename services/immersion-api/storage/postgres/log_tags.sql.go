@@ -10,6 +10,7 @@ import (
 	"database/sql"
 
 	"github.com/google/uuid"
+	"github.com/lib/pq"
 )
 
 const insertLogTag = `-- name: InsertLogTag :exec
@@ -90,6 +91,71 @@ func (q *Queries) ListTagSuggestionsForUser(ctx context.Context, arg ListTagSugg
 	for rows.Next() {
 		var i ListTagSuggestionsForUserRow
 		if err := rows.Scan(&i.Tag, &i.UsageCount); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listTagsForLog = `-- name: ListTagsForLog :many
+select tag
+from log_tags
+where log_id = $1
+order by tag
+`
+
+func (q *Queries) ListTagsForLog(ctx context.Context, logID uuid.UUID) ([]string, error) {
+	rows, err := q.db.QueryContext(ctx, listTagsForLog, logID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []string
+	for rows.Next() {
+		var tag string
+		if err := rows.Scan(&tag); err != nil {
+			return nil, err
+		}
+		items = append(items, tag)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listTagsForLogs = `-- name: ListTagsForLogs :many
+select log_id, tag
+from log_tags
+where log_id = any($1::uuid[])
+order by log_id, tag
+`
+
+type ListTagsForLogsRow struct {
+	LogID uuid.UUID
+	Tag   string
+}
+
+func (q *Queries) ListTagsForLogs(ctx context.Context, logIds []uuid.UUID) ([]ListTagsForLogsRow, error) {
+	rows, err := q.db.QueryContext(ctx, listTagsForLogs, pq.Array(logIds))
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListTagsForLogsRow
+	for rows.Next() {
+		var i ListTagsForLogsRow
+		if err := rows.Scan(&i.LogID, &i.Tag); err != nil {
 			return nil, err
 		}
 		items = append(items, i)

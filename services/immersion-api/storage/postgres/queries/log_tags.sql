@@ -19,3 +19,14 @@ where name ilike '%' || sqlc.arg('query') || '%'
 order by name
 limit 30;
 
+-- name: ListTagsForLog :many
+select tag
+from log_tags
+where log_id = sqlc.arg('log_id')
+order by tag;
+
+-- name: ListTagsForLogs :many
+select log_id, tag
+from log_tags
+where log_id = any(sqlc.arg('log_ids')::uuid[])
+order by log_id, tag;

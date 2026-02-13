@@ -26,6 +26,7 @@ import (
 	_ "github.com/jackc/pgx/v4/stdlib"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
+	"github.com/valkey-io/valkey-go"
 )
 
 type Config struct {
@@ -36,6 +37,7 @@ type Config struct {
 	OathkeeperURL          string  `validate:"required" envconfig:"oathkeeper_url"`
 	KetoReadURL            string  `validate:"required" envconfig:"keto_read_url"`
 	KetoWriteURL           string  `validate:"required" envconfig:"keto_write_url"`
+	ValkeyURL              string  `validate:"required" envconfig:"valkey_url"`
 	ServiceName            string  `envconfig:"service_name" default:"immersion-api"`
 	SentryDSN              string  `envconfig:"sentry_dns"`
 	SentryTracesSampleRate float64 `validate:"required_with=SentryDSN" envconfig:"sentry_traces_sample_rate"`
@@ -61,6 +63,16 @@ func main() {
 	postgresRepository := repository.NewRepository(psql)
 	var ketoAuthz ketoclient.AuthorizationClient = ketoclient.NewClient(cfg.KetoReadURL, cfg.KetoWriteURL)
 	rolesSvc := commonroles.NewKetoService(ketoAuthz, "app", "tadoku")
+
+	valkeyOpt, err := valkey.ParseURL(cfg.ValkeyURL)
+	if err != nil {
+		panic(fmt.Errorf("could not parse valkey url: %w", err))
+	}
+	valkeyClient, err := valkey.NewClient(valkeyOpt)
+	if err != nil {
+		panic(fmt.Errorf("could not connect to valkey: %w", err))
+	}
+	defer valkeyClient.Close()
 
 	e := echo.New()
 	e.Use(tadokumiddleware.Logger([]string{"/ping"}))

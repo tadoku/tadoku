@@ -24,6 +24,7 @@ go_library(
         "@com_github_kelseyhightower_envconfig//:envconfig",
         "@com_github_labstack_echo_v4//:echo",
         "@com_github_labstack_echo_v4//middleware",
+        "@com_github_valkey_io_valkey_go//:valkey-go",
     ],
 )
 

@@ -197,18 +197,18 @@ export const LogForm = ({
                   unitsLabel="Unit"
                 />
               </div>
+              <Input
+                name="description"
+                label="Description"
+                type="text"
+                placeholder="e.g. One Piece volume 45"
+              />
               <TagsInput
                 name="tags"
                 label="Tags"
                 placeholder="Add tags..."
                 maxTags={10}
                 getSuggestions={fetchTagSuggestions}
-              />
-              <Input
-                name="description"
-                label="Description"
-                type="text"
-                placeholder="e.g. One Piece volume 45"
               />
             </div>
           </div>

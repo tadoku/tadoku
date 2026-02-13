@@ -1,3 +1,8 @@
+---
+sidebar_position: 4
+title: S2S Auth
+---
+
 # Service-to-Service Authentication
 
 This document describes how internal services authenticate with each other using short-lived JWTs issued by Oathkeeper. The same middleware supports both user and service identities.

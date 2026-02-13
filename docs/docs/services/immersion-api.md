@@ -1,3 +1,8 @@
+---
+sidebar_position: 1
+title: immersion-api
+---
+
 # Immersion API
 
 This is the main API of the Tadoku website. It contains the functionality to:

@@ -1,3 +1,8 @@
+---
+sidebar_position: 3
+title: Authorization (Keto)
+---
+
 # Authorization (Ory Keto)
 
 This document describes how Tadoku uses Ory Keto for authorization, specifically for user roles (admin/banned).

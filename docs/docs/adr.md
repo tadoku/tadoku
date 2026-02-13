@@ -1,3 +1,8 @@
+---
+sidebar_position: 2
+title: Architectural Decision Records
+---
+
 # Architectural Decision Records
 
 ## What are these?
@@ -8,10 +13,10 @@ ref. https://github.com/joelparkerhenderson/architecture-decision-record
 
 ## Index
 
-- [001 - Leaderboard Improvements](adr/001-leaderboard.md)
-- [002 - Define API contracts through OpenAPI](adr/002-api-contracts.md)
-- [003 - Zod as a request parser](adr/003-zod.md)
-- [004 - Automating contest scheduling](adr/004-scheduling-contests.md)
+- [001 - Leaderboard Improvements](./adr/001-leaderboard.md)
+- [002 - Define API contracts through OpenAPI](./adr/002-api-contracts.md)
+- [003 - Zod as a request parser](./adr/003-zod.md)
+- [004 - Automating contest scheduling](./adr/004-scheduling-contests.md)
 
 ## Template
 

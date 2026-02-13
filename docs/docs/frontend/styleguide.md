@@ -1,3 +1,8 @@
+---
+sidebar_position: 2
+title: styleguide
+---
+
 # Styleguide
 
 This is the styleguide of the Tadoku website. It's an example of how to use the `frontend/packages/ui` component library.

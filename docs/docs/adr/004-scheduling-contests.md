@@ -1,3 +1,8 @@
+---
+sidebar_position: 4
+title: "004 - Contest Scheduling"
+---
+
 # [004] Automating contest scheduling
 
 - Status: accepted

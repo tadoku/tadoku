@@ -1,3 +1,8 @@
+---
+sidebar_position: 1
+title: auth
+---
+
 # Auth frontend
 
 This is the identity portal of the Tadoku website. It contains all functionality to:

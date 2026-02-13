@@ -1,3 +1,8 @@
+---
+sidebar_position: 1
+title: "001 - Leaderboard Improvements"
+---
+
 # [001] Leaderboard Improvements
 
 * Status: proposed
@@ -13,7 +18,7 @@ Global and yearly leaderboards could get fairly large, so ideally we would be ab
 
 ### Use cases
 
-![Overview of the use cases](assets/001/use-cases.png)
+![Overview of the use cases](./assets/001/use-cases.png)
 
 ## Considered options
 

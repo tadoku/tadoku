@@ -1,3 +1,7 @@
+---
+title: Free Text Tags Feature
+---
+
 # Implementation Plan for Free Text Tags Feature
 
 ## Overview

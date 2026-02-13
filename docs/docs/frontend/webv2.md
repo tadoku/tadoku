@@ -1,3 +1,8 @@
+---
+sidebar_position: 3
+title: webv2
+---
+
 # Webv2 frontend
 
 This is the main frontend of the Tadoku website. It contains all logging & contest functionality.

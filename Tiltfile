@@ -6,6 +6,7 @@ allow_k8s_contexts('orbstack')
 include('./infra/dev/gateway/Tiltfile')
 include('./infra/dev/ory/Tiltfile')
 include('./infra/dev/postgres/Tiltfile')
+include('./infra/dev/valkey/Tiltfile')
 include('./infra/dev/tools/Tiltfile')
 
 # Services

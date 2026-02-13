@@ -1,0 +1,12 @@
+load('ext://helm_resource', 'helm_resource', 'helm_repo')
+
+helm_repo('groundhog2k', 'https://groundhog2k.github.io/helm-charts/', resource_name='helm-repo-groundhog2k', labels=["infra"])
+
+helm_resource('valkey-immersion',
+              'groundhog2k/valkey',
+              flags=[
+                '-f', './immersion_values.yaml',
+              ],
+              deps=['./immersion_values.yaml'],
+              resource_deps=['helm-repo-groundhog2k'])
+k8s_resource("valkey-immersion", labels=["infra"])

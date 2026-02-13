@@ -48,6 +48,8 @@ spec:
             value: "http://keto-read.default:4466"
           - name: API_KETO_WRITE_URL
             value: "http://keto-write.default:4467"
+          - name: API_VALKEY_URL
+            value: "redis://valkey-immersion.default:6379"
           - name: SERVICE_NAME
             value: "immersion-api"
         volumeMounts:

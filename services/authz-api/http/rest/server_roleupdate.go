@@ -38,4 +38,3 @@ func (s *Server) RoleUpdate(ctx echo.Context, id types.UUID) error {
 
 	return ctx.NoContent(http.StatusOK)
 }
-

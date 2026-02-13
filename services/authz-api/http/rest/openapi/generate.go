@@ -3,4 +3,3 @@
 //go:generate oapi-codegen -package internalapi -generate types,server,client -o internalapi/api.gen.go internal-api.yaml
 
 package openapi
-

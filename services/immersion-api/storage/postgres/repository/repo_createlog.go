@@ -58,6 +58,18 @@ func (r *Repository) CreateLog(ctx context.Context, req *domain.LogCreateRequest
 		}
 	}
 
+	// Dual-write: insert tags into log_tags table
+	for _, tag := range req.Tags {
+		if err = qtx.InsertLogTag(ctx, postgres.InsertLogTagParams{
+			LogID:  id,
+			UserID: req.UserID,
+			Tag:    tag,
+		}); err != nil {
+			_ = tx.Rollback()
+			return nil, fmt.Errorf("could not insert log tag: %w", err)
+		}
+	}
+
 	if err = tx.Commit(); err != nil {
 		return nil, fmt.Errorf("could not create log: %w", err)
 	}

@@ -1,13 +1,14 @@
 import {
-  AutocompleteInput,
   AutocompleteMultiInput,
   Input,
   RadioGroup,
+  TagsInput,
 } from 'ui'
 import { FormProvider, useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import {
   ContestRegistrationsView,
+  fetchTagSuggestions,
   LogConfigurationOptions,
   useCreateLog,
 } from '@app/immersion/api'
@@ -16,7 +17,6 @@ import { routes } from '@app/common/routes'
 import {
   estimateScore,
   filterActivities,
-  filterTags,
   filterUnits,
   formatContestLabel,
   NewLogAPISchema,
@@ -92,7 +92,6 @@ export const LogForm = ({
   }))
 
   const activity = options.activities.find(it => it.id === activityId)
-  const tags = filterTags(options.tags, activity)
   const units = filterUnits(options.units, activity?.id, languageCode)
   const unitsAsOptions: Option[] = units.map(it => ({
     value: it.id,
@@ -198,24 +197,20 @@ export const LogForm = ({
                   unitsLabel="Unit"
                 />
               </div>
-              <AutocompleteMultiInput
-                name="tags"
-                label="Tags"
-                options={tags}
-                match={(option, query) =>
-                  option.name
-                    .toLowerCase()
-                    .replace(/[^a-zA-Z0-9]/g, '')
-                    .includes(query.toLowerCase())
-                }
-                getIdForOption={option => option.id}
-                format={option => option.name}
-              />
               <Input
                 name="description"
                 label="Description"
                 type="text"
                 placeholder="e.g. One Piece volume 45"
+              />
+              <TagsInput
+                name="tags"
+                label="Tags"
+                placeholder="Add tags..."
+                maxTags={10}
+                getSuggestions={fetchTagSuggestions}
+                renderSuggestion={s => s.count > 0 ? `${s.tag} (${s.count}×)` : s.tag}
+                getValue={s => s.tag}
               />
             </div>
           </div>

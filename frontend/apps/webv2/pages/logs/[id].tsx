@@ -76,7 +76,7 @@ const Page = () => {
           <div
             className={`bg-${logColor}-300 absolute top-0 left-0 right-0 h-2`}
           ></div>
-          <div className="h-stack spaced">
+          <div className="flex flex-wrap gap-3">
             <span className={`tag bg-${logColor}-300 text-${logColor}-900`}>
               {log.data.activity.name}
             </span>

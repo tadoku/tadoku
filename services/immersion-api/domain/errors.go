@@ -18,7 +18,8 @@ var (
 
 // Log errors
 var (
-	ErrInvalidLog = errors.New("unable to validate log")
+	ErrInvalidLog  = errors.New("unable to validate log")
+	ErrInvalidTags = errors.New("invalid tags")
 )
 
 // Contest errors

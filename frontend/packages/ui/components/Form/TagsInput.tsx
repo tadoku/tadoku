@@ -8,17 +8,19 @@ import { XMarkIcon } from '@heroicons/react/20/solid'
 import React, { useState, useEffect, useRef } from 'react'
 import { useController, useFormContext } from 'react-hook-form'
 
-export function TagsInput(props: {
+export function TagsInput<T = string>(props: {
   label: string
   name: string
   hint?: string
-  getSuggestions: (inputText: string) => string[] | Promise<string[]>
+  getSuggestions: (inputText: string) => T[] | Promise<T[]>
+  renderSuggestion?: (item: T) => string
+  getValue?: (item: T) => string
   placeholder?: string
   debounceMs?: number
   maxTags?: number
 }) {
   const [query, setQuery] = useState('')
-  const [suggestions, setSuggestions] = useState<string[]>([])
+  const [suggestions, setSuggestions] = useState<T[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
@@ -27,6 +29,8 @@ export function TagsInput(props: {
     label,
     hint,
     getSuggestions,
+    renderSuggestion = (item: T) => String(item),
+    getValue = (item: T) => String(item),
     placeholder,
     debounceMs = 300,
     maxTags,
@@ -47,18 +51,12 @@ export function TagsInput(props: {
       clearTimeout(debounceRef.current)
     }
 
-    if (!query) {
-      setSuggestions([])
-      setIsLoading(false)
-      return
-    }
-
     setIsLoading(true)
 
     debounceRef.current = setTimeout(async () => {
       try {
         const result = await Promise.resolve(getSuggestions(query))
-        const filtered = result.filter(s => !tags.includes(s))
+        const filtered = result.filter(s => !tags.includes(getValue(s)))
         setSuggestions(filtered)
       } catch {
         setSuggestions([])
@@ -76,9 +74,14 @@ export function TagsInput(props: {
 
   const isAtLimit = maxTags !== undefined && tags.length >= maxTags
 
-  const handleSelect = (selected: string | null) => {
-    if (selected && !tags.includes(selected) && !isAtLimit) {
-      onChange([...tags, selected])
+  const normalize = (s: string) => s.trim().toLowerCase()
+
+  const handleSelect = (selected: T | null) => {
+    if (selected) {
+      const val = normalize(getValue(selected))
+      if (val && !tags.includes(val) && !isAtLimit) {
+        onChange([...tags, val])
+      }
     }
     setQuery('')
   }
@@ -88,12 +91,15 @@ export function TagsInput(props: {
   }
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter' && query.trim() && suggestions.length === 0 && !isLoading) {
+    if (e.key === 'Enter' && query.trim() && (suggestions.length === 0 || isLoading)) {
       e.preventDefault()
-      if (!tags.includes(query.trim()) && !isAtLimit) {
-        onChange([...tags, query.trim()])
+      const val = normalize(query)
+      if (val && !tags.includes(val) && !isAtLimit) {
+        onChange([...tags, val])
       }
       setQuery('')
+      e.currentTarget.blur()
+      e.currentTarget.focus()
     }
   }
 
@@ -104,7 +110,9 @@ export function TagsInput(props: {
     <div className={`label ${hasError ? 'error' : ''}`}>
       <span className="label-text">
         {label}
-        {hint ? (
+        {maxTags !== undefined ? (
+          <span className="label-hint hidden sm:flex">{tags.length}/{maxTags}</span>
+        ) : hint ? (
           <span className="label-hint hidden sm:flex">{hint}</span>
         ) : undefined}
       </span>
@@ -124,6 +132,7 @@ export function TagsInput(props: {
             className="w-full"
           />
           <ComboboxOptions
+            modal={false}
             transition
             className={`absolute mt-2 z-50 max-h-60 w-full overflow-auto bg-white py-1 shadow-md shadow-slate-500/20 ring-1 ring-secondary ring-opacity-5 focus:outline-none transition ease-in duration-100 data-[closed]:opacity-0`}
           >
@@ -135,14 +144,18 @@ export function TagsInput(props: {
               <div className="relative cursor-default select-none py-2 px-4 text-gray-700">
                 Press Enter to add &quot;{query}&quot;
               </div>
+            ) : suggestions.length === 0 ? (
+              <div className="relative cursor-default select-none py-2 px-4 text-gray-500">
+                No suggestions available
+              </div>
             ) : (
               suggestions.map(suggestion => (
                 <ComboboxOption
-                  key={suggestion}
+                  key={getValue(suggestion)}
                   value={suggestion}
                   className="relative cursor-default select-none py-2 px-4 data-[focus]:bg-secondary data-[focus]:text-white"
                 >
-                  <span className="block truncate">{suggestion}</span>
+                  <span className="block truncate">{renderSuggestion(suggestion)}</span>
                 </ComboboxOption>
               ))
             )}
@@ -169,7 +182,11 @@ export function TagsInput(props: {
           ))}
         </div>
       )}
-      {hint ? <span className="label-hint sm:hidden">{hint}</span> : undefined}
+      {maxTags !== undefined ? (
+        <span className="label-hint sm:hidden">{tags.length}/{maxTags}</span>
+      ) : hint ? (
+        <span className="label-hint sm:hidden">{hint}</span>
+      ) : undefined}
       <span className="error">{errorMessage}</span>
     </div>
   )

@@ -67,6 +67,12 @@ func (s *LogCreate) Execute(ctx context.Context, req *LogCreateRequest) (*Log, e
 		return nil, fmt.Errorf("unable to validate: %w", ErrInvalidLog)
 	}
 
+	// Validate and normalize tags
+	req.Tags, err = ValidateAndNormalizeTags(req.Tags)
+	if err != nil {
+		return nil, fmt.Errorf("unable to validate tags: %w", err)
+	}
+
 	registrations, err := s.repo.FetchOngoingContestRegistrations(ctx, &RegistrationListOngoingRequest{
 		UserID: req.UserID,
 		Now:    s.clock.Now(),

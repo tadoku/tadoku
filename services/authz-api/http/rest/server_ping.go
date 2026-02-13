@@ -10,4 +10,3 @@ import (
 func (s *Server) Ping(ctx echo.Context) error {
 	return ctx.String(http.StatusOK, "pong")
 }
-

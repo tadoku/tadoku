@@ -39,4 +39,3 @@ func (r *Repository) CreateModerationAuditLog(ctx context.Context, req *domain.M
 }
 
 var _ domain.ModerationAuditRepository = (*Repository)(nil)
-

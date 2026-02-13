@@ -516,6 +516,26 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/LogConfigurationOptions"
+  /logs/tag-suggestions:
+    get:
+      summary: Fetches tag suggestions for autocomplete
+      operationId: logTagSuggestions
+      tags: [logs]
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: query
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TagSuggestions"
   /users/{userId}/profile:
     get:
       summary: Fetches a profile of a user
@@ -978,6 +998,25 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/Tag"
+    TagSuggestion:
+      type: object
+      required:
+        - tag
+        - count
+      properties:
+        tag:
+          type: string
+        count:
+          type: integer
+    TagSuggestions:
+      type: object
+      required:
+        - suggestions
+      properties:
+        suggestions:
+          type: array
+          items:
+            $ref: "#/components/schemas/TagSuggestion"
     ContestConfigurationOptions:
       allOf:
         - $ref: "#/components/schemas/Languages"

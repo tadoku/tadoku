@@ -13,4 +13,3 @@ func requireAdmin(ctx context.Context) error {
 func isAdmin(ctx context.Context) bool {
 	return roles.IsAdmin(ctx)
 }
-

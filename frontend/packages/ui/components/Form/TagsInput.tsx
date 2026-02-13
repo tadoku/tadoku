@@ -98,7 +98,9 @@ export function TagsInput(props: {
     <div className={`label ${hasError ? 'error' : ''}`}>
       <span className="label-text">
         {label}
-        {hint ? (
+        {maxTags !== undefined ? (
+          <span className="label-hint hidden sm:flex">{tags.length}/{maxTags}</span>
+        ) : hint ? (
           <span className="label-hint hidden sm:flex">{hint}</span>
         ) : undefined}
       </span>
@@ -118,6 +120,7 @@ export function TagsInput(props: {
             className="w-full"
           />
           <ComboboxOptions
+            modal={false}
             transition
             className={`absolute mt-2 z-50 max-h-60 w-full overflow-auto bg-white py-1 shadow-md shadow-slate-500/20 ring-1 ring-secondary ring-opacity-5 focus:outline-none transition ease-in duration-100 data-[closed]:opacity-0`}
           >
@@ -167,7 +170,11 @@ export function TagsInput(props: {
           ))}
         </div>
       )}
-      {hint ? <span className="label-hint sm:hidden">{hint}</span> : undefined}
+      {maxTags !== undefined ? (
+        <span className="label-hint sm:hidden">{tags.length}/{maxTags}</span>
+      ) : hint ? (
+        <span className="label-hint sm:hidden">{hint}</span>
+      ) : undefined}
       <span className="error">{errorMessage}</span>
     </div>
   )

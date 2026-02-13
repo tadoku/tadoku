@@ -64,7 +64,6 @@ insert into logs (
   language_code,
   log_activity_id,
   unit_id,
-  tags,
   amount,
   modifier,
   eligible_official_leaderboard,
@@ -78,8 +77,7 @@ insert into logs (
   $6,
   $7,
   $8,
-  $9,
-  $10
+  $9
 ) returning id
 `
 
@@ -89,7 +87,6 @@ type CreateLogParams struct {
 	LanguageCode                string
 	LogActivityID               int16
 	UnitID                      uuid.UUID
-	Tags                        []string
 	Amount                      float32
 	Modifier                    float32
 	EligibleOfficialLeaderboard bool
@@ -103,7 +100,6 @@ func (q *Queries) CreateLog(ctx context.Context, arg CreateLogParams) (uuid.UUID
 		arg.LanguageCode,
 		arg.LogActivityID,
 		arg.UnitID,
-		pq.Array(arg.Tags),
 		arg.Amount,
 		arg.Modifier,
 		arg.EligibleOfficialLeaderboard,

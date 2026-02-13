@@ -84,16 +84,33 @@ func StringArrayFromInterface(val any) []string {
 		return []string{}
 	}
 
-	// pq driver returns []byte for text[] arrays
-	bytes, ok := val.([]byte)
-	if !ok || len(bytes) == 0 {
+	// Handle different types the pq driver might return
+	switch v := val.(type) {
+	case []byte:
+		return parsePostgresArray(string(v))
+	case string:
+		return parsePostgresArray(v)
+	case []string:
+		if v == nil {
+			return []string{}
+		}
+		return v
+	case []any:
+		result := make([]string, 0, len(v))
+		for _, item := range v {
+			if s, ok := item.(string); ok {
+				result = append(result, s)
+			}
+		}
+		return result
+	default:
 		return []string{}
 	}
+}
 
-	s := string(bytes)
-
-	// Empty array case: "{}"
-	if s == "{}" {
+// parsePostgresArray parses PostgreSQL array text format like "{foo,bar}" into []string.
+func parsePostgresArray(s string) []string {
+	if s == "" || s == "{}" {
 		return []string{}
 	}
 

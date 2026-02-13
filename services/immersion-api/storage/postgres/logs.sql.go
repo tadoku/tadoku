@@ -281,7 +281,7 @@ select
   logs.deleted_at,
   coalesce(
     (select array_agg(tag order by tag) from log_tags where log_id = logs.id),
-    '{}'
+    array[]::text[]
   ) as tags
 from logs
 inner join languages on (languages.code = logs.language_code)
@@ -361,7 +361,7 @@ with eligible_logs as (
     users.display_name as user_display_name,
     coalesce(
       (select array_agg(tag order by tag) from log_tags where log_id = logs.id),
-      '{}'
+      array[]::text[]
     ) as tags
   from contest_logs
   inner join logs on (logs.id = contest_logs.log_id)
@@ -477,7 +477,7 @@ with eligible_logs as (
     logs.deleted_at,
     coalesce(
       (select array_agg(tag order by tag) from log_tags where log_id = logs.id),
-      '{}'
+      array[]::text[]
     ) as tags
   from logs
   inner join languages on (languages.code = logs.language_code)

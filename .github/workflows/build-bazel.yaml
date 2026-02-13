@@ -29,7 +29,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: "/home/runner/.cache/bazel"
-          key: bazel-v4
+          key: bazel-v4-${{ hashFiles('go.mod', 'go.sum', 'MODULE.bazel') }}
 
       - name: Build
         run: bazel build //...
@@ -50,7 +50,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: "/home/runner/.cache/bazel"
-          key: bazel-v4
+          key: bazel-v4-${{ hashFiles('go.mod', 'go.sum', 'MODULE.bazel') }}
 
       - name: Push images
         run: |

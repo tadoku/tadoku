@@ -24,16 +24,10 @@ func (r *Repository) FetchLogConfigurationOptions(ctx context.Context) (*domain.
 		return nil, fmt.Errorf("could not fetch log configuration options: %w", err)
 	}
 
-	tags, err := r.q.ListTags(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("could not fetch log configuration options: %w", err)
-	}
-
 	options := domain.LogConfigurationOptionsResponse{
 		Languages:  make([]domain.Language, len(langs)),
 		Activities: make([]domain.Activity, len(acts)),
 		Units:      make([]domain.Unit, len(units)),
-		Tags:       make([]domain.Tag, len(tags)),
 	}
 
 	for i, l := range langs {
@@ -61,13 +55,5 @@ func (r *Repository) FetchLogConfigurationOptions(ctx context.Context) (*domain.
 		}
 	}
 
-	for i, t := range tags {
-		options.Tags[i] = domain.Tag{
-			ID:            t.ID,
-			LogActivityID: int(t.LogActivityID),
-			Name:          t.Name,
-		}
-	}
-
-	return &options, err
+	return &options, nil
 }

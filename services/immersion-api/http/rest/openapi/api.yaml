@@ -942,7 +942,6 @@ components:
         - $ref: "#/components/schemas/Languages"
         - $ref: "#/components/schemas/Activities"
         - $ref: "#/components/schemas/Units"
-        - $ref: "#/components/schemas/Tags"
     Unit:
       type: object
       required:

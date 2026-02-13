@@ -12,10 +12,9 @@ import (
 const listTags = `-- name: ListTags :many
 select
   id,
-  log_activity_id,
   name
 from log_default_tags
-order by log_activity_id asc
+order by name asc
 `
 
 func (q *Queries) ListTags(ctx context.Context) ([]LogDefaultTag, error) {
@@ -27,7 +26,7 @@ func (q *Queries) ListTags(ctx context.Context) ([]LogDefaultTag, error) {
 	var items []LogDefaultTag
 	for rows.Next() {
 		var i LogDefaultTag
-		if err := rows.Scan(&i.ID, &i.LogActivityID, &i.Name); err != nil {
+		if err := rows.Scan(&i.ID, &i.Name); err != nil {
 			return nil, err
 		}
 		items = append(items, i)

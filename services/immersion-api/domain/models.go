@@ -127,9 +127,8 @@ type Unit struct {
 }
 
 type Tag struct {
-	ID            uuid.UUID
-	LogActivityID int
-	Name          string
+	ID   uuid.UUID
+	Name string
 }
 
 type Log struct {

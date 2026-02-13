@@ -57,7 +57,6 @@ type Log struct {
 	LanguageCode                string
 	LogActivityID               int16
 	UnitID                      uuid.UUID
-	Tags                        []string
 	Description                 sql.NullString
 	Amount                      float32
 	Modifier                    float32
@@ -76,9 +75,8 @@ type LogActivity struct {
 }
 
 type LogDefaultTag struct {
-	ID            uuid.UUID
-	LogActivityID int16
-	Name          string
+	ID   uuid.UUID
+	Name string
 }
 
 type LogTag struct {

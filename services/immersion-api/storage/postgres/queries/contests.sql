@@ -143,13 +143,11 @@ limit 1;
 
 -- name: ContestSummary :one
 select
-  sum(logs.score)::real as total_score,
+  coalesce(sum(logs.score), 0)::real as total_score,
   count(distinct logs.user_id) as participant_count,
   count(distinct logs.language_code) as language_count
-from logs
-inner join contest_logs
-  on contest_logs.log_id = logs.id
+from contests
+left join contest_logs on contest_logs.contest_id = contests.id
+left join logs on contest_logs.log_id = logs.id and logs.deleted_at is null
 where
-  contest_logs.contest_id = sqlc.arg('contest_id')
-  and logs.deleted_at is null
-having sum(logs.score) is not null;
+  contests.id = sqlc.arg('contest_id');

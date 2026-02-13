@@ -22,7 +22,6 @@ func (s *Server) LogGetConfigurations(ctx echo.Context) error {
 		Activities: make([]openapi.Activity, len(opts.Activities)),
 		Languages:  make([]openapi.Language, len(opts.Languages)),
 		Units:      make([]openapi.Unit, len(opts.Units)),
-		Tags:       make([]openapi.Tag, len(opts.Tags)),
 	}
 
 	for i, it := range opts.Activities {
@@ -47,14 +46,6 @@ func (s *Server) LogGetConfigurations(ctx echo.Context) error {
 			Name:          it.Name,
 			Modifier:      it.Modifier,
 			LanguageCode:  it.LanguageCode,
-		}
-	}
-
-	for i, it := range opts.Tags {
-		res.Tags[i] = openapi.Tag{
-			Id:            it.ID,
-			LogActivityId: it.LogActivityID,
-			Name:          it.Name,
 		}
 	}
 

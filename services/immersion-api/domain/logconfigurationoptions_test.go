@@ -25,7 +25,6 @@ func (m *mockLogConfigurationOptionsRepo) FetchLogConfigurationOptions(ctx conte
 func TestLogConfigurationOptions_Execute(t *testing.T) {
 	t.Run("fetches configuration options successfully for authenticated user", func(t *testing.T) {
 		unitID := uuid.New()
-		tagID := uuid.New()
 		langCode := "ja"
 
 		repo := &mockLogConfigurationOptionsRepo{
@@ -40,9 +39,6 @@ func TestLogConfigurationOptions_Execute(t *testing.T) {
 					Units: []domain.Unit{
 						{ID: unitID, LogActivityID: 1, Name: "Pages", Modifier: 1.0, LanguageCode: &langCode},
 					},
-					Tags: []domain.Tag{
-						{ID: tagID, LogActivityID: 1, Name: "Novel"},
-					},
 				}, nil
 			},
 		}
@@ -55,11 +51,9 @@ func TestLogConfigurationOptions_Execute(t *testing.T) {
 		assert.Len(t, resp.Languages, 1)
 		assert.Len(t, resp.Activities, 1)
 		assert.Len(t, resp.Units, 1)
-		assert.Len(t, resp.Tags, 1)
 		assert.Equal(t, "ja", resp.Languages[0].Code)
 		assert.Equal(t, "Reading", resp.Activities[0].Name)
 		assert.Equal(t, "Pages", resp.Units[0].Name)
-		assert.Equal(t, "Novel", resp.Tags[0].Name)
 	})
 
 	t.Run("returns unauthorized for guest user", func(t *testing.T) {

@@ -5,7 +5,6 @@ insert into logs (
   language_code,
   log_activity_id,
   unit_id,
-  tags,
   amount,
   modifier,
   eligible_official_leaderboard,
@@ -16,7 +15,6 @@ insert into logs (
   sqlc.arg('language_code'),
   sqlc.arg('log_activity_id'),
   sqlc.arg('unit_id'),
-  sqlc.arg('tags'),
   sqlc.arg('amount'),
   sqlc.arg('modifier'),
   sqlc.arg('eligible_official_leaderboard'),
@@ -43,14 +41,17 @@ with eligible_logs as (
     log_activities.name as activity_name,
     log_units.name as unit_name,
     logs.description,
-    logs.tags,
     logs.amount,
     logs.modifier,
     logs.score,
     logs.created_at,
     logs.updated_at,
     logs.deleted_at,
-    users.display_name as user_display_name
+    users.display_name as user_display_name,
+    coalesce(
+      (select array_agg(tag order by tag) from log_tags where log_id = logs.id),
+      array[]::text[]
+    ) as tags
   from contest_logs
   inner join logs on (logs.id = contest_logs.log_id)
   inner join languages on (languages.code = logs.language_code)
@@ -81,13 +82,16 @@ with eligible_logs as (
     log_activities.name as activity_name,
     log_units.name as unit_name,
     logs.description,
-    logs.tags,
     logs.amount,
     logs.modifier,
     logs.score,
     logs.created_at,
     logs.updated_at,
-    logs.deleted_at
+    logs.deleted_at,
+    coalesce(
+      (select array_agg(tag order by tag) from log_tags where log_id = logs.id),
+      array[]::text[]
+    ) as tags
   from logs
   inner join languages on (languages.code = logs.language_code)
   inner join log_activities on (log_activities.id = logs.log_activity_id)
@@ -115,13 +119,16 @@ select
   log_activities.name as activity_name,
   log_units.name as unit_name,
   logs.description,
-  logs.tags,
   logs.amount,
   logs.modifier,
   logs.score,
   logs.created_at,
   logs.updated_at,
-  logs.deleted_at
+  logs.deleted_at,
+  coalesce(
+    (select array_agg(tag order by tag) from log_tags where log_id = logs.id),
+    array[]::text[]
+  ) as tags
 from logs
 inner join languages on (languages.code = logs.language_code)
 inner join log_activities on (log_activities.id = logs.log_activity_id)

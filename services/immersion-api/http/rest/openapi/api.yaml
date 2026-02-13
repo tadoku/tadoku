@@ -942,7 +942,6 @@ components:
         - $ref: "#/components/schemas/Languages"
         - $ref: "#/components/schemas/Activities"
         - $ref: "#/components/schemas/Units"
-        - $ref: "#/components/schemas/Tags"
     Unit:
       type: object
       required:
@@ -974,30 +973,6 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/Unit"
-    Tag:
-      type: object
-      required:
-        - id
-        - log_activity_id
-        - name
-      properties:
-        id:
-          type: string
-          format: uuid
-        log_activity_id:
-          type: integer
-        name:
-          type: string
-          example: Book
-    Tags:
-      type: object
-      required:
-        - tags
-      properties:
-        tags:
-          type: array
-          items:
-            $ref: "#/components/schemas/Tag"
     TagSuggestion:
       type: object
       required:

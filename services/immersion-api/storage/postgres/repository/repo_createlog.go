@@ -37,7 +37,6 @@ func (r *Repository) CreateLog(ctx context.Context, req *domain.LogCreateRequest
 		LanguageCode:                req.LanguageCode,
 		LogActivityID:               int16(req.ActivityID),
 		UnitID:                      req.UnitID,
-		Tags:                        req.Tags,
 		Amount:                      req.Amount,
 		Modifier:                    unit.Modifier,
 		EligibleOfficialLeaderboard: req.EligibleOfficialLeaderboard,
@@ -58,7 +57,7 @@ func (r *Repository) CreateLog(ctx context.Context, req *domain.LogCreateRequest
 		}
 	}
 
-	// Dual-write: insert tags into log_tags table
+	// Insert tags into log_tags table
 	for _, tag := range req.Tags {
 		if err = qtx.InsertLogTag(ctx, postgres.InsertLogTagParams{
 			LogID:  id,

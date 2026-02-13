@@ -1,6 +1,7 @@
 package rest
 
 import (
+	"errors"
 	"net/http"
 
 	"github.com/deepmap/oapi-codegen/pkg/types"
@@ -16,6 +17,10 @@ func (s *Server) ContestFindRegistration(ctx echo.Context, id types.UUID) error 
 		ContestID: id,
 	})
 	if err != nil {
+		// Return 204 No Content when registration doesn't exist (not an error condition)
+		if errors.Is(err, domain.ErrNotFound) {
+			return ctx.NoContent(http.StatusNoContent)
+		}
 		if handled, respErr := handleCommonErrors(ctx, err); handled {
 			return respErr
 		}

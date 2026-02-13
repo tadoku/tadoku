@@ -216,7 +216,6 @@ type Log struct {
 type LogConfigurationOptions struct {
 	Activities []Activity `json:"activities"`
 	Languages  []Language `json:"languages"`
-	Tags       []Tag      `json:"tags"`
 	Units      []Unit     `json:"units"`
 }
 
@@ -252,13 +251,6 @@ type Score struct {
 // Scores defines model for Scores.
 type Scores = []Score
 
-// Tag defines model for Tag.
-type Tag struct {
-	Id            openapi_types.UUID `json:"id"`
-	LogActivityId int                `json:"log_activity_id"`
-	Name          string             `json:"name"`
-}
-
 // TagSuggestion defines model for TagSuggestion.
 type TagSuggestion struct {
 	Count int    `json:"count"`
@@ -268,11 +260,6 @@ type TagSuggestion struct {
 // TagSuggestions defines model for TagSuggestions.
 type TagSuggestions struct {
 	Suggestions []TagSuggestion `json:"suggestions"`
-}
-
-// Tags defines model for Tags.
-type Tags struct {
-	Tags []Tag `json:"tags"`
 }
 
 // Unit defines model for Unit.
@@ -993,6 +980,8 @@ func (w *ServerInterfaceWrapper) LogGetConfigurations(ctx echo.Context) error {
 // LogTagSuggestions converts echo context to params.
 func (w *ServerInterfaceWrapper) LogTagSuggestions(ctx echo.Context) error {
 	var err error
+
+	ctx.Set(CookieAuthScopes, []string{""})
 
 	// Parameter object where we will unmarshal all parameters from the context
 	var params LogTagSuggestionsParams

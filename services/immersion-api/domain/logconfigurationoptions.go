@@ -12,7 +12,6 @@ type LogConfigurationOptionsResponse struct {
 	Languages  []Language
 	Activities []Activity
 	Units      []Unit
-	Tags       []Tag
 }
 
 type LogConfigurationOptions struct {

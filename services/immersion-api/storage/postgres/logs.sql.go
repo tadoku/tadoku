@@ -64,7 +64,6 @@ insert into logs (
   language_code,
   log_activity_id,
   unit_id,
-  tags,
   amount,
   modifier,
   eligible_official_leaderboard,
@@ -78,8 +77,7 @@ insert into logs (
   $6,
   $7,
   $8,
-  $9,
-  $10
+  $9
 ) returning id
 `
 
@@ -89,7 +87,6 @@ type CreateLogParams struct {
 	LanguageCode                string
 	LogActivityID               int16
 	UnitID                      uuid.UUID
-	Tags                        []string
 	Amount                      float32
 	Modifier                    float32
 	EligibleOfficialLeaderboard bool
@@ -103,7 +100,6 @@ func (q *Queries) CreateLog(ctx context.Context, arg CreateLogParams) (uuid.UUID
 		arg.LanguageCode,
 		arg.LogActivityID,
 		arg.UnitID,
-		pq.Array(arg.Tags),
 		arg.Amount,
 		arg.Modifier,
 		arg.EligibleOfficialLeaderboard,
@@ -277,13 +273,16 @@ select
   log_activities.name as activity_name,
   log_units.name as unit_name,
   logs.description,
-  logs.tags,
   logs.amount,
   logs.modifier,
   logs.score,
   logs.created_at,
   logs.updated_at,
-  logs.deleted_at
+  logs.deleted_at,
+  coalesce(
+    (select array_agg(tag order by tag) from log_tags where log_id = logs.id),
+    array[]::text[]
+  ) as tags
 from logs
 inner join languages on (languages.code = logs.language_code)
 inner join log_activities on (log_activities.id = logs.log_activity_id)
@@ -309,13 +308,13 @@ type FindLogByIDRow struct {
 	ActivityName    string
 	UnitName        string
 	Description     sql.NullString
-	Tags            []string
 	Amount          float32
 	Modifier        float32
 	Score           float32
 	CreatedAt       time.Time
 	UpdatedAt       time.Time
 	DeletedAt       sql.NullTime
+	Tags            interface{}
 }
 
 func (q *Queries) FindLogByID(ctx context.Context, arg FindLogByIDParams) (FindLogByIDRow, error) {
@@ -331,13 +330,13 @@ func (q *Queries) FindLogByID(ctx context.Context, arg FindLogByIDParams) (FindL
 		&i.ActivityName,
 		&i.UnitName,
 		&i.Description,
-		pq.Array(&i.Tags),
 		&i.Amount,
 		&i.Modifier,
 		&i.Score,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.DeletedAt,
+		&i.Tags,
 	)
 	return i, err
 }
@@ -353,14 +352,17 @@ with eligible_logs as (
     log_activities.name as activity_name,
     log_units.name as unit_name,
     logs.description,
-    logs.tags,
     logs.amount,
     logs.modifier,
     logs.score,
     logs.created_at,
     logs.updated_at,
     logs.deleted_at,
-    users.display_name as user_display_name
+    users.display_name as user_display_name,
+    coalesce(
+      (select array_agg(tag order by tag) from log_tags where log_id = logs.id),
+      array[]::text[]
+    ) as tags
   from contest_logs
   inner join logs on (logs.id = contest_logs.log_id)
   inner join languages on (languages.code = logs.language_code)
@@ -373,7 +375,7 @@ with eligible_logs as (
     and contest_logs.contest_id = $5
 )
 select
-  id, user_id, language_code, language_name, activity_id, activity_name, unit_name, description, tags, amount, modifier, score, created_at, updated_at, deleted_at, user_display_name,
+  id, user_id, language_code, language_name, activity_id, activity_name, unit_name, description, amount, modifier, score, created_at, updated_at, deleted_at, user_display_name, tags,
   (select count(eligible_logs.id) from eligible_logs) as total_size
 from eligible_logs
 order by created_at desc
@@ -398,7 +400,6 @@ type ListLogsForContestRow struct {
 	ActivityName    string
 	UnitName        string
 	Description     sql.NullString
-	Tags            []string
 	Amount          float32
 	Modifier        float32
 	Score           float32
@@ -406,6 +407,7 @@ type ListLogsForContestRow struct {
 	UpdatedAt       time.Time
 	DeletedAt       sql.NullTime
 	UserDisplayName string
+	Tags            interface{}
 	TotalSize       int64
 }
 
@@ -433,7 +435,6 @@ func (q *Queries) ListLogsForContest(ctx context.Context, arg ListLogsForContest
 			&i.ActivityName,
 			&i.UnitName,
 			&i.Description,
-			pq.Array(&i.Tags),
 			&i.Amount,
 			&i.Modifier,
 			&i.Score,
@@ -441,6 +442,7 @@ func (q *Queries) ListLogsForContest(ctx context.Context, arg ListLogsForContest
 			&i.UpdatedAt,
 			&i.DeletedAt,
 			&i.UserDisplayName,
+			&i.Tags,
 			&i.TotalSize,
 		); err != nil {
 			return nil, err
@@ -467,13 +469,16 @@ with eligible_logs as (
     log_activities.name as activity_name,
     log_units.name as unit_name,
     logs.description,
-    logs.tags,
     logs.amount,
     logs.modifier,
     logs.score,
     logs.created_at,
     logs.updated_at,
-    logs.deleted_at
+    logs.deleted_at,
+    coalesce(
+      (select array_agg(tag order by tag) from log_tags where log_id = logs.id),
+      array[]::text[]
+    ) as tags
   from logs
   inner join languages on (languages.code = logs.language_code)
   inner join log_activities on (log_activities.id = logs.log_activity_id)
@@ -483,7 +488,7 @@ with eligible_logs as (
     and logs.user_id = $4
 )
 select
-  id, user_id, language_code, language_name, activity_id, activity_name, unit_name, description, tags, amount, modifier, score, created_at, updated_at, deleted_at,
+  id, user_id, language_code, language_name, activity_id, activity_name, unit_name, description, amount, modifier, score, created_at, updated_at, deleted_at, tags,
   (select count(eligible_logs.id) from eligible_logs) as total_size
 from eligible_logs
 order by created_at desc
@@ -507,13 +512,13 @@ type ListLogsForUserRow struct {
 	ActivityName string
 	UnitName     string
 	Description  sql.NullString
-	Tags         []string
 	Amount       float32
 	Modifier     float32
 	Score        float32
 	CreatedAt    time.Time
 	UpdatedAt    time.Time
 	DeletedAt    sql.NullTime
+	Tags         interface{}
 	TotalSize    int64
 }
 
@@ -540,13 +545,13 @@ func (q *Queries) ListLogsForUser(ctx context.Context, arg ListLogsForUserParams
 			&i.ActivityName,
 			&i.UnitName,
 			&i.Description,
-			pq.Array(&i.Tags),
 			&i.Amount,
 			&i.Modifier,
 			&i.Score,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.DeletedAt,
+			&i.Tags,
 			&i.TotalSize,
 		); err != nil {
 			return nil, err

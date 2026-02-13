@@ -521,6 +521,8 @@ paths:
       summary: Fetches tag suggestions for autocomplete
       operationId: logTagSuggestions
       tags: [logs]
+      security:
+        - cookieAuth: []
       parameters:
         - name: query
           in: query

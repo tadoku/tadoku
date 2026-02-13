@@ -37,25 +37,18 @@ func NewTagSuggestions(repo TagSuggestionsRepository) *TagSuggestions {
 }
 
 func (s *TagSuggestions) Execute(ctx context.Context, req *TagSuggestionsRequest) (*TagSuggestionsResponse, error) {
-	// Get user ID from session if authenticated
-	var userID *uuid.UUID
 	session := commondomain.ParseUserIdentity(ctx)
-	if session != nil && session.Subject != "" {
-		id, err := uuid.Parse(session.Subject)
-		if err == nil {
-			userID = &id
-		}
+	if session == nil || session.Subject == "" {
+		return nil, ErrUnauthorized
+	}
+	userID, err := uuid.Parse(session.Subject)
+	if err != nil {
+		return nil, ErrUnauthorized
 	}
 
-	var suggestions []TagSuggestion
-
-	// If user is authenticated, fetch their previously used tags
-	if userID != nil {
-		userTags, err := s.repo.FetchTagSuggestionsForUser(ctx, *userID, req.Query)
-		if err != nil {
-			return nil, err
-		}
-		suggestions = userTags
+	suggestions, err := s.repo.FetchTagSuggestionsForUser(ctx, userID, req.Query)
+	if err != nil {
+		return nil, err
 	}
 
 	// Append default tags, deduplicating against user tags

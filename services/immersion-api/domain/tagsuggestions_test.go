@@ -82,18 +82,14 @@ func TestTagSuggestions_Execute(t *testing.T) {
 		}, result.Suggestions)
 	})
 
-	t.Run("returns only default tags for unauthenticated user", func(t *testing.T) {
-		repo := &mockTagSuggestionsRepository{
-			defaultTags: []string{"book", "fiction"},
-		}
+	t.Run("returns unauthorized for unauthenticated user", func(t *testing.T) {
+		repo := &mockTagSuggestionsRepository{}
 		svc := domain.NewTagSuggestions(repo)
 
 		ctx := context.Background()
 
-		result, err := svc.Execute(ctx, &domain.TagSuggestionsRequest{Query: "bo"})
+		_, err := svc.Execute(ctx, &domain.TagSuggestionsRequest{Query: "bo"})
 
-		require.NoError(t, err)
-		assert.Equal(t, domain.TagSuggestion{Tag: "book", Count: 0}, result.Suggestions[0])
-		assert.Equal(t, domain.TagSuggestion{Tag: "fiction", Count: 0}, result.Suggestions[1])
+		assert.ErrorIs(t, err, domain.ErrUnauthorized)
 	})
 }

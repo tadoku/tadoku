@@ -679,19 +679,10 @@ export const Unit = z.object({
 
 export type Unit = z.infer<typeof Unit>
 
-export const Tag = z.object({
-  id: z.string(),
-  log_activity_id: z.number(),
-  name: z.string(),
-})
-
-export type Tag = z.infer<typeof Tag>
-
 const LogConfigurationOptions = z.object({
   languages: z.array(Language),
   activities: z.array(Activity),
   units: z.array(Unit),
-  tags: z.array(Tag),
 })
 
 export type LogConfigurationOptions = z.infer<typeof LogConfigurationOptions>

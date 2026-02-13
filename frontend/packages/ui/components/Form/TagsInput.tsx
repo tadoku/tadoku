@@ -91,7 +91,7 @@ export function TagsInput<T = string>(props: {
   }
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter' && query.trim() && suggestions.length === 0 && !isLoading) {
+    if (e.key === 'Enter' && query.trim() && (suggestions.length === 0 || isLoading)) {
       e.preventDefault()
       const val = normalize(query)
       if (val && !tags.includes(val) && !isAtLimit) {
@@ -99,6 +99,7 @@ export function TagsInput<T = string>(props: {
       }
       setQuery('')
       e.currentTarget.blur()
+      e.currentTarget.focus()
     }
   }
 

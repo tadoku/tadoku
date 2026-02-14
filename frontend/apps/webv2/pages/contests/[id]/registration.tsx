@@ -26,7 +26,7 @@ const Page = () => {
     if (!session) {
       router.push(routes.authLogin(currentUrl))
     }
-  }, [session])
+  }, [session, currentUrl, router])
 
   if (!session || contest.isLoading || contest.isIdle) {
     return <Loading />

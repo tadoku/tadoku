@@ -14,6 +14,11 @@ type LogDeleteRepository interface {
 	DeleteLog(context.Context, *LogDeleteRequest) error
 }
 
+type LogDeleteLeaderboardUpdater interface {
+	UpdateUserContestScore(ctx context.Context, contestID uuid.UUID, userID uuid.UUID)
+	UpdateUserOfficialScores(ctx context.Context, year int, userID uuid.UUID)
+}
+
 type LogDeleteRequest struct {
 	LogID uuid.UUID
 	Now   time.Time
@@ -22,13 +27,13 @@ type LogDeleteRequest struct {
 type LogDelete struct {
 	repo               LogDeleteRepository
 	clock              commondomain.Clock
-	leaderboardUpdater LeaderboardScoreUpdater
+	leaderboardUpdater LogDeleteLeaderboardUpdater
 }
 
 func NewLogDelete(
 	repo LogDeleteRepository,
 	clock commondomain.Clock,
-	leaderboardUpdater LeaderboardScoreUpdater,
+	leaderboardUpdater LogDeleteLeaderboardUpdater,
 ) *LogDelete {
 	return &LogDelete{
 		repo:               repo,

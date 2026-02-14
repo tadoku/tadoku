@@ -14,6 +14,10 @@ type ContestModerationDetachLogRepository interface {
 	DetachLogFromContest(context.Context, *ContestModerationDetachLogRequest, uuid.UUID) error
 }
 
+type ContestModerationDetachLogLeaderboardUpdater interface {
+	UpdateUserContestScore(ctx context.Context, contestID uuid.UUID, userID uuid.UUID)
+}
+
 type ContestModerationDetachLogRequest struct {
 	ContestID uuid.UUID
 	LogID     uuid.UUID
@@ -22,12 +26,12 @@ type ContestModerationDetachLogRequest struct {
 
 type ContestModerationDetachLog struct {
 	repo               ContestModerationDetachLogRepository
-	leaderboardUpdater LeaderboardScoreUpdater
+	leaderboardUpdater ContestModerationDetachLogLeaderboardUpdater
 }
 
 func NewContestModerationDetachLog(
 	repo ContestModerationDetachLogRepository,
-	leaderboardUpdater LeaderboardScoreUpdater,
+	leaderboardUpdater ContestModerationDetachLogLeaderboardUpdater,
 ) *ContestModerationDetachLog {
 	return &ContestModerationDetachLog{
 		repo:               repo,

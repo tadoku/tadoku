@@ -72,7 +72,7 @@ func TestRegistrationUpsert_Execute(t *testing.T) {
 		userRepo := &mockUserUpsertRepositoryForReg{}
 		userUpsert := domain.NewUserUpsert(userRepo)
 		repo := &mockRegistrationUpsertRepository{}
-		updater := &mockLeaderboardScoreUpdater{}
+		updater := &mockLeaderboardUpdater{}
 		svc := domain.NewRegistrationUpsert(repo, userUpsert, updater)
 
 		ctx := ctxWithGuest()
@@ -90,7 +90,7 @@ func TestRegistrationUpsert_Execute(t *testing.T) {
 		userRepo := &mockUserUpsertRepositoryForReg{}
 		userUpsert := domain.NewUserUpsert(userRepo)
 		repo := &mockRegistrationUpsertRepository{}
-		updater := &mockLeaderboardScoreUpdater{}
+		updater := &mockLeaderboardUpdater{}
 		svc := domain.NewRegistrationUpsert(repo, userUpsert, updater)
 
 		err := svc.Execute(context.Background(), &domain.RegistrationUpsertRequest{
@@ -109,7 +109,7 @@ func TestRegistrationUpsert_Execute(t *testing.T) {
 			contest:    validContest,
 			findRegErr: domain.ErrNotFound,
 		}
-		updater := &mockLeaderboardScoreUpdater{}
+		updater := &mockLeaderboardUpdater{}
 		svc := domain.NewRegistrationUpsert(repo, userUpsert, updater)
 
 		ctx := ctxWithUserSubject(userID.String())
@@ -130,7 +130,7 @@ func TestRegistrationUpsert_Execute(t *testing.T) {
 			contest:    validContest,
 			findRegErr: domain.ErrNotFound,
 		}
-		updater := &mockLeaderboardScoreUpdater{}
+		updater := &mockLeaderboardUpdater{}
 		svc := domain.NewRegistrationUpsert(repo, userUpsert, updater)
 
 		ctx := ctxWithUserSubject(userID.String())
@@ -160,7 +160,7 @@ func TestRegistrationUpsert_Execute(t *testing.T) {
 			contest:    contestWithAllowList,
 			findRegErr: domain.ErrNotFound,
 		}
-		updater := &mockLeaderboardScoreUpdater{}
+		updater := &mockLeaderboardUpdater{}
 		svc := domain.NewRegistrationUpsert(repo, userUpsert, updater)
 
 		ctx := ctxWithUserSubject(userID.String())
@@ -191,7 +191,7 @@ func TestRegistrationUpsert_Execute(t *testing.T) {
 			contest:      validContest,
 			registration: existingRegistration,
 		}
-		updater := &mockLeaderboardScoreUpdater{}
+		updater := &mockLeaderboardUpdater{}
 		svc := domain.NewRegistrationUpsert(repo, userUpsert, updater)
 
 		ctx := ctxWithUserSubject(userID.String())
@@ -224,7 +224,7 @@ func TestRegistrationUpsert_Execute(t *testing.T) {
 			contest:      validContest,
 			registration: existingRegistration,
 		}
-		updater := &mockLeaderboardScoreUpdater{}
+		updater := &mockLeaderboardUpdater{}
 		svc := domain.NewRegistrationUpsert(repo, userUpsert, updater)
 
 		ctx := ctxWithUserSubject(userID.String())
@@ -246,7 +246,7 @@ func TestRegistrationUpsert_Execute(t *testing.T) {
 			contest:    validContest,
 			findRegErr: domain.ErrNotFound,
 		}
-		updater := &mockLeaderboardScoreUpdater{}
+		updater := &mockLeaderboardUpdater{}
 		svc := domain.NewRegistrationUpsert(repo, userUpsert, updater)
 
 		ctx := ctxWithUserSubject(userID.String())
@@ -278,7 +278,7 @@ func TestRegistrationUpsert_Execute(t *testing.T) {
 			contest:      validContest,
 			registration: existingRegistration,
 		}
-		updater := &mockLeaderboardScoreUpdater{}
+		updater := &mockLeaderboardUpdater{}
 		svc := domain.NewRegistrationUpsert(repo, userUpsert, updater)
 
 		ctx := ctxWithUserSubject(userID.String())
@@ -300,7 +300,7 @@ func TestRegistrationUpsert_Execute(t *testing.T) {
 			contest:    validContest,
 			findRegErr: domain.ErrNotFound,
 		}
-		updater := &mockLeaderboardScoreUpdater{}
+		updater := &mockLeaderboardUpdater{}
 		svc := domain.NewRegistrationUpsert(repo, userUpsert, updater)
 
 		ctx := ctxWithUserSubject(userID.String())

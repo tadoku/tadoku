@@ -57,7 +57,7 @@ func TestContestModerationDetachLog_Execute(t *testing.T) {
 
 	t.Run("returns unauthorized for guest", func(t *testing.T) {
 		repo := &mockContestModerationDetachLogRepository{}
-		updater := &mockLeaderboardScoreUpdater{}
+		updater := &mockLeaderboardUpdater{}
 		svc := domain.NewContestModerationDetachLog(repo, updater)
 
 		ctx := ctxWithGuest()
@@ -74,7 +74,7 @@ func TestContestModerationDetachLog_Execute(t *testing.T) {
 
 	t.Run("returns unauthorized for nil session", func(t *testing.T) {
 		repo := &mockContestModerationDetachLogRepository{}
-		updater := &mockLeaderboardScoreUpdater{}
+		updater := &mockLeaderboardUpdater{}
 		svc := domain.NewContestModerationDetachLog(repo, updater)
 
 		err := svc.Execute(context.Background(), &domain.ContestModerationDetachLogRequest{
@@ -91,7 +91,7 @@ func TestContestModerationDetachLog_Execute(t *testing.T) {
 		repo := &mockContestModerationDetachLogRepository{
 			findContestErr: domain.ErrNotFound,
 		}
-		updater := &mockLeaderboardScoreUpdater{}
+		updater := &mockLeaderboardUpdater{}
 		svc := domain.NewContestModerationDetachLog(repo, updater)
 
 		ctx := ctxWithUserSubject(userID.String())
@@ -110,7 +110,7 @@ func TestContestModerationDetachLog_Execute(t *testing.T) {
 		repo := &mockContestModerationDetachLogRepository{
 			contest: contest,
 		}
-		updater := &mockLeaderboardScoreUpdater{}
+		updater := &mockLeaderboardUpdater{}
 		svc := domain.NewContestModerationDetachLog(repo, updater)
 
 		ctx := ctxWithUserSubject(otherUserID.String()) // Not the owner
@@ -130,7 +130,7 @@ func TestContestModerationDetachLog_Execute(t *testing.T) {
 			contest:    contest,
 			findLogErr: domain.ErrNotFound,
 		}
-		updater := &mockLeaderboardScoreUpdater{}
+		updater := &mockLeaderboardUpdater{}
 		svc := domain.NewContestModerationDetachLog(repo, updater)
 
 		ctx := ctxWithUserSubject(userID.String())
@@ -150,7 +150,7 @@ func TestContestModerationDetachLog_Execute(t *testing.T) {
 			contest: contest,
 			log:     log,
 		}
-		updater := &mockLeaderboardScoreUpdater{}
+		updater := &mockLeaderboardUpdater{}
 		svc := domain.NewContestModerationDetachLog(repo, updater)
 
 		ctx := ctxWithUserSubject(userID.String()) // Contest owner
@@ -171,7 +171,7 @@ func TestContestModerationDetachLog_Execute(t *testing.T) {
 			contest: contest,
 			log:     log,
 		}
-		updater := &mockLeaderboardScoreUpdater{}
+		updater := &mockLeaderboardUpdater{}
 		svc := domain.NewContestModerationDetachLog(repo, updater)
 
 		adminID := uuid.New()
@@ -194,7 +194,7 @@ func TestContestModerationDetachLog_Execute(t *testing.T) {
 			log:       log,
 			detachErr: errors.New("database error"),
 		}
-		updater := &mockLeaderboardScoreUpdater{}
+		updater := &mockLeaderboardUpdater{}
 		svc := domain.NewContestModerationDetachLog(repo, updater)
 
 		ctx := ctxWithUserSubject(userID.String())
@@ -214,7 +214,7 @@ func TestContestModerationDetachLog_Execute(t *testing.T) {
 			contest: contest,
 			log:     log,
 		}
-		updater := &mockLeaderboardScoreUpdater{}
+		updater := &mockLeaderboardUpdater{}
 		svc := domain.NewContestModerationDetachLog(repo, updater)
 
 		ctx := ctxWithUserSubject(userID.String())
@@ -237,7 +237,7 @@ func TestContestModerationDetachLog_Execute(t *testing.T) {
 			log:       log,
 			detachErr: errors.New("database error"),
 		}
-		updater := &mockLeaderboardScoreUpdater{}
+		updater := &mockLeaderboardUpdater{}
 		svc := domain.NewContestModerationDetachLog(repo, updater)
 
 		ctx := ctxWithUserSubject(userID.String())

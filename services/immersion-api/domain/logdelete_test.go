@@ -38,7 +38,7 @@ func TestLogDelete_Execute(t *testing.T) {
 	t.Run("returns unauthorized for guest", func(t *testing.T) {
 		repo := &mockLogDeleteRepository{}
 		clock := commondomain.NewMockClock(now)
-		updater := &mockLeaderboardScoreUpdater{}
+		updater := &mockLeaderboardUpdater{}
 		svc := domain.NewLogDelete(repo, clock, updater)
 
 		ctx := ctxWithGuest()
@@ -52,7 +52,7 @@ func TestLogDelete_Execute(t *testing.T) {
 	t.Run("returns unauthorized for nil session", func(t *testing.T) {
 		repo := &mockLogDeleteRepository{}
 		clock := commondomain.NewMockClock(now)
-		updater := &mockLeaderboardScoreUpdater{}
+		updater := &mockLeaderboardUpdater{}
 		svc := domain.NewLogDelete(repo, clock, updater)
 
 		err := svc.Execute(context.Background(), &domain.LogDeleteRequest{LogID: logID})
@@ -66,7 +66,7 @@ func TestLogDelete_Execute(t *testing.T) {
 			log: &domain.Log{ID: logID, UserID: userID},
 		}
 		clock := commondomain.NewMockClock(now)
-		updater := &mockLeaderboardScoreUpdater{}
+		updater := &mockLeaderboardUpdater{}
 		svc := domain.NewLogDelete(repo, clock, updater)
 
 		ctx := ctxWithUserSubject(userID.String())
@@ -82,7 +82,7 @@ func TestLogDelete_Execute(t *testing.T) {
 			log: &domain.Log{ID: logID, UserID: otherUserID},
 		}
 		clock := commondomain.NewMockClock(now)
-		updater := &mockLeaderboardScoreUpdater{}
+		updater := &mockLeaderboardUpdater{}
 		svc := domain.NewLogDelete(repo, clock, updater)
 
 		ctx := ctxWithUserSubject(userID.String())
@@ -98,7 +98,7 @@ func TestLogDelete_Execute(t *testing.T) {
 			log: &domain.Log{ID: logID, UserID: otherUserID},
 		}
 		clock := commondomain.NewMockClock(now)
-		updater := &mockLeaderboardScoreUpdater{}
+		updater := &mockLeaderboardUpdater{}
 		svc := domain.NewLogDelete(repo, clock, updater)
 
 		ctx := ctxWithAdminSubject(uuid.New().String())
@@ -114,7 +114,7 @@ func TestLogDelete_Execute(t *testing.T) {
 			findErr: domain.ErrNotFound,
 		}
 		clock := commondomain.NewMockClock(now)
-		updater := &mockLeaderboardScoreUpdater{}
+		updater := &mockLeaderboardUpdater{}
 		svc := domain.NewLogDelete(repo, clock, updater)
 
 		ctx := ctxWithUserSubject(userID.String())
@@ -131,7 +131,7 @@ func TestLogDelete_Execute(t *testing.T) {
 			deleteErr: errors.New("database error"),
 		}
 		clock := commondomain.NewMockClock(now)
-		updater := &mockLeaderboardScoreUpdater{}
+		updater := &mockLeaderboardUpdater{}
 		svc := domain.NewLogDelete(repo, clock, updater)
 
 		ctx := ctxWithUserSubject(userID.String())
@@ -151,7 +151,7 @@ func TestLogDelete_LeaderboardUpdates(t *testing.T) {
 	now := time.Date(2026, 3, 15, 10, 0, 0, 0, time.UTC)
 
 	t.Run("updates user contest score for each registration", func(t *testing.T) {
-		updater := &mockLeaderboardScoreUpdater{}
+		updater := &mockLeaderboardUpdater{}
 		repo := &mockLogDeleteRepository{
 			log: &domain.Log{
 				ID:     logID,
@@ -179,7 +179,7 @@ func TestLogDelete_LeaderboardUpdates(t *testing.T) {
 	})
 
 	t.Run("updates official scores when EligibleOfficialLeaderboard is true", func(t *testing.T) {
-		updater := &mockLeaderboardScoreUpdater{}
+		updater := &mockLeaderboardUpdater{}
 		repo := &mockLogDeleteRepository{
 			log: &domain.Log{
 				ID:                          logID,
@@ -206,7 +206,7 @@ func TestLogDelete_LeaderboardUpdates(t *testing.T) {
 	})
 
 	t.Run("does not update official scores when EligibleOfficialLeaderboard is false", func(t *testing.T) {
-		updater := &mockLeaderboardScoreUpdater{}
+		updater := &mockLeaderboardUpdater{}
 		repo := &mockLogDeleteRepository{
 			log: &domain.Log{
 				ID:                          logID,
@@ -231,7 +231,7 @@ func TestLogDelete_LeaderboardUpdates(t *testing.T) {
 	})
 
 	t.Run("does not update leaderboards when delete fails", func(t *testing.T) {
-		updater := &mockLeaderboardScoreUpdater{}
+		updater := &mockLeaderboardUpdater{}
 		repo := &mockLogDeleteRepository{
 			log: &domain.Log{
 				ID:     logID,

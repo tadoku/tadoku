@@ -15,6 +15,11 @@ type LogCreateRepository interface {
 	FindLogByID(context.Context, *LogFindRequest) (*Log, error)
 }
 
+type LogCreateLeaderboardUpdater interface {
+	UpdateUserContestScore(ctx context.Context, contestID uuid.UUID, userID uuid.UUID)
+	UpdateUserOfficialScores(ctx context.Context, year int, userID uuid.UUID)
+}
+
 type LogCreateRequest struct {
 	RegistrationIDs []uuid.UUID `validate:"required"`
 	UnitID          uuid.UUID   `validate:"required"`
@@ -34,14 +39,14 @@ type LogCreate struct {
 	clock              commondomain.Clock
 	validate           *validator.Validate
 	userUpsert         *UserUpsert
-	leaderboardUpdater LeaderboardScoreUpdater
+	leaderboardUpdater LogCreateLeaderboardUpdater
 }
 
 func NewLogCreate(
 	repo LogCreateRepository,
 	clock commondomain.Clock,
 	userUpsert *UserUpsert,
-	leaderboardUpdater LeaderboardScoreUpdater,
+	leaderboardUpdater LogCreateLeaderboardUpdater,
 ) *LogCreate {
 	return &LogCreate{
 		repo:               repo,

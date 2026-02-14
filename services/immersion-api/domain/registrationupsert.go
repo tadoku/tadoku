@@ -16,6 +16,10 @@ type RegistrationUpsertRepository interface {
 	DetachContestLogsForLanguages(context.Context, *DetachContestLogsForLanguagesRequest) error
 }
 
+type RegistrationUpsertLeaderboardUpdater interface {
+	UpdateUserContestScore(ctx context.Context, contestID uuid.UUID, userID uuid.UUID)
+}
+
 type RegistrationUpsertRequest struct {
 	ID            uuid.UUID
 	ContestID     uuid.UUID
@@ -32,13 +36,13 @@ type DetachContestLogsForLanguagesRequest struct {
 type RegistrationUpsert struct {
 	repo               RegistrationUpsertRepository
 	userUpsert         *UserUpsert
-	leaderboardUpdater LeaderboardScoreUpdater
+	leaderboardUpdater RegistrationUpsertLeaderboardUpdater
 }
 
 func NewRegistrationUpsert(
 	repo RegistrationUpsertRepository,
 	userUpsert *UserUpsert,
-	leaderboardUpdater LeaderboardScoreUpdater,
+	leaderboardUpdater RegistrationUpsertLeaderboardUpdater,
 ) *RegistrationUpsert {
 	return &RegistrationUpsert{
 		repo:               repo,

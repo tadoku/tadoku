@@ -19,7 +19,6 @@ go_library(
         "languagelist.go",
         "languageupdate.go",
         "leaderboardglobal.go",
-        "leaderboardstore.go",
         "leaderboardupdater.go",
         "leaderboardyearly.go",
         "logconfigurationoptions.go",

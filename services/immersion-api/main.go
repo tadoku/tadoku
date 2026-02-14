@@ -76,6 +76,7 @@ func main() {
 	defer valkeyClient.Close()
 
 	leaderboardStore := valkeystore.NewLeaderboardStore(valkeyClient)
+	leaderboardUpdater := immersiondomain.NewLeaderboardUpdater(leaderboardStore, postgresRepository)
 
 	e := echo.New()
 	e.Use(tadokumiddleware.Logger([]string{"/ping"}))
@@ -124,11 +125,11 @@ func main() {
 	profileFetch := immersiondomain.NewProfileFetch(kratosClient)
 	registrationListOngoing := immersiondomain.NewRegistrationListOngoing(postgresRepository, clock)
 	contestPermissionCheck := immersiondomain.NewContestPermissionCheck(postgresRepository, kratosClient, clock)
-	logDelete := immersiondomain.NewLogDelete(postgresRepository, clock, leaderboardStore, postgresRepository)
-	contestModerationDetachLog := immersiondomain.NewContestModerationDetachLog(postgresRepository, leaderboardStore, postgresRepository)
+	logDelete := immersiondomain.NewLogDelete(postgresRepository, clock, leaderboardUpdater)
+	contestModerationDetachLog := immersiondomain.NewContestModerationDetachLog(postgresRepository, leaderboardUpdater)
 	userUpsert := immersiondomain.NewUserUpsert(postgresRepository)
-	registrationUpsert := immersiondomain.NewRegistrationUpsert(postgresRepository, userUpsert, leaderboardStore, postgresRepository)
-	logCreate := immersiondomain.NewLogCreate(postgresRepository, clock, userUpsert, leaderboardStore, postgresRepository)
+	registrationUpsert := immersiondomain.NewRegistrationUpsert(postgresRepository, userUpsert, leaderboardUpdater)
+	logCreate := immersiondomain.NewLogCreate(postgresRepository, clock, userUpsert, leaderboardUpdater)
 	contestCreate := immersiondomain.NewContestCreate(postgresRepository, clock, userUpsert)
 	languageList := immersiondomain.NewLanguageList(postgresRepository)
 	languageCreate := immersiondomain.NewLanguageCreate(postgresRepository)

@@ -142,6 +142,69 @@ func (q *Queries) GlobalLeaderboardAllScores(ctx context.Context) ([]GlobalLeade
 	return items, nil
 }
 
+const userContestScore = `-- name: UserContestScore :one
+select
+  coalesce(sum(logs.score), 0)::real as score
+from logs
+inner join contest_logs on contest_logs.log_id = logs.id
+where
+  contest_logs.contest_id = $1
+  and logs.user_id = $2
+  and logs.deleted_at is null
+`
+
+type UserContestScoreParams struct {
+	ContestID uuid.UUID
+	UserID    uuid.UUID
+}
+
+func (q *Queries) UserContestScore(ctx context.Context, arg UserContestScoreParams) (float32, error) {
+	row := q.db.QueryRowContext(ctx, userContestScore, arg.ContestID, arg.UserID)
+	var score float32
+	err := row.Scan(&score)
+	return score, err
+}
+
+const userYearlyScore = `-- name: UserYearlyScore :one
+select
+  coalesce(sum(score), 0)::real as score
+from logs
+where
+  year = $1
+  and user_id = $2
+  and eligible_official_leaderboard = true
+  and deleted_at is null
+`
+
+type UserYearlyScoreParams struct {
+	Year   int16
+	UserID uuid.UUID
+}
+
+func (q *Queries) UserYearlyScore(ctx context.Context, arg UserYearlyScoreParams) (float32, error) {
+	row := q.db.QueryRowContext(ctx, userYearlyScore, arg.Year, arg.UserID)
+	var score float32
+	err := row.Scan(&score)
+	return score, err
+}
+
+const userGlobalScore = `-- name: UserGlobalScore :one
+select
+  coalesce(sum(score), 0)::real as score
+from logs
+where
+  user_id = $1
+  and eligible_official_leaderboard = true
+  and deleted_at is null
+`
+
+func (q *Queries) UserGlobalScore(ctx context.Context, userID uuid.UUID) (float32, error) {
+	row := q.db.QueryRowContext(ctx, userGlobalScore, userID)
+	var score float32
+	err := row.Scan(&score)
+	return score, err
+}
+
 const globalLeaderboard = `-- name: GlobalLeaderboard :many
 with leaderboard as (
   select

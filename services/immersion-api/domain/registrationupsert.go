@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log/slog"
 
 	"github.com/google/uuid"
 	commondomain "github.com/tadoku/tadoku/services/common/domain"
@@ -31,23 +30,20 @@ type DetachContestLogsForLanguagesRequest struct {
 }
 
 type RegistrationUpsert struct {
-	repo             RegistrationUpsertRepository
-	userUpsert       *UserUpsert
-	leaderboardStore LeaderboardStore
-	leaderboardRepo  LeaderboardRebuildRepository
+	repo               RegistrationUpsertRepository
+	userUpsert         *UserUpsert
+	leaderboardUpdater *LeaderboardUpdater
 }
 
 func NewRegistrationUpsert(
 	repo RegistrationUpsertRepository,
 	userUpsert *UserUpsert,
-	leaderboardStore LeaderboardStore,
-	leaderboardRepo LeaderboardRebuildRepository,
+	leaderboardUpdater *LeaderboardUpdater,
 ) *RegistrationUpsert {
 	return &RegistrationUpsert{
-		repo:             repo,
-		userUpsert:       userUpsert,
-		leaderboardStore: leaderboardStore,
-		leaderboardRepo:  leaderboardRepo,
+		repo:               repo,
+		userUpsert:         userUpsert,
+		leaderboardUpdater: leaderboardUpdater,
 	}
 }
 
@@ -135,18 +131,7 @@ func (s *RegistrationUpsert) Execute(ctx context.Context, req *RegistrationUpser
 	}
 
 	// Rebuild contest leaderboard — best effort, do not fail the registration
-	s.rebuildContestLeaderboard(ctx, req.ContestID)
+	s.leaderboardUpdater.RebuildContestLeaderboard(ctx, req.ContestID)
 
 	return nil
-}
-
-func (s *RegistrationUpsert) rebuildContestLeaderboard(ctx context.Context, contestID uuid.UUID) {
-	scores, err := s.leaderboardRepo.FetchAllContestLeaderboardScores(ctx, contestID)
-	if err != nil {
-		slog.ErrorContext(ctx, "failed to fetch contest leaderboard scores for rebuild after registration", "contest_id", contestID, "error", err)
-		return
-	}
-	if err := s.leaderboardStore.RebuildContestLeaderboard(ctx, contestID, scores); err != nil {
-		slog.ErrorContext(ctx, "failed to rebuild contest leaderboard after registration", "contest_id", contestID, "error", err)
-	}
 }

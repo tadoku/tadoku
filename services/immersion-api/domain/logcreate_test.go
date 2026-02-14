@@ -46,104 +46,120 @@ func (m *mockUserUpsertRepositoryForLog) UpsertUser(ctx context.Context, req *do
 	return m.err
 }
 
+// mockLeaderboardStore implements domain.LeaderboardStore for testing.
 type mockLeaderboardStore struct {
-	incrementContestCalls []leaderboardIncrementCall
-	incrementYearlyCalls  []leaderboardIncrementCall
-	incrementGlobalCalls  []leaderboardIncrementCall
-	rebuildContestCalls   []leaderboardRebuildCall
-	rebuildYearlyCalls    []leaderboardRebuildCall
-	rebuildGlobalCalls    int
+	updateContestCalls   []updateContestCall
+	updateOfficialCalls  []updateOfficialCall
+	rebuildContestCalls  []rebuildContestCall
+	rebuildOfficialCalls []rebuildOfficialCall
 
 	// Control behavior
-	incrementContestExists bool
-	incrementYearlyExists  bool
-	incrementGlobalExists  bool
-	incrementContestErr    error
-	incrementYearlyErr     error
-	incrementGlobalErr     error
-	rebuildContestErr      error
-	rebuildYearlyErr       error
-	rebuildGlobalErr       error
+	updateContestExists  bool
+	updateOfficialYearly bool
+	updateOfficialGlobal bool
+	updateContestErr     error
+	updateOfficialErr    error
+	rebuildContestErr    error
+	rebuildOfficialErr   error
 }
 
-type leaderboardIncrementCall struct {
+type updateContestCall struct {
 	ContestID uuid.UUID
-	Year      int
 	UserID    uuid.UUID
 	Score     float64
 }
 
-type leaderboardRebuildCall struct {
+type updateOfficialCall struct {
+	Year        int
+	UserID      uuid.UUID
+	YearlyScore float64
+	GlobalScore float64
+}
+
+type rebuildContestCall struct {
 	ContestID uuid.UUID
-	Year      int
 	Scores    []domain.LeaderboardScore
 }
 
-func (m *mockLeaderboardStore) IncrementContestScore(ctx context.Context, contestID uuid.UUID, userID uuid.UUID, score float64) (bool, error) {
-	m.incrementContestCalls = append(m.incrementContestCalls, leaderboardIncrementCall{
+type rebuildOfficialCall struct {
+	Year         int
+	YearlyScores []domain.LeaderboardScore
+	GlobalScores []domain.LeaderboardScore
+}
+
+func (m *mockLeaderboardStore) UpdateContestScore(ctx context.Context, contestID uuid.UUID, userID uuid.UUID, score float64) (bool, error) {
+	m.updateContestCalls = append(m.updateContestCalls, updateContestCall{
 		ContestID: contestID, UserID: userID, Score: score,
 	})
-	return m.incrementContestExists, m.incrementContestErr
+	return m.updateContestExists, m.updateContestErr
 }
 
-func (m *mockLeaderboardStore) IncrementYearlyScore(ctx context.Context, year int, userID uuid.UUID, score float64) (bool, error) {
-	m.incrementYearlyCalls = append(m.incrementYearlyCalls, leaderboardIncrementCall{
-		Year: year, UserID: userID, Score: score,
+func (m *mockLeaderboardStore) UpdateOfficialScores(ctx context.Context, year int, userID uuid.UUID, yearlyScore float64, globalScore float64) (bool, bool, error) {
+	m.updateOfficialCalls = append(m.updateOfficialCalls, updateOfficialCall{
+		Year: year, UserID: userID, YearlyScore: yearlyScore, GlobalScore: globalScore,
 	})
-	return m.incrementYearlyExists, m.incrementYearlyErr
-}
-
-func (m *mockLeaderboardStore) IncrementGlobalScore(ctx context.Context, userID uuid.UUID, score float64) (bool, error) {
-	m.incrementGlobalCalls = append(m.incrementGlobalCalls, leaderboardIncrementCall{
-		UserID: userID, Score: score,
-	})
-	return m.incrementGlobalExists, m.incrementGlobalErr
+	return m.updateOfficialYearly, m.updateOfficialGlobal, m.updateOfficialErr
 }
 
 func (m *mockLeaderboardStore) RebuildContestLeaderboard(ctx context.Context, contestID uuid.UUID, scores []domain.LeaderboardScore) error {
-	m.rebuildContestCalls = append(m.rebuildContestCalls, leaderboardRebuildCall{
+	m.rebuildContestCalls = append(m.rebuildContestCalls, rebuildContestCall{
 		ContestID: contestID, Scores: scores,
 	})
 	return m.rebuildContestErr
 }
 
-func (m *mockLeaderboardStore) RebuildYearlyLeaderboard(ctx context.Context, year int, scores []domain.LeaderboardScore) error {
-	m.rebuildYearlyCalls = append(m.rebuildYearlyCalls, leaderboardRebuildCall{
-		Year: year, Scores: scores,
+func (m *mockLeaderboardStore) RebuildOfficialLeaderboards(ctx context.Context, year int, yearlyScores []domain.LeaderboardScore, globalScores []domain.LeaderboardScore) error {
+	m.rebuildOfficialCalls = append(m.rebuildOfficialCalls, rebuildOfficialCall{
+		Year: year, YearlyScores: yearlyScores, GlobalScores: globalScores,
 	})
-	return m.rebuildYearlyErr
+	return m.rebuildOfficialErr
 }
 
-func (m *mockLeaderboardStore) RebuildGlobalLeaderboard(ctx context.Context, scores []domain.LeaderboardScore) error {
-	m.rebuildGlobalCalls++
-	return m.rebuildGlobalErr
+// mockLeaderboardRepo implements domain.LeaderboardRepository for testing.
+type mockLeaderboardRepo struct {
+	contestScores    []domain.LeaderboardScore
+	yearlyScores     []domain.LeaderboardScore
+	globalScores     []domain.LeaderboardScore
+	userContestScore float64
+	userYearlyScore  float64
+	userGlobalScore  float64
+	contestErr       error
+	yearlyErr        error
+	globalErr        error
+	userContestErr   error
+	userYearlyErr    error
+	userGlobalErr    error
 }
 
-type mockLeaderboardRebuildRepo struct {
-	contestScores []domain.LeaderboardScore
-	yearlyScores  []domain.LeaderboardScore
-	globalScores  []domain.LeaderboardScore
-	contestErr    error
-	yearlyErr     error
-	globalErr     error
-}
-
-func (m *mockLeaderboardRebuildRepo) FetchAllContestLeaderboardScores(ctx context.Context, contestID uuid.UUID) ([]domain.LeaderboardScore, error) {
+func (m *mockLeaderboardRepo) FetchAllContestLeaderboardScores(ctx context.Context, contestID uuid.UUID) ([]domain.LeaderboardScore, error) {
 	return m.contestScores, m.contestErr
 }
 
-func (m *mockLeaderboardRebuildRepo) FetchAllYearlyLeaderboardScores(ctx context.Context, year int) ([]domain.LeaderboardScore, error) {
+func (m *mockLeaderboardRepo) FetchAllYearlyLeaderboardScores(ctx context.Context, year int) ([]domain.LeaderboardScore, error) {
 	return m.yearlyScores, m.yearlyErr
 }
 
-func (m *mockLeaderboardRebuildRepo) FetchAllGlobalLeaderboardScores(ctx context.Context) ([]domain.LeaderboardScore, error) {
+func (m *mockLeaderboardRepo) FetchAllGlobalLeaderboardScores(ctx context.Context) ([]domain.LeaderboardScore, error) {
 	return m.globalScores, m.globalErr
 }
 
-func newLogCreateService(repo *mockLogCreateRepository, clock commondomain.Clock, store *mockLeaderboardStore, rebuildRepo *mockLeaderboardRebuildRepo) *domain.LogCreate {
+func (m *mockLeaderboardRepo) FetchUserContestScore(ctx context.Context, contestID uuid.UUID, userID uuid.UUID) (float64, error) {
+	return m.userContestScore, m.userContestErr
+}
+
+func (m *mockLeaderboardRepo) FetchUserYearlyScore(ctx context.Context, year int, userID uuid.UUID) (float64, error) {
+	return m.userYearlyScore, m.userYearlyErr
+}
+
+func (m *mockLeaderboardRepo) FetchUserGlobalScore(ctx context.Context, userID uuid.UUID) (float64, error) {
+	return m.userGlobalScore, m.userGlobalErr
+}
+
+func newLogCreateService(repo *mockLogCreateRepository, clock commondomain.Clock, store *mockLeaderboardStore, lbRepo *mockLeaderboardRepo) *domain.LogCreate {
 	userRepo := &mockUserUpsertRepositoryForLog{}
 	userUpsert := domain.NewUserUpsert(userRepo)
-	return domain.NewLogCreate(repo, clock, userUpsert, store, rebuildRepo)
+	updater := domain.NewLeaderboardUpdater(store, lbRepo)
+	return domain.NewLogCreate(repo, clock, userUpsert, updater)
 }
 
 func TestLogCreate_Execute(t *testing.T) {
@@ -184,10 +200,10 @@ func TestLogCreate_Execute(t *testing.T) {
 
 	t.Run("returns unauthorized for guest", func(t *testing.T) {
 		store := &mockLeaderboardStore{}
-		rebuildRepo := &mockLeaderboardRebuildRepo{}
+		lbRepo := &mockLeaderboardRepo{}
 		repo := &mockLogCreateRepository{}
 		clock := commondomain.NewMockClock(now)
-		svc := newLogCreateService(repo, clock, store, rebuildRepo)
+		svc := newLogCreateService(repo, clock, store, lbRepo)
 
 		ctx := ctxWithGuest()
 
@@ -199,10 +215,10 @@ func TestLogCreate_Execute(t *testing.T) {
 
 	t.Run("returns unauthorized for nil session", func(t *testing.T) {
 		store := &mockLeaderboardStore{}
-		rebuildRepo := &mockLeaderboardRebuildRepo{}
+		lbRepo := &mockLeaderboardRepo{}
 		repo := &mockLogCreateRepository{}
 		clock := commondomain.NewMockClock(now)
-		svc := newLogCreateService(repo, clock, store, rebuildRepo)
+		svc := newLogCreateService(repo, clock, store, lbRepo)
 
 		_, err := svc.Execute(context.Background(), &domain.LogCreateRequest{})
 
@@ -212,10 +228,10 @@ func TestLogCreate_Execute(t *testing.T) {
 
 	t.Run("returns error for invalid request (missing required fields)", func(t *testing.T) {
 		store := &mockLeaderboardStore{}
-		rebuildRepo := &mockLeaderboardRebuildRepo{}
+		lbRepo := &mockLeaderboardRepo{}
 		repo := &mockLogCreateRepository{}
 		clock := commondomain.NewMockClock(now)
-		svc := newLogCreateService(repo, clock, store, rebuildRepo)
+		svc := newLogCreateService(repo, clock, store, lbRepo)
 
 		ctx := ctxWithUserSubject(userID.String())
 
@@ -229,12 +245,12 @@ func TestLogCreate_Execute(t *testing.T) {
 
 	t.Run("returns error when registration not found for user", func(t *testing.T) {
 		store := &mockLeaderboardStore{}
-		rebuildRepo := &mockLeaderboardRebuildRepo{}
+		lbRepo := &mockLeaderboardRepo{}
 		repo := &mockLogCreateRepository{
 			registrations: &domain.ContestRegistrations{Registrations: []domain.ContestRegistration{}},
 		}
 		clock := commondomain.NewMockClock(now)
-		svc := newLogCreateService(repo, clock, store, rebuildRepo)
+		svc := newLogCreateService(repo, clock, store, lbRepo)
 
 		ctx := ctxWithUserSubject(userID.String())
 
@@ -252,12 +268,12 @@ func TestLogCreate_Execute(t *testing.T) {
 
 	t.Run("returns error when language not allowed by registration", func(t *testing.T) {
 		store := &mockLeaderboardStore{}
-		rebuildRepo := &mockLeaderboardRebuildRepo{}
+		lbRepo := &mockLeaderboardRepo{}
 		repo := &mockLogCreateRepository{
 			registrations: validRegistrations,
 		}
 		clock := commondomain.NewMockClock(now)
-		svc := newLogCreateService(repo, clock, store, rebuildRepo)
+		svc := newLogCreateService(repo, clock, store, lbRepo)
 
 		ctx := ctxWithUserSubject(userID.String())
 
@@ -275,12 +291,12 @@ func TestLogCreate_Execute(t *testing.T) {
 
 	t.Run("returns error when activity not allowed by contest", func(t *testing.T) {
 		store := &mockLeaderboardStore{}
-		rebuildRepo := &mockLeaderboardRebuildRepo{}
+		lbRepo := &mockLeaderboardRepo{}
 		repo := &mockLogCreateRepository{
 			registrations: validRegistrations,
 		}
 		clock := commondomain.NewMockClock(now)
-		svc := newLogCreateService(repo, clock, store, rebuildRepo)
+		svc := newLogCreateService(repo, clock, store, lbRepo)
 
 		ctx := ctxWithUserSubject(userID.String())
 
@@ -297,15 +313,15 @@ func TestLogCreate_Execute(t *testing.T) {
 	})
 
 	t.Run("successfully creates log", func(t *testing.T) {
-		store := &mockLeaderboardStore{incrementContestExists: true}
-		rebuildRepo := &mockLeaderboardRebuildRepo{}
+		store := &mockLeaderboardStore{updateContestExists: true}
+		lbRepo := &mockLeaderboardRepo{userContestScore: 50}
 		repo := &mockLogCreateRepository{
 			registrations: validRegistrations,
 			createdLogID:  &logID,
 			log:           createdLog,
 		}
 		clock := commondomain.NewMockClock(now)
-		svc := newLogCreateService(repo, clock, store, rebuildRepo)
+		svc := newLogCreateService(repo, clock, store, lbRepo)
 
 		ctx := ctxWithUserSubject(userID.String())
 
@@ -343,18 +359,18 @@ func TestLogCreate_Execute(t *testing.T) {
 		}
 
 		store := &mockLeaderboardStore{
-			incrementContestExists: true,
-			incrementYearlyExists:  true,
-			incrementGlobalExists:  true,
+			updateContestExists:  true,
+			updateOfficialYearly: true,
+			updateOfficialGlobal: true,
 		}
-		rebuildRepo := &mockLeaderboardRebuildRepo{}
+		lbRepo := &mockLeaderboardRepo{userContestScore: 50, userYearlyScore: 50, userGlobalScore: 50}
 		repo := &mockLogCreateRepository{
 			registrations: officialRegistrations,
 			createdLogID:  &logID,
 			log:           createdLog,
 		}
 		clock := commondomain.NewMockClock(now)
-		svc := newLogCreateService(repo, clock, store, rebuildRepo)
+		svc := newLogCreateService(repo, clock, store, lbRepo)
 
 		ctx := ctxWithUserSubject(userID.String())
 
@@ -379,9 +395,9 @@ func TestLogCreate_LeaderboardUpdates(t *testing.T) {
 	unitID := uuid.New()
 	now := time.Date(2026, 3, 15, 10, 0, 0, 0, time.UTC)
 
-	t.Run("increments contest leaderboard when it exists in store", func(t *testing.T) {
-		store := &mockLeaderboardStore{incrementContestExists: true}
-		rebuildRepo := &mockLeaderboardRebuildRepo{}
+	t.Run("recalculates user contest score when leaderboard exists in store", func(t *testing.T) {
+		store := &mockLeaderboardStore{updateContestExists: true}
+		lbRepo := &mockLeaderboardRepo{userContestScore: 142.5}
 		repo := &mockLogCreateRepository{
 			registrations: &domain.ContestRegistrations{
 				Registrations: []domain.ContestRegistration{
@@ -409,7 +425,7 @@ func TestLogCreate_LeaderboardUpdates(t *testing.T) {
 			},
 		}
 		clock := commondomain.NewMockClock(now)
-		svc := newLogCreateService(repo, clock, store, rebuildRepo)
+		svc := newLogCreateService(repo, clock, store, lbRepo)
 
 		ctx := ctxWithUserSubject(userID.String())
 		_, err := svc.Execute(ctx, &domain.LogCreateRequest{
@@ -421,10 +437,10 @@ func TestLogCreate_LeaderboardUpdates(t *testing.T) {
 		})
 
 		require.NoError(t, err)
-		require.Len(t, store.incrementContestCalls, 1)
-		assert.Equal(t, contestID, store.incrementContestCalls[0].ContestID)
-		assert.Equal(t, userID, store.incrementContestCalls[0].UserID)
-		assert.InDelta(t, 42.5, store.incrementContestCalls[0].Score, 0.01)
+		require.Len(t, store.updateContestCalls, 1)
+		assert.Equal(t, contestID, store.updateContestCalls[0].ContestID)
+		assert.Equal(t, userID, store.updateContestCalls[0].UserID)
+		assert.InDelta(t, 142.5, store.updateContestCalls[0].Score, 0.01)
 		assert.Empty(t, store.rebuildContestCalls)
 	})
 
@@ -433,8 +449,8 @@ func TestLogCreate_LeaderboardUpdates(t *testing.T) {
 			{UserID: userID, Score: 42.5},
 			{UserID: uuid.New(), Score: 100},
 		}
-		store := &mockLeaderboardStore{incrementContestExists: false}
-		rebuildRepo := &mockLeaderboardRebuildRepo{contestScores: dbScores}
+		store := &mockLeaderboardStore{updateContestExists: false}
+		lbRepo := &mockLeaderboardRepo{userContestScore: 42.5, contestScores: dbScores}
 		repo := &mockLogCreateRepository{
 			registrations: &domain.ContestRegistrations{
 				Registrations: []domain.ContestRegistration{
@@ -462,7 +478,7 @@ func TestLogCreate_LeaderboardUpdates(t *testing.T) {
 			},
 		}
 		clock := commondomain.NewMockClock(now)
-		svc := newLogCreateService(repo, clock, store, rebuildRepo)
+		svc := newLogCreateService(repo, clock, store, lbRepo)
 
 		ctx := ctxWithUserSubject(userID.String())
 		_, err := svc.Execute(ctx, &domain.LogCreateRequest{
@@ -481,11 +497,15 @@ func TestLogCreate_LeaderboardUpdates(t *testing.T) {
 
 	t.Run("updates yearly and global leaderboards for official contests", func(t *testing.T) {
 		store := &mockLeaderboardStore{
-			incrementContestExists: true,
-			incrementYearlyExists:  true,
-			incrementGlobalExists:  true,
+			updateContestExists:  true,
+			updateOfficialYearly: true,
+			updateOfficialGlobal: true,
 		}
-		rebuildRepo := &mockLeaderboardRebuildRepo{}
+		lbRepo := &mockLeaderboardRepo{
+			userContestScore: 50,
+			userYearlyScore:  200,
+			userGlobalScore:  500,
+		}
 		repo := &mockLogCreateRepository{
 			registrations: &domain.ContestRegistrations{
 				Registrations: []domain.ContestRegistration{
@@ -513,7 +533,7 @@ func TestLogCreate_LeaderboardUpdates(t *testing.T) {
 			},
 		}
 		clock := commondomain.NewMockClock(now)
-		svc := newLogCreateService(repo, clock, store, rebuildRepo)
+		svc := newLogCreateService(repo, clock, store, lbRepo)
 
 		ctx := ctxWithUserSubject(userID.String())
 		_, err := svc.Execute(ctx, &domain.LogCreateRequest{
@@ -526,25 +546,21 @@ func TestLogCreate_LeaderboardUpdates(t *testing.T) {
 
 		require.NoError(t, err)
 
-		// Contest leaderboard updated
-		require.Len(t, store.incrementContestCalls, 1)
-		assert.Equal(t, contestID, store.incrementContestCalls[0].ContestID)
+		// Contest leaderboard updated with recalculated score
+		require.Len(t, store.updateContestCalls, 1)
+		assert.Equal(t, contestID, store.updateContestCalls[0].ContestID)
 
-		// Yearly leaderboard updated
-		require.Len(t, store.incrementYearlyCalls, 1)
-		assert.Equal(t, 2026, store.incrementYearlyCalls[0].Year)
-		assert.Equal(t, userID, store.incrementYearlyCalls[0].UserID)
-		assert.InDelta(t, 50, store.incrementYearlyCalls[0].Score, 0.01)
-
-		// Global leaderboard updated
-		require.Len(t, store.incrementGlobalCalls, 1)
-		assert.Equal(t, userID, store.incrementGlobalCalls[0].UserID)
-		assert.InDelta(t, 50, store.incrementGlobalCalls[0].Score, 0.01)
+		// Official leaderboards updated with recalculated scores (pipelined)
+		require.Len(t, store.updateOfficialCalls, 1)
+		assert.Equal(t, 2026, store.updateOfficialCalls[0].Year)
+		assert.Equal(t, userID, store.updateOfficialCalls[0].UserID)
+		assert.InDelta(t, 200, store.updateOfficialCalls[0].YearlyScore, 0.01)
+		assert.InDelta(t, 500, store.updateOfficialCalls[0].GlobalScore, 0.01)
 	})
 
 	t.Run("does not update yearly or global for unofficial contests", func(t *testing.T) {
-		store := &mockLeaderboardStore{incrementContestExists: true}
-		rebuildRepo := &mockLeaderboardRebuildRepo{}
+		store := &mockLeaderboardStore{updateContestExists: true}
+		lbRepo := &mockLeaderboardRepo{userContestScore: 50}
 		repo := &mockLogCreateRepository{
 			registrations: &domain.ContestRegistrations{
 				Registrations: []domain.ContestRegistration{
@@ -572,7 +588,7 @@ func TestLogCreate_LeaderboardUpdates(t *testing.T) {
 			},
 		}
 		clock := commondomain.NewMockClock(now)
-		svc := newLogCreateService(repo, clock, store, rebuildRepo)
+		svc := newLogCreateService(repo, clock, store, lbRepo)
 
 		ctx := ctxWithUserSubject(userID.String())
 		_, err := svc.Execute(ctx, &domain.LogCreateRequest{
@@ -584,17 +600,16 @@ func TestLogCreate_LeaderboardUpdates(t *testing.T) {
 		})
 
 		require.NoError(t, err)
-		assert.Len(t, store.incrementContestCalls, 1)
-		assert.Empty(t, store.incrementYearlyCalls)
-		assert.Empty(t, store.incrementGlobalCalls)
+		assert.Len(t, store.updateContestCalls, 1)
+		assert.Empty(t, store.updateOfficialCalls)
 	})
 
 	t.Run("updates multiple contest leaderboards", func(t *testing.T) {
 		contestID2 := uuid.New()
 		registrationID2 := uuid.New()
 
-		store := &mockLeaderboardStore{incrementContestExists: true}
-		rebuildRepo := &mockLeaderboardRebuildRepo{}
+		store := &mockLeaderboardStore{updateContestExists: true}
+		lbRepo := &mockLeaderboardRepo{userContestScore: 25}
 		repo := &mockLogCreateRepository{
 			registrations: &domain.ContestRegistrations{
 				Registrations: []domain.ContestRegistration{
@@ -631,7 +646,7 @@ func TestLogCreate_LeaderboardUpdates(t *testing.T) {
 			},
 		}
 		clock := commondomain.NewMockClock(now)
-		svc := newLogCreateService(repo, clock, store, rebuildRepo)
+		svc := newLogCreateService(repo, clock, store, lbRepo)
 
 		ctx := ctxWithUserSubject(userID.String())
 		_, err := svc.Execute(ctx, &domain.LogCreateRequest{
@@ -643,16 +658,16 @@ func TestLogCreate_LeaderboardUpdates(t *testing.T) {
 		})
 
 		require.NoError(t, err)
-		require.Len(t, store.incrementContestCalls, 2)
-		assert.Equal(t, contestID, store.incrementContestCalls[0].ContestID)
-		assert.Equal(t, contestID2, store.incrementContestCalls[1].ContestID)
+		require.Len(t, store.updateContestCalls, 2)
+		assert.Equal(t, contestID, store.updateContestCalls[0].ContestID)
+		assert.Equal(t, contestID2, store.updateContestCalls[1].ContestID)
 	})
 
 	t.Run("leaderboard store errors do not fail log creation", func(t *testing.T) {
 		store := &mockLeaderboardStore{
-			incrementContestErr: errors.New("redis connection refused"),
+			updateContestErr: errors.New("redis connection refused"),
 		}
-		rebuildRepo := &mockLeaderboardRebuildRepo{}
+		lbRepo := &mockLeaderboardRepo{userContestScore: 50}
 		repo := &mockLogCreateRepository{
 			registrations: &domain.ContestRegistrations{
 				Registrations: []domain.ContestRegistration{
@@ -678,7 +693,7 @@ func TestLogCreate_LeaderboardUpdates(t *testing.T) {
 			},
 		}
 		clock := commondomain.NewMockClock(now)
-		svc := newLogCreateService(repo, clock, store, rebuildRepo)
+		svc := newLogCreateService(repo, clock, store, lbRepo)
 
 		ctx := ctxWithUserSubject(userID.String())
 		result, err := svc.Execute(ctx, &domain.LogCreateRequest{
@@ -695,10 +710,11 @@ func TestLogCreate_LeaderboardUpdates(t *testing.T) {
 
 	t.Run("rebuild errors do not fail log creation", func(t *testing.T) {
 		store := &mockLeaderboardStore{
-			incrementContestExists: false,
+			updateContestExists: false,
 		}
-		rebuildRepo := &mockLeaderboardRebuildRepo{
-			contestErr: errors.New("database timeout"),
+		lbRepo := &mockLeaderboardRepo{
+			userContestScore: 50,
+			contestErr:       errors.New("database timeout"),
 		}
 		repo := &mockLogCreateRepository{
 			registrations: &domain.ContestRegistrations{
@@ -725,7 +741,7 @@ func TestLogCreate_LeaderboardUpdates(t *testing.T) {
 			},
 		}
 		clock := commondomain.NewMockClock(now)
-		svc := newLogCreateService(repo, clock, store, rebuildRepo)
+		svc := newLogCreateService(repo, clock, store, lbRepo)
 
 		ctx := ctxWithUserSubject(userID.String())
 		result, err := svc.Execute(ctx, &domain.LogCreateRequest{

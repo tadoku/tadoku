@@ -144,6 +144,41 @@ where
 group by user_id
 having sum(score) > 0;
 
+-- name: UserContestScore :one
+-- Returns a single user's total score for a contest.
+-- Used for updating a user's score in the Redis leaderboard.
+select
+  coalesce(sum(logs.score), 0)::real as score
+from logs
+inner join contest_logs on contest_logs.log_id = logs.id
+where
+  contest_logs.contest_id = sqlc.arg('contest_id')
+  and logs.user_id = sqlc.arg('user_id')
+  and logs.deleted_at is null;
+
+-- name: UserYearlyScore :one
+-- Returns a single user's total score for a year (official logs only).
+-- Used for updating a user's score in the Redis leaderboard.
+select
+  coalesce(sum(score), 0)::real as score
+from logs
+where
+  year = sqlc.arg('year')
+  and user_id = sqlc.arg('user_id')
+  and eligible_official_leaderboard = true
+  and deleted_at is null;
+
+-- name: UserGlobalScore :one
+-- Returns a single user's total global score (official logs only).
+-- Used for updating a user's score in the Redis leaderboard.
+select
+  coalesce(sum(score), 0)::real as score
+from logs
+where
+  user_id = sqlc.arg('user_id')
+  and eligible_official_leaderboard = true
+  and deleted_at is null;
+
 -- name: GlobalLeaderboard :many
 with leaderboard as (
   select

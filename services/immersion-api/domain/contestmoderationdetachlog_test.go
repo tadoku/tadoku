@@ -58,8 +58,9 @@ func TestContestModerationDetachLog_Execute(t *testing.T) {
 	t.Run("returns unauthorized for guest", func(t *testing.T) {
 		repo := &mockContestModerationDetachLogRepository{}
 		store := &mockLeaderboardStore{}
-		rebuildRepo := &mockLeaderboardRebuildRepo{}
-		svc := domain.NewContestModerationDetachLog(repo, store, rebuildRepo)
+		lbRepo := &mockLeaderboardRepo{}
+		updater := domain.NewLeaderboardUpdater(store, lbRepo)
+		svc := domain.NewContestModerationDetachLog(repo, updater)
 
 		ctx := ctxWithGuest()
 
@@ -76,8 +77,9 @@ func TestContestModerationDetachLog_Execute(t *testing.T) {
 	t.Run("returns unauthorized for nil session", func(t *testing.T) {
 		repo := &mockContestModerationDetachLogRepository{}
 		store := &mockLeaderboardStore{}
-		rebuildRepo := &mockLeaderboardRebuildRepo{}
-		svc := domain.NewContestModerationDetachLog(repo, store, rebuildRepo)
+		lbRepo := &mockLeaderboardRepo{}
+		updater := domain.NewLeaderboardUpdater(store, lbRepo)
+		svc := domain.NewContestModerationDetachLog(repo, updater)
 
 		err := svc.Execute(context.Background(), &domain.ContestModerationDetachLogRequest{
 			ContestID: contestID,
@@ -94,8 +96,9 @@ func TestContestModerationDetachLog_Execute(t *testing.T) {
 			findContestErr: domain.ErrNotFound,
 		}
 		store := &mockLeaderboardStore{}
-		rebuildRepo := &mockLeaderboardRebuildRepo{}
-		svc := domain.NewContestModerationDetachLog(repo, store, rebuildRepo)
+		lbRepo := &mockLeaderboardRepo{}
+		updater := domain.NewLeaderboardUpdater(store, lbRepo)
+		svc := domain.NewContestModerationDetachLog(repo, updater)
 
 		ctx := ctxWithUserSubject(userID.String())
 
@@ -114,8 +117,9 @@ func TestContestModerationDetachLog_Execute(t *testing.T) {
 			contest: contest,
 		}
 		store := &mockLeaderboardStore{}
-		rebuildRepo := &mockLeaderboardRebuildRepo{}
-		svc := domain.NewContestModerationDetachLog(repo, store, rebuildRepo)
+		lbRepo := &mockLeaderboardRepo{}
+		updater := domain.NewLeaderboardUpdater(store, lbRepo)
+		svc := domain.NewContestModerationDetachLog(repo, updater)
 
 		ctx := ctxWithUserSubject(otherUserID.String()) // Not the owner
 
@@ -135,8 +139,9 @@ func TestContestModerationDetachLog_Execute(t *testing.T) {
 			findLogErr: domain.ErrNotFound,
 		}
 		store := &mockLeaderboardStore{}
-		rebuildRepo := &mockLeaderboardRebuildRepo{}
-		svc := domain.NewContestModerationDetachLog(repo, store, rebuildRepo)
+		lbRepo := &mockLeaderboardRepo{}
+		updater := domain.NewLeaderboardUpdater(store, lbRepo)
+		svc := domain.NewContestModerationDetachLog(repo, updater)
 
 		ctx := ctxWithUserSubject(userID.String())
 
@@ -156,8 +161,9 @@ func TestContestModerationDetachLog_Execute(t *testing.T) {
 			log:     log,
 		}
 		store := &mockLeaderboardStore{}
-		rebuildRepo := &mockLeaderboardRebuildRepo{}
-		svc := domain.NewContestModerationDetachLog(repo, store, rebuildRepo)
+		lbRepo := &mockLeaderboardRepo{}
+		updater := domain.NewLeaderboardUpdater(store, lbRepo)
+		svc := domain.NewContestModerationDetachLog(repo, updater)
 
 		ctx := ctxWithUserSubject(userID.String()) // Contest owner
 
@@ -178,8 +184,9 @@ func TestContestModerationDetachLog_Execute(t *testing.T) {
 			log:     log,
 		}
 		store := &mockLeaderboardStore{}
-		rebuildRepo := &mockLeaderboardRebuildRepo{}
-		svc := domain.NewContestModerationDetachLog(repo, store, rebuildRepo)
+		lbRepo := &mockLeaderboardRepo{}
+		updater := domain.NewLeaderboardUpdater(store, lbRepo)
+		svc := domain.NewContestModerationDetachLog(repo, updater)
 
 		adminID := uuid.New()
 		ctx := ctxWithAdminSubject(adminID.String())
@@ -202,8 +209,9 @@ func TestContestModerationDetachLog_Execute(t *testing.T) {
 			detachErr: errors.New("database error"),
 		}
 		store := &mockLeaderboardStore{}
-		rebuildRepo := &mockLeaderboardRebuildRepo{}
-		svc := domain.NewContestModerationDetachLog(repo, store, rebuildRepo)
+		lbRepo := &mockLeaderboardRepo{}
+		updater := domain.NewLeaderboardUpdater(store, lbRepo)
+		svc := domain.NewContestModerationDetachLog(repo, updater)
 
 		ctx := ctxWithUserSubject(userID.String())
 
@@ -238,13 +246,17 @@ func TestContestModerationDetachLog_LeaderboardUpdates(t *testing.T) {
 	}
 
 	t.Run("rebuilds contest leaderboard after successful detach", func(t *testing.T) {
+		dbScores := []domain.LeaderboardScore{
+			{UserID: otherUserID, Score: 100},
+		}
 		repo := &mockContestModerationDetachLogRepository{
 			contest: contest,
 			log:     log,
 		}
 		store := &mockLeaderboardStore{}
-		rebuildRepo := &mockLeaderboardRebuildRepo{}
-		svc := domain.NewContestModerationDetachLog(repo, store, rebuildRepo)
+		lbRepo := &mockLeaderboardRepo{contestScores: dbScores}
+		updater := domain.NewLeaderboardUpdater(store, lbRepo)
+		svc := domain.NewContestModerationDetachLog(repo, updater)
 
 		ctx := ctxWithUserSubject(userID.String())
 
@@ -258,6 +270,7 @@ func TestContestModerationDetachLog_LeaderboardUpdates(t *testing.T) {
 		assert.True(t, repo.detachCalled)
 		require.Len(t, store.rebuildContestCalls, 1)
 		assert.Equal(t, contestID, store.rebuildContestCalls[0].ContestID)
+		assert.Equal(t, dbScores, store.rebuildContestCalls[0].Scores)
 	})
 
 	t.Run("leaderboard rebuild error does not fail the detach", func(t *testing.T) {
@@ -268,8 +281,9 @@ func TestContestModerationDetachLog_LeaderboardUpdates(t *testing.T) {
 		store := &mockLeaderboardStore{
 			rebuildContestErr: errors.New("redis unavailable"),
 		}
-		rebuildRepo := &mockLeaderboardRebuildRepo{}
-		svc := domain.NewContestModerationDetachLog(repo, store, rebuildRepo)
+		lbRepo := &mockLeaderboardRepo{}
+		updater := domain.NewLeaderboardUpdater(store, lbRepo)
+		svc := domain.NewContestModerationDetachLog(repo, updater)
 
 		ctx := ctxWithAdminSubject(uuid.New().String())
 
@@ -289,10 +303,11 @@ func TestContestModerationDetachLog_LeaderboardUpdates(t *testing.T) {
 			log:     log,
 		}
 		store := &mockLeaderboardStore{}
-		rebuildRepo := &mockLeaderboardRebuildRepo{
+		lbRepo := &mockLeaderboardRepo{
 			contestErr: errors.New("database timeout"),
 		}
-		svc := domain.NewContestModerationDetachLog(repo, store, rebuildRepo)
+		updater := domain.NewLeaderboardUpdater(store, lbRepo)
+		svc := domain.NewContestModerationDetachLog(repo, updater)
 
 		ctx := ctxWithUserSubject(userID.String())
 

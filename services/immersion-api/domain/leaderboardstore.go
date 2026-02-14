@@ -15,35 +15,30 @@ type LeaderboardScore struct {
 // LeaderboardStore manages leaderboard sorted sets in a fast key-value store.
 // Only unfiltered (main) leaderboards are stored — no language or activity filters.
 type LeaderboardStore interface {
-	// IncrementContestScore atomically increments a user's score in a contest leaderboard.
-	// Returns true if the leaderboard existed and the score was incremented.
-	// Returns false if the leaderboard does not exist yet (needs rebuild).
-	IncrementContestScore(ctx context.Context, contestID uuid.UUID, userID uuid.UUID, score float64) (bool, error)
+	// UpdateContestScore sets a user's absolute score in a contest leaderboard.
+	// Only updates if the leaderboard already exists in the store.
+	// Returns true if the leaderboard existed and the score was set.
+	UpdateContestScore(ctx context.Context, contestID uuid.UUID, userID uuid.UUID, score float64) (bool, error)
 
-	// IncrementYearlyScore atomically increments a user's score in a yearly leaderboard.
-	// Returns true if the leaderboard existed and the score was incremented.
-	// Returns false if the leaderboard does not exist yet (needs rebuild).
-	IncrementYearlyScore(ctx context.Context, year int, userID uuid.UUID, score float64) (bool, error)
-
-	// IncrementGlobalScore atomically increments a user's score in the global leaderboard.
-	// Returns true if the leaderboard existed and the score was incremented.
-	// Returns false if the leaderboard does not exist yet (needs rebuild).
-	IncrementGlobalScore(ctx context.Context, userID uuid.UUID, score float64) (bool, error)
+	// UpdateOfficialScores atomically sets a user's yearly and global scores.
+	// Only updates leaderboards that already exist in the store.
+	// Returns which leaderboards were updated (yearlyUpdated, globalUpdated).
+	UpdateOfficialScores(ctx context.Context, year int, userID uuid.UUID, yearlyScore float64, globalScore float64) (yearlyUpdated bool, globalUpdated bool, err error)
 
 	// RebuildContestLeaderboard atomically replaces a contest leaderboard with the given scores.
 	RebuildContestLeaderboard(ctx context.Context, contestID uuid.UUID, scores []LeaderboardScore) error
 
-	// RebuildYearlyLeaderboard atomically replaces a yearly leaderboard with the given scores.
-	RebuildYearlyLeaderboard(ctx context.Context, year int, scores []LeaderboardScore) error
-
-	// RebuildGlobalLeaderboard atomically replaces the global leaderboard with the given scores.
-	RebuildGlobalLeaderboard(ctx context.Context, scores []LeaderboardScore) error
+	// RebuildOfficialLeaderboards atomically replaces both yearly and global leaderboards.
+	RebuildOfficialLeaderboards(ctx context.Context, year int, yearlyScores []LeaderboardScore, globalScores []LeaderboardScore) error
 }
 
-// LeaderboardRebuildRepository provides queries for fetching all leaderboard scores
-// from the database, used when a leaderboard needs to be rebuilt in the store.
-type LeaderboardRebuildRepository interface {
+// LeaderboardRepository provides queries for fetching leaderboard scores
+// from the database, used for updating and rebuilding leaderboards in the store.
+type LeaderboardRepository interface {
 	FetchAllContestLeaderboardScores(ctx context.Context, contestID uuid.UUID) ([]LeaderboardScore, error)
 	FetchAllYearlyLeaderboardScores(ctx context.Context, year int) ([]LeaderboardScore, error)
 	FetchAllGlobalLeaderboardScores(ctx context.Context) ([]LeaderboardScore, error)
+	FetchUserContestScore(ctx context.Context, contestID uuid.UUID, userID uuid.UUID) (float64, error)
+	FetchUserYearlyScore(ctx context.Context, year int, userID uuid.UUID) (float64, error)
+	FetchUserGlobalScore(ctx context.Context, userID uuid.UUID) (float64, error)
 }

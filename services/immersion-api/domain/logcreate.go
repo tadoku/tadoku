@@ -3,7 +3,6 @@ package domain
 import (
 	"context"
 	"fmt"
-	"log/slog"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
@@ -31,28 +30,25 @@ type LogCreateRequest struct {
 }
 
 type LogCreate struct {
-	repo             LogCreateRepository
-	clock            commondomain.Clock
-	validate         *validator.Validate
-	userUpsert       *UserUpsert
-	leaderboardStore LeaderboardStore
-	leaderboardRepo  LeaderboardRebuildRepository
+	repo               LogCreateRepository
+	clock              commondomain.Clock
+	validate           *validator.Validate
+	userUpsert         *UserUpsert
+	leaderboardUpdater *LeaderboardUpdater
 }
 
 func NewLogCreate(
 	repo LogCreateRepository,
 	clock commondomain.Clock,
 	userUpsert *UserUpsert,
-	leaderboardStore LeaderboardStore,
-	leaderboardRepo LeaderboardRebuildRepository,
+	leaderboardUpdater *LeaderboardUpdater,
 ) *LogCreate {
 	return &LogCreate{
-		repo:             repo,
-		clock:            clock,
-		validate:         validator.New(),
-		userUpsert:       userUpsert,
-		leaderboardStore: leaderboardStore,
-		leaderboardRepo:  leaderboardRepo,
+		repo:               repo,
+		clock:              clock,
+		validate:           validator.New(),
+		userUpsert:         userUpsert,
+		leaderboardUpdater: leaderboardUpdater,
 	}
 }
 
@@ -146,93 +142,24 @@ func (s *LogCreate) Execute(ctx context.Context, req *LogCreateRequest) (*Log, e
 		return nil, err
 	}
 
-	// Update leaderboards in Redis — best effort, do not fail the log creation
+	// Update leaderboards — best effort, do not fail the log creation
 	s.updateLeaderboards(ctx, req, validContestIDs, log)
 
 	return log, nil
 }
 
-// updateLeaderboards updates all relevant Redis leaderboards after a log is created.
-// For each attached contest: increment the user's score (or rebuild if the leaderboard doesn't exist).
-// For official contests: also update yearly and global leaderboards.
-// Errors are logged but do not fail the log creation.
+// updateLeaderboards recalculates the user's score for all relevant leaderboards.
+// For each attached contest: recalculate the user's total contest score.
+// For official contests: also recalculate yearly and global scores (pipelined).
 func (s *LogCreate) updateLeaderboards(ctx context.Context, req *LogCreateRequest, validContestIDs map[uuid.UUID]ContestRegistration, log *Log) {
-	score := float64(log.Score)
 	year := log.CreatedAt.Year()
 
 	for _, regID := range req.RegistrationIDs {
 		registration := validContestIDs[regID]
-		contestID := registration.ContestID
-
-		s.updateContestLeaderboard(ctx, contestID, req.UserID, score)
+		s.leaderboardUpdater.UpdateUserContestScore(ctx, registration.ContestID, req.UserID)
 	}
 
 	if req.EligibleOfficialLeaderboard {
-		s.updateYearlyLeaderboard(ctx, year, req.UserID, score)
-		s.updateGlobalLeaderboard(ctx, req.UserID, score)
-	}
-}
-
-func (s *LogCreate) updateContestLeaderboard(ctx context.Context, contestID uuid.UUID, userID uuid.UUID, score float64) {
-	updated, err := s.leaderboardStore.IncrementContestScore(ctx, contestID, userID, score)
-	if err != nil {
-		slog.ErrorContext(ctx, "failed to increment contest leaderboard", "contest_id", contestID, "error", err)
-		return
-	}
-	if updated {
-		return
-	}
-
-	// Leaderboard doesn't exist in Redis yet, rebuild from database
-	scores, err := s.leaderboardRepo.FetchAllContestLeaderboardScores(ctx, contestID)
-	if err != nil {
-		slog.ErrorContext(ctx, "failed to fetch contest leaderboard scores for rebuild", "contest_id", contestID, "error", err)
-		return
-	}
-
-	if err := s.leaderboardStore.RebuildContestLeaderboard(ctx, contestID, scores); err != nil {
-		slog.ErrorContext(ctx, "failed to rebuild contest leaderboard", "contest_id", contestID, "error", err)
-	}
-}
-
-func (s *LogCreate) updateYearlyLeaderboard(ctx context.Context, year int, userID uuid.UUID, score float64) {
-	updated, err := s.leaderboardStore.IncrementYearlyScore(ctx, year, userID, score)
-	if err != nil {
-		slog.ErrorContext(ctx, "failed to increment yearly leaderboard", "year", year, "error", err)
-		return
-	}
-	if updated {
-		return
-	}
-
-	scores, err := s.leaderboardRepo.FetchAllYearlyLeaderboardScores(ctx, year)
-	if err != nil {
-		slog.ErrorContext(ctx, "failed to fetch yearly leaderboard scores for rebuild", "year", year, "error", err)
-		return
-	}
-
-	if err := s.leaderboardStore.RebuildYearlyLeaderboard(ctx, year, scores); err != nil {
-		slog.ErrorContext(ctx, "failed to rebuild yearly leaderboard", "year", year, "error", err)
-	}
-}
-
-func (s *LogCreate) updateGlobalLeaderboard(ctx context.Context, userID uuid.UUID, score float64) {
-	updated, err := s.leaderboardStore.IncrementGlobalScore(ctx, userID, score)
-	if err != nil {
-		slog.ErrorContext(ctx, "failed to increment global leaderboard", "error", err)
-		return
-	}
-	if updated {
-		return
-	}
-
-	scores, err := s.leaderboardRepo.FetchAllGlobalLeaderboardScores(ctx)
-	if err != nil {
-		slog.ErrorContext(ctx, "failed to fetch global leaderboard scores for rebuild", "error", err)
-		return
-	}
-
-	if err := s.leaderboardStore.RebuildGlobalLeaderboard(ctx, scores); err != nil {
-		slog.ErrorContext(ctx, "failed to rebuild global leaderboard", "error", err)
+		s.leaderboardUpdater.UpdateUserOfficialScores(ctx, year, req.UserID)
 	}
 }

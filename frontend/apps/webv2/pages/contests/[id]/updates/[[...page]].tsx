@@ -111,7 +111,7 @@ const Page = () => {
                 href: routes.contestJoin(id),
                 label: 'Update registration',
                 style: 'secondary',
-                visible: hasEnded && registration.data !== undefined,
+                visible: !hasEnded && registration.data !== undefined,
               },
               {
                 href: routes.logCreate(),

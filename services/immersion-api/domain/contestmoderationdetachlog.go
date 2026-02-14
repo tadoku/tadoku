@@ -14,6 +14,10 @@ type ContestModerationDetachLogRepository interface {
 	DetachLogFromContest(context.Context, *ContestModerationDetachLogRequest, uuid.UUID) error
 }
 
+type ContestModerationDetachLogLeaderboardUpdater interface {
+	UpdateUserContestScore(ctx context.Context, contestID uuid.UUID, userID uuid.UUID)
+}
+
 type ContestModerationDetachLogRequest struct {
 	ContestID uuid.UUID
 	LogID     uuid.UUID
@@ -21,11 +25,18 @@ type ContestModerationDetachLogRequest struct {
 }
 
 type ContestModerationDetachLog struct {
-	repo ContestModerationDetachLogRepository
+	repo               ContestModerationDetachLogRepository
+	leaderboardUpdater ContestModerationDetachLogLeaderboardUpdater
 }
 
-func NewContestModerationDetachLog(repo ContestModerationDetachLogRepository) *ContestModerationDetachLog {
-	return &ContestModerationDetachLog{repo: repo}
+func NewContestModerationDetachLog(
+	repo ContestModerationDetachLogRepository,
+	leaderboardUpdater ContestModerationDetachLogLeaderboardUpdater,
+) *ContestModerationDetachLog {
+	return &ContestModerationDetachLog{
+		repo:               repo,
+		leaderboardUpdater: leaderboardUpdater,
+	}
 }
 
 func (s *ContestModerationDetachLog) Execute(ctx context.Context, req *ContestModerationDetachLogRequest) error {
@@ -58,7 +69,7 @@ func (s *ContestModerationDetachLog) Execute(ctx context.Context, req *ContestMo
 	}
 
 	// Verify log exists
-	_, err = s.repo.FindLogByID(ctx, &LogFindRequest{
+	log, err := s.repo.FindLogByID(ctx, &LogFindRequest{
 		ID:             req.LogID,
 		IncludeDeleted: false,
 	})
@@ -67,5 +78,12 @@ func (s *ContestModerationDetachLog) Execute(ctx context.Context, req *ContestMo
 	}
 
 	// Detach log from contest with audit logging
-	return s.repo.DetachLogFromContest(ctx, req, userID)
+	if err := s.repo.DetachLogFromContest(ctx, req, userID); err != nil {
+		return err
+	}
+
+	// Update the affected user's contest score — best effort, do not fail the detach
+	s.leaderboardUpdater.UpdateUserContestScore(ctx, req.ContestID, log.UserID)
+
+	return nil
 }

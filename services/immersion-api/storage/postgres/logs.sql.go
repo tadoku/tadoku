@@ -276,6 +276,7 @@ select
   logs.amount,
   logs.modifier,
   logs.score,
+  logs.eligible_official_leaderboard,
   logs.created_at,
   logs.updated_at,
   logs.deleted_at,
@@ -299,22 +300,23 @@ type FindLogByIDParams struct {
 }
 
 type FindLogByIDRow struct {
-	ID              uuid.UUID
-	UserID          uuid.UUID
-	UserDisplayName string
-	LanguageCode    string
-	LanguageName    string
-	ActivityID      int16
-	ActivityName    string
-	UnitName        string
-	Description     sql.NullString
-	Amount          float32
-	Modifier        float32
-	Score           float32
-	CreatedAt       time.Time
-	UpdatedAt       time.Time
-	DeletedAt       sql.NullTime
-	Tags            interface{}
+	ID                          uuid.UUID
+	UserID                      uuid.UUID
+	UserDisplayName             string
+	LanguageCode                string
+	LanguageName                string
+	ActivityID                  int16
+	ActivityName                string
+	UnitName                    string
+	Description                 sql.NullString
+	Amount                      float32
+	Modifier                    float32
+	Score                       float32
+	EligibleOfficialLeaderboard bool
+	CreatedAt                   time.Time
+	UpdatedAt                   time.Time
+	DeletedAt                   sql.NullTime
+	Tags                        interface{}
 }
 
 func (q *Queries) FindLogByID(ctx context.Context, arg FindLogByIDParams) (FindLogByIDRow, error) {
@@ -333,6 +335,7 @@ func (q *Queries) FindLogByID(ctx context.Context, arg FindLogByIDParams) (FindL
 		&i.Amount,
 		&i.Modifier,
 		&i.Score,
+		&i.EligibleOfficialLeaderboard,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.DeletedAt,

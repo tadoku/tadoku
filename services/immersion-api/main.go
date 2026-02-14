@@ -20,6 +20,7 @@ import (
 	"github.com/tadoku/tadoku/services/immersion-api/http/rest"
 	"github.com/tadoku/tadoku/services/immersion-api/http/rest/openapi"
 	"github.com/tadoku/tadoku/services/immersion-api/storage/postgres/repository"
+	valkeystore "github.com/tadoku/tadoku/services/immersion-api/storage/valkey"
 
 	"github.com/getsentry/sentry-go"
 	sentryecho "github.com/getsentry/sentry-go/echo"
@@ -74,6 +75,9 @@ func main() {
 	}
 	defer valkeyClient.Close()
 
+	leaderboardStore := valkeystore.NewLeaderboardStore(valkeyClient)
+	leaderboardUpdater := immersiondomain.NewLeaderboardUpdater(leaderboardStore, postgresRepository)
+
 	e := echo.New()
 	e.Use(tadokumiddleware.Logger([]string{"/ping"}))
 	e.Use(tadokumiddleware.VerifyJWT(cfg.JWKS))
@@ -121,11 +125,11 @@ func main() {
 	profileFetch := immersiondomain.NewProfileFetch(kratosClient)
 	registrationListOngoing := immersiondomain.NewRegistrationListOngoing(postgresRepository, clock)
 	contestPermissionCheck := immersiondomain.NewContestPermissionCheck(postgresRepository, kratosClient, clock)
-	logDelete := immersiondomain.NewLogDelete(postgresRepository, clock)
-	contestModerationDetachLog := immersiondomain.NewContestModerationDetachLog(postgresRepository)
+	logDelete := immersiondomain.NewLogDelete(postgresRepository, clock, leaderboardUpdater)
+	contestModerationDetachLog := immersiondomain.NewContestModerationDetachLog(postgresRepository, leaderboardUpdater)
 	userUpsert := immersiondomain.NewUserUpsert(postgresRepository)
-	registrationUpsert := immersiondomain.NewRegistrationUpsert(postgresRepository, userUpsert)
-	logCreate := immersiondomain.NewLogCreate(postgresRepository, clock, userUpsert)
+	registrationUpsert := immersiondomain.NewRegistrationUpsert(postgresRepository, userUpsert, leaderboardUpdater)
+	logCreate := immersiondomain.NewLogCreate(postgresRepository, clock, userUpsert, leaderboardUpdater)
 	contestCreate := immersiondomain.NewContestCreate(postgresRepository, clock, userUpsert)
 	languageList := immersiondomain.NewLanguageList(postgresRepository)
 	languageCreate := immersiondomain.NewLanguageCreate(postgresRepository)

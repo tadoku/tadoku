@@ -17,7 +17,7 @@ export function CodeEditor({ value, onChange, extensions, placeholder }: Props) 
   const onChangeRef = useRef(onChange)
   onChangeRef.current = onChange
 
-  // Create the editor once
+  // Create the editor once — value is intentionally excluded; the sync effect below handles updates
   useEffect(() => {
     if (!containerRef.current) return
 
@@ -60,6 +60,7 @@ export function CodeEditor({ value, onChange, extensions, placeholder }: Props) 
       view.destroy()
       viewRef.current = null
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [extensions, placeholder])
 
   // Sync external value changes into the editor

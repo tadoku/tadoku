@@ -23,8 +23,13 @@ const Page = () => {
 
   const [filters, setFilters] = useState(() => newFilter())
   useEffect(() => {
-    setFilters(newFilter())
-  }, [router.asPath])
+    setFilters({
+      page: getQueryStringIntParameter(router.query.page, 1),
+      pageSize: 50,
+      includeDeleted: false,
+      userId,
+    })
+  }, [router.asPath, userId, router.query.page])
 
   const profile = useUserProfile({ userId })
   const logs = useProfileLogs(filters)

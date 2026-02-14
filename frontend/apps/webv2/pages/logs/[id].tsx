@@ -97,6 +97,7 @@ const Page = () => {
               Submitted to{' '}
               {formatArray(log.data.registrations, it => (
                 <Link
+                  key={it.contest_id}
                   href={routes.contestLeaderboard(it.contest_id)}
                   className="font-bold"
                 >

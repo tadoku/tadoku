@@ -75,7 +75,12 @@ func main() {
 	}
 	defer valkeyClient.Close()
 
-	leaderboardStore := valkeystore.NewLeaderboardStore(valkeyClient)
+	clock, err := domain.NewClock("UTC")
+	if err != nil {
+		panic(err)
+	}
+
+	leaderboardStore := valkeystore.NewLeaderboardStore(valkeyClient, clock)
 	leaderboardUpdater := immersiondomain.NewLeaderboardUpdater(leaderboardStore, postgresRepository)
 
 	e := echo.New()
@@ -97,11 +102,6 @@ func main() {
 		e.Use(sentryecho.New(sentryecho.Options{}))
 	}
 
-	clock, err := domain.NewClock("UTC")
-	if err != nil {
-		panic(err)
-	}
-
 	// Service-per-function services
 	contestConfigurationOptions := immersiondomain.NewContestConfigurationOptions(postgresRepository)
 	logConfigurationOptions := immersiondomain.NewLogConfigurationOptions(postgresRepository)
@@ -115,9 +115,9 @@ func main() {
 	logListForContest := immersiondomain.NewLogListForContest(postgresRepository)
 	registrationFind := immersiondomain.NewRegistrationFind(postgresRepository)
 	registrationListYearly := immersiondomain.NewRegistrationListYearly(postgresRepository)
-	contestLeaderboardFetch := immersiondomain.NewContestLeaderboardFetch(postgresRepository)
-	leaderboardYearly := immersiondomain.NewLeaderboardYearly(postgresRepository)
-	leaderboardGlobal := immersiondomain.NewLeaderboardGlobal(postgresRepository)
+	contestLeaderboardFetch := immersiondomain.NewContestLeaderboardFetch(postgresRepository, leaderboardStore)
+	leaderboardYearly := immersiondomain.NewLeaderboardYearly(postgresRepository, leaderboardStore)
+	leaderboardGlobal := immersiondomain.NewLeaderboardGlobal(postgresRepository, leaderboardStore)
 	profileContest := immersiondomain.NewProfileContest(postgresRepository)
 	profileContestActivity := immersiondomain.NewProfileContestActivity(postgresRepository)
 	profileYearlyActivity := immersiondomain.NewProfileYearlyActivity(postgresRepository)

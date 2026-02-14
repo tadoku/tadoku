@@ -23,6 +23,7 @@ go_library(
         "repo_findlogbyid.go",
         "repo_findregistrationforuser.go",
         "repo_findscoresforregistration.go",
+        "repo_finduserdisplaynames.go",
         "repo_getcontestsbyusercountforyear.go",
         "repo_languageexists.go",
         "repo_listcontests.go",

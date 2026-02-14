@@ -13,6 +13,22 @@ type LeaderboardScore struct {
 	Score  float64
 }
 
+// LeaderboardPage holds a page of scores along with metadata needed to
+// compute correct ranks and tie detection across page boundaries.
+type LeaderboardPage struct {
+	Scores     []LeaderboardScore
+	TotalCount int
+	// StartRank is the rank of the first entry on this page, accounting for
+	// entries with higher scores on prior pages. Computed via ZCOUNT.
+	StartRank int
+	// HasPrevTie is true if the entry immediately before this page has the
+	// same score as the first entry on this page.
+	HasPrevTie bool
+	// HasNextTie is true if the entry immediately after this page has the
+	// same score as the last entry on this page.
+	HasNextTie bool
+}
+
 // LeaderboardStore manages leaderboard sorted sets in a fast key-value store.
 // Only unfiltered (main) leaderboards are stored — no language or activity filters.
 type LeaderboardStore interface {

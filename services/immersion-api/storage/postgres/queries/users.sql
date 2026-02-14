@@ -11,3 +11,6 @@ update set
   updated_at = now()
 where
     users.updated_at < sqlc.arg('session_created_at');
+
+-- name: FindUserDisplayNames :many
+select id, display_name from users where id = any(sqlc.arg('ids')::uuid[]);

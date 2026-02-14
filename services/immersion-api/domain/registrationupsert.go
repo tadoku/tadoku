@@ -32,13 +32,13 @@ type DetachContestLogsForLanguagesRequest struct {
 type RegistrationUpsert struct {
 	repo               RegistrationUpsertRepository
 	userUpsert         *UserUpsert
-	leaderboardUpdater *LeaderboardUpdater
+	leaderboardUpdater LeaderboardScoreUpdater
 }
 
 func NewRegistrationUpsert(
 	repo RegistrationUpsertRepository,
 	userUpsert *UserUpsert,
-	leaderboardUpdater *LeaderboardUpdater,
+	leaderboardUpdater LeaderboardScoreUpdater,
 ) *RegistrationUpsert {
 	return &RegistrationUpsert{
 		repo:               repo,

@@ -7,12 +7,16 @@ import (
 	"github.com/google/uuid"
 )
 
-// LeaderboardUpdater is a domain service that handles updating leaderboard
-// sorted sets in the store. It encapsulates both the store and the repository,
-// providing high-level methods for the rest of the domain layer.
-//
-// All operations are best-effort — errors are logged but never returned,
-// since leaderboard updates should not fail the primary operation.
+// LeaderboardScoreUpdater is the interface used by domain services to update
+// leaderboard scores. All operations are best-effort — errors are logged but
+// never returned, since leaderboard updates should not fail the primary operation.
+type LeaderboardScoreUpdater interface {
+	UpdateUserContestScore(ctx context.Context, contestID uuid.UUID, userID uuid.UUID)
+	UpdateUserOfficialScores(ctx context.Context, year int, userID uuid.UUID)
+}
+
+// LeaderboardUpdater implements LeaderboardScoreUpdater and also provides
+// full rebuild methods for reconciliation.
 type LeaderboardUpdater struct {
 	store LeaderboardStore
 	repo  LeaderboardRepository

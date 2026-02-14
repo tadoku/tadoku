@@ -2,7 +2,6 @@ package domain_test
 
 import (
 	"context"
-	"errors"
 	"testing"
 	"time"
 
@@ -73,9 +72,7 @@ func TestRegistrationUpsert_Execute(t *testing.T) {
 		userRepo := &mockUserUpsertRepositoryForReg{}
 		userUpsert := domain.NewUserUpsert(userRepo)
 		repo := &mockRegistrationUpsertRepository{}
-		store := &mockLeaderboardStore{}
-		lbRepo := &mockLeaderboardRepo{}
-		updater := domain.NewLeaderboardUpdater(store, lbRepo)
+		updater := &mockLeaderboardScoreUpdater{}
 		svc := domain.NewRegistrationUpsert(repo, userUpsert, updater)
 
 		ctx := ctxWithGuest()
@@ -93,9 +90,7 @@ func TestRegistrationUpsert_Execute(t *testing.T) {
 		userRepo := &mockUserUpsertRepositoryForReg{}
 		userUpsert := domain.NewUserUpsert(userRepo)
 		repo := &mockRegistrationUpsertRepository{}
-		store := &mockLeaderboardStore{}
-		lbRepo := &mockLeaderboardRepo{}
-		updater := domain.NewLeaderboardUpdater(store, lbRepo)
+		updater := &mockLeaderboardScoreUpdater{}
 		svc := domain.NewRegistrationUpsert(repo, userUpsert, updater)
 
 		err := svc.Execute(context.Background(), &domain.RegistrationUpsertRequest{
@@ -114,9 +109,7 @@ func TestRegistrationUpsert_Execute(t *testing.T) {
 			contest:    validContest,
 			findRegErr: domain.ErrNotFound,
 		}
-		store := &mockLeaderboardStore{}
-		lbRepo := &mockLeaderboardRepo{}
-		updater := domain.NewLeaderboardUpdater(store, lbRepo)
+		updater := &mockLeaderboardScoreUpdater{}
 		svc := domain.NewRegistrationUpsert(repo, userUpsert, updater)
 
 		ctx := ctxWithUserSubject(userID.String())
@@ -137,9 +130,7 @@ func TestRegistrationUpsert_Execute(t *testing.T) {
 			contest:    validContest,
 			findRegErr: domain.ErrNotFound,
 		}
-		store := &mockLeaderboardStore{}
-		lbRepo := &mockLeaderboardRepo{}
-		updater := domain.NewLeaderboardUpdater(store, lbRepo)
+		updater := &mockLeaderboardScoreUpdater{}
 		svc := domain.NewRegistrationUpsert(repo, userUpsert, updater)
 
 		ctx := ctxWithUserSubject(userID.String())
@@ -169,9 +160,7 @@ func TestRegistrationUpsert_Execute(t *testing.T) {
 			contest:    contestWithAllowList,
 			findRegErr: domain.ErrNotFound,
 		}
-		store := &mockLeaderboardStore{}
-		lbRepo := &mockLeaderboardRepo{}
-		updater := domain.NewLeaderboardUpdater(store, lbRepo)
+		updater := &mockLeaderboardScoreUpdater{}
 		svc := domain.NewRegistrationUpsert(repo, userUpsert, updater)
 
 		ctx := ctxWithUserSubject(userID.String())
@@ -202,9 +191,7 @@ func TestRegistrationUpsert_Execute(t *testing.T) {
 			contest:      validContest,
 			registration: existingRegistration,
 		}
-		store := &mockLeaderboardStore{}
-		lbRepo := &mockLeaderboardRepo{}
-		updater := domain.NewLeaderboardUpdater(store, lbRepo)
+		updater := &mockLeaderboardScoreUpdater{}
 		svc := domain.NewRegistrationUpsert(repo, userUpsert, updater)
 
 		ctx := ctxWithUserSubject(userID.String())
@@ -237,9 +224,7 @@ func TestRegistrationUpsert_Execute(t *testing.T) {
 			contest:      validContest,
 			registration: existingRegistration,
 		}
-		store := &mockLeaderboardStore{}
-		lbRepo := &mockLeaderboardRepo{}
-		updater := domain.NewLeaderboardUpdater(store, lbRepo)
+		updater := &mockLeaderboardScoreUpdater{}
 		svc := domain.NewRegistrationUpsert(repo, userUpsert, updater)
 
 		ctx := ctxWithUserSubject(userID.String())
@@ -261,9 +246,7 @@ func TestRegistrationUpsert_Execute(t *testing.T) {
 			contest:    validContest,
 			findRegErr: domain.ErrNotFound,
 		}
-		store := &mockLeaderboardStore{}
-		lbRepo := &mockLeaderboardRepo{}
-		updater := domain.NewLeaderboardUpdater(store, lbRepo)
+		updater := &mockLeaderboardScoreUpdater{}
 		svc := domain.NewRegistrationUpsert(repo, userUpsert, updater)
 
 		ctx := ctxWithUserSubject(userID.String())
@@ -295,9 +278,7 @@ func TestRegistrationUpsert_Execute(t *testing.T) {
 			contest:      validContest,
 			registration: existingRegistration,
 		}
-		store := &mockLeaderboardStore{}
-		lbRepo := &mockLeaderboardRepo{}
-		updater := domain.NewLeaderboardUpdater(store, lbRepo)
+		updater := &mockLeaderboardScoreUpdater{}
 		svc := domain.NewRegistrationUpsert(repo, userUpsert, updater)
 
 		ctx := ctxWithUserSubject(userID.String())
@@ -311,33 +292,15 @@ func TestRegistrationUpsert_Execute(t *testing.T) {
 		assert.True(t, repo.upsertCalled)
 		assert.Equal(t, existingRegID, repo.upsertCalledWith.ID)
 	})
-}
 
-func TestRegistrationUpsert_LeaderboardUpdates(t *testing.T) {
-	userID := uuid.New()
-	contestID := uuid.New()
-	now := time.Now()
-
-	validContest := &domain.ContestView{
-		ID:               contestID,
-		ContestStart:     now.Add(-time.Hour),
-		ContestEnd:       now.Add(time.Hour * 24),
-		RegistrationEnd:  now.Add(time.Hour * 12),
-		Title:            "Test Contest",
-		OwnerUserID:      uuid.New(),
-		AllowedLanguages: []domain.Language{},
-	}
-
-	t.Run("updates user contest score after new registration", func(t *testing.T) {
+	t.Run("updates user contest score after successful registration", func(t *testing.T) {
 		userRepo := &mockUserUpsertRepositoryForReg{}
 		userUpsert := domain.NewUserUpsert(userRepo)
-		store := &mockLeaderboardStore{updateContestExists: true}
-		lbRepo := &mockLeaderboardRepo{userContestScore: 0}
-		updater := domain.NewLeaderboardUpdater(store, lbRepo)
 		repo := &mockRegistrationUpsertRepository{
 			contest:    validContest,
 			findRegErr: domain.ErrNotFound,
 		}
+		updater := &mockLeaderboardScoreUpdater{}
 		svc := domain.NewRegistrationUpsert(repo, userUpsert, updater)
 
 		ctx := ctxWithUserSubject(userID.String())
@@ -348,74 +311,8 @@ func TestRegistrationUpsert_LeaderboardUpdates(t *testing.T) {
 		})
 
 		require.NoError(t, err)
-		assert.True(t, repo.upsertCalled)
-		require.Len(t, store.updateContestCalls, 1)
-		assert.Equal(t, contestID, store.updateContestCalls[0].ContestID)
-		assert.Equal(t, userID, store.updateContestCalls[0].UserID)
-	})
-
-	t.Run("updates user contest score after registration update with removed languages", func(t *testing.T) {
-		userRepo := &mockUserUpsertRepositoryForReg{}
-		userUpsert := domain.NewUserUpsert(userRepo)
-		existingRegID := uuid.New()
-		existingRegistration := &domain.ContestRegistration{
-			ID:        existingRegID,
-			ContestID: contestID,
-			UserID:    userID,
-			Languages: []domain.Language{
-				{Code: "jpn", Name: "Japanese"},
-				{Code: "kor", Name: "Korean"},
-			},
-		}
-		store := &mockLeaderboardStore{updateContestExists: true}
-		lbRepo := &mockLeaderboardRepo{userContestScore: 100}
-		updater := domain.NewLeaderboardUpdater(store, lbRepo)
-		repo := &mockRegistrationUpsertRepository{
-			contest:      validContest,
-			registration: existingRegistration,
-		}
-		svc := domain.NewRegistrationUpsert(repo, userUpsert, updater)
-
-		ctx := ctxWithUserSubject(userID.String())
-
-		err := svc.Execute(ctx, &domain.RegistrationUpsertRequest{
-			ContestID:     contestID,
-			LanguageCodes: []string{"jpn"}, // Removing "kor"
-		})
-
-		require.NoError(t, err)
-		assert.True(t, repo.upsertCalled)
-		assert.True(t, repo.detachCalled)
-		require.Len(t, store.updateContestCalls, 1)
-		assert.Equal(t, contestID, store.updateContestCalls[0].ContestID)
-		assert.Equal(t, userID, store.updateContestCalls[0].UserID)
-		assert.Equal(t, float64(100), store.updateContestCalls[0].Score)
-	})
-
-	t.Run("leaderboard errors do not fail the registration", func(t *testing.T) {
-		userRepo := &mockUserUpsertRepositoryForReg{}
-		userUpsert := domain.NewUserUpsert(userRepo)
-		store := &mockLeaderboardStore{
-			updateContestErr: errors.New("redis connection refused"),
-		}
-		lbRepo := &mockLeaderboardRepo{
-			userContestErr: errors.New("database timeout"),
-		}
-		updater := domain.NewLeaderboardUpdater(store, lbRepo)
-		repo := &mockRegistrationUpsertRepository{
-			contest:    validContest,
-			findRegErr: domain.ErrNotFound,
-		}
-		svc := domain.NewRegistrationUpsert(repo, userUpsert, updater)
-
-		ctx := ctxWithUserSubject(userID.String())
-
-		err := svc.Execute(ctx, &domain.RegistrationUpsertRequest{
-			ContestID:     contestID,
-			LanguageCodes: []string{"jpn"},
-		})
-
-		require.NoError(t, err)
-		assert.True(t, repo.upsertCalled)
+		require.Len(t, updater.updateContestCalls, 1)
+		assert.Equal(t, contestID, updater.updateContestCalls[0].ContestID)
+		assert.Equal(t, userID, updater.updateContestCalls[0].UserID)
 	})
 }

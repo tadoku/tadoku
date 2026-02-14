@@ -34,14 +34,14 @@ type LogCreate struct {
 	clock              commondomain.Clock
 	validate           *validator.Validate
 	userUpsert         *UserUpsert
-	leaderboardUpdater *LeaderboardUpdater
+	leaderboardUpdater LeaderboardScoreUpdater
 }
 
 func NewLogCreate(
 	repo LogCreateRepository,
 	clock commondomain.Clock,
 	userUpsert *UserUpsert,
-	leaderboardUpdater *LeaderboardUpdater,
+	leaderboardUpdater LeaderboardScoreUpdater,
 ) *LogCreate {
 	return &LogCreate{
 		repo:               repo,

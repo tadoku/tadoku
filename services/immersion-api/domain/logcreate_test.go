@@ -155,6 +155,32 @@ func (m *mockLeaderboardRepo) FetchUserGlobalScore(ctx context.Context, userID u
 	return m.userGlobalScore, m.userGlobalErr
 }
 
+// mockLeaderboardScoreUpdater implements domain.LeaderboardScoreUpdater for testing.
+// Used by services that only need to verify the updater was called correctly,
+// without testing the updater's internal logic.
+type mockLeaderboardScoreUpdater struct {
+	updateContestCalls  []mockUpdateContestCall
+	updateOfficialCalls []mockUpdateOfficialCall
+}
+
+type mockUpdateContestCall struct {
+	ContestID uuid.UUID
+	UserID    uuid.UUID
+}
+
+type mockUpdateOfficialCall struct {
+	Year   int
+	UserID uuid.UUID
+}
+
+func (m *mockLeaderboardScoreUpdater) UpdateUserContestScore(ctx context.Context, contestID uuid.UUID, userID uuid.UUID) {
+	m.updateContestCalls = append(m.updateContestCalls, mockUpdateContestCall{ContestID: contestID, UserID: userID})
+}
+
+func (m *mockLeaderboardScoreUpdater) UpdateUserOfficialScores(ctx context.Context, year int, userID uuid.UUID) {
+	m.updateOfficialCalls = append(m.updateOfficialCalls, mockUpdateOfficialCall{Year: year, UserID: userID})
+}
+
 func newLogCreateService(repo *mockLogCreateRepository, clock commondomain.Clock, store *mockLeaderboardStore, lbRepo *mockLeaderboardRepo) *domain.LogCreate {
 	userRepo := &mockUserUpsertRepositoryForLog{}
 	userUpsert := domain.NewUserUpsert(userRepo)

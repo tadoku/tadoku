@@ -22,12 +22,12 @@ type ContestModerationDetachLogRequest struct {
 
 type ContestModerationDetachLog struct {
 	repo               ContestModerationDetachLogRepository
-	leaderboardUpdater *LeaderboardUpdater
+	leaderboardUpdater LeaderboardScoreUpdater
 }
 
 func NewContestModerationDetachLog(
 	repo ContestModerationDetachLogRepository,
-	leaderboardUpdater *LeaderboardUpdater,
+	leaderboardUpdater LeaderboardScoreUpdater,
 ) *ContestModerationDetachLog {
 	return &ContestModerationDetachLog{
 		repo:               repo,

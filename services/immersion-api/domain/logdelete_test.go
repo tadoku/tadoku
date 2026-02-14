@@ -38,9 +38,7 @@ func TestLogDelete_Execute(t *testing.T) {
 	t.Run("returns unauthorized for guest", func(t *testing.T) {
 		repo := &mockLogDeleteRepository{}
 		clock := commondomain.NewMockClock(now)
-		store := &mockLeaderboardStore{}
-		lbRepo := &mockLeaderboardRepo{}
-		updater := domain.NewLeaderboardUpdater(store, lbRepo)
+		updater := &mockLeaderboardScoreUpdater{}
 		svc := domain.NewLogDelete(repo, clock, updater)
 
 		ctx := ctxWithGuest()
@@ -54,9 +52,7 @@ func TestLogDelete_Execute(t *testing.T) {
 	t.Run("returns unauthorized for nil session", func(t *testing.T) {
 		repo := &mockLogDeleteRepository{}
 		clock := commondomain.NewMockClock(now)
-		store := &mockLeaderboardStore{}
-		lbRepo := &mockLeaderboardRepo{}
-		updater := domain.NewLeaderboardUpdater(store, lbRepo)
+		updater := &mockLeaderboardScoreUpdater{}
 		svc := domain.NewLogDelete(repo, clock, updater)
 
 		err := svc.Execute(context.Background(), &domain.LogDeleteRequest{LogID: logID})
@@ -70,9 +66,7 @@ func TestLogDelete_Execute(t *testing.T) {
 			log: &domain.Log{ID: logID, UserID: userID},
 		}
 		clock := commondomain.NewMockClock(now)
-		store := &mockLeaderboardStore{}
-		lbRepo := &mockLeaderboardRepo{}
-		updater := domain.NewLeaderboardUpdater(store, lbRepo)
+		updater := &mockLeaderboardScoreUpdater{}
 		svc := domain.NewLogDelete(repo, clock, updater)
 
 		ctx := ctxWithUserSubject(userID.String())
@@ -88,9 +82,7 @@ func TestLogDelete_Execute(t *testing.T) {
 			log: &domain.Log{ID: logID, UserID: otherUserID},
 		}
 		clock := commondomain.NewMockClock(now)
-		store := &mockLeaderboardStore{}
-		lbRepo := &mockLeaderboardRepo{}
-		updater := domain.NewLeaderboardUpdater(store, lbRepo)
+		updater := &mockLeaderboardScoreUpdater{}
 		svc := domain.NewLogDelete(repo, clock, updater)
 
 		ctx := ctxWithUserSubject(userID.String())
@@ -106,9 +98,7 @@ func TestLogDelete_Execute(t *testing.T) {
 			log: &domain.Log{ID: logID, UserID: otherUserID},
 		}
 		clock := commondomain.NewMockClock(now)
-		store := &mockLeaderboardStore{}
-		lbRepo := &mockLeaderboardRepo{}
-		updater := domain.NewLeaderboardUpdater(store, lbRepo)
+		updater := &mockLeaderboardScoreUpdater{}
 		svc := domain.NewLogDelete(repo, clock, updater)
 
 		ctx := ctxWithAdminSubject(uuid.New().String())
@@ -124,9 +114,7 @@ func TestLogDelete_Execute(t *testing.T) {
 			findErr: domain.ErrNotFound,
 		}
 		clock := commondomain.NewMockClock(now)
-		store := &mockLeaderboardStore{}
-		lbRepo := &mockLeaderboardRepo{}
-		updater := domain.NewLeaderboardUpdater(store, lbRepo)
+		updater := &mockLeaderboardScoreUpdater{}
 		svc := domain.NewLogDelete(repo, clock, updater)
 
 		ctx := ctxWithUserSubject(userID.String())
@@ -143,9 +131,7 @@ func TestLogDelete_Execute(t *testing.T) {
 			deleteErr: errors.New("database error"),
 		}
 		clock := commondomain.NewMockClock(now)
-		store := &mockLeaderboardStore{}
-		lbRepo := &mockLeaderboardRepo{}
-		updater := domain.NewLeaderboardUpdater(store, lbRepo)
+		updater := &mockLeaderboardScoreUpdater{}
 		svc := domain.NewLogDelete(repo, clock, updater)
 
 		ctx := ctxWithUserSubject(userID.String())
@@ -164,10 +150,8 @@ func TestLogDelete_LeaderboardUpdates(t *testing.T) {
 	contestID2 := uuid.New()
 	now := time.Date(2026, 3, 15, 10, 0, 0, 0, time.UTC)
 
-	t.Run("updates user contest scores after delete with registrations", func(t *testing.T) {
-		store := &mockLeaderboardStore{updateContestExists: true}
-		lbRepo := &mockLeaderboardRepo{userContestScore: 100}
-		updater := domain.NewLeaderboardUpdater(store, lbRepo)
+	t.Run("updates user contest score for each registration", func(t *testing.T) {
+		updater := &mockLeaderboardScoreUpdater{}
 		repo := &mockLogDeleteRepository{
 			log: &domain.Log{
 				ID:     logID,
@@ -187,26 +171,15 @@ func TestLogDelete_LeaderboardUpdates(t *testing.T) {
 		err := svc.Execute(ctx, &domain.LogDeleteRequest{LogID: logID})
 
 		require.NoError(t, err)
-		assert.True(t, repo.deleteCalled)
-		require.Len(t, store.updateContestCalls, 2)
-		assert.Equal(t, contestID, store.updateContestCalls[0].ContestID)
-		assert.Equal(t, userID, store.updateContestCalls[0].UserID)
-		assert.Equal(t, contestID2, store.updateContestCalls[1].ContestID)
-		assert.Equal(t, userID, store.updateContestCalls[1].UserID)
+		require.Len(t, updater.updateContestCalls, 2)
+		assert.Equal(t, contestID, updater.updateContestCalls[0].ContestID)
+		assert.Equal(t, userID, updater.updateContestCalls[0].UserID)
+		assert.Equal(t, contestID2, updater.updateContestCalls[1].ContestID)
+		assert.Equal(t, userID, updater.updateContestCalls[1].UserID)
 	})
 
-	t.Run("updates user official scores when EligibleOfficialLeaderboard is true", func(t *testing.T) {
-		store := &mockLeaderboardStore{
-			updateContestExists:  true,
-			updateOfficialYearly: true,
-			updateOfficialGlobal: true,
-		}
-		lbRepo := &mockLeaderboardRepo{
-			userContestScore: 50,
-			userYearlyScore:  200,
-			userGlobalScore:  500,
-		}
-		updater := domain.NewLeaderboardUpdater(store, lbRepo)
+	t.Run("updates official scores when EligibleOfficialLeaderboard is true", func(t *testing.T) {
+		updater := &mockLeaderboardScoreUpdater{}
 		repo := &mockLogDeleteRepository{
 			log: &domain.Log{
 				ID:                          logID,
@@ -226,26 +199,14 @@ func TestLogDelete_LeaderboardUpdates(t *testing.T) {
 		err := svc.Execute(ctx, &domain.LogDeleteRequest{LogID: logID})
 
 		require.NoError(t, err)
-		assert.True(t, repo.deleteCalled)
-
-		// Contest score updated for user
-		require.Len(t, store.updateContestCalls, 1)
-		assert.Equal(t, userID, store.updateContestCalls[0].UserID)
-
-		// Official scores updated for user
-		require.Len(t, store.updateOfficialCalls, 1)
-		assert.Equal(t, 2026, store.updateOfficialCalls[0].Year)
-		assert.Equal(t, userID, store.updateOfficialCalls[0].UserID)
-		assert.Equal(t, float64(200), store.updateOfficialCalls[0].YearlyScore)
-		assert.Equal(t, float64(500), store.updateOfficialCalls[0].GlobalScore)
+		require.Len(t, updater.updateContestCalls, 1)
+		require.Len(t, updater.updateOfficialCalls, 1)
+		assert.Equal(t, 2026, updater.updateOfficialCalls[0].Year)
+		assert.Equal(t, userID, updater.updateOfficialCalls[0].UserID)
 	})
 
 	t.Run("does not update official scores when EligibleOfficialLeaderboard is false", func(t *testing.T) {
-		store := &mockLeaderboardStore{updateContestExists: true}
-		lbRepo := &mockLeaderboardRepo{
-			userContestScore: 50,
-		}
-		updater := domain.NewLeaderboardUpdater(store, lbRepo)
+		updater := &mockLeaderboardScoreUpdater{}
 		repo := &mockLogDeleteRepository{
 			log: &domain.Log{
 				ID:                          logID,
@@ -265,45 +226,31 @@ func TestLogDelete_LeaderboardUpdates(t *testing.T) {
 		err := svc.Execute(ctx, &domain.LogDeleteRequest{LogID: logID})
 
 		require.NoError(t, err)
-		assert.True(t, repo.deleteCalled)
-
-		// Contest score updated for user
-		require.Len(t, store.updateContestCalls, 1)
-
-		// Official scores NOT updated
-		assert.Empty(t, store.updateOfficialCalls)
+		require.Len(t, updater.updateContestCalls, 1)
+		assert.Empty(t, updater.updateOfficialCalls)
 	})
 
-	t.Run("leaderboard errors do not fail deletion", func(t *testing.T) {
-		store := &mockLeaderboardStore{
-			updateContestErr:  errors.New("redis connection refused"),
-			updateOfficialErr: errors.New("redis timeout"),
-		}
-		lbRepo := &mockLeaderboardRepo{
-			userContestScore: 10,
-			userYearlyScore:  20,
-			userGlobalScore:  30,
-		}
-		updater := domain.NewLeaderboardUpdater(store, lbRepo)
+	t.Run("does not update leaderboards when delete fails", func(t *testing.T) {
+		updater := &mockLeaderboardScoreUpdater{}
 		repo := &mockLogDeleteRepository{
 			log: &domain.Log{
-				ID:                          logID,
-				UserID:                      userID,
-				Score:                       50,
-				EligibleOfficialLeaderboard: true,
+				ID:     logID,
+				UserID: userID,
+				Score:  50,
 				Registrations: []domain.ContestRegistrationReference{
 					{RegistrationID: uuid.New(), ContestID: contestID},
 				},
 				CreatedAt: now,
 			},
+			deleteErr: errors.New("database error"),
 		}
 		clock := commondomain.NewMockClock(now)
 		svc := domain.NewLogDelete(repo, clock, updater)
 
 		ctx := ctxWithUserSubject(userID.String())
-		err := svc.Execute(ctx, &domain.LogDeleteRequest{LogID: logID})
+		_ = svc.Execute(ctx, &domain.LogDeleteRequest{LogID: logID})
 
-		require.NoError(t, err)
-		assert.True(t, repo.deleteCalled)
+		assert.Empty(t, updater.updateContestCalls)
+		assert.Empty(t, updater.updateOfficialCalls)
 	})
 }

@@ -22,13 +22,13 @@ type LogDeleteRequest struct {
 type LogDelete struct {
 	repo               LogDeleteRepository
 	clock              commondomain.Clock
-	leaderboardUpdater *LeaderboardUpdater
+	leaderboardUpdater LeaderboardScoreUpdater
 }
 
 func NewLogDelete(
 	repo LogDeleteRepository,
 	clock commondomain.Clock,
-	leaderboardUpdater *LeaderboardUpdater,
+	leaderboardUpdater LeaderboardScoreUpdater,
 ) *LogDelete {
 	return &LogDelete{
 		repo:               repo,

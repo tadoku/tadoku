@@ -67,21 +67,21 @@ func (s *LogDelete) Execute(ctx context.Context, req *LogDeleteRequest) error {
 	}
 
 	// Rebuild affected leaderboards — best effort, do not fail the deletion
-	s.rebuildLeaderboardsAfterDelete(ctx, log)
+	s.updateLeaderboardsAfterDelete(ctx, log)
 
 	return nil
 }
 
-// rebuildLeaderboardsAfterDelete rebuilds all leaderboards affected by a deleted log.
-// For each contest the log was attached to: rebuild that contest's leaderboard.
-// If the log was eligible for official leaderboard: rebuild yearly and global.
-func (s *LogDelete) rebuildLeaderboardsAfterDelete(ctx context.Context, log *Log) {
+// updateLeaderboardsAfterDelete updates all leaderboards affected by a deleted log.
+// For each contest the log was attached to: update that user's contest score.
+// If the log was eligible for official leaderboard: update yearly and global scores.
+func (s *LogDelete) updateLeaderboardsAfterDelete(ctx context.Context, log *Log) {
 	for _, reg := range log.Registrations {
-		s.leaderboardUpdater.RebuildContestLeaderboard(ctx, reg.ContestID)
+		s.leaderboardUpdater.UpdateUserContestScore(ctx, reg.ContestID, log.UserID)
 	}
 
 	if log.EligibleOfficialLeaderboard {
 		year := log.CreatedAt.Year()
-		s.leaderboardUpdater.RebuildOfficialLeaderboards(ctx, year)
+		s.leaderboardUpdater.UpdateUserOfficialScores(ctx, year, log.UserID)
 	}
 }

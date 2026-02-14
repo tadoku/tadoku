@@ -245,16 +245,13 @@ func TestContestModerationDetachLog_LeaderboardUpdates(t *testing.T) {
 		CreatedAt: now,
 	}
 
-	t.Run("rebuilds contest leaderboard after successful detach", func(t *testing.T) {
-		dbScores := []domain.LeaderboardScore{
-			{UserID: otherUserID, Score: 100},
-		}
+	t.Run("updates user contest score after successful detach", func(t *testing.T) {
 		repo := &mockContestModerationDetachLogRepository{
 			contest: contest,
 			log:     log,
 		}
-		store := &mockLeaderboardStore{}
-		lbRepo := &mockLeaderboardRepo{contestScores: dbScores}
+		store := &mockLeaderboardStore{updateContestExists: true}
+		lbRepo := &mockLeaderboardRepo{userContestScore: 100}
 		updater := domain.NewLeaderboardUpdater(store, lbRepo)
 		svc := domain.NewContestModerationDetachLog(repo, updater)
 
@@ -268,18 +265,19 @@ func TestContestModerationDetachLog_LeaderboardUpdates(t *testing.T) {
 
 		require.NoError(t, err)
 		assert.True(t, repo.detachCalled)
-		require.Len(t, store.rebuildContestCalls, 1)
-		assert.Equal(t, contestID, store.rebuildContestCalls[0].ContestID)
-		assert.Equal(t, dbScores, store.rebuildContestCalls[0].Scores)
+		require.Len(t, store.updateContestCalls, 1)
+		assert.Equal(t, contestID, store.updateContestCalls[0].ContestID)
+		assert.Equal(t, otherUserID, store.updateContestCalls[0].UserID)
+		assert.Equal(t, float64(100), store.updateContestCalls[0].Score)
 	})
 
-	t.Run("leaderboard rebuild error does not fail the detach", func(t *testing.T) {
+	t.Run("leaderboard update error does not fail the detach", func(t *testing.T) {
 		repo := &mockContestModerationDetachLogRepository{
 			contest: contest,
 			log:     log,
 		}
 		store := &mockLeaderboardStore{
-			rebuildContestErr: errors.New("redis unavailable"),
+			updateContestErr: errors.New("redis unavailable"),
 		}
 		lbRepo := &mockLeaderboardRepo{}
 		updater := domain.NewLeaderboardUpdater(store, lbRepo)
@@ -297,14 +295,14 @@ func TestContestModerationDetachLog_LeaderboardUpdates(t *testing.T) {
 		assert.True(t, repo.detachCalled)
 	})
 
-	t.Run("leaderboard fetch scores error does not fail the detach", func(t *testing.T) {
+	t.Run("leaderboard fetch score error does not fail the detach", func(t *testing.T) {
 		repo := &mockContestModerationDetachLogRepository{
 			contest: contest,
 			log:     log,
 		}
 		store := &mockLeaderboardStore{}
 		lbRepo := &mockLeaderboardRepo{
-			contestErr: errors.New("database timeout"),
+			userContestErr: errors.New("database timeout"),
 		}
 		updater := domain.NewLeaderboardUpdater(store, lbRepo)
 		svc := domain.NewContestModerationDetachLog(repo, updater)
@@ -319,6 +317,6 @@ func TestContestModerationDetachLog_LeaderboardUpdates(t *testing.T) {
 
 		require.NoError(t, err)
 		assert.True(t, repo.detachCalled)
-		assert.Empty(t, store.rebuildContestCalls)
+		assert.Empty(t, store.updateContestCalls)
 	})
 }

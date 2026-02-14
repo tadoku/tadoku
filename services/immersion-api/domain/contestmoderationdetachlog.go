@@ -65,7 +65,7 @@ func (s *ContestModerationDetachLog) Execute(ctx context.Context, req *ContestMo
 	}
 
 	// Verify log exists
-	_, err = s.repo.FindLogByID(ctx, &LogFindRequest{
+	log, err := s.repo.FindLogByID(ctx, &LogFindRequest{
 		ID:             req.LogID,
 		IncludeDeleted: false,
 	})
@@ -78,8 +78,8 @@ func (s *ContestModerationDetachLog) Execute(ctx context.Context, req *ContestMo
 		return err
 	}
 
-	// Rebuild contest leaderboard — best effort, do not fail the detach
-	s.leaderboardUpdater.RebuildContestLeaderboard(ctx, req.ContestID)
+	// Update the affected user's contest score — best effort, do not fail the detach
+	s.leaderboardUpdater.UpdateUserContestScore(ctx, req.ContestID, log.UserID)
 
 	return nil
 }

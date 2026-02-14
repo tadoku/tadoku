@@ -164,12 +164,9 @@ func TestLogDelete_LeaderboardUpdates(t *testing.T) {
 	contestID2 := uuid.New()
 	now := time.Date(2026, 3, 15, 10, 0, 0, 0, time.UTC)
 
-	t.Run("rebuilds contest leaderboards after delete with registrations", func(t *testing.T) {
-		dbScores := []domain.LeaderboardScore{
-			{UserID: uuid.New(), Score: 100},
-		}
-		store := &mockLeaderboardStore{}
-		lbRepo := &mockLeaderboardRepo{contestScores: dbScores}
+	t.Run("updates user contest scores after delete with registrations", func(t *testing.T) {
+		store := &mockLeaderboardStore{updateContestExists: true}
+		lbRepo := &mockLeaderboardRepo{userContestScore: 100}
 		updater := domain.NewLeaderboardUpdater(store, lbRepo)
 		repo := &mockLogDeleteRepository{
 			log: &domain.Log{
@@ -191,24 +188,23 @@ func TestLogDelete_LeaderboardUpdates(t *testing.T) {
 
 		require.NoError(t, err)
 		assert.True(t, repo.deleteCalled)
-		require.Len(t, store.rebuildContestCalls, 2)
-		assert.Equal(t, contestID, store.rebuildContestCalls[0].ContestID)
-		assert.Equal(t, contestID2, store.rebuildContestCalls[1].ContestID)
-		assert.Equal(t, dbScores, store.rebuildContestCalls[0].Scores)
+		require.Len(t, store.updateContestCalls, 2)
+		assert.Equal(t, contestID, store.updateContestCalls[0].ContestID)
+		assert.Equal(t, userID, store.updateContestCalls[0].UserID)
+		assert.Equal(t, contestID2, store.updateContestCalls[1].ContestID)
+		assert.Equal(t, userID, store.updateContestCalls[1].UserID)
 	})
 
-	t.Run("rebuilds official leaderboards when EligibleOfficialLeaderboard is true", func(t *testing.T) {
-		yearlyScores := []domain.LeaderboardScore{
-			{UserID: userID, Score: 200},
+	t.Run("updates user official scores when EligibleOfficialLeaderboard is true", func(t *testing.T) {
+		store := &mockLeaderboardStore{
+			updateContestExists:  true,
+			updateOfficialYearly: true,
+			updateOfficialGlobal: true,
 		}
-		globalScores := []domain.LeaderboardScore{
-			{UserID: userID, Score: 500},
-		}
-		store := &mockLeaderboardStore{}
 		lbRepo := &mockLeaderboardRepo{
-			contestScores: []domain.LeaderboardScore{},
-			yearlyScores:  yearlyScores,
-			globalScores:  globalScores,
+			userContestScore: 50,
+			userYearlyScore:  200,
+			userGlobalScore:  500,
 		}
 		updater := domain.NewLeaderboardUpdater(store, lbRepo)
 		repo := &mockLogDeleteRepository{
@@ -232,20 +228,22 @@ func TestLogDelete_LeaderboardUpdates(t *testing.T) {
 		require.NoError(t, err)
 		assert.True(t, repo.deleteCalled)
 
-		// Contest leaderboard rebuilt
-		require.Len(t, store.rebuildContestCalls, 1)
+		// Contest score updated for user
+		require.Len(t, store.updateContestCalls, 1)
+		assert.Equal(t, userID, store.updateContestCalls[0].UserID)
 
-		// Official leaderboards rebuilt (pipelined)
-		require.Len(t, store.rebuildOfficialCalls, 1)
-		assert.Equal(t, 2026, store.rebuildOfficialCalls[0].Year)
-		assert.Equal(t, yearlyScores, store.rebuildOfficialCalls[0].YearlyScores)
-		assert.Equal(t, globalScores, store.rebuildOfficialCalls[0].GlobalScores)
+		// Official scores updated for user
+		require.Len(t, store.updateOfficialCalls, 1)
+		assert.Equal(t, 2026, store.updateOfficialCalls[0].Year)
+		assert.Equal(t, userID, store.updateOfficialCalls[0].UserID)
+		assert.Equal(t, float64(200), store.updateOfficialCalls[0].YearlyScore)
+		assert.Equal(t, float64(500), store.updateOfficialCalls[0].GlobalScore)
 	})
 
-	t.Run("does not rebuild official leaderboards when EligibleOfficialLeaderboard is false", func(t *testing.T) {
-		store := &mockLeaderboardStore{}
+	t.Run("does not update official scores when EligibleOfficialLeaderboard is false", func(t *testing.T) {
+		store := &mockLeaderboardStore{updateContestExists: true}
 		lbRepo := &mockLeaderboardRepo{
-			contestScores: []domain.LeaderboardScore{},
+			userContestScore: 50,
 		}
 		updater := domain.NewLeaderboardUpdater(store, lbRepo)
 		repo := &mockLogDeleteRepository{
@@ -269,22 +267,22 @@ func TestLogDelete_LeaderboardUpdates(t *testing.T) {
 		require.NoError(t, err)
 		assert.True(t, repo.deleteCalled)
 
-		// Contest leaderboard rebuilt
-		require.Len(t, store.rebuildContestCalls, 1)
+		// Contest score updated for user
+		require.Len(t, store.updateContestCalls, 1)
 
-		// Official leaderboards NOT rebuilt
-		assert.Empty(t, store.rebuildOfficialCalls)
+		// Official scores NOT updated
+		assert.Empty(t, store.updateOfficialCalls)
 	})
 
 	t.Run("leaderboard errors do not fail deletion", func(t *testing.T) {
 		store := &mockLeaderboardStore{
-			rebuildContestErr:  errors.New("redis connection refused"),
-			rebuildOfficialErr: errors.New("redis timeout"),
+			updateContestErr:  errors.New("redis connection refused"),
+			updateOfficialErr: errors.New("redis timeout"),
 		}
 		lbRepo := &mockLeaderboardRepo{
-			contestScores: []domain.LeaderboardScore{{UserID: userID, Score: 10}},
-			yearlyScores:  []domain.LeaderboardScore{{UserID: userID, Score: 20}},
-			globalScores:  []domain.LeaderboardScore{{UserID: userID, Score: 30}},
+			userContestScore: 10,
+			userYearlyScore:  20,
+			userGlobalScore:  30,
 		}
 		updater := domain.NewLeaderboardUpdater(store, lbRepo)
 		repo := &mockLogDeleteRepository{

@@ -130,8 +130,8 @@ func (s *RegistrationUpsert) Execute(ctx context.Context, req *RegistrationUpser
 		return err
 	}
 
-	// Rebuild contest leaderboard — best effort, do not fail the registration
-	s.leaderboardUpdater.RebuildContestLeaderboard(ctx, req.ContestID)
+	// Update the user's contest score — best effort, do not fail the registration
+	s.leaderboardUpdater.UpdateUserContestScore(ctx, req.ContestID, req.UserID)
 
 	return nil
 }

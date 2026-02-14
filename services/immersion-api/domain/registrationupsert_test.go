@@ -328,14 +328,11 @@ func TestRegistrationUpsert_LeaderboardUpdates(t *testing.T) {
 		AllowedLanguages: []domain.Language{},
 	}
 
-	t.Run("rebuilds contest leaderboard after new registration", func(t *testing.T) {
+	t.Run("updates user contest score after new registration", func(t *testing.T) {
 		userRepo := &mockUserUpsertRepositoryForReg{}
 		userUpsert := domain.NewUserUpsert(userRepo)
-		dbScores := []domain.LeaderboardScore{
-			{UserID: userID, Score: 0},
-		}
-		store := &mockLeaderboardStore{}
-		lbRepo := &mockLeaderboardRepo{contestScores: dbScores}
+		store := &mockLeaderboardStore{updateContestExists: true}
+		lbRepo := &mockLeaderboardRepo{userContestScore: 0}
 		updater := domain.NewLeaderboardUpdater(store, lbRepo)
 		repo := &mockRegistrationUpsertRepository{
 			contest:    validContest,
@@ -352,12 +349,12 @@ func TestRegistrationUpsert_LeaderboardUpdates(t *testing.T) {
 
 		require.NoError(t, err)
 		assert.True(t, repo.upsertCalled)
-		require.Len(t, store.rebuildContestCalls, 1)
-		assert.Equal(t, contestID, store.rebuildContestCalls[0].ContestID)
-		assert.Equal(t, dbScores, store.rebuildContestCalls[0].Scores)
+		require.Len(t, store.updateContestCalls, 1)
+		assert.Equal(t, contestID, store.updateContestCalls[0].ContestID)
+		assert.Equal(t, userID, store.updateContestCalls[0].UserID)
 	})
 
-	t.Run("rebuilds contest leaderboard after registration update with removed languages", func(t *testing.T) {
+	t.Run("updates user contest score after registration update with removed languages", func(t *testing.T) {
 		userRepo := &mockUserUpsertRepositoryForReg{}
 		userUpsert := domain.NewUserUpsert(userRepo)
 		existingRegID := uuid.New()
@@ -370,11 +367,8 @@ func TestRegistrationUpsert_LeaderboardUpdates(t *testing.T) {
 				{Code: "kor", Name: "Korean"},
 			},
 		}
-		dbScores := []domain.LeaderboardScore{
-			{UserID: userID, Score: 100},
-		}
-		store := &mockLeaderboardStore{}
-		lbRepo := &mockLeaderboardRepo{contestScores: dbScores}
+		store := &mockLeaderboardStore{updateContestExists: true}
+		lbRepo := &mockLeaderboardRepo{userContestScore: 100}
 		updater := domain.NewLeaderboardUpdater(store, lbRepo)
 		repo := &mockRegistrationUpsertRepository{
 			contest:      validContest,
@@ -392,19 +386,20 @@ func TestRegistrationUpsert_LeaderboardUpdates(t *testing.T) {
 		require.NoError(t, err)
 		assert.True(t, repo.upsertCalled)
 		assert.True(t, repo.detachCalled)
-		require.Len(t, store.rebuildContestCalls, 1)
-		assert.Equal(t, contestID, store.rebuildContestCalls[0].ContestID)
-		assert.Equal(t, dbScores, store.rebuildContestCalls[0].Scores)
+		require.Len(t, store.updateContestCalls, 1)
+		assert.Equal(t, contestID, store.updateContestCalls[0].ContestID)
+		assert.Equal(t, userID, store.updateContestCalls[0].UserID)
+		assert.Equal(t, float64(100), store.updateContestCalls[0].Score)
 	})
 
 	t.Run("leaderboard errors do not fail the registration", func(t *testing.T) {
 		userRepo := &mockUserUpsertRepositoryForReg{}
 		userUpsert := domain.NewUserUpsert(userRepo)
 		store := &mockLeaderboardStore{
-			rebuildContestErr: errors.New("redis connection refused"),
+			updateContestErr: errors.New("redis connection refused"),
 		}
 		lbRepo := &mockLeaderboardRepo{
-			contestErr: errors.New("database timeout"),
+			userContestErr: errors.New("database timeout"),
 		}
 		updater := domain.NewLeaderboardUpdater(store, lbRepo)
 		repo := &mockRegistrationUpsertRepository{

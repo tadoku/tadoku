@@ -36,17 +36,16 @@ func (m *leaderboardYearlyRepositoryMock) FetchAllYearlyLeaderboardScores(ctx co
 }
 
 type leaderboardYearlyStoreMock struct {
-	scores     []domain.LeaderboardScore
-	totalCount int
-	exists     bool
-	fetchErr   error
-	rebuildErr error
+	page     *domain.LeaderboardPage
+	exists   bool
+	fetchErr error
 
+	rebuildErr    error
 	rebuiltScores []domain.LeaderboardScore
 }
 
-func (m *leaderboardYearlyStoreMock) FetchYearlyLeaderboardPage(ctx context.Context, year int, page, pageSize int) ([]domain.LeaderboardScore, int, bool, error) {
-	return m.scores, m.totalCount, m.exists, m.fetchErr
+func (m *leaderboardYearlyStoreMock) FetchYearlyLeaderboardPage(ctx context.Context, year int, page, pageSize int) (*domain.LeaderboardPage, bool, error) {
+	return m.page, m.exists, m.fetchErr
 }
 
 func (m *leaderboardYearlyStoreMock) RebuildYearlyLeaderboard(ctx context.Context, year int, scores []domain.LeaderboardScore) error {
@@ -170,12 +169,15 @@ func TestLeaderboardYearly_CacheHit(t *testing.T) {
 	u1, u2 := uuid.New(), uuid.New()
 
 	store := &leaderboardYearlyStoreMock{
-		scores: []domain.LeaderboardScore{
-			{UserID: u1, Score: 200},
-			{UserID: u2, Score: 100},
+		page: &domain.LeaderboardPage{
+			Scores: []domain.LeaderboardScore{
+				{UserID: u1, Score: 200},
+				{UserID: u2, Score: 100},
+			},
+			TotalCount: 2,
+			StartRank:  1,
 		},
-		totalCount: 2,
-		exists:     true,
+		exists: true,
 	}
 	repo := &leaderboardYearlyRepositoryMock{
 		displayNames: map[uuid.UUID]string{u1: "Alice", u2: "Bob"},

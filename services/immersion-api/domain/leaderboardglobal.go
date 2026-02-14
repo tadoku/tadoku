@@ -14,7 +14,7 @@ type LeaderboardGlobalRepository interface {
 }
 
 type LeaderboardGlobalStore interface {
-	FetchGlobalLeaderboardPage(ctx context.Context, page, pageSize int) ([]LeaderboardScore, int, bool, error)
+	FetchGlobalLeaderboardPage(ctx context.Context, page, pageSize int) (*LeaderboardPage, bool, error)
 	RebuildGlobalLeaderboard(ctx context.Context, scores []LeaderboardScore) error
 }
 
@@ -46,7 +46,7 @@ func (s *LeaderboardGlobal) Execute(ctx context.Context, req *LeaderboardGlobalR
 		return s.repo.FetchGlobalLeaderboard(ctx, req)
 	}
 
-	scores, totalCount, exists, err := s.store.FetchGlobalLeaderboardPage(ctx, req.Page, req.PageSize)
+	lbPage, exists, err := s.store.FetchGlobalLeaderboardPage(ctx, req.Page, req.PageSize)
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch global leaderboard from store: %w", err)
 	}
@@ -62,8 +62,8 @@ func (s *LeaderboardGlobal) Execute(ctx context.Context, req *LeaderboardGlobalR
 		return s.repo.FetchGlobalLeaderboard(ctx, req)
 	}
 
-	userIDs := make([]uuid.UUID, len(scores))
-	for i, sc := range scores {
+	userIDs := make([]uuid.UUID, len(lbPage.Scores))
+	for i, sc := range lbPage.Scores {
 		userIDs[i] = sc.UserID
 	}
 
@@ -72,16 +72,16 @@ func (s *LeaderboardGlobal) Execute(ctx context.Context, req *LeaderboardGlobalR
 		return nil, fmt.Errorf("failed to fetch display names: %w", err)
 	}
 
-	entries := buildLeaderboardEntries(scores, displayNames, req.Page*req.PageSize)
+	entries := buildLeaderboardEntries(*lbPage, displayNames)
 
 	nextPageToken := ""
-	if (req.Page*req.PageSize)+req.PageSize < totalCount {
+	if (req.Page*req.PageSize)+req.PageSize < lbPage.TotalCount {
 		nextPageToken = fmt.Sprint(req.Page + 1)
 	}
 
 	return &Leaderboard{
 		Entries:       entries,
-		TotalSize:     totalCount,
+		TotalSize:     lbPage.TotalCount,
 		NextPageToken: nextPageToken,
 	}, nil
 }

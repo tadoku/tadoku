@@ -36,17 +36,16 @@ func (m *contestLeaderboardFetchRepositoryMock) FetchAllContestLeaderboardScores
 }
 
 type contestLeaderboardFetchStoreMock struct {
-	scores     []domain.LeaderboardScore
-	totalCount int
-	exists     bool
-	fetchErr   error
-	rebuildErr error
+	page     *domain.LeaderboardPage
+	exists   bool
+	fetchErr error
 
+	rebuildErr    error
 	rebuiltScores []domain.LeaderboardScore
 }
 
-func (m *contestLeaderboardFetchStoreMock) FetchContestLeaderboardPage(ctx context.Context, contestID uuid.UUID, page, pageSize int) ([]domain.LeaderboardScore, int, bool, error) {
-	return m.scores, m.totalCount, m.exists, m.fetchErr
+func (m *contestLeaderboardFetchStoreMock) FetchContestLeaderboardPage(ctx context.Context, contestID uuid.UUID, page, pageSize int) (*domain.LeaderboardPage, bool, error) {
+	return m.page, m.exists, m.fetchErr
 }
 
 func (m *contestLeaderboardFetchStoreMock) RebuildContestLeaderboard(ctx context.Context, contestID uuid.UUID, scores []domain.LeaderboardScore) error {
@@ -174,12 +173,15 @@ func TestContestLeaderboardFetch_CacheHit(t *testing.T) {
 	u1, u2 := uuid.New(), uuid.New()
 
 	store := &contestLeaderboardFetchStoreMock{
-		scores: []domain.LeaderboardScore{
-			{UserID: u1, Score: 200},
-			{UserID: u2, Score: 100},
+		page: &domain.LeaderboardPage{
+			Scores: []domain.LeaderboardScore{
+				{UserID: u1, Score: 200},
+				{UserID: u2, Score: 100},
+			},
+			TotalCount: 2,
+			StartRank:  1,
 		},
-		totalCount: 2,
-		exists:     true,
+		exists: true,
 	}
 	repo := &contestLeaderboardFetchRepositoryMock{
 		displayNames: map[uuid.UUID]string{u1: "Alice", u2: "Bob"},

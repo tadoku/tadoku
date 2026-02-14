@@ -14,7 +14,7 @@ type LeaderboardYearlyRepository interface {
 }
 
 type LeaderboardYearlyStore interface {
-	FetchYearlyLeaderboardPage(ctx context.Context, year int, page, pageSize int) ([]LeaderboardScore, int, bool, error)
+	FetchYearlyLeaderboardPage(ctx context.Context, year int, page, pageSize int) (*LeaderboardPage, bool, error)
 	RebuildYearlyLeaderboard(ctx context.Context, year int, scores []LeaderboardScore) error
 }
 
@@ -48,7 +48,7 @@ func (s *LeaderboardYearly) Execute(ctx context.Context, req *LeaderboardYearlyR
 	}
 
 	year := int(req.Year)
-	scores, totalCount, exists, err := s.store.FetchYearlyLeaderboardPage(ctx, year, req.Page, req.PageSize)
+	lbPage, exists, err := s.store.FetchYearlyLeaderboardPage(ctx, year, req.Page, req.PageSize)
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch yearly leaderboard from store: %w", err)
 	}
@@ -64,8 +64,8 @@ func (s *LeaderboardYearly) Execute(ctx context.Context, req *LeaderboardYearlyR
 		return s.repo.FetchYearlyLeaderboard(ctx, req)
 	}
 
-	userIDs := make([]uuid.UUID, len(scores))
-	for i, sc := range scores {
+	userIDs := make([]uuid.UUID, len(lbPage.Scores))
+	for i, sc := range lbPage.Scores {
 		userIDs[i] = sc.UserID
 	}
 
@@ -74,16 +74,16 @@ func (s *LeaderboardYearly) Execute(ctx context.Context, req *LeaderboardYearlyR
 		return nil, fmt.Errorf("failed to fetch display names: %w", err)
 	}
 
-	entries := buildLeaderboardEntries(scores, displayNames, req.Page*req.PageSize)
+	entries := buildLeaderboardEntries(*lbPage, displayNames)
 
 	nextPageToken := ""
-	if (req.Page*req.PageSize)+req.PageSize < totalCount {
+	if (req.Page*req.PageSize)+req.PageSize < lbPage.TotalCount {
 		nextPageToken = fmt.Sprint(req.Page + 1)
 	}
 
 	return &Leaderboard{
 		Entries:       entries,
-		TotalSize:     totalCount,
+		TotalSize:     lbPage.TotalCount,
 		NextPageToken: nextPageToken,
 	}, nil
 }

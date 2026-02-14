@@ -186,15 +186,15 @@ func (s *LeaderboardStore) RebuildOfficialLeaderboards(ctx context.Context, year
 	return nil
 }
 
-func (s *LeaderboardStore) FetchGlobalLeaderboardPage(ctx context.Context, page, pageSize int) ([]domain.LeaderboardScore, int, bool, error) {
+func (s *LeaderboardStore) FetchGlobalLeaderboardPage(ctx context.Context, page, pageSize int) (*domain.LeaderboardPage, bool, error) {
 	return s.fetchLeaderboardPage(ctx, globalLeaderboardKey, page, pageSize)
 }
 
-func (s *LeaderboardStore) FetchYearlyLeaderboardPage(ctx context.Context, year int, page, pageSize int) ([]domain.LeaderboardScore, int, bool, error) {
+func (s *LeaderboardStore) FetchYearlyLeaderboardPage(ctx context.Context, year int, page, pageSize int) (*domain.LeaderboardPage, bool, error) {
 	return s.fetchLeaderboardPage(ctx, yearlyLeaderboardKey(year), page, pageSize)
 }
 
-func (s *LeaderboardStore) FetchContestLeaderboardPage(ctx context.Context, contestID uuid.UUID, page, pageSize int) ([]domain.LeaderboardScore, int, bool, error) {
+func (s *LeaderboardStore) FetchContestLeaderboardPage(ctx context.Context, contestID uuid.UUID, page, pageSize int) (*domain.LeaderboardPage, bool, error) {
 	return s.fetchLeaderboardPage(ctx, contestLeaderboardKey(contestID), page, pageSize)
 }
 
@@ -210,43 +210,70 @@ func lastUpdatedKey(key string) string {
 	return key + ":last_updated"
 }
 
-// fetchLeaderboardPage returns a page of scores from a sorted set.
-// Returns (scores, totalCount, exists, error). If the leaderboard has not
-// been built yet (no :last_updated marker), exists is false and scores is nil.
-func (s *LeaderboardStore) fetchLeaderboardPage(ctx context.Context, key string, page, pageSize int) ([]domain.LeaderboardScore, int, bool, error) {
+// fetchLeaderboardPage returns a page of scores from a sorted set with
+// metadata for correct rank/tie computation across page boundaries.
+// Returns (page, exists, error). If the leaderboard has not been built yet
+// (no :last_updated marker), exists is false and page is nil.
+func (s *LeaderboardStore) fetchLeaderboardPage(ctx context.Context, key string, page, pageSize int) (*domain.LeaderboardPage, bool, error) {
 	existsCmd := s.client.B().Exists().Key(lastUpdatedKey(key)).Build()
 	existsResult, err := s.client.Do(ctx, existsCmd).AsInt64()
 	if err != nil {
-		return nil, 0, false, fmt.Errorf("failed to check last_updated marker for key %s: %w", key, err)
+		return nil, false, fmt.Errorf("failed to check last_updated marker for key %s: %w", key, err)
 	}
 	if existsResult == 0 {
-		return nil, 0, false, nil
+		return nil, false, nil
 	}
 
 	zcardCmd := s.client.B().Zcard().Key(key).Build()
 	totalCount, err := s.client.Do(ctx, zcardCmd).AsInt64()
 	if err != nil {
-		return nil, 0, false, fmt.Errorf("failed to get cardinality for key %s: %w", key, err)
+		return nil, false, fmt.Errorf("failed to get cardinality for key %s: %w", key, err)
 	}
 
 	if totalCount == 0 {
-		return []domain.LeaderboardScore{}, 0, true, nil
+		return &domain.LeaderboardPage{
+			Scores:    []domain.LeaderboardScore{},
+			StartRank: 1,
+		}, true, nil
 	}
 
+	// Fetch one extra entry on each side for boundary tie detection.
 	start := int64(page * pageSize)
 	stop := start + int64(pageSize) - 1
+	fetchStart := start
+	if fetchStart > 0 {
+		fetchStart--
+	}
+	fetchStop := stop + 1 // one after
 
-	zrangeCmd := s.client.B().Zrange().Key(key).Min(strconv.FormatInt(start, 10)).Max(strconv.FormatInt(stop, 10)).Rev().Withscores().Build()
+	zrangeCmd := s.client.B().Zrange().Key(key).Min(strconv.FormatInt(fetchStart, 10)).Max(strconv.FormatInt(fetchStop, 10)).Rev().Withscores().Build()
 	entries, err := s.client.Do(ctx, zrangeCmd).AsZScores()
 	if err != nil {
-		return nil, 0, false, fmt.Errorf("failed to fetch leaderboard page for key %s: %w", key, err)
+		return nil, false, fmt.Errorf("failed to fetch leaderboard page for key %s: %w", key, err)
+	}
+
+	// Separate the prev neighbor, page entries, and next neighbor.
+	hasPrevNeighbor := fetchStart < start && len(entries) > 0
+	var prevScore float64
+	if hasPrevNeighbor {
+		prevScore = entries[0].Score
+		entries = entries[1:]
+	}
+
+	var nextScore float64
+	hasNextNeighbor := false
+	pageEnd := int64(pageSize)
+	if int64(len(entries)) > pageEnd {
+		hasNextNeighbor = true
+		nextScore = entries[len(entries)-1].Score
+		entries = entries[:len(entries)-1]
 	}
 
 	scores := make([]domain.LeaderboardScore, len(entries))
 	for i, entry := range entries {
 		userID, err := uuid.Parse(entry.Member)
 		if err != nil {
-			return nil, 0, false, fmt.Errorf("failed to parse member UUID %q: %w", entry.Member, err)
+			return nil, false, fmt.Errorf("failed to parse member UUID %q: %w", entry.Member, err)
 		}
 		scores[i] = domain.LeaderboardScore{
 			UserID: userID,
@@ -254,7 +281,30 @@ func (s *LeaderboardStore) fetchLeaderboardPage(ctx context.Context, key string,
 		}
 	}
 
-	return scores, int(totalCount), true, nil
+	// Compute the rank of the first entry: count of members with strictly
+	// higher score + 1.
+	startRank := int(start) + 1
+	if len(scores) > 0 {
+		firstScore := scores[0].Score
+		scoreStr := fmt.Sprintf("(%s", strconv.FormatFloat(firstScore, 'f', -1, 64))
+		zcountCmd := s.client.B().Zcount().Key(key).Min(scoreStr).Max("+inf").Build()
+		higherCount, err := s.client.Do(ctx, zcountCmd).AsInt64()
+		if err != nil {
+			return nil, false, fmt.Errorf("failed to count higher scores for key %s: %w", key, err)
+		}
+		startRank = int(higherCount) + 1
+	}
+
+	hasPrevTie := hasPrevNeighbor && len(scores) > 0 && prevScore == scores[0].Score
+	hasNextTie := hasNextNeighbor && len(scores) > 0 && nextScore == scores[len(scores)-1].Score
+
+	return &domain.LeaderboardPage{
+		Scores:     scores,
+		TotalCount: int(totalCount),
+		StartRank:  startRank,
+		HasPrevTie: hasPrevTie,
+		HasNextTie: hasNextTie,
+	}, true, nil
 }
 
 // rebuildLeaderboard atomically replaces a sorted set with the given scores

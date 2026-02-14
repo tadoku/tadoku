@@ -36,17 +36,16 @@ func (m *leaderboardGlobalRepositoryMock) FetchAllGlobalLeaderboardScores(ctx co
 }
 
 type leaderboardGlobalStoreMock struct {
-	scores     []domain.LeaderboardScore
-	totalCount int
-	exists     bool
-	fetchErr   error
-	rebuildErr error
+	page     *domain.LeaderboardPage
+	exists   bool
+	fetchErr error
 
+	rebuildErr    error
 	rebuiltScores []domain.LeaderboardScore
 }
 
-func (m *leaderboardGlobalStoreMock) FetchGlobalLeaderboardPage(ctx context.Context, page, pageSize int) ([]domain.LeaderboardScore, int, bool, error) {
-	return m.scores, m.totalCount, m.exists, m.fetchErr
+func (m *leaderboardGlobalStoreMock) FetchGlobalLeaderboardPage(ctx context.Context, page, pageSize int) (*domain.LeaderboardPage, bool, error) {
+	return m.page, m.exists, m.fetchErr
 }
 
 func (m *leaderboardGlobalStoreMock) RebuildGlobalLeaderboard(ctx context.Context, scores []domain.LeaderboardScore) error {
@@ -168,12 +167,15 @@ func TestLeaderboardGlobal_CacheHit(t *testing.T) {
 	u1, u2 := uuid.New(), uuid.New()
 
 	store := &leaderboardGlobalStoreMock{
-		scores: []domain.LeaderboardScore{
-			{UserID: u1, Score: 200},
-			{UserID: u2, Score: 100},
+		page: &domain.LeaderboardPage{
+			Scores: []domain.LeaderboardScore{
+				{UserID: u1, Score: 200},
+				{UserID: u2, Score: 100},
+			},
+			TotalCount: 2,
+			StartRank:  1,
 		},
-		totalCount: 2,
-		exists:     true,
+		exists: true,
 	}
 	repo := &leaderboardGlobalRepositoryMock{
 		displayNames: map[uuid.UUID]string{u1: "Alice", u2: "Bob"},
@@ -242,9 +244,12 @@ func TestLeaderboardGlobal_Pagination(t *testing.T) {
 	u1 := uuid.New()
 
 	store := &leaderboardGlobalStoreMock{
-		scores:     []domain.LeaderboardScore{{UserID: u1, Score: 50}},
-		totalCount: 30,
-		exists:     true,
+		page: &domain.LeaderboardPage{
+			Scores:     []domain.LeaderboardScore{{UserID: u1, Score: 50}},
+			TotalCount: 30,
+			StartRank:  1,
+		},
+		exists: true,
 	}
 	repo := &leaderboardGlobalRepositoryMock{
 		displayNames: map[uuid.UUID]string{u1: "A"},

@@ -14,7 +14,7 @@ type ContestLeaderboardFetchRepository interface {
 }
 
 type ContestLeaderboardFetchStore interface {
-	FetchContestLeaderboardPage(ctx context.Context, contestID uuid.UUID, page, pageSize int) ([]LeaderboardScore, int, bool, error)
+	FetchContestLeaderboardPage(ctx context.Context, contestID uuid.UUID, page, pageSize int) (*LeaderboardPage, bool, error)
 	RebuildContestLeaderboard(ctx context.Context, contestID uuid.UUID, scores []LeaderboardScore) error
 }
 
@@ -47,7 +47,7 @@ func (s *ContestLeaderboardFetch) Execute(ctx context.Context, req *ContestLeade
 		return s.repo.FetchContestLeaderboard(ctx, req)
 	}
 
-	scores, totalCount, exists, err := s.store.FetchContestLeaderboardPage(ctx, req.ContestID, req.Page, req.PageSize)
+	lbPage, exists, err := s.store.FetchContestLeaderboardPage(ctx, req.ContestID, req.Page, req.PageSize)
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch contest leaderboard from store: %w", err)
 	}
@@ -63,8 +63,8 @@ func (s *ContestLeaderboardFetch) Execute(ctx context.Context, req *ContestLeade
 		return s.repo.FetchContestLeaderboard(ctx, req)
 	}
 
-	userIDs := make([]uuid.UUID, len(scores))
-	for i, sc := range scores {
+	userIDs := make([]uuid.UUID, len(lbPage.Scores))
+	for i, sc := range lbPage.Scores {
 		userIDs[i] = sc.UserID
 	}
 
@@ -73,16 +73,16 @@ func (s *ContestLeaderboardFetch) Execute(ctx context.Context, req *ContestLeade
 		return nil, fmt.Errorf("failed to fetch display names: %w", err)
 	}
 
-	entries := buildLeaderboardEntries(scores, displayNames, req.Page*req.PageSize)
+	entries := buildLeaderboardEntries(*lbPage, displayNames)
 
 	nextPageToken := ""
-	if (req.Page*req.PageSize)+req.PageSize < totalCount {
+	if (req.Page*req.PageSize)+req.PageSize < lbPage.TotalCount {
 		nextPageToken = fmt.Sprint(req.Page + 1)
 	}
 
 	return &Leaderboard{
 		Entries:       entries,
-		TotalSize:     totalCount,
+		TotalSize:     lbPage.TotalCount,
 		NextPageToken: nextPageToken,
 	}, nil
 }

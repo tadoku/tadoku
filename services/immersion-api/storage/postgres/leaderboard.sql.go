@@ -38,6 +38,8 @@ type ContestLeaderboardAllScoresRow struct {
 	Score  float32
 }
 
+// Returns all user scores for a contest without pagination/ranking.
+// Used for rebuilding the Redis leaderboard sorted set.
 func (q *Queries) ContestLeaderboardAllScores(ctx context.Context, contestID uuid.UUID) ([]ContestLeaderboardAllScoresRow, error) {
 	rows, err := q.db.QueryContext(ctx, contestLeaderboardAllScores, contestID)
 	if err != nil {
@@ -59,150 +61,6 @@ func (q *Queries) ContestLeaderboardAllScores(ctx context.Context, contestID uui
 		return nil, err
 	}
 	return items, nil
-}
-
-const yearlyLeaderboardAllScores = `-- name: YearlyLeaderboardAllScores :many
-select
-  user_id,
-  sum(score)::real as score
-from logs
-where
-  year = $1
-  and eligible_official_leaderboard = true
-  and deleted_at is null
-group by user_id
-having sum(score) > 0
-`
-
-type YearlyLeaderboardAllScoresRow struct {
-	UserID uuid.UUID
-	Score  float32
-}
-
-func (q *Queries) YearlyLeaderboardAllScores(ctx context.Context, year int16) ([]YearlyLeaderboardAllScoresRow, error) {
-	rows, err := q.db.QueryContext(ctx, yearlyLeaderboardAllScores, year)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []YearlyLeaderboardAllScoresRow
-	for rows.Next() {
-		var i YearlyLeaderboardAllScoresRow
-		if err := rows.Scan(&i.UserID, &i.Score); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const globalLeaderboardAllScores = `-- name: GlobalLeaderboardAllScores :many
-select
-  user_id,
-  sum(score)::real as score
-from logs
-where
-  eligible_official_leaderboard = true
-  and deleted_at is null
-group by user_id
-having sum(score) > 0
-`
-
-type GlobalLeaderboardAllScoresRow struct {
-	UserID uuid.UUID
-	Score  float32
-}
-
-func (q *Queries) GlobalLeaderboardAllScores(ctx context.Context) ([]GlobalLeaderboardAllScoresRow, error) {
-	rows, err := q.db.QueryContext(ctx, globalLeaderboardAllScores)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []GlobalLeaderboardAllScoresRow
-	for rows.Next() {
-		var i GlobalLeaderboardAllScoresRow
-		if err := rows.Scan(&i.UserID, &i.Score); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const userContestScore = `-- name: UserContestScore :one
-select
-  coalesce(sum(logs.score), 0)::real as score
-from logs
-inner join contest_logs on contest_logs.log_id = logs.id
-where
-  contest_logs.contest_id = $1
-  and logs.user_id = $2
-  and logs.deleted_at is null
-`
-
-type UserContestScoreParams struct {
-	ContestID uuid.UUID
-	UserID    uuid.UUID
-}
-
-func (q *Queries) UserContestScore(ctx context.Context, arg UserContestScoreParams) (float32, error) {
-	row := q.db.QueryRowContext(ctx, userContestScore, arg.ContestID, arg.UserID)
-	var score float32
-	err := row.Scan(&score)
-	return score, err
-}
-
-const userYearlyScore = `-- name: UserYearlyScore :one
-select
-  coalesce(sum(score), 0)::real as score
-from logs
-where
-  year = $1
-  and user_id = $2
-  and eligible_official_leaderboard = true
-  and deleted_at is null
-`
-
-type UserYearlyScoreParams struct {
-	Year   int16
-	UserID uuid.UUID
-}
-
-func (q *Queries) UserYearlyScore(ctx context.Context, arg UserYearlyScoreParams) (float32, error) {
-	row := q.db.QueryRowContext(ctx, userYearlyScore, arg.Year, arg.UserID)
-	var score float32
-	err := row.Scan(&score)
-	return score, err
-}
-
-const userGlobalScore = `-- name: UserGlobalScore :one
-select
-  coalesce(sum(score), 0)::real as score
-from logs
-where
-  user_id = $1
-  and eligible_official_leaderboard = true
-  and deleted_at is null
-`
-
-func (q *Queries) UserGlobalScore(ctx context.Context, userID uuid.UUID) (float32, error) {
-	row := q.db.QueryRowContext(ctx, userGlobalScore, userID)
-	var score float32
-	err := row.Scan(&score)
-	return score, err
 }
 
 const globalLeaderboard = `-- name: GlobalLeaderboard :many
@@ -286,6 +144,48 @@ func (q *Queries) GlobalLeaderboard(ctx context.Context, arg GlobalLeaderboardPa
 			&i.IsTie,
 			&i.TotalSize,
 		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const globalLeaderboardAllScores = `-- name: GlobalLeaderboardAllScores :many
+select
+  user_id,
+  sum(score)::real as score
+from logs
+where
+  eligible_official_leaderboard = true
+  and deleted_at is null
+group by user_id
+having sum(score) > 0
+`
+
+type GlobalLeaderboardAllScoresRow struct {
+	UserID uuid.UUID
+	Score  float32
+}
+
+// Returns all user scores globally without pagination/ranking.
+// Used for rebuilding the Redis leaderboard sorted set.
+func (q *Queries) GlobalLeaderboardAllScores(ctx context.Context) ([]GlobalLeaderboardAllScoresRow, error) {
+	rows, err := q.db.QueryContext(ctx, globalLeaderboardAllScores)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GlobalLeaderboardAllScoresRow
+	for rows.Next() {
+		var i GlobalLeaderboardAllScoresRow
+		if err := rows.Scan(&i.UserID, &i.Score); err != nil {
 			return nil, err
 		}
 		items = append(items, i)
@@ -408,6 +308,75 @@ func (q *Queries) LeaderboardForContest(ctx context.Context, arg LeaderboardForC
 	return items, nil
 }
 
+const userContestScore = `-- name: UserContestScore :one
+select
+  coalesce(sum(logs.score), 0)::real as score
+from logs
+inner join contest_logs on contest_logs.log_id = logs.id
+where
+  contest_logs.contest_id = $1
+  and logs.user_id = $2
+  and logs.deleted_at is null
+`
+
+type UserContestScoreParams struct {
+	ContestID uuid.UUID
+	UserID    uuid.UUID
+}
+
+// Returns a single user's total score for a contest.
+// Used for updating a user's score in the Redis leaderboard.
+func (q *Queries) UserContestScore(ctx context.Context, arg UserContestScoreParams) (float32, error) {
+	row := q.db.QueryRowContext(ctx, userContestScore, arg.ContestID, arg.UserID)
+	var score float32
+	err := row.Scan(&score)
+	return score, err
+}
+
+const userGlobalScore = `-- name: UserGlobalScore :one
+select
+  coalesce(sum(score), 0)::real as score
+from logs
+where
+  user_id = $1
+  and eligible_official_leaderboard = true
+  and deleted_at is null
+`
+
+// Returns a single user's total global score (official logs only).
+// Used for updating a user's score in the Redis leaderboard.
+func (q *Queries) UserGlobalScore(ctx context.Context, userID uuid.UUID) (float32, error) {
+	row := q.db.QueryRowContext(ctx, userGlobalScore, userID)
+	var score float32
+	err := row.Scan(&score)
+	return score, err
+}
+
+const userYearlyScore = `-- name: UserYearlyScore :one
+select
+  coalesce(sum(score), 0)::real as score
+from logs
+where
+  year = $1
+  and user_id = $2
+  and eligible_official_leaderboard = true
+  and deleted_at is null
+`
+
+type UserYearlyScoreParams struct {
+	Year   int16
+	UserID uuid.UUID
+}
+
+// Returns a single user's total score for a year (official logs only).
+// Used for updating a user's score in the Redis leaderboard.
+func (q *Queries) UserYearlyScore(ctx context.Context, arg UserYearlyScoreParams) (float32, error) {
+	row := q.db.QueryRowContext(ctx, userYearlyScore, arg.Year, arg.UserID)
+	var score float32
+	err := row.Scan(&score)
+	return score, err
+}
+
 const yearlyLeaderboard = `-- name: YearlyLeaderboard :many
 with leaderboard as (
   select
@@ -491,6 +460,49 @@ func (q *Queries) YearlyLeaderboard(ctx context.Context, arg YearlyLeaderboardPa
 			&i.IsTie,
 			&i.TotalSize,
 		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const yearlyLeaderboardAllScores = `-- name: YearlyLeaderboardAllScores :many
+select
+  user_id,
+  sum(score)::real as score
+from logs
+where
+  year = $1
+  and eligible_official_leaderboard = true
+  and deleted_at is null
+group by user_id
+having sum(score) > 0
+`
+
+type YearlyLeaderboardAllScoresRow struct {
+	UserID uuid.UUID
+	Score  float32
+}
+
+// Returns all user scores for a year without pagination/ranking.
+// Used for rebuilding the Redis leaderboard sorted set.
+func (q *Queries) YearlyLeaderboardAllScores(ctx context.Context, year int16) ([]YearlyLeaderboardAllScoresRow, error) {
+	rows, err := q.db.QueryContext(ctx, yearlyLeaderboardAllScores, year)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []YearlyLeaderboardAllScoresRow
+	for rows.Next() {
+		var i YearlyLeaderboardAllScoresRow
+		if err := rows.Scan(&i.UserID, &i.Score); err != nil {
 			return nil, err
 		}
 		items = append(items, i)

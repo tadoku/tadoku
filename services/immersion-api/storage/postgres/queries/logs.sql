@@ -122,6 +122,7 @@ select
   logs.amount,
   logs.modifier,
   logs.score,
+  logs.eligible_official_leaderboard,
   logs.created_at,
   logs.updated_at,
   logs.deleted_at,

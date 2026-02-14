@@ -2,6 +2,7 @@ package domain_test
 
 import (
 	"context"
+	"errors"
 	"testing"
 	"time"
 
@@ -72,7 +73,9 @@ func TestRegistrationUpsert_Execute(t *testing.T) {
 		userRepo := &mockUserUpsertRepositoryForReg{}
 		userUpsert := domain.NewUserUpsert(userRepo)
 		repo := &mockRegistrationUpsertRepository{}
-		svc := domain.NewRegistrationUpsert(repo, userUpsert)
+		store := &mockLeaderboardStore{}
+		rebuildRepo := &mockLeaderboardRebuildRepo{}
+		svc := domain.NewRegistrationUpsert(repo, userUpsert, store, rebuildRepo)
 
 		ctx := ctxWithGuest()
 
@@ -89,7 +92,9 @@ func TestRegistrationUpsert_Execute(t *testing.T) {
 		userRepo := &mockUserUpsertRepositoryForReg{}
 		userUpsert := domain.NewUserUpsert(userRepo)
 		repo := &mockRegistrationUpsertRepository{}
-		svc := domain.NewRegistrationUpsert(repo, userUpsert)
+		store := &mockLeaderboardStore{}
+		rebuildRepo := &mockLeaderboardRebuildRepo{}
+		svc := domain.NewRegistrationUpsert(repo, userUpsert, store, rebuildRepo)
 
 		err := svc.Execute(context.Background(), &domain.RegistrationUpsertRequest{
 			ContestID:     contestID,
@@ -107,7 +112,9 @@ func TestRegistrationUpsert_Execute(t *testing.T) {
 			contest:    validContest,
 			findRegErr: domain.ErrNotFound,
 		}
-		svc := domain.NewRegistrationUpsert(repo, userUpsert)
+		store := &mockLeaderboardStore{}
+		rebuildRepo := &mockLeaderboardRebuildRepo{}
+		svc := domain.NewRegistrationUpsert(repo, userUpsert, store, rebuildRepo)
 
 		ctx := ctxWithUserSubject(userID.String())
 
@@ -127,7 +134,9 @@ func TestRegistrationUpsert_Execute(t *testing.T) {
 			contest:    validContest,
 			findRegErr: domain.ErrNotFound,
 		}
-		svc := domain.NewRegistrationUpsert(repo, userUpsert)
+		store := &mockLeaderboardStore{}
+		rebuildRepo := &mockLeaderboardRebuildRepo{}
+		svc := domain.NewRegistrationUpsert(repo, userUpsert, store, rebuildRepo)
 
 		ctx := ctxWithUserSubject(userID.String())
 
@@ -156,7 +165,9 @@ func TestRegistrationUpsert_Execute(t *testing.T) {
 			contest:    contestWithAllowList,
 			findRegErr: domain.ErrNotFound,
 		}
-		svc := domain.NewRegistrationUpsert(repo, userUpsert)
+		store := &mockLeaderboardStore{}
+		rebuildRepo := &mockLeaderboardRebuildRepo{}
+		svc := domain.NewRegistrationUpsert(repo, userUpsert, store, rebuildRepo)
 
 		ctx := ctxWithUserSubject(userID.String())
 
@@ -186,7 +197,9 @@ func TestRegistrationUpsert_Execute(t *testing.T) {
 			contest:      validContest,
 			registration: existingRegistration,
 		}
-		svc := domain.NewRegistrationUpsert(repo, userUpsert)
+		store := &mockLeaderboardStore{}
+		rebuildRepo := &mockLeaderboardRebuildRepo{}
+		svc := domain.NewRegistrationUpsert(repo, userUpsert, store, rebuildRepo)
 
 		ctx := ctxWithUserSubject(userID.String())
 
@@ -218,7 +231,9 @@ func TestRegistrationUpsert_Execute(t *testing.T) {
 			contest:      validContest,
 			registration: existingRegistration,
 		}
-		svc := domain.NewRegistrationUpsert(repo, userUpsert)
+		store := &mockLeaderboardStore{}
+		rebuildRepo := &mockLeaderboardRebuildRepo{}
+		svc := domain.NewRegistrationUpsert(repo, userUpsert, store, rebuildRepo)
 
 		ctx := ctxWithUserSubject(userID.String())
 
@@ -239,7 +254,9 @@ func TestRegistrationUpsert_Execute(t *testing.T) {
 			contest:    validContest,
 			findRegErr: domain.ErrNotFound,
 		}
-		svc := domain.NewRegistrationUpsert(repo, userUpsert)
+		store := &mockLeaderboardStore{}
+		rebuildRepo := &mockLeaderboardRebuildRepo{}
+		svc := domain.NewRegistrationUpsert(repo, userUpsert, store, rebuildRepo)
 
 		ctx := ctxWithUserSubject(userID.String())
 
@@ -270,7 +287,9 @@ func TestRegistrationUpsert_Execute(t *testing.T) {
 			contest:      validContest,
 			registration: existingRegistration,
 		}
-		svc := domain.NewRegistrationUpsert(repo, userUpsert)
+		store := &mockLeaderboardStore{}
+		rebuildRepo := &mockLeaderboardRebuildRepo{}
+		svc := domain.NewRegistrationUpsert(repo, userUpsert, store, rebuildRepo)
 
 		ctx := ctxWithUserSubject(userID.String())
 
@@ -282,5 +301,114 @@ func TestRegistrationUpsert_Execute(t *testing.T) {
 		require.NoError(t, err)
 		assert.True(t, repo.upsertCalled)
 		assert.Equal(t, existingRegID, repo.upsertCalledWith.ID)
+	})
+}
+
+func TestRegistrationUpsert_LeaderboardUpdates(t *testing.T) {
+	userID := uuid.New()
+	contestID := uuid.New()
+	now := time.Now()
+
+	validContest := &domain.ContestView{
+		ID:               contestID,
+		ContestStart:     now.Add(-time.Hour),
+		ContestEnd:       now.Add(time.Hour * 24),
+		RegistrationEnd:  now.Add(time.Hour * 12),
+		Title:            "Test Contest",
+		OwnerUserID:      uuid.New(),
+		AllowedLanguages: []domain.Language{},
+	}
+
+	t.Run("rebuilds contest leaderboard after new registration", func(t *testing.T) {
+		userRepo := &mockUserUpsertRepositoryForReg{}
+		userUpsert := domain.NewUserUpsert(userRepo)
+		dbScores := []domain.LeaderboardScore{
+			{UserID: userID, Score: 0},
+		}
+		store := &mockLeaderboardStore{}
+		rebuildRepo := &mockLeaderboardRebuildRepo{contestScores: dbScores}
+		repo := &mockRegistrationUpsertRepository{
+			contest:    validContest,
+			findRegErr: domain.ErrNotFound,
+		}
+		svc := domain.NewRegistrationUpsert(repo, userUpsert, store, rebuildRepo)
+
+		ctx := ctxWithUserSubject(userID.String())
+
+		err := svc.Execute(ctx, &domain.RegistrationUpsertRequest{
+			ContestID:     contestID,
+			LanguageCodes: []string{"jpn"},
+		})
+
+		require.NoError(t, err)
+		assert.True(t, repo.upsertCalled)
+		require.Len(t, store.rebuildContestCalls, 1)
+		assert.Equal(t, contestID, store.rebuildContestCalls[0].ContestID)
+		assert.Equal(t, dbScores, store.rebuildContestCalls[0].Scores)
+	})
+
+	t.Run("rebuilds contest leaderboard after registration update with removed languages", func(t *testing.T) {
+		userRepo := &mockUserUpsertRepositoryForReg{}
+		userUpsert := domain.NewUserUpsert(userRepo)
+		existingRegID := uuid.New()
+		existingRegistration := &domain.ContestRegistration{
+			ID:        existingRegID,
+			ContestID: contestID,
+			UserID:    userID,
+			Languages: []domain.Language{
+				{Code: "jpn", Name: "Japanese"},
+				{Code: "kor", Name: "Korean"},
+			},
+		}
+		dbScores := []domain.LeaderboardScore{
+			{UserID: userID, Score: 100},
+		}
+		store := &mockLeaderboardStore{}
+		rebuildRepo := &mockLeaderboardRebuildRepo{contestScores: dbScores}
+		repo := &mockRegistrationUpsertRepository{
+			contest:      validContest,
+			registration: existingRegistration,
+		}
+		svc := domain.NewRegistrationUpsert(repo, userUpsert, store, rebuildRepo)
+
+		ctx := ctxWithUserSubject(userID.String())
+
+		err := svc.Execute(ctx, &domain.RegistrationUpsertRequest{
+			ContestID:     contestID,
+			LanguageCodes: []string{"jpn"}, // Removing "kor"
+		})
+
+		require.NoError(t, err)
+		assert.True(t, repo.upsertCalled)
+		assert.True(t, repo.detachCalled)
+		require.Len(t, store.rebuildContestCalls, 1)
+		assert.Equal(t, contestID, store.rebuildContestCalls[0].ContestID)
+		assert.Equal(t, dbScores, store.rebuildContestCalls[0].Scores)
+	})
+
+	t.Run("leaderboard errors do not fail the registration", func(t *testing.T) {
+		userRepo := &mockUserUpsertRepositoryForReg{}
+		userUpsert := domain.NewUserUpsert(userRepo)
+		store := &mockLeaderboardStore{
+			rebuildContestErr: errors.New("redis connection refused"),
+		}
+		rebuildRepo := &mockLeaderboardRebuildRepo{
+			contestErr: errors.New("database timeout"),
+		}
+		repo := &mockRegistrationUpsertRepository{
+			contest:    validContest,
+			findRegErr: domain.ErrNotFound,
+		}
+		svc := domain.NewRegistrationUpsert(repo, userUpsert, store, rebuildRepo)
+
+		ctx := ctxWithUserSubject(userID.String())
+
+		err := svc.Execute(ctx, &domain.RegistrationUpsertRequest{
+			ContestID:     contestID,
+			LanguageCodes: []string{"jpn"},
+		})
+
+		require.NoError(t, err)
+		assert.True(t, repo.upsertCalled)
 	})
 }

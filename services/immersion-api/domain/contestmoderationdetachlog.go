@@ -3,6 +3,7 @@ package domain
 import (
 	"context"
 	"fmt"
+	"log/slog"
 
 	"github.com/google/uuid"
 	commondomain "github.com/tadoku/tadoku/services/common/domain"
@@ -21,11 +22,21 @@ type ContestModerationDetachLogRequest struct {
 }
 
 type ContestModerationDetachLog struct {
-	repo ContestModerationDetachLogRepository
+	repo             ContestModerationDetachLogRepository
+	leaderboardStore LeaderboardStore
+	leaderboardRepo  LeaderboardRebuildRepository
 }
 
-func NewContestModerationDetachLog(repo ContestModerationDetachLogRepository) *ContestModerationDetachLog {
-	return &ContestModerationDetachLog{repo: repo}
+func NewContestModerationDetachLog(
+	repo ContestModerationDetachLogRepository,
+	leaderboardStore LeaderboardStore,
+	leaderboardRepo LeaderboardRebuildRepository,
+) *ContestModerationDetachLog {
+	return &ContestModerationDetachLog{
+		repo:             repo,
+		leaderboardStore: leaderboardStore,
+		leaderboardRepo:  leaderboardRepo,
+	}
 }
 
 func (s *ContestModerationDetachLog) Execute(ctx context.Context, req *ContestModerationDetachLogRequest) error {
@@ -67,5 +78,23 @@ func (s *ContestModerationDetachLog) Execute(ctx context.Context, req *ContestMo
 	}
 
 	// Detach log from contest with audit logging
-	return s.repo.DetachLogFromContest(ctx, req, userID)
+	if err := s.repo.DetachLogFromContest(ctx, req, userID); err != nil {
+		return err
+	}
+
+	// Rebuild contest leaderboard — best effort, do not fail the detach
+	s.rebuildContestLeaderboard(ctx, req.ContestID)
+
+	return nil
+}
+
+func (s *ContestModerationDetachLog) rebuildContestLeaderboard(ctx context.Context, contestID uuid.UUID) {
+	scores, err := s.leaderboardRepo.FetchAllContestLeaderboardScores(ctx, contestID)
+	if err != nil {
+		slog.ErrorContext(ctx, "failed to fetch contest leaderboard scores for rebuild after detach", "contest_id", contestID, "error", err)
+		return
+	}
+	if err := s.leaderboardStore.RebuildContestLeaderboard(ctx, contestID, scores); err != nil {
+		slog.ErrorContext(ctx, "failed to rebuild contest leaderboard after detach", "contest_id", contestID, "error", err)
+	}
 }

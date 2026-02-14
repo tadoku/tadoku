@@ -57,7 +57,9 @@ func TestContestModerationDetachLog_Execute(t *testing.T) {
 
 	t.Run("returns unauthorized for guest", func(t *testing.T) {
 		repo := &mockContestModerationDetachLogRepository{}
-		svc := domain.NewContestModerationDetachLog(repo)
+		store := &mockLeaderboardStore{}
+		rebuildRepo := &mockLeaderboardRebuildRepo{}
+		svc := domain.NewContestModerationDetachLog(repo, store, rebuildRepo)
 
 		ctx := ctxWithGuest()
 
@@ -73,7 +75,9 @@ func TestContestModerationDetachLog_Execute(t *testing.T) {
 
 	t.Run("returns unauthorized for nil session", func(t *testing.T) {
 		repo := &mockContestModerationDetachLogRepository{}
-		svc := domain.NewContestModerationDetachLog(repo)
+		store := &mockLeaderboardStore{}
+		rebuildRepo := &mockLeaderboardRebuildRepo{}
+		svc := domain.NewContestModerationDetachLog(repo, store, rebuildRepo)
 
 		err := svc.Execute(context.Background(), &domain.ContestModerationDetachLogRequest{
 			ContestID: contestID,
@@ -89,7 +93,9 @@ func TestContestModerationDetachLog_Execute(t *testing.T) {
 		repo := &mockContestModerationDetachLogRepository{
 			findContestErr: domain.ErrNotFound,
 		}
-		svc := domain.NewContestModerationDetachLog(repo)
+		store := &mockLeaderboardStore{}
+		rebuildRepo := &mockLeaderboardRebuildRepo{}
+		svc := domain.NewContestModerationDetachLog(repo, store, rebuildRepo)
 
 		ctx := ctxWithUserSubject(userID.String())
 
@@ -107,7 +113,9 @@ func TestContestModerationDetachLog_Execute(t *testing.T) {
 		repo := &mockContestModerationDetachLogRepository{
 			contest: contest,
 		}
-		svc := domain.NewContestModerationDetachLog(repo)
+		store := &mockLeaderboardStore{}
+		rebuildRepo := &mockLeaderboardRebuildRepo{}
+		svc := domain.NewContestModerationDetachLog(repo, store, rebuildRepo)
 
 		ctx := ctxWithUserSubject(otherUserID.String()) // Not the owner
 
@@ -126,7 +134,9 @@ func TestContestModerationDetachLog_Execute(t *testing.T) {
 			contest:    contest,
 			findLogErr: domain.ErrNotFound,
 		}
-		svc := domain.NewContestModerationDetachLog(repo)
+		store := &mockLeaderboardStore{}
+		rebuildRepo := &mockLeaderboardRebuildRepo{}
+		svc := domain.NewContestModerationDetachLog(repo, store, rebuildRepo)
 
 		ctx := ctxWithUserSubject(userID.String())
 
@@ -145,7 +155,9 @@ func TestContestModerationDetachLog_Execute(t *testing.T) {
 			contest: contest,
 			log:     log,
 		}
-		svc := domain.NewContestModerationDetachLog(repo)
+		store := &mockLeaderboardStore{}
+		rebuildRepo := &mockLeaderboardRebuildRepo{}
+		svc := domain.NewContestModerationDetachLog(repo, store, rebuildRepo)
 
 		ctx := ctxWithUserSubject(userID.String()) // Contest owner
 
@@ -165,7 +177,9 @@ func TestContestModerationDetachLog_Execute(t *testing.T) {
 			contest: contest,
 			log:     log,
 		}
-		svc := domain.NewContestModerationDetachLog(repo)
+		store := &mockLeaderboardStore{}
+		rebuildRepo := &mockLeaderboardRebuildRepo{}
+		svc := domain.NewContestModerationDetachLog(repo, store, rebuildRepo)
 
 		adminID := uuid.New()
 		ctx := ctxWithAdminSubject(adminID.String())
@@ -187,7 +201,9 @@ func TestContestModerationDetachLog_Execute(t *testing.T) {
 			log:       log,
 			detachErr: errors.New("database error"),
 		}
-		svc := domain.NewContestModerationDetachLog(repo)
+		store := &mockLeaderboardStore{}
+		rebuildRepo := &mockLeaderboardRebuildRepo{}
+		svc := domain.NewContestModerationDetachLog(repo, store, rebuildRepo)
 
 		ctx := ctxWithUserSubject(userID.String())
 
@@ -199,5 +215,95 @@ func TestContestModerationDetachLog_Execute(t *testing.T) {
 
 		assert.Error(t, err)
 		assert.True(t, repo.detachCalled)
+	})
+}
+
+func TestContestModerationDetachLog_LeaderboardUpdates(t *testing.T) {
+	userID := uuid.New()
+	otherUserID := uuid.New()
+	contestID := uuid.New()
+	logID := uuid.New()
+	now := time.Now()
+
+	contest := &domain.ContestView{
+		ID:          contestID,
+		OwnerUserID: userID,
+		Title:       "Test Contest",
+	}
+
+	log := &domain.Log{
+		ID:        logID,
+		UserID:    otherUserID,
+		CreatedAt: now,
+	}
+
+	t.Run("rebuilds contest leaderboard after successful detach", func(t *testing.T) {
+		repo := &mockContestModerationDetachLogRepository{
+			contest: contest,
+			log:     log,
+		}
+		store := &mockLeaderboardStore{}
+		rebuildRepo := &mockLeaderboardRebuildRepo{}
+		svc := domain.NewContestModerationDetachLog(repo, store, rebuildRepo)
+
+		ctx := ctxWithUserSubject(userID.String())
+
+		err := svc.Execute(ctx, &domain.ContestModerationDetachLogRequest{
+			ContestID: contestID,
+			LogID:     logID,
+			Reason:    "test",
+		})
+
+		require.NoError(t, err)
+		assert.True(t, repo.detachCalled)
+		require.Len(t, store.rebuildContestCalls, 1)
+		assert.Equal(t, contestID, store.rebuildContestCalls[0].ContestID)
+	})
+
+	t.Run("leaderboard rebuild error does not fail the detach", func(t *testing.T) {
+		repo := &mockContestModerationDetachLogRepository{
+			contest: contest,
+			log:     log,
+		}
+		store := &mockLeaderboardStore{
+			rebuildContestErr: errors.New("redis unavailable"),
+		}
+		rebuildRepo := &mockLeaderboardRebuildRepo{}
+		svc := domain.NewContestModerationDetachLog(repo, store, rebuildRepo)
+
+		ctx := ctxWithAdminSubject(uuid.New().String())
+
+		err := svc.Execute(ctx, &domain.ContestModerationDetachLogRequest{
+			ContestID: contestID,
+			LogID:     logID,
+			Reason:    "admin action",
+		})
+
+		require.NoError(t, err)
+		assert.True(t, repo.detachCalled)
+	})
+
+	t.Run("leaderboard fetch scores error does not fail the detach", func(t *testing.T) {
+		repo := &mockContestModerationDetachLogRepository{
+			contest: contest,
+			log:     log,
+		}
+		store := &mockLeaderboardStore{}
+		rebuildRepo := &mockLeaderboardRebuildRepo{
+			contestErr: errors.New("database timeout"),
+		}
+		svc := domain.NewContestModerationDetachLog(repo, store, rebuildRepo)
+
+		ctx := ctxWithUserSubject(userID.String())
+
+		err := svc.Execute(ctx, &domain.ContestModerationDetachLogRequest{
+			ContestID: contestID,
+			LogID:     logID,
+			Reason:    "test",
+		})
+
+		require.NoError(t, err)
+		assert.True(t, repo.detachCalled)
+		assert.Empty(t, store.rebuildContestCalls)
 	})
 }

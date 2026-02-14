@@ -40,6 +40,8 @@ cd frontend && pnpm build
 
 **SQL style: always use lowercase keywords** (select, create table, not SELECT, CREATE TABLE)
 
+**Accept narrow interfaces** — define interfaces where they are used, with only the methods that consumer needs. Don't create wide/shared interfaces that bundle many methods together. Concrete implementations can be large, but each consumer should accept the smallest dependency possible. This follows Go's interface segregation principle and makes testing easier.
+
 ```sh
 # 1. Make changes
 

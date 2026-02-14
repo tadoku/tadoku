@@ -176,6 +176,69 @@ func (s *LeaderboardStore) RebuildOfficialLeaderboards(ctx context.Context, year
 	return nil
 }
 
+func (s *LeaderboardStore) FetchGlobalLeaderboardPage(ctx context.Context, page, pageSize int) ([]domain.LeaderboardScore, int, bool, error) {
+	return s.fetchLeaderboardPage(ctx, globalLeaderboardKey, page, pageSize)
+}
+
+func (s *LeaderboardStore) FetchYearlyLeaderboardPage(ctx context.Context, year int, page, pageSize int) ([]domain.LeaderboardScore, int, bool, error) {
+	return s.fetchLeaderboardPage(ctx, yearlyLeaderboardKey(year), page, pageSize)
+}
+
+func (s *LeaderboardStore) FetchContestLeaderboardPage(ctx context.Context, contestID uuid.UUID, page, pageSize int) ([]domain.LeaderboardScore, int, bool, error) {
+	return s.fetchLeaderboardPage(ctx, contestLeaderboardKey(contestID), page, pageSize)
+}
+
+func (s *LeaderboardStore) RebuildGlobalLeaderboard(ctx context.Context, scores []domain.LeaderboardScore) error {
+	return s.rebuildLeaderboard(ctx, globalLeaderboardKey, scores)
+}
+
+func (s *LeaderboardStore) RebuildYearlyLeaderboard(ctx context.Context, year int, scores []domain.LeaderboardScore) error {
+	return s.rebuildLeaderboard(ctx, yearlyLeaderboardKey(year), scores)
+}
+
+// fetchLeaderboardPage returns a page of scores from a sorted set.
+// Returns (scores, totalCount, exists, error). If the key does not exist,
+// exists is false and scores is nil.
+func (s *LeaderboardStore) fetchLeaderboardPage(ctx context.Context, key string, page, pageSize int) ([]domain.LeaderboardScore, int, bool, error) {
+	existsCmd := s.client.B().Exists().Key(key).Build()
+	existsResult, err := s.client.Do(ctx, existsCmd).AsInt64()
+	if err != nil {
+		return nil, 0, false, fmt.Errorf("failed to check existence for key %s: %w", key, err)
+	}
+	if existsResult == 0 {
+		return nil, 0, false, nil
+	}
+
+	zcardCmd := s.client.B().Zcard().Key(key).Build()
+	totalCount, err := s.client.Do(ctx, zcardCmd).AsInt64()
+	if err != nil {
+		return nil, 0, false, fmt.Errorf("failed to get cardinality for key %s: %w", key, err)
+	}
+
+	start := int64(page * pageSize)
+	stop := start + int64(pageSize) - 1
+
+	zrangeCmd := s.client.B().Zrange().Key(key).Min(strconv.FormatInt(start, 10)).Max(strconv.FormatInt(stop, 10)).Rev().Withscores().Build()
+	entries, err := s.client.Do(ctx, zrangeCmd).AsZScores()
+	if err != nil {
+		return nil, 0, false, fmt.Errorf("failed to fetch leaderboard page for key %s: %w", key, err)
+	}
+
+	scores := make([]domain.LeaderboardScore, len(entries))
+	for i, entry := range entries {
+		userID, err := uuid.Parse(entry.Member)
+		if err != nil {
+			return nil, 0, false, fmt.Errorf("failed to parse member UUID %q: %w", entry.Member, err)
+		}
+		scores[i] = domain.LeaderboardScore{
+			UserID: userID,
+			Score:  entry.Score,
+		}
+	}
+
+	return scores, int(totalCount), true, nil
+}
+
 // rebuildLeaderboard atomically replaces a sorted set with the given scores using a Lua script.
 func (s *LeaderboardStore) rebuildLeaderboard(ctx context.Context, key string, scores []domain.LeaderboardScore) error {
 	args := make([]string, 0, len(scores)*2)

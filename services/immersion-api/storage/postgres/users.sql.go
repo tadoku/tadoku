@@ -10,7 +10,40 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/lib/pq"
 )
+
+const findUserDisplayNames = `-- name: FindUserDisplayNames :many
+select id, display_name from users where id = any($1::uuid[])
+`
+
+type FindUserDisplayNamesRow struct {
+	ID          uuid.UUID
+	DisplayName string
+}
+
+func (q *Queries) FindUserDisplayNames(ctx context.Context, ids []uuid.UUID) ([]FindUserDisplayNamesRow, error) {
+	rows, err := q.db.QueryContext(ctx, findUserDisplayNames, pq.Array(ids))
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []FindUserDisplayNamesRow
+	for rows.Next() {
+		var i FindUserDisplayNamesRow
+		if err := rows.Scan(&i.ID, &i.DisplayName); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
 
 const upsertUser = `-- name: UpsertUser :exec
 insert into users (

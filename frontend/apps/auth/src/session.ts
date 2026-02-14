@@ -35,6 +35,7 @@ export const useLogoutHandler = (deps?: DependencyList) => {
         // Something else happened!
         return Promise.reject(err)
       })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, deps)
 
   return () => {
@@ -56,7 +57,7 @@ export const useProtectedRoute = (fallback: string = '/') => {
     if (!session) {
       router.replace(fallback)
     }
-  }, [session])
+  }, [session, fallback, router])
 }
 
 // Used to prevent access to a page when a user is authenticated
@@ -68,7 +69,7 @@ export const useAnonymouseRoute = (fallback: string = '/') => {
     if (session) {
       router.replace(fallback)
     }
-  }, [session])
+  }, [session, fallback, router])
 }
 
 export interface AppContextWithSession extends AppContext {

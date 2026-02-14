@@ -69,6 +69,7 @@ go_test(
         "languagelist_test.go",
         "languageupdate_test.go",
         "leaderboardglobal_test.go",
+        "leaderboardupdater_test.go",
         "leaderboardyearly_test.go",
         "logconfigurationoptions_test.go",
         "logcreate_test.go",

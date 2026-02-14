@@ -49,7 +49,7 @@ const Settings: NextPage<Props> = () => {
         setFlow(data)
       })
       .catch(handleFlowError(router, 'settings', setFlow))
-  }, [flowId, router, router.isReady, returnTo, flow])
+  }, [flowId, router, router.isReady, returnTo, flow, session])
 
   if (!flow) {
     return null

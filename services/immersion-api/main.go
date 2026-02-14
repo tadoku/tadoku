@@ -75,7 +75,12 @@ func main() {
 	}
 	defer valkeyClient.Close()
 
-	leaderboardStore := valkeystore.NewLeaderboardStore(valkeyClient)
+	clock, err := domain.NewClock("UTC")
+	if err != nil {
+		panic(err)
+	}
+
+	leaderboardStore := valkeystore.NewLeaderboardStore(valkeyClient, clock)
 	leaderboardUpdater := immersiondomain.NewLeaderboardUpdater(leaderboardStore, postgresRepository)
 
 	e := echo.New()
@@ -95,11 +100,6 @@ func main() {
 			panic(fmt.Errorf("sentry initialization failed: %v", err))
 		}
 		e.Use(sentryecho.New(sentryecho.Options{}))
-	}
-
-	clock, err := domain.NewClock("UTC")
-	if err != nil {
-		panic(err)
 	}
 
 	// Service-per-function services

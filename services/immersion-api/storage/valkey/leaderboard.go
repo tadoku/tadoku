@@ -6,6 +6,7 @@ import (
 	"strconv"
 
 	"github.com/google/uuid"
+	commondomain "github.com/tadoku/tadoku/services/common/domain"
 	"github.com/tadoku/tadoku/services/immersion-api/domain"
 	valkeylib "github.com/valkey-io/valkey-go"
 )
@@ -99,11 +100,12 @@ return 0
 // LeaderboardStore implements domain.LeaderboardStore using Valkey sorted sets.
 type LeaderboardStore struct {
 	client valkeylib.Client
+	clock  commondomain.Clock
 }
 
 // NewLeaderboardStore creates a new LeaderboardStore backed by the given Valkey client.
-func NewLeaderboardStore(client valkeylib.Client) *LeaderboardStore {
-	return &LeaderboardStore{client: client}
+func NewLeaderboardStore(client valkeylib.Client, clock commondomain.Clock) *LeaderboardStore {
+	return &LeaderboardStore{client: client, clock: clock}
 }
 
 func contestLeaderboardKey(contestID uuid.UUID) string {
@@ -173,6 +175,14 @@ func (s *LeaderboardStore) RebuildOfficialLeaderboards(ctx context.Context, year
 		return fmt.Errorf("failed to rebuild official leaderboards: %w", err)
 	}
 
+	ts := strconv.FormatInt(s.clock.Now().Unix(), 10)
+	for _, key := range []string{yearlyKey, globalLeaderboardKey} {
+		setCmd := s.client.B().Set().Key(lastUpdatedKey(key)).Value(ts).Build()
+		if err := s.client.Do(ctx, setCmd).Error(); err != nil {
+			return fmt.Errorf("failed to set last_updated marker for key %s: %w", key, err)
+		}
+	}
+
 	return nil
 }
 
@@ -196,14 +206,18 @@ func (s *LeaderboardStore) RebuildYearlyLeaderboard(ctx context.Context, year in
 	return s.rebuildLeaderboard(ctx, yearlyLeaderboardKey(year), scores)
 }
 
+func lastUpdatedKey(key string) string {
+	return key + ":last_updated"
+}
+
 // fetchLeaderboardPage returns a page of scores from a sorted set.
-// Returns (scores, totalCount, exists, error). If the key does not exist,
-// exists is false and scores is nil.
+// Returns (scores, totalCount, exists, error). If the leaderboard has not
+// been built yet (no :last_updated marker), exists is false and scores is nil.
 func (s *LeaderboardStore) fetchLeaderboardPage(ctx context.Context, key string, page, pageSize int) ([]domain.LeaderboardScore, int, bool, error) {
-	existsCmd := s.client.B().Exists().Key(key).Build()
+	existsCmd := s.client.B().Exists().Key(lastUpdatedKey(key)).Build()
 	existsResult, err := s.client.Do(ctx, existsCmd).AsInt64()
 	if err != nil {
-		return nil, 0, false, fmt.Errorf("failed to check existence for key %s: %w", key, err)
+		return nil, 0, false, fmt.Errorf("failed to check last_updated marker for key %s: %w", key, err)
 	}
 	if existsResult == 0 {
 		return nil, 0, false, nil
@@ -213,6 +227,10 @@ func (s *LeaderboardStore) fetchLeaderboardPage(ctx context.Context, key string,
 	totalCount, err := s.client.Do(ctx, zcardCmd).AsInt64()
 	if err != nil {
 		return nil, 0, false, fmt.Errorf("failed to get cardinality for key %s: %w", key, err)
+	}
+
+	if totalCount == 0 {
+		return []domain.LeaderboardScore{}, 0, true, nil
 	}
 
 	start := int64(page * pageSize)
@@ -239,7 +257,9 @@ func (s *LeaderboardStore) fetchLeaderboardPage(ctx context.Context, key string,
 	return scores, int(totalCount), true, nil
 }
 
-// rebuildLeaderboard atomically replaces a sorted set with the given scores using a Lua script.
+// rebuildLeaderboard atomically replaces a sorted set with the given scores
+// using a Lua script, then sets a :last_updated timestamp so that
+// fetchLeaderboardPage can distinguish "never built" from "built but empty".
 func (s *LeaderboardStore) rebuildLeaderboard(ctx context.Context, key string, scores []domain.LeaderboardScore) error {
 	args := make([]string, 0, len(scores)*2)
 	for _, entry := range scores {
@@ -250,6 +270,12 @@ func (s *LeaderboardStore) rebuildLeaderboard(ctx context.Context, key string, s
 	err := rebuildScript.Exec(ctx, s.client, []string{key}, args).Error()
 	if err != nil {
 		return fmt.Errorf("failed to rebuild leaderboard for key %s: %w", key, err)
+	}
+
+	ts := strconv.FormatInt(s.clock.Now().Unix(), 10)
+	setCmd := s.client.B().Set().Key(lastUpdatedKey(key)).Value(ts).Build()
+	if err := s.client.Do(ctx, setCmd).Error(); err != nil {
+		return fmt.Errorf("failed to set last_updated marker for key %s: %w", key, err)
 	}
 
 	return nil

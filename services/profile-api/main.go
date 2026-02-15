@@ -9,6 +9,7 @@ import (
 	"github.com/kelseyhightower/envconfig"
 	commonroles "github.com/tadoku/tadoku/services/common/authz/roles"
 	ketoclient "github.com/tadoku/tadoku/services/common/client/keto"
+	"github.com/tadoku/tadoku/services/common/health"
 	tadokumiddleware "github.com/tadoku/tadoku/services/common/middleware"
 	"github.com/tadoku/tadoku/services/profile-api/cache"
 	"github.com/tadoku/tadoku/services/profile-api/client/ory"
@@ -48,7 +49,6 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	_ = psql // Will be used when repositories are added
 
 	kratosClient := ory.NewKratosClient(cfg.KratosURL)
 	userCache := cache.NewUserCache(kratosClient, 5*time.Minute)
@@ -59,13 +59,22 @@ func main() {
 	userList := profiledomain.NewUserList(userCache, rolesSvc)
 
 	e := echo.New()
-	e.Use(tadokumiddleware.Logger([]string{"/ping"}))
-	e.Use(tadokumiddleware.VerifyJWT(cfg.JWKS))
-	e.Use(tadokumiddleware.Identity())
-	e.Use(tadokumiddleware.RolesFromKeto(rolesSvc))
-	e.Use(tadokumiddleware.RequireServiceAudience(cfg.ServiceName))
-	e.Use(tadokumiddleware.RejectBannedUsers())
 	e.Use(middleware.Recover())
+
+	// Health endpoints: allow K8s probes without auth, require admin if JWT is present
+	optAuth := tadokumiddleware.OptionalAdminAuth(cfg.JWKS, rolesSvc)
+	pgChecker := health.NewPostgresChecker("postgres", psql)
+	e.GET("/livez", health.LivezHandler, optAuth)
+	e.GET("/readyz", health.ReadyzHandler([]health.HealthChecker{pgChecker}), optAuth)
+
+	// Business endpoints: full auth middleware stack
+	api := e.Group("")
+	api.Use(tadokumiddleware.Logger([]string{"/ping"}))
+	api.Use(tadokumiddleware.VerifyJWT(cfg.JWKS))
+	api.Use(tadokumiddleware.Identity())
+	api.Use(tadokumiddleware.RolesFromKeto(rolesSvc))
+	api.Use(tadokumiddleware.RequireServiceAudience(cfg.ServiceName))
+	api.Use(tadokumiddleware.RejectBannedUsers())
 
 	if cfg.SentryDSN != "" {
 		if err := sentry.Init(sentry.ClientOptions{
@@ -74,14 +83,14 @@ func main() {
 		}); err != nil {
 			panic(fmt.Errorf("sentry initialization failed: %v", err))
 		}
-		e.Use(sentryecho.New(sentryecho.Options{}))
+		api.Use(sentryecho.New(sentryecho.Options{}))
 	}
 
 	server := rest.NewServer(userList)
 	internalServer := rest.NewInternalServer()
 
-	openapi.RegisterHandlersWithBaseURL(e, server, "")
-	internal := e.Group("", tadokumiddleware.RequireServiceIdentity())
+	openapi.RegisterHandlersWithBaseURL(api, server, "")
+	internal := api.Group("", tadokumiddleware.RequireServiceIdentity())
 	rest.RegisterInternalRoutes(internal, internalServer)
 
 	defer userCache.Stop()

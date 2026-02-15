@@ -1,3 +1,8 @@
+---
+sidebar_position: 1
+title: Account Deletion
+---
+
 # Account Deletion Guide
 
 This document provides the SQL queries and API commands needed to completely delete a user account from Tadoku.

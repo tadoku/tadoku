@@ -1,3 +1,8 @@
+---
+sidebar_position: 2
+title: "002 - API Contracts (OpenAPI)"
+---
+
 # [002] Define API contracts through OpenAPI
 
 * Status: accepted

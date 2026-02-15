@@ -1,3 +1,8 @@
+---
+sidebar_position: 2
+title: content-api
+---
+
 # Content API
 
 This is the blog/content API of the Tadoku website. It contains the functionality to:

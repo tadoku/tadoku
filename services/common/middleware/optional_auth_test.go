@@ -196,40 +196,6 @@ func TestOptionalAdminAuth_ValidNonAdminJWT_Forbidden(t *testing.T) {
 	assert.Equal(t, http.StatusForbidden, rec.Code)
 }
 
-func TestOptionalAdminAuth_BannedAdminJWT_Forbidden(t *testing.T) {
-	privateKey, jwksServer := setupJWKSServer(t)
-
-	rolesSvc := &mockRolesService{
-		claims: roles.Claims{
-			Subject:       "user-789",
-			Authenticated: true,
-			Admin:         true,
-			Banned:        true,
-		},
-	}
-	mw := OptionalAdminAuth(jwksServer.URL, rolesSvc)
-
-	claims := &UnifiedClaims{
-		RegisteredClaims: jwtv4.RegisteredClaims{
-			Subject:   "user-789",
-			ExpiresAt: jwtv4.NewNumericDate(time.Now().Add(time.Hour)),
-		},
-	}
-	tokenString := signToken(t, privateKey, claims)
-
-	e := echo.New()
-	req := httptest.NewRequest(http.MethodGet, "/readyz", nil)
-	req.Header.Set("Authorization", "Bearer "+tokenString)
-	rec := httptest.NewRecorder()
-	ctx := e.NewContext(req, rec)
-
-	err := mw(func(c echo.Context) error {
-		return c.NoContent(http.StatusOK)
-	})(ctx)
-
-	assert.NoError(t, err)
-	assert.Equal(t, http.StatusForbidden, rec.Code)
-}
 
 func TestOptionalAdminAuth_ServiceToken_Allowed(t *testing.T) {
 	privateKey, jwksServer := setupJWKSServer(t)

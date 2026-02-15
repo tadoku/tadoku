@@ -4,6 +4,7 @@ go_library(
     name = "middleware",
     srcs = [
         "logger.go",
+        "optional_auth.go",
         "roles.go",
         "session.go",
     ],
@@ -22,11 +23,16 @@ go_library(
 
 go_test(
     name = "middleware_test",
-    srcs = ["session_test.go"],
+    srcs = [
+        "optional_auth_test.go",
+        "session_test.go",
+    ],
     embed = [":middleware"],
     deps = [
         "//services/common/authz/roles",
+        "@com_github_golang_jwt_jwt_v4//:jwt",
         "@com_github_labstack_echo_v4//:echo",
         "@com_github_stretchr_testify//assert",
+        "@com_github_stretchr_testify//require",
     ],
 )

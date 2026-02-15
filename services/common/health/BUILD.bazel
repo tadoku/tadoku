@@ -1,0 +1,23 @@
+load("@rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "health",
+    srcs = [
+        "handler.go",
+        "health.go",
+    ],
+    importpath = "github.com/tadoku/tadoku/services/common/health",
+    visibility = ["//visibility:public"],
+    deps = ["@com_github_labstack_echo_v4//:echo"],
+)
+
+go_test(
+    name = "health_test",
+    srcs = ["handler_test.go"],
+    embed = [":health"],
+    deps = [
+        "@com_github_labstack_echo_v4//:echo",
+        "@com_github_stretchr_testify//assert",
+        "@com_github_stretchr_testify//require",
+    ],
+)

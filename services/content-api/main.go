@@ -9,6 +9,7 @@ import (
 	commonroles "github.com/tadoku/tadoku/services/common/authz/roles"
 	ketoclient "github.com/tadoku/tadoku/services/common/client/keto"
 	commondomain "github.com/tadoku/tadoku/services/common/domain"
+	"github.com/tadoku/tadoku/services/common/health"
 	tadokumiddleware "github.com/tadoku/tadoku/services/common/middleware"
 	"github.com/tadoku/tadoku/services/content-api/domain"
 	"github.com/tadoku/tadoku/services/content-api/http/rest"
@@ -53,13 +54,22 @@ func main() {
 	rolesSvc := commonroles.NewKetoService(ketoclient.NewReadClient(cfg.KetoReadURL), "app", "tadoku")
 
 	e := echo.New()
-	e.Use(tadokumiddleware.Logger([]string{"/ping"}))
-	e.Use(tadokumiddleware.VerifyJWT(cfg.JWKS))
-	e.Use(tadokumiddleware.Identity())
-	e.Use(tadokumiddleware.RolesFromKeto(rolesSvc))
-	e.Use(tadokumiddleware.RequireServiceAudience(cfg.ServiceName))
-	e.Use(tadokumiddleware.RejectBannedUsers())
 	e.Use(middleware.Recover())
+
+	// Health endpoints: allow K8s probes without auth, require admin if JWT is present
+	optAuth := tadokumiddleware.OptionalAdminAuth(cfg.JWKS, rolesSvc)
+	pgChecker := health.NewPostgresChecker("postgres", psql)
+	e.GET("/livez", health.LivezHandler, optAuth)
+	e.GET("/readyz", health.ReadyzHandler([]health.HealthChecker{pgChecker}), optAuth)
+
+	// Business endpoints: full auth middleware stack
+	api := e.Group("")
+	api.Use(tadokumiddleware.Logger([]string{"/ping"}))
+	api.Use(tadokumiddleware.VerifyJWT(cfg.JWKS))
+	api.Use(tadokumiddleware.Identity())
+	api.Use(tadokumiddleware.RolesFromKeto(rolesSvc))
+	api.Use(tadokumiddleware.RequireServiceAudience(cfg.ServiceName))
+	api.Use(tadokumiddleware.RejectBannedUsers())
 
 	if cfg.SentryDSN != "" {
 		if err := sentry.Init(sentry.ClientOptions{
@@ -68,7 +78,7 @@ func main() {
 		}); err != nil {
 			panic(fmt.Errorf("sentry initialization failed: %v", err))
 		}
-		e.Use(sentryecho.New(sentryecho.Options{}))
+		api.Use(sentryecho.New(sentryecho.Options{}))
 	}
 
 	clock, err := commondomain.NewClock("UTC")
@@ -129,7 +139,7 @@ func main() {
 		announcementListActive,
 	)
 
-	openapi.RegisterHandlersWithBaseURL(e, server, "")
+	openapi.RegisterHandlersWithBaseURL(api, server, "")
 
 	fmt.Printf("content-api is now available at: http://localhost:%d/v2\n", cfg.Port)
 	e.Logger.Fatal(e.Start(fmt.Sprintf("0.0.0.0:%d", cfg.Port)))

@@ -53,7 +53,7 @@ func OptionalAdminAuth(jwksURL string, rolesSvc roles.Service) echo.MiddlewareFu
 			if err != nil {
 				return c.NoContent(http.StatusServiceUnavailable)
 			}
-			if roleClaims.Banned || !roleClaims.Admin {
+			if !roleClaims.Admin {
 				return c.NoContent(http.StatusForbidden)
 			}
 

@@ -31,8 +31,13 @@ const Page = () => {
 
   const [filters, setFilters] = useState(() => newFilter())
   useEffect(() => {
-    setFilters(newFilter())
-  }, [router.asPath])
+    setFilters({
+      page: getQueryStringIntParameter(router.query.page, 1),
+      pageSize: 50,
+      includeDeleted: false,
+      contestId: id,
+    })
+  }, [router.asPath, id, router.query.page])
 
   const now = useCurrentDateTime()
 

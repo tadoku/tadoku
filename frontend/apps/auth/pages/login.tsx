@@ -60,7 +60,7 @@ const Login: NextPage<Props> = () => {
       })
       .catch(handleFlowError(router, 'login', setFlow))
       .catch(err => setError(err))
-  }, [flowId, router, router.isReady, aal, refresh, returnTo, flow, error])
+  }, [flowId, router, router.isReady, aal, refresh, returnTo, flow, error, session])
 
   if (error) {
     return (

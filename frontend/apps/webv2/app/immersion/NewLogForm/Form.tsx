@@ -142,7 +142,7 @@ export const LogForm = ({
       }
     })
     return () => subscription.unsubscribe()
-  }, [methods.watch])
+  }, [methods, languageCode, options.units])
 
   return (
     <FormProvider {...methods}>

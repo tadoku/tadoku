@@ -27,8 +27,12 @@ const Page = () => {
   const leaderboard = useYearlyLeaderboard(filters)
 
   useEffect(() => {
-    setFilters(newFilter())
-  }, [router.asPath])
+    setFilters({
+      page: getQueryStringIntParameter(router.query.page, 1),
+      year,
+      pageSize: 50,
+    })
+  }, [router.asPath, year, router.query.page])
 
   const showPagination =
     leaderboard.data && leaderboard.data.total_size > filters.pageSize

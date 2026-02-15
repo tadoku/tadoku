@@ -32,8 +32,14 @@ const Contests: NextPage<Props> = () => {
   }
   const [filters, setFilters] = useState(() => newFilter())
   useEffect(() => {
-    setFilters(newFilter())
-  }, [router.asPath])
+    setFilters({
+      page: getQueryStringIntParameter(router.query.page, 1),
+      pageSize: 25,
+      official: false,
+      includeDeleted: false,
+      userId: session?.identity.id,
+    })
+  }, [router.asPath, session?.identity.id, router.query.page])
 
   const options = useContestConfigurationOptions({ enabled: !!session })
   const list = useContestList(filters, { enabled: !!options.data })

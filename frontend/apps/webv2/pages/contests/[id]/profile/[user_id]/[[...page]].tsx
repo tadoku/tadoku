@@ -26,8 +26,14 @@ const Page = () => {
   }
   const [logListParams, setLogListParams] = useState(() => newLogListParams())
   useEffect(() => {
-    setLogListParams(newLogListParams())
-  }, [router.asPath])
+    setLogListParams({
+      userId,
+      contestId,
+      includeDeleted: false,
+      page: getQueryStringIntParameter(router.query.page, 1),
+      pageSize: 50,
+    })
+  }, [router.asPath, userId, contestId, router.query.page])
 
   const profile = useContestProfileScores({ userId, contestId })
   const logs = useContestLogs(logListParams)

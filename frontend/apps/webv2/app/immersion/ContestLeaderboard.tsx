@@ -46,8 +46,12 @@ export const ContestLeaderboard = ({ id, contest, routeForPage }: Props) => {
   const summary = useContestSummary(id)
 
   useEffect(() => {
-    setFilters(newFilter())
-  }, [router.asPath])
+    setFilters({
+      contestId: id,
+      page: getQueryStringIntParameter(router.query.page, 1),
+      pageSize: 50,
+    })
+  }, [router.asPath, id, router.query.page])
 
   const contestInterval = Interval.fromDateTimes(
     DateTime.fromISO(contest.contest_start),

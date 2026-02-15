@@ -52,7 +52,7 @@ const AccountRecovery: NextPage<Props> = () => {
       })
       .catch(handleFlowError(router, 'recovery', setFlow))
       .catch(err => setError(err))
-  }, [flowId, router, router.isReady, returnTo, flow, error])
+  }, [flowId, router, router.isReady, returnTo, flow, error, session])
 
   if (error) {
     return (

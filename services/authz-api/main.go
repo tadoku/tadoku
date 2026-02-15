@@ -18,6 +18,7 @@ import (
 	commonroles "github.com/tadoku/tadoku/services/common/authz/roles"
 	ketoclient "github.com/tadoku/tadoku/services/common/client/keto"
 	kratosclient "github.com/tadoku/tadoku/services/common/client/kratos"
+	"github.com/tadoku/tadoku/services/common/health"
 	tadokumiddleware "github.com/tadoku/tadoku/services/common/middleware"
 
 	"github.com/getsentry/sentry-go"
@@ -91,12 +92,21 @@ func main() {
 	)
 
 	e := echo.New()
-	e.Use(tadokumiddleware.Logger([]string{"/ping", "/internal/v1/ping"}))
-	e.Use(tadokumiddleware.VerifyJWT(cfg.JWKS))
-	e.Use(tadokumiddleware.Identity())
-	e.Use(tadokumiddleware.RolesFromKeto(rolesSvc))
-	e.Use(tadokumiddleware.RequireServiceAudience(cfg.ServiceName))
 	e.Use(middleware.Recover())
+
+	// Health endpoints: allow K8s probes without auth, require admin if JWT is present
+	optAuth := tadokumiddleware.OptionalAdminAuth(cfg.JWKS, rolesSvc)
+	pgChecker := health.NewPostgresChecker("postgres", psql)
+	e.GET("/livez", health.LivezHandler, optAuth)
+	e.GET("/readyz", health.ReadyzHandler([]health.HealthChecker{pgChecker}), optAuth)
+
+	// Business endpoints: full auth middleware stack
+	api := e.Group("")
+	api.Use(tadokumiddleware.Logger([]string{"/ping", "/internal/v1/ping"}))
+	api.Use(tadokumiddleware.VerifyJWT(cfg.JWKS))
+	api.Use(tadokumiddleware.Identity())
+	api.Use(tadokumiddleware.RolesFromKeto(rolesSvc))
+	api.Use(tadokumiddleware.RequireServiceAudience(cfg.ServiceName))
 
 	if cfg.SentryDSN != "" {
 		if err := sentry.Init(sentry.ClientOptions{
@@ -105,11 +115,11 @@ func main() {
 		}); err != nil {
 			panic(fmt.Errorf("sentry initialization failed: %v", err))
 		}
-		e.Use(sentryecho.New(sentryecho.Options{}))
+		api.Use(sentryecho.New(sentryecho.Options{}))
 	}
 
-	openapi.RegisterHandlersWithBaseURL(e, server, "")
-	internal := e.Group("", tadokumiddleware.RequireServiceIdentity())
+	openapi.RegisterHandlersWithBaseURL(api, server, "")
+	internal := api.Group("", tadokumiddleware.RequireServiceIdentity())
 	internalapi.RegisterHandlers(internal, server)
 
 	go func() {

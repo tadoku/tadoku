@@ -10,6 +10,7 @@ go_library(
     deps = [
         "//services/common/authz/roles",
         "//services/common/client/keto",
+        "//services/common/health",
         "//services/common/middleware",
         "//services/profile-api/cache",
         "//services/profile-api/client/ory",

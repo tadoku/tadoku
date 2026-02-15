@@ -16,6 +16,7 @@ go_library(
         "//services/common/authz/roles",
         "//services/common/client/keto",
         "//services/common/client/kratos",
+        "//services/common/health",
         "//services/common/middleware",
         "@com_github_getsentry_sentry_go//:sentry-go",
         "@com_github_getsentry_sentry_go//echo",

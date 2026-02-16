@@ -6,9 +6,10 @@ interface Props {
   setIsOpen: Dispatch<SetStateAction<boolean>>
   title?: string
   children: ReactNode
+  className?: string
 }
 
-export const Modal = ({ isOpen, setIsOpen, title, children }: Props) => (
+export const Modal = ({ isOpen, setIsOpen, title, children, className }: Props) => (
   <Transition appear show={isOpen} as={Fragment}>
     <Dialog as="div" className="relative z-50" onClose={() => setIsOpen(false)}>
       <TransitionChild
@@ -34,7 +35,7 @@ export const Modal = ({ isOpen, setIsOpen, title, children }: Props) => (
             leaveFrom="opacity-100 scale-100"
             leaveTo="opacity-0 scale-95"
           >
-            <DialogPanel className="w-full max-w-lg transform overflow-hidden card text-left align-middle transition-all">
+            <DialogPanel className={`w-full max-w-lg transform overflow-hidden card text-left align-middle transition-all ${className ?? ''}`}>
               {title && (
                 <DialogTitle
                   as="h3"

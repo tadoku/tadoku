@@ -81,6 +81,11 @@ const getSidebarSections = (currentPath: string) => [
         href: '/logging',
         active: currentPath === '/logging',
       },
+      {
+        label: 'Logging flow v2',
+        href: '/logging-v2',
+        active: currentPath === '/logging-v2',
+      },
     ],
   },
 ]

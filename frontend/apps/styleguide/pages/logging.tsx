@@ -61,11 +61,11 @@ function LogList() {
           duration: 35,
           amount: 40,
           score: 8,
-          unit: 'comic pages',
+          unit: 'pages',
           description: 'Bleach ch 60-61',
           tags: ['manga', 'fiction'],
         },
-        { amount: 20, score: 4, unit: 'comic pages' },
+        { amount: 20, score: 4, unit: 'pages', tags: ['manga'] },
         {
           duration: 80,
           amount: 40,

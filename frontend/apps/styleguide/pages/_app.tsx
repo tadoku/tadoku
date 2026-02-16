@@ -77,9 +77,14 @@ const getSidebarSections = (currentPath: string) => [
     title: 'Interactions',
     links: [
       {
-        label: 'Logging flow',
+        label: 'Logs overview',
         href: '/logging',
         active: currentPath === '/logging',
+      },
+      {
+        label: 'Logging flow v2',
+        href: '/logging-v2',
+        active: currentPath === '/logging-v2',
       },
     ],
   },

@@ -73,7 +73,8 @@ export const useLogoutHandler = (deps?: DependencyList) => {
         // Something else happened!
         return Promise.reject(err)
       })
-  }, [...(deps ?? []), logoutToken, session])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [...(deps ?? []), logoutToken, session, setLogoutToken])
 
   return () => {
     if (logoutToken) {

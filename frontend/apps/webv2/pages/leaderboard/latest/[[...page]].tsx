@@ -1,4 +1,5 @@
 import { useCurrentDateTime } from '@app/common/hooks'
+import { useSession } from '@app/common/session'
 import {
   useContestRegistration,
   useLatestOfficialContest,
@@ -14,10 +15,11 @@ import Head from 'next/head'
 const Page = () => {
   const now = useCurrentDateTime()
 
+  const [session] = useSession()
   const contest = useLatestOfficialContest()
   const id = contest.data?.id ?? ''
   const registration = useContestRegistration(id, {
-    enabled: !!contest.data,
+    enabled: !!session && !!contest.data,
   })
 
   if (contest.isLoading || contest.isIdle) {

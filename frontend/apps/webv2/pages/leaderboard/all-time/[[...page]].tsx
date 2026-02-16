@@ -21,8 +21,11 @@ const Page = () => {
   const leaderboard = useAllTimeLeaderboard(filters)
 
   useEffect(() => {
-    setFilters(newFilter())
-  }, [router.asPath])
+    setFilters({
+      page: getQueryStringIntParameter(router.query.page, 1),
+      pageSize: 50,
+    })
+  }, [router.asPath, router.query.page])
 
   const showPagination =
     leaderboard.data && leaderboard.data.total_size > filters.pageSize

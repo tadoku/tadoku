@@ -12,7 +12,7 @@ export const useCurrentLocation = () => {
         ? window.location.origin
         : ''
     setLocation(origin + router.asPath)
-  }, [router.isReady])
+  }, [router.isReady, router.asPath])
 
   return location
 }

@@ -20,9 +20,9 @@ from contest_registrations cr
 left join (
   select
     logs.user_id,
-    sum(logs.score) as score
-  from logs
-  inner join contest_logs on contest_logs.log_id = logs.id
+    sum(contest_logs.score) as score
+  from contest_logs
+  inner join logs on logs.id = contest_logs.log_id
   where
     contest_logs.contest_id = $1
     and logs.deleted_at is null
@@ -202,17 +202,17 @@ func (q *Queries) GlobalLeaderboardAllScores(ctx context.Context) ([]GlobalLeade
 const leaderboardForContest = `-- name: LeaderboardForContest :many
 with leaderboard as (
   select
-    user_id,
-    sum(score) as score
-  from logs
-  inner join contest_logs
-    on contest_logs.log_id = logs.id
+    logs.user_id,
+    sum(contest_logs.score) as score
+  from contest_logs
+  inner join logs
+    on logs.id = contest_logs.log_id
   where
     contest_logs.contest_id = $3
     and logs.deleted_at is null
     and (logs.language_code = $4 or $4 is null)
     and (logs.log_activity_id = $5::integer or $5 is null)
-  group by user_id
+  group by logs.user_id
 ), ranked_leaderboard as (
   select
     user_id,
@@ -310,9 +310,9 @@ func (q *Queries) LeaderboardForContest(ctx context.Context, arg LeaderboardForC
 
 const userContestScore = `-- name: UserContestScore :one
 select
-  coalesce(sum(logs.score), 0)::real as score
-from logs
-inner join contest_logs on contest_logs.log_id = logs.id
+  coalesce(sum(contest_logs.score), 0)::real as score
+from contest_logs
+inner join logs on logs.id = contest_logs.log_id
 where
   contest_logs.contest_id = $1
   and logs.user_id = $2

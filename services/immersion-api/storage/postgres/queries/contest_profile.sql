@@ -1,26 +1,26 @@
 -- name: FetchScoresForContestProfile :many
 select
-  language_code,
-  sum(score)::real as score
-from logs
-inner join contest_logs
-  on contest_logs.log_id = logs.id
+  logs.language_code,
+  sum(contest_logs.score)::real as score
+from contest_logs
+inner join logs
+  on logs.id = contest_logs.log_id
 where
   contest_logs.contest_id = sqlc.arg('contest_id')
   and logs.user_id = sqlc.arg('user_id')
   and logs.deleted_at is null
-group by language_code
+group by logs.language_code
 order by score desc;
 
 -- name: ActivityPerLanguageForContestProfile :many
 with eligible_logs as (
   select
-    created_at::date as "date",
-    language_code,
-    score
-  from logs
-  inner join contest_logs
-    on contest_logs.log_id = logs.id
+    logs.created_at::date as "date",
+    logs.language_code,
+    contest_logs.score
+  from contest_logs
+  inner join logs
+    on logs.id = contest_logs.log_id
   where
     contest_logs.contest_id = sqlc.arg('contest_id')
     and logs.user_id = sqlc.arg('user_id')

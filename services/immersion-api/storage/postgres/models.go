@@ -33,6 +33,9 @@ type Contest struct {
 type ContestLog struct {
 	ContestID uuid.UUID
 	LogID     uuid.UUID
+	Amount    float32
+	Modifier  float32
+	Score     sql.NullFloat64
 }
 
 type ContestRegistration struct {

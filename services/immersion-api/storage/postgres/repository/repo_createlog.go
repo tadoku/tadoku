@@ -51,6 +51,8 @@ func (r *Repository) CreateLog(ctx context.Context, req *domain.LogCreateRequest
 		if err = qtx.CreateContestLogRelation(ctx, postgres.CreateContestLogRelationParams{
 			RegistrationID: registrationID,
 			LogID:          id,
+			Amount:         req.Amount,
+			Modifier:       unit.Modifier,
 		}); err != nil {
 			_ = tx.Rollback()
 			return nil, fmt.Errorf("could not create log: %w", err)

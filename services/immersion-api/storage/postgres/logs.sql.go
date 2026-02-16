@@ -40,20 +40,31 @@ func (q *Queries) CheckIfLogCanBeDeleted(ctx context.Context, arg CheckIfLogCanB
 const createContestLogRelation = `-- name: CreateContestLogRelation :exec
 insert into contest_logs (
   contest_id,
-  log_id
+  log_id,
+  amount,
+  modifier
 ) values (
   (select contest_id from contest_registrations where id = $1),
-  $2
+  $2,
+  $3,
+  $4
 )
 `
 
 type CreateContestLogRelationParams struct {
 	RegistrationID uuid.UUID
 	LogID          uuid.UUID
+	Amount         float32
+	Modifier       float32
 }
 
 func (q *Queries) CreateContestLogRelation(ctx context.Context, arg CreateContestLogRelationParams) error {
-	_, err := q.db.ExecContext(ctx, createContestLogRelation, arg.RegistrationID, arg.LogID)
+	_, err := q.db.ExecContext(ctx, createContestLogRelation,
+		arg.RegistrationID,
+		arg.LogID,
+		arg.Amount,
+		arg.Modifier,
+	)
 	return err
 }
 
@@ -355,9 +366,9 @@ with eligible_logs as (
     log_activities.name as activity_name,
     log_units.name as unit_name,
     logs.description,
-    logs.amount,
-    logs.modifier,
-    logs.score,
+    contest_logs.amount,
+    contest_logs.modifier,
+    contest_logs.score,
     logs.created_at,
     logs.updated_at,
     logs.deleted_at,
@@ -405,7 +416,7 @@ type ListLogsForContestRow struct {
 	Description     sql.NullString
 	Amount          float32
 	Modifier        float32
-	Score           float32
+	Score           sql.NullFloat64
 	CreatedAt       time.Time
 	UpdatedAt       time.Time
 	DeletedAt       sql.NullTime

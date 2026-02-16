@@ -15,12 +15,12 @@ import (
 const activityPerLanguageForContestProfile = `-- name: ActivityPerLanguageForContestProfile :many
 with eligible_logs as (
   select
-    created_at::date as "date",
-    language_code,
-    score
-  from logs
-  inner join contest_logs
-    on contest_logs.log_id = logs.id
+    logs.created_at::date as "date",
+    logs.language_code,
+    contest_logs.score
+  from contest_logs
+  inner join logs
+    on logs.id = contest_logs.log_id
   where
     contest_logs.contest_id = $1
     and logs.user_id = $2
@@ -71,16 +71,16 @@ func (q *Queries) ActivityPerLanguageForContestProfile(ctx context.Context, arg 
 
 const fetchScoresForContestProfile = `-- name: FetchScoresForContestProfile :many
 select
-  language_code,
-  sum(score)::real as score
-from logs
-inner join contest_logs
-  on contest_logs.log_id = logs.id
+  logs.language_code,
+  sum(contest_logs.score)::real as score
+from contest_logs
+inner join logs
+  on logs.id = contest_logs.log_id
 where
   contest_logs.contest_id = $1
   and logs.user_id = $2
   and logs.deleted_at is null
-group by language_code
+group by logs.language_code
 order by score desc
 `
 

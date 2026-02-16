@@ -1,17 +1,17 @@
 -- name: LeaderboardForContest :many
 with leaderboard as (
   select
-    user_id,
-    sum(score) as score
-  from logs
-  inner join contest_logs
-    on contest_logs.log_id = logs.id
+    logs.user_id,
+    sum(contest_logs.score) as score
+  from contest_logs
+  inner join logs
+    on logs.id = contest_logs.log_id
   where
     contest_logs.contest_id = sqlc.arg('contest_id')
     and logs.deleted_at is null
     and (logs.language_code = sqlc.narg('language_code') or sqlc.narg('language_code') is null)
     and (logs.log_activity_id = sqlc.narg('activity_id')::integer or sqlc.narg('activity_id') is null)
-  group by user_id
+  group by logs.user_id
 ), ranked_leaderboard as (
   select
     user_id,
@@ -105,9 +105,9 @@ from contest_registrations cr
 left join (
   select
     logs.user_id,
-    sum(logs.score) as score
-  from logs
-  inner join contest_logs on contest_logs.log_id = logs.id
+    sum(contest_logs.score) as score
+  from contest_logs
+  inner join logs on logs.id = contest_logs.log_id
   where
     contest_logs.contest_id = sqlc.arg('contest_id')
     and logs.deleted_at is null
@@ -148,9 +148,9 @@ having sum(score) > 0;
 -- Returns a single user's total score for a contest.
 -- Used for updating a user's score in the Redis leaderboard.
 select
-  coalesce(sum(logs.score), 0)::real as score
-from logs
-inner join contest_logs on contest_logs.log_id = logs.id
+  coalesce(sum(contest_logs.score), 0)::real as score
+from contest_logs
+inner join logs on logs.id = contest_logs.log_id
 where
   contest_logs.contest_id = sqlc.arg('contest_id')
   and logs.user_id = sqlc.arg('user_id')

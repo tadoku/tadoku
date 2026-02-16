@@ -24,10 +24,14 @@ insert into logs (
 -- name: CreateContestLogRelation :exec
 insert into contest_logs (
   contest_id,
-  log_id
+  log_id,
+  amount,
+  modifier
 ) values (
   (select contest_id from contest_registrations where id = sqlc.arg('registration_id')),
-  sqlc.arg('log_id')
+  sqlc.arg('log_id'),
+  sqlc.arg('amount'),
+  sqlc.arg('modifier')
 );
 
 -- name: ListLogsForContest :many
@@ -41,9 +45,9 @@ with eligible_logs as (
     log_activities.name as activity_name,
     log_units.name as unit_name,
     logs.description,
-    logs.amount,
-    logs.modifier,
-    logs.score,
+    contest_logs.amount,
+    contest_logs.modifier,
+    contest_logs.score,
     logs.created_at,
     logs.updated_at,
     logs.deleted_at,

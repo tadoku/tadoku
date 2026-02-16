@@ -196,7 +196,6 @@ func TestOptionalAdminAuth_ValidNonAdminJWT_Forbidden(t *testing.T) {
 	assert.Equal(t, http.StatusForbidden, rec.Code)
 }
 
-
 func TestOptionalAdminAuth_ServiceToken_Allowed(t *testing.T) {
 	privateKey, jwksServer := setupJWKSServer(t)
 

@@ -114,6 +114,9 @@ export const ContestLeaderboard = ({ id, contest, routeForPage }: Props) => {
               />
             </div>
           ) : null}
+          <p className="text-sm text-slate-500 mt-4 text-center italic">
+            Scores may take a few seconds to update.
+          </p>
         </div>
         <div className="md:w-[300px] space-y-4">
           <ContestOverview

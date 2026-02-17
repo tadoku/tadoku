@@ -106,6 +106,9 @@ const Page = () => {
               />
             </div>
           ) : null}
+          <p className="text-sm text-slate-500 mt-4 text-center italic">
+            Scores may take a few seconds to update.
+          </p>
         </div>
         <div className="flex-shrink pl-3 min-w-32">
           <VerticalTabbar

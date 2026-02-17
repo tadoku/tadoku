@@ -51,14 +51,14 @@ spec:
           readinessProbe:
             httpGet:
               scheme: HTTP
-              path: /ping
+              path: /readyz
               port: 8000
             initialDelaySeconds: 10
             periodSeconds: 3
           livenessProbe:
             httpGet:
               scheme: HTTP
-              path: /ping
+              path: /livez
               port: 8000
             initialDelaySeconds: 10
             periodSeconds: 3

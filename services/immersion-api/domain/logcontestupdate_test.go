@@ -43,8 +43,8 @@ func (m *mockLogContestUpdateRepository) UpdateLogContests(ctx context.Context, 
 	return m.updateErr
 }
 
-func newLogContestUpdateService(repo *mockLogContestUpdateRepository, clock commondomain.Clock, updater *mockLeaderboardUpdater) *domain.LogContestUpdate {
-	return domain.NewLogContestUpdate(repo, clock, updater)
+func newLogContestUpdateService(repo *mockLogContestUpdateRepository, clock commondomain.Clock) *domain.LogContestUpdate {
+	return domain.NewLogContestUpdate(repo, clock)
 }
 
 func TestLogContestUpdate_Execute(t *testing.T) {
@@ -88,7 +88,7 @@ func TestLogContestUpdate_Execute(t *testing.T) {
 	t.Run("returns unauthorized for guest", func(t *testing.T) {
 		repo := &mockLogContestUpdateRepository{}
 		clock := commondomain.NewMockClock(now)
-		svc := newLogContestUpdateService(repo, clock, &mockLeaderboardUpdater{})
+		svc := newLogContestUpdateService(repo, clock)
 
 		ctx := ctxWithGuest()
 		_, err := svc.Execute(ctx, &domain.LogContestUpdateRequest{
@@ -103,7 +103,7 @@ func TestLogContestUpdate_Execute(t *testing.T) {
 	t.Run("returns unauthorized for nil session", func(t *testing.T) {
 		repo := &mockLogContestUpdateRepository{}
 		clock := commondomain.NewMockClock(now)
-		svc := newLogContestUpdateService(repo, clock, &mockLeaderboardUpdater{})
+		svc := newLogContestUpdateService(repo, clock)
 
 		_, err := svc.Execute(context.Background(), &domain.LogContestUpdateRequest{
 			LogID:           logID,
@@ -122,7 +122,7 @@ func TestLogContestUpdate_Execute(t *testing.T) {
 			},
 		}
 		clock := commondomain.NewMockClock(now)
-		svc := newLogContestUpdateService(repo, clock, &mockLeaderboardUpdater{})
+		svc := newLogContestUpdateService(repo, clock)
 
 		ctx := ctxWithUserSubject(userID.String())
 		_, err := svc.Execute(ctx, &domain.LogContestUpdateRequest{
@@ -139,7 +139,7 @@ func TestLogContestUpdate_Execute(t *testing.T) {
 			findErr: domain.ErrNotFound,
 		}
 		clock := commondomain.NewMockClock(now)
-		svc := newLogContestUpdateService(repo, clock, &mockLeaderboardUpdater{})
+		svc := newLogContestUpdateService(repo, clock)
 
 		ctx := ctxWithUserSubject(userID.String())
 		_, err := svc.Execute(ctx, &domain.LogContestUpdateRequest{
@@ -158,7 +158,7 @@ func TestLogContestUpdate_Execute(t *testing.T) {
 			registrations: ongoingRegistrations,
 		}
 		clock := commondomain.NewMockClock(now)
-		svc := newLogContestUpdateService(repo, clock, &mockLeaderboardUpdater{})
+		svc := newLogContestUpdateService(repo, clock)
 
 		ctx := ctxWithUserSubject(userID.String())
 		_, err := svc.Execute(ctx, &domain.LogContestUpdateRequest{
@@ -185,7 +185,7 @@ func TestLogContestUpdate_Execute(t *testing.T) {
 			registrations: ongoingRegistrations,
 		}
 		clock := commondomain.NewMockClock(now)
-		svc := newLogContestUpdateService(repo, clock, &mockLeaderboardUpdater{})
+		svc := newLogContestUpdateService(repo, clock)
 
 		ctx := ctxWithUserSubject(userID.String())
 		_, err := svc.Execute(ctx, &domain.LogContestUpdateRequest{
@@ -212,7 +212,7 @@ func TestLogContestUpdate_Execute(t *testing.T) {
 			registrations: ongoingRegistrations,
 		}
 		clock := commondomain.NewMockClock(now)
-		svc := newLogContestUpdateService(repo, clock, &mockLeaderboardUpdater{})
+		svc := newLogContestUpdateService(repo, clock)
 
 		ctx := ctxWithUserSubject(userID.String())
 		_, err := svc.Execute(ctx, &domain.LogContestUpdateRequest{
@@ -244,8 +244,7 @@ func TestLogContestUpdate_Execute(t *testing.T) {
 			registrations: ongoingRegistrations,
 		}
 		clock := commondomain.NewMockClock(now)
-		updater := &mockLeaderboardUpdater{}
-		svc := newLogContestUpdateService(repo, clock, updater)
+		svc := newLogContestUpdateService(repo, clock)
 
 		ctx := ctxWithUserSubject(userID.String())
 		result, err := svc.Execute(ctx, &domain.LogContestUpdateRequest{
@@ -292,8 +291,7 @@ func TestLogContestUpdate_Execute(t *testing.T) {
 			registrations: ongoingRegistrations,
 		}
 		clock := commondomain.NewMockClock(now)
-		updater := &mockLeaderboardUpdater{}
-		svc := newLogContestUpdateService(repo, clock, updater)
+		svc := newLogContestUpdateService(repo, clock)
 
 		ctx := ctxWithUserSubject(userID.String())
 		_, err := svc.Execute(ctx, &domain.LogContestUpdateRequest{
@@ -327,7 +325,7 @@ func TestLogContestUpdate_Execute(t *testing.T) {
 			registrations: ongoingRegistrations,
 		}
 		clock := commondomain.NewMockClock(now)
-		svc := newLogContestUpdateService(repo, clock, &mockLeaderboardUpdater{})
+		svc := newLogContestUpdateService(repo, clock)
 
 		ctx := ctxWithUserSubject(userID.String())
 		result, err := svc.Execute(ctx, &domain.LogContestUpdateRequest{
@@ -373,7 +371,7 @@ func TestLogContestUpdate_Execute(t *testing.T) {
 			registrations: ongoingRegistrations,
 		}
 		clock := commondomain.NewMockClock(now)
-		svc := newLogContestUpdateService(repo, clock, &mockLeaderboardUpdater{})
+		svc := newLogContestUpdateService(repo, clock)
 
 		ctx := ctxWithUserSubject(userID.String())
 		// Send empty desired set — should only detach ongoing, not ended
@@ -388,163 +386,5 @@ func TestLogContestUpdate_Execute(t *testing.T) {
 		require.Len(t, repo.updateCalledWith.Detach, 1)
 		assert.Equal(t, contestID, repo.updateCalledWith.Detach[0])
 		// Ended contest is NOT in the detach list
-	})
-}
-
-func TestLogContestUpdate_LeaderboardUpdates(t *testing.T) {
-	userID := uuid.New()
-	logID := uuid.New()
-	registrationID := uuid.New()
-	contestID := uuid.New()
-	now := time.Date(2026, 2, 15, 10, 0, 0, 0, time.UTC)
-
-	baseLog := &domain.Log{
-		ID:           logID,
-		UserID:       userID,
-		LanguageCode: "jpn",
-		ActivityID:   1,
-		Amount:       100,
-		Modifier:     1.0,
-		Score:        100,
-		CreatedAt:    now,
-	}
-
-	t.Run("updates contest leaderboard for attached contest", func(t *testing.T) {
-		updater := &mockLeaderboardUpdater{}
-		repo := &mockLogContestUpdateRepository{
-			log: baseLog,
-			updatedLog: &domain.Log{
-				ID:        logID,
-				UserID:    userID,
-				CreatedAt: now,
-			},
-			registrations: &domain.ContestRegistrations{
-				Registrations: []domain.ContestRegistration{
-					{
-						ID:        registrationID,
-						ContestID: contestID,
-						UserID:    userID,
-						Languages: []domain.Language{{Code: "jpn", Name: "Japanese"}},
-						Contest: &domain.ContestView{
-							ID:                contestID,
-							Official:          false,
-							AllowedActivities: []domain.Activity{{ID: 1, Name: "Reading"}},
-							ContestEnd:        now.Add(30 * 24 * time.Hour),
-						},
-					},
-				},
-			},
-		}
-		clock := commondomain.NewMockClock(now)
-		svc := newLogContestUpdateService(repo, clock, updater)
-
-		ctx := ctxWithUserSubject(userID.String())
-		_, err := svc.Execute(ctx, &domain.LogContestUpdateRequest{
-			LogID:           logID,
-			RegistrationIDs: []uuid.UUID{registrationID},
-		})
-
-		require.NoError(t, err)
-		require.Len(t, updater.updateContestCalls, 1)
-		assert.Equal(t, contestID, updater.updateContestCalls[0].ContestID)
-		assert.Equal(t, userID, updater.updateContestCalls[0].UserID)
-		assert.Empty(t, updater.updateOfficialCalls)
-	})
-
-	t.Run("updates official scores when official contest is attached", func(t *testing.T) {
-		updater := &mockLeaderboardUpdater{}
-		repo := &mockLogContestUpdateRepository{
-			log: baseLog,
-			updatedLog: &domain.Log{
-				ID:        logID,
-				UserID:    userID,
-				CreatedAt: now,
-			},
-			registrations: &domain.ContestRegistrations{
-				Registrations: []domain.ContestRegistration{
-					{
-						ID:        registrationID,
-						ContestID: contestID,
-						UserID:    userID,
-						Languages: []domain.Language{{Code: "jpn", Name: "Japanese"}},
-						Contest: &domain.ContestView{
-							ID:                contestID,
-							Official:          true,
-							AllowedActivities: []domain.Activity{{ID: 1, Name: "Reading"}},
-							ContestEnd:        now.Add(30 * 24 * time.Hour),
-						},
-					},
-				},
-			},
-		}
-		clock := commondomain.NewMockClock(now)
-		svc := newLogContestUpdateService(repo, clock, updater)
-
-		ctx := ctxWithUserSubject(userID.String())
-		_, err := svc.Execute(ctx, &domain.LogContestUpdateRequest{
-			LogID:           logID,
-			RegistrationIDs: []uuid.UUID{registrationID},
-		})
-
-		require.NoError(t, err)
-		require.Len(t, updater.updateContestCalls, 1)
-		require.Len(t, updater.updateOfficialCalls, 1)
-		assert.Equal(t, 2026, updater.updateOfficialCalls[0].Year)
-		assert.Equal(t, userID, updater.updateOfficialCalls[0].UserID)
-	})
-
-	t.Run("updates official scores when official contest is detached", func(t *testing.T) {
-		updater := &mockLeaderboardUpdater{}
-		logWithOfficialRegistration := &domain.Log{
-			ID:           logID,
-			UserID:       userID,
-			LanguageCode: "jpn",
-			ActivityID:   1,
-			Amount:       100,
-			Modifier:     1.0,
-			Score:        100,
-			CreatedAt:    now,
-			Registrations: []domain.ContestRegistrationReference{
-				{RegistrationID: registrationID, ContestID: contestID, ContestEnd: now.Add(30 * 24 * time.Hour), Title: "Official"},
-			},
-		}
-		repo := &mockLogContestUpdateRepository{
-			log: logWithOfficialRegistration,
-			updatedLog: &domain.Log{
-				ID:        logID,
-				UserID:    userID,
-				CreatedAt: now,
-			},
-			registrations: &domain.ContestRegistrations{
-				Registrations: []domain.ContestRegistration{
-					{
-						ID:        registrationID,
-						ContestID: contestID,
-						UserID:    userID,
-						Languages: []domain.Language{{Code: "jpn", Name: "Japanese"}},
-						Contest: &domain.ContestView{
-							ID:                contestID,
-							Official:          true,
-							AllowedActivities: []domain.Activity{{ID: 1, Name: "Reading"}},
-							ContestEnd:        now.Add(30 * 24 * time.Hour),
-						},
-					},
-				},
-			},
-		}
-		clock := commondomain.NewMockClock(now)
-		svc := newLogContestUpdateService(repo, clock, updater)
-
-		ctx := ctxWithUserSubject(userID.String())
-		_, err := svc.Execute(ctx, &domain.LogContestUpdateRequest{
-			LogID:           logID,
-			RegistrationIDs: []uuid.UUID{}, // detach all
-		})
-
-		require.NoError(t, err)
-		require.Len(t, updater.updateContestCalls, 1)
-		assert.Equal(t, contestID, updater.updateContestCalls[0].ContestID)
-		require.Len(t, updater.updateOfficialCalls, 1)
-		assert.Equal(t, 2026, updater.updateOfficialCalls[0].Year)
 	})
 }

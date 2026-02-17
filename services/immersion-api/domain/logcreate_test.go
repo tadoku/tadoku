@@ -220,8 +220,7 @@ func TestLogCreate_Execute(t *testing.T) {
 			log:          createdLog,
 		}
 		clock := commondomain.NewMockClock(now)
-		updater := &mockLeaderboardUpdater{}
-		svc := newLogCreateService(repo, clock, updater)
+		svc := newLogCreateService(repo, clock)
 
 		ctx := ctxWithUserSubject(userID.String())
 
@@ -236,9 +235,7 @@ func TestLogCreate_Execute(t *testing.T) {
 		assert.True(t, repo.createCalled)
 		assert.Equal(t, logID, result.ID)
 		assert.Empty(t, repo.createCalledWith.RegistrationIDs)
-		assert.False(t, repo.createCalledWith.EligibleOfficialLeaderboard)
-		assert.Empty(t, updater.updateContestCalls)
-		assert.Empty(t, updater.updateOfficialCalls)
+		assert.False(t, repo.createCalledWith.EligibleOfficialLeaderboard())
 	})
 
 	t.Run("sets EligibleOfficialLeaderboard for official contest", func(t *testing.T) {

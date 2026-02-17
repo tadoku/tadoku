@@ -15,11 +15,6 @@ type LogContestUpdateRepository interface {
 	UpdateLogContests(ctx context.Context, req *LogContestUpdateDBRequest) error
 }
 
-type LogContestUpdateLeaderboardUpdater interface {
-	UpdateUserContestScore(ctx context.Context, contestID uuid.UUID, userID uuid.UUID)
-	UpdateUserOfficialScores(ctx context.Context, year int, userID uuid.UUID)
-}
-
 type LogContestUpdateRequest struct {
 	LogID           uuid.UUID
 	RegistrationIDs []uuid.UUID
@@ -39,20 +34,17 @@ type LogContestAttach struct {
 }
 
 type LogContestUpdate struct {
-	repo               LogContestUpdateRepository
-	clock              commondomain.Clock
-	leaderboardUpdater LogContestUpdateLeaderboardUpdater
+	repo  LogContestUpdateRepository
+	clock commondomain.Clock
 }
 
 func NewLogContestUpdate(
 	repo LogContestUpdateRepository,
 	clock commondomain.Clock,
-	leaderboardUpdater LogContestUpdateLeaderboardUpdater,
 ) *LogContestUpdate {
 	return &LogContestUpdate{
-		repo:               repo,
-		clock:              clock,
-		leaderboardUpdater: leaderboardUpdater,
+		repo:  repo,
+		clock: clock,
 	}
 }
 
@@ -186,54 +178,5 @@ func (s *LogContestUpdate) Execute(ctx context.Context, req *LogContestUpdateReq
 		return nil, fmt.Errorf("could not fetch updated log: %w", err)
 	}
 
-	// Update leaderboards — best effort
-	s.updateLeaderboards(ctx, userID, log, toAttach, toDetach, validRegistrations)
-
 	return updatedLog, nil
-}
-
-func (s *LogContestUpdate) updateLeaderboards(
-	ctx context.Context,
-	userID uuid.UUID,
-	log *Log,
-	attached []LogContestAttach,
-	detached []uuid.UUID,
-	validRegistrations map[uuid.UUID]ContestRegistration,
-) {
-	year := log.CreatedAt.Year()
-
-	for _, a := range attached {
-		s.leaderboardUpdater.UpdateUserContestScore(ctx, a.ContestID, userID)
-	}
-	for _, contestID := range detached {
-		s.leaderboardUpdater.UpdateUserContestScore(ctx, contestID, userID)
-	}
-
-	// Check if any affected contest is official
-	officialAffected := false
-	for _, a := range attached {
-		if reg, ok := validRegistrations[a.RegistrationID]; ok && reg.Contest.Official {
-			officialAffected = true
-			break
-		}
-	}
-	if !officialAffected {
-		// For detached contests, we check via the log's current registrations
-		// (before detach). The registration references include contest_id.
-		for _, contestID := range detached {
-			for _, reg := range validRegistrations {
-				if reg.ContestID == contestID && reg.Contest.Official {
-					officialAffected = true
-					break
-				}
-			}
-			if officialAffected {
-				break
-			}
-		}
-	}
-
-	if officialAffected {
-		s.leaderboardUpdater.UpdateUserOfficialScores(ctx, year, userID)
-	}
 }

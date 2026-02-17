@@ -8,7 +8,6 @@ package postgres
 import (
 	"context"
 	"database/sql"
-	"time"
 
 	"github.com/google/uuid"
 	"github.com/lib/pq"
@@ -20,7 +19,7 @@ where processed_at is not null
   and processed_at < $1
 `
 
-func (q *Queries) CleanupProcessedOutboxEvents(ctx context.Context, before time.Time) error {
+func (q *Queries) CleanupProcessedOutboxEvents(ctx context.Context, before sql.NullTime) error {
 	_, err := q.db.ExecContext(ctx, cleanupProcessedOutboxEvents, before)
 	return err
 }

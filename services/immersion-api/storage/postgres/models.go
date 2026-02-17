@@ -48,6 +48,12 @@ type ContestRegistration struct {
 	DeletedAt     sql.NullTime
 }
 
+type Language struct {
+	// See https://en.wikipedia.org/wiki/Wikipedia:WikiProject_Languages/List_of_ISO_639-3_language_codes_(2019)
+	Code string
+	Name string
+}
+
 type LeaderboardOutbox struct {
 	ID          int64
 	EventType   string
@@ -56,12 +62,6 @@ type LeaderboardOutbox struct {
 	Year        sql.NullInt16
 	CreatedAt   time.Time
 	ProcessedAt sql.NullTime
-}
-
-type Language struct {
-	// See https://en.wikipedia.org/wiki/Wikipedia:WikiProject_Languages/List_of_ISO_639-3_language_codes_(2019)
-	Code string
-	Name string
 }
 
 type Log struct {

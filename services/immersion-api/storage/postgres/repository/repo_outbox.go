@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"time"
 
@@ -46,7 +47,7 @@ func (r *Repository) ProcessOutboxBatch(ctx context.Context, batchSize int32, fn
 
 // CleanupProcessedOutboxEvents deletes outbox events that were processed before the given time.
 func (r *Repository) CleanupProcessedOutboxEvents(ctx context.Context, before time.Time) error {
-	if err := r.q.CleanupProcessedOutboxEvents(ctx, before); err != nil {
+	if err := r.q.CleanupProcessedOutboxEvents(ctx, sql.NullTime{Time: before, Valid: true}); err != nil {
 		return fmt.Errorf("could not cleanup outbox events: %w", err)
 	}
 	return nil

@@ -157,6 +157,22 @@ func (q *Queries) DetachContestLogsForLanguages(ctx context.Context, arg DetachC
 	return err
 }
 
+const detachLogFromContest = `-- name: DetachLogFromContest :exec
+delete from contest_logs
+where contest_id = $1
+  and log_id = $2
+`
+
+type DetachLogFromContestParams struct {
+	ContestID uuid.UUID
+	LogID     uuid.UUID
+}
+
+func (q *Queries) DetachLogFromContest(ctx context.Context, arg DetachLogFromContestParams) error {
+	_, err := q.db.ExecContext(ctx, detachLogFromContest, arg.ContestID, arg.LogID)
+	return err
+}
+
 const fetchContestIDForRegistration = `-- name: FetchContestIDForRegistration :one
 select contest_id
 from contest_registrations
@@ -216,22 +232,6 @@ func (q *Queries) FetchLogOutboxContext(ctx context.Context, logID uuid.UUID) (F
 	var i FetchLogOutboxContextRow
 	err := row.Scan(&i.UserID, &i.Year, &i.EligibleOfficialLeaderboard)
 	return i, err
-}
-
-const detachLogFromContest = `-- name: DetachLogFromContest :exec
-delete from contest_logs
-where contest_id = $1
-  and log_id = $2
-`
-
-type DetachLogFromContestParams struct {
-	ContestID uuid.UUID
-	LogID     uuid.UUID
-}
-
-func (q *Queries) DetachLogFromContest(ctx context.Context, arg DetachLogFromContestParams) error {
-	_, err := q.db.ExecContext(ctx, detachLogFromContest, arg.ContestID, arg.LogID)
-	return err
 }
 
 const fetchScoresForProfile = `-- name: FetchScoresForProfile :many

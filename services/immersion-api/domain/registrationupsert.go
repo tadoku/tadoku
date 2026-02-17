@@ -24,9 +24,11 @@ type RegistrationUpsertRequest struct {
 }
 
 type DetachContestLogsForLanguagesRequest struct {
-	ContestID     uuid.UUID
-	UserID        uuid.UUID
-	LanguageCodes []string
+	ContestID       uuid.UUID
+	UserID          uuid.UUID
+	LanguageCodes   []string
+	OfficialContest bool
+	Year            int16
 }
 
 type RegistrationUpsert struct {
@@ -113,9 +115,11 @@ func (s *RegistrationUpsert) Execute(ctx context.Context, req *RegistrationUpser
 
 		if len(removedLanguages) > 0 {
 			err := s.repo.DetachContestLogsForLanguages(ctx, &DetachContestLogsForLanguagesRequest{
-				ContestID:     req.ContestID,
-				UserID:        req.UserID,
-				LanguageCodes: removedLanguages,
+				ContestID:       req.ContestID,
+				UserID:          req.UserID,
+				LanguageCodes:   removedLanguages,
+				OfficialContest: contest.Official,
+				Year:            int16(contest.ContestStart.Year()),
 			})
 			if err != nil {
 				return fmt.Errorf("could not detach logs for removed languages: %w", err)

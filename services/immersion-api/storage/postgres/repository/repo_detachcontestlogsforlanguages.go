@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 
 	"github.com/google/uuid"
@@ -26,7 +27,7 @@ func (r *Repository) DetachContestLogsForLanguages(ctx context.Context, req *dom
 		return fmt.Errorf("could not detach contest logs for languages: %w", err)
 	}
 
-	// Write outbox event for leaderboard sync
+	// Write outbox events for leaderboard sync
 	if err = qtx.InsertLeaderboardOutboxEvent(ctx, postgres.InsertLeaderboardOutboxEventParams{
 		EventType: "refresh_contest_score",
 		UserID:    req.UserID,
@@ -34,6 +35,17 @@ func (r *Repository) DetachContestLogsForLanguages(ctx context.Context, req *dom
 	}); err != nil {
 		_ = tx.Rollback()
 		return fmt.Errorf("could not insert outbox event: %w", err)
+	}
+
+	if req.OfficialContest {
+		if err = qtx.InsertLeaderboardOutboxEvent(ctx, postgres.InsertLeaderboardOutboxEventParams{
+			EventType: "refresh_official_scores",
+			UserID:    req.UserID,
+			Year:      sql.NullInt16{Int16: req.Year, Valid: true},
+		}); err != nil {
+			_ = tx.Rollback()
+			return fmt.Errorf("could not insert outbox event: %w", err)
+		}
 	}
 
 	if err = tx.Commit(); err != nil {

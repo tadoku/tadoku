@@ -15,45 +15,44 @@ type LogCreateRepository interface {
 	FindLogByID(context.Context, *LogFindRequest) (*Log, error)
 }
 
-type LogCreateLeaderboardUpdater interface {
-	UpdateUserContestScore(ctx context.Context, contestID uuid.UUID, userID uuid.UUID)
-	UpdateUserOfficialScores(ctx context.Context, year int, userID uuid.UUID)
-}
-
 type LogCreateRequest struct {
 	RegistrationIDs []uuid.UUID `validate:"required"`
 	UnitID          uuid.UUID   `validate:"required"`
-	UserID          uuid.UUID   `validate:"required"`
 	ActivityID      int32       `validate:"required"`
 	LanguageCode    string      `validate:"required"`
 	Amount          float32     `validate:"required,gte=0"`
 	Tags            []string
 
 	// Optional
-	Description                 *string
-	EligibleOfficialLeaderboard bool
+	Description *string
+
+	// Set by domain layer (unexported: only domain can write, others read via getters)
+	userID                      uuid.UUID
+	eligibleOfficialLeaderboard bool
+	year                        int16
 }
 
+func (r *LogCreateRequest) UserID() uuid.UUID                 { return r.userID }
+func (r *LogCreateRequest) EligibleOfficialLeaderboard() bool { return r.eligibleOfficialLeaderboard }
+func (r *LogCreateRequest) Year() int16                       { return r.year }
+
 type LogCreate struct {
-	repo               LogCreateRepository
-	clock              commondomain.Clock
-	validate           *validator.Validate
-	userUpsert         *UserUpsert
-	leaderboardUpdater LogCreateLeaderboardUpdater
+	repo       LogCreateRepository
+	clock      commondomain.Clock
+	validate   *validator.Validate
+	userUpsert *UserUpsert
 }
 
 func NewLogCreate(
 	repo LogCreateRepository,
 	clock commondomain.Clock,
 	userUpsert *UserUpsert,
-	leaderboardUpdater LogCreateLeaderboardUpdater,
 ) *LogCreate {
 	return &LogCreate{
-		repo:               repo,
-		clock:              clock,
-		validate:           validator.New(),
-		userUpsert:         userUpsert,
-		leaderboardUpdater: leaderboardUpdater,
+		repo:       repo,
+		clock:      clock,
+		validate:   validator.New(),
+		userUpsert: userUpsert,
 	}
 }
 
@@ -72,7 +71,7 @@ func (s *LogCreate) Execute(ctx context.Context, req *LogCreateRequest) (*Log, e
 	if session == nil {
 		return nil, ErrUnauthorized
 	}
-	req.UserID = uuid.MustParse(session.Subject)
+	req.userID = uuid.MustParse(session.Subject)
 
 	err := s.validate.Struct(req)
 	if err != nil {
@@ -86,7 +85,7 @@ func (s *LogCreate) Execute(ctx context.Context, req *LogCreateRequest) (*Log, e
 	}
 
 	registrations, err := s.repo.FetchOngoingContestRegistrations(ctx, &RegistrationListOngoingRequest{
-		UserID: req.UserID,
+		UserID: req.userID,
 		Now:    s.clock.Now(),
 	})
 	if err != nil {
@@ -106,7 +105,7 @@ func (s *LogCreate) Execute(ctx context.Context, req *LogCreateRequest) (*Log, e
 		}
 
 		if registration.Contest.Official {
-			req.EligibleOfficialLeaderboard = true
+			req.eligibleOfficialLeaderboard = true
 		}
 
 		// validate language is part of registration
@@ -134,6 +133,8 @@ func (s *LogCreate) Execute(ctx context.Context, req *LogCreateRequest) (*Log, e
 		}
 	}
 
+	req.year = int16(s.clock.Now().Year())
+
 	logId, err := s.repo.CreateLog(ctx, req)
 	if err != nil {
 		return nil, fmt.Errorf("could not create log: %w", err)
@@ -147,24 +148,5 @@ func (s *LogCreate) Execute(ctx context.Context, req *LogCreateRequest) (*Log, e
 		return nil, err
 	}
 
-	// Update leaderboards — best effort, do not fail the log creation
-	s.updateLeaderboards(ctx, req, validContestIDs, log)
-
 	return log, nil
-}
-
-// updateLeaderboards recalculates the user's score for all relevant leaderboards.
-// For each attached contest: recalculate the user's total contest score.
-// For official contests: also recalculate yearly and global scores (pipelined).
-func (s *LogCreate) updateLeaderboards(ctx context.Context, req *LogCreateRequest, validContestIDs map[uuid.UUID]ContestRegistration, log *Log) {
-	year := log.CreatedAt.Year()
-
-	for _, regID := range req.RegistrationIDs {
-		registration := validContestIDs[regID]
-		s.leaderboardUpdater.UpdateUserContestScore(ctx, registration.ContestID, req.UserID)
-	}
-
-	if req.EligibleOfficialLeaderboard {
-		s.leaderboardUpdater.UpdateUserOfficialScores(ctx, year, req.UserID)
-	}
 }

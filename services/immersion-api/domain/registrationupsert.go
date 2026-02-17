@@ -16,38 +16,42 @@ type RegistrationUpsertRepository interface {
 	DetachContestLogsForLanguages(context.Context, *DetachContestLogsForLanguagesRequest) error
 }
 
-type RegistrationUpsertLeaderboardUpdater interface {
-	UpdateUserContestScore(ctx context.Context, contestID uuid.UUID, userID uuid.UUID)
+type RegistrationUpsertRequest struct {
+	ContestID     uuid.UUID
+	LanguageCodes []string
+
+	// Set by domain layer (unexported: only domain can write, others read via getters)
+	id              uuid.UUID
+	userID          uuid.UUID
+	officialContest bool
+	year            int16
 }
 
-type RegistrationUpsertRequest struct {
-	ID            uuid.UUID
-	ContestID     uuid.UUID
-	UserID        uuid.UUID
-	LanguageCodes []string
-}
+func (r *RegistrationUpsertRequest) ID() uuid.UUID         { return r.id }
+func (r *RegistrationUpsertRequest) UserID() uuid.UUID     { return r.userID }
+func (r *RegistrationUpsertRequest) OfficialContest() bool { return r.officialContest }
+func (r *RegistrationUpsertRequest) Year() int16           { return r.year }
 
 type DetachContestLogsForLanguagesRequest struct {
-	ContestID     uuid.UUID
-	UserID        uuid.UUID
-	LanguageCodes []string
+	ContestID       uuid.UUID
+	UserID          uuid.UUID
+	LanguageCodes   []string
+	OfficialContest bool
+	Year            int16
 }
 
 type RegistrationUpsert struct {
-	repo               RegistrationUpsertRepository
-	userUpsert         *UserUpsert
-	leaderboardUpdater RegistrationUpsertLeaderboardUpdater
+	repo       RegistrationUpsertRepository
+	userUpsert *UserUpsert
 }
 
 func NewRegistrationUpsert(
 	repo RegistrationUpsertRepository,
 	userUpsert *UserUpsert,
-	leaderboardUpdater RegistrationUpsertLeaderboardUpdater,
 ) *RegistrationUpsert {
 	return &RegistrationUpsert{
-		repo:               repo,
-		userUpsert:         userUpsert,
-		leaderboardUpdater: leaderboardUpdater,
+		repo:       repo,
+		userUpsert: userUpsert,
 	}
 }
 
@@ -65,8 +69,8 @@ func (s *RegistrationUpsert) Execute(ctx context.Context, req *RegistrationUpser
 	if session == nil {
 		return ErrUnauthorized
 	}
-	req.UserID = uuid.MustParse(session.Subject)
-	req.ID = uuid.New()
+	req.userID = uuid.MustParse(session.Subject)
+	req.id = uuid.New()
 
 	contest, err := s.repo.FindContestByID(ctx, &ContestFindRequest{
 		ID:             req.ContestID,
@@ -95,7 +99,7 @@ func (s *RegistrationUpsert) Execute(ctx context.Context, req *RegistrationUpser
 
 	// check if existing registration
 	registration, err := s.repo.FindRegistrationForUser(ctx, &RegistrationFindRequest{
-		UserID:    req.UserID,
+		UserID:    req.userID,
 		ContestID: req.ContestID,
 	})
 	if err != nil && !errors.Is(err, ErrNotFound) {
@@ -104,7 +108,7 @@ func (s *RegistrationUpsert) Execute(ctx context.Context, req *RegistrationUpser
 
 	// detach logs for any removed languages
 	if registration != nil {
-		req.ID = registration.ID
+		req.id = registration.ID
 
 		newLangs := map[string]bool{}
 		for _, lang := range req.LanguageCodes {
@@ -120,9 +124,11 @@ func (s *RegistrationUpsert) Execute(ctx context.Context, req *RegistrationUpser
 
 		if len(removedLanguages) > 0 {
 			err := s.repo.DetachContestLogsForLanguages(ctx, &DetachContestLogsForLanguagesRequest{
-				ContestID:     req.ContestID,
-				UserID:        req.UserID,
-				LanguageCodes: removedLanguages,
+				ContestID:       req.ContestID,
+				UserID:          req.userID,
+				LanguageCodes:   removedLanguages,
+				OfficialContest: contest.Official,
+				Year:            int16(contest.ContestStart.Year()),
 			})
 			if err != nil {
 				return fmt.Errorf("could not detach logs for removed languages: %w", err)
@@ -130,12 +136,12 @@ func (s *RegistrationUpsert) Execute(ctx context.Context, req *RegistrationUpser
 		}
 	}
 
+	req.officialContest = contest.Official
+	req.year = int16(contest.ContestStart.Year())
+
 	if err := s.repo.UpsertContestRegistration(ctx, req); err != nil {
 		return err
 	}
-
-	// Update the user's contest score — best effort, do not fail the registration
-	s.leaderboardUpdater.UpdateUserContestScore(ctx, req.ContestID, req.UserID)
 
 	return nil
 }

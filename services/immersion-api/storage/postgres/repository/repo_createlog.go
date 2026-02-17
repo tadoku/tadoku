@@ -33,19 +33,22 @@ func (r *Repository) CreateLog(ctx context.Context, req *domain.LogCreateRequest
 	id := uuid.New()
 	logId, err := qtx.CreateLog(ctx, postgres.CreateLogParams{
 		ID:                          id,
-		UserID:                      req.UserID,
+		UserID:                      req.UserID(),
 		LanguageCode:                req.LanguageCode,
 		LogActivityID:               int16(req.ActivityID),
 		UnitID:                      req.UnitID,
 		Amount:                      req.Amount,
 		Modifier:                    unit.Modifier,
-		EligibleOfficialLeaderboard: req.EligibleOfficialLeaderboard,
+		EligibleOfficialLeaderboard: req.EligibleOfficialLeaderboard(),
 		Description:                 postgres.NewNullString(req.Description),
 	})
 	if err != nil {
 		_ = tx.Rollback()
 		return nil, fmt.Errorf("could not create log: %w", err)
 	}
+
+	// Track unique contest IDs for outbox events
+	contestIDSet := map[uuid.UUID]struct{}{}
 
 	for _, registrationID := range req.RegistrationIDs {
 		if err = qtx.CreateContestLogRelation(ctx, postgres.CreateContestLogRelationParams{
@@ -57,18 +60,40 @@ func (r *Repository) CreateLog(ctx context.Context, req *domain.LogCreateRequest
 			_ = tx.Rollback()
 			return nil, fmt.Errorf("could not create log: %w", err)
 		}
+
+		contestID, err := qtx.FetchContestIDForRegistration(ctx, registrationID)
+		if err != nil {
+			_ = tx.Rollback()
+			return nil, fmt.Errorf("could not resolve contest for registration: %w", err)
+		}
+		contestIDSet[contestID] = struct{}{}
 	}
 
 	// Insert tags into log_tags table
 	for _, tag := range req.Tags {
 		if err = qtx.InsertLogTag(ctx, postgres.InsertLogTagParams{
 			LogID:  id,
-			UserID: req.UserID,
+			UserID: req.UserID(),
 			Tag:    tag,
 		}); err != nil {
 			_ = tx.Rollback()
 			return nil, fmt.Errorf("could not insert log tag: %w", err)
 		}
+	}
+
+	// Write outbox events for leaderboard sync
+	contestIDs := make([]uuid.UUID, 0, len(contestIDSet))
+	for id := range contestIDSet {
+		contestIDs = append(contestIDs, id)
+	}
+	if err = insertLeaderboardOutboxEvents(ctx, qtx, LeaderboardOutboxParams{
+		UserID:          req.UserID(),
+		ContestIDs:      contestIDs,
+		OfficialContest: req.EligibleOfficialLeaderboard(),
+		Year:            req.Year(),
+	}); err != nil {
+		_ = tx.Rollback()
+		return nil, err
 	}
 
 	if err = tx.Commit(); err != nil {

@@ -14,31 +14,27 @@ type LogDeleteRepository interface {
 	DeleteLog(context.Context, *LogDeleteRequest) error
 }
 
-type LogDeleteLeaderboardUpdater interface {
-	UpdateUserContestScore(ctx context.Context, contestID uuid.UUID, userID uuid.UUID)
-	UpdateUserOfficialScores(ctx context.Context, year int, userID uuid.UUID)
-}
-
 type LogDeleteRequest struct {
 	LogID uuid.UUID
-	Now   time.Time
+
+	// Set by domain layer (unexported: only domain can write, others read via getters)
+	now time.Time
 }
 
+func (r *LogDeleteRequest) Now() time.Time { return r.now }
+
 type LogDelete struct {
-	repo               LogDeleteRepository
-	clock              commondomain.Clock
-	leaderboardUpdater LogDeleteLeaderboardUpdater
+	repo  LogDeleteRepository
+	clock commondomain.Clock
 }
 
 func NewLogDelete(
 	repo LogDeleteRepository,
 	clock commondomain.Clock,
-	leaderboardUpdater LogDeleteLeaderboardUpdater,
 ) *LogDelete {
 	return &LogDelete{
-		repo:               repo,
-		clock:              clock,
-		leaderboardUpdater: leaderboardUpdater,
+		repo:  repo,
+		clock: clock,
 	}
 }
 
@@ -65,28 +61,11 @@ func (s *LogDelete) Execute(ctx context.Context, req *LogDeleteRequest) error {
 		return ErrForbidden
 	}
 
-	req.Now = s.clock.Now()
+	req.now = s.clock.Now()
 
 	if err := s.repo.DeleteLog(ctx, req); err != nil {
 		return err
 	}
 
-	// Rebuild affected leaderboards — best effort, do not fail the deletion
-	s.updateLeaderboardsAfterDelete(ctx, log)
-
 	return nil
-}
-
-// updateLeaderboardsAfterDelete updates all leaderboards affected by a deleted log.
-// For each contest the log was attached to: update that user's contest score.
-// If the log was eligible for official leaderboard: update yearly and global scores.
-func (s *LogDelete) updateLeaderboardsAfterDelete(ctx context.Context, log *Log) {
-	for _, reg := range log.Registrations {
-		s.leaderboardUpdater.UpdateUserContestScore(ctx, reg.ContestID, log.UserID)
-	}
-
-	if log.EligibleOfficialLeaderboard {
-		year := log.CreatedAt.Year()
-		s.leaderboardUpdater.UpdateUserOfficialScores(ctx, year, log.UserID)
-	}
 }

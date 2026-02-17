@@ -44,6 +44,12 @@ cd frontend && pnpm build
 
 **Use "Repository" for persistent source-of-truth data, "Store" for everything else** — `Repository` interfaces access the primary database (Postgres) where authoritative data lives. `Store` interfaces access auxiliary storage (e.g. Valkey/Redis) for caches, derived data, pub/sub, coordination state, or any non-authoritative data. Implementations live under `storage/postgres/` and `storage/valkey/` respectively.
 
+**Never call `time.Now()` directly** — always inject `commondomain.Clock` and use `clock.Now()`. This applies to domain services, repository methods, and background workers. The clock is created in `main.go` and threaded through constructors. This makes time-dependent code testable via `mockClock`.
+
+**Domain must not import storage packages** — the `domain` package must never import from `storage/postgres`, `storage/valkey`, or any other storage layer. Define domain types and interfaces in the domain package; the storage layer implements them. Repository methods should convert between sqlc types and domain types internally.
+
+**Use unexported fields for domain-enriched request data** — when a request struct has fields set exclusively by the domain layer (e.g. `UserID` from session, `Year` from clock), make those fields unexported (lowercase) and add getter methods. This prevents the HTTP layer from setting them while still allowing the repository layer to read them. The domain layer (same package) writes directly (`req.userID = ...`), other packages read via getters (`req.UserID()`). Fields that the HTTP layer legitimately sets (e.g. `ContestID`, `LanguageCodes`) remain exported.
+
 ```sh
 # 1. Make changes
 

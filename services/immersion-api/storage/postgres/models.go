@@ -54,6 +54,16 @@ type Language struct {
 	Name string
 }
 
+type LeaderboardOutbox struct {
+	ID          int64
+	EventType   string
+	UserID      uuid.UUID
+	ContestID   uuid.NullUUID
+	Year        sql.NullInt16
+	CreatedAt   time.Time
+	ProcessedAt sql.NullTime
+}
+
 type Log struct {
 	ID                          uuid.UUID
 	UserID                      uuid.UUID

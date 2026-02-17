@@ -236,6 +236,17 @@ delete from contest_logs
 where contest_id = sqlc.arg('contest_id')
   and log_id = sqlc.arg('log_id');
 
+-- name: UpdateLogEligibleOfficialLeaderboard :exec
+update logs
+set eligible_official_leaderboard = (
+  select coalesce(bool_or(contests.official), false)
+  from contest_logs
+  inner join contests on contests.id = contest_logs.contest_id
+  where contest_logs.log_id = sqlc.arg('log_id')
+),
+updated_at = now()
+where id = sqlc.arg('log_id');
+
 -- name: DetachContestLogsForLanguages :exec
 delete from contest_logs
 where contest_id = sqlc.arg('contest_id')

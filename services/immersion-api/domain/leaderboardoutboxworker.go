@@ -7,15 +7,23 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/tadoku/tadoku/services/immersion-api/storage/postgres"
 )
+
+// LeaderboardOutboxEvent represents a pending leaderboard update event.
+type LeaderboardOutboxEvent struct {
+	ID        int64
+	EventType string
+	UserID    uuid.UUID
+	ContestID *uuid.UUID
+	Year      *int
+}
 
 // LeaderboardOutboxWorkerRepository provides transactional access to the outbox table.
 // ProcessOutboxBatch handles the full transaction lifecycle internally:
 // it begins a transaction, fetches and locks events, calls the provided
 // callback, marks processed IDs, and commits (or rolls back on error).
 type LeaderboardOutboxWorkerRepository interface {
-	ProcessOutboxBatch(ctx context.Context, batchSize int32, fn func(events []postgres.FetchAndLockOutboxEventsRow) []int64) error
+	ProcessOutboxBatch(ctx context.Context, batchSize int32, fn func(events []LeaderboardOutboxEvent) []int64) error
 	CleanupProcessedOutboxEvents(ctx context.Context, before time.Time) error
 }
 
@@ -75,7 +83,7 @@ func (w *LeaderboardOutboxWorker) ProcessBatchForTest(ctx context.Context) {
 }
 
 func (w *LeaderboardOutboxWorker) processBatch(ctx context.Context) {
-	err := w.repo.ProcessOutboxBatch(ctx, 100, func(events []postgres.FetchAndLockOutboxEventsRow) []int64 {
+	err := w.repo.ProcessOutboxBatch(ctx, 100, func(events []LeaderboardOutboxEvent) []int64 {
 		if len(events) == 0 {
 			return nil
 		}
@@ -85,7 +93,7 @@ func (w *LeaderboardOutboxWorker) processBatch(ctx context.Context) {
 			eventType string
 			userID    uuid.UUID
 			contestID uuid.UUID // zero for official scores
-			year      int16     // zero for contest scores
+			year      int       // zero for contest scores
 		}
 		seen := map[dedupeKey]struct{}{}
 		var allIDs []int64
@@ -97,11 +105,11 @@ func (w *LeaderboardOutboxWorker) processBatch(ctx context.Context) {
 				eventType: event.EventType,
 				userID:    event.UserID,
 			}
-			if event.ContestID.Valid {
-				key.contestID = event.ContestID.UUID
+			if event.ContestID != nil {
+				key.contestID = *event.ContestID
 			}
-			if event.Year.Valid {
-				key.year = event.Year.Int16
+			if event.Year != nil {
+				key.year = *event.Year
 			}
 
 			if _, exists := seen[key]; exists {
@@ -119,21 +127,21 @@ func (w *LeaderboardOutboxWorker) processBatch(ctx context.Context) {
 	}
 }
 
-func (w *LeaderboardOutboxWorker) processEvent(ctx context.Context, event postgres.FetchAndLockOutboxEventsRow) {
+func (w *LeaderboardOutboxWorker) processEvent(ctx context.Context, event LeaderboardOutboxEvent) {
 	switch event.EventType {
 	case "refresh_contest_score":
-		if !event.ContestID.Valid {
+		if event.ContestID == nil {
 			slog.ErrorContext(ctx, "outbox worker: refresh_contest_score event missing contest_id", "event_id", event.ID)
 			return
 		}
-		w.updater.UpdateUserContestScore(ctx, event.ContestID.UUID, event.UserID)
+		w.updater.UpdateUserContestScore(ctx, *event.ContestID, event.UserID)
 
 	case "refresh_official_scores":
-		if !event.Year.Valid {
+		if event.Year == nil {
 			slog.ErrorContext(ctx, "outbox worker: refresh_official_scores event missing year", "event_id", event.ID)
 			return
 		}
-		w.updater.UpdateUserOfficialScores(ctx, int(event.Year.Int16), event.UserID)
+		w.updater.UpdateUserOfficialScores(ctx, *event.Year, event.UserID)
 
 	default:
 		slog.ErrorContext(ctx, fmt.Sprintf("outbox worker: unknown event type: %s", event.EventType), "event_id", event.ID)

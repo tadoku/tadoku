@@ -2,7 +2,6 @@ package domain_test
 
 import (
 	"context"
-	"database/sql"
 	"errors"
 	"testing"
 	"time"
@@ -11,11 +10,10 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/tadoku/tadoku/services/immersion-api/domain"
-	"github.com/tadoku/tadoku/services/immersion-api/storage/postgres"
 )
 
 type mockLeaderboardOutboxRepository struct {
-	events     []postgres.FetchAndLockOutboxEventsRow
+	events     []domain.LeaderboardOutboxEvent
 	batchErr   error
 	cleanupErr error
 
@@ -23,7 +21,7 @@ type mockLeaderboardOutboxRepository struct {
 	cleanedUp bool
 }
 
-func (m *mockLeaderboardOutboxRepository) ProcessOutboxBatch(ctx context.Context, batchSize int32, fn func(events []postgres.FetchAndLockOutboxEventsRow) []int64) error {
+func (m *mockLeaderboardOutboxRepository) ProcessOutboxBatch(ctx context.Context, batchSize int32, fn func(events []domain.LeaderboardOutboxEvent) []int64) error {
 	if m.batchErr != nil {
 		return m.batchErr
 	}
@@ -60,6 +58,8 @@ func (m *mockLeaderboardOutboxUpdater) UpdateUserOfficialScores(ctx context.Cont
 	m.officialCalls = append(m.officialCalls, mockLeaderboardOutboxOfficialCall{Year: year, UserID: userID})
 }
 
+func ptr[T any](v T) *T { return &v }
+
 func TestLeaderboardOutboxWorker_ProcessEvent(t *testing.T) {
 	userID := uuid.New()
 	contestID := uuid.New()
@@ -67,12 +67,12 @@ func TestLeaderboardOutboxWorker_ProcessEvent(t *testing.T) {
 	t.Run("processes refresh_contest_score events", func(t *testing.T) {
 		updater := &mockLeaderboardOutboxUpdater{}
 		repo := &mockLeaderboardOutboxRepository{
-			events: []postgres.FetchAndLockOutboxEventsRow{
+			events: []domain.LeaderboardOutboxEvent{
 				{
 					ID:        1,
 					EventType: "refresh_contest_score",
 					UserID:    userID,
-					ContestID: uuid.NullUUID{UUID: contestID, Valid: true},
+					ContestID: &contestID,
 				},
 			},
 		}
@@ -90,12 +90,12 @@ func TestLeaderboardOutboxWorker_ProcessEvent(t *testing.T) {
 	t.Run("processes refresh_official_scores events", func(t *testing.T) {
 		updater := &mockLeaderboardOutboxUpdater{}
 		repo := &mockLeaderboardOutboxRepository{
-			events: []postgres.FetchAndLockOutboxEventsRow{
+			events: []domain.LeaderboardOutboxEvent{
 				{
 					ID:        2,
 					EventType: "refresh_official_scores",
 					UserID:    userID,
-					Year:      sql.NullInt16{Int16: 2026, Valid: true},
+					Year:      ptr(2026),
 				},
 			},
 		}
@@ -113,24 +113,24 @@ func TestLeaderboardOutboxWorker_ProcessEvent(t *testing.T) {
 	t.Run("deduplicates events with same key", func(t *testing.T) {
 		updater := &mockLeaderboardOutboxUpdater{}
 		repo := &mockLeaderboardOutboxRepository{
-			events: []postgres.FetchAndLockOutboxEventsRow{
+			events: []domain.LeaderboardOutboxEvent{
 				{
 					ID:        1,
 					EventType: "refresh_contest_score",
 					UserID:    userID,
-					ContestID: uuid.NullUUID{UUID: contestID, Valid: true},
+					ContestID: &contestID,
 				},
 				{
 					ID:        2,
 					EventType: "refresh_contest_score",
 					UserID:    userID,
-					ContestID: uuid.NullUUID{UUID: contestID, Valid: true},
+					ContestID: &contestID,
 				},
 				{
 					ID:        3,
 					EventType: "refresh_contest_score",
 					UserID:    userID,
-					ContestID: uuid.NullUUID{UUID: contestID, Valid: true},
+					ContestID: &contestID,
 				},
 			},
 		}
@@ -150,24 +150,24 @@ func TestLeaderboardOutboxWorker_ProcessEvent(t *testing.T) {
 
 		updater := &mockLeaderboardOutboxUpdater{}
 		repo := &mockLeaderboardOutboxRepository{
-			events: []postgres.FetchAndLockOutboxEventsRow{
+			events: []domain.LeaderboardOutboxEvent{
 				{
 					ID:        1,
 					EventType: "refresh_contest_score",
 					UserID:    userID,
-					ContestID: uuid.NullUUID{UUID: contestID, Valid: true},
+					ContestID: &contestID,
 				},
 				{
 					ID:        2,
 					EventType: "refresh_contest_score",
 					UserID:    userID2,
-					ContestID: uuid.NullUUID{UUID: contestID2, Valid: true},
+					ContestID: &contestID2,
 				},
 				{
 					ID:        3,
 					EventType: "refresh_official_scores",
 					UserID:    userID,
-					Year:      sql.NullInt16{Int16: 2026, Valid: true},
+					Year:      ptr(2026),
 				},
 			},
 		}
@@ -183,7 +183,7 @@ func TestLeaderboardOutboxWorker_ProcessEvent(t *testing.T) {
 	t.Run("no-op when no events", func(t *testing.T) {
 		updater := &mockLeaderboardOutboxUpdater{}
 		repo := &mockLeaderboardOutboxRepository{
-			events: []postgres.FetchAndLockOutboxEventsRow{},
+			events: []domain.LeaderboardOutboxEvent{},
 		}
 
 		worker := domain.NewLeaderboardOutboxWorker(repo, updater, time.Second)

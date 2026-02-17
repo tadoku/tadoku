@@ -31,6 +31,7 @@ export const routes = {
   logCreate: () => `/logs/new`,
   logCreateWithAmount: (amount: number) => `/logs/new?amount=${amount}`,
   log: (id: string) => `/logs/${id}`,
+  logContests: (id: string) => `/logs/${id}/contests`,
 
   leaderboardLatestOfficial: (page?: Page) =>
     `/leaderboard/latest/${page ?? '1'}`,

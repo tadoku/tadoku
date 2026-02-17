@@ -743,6 +743,66 @@ export const useCreateLog = (onSuccess: (id: string) => void) =>
     },
   })
 
+export type CreateLogV2Payload = {
+  language_code: string
+  activity_id: number
+  amount: number
+  unit_id: string
+  tags: string[]
+  description?: string
+}
+
+export const useCreateLogV2 = (onSuccess: (log: Log) => void) =>
+  useMutation({
+    mutationFn: async (payload: CreateLogV2Payload) => {
+      const response = await fetch(`${root}/logs`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      })
+      if (response.status !== 200) {
+        throw new Error(response.status.toString())
+      }
+
+      return Log.parse(await response.json())
+    },
+    onSuccess(data) {
+      onSuccess(data)
+    },
+  })
+
+export const useUpdateLogContestRegistrations = (onSuccess: (log: Log) => void) => {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async ({
+      logId,
+      registrationIds,
+    }: {
+      logId: string
+      registrationIds: string[]
+    }) => {
+      const response = await fetch(`${root}/logs/${logId}/contest-registrations`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ registration_ids: registrationIds }),
+      })
+      if (response.status !== 200) {
+        throw new Error(response.status.toString())
+      }
+
+      return Log.parse(await response.json())
+    },
+    onSuccess(data) {
+      queryClient.invalidateQueries(['log', 'findByID', data.id])
+      onSuccess(data)
+    },
+  })
+}
+
 export const useLog = (id: string, options?: { enabled?: boolean }) =>
   useQuery(
     ['log', 'findByID', id],

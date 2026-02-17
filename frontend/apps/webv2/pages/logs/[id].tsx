@@ -6,8 +6,9 @@ import {
 } from '@app/common/format'
 import { useCurrentDateTime } from '@app/common/hooks'
 import { routes } from '@app/common/routes'
-import { useSession } from '@app/common/session'
+import { useSession, useUserRole } from '@app/common/session'
 import { Log, useDeleteLog, useLog } from '@app/immersion/api'
+import { LogDetailsV2 } from '@app/immersion/LogDetailsV2'
 import { HomeIcon, TrashIcon } from '@heroicons/react/20/solid'
 import { XMarkIcon } from '@heroicons/react/24/outline'
 import { DateTime } from 'luxon'
@@ -22,8 +23,9 @@ const Page = () => {
   const router = useRouter()
   const id = router.query['id']?.toString() ?? ''
   const log = useLog(id)
+  const role = useUserRole()
 
-  if (log.isLoading || log.isIdle) {
+  if (log.isLoading || log.isIdle || role === undefined) {
     return <Loading />
   }
 
@@ -32,6 +34,34 @@ const Page = () => {
       <span className="flash error">
         Could not load page, please try again later.
       </span>
+    )
+  }
+
+  if (role === 'admin') {
+    return (
+      <>
+        <Head>
+          <title>Log details - Tadoku</title>
+        </Head>
+        <div className="pb-4">
+          <Breadcrumb
+            links={[
+              { label: 'Home', href: routes.home(), IconComponent: HomeIcon },
+              {
+                label: log.data.user_display_name!,
+                href: routes.userProfileStatistics(log.data.user_id),
+              },
+              {
+                label: 'Log details',
+                href: routes.log(log.data.id),
+              },
+            ]}
+          />
+        </div>
+        <div className="max-w-2xl">
+          <LogDetailsV2 log={log.data} />
+        </div>
+      </>
     )
   }
 

@@ -2,6 +2,7 @@ package domain_test
 
 import (
 	"context"
+	"fmt"
 	"testing"
 	"time"
 
@@ -13,16 +14,15 @@ import (
 )
 
 type mockLogContestUpdateRepository struct {
-	registrations        *domain.ContestRegistrations
-	fetchRegErr          error
-	log                  *domain.Log
-	updatedLog           *domain.Log
-	findErr              error
-	updateErr            error
-	updateCalled         bool
-	updateCalledWith     *domain.LogContestUpdateDBRequest
-	findCallCount        int
-	findLogByIDResponses []*domain.Log
+	registrations    *domain.ContestRegistrations
+	fetchRegErr      error
+	log              *domain.Log
+	updatedLog       *domain.Log
+	findErr          error
+	updateErr        error
+	updateCalled     bool
+	updateCalledWith *domain.LogContestUpdateDBRequest
+	findCallCount    int
 }
 
 func (m *mockLogContestUpdateRepository) FetchOngoingContestRegistrations(ctx context.Context, req *domain.RegistrationListOngoingRequest) (*domain.ContestRegistrations, error) {
@@ -336,6 +336,26 @@ func TestLogContestUpdate_Execute(t *testing.T) {
 		require.NoError(t, err)
 		assert.False(t, repo.updateCalled) // no changes needed
 		assert.Equal(t, logID, result.ID)
+	})
+
+	t.Run("returns error when UpdateLogContests fails", func(t *testing.T) {
+		repo := &mockLogContestUpdateRepository{
+			log:           baseLog, // no registrations initially
+			registrations: ongoingRegistrations,
+			updateErr:     fmt.Errorf("database error"),
+		}
+		clock := commondomain.NewMockClock(now)
+		svc := newLogContestUpdateService(repo, clock)
+
+		ctx := ctxWithUserSubject(userID.String())
+		_, err := svc.Execute(ctx, &domain.LogContestUpdateRequest{
+			LogID:           logID,
+			RegistrationIDs: []uuid.UUID{registrationID},
+		})
+
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "could not update log contests")
+		assert.True(t, repo.updateCalled)
 	})
 
 	t.Run("preserves ended contest attachments", func(t *testing.T) {

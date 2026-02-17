@@ -211,7 +211,7 @@ func TestLogCreate_Execute(t *testing.T) {
 		require.NoError(t, err)
 		assert.True(t, repo.createCalled)
 		assert.Equal(t, logID, result.ID)
-		assert.Equal(t, userID, repo.createCalledWith.UserID)
+		assert.Equal(t, userID, repo.createCalledWith.UserID())
 	})
 
 	t.Run("sets EligibleOfficialLeaderboard for official contest", func(t *testing.T) {
@@ -252,6 +252,6 @@ func TestLogCreate_Execute(t *testing.T) {
 		})
 
 		require.NoError(t, err)
-		assert.True(t, repo.createCalledWith.EligibleOfficialLeaderboard)
+		assert.True(t, repo.createCalledWith.EligibleOfficialLeaderboard())
 	})
 }

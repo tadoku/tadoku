@@ -17,15 +17,20 @@ type RegistrationUpsertRepository interface {
 }
 
 type RegistrationUpsertRequest struct {
-	ID            uuid.UUID
 	ContestID     uuid.UUID
-	UserID        uuid.UUID
 	LanguageCodes []string
 
-	// Set by domain layer
-	OfficialContest bool
-	Year            int16
+	// Set by domain layer (unexported: only domain can write, others read via getters)
+	id              uuid.UUID
+	userID          uuid.UUID
+	officialContest bool
+	year            int16
 }
+
+func (r *RegistrationUpsertRequest) ID() uuid.UUID         { return r.id }
+func (r *RegistrationUpsertRequest) UserID() uuid.UUID     { return r.userID }
+func (r *RegistrationUpsertRequest) OfficialContest() bool { return r.officialContest }
+func (r *RegistrationUpsertRequest) Year() int16           { return r.year }
 
 type DetachContestLogsForLanguagesRequest struct {
 	ContestID       uuid.UUID
@@ -64,8 +69,8 @@ func (s *RegistrationUpsert) Execute(ctx context.Context, req *RegistrationUpser
 	if session == nil {
 		return ErrUnauthorized
 	}
-	req.UserID = uuid.MustParse(session.Subject)
-	req.ID = uuid.New()
+	req.userID = uuid.MustParse(session.Subject)
+	req.id = uuid.New()
 
 	contest, err := s.repo.FindContestByID(ctx, &ContestFindRequest{
 		ID:             req.ContestID,
@@ -94,7 +99,7 @@ func (s *RegistrationUpsert) Execute(ctx context.Context, req *RegistrationUpser
 
 	// check if existing registration
 	registration, err := s.repo.FindRegistrationForUser(ctx, &RegistrationFindRequest{
-		UserID:    req.UserID,
+		UserID:    req.userID,
 		ContestID: req.ContestID,
 	})
 	if err != nil && !errors.Is(err, ErrNotFound) {
@@ -103,7 +108,7 @@ func (s *RegistrationUpsert) Execute(ctx context.Context, req *RegistrationUpser
 
 	// detach logs for any removed languages
 	if registration != nil {
-		req.ID = registration.ID
+		req.id = registration.ID
 
 		newLangs := map[string]bool{}
 		for _, lang := range req.LanguageCodes {
@@ -120,7 +125,7 @@ func (s *RegistrationUpsert) Execute(ctx context.Context, req *RegistrationUpser
 		if len(removedLanguages) > 0 {
 			err := s.repo.DetachContestLogsForLanguages(ctx, &DetachContestLogsForLanguagesRequest{
 				ContestID:       req.ContestID,
-				UserID:          req.UserID,
+				UserID:          req.userID,
 				LanguageCodes:   removedLanguages,
 				OfficialContest: contest.Official,
 				Year:            int16(contest.ContestStart.Year()),
@@ -131,8 +136,8 @@ func (s *RegistrationUpsert) Execute(ctx context.Context, req *RegistrationUpser
 		}
 	}
 
-	req.OfficialContest = contest.Official
-	req.Year = int16(contest.ContestStart.Year())
+	req.officialContest = contest.Official
+	req.year = int16(contest.ContestStart.Year())
 
 	if err := s.repo.UpsertContestRegistration(ctx, req); err != nil {
 		return err

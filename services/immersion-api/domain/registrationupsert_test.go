@@ -250,7 +250,7 @@ func TestRegistrationUpsert_Execute(t *testing.T) {
 
 		require.NoError(t, err)
 		assert.True(t, repo.upsertCalled)
-		assert.Equal(t, userID, repo.upsertCalledWith.UserID)
+		assert.Equal(t, userID, repo.upsertCalledWith.UserID())
 		assert.Equal(t, contestID, repo.upsertCalledWith.ContestID)
 	})
 
@@ -281,6 +281,6 @@ func TestRegistrationUpsert_Execute(t *testing.T) {
 
 		require.NoError(t, err)
 		assert.True(t, repo.upsertCalled)
-		assert.Equal(t, existingRegID, repo.upsertCalledWith.ID)
+		assert.Equal(t, existingRegID, repo.upsertCalledWith.ID())
 	})
 }

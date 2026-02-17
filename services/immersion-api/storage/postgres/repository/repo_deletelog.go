@@ -16,7 +16,7 @@ func (r *Repository) DeleteLog(ctx context.Context, req *domain.LogDeleteRequest
 	qtx := r.q.WithTx(tx)
 
 	isValid, err := qtx.CheckIfLogCanBeDeleted(ctx, postgres.CheckIfLogCanBeDeletedParams{
-		Now:   req.Now,
+		Now:   req.Now(),
 		LogID: req.LogID,
 	})
 	if err != nil {

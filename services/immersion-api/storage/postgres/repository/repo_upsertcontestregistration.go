@@ -17,9 +17,9 @@ func (r *Repository) UpsertContestRegistration(ctx context.Context, req *domain.
 	qtx := r.q.WithTx(tx)
 
 	_, err = qtx.UpsertContestRegistration(ctx, postgres.UpsertContestRegistrationParams{
-		ID:            req.ID,
+		ID:            req.ID(),
 		ContestID:     req.ContestID,
-		UserID:        req.UserID,
+		UserID:        req.UserID(),
 		LanguageCodes: req.LanguageCodes,
 	})
 	if err != nil {
@@ -29,10 +29,10 @@ func (r *Repository) UpsertContestRegistration(ctx context.Context, req *domain.
 
 	// Write outbox events for leaderboard sync
 	if err = insertLeaderboardOutboxEvents(ctx, qtx, LeaderboardOutboxParams{
-		UserID:          req.UserID,
+		UserID:          req.UserID(),
 		ContestIDs:      []uuid.UUID{req.ContestID},
-		OfficialContest: req.OfficialContest,
-		Year:            req.Year,
+		OfficialContest: req.OfficialContest(),
+		Year:            req.Year(),
 	}); err != nil {
 		_ = tx.Rollback()
 		return err

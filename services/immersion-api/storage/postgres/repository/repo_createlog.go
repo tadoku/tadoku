@@ -33,13 +33,13 @@ func (r *Repository) CreateLog(ctx context.Context, req *domain.LogCreateRequest
 	id := uuid.New()
 	logId, err := qtx.CreateLog(ctx, postgres.CreateLogParams{
 		ID:                          id,
-		UserID:                      req.UserID,
+		UserID:                      req.UserID(),
 		LanguageCode:                req.LanguageCode,
 		LogActivityID:               int16(req.ActivityID),
 		UnitID:                      req.UnitID,
 		Amount:                      req.Amount,
 		Modifier:                    unit.Modifier,
-		EligibleOfficialLeaderboard: req.EligibleOfficialLeaderboard,
+		EligibleOfficialLeaderboard: req.EligibleOfficialLeaderboard(),
 		Description:                 postgres.NewNullString(req.Description),
 	})
 	if err != nil {
@@ -73,7 +73,7 @@ func (r *Repository) CreateLog(ctx context.Context, req *domain.LogCreateRequest
 	for _, tag := range req.Tags {
 		if err = qtx.InsertLogTag(ctx, postgres.InsertLogTagParams{
 			LogID:  id,
-			UserID: req.UserID,
+			UserID: req.UserID(),
 			Tag:    tag,
 		}); err != nil {
 			_ = tx.Rollback()
@@ -87,10 +87,10 @@ func (r *Repository) CreateLog(ctx context.Context, req *domain.LogCreateRequest
 		contestIDs = append(contestIDs, id)
 	}
 	if err = insertLeaderboardOutboxEvents(ctx, qtx, LeaderboardOutboxParams{
-		UserID:          req.UserID,
+		UserID:          req.UserID(),
 		ContestIDs:      contestIDs,
-		OfficialContest: req.EligibleOfficialLeaderboard,
-		Year:            req.Year,
+		OfficialContest: req.EligibleOfficialLeaderboard(),
+		Year:            req.Year(),
 	}); err != nil {
 		_ = tx.Rollback()
 		return nil, err

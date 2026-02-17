@@ -48,6 +48,8 @@ cd frontend && pnpm build
 
 **Domain must not import storage packages** — the `domain` package must never import from `storage/postgres`, `storage/valkey`, or any other storage layer. Define domain types and interfaces in the domain package; the storage layer implements them. Repository methods should convert between sqlc types and domain types internally.
 
+**Use unexported fields for domain-enriched request data** — when a request struct has fields set exclusively by the domain layer (e.g. `UserID` from session, `Year` from clock), make those fields unexported (lowercase) and add getter methods. This prevents the HTTP layer from setting them while still allowing the repository layer to read them. The domain layer (same package) writes directly (`req.userID = ...`), other packages read via getters (`req.UserID()`). Fields that the HTTP layer legitimately sets (e.g. `ContestID`, `LanguageCodes`) remain exported.
+
 ```sh
 # 1. Make changes
 

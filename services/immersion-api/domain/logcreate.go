@@ -18,19 +18,23 @@ type LogCreateRepository interface {
 type LogCreateRequest struct {
 	RegistrationIDs []uuid.UUID `validate:"required"`
 	UnitID          uuid.UUID   `validate:"required"`
-	UserID          uuid.UUID   `validate:"required"`
 	ActivityID      int32       `validate:"required"`
 	LanguageCode    string      `validate:"required"`
 	Amount          float32     `validate:"required,gte=0"`
 	Tags            []string
 
 	// Optional
-	Description                 *string
-	EligibleOfficialLeaderboard bool
+	Description *string
 
-	// Set by domain layer
-	Year int16
+	// Set by domain layer (unexported: only domain can write, others read via getters)
+	userID                      uuid.UUID
+	eligibleOfficialLeaderboard bool
+	year                        int16
 }
+
+func (r *LogCreateRequest) UserID() uuid.UUID                 { return r.userID }
+func (r *LogCreateRequest) EligibleOfficialLeaderboard() bool { return r.eligibleOfficialLeaderboard }
+func (r *LogCreateRequest) Year() int16                       { return r.year }
 
 type LogCreate struct {
 	repo       LogCreateRepository
@@ -67,7 +71,7 @@ func (s *LogCreate) Execute(ctx context.Context, req *LogCreateRequest) (*Log, e
 	if session == nil {
 		return nil, ErrUnauthorized
 	}
-	req.UserID = uuid.MustParse(session.Subject)
+	req.userID = uuid.MustParse(session.Subject)
 
 	err := s.validate.Struct(req)
 	if err != nil {
@@ -81,7 +85,7 @@ func (s *LogCreate) Execute(ctx context.Context, req *LogCreateRequest) (*Log, e
 	}
 
 	registrations, err := s.repo.FetchOngoingContestRegistrations(ctx, &RegistrationListOngoingRequest{
-		UserID: req.UserID,
+		UserID: req.userID,
 		Now:    s.clock.Now(),
 	})
 	if err != nil {
@@ -101,7 +105,7 @@ func (s *LogCreate) Execute(ctx context.Context, req *LogCreateRequest) (*Log, e
 		}
 
 		if registration.Contest.Official {
-			req.EligibleOfficialLeaderboard = true
+			req.eligibleOfficialLeaderboard = true
 		}
 
 		// validate language is part of registration
@@ -129,7 +133,7 @@ func (s *LogCreate) Execute(ctx context.Context, req *LogCreateRequest) (*Log, e
 		}
 	}
 
-	req.Year = int16(s.clock.Now().Year())
+	req.year = int16(s.clock.Now().Year())
 
 	logId, err := s.repo.CreateLog(ctx, req)
 	if err != nil {

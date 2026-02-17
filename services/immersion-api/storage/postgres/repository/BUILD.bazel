@@ -3,6 +3,7 @@ load("@rules_go//go:def.bzl", "go_library")
 go_library(
     name = "repository",
     srcs = [
+        "outbox.go",
         "repo_activityforcontestuser.go",
         "repo_contestfindlatestofficial.go",
         "repo_createcontest.go",

@@ -2,10 +2,8 @@ package repository
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
 
-	"github.com/google/uuid"
 	"github.com/tadoku/tadoku/services/immersion-api/domain"
 	"github.com/tadoku/tadoku/services/immersion-api/storage/postgres"
 )
@@ -50,26 +48,14 @@ func (r *Repository) DeleteLog(ctx context.Context, req *domain.LogDeleteRequest
 	}
 
 	// Write outbox events for leaderboard sync
-	for _, contestID := range contestIDs {
-		if err = qtx.InsertLeaderboardOutboxEvent(ctx, postgres.InsertLeaderboardOutboxEventParams{
-			EventType: "refresh_contest_score",
-			UserID:    logCtx.UserID,
-			ContestID: uuid.NullUUID{UUID: contestID, Valid: true},
-		}); err != nil {
-			_ = tx.Rollback()
-			return fmt.Errorf("could not insert outbox event: %w", err)
-		}
-	}
-
-	if logCtx.EligibleOfficialLeaderboard {
-		if err = qtx.InsertLeaderboardOutboxEvent(ctx, postgres.InsertLeaderboardOutboxEventParams{
-			EventType: "refresh_official_scores",
-			UserID:    logCtx.UserID,
-			Year:      sql.NullInt16{Int16: logCtx.Year, Valid: true},
-		}); err != nil {
-			_ = tx.Rollback()
-			return fmt.Errorf("could not insert outbox event: %w", err)
-		}
+	if err = insertLeaderboardOutboxEvents(ctx, qtx, LeaderboardOutboxParams{
+		UserID:          logCtx.UserID,
+		ContestIDs:      contestIDs,
+		OfficialContest: logCtx.EligibleOfficialLeaderboard,
+		Year:            logCtx.Year,
+	}); err != nil {
+		_ = tx.Rollback()
+		return err
 	}
 
 	if err = tx.Commit(); err != nil {

@@ -82,26 +82,18 @@ func (r *Repository) CreateLog(ctx context.Context, req *domain.LogCreateRequest
 	}
 
 	// Write outbox events for leaderboard sync
-	for contestID := range contestIDSet {
-		if err = qtx.InsertLeaderboardOutboxEvent(ctx, postgres.InsertLeaderboardOutboxEventParams{
-			EventType: "refresh_contest_score",
-			UserID:    req.UserID,
-			ContestID: uuid.NullUUID{UUID: contestID, Valid: true},
-		}); err != nil {
-			_ = tx.Rollback()
-			return nil, fmt.Errorf("could not insert outbox event: %w", err)
-		}
+	contestIDs := make([]uuid.UUID, 0, len(contestIDSet))
+	for id := range contestIDSet {
+		contestIDs = append(contestIDs, id)
 	}
-
-	if req.EligibleOfficialLeaderboard {
-		if err = qtx.InsertLeaderboardOutboxEvent(ctx, postgres.InsertLeaderboardOutboxEventParams{
-			EventType: "refresh_official_scores",
-			UserID:    req.UserID,
-			Year:      sql.NullInt16{Int16: req.Year, Valid: true},
-		}); err != nil {
-			_ = tx.Rollback()
-			return nil, fmt.Errorf("could not insert outbox event: %w", err)
-		}
+	if err = insertLeaderboardOutboxEvents(ctx, qtx, LeaderboardOutboxParams{
+		UserID:          req.UserID,
+		ContestIDs:      contestIDs,
+		OfficialContest: req.EligibleOfficialLeaderboard,
+		Year:            req.Year,
+	}); err != nil {
+		_ = tx.Rollback()
+		return nil, err
 	}
 
 	if err = tx.Commit(); err != nil {

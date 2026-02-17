@@ -21,6 +21,10 @@ type RegistrationUpsertRequest struct {
 	ContestID     uuid.UUID
 	UserID        uuid.UUID
 	LanguageCodes []string
+
+	// Set by domain layer
+	OfficialContest bool
+	Year            int16
 }
 
 type DetachContestLogsForLanguagesRequest struct {
@@ -126,6 +130,9 @@ func (s *RegistrationUpsert) Execute(ctx context.Context, req *RegistrationUpser
 			}
 		}
 	}
+
+	req.OfficialContest = contest.Official
+	req.Year = int16(contest.ContestStart.Year())
 
 	if err := s.repo.UpsertContestRegistration(ctx, req); err != nil {
 		return err

@@ -27,14 +27,15 @@ func (r *Repository) UpsertContestRegistration(ctx context.Context, req *domain.
 		return fmt.Errorf("could not create or update contest registration: %w", err)
 	}
 
-	// Write outbox event for leaderboard sync
-	if err = qtx.InsertLeaderboardOutboxEvent(ctx, postgres.InsertLeaderboardOutboxEventParams{
-		EventType: "refresh_contest_score",
-		UserID:    req.UserID,
-		ContestID: uuid.NullUUID{UUID: req.ContestID, Valid: true},
+	// Write outbox events for leaderboard sync
+	if err = insertLeaderboardOutboxEvents(ctx, qtx, LeaderboardOutboxParams{
+		UserID:          req.UserID,
+		ContestIDs:      []uuid.UUID{req.ContestID},
+		OfficialContest: req.OfficialContest,
+		Year:            req.Year,
 	}); err != nil {
 		_ = tx.Rollback()
-		return fmt.Errorf("could not insert outbox event: %w", err)
+		return err
 	}
 
 	if err = tx.Commit(); err != nil {

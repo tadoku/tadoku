@@ -63,24 +63,14 @@ func (r *Repository) DetachLogFromContest(ctx context.Context, req *domain.Conte
 	}
 
 	// Write outbox events for leaderboard sync
-	if err = qtx.InsertLeaderboardOutboxEvent(ctx, postgres.InsertLeaderboardOutboxEventParams{
-		EventType: "refresh_contest_score",
-		UserID:    logCtx.UserID,
-		ContestID: uuid.NullUUID{UUID: req.ContestID, Valid: true},
+	if err = insertLeaderboardOutboxEvents(ctx, qtx, LeaderboardOutboxParams{
+		UserID:          logCtx.UserID,
+		ContestIDs:      []uuid.UUID{req.ContestID},
+		OfficialContest: logCtx.EligibleOfficialLeaderboard,
+		Year:            logCtx.Year,
 	}); err != nil {
 		_ = tx.Rollback()
-		return fmt.Errorf("could not insert outbox event: %w", err)
-	}
-
-	if logCtx.EligibleOfficialLeaderboard {
-		if err = qtx.InsertLeaderboardOutboxEvent(ctx, postgres.InsertLeaderboardOutboxEventParams{
-			EventType: "refresh_official_scores",
-			UserID:    logCtx.UserID,
-			Year:      sql.NullInt16{Int16: logCtx.Year, Valid: true},
-		}); err != nil {
-			_ = tx.Rollback()
-			return fmt.Errorf("could not insert outbox event: %w", err)
-		}
+		return err
 	}
 
 	// Commit transaction

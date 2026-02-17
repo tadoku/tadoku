@@ -132,7 +132,7 @@ export function DashboardLayout({ children, activeLink }: Props) {
             <XMarkIcon className="w-6 h-6" />
           </button>
         </div>
-        <div className="pl-4 pr-0 pb-4 flex-1">
+        <div className="pl-4 pr-0 pb-4 flex-1 overflow-y-auto">
           <Sidebar sections={sidebarSections(ns, activeLink)} />
         </div>
         <div className="p-4">

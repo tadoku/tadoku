@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"time"
 
 	"github.com/google/uuid"
 	"github.com/tadoku/tadoku/services/immersion-api/domain"
@@ -95,11 +94,10 @@ func (r *Repository) CreateLog(ctx context.Context, req *domain.LogCreateRequest
 	}
 
 	if req.EligibleOfficialLeaderboard {
-		year := int16(time.Now().Year())
 		if err = qtx.InsertLeaderboardOutboxEvent(ctx, postgres.InsertLeaderboardOutboxEventParams{
 			EventType: "refresh_official_scores",
 			UserID:    req.UserID,
-			Year:      sql.NullInt16{Int16: year, Valid: true},
+			Year:      sql.NullInt16{Int16: req.Year, Valid: true},
 		}); err != nil {
 			_ = tx.Rollback()
 			return nil, fmt.Errorf("could not insert outbox event: %w", err)

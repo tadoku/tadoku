@@ -84,7 +84,7 @@ func main() {
 	leaderboardUpdater := immersiondomain.NewLeaderboardUpdater(leaderboardStore, postgresRepository)
 
 	// Start leaderboard outbox worker for async leaderboard sync
-	outboxWorker := immersiondomain.NewLeaderboardOutboxWorker(postgresRepository, leaderboardUpdater, 500*time.Millisecond)
+	outboxWorker := immersiondomain.NewLeaderboardOutboxWorker(postgresRepository, leaderboardUpdater, clock, 500*time.Millisecond)
 	workerCtx, workerCancel := context.WithCancel(context.Background())
 	defer workerCancel()
 	go outboxWorker.Run(workerCtx)

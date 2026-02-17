@@ -27,6 +27,9 @@ type LogCreateRequest struct {
 	// Optional
 	Description                 *string
 	EligibleOfficialLeaderboard bool
+
+	// Set by domain layer
+	Year int16
 }
 
 type LogCreate struct {
@@ -125,6 +128,8 @@ func (s *LogCreate) Execute(ctx context.Context, req *LogCreateRequest) (*Log, e
 			return nil, fmt.Errorf("activity is not allowed for registration: %w", ErrInvalidLog)
 		}
 	}
+
+	req.Year = int16(s.clock.Now().Year())
 
 	logId, err := s.repo.CreateLog(ctx, req)
 	if err != nil {

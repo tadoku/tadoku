@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	commondomain "github.com/tadoku/tadoku/services/common/domain"
 )
 
 // LeaderboardOutboxEvent represents a pending leaderboard update event.
@@ -40,17 +41,20 @@ type LeaderboardOutboxUpdater interface {
 type LeaderboardOutboxWorker struct {
 	repo     LeaderboardOutboxWorkerRepository
 	updater  LeaderboardOutboxUpdater
+	clock    commondomain.Clock
 	interval time.Duration
 }
 
 func NewLeaderboardOutboxWorker(
 	repo LeaderboardOutboxWorkerRepository,
 	updater LeaderboardOutboxUpdater,
+	clock commondomain.Clock,
 	interval time.Duration,
 ) *LeaderboardOutboxWorker {
 	return &LeaderboardOutboxWorker{
 		repo:     repo,
 		updater:  updater,
+		clock:    clock,
 		interval: interval,
 	}
 }
@@ -149,7 +153,7 @@ func (w *LeaderboardOutboxWorker) processEvent(ctx context.Context, event Leader
 }
 
 func (w *LeaderboardOutboxWorker) cleanup(ctx context.Context) {
-	before := time.Now().Add(-24 * time.Hour)
+	before := w.clock.Now().Add(-24 * time.Hour)
 	if err := w.repo.CleanupProcessedOutboxEvents(ctx, before); err != nil {
 		slog.ErrorContext(ctx, "outbox worker: could not cleanup old events", "error", err)
 	}

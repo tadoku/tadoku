@@ -77,7 +77,7 @@ func TestLeaderboardOutboxWorker_ProcessEvent(t *testing.T) {
 			},
 		}
 
-		worker := domain.NewLeaderboardOutboxWorker(repo, updater, time.Second)
+		worker := domain.NewLeaderboardOutboxWorker(repo, updater, &mockClock{now: time.Now()}, time.Second)
 		worker.ProcessBatchForTest(context.Background())
 
 		require.Len(t, updater.contestCalls, 1)
@@ -100,7 +100,7 @@ func TestLeaderboardOutboxWorker_ProcessEvent(t *testing.T) {
 			},
 		}
 
-		worker := domain.NewLeaderboardOutboxWorker(repo, updater, time.Second)
+		worker := domain.NewLeaderboardOutboxWorker(repo, updater, &mockClock{now: time.Now()}, time.Second)
 		worker.ProcessBatchForTest(context.Background())
 
 		assert.Empty(t, updater.contestCalls)
@@ -135,7 +135,7 @@ func TestLeaderboardOutboxWorker_ProcessEvent(t *testing.T) {
 			},
 		}
 
-		worker := domain.NewLeaderboardOutboxWorker(repo, updater, time.Second)
+		worker := domain.NewLeaderboardOutboxWorker(repo, updater, &mockClock{now: time.Now()}, time.Second)
 		worker.ProcessBatchForTest(context.Background())
 
 		// Only one actual update should happen despite 3 events
@@ -172,7 +172,7 @@ func TestLeaderboardOutboxWorker_ProcessEvent(t *testing.T) {
 			},
 		}
 
-		worker := domain.NewLeaderboardOutboxWorker(repo, updater, time.Second)
+		worker := domain.NewLeaderboardOutboxWorker(repo, updater, &mockClock{now: time.Now()}, time.Second)
 		worker.ProcessBatchForTest(context.Background())
 
 		require.Len(t, updater.contestCalls, 2)
@@ -186,7 +186,7 @@ func TestLeaderboardOutboxWorker_ProcessEvent(t *testing.T) {
 			events: []domain.LeaderboardOutboxEvent{},
 		}
 
-		worker := domain.NewLeaderboardOutboxWorker(repo, updater, time.Second)
+		worker := domain.NewLeaderboardOutboxWorker(repo, updater, &mockClock{now: time.Now()}, time.Second)
 		worker.ProcessBatchForTest(context.Background())
 
 		assert.Empty(t, updater.contestCalls)
@@ -200,7 +200,7 @@ func TestLeaderboardOutboxWorker_ProcessEvent(t *testing.T) {
 			batchErr: errors.New("db connection lost"),
 		}
 
-		worker := domain.NewLeaderboardOutboxWorker(repo, updater, time.Second)
+		worker := domain.NewLeaderboardOutboxWorker(repo, updater, &mockClock{now: time.Now()}, time.Second)
 		// Should not panic
 		worker.ProcessBatchForTest(context.Background())
 

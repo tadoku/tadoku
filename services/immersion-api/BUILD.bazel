@@ -11,6 +11,7 @@ go_library(
         "//services/common/authz/roles",
         "//services/common/client/keto",
         "//services/common/domain",
+        "//services/common/health",
         "//services/common/middleware",
         "//services/immersion-api/client/ory",
         "//services/immersion-api/domain",

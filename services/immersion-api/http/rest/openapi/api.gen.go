@@ -357,7 +357,7 @@ type LogCreateJSONBody struct {
 	Amount          float32              `json:"amount"`
 	Description     *string              `json:"description,omitempty"`
 	LanguageCode    string               `json:"language_code"`
-	RegistrationIds []openapi_types.UUID `json:"registration_ids"`
+	RegistrationIds *[]openapi_types.UUID `json:"registration_ids,omitempty"`
 	Tags            []string             `json:"tags"`
 	UnitId          openapi_types.UUID   `json:"unit_id"`
 }

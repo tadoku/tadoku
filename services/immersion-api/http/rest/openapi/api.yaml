@@ -421,7 +421,6 @@ paths:
             schema:
               type: object
               required:
-                - registration_ids
                 - language_code
                 - activity_id
                 - amount

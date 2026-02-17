@@ -4,6 +4,7 @@ import (
 	"errors"
 	"net/http"
 
+	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 	"github.com/tadoku/tadoku/services/immersion-api/domain"
 	"github.com/tadoku/tadoku/services/immersion-api/http/rest/openapi"
@@ -18,8 +19,13 @@ func (s *Server) LogCreate(ctx echo.Context) error {
 		return ctx.NoContent(http.StatusBadRequest)
 	}
 
+	var registrationIDs []uuid.UUID
+	if req.RegistrationIds != nil {
+		registrationIDs = *req.RegistrationIds
+	}
+
 	log, err := s.logCreate.Execute(ctx.Request().Context(), &domain.LogCreateRequest{
-		RegistrationIDs: req.RegistrationIds,
+		RegistrationIDs: registrationIDs,
 		UnitID:          req.UnitId,
 		ActivityID:      req.ActivityId,
 		LanguageCode:    req.LanguageCode,

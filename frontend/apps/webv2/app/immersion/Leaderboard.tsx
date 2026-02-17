@@ -96,6 +96,9 @@ export const Leaderboard = ({
           </tbody>
         </table>
       </div>
+      <p className="text-sm text-slate-500 mt-4 text-center italic">
+        Scores may take a few seconds to update.
+      </p>
     </>
   )
 }

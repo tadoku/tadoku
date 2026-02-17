@@ -35,6 +35,7 @@ go_library(
         "repo_outbox.go",
         "repo_tagsuggestions.go",
         "repo_updatelanguage.go",
+        "repo_updatelogcontests.go",
         "repo_upsertcontestregistration.go",
         "repo_upsertuser.go",
         "repo_yearlyactivityforuser.go",

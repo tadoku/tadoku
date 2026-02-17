@@ -4,34 +4,24 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/google/uuid"
+	openapi_types "github.com/deepmap/oapi-codegen/pkg/types"
 	"github.com/labstack/echo/v4"
 	"github.com/tadoku/tadoku/services/immersion-api/domain"
 	"github.com/tadoku/tadoku/services/immersion-api/http/rest/openapi"
 )
 
-// Submits a new log
-// (POST /logs)
-func (s *Server) LogCreate(ctx echo.Context) error {
-	var req openapi.LogCreateJSONRequestBody
+// Updates the contest registrations for a log
+// (PUT /logs/{id}/contest-registrations)
+func (s *Server) LogContestRegistrationUpdate(ctx echo.Context, id openapi_types.UUID) error {
+	var req openapi.LogContestRegistrationUpdateJSONRequestBody
 	if err := ctx.Bind(&req); err != nil {
 		ctx.Echo().Logger.Error("could not process request: ", err)
 		return ctx.NoContent(http.StatusBadRequest)
 	}
 
-	var registrationIDs []uuid.UUID
-	if req.RegistrationIds != nil {
-		registrationIDs = *req.RegistrationIds
-	}
-
-	log, err := s.logCreate.Execute(ctx.Request().Context(), &domain.LogCreateRequest{
-		RegistrationIDs: registrationIDs,
-		UnitID:          req.UnitId,
-		ActivityID:      req.ActivityId,
-		LanguageCode:    req.LanguageCode,
-		Amount:          req.Amount,
-		Tags:            req.Tags,
-		Description:     req.Description,
+	log, err := s.logContestUpdate.Execute(ctx.Request().Context(), &domain.LogContestUpdateRequest{
+		LogID:           id,
+		RegistrationIDs: req.RegistrationIds,
 	})
 	if err != nil {
 		if handled, respErr := handleCommonErrors(ctx, err); handled {

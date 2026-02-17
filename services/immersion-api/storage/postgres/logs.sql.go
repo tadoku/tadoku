@@ -134,6 +134,23 @@ func (q *Queries) DeleteLog(ctx context.Context, logID uuid.UUID) error {
 	return err
 }
 
+const updateLogEligibleOfficialLeaderboard = `-- name: UpdateLogEligibleOfficialLeaderboard :exec
+update logs
+set eligible_official_leaderboard = (
+  select coalesce(bool_or(contests.official), false)
+  from contest_logs
+  inner join contests on contests.id = contest_logs.contest_id
+  where contest_logs.log_id = $1
+),
+updated_at = now()
+where id = $1
+`
+
+func (q *Queries) UpdateLogEligibleOfficialLeaderboard(ctx context.Context, logID uuid.UUID) error {
+	_, err := q.db.ExecContext(ctx, updateLogEligibleOfficialLeaderboard, logID)
+	return err
+}
+
 const detachContestLogsForLanguages = `-- name: DetachContestLogsForLanguages :exec
 delete from contest_logs
 where contest_id = $1

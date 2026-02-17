@@ -141,6 +141,7 @@ func main() {
 	languageCreate := immersiondomain.NewLanguageCreate(postgresRepository)
 	languageUpdate := immersiondomain.NewLanguageUpdate(postgresRepository)
 	tagSuggestions := immersiondomain.NewTagSuggestions(postgresRepository)
+	logContestUpdate := immersiondomain.NewLogContestUpdate(postgresRepository, clock)
 
 	server := rest.NewServer(
 		contestConfigurationOptions,
@@ -174,6 +175,7 @@ func main() {
 		languageCreate,
 		languageUpdate,
 		tagSuggestions,
+		logContestUpdate,
 	)
 
 	openapi.RegisterHandlersWithBaseURL(e, server, "")

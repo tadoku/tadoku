@@ -214,6 +214,30 @@ func TestLogCreate_Execute(t *testing.T) {
 		assert.Equal(t, userID, repo.createCalledWith.UserID())
 	})
 
+	t.Run("successfully creates log without registration IDs", func(t *testing.T) {
+		repo := &mockLogCreateRepository{
+			createdLogID: &logID,
+			log:          createdLog,
+		}
+		clock := commondomain.NewMockClock(now)
+		svc := newLogCreateService(repo, clock)
+
+		ctx := ctxWithUserSubject(userID.String())
+
+		result, err := svc.Execute(ctx, &domain.LogCreateRequest{
+			UnitID:       unitID,
+			ActivityID:   1,
+			LanguageCode: "jpn",
+			Amount:       100,
+		})
+
+		require.NoError(t, err)
+		assert.True(t, repo.createCalled)
+		assert.Equal(t, logID, result.ID)
+		assert.Empty(t, repo.createCalledWith.RegistrationIDs)
+		assert.False(t, repo.createCalledWith.EligibleOfficialLeaderboard())
+	})
+
 	t.Run("sets EligibleOfficialLeaderboard for official contest", func(t *testing.T) {
 		officialRegistrations := &domain.ContestRegistrations{
 			Registrations: []domain.ContestRegistration{

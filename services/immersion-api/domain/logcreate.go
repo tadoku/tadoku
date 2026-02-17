@@ -16,11 +16,11 @@ type LogCreateRepository interface {
 }
 
 type LogCreateRequest struct {
-	RegistrationIDs []uuid.UUID `validate:"required"`
-	UnitID          uuid.UUID   `validate:"required"`
-	ActivityID      int32       `validate:"required"`
-	LanguageCode    string      `validate:"required"`
-	Amount          float32     `validate:"required,gte=0"`
+	RegistrationIDs []uuid.UUID
+	UnitID          uuid.UUID `validate:"required"`
+	ActivityID      int32     `validate:"required"`
+	LanguageCode    string    `validate:"required"`
+	Amount          float32   `validate:"required,gte=0"`
 	Tags            []string
 
 	// Optional
@@ -84,52 +84,54 @@ func (s *LogCreate) Execute(ctx context.Context, req *LogCreateRequest) (*Log, e
 		return nil, fmt.Errorf("unable to validate tags: %w", err)
 	}
 
-	registrations, err := s.repo.FetchOngoingContestRegistrations(ctx, &RegistrationListOngoingRequest{
-		UserID: req.userID,
-		Now:    s.clock.Now(),
-	})
-	if err != nil {
-		return nil, fmt.Errorf("unable to fetch registrations: %w", err)
-	}
-
-	validContestIDs := map[uuid.UUID]ContestRegistration{}
-	for _, r := range registrations.Registrations {
-		validContestIDs[r.ID] = r
-	}
-
-	// validate registrations
-	for _, id := range req.RegistrationIDs {
-		registration, ok := validContestIDs[id]
-		if !ok {
-			return nil, fmt.Errorf("registration is not found as ongoing for the current user: %w", ErrInvalidLog)
+	if len(req.RegistrationIDs) > 0 {
+		registrations, fetchErr := s.repo.FetchOngoingContestRegistrations(ctx, &RegistrationListOngoingRequest{
+			UserID: req.userID,
+			Now:    s.clock.Now(),
+		})
+		if fetchErr != nil {
+			return nil, fmt.Errorf("unable to fetch registrations: %w", fetchErr)
 		}
 
-		if registration.Contest.Official {
-			req.eligibleOfficialLeaderboard = true
+		validContestIDs := map[uuid.UUID]ContestRegistration{}
+		for _, r := range registrations.Registrations {
+			validContestIDs[r.ID] = r
 		}
 
-		// validate language is part of registration
-		found := false
-		for _, lang := range registration.Languages {
-			if lang.Code == req.LanguageCode {
-				found = true
-				break
+		// validate registrations
+		for _, id := range req.RegistrationIDs {
+			registration, ok := validContestIDs[id]
+			if !ok {
+				return nil, fmt.Errorf("registration is not found as ongoing for the current user: %w", ErrInvalidLog)
 			}
-		}
-		if !found {
-			return nil, fmt.Errorf("language is not allowed for registration: %w", ErrInvalidLog)
-		}
 
-		// validate activity is allowed by the contest
-		found = false
-		for _, act := range registration.Contest.AllowedActivities {
-			if act.ID == req.ActivityID {
-				found = true
-				break
+			if registration.Contest.Official {
+				req.eligibleOfficialLeaderboard = true
 			}
-		}
-		if !found {
-			return nil, fmt.Errorf("activity is not allowed for registration: %w", ErrInvalidLog)
+
+			// validate language is part of registration
+			found := false
+			for _, lang := range registration.Languages {
+				if lang.Code == req.LanguageCode {
+					found = true
+					break
+				}
+			}
+			if !found {
+				return nil, fmt.Errorf("language is not allowed for registration: %w", ErrInvalidLog)
+			}
+
+			// validate activity is allowed by the contest
+			found = false
+			for _, act := range registration.Contest.AllowedActivities {
+				if act.ID == req.ActivityID {
+					found = true
+					break
+				}
+			}
+			if !found {
+				return nil, fmt.Errorf("activity is not allowed for registration: %w", ErrInvalidLog)
+			}
 		}
 	}
 

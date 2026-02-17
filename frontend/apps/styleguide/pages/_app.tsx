@@ -162,7 +162,7 @@ export default function App({ Component, pageProps }: AppProps) {
             <XMarkIcon className="w-6 h-6" />
           </button>
         </div>
-        <div className="pl-4 pr-0 pb-4 flex-1">
+        <div className="pl-4 pr-0 pb-4 flex-1 overflow-y-auto">
           <Sidebar sections={getSidebarSections(router.pathname)} />
         </div>
         <div className="p-4">

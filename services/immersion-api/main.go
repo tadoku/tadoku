@@ -83,8 +83,8 @@ func main() {
 	leaderboardStore := valkeystore.NewLeaderboardStore(valkeyClient, clock)
 	leaderboardUpdater := immersiondomain.NewLeaderboardUpdater(leaderboardStore, postgresRepository)
 
-	// Start outbox worker for async leaderboard sync
-	outboxWorker := immersiondomain.NewOutboxWorker(postgresRepository, leaderboardUpdater, 500*time.Millisecond)
+	// Start leaderboard outbox worker for async leaderboard sync
+	outboxWorker := immersiondomain.NewLeaderboardOutboxWorker(postgresRepository, leaderboardUpdater, 500*time.Millisecond)
 	workerCtx, workerCancel := context.WithCancel(context.Background())
 	defer workerCancel()
 	go outboxWorker.Run(workerCtx)

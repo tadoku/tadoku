@@ -10,37 +10,37 @@ import (
 	"github.com/tadoku/tadoku/services/immersion-api/storage/postgres"
 )
 
-// OutboxWorkerRepository provides transactional access to the outbox table.
+// LeaderboardOutboxWorkerRepository provides transactional access to the outbox table.
 // ProcessOutboxBatch handles the full transaction lifecycle internally:
 // it begins a transaction, fetches and locks events, calls the provided
 // callback, marks processed IDs, and commits (or rolls back on error).
-type OutboxWorkerRepository interface {
+type LeaderboardOutboxWorkerRepository interface {
 	ProcessOutboxBatch(ctx context.Context, batchSize int32, fn func(events []postgres.FetchAndLockOutboxEventsRow) []int64) error
 	CleanupProcessedOutboxEvents(ctx context.Context, before time.Time) error
 }
 
-// OutboxWorkerLeaderboardUpdater is the narrow interface the outbox worker
+// LeaderboardOutboxUpdater is the narrow interface the outbox worker
 // needs from LeaderboardUpdater.
-type OutboxWorkerLeaderboardUpdater interface {
+type LeaderboardOutboxUpdater interface {
 	UpdateUserContestScore(ctx context.Context, contestID uuid.UUID, userID uuid.UUID)
 	UpdateUserOfficialScores(ctx context.Context, year int, userID uuid.UUID)
 }
 
-// OutboxWorker polls the leaderboard_outbox table and processes events
+// LeaderboardOutboxWorker polls the leaderboard_outbox table and processes events
 // by calling the LeaderboardUpdater. It uses FOR UPDATE SKIP LOCKED to
 // allow safe concurrent processing across multiple API instances.
-type OutboxWorker struct {
-	repo     OutboxWorkerRepository
-	updater  OutboxWorkerLeaderboardUpdater
+type LeaderboardOutboxWorker struct {
+	repo     LeaderboardOutboxWorkerRepository
+	updater  LeaderboardOutboxUpdater
 	interval time.Duration
 }
 
-func NewOutboxWorker(
-	repo OutboxWorkerRepository,
-	updater OutboxWorkerLeaderboardUpdater,
+func NewLeaderboardOutboxWorker(
+	repo LeaderboardOutboxWorkerRepository,
+	updater LeaderboardOutboxUpdater,
 	interval time.Duration,
-) *OutboxWorker {
-	return &OutboxWorker{
+) *LeaderboardOutboxWorker {
+	return &LeaderboardOutboxWorker{
 		repo:     repo,
 		updater:  updater,
 		interval: interval,
@@ -49,7 +49,7 @@ func NewOutboxWorker(
 
 // Run polls the outbox table at the configured interval until the context
 // is cancelled. It also periodically cleans up old processed events.
-func (w *OutboxWorker) Run(ctx context.Context) {
+func (w *LeaderboardOutboxWorker) Run(ctx context.Context) {
 	ticker := time.NewTicker(w.interval)
 	defer ticker.Stop()
 
@@ -70,11 +70,11 @@ func (w *OutboxWorker) Run(ctx context.Context) {
 }
 
 // ProcessBatchForTest exposes processBatch for unit testing.
-func (w *OutboxWorker) ProcessBatchForTest(ctx context.Context) {
+func (w *LeaderboardOutboxWorker) ProcessBatchForTest(ctx context.Context) {
 	w.processBatch(ctx)
 }
 
-func (w *OutboxWorker) processBatch(ctx context.Context) {
+func (w *LeaderboardOutboxWorker) processBatch(ctx context.Context) {
 	err := w.repo.ProcessOutboxBatch(ctx, 100, func(events []postgres.FetchAndLockOutboxEventsRow) []int64 {
 		if len(events) == 0 {
 			return nil
@@ -119,7 +119,7 @@ func (w *OutboxWorker) processBatch(ctx context.Context) {
 	}
 }
 
-func (w *OutboxWorker) processEvent(ctx context.Context, event postgres.FetchAndLockOutboxEventsRow) {
+func (w *LeaderboardOutboxWorker) processEvent(ctx context.Context, event postgres.FetchAndLockOutboxEventsRow) {
 	switch event.EventType {
 	case "refresh_contest_score":
 		if !event.ContestID.Valid {
@@ -140,7 +140,7 @@ func (w *OutboxWorker) processEvent(ctx context.Context, event postgres.FetchAnd
 	}
 }
 
-func (w *OutboxWorker) cleanup(ctx context.Context) {
+func (w *LeaderboardOutboxWorker) cleanup(ctx context.Context) {
 	before := time.Now().Add(-24 * time.Hour)
 	if err := w.repo.CleanupProcessedOutboxEvents(ctx, before); err != nil {
 		slog.ErrorContext(ctx, "outbox worker: could not cleanup old events", "error", err)

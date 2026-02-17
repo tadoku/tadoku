@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/tadoku/tadoku/services/immersion-api/domain"
@@ -47,6 +48,9 @@ func (r *Repository) CreateLog(ctx context.Context, req *domain.LogCreateRequest
 		return nil, fmt.Errorf("could not create log: %w", err)
 	}
 
+	// Track unique contest IDs for outbox events
+	contestIDSet := map[uuid.UUID]struct{}{}
+
 	for _, registrationID := range req.RegistrationIDs {
 		if err = qtx.CreateContestLogRelation(ctx, postgres.CreateContestLogRelationParams{
 			RegistrationID: registrationID,
@@ -57,6 +61,13 @@ func (r *Repository) CreateLog(ctx context.Context, req *domain.LogCreateRequest
 			_ = tx.Rollback()
 			return nil, fmt.Errorf("could not create log: %w", err)
 		}
+
+		contestID, err := qtx.FetchContestIDForRegistration(ctx, registrationID)
+		if err != nil {
+			_ = tx.Rollback()
+			return nil, fmt.Errorf("could not resolve contest for registration: %w", err)
+		}
+		contestIDSet[contestID] = struct{}{}
 	}
 
 	// Insert tags into log_tags table
@@ -68,6 +79,30 @@ func (r *Repository) CreateLog(ctx context.Context, req *domain.LogCreateRequest
 		}); err != nil {
 			_ = tx.Rollback()
 			return nil, fmt.Errorf("could not insert log tag: %w", err)
+		}
+	}
+
+	// Write outbox events for leaderboard sync
+	for contestID := range contestIDSet {
+		if err = qtx.InsertLeaderboardOutboxEvent(ctx, postgres.InsertLeaderboardOutboxEventParams{
+			EventType: "refresh_contest_score",
+			UserID:    req.UserID,
+			ContestID: uuid.NullUUID{UUID: contestID, Valid: true},
+		}); err != nil {
+			_ = tx.Rollback()
+			return nil, fmt.Errorf("could not insert outbox event: %w", err)
+		}
+	}
+
+	if req.EligibleOfficialLeaderboard {
+		year := int16(time.Now().Year())
+		if err = qtx.InsertLeaderboardOutboxEvent(ctx, postgres.InsertLeaderboardOutboxEventParams{
+			EventType: "refresh_official_scores",
+			UserID:    req.UserID,
+			Year:      sql.NullInt16{Int16: year, Valid: true},
+		}); err != nil {
+			_ = tx.Rollback()
+			return nil, fmt.Errorf("could not insert outbox event: %w", err)
 		}
 	}
 

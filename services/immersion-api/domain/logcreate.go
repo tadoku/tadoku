@@ -15,11 +15,6 @@ type LogCreateRepository interface {
 	FindLogByID(context.Context, *LogFindRequest) (*Log, error)
 }
 
-type LogCreateLeaderboardUpdater interface {
-	UpdateUserContestScore(ctx context.Context, contestID uuid.UUID, userID uuid.UUID)
-	UpdateUserOfficialScores(ctx context.Context, year int, userID uuid.UUID)
-}
-
 type LogCreateRequest struct {
 	RegistrationIDs []uuid.UUID `validate:"required"`
 	UnitID          uuid.UUID   `validate:"required"`
@@ -35,25 +30,22 @@ type LogCreateRequest struct {
 }
 
 type LogCreate struct {
-	repo               LogCreateRepository
-	clock              commondomain.Clock
-	validate           *validator.Validate
-	userUpsert         *UserUpsert
-	leaderboardUpdater LogCreateLeaderboardUpdater
+	repo       LogCreateRepository
+	clock      commondomain.Clock
+	validate   *validator.Validate
+	userUpsert *UserUpsert
 }
 
 func NewLogCreate(
 	repo LogCreateRepository,
 	clock commondomain.Clock,
 	userUpsert *UserUpsert,
-	leaderboardUpdater LogCreateLeaderboardUpdater,
 ) *LogCreate {
 	return &LogCreate{
-		repo:               repo,
-		clock:              clock,
-		validate:           validator.New(),
-		userUpsert:         userUpsert,
-		leaderboardUpdater: leaderboardUpdater,
+		repo:       repo,
+		clock:      clock,
+		validate:   validator.New(),
+		userUpsert: userUpsert,
 	}
 }
 
@@ -147,24 +139,5 @@ func (s *LogCreate) Execute(ctx context.Context, req *LogCreateRequest) (*Log, e
 		return nil, err
 	}
 
-	// Update leaderboards — best effort, do not fail the log creation
-	s.updateLeaderboards(ctx, req, validContestIDs, log)
-
 	return log, nil
-}
-
-// updateLeaderboards recalculates the user's score for all relevant leaderboards.
-// For each attached contest: recalculate the user's total contest score.
-// For official contests: also recalculate yearly and global scores (pipelined).
-func (s *LogCreate) updateLeaderboards(ctx context.Context, req *LogCreateRequest, validContestIDs map[uuid.UUID]ContestRegistration, log *Log) {
-	year := log.CreatedAt.Year()
-
-	for _, regID := range req.RegistrationIDs {
-		registration := validContestIDs[regID]
-		s.leaderboardUpdater.UpdateUserContestScore(ctx, registration.ContestID, req.UserID)
-	}
-
-	if req.EligibleOfficialLeaderboard {
-		s.leaderboardUpdater.UpdateUserOfficialScores(ctx, year, req.UserID)
-	}
 }

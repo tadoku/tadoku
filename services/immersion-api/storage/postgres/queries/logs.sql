@@ -216,6 +216,21 @@ select (not(true = any(
     contest_logs.log_id = sqlc.arg('log_id')
 )))::boolean as can_be_deleted;
 
+-- name: FetchContestIDsForLog :many
+select contest_id
+from contest_logs
+where log_id = sqlc.arg('log_id');
+
+-- name: FetchLogOutboxContext :one
+select user_id, year, eligible_official_leaderboard
+from logs
+where id = sqlc.arg('log_id');
+
+-- name: FetchContestIDForRegistration :one
+select contest_id
+from contest_registrations
+where id = sqlc.arg('registration_id');
+
 -- name: DetachLogFromContest :exec
 delete from contest_logs
 where contest_id = sqlc.arg('contest_id')

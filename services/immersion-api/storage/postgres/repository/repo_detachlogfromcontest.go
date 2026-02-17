@@ -42,6 +42,13 @@ func (r *Repository) DetachLogFromContest(ctx context.Context, req *domain.Conte
 		return fmt.Errorf("could not create audit log: %w", err)
 	}
 
+	// Look up the log owner for the outbox event
+	logCtx, err := qtx.FetchLogOutboxContext(ctx, req.LogID)
+	if err != nil {
+		_ = tx.Rollback()
+		return fmt.Errorf("could not fetch log context: %w", err)
+	}
+
 	// Detach log from contest
 	err = qtx.DetachLogFromContest(ctx, postgres.DetachLogFromContestParams{
 		ContestID: req.ContestID,
@@ -53,6 +60,16 @@ func (r *Repository) DetachLogFromContest(ctx context.Context, req *domain.Conte
 			return domain.ErrNotFound
 		}
 		return fmt.Errorf("could not detach log from contest: %w", err)
+	}
+
+	// Write outbox event for leaderboard sync
+	if err = qtx.InsertLeaderboardOutboxEvent(ctx, postgres.InsertLeaderboardOutboxEventParams{
+		EventType: "refresh_contest_score",
+		UserID:    logCtx.UserID,
+		ContestID: uuid.NullUUID{UUID: req.ContestID, Valid: true},
+	}); err != nil {
+		_ = tx.Rollback()
+		return fmt.Errorf("could not insert outbox event: %w", err)
 	}
 
 	// Commit transaction

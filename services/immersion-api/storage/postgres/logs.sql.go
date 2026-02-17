@@ -157,6 +157,67 @@ func (q *Queries) DetachContestLogsForLanguages(ctx context.Context, arg DetachC
 	return err
 }
 
+const fetchContestIDForRegistration = `-- name: FetchContestIDForRegistration :one
+select contest_id
+from contest_registrations
+where id = $1
+`
+
+func (q *Queries) FetchContestIDForRegistration(ctx context.Context, registrationID uuid.UUID) (uuid.UUID, error) {
+	row := q.db.QueryRowContext(ctx, fetchContestIDForRegistration, registrationID)
+	var contest_id uuid.UUID
+	err := row.Scan(&contest_id)
+	return contest_id, err
+}
+
+const fetchContestIDsForLog = `-- name: FetchContestIDsForLog :many
+select contest_id
+from contest_logs
+where log_id = $1
+`
+
+func (q *Queries) FetchContestIDsForLog(ctx context.Context, logID uuid.UUID) ([]uuid.UUID, error) {
+	rows, err := q.db.QueryContext(ctx, fetchContestIDsForLog, logID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []uuid.UUID
+	for rows.Next() {
+		var contest_id uuid.UUID
+		if err := rows.Scan(&contest_id); err != nil {
+			return nil, err
+		}
+		items = append(items, contest_id)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const fetchLogOutboxContext = `-- name: FetchLogOutboxContext :one
+select user_id, year, eligible_official_leaderboard
+from logs
+where id = $1
+`
+
+type FetchLogOutboxContextRow struct {
+	UserID                      uuid.UUID
+	Year                        int16
+	EligibleOfficialLeaderboard bool
+}
+
+func (q *Queries) FetchLogOutboxContext(ctx context.Context, logID uuid.UUID) (FetchLogOutboxContextRow, error) {
+	row := q.db.QueryRowContext(ctx, fetchLogOutboxContext, logID)
+	var i FetchLogOutboxContextRow
+	err := row.Scan(&i.UserID, &i.Year, &i.EligibleOfficialLeaderboard)
+	return i, err
+}
+
 const detachLogFromContest = `-- name: DetachLogFromContest :exec
 delete from contest_logs
 where contest_id = $1

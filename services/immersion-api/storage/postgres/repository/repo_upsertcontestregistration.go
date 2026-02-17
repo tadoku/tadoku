@@ -4,19 +4,40 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/google/uuid"
 	"github.com/tadoku/tadoku/services/immersion-api/domain"
 	"github.com/tadoku/tadoku/services/immersion-api/storage/postgres"
 )
 
 func (r *Repository) UpsertContestRegistration(ctx context.Context, req *domain.RegistrationUpsertRequest) error {
-	_, err := r.q.UpsertContestRegistration(ctx, postgres.UpsertContestRegistrationParams{
+	tx, err := r.psql.BeginTx(ctx, nil)
+	if err != nil {
+		return fmt.Errorf("could not start transaction: %w", err)
+	}
+	qtx := r.q.WithTx(tx)
+
+	_, err = qtx.UpsertContestRegistration(ctx, postgres.UpsertContestRegistrationParams{
 		ID:            req.ID,
 		ContestID:     req.ContestID,
 		UserID:        req.UserID,
 		LanguageCodes: req.LanguageCodes,
 	})
-
 	if err != nil {
+		_ = tx.Rollback()
+		return fmt.Errorf("could not create or update contest registration: %w", err)
+	}
+
+	// Write outbox event for leaderboard sync
+	if err = qtx.InsertLeaderboardOutboxEvent(ctx, postgres.InsertLeaderboardOutboxEventParams{
+		EventType: "refresh_contest_score",
+		UserID:    req.UserID,
+		ContestID: uuid.NullUUID{UUID: req.ContestID, Valid: true},
+	}); err != nil {
+		_ = tx.Rollback()
+		return fmt.Errorf("could not insert outbox event: %w", err)
+	}
+
+	if err = tx.Commit(); err != nil {
 		return fmt.Errorf("could not create or update contest registration: %w", err)
 	}
 

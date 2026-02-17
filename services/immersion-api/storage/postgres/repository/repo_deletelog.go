@@ -2,26 +2,77 @@ package repository
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 
+	"github.com/google/uuid"
 	"github.com/tadoku/tadoku/services/immersion-api/domain"
 	"github.com/tadoku/tadoku/services/immersion-api/storage/postgres"
 )
 
 func (r *Repository) DeleteLog(ctx context.Context, req *domain.LogDeleteRequest) error {
-	isValid, err := r.q.CheckIfLogCanBeDeleted(ctx, postgres.CheckIfLogCanBeDeletedParams{
+	tx, err := r.psql.BeginTx(ctx, nil)
+	if err != nil {
+		return fmt.Errorf("could not start transaction: %w", err)
+	}
+	qtx := r.q.WithTx(tx)
+
+	isValid, err := qtx.CheckIfLogCanBeDeleted(ctx, postgres.CheckIfLogCanBeDeletedParams{
 		Now:   req.Now,
 		LogID: req.LogID,
 	})
 	if err != nil {
+		_ = tx.Rollback()
 		return fmt.Errorf("could not check if log can be deleted: %w", err)
 	}
 
 	if !isValid {
+		_ = tx.Rollback()
 		return domain.ErrForbidden
 	}
 
-	if err := r.q.DeleteLog(ctx, req.LogID); err != nil {
+	// Fetch outbox context before deleting
+	logCtx, err := qtx.FetchLogOutboxContext(ctx, req.LogID)
+	if err != nil {
+		_ = tx.Rollback()
+		return fmt.Errorf("could not fetch log context: %w", err)
+	}
+
+	contestIDs, err := qtx.FetchContestIDsForLog(ctx, req.LogID)
+	if err != nil {
+		_ = tx.Rollback()
+		return fmt.Errorf("could not fetch contest IDs for log: %w", err)
+	}
+
+	if err := qtx.DeleteLog(ctx, req.LogID); err != nil {
+		_ = tx.Rollback()
+		return fmt.Errorf("could not delete log: %w", err)
+	}
+
+	// Write outbox events for leaderboard sync
+	for _, contestID := range contestIDs {
+		if err = qtx.InsertLeaderboardOutboxEvent(ctx, postgres.InsertLeaderboardOutboxEventParams{
+			EventType: "refresh_contest_score",
+			UserID:    logCtx.UserID,
+			ContestID: uuid.NullUUID{UUID: contestID, Valid: true},
+		}); err != nil {
+			_ = tx.Rollback()
+			return fmt.Errorf("could not insert outbox event: %w", err)
+		}
+	}
+
+	if logCtx.EligibleOfficialLeaderboard {
+		if err = qtx.InsertLeaderboardOutboxEvent(ctx, postgres.InsertLeaderboardOutboxEventParams{
+			EventType: "refresh_official_scores",
+			UserID:    logCtx.UserID,
+			Year:      sql.NullInt16{Int16: logCtx.Year, Valid: true},
+		}); err != nil {
+			_ = tx.Rollback()
+			return fmt.Errorf("could not insert outbox event: %w", err)
+		}
+	}
+
+	if err = tx.Commit(); err != nil {
 		return fmt.Errorf("could not delete log: %w", err)
 	}
 

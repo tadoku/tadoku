@@ -54,7 +54,7 @@ export const LogDetailsV2 = ({ log }: Props) => {
           <div className="flex flex-wrap gap-2 mb-4">
             {tags.map(tag => (
               <span key={tag} className="tag text-slate-900 bg-slate-200">
-                {tag}
+                #{tag}
               </span>
             ))}
           </div>

@@ -74,8 +74,8 @@ export const LogDetailsV2 = ({ log }: Props) => {
       {log.registrations && log.registrations.length > 0 ? (
         <>
           <div className="my-6" />
-          <div>
-            <div className="flex items-center justify-between mb-2">
+          <div className="card">
+            <div className="flex items-center justify-between mb-4">
               <h3 className="subtitle">Submitted to contests</h3>
               <Link href={routes.logContests(log.id)} className="btn ghost text-sm">
                 Edit submissions

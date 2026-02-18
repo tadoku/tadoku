@@ -37,7 +37,7 @@ export const LogDetailsV2 = ({ log }: Props) => {
       <div className="my-6" />
 
       <div className="flex flex-col lg:flex-row gap-6">
-        <div className="card narrow flex-1">
+        <div className="card narrow lg:w-1/2">
           <div className={`bg-${logColor}-200 -mx-4 -mt-4 mb-4 px-4 py-3 rounded-t`}>
             <div className="text-sm flex items-baseline gap-2">
               <strong>{log.language.name}</strong>
@@ -84,7 +84,7 @@ export const LogDetailsV2 = ({ log }: Props) => {
           </div>
         </div>
 
-        <div className="card narrow lg:w-80 lg:flex-shrink-0 self-start">
+        <div className="card narrow lg:w-1/2 self-start">
           <div className="flex items-center justify-between mb-4">
             <h3 className="subtitle">Submitted to contests</h3>
             <Link href={routes.logContests(log.id)} className="btn ghost text-sm">

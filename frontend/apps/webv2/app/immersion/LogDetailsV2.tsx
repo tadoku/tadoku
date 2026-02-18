@@ -83,49 +83,53 @@ export const LogDetailsV2 = ({ log }: Props) => {
         </div>
       </div>
 
-      {log.registrations && log.registrations.length > 0 ? (
-        <>
-          <div className="my-6" />
-          <div className="max-w-2xl card narrow">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="subtitle">Submitted to contests</h3>
-              <Link href={routes.logContests(log.id)} className="btn ghost text-sm">
-                Edit submissions
-              </Link>
-            </div>
-            <div className="v-stack gap-2">
-              {log.registrations.map(reg => (
-                <Link
-                  key={reg.contest_id}
-                  href={routes.contestLeaderboard(reg.contest_id)}
-                  className="input-frame px-4 py-2 no-underline hover:bg-neutral-50 transition-colors"
-                >
-                  <div className="h-stack items-center w-full">
-                    <div className="flex-1">
-                      <div className="font-bold text-secondary">
-                        {reg.title}
-                      </div>
-                      {reg.official ? (
-                        <div className="text-xs text-gray-600 flex items-center">
-                          Administered by <strong className="ml-1">Tadoku</strong>
-                          <CheckBadgeIcon className="ml-1 w-4 h-4 text-lime-700" />
-                        </div>
-                      ) : reg.owner_user_display_name ? (
-                        <div className="text-xs text-gray-600">
-                          Administered by <strong>{reg.owner_user_display_name}</strong>
-                        </div>
-                      ) : null}
+      <div className="my-6" />
+      <div className="max-w-2xl card narrow">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="subtitle">Submitted to contests</h3>
+          <Link href={routes.logContests(log.id)} className="btn ghost text-sm">
+            {log.registrations && log.registrations.length > 0
+              ? 'Edit submissions'
+              : 'Submit to contests'}
+          </Link>
+        </div>
+        {log.registrations && log.registrations.length > 0 ? (
+          <div className="v-stack gap-2">
+            {log.registrations.map(reg => (
+              <Link
+                key={reg.contest_id}
+                href={routes.contestLeaderboard(reg.contest_id)}
+                className="input-frame px-4 py-2 no-underline hover:bg-neutral-50 transition-colors"
+              >
+                <div className="h-stack items-center w-full">
+                  <div className="flex-1">
+                    <div className="font-bold text-secondary">
+                      {reg.title}
                     </div>
-                    <span className="text-sm font-medium text-secondary">
-                      Score: {formatScore(log.score)}
-                    </span>
+                    {reg.official ? (
+                      <div className="text-xs text-gray-600 flex items-center">
+                        Administered by <strong className="ml-1">Tadoku</strong>
+                        <CheckBadgeIcon className="ml-1 w-4 h-4 text-lime-700" />
+                      </div>
+                    ) : reg.owner_user_display_name ? (
+                      <div className="text-xs text-gray-600">
+                        Administered by <strong>{reg.owner_user_display_name}</strong>
+                      </div>
+                    ) : null}
                   </div>
-                </Link>
-              ))}
-            </div>
+                  <span className="text-sm font-medium text-secondary">
+                    Score: {formatScore(log.score)}
+                  </span>
+                </div>
+              </Link>
+            ))}
           </div>
-        </>
-      ) : null}
+        ) : (
+          <p className="text-sm text-slate-500">
+            Not submitted to any contests yet.
+          </p>
+        )}
+      </div>
     </div>
   )
 }

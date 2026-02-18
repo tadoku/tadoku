@@ -31,10 +31,12 @@ func (r *Repository) FindLogByID(ctx context.Context, req *domain.LogFindRequest
 	refs := make([]domain.ContestRegistrationReference, len(registrations))
 	for i, it := range registrations {
 		refs[i] = domain.ContestRegistrationReference{
-			RegistrationID: it.ID,
-			ContestID:      it.ContestID,
-			ContestEnd:     it.ContestEnd,
-			Title:          it.Title,
+			RegistrationID:       it.ID,
+			ContestID:            it.ContestID,
+			ContestEnd:           it.ContestEnd,
+			Title:                it.Title,
+			OwnerUserDisplayName: it.OwnerUserDisplayName,
+			Official:             it.Official,
 		}
 	}
 

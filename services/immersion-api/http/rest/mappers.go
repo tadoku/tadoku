@@ -30,10 +30,12 @@ func logToAPI(log *domain.Log) *openapi.Log {
 	refs := make([]openapi.ContestRegistrationReference, len(log.Registrations))
 	for i, it := range log.Registrations {
 		refs[i] = openapi.ContestRegistrationReference{
-			ContestId:      it.ContestID,
-			ContestEnd:     types.Date{Time: it.ContestEnd},
-			RegistrationId: it.RegistrationID,
-			Title:          it.Title,
+			ContestId:            it.ContestID,
+			ContestEnd:           types.Date{Time: it.ContestEnd},
+			RegistrationId:       it.RegistrationID,
+			Title:                it.Title,
+			OwnerUserDisplayName: &it.OwnerUserDisplayName,
+			Official:             &it.Official,
 		}
 	}
 
@@ -72,16 +74,18 @@ func contestRegistrationToAPI(r *domain.ContestRegistration) *openapi.ContestReg
 
 	if r.Contest != nil {
 		contest := openapi.ContestView{
-			Id:                &r.ContestID,
-			ContestStart:      types.Date{Time: r.Contest.ContestStart},
-			ContestEnd:        types.Date{Time: r.Contest.ContestEnd},
-			RegistrationEnd:   types.Date{Time: r.Contest.RegistrationEnd},
-			Title:             r.Contest.Title,
-			Description:       r.Contest.Description,
-			Official:          r.Contest.Official,
-			Private:           r.Contest.Private,
-			AllowedLanguages:  []openapi.Language{},
-			AllowedActivities: make([]openapi.Activity, len(r.Contest.AllowedActivities)),
+			Id:                   &r.ContestID,
+			ContestStart:         types.Date{Time: r.Contest.ContestStart},
+			ContestEnd:           types.Date{Time: r.Contest.ContestEnd},
+			RegistrationEnd:      types.Date{Time: r.Contest.RegistrationEnd},
+			Title:                r.Contest.Title,
+			Description:          r.Contest.Description,
+			Official:             r.Contest.Official,
+			Private:              r.Contest.Private,
+			OwnerUserId:          &r.Contest.OwnerUserID,
+			OwnerUserDisplayName: &r.Contest.OwnerUserDisplayName,
+			AllowedLanguages:     []openapi.Language{},
+			AllowedActivities:    make([]openapi.Activity, len(r.Contest.AllowedActivities)),
 		}
 
 		for i, a := range r.Contest.AllowedActivities {

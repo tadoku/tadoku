@@ -63,10 +63,12 @@ type ContestRegistration struct {
 }
 
 type ContestRegistrationReference struct {
-	RegistrationID uuid.UUID
-	ContestID      uuid.UUID
-	ContestEnd     time.Time
-	Title          string
+	RegistrationID       uuid.UUID
+	ContestID            uuid.UUID
+	ContestEnd           time.Time
+	Title                string
+	OwnerUserDisplayName string
+	Official             bool
 }
 
 type ContestRegistrations struct {

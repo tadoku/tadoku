@@ -148,7 +148,9 @@ select
   contest_logs.contest_id,
   contests.title,
   contest_registrations.id,
-  contests.contest_end
+  contests.contest_end,
+  owner_users.display_name as owner_user_display_name,
+  contests.official
 from contest_logs
 inner join contests on (contests.id = contest_logs.contest_id)
 inner join logs on (logs.id = contest_logs.log_id)
@@ -156,6 +158,7 @@ inner join contest_registrations on (
   contest_registrations.contest_id = contest_logs.contest_id
   and contest_registrations.user_id = logs.user_id
 )
+inner join users as owner_users on (owner_users.id = contests.owner_user_id)
 where log_id = sqlc.arg('id');
 
 -- name: YearlyActivityForUser :many

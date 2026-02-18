@@ -93,6 +93,15 @@ export const LogDetailsV2 = ({ log }: Props) => {
                       <div className="font-bold text-secondary">
                         {reg.title}
                       </div>
+                      {reg.official ? (
+                        <div className="text-xs text-gray-600">
+                          Administrated by Tadoku
+                        </div>
+                      ) : reg.owner_user_display_name ? (
+                        <div className="text-xs text-gray-600">
+                          Administrated by {reg.owner_user_display_name}
+                        </div>
+                      ) : null}
                     </div>
                     <span className="text-sm font-medium text-secondary">
                       Score: {formatScore(log.score)}

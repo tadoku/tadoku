@@ -1258,6 +1258,10 @@ components:
         title:
           type: string
           example: "January 2026"
+        owner_user_display_name:
+          type: string
+        official:
+          type: boolean
     LeaderboardEntry:
       type: object
       required:

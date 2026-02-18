@@ -49,8 +49,9 @@ export const SubmitToContest = ({ log, registrations }: Props) => {
   })
 
   const onSubmit = () => {
+    const values = methods.getValues()
     const selectedIds = options
-      .filter(o => o.eligible && watched[o.registration.id])
+      .filter(o => o.eligible && values[o.registration.id])
       .map(o => o.registration.id)
 
     submit({ logId: log.id, registrationIds: selectedIds })

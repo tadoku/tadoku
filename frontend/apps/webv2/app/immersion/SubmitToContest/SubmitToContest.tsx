@@ -16,9 +16,10 @@ import { useDebouncedCallback } from 'use-debounce'
 interface Props {
   log: Log
   registrations: ContestRegistrationView[]
+  preselect?: boolean
 }
 
-export const SubmitToContest = ({ log, registrations }: Props) => {
+export const SubmitToContest = ({ log, registrations, preselect }: Props) => {
   const options = classifyRegistrations(log, registrations)
 
   const alreadyAttachedIds = new Set(
@@ -30,7 +31,7 @@ export const SubmitToContest = ({ log, registrations }: Props) => {
     if (option.eligible) {
       defaultChecked[option.registration.id] =
         alreadyAttachedIds.has(option.registration.id) ||
-        alreadyAttachedIds.size === 0
+        (!!preselect && alreadyAttachedIds.size === 0)
     }
   }
 

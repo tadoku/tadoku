@@ -10,6 +10,7 @@ import { useSessionOrRedirect } from '@app/common/session'
 const Page = () => {
   const router = useRouter()
   const id = router.query['id']?.toString() ?? ''
+  const preselect = router.query['preselect'] === '1'
   const log = useLog(id, { enabled: !!id })
   const registrations = useOngoingContestRegistrations()
 
@@ -53,6 +54,7 @@ const Page = () => {
         <SubmitToContest
           log={log.data}
           registrations={registrations.data.registrations}
+          preselect={preselect}
         />
       </div>
     </>

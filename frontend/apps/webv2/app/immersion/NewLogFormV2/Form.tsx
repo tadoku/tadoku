@@ -75,7 +75,7 @@ export const LogFormV2 = ({ options, defaultValues: originalDefaultValues }: Pro
       registrations.data &&
       registrations.data.registrations.length > 0
     if (hasRegistrations) {
-      router.replace(routes.logContests(log.id))
+      router.replace(routes.logContests(log.id) + '?preselect=1')
     } else {
       router.replace(routes.log(log.id))
     }

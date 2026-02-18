@@ -46,7 +46,10 @@ export const LogDetailsV2 = ({ log }: Props) => {
         </div>
         <div className="mt-6" />
         {log.description ? (
-          <p className="text-sm mb-4">{log.description}</p>
+          <div className="mb-4">
+            <h3 className="subtitle mb-1">Description</h3>
+            <p className="text-sm">{log.description}</p>
+          </div>
         ) : null}
         {tags.length > 0 ? (
           <div className="flex flex-wrap gap-2 mb-4">

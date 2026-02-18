@@ -37,7 +37,7 @@ export const LogDetailsV2 = ({ log }: Props) => {
       <div className="my-6" />
 
       <div className="card narrow">
-        <div className={`bg-${logColor}-200 -mx-4 -mt-4 px-4 py-3 rounded-t`}>
+        <div className={`bg-${logColor}-200 -mx-4 -mt-4 mb-4 px-4 py-3 rounded-t`}>
           <div className="text-sm flex items-baseline gap-2">
             <strong>{log.language.name}</strong>
             <span>&middot;</span>

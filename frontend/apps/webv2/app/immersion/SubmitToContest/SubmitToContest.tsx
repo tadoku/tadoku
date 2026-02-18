@@ -1,4 +1,4 @@
-import { CheckIcon } from '@heroicons/react/20/solid'
+import { CheckIcon, CheckBadgeIcon } from '@heroicons/react/20/solid'
 import { FormProvider, useForm } from 'react-hook-form'
 import {
   ContestRegistrationView,
@@ -93,8 +93,16 @@ export const SubmitToContest = ({ log, registrations, preselect }: Props) => {
                         <div className="font-bold text-secondary/30">
                           {contest.title}
                         </div>
-                        <div className="text-xs text-secondary/30">
-                          {contest.owner_user_display_name ?? 'Unknown'}
+                        <div className="text-xs text-secondary/30 flex items-center">
+                          Administered by{' '}
+                          {contest.official ? (
+                            <>
+                              <strong className="ml-1">Tadoku</strong>
+                              <CheckBadgeIcon className="ml-1 w-4 h-4 text-lime-700/30" />
+                            </>
+                          ) : (
+                            <strong className="ml-1">{contest.owner_user_display_name}</strong>
+                          )}
                         </div>
                       </div>
                       <span className="text-xs text-slate-400 italic mr-2">
@@ -127,8 +135,16 @@ export const SubmitToContest = ({ log, registrations, preselect }: Props) => {
                       <div className="font-bold text-secondary">
                         {contest.title}
                       </div>
-                      <div className="text-xs text-gray-600">
-                        {contest.owner_user_display_name ?? 'Unknown'}
+                      <div className="text-xs text-gray-600 flex items-center">
+                        Administered by{' '}
+                        {contest.official ? (
+                          <>
+                            <strong className="ml-1">Tadoku</strong>
+                            <CheckBadgeIcon className="ml-1 w-4 h-4 text-lime-700" />
+                          </>
+                        ) : (
+                          <strong className="ml-1">{contest.owner_user_display_name}</strong>
+                        )}
                       </div>
                     </div>
                     <span className="text-sm font-medium text-secondary mr-4">

@@ -58,9 +58,7 @@ const Page = () => {
             ]}
           />
         </div>
-        <div className="max-w-lg">
-          <LogDetailsV2 log={log.data} />
-        </div>
+        <LogDetailsV2 log={log.data} />
       </>
     )
   }

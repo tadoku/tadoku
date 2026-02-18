@@ -187,7 +187,7 @@ function DeleteButton({ log }: { log: Log }) {
       </Modal>
       <button
         type="button"
-        className="btn ghost gap-2"
+        className="btn ghost danger gap-2"
         onClick={() => setIsDeleteModalOpen(true)}
       >
         <TrashIcon className="w-4 h-4 mr-2" />

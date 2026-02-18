@@ -36,99 +36,97 @@ export const LogDetailsV2 = ({ log }: Props) => {
 
       <div className="my-6" />
 
-      <div className="max-w-2xl card narrow">
-        <div className={`bg-${logColor}-200 -mx-4 -mt-4 mb-4 px-4 py-3 rounded-t`}>
-          <div className="text-sm flex items-baseline gap-2">
-            <strong>{log.language.name}</strong>
-            <span>&middot;</span>
-            <span>{log.activity.name}</span>
-          </div>
-        </div>
-        {log.description ? (
-          <div className="mb-4">
-            <h3 className="subtitle">Description</h3>
-            <p className="text-sm">{log.description}</p>
-          </div>
-        ) : null}
-        {tags.length > 0 ? (
-          <div className="flex flex-wrap gap-2 mb-4">
-            {tags.map(tag => (
-              <span key={tag} className="tag text-slate-900 bg-slate-200">
-                #{tag}
-              </span>
-            ))}
-          </div>
-        ) : null}
-        <div className="h-stack w-full spaced">
-          <div className="w-1/2">
-            <h3 className="subtitle mb-2">Score</h3>
-            <div className="font-bold text-5xl">
-              {formatScore(log.score)}
+      <div className="flex flex-col lg:flex-row gap-6">
+        <div className="card narrow flex-1">
+          <div className={`bg-${logColor}-200 -mx-4 -mt-4 mb-4 px-4 py-3 rounded-t`}>
+            <div className="text-sm flex items-baseline gap-2">
+              <strong>{log.language.name}</strong>
+              <span>&middot;</span>
+              <span>{log.activity.name}</span>
             </div>
           </div>
-          <div className="w-1/2 flex flex-col items-end justify-end opacity-80">
-            <h4 className="subtitle text-sm">Breakdown</h4>
-            <div className="lowercase flex items-center space-x-1 text-sm">
-              <strong className="text-lg">
-                {formatScore(log.amount)}
-              </strong>
-              <span className="text-slate-500">
-                {formatUnit(log.amount, log.unit_name)}
-              </span>
-              <XMarkIcon className="w-3 h-3 mx-2 text-secondary" />
-              <strong className="text-lg">{log.modifier}</strong>
-              <span className="text-slate-500">modifier</span>
+          {log.description ? (
+            <div className="mb-4">
+              <h3 className="subtitle">Description</h3>
+              <p className="text-sm">{log.description}</p>
+            </div>
+          ) : null}
+          {tags.length > 0 ? (
+            <div className="flex flex-wrap gap-2 mb-4">
+              {tags.map(tag => (
+                <span key={tag} className="tag text-slate-900 bg-slate-200">
+                  #{tag}
+                </span>
+              ))}
+            </div>
+          ) : null}
+          <div className="h-stack w-full spaced">
+            <div className="w-1/2">
+              <h3 className="subtitle mb-2">Score</h3>
+              <div className="font-bold text-5xl">
+                {formatScore(log.score)}
+              </div>
+            </div>
+            <div className="w-1/2 flex flex-col items-end justify-end opacity-80">
+              <h4 className="subtitle text-sm">Breakdown</h4>
+              <div className="lowercase flex items-center space-x-1 text-sm">
+                <strong className="text-lg">
+                  {formatScore(log.amount)}
+                </strong>
+                <span className="text-slate-500">
+                  {formatUnit(log.amount, log.unit_name)}
+                </span>
+                <XMarkIcon className="w-3 h-3 mx-2 text-secondary" />
+                <strong className="text-lg">{log.modifier}</strong>
+                <span className="text-slate-500">modifier</span>
+              </div>
             </div>
           </div>
         </div>
-      </div>
 
-      <div className="my-6" />
-      <div className="max-w-2xl card narrow">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="subtitle">Submitted to contests</h3>
-          <Link href={routes.logContests(log.id)} className="btn ghost text-sm">
-            {log.registrations && log.registrations.length > 0
-              ? 'Edit submissions'
-              : 'Submit to contests'}
-          </Link>
-        </div>
-        {log.registrations && log.registrations.length > 0 ? (
-          <div className="v-stack gap-2">
-            {log.registrations.map(reg => (
-              <Link
-                key={reg.contest_id}
-                href={routes.contestLeaderboard(reg.contest_id)}
-                className="input-frame px-4 py-2 no-underline hover:bg-neutral-50 transition-colors"
-              >
-                <div className="h-stack items-center w-full">
-                  <div className="flex-1">
-                    <div className="font-bold text-secondary">
-                      {reg.title}
-                    </div>
-                    {reg.official ? (
-                      <div className="text-xs text-gray-600 flex items-center">
-                        Administered by <strong className="ml-1">Tadoku</strong>
-                        <CheckBadgeIcon className="ml-1 w-4 h-4 text-lime-700" />
-                      </div>
-                    ) : reg.owner_user_display_name ? (
-                      <div className="text-xs text-gray-600">
-                        Administered by <strong>{reg.owner_user_display_name}</strong>
-                      </div>
-                    ) : null}
-                  </div>
-                  <span className="text-sm font-medium text-secondary">
-                    Score: {formatScore(log.score)}
-                  </span>
-                </div>
-              </Link>
-            ))}
+        <div className="card narrow lg:w-80 lg:flex-shrink-0 self-start">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="subtitle">Submitted to contests</h3>
+            <Link href={routes.logContests(log.id)} className="btn ghost text-sm">
+              {log.registrations && log.registrations.length > 0
+                ? 'Edit submissions'
+                : 'Submit to contests'}
+            </Link>
           </div>
-        ) : (
-          <p className="text-sm text-slate-500">
-            Not submitted to any contests yet.
-          </p>
-        )}
+          {log.registrations && log.registrations.length > 0 ? (
+            <div className="v-stack gap-2">
+              {log.registrations.map(reg => (
+                <Link
+                  key={reg.contest_id}
+                  href={routes.contestLeaderboard(reg.contest_id)}
+                  className="input-frame px-4 py-2 no-underline hover:bg-neutral-50 transition-colors"
+                >
+                  <div className="h-stack items-center w-full">
+                    <div className="flex-1">
+                      <div className="font-bold text-secondary">
+                        {reg.title}
+                      </div>
+                      {reg.official ? (
+                        <div className="text-xs text-gray-600 flex items-center">
+                          Administered by <strong className="ml-1">Tadoku</strong>
+                          <CheckBadgeIcon className="ml-1 w-4 h-4 text-lime-700" />
+                        </div>
+                      ) : reg.owner_user_display_name ? (
+                        <div className="text-xs text-gray-600">
+                          Administered by <strong>{reg.owner_user_display_name}</strong>
+                        </div>
+                      ) : null}
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          ) : (
+            <p className="text-sm text-slate-500">
+              Not submitted to any contests yet.
+            </p>
+          )}
+        </div>
       </div>
     </div>
   )

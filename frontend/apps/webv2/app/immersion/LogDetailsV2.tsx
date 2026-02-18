@@ -1,4 +1,4 @@
-import { TrashIcon } from '@heroicons/react/20/solid'
+import { TrashIcon, CheckBadgeIcon } from '@heroicons/react/20/solid'
 import { Log, useDeleteLog } from '@app/immersion/api'
 import { routes } from '@app/common/routes'
 import { formatScore, formatUnit } from '@app/common/format'
@@ -94,12 +94,13 @@ export const LogDetailsV2 = ({ log }: Props) => {
                         {reg.title}
                       </div>
                       {reg.official ? (
-                        <div className="text-xs text-gray-600">
-                          Administrated by Tadoku
+                        <div className="text-xs text-gray-600 flex items-center">
+                          Administered by <strong className="ml-1">Tadoku</strong>
+                          <CheckBadgeIcon className="ml-1 w-4 h-4 text-lime-700" />
                         </div>
                       ) : reg.owner_user_display_name ? (
                         <div className="text-xs text-gray-600">
-                          Administrated by {reg.owner_user_display_name}
+                          Administered by {reg.owner_user_display_name}
                         </div>
                       ) : null}
                     </div>

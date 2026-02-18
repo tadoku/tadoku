@@ -1,7 +1,8 @@
 import { TrashIcon, CheckBadgeIcon } from '@heroicons/react/20/solid'
+import { XMarkIcon } from '@heroicons/react/24/outline'
 import { Log, useDeleteLog } from '@app/immersion/api'
 import { routes } from '@app/common/routes'
-import { formatScore, formatUnit } from '@app/common/format'
+import { colorForActivity, formatScore, formatUnit } from '@app/common/format'
 import { useSession } from '@app/common/session'
 import { useRouter } from 'next/router'
 import { useState } from 'react'
@@ -15,18 +16,7 @@ interface Props {
 }
 
 export const LogDetailsV2 = ({ log }: Props) => {
-  const fields = [
-    { label: 'Language', value: log.language.name },
-    { label: 'Activity', value: log.activity.name },
-    {
-      label: 'Amount',
-      value: `${formatScore(log.amount)} ${formatUnit(log.amount, log.unit_name)}`,
-    },
-    ...(log.description
-      ? [{ label: 'Description', value: log.description }]
-      : []),
-  ]
-
+  const logColor = colorForActivity(log.activity.id)
   const tags = log.tags
 
   return (
@@ -47,27 +37,47 @@ export const LogDetailsV2 = ({ log }: Props) => {
       <div className="my-6" />
 
       <div className="card narrow">
-        <div className="v-stack gap-3">
-          {fields.map(field => (
-            <div key={field.label} className="flex">
-              <span className="w-32 text-sm text-neutral-500 flex-shrink-0">
-                {field.label}
+        <div className={`bg-${logColor}-300 -mx-4 -mt-4 md:-mx-7 md:-mt-7 px-4 py-3 md:px-7 rounded-t`}>
+          <div className="text-sm flex items-baseline gap-2">
+            <strong>{log.language.name}</strong>
+            <span>&middot;</span>
+            <span>{log.activity.name}</span>
+          </div>
+        </div>
+        <div className="mt-6" />
+        {log.description ? (
+          <p className="text-sm mb-4">{log.description}</p>
+        ) : null}
+        {tags.length > 0 ? (
+          <div className="flex flex-wrap gap-2 mb-4">
+            {tags.map(tag => (
+              <span key={tag} className="tag text-slate-900 bg-slate-200">
+                {tag}
               </span>
-              <span className="text-sm font-medium">{field.value}</span>
+            ))}
+          </div>
+        ) : null}
+        <div className="h-stack w-full spaced">
+          <div className="w-1/2">
+            <h3 className="subtitle mb-2">Score</h3>
+            <div className="font-bold text-5xl">
+              {formatScore(log.score)}
             </div>
-          ))}
-          {tags.length > 0 ? (
-            <div className="flex">
-              <span className="w-32 text-sm text-neutral-500 flex-shrink-0">
-                Tags
+          </div>
+          <div className="w-1/2 flex flex-col items-end justify-end opacity-80">
+            <h4 className="subtitle text-sm">Breakdown</h4>
+            <div className="lowercase flex items-center space-x-1 text-sm">
+              <strong className="text-lg">
+                {formatScore(log.amount)}
+              </strong>
+              <span className="text-slate-500">
+                {formatUnit(log.amount, log.unit_name)}
               </span>
-              <span className="text-sm font-medium">
-                {tags
-                  .map(tag => `#${tag.toLowerCase().replace(/\s+/g, '-')}`)
-                  .join(' ')}
-              </span>
+              <XMarkIcon className="w-3 h-3 mx-2 text-secondary" />
+              <strong className="text-lg">{log.modifier}</strong>
+              <span className="text-slate-500">modifier</span>
             </div>
-          ) : null}
+          </div>
         </div>
       </div>
 

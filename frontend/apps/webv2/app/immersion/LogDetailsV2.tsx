@@ -46,7 +46,7 @@ export const LogDetailsV2 = ({ log }: Props) => {
         </div>
         {log.description ? (
           <div className="mb-4">
-            <h3 className="subtitle mb-1">Description</h3>
+            <h3 className="subtitle">Description</h3>
             <p className="text-sm">{log.description}</p>
           </div>
         ) : null}

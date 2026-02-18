@@ -30,12 +30,12 @@ export const LogDetailsV2 = ({ log }: Props) => {
           </h2>
         </div>
         <div className="h-stack gap-2">
-          <Link href={routes.logContests(log.id)} className="btn ghost text-sm">
+          <DeleteButton log={log} />
+          <Link href={routes.logContests(log.id)} className="btn secondary text-sm">
             {log.registrations && log.registrations.length > 0
               ? 'Edit submissions'
               : 'Submit to contests'}
           </Link>
-          <DeleteButton log={log} />
         </div>
       </div>
 
@@ -187,7 +187,7 @@ function DeleteButton({ log }: { log: Log }) {
       </Modal>
       <button
         type="button"
-        className="btn danger gap-2"
+        className="btn ghost gap-2"
         onClick={() => setIsDeleteModalOpen(true)}
       >
         <TrashIcon className="w-4 h-4 mr-2" />

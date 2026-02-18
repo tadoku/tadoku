@@ -44,7 +44,6 @@ export const LogDetailsV2 = ({ log }: Props) => {
             <span>{log.activity.name}</span>
           </div>
         </div>
-        <div className="mt-6" />
         {log.description ? (
           <div className="mb-4">
             <h3 className="subtitle mb-1">Description</h3>

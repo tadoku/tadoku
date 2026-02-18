@@ -1,5 +1,5 @@
 import { TrashIcon, CheckBadgeIcon } from '@heroicons/react/20/solid'
-import { XMarkIcon } from '@heroicons/react/24/outline'
+import { XMarkIcon, ChevronRightIcon } from '@heroicons/react/24/outline'
 import { Log, useDeleteLog } from '@app/immersion/api'
 import { routes } from '@app/common/routes'
 import { colorForActivity, formatScore, formatUnit } from '@app/common/format'
@@ -89,21 +89,20 @@ export const LogDetailsV2 = ({ log }: Props) => {
           </div>
         </div>
 
-        <div className="card narrow lg:w-2/5 self-start">
-          <h3 className="subtitle mb-4">Submitted to contests</h3>
-          {log.registrations && log.registrations.length > 0 ? (
-            <div className="v-stack gap-2">
-              {log.registrations.map(reg => (
-                <Link
-                  key={reg.contest_id}
-                  href={routes.contestLeaderboard(reg.contest_id)}
-                  className="input-frame px-4 py-2 no-underline hover:bg-neutral-50 transition-colors"
-                >
-                  <div className="h-stack items-center w-full">
+        <div className="card p-0 lg:w-2/5 self-start">
+          <h3 className="subtitle p-4">Submitted to contests</h3>
+          <ul className={`divide-y-2 divide-slate-500/5 ${
+            log.registrations && log.registrations.length > 0 ? 'border-t-2 border-slate-500/5' : ''
+          }`}>
+            {log.registrations && log.registrations.length > 0 ? (
+              log.registrations.map(reg => (
+                <li key={reg.contest_id}>
+                  <Link
+                    href={routes.contestLeaderboard(reg.contest_id)}
+                    className="reset px-4 py-2 flex items-center hover:bg-slate-500/5"
+                  >
                     <div className="flex-1">
-                      <div className="font-bold text-secondary">
-                        {reg.title}
-                      </div>
+                      <span className="font-bold text-base">{reg.title}</span>
                       {reg.official ? (
                         <div className="text-xs text-gray-600 flex items-center">
                           Administered by <strong className="ml-1">Tadoku</strong>
@@ -115,15 +114,16 @@ export const LogDetailsV2 = ({ log }: Props) => {
                         </div>
                       ) : null}
                     </div>
-                  </div>
-                </Link>
-              ))}
-            </div>
-          ) : (
-            <p className="text-sm text-slate-500">
-              Not submitted to any contests yet.
-            </p>
-          )}
+                    <ChevronRightIcon className="w-5 h-5 ml-auto" />
+                  </Link>
+                </li>
+              ))
+            ) : (
+              <li className="px-4 py-4 text-sm text-slate-500">
+                Not submitted to any contests yet.
+              </li>
+            )}
+          </ul>
         </div>
       </div>
     </div>

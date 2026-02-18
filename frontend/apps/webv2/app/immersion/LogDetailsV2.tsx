@@ -30,6 +30,11 @@ export const LogDetailsV2 = ({ log }: Props) => {
           </h2>
         </div>
         <div className="h-stack gap-2">
+          <Link href={routes.logContests(log.id)} className="btn ghost text-sm">
+            {log.registrations && log.registrations.length > 0
+              ? 'Edit submissions'
+              : 'Submit to contests'}
+          </Link>
           <DeleteButton log={log} />
         </div>
       </div>
@@ -85,14 +90,7 @@ export const LogDetailsV2 = ({ log }: Props) => {
         </div>
 
         <div className="card narrow lg:w-2/5 self-start">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="subtitle">Submitted to contests</h3>
-            <Link href={routes.logContests(log.id)} className="btn ghost text-sm">
-              {log.registrations && log.registrations.length > 0
-                ? 'Edit submissions'
-                : 'Submit to contests'}
-            </Link>
-          </div>
+          <h3 className="subtitle mb-4">Submitted to contests</h3>
           {log.registrations && log.registrations.length > 0 ? (
             <div className="v-stack gap-2">
               {log.registrations.map(reg => (

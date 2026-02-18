@@ -113,7 +113,7 @@ export const LogFormV2 = ({ options, defaultValues: originalDefaultValues }: Pro
     <FormProvider {...methods}>
       <form
         onSubmit={methods.handleSubmit(onSubmit, errors => console.log(errors))}
-        className="v-stack spaced max-w-4xl"
+        className="v-stack spaced max-w-lg"
       >
         <div className="card">
           <div className="v-stack spaced">

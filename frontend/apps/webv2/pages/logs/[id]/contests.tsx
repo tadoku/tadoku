@@ -49,7 +49,7 @@ const Page = () => {
         />
       </div>
       <h1 className="title mb-4">Submit to contests</h1>
-      <div className="max-w-2xl">
+      <div className="max-w-lg">
         <SubmitToContest
           log={log.data}
           registrations={registrations.data.registrations}

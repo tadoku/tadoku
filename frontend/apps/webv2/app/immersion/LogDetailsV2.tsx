@@ -75,7 +75,12 @@ export const LogDetailsV2 = ({ log }: Props) => {
         <>
           <div className="my-6" />
           <div>
-            <h3 className="subtitle mb-2">Submitted to contests</h3>
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="subtitle">Submitted to contests</h3>
+              <Link href={routes.logContests(log.id)} className="btn ghost text-sm">
+                Edit submissions
+              </Link>
+            </div>
             <div className="v-stack gap-2">
               {log.registrations.map(reg => (
                 <Link

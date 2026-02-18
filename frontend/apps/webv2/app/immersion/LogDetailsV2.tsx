@@ -100,7 +100,7 @@ export const LogDetailsV2 = ({ log }: Props) => {
                         </div>
                       ) : reg.owner_user_display_name ? (
                         <div className="text-xs text-gray-600">
-                          Administered by {reg.owner_user_display_name}
+                          Administered by <strong>{reg.owner_user_display_name}</strong>
                         </div>
                       ) : null}
                     </div>

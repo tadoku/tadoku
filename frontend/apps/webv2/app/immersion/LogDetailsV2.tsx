@@ -88,7 +88,7 @@ export const LogDetailsV2 = ({ log }: Props) => {
           <div className="flex items-center justify-between p-4">
             <h3 className="subtitle">Submitted to contests</h3>
             <Link href={routes.logContests(log.id)} className="btn ghost text-sm -my-4">
-              <PencilSquareIcon className="w-4 h-4 mr-1" />
+              <PencilSquareIcon className="w-4 h-4 mr-2" />
               Edit
             </Link>
           </div>

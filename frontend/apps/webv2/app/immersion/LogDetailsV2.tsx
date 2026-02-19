@@ -31,11 +31,6 @@ export const LogDetailsV2 = ({ log }: Props) => {
         </div>
         <div className="h-stack gap-2">
           <DeleteButton log={log} />
-          <Link href={routes.logContests(log.id)} className="btn secondary text-sm">
-            {log.registrations && log.registrations.length > 0
-              ? 'Edit submissions'
-              : 'Submit to contests'}
-          </Link>
         </div>
       </div>
 
@@ -90,7 +85,14 @@ export const LogDetailsV2 = ({ log }: Props) => {
         </div>
 
         <div className="card p-0 w-full lg:w-2/5 self-start">
-          <h3 className="subtitle p-4">Submitted to contests</h3>
+          <div className="flex items-center justify-between p-4">
+            <h3 className="subtitle">Submitted to contests</h3>
+            <Link href={routes.logContests(log.id)} className="btn secondary text-sm">
+              {log.registrations && log.registrations.length > 0
+                ? 'Edit submissions'
+                : 'Submit to contests'}
+            </Link>
+          </div>
           <ul className={`divide-y-2 divide-slate-500/5 ${
             log.registrations && log.registrations.length > 0 ? 'border-t-2 border-slate-500/5' : ''
           }`}>

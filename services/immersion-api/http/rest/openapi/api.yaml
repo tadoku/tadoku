@@ -501,6 +501,59 @@ paths:
           description: forbidden
         "404":
           description: not found
+    put:
+      summary: Updates an existing log
+      operationId: logUpdate
+      tags: [logs]
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: id
+          in: path
+          description: ID of log to update
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - amount
+                - unit_id
+                - tags
+              properties:
+                amount:
+                  type: number
+                  format: float
+                unit_id:
+                  type: string
+                  format: uuid
+                tags:
+                  type: array
+                  items:
+                    type: string
+                  example: ["book", "fiction"]
+                description:
+                  type: string
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Log"
+        "400":
+          description: invalid request
+        "401":
+          description: unauthorized
+        "403":
+          description: forbidden
+        "404":
+          description: not found
   /logs/{id}/contest-registrations:
     put:
       summary: Updates the contest registrations for a log

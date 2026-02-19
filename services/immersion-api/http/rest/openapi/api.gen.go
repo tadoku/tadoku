@@ -401,6 +401,17 @@ type LanguageUpdateJSONRequestBody LanguageUpdateJSONBody
 // LogCreateJSONRequestBody defines body for LogCreate for application/json ContentType.
 type LogCreateJSONRequestBody LogCreateJSONBody
 
+// LogUpdateJSONBody defines parameters for LogUpdate.
+type LogUpdateJSONBody struct {
+	Amount      float32            `json:"amount"`
+	Description *string            `json:"description,omitempty"`
+	Tags        []string           `json:"tags"`
+	UnitId      openapi_types.UUID `json:"unit_id"`
+}
+
+// LogUpdateJSONRequestBody defines body for LogUpdate for application/json ContentType.
+type LogUpdateJSONRequestBody LogUpdateJSONBody
+
 // LogContestRegistrationUpdateJSONRequestBody defines body for LogContestRegistrationUpdate for application/json ContentType.
 type LogContestRegistrationUpdateJSONRequestBody LogContestRegistrationUpdateJSONBody
 
@@ -481,6 +492,9 @@ type ServerInterface interface {
 	// Fetches a log by id
 	// (GET /logs/{id})
 	LogFindByID(ctx echo.Context, id openapi_types.UUID) error
+	// Updates an existing log
+	// (PUT /logs/{id})
+	LogUpdate(ctx echo.Context, id openapi_types.UUID) error
 	// Updates the contest registrations for a log
 	// (PUT /logs/{id}/contest-registrations)
 	LogContestRegistrationUpdate(ctx echo.Context, id openapi_types.UUID) error
@@ -1044,6 +1058,24 @@ func (w *ServerInterfaceWrapper) LogFindByID(ctx echo.Context) error {
 	return err
 }
 
+// LogUpdate converts echo context to params.
+func (w *ServerInterfaceWrapper) LogUpdate(ctx echo.Context) error {
+	var err error
+	// ------------- Path parameter "id" -------------
+	var id openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithLocation("simple", false, "id", runtime.ParamLocationPath, ctx.Param("id"), &id)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter id: %s", err))
+	}
+
+	ctx.Set(CookieAuthScopes, []string{""})
+
+	// Invoke the callback with all the unmarshalled arguments
+	err = w.Handler.LogUpdate(ctx, id)
+	return err
+}
+
 // LogContestRegistrationUpdate converts echo context to params.
 func (w *ServerInterfaceWrapper) LogContestRegistrationUpdate(ctx echo.Context) error {
 	var err error
@@ -1275,6 +1307,7 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 	router.GET(baseURL+"/logs/tag-suggestions", wrapper.LogTagSuggestions)
 	router.DELETE(baseURL+"/logs/:id", wrapper.LogDeleteByID)
 	router.GET(baseURL+"/logs/:id", wrapper.LogFindByID)
+	router.PUT(baseURL+"/logs/:id", wrapper.LogUpdate)
 	router.PUT(baseURL+"/logs/:id/contest-registrations", wrapper.LogContestRegistrationUpdate)
 	router.GET(baseURL+"/ping", wrapper.Ping)
 	router.GET(baseURL+"/users/:userId/activity-split/:year", wrapper.ProfileYearlyActivitySplitByUserID)

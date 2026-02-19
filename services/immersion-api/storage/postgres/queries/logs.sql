@@ -252,6 +252,37 @@ set eligible_official_leaderboard = (
 updated_at = now()
 where id = sqlc.arg('log_id');
 
+-- name: UpdateLog :exec
+update logs
+set
+  amount = sqlc.arg('amount'),
+  modifier = sqlc.arg('modifier'),
+  unit_id = sqlc.arg('unit_id'),
+  "description" = sqlc.arg('description'),
+  updated_at = sqlc.arg('now')
+where
+  id = sqlc.arg('log_id')
+  and deleted_at is null;
+
+-- name: UpdateOngoingContestLogs :exec
+update contest_logs
+set
+  amount = sqlc.arg('amount'),
+  modifier = sqlc.arg('modifier')
+from contests
+where
+  contest_logs.log_id = sqlc.arg('log_id')
+  and contest_logs.contest_id = contests.id
+  and contests.contest_end >= sqlc.arg('now');
+
+-- name: FetchOngoingContestIDsForLog :many
+select contest_logs.contest_id
+from contest_logs
+inner join contests on (contests.id = contest_logs.contest_id)
+where
+  contest_logs.log_id = sqlc.arg('log_id')
+  and contests.contest_end >= sqlc.arg('now');
+
 -- name: DetachContestLogsForLanguages :exec
 delete from contest_logs
 where contest_id = sqlc.arg('contest_id')

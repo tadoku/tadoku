@@ -12,6 +12,15 @@ import (
 	"github.com/google/uuid"
 )
 
+const deleteLogTagsForLog = `-- name: DeleteLogTagsForLog :exec
+delete from log_tags where log_id = $1
+`
+
+func (q *Queries) DeleteLogTagsForLog(ctx context.Context, logID uuid.UUID) error {
+	_, err := q.db.ExecContext(ctx, deleteLogTagsForLog, logID)
+	return err
+}
+
 const insertLogTag = `-- name: InsertLogTag :exec
 insert into log_tags (log_id, user_id, tag)
 values ($1, $2, $3)

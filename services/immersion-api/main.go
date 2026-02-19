@@ -146,6 +146,7 @@ func main() {
 	userUpsert := immersiondomain.NewUserUpsert(postgresRepository)
 	registrationUpsert := immersiondomain.NewRegistrationUpsert(postgresRepository, userUpsert)
 	logCreate := immersiondomain.NewLogCreate(postgresRepository, clock, userUpsert)
+	logUpdate := immersiondomain.NewLogUpdate(postgresRepository, clock)
 	contestCreate := immersiondomain.NewContestCreate(postgresRepository, clock, userUpsert)
 	languageList := immersiondomain.NewLanguageList(postgresRepository)
 	languageCreate := immersiondomain.NewLanguageCreate(postgresRepository)
@@ -180,6 +181,7 @@ func main() {
 		contestModerationDetachLog,
 		registrationUpsert,
 		logCreate,
+		logUpdate,
 		contestCreate,
 		languageList,
 		languageCreate,

@@ -44,7 +44,7 @@ export const LogDetailsV2 = ({ log }: Props) => {
               <span>&middot;</span>
               <span>{log.activity.name}</span>
             </div>
-            <Link href="#" title="Coming soon!" className="btn ghost text-sm -my-4 -mr-4 md:-mr-7">
+            <Link href={routes.logEdit(log.id)} className="btn ghost text-sm -my-4 -mr-4 md:-mr-7">
               <PencilSquareIcon className="w-4 h-4 mr-2" />
               Edit
             </Link>

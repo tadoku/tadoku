@@ -89,7 +89,7 @@ export const LogDetailsV2 = ({ log }: Props) => {
           </div>
         </div>
 
-        <div className="card p-0 lg:w-2/5 self-start">
+        <div className="card p-0 w-full lg:w-2/5 self-start">
           <h3 className="subtitle p-4">Submitted to contests</h3>
           <ul className={`divide-y-2 divide-slate-500/5 ${
             log.registrations && log.registrations.length > 0 ? 'border-t-2 border-slate-500/5' : ''

@@ -44,7 +44,7 @@ export const LogDetailsV2 = ({ log }: Props) => {
               <span>&middot;</span>
               <span>{log.activity.name}</span>
             </div>
-            <Link href="#" className="btn ghost text-sm -my-4">
+            <Link href="#" className="btn ghost text-sm -my-4 -mr-4">
               <PencilSquareIcon className="w-4 h-4 mr-2" />
               Edit
             </Link>
@@ -91,7 +91,7 @@ export const LogDetailsV2 = ({ log }: Props) => {
         <div className="card p-0 w-full lg:w-2/5 self-start">
           <div className="flex items-center justify-between px-4 py-3">
             <h3 className="subtitle text-sm">Submitted to contests</h3>
-            <Link href={routes.logContests(log.id)} className="btn ghost text-sm -my-4">
+            <Link href={routes.logContests(log.id)} className="btn ghost text-sm -my-4 -mr-4">
               <PencilSquareIcon className="w-4 h-4 mr-2" />
               Edit
             </Link>

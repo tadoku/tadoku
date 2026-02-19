@@ -353,6 +353,7 @@ select
   languages.name as language_name,
   logs.log_activity_id as activity_id,
   log_activities.name as activity_name,
+  logs.unit_id,
   log_units.name as unit_name,
   logs.description,
   logs.amount,
@@ -389,6 +390,7 @@ type FindLogByIDRow struct {
 	LanguageName                string
 	ActivityID                  int16
 	ActivityName                string
+	UnitID                      uuid.UUID
 	UnitName                    string
 	Description                 sql.NullString
 	Amount                      float32
@@ -412,6 +414,7 @@ func (q *Queries) FindLogByID(ctx context.Context, arg FindLogByIDParams) (FindL
 		&i.LanguageName,
 		&i.ActivityID,
 		&i.ActivityName,
+		&i.UnitID,
 		&i.UnitName,
 		&i.Description,
 		&i.Amount,

@@ -536,6 +536,7 @@ export const Log = z.object({
   description: z.string().optional(),
   language: Language,
   activity: Activity,
+  unit_id: z.string(),
   unit_name: z.string(),
   tags: z.array(z.string()),
   amount: z.number(),

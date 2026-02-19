@@ -143,6 +143,7 @@ type Log struct {
 	LanguageName                string
 	ActivityID                  int
 	ActivityName                string
+	UnitID                      uuid.UUID
 	UnitName                    string
 	Tags                        []string
 	Amount                      float32

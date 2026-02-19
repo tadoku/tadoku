@@ -210,6 +210,7 @@ type Log struct {
 	Registrations   *[]ContestRegistrationReference `json:"registrations,omitempty"`
 	Score           float32                         `json:"score"`
 	Tags            []string                        `json:"tags"`
+	UnitId          openapi_types.UUID              `json:"unit_id"`
 	UnitName        string                          `json:"unit_name"`
 	UserDisplayName *string                         `json:"user_display_name,omitempty"`
 	UserId          openapi_types.UUID              `json:"user_id"`

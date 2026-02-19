@@ -121,6 +121,7 @@ select
   languages.name as language_name,
   logs.log_activity_id as activity_id,
   log_activities.name as activity_name,
+  logs.unit_id,
   log_units.name as unit_name,
   logs.description,
   logs.amount,

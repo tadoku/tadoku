@@ -26,14 +26,15 @@ export const SubmitToContest = ({ log, registrations, preselect }: Props) => {
     (log.registrations ?? []).map(r => r.registration_id),
   )
 
-  const defaultChecked: Record<string, boolean> = {}
-  for (const option of options) {
-    if (option.eligible) {
-      defaultChecked[option.registration.id] =
+  const defaultChecked: Record<string, boolean> = Object.fromEntries(
+    options
+      .filter(option => option.eligible)
+      .map(option => [
+        option.registration.id,
         alreadyAttachedIds.has(option.registration.id) ||
-        (!!preselect && alreadyAttachedIds.size === 0)
-    }
-  }
+          (!!preselect && alreadyAttachedIds.size === 0),
+      ]),
+  )
 
   const methods = useForm({ defaultValues: defaultChecked })
   const watched = methods.watch()

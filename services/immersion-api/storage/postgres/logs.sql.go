@@ -134,23 +134,6 @@ func (q *Queries) DeleteLog(ctx context.Context, logID uuid.UUID) error {
 	return err
 }
 
-const updateLogEligibleOfficialLeaderboard = `-- name: UpdateLogEligibleOfficialLeaderboard :exec
-update logs
-set eligible_official_leaderboard = (
-  select coalesce(bool_or(contests.official), false)
-  from contest_logs
-  inner join contests on contests.id = contest_logs.contest_id
-  where contest_logs.log_id = $1
-),
-updated_at = now()
-where id = $1
-`
-
-func (q *Queries) UpdateLogEligibleOfficialLeaderboard(ctx context.Context, logID uuid.UUID) error {
-	_, err := q.db.ExecContext(ctx, updateLogEligibleOfficialLeaderboard, logID)
-	return err
-}
-
 const detachContestLogsForLanguages = `-- name: DetachContestLogsForLanguages :exec
 delete from contest_logs
 where contest_id = $1
@@ -305,7 +288,10 @@ select
   contest_logs.contest_id,
   contests.title,
   contest_registrations.id,
-  contests.contest_end
+  contests.contest_end,
+  owner_users.display_name as owner_user_display_name,
+  contests.official,
+  contest_logs.score
 from contest_logs
 inner join contests on (contests.id = contest_logs.contest_id)
 inner join logs on (logs.id = contest_logs.log_id)
@@ -313,14 +299,18 @@ inner join contest_registrations on (
   contest_registrations.contest_id = contest_logs.contest_id
   and contest_registrations.user_id = logs.user_id
 )
+inner join users as owner_users on (owner_users.id = contests.owner_user_id)
 where log_id = $1
 `
 
 type FindAttachedContestRegistrationsForLogRow struct {
-	ContestID  uuid.UUID
-	Title      string
-	ID         uuid.UUID
-	ContestEnd time.Time
+	ContestID            uuid.UUID
+	Title                string
+	ID                   uuid.UUID
+	ContestEnd           time.Time
+	OwnerUserDisplayName string
+	Official             bool
+	Score                sql.NullFloat64
 }
 
 func (q *Queries) FindAttachedContestRegistrationsForLog(ctx context.Context, id uuid.UUID) ([]FindAttachedContestRegistrationsForLogRow, error) {
@@ -337,6 +327,9 @@ func (q *Queries) FindAttachedContestRegistrationsForLog(ctx context.Context, id
 			&i.Title,
 			&i.ID,
 			&i.ContestEnd,
+			&i.OwnerUserDisplayName,
+			&i.Official,
+			&i.Score,
 		); err != nil {
 			return nil, err
 		}
@@ -657,6 +650,23 @@ func (q *Queries) ListLogsForUser(ctx context.Context, arg ListLogsForUserParams
 		return nil, err
 	}
 	return items, nil
+}
+
+const updateLogEligibleOfficialLeaderboard = `-- name: UpdateLogEligibleOfficialLeaderboard :exec
+update logs
+set eligible_official_leaderboard = (
+  select coalesce(bool_or(contests.official), false)
+  from contest_logs
+  inner join contests on contests.id = contest_logs.contest_id
+  where contest_logs.log_id = $1
+),
+updated_at = now()
+where id = $1
+`
+
+func (q *Queries) UpdateLogEligibleOfficialLeaderboard(ctx context.Context, logID uuid.UUID) error {
+	_, err := q.db.ExecContext(ctx, updateLogEligibleOfficialLeaderboard, logID)
+	return err
 }
 
 const yearlyActivityForUser = `-- name: YearlyActivityForUser :many

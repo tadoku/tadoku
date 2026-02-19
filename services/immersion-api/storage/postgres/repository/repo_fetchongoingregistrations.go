@@ -56,16 +56,18 @@ func (r *Repository) FetchOngoingContestRegistrations(ctx context.Context, req *
 		r := r
 
 		contest := &domain.ContestView{
-			ID:                r.ContestID,
-			ContestStart:      r.ContestStart,
-			ContestEnd:        r.ContestEnd,
-			RegistrationEnd:   r.RegistrationEnd,
-			Title:             r.Title,
-			Description:       postgres.NewStringFromNullString(r.Description),
-			Private:           r.Private,
-			Official:          r.Official,
-			AllowedLanguages:  make([]domain.Language, 0),
-			AllowedActivities: make([]domain.Activity, len(r.ActivityTypeIDAllowList)),
+			ID:                   r.ContestID,
+			ContestStart:         r.ContestStart,
+			ContestEnd:           r.ContestEnd,
+			RegistrationEnd:      r.RegistrationEnd,
+			Title:                r.Title,
+			Description:          postgres.NewStringFromNullString(r.Description),
+			Private:              r.Private,
+			Official:             r.Official,
+			OwnerUserID:          r.OwnerUserID,
+			OwnerUserDisplayName: r.OwnerUserDisplayName,
+			AllowedLanguages:     make([]domain.Language, 0),
+			AllowedActivities:    make([]domain.Activity, len(r.ActivityTypeIDAllowList)),
 		}
 
 		for i, a := range r.ActivityTypeIDAllowList {

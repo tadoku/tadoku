@@ -115,10 +115,13 @@ type ContestRegistration struct {
 
 // ContestRegistrationReference defines model for ContestRegistrationReference.
 type ContestRegistrationReference struct {
-	ContestEnd     openapi_types.Date `json:"contest_end"`
-	ContestId      openapi_types.UUID `json:"contest_id"`
-	RegistrationId openapi_types.UUID `json:"registration_id"`
-	Title          string             `json:"title"`
+	ContestEnd           openapi_types.Date `json:"contest_end"`
+	ContestId            openapi_types.UUID `json:"contest_id"`
+	Official             *bool              `json:"official,omitempty"`
+	OwnerUserDisplayName *string            `json:"owner_user_display_name,omitempty"`
+	RegistrationId       openapi_types.UUID `json:"registration_id"`
+	Score                *float32           `json:"score,omitempty"`
+	Title                string             `json:"title"`
 }
 
 // ContestRegistrations defines model for ContestRegistrations.
@@ -367,6 +370,11 @@ type LogTagSuggestionsParams struct {
 	Query *string `form:"query,omitempty" json:"query,omitempty"`
 }
 
+// LogContestRegistrationUpdateJSONBody defines parameters for LogContestRegistrationUpdate.
+type LogContestRegistrationUpdateJSONBody struct {
+	RegistrationIds []openapi_types.UUID `json:"registration_ids"`
+}
+
 // ProfileListLogsParams defines parameters for ProfileListLogs.
 type ProfileListLogsParams struct {
 	IncludeDeleted *bool `form:"include_deleted,omitempty" json:"include_deleted,omitempty"`
@@ -388,11 +396,6 @@ type LanguageCreateJSONRequestBody = Language
 
 // LanguageUpdateJSONRequestBody defines body for LanguageUpdate for application/json ContentType.
 type LanguageUpdateJSONRequestBody LanguageUpdateJSONBody
-
-// LogContestRegistrationUpdateJSONBody defines parameters for LogContestRegistrationUpdate.
-type LogContestRegistrationUpdateJSONBody struct {
-	RegistrationIds []openapi_types.UUID `json:"registration_ids"`
-}
 
 // LogCreateJSONRequestBody defines body for LogCreate for application/json ContentType.
 type LogCreateJSONRequestBody LogCreateJSONBody
@@ -474,12 +477,12 @@ type ServerInterface interface {
 	// Deletes a log by id
 	// (DELETE /logs/{id})
 	LogDeleteByID(ctx echo.Context, id openapi_types.UUID) error
-	// Updates the contest registrations for a log
-	// (PUT /logs/{id}/contest-registrations)
-	LogContestRegistrationUpdate(ctx echo.Context, id openapi_types.UUID) error
 	// Fetches a log by id
 	// (GET /logs/{id})
 	LogFindByID(ctx echo.Context, id openapi_types.UUID) error
+	// Updates the contest registrations for a log
+	// (PUT /logs/{id}/contest-registrations)
+	LogContestRegistrationUpdate(ctx echo.Context, id openapi_types.UUID) error
 	// Checks if service is responsive
 	// (GET /ping)
 	Ping(ctx echo.Context) error
@@ -1024,22 +1027,6 @@ func (w *ServerInterfaceWrapper) LogDeleteByID(ctx echo.Context) error {
 	return err
 }
 
-// LogContestRegistrationUpdate converts echo context to params.
-func (w *ServerInterfaceWrapper) LogContestRegistrationUpdate(ctx echo.Context) error {
-	var err error
-	// ------------- Path parameter "id" -------------
-	var id openapi_types.UUID
-
-	err = runtime.BindStyledParameterWithLocation("simple", false, "id", runtime.ParamLocationPath, ctx.Param("id"), &id)
-	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter id: %s", err))
-	}
-
-	// Invoke the callback with all the unmarshalled arguments
-	err = w.Handler.LogContestRegistrationUpdate(ctx, id)
-	return err
-}
-
 // LogFindByID converts echo context to params.
 func (w *ServerInterfaceWrapper) LogFindByID(ctx echo.Context) error {
 	var err error
@@ -1053,6 +1040,24 @@ func (w *ServerInterfaceWrapper) LogFindByID(ctx echo.Context) error {
 
 	// Invoke the callback with all the unmarshalled arguments
 	err = w.Handler.LogFindByID(ctx, id)
+	return err
+}
+
+// LogContestRegistrationUpdate converts echo context to params.
+func (w *ServerInterfaceWrapper) LogContestRegistrationUpdate(ctx echo.Context) error {
+	var err error
+	// ------------- Path parameter "id" -------------
+	var id openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithLocation("simple", false, "id", runtime.ParamLocationPath, ctx.Param("id"), &id)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter id: %s", err))
+	}
+
+	ctx.Set(CookieAuthScopes, []string{""})
+
+	// Invoke the callback with all the unmarshalled arguments
+	err = w.Handler.LogContestRegistrationUpdate(ctx, id)
 	return err
 }
 
@@ -1268,8 +1273,8 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 	router.GET(baseURL+"/logs/configuration-options", wrapper.LogGetConfigurations)
 	router.GET(baseURL+"/logs/tag-suggestions", wrapper.LogTagSuggestions)
 	router.DELETE(baseURL+"/logs/:id", wrapper.LogDeleteByID)
-	router.PUT(baseURL+"/logs/:id/contest-registrations", wrapper.LogContestRegistrationUpdate)
 	router.GET(baseURL+"/logs/:id", wrapper.LogFindByID)
+	router.PUT(baseURL+"/logs/:id/contest-registrations", wrapper.LogContestRegistrationUpdate)
 	router.GET(baseURL+"/ping", wrapper.Ping)
 	router.GET(baseURL+"/users/:userId/activity-split/:year", wrapper.ProfileYearlyActivitySplitByUserID)
 	router.GET(baseURL+"/users/:userId/activity/:year", wrapper.ProfileYearlyActivityByUserID)

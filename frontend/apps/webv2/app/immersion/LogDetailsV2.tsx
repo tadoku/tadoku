@@ -87,7 +87,7 @@ export const LogDetailsV2 = ({ log }: Props) => {
         <div className="card p-0 w-full lg:w-2/5 self-start">
           <div className="flex items-center justify-between p-4">
             <h3 className="subtitle">Submitted to contests</h3>
-            <Link href={routes.logContests(log.id)} className="btn ghost small text-sm -my-2">
+            <Link href={routes.logContests(log.id)} className="btn ghost text-sm -my-2">
               {log.registrations && log.registrations.length > 0
                 ? 'Edit submissions'
                 : 'Submit to contests'}

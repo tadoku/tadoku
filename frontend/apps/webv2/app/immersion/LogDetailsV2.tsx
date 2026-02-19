@@ -38,12 +38,16 @@ export const LogDetailsV2 = ({ log }: Props) => {
 
       <div className="flex flex-col lg:flex-row gap-6">
         <div className="card lg:w-3/5">
-          <div className={`bg-${logColor}-200 -mx-4 -mt-4 md:-mx-7 md:-mt-7 mb-4 px-4 py-3 md:px-7`}>
+          <div className={`bg-${logColor}-200 -mx-4 -mt-4 md:-mx-7 md:-mt-7 mb-4 px-4 py-3 md:px-7 flex items-center justify-between`}>
             <div className="text-sm flex items-baseline gap-2">
               <strong>{log.language.name}</strong>
               <span>&middot;</span>
               <span>{log.activity.name}</span>
             </div>
+            <Link href="#" className="btn ghost text-sm -my-4">
+              <PencilSquareIcon className="w-4 h-4 mr-2" />
+              Edit
+            </Link>
           </div>
           {log.description ? (
             <div className="mb-4">

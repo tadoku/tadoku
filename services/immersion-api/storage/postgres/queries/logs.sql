@@ -150,7 +150,8 @@ select
   contest_registrations.id,
   contests.contest_end,
   owner_users.display_name as owner_user_display_name,
-  contests.official
+  contests.official,
+  contest_logs.score
 from contest_logs
 inner join contests on (contests.id = contest_logs.contest_id)
 inner join logs on (logs.id = contest_logs.log_id)

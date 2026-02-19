@@ -1262,6 +1262,9 @@ components:
           type: string
         official:
           type: boolean
+        score:
+          type: number
+          format: float
     LeaderboardEntry:
       type: object
       required:

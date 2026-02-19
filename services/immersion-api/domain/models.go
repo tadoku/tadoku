@@ -69,6 +69,7 @@ type ContestRegistrationReference struct {
 	Title                string
 	OwnerUserDisplayName string
 	Official             bool
+	Score                float32
 }
 
 type ContestRegistrations struct {

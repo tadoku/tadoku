@@ -522,6 +522,7 @@ const ContestRegistrationReference = z.object({
   title: z.string(),
   owner_user_display_name: z.string().optional(),
   official: z.boolean().optional(),
+  score: z.number().optional(),
 })
 
 export type ContestRegistrationReference = z.infer<

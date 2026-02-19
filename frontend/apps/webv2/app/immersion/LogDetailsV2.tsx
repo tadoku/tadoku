@@ -114,7 +114,12 @@ export const LogDetailsV2 = ({ log }: Props) => {
                         </div>
                       ) : null}
                     </div>
-                    <ChevronRightIcon className="w-5 h-5 ml-auto" />
+                    {reg.score != null ? (
+                      <span className="text-sm font-medium text-secondary mr-2">
+                        {formatScore(reg.score)}
+                      </span>
+                    ) : null}
+                    <ChevronRightIcon className="w-5 h-5 flex-shrink-0" />
                   </Link>
                 </li>
               ))

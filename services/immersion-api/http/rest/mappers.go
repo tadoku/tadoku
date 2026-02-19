@@ -36,6 +36,7 @@ func logToAPI(log *domain.Log) *openapi.Log {
 			Title:                it.Title,
 			OwnerUserDisplayName: &it.OwnerUserDisplayName,
 			Official:             &it.Official,
+			Score:                &it.Score,
 		}
 	}
 

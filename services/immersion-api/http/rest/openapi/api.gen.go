@@ -120,6 +120,7 @@ type ContestRegistrationReference struct {
 	Official             *bool              `json:"official,omitempty"`
 	OwnerUserDisplayName *string            `json:"owner_user_display_name,omitempty"`
 	RegistrationId       openapi_types.UUID `json:"registration_id"`
+	Score                *float32           `json:"score,omitempty"`
 	Title                string             `json:"title"`
 }
 

@@ -371,6 +371,14 @@ type LogTagSuggestionsParams struct {
 	Query *string `form:"query,omitempty" json:"query,omitempty"`
 }
 
+// LogUpdateJSONBody defines parameters for LogUpdate.
+type LogUpdateJSONBody struct {
+	Amount      float32            `json:"amount"`
+	Description *string            `json:"description,omitempty"`
+	Tags        []string           `json:"tags"`
+	UnitId      openapi_types.UUID `json:"unit_id"`
+}
+
 // LogContestRegistrationUpdateJSONBody defines parameters for LogContestRegistrationUpdate.
 type LogContestRegistrationUpdateJSONBody struct {
 	RegistrationIds []openapi_types.UUID `json:"registration_ids"`
@@ -400,14 +408,6 @@ type LanguageUpdateJSONRequestBody LanguageUpdateJSONBody
 
 // LogCreateJSONRequestBody defines body for LogCreate for application/json ContentType.
 type LogCreateJSONRequestBody LogCreateJSONBody
-
-// LogUpdateJSONBody defines parameters for LogUpdate.
-type LogUpdateJSONBody struct {
-	Amount      float32            `json:"amount"`
-	Description *string            `json:"description,omitempty"`
-	Tags        []string           `json:"tags"`
-	UnitId      openapi_types.UUID `json:"unit_id"`
-}
 
 // LogUpdateJSONRequestBody defines body for LogUpdate for application/json ContentType.
 type LogUpdateJSONRequestBody LogUpdateJSONBody

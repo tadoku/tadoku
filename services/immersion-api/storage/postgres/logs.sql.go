@@ -234,6 +234,43 @@ func (q *Queries) FetchLogOutboxContext(ctx context.Context, logID uuid.UUID) (F
 	return i, err
 }
 
+const fetchOngoingContestIDsForLog = `-- name: FetchOngoingContestIDsForLog :many
+select contest_logs.contest_id
+from contest_logs
+inner join contests on (contests.id = contest_logs.contest_id)
+where
+  contest_logs.log_id = $1
+  and contests.contest_end >= $2
+`
+
+type FetchOngoingContestIDsForLogParams struct {
+	LogID uuid.UUID
+	Now   time.Time
+}
+
+func (q *Queries) FetchOngoingContestIDsForLog(ctx context.Context, arg FetchOngoingContestIDsForLogParams) ([]uuid.UUID, error) {
+	rows, err := q.db.QueryContext(ctx, fetchOngoingContestIDsForLog, arg.LogID, arg.Now)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []uuid.UUID
+	for rows.Next() {
+		var contest_id uuid.UUID
+		if err := rows.Scan(&contest_id); err != nil {
+			return nil, err
+		}
+		items = append(items, contest_id)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const fetchScoresForProfile = `-- name: FetchScoresForProfile :many
 select
   language_code,
@@ -655,43 +692,6 @@ func (q *Queries) ListLogsForUser(ctx context.Context, arg ListLogsForUserParams
 	return items, nil
 }
 
-const fetchOngoingContestIDsForLog = `-- name: FetchOngoingContestIDsForLog :many
-select contest_logs.contest_id
-from contest_logs
-inner join contests on (contests.id = contest_logs.contest_id)
-where
-  contest_logs.log_id = $1
-  and contests.contest_end >= $2
-`
-
-type FetchOngoingContestIDsForLogParams struct {
-	LogID uuid.UUID
-	Now   time.Time
-}
-
-func (q *Queries) FetchOngoingContestIDsForLog(ctx context.Context, arg FetchOngoingContestIDsForLogParams) ([]uuid.UUID, error) {
-	rows, err := q.db.QueryContext(ctx, fetchOngoingContestIDsForLog, arg.LogID, arg.Now)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []uuid.UUID
-	for rows.Next() {
-		var contest_id uuid.UUID
-		if err := rows.Scan(&contest_id); err != nil {
-			return nil, err
-		}
-		items = append(items, contest_id)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
 const updateLog = `-- name: UpdateLog :exec
 update logs
 set
@@ -726,6 +726,23 @@ func (q *Queries) UpdateLog(ctx context.Context, arg UpdateLogParams) error {
 	return err
 }
 
+const updateLogEligibleOfficialLeaderboard = `-- name: UpdateLogEligibleOfficialLeaderboard :exec
+update logs
+set eligible_official_leaderboard = (
+  select coalesce(bool_or(contests.official), false)
+  from contest_logs
+  inner join contests on contests.id = contest_logs.contest_id
+  where contest_logs.log_id = $1
+),
+updated_at = now()
+where id = $1
+`
+
+func (q *Queries) UpdateLogEligibleOfficialLeaderboard(ctx context.Context, logID uuid.UUID) error {
+	_, err := q.db.ExecContext(ctx, updateLogEligibleOfficialLeaderboard, logID)
+	return err
+}
+
 const updateOngoingContestLogs = `-- name: UpdateOngoingContestLogs :exec
 update contest_logs
 set
@@ -752,23 +769,6 @@ func (q *Queries) UpdateOngoingContestLogs(ctx context.Context, arg UpdateOngoin
 		arg.LogID,
 		arg.Now,
 	)
-	return err
-}
-
-const updateLogEligibleOfficialLeaderboard = `-- name: UpdateLogEligibleOfficialLeaderboard :exec
-update logs
-set eligible_official_leaderboard = (
-  select coalesce(bool_or(contests.official), false)
-  from contest_logs
-  inner join contests on contests.id = contest_logs.contest_id
-  where contest_logs.log_id = $1
-),
-updated_at = now()
-where id = $1
-`
-
-func (q *Queries) UpdateLogEligibleOfficialLeaderboard(ctx context.Context, logID uuid.UUID) error {
-	_, err := q.db.ExecContext(ctx, updateLogEligibleOfficialLeaderboard, logID)
 	return err
 }
 

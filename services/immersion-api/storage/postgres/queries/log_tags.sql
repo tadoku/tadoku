@@ -3,6 +3,9 @@ insert into log_tags (log_id, user_id, tag)
 values (sqlc.arg('log_id'), sqlc.arg('user_id'), sqlc.arg('tag'))
 on conflict do nothing;
 
+-- name: DeleteLogTagsForLog :exec
+delete from log_tags where log_id = sqlc.arg('log_id');
+
 -- name: ListTagSuggestionsForUser :many
 select tag, count(*) as usage_count
 from log_tags

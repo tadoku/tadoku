@@ -33,6 +33,7 @@ func NewServer(
 	contestModerationDetachLog *domain.ContestModerationDetachLog,
 	registrationUpsert *domain.RegistrationUpsert,
 	logCreate *domain.LogCreate,
+	logUpdate *domain.LogUpdate,
 	contestCreate *domain.ContestCreate,
 	languageList *domain.LanguageList,
 	languageCreate *domain.LanguageCreate,
@@ -67,6 +68,7 @@ func NewServer(
 		contestModerationDetachLog:  contestModerationDetachLog,
 		registrationUpsert:          registrationUpsert,
 		logCreate:                   logCreate,
+		logUpdate:                   logUpdate,
 		contestCreate:               contestCreate,
 		languageList:                languageList,
 		languageCreate:              languageCreate,
@@ -103,6 +105,7 @@ type Server struct {
 	contestModerationDetachLog  *domain.ContestModerationDetachLog
 	registrationUpsert          *domain.RegistrationUpsert
 	logCreate                   *domain.LogCreate
+	logUpdate                   *domain.LogUpdate
 	contestCreate               *domain.ContestCreate
 	languageList                *domain.LanguageList
 	languageCreate              *domain.LanguageCreate

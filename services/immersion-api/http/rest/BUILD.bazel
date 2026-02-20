@@ -31,6 +31,7 @@ go_library(
         "server_logdeletebyid.go",
         "server_logfindbyid.go",
         "server_loggetconfigurations.go",
+        "server_logupdate.go",
         "server_ping.go",
         "server_profilefindbyuserid.go",
         "server_profilelistlogs.go",

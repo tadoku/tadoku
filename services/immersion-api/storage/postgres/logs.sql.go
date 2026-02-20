@@ -234,6 +234,43 @@ func (q *Queries) FetchLogOutboxContext(ctx context.Context, logID uuid.UUID) (F
 	return i, err
 }
 
+const fetchOngoingContestIDsForLog = `-- name: FetchOngoingContestIDsForLog :many
+select contest_logs.contest_id
+from contest_logs
+inner join contests on (contests.id = contest_logs.contest_id)
+where
+  contest_logs.log_id = $1
+  and contests.contest_end >= $2
+`
+
+type FetchOngoingContestIDsForLogParams struct {
+	LogID uuid.UUID
+	Now   time.Time
+}
+
+func (q *Queries) FetchOngoingContestIDsForLog(ctx context.Context, arg FetchOngoingContestIDsForLogParams) ([]uuid.UUID, error) {
+	rows, err := q.db.QueryContext(ctx, fetchOngoingContestIDsForLog, arg.LogID, arg.Now)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []uuid.UUID
+	for rows.Next() {
+		var contest_id uuid.UUID
+		if err := rows.Scan(&contest_id); err != nil {
+			return nil, err
+		}
+		items = append(items, contest_id)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const fetchScoresForProfile = `-- name: FetchScoresForProfile :many
 select
   language_code,
@@ -353,6 +390,7 @@ select
   languages.name as language_name,
   logs.log_activity_id as activity_id,
   log_activities.name as activity_name,
+  logs.unit_id,
   log_units.name as unit_name,
   logs.description,
   logs.amount,
@@ -389,6 +427,7 @@ type FindLogByIDRow struct {
 	LanguageName                string
 	ActivityID                  int16
 	ActivityName                string
+	UnitID                      uuid.UUID
 	UnitName                    string
 	Description                 sql.NullString
 	Amount                      float32
@@ -412,6 +451,7 @@ func (q *Queries) FindLogByID(ctx context.Context, arg FindLogByIDParams) (FindL
 		&i.LanguageName,
 		&i.ActivityID,
 		&i.ActivityName,
+		&i.UnitID,
 		&i.UnitName,
 		&i.Description,
 		&i.Amount,
@@ -652,6 +692,40 @@ func (q *Queries) ListLogsForUser(ctx context.Context, arg ListLogsForUserParams
 	return items, nil
 }
 
+const updateLog = `-- name: UpdateLog :exec
+update logs
+set
+  amount = $1,
+  modifier = $2,
+  unit_id = $3,
+  "description" = $4,
+  updated_at = $5
+where
+  id = $6
+  and deleted_at is null
+`
+
+type UpdateLogParams struct {
+	Amount      float32
+	Modifier    float32
+	UnitID      uuid.UUID
+	Description sql.NullString
+	Now         time.Time
+	LogID       uuid.UUID
+}
+
+func (q *Queries) UpdateLog(ctx context.Context, arg UpdateLogParams) error {
+	_, err := q.db.ExecContext(ctx, updateLog,
+		arg.Amount,
+		arg.Modifier,
+		arg.UnitID,
+		arg.Description,
+		arg.Now,
+		arg.LogID,
+	)
+	return err
+}
+
 const updateLogEligibleOfficialLeaderboard = `-- name: UpdateLogEligibleOfficialLeaderboard :exec
 update logs
 set eligible_official_leaderboard = (
@@ -666,6 +740,35 @@ where id = $1
 
 func (q *Queries) UpdateLogEligibleOfficialLeaderboard(ctx context.Context, logID uuid.UUID) error {
 	_, err := q.db.ExecContext(ctx, updateLogEligibleOfficialLeaderboard, logID)
+	return err
+}
+
+const updateOngoingContestLogs = `-- name: UpdateOngoingContestLogs :exec
+update contest_logs
+set
+  amount = $1,
+  modifier = $2
+from contests
+where
+  contest_logs.log_id = $3
+  and contest_logs.contest_id = contests.id
+  and contests.contest_end >= $4
+`
+
+type UpdateOngoingContestLogsParams struct {
+	Amount   float32
+	Modifier float32
+	LogID    uuid.UUID
+	Now      time.Time
+}
+
+func (q *Queries) UpdateOngoingContestLogs(ctx context.Context, arg UpdateOngoingContestLogsParams) error {
+	_, err := q.db.ExecContext(ctx, updateOngoingContestLogs,
+		arg.Amount,
+		arg.Modifier,
+		arg.LogID,
+		arg.Now,
+	)
 	return err
 }
 

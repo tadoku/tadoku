@@ -293,7 +293,10 @@ export const useContestRegistrationUpdate = (onSuccess: () => void) => {
       return
     },
     onSuccess() {
-      queryClient.invalidateQueries(['contest', 'ongoing-contest-registrations'])
+      queryClient.invalidateQueries([
+        'contest',
+        'ongoing-contest-registrations',
+      ])
       onSuccess()
     },
   })
@@ -536,6 +539,7 @@ export const Log = z.object({
   description: z.string().optional(),
   language: Language,
   activity: Activity,
+  unit_id: z.string(),
   unit_name: z.string(),
   tags: z.array(z.string()),
   amount: z.number(),
@@ -716,7 +720,9 @@ const TagSuggestions = z.object({
   suggestions: z.array(TagSuggestion),
 })
 
-export const fetchTagSuggestions = async (query: string): Promise<TagSuggestion[]> => {
+export const fetchTagSuggestions = async (
+  query: string,
+): Promise<TagSuggestion[]> => {
   const response = await fetch(
     `${root}/logs/tag-suggestions?query=${encodeURIComponent(query)}`,
   )
@@ -776,7 +782,46 @@ export const useCreateLogV2 = (onSuccess: (log: Log) => void) =>
     },
   })
 
-export const useUpdateLogContestRegistrations = (onSuccess: (log: Log) => void) => {
+export type UpdateLogPayload = {
+  amount: number
+  unit_id: string
+  tags: string[]
+  description?: string
+}
+
+export const useUpdateLog = (onSuccess: (log: Log) => void) => {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async ({
+      logId,
+      payload,
+    }: {
+      logId: string
+      payload: UpdateLogPayload
+    }) => {
+      const response = await fetch(`${root}/logs/${logId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      })
+      if (response.status !== 200) {
+        throw new Error(response.status.toString())
+      }
+
+      return Log.parse(await response.json())
+    },
+    onSuccess(data) {
+      queryClient.invalidateQueries(['log', 'findByID', data.id])
+      onSuccess(data)
+    },
+  })
+}
+
+export const useUpdateLogContestRegistrations = (
+  onSuccess: (log: Log) => void,
+) => {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: async ({
@@ -786,13 +831,16 @@ export const useUpdateLogContestRegistrations = (onSuccess: (log: Log) => void) 
       logId: string
       registrationIds: string[]
     }) => {
-      const response = await fetch(`${root}/logs/${logId}/contest-registrations`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
+      const response = await fetch(
+        `${root}/logs/${logId}/contest-registrations`,
+        {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ registration_ids: registrationIds }),
         },
-        body: JSON.stringify({ registration_ids: registrationIds }),
-      })
+      )
       if (response.status !== 200) {
         throw new Error(response.status.toString())
       }
@@ -1054,10 +1102,7 @@ export const useUserList = (
     { ...options, retry: false },
   )
 
-export const useUpdateUserRole = (
-  onSuccess: () => void,
-  onError: () => void,
-) =>
+export const useUpdateUserRole = (onSuccess: () => void, onError: () => void) =>
   useMutation({
     mutationFn: async ({
       userId,

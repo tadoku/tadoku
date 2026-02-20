@@ -84,18 +84,22 @@ export const EditLogForm = ({ options, log }: Props) => {
       >
         <div className="card">
           <div className="v-stack spaced">
-            <div>
-              <label className="label">Language</label>
-              <div className="text-sm font-medium py-2 px-3 bg-slate-100 rounded">
-                {log.language.name}
-              </div>
-            </div>
-            <div>
-              <label className="label">Activity</label>
-              <div className="text-sm font-medium py-2 px-3 bg-slate-100 rounded">
-                {log.activity.name}
-              </div>
-            </div>
+            <label className="label">
+              <span className="label-text">Language</span>
+              <input
+                type="text"
+                value={log.language.name}
+                disabled
+              />
+            </label>
+            <label className="label">
+              <span className="label-text">Activity</span>
+              <input
+                type="text"
+                value={log.activity.name}
+                disabled
+              />
+            </label>
             <AmountWithUnit
               label="Amount"
               name="amount"

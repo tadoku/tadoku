@@ -293,7 +293,10 @@ export const useContestRegistrationUpdate = (onSuccess: () => void) => {
       return
     },
     onSuccess() {
-      queryClient.invalidateQueries(['contest', 'ongoing-contest-registrations'])
+      queryClient.invalidateQueries([
+        'contest',
+        'ongoing-contest-registrations',
+      ])
       onSuccess()
     },
   })
@@ -717,7 +720,9 @@ const TagSuggestions = z.object({
   suggestions: z.array(TagSuggestion),
 })
 
-export const fetchTagSuggestions = async (query: string): Promise<TagSuggestion[]> => {
+export const fetchTagSuggestions = async (
+  query: string,
+): Promise<TagSuggestion[]> => {
   const response = await fetch(
     `${root}/logs/tag-suggestions?query=${encodeURIComponent(query)}`,
   )
@@ -814,7 +819,9 @@ export const useUpdateLog = (onSuccess: (log: Log) => void) => {
   })
 }
 
-export const useUpdateLogContestRegistrations = (onSuccess: (log: Log) => void) => {
+export const useUpdateLogContestRegistrations = (
+  onSuccess: (log: Log) => void,
+) => {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: async ({
@@ -824,13 +831,16 @@ export const useUpdateLogContestRegistrations = (onSuccess: (log: Log) => void) 
       logId: string
       registrationIds: string[]
     }) => {
-      const response = await fetch(`${root}/logs/${logId}/contest-registrations`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
+      const response = await fetch(
+        `${root}/logs/${logId}/contest-registrations`,
+        {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ registration_ids: registrationIds }),
         },
-        body: JSON.stringify({ registration_ids: registrationIds }),
-      })
+      )
       if (response.status !== 200) {
         throw new Error(response.status.toString())
       }
@@ -1092,10 +1102,7 @@ export const useUserList = (
     { ...options, retry: false },
   )
 
-export const useUpdateUserRole = (
-  onSuccess: () => void,
-  onError: () => void,
-) =>
+export const useUpdateUserRole = (onSuccess: () => void, onError: () => void) =>
   useMutation({
     mutationFn: async ({
       userId,

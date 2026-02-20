@@ -1,5 +1,9 @@
 import { TrashIcon, CheckBadgeIcon } from '@heroicons/react/20/solid'
-import { XMarkIcon, ChevronRightIcon, PencilSquareIcon } from '@heroicons/react/24/outline'
+import {
+  XMarkIcon,
+  ChevronRightIcon,
+  PencilSquareIcon,
+} from '@heroicons/react/24/outline'
 import { Log, useDeleteLog } from '@app/immersion/api'
 import { routes } from '@app/common/routes'
 import { colorForActivity, formatScore, formatUnit } from '@app/common/format'
@@ -38,13 +42,18 @@ export const LogDetailsV2 = ({ log }: Props) => {
 
       <div className="flex flex-col lg:flex-row gap-6">
         <div className="card lg:w-3/5">
-          <div className={`bg-${logColor}-200 -mx-4 -mt-4 md:-mx-7 md:-mt-7 mb-4 px-4 py-3 md:px-7 flex items-center justify-between`}>
+          <div
+            className={`bg-${logColor}-200 -mx-4 -mt-4 md:-mx-7 md:-mt-7 mb-4 px-4 py-3 md:px-7 flex items-center justify-between`}
+          >
             <div className="text-sm flex items-baseline gap-2">
               <strong>{log.language.name}</strong>
               <span>&middot;</span>
               <span>{log.activity.name}</span>
             </div>
-            <Link href={routes.logEdit(log.id)} className="btn ghost text-sm -my-4 -mr-4 md:-mr-7">
+            <Link
+              href={routes.logEdit(log.id)}
+              className="btn ghost text-sm -my-4 -mr-4 md:-mr-7"
+            >
               <PencilSquareIcon className="w-4 h-4 mr-2" />
               Edit
             </Link>
@@ -67,16 +76,12 @@ export const LogDetailsV2 = ({ log }: Props) => {
           <div className="h-stack w-full spaced">
             <div className="w-1/2">
               <h3 className="subtitle mb-2">Score</h3>
-              <div className="font-bold text-5xl">
-                {formatScore(log.score)}
-              </div>
+              <div className="font-bold text-5xl">{formatScore(log.score)}</div>
             </div>
             <div className="w-1/2 flex flex-col items-end justify-end opacity-80">
               <h4 className="subtitle text-sm">Breakdown</h4>
               <div className="lowercase flex items-center space-x-1 text-sm">
-                <strong className="text-lg">
-                  {formatScore(log.amount)}
-                </strong>
+                <strong className="text-lg">{formatScore(log.amount)}</strong>
                 <span className="text-slate-500">
                   {formatUnit(log.amount, log.unit_name)}
                 </span>
@@ -91,14 +96,21 @@ export const LogDetailsV2 = ({ log }: Props) => {
         <div className="card p-0 w-full lg:w-2/5 self-start">
           <div className="flex items-center justify-between px-4 py-3">
             <h3 className="subtitle text-sm">Submitted to contests</h3>
-            <Link href={routes.logContests(log.id)} className="btn ghost text-sm -my-4 -mr-4">
+            <Link
+              href={routes.logContests(log.id)}
+              className="btn ghost text-sm -my-4 -mr-4"
+            >
               <PencilSquareIcon className="w-4 h-4 mr-2" />
               Edit
             </Link>
           </div>
-          <ul className={`divide-y-2 divide-slate-500/5 ${
-            log.registrations && log.registrations.length > 0 ? 'border-t-2 border-slate-500/5' : ''
-          }`}>
+          <ul
+            className={`divide-y-2 divide-slate-500/5 ${
+              log.registrations && log.registrations.length > 0
+                ? 'border-t-2 border-slate-500/5'
+                : ''
+            }`}
+          >
             {log.registrations && log.registrations.length > 0 ? (
               log.registrations.map(reg => (
                 <li key={reg.contest_id}>
@@ -110,12 +122,14 @@ export const LogDetailsV2 = ({ log }: Props) => {
                       <span className="font-bold text-base">{reg.title}</span>
                       {reg.official ? (
                         <div className="text-xs text-gray-600 flex items-center">
-                          Administered by <strong className="ml-1">Tadoku</strong>
+                          Administered by{' '}
+                          <strong className="ml-1">Tadoku</strong>
                           <CheckBadgeIcon className="ml-1 w-4 h-4 text-lime-700" />
                         </div>
                       ) : reg.owner_user_display_name ? (
                         <div className="text-xs text-gray-600">
-                          Administered by <strong>{reg.owner_user_display_name}</strong>
+                          Administered by{' '}
+                          <strong>{reg.owner_user_display_name}</strong>
                         </div>
                       ) : null}
                     </div>
@@ -170,8 +184,8 @@ function DeleteButton({ log }: { log: Log }) {
         title="Are you sure?"
       >
         <p className="modal-body">
-          Deletion cannot be undone. The log will be permanently removed from all
-          contests and your personal tracking history.
+          Deletion cannot be undone. The log will be permanently removed from
+          all contests and your personal tracking history.
         </p>
 
         <div className="modal-actions spaced">

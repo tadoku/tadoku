@@ -22,9 +22,7 @@ const Page = () => {
 
   if (role !== 'admin') {
     return (
-      <span className="flash error">
-        This feature is not yet available.
-      </span>
+      <span className="flash error">This feature is not yet available.</span>
     )
   }
 

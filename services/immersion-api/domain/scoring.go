@@ -28,14 +28,14 @@ func validateTrackingData(activity *Activity, durationSeconds *int32, amount *fl
 
 // ComputeScore calculates the score for a log based on the activity's input type.
 // When amount is provided, it takes priority. When only time is provided, the
-// activity's time_modifier is used.
+// DefaultTimeModifier is used.
 func ComputeScore(activity *Activity, amount *float32, modifier *float32, durationSeconds *int32) float32 {
 	hasAmount := amount != nil && modifier != nil
 
 	if activity.InputType == "time" {
 		// Time-based activities always score from time
 		if durationSeconds != nil {
-			return (float32(*durationSeconds) / 60.0) * activity.TimeModifier
+			return (float32(*durationSeconds) / 60.0) * DefaultTimeModifier
 		}
 		return 0
 	}
@@ -45,7 +45,7 @@ func ComputeScore(activity *Activity, amount *float32, modifier *float32, durati
 		return *amount * *modifier
 	}
 	if durationSeconds != nil {
-		return (float32(*durationSeconds) / 60.0) * activity.TimeModifier
+		return (float32(*durationSeconds) / 60.0) * DefaultTimeModifier
 	}
 	return 0
 }

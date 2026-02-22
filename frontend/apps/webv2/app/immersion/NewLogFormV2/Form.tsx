@@ -90,7 +90,6 @@ export const LogFormV2 = ({ options, defaultValues: originalDefaultValues }: Pro
     amount,
     currentSelectedUnit,
     durationMinutes,
-    activity?.time_modifier ?? undefined,
   )
 
   // Eagerly prefetch ongoing registrations (non-blocking)

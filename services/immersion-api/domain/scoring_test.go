@@ -10,8 +10,8 @@ import (
 func ptr[T any](v T) *T { return &v }
 
 func TestValidateTrackingData(t *testing.T) {
-	timeActivity := &Activity{ID: 1, Name: "Listening", InputType: "time", TimeModifier: 0.3}
-	amountActivity := &Activity{ID: 2, Name: "Reading", InputType: "amount", TimeModifier: 0.3}
+	timeActivity := &Activity{ID: 1, Name: "Listening", InputType: "time"}
+	amountActivity := &Activity{ID: 2, Name: "Reading", InputType: "amount"}
 
 	t.Run("time activity: valid with duration", func(t *testing.T) {
 		err := validateTrackingData(timeActivity, ptr(int32(3600)), nil, nil)
@@ -75,8 +75,8 @@ func TestValidateTrackingData(t *testing.T) {
 }
 
 func TestComputeScore(t *testing.T) {
-	timeActivity := &Activity{ID: 1, Name: "Listening", InputType: "time", TimeModifier: 0.3}
-	amountActivity := &Activity{ID: 2, Name: "Reading", InputType: "amount", TimeModifier: 0.3}
+	timeActivity := &Activity{ID: 1, Name: "Listening", InputType: "time"}
+	amountActivity := &Activity{ID: 2, Name: "Reading", InputType: "amount"}
 
 	t.Run("time activity: scores from duration", func(t *testing.T) {
 		// 3600 seconds = 60 minutes, 60 * 0.3 = 18

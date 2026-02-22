@@ -62,7 +62,6 @@ export const EditLogForm = ({ options, log }: Props) => {
   const amount = methods.watch('amountValue')
   const durationMinutes = methods.watch('durationMinutes')
 
-  const activity = options.activities.find(it => it.id === log.activity.id)
   const units = filterUnits(options.units, log.activity.id, log.language.code)
   const unitsAsOptions: Option[] = units.map(it => ({
     value: it.id,
@@ -73,7 +72,6 @@ export const EditLogForm = ({ options, log }: Props) => {
     amount,
     currentSelectedUnit,
     durationMinutes,
-    activity?.time_modifier ?? undefined,
   )
 
   const router = useRouter()

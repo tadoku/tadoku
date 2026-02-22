@@ -11,12 +11,15 @@ type Language struct {
 	Name string
 }
 
+// DefaultTimeModifier is the score multiplier applied per minute when scoring
+// from time instead of amount. This is a fixed business rule, not per-activity.
+const DefaultTimeModifier float32 = 0.3
+
 type Activity struct {
-	ID           int32
-	Name         string
-	Default      bool
-	TimeModifier float32
-	InputType    string // "time" or "amount"
+	ID        int32
+	Name      string
+	Default   bool
+	InputType string // "time" or "amount"
 }
 
 type ContestView struct {
@@ -145,6 +148,7 @@ type Log struct {
 	LanguageName                string
 	ActivityID                  int
 	ActivityName                string
+	ActivityInputType           string
 	UnitID                      *uuid.UUID
 	UnitName                    *string
 	Tags                        []string

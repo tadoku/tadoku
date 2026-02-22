@@ -32,11 +32,10 @@ func (r *Repository) FetchContestConfigurationOptions(ctx context.Context) (*dom
 
 	for i, a := range acts {
 		options.Activities[i] = domain.Activity{
-			ID:           a.ID,
-			Name:         a.Name,
-			Default:      a.Default,
-			TimeModifier: a.TimeModifier,
-			InputType:    a.InputType,
+			ID:        a.ID,
+			Name:      a.Name,
+			Default:   a.Default,
+			InputType: a.InputType,
 		}
 	}
 

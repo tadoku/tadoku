@@ -42,7 +42,7 @@ func (m *mockLogUpdateRepository) FindActivityByID(ctx context.Context, id int32
 	if m.activityOverride != nil {
 		return m.activityOverride, nil
 	}
-	return &domain.Activity{ID: id, Name: "test", InputType: "amount", TimeModifier: 0.3}, nil
+	return &domain.Activity{ID: id, Name: "test", InputType: "amount"}, nil
 }
 
 func TestLogUpdate_Execute(t *testing.T) {
@@ -236,7 +236,7 @@ func TestLogUpdate_Execute(t *testing.T) {
 			log:        &domain.Log{ID: logID, UserID: userID, ActivityID: 3},
 			updatedLog: updatedLog,
 			activityOverride: &domain.Activity{
-				ID: 3, Name: "Listening", InputType: "time", TimeModifier: 0.3,
+				ID: 3, Name: "Listening", InputType: "time",
 			},
 		}
 		clock := commondomain.NewMockClock(now)
@@ -260,7 +260,7 @@ func TestLogUpdate_Execute(t *testing.T) {
 		repo := &mockLogUpdateRepository{
 			log: &domain.Log{ID: logID, UserID: userID, ActivityID: 3},
 			activityOverride: &domain.Activity{
-				ID: 3, Name: "Listening", InputType: "time", TimeModifier: 0.3,
+				ID: 3, Name: "Listening", InputType: "time",
 			},
 		}
 		clock := commondomain.NewMockClock(now)

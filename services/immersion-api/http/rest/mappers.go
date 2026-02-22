@@ -43,8 +43,9 @@ func logToAPI(log *domain.Log) *openapi.Log {
 	return &openapi.Log{
 		Id: log.ID,
 		Activity: openapi.Activity{
-			Id:   int32(log.ActivityID),
-			Name: log.ActivityName,
+			Id:        int32(log.ActivityID),
+			Name:      log.ActivityName,
+			InputType: openapi.ActivityInputType(log.ActivityInputType),
 		},
 		Language: openapi.Language{
 			Code: log.LanguageCode,

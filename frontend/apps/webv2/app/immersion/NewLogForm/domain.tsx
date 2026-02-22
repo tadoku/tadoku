@@ -165,17 +165,19 @@ export const trackingModesForRegistrations = (registrationCount: number) => {
   ] satisfies RadioProps['options']
 }
 
+// Fixed score multiplier per minute when scoring from time instead of amount.
+const DEFAULT_TIME_MODIFIER = 0.3
+
 export const estimateScore = (
   amount: number | undefined,
   unit: Unit | undefined,
   durationMinutes?: number | undefined,
-  timeModifier?: number | undefined,
 ) => {
   if (amount && unit) {
     return amount * unit.modifier
   }
-  if (durationMinutes && timeModifier) {
-    return durationMinutes * timeModifier
+  if (durationMinutes) {
+    return durationMinutes * DEFAULT_TIME_MODIFIER
   }
   return undefined
 }

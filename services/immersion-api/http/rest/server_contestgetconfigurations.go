@@ -24,11 +24,10 @@ func (s *Server) ContestGetConfigurations(ctx echo.Context) error {
 	for i, a := range opts.Activities {
 		a := a
 		res.Activities[i] = openapi.Activity{
-			Id:           a.ID,
-			Name:         a.Name,
-			Default:      &a.Default,
-			InputType:    openapi.ActivityInputType(a.InputType),
-			TimeModifier: &a.TimeModifier,
+			Id:        a.ID,
+			Name:      a.Name,
+			Default:   &a.Default,
+			InputType: openapi.ActivityInputType(a.InputType),
 		}
 	}
 

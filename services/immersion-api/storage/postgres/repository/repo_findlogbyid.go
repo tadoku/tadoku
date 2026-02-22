@@ -57,6 +57,7 @@ func (r *Repository) FindLogByID(ctx context.Context, req *domain.LogFindRequest
 		LanguageName:                log.LanguageName,
 		ActivityID:                  int(log.ActivityID),
 		ActivityName:                log.ActivityName,
+		ActivityInputType:           log.ActivityInputType,
 		UnitID:                      postgres.NewUUIDFromNullUUID(log.UnitID),
 		UnitName:                    unitName,
 		Tags:                        postgres.StringArrayFromInterface(log.Tags),

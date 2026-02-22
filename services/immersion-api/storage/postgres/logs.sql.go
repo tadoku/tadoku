@@ -406,6 +406,7 @@ select
   languages.name as language_name,
   logs.log_activity_id as activity_id,
   log_activities.name as activity_name,
+  log_activities.input_type as activity_input_type,
   logs.unit_id,
   log_units.name as unit_name,
   logs.description,
@@ -444,6 +445,7 @@ type FindLogByIDRow struct {
 	LanguageName                string
 	ActivityID                  int16
 	ActivityName                string
+	ActivityInputType           string
 	UnitID                      uuid.NullUUID
 	UnitName                    string
 	Description                 sql.NullString
@@ -469,6 +471,7 @@ func (q *Queries) FindLogByID(ctx context.Context, arg FindLogByIDParams) (FindL
 		&i.LanguageName,
 		&i.ActivityID,
 		&i.ActivityName,
+		&i.ActivityInputType,
 		&i.UnitID,
 		&i.UnitName,
 		&i.Description,
@@ -494,6 +497,7 @@ with eligible_logs as (
     languages.name as language_name,
     logs.log_activity_id as activity_id,
     log_activities.name as activity_name,
+    log_activities.input_type as activity_input_type,
     log_units.name as unit_name,
     logs.description,
     contest_logs.amount,
@@ -520,7 +524,7 @@ with eligible_logs as (
     and contest_logs.contest_id = $5
 )
 select
-  id, user_id, language_code, language_name, activity_id, activity_name, unit_name, description, amount, modifier, score, duration_seconds, created_at, updated_at, deleted_at, user_display_name, tags,
+  id, user_id, language_code, language_name, activity_id, activity_name, activity_input_type, unit_name, description, amount, modifier, score, duration_seconds, created_at, updated_at, deleted_at, user_display_name, tags,
   (select count(eligible_logs.id) from eligible_logs) as total_size
 from eligible_logs
 order by created_at desc
@@ -537,24 +541,25 @@ type ListLogsForContestParams struct {
 }
 
 type ListLogsForContestRow struct {
-	ID              uuid.UUID
-	UserID          uuid.UUID
-	LanguageCode    string
-	LanguageName    string
-	ActivityID      int16
-	ActivityName    string
-	UnitName        string
-	Description     sql.NullString
-	Amount          sql.NullFloat64
-	Modifier        sql.NullFloat64
-	Score           sql.NullFloat64
-	DurationSeconds sql.NullInt32
-	CreatedAt       time.Time
-	UpdatedAt       time.Time
-	DeletedAt       sql.NullTime
-	UserDisplayName string
-	Tags            interface{}
-	TotalSize       int64
+	ID                uuid.UUID
+	UserID            uuid.UUID
+	LanguageCode      string
+	LanguageName      string
+	ActivityID        int16
+	ActivityName      string
+	ActivityInputType string
+	UnitName          string
+	Description       sql.NullString
+	Amount            sql.NullFloat64
+	Modifier          sql.NullFloat64
+	Score             sql.NullFloat64
+	DurationSeconds   sql.NullInt32
+	CreatedAt         time.Time
+	UpdatedAt         time.Time
+	DeletedAt         sql.NullTime
+	UserDisplayName   string
+	Tags              interface{}
+	TotalSize         int64
 }
 
 func (q *Queries) ListLogsForContest(ctx context.Context, arg ListLogsForContestParams) ([]ListLogsForContestRow, error) {
@@ -579,6 +584,7 @@ func (q *Queries) ListLogsForContest(ctx context.Context, arg ListLogsForContest
 			&i.LanguageName,
 			&i.ActivityID,
 			&i.ActivityName,
+			&i.ActivityInputType,
 			&i.UnitName,
 			&i.Description,
 			&i.Amount,
@@ -614,6 +620,7 @@ with eligible_logs as (
     languages.name as language_name,
     logs.log_activity_id as activity_id,
     log_activities.name as activity_name,
+    log_activities.input_type as activity_input_type,
     log_units.name as unit_name,
     logs.description,
     logs.amount,
@@ -636,7 +643,7 @@ with eligible_logs as (
     and logs.user_id = $4
 )
 select
-  id, user_id, language_code, language_name, activity_id, activity_name, unit_name, description, amount, modifier, score, duration_seconds, created_at, updated_at, deleted_at, tags,
+  id, user_id, language_code, language_name, activity_id, activity_name, activity_input_type, unit_name, description, amount, modifier, score, duration_seconds, created_at, updated_at, deleted_at, tags,
   (select count(eligible_logs.id) from eligible_logs) as total_size
 from eligible_logs
 order by created_at desc
@@ -652,23 +659,24 @@ type ListLogsForUserParams struct {
 }
 
 type ListLogsForUserRow struct {
-	ID              uuid.UUID
-	UserID          uuid.UUID
-	LanguageCode    string
-	LanguageName    string
-	ActivityID      int16
-	ActivityName    string
-	UnitName        sql.NullString
-	Description     sql.NullString
-	Amount          sql.NullFloat64
-	Modifier        sql.NullFloat64
-	Score           float32
-	DurationSeconds sql.NullInt32
-	CreatedAt       time.Time
-	UpdatedAt       time.Time
-	DeletedAt       sql.NullTime
-	Tags            interface{}
-	TotalSize       int64
+	ID                uuid.UUID
+	UserID            uuid.UUID
+	LanguageCode      string
+	LanguageName      string
+	ActivityID        int16
+	ActivityName      string
+	ActivityInputType string
+	UnitName          sql.NullString
+	Description       sql.NullString
+	Amount            sql.NullFloat64
+	Modifier          sql.NullFloat64
+	Score             float32
+	DurationSeconds   sql.NullInt32
+	CreatedAt         time.Time
+	UpdatedAt         time.Time
+	DeletedAt         sql.NullTime
+	Tags              interface{}
+	TotalSize         int64
 }
 
 func (q *Queries) ListLogsForUser(ctx context.Context, arg ListLogsForUserParams) ([]ListLogsForUserRow, error) {
@@ -692,6 +700,7 @@ func (q *Queries) ListLogsForUser(ctx context.Context, arg ListLogsForUserParams
 			&i.LanguageName,
 			&i.ActivityID,
 			&i.ActivityName,
+			&i.ActivityInputType,
 			&i.UnitName,
 			&i.Description,
 			&i.Amount,

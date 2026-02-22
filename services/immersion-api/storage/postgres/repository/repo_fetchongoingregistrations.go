@@ -39,9 +39,8 @@ func (r *Repository) FetchOngoingContestRegistrations(ctx context.Context, req *
 
 	langs := map[string]string{}
 	type actInfo struct {
-		Name         string
-		TimeModifier float32
-		InputType    string
+		Name      string
+		InputType string
 	}
 	acts := map[int32]actInfo{}
 
@@ -49,7 +48,7 @@ func (r *Repository) FetchOngoingContestRegistrations(ctx context.Context, req *
 		langs[l.Code] = l.Name
 	}
 	for _, a := range activities {
-		acts[a.ID] = actInfo{Name: a.Name, TimeModifier: a.TimeModifier, InputType: a.InputType}
+		acts[a.ID] = actInfo{Name: a.Name, InputType: a.InputType}
 	}
 
 	res := &domain.ContestRegistrations{
@@ -78,10 +77,9 @@ func (r *Repository) FetchOngoingContestRegistrations(ctx context.Context, req *
 		for i, a := range r.ActivityTypeIDAllowList {
 			info := acts[a]
 			contest.AllowedActivities[i] = domain.Activity{
-				ID:           a,
-				Name:         info.Name,
-				TimeModifier: info.TimeModifier,
-				InputType:    info.InputType,
+				ID:        a,
+				Name:      info.Name,
+				InputType: info.InputType,
 			}
 		}
 

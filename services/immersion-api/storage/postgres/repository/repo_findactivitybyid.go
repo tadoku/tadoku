@@ -19,10 +19,9 @@ func (r *Repository) FindActivityByID(ctx context.Context, id int32) (*domain.Ac
 	}
 
 	return &domain.Activity{
-		ID:           activity.ID,
-		Name:         activity.Name,
-		Default:      activity.Default,
-		TimeModifier: activity.TimeModifier,
-		InputType:    activity.InputType,
+		ID:        activity.ID,
+		Name:      activity.Name,
+		Default:   activity.Default,
+		InputType: activity.InputType,
 	}, nil
 }

@@ -42,7 +42,7 @@ func (m *mockLogCreateRepository) FindActivityByID(ctx context.Context, id int32
 	if m.activityOverride != nil {
 		return m.activityOverride, nil
 	}
-	return &domain.Activity{ID: id, Name: "test", InputType: "amount", TimeModifier: 0.3}, nil
+	return &domain.Activity{ID: id, Name: "test", InputType: "amount"}, nil
 }
 
 type mockUserUpsertRepositoryForLog struct {
@@ -260,7 +260,7 @@ func TestLogCreate_Execute(t *testing.T) {
 			createdLogID: &logID,
 			log:          timeLog,
 			activityOverride: &domain.Activity{
-				ID: 3, Name: "Listening", InputType: "time", TimeModifier: 0.3,
+				ID: 3, Name: "Listening", InputType: "time",
 			},
 		}
 		clock := commondomain.NewMockClock(now)
@@ -284,7 +284,7 @@ func TestLogCreate_Execute(t *testing.T) {
 	t.Run("rejects time-based activity without duration", func(t *testing.T) {
 		repo := &mockLogCreateRepository{
 			activityOverride: &domain.Activity{
-				ID: 3, Name: "Listening", InputType: "time", TimeModifier: 0.3,
+				ID: 3, Name: "Listening", InputType: "time",
 			},
 		}
 		clock := commondomain.NewMockClock(now)

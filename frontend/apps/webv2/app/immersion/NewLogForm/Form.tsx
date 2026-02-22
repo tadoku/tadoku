@@ -237,7 +237,7 @@ export const LogForm = ({
           </div>
         </form>
         <aside className="hidden lg:block lg:w-56 lg:pt-1">
-          <div className="sticky top-4">
+          <div className="sticky top-14 sm:top-20">
             <TagsSidebar activityId={activityId} />
           </div>
         </aside>

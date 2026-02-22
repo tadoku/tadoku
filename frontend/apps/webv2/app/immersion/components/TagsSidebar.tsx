@@ -79,8 +79,8 @@ export function TagsSidebar({ activityId }: TagsSidebarProps) {
   }
 
   return (
-    <div className="v-stack gap-2">
-      <span className="text-sm font-medium text-slate-500">Common tags</span>
+    <div className="v-stack gap-2 mt-4 lg:mt-0">
+      <span className="subtitle text-sm">Common tags</span>
       <div className="flex flex-wrap gap-2">
         {suggestions.map(({ tag }) => {
           const isSelected = tags.includes(tag)
@@ -90,10 +90,10 @@ export function TagsSidebar({ activityId }: TagsSidebarProps) {
               type="button"
               onClick={() => handleToggle(tag)}
               disabled={!isSelected && isAtLimit}
-              className={`tag rounded-md cursor-pointer transition-colors ${
+              className={`tag cursor-pointer transition-colors border border-b-2 border-black/5 lg:border-black/15 bg-black/5 lg:bg-white ${
                 isSelected
-                  ? 'bg-secondary/10 border border-secondary/30 text-secondary-900'
-                  : 'bg-white border border-slate-300 text-slate-700 hover:bg-slate-50'
+                  ? 'opacity-70 line-through'
+                  : 'hover:bg-slate-50'
               } ${!isSelected && isAtLimit ? 'opacity-50 cursor-not-allowed' : ''}`}
             >
               {tag}

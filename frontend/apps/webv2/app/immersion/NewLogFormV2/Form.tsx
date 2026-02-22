@@ -20,7 +20,7 @@ import {
 import { formatScore } from '@app/common/format'
 import { useDebouncedCallback } from 'use-debounce'
 import { useSessionOrRedirect } from '@app/common/session'
-import { XMarkIcon } from '@heroicons/react/20/solid'
+import { TrashIcon } from '@heroicons/react/20/solid'
 import { useEffect, useState } from 'react'
 import { AmountWithUnit, InputGroup, Option, OptionGroup, Select } from 'ui/components/Form'
 
@@ -202,7 +202,7 @@ export const LogFormV2 = ({ options, defaultValues: originalDefaultValues }: Pro
                           }}
                           aria-label="Remove time tracking"
                         >
-                          <XMarkIcon className="w-4 h-4" />
+                          <TrashIcon className="w-4 h-4" />
                         </button>
                       }
                     />

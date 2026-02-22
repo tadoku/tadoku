@@ -20,7 +20,7 @@ import {
 import { formatScore } from '@app/common/format'
 import { useDebouncedCallback } from 'use-debounce'
 import { useSessionOrRedirect } from '@app/common/session'
-import { XMarkIcon } from '@heroicons/react/20/solid'
+import { TrashIcon } from '@heroicons/react/20/solid'
 import { useState } from 'react'
 import { AmountWithUnit, InputGroup, Option } from 'ui/components/Form'
 import { toast } from 'react-toastify'
@@ -164,7 +164,7 @@ export const EditLogForm = ({ options, log }: Props) => {
                           }}
                           aria-label="Remove time tracking"
                         >
-                          <XMarkIcon className="w-4 h-4" />
+                          <TrashIcon className="w-4 h-4" />
                         </button>
                       }
                     />

@@ -39,9 +39,10 @@ export function InputGroup<T extends FieldValues>(
         {labelAction}
       </div>
       <div
-        className="flex h-11 overflow-visible input-frame group focus-within:ring-2 focus-within:ring-primary/40 focus-within:border-primary transition ease-in-out"
+        className="flex h-11 overflow-visible input-frame group focus-within:ring-2 focus-within:ring-primary/40 focus-within:border-primary transition ease-in-out cursor-text"
         role="group"
         aria-labelledby={`${name}-label`}
+        onClick={() => document.getElementById(name)?.focus()}
       >
         {prefix ? (
           <span className="flex items-center px-3 bg-black/5 whitespace-nowrap">

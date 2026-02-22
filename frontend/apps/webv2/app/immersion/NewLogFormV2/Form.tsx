@@ -20,8 +20,9 @@ import {
 import { formatScore } from '@app/common/format'
 import { useDebouncedCallback } from 'use-debounce'
 import { useSessionOrRedirect } from '@app/common/session'
+import { XMarkIcon } from '@heroicons/react/20/solid'
 import { useEffect, useState } from 'react'
-import { AmountWithUnit, Option, OptionGroup, Select } from 'ui/components/Form'
+import { AmountWithUnit, InputGroup, Option, OptionGroup, Select } from 'ui/components/Form'
 
 interface Props {
   options: LogConfigurationOptions
@@ -163,10 +164,10 @@ export const LogFormV2 = ({ options, defaultValues: originalDefaultValues }: Pro
                 options={{ valueAsNumber: true }}
               />
               {inputType === 'time' ? (
-                <Input
+                <InputGroup
                   name="durationMinutes"
-                  label="Time (minutes)"
-                  type="number"
+                  label="Time"
+                  suffix="minutes"
                   defaultValue={0}
                   min={0}
                   step="any"
@@ -184,29 +185,28 @@ export const LogFormV2 = ({ options, defaultValues: originalDefaultValues }: Pro
                     unitsLabel="Unit"
                   />
                   {showTimeInput ? (
-                    <div className="h-stack items-end gap-2">
-                      <div className="flex-1">
-                        <Input
-                          name="durationMinutes"
-                          label="Time spent (minutes)"
-                          type="number"
-                          defaultValue={0}
-                          min={0}
-                          step="any"
-                          options={{ valueAsNumber: true }}
-                        />
-                      </div>
-                      <button
-                        type="button"
-                        className="btn ghost text-sm mb-0.5"
-                        onClick={() => {
-                          setShowTimeInput(false)
-                          methods.setValue('durationMinutes', undefined)
-                        }}
-                      >
-                        Remove
-                      </button>
-                    </div>
+                    <InputGroup
+                      name="durationMinutes"
+                      label="Time spent"
+                      suffix="minutes"
+                      defaultValue={0}
+                      min={0}
+                      step="any"
+                      options={{ valueAsNumber: true }}
+                      labelAction={
+                        <button
+                          type="button"
+                          className="text-red-400 hover:text-red-600"
+                          onClick={() => {
+                            setShowTimeInput(false)
+                            methods.setValue('durationMinutes', undefined)
+                          }}
+                          aria-label="Remove time tracking"
+                        >
+                          <XMarkIcon className="w-4 h-4" />
+                        </button>
+                      }
+                    />
                   ) : (
                     <button
                       type="button"

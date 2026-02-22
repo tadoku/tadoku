@@ -31,11 +31,13 @@ type Contest struct {
 }
 
 type ContestLog struct {
-	ContestID uuid.UUID
-	LogID     uuid.UUID
-	Amount    float32
-	Modifier  float32
-	Score     sql.NullFloat64
+	ContestID       uuid.UUID
+	LogID           uuid.UUID
+	Amount          sql.NullFloat64
+	Modifier        sql.NullFloat64
+	Score           sql.NullFloat64
+	DurationSeconds sql.NullInt32
+	ComputedScore   sql.NullFloat64
 }
 
 type ContestRegistration struct {
@@ -69,22 +71,26 @@ type Log struct {
 	UserID                      uuid.UUID
 	LanguageCode                string
 	LogActivityID               int16
-	UnitID                      uuid.UUID
+	UnitID                      uuid.NullUUID
 	Description                 sql.NullString
-	Amount                      float32
-	Modifier                    float32
+	Amount                      sql.NullFloat64
+	Modifier                    sql.NullFloat64
 	Score                       float32
 	EligibleOfficialLeaderboard bool
 	Year                        int16
 	CreatedAt                   time.Time
 	UpdatedAt                   time.Time
 	DeletedAt                   sql.NullTime
+	DurationSeconds             sql.NullInt32
+	ComputedScore               sql.NullFloat64
 }
 
 type LogActivity struct {
-	ID      int32
-	Name    string
-	Default bool
+	ID           int32
+	Name         string
+	Default      bool
+	TimeModifier float32
+	InputType    string
 }
 
 type LogDefaultTag struct {

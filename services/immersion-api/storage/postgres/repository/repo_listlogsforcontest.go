@@ -40,6 +40,12 @@ func (r *Repository) ListLogsForContest(ctx context.Context, req *domain.LogList
 
 	res := make([]domain.Log, len(entries))
 	for i, it := range entries {
+		// UnitName from ListLogsForContestRow is string (not nullable per sqlc)
+		var unitName *string
+		if it.UnitName != "" {
+			unitName = &it.UnitName
+		}
+
 		res[i] = domain.Log{
 			ID:              it.ID,
 			UserID:          it.UserID,
@@ -47,13 +53,15 @@ func (r *Repository) ListLogsForContest(ctx context.Context, req *domain.LogList
 			Description:     postgres.NewStringFromNullString(it.Description),
 			LanguageCode:    it.LanguageCode,
 			LanguageName:    it.LanguageName,
-			ActivityID:      int(it.ActivityID),
-			ActivityName:    it.ActivityName,
-			UnitName:        it.UnitName,
+			ActivityID:        int(it.ActivityID),
+			ActivityName:      it.ActivityName,
+			ActivityInputType: it.ActivityInputType,
+			UnitName:        unitName,
 			Tags:            postgres.StringArrayFromInterface(it.Tags),
-			Amount:          it.Amount,
-			Modifier:        it.Modifier,
+			Amount:          postgres.NewFloat32FromNullFloat64(it.Amount),
+			Modifier:        postgres.NewFloat32FromNullFloat64(it.Modifier),
 			Score:           float32(it.Score.Float64),
+			DurationSeconds: postgres.NewInt32FromNullInt32(it.DurationSeconds),
 			CreatedAt:       it.CreatedAt,
 			UpdatedAt:       it.UpdatedAt,
 			Deleted:         it.DeletedAt.Valid,

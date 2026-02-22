@@ -31,21 +31,23 @@ func (r *Repository) ListLogsForUser(ctx context.Context, req *domain.LogListFor
 	res := make([]domain.Log, len(entries))
 	for i, it := range entries {
 		res[i] = domain.Log{
-			ID:           it.ID,
-			UserID:       it.UserID,
-			Description:  postgres.NewStringFromNullString(it.Description),
-			LanguageCode: it.LanguageCode,
-			LanguageName: it.LanguageName,
-			ActivityID:   int(it.ActivityID),
-			ActivityName: it.ActivityName,
-			UnitName:     it.UnitName,
-			Tags:         postgres.StringArrayFromInterface(it.Tags),
-			Amount:       it.Amount,
-			Modifier:     it.Modifier,
-			Score:        it.Score,
-			CreatedAt:    it.CreatedAt,
-			UpdatedAt:    it.UpdatedAt,
-			Deleted:      it.DeletedAt.Valid,
+			ID:              it.ID,
+			UserID:          it.UserID,
+			Description:     postgres.NewStringFromNullString(it.Description),
+			LanguageCode:    it.LanguageCode,
+			LanguageName:    it.LanguageName,
+			ActivityID:        int(it.ActivityID),
+			ActivityName:      it.ActivityName,
+			ActivityInputType: it.ActivityInputType,
+			UnitName:        postgres.NewStringFromNullString(it.UnitName),
+			Tags:            postgres.StringArrayFromInterface(it.Tags),
+			Amount:          postgres.NewFloat32FromNullFloat64(it.Amount),
+			Modifier:        postgres.NewFloat32FromNullFloat64(it.Modifier),
+			Score:           it.Score,
+			DurationSeconds: postgres.NewInt32FromNullInt32(it.DurationSeconds),
+			CreatedAt:       it.CreatedAt,
+			UpdatedAt:       it.UpdatedAt,
+			Deleted:         it.DeletedAt.Valid,
 		}
 	}
 

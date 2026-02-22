@@ -20,11 +20,12 @@ func (s *Server) LogUpdate(ctx echo.Context, id openapi_types.UUID) error {
 	}
 
 	log, err := s.logUpdate.Execute(ctx.Request().Context(), &domain.LogUpdateRequest{
-		LogID:       id,
-		UnitID:      req.UnitId,
-		Amount:      req.Amount,
-		Tags:        req.Tags,
-		Description: req.Description,
+		LogID:           id,
+		UnitID:          req.UnitId,
+		Amount:          req.Amount,
+		DurationSeconds: int32PtrFromIntPtr(req.DurationSeconds),
+		Tags:            req.Tags,
+		Description:     req.Description,
 	})
 	if err != nil {
 		if handled, respErr := handleCommonErrors(ctx, err); handled {

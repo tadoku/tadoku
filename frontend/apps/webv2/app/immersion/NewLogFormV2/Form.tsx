@@ -13,14 +13,16 @@ import { routes } from '@app/common/routes'
 import {
   estimateScore,
   filterUnits,
+  getInputType,
   NewLogFormV2Schema,
   NewLogV2APISchema,
 } from '@app/immersion/NewLogFormV2/domain'
 import { formatScore } from '@app/common/format'
 import { useDebouncedCallback } from 'use-debounce'
 import { useSessionOrRedirect } from '@app/common/session'
-import { useEffect } from 'react'
-import { AmountWithUnit, Option, OptionGroup, Select } from 'ui/components/Form'
+import { TrashIcon } from '@heroicons/react/20/solid'
+import { useEffect, useState } from 'react'
+import { AmountWithUnit, InputGroup, Option, OptionGroup, Select } from 'ui/components/Form'
 
 interface Props {
   options: LogConfigurationOptions
@@ -28,11 +30,16 @@ interface Props {
 }
 
 export const LogFormV2 = ({ options, defaultValues: originalDefaultValues }: Props) => {
+  const initialActivityId = options.activities[0].id
+  const initialInputType = getInputType(options.activities, initialActivityId)
+  const [showTimeInput, setShowTimeInput] = useState(false)
+
   const defaultValues: Partial<NewLogFormV2Schema> = {
     ...originalDefaultValues,
-    activityId: options.activities[0].id,
+    activityId: initialActivityId,
+    inputType: initialInputType,
     amountUnit: options.units.filter(
-      it => it.log_activity_id === options.activities[0].id,
+      it => it.log_activity_id === initialActivityId,
     )[0]?.id,
     allUnits: options.units,
   }
@@ -48,6 +55,8 @@ export const LogFormV2 = ({ options, defaultValues: originalDefaultValues }: Pro
   const languageCode = methods.watch('languageCode')
   const unitId = methods.watch('amountUnit')
   const amount = methods.watch('amountValue')
+  const durationMinutes = methods.watch('durationMinutes')
+  const inputType = getInputType(options.activities, activityId)
 
   const languagesAsOptions: Option[] = options.languages.map(it => ({
     value: it.code,
@@ -77,7 +86,11 @@ export const LogFormV2 = ({ options, defaultValues: originalDefaultValues }: Pro
     value: it.id.toString(),
     label: it.name,
   }))
-  const estimatedScore = estimateScore(amount, currentSelectedUnit)
+  const estimatedScore = estimateScore(
+    amount,
+    currentSelectedUnit,
+    durationMinutes,
+  )
 
   // Eagerly prefetch ongoing registrations (non-blocking)
   const registrations = useOngoingContestRegistrations()
@@ -105,6 +118,12 @@ export const LogFormV2 = ({ options, defaultValues: originalDefaultValues }: Pro
 
   useEffect(() => {
     const subscription = methods.watch((value, { name, type }) => {
+      if (name === 'activityId' && type === 'change') {
+        const newInputType = getInputType(options.activities, value.activityId)
+        methods.setValue('inputType', newInputType)
+        setShowTimeInput(false)
+        methods.setValue('durationMinutes', undefined)
+      }
       if (
         (name === 'languageCode' || name === 'activityId') &&
         type === 'change'
@@ -120,7 +139,7 @@ export const LogFormV2 = ({ options, defaultValues: originalDefaultValues }: Pro
       }
     })
     return () => subscription.unsubscribe()
-  }, [methods, languageCode, options.units])
+  }, [methods, languageCode, options.units, options.activities])
 
   return (
     <FormProvider {...methods}>
@@ -143,15 +162,61 @@ export const LogFormV2 = ({ options, defaultValues: originalDefaultValues }: Pro
                 values={activitiesAsOptions}
                 options={{ valueAsNumber: true }}
               />
-              <AmountWithUnit
-                label="Amount"
-                name="amount"
-                defaultValue={0}
-                min={0}
-                step="any"
-                units={unitsAsOptions}
-                unitsLabel="Unit"
-              />
+              {inputType === 'time' ? (
+                <InputGroup
+                  name="durationMinutes"
+                  label="Time"
+                  suffix="minutes"
+                  defaultValue={0}
+                  min={0}
+                  step="any"
+                  options={{ valueAsNumber: true }}
+                />
+              ) : (
+                <>
+                  <AmountWithUnit
+                    label="Amount"
+                    name="amount"
+                    defaultValue={0}
+                    min={0}
+                    step="any"
+                    units={unitsAsOptions}
+                    unitsLabel="Unit"
+                  />
+                  {showTimeInput ? (
+                    <InputGroup
+                      name="durationMinutes"
+                      label="Time spent"
+                      suffix="minutes"
+                      defaultValue={0}
+                      min={0}
+                      step="any"
+                      options={{ valueAsNumber: true }}
+                      labelAction={
+                        <button
+                          type="button"
+                          className="text-red-400 hover:text-red-600"
+                          onClick={() => {
+                            setShowTimeInput(false)
+                            methods.setValue('durationMinutes', undefined)
+                          }}
+                          aria-label="Remove time tracking"
+                        >
+                          <TrashIcon className="w-4 h-4" />
+                        </button>
+                      }
+                    />
+                  ) : (
+                    <button
+                      type="button"
+                      className="text-sm text-primary hover:underline text-left"
+                      onClick={() => setShowTimeInput(true)}
+                    >
+                      + Track time spent
+                    </button>
+                  )}
+                </>
+              )}
               <Input
                 name="description"
                 label="Description"

@@ -20,7 +20,7 @@ from contest_registrations cr
 left join (
   select
     logs.user_id,
-    sum(contest_logs.score) as score
+    sum(coalesce(contest_logs.computed_score, contest_logs.score)) as score
   from contest_logs
   inner join logs on logs.id = contest_logs.log_id
   where
@@ -67,7 +67,7 @@ const globalLeaderboard = `-- name: GlobalLeaderboard :many
 with leaderboard as (
   select
     user_id,
-    sum(score) as score
+    sum(coalesce(computed_score, score)) as score
   from logs
   where
     eligible_official_leaderboard = true
@@ -160,13 +160,13 @@ func (q *Queries) GlobalLeaderboard(ctx context.Context, arg GlobalLeaderboardPa
 const globalLeaderboardAllScores = `-- name: GlobalLeaderboardAllScores :many
 select
   user_id,
-  sum(score)::real as score
+  sum(coalesce(computed_score, score))::real as score
 from logs
 where
   eligible_official_leaderboard = true
   and deleted_at is null
 group by user_id
-having sum(score) > 0
+having sum(coalesce(computed_score, score)) > 0
 `
 
 type GlobalLeaderboardAllScoresRow struct {
@@ -203,7 +203,7 @@ const leaderboardForContest = `-- name: LeaderboardForContest :many
 with leaderboard as (
   select
     logs.user_id,
-    sum(contest_logs.score) as score
+    sum(coalesce(contest_logs.computed_score, contest_logs.score)) as score
   from contest_logs
   inner join logs
     on logs.id = contest_logs.log_id
@@ -310,7 +310,7 @@ func (q *Queries) LeaderboardForContest(ctx context.Context, arg LeaderboardForC
 
 const userContestScore = `-- name: UserContestScore :one
 select
-  coalesce(sum(contest_logs.score), 0)::real as score
+  coalesce(sum(coalesce(contest_logs.computed_score, contest_logs.score)), 0)::real as score
 from contest_logs
 inner join logs on logs.id = contest_logs.log_id
 where
@@ -335,7 +335,7 @@ func (q *Queries) UserContestScore(ctx context.Context, arg UserContestScorePara
 
 const userGlobalScore = `-- name: UserGlobalScore :one
 select
-  coalesce(sum(score), 0)::real as score
+  coalesce(sum(coalesce(computed_score, score)), 0)::real as score
 from logs
 where
   user_id = $1
@@ -354,7 +354,7 @@ func (q *Queries) UserGlobalScore(ctx context.Context, userID uuid.UUID) (float3
 
 const userYearlyScore = `-- name: UserYearlyScore :one
 select
-  coalesce(sum(score), 0)::real as score
+  coalesce(sum(coalesce(computed_score, score)), 0)::real as score
 from logs
 where
   year = $1
@@ -381,7 +381,7 @@ const yearlyLeaderboard = `-- name: YearlyLeaderboard :many
 with leaderboard as (
   select
     user_id,
-    sum(score) as score
+    sum(coalesce(computed_score, score)) as score
   from logs
   where
     logs.year = $3
@@ -476,14 +476,14 @@ func (q *Queries) YearlyLeaderboard(ctx context.Context, arg YearlyLeaderboardPa
 const yearlyLeaderboardAllScores = `-- name: YearlyLeaderboardAllScores :many
 select
   user_id,
-  sum(score)::real as score
+  sum(coalesce(computed_score, score))::real as score
 from logs
 where
   year = $1
   and eligible_official_leaderboard = true
   and deleted_at is null
 group by user_id
-having sum(score) > 0
+having sum(coalesce(computed_score, score)) > 0
 `
 
 type YearlyLeaderboardAllScoresRow struct {

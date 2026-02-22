@@ -21,6 +21,8 @@ export const Activity = z.object({
   id: z.number(),
   name: z.string(),
   default: z.boolean().nullable().optional(),
+  input_type: z.enum(['time', 'amount']).default('amount'),
+  time_modifier: z.number().nullable().optional(),
 })
 
 export type Activity = z.infer<typeof Activity>
@@ -539,12 +541,13 @@ export const Log = z.object({
   description: z.string().optional(),
   language: Language,
   activity: Activity,
-  unit_id: z.string(),
-  unit_name: z.string(),
+  unit_id: z.string().nullable().optional(),
+  unit_name: z.string().nullable().optional(),
   tags: z.array(z.string()),
-  amount: z.number(),
-  modifier: z.number(),
+  amount: z.number().nullable().optional(),
+  modifier: z.number().nullable().optional(),
   score: z.number(),
+  duration_seconds: z.number().nullable().optional(),
   registrations: z.array(ContestRegistrationReference).optional(),
   created_at: z.string(),
   deleted: z.boolean(),
@@ -756,8 +759,9 @@ export const useCreateLog = (onSuccess: (id: string) => void) =>
 export type CreateLogV2Payload = {
   language_code: string
   activity_id: number
-  amount: number
-  unit_id: string
+  amount?: number
+  unit_id?: string
+  duration_seconds?: number
   tags: string[]
   description?: string
 }
@@ -784,8 +788,9 @@ export const useCreateLogV2 = (onSuccess: (log: Log) => void) =>
   })
 
 export type UpdateLogPayload = {
-  amount: number
-  unit_id: string
+  amount?: number
+  unit_id?: string
+  duration_seconds?: number
   tags: string[]
   description?: string
 }

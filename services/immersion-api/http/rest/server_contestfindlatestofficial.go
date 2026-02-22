@@ -36,8 +36,9 @@ func (s *Server) ContestFindLatestOfficial(ctx echo.Context) error {
 	acts := make([]openapi.Activity, len(contest.AllowedActivities))
 	for i, it := range contest.AllowedActivities {
 		acts[i] = openapi.Activity{
-			Id:   it.ID,
-			Name: it.Name,
+			Id:        it.ID,
+			Name:      it.Name,
+			InputType: openapi.ActivityInputType(it.InputType),
 		}
 	}
 

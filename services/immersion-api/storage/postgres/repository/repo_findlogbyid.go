@@ -41,6 +41,13 @@ func (r *Repository) FindLogByID(ctx context.Context, req *domain.LogFindRequest
 		}
 	}
 
+	// UnitName from FindLogByIDRow is string (not nullable per sqlc), but with
+	// left join it could be empty string for time-only logs. Treat empty as nil.
+	var unitName *string
+	if log.UnitName != "" {
+		unitName = &log.UnitName
+	}
+
 	return &domain.Log{
 		ID:                          log.ID,
 		UserID:                      log.UserID,
@@ -50,12 +57,13 @@ func (r *Repository) FindLogByID(ctx context.Context, req *domain.LogFindRequest
 		LanguageName:                log.LanguageName,
 		ActivityID:                  int(log.ActivityID),
 		ActivityName:                log.ActivityName,
-		UnitID:                      log.UnitID,
-		UnitName:                    log.UnitName,
+		UnitID:                      postgres.NewUUIDFromNullUUID(log.UnitID),
+		UnitName:                    unitName,
 		Tags:                        postgres.StringArrayFromInterface(log.Tags),
-		Amount:                      log.Amount,
-		Modifier:                    log.Modifier,
+		Amount:                      postgres.NewFloat32FromNullFloat64(log.Amount),
+		Modifier:                    postgres.NewFloat32FromNullFloat64(log.Modifier),
 		Score:                       log.Score,
+		DurationSeconds:             postgres.NewInt32FromNullInt32(log.DurationSeconds),
 		EligibleOfficialLeaderboard: log.EligibleOfficialLeaderboard,
 		CreatedAt:                   log.CreatedAt,
 		UpdatedAt:                   log.UpdatedAt,

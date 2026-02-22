@@ -42,20 +42,26 @@ insert into contest_logs (
   contest_id,
   log_id,
   amount,
-  modifier
+  modifier,
+  duration_seconds,
+  computed_score
 ) values (
   (select contest_id from contest_registrations where id = $1),
   $2,
   $3,
-  $4
+  $4,
+  $5,
+  $6
 )
 `
 
 type CreateContestLogRelationParams struct {
-	RegistrationID uuid.UUID
-	LogID          uuid.UUID
-	Amount         float32
-	Modifier       float32
+	RegistrationID  uuid.UUID
+	LogID           uuid.UUID
+	Amount          sql.NullFloat64
+	Modifier        sql.NullFloat64
+	DurationSeconds sql.NullInt32
+	ComputedScore   sql.NullFloat64
 }
 
 func (q *Queries) CreateContestLogRelation(ctx context.Context, arg CreateContestLogRelationParams) error {
@@ -64,6 +70,8 @@ func (q *Queries) CreateContestLogRelation(ctx context.Context, arg CreateContes
 		arg.LogID,
 		arg.Amount,
 		arg.Modifier,
+		arg.DurationSeconds,
+		arg.ComputedScore,
 	)
 	return err
 }
@@ -77,6 +85,8 @@ insert into logs (
   unit_id,
   amount,
   modifier,
+  duration_seconds,
+  computed_score,
   eligible_official_leaderboard,
   "description"
 ) values (
@@ -88,7 +98,9 @@ insert into logs (
   $6,
   $7,
   $8,
-  $9
+  $9,
+  $10,
+  $11
 ) returning id
 `
 
@@ -97,9 +109,11 @@ type CreateLogParams struct {
 	UserID                      uuid.UUID
 	LanguageCode                string
 	LogActivityID               int16
-	UnitID                      uuid.UUID
-	Amount                      float32
-	Modifier                    float32
+	UnitID                      uuid.NullUUID
+	Amount                      sql.NullFloat64
+	Modifier                    sql.NullFloat64
+	DurationSeconds             sql.NullInt32
+	ComputedScore               sql.NullFloat64
 	EligibleOfficialLeaderboard bool
 	Description                 sql.NullString
 }
@@ -113,6 +127,8 @@ func (q *Queries) CreateLog(ctx context.Context, arg CreateLogParams) (uuid.UUID
 		arg.UnitID,
 		arg.Amount,
 		arg.Modifier,
+		arg.DurationSeconds,
+		arg.ComputedScore,
 		arg.EligibleOfficialLeaderboard,
 		arg.Description,
 	)
@@ -274,7 +290,7 @@ func (q *Queries) FetchOngoingContestIDsForLog(ctx context.Context, arg FetchOng
 const fetchScoresForProfile = `-- name: FetchScoresForProfile :many
 select
   language_code,
-  sum(score)::real as score,
+  sum(coalesce(logs.computed_score, logs.score))::real as score,
   languages.name as language_name
 from logs
 inner join languages on (languages.code = logs.language_code)
@@ -328,7 +344,7 @@ select
   contests.contest_end,
   owner_users.display_name as owner_user_display_name,
   contests.official,
-  contest_logs.score
+  coalesce(contest_logs.computed_score, contest_logs.score) as score
 from contest_logs
 inner join contests on (contests.id = contest_logs.contest_id)
 inner join logs on (logs.id = contest_logs.log_id)
@@ -395,7 +411,8 @@ select
   logs.description,
   logs.amount,
   logs.modifier,
-  logs.score,
+  coalesce(logs.computed_score, logs.score) as score,
+  logs.duration_seconds,
   logs.eligible_official_leaderboard,
   logs.created_at,
   logs.updated_at,
@@ -407,7 +424,7 @@ select
 from logs
 inner join languages on (languages.code = logs.language_code)
 inner join log_activities on (log_activities.id = logs.log_activity_id)
-inner join log_units on (log_units.id = logs.unit_id)
+left join log_units on (log_units.id = logs.unit_id)
 inner join users on (users.id = logs.user_id)
 where
   ($1::boolean or deleted_at is null)
@@ -427,12 +444,13 @@ type FindLogByIDRow struct {
 	LanguageName                string
 	ActivityID                  int16
 	ActivityName                string
-	UnitID                      uuid.UUID
+	UnitID                      uuid.NullUUID
 	UnitName                    string
 	Description                 sql.NullString
-	Amount                      float32
-	Modifier                    float32
+	Amount                      sql.NullFloat64
+	Modifier                    sql.NullFloat64
 	Score                       float32
+	DurationSeconds             sql.NullInt32
 	EligibleOfficialLeaderboard bool
 	CreatedAt                   time.Time
 	UpdatedAt                   time.Time
@@ -457,6 +475,7 @@ func (q *Queries) FindLogByID(ctx context.Context, arg FindLogByIDParams) (FindL
 		&i.Amount,
 		&i.Modifier,
 		&i.Score,
+		&i.DurationSeconds,
 		&i.EligibleOfficialLeaderboard,
 		&i.CreatedAt,
 		&i.UpdatedAt,
@@ -479,7 +498,8 @@ with eligible_logs as (
     logs.description,
     contest_logs.amount,
     contest_logs.modifier,
-    contest_logs.score,
+    coalesce(contest_logs.computed_score, contest_logs.score) as score,
+    logs.duration_seconds,
     logs.created_at,
     logs.updated_at,
     logs.deleted_at,
@@ -492,7 +512,7 @@ with eligible_logs as (
   inner join logs on (logs.id = contest_logs.log_id)
   inner join languages on (languages.code = logs.language_code)
   inner join log_activities on (log_activities.id = logs.log_activity_id)
-  inner join log_units on (log_units.id = logs.unit_id)
+  left join log_units on (log_units.id = logs.unit_id)
   inner join users on (users.id = logs.user_id)
   where
     ($3::boolean or logs.deleted_at is null)
@@ -500,7 +520,7 @@ with eligible_logs as (
     and contest_logs.contest_id = $5
 )
 select
-  id, user_id, language_code, language_name, activity_id, activity_name, unit_name, description, amount, modifier, score, created_at, updated_at, deleted_at, user_display_name, tags,
+  id, user_id, language_code, language_name, activity_id, activity_name, unit_name, description, amount, modifier, score, duration_seconds, created_at, updated_at, deleted_at, user_display_name, tags,
   (select count(eligible_logs.id) from eligible_logs) as total_size
 from eligible_logs
 order by created_at desc
@@ -525,9 +545,10 @@ type ListLogsForContestRow struct {
 	ActivityName    string
 	UnitName        string
 	Description     sql.NullString
-	Amount          float32
-	Modifier        float32
+	Amount          sql.NullFloat64
+	Modifier        sql.NullFloat64
 	Score           sql.NullFloat64
+	DurationSeconds sql.NullInt32
 	CreatedAt       time.Time
 	UpdatedAt       time.Time
 	DeletedAt       sql.NullTime
@@ -563,6 +584,7 @@ func (q *Queries) ListLogsForContest(ctx context.Context, arg ListLogsForContest
 			&i.Amount,
 			&i.Modifier,
 			&i.Score,
+			&i.DurationSeconds,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.DeletedAt,
@@ -596,7 +618,8 @@ with eligible_logs as (
     logs.description,
     logs.amount,
     logs.modifier,
-    logs.score,
+    coalesce(logs.computed_score, logs.score) as score,
+    logs.duration_seconds,
     logs.created_at,
     logs.updated_at,
     logs.deleted_at,
@@ -607,13 +630,13 @@ with eligible_logs as (
   from logs
   inner join languages on (languages.code = logs.language_code)
   inner join log_activities on (log_activities.id = logs.log_activity_id)
-  inner join log_units on (log_units.id = logs.unit_id)
+  left join log_units on (log_units.id = logs.unit_id)
   where
     ($3::boolean or deleted_at is null)
     and logs.user_id = $4
 )
 select
-  id, user_id, language_code, language_name, activity_id, activity_name, unit_name, description, amount, modifier, score, created_at, updated_at, deleted_at, tags,
+  id, user_id, language_code, language_name, activity_id, activity_name, unit_name, description, amount, modifier, score, duration_seconds, created_at, updated_at, deleted_at, tags,
   (select count(eligible_logs.id) from eligible_logs) as total_size
 from eligible_logs
 order by created_at desc
@@ -629,22 +652,23 @@ type ListLogsForUserParams struct {
 }
 
 type ListLogsForUserRow struct {
-	ID           uuid.UUID
-	UserID       uuid.UUID
-	LanguageCode string
-	LanguageName string
-	ActivityID   int16
-	ActivityName string
-	UnitName     string
-	Description  sql.NullString
-	Amount       float32
-	Modifier     float32
-	Score        float32
-	CreatedAt    time.Time
-	UpdatedAt    time.Time
-	DeletedAt    sql.NullTime
-	Tags         interface{}
-	TotalSize    int64
+	ID              uuid.UUID
+	UserID          uuid.UUID
+	LanguageCode    string
+	LanguageName    string
+	ActivityID      int16
+	ActivityName    string
+	UnitName        sql.NullString
+	Description     sql.NullString
+	Amount          sql.NullFloat64
+	Modifier        sql.NullFloat64
+	Score           float32
+	DurationSeconds sql.NullInt32
+	CreatedAt       time.Time
+	UpdatedAt       time.Time
+	DeletedAt       sql.NullTime
+	Tags            interface{}
+	TotalSize       int64
 }
 
 func (q *Queries) ListLogsForUser(ctx context.Context, arg ListLogsForUserParams) ([]ListLogsForUserRow, error) {
@@ -673,6 +697,7 @@ func (q *Queries) ListLogsForUser(ctx context.Context, arg ListLogsForUserParams
 			&i.Amount,
 			&i.Modifier,
 			&i.Score,
+			&i.DurationSeconds,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.DeletedAt,
@@ -698,20 +723,24 @@ set
   amount = $1,
   modifier = $2,
   unit_id = $3,
-  "description" = $4,
-  updated_at = $5
+  duration_seconds = $4,
+  computed_score = $5,
+  "description" = $6,
+  updated_at = $7
 where
-  id = $6
+  id = $8
   and deleted_at is null
 `
 
 type UpdateLogParams struct {
-	Amount      float32
-	Modifier    float32
-	UnitID      uuid.UUID
-	Description sql.NullString
-	Now         time.Time
-	LogID       uuid.UUID
+	Amount          sql.NullFloat64
+	Modifier        sql.NullFloat64
+	UnitID          uuid.NullUUID
+	DurationSeconds sql.NullInt32
+	ComputedScore   sql.NullFloat64
+	Description     sql.NullString
+	Now             time.Time
+	LogID           uuid.UUID
 }
 
 func (q *Queries) UpdateLog(ctx context.Context, arg UpdateLogParams) error {
@@ -719,6 +748,8 @@ func (q *Queries) UpdateLog(ctx context.Context, arg UpdateLogParams) error {
 		arg.Amount,
 		arg.Modifier,
 		arg.UnitID,
+		arg.DurationSeconds,
+		arg.ComputedScore,
 		arg.Description,
 		arg.Now,
 		arg.LogID,
@@ -747,25 +778,31 @@ const updateOngoingContestLogs = `-- name: UpdateOngoingContestLogs :exec
 update contest_logs
 set
   amount = $1,
-  modifier = $2
+  modifier = $2,
+  duration_seconds = $3,
+  computed_score = $4
 from contests
 where
-  contest_logs.log_id = $3
+  contest_logs.log_id = $5
   and contest_logs.contest_id = contests.id
-  and contests.contest_end >= $4
+  and contests.contest_end >= $6
 `
 
 type UpdateOngoingContestLogsParams struct {
-	Amount   float32
-	Modifier float32
-	LogID    uuid.UUID
-	Now      time.Time
+	Amount          sql.NullFloat64
+	Modifier        sql.NullFloat64
+	DurationSeconds sql.NullInt32
+	ComputedScore   sql.NullFloat64
+	LogID           uuid.UUID
+	Now             time.Time
 }
 
 func (q *Queries) UpdateOngoingContestLogs(ctx context.Context, arg UpdateOngoingContestLogsParams) error {
 	_, err := q.db.ExecContext(ctx, updateOngoingContestLogs,
 		arg.Amount,
 		arg.Modifier,
+		arg.DurationSeconds,
+		arg.ComputedScore,
 		arg.LogID,
 		arg.Now,
 	)
@@ -774,7 +811,7 @@ func (q *Queries) UpdateOngoingContestLogs(ctx context.Context, arg UpdateOngoin
 
 const yearlyActivityForUser = `-- name: YearlyActivityForUser :many
 select
-  sum(score)::real as score,
+  sum(coalesce(computed_score, score))::real as score,
   count(id) as update_count,
   created_at::date as "date"
 from logs
@@ -822,7 +859,7 @@ func (q *Queries) YearlyActivityForUser(ctx context.Context, arg YearlyActivityF
 
 const yearlyActivitySplitForUser = `-- name: YearlyActivitySplitForUser :many
 select
-  sum(logs.score)::real as score,
+  sum(coalesce(logs.computed_score, logs.score))::real as score,
   logs.log_activity_id,
   log_activities.name as log_activity_name
 from logs

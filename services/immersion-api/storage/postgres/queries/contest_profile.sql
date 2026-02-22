@@ -1,7 +1,7 @@
 -- name: FetchScoresForContestProfile :many
 select
   logs.language_code,
-  sum(contest_logs.score)::real as score
+  sum(coalesce(contest_logs.computed_score, contest_logs.score))::real as score
 from contest_logs
 inner join logs
   on logs.id = contest_logs.log_id
@@ -17,7 +17,7 @@ with eligible_logs as (
   select
     logs.created_at::date as "date",
     logs.language_code,
-    contest_logs.score
+    coalesce(contest_logs.computed_score, contest_logs.score) as score
   from contest_logs
   inner join logs
     on logs.id = contest_logs.log_id

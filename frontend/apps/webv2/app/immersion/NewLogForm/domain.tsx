@@ -168,12 +168,16 @@ export const trackingModesForRegistrations = (registrationCount: number) => {
 export const estimateScore = (
   amount: number | undefined,
   unit: Unit | undefined,
+  durationMinutes?: number | undefined,
+  timeModifier?: number | undefined,
 ) => {
-  if (!amount || !unit) {
-    return undefined
+  if (amount && unit) {
+    return amount * unit.modifier
   }
-
-  return amount * unit.modifier
+  if (durationMinutes && timeModifier) {
+    return durationMinutes * timeModifier
+  }
+  return undefined
 }
 
 export function contestsForLog({

@@ -30,6 +30,7 @@ func (s *Server) LogCreate(ctx echo.Context) error {
 		ActivityID:      req.ActivityId,
 		LanguageCode:    req.LanguageCode,
 		Amount:          req.Amount,
+		DurationSeconds: int32PtrFromIntPtr(req.DurationSeconds),
 		Tags:            req.Tags,
 		Description:     req.Description,
 	})

@@ -17,6 +17,12 @@ const (
 	CookieAuthScopes = "cookieAuth.Scopes"
 )
 
+// Defines values for ActivityInputType.
+const (
+	Amount ActivityInputType = "amount"
+	Time   ActivityInputType = "time"
+)
+
 // Activities defines model for Activities.
 type Activities struct {
 	Activities []Activity `json:"activities"`
@@ -24,10 +30,15 @@ type Activities struct {
 
 // Activity defines model for Activity.
 type Activity struct {
-	Default *bool  `json:"default,omitempty"`
-	Id      int32  `json:"id"`
-	Name    string `json:"name"`
+	Default      *bool             `json:"default,omitempty"`
+	Id           int32             `json:"id"`
+	InputType    ActivityInputType `json:"input_type"`
+	Name         string            `json:"name"`
+	TimeModifier *float32          `json:"time_modifier,omitempty"`
 }
+
+// ActivityInputType defines model for Activity.InputType.
+type ActivityInputType string
 
 // ActivitySplit defines model for ActivitySplit.
 type ActivitySplit struct {
@@ -200,18 +211,19 @@ type LeaderboardEntry struct {
 // Log defines model for Log.
 type Log struct {
 	Activity        Activity                        `json:"activity"`
-	Amount          float32                         `json:"amount"`
+	Amount          *float32                        `json:"amount,omitempty"`
 	CreatedAt       time.Time                       `json:"created_at"`
 	Deleted         bool                            `json:"deleted"`
 	Description     *string                         `json:"description,omitempty"`
+	DurationSeconds *int                            `json:"duration_seconds,omitempty"`
 	Id              openapi_types.UUID              `json:"id"`
 	Language        Language                        `json:"language"`
-	Modifier        float32                         `json:"modifier"`
+	Modifier        *float32                        `json:"modifier,omitempty"`
 	Registrations   *[]ContestRegistrationReference `json:"registrations,omitempty"`
 	Score           float32                         `json:"score"`
 	Tags            []string                        `json:"tags"`
-	UnitId          openapi_types.UUID              `json:"unit_id"`
-	UnitName        string                          `json:"unit_name"`
+	UnitId          *openapi_types.UUID             `json:"unit_id,omitempty"`
+	UnitName        *string                         `json:"unit_name,omitempty"`
 	UserDisplayName *string                         `json:"user_display_name,omitempty"`
 	UserId          openapi_types.UUID              `json:"user_id"`
 }
@@ -359,12 +371,13 @@ type FetchLeaderboardForYearParams struct {
 // LogCreateJSONBody defines parameters for LogCreate.
 type LogCreateJSONBody struct {
 	ActivityId      int32                 `json:"activity_id"`
-	Amount          float32               `json:"amount"`
+	Amount          *float32              `json:"amount,omitempty"`
 	Description     *string               `json:"description,omitempty"`
+	DurationSeconds *int                  `json:"duration_seconds,omitempty"`
 	LanguageCode    string                `json:"language_code"`
 	RegistrationIds *[]openapi_types.UUID `json:"registration_ids,omitempty"`
 	Tags            []string              `json:"tags"`
-	UnitId          openapi_types.UUID    `json:"unit_id"`
+	UnitId          *openapi_types.UUID   `json:"unit_id,omitempty"`
 }
 
 // LogTagSuggestionsParams defines parameters for LogTagSuggestions.
@@ -374,10 +387,11 @@ type LogTagSuggestionsParams struct {
 
 // LogUpdateJSONBody defines parameters for LogUpdate.
 type LogUpdateJSONBody struct {
-	Amount      float32            `json:"amount"`
-	Description *string            `json:"description,omitempty"`
-	Tags        []string           `json:"tags"`
-	UnitId      openapi_types.UUID `json:"unit_id"`
+	Amount          *float32            `json:"amount,omitempty"`
+	Description     *string             `json:"description,omitempty"`
+	DurationSeconds *int                `json:"duration_seconds,omitempty"`
+	Tags            []string            `json:"tags"`
+	UnitId          *openapi_types.UUID `json:"unit_id,omitempty"`
 }
 
 // LogContestRegistrationUpdateJSONBody defines parameters for LogContestRegistrationUpdate.

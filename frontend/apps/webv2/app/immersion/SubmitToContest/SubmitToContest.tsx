@@ -71,7 +71,11 @@ export const SubmitToContest = ({ log, registrations, preselect }: Props) => {
               <span>
                 <strong>{log.language.name}</strong> &middot;{' '}
                 {log.activity.name} &middot;{' '}
-                {formatScore(log.amount)} {formatUnit(log.amount, log.unit_name)}
+                {log.amount != null && log.unit_name != null
+                  ? `${formatScore(log.amount)} ${formatUnit(log.amount, log.unit_name)}`
+                  : log.duration_seconds != null
+                    ? `${Math.round(log.duration_seconds / 60)} min`
+                    : ''}
               </span>
               {log.description ? <span>{log.description}</span> : null}
             </div>

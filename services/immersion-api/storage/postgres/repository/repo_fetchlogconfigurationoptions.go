@@ -46,9 +46,11 @@ func (r *Repository) FetchLogConfigurationOptions(ctx context.Context, userID uu
 
 	for i, a := range acts {
 		options.Activities[i] = domain.Activity{
-			ID:      a.ID,
-			Name:    a.Name,
-			Default: a.Default,
+			ID:           a.ID,
+			Name:         a.Name,
+			Default:      a.Default,
+			TimeModifier: a.TimeModifier,
+			InputType:    a.InputType,
 		}
 	}
 

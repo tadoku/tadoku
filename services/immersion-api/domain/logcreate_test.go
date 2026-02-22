@@ -21,6 +21,7 @@ type mockLogCreateRepository struct {
 	findErr          error
 	createCalled     bool
 	createCalledWith *domain.LogCreateRequest
+	activityOverride *domain.Activity
 }
 
 func (m *mockLogCreateRepository) FetchOngoingContestRegistrations(ctx context.Context, req *domain.RegistrationListOngoingRequest) (*domain.ContestRegistrations, error) {
@@ -35,6 +36,13 @@ func (m *mockLogCreateRepository) CreateLog(ctx context.Context, req *domain.Log
 
 func (m *mockLogCreateRepository) FindLogByID(ctx context.Context, req *domain.LogFindRequest) (*domain.Log, error) {
 	return m.log, m.findErr
+}
+
+func (m *mockLogCreateRepository) FindActivityByID(ctx context.Context, id int32) (*domain.Activity, error) {
+	if m.activityOverride != nil {
+		return m.activityOverride, nil
+	}
+	return &domain.Activity{ID: id, Name: "test", InputType: "amount", TimeModifier: 0.3}, nil
 }
 
 type mockUserUpsertRepositoryForLog struct {
@@ -82,7 +90,7 @@ func TestLogCreate_Execute(t *testing.T) {
 		UserID:       userID,
 		LanguageCode: "jpn",
 		ActivityID:   1,
-		Amount:       100,
+		Amount:       ptrFloat32(100),
 		Score:        50,
 		CreatedAt:    now,
 	}
@@ -137,10 +145,10 @@ func TestLogCreate_Execute(t *testing.T) {
 
 		_, err := svc.Execute(ctx, &domain.LogCreateRequest{
 			RegistrationIDs: []uuid.UUID{registrationID},
-			UnitID:          unitID,
+			UnitID:          ptrUUID(unitID),
 			ActivityID:      1,
 			LanguageCode:    "jpn",
-			Amount:          100,
+			Amount:          ptrFloat32(100),
 		})
 
 		assert.ErrorIs(t, err, domain.ErrInvalidLog)
@@ -158,10 +166,10 @@ func TestLogCreate_Execute(t *testing.T) {
 
 		_, err := svc.Execute(ctx, &domain.LogCreateRequest{
 			RegistrationIDs: []uuid.UUID{registrationID},
-			UnitID:          unitID,
+			UnitID:          ptrUUID(unitID),
 			ActivityID:      1,
 			LanguageCode:    "kor", // Not in registration
-			Amount:          100,
+			Amount:          ptrFloat32(100),
 		})
 
 		assert.ErrorIs(t, err, domain.ErrInvalidLog)
@@ -179,10 +187,10 @@ func TestLogCreate_Execute(t *testing.T) {
 
 		_, err := svc.Execute(ctx, &domain.LogCreateRequest{
 			RegistrationIDs: []uuid.UUID{registrationID},
-			UnitID:          unitID,
+			UnitID:          ptrUUID(unitID),
 			ActivityID:      999, // Not allowed
 			LanguageCode:    "jpn",
-			Amount:          100,
+			Amount:          ptrFloat32(100),
 		})
 
 		assert.ErrorIs(t, err, domain.ErrInvalidLog)
@@ -202,10 +210,10 @@ func TestLogCreate_Execute(t *testing.T) {
 
 		result, err := svc.Execute(ctx, &domain.LogCreateRequest{
 			RegistrationIDs: []uuid.UUID{registrationID},
-			UnitID:          unitID,
+			UnitID:          ptrUUID(unitID),
 			ActivityID:      1,
 			LanguageCode:    "jpn",
-			Amount:          100,
+			Amount:          ptrFloat32(100),
 		})
 
 		require.NoError(t, err)
@@ -225,10 +233,10 @@ func TestLogCreate_Execute(t *testing.T) {
 		ctx := ctxWithUserSubject(userID.String())
 
 		result, err := svc.Execute(ctx, &domain.LogCreateRequest{
-			UnitID:       unitID,
+			UnitID:       ptrUUID(unitID),
 			ActivityID:   1,
 			LanguageCode: "jpn",
-			Amount:       100,
+			Amount:       ptrFloat32(100),
 		})
 
 		require.NoError(t, err)
@@ -236,6 +244,79 @@ func TestLogCreate_Execute(t *testing.T) {
 		assert.Equal(t, logID, result.ID)
 		assert.Empty(t, repo.createCalledWith.RegistrationIDs)
 		assert.False(t, repo.createCalledWith.EligibleOfficialLeaderboard())
+	})
+
+	t.Run("successfully creates time-based log", func(t *testing.T) {
+		timeLog := &domain.Log{
+			ID:              logID,
+			UserID:          userID,
+			LanguageCode:    "jpn",
+			ActivityID:      3,
+			DurationSeconds: ptrInt32(3600),
+			Score:           18,
+			CreatedAt:       now,
+		}
+		repo := &mockLogCreateRepository{
+			createdLogID: &logID,
+			log:          timeLog,
+			activityOverride: &domain.Activity{
+				ID: 3, Name: "Listening", InputType: "time", TimeModifier: 0.3,
+			},
+		}
+		clock := commondomain.NewMockClock(now)
+		svc := newLogCreateService(repo, clock)
+
+		ctx := ctxWithUserSubject(userID.String())
+
+		result, err := svc.Execute(ctx, &domain.LogCreateRequest{
+			ActivityID:      3,
+			LanguageCode:    "jpn",
+			DurationSeconds: ptrInt32(3600),
+		})
+
+		require.NoError(t, err)
+		assert.True(t, repo.createCalled)
+		assert.Equal(t, logID, result.ID)
+		assert.NotNil(t, repo.createCalledWith.Activity())
+		assert.Equal(t, "time", repo.createCalledWith.Activity().InputType)
+	})
+
+	t.Run("rejects time-based activity without duration", func(t *testing.T) {
+		repo := &mockLogCreateRepository{
+			activityOverride: &domain.Activity{
+				ID: 3, Name: "Listening", InputType: "time", TimeModifier: 0.3,
+			},
+		}
+		clock := commondomain.NewMockClock(now)
+		svc := newLogCreateService(repo, clock)
+
+		ctx := ctxWithUserSubject(userID.String())
+
+		_, err := svc.Execute(ctx, &domain.LogCreateRequest{
+			ActivityID:   3,
+			LanguageCode: "jpn",
+			Amount:       ptrFloat32(100),
+			UnitID:       ptrUUID(unitID),
+		})
+
+		assert.ErrorIs(t, err, domain.ErrInvalidLog)
+		assert.False(t, repo.createCalled)
+	})
+
+	t.Run("rejects amount-based activity without amount or duration", func(t *testing.T) {
+		repo := &mockLogCreateRepository{}
+		clock := commondomain.NewMockClock(now)
+		svc := newLogCreateService(repo, clock)
+
+		ctx := ctxWithUserSubject(userID.String())
+
+		_, err := svc.Execute(ctx, &domain.LogCreateRequest{
+			ActivityID:   1,
+			LanguageCode: "jpn",
+		})
+
+		assert.ErrorIs(t, err, domain.ErrInvalidLog)
+		assert.False(t, repo.createCalled)
 	})
 
 	t.Run("sets EligibleOfficialLeaderboard for official contest", func(t *testing.T) {
@@ -269,10 +350,10 @@ func TestLogCreate_Execute(t *testing.T) {
 
 		_, err := svc.Execute(ctx, &domain.LogCreateRequest{
 			RegistrationIDs: []uuid.UUID{registrationID},
-			UnitID:          unitID,
+			UnitID:          ptrUUID(unitID),
 			ActivityID:      1,
 			LanguageCode:    "jpn",
-			Amount:          100,
+			Amount:          ptrFloat32(100),
 		})
 
 		require.NoError(t, err)

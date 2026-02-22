@@ -52,10 +52,11 @@ func logToAPI(log *domain.Log) *openapi.Log {
 		},
 		Amount:          log.Amount,
 		Modifier:        log.Modifier,
-		Score:           log.Score,
+		Score:           log.EffectiveScore(),
 		Tags:            log.Tags,
 		UnitId:          log.UnitID,
 		UnitName:        log.UnitName,
+		DurationSeconds: intPtrFromInt32Ptr(log.DurationSeconds),
 		UserId:          log.UserID,
 		UserDisplayName: log.UserDisplayName,
 		CreatedAt:       log.CreatedAt,
@@ -63,6 +64,22 @@ func logToAPI(log *domain.Log) *openapi.Log {
 		Description:     log.Description,
 		Registrations:   &refs,
 	}
+}
+
+func intPtrFromInt32Ptr(v *int32) *int {
+	if v == nil {
+		return nil
+	}
+	i := int(*v)
+	return &i
+}
+
+func int32PtrFromIntPtr(v *int) *int32 {
+	if v == nil {
+		return nil
+	}
+	i := int32(*v)
+	return &i
 }
 
 func contestRegistrationToAPI(r *domain.ContestRegistration) *openapi.ContestRegistration {
@@ -92,8 +109,9 @@ func contestRegistrationToAPI(r *domain.ContestRegistration) *openapi.ContestReg
 
 		for i, a := range r.Contest.AllowedActivities {
 			contest.AllowedActivities[i] = openapi.Activity{
-				Id:   a.ID,
-				Name: a.Name,
+				Id:        a.ID,
+				Name:      a.Name,
+				InputType: openapi.ActivityInputType(a.InputType),
 			}
 		}
 

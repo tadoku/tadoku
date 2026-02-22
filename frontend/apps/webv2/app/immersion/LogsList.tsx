@@ -149,7 +149,11 @@ const LogsList = ({ logs, showUsername = false, contestId }: Props) => {
               </td>
               <td className="default link font-bold hidden md:table-cell">
                 <Link className="reset" href={routes.log(it.id)}>
-                  {formatScore(it.amount)} {formatUnit(it.amount, it.unit_name)}
+                  {it.amount != null && it.unit_name != null
+                    ? `${formatScore(it.amount)} ${formatUnit(it.amount, it.unit_name)}`
+                    : it.duration_seconds != null
+                      ? `${Math.round(it.duration_seconds / 60)} min`
+                      : 'N/A'}
                 </Link>
               </td>
               <td className="default link font-bold">

@@ -2,7 +2,7 @@
 with leaderboard as (
   select
     logs.user_id,
-    sum(contest_logs.score) as score
+    sum(coalesce(contest_logs.computed_score, contest_logs.score)) as score
   from contest_logs
   inner join logs
     on logs.id = contest_logs.log_id
@@ -57,7 +57,7 @@ offset sqlc.arg('start_from');
 with leaderboard as (
   select
     user_id,
-    sum(score) as score
+    sum(coalesce(computed_score, score)) as score
   from logs
   where
     logs.year = sqlc.arg('year')
@@ -105,7 +105,7 @@ from contest_registrations cr
 left join (
   select
     logs.user_id,
-    sum(contest_logs.score) as score
+    sum(coalesce(contest_logs.computed_score, contest_logs.score)) as score
   from contest_logs
   inner join logs on logs.id = contest_logs.log_id
   where
@@ -122,33 +122,33 @@ where
 -- Used for rebuilding the Redis leaderboard sorted set.
 select
   user_id,
-  sum(score)::real as score
+  sum(coalesce(computed_score, score))::real as score
 from logs
 where
   year = sqlc.arg('year')
   and eligible_official_leaderboard = true
   and deleted_at is null
 group by user_id
-having sum(score) > 0;
+having sum(coalesce(computed_score, score)) > 0;
 
 -- name: GlobalLeaderboardAllScores :many
 -- Returns all user scores globally without pagination/ranking.
 -- Used for rebuilding the Redis leaderboard sorted set.
 select
   user_id,
-  sum(score)::real as score
+  sum(coalesce(computed_score, score))::real as score
 from logs
 where
   eligible_official_leaderboard = true
   and deleted_at is null
 group by user_id
-having sum(score) > 0;
+having sum(coalesce(computed_score, score)) > 0;
 
 -- name: UserContestScore :one
 -- Returns a single user's total score for a contest.
 -- Used for updating a user's score in the Redis leaderboard.
 select
-  coalesce(sum(contest_logs.score), 0)::real as score
+  coalesce(sum(coalesce(contest_logs.computed_score, contest_logs.score)), 0)::real as score
 from contest_logs
 inner join logs on logs.id = contest_logs.log_id
 where
@@ -160,7 +160,7 @@ where
 -- Returns a single user's total score for a year (official logs only).
 -- Used for updating a user's score in the Redis leaderboard.
 select
-  coalesce(sum(score), 0)::real as score
+  coalesce(sum(coalesce(computed_score, score)), 0)::real as score
 from logs
 where
   year = sqlc.arg('year')
@@ -172,7 +172,7 @@ where
 -- Returns a single user's total global score (official logs only).
 -- Used for updating a user's score in the Redis leaderboard.
 select
-  coalesce(sum(score), 0)::real as score
+  coalesce(sum(coalesce(computed_score, score)), 0)::real as score
 from logs
 where
   user_id = sqlc.arg('user_id')
@@ -183,7 +183,7 @@ where
 with leaderboard as (
   select
     user_id,
-    sum(score) as score
+    sum(coalesce(computed_score, score)) as score
   from logs
   where
     eligible_official_leaderboard = true

@@ -12,9 +12,11 @@ type Language struct {
 }
 
 type Activity struct {
-	ID      int32
-	Name    string
-	Default bool
+	ID           int32
+	Name         string
+	Default      bool
+	TimeModifier float32
+	InputType    string // "time" or "amount"
 }
 
 type ContestView struct {
@@ -143,15 +145,26 @@ type Log struct {
 	LanguageName                string
 	ActivityID                  int
 	ActivityName                string
-	UnitID                      uuid.UUID
-	UnitName                    string
+	UnitID                      *uuid.UUID
+	UnitName                    *string
 	Tags                        []string
-	Amount                      float32
-	Modifier                    float32
+	Amount                      *float32
+	Modifier                    *float32
 	Score                       float32
+	ComputedScore               *float32
+	DurationSeconds             *int32
 	EligibleOfficialLeaderboard bool
 	Registrations               []ContestRegistrationReference
 	CreatedAt                   time.Time
 	UpdatedAt                   time.Time
 	Deleted                     bool
+}
+
+// EffectiveScore returns computed_score if set, otherwise falls back to the
+// generated score column (for historical logs).
+func (l *Log) EffectiveScore() float32 {
+	if l.ComputedScore != nil {
+		return *l.ComputedScore
+	}
+	return l.Score
 }

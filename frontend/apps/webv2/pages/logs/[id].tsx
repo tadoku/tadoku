@@ -149,17 +149,30 @@ const Page = () => {
             </div>
             <div className="w-1/2 flex flex-col items-end justify-end opacity-80">
               <h4 className="subtitle text-sm">Breakdown</h4>
-              <div className="lowercase flex items-center space-x-1 text-sm">
-                <strong className="text-lg">
-                  {formatScore(log.data.amount)}
-                </strong>
-                <span className="text-slate-500">
-                  {formatUnit(log.data.amount, log.data.unit_name)}
-                </span>
-                <XMarkIcon className="w-3 h-3 mx-2 text-secondary" />
-                <strong className="text-lg">{log.data.modifier}</strong>
-                <span className="text-slate-500">modifier</span>
-              </div>
+              {log.data.amount != null && log.data.unit_name != null ? (
+                <div className="lowercase flex items-center space-x-1 text-sm">
+                  <strong className="text-lg">
+                    {formatScore(log.data.amount)}
+                  </strong>
+                  <span className="text-slate-500">
+                    {formatUnit(log.data.amount, log.data.unit_name)}
+                  </span>
+                  {log.data.modifier != null ? (
+                    <>
+                      <XMarkIcon className="w-3 h-3 mx-2 text-secondary" />
+                      <strong className="text-lg">{log.data.modifier}</strong>
+                      <span className="text-slate-500">modifier</span>
+                    </>
+                  ) : null}
+                </div>
+              ) : log.data.duration_seconds != null ? (
+                <div className="lowercase flex items-center space-x-1 text-sm">
+                  <strong className="text-lg">
+                    {Math.round(log.data.duration_seconds / 60)}
+                  </strong>
+                  <span className="text-slate-500">minutes</span>
+                </div>
+              ) : null}
             </div>
           </div>
         </div>

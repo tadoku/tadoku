@@ -14,11 +14,13 @@ import { routes } from '@app/common/routes'
 import {
   estimateScore,
   filterUnits,
+  getInputType,
   NewLogFormV2Schema,
 } from '@app/immersion/NewLogFormV2/domain'
 import { formatScore } from '@app/common/format'
 import { useDebouncedCallback } from 'use-debounce'
 import { useSessionOrRedirect } from '@app/common/session'
+import { useState } from 'react'
 import { AmountWithUnit, Option } from 'ui/components/Form'
 import { toast } from 'react-toastify'
 
@@ -28,11 +30,21 @@ interface Props {
 }
 
 export const EditLogForm = ({ options, log }: Props) => {
+  const inputType = getInputType(options.activities, log.activity.id)
+  const [showTimeInput, setShowTimeInput] = useState(
+    inputType === 'amount' && log.duration_seconds != null,
+  )
+
   const defaultValues: Partial<NewLogFormV2Schema> = {
     languageCode: log.language.code,
     activityId: log.activity.id,
-    amountValue: log.amount,
-    amountUnit: log.unit_id,
+    inputType,
+    amountValue: log.amount ?? undefined,
+    amountUnit: log.unit_id ?? undefined,
+    durationMinutes:
+      log.duration_seconds != null
+        ? log.duration_seconds / 60
+        : undefined,
     tags: log.tags,
     description: log.description ?? '',
     allUnits: options.units,
@@ -47,14 +59,21 @@ export const EditLogForm = ({ options, log }: Props) => {
 
   const unitId = methods.watch('amountUnit')
   const amount = methods.watch('amountValue')
+  const durationMinutes = methods.watch('durationMinutes')
 
+  const activity = options.activities.find(it => it.id === log.activity.id)
   const units = filterUnits(options.units, log.activity.id, log.language.code)
   const unitsAsOptions: Option[] = units.map(it => ({
     value: it.id,
     label: it.name,
   }))
   const currentSelectedUnit = units.find(it => it.id === unitId)
-  const estimatedScore = estimateScore(amount, currentSelectedUnit)
+  const estimatedScore = estimateScore(
+    amount,
+    currentSelectedUnit,
+    durationMinutes,
+    activity?.time_modifier ?? undefined,
+  )
 
   const router = useRouter()
   const updateLogMutation = useUpdateLog(updatedLog => {
@@ -69,8 +88,12 @@ export const EditLogForm = ({ options, log }: Props) => {
 
   const onSubmit = (data: any) => {
     const payload: UpdateLogPayload = {
-      amount: data.amountValue,
-      unit_id: data.amountUnit,
+      ...(data.amountValue != null && data.amountUnit != null
+        ? { amount: data.amountValue, unit_id: data.amountUnit }
+        : {}),
+      ...(data.durationMinutes != null
+        ? { duration_seconds: Math.round(data.durationMinutes * 60) }
+        : {}),
       tags: data.tags,
       description: data.description || undefined,
     }
@@ -102,15 +125,62 @@ export const EditLogForm = ({ options, log }: Props) => {
                   disabled
                 />
               </label>
-              <AmountWithUnit
-                label="Amount"
-                name="amount"
-                defaultValue={log.amount}
-                min={0}
-                step="any"
-                units={unitsAsOptions}
-                unitsLabel="Unit"
-              />
+              {inputType === 'time' ? (
+                <Input
+                  name="durationMinutes"
+                  label="Time (minutes)"
+                  type="number"
+                  defaultValue={defaultValues.durationMinutes ?? 0}
+                  min={0}
+                  step="any"
+                  options={{ valueAsNumber: true }}
+                />
+              ) : (
+                <>
+                  <AmountWithUnit
+                    label="Amount"
+                    name="amount"
+                    defaultValue={log.amount ?? 0}
+                    min={0}
+                    step="any"
+                    units={unitsAsOptions}
+                    unitsLabel="Unit"
+                  />
+                  {showTimeInput ? (
+                    <div className="h-stack items-end gap-2">
+                      <div className="flex-1">
+                        <Input
+                          name="durationMinutes"
+                          label="Time spent (minutes)"
+                          type="number"
+                          defaultValue={defaultValues.durationMinutes ?? 0}
+                          min={0}
+                          step="any"
+                          options={{ valueAsNumber: true }}
+                        />
+                      </div>
+                      <button
+                        type="button"
+                        className="btn ghost text-sm mb-0.5"
+                        onClick={() => {
+                          setShowTimeInput(false)
+                          methods.setValue('durationMinutes', undefined)
+                        }}
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      className="text-sm text-primary hover:underline text-left"
+                      onClick={() => setShowTimeInput(true)}
+                    >
+                      + Track time spent
+                    </button>
+                  )}
+                </>
+              )}
               <Input
                 name="description"
                 label="Description"

@@ -12,12 +12,12 @@ import (
 )
 
 type mockLogConfigurationOptionsRepo struct {
-	fetchFn func(ctx context.Context) (*domain.LogConfigurationOptionsResponse, error)
+	fetchFn func(ctx context.Context, userID uuid.UUID) (*domain.LogConfigurationOptionsResponse, error)
 }
 
-func (m *mockLogConfigurationOptionsRepo) FetchLogConfigurationOptions(ctx context.Context) (*domain.LogConfigurationOptionsResponse, error) {
+func (m *mockLogConfigurationOptionsRepo) FetchLogConfigurationOptions(ctx context.Context, userID uuid.UUID) (*domain.LogConfigurationOptionsResponse, error) {
 	if m.fetchFn != nil {
-		return m.fetchFn(ctx)
+		return m.fetchFn(ctx, userID)
 	}
 	return nil, nil
 }
@@ -28,7 +28,7 @@ func TestLogConfigurationOptions_Execute(t *testing.T) {
 		langCode := "ja"
 
 		repo := &mockLogConfigurationOptionsRepo{
-			fetchFn: func(ctx context.Context) (*domain.LogConfigurationOptionsResponse, error) {
+			fetchFn: func(ctx context.Context, userID uuid.UUID) (*domain.LogConfigurationOptionsResponse, error) {
 				return &domain.LogConfigurationOptionsResponse{
 					Languages: []domain.Language{
 						{Code: "ja", Name: "Japanese"},
@@ -39,6 +39,7 @@ func TestLogConfigurationOptions_Execute(t *testing.T) {
 					Units: []domain.Unit{
 						{ID: unitID, LogActivityID: 1, Name: "Pages", Modifier: 1.0, LanguageCode: &langCode},
 					},
+					UserLanguageCodes: []string{"ja"},
 				}, nil
 			},
 		}
@@ -54,6 +55,7 @@ func TestLogConfigurationOptions_Execute(t *testing.T) {
 		assert.Equal(t, "ja", resp.Languages[0].Code)
 		assert.Equal(t, "Reading", resp.Activities[0].Name)
 		assert.Equal(t, "Pages", resp.Units[0].Name)
+		assert.Equal(t, []string{"ja"}, resp.UserLanguageCodes)
 	})
 
 	t.Run("returns unauthorized for guest user", func(t *testing.T) {
@@ -68,7 +70,7 @@ func TestLogConfigurationOptions_Execute(t *testing.T) {
 
 	t.Run("returns unauthorized when no session", func(t *testing.T) {
 		repo := &mockLogConfigurationOptionsRepo{
-			fetchFn: func(ctx context.Context) (*domain.LogConfigurationOptionsResponse, error) {
+			fetchFn: func(ctx context.Context, userID uuid.UUID) (*domain.LogConfigurationOptionsResponse, error) {
 				return &domain.LogConfigurationOptionsResponse{}, nil
 			},
 		}
@@ -82,7 +84,7 @@ func TestLogConfigurationOptions_Execute(t *testing.T) {
 	t.Run("returns repository error", func(t *testing.T) {
 		repoErr := errors.New("database connection failed")
 		repo := &mockLogConfigurationOptionsRepo{
-			fetchFn: func(ctx context.Context) (*domain.LogConfigurationOptionsResponse, error) {
+			fetchFn: func(ctx context.Context, userID uuid.UUID) (*domain.LogConfigurationOptionsResponse, error) {
 				return nil, repoErr
 			},
 		}

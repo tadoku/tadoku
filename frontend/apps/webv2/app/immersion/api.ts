@@ -690,6 +690,7 @@ const LogConfigurationOptions = z.object({
   languages: z.array(Language),
   activities: z.array(Activity),
   units: z.array(Unit),
+  user_language_codes: z.array(z.string()).default([]),
 })
 
 export type LogConfigurationOptions = z.infer<typeof LogConfigurationOptions>

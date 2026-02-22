@@ -59,6 +59,35 @@ func (q *Queries) GetLanguagesByCode(ctx context.Context, languageCodes []string
 	return items, nil
 }
 
+const listDistinctLanguageCodesForUser = `-- name: ListDistinctLanguageCodesForUser :many
+select distinct language_code
+from logs
+where user_id = $1 and deleted_at is null
+`
+
+func (q *Queries) ListDistinctLanguageCodesForUser(ctx context.Context, userID uuid.UUID) ([]string, error) {
+	rows, err := q.db.QueryContext(ctx, listDistinctLanguageCodesForUser, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []string
+	for rows.Next() {
+		var language_code string
+		if err := rows.Scan(&language_code); err != nil {
+			return nil, err
+		}
+		items = append(items, language_code)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listLanguages = `-- name: ListLanguages :many
 select
   code,

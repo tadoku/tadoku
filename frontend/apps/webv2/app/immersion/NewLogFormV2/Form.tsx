@@ -20,7 +20,7 @@ import { formatScore } from '@app/common/format'
 import { useDebouncedCallback } from 'use-debounce'
 import { useSessionOrRedirect } from '@app/common/session'
 import { useEffect } from 'react'
-import { AmountWithUnit, Option, Select } from 'ui/components/Form'
+import { AmountWithUnit, Option, OptionGroup, Select } from 'ui/components/Form'
 
 interface Props {
   options: LogConfigurationOptions
@@ -53,6 +53,18 @@ export const LogFormV2 = ({ options, defaultValues: originalDefaultValues }: Pro
     value: it.code,
     label: it.name,
   }))
+
+  const userLangSet = new Set(options.user_language_codes)
+  const languageGroups: OptionGroup[] | undefined =
+    userLangSet.size > 0
+      ? [
+          {
+            label: 'Previously used',
+            options: languagesAsOptions.filter(it => userLangSet.has(it.value)),
+          },
+          { label: 'All languages', options: languagesAsOptions },
+        ]
+      : undefined
 
   const activity = options.activities.find(it => it.id === activityId)
   const units = filterUnits(options.units, activity?.id, languageCode)
@@ -123,6 +135,7 @@ export const LogFormV2 = ({ options, defaultValues: originalDefaultValues }: Pro
                 name="languageCode"
                 label="Language"
                 values={languagesAsOptions}
+                groups={languageGroups}
               />
               <Select
                 name="activityId"

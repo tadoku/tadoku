@@ -18,10 +18,16 @@ func (s *Server) LogGetConfigurations(ctx echo.Context) error {
 		return ctx.NoContent(http.StatusInternalServerError)
 	}
 
+	userLangCodes := opts.UserLanguageCodes
+	if userLangCodes == nil {
+		userLangCodes = []string{}
+	}
+
 	res := openapi.LogConfigurationOptions{
-		Activities: make([]openapi.Activity, len(opts.Activities)),
-		Languages:  make([]openapi.Language, len(opts.Languages)),
-		Units:      make([]openapi.Unit, len(opts.Units)),
+		Activities:        make([]openapi.Activity, len(opts.Activities)),
+		Languages:         make([]openapi.Language, len(opts.Languages)),
+		Units:             make([]openapi.Unit, len(opts.Units)),
+		UserLanguageCodes: &userLangCodes,
 	}
 
 	for i, it := range opts.Activities {

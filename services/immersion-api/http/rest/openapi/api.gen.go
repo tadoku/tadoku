@@ -218,9 +218,10 @@ type Log struct {
 
 // LogConfigurationOptions defines model for LogConfigurationOptions.
 type LogConfigurationOptions struct {
-	Activities []Activity `json:"activities"`
-	Languages  []Language `json:"languages"`
-	Units      []Unit     `json:"units"`
+	Activities        []Activity `json:"activities"`
+	Languages         []Language `json:"languages"`
+	Units             []Unit     `json:"units"`
+	UserLanguageCodes *[]string  `json:"user_language_codes,omitempty"`
 }
 
 // Logs defines model for Logs.

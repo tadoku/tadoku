@@ -1038,6 +1038,12 @@ components:
         - $ref: "#/components/schemas/Languages"
         - $ref: "#/components/schemas/Activities"
         - $ref: "#/components/schemas/Units"
+        - type: object
+          properties:
+            user_language_codes:
+              type: array
+              items:
+                type: string
     Unit:
       type: object
       required:

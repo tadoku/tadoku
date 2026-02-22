@@ -4,11 +4,12 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/google/uuid"
 	"github.com/tadoku/tadoku/services/immersion-api/domain"
 	"github.com/tadoku/tadoku/services/immersion-api/storage/postgres"
 )
 
-func (r *Repository) FetchLogConfigurationOptions(ctx context.Context) (*domain.LogConfigurationOptionsResponse, error) {
+func (r *Repository) FetchLogConfigurationOptions(ctx context.Context, userID uuid.UUID) (*domain.LogConfigurationOptionsResponse, error) {
 	langs, err := r.q.ListLanguages(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("could not fetch log configuration options: %w", err)
@@ -24,10 +25,16 @@ func (r *Repository) FetchLogConfigurationOptions(ctx context.Context) (*domain.
 		return nil, fmt.Errorf("could not fetch log configuration options: %w", err)
 	}
 
+	userLangs, err := r.q.ListDistinctLanguageCodesForUser(ctx, userID)
+	if err != nil {
+		return nil, fmt.Errorf("could not fetch user language codes: %w", err)
+	}
+
 	options := domain.LogConfigurationOptionsResponse{
-		Languages:  make([]domain.Language, len(langs)),
-		Activities: make([]domain.Activity, len(acts)),
-		Units:      make([]domain.Unit, len(units)),
+		Languages:         make([]domain.Language, len(langs)),
+		Activities:        make([]domain.Activity, len(acts)),
+		Units:             make([]domain.Unit, len(units)),
+		UserLanguageCodes: userLangs,
 	}
 
 	for i, l := range langs {

@@ -9,3 +9,8 @@ export interface Option {
   value: string
   label: string
 }
+
+export interface OptionGroup {
+  label: string
+  options: Option[]
+}

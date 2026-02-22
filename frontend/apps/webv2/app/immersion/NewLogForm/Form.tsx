@@ -4,6 +4,7 @@ import {
   RadioGroup,
   TagsInput,
 } from 'ui'
+import { TagsSidebar } from '@app/immersion/components/TagsSidebar'
 import { FormProvider, useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import {
@@ -146,91 +147,101 @@ export const LogForm = ({
 
   return (
     <FormProvider {...methods}>
-      <form
-        onSubmit={methods.handleSubmit(onSubmit, errors => console.log(errors))}
-        className="v-stack spaced max-w-4xl"
-      >
-        <div className="card">
-          <div className="v-stack spaced lg:h-stack lg:!space-x-8 w-full">
-            <div className="flex-grow v-stack spaced lg:w-2/5">
-              <RadioGroup
-                options={trackingModesForRegistrations(registrations.length)}
-                label="Contests"
-                name="tracking_mode"
-              />
-              {trackingMode === 'manual' ? (
-                <AutocompleteMultiInput
-                  name="selected_registrations"
-                  label="Contest selection"
-                  options={registrations}
-                  match={(option, query) =>
-                    option.contest?.title
-                      .toLowerCase()
-                      .replace(/[^a-zA-Z0-9]/g, '')
-                      .includes(query.toLowerCase()) ?? false
-                  }
-                  getIdForOption={option => option.id}
-                  format={option => formatContestLabel(option.contest!)}
+      <div className="flex flex-col lg:flex-row lg:gap-6">
+        <form
+          onSubmit={methods.handleSubmit(onSubmit, errors => console.log(errors))}
+          className="v-stack spaced max-w-4xl flex-1"
+        >
+          <div className="card">
+            <div className="v-stack spaced lg:h-stack lg:!space-x-8 w-full">
+              <div className="flex-grow v-stack spaced lg:w-2/5">
+                <RadioGroup
+                  options={trackingModesForRegistrations(registrations.length)}
+                  label="Contests"
+                  name="tracking_mode"
                 />
-              ) : null}
-            </div>
-            <div className="v-stack spaced lg:w-3/5">
-              <Select
-                name="languageCode"
-                label="Language"
-                values={languagesAsOptions}
-              />
-              <Select
-                name="activityId"
-                label="Activity"
-                values={activitiesAsOptions}
-                options={{ valueAsNumber: true }}
-              />
-              <div className="h-stack spaced">
-                <AmountWithUnit
-                  label="Amount"
-                  name="amount"
-                  defaultValue={0}
-                  min={0}
-                  step="any"
-                  units={unitsAsOptions}
-                  unitsLabel="Unit"
-                />
+                {trackingMode === 'manual' ? (
+                  <AutocompleteMultiInput
+                    name="selected_registrations"
+                    label="Contest selection"
+                    options={registrations}
+                    match={(option, query) =>
+                      option.contest?.title
+                        .toLowerCase()
+                        .replace(/[^a-zA-Z0-9]/g, '')
+                        .includes(query.toLowerCase()) ?? false
+                    }
+                    getIdForOption={option => option.id}
+                    format={option => formatContestLabel(option.contest!)}
+                  />
+                ) : null}
               </div>
-              <Input
-                name="description"
-                label="Description"
-                type="text"
-                placeholder="e.g. One Piece volume 45"
-              />
-              <TagsInput
-                name="tags"
-                label="Tags"
-                placeholder="Add tags..."
-                maxTags={10}
-                getSuggestions={fetchTagSuggestions}
-                renderSuggestion={s => s.count > 0 ? `${s.tag} (${s.count}×)` : s.tag}
-                getValue={s => s.tag}
-              />
+              <div className="v-stack spaced lg:w-3/5">
+                <Select
+                  name="languageCode"
+                  label="Language"
+                  values={languagesAsOptions}
+                />
+                <Select
+                  name="activityId"
+                  label="Activity"
+                  values={activitiesAsOptions}
+                  options={{ valueAsNumber: true }}
+                />
+                <div className="h-stack spaced">
+                  <AmountWithUnit
+                    label="Amount"
+                    name="amount"
+                    defaultValue={0}
+                    min={0}
+                    step="any"
+                    units={unitsAsOptions}
+                    unitsLabel="Unit"
+                  />
+                </div>
+                <Input
+                  name="description"
+                  label="Description"
+                  type="text"
+                  placeholder="e.g. One Piece volume 45"
+                />
+                <TagsInput
+                  name="tags"
+                  label="Tags"
+                  placeholder="Add tags..."
+                  maxTags={10}
+                  getSuggestions={fetchTagSuggestions}
+                  renderSuggestion={s => s.count > 0 ? `${s.tag} (${s.count}×)` : s.tag}
+                  getValue={s => s.tag}
+                />
+                <div className="lg:hidden">
+                  <TagsSidebar activityId={activityId} />
+                </div>
+              </div>
+            </div>
+            <div className="-mx-4 -mb-4 mt-4 px-4 py-2 md:-mx-7 md:-mb-7 md:px-7 md:py-2 bg-slate-500/5 text-center lg:text-right font-mono">
+              Estimated score: <strong>{formatScore(estimatedScore)}</strong>
             </div>
           </div>
-          <div className="-mx-4 -mb-4 mt-4 px-4 py-2 md:-mx-7 md:-mb-7 md:px-7 md:py-2 bg-slate-500/5 text-center lg:text-right font-mono">
-            Estimated score: <strong>{formatScore(estimatedScore)}</strong>
+          <div className="h-stack spaced justify-end">
+            <a href={routes.contestListOfficial()} className="btn ghost">
+              Cancel
+            </a>
+            <button
+              type="submit"
+              className="btn primary"
+              disabled={methods.formState.isSubmitting}
+            >
+              Create
+            </button>
           </div>
-        </div>
-        <div className="h-stack spaced justify-end">
-          <a href={routes.contestListOfficial()} className="btn ghost">
-            Cancel
-          </a>
-          <button
-            type="submit"
-            className="btn primary"
-            disabled={methods.formState.isSubmitting}
-          >
-            Create
-          </button>
-        </div>
-      </form>
+        </form>
+        <aside className="hidden lg:block lg:w-56 lg:pt-1">
+          <div className="sticky top-4">
+            <TagsSidebar activityId={activityId} />
+          </div>
+        </aside>
+      </div>
     </FormProvider>
   )
 }

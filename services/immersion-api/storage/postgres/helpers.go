@@ -3,6 +3,8 @@ package postgres
 import (
 	"database/sql"
 	"time"
+
+	"github.com/google/uuid"
 )
 
 func NewQueries(psql *sql.DB) *Queries {
@@ -75,6 +77,42 @@ func NewNullInt16(val *int16) sql.NullInt16 {
 		Valid: true,
 		Int16: *val,
 	}
+}
+
+func NewNullFloat64(val *float32) sql.NullFloat64 {
+	if val == nil {
+		return sql.NullFloat64{Valid: false}
+	}
+	return sql.NullFloat64{Valid: true, Float64: float64(*val)}
+}
+
+func NewFloat32FromNullFloat64(val sql.NullFloat64) *float32 {
+	if !val.Valid {
+		return nil
+	}
+	f := float32(val.Float64)
+	return &f
+}
+
+func NewNullUUID(val *uuid.UUID) uuid.NullUUID {
+	if val == nil {
+		return uuid.NullUUID{Valid: false}
+	}
+	return uuid.NullUUID{Valid: true, UUID: *val}
+}
+
+func NewUUIDFromNullUUID(val uuid.NullUUID) *uuid.UUID {
+	if !val.Valid {
+		return nil
+	}
+	return &val.UUID
+}
+
+func NewInt32FromNullInt32(val sql.NullInt32) *int32 {
+	if !val.Valid {
+		return nil
+	}
+	return &val.Int32
 }
 
 // StringArrayFromInterface converts the any result from array_agg to []string.

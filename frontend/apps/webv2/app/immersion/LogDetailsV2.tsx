@@ -80,15 +80,28 @@ export const LogDetailsV2 = ({ log }: Props) => {
             </div>
             <div className="w-1/2 flex flex-col items-end justify-end opacity-80">
               <h4 className="subtitle text-sm">Breakdown</h4>
-              <div className="lowercase flex items-center space-x-1 text-sm">
-                <strong className="text-lg">{formatScore(log.amount)}</strong>
-                <span className="text-slate-500">
-                  {formatUnit(log.amount, log.unit_name)}
-                </span>
-                <XMarkIcon className="w-3 h-3 mx-2 text-secondary" />
-                <strong className="text-lg">{log.modifier}</strong>
-                <span className="text-slate-500">modifier</span>
-              </div>
+              {log.amount != null && log.unit_name != null ? (
+                <div className="lowercase flex items-center space-x-1 text-sm">
+                  <strong className="text-lg">{formatScore(log.amount)}</strong>
+                  <span className="text-slate-500">
+                    {formatUnit(log.amount, log.unit_name)}
+                  </span>
+                  {log.modifier != null ? (
+                    <>
+                      <XMarkIcon className="w-3 h-3 mx-2 text-secondary" />
+                      <strong className="text-lg">{log.modifier}</strong>
+                      <span className="text-slate-500">modifier</span>
+                    </>
+                  ) : null}
+                </div>
+              ) : log.duration_seconds != null ? (
+                <div className="lowercase flex items-center space-x-1 text-sm">
+                  <strong className="text-lg">
+                    {Math.round(log.duration_seconds / 60)}
+                  </strong>
+                  <span className="text-slate-500">minutes</span>
+                </div>
+              ) : null}
             </div>
           </div>
         </div>

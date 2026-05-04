@@ -11,6 +11,8 @@ import (
 )
 
 func (r *Repository) UpdateLog(ctx context.Context, req *domain.LogUpdateRequest) error {
+	activity := req.Activity()
+
 	// Look up the existing log to get activity_id + language_code for unit validation
 	existingLog, err := r.q.FindLogByID(ctx, postgres.FindLogByIDParams{
 		ID:             req.LogID,
@@ -23,18 +25,25 @@ func (r *Repository) UpdateLog(ctx context.Context, req *domain.LogUpdateRequest
 		return fmt.Errorf("could not fetch log: %w", err)
 	}
 
-	// Resolve unit -> modifier (unit must match the log's activity)
-	unit, err := r.q.FindUnitForTracking(ctx, postgres.FindUnitForTrackingParams{
-		ID:            req.UnitID,
-		LogActivityID: existingLog.ActivityID,
-		LanguageCode:  postgres.NewNullString(&existingLog.LanguageCode),
-	})
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return fmt.Errorf("invalid unit supplied: %w", domain.ErrInvalidLog)
+	// Resolve unit -> modifier (only when unit is provided)
+	var modifier *float32
+	if req.UnitID != nil {
+		unit, err := r.q.FindUnitForTracking(ctx, postgres.FindUnitForTrackingParams{
+			ID:            *req.UnitID,
+			LogActivityID: existingLog.ActivityID,
+			LanguageCode:  postgres.NewNullString(&existingLog.LanguageCode),
+		})
+		if err != nil {
+			if errors.Is(err, sql.ErrNoRows) {
+				return fmt.Errorf("invalid unit supplied: %w", domain.ErrInvalidLog)
+			}
+			return fmt.Errorf("could not fetch unit for tracking: %w", err)
 		}
-		return fmt.Errorf("could not fetch unit for tracking: %w", err)
+		modifier = &unit.Modifier
 	}
+
+	// Compute score using resolved modifier
+	computedScore := domain.ComputeScore(activity, req.Amount, modifier, req.DurationSeconds)
 
 	tx, err := r.psql.BeginTx(ctx, nil)
 	if err != nil {
@@ -51,12 +60,14 @@ func (r *Repository) UpdateLog(ctx context.Context, req *domain.LogUpdateRequest
 
 	// Update the log itself
 	if err := qtx.UpdateLog(ctx, postgres.UpdateLogParams{
-		LogID:       req.LogID,
-		Amount:      req.Amount,
-		Modifier:    unit.Modifier,
-		UnitID:      req.UnitID,
-		Description: postgres.NewNullString(req.Description),
-		Now:         req.Now(),
+		LogID:           req.LogID,
+		Amount:          postgres.NewNullFloat64(req.Amount),
+		Modifier:        postgres.NewNullFloat64(modifier),
+		UnitID:          postgres.NewNullUUID(req.UnitID),
+		DurationSeconds: postgres.NewNullInt32(req.DurationSeconds),
+		ComputedScore:   sql.NullFloat64{Valid: true, Float64: float64(computedScore)},
+		Description:     postgres.NewNullString(req.Description),
+		Now:             req.Now(),
 	}); err != nil {
 		_ = tx.Rollback()
 		return fmt.Errorf("could not update log: %w", err)
@@ -64,10 +75,12 @@ func (r *Repository) UpdateLog(ctx context.Context, req *domain.LogUpdateRequest
 
 	// Update contest_logs for ongoing contests only
 	if err := qtx.UpdateOngoingContestLogs(ctx, postgres.UpdateOngoingContestLogsParams{
-		LogID:    req.LogID,
-		Amount:   req.Amount,
-		Modifier: unit.Modifier,
-		Now:      req.Now(),
+		LogID:           req.LogID,
+		Amount:          postgres.NewNullFloat64(req.Amount),
+		Modifier:        postgres.NewNullFloat64(modifier),
+		DurationSeconds: postgres.NewNullInt32(req.DurationSeconds),
+		ComputedScore:   sql.NullFloat64{Valid: true, Float64: float64(computedScore)},
+		Now:             req.Now(),
 	}); err != nil {
 		_ = tx.Rollback()
 		return fmt.Errorf("could not update contest logs: %w", err)

@@ -13,14 +13,16 @@ type LogCreateRepository interface {
 	FetchOngoingContestRegistrations(context.Context, *RegistrationListOngoingRequest) (*ContestRegistrations, error)
 	CreateLog(context.Context, *LogCreateRequest) (*uuid.UUID, error)
 	FindLogByID(context.Context, *LogFindRequest) (*Log, error)
+	FindActivityByID(context.Context, int32) (*Activity, error)
 }
 
 type LogCreateRequest struct {
 	RegistrationIDs []uuid.UUID
-	UnitID          uuid.UUID `validate:"required"`
-	ActivityID      int32     `validate:"required"`
-	LanguageCode    string    `validate:"required"`
-	Amount          float32   `validate:"required,gte=0"`
+	UnitID          *uuid.UUID
+	ActivityID      int32  `validate:"required"`
+	LanguageCode    string `validate:"required"`
+	Amount          *float32
+	DurationSeconds *int32
 	Tags            []string
 
 	// Optional
@@ -30,11 +32,13 @@ type LogCreateRequest struct {
 	userID                      uuid.UUID
 	eligibleOfficialLeaderboard bool
 	year                        int16
+	activity                    *Activity
 }
 
 func (r *LogCreateRequest) UserID() uuid.UUID                 { return r.userID }
 func (r *LogCreateRequest) EligibleOfficialLeaderboard() bool { return r.eligibleOfficialLeaderboard }
 func (r *LogCreateRequest) Year() int16                       { return r.year }
+func (r *LogCreateRequest) Activity() *Activity               { return r.activity }
 
 type LogCreate struct {
 	repo       LogCreateRepository
@@ -77,6 +81,20 @@ func (s *LogCreate) Execute(ctx context.Context, req *LogCreateRequest) (*Log, e
 	if err != nil {
 		return nil, fmt.Errorf("unable to validate: %w", ErrInvalidLog)
 	}
+
+	// Look up activity to determine input type
+	activity, err := s.repo.FindActivityByID(ctx, req.ActivityID)
+	if err != nil {
+		return nil, fmt.Errorf("could not find activity: %w", ErrInvalidLog)
+	}
+
+	// Validate tracking data based on input type
+	if err := validateTrackingData(activity, req.DurationSeconds, req.Amount, req.UnitID); err != nil {
+		return nil, err
+	}
+
+	// Store activity for repo layer to use when computing score
+	req.activity = activity
 
 	// Validate and normalize tags
 	req.Tags, err = ValidateAndNormalizeTags(req.Tags)

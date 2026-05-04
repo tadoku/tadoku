@@ -11,11 +11,37 @@ import (
 	"github.com/google/uuid"
 )
 
+const findActivityByID = `-- name: FindActivityByID :one
+select
+  id,
+  name,
+  "default",
+  time_modifier,
+  input_type
+from log_activities
+where id = $1
+`
+
+func (q *Queries) FindActivityByID(ctx context.Context, id int32) (LogActivity, error) {
+	row := q.db.QueryRowContext(ctx, findActivityByID, id)
+	var i LogActivity
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Default,
+		&i.TimeModifier,
+		&i.InputType,
+	)
+	return i, err
+}
+
 const listActivities = `-- name: ListActivities :many
 select
   id,
   name,
-  "default"
+  "default",
+  time_modifier,
+  input_type
 from log_activities
 order by id asc
 `
@@ -29,7 +55,13 @@ func (q *Queries) ListActivities(ctx context.Context) ([]LogActivity, error) {
 	var items []LogActivity
 	for rows.Next() {
 		var i LogActivity
-		if err := rows.Scan(&i.ID, &i.Name, &i.Default); err != nil {
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.Default,
+			&i.TimeModifier,
+			&i.InputType,
+		); err != nil {
 			return nil, err
 		}
 		items = append(items, i)
@@ -46,7 +78,9 @@ func (q *Queries) ListActivities(ctx context.Context) ([]LogActivity, error) {
 const listActivitiesForContest = `-- name: ListActivitiesForContest :many
 select
   id,
-  name
+  name,
+  time_modifier,
+  input_type
 from log_activities
 where
   id = any((
@@ -58,8 +92,10 @@ order by name asc
 `
 
 type ListActivitiesForContestRow struct {
-	ID   int32
-	Name string
+	ID           int32
+	Name         string
+	TimeModifier float32
+	InputType    string
 }
 
 func (q *Queries) ListActivitiesForContest(ctx context.Context, contestID uuid.UUID) ([]ListActivitiesForContestRow, error) {
@@ -71,7 +107,12 @@ func (q *Queries) ListActivitiesForContest(ctx context.Context, contestID uuid.U
 	var items []ListActivitiesForContestRow
 	for rows.Next() {
 		var i ListActivitiesForContestRow
-		if err := rows.Scan(&i.ID, &i.Name); err != nil {
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.TimeModifier,
+			&i.InputType,
+		); err != nil {
 			return nil, err
 		}
 		items = append(items, i)

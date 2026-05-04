@@ -21,6 +21,7 @@ type mockLogUpdateRepository struct {
 	updateCalled     bool
 	updateCalledWith *domain.LogUpdateRequest
 	findCallCount    int
+	activityOverride *domain.Activity
 }
 
 func (m *mockLogUpdateRepository) FindLogByID(_ context.Context, req *domain.LogFindRequest) (*domain.Log, error) {
@@ -35,6 +36,13 @@ func (m *mockLogUpdateRepository) UpdateLog(_ context.Context, req *domain.LogUp
 	m.updateCalled = true
 	m.updateCalledWith = req
 	return m.updateErr
+}
+
+func (m *mockLogUpdateRepository) FindActivityByID(ctx context.Context, id int32) (*domain.Activity, error) {
+	if m.activityOverride != nil {
+		return m.activityOverride, nil
+	}
+	return &domain.Activity{ID: id, Name: "test", InputType: "amount"}, nil
 }
 
 func TestLogUpdate_Execute(t *testing.T) {
@@ -57,8 +65,8 @@ func TestLogUpdate_Execute(t *testing.T) {
 
 		_, err := svc.Execute(ctx, &domain.LogUpdateRequest{
 			LogID:  logID,
-			UnitID: unitID,
-			Amount: 10,
+			UnitID: ptrUUID(unitID),
+			Amount: ptrFloat32(10),
 		})
 
 		assert.ErrorIs(t, err, domain.ErrUnauthorized)
@@ -72,8 +80,8 @@ func TestLogUpdate_Execute(t *testing.T) {
 
 		_, err := svc.Execute(context.Background(), &domain.LogUpdateRequest{
 			LogID:  logID,
-			UnitID: unitID,
-			Amount: 10,
+			UnitID: ptrUUID(unitID),
+			Amount: ptrFloat32(10),
 		})
 
 		assert.ErrorIs(t, err, domain.ErrUnauthorized)
@@ -81,7 +89,7 @@ func TestLogUpdate_Execute(t *testing.T) {
 	})
 
 	t.Run("allows owner to update their own log", func(t *testing.T) {
-		updatedLog := &domain.Log{ID: logID, UserID: userID, Amount: 20}
+		updatedLog := &domain.Log{ID: logID, UserID: userID, Amount: ptrFloat32(20)}
 		repo := &mockLogUpdateRepository{
 			log:        makeLog(userID),
 			updatedLog: updatedLog,
@@ -93,8 +101,8 @@ func TestLogUpdate_Execute(t *testing.T) {
 
 		result, err := svc.Execute(ctx, &domain.LogUpdateRequest{
 			LogID:  logID,
-			UnitID: unitID,
-			Amount: 20,
+			UnitID: ptrUUID(unitID),
+			Amount: ptrFloat32(20),
 		})
 
 		require.NoError(t, err)
@@ -113,8 +121,8 @@ func TestLogUpdate_Execute(t *testing.T) {
 
 		_, err := svc.Execute(ctx, &domain.LogUpdateRequest{
 			LogID:  logID,
-			UnitID: unitID,
-			Amount: 10,
+			UnitID: ptrUUID(unitID),
+			Amount: ptrFloat32(10),
 		})
 
 		assert.ErrorIs(t, err, domain.ErrForbidden)
@@ -122,7 +130,7 @@ func TestLogUpdate_Execute(t *testing.T) {
 	})
 
 	t.Run("allows admin to update any log", func(t *testing.T) {
-		updatedLog := &domain.Log{ID: logID, UserID: otherUserID, Amount: 15}
+		updatedLog := &domain.Log{ID: logID, UserID: otherUserID, Amount: ptrFloat32(15)}
 		repo := &mockLogUpdateRepository{
 			log:        makeLog(otherUserID),
 			updatedLog: updatedLog,
@@ -134,8 +142,8 @@ func TestLogUpdate_Execute(t *testing.T) {
 
 		result, err := svc.Execute(ctx, &domain.LogUpdateRequest{
 			LogID:  logID,
-			UnitID: unitID,
-			Amount: 15,
+			UnitID: ptrUUID(unitID),
+			Amount: ptrFloat32(15),
 		})
 
 		require.NoError(t, err)
@@ -154,8 +162,8 @@ func TestLogUpdate_Execute(t *testing.T) {
 
 		_, err := svc.Execute(ctx, &domain.LogUpdateRequest{
 			LogID:  logID,
-			UnitID: unitID,
-			Amount: 10,
+			UnitID: ptrUUID(unitID),
+			Amount: ptrFloat32(10),
 		})
 
 		assert.Error(t, err)
@@ -173,7 +181,7 @@ func TestLogUpdate_Execute(t *testing.T) {
 
 		_, err := svc.Execute(ctx, &domain.LogUpdateRequest{
 			LogID:  logID,
-			Amount: 10,
+			Amount: ptrFloat32(10),
 		})
 
 		assert.ErrorIs(t, err, domain.ErrInvalidLog)
@@ -192,8 +200,8 @@ func TestLogUpdate_Execute(t *testing.T) {
 
 		_, err := svc.Execute(ctx, &domain.LogUpdateRequest{
 			LogID:  logID,
-			UnitID: unitID,
-			Amount: 10,
+			UnitID: ptrUUID(unitID),
+			Amount: ptrFloat32(10),
 		})
 
 		assert.Error(t, err)
@@ -201,7 +209,7 @@ func TestLogUpdate_Execute(t *testing.T) {
 	})
 
 	t.Run("sets now from clock and userID from log owner", func(t *testing.T) {
-		updatedLog := &domain.Log{ID: logID, UserID: userID, Amount: 10}
+		updatedLog := &domain.Log{ID: logID, UserID: userID, Amount: ptrFloat32(10)}
 		repo := &mockLogUpdateRepository{
 			log:        makeLog(userID),
 			updatedLog: updatedLog,
@@ -213,8 +221,8 @@ func TestLogUpdate_Execute(t *testing.T) {
 
 		_, err := svc.Execute(ctx, &domain.LogUpdateRequest{
 			LogID:  logID,
-			UnitID: unitID,
-			Amount: 10,
+			UnitID: ptrUUID(unitID),
+			Amount: ptrFloat32(10),
 		})
 
 		require.NoError(t, err)
@@ -222,8 +230,56 @@ func TestLogUpdate_Execute(t *testing.T) {
 		assert.Equal(t, userID, repo.updateCalledWith.UserID())
 	})
 
+	t.Run("allows updating with duration for time-based activity", func(t *testing.T) {
+		updatedLog := &domain.Log{ID: logID, UserID: userID, DurationSeconds: ptrInt32(3600)}
+		repo := &mockLogUpdateRepository{
+			log:        &domain.Log{ID: logID, UserID: userID, ActivityID: 3},
+			updatedLog: updatedLog,
+			activityOverride: &domain.Activity{
+				ID: 3, Name: "Listening", InputType: "time",
+			},
+		}
+		clock := commondomain.NewMockClock(now)
+		svc := domain.NewLogUpdate(repo, clock)
+
+		ctx := ctxWithUserSubject(userID.String())
+
+		result, err := svc.Execute(ctx, &domain.LogUpdateRequest{
+			LogID:           logID,
+			DurationSeconds: ptrInt32(3600),
+		})
+
+		require.NoError(t, err)
+		assert.True(t, repo.updateCalled)
+		assert.Equal(t, updatedLog, result)
+		assert.NotNil(t, repo.updateCalledWith.Activity())
+		assert.Equal(t, "time", repo.updateCalledWith.Activity().InputType)
+	})
+
+	t.Run("rejects time-based activity update without duration", func(t *testing.T) {
+		repo := &mockLogUpdateRepository{
+			log: &domain.Log{ID: logID, UserID: userID, ActivityID: 3},
+			activityOverride: &domain.Activity{
+				ID: 3, Name: "Listening", InputType: "time",
+			},
+		}
+		clock := commondomain.NewMockClock(now)
+		svc := domain.NewLogUpdate(repo, clock)
+
+		ctx := ctxWithUserSubject(userID.String())
+
+		_, err := svc.Execute(ctx, &domain.LogUpdateRequest{
+			LogID:  logID,
+			UnitID: ptrUUID(unitID),
+			Amount: ptrFloat32(10),
+		})
+
+		assert.ErrorIs(t, err, domain.ErrInvalidLog)
+		assert.False(t, repo.updateCalled)
+	})
+
 	t.Run("normalizes tags", func(t *testing.T) {
-		updatedLog := &domain.Log{ID: logID, UserID: userID, Amount: 10}
+		updatedLog := &domain.Log{ID: logID, UserID: userID, Amount: ptrFloat32(10)}
 		repo := &mockLogUpdateRepository{
 			log:        makeLog(userID),
 			updatedLog: updatedLog,
@@ -235,8 +291,8 @@ func TestLogUpdate_Execute(t *testing.T) {
 
 		_, err := svc.Execute(ctx, &domain.LogUpdateRequest{
 			LogID:  logID,
-			UnitID: unitID,
-			Amount: 10,
+			UnitID: ptrUUID(unitID),
+			Amount: ptrFloat32(10),
 			Tags:   []string{"Book", " FICTION ", "book"},
 		})
 

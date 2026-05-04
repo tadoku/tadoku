@@ -21,11 +21,13 @@ type LogContestUpdateRequest struct {
 }
 
 type LogContestUpdateDBRequest struct {
-	LogID    uuid.UUID
-	Amount   float32
-	Modifier float32
-	Attach   []LogContestAttach
-	Detach   []uuid.UUID // contest_ids to remove
+	LogID           uuid.UUID
+	Amount          *float32
+	Modifier        *float32
+	DurationSeconds *int32
+	ComputedScore   *float32
+	Attach          []LogContestAttach
+	Detach          []uuid.UUID // contest_ids to remove
 }
 
 type LogContestAttach struct {
@@ -161,11 +163,13 @@ func (s *LogContestUpdate) Execute(ctx context.Context, req *LogContestUpdateReq
 	}
 
 	if err := s.repo.UpdateLogContests(ctx, &LogContestUpdateDBRequest{
-		LogID:    req.LogID,
-		Amount:   log.Amount,
-		Modifier: log.Modifier,
-		Attach:   toAttach,
-		Detach:   toDetach,
+		LogID:           req.LogID,
+		Amount:          log.Amount,
+		Modifier:        log.Modifier,
+		DurationSeconds: log.DurationSeconds,
+		ComputedScore:   log.ComputedScore,
+		Attach:          toAttach,
+		Detach:          toDetach,
 	}); err != nil {
 		return nil, fmt.Errorf("could not update log contests: %w", err)
 	}

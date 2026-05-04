@@ -423,8 +423,6 @@ paths:
               required:
                 - language_code
                 - activity_id
-                - amount
-                - unit_id
                 - tags
               properties:
                 registration_ids:
@@ -444,6 +442,8 @@ paths:
                 unit_id:
                   type: string
                   format: uuid
+                duration_seconds:
+                  type: integer
                 tags:
                   type: array
                   items:
@@ -522,8 +522,6 @@ paths:
             schema:
               type: object
               required:
-                - amount
-                - unit_id
                 - tags
               properties:
                 amount:
@@ -532,6 +530,8 @@ paths:
                 unit_id:
                   type: string
                   format: uuid
+                duration_seconds:
+                  type: integer
                 tags:
                   type: array
                   items:
@@ -1131,6 +1131,7 @@ components:
       required:
         - id
         - name
+        - input_type
       properties:
         id:
           format: int32
@@ -1141,6 +1142,13 @@ components:
           example: Reading
         default:
           type: boolean
+        time_modifier:
+          type: number
+          format: float
+        input_type:
+          type: string
+          enum: ["time", "amount"]
+          example: amount
     Activities:
       type: object
       required:
@@ -1428,11 +1436,7 @@ components:
         - user_id
         - language
         - activity
-        - unit_id
-        - unit_name
         - tags
-        - amount
-        - modifier
         - score
         - created_at
         - deleted
@@ -1471,6 +1475,8 @@ components:
         score:
           type: number
           format: float
+        duration_seconds:
+          type: integer
         registrations:
           type: array
           items:

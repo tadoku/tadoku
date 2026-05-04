@@ -60,8 +60,8 @@ func TestLogContestUpdate_Execute(t *testing.T) {
 		UserID:       userID,
 		LanguageCode: "jpn",
 		ActivityID:   1,
-		Amount:       100,
-		Modifier:     1.0,
+		Amount:       ptrFloat32(100),
+		Modifier:     ptrFloat32(1.0),
 		Score:        100,
 		CreatedAt:    now,
 	}
@@ -176,8 +176,8 @@ func TestLogContestUpdate_Execute(t *testing.T) {
 			UserID:       userID,
 			LanguageCode: "kor",
 			ActivityID:   1,
-			Amount:       100,
-			Modifier:     1.0,
+			Amount:       ptrFloat32(100),
+			Modifier:     ptrFloat32(1.0),
 			CreatedAt:    now,
 		}
 		repo := &mockLogContestUpdateRepository{
@@ -203,8 +203,8 @@ func TestLogContestUpdate_Execute(t *testing.T) {
 			UserID:       userID,
 			LanguageCode: "jpn",
 			ActivityID:   999,
-			Amount:       100,
-			Modifier:     1.0,
+			Amount:       ptrFloat32(100),
+			Modifier:     ptrFloat32(1.0),
 			CreatedAt:    now,
 		}
 		repo := &mockLogContestUpdateRepository{
@@ -230,8 +230,8 @@ func TestLogContestUpdate_Execute(t *testing.T) {
 			UserID:       userID,
 			LanguageCode: "jpn",
 			ActivityID:   1,
-			Amount:       100,
-			Modifier:     1.0,
+			Amount:       ptrFloat32(100),
+			Modifier:     ptrFloat32(1.0),
 			Score:        100,
 			CreatedAt:    now,
 			Registrations: []domain.ContestRegistrationReference{
@@ -267,8 +267,8 @@ func TestLogContestUpdate_Execute(t *testing.T) {
 			UserID:       userID,
 			LanguageCode: "jpn",
 			ActivityID:   1,
-			Amount:       100,
-			Modifier:     1.0,
+			Amount:       ptrFloat32(100),
+			Modifier:     ptrFloat32(1.0),
 			Score:        100,
 			CreatedAt:    now,
 			Registrations: []domain.ContestRegistrationReference{
@@ -280,8 +280,8 @@ func TestLogContestUpdate_Execute(t *testing.T) {
 			UserID:       userID,
 			LanguageCode: "jpn",
 			ActivityID:   1,
-			Amount:       100,
-			Modifier:     1.0,
+			Amount:       ptrFloat32(100),
+			Modifier:     ptrFloat32(1.0),
 			Score:        100,
 			CreatedAt:    now,
 		}
@@ -312,8 +312,8 @@ func TestLogContestUpdate_Execute(t *testing.T) {
 			UserID:       userID,
 			LanguageCode: "jpn",
 			ActivityID:   1,
-			Amount:       100,
-			Modifier:     1.0,
+			Amount:       ptrFloat32(100),
+			Modifier:     ptrFloat32(1.0),
 			Score:        100,
 			CreatedAt:    now,
 			Registrations: []domain.ContestRegistrationReference{
@@ -366,8 +366,8 @@ func TestLogContestUpdate_Execute(t *testing.T) {
 			UserID:       userID,
 			LanguageCode: "jpn",
 			ActivityID:   1,
-			Amount:       100,
-			Modifier:     1.0,
+			Amount:       ptrFloat32(100),
+			Modifier:     ptrFloat32(1.0),
 			Score:        100,
 			CreatedAt:    now,
 			Registrations: []domain.ContestRegistrationReference{
@@ -380,8 +380,8 @@ func TestLogContestUpdate_Execute(t *testing.T) {
 			UserID:       userID,
 			LanguageCode: "jpn",
 			ActivityID:   1,
-			Amount:       100,
-			Modifier:     1.0,
+			Amount:       ptrFloat32(100),
+			Modifier:     ptrFloat32(1.0),
 			Score:        100,
 			CreatedAt:    now,
 		}
@@ -408,3 +408,8 @@ func TestLogContestUpdate_Execute(t *testing.T) {
 		// Ended contest is NOT in the detach list
 	})
 }
+
+func ptrFloat32(v float32) *float32  { return &v }
+func ptrInt32(v int32) *int32        { return &v }
+func ptrString(v string) *string     { return &v }
+func ptrUUID(v uuid.UUID) *uuid.UUID { return &v }

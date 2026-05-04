@@ -20,6 +20,7 @@ go_library(
         "repo_fetchlogconfigurationoptions.go",
         "repo_fetchongoingregistrations.go",
         "repo_fetchyearlyleaderboard.go",
+        "repo_findactivitybyid.go",
         "repo_findcontestbyid.go",
         "repo_findlogbyid.go",
         "repo_findregistrationforuser.go",

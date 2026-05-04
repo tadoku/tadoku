@@ -55,27 +55,8 @@ func (s *Server) ContestListLogs(ctx echo.Context, id types.UUID, params openapi
 	}
 
 	for i, it := range list.Logs {
-		res.Logs[i] = openapi.Log{
-			Id: it.ID,
-			Activity: openapi.Activity{
-				Id:   int32(it.ActivityID),
-				Name: it.ActivityName,
-			},
-			Language: openapi.Language{
-				Code: it.LanguageCode,
-				Name: it.LanguageName,
-			},
-			Amount:          it.Amount,
-			Modifier:        it.Modifier,
-			Score:           it.Score,
-			Tags:            it.Tags,
-			UnitName:        it.UnitName,
-			UserId:          it.UserID,
-			UserDisplayName: it.UserDisplayName,
-			CreatedAt:       it.CreatedAt,
-			Deleted:         it.Deleted,
-			Description:     it.Description,
-		}
+		it := it
+		res.Logs[i] = *logToAPI(&it)
 	}
 
 	return ctx.JSON(http.StatusOK, res)

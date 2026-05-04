@@ -38,13 +38,17 @@ func (r *Repository) YearlyContestRegistrationsForUser(ctx context.Context, req 
 	}
 
 	langs := map[string]string{}
-	acts := map[int32]string{}
+	type actInfo struct {
+		Name      string
+		InputType string
+	}
+	acts := map[int32]actInfo{}
 
 	for _, l := range languages {
 		langs[l.Code] = l.Name
 	}
 	for _, a := range activities {
-		acts[a.ID] = a.Name
+		acts[a.ID] = actInfo{Name: a.Name, InputType: a.InputType}
 	}
 
 	res := &domain.ContestRegistrations{
@@ -69,9 +73,11 @@ func (r *Repository) YearlyContestRegistrationsForUser(ctx context.Context, req 
 		}
 
 		for i, a := range r.ActivityTypeIDAllowList {
+			info := acts[a]
 			contest.AllowedActivities[i] = domain.Activity{
-				ID:   a,
-				Name: acts[a],
+				ID:        a,
+				Name:      info.Name,
+				InputType: info.InputType,
 			}
 		}
 

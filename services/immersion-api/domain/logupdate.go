@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
 	commondomain "github.com/tadoku/tadoku/services/common/domain"
 )
@@ -13,27 +12,30 @@ import (
 type LogUpdateRepository interface {
 	FindLogByID(context.Context, *LogFindRequest) (*Log, error)
 	UpdateLog(context.Context, *LogUpdateRequest) error
+	FindActivityByID(context.Context, int32) (*Activity, error)
 }
 
 type LogUpdateRequest struct {
-	LogID       uuid.UUID
-	UnitID      uuid.UUID `validate:"required"`
-	Amount      float32   `validate:"required,gte=0"`
-	Tags        []string
-	Description *string
+	LogID           uuid.UUID
+	UnitID          *uuid.UUID
+	Amount          *float32
+	DurationSeconds *int32
+	Tags            []string
+	Description     *string
 
 	// Set by domain layer (unexported: only domain can write, others read via getters)
-	now    time.Time
-	userID uuid.UUID
+	now      time.Time
+	userID   uuid.UUID
+	activity *Activity
 }
 
-func (r *LogUpdateRequest) Now() time.Time    { return r.now }
-func (r *LogUpdateRequest) UserID() uuid.UUID { return r.userID }
+func (r *LogUpdateRequest) Now() time.Time      { return r.now }
+func (r *LogUpdateRequest) UserID() uuid.UUID   { return r.userID }
+func (r *LogUpdateRequest) Activity() *Activity { return r.activity }
 
 type LogUpdate struct {
-	repo     LogUpdateRepository
-	clock    commondomain.Clock
-	validate *validator.Validate
+	repo  LogUpdateRepository
+	clock commondomain.Clock
 }
 
 func NewLogUpdate(
@@ -41,9 +43,8 @@ func NewLogUpdate(
 	clock commondomain.Clock,
 ) *LogUpdate {
 	return &LogUpdate{
-		repo:     repo,
-		clock:    clock,
-		validate: validator.New(),
+		repo:  repo,
+		clock: clock,
 	}
 }
 
@@ -71,10 +72,19 @@ func (s *LogUpdate) Execute(ctx context.Context, req *LogUpdateRequest) (*Log, e
 		return nil, ErrForbidden
 	}
 
-	err = s.validate.Struct(req)
+	// Look up activity to determine input type
+	activity, err := s.repo.FindActivityByID(ctx, int32(log.ActivityID))
 	if err != nil {
-		return nil, fmt.Errorf("unable to validate: %w", ErrInvalidLog)
+		return nil, fmt.Errorf("could not find activity: %w", ErrInvalidLog)
 	}
+
+	// Validate tracking data based on input type
+	if err := validateTrackingData(activity, req.DurationSeconds, req.Amount, req.UnitID); err != nil {
+		return nil, err
+	}
+
+	// Store activity for repo layer to use when computing score
+	req.activity = activity
 
 	req.Tags, err = ValidateAndNormalizeTags(req.Tags)
 	if err != nil {

@@ -2,14 +2,18 @@
 select
   id,
   name,
-  "default"
+  "default",
+  time_modifier,
+  input_type
 from log_activities
 order by id asc;
 
 -- name: ListActivitiesForContest :many
 select
   id,
-  name
+  name,
+  time_modifier,
+  input_type
 from log_activities
 where
   id = any((
@@ -18,3 +22,13 @@ where
     where contests.id = sqlc.arg('contest_id')
   )::integer[])
 order by name asc;
+
+-- name: FindActivityByID :one
+select
+  id,
+  name,
+  "default",
+  time_modifier,
+  input_type
+from log_activities
+where id = sqlc.arg('id');

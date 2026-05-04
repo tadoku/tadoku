@@ -11,10 +11,15 @@ type Language struct {
 	Name string
 }
 
+// DefaultTimeModifier is the score multiplier applied per minute when scoring
+// from time instead of amount. This is a fixed business rule, not per-activity.
+const DefaultTimeModifier float32 = 0.3
+
 type Activity struct {
-	ID      int32
-	Name    string
-	Default bool
+	ID        int32
+	Name      string
+	Default   bool
+	InputType string // "time" or "amount"
 }
 
 type ContestView struct {
@@ -143,15 +148,27 @@ type Log struct {
 	LanguageName                string
 	ActivityID                  int
 	ActivityName                string
-	UnitID                      uuid.UUID
-	UnitName                    string
+	ActivityInputType           string
+	UnitID                      *uuid.UUID
+	UnitName                    *string
 	Tags                        []string
-	Amount                      float32
-	Modifier                    float32
+	Amount                      *float32
+	Modifier                    *float32
 	Score                       float32
+	ComputedScore               *float32
+	DurationSeconds             *int32
 	EligibleOfficialLeaderboard bool
 	Registrations               []ContestRegistrationReference
 	CreatedAt                   time.Time
 	UpdatedAt                   time.Time
 	Deleted                     bool
+}
+
+// EffectiveScore returns computed_score if set, otherwise falls back to the
+// generated score column (for historical logs).
+func (l *Log) EffectiveScore() float32 {
+	if l.ComputedScore != nil {
+		return *l.ComputedScore
+	}
+	return l.Score
 }

@@ -12,17 +12,27 @@ import (
 )
 
 func (r *Repository) CreateLog(ctx context.Context, req *domain.LogCreateRequest) (*uuid.UUID, error) {
-	unit, err := r.q.FindUnitForTracking(ctx, postgres.FindUnitForTrackingParams{
-		ID:            req.UnitID,
-		LogActivityID: int16(req.ActivityID),
-		LanguageCode:  postgres.NewNullString(&req.LanguageCode),
-	})
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return nil, fmt.Errorf("invalid unit supplied: %w", domain.ErrInvalidLog)
+	activity := req.Activity()
+
+	// Resolve unit -> modifier (only when unit is provided)
+	var modifier *float32
+	if req.UnitID != nil {
+		unit, err := r.q.FindUnitForTracking(ctx, postgres.FindUnitForTrackingParams{
+			ID:            *req.UnitID,
+			LogActivityID: int16(req.ActivityID),
+			LanguageCode:  postgres.NewNullString(&req.LanguageCode),
+		})
+		if err != nil {
+			if errors.Is(err, sql.ErrNoRows) {
+				return nil, fmt.Errorf("invalid unit supplied: %w", domain.ErrInvalidLog)
+			}
+			return nil, fmt.Errorf("could not fetch unit for tracking: %w", err)
 		}
-		return nil, fmt.Errorf("could not fetch unit for tracking: %w", err)
+		modifier = &unit.Modifier
 	}
+
+	// Compute score using resolved modifier
+	computedScore := domain.ComputeScore(activity, req.Amount, modifier, req.DurationSeconds)
 
 	tx, err := r.psql.BeginTx(ctx, nil)
 	if err != nil {
@@ -36,9 +46,11 @@ func (r *Repository) CreateLog(ctx context.Context, req *domain.LogCreateRequest
 		UserID:                      req.UserID(),
 		LanguageCode:                req.LanguageCode,
 		LogActivityID:               int16(req.ActivityID),
-		UnitID:                      req.UnitID,
-		Amount:                      req.Amount,
-		Modifier:                    unit.Modifier,
+		UnitID:                      postgres.NewNullUUID(req.UnitID),
+		Amount:                      postgres.NewNullFloat64(req.Amount),
+		Modifier:                    postgres.NewNullFloat64(modifier),
+		DurationSeconds:             postgres.NewNullInt32(req.DurationSeconds),
+		ComputedScore:               sql.NullFloat64{Valid: true, Float64: float64(computedScore)},
 		EligibleOfficialLeaderboard: req.EligibleOfficialLeaderboard(),
 		Description:                 postgres.NewNullString(req.Description),
 	})
@@ -52,10 +64,12 @@ func (r *Repository) CreateLog(ctx context.Context, req *domain.LogCreateRequest
 
 	for _, registrationID := range req.RegistrationIDs {
 		if err = qtx.CreateContestLogRelation(ctx, postgres.CreateContestLogRelationParams{
-			RegistrationID: registrationID,
-			LogID:          id,
-			Amount:         req.Amount,
-			Modifier:       unit.Modifier,
+			RegistrationID:  registrationID,
+			LogID:           id,
+			Amount:          postgres.NewNullFloat64(req.Amount),
+			Modifier:        postgres.NewNullFloat64(modifier),
+			DurationSeconds: postgres.NewNullInt32(req.DurationSeconds),
+			ComputedScore:   sql.NullFloat64{Valid: true, Float64: float64(computedScore)},
 		}); err != nil {
 			_ = tx.Rollback()
 			return nil, fmt.Errorf("could not create log: %w", err)

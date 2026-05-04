@@ -28,8 +28,9 @@ func (r *Repository) ContestFindLatestOfficial(ctx context.Context) (*domain.Con
 	acts := make([]domain.Activity, len(activities))
 	for i, a := range activities {
 		acts[i] = domain.Activity{
-			ID:   a.ID,
-			Name: a.Name,
+			ID:        a.ID,
+			Name:      a.Name,
+			InputType: a.InputType,
 		}
 	}
 

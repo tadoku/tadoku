@@ -21,7 +21,7 @@ export const Activity = z.object({
   id: z.number(),
   name: z.string(),
   default: z.boolean().nullable().optional(),
-  input_type: z.enum(['time', 'amount']).default('amount'),
+  input_type: z.enum(['time', 'amount']).catch('amount'),
 })
 
 export type Activity = z.infer<typeof Activity>

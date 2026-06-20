@@ -11,44 +11,79 @@ export const NewLogFormV2Schema = z
     inputType: z.enum(['time', 'amount']).default('amount'),
     amountValue: z
       .number({ invalid_type_error: 'Please enter a number' })
-      .positive()
       .optional(),
     amountUnit: z.string().optional(),
     durationMinutes: z
       .number({ invalid_type_error: 'Please enter a number' })
-      .positive()
       .optional(),
     allUnits: z.array(Unit),
     tags: z.array(z.string().max(50)).max(10, 'Maximum 10 tags allowed'),
     description: z.string().optional(),
   })
-  .refine(
-    log => {
-      if (log.inputType === 'time') {
-        return log.durationMinutes != null && log.durationMinutes > 0
+  .superRefine((log, ctx) => {
+    const hasTime = log.durationMinutes != null && log.durationMinutes > 0
+    const hasAmount =
+      log.amountValue != null && log.amountValue > 0 && log.amountUnit != null
+
+    if (log.inputType === 'time') {
+      if (!hasTime) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['durationMinutes'],
+          message: 'Please enter time',
+        })
       }
-      // amount type: need amount+unit or duration
-      const hasAmount = log.amountValue != null && log.amountUnit != null
-      const hasTime = log.durationMinutes != null && log.durationMinutes > 0
-      return hasAmount || hasTime
-    },
-    {
-      path: ['amountValue'],
-      message: 'Please enter an amount or time',
-    },
-  )
-  .refine(
-    log => {
-      if (log.inputType === 'time') return true
-      if (!log.amountUnit) return true
+      return
+    }
+
+    if (!hasAmount && !hasTime) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['amountValue'],
+        message: 'Please enter an amount or time',
+      })
+    }
+
+    if (log.amountValue != null && log.amountValue <= 0 && !hasTime) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['amountValue'],
+        message: 'Number must be greater than 0',
+      })
+    }
+
+    if (log.durationMinutes != null && log.durationMinutes <= 0 && !hasAmount) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['durationMinutes'],
+        message: 'Number must be greater than 0',
+      })
+    }
+
+    if (log.amountUnit) {
       const unit = log.allUnits.find(it => it.id === log.amountUnit)
-      return unit?.log_activity_id === log.activityId
-    },
-    {
-      path: ['amountUnit'],
-      message: 'This unit cannot be used for this activity',
-    },
-  )
+      if (unit?.log_activity_id !== log.activityId) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['amountUnit'],
+          message: 'This unit cannot be used for this activity',
+        })
+      }
+    }
+  })
+  .transform(log => {
+    const includeAmount =
+      log.inputType === 'amount' &&
+      log.amountValue != null &&
+      log.amountValue > 0 &&
+      log.amountUnit != null
+
+    return {
+      ...log,
+      amountValue: includeAmount ? log.amountValue : undefined,
+      amountUnit: includeAmount ? log.amountUnit : undefined,
+    }
+  })
 
 export type NewLogFormV2Schema = z.infer<typeof NewLogFormV2Schema>
 
@@ -74,4 +109,3 @@ export const getInputType = (
   const activity = activities.find(it => it.id === activityId)
   return activity?.input_type ?? 'amount'
 }
-

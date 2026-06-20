@@ -37,7 +37,7 @@ func (r *Repository) FindLogByID(ctx context.Context, req *domain.LogFindRequest
 			Title:                it.Title,
 			OwnerUserDisplayName: it.OwnerUserDisplayName,
 			Official:             it.Official,
-			Score:                float32(it.Score.Float64),
+			Score:                it.Score,
 		}
 	}
 

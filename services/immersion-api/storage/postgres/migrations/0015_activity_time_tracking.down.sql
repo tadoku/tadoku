@@ -1,5 +1,14 @@
 -- Remove computed_score from contest_logs
 alter table contest_logs
+  drop constraint if exists contest_logs_has_tracking_data;
+
+alter table contest_logs
+  drop column if exists score;
+
+alter table contest_logs
+  add column score real generated always as (amount * modifier) stored;
+
+alter table contest_logs
   drop column if exists computed_score;
 
 -- Remove duration_seconds from contest_logs
@@ -11,6 +20,12 @@ alter table contest_logs
   drop column if exists duration_seconds;
 
 -- Remove computed_score from logs
+alter table logs
+  drop column if exists score;
+
+alter table logs
+  add column score real not null generated always as (amount * modifier) stored;
+
 alter table logs
   drop column if exists computed_score;
 

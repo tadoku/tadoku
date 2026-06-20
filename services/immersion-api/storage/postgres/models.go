@@ -35,9 +35,9 @@ type ContestLog struct {
 	LogID           uuid.UUID
 	Amount          sql.NullFloat64
 	Modifier        sql.NullFloat64
-	Score           sql.NullFloat64
 	DurationSeconds sql.NullInt32
 	ComputedScore   sql.NullFloat64
+	Score           float32
 }
 
 type ContestRegistration struct {
@@ -75,7 +75,6 @@ type Log struct {
 	Description                 sql.NullString
 	Amount                      sql.NullFloat64
 	Modifier                    sql.NullFloat64
-	Score                       float32
 	EligibleOfficialLeaderboard bool
 	Year                        int16
 	CreatedAt                   time.Time
@@ -83,6 +82,7 @@ type Log struct {
 	DeletedAt                   sql.NullTime
 	DurationSeconds             sql.NullInt32
 	ComputedScore               sql.NullFloat64
+	Score                       float32
 }
 
 type LogActivity struct {

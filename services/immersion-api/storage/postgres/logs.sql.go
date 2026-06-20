@@ -363,7 +363,7 @@ type FindAttachedContestRegistrationsForLogRow struct {
 	ContestEnd           time.Time
 	OwnerUserDisplayName string
 	Official             bool
-	Score                sql.NullFloat64
+	Score                float32
 }
 
 func (q *Queries) FindAttachedContestRegistrationsForLog(ctx context.Context, id uuid.UUID) ([]FindAttachedContestRegistrationsForLogRow, error) {
@@ -552,7 +552,7 @@ type ListLogsForContestRow struct {
 	Description       sql.NullString
 	Amount            sql.NullFloat64
 	Modifier          sql.NullFloat64
-	Score             sql.NullFloat64
+	Score             float32
 	DurationSeconds   sql.NullInt32
 	CreatedAt         time.Time
 	UpdatedAt         time.Time

@@ -8,15 +8,6 @@ alter table logs
   alter column unit_id drop not null,
   alter column modifier drop not null;
 
--- Ensure at least one complete tracking method:
--- either duration, or the full amount triple (amount + unit_id + modifier)
-alter table logs
-  add constraint logs_has_tracking_data
-  check (
-    duration_seconds is not null
-    or (amount is not null and unit_id is not null and modifier is not null)
-  );
-
 -- Add time-based modifier and input type to activities
 alter table log_activities
   add column time_modifier real not null default 0.3,
@@ -27,10 +18,30 @@ alter table log_activities
 update log_activities set input_type = 'time' where id in (2, 4, 5);
 update log_activities set input_type = 'amount' where id in (1, 3);
 
--- Keep existing generated score column untouched (preserves all historical scores).
 -- Add a new computed_score column for application-written scores (used for new logs).
 alter table logs
   add column computed_score real;
+
+-- Preserve historical scores, then update the legacy generated score column so
+-- time-only logs can use computed_score while amount logs still prefer amount * modifier.
+update logs
+set computed_score = score
+where computed_score is null;
+
+alter table logs
+  drop column score;
+
+alter table logs
+  add column score real not null generated always as (coalesce(amount * modifier, computed_score)) stored;
+
+-- Ensure at least one complete tracking method:
+-- either duration, or the full amount triple (amount + unit_id + modifier)
+alter table logs
+  add constraint logs_has_tracking_data
+  check (
+    duration_seconds is not null
+    or (amount is not null and unit_id is not null and modifier is not null)
+  );
 
 -- contest_logs: same treatment (has amount, modifier, and generated score from migration 0013)
 alter table contest_logs
@@ -44,3 +55,20 @@ alter table contest_logs
 -- Add computed_score for new entries.
 alter table contest_logs
   add column computed_score real;
+
+update contest_logs
+set computed_score = score
+where computed_score is null;
+
+alter table contest_logs
+  drop column score;
+
+alter table contest_logs
+  add column score real not null generated always as (coalesce(amount * modifier, computed_score)) stored;
+
+alter table contest_logs
+  add constraint contest_logs_has_tracking_data
+  check (
+    duration_seconds is not null
+    or (amount is not null and modifier is not null)
+  );

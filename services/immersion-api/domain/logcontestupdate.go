@@ -22,8 +22,7 @@ type LogContestUpdateRequest struct {
 
 type LogContestUpdateDBRequest struct {
 	LogID    uuid.UUID
-	Amount   float32
-	Modifier float32
+	Tracking LogTracking
 	Attach   []LogContestAttach
 	Detach   []uuid.UUID // contest_ids to remove
 }
@@ -167,10 +166,27 @@ func (s *LogContestUpdate) Execute(ctx context.Context, req *LogContestUpdateReq
 		return log, nil
 	}
 
+	tracking := LogTracking{
+		ComputedScore: log.Score,
+	}
+	if log.UnitID != uuid.Nil {
+		tracking.Kind = LogTrackingAmountUnit
+		tracking.UnitID = log.UnitID
+		tracking.Amount = log.Amount
+		tracking.Modifier = log.Modifier
+	}
+	if log.DurationSeconds != nil {
+		if tracking.Kind == LogTrackingAmountUnit {
+			tracking.Kind = LogTrackingBoth
+		} else {
+			tracking.Kind = LogTrackingDuration
+		}
+		tracking.DurationSeconds = *log.DurationSeconds
+	}
+
 	if err := s.repo.UpdateLogContests(ctx, &LogContestUpdateDBRequest{
 		LogID:    req.LogID,
-		Amount:   log.Amount,
-		Modifier: log.Modifier,
+		Tracking: tracking,
 		Attach:   toAttach,
 		Detach:   toDetach,
 	}); err != nil {

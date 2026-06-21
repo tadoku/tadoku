@@ -60,6 +60,16 @@ func NewNullFloat64FromFloat32(val float32) sql.NullFloat64 {
 	}
 }
 
+func NewNullFloat64FromFloat32Ptr(val *float32) sql.NullFloat64 {
+	if val == nil {
+		return sql.NullFloat64{
+			Valid: false,
+		}
+	}
+
+	return NewNullFloat64FromFloat32(*val)
+}
+
 func NewFloat32FromNullFloat64(val sql.NullFloat64) float32 {
 	if !val.Valid {
 		return 0
@@ -73,6 +83,16 @@ func NewNullUUID(val uuid.UUID) uuid.NullUUID {
 		Valid: true,
 		UUID:  val,
 	}
+}
+
+func NewNullUUIDFromPtr(val *uuid.UUID) uuid.NullUUID {
+	if val == nil {
+		return uuid.NullUUID{
+			Valid: false,
+		}
+	}
+
+	return NewNullUUID(*val)
 }
 
 func NewUUIDFromNullUUID(val uuid.NullUUID) uuid.UUID {
@@ -90,6 +110,14 @@ func NewNullInt32(val *int32) sql.NullInt32 {
 		Valid: true,
 		Int32: *val,
 	}
+}
+
+func NewInt32PtrFromNullInt32(val sql.NullInt32) *int32 {
+	if !val.Valid {
+		return nil
+	}
+
+	return &val.Int32
 }
 
 func NewNullInt16(val *int16) sql.NullInt16 {

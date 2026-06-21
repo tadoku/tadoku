@@ -12,23 +12,27 @@ import (
 
 type LogUpdateRepository interface {
 	FindLogByID(context.Context, *LogFindRequest) (*Log, error)
+	FindUnitForTracking(context.Context, *UnitFindForTrackingRequest) (*Unit, error)
 	UpdateLog(context.Context, *LogUpdateRequest) error
 }
 
 type LogUpdateRequest struct {
-	LogID       uuid.UUID
-	UnitID      uuid.UUID `validate:"required"`
-	Amount      float32   `validate:"required,gte=0"`
-	Tags        []string
-	Description *string
+	LogID           uuid.UUID
+	UnitID          *uuid.UUID
+	Amount          *float32
+	DurationSeconds *int32
+	Tags            []string
+	Description     *string
 
 	// Set by domain layer (unexported: only domain can write, others read via getters)
-	now    time.Time
-	userID uuid.UUID
+	now      time.Time
+	userID   uuid.UUID
+	tracking LogTracking
 }
 
-func (r *LogUpdateRequest) Now() time.Time    { return r.now }
-func (r *LogUpdateRequest) UserID() uuid.UUID { return r.userID }
+func (r *LogUpdateRequest) Now() time.Time        { return r.now }
+func (r *LogUpdateRequest) UserID() uuid.UUID     { return r.userID }
+func (r *LogUpdateRequest) Tracking() LogTracking { return r.tracking }
 
 type LogUpdate struct {
 	repo     LogUpdateRepository
@@ -79,6 +83,19 @@ func (s *LogUpdate) Execute(ctx context.Context, req *LogUpdateRequest) (*Log, e
 	req.Tags, err = ValidateAndNormalizeTags(req.Tags)
 	if err != nil {
 		return nil, fmt.Errorf("unable to validate tags: %w", err)
+	}
+
+	req.tracking, err = resolveLogTracking(
+		ctx,
+		s.repo,
+		int32(log.ActivityID),
+		log.LanguageCode,
+		req.UnitID,
+		req.Amount,
+		req.DurationSeconds,
+	)
+	if err != nil {
+		return nil, err
 	}
 
 	req.now = s.clock.Now()

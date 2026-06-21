@@ -2,8 +2,6 @@ package repository
 
 import (
 	"context"
-	"database/sql"
-	"errors"
 	"fmt"
 
 	"github.com/google/uuid"
@@ -12,18 +10,6 @@ import (
 )
 
 func (r *Repository) CreateLog(ctx context.Context, req *domain.LogCreateRequest) (*uuid.UUID, error) {
-	unit, err := r.q.FindUnitForTracking(ctx, postgres.FindUnitForTrackingParams{
-		ID:            req.UnitID,
-		LogActivityID: int16(req.ActivityID),
-		LanguageCode:  postgres.NewNullString(&req.LanguageCode),
-	})
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return nil, fmt.Errorf("invalid unit supplied: %w", domain.ErrInvalidLog)
-		}
-		return nil, fmt.Errorf("could not fetch unit for tracking: %w", err)
-	}
-
 	tx, err := r.psql.BeginTx(ctx, nil)
 	if err != nil {
 		return nil, fmt.Errorf("could not create log: %w", err)
@@ -31,14 +17,17 @@ func (r *Repository) CreateLog(ctx context.Context, req *domain.LogCreateRequest
 	qtx := r.q.WithTx(tx)
 
 	id := uuid.New()
+	tracking := req.Tracking()
 	logId, err := qtx.CreateLog(ctx, postgres.CreateLogParams{
 		ID:                          id,
 		UserID:                      req.UserID(),
 		LanguageCode:                req.LanguageCode,
 		LogActivityID:               int16(req.ActivityID),
-		UnitID:                      postgres.NewNullUUID(req.UnitID),
-		Amount:                      postgres.NewNullFloat64FromFloat32(req.Amount),
-		Modifier:                    postgres.NewNullFloat64FromFloat32(unit.Modifier),
+		UnitID:                      trackingUnitID(tracking),
+		Amount:                      trackingAmount(tracking),
+		Modifier:                    trackingModifier(tracking),
+		DurationSeconds:             trackingDurationSeconds(tracking),
+		ComputedScore:               postgres.NewNullFloat64FromFloat32(tracking.ComputedScore),
 		EligibleOfficialLeaderboard: req.EligibleOfficialLeaderboard(),
 		Description:                 postgres.NewNullString(req.Description),
 	})
@@ -52,10 +41,12 @@ func (r *Repository) CreateLog(ctx context.Context, req *domain.LogCreateRequest
 
 	for _, registrationID := range req.RegistrationIDs {
 		if err = qtx.CreateContestLogRelation(ctx, postgres.CreateContestLogRelationParams{
-			RegistrationID: registrationID,
-			LogID:          id,
-			Amount:         postgres.NewNullFloat64FromFloat32(req.Amount),
-			Modifier:       postgres.NewNullFloat64FromFloat32(unit.Modifier),
+			RegistrationID:  registrationID,
+			LogID:           id,
+			Amount:          trackingAmount(tracking),
+			Modifier:        trackingModifier(tracking),
+			DurationSeconds: trackingDurationSeconds(tracking),
+			ComputedScore:   postgres.NewNullFloat64FromFloat32(tracking.ComputedScore),
 		}); err != nil {
 			_ = tx.Rollback()
 			return nil, fmt.Errorf("could not create log: %w", err)

@@ -58,11 +58,10 @@ func (m *mockLeaderboardOutboxUpdater) UpdateUserOfficialScores(ctx context.Cont
 	m.officialCalls = append(m.officialCalls, mockLeaderboardOutboxOfficialCall{Year: year, UserID: userID})
 }
 
-func ptr[T any](v T) *T { return &v }
-
 func TestLeaderboardOutboxWorker_ProcessEvent(t *testing.T) {
 	userID := uuid.New()
 	contestID := uuid.New()
+	year2026 := 2026
 
 	t.Run("processes refresh_contest_score events", func(t *testing.T) {
 		updater := &mockLeaderboardOutboxUpdater{}
@@ -95,7 +94,7 @@ func TestLeaderboardOutboxWorker_ProcessEvent(t *testing.T) {
 					ID:        2,
 					EventType: "refresh_official_scores",
 					UserID:    userID,
-					Year:      ptr(2026),
+					Year:      &year2026,
 				},
 			},
 		}
@@ -167,7 +166,7 @@ func TestLeaderboardOutboxWorker_ProcessEvent(t *testing.T) {
 					ID:        3,
 					EventType: "refresh_official_scores",
 					UserID:    userID,
-					Year:      ptr(2026),
+					Year:      &year2026,
 				},
 			},
 		}

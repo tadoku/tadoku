@@ -42,20 +42,26 @@ insert into contest_logs (
   contest_id,
   log_id,
   amount,
-  modifier
+  modifier,
+  duration_seconds,
+  computed_score
 ) values (
   (select contest_id from contest_registrations where id = $1),
   $2,
   $3,
-  $4
+  $4,
+  $5,
+  $6
 )
 `
 
 type CreateContestLogRelationParams struct {
-	RegistrationID uuid.UUID
-	LogID          uuid.UUID
-	Amount         sql.NullFloat64
-	Modifier       sql.NullFloat64
+	RegistrationID  uuid.UUID
+	LogID           uuid.UUID
+	Amount          sql.NullFloat64
+	Modifier        sql.NullFloat64
+	DurationSeconds sql.NullInt32
+	ComputedScore   sql.NullFloat64
 }
 
 func (q *Queries) CreateContestLogRelation(ctx context.Context, arg CreateContestLogRelationParams) error {
@@ -64,6 +70,8 @@ func (q *Queries) CreateContestLogRelation(ctx context.Context, arg CreateContes
 		arg.LogID,
 		arg.Amount,
 		arg.Modifier,
+		arg.DurationSeconds,
+		arg.ComputedScore,
 	)
 	return err
 }
@@ -77,6 +85,8 @@ insert into logs (
   unit_id,
   amount,
   modifier,
+  duration_seconds,
+  computed_score,
   eligible_official_leaderboard,
   "description"
 ) values (
@@ -88,7 +98,9 @@ insert into logs (
   $6,
   $7,
   $8,
-  $9
+  $9,
+  $10,
+  $11
 ) returning id
 `
 
@@ -100,6 +112,8 @@ type CreateLogParams struct {
 	UnitID                      uuid.NullUUID
 	Amount                      sql.NullFloat64
 	Modifier                    sql.NullFloat64
+	DurationSeconds             sql.NullInt32
+	ComputedScore               sql.NullFloat64
 	EligibleOfficialLeaderboard bool
 	Description                 sql.NullString
 }
@@ -113,6 +127,8 @@ func (q *Queries) CreateLog(ctx context.Context, arg CreateLogParams) (uuid.UUID
 		arg.UnitID,
 		arg.Amount,
 		arg.Modifier,
+		arg.DurationSeconds,
+		arg.ComputedScore,
 		arg.EligibleOfficialLeaderboard,
 		arg.Description,
 	)
@@ -394,6 +410,7 @@ select
   logs.description,
   logs.amount,
   logs.modifier,
+  logs.duration_seconds,
   coalesce(logs.computed_score, logs.score) as score,
   logs.eligible_official_leaderboard,
   logs.created_at,
@@ -429,6 +446,7 @@ type FindLogByIDRow struct {
 	Description                 sql.NullString
 	Amount                      sql.NullFloat64
 	Modifier                    sql.NullFloat64
+	DurationSeconds             sql.NullInt32
 	Score                       sql.NullFloat64
 	EligibleOfficialLeaderboard bool
 	CreatedAt                   time.Time
@@ -452,6 +470,7 @@ func (q *Queries) FindLogByID(ctx context.Context, arg FindLogByIDParams) (FindL
 		&i.Description,
 		&i.Amount,
 		&i.Modifier,
+		&i.DurationSeconds,
 		&i.Score,
 		&i.EligibleOfficialLeaderboard,
 		&i.CreatedAt,
@@ -686,20 +705,24 @@ set
   amount = $1,
   modifier = $2,
   unit_id = $3,
-  "description" = $4,
-  updated_at = $5
+  duration_seconds = $4,
+  computed_score = $5,
+  "description" = $6,
+  updated_at = $7
 where
-  id = $6
+  id = $8
   and deleted_at is null
 `
 
 type UpdateLogParams struct {
-	Amount      sql.NullFloat64
-	Modifier    sql.NullFloat64
-	UnitID      uuid.NullUUID
-	Description sql.NullString
-	Now         time.Time
-	LogID       uuid.UUID
+	Amount          sql.NullFloat64
+	Modifier        sql.NullFloat64
+	UnitID          uuid.NullUUID
+	DurationSeconds sql.NullInt32
+	ComputedScore   sql.NullFloat64
+	Description     sql.NullString
+	Now             time.Time
+	LogID           uuid.UUID
 }
 
 func (q *Queries) UpdateLog(ctx context.Context, arg UpdateLogParams) error {
@@ -707,6 +730,8 @@ func (q *Queries) UpdateLog(ctx context.Context, arg UpdateLogParams) error {
 		arg.Amount,
 		arg.Modifier,
 		arg.UnitID,
+		arg.DurationSeconds,
+		arg.ComputedScore,
 		arg.Description,
 		arg.Now,
 		arg.LogID,
@@ -735,25 +760,31 @@ const updateOngoingContestLogs = `-- name: UpdateOngoingContestLogs :exec
 update contest_logs
 set
   amount = $1,
-  modifier = $2
+  modifier = $2,
+  duration_seconds = $3,
+  computed_score = $4
 from contests
 where
-  contest_logs.log_id = $3
+  contest_logs.log_id = $5
   and contest_logs.contest_id = contests.id
-  and contests.contest_end >= $4
+  and contests.contest_end >= $6
 `
 
 type UpdateOngoingContestLogsParams struct {
-	Amount   sql.NullFloat64
-	Modifier sql.NullFloat64
-	LogID    uuid.UUID
-	Now      time.Time
+	Amount          sql.NullFloat64
+	Modifier        sql.NullFloat64
+	DurationSeconds sql.NullInt32
+	ComputedScore   sql.NullFloat64
+	LogID           uuid.UUID
+	Now             time.Time
 }
 
 func (q *Queries) UpdateOngoingContestLogs(ctx context.Context, arg UpdateOngoingContestLogsParams) error {
 	_, err := q.db.ExecContext(ctx, updateOngoingContestLogs,
 		arg.Amount,
 		arg.Modifier,
+		arg.DurationSeconds,
+		arg.ComputedScore,
 		arg.LogID,
 		arg.Now,
 	)

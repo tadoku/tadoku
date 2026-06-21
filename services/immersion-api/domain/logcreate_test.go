@@ -15,6 +15,8 @@ import (
 type mockLogCreateRepository struct {
 	registrations    *domain.ContestRegistrations
 	fetchRegErr      error
+	unit             *domain.Unit
+	findUnitErr      error
 	createdLogID     *uuid.UUID
 	createErr        error
 	log              *domain.Log
@@ -25,6 +27,21 @@ type mockLogCreateRepository struct {
 
 func (m *mockLogCreateRepository) FetchOngoingContestRegistrations(ctx context.Context, req *domain.RegistrationListOngoingRequest) (*domain.ContestRegistrations, error) {
 	return m.registrations, m.fetchRegErr
+}
+
+func (m *mockLogCreateRepository) FindUnitForTracking(_ context.Context, req *domain.UnitFindForTrackingRequest) (*domain.Unit, error) {
+	if m.findUnitErr != nil {
+		return nil, m.findUnitErr
+	}
+	if m.unit != nil {
+		return m.unit, nil
+	}
+	return &domain.Unit{
+		ID:            req.ID,
+		LogActivityID: int(req.ActivityID),
+		Modifier:      1,
+		LanguageCode:  &req.LanguageCode,
+	}, nil
 }
 
 func (m *mockLogCreateRepository) CreateLog(ctx context.Context, req *domain.LogCreateRequest) (*uuid.UUID, error) {
@@ -57,6 +74,10 @@ func TestLogCreate_Execute(t *testing.T) {
 	registrationID := uuid.New()
 	contestID := uuid.New()
 	unitID := uuid.New()
+	amount100 := float32(100)
+	durationZero := int32(0)
+	duration600 := int32(600)
+	duration900 := int32(900)
 	now := time.Now()
 
 	validRegistrations := &domain.ContestRegistrations{
@@ -126,6 +147,57 @@ func TestLogCreate_Execute(t *testing.T) {
 		assert.False(t, repo.createCalled)
 	})
 
+	t.Run("returns error for invalid request with only amount", func(t *testing.T) {
+		repo := &mockLogCreateRepository{}
+		clock := commondomain.NewMockClock(now)
+		svc := newLogCreateService(repo, clock)
+
+		ctx := ctxWithUserSubject(userID.String())
+
+		_, err := svc.Execute(ctx, &domain.LogCreateRequest{
+			ActivityID:   1,
+			LanguageCode: "jpn",
+			Amount:       &amount100,
+		})
+
+		assert.ErrorIs(t, err, domain.ErrInvalidLog)
+		assert.False(t, repo.createCalled)
+	})
+
+	t.Run("returns error for invalid request with only unit", func(t *testing.T) {
+		repo := &mockLogCreateRepository{}
+		clock := commondomain.NewMockClock(now)
+		svc := newLogCreateService(repo, clock)
+
+		ctx := ctxWithUserSubject(userID.String())
+
+		_, err := svc.Execute(ctx, &domain.LogCreateRequest{
+			UnitID:       &unitID,
+			ActivityID:   1,
+			LanguageCode: "jpn",
+		})
+
+		assert.ErrorIs(t, err, domain.ErrInvalidLog)
+		assert.False(t, repo.createCalled)
+	})
+
+	t.Run("returns error for invalid request with non-positive duration", func(t *testing.T) {
+		repo := &mockLogCreateRepository{}
+		clock := commondomain.NewMockClock(now)
+		svc := newLogCreateService(repo, clock)
+
+		ctx := ctxWithUserSubject(userID.String())
+
+		_, err := svc.Execute(ctx, &domain.LogCreateRequest{
+			ActivityID:      1,
+			LanguageCode:    "jpn",
+			DurationSeconds: &durationZero,
+		})
+
+		assert.ErrorIs(t, err, domain.ErrInvalidLog)
+		assert.False(t, repo.createCalled)
+	})
+
 	t.Run("returns error when registration not found for user", func(t *testing.T) {
 		repo := &mockLogCreateRepository{
 			registrations: &domain.ContestRegistrations{Registrations: []domain.ContestRegistration{}},
@@ -137,10 +209,10 @@ func TestLogCreate_Execute(t *testing.T) {
 
 		_, err := svc.Execute(ctx, &domain.LogCreateRequest{
 			RegistrationIDs: []uuid.UUID{registrationID},
-			UnitID:          unitID,
+			UnitID:          &unitID,
 			ActivityID:      1,
 			LanguageCode:    "jpn",
-			Amount:          100,
+			Amount:          &amount100,
 		})
 
 		assert.ErrorIs(t, err, domain.ErrInvalidLog)
@@ -158,10 +230,10 @@ func TestLogCreate_Execute(t *testing.T) {
 
 		_, err := svc.Execute(ctx, &domain.LogCreateRequest{
 			RegistrationIDs: []uuid.UUID{registrationID},
-			UnitID:          unitID,
+			UnitID:          &unitID,
 			ActivityID:      1,
 			LanguageCode:    "kor", // Not in registration
-			Amount:          100,
+			Amount:          &amount100,
 		})
 
 		assert.ErrorIs(t, err, domain.ErrInvalidLog)
@@ -176,10 +248,10 @@ func TestLogCreate_Execute(t *testing.T) {
 		ctx := ctxWithUserSubject(userID.String())
 
 		_, err := svc.Execute(ctx, &domain.LogCreateRequest{
-			UnitID:       unitID,
+			UnitID:       &unitID,
 			ActivityID:   999,
 			LanguageCode: "jpn",
-			Amount:       100,
+			Amount:       &amount100,
 		})
 
 		assert.ErrorIs(t, err, domain.ErrInvalidLog)
@@ -197,10 +269,10 @@ func TestLogCreate_Execute(t *testing.T) {
 
 		_, err := svc.Execute(ctx, &domain.LogCreateRequest{
 			RegistrationIDs: []uuid.UUID{registrationID},
-			UnitID:          unitID,
+			UnitID:          &unitID,
 			ActivityID:      2, // Valid activity, but not allowed
 			LanguageCode:    "jpn",
-			Amount:          100,
+			Amount:          &amount100,
 		})
 
 		assert.ErrorIs(t, err, domain.ErrInvalidLog)
@@ -220,16 +292,22 @@ func TestLogCreate_Execute(t *testing.T) {
 
 		result, err := svc.Execute(ctx, &domain.LogCreateRequest{
 			RegistrationIDs: []uuid.UUID{registrationID},
-			UnitID:          unitID,
+			UnitID:          &unitID,
 			ActivityID:      1,
 			LanguageCode:    "jpn",
-			Amount:          100,
+			Amount:          &amount100,
 		})
 
 		require.NoError(t, err)
 		assert.True(t, repo.createCalled)
 		assert.Equal(t, logID, result.ID)
 		assert.Equal(t, userID, repo.createCalledWith.UserID())
+		tracking := repo.createCalledWith.Tracking()
+		assert.Equal(t, domain.LogTrackingAmountUnit, tracking.Kind)
+		assert.Equal(t, unitID, tracking.UnitID)
+		assert.Equal(t, amount100, tracking.Amount)
+		assert.Equal(t, float32(1), tracking.Modifier)
+		assert.InDelta(t, float32(100), tracking.ComputedScore, 0.0001)
 	})
 
 	t.Run("successfully creates log without registration IDs", func(t *testing.T) {
@@ -243,10 +321,10 @@ func TestLogCreate_Execute(t *testing.T) {
 		ctx := ctxWithUserSubject(userID.String())
 
 		result, err := svc.Execute(ctx, &domain.LogCreateRequest{
-			UnitID:       unitID,
+			UnitID:       &unitID,
 			ActivityID:   1,
 			LanguageCode: "jpn",
-			Amount:       100,
+			Amount:       &amount100,
 		})
 
 		require.NoError(t, err)
@@ -254,6 +332,60 @@ func TestLogCreate_Execute(t *testing.T) {
 		assert.Equal(t, logID, result.ID)
 		assert.Empty(t, repo.createCalledWith.RegistrationIDs)
 		assert.False(t, repo.createCalledWith.EligibleOfficialLeaderboard())
+	})
+
+	t.Run("successfully creates duration-only log", func(t *testing.T) {
+		repo := &mockLogCreateRepository{
+			createdLogID: &logID,
+			log:          createdLog,
+		}
+		clock := commondomain.NewMockClock(now)
+		svc := newLogCreateService(repo, clock)
+
+		ctx := ctxWithUserSubject(userID.String())
+
+		result, err := svc.Execute(ctx, &domain.LogCreateRequest{
+			ActivityID:      2,
+			LanguageCode:    "jpn",
+			DurationSeconds: &duration600,
+		})
+
+		require.NoError(t, err)
+		assert.True(t, repo.createCalled)
+		assert.Equal(t, logID, result.ID)
+		tracking := repo.createCalledWith.Tracking()
+		assert.Equal(t, domain.LogTrackingDuration, tracking.Kind)
+		assert.Equal(t, duration600, tracking.DurationSeconds)
+		assert.InDelta(t, float32(4), tracking.ComputedScore, 0.0001)
+	})
+
+	t.Run("successfully creates amount log with duration metadata", func(t *testing.T) {
+		repo := &mockLogCreateRepository{
+			createdLogID: &logID,
+			log:          createdLog,
+		}
+		clock := commondomain.NewMockClock(now)
+		svc := newLogCreateService(repo, clock)
+
+		ctx := ctxWithUserSubject(userID.String())
+
+		_, err := svc.Execute(ctx, &domain.LogCreateRequest{
+			UnitID:          &unitID,
+			ActivityID:      1,
+			LanguageCode:    "jpn",
+			Amount:          &amount100,
+			DurationSeconds: &duration900,
+		})
+
+		require.NoError(t, err)
+		assert.True(t, repo.createCalled)
+		tracking := repo.createCalledWith.Tracking()
+		assert.Equal(t, domain.LogTrackingBoth, tracking.Kind)
+		assert.Equal(t, unitID, tracking.UnitID)
+		assert.Equal(t, amount100, tracking.Amount)
+		assert.Equal(t, duration900, tracking.DurationSeconds)
+		assert.Equal(t, float32(1), tracking.Modifier)
+		assert.InDelta(t, float32(100), tracking.ComputedScore, 0.0001)
 	})
 
 	t.Run("sets EligibleOfficialLeaderboard for official contest", func(t *testing.T) {
@@ -287,10 +419,10 @@ func TestLogCreate_Execute(t *testing.T) {
 
 		_, err := svc.Execute(ctx, &domain.LogCreateRequest{
 			RegistrationIDs: []uuid.UUID{registrationID},
-			UnitID:          unitID,
+			UnitID:          &unitID,
 			ActivityID:      1,
 			LanguageCode:    "jpn",
-			Amount:          100,
+			Amount:          &amount100,
 		})
 
 		require.NoError(t, err)

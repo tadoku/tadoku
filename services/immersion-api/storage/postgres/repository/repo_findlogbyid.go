@@ -55,6 +55,7 @@ func (r *Repository) FindLogByID(ctx context.Context, req *domain.LogFindRequest
 		Amount:                      postgres.NewFloat32FromNullFloat64(log.Amount),
 		Modifier:                    postgres.NewFloat32FromNullFloat64(log.Modifier),
 		Score:                       postgres.NewFloat32FromNullFloat64(log.Score),
+		DurationSeconds:             postgres.NewInt32PtrFromNullInt32(log.DurationSeconds),
 		EligibleOfficialLeaderboard: log.EligibleOfficialLeaderboard,
 		CreatedAt:                   log.CreatedAt,
 		UpdatedAt:                   log.UpdatedAt,

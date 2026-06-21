@@ -11,16 +11,18 @@ import (
 
 type LogCreateRepository interface {
 	FetchOngoingContestRegistrations(context.Context, *RegistrationListOngoingRequest) (*ContestRegistrations, error)
+	FindUnitForTracking(context.Context, *UnitFindForTrackingRequest) (*Unit, error)
 	CreateLog(context.Context, *LogCreateRequest) (*uuid.UUID, error)
 	FindLogByID(context.Context, *LogFindRequest) (*Log, error)
 }
 
 type LogCreateRequest struct {
 	RegistrationIDs []uuid.UUID
-	UnitID          uuid.UUID `validate:"required"`
-	ActivityID      int32     `validate:"required"`
-	LanguageCode    string    `validate:"required"`
-	Amount          float32   `validate:"required,gte=0"`
+	UnitID          *uuid.UUID
+	ActivityID      int32  `validate:"required"`
+	LanguageCode    string `validate:"required"`
+	Amount          *float32
+	DurationSeconds *int32
 	Tags            []string
 
 	// Optional
@@ -30,11 +32,13 @@ type LogCreateRequest struct {
 	userID                      uuid.UUID
 	eligibleOfficialLeaderboard bool
 	year                        int16
+	tracking                    LogTracking
 }
 
 func (r *LogCreateRequest) UserID() uuid.UUID                 { return r.userID }
 func (r *LogCreateRequest) EligibleOfficialLeaderboard() bool { return r.eligibleOfficialLeaderboard }
 func (r *LogCreateRequest) Year() int16                       { return r.year }
+func (r *LogCreateRequest) Tracking() LogTracking             { return r.tracking }
 
 type LogCreate struct {
 	repo       LogCreateRepository
@@ -76,10 +80,6 @@ func (s *LogCreate) Execute(ctx context.Context, req *LogCreateRequest) (*Log, e
 	err := s.validate.Struct(req)
 	if err != nil {
 		return nil, fmt.Errorf("unable to validate: %w", ErrInvalidLog)
-	}
-
-	if !IsValidActivityID(req.ActivityID) {
-		return nil, fmt.Errorf("activity %d is not valid: %w", req.ActivityID, ErrInvalidLog)
 	}
 
 	// Validate and normalize tags
@@ -137,6 +137,19 @@ func (s *LogCreate) Execute(ctx context.Context, req *LogCreateRequest) (*Log, e
 				return nil, fmt.Errorf("activity is not allowed for registration: %w", ErrInvalidLog)
 			}
 		}
+	}
+
+	req.tracking, err = resolveLogTracking(
+		ctx,
+		s.repo,
+		req.ActivityID,
+		req.LanguageCode,
+		req.UnitID,
+		req.Amount,
+		req.DurationSeconds,
+	)
+	if err != nil {
+		return nil, err
 	}
 
 	req.year = int16(s.clock.Now().Year())

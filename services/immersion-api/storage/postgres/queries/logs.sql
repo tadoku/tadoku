@@ -7,6 +7,8 @@ insert into logs (
   unit_id,
   amount,
   modifier,
+  duration_seconds,
+  computed_score,
   eligible_official_leaderboard,
   "description"
 ) values (
@@ -17,6 +19,8 @@ insert into logs (
   sqlc.arg('unit_id'),
   sqlc.arg('amount'),
   sqlc.arg('modifier'),
+  sqlc.arg('duration_seconds'),
+  sqlc.arg('computed_score'),
   sqlc.arg('eligible_official_leaderboard'),
   sqlc.arg('description')
 ) returning id;
@@ -26,12 +30,16 @@ insert into contest_logs (
   contest_id,
   log_id,
   amount,
-  modifier
+  modifier,
+  duration_seconds,
+  computed_score
 ) values (
   (select contest_id from contest_registrations where id = sqlc.arg('registration_id')),
   sqlc.arg('log_id'),
   sqlc.arg('amount'),
-  sqlc.arg('modifier')
+  sqlc.arg('modifier'),
+  sqlc.arg('duration_seconds'),
+  sqlc.arg('computed_score')
 );
 
 -- name: ListLogsForContest :many
@@ -121,6 +129,7 @@ select
   logs.description,
   logs.amount,
   logs.modifier,
+  logs.duration_seconds,
   coalesce(logs.computed_score, logs.score) as score,
   logs.eligible_official_leaderboard,
   logs.created_at,
@@ -250,6 +259,8 @@ set
   amount = sqlc.arg('amount'),
   modifier = sqlc.arg('modifier'),
   unit_id = sqlc.arg('unit_id'),
+  duration_seconds = sqlc.arg('duration_seconds'),
+  computed_score = sqlc.arg('computed_score'),
   "description" = sqlc.arg('description'),
   updated_at = sqlc.arg('now')
 where
@@ -260,7 +271,9 @@ where
 update contest_logs
 set
   amount = sqlc.arg('amount'),
-  modifier = sqlc.arg('modifier')
+  modifier = sqlc.arg('modifier'),
+  duration_seconds = sqlc.arg('duration_seconds'),
+  computed_score = sqlc.arg('computed_score')
 from contests
 where
   contest_logs.log_id = sqlc.arg('log_id')

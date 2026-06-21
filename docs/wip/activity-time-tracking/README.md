@@ -87,10 +87,11 @@ Until then, use a small legacy scoring bridge in domain code:
 
 - Amount/unit submissions keep the current behavior: score is based on the selected unit modifier.
 - If both amount/unit and duration are present, amount/unit remains the scoring source and duration is metadata.
-- Duration-only Listening, Speaking, and Study submissions should emulate the existing amount/unit scoring. Their current units are minute-based, so fallback scoring should calculate an equivalent minute amount from `duration_seconds` and apply the same effective modifier that the current minute unit would use.
-- Duration-only Reading and Writing submissions are allowed in V2. They should use a fallback scoring formula until rules-based scoring exists.
+- Duration-only Listening submissions use a temporary `minutes * 0.4` fallback, matching the plain minute row in the manual.
+- Duration-only Speaking and Study submissions use a temporary `minutes * 0.5` fallback, matching the plain minute row in the manual.
+- Duration-only Reading and Writing submissions use a temporary `minutes * 0.2` fallback.
 
-The interim time scoring policy should be isolated in one domain helper with a clear ADR 005 TODO. Do not attach a `time_modifier` to `Activity`, do not add it to a database activity table, and do not spread time scoring constants through handlers or repositories.
+The interim time scoring policy should be isolated in one domain helper with a clear ADR 005 TODO. Do not attach a `time_modifier` to `Activity`, do not add it to a database activity table, and do not spread time scoring constants through handlers or repositories. The duration-first V2 UI must not ship until ADR 005 scoring rules can preserve dense-minute behavior for Listening and Speaking.
 
 When ADR 005 scoring rules are implemented, this bridge should be replaced by the rule engine. New logs should still snapshot the resolved score into `computed_score`.
 
@@ -136,7 +137,7 @@ Each step should be merged to `main` and deployable on its own.
 
 1. [x] Backend schema: add nullable duration/effective-score support and constraints without changing API behavior.
 2. [x] Backend reads: switch log, contest log, leaderboard, and yearly split queries to effective score.
-3. [ ] Backend writes: accept optional `duration_seconds` and compute `computed_score` for duration-only logs.
+3. [x] Backend writes: accept optional `duration_seconds` and compute `computed_score` for duration-only logs.
 4. [ ] Backend config: expose code-owned activity input mode as additive activity metadata.
 5. [ ] Backend tests: cover legacy amount logs, amount+duration logs, duration-only time-primary logs, duration-only Reading/Writing fallback scoring, contest attachment, and leaderboard aggregation.
 6. [ ] Frontend API types: add optional duration and activity input mode.

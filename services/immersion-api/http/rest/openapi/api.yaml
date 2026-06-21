@@ -423,8 +423,6 @@ paths:
               required:
                 - language_code
                 - activity_id
-                - amount
-                - unit_id
                 - tags
               properties:
                 registration_ids:
@@ -444,6 +442,9 @@ paths:
                 unit_id:
                   type: string
                   format: uuid
+                duration_seconds:
+                  type: integer
+                  format: int32
                 tags:
                   type: array
                   items:
@@ -522,8 +523,6 @@ paths:
             schema:
               type: object
               required:
-                - amount
-                - unit_id
                 - tags
               properties:
                 amount:
@@ -532,6 +531,9 @@ paths:
                 unit_id:
                   type: string
                   format: uuid
+                duration_seconds:
+                  type: integer
+                  format: int32
                 tags:
                   type: array
                   items:

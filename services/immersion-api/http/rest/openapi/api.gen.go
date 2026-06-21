@@ -359,12 +359,13 @@ type FetchLeaderboardForYearParams struct {
 // LogCreateJSONBody defines parameters for LogCreate.
 type LogCreateJSONBody struct {
 	ActivityId      int32                 `json:"activity_id"`
-	Amount          float32               `json:"amount"`
+	Amount          *float32              `json:"amount,omitempty"`
 	Description     *string               `json:"description,omitempty"`
+	DurationSeconds *int32                `json:"duration_seconds,omitempty"`
 	LanguageCode    string                `json:"language_code"`
 	RegistrationIds *[]openapi_types.UUID `json:"registration_ids,omitempty"`
 	Tags            []string              `json:"tags"`
-	UnitId          openapi_types.UUID    `json:"unit_id"`
+	UnitId          *openapi_types.UUID   `json:"unit_id,omitempty"`
 }
 
 // LogTagSuggestionsParams defines parameters for LogTagSuggestions.
@@ -374,10 +375,11 @@ type LogTagSuggestionsParams struct {
 
 // LogUpdateJSONBody defines parameters for LogUpdate.
 type LogUpdateJSONBody struct {
-	Amount      float32            `json:"amount"`
-	Description *string            `json:"description,omitempty"`
-	Tags        []string           `json:"tags"`
-	UnitId      openapi_types.UUID `json:"unit_id"`
+	Amount          *float32            `json:"amount,omitempty"`
+	Description     *string             `json:"description,omitempty"`
+	DurationSeconds *int32              `json:"duration_seconds,omitempty"`
+	Tags            []string            `json:"tags"`
+	UnitId          *openapi_types.UUID `json:"unit_id,omitempty"`
 }
 
 // LogContestRegistrationUpdateJSONBody defines parameters for LogContestRegistrationUpdate.

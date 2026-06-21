@@ -3,6 +3,7 @@ load("@rules_go//go:def.bzl", "go_library")
 go_library(
     name = "repository",
     srcs = [
+        "logtracking.go",
         "outbox.go",
         "repo_activityforcontestuser.go",
         "repo_contestfindlatestofficial.go",
@@ -24,6 +25,7 @@ go_library(
         "repo_findlogbyid.go",
         "repo_findregistrationforuser.go",
         "repo_findscoresforregistration.go",
+        "repo_findunitfortracking.go",
         "repo_finduserdisplaynames.go",
         "repo_getcontestsbyusercountforyear.go",
         "repo_languageexists.go",

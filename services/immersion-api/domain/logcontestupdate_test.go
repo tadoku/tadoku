@@ -261,6 +261,51 @@ func TestLogContestUpdate_Execute(t *testing.T) {
 		assert.Equal(t, logID, result.ID)
 	})
 
+	t.Run("snapshots duration-only score data when attaching a registration", func(t *testing.T) {
+		computedScore := float32(5)
+		durationSeconds := int32(600)
+		durationLog := &domain.Log{
+			ID:              logID,
+			UserID:          userID,
+			LanguageCode:    "jpn",
+			ActivityID:      1,
+			DurationSeconds: &durationSeconds,
+			Score:           computedScore,
+			CreatedAt:       now,
+		}
+		updatedLog := &domain.Log{
+			ID:              logID,
+			UserID:          userID,
+			LanguageCode:    "jpn",
+			ActivityID:      1,
+			DurationSeconds: &durationSeconds,
+			Score:           computedScore,
+			CreatedAt:       now,
+			Registrations: []domain.ContestRegistrationReference{
+				{RegistrationID: registrationID, ContestID: contestID, ContestEnd: now.Add(30 * 24 * time.Hour), Title: "Test"},
+			},
+		}
+		repo := &mockLogContestUpdateRepository{
+			log:           durationLog,
+			updatedLog:    updatedLog,
+			registrations: ongoingRegistrations,
+		}
+		clock := commondomain.NewMockClock(now)
+		svc := newLogContestUpdateService(repo, clock)
+
+		ctx := ctxWithUserSubject(userID.String())
+		_, err := svc.Execute(ctx, &domain.LogContestUpdateRequest{
+			LogID:           logID,
+			RegistrationIDs: []uuid.UUID{registrationID},
+		})
+
+		require.NoError(t, err)
+		assert.True(t, repo.updateCalled)
+		assert.Equal(t, domain.LogTrackingDuration, repo.updateCalledWith.Tracking.Kind)
+		assert.Equal(t, durationSeconds, repo.updateCalledWith.Tracking.DurationSeconds)
+		assert.Equal(t, computedScore, repo.updateCalledWith.Tracking.ComputedScore)
+	})
+
 	t.Run("successfully detaches a registration", func(t *testing.T) {
 		logWithRegistration := &domain.Log{
 			ID:           logID,

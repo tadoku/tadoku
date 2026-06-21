@@ -40,6 +40,7 @@ func (r *Repository) ListLogsForContest(ctx context.Context, req *domain.LogList
 
 	res := make([]domain.Log, len(entries))
 	for i, it := range entries {
+		tracking := readLogTracking(it.UnitID, it.Amount, it.Modifier, it.DurationSeconds, it.Score)
 		res[i] = domain.Log{
 			ID:              it.ID,
 			UserID:          it.UserID,
@@ -48,11 +49,14 @@ func (r *Repository) ListLogsForContest(ctx context.Context, req *domain.LogList
 			LanguageCode:    it.LanguageCode,
 			LanguageName:    it.LanguageName,
 			ActivityID:      int(it.ActivityID),
+			UnitID:          postgres.NewUUIDFromNullUUID(it.UnitID),
 			UnitName:        it.UnitName,
 			Tags:            postgres.StringArrayFromInterface(it.Tags),
 			Amount:          postgres.NewFloat32FromNullFloat64(it.Amount),
 			Modifier:        postgres.NewFloat32FromNullFloat64(it.Modifier),
 			Score:           postgres.NewFloat32FromNullFloat64(it.Score),
+			DurationSeconds: postgres.NewInt32PtrFromNullInt32(it.DurationSeconds),
+			Tracking:        tracking,
 			CreatedAt:       it.CreatedAt,
 			UpdatedAt:       it.UpdatedAt,
 			Deleted:         it.DeletedAt.Valid,

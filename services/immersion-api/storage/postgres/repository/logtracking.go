@@ -35,3 +35,31 @@ func trackingDurationSeconds(tracking domain.LogTracking) sql.NullInt32 {
 	}
 	return sql.NullInt32{Valid: true, Int32: tracking.DurationSeconds}
 }
+
+func readLogTracking(
+	unitID uuid.NullUUID,
+	amount sql.NullFloat64,
+	modifier sql.NullFloat64,
+	durationSeconds sql.NullInt32,
+	score sql.NullFloat64,
+) domain.LogTracking {
+	tracking := domain.LogTracking{
+		ComputedScore: postgres.NewFloat32FromNullFloat64(score),
+	}
+	hasAmountUnit := amount.Valid && modifier.Valid
+	if hasAmountUnit {
+		tracking.Kind = domain.LogTrackingAmountUnit
+		tracking.UnitID = postgres.NewUUIDFromNullUUID(unitID)
+		tracking.Amount = postgres.NewFloat32FromNullFloat64(amount)
+		tracking.Modifier = postgres.NewFloat32FromNullFloat64(modifier)
+	}
+	if durationSeconds.Valid {
+		if hasAmountUnit {
+			tracking.Kind = domain.LogTrackingBoth
+		} else {
+			tracking.Kind = domain.LogTrackingDuration
+		}
+		tracking.DurationSeconds = durationSeconds.Int32
+	}
+	return tracking
+}

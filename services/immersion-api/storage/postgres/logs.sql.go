@@ -489,10 +489,12 @@ with eligible_logs as (
     logs.language_code,
     languages.name as language_name,
     logs.log_activity_id as activity_id,
+    logs.unit_id,
     coalesce(log_units.name, '') as unit_name,
     logs.description,
     contest_logs.amount,
     contest_logs.modifier,
+    contest_logs.duration_seconds,
     coalesce(contest_logs.computed_score, contest_logs.score) as score,
     logs.created_at,
     logs.updated_at,
@@ -513,7 +515,7 @@ with eligible_logs as (
     and contest_logs.contest_id = $5
 )
 select
-  id, user_id, language_code, language_name, activity_id, unit_name, description, amount, modifier, score, created_at, updated_at, deleted_at, user_display_name, tags,
+  id, user_id, language_code, language_name, activity_id, unit_id, unit_name, description, amount, modifier, duration_seconds, score, created_at, updated_at, deleted_at, user_display_name, tags,
   (select count(eligible_logs.id) from eligible_logs) as total_size
 from eligible_logs
 order by created_at desc
@@ -535,10 +537,12 @@ type ListLogsForContestRow struct {
 	LanguageCode    string
 	LanguageName    string
 	ActivityID      int16
+	UnitID          uuid.NullUUID
 	UnitName        string
 	Description     sql.NullString
 	Amount          sql.NullFloat64
 	Modifier        sql.NullFloat64
+	DurationSeconds sql.NullInt32
 	Score           sql.NullFloat64
 	CreatedAt       time.Time
 	UpdatedAt       time.Time
@@ -569,10 +573,12 @@ func (q *Queries) ListLogsForContest(ctx context.Context, arg ListLogsForContest
 			&i.LanguageCode,
 			&i.LanguageName,
 			&i.ActivityID,
+			&i.UnitID,
 			&i.UnitName,
 			&i.Description,
 			&i.Amount,
 			&i.Modifier,
+			&i.DurationSeconds,
 			&i.Score,
 			&i.CreatedAt,
 			&i.UpdatedAt,
@@ -602,10 +608,12 @@ with eligible_logs as (
     logs.language_code,
     languages.name as language_name,
     logs.log_activity_id as activity_id,
+    logs.unit_id,
     coalesce(log_units.name, '') as unit_name,
     logs.description,
     logs.amount,
     logs.modifier,
+    logs.duration_seconds,
     coalesce(logs.computed_score, logs.score) as score,
     logs.created_at,
     logs.updated_at,
@@ -622,7 +630,7 @@ with eligible_logs as (
     and logs.user_id = $4
 )
 select
-  id, user_id, language_code, language_name, activity_id, unit_name, description, amount, modifier, score, created_at, updated_at, deleted_at, tags,
+  id, user_id, language_code, language_name, activity_id, unit_id, unit_name, description, amount, modifier, duration_seconds, score, created_at, updated_at, deleted_at, tags,
   (select count(eligible_logs.id) from eligible_logs) as total_size
 from eligible_logs
 order by created_at desc
@@ -638,21 +646,23 @@ type ListLogsForUserParams struct {
 }
 
 type ListLogsForUserRow struct {
-	ID           uuid.UUID
-	UserID       uuid.UUID
-	LanguageCode string
-	LanguageName string
-	ActivityID   int16
-	UnitName     string
-	Description  sql.NullString
-	Amount       sql.NullFloat64
-	Modifier     sql.NullFloat64
-	Score        sql.NullFloat64
-	CreatedAt    time.Time
-	UpdatedAt    time.Time
-	DeletedAt    sql.NullTime
-	Tags         interface{}
-	TotalSize    int64
+	ID              uuid.UUID
+	UserID          uuid.UUID
+	LanguageCode    string
+	LanguageName    string
+	ActivityID      int16
+	UnitID          uuid.NullUUID
+	UnitName        string
+	Description     sql.NullString
+	Amount          sql.NullFloat64
+	Modifier        sql.NullFloat64
+	DurationSeconds sql.NullInt32
+	Score           sql.NullFloat64
+	CreatedAt       time.Time
+	UpdatedAt       time.Time
+	DeletedAt       sql.NullTime
+	Tags            interface{}
+	TotalSize       int64
 }
 
 func (q *Queries) ListLogsForUser(ctx context.Context, arg ListLogsForUserParams) ([]ListLogsForUserRow, error) {
@@ -675,10 +685,12 @@ func (q *Queries) ListLogsForUser(ctx context.Context, arg ListLogsForUserParams
 			&i.LanguageCode,
 			&i.LanguageName,
 			&i.ActivityID,
+			&i.UnitID,
 			&i.UnitName,
 			&i.Description,
 			&i.Amount,
 			&i.Modifier,
+			&i.DurationSeconds,
 			&i.Score,
 			&i.CreatedAt,
 			&i.UpdatedAt,

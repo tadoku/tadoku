@@ -41,6 +41,8 @@ func (r *Repository) FindLogByID(ctx context.Context, req *domain.LogFindRequest
 		}
 	}
 
+	tracking := readLogTracking(log.UnitID, log.Amount, log.Modifier, log.DurationSeconds, log.Score)
+
 	return &domain.Log{
 		ID:                          log.ID,
 		UserID:                      log.UserID,
@@ -56,6 +58,7 @@ func (r *Repository) FindLogByID(ctx context.Context, req *domain.LogFindRequest
 		Modifier:                    postgres.NewFloat32FromNullFloat64(log.Modifier),
 		Score:                       postgres.NewFloat32FromNullFloat64(log.Score),
 		DurationSeconds:             postgres.NewInt32PtrFromNullInt32(log.DurationSeconds),
+		Tracking:                    tracking,
 		EligibleOfficialLeaderboard: log.EligibleOfficialLeaderboard,
 		CreatedAt:                   log.CreatedAt,
 		UpdatedAt:                   log.UpdatedAt,

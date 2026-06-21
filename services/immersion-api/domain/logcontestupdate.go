@@ -166,27 +166,13 @@ func (s *LogContestUpdate) Execute(ctx context.Context, req *LogContestUpdateReq
 		return log, nil
 	}
 
-	tracking := LogTracking{
-		ComputedScore: log.Score,
-	}
-	if log.UnitID != uuid.Nil {
-		tracking.Kind = LogTrackingAmountUnit
-		tracking.UnitID = log.UnitID
-		tracking.Amount = log.Amount
-		tracking.Modifier = log.Modifier
-	}
-	if log.DurationSeconds != nil {
-		if tracking.Kind == LogTrackingAmountUnit {
-			tracking.Kind = LogTrackingBoth
-		} else {
-			tracking.Kind = LogTrackingDuration
-		}
-		tracking.DurationSeconds = *log.DurationSeconds
+	if len(toAttach) > 0 && log.Tracking.Kind == "" {
+		return nil, fmt.Errorf("log tracking data is required for contest attachment: %w", ErrInvalidLog)
 	}
 
 	if err := s.repo.UpdateLogContests(ctx, &LogContestUpdateDBRequest{
 		LogID:    req.LogID,
-		Tracking: tracking,
+		Tracking: log.Tracking,
 		Attach:   toAttach,
 		Detach:   toDetach,
 	}); err != nil {

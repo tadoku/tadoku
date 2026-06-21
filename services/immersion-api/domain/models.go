@@ -150,6 +150,7 @@ type Log struct {
 	Modifier                    float32
 	Score                       float32
 	DurationSeconds             *int32
+	Tracking                    LogTracking
 	EligibleOfficialLeaderboard bool
 	Registrations               []ContestRegistrationReference
 	CreatedAt                   time.Time

@@ -51,18 +51,28 @@ func TestLogContestUpdate_Execute(t *testing.T) {
 	userID := uuid.New()
 	otherUserID := uuid.New()
 	logID := uuid.New()
+	unitID := uuid.New()
 	registrationID := uuid.New()
 	contestID := uuid.New()
 	now := time.Date(2026, 2, 15, 10, 0, 0, 0, time.UTC)
 
+	amountTracking := domain.LogTracking{
+		Kind:          domain.LogTrackingAmountUnit,
+		UnitID:        unitID,
+		Amount:        100,
+		Modifier:      1,
+		ComputedScore: 100,
+	}
 	baseLog := &domain.Log{
 		ID:           logID,
 		UserID:       userID,
 		LanguageCode: "jpn",
 		ActivityID:   1,
+		UnitID:       unitID,
 		Amount:       100,
 		Modifier:     1.0,
 		Score:        100,
+		Tracking:     amountTracking,
 		CreatedAt:    now,
 	}
 
@@ -230,9 +240,11 @@ func TestLogContestUpdate_Execute(t *testing.T) {
 			UserID:       userID,
 			LanguageCode: "jpn",
 			ActivityID:   1,
+			UnitID:       unitID,
 			Amount:       100,
 			Modifier:     1.0,
 			Score:        100,
+			Tracking:     amountTracking,
 			CreatedAt:    now,
 			Registrations: []domain.ContestRegistrationReference{
 				{RegistrationID: registrationID, ContestID: contestID, ContestEnd: now.Add(30 * 24 * time.Hour), Title: "Test"},
@@ -271,7 +283,12 @@ func TestLogContestUpdate_Execute(t *testing.T) {
 			ActivityID:      1,
 			DurationSeconds: &durationSeconds,
 			Score:           computedScore,
-			CreatedAt:       now,
+			Tracking: domain.LogTracking{
+				Kind:            domain.LogTrackingDuration,
+				DurationSeconds: durationSeconds,
+				ComputedScore:   computedScore,
+			},
+			CreatedAt: now,
 		}
 		updatedLog := &domain.Log{
 			ID:              logID,
@@ -280,7 +297,12 @@ func TestLogContestUpdate_Execute(t *testing.T) {
 			ActivityID:      1,
 			DurationSeconds: &durationSeconds,
 			Score:           computedScore,
-			CreatedAt:       now,
+			Tracking: domain.LogTracking{
+				Kind:            domain.LogTrackingDuration,
+				DurationSeconds: durationSeconds,
+				ComputedScore:   computedScore,
+			},
+			CreatedAt: now,
 			Registrations: []domain.ContestRegistrationReference{
 				{RegistrationID: registrationID, ContestID: contestID, ContestEnd: now.Add(30 * 24 * time.Hour), Title: "Test"},
 			},
@@ -312,9 +334,11 @@ func TestLogContestUpdate_Execute(t *testing.T) {
 			UserID:       userID,
 			LanguageCode: "jpn",
 			ActivityID:   1,
+			UnitID:       unitID,
 			Amount:       100,
 			Modifier:     1.0,
 			Score:        100,
+			Tracking:     amountTracking,
 			CreatedAt:    now,
 			Registrations: []domain.ContestRegistrationReference{
 				{RegistrationID: registrationID, ContestID: contestID, ContestEnd: now.Add(30 * 24 * time.Hour), Title: "Test"},
@@ -325,9 +349,11 @@ func TestLogContestUpdate_Execute(t *testing.T) {
 			UserID:       userID,
 			LanguageCode: "jpn",
 			ActivityID:   1,
+			UnitID:       unitID,
 			Amount:       100,
 			Modifier:     1.0,
 			Score:        100,
+			Tracking:     amountTracking,
 			CreatedAt:    now,
 		}
 		repo := &mockLogContestUpdateRepository{
@@ -357,9 +383,11 @@ func TestLogContestUpdate_Execute(t *testing.T) {
 			UserID:       userID,
 			LanguageCode: "jpn",
 			ActivityID:   1,
+			UnitID:       unitID,
 			Amount:       100,
 			Modifier:     1.0,
 			Score:        100,
+			Tracking:     amountTracking,
 			CreatedAt:    now,
 			Registrations: []domain.ContestRegistrationReference{
 				{RegistrationID: registrationID, ContestID: contestID, ContestEnd: now.Add(30 * 24 * time.Hour), Title: "Test"},
@@ -411,9 +439,11 @@ func TestLogContestUpdate_Execute(t *testing.T) {
 			UserID:       userID,
 			LanguageCode: "jpn",
 			ActivityID:   1,
+			UnitID:       unitID,
 			Amount:       100,
 			Modifier:     1.0,
 			Score:        100,
+			Tracking:     amountTracking,
 			CreatedAt:    now,
 			Registrations: []domain.ContestRegistrationReference{
 				{RegistrationID: registrationID, ContestID: contestID, ContestEnd: now.Add(30 * 24 * time.Hour), Title: "Ongoing"},
@@ -425,9 +455,11 @@ func TestLogContestUpdate_Execute(t *testing.T) {
 			UserID:       userID,
 			LanguageCode: "jpn",
 			ActivityID:   1,
+			UnitID:       unitID,
 			Amount:       100,
 			Modifier:     1.0,
 			Score:        100,
+			Tracking:     amountTracking,
 			CreatedAt:    now,
 		}
 		repo := &mockLogContestUpdateRepository{

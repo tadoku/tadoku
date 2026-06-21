@@ -81,12 +81,6 @@ type Log struct {
 	DeletedAt                   sql.NullTime
 }
 
-type LogActivity struct {
-	ID      int32
-	Name    string
-	Default bool
-}
-
 type LogTag struct {
 	LogID     uuid.UUID
 	UserID    uuid.UUID

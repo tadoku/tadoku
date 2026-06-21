@@ -135,7 +135,7 @@ V2 logging form:
 Each step should be merged to `main` and deployable on its own.
 
 1. [x] Backend schema: add nullable duration/effective-score support and constraints without changing API behavior.
-2. [ ] Backend reads: switch log, contest log, leaderboard, and yearly split queries to effective score.
+2. [x] Backend reads: switch log, contest log, leaderboard, and yearly split queries to effective score.
 3. [ ] Backend writes: accept optional `duration_seconds` and compute `computed_score` for duration-only logs.
 4. [ ] Backend config: expose code-owned activity input mode as additive activity metadata.
 5. [ ] Backend tests: cover legacy amount logs, amount+duration logs, duration-only time-primary logs, duration-only Reading/Writing fallback scoring, contest attachment, and leaderboard aggregation.

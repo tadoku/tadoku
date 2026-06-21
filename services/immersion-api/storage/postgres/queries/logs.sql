@@ -42,11 +42,11 @@ with eligible_logs as (
     logs.language_code,
     languages.name as language_name,
     logs.log_activity_id as activity_id,
-    log_units.name as unit_name,
+    coalesce(log_units.name, '') as unit_name,
     logs.description,
     contest_logs.amount,
     contest_logs.modifier,
-    contest_logs.score,
+    coalesce(contest_logs.computed_score, contest_logs.score) as score,
     logs.created_at,
     logs.updated_at,
     logs.deleted_at,
@@ -58,7 +58,7 @@ with eligible_logs as (
   from contest_logs
   inner join logs on (logs.id = contest_logs.log_id)
   inner join languages on (languages.code = logs.language_code)
-  inner join log_units on (log_units.id = logs.unit_id)
+  left join log_units on (log_units.id = logs.unit_id)
   inner join users on (users.id = logs.user_id)
   where
     (sqlc.arg('include_deleted')::boolean or logs.deleted_at is null)
@@ -81,11 +81,11 @@ with eligible_logs as (
     logs.language_code,
     languages.name as language_name,
     logs.log_activity_id as activity_id,
-    log_units.name as unit_name,
+    coalesce(log_units.name, '') as unit_name,
     logs.description,
     logs.amount,
     logs.modifier,
-    logs.score,
+    coalesce(logs.computed_score, logs.score) as score,
     logs.created_at,
     logs.updated_at,
     logs.deleted_at,
@@ -95,7 +95,7 @@ with eligible_logs as (
     ) as tags
   from logs
   inner join languages on (languages.code = logs.language_code)
-  inner join log_units on (log_units.id = logs.unit_id)
+  left join log_units on (log_units.id = logs.unit_id)
   where
     (sqlc.arg('include_deleted')::boolean or deleted_at is null)
     and logs.user_id = sqlc.arg('user_id')
@@ -117,11 +117,11 @@ select
   languages.name as language_name,
   logs.log_activity_id as activity_id,
   logs.unit_id,
-  log_units.name as unit_name,
+  coalesce(log_units.name, '') as unit_name,
   logs.description,
   logs.amount,
   logs.modifier,
-  logs.score,
+  coalesce(logs.computed_score, logs.score) as score,
   logs.eligible_official_leaderboard,
   logs.created_at,
   logs.updated_at,
@@ -132,7 +132,7 @@ select
   ) as tags
 from logs
 inner join languages on (languages.code = logs.language_code)
-inner join log_units on (log_units.id = logs.unit_id)
+left join log_units on (log_units.id = logs.unit_id)
 inner join users on (users.id = logs.user_id)
 where
   (sqlc.arg('include_deleted')::boolean or deleted_at is null)
@@ -146,7 +146,7 @@ select
   contests.contest_end,
   owner_users.display_name as owner_user_display_name,
   contests.official,
-  contest_logs.score
+  coalesce(contest_logs.computed_score, contest_logs.score) as score
 from contest_logs
 inner join contests on (contests.id = contest_logs.contest_id)
 inner join logs on (logs.id = contest_logs.log_id)
@@ -159,7 +159,7 @@ where log_id = sqlc.arg('id');
 
 -- name: YearlyActivityForUser :many
 select
-  sum(score)::real as score,
+  sum(coalesce(computed_score, score))::real as score,
   count(id) as update_count,
   created_at::date as "date"
 from logs
@@ -173,7 +173,7 @@ order by date asc;
 -- name: FetchScoresForProfile :many
 select
   language_code,
-  sum(score)::real as score,
+  sum(coalesce(logs.computed_score, logs.score))::real as score,
   languages.name as language_name
 from logs
 inner join languages on (languages.code = logs.language_code)
@@ -186,7 +186,7 @@ order by score desc;
 
 -- name: YearlyActivitySplitForUser :many
 select
-  sum(logs.score)::real as score,
+  sum(coalesce(logs.computed_score, logs.score))::real as score,
   logs.log_activity_id
 from logs
 where

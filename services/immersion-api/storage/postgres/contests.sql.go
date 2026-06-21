@@ -31,7 +31,12 @@ func (q *Queries) CancelContest(ctx context.Context, id uuid.UUID) (uuid.UUID, e
 
 const contestSummary = `-- name: ContestSummary :one
 select
-  coalesce(sum(logs.score), 0)::real as total_score,
+  coalesce(sum(
+    case
+      when logs.id is null then null
+      else coalesce(contest_logs.computed_score, contest_logs.score)
+    end
+  ), 0)::real as total_score,
   count(distinct logs.user_id) as participant_count,
   count(distinct logs.language_code) as language_count
 from contests

@@ -3,6 +3,8 @@ package postgres
 import (
 	"database/sql"
 	"time"
+
+	"github.com/google/uuid"
 )
 
 func NewQueries(psql *sql.DB) *Queries {
@@ -49,6 +51,32 @@ func NewStringFromNullString(val sql.NullString) *string {
 	}
 
 	return &val.String
+}
+
+func NewNullFloat64FromFloat32(val float32) sql.NullFloat64 {
+	return sql.NullFloat64{
+		Valid:   true,
+		Float64: float64(val),
+	}
+}
+
+func NewFloat32FromNullFloat64(val sql.NullFloat64) float32 {
+	if !val.Valid {
+		return 0
+	}
+
+	return float32(val.Float64)
+}
+
+func NewNullUUID(val uuid.UUID) uuid.NullUUID {
+	return uuid.NullUUID{
+		Valid: true,
+		UUID:  val,
+	}
+}
+
+func NewUUIDFromNullUUID(val uuid.NullUUID) uuid.UUID {
+	return val.UUID
 }
 
 func NewNullInt32(val *int32) sql.NullInt32 {

@@ -54,8 +54,8 @@ insert into contest_logs (
 type CreateContestLogRelationParams struct {
 	RegistrationID uuid.UUID
 	LogID          uuid.UUID
-	Amount         float32
-	Modifier       float32
+	Amount         sql.NullFloat64
+	Modifier       sql.NullFloat64
 }
 
 func (q *Queries) CreateContestLogRelation(ctx context.Context, arg CreateContestLogRelationParams) error {
@@ -97,9 +97,9 @@ type CreateLogParams struct {
 	UserID                      uuid.UUID
 	LanguageCode                string
 	LogActivityID               int16
-	UnitID                      uuid.UUID
-	Amount                      float32
-	Modifier                    float32
+	UnitID                      uuid.NullUUID
+	Amount                      sql.NullFloat64
+	Modifier                    sql.NullFloat64
 	EligibleOfficialLeaderboard bool
 	Description                 sql.NullString
 }
@@ -424,12 +424,12 @@ type FindLogByIDRow struct {
 	LanguageCode                string
 	LanguageName                string
 	ActivityID                  int16
-	UnitID                      uuid.UUID
+	UnitID                      uuid.NullUUID
 	UnitName                    string
 	Description                 sql.NullString
-	Amount                      float32
-	Modifier                    float32
-	Score                       float32
+	Amount                      sql.NullFloat64
+	Modifier                    sql.NullFloat64
+	Score                       sql.NullFloat64
 	EligibleOfficialLeaderboard bool
 	CreatedAt                   time.Time
 	UpdatedAt                   time.Time
@@ -518,8 +518,8 @@ type ListLogsForContestRow struct {
 	ActivityID      int16
 	UnitName        string
 	Description     sql.NullString
-	Amount          float32
-	Modifier        float32
+	Amount          sql.NullFloat64
+	Modifier        sql.NullFloat64
 	Score           sql.NullFloat64
 	CreatedAt       time.Time
 	UpdatedAt       time.Time
@@ -626,9 +626,9 @@ type ListLogsForUserRow struct {
 	ActivityID   int16
 	UnitName     string
 	Description  sql.NullString
-	Amount       float32
-	Modifier     float32
-	Score        float32
+	Amount       sql.NullFloat64
+	Modifier     sql.NullFloat64
+	Score        sql.NullFloat64
 	CreatedAt    time.Time
 	UpdatedAt    time.Time
 	DeletedAt    sql.NullTime
@@ -694,9 +694,9 @@ where
 `
 
 type UpdateLogParams struct {
-	Amount      float32
-	Modifier    float32
-	UnitID      uuid.UUID
+	Amount      sql.NullFloat64
+	Modifier    sql.NullFloat64
+	UnitID      uuid.NullUUID
 	Description sql.NullString
 	Now         time.Time
 	LogID       uuid.UUID
@@ -744,8 +744,8 @@ where
 `
 
 type UpdateOngoingContestLogsParams struct {
-	Amount   float32
-	Modifier float32
+	Amount   sql.NullFloat64
+	Modifier sql.NullFloat64
 	LogID    uuid.UUID
 	Now      time.Time
 }

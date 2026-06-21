@@ -36,9 +36,9 @@ func (r *Repository) CreateLog(ctx context.Context, req *domain.LogCreateRequest
 		UserID:                      req.UserID(),
 		LanguageCode:                req.LanguageCode,
 		LogActivityID:               int16(req.ActivityID),
-		UnitID:                      req.UnitID,
-		Amount:                      req.Amount,
-		Modifier:                    unit.Modifier,
+		UnitID:                      postgres.NewNullUUID(req.UnitID),
+		Amount:                      postgres.NewNullFloat64FromFloat32(req.Amount),
+		Modifier:                    postgres.NewNullFloat64FromFloat32(unit.Modifier),
 		EligibleOfficialLeaderboard: req.EligibleOfficialLeaderboard(),
 		Description:                 postgres.NewNullString(req.Description),
 	})
@@ -54,8 +54,8 @@ func (r *Repository) CreateLog(ctx context.Context, req *domain.LogCreateRequest
 		if err = qtx.CreateContestLogRelation(ctx, postgres.CreateContestLogRelationParams{
 			RegistrationID: registrationID,
 			LogID:          id,
-			Amount:         req.Amount,
-			Modifier:       unit.Modifier,
+			Amount:         postgres.NewNullFloat64FromFloat32(req.Amount),
+			Modifier:       postgres.NewNullFloat64FromFloat32(unit.Modifier),
 		}); err != nil {
 			_ = tx.Rollback()
 			return nil, fmt.Errorf("could not create log: %w", err)

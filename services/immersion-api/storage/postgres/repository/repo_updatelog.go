@@ -52,9 +52,9 @@ func (r *Repository) UpdateLog(ctx context.Context, req *domain.LogUpdateRequest
 	// Update the log itself
 	if err := qtx.UpdateLog(ctx, postgres.UpdateLogParams{
 		LogID:       req.LogID,
-		Amount:      req.Amount,
-		Modifier:    unit.Modifier,
-		UnitID:      req.UnitID,
+		Amount:      postgres.NewNullFloat64FromFloat32(req.Amount),
+		Modifier:    postgres.NewNullFloat64FromFloat32(unit.Modifier),
+		UnitID:      postgres.NewNullUUID(req.UnitID),
 		Description: postgres.NewNullString(req.Description),
 		Now:         req.Now(),
 	}); err != nil {
@@ -65,8 +65,8 @@ func (r *Repository) UpdateLog(ctx context.Context, req *domain.LogUpdateRequest
 	// Update contest_logs for ongoing contests only
 	if err := qtx.UpdateOngoingContestLogs(ctx, postgres.UpdateOngoingContestLogsParams{
 		LogID:    req.LogID,
-		Amount:   req.Amount,
-		Modifier: unit.Modifier,
+		Amount:   postgres.NewNullFloat64FromFloat32(req.Amount),
+		Modifier: postgres.NewNullFloat64FromFloat32(unit.Modifier),
 		Now:      req.Now(),
 	}); err != nil {
 		_ = tx.Rollback()

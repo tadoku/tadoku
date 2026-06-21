@@ -37,8 +37,8 @@ func (r *Repository) UpdateLogContests(ctx context.Context, req *domain.LogConte
 		if err := qtx.CreateContestLogRelation(ctx, postgres.CreateContestLogRelationParams{
 			RegistrationID: attach.RegistrationID,
 			LogID:          req.LogID,
-			Amount:         req.Amount,
-			Modifier:       req.Modifier,
+			Amount:         postgres.NewNullFloat64FromFloat32(req.Amount),
+			Modifier:       postgres.NewNullFloat64FromFloat32(req.Modifier),
 		}); err != nil {
 			_ = tx.Rollback()
 			return fmt.Errorf("could not attach contest %s: %w", attach.ContestID, err)

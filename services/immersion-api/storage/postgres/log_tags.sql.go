@@ -38,37 +38,6 @@ func (q *Queries) InsertLogTag(ctx context.Context, arg InsertLogTagParams) erro
 	return err
 }
 
-const listDefaultTagsMatching = `-- name: ListDefaultTagsMatching :many
-select name as tag
-from log_default_tags
-where name ilike '%' || $1 || '%'
-order by name
-limit 30
-`
-
-func (q *Queries) ListDefaultTagsMatching(ctx context.Context, query sql.NullString) ([]string, error) {
-	rows, err := q.db.QueryContext(ctx, listDefaultTagsMatching, query)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []string
-	for rows.Next() {
-		var tag string
-		if err := rows.Scan(&tag); err != nil {
-			return nil, err
-		}
-		items = append(items, tag)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
 const listTagSuggestionsForUser = `-- name: ListTagSuggestionsForUser :many
 select tag, count(*) as usage_count
 from log_tags

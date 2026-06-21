@@ -14,11 +14,3 @@ where user_id = sqlc.arg('user_id')
 group by tag
 order by usage_count desc, tag
 limit 30;
-
--- name: ListDefaultTagsMatching :many
-select name as tag
-from log_default_tags
-where name ilike '%' || sqlc.arg('query') || '%'
-order by name
-limit 30;
-

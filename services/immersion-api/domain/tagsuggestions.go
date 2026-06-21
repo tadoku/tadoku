@@ -15,7 +15,34 @@ type TagSuggestion struct {
 
 type TagSuggestionsRepository interface {
 	FetchTagSuggestionsForUser(ctx context.Context, userID uuid.UUID, query string) ([]TagSuggestion, error)
-	FetchDefaultTagsMatching(ctx context.Context, query string) ([]string, error)
+}
+
+var defaultTagSuggestions = []string{
+	"anime",
+	"audiobook",
+	"book",
+	"chat",
+	"chorusing",
+	"comic",
+	"conversation",
+	"drama",
+	"ebook",
+	"fiction",
+	"game",
+	"grammar",
+	"lyric",
+	"news",
+	"non-fiction",
+	"online video",
+	"podcast",
+	"presentation",
+	"shadowing",
+	"social media",
+	"srs",
+	"textbook",
+	"tv",
+	"vocabulary",
+	"web page",
 }
 
 type TagSuggestionsRequest struct {
@@ -51,17 +78,11 @@ func (s *TagSuggestions) Execute(ctx context.Context, req *TagSuggestionsRequest
 		return nil, err
 	}
 
-	// Append default tags, deduplicating against user tags
-	defaultTags, err := s.repo.FetchDefaultTagsMatching(ctx, req.Query)
-	if err != nil {
-		return nil, err
-	}
-
 	seen := make(map[string]struct{})
 	for _, s := range suggestions {
 		seen[strings.ToLower(s.Tag)] = struct{}{}
 	}
-	for _, tag := range defaultTags {
+	for _, tag := range matchingDefaultTags(req.Query) {
 		if _, exists := seen[strings.ToLower(tag)]; !exists {
 			seen[strings.ToLower(tag)] = struct{}{}
 			suggestions = append(suggestions, TagSuggestion{Tag: tag, Count: 0})
@@ -74,4 +95,19 @@ func (s *TagSuggestions) Execute(ctx context.Context, req *TagSuggestionsRequest
 	return &TagSuggestionsResponse{
 		Suggestions: suggestions,
 	}, nil
+}
+
+func matchingDefaultTags(query string) []string {
+	query = strings.ToLower(query)
+	if query == "" {
+		return defaultTagSuggestions
+	}
+
+	tags := []string{}
+	for _, tag := range defaultTagSuggestions {
+		if strings.Contains(tag, query) {
+			tags = append(tags, tag)
+		}
+	}
+	return tags
 }

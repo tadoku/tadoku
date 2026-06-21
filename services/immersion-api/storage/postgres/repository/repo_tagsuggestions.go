@@ -3,7 +3,6 @@ package repository
 import (
 	"context"
 	"database/sql"
-	"strings"
 
 	"github.com/google/uuid"
 	"github.com/tadoku/tadoku/services/immersion-api/domain"
@@ -24,9 +23,4 @@ func (r *Repository) FetchTagSuggestionsForUser(ctx context.Context, userID uuid
 		tags[i] = domain.TagSuggestion{Tag: row.Tag, Count: int(row.UsageCount)}
 	}
 	return tags, nil
-}
-
-func (r *Repository) FetchDefaultTagsMatching(ctx context.Context, query string) ([]string, error) {
-	query = strings.ToLower(query)
-	return r.q.ListDefaultTagsMatching(ctx, sql.NullString{String: query, Valid: true})
 }

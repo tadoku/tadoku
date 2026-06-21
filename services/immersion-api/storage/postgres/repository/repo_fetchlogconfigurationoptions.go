@@ -15,11 +15,6 @@ func (r *Repository) FetchLogConfigurationOptions(ctx context.Context, userID uu
 		return nil, fmt.Errorf("could not fetch log configuration options: %w", err)
 	}
 
-	acts, err := r.q.ListActivities(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("could not fetch log configuration options: %w", err)
-	}
-
 	units, err := r.q.ListUnits(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("could not fetch log configuration options: %w", err)
@@ -32,7 +27,6 @@ func (r *Repository) FetchLogConfigurationOptions(ctx context.Context, userID uu
 
 	options := domain.LogConfigurationOptionsResponse{
 		Languages:         make([]domain.Language, len(langs)),
-		Activities:        make([]domain.Activity, len(acts)),
 		Units:             make([]domain.Unit, len(units)),
 		UserLanguageCodes: userLangs,
 	}
@@ -41,14 +35,6 @@ func (r *Repository) FetchLogConfigurationOptions(ctx context.Context, userID uu
 		options.Languages[i] = domain.Language{
 			Code: l.Code,
 			Name: l.Name,
-		}
-	}
-
-	for i, a := range acts {
-		options.Activities[i] = domain.Activity{
-			ID:      a.ID,
-			Name:    a.Name,
-			Default: a.Default,
 		}
 	}
 

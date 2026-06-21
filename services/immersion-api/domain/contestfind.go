@@ -26,5 +26,12 @@ func NewContestFind(repo ContestFindRepository) *ContestFind {
 func (s *ContestFind) Execute(ctx context.Context, req *ContestFindRequest) (*ContestView, error) {
 	req.IncludeDeleted = isAdmin(ctx)
 
-	return s.repo.FindContestByID(ctx, req)
+	contest, err := s.repo.FindContestByID(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+	if err := hydrateContestActivities(contest, true); err != nil {
+		return nil, err
+	}
+	return contest, nil
 }

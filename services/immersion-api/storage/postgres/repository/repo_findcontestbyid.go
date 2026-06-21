@@ -23,17 +23,9 @@ func (r *Repository) FindContestByID(ctx context.Context, req *domain.ContestFin
 		return nil, fmt.Errorf("could not fetch contest: %w", err)
 	}
 
-	activities, err := r.q.ListActivitiesForContest(ctx, contest.ID)
-	if err != nil {
-		return nil, fmt.Errorf("could not fetch contest: %w", err)
-	}
-
-	acts := make([]domain.Activity, len(activities))
-	for i, a := range activities {
-		acts[i] = domain.Activity{
-			ID:   a.ID,
-			Name: a.Name,
-		}
+	acts := make([]domain.Activity, len(contest.ActivityTypeIDAllowList))
+	for i, activityID := range contest.ActivityTypeIDAllowList {
+		acts[i] = domain.Activity{ID: activityID}
 	}
 
 	langs := []domain.Language{}

@@ -78,6 +78,10 @@ func (s *LogCreate) Execute(ctx context.Context, req *LogCreateRequest) (*Log, e
 		return nil, fmt.Errorf("unable to validate: %w", ErrInvalidLog)
 	}
 
+	if !IsValidActivityID(req.ActivityID) {
+		return nil, fmt.Errorf("activity %d is not valid: %w", req.ActivityID, ErrInvalidLog)
+	}
+
 	// Validate and normalize tags
 	req.Tags, err = ValidateAndNormalizeTags(req.Tags)
 	if err != nil {
@@ -147,6 +151,10 @@ func (s *LogCreate) Execute(ctx context.Context, req *LogCreateRequest) (*Log, e
 		IncludeDeleted: false,
 	})
 	if err != nil {
+		return nil, err
+	}
+
+	if err := hydrateLogActivity(log); err != nil {
 		return nil, err
 	}
 

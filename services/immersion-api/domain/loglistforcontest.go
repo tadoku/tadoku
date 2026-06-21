@@ -45,5 +45,12 @@ func (s *LogListForContest) Execute(ctx context.Context, req *LogListForContestR
 		return nil, ErrUnauthorized
 	}
 
-	return s.repo.ListLogsForContest(ctx, req)
+	res, err := s.repo.ListLogsForContest(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+	if err := hydrateLogActivities(res.Logs); err != nil {
+		return nil, err
+	}
+	return res, nil
 }

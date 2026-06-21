@@ -45,7 +45,7 @@ func TestLogUpdate_Execute(t *testing.T) {
 	now := time.Date(2026, 2, 19, 12, 0, 0, 0, time.UTC)
 
 	makeLog := func(ownerID uuid.UUID) *domain.Log {
-		return &domain.Log{ID: logID, UserID: ownerID}
+		return &domain.Log{ID: logID, UserID: ownerID, ActivityID: 1}
 	}
 
 	t.Run("returns unauthorized for guest", func(t *testing.T) {
@@ -81,7 +81,7 @@ func TestLogUpdate_Execute(t *testing.T) {
 	})
 
 	t.Run("allows owner to update their own log", func(t *testing.T) {
-		updatedLog := &domain.Log{ID: logID, UserID: userID, Amount: 20}
+		updatedLog := &domain.Log{ID: logID, UserID: userID, ActivityID: 1, Amount: 20}
 		repo := &mockLogUpdateRepository{
 			log:        makeLog(userID),
 			updatedLog: updatedLog,
@@ -122,7 +122,7 @@ func TestLogUpdate_Execute(t *testing.T) {
 	})
 
 	t.Run("allows admin to update any log", func(t *testing.T) {
-		updatedLog := &domain.Log{ID: logID, UserID: otherUserID, Amount: 15}
+		updatedLog := &domain.Log{ID: logID, UserID: otherUserID, ActivityID: 1, Amount: 15}
 		repo := &mockLogUpdateRepository{
 			log:        makeLog(otherUserID),
 			updatedLog: updatedLog,
@@ -201,7 +201,7 @@ func TestLogUpdate_Execute(t *testing.T) {
 	})
 
 	t.Run("sets now from clock and userID from log owner", func(t *testing.T) {
-		updatedLog := &domain.Log{ID: logID, UserID: userID, Amount: 10}
+		updatedLog := &domain.Log{ID: logID, UserID: userID, ActivityID: 1, Amount: 10}
 		repo := &mockLogUpdateRepository{
 			log:        makeLog(userID),
 			updatedLog: updatedLog,
@@ -223,7 +223,7 @@ func TestLogUpdate_Execute(t *testing.T) {
 	})
 
 	t.Run("normalizes tags", func(t *testing.T) {
-		updatedLog := &domain.Log{ID: logID, UserID: userID, Amount: 10}
+		updatedLog := &domain.Log{ID: logID, UserID: userID, ActivityID: 1, Amount: 10}
 		repo := &mockLogUpdateRepository{
 			log:        makeLog(userID),
 			updatedLog: updatedLog,

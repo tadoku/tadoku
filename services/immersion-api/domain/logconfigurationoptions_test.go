@@ -33,9 +33,6 @@ func TestLogConfigurationOptions_Execute(t *testing.T) {
 					Languages: []domain.Language{
 						{Code: "ja", Name: "Japanese"},
 					},
-					Activities: []domain.Activity{
-						{ID: 1, Name: "Reading", Default: true},
-					},
 					Units: []domain.Unit{
 						{ID: unitID, LogActivityID: 1, Name: "Pages", Modifier: 1.0, LanguageCode: &langCode},
 					},
@@ -50,7 +47,7 @@ func TestLogConfigurationOptions_Execute(t *testing.T) {
 
 		require.NoError(t, err)
 		assert.Len(t, resp.Languages, 1)
-		assert.Len(t, resp.Activities, 1)
+		assert.Equal(t, domain.Activities(), resp.Activities)
 		assert.Len(t, resp.Units, 1)
 		assert.Equal(t, "ja", resp.Languages[0].Code)
 		assert.Equal(t, "Reading", resp.Activities[0].Name)

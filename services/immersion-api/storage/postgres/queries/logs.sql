@@ -42,7 +42,6 @@ with eligible_logs as (
     logs.language_code,
     languages.name as language_name,
     logs.log_activity_id as activity_id,
-    log_activities.name as activity_name,
     log_units.name as unit_name,
     logs.description,
     contest_logs.amount,
@@ -59,7 +58,6 @@ with eligible_logs as (
   from contest_logs
   inner join logs on (logs.id = contest_logs.log_id)
   inner join languages on (languages.code = logs.language_code)
-  inner join log_activities on (log_activities.id = logs.log_activity_id)
   inner join log_units on (log_units.id = logs.unit_id)
   inner join users on (users.id = logs.user_id)
   where
@@ -83,7 +81,6 @@ with eligible_logs as (
     logs.language_code,
     languages.name as language_name,
     logs.log_activity_id as activity_id,
-    log_activities.name as activity_name,
     log_units.name as unit_name,
     logs.description,
     logs.amount,
@@ -98,7 +95,6 @@ with eligible_logs as (
     ) as tags
   from logs
   inner join languages on (languages.code = logs.language_code)
-  inner join log_activities on (log_activities.id = logs.log_activity_id)
   inner join log_units on (log_units.id = logs.unit_id)
   where
     (sqlc.arg('include_deleted')::boolean or deleted_at is null)
@@ -120,7 +116,6 @@ select
   logs.language_code,
   languages.name as language_name,
   logs.log_activity_id as activity_id,
-  log_activities.name as activity_name,
   logs.unit_id,
   log_units.name as unit_name,
   logs.description,
@@ -137,7 +132,6 @@ select
   ) as tags
 from logs
 inner join languages on (languages.code = logs.language_code)
-inner join log_activities on (log_activities.id = logs.log_activity_id)
 inner join log_units on (log_units.id = logs.unit_id)
 inner join users on (users.id = logs.user_id)
 where
@@ -193,15 +187,13 @@ order by score desc;
 -- name: YearlyActivitySplitForUser :many
 select
   sum(logs.score)::real as score,
-  logs.log_activity_id,
-  log_activities.name as log_activity_name
+  logs.log_activity_id
 from logs
-inner join log_activities on (log_activities.id = logs.log_activity_id)
 where
   user_id = sqlc.arg('user_id')
   and year = sqlc.arg('year')
   and deleted_at is null
-group by logs.log_activity_id, log_activities.name
+group by logs.log_activity_id
 order by score desc;
 
 -- name: DeleteLog :exec

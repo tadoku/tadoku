@@ -43,6 +43,10 @@ func (s *ContestLeaderboardFetch) Execute(ctx context.Context, req *ContestLeade
 		req.PageSize = 100
 	}
 
+	if req.ActivityID != nil && !IsValidActivityID(*req.ActivityID) {
+		return nil, fmt.Errorf("activity %d is not valid: %w", *req.ActivityID, ErrRequestInvalid)
+	}
+
 	if req.LanguageCode != nil || req.ActivityID != nil {
 		return s.repo.FetchContestLeaderboard(ctx, req)
 	}

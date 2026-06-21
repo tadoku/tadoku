@@ -389,7 +389,6 @@ select
   logs.language_code,
   languages.name as language_name,
   logs.log_activity_id as activity_id,
-  log_activities.name as activity_name,
   logs.unit_id,
   log_units.name as unit_name,
   logs.description,
@@ -406,7 +405,6 @@ select
   ) as tags
 from logs
 inner join languages on (languages.code = logs.language_code)
-inner join log_activities on (log_activities.id = logs.log_activity_id)
 inner join log_units on (log_units.id = logs.unit_id)
 inner join users on (users.id = logs.user_id)
 where
@@ -426,7 +424,6 @@ type FindLogByIDRow struct {
 	LanguageCode                string
 	LanguageName                string
 	ActivityID                  int16
-	ActivityName                string
 	UnitID                      uuid.UUID
 	UnitName                    string
 	Description                 sql.NullString
@@ -450,7 +447,6 @@ func (q *Queries) FindLogByID(ctx context.Context, arg FindLogByIDParams) (FindL
 		&i.LanguageCode,
 		&i.LanguageName,
 		&i.ActivityID,
-		&i.ActivityName,
 		&i.UnitID,
 		&i.UnitName,
 		&i.Description,
@@ -474,7 +470,6 @@ with eligible_logs as (
     logs.language_code,
     languages.name as language_name,
     logs.log_activity_id as activity_id,
-    log_activities.name as activity_name,
     log_units.name as unit_name,
     logs.description,
     contest_logs.amount,
@@ -491,7 +486,6 @@ with eligible_logs as (
   from contest_logs
   inner join logs on (logs.id = contest_logs.log_id)
   inner join languages on (languages.code = logs.language_code)
-  inner join log_activities on (log_activities.id = logs.log_activity_id)
   inner join log_units on (log_units.id = logs.unit_id)
   inner join users on (users.id = logs.user_id)
   where
@@ -500,7 +494,7 @@ with eligible_logs as (
     and contest_logs.contest_id = $5
 )
 select
-  id, user_id, language_code, language_name, activity_id, activity_name, unit_name, description, amount, modifier, score, created_at, updated_at, deleted_at, user_display_name, tags,
+  id, user_id, language_code, language_name, activity_id, unit_name, description, amount, modifier, score, created_at, updated_at, deleted_at, user_display_name, tags,
   (select count(eligible_logs.id) from eligible_logs) as total_size
 from eligible_logs
 order by created_at desc
@@ -522,7 +516,6 @@ type ListLogsForContestRow struct {
 	LanguageCode    string
 	LanguageName    string
 	ActivityID      int16
-	ActivityName    string
 	UnitName        string
 	Description     sql.NullString
 	Amount          float32
@@ -557,7 +550,6 @@ func (q *Queries) ListLogsForContest(ctx context.Context, arg ListLogsForContest
 			&i.LanguageCode,
 			&i.LanguageName,
 			&i.ActivityID,
-			&i.ActivityName,
 			&i.UnitName,
 			&i.Description,
 			&i.Amount,
@@ -591,7 +583,6 @@ with eligible_logs as (
     logs.language_code,
     languages.name as language_name,
     logs.log_activity_id as activity_id,
-    log_activities.name as activity_name,
     log_units.name as unit_name,
     logs.description,
     logs.amount,
@@ -606,14 +597,13 @@ with eligible_logs as (
     ) as tags
   from logs
   inner join languages on (languages.code = logs.language_code)
-  inner join log_activities on (log_activities.id = logs.log_activity_id)
   inner join log_units on (log_units.id = logs.unit_id)
   where
     ($3::boolean or deleted_at is null)
     and logs.user_id = $4
 )
 select
-  id, user_id, language_code, language_name, activity_id, activity_name, unit_name, description, amount, modifier, score, created_at, updated_at, deleted_at, tags,
+  id, user_id, language_code, language_name, activity_id, unit_name, description, amount, modifier, score, created_at, updated_at, deleted_at, tags,
   (select count(eligible_logs.id) from eligible_logs) as total_size
 from eligible_logs
 order by created_at desc
@@ -634,7 +624,6 @@ type ListLogsForUserRow struct {
 	LanguageCode string
 	LanguageName string
 	ActivityID   int16
-	ActivityName string
 	UnitName     string
 	Description  sql.NullString
 	Amount       float32
@@ -667,7 +656,6 @@ func (q *Queries) ListLogsForUser(ctx context.Context, arg ListLogsForUserParams
 			&i.LanguageCode,
 			&i.LanguageName,
 			&i.ActivityID,
-			&i.ActivityName,
 			&i.UnitName,
 			&i.Description,
 			&i.Amount,
@@ -823,15 +811,13 @@ func (q *Queries) YearlyActivityForUser(ctx context.Context, arg YearlyActivityF
 const yearlyActivitySplitForUser = `-- name: YearlyActivitySplitForUser :many
 select
   sum(logs.score)::real as score,
-  logs.log_activity_id,
-  log_activities.name as log_activity_name
+  logs.log_activity_id
 from logs
-inner join log_activities on (log_activities.id = logs.log_activity_id)
 where
   user_id = $1
   and year = $2
   and deleted_at is null
-group by logs.log_activity_id, log_activities.name
+group by logs.log_activity_id
 order by score desc
 `
 
@@ -841,9 +827,8 @@ type YearlyActivitySplitForUserParams struct {
 }
 
 type YearlyActivitySplitForUserRow struct {
-	Score           float32
-	LogActivityID   int16
-	LogActivityName string
+	Score         float32
+	LogActivityID int16
 }
 
 func (q *Queries) YearlyActivitySplitForUser(ctx context.Context, arg YearlyActivitySplitForUserParams) ([]YearlyActivitySplitForUserRow, error) {
@@ -855,7 +840,7 @@ func (q *Queries) YearlyActivitySplitForUser(ctx context.Context, arg YearlyActi
 	var items []YearlyActivitySplitForUserRow
 	for rows.Next() {
 		var i YearlyActivitySplitForUserRow
-		if err := rows.Scan(&i.Score, &i.LogActivityID, &i.LogActivityName); err != nil {
+		if err := rows.Scan(&i.Score, &i.LogActivityID); err != nil {
 			return nil, err
 		}
 		items = append(items, i)

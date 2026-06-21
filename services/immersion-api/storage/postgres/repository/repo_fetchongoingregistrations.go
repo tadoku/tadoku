@@ -32,19 +32,10 @@ func (r *Repository) FetchOngoingContestRegistrations(ctx context.Context, req *
 		return nil, fmt.Errorf("could not fetch ongoing contest registrations: %w", err)
 	}
 
-	activities, err := r.q.ListActivities(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("could not fetch ongoing contest registrations: %w", err)
-	}
-
 	langs := map[string]string{}
-	acts := map[int32]string{}
 
 	for _, l := range languages {
 		langs[l.Code] = l.Name
-	}
-	for _, a := range activities {
-		acts[a.ID] = a.Name
 	}
 
 	res := &domain.ContestRegistrations{
@@ -72,8 +63,7 @@ func (r *Repository) FetchOngoingContestRegistrations(ctx context.Context, req *
 
 		for i, a := range r.ActivityTypeIDAllowList {
 			contest.AllowedActivities[i] = domain.Activity{
-				ID:   a,
-				Name: acts[a],
+				ID: a,
 			}
 		}
 

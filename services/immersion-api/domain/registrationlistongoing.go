@@ -40,5 +40,12 @@ func (s *RegistrationListOngoing) Execute(ctx context.Context) (*ContestRegistra
 		Now:    s.clock.Now(),
 	}
 
-	return s.repo.FetchOngoingContestRegistrations(ctx, req)
+	res, err := s.repo.FetchOngoingContestRegistrations(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+	if err := hydrateContestRegistrationActivities(res.Registrations); err != nil {
+		return nil, err
+	}
+	return res, nil
 }

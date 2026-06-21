@@ -27,9 +27,8 @@ func (r *Repository) YearlyActivitySplitForUser(ctx context.Context, req *domain
 	scores := make([]domain.ActivityScore, len(rows))
 	for i, row := range rows {
 		scores[i] = domain.ActivityScore{
-			ActivityID:   int(row.LogActivityID),
-			ActivityName: row.LogActivityName,
-			Score:        row.Score,
+			ActivityID: int(row.LogActivityID),
+			Score:      row.Score,
 		}
 	}
 

@@ -168,6 +168,24 @@ func TestLogCreate_Execute(t *testing.T) {
 		assert.False(t, repo.createCalled)
 	})
 
+	t.Run("returns error for unknown activity", func(t *testing.T) {
+		repo := &mockLogCreateRepository{}
+		clock := commondomain.NewMockClock(now)
+		svc := newLogCreateService(repo, clock)
+
+		ctx := ctxWithUserSubject(userID.String())
+
+		_, err := svc.Execute(ctx, &domain.LogCreateRequest{
+			UnitID:       unitID,
+			ActivityID:   999,
+			LanguageCode: "jpn",
+			Amount:       100,
+		})
+
+		assert.ErrorIs(t, err, domain.ErrInvalidLog)
+		assert.False(t, repo.createCalled)
+	})
+
 	t.Run("returns error when activity not allowed by contest", func(t *testing.T) {
 		repo := &mockLogCreateRepository{
 			registrations: validRegistrations,
@@ -180,7 +198,7 @@ func TestLogCreate_Execute(t *testing.T) {
 		_, err := svc.Execute(ctx, &domain.LogCreateRequest{
 			RegistrationIDs: []uuid.UUID{registrationID},
 			UnitID:          unitID,
-			ActivityID:      999, // Not allowed
+			ActivityID:      2, // Valid activity, but not allowed
 			LanguageCode:    "jpn",
 			Amount:          100,
 		})

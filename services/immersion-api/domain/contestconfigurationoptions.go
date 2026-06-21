@@ -28,6 +28,7 @@ func (s *ContestConfigurationOptions) Execute(ctx context.Context) (*ContestConf
 		return nil, err
 	}
 
+	res.Activities = Activities()
 	res.CanCreateOfficialRound = isAdmin(ctx)
 
 	return res, nil

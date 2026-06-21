@@ -168,6 +168,23 @@ func TestContestLeaderboardFetch_Filters(t *testing.T) {
 	assert.Equal(t, 2, repo.capturedRequest.Page)
 }
 
+func TestContestLeaderboardFetch_InvalidActivityFilter(t *testing.T) {
+	contestID := uuid.New()
+	activityID := int32(999)
+	repo := &contestLeaderboardFetchRepositoryMock{}
+	store := &contestLeaderboardFetchStoreMock{}
+	service := domain.NewContestLeaderboardFetch(repo, store)
+
+	_, err := service.Execute(context.Background(), &domain.ContestLeaderboardFetchRequest{
+		ContestID:  contestID,
+		ActivityID: &activityID,
+		PageSize:   25,
+	})
+
+	assert.ErrorIs(t, err, domain.ErrRequestInvalid)
+	assert.Nil(t, repo.capturedRequest)
+}
+
 func TestContestLeaderboardFetch_CacheHit(t *testing.T) {
 	contestID := uuid.New()
 	u1, u2 := uuid.New(), uuid.New()

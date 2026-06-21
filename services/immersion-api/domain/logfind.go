@@ -43,6 +43,10 @@ func (s *LogFind) Execute(ctx context.Context, req *LogFindRequest) (*Log, error
 		return nil, err
 	}
 
+	if err := hydrateLogActivity(log); err != nil {
+		return nil, err
+	}
+
 	// Needed to prevent leaking private registrations, only show to admins and the owner of the log
 	isAdmin := isAdmin(ctx)
 	isOwner := log.UserID == userID

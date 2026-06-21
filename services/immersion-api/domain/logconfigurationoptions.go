@@ -36,5 +36,10 @@ func (s *LogConfigurationOptions) Execute(ctx context.Context) (*LogConfiguratio
 		return nil, ErrUnauthorized
 	}
 
-	return s.repo.FetchLogConfigurationOptions(ctx, userID)
+	res, err := s.repo.FetchLogConfigurationOptions(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+	res.Activities = Activities()
+	return res, nil
 }

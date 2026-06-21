@@ -107,6 +107,29 @@ func TestContestCreate_Execute(t *testing.T) {
 		assert.False(t, repo.createCalled)
 	})
 
+	t.Run("returns error for unknown activity", func(t *testing.T) {
+		repo := &mockContestCreateRepository{}
+		userUpsert := domain.NewUserUpsert(repo)
+		svc := domain.NewContestCreate(repo, clock, userUpsert)
+
+		ctx := ctxWithUserIdentity(uuid.NewString(), "TestUser")
+
+		badRequest := &domain.ContestCreateRequest{
+			ContestStart:            now.Add(30 * 24 * time.Hour),
+			ContestEnd:              now.Add(45 * 24 * time.Hour),
+			RegistrationEnd:         now.Add(40 * 24 * time.Hour),
+			Official:                false,
+			Private:                 false,
+			Title:                   "test round",
+			ActivityTypeIDAllowList: []int32{1, 999},
+		}
+
+		_, err := svc.Execute(ctx, badRequest)
+
+		assert.ErrorIs(t, err, domain.ErrInvalidContest)
+		assert.False(t, repo.createCalled)
+	})
+
 	t.Run("allows user to create non-official contest", func(t *testing.T) {
 		expectedResult := &domain.ContestCreateResponse{
 			ID:    uuid.New(),

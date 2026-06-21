@@ -115,6 +115,12 @@ func (s *ContestCreate) Execute(ctx context.Context, req *ContestCreateRequest) 
 		return nil, fmt.Errorf("contest cannot start after it has ended: %w", ErrInvalidContest)
 	}
 
+	for _, activityID := range req.ActivityTypeIDAllowList {
+		if !IsValidActivityID(activityID) {
+			return nil, fmt.Errorf("activity %d is not valid: %w", activityID, ErrInvalidContest)
+		}
+	}
+
 	if !isAdmin(ctx) {
 		now := s.clock.Now()
 		if now.After(req.ContestEnd) || now.After(req.ContestStart) {

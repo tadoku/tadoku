@@ -3,6 +3,7 @@ load("@rules_go//go:def.bzl", "go_library", "go_test")
 go_library(
     name = "domain",
     srcs = [
+        "activities.go",
         "authz.go",
         "contestconfigurationoptions.go",
         "contestcreate.go",
@@ -60,6 +61,7 @@ go_library(
 go_test(
     name = "domain_test",
     srcs = [
+        "activities_test.go",
         "contestconfigurationoptions_test.go",
         "contestcreate_test.go",
         "contestfind_test.go",

@@ -30,10 +30,6 @@ func TestContestConfigurationOptions_Execute(t *testing.T) {
 						{Code: "ja", Name: "Japanese"},
 						{Code: "zh", Name: "Chinese"},
 					},
-					Activities: []domain.Activity{
-						{ID: 1, Name: "Reading", Default: true},
-						{ID: 2, Name: "Listening", Default: false},
-					},
 				}, nil
 			},
 		}
@@ -43,7 +39,7 @@ func TestContestConfigurationOptions_Execute(t *testing.T) {
 
 		require.NoError(t, err)
 		assert.Len(t, resp.Languages, 2)
-		assert.Len(t, resp.Activities, 2)
+		assert.Equal(t, domain.Activities(), resp.Activities)
 		assert.Equal(t, "ja", resp.Languages[0].Code)
 		assert.Equal(t, "Reading", resp.Activities[0].Name)
 		assert.False(t, resp.CanCreateOfficialRound)

@@ -28,5 +28,12 @@ func NewProfileYearlyActivitySplit(repo ProfileYearlyActivitySplitRepository) *P
 }
 
 func (s *ProfileYearlyActivitySplit) Execute(ctx context.Context, req *ProfileYearlyActivitySplitRequest) (*ProfileYearlyActivitySplitResponse, error) {
-	return s.repo.YearlyActivitySplitForUser(ctx, req)
+	res, err := s.repo.YearlyActivitySplitForUser(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+	if err := hydrateActivityScores(res.Activities); err != nil {
+		return nil, err
+	}
+	return res, nil
 }

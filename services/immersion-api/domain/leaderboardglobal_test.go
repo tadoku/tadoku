@@ -163,6 +163,21 @@ func TestLeaderboardGlobal_Filters(t *testing.T) {
 	assert.Equal(t, 2, repo.capturedRequest.Page)
 }
 
+func TestLeaderboardGlobal_InvalidActivityFilter(t *testing.T) {
+	activityID := int32(999)
+	repo := &leaderboardGlobalRepositoryMock{}
+	store := &leaderboardGlobalStoreMock{}
+	service := domain.NewLeaderboardGlobal(repo, store)
+
+	_, err := service.Execute(context.Background(), &domain.LeaderboardGlobalRequest{
+		ActivityID: &activityID,
+		PageSize:   25,
+	})
+
+	assert.ErrorIs(t, err, domain.ErrRequestInvalid)
+	assert.Nil(t, repo.capturedRequest)
+}
+
 func TestLeaderboardGlobal_CacheHit(t *testing.T) {
 	u1, u2 := uuid.New(), uuid.New()
 

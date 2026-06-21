@@ -96,5 +96,9 @@ func (s *LogUpdate) Execute(ctx context.Context, req *LogUpdateRequest) (*Log, e
 		return nil, fmt.Errorf("could not fetch updated log: %w", err)
 	}
 
+	if err := hydrateLogActivity(updated); err != nil {
+		return nil, err
+	}
+
 	return updated, nil
 }

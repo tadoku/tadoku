@@ -72,6 +72,13 @@ func (s *LogContestUpdate) Execute(ctx context.Context, req *LogContestUpdateReq
 		return nil, ErrForbidden
 	}
 
+	if !IsValidActivityID(int32(log.ActivityID)) {
+		return nil, fmt.Errorf("activity %d is not valid: %w", log.ActivityID, ErrInvalidLog)
+	}
+	if err := hydrateLogActivity(log); err != nil {
+		return nil, err
+	}
+
 	now := s.clock.Now()
 
 	// Fetch ongoing registrations to validate requested IDs
@@ -176,6 +183,10 @@ func (s *LogContestUpdate) Execute(ctx context.Context, req *LogContestUpdateReq
 	})
 	if err != nil {
 		return nil, fmt.Errorf("could not fetch updated log: %w", err)
+	}
+
+	if err := hydrateLogActivity(updatedLog); err != nil {
+		return nil, err
 	}
 
 	return updatedLog, nil

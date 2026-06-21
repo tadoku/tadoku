@@ -165,6 +165,22 @@ func TestLeaderboardYearly_Filters(t *testing.T) {
 	assert.Equal(t, 2, repo.capturedRequest.Page)
 }
 
+func TestLeaderboardYearly_InvalidActivityFilter(t *testing.T) {
+	activityID := int32(999)
+	repo := &leaderboardYearlyRepositoryMock{}
+	store := &leaderboardYearlyStoreMock{}
+	service := domain.NewLeaderboardYearly(repo, store)
+
+	_, err := service.Execute(context.Background(), &domain.LeaderboardYearlyRequest{
+		Year:       2024,
+		ActivityID: &activityID,
+		PageSize:   25,
+	})
+
+	assert.ErrorIs(t, err, domain.ErrRequestInvalid)
+	assert.Nil(t, repo.capturedRequest)
+}
+
 func TestLeaderboardYearly_CacheHit(t *testing.T) {
 	u1, u2 := uuid.New(), uuid.New()
 

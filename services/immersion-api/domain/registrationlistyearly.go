@@ -35,5 +35,12 @@ func (s *RegistrationListYearly) Execute(ctx context.Context, req *RegistrationL
 	sessionMatchesUser := err == nil && userID == req.UserID
 	req.IncludePrivate = isAdmin(ctx) || sessionMatchesUser
 
-	return s.repo.YearlyContestRegistrationsForUser(ctx, req)
+	res, err := s.repo.YearlyContestRegistrationsForUser(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+	if err := hydrateContestRegistrationActivities(res.Registrations); err != nil {
+		return nil, err
+	}
+	return res, nil
 }

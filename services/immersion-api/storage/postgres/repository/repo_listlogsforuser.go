@@ -37,7 +37,6 @@ func (r *Repository) ListLogsForUser(ctx context.Context, req *domain.LogListFor
 			LanguageCode: it.LanguageCode,
 			LanguageName: it.LanguageName,
 			ActivityID:   int(it.ActivityID),
-			ActivityName: it.ActivityName,
 			UnitName:     it.UnitName,
 			Tags:         postgres.StringArrayFromInterface(it.Tags),
 			Amount:       it.Amount,

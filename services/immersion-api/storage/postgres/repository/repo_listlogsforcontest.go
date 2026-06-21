@@ -48,7 +48,6 @@ func (r *Repository) ListLogsForContest(ctx context.Context, req *domain.LogList
 			LanguageCode:    it.LanguageCode,
 			LanguageName:    it.LanguageName,
 			ActivityID:      int(it.ActivityID),
-			ActivityName:    it.ActivityName,
 			UnitName:        it.UnitName,
 			Tags:            postgres.StringArrayFromInterface(it.Tags),
 			Amount:          it.Amount,

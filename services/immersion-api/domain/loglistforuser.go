@@ -44,5 +44,12 @@ func (s *LogListForUser) Execute(ctx context.Context, req *LogListForUserRequest
 		return nil, ErrUnauthorized
 	}
 
-	return s.repo.ListLogsForUser(ctx, req)
+	res, err := s.repo.ListLogsForUser(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+	if err := hydrateLogActivities(res.Logs); err != nil {
+		return nil, err
+	}
+	return res, nil
 }

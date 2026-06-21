@@ -17,5 +17,12 @@ func NewContestFindLatestOfficial(repo ContestFindLatestOfficialRepository) *Con
 }
 
 func (s *ContestFindLatestOfficial) Execute(ctx context.Context) (*ContestView, error) {
-	return s.repo.ContestFindLatestOfficial(ctx)
+	contest, err := s.repo.ContestFindLatestOfficial(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if err := hydrateContestActivities(contest, true); err != nil {
+		return nil, err
+	}
+	return contest, nil
 }

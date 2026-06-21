@@ -64,6 +64,7 @@ func TestLogUpdate_Execute(t *testing.T) {
 	amount20 := float32(20)
 	durationZero := int32(0)
 	duration600 := int32(600)
+	duration900 := int32(900)
 	now := time.Date(2026, 2, 19, 12, 0, 0, 0, time.UTC)
 
 	makeLog := func(ownerID uuid.UUID) *domain.Log {
@@ -309,6 +310,36 @@ func TestLogUpdate_Execute(t *testing.T) {
 		assert.Equal(t, domain.LogTrackingDuration, tracking.Kind)
 		assert.Equal(t, duration600, tracking.DurationSeconds)
 		assert.InDelta(t, float32(4), tracking.ComputedScore, 0.0001)
+	})
+
+	t.Run("allows amount update with duration metadata", func(t *testing.T) {
+		updatedLog := &domain.Log{ID: logID, UserID: userID, ActivityID: 1, Amount: 10, DurationSeconds: &duration900}
+		repo := &mockLogUpdateRepository{
+			log:        makeLog(userID),
+			updatedLog: updatedLog,
+		}
+		clock := commondomain.NewMockClock(now)
+		svc := domain.NewLogUpdate(repo, clock)
+
+		ctx := ctxWithUserSubject(userID.String())
+
+		result, err := svc.Execute(ctx, &domain.LogUpdateRequest{
+			LogID:           logID,
+			UnitID:          &unitID,
+			Amount:          &amount10,
+			DurationSeconds: &duration900,
+		})
+
+		require.NoError(t, err)
+		assert.True(t, repo.updateCalled)
+		assert.Equal(t, updatedLog, result)
+		tracking := repo.updateCalledWith.Tracking()
+		assert.Equal(t, domain.LogTrackingBoth, tracking.Kind)
+		assert.Equal(t, unitID, tracking.UnitID)
+		assert.Equal(t, amount10, tracking.Amount)
+		assert.Equal(t, duration900, tracking.DurationSeconds)
+		assert.Equal(t, float32(1), tracking.Modifier)
+		assert.InDelta(t, float32(10), tracking.ComputedScore, 0.0001)
 	})
 
 	t.Run("normalizes tags", func(t *testing.T) {

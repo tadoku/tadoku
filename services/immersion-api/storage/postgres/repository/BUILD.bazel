@@ -1,4 +1,4 @@
-load("@rules_go//go:def.bzl", "go_library")
+load("@rules_go//go:def.bzl", "go_library", "go_test")
 
 go_library(
     name = "repository",
@@ -53,5 +53,17 @@ go_library(
         "//services/immersion-api/domain",
         "//services/immersion-api/storage/postgres",
         "@com_github_google_uuid//:uuid",
+    ],
+)
+
+go_test(
+    name = "repository_test",
+    srcs = ["logtracking_test.go"],
+    embed = [":repository"],
+    deps = [
+        "//services/immersion-api/domain",
+        "@com_github_google_uuid//:uuid",
+        "@com_github_stretchr_testify//assert",
+        "@com_github_stretchr_testify//require",
     ],
 )

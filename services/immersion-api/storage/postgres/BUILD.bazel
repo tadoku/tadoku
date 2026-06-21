@@ -31,7 +31,10 @@ go_library(
 
 go_test(
     name = "postgres_test",
-    srcs = ["helpers_test.go"],
+    srcs = [
+        "helpers_test.go",
+        "sql_regression_test.go",
+    ],
     embed = [":postgres"],
     deps = ["@com_github_stretchr_testify//assert"],
 )

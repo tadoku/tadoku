@@ -63,6 +63,14 @@ func TestLogContestUpdate_Execute(t *testing.T) {
 		Modifier:      1,
 		ComputedScore: 100,
 	}
+	amountWithDurationTracking := domain.LogTracking{
+		Kind:            domain.LogTrackingBoth,
+		UnitID:          unitID,
+		Amount:          100,
+		Modifier:        1,
+		DurationSeconds: 900,
+		ComputedScore:   100,
+	}
 	baseLog := &domain.Log{
 		ID:           logID,
 		UserID:       userID,
@@ -326,6 +334,56 @@ func TestLogContestUpdate_Execute(t *testing.T) {
 		assert.Equal(t, domain.LogTrackingDuration, repo.updateCalledWith.Tracking.Kind)
 		assert.Equal(t, durationSeconds, repo.updateCalledWith.Tracking.DurationSeconds)
 		assert.Equal(t, computedScore, repo.updateCalledWith.Tracking.ComputedScore)
+	})
+
+	t.Run("snapshots amount score data and duration metadata when attaching a registration", func(t *testing.T) {
+		durationSeconds := int32(900)
+		logWithDurationMetadata := &domain.Log{
+			ID:              logID,
+			UserID:          userID,
+			LanguageCode:    "jpn",
+			ActivityID:      1,
+			UnitID:          unitID,
+			Amount:          100,
+			Modifier:        1,
+			DurationSeconds: &durationSeconds,
+			Score:           100,
+			Tracking:        amountWithDurationTracking,
+			CreatedAt:       now,
+		}
+		updatedLog := &domain.Log{
+			ID:              logID,
+			UserID:          userID,
+			LanguageCode:    "jpn",
+			ActivityID:      1,
+			UnitID:          unitID,
+			Amount:          100,
+			Modifier:        1,
+			DurationSeconds: &durationSeconds,
+			Score:           100,
+			Tracking:        amountWithDurationTracking,
+			CreatedAt:       now,
+			Registrations: []domain.ContestRegistrationReference{
+				{RegistrationID: registrationID, ContestID: contestID, ContestEnd: now.Add(30 * 24 * time.Hour), Title: "Test"},
+			},
+		}
+		repo := &mockLogContestUpdateRepository{
+			log:           logWithDurationMetadata,
+			updatedLog:    updatedLog,
+			registrations: ongoingRegistrations,
+		}
+		clock := commondomain.NewMockClock(now)
+		svc := newLogContestUpdateService(repo, clock)
+
+		ctx := ctxWithUserSubject(userID.String())
+		_, err := svc.Execute(ctx, &domain.LogContestUpdateRequest{
+			LogID:           logID,
+			RegistrationIDs: []uuid.UUID{registrationID},
+		})
+
+		require.NoError(t, err)
+		assert.True(t, repo.updateCalled)
+		assert.Equal(t, amountWithDurationTracking, repo.updateCalledWith.Tracking)
 	})
 
 	t.Run("successfully detaches a registration", func(t *testing.T) {

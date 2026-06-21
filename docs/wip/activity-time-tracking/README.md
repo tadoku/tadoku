@@ -139,7 +139,7 @@ Each step should be merged to `main` and deployable on its own.
 2. [x] Backend reads: switch log, contest log, leaderboard, and yearly split queries to effective score.
 3. [x] Backend writes: accept optional `duration_seconds` and compute `computed_score` for duration-only logs.
 4. [x] Backend config: expose code-owned activity input mode as additive activity metadata.
-5. [ ] Backend tests: cover legacy amount logs, amount+duration logs, duration-only time-primary logs, duration-only Reading/Writing fallback scoring, contest attachment, and leaderboard aggregation.
+5. [x] Backend tests: cover legacy amount logs, amount+duration logs, duration-only time-primary logs, duration-only Reading/Writing fallback scoring, contest attachment, and leaderboard aggregation.
 6. [ ] Frontend API types: add optional duration and activity input mode.
 7. [ ] V2 create/edit forms: add adaptive time-tracking UI.
 8. [ ] V2 detail/list views: display duration when present.

@@ -48,11 +48,8 @@ func (s *Server) ProfileListLogs(ctx echo.Context, userId types.UUID, params ope
 
 	for i, it := range list.Logs {
 		res.Logs[i] = openapi.Log{
-			Id: it.ID,
-			Activity: openapi.Activity{
-				Id:   int32(it.ActivityID),
-				Name: it.ActivityName,
-			},
+			Id:       it.ID,
+			Activity: logActivityToAPI(&it),
 			Language: openapi.Language{
 				Code: it.LanguageCode,
 				Name: it.LanguageName,

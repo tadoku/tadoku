@@ -12,11 +12,11 @@ func TestActivities(t *testing.T) {
 		activities := domain.Activities()
 
 		assert.Equal(t, []domain.Activity{
-			{ID: 1, Name: "Reading", Default: true},
-			{ID: 2, Name: "Listening", Default: true},
-			{ID: 3, Name: "Writing", Default: false},
-			{ID: 4, Name: "Speaking", Default: false},
-			{ID: 5, Name: "Study", Default: false},
+			{ID: 1, Name: "Reading", Default: true, InputType: domain.ActivityInputTypeAmountPrimary},
+			{ID: 2, Name: "Listening", Default: true, InputType: domain.ActivityInputTypeTimePrimary},
+			{ID: 3, Name: "Writing", Default: false, InputType: domain.ActivityInputTypeAmountPrimary},
+			{ID: 4, Name: "Speaking", Default: false, InputType: domain.ActivityInputTypeTimePrimary},
+			{ID: 5, Name: "Study", Default: false, InputType: domain.ActivityInputTypeTimePrimary},
 		}, activities)
 	})
 
@@ -24,7 +24,12 @@ func TestActivities(t *testing.T) {
 		activity, ok := domain.ActivityByID(1)
 
 		assert.True(t, ok)
-		assert.Equal(t, domain.Activity{ID: 1, Name: "Reading", Default: true}, activity)
+		assert.Equal(t, domain.Activity{
+			ID:        1,
+			Name:      "Reading",
+			Default:   true,
+			InputType: domain.ActivityInputTypeAmountPrimary,
+		}, activity)
 	})
 
 	t.Run("returns false for unknown activity ids", func(t *testing.T) {
@@ -39,9 +44,9 @@ func TestActivities(t *testing.T) {
 
 		assert.True(t, ok)
 		assert.Equal(t, []domain.Activity{
-			{ID: 2, Name: "Listening", Default: true},
-			{ID: 1, Name: "Reading", Default: true},
-			{ID: 5, Name: "Study", Default: false},
+			{ID: 2, Name: "Listening", Default: true, InputType: domain.ActivityInputTypeTimePrimary},
+			{ID: 1, Name: "Reading", Default: true, InputType: domain.ActivityInputTypeAmountPrimary},
+			{ID: 5, Name: "Study", Default: false, InputType: domain.ActivityInputTypeTimePrimary},
 		}, activities)
 	})
 }

@@ -31,11 +31,7 @@ func (s *Server) LogGetConfigurations(ctx echo.Context) error {
 	}
 
 	for i, it := range opts.Activities {
-		it := it
-		res.Activities[i] = openapi.Activity{
-			Id:   it.ID,
-			Name: it.Name,
-		}
+		res.Activities[i] = activityToAPI(it, false)
 	}
 
 	for i, it := range opts.Languages {

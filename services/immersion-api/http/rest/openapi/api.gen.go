@@ -17,6 +17,12 @@ const (
 	CookieAuthScopes = "cookieAuth.Scopes"
 )
 
+// Defines values for ActivityInputType.
+const (
+	AmountPrimary ActivityInputType = "amount_primary"
+	TimePrimary   ActivityInputType = "time_primary"
+)
+
 // Activities defines model for Activities.
 type Activities struct {
 	Activities []Activity `json:"activities"`
@@ -24,10 +30,14 @@ type Activities struct {
 
 // Activity defines model for Activity.
 type Activity struct {
-	Default *bool  `json:"default,omitempty"`
-	Id      int32  `json:"id"`
-	Name    string `json:"name"`
+	Default   *bool              `json:"default,omitempty"`
+	Id        int32              `json:"id"`
+	InputType *ActivityInputType `json:"input_type,omitempty"`
+	Name      string             `json:"name"`
 }
+
+// ActivityInputType defines model for Activity.InputType.
+type ActivityInputType string
 
 // ActivitySplit defines model for ActivitySplit.
 type ActivitySplit struct {

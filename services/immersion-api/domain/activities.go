@@ -5,12 +5,19 @@ import (
 	"sort"
 )
 
+type ActivityInputType string
+
+const (
+	ActivityInputTypeAmountPrimary ActivityInputType = "amount_primary"
+	ActivityInputTypeTimePrimary   ActivityInputType = "time_primary"
+)
+
 var activities = []Activity{
-	{ID: 1, Name: "Reading", Default: true},
-	{ID: 2, Name: "Listening", Default: true},
-	{ID: 3, Name: "Writing", Default: false},
-	{ID: 4, Name: "Speaking", Default: false},
-	{ID: 5, Name: "Study", Default: false},
+	{ID: 1, Name: "Reading", Default: true, InputType: ActivityInputTypeAmountPrimary},
+	{ID: 2, Name: "Listening", Default: true, InputType: ActivityInputTypeTimePrimary},
+	{ID: 3, Name: "Writing", Default: false, InputType: ActivityInputTypeAmountPrimary},
+	{ID: 4, Name: "Speaking", Default: false, InputType: ActivityInputTypeTimePrimary},
+	{ID: 5, Name: "Study", Default: false, InputType: ActivityInputTypeTimePrimary},
 }
 
 var activitiesByID = map[int32]Activity{

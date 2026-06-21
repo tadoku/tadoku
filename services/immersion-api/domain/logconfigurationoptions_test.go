@@ -51,6 +51,8 @@ func TestLogConfigurationOptions_Execute(t *testing.T) {
 		assert.Len(t, resp.Units, 1)
 		assert.Equal(t, "ja", resp.Languages[0].Code)
 		assert.Equal(t, "Reading", resp.Activities[0].Name)
+		assert.Equal(t, domain.ActivityInputTypeAmountPrimary, resp.Activities[0].InputType)
+		assert.Equal(t, domain.ActivityInputTypeTimePrimary, resp.Activities[1].InputType)
 		assert.Equal(t, "Pages", resp.Units[0].Name)
 		assert.Equal(t, []string{"ja"}, resp.UserLanguageCodes)
 	})

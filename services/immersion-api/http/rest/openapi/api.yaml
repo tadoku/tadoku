@@ -1143,6 +1143,11 @@ components:
           example: Reading
         default:
           type: boolean
+        input_type:
+          type: string
+          enum:
+            - amount_primary
+            - time_primary
     Activities:
       type: object
       required:

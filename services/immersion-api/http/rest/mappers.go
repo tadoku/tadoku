@@ -26,6 +26,30 @@ func domainLeaderboardToAPI(leaderboard domain.Leaderboard) *openapi.Leaderboard
 	return &res
 }
 
+func activityToAPI(activity domain.Activity, includeDefault bool) openapi.Activity {
+	inputType := openapi.ActivityInputType(activity.InputType)
+	res := openapi.Activity{
+		Id:        activity.ID,
+		InputType: &inputType,
+		Name:      activity.Name,
+	}
+	if includeDefault {
+		res.Default = &activity.Default
+	}
+	return res
+}
+
+func logActivityToAPI(log *domain.Log) openapi.Activity {
+	activity, ok := domain.ActivityByID(int32(log.ActivityID))
+	if !ok {
+		return openapi.Activity{
+			Id:   int32(log.ActivityID),
+			Name: log.ActivityName,
+		}
+	}
+	return activityToAPI(activity, false)
+}
+
 func logToAPI(log *domain.Log) *openapi.Log {
 	refs := make([]openapi.ContestRegistrationReference, len(log.Registrations))
 	for i, it := range log.Registrations {
@@ -41,11 +65,8 @@ func logToAPI(log *domain.Log) *openapi.Log {
 	}
 
 	return &openapi.Log{
-		Id: log.ID,
-		Activity: openapi.Activity{
-			Id:   int32(log.ActivityID),
-			Name: log.ActivityName,
-		},
+		Id:       log.ID,
+		Activity: logActivityToAPI(log),
 		Language: openapi.Language{
 			Code: log.LanguageCode,
 			Name: log.LanguageName,
@@ -91,10 +112,7 @@ func contestRegistrationToAPI(r *domain.ContestRegistration) *openapi.ContestReg
 		}
 
 		for i, a := range r.Contest.AllowedActivities {
-			contest.AllowedActivities[i] = openapi.Activity{
-				Id:   a.ID,
-				Name: a.Name,
-			}
+			contest.AllowedActivities[i] = activityToAPI(a, false)
 		}
 
 		registration.Contest = &contest

@@ -1,4 +1,4 @@
-load("@rules_go//go:def.bzl", "go_library")
+load("@rules_go//go:def.bzl", "go_library", "go_test")
 
 go_library(
     name = "rest",
@@ -50,5 +50,17 @@ go_library(
         "@com_github_deepmap_oapi_codegen//pkg/types",
         "@com_github_google_uuid//:uuid",
         "@com_github_labstack_echo_v4//:echo",
+    ],
+)
+
+go_test(
+    name = "rest_test",
+    srcs = ["mappers_test.go"],
+    embed = [":rest"],
+    deps = [
+        "//services/immersion-api/domain",
+        "//services/immersion-api/http/rest/openapi",
+        "@com_github_stretchr_testify//assert",
+        "@com_github_stretchr_testify//require",
     ],
 )

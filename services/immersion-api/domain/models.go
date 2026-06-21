@@ -12,9 +12,10 @@ type Language struct {
 }
 
 type Activity struct {
-	ID      int32
-	Name    string
-	Default bool
+	ID        int32
+	Name      string
+	Default   bool
+	InputType ActivityInputType
 }
 
 type ContestView struct {

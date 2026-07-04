@@ -2,7 +2,7 @@
 
 I'm really glad you're reading this, because volunteer developers are always welcome to improve Tadoku.
 
-If you haven't already, come find us on our [Discord server](https://discord.gg/Dd8t9WB). We want you working on things you're excited about.
+If you haven't already, come find us on our [Discord server](https://discord.gg/AsC9vZs2Ex). We want you working on things you're excited about.
 
 ## Architecture
 

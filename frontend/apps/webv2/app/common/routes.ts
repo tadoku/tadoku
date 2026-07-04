@@ -62,5 +62,5 @@ export const routes = {
   personalWebsite: () => `https://antonve.be`,
   twitter: () => `https://twitter.com/tadoku_app`,
   github: () => `https://github.com/tadoku`,
-  discord: () => `https://discord.gg/Dd8t9WB`,
+  discord: () => `https://discord.gg/AsC9vZs2Ex`,
 }

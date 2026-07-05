@@ -7,7 +7,7 @@ title: Local Environment
 
 Tadoku is made up of several services working together. It can be quite difficult to set up a local development environment with all the required services linked up together. This is a requirement for anyone to be productive in this project, and is also why we've provided a development environment for you.
 
-We use [Tilt](https://tilt.dev/) to spin up a local Kubernetes cluster with all our backend services & dependencies. We've decided to leave out the frontend packages from this environment for now, as it turned out to be quite resource intensive when doing so. Each frontend will have some sort of development mode included which is configured to connect to this environment.
+We use [Tilt](https://tilt.dev/) to deploy all our backend services & dependencies to a Kubernetes cluster. Tilt can target either a local cluster (the `orbstack` context) or the shared `tadoku-dev` lab cluster; when targeting `tadoku-dev`, built images are pushed to the `registry.tadoku.lab` registry. The environment includes both the backend services and the frontend apps. Each frontend also has a development mode which is configured to connect to this environment.
 
 ## Getting Started
 
@@ -23,7 +23,7 @@ export KUBECONFIG="$HOME/.kube/tadoku-dev.yaml"
 kubectl get nodes
 ```
 
-The script reads `/etc/rancher/k3s/k3s.yaml` from `io@ct200.lab`, rewrites the API server to `https://ct200.lab:6443`, sets the context to `tadoku-dev`, and stores the result as `~/.kube/tadoku-dev.yaml`. Override the SSH target with `TADOKU_DEV_K3S_SSH_TARGET` or pass a destination path as the first argument.
+The script reads `/etc/rancher/k3s/k3s.yaml` from `io@ct200.lab`, rewrites the API server to `https://ct200.lab:6443`, sets the context to `tadoku-dev`, and stores the result as `~/.kube/tadoku-dev.yaml`. Override the SSH target with `TADOKU_DEV_K3S_SSH_TARGET` or pass a destination path as the first argument. The host (`TADOKU_DEV_K3S_HOST`), read command (`TADOKU_DEV_K3S_READ_CMD`), TLS server name (`TADOKU_DEV_K3S_TLS_SERVER_NAME`), and output path (`TADOKU_DEV_KUBECONFIG`) can also be overridden via environment variables.
 
 6. Read the [Getting Started Tutorial](https://docs.tilt.dev/tutorial.html) for Tilt to get familiar with it.
 7. Run `$ tilt up` in the root of this repository.

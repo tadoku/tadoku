@@ -7,7 +7,7 @@ title: System Architecture
 
 ## Overview
 
-The Tadoku app consists of several backend services & frontends deployed to a Kubernetes cluster. For development we use [Tilt](https://tilt.dev/) to spin up a [local environment](./local-environment.md) which mimics the production deployment.
+The Tadoku app consists of several backend services & frontends deployed to a Kubernetes cluster. For development we use [Tilt](https://tilt.dev/) to spin up a [development environment](./local-environment.md) which mimics the production deployment.
 
 ### Backend services
 

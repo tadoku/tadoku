@@ -29,15 +29,27 @@ def _default_local_cluster_type(context):
 def _default_local_cluster_name(cluster_type, context):
     if cluster_type == 'kind' and context.startswith('kind-'):
         return context[len('kind-'):]
-    if cluster_type == 'minikube' and context != 'minikube':
-        return context
+    if cluster_type == 'minikube':
+        if context.startswith('minikube-'):
+            return context[len('minikube-'):]
+        if context != 'minikube':
+            return context
     return ''
 
-local_cluster_type = (
+_explicit_local_cluster_type = (
     os.getenv('TADOKU_LOCAL_CLUSTER_TYPE', '') or
-    ('' if local_k8s_context_env else tilt_config.get('local_cluster_type', '')) or
+    ('' if local_k8s_context_env else tilt_config.get('local_cluster_type', ''))
+)
+local_cluster_type = (
+    _explicit_local_cluster_type or
     _default_local_cluster_type(local_k8s_context)
 ).lower()
+if not _explicit_local_cluster_type and local_cluster_type == 'shared-daemon':
+    warn((
+        'local_cluster_type inferred as "shared-daemon" for context "{}"; ' +
+        'locally built images will not be loaded into the cluster. ' +
+        'Set TADOKU_LOCAL_CLUSTER_TYPE or local_cluster_type in tilt_config.json if this is wrong.'
+    ).format(local_k8s_context))
 local_cluster_name = (
     os.getenv('TADOKU_LOCAL_CLUSTER_NAME', '') or
     ('' if local_k8s_context_env else tilt_config.get('local_cluster_name', '')) or

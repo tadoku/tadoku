@@ -42,6 +42,8 @@ export TADOKU_LOCAL_K8S_CONTEXT=docker-desktop
 export TADOKU_LOCAL_CLUSTER_TYPE=docker-desktop
 ```
 
+When `TADOKU_LOCAL_K8S_CONTEXT` is set, the `local_cluster_type` and `local_cluster_name` values from `tilt_config.json` are ignored (they describe the file's own context, not the override); set the matching `TADOKU_LOCAL_CLUSTER_TYPE`/`TADOKU_LOCAL_CLUSTER_NAME` env vars or rely on inference from the context name. If the type is inferred as `shared-daemon`, Tilt prints a warning since locally built images will not be loaded into the cluster.
+
 For local contexts, backend images are built with Bazel and are not pushed to a registry. OrbStack and Docker Desktop use the daemon-sharing path, while kind and minikube run an image-load step after each backend image build (`kind load docker-image` or `minikube image load`). If your kind cluster or minikube profile name is not obvious from the kubectl context, set `local_cluster_name` in `tilt_config.json` or `TADOKU_LOCAL_CLUSTER_NAME`. The cluster type is inferred from the context name; accepted `local_cluster_type` values are `kind`, `minikube`, and the daemon-sharing types `orbstack`, `docker-desktop`, `shared-daemon`, and `none` (the last two skip the image-load step for any other daemon-sharing runtime). Access the environment using the `local.hosts` values in `tilt_config.json`.
 
 ### Option B: Shared lab cluster (`dev-lab`)

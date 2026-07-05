@@ -31,7 +31,7 @@ We model global, application-scoped roles under a single object:
 
 The OPL (namespace config) lives at:
 
-- `/Users/io/xdev/tadoku/infra/dev/ory/namespaces.keto.ts`
+- `infra/dev/ory/namespaces.keto.ts`
 
 Example tuples:
 
@@ -46,7 +46,7 @@ Important detail: the **Keto subject id** we use is the **Kratos identity id** f
 
 The shared Keto client lives at:
 
-- `/Users/io/xdev/tadoku/services/common/client/keto/`
+- `services/common/client/keto/`
 
 Key points:
 
@@ -58,7 +58,7 @@ Key points:
 
 Role evaluation is implemented in:
 
-- `/Users/io/xdev/tadoku/services/common/authz/roles/`
+- `services/common/authz/roles/`
 
 The middleware stores a `roles.Claims` struct on the request context:
 
@@ -98,11 +98,11 @@ Notes:
 
 Backend domain code returns shared sentinel errors from:
 
-- `/Users/io/xdev/tadoku/services/common/domain/errors.go`
+- `services/common/domain/errors.go`
 
 REST handlers map these to status codes via:
 
-- `/Users/io/xdev/tadoku/services/common/http/httperr/httperr.go`
+- `services/common/http/httperr/httperr.go`
 
 Relevant mappings:
 
@@ -114,7 +114,7 @@ Relevant mappings:
 
 Tilt runs an idempotent Kubernetes Job at startup to ensure a dev admin exists:
 
-- `/Users/io/xdev/tadoku/infra/dev/ory/keto_seed_admin_job.yaml`
+- `infra/dev/ory/keto_seed_admin_job.yaml`
 
 Behavior:
 

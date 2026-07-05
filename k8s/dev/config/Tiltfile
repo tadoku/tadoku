@@ -68,7 +68,7 @@ def selected_config():
     return tilt_config.get(selected_environment(), {})
 
 def dev_registry():
-    registry = selected_config().get('registry', '')
+    registry = os.getenv('TADOKU_DEV_REGISTRY_HOST', '') or selected_config().get('registry', '')
     if is_shared_cluster() and (registry == '' or registry.endswith('.example') or registry.endswith('.example.invalid')):
         fail('copy tilt_config.json.example to tilt_config.json and set shared.registry for the shared dev cluster')
     return registry

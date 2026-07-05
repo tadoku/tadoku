@@ -17,6 +17,7 @@ if ! command -v kubectl >/dev/null 2>&1; then
 fi
 
 mkdir -p "$(dirname "${out}")"
+# shellcheck disable=SC2029 # read_cmd is a full remote command; client-side expansion is intended
 ssh "${ssh_target}" "${read_cmd}" > "${tmp}"
 
 install -m 600 "${tmp}" "${out}"

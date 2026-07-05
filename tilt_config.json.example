@@ -1,6 +1,8 @@
 {
   "shared_k8s_context": "dev-lab",
   "local_k8s_context": "orbstack",
+  "local_cluster_type": "orbstack",
+  "local_cluster_name": "",
   "local": {
     "ingress_class": "kong",
     "registry": "",

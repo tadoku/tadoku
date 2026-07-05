@@ -6,13 +6,55 @@ def repo_path(path):
     return os.path.join(repo_root, path)
 
 config_path = repo_path('tilt_config.json')
-if not os.path.exists(config_path):
+user_config_exists = os.path.exists(config_path)
+if not user_config_exists:
     config_path = repo_path('tilt_config.json.example')
 
 tilt_config = read_json(config_path)
 
 shared_k8s_context = os.getenv('TADOKU_SHARED_K8S_CONTEXT', '') or tilt_config.get('shared_k8s_context', 'dev-lab')
-local_k8s_context = os.getenv('TADOKU_LOCAL_K8S_CONTEXT', '') or tilt_config.get('local_k8s_context', 'orbstack')
+local_k8s_context_env = os.getenv('TADOKU_LOCAL_K8S_CONTEXT', '')
+local_k8s_context = local_k8s_context_env or tilt_config.get('local_k8s_context', 'orbstack')
+
+def _default_local_cluster_type(context):
+    context = context.lower()
+    if context == 'orbstack' or context == 'docker-desktop':
+        return context
+    if context == 'kind' or context.startswith('kind-'):
+        return 'kind'
+    if context == 'minikube' or context.startswith('minikube-'):
+        return 'minikube'
+    return 'shared-daemon'
+
+def _default_local_cluster_name(cluster_type, context):
+    if cluster_type == 'kind' and context.startswith('kind-'):
+        return context[len('kind-'):]
+    if cluster_type == 'minikube':
+        if context.startswith('minikube-'):
+            return context[len('minikube-'):]
+        if context != 'minikube':
+            return context
+    return ''
+
+_explicit_local_cluster_type = (
+    os.getenv('TADOKU_LOCAL_CLUSTER_TYPE', '') or
+    ('' if local_k8s_context_env else tilt_config.get('local_cluster_type', ''))
+)
+local_cluster_type = (
+    _explicit_local_cluster_type or
+    _default_local_cluster_type(local_k8s_context)
+).lower()
+if not _explicit_local_cluster_type and local_cluster_type == 'shared-daemon':
+    warn((
+        'local_cluster_type inferred as "shared-daemon" for context "{}"; ' +
+        'locally built images will not be loaded into the cluster. ' +
+        'Set TADOKU_LOCAL_CLUSTER_TYPE or local_cluster_type in tilt_config.json if this is wrong.'
+    ).format(local_k8s_context))
+local_cluster_name = (
+    os.getenv('TADOKU_LOCAL_CLUSTER_NAME', '') or
+    ('' if local_k8s_context_env else tilt_config.get('local_cluster_name', '')) or
+    _default_local_cluster_name(local_cluster_type, local_k8s_context)
+)
 
 def is_shared_cluster():
     return k8s_context() == shared_k8s_context

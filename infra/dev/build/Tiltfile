@@ -1,25 +1,69 @@
-load('./../../../k8s/dev/config/Tiltfile', 'is_shared_cluster', 'shared_k8s_context')
+load('./../../../k8s/dev/config/Tiltfile', 'is_shared_cluster', 'local_cluster_name', 'local_cluster_type', 'repo_path')
+
+def _sh_quote(value):
+  return "'" + value.replace("'", "'\"'\"'") + "'"
+
+def _local_image_load_command(image_ref):
+  if local_cluster_type == 'kind':
+    command = 'kind load docker-image'
+    if local_cluster_name:
+      command += ' --name ' + _sh_quote(local_cluster_name)
+    return command + ' ' + image_ref
+
+  if local_cluster_type == 'minikube':
+    command = 'minikube'
+    if local_cluster_name:
+      command += ' -p ' + _sh_quote(local_cluster_name)
+    return command + ' image load ' + image_ref
+
+  if local_cluster_type in ['orbstack', 'docker-desktop', 'shared-daemon', 'none', '']:
+    return ''
+
+  fail('unsupported local_cluster_type %r; expected kind, minikube, or a daemon-sharing type' % local_cluster_type)
 
 def bazel_build(image, target, deps):
   dest = target.replace('//', 'bazel/').replace(':load', ":latest")
   command = (
-    'bazel run --platforms=@rules_go//go/toolchain:linux_amd64 {image_target} && ' +
-    'docker tag {bazel_image} $EXPECTED_REF').format(
+    'bazel run --platforms=@rules_go//go/toolchain:linux_amd64 {image_target}').format(
       image_target=target,
-      bazel_image=dest,
     )
 
   push_to_registry = is_shared_cluster()
+  output_ref_file = ''
   if push_to_registry:
+    command += ' && docker tag {bazel_image} $EXPECTED_REF'.format(bazel_image=dest)
     # Normalize Bazel-loaded image metadata before Tilt pushes to Zot.
     command += (
       ' && cid=$(docker create $EXPECTED_REF)' +
       ' && { docker commit "$cid" $EXPECTED_REF >/dev/null; status=$?;' +
       ' docker rm "$cid" >/dev/null; exit $status; }')
+  else:
+    load_command = _local_image_load_command('"$ref"')
+    if load_command:
+      command += (
+        ' && ref={image}:tilt-$(docker image inspect --format="{{{{.Id}}}}" {bazel_image}' +
+        ' | sed "s/^sha256://" | cut -c1-16)' +
+        ' && docker tag {bazel_image} "$ref"').format(
+          image=image,
+          bazel_image=dest,
+        )
+      command += ' && ' + load_command
+      output_ref_file = repo_path('tmp/tilt-' + image + '-ref')
+      command += (
+        ' && mkdir -p ' + _sh_quote(os.path.dirname(output_ref_file)) +
+        ' && printf "%s" "$ref" > ' + _sh_quote(output_ref_file)
+      )
+    else:
+      command += ' && docker tag {bazel_image} $EXPECTED_REF'.format(bazel_image=dest)
+
+  build_kwargs = {}
+  if output_ref_file:
+    build_kwargs['outputs_image_ref_to'] = output_ref_file
 
   custom_build(
     ref=image,
     disable_push=not push_to_registry,
     command=command,
     deps=deps,
-)
+    **build_kwargs
+  )

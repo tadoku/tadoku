@@ -7,7 +7,7 @@ def bazel_build(image, target, deps):
       bazel_image=dest,
     )
 
-  push_to_registry = k8s_context() == 'tadoku-dev'
+  push_to_registry = k8s_context() == 'dev-lab'
   if push_to_registry:
     # Normalize Bazel-loaded image metadata before Tilt pushes to Zot.
     command += (

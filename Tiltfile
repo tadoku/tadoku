@@ -1,12 +1,15 @@
 # -*- mode: Python -*-
 
-allow_k8s_contexts(['orbstack', 'tadoku-dev'])
+local_k8s_context = os.getenv('TADOKU_LOCAL_K8S_CONTEXT', '') or 'orbstack'
+shared_k8s_context = 'dev-lab'
 
-if k8s_context() == 'tadoku-dev':
+allow_k8s_contexts([local_k8s_context, shared_k8s_context])
+
+if k8s_context() == shared_k8s_context:
     # Shared lab cluster: images are pushed to the homelab dev registry.
     default_registry('registry.dev.lab')
 else:
-    # Local cluster (e.g. orbstack): images stay in the local docker daemon.
+    # Local cluster: images stay in the local docker daemon.
     # Phase 5: local-cluster bootstrap (postgres operator, etc.) goes here.
     pass
 

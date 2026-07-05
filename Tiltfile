@@ -1,7 +1,8 @@
 # -*- mode: Python -*-
 
+load('./infra/dev/build/Tiltfile', 'shared_k8s_context')
+
 local_k8s_context = os.getenv('TADOKU_LOCAL_K8S_CONTEXT', '') or 'orbstack'
-shared_k8s_context = 'dev-lab'
 
 allow_k8s_contexts([local_k8s_context, shared_k8s_context])
 

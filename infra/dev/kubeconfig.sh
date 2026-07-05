@@ -5,7 +5,7 @@ host="${TADOKU_DEV_K3S_HOST:-ct200.lab}"
 server="https://${host}:6443"
 ssh_target="${TADOKU_DEV_K3S_SSH_TARGET:-io@${host}}"
 read_cmd="${TADOKU_DEV_K3S_READ_CMD:-sudo cat /etc/rancher/k3s/k3s.yaml}"
-tls_server_name="${TADOKU_DEV_K3S_TLS_SERVER_NAME:-ct200}"
+tls_server_name="${TADOKU_DEV_K3S_TLS_SERVER_NAME:-${host%%.*}}"
 out="${1:-${TADOKU_DEV_KUBECONFIG:-${HOME}/.kube/dev-lab.yaml}}"
 
 tmp="$(mktemp)"

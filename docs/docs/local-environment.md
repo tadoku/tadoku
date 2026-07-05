@@ -30,7 +30,7 @@ kubectl config use-context docker-desktop
 export TADOKU_LOCAL_K8S_CONTEXT=docker-desktop
 ```
 
-Built images stay in your local docker daemon. Access the environment from `http://langlog.be`, a domain reserved to serve a local dev instance of Tadoku.
+Built images stay in your local docker daemon. Because backend images are built with Bazel and never pushed to a registry for local contexts, the cluster must be able to run images straight from the host Docker daemon (e.g. OrbStack or Docker Desktop). Clusters with their own container runtime, such as kind or minikube, would need an extra image-load step (e.g. `kind load`) that is not supported yet. Access the environment from `http://langlog.be`, a domain reserved to serve a local dev instance of Tadoku.
 
 ### Option B: Shared lab cluster (`dev-lab`)
 

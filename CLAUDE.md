@@ -79,6 +79,13 @@ cd services/content-api/http/rest/openapi && go generate
 bazel build //services/... && bazel test //services/...
 ```
 
+## Dev Environment
+
+Use `k8s/dev/` as the Tilt entrypoint for the shared and local Kubernetes dev stacks.
+Cluster-specific hostnames, registry hosts, and kube access details belong in ignored local config (`tilt_config.json`, `.env.local`); committed files should use placeholder examples.
+
+Dev Postgres is provisioned with the Zalando `postgresql` custom resource. Do not add or reintroduce hand-rolled Postgres Deployments or Helm releases for the dev stack.
+
 ## Commit Guidelines
 
 **Commit in atomic diffs** — each commit should represent one logical change. Don't bundle unrelated changes into a single commit.

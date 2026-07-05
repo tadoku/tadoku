@@ -21,18 +21,18 @@ spec:
         ports:
         - containerPort: 3000
         env:
-        - name:  NEXT_PUBLIC_KRATOS_INTERNAL_ENDPOINT
+        - name: NEXT_PUBLIC_KRATOS_INTERNAL_ENDPOINT
           value: http://kratos-public
         - name: NEXT_PUBLIC_KRATOS_ENDPOINT
-          value: http://account.langlog.be/kratos
+          value: {{TADOKU_AUTH_URL}}/kratos
         - name: NEXT_PUBLIC_AUTH_UI_URL
-          value: http://account.langlog.be
+          value: {{TADOKU_AUTH_URL}}
         - name: NEXT_PUBLIC_HOME_URL
-          value: http://langlog.be
+          value: {{TADOKU_APP_URL}}
         - name: NEXT_PUBLIC_API_ENDPOINT
-          value: http://langlog.be/api/internal
+          value: {{TADOKU_APP_URL}}/api/internal
         - name: NEXT_PUBLIC_COOKIE_DOMAIN
-          value: .langlog.be
+          value: .{{TADOKU_COOKIE_DOMAIN}}
 ---
 apiVersion: v1
 kind: Service

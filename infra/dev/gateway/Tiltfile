@@ -1,7 +1,5 @@
 load('ext://helm_resource', 'helm_resource', 'helm_repo')
 
-k8s_yaml('./ingress.yaml')
-
 helm_repo('kong', 'https://charts.konghq.com', resource_name='helm-repo-kong', labels=["infra"])
 helm_resource('kong',
               'kong/kong',

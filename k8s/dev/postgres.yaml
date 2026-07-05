@@ -1,0 +1,106 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: authz.tadoku-dev-db.credentials.postgresql.acid.zalan.do
+  labels:
+    app.kubernetes.io/part-of: tadoku-dev
+    app.kubernetes.io/component: postgres-credentials
+type: Opaque
+stringData:
+  username: authz
+  password: dev-foobar
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: content.tadoku-dev-db.credentials.postgresql.acid.zalan.do
+  labels:
+    app.kubernetes.io/part-of: tadoku-dev
+    app.kubernetes.io/component: postgres-credentials
+type: Opaque
+stringData:
+  username: content
+  password: dev-foobar
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: immersion.tadoku-dev-db.credentials.postgresql.acid.zalan.do
+  labels:
+    app.kubernetes.io/part-of: tadoku-dev
+    app.kubernetes.io/component: postgres-credentials
+type: Opaque
+stringData:
+  username: immersion
+  password: dev-foobar
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: keto.tadoku-dev-db.credentials.postgresql.acid.zalan.do
+  labels:
+    app.kubernetes.io/part-of: tadoku-dev
+    app.kubernetes.io/component: postgres-credentials
+type: Opaque
+stringData:
+  username: keto
+  password: dev-foobar
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: kratos.tadoku-dev-db.credentials.postgresql.acid.zalan.do
+  labels:
+    app.kubernetes.io/part-of: tadoku-dev
+    app.kubernetes.io/component: postgres-credentials
+type: Opaque
+stringData:
+  username: kratos
+  password: dev-foobar
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: profile.tadoku-dev-db.credentials.postgresql.acid.zalan.do
+  labels:
+    app.kubernetes.io/part-of: tadoku-dev
+    app.kubernetes.io/component: postgres-credentials
+type: Opaque
+stringData:
+  username: profile
+  password: dev-foobar
+---
+apiVersion: acid.zalan.do/v1
+kind: postgresql
+metadata:
+  name: tadoku-dev-db
+  labels:
+    app.kubernetes.io/part-of: tadoku-dev
+spec:
+  teamId: tadoku
+  numberOfInstances: 1
+  users:
+    authz: []
+    content: []
+    immersion: []
+    keto: []
+    kratos: []
+    profile: []
+  databases:
+    authz: authz
+    content: content
+    immersion: immersion
+    keto: keto
+    kratos: kratos
+    profile: profile
+  postgresql:
+    version: "17"
+  volume:
+    size: 2Gi
+  resources:
+    requests:
+      cpu: 250m
+      memory: 512Mi
+    limits:
+      cpu: "1"
+      memory: 1Gi

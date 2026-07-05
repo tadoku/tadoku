@@ -28,7 +28,7 @@ spec:
           args: ["-source", "file:///migrations", "-database", "$(DATABASE_URL)", "up"]
           env:
             - name: DATABASE_URL
-              value: "postgres://authz:foobar@postgres-authz.default/authz?sslmode=disable"
+              value: "postgres://authz:dev-foobar@tadoku-dev-db.default/authz?sslmode=require"
       containers:
         - name: authz-api
           image: authz-api-image
@@ -37,7 +37,7 @@ spec:
             - containerPort: 8000
           env:
             - name: API_POSTGRES_URL
-              value: "postgres://authz:foobar@postgres-authz.default/authz?sslmode=disable"
+              value: "postgres://authz:dev-foobar@tadoku-dev-db.default/authz?sslmode=require"
             - name: API_PORT
               value: "8000"
             - name: API_JWKS

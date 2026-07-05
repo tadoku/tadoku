@@ -7,7 +7,7 @@ title: Development Environment
 
 Tadoku is made up of several services working together. It can be quite difficult to set up a local development environment with all the required services linked up together. This is a requirement for anyone to be productive in this project, and is also why we've provided a development environment for you.
 
-We use [Tilt](https://tilt.dev/) to deploy all our backend services & dependencies to a Kubernetes cluster. Tilt can target either a local cluster or the shared `dev-lab` cluster; when targeting `dev-lab`, built images are pushed to the `registry.dev.lab` registry. The environment includes both the backend services and the frontend apps. Each frontend also has a development mode which is configured to connect to this environment.
+We use [Tilt](https://tilt.dev/) to deploy all our backend services & dependencies to a Kubernetes cluster. Tilt can target either a local cluster or the shared `dev-lab` cluster; when targeting `dev-lab`, built images are pushed to the registry configured in `tilt_config.json`. The environment includes both the backend services and the frontend apps. Each frontend also has a development mode which is configured to connect to this environment.
 
 ## Getting Started
 
@@ -16,37 +16,40 @@ We use [Tilt](https://tilt.dev/) to deploy all our backend services & dependenci
 3. Install [Tilt](https://docs.tilt.dev/install.html).
 4. Install [kubectl](https://kubernetes.io/docs/tasks/tools/).
 5. Point kubectl at the cluster you want to use (see below).
-6. Read the [Getting Started Tutorial](https://docs.tilt.dev/tutorial.html) for Tilt to get familiar with it.
-7. Run `$ tilt up` in the root of this repository.
-8. Some services will have a database seed script, these can be manually triggered from within Tilt when needed.
-9. Access the environment (see below for the hostnames of each cluster).
+6. Copy `tilt_config.json.example` to `tilt_config.json` and set the local hostnames for your cluster. This file is gitignored.
+7. Read the [Getting Started Tutorial](https://docs.tilt.dev/tutorial.html) for Tilt to get familiar with it.
+8. Run `$ tilt up` in the root of this repository.
+9. Some services will have a database seed script, these can be manually triggered from within Tilt when needed.
+10. Access the environment using the hostnames from your local Tilt config.
 
 ### Option A: Local cluster
 
-Run a local Kubernetes cluster and select its kubectl context. Tilt uses `orbstack` by default for local development; set `TADOKU_LOCAL_K8S_CONTEXT` when your local context has another name:
+Run a local Kubernetes cluster and select its kubectl context. Tilt uses `orbstack` by default for local development; set `local_k8s_context` in `tilt_config.json` when your local context has another name (the `TADOKU_LOCAL_K8S_CONTEXT` environment variable overrides it):
 
 ```sh
 kubectl config use-context docker-desktop
-export TADOKU_LOCAL_K8S_CONTEXT=docker-desktop
+# and in tilt_config.json: "local_k8s_context": "docker-desktop"
 ```
 
-Built images stay in your local docker daemon. Because backend images are built with Bazel and never pushed to a registry for local contexts, the cluster must be able to run images straight from the host Docker daemon (e.g. OrbStack or Docker Desktop). Clusters with their own container runtime, such as kind or minikube, would need an extra image-load step (e.g. `kind load`) that is not supported yet. Access the environment from `http://langlog.be`, a domain reserved to serve a local dev instance of Tadoku.
+Built images stay in your local docker daemon. Because backend images are built with Bazel and never pushed to a registry for local contexts, the cluster must be able to run images straight from the host Docker daemon (e.g. OrbStack or Docker Desktop). Clusters with their own container runtime, such as kind or minikube, would need an extra image-load step (e.g. `kind load`) that is not supported yet. Access the environment using the `local.hosts` values in `tilt_config.json`.
 
 ### Option B: Shared lab cluster (`dev-lab`)
 
-Prerequisite: `registry.dev.lab` must resolve from your machine, and your Docker daemon must trust the registry endpoint (via an insecure-registry entry for HTTP, or the lab TLS certificate once available) before Tilt can push images. This may still be pending on the platform side (DNS, registry ingress, and node/container runtime trust for the renamed registry).
+Prerequisite: the configured registry hostname must resolve from your machine, and your Docker daemon must trust the registry endpoint (via an insecure-registry entry for HTTP, or the lab TLS certificate once available) before Tilt can push images.
 
-Fetch the dev-cluster kubeconfig:
+Fetch the dev-cluster kubeconfig after creating `.env.local` from `.env.local.example`:
 
 ```sh
+cp .env.local.example .env.local
+# Edit .env.local with the shared cluster host and SSH target.
 ./infra/dev/kubeconfig.sh
 export KUBECONFIG="$HOME/.kube/dev-lab.yaml"
 kubectl get nodes
 ```
 
-The script reads `/etc/rancher/k3s/k3s.yaml` from `io@ct200.lab`, rewrites the API server to `https://ct200.lab:6443`, sets the context to `dev-lab`, and stores the result as `~/.kube/dev-lab.yaml`. Override the SSH target with `TADOKU_DEV_K3S_SSH_TARGET` or pass a destination path as the first argument. The host (`TADOKU_DEV_K3S_HOST`), read command (`TADOKU_DEV_K3S_READ_CMD`), TLS server name (`TADOKU_DEV_K3S_TLS_SERVER_NAME`), and output path (`TADOKU_DEV_KUBECONFIG`) can also be overridden via environment variables.
+The script reads `/etc/rancher/k3s/k3s.yaml` from `TADOKU_DEV_K3S_SSH_TARGET`, rewrites the API server to `https://${TADOKU_DEV_K3S_HOST}:6443`, sets the context to `dev-lab`, and stores the result as `~/.kube/dev-lab.yaml`. Override the SSH target with `TADOKU_DEV_K3S_SSH_TARGET` or pass a destination path as the first argument. The host (`TADOKU_DEV_K3S_HOST`), read command (`TADOKU_DEV_K3S_READ_CMD`), TLS server name (`TADOKU_DEV_K3S_TLS_SERVER_NAME`), and output path (`TADOKU_DEV_KUBECONFIG`) can also be overridden via environment variables.
 
-Built images are pushed to `registry.dev.lab`. The Tadoku dev app is served from `tadoku.dev.lab`, with app subdomains under `*.tadoku.dev.lab`.
+Built images are pushed to `shared.registry` from `tilt_config.json`. The app and auth/admin hostnames come from the `shared.hosts` block.
 
 ## Can't connect connect to service/database
 

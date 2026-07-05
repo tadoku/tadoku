@@ -21,10 +21,10 @@ spec:
         ports:
         - containerPort: 3000
         env:
-        - name:  NEXT_PUBLIC_KRATOS_INTERNAL_ENDPOINT
+        - name: NEXT_PUBLIC_KRATOS_INTERNAL_ENDPOINT
           value: http://kratos-public
         - name: NEXT_PUBLIC_KRATOS_ENDPOINT
-          value: http://account.langlog.be/kratos
+          value: {{TADOKU_AUTH_URL}}/kratos
 ---
 apiVersion: v1
 kind: Service

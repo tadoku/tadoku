@@ -1,28 +1,33 @@
 load('ext://helm_resource', 'helm_resource', 'helm_repo')
 load('ext://secret', 'secret_yaml_generic')
 load('ext://configmap', 'configmap_yaml')
+load('./../../../k8s/dev/config/Tiltfile', 'render_template')
 
 helm_repo('ory', 'https://k8s.ory.sh/helm/charts', resource_name='helm-repo-ory', labels=["auth"])
+
+kratos_values = render_template('infra/dev/ory/kratos_values.yaml', '.tilt/rendered/infra/dev/ory/kratos_values.yaml')
+oathkeeper_values = render_template('infra/dev/ory/oathkeeper_values.yaml', '.tilt/rendered/infra/dev/ory/oathkeeper_values.yaml')
+access_rules = render_template('infra/dev/ory/access_rules.yaml', '.tilt/rendered/infra/dev/ory/access_rules.yaml')
 
 # kratos
 helm_resource('kratos',
               'ory/kratos',
               flags=[
                 '--version=0.32.0',
-                '-f', './kratos_values.yaml',
+                '-f', kratos_values,
               ],
               deps=['./kratos_values.yaml'],
-              resource_deps=['helm-repo-ory'])
+              resource_deps=['helm-repo-ory', 'tadoku-dev-db'])
 
 k8s_resource("kratos", labels=["auth"])
 
 # oathkeeper
-k8s_yaml(secret_yaml_generic('oathkeeper-jwks', from_file=['jwks.json=./jwks-dev.json']))
+k8s_yaml(secret_yaml_generic('dev-oathkeeper-jwks', from_file=['jwks.json=./jwks-dev.json']))
 helm_resource('oathkeeper',
               'ory/oathkeeper',
               flags=[
-                '--set-file', 'oathkeeper.accessRules=./access_rules.yaml',
-                '-f', './oathkeeper_values.yaml',
+                '--set-file', 'oathkeeper.accessRules=%s' % access_rules,
+                '-f', oathkeeper_values,
               ],
               deps=['./access_rules.yaml', './oathkeeper_values.yaml'],
               resource_deps=['helm-repo-ory'])
@@ -40,7 +45,13 @@ helm_resource('keto',
                 '-f', './keto_values.yaml',
               ],
               deps=['./keto_values.yaml', './namespaces.keto.ts'],
-              resource_deps=['helm-repo-ory', 'postgres-keto'])
+              resource_deps=['helm-repo-ory', 'tadoku-dev-db'])
 
 k8s_resource("keto", labels=["auth"])
-k8s_resource("keto-seed-admin", labels=["auth"], resource_deps=["kratos", "keto"])
+k8s_resource(
+  "keto-seed-admin",
+  labels=["auth"],
+  resource_deps=["kratos", "keto"],
+  trigger_mode=TRIGGER_MODE_MANUAL,
+  auto_init=False,
+)

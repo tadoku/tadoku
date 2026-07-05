@@ -1,0 +1,20 @@
+load('ext://helm_resource', 'helm_resource', 'helm_repo')
+
+helm_repo(
+    'postgres-operator-charts',
+    'https://opensource.zalando.com/postgres-operator/charts/postgres-operator',
+    resource_name='helm-repo-postgres-operator',
+    labels=['infra'],
+)
+
+helm_resource(
+    'postgres-operator',
+    'postgres-operator-charts/postgres-operator',
+    flags=[
+        '--namespace', 'postgres-operator',
+        '--create-namespace',
+    ],
+    resource_deps=['helm-repo-postgres-operator'],
+)
+
+k8s_resource('postgres-operator', labels=['infra'])

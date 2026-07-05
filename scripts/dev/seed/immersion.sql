@@ -103,7 +103,7 @@ values
     '00000000-0000-4000-8000-000000000202',
     '00000000-0000-4000-8000-000000000101',
     :'reader_user_id'::uuid,
-    array['jpn']::varchar(10)[],
+    array['jpn', 'spa']::varchar(10)[],
     now(),
     now()
   ),

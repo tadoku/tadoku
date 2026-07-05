@@ -19,12 +19,21 @@ require_cmd() {
 
 db_pod() {
   kubectl -n "$DB_NAMESPACE" get pod \
-    -l "application=spilo,cluster-name=${DB_NAME}" \
+    -l "application=spilo,cluster-name=${DB_NAME},spilo-role=master" \
     -o jsonpath='{.items[0].metadata.name}'
 }
 
 wait_for_db() {
   echo "waiting for ${DB_NAME} pod..."
+  local _i
+  for _i in $(seq 1 60); do
+    if [ -n "$(kubectl -n "$DB_NAMESPACE" get pod \
+      -l "application=spilo,cluster-name=${DB_NAME}" \
+      -o name 2>/dev/null)" ]; then
+      break
+    fi
+    sleep 5
+  done
   kubectl -n "$DB_NAMESPACE" wait \
     --for=condition=Ready \
     pod \

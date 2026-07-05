@@ -35,9 +35,60 @@ rollout_wait_if_present() {
   fi
 }
 
+tilt_config_value() {
+  local key="$1"
+  local file
+  for file in "$ROOT/tilt_config.json" "$ROOT/tilt_config.json.example"; do
+    if [ -f "$file" ]; then
+      sed -n 's/.*"'"$key"'"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' "$file" | head -n 1
+      return 0
+    fi
+  done
+}
+
+wait_for_db_pod() {
+  echo "waiting for ${DB_NAME} pod to be created by the operator..."
+  local _i
+  for _i in $(seq 1 60); do
+    if [ -n "$(kubectl -n "$DB_NAMESPACE" get pod \
+      -l "application=spilo,cluster-name=${DB_NAME}" \
+      -o name 2>/dev/null)" ]; then
+      return 0
+    fi
+    sleep 5
+  done
+  echo "timed out waiting for the operator to create the ${DB_NAME} pod" >&2
+  exit 1
+}
+
 require_cmd kubectl
 
-echo "resetting Tadoku dev environment in context: $(kubectl config current-context)"
+SHARED_CONTEXT="${TADOKU_SHARED_K8S_CONTEXT:-$(tilt_config_value shared_k8s_context)}"
+SHARED_CONTEXT="${SHARED_CONTEXT:-dev-lab}"
+LOCAL_CONTEXT="${TADOKU_LOCAL_K8S_CONTEXT:-$(tilt_config_value local_k8s_context)}"
+LOCAL_CONTEXT="${LOCAL_CONTEXT:-orbstack}"
+CURRENT_CONTEXT="$(kubectl config current-context)"
+
+if [ "$CURRENT_CONTEXT" != "$SHARED_CONTEXT" ] && [ "$CURRENT_CONTEXT" != "$LOCAL_CONTEXT" ]; then
+  echo "refusing to reset: kubectl context '${CURRENT_CONTEXT}' is not a known dev context ('${SHARED_CONTEXT}' or '${LOCAL_CONTEXT}')" >&2
+  echo "switch contexts or set TADOKU_SHARED_K8S_CONTEXT / TADOKU_LOCAL_K8S_CONTEXT if your dev cluster uses a different name" >&2
+  exit 1
+fi
+
+if [ "$CURRENT_CONTEXT" = "$SHARED_CONTEXT" ]; then
+  if [ ! -t 0 ]; then
+    echo "refusing to reset the shared dev cluster '${CURRENT_CONTEXT}' without an interactive confirmation" >&2
+    exit 1
+  fi
+  printf "this deletes the '%s' database and its data on the shared dev cluster '%s'. type the context name to continue: " "$DB_NAME" "$CURRENT_CONTEXT"
+  read -r confirmation
+  if [ "$confirmation" != "$CURRENT_CONTEXT" ]; then
+    echo "confirmation did not match; aborting" >&2
+    exit 1
+  fi
+fi
+
+echo "resetting Tadoku dev environment in context: ${CURRENT_CONTEXT}"
 
 delete_if_present "postgres operator cluster ${DB_NAME}" \
   kubectl -n "$DB_NAMESPACE" delete "postgresql.acid.zalan.do/${DB_NAME}" --wait=true
@@ -52,6 +103,7 @@ delete_if_present "postgres persistent volumes for ${DB_NAME}" \
 
 echo "recreating operator-managed postgres cluster..."
 kubectl apply -f "$ROOT/k8s/dev/postgres.yaml"
+wait_for_db_pod
 kubectl -n "$DB_NAMESPACE" wait \
   --for=condition=Ready \
   pod \

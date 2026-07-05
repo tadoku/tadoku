@@ -25,15 +25,20 @@ db_pod() {
 
 wait_for_db() {
   echo "waiting for ${DB_NAME} pod..."
-  local _i
+  local _i found=""
   for _i in $(seq 1 60); do
     if [ -n "$(kubectl -n "$DB_NAMESPACE" get pod \
       -l "application=spilo,cluster-name=${DB_NAME}" \
       -o name 2>/dev/null)" ]; then
+      found=1
       break
     fi
     sleep 5
   done
+  if [ -z "$found" ]; then
+    echo "timed out waiting for ${DB_NAME} pod to appear in namespace ${DB_NAMESPACE}; is the dev Postgres cluster deployed?" >&2
+    exit 1
+  fi
   kubectl -n "$DB_NAMESPACE" wait \
     --for=condition=Ready \
     pod \
@@ -96,6 +101,7 @@ kratos_admin = os.getenv("KRATOS_ADMIN_URL", "http://kratos-admin").rstrip("/")
 email = os.environ["SEED_EMAIL"]
 display_name = os.environ["SEED_DISPLAY_NAME"]
 password = os.environ["SEED_PASSWORD"]
+SEED_MARKER = "tadoku-dev-seed"
 
 def request(method, path, payload=None):
     data = None
@@ -126,6 +132,24 @@ while time.time() < deadline:
     try:
         identity = find_identity()
         if identity:
+            metadata = identity.get("metadata_admin") or {}
+            if metadata.get("seeded_by") == SEED_MARKER:
+                request("PUT", f"/admin/identities/{identity['id']}", {
+                    "schema_id": identity.get("schema_id", "user"),
+                    "state": identity.get("state", "active"),
+                    "traits": identity.get("traits") or {},
+                    "metadata_admin": metadata,
+                    "credentials": {
+                        "password": {
+                            "config": {
+                                "password": password,
+                            },
+                        },
+                    },
+                })
+                print(f"refreshed password for seeded identity {email}", file=sys.stderr)
+            else:
+                print(f"identity {email} not owned by dev seed; leaving credentials untouched", file=sys.stderr)
             print(identity["id"])
             sys.exit(0)
 
@@ -134,6 +158,9 @@ while time.time() < deadline:
             "traits": {
                 "email": email,
                 "display_name": display_name,
+            },
+            "metadata_admin": {
+                "seeded_by": SEED_MARKER,
             },
             "credentials": {
                 "password": {

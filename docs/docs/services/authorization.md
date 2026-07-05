@@ -121,3 +121,5 @@ Behavior:
 - Looks up the Kratos identity id for `SEED_ADMIN_EMAIL` (default `dev@tadoku.app`) using the Kratos admin API.
 - Seeds `app:tadoku#admins@<kratos_subject_id>` into Keto using the write admin API.
 - If the tuple already exists, Keto returns `409` and the job treats that as success.
+
+The dev seed script (`make dev-seed`, `scripts/dev/seed-db.sh`) also grants the same admin relation for the seeded admin identity, so either path results in a working dev admin. See [Local environment](../local-environment.md) for the full seed/reset workflow.

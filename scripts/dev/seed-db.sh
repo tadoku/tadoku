@@ -133,22 +133,7 @@ while time.time() < deadline:
         identity = find_identity()
         if identity:
             metadata = identity.get("metadata_admin") or {}
-            if metadata.get("seeded_by") == SEED_MARKER:
-                request("PUT", f"/admin/identities/{identity['id']}", {
-                    "schema_id": identity.get("schema_id", "user"),
-                    "state": identity.get("state", "active"),
-                    "traits": identity.get("traits") or {},
-                    "metadata_admin": metadata,
-                    "credentials": {
-                        "password": {
-                            "config": {
-                                "password": password,
-                            },
-                        },
-                    },
-                })
-                print(f"refreshed password for seeded identity {email}", file=sys.stderr)
-            else:
+            if metadata.get("seeded_by") != SEED_MARKER:
                 print(f"identity {email} not owned by dev seed; leaving credentials untouched", file=sys.stderr)
             print(identity["id"])
             sys.exit(0)
@@ -179,6 +164,37 @@ while time.time() < deadline:
 print(f"failed to seed kratos identity for {email}: {last_error}", file=sys.stderr)
 sys.exit(1)
 PY
+}
+
+refresh_identity_password() {
+  local email="$1"
+  local password="$2"
+  local pod
+  pod="$(db_pod)"
+
+  kubectl -n "$DB_NAMESPACE" exec -i "$pod" -- env PGPASSWORD="$DB_PASSWORD" \
+    psql -X -q \
+      -v ON_ERROR_STOP=1 \
+      -v "seed_email=${email}" \
+      -v "seed_password=${password}" \
+      "$(psql_url kratos kratos)" <<'SQL'
+create extension if not exists pgcrypto;
+update identity_credentials ic
+set config = jsonb_set(
+      ic.config,
+      '{hashed_password}',
+      to_jsonb(crypt(:'seed_password', gen_salt('bf', 12)))
+    ),
+    updated_at = now()
+from identities i,
+     identity_credential_types ict
+where ic.identity_id = i.id
+  and ic.identity_credential_type_id = ict.id
+  and ict.name = 'password'
+  and i.traits->>'email' = :'seed_email'
+  and i.metadata_admin->>'seeded_by' = 'tadoku-dev-seed';
+SQL
+  echo "refreshed password for seeded identity ${email} (no-op if not seed-owned)"
 }
 
 seed_keto_admin() {
@@ -263,6 +279,8 @@ echo "seeding kratos identities..."
 ADMIN_USER_ID="$(seed_identity "$ADMIN_EMAIL" "Dev Admin" "$ADMIN_PASSWORD" | tail -n 1)"
 READER_USER_ID="$(seed_identity "$READER_EMAIL" "Dev Reader" "$READER_PASSWORD" | tail -n 1)"
 export ADMIN_USER_ID READER_USER_ID
+refresh_identity_password "$ADMIN_EMAIL" "$ADMIN_PASSWORD"
+refresh_identity_password "$READER_EMAIL" "$READER_PASSWORD"
 seed_keto_admin "$ADMIN_USER_ID"
 
 wait_for_relation immersion immersion users

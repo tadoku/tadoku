@@ -110,9 +110,9 @@ Relevant mappings:
 - `ErrForbidden` -> `403`
 - `ErrAuthzUnavailable` -> `503`
 
-## Local Dev: Seeding an Admin
+## Development Environment: Seeding an Admin
 
-Tilt runs an idempotent Kubernetes Job at startup to ensure a local dev admin exists:
+Tilt runs an idempotent Kubernetes Job at startup to ensure a dev admin exists:
 
 - `/Users/io/xdev/tadoku/infra/dev/ory/keto_seed_admin_job.yaml`
 

@@ -74,7 +74,7 @@ Authz:
   - Each service sets a default via envconfig: `service_name` defaults to the service's name (for example, `immersion-api`).
 - `RejectBannedUsers` blocks banned users (except `/current-user/role`).
 
-## Local Development Setup
+## Development Environment Setup
 
 - Each service runs in its own namespace prefixed with `tdk-`.
 - Each service has its own ServiceAccount.

@@ -19,7 +19,7 @@ We use [Tilt](https://tilt.dev/) to deploy all our backend services & dependenci
 6. Copy `tilt_config.json.example` to `tilt_config.json` and set the local hostnames for your cluster. This file is gitignored.
 7. Read the [Getting Started Tutorial](https://docs.tilt.dev/tutorial.html) for Tilt to get familiar with it.
 8. Run `$ tilt up` in the root of this repository.
-9. Some services will have a database seed script, these can be manually triggered from within Tilt when needed.
+9. Seed data is applied by the `dev-seed` Tilt resource once the services are up (see below); it can also be re-run manually from within Tilt or via `make dev-seed`.
 10. Access the environment using the hostnames from your local Tilt config.
 
 ### Option A: Local cluster
@@ -69,6 +69,22 @@ Built images are pushed to `shared.registry` from `tilt_config.json`. The app an
 ### Private infrastructure
 
 Operators can include a private Tiltfile (kept outside this repository) by setting `TADOKU_PRIVATE_INFRA_TILTFILE` to its path before running `tilt up`; it is skipped when unset or when the file does not exist.
+
+## Seeding and resetting the dev database
+
+The root `Makefile` wraps the common dev-environment commands:
+
+```sh
+make dev-up      # start Tilt
+make dev-down    # stop Tilt-managed resources
+make dev-seed    # rerun idempotent seed data only (scripts/dev/seed-db.sh)
+make dev-reset   # delete/recreate the dev DB, rerun migrations, and seed (scripts/dev/reset-env.sh)
+make dev-logs    # stream Tilt logs
+```
+
+Seeding (`dev-seed`, also a Tilt resource that runs automatically once the backend services are ready) creates two Kratos identities — an admin `dev@tadoku.app` and a regular user `reader@tadoku.app`, both with password `dev-password` — grants the admin a Keto admin relation, and loads deterministic contests, activity logs, profile, and content data into the `immersion`, `profile`, and `content` databases. The seed is idempotent and safe to re-run. Defaults can be overridden with `TADOKU_DEV_NAMESPACE`, `TADOKU_DEV_DB_PASSWORD`, `TADOKU_DEV_ADMIN_EMAIL`/`TADOKU_DEV_ADMIN_PASSWORD`, and `TADOKU_DEV_READER_EMAIL`/`TADOKU_DEV_READER_PASSWORD`.
+
+Resetting (`dev-reset`, also available as a manual-only `dev-reset` Tilt resource) is destructive: it deletes the Zalando operator-managed `tadoku-dev-db` cluster and its persistent volume claims, reapplies the `postgresql` custom resource, restarts the backend services so their startup migrations run against the fresh database, and then reseeds. The script refuses to run unless the current kubectl context matches a known dev context (`shared_k8s_context`/`local_k8s_context` from `tilt_config.json`, or the `TADOKU_SHARED_K8S_CONTEXT`/`TADOKU_LOCAL_K8S_CONTEXT` env vars), and requires typing the context name to confirm when targeting the shared cluster. Ordinary `tilt down`/`tilt up` keeps data since the database uses persistent volumes.
 
 ## Can't connect connect to service/database
 

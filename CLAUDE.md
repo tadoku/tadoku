@@ -86,6 +86,8 @@ Cluster-specific hostnames, registry hosts, and kube access details belong in ig
 
 Dev Postgres is provisioned with the Zalando `postgresql` custom resource. Do not add or reintroduce hand-rolled Postgres Deployments or Helm releases for the dev stack.
 
+Use `make dev-seed` (`scripts/dev/seed-db.sh`) to rerun the idempotent seed data and `make dev-reset` (`scripts/dev/reset-env.sh`) for a destructive database reset; both are also exposed as `dev-seed`/`dev-reset` Tilt resources.
+
 ## Commit Guidelines
 
 **Commit in atomic diffs** — each commit should represent one logical change. Don't bundle unrelated changes into a single commit.

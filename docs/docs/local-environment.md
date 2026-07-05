@@ -1,9 +1,9 @@
 ---
 sidebar_position: 3
-title: Local Environment
+title: Development Environment
 ---
 
-# Local Development Environment
+# Development Environment
 
 Tadoku is made up of several services working together. It can be quite difficult to set up a local development environment with all the required services linked up together. This is a requirement for anyone to be productive in this project, and is also why we've provided a development environment for you.
 

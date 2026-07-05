@@ -35,6 +35,12 @@ spec:
           value: .{{TADOKU_COOKIE_DOMAIN}}
         - name: NEXT_PUBLIC_ADMIN_URL
           value: {{TADOKU_ADMIN_URL}}
+        - name: WATCHPACK_POLLING
+          value: "true"
+        - name: WATCHPACK_POLLING_INTERVAL
+          value: "1000"
+        - name: CHOKIDAR_USEPOLLING
+          value: "true"
 ---
 apiVersion: v1
 kind: Service

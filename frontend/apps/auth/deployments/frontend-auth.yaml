@@ -25,6 +25,12 @@ spec:
           value: http://kratos-public
         - name: NEXT_PUBLIC_KRATOS_ENDPOINT
           value: {{TADOKU_AUTH_URL}}/kratos
+        - name: WATCHPACK_POLLING
+          value: "true"
+        - name: WATCHPACK_POLLING_INTERVAL
+          value: "1000"
+        - name: CHOKIDAR_USEPOLLING
+          value: "true"
 ---
 apiVersion: v1
 kind: Service

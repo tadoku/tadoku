@@ -134,7 +134,14 @@ while time.time() < deadline:
         if identity:
             metadata = identity.get("metadata_admin") or {}
             if metadata.get("seeded_by") != SEED_MARKER:
-                print(f"identity {email} not owned by dev seed; leaving credentials untouched", file=sys.stderr)
+                print(
+                    f"error: identity {email} already exists but is not owned by the dev seed "
+                    f"(missing metadata_admin.seeded_by={SEED_MARKER}); refusing to touch its credentials.\n"
+                    f"remediation: run `make dev-reset` for a clean database, or delete the identity "
+                    f"(or set metadata_admin.seeded_by={SEED_MARKER} on it) and rerun `make dev-seed`.",
+                    file=sys.stderr,
+                )
+                sys.exit(2)
             print(identity["id"])
             sys.exit(0)
 
@@ -194,7 +201,7 @@ where ic.identity_id = i.id
   and i.traits->>'email' = :'seed_email'
   and i.metadata_admin->>'seeded_by' = 'tadoku-dev-seed';
 SQL
-  echo "refreshed password for seeded identity ${email} (no-op if not seed-owned)"
+  echo "refreshed password for seeded identity ${email}"
 }
 
 seed_keto_admin() {

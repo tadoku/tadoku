@@ -82,6 +82,13 @@ set
   updated_at = now(),
   deleted_at = null;
 
+-- remove stale seed registrations left over from runs with different seed
+-- identities, so the fixed ids below never collide on the primary key
+delete from contest_registrations
+where (id = '00000000-0000-4000-8000-000000000201' and user_id <> :'admin_user_id'::uuid)
+   or (id = '00000000-0000-4000-8000-000000000202' and user_id <> :'reader_user_id'::uuid)
+   or (id = '00000000-0000-4000-8000-000000000203' and user_id <> :'reader_user_id'::uuid);
+
 insert into contest_registrations (
   id,
   contest_id,
@@ -221,6 +228,7 @@ values
   ('00000000-0000-4000-8000-000000000301', :'admin_user_id'::uuid, 'book', now()),
   ('00000000-0000-4000-8000-000000000302', :'reader_user_id'::uuid, 'podcast', now()),
   ('00000000-0000-4000-8000-000000000303', :'reader_user_id'::uuid, 'fiction', now())
-on conflict (log_id, tag) do nothing;
+on conflict (log_id, tag) do update
+set user_id = excluded.user_id;
 
 commit;

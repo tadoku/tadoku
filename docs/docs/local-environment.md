@@ -24,11 +24,11 @@ We use [Tilt](https://tilt.dev/) to deploy all our backend services & dependenci
 
 ### Option A: Local cluster
 
-Run a local Kubernetes cluster and select its kubectl context. Tilt uses `orbstack` by default for local development; set `TADOKU_LOCAL_K8S_CONTEXT` when your local context has another name:
+Run a local Kubernetes cluster and select its kubectl context. Tilt uses `orbstack` by default for local development; set `local_k8s_context` in `tilt_config.json` when your local context has another name (the `TADOKU_LOCAL_K8S_CONTEXT` environment variable overrides it):
 
 ```sh
 kubectl config use-context docker-desktop
-export TADOKU_LOCAL_K8S_CONTEXT=docker-desktop
+# and in tilt_config.json: "local_k8s_context": "docker-desktop"
 ```
 
 Built images stay in your local docker daemon. Because backend images are built with Bazel and never pushed to a registry for local contexts, the cluster must be able to run images straight from the host Docker daemon (e.g. OrbStack or Docker Desktop). Clusters with their own container runtime, such as kind or minikube, would need an extra image-load step (e.g. `kind load`) that is not supported yet. Access the environment using the `local.hosts` values in `tilt_config.json`.

@@ -1,7 +1,14 @@
 # -*- mode: Python -*-
 
 allow_k8s_contexts(['orbstack', 'tadoku-dev'])
-default_registry('registry.tadoku.lab')
+
+if k8s_context() == 'tadoku-dev':
+    # Shared lab cluster: images are pushed to the lab registry.
+    default_registry('registry.tadoku.lab')
+else:
+    # Local cluster (e.g. orbstack): images stay in the local docker daemon.
+    # Phase 5: local-cluster bootstrap (postgres operator, etc.) goes here.
+    pass
 
 # Infra
 include('./infra/dev/gateway/Tiltfile')

@@ -19,7 +19,6 @@ fi
 mkdir -p "$(dirname "${out}")"
 ssh "${ssh_target}" "${read_cmd}" > "${tmp}"
 
-perl -0pi -e "s#server:\\s*https://[^\\s]+#server: ${server}#" "${tmp}"
 install -m 600 "${tmp}" "${out}"
 
 current_context="$(KUBECONFIG="${out}" kubectl config current-context)"
@@ -31,6 +30,5 @@ cluster="$(KUBECONFIG="${out}" kubectl config view -o jsonpath='{.contexts[?(@.n
 KUBECONFIG="${out}" kubectl config set-cluster "${cluster}" --server="${server}" --tls-server-name="${tls_server_name}" >/dev/null
 KUBECONFIG="${out}" kubectl config use-context tadoku-dev >/dev/null
 
-chmod 600 "${out}"
 printf 'wrote %s\n' "${out}"
 printf 'use: export KUBECONFIG=%s\n' "${out}"

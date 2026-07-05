@@ -49,7 +49,7 @@ export KUBECONFIG="$HOME/.kube/<shared-context>.yaml"
 kubectl get nodes
 ```
 
-The script reads `/etc/rancher/k3s/k3s.yaml` from `TADOKU_DEV_K3S_SSH_TARGET`, rewrites the API server to `https://$TADOKU_DEV_K3S_HOST:6443`, sets the context to `TADOKU_DEV_K8S_CONTEXT`, and stores the result as `~/.kube/<shared-context>.yaml` unless `TADOKU_DEV_KUBECONFIG` or a destination argument is provided. The host (`TADOKU_DEV_K3S_HOST`), SSH target (`TADOKU_DEV_K3S_SSH_TARGET`), context (`TADOKU_DEV_K8S_CONTEXT`), read command (`TADOKU_DEV_K3S_READ_CMD`), TLS server name (`TADOKU_DEV_K3S_TLS_SERVER_NAME`), and output path (`TADOKU_DEV_KUBECONFIG`) can be set in `infra/dev/.env.local` or as environment variables.
+The script reads `/etc/rancher/k3s/k3s.yaml` from `TADOKU_DEV_K3S_SSH_TARGET`, rewrites the API server to `https://$TADOKU_DEV_K3S_HOST:6443`, sets the context to `TADOKU_DEV_K8S_CONTEXT`, and stores the result as `~/.kube/<shared-context>.yaml` unless `TADOKU_DEV_KUBECONFIG` or a destination argument is provided. The host (`TADOKU_DEV_K3S_HOST`), SSH target (`TADOKU_DEV_K3S_SSH_TARGET`), context (`TADOKU_DEV_K8S_CONTEXT`), read command (`TADOKU_DEV_K3S_READ_CMD`), TLS server name (`TADOKU_DEV_K3S_TLS_SERVER_NAME`), and output path (`TADOKU_DEV_KUBECONFIG`) can be set in `infra/dev/.env.local` or as environment variables; environment variables take precedence over `.env.local`.
 
 Built images are pushed to `shared.registry` from `tilt_config.json`. The app and auth/admin hostnames come from the `shared.hosts` block.
 

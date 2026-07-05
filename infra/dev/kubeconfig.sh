@@ -4,10 +4,26 @@ set -euo pipefail
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 env_file="${TADOKU_DEV_KUBECONFIG_ENV:-${script_dir}/.env.local}"
 if [[ -f "${env_file}" ]]; then
-  set -a
+  env_vars=(
+    TADOKU_DEV_K3S_HOST
+    TADOKU_DEV_K3S_SSH_TARGET
+    TADOKU_DEV_K8S_CONTEXT
+    TADOKU_SHARED_K8S_CONTEXT
+    TADOKU_DEV_K3S_READ_CMD
+    TADOKU_DEV_K3S_TLS_SERVER_NAME
+    TADOKU_DEV_KUBECONFIG
+  )
+  preset=()
+  for name in "${env_vars[@]}"; do
+    if [[ -n "${!name+x}" ]]; then
+      preset+=("${name}=${!name}")
+    fi
+  done
   # shellcheck source=/dev/null
   source "${env_file}"
-  set +a
+  for entry in ${preset[@]+"${preset[@]}"}; do
+    declare "${entry}"
+  done
 fi
 
 require_env() {

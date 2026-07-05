@@ -64,4 +64,5 @@ oci_push(
     image = ":image",
     remote_tags = ["latest"],
     repository = "ghcr.io/tadoku/tadoku/immersion-api",
+    visibility = ["//visibility:public"],
 )

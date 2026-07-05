@@ -23,13 +23,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       - name: Setup cache
         uses: actions/cache@v4
         with:
           path: "/home/runner/.cache/bazel"
-          key: bazel-v4-${{ hashFiles('go.mod', 'go.sum', 'MODULE.bazel') }}
+          key: bazel-v5-${{ runner.os }}-${{ hashFiles('.bazelversion', '.bazelrc', 'MODULE.bazel', 'MODULE.bazel.lock', 'go.mod', 'go.sum') }}
 
       - name: Build
         run: bazel build //...
@@ -44,13 +44,13 @@ jobs:
     if: github.ref == 'refs/heads/main'
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       - name: Setup cache
         uses: actions/cache@v4
         with:
           path: "/home/runner/.cache/bazel"
-          key: bazel-v4-${{ hashFiles('go.mod', 'go.sum', 'MODULE.bazel') }}
+          key: bazel-v5-${{ runner.os }}-${{ hashFiles('.bazelversion', '.bazelrc', 'MODULE.bazel', 'MODULE.bazel.lock', 'go.mod', 'go.sum') }}
 
       - name: Push images
         run: |
@@ -60,6 +60,4 @@ jobs:
           cp /home/runner/.docker/config.json /tmp/docker/config.json
 
           # Push images
-          for target in $(bazel query 'kind("oci_push", //services/...)'); do
-            bazel run "$target"
-          done
+          bazel run //:push_images

@@ -41,4 +41,5 @@ oci_push(
     image = ":image",
     remote_tags = ["latest"],
     repository = "ghcr.io/tadoku/tadoku/token-reflector",
+    visibility = ["//visibility:public"],
 )

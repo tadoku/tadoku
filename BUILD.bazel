@@ -2,3 +2,22 @@ load("@gazelle//:def.bzl", "gazelle")
 
 # gazelle:prefix github.com/tadoku/tadoku
 gazelle(name = "gazelle")
+
+sh_binary(
+    name = "push_images",
+    srcs = ["tools/ci/push_bazel_images.sh"],
+    args = [
+        "$(rlocationpath //services/authz-api:push)",
+        "$(rlocationpath //services/content-api:push)",
+        "$(rlocationpath //services/immersion-api:push)",
+        "$(rlocationpath //services/profile-api:push)",
+        "$(rlocationpath //services/token-reflector:push)",
+    ],
+    data = [
+        "//services/authz-api:push",
+        "//services/content-api:push",
+        "//services/immersion-api:push",
+        "//services/profile-api:push",
+        "//services/token-reflector:push",
+    ],
+)

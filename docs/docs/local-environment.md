@@ -7,7 +7,7 @@ title: Development Environment
 
 Tadoku is made up of several services working together. It can be quite difficult to set up a local development environment with all the required services linked up together. This is a requirement for anyone to be productive in this project, and is also why we've provided a development environment for you.
 
-We use [Tilt](https://tilt.dev/) to deploy all our backend services & dependencies to a Kubernetes cluster. Tilt can target either a local cluster or the shared `dev-lab` cluster; when targeting `dev-lab`, built images are pushed to the registry configured in `tilt_config.json`. The environment includes both the backend services and the frontend apps. Each frontend also has a development mode which is configured to connect to this environment.
+We use [Tilt](https://tilt.dev/) to deploy all our backend services & dependencies to a Kubernetes cluster. Tilt can target either a local cluster or a shared development cluster; when targeting the shared cluster, built images are pushed to the registry configured in `tilt_config.json`. The environment includes both the backend services and the frontend apps. Each frontend also has a development mode which is configured to connect to this environment.
 
 ## Getting Started
 
@@ -46,23 +46,29 @@ When `TADOKU_LOCAL_K8S_CONTEXT` is set, the `local_cluster_type` and `local_clus
 
 For local contexts, backend images are built with Bazel and are not pushed to a registry. OrbStack and Docker Desktop use the daemon-sharing path, while kind and minikube run an image-load step after each backend image build (`kind load docker-image` or `minikube image load`). If your kind cluster or minikube profile name is not obvious from the kubectl context, set `local_cluster_name` in `tilt_config.json` or `TADOKU_LOCAL_CLUSTER_NAME`. The cluster type is inferred from the context name; accepted `local_cluster_type` values are `kind`, `minikube`, and the daemon-sharing types `orbstack`, `docker-desktop`, `shared-daemon`, and `none` (the last two skip the image-load step for any other daemon-sharing runtime). Access the environment using the `local.hosts` values in `tilt_config.json`.
 
-### Option B: Shared lab cluster (`dev-lab`)
+### Option B: Shared development cluster
 
-Prerequisite: the configured registry hostname must resolve from your machine, and your Docker daemon must trust the registry endpoint (via an insecure-registry entry for HTTP, or the lab TLS certificate once available) before Tilt can push images.
+Prerequisite: the configured registry hostname must resolve from your machine, and your Docker daemon must trust the registry endpoint (via an insecure-registry entry for HTTP, or the platform TLS certificate once available) before Tilt can push images.
 
-Fetch the dev-cluster kubeconfig after creating `.env.local` from `.env.local.example`:
+Copy `tilt_config.json.example` to the gitignored `tilt_config.json`, then replace the placeholder values with your private operator values. Keep real hostnames, registry names, and context names in private config only. The context keys can also be set via environment variables (`shared_k8s_context` → `TADOKU_SHARED_K8S_CONTEXT`, `local_k8s_context` → `TADOKU_LOCAL_K8S_CONTEXT`); environment variables take precedence over `tilt_config.json`.
+
+Fetch the dev-cluster kubeconfig after creating `infra/dev/.env.local` from `infra/dev/.env.example`:
 
 ```sh
-cp .env.local.example .env.local
-# Edit .env.local with the shared cluster host and SSH target.
+cp infra/dev/.env.example infra/dev/.env.local
+# Edit infra/dev/.env.local with your private operator values.
 ./infra/dev/kubeconfig.sh
-export KUBECONFIG="$HOME/.kube/dev-lab.yaml"
+export KUBECONFIG="$HOME/.kube/<shared-context>.yaml"
 kubectl get nodes
 ```
 
-The script reads `/etc/rancher/k3s/k3s.yaml` from `TADOKU_DEV_K3S_SSH_TARGET`, rewrites the API server to `https://${TADOKU_DEV_K3S_HOST}:6443`, sets the context to `dev-lab`, and stores the result as `~/.kube/dev-lab.yaml`. Override the SSH target with `TADOKU_DEV_K3S_SSH_TARGET` or pass a destination path as the first argument. The host (`TADOKU_DEV_K3S_HOST`), read command (`TADOKU_DEV_K3S_READ_CMD`), TLS server name (`TADOKU_DEV_K3S_TLS_SERVER_NAME`), and output path (`TADOKU_DEV_KUBECONFIG`) can also be overridden via environment variables.
+The script reads `/etc/rancher/k3s/k3s.yaml` from `TADOKU_DEV_K3S_SSH_TARGET`, rewrites the API server to `https://$TADOKU_DEV_K3S_HOST:6443`, sets the context to `TADOKU_DEV_K8S_CONTEXT`, and stores the result as `~/.kube/<shared-context>.yaml` unless `TADOKU_DEV_KUBECONFIG` or a destination argument is provided. The host (`TADOKU_DEV_K3S_HOST`), SSH target (`TADOKU_DEV_K3S_SSH_TARGET`), context (`TADOKU_DEV_K8S_CONTEXT`), read command (`TADOKU_DEV_K3S_READ_CMD`), TLS server name (`TADOKU_DEV_K3S_TLS_SERVER_NAME`), and output path (`TADOKU_DEV_KUBECONFIG`) can be set in `infra/dev/.env.local` or as environment variables; environment variables take precedence over `.env.local`. Set `TADOKU_DEV_KUBECONFIG_ENV` to read the env file from a different path.
 
 Built images are pushed to `shared.registry` from `tilt_config.json`. The app and auth/admin hostnames come from the `shared.hosts` block.
+
+### Private infrastructure
+
+Operators can include a private Tiltfile (kept outside this repository) by setting `TADOKU_PRIVATE_INFRA_TILTFILE` to its path before running `tilt up`; it is skipped when unset or when the file does not exist.
 
 ## Can't connect connect to service/database
 

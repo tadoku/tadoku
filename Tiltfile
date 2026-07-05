@@ -14,6 +14,6 @@ else:
 include('./k8s/dev/Tiltfile')
 
 # Private
-# private_infra_path = '../tadoku-private/Tiltfile'
-# if os.path.exists(private_infra_path):
-#     include(private_infra_path)
+private_infra_path = os.getenv('TADOKU_PRIVATE_INFRA_TILTFILE', '')
+if private_infra_path and os.path.exists(private_infra_path):
+    include(private_infra_path)

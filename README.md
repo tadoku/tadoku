@@ -25,7 +25,7 @@ make dev-logs    # stream Tilt logs
 
 The dev Postgres cluster is a Zalando `postgresql` custom resource with persistent volumes, so ordinary `tilt down`/`tilt up` keeps data.
 `make dev-reset` is the destructive reset path: it deletes the operator CR and its PVCs, reapplies the CR, restarts services so init-container migrations run, then seeds deterministic dev users/content/activity data.
-Seed users are `dev@tadoku.app` and `reader@tadoku.app`, both with password `dev-password`.
+Seed users are `dev@tadoku.app` and `reader@tadoku.app`, both with password `tadoku`.
 
 Frontend pods use Tilt `live_update` with scoped sync paths and polling file watchers for Next.js.
 Routine edits under a frontend app or `frontend/packages/ui` should sync into the running pod and hot-reload without an image rebuild; package file changes run `pnpm -r install` inside the container.

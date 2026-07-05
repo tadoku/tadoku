@@ -6,9 +6,9 @@ DB_NAME="tadoku-dev-db"
 DB_NAMESPACE="${TADOKU_DEV_NAMESPACE:-default}"
 DB_PASSWORD="${TADOKU_DEV_DB_PASSWORD:-dev-foobar}"
 ADMIN_EMAIL="${TADOKU_DEV_ADMIN_EMAIL:-dev@tadoku.app}"
-ADMIN_PASSWORD="${TADOKU_DEV_ADMIN_PASSWORD:-dev-password}"
+ADMIN_PASSWORD="${TADOKU_DEV_ADMIN_PASSWORD:-tadoku}"
 READER_EMAIL="${TADOKU_DEV_READER_EMAIL:-reader@tadoku.app}"
-READER_PASSWORD="${TADOKU_DEV_READER_PASSWORD:-dev-password}"
+READER_PASSWORD="${TADOKU_DEV_READER_PASSWORD:-tadoku}"
 
 require_cmd() {
   if ! command -v "$1" >/dev/null 2>&1; then

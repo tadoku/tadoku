@@ -25,6 +25,8 @@ spec:
           value: http://kratos-public
         - name: NEXT_PUBLIC_KRATOS_ENDPOINT
           value: {{TADOKU_AUTH_URL}}/kratos
+        - name: NEXT_PUBLIC_HOME_URL
+          value: {{TADOKU_APP_URL}}
         - name: WATCHPACK_POLLING
           value: "true"
         - name: WATCHPACK_POLLING_INTERVAL

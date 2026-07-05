@@ -7,7 +7,7 @@ title: Development Environment
 
 Tadoku is made up of several services working together. It can be quite difficult to set up a local development environment with all the required services linked up together. This is a requirement for anyone to be productive in this project, and is also why we've provided a development environment for you.
 
-We use [Tilt](https://tilt.dev/) to deploy all our backend services & dependencies to a Kubernetes cluster. Tilt can target either a local cluster (the `orbstack` context) or the shared `tadoku-dev` lab cluster; when targeting `tadoku-dev`, built images are pushed to the `registry.tadoku.lab` registry. The environment includes both the backend services and the frontend apps. Each frontend also has a development mode which is configured to connect to this environment.
+We use [Tilt](https://tilt.dev/) to deploy all our backend services & dependencies to a Kubernetes cluster. Tilt can target either a local cluster (the `orbstack` context) or the shared `tadoku-dev` lab cluster; when targeting `tadoku-dev`, built images are pushed to the `registry.dev.lab` registry. The environment includes both the backend services and the frontend apps. Each frontend also has a development mode which is configured to connect to this environment.
 
 ## Getting Started
 
@@ -43,7 +43,7 @@ kubectl get nodes
 
 The script reads `/etc/rancher/k3s/k3s.yaml` from `io@ct200.lab`, rewrites the API server to `https://ct200.lab:6443`, sets the context to `tadoku-dev`, and stores the result as `~/.kube/tadoku-dev.yaml`. Override the SSH target with `TADOKU_DEV_K3S_SSH_TARGET` or pass a destination path as the first argument. The host (`TADOKU_DEV_K3S_HOST`), read command (`TADOKU_DEV_K3S_READ_CMD`), TLS server name (`TADOKU_DEV_K3S_TLS_SERVER_NAME`), and output path (`TADOKU_DEV_KUBECONFIG`) can also be overridden via environment variables.
 
-Built images are pushed to `registry.tadoku.lab`. Access the dev cluster through the `.tadoku.lab` hostnames.
+Built images are pushed to `registry.dev.lab`. The Tadoku dev app is served from `tadoku.dev.lab`, with app subdomains under `*.tadoku.dev.lab`.
 
 ## Can't connect connect to service/database
 

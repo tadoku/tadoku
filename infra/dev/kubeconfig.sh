@@ -1,9 +1,16 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-host="${TADOKU_DEV_K3S_HOST:-ct200.lab}"
+if [[ -f .env.local ]]; then
+  set -a
+  # shellcheck disable=SC1091
+  source .env.local
+  set +a
+fi
+
+host="${TADOKU_DEV_K3S_HOST:-cluster-node.example.invalid}"
 server="https://${host}:6443"
-ssh_target="${TADOKU_DEV_K3S_SSH_TARGET:-io@${host}}"
+ssh_target="${TADOKU_DEV_K3S_SSH_TARGET:-user@${host}}"
 read_cmd="${TADOKU_DEV_K3S_READ_CMD:-sudo cat /etc/rancher/k3s/k3s.yaml}"
 tls_server_name="${TADOKU_DEV_K3S_TLS_SERVER_NAME:-${host%%.*}}"
 out="${1:-${TADOKU_DEV_KUBECONFIG:-${HOME}/.kube/dev-lab.yaml}}"

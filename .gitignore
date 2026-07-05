@@ -17,9 +17,13 @@ bazel-*
 
 # Don't commit the environment variables that are in use
 .env
+.env.local
+tilt_config.json
+.tools/
 
 # Ignore Tilt generated files
 .helm/
+.tilt/
 tilt_modules/
 /api/
 

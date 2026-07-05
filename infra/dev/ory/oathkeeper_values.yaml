@@ -10,9 +10,9 @@ oathkeeper:
         cors:
           enabled: true
           allowed_origins:
-            - http://langlog.be
-            - http://account.langlog.be
-            - http://admin.langlog.be
+            - "{{TADOKU_APP_URL}}"
+            - "{{TADOKU_AUTH_URL}}"
+            - "{{TADOKU_ADMIN_URL}}"
           allowed_methods:
             - POST
             - GET
@@ -35,7 +35,7 @@ oathkeeper:
         redirect:
           enabled: true
           config:
-            to: http://account.langlog.be/
+            to: "{{TADOKU_AUTH_URL}}/"
             when:
               -
                 error:
@@ -101,7 +101,7 @@ deployment:
   extraVolumes:
     - name: jwks
       secret:
-        secretName: oathkeeper-jwks
+        secretName: dev-oathkeeper-jwks
   extraVolumeMounts:
     - name: jwks
       mountPath: /etc/secrets/oathkeeper

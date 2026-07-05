@@ -1,0 +1,136 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: tadoku-web
+spec:
+  ingressClassName: {{TADOKU_INGRESS_CLASS}}
+  rules:
+    - host: {{TADOKU_APP_HOST}}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: frontend-webv2
+                port:
+                  number: 3000
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: tadoku-api
+spec:
+  ingressClassName: {{TADOKU_INGRESS_CLASS}}
+  rules:
+    - host: {{TADOKU_APP_HOST}}
+      http:
+        paths:
+          - path: /api/internal
+            pathType: Prefix
+            backend:
+              service:
+                name: oathkeeper-proxy
+                port:
+                  number: 4455
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: tadoku-auth-web
+spec:
+  ingressClassName: {{TADOKU_INGRESS_CLASS}}
+  rules:
+    - host: {{TADOKU_AUTH_HOST}}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: frontend-auth
+                port:
+                  number: 3000
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: tadoku-auth-stripped
+  annotations:
+    nginx.ingress.kubernetes.io/use-regex: "true"
+    nginx.ingress.kubernetes.io/rewrite-target: /$2
+    konghq.com/strip-path: "true"
+spec:
+  ingressClassName: {{TADOKU_INGRESS_CLASS}}
+  rules:
+    - host: {{TADOKU_AUTH_HOST}}
+      http:
+        paths:
+          - path: /kratos(/|$)(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: kratos-public
+                port:
+                  number: 80
+          - path: /private(/|$)(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: kratos-admin
+                port:
+                  number: 80
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: tadoku-admin-web
+spec:
+  ingressClassName: {{TADOKU_INGRESS_CLASS}}
+  rules:
+    - host: {{TADOKU_ADMIN_HOST}}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: frontend-admin
+                port:
+                  number: 3000
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: tadoku-tools-stripped
+  annotations:
+    nginx.ingress.kubernetes.io/use-regex: "true"
+    nginx.ingress.kubernetes.io/rewrite-target: /$2
+    konghq.com/strip-path: "true"
+spec:
+  ingressClassName: {{TADOKU_INGRESS_CLASS}}
+  rules:
+    - host: {{TADOKU_APP_HOST}}
+      http:
+        paths:
+          - path: /oathkeeper(/|$)(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: oathkeeper-api
+                port:
+                  number: 4456
+          - path: /pgweb(/|$)(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: pgweb
+                port:
+                  number: 8081
+          - path: /mail(/|$)(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: mailhog
+                port:
+                  number: 8025

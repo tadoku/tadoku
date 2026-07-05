@@ -1,0 +1,64 @@
+# -*- mode: Python -*-
+
+load('./config/Tiltfile', 'is_shared_cluster', 'render_template')
+
+if not is_shared_cluster():
+    include('./postgres-operator/Tiltfile')
+    include('../../infra/dev/gateway/Tiltfile')
+
+postgres_yaml = render_template('k8s/dev/postgres.yaml', '.tilt/rendered/k8s/dev/postgres.yaml')
+k8s_yaml(postgres_yaml)
+
+postgres_deps = []
+if not is_shared_cluster():
+    postgres_deps.append('postgres-operator')
+k8s_resource(
+    objects=[
+        'authz.tadoku-dev-db.credentials.postgresql.acid.zalan.do:secret:default',
+        'content.tadoku-dev-db.credentials.postgresql.acid.zalan.do:secret:default',
+        'immersion.tadoku-dev-db.credentials.postgresql.acid.zalan.do:secret:default',
+        'keto.tadoku-dev-db.credentials.postgresql.acid.zalan.do:secret:default',
+        'kratos.tadoku-dev-db.credentials.postgresql.acid.zalan.do:secret:default',
+        'profile.tadoku-dev-db.credentials.postgresql.acid.zalan.do:secret:default',
+        'tadoku-dev-db:postgresql:default',
+    ],
+    new_name='tadoku-dev-db',
+    labels=['infra'],
+    resource_deps=postgres_deps,
+)
+
+ingress_yaml = render_template('k8s/dev/ingress.yaml', '.tilt/rendered/k8s/dev/ingress.yaml')
+k8s_yaml(ingress_yaml)
+k8s_resource(
+    objects=[
+        'tadoku-web:ingress:default',
+        'tadoku-api:ingress:default',
+        'tadoku-auth-web:ingress:default',
+        'tadoku-auth-stripped:ingress:default',
+        'tadoku-admin-web:ingress:default',
+        'tadoku-tools-stripped:ingress:default',
+    ],
+    new_name='tadoku-ingress',
+    labels=['infra'],
+    resource_deps=[
+        'frontend-webv2',
+        'frontend-auth',
+        'frontend-admin',
+        'oathkeeper',
+        'kratos',
+        'mailhog',
+        'pgweb',
+    ],
+)
+
+include('../../infra/dev/ory/Tiltfile')
+include('../../infra/dev/valkey/Tiltfile')
+include('../../infra/dev/tools/Tiltfile')
+
+include('../../services/token-reflector/Tiltfile')
+include('../../services/immersion-api/Tiltfile')
+include('../../services/content-api/Tiltfile')
+include('../../services/profile-api/Tiltfile')
+include('../../services/authz-api/Tiltfile')
+
+include('../../frontend/Tiltfile')

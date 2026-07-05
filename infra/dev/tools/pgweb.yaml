@@ -21,7 +21,7 @@ spec:
             - containerPort: 8081
           env:
             - name: PGWEB_DATABASE_URL
-              value: "postgres://immersion:foobar@postgres-immersion/immersion?sslmode=disable"
+              value: "postgres://immersion:dev-foobar@tadoku-dev-db/immersion?sslmode=require"
 ---
 apiVersion: v1
 kind: Service

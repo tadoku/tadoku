@@ -4,7 +4,7 @@
     url: "http://content-api.tdk-content-api:80"
     strip_path: /api/internal/content/
   match:
-    url: "http://langlog.be/api/internal/content/<**>"
+    url: "{{TADOKU_APP_URL}}/api/internal/content/<**>"
     methods:
       - GET
       - POST
@@ -25,7 +25,7 @@
     url: "http://immersion-api.tdk-immersion-api:80"
     strip_path: /api/internal/immersion/
   match:
-    url: "http://langlog.be/api/internal/immersion/<**>"
+    url: "{{TADOKU_APP_URL}}/api/internal/immersion/<**>"
     methods:
       - GET
       - POST
@@ -46,7 +46,7 @@
     url: "http://authz-api.tdk-authz-api:80"
     strip_path: /api/internal/authz/
   match:
-    url: "http://langlog.be/api/internal/authz/<**>"
+    url: "{{TADOKU_APP_URL}}/api/internal/authz/<**>"
     methods:
       - GET
       - POST
@@ -67,7 +67,7 @@
     url: "http://profile-api.tdk-profile-api:80"
     strip_path: /api/internal/profile/
   match:
-    url: "http://langlog.be/api/internal/profile/<**>"
+    url: "{{TADOKU_APP_URL}}/api/internal/profile/<**>"
     methods:
       - GET
       - POST
@@ -88,7 +88,7 @@
     url: "http://memory-api:80"
     strip_path: /api/internal/memory/
   match:
-    url: "http://langlog.be/api/internal/memory/<**>"
+    url: "{{TADOKU_APP_URL}}/api/internal/memory/<**>"
     methods:
       - GET
       - POST
@@ -109,7 +109,7 @@
     url: "http://echo"
     strip_path: /api/internal/echo
   match:
-    url: "http://langlog.be/api/internal/echo/<**>"
+    url: "{{TADOKU_APP_URL}}/api/internal/echo/<**>"
     methods:
       - GET
       - POST

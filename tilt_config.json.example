@@ -1,0 +1,24 @@
+{
+  "shared_k8s_context": "dev-lab",
+  "local_k8s_context": "orbstack",
+  "local": {
+    "ingress_class": "kong",
+    "registry": "",
+    "hosts": {
+      "app": "langlog.be",
+      "auth": "account.langlog.be",
+      "admin": "admin.langlog.be"
+    },
+    "cookie_domain": "langlog.be"
+  },
+  "shared": {
+    "ingress_class": "nginx",
+    "registry": "registry.example.invalid",
+    "hosts": {
+      "app": "tadoku.example.invalid",
+      "auth": "account.tadoku.example.invalid",
+      "admin": "admin.tadoku.example.invalid"
+    },
+    "cookie_domain": "tadoku.example.invalid"
+  }
+}

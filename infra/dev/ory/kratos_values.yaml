@@ -55,11 +55,11 @@ kratos:
 
   # kratos config https://www.ory.sh/docs/kratos/reference/configuration
   config:
-    dsn: postgres://kratos:foobar@postgres-kratos:5432/kratos
+    dsn: postgres://kratos:dev-foobar@tadoku-dev-db:5432/kratos?sslmode=require
     secrets:
       default:
-        - dolore occaecat nostrud Ut
-        - sit et commodoaute ut voluptate consectetur Duis
+        - dev-kratos-default-secret-1
+        - dev-kratos-default-secret-2
 
     identity:
       schemas:
@@ -74,9 +74,9 @@ kratos:
     selfservice:
       default_browser_return_url: /
       allowed_return_urls:
-        - http://account.langlog.be/
-        - http://langlog.be/
-        - http://admin.langlog.be/
+        - "{{TADOKU_AUTH_URL}}/"
+        - "{{TADOKU_APP_URL}}/"
+        - "{{TADOKU_ADMIN_URL}}/"
       methods:
         link:
           enabled: true
@@ -86,12 +86,12 @@ kratos:
       flows:
         verification:
           # enabled: true
-          ui_url: http://account.langlog.be/verification
+          ui_url: "{{TADOKU_AUTH_URL}}/verification"
 
         recovery:
           enabled: true
           use: link
-          ui_url: http://account.langlog.be/account-recovery
+          ui_url: "{{TADOKU_AUTH_URL}}/account-recovery"
 
         registration:
           ui_url: "/register"
@@ -102,14 +102,14 @@ kratos:
                 - hook: session
 
         login:
-          ui_url: http://account.langlog.be/login
+          ui_url: "{{TADOKU_AUTH_URL}}/login"
           # after:
           #   password:
           #     hooks:
           #       - hook: require_verified_address
 
         settings:
-          ui_url: http://account.langlog.be/
+          ui_url: "{{TADOKU_AUTH_URL}}/"
           # after:
           #   profile:
           #     hooks:
@@ -120,7 +120,7 @@ kratos:
           #           body: /etc/config/post-profile-update-hook.jsonnet
 
     cookies:
-      domain: langlog.be
+      domain: "{{TADOKU_COOKIE_DOMAIN}}"
       path: /
       same_site: Lax
 
@@ -133,13 +133,13 @@ kratos:
 
     serve:
       public:
-        base_url: http://account.langlog.be/kratos/
+        base_url: "{{TADOKU_AUTH_URL}}/kratos/"
         cors:
           enabled: true
           allowed_origins:
-            - http://account.langlog.be
-            - http://langlog.be
-            - http://admin.langlog.be
+            - "{{TADOKU_AUTH_URL}}"
+            - "{{TADOKU_APP_URL}}"
+            - "{{TADOKU_ADMIN_URL}}"
           allowed_methods:
             - POST
             - GET
@@ -155,6 +155,6 @@ kratos:
         request_log:
           disable_for_health: true
       admin:
-        base_url: http://account.langlog.be/admin/
+        base_url: "{{TADOKU_AUTH_URL}}/admin/"
         request_log:
           disable_for_health: true

@@ -28,7 +28,7 @@ spec:
           args: ['-source', 'file:///migrations', '-database', '$(DATABASE_URL)', 'up']
           env:
           - name: DATABASE_URL
-            value: "postgres://immersion:foobar@postgres-immersion.default/immersion?sslmode=disable"
+            value: "postgres://immersion:dev-foobar@tadoku-dev-db.default/immersion?sslmode=require"
       containers:
       - name: immersion-api
         image: immersion-api-image
@@ -37,7 +37,7 @@ spec:
         - containerPort: 8000
         env:
           - name: API_POSTGRES_URL
-            value: "postgres://immersion:foobar@postgres-immersion.default/immersion?sslmode=disable"
+            value: "postgres://immersion:dev-foobar@tadoku-dev-db.default/immersion?sslmode=require"
           - name: API_PORT
             value: "8000"
           - name: API_JWKS

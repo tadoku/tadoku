@@ -1,0 +1,45 @@
+# -*- mode: Python -*-
+
+repo_root = os.getenv('PWD', '.')
+
+def repo_path(path):
+    return repo_root + '/' + path
+
+config_path = repo_path('tilt_config.json')
+if not os.path.exists(config_path):
+    config_path = repo_path('tilt_config.json.example')
+
+tilt_config = read_json(config_path)
+
+shared_k8s_context = os.getenv('TADOKU_SHARED_K8S_CONTEXT', '') or tilt_config.get('shared_k8s_context', 'dev-lab')
+local_k8s_context = os.getenv('TADOKU_LOCAL_K8S_CONTEXT', '') or tilt_config.get('local_k8s_context', 'orbstack')
+
+def is_shared_cluster():
+    return k8s_context() == shared_k8s_context
+
+def selected_environment():
+    if is_shared_cluster():
+        return 'shared'
+    return 'local'
+
+def selected_config():
+    return tilt_config.get(selected_environment(), {})
+
+def dev_registry():
+    registry = selected_config().get('registry', '')
+    if is_shared_cluster() and (registry == '' or registry.endswith('.example.invalid')):
+        fail('copy tilt_config.json.example to tilt_config.json and set shared.registry for the shared dev cluster')
+    return registry
+
+def render_template(src, dst):
+    cmd = (
+        'python3 "{script}" --config "{config}" --environment "{environment}" --src "{src}" --dst "{dst}"'
+    ).format(
+        script=repo_path('k8s/dev/render_template.py'),
+        config=config_path,
+        environment=selected_environment(),
+        src=repo_path(src),
+        dst=repo_path(dst),
+    )
+    local(cmd, quiet=True)
+    return repo_path(dst)

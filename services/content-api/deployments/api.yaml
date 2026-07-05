@@ -28,7 +28,7 @@ spec:
           args: ['-source', 'file:///migrations', '-database', '$(DATABASE_URL)', 'up']
           env:
           - name: DATABASE_URL
-            value: "postgres://content:foobar@postgres-content.default/content?sslmode=disable"
+            value: "postgres://content:dev-foobar@tadoku-dev-db.default/content?sslmode=require"
       containers:
       - name: content-api
         image: content-api-image
@@ -37,7 +37,7 @@ spec:
         - containerPort: 8000
         env:
           - name: API_POSTGRES_URL
-            value: "postgres://content:foobar@postgres-content.default/content?sslmode=disable"
+            value: "postgres://content:dev-foobar@tadoku-dev-db.default/content?sslmode=require"
           - name: API_PORT
             value: "8000"
           - name: API_JWKS

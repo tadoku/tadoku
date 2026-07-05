@@ -16,4 +16,4 @@ bazel_build(
   deps=['./', './../common/'],
 )
 
-k8s_resource('content-api', labels=["backend"])
+k8s_resource('content-api', labels=["backend"], resource_deps=["tadoku-dev-db", "keto"])

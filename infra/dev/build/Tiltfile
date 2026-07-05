@@ -1,4 +1,4 @@
-shared_k8s_context = 'dev-lab'
+load('./../../../k8s/dev/config/Tiltfile', 'is_shared_cluster', 'shared_k8s_context')
 
 def bazel_build(image, target, deps):
   dest = target.replace('//', 'bazel/').replace(':load', ":latest")
@@ -9,7 +9,7 @@ def bazel_build(image, target, deps):
       bazel_image=dest,
     )
 
-  push_to_registry = k8s_context() == shared_k8s_context
+  push_to_registry = is_shared_cluster()
   if push_to_registry:
     # Normalize Bazel-loaded image metadata before Tilt pushes to Zot.
     command += (

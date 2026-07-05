@@ -1,23 +1,52 @@
 ---
 sidebar_position: 3
-title: Local Environment
+title: Development Environment
 ---
 
-# Local Development Environment
+# Development Environment
 
 Tadoku is made up of several services working together. It can be quite difficult to set up a local development environment with all the required services linked up together. This is a requirement for anyone to be productive in this project, and is also why we've provided a development environment for you.
 
-We use [Tilt](https://tilt.dev/) to spin up a local Kubernetes cluster with all our backend services & dependencies. We've decided to leave out the frontend packages from this environment for now, as it turned out to be quite resource intensive when doing so. Each frontend will have some sort of development mode included which is configured to connect to this environment.
+We use [Tilt](https://tilt.dev/) to deploy all our backend services & dependencies to a Kubernetes cluster. Tilt can target either a local cluster or the shared `dev-lab` cluster; when targeting `dev-lab`, built images are pushed to the `registry.dev.lab` registry. The environment includes both the backend services and the frontend apps. Each frontend also has a development mode which is configured to connect to this environment.
 
 ## Getting Started
 
 1. Install [Helm](https://helm.sh/docs/intro/install/).
 2. Install [Bazel](https://docs.bazel.build/bazel-overview.html).
 3. Install [Tilt](https://docs.tilt.dev/install.html).
-4. Read the [Getting Started Tutorial](https://docs.tilt.dev/tutorial.html) for Tilt to get familiar with it.
-5. Run `$ tilt up` in the root of this repository.
-6. Some services will have a database seed script, these can be manually triggered from within Tilt when needed.
-7. Access the cluster from `http://langlog.be`, a domain reserved to serve a local dev instance of Tadoku.
+4. Install [kubectl](https://kubernetes.io/docs/tasks/tools/).
+5. Point kubectl at the cluster you want to use (see below).
+6. Read the [Getting Started Tutorial](https://docs.tilt.dev/tutorial.html) for Tilt to get familiar with it.
+7. Run `$ tilt up` in the root of this repository.
+8. Some services will have a database seed script, these can be manually triggered from within Tilt when needed.
+9. Access the environment (see below for the hostnames of each cluster).
+
+### Option A: Local cluster
+
+Run a local Kubernetes cluster and select its kubectl context. Tilt uses `orbstack` by default for local development; set `TADOKU_LOCAL_K8S_CONTEXT` when your local context has another name:
+
+```sh
+kubectl config use-context docker-desktop
+export TADOKU_LOCAL_K8S_CONTEXT=docker-desktop
+```
+
+Built images stay in your local docker daemon. Because backend images are built with Bazel and never pushed to a registry for local contexts, the cluster must be able to run images straight from the host Docker daemon (e.g. OrbStack or Docker Desktop). Clusters with their own container runtime, such as kind or minikube, would need an extra image-load step (e.g. `kind load`) that is not supported yet. Access the environment from `http://langlog.be`, a domain reserved to serve a local dev instance of Tadoku.
+
+### Option B: Shared lab cluster (`dev-lab`)
+
+Prerequisite: `registry.dev.lab` must resolve from your machine, and your Docker daemon must trust the registry endpoint (via an insecure-registry entry for HTTP, or the lab TLS certificate once available) before Tilt can push images. This may still be pending on the platform side (DNS, registry ingress, and node/container runtime trust for the renamed registry).
+
+Fetch the dev-cluster kubeconfig:
+
+```sh
+./infra/dev/kubeconfig.sh
+export KUBECONFIG="$HOME/.kube/dev-lab.yaml"
+kubectl get nodes
+```
+
+The script reads `/etc/rancher/k3s/k3s.yaml` from `io@ct200.lab`, rewrites the API server to `https://ct200.lab:6443`, sets the context to `dev-lab`, and stores the result as `~/.kube/dev-lab.yaml`. Override the SSH target with `TADOKU_DEV_K3S_SSH_TARGET` or pass a destination path as the first argument. The host (`TADOKU_DEV_K3S_HOST`), read command (`TADOKU_DEV_K3S_READ_CMD`), TLS server name (`TADOKU_DEV_K3S_TLS_SERVER_NAME`), and output path (`TADOKU_DEV_KUBECONFIG`) can also be overridden via environment variables.
+
+Built images are pushed to `registry.dev.lab`. The Tadoku dev app is served from `tadoku.dev.lab`, with app subdomains under `*.tadoku.dev.lab`.
 
 ## Can't connect connect to service/database
 

@@ -1,6 +1,18 @@
 # -*- mode: Python -*-
 
-allow_k8s_contexts('orbstack')
+load('./infra/dev/build/Tiltfile', 'shared_k8s_context')
+
+local_k8s_context = os.getenv('TADOKU_LOCAL_K8S_CONTEXT', '') or 'orbstack'
+
+allow_k8s_contexts([local_k8s_context, shared_k8s_context])
+
+if k8s_context() == shared_k8s_context:
+    # Shared lab cluster: images are pushed to the homelab dev registry.
+    default_registry('registry.dev.lab')
+else:
+    # Local cluster: images stay in the local docker daemon.
+    # Phase 5: local-cluster bootstrap (postgres operator, etc.) goes here.
+    pass
 
 # Infra
 include('./infra/dev/gateway/Tiltfile')

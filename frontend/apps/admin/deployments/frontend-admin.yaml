@@ -17,6 +17,7 @@ spec:
       containers:
       - name: frontend-admin
         image: frontend-admin
+        imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 3000
         env:

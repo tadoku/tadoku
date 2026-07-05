@@ -23,6 +23,7 @@ spec:
       containers:
       - name: token-reflector
         image: token-reflector-image
+        imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 8080
         readinessProbe:

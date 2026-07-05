@@ -17,6 +17,7 @@ spec:
       containers:
       - name: frontend-auth
         image: frontend-auth
+        imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 3000
         env:

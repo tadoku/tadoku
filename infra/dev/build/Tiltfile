@@ -1,13 +1,25 @@
+shared_k8s_context = 'dev-lab'
+
 def bazel_build(image, target, deps):
   dest = target.replace('//', 'bazel/').replace(':load', ":latest")
+  command = (
+    'bazel run --platforms=@rules_go//go/toolchain:linux_amd64 {image_target} && ' +
+    'docker tag {bazel_image} $EXPECTED_REF').format(
+      image_target=target,
+      bazel_image=dest,
+    )
+
+  push_to_registry = k8s_context() == shared_k8s_context
+  if push_to_registry:
+    # Normalize Bazel-loaded image metadata before Tilt pushes to Zot.
+    command += (
+      ' && cid=$(docker create $EXPECTED_REF)' +
+      ' && { docker commit "$cid" $EXPECTED_REF >/dev/null; status=$?;' +
+      ' docker rm "$cid" >/dev/null; exit $status; }')
+
   custom_build(
     ref=image,
-    disable_push=True,
-    command=(
-      'bazel run --platforms=@rules_go//go/toolchain:linux_amd64 {image_target} && ' +
-      'docker tag {bazel_image} $EXPECTED_REF').format(
-        image_target=target,
-        bazel_image=dest,
-      ),
+    disable_push=not push_to_registry,
+    command=command,
     deps=deps,
 )

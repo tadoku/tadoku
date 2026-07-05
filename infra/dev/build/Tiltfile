@@ -2,10 +2,14 @@ def bazel_build(image, target, deps):
   dest = target.replace('//', 'bazel/').replace(':load', ":latest")
   custom_build(
     ref=image,
-    disable_push=True,
     command=(
       'bazel run --platforms=@rules_go//go/toolchain:linux_amd64 {image_target} && ' +
-      'docker tag {bazel_image} $EXPECTED_REF').format(
+      'docker tag {bazel_image} $EXPECTED_REF && ' +
+      # Normalize Bazel-loaded image metadata before pushing to Zot.
+      'cid=$(docker create $EXPECTED_REF) && ' +
+      'docker commit "$cid" $EXPECTED_REF >/dev/null && ' +
+      'docker rm "$cid" >/dev/null && ' +
+      'docker push $EXPECTED_REF').format(
         image_target=target,
         bazel_image=dest,
       ),

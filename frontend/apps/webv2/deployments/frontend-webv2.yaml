@@ -17,6 +17,7 @@ spec:
       containers:
       - name: frontend-webv2
         image: frontend-webv2
+        imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 3000
         env:

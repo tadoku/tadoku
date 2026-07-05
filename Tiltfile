@@ -1,6 +1,7 @@
 # -*- mode: Python -*-
 
-allow_k8s_contexts('orbstack')
+allow_k8s_contexts(['orbstack', 'tadoku-dev'])
+default_registry('registry.tadoku.lab')
 
 # Infra
 include('./infra/dev/gateway/Tiltfile')

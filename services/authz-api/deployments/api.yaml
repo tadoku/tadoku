@@ -23,6 +23,7 @@ spec:
       initContainers:
         - name: migrations
           image: authz-api-migrate-image
+          imagePullPolicy: IfNotPresent
           command: ["/migrate"]
           args: ["-source", "file:///migrations", "-database", "$(DATABASE_URL)", "up"]
           env:
@@ -31,6 +32,7 @@ spec:
       containers:
         - name: authz-api
           image: authz-api-image
+          imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8000
           env:
@@ -85,4 +87,3 @@ kind: ServiceAccount
 metadata:
   name: authz-api
   namespace: tdk-authz-api
-

@@ -23,6 +23,7 @@ spec:
       initContainers:
         - name: migrations
           image: content-api-migrate-image
+          imagePullPolicy: IfNotPresent
           command: ['/migrate']
           args: ['-source', 'file:///migrations', '-database', '$(DATABASE_URL)', 'up']
           env:
@@ -31,6 +32,7 @@ spec:
       containers:
       - name: content-api
         image: content-api-image
+        imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 8000
         env:

@@ -20,16 +20,16 @@ mkdir -p "$(dirname "${out}")"
 # shellcheck disable=SC2029 # read_cmd is a full remote command; client-side expansion is intended
 ssh "${ssh_target}" "${read_cmd}" > "${tmp}"
 
-install -m 600 "${tmp}" "${out}"
-
-current_context="$(KUBECONFIG="${out}" kubectl config current-context)"
+current_context="$(KUBECONFIG="${tmp}" kubectl config current-context)"
 if [[ "${current_context}" != "tadoku-dev" ]]; then
-  KUBECONFIG="${out}" kubectl config rename-context "${current_context}" tadoku-dev >/dev/null
+  KUBECONFIG="${tmp}" kubectl config rename-context "${current_context}" tadoku-dev >/dev/null
 fi
 
-cluster="$(KUBECONFIG="${out}" kubectl config view -o jsonpath='{.contexts[?(@.name=="tadoku-dev")].context.cluster}')"
-KUBECONFIG="${out}" kubectl config set-cluster "${cluster}" --server="${server}" --tls-server-name="${tls_server_name}" >/dev/null
-KUBECONFIG="${out}" kubectl config use-context tadoku-dev >/dev/null
+cluster="$(KUBECONFIG="${tmp}" kubectl config view -o jsonpath='{.contexts[?(@.name=="tadoku-dev")].context.cluster}')"
+KUBECONFIG="${tmp}" kubectl config set-cluster "${cluster}" --server="${server}" --tls-server-name="${tls_server_name}" >/dev/null
+KUBECONFIG="${tmp}" kubectl config use-context tadoku-dev >/dev/null
+
+install -m 600 "${tmp}" "${out}"
 
 printf 'wrote %s\n' "${out}"
 printf 'use: export KUBECONFIG=%s\n' "${out}"

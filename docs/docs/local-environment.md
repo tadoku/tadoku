@@ -33,6 +33,8 @@ Built images stay in your local docker daemon. Access the environment from `http
 
 ### Option B: Shared lab cluster (`tadoku-dev`)
 
+Prerequisite: `registry.dev.lab` must resolve from your machine, and your Docker daemon must trust the registry endpoint (via an insecure-registry entry for HTTP, or the lab TLS certificate once available) before Tilt can push images. This may still be pending on the platform side (DNS, registry ingress, and node/container runtime trust for the renamed registry).
+
 Fetch the dev-cluster kubeconfig:
 
 ```sh

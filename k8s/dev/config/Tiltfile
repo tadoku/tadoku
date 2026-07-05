@@ -1,9 +1,9 @@
 # -*- mode: Python -*-
 
-repo_root = os.getenv('PWD', '.')
+repo_root = os.path.abspath(os.path.join(os.getcwd(), '..', '..', '..'))
 
 def repo_path(path):
-    return repo_root + '/' + path
+    return os.path.join(repo_root, path)
 
 config_path = repo_path('tilt_config.json')
 if not os.path.exists(config_path):
@@ -32,6 +32,8 @@ def dev_registry():
     return registry
 
 def render_template(src, dst):
+    read_file(repo_path(src))
+    read_file(repo_path('k8s/dev/render_template.py'))
     cmd = (
         'python3 "{script}" --config "{config}" --environment "{environment}" --src "{src}" --dst "{dst}"'
     ).format(

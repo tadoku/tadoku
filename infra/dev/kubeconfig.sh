@@ -1,10 +1,13 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-if [[ -f .env.local ]]; then
+script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+repo_root="$(cd "${script_dir}/../.." && pwd)"
+
+if [[ -f "${repo_root}/.env.local" ]]; then
   set -a
   # shellcheck disable=SC1091
-  source .env.local
+  source "${repo_root}/.env.local"
   set +a
 fi
 

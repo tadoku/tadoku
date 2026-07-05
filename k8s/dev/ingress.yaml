@@ -66,15 +66,15 @@ spec:
     - host: {{TADOKU_AUTH_HOST}}
       http:
         paths:
-          - path: /kratos(/|$)(.*)
-            pathType: ImplementationSpecific
+          - path: /kratos{{TADOKU_STRIP_PATH_SUFFIX}}
+            pathType: {{TADOKU_STRIP_PATH_TYPE}}
             backend:
               service:
                 name: kratos-public
                 port:
                   number: 80
-          - path: /private(/|$)(.*)
-            pathType: ImplementationSpecific
+          - path: /private{{TADOKU_STRIP_PATH_SUFFIX}}
+            pathType: {{TADOKU_STRIP_PATH_TYPE}}
             backend:
               service:
                 name: kratos-admin
@@ -113,22 +113,22 @@ spec:
     - host: {{TADOKU_APP_HOST}}
       http:
         paths:
-          - path: /oathkeeper(/|$)(.*)
-            pathType: ImplementationSpecific
+          - path: /oathkeeper{{TADOKU_STRIP_PATH_SUFFIX}}
+            pathType: {{TADOKU_STRIP_PATH_TYPE}}
             backend:
               service:
                 name: oathkeeper-api
                 port:
                   number: 4456
-          - path: /pgweb(/|$)(.*)
-            pathType: ImplementationSpecific
+          - path: /pgweb{{TADOKU_STRIP_PATH_SUFFIX}}
+            pathType: {{TADOKU_STRIP_PATH_TYPE}}
             backend:
               service:
                 name: pgweb
                 port:
                   number: 8081
-          - path: /mail(/|$)(.*)
-            pathType: ImplementationSpecific
+          - path: /mail{{TADOKU_STRIP_PATH_SUFFIX}}
+            pathType: {{TADOKU_STRIP_PATH_TYPE}}
             backend:
               service:
                 name: mailhog

@@ -8,7 +8,10 @@ import {
   ArrowRightOnRectangleIcon,
   Cog8ToothIcon,
 } from '@heroicons/react/20/solid'
+import getConfig from 'next/config'
 import { useLogoutHandler, useSession } from './session'
+
+const { publicRuntimeConfig } = getConfig()
 
 export default function Navigation() {
   const [session] = useSession()
@@ -52,7 +55,7 @@ export default function Navigation() {
         {
           type: 'link',
           label: 'Home',
-          href: 'https://tadoku.app/',
+          href: publicRuntimeConfig.homeUrl,
           current: false,
         },
         ...userNavigation,

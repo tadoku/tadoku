@@ -1,6 +1,6 @@
 # -*- mode: Python -*-
 
-load('./config/Tiltfile', 'is_shared_cluster', 'render_template')
+load('./config/Tiltfile', 'is_shared_cluster', 'render_template', 'repo_path')
 
 if not is_shared_cluster():
     include('./postgres-operator/Tiltfile')
@@ -62,3 +62,38 @@ include('../../services/profile-api/Tiltfile')
 include('../../services/authz-api/Tiltfile')
 
 include('../../frontend/Tiltfile')
+
+local_resource(
+    'dev-seed',
+    cmd=repo_path('scripts/dev/seed-db.sh'),
+    deps=[
+        repo_path('scripts/dev/seed-db.sh'),
+        repo_path('scripts/dev/seed/content.sql'),
+        repo_path('scripts/dev/seed/immersion.sql'),
+        repo_path('scripts/dev/seed/profile.sql'),
+    ],
+    labels=['infra'],
+    resource_deps=[
+        'authz-api',
+        'content-api',
+        'immersion-api',
+        'profile-api',
+        'kratos',
+        'keto',
+    ],
+)
+
+local_resource(
+    'dev-reset',
+    cmd=repo_path('scripts/dev/reset-env.sh'),
+    deps=[
+        repo_path('scripts/dev/reset-env.sh'),
+        repo_path('scripts/dev/seed-db.sh'),
+        repo_path('scripts/dev/seed/content.sql'),
+        repo_path('scripts/dev/seed/immersion.sql'),
+        repo_path('scripts/dev/seed/profile.sql'),
+    ],
+    labels=['infra'],
+    auto_init=False,
+    trigger_mode=TRIGGER_MODE_MANUAL,
+)

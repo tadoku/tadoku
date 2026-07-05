@@ -13,14 +13,34 @@ def frontend_build(image, project_name, package_trigger):
       ' docker rm "$cid" >/dev/null; exit $status; }'
     )
 
+  package_triggers = [
+    package_trigger,
+    './packages/ui/package.json',
+    './package.json',
+    './pnpm-lock.yaml',
+    './pnpm-workspace.yaml',
+  ]
+
   custom_build(
     image,
     command=command,
-    deps=['./'],
+    deps=[
+      './Dockerfile.dev',
+      './package.json',
+      './pnpm-lock.yaml',
+      './pnpm-workspace.yaml',
+      package_trigger,
+      './apps/%s' % project_name,
+      './packages',
+    ],
     disable_push=not is_shared_cluster(),
     live_update=[
-      sync('./', '/app'),
-      run('pnpm -r install', trigger=[package_trigger, './package.json', './pnpm-lock.yaml']),
+      sync('./apps/%s' % project_name, '/app/apps/%s' % project_name),
+      sync('./packages', '/app/packages'),
+      sync('./package.json', '/app/package.json'),
+      sync('./pnpm-lock.yaml', '/app/pnpm-lock.yaml'),
+      sync('./pnpm-workspace.yaml', '/app/pnpm-workspace.yaml'),
+      run('pnpm -r install', trigger=package_triggers),
     ],
     entrypoint='pnpm run %s' % project_name,
   )

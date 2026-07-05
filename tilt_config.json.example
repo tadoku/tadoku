@@ -1,5 +1,5 @@
 {
-  "shared_k8s_context": "dev-lab",
+  "shared_k8s_context": "<shared-context>",
   "local_k8s_context": "orbstack",
   "local_cluster_type": "orbstack",
   "local_cluster_name": "",
@@ -15,7 +15,7 @@
   },
   "shared": {
     "ingress_class": "nginx",
-    "registry": "registry.example.invalid",
+    "registry": "registry.internal.example",
     "hosts": {
       "app": "tadoku.example.invalid",
       "auth": "account.tadoku.example.invalid",

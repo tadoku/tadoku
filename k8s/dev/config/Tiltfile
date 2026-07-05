@@ -12,7 +12,7 @@ if not user_config_exists:
 
 tilt_config = read_json(config_path)
 
-shared_k8s_context = os.getenv('TADOKU_SHARED_K8S_CONTEXT', '') or tilt_config.get('shared_k8s_context', 'dev-lab')
+shared_k8s_context = os.getenv('TADOKU_SHARED_K8S_CONTEXT', '') or tilt_config.get('shared_k8s_context', '')
 local_k8s_context_env = os.getenv('TADOKU_LOCAL_K8S_CONTEXT', '')
 local_k8s_context = local_k8s_context_env or tilt_config.get('local_k8s_context', 'orbstack')
 
@@ -57,7 +57,7 @@ local_cluster_name = (
 )
 
 def is_shared_cluster():
-    return k8s_context() == shared_k8s_context
+    return shared_k8s_context != '' and k8s_context() == shared_k8s_context
 
 def selected_environment():
     if is_shared_cluster():
@@ -69,7 +69,7 @@ def selected_config():
 
 def dev_registry():
     registry = selected_config().get('registry', '')
-    if is_shared_cluster() and (registry == '' or registry.endswith('.example.invalid')):
+    if is_shared_cluster() and (registry == '' or registry.endswith('.example') or registry.endswith('.example.invalid')):
         fail('copy tilt_config.json.example to tilt_config.json and set shared.registry for the shared dev cluster')
     return registry
 

@@ -2,7 +2,15 @@ load("@rules_go//go:def.bzl", "go_library")
 
 go_library(
     name = "rest",
-    srcs = glob(["*.go"]),
+    srcs = [
+        "errors.go",
+        "server.go",
+        "server_internal.go",
+        "server_permissioncheck.go",
+        "server_ping.go",
+        "server_roleget.go",
+        "server_roleupdate.go",
+    ],
     importpath = "github.com/tadoku/tadoku/services/authz-api/http/rest",
     visibility = ["//visibility:public"],
     deps = [

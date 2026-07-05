@@ -2,10 +2,15 @@ load("@rules_go//go:def.bzl", "go_library", "go_test")
 
 go_library(
     name = "domain",
-    srcs = glob(
-        ["*.go"],
-        exclude = ["*_test.go"],
-    ),
+    srcs = [
+        "allowlist.go",
+        "moderationaudit.go",
+        "permissioncheck_internal.go",
+        "permissioncheck_public.go",
+        "relationshipwrite.go",
+        "roleget.go",
+        "roleupdate.go",
+    ],
     importpath = "github.com/tadoku/tadoku/services/authz-api/domain",
     visibility = ["//visibility:public"],
     deps = [
@@ -18,7 +23,10 @@ go_library(
 
 go_test(
     name = "domain_test",
-    srcs = glob(["*_test.go"]),
+    srcs = [
+        "permissioncheck_public_test.go",
+        "roleupdate_test.go",
+    ],
     deps = [
         ":domain",
         "//services/common/authz/roles",

@@ -1,4 +1,10 @@
 #!/usr/bin/env bash
+#
+# Runs a list of oci_push binaries (passed as runfiles paths in "$@") so all
+# service images are pushed in a single `bazel run //:push_images` invocation,
+# instead of one bazel analysis per image. Invoked by CI in
+# .github/workflows/build-bazel.yaml; each push is wrapped in a GitHub Actions
+# log group.
 set -euo pipefail
 
 if [[ -n "${RUNFILES_DIR:-}" && -f "${RUNFILES_DIR}/bazel_tools/tools/bash/runfiles/runfiles.bash" ]]; then

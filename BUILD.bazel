@@ -3,6 +3,9 @@ load("@gazelle//:def.bzl", "gazelle")
 # gazelle:prefix github.com/tadoku/tadoku
 gazelle(name = "gazelle")
 
+# Pushes all service images in one `bazel run //:push_images` invocation.
+# Used by CI (.github/workflows/build-bazel.yaml); add new oci_push targets
+# to both args and data below.
 sh_binary(
     name = "push_images",
     srcs = ["tools/ci/push_bazel_images.sh"],

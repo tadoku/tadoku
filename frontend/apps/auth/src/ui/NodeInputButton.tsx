@@ -15,8 +15,9 @@ export function NodeInputButton<T>({
     <>
       <button
         type="button"
+        value={String(attributes.value ?? '')}
         {...register(attributes.name)}
-        onClick={e => {
+        onClick={async e => {
           // This section is only used for WebAuthn. The script is loaded via a <script> node
           // and the functions are available on the global window level. Unfortunately, there
           // is currently no better way than executing eval / function here at this moment.
@@ -31,7 +32,7 @@ export function NodeInputButton<T>({
           }
 
           setValue(attributes.name, attributes.value)
-          dispatchSubmit(e)
+          await dispatchSubmit(e)
           setValue(attributes.name, undefined)
         }}
         disabled={attributes.disabled || disabled}

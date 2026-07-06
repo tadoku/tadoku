@@ -66,6 +66,17 @@ The script reads `/etc/rancher/k3s/k3s.yaml` from `TADOKU_DEV_K3S_SSH_TARGET`, r
 
 Built images are pushed to `shared.registry` from `tilt_config.json`. The app and auth/admin hostnames come from the `shared.hosts` block.
 
+### HTTPS and TLS
+
+Each environment block in `tilt_config.json` controls how the dev stack is exposed:
+
+- `scheme` (`http` or `https`): scheme used for the generated app/auth/admin URLs. Defaults to `https` for the shared environment and `http` for local. With `https`, session cookies are marked secure (`NEXT_PUBLIC_COOKIE_SECURE`) and Kratos runs with `development: false` unless overridden.
+- `tls.enabled`: adds a `tls` block and a `cert-manager.io/cluster-issuer` annotation to the app, auth, and admin ingresses. Defaults to true on the shared environment when `scheme` is `https`, false otherwise. When enabled, `tls.cluster_issuer` is required; `tls.secret_names.{app,auth,admin}` override the default certificate secret names (`tadoku-dev-{app,auth,admin}-tls`).
+- `ssl_redirect`: adds nginx annotations that redirect HTTP traffic to HTTPS on all dev ingresses. Defaults to the value of `tls.enabled`. Only supported with `ingress_class: "nginx"` — rendering fails otherwise, so set it to `false` on non-nginx clusters.
+- `kratos_development`: toggles Kratos development mode. Defaults to true unless `scheme` is `https`.
+
+See `tilt_config.json.example` for a complete example of both environments.
+
 ### Private infrastructure
 
 Operators can include a private Tiltfile (kept outside this repository) by setting `TADOKU_PRIVATE_INFRA_TILTFILE` to its path before running `tilt up`; it is skipped when unset or when the file does not exist.

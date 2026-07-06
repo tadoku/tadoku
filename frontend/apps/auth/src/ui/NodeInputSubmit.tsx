@@ -15,10 +15,11 @@ export function NodeInputSubmit<T>({
     <>
       <button
         type="submit"
+        value={String(attributes.value ?? '')}
         {...register(attributes.name)}
-        onClick={e => {
+        onClick={async e => {
           setValue(attributes.name, attributes.value)
-          dispatchSubmit(e)
+          await dispatchSubmit(e)
           setValue(attributes.name, undefined)
         }}
         disabled={attributes.disabled || disabled}

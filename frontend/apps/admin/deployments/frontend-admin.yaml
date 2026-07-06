@@ -33,6 +33,10 @@ spec:
           value: {{TADOKU_APP_URL}}/api/internal
         - name: NEXT_PUBLIC_COOKIE_DOMAIN
           value: .{{TADOKU_COOKIE_DOMAIN}}
+        - name: NEXT_PUBLIC_COOKIE_SECURE
+          value: "{{TADOKU_COOKIE_SECURE}}"
+        - name: NEXT_PUBLIC_ADMIN_URL
+          value: {{TADOKU_ADMIN_URL}}
         - name: WATCHPACK_POLLING
           value: "true"
         - name: WATCHPACK_POLLING_INTERVAL

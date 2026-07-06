@@ -18,6 +18,7 @@ const nextConfig = {
     apiEndpoint:
       process.env.NEXT_PUBLIC_API_ENDPOINT ?? 'https://tadoku.app/api/internal',
     cookieDomain: process.env.NEXT_PUBLIC_COOKIE_DOMAIN ?? '.tadoku.app',
+    cookieSecure: process.env.NEXT_PUBLIC_COOKIE_SECURE !== 'false',
   },
   transpilePackages: ['ui'],
   async redirects() {

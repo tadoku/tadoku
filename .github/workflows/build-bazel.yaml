@@ -8,6 +8,7 @@ on:
   push:
     paths:
       - "services/**"
+      - "tools/ci/**"
       - "BUILD.bazel"
       - ".bazelversion"
       - ".bazelrc"
@@ -23,19 +24,26 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       - name: Setup cache
         uses: actions/cache@v4
         with:
           path: "/home/runner/.cache/bazel"
-          key: bazel-v4-${{ hashFiles('go.mod', 'go.sum', 'MODULE.bazel') }}
+          key: bazel-v5-${{ runner.os }}-${{ hashFiles('.bazelversion', '.bazelrc', 'MODULE.bazel', 'MODULE.bazel.lock', 'go.mod', 'go.sum') }}
 
       - name: Verify Gazelle
         run: bazel run //:gazelle -- -mode=diff
 
       - name: Build
         run: bazel build //...
+
+      - name: Check push_images covers all oci_push targets
+        run: |
+          diff \
+            <(bazel query 'kind("oci_push", //services/...)' | sort) \
+            <(bazel query 'labels(data, //:push_images)' | sort) \
+          || { echo "//:push_images is out of sync with oci_push targets under //services/..." >&2; exit 1; }
 
       - name: Run tests
         run: bazel test //...
@@ -47,13 +55,13 @@ jobs:
     if: github.ref == 'refs/heads/main'
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       - name: Setup cache
         uses: actions/cache@v4
         with:
           path: "/home/runner/.cache/bazel"
-          key: bazel-v4-${{ hashFiles('go.mod', 'go.sum', 'MODULE.bazel') }}
+          key: bazel-v5-${{ runner.os }}-${{ hashFiles('.bazelversion', '.bazelrc', 'MODULE.bazel', 'MODULE.bazel.lock', 'go.mod', 'go.sum') }}
 
       - name: Push images
         run: |
@@ -63,6 +71,4 @@ jobs:
           cp /home/runner/.docker/config.json /tmp/docker/config.json
 
           # Push images
-          for target in $(bazel query 'kind("oci_push", //services/...)'); do
-            bazel run "$target"
-          done
+          bazel run //:push_images

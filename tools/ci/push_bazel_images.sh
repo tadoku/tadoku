@@ -5,15 +5,18 @@
 # instead of one bazel analysis per image. Invoked by CI in
 # .github/workflows/build-bazel.yaml; each push is wrapped in a GitHub Actions
 # log group.
-set -euo pipefail
+set -uo pipefail
 
-if [[ -n "${RUNFILES_DIR:-}" && -f "${RUNFILES_DIR}/bazel_tools/tools/bash/runfiles/runfiles.bash" ]]; then
-  # shellcheck source=/dev/null
-  source "${RUNFILES_DIR}/bazel_tools/tools/bash/runfiles/runfiles.bash"
-elif [[ -n "${RUNFILES_MANIFEST_FILE:-}" && -f "${RUNFILES_MANIFEST_FILE}" ]]; then
-  # shellcheck source=/dev/null
-  source "$(grep -m1 "^bazel_tools/tools/bash/runfiles/runfiles.bash " "${RUNFILES_MANIFEST_FILE}" | cut -d' ' -f2-)"
-fi
+runfiles_bash="bazel_tools/tools/bash/runfiles/runfiles.bash"
+# shellcheck disable=SC1090
+source "${RUNFILES_DIR:-/dev/null}/${runfiles_bash}" 2>/dev/null || \
+  source "$(grep -sm1 "^${runfiles_bash} " "${RUNFILES_MANIFEST_FILE:-/dev/null}" | cut -d' ' -f2-)" 2>/dev/null || \
+  source "$0.runfiles/${runfiles_bash}" 2>/dev/null || \
+  source "$(grep -sm1 "^${runfiles_bash} " "$0.runfiles_manifest" | cut -d' ' -f2-)" 2>/dev/null || \
+  source "$(grep -sm1 "^${runfiles_bash} " "$0.exe.runfiles_manifest" | cut -d' ' -f2-)" 2>/dev/null || \
+  { echo "ERROR: cannot find ${runfiles_bash}" >&2; exit 1; }
+runfiles_bash=
+set -e
 
 resolve_runfile() {
   local path="$1"

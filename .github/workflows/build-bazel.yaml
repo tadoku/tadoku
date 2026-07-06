@@ -31,6 +31,9 @@ jobs:
           path: "/home/runner/.cache/bazel"
           key: bazel-v4-${{ hashFiles('go.mod', 'go.sum', 'MODULE.bazel') }}
 
+      - name: Verify Gazelle
+        run: bazel run //:gazelle -- -mode=diff
+
       - name: Build
         run: bazel build //...
 

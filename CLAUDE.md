@@ -65,6 +65,7 @@ bazel test //services/immersion-api/domain/command:command_test --test_filter=Te
 gofmt -w services/
 
 # 5. Regenerate BUILD.bazel files (after adding/removing Go files or changing deps/imports)
+# CI fails if these are stale (it runs `bazel run //:gazelle -- -mode=diff`)
 bazel run //:gazelle
 
 # 6. Regenerate sqlc code (after modifying SQL queries)

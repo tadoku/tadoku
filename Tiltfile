@@ -1,10 +1,13 @@
 # -*- mode: Python -*-
 
-load('./k8s/dev/config/Tiltfile', 'dev_registry', 'local_k8s_context', 'shared_k8s_context')
+load('./k8s/dev/config/Tiltfile', 'dev_registry', 'is_shared_cluster', 'local_k8s_context', 'shared_k8s_context')
 
-allow_k8s_contexts([local_k8s_context, shared_k8s_context])
+allowed_k8s_contexts = [local_k8s_context]
+if shared_k8s_context != '':
+    allowed_k8s_contexts.append(shared_k8s_context)
+allow_k8s_contexts(allowed_k8s_contexts)
 
-if k8s_context() == shared_k8s_context:
+if is_shared_cluster():
     # Shared cluster: images are pushed to the registry configured in tilt_config.json.
     default_registry(dev_registry())
 else:

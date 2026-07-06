@@ -8,6 +8,7 @@
 set -uo pipefail
 
 runfiles_bash="bazel_tools/tools/bash/runfiles/runfiles.bash"
+# shellcheck disable=SC1090
 source "${RUNFILES_DIR:-/dev/null}/${runfiles_bash}" 2>/dev/null || \
   source "$(grep -sm1 "^${runfiles_bash} " "${RUNFILES_MANIFEST_FILE:-/dev/null}" | cut -d' ' -f2-)" 2>/dev/null || \
   source "$0.runfiles/${runfiles_bash}" 2>/dev/null || \

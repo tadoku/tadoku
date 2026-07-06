@@ -7,6 +7,9 @@ import { ToastContainer } from 'ui'
 import 'ui/styles/globals.css'
 import Navigation from '../src/Navigation'
 import Head from 'next/head'
+import getConfig from 'next/config'
+
+const { publicRuntimeConfig } = getConfig()
 
 interface Props {
   session: Session | undefined
@@ -69,7 +72,17 @@ MyApp.getInitialProps = async (ctx: AppContextWithSession) => {
       props.pageProps.initialState.session = session
       ctx.ctx.session = session
     } catch (err) {
-      ctx.ctx.res?.setHeader('Set-Cookie', ['ory_kratos_session=0; Max-Age=0'])
+      const cookieAttributes = [
+        'ory_kratos_session=0',
+        'Path=/',
+        `Domain=${publicRuntimeConfig.cookieDomain}`,
+        'Max-Age=0',
+        'SameSite=Lax',
+      ]
+      if (publicRuntimeConfig.cookieSecure) {
+        cookieAttributes.push('Secure')
+      }
+      ctx.ctx.res?.setHeader('Set-Cookie', [cookieAttributes.join('; ')])
     }
   }
 

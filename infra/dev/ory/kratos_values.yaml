@@ -1,5 +1,5 @@
 kratos:
-  development: true
+  development: {{TADOKU_KRATOS_DEVELOPMENT}}
   automigration:
     enabled: true
 

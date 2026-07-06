@@ -27,6 +27,10 @@ spec:
           value: {{TADOKU_AUTH_URL}}/kratos
         - name: NEXT_PUBLIC_HOME_URL
           value: {{TADOKU_APP_URL}}
+        - name: NEXT_PUBLIC_COOKIE_DOMAIN
+          value: .{{TADOKU_COOKIE_DOMAIN}}
+        - name: NEXT_PUBLIC_COOKIE_SECURE
+          value: "{{TADOKU_COOKIE_SECURE}}"
         - name: WATCHPACK_POLLING
           value: "true"
         - name: WATCHPACK_POLLING_INTERVAL

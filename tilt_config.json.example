@@ -6,21 +6,39 @@
   "local": {
     "ingress_class": "kong",
     "registry": "",
+    "scheme": "http",
+    "ssl_redirect": false,
+    "kratos_development": true,
     "hosts": {
       "app": "langlog.be",
       "auth": "account.langlog.be",
       "admin": "admin.langlog.be"
     },
-    "cookie_domain": "langlog.be"
+    "cookie_domain": "langlog.be",
+    "tls": {
+      "enabled": false
+    }
   },
   "shared": {
     "ingress_class": "nginx",
     "registry": "registry.internal.example",
+    "scheme": "https",
+    "ssl_redirect": true,
+    "kratos_development": false,
     "hosts": {
       "app": "tadoku.example.invalid",
       "auth": "account.tadoku.example.invalid",
       "admin": "admin.tadoku.example.invalid"
     },
-    "cookie_domain": "tadoku.example.invalid"
+    "cookie_domain": "tadoku.example.invalid",
+    "tls": {
+      "enabled": true,
+      "cluster_issuer": "example-ca-acme",
+      "secret_names": {
+        "app": "tadoku-dev-app-tls",
+        "auth": "tadoku-dev-auth-tls",
+        "admin": "tadoku-dev-admin-tls"
+      }
+    }
   }
 }

@@ -8,6 +8,7 @@ on:
   push:
     paths:
       - "services/**"
+      - "tools/ci/**"
       - "BUILD.bazel"
       - ".bazelversion"
       - ".bazelrc"
@@ -33,6 +34,13 @@ jobs:
 
       - name: Build
         run: bazel build //...
+
+      - name: Check push_images covers all oci_push targets
+        run: |
+          diff \
+            <(bazel query 'kind("oci_push", //services/...)' | sort) \
+            <(bazel query 'labels(data, //:push_images)' | sort) \
+          || { echo "//:push_images is out of sync with oci_push targets under //services/..." >&2; exit 1; }
 
       - name: Run tests
         run: bazel test //...

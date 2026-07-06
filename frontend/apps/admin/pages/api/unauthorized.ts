@@ -5,6 +5,8 @@ const { publicRuntimeConfig } = getConfig()
 
 export default function handler(req: NextApiRequest, res: NextApiResponse) {
   const returnTo = req.headers.referer || publicRuntimeConfig.adminUrl
-  const loginUrl = `${publicRuntimeConfig.authUiUrl}/login?return_to=${encodeURIComponent(returnTo)}`
+  const loginUrl = `${
+    publicRuntimeConfig.authUiUrl
+  }/login?return_to=${encodeURIComponent(returnTo)}`
   res.redirect(302, loginUrl)
 }

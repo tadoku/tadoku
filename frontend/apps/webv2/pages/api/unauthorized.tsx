@@ -19,9 +19,6 @@ export default function handler(
     cookieAttributes.push('Secure')
   }
 
-  res.setHeader(
-    'Set-Cookie',
-    cookieAttributes.join('; '),
-  )
+  res.setHeader('Set-Cookie', cookieAttributes.join('; '))
   res.status(200).redirect(publicRuntimeConfig.authUiUrl)
 }

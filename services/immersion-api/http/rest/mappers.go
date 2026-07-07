@@ -74,6 +74,7 @@ func logToAPI(log *domain.Log) *openapi.Log {
 		Amount:          log.Amount,
 		Modifier:        log.Modifier,
 		Score:           log.Score,
+		DurationSeconds: log.DurationSeconds,
 		Tags:            log.Tags,
 		UnitId:          log.UnitID,
 		UnitName:        log.UnitName,

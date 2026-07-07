@@ -214,6 +214,7 @@ type Log struct {
 	CreatedAt       time.Time                       `json:"created_at"`
 	Deleted         bool                            `json:"deleted"`
 	Description     *string                         `json:"description,omitempty"`
+	DurationSeconds *int32                          `json:"duration_seconds,omitempty"`
 	Id              openapi_types.UUID              `json:"id"`
 	Language        Language                        `json:"language"`
 	Modifier        float32                         `json:"modifier"`

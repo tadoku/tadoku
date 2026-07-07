@@ -6,7 +6,6 @@ import {
   fetchTagSuggestions,
   Log,
   LogConfigurationOptions,
-  UpdateLogPayload,
   useUpdateLog,
 } from '@app/immersion/api'
 import { useRouter } from 'next/router'
@@ -15,6 +14,7 @@ import {
   estimateScore,
   filterUnits,
   NewLogFormV2Schema,
+  NewLogV2APISchema,
 } from '@app/immersion/NewLogFormV2/domain'
 import { formatScore } from '@app/common/format'
 import { useDebouncedCallback } from 'use-debounce'
@@ -28,14 +28,27 @@ interface Props {
 }
 
 export const EditLogForm = ({ options, log }: Props) => {
+  const activity =
+    options.activities.find(it => it.id === log.activity.id) ?? log.activity
+  const activityInputType = activity.input_type ?? 'amount_primary'
+  const isLegacyAmountEdit =
+    activityInputType === 'time_primary' &&
+    log.duration_seconds === undefined
+  const usesAmountUnit =
+    activityInputType === 'amount_primary' || isLegacyAmountEdit
   const defaultValues: Partial<NewLogFormV2Schema> = {
     languageCode: log.language.code,
     activityId: log.activity.id,
     amountValue: log.amount,
     amountUnit: log.unit_id,
+    durationMinutes:
+      log.duration_seconds !== undefined
+        ? log.duration_seconds / 60
+        : undefined,
     tags: log.tags,
     description: log.description ?? '',
     allUnits: options.units,
+    allActivities: options.activities,
   }
 
   const methods = useForm({
@@ -54,7 +67,9 @@ export const EditLogForm = ({ options, log }: Props) => {
     label: it.name,
   }))
   const currentSelectedUnit = units.find(it => it.id === unitId)
-  const estimatedScore = estimateScore(amount, currentSelectedUnit)
+  const estimatedScore = usesAmountUnit
+    ? estimateScore(amount, currentSelectedUnit)
+    : undefined
 
   const router = useRouter()
   const updateLogMutation = useUpdateLog(updatedLog => {
@@ -68,11 +83,15 @@ export const EditLogForm = ({ options, log }: Props) => {
   })
 
   const onSubmit = (data: any) => {
-    const payload: UpdateLogPayload = {
-      amount: data.amountValue,
-      unit_id: data.amountUnit,
-      tags: data.tags,
-      description: data.description || undefined,
+    const parsed = NewLogV2APISchema.parse(data)
+    const payload = {
+      tags: parsed.tags,
+      description: parsed.description,
+      ...('amount' in parsed ? { amount: parsed.amount } : {}),
+      ...('unit_id' in parsed ? { unit_id: parsed.unit_id } : {}),
+      ...('duration_seconds' in parsed
+        ? { duration_seconds: parsed.duration_seconds }
+        : {}),
     }
     updateLog({ logId: log.id, payload })
   }
@@ -102,15 +121,40 @@ export const EditLogForm = ({ options, log }: Props) => {
                   disabled
                 />
               </label>
-              <AmountWithUnit
-                label="Amount"
-                name="amount"
-                defaultValue={log.amount}
-                min={0}
-                step="any"
-                units={unitsAsOptions}
-                unitsLabel="Unit"
-              />
+              {usesAmountUnit ? (
+                <>
+                  <AmountWithUnit
+                    label="Amount"
+                    name="amount"
+                    defaultValue={log.amount}
+                    min={0}
+                    step="any"
+                    units={unitsAsOptions}
+                    unitsLabel="Unit"
+                  />
+                  {activityInputType === 'amount_primary' ? (
+                    <Input
+                      name="durationMinutes"
+                      label="Time spent"
+                      type="number"
+                      min={0}
+                      step="any"
+                      hint="minutes"
+                      options={{ valueAsNumber: true }}
+                    />
+                  ) : null}
+                </>
+              ) : (
+                <Input
+                  name="durationMinutes"
+                  label="Time spent"
+                  type="number"
+                  min={0}
+                  step="any"
+                  hint="minutes"
+                  options={{ valueAsNumber: true }}
+                />
+              )}
               <Input
                 name="description"
                 label="Description"
@@ -133,7 +177,10 @@ export const EditLogForm = ({ options, log }: Props) => {
               </div>
             </div>
             <div className="-mx-4 -mb-4 mt-4 px-4 py-2 md:-mx-7 md:-mb-7 md:px-7 md:py-2 bg-slate-500/5 text-center lg:text-right font-mono">
-              Estimated score: <strong>{formatScore(estimatedScore)}</strong>
+              Estimated score:{' '}
+              <strong>
+                {usesAmountUnit ? formatScore(estimatedScore) : '-'}
+              </strong>
             </div>
           </div>
           <div className="h-stack spaced justify-end">

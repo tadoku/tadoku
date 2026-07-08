@@ -48,7 +48,7 @@ For local contexts, backend images are built with Bazel and are not pushed to a 
 
 ### Option B: Shared development cluster
 
-Prerequisite: the configured registry hostname must resolve from your machine, and your Docker daemon must trust the registry endpoint (via an insecure-registry entry for HTTP, or the platform TLS certificate once available) before Tilt can push images.
+Prerequisite: the configured registry hostname must resolve from your machine, and your Docker daemon must trust the registry endpoint (via an insecure-registry entry for HTTP, or the platform TLS certificate once available) before Tilt can push images. If the registry requires authentication, also set up the push and pull credentials described in [Private development registry](#private-development-registry).
 
 Copy `tilt_config.json.example` to the gitignored `tilt_config.json`, then replace the placeholder values with your private operator values. Keep real hostnames, registry names, and context names in private config only. The context keys can also be set via environment variables (`shared_k8s_context` → `TADOKU_SHARED_K8S_CONTEXT`, `local_k8s_context` → `TADOKU_LOCAL_K8S_CONTEXT`); environment variables take precedence over `tilt_config.json`. Shared-cluster mode stays disabled until a shared context is configured via `shared_k8s_context` or `TADOKU_SHARED_K8S_CONTEXT`; there is no committed default.
 
@@ -99,7 +99,7 @@ Resetting (`dev-reset`, also available as a manual-only `dev-reset` Tilt resourc
 
 ## Private development registry
 
-Tilt can push dev images to a private registry and create pull secrets for the namespaces that run Tilt-built images. The registry host is resolved the same way as the shared-cluster `default_registry`: the `TADOKU_DEV_REGISTRY_HOST` environment variable if set, otherwise the `registry` value in `tilt_config.json`. Configure the pull-side credentials with local environment variables before running Tilt:
+Tilt can push dev images to a private registry and create `tadoku-dev-registry-pull` docker-registry pull secrets for the namespaces that run Tilt-built images. The registry host is resolved the same way as the shared-cluster `default_registry`: the `TADOKU_DEV_REGISTRY_HOST` environment variable if set, otherwise the `registry` value in `tilt_config.json`. Configure the pull-side credentials with local environment variables before running Tilt:
 
 ```sh
 export TADOKU_DEV_REGISTRY_HOST="<registry-host>" # optional when registry is set in tilt_config.json
@@ -112,6 +112,8 @@ On the shared cluster the same host is used as Tilt's `default_registry`, so aut
 ```sh
 docker login "$TADOKU_DEV_REGISTRY_HOST" --username registry-push
 ```
+
+When the host, username, or password is missing, Tilt skips creating the pull secrets and prints a notice — local clusters that keep images in the local Docker daemon work unchanged without any of these variables.
 
 Do not commit real registry hosts, usernames beyond the documented role names, passwords, or generated Secret YAML.
 

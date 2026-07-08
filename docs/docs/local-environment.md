@@ -99,15 +99,15 @@ Resetting (`dev-reset`, also available as a manual-only `dev-reset` Tilt resourc
 
 ## Private development registry
 
-Tilt can push dev images to a private registry and create pull secrets for the namespaces that run Tilt-built images. Configure the pull-side credentials with local environment variables before running Tilt:
+Tilt can push dev images to a private registry and create pull secrets for the namespaces that run Tilt-built images. The registry host is resolved the same way as the shared-cluster `default_registry`: the `TADOKU_DEV_REGISTRY_HOST` environment variable if set, otherwise the `registry` value in `tilt_config.json`. Configure the pull-side credentials with local environment variables before running Tilt:
 
 ```sh
-export TADOKU_DEV_REGISTRY_HOST="<registry-host>"
+export TADOKU_DEV_REGISTRY_HOST="<registry-host>" # optional when registry is set in tilt_config.json
 export TADOKU_DEV_REGISTRY_USERNAME="registry-pull"
 export TADOKU_DEV_REGISTRY_PASSWORD="<registry-pull-password>"
 ```
 
-The host value is also used as Tilt's `default_registry`, so authenticate Docker separately with the push account:
+On the shared cluster the same host is used as Tilt's `default_registry`, so authenticate Docker separately with the push account:
 
 ```sh
 docker login "$TADOKU_DEV_REGISTRY_HOST" --username registry-push

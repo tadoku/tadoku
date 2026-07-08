@@ -98,3 +98,5 @@ kind: ServiceAccount
 metadata:
   name: profile-api
   namespace: tdk-profile-api
+imagePullSecrets:
+  - name: tadoku-dev-registry-pull

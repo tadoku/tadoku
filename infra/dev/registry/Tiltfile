@@ -1,0 +1,32 @@
+# -*- mode: Python -*-
+
+load('ext://secret', 'secret_yaml_docker_registry')
+
+DEV_REGISTRY_PULL_SECRET = 'tadoku-dev-registry-pull'
+DEV_REGISTRY_NAMESPACES = [
+  '',
+  'tdk-authz-api',
+  'tdk-content-api',
+  'tdk-immersion-api',
+  'tdk-profile-api',
+  'tdk-token-reflector',
+]
+
+registry_host = os.getenv('TADOKU_DEV_REGISTRY_HOST', '')
+registry_username = os.getenv('TADOKU_DEV_REGISTRY_USERNAME', 'registry-pull')
+registry_password = os.getenv('TADOKU_DEV_REGISTRY_PASSWORD', '')
+
+if registry_host:
+  default_registry(registry_host)
+
+if registry_host and registry_username and registry_password:
+  for namespace in DEV_REGISTRY_NAMESPACES:
+    k8s_yaml(secret_yaml_docker_registry(
+      DEV_REGISTRY_PULL_SECRET,
+      username=registry_username,
+      password=registry_password,
+      server=registry_host,
+      namespace=namespace,
+    ))
+else:
+  print('Skipping Tadoku dev registry pull secrets; set TADOKU_DEV_REGISTRY_HOST, TADOKU_DEV_REGISTRY_USERNAME, and TADOKU_DEV_REGISTRY_PASSWORD to pull private Tilt images.')

@@ -87,3 +87,5 @@ kind: ServiceAccount
 metadata:
   name: authz-api
   namespace: tdk-authz-api
+imagePullSecrets:
+  - name: tadoku-dev-registry-pull

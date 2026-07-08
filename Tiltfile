@@ -14,6 +14,9 @@ else:
     # Local cluster: images stay in the local docker daemon.
     pass
 
+# Dev registry auth
+include('./infra/dev/registry/Tiltfile')
+
 include('./k8s/dev/Tiltfile')
 
 # Private

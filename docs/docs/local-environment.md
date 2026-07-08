@@ -97,6 +97,24 @@ Seeding (`dev-seed`, also a Tilt resource that runs automatically once the backe
 
 Resetting (`dev-reset`, also available as a manual-only `dev-reset` Tilt resource) is destructive: it deletes the Zalando operator-managed `tadoku-dev-db` cluster and its persistent volume claims, reapplies the `postgresql` custom resource, restarts the backend services so their startup migrations run against the fresh database, and then reseeds. The script refuses to run unless the current kubectl context matches a known dev context (`shared_k8s_context`/`local_k8s_context` from `tilt_config.json`, or the `TADOKU_SHARED_K8S_CONTEXT`/`TADOKU_LOCAL_K8S_CONTEXT` env vars), and requires typing the context name to confirm when targeting the shared cluster. Ordinary `tilt down`/`tilt up` keeps data since the database uses persistent volumes.
 
+## Private development registry
+
+Tilt can push dev images to a private registry and create pull secrets for the namespaces that run Tilt-built images. Configure the pull-side credentials with local environment variables before running Tilt:
+
+```sh
+export TADOKU_DEV_REGISTRY_HOST="<registry-host>"
+export TADOKU_DEV_REGISTRY_USERNAME="registry-pull"
+export TADOKU_DEV_REGISTRY_PASSWORD="<registry-pull-password>"
+```
+
+The host value is also used as Tilt's `default_registry`, so authenticate Docker separately with the push account:
+
+```sh
+docker login "$TADOKU_DEV_REGISTRY_HOST" --username registry-push
+```
+
+Do not commit real registry hosts, usernames beyond the documented role names, passwords, or generated Secret YAML.
+
 ## Can't connect connect to service/database
 
 It's possible that the containers for a particular service or database have been shut down due resource constraints. In this case you can restart the service manually from the Tilt dashboard. If a database is unreachable it might be useful to restart the Tilt cluster.

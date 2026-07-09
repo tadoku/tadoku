@@ -1,4 +1,5 @@
 load("./../../infra/dev/build/Tiltfile", "bazel_build")
+load("./../../k8s/dev/config/Tiltfile", "dev_registry_push_resource_deps")
 
 # Api container
 watch_file('./deployments/api.yaml')
@@ -16,4 +17,4 @@ bazel_build(
   deps=['./', './../common/'],
 )
 
-k8s_resource('content-api', labels=["backend"], resource_deps=["tadoku-dev-db", "keto"])
+k8s_resource('content-api', labels=["backend"], resource_deps=dev_registry_push_resource_deps() + ["tadoku-dev-db", "keto"])

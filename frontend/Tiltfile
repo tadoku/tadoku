@@ -1,4 +1,4 @@
-load('./../k8s/dev/config/Tiltfile', 'is_shared_cluster', 'render_template')
+load('./../k8s/dev/config/Tiltfile', 'dev_registry_push_resource_deps', 'is_shared_cluster', 'render_template')
 
 def frontend_build(image, project_name, package_trigger):
   command = (
@@ -48,17 +48,17 @@ def frontend_build(image, project_name, package_trigger):
 # webv2
 frontend_webv2 = render_template('frontend/apps/webv2/deployments/frontend-webv2.yaml', '.tilt/rendered/frontend/apps/webv2/deployments/frontend-webv2.yaml')
 k8s_yaml(frontend_webv2)
-k8s_resource("frontend-webv2", labels=["frontend"])
+k8s_resource("frontend-webv2", labels=["frontend"], resource_deps=dev_registry_push_resource_deps())
 frontend_build('frontend-webv2', 'webv2', './apps/webv2/package.json')
 
 # auth
 frontend_auth = render_template('frontend/apps/auth/deployments/frontend-auth.yaml', '.tilt/rendered/frontend/apps/auth/deployments/frontend-auth.yaml')
 k8s_yaml(frontend_auth)
-k8s_resource("frontend-auth", labels=["auth"])
+k8s_resource("frontend-auth", labels=["auth"], resource_deps=dev_registry_push_resource_deps())
 frontend_build('frontend-auth', 'auth', './apps/auth/package.json')
 
 # admin
 frontend_admin = render_template('frontend/apps/admin/deployments/frontend-admin.yaml', '.tilt/rendered/frontend/apps/admin/deployments/frontend-admin.yaml')
 k8s_yaml(frontend_admin)
-k8s_resource("frontend-admin", labels=["frontend"])
+k8s_resource("frontend-admin", labels=["frontend"], resource_deps=dev_registry_push_resource_deps())
 frontend_build('frontend-admin', 'admin', './apps/admin/package.json')

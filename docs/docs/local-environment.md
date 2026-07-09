@@ -107,11 +107,14 @@ export TADOKU_DEV_REGISTRY_USERNAME="registry-pull"
 export TADOKU_DEV_REGISTRY_PASSWORD="<registry-pull-password>"
 ```
 
-On the shared cluster the same host is used as Tilt's `default_registry`, so authenticate Docker separately with the push account:
+On the shared cluster the same host is used as Tilt's `default_registry`. To have Tilt authenticate Docker automatically before shared-cluster image pushes, set the push-side credentials too:
 
 ```sh
-docker login "$TADOKU_DEV_REGISTRY_HOST" --username registry-push
+export TADOKU_DEV_REGISTRY_PUSH_USERNAME="registry-push"
+export TADOKU_DEV_REGISTRY_PUSH_PASSWORD="<registry-push-password>"
 ```
+
+Tilt runs `docker login` with `--password-stdin` before the image-building resources that push to the shared registry. If the push password is unset, Tilt skips this login resource and Docker must already have valid credentials for the registry.
 
 When the host, username, or password is missing, Tilt skips creating the pull secrets and prints a notice — local clusters that keep images in the local Docker daemon work unchanged without any of these variables.
 

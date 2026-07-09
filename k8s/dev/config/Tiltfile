@@ -56,6 +56,8 @@ local_cluster_name = (
     _default_local_cluster_name(local_cluster_type, local_k8s_context)
 )
 
+DEV_REGISTRY_PUSH_RESOURCE = 'dev-registry-push-login'
+
 def is_shared_cluster():
     return shared_k8s_context != '' and k8s_context() == shared_k8s_context
 
@@ -72,6 +74,11 @@ def dev_registry():
     if is_shared_cluster() and (registry == '' or registry.endswith('.example') or registry.endswith('.example.invalid')):
         fail('copy tilt_config.json.example to tilt_config.json and set shared.registry for the shared dev cluster')
     return registry
+
+def dev_registry_push_resource_deps():
+    if is_shared_cluster() and os.getenv('TADOKU_DEV_REGISTRY_PUSH_PASSWORD', ''):
+        return [DEV_REGISTRY_PUSH_RESOURCE]
+    return []
 
 def render_template(src, dst):
     read_file(repo_path(src))

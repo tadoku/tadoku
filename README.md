@@ -30,4 +30,6 @@ Seed users are `dev@tadoku.app` and `reader@tadoku.app`, both with password `tad
 Frontend pods use Tilt `live_update` with scoped sync paths and polling file watchers for Next.js.
 Routine edits under a frontend app or `frontend/packages/ui` should sync into the running pod and hot-reload without an image rebuild; package file changes run `pnpm -r install` inside the container.
 
+For clusters that use a private registry, set `TADOKU_DEV_REGISTRY_HOST` (or the `registry` value in `tilt_config.json`), pull credentials (`TADOKU_DEV_REGISTRY_USERNAME`/`TADOKU_DEV_REGISTRY_PASSWORD`), and shared-cluster push credentials (`TADOKU_DEV_REGISTRY_PUSH_USERNAME`/`TADOKU_DEV_REGISTRY_PUSH_PASSWORD`) before `make dev-up` so Tilt can create pull secrets and authenticate Docker for pushes; see `docs/docs/local-environment.md` for details.
+
 Registry cache is intentionally skipped for now: the dev stack already pulls from the configured per-environment registry, and there is no committed evidence that image pulls are a bottleneck.

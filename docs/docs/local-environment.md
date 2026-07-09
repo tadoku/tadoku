@@ -48,7 +48,7 @@ For local contexts, backend images are built with Bazel and are not pushed to a 
 
 ### Option B: Shared development cluster
 
-Prerequisite: the configured registry hostname must resolve from your machine, and your Docker daemon must trust the registry endpoint (via an insecure-registry entry for HTTP, or the platform TLS certificate once available) before Tilt can push images.
+Prerequisite: the configured registry hostname must resolve from your machine, and your Docker daemon must trust the registry endpoint (via an insecure-registry entry for HTTP, or the platform TLS certificate once available) before Tilt can push images. If the registry requires authentication, also set up the push and pull credentials described in [Private development registry](#private-development-registry).
 
 Copy `tilt_config.json.example` to the gitignored `tilt_config.json`, then replace the placeholder values with your private operator values. Keep real hostnames, registry names, and context names in private config only. The context keys can also be set via environment variables (`shared_k8s_context` → `TADOKU_SHARED_K8S_CONTEXT`, `local_k8s_context` → `TADOKU_LOCAL_K8S_CONTEXT`); environment variables take precedence over `tilt_config.json`. Shared-cluster mode stays disabled until a shared context is configured via `shared_k8s_context` or `TADOKU_SHARED_K8S_CONTEXT`; there is no committed default.
 
@@ -96,6 +96,29 @@ make dev-logs    # stream Tilt logs
 Seeding (`dev-seed`, also a Tilt resource that runs automatically once the backend services are ready) creates two Kratos identities — an admin `dev@tadoku.app` and a regular user `reader@tadoku.app`, both with password `tadoku` — grants the admin a Keto admin relation, and loads deterministic contests, activity logs, profile, and content data into the `immersion`, `profile`, and `content` databases. The seed is idempotent and safe to re-run: identities created by the seed carry a `seeded_by: tadoku-dev-seed` admin metadata marker, and re-running the seed refreshes their password to the currently configured value, so password overrides take effect on the next `dev-seed`. Identities without the marker (real or manually created accounts) are never modified, even if their email matches. Defaults can be overridden with `TADOKU_DEV_NAMESPACE`, `TADOKU_DEV_DB_PASSWORD`, `TADOKU_DEV_ADMIN_EMAIL`/`TADOKU_DEV_ADMIN_PASSWORD`, and `TADOKU_DEV_READER_EMAIL`/`TADOKU_DEV_READER_PASSWORD`.
 
 Resetting (`dev-reset`, also available as a manual-only `dev-reset` Tilt resource) is destructive: it deletes the Zalando operator-managed `tadoku-dev-db` cluster and its persistent volume claims, reapplies the `postgresql` custom resource, restarts the backend services so their startup migrations run against the fresh database, and then reseeds. The script refuses to run unless the current kubectl context matches a known dev context (`shared_k8s_context`/`local_k8s_context` from `tilt_config.json`, or the `TADOKU_SHARED_K8S_CONTEXT`/`TADOKU_LOCAL_K8S_CONTEXT` env vars), and requires typing the context name to confirm when targeting the shared cluster. Ordinary `tilt down`/`tilt up` keeps data since the database uses persistent volumes.
+
+## Private development registry
+
+Tilt can push dev images to a private registry and create `tadoku-dev-registry-pull` docker-registry pull secrets for the namespaces that run Tilt-built images. The registry host is resolved the same way as the shared-cluster `default_registry`: the `TADOKU_DEV_REGISTRY_HOST` environment variable if set, otherwise the `registry` value in `tilt_config.json`. Configure the pull-side credentials with local environment variables before running Tilt:
+
+```sh
+export TADOKU_DEV_REGISTRY_HOST="<registry-host>" # optional when registry is set in tilt_config.json
+export TADOKU_DEV_REGISTRY_USERNAME="registry-pull"
+export TADOKU_DEV_REGISTRY_PASSWORD="<registry-pull-password>"
+```
+
+On the shared cluster the same host is used as Tilt's `default_registry`. To have Tilt authenticate Docker automatically before shared-cluster image pushes, set the push-side credentials too:
+
+```sh
+export TADOKU_DEV_REGISTRY_PUSH_USERNAME="registry-push"
+export TADOKU_DEV_REGISTRY_PUSH_PASSWORD="<registry-push-password>"
+```
+
+Tilt runs `docker login` with `--password-stdin` before the image-building resources that push to the shared registry. If the push password is unset, Tilt skips this login resource and Docker must already have valid credentials for the registry.
+
+When the host, username, or password is missing, Tilt skips creating the pull secrets and prints a notice — local clusters that keep images in the local Docker daemon work unchanged without any of these variables.
+
+Do not commit real registry hosts, usernames beyond the documented role names, passwords, or generated Secret YAML.
 
 ## Can't connect connect to service/database
 

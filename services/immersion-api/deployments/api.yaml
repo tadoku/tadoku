@@ -102,3 +102,5 @@ kind: ServiceAccount
 metadata:
   name: immersion-api
   namespace: tdk-immersion-api
+imagePullSecrets:
+  - name: tadoku-dev-registry-pull

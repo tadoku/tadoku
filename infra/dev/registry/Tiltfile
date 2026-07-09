@@ -1,0 +1,60 @@
+# -*- mode: Python -*-
+
+load('ext://secret', 'secret_yaml_docker_registry')
+load('./../../../k8s/dev/config/Tiltfile', 'DEV_REGISTRY_PUSH_RESOURCE', 'dev_registry', 'is_shared_cluster')
+
+DEV_REGISTRY_PULL_SECRET = 'tadoku-dev-registry-pull'
+DEV_REGISTRY_NAMESPACES = [
+  '',
+  'tdk-authz-api',
+  'tdk-content-api',
+  'tdk-immersion-api',
+  'tdk-profile-api',
+  'tdk-token-reflector',
+]
+
+registry_host = dev_registry()
+registry_username = os.getenv('TADOKU_DEV_REGISTRY_USERNAME', 'registry-pull')
+registry_password = os.getenv('TADOKU_DEV_REGISTRY_PASSWORD', '')
+registry_push_username = os.getenv('TADOKU_DEV_REGISTRY_PUSH_USERNAME', 'registry-push')
+registry_push_password = os.getenv('TADOKU_DEV_REGISTRY_PUSH_PASSWORD', '')
+
+def _sh_quote(value):
+  return "'" + value.replace("'", "'\"'\"'") + "'"
+
+if is_shared_cluster() and registry_host and registry_push_username and registry_push_password:
+  local_resource(
+    DEV_REGISTRY_PUSH_RESOURCE,
+    cmd=(
+      'registry_host=' + _sh_quote(registry_host) +
+      '; registry_username="${TADOKU_DEV_REGISTRY_PUSH_USERNAME:-registry-push}"; ' +
+      'printf "%s" "$TADOKU_DEV_REGISTRY_PUSH_PASSWORD" | docker login "$registry_host" --username "$registry_username" --password-stdin'
+    ),
+    labels=['infra'],
+  )
+elif is_shared_cluster():
+  print('Skipping Tadoku dev registry push login; set TADOKU_DEV_REGISTRY_PUSH_USERNAME and TADOKU_DEV_REGISTRY_PUSH_PASSWORD to have Tilt authenticate Docker automatically before pushing shared-cluster images.')
+
+if registry_host and registry_username and registry_password:
+  # Group the tdk-* Namespace objects with the pull secrets in a single
+  # resource so Tilt applies the namespaces before the secrets that live in
+  # them (entities within a resource are applied in kind order).
+  registry_auth_objects = []
+  for namespace in DEV_REGISTRY_NAMESPACES:
+    k8s_yaml(secret_yaml_docker_registry(
+      DEV_REGISTRY_PULL_SECRET,
+      username=registry_username,
+      password=registry_password,
+      server=registry_host,
+      namespace=namespace,
+    ))
+    registry_auth_objects.append('%s:secret:%s' % (DEV_REGISTRY_PULL_SECRET, namespace or 'default'))
+    if namespace:
+      registry_auth_objects.append('%s:namespace' % namespace)
+  k8s_resource(
+    new_name='dev-registry-auth',
+    objects=registry_auth_objects,
+    labels=['infra'],
+  )
+else:
+  print('Skipping Tadoku dev registry pull secrets; set TADOKU_DEV_REGISTRY_HOST (or the registry in tilt_config.json), TADOKU_DEV_REGISTRY_USERNAME, and TADOKU_DEV_REGISTRY_PASSWORD to pull private Tilt images.')

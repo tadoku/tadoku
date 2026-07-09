@@ -50,3 +50,5 @@ kind: ServiceAccount
 metadata:
   name: token-reflector
   namespace: tdk-token-reflector
+imagePullSecrets:
+  - name: tadoku-dev-registry-pull

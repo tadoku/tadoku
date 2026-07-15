@@ -1,16 +1,49 @@
-load('./../k8s/dev/config/Tiltfile', 'is_shared_cluster', 'render_template')
+load(
+  './../k8s/dev/config/Tiltfile',
+  'dev_build_platform',
+  'dev_buildx_builder',
+  'dev_buildx_registry_insecure',
+  'is_shared_cluster',
+  'render_template',
+)
+
+def _sh_quote(value):
+  return "'" + value.replace("'", "'\"'\"'") + "'"
+
+def _buildx_output():
+  output = 'type=image,name=$EXPECTED_REF,push=true,oci-mediatypes=true'
+  if dev_buildx_registry_insecure():
+    output += ',registry.insecure=true'
+  return output
+
+def _buildx_setup_command():
+  builder = _sh_quote(dev_buildx_builder())
+  return (
+    'docker buildx inspect {builder} >/dev/null 2>&1 || ' +
+    'docker buildx create --name {builder} --driver docker-container >/dev/null; ' +
+    'docker buildx inspect --bootstrap {builder} >/dev/null; '
+  ).format(builder=builder)
 
 def frontend_build(image, project_name, package_trigger):
-  command = (
-    'docker build --platform linux/amd64 -f ./Dockerfile.dev --build-arg PROJECT_NAME={project_name} -t $EXPECTED_REF .'
-  ).format(project_name=project_name)
-
   if is_shared_cluster():
-    # Normalize Docker metadata before Tilt pushes to Zot.
-    command += (
-      ' && cid=$(docker create --entrypoint /bin/sh $EXPECTED_REF -c true)' +
-      ' && { docker commit "$cid" $EXPECTED_REF >/dev/null; status=$?;' +
-      ' docker rm "$cid" >/dev/null; exit $status; }'
+    command = (
+      _buildx_setup_command() +
+      'docker buildx build --builder {builder} --platform {platform} -f ./Dockerfile.dev ' +
+      '--build-arg PROJECT_NAME={project_name} ' +
+      '--provenance=false --sbom=false ' +
+      '--output {output} .'
+    ).format(
+      builder=_sh_quote(dev_buildx_builder()),
+      platform=_sh_quote(dev_build_platform()),
+      project_name=project_name,
+      output=_buildx_output(),
+    )
+  else:
+    command = (
+      'docker build --platform {platform} -f ./Dockerfile.dev --build-arg PROJECT_NAME={project_name} -t $EXPECTED_REF .'
+    ).format(
+      platform=_sh_quote(dev_build_platform()),
+      project_name=project_name,
     )
 
   package_triggers = [
@@ -33,7 +66,8 @@ def frontend_build(image, project_name, package_trigger):
       './apps/%s' % project_name,
       './packages',
     ],
-    disable_push=not is_shared_cluster(),
+    disable_push=True,
+    skips_local_docker=is_shared_cluster(),
     live_update=[
       sync('./apps/%s' % project_name, '/app/apps/%s' % project_name),
       sync('./packages', '/app/packages'),

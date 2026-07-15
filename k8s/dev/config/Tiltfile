@@ -67,11 +67,40 @@ def selected_environment():
 def selected_config():
     return tilt_config.get(selected_environment(), {})
 
+def selected_build_config():
+    return selected_config().get('build', {})
+
+def _env_bool(name):
+    value = os.getenv(name, '').lower()
+    if value in ['1', 'true', 'yes', 'on']:
+        return True
+    if value in ['0', 'false', 'no', 'off']:
+        return False
+    return None
+
 def dev_registry():
     registry = os.getenv('TADOKU_DEV_REGISTRY_HOST', '') or selected_config().get('registry', '')
     if is_shared_cluster() and (registry == '' or registry.endswith('.example') or registry.endswith('.example.invalid')):
         fail('copy tilt_config.json.example to tilt_config.json and set shared.registry for the shared dev cluster')
     return registry
+
+def dev_build_platform():
+    return os.getenv('TADOKU_DEV_BUILD_PLATFORM', '') or selected_build_config().get('platform', 'linux/amd64')
+
+def dev_bazel_platform():
+    return os.getenv('TADOKU_DEV_BAZEL_PLATFORM', '') or selected_build_config().get('bazel_platform', '@rules_go//go/toolchain:linux_amd64')
+
+def dev_buildx_builder():
+    return os.getenv('TADOKU_DEV_BUILDX_BUILDER', '') or selected_build_config().get('buildx_builder', 'tadoku-dev')
+
+def dev_buildx_registry_insecure():
+    env_value = _env_bool('TADOKU_DEV_BUILDX_REGISTRY_INSECURE')
+    if env_value != None:
+        return env_value
+    return selected_build_config().get('buildx_registry_insecure', False)
+
+def dev_registry_ca_file():
+    return os.getenv('TADOKU_DEV_REGISTRY_CA_FILE', '') or selected_build_config().get('registry_ca_file', '')
 
 def render_template(src, dst):
     read_file(repo_path(src))

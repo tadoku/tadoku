@@ -1,4 +1,15 @@
-load('./../../../k8s/dev/config/Tiltfile', 'is_shared_cluster', 'local_cluster_name', 'local_cluster_type', 'repo_path')
+load(
+  './../../../k8s/dev/config/Tiltfile',
+  'dev_bazel_platform',
+  'dev_build_platform',
+  'dev_buildx_builder',
+  'dev_buildx_registry_insecure',
+  'dev_registry_ca_file',
+  'is_shared_cluster',
+  'local_cluster_name',
+  'local_cluster_type',
+  'repo_path',
+)
 
 def _sh_quote(value):
   return "'" + value.replace("'", "'\"'\"'") + "'"
@@ -21,23 +32,62 @@ def _local_image_load_command(image_ref):
 
   fail('unsupported local_cluster_type %r; expected kind, minikube, or a daemon-sharing type' % local_cluster_type)
 
+def _buildx_output():
+  output = 'type=image,name=$EXPECTED_REF,push=true,oci-mediatypes=true'
+  if dev_buildx_registry_insecure():
+    output += ',registry.insecure=true'
+  return output
+
+def _buildx_setup_command():
+  builder = _sh_quote(dev_buildx_builder())
+  return (
+    'docker buildx inspect {builder} >/dev/null 2>&1 || ' +
+    'docker buildx create --name {builder} --driver docker-container >/dev/null; ' +
+    'docker buildx inspect --bootstrap {builder} >/dev/null; '
+  ).format(builder=builder)
+
+def _bazel_env_prefix():
+  ca_file = dev_registry_ca_file()
+  if ca_file:
+    return 'SSL_CERT_FILE={ca_file} '.format(ca_file=_sh_quote(ca_file))
+  return ''
+
 def bazel_build(image, target, deps):
   dest = target.replace('//', 'bazel/').replace(':load', ":latest")
-  command = (
-    'bazel run --platforms=@rules_go//go/toolchain:linux_amd64 {image_target}').format(
-      image_target=target,
-    )
 
   push_to_registry = is_shared_cluster()
   output_ref_file = ''
   if push_to_registry:
-    command += ' && docker tag {bazel_image} $EXPECTED_REF'.format(bazel_image=dest)
-    # Normalize Bazel-loaded image metadata before Tilt pushes to Zot.
-    command += (
-      ' && cid=$(docker create $EXPECTED_REF)' +
-      ' && { docker commit "$cid" $EXPECTED_REF >/dev/null; status=$?;' +
-      ' docker rm "$cid" >/dev/null; exit $status; }')
+    if '/storage/postgres/migrations:load' in target:
+      package_dir = target.split(':')[0].replace('//', '')
+      package_path = repo_path(package_dir)
+      command = (
+        _buildx_setup_command() +
+        'docker buildx build --builder {builder} --platform {platform} ' +
+        '-f {dockerfile} ' +
+        '--provenance=false --sbom=false ' +
+        '--output {output} ' +
+        '{context}').format(
+          builder=_sh_quote(dev_buildx_builder()),
+          platform=_sh_quote(dev_build_platform()),
+          dockerfile=_sh_quote(package_path + '/Dockerfile.dev'),
+          output=_buildx_output(),
+          context=_sh_quote(package_path),
+        )
+    else:
+      command = (
+        _bazel_env_prefix() +
+        'bazel run --platforms={bazel_platform} {push_target} -- ' +
+        '--repository $EXPECTED_REGISTRY/$EXPECTED_IMAGE --tag $EXPECTED_TAG').format(
+          bazel_platform=_sh_quote(dev_bazel_platform()),
+          push_target=target.replace(':load', ':dev_push'),
+        )
   else:
+    command = (
+      'bazel run --platforms={bazel_platform} {image_target}').format(
+        bazel_platform=_sh_quote(dev_bazel_platform()),
+        image_target=target,
+      )
     load_command = _local_image_load_command('"$ref"')
     if load_command:
       command += (
@@ -62,7 +112,8 @@ def bazel_build(image, target, deps):
 
   custom_build(
     ref=image,
-    disable_push=not push_to_registry,
+    disable_push=True,
+    skips_local_docker=push_to_registry,
     command=command,
     deps=deps,
     **build_kwargs

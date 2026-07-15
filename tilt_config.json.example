@@ -22,6 +22,13 @@
   "shared": {
     "ingress_class": "nginx",
     "registry": "registry.internal.example",
+    "build": {
+      "platform": "linux/amd64",
+      "bazel_platform": "@rules_go//go/toolchain:linux_amd64",
+      "buildx_builder": "tadoku-dev",
+      "buildx_registry_insecure": false,
+      "registry_ca_file": ""
+    },
     "scheme": "https",
     "ssl_redirect": true,
     "kratos_development": false,

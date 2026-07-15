@@ -57,6 +57,12 @@ oci_load(
 )
 
 oci_push(
+    name = "dev_push",
+    image = ":image",
+    visibility = ["//visibility:public"],
+)
+
+oci_push(
     name = "push",
     image = ":image",
     remote_tags = ["latest"],

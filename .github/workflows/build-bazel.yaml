@@ -38,12 +38,12 @@ jobs:
       - name: Build
         run: bazel build //...
 
-      - name: Check push_images covers all oci_push targets
+      - name: Check push_images covers all production oci_push targets
         run: |
           diff \
-            <(bazel query 'kind("oci_push", //services/...)' | sort) \
+            <(bazel query 'attr(name, "^push$", kind("oci_push", //services/...))' | sort) \
             <(bazel query 'kind("oci_push", labels(data, //:push_images))' | sort) \
-          || { echo "//:push_images is out of sync with oci_push targets under //services/..." >&2; exit 1; }
+          || { echo "//:push_images is out of sync with production oci_push targets named :push under //services/..." >&2; exit 1; }
 
       - name: Run tests
         run: bazel test //...

@@ -16,6 +16,38 @@ export const formatScore = (
 export const formatUnit = (amount: number, unit: string) =>
   `${unit.toLowerCase()}${amount !== 1 ? 's' : ''}`
 
+export const formatDuration = (durationSeconds: number) =>
+  `${new Intl.NumberFormat('en-US', {
+    maximumFractionDigits: 1,
+  }).format(durationSeconds / 60)} min`
+
+interface TrackingValues {
+  amount: number
+  unit_name: string
+  duration_seconds?: number
+}
+
+export const hasTrackedAmount = (tracking: TrackingValues) =>
+  tracking.unit_name !== ''
+
+export const formatTracking = (tracking: TrackingValues) => {
+  const values: string[] = []
+
+  if (hasTrackedAmount(tracking)) {
+    values.push(
+      `${formatScore(tracking.amount)} ${formatUnit(
+        tracking.amount,
+        tracking.unit_name,
+      )}`,
+    )
+  }
+  if (tracking.duration_seconds !== undefined) {
+    values.push(formatDuration(tracking.duration_seconds))
+  }
+
+  return values.join(' · ')
+}
+
 export const colorForActivity = (id: number) =>
   activityColors[id % activityColors.length]
 

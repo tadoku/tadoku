@@ -6,7 +6,13 @@ import {
 } from '@heroicons/react/24/outline'
 import { Log, useDeleteLog } from '@app/immersion/api'
 import { routes } from '@app/common/routes'
-import { colorForActivity, formatScore, formatUnit } from '@app/common/format'
+import {
+  colorForActivity,
+  formatDuration,
+  formatScore,
+  formatUnit,
+  hasTrackedAmount,
+} from '@app/common/format'
 import { useSession } from '@app/common/session'
 import { useRouter } from 'next/router'
 import { useState } from 'react'
@@ -22,6 +28,7 @@ interface Props {
 export const LogDetailsV2 = ({ log }: Props) => {
   const logColor = colorForActivity(log.activity.id)
   const tags = log.tags
+  const hasAmount = hasTrackedAmount(log)
 
   return (
     <div>
@@ -78,17 +85,31 @@ export const LogDetailsV2 = ({ log }: Props) => {
               <h3 className="subtitle mb-2">Score</h3>
               <div className="font-bold text-5xl">{formatScore(log.score)}</div>
             </div>
-            <div className="w-1/2 flex flex-col items-end justify-end opacity-80">
-              <h4 className="subtitle text-sm">Breakdown</h4>
-              <div className="lowercase flex items-center space-x-1 text-sm">
-                <strong className="text-lg">{formatScore(log.amount)}</strong>
-                <span className="text-slate-500">
-                  {formatUnit(log.amount, log.unit_name)}
-                </span>
-                <XMarkIcon className="w-3 h-3 mx-2 text-secondary" />
-                <strong className="text-lg">{log.modifier}</strong>
-                <span className="text-slate-500">modifier</span>
-              </div>
+            <div className="w-1/2 flex flex-col items-end justify-end gap-2 opacity-80">
+              {hasAmount ? (
+                <div className="flex flex-col items-end">
+                  <h4 className="subtitle text-sm">Breakdown</h4>
+                  <div className="lowercase flex items-center space-x-1 text-sm">
+                    <strong className="text-lg">
+                      {formatScore(log.amount)}
+                    </strong>
+                    <span className="text-slate-500">
+                      {formatUnit(log.amount, log.unit_name)}
+                    </span>
+                    <XMarkIcon className="w-3 h-3 mx-2 text-secondary" />
+                    <strong className="text-lg">{log.modifier}</strong>
+                    <span className="text-slate-500">modifier</span>
+                  </div>
+                </div>
+              ) : null}
+              {log.duration_seconds !== undefined ? (
+                <div className="flex flex-col items-end">
+                  <h4 className="subtitle text-sm">Time spent</h4>
+                  <strong className="text-lg">
+                    {formatDuration(log.duration_seconds)}
+                  </strong>
+                </div>
+              ) : null}
             </div>
           </div>
         </div>

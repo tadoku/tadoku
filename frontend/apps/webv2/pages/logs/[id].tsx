@@ -1,8 +1,10 @@
 import {
   colorForActivity,
   formatArray,
+  formatDuration,
   formatScore,
   formatUnit,
+  hasTrackedAmount,
 } from '@app/common/format'
 import { useCurrentDateTime } from '@app/common/hooks'
 import { routes } from '@app/common/routes'
@@ -64,6 +66,7 @@ const Page = () => {
   }
 
   const logColor = colorForActivity(log.data.activity.id)
+  const hasAmount = hasTrackedAmount(log.data)
 
   return (
     <>
@@ -147,19 +150,31 @@ const Page = () => {
                 {formatScore(log.data.score)}
               </div>
             </div>
-            <div className="w-1/2 flex flex-col items-end justify-end opacity-80">
-              <h4 className="subtitle text-sm">Breakdown</h4>
-              <div className="lowercase flex items-center space-x-1 text-sm">
-                <strong className="text-lg">
-                  {formatScore(log.data.amount)}
-                </strong>
-                <span className="text-slate-500">
-                  {formatUnit(log.data.amount, log.data.unit_name)}
-                </span>
-                <XMarkIcon className="w-3 h-3 mx-2 text-secondary" />
-                <strong className="text-lg">{log.data.modifier}</strong>
-                <span className="text-slate-500">modifier</span>
-              </div>
+            <div className="w-1/2 flex flex-col items-end justify-end gap-2 opacity-80">
+              {hasAmount ? (
+                <div className="flex flex-col items-end">
+                  <h4 className="subtitle text-sm">Breakdown</h4>
+                  <div className="lowercase flex items-center space-x-1 text-sm">
+                    <strong className="text-lg">
+                      {formatScore(log.data.amount)}
+                    </strong>
+                    <span className="text-slate-500">
+                      {formatUnit(log.data.amount, log.data.unit_name)}
+                    </span>
+                    <XMarkIcon className="w-3 h-3 mx-2 text-secondary" />
+                    <strong className="text-lg">{log.data.modifier}</strong>
+                    <span className="text-slate-500">modifier</span>
+                  </div>
+                </div>
+              ) : null}
+              {log.data.duration_seconds !== undefined ? (
+                <div className="flex flex-col items-end">
+                  <h4 className="subtitle text-sm">Time spent</h4>
+                  <strong className="text-lg">
+                    {formatDuration(log.data.duration_seconds)}
+                  </strong>
+                </div>
+              ) : null}
             </div>
           </div>
         </div>

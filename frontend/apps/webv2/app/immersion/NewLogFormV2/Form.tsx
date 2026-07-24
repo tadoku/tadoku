@@ -165,38 +165,26 @@ export const LogFormV2 = ({ options, defaultValues: originalDefaultValues }: Pro
                 values={activitiesAsOptions}
                 options={{ valueAsNumber: true }}
               />
-              {usesAmountUnit ? (
-                <>
-                  <AmountWithUnit
-                    label="Amount"
-                    name="amount"
-                    defaultValue={0}
-                    min={0}
-                    step="any"
-                    units={unitsAsOptions}
-                    unitsLabel="Unit"
-                  />
-                  <Input
-                    name="durationMinutes"
-                    label="Time spent"
-                    type="number"
-                    min={0}
-                    step="any"
-                    hint="minutes"
-                    options={{ valueAsNumber: true }}
-                  />
-                </>
-              ) : (
-                <Input
-                  name="durationMinutes"
-                  label="Time spent"
-                  type="number"
+              {usesAmountUnit && (
+                <AmountWithUnit
+                  label="Amount"
+                  name="amount"
+                  defaultValue={0}
                   min={0}
                   step="any"
-                  hint="minutes"
-                  options={{ valueAsNumber: true }}
+                  units={unitsAsOptions}
+                  unitsLabel="Unit"
                 />
               )}
+              <Input
+                name="durationMinutes"
+                label="Time spent"
+                type="number"
+                min={0}
+                step="any"
+                hint="minutes"
+                options={{ valueAsNumber: true }}
+              />
               <Input
                 name="description"
                 label="Description"

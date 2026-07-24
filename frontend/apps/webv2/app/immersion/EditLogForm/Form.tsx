@@ -121,30 +121,18 @@ export const EditLogForm = ({ options, log }: Props) => {
                   disabled
                 />
               </label>
-              {usesAmountUnit ? (
-                <>
-                  <AmountWithUnit
-                    label="Amount"
-                    name="amount"
-                    defaultValue={log.amount}
-                    min={0}
-                    step="any"
-                    units={unitsAsOptions}
-                    unitsLabel="Unit"
-                  />
-                  {activityInputType === 'amount_primary' ? (
-                    <Input
-                      name="durationMinutes"
-                      label="Time spent"
-                      type="number"
-                      min={0}
-                      step="any"
-                      hint="minutes"
-                      options={{ valueAsNumber: true }}
-                    />
-                  ) : null}
-                </>
-              ) : (
+              {usesAmountUnit && (
+                <AmountWithUnit
+                  label="Amount"
+                  name="amount"
+                  defaultValue={log.amount}
+                  min={0}
+                  step="any"
+                  units={unitsAsOptions}
+                  unitsLabel="Unit"
+                />
+              )}
+              {!isLegacyAmountEdit && (
                 <Input
                   name="durationMinutes"
                   label="Time spent"

@@ -1478,6 +1478,9 @@ components:
         score:
           type: number
           format: float
+        duration_seconds:
+          type: integer
+          format: int32
         registrations:
           type: array
           items:

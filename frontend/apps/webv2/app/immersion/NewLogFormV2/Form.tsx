@@ -28,13 +28,19 @@ interface Props {
 }
 
 export const LogFormV2 = ({ options, defaultValues: originalDefaultValues }: Props) => {
+  const defaultActivity = options.activities[0]
+  const defaultActivityInputType =
+    defaultActivity?.input_type ?? 'amount_primary'
   const defaultValues: Partial<NewLogFormV2Schema> = {
     ...originalDefaultValues,
-    activityId: options.activities[0].id,
-    amountUnit: options.units.filter(
-      it => it.log_activity_id === options.activities[0].id,
-    )[0]?.id,
+    activityId: defaultActivity.id,
+    amountUnit:
+      defaultActivityInputType === 'amount_primary'
+        ? options.units.filter(it => it.log_activity_id === defaultActivity.id)[0]
+            ?.id
+        : undefined,
     allUnits: options.units,
+    allActivities: options.activities,
   }
 
   const methods = useForm({
@@ -67,6 +73,8 @@ export const LogFormV2 = ({ options, defaultValues: originalDefaultValues }: Pro
       : undefined
 
   const activity = options.activities.find(it => it.id === activityId)
+  const activityInputType = activity?.input_type ?? 'amount_primary'
+  const usesAmountUnit = activityInputType === 'amount_primary'
   const units = filterUnits(options.units, activity?.id, languageCode)
   const unitsAsOptions: Option[] = units.map(it => ({
     value: it.id,
@@ -77,7 +85,9 @@ export const LogFormV2 = ({ options, defaultValues: originalDefaultValues }: Pro
     value: it.id.toString(),
     label: it.name,
   }))
-  const estimatedScore = estimateScore(amount, currentSelectedUnit)
+  const estimatedScore = usesAmountUnit
+    ? estimateScore(amount, currentSelectedUnit)
+    : undefined
 
   // Eagerly prefetch ongoing registrations (non-blocking)
   const registrations = useOngoingContestRegistrations()
@@ -109,10 +119,22 @@ export const LogFormV2 = ({ options, defaultValues: originalDefaultValues }: Pro
         (name === 'languageCode' || name === 'activityId') &&
         type === 'change'
       ) {
+        const selectedActivity = options.activities.find(
+          it => it.id === value.activityId,
+        )
+        const selectedInputType =
+          selectedActivity?.input_type ?? 'amount_primary'
+
+        if (selectedInputType === 'time_primary') {
+          methods.setValue('amountValue', undefined)
+          methods.setValue('amountUnit', undefined)
+          return
+        }
+
         const id = filterUnits(
           options.units,
           value.activityId,
-          languageCode,
+          value.languageCode,
         )?.[0]?.id
         if (id !== methods.getValues('amountUnit')) {
           methods.setValue('amountUnit', id)
@@ -120,7 +142,7 @@ export const LogFormV2 = ({ options, defaultValues: originalDefaultValues }: Pro
       }
     })
     return () => subscription.unsubscribe()
-  }, [methods, languageCode, options.units])
+  }, [methods, options.activities, options.units])
 
   return (
     <FormProvider {...methods}>
@@ -143,14 +165,25 @@ export const LogFormV2 = ({ options, defaultValues: originalDefaultValues }: Pro
                 values={activitiesAsOptions}
                 options={{ valueAsNumber: true }}
               />
-              <AmountWithUnit
-                label="Amount"
-                name="amount"
-                defaultValue={0}
+              {usesAmountUnit && (
+                <AmountWithUnit
+                  label="Amount"
+                  name="amount"
+                  defaultValue={0}
+                  min={0}
+                  step="any"
+                  units={unitsAsOptions}
+                  unitsLabel="Unit"
+                />
+              )}
+              <Input
+                name="durationMinutes"
+                label="Time spent"
+                type="number"
                 min={0}
                 step="any"
-                units={unitsAsOptions}
-                unitsLabel="Unit"
+                hint="minutes"
+                options={{ valueAsNumber: true }}
               />
               <Input
                 name="description"
@@ -172,7 +205,10 @@ export const LogFormV2 = ({ options, defaultValues: originalDefaultValues }: Pro
               </div>
             </div>
             <div className="-mx-4 -mb-4 mt-4 px-4 py-2 md:-mx-7 md:-mb-7 md:px-7 md:py-2 bg-slate-500/5 text-center lg:text-right font-mono">
-              Estimated score: <strong>{formatScore(estimatedScore)}</strong>
+              Estimated score:{' '}
+              <strong>
+                {usesAmountUnit ? formatScore(estimatedScore) : '-'}
+              </strong>
             </div>
           </div>
           <div className="h-stack spaced justify-end">

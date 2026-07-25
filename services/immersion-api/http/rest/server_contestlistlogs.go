@@ -65,6 +65,7 @@ func (s *Server) ContestListLogs(ctx echo.Context, id types.UUID, params openapi
 			Amount:          it.Amount,
 			Modifier:        it.Modifier,
 			Score:           it.Score,
+			DurationSeconds: it.DurationSeconds,
 			Tags:            it.Tags,
 			UnitName:        it.UnitName,
 			UserId:          it.UserID,

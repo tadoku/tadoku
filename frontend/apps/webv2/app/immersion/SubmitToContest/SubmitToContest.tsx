@@ -7,8 +7,7 @@ import {
 } from '@app/immersion/api'
 import { useRouter } from 'next/router'
 import { routes } from '@app/common/routes'
-import { formatScore } from '@app/common/format'
-import { formatUnit } from '@app/common/format'
+import { formatScore, formatTracking } from '@app/common/format'
 import { classifyRegistrations } from '@app/immersion/SubmitToContest/domain'
 import { toast } from 'react-toastify'
 import { useDebouncedCallback } from 'use-debounce'
@@ -71,7 +70,7 @@ export const SubmitToContest = ({ log, registrations, preselect }: Props) => {
               <span>
                 <strong>{log.language.name}</strong> &middot;{' '}
                 {log.activity.name} &middot;{' '}
-                {formatScore(log.amount)} {formatUnit(log.amount, log.unit_name)}
+                {formatTracking(log)}
               </span>
               {log.description ? <span>{log.description}</span> : null}
             </div>

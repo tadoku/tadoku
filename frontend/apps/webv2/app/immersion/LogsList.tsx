@@ -14,7 +14,11 @@ import {
   getContestLogsQueryKey,
 } from '@app/immersion/api'
 import { UseQueryResult, useQueryClient } from 'react-query'
-import { colorForActivity, formatScore, formatUnit } from '@app/common/format'
+import {
+  colorForActivity,
+  formatScore,
+  formatTracking,
+} from '@app/common/format'
 import { Loading, ActionMenu, Modal } from 'ui'
 import { useState } from 'react'
 import { useSession, useUserRole } from '@app/common/session'
@@ -100,7 +104,7 @@ const LogsList = ({ logs, showUsername = false, contestId }: Props) => {
             <th className="default w-36">Date</th>
             <th className="default w-32">Language</th>
             <th className="default hidden lg:table-cell">Description</th>
-            <th className="default w-36 hidden md:table-cell">Amount</th>
+            <th className="default w-36 hidden md:table-cell">Tracked</th>
             <th className="default w-24 !text-right">Score</th>
             <th className="default"></th>
           </tr>
@@ -149,7 +153,7 @@ const LogsList = ({ logs, showUsername = false, contestId }: Props) => {
               </td>
               <td className="default link font-bold hidden md:table-cell">
                 <Link className="reset" href={routes.log(it.id)}>
-                  {formatScore(it.amount)} {formatUnit(it.amount, it.unit_name)}
+                  {formatTracking(it)}
                 </Link>
               </td>
               <td className="default link font-bold">

@@ -55,11 +55,16 @@ go_library(
 
 go_test(
     name = "rest_test",
-    srcs = ["mappers_test.go"],
+    srcs = [
+        "mappers_test.go",
+        "server_loglist_test.go",
+    ],
     embed = [":rest"],
     deps = [
         "//services/immersion-api/domain",
         "//services/immersion-api/http/rest/openapi",
+        "@com_github_google_uuid//:uuid",
+        "@com_github_labstack_echo_v4//:echo",
         "@com_github_stretchr_testify//assert",
         "@com_github_stretchr_testify//require",
     ],

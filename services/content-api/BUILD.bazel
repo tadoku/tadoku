@@ -43,7 +43,11 @@ oci_image(
     # This is defined by an oci.pull() call in /MODULE.bazel
     base = "@distroless_base_linux_amd64",
     entrypoint = ["/content-api"],
-    tars = [":app_layer"],
+    tars = [
+        ":app_layer",
+        "//services/common/migrate-runner:layer",
+        "//services/content-api/storage/postgres/migrations:tar",
+    ],
 )
 
 oci_load(

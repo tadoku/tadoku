@@ -1,0 +1,46 @@
+load("@rules_go//go:def.bzl", "go_binary", "go_library", "go_test")
+load("@rules_pkg//:pkg.bzl", "pkg_tar")
+
+go_library(
+    name = "migrate-runner_lib",
+    srcs = ["main.go"],
+    importpath = "github.com/tadoku/tadoku/services/common/migrate-runner",
+    visibility = ["//visibility:private"],
+    deps = [
+        "@com_github_golang_migrate_migrate_v4//:migrate",
+        "@com_github_golang_migrate_migrate_v4//database/postgres",
+        "@com_github_golang_migrate_migrate_v4//source/file",
+    ],
+)
+
+go_binary(
+    name = "migrate",
+    embed = [":migrate-runner_lib"],
+    pure = "on",
+    static = "on",
+    visibility = ["//visibility:private"],
+)
+
+go_test(
+    name = "migrate-runner_test",
+    srcs = ["main_test.go"],
+    embed = [":migrate-runner_lib"],
+    deps = [
+        "@com_github_golang_migrate_migrate_v4//:migrate",
+        "@com_github_stretchr_testify//assert",
+        "@com_github_stretchr_testify//require",
+    ],
+)
+
+pkg_tar(
+    name = "layer",
+    srcs = [":migrate"],
+    mode = "0755",
+    package_dir = "/",
+    visibility = [
+        "//services/authz-api:__pkg__",
+        "//services/content-api:__pkg__",
+        "//services/immersion-api:__pkg__",
+        "//services/profile-api:__pkg__",
+    ],
+)

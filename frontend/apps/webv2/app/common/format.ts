@@ -16,10 +16,12 @@ export const formatScore = (
 export const formatUnit = (amount: number, unit: string) =>
   `${unit.toLowerCase()}${amount !== 1 ? 's' : ''}`
 
+const durationFormatter = new Intl.NumberFormat('en-US', {
+  maximumFractionDigits: 1,
+})
+
 export const formatDuration = (durationSeconds: number) =>
-  `${new Intl.NumberFormat('en-US', {
-    maximumFractionDigits: 1,
-  }).format(durationSeconds / 60)} min`
+  `${durationFormatter.format(durationSeconds / 60)} min`
 
 interface TrackingValues {
   amount: number

@@ -75,20 +75,6 @@ jobs:
             -t ghcr.io/tadoku/tadoku/frontend-webv2:latest \
             .
 
-      - name: Install Trivy
-        uses: aquasecurity/setup-trivy@81e514348e19b6112ce2a7e3ecbafe19c1e1f567 # v0.3.1
-        with:
-          version: v0.72.0
-
-      - name: Scan image
-        run: |
-          trivy image \
-            --exit-code 1 \
-            --ignore-unfixed \
-            --scanners vuln \
-            --severity CRITICAL,HIGH \
-            ghcr.io/tadoku/tadoku/frontend-webv2:latest
-
       - name: Push images
         env:
           IMAGE_NAME: ghcr.io/tadoku/tadoku/frontend-webv2

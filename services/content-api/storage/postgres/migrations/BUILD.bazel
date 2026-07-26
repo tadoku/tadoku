@@ -1,4 +1,3 @@
-load("@rules_oci//oci:defs.bzl", "oci_image", "oci_load")
 load("@rules_pkg//:pkg.bzl", "pkg_tar")
 
 pkg_tar(
@@ -7,16 +6,4 @@ pkg_tar(
     mode = "0644",
     package_dir = "/migrations",
     visibility = ["//services/content-api:__pkg__"],
-)
-
-oci_image(
-    name = "image",
-    base = "@go_migrate_linux_amd64",
-    tars = [":tar"],
-)
-
-oci_load(
-    name = "load",
-    image = ":image",
-    repo_tags = ["bazel/services/content-api/storage/postgres/migrations:latest"],
 )

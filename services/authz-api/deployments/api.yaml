@@ -22,7 +22,7 @@ spec:
       serviceAccountName: authz-api
       initContainers:
         - name: migrations
-          image: authz-api-migrate-image
+          image: authz-api-image
           imagePullPolicy: IfNotPresent
           command: ["/migrate"]
           args: ["-source", "file:///migrations", "-database", "$(DATABASE_URL)", "up"]

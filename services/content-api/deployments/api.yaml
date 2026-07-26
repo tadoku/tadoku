@@ -22,7 +22,7 @@ spec:
       serviceAccountName: content-api
       initContainers:
         - name: migrations
-          image: content-api-migrate-image
+          image: content-api-image
           imagePullPolicy: IfNotPresent
           command: ['/migrate']
           args: ['-source', 'file:///migrations', '-database', '$(DATABASE_URL)', 'up']

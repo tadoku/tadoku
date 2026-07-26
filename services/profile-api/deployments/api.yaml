@@ -22,7 +22,7 @@ spec:
       serviceAccountName: profile-api
       initContainers:
         - name: migrations
-          image: profile-api-migrate-image
+          image: profile-api-image
           imagePullPolicy: IfNotPresent
           command: ['/migrate']
           args: ['-source', 'file:///migrations', '-database', '$(DATABASE_URL)', 'up']

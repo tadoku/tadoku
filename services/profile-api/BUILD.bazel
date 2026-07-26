@@ -42,7 +42,11 @@ oci_image(
     name = "image",
     base = "@distroless_base_linux_amd64",
     entrypoint = ["/profile-api"],
-    tars = [":app_layer"],
+    tars = [
+        ":app_layer",
+        "//services/common/migrate-runner:layer",
+        "//services/profile-api/storage/postgres/migrations:tar",
+    ],
 )
 
 oci_load(

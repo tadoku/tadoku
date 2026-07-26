@@ -66,15 +66,37 @@ jobs:
         working-directory: frontend
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
+
+      - name: Build image
+        run: |
+          docker build \
+            --build-arg PROJECT_NAME=admin \
+            -t ghcr.io/tadoku/tadoku/frontend-admin:latest \
+            .
+
+      - name: Install Trivy
+        uses: aquasecurity/setup-trivy@81e514348e19b6112ce2a7e3ecbafe19c1e1f567 # v0.3.1
+        with:
+          version: v0.72.0
+
+      - name: Scan image
+        run: |
+          trivy image \
+            --exit-code 1 \
+            --ignore-unfixed \
+            --scanners vuln \
+            --severity CRITICAL,HIGH \
+            ghcr.io/tadoku/tadoku/frontend-admin:latest
 
       - name: Push images
+        env:
+          IMAGE_NAME: ghcr.io/tadoku/tadoku/frontend-admin
         run: |
-          # Setup credentials for GitHub packages
-          echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u tadoku --password-stdin
-
-          # Push images
-          IMAGE_NAME=ghcr.io/tadoku/tadoku/frontend-admin
-          docker build --build-arg PROJECT_NAME=admin -t $IMAGE_NAME:latest .
-          docker tag $IMAGE_NAME:latest $IMAGE_NAME:$GITHUB_SHA
-          docker push $IMAGE_NAME
+          echo "${{ secrets.GITHUB_TOKEN }}" |
+            docker login ghcr.io -u tadoku --password-stdin
+          docker tag "${IMAGE_NAME}:latest" "${IMAGE_NAME}:${GITHUB_SHA}"
+          docker tag "${IMAGE_NAME}:latest" "${IMAGE_NAME}:prod"
+          docker push "${IMAGE_NAME}:latest"
+          docker push "${IMAGE_NAME}:${GITHUB_SHA}"
+          docker push "${IMAGE_NAME}:prod"

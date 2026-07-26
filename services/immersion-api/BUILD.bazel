@@ -62,6 +62,7 @@ oci_load(
         "ghcr.io/tadoku/tadoku/immersion-api:latest",
         "bazel/services/immersion-api:latest",
     ],
+    visibility = ["//visibility:public"],
 )
 
 oci_push(

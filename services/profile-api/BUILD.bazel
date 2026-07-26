@@ -57,6 +57,7 @@ oci_load(
         "ghcr.io/tadoku/tadoku/profile-api:latest",
         "bazel/services/profile-api:latest",
     ],
+    visibility = ["//visibility:public"],
 )
 
 oci_push(

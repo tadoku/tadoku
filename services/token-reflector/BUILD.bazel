@@ -34,6 +34,7 @@ oci_load(
         "ghcr.io/tadoku/tadoku/token-reflector:latest",
         "bazel/services/token-reflector:latest",
     ],
+    visibility = ["//visibility:public"],
 )
 
 oci_push(

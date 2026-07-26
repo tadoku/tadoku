@@ -1,6 +1,6 @@
 module github.com/tadoku/tadoku
 
-go 1.26.4
+go 1.26.5
 
 require (
 	github.com/MicahParks/keyfunc v1.7.0

@@ -54,7 +54,7 @@ bazel_dep(name = "rules_oci", version = "2.3.0")
 oci = use_extension("@rules_oci//oci:extensions.bzl", "oci")
 oci.pull(
     name = "distroless_base",
-    digest = "sha256:27769871031f67460f1545a52dfacead6d18a9f197db77110cfc649ca2a91f44",
+    digest = "sha256:62730825d3cf03571e0a1b8f014748de94d0404500f063593b614c23da38841d",
     image = "gcr.io/distroless/base-debian12",
     platforms = [
         "linux/amd64",

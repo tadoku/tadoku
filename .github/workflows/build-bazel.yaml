@@ -45,8 +45,43 @@ jobs:
             <(bazel query 'kind("oci_push", labels(data, //:push_images))' | sort) \
           || { echo "//:push_images is out of sync with production oci_push targets named :push under //services/..." >&2; exit 1; }
 
+      - name: Check load_images covers all production oci_load targets
+        run: |
+          diff \
+            <(bazel query 'filter("^//services/[^/]+:load$", attr(name, "^load$", kind("oci_load", //services/...)))' | sort) \
+            <(bazel query 'kind("oci_load", labels(data, //:load_images))' | sort) \
+          || { echo "//:load_images is out of sync with production oci_load targets named :load under //services/..." >&2; exit 1; }
+
       - name: Run tests
         run: bazel test //...
+
+      - name: Load backend images for scanning
+        run: bazel run //:load_images
+
+      - name: Install Trivy
+        uses: aquasecurity/setup-trivy@81e514348e19b6112ce2a7e3ecbafe19c1e1f567 # v0.3.1
+        with:
+          version: v0.72.0
+
+      - name: Scan backend images
+        env:
+          BACKEND_IMAGES: |
+            ghcr.io/tadoku/tadoku/authz-api:latest
+            ghcr.io/tadoku/tadoku/content-api:latest
+            ghcr.io/tadoku/tadoku/immersion-api:latest
+            ghcr.io/tadoku/tadoku/profile-api:latest
+            ghcr.io/tadoku/tadoku/token-reflector:latest
+        run: |
+          scan_status=0
+          while read -r image; do
+            trivy image \
+              --exit-code 1 \
+              --ignore-unfixed \
+              --scanners vuln \
+              --severity CRITICAL,HIGH \
+              "${image}" || scan_status=1
+          done <<< "${BACKEND_IMAGES}"
+          exit "${scan_status}"
 
   publish:
     name: Publish Tadoku Images
@@ -62,18 +97,6 @@ jobs:
         with:
           path: "/home/runner/.cache/bazel"
           key: bazel-v5-${{ runner.os }}-${{ hashFiles('.bazelversion', '.bazelrc', 'MODULE.bazel', 'MODULE.bazel.lock', 'go.mod', 'go.sum') }}
-
-      - name: Load token-reflector image for scanning
-        run: bazel run //services/token-reflector:load
-
-      - name: Scan token-reflector image
-        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
-        with:
-          image-ref: ghcr.io/tadoku/tadoku/token-reflector:latest
-          format: table
-          exit-code: "1"
-          ignore-unfixed: true
-          severity: CRITICAL,HIGH
 
       - name: Push images
         run: |

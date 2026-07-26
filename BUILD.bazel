@@ -3,12 +3,35 @@ load("@gazelle//:def.bzl", "gazelle")
 # gazelle:prefix github.com/tadoku/tadoku
 gazelle(name = "gazelle")
 
+# Loads all service images in one `bazel run //:load_images` invocation.
+# Used by CI (.github/workflows/build-bazel.yaml); add new production oci_load
+# targets to both args and data below.
+sh_binary(
+    name = "load_images",
+    srcs = ["tools/ci/run_bazel_images.sh"],
+    args = [
+        "$(rlocationpath //services/authz-api:load)",
+        "$(rlocationpath //services/content-api:load)",
+        "$(rlocationpath //services/immersion-api:load)",
+        "$(rlocationpath //services/profile-api:load)",
+        "$(rlocationpath //services/token-reflector:load)",
+    ],
+    data = [
+        "//services/authz-api:load",
+        "//services/content-api:load",
+        "//services/immersion-api:load",
+        "//services/profile-api:load",
+        "//services/token-reflector:load",
+        "@bazel_tools//tools/bash/runfiles",
+    ],
+)
+
 # Pushes all service images in one `bazel run //:push_images` invocation.
-# Used by CI (.github/workflows/build-bazel.yaml); add new oci_push targets
-# to both args and data below.
+# Used by CI (.github/workflows/build-bazel.yaml); add new production oci_push
+# targets to both args and data below.
 sh_binary(
     name = "push_images",
-    srcs = ["tools/ci/push_bazel_images.sh"],
+    srcs = ["tools/ci/run_bazel_images.sh"],
     args = [
         "$(rlocationpath //services/authz-api:push)",
         "$(rlocationpath //services/content-api:push)",

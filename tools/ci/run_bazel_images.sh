@@ -1,10 +1,8 @@
 #!/usr/bin/env bash
 #
-# Runs a list of oci_push binaries (passed as runfiles paths in "$@") so all
-# service images are pushed in a single `bazel run //:push_images` invocation,
-# instead of one bazel analysis per image. Invoked by CI in
-# .github/workflows/build-bazel.yaml; each push is wrapped in a GitHub Actions
-# log group.
+# Runs a list of oci_load or oci_push binaries passed as runfiles paths in
+# "$@", allowing CI to load or push all service images after one Bazel
+# analysis. Each operation is wrapped in a GitHub Actions log group.
 set -uo pipefail
 
 runfiles_bash="bazel_tools/tools/bash/runfiles/runfiles.bash"
@@ -43,13 +41,13 @@ resolve_runfile() {
   return 1
 }
 
-for pusher in "$@"; do
-  if ! resolved_pusher="$(resolve_runfile "${pusher}")"; then
-    echo "could not resolve ${pusher}" >&2
+for image_operation in "$@"; do
+  if ! resolved_operation="$(resolve_runfile "${image_operation}")"; then
+    echo "could not resolve ${image_operation}" >&2
     exit 1
   fi
 
-  echo "::group::${pusher}"
-  "${resolved_pusher}"
+  echo "::group::${image_operation}"
+  "${resolved_operation}"
   echo "::endgroup::"
 done

@@ -58,6 +58,7 @@ oci_load(
         "ghcr.io/tadoku/tadoku/authz-api:latest",
         "bazel/services/authz-api:latest",
     ],
+    visibility = ["//visibility:public"],
 )
 
 oci_push(

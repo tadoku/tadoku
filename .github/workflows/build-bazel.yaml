@@ -63,6 +63,18 @@ jobs:
           path: "/home/runner/.cache/bazel"
           key: bazel-v5-${{ runner.os }}-${{ hashFiles('.bazelversion', '.bazelrc', 'MODULE.bazel', 'MODULE.bazel.lock', 'go.mod', 'go.sum') }}
 
+      - name: Load token-reflector image for scanning
+        run: bazel run //services/token-reflector:load
+
+      - name: Scan token-reflector image
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          image-ref: ghcr.io/tadoku/tadoku/token-reflector:latest
+          format: table
+          exit-code: "1"
+          ignore-unfixed: true
+          severity: CRITICAL,HIGH
+
       - name: Push images
         run: |
           # Setup credentials for GitHub packages

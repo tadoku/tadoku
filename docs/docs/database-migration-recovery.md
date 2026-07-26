@@ -26,8 +26,8 @@ It does not support `down`, `drop`, or arbitrary migration steps.
    database state, and recovery commands in the incident.
 5. Take and verify a database backup or PITR recovery point before manual SQL
    or metadata repair.
-6. Have a second engineer review the physical schema assessment, repair SQL,
-   and selected target version.
+6. Have a human review the physical schema assessment, repair SQL, and
+   selected target version.
 7. Prefer a forward fix. Do not run destructive down migrations during an
    incident.
 

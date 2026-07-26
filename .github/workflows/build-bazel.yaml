@@ -74,6 +74,7 @@ jobs:
         run: |
           scan_status=0
           while read -r image; do
+            [[ -z "${image}" ]] && continue
             trivy image \
               --exit-code 1 \
               --ignore-unfixed \

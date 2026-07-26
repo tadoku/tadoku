@@ -45,6 +45,7 @@ oci_image(
     entrypoint = ["/authz-api"],
     tars = [
         ":app_layer",
+        "//services/common/migrate-recovery:layer",
         "//services/common/migrate-runner:layer",
         "//services/authz-api/storage/postgres/migrations:tar",
     ],

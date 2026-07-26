@@ -48,6 +48,7 @@ oci_image(
     entrypoint = ["/immersion-api"],
     tars = [
         ":app_layer",
+        "//services/common/migrate-recovery:layer",
         "//services/common/migrate-runner:layer",
         "//services/immersion-api/storage/postgres/migrations:tar",
     ],

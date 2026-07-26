@@ -1,0 +1,45 @@
+load("@rules_go//go:def.bzl", "go_binary", "go_library", "go_test")
+load("@rules_pkg//:pkg.bzl", "pkg_tar")
+
+go_library(
+    name = "migrate-recovery_lib",
+    srcs = ["main.go"],
+    importpath = "github.com/tadoku/tadoku/services/common/migrate-recovery",
+    visibility = ["//visibility:private"],
+    deps = [
+        "@com_github_golang_migrate_migrate_v4//:migrate",
+        "@com_github_golang_migrate_migrate_v4//database/postgres",
+        "@com_github_golang_migrate_migrate_v4//source/file",
+    ],
+)
+
+go_binary(
+    name = "migrate-recovery",
+    embed = [":migrate-recovery_lib"],
+    pure = "on",
+    static = "on",
+    visibility = ["//visibility:private"],
+)
+
+go_test(
+    name = "migrate-recovery_test",
+    srcs = ["main_test.go"],
+    embed = [":migrate-recovery_lib"],
+    deps = [
+        "@com_github_golang_migrate_migrate_v4//:migrate",
+        "@com_github_stretchr_testify//assert",
+    ],
+)
+
+pkg_tar(
+    name = "layer",
+    srcs = [":migrate-recovery"],
+    mode = "0755",
+    package_dir = "/",
+    visibility = [
+        "//services/authz-api:__pkg__",
+        "//services/content-api:__pkg__",
+        "//services/immersion-api:__pkg__",
+        "//services/profile-api:__pkg__",
+    ],
+)

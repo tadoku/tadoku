@@ -39,7 +39,7 @@ const sidebars: SidebarsConfig = {
     {
       type: 'category',
       label: 'Administration',
-      items: ['account-deletion'],
+      items: ['account-deletion', 'database-migration-recovery'],
     },
   ],
 };

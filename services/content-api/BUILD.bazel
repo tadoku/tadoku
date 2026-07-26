@@ -45,6 +45,7 @@ oci_image(
     entrypoint = ["/content-api"],
     tars = [
         ":app_layer",
+        "//services/common/migrate-recovery:layer",
         "//services/common/migrate-runner:layer",
         "//services/content-api/storage/postgres/migrations:tar",
     ],

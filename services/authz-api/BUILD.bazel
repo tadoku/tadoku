@@ -70,7 +70,10 @@ oci_push(
 oci_push(
     name = "push",
     image = ":image",
-    remote_tags = ["latest"],
+    remote_tags = [
+        "latest",
+        "prod",
+    ],
     repository = "ghcr.io/tadoku/tadoku/authz-api",
     visibility = ["//visibility:public"],
 )

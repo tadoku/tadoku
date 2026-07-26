@@ -22,7 +22,7 @@ spec:
       serviceAccountName: immersion-api
       initContainers:
         - name: migrations
-          image: immersion-api-migrate-image
+          image: immersion-api-image
           imagePullPolicy: IfNotPresent
           command: ['/migrate']
           args: ['-source', 'file:///migrations', '-database', '$(DATABASE_URL)', 'up']

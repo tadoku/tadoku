@@ -5,12 +5,6 @@ watch_file('./deployments/api.yaml')
 k8s_yaml(local('cat ./deployments/api.yaml'))
 
 bazel_build(
-  'content-api-migrate-image',
-  '//services/content-api/storage/postgres/migrations:load',
-  ['./storage/postgres/migrations/'],
-)
-
-bazel_build(
   'content-api-image',
   '//services/content-api:load',
   deps=['./', './../common/'],

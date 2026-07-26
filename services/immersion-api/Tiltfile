@@ -5,12 +5,6 @@ watch_file('./deployments/api.yaml')
 k8s_yaml(local('cat ./deployments/api.yaml'))
 
 bazel_build(
-  'immersion-api-migrate-image',
-  '//services/immersion-api/storage/postgres/migrations:load',
-  ['./storage/postgres/migrations/'],
-)
-
-bazel_build(
   'immersion-api-image',
   '//services/immersion-api:load',
   deps=['./', './../common/'],

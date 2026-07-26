@@ -60,18 +60,8 @@ oci.pull(
         "linux/amd64",
     ],
 )
-oci.pull(
-    name = "go_migrate",
-    image = "index.docker.io/migrate/migrate",
-    platforms = [
-        "linux/amd64",
-    ],
-    tag = "4",
-)
 use_repo(
     oci,
     "distroless_base",
     "distroless_base_linux_amd64",
-    "go_migrate",
-    "go_migrate_linux_amd64",
 )

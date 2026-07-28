@@ -1,4 +1,4 @@
-import { ComponentType } from 'react'
+import { ComponentType, useEffect } from 'react'
 import {
   Disclosure,
   DisclosureButton,
@@ -24,6 +24,8 @@ export interface NavigationDropDownProps {
     IconComponent?: ComponentType<any>
     onClick?: () => void
     divider?: boolean
+    mobilePrimary?: boolean
+    mobileBottom?: boolean
   }[]
 }
 
@@ -48,21 +50,26 @@ export function Navbar({
   isLoading = false,
 }: Props) {
   const router = useRouter()
+  const hasMobileBottomLinks = navigation.some(
+    item =>
+      item.type === 'dropdown' && item.links.some(link => link.mobileBottom),
+  )
 
   return (
     <>
       <div className="h-10 sm:h-16 absolute top-0 left-0 right-0 bg-white z-0"></div>
       <Disclosure
         as="nav"
-        className="bg-white sticky top-0 z-40 backdrop-blur bg-white/70 border-b border-black/10 shadow shadow-slate-500/10"
+        className="sticky top-0 z-40 border-b border-black/10 bg-white shadow shadow-slate-500/10"
       >
         {({ open }) => (
           <>
+            <MobileScrollLock active={open} />
             <div className={`mx-auto ${width} px-2 sm:px-6 lg:px-8 z-10`}>
               <div className="relative flex h-10 sm:h-16 items-center justify-between">
                 <div className="absolute inset-y-0 left-0 flex items-center sm:hidden">
                   {/* Mobile menu button*/}
-                  <DisclosureButton className="inline-flex items-center justify-center p-2 text-secondary hover:bg-secondary hover:text-white focus:outline-none focus:ring-3 focus:ring-inset focus:ring-white">
+                  <DisclosureButton className="inline-flex items-center justify-center p-2 text-secondary hover:bg-secondary/5 focus:bg-secondary/5 focus:outline-none focus:ring-3 focus:ring-inset focus:ring-secondary/20">
                     <span className="sr-only">Open main menu</span>
                     {open ? (
                       <XMarkIcon className="block h-6 w-6" aria-hidden="true" />
@@ -97,7 +104,7 @@ export function Navbar({
                               className={classNames(
                                 item.current || router.pathname === item.href
                                   ? 'bg-secondary !text-white hover:bg-secondary/80'
-                                  : 'text-secondary hover:bg-secondary hover:text-white',
+                                  : 'text-secondary hover:bg-secondary/5 focus:bg-secondary/5',
                                 'reset text-xs px-2 py-1 md:px-3 md:py-2 md:text-sm font-bold inline-flex items-center justify-center',
                               )}
                               aria-current={item.current ? 'page' : undefined}
@@ -114,41 +121,135 @@ export function Navbar({
             </div>
 
             <DisclosurePanel className="sm:hidden">
-              <div className="space-y-1 px-2 pt-2 pb-3">
-                {navigation.map(item => {
-                  if (item.type === 'dropdown') {
-                    return (
-                      <div
-                        key={item.label}
-                        className={classNames(
-                          'text-secondary hover:bg-secondary hover:text-white',
-                          'reset block px-3 py-2 text-base font-bold',
-                        )}
-                      >
-                        <DropDownMobile {...item} />
-                      </div>
-                    )
-                  }
+              <div className="fixed inset-x-0 bottom-0 top-10 z-30 overflow-y-auto bg-white p-2 shadow-lg">
+                <div className="flex min-h-full flex-col">
+                  <div className="space-y-1">
+                    {navigation.map(item =>
+                      item.type === 'dropdown'
+                        ? item.links.map(
+                            (
+                              {
+                                label,
+                                href,
+                                IconComponent,
+                                onClick,
+                                mobilePrimary,
+                              },
+                              i,
+                            ) =>
+                              mobilePrimary ? (
+                                <MobileDropDownLink
+                                  key={`${label}-${i}`}
+                                  label={label}
+                                  href={href}
+                                  onClick={onClick}
+                                  IconComponent={IconComponent}
+                                  highlighted
+                                />
+                              ) : null,
+                          )
+                        : null,
+                    )}
+                    <div className="px-3 pb-1 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                      Navigation
+                    </div>
+                    {navigation.map(item => {
+                      if (item.type === 'link') {
+                        return (
+                          <DisclosureButton
+                            key={item.label}
+                            as={Link}
+                            href={item.href}
+                            className={classNames(
+                              item.current
+                                ? 'bg-secondary text-white'
+                                : 'text-secondary hover:bg-secondary/5 focus:bg-secondary/5',
+                              'reset flex min-h-12 w-full items-center px-3 py-2 text-base font-bold transition-[background-color]',
+                            )}
+                            aria-current={item.current ? 'page' : undefined}
+                          >
+                            {item.label}
+                          </DisclosureButton>
+                        )
+                      }
 
-                  if (item.type === 'link') {
-                    return (
-                      <DisclosureButton
-                        key={item.label}
-                        as={Link}
-                        href={item.href}
-                        className={classNames(
-                          item.current
-                            ? 'bg-secondary text-white'
-                            : 'text-secondary hover:bg-secondary hover:text-white',
-                          'reset transition-[background-color] block px-3 py-2 text-base font-bold',
-                        )}
-                        aria-current={item.current ? 'page' : undefined}
-                      >
-                        {item.label}
-                      </DisclosureButton>
-                    )
-                  }
-                })}
+                      return null
+                    })}
+                  </div>
+
+                  {navigation.map(item => {
+                    if (
+                      item.type === 'dropdown' &&
+                      item.links.some(
+                        link => !link.mobilePrimary && !link.mobileBottom,
+                      )
+                    ) {
+                      return (
+                        <div key={item.label} className="pt-3">
+                          <div className="px-3 py-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                            {item.label}
+                          </div>
+                          <div>
+                            {item.links.map(
+                              (
+                                {
+                                  label,
+                                  href,
+                                  IconComponent,
+                                  onClick,
+                                  mobilePrimary,
+                                  mobileBottom,
+                                },
+                                i,
+                              ) =>
+                                !mobilePrimary && !mobileBottom ? (
+                                  <MobileDropDownLink
+                                    key={`${label}-${i}`}
+                                    label={label}
+                                    href={href}
+                                    onClick={onClick}
+                                    IconComponent={IconComponent}
+                                  />
+                                ) : null,
+                            )}
+                          </div>
+                        </div>
+                      )
+                    }
+
+                    return null
+                  })}
+
+                  {hasMobileBottomLinks ? (
+                    <div className="mt-auto border-t border-slate-500/20">
+                      {navigation.map(item =>
+                        item.type === 'dropdown'
+                          ? item.links.map(
+                              (
+                                {
+                                  label,
+                                  href,
+                                  IconComponent,
+                                  onClick,
+                                  mobileBottom,
+                                },
+                                i,
+                              ) =>
+                                mobileBottom ? (
+                                  <MobileDropDownLink
+                                    key={`${label}-${i}`}
+                                    label={label}
+                                    href={href}
+                                    onClick={onClick}
+                                    IconComponent={IconComponent}
+                                  />
+                                ) : null,
+                            )
+                          : null,
+                      )}
+                    </div>
+                  ) : null}
+                </div>
               </div>
             </DisclosurePanel>
             <div
@@ -163,11 +264,74 @@ export function Navbar({
   )
 }
 
+const MobileScrollLock = ({ active }: { active: boolean }) => {
+  useEffect(() => {
+    if (!active) return
+
+    const scrollY = window.scrollY
+    const previousOverflow = document.body.style.overflow
+    const previousPosition = document.body.style.position
+    const previousTop = document.body.style.top
+    const previousWidth = document.body.style.width
+
+    document.body.style.overflow = 'hidden'
+    document.body.style.position = 'fixed'
+    document.body.style.top = `-${scrollY}px`
+    document.body.style.width = '100%'
+
+    return () => {
+      document.body.style.overflow = previousOverflow
+      document.body.style.position = previousPosition
+      document.body.style.top = previousTop
+      document.body.style.width = previousWidth
+      window.scrollTo(0, scrollY)
+    }
+  }, [active])
+
+  return null
+}
+
+interface MobileDropDownLinkProps {
+  label: string
+  href: string
+  IconComponent?: ComponentType<any>
+  onClick?: () => void
+  highlighted?: boolean
+}
+
+const MobileDropDownLink = ({
+  label,
+  href,
+  IconComponent,
+  onClick,
+  highlighted = false,
+}: MobileDropDownLinkProps) => (
+  <DisclosureButton
+    as={Link}
+    href={href}
+    onClick={onClick}
+    className={classNames(
+      'reset flex min-h-12 w-full items-center px-3 py-2 text-base font-bold transition-[background-color]',
+      {
+        'mb-3 bg-secondary/5 text-secondary hover:bg-secondary/10 focus:bg-secondary/10':
+          highlighted,
+        'text-secondary hover:bg-secondary/5 focus:bg-secondary/5':
+          !highlighted,
+      },
+    )}
+  >
+    {IconComponent && (
+      <IconComponent className="mr-3 h-5 w-5 shrink-0" aria-hidden="true" />
+    )}
+    {label}
+  </DisclosureButton>
+)
+
 const DropDown = ({ label, links }: NavigationDropDownProps) => (
   <div className="">
     <Menu as="div" className="relative">
       <div>
-        <MenuButton className="text-secondary hover:bg-secondary hover:text-white text-xs px-2 py-1 md:px-3 md:py-2 md:text-sm font-bold flex items-center justify-center">
+        <MenuButton className="text-secondary hover:bg-secondary/5 focus:bg-secondary/5 text-xs px-2 py-1 md:px-3 md:py-2 md:text-sm font-bold flex items-center justify-center">
           <span className="sr-only">Open navigation menu</span>
           {label}
           <ChevronDownIcon
@@ -188,7 +352,7 @@ const DropDown = ({ label, links }: NavigationDropDownProps) => (
               href={href}
               onClick={onClick}
               className={classNames(
-                'reset whitespace-nowrap flex-inline transition-[background-color] items-center px-3 py-2 text-sm text-gray-700 flex font-bold data-[focus]:bg-secondary data-[focus]:text-white',
+                'reset whitespace-nowrap flex-inline transition-[background-color] items-center px-3 py-2 text-sm text-gray-700 flex font-bold data-[focus]:bg-secondary/5',
                 {
                   'border-b border-slate-500/20': !!divider,
                 },
@@ -197,43 +361,6 @@ const DropDown = ({ label, links }: NavigationDropDownProps) => (
               {IconComponent && <IconComponent className="w-4 h-4 mr-3" />}{' '}
               {label}
             </Link>
-          </MenuItem>
-        ))}
-      </MenuItems>
-    </Menu>
-  </div>
-)
-
-const DropDownMobile = ({ label, links }: NavigationDropDownProps) => (
-  <div className="">
-    <Menu as="div" className="relative">
-      <div>
-        <MenuButton className="flex items-center justify-between w-full">
-          <span className="sr-only">Open navigation menu</span>
-          {label}
-          <ChevronDownIcon
-            className="ml-2 h-4 w-3 md:h-5 md:w-4"
-            aria-hidden="true"
-          />
-        </MenuButton>
-      </div>
-      <MenuItems
-        anchor="bottom"
-        modal={false}
-        transition
-        className="absolute left-0 right-0 z-50 mt-2 min-w-48 origin-top-right bg-white py-1 shadow-md shadow-slate-500/20 ring-1 ring-secondary ring-opacity-5 focus:outline-none transition ease-out duration-100 data-[closed]:scale-95 data-[closed]:opacity-0"
-      >
-        {links.map(({ label, href, IconComponent, onClick }, i) => (
-          <MenuItem key={i}>
-            <DisclosureButton
-              as={Link}
-              href={href}
-              onClick={onClick}
-              className="reset transition-[background-color] flex-inline items-center px-3 py-4 text-sm text-gray-700 flex font-bold data-[focus]:bg-secondary data-[focus]:text-white"
-            >
-              {IconComponent && <IconComponent className="w-4 h-4 mr-3" />}{' '}
-              {label}
-            </DisclosureButton>
           </MenuItem>
         ))}
       </MenuItems>

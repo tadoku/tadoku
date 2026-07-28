@@ -1,5 +1,5 @@
 const config = require('ui/tailwind.config.js')
-config.content.push('./node_modules/ui/components/**/*.{js,ts,jsx,tsx}')
+config.content.push('../../packages/ui/components/**/*.{js,ts,jsx,tsx}')
 
 const activityColors = require('./app/common/variables').activityColors
 activityColors.forEach(color => {

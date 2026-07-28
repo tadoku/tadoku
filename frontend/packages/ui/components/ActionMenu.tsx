@@ -40,10 +40,10 @@ export const ActionMenu = ({
                   className={classNames(
                     'reset flex-inline items-center px-3 py-2 text-sm flex font-medium',
                     {
-                      'data-[focus]:bg-secondary': type === 'normal',
+                      'data-[focus]:bg-secondary/5': type === 'normal',
                       'data-[focus]:bg-red-700/80': type === 'danger',
                       'text-red-600 data-[focus]:text-white ': type === 'danger',
-                      'text-gray-700 data-[focus]:text-white': type === 'normal',
+                      'text-gray-700': type === 'normal',
                     },
                   )}
                 >

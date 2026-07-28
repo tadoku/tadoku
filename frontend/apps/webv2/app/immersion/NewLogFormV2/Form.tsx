@@ -27,7 +27,37 @@ interface Props {
   defaultValues?: Partial<NewLogFormV2Schema>
 }
 
-export const LogFormV2 = ({ options, defaultValues: originalDefaultValues }: Props) => {
+const LAST_LOGGED_LANGUAGE_STORAGE_KEY = 'log-form-v2:last-logged-language'
+
+const getLastLoggedLanguage = () => {
+  if (typeof window === 'undefined') {
+    return null
+  }
+
+  try {
+    return window.localStorage.getItem(LAST_LOGGED_LANGUAGE_STORAGE_KEY)
+  } catch {
+    return null
+  }
+}
+
+const storeLastLoggedLanguage = (languageCode: string) => {
+  if (typeof window === 'undefined') {
+    return
+  }
+
+  try {
+    window.localStorage.setItem(
+      LAST_LOGGED_LANGUAGE_STORAGE_KEY,
+      languageCode,
+    )
+  } catch {}
+}
+
+export const LogFormV2 = ({
+  options,
+  defaultValues: originalDefaultValues,
+}: Props) => {
   const defaultActivity = options.activities[0]
   const defaultActivityInputType =
     defaultActivity?.input_type ?? 'amount_primary'
@@ -94,6 +124,8 @@ export const LogFormV2 = ({ options, defaultValues: originalDefaultValues }: Pro
 
   const router = useRouter()
   const createLogMutation = useCreateLogV2(log => {
+    storeLastLoggedLanguage(log.language.code)
+
     const hasRegistrations =
       registrations.data &&
       registrations.data.registrations.length > 0
@@ -112,6 +144,35 @@ export const LogFormV2 = ({ options, defaultValues: originalDefaultValues }: Pro
   const onSubmit = (data: any) => {
     createLog(NewLogV2APISchema.parse(data))
   }
+
+  useEffect(() => {
+    if (originalDefaultValues?.languageCode !== undefined) {
+      return
+    }
+
+    const lastLoggedLanguage = getLastLoggedLanguage()
+    if (
+      lastLoggedLanguage === null ||
+      !options.languages.some(language => language.code === lastLoggedLanguage)
+    ) {
+      return
+    }
+
+    methods.setValue('languageCode', lastLoggedLanguage)
+    methods.setValue(
+      'amountUnit',
+      filterUnits(
+        options.units,
+        methods.getValues('activityId'),
+        lastLoggedLanguage,
+      )[0]?.id,
+    )
+  }, [
+    methods,
+    options.languages,
+    options.units,
+    originalDefaultValues?.languageCode,
+  ])
 
   useEffect(() => {
     const subscription = methods.watch((value, { name, type }) => {

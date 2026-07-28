@@ -46,6 +46,7 @@ module.exports = {
     'bg-lime-700',
     'bg-neutral-100',
     'bg-neutral-900',
+    'mt-auto',
   ],
   plugins: [require('@tailwindcss/forms')],
 }

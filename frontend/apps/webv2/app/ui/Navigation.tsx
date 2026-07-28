@@ -41,6 +41,7 @@ export default function Navigation() {
                 href: routes.logCreate(),
                 IconComponent: PlusIcon,
                 divider: !isAdmin,
+                mobilePrimary: true,
               },
               ...(isAdmin
                 ? [
@@ -62,6 +63,7 @@ export default function Navigation() {
                 href: '#',
                 onClick: onLogout,
                 IconComponent: ArrowRightOnRectangleIcon,
+                mobileBottom: true,
               },
             ],
           },

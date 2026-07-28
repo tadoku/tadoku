@@ -49,17 +49,21 @@ type ScoringInput struct {
 	DurationSeconds *int32
 }
 
+type AppliedScoringRule struct {
+	RuleID uuid.UUID
+	Rate   float32
+}
+
 type ScoringResult struct {
 	Score            float32
 	ScoreSource      ScoreSource
 	Matched          bool
 	AppliedRuleSetID *uuid.UUID
-	AppliedRuleID    *uuid.UUID
-	AppliedRate      *float32
+	AppliedRules     []AppliedScoringRule
 }
 
-// EvaluateScoringRuleSet evaluates rules in ascending priority order and
-// returns the first rule whose populated matchers and score source match.
+// EvaluateScoringRuleSet applies every matching rule in ascending priority
+// order by multiplying their rates.
 func EvaluateScoringRuleSet(input ScoringInput, ruleSet ScoringRuleSet) (ScoringResult, error) {
 	source, scoreableValue, err := scoringSourceAndValue(input)
 	if err != nil {
@@ -69,7 +73,10 @@ func EvaluateScoringRuleSet(input ScoringInput, ruleSet ScoringRuleSet) (Scoring
 		return ScoringResult{}, err
 	}
 
-	result := ScoringResult{ScoreSource: source}
+	result := ScoringResult{
+		Score:       scoreableValue,
+		ScoreSource: source,
+	}
 	rules := append([]ScoringRule(nil), ruleSet.Rules...)
 	sort.SliceStable(rules, func(i, j int) bool {
 		return rules[i].Priority < rules[j].Priority
@@ -85,19 +92,21 @@ func EvaluateScoringRuleSet(input ScoringInput, ruleSet ScoringRuleSet) (Scoring
 			continue
 		}
 
-		ruleSetID := ruleSet.ID
-		ruleID := rule.ID
-		rate := rule.Rate
-		return ScoringResult{
-			Score:            scoreableValue * rate,
-			ScoreSource:      source,
-			Matched:          true,
-			AppliedRuleSetID: &ruleSetID,
-			AppliedRuleID:    &ruleID,
-			AppliedRate:      &rate,
-		}, nil
+		result.Score *= rule.Rate
+		result.AppliedRules = append(result.AppliedRules, AppliedScoringRule{
+			RuleID: rule.ID,
+			Rate:   rule.Rate,
+		})
 	}
 
+	if len(result.AppliedRules) > 0 {
+		ruleSetID := ruleSet.ID
+		result.Matched = true
+		result.AppliedRuleSetID = &ruleSetID
+		return result, nil
+	}
+
+	result.Score = 0
 	return result, nil
 }
 

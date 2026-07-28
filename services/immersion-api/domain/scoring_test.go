@@ -10,39 +10,43 @@ import (
 )
 
 func TestEvaluateScoringRuleSet(t *testing.T) {
-	t.Run("uses the matching rule with the lowest priority number", func(t *testing.T) {
+	t.Run("multiplies the rates of every matching rule", func(t *testing.T) {
 		amount := float32(100)
 		laterRuleID := uuid.New()
 		earlierRuleID := uuid.New()
 		ruleSet := domain.ScoringRuleSet{
-			ID:      uuid.New(),
-			Version: 1,
+			ID: uuid.New(),
 			Rules: []domain.ScoringRule{
 				{
 					ID:          laterRuleID,
 					Priority:    20,
 					ActivityID:  1,
 					ScoreSource: domain.ScoreSourceAmount,
-					Rate:        1,
+					Rate:        2,
 				},
 				{
-					ID:          earlierRuleID,
-					Priority:    10,
-					ActivityID:  1,
-					ScoreSource: domain.ScoreSourceAmount,
-					Rate:        2,
+					ID:           earlierRuleID,
+					Priority:     10,
+					ActivityID:   1,
+					LanguageCode: "jpn",
+					ScoreSource:  domain.ScoreSourceAmount,
+					Rate:         1.5,
 				},
 			},
 		}
 
 		result, err := domain.EvaluateScoringRuleSet(domain.ScoringInput{
-			ActivityID: 1,
-			Amount:     &amount,
+			ActivityID:   1,
+			LanguageCode: "jpn",
+			Amount:       &amount,
 		}, ruleSet)
 
 		require.NoError(t, err)
-		assert.Equal(t, float32(200), result.Score)
-		assert.Equal(t, earlierRuleID, *result.AppliedRuleID)
+		assert.Equal(t, float32(300), result.Score)
+		assert.Equal(t, []domain.AppliedScoringRule{
+			{RuleID: earlierRuleID, Rate: 1.5},
+			{RuleID: laterRuleID, Rate: 2},
+		}, result.AppliedRules)
 	})
 
 	t.Run("requires every populated matcher to match", func(t *testing.T) {
@@ -81,7 +85,10 @@ func TestEvaluateScoringRuleSet(t *testing.T) {
 		}, ruleSet)
 		require.NoError(t, err)
 		assert.Equal(t, float32(160), matchingResult.Score)
-		assert.Equal(t, specificRuleID, *matchingResult.AppliedRuleID)
+		assert.Equal(t, []domain.AppliedScoringRule{
+			{RuleID: specificRuleID, Rate: 1.6},
+			{RuleID: fallbackRuleID, Rate: 1},
+		}, matchingResult.AppliedRules)
 
 		tests := []struct {
 			name        string
@@ -143,7 +150,9 @@ func TestEvaluateScoringRuleSet(t *testing.T) {
 					assert.False(t, result.Matched)
 					return
 				}
-				assert.Equal(t, fallbackRuleID, *result.AppliedRuleID)
+				assert.Equal(t, []domain.AppliedScoringRule{
+					{RuleID: fallbackRuleID, Rate: 1},
+				}, result.AppliedRules)
 			})
 		}
 	})
@@ -174,8 +183,9 @@ func TestEvaluateScoringRuleSet(t *testing.T) {
 		assert.Equal(t, domain.ScoreSourceAmount, result.ScoreSource)
 		assert.True(t, result.Matched)
 		assert.Equal(t, ruleSetID, *result.AppliedRuleSetID)
-		assert.Equal(t, ruleID, *result.AppliedRuleID)
-		assert.Equal(t, float32(1), *result.AppliedRate)
+		assert.Equal(t, []domain.AppliedScoringRule{
+			{RuleID: ruleID, Rate: 1},
+		}, result.AppliedRules)
 	})
 
 	t.Run("converts duration from seconds to minutes", func(t *testing.T) {
@@ -232,7 +242,9 @@ func TestEvaluateScoringRuleSet(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, float32(5), result.Score)
 		assert.Equal(t, domain.ScoreSourceAmount, result.ScoreSource)
-		assert.Equal(t, amountRuleID, *result.AppliedRuleID)
+		assert.Equal(t, []domain.AppliedScoringRule{
+			{RuleID: amountRuleID, Rate: 0.5},
+		}, result.AppliedRules)
 	})
 
 	t.Run("returns zero and the selected source when no platform rule matches", func(t *testing.T) {
@@ -257,8 +269,7 @@ func TestEvaluateScoringRuleSet(t *testing.T) {
 		assert.Equal(t, domain.ScoreSourceDurationMinutes, result.ScoreSource)
 		assert.False(t, result.Matched)
 		assert.Nil(t, result.AppliedRuleSetID)
-		assert.Nil(t, result.AppliedRuleID)
-		assert.Nil(t, result.AppliedRate)
+		assert.Empty(t, result.AppliedRules)
 	})
 }
 
@@ -338,7 +349,9 @@ func TestEvaluateContestScore(t *testing.T) {
 
 		require.NoError(t, err)
 		assert.Equal(t, float32(100), result.Score)
-		assert.Equal(t, platformRuleID, *result.AppliedRuleID)
+		assert.Equal(t, []domain.AppliedScoringRule{
+			{RuleID: platformRuleID, Rate: 1},
+		}, result.AppliedRules)
 		assert.Equal(t, platformSet.ID, *result.AppliedRuleSetID)
 	})
 

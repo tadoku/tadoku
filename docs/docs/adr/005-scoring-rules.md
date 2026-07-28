@@ -13,18 +13,24 @@ title: "005 - Scoring Rules"
 
 Log scoring currently uses a modifier attached to the selected log unit. This makes scoring look like a property of the unit, even though future scoring needs to be more flexible.
 
-We want scoring to be resolved from an ordered list of rules. Earlier rules are more specific, and the first matching rule is used. Rules can match on activity, unit, language, and tags.
+We want scoring to be resolved from an ordered list of rules. Every matching
+rule is applied in priority order by multiplying its rate into the score. Rules
+can match on activity, unit, language, and tags.
 
 For example:
 
 ```text
-activity=reading, unit=characters, language=jpn -> 0.0025
 activity=reading, unit=characters -> 0.00083333
+activity=reading, unit=characters, language=jpn -> 3
 activity=reading, unit=page, language=jpn, tag=two_column -> 1.6
 activity=reading, unit=page -> 1
-activity=listening, tag=dense -> 0.7
 activity=listening -> 0.5
+activity=listening, tag=dense -> 1.4
 ```
+
+Rates on broad rules provide the base multiplier. More specific matching rules
+provide relative multipliers; for example, Japanese characters score at
+`0.00083333 * 3`, while dense listening scores at `0.5 * 1.4`.
 
 The set of activities is fixed and is not expected to change. Units still exist, but they are stable identifiers rather than containers for scoring modifiers. Contest admins may configure contest-specific scoring rules, and we also expect to tweak the platform default scoring rules over time.
 
@@ -36,7 +42,8 @@ Units will also be owned by code as stable identifiers, grouped by activity. Uni
 
 Scoring rules will be stored in the database. The platform default rules will be represented as a platform-owned rule set, using the same tables and evaluation path as contest-specific rule sets. Contest-specific rule sets can override or replace the platform defaults depending on the contest configuration.
 
-The scoring engine will resolve a rule set, evaluate rules in priority order, and use the first matching rule.
+The scoring engine will resolve a rule set, evaluate rules in priority order,
+and multiply the rates of every matching rule.
 
 Scores should be snapshotted with the log submission that uses them. If contest scoring can differ from platform scoring, the contest score should be stored with the contest log entry rather than only on the base log.
 

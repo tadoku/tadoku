@@ -16,7 +16,8 @@ not silently change scores for existing logs or contest submissions.
 
 ## Rule evaluation semantics
 
-- Rules are evaluated by explicit priority; the lowest priority number wins.
+- Rules are evaluated by explicit priority. Every matching rule is applied in
+  ascending priority order by multiplying its rate into the score.
 - Every populated matcher on a rule must match.
 - Rules may match activity, stable unit key, language, and one normalized tag.
 - Rules declare a `score_source`:
@@ -120,20 +121,21 @@ authoritative.
 | Reading | `reading_two_column_page` | Japanese | 1.6 |
 | Reading | `reading_comic_page` | any | 0.2 |
 | Reading | `reading_sentence` | any | 0.05 |
-| Reading | `reading_character` | default | 0.000833333 |
-| Reading | `reading_character` | Japanese, Korean, and Chinese variants | 0.0025 |
+| Reading | `reading_character` | any | 0.000833333 |
+| Reading | `reading_character` | Japanese, Korean, and Chinese variants | 3 |
 | Listening | `listening_minute` | any | 0.5 |
 | Listening | `listening_dense_minutes` | any | 0.7 |
 | Writing | `writing_page` | any | 1 |
 | Writing | `writing_sentence` | any | 0.05 |
-| Writing | `writing_character` | default | 0.000833333 |
-| Writing | `writing_character` | Japanese, Korean, and Chinese variants | 0.0025 |
+| Writing | `writing_character` | any | 0.000833333 |
+| Writing | `writing_character` | Japanese, Korean, and Chinese variants | 3 |
 | Speaking | `speaking_minute` | any | 0.5 |
 | Speaking | `speaking_dense_minutes` | any | 0.7 |
 | Study | `study_minute` | any | 0.5 |
 
 The high-rate character language codes currently represented by database unit
-rows are `jpn`, `kor`, `zho`, `cmn`, `yue`, and `wuu`.
+rows are `jpn`, `kor`, `zho`, `cmn`, `yue`, and `wuu`. Their language-specific
+rule is a relative multiplier applied on top of the broad character rule.
 
 ### Duration rules
 
@@ -213,14 +215,15 @@ the transition:
 Add these fields to both `logs` and `contest_logs`:
 
 - `score_rule_set_id`
-- `score_rule_id`
-- `score_rate`
+- `score_rule_ids`
+- `score_rates`
 - `score_source`
 
 `computed_score` remains the authoritative numeric snapshot. For a matched
-rule, all provenance fields are populated. For an unmatched rule,
+rule set, the ordered rule ID and rate arrays contain every applied rule in
+ascending priority order. For an unmatched rule set,
 `computed_score` is zero, `score_source` records the selected input source, and
-the rule-set/rule/rate fields may be null. Historical rows may have all
+the rule-set/rules/rates fields may be null. Historical rows may have all
 provenance fields null.
 
 ## Rule resolution paths
@@ -327,12 +330,13 @@ endpoint. All form changes must use `react-hook-form` and components from the
   - [x] Accept activity, unit key, language, normalized tags, amount, and duration.
   - [x] Select the log's score source.
   - [x] Evaluate rules in priority order.
-  - [x] Return the first matching rule and calculated score.
+  - [x] Multiply the rates of every matching rule into the calculated score.
+  - [x] Return applied-rule provenance in priority order.
   - [x] Return zero with no applied rule when nothing matches.
   - [x] Keep domain interfaces narrow and storage-independent.
 
 - [x] Add comprehensive engine tests.
-  - [x] Cover priority ordering.
+  - [x] Cover multiple matching rules and priority ordering.
   - [x] Cover activity, unit, language, and tag matching.
   - [x] Cover amount and duration score sources.
   - [x] Cover amount-plus-duration precedence.
@@ -351,8 +355,8 @@ endpoint. All form changes must use `react-hook-form` and components from the
 
 - [ ] Add score provenance snapshots.
   - [ ] Keep `computed_score` as the authoritative score.
-  - [ ] Add the applied rule-set ID and rule ID.
-  - [ ] Add the applied rate.
+  - [ ] Add the applied rule-set ID and ordered rule IDs.
+  - [ ] Add the ordered applied rates.
   - [ ] Add `score_source`.
   - [ ] Add the same fields independently to `contest_logs`.
   - [ ] Allow rule fields to be null when the score is zero because no rule matched.

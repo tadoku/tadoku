@@ -90,16 +90,15 @@ func EvaluateScoringRuleSet(input ScoringInput, ruleSet ScoringRuleSet) (Scoring
 
 	var baseRule *ScoringRule
 	modifierRules := make([]ScoringRule, 0)
-	for i := range rules {
-		rule := &rules[i]
-		if !scoringRuleMatches(*rule, input, source, tags) {
+	for _, rule := range rules {
+		if !scoringRuleMatches(rule, input, source, tags) {
 			continue
 		}
 
 		if rule.Stackable {
-			modifierRules = append(modifierRules, *rule)
+			modifierRules = append(modifierRules, rule)
 		} else if baseRule == nil {
-			baseRule = rule
+			baseRule = &rule
 		}
 	}
 

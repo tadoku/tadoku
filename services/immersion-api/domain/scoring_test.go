@@ -117,7 +117,7 @@ func TestEvaluateScoringRuleSet(t *testing.T) {
 					ActivityID:  1,
 					Tag:         "dense",
 					ScoreSource: domain.ScoreSourceAmount,
-					Rate:        1.4,
+					Rate:        1.5,
 				},
 				{
 					ID:          uuid.New(),

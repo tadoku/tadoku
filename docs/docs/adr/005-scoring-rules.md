@@ -24,15 +24,15 @@ base: activity=reading, unit=characters, language=jpn -> 0.0025
 base: activity=reading, unit=characters -> 0.00083333
 base: activity=reading, unit=page, language=jpn, tag=two_column -> 1.6
 base: activity=reading, unit=page -> 1
-base: activity=listening -> 0.5
-modifier: activity=listening, tag=dense -> 1.4
+base: activity=listening -> 0.4
+modifier: activity=listening, tag=dense -> 1.5
 ```
 
 Priority orders rules from most specific to least specific. The first matching
 base rule supplies the base rate, so Japanese characters use `0.0025` directly
 rather than stacking a language multiplier on the broad character rate. Every
 matching stackable modifier is then applied; for example, dense listening
-scores at `0.5 * 1.4`. A modifier cannot produce a score without a matching
+scores at `0.4 * 1.5`. A modifier cannot produce a score without a matching
 base rule.
 
 The set of activities is fixed and is not expected to change. Units still exist, but they are stable identifiers rather than containers for scoring modifiers. Contest admins may configure contest-specific scoring rules, and we also expect to tweak the platform default scoring rules over time.

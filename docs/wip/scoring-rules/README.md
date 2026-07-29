@@ -39,7 +39,7 @@ For example:
 ```text
 amount: 200 pages * 1.0 = 200
 duration_minutes: 30 minutes * 0.4 = 12
-dense listening: 30 minutes * 0.5 base * 1.4 modifier = 21
+dense listening: 30 minutes * 0.4 base * 1.5 modifier = 18
 ```
 
 ## Rule-set behavior
@@ -156,7 +156,7 @@ the broad character base and is not modeled as a `3x` modifier.
 
 The compatibility dense-unit rules remain non-stackable `0.7` bases so the
 initial set exactly reproduces current coverage. A future normalized `dense`
-tag can instead be a stackable `1.4` modifier over the applicable `0.5` base
+tag can instead be a stackable `1.5` modifier over the applicable `0.4` base
 without changing base-rate selection.
 
 ## Proposed persistence model

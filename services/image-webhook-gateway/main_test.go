@@ -53,30 +53,6 @@ func TestParsePackageEventRejectsUnusableEvents(t *testing.T) {
 	}
 }
 
-func TestSplitGHCRImage(t *testing.T) {
-	owner, name, tag, ok := splitGHCRImage("ghcr.io/tadoku/tadoku/content-api:prod")
-	require.True(t, ok)
-	assert.Equal(t, "tadoku", owner)
-	assert.Equal(t, "tadoku/content-api", name)
-	assert.Equal(t, "prod", tag)
-
-	_, _, _, ok = splitGHCRImage("docker.io/tadoku/content-api:prod")
-	assert.False(t, ok)
-	_, _, _, ok = splitGHCRImage("ghcr.io/tadoku/content-api")
-	assert.False(t, ok)
-}
-
-func TestSyntheticPackageEventRoundTrip(t *testing.T) {
-	body, err := syntheticPackageEvent("tadoku", "tadoku/content-api", "prod")
-	require.NoError(t, err)
-
-	event, err := parsePackageEvent(body)
-	require.NoError(t, err)
-	assert.Equal(t, "tadoku", event.Package.Owner.Login)
-	assert.Equal(t, "tadoku/content-api", event.Package.Name)
-	assert.Equal(t, "prod", event.Package.PackageVersion.ContainerMetadata.Tag.Name)
-}
-
 func TestHandleWebhookQueuesAuthenticatedEvent(t *testing.T) {
 	g := &gateway{
 		cfg:   config{secret: "secret"},
@@ -100,9 +76,34 @@ func TestHandleWebhookQueuesAuthenticatedEvent(t *testing.T) {
 	g.handleWebhook(response, req)
 
 	assert.Equal(t, http.StatusAccepted, response.Code)
-	assert.EqualValues(t, 1, g.pending.Load())
 	queued := <-g.queue
 	assert.Equal(t, body, queued.body)
+}
+
+func TestHandleWebhookIgnoresAuthenticatedNonProdEvent(t *testing.T) {
+	g := &gateway{
+		cfg:   config{secret: "secret"},
+		queue: make(chan webhookEvent, 1),
+	}
+	g.accepting.Store(true)
+	body := []byte(`{
+		"action":"published",
+		"package":{
+			"name":"tadoku/content-api",
+			"package_type":"container",
+			"owner":{"login":"tadoku"},
+			"package_version":{"name":"latest"}
+		}
+	}`)
+	req := httptest.NewRequest(http.MethodPost, "/webhook", bytes.NewReader(body))
+	req.Header.Set("X-GitHub-Event", "package")
+	req.Header.Set("X-Hub-Signature-256", signature([]byte("secret"), body))
+	response := httptest.NewRecorder()
+
+	g.handleWebhook(response, req)
+
+	assert.Equal(t, http.StatusAccepted, response.Code)
+	assert.Empty(t, g.queue)
 }
 
 func TestHandleWebhookRejectsInvalidSignature(t *testing.T) {
@@ -156,9 +157,8 @@ func TestWorkerSerializesUntilReconciliationCompletes(t *testing.T) {
 		queue:     make(chan webhookEvent, 2),
 		pollEvery: time.Millisecond,
 	}
-	g.pending.Store(2)
-	g.queue <- webhookEvent{body: []byte(`{}`), source: "test-1"}
-	g.queue <- webhookEvent{body: []byte(`{}`), source: "test-2"}
+	g.queue <- webhookEvent{body: []byte(`{}`)}
+	g.queue <- webhookEvent{body: []byte(`{}`)}
 	close(g.queue)
 
 	g.runWorker()
@@ -167,7 +167,6 @@ func TestWorkerSerializesUntilReconciliationCompletes(t *testing.T) {
 	defer mu.Unlock()
 	assert.Equal(t, 2, completed)
 	assert.Equal(t, 1, maxActive)
-	assert.EqualValues(t, 0, g.pending.Load())
 }
 
 type fakeImageUpdaterReader struct {

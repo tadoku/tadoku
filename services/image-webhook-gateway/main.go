@@ -31,19 +31,17 @@ const (
 )
 
 type config struct {
-	address         string
-	targetURL       string
-	namespace       string
-	imageUpdater    string
-	refreshInterval time.Duration
-	queueSize       int
-	secret          string
+	address      string
+	targetURL    string
+	namespace    string
+	imageUpdater string
+	queueSize    int
+	secret       string
 }
 
 type webhookEvent struct {
 	body     []byte
 	delivery string
-	source   string
 }
 
 type packageEvent struct {
@@ -67,13 +65,6 @@ type packageEvent struct {
 }
 
 type imageUpdater struct {
-	Spec struct {
-		ApplicationRefs []struct {
-			Images []struct {
-				ImageName string `json:"imageName"`
-			} `json:"images"`
-		} `json:"applicationRefs"`
-	} `json:"spec"`
 	Status struct {
 		LastCheckedAt string `json:"lastCheckedAt"`
 		Conditions    []struct {
@@ -101,7 +92,6 @@ type gateway struct {
 	kube      imageUpdaterReader
 	queue     chan webhookEvent
 	accepting atomic.Bool
-	pending   atomic.Int64
 	pollEvery time.Duration
 }
 
@@ -144,14 +134,6 @@ func main() {
 		g.runWorker()
 	}()
 
-	refreshCtx, stopRefresh := context.WithCancel(context.Background())
-	var scheduler sync.WaitGroup
-	scheduler.Add(1)
-	go func() {
-		defer scheduler.Done()
-		g.runRefreshScheduler(refreshCtx)
-	}()
-
 	serverErrors := make(chan error, 1)
 	go func() {
 		slog.Info("image webhook gateway listening", "address", cfg.address)
@@ -170,8 +152,6 @@ func main() {
 	}
 
 	g.accepting.Store(false)
-	stopRefresh()
-	scheduler.Wait()
 	shutdownCtx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	_ = server.Shutdown(shutdownCtx)
 	cancel()
@@ -182,29 +162,18 @@ func main() {
 
 func loadConfig() (config, error) {
 	cfg := config{
-		address:         envOrDefault("ADDRESS", ":8080"),
-		targetURL:       envOrDefault("IMAGE_UPDATER_WEBHOOK_URL", "http://argocd-image-updater-webhook-internal:8082/webhook?type=ghcr.io"),
-		namespace:       envOrDefault("IMAGE_UPDATER_NAMESPACE", "argocd"),
-		imageUpdater:    envOrDefault("IMAGE_UPDATER_NAME", "tadoku"),
-		refreshInterval: time.Hour,
-		queueSize:       256,
-		secret:          os.Getenv("GHCR_WEBHOOK_SECRET"),
-	}
-	var err error
-	if value := os.Getenv("REFRESH_INTERVAL"); value != "" {
-		cfg.refreshInterval, err = time.ParseDuration(value)
-		if err != nil {
-			return config{}, fmt.Errorf("REFRESH_INTERVAL: %w", err)
-		}
+		address:      envOrDefault("ADDRESS", ":8080"),
+		targetURL:    envOrDefault("IMAGE_UPDATER_WEBHOOK_URL", "http://argocd-image-updater-webhook-internal:8082/webhook?type=ghcr.io"),
+		namespace:    envOrDefault("IMAGE_UPDATER_NAMESPACE", "argocd"),
+		imageUpdater: envOrDefault("IMAGE_UPDATER_NAME", "tadoku"),
+		queueSize:    256,
+		secret:       os.Getenv("GHCR_WEBHOOK_SECRET"),
 	}
 	if cfg.secret == "" {
 		return config{}, errors.New("GHCR_WEBHOOK_SECRET is required")
 	}
 	if _, err := url.ParseRequestURI(cfg.targetURL); err != nil {
 		return config{}, fmt.Errorf("IMAGE_UPDATER_WEBHOOK_URL: %w", err)
-	}
-	if cfg.refreshInterval <= 0 {
-		return config{}, errors.New("REFRESH_INTERVAL must be positive")
 	}
 	return cfg, nil
 }
@@ -238,24 +207,27 @@ func (g *gateway) handleWebhook(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "invalid webhook signature", http.StatusUnauthorized)
 		return
 	}
-	if _, err := parsePackageEvent(body); err != nil {
+	eventPayload, err := parsePackageEvent(body)
+	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	if eventPayload.tag() != "prod" {
+		w.WriteHeader(http.StatusAccepted)
+		_, _ = w.Write([]byte("ignored non-prod package event"))
 		return
 	}
 
 	event := webhookEvent{
 		body:     body,
 		delivery: r.Header.Get("X-GitHub-Delivery"),
-		source:   "github",
 	}
-	g.pending.Add(1)
 	select {
 	case g.queue <- event:
-		slog.Info("webhook event queued", "delivery", event.delivery, "pending", g.pending.Load())
+		slog.Info("webhook event queued", "delivery", event.delivery, "queued", len(g.queue))
 		w.WriteHeader(http.StatusAccepted)
 		_, _ = w.Write([]byte("queued"))
 	default:
-		g.pending.Add(-1)
 		http.Error(w, "event queue is full", http.StatusServiceUnavailable)
 	}
 }
@@ -271,7 +243,6 @@ func (g *gateway) handleReady(w http.ResponseWriter, _ *http.Request) {
 func (g *gateway) runWorker() {
 	for event := range g.queue {
 		g.process(event)
-		g.pending.Add(-1)
 	}
 }
 
@@ -284,18 +255,17 @@ func (g *gateway) process(event webhookEvent) {
 			continue
 		}
 		if err := g.forward(context.Background(), event); err != nil {
-			slog.Error("forward webhook", "source", event.source, "delivery", event.delivery, "error", err)
+			slog.Error("forward webhook", "delivery", event.delivery, "error", err)
 			time.Sleep(retryDelay)
 			continue
 		}
 		status, err := g.waitForCompletion(context.Background(), baseline)
 		if err != nil {
-			slog.Error("wait for webhook reconciliation", "source", event.source, "delivery", event.delivery, "error", err)
+			slog.Error("wait for webhook reconciliation", "delivery", event.delivery, "error", err)
 			time.Sleep(retryDelay)
 			continue
 		}
 		slog.Info("serialized webhook reconciliation completed",
-			"source", event.source,
 			"delivery", event.delivery,
 			"lastCheckedAt", status.Status.LastCheckedAt,
 			"readyReason", conditionReason(status, "Ready"),
@@ -374,55 +344,6 @@ func (g *gateway) statusPollInterval() time.Duration {
 	return statusPoll
 }
 
-func (g *gateway) runRefreshScheduler(ctx context.Context) {
-	timer := time.NewTimer(g.cfg.refreshInterval)
-	defer timer.Stop()
-	for {
-		select {
-		case <-ctx.Done():
-			return
-		case <-timer.C:
-			g.enqueueRefresh(ctx)
-			timer.Reset(g.cfg.refreshInterval)
-		}
-	}
-}
-
-func (g *gateway) enqueueRefresh(ctx context.Context) {
-	resource, err := g.kube.get(ctx)
-	if err != nil {
-		slog.Error("load images for hourly refresh", "error", err)
-		return
-	}
-	seen := make(map[string]struct{})
-	for _, app := range resource.Spec.ApplicationRefs {
-		for _, image := range app.Images {
-			owner, name, tag, ok := splitGHCRImage(image.ImageName)
-			if !ok {
-				continue
-			}
-			key := owner + "/" + name + ":" + tag
-			if _, exists := seen[key]; exists {
-				continue
-			}
-			seen[key] = struct{}{}
-			body, err := syntheticPackageEvent(owner, name, tag)
-			if err != nil {
-				slog.Error("create hourly refresh event", "image", image.ImageName, "error", err)
-				continue
-			}
-			g.pending.Add(1)
-			select {
-			case g.queue <- webhookEvent{body: body, source: "hourly-refresh"}:
-			default:
-				g.pending.Add(-1)
-				slog.Error("hourly refresh event dropped because queue is full", "image", image.ImageName)
-			}
-		}
-	}
-	slog.Info("hourly image refresh queued", "images", len(seen), "pending", g.pending.Load())
-}
-
 func parsePackageEvent(body []byte) (packageEvent, error) {
 	var event packageEvent
 	if err := json.Unmarshal(body, &event); err != nil {
@@ -437,42 +358,20 @@ func parsePackageEvent(body []byte) (packageEvent, error) {
 	if event.Package.Name == "" || event.Package.Owner.Login == "" {
 		return event, errors.New("package owner and name are required")
 	}
-	tag := event.Package.PackageVersion.ContainerMetadata.Tag.Name
-	if tag == "" {
-		tag = event.Package.PackageVersion.Name
-	}
-	if tag == "" {
-		tag = event.Package.PackageVersion.Version
-	}
-	if tag == "" {
+	if event.tag() == "" {
 		return event, errors.New("package tag is required")
 	}
 	return event, nil
 }
 
-func syntheticPackageEvent(owner, name, tag string) ([]byte, error) {
-	var event packageEvent
-	event.Action = "published"
-	event.Package.Name = name
-	event.Package.PackageType = "container"
-	event.Package.Owner.Login = owner
-	event.Package.PackageVersion.Name = tag
-	event.Package.PackageVersion.ContainerMetadata.Tag.Name = tag
-	return json.Marshal(event)
-}
-
-func splitGHCRImage(image string) (owner, name, tag string, ok bool) {
-	const prefix = "ghcr.io/"
-	if !strings.HasPrefix(image, prefix) {
-		return "", "", "", false
+func (e packageEvent) tag() string {
+	if tag := e.Package.PackageVersion.ContainerMetadata.Tag.Name; tag != "" {
+		return tag
 	}
-	reference := strings.TrimPrefix(image, prefix)
-	colon := strings.LastIndex(reference, ":")
-	slash := strings.Index(reference, "/")
-	if slash <= 0 || colon <= slash+1 || colon == len(reference)-1 {
-		return "", "", "", false
+	if tag := e.Package.PackageVersion.Name; tag != "" {
+		return tag
 	}
-	return reference[:slash], reference[slash+1 : colon], reference[colon+1:], true
+	return e.Package.PackageVersion.Version
 }
 
 func signature(secret, body []byte) string {

@@ -41,6 +41,7 @@ func (r *Repository) FetchLogConfigurationOptions(ctx context.Context, userID uu
 	for i, u := range units {
 		options.Units[i] = domain.Unit{
 			ID:            u.ID,
+			Key:           u.UnitKey,
 			LogActivityID: int(u.LogActivityID),
 			Name:          u.Name,
 			Modifier:      u.Modifier,

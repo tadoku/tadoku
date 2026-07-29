@@ -27,6 +27,7 @@ func (s *Server) LogCreate(ctx echo.Context) error {
 	log, err := s.logCreate.Execute(ctx.Request().Context(), &domain.LogCreateRequest{
 		RegistrationIDs: registrationIDs,
 		UnitID:          req.UnitId,
+		UnitKey:         req.UnitKey,
 		ActivityID:      req.ActivityId,
 		LanguageCode:    req.LanguageCode,
 		Amount:          req.Amount,

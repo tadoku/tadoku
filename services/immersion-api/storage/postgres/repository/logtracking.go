@@ -15,6 +15,13 @@ func trackingUnitID(tracking domain.LogTracking) uuid.NullUUID {
 	return postgres.NewNullUUID(tracking.UnitID)
 }
 
+func trackingUnitKey(tracking domain.LogTracking) sql.NullString {
+	if tracking.Kind != domain.LogTrackingAmountUnit && tracking.Kind != domain.LogTrackingBoth {
+		return sql.NullString{}
+	}
+	return sql.NullString{String: tracking.UnitKey, Valid: true}
+}
+
 func trackingAmount(tracking domain.LogTracking) sql.NullFloat64 {
 	if tracking.Kind != domain.LogTrackingAmountUnit && tracking.Kind != domain.LogTrackingBoth {
 		return sql.NullFloat64{}
@@ -38,6 +45,7 @@ func trackingDurationSeconds(tracking domain.LogTracking) sql.NullInt32 {
 
 func readLogTracking(
 	unitID uuid.NullUUID,
+	unitKey string,
 	amount sql.NullFloat64,
 	modifier sql.NullFloat64,
 	durationSeconds sql.NullInt32,
@@ -50,6 +58,7 @@ func readLogTracking(
 	if hasAmountUnit {
 		tracking.Kind = domain.LogTrackingAmountUnit
 		tracking.UnitID = postgres.NewUUIDFromNullUUID(unitID)
+		tracking.UnitKey = unitKey
 		tracking.Amount = postgres.NewFloat32FromNullFloat64(amount)
 		tracking.Modifier = postgres.NewFloat32FromNullFloat64(modifier)
 	}

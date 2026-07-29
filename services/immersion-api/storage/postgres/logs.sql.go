@@ -41,6 +41,7 @@ const createContestLogRelation = `-- name: CreateContestLogRelation :exec
 insert into contest_logs (
   contest_id,
   log_id,
+  unit_key,
   amount,
   modifier,
   duration_seconds,
@@ -51,13 +52,15 @@ insert into contest_logs (
   $3,
   $4,
   $5,
-  $6
+  $6,
+  $7
 )
 `
 
 type CreateContestLogRelationParams struct {
 	RegistrationID  uuid.UUID
 	LogID           uuid.UUID
+	UnitKey         sql.NullString
 	Amount          sql.NullFloat64
 	Modifier        sql.NullFloat64
 	DurationSeconds sql.NullInt32
@@ -68,6 +71,7 @@ func (q *Queries) CreateContestLogRelation(ctx context.Context, arg CreateContes
 	_, err := q.db.ExecContext(ctx, createContestLogRelation,
 		arg.RegistrationID,
 		arg.LogID,
+		arg.UnitKey,
 		arg.Amount,
 		arg.Modifier,
 		arg.DurationSeconds,
@@ -83,6 +87,7 @@ insert into logs (
   language_code,
   log_activity_id,
   unit_id,
+  unit_key,
   amount,
   modifier,
   duration_seconds,
@@ -100,7 +105,8 @@ insert into logs (
   $8,
   $9,
   $10,
-  $11
+  $11,
+  $12
 ) returning id
 `
 
@@ -110,6 +116,7 @@ type CreateLogParams struct {
 	LanguageCode                string
 	LogActivityID               int16
 	UnitID                      uuid.NullUUID
+	UnitKey                     sql.NullString
 	Amount                      sql.NullFloat64
 	Modifier                    sql.NullFloat64
 	DurationSeconds             sql.NullInt32
@@ -125,6 +132,7 @@ func (q *Queries) CreateLog(ctx context.Context, arg CreateLogParams) (uuid.UUID
 		arg.LanguageCode,
 		arg.LogActivityID,
 		arg.UnitID,
+		arg.UnitKey,
 		arg.Amount,
 		arg.Modifier,
 		arg.DurationSeconds,
@@ -406,6 +414,7 @@ select
   languages.name as language_name,
   logs.log_activity_id as activity_id,
   logs.unit_id,
+  coalesce(logs.unit_key, '') as unit_key,
   coalesce(log_units.name, '') as unit_name,
   logs.description,
   logs.amount,
@@ -442,6 +451,7 @@ type FindLogByIDRow struct {
 	LanguageName                string
 	ActivityID                  int16
 	UnitID                      uuid.NullUUID
+	UnitKey                     string
 	UnitName                    string
 	Description                 sql.NullString
 	Amount                      sql.NullFloat64
@@ -466,6 +476,7 @@ func (q *Queries) FindLogByID(ctx context.Context, arg FindLogByIDParams) (FindL
 		&i.LanguageName,
 		&i.ActivityID,
 		&i.UnitID,
+		&i.UnitKey,
 		&i.UnitName,
 		&i.Description,
 		&i.Amount,
@@ -490,6 +501,7 @@ with eligible_logs as (
     languages.name as language_name,
     logs.log_activity_id as activity_id,
     logs.unit_id,
+    coalesce(logs.unit_key, '') as unit_key,
     coalesce(log_units.name, '') as unit_name,
     logs.description,
     contest_logs.amount,
@@ -515,7 +527,7 @@ with eligible_logs as (
     and contest_logs.contest_id = $5
 )
 select
-  id, user_id, language_code, language_name, activity_id, unit_id, unit_name, description, amount, modifier, duration_seconds, score, created_at, updated_at, deleted_at, user_display_name, tags,
+  id, user_id, language_code, language_name, activity_id, unit_id, unit_key, unit_name, description, amount, modifier, duration_seconds, score, created_at, updated_at, deleted_at, user_display_name, tags,
   (select count(eligible_logs.id) from eligible_logs) as total_size
 from eligible_logs
 order by created_at desc
@@ -538,6 +550,7 @@ type ListLogsForContestRow struct {
 	LanguageName    string
 	ActivityID      int16
 	UnitID          uuid.NullUUID
+	UnitKey         string
 	UnitName        string
 	Description     sql.NullString
 	Amount          sql.NullFloat64
@@ -574,6 +587,7 @@ func (q *Queries) ListLogsForContest(ctx context.Context, arg ListLogsForContest
 			&i.LanguageName,
 			&i.ActivityID,
 			&i.UnitID,
+			&i.UnitKey,
 			&i.UnitName,
 			&i.Description,
 			&i.Amount,
@@ -609,6 +623,7 @@ with eligible_logs as (
     languages.name as language_name,
     logs.log_activity_id as activity_id,
     logs.unit_id,
+    coalesce(logs.unit_key, '') as unit_key,
     coalesce(log_units.name, '') as unit_name,
     logs.description,
     logs.amount,
@@ -630,7 +645,7 @@ with eligible_logs as (
     and logs.user_id = $4
 )
 select
-  id, user_id, language_code, language_name, activity_id, unit_id, unit_name, description, amount, modifier, duration_seconds, score, created_at, updated_at, deleted_at, tags,
+  id, user_id, language_code, language_name, activity_id, unit_id, unit_key, unit_name, description, amount, modifier, duration_seconds, score, created_at, updated_at, deleted_at, tags,
   (select count(eligible_logs.id) from eligible_logs) as total_size
 from eligible_logs
 order by created_at desc
@@ -652,6 +667,7 @@ type ListLogsForUserRow struct {
 	LanguageName    string
 	ActivityID      int16
 	UnitID          uuid.NullUUID
+	UnitKey         string
 	UnitName        string
 	Description     sql.NullString
 	Amount          sql.NullFloat64
@@ -686,6 +702,7 @@ func (q *Queries) ListLogsForUser(ctx context.Context, arg ListLogsForUserParams
 			&i.LanguageName,
 			&i.ActivityID,
 			&i.UnitID,
+			&i.UnitKey,
 			&i.UnitName,
 			&i.Description,
 			&i.Amount,
@@ -717,12 +734,13 @@ set
   amount = $1,
   modifier = $2,
   unit_id = $3,
-  duration_seconds = $4,
-  computed_score = $5,
-  "description" = $6,
-  updated_at = $7
+  unit_key = $4,
+  duration_seconds = $5,
+  computed_score = $6,
+  "description" = $7,
+  updated_at = $8
 where
-  id = $8
+  id = $9
   and deleted_at is null
 `
 
@@ -730,6 +748,7 @@ type UpdateLogParams struct {
 	Amount          sql.NullFloat64
 	Modifier        sql.NullFloat64
 	UnitID          uuid.NullUUID
+	UnitKey         sql.NullString
 	DurationSeconds sql.NullInt32
 	ComputedScore   sql.NullFloat64
 	Description     sql.NullString
@@ -742,6 +761,7 @@ func (q *Queries) UpdateLog(ctx context.Context, arg UpdateLogParams) error {
 		arg.Amount,
 		arg.Modifier,
 		arg.UnitID,
+		arg.UnitKey,
 		arg.DurationSeconds,
 		arg.ComputedScore,
 		arg.Description,
@@ -771,18 +791,20 @@ func (q *Queries) UpdateLogEligibleOfficialLeaderboard(ctx context.Context, logI
 const updateOngoingContestLogs = `-- name: UpdateOngoingContestLogs :exec
 update contest_logs
 set
-  amount = $1,
-  modifier = $2,
-  duration_seconds = $3,
-  computed_score = $4
+  unit_key = $1,
+  amount = $2,
+  modifier = $3,
+  duration_seconds = $4,
+  computed_score = $5
 from contests
 where
-  contest_logs.log_id = $5
+  contest_logs.log_id = $6
   and contest_logs.contest_id = contests.id
-  and contests.contest_end >= $6
+  and contests.contest_end >= $7
 `
 
 type UpdateOngoingContestLogsParams struct {
+	UnitKey         sql.NullString
 	Amount          sql.NullFloat64
 	Modifier        sql.NullFloat64
 	DurationSeconds sql.NullInt32
@@ -793,6 +815,7 @@ type UpdateOngoingContestLogsParams struct {
 
 func (q *Queries) UpdateOngoingContestLogs(ctx context.Context, arg UpdateOngoingContestLogsParams) error {
 	_, err := q.db.ExecContext(ctx, updateOngoingContestLogs,
+		arg.UnitKey,
 		arg.Amount,
 		arg.Modifier,
 		arg.DurationSeconds,

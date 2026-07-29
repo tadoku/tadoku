@@ -39,6 +39,7 @@ func (r *Repository) UpdateLogContests(ctx context.Context, req *domain.LogConte
 		if err := qtx.CreateContestLogRelation(ctx, postgres.CreateContestLogRelationParams{
 			RegistrationID:  attach.RegistrationID,
 			LogID:           req.LogID,
+			UnitKey:         trackingUnitKey(tracking),
 			Amount:          trackingAmount(tracking),
 			Modifier:        trackingModifier(tracking),
 			DurationSeconds: trackingDurationSeconds(tracking),

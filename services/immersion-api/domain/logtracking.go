@@ -26,6 +26,7 @@ const (
 type LogTracking struct {
 	Kind            LogTrackingKind
 	UnitID          uuid.UUID
+	UnitKey         string
 	Amount          float32
 	DurationSeconds int32
 	Modifier        float32
@@ -35,6 +36,7 @@ type LogTracking struct {
 type LogTrackingInput struct {
 	ActivityID      int32
 	UnitID          *uuid.UUID
+	UnitKey         *string
 	Amount          *float32
 	Modifier        *float32
 	DurationSeconds *int32
@@ -46,13 +48,20 @@ type UnitFindForTrackingRequest struct {
 	LanguageCode string
 }
 
+type UnitFindForTrackingByKeyRequest struct {
+	Key          string
+	ActivityID   int32
+	LanguageCode string
+}
+
 type logTrackingUnitFinder interface {
 	FindUnitForTracking(context.Context, *UnitFindForTrackingRequest) (*Unit, error)
+	FindUnitForTrackingByKey(context.Context, *UnitFindForTrackingByKeyRequest) (*Unit, error)
 }
 
 func DetermineLogTrackingKind(input LogTrackingInput) (LogTrackingKind, error) {
 	hasAmount := input.Amount != nil
-	hasUnit := input.UnitID != nil
+	hasUnit := input.UnitID != nil || input.UnitKey != nil
 	hasDuration := input.DurationSeconds != nil
 
 	if !IsValidActivityID(input.ActivityID) {
@@ -65,7 +74,7 @@ func DetermineLogTrackingKind(input LogTrackingInput) (LogTrackingKind, error) {
 		return "", fmt.Errorf("amount must be positive: %w", ErrInvalidLog)
 	}
 	if hasAmount != hasUnit {
-		return "", fmt.Errorf("amount and unit_id must be supplied together: %w", ErrInvalidLog)
+		return "", fmt.Errorf("amount and a unit identifier must be supplied together: %w", ErrInvalidLog)
 	}
 	if hasAmount && input.Modifier == nil {
 		return "", fmt.Errorf("modifier is required for amount scoring: %w", ErrInvalidLog)
@@ -120,6 +129,7 @@ func resolveLogTracking(
 	activityID int32,
 	languageCode string,
 	unitID *uuid.UUID,
+	unitKey *string,
 	amount *float32,
 	durationSeconds *int32,
 ) (LogTracking, error) {
@@ -127,9 +137,15 @@ func resolveLogTracking(
 		return LogTracking{}, fmt.Errorf("activity %d is not valid: %w", activityID, ErrInvalidLog)
 	}
 
-	var modifier *float32
+	var unit *Unit
+	if unitKey != nil {
+		definition, ok := UnitDefinitionByKey(*unitKey)
+		if !ok || definition.ActivityID != activityID {
+			return LogTracking{}, fmt.Errorf("unit key %q is not valid for activity %d: %w", *unitKey, activityID, ErrInvalidLog)
+		}
+	}
 	if amount != nil && unitID != nil {
-		unit, err := finder.FindUnitForTracking(ctx, &UnitFindForTrackingRequest{
+		resolved, err := finder.FindUnitForTracking(ctx, &UnitFindForTrackingRequest{
 			ID:           *unitID,
 			ActivityID:   activityID,
 			LanguageCode: languageCode,
@@ -137,12 +153,38 @@ func resolveLogTracking(
 		if err != nil {
 			return LogTracking{}, err
 		}
+		unit = resolved
+	}
+	if amount != nil && unitID == nil && unitKey != nil {
+		resolved, err := finder.FindUnitForTrackingByKey(ctx, &UnitFindForTrackingByKeyRequest{
+			Key:          *unitKey,
+			ActivityID:   activityID,
+			LanguageCode: languageCode,
+		})
+		if err != nil {
+			return LogTracking{}, err
+		}
+		unit = resolved
+	}
+	if unit != nil {
+		definition, ok := UnitDefinitionByKey(unit.Key)
+		if !ok || definition.ActivityID != activityID {
+			return LogTracking{}, fmt.Errorf("resolved unit key %q is not valid for activity %d: %w", unit.Key, activityID, ErrInvalidLog)
+		}
+	}
+	if unit != nil && unitKey != nil && unit.Key != *unitKey {
+		return LogTracking{}, fmt.Errorf("unit_id and unit_key identify different units: %w", ErrInvalidLog)
+	}
+
+	var modifier *float32
+	if unit != nil {
 		modifier = &unit.Modifier
 	}
 
 	input := LogTrackingInput{
 		ActivityID:      activityID,
 		UnitID:          unitID,
+		UnitKey:         unitKey,
 		Amount:          amount,
 		Modifier:        modifier,
 		DurationSeconds: durationSeconds,
@@ -161,7 +203,8 @@ func resolveLogTracking(
 		ComputedScore: computedScore,
 	}
 	if kind == LogTrackingAmountUnit || kind == LogTrackingBoth {
-		tracking.UnitID = *unitID
+		tracking.UnitID = unit.ID
+		tracking.UnitKey = unit.Key
 		tracking.Amount = *amount
 		tracking.Modifier = *modifier
 	}

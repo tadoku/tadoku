@@ -327,13 +327,13 @@ endpoint. All form changes must use `react-hook-form` and components from the
   - [ ] Unmatched rules produce zero.
   - [ ] Published rule sets are immutable and versioned.
 
-- [ ] Introduce stable, code-owned unit keys.
-  - [ ] Add keys such as `reading_page`, `reading_character`, and
+- [x] Introduce stable, code-owned unit keys.
+  - [x] Add keys such as `reading_page`, `reading_character`, and
     `listening_minute`.
-  - [ ] Add `unit_key` to logs and API configuration responses.
-  - [ ] Backfill existing logs from their UUID units.
-  - [ ] Continue accepting legacy `unit_id` UUID payloads.
-  - [ ] Keep the legacy form's behavior unchanged.
+  - [x] Add `unit_key` to logs and API configuration responses.
+  - [x] Backfill existing logs from their UUID units.
+  - [x] Continue accepting legacy `unit_id` UUID payloads.
+  - [x] Keep the legacy form's behavior unchanged.
 
 - [ ] Add scoring-rule storage.
   - [ ] Add versioned `scoring_rule_sets`.

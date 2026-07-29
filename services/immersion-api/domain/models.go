@@ -124,6 +124,7 @@ type ActivityScore struct {
 
 type Unit struct {
 	ID            uuid.UUID
+	Key           string
 	LogActivityID int
 	Name          string
 	Modifier      float32
@@ -145,6 +146,7 @@ type Log struct {
 	ActivityID                  int
 	ActivityName                string
 	UnitID                      uuid.UUID
+	UnitKey                     string
 	UnitName                    string
 	Tags                        []string
 	Amount                      float32

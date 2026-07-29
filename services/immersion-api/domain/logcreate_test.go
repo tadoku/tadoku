@@ -38,6 +38,23 @@ func (m *mockLogCreateRepository) FindUnitForTracking(_ context.Context, req *do
 	}
 	return &domain.Unit{
 		ID:            req.ID,
+		Key:           domain.UnitKeyReadingPage,
+		LogActivityID: int(req.ActivityID),
+		Modifier:      1,
+		LanguageCode:  &req.LanguageCode,
+	}, nil
+}
+
+func (m *mockLogCreateRepository) FindUnitForTrackingByKey(_ context.Context, req *domain.UnitFindForTrackingByKeyRequest) (*domain.Unit, error) {
+	if m.findUnitErr != nil {
+		return nil, m.findUnitErr
+	}
+	if m.unit != nil {
+		return m.unit, nil
+	}
+	return &domain.Unit{
+		ID:            uuid.New(),
+		Key:           req.Key,
 		LogActivityID: int(req.ActivityID),
 		Modifier:      1,
 		LanguageCode:  &req.LanguageCode,
@@ -332,6 +349,84 @@ func TestLogCreate_Execute(t *testing.T) {
 		assert.Equal(t, logID, result.ID)
 		assert.Empty(t, repo.createCalledWith.RegistrationIDs)
 		assert.False(t, repo.createCalledWith.EligibleOfficialLeaderboard())
+	})
+
+	t.Run("successfully creates an amount log from a stable unit key", func(t *testing.T) {
+		resolvedUnitID := uuid.New()
+		unitKey := domain.UnitKeyReadingCharacter
+		repo := &mockLogCreateRepository{
+			unit: &domain.Unit{
+				ID:            resolvedUnitID,
+				Key:           unitKey,
+				LogActivityID: 1,
+				Modifier:      0.0025,
+			},
+			createdLogID: &logID,
+			log:          createdLog,
+		}
+		clock := commondomain.NewMockClock(now)
+		svc := newLogCreateService(repo, clock)
+
+		_, err := svc.Execute(ctxWithUserSubject(userID.String()), &domain.LogCreateRequest{
+			UnitKey:      &unitKey,
+			ActivityID:   1,
+			LanguageCode: "jpn",
+			Amount:       &amount100,
+		})
+
+		require.NoError(t, err)
+		tracking := repo.createCalledWith.Tracking()
+		assert.Equal(t, resolvedUnitID, tracking.UnitID)
+		assert.Equal(t, unitKey, tracking.UnitKey)
+		assert.InDelta(t, float32(0.25), tracking.ComputedScore, 0.0001)
+	})
+
+	t.Run("rejects conflicting legacy and stable unit identifiers", func(t *testing.T) {
+		unitKey := domain.UnitKeyReadingCharacter
+		repo := &mockLogCreateRepository{
+			unit: &domain.Unit{
+				ID:            unitID,
+				Key:           domain.UnitKeyReadingPage,
+				LogActivityID: 1,
+				Modifier:      1,
+			},
+		}
+		clock := commondomain.NewMockClock(now)
+		svc := newLogCreateService(repo, clock)
+
+		_, err := svc.Execute(ctxWithUserSubject(userID.String()), &domain.LogCreateRequest{
+			UnitID:       &unitID,
+			UnitKey:      &unitKey,
+			ActivityID:   1,
+			LanguageCode: "jpn",
+			Amount:       &amount100,
+		})
+
+		assert.ErrorIs(t, err, domain.ErrInvalidLog)
+		assert.False(t, repo.createCalled)
+	})
+
+	t.Run("rejects a legacy unit that has no code-owned key", func(t *testing.T) {
+		repo := &mockLogCreateRepository{
+			unit: &domain.Unit{
+				ID:            unitID,
+				Key:           "unknown",
+				LogActivityID: 1,
+				Modifier:      1,
+			},
+		}
+		clock := commondomain.NewMockClock(now)
+		svc := newLogCreateService(repo, clock)
+
+		_, err := svc.Execute(ctxWithUserSubject(userID.String()), &domain.LogCreateRequest{
+			UnitID:       &unitID,
+			ActivityID:   1,
+			LanguageCode: "jpn",
+			Amount:       &amount100,
+		})
+
+		assert.ErrorIs(t, err, domain.ErrInvalidLog)
+		assert.False(t, repo.createCalled)
 	})
 
 	t.Run("successfully creates duration-only log", func(t *testing.T) {

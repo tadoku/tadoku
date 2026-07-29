@@ -12,6 +12,7 @@ import (
 
 func TestTrackingNullConversions(t *testing.T) {
 	unitID := uuid.New()
+	unitKey := domain.UnitKeyReadingPage
 
 	tests := []struct {
 		name     string
@@ -22,6 +23,7 @@ func TestTrackingNullConversions(t *testing.T) {
 			tracking: domain.LogTracking{
 				Kind:          domain.LogTrackingAmountUnit,
 				UnitID:        unitID,
+				UnitKey:       unitKey,
 				Amount:        12.5,
 				Modifier:      0.8,
 				ComputedScore: 10,
@@ -40,6 +42,7 @@ func TestTrackingNullConversions(t *testing.T) {
 			tracking: domain.LogTracking{
 				Kind:            domain.LogTrackingBoth,
 				UnitID:          unitID,
+				UnitKey:         unitKey,
 				Amount:          12.5,
 				Modifier:        0.8,
 				DurationSeconds: 600,
@@ -51,16 +54,19 @@ func TestTrackingNullConversions(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			unit := trackingUnitID(tt.tracking)
+			key := trackingUnitKey(tt.tracking)
 			amount := trackingAmount(tt.tracking)
 			modifier := trackingModifier(tt.tracking)
 			duration := trackingDurationSeconds(tt.tracking)
 
 			hasAmountUnit := tt.tracking.Kind == domain.LogTrackingAmountUnit || tt.tracking.Kind == domain.LogTrackingBoth
 			assert.Equal(t, hasAmountUnit, unit.Valid)
+			assert.Equal(t, hasAmountUnit, key.Valid)
 			assert.Equal(t, hasAmountUnit, amount.Valid)
 			assert.Equal(t, hasAmountUnit, modifier.Valid)
 			if hasAmountUnit {
 				assert.Equal(t, tt.tracking.UnitID, unit.UUID)
+				assert.Equal(t, tt.tracking.UnitKey, key.String)
 				assert.InDelta(t, tt.tracking.Amount, float32(amount.Float64), 0.0001)
 				assert.InDelta(t, tt.tracking.Modifier, float32(modifier.Float64), 0.0001)
 			}
@@ -76,6 +82,7 @@ func TestTrackingNullConversions(t *testing.T) {
 
 func TestReadLogTracking(t *testing.T) {
 	unitID := uuid.New()
+	unitKey := domain.UnitKeyReadingPage
 
 	tests := []struct {
 		name             string
@@ -95,6 +102,7 @@ func TestReadLogTracking(t *testing.T) {
 			expectedTracking: domain.LogTracking{
 				Kind:          domain.LogTrackingAmountUnit,
 				UnitID:        unitID,
+				UnitKey:       unitKey,
 				Amount:        12.5,
 				Modifier:      0.8,
 				ComputedScore: 10,
@@ -120,6 +128,7 @@ func TestReadLogTracking(t *testing.T) {
 			expectedTracking: domain.LogTracking{
 				Kind:            domain.LogTrackingBoth,
 				UnitID:          unitID,
+				UnitKey:         unitKey,
 				Amount:          12.5,
 				Modifier:        0.8,
 				DurationSeconds: 600,
@@ -130,10 +139,11 @@ func TestReadLogTracking(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			tracking := readLogTracking(tt.unitID, tt.amount, tt.modifier, tt.durationSeconds, tt.score)
+			tracking := readLogTracking(tt.unitID, unitKey, tt.amount, tt.modifier, tt.durationSeconds, tt.score)
 
 			require.Equal(t, tt.expectedTracking.Kind, tracking.Kind)
 			assert.Equal(t, tt.expectedTracking.UnitID, tracking.UnitID)
+			assert.Equal(t, tt.expectedTracking.UnitKey, tracking.UnitKey)
 			assert.InDelta(t, tt.expectedTracking.Amount, tracking.Amount, 0.0001)
 			assert.InDelta(t, tt.expectedTracking.Modifier, tracking.Modifier, 0.0001)
 			assert.Equal(t, tt.expectedTracking.DurationSeconds, tracking.DurationSeconds)

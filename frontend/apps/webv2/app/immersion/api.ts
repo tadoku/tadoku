@@ -545,6 +545,7 @@ export const Log = z.object({
   language: Language,
   activity: Activity,
   unit_id: z.string(),
+  unit_key: z.string().optional(),
   unit_name: z.string(),
   tags: z.array(z.string()),
   amount: z.number(),
@@ -684,6 +685,7 @@ export const useUserProfile = (
 
 export const Unit = z.object({
   id: z.string(),
+  unit_key: z.string(),
   log_activity_id: z.number(),
   name: z.string(),
   modifier: z.number(),
@@ -764,6 +766,7 @@ export type CreateLogV2Payload = {
   activity_id: number
   amount?: number
   unit_id?: string
+  unit_key?: string
   duration_seconds?: number
   tags: string[]
   description?: string
@@ -793,6 +796,7 @@ export const useCreateLogV2 = (onSuccess: (log: Log) => void) =>
 export type UpdateLogPayload = {
   amount?: number
   unit_id?: string
+  unit_key?: string
   duration_seconds?: number
   tags: string[]
   description?: string

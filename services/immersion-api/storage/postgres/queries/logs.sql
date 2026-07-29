@@ -5,6 +5,7 @@ insert into logs (
   language_code,
   log_activity_id,
   unit_id,
+  unit_key,
   amount,
   modifier,
   duration_seconds,
@@ -17,6 +18,7 @@ insert into logs (
   sqlc.arg('language_code'),
   sqlc.arg('log_activity_id'),
   sqlc.arg('unit_id'),
+  sqlc.arg('unit_key'),
   sqlc.arg('amount'),
   sqlc.arg('modifier'),
   sqlc.arg('duration_seconds'),
@@ -29,6 +31,7 @@ insert into logs (
 insert into contest_logs (
   contest_id,
   log_id,
+  unit_key,
   amount,
   modifier,
   duration_seconds,
@@ -36,6 +39,7 @@ insert into contest_logs (
 ) values (
   (select contest_id from contest_registrations where id = sqlc.arg('registration_id')),
   sqlc.arg('log_id'),
+  sqlc.arg('unit_key'),
   sqlc.arg('amount'),
   sqlc.arg('modifier'),
   sqlc.arg('duration_seconds'),
@@ -51,6 +55,7 @@ with eligible_logs as (
     languages.name as language_name,
     logs.log_activity_id as activity_id,
     logs.unit_id,
+    coalesce(contest_logs.unit_key, '') as unit_key,
     coalesce(log_units.name, '') as unit_name,
     logs.description,
     contest_logs.amount,
@@ -92,6 +97,7 @@ with eligible_logs as (
     languages.name as language_name,
     logs.log_activity_id as activity_id,
     logs.unit_id,
+    coalesce(logs.unit_key, '') as unit_key,
     coalesce(log_units.name, '') as unit_name,
     logs.description,
     logs.amount,
@@ -129,6 +135,7 @@ select
   languages.name as language_name,
   logs.log_activity_id as activity_id,
   logs.unit_id,
+  coalesce(logs.unit_key, '') as unit_key,
   coalesce(log_units.name, '') as unit_name,
   logs.description,
   logs.amount,
@@ -263,6 +270,7 @@ set
   amount = sqlc.arg('amount'),
   modifier = sqlc.arg('modifier'),
   unit_id = sqlc.arg('unit_id'),
+  unit_key = sqlc.arg('unit_key'),
   duration_seconds = sqlc.arg('duration_seconds'),
   computed_score = sqlc.arg('computed_score'),
   "description" = sqlc.arg('description'),
@@ -274,6 +282,7 @@ where
 -- name: UpdateOngoingContestLogs :exec
 update contest_logs
 set
+  unit_key = sqlc.arg('unit_key'),
   amount = sqlc.arg('amount'),
   modifier = sqlc.arg('modifier'),
   duration_seconds = sqlc.arg('duration_seconds'),

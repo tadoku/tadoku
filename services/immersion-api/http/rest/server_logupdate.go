@@ -22,6 +22,7 @@ func (s *Server) LogUpdate(ctx echo.Context, id openapi_types.UUID) error {
 	log, err := s.logUpdate.Execute(ctx.Request().Context(), &domain.LogUpdateRequest{
 		LogID:           id,
 		UnitID:          req.UnitId,
+		UnitKey:         req.UnitKey,
 		Amount:          req.Amount,
 		DurationSeconds: req.DurationSeconds,
 		Tags:            req.Tags,

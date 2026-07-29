@@ -10,7 +10,7 @@ import (
 )
 
 func TestEvaluateScoringRuleSet(t *testing.T) {
-	t.Run("multiplies the rates of every matching rule", func(t *testing.T) {
+	t.Run("uses the most specific matching base rule", func(t *testing.T) {
 		amount := float32(100)
 		laterRuleID := uuid.New()
 		earlierRuleID := uuid.New()
@@ -42,11 +42,98 @@ func TestEvaluateScoringRuleSet(t *testing.T) {
 		}, ruleSet)
 
 		require.NoError(t, err)
-		assert.Equal(t, float32(300), result.Score)
+		assert.Equal(t, float32(150), result.Score)
 		assert.Equal(t, []domain.AppliedScoringRule{
 			{RuleID: earlierRuleID, Rate: 1.5},
-			{RuleID: laterRuleID, Rate: 2},
 		}, result.AppliedRules)
+	})
+
+	t.Run("stacks every matching modifier after the selected base rule", func(t *testing.T) {
+		amount := float32(100)
+		baseRuleID := uuid.New()
+		earlierModifierID := uuid.New()
+		laterModifierID := uuid.New()
+
+		result, err := domain.EvaluateScoringRuleSet(domain.ScoringInput{
+			ActivityID:   1,
+			LanguageCode: "jpn",
+			Tags:         []string{"dense", "featured"},
+			Amount:       &amount,
+		}, domain.ScoringRuleSet{
+			ID: uuid.New(),
+			Rules: []domain.ScoringRule{
+				{
+					ID:           laterModifierID,
+					Priority:     30,
+					Stackable:    true,
+					ActivityID:   1,
+					LanguageCode: "jpn",
+					Tag:          "featured",
+					ScoreSource:  domain.ScoreSourceAmount,
+					Rate:         3,
+				},
+				{
+					ID:          baseRuleID,
+					Priority:    10,
+					ActivityID:  1,
+					ScoreSource: domain.ScoreSourceAmount,
+					Rate:        1.5,
+				},
+				{
+					ID:          earlierModifierID,
+					Priority:    5,
+					Stackable:   true,
+					ActivityID:  1,
+					Tag:         "dense",
+					ScoreSource: domain.ScoreSourceAmount,
+					Rate:        2,
+				},
+			},
+		})
+
+		require.NoError(t, err)
+		assert.Equal(t, float32(900), result.Score)
+		assert.Equal(t, []domain.AppliedScoringRule{
+			{RuleID: baseRuleID, Rate: 1.5},
+			{RuleID: earlierModifierID, Rate: 2},
+			{RuleID: laterModifierID, Rate: 3},
+		}, result.AppliedRules)
+	})
+
+	t.Run("does not match modifiers without a base rule", func(t *testing.T) {
+		amount := float32(100)
+
+		result, err := domain.EvaluateScoringRuleSet(domain.ScoringInput{
+			ActivityID: 1,
+			Tags:       []string{"dense"},
+			Amount:     &amount,
+		}, domain.ScoringRuleSet{
+			ID: uuid.New(),
+			Rules: []domain.ScoringRule{
+				{
+					ID:          uuid.New(),
+					Priority:    1,
+					Stackable:   true,
+					ActivityID:  1,
+					Tag:         "dense",
+					ScoreSource: domain.ScoreSourceAmount,
+					Rate:        1.4,
+				},
+				{
+					ID:          uuid.New(),
+					Priority:    2,
+					ActivityID:  2,
+					ScoreSource: domain.ScoreSourceAmount,
+					Rate:        0.5,
+				},
+			},
+		})
+
+		require.NoError(t, err)
+		assert.Zero(t, result.Score)
+		assert.False(t, result.Matched)
+		assert.Nil(t, result.AppliedRuleSetID)
+		assert.Empty(t, result.AppliedRules)
 	})
 
 	t.Run("requires every populated matcher to match", func(t *testing.T) {
@@ -87,7 +174,6 @@ func TestEvaluateScoringRuleSet(t *testing.T) {
 		assert.Equal(t, float32(160), matchingResult.Score)
 		assert.Equal(t, []domain.AppliedScoringRule{
 			{RuleID: specificRuleID, Rate: 1.6},
-			{RuleID: fallbackRuleID, Rate: 1},
 		}, matchingResult.AppliedRules)
 
 		tests := []struct {

@@ -25,6 +25,7 @@ const (
 type ScoringRule struct {
 	ID           uuid.UUID
 	Priority     int32
+	Stackable    bool
 	ActivityID   int32
 	UnitKey      string
 	LanguageCode string
@@ -62,8 +63,8 @@ type ScoringResult struct {
 	AppliedRules     []AppliedScoringRule
 }
 
-// EvaluateScoringRuleSet applies every matching rule in ascending priority
-// order by multiplying their rates.
+// EvaluateScoringRuleSet applies the first matching base rule in ascending
+// priority order, then multiplies the rates of every matching stackable rule.
 func EvaluateScoringRuleSet(input ScoringInput, ruleSet ScoringRuleSet) (ScoringResult, error) {
 	source, scoreableValue, err := scoringSourceAndValue(input)
 	if err != nil {
@@ -87,11 +88,32 @@ func EvaluateScoringRuleSet(input ScoringInput, ruleSet ScoringRuleSet) (Scoring
 		tags[tag] = struct{}{}
 	}
 
-	for _, rule := range rules {
-		if !scoringRuleMatches(rule, input, source, tags) {
+	var baseRule *ScoringRule
+	modifierRules := make([]ScoringRule, 0)
+	for i := range rules {
+		rule := &rules[i]
+		if !scoringRuleMatches(*rule, input, source, tags) {
 			continue
 		}
 
+		if rule.Stackable {
+			modifierRules = append(modifierRules, *rule)
+		} else if baseRule == nil {
+			baseRule = rule
+		}
+	}
+
+	if baseRule == nil {
+		result.Score = 0
+		return result, nil
+	}
+
+	result.Score *= baseRule.Rate
+	result.AppliedRules = append(result.AppliedRules, AppliedScoringRule{
+		RuleID: baseRule.ID,
+		Rate:   baseRule.Rate,
+	})
+	for _, rule := range modifierRules {
 		result.Score *= rule.Rate
 		result.AppliedRules = append(result.AppliedRules, AppliedScoringRule{
 			RuleID: rule.ID,
@@ -99,14 +121,9 @@ func EvaluateScoringRuleSet(input ScoringInput, ruleSet ScoringRuleSet) (Scoring
 		})
 	}
 
-	if len(result.AppliedRules) > 0 {
-		ruleSetID := ruleSet.ID
-		result.Matched = true
-		result.AppliedRuleSetID = &ruleSetID
-		return result, nil
-	}
-
-	result.Score = 0
+	ruleSetID := ruleSet.ID
+	result.Matched = true
+	result.AppliedRuleSetID = &ruleSetID
 	return result, nil
 }
 

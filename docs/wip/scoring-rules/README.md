@@ -16,8 +16,13 @@ not silently change scores for existing logs or contest submissions.
 
 ## Rule evaluation semantics
 
-- Rules are evaluated by explicit priority. Every matching rule is applied in
-  ascending priority order by multiplying its rate into the score.
+- Rules are evaluated by explicit ascending priority, with more specific rules
+  ordered before broader rules.
+- A non-stackable rule is a base rule. The first matching base rule supplies
+  the score rate; other matching base rules are ignored.
+- A stackable rule is a modifier. After selecting a base, every matching
+  modifier multiplies the score. Modifiers do not match or score on their own
+  when no base rule matches.
 - Every populated matcher on a rule must match.
 - Rules may match activity, stable unit key, language, and one normalized tag.
 - Rules declare a `score_source`:
@@ -34,6 +39,7 @@ For example:
 ```text
 amount: 200 pages * 1.0 = 200
 duration_minutes: 30 minutes * 0.4 = 12
+dense listening: 30 minutes * 0.5 base * 1.4 modifier = 21
 ```
 
 ## Rule-set behavior
@@ -115,27 +121,28 @@ authoritative.
 
 ### Amount rules
 
-| Activity | Stable unit key | Language | Rate |
-| --- | --- | --- | ---: |
-| Reading | `reading_page` | any | 1 |
-| Reading | `reading_two_column_page` | Japanese | 1.6 |
-| Reading | `reading_comic_page` | any | 0.2 |
-| Reading | `reading_sentence` | any | 0.05 |
-| Reading | `reading_character` | any | 0.000833333 |
-| Reading | `reading_character` | Japanese, Korean, and Chinese variants | 3 |
-| Listening | `listening_minute` | any | 0.5 |
-| Listening | `listening_dense_minutes` | any | 0.7 |
-| Writing | `writing_page` | any | 1 |
-| Writing | `writing_sentence` | any | 0.05 |
-| Writing | `writing_character` | any | 0.000833333 |
-| Writing | `writing_character` | Japanese, Korean, and Chinese variants | 3 |
-| Speaking | `speaking_minute` | any | 0.5 |
-| Speaking | `speaking_dense_minutes` | any | 0.7 |
-| Study | `study_minute` | any | 0.5 |
+| Activity | Stable unit key | Language | Rule kind | Rate |
+| --- | --- | --- | --- | ---: |
+| Reading | `reading_page` | any | base | 1 |
+| Reading | `reading_two_column_page` | Japanese | base | 1.6 |
+| Reading | `reading_comic_page` | any | base | 0.2 |
+| Reading | `reading_sentence` | any | base | 0.05 |
+| Reading | `reading_character` | Japanese, Korean, and Chinese variants | base | 0.0025 |
+| Reading | `reading_character` | any | base | 0.000833333 |
+| Listening | `listening_minute` | any | base | 0.5 |
+| Listening | `listening_dense_minutes` | any | base | 0.7 |
+| Writing | `writing_page` | any | base | 1 |
+| Writing | `writing_sentence` | any | base | 0.05 |
+| Writing | `writing_character` | Japanese, Korean, and Chinese variants | base | 0.0025 |
+| Writing | `writing_character` | any | base | 0.000833333 |
+| Speaking | `speaking_minute` | any | base | 0.5 |
+| Speaking | `speaking_dense_minutes` | any | base | 0.7 |
+| Study | `study_minute` | any | base | 0.5 |
 
 The high-rate character language codes currently represented by database unit
 rows are `jpn`, `kor`, `zho`, `cmn`, `yue`, and `wuu`. Their language-specific
-rule is a relative multiplier applied on top of the broad character rule.
+rule is a more-specific non-stackable base with rate `0.0025`; it wins before
+the broad character base and is not modeled as a `3x` modifier.
 
 ### Duration rules
 
@@ -147,7 +154,10 @@ rule is a relative multiplier applied on top of the broad character rule.
 | Speaking | `duration_minutes` | 0.5 |
 | Study | `duration_minutes` | 0.5 |
 
-Dense-tag scoring is not part of this parity rule set.
+The compatibility dense-unit rules remain non-stackable `0.7` bases so the
+initial set exactly reproduces current coverage. A future normalized `dense`
+tag can instead be a stackable `1.4` modifier over the applicable `0.5` base
+without changing base-rate selection.
 
 ## Proposed persistence model
 
@@ -178,6 +188,7 @@ creates a new version.
 - `id uuid primary key`
 - `rule_set_id uuid not null`
 - `priority integer not null`
+- `stackable boolean not null`
 - `activity_id smallint not null`
 - `unit_key text null`
 - `language_code varchar(10) null`
@@ -185,9 +196,10 @@ creates a new version.
 - `score_source text not null` constrained to `amount` or `duration_minutes`
 - `rate real not null`
 
-Priorities are unique within a rule set. Tags are stored in the same normalized
-lowercase form as log tags. Activity IDs are validated against the code-owned
-activity catalog. Unit keys are validated against the code-owned unit catalog.
+Priorities are unique within a rule set. Non-stackable rows are base rules;
+stackable rows are modifiers. Tags are stored in the same normalized lowercase
+form as log tags. Activity IDs are validated against the code-owned activity
+catalog. Unit keys are validated against the code-owned unit catalog.
 
 Use a singleton platform configuration row to point to the active published
 platform rule set. Add a nullable `scoring_rule_set_id` to `contests` to pin a
@@ -220,8 +232,9 @@ Add these fields to both `logs` and `contest_logs`:
 - `score_source`
 
 `computed_score` remains the authoritative numeric snapshot. For a matched
-rule set, the ordered rule ID and rate arrays contain every applied rule in
-ascending priority order. For an unmatched rule set,
+rule set, the ordered rule ID and rate arrays contain the selected base rule
+first, followed by every applied modifier in ascending priority order.
+Non-selected matching base rules are omitted. For an unmatched rule set,
 `computed_score` is zero, `score_source` records the selected input source, and
 the rule-set/rules/rates fields may be null. Historical rows may have all
 provenance fields null.
@@ -329,14 +342,15 @@ endpoint. All form changes must use `react-hook-form` and components from the
 - [x] Implement the domain scoring engine.
   - [x] Accept activity, unit key, language, normalized tags, amount, and duration.
   - [x] Select the log's score source.
-  - [x] Evaluate rules in priority order.
-  - [x] Multiply the rates of every matching rule into the calculated score.
-  - [x] Return applied-rule provenance in priority order.
+  - [x] Select the first matching non-stackable base rule in priority order.
+  - [x] Multiply every matching stackable modifier into the base score.
+  - [x] Return the selected base then applied modifiers as provenance.
   - [x] Return zero with no applied rule when nothing matches.
   - [x] Keep domain interfaces narrow and storage-independent.
 
 - [x] Add comprehensive engine tests.
-  - [x] Cover multiple matching rules and priority ordering.
+  - [x] Cover specific base selection, omitted fallback bases, and priority ordering.
+  - [x] Cover multiple matching modifiers and modifiers without a base.
   - [x] Cover activity, unit, language, and tag matching.
   - [x] Cover amount and duration score sources.
   - [x] Cover amount-plus-duration precedence.

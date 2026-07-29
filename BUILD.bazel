@@ -12,6 +12,7 @@ sh_binary(
     args = [
         "$(rlocationpath //services/authz-api:load)",
         "$(rlocationpath //services/content-api:load)",
+        "$(rlocationpath //services/image-webhook-gateway:load)",
         "$(rlocationpath //services/immersion-api:load)",
         "$(rlocationpath //services/profile-api:load)",
         "$(rlocationpath //services/token-reflector:load)",
@@ -19,6 +20,7 @@ sh_binary(
     data = [
         "//services/authz-api:load",
         "//services/content-api:load",
+        "//services/image-webhook-gateway:load",
         "//services/immersion-api:load",
         "//services/profile-api:load",
         "//services/token-reflector:load",
@@ -35,6 +37,7 @@ sh_binary(
     args = [
         "$(rlocationpath //services/authz-api:push)",
         "$(rlocationpath //services/content-api:push)",
+        "$(rlocationpath //services/image-webhook-gateway:push)",
         "$(rlocationpath //services/immersion-api:push)",
         "$(rlocationpath //services/profile-api:push)",
         "$(rlocationpath //services/token-reflector:push)",
@@ -42,6 +45,7 @@ sh_binary(
     data = [
         "//services/authz-api:push",
         "//services/content-api:push",
+        "//services/image-webhook-gateway:push",
         "//services/immersion-api:push",
         "//services/profile-api:push",
         "//services/token-reflector:push",

@@ -68,6 +68,7 @@ jobs:
           BACKEND_IMAGES: |
             ghcr.io/tadoku/tadoku/authz-api:latest
             ghcr.io/tadoku/tadoku/content-api:latest
+            ghcr.io/tadoku/tadoku/image-webhook-gateway:latest
             ghcr.io/tadoku/tadoku/immersion-api:latest
             ghcr.io/tadoku/tadoku/profile-api:latest
             ghcr.io/tadoku/tadoku/token-reflector:latest

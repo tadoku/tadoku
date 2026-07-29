@@ -115,9 +115,10 @@ The following behavior must remain true throughout the rollout:
 
 ## Initial parity rule set
 
-The first published platform rule set must reproduce the current scorer. Shadow
-mode should therefore reach zero unexplained differences before it becomes
-authoritative.
+The first published platform rule set must reproduce the public scoring manual
+for amount-and-unit inputs. The public manual is authoritative where the legacy
+database modifiers differ. Shadow mode should therefore reach zero unexplained
+differences before the rule set becomes authoritative.
 
 ### Amount rules
 
@@ -129,14 +130,14 @@ authoritative.
 | Reading | `reading_sentence` | any | base | 0.05 |
 | Reading | `reading_character` | Japanese, Korean, and Chinese variants | base | 0.0025 |
 | Reading | `reading_character` | any | base | 0.000833333 |
-| Listening | `listening_minute` | any | base | 0.5 |
-| Listening | `listening_dense_minutes` | any | base | 0.7 |
+| Listening | any | any | base | 0.4 |
+| Listening | `listening_dense_minutes` | any | modifier | 1.5 |
 | Writing | `writing_page` | any | base | 1 |
 | Writing | `writing_sentence` | any | base | 0.05 |
 | Writing | `writing_character` | Japanese, Korean, and Chinese variants | base | 0.0025 |
 | Writing | `writing_character` | any | base | 0.000833333 |
-| Speaking | `speaking_minute` | any | base | 0.5 |
-| Speaking | `speaking_dense_minutes` | any | base | 0.7 |
+| Speaking | any | any | base | 0.5 |
+| Speaking | `speaking_dense_minutes` | any | modifier | 1.4 |
 | Study | `study_minute` | any | base | 0.5 |
 
 The high-rate character language codes currently represented by database unit
@@ -146,6 +147,9 @@ the broad character base and is not modeled as a `3x` modifier.
 
 ### Duration rules
 
+Duration-only scoring is a new extension beyond the amount-and-unit rules in
+the public manual.
+
 | Activity | Score source | Rate per minute |
 | --- | --- | ---: |
 | Reading | `duration_minutes` | 0.2 |
@@ -154,10 +158,10 @@ the broad character base and is not modeled as a `3x` modifier.
 | Speaking | `duration_minutes` | 0.5 |
 | Study | `duration_minutes` | 0.5 |
 
-The compatibility dense-unit rules remain non-stackable `0.7` bases so the
-initial set exactly reproduces current coverage. A future normalized `dense`
-tag can instead be a stackable `1.5` modifier over the applicable `0.4` base
-without changing base-rate selection.
+The high-density unit rules use relative stackable modifiers: Listening scores
+at `0.4 * 1.5 = 0.6` per minute, and Speaking scores at
+`0.5 * 1.4 = 0.7` per minute. A future normalized `dense` tag can use the same
+modifiers without changing base-rate selection.
 
 ## Proposed persistence model
 

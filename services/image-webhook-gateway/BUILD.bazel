@@ -4,7 +4,12 @@ load("@rules_pkg//:pkg.bzl", "pkg_tar")
 
 go_library(
     name = "image-webhook-gateway_lib",
-    srcs = ["main.go"],
+    srcs = [
+        "kube.go",
+        "main.go",
+        "webhook.go",
+        "worker.go",
+    ],
     importpath = "github.com/tadoku/tadoku/services/image-webhook-gateway",
     visibility = ["//visibility:private"],
 )
@@ -19,7 +24,10 @@ go_binary(
 
 go_test(
     name = "image-webhook-gateway_test",
-    srcs = ["main_test.go"],
+    srcs = [
+        "webhook_test.go",
+        "worker_test.go",
+    ],
     embed = [":image-webhook-gateway_lib"],
     deps = [
         "@com_github_stretchr_testify//assert",

@@ -58,7 +58,7 @@ func (g *gateway) handleWebhook(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "invalid request body", http.StatusBadRequest)
 		return
 	}
-	if !validSignature([]byte(g.cfg.secret), body, r.Header.Get("X-Hub-Signature-256")) {
+	if !validSignature([]byte(g.cfg.GHCRWebhookSecret), body, r.Header.Get("X-Hub-Signature-256")) {
 		http.Error(w, "invalid webhook signature", http.StatusUnauthorized)
 		return
 	}

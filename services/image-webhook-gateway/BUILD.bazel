@@ -12,6 +12,7 @@ go_library(
     ],
     importpath = "github.com/tadoku/tadoku/services/image-webhook-gateway",
     visibility = ["//visibility:private"],
+    deps = ["@com_github_kelseyhightower_envconfig//:envconfig"],
 )
 
 go_binary(
@@ -25,6 +26,7 @@ go_binary(
 go_test(
     name = "image-webhook-gateway_test",
     srcs = [
+        "main_test.go",
         "webhook_test.go",
         "worker_test.go",
     ],

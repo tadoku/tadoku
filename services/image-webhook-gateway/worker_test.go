@@ -39,7 +39,7 @@ func TestWorkerSerializesUntilReconciliationCompletes(t *testing.T) {
 	defer upstream.Close()
 
 	g := &gateway{
-		cfg:       config{targetURL: upstream.URL, secret: "secret"},
+		cfg:       Config{ImageUpdaterWebhookURL: upstream.URL, GHCRWebhookSecret: "secret"},
 		http:      upstream.Client(),
 		kube:      kube,
 		queue:     make(chan webhookEvent, 2),

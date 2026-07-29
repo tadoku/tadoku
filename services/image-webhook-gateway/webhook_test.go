@@ -23,9 +23,9 @@ func TestParsePackageEvent(t *testing.T) {
 	body := []byte(`{
 		"action": "published",
 		"package": {
-			"name": "tadoku/content-api",
+			"name": "example/app",
 			"package_type": "container",
-			"owner": {"login": "tadoku"},
+			"owner": {"login": "example"},
 			"package_version": {
 				"container_metadata": {"tag": {"name": "prod"}}
 			}
@@ -34,7 +34,7 @@ func TestParsePackageEvent(t *testing.T) {
 
 	event, err := parsePackageEvent(body)
 	require.NoError(t, err)
-	assert.Equal(t, "tadoku/content-api", event.Package.Name)
+	assert.Equal(t, "example/app", event.Package.Name)
 }
 
 func TestParsePackageEventRejectsUnusableEvents(t *testing.T) {
@@ -52,16 +52,16 @@ func TestParsePackageEventRejectsUnusableEvents(t *testing.T) {
 
 func TestHandleWebhookQueuesAuthenticatedEvent(t *testing.T) {
 	g := &gateway{
-		cfg:   config{secret: "secret"},
+		cfg:   Config{GHCRWebhookSecret: "secret"},
 		queue: make(chan webhookEvent, 1),
 	}
 	g.accepting.Store(true)
 	body := []byte(`{
 		"action":"published",
 		"package":{
-			"name":"tadoku/content-api",
+			"name":"example/app",
 			"package_type":"container",
-			"owner":{"login":"tadoku"},
+			"owner":{"login":"example"},
 			"package_version":{"name":"prod"}
 		}
 	}`)
@@ -79,16 +79,16 @@ func TestHandleWebhookQueuesAuthenticatedEvent(t *testing.T) {
 
 func TestHandleWebhookIgnoresAuthenticatedNonProdEvent(t *testing.T) {
 	g := &gateway{
-		cfg:   config{secret: "secret"},
+		cfg:   Config{GHCRWebhookSecret: "secret"},
 		queue: make(chan webhookEvent, 1),
 	}
 	g.accepting.Store(true)
 	body := []byte(`{
 		"action":"published",
 		"package":{
-			"name":"tadoku/content-api",
+			"name":"example/app",
 			"package_type":"container",
-			"owner":{"login":"tadoku"},
+			"owner":{"login":"example"},
 			"package_version":{"name":"latest"}
 		}
 	}`)
@@ -105,7 +105,7 @@ func TestHandleWebhookIgnoresAuthenticatedNonProdEvent(t *testing.T) {
 
 func TestHandleWebhookRejectsInvalidSignature(t *testing.T) {
 	g := &gateway{
-		cfg:   config{secret: "secret"},
+		cfg:   Config{GHCRWebhookSecret: "secret"},
 		queue: make(chan webhookEvent, 1),
 	}
 	g.accepting.Store(true)

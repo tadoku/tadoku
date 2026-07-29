@@ -12,15 +12,17 @@ import (
 	"sync"
 	"syscall"
 	"time"
+
+	"github.com/kelseyhightower/envconfig"
 )
 
-type config struct {
-	address      string
-	targetURL    string
-	namespace    string
-	imageUpdater string
-	queueSize    int
-	secret       string
+type Config struct {
+	Address                string `required:"true"`
+	ImageUpdaterWebhookURL string `envconfig:"image_updater_webhook_url" required:"true"`
+	ImageUpdaterNamespace  string `envconfig:"image_updater_namespace" required:"true"`
+	ImageUpdaterName       string `envconfig:"image_updater_name" required:"true"`
+	QueueSize              int    `envconfig:"queue_size" required:"true"`
+	GHCRWebhookSecret      string `envconfig:"ghcr_webhook_secret" required:"true"`
 }
 
 func main() {
@@ -29,7 +31,7 @@ func main() {
 		slog.Error("invalid configuration", "error", err)
 		os.Exit(1)
 	}
-	kube, err := newKubeClient(cfg.namespace, cfg.imageUpdater)
+	kube, err := newKubeClient(cfg.ImageUpdaterNamespace, cfg.ImageUpdaterName)
 	if err != nil {
 		slog.Error("configure Kubernetes client", "error", err)
 		os.Exit(1)
@@ -39,7 +41,7 @@ func main() {
 		cfg:   cfg,
 		http:  &http.Client{Timeout: 30 * time.Second},
 		kube:  kube,
-		queue: make(chan webhookEvent, cfg.queueSize),
+		queue: make(chan webhookEvent, cfg.QueueSize),
 	}
 	g.accepting.Store(true)
 
@@ -50,7 +52,7 @@ func main() {
 	})
 	mux.HandleFunc("/readyz", g.handleReady)
 	server := &http.Server{
-		Addr:              cfg.address,
+		Addr:              cfg.Address,
 		Handler:           mux,
 		ReadHeaderTimeout: 5 * time.Second,
 	}
@@ -64,7 +66,7 @@ func main() {
 
 	serverErrors := make(chan error, 1)
 	go func() {
-		slog.Info("image webhook gateway listening", "address", cfg.address)
+		slog.Info("image webhook gateway listening", "address", cfg.Address)
 		serverErrors <- server.ListenAndServe()
 	}()
 
@@ -88,27 +90,13 @@ func main() {
 	slog.Info("queue drained; shutdown complete")
 }
 
-func loadConfig() (config, error) {
-	cfg := config{
-		address:      envOrDefault("ADDRESS", ":8080"),
-		targetURL:    envOrDefault("IMAGE_UPDATER_WEBHOOK_URL", "http://argocd-image-updater-webhook-internal:8082/webhook?type=ghcr.io"),
-		namespace:    envOrDefault("IMAGE_UPDATER_NAMESPACE", "argocd"),
-		imageUpdater: envOrDefault("IMAGE_UPDATER_NAME", "tadoku"),
-		queueSize:    256,
-		secret:       os.Getenv("GHCR_WEBHOOK_SECRET"),
+func loadConfig() (Config, error) {
+	cfg := Config{}
+	if err := envconfig.Process("GATEWAY", &cfg); err != nil {
+		return Config{}, err
 	}
-	if cfg.secret == "" {
-		return config{}, errors.New("GHCR_WEBHOOK_SECRET is required")
-	}
-	if _, err := url.ParseRequestURI(cfg.targetURL); err != nil {
-		return config{}, fmt.Errorf("IMAGE_UPDATER_WEBHOOK_URL: %w", err)
+	if _, err := url.ParseRequestURI(cfg.ImageUpdaterWebhookURL); err != nil {
+		return Config{}, fmt.Errorf("GATEWAY_IMAGE_UPDATER_WEBHOOK_URL: %w", err)
 	}
 	return cfg, nil
-}
-
-func envOrDefault(name, fallback string) string {
-	if value := os.Getenv(name); value != "" {
-		return value
-	}
-	return fallback
 }

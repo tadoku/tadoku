@@ -18,7 +18,7 @@ const (
 )
 
 type gateway struct {
-	cfg       config
+	cfg       Config
 	http      *http.Client
 	kube      imageUpdaterReader
 	queue     chan webhookEvent
@@ -61,13 +61,13 @@ func (g *gateway) process(event webhookEvent) {
 }
 
 func (g *gateway) forward(ctx context.Context, event webhookEvent) error {
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, g.cfg.targetURL, bytes.NewReader(event.body))
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, g.cfg.ImageUpdaterWebhookURL, bytes.NewReader(event.body))
 	if err != nil {
 		return err
 	}
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("X-GitHub-Event", "package")
-	req.Header.Set("X-Hub-Signature-256", signature([]byte(g.cfg.secret), event.body))
+	req.Header.Set("X-Hub-Signature-256", signature([]byte(g.cfg.GHCRWebhookSecret), event.body))
 	if event.delivery != "" {
 		req.Header.Set("X-GitHub-Delivery", event.delivery)
 	}

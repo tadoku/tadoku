@@ -97,17 +97,20 @@ export function Navbar({
                         }
 
                         if (item.type === 'link') {
+                          const isCurrent =
+                            item.current ?? router.pathname === item.href
+
                           return (
                             <Link
                               key={item.label}
                               href={item.href}
                               className={classNames(
-                                item.current || router.pathname === item.href
+                                isCurrent
                                   ? 'bg-secondary !text-white hover:bg-secondary/80'
                                   : 'text-secondary hover:bg-secondary/5 focus:bg-secondary/5',
                                 'reset text-xs px-2 py-1 md:px-3 md:py-2 md:text-sm font-bold inline-flex items-center justify-center',
                               )}
-                              aria-current={item.current ? 'page' : undefined}
+                              aria-current={isCurrent ? 'page' : undefined}
                             >
                               {item.label}
                             </Link>

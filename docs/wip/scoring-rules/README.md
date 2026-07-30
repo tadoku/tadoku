@@ -393,13 +393,13 @@ endpoint. All form changes must use `react-hook-form` and components from the
   - [x] Preserve existing amount-plus-duration behavior.
   - [x] Confirm historical logs and aggregates remain unchanged.
 
-- [ ] Implement independent contest scoring.
-  - [ ] Resolve each selected contest's rules separately.
-  - [ ] Snapshot each contest score in `contest_logs`.
-  - [ ] Re-resolve ongoing contest scores when a log is edited.
-  - [ ] Resolve rules when an existing log is attached to a contest.
-  - [ ] Never change completed-contest snapshots implicitly.
-  - [ ] Confirm uncovered replacing rule sets award zero.
+- [x] Implement independent contest scoring.
+  - [x] Resolve each selected contest's rules separately.
+  - [x] Snapshot each contest score in `contest_logs`.
+  - [x] Re-resolve ongoing contest scores when a log is edited.
+  - [x] Resolve rules when an existing log is attached to a contest.
+  - [x] Never change completed-contest snapshots implicitly.
+  - [x] Confirm uncovered replacing rule sets award zero.
 
 - [ ] Add a score-preview API.
   - [ ] Accept the same activity, unit, language, tags, amount, duration, and contest

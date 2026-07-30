@@ -14,6 +14,7 @@ type LogCreateRepository interface {
 	FindUnitForTracking(context.Context, *UnitFindForTrackingRequest) (*Unit, error)
 	FindUnitForTrackingByKey(context.Context, *UnitFindForTrackingByKeyRequest) (*Unit, error)
 	FindActivePlatformScoringRuleSet(context.Context) (*ScoringRuleSet, error)
+	FindContestScoringRuleSets(context.Context, uuid.UUID) (*ScoringRuleSet, *ScoringRuleSet, error)
 	CreateLog(context.Context, *LogCreateRequest) (*uuid.UUID, error)
 	FindLogByID(context.Context, *LogFindRequest) (*Log, error)
 }
@@ -36,12 +37,16 @@ type LogCreateRequest struct {
 	eligibleOfficialLeaderboard bool
 	year                        int16
 	tracking                    LogTracking
+	contestTrackings            []ContestLogTracking
 }
 
 func (r *LogCreateRequest) UserID() uuid.UUID                 { return r.userID }
 func (r *LogCreateRequest) EligibleOfficialLeaderboard() bool { return r.eligibleOfficialLeaderboard }
 func (r *LogCreateRequest) Year() int16                       { return r.year }
 func (r *LogCreateRequest) Tracking() LogTracking             { return r.tracking }
+func (r *LogCreateRequest) ContestTrackings() []ContestLogTracking {
+	return r.contestTrackings
+}
 
 type LogCreate struct {
 	repo             LogCreateRepository
@@ -102,6 +107,7 @@ func (s *LogCreate) Execute(ctx context.Context, req *LogCreateRequest) (*Log, e
 		return nil, fmt.Errorf("unable to validate tags: %w", err)
 	}
 
+	validContestRegistrations := map[uuid.UUID]ContestRegistration{}
 	if len(req.RegistrationIDs) > 0 {
 		registrations, fetchErr := s.repo.FetchOngoingContestRegistrations(ctx, &RegistrationListOngoingRequest{
 			UserID: req.userID,
@@ -111,14 +117,13 @@ func (s *LogCreate) Execute(ctx context.Context, req *LogCreateRequest) (*Log, e
 			return nil, fmt.Errorf("unable to fetch registrations: %w", fetchErr)
 		}
 
-		validContestIDs := map[uuid.UUID]ContestRegistration{}
 		for _, r := range registrations.Registrations {
-			validContestIDs[r.ID] = r
+			validContestRegistrations[r.ID] = r
 		}
 
 		// validate registrations
 		for _, id := range req.RegistrationIDs {
-			registration, ok := validContestIDs[id]
+			registration, ok := validContestRegistrations[id]
 			if !ok {
 				return nil, fmt.Errorf("registration is not found as ongoing for the current user: %w", ErrInvalidLog)
 			}
@@ -180,6 +185,21 @@ func (s *LogCreate) Execute(ctx context.Context, req *LogCreateRequest) (*Log, e
 			return nil, fmt.Errorf("could not score log: %w", scoringErr)
 		}
 		ApplyScoringResult(&req.tracking, result)
+		for _, registrationID := range req.RegistrationIDs {
+			registration := validContestRegistrations[registrationID]
+			contestTracking, contestErr := resolveContestLogTracking(
+				ctx,
+				s.repo,
+				registration.ContestID,
+				registrationID,
+				req.tracking,
+				scoringInput,
+			)
+			if contestErr != nil {
+				return nil, fmt.Errorf("could not score contest %s: %w", registration.ContestID, contestErr)
+			}
+			req.contestTrackings = append(req.contestTrackings, contestTracking)
+		}
 	} else {
 		RecordPlatformScoringShadow(ctx, s.repo, scoringInput, req.tracking.ComputedScore)
 	}

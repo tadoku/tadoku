@@ -14,18 +14,28 @@ import (
 )
 
 type mockLogUpdateRepository struct {
-	log              *domain.Log
-	updatedLog       *domain.Log
-	unit             *domain.Unit
-	findUnitErr      error
-	scoringRuleSet   *domain.ScoringRuleSet
-	scoringRuleErr   error
-	scoringRuleCalls int
-	findErr          error
-	updateErr        error
-	updateCalled     bool
-	updateCalledWith *domain.LogUpdateRequest
-	findCallCount    int
+	log               *domain.Log
+	updatedLog        *domain.Log
+	unit              *domain.Unit
+	findUnitErr       error
+	scoringRuleSet    *domain.ScoringRuleSet
+	scoringRuleErr    error
+	scoringRuleCalls  int
+	contestRuleSets   map[uuid.UUID]*domain.ScoringRuleSet
+	contestFallbacks  map[uuid.UUID]*domain.ScoringRuleSet
+	contestScoringErr error
+	findErr           error
+	updateErr         error
+	updateCalled      bool
+	updateCalledWith  *domain.LogUpdateRequest
+	findCallCount     int
+}
+
+func (m *mockLogUpdateRepository) FindContestScoringRuleSets(_ context.Context, contestID uuid.UUID) (*domain.ScoringRuleSet, *domain.ScoringRuleSet, error) {
+	if m.contestScoringErr != nil {
+		return nil, nil, m.contestScoringErr
+	}
+	return m.contestRuleSets[contestID], m.contestFallbacks[contestID], nil
 }
 
 func (m *mockLogUpdateRepository) FindLogByID(_ context.Context, req *domain.LogFindRequest) (*domain.Log, error) {
@@ -399,6 +409,54 @@ func TestLogUpdate_Execute(t *testing.T) {
 		require.NotNil(t, tracking.ScoreProvenance)
 		assert.Equal(t, &ruleSetID, tracking.ScoreProvenance.RuleSetID)
 		assert.Equal(t, []uuid.UUID{ruleID}, tracking.ScoreProvenance.RuleIDs)
+	})
+
+	t.Run("recomputes ongoing contest scores independently when enabled", func(t *testing.T) {
+		contestID := uuid.New()
+		registrationID := uuid.New()
+		contestRuleSetID := uuid.New()
+		contestRuleID := uuid.New()
+		log := makeLog(userID)
+		log.LanguageCode = "jpn"
+		log.Registrations = []domain.ContestRegistrationReference{{
+			RegistrationID: registrationID,
+			ContestID:      contestID,
+			ContestEnd:     now.Add(time.Hour),
+		}}
+		repo := &mockLogUpdateRepository{
+			log:        log,
+			updatedLog: &domain.Log{ID: logID, UserID: userID, ActivityID: 1},
+			contestRuleSets: map[uuid.UUID]*domain.ScoringRuleSet{
+				contestID: {
+					ID:   contestRuleSetID,
+					Mode: domain.ScoringRuleSetModeReplace,
+					Rules: []domain.ScoringRule{{
+						ID:          contestRuleID,
+						Priority:    1,
+						ActivityID:  1,
+						UnitKey:     domain.UnitKeyReadingPage,
+						ScoreSource: domain.ScoreSourceAmount,
+						Rate:        3,
+					}},
+				},
+			},
+		}
+		clock := commondomain.NewMockClock(now)
+		svc := domain.NewLogUpdateWithScoringEngine(repo, clock, true)
+
+		_, err := svc.Execute(ctxWithUserSubject(userID.String()), &domain.LogUpdateRequest{
+			LogID:  logID,
+			UnitID: &unitID,
+			Amount: &amount10,
+		})
+
+		require.NoError(t, err)
+		contestTrackings := repo.updateCalledWith.ContestTrackings()
+		require.Len(t, contestTrackings, 1)
+		assert.Equal(t, contestID, contestTrackings[0].ContestID)
+		assert.Equal(t, float32(30), contestTrackings[0].Tracking.ComputedScore)
+		require.NotNil(t, contestTrackings[0].Tracking.ScoreProvenance)
+		assert.Equal(t, &contestRuleSetID, contestTrackings[0].Tracking.ScoreProvenance.RuleSetID)
 	})
 
 	t.Run("allows amount update with duration metadata", func(t *testing.T) {

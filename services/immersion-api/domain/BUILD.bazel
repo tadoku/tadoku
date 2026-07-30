@@ -13,6 +13,7 @@ go_library(
         "contestlist.go",
         "contestmoderationdetachlog.go",
         "contestpermissioncheck.go",
+        "contestscoring.go",
         "contestsummaryfetch.go",
         "errors.go",
         "interfaces.go",

@@ -36,6 +36,20 @@ func (q *Queries) FindActivePlatformScoringRuleSet(ctx context.Context) (Scoring
 	return i, err
 }
 
+const findContestScoringRuleSetID = `-- name: FindContestScoringRuleSetID :one
+select scoring_rule_set_id
+from contests
+where id = $1
+  and deleted_at is null
+`
+
+func (q *Queries) FindContestScoringRuleSetID(ctx context.Context, contestID uuid.UUID) (uuid.NullUUID, error) {
+	row := q.db.QueryRowContext(ctx, findContestScoringRuleSetID, contestID)
+	var scoring_rule_set_id uuid.NullUUID
+	err := row.Scan(&scoring_rule_set_id)
+	return scoring_rule_set_id, err
+}
+
 const findScoringRuleSetByID = `-- name: FindScoringRuleSetByID :one
 select id, scope, contest_id, version, status, mode, fallback_rule_set_id, created_at, published_at
 from scoring_rule_sets

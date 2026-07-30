@@ -44,25 +44,37 @@ func (r *Repository) CreateLog(ctx context.Context, req *domain.LogCreateRequest
 	// Track unique contest IDs for outbox events
 	contestIDSet := map[uuid.UUID]struct{}{}
 
-	for _, registrationID := range req.RegistrationIDs {
+	contestTrackings := req.ContestTrackings()
+	if len(contestTrackings) == 0 {
+		contestTrackings = make([]domain.ContestLogTracking, len(req.RegistrationIDs))
+		for i, registrationID := range req.RegistrationIDs {
+			contestTrackings[i] = domain.ContestLogTracking{
+				RegistrationID: registrationID,
+				Tracking:       tracking,
+			}
+		}
+	}
+
+	for _, contestTracking := range contestTrackings {
+		contestTracking := contestTracking
 		if err = qtx.CreateContestLogRelation(ctx, postgres.CreateContestLogRelationParams{
-			RegistrationID:  registrationID,
+			RegistrationID:  contestTracking.RegistrationID,
 			LogID:           id,
-			UnitKey:         trackingUnitKey(tracking),
-			Amount:          trackingAmount(tracking),
-			Modifier:        trackingModifier(tracking),
-			DurationSeconds: trackingDurationSeconds(tracking),
-			ComputedScore:   postgres.NewNullFloat64FromFloat32(tracking.ComputedScore),
-			ScoreRuleSetID:  scoreRuleSetID(nil),
-			ScoreRuleIds:    scoreRuleIDs(nil),
-			ScoreRates:      scoreRates(nil),
-			ScoreSource:     scoreSource(nil),
+			UnitKey:         trackingUnitKey(contestTracking.Tracking),
+			Amount:          trackingAmount(contestTracking.Tracking),
+			Modifier:        trackingModifier(contestTracking.Tracking),
+			DurationSeconds: trackingDurationSeconds(contestTracking.Tracking),
+			ComputedScore:   postgres.NewNullFloat64FromFloat32(contestTracking.Tracking.ComputedScore),
+			ScoreRuleSetID:  scoreRuleSetID(contestTracking.Tracking.ScoreProvenance),
+			ScoreRuleIds:    scoreRuleIDs(contestTracking.Tracking.ScoreProvenance),
+			ScoreRates:      scoreRates(contestTracking.Tracking.ScoreProvenance),
+			ScoreSource:     scoreSource(contestTracking.Tracking.ScoreProvenance),
 		}); err != nil {
 			_ = tx.Rollback()
 			return nil, fmt.Errorf("could not create log: %w", err)
 		}
 
-		contestID, err := qtx.FetchContestIDForRegistration(ctx, registrationID)
+		contestID, err := qtx.FetchContestIDForRegistration(ctx, contestTracking.RegistrationID)
 		if err != nil {
 			_ = tx.Rollback()
 			return nil, fmt.Errorf("could not resolve contest for registration: %w", err)

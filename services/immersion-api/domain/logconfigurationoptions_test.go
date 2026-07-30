@@ -41,7 +41,7 @@ func TestLogConfigurationOptions_Execute(t *testing.T) {
 			},
 		}
 
-		svc := domain.NewLogConfigurationOptions(repo)
+		svc := domain.NewLogConfigurationOptionsWithScoringEngine(repo, true)
 		ctx := ctxWithUser()
 		resp, err := svc.Execute(ctx)
 
@@ -55,6 +55,7 @@ func TestLogConfigurationOptions_Execute(t *testing.T) {
 		assert.Equal(t, domain.ActivityInputTypeTimePrimary, resp.Activities[1].InputType)
 		assert.Equal(t, "Pages", resp.Units[0].Name)
 		assert.Equal(t, []string{"ja"}, resp.UserLanguageCodes)
+		assert.True(t, resp.ScoringEngineEnabled)
 	})
 
 	t.Run("returns unauthorized for guest user", func(t *testing.T) {

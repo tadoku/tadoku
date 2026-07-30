@@ -1098,11 +1098,15 @@ components:
         - $ref: "#/components/schemas/Activities"
         - $ref: "#/components/schemas/Units"
         - type: object
+          required:
+            - scoring_engine_enabled
           properties:
             user_language_codes:
               type: array
               items:
                 type: string
+            scoring_engine_enabled:
+              type: boolean
     Unit:
       type: object
       required:

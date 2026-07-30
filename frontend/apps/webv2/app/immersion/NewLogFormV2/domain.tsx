@@ -1,8 +1,8 @@
 import { z } from 'zod'
 import { Activity, Unit } from '@app/immersion/api'
-import { filterUnits, estimateScore } from '@app/immersion/NewLogForm/domain'
+import { filterUnits } from '@app/immersion/NewLogForm/domain'
 
-export { filterUnits, estimateScore }
+export { filterUnits }
 
 const optionalPositiveNumber = z.preprocess(
   value =>

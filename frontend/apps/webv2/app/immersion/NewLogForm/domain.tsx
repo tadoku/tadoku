@@ -165,17 +165,6 @@ export const trackingModesForRegistrations = (registrationCount: number) => {
   ] satisfies RadioProps['options']
 }
 
-export const estimateScore = (
-  amount: number | undefined,
-  unit: Unit | undefined,
-) => {
-  if (!amount || !unit) {
-    return undefined
-  }
-
-  return amount * unit.modifier
-}
-
 export function contestsForLog({
   registrations,
   manualContests,

@@ -49,6 +49,24 @@ The scoring engine will resolve a rule set, select the first matching
 non-stackable base rule in priority order, and then multiply the rates of every
 matching stackable modifier.
 
+Every populated matcher must match. Rules may match the code-owned activity,
+stable unit key, language code, and one normalized tag. Each rule explicitly
+selects either the submitted `amount` or `duration_minutes` as its score
+source. When a log contains both amount and duration, amount is authoritative
+for scoring and duration remains tracking metadata.
+
+If no base rule matches, the score is zero and the submission remains valid.
+Modifiers never score without a matching base rule.
+
+Rule sets are versioned. Drafts may be assembled and validated, but publication
+makes a version immutable. Activating a new platform or contest version affects
+only future score resolutions; it never recalculates stored scores.
+
+An overriding contest rule set evaluates its rules first and falls back to a
+specific published platform version pinned when the contest version is
+created. A replacing contest rule set has no fallback, so uncovered inputs
+score zero for that contest.
+
 Scores should be snapshotted with the log submission that uses them. If contest scoring can differ from platform scoring, the contest score should be stored with the contest log entry rather than only on the base log.
 
 ## Consequences
@@ -58,5 +76,9 @@ Using code-owned activities and units keeps the core vocabulary stable and preve
 Using database-backed scoring rules lets us tune platform defaults without redeploying application code, and lets platform defaults and contest-specific rules share one implementation path.
 
 Snapshotting scores prevents historical leaderboards from changing silently when rules are edited. Recalculation, if needed, should be an explicit operation.
+
+Versioning and publication add an explicit management workflow, but make
+provenance durable: a score can retain the exact rule-set version, ordered rule
+IDs, applied rates, and score source that produced it.
 
 Default tags are not part of scoring metadata by default. Tags remain free text. If a tag affects scoring, it does so because a scoring rule matches it.

@@ -13,6 +13,7 @@ type LogCreateRepository interface {
 	FetchOngoingContestRegistrations(context.Context, *RegistrationListOngoingRequest) (*ContestRegistrations, error)
 	FindUnitForTracking(context.Context, *UnitFindForTrackingRequest) (*Unit, error)
 	FindUnitForTrackingByKey(context.Context, *UnitFindForTrackingByKeyRequest) (*Unit, error)
+	FindActivePlatformScoringRuleSet(context.Context) (*ScoringRuleSet, error)
 	CreateLog(context.Context, *LogCreateRequest) (*uuid.UUID, error)
 	FindLogByID(context.Context, *LogFindRequest) (*Log, error)
 }
@@ -154,6 +155,14 @@ func (s *LogCreate) Execute(ctx context.Context, req *LogCreateRequest) (*Log, e
 	if err != nil {
 		return nil, err
 	}
+	RecordPlatformScoringShadow(ctx, s.repo, ScoringInput{
+		ActivityID:      req.ActivityID,
+		UnitKey:         req.tracking.UnitKey,
+		LanguageCode:    req.LanguageCode,
+		Tags:            req.Tags,
+		Amount:          req.Amount,
+		DurationSeconds: req.DurationSeconds,
+	}, req.tracking.ComputedScore)
 
 	req.year = int16(s.clock.Now().Year())
 

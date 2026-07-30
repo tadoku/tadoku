@@ -2,6 +2,7 @@ package domain_test
 
 import (
 	"context"
+	"errors"
 	"testing"
 	"time"
 
@@ -17,6 +18,9 @@ type mockLogCreateRepository struct {
 	fetchRegErr      error
 	unit             *domain.Unit
 	findUnitErr      error
+	scoringRuleSet   *domain.ScoringRuleSet
+	scoringRuleErr   error
+	scoringRuleCalls int
 	createdLogID     *uuid.UUID
 	createErr        error
 	log              *domain.Log
@@ -59,6 +63,40 @@ func (m *mockLogCreateRepository) FindUnitForTrackingByKey(_ context.Context, re
 		Modifier:      1,
 		LanguageCode:  &req.LanguageCode,
 	}, nil
+}
+
+func (m *mockLogCreateRepository) FindActivePlatformScoringRuleSet(context.Context) (*domain.ScoringRuleSet, error) {
+	m.scoringRuleCalls++
+	if m.scoringRuleErr != nil {
+		return nil, m.scoringRuleErr
+	}
+	if m.scoringRuleSet != nil {
+		return m.scoringRuleSet, nil
+	}
+	return defaultScoringShadowRuleSet(), nil
+}
+
+func defaultScoringShadowRuleSet() *domain.ScoringRuleSet {
+	rules := make([]domain.ScoringRule, 0, 10)
+	for activityID := int32(1); activityID <= 5; activityID++ {
+		rules = append(rules,
+			domain.ScoringRule{
+				ID:          uuid.New(),
+				Priority:    activityID * 10,
+				ActivityID:  activityID,
+				ScoreSource: domain.ScoreSourceAmount,
+				Rate:        1,
+			},
+			domain.ScoringRule{
+				ID:          uuid.New(),
+				Priority:    activityID*10 + 1,
+				ActivityID:  activityID,
+				ScoreSource: domain.ScoreSourceDurationMinutes,
+				Rate:        1,
+			},
+		)
+	}
+	return &domain.ScoringRuleSet{ID: uuid.New(), Rules: rules}
 }
 
 func (m *mockLogCreateRepository) CreateLog(ctx context.Context, req *domain.LogCreateRequest) (*uuid.UUID, error) {
@@ -452,6 +490,28 @@ func TestLogCreate_Execute(t *testing.T) {
 		assert.Equal(t, domain.LogTrackingDuration, tracking.Kind)
 		assert.Equal(t, duration600, tracking.DurationSeconds)
 		assert.InDelta(t, float32(4), tracking.ComputedScore, 0.0001)
+	})
+
+	t.Run("keeps writing the interim score when shadow evaluation fails", func(t *testing.T) {
+		repo := &mockLogCreateRepository{
+			scoringRuleErr: errors.New("scoring unavailable"),
+			createdLogID:   &logID,
+			log:            createdLog,
+		}
+		clock := commondomain.NewMockClock(now)
+		svc := newLogCreateService(repo, clock)
+
+		_, err := svc.Execute(ctxWithUserSubject(userID.String()), &domain.LogCreateRequest{
+			UnitID:       &unitID,
+			ActivityID:   1,
+			LanguageCode: "jpn",
+			Amount:       &amount100,
+		})
+
+		require.NoError(t, err)
+		assert.Equal(t, 1, repo.scoringRuleCalls)
+		assert.True(t, repo.createCalled)
+		assert.Equal(t, float32(100), repo.createCalledWith.Tracking().ComputedScore)
 	})
 
 	t.Run("successfully creates amount log with duration metadata", func(t *testing.T) {

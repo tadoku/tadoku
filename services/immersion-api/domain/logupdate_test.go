@@ -18,6 +18,9 @@ type mockLogUpdateRepository struct {
 	updatedLog       *domain.Log
 	unit             *domain.Unit
 	findUnitErr      error
+	scoringRuleSet   *domain.ScoringRuleSet
+	scoringRuleErr   error
+	scoringRuleCalls int
 	findErr          error
 	updateErr        error
 	updateCalled     bool
@@ -63,6 +66,17 @@ func (m *mockLogUpdateRepository) FindUnitForTrackingByKey(_ context.Context, re
 		Modifier:      1,
 		LanguageCode:  &req.LanguageCode,
 	}, nil
+}
+
+func (m *mockLogUpdateRepository) FindActivePlatformScoringRuleSet(context.Context) (*domain.ScoringRuleSet, error) {
+	m.scoringRuleCalls++
+	if m.scoringRuleErr != nil {
+		return nil, m.scoringRuleErr
+	}
+	if m.scoringRuleSet != nil {
+		return m.scoringRuleSet, nil
+	}
+	return defaultScoringShadowRuleSet(), nil
 }
 
 func (m *mockLogUpdateRepository) UpdateLog(_ context.Context, req *domain.LogUpdateRequest) error {
@@ -327,6 +341,28 @@ func TestLogUpdate_Execute(t *testing.T) {
 		assert.Equal(t, domain.LogTrackingDuration, tracking.Kind)
 		assert.Equal(t, duration600, tracking.DurationSeconds)
 		assert.InDelta(t, float32(4), tracking.ComputedScore, 0.0001)
+	})
+
+	t.Run("keeps writing the interim score when shadow evaluation fails", func(t *testing.T) {
+		updatedLog := &domain.Log{ID: logID, UserID: userID, ActivityID: 1, Amount: 10}
+		repo := &mockLogUpdateRepository{
+			log:            makeLog(userID),
+			updatedLog:     updatedLog,
+			scoringRuleErr: errors.New("scoring unavailable"),
+		}
+		clock := commondomain.NewMockClock(now)
+		svc := domain.NewLogUpdate(repo, clock)
+
+		_, err := svc.Execute(ctxWithUserSubject(userID.String()), &domain.LogUpdateRequest{
+			LogID:  logID,
+			UnitID: &unitID,
+			Amount: &amount10,
+		})
+
+		require.NoError(t, err)
+		assert.Equal(t, 1, repo.scoringRuleCalls)
+		assert.True(t, repo.updateCalled)
+		assert.Equal(t, float32(10), repo.updateCalledWith.Tracking().ComputedScore)
 	})
 
 	t.Run("allows amount update with duration metadata", func(t *testing.T) {

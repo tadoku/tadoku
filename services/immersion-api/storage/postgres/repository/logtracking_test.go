@@ -139,7 +139,18 @@ func TestReadLogTracking(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			tracking := readLogTracking(tt.unitID, unitKey, tt.amount, tt.modifier, tt.durationSeconds, tt.score)
+			tracking := readLogTracking(
+				tt.unitID,
+				unitKey,
+				tt.amount,
+				tt.modifier,
+				tt.durationSeconds,
+				tt.score,
+				uuid.NullUUID{},
+				nil,
+				nil,
+				sql.NullString{},
+			)
 
 			require.Equal(t, tt.expectedTracking.Kind, tracking.Kind)
 			assert.Equal(t, tt.expectedTracking.UnitID, tracking.UnitID)
@@ -150,4 +161,52 @@ func TestReadLogTracking(t *testing.T) {
 			assert.InDelta(t, tt.expectedTracking.ComputedScore, tracking.ComputedScore, 0.0001)
 		})
 	}
+}
+
+func TestScoreProvenanceConversions(t *testing.T) {
+	ruleSetID := uuid.New()
+	ruleIDs := []uuid.UUID{uuid.New(), uuid.New()}
+	rates := []float32{1, 1.5}
+	provenance := &domain.ScoreProvenance{
+		RuleSetID: &ruleSetID,
+		RuleIDs:   ruleIDs,
+		Rates:     rates,
+		Source:    domain.ScoreSourceAmount,
+	}
+
+	assert.Equal(t, ruleSetID, scoreRuleSetID(provenance).UUID)
+	assert.Equal(t, ruleIDs, scoreRuleIDs(provenance))
+	assert.Equal(t, rates, scoreRates(provenance))
+	assert.Equal(t, string(domain.ScoreSourceAmount), scoreSource(provenance).String)
+
+	assert.False(t, scoreRuleSetID(nil).Valid)
+	assert.Nil(t, scoreRuleIDs(nil))
+	assert.Nil(t, scoreRates(nil))
+	assert.False(t, scoreSource(nil).Valid)
+}
+
+func TestReadLogTrackingWithScoreProvenance(t *testing.T) {
+	ruleSetID := uuid.New()
+	ruleIDs := []uuid.UUID{uuid.New(), uuid.New()}
+	rates := []float32{1, 1.5}
+
+	tracking := readLogTracking(
+		uuid.NullUUID{},
+		"",
+		sql.NullFloat64{},
+		sql.NullFloat64{},
+		sql.NullInt32{Int32: 600, Valid: true},
+		sql.NullFloat64{Float64: 4, Valid: true},
+		uuid.NullUUID{UUID: ruleSetID, Valid: true},
+		ruleIDs,
+		rates,
+		sql.NullString{String: string(domain.ScoreSourceDurationMinutes), Valid: true},
+	)
+
+	require.NotNil(t, tracking.ScoreProvenance)
+	require.NotNil(t, tracking.ScoreProvenance.RuleSetID)
+	assert.Equal(t, ruleSetID, *tracking.ScoreProvenance.RuleSetID)
+	assert.Equal(t, ruleIDs, tracking.ScoreProvenance.RuleIDs)
+	assert.Equal(t, rates, tracking.ScoreProvenance.Rates)
+	assert.Equal(t, domain.ScoreSourceDurationMinutes, tracking.ScoreProvenance.Source)
 }

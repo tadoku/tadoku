@@ -39,6 +39,10 @@ type ContestLog struct {
 	Score           sql.NullFloat64
 	DurationSeconds sql.NullInt32
 	ComputedScore   sql.NullFloat64
+	ScoreRuleSetID  uuid.NullUUID
+	ScoreRuleIds    []uuid.UUID
+	ScoreRates      []float32
+	ScoreSource     sql.NullString
 }
 
 type ContestRegistration struct {
@@ -85,6 +89,10 @@ type Log struct {
 	DurationSeconds             sql.NullInt32
 	ComputedScore               sql.NullFloat64
 	UnitKey                     sql.NullString
+	ScoreRuleSetID              uuid.NullUUID
+	ScoreRuleIds                []uuid.UUID
+	ScoreRates                  []float32
+	ScoreSource                 sql.NullString
 }
 
 type LogTag struct {

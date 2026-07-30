@@ -33,6 +33,10 @@ func (r *Repository) UpdateLog(ctx context.Context, req *domain.LogUpdateRequest
 		UnitKey:         trackingUnitKey(tracking),
 		DurationSeconds: trackingDurationSeconds(tracking),
 		ComputedScore:   postgres.NewNullFloat64FromFloat32(tracking.ComputedScore),
+		ScoreRuleSetID:  scoreRuleSetID(tracking.ScoreProvenance),
+		ScoreRuleIds:    scoreRuleIDs(tracking.ScoreProvenance),
+		ScoreRates:      scoreRates(tracking.ScoreProvenance),
+		ScoreSource:     scoreSource(tracking.ScoreProvenance),
 		Description:     postgres.NewNullString(req.Description),
 		Now:             req.Now(),
 	}); err != nil {
@@ -48,6 +52,10 @@ func (r *Repository) UpdateLog(ctx context.Context, req *domain.LogUpdateRequest
 		Modifier:        trackingModifier(tracking),
 		DurationSeconds: trackingDurationSeconds(tracking),
 		ComputedScore:   postgres.NewNullFloat64FromFloat32(tracking.ComputedScore),
+		ScoreRuleSetID:  scoreRuleSetID(nil),
+		ScoreRuleIds:    scoreRuleIDs(nil),
+		ScoreRates:      scoreRates(nil),
+		ScoreSource:     scoreSource(nil),
 		Now:             req.Now(),
 	}); err != nil {
 		_ = tx.Rollback()

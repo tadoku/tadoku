@@ -30,7 +30,18 @@ func (r *Repository) ListLogsForUser(ctx context.Context, req *domain.LogListFor
 
 	res := make([]domain.Log, len(entries))
 	for i, it := range entries {
-		tracking := readLogTracking(it.UnitID, it.UnitKey, it.Amount, it.Modifier, it.DurationSeconds, it.Score)
+		tracking := readLogTracking(
+			it.UnitID,
+			it.UnitKey,
+			it.Amount,
+			it.Modifier,
+			it.DurationSeconds,
+			it.Score,
+			it.ScoreRuleSetID,
+			it.ScoreRuleIds,
+			it.ScoreRates,
+			it.ScoreSource,
+		)
 		res[i] = domain.Log{
 			ID:              it.ID,
 			UserID:          it.UserID,

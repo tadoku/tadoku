@@ -365,6 +365,42 @@ func TestLogUpdate_Execute(t *testing.T) {
 		assert.Equal(t, float32(10), repo.updateCalledWith.Tracking().ComputedScore)
 	})
 
+	t.Run("writes the engine score and provenance when enabled", func(t *testing.T) {
+		ruleSetID := uuid.New()
+		ruleID := uuid.New()
+		updatedLog := &domain.Log{ID: logID, UserID: userID, ActivityID: 1, Amount: 10}
+		repo := &mockLogUpdateRepository{
+			log:        makeLog(userID),
+			updatedLog: updatedLog,
+			scoringRuleSet: &domain.ScoringRuleSet{
+				ID: ruleSetID,
+				Rules: []domain.ScoringRule{{
+					ID:          ruleID,
+					Priority:    1,
+					ActivityID:  1,
+					UnitKey:     domain.UnitKeyReadingPage,
+					ScoreSource: domain.ScoreSourceAmount,
+					Rate:        2,
+				}},
+			},
+		}
+		clock := commondomain.NewMockClock(now)
+		svc := domain.NewLogUpdateWithScoringEngine(repo, clock, true)
+
+		_, err := svc.Execute(ctxWithUserSubject(userID.String()), &domain.LogUpdateRequest{
+			LogID:  logID,
+			UnitID: &unitID,
+			Amount: &amount10,
+		})
+
+		require.NoError(t, err)
+		tracking := repo.updateCalledWith.Tracking()
+		assert.Equal(t, float32(20), tracking.ComputedScore)
+		require.NotNil(t, tracking.ScoreProvenance)
+		assert.Equal(t, &ruleSetID, tracking.ScoreProvenance.RuleSetID)
+		assert.Equal(t, []uuid.UUID{ruleID}, tracking.ScoreProvenance.RuleIDs)
+	})
+
 	t.Run("allows amount update with duration metadata", func(t *testing.T) {
 		updatedLog := &domain.Log{ID: logID, UserID: userID, ActivityID: 1, Amount: 10, DurationSeconds: &duration900}
 		repo := &mockLogUpdateRepository{

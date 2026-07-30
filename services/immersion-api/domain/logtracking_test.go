@@ -157,3 +157,44 @@ func TestComputeInterimLogScore(t *testing.T) {
 		}
 	})
 }
+
+func TestApplyScoringResult(t *testing.T) {
+	ruleSetID := uuid.New()
+	baseRuleID := uuid.New()
+	modifierRuleID := uuid.New()
+	tracking := domain.LogTracking{ComputedScore: 99}
+
+	domain.ApplyScoringResult(&tracking, domain.ScoringResult{
+		Score:            15,
+		ScoreSource:      domain.ScoreSourceAmount,
+		Matched:          true,
+		AppliedRuleSetID: &ruleSetID,
+		AppliedRules: []domain.AppliedScoringRule{
+			{RuleID: baseRuleID, Rate: 1},
+			{RuleID: modifierRuleID, Rate: 1.5},
+		},
+	})
+
+	assert.Equal(t, float32(15), tracking.ComputedScore)
+	require.NotNil(t, tracking.ScoreProvenance)
+	assert.Equal(t, &ruleSetID, tracking.ScoreProvenance.RuleSetID)
+	assert.Equal(t, []uuid.UUID{baseRuleID, modifierRuleID}, tracking.ScoreProvenance.RuleIDs)
+	assert.Equal(t, []float32{1, 1.5}, tracking.ScoreProvenance.Rates)
+	assert.Equal(t, domain.ScoreSourceAmount, tracking.ScoreProvenance.Source)
+}
+
+func TestApplyUnmatchedScoringResult(t *testing.T) {
+	tracking := domain.LogTracking{ComputedScore: 99}
+
+	domain.ApplyScoringResult(&tracking, domain.ScoringResult{
+		Score:       0,
+		ScoreSource: domain.ScoreSourceDurationMinutes,
+	})
+
+	assert.Zero(t, tracking.ComputedScore)
+	require.NotNil(t, tracking.ScoreProvenance)
+	assert.Nil(t, tracking.ScoreProvenance.RuleSetID)
+	assert.Empty(t, tracking.ScoreProvenance.RuleIDs)
+	assert.Empty(t, tracking.ScoreProvenance.Rates)
+	assert.Equal(t, domain.ScoreSourceDurationMinutes, tracking.ScoreProvenance.Source)
+}

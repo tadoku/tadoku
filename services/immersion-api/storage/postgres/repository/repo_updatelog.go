@@ -44,22 +44,45 @@ func (r *Repository) UpdateLog(ctx context.Context, req *domain.LogUpdateRequest
 		return fmt.Errorf("could not update log: %w", err)
 	}
 
-	// Update contest_logs for ongoing contests only
-	if err := qtx.UpdateOngoingContestLogs(ctx, postgres.UpdateOngoingContestLogsParams{
-		LogID:           req.LogID,
-		UnitKey:         trackingUnitKey(tracking),
-		Amount:          trackingAmount(tracking),
-		Modifier:        trackingModifier(tracking),
-		DurationSeconds: trackingDurationSeconds(tracking),
-		ComputedScore:   postgres.NewNullFloat64FromFloat32(tracking.ComputedScore),
-		ScoreRuleSetID:  scoreRuleSetID(nil),
-		ScoreRuleIds:    scoreRuleIDs(nil),
-		ScoreRates:      scoreRates(nil),
-		ScoreSource:     scoreSource(nil),
-		Now:             req.Now(),
-	}); err != nil {
-		_ = tx.Rollback()
-		return fmt.Errorf("could not update contest logs: %w", err)
+	contestTrackings := req.ContestTrackings()
+	if len(contestTrackings) == 0 {
+		if err := qtx.UpdateOngoingContestLogs(ctx, postgres.UpdateOngoingContestLogsParams{
+			LogID:           req.LogID,
+			UnitKey:         trackingUnitKey(tracking),
+			Amount:          trackingAmount(tracking),
+			Modifier:        trackingModifier(tracking),
+			DurationSeconds: trackingDurationSeconds(tracking),
+			ComputedScore:   postgres.NewNullFloat64FromFloat32(tracking.ComputedScore),
+			ScoreRuleSetID:  scoreRuleSetID(nil),
+			ScoreRuleIds:    scoreRuleIDs(nil),
+			ScoreRates:      scoreRates(nil),
+			ScoreSource:     scoreSource(nil),
+			Now:             req.Now(),
+		}); err != nil {
+			_ = tx.Rollback()
+			return fmt.Errorf("could not update contest logs: %w", err)
+		}
+	} else {
+		for _, contestTracking := range contestTrackings {
+			contestTracking := contestTracking
+			if err := qtx.UpdateOngoingContestLog(ctx, postgres.UpdateOngoingContestLogParams{
+				LogID:           req.LogID,
+				ContestID:       contestTracking.ContestID,
+				UnitKey:         trackingUnitKey(contestTracking.Tracking),
+				Amount:          trackingAmount(contestTracking.Tracking),
+				Modifier:        trackingModifier(contestTracking.Tracking),
+				DurationSeconds: trackingDurationSeconds(contestTracking.Tracking),
+				ComputedScore:   postgres.NewNullFloat64FromFloat32(contestTracking.Tracking.ComputedScore),
+				ScoreRuleSetID:  scoreRuleSetID(contestTracking.Tracking.ScoreProvenance),
+				ScoreRuleIds:    scoreRuleIDs(contestTracking.Tracking.ScoreProvenance),
+				ScoreRates:      scoreRates(contestTracking.Tracking.ScoreProvenance),
+				ScoreSource:     scoreSource(contestTracking.Tracking.ScoreProvenance),
+				Now:             req.Now(),
+			}); err != nil {
+				_ = tx.Rollback()
+				return fmt.Errorf("could not update contest log %s: %w", contestTracking.ContestID, err)
+			}
+		}
 	}
 
 	// Sync tags: delete all, re-insert new ones

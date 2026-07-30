@@ -15,6 +15,7 @@ type LogUpdateRepository interface {
 	FindUnitForTracking(context.Context, *UnitFindForTrackingRequest) (*Unit, error)
 	FindUnitForTrackingByKey(context.Context, *UnitFindForTrackingByKeyRequest) (*Unit, error)
 	FindActivePlatformScoringRuleSet(context.Context) (*ScoringRuleSet, error)
+	FindContestScoringRuleSets(context.Context, uuid.UUID) (*ScoringRuleSet, *ScoringRuleSet, error)
 	UpdateLog(context.Context, *LogUpdateRequest) error
 }
 
@@ -28,14 +29,18 @@ type LogUpdateRequest struct {
 	Description     *string
 
 	// Set by domain layer (unexported: only domain can write, others read via getters)
-	now      time.Time
-	userID   uuid.UUID
-	tracking LogTracking
+	now              time.Time
+	userID           uuid.UUID
+	tracking         LogTracking
+	contestTrackings []ContestLogTracking
 }
 
 func (r *LogUpdateRequest) Now() time.Time        { return r.now }
 func (r *LogUpdateRequest) UserID() uuid.UUID     { return r.userID }
 func (r *LogUpdateRequest) Tracking() LogTracking { return r.tracking }
+func (r *LogUpdateRequest) ContestTrackings() []ContestLogTracking {
+	return r.contestTrackings
+}
 
 type LogUpdate struct {
 	repo             LogUpdateRepository
@@ -125,11 +130,29 @@ func (s *LogUpdate) Execute(ctx context.Context, req *LogUpdateRequest) (*Log, e
 			return nil, fmt.Errorf("could not score log: %w", scoringErr)
 		}
 		ApplyScoringResult(&req.tracking, result)
+		req.now = s.clock.Now()
+		for _, registration := range log.Registrations {
+			if registration.ContestEnd.Before(req.now) {
+				continue
+			}
+			contestTracking, contestErr := resolveContestLogTracking(
+				ctx,
+				s.repo,
+				registration.ContestID,
+				registration.RegistrationID,
+				req.tracking,
+				scoringInput,
+			)
+			if contestErr != nil {
+				return nil, fmt.Errorf("could not score contest %s: %w", registration.ContestID, contestErr)
+			}
+			req.contestTrackings = append(req.contestTrackings, contestTracking)
+		}
 	} else {
 		RecordPlatformScoringShadow(ctx, s.repo, scoringInput, req.tracking.ComputedScore)
+		req.now = s.clock.Now()
 	}
 
-	req.now = s.clock.Now()
 	req.userID = log.UserID
 
 	if err := s.repo.UpdateLog(ctx, req); err != nil {

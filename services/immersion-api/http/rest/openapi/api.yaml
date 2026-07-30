@@ -463,6 +463,59 @@ paths:
                 $ref: "#/components/schemas/Log"
         "400":
           description: invalid submission
+  /logs/score-preview:
+    post:
+      summary: Previews platform and contest scores without creating a log
+      operationId: scorePreview
+      tags: [logs]
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - language_code
+                - activity_id
+                - tags
+              properties:
+                registration_ids:
+                  type: array
+                  items:
+                    type: string
+                    format: uuid
+                language_code:
+                  type: string
+                  example: jpn
+                activity_id:
+                  format: int32
+                  type: integer
+                amount:
+                  type: number
+                  format: float
+                unit_id:
+                  type: string
+                  format: uuid
+                unit_key:
+                  type: string
+                duration_seconds:
+                  type: integer
+                  format: int32
+                tags:
+                  type: array
+                  items:
+                    type: string
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ScorePreview"
+        "400":
+          description: invalid preview input
   /logs/{id}:
     get:
       summary: Fetches a log by id
@@ -1387,6 +1440,67 @@ components:
         score:
           type: number
           format: float
+    AppliedScoringRule:
+      type: object
+      required:
+        - rule_id
+        - rate
+      properties:
+        rule_id:
+          type: string
+          format: uuid
+        rate:
+          type: number
+          format: float
+    ScoreEstimate:
+      type: object
+      required:
+        - score
+        - source
+        - rules
+      properties:
+        score:
+          type: number
+          format: float
+        source:
+          type: string
+          enum:
+            - amount
+            - duration_minutes
+        rule_set_id:
+          type: string
+          format: uuid
+        rules:
+          type: array
+          items:
+            $ref: "#/components/schemas/AppliedScoringRule"
+    ContestScoreEstimate:
+      type: object
+      required:
+        - registration_id
+        - contest_id
+        - estimate
+      properties:
+        registration_id:
+          type: string
+          format: uuid
+        contest_id:
+          type: string
+          format: uuid
+        estimate:
+          $ref: "#/components/schemas/ScoreEstimate"
+    ScorePreview:
+      type: object
+      required:
+        - platform
+        - contests
+      properties:
+        platform:
+          $ref: "#/components/schemas/ScoreEstimate"
+        contests:
+          type: array
+          items:
+            $ref: "#/components/schemas/ContestScoreEstimate"
     Scores:
       type: array
       items:

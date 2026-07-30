@@ -423,13 +423,13 @@ endpoint. All form changes must use `react-hook-form` and components from the
   - [x] Configure contest mode and pinned fallback.
   - [x] Prevent implicit mutation of published rule sets.
 
-- [ ] Add contest scoring configuration UI.
-  - [ ] Use components from the `ui` package.
-  - [ ] Use `react-hook-form` for form state and validation.
-  - [ ] Support ordered rules and match conditions.
-  - [ ] Show uncovered inputs as scoring zero.
-  - [ ] Show whether the contest overrides or replaces platform rules.
-  - [ ] Prevent unsafe rule changes after the contest starts.
+- [x] Add contest scoring configuration UI.
+  - [x] Use components from the `ui` package.
+  - [x] Use `react-hook-form` for form state and validation.
+  - [x] Support ordered rules and match conditions.
+  - [x] Show uncovered inputs as scoring zero.
+  - [x] Show whether the contest overrides or replaces platform rules.
+  - [x] Prevent unsafe rule changes after the contest starts.
 
 - [ ] Complete production verification.
   - [ ] Shadow mismatches are understood or zero.

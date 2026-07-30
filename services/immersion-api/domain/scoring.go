@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math"
 	"sort"
+	"time"
 
 	"github.com/google/uuid"
 )
@@ -22,6 +23,20 @@ const (
 	ScoringRuleSetModeReplace  ScoringRuleSetMode = "replace"
 )
 
+type ScoringRuleSetScope string
+
+const (
+	ScoringRuleSetScopePlatform ScoringRuleSetScope = "platform"
+	ScoringRuleSetScopeContest  ScoringRuleSetScope = "contest"
+)
+
+type ScoringRuleSetStatus string
+
+const (
+	ScoringRuleSetStatusDraft     ScoringRuleSetStatus = "draft"
+	ScoringRuleSetStatusPublished ScoringRuleSetStatus = "published"
+)
+
 type ScoringRule struct {
 	ID           uuid.UUID
 	Priority     int32
@@ -36,10 +51,16 @@ type ScoringRule struct {
 
 type ScoringRuleSet struct {
 	ID                uuid.UUID
+	Scope             ScoringRuleSetScope
+	ContestID         *uuid.UUID
 	Version           int32
+	Status            ScoringRuleSetStatus
+	Active            bool
 	Mode              ScoringRuleSetMode
 	FallbackRuleSetID *uuid.UUID
 	Rules             []ScoringRule
+	CreatedAt         time.Time
+	PublishedAt       *time.Time
 }
 
 type ScoringInput struct {

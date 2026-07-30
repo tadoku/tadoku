@@ -936,6 +936,124 @@ paths:
                 $ref: "#/components/schemas/Leaderboard"
         "404":
           description: not found
+  /scoring/rule-sets:
+    get:
+      summary: Lists platform scoring rule-set versions
+      operationId: scoringRuleSetListPlatform
+      tags: [scoring]
+      security:
+        - cookieAuth: []
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ScoringRuleSets"
+    post:
+      summary: Creates a draft platform scoring rule-set version
+      operationId: scoringRuleSetCreatePlatform
+      tags: [scoring]
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ScoringRuleSetDraft"
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ScoringRuleSet"
+  /contests/{id}/scoring-rule-sets:
+    get:
+      summary: Lists scoring rule-set versions owned by a contest
+      operationId: scoringRuleSetListContest
+      tags: [scoring]
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ScoringRuleSets"
+    post:
+      summary: Creates a draft contest scoring rule-set version
+      operationId: scoringRuleSetCreateContest
+      tags: [scoring]
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ScoringRuleSetDraft"
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ScoringRuleSet"
+  /scoring/rule-sets/{id}/publish:
+    post:
+      summary: Publishes an immutable scoring rule-set version
+      operationId: scoringRuleSetPublish
+      tags: [scoring]
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ScoringRuleSet"
+  /scoring/rule-sets/{id}/activate:
+    post:
+      summary: Activates a published scoring rule-set version
+      operationId: scoringRuleSetActivate
+      tags: [scoring]
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "204":
+          description: activated
   /ping:
     get:
       summary: Checks if service is responsive
@@ -1505,6 +1623,116 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/ContestScoreEstimate"
+    ScoringRule:
+      type: object
+      required:
+        - priority
+        - stackable
+        - activity_id
+        - score_source
+        - rate
+      properties:
+        id:
+          type: string
+          format: uuid
+        priority:
+          type: integer
+          format: int32
+        stackable:
+          type: boolean
+        activity_id:
+          type: integer
+          format: int32
+        unit_key:
+          type: string
+        language_code:
+          type: string
+        tag:
+          type: string
+        score_source:
+          type: string
+          enum:
+            - amount
+            - duration_minutes
+        rate:
+          type: number
+          format: float
+    ScoringRuleSetDraft:
+      type: object
+      required:
+        - rules
+      properties:
+        mode:
+          type: string
+          enum:
+            - override
+            - replace
+        fallback_rule_set_id:
+          type: string
+          format: uuid
+        rules:
+          type: array
+          items:
+            $ref: "#/components/schemas/ScoringRule"
+    ScoringRuleSet:
+      type: object
+      required:
+        - id
+        - scope
+        - version
+        - status
+        - active
+        - rules
+        - created_at
+      properties:
+        id:
+          type: string
+          format: uuid
+        scope:
+          type: string
+          enum:
+            - platform
+            - contest
+        contest_id:
+          type: string
+          format: uuid
+        version:
+          type: integer
+          format: int32
+        status:
+          type: string
+          enum:
+            - draft
+            - published
+        active:
+          type: boolean
+        mode:
+          type: string
+          enum:
+            - override
+            - replace
+        fallback_rule_set_id:
+          type: string
+          format: uuid
+        rules:
+          type: array
+          items:
+            $ref: "#/components/schemas/ScoringRule"
+        created_at:
+          type: string
+          format: date-time
+        published_at:
+          type: string
+          format: date-time
+    ScoringRuleSets:
+      type: object
+      required:
+        - rule_sets
+      properties:
+        rule_sets:
+          type: array
+          items:
+            $ref: "#/components/schemas/ScoringRuleSet"
     Scores:
       type: array
       items:

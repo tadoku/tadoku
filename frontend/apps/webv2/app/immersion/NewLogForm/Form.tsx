@@ -12,11 +12,11 @@ import {
   fetchTagSuggestions,
   LogConfigurationOptions,
   useCreateLog,
+  useScorePreview,
 } from '@app/immersion/api'
 import { useRouter } from 'next/router'
 import { routes } from '@app/common/routes'
 import {
-  estimateScore,
   filterActivities,
   filterUnits,
   formatContestLabel,
@@ -24,11 +24,11 @@ import {
   NewLogFormSchema,
   trackingModesForRegistrations,
 } from '@app/immersion/NewLogForm/domain'
-import { formatScore } from '@app/common/format'
-import { useDebouncedCallback } from 'use-debounce'
+import { useDebounce, useDebouncedCallback } from 'use-debounce'
 import { useSessionOrRedirect } from '@app/common/session'
 import { useEffect } from 'react'
 import { AmountWithUnit, Option, Select } from 'ui/components/Form'
+import { ScorePreviewEstimate } from '@app/immersion/components/ScorePreviewEstimate'
 
 interface Props {
   registrations: ContestRegistrationsView
@@ -66,8 +66,7 @@ export const LogForm = ({
   const trackingMode = methods.watch('tracking_mode') ?? 'personal'
   const activityId = methods.watch('activityId')
   const languageCode = methods.watch('languageCode')
-  const unitId = methods.watch('amountUnit')
-  const amount = methods.watch('amountValue')
+  const formValues = methods.watch()
 
   const languages =
     trackingMode === 'personal'
@@ -98,7 +97,6 @@ export const LogForm = ({
     value: it.id,
     label: it.name,
   }))
-  const currentSelectedUnit = units.find(it => it.id === unitId)
   const activities = filterActivities(
     options.activities,
     registrations,
@@ -108,7 +106,19 @@ export const LogForm = ({
     value: it.id.toString(),
     label: it.name,
   }))
-  const estimatedScore = estimateScore(amount, currentSelectedUnit)
+  const previewPayloadResult = NewLogAPISchema.safeParse(formValues)
+  const [previewPayloadJSON] = useDebounce(
+    previewPayloadResult.success
+      ? JSON.stringify(previewPayloadResult.data)
+      : undefined,
+    300,
+  )
+  const previewPayload = previewPayloadJSON
+    ? JSON.parse(previewPayloadJSON)
+    : undefined
+  const scorePreview = useScorePreview(previewPayload, {
+    enabled: options.scoring_engine_enabled,
+  })
 
   const router = useRouter()
   const createLogMutation = useCreateLog(id => {
@@ -220,7 +230,11 @@ export const LogForm = ({
               </div>
             </div>
             <div className="-mx-4 -mb-4 mt-4 px-4 py-2 md:-mx-7 md:-mb-7 md:px-7 md:py-2 bg-slate-500/5 text-center lg:text-right font-mono">
-              Estimated score: <strong>{formatScore(estimatedScore)}</strong>
+              <ScorePreviewEstimate
+                enabled={options.scoring_engine_enabled}
+                preview={scorePreview.data}
+                registrations={registrations}
+              />
             </div>
           </div>
           <div className="h-stack spaced justify-end">

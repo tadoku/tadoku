@@ -12,18 +12,30 @@ type LogConfigurationOptionsRepository interface {
 }
 
 type LogConfigurationOptionsResponse struct {
-	Languages         []Language
-	Activities        []Activity
-	Units             []Unit
-	UserLanguageCodes []string
+	Languages            []Language
+	Activities           []Activity
+	Units                []Unit
+	UserLanguageCodes    []string
+	ScoringEngineEnabled bool
 }
 
 type LogConfigurationOptions struct {
-	repo LogConfigurationOptionsRepository
+	repo                 LogConfigurationOptionsRepository
+	scoringEngineEnabled bool
 }
 
 func NewLogConfigurationOptions(repo LogConfigurationOptionsRepository) *LogConfigurationOptions {
-	return &LogConfigurationOptions{repo: repo}
+	return NewLogConfigurationOptionsWithScoringEngine(repo, false)
+}
+
+func NewLogConfigurationOptionsWithScoringEngine(
+	repo LogConfigurationOptionsRepository,
+	enabled bool,
+) *LogConfigurationOptions {
+	return &LogConfigurationOptions{
+		repo:                 repo,
+		scoringEngineEnabled: enabled,
+	}
 }
 
 func (s *LogConfigurationOptions) Execute(ctx context.Context) (*LogConfigurationOptionsResponse, error) {
@@ -41,5 +53,6 @@ func (s *LogConfigurationOptions) Execute(ctx context.Context) (*LogConfiguratio
 		return nil, err
 	}
 	res.Activities = Activities()
+	res.ScoringEngineEnabled = s.scoringEngineEnabled
 	return res, nil
 }

@@ -7,20 +7,20 @@ import {
   Log,
   LogConfigurationOptions,
   useUpdateLog,
+  useScorePreview,
 } from '@app/immersion/api'
 import { useRouter } from 'next/router'
 import { routes } from '@app/common/routes'
 import {
-  estimateScore,
   filterUnits,
   NewLogFormV2Schema,
   NewLogV2APISchema,
 } from '@app/immersion/NewLogFormV2/domain'
-import { formatScore } from '@app/common/format'
-import { useDebouncedCallback } from 'use-debounce'
+import { useDebounce, useDebouncedCallback } from 'use-debounce'
 import { useSessionOrRedirect } from '@app/common/session'
 import { AmountWithUnit, Option } from 'ui/components/Form'
 import { toast } from 'react-toastify'
+import { ScorePreviewEstimate } from '@app/immersion/components/ScorePreviewEstimate'
 
 interface Props {
   options: LogConfigurationOptions
@@ -58,18 +58,30 @@ export const EditLogForm = ({ options, log }: Props) => {
 
   useSessionOrRedirect()
 
-  const unitId = methods.watch('amountUnit')
-  const amount = methods.watch('amountValue')
+  const formValues = methods.watch()
 
   const units = filterUnits(options.units, log.activity.id, log.language.code)
   const unitsAsOptions: Option[] = units.map(it => ({
     value: it.id,
     label: it.name,
   }))
-  const currentSelectedUnit = units.find(it => it.id === unitId)
-  const estimatedScore = usesAmountUnit
-    ? estimateScore(amount, currentSelectedUnit)
+  const parsedPreviewValues = NewLogV2APISchema.safeParse(formValues)
+  const [previewPayloadJSON] = useDebounce(
+    parsedPreviewValues.success
+      ? JSON.stringify({
+          ...parsedPreviewValues.data,
+          activity_id: log.activity.id,
+          language_code: log.language.code,
+        })
+      : undefined,
+    300,
+  )
+  const previewPayload = previewPayloadJSON
+    ? JSON.parse(previewPayloadJSON)
     : undefined
+  const scorePreview = useScorePreview(previewPayload, {
+    enabled: options.scoring_engine_enabled,
+  })
 
   const router = useRouter()
   const updateLogMutation = useUpdateLog(updatedLog => {
@@ -165,10 +177,10 @@ export const EditLogForm = ({ options, log }: Props) => {
               </div>
             </div>
             <div className="-mx-4 -mb-4 mt-4 px-4 py-2 md:-mx-7 md:-mb-7 md:px-7 md:py-2 bg-slate-500/5 text-center lg:text-right font-mono">
-              Estimated score:{' '}
-              <strong>
-                {usesAmountUnit ? formatScore(estimatedScore) : '-'}
-              </strong>
+              <ScorePreviewEstimate
+                enabled={options.scoring_engine_enabled}
+                preview={scorePreview.data}
+              />
             </div>
           </div>
           <div className="h-stack spaced justify-end">

@@ -35,10 +35,11 @@ type ScoringRule struct {
 }
 
 type ScoringRuleSet struct {
-	ID      uuid.UUID
-	Version int32
-	Mode    ScoringRuleSetMode
-	Rules   []ScoringRule
+	ID                uuid.UUID
+	Version           int32
+	Mode              ScoringRuleSetMode
+	FallbackRuleSetID *uuid.UUID
+	Rules             []ScoringRule
 }
 
 type ScoringInput struct {

@@ -28,6 +28,7 @@ type Contest struct {
 	CreatedAt               time.Time
 	UpdatedAt               time.Time
 	DeletedAt               sql.NullTime
+	ScoringRuleSetID        uuid.NullUUID
 }
 
 type ContestLog struct {
@@ -109,6 +110,36 @@ type ModerationAuditLog struct {
 	Metadata    json.RawMessage
 	Description sql.NullString
 	CreatedAt   time.Time
+}
+
+type PlatformScoringConfig struct {
+	Singleton       bool
+	ActiveRuleSetID uuid.UUID
+}
+
+type ScoringRule struct {
+	ID           uuid.UUID
+	RuleSetID    uuid.UUID
+	Priority     int32
+	Stackable    bool
+	ActivityID   int16
+	UnitKey      sql.NullString
+	LanguageCode sql.NullString
+	Tag          sql.NullString
+	ScoreSource  string
+	Rate         float32
+}
+
+type ScoringRuleSet struct {
+	ID                uuid.UUID
+	Scope             string
+	ContestID         uuid.NullUUID
+	Version           int32
+	Status            string
+	Mode              sql.NullString
+	FallbackRuleSetID uuid.NullUUID
+	CreatedAt         time.Time
+	PublishedAt       sql.NullTime
 }
 
 type User struct {

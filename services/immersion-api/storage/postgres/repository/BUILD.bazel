@@ -25,6 +25,7 @@ go_library(
         "repo_findlogbyid.go",
         "repo_findregistrationforuser.go",
         "repo_findscoresforregistration.go",
+        "repo_findscoringruleset.go",
         "repo_findunitfortracking.go",
         "repo_finduserdisplaynames.go",
         "repo_getcontestsbyusercountforyear.go",
@@ -58,10 +59,14 @@ go_library(
 
 go_test(
     name = "repository_test",
-    srcs = ["logtracking_test.go"],
+    srcs = [
+        "logtracking_test.go",
+        "repo_findscoringruleset_test.go",
+    ],
     embed = [":repository"],
     deps = [
         "//services/immersion-api/domain",
+        "//services/immersion-api/storage/postgres",
         "@com_github_google_uuid//:uuid",
         "@com_github_stretchr_testify//assert",
         "@com_github_stretchr_testify//require",

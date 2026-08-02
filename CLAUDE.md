@@ -61,7 +61,7 @@ Run the generator for every affected service from the repository root:
 
 Each `go generate` command installs the sqlc version pinned in that service's `generate.go` and then runs `sqlc generate`.
 
-CI runs both generators on every pull request and fails if they change the working tree. Before pushing, commit the complete generated output so this check stays clean.
+CI runs sqlc for both packages on every pull request using the versions pinned in their `generate.go` files, and fails if code generation changes the working tree. Before pushing, commit the complete generated output so this check stays clean.
 
 **Accept narrow interfaces** — define interfaces where they are used, with only the methods that consumer needs. Don't create wide/shared interfaces that bundle many methods together. Concrete implementations can be large, but each consumer should accept the smallest dependency possible. This follows Go's interface segregation principle and makes testing easier.
 

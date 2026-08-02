@@ -31,6 +31,14 @@ type LogTracking struct {
 	DurationSeconds int32
 	Modifier        float32
 	ComputedScore   float32
+	ScoreProvenance *ScoreProvenance
+}
+
+type ScoreProvenance struct {
+	RuleSetID *uuid.UUID
+	RuleIDs   []uuid.UUID
+	Rates     []float32
+	Source    ScoreSource
 }
 
 type LogTrackingInput struct {

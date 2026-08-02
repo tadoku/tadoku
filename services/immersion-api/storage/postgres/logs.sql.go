@@ -45,7 +45,11 @@ insert into contest_logs (
   amount,
   modifier,
   duration_seconds,
-  computed_score
+  computed_score,
+  score_rule_set_id,
+  score_rule_ids,
+  score_rates,
+  score_source
 ) values (
   (select contest_id from contest_registrations where id = $1),
   $2,
@@ -53,7 +57,11 @@ insert into contest_logs (
   $4,
   $5,
   $6,
-  $7
+  $7,
+  $8,
+  $9,
+  $10
+  $11
 )
 `
 
@@ -65,6 +73,10 @@ type CreateContestLogRelationParams struct {
 	Modifier        sql.NullFloat64
 	DurationSeconds sql.NullInt32
 	ComputedScore   sql.NullFloat64
+	ScoreRuleSetID  uuid.NullUUID
+	ScoreRuleIds    []uuid.UUID
+	ScoreRates      []float32
+	ScoreSource     sql.NullString
 }
 
 func (q *Queries) CreateContestLogRelation(ctx context.Context, arg CreateContestLogRelationParams) error {
@@ -76,6 +88,10 @@ func (q *Queries) CreateContestLogRelation(ctx context.Context, arg CreateContes
 		arg.Modifier,
 		arg.DurationSeconds,
 		arg.ComputedScore,
+		arg.ScoreRuleSetID,
+		pq.Array(arg.ScoreRuleIds),
+		pq.Array(arg.ScoreRates),
+		arg.ScoreSource,
 	)
 	return err
 }
@@ -92,6 +108,10 @@ insert into logs (
   modifier,
   duration_seconds,
   computed_score,
+  score_rule_set_id,
+  score_rule_ids,
+  score_rates,
+  score_source,
   eligible_official_leaderboard,
   "description"
 ) values (
@@ -106,7 +126,11 @@ insert into logs (
   $9,
   $10,
   $11,
-  $12
+  $12,
+  $13,
+  $14,
+  $15,
+  $16
 ) returning id
 `
 
@@ -121,6 +145,10 @@ type CreateLogParams struct {
 	Modifier                    sql.NullFloat64
 	DurationSeconds             sql.NullInt32
 	ComputedScore               sql.NullFloat64
+	ScoreRuleSetID              uuid.NullUUID
+	ScoreRuleIds                []uuid.UUID
+	ScoreRates                  []float32
+	ScoreSource                 sql.NullString
 	EligibleOfficialLeaderboard bool
 	Description                 sql.NullString
 }
@@ -137,6 +165,10 @@ func (q *Queries) CreateLog(ctx context.Context, arg CreateLogParams) (uuid.UUID
 		arg.Modifier,
 		arg.DurationSeconds,
 		arg.ComputedScore,
+		arg.ScoreRuleSetID,
+		pq.Array(arg.ScoreRuleIds),
+		pq.Array(arg.ScoreRates),
+		arg.ScoreSource,
 		arg.EligibleOfficialLeaderboard,
 		arg.Description,
 	)
@@ -421,6 +453,10 @@ select
   logs.modifier,
   logs.duration_seconds,
   coalesce(logs.computed_score, logs.score) as score,
+  logs.score_rule_set_id,
+  logs.score_rule_ids,
+  logs.score_rates,
+  logs.score_source,
   logs.eligible_official_leaderboard,
   logs.created_at,
   logs.updated_at,
@@ -458,6 +494,10 @@ type FindLogByIDRow struct {
 	Modifier                    sql.NullFloat64
 	DurationSeconds             sql.NullInt32
 	Score                       sql.NullFloat64
+	ScoreRuleSetID              uuid.NullUUID
+	ScoreRuleIds                []uuid.UUID
+	ScoreRates                  []float32
+	ScoreSource                 sql.NullString
 	EligibleOfficialLeaderboard bool
 	CreatedAt                   time.Time
 	UpdatedAt                   time.Time
@@ -483,6 +523,10 @@ func (q *Queries) FindLogByID(ctx context.Context, arg FindLogByIDParams) (FindL
 		&i.Modifier,
 		&i.DurationSeconds,
 		&i.Score,
+		&i.ScoreRuleSetID,
+		pq.Array(&i.ScoreRuleIds),
+		pq.Array(&i.ScoreRates),
+		&i.ScoreSource,
 		&i.EligibleOfficialLeaderboard,
 		&i.CreatedAt,
 		&i.UpdatedAt,
@@ -508,6 +552,10 @@ with eligible_logs as (
     contest_logs.modifier,
     contest_logs.duration_seconds,
     coalesce(contest_logs.computed_score, contest_logs.score) as score,
+    contest_logs.score_rule_set_id,
+    contest_logs.score_rule_ids,
+    contest_logs.score_rates,
+    contest_logs.score_source,
     logs.created_at,
     logs.updated_at,
     logs.deleted_at,
@@ -527,7 +575,7 @@ with eligible_logs as (
     and contest_logs.contest_id = $5
 )
 select
-  id, user_id, language_code, language_name, activity_id, unit_id, unit_key, unit_name, description, amount, modifier, duration_seconds, score, created_at, updated_at, deleted_at, user_display_name, tags,
+  id, user_id, language_code, language_name, activity_id, unit_id, unit_key, unit_name, description, amount, modifier, duration_seconds, score, score_rule_set_id, score_rule_ids, score_rates, score_source, created_at, updated_at, deleted_at, user_display_name, tags,
   (select count(eligible_logs.id) from eligible_logs) as total_size
 from eligible_logs
 order by created_at desc
@@ -557,6 +605,10 @@ type ListLogsForContestRow struct {
 	Modifier        sql.NullFloat64
 	DurationSeconds sql.NullInt32
 	Score           sql.NullFloat64
+	ScoreRuleSetID  uuid.NullUUID
+	ScoreRuleIds    []uuid.UUID
+	ScoreRates      []float32
+	ScoreSource     sql.NullString
 	CreatedAt       time.Time
 	UpdatedAt       time.Time
 	DeletedAt       sql.NullTime
@@ -594,6 +646,10 @@ func (q *Queries) ListLogsForContest(ctx context.Context, arg ListLogsForContest
 			&i.Modifier,
 			&i.DurationSeconds,
 			&i.Score,
+			&i.ScoreRuleSetID,
+			pq.Array(&i.ScoreRuleIds),
+			pq.Array(&i.ScoreRates),
+			&i.ScoreSource,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.DeletedAt,
@@ -630,6 +686,10 @@ with eligible_logs as (
     logs.modifier,
     logs.duration_seconds,
     coalesce(logs.computed_score, logs.score) as score,
+    logs.score_rule_set_id,
+    logs.score_rule_ids,
+    logs.score_rates,
+    logs.score_source,
     logs.created_at,
     logs.updated_at,
     logs.deleted_at,
@@ -645,7 +705,7 @@ with eligible_logs as (
     and logs.user_id = $4
 )
 select
-  id, user_id, language_code, language_name, activity_id, unit_id, unit_key, unit_name, description, amount, modifier, duration_seconds, score, created_at, updated_at, deleted_at, tags,
+  id, user_id, language_code, language_name, activity_id, unit_id, unit_key, unit_name, description, amount, modifier, duration_seconds, score, score_rule_set_id, score_rule_ids, score_rates, score_source, created_at, updated_at, deleted_at, tags,
   (select count(eligible_logs.id) from eligible_logs) as total_size
 from eligible_logs
 order by created_at desc
@@ -674,6 +734,10 @@ type ListLogsForUserRow struct {
 	Modifier        sql.NullFloat64
 	DurationSeconds sql.NullInt32
 	Score           sql.NullFloat64
+	ScoreRuleSetID  uuid.NullUUID
+	ScoreRuleIds    []uuid.UUID
+	ScoreRates      []float32
+	ScoreSource     sql.NullString
 	CreatedAt       time.Time
 	UpdatedAt       time.Time
 	DeletedAt       sql.NullTime
@@ -709,6 +773,10 @@ func (q *Queries) ListLogsForUser(ctx context.Context, arg ListLogsForUserParams
 			&i.Modifier,
 			&i.DurationSeconds,
 			&i.Score,
+			&i.ScoreRuleSetID,
+			pq.Array(&i.ScoreRuleIds),
+			pq.Array(&i.ScoreRates),
+			&i.ScoreSource,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.DeletedAt,
@@ -737,10 +805,14 @@ set
   unit_key = $4,
   duration_seconds = $5,
   computed_score = $6,
-  "description" = $7,
-  updated_at = $8
+  score_rule_set_id = $7,
+  score_rule_ids = $8,
+  score_rates = $9,
+  score_source = $10,
+  "description" = $11,
+  updated_at = $12
 where
-  id = $9
+  id = $13
   and deleted_at is null
 `
 
@@ -751,6 +823,10 @@ type UpdateLogParams struct {
 	UnitKey         sql.NullString
 	DurationSeconds sql.NullInt32
 	ComputedScore   sql.NullFloat64
+	ScoreRuleSetID  uuid.NullUUID
+	ScoreRuleIds    []uuid.UUID
+	ScoreRates      []float32
+	ScoreSource     sql.NullString
 	Description     sql.NullString
 	Now             time.Time
 	LogID           uuid.UUID
@@ -764,6 +840,10 @@ func (q *Queries) UpdateLog(ctx context.Context, arg UpdateLogParams) error {
 		arg.UnitKey,
 		arg.DurationSeconds,
 		arg.ComputedScore,
+		arg.ScoreRuleSetID,
+		pq.Array(arg.ScoreRuleIds),
+		pq.Array(arg.ScoreRates),
+		arg.ScoreSource,
 		arg.Description,
 		arg.Now,
 		arg.LogID,
@@ -795,12 +875,16 @@ set
   amount = $2,
   modifier = $3,
   duration_seconds = $4,
-  computed_score = $5
+  computed_score = $5,
+  score_rule_set_id = $6,
+  score_rule_ids = $7,
+  score_rates = $8,
+  score_source = $9
 from contests
 where
-  contest_logs.log_id = $6
+  contest_logs.log_id = $10
   and contest_logs.contest_id = contests.id
-  and contests.contest_end >= $7
+  and contests.contest_end >= $11
 `
 
 type UpdateOngoingContestLogsParams struct {
@@ -809,6 +893,10 @@ type UpdateOngoingContestLogsParams struct {
 	Modifier        sql.NullFloat64
 	DurationSeconds sql.NullInt32
 	ComputedScore   sql.NullFloat64
+	ScoreRuleSetID  uuid.NullUUID
+	ScoreRuleIds    []uuid.UUID
+	ScoreRates      []float32
+	ScoreSource     sql.NullString
 	LogID           uuid.UUID
 	Now             time.Time
 }
@@ -820,6 +908,10 @@ func (q *Queries) UpdateOngoingContestLogs(ctx context.Context, arg UpdateOngoin
 		arg.Modifier,
 		arg.DurationSeconds,
 		arg.ComputedScore,
+		arg.ScoreRuleSetID,
+		pq.Array(arg.ScoreRuleIds),
+		pq.Array(arg.ScoreRates),
+		arg.ScoreSource,
 		arg.LogID,
 		arg.Now,
 	)

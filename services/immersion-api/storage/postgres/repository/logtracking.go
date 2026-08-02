@@ -43,6 +43,34 @@ func trackingDurationSeconds(tracking domain.LogTracking) sql.NullInt32 {
 	return sql.NullInt32{Valid: true, Int32: tracking.DurationSeconds}
 }
 
+func scoreRuleSetID(provenance *domain.ScoreProvenance) uuid.NullUUID {
+	if provenance == nil || provenance.RuleSetID == nil {
+		return uuid.NullUUID{}
+	}
+	return postgres.NewNullUUID(*provenance.RuleSetID)
+}
+
+func scoreRuleIDs(provenance *domain.ScoreProvenance) []uuid.UUID {
+	if provenance == nil {
+		return nil
+	}
+	return provenance.RuleIDs
+}
+
+func scoreRates(provenance *domain.ScoreProvenance) []float32 {
+	if provenance == nil {
+		return nil
+	}
+	return provenance.Rates
+}
+
+func scoreSource(provenance *domain.ScoreProvenance) sql.NullString {
+	if provenance == nil || provenance.Source == "" {
+		return sql.NullString{}
+	}
+	return sql.NullString{String: string(provenance.Source), Valid: true}
+}
+
 func readLogTracking(
 	unitID uuid.NullUUID,
 	unitKey string,
@@ -50,9 +78,24 @@ func readLogTracking(
 	modifier sql.NullFloat64,
 	durationSeconds sql.NullInt32,
 	score sql.NullFloat64,
+	scoreRuleSetID uuid.NullUUID,
+	scoreRuleIDs []uuid.UUID,
+	scoreRates []float32,
+	scoreSource sql.NullString,
 ) domain.LogTracking {
 	tracking := domain.LogTracking{
 		ComputedScore: postgres.NewFloat32FromNullFloat64(score),
+	}
+	if scoreRuleSetID.Valid || scoreSource.Valid || len(scoreRuleIDs) > 0 || len(scoreRates) > 0 {
+		tracking.ScoreProvenance = &domain.ScoreProvenance{
+			RuleIDs: append([]uuid.UUID(nil), scoreRuleIDs...),
+			Rates:   append([]float32(nil), scoreRates...),
+			Source:  domain.ScoreSource(scoreSource.String),
+		}
+		if scoreRuleSetID.Valid {
+			ruleSetID := scoreRuleSetID.UUID
+			tracking.ScoreProvenance.RuleSetID = &ruleSetID
+		}
 	}
 	hasAmountUnit := amount.Valid && modifier.Valid
 	if hasAmountUnit {

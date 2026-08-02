@@ -41,7 +41,18 @@ func (r *Repository) FindLogByID(ctx context.Context, req *domain.LogFindRequest
 		}
 	}
 
-	tracking := readLogTracking(log.UnitID, log.UnitKey, log.Amount, log.Modifier, log.DurationSeconds, log.Score)
+	tracking := readLogTracking(
+		log.UnitID,
+		log.UnitKey,
+		log.Amount,
+		log.Modifier,
+		log.DurationSeconds,
+		log.Score,
+		log.ScoreRuleSetID,
+		log.ScoreRuleIds,
+		log.ScoreRates,
+		log.ScoreSource,
+	)
 
 	return &domain.Log{
 		ID:                          log.ID,

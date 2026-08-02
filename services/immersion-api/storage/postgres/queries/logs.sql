@@ -10,6 +10,10 @@ insert into logs (
   modifier,
   duration_seconds,
   computed_score,
+  score_rule_set_id,
+  score_rule_ids,
+  score_rates,
+  score_source,
   eligible_official_leaderboard,
   "description"
 ) values (
@@ -23,6 +27,10 @@ insert into logs (
   sqlc.arg('modifier'),
   sqlc.arg('duration_seconds'),
   sqlc.arg('computed_score'),
+  sqlc.arg('score_rule_set_id'),
+  sqlc.arg('score_rule_ids'),
+  sqlc.arg('score_rates'),
+  sqlc.arg('score_source'),
   sqlc.arg('eligible_official_leaderboard'),
   sqlc.arg('description')
 ) returning id;
@@ -35,7 +43,11 @@ insert into contest_logs (
   amount,
   modifier,
   duration_seconds,
-  computed_score
+  computed_score,
+  score_rule_set_id,
+  score_rule_ids,
+  score_rates,
+  score_source
 ) values (
   (select contest_id from contest_registrations where id = sqlc.arg('registration_id')),
   sqlc.arg('log_id'),
@@ -43,7 +55,11 @@ insert into contest_logs (
   sqlc.arg('amount'),
   sqlc.arg('modifier'),
   sqlc.arg('duration_seconds'),
-  sqlc.arg('computed_score')
+  sqlc.arg('computed_score'),
+  sqlc.arg('score_rule_set_id'),
+  sqlc.arg('score_rule_ids'),
+  sqlc.arg('score_rates'),
+  sqlc.arg('score_source')
 );
 
 -- name: ListLogsForContest :many
@@ -62,6 +78,10 @@ with eligible_logs as (
     contest_logs.modifier,
     contest_logs.duration_seconds,
     coalesce(contest_logs.computed_score, contest_logs.score) as score,
+    contest_logs.score_rule_set_id,
+    contest_logs.score_rule_ids,
+    contest_logs.score_rates,
+    contest_logs.score_source,
     logs.created_at,
     logs.updated_at,
     logs.deleted_at,
@@ -104,6 +124,10 @@ with eligible_logs as (
     logs.modifier,
     logs.duration_seconds,
     coalesce(logs.computed_score, logs.score) as score,
+    logs.score_rule_set_id,
+    logs.score_rule_ids,
+    logs.score_rates,
+    logs.score_source,
     logs.created_at,
     logs.updated_at,
     logs.deleted_at,
@@ -142,6 +166,10 @@ select
   logs.modifier,
   logs.duration_seconds,
   coalesce(logs.computed_score, logs.score) as score,
+  logs.score_rule_set_id,
+  logs.score_rule_ids,
+  logs.score_rates,
+  logs.score_source,
   logs.eligible_official_leaderboard,
   logs.created_at,
   logs.updated_at,
@@ -273,6 +301,10 @@ set
   unit_key = sqlc.arg('unit_key'),
   duration_seconds = sqlc.arg('duration_seconds'),
   computed_score = sqlc.arg('computed_score'),
+  score_rule_set_id = sqlc.arg('score_rule_set_id'),
+  score_rule_ids = sqlc.arg('score_rule_ids'),
+  score_rates = sqlc.arg('score_rates'),
+  score_source = sqlc.arg('score_source'),
   "description" = sqlc.arg('description'),
   updated_at = sqlc.arg('now')
 where
@@ -286,7 +318,11 @@ set
   amount = sqlc.arg('amount'),
   modifier = sqlc.arg('modifier'),
   duration_seconds = sqlc.arg('duration_seconds'),
-  computed_score = sqlc.arg('computed_score')
+  computed_score = sqlc.arg('computed_score'),
+  score_rule_set_id = sqlc.arg('score_rule_set_id'),
+  score_rule_ids = sqlc.arg('score_rule_ids'),
+  score_rates = sqlc.arg('score_rates'),
+  score_source = sqlc.arg('score_source')
 from contests
 where
   contest_logs.log_id = sqlc.arg('log_id')

@@ -379,13 +379,13 @@ endpoint. All form changes must use `react-hook-form` and components from the
   - [x] Use `0.4` per minute for duration-only Listening.
   - [x] Do not introduce dense-tag scoring in this plan.
 
-- [ ] Add score provenance snapshots.
-  - [ ] Keep `computed_score` as the authoritative score.
-  - [ ] Add the applied rule-set ID and ordered rule IDs.
-  - [ ] Add the ordered applied rates.
-  - [ ] Add `score_source`.
-  - [ ] Add the same fields independently to `contest_logs`.
-  - [ ] Allow rule fields to be null when the score is zero because no rule matched.
+- [x] Add score provenance snapshots.
+  - [x] Keep `computed_score` as the authoritative score.
+  - [x] Add the applied rule-set ID and ordered rule IDs.
+  - [x] Add the ordered applied rates.
+  - [x] Add `score_source`.
+  - [x] Add the same fields independently to `contest_logs`.
+  - [x] Allow rule fields to be null when the score is zero because no rule matched.
 
 - [ ] Switch platform log scoring to the engine behind the feature flag.
   - [ ] Use the active platform rule set for create and update.

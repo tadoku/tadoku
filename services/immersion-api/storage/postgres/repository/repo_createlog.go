@@ -29,6 +29,10 @@ func (r *Repository) CreateLog(ctx context.Context, req *domain.LogCreateRequest
 		Modifier:                    trackingModifier(tracking),
 		DurationSeconds:             trackingDurationSeconds(tracking),
 		ComputedScore:               postgres.NewNullFloat64FromFloat32(tracking.ComputedScore),
+		ScoreRuleSetID:              scoreRuleSetID(tracking.ScoreProvenance),
+		ScoreRuleIds:                scoreRuleIDs(tracking.ScoreProvenance),
+		ScoreRates:                  scoreRates(tracking.ScoreProvenance),
+		ScoreSource:                 scoreSource(tracking.ScoreProvenance),
 		EligibleOfficialLeaderboard: req.EligibleOfficialLeaderboard(),
 		Description:                 postgres.NewNullString(req.Description),
 	})
@@ -49,6 +53,10 @@ func (r *Repository) CreateLog(ctx context.Context, req *domain.LogCreateRequest
 			Modifier:        trackingModifier(tracking),
 			DurationSeconds: trackingDurationSeconds(tracking),
 			ComputedScore:   postgres.NewNullFloat64FromFloat32(tracking.ComputedScore),
+			ScoreRuleSetID:  scoreRuleSetID(nil),
+			ScoreRuleIds:    scoreRuleIDs(nil),
+			ScoreRates:      scoreRates(nil),
+			ScoreSource:     scoreSource(nil),
 		}); err != nil {
 			_ = tx.Rollback()
 			return nil, fmt.Errorf("could not create log: %w", err)

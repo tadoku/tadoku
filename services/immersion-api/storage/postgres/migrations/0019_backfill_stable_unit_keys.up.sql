@@ -8,12 +8,12 @@ set unit_key = case
   when log_activity_id = 1 and name = 'Sentence' then 'reading_sentence'
   when log_activity_id = 1 and name = 'Character' then 'reading_character'
   when log_activity_id = 2 and name = 'Minute' then 'listening_minute'
-  when log_activity_id = 2 and name = 'Minute (high density)' then 'listening_dense_minutes'
+  when log_activity_id = 2 and name in ('Minute (high density)', 'Dense minute') then 'listening_dense_minutes'
   when log_activity_id = 3 and name = 'Page' then 'writing_page'
   when log_activity_id = 3 and name = 'Sentence' then 'writing_sentence'
   when log_activity_id = 3 and name = 'Character' then 'writing_character'
   when log_activity_id = 4 and name = 'Minute' then 'speaking_minute'
-  when log_activity_id = 4 and name = 'Minute (high density)' then 'speaking_dense_minutes'
+  when log_activity_id = 4 and name in ('Minute (high density)', 'Dense minute') then 'speaking_dense_minutes'
   when log_activity_id = 5 and name = 'Minute' then 'study_minute'
 end
 where unit_key is null;

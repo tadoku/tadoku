@@ -46,6 +46,22 @@ Migration PRs must remain compatible with the application version currently depl
 
 **SQL style: always use lowercase keywords** (select, create table, not SELECT, CREATE TABLE)
 
+### sqlc code generation
+
+**Always run sqlc code generation after changing a SQL query.** The checked-in generated Go files must exactly match the query sources.
+
+**Never manually edit sqlc-generated files, and never delete, revert, or selectively omit changes produced by sqlc code generation.** Commit the complete generated diff, even when code generation reveals previously stale output. If generated changes are unexpected, investigate the query inputs and pinned sqlc version, then rerun code generation; do not discard the generated changes.
+
+Run the generator for every affected service from the repository root:
+
+```sh
+(cd services/immersion-api/storage/postgres && go generate)
+(cd services/content-api/storage/postgres && go generate)
+(cd services/profile-api/storage/postgres && go generate)
+```
+
+Each `go generate` command installs the sqlc version pinned in that service's `generate.go` and then runs `sqlc generate`.
+
 **Accept narrow interfaces** — define interfaces where they are used, with only the methods that consumer needs. Don't create wide/shared interfaces that bundle many methods together. Concrete implementations can be large, but each consumer should accept the smallest dependency possible. This follows Go's interface segregation principle and makes testing easier.
 
 **Use "Repository" for persistent source-of-truth data, "Store" for everything else** — `Repository` interfaces access the primary database (Postgres) where authoritative data lives. `Store` interfaces access auxiliary storage (e.g. Valkey/Redis) for caches, derived data, pub/sub, coordination state, or any non-authoritative data. Implementations live under `storage/postgres/` and `storage/valkey/` respectively.
@@ -74,9 +90,8 @@ gofmt -w services/
 # CI fails if these are stale (it runs `bazel run //:gazelle -- -mode=diff`)
 bazel run //:gazelle
 
-# 6. Regenerate sqlc code (after modifying SQL queries)
-cd services/immersion-api/storage/postgres && go generate
-cd services/content-api/storage/postgres && go generate
+# 6. Regenerate sqlc code after modifying SQL queries
+# Run the commands in the "sqlc code generation" section above for every affected service.
 
 # 7. Regenerate OpenAPI code (after modifying OpenAPI specs)
 cd services/immersion-api/http/rest/openapi && go generate

@@ -1,0 +1,28 @@
+name: verify-sqlc
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: Verify generated sqlc code
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Regenerate sqlc code
+        run: ./scripts/generate-sqlc.sh
+
+      - name: Verify generated code is current
+        run: |
+          if [[ -n "$(git status --porcelain)" ]]; then
+            echo "::error::sqlc generated code is out of date. Run ./scripts/generate-sqlc.sh and commit the complete output."
+            git status --short
+            git diff
+            exit 1
+          fi

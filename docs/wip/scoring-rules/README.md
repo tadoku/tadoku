@@ -113,6 +113,14 @@ The following behavior must remain true throughout the rollout:
 - Domain packages must not import storage packages.
 - Time-dependent services use an injected `commondomain.Clock`.
 
+## Stable-unit-key rollout
+
+The stable-unit-key change is intentionally deployed in four steps: add nullable
+columns, backfill existing rows, deploy writers that populate the keys, then
+enforce the non-null and log-tracking constraints. The enforcement migration
+must only run after every live API writer has the preceding application change;
+otherwise a rolling deployment could reject writes from an old pod.
+
 ## Initial parity rule set
 
 The first published platform rule set must reproduce the public scoring manual

@@ -60,7 +60,7 @@ insert into contest_logs (
   $7,
   $8,
   $9,
-  $10
+  $10,
   $11
 )
 `
@@ -545,7 +545,7 @@ with eligible_logs as (
     languages.name as language_name,
     logs.log_activity_id as activity_id,
     logs.unit_id,
-    coalesce(logs.unit_key, '') as unit_key,
+    coalesce(contest_logs.unit_key, '') as unit_key,
     coalesce(log_units.name, '') as unit_name,
     logs.description,
     contest_logs.amount,

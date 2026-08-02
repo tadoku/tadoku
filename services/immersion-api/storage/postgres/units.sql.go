@@ -15,6 +15,7 @@ import (
 const findUnitForTracking = `-- name: FindUnitForTracking :one
 select
   id,
+  unit_key,
   log_activity_id,
   name,
   modifier,
@@ -32,11 +33,67 @@ type FindUnitForTrackingParams struct {
 	LanguageCode  sql.NullString
 }
 
-func (q *Queries) FindUnitForTracking(ctx context.Context, arg FindUnitForTrackingParams) (LogUnit, error) {
+type FindUnitForTrackingRow struct {
+	ID            uuid.UUID
+	UnitKey       string
+	LogActivityID int16
+	Name          string
+	Modifier      float32
+	LanguageCode  sql.NullString
+}
+
+func (q *Queries) FindUnitForTracking(ctx context.Context, arg FindUnitForTrackingParams) (FindUnitForTrackingRow, error) {
 	row := q.db.QueryRowContext(ctx, findUnitForTracking, arg.ID, arg.LogActivityID, arg.LanguageCode)
-	var i LogUnit
+	var i FindUnitForTrackingRow
 	err := row.Scan(
 		&i.ID,
+		&i.UnitKey,
+		&i.LogActivityID,
+		&i.Name,
+		&i.Modifier,
+		&i.LanguageCode,
+	)
+	return i, err
+}
+
+const findUnitForTrackingByKey = `-- name: FindUnitForTrackingByKey :one
+select
+  id,
+  unit_key,
+  log_activity_id,
+  name,
+  modifier,
+  language_code
+from log_units
+where
+  unit_key = $1
+  and log_activity_id = $2
+  and (language_code is null or language_code = $3)
+order by language_code is null asc
+limit 1
+`
+
+type FindUnitForTrackingByKeyParams struct {
+	UnitKey       string
+	LogActivityID int16
+	LanguageCode  sql.NullString
+}
+
+type FindUnitForTrackingByKeyRow struct {
+	ID            uuid.UUID
+	UnitKey       string
+	LogActivityID int16
+	Name          string
+	Modifier      float32
+	LanguageCode  sql.NullString
+}
+
+func (q *Queries) FindUnitForTrackingByKey(ctx context.Context, arg FindUnitForTrackingByKeyParams) (FindUnitForTrackingByKeyRow, error) {
+	row := q.db.QueryRowContext(ctx, findUnitForTrackingByKey, arg.UnitKey, arg.LogActivityID, arg.LanguageCode)
+	var i FindUnitForTrackingByKeyRow
+	err := row.Scan(
+		&i.ID,
+		&i.UnitKey,
 		&i.LogActivityID,
 		&i.Name,
 		&i.Modifier,
@@ -48,6 +105,7 @@ func (q *Queries) FindUnitForTracking(ctx context.Context, arg FindUnitForTracki
 const listUnits = `-- name: ListUnits :many
 select
   id,
+  unit_key,
   log_activity_id,
   name,
   modifier,
@@ -56,17 +114,27 @@ from log_units
 order by log_activity_id asc
 `
 
-func (q *Queries) ListUnits(ctx context.Context) ([]LogUnit, error) {
+type ListUnitsRow struct {
+	ID            uuid.UUID
+	UnitKey       string
+	LogActivityID int16
+	Name          string
+	Modifier      float32
+	LanguageCode  sql.NullString
+}
+
+func (q *Queries) ListUnits(ctx context.Context) ([]ListUnitsRow, error) {
 	rows, err := q.db.QueryContext(ctx, listUnits)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []LogUnit
+	var items []ListUnitsRow
 	for rows.Next() {
-		var i LogUnit
+		var i ListUnitsRow
 		if err := rows.Scan(
 			&i.ID,
+			&i.UnitKey,
 			&i.LogActivityID,
 			&i.Name,
 			&i.Modifier,

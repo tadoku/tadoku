@@ -30,7 +30,7 @@ func (r *Repository) ListLogsForUser(ctx context.Context, req *domain.LogListFor
 
 	res := make([]domain.Log, len(entries))
 	for i, it := range entries {
-		tracking := readLogTracking(it.UnitID, it.Amount, it.Modifier, it.DurationSeconds, it.Score)
+		tracking := readLogTracking(it.UnitID, it.UnitKey, it.Amount, it.Modifier, it.DurationSeconds, it.Score)
 		res[i] = domain.Log{
 			ID:              it.ID,
 			UserID:          it.UserID,
@@ -39,6 +39,7 @@ func (r *Repository) ListLogsForUser(ctx context.Context, req *domain.LogListFor
 			LanguageName:    it.LanguageName,
 			ActivityID:      int(it.ActivityID),
 			UnitID:          postgres.NewUUIDFromNullUUID(it.UnitID),
+			UnitKey:         it.UnitKey,
 			UnitName:        it.UnitName,
 			Tags:            postgres.StringArrayFromInterface(it.Tags),
 			Amount:          postgres.NewFloat32FromNullFloat64(it.Amount),

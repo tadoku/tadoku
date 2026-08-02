@@ -44,6 +44,7 @@ func (s *Server) LogGetConfigurations(ctx echo.Context) error {
 	for i, it := range opts.Units {
 		res.Units[i] = openapi.Unit{
 			Id:            it.ID,
+			UnitKey:       it.Key,
 			LogActivityId: it.LogActivityID,
 			Name:          it.Name,
 			Modifier:      it.Modifier,

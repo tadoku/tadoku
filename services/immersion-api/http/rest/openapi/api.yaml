@@ -442,6 +442,8 @@ paths:
                 unit_id:
                   type: string
                   format: uuid
+                unit_key:
+                  type: string
                 duration_seconds:
                   type: integer
                   format: int32
@@ -531,6 +533,8 @@ paths:
                 unit_id:
                   type: string
                   format: uuid
+                unit_key:
+                  type: string
                 duration_seconds:
                   type: integer
                   format: int32
@@ -1050,6 +1054,7 @@ components:
       type: object
       required:
         - id
+        - unit_key
         - log_activity_id
         - name
         - modifier
@@ -1057,6 +1062,9 @@ components:
         id:
           type: string
           format: uuid
+        unit_key:
+          type: string
+          example: reading_page
         log_activity_id:
           type: integer
         name:
@@ -1461,6 +1469,9 @@ components:
         unit_id:
           type: string
           format: uuid
+        unit_key:
+          type: string
+          example: reading_page
         unit_name:
           type: string
           example: "page"

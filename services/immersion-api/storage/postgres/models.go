@@ -83,6 +83,7 @@ type Log struct {
 	DeletedAt                   sql.NullTime
 	DurationSeconds             sql.NullInt32
 	ComputedScore               sql.NullFloat64
+	UnitKey                     sql.NullString
 }
 
 type LogTag struct {
@@ -98,6 +99,7 @@ type LogUnit struct {
 	Name          string
 	Modifier      float32
 	LanguageCode  sql.NullString
+	UnitKey       string
 }
 
 type ModerationAuditLog struct {

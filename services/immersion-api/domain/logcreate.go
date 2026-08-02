@@ -12,6 +12,7 @@ import (
 type LogCreateRepository interface {
 	FetchOngoingContestRegistrations(context.Context, *RegistrationListOngoingRequest) (*ContestRegistrations, error)
 	FindUnitForTracking(context.Context, *UnitFindForTrackingRequest) (*Unit, error)
+	FindUnitForTrackingByKey(context.Context, *UnitFindForTrackingByKeyRequest) (*Unit, error)
 	CreateLog(context.Context, *LogCreateRequest) (*uuid.UUID, error)
 	FindLogByID(context.Context, *LogFindRequest) (*Log, error)
 }
@@ -19,6 +20,7 @@ type LogCreateRepository interface {
 type LogCreateRequest struct {
 	RegistrationIDs []uuid.UUID
 	UnitID          *uuid.UUID
+	UnitKey         *string
 	ActivityID      int32  `validate:"required"`
 	LanguageCode    string `validate:"required"`
 	Amount          *float32
@@ -145,6 +147,7 @@ func (s *LogCreate) Execute(ctx context.Context, req *LogCreateRequest) (*Log, e
 		req.ActivityID,
 		req.LanguageCode,
 		req.UnitID,
+		req.UnitKey,
 		req.Amount,
 		req.DurationSeconds,
 	)

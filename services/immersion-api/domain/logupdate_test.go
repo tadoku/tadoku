@@ -42,6 +42,23 @@ func (m *mockLogUpdateRepository) FindUnitForTracking(_ context.Context, req *do
 	}
 	return &domain.Unit{
 		ID:            req.ID,
+		Key:           domain.UnitKeyReadingPage,
+		LogActivityID: int(req.ActivityID),
+		Modifier:      1,
+		LanguageCode:  &req.LanguageCode,
+	}, nil
+}
+
+func (m *mockLogUpdateRepository) FindUnitForTrackingByKey(_ context.Context, req *domain.UnitFindForTrackingByKeyRequest) (*domain.Unit, error) {
+	if m.findUnitErr != nil {
+		return nil, m.findUnitErr
+	}
+	if m.unit != nil {
+		return m.unit, nil
+	}
+	return &domain.Unit{
+		ID:            uuid.New(),
+		Key:           req.Key,
 		LogActivityID: int(req.ActivityID),
 		Modifier:      1,
 		LanguageCode:  &req.LanguageCode,

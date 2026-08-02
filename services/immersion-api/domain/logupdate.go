@@ -13,12 +13,14 @@ import (
 type LogUpdateRepository interface {
 	FindLogByID(context.Context, *LogFindRequest) (*Log, error)
 	FindUnitForTracking(context.Context, *UnitFindForTrackingRequest) (*Unit, error)
+	FindUnitForTrackingByKey(context.Context, *UnitFindForTrackingByKeyRequest) (*Unit, error)
 	UpdateLog(context.Context, *LogUpdateRequest) error
 }
 
 type LogUpdateRequest struct {
 	LogID           uuid.UUID
 	UnitID          *uuid.UUID
+	UnitKey         *string
 	Amount          *float32
 	DurationSeconds *int32
 	Tags            []string
@@ -91,6 +93,7 @@ func (s *LogUpdate) Execute(ctx context.Context, req *LogUpdateRequest) (*Log, e
 		int32(log.ActivityID),
 		log.LanguageCode,
 		req.UnitID,
+		req.UnitKey,
 		req.Amount,
 		req.DurationSeconds,
 	)

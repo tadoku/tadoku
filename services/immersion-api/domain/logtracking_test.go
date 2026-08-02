@@ -10,6 +10,22 @@ import (
 )
 
 func TestComputeInterimLogScore(t *testing.T) {
+	t.Run("scores amount tracking supplied with a stable unit key", func(t *testing.T) {
+		unitKey := domain.UnitKeyReadingPage
+		amount := float32(10)
+		modifier := float32(1)
+
+		score, err := domain.ComputeInterimLogScore(domain.LogTrackingInput{
+			ActivityID: 1,
+			UnitKey:    &unitKey,
+			Amount:     &amount,
+			Modifier:   &modifier,
+		})
+
+		require.NoError(t, err)
+		assert.InDelta(t, float32(10), score, 0.0001)
+	})
+
 	t.Run("scores amount and unit tracking from amount and modifier", func(t *testing.T) {
 		unitID := uuid.New()
 		amount := float32(10)

@@ -25,6 +25,30 @@ func (r *Repository) FindUnitForTracking(ctx context.Context, req *domain.UnitFi
 
 	return &domain.Unit{
 		ID:            unit.ID,
+		Key:           unit.UnitKey,
+		LogActivityID: int(unit.LogActivityID),
+		Name:          unit.Name,
+		Modifier:      unit.Modifier,
+		LanguageCode:  postgres.NewStringFromNullString(unit.LanguageCode),
+	}, nil
+}
+
+func (r *Repository) FindUnitForTrackingByKey(ctx context.Context, req *domain.UnitFindForTrackingByKeyRequest) (*domain.Unit, error) {
+	unit, err := r.q.FindUnitForTrackingByKey(ctx, postgres.FindUnitForTrackingByKeyParams{
+		UnitKey:       req.Key,
+		LogActivityID: int16(req.ActivityID),
+		LanguageCode:  postgres.NewNullString(&req.LanguageCode),
+	})
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, fmt.Errorf("invalid unit supplied: %w", domain.ErrInvalidLog)
+		}
+		return nil, fmt.Errorf("could not fetch unit for tracking: %w", err)
+	}
+
+	return &domain.Unit{
+		ID:            unit.ID,
+		Key:           unit.UnitKey,
 		LogActivityID: int(unit.LogActivityID),
 		Name:          unit.Name,
 		Modifier:      unit.Modifier,

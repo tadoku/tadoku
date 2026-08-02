@@ -64,7 +64,7 @@ func logToAPI(log *domain.Log) *openapi.Log {
 		}
 	}
 
-	return &openapi.Log{
+	result := &openapi.Log{
 		Id:       log.ID,
 		Activity: logActivityToAPI(log),
 		Language: openapi.Language{
@@ -85,6 +85,10 @@ func logToAPI(log *domain.Log) *openapi.Log {
 		Description:     log.Description,
 		Registrations:   &refs,
 	}
+	if log.UnitKey != "" {
+		result.UnitKey = &log.UnitKey
+	}
+	return result
 }
 
 func contestRegistrationToAPI(r *domain.ContestRegistration) *openapi.ContestRegistration {

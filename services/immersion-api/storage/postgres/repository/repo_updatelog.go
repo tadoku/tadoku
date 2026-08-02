@@ -30,6 +30,7 @@ func (r *Repository) UpdateLog(ctx context.Context, req *domain.LogUpdateRequest
 		Amount:          trackingAmount(tracking),
 		Modifier:        trackingModifier(tracking),
 		UnitID:          trackingUnitID(tracking),
+		UnitKey:         trackingUnitKey(tracking),
 		DurationSeconds: trackingDurationSeconds(tracking),
 		ComputedScore:   postgres.NewNullFloat64FromFloat32(tracking.ComputedScore),
 		Description:     postgres.NewNullString(req.Description),
@@ -42,6 +43,7 @@ func (r *Repository) UpdateLog(ctx context.Context, req *domain.LogUpdateRequest
 	// Update contest_logs for ongoing contests only
 	if err := qtx.UpdateOngoingContestLogs(ctx, postgres.UpdateOngoingContestLogsParams{
 		LogID:           req.LogID,
+		UnitKey:         trackingUnitKey(tracking),
 		Amount:          trackingAmount(tracking),
 		Modifier:        trackingModifier(tracking),
 		DurationSeconds: trackingDurationSeconds(tracking),

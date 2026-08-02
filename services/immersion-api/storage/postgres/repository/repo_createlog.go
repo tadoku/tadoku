@@ -24,6 +24,7 @@ func (r *Repository) CreateLog(ctx context.Context, req *domain.LogCreateRequest
 		LanguageCode:                req.LanguageCode,
 		LogActivityID:               int16(req.ActivityID),
 		UnitID:                      trackingUnitID(tracking),
+		UnitKey:                     trackingUnitKey(tracking),
 		Amount:                      trackingAmount(tracking),
 		Modifier:                    trackingModifier(tracking),
 		DurationSeconds:             trackingDurationSeconds(tracking),
@@ -43,6 +44,7 @@ func (r *Repository) CreateLog(ctx context.Context, req *domain.LogCreateRequest
 		if err = qtx.CreateContestLogRelation(ctx, postgres.CreateContestLogRelationParams{
 			RegistrationID:  registrationID,
 			LogID:           id,
+			UnitKey:         trackingUnitKey(tracking),
 			Amount:          trackingAmount(tracking),
 			Modifier:        trackingModifier(tracking),
 			DurationSeconds: trackingDurationSeconds(tracking),

@@ -222,6 +222,7 @@ type Log struct {
 	Score           float32                         `json:"score"`
 	Tags            []string                        `json:"tags"`
 	UnitId          openapi_types.UUID              `json:"unit_id"`
+	UnitKey         *string                         `json:"unit_key,omitempty"`
 	UnitName        string                          `json:"unit_name"`
 	UserDisplayName *string                         `json:"user_display_name,omitempty"`
 	UserId          openapi_types.UUID              `json:"user_id"`
@@ -285,6 +286,7 @@ type Unit struct {
 	LogActivityId int                `json:"log_activity_id"`
 	Modifier      float32            `json:"modifier"`
 	Name          string             `json:"name"`
+	UnitKey       string             `json:"unit_key"`
 }
 
 // Units defines model for Units.
@@ -377,6 +379,7 @@ type LogCreateJSONBody struct {
 	RegistrationIds *[]openapi_types.UUID `json:"registration_ids,omitempty"`
 	Tags            []string              `json:"tags"`
 	UnitId          *openapi_types.UUID   `json:"unit_id,omitempty"`
+	UnitKey         *string               `json:"unit_key,omitempty"`
 }
 
 // LogTagSuggestionsParams defines parameters for LogTagSuggestions.
@@ -391,6 +394,7 @@ type LogUpdateJSONBody struct {
 	DurationSeconds *int32              `json:"duration_seconds,omitempty"`
 	Tags            []string            `json:"tags"`
 	UnitId          *openapi_types.UUID `json:"unit_id,omitempty"`
+	UnitKey         *string             `json:"unit_key,omitempty"`
 }
 
 // LogContestRegistrationUpdateJSONBody defines parameters for LogContestRegistrationUpdate.

@@ -52,16 +52,13 @@ Migration PRs must remain compatible with the application version currently depl
 
 **Never manually edit sqlc-generated files, and never delete, revert, or selectively omit changes produced by sqlc code generation.** Commit the complete generated diff, even when code generation reveals previously stale output. If generated changes are unexpected, investigate the query inputs and pinned sqlc version, then rerun code generation; do not discard the generated changes.
 
-Run the generator for every affected service from the repository root:
+Run the repository generator from the repository root. It downloads and runs the sqlc versions pinned in each active package's `generate.go`, so it does not require `go` to be installed or available on `PATH`:
 
 ```sh
-(cd services/immersion-api/storage/postgres && go generate)
-(cd services/content-api/storage/postgres && go generate)
+./scripts/generate-sqlc.sh
 ```
 
-Each `go generate` command installs the sqlc version pinned in that service's `generate.go` and then runs `sqlc generate`.
-
-CI runs sqlc for both packages on every pull request using the versions pinned in their `generate.go` files, and fails if code generation changes the working tree. Before pushing, commit the complete generated output so this check stays clean.
+CI runs the same script on every pull request and fails if code generation changes the working tree. Before pushing, commit the complete generated output so this check stays clean.
 
 **Accept narrow interfaces** — define interfaces where they are used, with only the methods that consumer needs. Don't create wide/shared interfaces that bundle many methods together. Concrete implementations can be large, but each consumer should accept the smallest dependency possible. This follows Go's interface segregation principle and makes testing easier.
 
@@ -92,7 +89,7 @@ gofmt -w services/
 bazel run //:gazelle
 
 # 6. Regenerate sqlc code after modifying SQL queries
-# Run the commands in the "sqlc code generation" section above for every affected service.
+./scripts/generate-sqlc.sh
 
 # 7. Regenerate OpenAPI code (after modifying OpenAPI specs)
 cd services/immersion-api/http/rest/openapi && go generate

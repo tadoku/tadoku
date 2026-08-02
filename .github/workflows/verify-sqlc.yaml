@@ -16,29 +16,12 @@ jobs:
         uses: actions/checkout@v7
 
       - name: Regenerate sqlc code
-        run: |
-          generate_sqlc() {
-            package_dir="$1"
-            sqlc_version="$(sed -nE 's|^//go:generate go install github.com/kyleconroy/sqlc/cmd/sqlc@v([^[:space:]]+)$|\1|p' "${package_dir}/generate.go")"
-            if [[ -z "${sqlc_version}" ]]; then
-              echo "::error::Could not determine the pinned sqlc version for ${package_dir}."
-              return 1
-            fi
-
-            docker run --rm \
-              --user "$(id -u):$(id -g)" \
-              --volume "${PWD}:/src" \
-              --workdir "/src/${package_dir}" \
-              "sqlc/sqlc:${sqlc_version}" generate
-          }
-
-          generate_sqlc services/immersion-api/storage/postgres
-          generate_sqlc services/content-api/storage/postgres
+        run: ./scripts/generate-sqlc.sh
 
       - name: Verify generated code is current
         run: |
           if [[ -n "$(git status --porcelain)" ]]; then
-            echo "::error::sqlc generated code is out of date. Run go generate for every affected Postgres package and commit the complete output."
+            echo "::error::sqlc generated code is out of date. Run ./scripts/generate-sqlc.sh and commit the complete output."
             git status --short
             git diff
             exit 1

@@ -18,9 +18,10 @@ var (
 
 // Log errors
 var (
-	ErrInvalidLog            = errors.New("unable to validate log")
-	ErrInvalidScoringRuleSet = errors.New("invalid scoring rule set")
-	ErrInvalidTags           = errors.New("invalid tags")
+	ErrInvalidLog             = errors.New("unable to validate log")
+	ErrInvalidScoringRuleSet  = errors.New("invalid scoring rule set")
+	ErrScoringRuleSetNotFound = errors.New("scoring rule set not found")
+	ErrInvalidTags            = errors.New("invalid tags")
 )
 
 // Contest errors

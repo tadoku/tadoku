@@ -16,6 +16,7 @@ go_library(
         "models.go",
         "moderation.sql.go",
         "registrations.sql.go",
+        "scoring.sql.go",
         "units.sql.go",
         "user_roles.sql.go",
         "user_roles_list.sql.go",

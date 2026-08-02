@@ -343,13 +343,13 @@ endpoint. All form changes must use `react-hook-form` and components from the
   - [x] Continue accepting legacy `unit_id` UUID payloads.
   - [x] Keep the legacy form's behavior unchanged.
 
-- [ ] Add scoring-rule storage.
-  - [ ] Add versioned `scoring_rule_sets`.
-  - [ ] Add ordered `scoring_rules`.
-  - [ ] Support platform-owned and contest-owned rule sets.
-  - [ ] Add `override` and `replace` contest modes.
-  - [ ] Pin overriding contest sets to a specific platform rule-set version.
-  - [ ] Seed a platform rule set that reproduces current behavior.
+- [x] Add scoring-rule storage.
+  - [x] Add versioned `scoring_rule_sets`.
+  - [x] Add ordered `scoring_rules`.
+  - [x] Support platform-owned and contest-owned rule sets.
+  - [x] Add `override` and `replace` contest modes.
+  - [x] Pin overriding contest sets to a specific platform rule-set version.
+  - [x] Seed a platform rule set that reproduces current behavior.
 
 - [x] Implement the domain scoring engine.
   - [x] Accept activity, unit key, language, normalized tags, amount, and duration.

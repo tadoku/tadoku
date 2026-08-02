@@ -43,6 +43,7 @@ type Config struct {
 	ServiceName            string  `envconfig:"service_name" default:"immersion-api"`
 	SentryDSN              string  `envconfig:"sentry_dns"`
 	SentryTracesSampleRate float64 `validate:"required_with=SentryDSN" envconfig:"sentry_traces_sample_rate"`
+	ScoringEngineEnabled   bool    `envconfig:"scoring_engine_enabled" default:"false"`
 }
 
 func main() {
@@ -145,8 +146,8 @@ func main() {
 	contestModerationDetachLog := immersiondomain.NewContestModerationDetachLog(postgresRepository)
 	userUpsert := immersiondomain.NewUserUpsert(postgresRepository)
 	registrationUpsert := immersiondomain.NewRegistrationUpsert(postgresRepository, userUpsert)
-	logCreate := immersiondomain.NewLogCreate(postgresRepository, clock, userUpsert)
-	logUpdate := immersiondomain.NewLogUpdate(postgresRepository, clock)
+	logCreate := immersiondomain.NewLogCreateWithScoringEngine(postgresRepository, clock, userUpsert, cfg.ScoringEngineEnabled)
+	logUpdate := immersiondomain.NewLogUpdateWithScoringEngine(postgresRepository, clock, cfg.ScoringEngineEnabled)
 	contestCreate := immersiondomain.NewContestCreate(postgresRepository, clock, userUpsert)
 	languageList := immersiondomain.NewLanguageList(postgresRepository)
 	languageCreate := immersiondomain.NewLanguageCreate(postgresRepository)

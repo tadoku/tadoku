@@ -44,10 +44,11 @@ func (r *LogCreateRequest) Year() int16                       { return r.year }
 func (r *LogCreateRequest) Tracking() LogTracking             { return r.tracking }
 
 type LogCreate struct {
-	repo       LogCreateRepository
-	clock      commondomain.Clock
-	validate   *validator.Validate
-	userUpsert *UserUpsert
+	repo             LogCreateRepository
+	clock            commondomain.Clock
+	validate         *validator.Validate
+	userUpsert       *UserUpsert
+	useScoringEngine bool
 }
 
 func NewLogCreate(
@@ -55,11 +56,21 @@ func NewLogCreate(
 	clock commondomain.Clock,
 	userUpsert *UserUpsert,
 ) *LogCreate {
+	return NewLogCreateWithScoringEngine(repo, clock, userUpsert, false)
+}
+
+func NewLogCreateWithScoringEngine(
+	repo LogCreateRepository,
+	clock commondomain.Clock,
+	userUpsert *UserUpsert,
+	enabled bool,
+) *LogCreate {
 	return &LogCreate{
-		repo:       repo,
-		clock:      clock,
-		validate:   validator.New(),
-		userUpsert: userUpsert,
+		repo:             repo,
+		clock:            clock,
+		validate:         validator.New(),
+		userUpsert:       userUpsert,
+		useScoringEngine: enabled,
 	}
 }
 
@@ -155,14 +166,23 @@ func (s *LogCreate) Execute(ctx context.Context, req *LogCreateRequest) (*Log, e
 	if err != nil {
 		return nil, err
 	}
-	RecordPlatformScoringShadow(ctx, s.repo, ScoringInput{
+	scoringInput := ScoringInput{
 		ActivityID:      req.ActivityID,
 		UnitKey:         req.tracking.UnitKey,
 		LanguageCode:    req.LanguageCode,
 		Tags:            req.Tags,
 		Amount:          req.Amount,
 		DurationSeconds: req.DurationSeconds,
-	}, req.tracking.ComputedScore)
+	}
+	if s.useScoringEngine {
+		result, scoringErr := EvaluateActivePlatformScore(ctx, s.repo, scoringInput)
+		if scoringErr != nil {
+			return nil, fmt.Errorf("could not score log: %w", scoringErr)
+		}
+		ApplyScoringResult(&req.tracking, result)
+	} else {
+		RecordPlatformScoringShadow(ctx, s.repo, scoringInput, req.tracking.ComputedScore)
+	}
 
 	req.year = int16(s.clock.Now().Year())
 

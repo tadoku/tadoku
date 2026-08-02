@@ -123,6 +123,12 @@ func newLogCreateService(repo *mockLogCreateRepository, clock commondomain.Clock
 	return domain.NewLogCreate(repo, clock, userUpsert)
 }
 
+func newLogCreateServiceWithScoringEngine(repo *mockLogCreateRepository, clock commondomain.Clock) *domain.LogCreate {
+	userRepo := &mockUserUpsertRepositoryForLog{}
+	userUpsert := domain.NewUserUpsert(userRepo)
+	return domain.NewLogCreateWithScoringEngine(repo, clock, userUpsert, true)
+}
+
 func TestLogCreate_Execute(t *testing.T) {
 	userID := uuid.New()
 	logID := uuid.New()
@@ -512,6 +518,93 @@ func TestLogCreate_Execute(t *testing.T) {
 		assert.Equal(t, 1, repo.scoringRuleCalls)
 		assert.True(t, repo.createCalled)
 		assert.Equal(t, float32(100), repo.createCalledWith.Tracking().ComputedScore)
+	})
+
+	t.Run("writes the engine score and provenance when enabled", func(t *testing.T) {
+		ruleSetID := uuid.New()
+		ruleID := uuid.New()
+		repo := &mockLogCreateRepository{
+			scoringRuleSet: &domain.ScoringRuleSet{
+				ID: ruleSetID,
+				Rules: []domain.ScoringRule{{
+					ID:          ruleID,
+					Priority:    1,
+					ActivityID:  1,
+					UnitKey:     domain.UnitKeyReadingPage,
+					ScoreSource: domain.ScoreSourceAmount,
+					Rate:        2,
+				}},
+			},
+			createdLogID: &logID,
+			log:          createdLog,
+		}
+		clock := commondomain.NewMockClock(now)
+		svc := newLogCreateServiceWithScoringEngine(repo, clock)
+
+		_, err := svc.Execute(ctxWithUserSubject(userID.String()), &domain.LogCreateRequest{
+			UnitID:       &unitID,
+			ActivityID:   1,
+			LanguageCode: "jpn",
+			Amount:       &amount100,
+		})
+
+		require.NoError(t, err)
+		tracking := repo.createCalledWith.Tracking()
+		assert.Equal(t, float32(200), tracking.ComputedScore)
+		require.NotNil(t, tracking.ScoreProvenance)
+		assert.Equal(t, &ruleSetID, tracking.ScoreProvenance.RuleSetID)
+		assert.Equal(t, []uuid.UUID{ruleID}, tracking.ScoreProvenance.RuleIDs)
+		assert.Equal(t, []float32{2}, tracking.ScoreProvenance.Rates)
+		assert.Equal(t, domain.ScoreSourceAmount, tracking.ScoreProvenance.Source)
+	})
+
+	t.Run("writes zero for an unmatched input when enabled", func(t *testing.T) {
+		repo := &mockLogCreateRepository{
+			scoringRuleSet: &domain.ScoringRuleSet{
+				ID: uuid.New(),
+				Rules: []domain.ScoringRule{{
+					ID:          uuid.New(),
+					Priority:    1,
+					ActivityID:  3,
+					ScoreSource: domain.ScoreSourceAmount,
+					Rate:        1,
+				}},
+			},
+			createdLogID: &logID,
+			log:          createdLog,
+		}
+		clock := commondomain.NewMockClock(now)
+		svc := newLogCreateServiceWithScoringEngine(repo, clock)
+
+		_, err := svc.Execute(ctxWithUserSubject(userID.String()), &domain.LogCreateRequest{
+			UnitID:       &unitID,
+			ActivityID:   1,
+			LanguageCode: "jpn",
+			Amount:       &amount100,
+		})
+
+		require.NoError(t, err)
+		tracking := repo.createCalledWith.Tracking()
+		assert.Zero(t, tracking.ComputedScore)
+		require.NotNil(t, tracking.ScoreProvenance)
+		assert.Nil(t, tracking.ScoreProvenance.RuleSetID)
+		assert.Equal(t, domain.ScoreSourceAmount, tracking.ScoreProvenance.Source)
+	})
+
+	t.Run("rejects the write when authoritative scoring fails", func(t *testing.T) {
+		repo := &mockLogCreateRepository{scoringRuleErr: errors.New("scoring unavailable")}
+		clock := commondomain.NewMockClock(now)
+		svc := newLogCreateServiceWithScoringEngine(repo, clock)
+
+		_, err := svc.Execute(ctxWithUserSubject(userID.String()), &domain.LogCreateRequest{
+			UnitID:       &unitID,
+			ActivityID:   1,
+			LanguageCode: "jpn",
+			Amount:       &amount100,
+		})
+
+		assert.Error(t, err)
+		assert.False(t, repo.createCalled)
 	})
 
 	t.Run("successfully creates amount log with duration metadata", func(t *testing.T) {

@@ -54,6 +54,8 @@ spec:
             value: "redis://valkey-immersion.default:6379"
           - name: SERVICE_NAME
             value: "immersion-api"
+          - name: API_SCORING_ENGINE_ENABLED
+            value: "false"
         volumeMounts:
         - name: k8s-token
           mountPath: /var/run/secrets/tokens

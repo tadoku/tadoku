@@ -23,14 +23,7 @@ func EvaluatePlatformScoringShadow(
 	input ScoringInput,
 	interimScore float32,
 ) (ScoringShadowComparison, error) {
-	ruleSet, err := finder.FindActivePlatformScoringRuleSet(ctx)
-	if err != nil {
-		return ScoringShadowComparison{}, err
-	}
-	if ruleSet == nil {
-		return ScoringShadowComparison{}, fmt.Errorf("active platform scoring rule set is nil: %w", ErrScoringRuleSetNotFound)
-	}
-	ruleResult, err := EvaluateScoringRuleSet(input, *ruleSet)
+	ruleResult, err := EvaluateActivePlatformScore(ctx, finder, input)
 	if err != nil {
 		return ScoringShadowComparison{}, err
 	}
@@ -39,6 +32,21 @@ func EvaluatePlatformScoringShadow(
 		RuleResult:   ruleResult,
 		Mismatch:     !scoringScoresEqual(interimScore, ruleResult.Score),
 	}, nil
+}
+
+func EvaluateActivePlatformScore(
+	ctx context.Context,
+	finder activePlatformScoringRuleSetFinder,
+	input ScoringInput,
+) (ScoringResult, error) {
+	ruleSet, err := finder.FindActivePlatformScoringRuleSet(ctx)
+	if err != nil {
+		return ScoringResult{}, err
+	}
+	if ruleSet == nil {
+		return ScoringResult{}, fmt.Errorf("active platform scoring rule set is nil: %w", ErrScoringRuleSetNotFound)
+	}
+	return EvaluateScoringRuleSet(input, *ruleSet)
 }
 
 func RecordPlatformScoringShadow(

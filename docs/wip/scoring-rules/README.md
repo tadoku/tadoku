@@ -387,11 +387,11 @@ endpoint. All form changes must use `react-hook-form` and components from the
   - [x] Add the same fields independently to `contest_logs`.
   - [x] Allow rule fields to be null when the score is zero because no rule matched.
 
-- [ ] Switch platform log scoring to the engine behind the feature flag.
-  - [ ] Use the active platform rule set for create and update.
-  - [ ] Preserve legacy UUID-unit compatibility.
-  - [ ] Preserve existing amount-plus-duration behavior.
-  - [ ] Confirm historical logs and aggregates remain unchanged.
+- [x] Switch platform log scoring to the engine behind the feature flag.
+  - [x] Use the active platform rule set for create and update.
+  - [x] Preserve legacy UUID-unit compatibility.
+  - [x] Preserve existing amount-plus-duration behavior.
+  - [x] Confirm historical logs and aggregates remain unchanged.
 
 - [ ] Implement independent contest scoring.
   - [ ] Resolve each selected contest's rules separately.

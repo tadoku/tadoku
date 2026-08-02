@@ -41,6 +41,23 @@ type ScoreProvenance struct {
 	Source    ScoreSource
 }
 
+func ApplyScoringResult(tracking *LogTracking, result ScoringResult) {
+	tracking.ComputedScore = result.Score
+	tracking.ScoreProvenance = &ScoreProvenance{
+		Source: result.ScoreSource,
+	}
+	if !result.Matched {
+		return
+	}
+	tracking.ScoreProvenance.RuleSetID = result.AppliedRuleSetID
+	tracking.ScoreProvenance.RuleIDs = make([]uuid.UUID, len(result.AppliedRules))
+	tracking.ScoreProvenance.Rates = make([]float32, len(result.AppliedRules))
+	for i, appliedRule := range result.AppliedRules {
+		tracking.ScoreProvenance.RuleIDs[i] = appliedRule.RuleID
+		tracking.ScoreProvenance.Rates[i] = appliedRule.Rate
+	}
+}
+
 type LogTrackingInput struct {
 	ActivityID      int32
 	UnitID          *uuid.UUID

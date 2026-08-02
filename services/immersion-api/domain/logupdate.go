@@ -38,19 +38,29 @@ func (r *LogUpdateRequest) UserID() uuid.UUID     { return r.userID }
 func (r *LogUpdateRequest) Tracking() LogTracking { return r.tracking }
 
 type LogUpdate struct {
-	repo     LogUpdateRepository
-	clock    commondomain.Clock
-	validate *validator.Validate
+	repo             LogUpdateRepository
+	clock            commondomain.Clock
+	validate         *validator.Validate
+	useScoringEngine bool
 }
 
 func NewLogUpdate(
 	repo LogUpdateRepository,
 	clock commondomain.Clock,
 ) *LogUpdate {
+	return NewLogUpdateWithScoringEngine(repo, clock, false)
+}
+
+func NewLogUpdateWithScoringEngine(
+	repo LogUpdateRepository,
+	clock commondomain.Clock,
+	enabled bool,
+) *LogUpdate {
 	return &LogUpdate{
-		repo:     repo,
-		clock:    clock,
-		validate: validator.New(),
+		repo:             repo,
+		clock:            clock,
+		validate:         validator.New(),
+		useScoringEngine: enabled,
 	}
 }
 
@@ -101,14 +111,23 @@ func (s *LogUpdate) Execute(ctx context.Context, req *LogUpdateRequest) (*Log, e
 	if err != nil {
 		return nil, err
 	}
-	RecordPlatformScoringShadow(ctx, s.repo, ScoringInput{
+	scoringInput := ScoringInput{
 		ActivityID:      int32(log.ActivityID),
 		UnitKey:         req.tracking.UnitKey,
 		LanguageCode:    log.LanguageCode,
 		Tags:            req.Tags,
 		Amount:          req.Amount,
 		DurationSeconds: req.DurationSeconds,
-	}, req.tracking.ComputedScore)
+	}
+	if s.useScoringEngine {
+		result, scoringErr := EvaluateActivePlatformScore(ctx, s.repo, scoringInput)
+		if scoringErr != nil {
+			return nil, fmt.Errorf("could not score log: %w", scoringErr)
+		}
+		ApplyScoringResult(&req.tracking, result)
+	} else {
+		RecordPlatformScoringShadow(ctx, s.repo, scoringInput, req.tracking.ComputedScore)
+	}
 
 	req.now = s.clock.Now()
 	req.userID = log.UserID

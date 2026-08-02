@@ -34,6 +34,12 @@ cd frontend && pnpm build
 
 **Always use `bazel`, not `go`.**
 
+### Database migrations
+
+**Ship every schema or data migration as a standalone change.** A migration must land on `main` in its own commit and pull request, separate from application code, and must be deployed independently before any code that depends on it. Do not combine migrations and runtime behavior in the same commit, pull request, or deployment, including within a stacked PR series.
+
+Migration PRs must remain compatible with the application version currently deployed. Additive migrations come before dependent code; destructive or cleanup migrations come in a later standalone PR only after the old code is no longer deployed. After a migration is merged and deployed, base dependent work on the updated `main` branch.
+
 **Always write tests for new backend functionality** — new domain services, repository methods, and HTTP handlers should have corresponding test coverage.
 
 **Always use `testify` for test assertions** — use `assert` for checks and `require` for fatal preconditions (`github.com/stretchr/testify/assert` and `github.com/stretchr/testify/require`). Never use raw `if err != nil { t.Fatal(...) }` patterns.

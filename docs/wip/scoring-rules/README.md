@@ -372,12 +372,12 @@ endpoint. All form changes must use `react-hook-form` and components from the
   - [x] Cover stable behavior when published rules are superseded.
 
 - [ ] Run the engine in shadow mode.
-  - [ ] Evaluate both the interim scorer and the rule engine.
-  - [ ] Keep writing the interim result.
-  - [ ] Record mismatches and unmatched inputs.
+  - [x] Evaluate both the interim scorer and the rule engine.
+  - [x] Keep writing the interim result.
+  - [x] Record mismatches and unmatched inputs.
   - [ ] Verify all existing amount/unit combinations.
-  - [ ] Use `0.4` per minute for duration-only Listening.
-  - [ ] Do not introduce dense-tag scoring in this plan.
+  - [x] Use `0.4` per minute for duration-only Listening.
+  - [x] Do not introduce dense-tag scoring in this plan.
 
 - [ ] Add score provenance snapshots.
   - [ ] Keep `computed_score` as the authoritative score.

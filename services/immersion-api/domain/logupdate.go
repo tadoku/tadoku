@@ -14,6 +14,7 @@ type LogUpdateRepository interface {
 	FindLogByID(context.Context, *LogFindRequest) (*Log, error)
 	FindUnitForTracking(context.Context, *UnitFindForTrackingRequest) (*Unit, error)
 	FindUnitForTrackingByKey(context.Context, *UnitFindForTrackingByKeyRequest) (*Unit, error)
+	FindActivePlatformScoringRuleSet(context.Context) (*ScoringRuleSet, error)
 	UpdateLog(context.Context, *LogUpdateRequest) error
 }
 
@@ -100,6 +101,14 @@ func (s *LogUpdate) Execute(ctx context.Context, req *LogUpdateRequest) (*Log, e
 	if err != nil {
 		return nil, err
 	}
+	RecordPlatformScoringShadow(ctx, s.repo, ScoringInput{
+		ActivityID:      int32(log.ActivityID),
+		UnitKey:         req.tracking.UnitKey,
+		LanguageCode:    log.LanguageCode,
+		Tags:            req.Tags,
+		Amount:          req.Amount,
+		DurationSeconds: req.DurationSeconds,
+	}, req.tracking.ComputedScore)
 
 	req.now = s.clock.Now()
 	req.userID = log.UserID

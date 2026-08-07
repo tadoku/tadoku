@@ -1,0 +1,266 @@
+<!doctype html>
+<!-- Archived Tadoku Paper planning artifact. See ../README.md. -->
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Tadoku UI — Bookplate Refinement Study</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@700&family=Open+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --ink: #211a1d;
+      --ink-muted: #625b5f;
+      --paper: #fffefa;
+      --canvas: #f2efe8;
+      --canvas-deep: #e8e3d9;
+      --border-strong: #393235;
+      --border-default: #c7c0b5;
+      --border-subtle: #e2ddd4;
+      --accent: #5747b8;
+      --accent-hover: #46389d;
+      --accent-faint: rgba(87, 71, 184, .10);
+      --status-success: #3f7048;
+      --status-danger: #a33333;
+      --font-serif: "Merriweather", Georgia, serif;
+      --font-sans: "Open Sans", ui-sans-serif, system-ui, sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+    body { margin: 0; color: var(--ink); background: var(--canvas); font-family: var(--font-sans); line-height: 1.55; }
+    button, input, select { font: inherit; }
+    button { color: inherit; }
+    :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+    .page { width: min(1260px, calc(100% - 32px)); margin: 0 auto; padding: 54px 0 90px; }
+    .eyebrow { margin-bottom: 13px; color: var(--accent); font-size: 11px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; }
+    h1 { max-width: 920px; margin: 0; font: 700 clamp(40px, 5.5vw, 70px)/1.08 var(--font-serif); letter-spacing: -.04em; }
+    .lede { max-width: 760px; margin: 20px 0 0; color: var(--ink-muted); font-size: 17px; }
+    .decision { margin: 30px 0 0; padding: 18px 20px; border-left: 4px solid var(--accent); background: var(--paper); font-size: 13px; }
+    .decision strong { font-family: var(--font-serif); }
+
+    .section { margin-top: 64px; }
+    .section-heading { display: grid; grid-template-columns: 175px minmax(0,1fr); gap: 30px; margin-bottom: 20px; padding-bottom: 12px; border-bottom: 1px solid var(--border-strong); }
+    .section-number { color: var(--accent); font-size: 10px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; }
+    h2 { margin: 0; font: 700 27px/1.25 var(--font-serif); letter-spacing: -.02em; }
+    .section-heading p { max-width: 690px; margin: 7px 0 0; color: var(--ink-muted); font-size: 12px; }
+
+    .border-system { display: grid; grid-template-columns: repeat(4, 1fr); border: 1px solid var(--border-strong); background: var(--paper); }
+    .border-role { min-height: 225px; padding: 22px; border-right: 1px solid var(--border-default); }
+    .border-role:last-child { border-right: 0; }
+    .border-role small { color: var(--ink-muted); font-size: 9px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; }
+    .border-role h3 { margin: 8px 0 8px; font: 700 16px/1.3 var(--font-serif); }
+    .border-role p { margin: 0; color: var(--ink-muted); font-size: 11px; }
+    .sample { display: grid; place-items: center; height: 66px; margin-top: 22px; background: #faf8f2; font-size: 10px; }
+    .sample.structural { border: 1px solid var(--border-strong); }
+    .sample.component { border: 1px solid var(--border-default); }
+    .sample.interactive { border: 1px solid var(--border-strong); border-bottom-width: 2px; font-weight: 700; }
+    .sample.floating { border: 1px solid var(--border-strong); box-shadow: 3px 3px 0 rgba(33,26,29,.15); }
+    .border-rule { display: grid; grid-template-columns: 1fr 1fr; margin-top: 14px; border: 1px solid var(--border-default); background: var(--paper); }
+    .border-rule div { padding: 13px 16px; font-size: 11px; }
+    .border-rule div + div { border-left: 1px solid var(--border-default); }
+    .border-rule b { display: block; margin-bottom: 3px; }
+    .border-rule span { color: var(--ink-muted); }
+
+    .accent-toolbar { display: flex; flex-wrap: wrap; gap: 0; margin-bottom: 18px; }
+    .accent-option { min-height: 42px; padding: 8px 14px; border: 1px solid var(--border-strong); border-right: 0; background: var(--paper); cursor: pointer; font-size: 11px; font-weight: 700; }
+    .accent-option:last-child { border-right: 1px solid var(--border-strong); }
+    .accent-option[aria-pressed="true"] { color: white; background: var(--ink); }
+    .accent-option i { display: inline-block; width: 9px; height: 9px; margin-right: 7px; background: var(--swatch); vertical-align: -1px; }
+    .color-study { display: grid; grid-template-columns: 1fr 1.3fr; gap: 22px; }
+    .palette { display: grid; border: 1px solid var(--border-strong); background: var(--paper); }
+    .swatch { display: grid; grid-template-columns: 62px 1fr auto; align-items: center; gap: 14px; min-height: 74px; padding: 10px 16px; border-bottom: 1px solid var(--border-default); }
+    .swatch:last-child { border-bottom: 0; }
+    .swatch-color { width: 44px; height: 44px; border: 1px solid var(--border-default); background: var(--color); }
+    .swatch b { display: block; font-size: 12px; }
+    .swatch span, .swatch code { color: var(--ink-muted); font-size: 10px; }
+    .swatch code { font-family: ui-monospace, monospace; }
+
+    .accent-demo { border: 1px solid var(--border-strong); background: var(--paper); }
+    .accent-demo-header { padding: 16px 18px; border-bottom: 1px solid var(--border-default); }
+    .accent-demo-header h3 { margin: 0; font: 700 17px/1.3 var(--font-serif); }
+    .accent-demo-header p { margin: 4px 0 0; color: var(--ink-muted); font-size: 10px; }
+    .accent-demo-body { display: grid; gap: 18px; padding: 22px; }
+    .button-row { display: flex; flex-wrap: wrap; gap: 10px; }
+    .button { display: inline-flex; align-items: center; justify-content: center; min-height: 42px; padding: 8px 15px; border: 1px solid var(--border-strong); border-bottom-width: 2px; background: var(--paper); cursor: pointer; font-size: 12px; font-weight: 700; }
+    .button.primary { border-color: var(--accent-hover); color: white; background: var(--accent); }
+    .button.primary:hover { background: var(--accent-hover); }
+    .button.ghost { border-color: transparent; background: transparent; }
+    .field { display: grid; gap: 6px; }
+    .field label { font-size: 11px; font-weight: 700; }
+    .input { width: 100%; min-height: 43px; padding: 8px 10px; border: 1px solid var(--border-default); border-bottom: 2px solid var(--border-strong); outline: 0; background: white; }
+    .input:focus { border-color: var(--border-strong); box-shadow: 0 0 0 2px var(--accent-faint); outline: 2px solid var(--accent); outline-offset: 1px; }
+    .active-row { display: grid; grid-template-columns: 4px 1fr auto; align-items: center; border: 1px solid var(--border-default); background: #faf8f2; }
+    .active-row::before { content: ""; align-self: stretch; background: var(--accent); }
+    .active-row div { padding: 12px 13px; }
+    .active-row b { display: block; font-size: 12px; }
+    .active-row span { color: var(--ink-muted); font-size: 10px; }
+    .active-row strong { padding: 12px 14px; color: var(--accent-hover); font: 700 17px var(--font-serif); }
+    .status { display: grid; grid-template-columns: 4px 1fr; border: 1px solid var(--border-default); background: white; }
+    .status::before { content: ""; background: var(--status-success); }
+    .status div { padding: 10px 12px; font-size: 10px; }
+    .status b { color: var(--status-success); }
+
+    .logo-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+    .logo-card { display: grid; grid-template-rows: 1fr auto; min-height: 260px; border: 1px solid var(--border-default); background: var(--paper); }
+    .logo-stage { display: grid; place-items: center; padding: 32px; }
+    .logo-caption { padding: 14px 16px; border-top: 1px solid var(--border-default); }
+    .logo-caption b { display: block; font-size: 12px; }
+    .logo-caption span { color: var(--ink-muted); font-size: 10px; }
+    .logo { width: min(100%, 190px); height: auto; overflow: visible; }
+    .logo .word { fill: var(--ink); }
+    .logo .mark { fill: var(--accent); }
+    .catalog-lockup { display: grid; gap: 10px; width: min(100%, 230px); }
+    .catalog-lockup .logo { width: 170px; }
+    .catalog-meta { display: flex; justify-content: space-between; gap: 12px; padding-top: 8px; border-top: 1px solid var(--border-strong); color: var(--ink-muted); font-size: 8px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; }
+    .plate-lockup { width: min(100%, 250px); padding: 22px 20px 18px; border: 1px solid var(--border-strong); border-bottom-width: 2px; background: #faf8f2; }
+    .plate-lockup .logo { width: 170px; }
+    .plate-lockup p { margin: 12px 0 0; padding-top: 9px; border-top: 1px solid var(--border-default); color: var(--ink-muted); font-size: 8px; letter-spacing: .12em; text-transform: uppercase; }
+
+    .recommendation { display: grid; grid-template-columns: 190px 1fr; margin-top: 18px; border: 1px solid var(--border-strong); background: var(--paper); }
+    .recommendation strong { padding: 18px; border-right: 1px solid var(--border-default); font: 700 15px/1.4 var(--font-serif); }
+    .recommendation p { margin: 0; padding: 18px; color: var(--ink-muted); font-size: 12px; }
+
+    .mini-product { display: grid; grid-template-columns: 220px minmax(0,1fr); min-height: 560px; border: 1px solid var(--border-strong); background: var(--paper); box-shadow: 5px 5px 0 rgba(33,26,29,.13); }
+    .mini-sidebar { padding: 25px 18px; border-right: 1px solid var(--border-strong); background: #f7f4ed; }
+    .mini-sidebar .logo { width: 125px; margin: 2px 8px 30px; }
+    .mini-nav { padding: 9px 10px; border-left: 3px solid transparent; color: var(--ink-muted); font-size: 11px; }
+    .mini-nav.active { border-left-color: var(--accent); color: var(--ink); background: #e9e5dc; font-weight: 700; }
+    .mini-content { padding: 32px; background: #f7f4ef; }
+    .mini-content h3 { margin: 0; font: 700 27px/1.3 var(--font-serif); }
+    .mini-content > p { margin: 5px 0 22px; color: var(--ink-muted); font-size: 11px; }
+    .entry-panel { border: 1px solid var(--border-strong); border-bottom-width: 2px; background: white; }
+    .entry-head { display: flex; align-items: center; justify-content: space-between; padding: 13px 15px; border-bottom: 1px solid var(--border-default); }
+    .entry-head b { font: 700 13px var(--font-serif); }
+    .entry-head span { color: var(--ink-muted); font-size: 9px; }
+    .entry-body { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; padding: 18px; }
+    .entry-body .field:last-child { grid-column: 1 / -1; }
+    .entry-actions { display: flex; justify-content: flex-end; gap: 9px; padding: 14px 18px; border-top: 1px solid var(--border-default); }
+
+    footer { margin-top: 48px; padding-top: 16px; border-top: 1px solid var(--border-strong); color: var(--ink-muted); font-size: 10px; }
+
+    @media (max-width: 900px) {
+      .border-system { grid-template-columns: 1fr 1fr; }
+      .border-role:nth-child(2) { border-right: 0; }
+      .border-role:nth-child(-n+2) { border-bottom: 1px solid var(--border-default); }
+      .color-study { grid-template-columns: 1fr; }
+      .logo-grid { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 650px) {
+      .page { width: min(100% - 18px, 1260px); padding-top: 30px; }
+      .section-heading { grid-template-columns: 1fr; gap: 4px; }
+      .border-system { grid-template-columns: 1fr; }
+      .border-role { border-right: 0; border-bottom: 1px solid var(--border-default); }
+      .border-role:last-child { border-bottom: 0; }
+      .border-rule, .recommendation { grid-template-columns: 1fr; }
+      .border-rule div + div { border-left: 0; border-top: 1px solid var(--border-default); }
+      .recommendation strong { border-right: 0; border-bottom: 1px solid var(--border-default); }
+      .mini-product { grid-template-columns: 1fr; }
+      .mini-sidebar { display: none; }
+      .mini-content { padding: 22px 14px; }
+      .entry-body { grid-template-columns: 1fr; }
+      .entry-body .field:last-child { grid-column: auto; }
+    }
+  </style>
+</head>
+<body>
+  <svg width="0" height="0" aria-hidden="true" style="position:absolute">
+    <symbol id="tadoku-logo" viewBox="0 0 158 29">
+      <path class="word" d="M13.8789062,28 L8.12695312,28 L8.12695312,5.66015625 L0.760742188,5.66015625 L0.760742188,0.873046875 L21.2451172,0.873046875 L21.2451172,5.66015625 L13.8789062,5.66015625 L13.8789062,28 Z M38.6123047,0.76171875 L48.2236328,28 L42.0263672,28 L40.0595703,21.5429688 L32.0318594,21.5427187 L33.4551316,16.71875 L31.6171875,16.71875 L30.1716461,21.5430603 L30.1699219,21.5429688 L28.203125,28 L22.0058594,28 L31.5800781,0.76171875 L38.6123047,0.76171875 Z M38.6865234,16.71875 C36.868155,10.8678093 35.8445649,7.55892311 35.6157227,6.79199219 C35.3868804,6.02506127 35.2229823,5.41894754 35.1240234,4.97363281 C34.7158183,6.55697406 33.5468846,10.471974 31.6171875,16.71875 L38.6865234,16.71875 Z M74.1445312,14.1767578 C74.1445312,18.6422749 72.8735479,22.0624881 70.331543,24.4375 C67.7895381,26.8125119 64.1188391,28 59.3193359,28 L51.6376953,28 L51.6376953,0.873046875 L60.1542969,0.873046875 C64.5827044,0.873046875 68.0214721,2.0419805 70.4707031,4.37988281 C72.9199341,6.71778513 74.1445312,9.98337747 74.1445312,14.1767578 Z M68.1699219,14.3251953 C68.1699219,8.49899431 65.5970309,5.5859375 60.4511719,5.5859375 L57.3896484,5.5859375 L57.3896484,23.25 L59.8574219,23.25 C65.3991162,23.25 68.1699219,20.2750949 68.1699219,14.3251953 Z M104.388672,14.3994141 C104.388672,18.8896709 103.275402,22.3408083 101.048828,24.7529297 C98.8222545,27.1650511 95.6308802,28.3710938 91.4746094,28.3710938 C87.3183386,28.3710938 84.1269643,27.1650511 81.9003906,24.7529297 C79.673817,22.3408083 78.5605469,18.8773012 78.5605469,14.3623047 C78.5605469,9.84730815 79.6769094,6.39926321 81.909668,4.01806641 C84.1424265,1.6368696 87.3430781,0.446289062 91.5117188,0.446289062 C95.6803594,0.446289062 98.8686413,1.64614686 101.07666,4.04589844 C103.284679,6.44565002 104.388672,9.89678738 104.388672,14.3994141 Z M84.5908203,14.3994141 C84.5908203,17.4300282 85.1660099,19.7122319 86.3164062,21.2460938 C87.4668026,22.7799556 89.1861865,23.546875 91.4746094,23.546875 C96.063825,23.546875 98.3583984,20.4977518 98.3583984,14.3994141 C98.3583984,8.28870643 96.0761947,5.23339844 91.5117188,5.23339844 C89.2232958,5.23339844 87.4977272,6.00341027 86.3349609,7.54345703 C85.1721947,9.08350379 84.5908203,11.3688 84.5908203,14.3994141 Z M115.762695,21.3230794 L115.762695,28 L110.010742,28 L110.010742,0.873046875 L115.762695,0.873046875 L115.762695,13.2861328 L118.026367,10.0947266 L125.374023,0.873046875 L131.756836,0.873046875 L115.762695,21.3230794 Z M157.325195,0.873046875 L157.325195,18.4257812 C157.325195,20.4296975 156.876795,22.1861904 155.97998,23.6953125 C155.083166,25.2044346 153.787443,26.3609986 152.092773,27.1650391 C150.398104,27.9690795 148.394217,28.3710938 146.081055,28.3710938 C142.592756,28.3710938 139.883799,27.4773852 137.954102,25.6899414 C136.024404,23.9024976 135.05957,21.4563957 135.05957,18.3515625 L135.05957,0.873046875 L140.792969,0.873046875 L140.792969,17.4794922 C140.792969,19.5699974 141.213537,21.1038363 142.054688,22.0810547 C142.895838,23.0582731 144.287425,23.546875 146.229492,23.546875 C148.10971,23.546875 149.473466,23.0551807 150.320801,22.0717773 C151.168136,21.088374 151.591797,19.5452579 151.591797,17.4423828 L157.325195,0.873046875 Z" />
+      <polygon class="mark" points="131.853697 28.0167614 125.29276 28.0167614 118.760559 17.4854584 125.195374 17.4854584" />
+    </symbol>
+  </svg>
+
+  <main class="page">
+    <header>
+      <div class="eyebrow">Bookplate refinement · second study</div>
+      <h1>One border language. One annotation color.</h1>
+      <p class="lede">This pass removes the competing outlines from the first preview. Every boundary now comes from one neutral ink family; thickness communicates role, and color is reserved for meaning.</p>
+      <div class="decision"><strong>Working recommendation:</strong> keep Bookplate, simplify it. Preserve the current wordmark, shift the accent toward a darker ink violet, and treat any “library plate” treatment as an optional lockup—not as a replacement logo.</div>
+    </header>
+
+    <section class="section">
+      <div class="section-heading"><div class="section-number">01 / Borders</div><div><h2>A four-role border grammar</h2><p>These are the only border treatments available to components. Statuses no longer invent their own outlines, and violet is never a normal border color.</p></div></div>
+      <div class="border-system">
+        <article class="border-role"><small>Role 01</small><h3>Structural</h3><p>Major shells, navigation boundaries, and dialog edges.</p><div class="sample structural">1px · ink neutral</div></article>
+        <article class="border-role"><small>Role 02</small><h3>Component</h3><p>Fields, cards, rows, tags, and internal separation.</p><div class="sample component">1px · warm neutral</div></article>
+        <article class="border-role"><small>Role 03</small><h3>Interactive</h3><p>Buttons and fields gain tactile weight only underneath.</p><div class="sample interactive">1px + 2px lower rule</div></article>
+        <article class="border-role"><small>Role 04</small><h3>Floating</h3><p>Menus and dialogs use structural borders plus hard depth.</p><div class="sample floating">1px + 3px offset</div></article>
+      </div>
+      <div class="border-rule"><div><b>Color never defines the boundary.</b><span>Focus uses an outside outline. Status uses a narrow marker. The component outline stays neutral.</span></div><div><b>Avoid doubled borders.</b><span>Adjacent rows share one separator; nested panels do not each draw a competing box.</span></div></div>
+    </section>
+
+    <section class="section">
+      <div class="section-heading"><div class="section-number">02 / Accent</div><div><h2>Does purple still belong?</h2><p>Yes—but it works better as annotation ink than as a glowing digital color. Switch between the three studies below; the controls, active marker, focus treatment, and logo wedge update together.</p></div></div>
+      <div class="accent-toolbar" aria-label="Accent color studies">
+        <button class="accent-option" style="--swatch:#6969ff" data-accent="current" aria-pressed="false"><i></i>Current violet</button>
+        <button class="accent-option" style="--swatch:#5747b8" data-accent="ink" aria-pressed="true"><i></i>Ink violet · recommended</button>
+        <button class="accent-option" style="--swatch:#6b465c" data-accent="plum" aria-pressed="false"><i></i>Library plum</button>
+      </div>
+      <div class="color-study">
+        <div class="palette">
+          <div class="swatch"><div class="swatch-color" style="--color:var(--paper)"></div><div><b>Paper</b><span>Primary surface</span></div><code>#FFFEFA</code></div>
+          <div class="swatch"><div class="swatch-color" style="--color:var(--canvas)"></div><div><b>Canvas</b><span>Page and grouping</span></div><code>#F2EFE8</code></div>
+          <div class="swatch"><div class="swatch-color" style="--color:var(--ink)"></div><div><b>Ink</b><span>Text and structure</span></div><code>#211A1D</code></div>
+          <div class="swatch"><div class="swatch-color" style="--color:var(--border-default)"></div><div><b>Rule</b><span>Component boundary</span></div><code>#C7C0B5</code></div>
+          <div class="swatch"><div class="swatch-color" style="--color:var(--accent)"></div><div><b>Annotation</b><span>Action and active state</span></div><code id="accent-code">#5747B8</code></div>
+        </div>
+        <div class="accent-demo">
+          <div class="accent-demo-header"><h3>Accent in context</h3><p>The accent has four jobs: primary action, active marker, focus, and the logo wedge.</p></div>
+          <div class="accent-demo-body">
+            <div class="button-row"><button class="button primary">Save update</button><button class="button">Secondary</button><button class="button ghost">Cancel</button></div>
+            <div class="field"><label for="study-input">Book or media title</label><input class="input" id="study-input" value="Sōsō no Frieren, volume 8" /></div>
+            <div class="active-row"><div><b>Japanese reading</b><span>24 pages · today</span></div><strong>+24</strong></div>
+            <div class="status"><div><b>Recorded.</b> Your update has been added to the August log.</div></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="section-heading"><div class="section-number">03 / Logo</div><div><h2>Refine the setting, not the wordmark.</h2><p>The existing geometric wordmark already suits the sharp system. Its angled violet wedge is useful: it reads like a page marker. The lowest-risk improvement is to unify that wedge with the chosen annotation ink and establish intentional lockups.</p></div></div>
+      <div class="logo-grid">
+        <article class="logo-card"><div class="logo-stage"><svg class="logo" role="img" aria-label="Tadoku"><use href="#tadoku-logo" /></svg></div><div class="logo-caption"><b>Wordmark · recommended default</b><span>Keep the existing drawing; update only the accent token.</span></div></article>
+        <article class="logo-card"><div class="logo-stage"><div class="catalog-lockup"><svg class="logo" role="img" aria-label="Tadoku"><use href="#tadoku-logo" /></svg><div class="catalog-meta"><span>Immersion log</span><span>Est. 2014</span></div></div></div><div class="logo-caption"><b>Catalog lockup · recommended secondary</b><span>A typographic context lockup, not a replacement logo.</span></div></article>
+        <article class="logo-card"><div class="logo-stage"><div class="plate-lockup"><svg class="logo" role="img" aria-label="Tadoku"><use href="#tadoku-logo" /></svg><p>Read more · track less</p></div></div><div class="logo-caption"><b>Bookplate lockup · occasional use</b><span>Suitable for onboarding, empty states, print, or editorial pages—not the navbar.</span></div></article>
+      </div>
+      <div class="recommendation"><strong>Logo recommendation</strong><p>Do not redraw the wordmark during this migration. Recolor its wedge through the semantic accent token, preserve the unboxed wordmark in navigation, and introduce the catalog lockup as an optional branded composition. A separate favicon/compact-mark study can follow once the main system is stable.</p></div>
+    </section>
+
+    <section class="section">
+      <div class="section-heading"><div class="section-number">04 / Together</div><div><h2>A calmer Bookplate specimen</h2><p>One structural border, one component rule, one interactive lower edge, and one accent. No component chooses its own outline color.</p></div></div>
+      <div class="mini-product">
+        <aside class="mini-sidebar"><svg class="logo" role="img" aria-label="Tadoku"><use href="#tadoku-logo" /></svg><div class="mini-nav active">Reading log</div><div class="mini-nav">Books & media</div><div class="mini-nav">Yearly overview</div><div class="mini-nav">Export</div></aside>
+        <div class="mini-content"><h3>Log a reading update</h3><p>Record progress without interrupting the reading habit.</p><section class="entry-panel"><div class="entry-head"><b>New update</b><span>Draft</span></div><div class="entry-body"><div class="field"><label for="mini-language">Language</label><select class="input" id="mini-language"><option>Japanese</option></select></div><div class="field"><label for="mini-activity">Activity</label><select class="input" id="mini-activity"><option>Reading</option></select></div><div class="field"><label for="mini-notes">Notes</label><input class="input" id="mini-notes" value="Finished chapter seven" /></div></div><div class="entry-actions"><button class="button ghost">Cancel</button><button class="button primary">Save update</button></div></section></div>
+      </div>
+    </section>
+
+    <footer>Temporary P0.2 design study. The original audit and first Bookplate preview remain unchanged.</footer>
+  </main>
+
+  <script>
+    const accents = {
+      current: { accent: '#6969FF', hover: '#5656E5', faint: 'rgba(105,105,255,.10)' },
+      ink: { accent: '#5747B8', hover: '#46389D', faint: 'rgba(87,71,184,.10)' },
+      plum: { accent: '#6B465C', hover: '#553548', faint: 'rgba(107,70,92,.10)' },
+    }
+
+    function setAccent(name) {
+      const value = accents[name]
+      document.documentElement.style.setProperty('--accent', value.accent)
+      document.documentElement.style.setProperty('--accent-hover', value.hover)
+      document.documentElement.style.setProperty('--accent-faint', value.faint)
+      document.getElementById('accent-code').textContent = value.accent
+      document.querySelectorAll('[data-accent]').forEach(button => {
+        button.setAttribute('aria-pressed', String(button.dataset.accent === name))
+      })
+    }
+
+    document.querySelectorAll('[data-accent]').forEach(button => {
+      button.addEventListener('click', () => setAccent(button.dataset.accent))
+    })
+  </script>
+</body>
+</html>

@@ -1,0 +1,218 @@
+<!doctype html>
+<!-- Archived Tadoku Paper planning artifact. See ../README.md. -->
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Tadoku — Softer Cut Meter Study</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --canvas: #f2efe8;
+      --surface: #fffefa;
+      --surface-soft: #e9e5dc;
+      --text: #211a1d;
+      --muted: #686064;
+      --rule: #c7c0b5;
+      --rule-strong: #393235;
+      --accent: #5747b8;
+      --accent-soft: #e8e4fa;
+      --shadow: 3px 3px 0 rgba(33, 26, 29, .16);
+    }
+    [data-theme="dark"] {
+      color-scheme: dark;
+      --canvas: #171517;
+      --surface: #222022;
+      --surface-soft: #2d292c;
+      --text: #f2eee8;
+      --muted: #b8afb3;
+      --rule: #4e484b;
+      --rule-strong: #81777c;
+      --accent: #9a8bea;
+      --accent-soft: #332d52;
+      --shadow: 3px 3px 0 rgba(0, 0, 0, .48);
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--canvas); color: var(--text); font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; line-height: 1.5; }
+    button { font: inherit; color: inherit; }
+    h1, h2, h3, p { margin-top: 0; }
+    h1, h2 { font-family: Georgia, "Times New Roman", serif; }
+    h1 { max-width: 880px; margin-bottom: 16px; font-size: clamp(38px, 6vw, 68px); line-height: .98; letter-spacing: -.035em; }
+    h2 { margin-bottom: 9px; font-size: clamp(26px, 3vw, 37px); line-height: 1.08; }
+    h3 { margin-bottom: 7px; font-size: 16px; }
+    p { color: var(--muted); }
+    .page { width: min(1120px, calc(100% - 32px)); margin: 0 auto; padding: 44px 0 72px; }
+    .topbar { display: flex; align-items: start; justify-content: space-between; gap: 24px; margin-bottom: 52px; }
+    .eyebrow { margin: 0 0 10px; color: var(--accent); font-size: 12px; font-weight: 850; letter-spacing: .14em; text-transform: uppercase; }
+    .lede, .section-intro { max-width: 790px; }
+    .lede { font-size: 18px; }
+    .section { margin-top: 52px; }
+    .section-intro { margin-bottom: 22px; }
+    .btn { display: inline-flex; min-height: 42px; align-items: center; justify-content: center; padding: 9px 15px 8px; border: 1px solid var(--rule-strong); border-bottom-width: 2px; border-radius: 0; background: var(--surface); cursor: pointer; font-weight: 750; }
+    .btn:hover { background: var(--surface-soft); }
+    .btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+    .theme-toggle { flex: none; }
+
+    .explanation { display: grid; grid-template-columns: 190px 1fr; margin-bottom: 24px; border: 1px solid var(--rule-strong); background: var(--surface); box-shadow: var(--shadow); }
+    .explanation strong { padding: 18px; border-right: 1px solid var(--rule); font-family: Georgia, serif; }
+    .explanation p { margin: 0; padding: 18px; font-size: 14px; }
+    .variations { display: grid; grid-template-columns: repeat(2, 1fr); gap: 18px; }
+    .variation { display: grid; grid-template-columns: minmax(190px, .8fr) 1.2fr; min-height: 330px; border: 1px solid var(--rule); background: var(--surface); }
+    .stage { display: grid; place-items: center; border-right: 1px solid var(--rule); background: var(--surface); }
+    .copy { display: flex; flex-direction: column; padding: 22px; }
+    .copy p { margin-bottom: 16px; font-size: 14px; }
+    .tag { display: inline-block; align-self: flex-start; margin-bottom: 8px; padding: 3px 6px; background: var(--accent-soft); color: var(--accent); font-size: 10px; font-weight: 850; letter-spacing: .08em; text-transform: uppercase; }
+    .tests { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; margin-top: auto; border: 1px solid var(--rule); background: var(--rule); }
+    .test { display: grid; min-height: 68px; place-items: center; background: var(--surface); }
+    .test.reverse { background: var(--text); color: var(--surface); }
+    .lockup { display: flex; align-items: center; gap: 10px; padding-top: 14px; }
+    .wordmark { font-size: 14px; font-weight: 900; letter-spacing: .13em; }
+    .meta { margin-left: auto; color: var(--muted); font-size: 9px; letter-spacing: .08em; text-transform: uppercase; }
+    .mark { display: block; color: currentColor; }
+    .mark.hero { width: 120px; height: 120px; }
+    .mark.small { width: 28px; height: 28px; }
+    .mark.favicon { width: 16px; height: 16px; }
+    .mark.lock { width: 29px; height: 29px; }
+    .ink { fill: currentColor; }
+
+    .scale { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; border: 1px solid var(--rule); background: var(--rule); }
+    .scale-item { padding: 18px; background: var(--surface); text-align: center; }
+    .scale-item strong { display: block; margin-bottom: 4px; }
+    .scale-item span { color: var(--muted); font-size: 12px; }
+
+    @media (max-width: 950px) {
+      .variations { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 650px) {
+      .page { width: min(100% - 20px, 1120px); padding-top: 26px; }
+      .topbar { display: block; }
+      .theme-toggle { margin-top: 20px; }
+      .explanation, .variation, .scale { grid-template-columns: 1fr; }
+      .explanation strong, .stage { border-right: 0; border-bottom: 1px solid var(--rule); }
+      .stage { min-height: 205px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">Tadoku compact mark · Study 9</p>
+        <h1>What if the cut were actually soft?</h1>
+        <p class="lede">The previous round rounded the ends of one long line, but those ends lived outside the bars. This round places rounded geometry inside every bar, where it materially changes the silhouette.</p>
+      </div>
+      <button class="btn theme-toggle" id="theme-toggle" type="button" aria-pressed="false">Switch to dark</button>
+    </header>
+
+    <section class="section">
+      <div class="explanation"><strong>Construction correction</strong><p>Each visible piece of the cut is now its own capsule, arc, or circle. That preserves the upward rhythm while making the softness visible in monochrome and at small sizes.</p></div>
+      <div class="section-intro">
+        <p class="eyebrow">01 · Rounded cut family</p>
+        <h2>Four genuine softness levels</h2>
+        <p>The bars and proportions remain unchanged. Only the three interior interruptions vary.</p>
+      </div>
+
+      <div class="variations">
+        <article class="variation">
+          <div class="stage">
+            <svg class="mark hero" viewBox="0 0 64 64" role="img" aria-label="Restrained capsule Cut Meter">
+              <defs><mask id="restrained-hero"><rect width="64" height="64" fill="white"/><path d="M9 43L19 38.5M27 34L37 29.5M46 25.5L55 21.5" stroke="black" stroke-width="6" stroke-linecap="round"/></mask></defs>
+              <path class="ink" mask="url(#restrained-hero)" d="M7 38h13v18H7zM25 24h14v32H25zM44 8h13v48H44z"/>
+            </svg>
+          </div>
+          <div class="copy">
+            <span class="tag">Low softness</span><h3>1 · Restrained capsules</h3>
+            <p>Three slim pill-shaped cuts preserve the original angle. Rounded endpoints are visible, but the mark still feels disciplined and typographic.</p>
+            <div class="tests">
+              <div class="test"><svg class="mark small" viewBox="0 0 64 64"><defs><mask id="restrained-small"><rect width="64" height="64" fill="white"/><path d="M9 43L19 38.5M27 34L37 29.5M46 25.5L55 21.5" stroke="black" stroke-width="7" stroke-linecap="round"/></mask></defs><path class="ink" mask="url(#restrained-small)" d="M7 38h13v18H7zM25 24h14v32H25zM44 8h13v48H44z"/></svg></div>
+              <div class="test"><svg class="mark favicon" viewBox="0 0 64 64"><defs><mask id="restrained-fav"><rect width="64" height="64" fill="white"/><path d="M9 43L19 38.5M27 34L37 29.5M46 25.5L55 21.5" stroke="black" stroke-width="9" stroke-linecap="round"/></mask></defs><path class="ink" mask="url(#restrained-fav)" d="M6 37h15v20H6zM24 23h16v34H24zM43 7h15v50H43z"/></svg></div>
+              <div class="test reverse"><svg class="mark small" viewBox="0 0 64 64"><defs><mask id="restrained-rev"><rect width="64" height="64" fill="white"/><path d="M9 43L19 38.5M27 34L37 29.5M46 25.5L55 21.5" stroke="black" stroke-width="7" stroke-linecap="round"/></mask></defs><path class="ink" mask="url(#restrained-rev)" d="M7 38h13v18H7zM25 24h14v32H25zM44 8h13v48H44z"/></svg></div>
+            </div>
+            <div class="lockup"><svg class="mark lock" viewBox="0 0 64 64"><defs><mask id="restrained-lock"><rect width="64" height="64" fill="white"/><path d="M9 43L19 38.5M27 34L37 29.5M46 25.5L55 21.5" stroke="black" stroke-width="7" stroke-linecap="round"/></mask></defs><path class="ink" mask="url(#restrained-lock)" d="M7 38h13v18H7zM25 24h14v32H25zM44 8h13v48H44z"/></svg><span class="wordmark">TADOKU</span><span class="meta">Lockup</span></div>
+          </div>
+        </article>
+
+        <article class="variation">
+          <div class="stage">
+            <svg class="mark hero" viewBox="0 0 64 64" role="img" aria-label="Full capsule Cut Meter">
+              <defs><mask id="full-hero"><rect width="64" height="64" fill="white"/><path d="M10 43L18 39.5M28 34L36 30.5M47 25L54 22" stroke="black" stroke-width="9" stroke-linecap="round"/></mask></defs>
+              <path class="ink" mask="url(#full-hero)" d="M7 38h13v18H7zM25 24h14v32H25zM44 8h13v48H44z"/>
+            </svg>
+          </div>
+          <div class="copy">
+            <span class="tag">Medium softness</span><h3>2 · Full capsules</h3>
+            <p>Shorter, wider pills make the roundness unmistakable. The gaps feel friendly and tactile while retaining a clear rising direction.</p>
+            <div class="tests">
+              <div class="test"><svg class="mark small" viewBox="0 0 64 64"><defs><mask id="full-small"><rect width="64" height="64" fill="white"/><path d="M10 43L18 39.5M28 34L36 30.5M47 25L54 22" stroke="black" stroke-width="10" stroke-linecap="round"/></mask></defs><path class="ink" mask="url(#full-small)" d="M7 38h13v18H7zM25 24h14v32H25zM44 8h13v48H44z"/></svg></div>
+              <div class="test"><svg class="mark favicon" viewBox="0 0 64 64"><defs><mask id="full-fav"><rect width="64" height="64" fill="white"/><path d="M10 43L18 39.5M28 34L36 30.5M47 25L54 22" stroke="black" stroke-width="11" stroke-linecap="round"/></mask></defs><path class="ink" mask="url(#full-fav)" d="M6 37h15v20H6zM24 23h16v34H24zM43 7h15v50H43z"/></svg></div>
+              <div class="test reverse"><svg class="mark small" viewBox="0 0 64 64"><defs><mask id="full-rev"><rect width="64" height="64" fill="white"/><path d="M10 43L18 39.5M28 34L36 30.5M47 25L54 22" stroke="black" stroke-width="10" stroke-linecap="round"/></mask></defs><path class="ink" mask="url(#full-rev)" d="M7 38h13v18H7zM25 24h14v32H25zM44 8h13v48H44z"/></svg></div>
+            </div>
+            <div class="lockup"><svg class="mark lock" viewBox="0 0 64 64"><defs><mask id="full-lock"><rect width="64" height="64" fill="white"/><path d="M10 43L18 39.5M28 34L36 30.5M47 25L54 22" stroke="black" stroke-width="10" stroke-linecap="round"/></mask></defs><path class="ink" mask="url(#full-lock)" d="M7 38h13v18H7zM25 24h14v32H25zM44 8h13v48H44z"/></svg><span class="wordmark">TADOKU</span><span class="meta">Lockup</span></div>
+          </div>
+        </article>
+
+        <article class="variation">
+          <div class="stage">
+            <svg class="mark hero" viewBox="0 0 64 64" role="img" aria-label="Bowed capsule Cut Meter">
+              <defs><mask id="bowed-hero"><rect width="64" height="64" fill="white"/><path d="M9 42.5Q14 39 19 40M27 34Q32 29.5 37 30.5M46 25Q50.5 20.5 55 22" fill="none" stroke="black" stroke-width="8" stroke-linecap="round"/></mask></defs>
+              <path class="ink" mask="url(#bowed-hero)" d="M7 38h13v18H7zM25 24h14v32H25zM44 8h13v48H44z"/>
+            </svg>
+          </div>
+          <div class="copy">
+            <span class="tag">Flow</span><h3>3 · Bowed capsules</h3>
+            <p>Each pill bends gently upward. Together they imply one flowing path, with more listening and language cadence than a strict chart line.</p>
+            <div class="tests">
+              <div class="test"><svg class="mark small" viewBox="0 0 64 64"><defs><mask id="bowed-small"><rect width="64" height="64" fill="white"/><path d="M9 42.5Q14 39 19 40M27 34Q32 29.5 37 30.5M46 25Q50.5 20.5 55 22" fill="none" stroke="black" stroke-width="9" stroke-linecap="round"/></mask></defs><path class="ink" mask="url(#bowed-small)" d="M7 38h13v18H7zM25 24h14v32H25zM44 8h13v48H44z"/></svg></div>
+              <div class="test"><svg class="mark favicon" viewBox="0 0 64 64"><defs><mask id="bowed-fav"><rect width="64" height="64" fill="white"/><path d="M9 42.5Q14 39 19 40M27 34Q32 29.5 37 30.5M46 25Q50.5 20.5 55 22" fill="none" stroke="black" stroke-width="11" stroke-linecap="round"/></mask></defs><path class="ink" mask="url(#bowed-fav)" d="M6 37h15v20H6zM24 23h16v34H24zM43 7h15v50H43z"/></svg></div>
+              <div class="test reverse"><svg class="mark small" viewBox="0 0 64 64"><defs><mask id="bowed-rev"><rect width="64" height="64" fill="white"/><path d="M9 42.5Q14 39 19 40M27 34Q32 29.5 37 30.5M46 25Q50.5 20.5 55 22" fill="none" stroke="black" stroke-width="9" stroke-linecap="round"/></mask></defs><path class="ink" mask="url(#bowed-rev)" d="M7 38h13v18H7zM25 24h14v32H25zM44 8h13v48H44z"/></svg></div>
+            </div>
+            <div class="lockup"><svg class="mark lock" viewBox="0 0 64 64"><defs><mask id="bowed-lock"><rect width="64" height="64" fill="white"/><path d="M9 42.5Q14 39 19 40M27 34Q32 29.5 37 30.5M46 25Q50.5 20.5 55 22" fill="none" stroke="black" stroke-width="9" stroke-linecap="round"/></mask></defs><path class="ink" mask="url(#bowed-lock)" d="M7 38h13v18H7zM25 24h14v32H25zM44 8h13v48H44z"/></svg><span class="wordmark">TADOKU</span><span class="meta">Lockup</span></div>
+          </div>
+        </article>
+
+        <article class="variation">
+          <div class="stage">
+            <svg class="mark hero" viewBox="0 0 64 64" role="img" aria-label="Circular Cut Meter">
+              <defs><mask id="circle-hero"><rect width="64" height="64" fill="white"/><circle cx="14" cy="41" r="5" fill="black"/><circle cx="32" cy="32" r="5" fill="black"/><circle cx="50.5" cy="23" r="5" fill="black"/></mask></defs>
+              <path class="ink" mask="url(#circle-hero)" d="M7 38h13v18H7zM25 24h14v32H25zM44 8h13v48H44z"/>
+            </svg>
+          </div>
+          <div class="copy">
+            <span class="tag">Maximum softness</span><h3>4 · Circular passage</h3>
+            <p>The diagonal becomes three circular apertures. This is the strongest rounded treatment and the easiest to recognize small, but it shifts from “cut” toward “signal.”</p>
+            <div class="tests">
+              <div class="test"><svg class="mark small" viewBox="0 0 64 64"><defs><mask id="circle-small"><rect width="64" height="64" fill="white"/><circle cx="14" cy="41" r="5.5" fill="black"/><circle cx="32" cy="32" r="5.5" fill="black"/><circle cx="50.5" cy="23" r="5.5" fill="black"/></mask></defs><path class="ink" mask="url(#circle-small)" d="M7 38h13v18H7zM25 24h14v32H25zM44 8h13v48H44z"/></svg></div>
+              <div class="test"><svg class="mark favicon" viewBox="0 0 64 64"><defs><mask id="circle-fav"><rect width="64" height="64" fill="white"/><circle cx="13.5" cy="41" r="6.5" fill="black"/><circle cx="32" cy="32" r="6.5" fill="black"/><circle cx="50.5" cy="23" r="6.5" fill="black"/></mask></defs><path class="ink" mask="url(#circle-fav)" d="M6 37h15v20H6zM24 23h16v34H24zM43 7h15v50H43z"/></svg></div>
+              <div class="test reverse"><svg class="mark small" viewBox="0 0 64 64"><defs><mask id="circle-rev"><rect width="64" height="64" fill="white"/><circle cx="14" cy="41" r="5.5" fill="black"/><circle cx="32" cy="32" r="5.5" fill="black"/><circle cx="50.5" cy="23" r="5.5" fill="black"/></mask></defs><path class="ink" mask="url(#circle-rev)" d="M7 38h13v18H7zM25 24h14v32H25zM44 8h13v48H44z"/></svg></div>
+            </div>
+            <div class="lockup"><svg class="mark lock" viewBox="0 0 64 64"><defs><mask id="circle-lock"><rect width="64" height="64" fill="white"/><circle cx="14" cy="41" r="5.5" fill="black"/><circle cx="32" cy="32" r="5.5" fill="black"/><circle cx="50.5" cy="23" r="5.5" fill="black"/></mask></defs><path class="ink" mask="url(#circle-lock)" d="M7 38h13v18H7zM25 24h14v32H25zM44 8h13v48H44z"/></svg><span class="wordmark">TADOKU</span><span class="meta">Lockup</span></div>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="section-intro">
+        <p class="eyebrow">02 · Softness scale</p>
+        <h2>Where the character changes</h2>
+      </div>
+      <div class="scale">
+        <div class="scale-item"><strong>Restrained</strong><span>Still graphic and editorial</span></div>
+        <div class="scale-item"><strong>Full</strong><span>Friendly without becoming playful</span></div>
+        <div class="scale-item"><strong>Bowed</strong><span>More organic and media-oriented</span></div>
+        <div class="scale-item"><strong>Circular</strong><span>Softest, but changes the metaphor</span></div>
+      </div>
+    </section>
+  </main>
+  <script>
+    const root = document.documentElement;
+    const toggle = document.getElementById('theme-toggle');
+    toggle.addEventListener('click', () => {
+      const isDark = root.dataset.theme === 'dark';
+      root.dataset.theme = isDark ? '' : 'dark';
+      toggle.textContent = isDark ? 'Switch to dark' : 'Switch to light';
+      toggle.setAttribute('aria-pressed', String(!isDark));
+    });
+  </script>
+</body>
+</html>

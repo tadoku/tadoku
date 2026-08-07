@@ -1,0 +1,255 @@
+<!doctype html>
+<!-- Archived Tadoku Paper planning artifact. See ../README.md. -->
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Tadoku UI — Bookplate Light and Dark Study</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@700&family=Open+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      color-scheme: light;
+      --text: #211a1d;
+      --text-muted: #625b5f;
+      --paper: #fffefa;
+      --surface-raised: #ffffff;
+      --canvas: #f2efe8;
+      --canvas-deep: #e8e3d9;
+      --border-strong: #393235;
+      --border-default: #c7c0b5;
+      --border-subtle: #e2ddd4;
+      --accent: #5747b8;
+      --accent-hover: #46389d;
+      --accent-faint: rgba(87, 71, 184, .12);
+      --on-accent: #ffffff;
+      --success: #3f7048;
+      --danger: #a33333;
+      --hard-shadow: rgba(33, 26, 29, .15);
+      --font-serif: "Merriweather", Georgia, serif;
+      --font-sans: "Open Sans", ui-sans-serif, system-ui, sans-serif;
+    }
+
+    :root[data-theme="dark"] {
+      color-scheme: dark;
+      --text: #f2eee8;
+      --text-muted: #b8b0ac;
+      --paper: #222022;
+      --surface-raised: #2b282b;
+      --canvas: #171517;
+      --canvas-deep: #302b2e;
+      --border-strong: #81777c;
+      --border-default: #4e484b;
+      --border-subtle: #363235;
+      --accent: #9a8bea;
+      --accent-hover: #b1a5f0;
+      --accent-faint: rgba(154, 139, 234, .15);
+      --on-accent: #171517;
+      --success: #7fb488;
+      --danger: #e17d7d;
+      --hard-shadow: rgba(0, 0, 0, .42);
+    }
+
+    * { box-sizing: border-box; }
+    html { background: var(--canvas); }
+    body { margin: 0; color: var(--text); background: var(--canvas); font-family: var(--font-sans); line-height: 1.55; transition: color .18s ease, background .18s ease; }
+    button, input, select, textarea { font: inherit; }
+    button { color: inherit; }
+    :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+    .page { width: min(1260px, calc(100% - 32px)); margin: 0 auto; padding: 48px 0 90px; }
+    .top { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 40px; align-items: end; }
+    .eyebrow { margin-bottom: 12px; color: var(--accent); font-size: 10px; font-weight: 700; letter-spacing: .15em; text-transform: uppercase; }
+    h1 { max-width: 900px; margin: 0; font: 700 clamp(40px, 5.5vw, 70px)/1.08 var(--font-serif); letter-spacing: -.04em; }
+    .lede { max-width: 760px; margin: 19px 0 0; color: var(--text-muted); font-size: 16px; }
+    .theme-switch { display: flex; border: 1px solid var(--border-strong); background: var(--paper); }
+    .theme-switch button { min-height: 42px; padding: 8px 14px; border: 0; border-right: 1px solid var(--border-strong); background: transparent; cursor: pointer; font-size: 11px; font-weight: 700; }
+    .theme-switch button:last-child { border-right: 0; }
+    .theme-switch button[aria-pressed="true"] { color: var(--on-accent); background: var(--accent); }
+
+    .decision-strip { display: grid; grid-template-columns: repeat(4, 1fr); margin-top: 32px; border: 1px solid var(--border-strong); background: var(--paper); }
+    .decision { min-height: 116px; padding: 18px; border-right: 1px solid var(--border-default); }
+    .decision:last-child { border-right: 0; }
+    .decision b { display: block; margin-bottom: 6px; font: 700 13px/1.35 var(--font-serif); }
+    .decision span { display: block; color: var(--text-muted); font-size: 10px; }
+
+    .section { margin-top: 64px; }
+    .section-head { display: grid; grid-template-columns: 170px minmax(0,1fr); gap: 28px; margin-bottom: 18px; padding-bottom: 11px; border-bottom: 1px solid var(--border-strong); }
+    .section-index { color: var(--accent); font-size: 10px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; }
+    h2 { margin: 0; font: 700 27px/1.25 var(--font-serif); letter-spacing: -.02em; }
+    .section-head p { max-width: 720px; margin: 6px 0 0; color: var(--text-muted); font-size: 11px; }
+
+    .theme-map { display: grid; grid-template-columns: 1fr 1fr; border: 1px solid var(--border-strong); background: var(--paper); }
+    .theme-map article { padding: 24px; }
+    .theme-map article + article { border-left: 1px solid var(--border-default); }
+    .theme-map h3 { margin: 0 0 5px; font: 700 16px var(--font-serif); }
+    .theme-map p { margin: 0 0 18px; color: var(--text-muted); font-size: 10px; }
+    .token-row { display: grid; grid-template-columns: 34px 1fr auto; align-items: center; gap: 10px; min-height: 44px; border-bottom: 1px solid var(--border-subtle); }
+    .token-row:last-child { border-bottom: 0; }
+    .chip { width: 25px; height: 25px; border: 1px solid var(--border-default); }
+    .token-row b { font-size: 10px; }
+    .token-row code { color: var(--text-muted); font: 9px ui-monospace, monospace; }
+
+    .border-demo { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+    .demo-card { min-height: 155px; background: var(--paper); }
+    .demo-card h3 { margin: 0 0 5px; font: 700 14px var(--font-serif); }
+    .demo-card p { margin: 0; color: var(--text-muted); font-size: 10px; }
+    .accent-edge { padding: 20px; border-top: 1px solid var(--border-default); border-right: 1px solid var(--border-default); border-bottom: 1px solid var(--border-default); border-left: 4px solid var(--accent); }
+    .bad-edge { position: relative; padding: 20px 20px 20px 24px; border: 1px solid var(--border-default); opacity: .55; }
+    .bad-edge::before { content: ""; position: absolute; inset: 0 auto 0 3px; width: 4px; background: var(--accent); }
+    .verdict { margin-top: 16px; padding: 14px 16px; border-left: 4px solid var(--accent); background: var(--accent-faint); font-size: 11px; }
+
+    .app { min-height: 680px; border: 1px solid var(--border-strong); background: var(--paper); box-shadow: 4px 4px 0 var(--hard-shadow); }
+    .appbar { display: flex; align-items: center; justify-content: space-between; min-height: 68px; padding: 0 24px; border-bottom: 1px solid var(--border-strong); }
+    .logo { width: 148px; height: auto; color: var(--text); overflow: visible; }
+    .appbar-links { display: flex; gap: 22px; color: var(--text-muted); font-size: 11px; font-weight: 600; }
+    .appbar-links span.active { color: var(--text); box-shadow: inset 0 -3px 0 var(--accent); }
+    .appbody { display: grid; grid-template-columns: 210px minmax(0,1fr); min-height: 610px; }
+    .sidebar { padding: 26px 16px; border-right: 1px solid var(--border-strong); background: var(--canvas); }
+    .side-label { margin: 0 9px 10px; color: var(--text-muted); font-size: 9px; font-weight: 700; letter-spacing: .11em; text-transform: uppercase; }
+    .side-link { padding: 9px 10px; border-left: 3px solid transparent; color: var(--text-muted); font-size: 11px; }
+    .side-link.active { border-left-color: var(--accent); color: var(--text); background: var(--canvas-deep); font-weight: 700; }
+    .content { padding: 34px 38px 50px; background: color-mix(in srgb, var(--canvas) 70%, var(--paper)); }
+    .crumb { color: var(--text-muted); font-size: 9px; }
+    .title-row { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; margin: 9px 0 24px; }
+    .title-row h3 { margin: 0; font: 700 30px/1.25 var(--font-serif); }
+    .title-row p { margin: 5px 0 0; color: var(--text-muted); font-size: 10px; }
+
+    .button { display: inline-flex; align-items: center; justify-content: center; min-height: 42px; padding: 8px 14px; border: 1px solid var(--border-default); border-bottom-color: var(--border-strong); color: var(--text); background: var(--paper); cursor: pointer; font-size: 11px; font-weight: 700; }
+    .button:hover { background: var(--canvas-deep); }
+    .button:active { border-bottom-color: var(--border-default); background: var(--canvas-deep); }
+    .button.primary { border-color: var(--accent-hover); color: var(--on-accent); background: var(--accent); }
+    .button.primary:hover { background: var(--accent-hover); }
+    .button.ghost { border-color: transparent; background: transparent; }
+
+    .product-grid { display: grid; grid-template-columns: minmax(0,1.3fr) minmax(250px,.7fr); gap: 18px; }
+    .panel { border: 1px solid var(--border-default); background: var(--paper); }
+    .panel-head { display: flex; justify-content: space-between; align-items: center; min-height: 49px; padding: 11px 15px; border-bottom: 1px solid var(--border-default); }
+    .panel-head b { font: 700 13px var(--font-serif); }
+    .panel-head span { color: var(--text-muted); font-size: 9px; }
+    .panel-body { padding: 17px; }
+    .fields { display: grid; grid-template-columns: 1fr 1fr; gap: 13px; }
+    .field { display: grid; gap: 5px; }
+    .field.full { grid-column: 1 / -1; }
+    .field label { font-size: 10px; font-weight: 700; }
+    .input { width: 100%; min-height: 41px; padding: 7px 9px; border: 1px solid var(--border-default); border-bottom-color: var(--border-strong); outline: 0; color: var(--text); background: var(--surface-raised); }
+    .input:focus { border-color: var(--border-strong); outline: 2px solid var(--accent); outline-offset: 1px; }
+    textarea.input { min-height: 72px; resize: vertical; }
+    .actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 15px; padding-top: 13px; border-top: 1px solid var(--border-subtle); }
+
+    .right-stack { display: grid; gap: 14px; align-content: start; }
+    .accent-card { padding: 16px; border-top: 1px solid var(--border-default); border-right: 1px solid var(--border-default); border-bottom: 1px solid var(--border-default); border-left: 4px solid var(--accent); background: var(--paper); }
+    .accent-card b { display: block; font: 700 13px var(--font-serif); }
+    .accent-card span { color: var(--text-muted); font-size: 9px; }
+    .stat { display: grid; grid-template-columns: 1fr 1fr; border: 1px solid var(--border-default); background: var(--paper); }
+    .stat div { padding: 14px; }
+    .stat div + div { border-left: 1px solid var(--border-default); }
+    .stat b { display: block; font: 700 21px var(--font-serif); }
+    .stat span { color: var(--text-muted); font-size: 8px; letter-spacing: .08em; text-transform: uppercase; }
+    .menu-stage { position: relative; min-height: 160px; border: 1px dashed var(--border-default); background: var(--canvas); }
+    .menu { position: absolute; top: 30px; right: 26px; width: 170px; border: 1px solid var(--border-strong); background: var(--surface-raised); box-shadow: 3px 3px 0 var(--hard-shadow); }
+    .menu div { padding: 9px 11px; border-bottom: 1px solid var(--border-default); font-size: 10px; }
+    .menu div:last-child { border-bottom: 0; color: var(--danger); }
+
+    .logo-study { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+    .logo-stage { display: grid; place-items: center; min-height: 260px; padding: 36px; border: 1px solid var(--border-default); background: var(--paper); }
+    .logo-stage.dark-context { color: #f2eee8; background: #222022; --accent: #9a8bea; --border-strong: #81777c; --border-default: #4e484b; }
+    .logo-stage .logo { width: min(100%, 210px); }
+    .catalog-lockup { width: min(100%, 270px); }
+    .catalog-lockup .logo { width: 190px; }
+    .catalog-meta { display: flex; justify-content: space-between; gap: 20px; margin-top: 13px; padding-top: 9px; border-top: 1px solid currentColor; opacity: .72; font-size: 8px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; }
+    .logo-note { grid-column: 1 / -1; padding: 16px 18px; border-left: 4px solid var(--accent); background: var(--accent-faint); font-size: 11px; }
+
+    footer { margin-top: 50px; padding-top: 15px; border-top: 1px solid var(--border-strong); color: var(--text-muted); font-size: 9px; }
+
+    @media (max-width: 900px) {
+      .decision-strip { grid-template-columns: 1fr 1fr; }
+      .decision:nth-child(2) { border-right: 0; }
+      .decision:nth-child(-n+2) { border-bottom: 1px solid var(--border-default); }
+      .product-grid { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 680px) {
+      .page { width: min(100% - 18px, 1260px); padding-top: 28px; }
+      .top, .section-head { grid-template-columns: 1fr; gap: 8px; }
+      .theme-switch { width: fit-content; }
+      .decision-strip, .theme-map, .border-demo, .logo-study { grid-template-columns: 1fr; }
+      .decision { border-right: 0; border-bottom: 1px solid var(--border-default); }
+      .decision:last-child { border-bottom: 0; }
+      .theme-map article + article { border-left: 0; border-top: 1px solid var(--border-default); }
+      .appbody { grid-template-columns: 1fr; }
+      .sidebar, .appbar-links { display: none; }
+      .content { padding: 25px 14px 38px; }
+      .title-row { align-items: flex-start; flex-direction: column; }
+      .fields { grid-template-columns: 1fr; }
+      .field.full { grid-column: auto; }
+      .logo-note { grid-column: auto; }
+    }
+  </style>
+</head>
+<body>
+  <svg width="0" height="0" aria-hidden="true" style="position:absolute;overflow:hidden">
+    <symbol id="tadoku-wordmark" viewBox="0 0 158 29">
+      <path fill="currentColor" fill-rule="evenodd" clip-rule="evenodd" d="M13.8789062,28 L8.12695312,28 L8.12695312,5.66015625 L0.760742188,5.66015625 L0.760742188,0.873046875 L21.2451172,0.873046875 L21.2451172,5.66015625 L13.8789062,5.66015625 L13.8789062,28 Z M38.6123047,0.76171875 L48.2236328,28 L42.0263672,28 L40.0595703,21.5429688 L32.0318594,21.5427187 L33.4551316,16.71875 L31.6171875,16.71875 L30.1716461,21.5430603 L30.1699219,21.5429688 L28.203125,28 L22.0058594,28 L31.5800781,0.76171875 L38.6123047,0.76171875 Z M38.6865234,16.71875 C36.868155,10.8678093 35.8445649,7.55892311 35.6157227,6.79199219 C35.3868804,6.02506127 35.2229823,5.41894754 35.1240234,4.97363281 C34.7158183,6.55697406 33.5468846,10.471974 31.6171875,16.71875 L38.6865234,16.71875 Z M74.1445312,14.1767578 C74.1445312,18.6422749 72.8735479,22.0624881 70.331543,24.4375 C67.7895381,26.8125119 64.1188391,28 59.3193359,28 L51.6376953,28 L51.6376953,0.873046875 L60.1542969,0.873046875 C64.5827044,0.873046875 68.0214721,2.0419805 70.4707031,4.37988281 C72.9199341,6.71778513 74.1445312,9.98337747 74.1445312,14.1767578 Z M68.1699219,14.3251953 C68.1699219,8.49899431 65.5970309,5.5859375 60.4511719,5.5859375 L57.3896484,5.5859375 L57.3896484,23.25 L59.8574219,23.25 C65.3991162,23.25 68.1699219,20.2750949 68.1699219,14.3251953 Z M104.388672,14.3994141 C104.388672,18.8896709 103.275402,22.3408083 101.048828,24.7529297 C98.8222545,27.1650511 95.6308802,28.3710938 91.4746094,28.3710938 C87.3183386,28.3710938 84.1269643,27.1650511 81.9003906,24.7529297 C79.673817,22.3408083 78.5605469,18.8773012 78.5605469,14.3623047 C78.5605469,9.84730815 79.6769094,6.39926321 81.909668,4.01806641 C84.1424265,1.6368696 87.3430781,0.446289062 91.5117188,0.446289062 C95.6803594,0.446289062 98.8686413,1.64614686 101.07666,4.04589844 C103.284679,6.44565002 104.388672,9.89678738 104.388672,14.3994141 Z M84.5908203,14.3994141 C84.5908203,17.4300282 85.1660099,19.7122319 86.3164062,21.2460938 C87.4668026,22.7799556 89.1861865,23.546875 91.4746094,23.546875 C96.063825,23.546875 98.3583984,20.4977518 98.3583984,14.3994141 C98.3583984,8.28870643 96.0761947,5.23339844 91.5117188,5.23339844 C89.2232958,5.23339844 87.4977272,6.00341027 86.3349609,7.54345703 C85.1721947,9.08350379 84.5908203,11.3688 84.5908203,14.3994141 Z M115.762695,21.3230794 L115.762695,28 L110.010742,28 L110.010742,0.873046875 L115.762695,0.873046875 L115.762695,13.2861328 L118.026367,10.0947266 L125.374023,0.873046875 L131.756836,0.873046875 L115.762695,21.3230794 Z M157.325195,0.873046875 L157.325195,18.4257812 C157.325195,20.4296975 156.876795,22.1861904 155.97998,23.6953125 C155.083166,25.2044346 153.787443,26.3609986 152.092773,27.1650391 C150.398104,27.9690795 148.394217,28.3710938 146.081055,28.3710938 C142.592756,28.3710938 139.883799,27.4773852 137.954102,25.6899414 C136.024404,23.9024976 135.05957,21.4563957 135.05957,18.3515625 L135.05957,0.873046875 L140.792969,0.873046875 L140.792969,17.4794922 C140.792969,19.5699974 141.213537,21.1038363 142.054688,22.0810547 C142.895838,23.0582731 144.287425,23.546875 146.229492,23.546875 C148.10971,23.546875 149.473466,23.0551807 150.320801,22.0717773 C151.168136,21.088374 151.591797,19.5452579 151.591797,17.4423828 L157.325195,0.873046875 Z" />
+      <polygon fill="var(--accent)" points="131.853697 28.0167614 125.29276 28.0167614 118.760559 17.4854584 125.195374 17.4854584" />
+    </symbol>
+  </svg>
+
+  <main class="page">
+    <header class="top">
+      <div><div class="eyebrow">Bookplate refinement · third study</div><h1>Same library. After dark.</h1><p class="lede">Dark mode keeps the paper-and-ink hierarchy rather than simply inverting it. Surfaces become layered charcoal, rules stay neutral, and ink violet maps to a lighter tonal partner so the brand remains visible and accessible.</p></div>
+      <div class="theme-switch" aria-label="Preview theme"><button type="button" data-theme-choice="light" aria-pressed="true">Light</button><button type="button" data-theme-choice="dark" aria-pressed="false">Dark</button></div>
+    </header>
+
+    <div class="decision-strip">
+      <div class="decision"><b>Ink violet retained</b><span>#5747B8 in light mode maps to #9A8BEA in dark mode: same identity, appropriate luminance.</span></div>
+      <div class="decision"><b>Accent owns its edge</b><span>A colored left marker replaces the neutral hairline instead of sitting inside it.</span></div>
+      <div class="decision"><b>Softer interaction</b><span>Controls stay 1px on every side; only the bottom border color becomes darker.</span></div>
+      <div class="decision"><b>Logo rendering fixed</b><span>The original even-odd fill and independent accent wedge are restored.</span></div>
+    </div>
+
+    <section class="section">
+      <div class="section-head"><div class="section-index">01 / Dark mode</div><div><h2>Semantic tokens change tone, not structure.</h2><p>Dark mode uses charcoal surfaces rather than black, avoiding both glare and the “developer console” look. Structural relationships remain identical in both modes.</p></div></div>
+      <div class="theme-map">
+        <article><h3>Light Bookplate</h3><p>Warm paper, dark ink, quiet neutral rules.</p><div class="token-row"><i class="chip" style="background:#fffefa"></i><b>Surface</b><code>#FFFEFA</code></div><div class="token-row"><i class="chip" style="background:#f2efe8"></i><b>Canvas</b><code>#F2EFE8</code></div><div class="token-row"><i class="chip" style="background:#211a1d"></i><b>Text</b><code>#211A1D</code></div><div class="token-row"><i class="chip" style="background:#c7c0b5"></i><b>Rule</b><code>#C7C0B5</code></div><div class="token-row"><i class="chip" style="background:#5747b8"></i><b>Ink violet</b><code>#5747B8</code></div></article>
+        <article style="color:#f2eee8;background:#222022;--border-default:#4e484b;--border-subtle:#363235"><h3>Dark Bookplate</h3><p style="color:#b8b0ac">Charcoal paper, warm pale ink, lifted violet annotation.</p><div class="token-row"><i class="chip" style="background:#222022"></i><b>Surface</b><code>#222022</code></div><div class="token-row"><i class="chip" style="background:#171517"></i><b>Canvas</b><code>#171517</code></div><div class="token-row"><i class="chip" style="background:#f2eee8"></i><b>Text</b><code>#F2EEE8</code></div><div class="token-row"><i class="chip" style="background:#4e484b"></i><b>Rule</b><code>#4E484B</code></div><div class="token-row"><i class="chip" style="background:#9a8bea"></i><b>Ink violet</b><code>#9A8BEA</code></div></article>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="section-head"><div class="section-index">02 / Accent edge</div><div><h2>The accent replaces the left border.</h2><p>There is no neutral hairline underneath or outside the marker. The other three sides retain the standard component rule.</p></div></div>
+      <div class="border-demo"><article class="demo-card accent-edge"><h3>Recommended</h3><p>The violet edge is the boundary. Top, right, and bottom remain neutral.</p></article><article class="demo-card bad-edge"><h3>Previous preview</h3><p>A violet stripe sits inside a fully outlined component, creating a doubled left edge and awkward corners.</p></article></div>
+      <div class="verdict"><strong>Rule:</strong> a component may have a neutral four-sided border or an accented left edge with three neutral sides—never both left edges.</div>
+    </section>
+
+    <section class="section">
+      <div class="section-head"><div class="section-index">03 / Product</div><div><h2>Light and dark use the same component grammar.</h2><p>Toggle the theme at the top. Notice that the visual hierarchy survives without adding new border treatments or making every surface glow.</p></div></div>
+      <div class="app">
+        <div class="appbar"><svg class="logo" role="img" aria-label="Tadoku"><use href="#tadoku-wordmark" /></svg><div class="appbar-links"><span class="active">Immersion log</span><span>Contests</span><span>Leaderboard</span><span>Blog</span></div><button class="button">AV</button></div>
+        <div class="appbody"><aside class="sidebar"><div class="side-label">Your library</div><div class="side-link active">Reading log</div><div class="side-link">Books & media</div><div class="side-link">Yearly overview</div><div class="side-link">Tags</div></aside><div class="content"><div class="crumb">Immersion log / New update</div><div class="title-row"><div><h3>Log a reading update</h3><p>Record progress without interrupting the reading habit.</p></div><button class="button primary">Save update</button></div><div class="product-grid"><section class="panel"><div class="panel-head"><b>New update</b><span>Draft</span></div><div class="panel-body"><div class="fields"><div class="field"><label for="language-v3">Language</label><select class="input" id="language-v3"><option>Japanese</option></select></div><div class="field"><label for="activity-v3">Activity</label><select class="input" id="activity-v3"><option>Reading</option></select></div><div class="field"><label for="amount-v3">Amount</label><input class="input" id="amount-v3" value="24 pages" /></div><div class="field"><label for="duration-v3">Duration</label><input class="input" id="duration-v3" value="00:35" /></div><div class="field full"><label for="notes-v3">Notes</label><textarea class="input" id="notes-v3">Finished chapter seven. The library scene was excellent.</textarea></div></div><div class="actions"><button class="button ghost">Cancel</button><button class="button primary">Save update</button></div></div></section><aside class="right-stack"><div class="accent-card"><b>August reading</b><span>12 active days · 438 total score</span></div><div class="stat"><div><b>62%</b><span>Book progress</span></div><div><b>186</b><span>Pages read</span></div></div><div class="menu-stage"><div class="menu"><div>Edit entry</div><div>Duplicate</div><div>Delete entry</div></div></div></aside></div></div></div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="section-head"><div class="section-index">04 / Logo correction</div><div><h2>The wordmark is intact again.</h2><p>The U and internal counters now use the original even-odd fill rule. The wedge receives ink violet independently in both themes.</p></div></div>
+      <div class="logo-study"><div class="logo-stage"><svg class="logo" role="img" aria-label="Tadoku"><use href="#tadoku-wordmark" /></svg></div><div class="logo-stage dark-context"><div class="catalog-lockup"><svg class="logo" role="img" aria-label="Tadoku"><use href="#tadoku-wordmark" /></svg><div class="catalog-meta"><span>Immersion log</span><span>Est. 2014</span></div></div></div><div class="logo-note"><strong>Recommendation:</strong> keep the existing wordmark as the primary mark. The catalog lockup is the only proposed addition; it adds context through typography and a rule without redrawing or distorting the logo.</div></div>
+    </section>
+
+    <footer>Temporary P0.2 design study. The audit, first Bookplate preview, and v2 study remain available at their original URLs.</footer>
+  </main>
+
+  <script>
+    function setTheme(theme) {
+      document.documentElement.dataset.theme = theme
+      document.querySelectorAll('[data-theme-choice]').forEach(button => {
+        button.setAttribute('aria-pressed', String(button.dataset.themeChoice === theme))
+      })
+    }
+
+    document.querySelectorAll('[data-theme-choice]').forEach(button => {
+      button.addEventListener('click', () => setTheme(button.dataset.themeChoice))
+    })
+  </script>
+</body>
+</html>

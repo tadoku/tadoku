@@ -1,0 +1,261 @@
+<!doctype html>
+<!-- Archived Tadoku Paper planning artifact. See ../README.md. -->
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Tadoku — Cut Meter Variations and Decision Queue</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --canvas: #f2efe8;
+      --surface: #fffefa;
+      --surface-soft: #e9e5dc;
+      --text: #211a1d;
+      --muted: #686064;
+      --rule: #c7c0b5;
+      --rule-strong: #393235;
+      --accent: #5747b8;
+      --accent-soft: #e8e4fa;
+      --shadow: 3px 3px 0 rgba(33, 26, 29, .16);
+    }
+    [data-theme="dark"] {
+      color-scheme: dark;
+      --canvas: #171517;
+      --surface: #222022;
+      --surface-soft: #2d292c;
+      --text: #f2eee8;
+      --muted: #b8afb3;
+      --rule: #4e484b;
+      --rule-strong: #81777c;
+      --accent: #9a8bea;
+      --accent-soft: #332d52;
+      --shadow: 3px 3px 0 rgba(0, 0, 0, .48);
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--canvas); color: var(--text); font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; line-height: 1.5; }
+    button { font: inherit; color: inherit; }
+    h1, h2, h3, p { margin-top: 0; }
+    h1, h2 { font-family: Georgia, "Times New Roman", serif; }
+    h1 { max-width: 900px; margin-bottom: 16px; font-size: clamp(38px, 6vw, 68px); line-height: .98; letter-spacing: -.035em; }
+    h2 { margin-bottom: 9px; font-size: clamp(26px, 3vw, 37px); line-height: 1.08; }
+    h3 { margin-bottom: 7px; font-size: 16px; }
+    p { color: var(--muted); }
+    .page { width: min(1180px, calc(100% - 32px)); margin: 0 auto; padding: 44px 0 72px; }
+    .topbar { display: flex; align-items: start; justify-content: space-between; gap: 24px; margin-bottom: 52px; }
+    .eyebrow { margin: 0 0 10px; color: var(--accent); font-size: 12px; font-weight: 850; letter-spacing: .14em; text-transform: uppercase; }
+    .lede, .section-intro { max-width: 800px; }
+    .lede { font-size: 18px; }
+    .section { margin-top: 54px; }
+    .section-intro { margin-bottom: 22px; }
+    .btn { display: inline-flex; min-height: 42px; align-items: center; justify-content: center; padding: 9px 15px 8px; border: 1px solid var(--rule-strong); border-bottom-width: 2px; border-radius: 0; background: var(--surface); cursor: pointer; font-weight: 750; }
+    .btn:hover { background: var(--surface-soft); }
+    .btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+    .theme-toggle { flex: none; }
+
+    .confirmed { display: grid; grid-template-columns: 180px 1fr; margin-bottom: 22px; border: 1px solid var(--rule-strong); background: var(--surface); box-shadow: var(--shadow); }
+    .confirmed strong { padding: 17px; border-right: 1px solid var(--rule); font-family: Georgia, serif; }
+    .confirmed p { margin: 0; padding: 17px; font-size: 13px; }
+    .variations { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+    .variation { display: flex; min-height: 430px; flex-direction: column; border: 1px solid var(--rule); background: var(--surface); }
+    .variation.preferred { border-top: 4px solid var(--accent); }
+    .stage { display: grid; min-height: 205px; place-items: center; border-bottom: 1px solid var(--rule); background: var(--surface); }
+    .copy { display: flex; flex: 1; flex-direction: column; padding: 18px; }
+    .copy p { margin-bottom: 14px; font-size: 14px; }
+    .tag { display: inline-block; align-self: flex-start; margin-bottom: 8px; padding: 3px 6px; background: var(--accent-soft); color: var(--accent); font-size: 10px; font-weight: 850; letter-spacing: .08em; text-transform: uppercase; }
+    .tests { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1px; margin-top: auto; border: 1px solid var(--rule); background: var(--rule); }
+    .test { display: grid; min-height: 70px; place-items: center; background: var(--surface); }
+    .test.reverse { background: var(--text); color: var(--surface); }
+    .lockup { display: flex; align-items: center; gap: 10px; padding-top: 13px; }
+    .wordmark { font-size: 14px; font-weight: 900; letter-spacing: .13em; }
+    .mark { display: block; color: currentColor; }
+    .mark.hero { width: 108px; height: 108px; }
+    .mark.small { width: 28px; height: 28px; }
+    .mark.favicon { width: 16px; height: 16px; }
+    .mark.lock { width: 29px; height: 29px; }
+    .ink { fill: currentColor; }
+    .accent { fill: var(--accent); }
+    .test-label { margin-left: auto; color: var(--muted); font-size: 9px; letter-spacing: .08em; text-transform: uppercase; }
+
+    .queue { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; }
+    .question { position: relative; padding: 21px 22px 20px 28px; border-top: 1px solid var(--rule); border-right: 1px solid var(--rule); border-bottom: 1px solid var(--rule); background: var(--surface); }
+    .question::before { content: ""; position: absolute; top: -1px; bottom: -1px; left: 0; width: 6px; background: var(--accent); }
+    .question p { margin-bottom: 0; font-size: 14px; }
+    .question .status { margin-bottom: 8px; color: var(--accent); font-size: 10px; font-weight: 850; letter-spacing: .1em; text-transform: uppercase; }
+    .queue-note { margin-top: 16px; padding: 18px 20px; border: 1px solid var(--rule); background: var(--surface); font-size: 13px; }
+    .queue-note p { margin: 0; }
+
+    @media (max-width: 900px) { .variations { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 650px) {
+      .page { width: min(100% - 20px, 1180px); padding-top: 26px; }
+      .topbar { display: block; }
+      .theme-toggle { margin-top: 20px; }
+      .variations, .queue, .confirmed { grid-template-columns: 1fr; }
+      .confirmed strong { border-right: 0; border-bottom: 1px solid var(--rule); }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">Tadoku design discussion · P0.2 · Study 8</p>
+        <h1>One solid idea, six ways to cut it.</h1>
+        <p class="lede">The three rising bars stay fixed. Only the negative-space gesture changes, so we can refine character without losing the simplicity that made Cut Meter work.</p>
+      </div>
+      <button class="btn theme-toggle" id="theme-toggle" type="button" aria-pressed="false">Switch to dark</button>
+    </header>
+
+    <section class="section">
+      <div class="confirmed"><strong>System direction retained</strong><p>Sharp component geometry, ink violet as optional annotation, straight accent rails, subtle 2px field edges, light text on dark primary actions, and named 3px/5px hard-offset elevation.</p></div>
+      <div class="section-intro">
+        <p class="eyebrow">01 · Cut Meter family</p>
+        <h2>Shape first; color still optional</h2>
+        <p>Every large mark is a single-color silhouette. Each card also shows the 28px mark, a 16px favicon, and a reversed version. The bars retain identical proportions across all six candidates.</p>
+      </div>
+      <div class="variations">
+        <article class="variation">
+          <div class="stage">
+            <svg class="mark hero" viewBox="0 0 64 64" role="img" aria-label="Square diagonal Cut Meter">
+              <defs><mask id="square-hero"><rect width="64" height="64" fill="white"/><path d="M2 43L62 17" stroke="black" stroke-width="7"/></mask></defs>
+              <path class="ink" mask="url(#square-hero)" d="M7 38h13v18H7zM25 24h14v32H25zM44 8h13v48H44z"/>
+            </svg>
+          </div>
+          <div class="copy">
+            <span class="tag">Original</span><h3>1 · Square diagonal</h3>
+            <p>The current Cut Meter: a seven-pixel straight cut with square ends. Crisp, graphic, and most aligned with the sharp interface geometry.</p>
+            <div class="tests">
+              <div class="test"><svg class="mark small" viewBox="0 0 64 64"><defs><mask id="square-small"><rect width="64" height="64" fill="white"/><path d="M2 43L62 17" stroke="black" stroke-width="8"/></mask></defs><path class="ink" mask="url(#square-small)" d="M7 38h13v18H7zM25 24h14v32H25zM44 8h13v48H44z"/></svg></div>
+              <div class="test"><svg class="mark favicon" viewBox="0 0 64 64"><defs><mask id="square-fav"><rect width="64" height="64" fill="white"/><path d="M2 43L62 17" stroke="black" stroke-width="10"/></mask></defs><path class="ink" mask="url(#square-fav)" d="M6 37h15v20H6zM24 23h16v34H24zM43 7h15v50H43z"/></svg></div>
+              <div class="test reverse"><svg class="mark small" viewBox="0 0 64 64"><defs><mask id="square-rev"><rect width="64" height="64" fill="white"/><path d="M2 43L62 17" stroke="black" stroke-width="8"/></mask></defs><path class="ink" mask="url(#square-rev)" d="M7 38h13v18H7zM25 24h14v32H25zM44 8h13v48H44z"/></svg></div>
+            </div>
+            <div class="lockup"><svg class="mark lock" viewBox="0 0 64 64"><defs><mask id="square-lock"><rect width="64" height="64" fill="white"/><path d="M2 43L62 17" stroke="black" stroke-width="8"/></mask></defs><path class="ink" mask="url(#square-lock)" d="M7 38h13v18H7zM25 24h14v32H25zM44 8h13v48H44z"/></svg><span class="wordmark">TADOKU</span><span class="test-label">Lockup</span></div>
+          </div>
+        </article>
+
+        <article class="variation preferred">
+          <div class="stage">
+            <svg class="mark hero" viewBox="0 0 64 64" role="img" aria-label="Soft diagonal Cut Meter">
+              <defs><mask id="soft-hero"><rect width="64" height="64" fill="white"/><path d="M3 43L61 17" stroke="black" stroke-width="7" stroke-linecap="round"/></mask></defs>
+              <path class="ink" mask="url(#soft-hero)" d="M7 38h13v18H7zM25 24h14v32H25zM44 8h13v48H44z"/>
+            </svg>
+          </div>
+          <div class="copy">
+            <span class="tag">Suggested refinement</span><h3>2 · Soft diagonal</h3>
+            <p>The same straight trajectory with slightly rounded endpoints. The softness exists only inside the cut, giving the mark a friendlier gesture without rounding the bars.</p>
+            <div class="tests">
+              <div class="test"><svg class="mark small" viewBox="0 0 64 64"><defs><mask id="soft-small"><rect width="64" height="64" fill="white"/><path d="M3 43L61 17" stroke="black" stroke-width="8" stroke-linecap="round"/></mask></defs><path class="ink" mask="url(#soft-small)" d="M7 38h13v18H7zM25 24h14v32H25zM44 8h13v48H44z"/></svg></div>
+              <div class="test"><svg class="mark favicon" viewBox="0 0 64 64"><defs><mask id="soft-fav"><rect width="64" height="64" fill="white"/><path d="M3 43L61 17" stroke="black" stroke-width="10" stroke-linecap="round"/></mask></defs><path class="ink" mask="url(#soft-fav)" d="M6 37h15v20H6zM24 23h16v34H24zM43 7h15v50H43z"/></svg></div>
+              <div class="test reverse"><svg class="mark small" viewBox="0 0 64 64"><defs><mask id="soft-rev"><rect width="64" height="64" fill="white"/><path d="M3 43L61 17" stroke="black" stroke-width="8" stroke-linecap="round"/></mask></defs><path class="ink" mask="url(#soft-rev)" d="M7 38h13v18H7zM25 24h14v32H25zM44 8h13v48H44z"/></svg></div>
+            </div>
+            <div class="lockup"><svg class="mark lock" viewBox="0 0 64 64"><defs><mask id="soft-lock"><rect width="64" height="64" fill="white"/><path d="M3 43L61 17" stroke="black" stroke-width="8" stroke-linecap="round"/></mask></defs><path class="ink" mask="url(#soft-lock)" d="M7 38h13v18H7zM25 24h14v32H25zM44 8h13v48H44z"/></svg><span class="wordmark">TADOKU</span><span class="test-label">Lockup</span></div>
+          </div>
+        </article>
+
+        <article class="variation">
+          <div class="stage">
+            <svg class="mark hero" viewBox="0 0 64 64" role="img" aria-label="Tapered Cut Meter">
+              <defs><mask id="taper-hero"><rect width="64" height="64" fill="white"/><path d="M1 48L63 14L63 20L1 42Z" fill="black"/></mask></defs>
+              <path class="ink" mask="url(#taper-hero)" d="M7 38h13v18H7zM25 24h14v32H25zM44 8h13v48H44z"/>
+            </svg>
+          </div>
+          <div class="copy">
+            <span class="tag">Motion</span><h3>3 · Tapered passage</h3>
+            <p>A wedge-shaped cut narrows as it rises. It adds forward motion and a page-turn quality while remaining entirely negative space.</p>
+            <div class="tests">
+              <div class="test"><svg class="mark small" viewBox="0 0 64 64"><defs><mask id="taper-small"><rect width="64" height="64" fill="white"/><path d="M1 49L63 13L63 21L1 41Z" fill="black"/></mask></defs><path class="ink" mask="url(#taper-small)" d="M7 38h13v18H7zM25 24h14v32H25zM44 8h13v48H44z"/></svg></div>
+              <div class="test"><svg class="mark favicon" viewBox="0 0 64 64"><defs><mask id="taper-fav"><rect width="64" height="64" fill="white"/><path d="M0 50L64 12L64 22L0 40Z" fill="black"/></mask></defs><path class="ink" mask="url(#taper-fav)" d="M6 37h15v20H6zM24 23h16v34H24zM43 7h15v50H43z"/></svg></div>
+              <div class="test reverse"><svg class="mark small" viewBox="0 0 64 64"><defs><mask id="taper-rev"><rect width="64" height="64" fill="white"/><path d="M1 49L63 13L63 21L1 41Z" fill="black"/></mask></defs><path class="ink" mask="url(#taper-rev)" d="M7 38h13v18H7zM25 24h14v32H25zM44 8h13v48H44z"/></svg></div>
+            </div>
+            <div class="lockup"><svg class="mark lock" viewBox="0 0 64 64"><defs><mask id="taper-lock"><rect width="64" height="64" fill="white"/><path d="M1 49L63 13L63 21L1 41Z" fill="black"/></mask></defs><path class="ink" mask="url(#taper-lock)" d="M7 38h13v18H7zM25 24h14v32H25zM44 8h13v48H44z"/></svg><span class="wordmark">TADOKU</span><span class="test-label">Lockup</span></div>
+          </div>
+        </article>
+
+        <article class="variation">
+          <div class="stage">
+            <svg class="mark hero" viewBox="0 0 64 64" role="img" aria-label="Curved Cut Meter">
+              <defs><mask id="curve-hero"><rect width="64" height="64" fill="white"/><path d="M2 43C20 48 39 14 62 18" fill="none" stroke="black" stroke-width="7" stroke-linecap="round"/></mask></defs>
+              <path class="ink" mask="url(#curve-hero)" d="M7 38h13v18H7zM25 24h14v32H25zM44 8h13v48H44z"/>
+            </svg>
+          </div>
+          <div class="copy">
+            <span class="tag">Listening</span><h3>4 · Gentle wave</h3>
+            <p>A shallow curved cut introduces cadence and listening without adding a waveform icon. It is the softest and most organic member of the family.</p>
+            <div class="tests">
+              <div class="test"><svg class="mark small" viewBox="0 0 64 64"><defs><mask id="curve-small"><rect width="64" height="64" fill="white"/><path d="M2 43C20 48 39 14 62 18" fill="none" stroke="black" stroke-width="8" stroke-linecap="round"/></mask></defs><path class="ink" mask="url(#curve-small)" d="M7 38h13v18H7zM25 24h14v32H25zM44 8h13v48H44z"/></svg></div>
+              <div class="test"><svg class="mark favicon" viewBox="0 0 64 64"><defs><mask id="curve-fav"><rect width="64" height="64" fill="white"/><path d="M2 43C20 48 39 14 62 18" fill="none" stroke="black" stroke-width="10" stroke-linecap="round"/></mask></defs><path class="ink" mask="url(#curve-fav)" d="M6 37h15v20H6zM24 23h16v34H24zM43 7h15v50H43z"/></svg></div>
+              <div class="test reverse"><svg class="mark small" viewBox="0 0 64 64"><defs><mask id="curve-rev"><rect width="64" height="64" fill="white"/><path d="M2 43C20 48 39 14 62 18" fill="none" stroke="black" stroke-width="8" stroke-linecap="round"/></mask></defs><path class="ink" mask="url(#curve-rev)" d="M7 38h13v18H7zM25 24h14v32H25zM44 8h13v48H44z"/></svg></div>
+            </div>
+            <div class="lockup"><svg class="mark lock" viewBox="0 0 64 64"><defs><mask id="curve-lock"><rect width="64" height="64" fill="white"/><path d="M2 43C20 48 39 14 62 18" fill="none" stroke="black" stroke-width="8" stroke-linecap="round"/></mask></defs><path class="ink" mask="url(#curve-lock)" d="M7 38h13v18H7zM25 24h14v32H25zM44 8h13v48H44z"/></svg><span class="wordmark">TADOKU</span><span class="test-label">Lockup</span></div>
+          </div>
+        </article>
+
+        <article class="variation">
+          <div class="stage">
+            <svg class="mark hero" viewBox="0 0 64 64" role="img" aria-label="Stepped Cut Meter">
+              <defs><mask id="step-hero"><rect width="64" height="64" fill="white"/><path d="M1 43h18v-8h19v-8h25v8H45v8H26v8H1z" fill="black"/></mask></defs>
+              <path class="ink" mask="url(#step-hero)" d="M7 38h13v18H7zM25 24h14v32H25zM44 8h13v48H44z"/>
+            </svg>
+          </div>
+          <div class="copy">
+            <span class="tag">Tracking</span><h3>5 · Stepped cut</h3>
+            <p>A stair-step passage turns the diagonal into discrete milestones. It feels more like tracking and competition, but also more digital.</p>
+            <div class="tests">
+              <div class="test"><svg class="mark small" viewBox="0 0 64 64"><defs><mask id="step-small"><rect width="64" height="64" fill="white"/><path d="M1 43h18v-8h19v-8h25v9H45v8H26v8H1z" fill="black"/></mask></defs><path class="ink" mask="url(#step-small)" d="M7 38h13v18H7zM25 24h14v32H25zM44 8h13v48H44z"/></svg></div>
+              <div class="test"><svg class="mark favicon" viewBox="0 0 64 64"><defs><mask id="step-fav"><rect width="64" height="64" fill="white"/><path d="M0 44h20v-9h19v-9h25v11H46v9H27v9H0z" fill="black"/></mask></defs><path class="ink" mask="url(#step-fav)" d="M6 37h15v20H6zM24 23h16v34H24zM43 7h15v50H43z"/></svg></div>
+              <div class="test reverse"><svg class="mark small" viewBox="0 0 64 64"><defs><mask id="step-rev"><rect width="64" height="64" fill="white"/><path d="M1 43h18v-8h19v-8h25v9H45v8H26v8H1z" fill="black"/></mask></defs><path class="ink" mask="url(#step-rev)" d="M7 38h13v18H7zM25 24h14v32H25zM44 8h13v48H44z"/></svg></div>
+            </div>
+            <div class="lockup"><svg class="mark lock" viewBox="0 0 64 64"><defs><mask id="step-lock"><rect width="64" height="64" fill="white"/><path d="M1 43h18v-8h19v-8h25v9H45v8H26v8H1z" fill="black"/></mask></defs><path class="ink" mask="url(#step-lock)" d="M7 38h13v18H7zM25 24h14v32H25zM44 8h13v48H44z"/></svg><span class="wordmark">TADOKU</span><span class="test-label">Lockup</span></div>
+          </div>
+        </article>
+
+        <article class="variation">
+          <div class="stage">
+            <svg class="mark hero" viewBox="0 0 64 64" role="img" aria-label="Notched Cut Meter">
+              <defs><mask id="notch-hero"><rect width="64" height="64" fill="white"/><path d="M6 40h16v7H6zM23 29h18v7H23zM42 17h17v7H42z" fill="black"/></mask></defs>
+              <path class="ink" mask="url(#notch-hero)" d="M7 38h13v18H7zM25 24h14v32H25zM44 8h13v48H44z"/>
+            </svg>
+          </div>
+          <div class="copy">
+            <span class="tag">Rhythm</span><h3>6 · Separate notches</h3>
+            <p>The passage becomes three aligned interruptions rather than one continuous line. It is highly legible small, though less obviously a single gesture.</p>
+            <div class="tests">
+              <div class="test"><svg class="mark small" viewBox="0 0 64 64"><defs><mask id="notch-small"><rect width="64" height="64" fill="white"/><path d="M6 39h16v9H6zM23 28h18v9H23zM42 16h17v9H42z" fill="black"/></mask></defs><path class="ink" mask="url(#notch-small)" d="M7 38h13v18H7zM25 24h14v32H25zM44 8h13v48H44z"/></svg></div>
+              <div class="test"><svg class="mark favicon" viewBox="0 0 64 64"><defs><mask id="notch-fav"><rect width="64" height="64" fill="white"/><path d="M5 38h18v11H5zM22 27h20v11H22zM41 15h19v11H41z" fill="black"/></mask></defs><path class="ink" mask="url(#notch-fav)" d="M6 37h15v20H6zM24 23h16v34H24zM43 7h15v50H43z"/></svg></div>
+              <div class="test reverse"><svg class="mark small" viewBox="0 0 64 64"><defs><mask id="notch-rev"><rect width="64" height="64" fill="white"/><path d="M6 39h16v9H6zM23 28h18v9H23zM42 16h17v9H42z" fill="black"/></mask></defs><path class="ink" mask="url(#notch-rev)" d="M7 38h13v18H7zM25 24h14v32H25zM44 8h13v48H44z"/></svg></div>
+            </div>
+            <div class="lockup"><svg class="mark lock" viewBox="0 0 64 64"><defs><mask id="notch-lock"><rect width="64" height="64" fill="white"/><path d="M6 39h16v9H6zM23 28h18v9H23zM42 16h17v9H42z" fill="black"/></mask></defs><path class="ink" mask="url(#notch-lock)" d="M7 38h13v18H7zM25 24h14v32H25zM44 8h13v48H44z"/></svg><span class="wordmark">TADOKU</span><span class="test-label">Lockup</span></div>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="section-intro">
+        <p class="eyebrow">02 · Decision queue</p>
+        <h2>What we still need to decide</h2>
+        <p>The visual grammar is close enough that the remaining questions can now be made explicit. We should continue resolving them one at a time.</p>
+      </div>
+      <div class="queue">
+        <article class="question"><div class="status">P0.2 · Recommended next</div><h3>Density</h3><p>Do we adopt two named modes—44px comfortable controls for public/auth and 36px compact controls for admin—or keep one density everywhere?</p></article>
+        <article class="question"><div class="status">P0.2 · Still open</div><h3>Typography and icon grammar</h3><p>What are the canonical heading/body scales, and should icons inherit the sharp geometry or retain softer line endings for legibility?</p></article>
+        <article class="question"><div class="status">P0.5 · Needs discussion</div><h3>Button API</h3><p>Choose the typed variant names, model destructive tone, and confirm separate Button and LinkButton components.</p></article>
+        <article class="question"><div class="status">P2.4 · Needs discussion</div><h3>Package boundary</h3><p>Decide whether UI remains Next-specific, define supported entry points, and determine how long the compatibility stylesheet stays.</p></article>
+        <article class="question"><div class="status">Migration · Plan input</div><h3>Application rollout order</h3><p>After the style guide pilot, should auth, admin, or a representative webv2 route become the first real consumer of the refined theme?</p></article>
+        <article class="question"><div class="status">Testing · Plan input</div><h3>Regression baseline</h3><p>Which representative states must receive rendered component tests immediately, before the broader visual-regression issue is implemented?</p></article>
+      </div>
+      <div class="queue-note"><p><strong>Suggested sequence:</strong> finish the Cut Meter choice, decide density to close P0.2, then discuss the Button API and package boundary. Migration order and testing fixtures can be locked into the implementation plan afterward.</p></div>
+    </section>
+  </main>
+  <script>
+    const root = document.documentElement;
+    const toggle = document.getElementById('theme-toggle');
+    toggle.addEventListener('click', () => {
+      const isDark = root.dataset.theme === 'dark';
+      root.dataset.theme = isDark ? '' : 'dark';
+      toggle.textContent = isDark ? 'Switch to dark' : 'Switch to light';
+      toggle.setAttribute('aria-pressed', String(!isDark));
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,337 @@
+<!doctype html>
+<!-- Archived Tadoku Paper planning artifact. See ../README.md. -->
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Tadoku Bookplate — Border and Logo Study</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --canvas: #f2efe8;
+      --surface: #fffefa;
+      --surface-soft: #e9e5dc;
+      --text: #211a1d;
+      --muted: #686064;
+      --rule: #c7c0b5;
+      --rule-strong: #393235;
+      --accent: #5747b8;
+      --accent-soft: #e8e4fa;
+      --accent-bottom: #35277f;
+    }
+
+    [data-theme="dark"] {
+      color-scheme: dark;
+      --canvas: #171517;
+      --surface: #222022;
+      --surface-soft: #2d292c;
+      --text: #f2eee8;
+      --muted: #b8afb3;
+      --rule: #4e484b;
+      --rule-strong: #81777c;
+      --accent: #9a8bea;
+      --accent-soft: #332d52;
+      --accent-bottom: #b8acf8;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--canvas);
+      color: var(--text);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.5;
+    }
+
+    button, input, select { font: inherit; }
+    button { color: inherit; }
+    .page { width: min(1180px, calc(100% - 32px)); margin: 0 auto; padding: 44px 0 72px; }
+    .eyebrow { margin: 0 0 10px; color: var(--accent); font-size: 12px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; }
+    h1, h2, h3, p { margin-top: 0; }
+    h1 { max-width: 820px; margin-bottom: 16px; font-family: Georgia, "Times New Roman", serif; font-size: clamp(36px, 6vw, 68px); line-height: .98; letter-spacing: -.035em; }
+    h2 { margin-bottom: 9px; font-family: Georgia, "Times New Roman", serif; font-size: clamp(25px, 3vw, 36px); line-height: 1.1; }
+    h3 { margin-bottom: 6px; font-size: 16px; }
+    p { color: var(--muted); }
+    .lede { max-width: 740px; font-size: 18px; }
+    .topbar { display: flex; align-items: start; justify-content: space-between; gap: 24px; margin-bottom: 42px; }
+    .theme-toggle { flex: none; }
+
+    .btn, .field {
+      min-height: 42px;
+      border: 1px solid var(--rule);
+      border-bottom: 2px solid var(--rule-strong);
+      border-radius: 0;
+      background: var(--surface);
+    }
+    .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 9px 15px 8px; cursor: pointer; font-weight: 750; }
+    .btn:hover { background: var(--surface-soft); }
+    .btn:active { transform: translateY(1px); border-bottom-width: 1px; }
+    .btn.primary { border-color: var(--accent); border-bottom-color: var(--accent-bottom); background: var(--accent); color: #fff; }
+    [data-theme="dark"] .btn.primary { color: #17131f; }
+    .field { width: 100%; padding: 9px 11px 8px; color: var(--text); }
+    .field:focus, .btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+    .section { margin-top: 52px; }
+    .section-intro { max-width: 760px; margin-bottom: 20px; }
+    .rail-card {
+      position: relative;
+      border-top: 1px solid var(--rule);
+      border-right: 1px solid var(--rule);
+      border-bottom: 1px solid var(--rule);
+      border-left: 0;
+      background: var(--surface);
+    }
+    .rail-card::before {
+      content: "";
+      position: absolute;
+      z-index: 1;
+      top: -1px;
+      bottom: -1px;
+      left: 0;
+      width: 6px;
+      background: var(--accent);
+    }
+    .rail-content { padding: 26px 28px 26px 34px; }
+    .construction { display: grid; grid-template-columns: 1.05fr .95fr; }
+    .construction > * { min-width: 0; }
+    .construction-copy { padding-right: 32px; }
+    .construction-demo { border-left: 1px solid var(--rule); padding-left: 28px; }
+    .mini-bookplate { position: relative; min-height: 245px; padding: 26px 24px 24px 30px; border-top: 1px solid var(--rule); border-right: 1px solid var(--rule); border-bottom: 1px solid var(--rule); background: var(--canvas); }
+    .mini-bookplate::before { content: ""; position: absolute; top: -1px; bottom: -1px; left: 0; width: 6px; background: var(--accent); }
+    .mini-bookplate hr { margin: 20px 0; border: 0; border-top: 1px solid var(--rule); }
+    .mini-label { color: var(--accent); font-size: 11px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
+    .mini-title { margin: 5px 0 6px; font: 700 26px/1.1 Georgia, serif; }
+    .form-row { display: grid; grid-template-columns: 1fr auto; gap: 10px; }
+    .note { margin: 18px 0 0; padding-top: 14px; border-top: 1px solid var(--rule); font-size: 14px; }
+
+    .weight-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+    .weight-card { padding: 22px; border: 1px solid var(--rule); background: var(--surface); }
+    .control-row { display: flex; flex-wrap: wrap; gap: 10px; align-items: end; margin-top: 18px; }
+    .field-wrap { flex: 1 1 210px; }
+    label { display: block; margin-bottom: 6px; font-size: 12px; font-weight: 800; letter-spacing: .05em; text-transform: uppercase; }
+    .static-example { border: 1px solid var(--rule); padding: 13px 15px; background: var(--canvas); }
+    .static-example p { margin: 0; }
+
+    .logos { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; }
+    .logo-card { display: flex; flex-direction: column; min-height: 410px; border: 1px solid var(--rule); background: var(--surface); }
+    .logo-stage { display: grid; min-height: 185px; place-items: center; border-bottom: 1px solid var(--rule); background: var(--canvas); }
+    .logo-copy { display: flex; flex: 1; flex-direction: column; padding: 17px; }
+    .logo-copy p { margin-bottom: 16px; font-size: 14px; }
+    .logo-copy .fit { margin-top: auto; padding-top: 12px; border-top: 1px solid var(--rule); color: var(--text); font-size: 12px; }
+    .size-row { display: flex; align-items: center; gap: 14px; margin-top: 12px; }
+    .mark { display: block; color: var(--text); }
+    .mark.large { width: 92px; height: 92px; }
+    .mark.medium { width: 28px; height: 28px; }
+    .mark.small { width: 16px; height: 16px; }
+    .accent-stroke { stroke: var(--accent); }
+    .accent-fill { fill: var(--accent); }
+    .ink-stroke { stroke: currentColor; }
+    .ink-fill { fill: currentColor; }
+    .shortlist { border-top: 3px solid var(--accent); }
+    .badge { display: inline-block; align-self: flex-start; margin-bottom: 9px; padding: 3px 6px; background: var(--accent-soft); color: var(--accent); font-size: 10px; font-weight: 850; letter-spacing: .08em; text-transform: uppercase; }
+    .principles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; border: 1px solid var(--rule); background: var(--rule); }
+    .principle { padding: 22px; background: var(--surface); }
+    .principle strong { display: block; margin-bottom: 5px; }
+    .principle p { margin: 0; font-size: 14px; }
+
+    @media (max-width: 980px) {
+      .logos { grid-template-columns: repeat(2, 1fr); }
+      .construction { grid-template-columns: 1fr; }
+      .construction-copy { padding-right: 0; }
+      .construction-demo { margin-top: 24px; padding: 24px 0 0; border-top: 1px solid var(--rule); border-left: 0; }
+    }
+    @media (max-width: 650px) {
+      .page { width: min(100% - 20px, 1180px); padding-top: 26px; }
+      .topbar { display: block; }
+      .theme-toggle { margin-top: 20px; }
+      .weight-grid, .logos, .principles { grid-template-columns: 1fr; }
+      .rail-content { padding: 22px 18px 22px 26px; }
+      .form-row { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">Tadoku design discussion · P0.2 · Study 4</p>
+        <h1>Straight rails, firmer controls, and a mark of our own.</h1>
+        <p class="lede">This pass removes the triangular border join, tests a 2px lower edge only on interactive components, and explores five compact Tadoku logo ideas without borrowing the current K-shaped language.</p>
+      </div>
+      <button class="btn theme-toggle" id="theme-toggle" type="button" aria-pressed="false">Switch to dark</button>
+    </header>
+
+    <section class="section">
+      <div class="section-intro">
+        <p class="eyebrow">01 · Border construction</p>
+        <h2>One uninterrupted accent rail</h2>
+        <p>The triangle was a mitered join: the browser was blending a thick left border into thin top and bottom borders. Here, the violet rail is an independent positioned strip that covers both endpoints, so its full six-pixel edge stays perfectly straight.</p>
+      </div>
+      <article class="rail-card">
+        <div class="rail-content construction">
+          <div class="construction-copy">
+            <h3>Less nesting, clearer hierarchy</h3>
+            <p>The rail belongs only to the outermost meaningful container. Inside it, content groups use whitespace and horizontal separators instead of more boxes. This preserves the bookplate character without producing frames inside frames.</p>
+            <div class="principles">
+              <div class="principle"><strong>Outer edge</strong><p>One violet rail; no neutral hairline beneath it.</p></div>
+              <div class="principle"><strong>Inside</strong><p>Spacing first, then horizontal rules where needed.</p></div>
+              <div class="principle"><strong>Static cards</strong><p>Neutral 1px rule; never a heavy lower edge.</p></div>
+            </div>
+            <p class="note"><strong>Implementation note:</strong> the rail extends one pixel above and below the container, hiding the corner joins rather than trying to coax four unequal borders into meeting cleanly.</p>
+          </div>
+          <div class="construction-demo">
+            <div class="mini-bookplate">
+              <span class="mini-label">Current challenge</span>
+              <div class="mini-title">August Reading</div>
+              <p>Track what you read, one page at a time.</p>
+              <hr>
+              <div class="form-row">
+                <input class="field" aria-label="Pages read" value="24 pages">
+                <button class="btn primary" type="button">Add entry</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </article>
+    </section>
+
+    <section class="section">
+      <div class="section-intro">
+        <p class="eyebrow">02 · Interaction weight</p>
+        <h2>A 2px lower edge, where it earns its keep</h2>
+        <p>The extra pixel makes controls feel deliberate and tactile. It is restricted to elements people can press or type into; content containers keep a quiet 1px outline.</p>
+      </div>
+      <div class="weight-grid">
+        <article class="weight-card">
+          <h3>Interactive · 1px sides + 2px lower edge</h3>
+          <p>Buttons, inputs, selects, tabs, and compact interactive tiles.</p>
+          <div class="control-row">
+            <div class="field-wrap"><label for="language">Language</label><select class="field" id="language"><option>Japanese</option></select></div>
+            <button class="btn" type="button">Cancel</button>
+            <button class="btn primary" type="button">Save entry</button>
+          </div>
+        </article>
+        <article class="weight-card">
+          <h3>Static · consistent 1px hairline</h3>
+          <p>Cards, summaries, documentation examples, and content sections.</p>
+          <div class="static-example"><strong>7-day total · 184 pages</strong><p>The container stays quiet so controls remain visibly actionable.</p></div>
+        </article>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="section-intro">
+        <p class="eyebrow">03 · Logo territories</p>
+        <h2>Five marks that can belong to Tadoku</h2>
+        <p>These are deliberately schematic, code-native sketches for choosing a concept—not finished logos. Each is shown at favicon size to expose which ideas survive when small. The violet remains a structural accent, not decoration added afterward.</p>
+      </div>
+      <div class="logos">
+        <article class="logo-card">
+          <div class="logo-stage">
+            <svg class="mark large" viewBox="0 0 64 64" role="img" aria-label="Open Book T mark">
+              <path class="ink-stroke" d="M7 15c10-2 18 1 25 7v31C25 47 17 44 7 46zM57 15c-10-2-18 1-25 7v31c7-6 15-9 25-7z" fill="none" stroke-width="3" stroke-linejoin="miter"/>
+              <path class="accent-stroke" d="M20 13h24M32 13v40" fill="none" stroke-width="5"/>
+            </svg>
+          </div>
+          <div class="logo-copy">
+            <h3>1 · Open Book T</h3>
+            <p>An open book built around a violet T-shaped spine. Directly signals reading while giving the name an initial.</p>
+            <div class="size-row">
+              <svg class="mark medium" viewBox="0 0 64 64"><path class="ink-stroke" d="M7 15c10-2 18 1 25 7v31C25 47 17 44 7 46zM57 15c-10-2-18 1-25 7v31c7-6 15-9 25-7z" fill="none" stroke-width="4"/><path class="accent-stroke" d="M20 13h24M32 13v40" stroke-width="6"/></svg>
+              <svg class="mark small" viewBox="0 0 64 64"><path class="ink-stroke" d="M7 15c10-2 18 1 25 7v31C25 47 17 44 7 46zM57 15c-10-2-18 1-25 7v31c7-6 15-9 25-7z" fill="none" stroke-width="6"/><path class="accent-stroke" d="M20 13h24M32 13v40" stroke-width="8"/></svg>
+            </div>
+            <div class="fit"><strong>Fit:</strong> most literal, editorial, slightly formal.</div>
+          </div>
+        </article>
+
+        <article class="logo-card shortlist">
+          <div class="logo-stage">
+            <svg class="mark large" viewBox="0 0 64 64" role="img" aria-label="Bookmark T mark">
+              <path class="ink-stroke" d="M9 12h46M32 12v43" fill="none" stroke-width="6"/>
+              <path class="accent-fill" d="M24 8h16v50l-8-7-8 7z"/>
+              <path class="ink-stroke" d="M9 12h46" fill="none" stroke-width="6"/>
+            </svg>
+          </div>
+          <div class="logo-copy">
+            <span class="badge">Shortlist</span>
+            <h3>2 · Bookmark T</h3>
+            <p>A bold T interrupted by a bookmark ribbon. Simple enough to own, with a clear reading cue at small sizes.</p>
+            <div class="size-row">
+              <svg class="mark medium" viewBox="0 0 64 64"><path class="ink-stroke" d="M9 12h46M32 12v43" stroke-width="7"/><path class="accent-fill" d="M24 8h16v50l-8-7-8 7z"/><path class="ink-stroke" d="M9 12h46" stroke-width="7"/></svg>
+              <svg class="mark small" viewBox="0 0 64 64"><path class="ink-stroke" d="M8 12h48M32 12v44" stroke-width="9"/><path class="accent-fill" d="M23 7h18v52l-9-7-9 7z"/><path class="ink-stroke" d="M8 12h48" stroke-width="9"/></svg>
+            </div>
+            <div class="fit"><strong>Fit:</strong> strongest compact app icon; traditional but not nostalgic cosplay.</div>
+          </div>
+        </article>
+
+        <article class="logo-card">
+          <div class="logo-stage">
+            <svg class="mark large" viewBox="0 0 64 64" role="img" aria-label="Library Shelf mark">
+              <path class="ink-stroke" d="M7 54h50M11 16h11v38H11zM25 10h12v44H25z" fill="none" stroke-width="4"/>
+              <path class="accent-stroke" d="M43 16l10-2 7 37-10 2z" fill="none" stroke-width="5"/>
+            </svg>
+          </div>
+          <div class="logo-copy">
+            <h3>3 · Library Shelf</h3>
+            <p>A run of book spines with one violet volume leaning forward. It conveys collection, progress, and personal reading history.</p>
+            <div class="size-row">
+              <svg class="mark medium" viewBox="0 0 64 64"><path class="ink-stroke" d="M7 54h50M11 16h11v38H11zM25 10h12v44H25z" fill="none" stroke-width="5"/><path class="accent-stroke" d="M43 16l10-2 7 37-10 2z" fill="none" stroke-width="6"/></svg>
+              <svg class="mark small" viewBox="0 0 64 64"><path class="ink-stroke" d="M5 54h54M10 16h12v38H10zM25 10h13v44H25z" fill="none" stroke-width="7"/><path class="accent-stroke" d="M43 16l11-2 7 37-11 2z" fill="none" stroke-width="8"/></svg>
+            </div>
+            <div class="fit"><strong>Fit:</strong> warmest library cue; can become busy at 16px.</div>
+          </div>
+        </article>
+
+        <article class="logo-card shortlist">
+          <div class="logo-stage">
+            <svg class="mark large" viewBox="0 0 64 64" role="img" aria-label="Reading Loop mark">
+              <path class="ink-stroke" d="M8 32c7-15 18-18 24 0s17 15 24 0c-7-15-18-18-24 0S15 47 8 32z" fill="none" stroke-width="5" stroke-linecap="square"/>
+              <path class="accent-stroke" d="M31 32c6 18 17 15 24 2" fill="none" stroke-width="6"/>
+              <path class="accent-fill" d="M49 27l10 6-9 7z"/>
+            </svg>
+          </div>
+          <div class="logo-copy">
+            <span class="badge">Shortlist</span>
+            <h3>4 · Reading Loop</h3>
+            <p>A continuous page-turn path: read, record, continue. More abstract and ownable than a conventional book icon.</p>
+            <div class="size-row">
+              <svg class="mark medium" viewBox="0 0 64 64"><path class="ink-stroke" d="M8 32c7-15 18-18 24 0s17 15 24 0c-7-15-18-18-24 0S15 47 8 32z" fill="none" stroke-width="6"/><path class="accent-stroke" d="M31 32c6 18 17 15 24 2" fill="none" stroke-width="7"/><path class="accent-fill" d="M49 26l11 7-10 8z"/></svg>
+              <svg class="mark small" viewBox="0 0 64 64"><path class="ink-stroke" d="M7 32c7-16 19-19 25 0s18 16 25 0c-7-16-19-19-25 0S14 48 7 32z" fill="none" stroke-width="8"/><path class="accent-stroke" d="M31 32c6 19 18 16 25 2" fill="none" stroke-width="9"/><path class="accent-fill" d="M48 25l13 8-12 9z"/></svg>
+            </div>
+            <div class="fit"><strong>Fit:</strong> most distinctive and active; needs refinement to avoid an infinity-app feel.</div>
+          </div>
+        </article>
+
+        <article class="logo-card">
+          <div class="logo-stage">
+            <svg class="mark large" viewBox="0 0 64 64" role="img" aria-label="Catalog Card mark">
+              <path class="ink-stroke" d="M9 11h46v42H9zM20 23h26M20 32h20M20 41h25" fill="none" stroke-width="4"/>
+              <path class="accent-stroke" d="M9 10v44" fill="none" stroke-width="7"/>
+            </svg>
+          </div>
+          <div class="logo-copy">
+            <h3>5 · Catalog Card</h3>
+            <p>A library catalog card whose violet rail mirrors the interface. It connects the product identity directly to the design system.</p>
+            <div class="size-row">
+              <svg class="mark medium" viewBox="0 0 64 64"><path class="ink-stroke" d="M9 11h46v42H9zM20 23h26M20 32h20M20 41h25" fill="none" stroke-width="5"/><path class="accent-stroke" d="M9 9v46" stroke-width="8"/></svg>
+              <svg class="mark small" viewBox="0 0 64 64"><path class="ink-stroke" d="M8 10h48v44H8zM20 24h27M20 34h24M20 44h26" fill="none" stroke-width="7"/><path class="accent-stroke" d="M8 8v48" stroke-width="10"/></svg>
+            </div>
+            <div class="fit"><strong>Fit:</strong> best system connection; risks reading as a generic document icon.</div>
+          </div>
+        </article>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const root = document.documentElement;
+    const toggle = document.getElementById('theme-toggle');
+    toggle.addEventListener('click', () => {
+      const isDark = root.dataset.theme === 'dark';
+      root.dataset.theme = isDark ? '' : 'dark';
+      toggle.textContent = isDark ? 'Switch to dark' : 'Switch to light';
+      toggle.setAttribute('aria-pressed', String(!isDark));
+    });
+  </script>
+</body>
+</html>

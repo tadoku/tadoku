@@ -1,0 +1,300 @@
+<!doctype html>
+<!-- Archived Tadoku Paper planning artifact. See ../README.md. -->
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Tadoku UI — Bookplate Direction Preview</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@700&family=Open+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --ink: #211a1d;
+      --ink-soft: #5d575a;
+      --violet: #5b5bea;
+      --violet-dark: #4848cf;
+      --paper: #fffefa;
+      --canvas: #f2efe8;
+      --canvas-cool: #f4f4f6;
+      --rule: #d8d3c8;
+      --rule-dark: #aaa49a;
+      --success-bg: #e5f3e3;
+      --success-ink: #29592f;
+      --danger: #c83737;
+      --shadow-hard: 5px 5px 0 rgba(33, 26, 29, .12);
+      --font-sans: "Open Sans", ui-sans-serif, system-ui, sans-serif;
+      --font-serif: "Merriweather", Georgia, serif;
+    }
+
+    * { box-sizing: border-box; }
+    body { margin: 0; color: var(--ink); background: var(--canvas); font-family: var(--font-sans); line-height: 1.5; }
+    button, input, select { font: inherit; }
+    button { color: inherit; }
+    a { color: inherit; }
+    :focus-visible { outline: 2px solid var(--violet); outline-offset: 2px; }
+
+    .page { width: min(1440px, calc(100% - 32px)); margin: 0 auto; padding: 46px 0 80px; }
+    .intro { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 40px; align-items: end; margin-bottom: 28px; }
+    .kicker { margin-bottom: 14px; color: var(--violet-dark); font-size: 11px; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; }
+    h1 { max-width: 850px; margin: 0; font: 700 clamp(38px, 5vw, 68px)/1.08 var(--font-serif); letter-spacing: -.035em; }
+    .intro p { max-width: 720px; margin: 18px 0 0; color: var(--ink-soft); font-size: 17px; }
+
+    .mode-switch { display: flex; border: 1px solid var(--ink); border-bottom-width: 3px; background: var(--paper); }
+    .mode-switch button { min-height: 42px; padding: 8px 14px; border: 0; border-right: 1px solid var(--ink); background: transparent; cursor: pointer; font-size: 12px; font-weight: 700; }
+    .mode-switch button:last-child { border-right: 0; }
+    .mode-switch button[aria-pressed="true"] { color: white; background: var(--ink); }
+
+    .notes { display: grid; grid-template-columns: repeat(5, 1fr); border: 1px solid var(--rule-dark); border-bottom-width: 3px; background: var(--paper); }
+    .note { min-height: 106px; padding: 17px 18px; border-right: 1px solid var(--rule); }
+    .note:last-child { border-right: 0; }
+    .note b { display: block; margin-bottom: 7px; font: 700 14px/1.3 var(--font-serif); }
+    .note span { display: block; color: var(--ink-soft); font-size: 11px; }
+
+    .specimen-label { display: flex; align-items: center; gap: 12px; margin: 50px 0 14px; font-size: 11px; font-weight: 700; letter-spacing: .13em; text-transform: uppercase; }
+    .specimen-label::after { content: ""; flex: 1; height: 1px; background: var(--rule-dark); }
+
+    .app { min-height: 820px; overflow: hidden; border: 1px solid var(--ink); background: var(--paper); box-shadow: 8px 8px 0 rgba(33, 26, 29, .14); }
+    .appbar { display: flex; align-items: center; justify-content: space-between; min-height: 68px; padding: 0 26px; border-bottom: 1px solid var(--ink); background: var(--paper); }
+    .wordmark { position: relative; font-size: 20px; font-weight: 800; letter-spacing: .06em; }
+    .wordmark::after { content: ""; position: absolute; right: 20px; bottom: -3px; width: 15px; height: 4px; background: var(--violet); transform: skew(32deg); }
+    .toplinks { display: flex; gap: 24px; color: var(--ink-soft); font-size: 12px; font-weight: 600; }
+    .toplinks span.active { color: var(--ink); text-decoration: underline 3px var(--violet); text-underline-offset: 9px; }
+    .avatar { display: grid; place-items: center; width: 36px; height: 36px; border: 1px solid var(--ink); background: var(--canvas); font-size: 11px; font-weight: 700; }
+
+    .appbody { display: grid; grid-template-columns: 218px minmax(0, 1fr); min-height: 752px; }
+    .sidebar { padding: 28px 18px; border-right: 1px solid var(--ink); background: #f9f7f1; }
+    .sidebar-title { margin: 0 10px 16px; color: var(--ink-soft); font-size: 10px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; }
+    .navitem { display: flex; align-items: center; gap: 10px; min-height: 40px; padding: 8px 10px; border-left: 3px solid transparent; color: var(--ink-soft); font-size: 12px; }
+    .navitem.active { border-left-color: var(--violet); color: var(--ink); background: #ebe9e2; font-weight: 700; }
+    .navitem svg { width: 16px; height: 16px; }
+
+    .content { padding: 38px 42px 60px; min-width: 0; background: #f6f4ef; }
+    .crumb { color: #787176; font-size: 11px; }
+    .heading-row { display: flex; justify-content: space-between; gap: 28px; align-items: flex-end; margin: 12px 0 28px; }
+    h2 { margin: 0; font: 700 34px/1.2 var(--font-serif); letter-spacing: -.02em; }
+    .heading-row p { margin: 8px 0 0; color: var(--ink-soft); font-size: 13px; }
+
+    .button { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; padding: 8px 16px; border: 1px solid var(--ink); border-bottom-width: 3px; background: var(--paper); cursor: pointer; font-size: 13px; font-weight: 700; text-decoration: none; }
+    .button:hover { background: #f0eee8; }
+    .button:active { transform: translateY(1px); border-bottom-width: 2px; }
+    .button.primary { border-color: var(--violet-dark); color: white; background: var(--violet); }
+    .button.primary:hover { background: var(--violet-dark); }
+    .button.danger { border-color: #982a2a; color: white; background: var(--danger); }
+    .button.ghost { border-color: transparent; border-bottom-color: transparent; background: transparent; }
+    .button.compact { min-height: 36px; padding: 5px 11px; font-size: 12px; }
+    .button svg { width: 16px; height: 16px; }
+
+    .layout { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(280px, .65fr); gap: 22px; }
+    .stack { display: grid; gap: 18px; align-content: start; }
+    .panel { border: 1px solid var(--rule-dark); background: var(--paper); }
+    .panel.emphasis { border-color: var(--ink); border-bottom-width: 3px; }
+    .panel-header { display: flex; justify-content: space-between; gap: 18px; align-items: center; min-height: 52px; padding: 12px 16px; border-bottom: 1px solid var(--rule); }
+    .panel-header h3 { margin: 0; font: 700 15px/1.3 var(--font-serif); }
+    .panel-header span { color: var(--ink-soft); font-size: 11px; }
+    .panel-body { padding: 18px; }
+
+    .notice { display: grid; grid-template-columns: 4px 1fr; border: 1px solid #9ab89b; color: var(--success-ink); background: var(--success-bg); }
+    .notice::before { content: ""; background: #3f7b48; }
+    .notice div { padding: 12px 14px; font-size: 12px; }
+    .notice strong { display: block; margin-bottom: 2px; }
+
+    .fields { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .field { display: grid; gap: 6px; }
+    .field.full { grid-column: 1 / -1; }
+    .field label { font-size: 12px; font-weight: 700; }
+    .field small { color: var(--ink-soft); font-size: 10px; font-weight: 400; }
+    .input, .select { width: 100%; min-height: 44px; padding: 8px 11px; border: 1px solid var(--rule-dark); border-bottom: 2px solid var(--ink); color: var(--ink); background: white; outline: 0; }
+    .input:focus, .select:focus { border-color: var(--violet); box-shadow: 0 0 0 2px rgba(91,91,234,.19); }
+    textarea.input { min-height: 78px; resize: vertical; }
+    .form-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--rule); }
+
+    .book-card { border: 1px solid var(--ink); border-bottom-width: 3px; background: var(--paper); }
+    .book-card-top { display: grid; grid-template-columns: 56px 1fr; gap: 14px; padding: 16px; }
+    .cover { display: grid; place-items: center; width: 56px; height: 76px; border: 1px solid #272329; color: #f3efe7; background: #46404a; font: 700 8px/1.4 var(--font-serif); text-align: center; }
+    .book-card h4 { margin: 2px 0 5px; font: 700 14px/1.35 var(--font-serif); }
+    .book-card p { margin: 0; color: var(--ink-soft); font-size: 11px; }
+    .progress { height: 5px; margin-top: 13px; border-top: 1px solid var(--rule-dark); border-bottom: 1px solid var(--rule-dark); background: #ece9e1; }
+    .progress i { display: block; width: 62%; height: 100%; background: var(--violet); }
+    .book-meta { display: grid; grid-template-columns: repeat(3, 1fr); border-top: 1px solid var(--rule); }
+    .book-meta div { padding: 10px 12px; border-right: 1px solid var(--rule); }
+    .book-meta div:last-child { border-right: 0; }
+    .book-meta b { display: block; font-size: 12px; }
+    .book-meta span { color: var(--ink-soft); font-size: 9px; text-transform: uppercase; letter-spacing: .08em; }
+
+    .table-wrap { overflow-x: auto; border: 1px solid var(--rule-dark); background: white; }
+    table { width: 100%; min-width: 560px; border-collapse: collapse; }
+    th { padding: 10px 13px; border-bottom: 2px solid var(--ink); color: var(--ink-soft); background: #eeece6; font-size: 10px; letter-spacing: .07em; text-align: left; text-transform: uppercase; }
+    td { padding: 12px 13px; border-bottom: 1px solid var(--rule); font-size: 11px; }
+    tr:last-child td { border-bottom: 0; }
+    td.score { font-weight: 700; text-align: right; }
+    .tag { display: inline-flex; padding: 2px 6px; border: 1px solid var(--rule-dark); background: #f2f0ea; color: var(--ink-soft); font-size: 9px; }
+
+    .popover-demo { position: relative; display: flex; align-items: center; justify-content: flex-end; min-height: 150px; padding-right: 26px; border: 1px dashed var(--rule-dark); background: #f4f1ea; }
+    .popover { position: absolute; top: 54px; right: 26px; z-index: 2; width: 190px; border: 1px solid var(--ink); background: white; box-shadow: var(--shadow-hard); }
+    .popover a { display: block; padding: 10px 12px; border-bottom: 1px solid var(--rule); font-size: 11px; text-decoration: none; }
+    .popover a:last-child { border-bottom: 0; color: var(--danger); }
+    .popover a:hover { background: #f0eee8; }
+
+    .interpretation { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 30px; }
+    .interpretation article { padding: 22px; border: 1px solid var(--rule-dark); background: var(--paper); }
+    .interpretation h3 { margin: 0 0 9px; font: 700 16px/1.35 var(--font-serif); }
+    .interpretation p { margin: 0; color: var(--ink-soft); font-size: 12px; }
+
+    /* Flat archival comparison mode: same sharp geometry, less tactile weight. */
+    body.flat .button,
+    body.flat .mode-switch,
+    body.flat .notes,
+    body.flat .panel.emphasis,
+    body.flat .book-card { border-bottom-width: 1px; }
+    body.flat .input,
+    body.flat .select { border-bottom-color: var(--rule-dark); border-bottom-width: 1px; }
+    body.flat .app,
+    body.flat .popover { box-shadow: none; }
+    body.flat .panel.emphasis { border-color: var(--rule-dark); }
+
+    @media (max-width: 1000px) {
+      .intro { grid-template-columns: 1fr; align-items: start; }
+      .mode-switch { width: fit-content; }
+      .notes { grid-template-columns: repeat(2, 1fr); }
+      .note { border-bottom: 1px solid var(--rule); }
+      .layout { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 700px) {
+      .page { width: min(100% - 18px, 1440px); padding-top: 28px; }
+      .appbody { grid-template-columns: 1fr; }
+      .sidebar, .toplinks { display: none; }
+      .content { padding: 26px 16px 40px; }
+      .heading-row { align-items: flex-start; flex-direction: column; }
+      .notes, .fields, .interpretation { grid-template-columns: 1fr; }
+      .note { border-right: 0; }
+      .field.full { grid-column: auto; }
+      .appbar { padding: 0 16px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <header class="intro">
+      <div>
+        <div class="kicker">Tadoku visual grammar study · P0.2</div>
+        <h1>Sharp, tactile, and quietly bookish.</h1>
+        <p>This preview keeps every edge square. The “Bookplate” direction creates refinement through typographic hierarchy, paper-like surfaces, ruled borders, and deliberate weight under interactive controls.</p>
+      </div>
+      <div class="mode-switch" aria-label="Compare depth treatments">
+        <button id="bookplate" type="button" aria-pressed="true">Bookplate</button>
+        <button id="flat" type="button" aria-pressed="false">Flat archival</button>
+      </div>
+    </header>
+
+    <section class="notes" aria-label="Design rules demonstrated">
+      <div class="note"><b>Zero radius</b><span>Cards, controls, menus, tags, and navigation retain square corners.</span></div>
+      <div class="note"><b>Weighted controls</b><span>A heavier lower rule makes actions feel tactile without becoming glossy.</span></div>
+      <div class="note"><b>Paper & ink</b><span>Warm canvas, near-black ink, and ruled separators support the library character.</span></div>
+      <div class="note"><b>Selective depth</b><span>Hard offset shadows are reserved for the app frame and floating menu.</span></div>
+      <div class="note"><b>Violet markers</b><span>The brand color acts like an annotation: active rules, progress, and primary action.</span></div>
+    </section>
+
+    <div class="specimen-label">Product specimen</div>
+    <section class="app" aria-label="Tadoku interface rendered in the Bookplate direction">
+      <header class="appbar">
+        <div class="wordmark">TADOKU</div>
+        <div class="toplinks"><span class="active">Immersion log</span><span>Contests</span><span>Leaderboard</span><span>Blog</span></div>
+        <div class="avatar">AV</div>
+      </header>
+      <div class="appbody">
+        <aside class="sidebar">
+          <div class="sidebar-title">Your library</div>
+          <div class="navitem active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 5h16v14H4zM8 5v14M12 9h5M12 13h5"/></svg>Reading log</div>
+          <div class="navitem"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 19.5A2.5 2.5 0 016.5 17H20V4H6.5A2.5 2.5 0 004 6.5v13z"/></svg>Books & media</div>
+          <div class="navitem"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="8"/><path d="M12 8v8M8 12h8"/></svg>New update</div>
+          <div class="sidebar-title" style="margin-top:28px">Browse</div>
+          <div class="navitem">Yearly overview</div>
+          <div class="navitem">Tags</div>
+          <div class="navitem">Export</div>
+        </aside>
+
+        <div class="content">
+          <div class="crumb">Immersion log / 2026 / August</div>
+          <div class="heading-row">
+            <div><h2>Reading log</h2><p>A quiet record of what you have read, watched, and listened to.</p></div>
+            <button class="button primary"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>Log update</button>
+          </div>
+
+          <div class="layout">
+            <div class="stack">
+              <div class="notice"><div><strong>Update recorded</strong>Your 24 pages of Japanese reading were added to the August log.</div></div>
+
+              <section class="panel emphasis">
+                <div class="panel-header"><div><h3>New reading update</h3><span>Fields marked required must be completed.</span></div><span>Draft</span></div>
+                <div class="panel-body">
+                  <div class="fields">
+                    <div class="field"><label for="language">Language</label><select class="select" id="language"><option>Japanese</option></select></div>
+                    <div class="field"><label for="activity">Activity</label><select class="select" id="activity"><option>Reading</option></select></div>
+                    <div class="field"><label for="amount">Amount <small>pages</small></label><input class="input" id="amount" value="24" /></div>
+                    <div class="field"><label for="duration">Duration <small>optional</small></label><input class="input" id="duration" value="00:35" /></div>
+                    <div class="field full"><label for="notes">Notes</label><textarea class="input" id="notes">Finished chapter 7. The library scene was excellent.</textarea></div>
+                  </div>
+                  <div class="form-actions"><button class="button ghost">Cancel</button><button class="button primary">Save update</button></div>
+                </div>
+              </section>
+
+              <section>
+                <div class="panel-header" style="padding-inline:0"><div><h3>Recent entries</h3><span>August 2026</span></div><button class="button compact">View all</button></div>
+                <div class="table-wrap">
+                  <table>
+                    <thead><tr><th>Date</th><th>Entry</th><th>Tags</th><th style="text-align:right">Score</th></tr></thead>
+                    <tbody>
+                      <tr><td>Aug 7</td><td><strong>Sword Art Online v15</strong><br />24 pages · Japanese</td><td><span class="tag">light novel</span></td><td class="score">24</td></tr>
+                      <tr><td>Aug 6</td><td><strong>NHK Easy</strong><br />3 articles · Japanese</td><td><span class="tag">news</span></td><td class="score">9</td></tr>
+                      <tr><td>Aug 4</td><td><strong>Frieren episode 18</strong><br />24 minutes · Japanese</td><td><span class="tag">anime</span></td><td class="score">12</td></tr>
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+            </div>
+
+            <aside class="stack">
+              <article class="book-card">
+                <div class="book-card-top"><div class="cover">本<br />LIGHT<br />NOVEL</div><div><p>Currently reading</p><h4>Sword Art Online, Volume 15</h4><p>Japanese · Light novel</p><div class="progress"><i></i></div></div></div>
+                <div class="book-meta"><div><b>62%</b><span>Progress</span></div><div><b>186</b><span>Pages</span></div><div><b>7</b><span>Sessions</span></div></div>
+              </article>
+
+              <section class="panel">
+                <div class="panel-header"><div><h3>August</h3><span>Monthly progress</span></div></div>
+                <div class="panel-body" style="display:grid;grid-template-columns:1fr 1fr;gap:16px"><div><strong style="font:700 24px var(--font-serif)">438</strong><br /><span style="font-size:10px;color:var(--ink-soft)">TOTAL SCORE</span></div><div><strong style="font:700 24px var(--font-serif)">12</strong><br /><span style="font-size:10px;color:var(--ink-soft)">ACTIVE DAYS</span></div></div>
+              </section>
+
+              <div class="popover-demo">
+                <button class="button compact">Actions ▾</button>
+                <div class="popover"><a href="#">Edit entry</a><a href="#">Duplicate</a><a href="#">Delete entry</a></div>
+              </div>
+            </aside>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="interpretation">
+      <article><h3>Bookplate mode</h3><p>Interactive controls carry a heavier lower rule, and floating surfaces use a hard offset shadow. It feels physical, like a labeled drawer, bookplate, or stamped library card.</p></article>
+      <article><h3>Flat archival mode</h3><p>The toggle removes weighted edges and shadows while keeping the exact same square geometry. Use it to judge whether the tactile treatment adds character or merely noise.</p></article>
+    </section>
+  </main>
+
+  <script>
+    const bookplate = document.getElementById('bookplate')
+    const flat = document.getElementById('flat')
+
+    function setMode(mode) {
+      const isFlat = mode === 'flat'
+      document.body.classList.toggle('flat', isFlat)
+      bookplate.setAttribute('aria-pressed', String(!isFlat))
+      flat.setAttribute('aria-pressed', String(isFlat))
+    }
+
+    bookplate.addEventListener('click', () => setMode('bookplate'))
+    flat.addEventListener('click', () => setMode('flat'))
+  </script>
+</body>
+</html>

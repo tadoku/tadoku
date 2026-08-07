@@ -1,0 +1,360 @@
+<!doctype html>
+<!-- Archived Tadoku Paper planning artifact. See ../README.md. -->
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Tadoku Bookplate — Control and Abstract Mark Study</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --canvas: #f2efe8;
+      --surface: #fffefa;
+      --surface-soft: #e9e5dc;
+      --text: #211a1d;
+      --muted: #686064;
+      --rule: #c7c0b5;
+      --rule-hover: #a89f94;
+      --rule-strong: #393235;
+      --input-lower: #aba398;
+      --accent: #5747b8;
+      --accent-hover: #49399f;
+      --accent-lower: #35277f;
+      --accent-soft: #e8e4fa;
+    }
+
+    [data-theme="dark"] {
+      color-scheme: dark;
+      --canvas: #171517;
+      --surface: #222022;
+      --surface-soft: #2d292c;
+      --text: #f2eee8;
+      --muted: #b8afb3;
+      --rule: #4e484b;
+      --rule-hover: #675f63;
+      --rule-strong: #81777c;
+      --input-lower: #696166;
+      --accent: #9a8bea;
+      --accent-hover: #ac9ff1;
+      --accent-lower: #7767c8;
+      --accent-soft: #332d52;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--canvas);
+      color: var(--text);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.5;
+    }
+    button, input, select { font: inherit; }
+    button { color: inherit; }
+    h1, h2, h3, p { margin-top: 0; }
+    h1, h2 { font-family: Georgia, "Times New Roman", serif; }
+    h1 { max-width: 850px; margin-bottom: 16px; font-size: clamp(38px, 6vw, 68px); line-height: .98; letter-spacing: -.035em; }
+    h2 { margin-bottom: 9px; font-size: clamp(26px, 3vw, 37px); line-height: 1.08; }
+    h3 { margin-bottom: 7px; font-size: 16px; }
+    p { color: var(--muted); }
+    .page { width: min(1160px, calc(100% - 32px)); margin: 0 auto; padding: 44px 0 72px; }
+    .eyebrow { margin: 0 0 10px; color: var(--accent); font-size: 12px; font-weight: 850; letter-spacing: .14em; text-transform: uppercase; }
+    .lede, .section-intro { max-width: 760px; }
+    .lede { font-size: 18px; }
+    .topbar { display: flex; align-items: start; justify-content: space-between; gap: 24px; margin-bottom: 52px; }
+    .section { margin-top: 52px; }
+    .section-intro { margin-bottom: 22px; }
+
+    .btn {
+      display: inline-flex;
+      min-height: 42px;
+      align-items: center;
+      justify-content: center;
+      padding: 9px 15px 8px;
+      border: 1px solid var(--rule);
+      border-bottom: 2px solid var(--rule-strong);
+      border-radius: 0;
+      background: var(--surface);
+      cursor: pointer;
+      font-weight: 750;
+      transition: background-color 140ms ease, border-color 140ms ease, color 140ms ease;
+    }
+    .btn:hover { border-color: var(--rule-hover); background: var(--surface-soft); }
+    .btn:active { transform: translateY(1px); border-bottom-width: 1px; }
+    .btn.primary {
+      border-color: var(--accent);
+      border-bottom-color: var(--accent-lower);
+      background: var(--accent);
+      color: #fff;
+    }
+    .btn.primary:hover {
+      border-color: var(--accent-hover);
+      border-bottom-color: var(--accent-lower);
+      background: var(--accent-hover);
+    }
+    [data-theme="dark"] .btn.primary { color: #17131f; }
+    .btn:focus-visible, .field:focus { outline: 2px solid var(--accent); outline-offset: 2px; }
+    .theme-toggle { flex: none; }
+
+    .field {
+      width: 100%;
+      min-height: 42px;
+      padding: 9px 11px 8px;
+      border: 1px solid var(--rule);
+      border-bottom: 2px solid var(--input-lower);
+      border-radius: 0;
+      background: var(--surface);
+      color: var(--text);
+      transition: border-color 140ms ease, background-color 140ms ease;
+    }
+    .field:hover { border-color: var(--rule-hover); border-bottom-color: var(--input-lower); }
+    .field:focus { border-color: var(--accent); border-bottom-color: var(--accent); }
+    label { display: block; margin-bottom: 6px; font-size: 12px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; }
+
+    .rail-card {
+      position: relative;
+      border-top: 1px solid var(--rule);
+      border-right: 1px solid var(--rule);
+      border-bottom: 1px solid var(--rule);
+      background: var(--surface);
+    }
+    .rail-card::before { content: ""; position: absolute; z-index: 1; top: -1px; bottom: -1px; left: 0; width: 6px; background: var(--accent); }
+    .rail-content { padding: 27px 28px 27px 34px; }
+
+    .control-layout { display: grid; grid-template-columns: .9fr 1.1fr; gap: 34px; }
+    .token-table { border: 1px solid var(--rule); }
+    .token-row { display: grid; grid-template-columns: 145px 1fr; gap: 16px; padding: 13px 15px; }
+    .token-row + .token-row { border-top: 1px solid var(--rule); }
+    .token-row strong { font-size: 13px; }
+    .token-row span { color: var(--muted); font-size: 13px; }
+    .form-demo { padding-left: 32px; border-left: 1px solid var(--rule); }
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .form-grid .wide { grid-column: 1 / -1; }
+    .button-row { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 10px; padding-top: 4px; }
+    .hint { margin: 8px 0 0; font-size: 13px; }
+    .hover-demo { margin-top: 18px; padding-top: 18px; border-top: 1px solid var(--rule); }
+    .swatches { display: flex; flex-wrap: wrap; gap: 10px; }
+    .state-chip { min-width: 126px; padding: 10px 12px; border: 1px solid var(--accent); border-bottom: 2px solid var(--accent-lower); color: #fff; font-size: 12px; font-weight: 800; text-align: center; }
+    [data-theme="dark"] .state-chip { color: #17131f; }
+    .state-chip.default { background: var(--accent); }
+    .state-chip.hover { border-color: var(--accent-hover); background: var(--accent-hover); }
+
+    .logos { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; }
+    .logo-card { display: flex; min-height: 400px; flex-direction: column; border: 1px solid var(--rule); background: var(--surface); }
+    .logo-stage { display: grid; min-height: 190px; place-items: center; border-bottom: 1px solid var(--rule); background: var(--canvas); }
+    .logo-copy { display: flex; flex: 1; flex-direction: column; padding: 17px; }
+    .logo-copy p { margin-bottom: 14px; font-size: 14px; }
+    .logo-copy .idea { margin-top: auto; padding-top: 12px; border-top: 1px solid var(--rule); color: var(--text); font-size: 12px; }
+    .mark { display: block; color: var(--text); }
+    .mark.large { width: 96px; height: 96px; }
+    .mark.medium { width: 28px; height: 28px; }
+    .mark.small { width: 16px; height: 16px; }
+    .size-row { display: flex; align-items: center; gap: 14px; margin-top: 11px; }
+    .ink-fill { fill: currentColor; }
+    .ink-stroke { fill: none; stroke: currentColor; }
+    .accent-fill { fill: var(--accent); }
+    .accent-stroke { fill: none; stroke: var(--accent); }
+
+    .guardrails { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; border: 1px solid var(--rule); background: var(--rule); }
+    .guardrail { padding: 20px; background: var(--surface); }
+    .guardrail strong { display: block; margin-bottom: 5px; }
+    .guardrail p { margin: 0; font-size: 14px; }
+
+    @media (max-width: 980px) {
+      .logos { grid-template-columns: repeat(2, 1fr); }
+      .control-layout { grid-template-columns: 1fr; }
+      .form-demo { padding: 24px 0 0; border-top: 1px solid var(--rule); border-left: 0; }
+    }
+    @media (max-width: 650px) {
+      .page { width: min(100% - 20px, 1160px); padding-top: 26px; }
+      .topbar { display: block; }
+      .theme-toggle { margin-top: 20px; }
+      .logos, .guardrails, .form-grid { grid-template-columns: 1fr; }
+      .form-grid .wide { grid-column: auto; }
+      .rail-content { padding: 22px 18px 22px 26px; }
+      .token-row { grid-template-columns: 1fr; gap: 3px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">Tadoku design discussion · P0.2 · Study 5</p>
+        <h1>Quieter fields, responsive actions, abstract marks.</h1>
+        <p class="lede">This pass keeps the 2px interaction cue but lowers its contrast on pale fields. The primary action retains its authority and now has a visible hover state. The logo study starts over without letters.</p>
+      </div>
+      <button class="btn theme-toggle" id="theme-toggle" type="button" aria-pressed="false">Switch to dark</button>
+    </header>
+
+    <section class="section">
+      <div class="section-intro">
+        <p class="eyebrow">01 · Control refinement</p>
+        <h2>The same thickness, less visual weight</h2>
+        <p>Inputs keep a two-pixel lower edge for tactility, but it now uses a mid-neutral rather than the near-black rule. Submit buttons retain their darker violet lower edge because the filled surface can support the contrast.</p>
+      </div>
+      <article class="rail-card">
+        <div class="rail-content control-layout">
+          <div>
+            <h3>Split the semantic tokens</h3>
+            <p>One lower-border token was doing two different jobs. This treatment separates pale fields from filled actions.</p>
+            <div class="token-table">
+              <div class="token-row"><strong>Field lower edge</strong><span>Soft mid-neutral · 2px</span></div>
+              <div class="token-row"><strong>Field focus</strong><span>Ink violet · 2px outline and edge</span></div>
+              <div class="token-row"><strong>Primary lower edge</strong><span>Deep ink violet · 2px</span></div>
+              <div class="token-row"><strong>Primary hover</strong><span>Lighter violet fill; stable lower edge</span></div>
+            </div>
+            <div class="hover-demo">
+              <h3>Primary states</h3>
+              <div class="swatches">
+                <div class="state-chip default">Default</div>
+                <div class="state-chip hover">Hover</div>
+              </div>
+            </div>
+          </div>
+          <form class="form-demo">
+            <div class="form-grid">
+              <div>
+                <label for="pages">Pages read</label>
+                <input class="field" id="pages" value="24">
+              </div>
+              <div>
+                <label for="language">Language</label>
+                <select class="field" id="language"><option>Japanese</option></select>
+              </div>
+              <div class="wide">
+                <label for="title">Book or article</label>
+                <input class="field" id="title" value="コンビニ人間">
+                <p class="hint">Hover and focus the fields; hover the submit button to compare the state changes.</p>
+              </div>
+              <div class="wide button-row">
+                <button class="btn" type="button">Cancel</button>
+                <button class="btn primary" type="button">Add reading</button>
+              </div>
+            </div>
+          </form>
+        </div>
+      </article>
+    </section>
+
+    <section class="section">
+      <div class="section-intro">
+        <p class="eyebrow">02 · Abstract logo reset</p>
+        <h2>No initials. No letter puzzles.</h2>
+        <p>These are five fresh territories, not revisions of the previous marks. They avoid forcing a T or K and instead explore turning a page, opening a space, accumulating reading, forward motion, and the rhythm of a marked page.</p>
+      </div>
+      <div class="logos">
+        <article class="logo-card">
+          <div class="logo-stage">
+            <svg class="mark large" viewBox="0 0 64 64" role="img" aria-label="Page Turn abstract mark">
+              <path class="ink-fill" d="M11 9h42v46H11z"/>
+              <path fill="var(--canvas)" d="M17 15h30v34H17z"/>
+              <path class="accent-fill" d="M31 15h16v16z"/>
+              <path class="accent-fill" d="M31 15v16H17z" opacity=".68"/>
+            </svg>
+          </div>
+          <div class="logo-copy">
+            <h3>1 · Page Turn</h3>
+            <p>A single sheet caught mid-turn. The violet fold is the moment of movement, while the outer shape stays archival and square.</p>
+            <div class="size-row">
+              <svg class="mark medium" viewBox="0 0 64 64"><path class="ink-fill" d="M11 9h42v46H11z"/><path fill="var(--canvas)" d="M17 15h30v34H17z"/><path class="accent-fill" d="M31 15h16v16zM31 15v16H17z"/></svg>
+              <svg class="mark small" viewBox="0 0 64 64"><path class="ink-fill" d="M9 7h46v50H9z"/><path fill="var(--canvas)" d="M17 15h30v34H17z"/><path class="accent-fill" d="M31 15h16v16zM31 15v16H17z"/></svg>
+            </div>
+            <div class="idea"><strong>Character:</strong> quiet, editorial, precise.</div>
+          </div>
+        </article>
+
+        <article class="logo-card">
+          <div class="logo-stage">
+            <svg class="mark large" viewBox="0 0 64 64" role="img" aria-label="Open Passage abstract mark">
+              <path class="ink-fill" d="M7 12l22 7v36L7 47zM57 12l-22 7v36l22-8z"/>
+              <path class="accent-fill" d="M29 19h6v36h-6z"/>
+            </svg>
+          </div>
+          <div class="logo-copy">
+            <h3>2 · Open Passage</h3>
+            <p>Two planes create a narrow violet passage between them. It suggests opening a book or entering another world without drawing either literally.</p>
+            <div class="size-row">
+              <svg class="mark medium" viewBox="0 0 64 64"><path class="ink-fill" d="M7 12l22 7v36L7 47zM57 12l-22 7v36l22-8z"/><path class="accent-fill" d="M29 19h6v36h-6z"/></svg>
+              <svg class="mark small" viewBox="0 0 64 64"><path class="ink-fill" d="M5 10l24 8v38L5 48zM59 10l-24 8v38l24-8z"/><path class="accent-fill" d="M28 18h8v38h-8z"/></svg>
+            </div>
+            <div class="idea"><strong>Character:</strong> spatial, immersive, book-adjacent.</div>
+          </div>
+        </article>
+
+        <article class="logo-card">
+          <div class="logo-stage">
+            <svg class="mark large" viewBox="0 0 64 64" role="img" aria-label="Accumulation abstract mark">
+              <path class="ink-fill" d="M8 42h35v8H8zM13 29h35v8H13zM18 16h35v8H18z"/>
+              <path class="accent-fill" d="M43 42h13v8H43zM48 29h8v8H48zM53 16h3v8h-3z"/>
+            </svg>
+          </div>
+          <div class="logo-copy">
+            <h3>3 · Accumulation</h3>
+            <p>Three reading units gather into a stack. The stepped ends communicate steady progress rather than completion or competition.</p>
+            <div class="size-row">
+              <svg class="mark medium" viewBox="0 0 64 64"><path class="ink-fill" d="M8 42h35v8H8zM13 29h35v8H13zM18 16h35v8H18z"/><path class="accent-fill" d="M43 42h13v8H43zM48 29h8v8H48zM53 16h3v8h-3z"/></svg>
+              <svg class="mark small" viewBox="0 0 64 64"><path class="ink-fill" d="M6 41h38v10H6zM12 27h38v10H12zM18 13h38v10H18z"/><path class="accent-fill" d="M44 41h14v10H44zM50 27h8v10H50zM54 13h4v10h-4z"/></svg>
+            </div>
+            <div class="idea"><strong>Character:</strong> patient, cumulative, system-friendly.</div>
+          </div>
+        </article>
+
+        <article class="logo-card">
+          <div class="logo-stage">
+            <svg class="mark large" viewBox="0 0 64 64" role="img" aria-label="Reading Current abstract mark">
+              <path class="ink-stroke" d="M8 18h28c13 0 20 5 20 14s-7 14-20 14H14" stroke-width="7" stroke-linecap="square"/>
+              <path class="accent-fill" d="M8 39l14 7L8 53z"/>
+            </svg>
+          </div>
+          <div class="logo-copy">
+            <h3>4 · Reading Current</h3>
+            <p>A line moves forward, doubles back, and continues. It represents the relaxed Tadoku loop: encounter, absorb, keep going.</p>
+            <div class="size-row">
+              <svg class="mark medium" viewBox="0 0 64 64"><path class="ink-stroke" d="M8 18h28c13 0 20 5 20 14s-7 14-20 14H14" stroke-width="8"/><path class="accent-fill" d="M8 38l15 8-15 8z"/></svg>
+              <svg class="mark small" viewBox="0 0 64 64"><path class="ink-stroke" d="M6 17h31c14 0 21 6 21 15s-7 15-21 15H13" stroke-width="10"/><path class="accent-fill" d="M5 37l17 10-17 10z"/></svg>
+            </div>
+            <div class="idea"><strong>Character:</strong> active, continuous, less obviously literary.</div>
+          </div>
+        </article>
+
+        <article class="logo-card">
+          <div class="logo-stage">
+            <svg class="mark large" viewBox="0 0 64 64" role="img" aria-label="Marginal Rhythm abstract mark">
+              <path class="ink-fill" d="M12 10h8v44h-8zM27 10h25v7H27zM27 27h19v7H27zM27 44h25v7H27z"/>
+              <path class="accent-fill" d="M8 25h16v11H8z"/>
+            </svg>
+          </div>
+          <div class="logo-copy">
+            <h3>5 · Marginal Rhythm</h3>
+            <p>A marked margin beside lines of changing length. It references reading traces and the interface accent rail without becoming a document icon.</p>
+            <div class="size-row">
+              <svg class="mark medium" viewBox="0 0 64 64"><path class="ink-fill" d="M12 10h8v44h-8zM27 10h25v7H27zM27 27h19v7H27zM27 44h25v7H27z"/><path class="accent-fill" d="M8 25h16v11H8z"/></svg>
+              <svg class="mark small" viewBox="0 0 64 64"><path class="ink-fill" d="M10 8h10v48H10zM28 9h27v9H28zM28 27h21v9H28zM28 45h27v9H28z"/><path class="accent-fill" d="M6 24h18v14H6z"/></svg>
+            </div>
+            <div class="idea"><strong>Character:</strong> archival, rhythmic, closest to the UI language.</div>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="guardrails">
+        <div class="guardrail"><strong>No hidden initials</strong><p>The final symbol should stand on form and meaning, not a letter-recognition trick.</p></div>
+        <div class="guardrail"><strong>One accent gesture</strong><p>Ink violet identifies the meaningful movement or interruption within each mark.</p></div>
+        <div class="guardrail"><strong>Survive at 16px</strong><p>Every territory must reduce to a compact two-color silhouette before refinement.</p></div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const root = document.documentElement;
+    const toggle = document.getElementById('theme-toggle');
+    toggle.addEventListener('click', () => {
+      const isDark = root.dataset.theme === 'dark';
+      root.dataset.theme = isDark ? '' : 'dark';
+      toggle.textContent = isDark ? 'Switch to dark' : 'Switch to light';
+      toggle.setAttribute('aria-pressed', String(!isDark));
+    });
+  </script>
+</body>
+</html>

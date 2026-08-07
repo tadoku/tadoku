@@ -1,0 +1,319 @@
+<!doctype html>
+<!-- Archived Tadoku Paper planning artifact. See ../README.md. -->
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Tadoku Paper — Button Grammar and Package Direction</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@700&amp;family=Open+Sans:wght@400;600;700&amp;display=swap" rel="stylesheet">
+  <style>
+    :root {
+      color-scheme: light;
+      --canvas: #f2efe8;
+      --surface: #fffefa;
+      --surface-soft: #e9e5dc;
+      --text: #211a1d;
+      --muted: #686064;
+      --rule: #c7c0b5;
+      --rule-strong: #393235;
+      --control-lower: #aba398;
+      --accent: #5747b8;
+      --accent-hover: #49399f;
+      --accent-lower: #35277f;
+      --accent-soft: #e8e4fa;
+      --danger: #a33333;
+      --danger-hover: #892828;
+      --danger-soft: #f4e2df;
+      --danger-action: #a33333;
+      --danger-action-hover: #892828;
+      --danger-action-lower: #651b1b;
+      --shadow: 3px 3px 0 rgba(33, 26, 29, .16);
+      --font-serif: Merriweather, Georgia, serif;
+      --font-sans: "Open Sans", ui-sans-serif, system-ui, sans-serif;
+    }
+    [data-theme="dark"] {
+      color-scheme: dark;
+      --canvas: #171517;
+      --surface: #222022;
+      --surface-soft: #2d292c;
+      --text: #f2eee8;
+      --muted: #b8afb3;
+      --rule: #4e484b;
+      --rule-strong: #81777c;
+      --control-lower: #696166;
+      --accent: #9a8bea;
+      --accent-hover: #6d5cc7;
+      --accent-lower: #40318c;
+      --accent-soft: #332d52;
+      --danger: #d77171;
+      --danger-hover: #b94f4f;
+      --danger-soft: #472729;
+      --danger-action: #9f3d3d;
+      --danger-action-hover: #b14a4a;
+      --danger-action-lower: #6f2424;
+      --shadow: 3px 3px 0 rgba(0, 0, 0, .48);
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--canvas); color: var(--text); font-family: var(--font-sans); line-height: 1.5; }
+    button { font: inherit; color: inherit; }
+    h1, h2, h3, p { margin-top: 0; }
+    h1, h2 { font-family: var(--font-serif); }
+    h1 { max-width: 890px; margin-bottom: 16px; font-size: clamp(38px, 6vw, 64px); line-height: 1; letter-spacing: -.035em; }
+    h2 { margin-bottom: 9px; font-size: clamp(26px, 3vw, 36px); line-height: 1.1; letter-spacing: -.02em; }
+    h3 { margin-bottom: 7px; font-size: 18px; line-height: 24px; }
+    p { color: var(--muted); }
+    code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+    .page { width: min(1160px, calc(100% - 32px)); margin: 0 auto; padding: 44px 0 72px; }
+    .topbar { display: flex; align-items: start; justify-content: space-between; gap: 24px; margin-bottom: 50px; }
+    .heading-lockup { display: grid; grid-template-columns: 58px 1fr; gap: 17px; align-items: start; }
+    .brand-mark { width: 58px; height: 58px; color: var(--text); }
+    .eyebrow { margin: 0 0 10px; color: var(--accent); font-size: 12px; font-weight: 700; letter-spacing: .14em; line-height: 16px; text-transform: uppercase; }
+    .lede, .section-intro { max-width: 800px; }
+    .lede { font-size: 18px; }
+    .section { margin-top: 56px; }
+    .section-intro { margin-bottom: 22px; }
+
+    .btn {
+      display: inline-flex;
+      min-height: 44px;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 9px 15px 8px;
+      border: 1px solid var(--rule);
+      border-bottom: 2px solid var(--control-lower);
+      border-radius: 0;
+      background: var(--surface);
+      color: var(--text);
+      cursor: pointer;
+      font-weight: 700;
+      transition: background-color 140ms ease, border-color 140ms ease, color 140ms ease;
+    }
+    .btn:hover { border-color: var(--rule-strong); border-bottom-color: var(--control-lower); background: var(--surface-soft); }
+    .btn.primary { border-color: var(--accent); border-bottom-color: var(--accent-lower); background: var(--accent); color: #fffefa; }
+    .btn.primary:hover { border-color: var(--accent-hover); border-bottom-color: var(--accent-lower); background: var(--accent-hover); }
+    [data-theme="dark"] .btn.primary { border-color: #6150bc; background: #6150bc; }
+    [data-theme="dark"] .btn.primary:hover { border-color: var(--accent-hover); background: var(--accent-hover); }
+    .btn.ghost { border-color: transparent; border-bottom-color: transparent; background: transparent; }
+    .btn.ghost:hover { border-color: transparent; background: var(--surface-soft); }
+    .btn.danger { border-color: var(--danger); border-bottom-color: var(--danger); color: var(--danger); }
+    .btn.danger:hover { background: var(--danger-soft); }
+    .btn.primary.danger { border-color: var(--danger-action); border-bottom-color: var(--danger-action-lower); background: var(--danger-action); color: #fffefa; }
+    .btn.primary.danger:hover { border-color: var(--danger-action-hover); background: var(--danger-action-hover); }
+    .btn.ghost.danger { border-color: transparent; border-bottom-color: transparent; }
+    .btn.compact { min-height: 36px; padding: 6px 11px 5px; font-size: 14px; }
+    .btn.icon-only { width: 44px; padding-inline: 0; }
+    .btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+    .btn:disabled { cursor: not-allowed; opacity: .55; }
+    .btn.loading::before,
+    .btn[aria-busy="true"]::before {
+      content: "";
+      width: 14px;
+      height: 14px;
+      border: 2px solid currentColor;
+      border-right-color: transparent;
+      border-radius: 50%;
+      animation: spin 700ms linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    @media (prefers-reduced-motion: reduce) { .btn.loading::before, .btn[aria-busy="true"]::before { animation: none; } }
+    .theme-toggle { flex: none; }
+    .icon { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+    .icon.close { width: 24px; height: 24px; }
+
+    .summary { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; border: 1px solid var(--rule); background: var(--rule); box-shadow: var(--shadow); }
+    .summary-item { padding: 18px; background: var(--surface); }
+    .summary-item strong { display: block; margin-bottom: 5px; }
+    .summary-item p { margin: 0; font-size: 13px; }
+
+    .button-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+    .button-card { display: flex; min-height: 270px; flex-direction: column; padding: 20px; border: 1px solid var(--rule); background: var(--surface); }
+    .button-card p { font-size: 14px; }
+    .button-stage { display: flex; flex: 1; align-items: center; justify-content: center; padding: 25px 10px; background: var(--canvas); }
+    .button-code { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--rule); color: var(--muted); font-size: 12px; }
+    .tag { display: inline-block; align-self: flex-start; margin-bottom: 8px; padding: 3px 6px; background: var(--accent-soft); color: var(--accent); font-size: 10px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+
+    .close-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; }
+    .dialog { border: 1px solid var(--rule-strong); background: var(--surface); box-shadow: var(--shadow); }
+    .dialog-head { display: flex; align-items: center; justify-content: space-between; gap: 15px; padding: 14px 17px; border-bottom: 1px solid var(--rule); }
+    .dialog-head h3 { margin: 0; }
+    .dialog-body { min-height: 115px; padding: 18px; }
+    .dialog-actions { display: flex; justify-content: flex-end; gap: 10px; padding: 14px 17px; border-top: 1px solid var(--rule); }
+    .callout { padding: 20px 22px 20px 28px; border-top: 1px solid var(--rule); border-right: 1px solid var(--rule); border-bottom: 1px solid var(--rule); background: var(--surface); position: relative; }
+    .callout::before { content: ""; position: absolute; top: -1px; bottom: -1px; left: 0; width: 6px; background: var(--accent); }
+    .callout p:last-child { margin-bottom: 0; }
+
+    .tone-table { overflow: hidden; border: 1px solid var(--rule-strong); background: var(--surface); }
+    .tone-row { display: grid; grid-template-columns: 150px 1fr 1fr; align-items: center; gap: 18px; padding: 16px 18px; }
+    .tone-row + .tone-row { border-top: 1px solid var(--rule); }
+    .tone-row.header { background: var(--surface-soft); font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+    .tone-row strong { font-size: 14px; }
+    .tone-row span { color: var(--muted); font-size: 13px; }
+
+    .parity { display: grid; grid-template-columns: 1fr 1fr; border: 1px solid var(--rule-strong); background: var(--surface); }
+    .code-panel { min-width: 0; }
+    .code-panel + .code-panel { border-left: 1px solid var(--rule); }
+    .code-head { padding: 12px 16px; border-bottom: 1px solid var(--rule); font-size: 12px; font-weight: 700; }
+    pre { margin: 0; padding: 18px; overflow-x: auto; background: var(--surface-soft); color: var(--text); font: 12px/1.7 ui-monospace, SFMono-Regular, Menlo, monospace; }
+    .architecture { display: grid; grid-template-columns: 1fr 1.2fr; gap: 22px; }
+    .package-card { padding: 22px; border: 1px solid var(--rule-strong); background: var(--surface); box-shadow: var(--shadow); }
+    .package-name { display: inline-block; margin: 6px 0 16px; padding: 8px 10px; background: var(--text); color: var(--surface); font: 700 16px/1 ui-monospace, monospace; }
+    .package-card ul { margin: 0; padding-left: 19px; color: var(--muted); font-size: 14px; }
+    .package-card li + li { margin-top: 7px; }
+    .migration { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; border: 1px solid var(--rule); background: var(--rule); }
+    .migration-step { padding: 18px; background: var(--surface); }
+    .migration-step b { display: block; margin-bottom: 5px; color: var(--accent); font-size: 10px; letter-spacing: .08em; text-transform: uppercase; }
+    .migration-step strong { display: block; margin-bottom: 4px; }
+    .migration-step span { color: var(--muted); font-size: 12px; }
+
+    @media (max-width: 900px) {
+      .button-grid { grid-template-columns: repeat(2, 1fr); }
+      .architecture { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 650px) {
+      .page { width: min(100% - 20px, 1160px); padding-top: 26px; }
+      .topbar { display: block; }
+      .theme-toggle { margin-top: 20px; }
+      .heading-lockup { grid-template-columns: 42px 1fr; }
+      .brand-mark { width: 42px; height: 42px; }
+      .summary, .button-grid, .close-grid, .parity, .migration { grid-template-columns: 1fr; }
+      .code-panel + .code-panel { border-left: 0; border-top: 1px solid var(--rule); }
+      .tone-row { grid-template-columns: 1fr; gap: 5px; }
+      .tone-row.header { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <header class="topbar">
+      <div class="heading-lockup">
+        <svg class="brand-mark" viewBox="0 0 64 64" role="img" aria-label="Tadoku Cut Meter mark">
+          <defs><mask id="brand-cut"><rect width="64" height="64" fill="white"/><path d="M2 43L62 17" stroke="black" stroke-width="7"/></mask></defs>
+          <path fill="currentColor" mask="url(#brand-cut)" d="M7 38h13v18H7zM25 24h14v32H25zM44 8h13v48H44z"/>
+        </svg>
+        <div>
+          <p class="eyebrow">Tadoku Paper · Button grammar · Study 11</p>
+          <h1>Names should describe emphasis, not intent.</h1>
+          <p class="lede">Default, primary, and ghost describe visual hierarchy. Danger modifies tone. “Close” is an action label whose visual treatment depends on where it appears.</p>
+        </div>
+      </div>
+      <button class="btn theme-toggle" id="theme-toggle" type="button" aria-pressed="false">Switch to dark</button>
+    </header>
+
+    <section>
+      <div class="summary">
+        <article class="summary-item"><strong>Design system</strong><p>Human-facing name: Tadoku Paper.</p></article>
+        <article class="summary-item"><strong>Package</strong><p>React package: <code>paper-ui</code>; never Next-specific.</p></article>
+        <article class="summary-item"><strong>Migration</strong><p>One complete application at a time; no mixed v1/v2 UI inside an app.</p></article>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="section-intro">
+        <p class="eyebrow">01 · Visual hierarchy</p>
+        <h2>Three variants cover ordinary actions</h2>
+        <p>There is no separate secondary variant in this proposal. Default already fills that role, which keeps both the vocabulary and the visual hierarchy smaller.</p>
+      </div>
+      <div class="button-grid">
+        <article class="button-card"><span class="tag">Default</span><h3>Neutral action</h3><p>Routine, reversible, or lower-priority actions: Cancel, Close, Edit, Back.</p><div class="button-stage"><button class="btn" type="button">Close</button></div><div class="button-code"><code>class="btn"</code></div></article>
+        <article class="button-card"><span class="tag">Primary</span><h3>Preferred next action</h3><p>The single action the interface most wants completed: Save, Submit, Join.</p><div class="button-stage"><button class="btn primary" type="button">Save update</button></div><div class="button-code"><code>class="btn primary"</code></div></article>
+        <article class="button-card"><span class="tag">Ghost</span><h3>Interface chrome</h3><p>Low-emphasis controls, toolbars, back actions, and compact close buttons.</p><div class="button-stage"><button class="btn ghost" type="button"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M11 6l-6 6 6 6"/></svg>Back</button></div><div class="button-code"><code>class="btn ghost"</code></div></article>
+        <article class="button-card"><span class="tag">Loading state</span><h3>Composable state</h3><p>Loading combines with any hierarchy. The class draws it; attributes carry behavior and meaning.</p><div class="button-stage"><button class="btn primary loading" type="button" aria-busy="true" disabled>Saving</button></div><div class="button-code"><code>class="btn primary loading"</code></div></article>
+        <article class="button-card"><span class="tag">Danger tone</span><h3>Destructive, lower emphasis</h3><p>Use when deletion is available but not the dialog’s intended next step.</p><div class="button-stage"><button class="btn danger" type="button">Delete draft</button></div><div class="button-code"><code>class="btn danger"</code></div></article>
+        <article class="button-card"><span class="tag">Primary + danger</span><h3>Destructive confirmation</h3><p>Reserved for a dedicated confirmation flow where destruction is the explicit next action.</p><div class="button-stage"><button class="btn primary danger" type="button">Delete permanently</button></div><div class="button-code"><code>class="btn primary danger"</code></div></article>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="section-intro">
+        <p class="eyebrow">02 · Is default the close button?</p>
+        <h2>Sometimes. Placement decides.</h2>
+        <p>A footer button participates in the action hierarchy. A top-right × belongs to window chrome and should visually recede.</p>
+      </div>
+      <div class="close-grid">
+        <div class="dialog">
+          <div class="dialog-head"><h3>Edit reading</h3></div>
+          <div class="dialog-body"><p>The footer uses a default Cancel button beside the primary Save action.</p></div>
+          <div class="dialog-actions"><button class="btn" type="button">Cancel</button><button class="btn primary" type="button">Save update</button></div>
+        </div>
+        <div class="dialog">
+          <div class="dialog-head"><h3>Reading details</h3><button class="btn ghost icon-only" type="button" aria-label="Close dialog"><svg class="icon close" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button></div>
+          <div class="dialog-body"><p>The top-right × is a ghost icon-only button with an accessible name.</p></div>
+          <div class="dialog-actions"><button class="btn" type="button">Close</button></div>
+        </div>
+      </div>
+      <div class="callout"><p><strong>Recommendation:</strong> do not create a `close` visual variant. “Close” is purpose; default or ghost is presentation. This prevents purpose-specific variants such as `save`, `edit`, or `back` from multiplying the API.</p></div>
+    </section>
+
+    <section class="section">
+      <div class="section-intro">
+        <p class="eyebrow">03 · Variant versus tone</p>
+        <h2>Danger modifies the hierarchy</h2>
+        <p>Keeping danger independent lets the same destructive action appear quietly in a menu or strongly in its final confirmation.</p>
+      </div>
+      <div class="tone-table">
+        <div class="tone-row header"><span>Combination</span><span>Visual meaning</span><span>Typical use</span></div>
+        <div class="tone-row"><strong>Default</strong><span>Neutral bordered action</span><span>Cancel, Close, Edit</span></div>
+        <div class="tone-row"><strong>Primary</strong><span>Filled violet action</span><span>Save, Submit, Join</span></div>
+        <div class="tone-row"><strong>Ghost</strong><span>Borderless low emphasis</span><span>Toolbar, ×, Back</span></div>
+        <div class="tone-row"><strong>Default + danger</strong><span>Outlined destructive tone</span><span>Delete option before confirmation</span></div>
+        <div class="tone-row"><strong>Primary + danger</strong><span>Filled destructive tone</span><span>Final delete confirmation</span></div>
+        <div class="tone-row"><strong>Ghost + danger</strong><span>Quiet destructive tone</span><span>Menu or compact toolbar</span></div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="section-intro">
+        <p class="eyebrow">04 · Class and component parity</p>
+        <h2>Two APIs, one CSS implementation</h2>
+      </div>
+      <div class="parity">
+        <div class="code-panel"><div class="code-head">Class API · always supported</div><pre>&lt;button className="btn"&gt;Close&lt;/button&gt;
+&lt;button className="btn primary"&gt;Save&lt;/button&gt;
+&lt;button
+  className="btn primary loading"
+  aria-busy="true"
+  disabled
+&gt;Saving&lt;/button&gt;</pre></div>
+        <div class="code-panel"><div class="code-head">React API · optional convenience</div><pre>&lt;Button&gt;Close&lt;/Button&gt;
+&lt;Button variant="primary"&gt;Save&lt;/Button&gt;
+&lt;Button
+  variant="primary"
+  loading
+&gt;Saving&lt;/Button&gt;</pre></div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="section-intro">
+        <p class="eyebrow">05 · Paper architecture</p>
+        <h2>React, but never Next.js-specific</h2>
+      </div>
+      <div class="architecture">
+        <article class="package-card">
+          <p class="eyebrow">Package</p><h3>Tadoku Paper</h3><div class="package-name">paper-ui</div>
+          <ul><li>React and React DOM as peer dependencies.</li><li>No `next`, `next/image`, `next/link`, or `next/font` dependency.</li><li>Exports components, tokens, CSS recipes, font assets, icons, and an optional Tailwind preset.</li><li>Router-specific links use the public class API or a caller-supplied React element.</li></ul>
+        </article>
+        <div class="migration">
+          <div class="migration-step"><b>1 · Big bang</b><strong>Style guide</strong><span>Build the complete Tadoku Paper catalogue and fixtures.</span></div>
+          <div class="migration-step"><b>2 · Big bang</b><strong>Admin</strong><span>Switch the whole application to compact Paper components.</span></div>
+          <div class="migration-step"><b>3 · Big bang</b><strong>Auth</strong><span>Switch the whole application to comfortable Paper forms.</span></div>
+          <div class="migration-step"><b>4 · Big bang</b><strong>webv2</strong><span>Switch the final application after Paper is proven elsewhere.</span></div>
+        </div>
+      </div>
+    </section>
+  </main>
+  <script>
+    const root = document.documentElement;
+    const toggle = document.getElementById('theme-toggle');
+    toggle.addEventListener('click', () => {
+      const isDark = root.dataset.theme === 'dark';
+      root.dataset.theme = isDark ? '' : 'dark';
+      toggle.textContent = isDark ? 'Switch to dark' : 'Switch to light';
+      toggle.setAttribute('aria-pressed', String(!isDark));
+    });
+  </script>
+</body>
+</html>

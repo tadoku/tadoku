@@ -7,6 +7,7 @@ The studies intentionally include rejected directions. They document why the fin
 ## Documents
 
 - [Decision log](decision-log.md)
+- [Implementation plan](implementation-plan.md)
 - [Original design-system refinement audit](artifacts/design-system-refinement-audit.html)
 
 ## Visual studies
@@ -29,4 +30,4 @@ The original audit also remains published at [Presenter](https://presentr.lab/ht
 
 ## Status
 
-The discussion phase is complete enough to produce the implementation plan. The plan should be added to this directory without replacing the audit, studies, or decision log.
+The discussion and implementation-planning phases are complete. The audit, visual studies, and decision log remain the design history; the implementation plan defines the phased delivery and application migrations.

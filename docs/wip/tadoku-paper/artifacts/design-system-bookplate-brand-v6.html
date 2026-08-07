@@ -1,0 +1,334 @@
+<!doctype html>
+<!-- Archived Tadoku Paper planning artifact. See ../README.md. -->
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Tadoku Bookplate — Immersion Brand Study</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --canvas: #f2efe8;
+      --surface: #fffefa;
+      --surface-soft: #e9e5dc;
+      --text: #211a1d;
+      --muted: #686064;
+      --rule: #c7c0b5;
+      --rule-strong: #393235;
+      --input-lower: #aba398;
+      --accent: #5747b8;
+      --action: #5747b8;
+      --action-hover: #49399f;
+      --action-lower: #35277f;
+      --on-action: #fffefa;
+      --accent-soft: #e8e4fa;
+    }
+
+    [data-theme="dark"] {
+      color-scheme: dark;
+      --canvas: #171517;
+      --surface: #222022;
+      --surface-soft: #2d292c;
+      --text: #f2eee8;
+      --muted: #b8afb3;
+      --rule: #4e484b;
+      --rule-strong: #81777c;
+      --input-lower: #696166;
+      --accent: #9a8bea;
+      --action: #6150bc;
+      --action-hover: #6d5cc7;
+      --action-lower: #40318c;
+      --on-action: #fffefa;
+      --accent-soft: #332d52;
+    }
+
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--canvas); color: var(--text); font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; line-height: 1.5; }
+    button, input { font: inherit; }
+    h1, h2, h3, p { margin-top: 0; }
+    h1, h2 { font-family: Georgia, "Times New Roman", serif; }
+    h1 { max-width: 900px; margin-bottom: 16px; font-size: clamp(38px, 6vw, 68px); line-height: .98; letter-spacing: -.035em; }
+    h2 { margin-bottom: 9px; font-size: clamp(26px, 3vw, 37px); line-height: 1.08; }
+    h3 { margin-bottom: 7px; font-size: 16px; }
+    p { color: var(--muted); }
+    .page { width: min(1180px, calc(100% - 32px)); margin: 0 auto; padding: 44px 0 72px; }
+    .topbar { display: flex; align-items: start; justify-content: space-between; gap: 24px; margin-bottom: 52px; }
+    .eyebrow { margin: 0 0 10px; color: var(--accent); font-size: 12px; font-weight: 850; letter-spacing: .14em; text-transform: uppercase; }
+    .lede, .section-intro { max-width: 790px; }
+    .lede { font-size: 18px; }
+    .section { margin-top: 54px; }
+    .section-intro { margin-bottom: 22px; }
+
+    .btn {
+      display: inline-flex;
+      min-height: 42px;
+      align-items: center;
+      justify-content: center;
+      padding: 9px 15px 8px;
+      border: 1px solid var(--rule);
+      border-bottom: 2px solid var(--rule-strong);
+      border-radius: 0;
+      background: var(--surface);
+      color: var(--text);
+      cursor: pointer;
+      font-weight: 750;
+      transition: background-color 140ms ease, border-color 140ms ease;
+    }
+    .btn:hover { background: var(--surface-soft); }
+    .btn.primary { border-color: var(--action); border-bottom-color: var(--action-lower); background: var(--action); color: var(--on-action); }
+    .btn.primary:hover { border-color: var(--action-hover); border-bottom-color: var(--action-lower); background: var(--action-hover); }
+    .btn:focus-visible, .field:focus { outline: 2px solid var(--accent); outline-offset: 2px; }
+    .theme-toggle { flex: none; }
+    .field { width: 100%; min-height: 42px; padding: 9px 11px 8px; border: 1px solid var(--rule); border-bottom: 2px solid var(--input-lower); border-radius: 0; background: var(--surface); color: var(--text); }
+    .field:focus { border-color: var(--accent); border-bottom-color: var(--accent); }
+
+    .rail-card { position: relative; border-top: 1px solid var(--rule); border-right: 1px solid var(--rule); border-bottom: 1px solid var(--rule); background: var(--surface); }
+    .rail-card::before { content: ""; position: absolute; top: -1px; bottom: -1px; left: 0; width: 6px; background: var(--accent); }
+    .rail-content { padding: 27px 28px 27px 34px; }
+    .dark-decision { display: grid; grid-template-columns: 1fr 1fr; gap: 34px; }
+    .decision-copy { padding-right: 24px; }
+    .decision-list { margin: 18px 0 0; padding: 0; list-style: none; border: 1px solid var(--rule); }
+    .decision-list li { padding: 12px 14px; color: var(--muted); font-size: 14px; }
+    .decision-list li + li { border-top: 1px solid var(--rule); }
+    .decision-list strong { color: var(--text); }
+    .mini-form { padding-left: 32px; border-left: 1px solid var(--rule); }
+    label { display: block; margin: 0 0 6px; font-size: 12px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; }
+    .form-row { display: grid; grid-template-columns: 1fr auto; gap: 10px; }
+    .form-note { margin: 10px 0 0; font-size: 13px; }
+
+    .strategy { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; margin-bottom: 20px; border: 1px solid var(--rule); background: var(--rule); }
+    .strategy-item { padding: 20px; background: var(--surface); }
+    .strategy-item strong { display: block; margin-bottom: 5px; }
+    .strategy-item p { margin: 0; font-size: 14px; }
+    .concepts { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; }
+    .concept { display: flex; min-height: 455px; flex-direction: column; border: 1px solid var(--rule); background: var(--surface); }
+    .concept-stage { display: grid; min-height: 190px; place-items: center; border-bottom: 1px solid var(--rule); background: var(--canvas); }
+    .concept-copy { display: flex; flex: 1; flex-direction: column; padding: 17px; }
+    .concept-copy p { margin-bottom: 13px; font-size: 14px; }
+    .territory { display: inline-block; align-self: flex-start; margin-bottom: 9px; padding: 3px 6px; background: var(--accent-soft); color: var(--accent); font-size: 10px; font-weight: 850; letter-spacing: .08em; text-transform: uppercase; }
+    .lockup { display: flex; align-items: center; gap: 11px; margin-top: auto; padding: 12px 0; border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule); }
+    .wordmark { color: var(--text); font-size: 15px; font-weight: 900; letter-spacing: .13em; }
+    .size-row { display: flex; align-items: center; gap: 14px; padding-top: 12px; }
+    .size-label { margin-left: auto; color: var(--muted); font-size: 10px; text-transform: uppercase; }
+    .mark { display: block; color: var(--text); }
+    .mark.large { width: 98px; height: 98px; }
+    .mark.lock { width: 30px; height: 30px; }
+    .mark.medium { width: 28px; height: 28px; }
+    .mark.small { width: 16px; height: 16px; }
+    .ink-fill { fill: currentColor; }
+    .ink-stroke { fill: none; stroke: currentColor; }
+    .accent-fill { fill: var(--accent); }
+    .accent-stroke { fill: none; stroke: var(--accent); }
+
+    .recommendation { margin-top: 20px; padding: 22px 24px; border-left: 6px solid var(--accent); background: var(--surface); }
+    .recommendation p:last-child { margin-bottom: 0; }
+
+    @media (max-width: 1000px) {
+      .concepts { grid-template-columns: repeat(2, 1fr); }
+      .dark-decision { grid-template-columns: 1fr; }
+      .decision-copy { padding-right: 0; }
+      .mini-form { padding: 24px 0 0; border-top: 1px solid var(--rule); border-left: 0; }
+    }
+    @media (max-width: 650px) {
+      .page { width: min(100% - 20px, 1180px); padding-top: 26px; }
+      .topbar { display: block; }
+      .theme-toggle { margin-top: 20px; }
+      .concepts, .strategy { grid-template-columns: 1fr; }
+      .form-row { grid-template-columns: 1fr; }
+      .rail-content { padding: 22px 18px 22px 26px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">Tadoku design discussion · P0.2 · Study 6</p>
+        <h1>Language immersion, not a letter-shaped logo.</h1>
+        <p class="lede">A third logo reset based on what Tadoku actually does: build a habit of consuming foreign-language media through reading, listening, tracking, and friendly contests.</p>
+      </div>
+      <button class="btn theme-toggle" id="theme-toggle" type="button" aria-pressed="false">Switch to dark</button>
+    </header>
+
+    <section class="section">
+      <div class="section-intro">
+        <p class="eyebrow">01 · Dark primary action</p>
+        <h2>Light text, with a darker action violet</h2>
+        <p>Light text does read more naturally on a filled primary button. In dark mode, the structural accent can stay bright while the button fill uses a deeper companion violet, preserving contrast instead of placing white text on pale lavender.</p>
+      </div>
+      <article class="rail-card">
+        <div class="rail-content dark-decision">
+          <div class="decision-copy">
+            <h3>Separate accent ink from action fill</h3>
+            <p>One violet does not have to perform every job. Bright ink violet remains excellent for rails, focus rings, and small marks in dark mode; a deeper violet makes a better button surface.</p>
+            <ul class="decision-list">
+              <li><strong>Dark structural accent:</strong> lifted violet for thin lines and small details.</li>
+              <li><strong>Dark action fill:</strong> deeper violet behind light text.</li>
+              <li><strong>Hover:</strong> a controlled lift in brightness, without changing the text color.</li>
+            </ul>
+          </div>
+          <form class="mini-form">
+            <label for="minutes">Listening minutes</label>
+            <div class="form-row">
+              <input class="field" id="minutes" value="35 minutes">
+              <button class="btn primary" type="button">Add listening</button>
+            </div>
+            <p class="form-note">Use the theme switch above, then hover the primary button.</p>
+          </form>
+        </div>
+      </article>
+    </section>
+
+    <section class="section">
+      <div class="section-intro">
+        <p class="eyebrow">02 · Brand territories</p>
+        <h2>Five concepts based on immersion and momentum</h2>
+        <p>These marks are evaluated beside a neutral Tadoku wordmark and at favicon size. None contains a hidden initial. They deliberately range from broad brand ideas to narrower contest and media ideas so we can decide what the identity should emphasize.</p>
+      </div>
+      <div class="strategy">
+        <div class="strategy-item"><strong>Core promise</strong><p>Understand more by steadily consuming native-language material.</p></div>
+        <div class="strategy-item"><strong>Supported modes</strong><p>Reading, listening, video, and other trackable media.</p></div>
+        <div class="strategy-item"><strong>Social energy</strong><p>Friendly contests create momentum, but winning is not the only point.</p></div>
+      </div>
+
+      <div class="concepts">
+        <article class="concept">
+          <div class="concept-stage">
+            <svg class="mark large" viewBox="0 0 64 64" role="img" aria-label="Immersion Field mark">
+              <path class="ink-stroke" d="M55 19V9H9v46h46V45M47 24v-7H17v30h30v-7M39 28v-3H25v14h14v-3" stroke-width="5" stroke-linecap="square"/>
+              <path class="accent-fill" d="M48 27h10v10H48z"/>
+            </svg>
+          </div>
+          <div class="concept-copy">
+            <span class="territory">Immersion</span>
+            <h3>1 · Immersion Field</h3>
+            <p>Nested fields represent going deeper into a language. Their openings form a route rather than a closed target; the violet block is the next piece of input.</p>
+            <div class="lockup">
+              <svg class="mark lock" viewBox="0 0 64 64"><path class="ink-stroke" d="M55 19V9H9v46h46V45M47 24v-7H17v30h30v-7M39 28v-3H25v14h14v-3" stroke-width="6"/><path class="accent-fill" d="M48 27h10v10H48z"/></svg>
+              <span class="wordmark">TADOKU</span>
+            </div>
+            <div class="size-row">
+              <svg class="mark medium" viewBox="0 0 64 64"><path class="ink-stroke" d="M55 19V9H9v46h46V45M47 24v-7H17v30h30v-7M39 28v-3H25v14h14v-3" stroke-width="7"/><path class="accent-fill" d="M47 26h12v12H47z"/></svg>
+              <svg class="mark small" viewBox="0 0 64 64"><path class="ink-stroke" d="M56 20V8H8v48h48V44M47 24v-8H16v32h31v-8M39 27v-3H24v16h15v-3" stroke-width="9"/><path class="accent-fill" d="M46 25h14v14H46z"/></svg>
+              <span class="size-label">28 / 16</span>
+            </div>
+          </div>
+        </article>
+
+        <article class="concept">
+          <div class="concept-stage">
+            <svg class="mark large" viewBox="0 0 64 64" role="img" aria-label="Listening Signal mark">
+              <path class="ink-fill" d="M6 28h7v8H6zM17 20h7v24h-7zM28 10h8v44h-8zM40 17h7v30h-7zM51 25h7v14h-7z"/>
+              <path class="accent-fill" d="M28 10h8v16h-8zM28 38h8v16h-8z"/>
+            </svg>
+          </div>
+          <div class="concept-copy">
+            <span class="territory">Listening</span>
+            <h3>2 · Living Signal</h3>
+            <p>An uneven signal that can be read as sound, speech cadence, or activity. The violet interruptions suggest moments of recognition inside continuous input.</p>
+            <div class="lockup">
+              <svg class="mark lock" viewBox="0 0 64 64"><path class="ink-fill" d="M6 28h7v8H6zM17 20h7v24h-7zM28 10h8v44h-8zM40 17h7v30h-7zM51 25h7v14h-7z"/><path class="accent-fill" d="M28 10h8v16h-8zM28 38h8v16h-8z"/></svg>
+              <span class="wordmark">TADOKU</span>
+            </div>
+            <div class="size-row">
+              <svg class="mark medium" viewBox="0 0 64 64"><path class="ink-fill" d="M5 27h8v10H5zM17 19h8v26h-8zM28 8h8v48h-8zM40 16h8v32h-8zM52 24h8v16h-8z"/><path class="accent-fill" d="M28 8h8v17h-8zM28 39h8v17h-8z"/></svg>
+              <svg class="mark small" viewBox="0 0 64 64"><path class="ink-fill" d="M3 26h10v12H3zM16 17h10v30H16zM28 6h10v52H28zM41 14h10v36H41zM54 23h8v18h-8z"/><path class="accent-fill" d="M28 6h10v19H28zM28 39h10v19H28z"/></svg>
+              <span class="size-label">28 / 16</span>
+            </div>
+          </div>
+        </article>
+
+        <article class="concept">
+          <div class="concept-stage">
+            <svg class="mark large" viewBox="0 0 64 64" role="img" aria-label="Language Weave mark">
+              <path class="ink-fill" d="M7 13h34l16 19-16 19H7l16-19z"/>
+              <path fill="var(--canvas)" d="M18 20h20l10 12-10 12H18l10-12z"/>
+              <path class="accent-fill" d="M23 13h18l16 19-16 19H23l16-19z" opacity=".92"/>
+              <path fill="var(--canvas)" d="M32 20h6l10 12-10 12h-6l10-12z"/>
+            </svg>
+          </div>
+          <div class="concept-copy">
+            <span class="territory">Language learning</span>
+            <h3>3 · Language Weave</h3>
+            <p>Two directional ribbons overlap and share a center. It treats language learning as patterns becoming connected, not as translation between letterforms.</p>
+            <div class="lockup">
+              <svg class="mark lock" viewBox="0 0 64 64"><path class="ink-fill" d="M7 13h34l16 19-16 19H7l16-19z"/><path fill="var(--surface)" d="M18 20h20l10 12-10 12H18l10-12z"/><path class="accent-fill" d="M23 13h18l16 19-16 19H23l16-19z"/><path fill="var(--surface)" d="M32 20h6l10 12-10 12h-6l10-12z"/></svg>
+              <span class="wordmark">TADOKU</span>
+            </div>
+            <div class="size-row">
+              <svg class="mark medium" viewBox="0 0 64 64"><path class="ink-fill" d="M7 13h34l16 19-16 19H7l16-19z"/><path fill="var(--canvas)" d="M18 20h20l10 12-10 12H18l10-12z"/><path class="accent-fill" d="M23 13h18l16 19-16 19H23l16-19z"/><path fill="var(--canvas)" d="M32 20h6l10 12-10 12h-6l10-12z"/></svg>
+              <svg class="mark small" viewBox="0 0 64 64"><path class="ink-fill" d="M4 11h38l18 21-18 21H4l18-21z"/><path fill="var(--canvas)" d="M17 20h21l10 12-10 12H17l10-12z"/><path class="accent-fill" d="M23 11h19l18 21-18 21H23l18-21z"/><path fill="var(--canvas)" d="M33 20h5l10 12-10 12h-5l10-12z"/></svg>
+              <span class="size-label">28 / 16</span>
+            </div>
+          </div>
+        </article>
+
+        <article class="concept">
+          <div class="concept-stage">
+            <svg class="mark large" viewBox="0 0 64 64" role="img" aria-label="Friendly Pace mark">
+              <path class="ink-stroke" d="M9 17h24c14 0 22 6 22 15s-8 15-22 15H9M9 29h24c5 0 8 1 8 3s-3 3-8 3H9" stroke-width="6" stroke-linecap="square"/>
+              <path class="accent-fill" d="M48 24h10v16H48z"/>
+            </svg>
+          </div>
+          <div class="concept-copy">
+            <span class="territory">Friendly contest</span>
+            <h3>4 · Friendly Pace</h3>
+            <p>Two participants travel the same course at different rhythms. There is a checkpoint, but no winner’s podium—the competition is a structure for momentum.</p>
+            <div class="lockup">
+              <svg class="mark lock" viewBox="0 0 64 64"><path class="ink-stroke" d="M9 17h24c14 0 22 6 22 15s-8 15-22 15H9M9 29h24c5 0 8 1 8 3s-3 3-8 3H9" stroke-width="7"/><path class="accent-fill" d="M48 24h10v16H48z"/></svg>
+              <span class="wordmark">TADOKU</span>
+            </div>
+            <div class="size-row">
+              <svg class="mark medium" viewBox="0 0 64 64"><path class="ink-stroke" d="M7 16h26c15 0 23 7 23 16s-8 16-23 16H7M7 28h26c6 0 9 2 9 4s-3 4-9 4H7" stroke-width="7"/><path class="accent-fill" d="M48 23h11v18H48z"/></svg>
+              <svg class="mark small" viewBox="0 0 64 64"><path class="ink-stroke" d="M5 15h29c16 0 25 7 25 17s-9 17-25 17H5M5 27h29c7 0 10 2 10 5s-3 5-10 5H5" stroke-width="9"/><path class="accent-fill" d="M48 21h13v22H48z"/></svg>
+              <span class="size-label">28 / 16</span>
+            </div>
+          </div>
+        </article>
+
+        <article class="concept">
+          <div class="concept-stage">
+            <svg class="mark large" viewBox="0 0 64 64" role="img" aria-label="Media Feed mark">
+              <path class="ink-fill" d="M8 10h21v21H8zM35 10h21v21H35zM8 37h21v17H8zM35 37h21v17H35z"/>
+              <path fill="var(--canvas)" d="M14 16h9v9h-9zM40 16h11v3H40zM40 22h8v3h-8zM14 43h9v5h-9zM41 41l10 5-10 5z"/>
+              <path class="accent-fill" d="M8 37h21v17H8z"/>
+              <path fill="var(--canvas)" d="M13 46h3l2-5 3 10 2-5h2"/>
+            </svg>
+          </div>
+          <div class="concept-copy">
+            <span class="territory">Media consumption</span>
+            <h3>5 · Media Feed</h3>
+            <p>A compact field of different input formats—text, audio, video, and pages—with one active violet tile. It is broad, but intentionally more product-like.</p>
+            <div class="lockup">
+              <svg class="mark lock" viewBox="0 0 64 64"><path class="ink-fill" d="M8 10h21v21H8zM35 10h21v21H35zM8 37h21v17H8zM35 37h21v17H35z"/><path fill="var(--surface)" d="M14 16h9v9h-9zM40 16h11v3H40zM40 22h8v3h-8zM41 41l10 5-10 5z"/><path class="accent-fill" d="M8 37h21v17H8z"/></svg>
+              <span class="wordmark">TADOKU</span>
+            </div>
+            <div class="size-row">
+              <svg class="mark medium" viewBox="0 0 64 64"><path class="ink-fill" d="M8 10h21v21H8zM35 10h21v21H35zM8 37h21v17H8zM35 37h21v17H35z"/><path fill="var(--canvas)" d="M14 16h9v9h-9zM40 16h11v3H40zM40 22h8v3h-8zM41 41l10 5-10 5z"/><path class="accent-fill" d="M8 37h21v17H8z"/></svg>
+              <svg class="mark small" viewBox="0 0 64 64"><path class="ink-fill" d="M6 8h23v23H6zM35 8h23v23H35zM6 37h23v19H6zM35 37h23v19H35z"/><path fill="var(--canvas)" d="M13 15h10v10H13zM41 15h11v4H41zM41 22h8v4h-8zM41 41l12 6-12 6z"/><path class="accent-fill" d="M6 37h23v19H6z"/></svg>
+              <span class="size-label">28 / 16</span>
+            </div>
+          </div>
+        </article>
+      </div>
+
+      <div class="recommendation">
+        <p class="eyebrow">Brand judgment</p>
+        <h3>Keep the master mark broad; let contests have their own badge.</h3>
+        <p>Immersion Field and Language Weave are the broadest master-brand territories. Living Signal is viable if listening should become the strongest association. Friendly Pace and Media Feed are useful tests, but feel better suited to a contest badge or product feature than the permanent Tadoku mark.</p>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const root = document.documentElement;
+    const toggle = document.getElementById('theme-toggle');
+    toggle.addEventListener('click', () => {
+      const isDark = root.dataset.theme === 'dark';
+      root.dataset.theme = isDark ? '' : 'dark';
+      toggle.textContent = isDark ? 'Switch to dark' : 'Switch to light';
+      toggle.setAttribute('aria-pressed', String(!isDark));
+    });
+  </script>
+</body>
+</html>

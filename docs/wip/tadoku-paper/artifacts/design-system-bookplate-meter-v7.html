@@ -1,0 +1,280 @@
+<!doctype html>
+<!-- Archived Tadoku Paper planning artifact. See ../README.md. -->
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Tadoku Bookplate — Floating Surfaces and Meter Mark Study</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --canvas: #f2efe8;
+      --surface: #fffefa;
+      --surface-soft: #e9e5dc;
+      --text: #211a1d;
+      --muted: #686064;
+      --rule: #c7c0b5;
+      --rule-strong: #393235;
+      --accent: #5747b8;
+      --accent-hover: #49399f;
+      --accent-soft: #e8e4fa;
+      --float-shadow: 3px 3px 0 rgba(33, 26, 29, .16);
+      --showcase-shadow: 5px 5px 0 rgba(33, 26, 29, .13);
+    }
+    [data-theme="dark"] {
+      color-scheme: dark;
+      --canvas: #171517;
+      --surface: #222022;
+      --surface-soft: #2d292c;
+      --text: #f2eee8;
+      --muted: #b8afb3;
+      --rule: #4e484b;
+      --rule-strong: #81777c;
+      --accent: #9a8bea;
+      --accent-hover: #ac9ff1;
+      --accent-soft: #332d52;
+      --float-shadow: 3px 3px 0 rgba(0, 0, 0, .48);
+      --showcase-shadow: 5px 5px 0 rgba(0, 0, 0, .42);
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--canvas); color: var(--text); font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; line-height: 1.5; }
+    button { font: inherit; color: inherit; }
+    h1, h2, h3, p { margin-top: 0; }
+    h1, h2 { font-family: Georgia, "Times New Roman", serif; }
+    h1 { max-width: 900px; margin-bottom: 16px; font-size: clamp(38px, 6vw, 68px); line-height: .98; letter-spacing: -.035em; }
+    h2 { margin-bottom: 9px; font-size: clamp(26px, 3vw, 37px); line-height: 1.08; }
+    h3 { margin-bottom: 7px; font-size: 16px; }
+    p { color: var(--muted); }
+    .page { width: min(1180px, calc(100% - 32px)); margin: 0 auto; padding: 44px 0 72px; }
+    .topbar { display: flex; align-items: start; justify-content: space-between; gap: 24px; margin-bottom: 52px; }
+    .eyebrow { margin: 0 0 10px; color: var(--accent); font-size: 12px; font-weight: 850; letter-spacing: .14em; text-transform: uppercase; }
+    .lede, .section-intro { max-width: 800px; }
+    .lede { font-size: 18px; }
+    .section { margin-top: 54px; }
+    .section-intro { margin-bottom: 22px; }
+    .btn { display: inline-flex; min-height: 42px; align-items: center; justify-content: center; padding: 9px 15px 8px; border: 1px solid var(--rule-strong); border-bottom-width: 2px; border-radius: 0; background: var(--surface); cursor: pointer; font-weight: 750; }
+    .btn:hover { background: var(--surface-soft); }
+    .btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+    .theme-toggle { flex: none; }
+
+    .floating-system { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+    .surface-study { min-height: 260px; padding: 22px; border: 1px solid var(--rule); background: var(--surface-soft); }
+    .surface-study h3 { margin-bottom: 4px; }
+    .surface-study > p { font-size: 13px; }
+    .surface-demo { margin-top: 24px; background: var(--surface); }
+    .surface-demo.inline { padding: 18px; border: 1px solid var(--rule); }
+    .surface-demo.floating { padding: 18px; border: 1px solid var(--rule-strong); box-shadow: var(--float-shadow); }
+    .surface-demo.showcase { padding: 18px; border: 1px solid var(--rule-strong); box-shadow: var(--showcase-shadow); }
+    .surface-demo strong { display: block; margin-bottom: 4px; }
+    .surface-demo span { color: var(--muted); font-size: 12px; }
+    .usage-rule { display: grid; grid-template-columns: 180px 1fr; margin-top: 18px; border: 1px solid var(--rule-strong); background: var(--surface); }
+    .usage-rule strong { padding: 18px; border-right: 1px solid var(--rule); font-family: Georgia, serif; }
+    .usage-rule p { margin: 0; padding: 18px; font-size: 13px; }
+
+    .reference-note { display: grid; grid-template-columns: 170px 1fr; gap: 24px; align-items: center; margin-bottom: 20px; padding: 20px; border-left: 6px solid var(--accent); background: var(--surface); }
+    .reference-bars { display: flex; height: 72px; align-items: end; justify-content: center; gap: 9px; }
+    .reference-bars i { display: block; width: 22px; background: var(--text); }
+    .reference-bars i:nth-child(1) { height: 28px; }
+    .reference-bars i:nth-child(2) { height: 49px; }
+    .reference-bars i:nth-child(3) { height: 70px; }
+    .reference-note p { margin: 0; font-size: 14px; }
+
+    .marks { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; }
+    .mark-card { display: flex; min-height: 500px; flex-direction: column; border: 1px solid var(--rule); background: var(--surface); }
+    .mono-stage { display: grid; min-height: 198px; place-items: center; border-bottom: 1px solid var(--rule); background: var(--surface); }
+    .mark-copy { display: flex; flex: 1; flex-direction: column; padding: 17px; }
+    .mark-copy p { margin-bottom: 14px; font-size: 14px; }
+    .mark-name { margin-bottom: 7px; }
+    .tag { display: inline-block; align-self: flex-start; margin-bottom: 8px; padding: 3px 6px; background: var(--accent-soft); color: var(--accent); font-size: 10px; font-weight: 850; letter-spacing: .08em; text-transform: uppercase; }
+    .mark-tests { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; margin-top: auto; border: 1px solid var(--rule); background: var(--rule); }
+    .mark-test { display: grid; min-height: 78px; place-items: center; background: var(--surface); }
+    .mark-test.reverse { background: var(--text); color: var(--surface); }
+    .lockup { display: flex; align-items: center; gap: 9px; padding-top: 13px; }
+    .wordmark { font-size: 14px; font-weight: 900; letter-spacing: .13em; }
+    .mark { display: block; color: currentColor; }
+    .mark.hero { width: 100px; height: 100px; }
+    .mark.test { width: 34px; height: 34px; }
+    .mark.lock { width: 29px; height: 29px; }
+    .ink { fill: currentColor; }
+    .accent { fill: var(--accent); }
+    .accent-version .accentable { fill: var(--accent); }
+    .mono-version .accentable { fill: currentColor; }
+    .test-label { margin-left: auto; color: var(--muted); font-size: 9px; letter-spacing: .08em; text-transform: uppercase; }
+    .design-rule { margin-top: 20px; padding: 21px 24px; border: 1px solid var(--rule-strong); background: var(--surface); box-shadow: var(--float-shadow); }
+    .design-rule p:last-child { margin-bottom: 0; }
+
+    @media (max-width: 1000px) {
+      .marks { grid-template-columns: repeat(2, 1fr); }
+      .floating-system { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 650px) {
+      .page { width: min(100% - 20px, 1180px); padding-top: 26px; }
+      .topbar { display: block; }
+      .theme-toggle { margin-top: 20px; }
+      .marks { grid-template-columns: 1fr; }
+      .usage-rule, .reference-note { grid-template-columns: 1fr; }
+      .usage-rule strong { border-right: 0; border-bottom: 1px solid var(--rule); }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">Tadoku design discussion · P0.2 · Study 7</p>
+        <h1>Hard-edged lift and a simpler mark.</h1>
+        <p class="lede">This pass promotes the floating treatment into the design language and narrows the logo exploration to a restrained meter family: one-color first, violet optional.</p>
+      </div>
+      <button class="btn theme-toggle" id="theme-toggle" type="button" aria-pressed="false">Switch to dark</button>
+    </header>
+
+    <section class="section">
+      <div class="section-intro">
+        <p class="eyebrow">01 · Elevation role</p>
+        <h2>Floating is structural, not soft</h2>
+        <p>The hard offset shadow from the second Bookplate study fits the old print and library character. It becomes a named surface role with strict scope, alongside inline and showcase surfaces.</p>
+      </div>
+      <div class="floating-system">
+        <article class="surface-study">
+          <h3>Inline</h3>
+          <p>Normal cards and sections remain flat.</p>
+          <div class="surface-demo inline"><strong>Reading summary</strong><span>1px warm neutral boundary</span></div>
+        </article>
+        <article class="surface-study">
+          <h3>Floating</h3>
+          <p>Menus, popovers, date pickers, and dialogs.</p>
+          <div class="surface-demo floating"><strong>Choose a contest</strong><span>1px strong edge + 3px hard offset</span></div>
+        </article>
+        <article class="surface-study">
+          <h3>Showcase</h3>
+          <p>Rare branded shells and editorial specimens.</p>
+          <div class="surface-demo showcase"><strong>August Tadoku</strong><span>1px strong edge + 5px hard offset</span></div>
+        </article>
+      </div>
+      <div class="usage-rule"><strong>Approved direction</strong><p>Include hard-edged elevation in the design language. Use 3px floating depth for overlays and 5px showcase depth sparingly. Ordinary cards stay flat so elevation continues to communicate layer and importance.</p></div>
+    </section>
+
+    <section class="section">
+      <div class="section-intro">
+        <p class="eyebrow">02 · Compact mark</p>
+        <h2>A meter family, tested without color</h2>
+        <p>The Bookmeter reference succeeds because three growing bars communicate accumulation immediately. These are original Tadoku-oriented variations on that broad idea—not redraws of its exact proportions. Every hero mark below is monochrome.</p>
+      </div>
+      <div class="reference-note">
+        <div class="reference-bars" aria-label="Three growing bars"><i></i><i></i><i></i></div>
+        <p><strong>What to borrow as a principle:</strong> very few shapes, a clear rhythm, and meaning visible in silhouette. <strong>What not to borrow:</strong> Bookmeter’s exact three-bar proportions or its green treatment. Tadoku needs its own construction.</p>
+      </div>
+
+      <div class="marks">
+        <article class="mark-card">
+          <div class="mono-stage">
+            <svg class="mark hero mono-version" viewBox="0 0 64 64" role="img" aria-label="Three Beat Meter monochrome logo">
+              <path class="ink" d="M8 39h12v17H8zM26 26h12v30H26zM44 8h12v48H44z"/>
+            </svg>
+          </div>
+          <div class="mark-copy">
+            <span class="tag">Pure meter</span>
+            <h3 class="mark-name">1 · Three Beat</h3>
+            <p>The clearest possible growth mark. Uneven height changes feel like listening beats as well as tracked progress.</p>
+            <div class="mark-tests">
+              <div class="mark-test reverse"><svg class="mark test" viewBox="0 0 64 64"><path class="ink" d="M8 39h12v17H8zM26 26h12v30H26zM44 8h12v48H44z"/></svg></div>
+              <div class="mark-test"><svg class="mark test accent-version" viewBox="0 0 64 64"><path class="ink" d="M8 39h12v17H8zM26 26h12v30H26z"/><path class="accentable" d="M44 8h12v48H44z"/></svg></div>
+            </div>
+            <div class="lockup"><svg class="mark lock" viewBox="0 0 64 64"><path class="ink" d="M8 39h12v17H8zM26 26h12v30H26zM44 8h12v48H44z"/></svg><span class="wordmark">TADOKU</span><span class="test-label">Lockup</span></div>
+          </div>
+        </article>
+
+        <article class="mark-card">
+          <div class="mono-stage">
+            <svg class="mark hero mono-version" viewBox="0 0 64 64" role="img" aria-label="Page Meter monochrome logo">
+              <path class="ink" d="M7 38h13v18H7zM25 25h14v31H25zM44 8h13v48H44z"/>
+              <path fill="var(--surface)" d="M7 38l13-7v7zM25 25l14-7v7zM44 8l13-7v7z"/>
+            </svg>
+          </div>
+          <div class="mark-copy">
+            <span class="tag">Reading + growth</span>
+            <h3 class="mark-name">2 · Page Meter</h3>
+            <p>Three rising bars with identical page-like notches. The silhouette remains simple while the repeated cut gives it a Tadoku-specific detail.</p>
+            <div class="mark-tests">
+              <div class="mark-test reverse"><svg class="mark test" viewBox="0 0 64 64"><path class="ink" d="M7 38h13v18H7zM25 25h14v31H25zM44 8h13v48H44z"/><path fill="var(--text)" d="M7 38l13-7v7zM25 25l14-7v7zM44 8l13-7v7z"/></svg></div>
+              <div class="mark-test"><svg class="mark test accent-version" viewBox="0 0 64 64"><path class="ink" d="M7 38h13v18H7zM25 25h14v31H25z"/><path class="accentable" d="M44 8h13v48H44z"/><path fill="var(--surface)" d="M7 38l13-7v7zM25 25l14-7v7zM44 8l13-7v7z"/></svg></div>
+            </div>
+            <div class="lockup"><svg class="mark lock" viewBox="0 0 64 64"><path class="ink" d="M7 38h13v18H7zM25 25h14v31H25zM44 8h13v48H44z"/><path fill="var(--surface)" d="M7 38l13-7v7zM25 25l14-7v7zM44 8l13-7v7z"/></svg><span class="wordmark">TADOKU</span><span class="test-label">Lockup</span></div>
+          </div>
+        </article>
+
+        <article class="mark-card">
+          <div class="mono-stage">
+            <svg class="mark hero mono-version" viewBox="0 0 64 64" role="img" aria-label="Cut Meter monochrome logo">
+              <defs><mask id="cut-hero"><rect width="64" height="64" fill="white"/><path d="M2 43L62 17" stroke="black" stroke-width="7"/></mask></defs>
+              <path class="ink" mask="url(#cut-hero)" d="M7 38h13v18H7zM25 24h14v32H25zM44 8h13v48H44z"/>
+            </svg>
+          </div>
+          <div class="mark-copy">
+            <span class="tag">Weave simplified</span>
+            <h3 class="mark-name">3 · Cut Meter</h3>
+            <p>A single diagonal passage cuts through three rising bars. It preserves the directional energy of Language Weave using only one silhouette and negative space.</p>
+            <div class="mark-tests">
+              <div class="mark-test reverse"><svg class="mark test" viewBox="0 0 64 64"><defs><mask id="cut-reverse"><rect width="64" height="64" fill="white"/><path d="M2 43L62 17" stroke="black" stroke-width="8"/></mask></defs><path class="ink" mask="url(#cut-reverse)" d="M7 38h13v18H7zM25 24h14v32H25zM44 8h13v48H44z"/></svg></div>
+              <div class="mark-test"><svg class="mark test accent-version" viewBox="0 0 64 64"><defs><mask id="cut-accent"><rect width="64" height="64" fill="white"/><path d="M2 43L62 17" stroke="black" stroke-width="8"/></mask></defs><g mask="url(#cut-accent)"><path class="ink" d="M7 38h13v18H7zM25 24h14v32H25z"/><path class="accentable" d="M44 8h13v48H44z"/></g></svg></div>
+            </div>
+            <div class="lockup"><svg class="mark lock" viewBox="0 0 64 64"><defs><mask id="cut-lock"><rect width="64" height="64" fill="white"/><path d="M2 43L62 17" stroke="black" stroke-width="8"/></mask></defs><path class="ink" mask="url(#cut-lock)" d="M7 38h13v18H7zM25 24h14v32H25zM44 8h13v48H44z"/></svg><span class="wordmark">TADOKU</span><span class="test-label">Lockup</span></div>
+          </div>
+        </article>
+
+        <article class="mark-card">
+          <div class="mono-stage">
+            <svg class="mark hero mono-version" viewBox="0 0 64 64" role="img" aria-label="Signal Rise monochrome logo">
+              <path class="ink" d="M6 43h9v13H6zM18 31h9v25h-9zM30 37h9v19h-9zM42 20h9v36h-9zM54 8h5v48h-5z"/>
+            </svg>
+          </div>
+          <div class="mark-copy">
+            <span class="tag">Listening + progress</span>
+            <h3 class="mark-name">4 · Signal Rise</h3>
+            <p>A five-beat waveform whose overall trend still rises. It broadens the association from pages to listening and media without drawing headphones.</p>
+            <div class="mark-tests">
+              <div class="mark-test reverse"><svg class="mark test" viewBox="0 0 64 64"><path class="ink" d="M6 43h9v13H6zM18 31h9v25h-9zM30 37h9v19h-9zM42 20h9v36h-9zM54 8h5v48h-5z"/></svg></div>
+              <div class="mark-test"><svg class="mark test accent-version" viewBox="0 0 64 64"><path class="ink" d="M6 43h9v13H6zM18 31h9v25h-9zM30 37h9v19h-9zM42 20h9v36h-9z"/><path class="accentable" d="M54 8h5v48h-5z"/></svg></div>
+            </div>
+            <div class="lockup"><svg class="mark lock" viewBox="0 0 64 64"><path class="ink" d="M6 43h9v13H6zM18 31h9v25h-9zM30 37h9v19h-9zM42 20h9v36h-9zM54 8h5v48h-5z"/></svg><span class="wordmark">TADOKU</span><span class="test-label">Lockup</span></div>
+          </div>
+        </article>
+
+        <article class="mark-card">
+          <div class="mono-stage">
+            <svg class="mark hero mono-version" viewBox="0 0 64 64" role="img" aria-label="Stacked Measure monochrome logo">
+              <path class="ink" d="M8 10h27v11H8zM8 27h39v11H8zM8 44h50v11H8z"/>
+            </svg>
+          </div>
+          <div class="mark-copy">
+            <span class="tag">Library + tracking</span>
+            <h3 class="mark-name">5 · Stacked Measure</h3>
+            <p>Growth expressed horizontally, like stacked books or measured activity. It is distinct from the familiar vertical chart while staying extremely simple.</p>
+            <div class="mark-tests">
+              <div class="mark-test reverse"><svg class="mark test" viewBox="0 0 64 64"><path class="ink" d="M8 10h27v11H8zM8 27h39v11H8zM8 44h50v11H8z"/></svg></div>
+              <div class="mark-test"><svg class="mark test accent-version" viewBox="0 0 64 64"><path class="ink" d="M8 10h27v11H8zM8 27h39v11H8z"/><path class="accentable" d="M8 44h50v11H8z"/></svg></div>
+            </div>
+            <div class="lockup"><svg class="mark lock" viewBox="0 0 64 64"><path class="ink" d="M8 10h27v11H8zM8 27h39v11H8zM8 44h50v11H8z"/></svg><span class="wordmark">TADOKU</span><span class="test-label">Lockup</span></div>
+          </div>
+        </article>
+      </div>
+
+      <div class="design-rule">
+        <p class="eyebrow">Non-negotiable logo rule</p>
+        <h3>Black first. Reverse second. Accent third.</h3>
+        <p>The selected mark must be distinctive as a single-color SVG, work reversed on a dark field, and remain legible at 16px. Ink violet may emphasize one existing piece of the construction, but it cannot create the construction or rescue its meaning.</p>
+      </div>
+    </section>
+  </main>
+  <script>
+    const root = document.documentElement;
+    const toggle = document.getElementById('theme-toggle');
+    toggle.addEventListener('click', () => {
+      const isDark = root.dataset.theme === 'dark';
+      root.dataset.theme = isDark ? '' : 'dark';
+      toggle.textContent = isDark ? 'Switch to dark' : 'Switch to light';
+      toggle.setAttribute('aria-pressed', String(!isDark));
+    });
+  </script>
+</body>
+</html>

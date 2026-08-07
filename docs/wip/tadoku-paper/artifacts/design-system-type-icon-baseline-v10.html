@@ -1,0 +1,311 @@
+<!doctype html>
+<!-- Archived Tadoku Paper planning artifact. See ../README.md. -->
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Tadoku — Typography, Icon Grammar, and Regression Baseline</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@700&amp;family=Open+Sans:wght@400;600;700&amp;display=swap" rel="stylesheet">
+  <style>
+    :root {
+      color-scheme: light;
+      --canvas: #f2efe8;
+      --surface: #fffefa;
+      --surface-soft: #e9e5dc;
+      --text: #211a1d;
+      --muted: #686064;
+      --rule: #c7c0b5;
+      --rule-strong: #393235;
+      --accent: #5747b8;
+      --accent-soft: #e8e4fa;
+      --danger: #a33333;
+      --success: #3f7048;
+      --action: #5747b8;
+      --action-hover: #49399f;
+      --action-lower: #35277f;
+      --shadow: 3px 3px 0 rgba(33, 26, 29, .16);
+      --font-serif: Merriweather, Georgia, "Times New Roman", serif;
+      --font-sans: "Open Sans", Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    [data-theme="dark"] {
+      color-scheme: dark;
+      --canvas: #171517;
+      --surface: #222022;
+      --surface-soft: #2d292c;
+      --text: #f2eee8;
+      --muted: #b8afb3;
+      --rule: #4e484b;
+      --rule-strong: #81777c;
+      --accent: #9a8bea;
+      --accent-soft: #332d52;
+      --danger: #e08a8a;
+      --success: #87bd91;
+      --action: #6150bc;
+      --action-hover: #6d5cc7;
+      --action-lower: #40318c;
+      --shadow: 3px 3px 0 rgba(0, 0, 0, .48);
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--canvas); color: var(--text); font-family: var(--font-sans); line-height: 1.5; }
+    button { font: inherit; color: inherit; }
+    h1, h2, h3, p { margin-top: 0; }
+    .page { width: min(1180px, calc(100% - 32px)); margin: 0 auto; padding: 44px 0 72px; }
+    .topbar { display: flex; align-items: start; justify-content: space-between; gap: 24px; margin-bottom: 50px; }
+    .heading-lockup { display: grid; grid-template-columns: 58px 1fr; gap: 17px; align-items: start; }
+    .brand-mark { width: 58px; height: 58px; color: var(--text); }
+    .eyebrow { margin: 0 0 10px; color: var(--accent); font-size: 12px; font-weight: 700; letter-spacing: .14em; line-height: 16px; text-transform: uppercase; }
+    h1 { max-width: 900px; margin-bottom: 16px; font: 700 clamp(38px, 6vw, 64px)/1 var(--font-serif); letter-spacing: -.035em; }
+    h2 { margin-bottom: 9px; font: 700 clamp(26px, 3vw, 36px)/1.1 var(--font-serif); letter-spacing: -.02em; }
+    h3 { margin-bottom: 7px; font-size: 18px; line-height: 24px; }
+    p { color: var(--muted); }
+    .lede, .section-intro { max-width: 800px; }
+    .lede { font-size: 18px; }
+    .section { margin-top: 56px; }
+    .section-intro { margin-bottom: 22px; }
+    .btn { display: inline-flex; min-height: 44px; align-items: center; justify-content: center; gap: 8px; padding: 9px 15px 8px; border: 1px solid var(--rule); border-bottom: 2px solid var(--rule-strong); border-radius: 0; background: var(--surface); cursor: pointer; font-weight: 700; }
+    .btn:hover { background: var(--surface-soft); }
+    .btn.primary { border-color: var(--action); border-bottom-color: var(--action-lower); background: var(--action); color: #fffefa; }
+    .btn.primary:hover { border-color: var(--action-hover); background: var(--action-hover); }
+    .btn.compact { min-height: 36px; padding: 6px 11px 5px; font-size: 14px; }
+    .btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+    .theme-toggle { flex: none; }
+
+    .decisions { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; border: 1px solid var(--rule); background: var(--rule); box-shadow: var(--shadow); }
+    .decision { padding: 18px; background: var(--surface); }
+    .decision strong { display: block; margin-bottom: 5px; }
+    .decision p { margin: 0; font-size: 13px; }
+
+    .type-system { border: 1px solid var(--rule-strong); background: var(--surface); }
+    .type-row { display: grid; grid-template-columns: 145px 155px 1fr; align-items: baseline; gap: 20px; min-height: 92px; padding: 18px 20px; }
+    .type-row + .type-row { border-top: 1px solid var(--rule); }
+    .type-token { color: var(--accent); font: 700 11px/16px var(--font-sans); letter-spacing: .08em; text-transform: uppercase; }
+    .type-spec { color: var(--muted); font: 12px/18px ui-monospace, SFMono-Regular, Menlo, monospace; }
+    .display-sample { font: 700 48px/52px var(--font-serif); letter-spacing: -.025em; }
+    .page-sample { font: 700 32px/38px var(--font-serif); letter-spacing: -.015em; }
+    .section-sample { font: 700 24px/30px var(--font-serif); }
+    .component-sample { font: 600 18px/24px var(--font-sans); }
+    .body-sample { max-width: 650px; font: 400 16px/26px var(--font-sans); }
+    .compact-sample { max-width: 650px; font: 400 14px/22px var(--font-sans); }
+    .label-sample { font: 700 12px/16px var(--font-sans); letter-spacing: .1em; text-transform: uppercase; }
+    .meta-sample { font: 400 12px/18px var(--font-sans); color: var(--muted); }
+    .numeric { font-variant-numeric: tabular-nums; }
+
+    .type-rules { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-top: 16px; }
+    .rule-card { padding: 19px; border: 1px solid var(--rule); background: var(--surface); }
+    .rule-card strong { display: block; margin-bottom: 5px; }
+    .rule-card p { margin: 0; font-size: 13px; }
+
+    .icon-grid { display: grid; grid-template-columns: .9fr 1.1fr; gap: 18px; }
+    .icon-panel { border: 1px solid var(--rule); background: var(--surface); }
+    .panel-head { padding: 17px 19px; border-bottom: 1px solid var(--rule); }
+    .panel-head h3 { margin-bottom: 3px; }
+    .panel-head p { margin: 0; font-size: 13px; }
+    .icon-rows { padding: 4px 19px; }
+    .icon-row { display: grid; grid-template-columns: 88px 1fr; align-items: center; min-height: 74px; }
+    .icon-row + .icon-row { border-top: 1px solid var(--rule); }
+    .icon-row strong { font-size: 13px; }
+    .icon-demo { display: flex; align-items: center; gap: 18px; }
+    .icon { display: block; flex: none; }
+    .i16 { width: 16px; height: 16px; }
+    .i20 { width: 20px; height: 20px; }
+    .i24 { width: 24px; height: 24px; }
+    .i48 { width: 48px; height: 48px; }
+    .outline-icon { fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+    .solid-icon { fill: currentColor; }
+    .success { color: var(--success); }
+    .danger { color: var(--danger); }
+    .component-demos { display: grid; gap: 13px; padding: 19px; }
+    .demo-row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+    .icon-button { width: 44px; padding-inline: 0; }
+    .status-line { display: flex; align-items: center; gap: 8px; min-height: 42px; padding: 9px 12px; border: 1px solid var(--rule); background: var(--canvas); font-size: 14px; }
+    .icon-rule { padding: 13px 15px; border-left: 4px solid var(--accent); background: var(--surface-soft); color: var(--muted); font-size: 13px; }
+
+    .api-recommendation { display: grid; grid-template-columns: .8fr 1.2fr; border: 1px solid var(--rule-strong); background: var(--surface); box-shadow: var(--shadow); }
+    .api-copy { padding: 22px; border-right: 1px solid var(--rule); }
+    .api-copy p:last-child { margin-bottom: 0; }
+    pre { margin: 0; padding: 22px; overflow-x: auto; background: var(--surface-soft); color: var(--text); font: 13px/1.65 ui-monospace, SFMono-Regular, Menlo, monospace; }
+    .code-comment { color: var(--muted); }
+
+    .baseline { overflow: hidden; border: 1px solid var(--rule-strong); background: var(--surface); }
+    .baseline-row { display: grid; grid-template-columns: 155px 1.15fr 1fr; gap: 18px; padding: 17px 19px; }
+    .baseline-row + .baseline-row { border-top: 1px solid var(--rule); }
+    .baseline-row.header { background: var(--surface-soft); font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+    .baseline-row strong { font-size: 14px; }
+    .baseline-row span { color: var(--muted); font-size: 13px; }
+    .baseline-note { margin-top: 16px; padding: 18px 20px 18px 26px; border-top: 1px solid var(--rule); border-right: 1px solid var(--rule); border-bottom: 1px solid var(--rule); background: var(--surface); position: relative; }
+    .baseline-note::before { content: ""; position: absolute; top: -1px; bottom: -1px; left: 0; width: 6px; background: var(--accent); }
+    .baseline-note p { margin: 0; font-size: 14px; }
+
+    .rollout { display: grid; grid-template-columns: repeat(5, 1fr); gap: 1px; border: 1px solid var(--rule); background: var(--rule); }
+    .rollout-step { padding: 18px; background: var(--surface); }
+    .rollout-step b { display: block; margin-bottom: 5px; color: var(--accent); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; }
+    .rollout-step strong { display: block; margin-bottom: 4px; }
+    .rollout-step span { color: var(--muted); font-size: 12px; }
+
+    @media (max-width: 980px) {
+      .decisions, .rollout { grid-template-columns: repeat(2, 1fr); }
+      .icon-grid, .api-recommendation { grid-template-columns: 1fr; }
+      .api-copy { border-right: 0; border-bottom: 1px solid var(--rule); }
+      .type-row { grid-template-columns: 130px 1fr; }
+      .type-row > :last-child { grid-column: 1 / -1; }
+    }
+    @media (max-width: 650px) {
+      .page { width: min(100% - 20px, 1180px); padding-top: 26px; }
+      .topbar { display: block; }
+      .theme-toggle { margin-top: 20px; }
+      .heading-lockup { grid-template-columns: 42px 1fr; }
+      .brand-mark { width: 42px; height: 42px; }
+      .decisions, .type-rules, .rollout { grid-template-columns: 1fr; }
+      .type-row, .baseline-row { grid-template-columns: 1fr; gap: 5px; }
+      .type-row > :last-child { grid-column: auto; }
+      .display-sample { font-size: 38px; line-height: 44px; }
+      .baseline-row.header { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <header class="topbar">
+      <div class="heading-lockup">
+        <svg class="brand-mark" viewBox="0 0 64 64" role="img" aria-label="Tadoku Cut Meter mark">
+          <defs><mask id="brand-cut"><rect width="64" height="64" fill="white"/><path d="M2 43L62 17" stroke="black" stroke-width="7"/></mask></defs>
+          <path fill="currentColor" mask="url(#brand-cut)" d="M7 38h13v18H7zM25 24h14v32H25zM44 8h13v48H44z"/>
+        </svg>
+        <div>
+          <p class="eyebrow">Tadoku design discussion · P0.2 · Study 10</p>
+          <h1>Typography gives the system its voice.</h1>
+          <p class="lede">A complete type hierarchy, an intentional icon grammar, a class-first styling API, and a concrete explanation of the regression baseline.</p>
+        </div>
+      </div>
+      <button class="btn theme-toggle" id="theme-toggle" type="button" aria-pressed="false">Switch to dark</button>
+    </header>
+
+    <section>
+      <div class="decisions">
+        <article class="decision"><strong>Two densities</strong><p>Comfortable 44px and compact 36px are approved.</p></article>
+        <article class="decision"><strong>Compact mark</strong><p>Use the original square-diagonal Cut Meter for now.</p></article>
+        <article class="decision"><strong>Framework direction</strong><p>UI v2 must not depend on Next.js.</p></article>
+        <article class="decision"><strong>Rollout</strong><p>Style guide → admin → auth → webv2.</p></article>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="section-intro">
+        <p class="eyebrow">01 · Typography proposal</p>
+        <h2>Serif for editorial hierarchy; sans for work</h2>
+        <p>Keep Merriweather and Open Sans, but stop making every heading serif. Large navigational hierarchy gets the bookish voice; components and dense interfaces stay crisp and practical.</p>
+      </div>
+      <div class="type-system">
+        <div class="type-row"><div class="type-token">Display</div><div class="type-spec">48 / 52 · Serif 700</div><div class="display-sample">Read widely.</div></div>
+        <div class="type-row"><div class="type-token">Page title</div><div class="type-spec">32 / 38 · Serif 700</div><div class="page-sample">August Tadoku</div></div>
+        <div class="type-row"><div class="type-token">Section title</div><div class="type-spec">24 / 30 · Serif 700</div><div class="section-sample">Your reading activity</div></div>
+        <div class="type-row"><div class="type-token">Component title</div><div class="type-spec">18 / 24 · Sans 600</div><div class="component-sample">Recent updates</div></div>
+        <div class="type-row"><div class="type-token">Body comfortable</div><div class="type-spec">16 / 26 · Sans 400</div><div class="body-sample">Build understanding by reading and listening to material that interests you. The generous line height suits public, authentication, and editorial pages.</div></div>
+        <div class="type-row"><div class="type-token">Body compact</div><div class="type-spec">14 / 22 · Sans 400</div><div class="compact-sample">Admin tables and dense tools use a smaller role without changing the font family or inventing arbitrary sizes.</div></div>
+        <div class="type-row"><div class="type-token">Label / eyebrow</div><div class="type-spec">12 / 16 · Sans 700</div><div class="label-sample">Listening minutes</div></div>
+        <div class="type-row"><div class="type-token">Metadata</div><div class="type-spec">12 / 18 · Sans 400</div><div class="meta-sample numeric">Japanese · 07 Aug 2026 · 1,248 pages</div></div>
+      </div>
+      <div class="type-rules">
+        <article class="rule-card"><strong>Load real weights</strong><p>Open Sans 700 is currently missing even though `font-bold` is used. UI v2 should ship or document actual 400, 600, and 700 files—never synthetic bold.</p></article>
+        <article class="rule-card"><strong>Framework-independent fonts</strong><p>Use optional self-hosted WOFF2 assets and CSS variables. Do not depend on `next/font` or a runtime Google Fonts `@import`.</p></article>
+        <article class="rule-card"><strong>Respect multilingual text</strong><p>User-entered Japanese and other scripts stay in the sans/system fallback stack. Serif is reserved for controlled interface headings.</p></article>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="section-intro">
+        <p class="eyebrow">02 · Icon grammar proposal</p>
+        <h2>One family, two intentional modes</h2>
+        <p>Continue with Heroicons initially, but stop choosing solid versus outline ad hoc. Soft stroke endings aid recognition and do not require rounded component containers.</p>
+      </div>
+      <div class="icon-grid">
+        <article class="icon-panel">
+          <div class="panel-head"><h3>Size roles</h3><p>Three normal sizes and one illustration exception.</p></div>
+          <div class="icon-rows">
+            <div class="icon-row"><strong>16px</strong><div class="icon-demo"><svg class="icon i16 outline-icon" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg><span>Compact rows and inline metadata</span></div></div>
+            <div class="icon-row"><strong>20px</strong><div class="icon-demo"><svg class="icon i20 outline-icon" viewBox="0 0 24 24"><path d="M4 19.5V6.75A2.75 2.75 0 0 1 6.75 4H20v15.5H6.75A2.75 2.75 0 0 0 4 22.25M7 8h9M7 12h7"/></svg><span>Default buttons, fields, menus, and navigation</span></div></div>
+            <div class="icon-row"><strong>24px</strong><div class="icon-demo"><svg class="icon i24 outline-icon" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg><span>Icon-only controls and prominent actions</span></div></div>
+            <div class="icon-row"><strong>48px</strong><div class="icon-demo"><svg class="icon i48 outline-icon" viewBox="0 0 24 24"><path d="M4 19.5V6.75A2.75 2.75 0 0 1 6.75 4H20v15.5H6.75A2.75 2.75 0 0 0 4 22.25M7 8h9M7 12h7"/></svg><span>Empty states only—not ordinary UI</span></div></div>
+          </div>
+        </article>
+        <article class="icon-panel">
+          <div class="panel-head"><h3>Semantic modes</h3><p>Outline describes actions; solid confirms state.</p></div>
+          <div class="component-demos">
+            <div class="demo-row">
+              <button class="btn primary" type="button"><svg class="icon i20 outline-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Add reading</button>
+              <button class="btn compact" type="button"><svg class="icon i16 outline-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4l11-11-4-4L4 16zM13.5 6.5l4 4"/></svg>Edit</button>
+              <button class="btn icon-button" type="button" aria-label="More actions"><svg class="icon i24 outline-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></svg></button>
+            </div>
+            <div class="status-line"><svg class="icon i20 solid-icon success" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5a9.5 9.5 0 1 0 0 19 9.5 9.5 0 0 0 0-19zm4.4 7.2-5.2 5.5a1 1 0 0 1-1.45 0L7.3 12.8l1.4-1.4 1.75 1.75L15 8.35z"/></svg><span><strong>Recorded.</strong> Your update was added.</span></div>
+            <div class="status-line"><svg class="icon i20 solid-icon danger" viewBox="0 0 24 24" aria-hidden="true"><path d="M11 3.5 2.5 19h19L13 3.5a1.14 1.14 0 0 0-2 0zM11 9h2v5h-2zm0 6.5h2v2h-2z"/></svg><span><strong>Could not save.</strong> Check the highlighted fields.</span></div>
+            <div class="icon-rule"><strong>Accessibility:</strong> labeled icons are decorative and hidden from assistive technology. Icon-only controls require an accessible name. Color never carries status alone.</div>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="section-intro">
+        <p class="eyebrow">03 · Button API recommendation</p>
+        <h2>Classes are the primitive; React is optional</h2>
+        <p>A mandatory Button import would make simple markup less convenient and would couple navigation links to one framework. The class recipe should be the stable cross-framework contract.</p>
+      </div>
+      <div class="api-recommendation">
+        <div class="api-copy">
+          <h3>Hybrid, with a class-first bias</h3>
+          <p>`ui-v2/styles.css` owns `.btn`, variants, density, focus, disabled, and icon sizing. A Tailwind preset can expose the same tokens. Optional framework adapters add behavior without becoming the only way to obtain the styles.</p>
+          <p>This means plain HTML, React, another router, or a future non-Next application can all use the same visual contract.</p>
+        </div>
+        <pre><span class="code-comment">// No component import required</span>
+&lt;button className="btn primary"&gt;Save&lt;/button&gt;
+&lt;a className="btn" href="/contests"&gt;Contests&lt;/a&gt;
+
+<span class="code-comment">// Optional behavior adapter</span>
+&lt;Button loading icon={SaveIcon}&gt;Save&lt;/Button&gt;</pre>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="section-intro">
+        <p class="eyebrow">04 · Regression baseline, concretely</p>
+        <h2>Named fixtures plus behavior checks</h2>
+        <p>A baseline is the smallest representative set of UI v2 examples that must continue to render and behave correctly. It does not freeze the old design and it does not initially require screenshots.</p>
+      </div>
+      <div class="baseline">
+        <div class="baseline-row header"><span>Component</span><span>Shared style-guide fixtures</span><span>Immediate automated checks</span></div>
+        <div class="baseline-row"><strong>Buttons and links</strong><span>Primary, secondary, danger, disabled, loading, icon-only</span><span>Correct element, accessible name, disabled behavior, keyboard activation</span></div>
+        <div class="baseline-row"><strong>Form controls</strong><span>Empty, filled, error, disabled, help text</span><span>Label association, `aria-invalid`, described error, keyboard interaction</span></div>
+        <div class="baseline-row"><strong>Overlays</strong><span>Menu and modal open/closed states</span><span>Focus enters, Escape closes, focus returns to trigger</span></div>
+        <div class="baseline-row"><strong>Navigation</strong><span>Desktop, mobile closed, mobile open</span><span>Landmarks, toggle name/state, keyboard navigation</span></div>
+      </div>
+      <div class="baseline-note"><p><strong>How reuse works:</strong> the style guide imports a named fixture such as `PrimaryButtonDisabled`; the Vitest/Testing Library suite imports that same fixture and checks its semantics. The later visual-regression issue can screenshot the same fixture without inventing a second catalogue.</p></div>
+    </section>
+
+    <section class="section">
+      <div class="section-intro">
+        <p class="eyebrow">05 · Additive rollout</p>
+        <h2>A separate, framework-independent UI v2</h2>
+      </div>
+      <div class="rollout">
+        <div class="rollout-step"><b>Foundation</b><strong>Create `ui-v2`</strong><span>Tokens, fonts, CSS recipes, Tailwind preset; no Next dependency.</span></div>
+        <div class="rollout-step"><b>First</b><strong>Style guide</strong><span>Document the complete v2 system and its shared fixtures.</span></div>
+        <div class="rollout-step"><b>Second</b><strong>Admin</strong><span>Exercise compact density and dense component states.</span></div>
+        <div class="rollout-step"><b>Third</b><strong>Auth</strong><span>Exercise comfortable forms and isolated flows.</span></div>
+        <div class="rollout-step"><b>Fourth</b><strong>webv2</strong><span>Migrate route-by-route while old `ui` remains available.</span></div>
+      </div>
+    </section>
+  </main>
+  <script>
+    const root = document.documentElement;
+    const toggle = document.getElementById('theme-toggle');
+    toggle.addEventListener('click', () => {
+      const isDark = root.dataset.theme === 'dark';
+      root.dataset.theme = isDark ? '' : 'dark';
+      toggle.textContent = isDark ? 'Switch to dark' : 'Switch to light';
+      toggle.setAttribute('aria-pressed', String(!isDark));
+    });
+  </script>
+</body>
+</html>

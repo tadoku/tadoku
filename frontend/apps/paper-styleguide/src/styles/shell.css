@@ -524,7 +524,7 @@
 
   .paper-fixture-stage {
     min-block-size: 100%;
-    padding: 2rem;
+    padding: 0.5rem;
     color: var(--paper-color-text-ink);
     background: var(--paper-color-surface-canvas);
   }
@@ -600,7 +600,7 @@
     max-inline-size: 100%;
     min-block-size: 24rem;
     overflow: auto;
-    padding: 1.5rem;
+    padding: 0.5rem;
     background: var(--paper-color-surface-canvas);
   }
 
@@ -779,6 +779,10 @@
   }
 
   @media (max-width: 48rem) {
+    .example-canvas__stage {
+      padding: 0.25rem;
+    }
+
     .docs-header {
       min-block-size: 4rem;
     }

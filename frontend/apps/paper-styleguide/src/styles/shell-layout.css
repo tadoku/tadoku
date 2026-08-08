@@ -60,33 +60,9 @@
     align-items: center;
   }
 
-  .shell-search-trigger,
-  .mobile-nav-trigger,
-  .shell-icon-button,
-  .canvas-viewport-button {
-    border: 1px solid var(--paper-color-rule-strong);
-    background: var(--paper-color-surface-paper);
-  }
-
-  .shell-search-trigger,
-  .mobile-nav-trigger {
-    display: inline-flex;
-    gap: var(--paper-inline-gap);
-    align-items: center;
-    padding-inline: var(--paper-field-padding-inline);
-  }
-
   .shell-search-trigger kbd {
     color: var(--paper-color-text-muted);
     font-size: var(--paper-type-metadata-size);
-  }
-
-  .shell-icon-button {
-    display: grid;
-    place-items: center;
-    inline-size: var(--paper-control-height);
-    padding: 0;
-    font-size: var(--paper-type-section-size);
   }
 
   .mobile-nav-trigger {

@@ -8,6 +8,7 @@ import { importedStyleSources } from './style-sources'
 const testDirectory = dirname(fileURLToPath(import.meta.url))
 const appRoot = resolve(testDirectory, '..')
 const sourceRoot = resolve(appRoot, 'src')
+const viteConfig = readFileSync(resolve(appRoot, 'vite.config.ts'), 'utf8')
 
 function sourceFiles(directory: string): string[] {
   return readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
@@ -84,6 +85,12 @@ function importedPackages(source: string): string[] {
 }
 
 describe('Paper styleguide dogfooding boundary', () => {
+  it('deduplicates React and form context across the workspace-linked Paper package', () => {
+    expect(viteConfig).toContain(
+      "dedupe: ['react', 'react-dom', 'react-hook-form']",
+    )
+  })
+
   it('imports only public Paper APIs rather than legacy or primitive internals', () => {
     const forbidden = applicationSources.flatMap((path) =>
       importedPackages(readFileSync(path, 'utf8'))

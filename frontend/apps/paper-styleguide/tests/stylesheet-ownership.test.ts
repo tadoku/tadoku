@@ -36,16 +36,13 @@ describe('styleguide stylesheet ownership', () => {
   it.each([
     ['body', 'base.css'],
     ['.paper-wordmark > span', 'shell-layout.css'],
-    ['.canvas-controls label', 'controls.css'],
-    [
-      '.catalogue-nav__group + .catalogue-nav__group',
-      'navigation.css',
-    ],
+    ['.canvas-controls .paper-field', 'controls.css'],
+    ['.search-results', 'navigation.css'],
     ['.design-history__link', 'documents.css'],
     ['.example-canvas', 'canvas-frame.css'],
     ['.component-workbench__panel', 'workbench.css'],
     ['.preview-specimen h3', 'canvas.css'],
-    ['.search-dialog__heading h2', 'overlays.css'],
+    ['.search-field .paper-field__label', 'overlays.css'],
     ['.preview-breakpoint__narrow', 'responsive.css'],
   ])('keeps %s owned once by %s', (selector, owner) => {
     expect(ownersFor(selector)).toEqual([owner])

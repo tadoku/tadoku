@@ -147,7 +147,66 @@ describe('catalogue experience stability', () => {
     )
 
     await user.click(screen.getByRole('button', { name: 'Browse' }))
+    expect(screen.getByRole('dialog', { name: 'Browse Paper' })).toHaveClass(
+      'paper-drawer',
+    )
     expect(screen.getByRole('button', { name: 'Close navigation' })).toHaveFocus()
+  })
+
+  it('uses the same ordered Paper Sidebar links on desktop and mobile', async () => {
+    const user = userEvent.setup()
+    render(
+      <MemoryRouter initialEntries={['/components/actions/button']}>
+        <DocsShell documents={catalogRegistry.documents}>Content</DocsShell>
+      </MemoryRouter>,
+    )
+
+    const desktopNavigation = screen.getByRole('navigation', {
+      name: 'Paper catalogue',
+    })
+    expect(desktopNavigation).toHaveClass('paper-sidebar')
+
+    await user.click(screen.getByRole('button', { name: 'Browse' }))
+    const navigations = Array.from(
+      document.querySelectorAll<HTMLElement>(
+        'nav[aria-label="Paper catalogue"]',
+      ),
+    )
+    expect(navigations).toHaveLength(2)
+    expect(navigations[1]).toHaveClass('paper-sidebar')
+    const linkLabels = navigations.map((navigation) =>
+      within(navigation)
+        .getAllByRole('link', { hidden: true })
+        .map((link) => link.textContent),
+    )
+    expect(linkLabels[1]).toEqual(linkLabels[0])
+    for (const navigation of navigations) {
+      expect(
+        within(navigation).getByRole('link', {
+          name: 'Button',
+          hidden: true,
+        }),
+      ).toHaveAttribute('aria-current', 'page')
+    }
+    const ids = Array.from(document.querySelectorAll<HTMLElement>('[id]')).map(
+      (element) => element.id,
+    )
+    expect(new Set(ids).size).toBe(ids.length)
+  })
+
+  it('closes mobile navigation after navigating', async () => {
+    const user = userEvent.setup()
+    render(
+      <MemoryRouter initialEntries={['/']}>
+        <DocsShell documents={catalogRegistry.documents}>Content</DocsShell>
+      </MemoryRouter>,
+    )
+
+    await user.click(screen.getByRole('button', { name: 'Browse' }))
+    const drawer = screen.getByRole('dialog', { name: 'Browse Paper' })
+    await user.click(within(drawer).getByRole('link', { name: 'Button' }))
+
+    expect(screen.queryByRole('dialog', { name: 'Browse Paper' })).not.toBeInTheDocument()
   })
 
   it('closes mobile navigation when the viewport crosses into desktop layout', async () => {
@@ -176,17 +235,15 @@ describe('catalogue experience stability', () => {
     } as MediaQueryList
     vi.stubGlobal('matchMedia', vi.fn(() => desktopBoundary))
 
-    const { container } = render(
+    render(
       <MemoryRouter>
         <DocsShell documents={catalogRegistry.documents}>Content</DocsShell>
       </MemoryRouter>,
     )
 
     const browse = screen.getByRole('button', { name: 'Browse' })
-    const backdrop = container.querySelector('.mobile-nav-backdrop')
-    const drawer = container.querySelector<HTMLElement>('.mobile-nav-drawer')
     await user.click(browse)
-    expect(backdrop).toHaveAttribute('data-open', 'true')
+    expect(screen.getByRole('dialog', { name: 'Browse Paper' })).toBeVisible()
 
     collapsed = false
     listeners.forEach((listener) =>
@@ -194,9 +251,7 @@ describe('catalogue experience stability', () => {
     )
 
     await waitFor(() => expect(browse).toHaveAttribute('aria-expanded', 'false'))
-    expect(backdrop).toHaveAttribute('data-open', 'false')
-    expect(backdrop).toHaveAttribute('aria-hidden', 'true')
-    expect(drawer?.inert).toBe(true)
+    expect(screen.queryByRole('dialog', { name: 'Browse Paper' })).not.toBeInTheDocument()
   })
 
   it('keeps display preferences out of catalogue navigation', async () => {
@@ -230,13 +285,13 @@ describe('catalogue experience stability', () => {
     ).not.toBeInTheDocument()
 
     await user.click(screen.getByRole('button', { name: 'Browse' }))
-    const navigations = screen.getAllByRole('navigation', {
+    const drawer = screen.getByRole('dialog', { name: 'Browse Paper' })
+    const mobileNavigation = within(drawer).getByRole('navigation', {
       name: 'Paper catalogue',
     })
-    expect(navigations).toHaveLength(2)
-    expect(within(navigations[1]).queryByText('Stable')).not.toBeInTheDocument()
+    expect(within(mobileNavigation).queryByText('Stable')).not.toBeInTheDocument()
     expect(
-      within(navigations[1]).queryByText('Experimental'),
+      within(mobileNavigation).queryByText('Experimental'),
     ).not.toBeInTheDocument()
   })
 

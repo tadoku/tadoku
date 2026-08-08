@@ -138,65 +138,56 @@ describe('responsive visual contract', () => {
     )
   })
 
-  it('animates the Browse drawer while preserving reduced-motion safety', async () => {
+  it('delegates the Browse overlay and focus return to Paper Drawer', async () => {
     const user = userEvent.setup()
-    const { container } = render(
+    render(
       <MemoryRouter>
         <DocsShell documents={catalogRegistry.documents}>Content</DocsShell>
       </MemoryRouter>,
     )
 
-    const backdrop = container.querySelector('.mobile-nav-backdrop')
-    const drawer = container.querySelector<HTMLElement>('.mobile-nav-drawer')
-
-    expect(backdrop).toHaveAttribute('data-open', 'false')
-    expect(backdrop).toHaveAttribute('aria-hidden', 'true')
-    expect(drawer?.inert).toBe(true)
-
-    await user.click(screen.getByRole('button', { name: 'Browse' }))
-    expect(backdrop).toHaveAttribute('data-open', 'true')
-    expect(backdrop).toHaveAttribute('aria-hidden', 'false')
-    expect(drawer?.inert).toBe(false)
+    const browse = screen.getByRole('button', { name: 'Browse' })
+    await user.click(browse)
+    expect(screen.getByRole('dialog', { name: 'Browse Paper' })).toHaveClass(
+      'paper-drawer',
+    )
+    expect(document.querySelector('.paper-drawer__backdrop')).not.toBeNull()
 
     await user.click(screen.getByRole('button', { name: 'Close navigation' }))
-    expect(backdrop).toHaveAttribute('data-open', 'false')
-    expect(drawer?.inert).toBe(true)
-
-    expect(styleguideStyles).toContain(
-      '@media (prefers-reduced-motion: no-preference) {\n    .mobile-nav-backdrop {\n      transition: opacity var(--paper-motion-standard)',
-    )
-    expect(styleguideStyles).toContain(
-      '.mobile-nav-backdrop[data-open=\'false\'] .mobile-nav-drawer',
-    )
+    expect(screen.queryByRole('dialog', { name: 'Browse Paper' })).not.toBeInTheDocument()
+    expect(browse).toHaveFocus()
   })
 
-  it('uses the translucent semantic scrim for full-screen shell overlays', () => {
-    expect(styleguideStyles).toMatch(
-      /\.search-backdrop,\n {2}\.mobile-nav-backdrop \{[^}]*background: var\(--paper-color-surface-scrim\);[^}]*-webkit-backdrop-filter: blur\(0\.375rem\);[^}]*backdrop-filter: blur\(0\.375rem\);/s,
-    )
-    expect(styleguideStyles).toMatch(
-      /@media \(forced-colors: active\) \{[^}]*\.search-backdrop,\n {4}\.mobile-nav-backdrop \{[^}]*backdrop-filter: none;/s,
-    )
-  })
-
-  it('keeps the Browse header fixed while only its native-scroll navigation body moves', () => {
-    const { container } = render(
+  it('uses Paper overlay scrims for search and Browse', async () => {
+    const user = userEvent.setup()
+    render(
       <MemoryRouter>
         <DocsShell documents={catalogRegistry.documents}>Content</DocsShell>
       </MemoryRouter>,
     )
 
-    const drawer = container.querySelector('.mobile-nav-drawer')
-    const scrollBody = container.querySelector('.mobile-nav-drawer__body')
+    await user.click(screen.getByRole('button', { name: 'Browse' }))
+    expect(document.querySelector('.paper-drawer__backdrop')).not.toBeNull()
+    await user.click(screen.getByRole('button', { name: 'Close navigation' }))
+
+    await user.click(screen.getByRole('button', { name: 'Search Paper' }))
+    expect(document.querySelector('.paper-modal__backdrop')).not.toBeNull()
+  })
+
+  it('keeps the Browse header fixed while Paper Drawer owns the scrolling body', async () => {
+    const user = userEvent.setup()
+    render(
+      <MemoryRouter>
+        <DocsShell documents={catalogRegistry.documents}>Content</DocsShell>
+      </MemoryRouter>,
+    )
+
+    await user.click(screen.getByRole('button', { name: 'Browse' }))
+    const drawer = screen.getByRole('dialog', { name: 'Browse Paper' })
+    const scrollBody = drawer.querySelector('.paper-drawer__body')
 
     expect(drawer).toHaveClass('paper-elevation-showcase')
-    expect(scrollBody?.querySelector('.catalogue-nav')).not.toBeNull()
-    expect(styleguideStyles).toMatch(
-      /\.mobile-nav-drawer\s*\{[^}]*display:\s*flex;[^}]*flex-direction:\s*column;[^}]*overflow:\s*hidden;/s,
-    )
-    expect(styleguideStyles).toMatch(
-      /\.mobile-nav-drawer__body\s*\{[^}]*min-block-size:\s*0;[^}]*overflow-y:\s*auto;/s,
-    )
+    expect(scrollBody?.querySelector('.paper-sidebar')).not.toBeNull()
     expect(styleguideStyles).not.toMatch(/scrollbar-width|::-webkit-scrollbar/)
   })
 

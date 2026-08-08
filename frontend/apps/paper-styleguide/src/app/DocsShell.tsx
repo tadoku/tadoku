@@ -1,15 +1,16 @@
+import {
+  Button,
+  Drawer,
+  Sidebar,
+  type NavigationLinkRenderer,
+  type SidebarSection,
+} from 'paper-ui'
 import type { CatalogDocument } from 'paper-ui/catalog'
 import cutMeterUrl from 'paper-ui/assets/brand/cut-meter.svg?no-inline'
 import cutMeterReversedUrl from 'paper-ui/assets/brand/cut-meter-reversed.svg?no-inline'
-import { Bars3Icon, XMarkIcon, iconClassName } from 'paper-ui/icons'
-import {
-  type PropsWithChildren,
-  useEffect,
-  useRef,
-  useState,
-  type KeyboardEvent as ReactKeyboardEvent,
-} from 'react'
-import { Link, NavLink } from 'react-router-dom'
+import { Bars3Icon, iconClassName } from 'paper-ui/icons'
+import { type PropsWithChildren, useEffect, useState } from 'react'
+import { Link, useLocation } from 'react-router-dom'
 import { buildNavigationGroups } from './catalogue'
 import { CatalogueSearch } from './CatalogueSearch'
 
@@ -17,47 +18,32 @@ interface DocsShellProps extends PropsWithChildren {
   documents: readonly CatalogDocument[]
 }
 
-interface CatalogueNavigationProps {
-  documents: readonly CatalogDocument[]
-  onNavigate?: () => void
+const renderRouterLink: NavigationLinkRenderer = ({ href, ...props }) => (
+  <Link {...props} to={href} />
+)
+
+function navigationSections(
+  documents: readonly CatalogDocument[],
+): readonly SidebarSection[] {
+  return buildNavigationGroups(documents).map((group) => ({
+    id: group.id,
+    title: group.label,
+    links: group.documents.map((document) => ({
+      id: document.id,
+      label: document.name,
+      href: document.route,
+    })),
+  }))
 }
 
-function CatalogueNavigation({
-  documents,
-  onNavigate,
-}: CatalogueNavigationProps) {
-  return (
-    <nav className="catalogue-nav" aria-label="Paper catalogue">
-      {buildNavigationGroups(documents).map((group) => (
-        <section key={group.id} className="catalogue-nav__group">
-          <h2 className="paper-type-metadata">{group.label}</h2>
-          <ul>
-            {group.documents.map((document) => (
-              <li key={document.id}>
-                <NavLink
-                  className={({ isActive }) =>
-                    `catalogue-nav__link paper-focus-ring${
-                      isActive ? ' catalogue-nav__link--active' : ''
-                    }`
-                  }
-                  to={document.route}
-                  onClick={onNavigate}
-                >
-                  <span>{document.name}</span>
-                </NavLink>
-              </li>
-            ))}
-          </ul>
-        </section>
-      ))}
-    </nav>
-  )
-}
-
-export function DocsShell({ documents, children }: DocsShellProps) {
-  const [mobileNavigationOpen, setMobileNavigationOpen] = useState(false)
-  const mobileTriggerRef = useRef<HTMLButtonElement>(null)
-  const mobileCloseRef = useRef<HTMLButtonElement>(null)
+function MobileCatalogueNavigation({
+  sections,
+  currentPath,
+}: {
+  sections: readonly SidebarSection[]
+  currentPath: string
+}) {
+  const [open, setOpen] = useState(false)
 
   useEffect(() => {
     if (
@@ -69,7 +55,7 @@ export function DocsShell({ documents, children }: DocsShellProps) {
 
     const collapsedLayout = window.matchMedia('(max-width: 64rem)')
     const closeOnDesktop = (event: MediaQueryListEvent) => {
-      if (!event.matches) setMobileNavigationOpen(false)
+      if (!event.matches) setOpen(false)
     }
 
     collapsedLayout.addEventListener('change', closeOnDesktop)
@@ -77,38 +63,42 @@ export function DocsShell({ documents, children }: DocsShellProps) {
       collapsedLayout.removeEventListener('change', closeOnDesktop)
   }, [])
 
-  useEffect(() => {
-    if (!mobileNavigationOpen) return
-    mobileCloseRef.current?.focus()
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        setMobileNavigationOpen(false)
-        mobileTriggerRef.current?.focus()
+  return (
+    <Drawer
+      title="Browse Paper"
+      closeLabel="Close navigation"
+      placement="start"
+      open={open}
+      onOpenChange={setOpen}
+      trigger={
+        <Button
+          className="mobile-nav-trigger"
+          variant="outline"
+          aria-label="Browse"
+          leadingIcon={
+            <Bars3Icon
+              aria-hidden="true"
+              className={iconClassName('default')}
+            />
+          }
+        >
+          <span className="mobile-nav-trigger__label">Browse</span>
+        </Button>
       }
-    }
-    window.addEventListener('keydown', onKeyDown)
-    return () => window.removeEventListener('keydown', onKeyDown)
-  }, [mobileNavigationOpen])
+    >
+      <Sidebar
+        sections={sections}
+        currentPath={currentPath}
+        renderLink={renderRouterLink}
+        label="Paper catalogue"
+      />
+    </Drawer>
+  )
+}
 
-  function trapMobileFocus(event: ReactKeyboardEvent<HTMLElement>) {
-    if (event.key !== 'Tab') return
-    const focusable = Array.from(
-      event.currentTarget.querySelectorAll<HTMLElement>(
-        'button:not([disabled]), select:not([disabled]), a[href]',
-      ),
-    )
-    const first = focusable[0]
-    const last = focusable[focusable.length - 1]
-    if (!first || !last) return
-
-    if (event.shiftKey && document.activeElement === first) {
-      event.preventDefault()
-      last.focus()
-    } else if (!event.shiftKey && document.activeElement === last) {
-      event.preventDefault()
-      first.focus()
-    }
-  }
+export function DocsShell({ documents, children }: DocsShellProps) {
+  const location = useLocation()
+  const sections = navigationSections(documents)
 
   return (
     <div className="docs-shell">
@@ -133,74 +123,22 @@ export function DocsShell({ documents, children }: DocsShellProps) {
         </Link>
         <div className="docs-header__actions">
           <CatalogueSearch documents={documents} />
-          <button
-            ref={mobileTriggerRef}
-            className="mobile-nav-trigger paper-focus-ring"
-            type="button"
-            aria-label="Browse"
-            aria-controls="mobile-catalogue-navigation"
-            aria-expanded={mobileNavigationOpen}
-            onClick={() => setMobileNavigationOpen((value) => !value)}
-          >
-            <Bars3Icon
-              aria-hidden="true"
-              className={iconClassName('default')}
-            />
-            <span className="mobile-nav-trigger__label">Browse</span>
-          </button>
+          <MobileCatalogueNavigation
+            key={location.key}
+            sections={sections}
+            currentPath={location.pathname}
+          />
         </div>
       </header>
 
       <aside className="docs-sidebar">
-        <CatalogueNavigation documents={documents} />
+        <Sidebar
+          sections={sections}
+          currentPath={location.pathname}
+          renderLink={renderRouterLink}
+          label="Paper catalogue"
+        />
       </aside>
-
-      <div
-        className="mobile-nav-backdrop"
-        role="presentation"
-        data-open={mobileNavigationOpen ? 'true' : 'false'}
-        aria-hidden={!mobileNavigationOpen}
-        onMouseDown={(event) => {
-          if (event.target === event.currentTarget) {
-            setMobileNavigationOpen(false)
-          }
-        }}
-      >
-        <aside
-          ref={(node) => {
-            if (node) node.inert = !mobileNavigationOpen
-          }}
-          id="mobile-catalogue-navigation"
-          className="mobile-nav-drawer paper-surface-raised paper-elevation-showcase"
-          aria-label="Mobile catalogue navigation"
-          onKeyDown={trapMobileFocus}
-        >
-          <div className="mobile-nav-drawer__heading">
-            <strong className="paper-type-component">Browse Paper</strong>
-            <button
-              ref={mobileCloseRef}
-              type="button"
-              className="shell-icon-button paper-focus-ring"
-              aria-label="Close navigation"
-              onClick={() => {
-                setMobileNavigationOpen(false)
-                mobileTriggerRef.current?.focus()
-              }}
-            >
-              <XMarkIcon
-                aria-hidden="true"
-                className={iconClassName('default')}
-              />
-            </button>
-          </div>
-          <div className="mobile-nav-drawer__body">
-            <CatalogueNavigation
-              documents={documents}
-              onNavigate={() => setMobileNavigationOpen(false)}
-            />
-          </div>
-        </aside>
-      </div>
 
       <main id="main-content" className="docs-main" tabIndex={-1}>
         {children}

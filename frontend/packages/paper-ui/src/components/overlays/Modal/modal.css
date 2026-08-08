@@ -1,0 +1,103 @@
+@layer paper-recipes {
+  .paper-modal__backdrop {
+    position: fixed;
+    z-index: 80;
+    inset: 0;
+    background: rgb(20 16 18 / 58%);
+    opacity: 1;
+    transition: opacity var(--paper-motion-standard);
+  }
+
+  .paper-modal__viewport {
+    position: fixed;
+    z-index: 81;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    overflow-y: auto;
+    padding: 1rem;
+  }
+
+  .paper-modal {
+    inline-size: min(36rem, 100%);
+    max-block-size: min(42rem, calc(100vh - 2rem));
+    overflow-y: auto;
+    border: var(--paper-border-static-width) solid var(--paper-color-rule-strong);
+    background: var(--paper-color-surface-overlay);
+    transform: translateY(0);
+    transition:
+      opacity var(--paper-motion-standard),
+      transform var(--paper-motion-standard);
+  }
+
+  .paper-modal[data-starting-style],
+  .paper-modal[data-ending-style] {
+    opacity: 0;
+    transform: translateY(0.5rem);
+  }
+
+  .paper-modal__backdrop[data-starting-style],
+  .paper-modal__backdrop[data-ending-style] {
+    opacity: 0;
+  }
+
+  .paper-modal__header {
+    display: flex;
+    align-items: start;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1.25rem;
+    border-block-end: 1px solid var(--paper-color-rule-subtle);
+  }
+
+  .paper-modal__title {
+    margin: 0;
+    font-family: var(--paper-font-display);
+    font-size: var(--paper-type-section-size);
+    line-height: var(--paper-type-section-line-height);
+  }
+
+  .paper-modal__description {
+    margin: 0.4rem 0 0;
+    color: var(--paper-color-text-muted);
+  }
+
+  .paper-modal__icon-close {
+    display: grid;
+    flex: none;
+    place-items: center;
+    inline-size: var(--paper-control-height);
+    block-size: var(--paper-control-height);
+    padding: 0;
+    border: 1px solid transparent;
+    color: var(--paper-color-text-muted);
+    background: transparent;
+    font-size: 1.5rem;
+    cursor: pointer;
+  }
+
+  .paper-modal__icon-close:hover {
+    color: var(--paper-color-text-ink);
+    border-color: var(--paper-color-rule-default);
+    background: var(--paper-color-surface-raised);
+  }
+
+  .paper-modal__content {
+    padding: 1.25rem;
+  }
+
+  .paper-modal__footer {
+    display: flex;
+    justify-content: end;
+    gap: var(--paper-inline-gap);
+    padding: 1rem 1.25rem;
+    border-block-start: 1px solid var(--paper-color-rule-subtle);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .paper-modal,
+    .paper-modal__backdrop {
+      transition: none;
+    }
+  }
+}

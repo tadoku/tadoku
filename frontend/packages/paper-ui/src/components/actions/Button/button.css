@@ -1,0 +1,133 @@
+@layer paper-recipes {
+  .paper-button {
+    display: inline-flex;
+    position: relative;
+    align-items: center;
+    justify-content: center;
+    min-block-size: var(--paper-control-height);
+    gap: var(--paper-inline-gap);
+    padding: var(--paper-field-padding-block) var(--paper-field-padding-inline);
+    border: var(--paper-border-static-width) solid transparent;
+    border-block-end-width: var(--paper-border-action-edge-width);
+    border-radius: 0;
+    color: var(--paper-color-action-text);
+    background: var(--paper-color-action-default);
+    font-weight: var(--paper-type-label-weight);
+    line-height: 1;
+    text-align: center;
+    text-decoration: none;
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .paper-button:hover:not(:disabled) {
+    background: var(--paper-color-action-hover);
+  }
+
+  .paper-button:active:not(:disabled) {
+    background: var(--paper-color-action-active);
+    transform: translateY(1px);
+  }
+
+  .paper-button:disabled,
+  .paper-button[aria-disabled="true"] {
+    cursor: not-allowed;
+    opacity: 0.56;
+  }
+
+  .paper-button--outline {
+    border-color: var(--paper-color-rule-strong);
+    border-block-end-color: var(--paper-color-rule-action-edge);
+    color: var(--paper-color-text-ink);
+    background: var(--paper-color-surface-paper);
+  }
+
+  .paper-button--outline:hover:not(:disabled) {
+    background: var(--paper-color-surface-raised);
+  }
+
+  .paper-button--ghost,
+  .paper-button--link {
+    color: var(--paper-color-text-link);
+    background: transparent;
+  }
+
+  .paper-button--ghost:hover:not(:disabled),
+  .paper-button--link:hover:not(:disabled) {
+    color: var(--paper-color-text-ink);
+    background: var(--paper-color-action-soft);
+  }
+
+  .paper-button--link {
+    min-block-size: auto;
+    padding: 0;
+    border: 0;
+    text-decoration: underline;
+    text-underline-offset: 0.2em;
+  }
+
+  .paper-button--link:hover:not(:disabled) {
+    background: transparent;
+  }
+
+  .paper-button--destructive {
+    background: var(--paper-color-action-destructive);
+    border-block-end-color: color-mix(
+      in srgb,
+      var(--paper-color-action-destructive) 72%,
+      black
+    );
+  }
+
+  .paper-button--destructive:hover:not(:disabled) {
+    background: var(--paper-color-action-destructive-hover);
+  }
+
+  .paper-button--full-width {
+    inline-size: 100%;
+  }
+
+  .paper-button__icon,
+  .paper-button__spinner {
+    display: inline-grid;
+    flex: none;
+    place-items: center;
+    inline-size: var(--paper-icon-size-default);
+    block-size: var(--paper-icon-size-default);
+  }
+
+  .paper-button__icon > svg {
+    inline-size: 100%;
+    block-size: 100%;
+  }
+
+  .paper-button__spinner {
+    border: 2px solid currentColor;
+    border-inline-end-color: transparent;
+    border-radius: 50%;
+    animation: paper-button-spin 700ms linear infinite;
+  }
+
+  .paper-visually-hidden {
+    position: absolute;
+    inline-size: 1px;
+    block-size: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  @keyframes paper-button-spin {
+    to {
+      transform: rotate(1turn);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .paper-button,
+    .paper-button__spinner {
+      animation: none;
+      transition: none;
+    }
+  }
+}

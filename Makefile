@@ -1,4 +1,4 @@
-.PHONY: dev-up dev-down dev-reset dev-seed dev-logs
+.PHONY: dev-up dev-down dev-reset dev-seed dev-verify-scoring dev-logs
 
 dev-up:
 	tilt up
@@ -11,6 +11,9 @@ dev-reset:
 
 dev-seed:
 	./scripts/dev/seed-db.sh
+
+dev-verify-scoring:
+	./scripts/dev/verify-scoring.sh
 
 dev-logs:
 	tilt logs

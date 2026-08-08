@@ -40,7 +40,11 @@ export function ActionMenu({
         <span aria-hidden="true">▾</span>
       </Menu.Trigger>
       <Menu.Portal container={portalContainer}>
-        <Menu.Positioner className="paper-action-menu__positioner" sideOffset={6}>
+        <Menu.Positioner
+          className="paper-action-menu__positioner"
+          sideOffset={6}
+          align="start"
+        >
           <Menu.Popup className="paper-action-menu paper-elevation-floating">
             {items.map((item) => (
               <Menu.Item

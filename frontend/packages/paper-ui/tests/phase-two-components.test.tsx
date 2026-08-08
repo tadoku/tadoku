@@ -171,6 +171,20 @@ describe("Modal", () => {
 });
 
 describe("ActionMenu", () => {
+  it("left-aligns its menu with the trigger", async () => {
+    const user = userEvent.setup();
+    render(
+      <ActionMenu
+        label="Log actions"
+        items={[{ id: "edit", label: "Edit log", onSelect: vi.fn() }]}
+      />,
+    );
+
+    await user.click(screen.getByRole("button", { name: "Log actions" }));
+    const menu = await screen.findByRole("menu", { name: "Log actions" });
+    expect(menu.parentElement).toHaveAttribute("data-align", "start");
+  });
+
   it("supports keyboard selection and skips disabled items", async () => {
     const user = userEvent.setup();
     const edit = vi.fn();

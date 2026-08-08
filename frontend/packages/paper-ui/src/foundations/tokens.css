@@ -8,6 +8,7 @@
   --paper-private-paper: #fffefa;
   --paper-private-raised: #ffffff;
   --paper-private-overlay: #fffefa;
+  --paper-private-scrim: rgb(33 26 29 / 28%);
   --paper-private-ink: #211a1d;
   --paper-private-muted: #686064;
   --paper-private-inverse: #fffefa;
@@ -34,6 +35,7 @@
   --paper-color-surface-paper: var(--paper-private-paper);
   --paper-color-surface-raised: var(--paper-private-raised);
   --paper-color-surface-overlay: var(--paper-private-overlay);
+  --paper-color-surface-scrim: var(--paper-private-scrim);
   --paper-color-text-ink: var(--paper-private-ink);
   --paper-color-text-muted: var(--paper-private-muted);
   --paper-color-text-inverse: var(--paper-private-inverse);
@@ -78,6 +80,7 @@
   --paper-private-paper: #222022;
   --paper-private-raised: #2b282b;
   --paper-private-overlay: #2b282b;
+  --paper-private-scrim: rgb(0 0 0 / 38%);
   --paper-private-ink: #f2eee8;
   --paper-private-muted: #b8afb3;
   --paper-private-inverse: #fffefa;
@@ -104,6 +107,7 @@
   --paper-color-surface-paper: var(--paper-private-paper);
   --paper-color-surface-raised: var(--paper-private-raised);
   --paper-color-surface-overlay: var(--paper-private-overlay);
+  --paper-color-surface-scrim: var(--paper-private-scrim);
   --paper-color-text-ink: var(--paper-private-ink);
   --paper-color-text-muted: var(--paper-private-muted);
   --paper-color-text-inverse: var(--paper-private-inverse);

@@ -178,6 +178,15 @@ describe('responsive visual contract', () => {
     )
   })
 
+  it('uses the translucent semantic scrim for full-screen shell overlays', () => {
+    expect(shellStyles).toMatch(
+      /\.search-backdrop,\n {2}\.mobile-nav-backdrop \{[^}]*background: var\(--paper-color-surface-scrim\);[^}]*-webkit-backdrop-filter: blur\(0\.375rem\);[^}]*backdrop-filter: blur\(0\.375rem\);/s,
+    )
+    expect(shellStyles).toMatch(
+      /@media \(forced-colors: active\) \{[^}]*\.search-backdrop,\n {4}\.mobile-nav-backdrop \{[^}]*backdrop-filter: none;/s,
+    )
+  })
+
   it('keeps the inactive Cut Meter asset out of the wordmark layout', () => {
     expect(shellStyles).toContain('.paper-wordmark :where(img) {')
     expect(shellStyles).not.toContain('.paper-wordmark img {')

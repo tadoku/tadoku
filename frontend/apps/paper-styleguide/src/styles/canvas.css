@@ -1,0 +1,96 @@
+@layer paper-styleguide {
+  .example-canvas__heading {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1rem;
+    border: 0;
+    border-block-end: 0;
+  }
+
+  .example-canvas__heading h2 {
+    margin: 0.25rem 0 0;
+  }
+
+  .canvas-controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    align-items: end;
+  }
+
+  .canvas-controls fieldset {
+    display: flex;
+    margin: 0;
+    padding: 0;
+    border: 0;
+  }
+
+  .canvas-controls legend {
+    position: absolute;
+    inline-size: 1px;
+    block-size: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+  }
+
+  .canvas-viewport-button {
+    padding-inline: 0.65rem;
+  }
+
+  .canvas-viewport-button + .canvas-viewport-button {
+    border-inline-start: 0;
+  }
+
+  .canvas-viewport-button--active {
+    color: var(--paper-color-text-inverse);
+    background: var(--paper-color-action-default);
+  }
+
+  .canvas-status {
+    margin: 0;
+    padding: 0.5rem 1rem;
+    color: var(--paper-color-text-muted);
+    border-block-end: 1px solid var(--paper-color-rule-subtle);
+  }
+
+  .example-canvas__stage {
+    max-inline-size: 100%;
+    min-block-size: 24rem;
+    overflow: auto;
+    padding: 0.5rem;
+    border: 0;
+    background: var(--paper-color-surface-canvas);
+  }
+
+  .example-canvas iframe {
+    display: block;
+    max-inline-size: none;
+    block-size: 21rem;
+    border: 0;
+    background: var(--paper-color-surface-paper);
+  }
+
+  .preview-specimen {
+    margin: 2rem;
+    padding: 2rem;
+    border: 1px solid var(--paper-color-rule-default);
+  }
+
+  .preview-specimen h3 {
+    margin-block: 0.4rem;
+  }
+
+  .preview-breakpoint {
+    margin-block-start: 1.5rem;
+    padding-block-start: 1rem;
+    border-block-start: 1px solid var(--paper-color-rule-subtle);
+    color: var(--paper-color-status-information);
+    font-weight: var(--paper-type-label-weight);
+  }
+
+  .preview-breakpoint__wide {
+    display: none;
+  }
+
+}

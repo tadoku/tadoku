@@ -1,0 +1,7 @@
+@layer paper-styleguide {
+  .example-canvas {
+    border: 0;
+    background: var(--paper-color-surface-raised);
+  }
+
+}

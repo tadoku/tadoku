@@ -1,6 +1,3 @@
-import { readFileSync } from 'node:fs'
-import { dirname, resolve } from 'node:path'
-import { fileURLToPath } from 'node:url'
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
@@ -10,12 +7,7 @@ import { DocsShell } from '../src/app/DocsShell'
 import { CatalogIndex, ResolvedCatalogueRoute } from '../src/app/routes'
 import { DocumentPage } from '../src/documentation/DocumentPage'
 import '../src/styles/shell.css'
-
-const testDirectory = dirname(fileURLToPath(import.meta.url))
-const shellStyles = readFileSync(
-  resolve(testDirectory, '../src/styles/shell.css'),
-  'utf8',
-)
+import { styleguideStyles } from './style-sources'
 
 describe('responsive visual contract', () => {
   it('reserves inline space between the home hero accent rail and its copy', () => {
@@ -81,7 +73,7 @@ describe('responsive visual contract', () => {
     expect(browse.querySelector('svg')).not.toBeNull()
     expect(browse.querySelector('.mobile-nav-trigger__label')).not.toBeNull()
     expect(brandMarks).toHaveLength(2)
-    expect(shellStyles).toContain(
+    expect(styleguideStyles).toContain(
       'inline-size: 2.25rem;\n    block-size: 2.25rem;\n    aspect-ratio: 1;',
     )
     expect([...brandMarks].map((mark) => mark.getAttribute('src'))).toEqual(
@@ -111,28 +103,28 @@ describe('responsive visual contract', () => {
   })
 
   it('keeps shell element resets out of isolated component previews', () => {
-    expect(shellStyles).not.toContain('\n  button,\n  input,\n  select {')
-    expect(shellStyles).not.toContain('\n  button,\n  select {')
-    expect(shellStyles).not.toContain('\n  button {\n')
-    expect(shellStyles).not.toContain('\n  code {\n')
-    expect(shellStyles).toContain('.docs-shell button')
+    expect(styleguideStyles).not.toContain('\n  button,\n  input,\n  select {')
+    expect(styleguideStyles).not.toContain('\n  button,\n  select {')
+    expect(styleguideStyles).not.toContain('\n  button {\n')
+    expect(styleguideStyles).not.toContain('\n  code {\n')
+    expect(styleguideStyles).toContain('.docs-shell button')
   })
 
   it('keeps scoped shell resets low-specificity so selected controls retain contrast', () => {
-    expect(shellStyles).not.toContain('\n  .docs-shell button,\n')
-    expect(shellStyles).toContain('.docs-shell :where(button, input, select)')
+    expect(styleguideStyles).not.toContain('\n  .docs-shell button,\n')
+    expect(styleguideStyles).toContain('.docs-shell :where(button, input, select)')
   })
 
   it('collapses both header actions to icons at the narrow phone floor', () => {
-    expect(shellStyles).toContain(
+    expect(styleguideStyles).toContain(
       '.shell-search-trigger__label,\n    .mobile-nav-trigger__label,',
     )
   })
 
   it('collapses the catalogue sidebar into Browse at mid-size widths', () => {
-    const midSizeStyles = shellStyles.slice(
-      shellStyles.indexOf('@media (max-width: 64rem)'),
-      shellStyles.indexOf('@media (max-width: 48rem)'),
+    const midSizeStyles = styleguideStyles.slice(
+      styleguideStyles.indexOf('@media (max-width: 64rem)'),
+      styleguideStyles.indexOf('@media (max-width: 48rem)'),
     )
 
     expect(midSizeStyles).toContain(
@@ -170,19 +162,19 @@ describe('responsive visual contract', () => {
     expect(backdrop).toHaveAttribute('data-open', 'false')
     expect(drawer?.inert).toBe(true)
 
-    expect(shellStyles).toContain(
+    expect(styleguideStyles).toContain(
       '@media (prefers-reduced-motion: no-preference) {\n    .mobile-nav-backdrop {\n      transition: opacity var(--paper-motion-standard)',
     )
-    expect(shellStyles).toContain(
+    expect(styleguideStyles).toContain(
       '.mobile-nav-backdrop[data-open=\'false\'] .mobile-nav-drawer',
     )
   })
 
   it('uses the translucent semantic scrim for full-screen shell overlays', () => {
-    expect(shellStyles).toMatch(
+    expect(styleguideStyles).toMatch(
       /\.search-backdrop,\n {2}\.mobile-nav-backdrop \{[^}]*background: var\(--paper-color-surface-scrim\);[^}]*-webkit-backdrop-filter: blur\(0\.375rem\);[^}]*backdrop-filter: blur\(0\.375rem\);/s,
     )
-    expect(shellStyles).toMatch(
+    expect(styleguideStyles).toMatch(
       /@media \(forced-colors: active\) \{[^}]*\.search-backdrop,\n {4}\.mobile-nav-backdrop \{[^}]*backdrop-filter: none;/s,
     )
   })
@@ -199,25 +191,25 @@ describe('responsive visual contract', () => {
 
     expect(drawer).toHaveClass('paper-elevation-showcase')
     expect(scrollBody?.querySelector('.catalogue-nav')).not.toBeNull()
-    expect(shellStyles).toMatch(
+    expect(styleguideStyles).toMatch(
       /\.mobile-nav-drawer\s*\{[^}]*display:\s*flex;[^}]*flex-direction:\s*column;[^}]*overflow:\s*hidden;/s,
     )
-    expect(shellStyles).toMatch(
+    expect(styleguideStyles).toMatch(
       /\.mobile-nav-drawer__body\s*\{[^}]*min-block-size:\s*0;[^}]*overflow-y:\s*auto;/s,
     )
-    expect(shellStyles).not.toMatch(/scrollbar-width|::-webkit-scrollbar/)
+    expect(styleguideStyles).not.toMatch(/scrollbar-width|::-webkit-scrollbar/)
   })
 
   it('keeps the inactive Cut Meter asset out of the wordmark layout', () => {
-    expect(shellStyles).toContain('.paper-wordmark :where(img) {')
-    expect(shellStyles).not.toContain('.paper-wordmark img {')
+    expect(styleguideStyles).toContain('.paper-wordmark :where(img) {')
+    expect(styleguideStyles).not.toContain('.paper-wordmark img {')
   })
 
   it('switches the Cut Meter to its canonical reversed asset in dark mode', () => {
-    expect(shellStyles).toContain(
+    expect(styleguideStyles).toContain(
       ":root[data-theme='dark'] .paper-wordmark__mark--light",
     )
-    expect(shellStyles).toContain(
+    expect(styleguideStyles).toContain(
       ":root[data-theme='dark'] .paper-wordmark__mark--dark",
     )
   })

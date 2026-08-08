@@ -1,16 +1,8 @@
-import { readFileSync } from 'node:fs'
-import { dirname, resolve } from 'node:path'
-import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
-
-const testDirectory = dirname(fileURLToPath(import.meta.url))
-const shellStyles = readFileSync(
-  resolve(testDirectory, '../src/styles/shell.css'),
-  'utf8',
-)
+import { styleguideStyles } from './style-sources'
 
 function declarationsFor(selector: string): string[] {
-  return [...shellStyles.matchAll(/([^{}]+)\{([^{}]*)\}/gu)]
+  return [...styleguideStyles.matchAll(/([^{}]+)\{([^{}]*)\}/gu)]
     .filter((rule) =>
       rule[1]
         .split(',')
@@ -30,22 +22,22 @@ function borderValues(selector: string): string[] {
 
 describe('component workbench visual contract', () => {
   it('uses the workbench as the only outer frame around the isolated preview', () => {
-    expect(shellStyles).toMatch(
+    expect(styleguideStyles).toMatch(
       /\.component-workbench \{[^}]*border: 1px solid var\(--paper-color-rule-default\);[^}]*overflow: hidden;/s,
     )
-    expect(shellStyles).toMatch(
+    expect(styleguideStyles).toMatch(
       /\.example-canvas \{[^}]*border: 0;[^}]*background: var\(--paper-color-surface-raised\);/s,
     )
-    expect(shellStyles).toMatch(
+    expect(styleguideStyles).toMatch(
       /\.example-canvas__heading \{[^}]*border: 0;[^}]*border-block-end: 0;/s,
     )
-    expect(shellStyles).toMatch(
+    expect(styleguideStyles).toMatch(
       /\.example-canvas__stage \{[^}]*border: 0;/s,
     )
-    expect(shellStyles).toMatch(
+    expect(styleguideStyles).toMatch(
       /\.paper-fixture-stage \{[^}]*border: 0;/s,
     )
-    expect(shellStyles).toMatch(
+    expect(styleguideStyles).toMatch(
       /\.example-canvas iframe \{[^}]*max-inline-size: none;[^}]*border: 0;/s,
     )
 

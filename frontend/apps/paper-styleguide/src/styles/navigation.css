@@ -1,0 +1,38 @@
+@layer paper-styleguide {
+  .catalogue-nav__group + .catalogue-nav__group {
+    margin-block-start: 1.5rem;
+  }
+
+  .catalogue-nav__group h2 {
+    margin: 0 0 0.45rem;
+    color: var(--paper-color-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  .catalogue-nav ul,
+  .search-results,
+  .local-outline ol {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .catalogue-nav__link {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.5rem;
+    padding: 0.55rem 0.65rem;
+    border-inline-start: 3px solid var(--paper-color-rule-subtle);
+    color: var(--paper-color-text-muted);
+    text-decoration: none;
+  }
+
+  .catalogue-nav__link:hover,
+  .catalogue-nav__link--active {
+    color: var(--paper-color-text-ink);
+    border-inline-start-color: var(--paper-color-action-default);
+    background: var(--paper-color-surface-raised);
+  }
+
+}

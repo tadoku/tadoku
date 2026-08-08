@@ -3,6 +3,7 @@ import { dirname, extname, relative, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
 import { DOGFOODING_DEBT, type DogfoodingDebtKind } from './dogfooding-inventory'
+import { importedStyleSources } from './style-sources'
 
 const testDirectory = dirname(fileURLToPath(import.meta.url))
 const appRoot = resolve(testDirectory, '..')
@@ -35,19 +36,20 @@ function ordinalKeys(
 }
 
 function directSurfaceStyleKeys(): string[] {
-  const path = resolve(sourceRoot, 'styles/shell.css')
-  const source = readFileSync(path, 'utf8')
   const keys = new Set<string>()
-  const rules = source.matchAll(/([^{}]+)\{([^{}]*)\}/gu)
 
-  for (const rule of rules) {
-    if (!/background:\s*var\(--paper-color-surface-[^)]+\)/u.test(rule[2])) {
-      continue
-    }
-    for (const selector of rule[1].split(',')) {
-      const normalized = selector.trim().replace(/\s+/gu, ' ')
-      if (normalized.startsWith('.')) {
-        keys.add(`${sourceKey(path)}:surface-style:${normalized}`)
+  for (const { key, source } of importedStyleSources) {
+    const rules = source.matchAll(/([^{}]+)\{([^{}]*)\}/gu)
+
+    for (const rule of rules) {
+      if (!/background:\s*var\(--paper-color-surface-[^)]+\)/u.test(rule[2])) {
+        continue
+      }
+      for (const selector of rule[1].split(',')) {
+        const normalized = selector.trim().replace(/\s+/gu, ' ')
+        if (normalized.startsWith('.')) {
+          keys.add(`${key}:surface-style:${normalized}`)
+        }
       }
     }
   }

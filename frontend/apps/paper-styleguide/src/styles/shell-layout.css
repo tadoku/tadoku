@@ -1,0 +1,107 @@
+@layer paper-styleguide {
+  .docs-shell {
+    min-block-size: 100vh;
+    display: grid;
+    grid-template-columns: 18rem minmax(0, 1fr);
+    grid-template-rows: auto 1fr;
+    background: var(--paper-color-surface-canvas);
+  }
+
+  .docs-header {
+    position: sticky;
+    z-index: 30;
+    inset-block-start: 0;
+    grid-column: 1 / -1;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    min-block-size: 4.5rem;
+    padding-inline: clamp(1rem, 3vw, 2rem);
+    border-block-end: 1px solid var(--paper-color-rule-default);
+    background: var(--paper-color-surface-paper);
+  }
+
+  .paper-wordmark {
+    display: inline-flex;
+    gap: 0.7rem;
+    align-items: center;
+    color: var(--paper-color-text-ink);
+    text-decoration: none;
+    white-space: nowrap;
+  }
+
+  .paper-wordmark > span {
+    display: grid;
+    place-items: center;
+    inline-size: 2.25rem;
+    block-size: 2.25rem;
+    aspect-ratio: 1;
+    color: var(--paper-color-action-default);
+  }
+
+  .paper-wordmark :where(img) {
+    display: block;
+    inline-size: 100%;
+    block-size: 100%;
+  }
+
+  .paper-wordmark__mark--dark,
+  :root[data-theme='dark'] .paper-wordmark__mark--light {
+    display: none;
+  }
+
+  :root[data-theme='dark'] .paper-wordmark__mark--dark {
+    display: block;
+  }
+
+  .docs-header__actions {
+    display: flex;
+    gap: var(--paper-inline-gap);
+    align-items: center;
+  }
+
+  .shell-search-trigger,
+  .mobile-nav-trigger,
+  .shell-icon-button,
+  .canvas-viewport-button {
+    border: 1px solid var(--paper-color-rule-strong);
+    background: var(--paper-color-surface-paper);
+  }
+
+  .shell-search-trigger,
+  .mobile-nav-trigger {
+    display: inline-flex;
+    gap: var(--paper-inline-gap);
+    align-items: center;
+    padding-inline: var(--paper-field-padding-inline);
+  }
+
+  .shell-search-trigger kbd {
+    color: var(--paper-color-text-muted);
+    font-size: var(--paper-type-metadata-size);
+  }
+
+  .shell-icon-button {
+    display: grid;
+    place-items: center;
+    inline-size: var(--paper-control-height);
+    padding: 0;
+    font-size: var(--paper-type-section-size);
+  }
+
+  .mobile-nav-trigger {
+    display: none;
+  }
+
+  .docs-sidebar {
+    position: sticky;
+    inset-block-start: 4.5rem;
+    align-self: start;
+    block-size: calc(100vh - 4.5rem);
+    overflow-y: auto;
+    padding: 1.25rem 1rem 3rem;
+    border-inline-end: 1px solid var(--paper-color-rule-subtle);
+    background: var(--paper-color-surface-paper);
+  }
+
+}

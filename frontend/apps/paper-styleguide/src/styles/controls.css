@@ -1,0 +1,19 @@
+@layer paper-styleguide {
+  .canvas-controls label {
+    display: grid;
+    gap: 0.25rem;
+    color: var(--paper-color-text-muted);
+    font-size: var(--paper-type-metadata-size);
+  }
+
+  .canvas-controls select,
+  .search-field input {
+    inline-size: 100%;
+    border: 1px solid var(--paper-color-rule-field-edge);
+    border-block-end-color: var(--paper-color-rule-action-edge);
+    padding: var(--paper-field-padding-block) var(--paper-field-padding-inline);
+    color: var(--paper-color-text-ink);
+    background: var(--paper-color-surface-paper);
+  }
+
+}

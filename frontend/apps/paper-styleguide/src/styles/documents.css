@@ -1,0 +1,188 @@
+@layer paper-styleguide {
+  .docs-main {
+    min-inline-size: 0;
+    padding: clamp(2rem, 5vw, 5rem) clamp(1rem, 5vw, 5rem) 7rem;
+  }
+
+  .catalogue-index,
+  .not-found {
+    max-inline-size: 76rem;
+    margin-inline: auto;
+  }
+
+  .catalogue-index__hero {
+    max-inline-size: 48rem;
+    margin-block-end: 4rem;
+  }
+
+  .catalogue-index__section + .catalogue-index__section {
+    margin-block-start: 3.5rem;
+  }
+
+  .catalogue-index__section > h2 {
+    margin-block: 0 1rem;
+  }
+
+  .design-history > p {
+    max-inline-size: 46rem;
+    color: var(--paper-color-text-muted);
+  }
+
+  .design-history__links {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr));
+    gap: 1rem;
+    margin: 1.25rem 0 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .design-history__links a {
+    display: block;
+    block-size: 100%;
+    padding: 1rem;
+    border: 1px solid var(--paper-color-rule-default);
+    color: var(--paper-color-text-ink);
+    background: var(--paper-color-surface-raised);
+    text-decoration: none;
+  }
+
+  .design-history__links span {
+    display: block;
+    margin-block-start: 0.35rem;
+    color: var(--paper-color-text-muted);
+  }
+
+  .catalogue-index__hero h1,
+  .document-hero h1,
+  .not-found h1 {
+    margin-block: 0.3rem 1rem;
+  }
+
+  .catalogue-index__hero > p:last-child,
+  .document-summary {
+    color: var(--paper-color-text-muted);
+    font-size: var(--paper-type-component-size);
+    line-height: 1.65;
+  }
+
+  .eyebrow {
+    margin: 0;
+    color: var(--paper-color-text-link);
+    font-size: var(--paper-type-metadata-size);
+    font-weight: var(--paper-type-label-weight);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .document-card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr));
+    gap: 1rem;
+  }
+
+  .document-card {
+    min-block-size: 11rem;
+    padding: 1.25rem;
+    border: 1px solid var(--paper-color-rule-default);
+    color: var(--paper-color-text-ink);
+    text-decoration: none;
+  }
+
+  .document-card small,
+  .document-card p {
+    color: var(--paper-color-text-muted);
+  }
+
+  .document-card small {
+    float: inline-end;
+  }
+
+  .document-card p {
+    margin-block-end: 0;
+  }
+
+  .document-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 48rem) 12rem;
+    gap: clamp(2rem, 5vw, 5rem);
+    justify-content: center;
+  }
+
+  .document-hero,
+  .not-found {
+    margin-block-end: 4rem;
+  }
+
+  .document-section + .document-section,
+  .document-section + .document-section--wide,
+  .document-section--wide + .document-section {
+    margin-block-start: 4rem;
+  }
+
+  .document-section {
+    max-inline-size: 46rem;
+    scroll-margin-block-start: 6rem;
+  }
+
+  .document-section--wide {
+    max-inline-size: none;
+  }
+
+  .metadata-strip {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1rem;
+    margin-block-start: 2rem;
+    padding-block-start: 1rem;
+    border-block-start: 1px solid var(--paper-color-rule-subtle);
+  }
+
+  .metadata-strip dt,
+  .metadata-list dt {
+    color: var(--paper-color-text-muted);
+    font-size: var(--paper-type-metadata-size);
+  }
+
+  .metadata-strip dd,
+  .metadata-list dd {
+    margin: 0.2rem 0 0;
+  }
+
+  .metadata-list > div {
+    display: grid;
+    grid-template-columns: 9rem minmax(0, 1fr);
+    gap: 1rem;
+    padding-block: 0.75rem;
+    border-block-end: 1px solid var(--paper-color-rule-subtle);
+  }
+
+  .docs-shell code {
+    overflow-wrap: anywhere;
+    color: var(--paper-color-text-link);
+  }
+
+  .local-outline {
+    position: sticky;
+    inset-block-start: 6rem;
+    align-self: start;
+    padding-inline-start: 1rem;
+    border-inline-start: 1px solid var(--paper-color-rule-subtle);
+  }
+
+  .local-outline h2 {
+    margin-block-start: 0;
+  }
+
+  .local-outline a {
+    display: block;
+    padding-block: 0.35rem;
+    color: var(--paper-color-text-muted);
+    text-decoration: none;
+  }
+
+  .local-outline a:hover {
+    color: var(--paper-color-text-link);
+  }
+
+}

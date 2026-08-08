@@ -1,0 +1,107 @@
+@layer paper-styleguide {
+  .search-backdrop,
+  .mobile-nav-backdrop {
+    position: fixed;
+    z-index: 50;
+    inset: 0;
+    background: var(--paper-color-surface-scrim);
+    -webkit-backdrop-filter: blur(0.375rem);
+    backdrop-filter: blur(0.375rem);
+  }
+
+  .mobile-nav-backdrop {
+    display: none;
+    visibility: visible;
+    opacity: 1;
+  }
+
+  .mobile-nav-backdrop[data-open='false'] {
+    visibility: hidden;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .mobile-nav-drawer {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    transform: translateX(0);
+  }
+
+  .mobile-nav-drawer__body {
+    flex: 1;
+    min-block-size: 0;
+    overflow-y: auto;
+  }
+
+  .mobile-nav-backdrop[data-open='false'] .mobile-nav-drawer {
+    transform: translateX(-100%);
+  }
+
+  .search-dialog {
+    inline-size: min(40rem, calc(100% - 2rem));
+    max-block-size: min(42rem, calc(100vh - 4rem));
+    margin: min(14vh, 7rem) auto 0;
+    overflow: auto;
+    border: 1px solid var(--paper-color-rule-strong);
+  }
+
+  .search-dialog__heading,
+  .mobile-nav-drawer__heading {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+  }
+
+  .search-dialog__heading h2 {
+    margin: 0;
+  }
+
+  .search-field {
+    display: block;
+    padding-inline: 1rem;
+  }
+
+  .search-count {
+    margin: 0;
+    padding: 0.75rem 1rem;
+    color: var(--paper-color-text-muted);
+  }
+
+  .search-result {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.85rem 1rem;
+    border-block-start: 1px solid var(--paper-color-rule-subtle);
+    color: var(--paper-color-text-ink);
+    text-decoration: none;
+  }
+
+  .search-result:hover {
+    background: var(--paper-color-surface-raised);
+  }
+
+  .search-result strong,
+  .search-result small {
+    display: block;
+  }
+
+  .search-result small {
+    margin-block-start: 0.2rem;
+    color: var(--paper-color-text-muted);
+  }
+
+  .lifecycle-badge {
+    align-self: start;
+    color: var(--paper-color-status-information);
+    font-size: var(--paper-type-metadata-size);
+  }
+
+  .text-link {
+    color: var(--paper-color-text-link);
+  }
+
+}

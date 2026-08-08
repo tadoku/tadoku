@@ -12,6 +12,7 @@
     "resolveJsonModule": true,
     "skipLibCheck": true,
     "strict": true,
+    "ignoreDeprecations": "6.0",
     "noEmit": true,
     "types": ["vitest/globals", "@testing-library/jest-dom/vitest"]
   },

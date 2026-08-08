@@ -1,4 +1,5 @@
 load("@gazelle//:def.bzl", "gazelle")
+load("@rules_shell//shell:sh_binary.bzl", "sh_binary")
 
 # gazelle:prefix github.com/tadoku/tadoku
 gazelle(name = "gazelle")

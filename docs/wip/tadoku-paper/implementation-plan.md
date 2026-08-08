@@ -1,12 +1,14 @@
 # Tadoku Paper implementation plan
 
-Status: ready for implementation
+Status: Phases 0–4 complete; execution stopped before Phase 5 application migration
 
 Last updated: 2026-08-08
 
 Decision source: [decision-log.md](decision-log.md)
 
 Design history: [README.md](README.md)
+
+Execution evidence: [Phase 4 deployment gate](research/phase-4-deployment-gate.md) and [HTML gate report](artifacts/tadoku-paper-phase-4-gate.html)
 
 ## Outcome
 

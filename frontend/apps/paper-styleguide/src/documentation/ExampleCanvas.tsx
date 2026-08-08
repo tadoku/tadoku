@@ -122,9 +122,14 @@ export function ExampleCanvas({ fixture }: { fixture?: CatalogFixture }) {
       <div className="example-canvas__stage">
         <iframe
           title="Paper responsive component preview"
+          width={viewport.width}
+          data-fixture-id={fixture?.id}
           srcDoc={'<!doctype html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head><body><div id="paper-preview-root"></div></body></html>'}
           data-preview-width={viewport.width}
-          style={{ inlineSize: `${viewport.width}px` }}
+          style={{
+            inlineSize: `${viewport.width}px`,
+            boxSizing: 'content-box',
+          }}
           onLoad={(event) => {
             const targetDocument = event.currentTarget.contentDocument
             if (!targetDocument) return

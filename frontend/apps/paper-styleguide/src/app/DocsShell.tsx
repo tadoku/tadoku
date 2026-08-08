@@ -2,7 +2,13 @@ import type { CatalogDocument } from 'paper-ui/catalog'
 import cutMeterUrl from 'paper-ui/assets/brand/cut-meter.svg?no-inline'
 import cutMeterReversedUrl from 'paper-ui/assets/brand/cut-meter-reversed.svg?no-inline'
 import { Bars3Icon, XMarkIcon, iconClassName } from 'paper-ui/icons'
-import { type PropsWithChildren, useEffect, useRef, useState } from 'react'
+import {
+  type PropsWithChildren,
+  useEffect,
+  useRef,
+  useState,
+  type KeyboardEvent as ReactKeyboardEvent,
+} from 'react'
 import { Link, NavLink } from 'react-router-dom'
 import { buildNavigationGroups } from './catalogue'
 import { CatalogueSearch } from './CatalogueSearch'
@@ -88,9 +94,11 @@ function PreferenceControls() {
 export function DocsShell({ documents, children }: DocsShellProps) {
   const [mobileNavigationOpen, setMobileNavigationOpen] = useState(false)
   const mobileTriggerRef = useRef<HTMLButtonElement>(null)
+  const mobileCloseRef = useRef<HTMLButtonElement>(null)
 
   useEffect(() => {
     if (!mobileNavigationOpen) return
+    mobileCloseRef.current?.focus()
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
         setMobileNavigationOpen(false)
@@ -100,6 +108,26 @@ export function DocsShell({ documents, children }: DocsShellProps) {
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
   }, [mobileNavigationOpen])
+
+  function trapMobileFocus(event: ReactKeyboardEvent<HTMLElement>) {
+    if (event.key !== 'Tab') return
+    const focusable = Array.from(
+      event.currentTarget.querySelectorAll<HTMLElement>(
+        'button:not([disabled]), select:not([disabled]), a[href]',
+      ),
+    )
+    const first = focusable[0]
+    const last = focusable[focusable.length - 1]
+    if (!first || !last) return
+
+    if (event.shiftKey && document.activeElement === first) {
+      event.preventDefault()
+      last.focus()
+    } else if (!event.shiftKey && document.activeElement === last) {
+      event.preventDefault()
+      first.focus()
+    }
+  }
 
   return (
     <div className="docs-shell">
@@ -161,10 +189,12 @@ export function DocsShell({ documents, children }: DocsShellProps) {
             id="mobile-catalogue-navigation"
             className="mobile-nav-drawer paper-surface-raised paper-elevation-showcase"
             aria-label="Mobile catalogue navigation"
+            onKeyDown={trapMobileFocus}
           >
             <div className="mobile-nav-drawer__heading">
               <strong className="paper-type-component">Browse Paper</strong>
               <button
+                ref={mobileCloseRef}
                 type="button"
                 className="shell-icon-button paper-focus-ring"
                 aria-label="Close navigation"

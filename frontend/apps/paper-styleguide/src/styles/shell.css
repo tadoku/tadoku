@@ -252,6 +252,36 @@
     margin-block: 0 1rem;
   }
 
+  .design-history > p {
+    max-inline-size: 46rem;
+    color: var(--paper-color-text-muted);
+  }
+
+  .design-history__links {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr));
+    gap: 1rem;
+    margin: 1.25rem 0 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .design-history__links a {
+    display: block;
+    block-size: 100%;
+    padding: 1rem;
+    border: 1px solid var(--paper-color-rule-default);
+    color: var(--paper-color-text-ink);
+    background: var(--paper-color-surface-raised);
+    text-decoration: none;
+  }
+
+  .design-history__links span {
+    display: block;
+    margin-block-start: 0.35rem;
+    color: var(--paper-color-text-muted);
+  }
+
   .catalogue-index__hero h1,
   .document-hero h1,
   .not-found h1 {
@@ -451,6 +481,27 @@
   .code-view,
   .workbench-reference-grid {
     padding: 1.25rem;
+  }
+
+  .code-view__heading {
+    display: flex;
+    align-items: start;
+    justify-content: space-between;
+    gap: 1rem;
+  }
+
+  .code-copy {
+    display: grid;
+    justify-items: end;
+    gap: 0.35rem;
+    min-inline-size: 12rem;
+  }
+
+  .code-copy__status {
+    min-block-size: var(--paper-type-metadata-line-height);
+    color: var(--paper-color-text-muted);
+    font-size: var(--paper-type-metadata-size);
+    text-align: end;
   }
 
   .code-view h3,
@@ -745,6 +796,16 @@
 
     .document-card p {
       display: none;
+    }
+
+    .code-view__heading {
+      align-items: stretch;
+      flex-direction: column;
+    }
+
+    .code-copy {
+      justify-items: start;
+      min-inline-size: 0;
     }
 
     .mobile-nav-drawer {

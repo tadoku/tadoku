@@ -1,0 +1,206 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="High-level implementation plan for migrating the Tadoku admin application from Next.js Pages Router to TanStack Start.">
+  <title>Tadoku Admin — TanStack Start Migration Plan</title>
+  <style>
+    :root {
+      --ink: #172033;
+      --muted: #627086;
+      --paper: #f6f7fb;
+      --card: #fff;
+      --line: #dfe3ec;
+      --indigo: #4f46e5;
+      --indigo-soft: #e8e7ff;
+      --cyan: #087f8c;
+      --cyan-soft: #dff5f5;
+      --amber: #a65a00;
+      --amber-soft: #fff1d6;
+      --red: #a83f52;
+      --green: #177052;
+      --shadow: 0 18px 55px rgba(23, 32, 51, .08);
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 4% -5%, rgba(79,70,229,.14), transparent 31rem),
+        radial-gradient(circle at 100% 18%, rgba(8,127,140,.11), transparent 29rem),
+        var(--paper);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.55;
+    }
+    .shell { width: min(1160px, calc(100% - 32px)); margin: 0 auto; }
+    .topbar { position: sticky; top: 0; z-index: 10; border-bottom: 1px solid rgba(223,227,236,.9); background: rgba(246,247,251,.88); backdrop-filter: blur(14px); }
+    .topbar-inner { min-height: 62px; display: flex; justify-content: space-between; align-items: center; gap: 20px; }
+    .brand { display: flex; align-items: center; gap: 10px; font-weight: 820; letter-spacing: -.02em; }
+    .mark { width: 34px; height: 34px; display: grid; place-items: center; border-radius: 10px; color: white; background: var(--ink); font: 800 12px ui-monospace, monospace; }
+    nav { display: flex; gap: 4px; }
+    nav a { padding: 8px 10px; border-radius: 999px; color: var(--muted); font-size: 13px; text-decoration: none; }
+    nav a:hover { color: var(--ink); background: white; }
+    .hero { padding: 78px 0 45px; }
+    .eyebrow { margin: 0 0 14px; color: var(--indigo); font-size: 12px; font-weight: 850; letter-spacing: .16em; text-transform: uppercase; }
+    h1, h2, h3, p { margin-top: 0; }
+    h1 { max-width: 990px; margin-bottom: 23px; font-size: clamp(46px, 7.2vw, 82px); line-height: .98; letter-spacing: -.063em; }
+    h1 span { color: var(--cyan); }
+    .lead { max-width: 810px; color: var(--muted); font-size: clamp(18px, 2vw, 22px); letter-spacing: -.015em; }
+    .blocked { margin-top: 34px; padding: 22px 24px; display: grid; grid-template-columns: 150px 1fr; gap: 22px; border: 1px solid #eccb91; border-radius: 18px; background: var(--amber-soft); }
+    .blocked strong { color: var(--amber); font-size: 12px; letter-spacing: .12em; text-transform: uppercase; }
+    .blocked p { margin: 0; font-weight: 730; }
+    section { padding: 44px 0; scroll-margin-top: 76px; }
+    .section-head { margin-bottom: 26px; display: grid; grid-template-columns: 1fr 1.8fr; gap: 34px; }
+    h2 { margin-bottom: 7px; font-size: clamp(31px, 4vw, 44px); line-height: 1.04; letter-spacing: -.045em; }
+    .intro { color: var(--muted); font-size: 16px; }
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .card { padding: 24px; border: 1px solid var(--line); border-radius: 19px; background: var(--card); box-shadow: var(--shadow); }
+    .card h3 { margin-bottom: 12px; font-size: 19px; letter-spacing: -.025em; }
+    ul { margin: 0; padding-left: 20px; }
+    li { margin: 7px 0; }
+    li::marker { color: var(--indigo); }
+    .muted { color: var(--muted); }
+    .diagram { padding: 25px; overflow-x: auto; border: 1px solid var(--line); border-radius: 19px; background: white; box-shadow: var(--shadow); }
+    .risk-wrap, .mapping-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 19px; background: white; box-shadow: var(--shadow); }
+    table { width: 100%; min-width: 800px; border-collapse: collapse; }
+    th, td { padding: 14px 16px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; font-size: 13px; }
+    th { color: var(--muted); background: #f8f9fc; font-size: 10px; letter-spacing: .11em; text-transform: uppercase; }
+    tr:last-child td { border-bottom: 0; }
+    .high { color: var(--red); font-weight: 800; }
+    .medium { color: var(--amber); font-weight: 800; }
+    .low { color: var(--green); font-weight: 800; }
+    .phases { display: grid; gap: 15px; }
+    .phase { display: grid; grid-template-columns: 110px 1fr; gap: 22px; padding: 24px; border: 1px solid var(--line); border-radius: 19px; background: white; }
+    .phase-no { color: var(--indigo); font: 850 12px ui-monospace, monospace; letter-spacing: .08em; text-transform: uppercase; }
+    .phase h3 { margin-bottom: 5px; font-size: 21px; letter-spacing: -.028em; }
+    .phase .why { margin-bottom: 13px; color: var(--muted); }
+    .checks { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 28px; }
+    .check { position: relative; padding-left: 23px; font-size: 14px; }
+    .check::before { content: "□"; position: absolute; left: 0; color: var(--indigo); font-weight: 900; }
+    .gate { margin-top: 17px; padding: 13px 15px; border-left: 4px solid var(--cyan); border-radius: 7px; background: var(--cyan-soft); font-size: 13px; }
+    .gate strong { color: var(--cyan); text-transform: uppercase; letter-spacing: .08em; font-size: 10px; }
+    code { padding: 2px 6px; border-radius: 6px; background: #eef0f5; font: 12px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace; }
+    .success { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+    .metric { padding: 20px; border: 1px solid var(--line); border-radius: 17px; background: white; }
+    .metric strong { display: block; margin-bottom: 8px; color: var(--cyan); font-size: 21px; }
+    .metric p { margin: 0; color: var(--muted); font-size: 13px; }
+    footer { padding: 36px 0 55px; color: var(--muted); font-size: 12px; }
+    .foot { padding-top: 21px; border-top: 1px solid var(--line); display: flex; justify-content: space-between; gap: 20px; }
+    @media (max-width: 820px) {
+      nav { display: none; }
+      .section-head, .blocked, .phase { grid-template-columns: 1fr; }
+      .grid-2, .success, .checks { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 560px) { .shell { width: min(100% - 22px, 1160px); } .hero { padding-top: 48px; } h1 { font-size: 43px; } }
+    @media print { .topbar { position: static; } body { background: white; } .card, .diagram, .phase { box-shadow: none; } .phase { break-inside: avoid; } }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="shell topbar-inner">
+      <div class="brand"><span class="mark">TS</span><span>Tadoku admin migration</span></div>
+      <nav aria-label="Plan sections">
+        <a href="#shape">Shape</a><a href="#risks">Risks</a><a href="#phases">Phases</a><a href="#health">Health</a><a href="#success">Success</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <div class="shell hero">
+      <p class="eyebrow">Implementation plan · August 2026</p>
+      <h1>Move admin to TanStack Start—<span>after the design system settles.</span></h1>
+      <p class="lead">A phased, reversible migration of the one-user Tadoku admin application. Preserve URLs and APIs, prove Ory and the container early, add Kubernetes health probes safely, and remove the Next.js environment naming only after production is stable.</p>
+      <div class="blocked"><strong>Hard prerequisite</strong><p>Implementation does not begin until the design-system rework is merged, adopted by admin, free of Next.js runtime coupling, and stable for the migration window.</p></div>
+    </div>
+
+    <section id="shape">
+      <div class="shell">
+        <div class="section-head"><div><p class="eyebrow">Migration shape</p><h2>One framework changes. Product behavior does not.</h2></div><p class="intro">Use TanStack Start plus the file router, retain existing React Query hooks, keep authorization in backend APIs, and use route loaders only for session bootstrap, runtime configuration, redirects, and route UX.</p></div>
+        <div class="diagram"><pre class="mermaid">
+flowchart LR
+  DS[Design-system rework] -->|prerequisite gate| S[Start runtime spike]
+  S --> A[Ory + runtime config]
+  S --> R[Route families]
+  A --> C[Start container]
+  R --> C
+  C --> H[Health endpoints deployed]
+  H --> P[Kubernetes probes enabled]
+  P --> M[Manual cutover]
+  M --> E[Rename NEXT_PUBLIC variables]
+        </pre></div>
+        <div class="grid-2" style="margin-top:16px">
+          <article class="card"><h3>In scope</h3><ul><li>All 18 existing route behaviors and redirects</li><li>Request-scoped Ory session and admin layout guard</li><li>Runtime configuration from Kubernetes</li><li>Start/Nitro production image on port 3000</li><li>Startup, readiness, and liveness endpoints and probes</li><li>Final environment-variable cleanup</li></ul></article>
+          <article class="card"><h3>Deliberately out of scope</h3><ul><li>Admin or design-system redesign</li><li>Backend, Ory, Keto, or authorization changes</li><li>React Query upgrade or loader rewrite</li><li>React Server Components</li><li>A new E2E environment</li><li>Migration of other Next.js applications</li></ul></article>
+        </div>
+      </div>
+    </section>
+
+    <section id="risks">
+      <div class="shell">
+        <div class="section-head"><div><p class="eyebrow">Risk posture</p><h2>Prove the boundaries, not every screen.</h2></div><p class="intro">The route conversion is mechanical. Session cookies, browser-only editors, the production image, and deployment ordering deserve the attention. With one operator and backend-enforced authorization, manual acceptance is proportionate.</p></div>
+        <div class="risk-wrap"><table><thead><tr><th>Risk</th><th>Level</th><th>Control</th></tr></thead><tbody>
+          <tr><td>Ory login, logout, or return-to changes</td><td class="high">High</td><td>Request-scoped server session; exercise signed-out, signed-in, expired, and deep-link flows.</td></tr>
+          <tr><td>CodeMirror fails under Vite SSR</td><td class="medium">Medium</td><td>Put a real editor in the first vertical slice; add a client-only boundary only if needed.</td></tr>
+          <tr><td>Internal configuration leaks client-side</td><td class="medium">Medium</td><td>Server reads all env; root loader serializes an allow-listed public subset.</td></tr>
+          <tr><td>New image layout does not boot</td><td class="medium">Medium</td><td>Build and run the exact production image; leave other Next images unchanged.</td></tr>
+          <tr><td>Probes target an endpoint absent from the old image</td><td class="high">High</td><td>Deploy health endpoints first, verify them in-pod, then merge the ArgoCD probes.</td></tr>
+          <tr><td>UI regression reaches production</td><td class="low">Accepted</td><td>Ten-minute operator smoke test plus recorded previous image digest and Git rollback.</td></tr>
+        </tbody></table></div>
+      </div>
+    </section>
+
+    <section id="phases">
+      <div class="shell">
+        <div class="section-head"><div><p class="eyebrow">Execution</p><h2>Seven gated phases.</h2></div><p class="intro">Parallel labels identify work that can be split once the preceding gate establishes shared conventions. Each gate must pass before dependent work begins.</p></div>
+        <div class="phases">
+          <article class="phase"><div class="phase-no">Phase 0</div><div><h3>Prerequisite and baseline</h3><p class="why">Wait for the design-system rework and make rollback concrete.</p><div class="checks"><div class="check">Confirm design-system completion criteria</div><div class="check">Rebase on its merge commit</div><div class="check">Inventory routes, Next imports, Ory, config, and Docker</div><div class="check">Record current production digest and manual checklist</div></div><div class="gate"><strong>Gate</strong><br>Admin builds on the stable design system and a known-good rollback digest is recorded.</div></div></article>
+          <article class="phase"><div class="phase-no">Phase 1</div><div><h3>Prove the Start runtime</h3><p class="why">Establish Vite, generated routes, root providers, and one real editor before scaling out.</p><div class="checks"><div class="check">Create Start/Vite shell and update TypeScript</div><div class="check">Create root document and route boundaries</div><div class="check">Migrate dashboard and one dynamic editor</div><div class="check">Verify CodeMirror and production SSR</div></div><div class="gate"><strong>Gate</strong><br>The vertical slice works in development and the production build without UI or backend forks.</div></div></article>
+          <article class="phase"><div class="phase-no">Phase 2</div><div><h3>Session and runtime foundations</h3><p class="why">Make security and configuration request-scoped before moving all routes.</p><div class="checks"><div class="check">[Parallel: auth] Server-only Ory SDK and protected layout</div><div class="check">[Parallel: state] Per-request Jotai and Query Client</div><div class="check">[Parallel: config] Server-read env and public root-loader subset</div><div class="check">Replace unauthorized redirect route</div></div><div class="gate"><strong>Gate</strong><br>Login, logout, return-to, denial, expiry, and runtime config work; internal Kratos is absent from browser assets.</div></div></article>
+          <article class="phase"><div class="phase-no">Phase 3</div><div><h3>Complete the file-route tree</h3><p class="why">Route families can now migrate independently against one auth/layout convention.</p><div class="checks"><div class="check">[Parallel] Dashboard and users</div><div class="check">[Parallel] Languages</div><div class="check">[Parallel] Pages and posts</div><div class="check">[Parallel] Announcements</div><div class="check">Replace Link, router, head, redirects, and getLayout</div><div class="check">Remove every admin Next.js import</div></div><div class="gate"><strong>Gate</strong><br>Every URL is represented, the route tree is generated, and typecheck plus production build pass.</div></div></article>
+          <article class="phase" id="health"><div class="phase-no">Phase 4</div><div><h3>Container and Kubernetes health</h3><p class="why">Make health observable before Kubernetes begins enforcing it.</p><div class="checks"><div class="check">[Parallel: app] Add <code>/startupz</code>, <code>/readyz</code>, <code>/livez</code></div><div class="check">[Parallel: image] Build non-root Start/Nitro image</div><div class="check">Smoke exact image on port 3000</div><div class="check">Deploy and verify endpoints inside the pod</div><div class="check">[ArgoCD] Add startup, readiness, and liveness probes</div><div class="check">Validate a zero-unavailable rolling update</div></div><div class="gate"><strong>Gate</strong><br>All probes pass, the service stays available during rollout, and digest rollback remains viable.</div></div></article>
+          <article class="phase"><div class="phase-no">Phase 5</div><div><h3>Cutover and manual acceptance</h3><p class="why">Use the risk model appropriate for one operator; do not build an E2E environment.</p><div class="checks"><div class="check">Record outgoing and incoming digests</div><div class="check">Verify login and return-to</div><div class="check">Verify dashboard, deep link, and refresh</div><div class="check">Perform one harmless create/edit</div><div class="check">Verify logout or session expiry</div><div class="check">Revert the ArgoCD digest if any check fails</div></div><div class="gate"><strong>Gate</strong><br>The operator accepts the deployment, or production is restored to the recorded digest.</div></div></article>
+          <article class="phase"><div class="phase-no">Phase 6</div><div><h3>Rename legacy environment variables</h3><p class="why">Clean up the Next.js naming only after the new runtime is stable.</p><div class="checks"><div class="check">Add final <code>TADOKU_*</code> names with old-name fallbacks</div><div class="check">Update Tilt and production ArgoCD values</div><div class="check">Verify production using only final names</div><div class="check">Remove fallbacks and all <code>NEXT_PUBLIC_*</code> references</div></div><div class="gate"><strong>Gate</strong><br>Both repositories contain no admin <code>NEXT_PUBLIC_*</code> references and login/dashboard still pass.</div></div></article>
+        </div>
+      </div>
+    </section>
+
+    <section id="env">
+      <div class="shell">
+        <div class="section-head"><div><p class="eyebrow">Final cleanup</p><h2>Names that describe the boundary.</h2></div><p class="intro">The internal endpoint loses the misleading public prefix. Browser-safe values remain visibly public, but are still serialized by the server rather than read directly from the Vite bundle.</p></div>
+        <div class="mapping-wrap"><table><thead><tr><th>Legacy</th><th>Final</th><th>Boundary</th></tr></thead><tbody>
+          <tr><td><code>NEXT_PUBLIC_KRATOS_INTERNAL_ENDPOINT</code></td><td><code>TADOKU_KRATOS_INTERNAL_ENDPOINT</code></td><td>Server only</td></tr>
+          <tr><td><code>NEXT_PUBLIC_KRATOS_ENDPOINT</code></td><td><code>TADOKU_PUBLIC_KRATOS_ENDPOINT</code></td><td>Browser safe</td></tr>
+          <tr><td><code>NEXT_PUBLIC_AUTH_UI_URL</code></td><td><code>TADOKU_PUBLIC_AUTH_UI_URL</code></td><td>Browser safe</td></tr>
+          <tr><td><code>NEXT_PUBLIC_ADMIN_URL</code></td><td><code>TADOKU_PUBLIC_ADMIN_URL</code></td><td>Browser safe</td></tr>
+          <tr><td><code>NEXT_PUBLIC_HOME_URL</code></td><td><code>TADOKU_PUBLIC_HOME_URL</code></td><td>Browser safe</td></tr>
+          <tr><td><code>NEXT_PUBLIC_API_ENDPOINT</code></td><td><code>TADOKU_PUBLIC_API_ENDPOINT</code></td><td>Browser safe</td></tr>
+          <tr><td><code>NEXT_PUBLIC_COOKIE_DOMAIN</code></td><td><code>TADOKU_PUBLIC_COOKIE_DOMAIN</code></td><td>Browser safe</td></tr>
+          <tr><td><code>NEXT_PUBLIC_COOKIE_SECURE</code></td><td><code>TADOKU_PUBLIC_COOKIE_SECURE</code></td><td>Browser safe</td></tr>
+        </tbody></table></div>
+      </div>
+    </section>
+
+    <section id="success">
+      <div class="shell">
+        <div class="section-head"><div><p class="eyebrow">Definition of done</p><h2>Observable success.</h2></div><p class="intro">The migration is complete only when behavior, operations, and cleanup all hold—not merely when the new router renders the dashboard.</p></div>
+        <div class="success">
+          <div class="metric"><strong>18 routes</strong><p>Existing paths, redirects, parameters, direct loads, and refresh behavior are preserved.</p></div>
+          <div class="metric"><strong>3 probes</strong><p>Startup, readiness, and liveness endpoints return 200 and protect rolling deployments.</p></div>
+          <div class="metric"><strong>0 Next imports</strong><p>No admin source imports Next.js and no legacy public env names remain after cleanup.</p></div>
+          <div class="metric"><strong>0 E2E stack</strong><p>Validation stays proportional: typecheck, build, exact-image smoke, and operator acceptance.</p></div>
+          <div class="metric"><strong>1 rollback</strong><p>The previous immutable image digest is recorded before every production cutover.</p></div>
+          <div class="metric"><strong>0 leaked internals</strong><p>The Kratos cluster endpoint is not present in browser assets or public runtime config.</p></div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer><div class="shell foot"><span>Tadoku admin · TanStack Start migration plan</span><span>Planning only — blocked on design-system rework</span></div></footer>
+  <script type="module">
+    import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
+    mermaid.initialize({ startOnLoad: true, theme: 'neutral', flowchart: { curve: 'basis' } });
+  </script>
+</body>
+</html>

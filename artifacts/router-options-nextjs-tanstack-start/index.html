@@ -1,0 +1,361 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="A repository-specific comparison of Next.js Pages Router, Next.js App Router, and TanStack Start routing options for Tadoku.">
+  <title>Tadoku Router Options — Next.js vs TanStack Start</title>
+  <style>
+    :root {
+      --ink: #111d2b;
+      --muted: #617083;
+      --paper: #f5f7f8;
+      --card: #ffffff;
+      --line: #dbe1e6;
+      --blue: #0d5f92;
+      --blue-soft: #dceefa;
+      --teal: #087c72;
+      --teal-soft: #d9f1ed;
+      --orange: #c16432;
+      --orange-soft: #f9e7dc;
+      --violet: #6552a3;
+      --violet-soft: #eae5f8;
+      --red: #a63f4b;
+      --shadow: 0 18px 55px rgba(17, 29, 43, .08);
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 8% -8%, rgba(13, 95, 146, .13), transparent 32rem),
+        radial-gradient(circle at 100% 12%, rgba(8, 124, 114, .10), transparent 30rem),
+        var(--paper);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.55;
+    }
+
+    a { color: inherit; }
+    code { padding: 2px 6px; border-radius: 6px; background: #edf0f2; font: 12px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace; }
+    .shell { width: min(1180px, calc(100% - 32px)); margin: 0 auto; }
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      border-bottom: 1px solid rgba(219, 225, 230, .9);
+      background: rgba(245, 247, 248, .88);
+      backdrop-filter: blur(14px);
+    }
+    .topbar-inner { min-height: 62px; display: flex; align-items: center; justify-content: space-between; gap: 24px; }
+    .brand { display: flex; align-items: center; gap: 11px; font-weight: 800; letter-spacing: -.02em; }
+    .mark { width: 34px; height: 34px; display: grid; place-items: center; border-radius: 9px; color: white; background: var(--ink); font: 800 13px ui-monospace, monospace; }
+    nav { display: flex; gap: 6px; }
+    nav a { padding: 8px 10px; border-radius: 999px; color: var(--muted); font-size: 13px; text-decoration: none; }
+    nav a:hover { color: var(--ink); background: white; }
+
+    .hero { padding: 82px 0 52px; }
+    .eyebrow { margin: 0 0 15px; color: var(--blue); font-size: 12px; font-weight: 850; letter-spacing: .16em; text-transform: uppercase; }
+    h1, h2, h3, p { margin-top: 0; }
+    h1 { max-width: 960px; margin-bottom: 24px; font-size: clamp(46px, 7.3vw, 86px); font-weight: 760; letter-spacing: -.065em; line-height: .98; }
+    h1 span { color: var(--teal); }
+    .hero-copy { max-width: 810px; color: var(--muted); font-size: clamp(18px, 2vw, 23px); letter-spacing: -.015em; }
+    .verdict {
+      margin-top: 38px;
+      display: grid;
+      grid-template-columns: 132px 1fr;
+      gap: 22px;
+      padding: 23px 25px;
+      border: 1px solid #add8d1;
+      border-radius: 20px;
+      background: rgba(217, 241, 237, .72);
+    }
+    .verdict strong { color: var(--teal); font-size: 12px; letter-spacing: .12em; text-transform: uppercase; }
+    .verdict p { margin: 0; font-size: 18px; font-weight: 730; letter-spacing: -.018em; }
+
+    section { padding: 46px 0; scroll-margin-top: 75px; }
+    .section-head { display: grid; grid-template-columns: 1fr 2fr; gap: 34px; margin-bottom: 28px; }
+    h2 { margin-bottom: 8px; font-size: clamp(31px, 4vw, 45px); font-weight: 760; letter-spacing: -.045em; line-height: 1.04; }
+    .intro { max-width: 750px; color: var(--muted); font-size: 17px; }
+
+    .option-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .option { position: relative; overflow: hidden; padding: 26px; border: 1px solid var(--line); border-radius: 20px; background: var(--card); box-shadow: var(--shadow); }
+    .option::before { content: ""; position: absolute; inset: 0 0 auto; height: 5px; background: var(--accent); }
+    .option.pages { --accent: var(--orange); --soft: var(--orange-soft); }
+    .option.app { --accent: var(--violet); --soft: var(--violet-soft); }
+    .option.file { --accent: var(--teal); --soft: var(--teal-soft); }
+    .option.code { --accent: var(--blue); --soft: var(--blue-soft); }
+    .option-top { display: flex; justify-content: space-between; align-items: start; gap: 16px; }
+    .option h3 { margin-bottom: 6px; font-size: 21px; letter-spacing: -.025em; }
+    .option .sub { color: var(--muted); font-size: 13px; }
+    .pill { padding: 6px 9px; border-radius: 999px; color: var(--accent); background: var(--soft); font-size: 11px; font-weight: 850; white-space: nowrap; }
+    .option ul { margin: 20px 0 0; padding-left: 19px; }
+    .option li { margin: 8px 0; font-size: 14px; }
+    .option li::marker { color: var(--accent); }
+
+    .matrix-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 19px; background: white; box-shadow: var(--shadow); }
+    table { width: 100%; min-width: 960px; border-collapse: collapse; }
+    th, td { padding: 15px 17px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; font-size: 13px; }
+    th { color: var(--muted); background: #f7f9fa; font-size: 10px; letter-spacing: .11em; text-transform: uppercase; }
+    th:first-child, td:first-child { position: sticky; left: 0; z-index: 1; width: 155px; background: white; font-weight: 800; }
+    th:first-child { background: #f7f9fa; }
+    tr:last-child td { border-bottom: 0; }
+    .best { color: var(--teal); font-weight: 750; }
+    .caution { color: var(--orange); font-weight: 750; }
+
+    .translation { display: grid; gap: 12px; }
+    .route-row { display: grid; grid-template-columns: 1.1fr 32px 1.1fr 32px 1.1fr; gap: 12px; align-items: center; padding: 18px; border: 1px solid var(--line); border-radius: 17px; background: white; }
+    .route-cell { min-width: 0; }
+    .route-cell small { display: block; margin-bottom: 6px; color: var(--muted); font-size: 10px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; }
+    .route-cell code { display: block; overflow-wrap: anywhere; color: var(--ink); }
+    .arrow { color: var(--teal); text-align: center; font-size: 23px; }
+    .route-note { grid-column: 1 / -1; margin: 0; color: var(--muted); font-size: 12px; }
+
+    .deep-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; }
+    .deep { padding: 23px; border: 1px solid var(--line); border-radius: 17px; background: white; }
+    .deep .number { display: block; margin-bottom: 17px; color: var(--blue); font: 800 12px ui-monospace, monospace; }
+    .deep h3 { margin-bottom: 8px; font-size: 17px; letter-spacing: -.02em; }
+    .deep p { margin: 0; color: var(--muted); font-size: 13px; }
+
+    .decision-flow { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; }
+    .decision-card { padding: 25px; border-radius: 19px; color: white; background: var(--ink); }
+    .decision-card:nth-child(2) { background: var(--violet); }
+    .decision-card:nth-child(3) { background: var(--teal); }
+    .decision-card .when { display: block; margin-bottom: 14px; opacity: .7; font-size: 10px; font-weight: 850; letter-spacing: .12em; text-transform: uppercase; }
+    .decision-card h3 { margin-bottom: 9px; font-size: 20px; }
+    .decision-card p { margin: 0; color: rgba(255,255,255,.76); font-size: 13px; }
+
+    .recommendation { display: grid; grid-template-columns: 180px 1fr; gap: 28px; padding: 30px; border: 1px solid #acd6cf; border-radius: 21px; background: var(--teal-soft); }
+    .recommendation .label { color: var(--teal); font-size: 12px; font-weight: 850; letter-spacing: .13em; text-transform: uppercase; }
+    .recommendation h3 { margin-bottom: 9px; font-size: 24px; letter-spacing: -.03em; }
+    .recommendation p { margin-bottom: 10px; color: #355f5a; }
+    .recommendation p:last-child { margin-bottom: 0; }
+
+    .sources { display: grid; grid-template-columns: 1fr 1fr; gap: 11px; }
+    .source { display: block; padding: 15px 17px; border: 1px solid var(--line); border-radius: 14px; background: rgba(255,255,255,.7); text-decoration: none; }
+    .source:hover { border-color: var(--blue); }
+    .source strong { display: block; font-size: 14px; }
+    .source span { color: var(--muted); font-size: 12px; }
+    footer { padding: 35px 0 55px; color: var(--muted); font-size: 12px; }
+    .foot { display: flex; justify-content: space-between; gap: 20px; padding-top: 22px; border-top: 1px solid var(--line); }
+
+    @media (max-width: 860px) {
+      nav { display: none; }
+      .section-head, .verdict, .recommendation { grid-template-columns: 1fr; }
+      .deep-grid, .decision-flow { grid-template-columns: 1fr; }
+      .route-row { grid-template-columns: 1fr; }
+      .arrow { transform: rotate(90deg); }
+    }
+    @media (max-width: 600px) {
+      .shell { width: min(100% - 22px, 1180px); }
+      .option-grid, .sources { grid-template-columns: 1fr; }
+      .hero { padding-top: 48px; }
+      h1 { font-size: 44px; }
+    }
+    @media print {
+      .topbar { position: static; }
+      body { background: white; }
+      .option, .matrix-wrap { box-shadow: none; }
+      .option, .deep, .route-row { break-inside: avoid; }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="shell topbar-inner">
+      <div class="brand"><span class="mark">R?</span><span>Tadoku router decision guide</span></div>
+      <nav aria-label="Document sections">
+        <a href="#options">Options</a>
+        <a href="#matrix">Matrix</a>
+        <a href="#routes">Examples</a>
+        <a href="#decision">Decision</a>
+        <a href="#sources">Sources</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <div class="shell hero">
+      <p class="eyebrow">Routing options · 08 August 2026</p>
+      <h1>Next.js or TanStack Start:<br><span>which router, exactly?</span></h1>
+      <p class="hero-copy">“Next versus TanStack” hides four materially different choices. This guide compares the router architectures—not their logos—and maps each one to Tadoku’s current Pages Router codebase.</p>
+      <div class="verdict"><strong>Short answer</strong><p>If Tadoku moves to TanStack Start, use file-based routing for the application and reserve code-based or virtual routes for rare generated-route cases. Do not migrate to Next App Router merely as an intermediate step.</p></div>
+    </div>
+
+    <section id="options">
+      <div class="shell">
+        <div class="section-head">
+          <div><p class="eyebrow">The four choices</p><h2>Two frameworks, four routing models.</h2></div>
+          <p class="intro">Pages Router and App Router share the Next.js name but have different data, layout, rendering, and navigation models. TanStack’s file- and code-based options share one route tree and runtime; the difference is how that tree is declared.</p>
+        </div>
+        <div class="option-grid">
+          <article class="option pages">
+            <div class="option-top"><div><h3>Next.js Pages Router</h3><div class="sub"><code>pages/logs/[id].tsx</code></div></div><span class="pill">Current state</span></div>
+            <ul>
+              <li>One route per file, with dynamic and optional catch-all filenames.</li>
+              <li>Data arrives through <code>getServerSideProps</code>, <code>getStaticProps</code>, or global <code>getInitialProps</code>.</li>
+              <li>Layouts are application conventions such as <code>getLayout</code>, not a nested route primitive.</li>
+              <li><code>router.query</code> mixes path and search values as broad string/array types.</li>
+              <li>Lowest immediate migration cost; weakest fit for typed URL state and nested route lifecycles.</li>
+            </ul>
+          </article>
+          <article class="option app">
+            <div class="option-top"><div><h3>Next.js App Router</h3><div class="sub"><code>app/logs/[id]/page.tsx</code></div></div><span class="pill">Next-native rewrite</span></div>
+            <ul>
+              <li>Folder segments plus special files for page, layout, loading, error, not-found, and route handlers.</li>
+              <li>Nested layouts preserve state; parallel and intercepting routes support advanced composition.</li>
+              <li>Server Components are the default; interactive components opt into client boundaries.</li>
+              <li>Params get generated route-aware helpers, but search params still need application validation.</li>
+              <li>Best when RSC, streaming, and the modern Next.js ecosystem are explicit goals.</li>
+            </ul>
+          </article>
+          <article class="option file">
+            <div class="option-top"><div><h3>TanStack Start: file-based</h3><div class="sub"><code>routes/logs/$id.tsx</code></div></div><span class="pill">Recommended TanStack path</span></div>
+            <ul>
+              <li>Files generate a typed route tree through the bundler plugin or Router CLI.</li>
+              <li>Params, links, navigation, search schemas, loader data, and route context share one inferred contract.</li>
+              <li>Nested, pathless, and non-nested layouts are explicit route primitives.</li>
+              <li><code>beforeLoad</code>, <code>loaderDeps</code>, and <code>loader</code> make route lifecycle and preloading visible.</li>
+              <li>Best default for Tadoku if the Start migration proceeds.</li>
+            </ul>
+          </article>
+          <article class="option code">
+            <div class="option-top"><div><h3>TanStack Start: code-based</h3><div class="sub"><code>createRoute({ path: '$id' })</code></div></div><span class="pill">Specialized option</span></div>
+            <ul>
+              <li>The same router capabilities, declared and assembled manually as a route tree.</li>
+              <li>Useful when routes are generated from configuration, plugins, or domain manifests.</li>
+              <li>Parent relationships and child arrays are explicit, which can aid metaprogramming.</li>
+              <li>More verbose and easier to misassemble than generated file routing.</li>
+              <li>TanStack’s own docs do not recommend it for most applications.</li>
+            </ul>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section id="matrix">
+      <div class="shell">
+        <div class="section-head">
+          <div><p class="eyebrow">Capability matrix</p><h2>Where the models actually differ.</h2></div>
+          <p class="intro">All four can render dynamic URLs and navigate without full reloads. The meaningful differences are type propagation, route lifecycle, rendering defaults, layout composition, and how much behavior is encoded in conventions.</p>
+        </div>
+        <div class="matrix-wrap">
+          <table>
+            <thead><tr><th>Dimension</th><th>Next Pages</th><th>Next App</th><th>Start file-based</th><th>Start code-based</th></tr></thead>
+            <tbody>
+              <tr><td>Route declaration</td><td>Files under <code>pages/</code></td><td>Folders + special files under <code>app/</code></td><td>Files generate a route tree</td><td>Manual <code>createRoute</code> tree</td></tr>
+              <tr><td>Path params</td><td><code>[id]</code>; broad <code>router.query</code></td><td><code>[id]</code>; generated <code>PageProps</code></td><td class="best"><code>$id</code>; inferred across route APIs</td><td class="best"><code>$id</code>; inferred from explicit tree</td></tr>
+              <tr><td>Search params</td><td>Parsed manually from router query</td><td><code>searchParams</code>/<code>useSearchParams</code>; validate manually</td><td class="best">Schema-validated, typed, inherited URL state</td><td class="best">Same schema and type system</td></tr>
+              <tr><td>Navigation types</td><td>Mostly string destinations</td><td>Generated route helpers; framework conventions</td><td class="best">Route-aware <code>to</code>, params, and search</td><td class="best">Same route-aware navigation</td></tr>
+              <tr><td>Layouts</td><td>Custom <code>getLayout</code> pattern</td><td class="best">Nested, route groups, parallel slots, interception</td><td>Nested, pathless, non-nested, <code>Outlet</code></td><td>Same; declared explicitly</td></tr>
+              <tr><td>Data lifecycle</td><td>Page-level SSR/SSG functions</td><td>Async Server Components, fetch/cache, Suspense</td><td class="best"><code>beforeLoad</code> → parallel loaders → cache/preload</td><td>Same lifecycle</td></tr>
+              <tr><td>Rendering default</td><td>SSR + hydrated React</td><td>Server Components by default</td><td>SSR + interactive/hydrated React by default</td><td>Same Start rendering model</td></tr>
+              <tr><td>Pending/errors</td><td>Application-level conventions</td><td>Segment <code>loading</code>/<code>error</code>/<code>not-found</code></td><td>Route pending/error/not-found components</td><td>Same route boundaries</td></tr>
+              <tr><td>Route guards</td><td>Effects, SSR wrappers, middleware</td><td>Layouts, redirects, Proxy/middleware; protect data separately</td><td class="best">Typed parent <code>beforeLoad</code> + request middleware</td><td>Same guard model</td></tr>
+              <tr><td>API endpoints</td><td><code>pages/api</code> handlers</td><td><code>route.ts</code> Web handlers</td><td>Route <code>server.handlers</code> + middleware</td><td>Same server handlers</td></tr>
+              <tr><td>Code splitting</td><td>Automatic page splitting</td><td>Segment/component streaming and splitting</td><td>Generated automatic route splitting</td><td class="caution">Requires deliberate tree/lazy structure</td></tr>
+              <tr><td>Best fit</td><td>Minimum-change maintenance</td><td>Server-first/RSC products staying on Next</td><td class="best">Typed, interactive applications</td><td>Config- or plugin-generated routes</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section id="routes">
+      <div class="shell">
+        <div class="section-head">
+          <div><p class="eyebrow">Tadoku translations</p><h2>Same URLs, different contracts.</h2></div>
+          <p class="intro">These examples preserve public paths. A framework migration should not silently redesign URLs; path cleanup and typed search normalization belong in later, separately redirected changes.</p>
+        </div>
+        <div class="translation">
+          <article class="route-row">
+            <div class="route-cell"><small>Current Pages Router</small><code>pages/logs/[id].tsx</code></div><div class="arrow">→</div>
+            <div class="route-cell"><small>Next App Router</small><code>app/logs/[id]/page.tsx</code></div><div class="arrow">→</div>
+            <div class="route-cell"><small>TanStack file route</small><code>routes/logs/$id.tsx</code></div>
+            <p class="route-note">TanStack’s route object ties the <code>id</code> param to the loader, component, links, and navigation. Next App generates param-aware page props; runtime validation is still required in either framework.</p>
+          </article>
+          <article class="route-row">
+            <div class="route-cell"><small>Current Pages Router</small><code>pages/contests/[id]/registration.tsx</code></div><div class="arrow">→</div>
+            <div class="route-cell"><small>Next App Router</small><code>app/contests/[id]/registration/page.tsx</code></div><div class="arrow">→</div>
+            <div class="route-cell"><small>TanStack file route</small><code>routes/contests/$id/registration.tsx</code></div>
+            <p class="route-note">App Router would naturally place auth and loading behavior in segment layouts. TanStack would normally use a pathless authenticated parent, request middleware, and <code>beforeLoad</code> for navigation UX.</p>
+          </article>
+          <article class="route-row">
+            <div class="route-cell"><small>Current Pages Router</small><code>leaderboard/latest/[[...page]].tsx</code></div><div class="arrow">→</div>
+            <div class="route-cell"><small>Compatibility shape</small><code>index + optional catch-all/splat</code></div><div class="arrow">→</div>
+            <div class="route-cell"><small>Later URL design</small><code>/leaderboard/latest?page=2</code></div>
+            <p class="route-note">First preserve the legacy path with explicit index and catch-all coverage. Later, TanStack’s validated search schema is a better home for pagination; redirect legacy URLs in a separate release.</p>
+          </article>
+          <article class="route-row">
+            <div class="route-cell"><small>Current Pages Router</small><code>pages/api/health.tsx</code></div><div class="arrow">→</div>
+            <div class="route-cell"><small>Next App Router</small><code>app/api/health/route.ts</code></div><div class="arrow">→</div>
+            <div class="route-cell"><small>TanStack Start</small><code>server.handlers.GET</code></div>
+            <p class="route-note">Both targets use Web <code>Request</code>/<code>Response</code> semantics. Preserve the exact HTTP status and body because Kubernetes probes depend on behavior, not file conventions.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="shell">
+        <div class="section-head">
+          <div><p class="eyebrow">Repository implications</p><h2>The router files are not the hard part.</h2></div>
+          <p class="intro">The route syntax changes are mostly mechanical. The migration risk sits in global session hydration, shared UI navigation, URL-state behavior, and absent regression tests.</p>
+        </div>
+        <div class="deep-grid">
+          <article class="deep"><span class="number">01 / SESSION</span><h3>Three global SSR hooks</h3><p><code>webv2</code>, <code>auth</code>, and <code>admin</code> hydrate Ory sessions through <code>_app.getInitialProps</code>. App Router and Start require different request-to-route context designs.</p></article>
+          <article class="deep"><span class="number">02 / URL STATE</span><h3>29 dynamic route files</h3><p>Twelve web routes use optional catch-all pagination. TanStack’s search schemas offer a clear improvement, but changing canonical URLs must not be bundled into framework parity.</p></article>
+          <article class="deep"><span class="number">03 / SHARED UI</span><h3>50 router-coupled files</h3><p>The apps and shared <code>ui</code> package import <code>next/router</code>. Introduce a small navigation adapter before moving any app to avoid maintaining two component libraries.</p></article>
+          <article class="deep"><span class="number">04 / DATA</span><h3>90 query/mutation calls</h3><p>Routing and server data are not the same migration. Keep React Query v3 stable initially; integrate loaders around it and upgrade Query separately.</p></article>
+          <article class="deep"><span class="number">05 / TESTS</span><h3>No app test/spec files</h3><p>Build route, metadata, status, and auth journey snapshots before translating behavior. Otherwise the new router becomes the accidental specification.</p></article>
+          <article class="deep"><span class="number">06 / DEPLOYMENT</span><h3>Independent hostnames help</h3><p>Admin, auth, and webv2 can cut over independently at ingress. That makes either App Router or Start safer as a per-app migration than an in-place big bang.</p></article>
+        </div>
+      </div>
+    </section>
+
+    <section id="decision">
+      <div class="shell">
+        <div class="section-head">
+          <div><p class="eyebrow">Decision guide</p><h2>Choose the architecture you actually want.</h2></div>
+          <p class="intro">Do not select App Router merely because it shares a package name with the current stack. Its Server Component, caching, data, and layout model makes it a real migration with its own benefits and costs.</p>
+        </div>
+        <div class="decision-flow">
+          <article class="decision-card"><span class="when">When minimizing change wins</span><h3>Stay on Pages Router—for now</h3><p>Upgrade dependencies, add tests, neutralize shared UI, and remove global coupling. This is a valid stabilization choice, not a long-term routing improvement.</p></article>
+          <article class="decision-card"><span class="when">When server-first React wins</span><h3>Move directly to App Router</h3><p>Choose this only if the team explicitly wants Server Components, segment streaming, parallel/intercepting layouts, and the modern Next.js model.</p></article>
+          <article class="decision-card"><span class="when">When typed interactive routing wins</span><h3>Move directly to Start file routes</h3><p>Choose this for typed URL state, explicit loaders/guards, interactive React defaults, and a generated route contract. Keep code-based routes exceptional.</p></article>
+        </div>
+        <div class="recommendation" style="margin-top:16px">
+          <div class="label">Tadoku recommendation</div>
+          <div><h3>File-based TanStack Start—conditionally, after the foundation spike.</h3><p>It best addresses Tadoku’s real router pain: dynamic paths, pagination state, route-aware navigation, auth context, and loader boundaries. Use the generated file route tree for ordinary product routes.</p><p>Keep code-based or virtual routing available only for future route manifests or plugin-driven sections. If the Start spike fails its maturity/operations gate, remain on Pages Router and modernize there; do not spend an intermediate migration on App Router unless RSC becomes a product goal.</p></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="sources">
+      <div class="shell">
+        <div class="section-head">
+          <div><p class="eyebrow">Primary sources</p><h2>Documentation, not framework folklore.</h2></div>
+          <p class="intro">Framework behavior was checked against current official documentation on 08 August 2026. Repository counts come from Tadoku commit <code>f3dba363</code>. Recommendations are an engineering judgment, not vendor claims.</p>
+        </div>
+        <div class="sources">
+          <a class="source" href="https://nextjs.org/docs/pages/building-your-application/routing/dynamic-routes" target="_blank" rel="noreferrer"><strong>Next.js Pages: dynamic routes</strong><span>Params, catch-all, and optional catch-all conventions</span></a>
+          <a class="source" href="https://nextjs.org/docs/pages/building-your-application/routing/linking-and-navigating" target="_blank" rel="noreferrer"><strong>Next.js Pages: navigation</strong><span>Link, router, and shallow routing behavior</span></a>
+          <a class="source" href="https://nextjs.org/docs/app/getting-started/layouts-and-pages" target="_blank" rel="noreferrer"><strong>Next.js App: layouts and pages</strong><span>Nested route and generated props conventions</span></a>
+          <a class="source" href="https://nextjs.org/docs/app/api-reference/file-conventions" target="_blank" rel="noreferrer"><strong>Next.js App: file conventions</strong><span>Layouts, loading/error boundaries, parallel and intercepting routes</span></a>
+          <a class="source" href="https://nextjs.org/docs/app/getting-started/fetching-data" target="_blank" rel="noreferrer"><strong>Next.js App: data and streaming</strong><span>Server Components, Suspense, sequential and parallel fetches</span></a>
+          <a class="source" href="https://tanstack.com/router/latest/docs/overview" target="_blank" rel="noreferrer"><strong>TanStack Router overview</strong><span>Typed navigation, search state, loaders, context, mixed route styles</span></a>
+          <a class="source" href="https://tanstack.com/router/latest/docs/routing/file-based-routing" target="_blank" rel="noreferrer"><strong>TanStack file-based routing</strong><span>Generated route tree, nesting, code splitting, supported bundlers</span></a>
+          <a class="source" href="https://tanstack.com/router/latest/docs/routing/code-based-routing" target="_blank" rel="noreferrer"><strong>TanStack code-based routing</strong><span>Manual trees, parent relationships, official recommendation caveat</span></a>
+          <a class="source" href="https://tanstack.com/router/latest/docs/guide/search-params" target="_blank" rel="noreferrer"><strong>TanStack search params</strong><span>Validation, inheritance, loaders, links, and navigation</span></a>
+          <a class="source" href="https://tanstack.com/router/latest/docs/framework/react/guide/authenticated-routes" target="_blank" rel="noreferrer"><strong>TanStack authenticated routes</strong><span>beforeLoad ordering, context, and redirect behavior</span></a>
+          <a class="source" href="https://tanstack.com/start/latest/docs/framework/react/guide/middleware" target="_blank" rel="noreferrer"><strong>TanStack Start middleware</strong><span>Request and server-route middleware composition</span></a>
+          <a class="source" href="https://tanstack.com/start/latest/docs/framework/react/migrate-from-next-js" target="_blank" rel="noreferrer"><strong>Official Next → Start guide</strong><span>Route file translation and App Router scope</span></a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer><div class="shell foot"><span>Tadoku · Router options</span><span>Next.js Pages · Next.js App · TanStack file · TanStack code</span></div></footer>
+</body>
+</html>

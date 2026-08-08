@@ -1,0 +1,541 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="A repository-specific decision brief and phased plan for migrating Tadoku from Next.js Pages Router to TanStack Start.">
+  <title>Tadoku — Next.js to TanStack Start</title>
+  <style>
+    :root {
+      --ink: #17211b;
+      --muted: #5f6d64;
+      --paper: #f4f1e8;
+      --card: #fffdf7;
+      --line: #d9d5c8;
+      --green: #176b50;
+      --green-2: #d8eee4;
+      --navy: #203b4a;
+      --gold: #b77a18;
+      --gold-2: #f7e8c5;
+      --red: #a44235;
+      --red-2: #f5dfda;
+      --shadow: 0 18px 50px rgba(23, 33, 27, .08);
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 9% -10%, rgba(23, 107, 80, .13), transparent 30rem),
+        radial-gradient(circle at 100% 15%, rgba(183, 122, 24, .10), transparent 28rem),
+        var(--paper);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.55;
+    }
+
+    a { color: inherit; }
+    .shell { width: min(1180px, calc(100% - 32px)); margin: 0 auto; }
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      border-bottom: 1px solid rgba(217, 213, 200, .9);
+      background: rgba(244, 241, 232, .88);
+      backdrop-filter: blur(14px);
+    }
+    .topbar-inner {
+      min-height: 64px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 24px;
+    }
+    .brand { display: flex; align-items: center; gap: 11px; font-weight: 750; letter-spacing: -.02em; }
+    .brand-mark {
+      width: 32px;
+      height: 32px;
+      display: grid;
+      place-items: center;
+      border-radius: 50%;
+      color: white;
+      background: var(--green);
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 13px;
+    }
+    .nav { display: flex; gap: 6px; flex-wrap: wrap; }
+    .nav a {
+      padding: 8px 10px;
+      border-radius: 999px;
+      color: var(--muted);
+      font-size: 13px;
+      text-decoration: none;
+    }
+    .nav a:hover { color: var(--ink); background: rgba(255,255,255,.65); }
+
+    .hero { padding: 88px 0 54px; }
+    .eyebrow {
+      margin: 0 0 16px;
+      color: var(--green);
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: .16em;
+      text-transform: uppercase;
+    }
+    h1, h2, h3, p { margin-top: 0; }
+    h1 {
+      max-width: 920px;
+      margin-bottom: 24px;
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: clamp(46px, 7vw, 86px);
+      font-weight: 500;
+      letter-spacing: -.055em;
+      line-height: .98;
+    }
+    .hero-copy {
+      max-width: 760px;
+      color: var(--muted);
+      font-size: clamp(18px, 2vw, 23px);
+      letter-spacing: -.015em;
+    }
+    .decision-strip {
+      margin-top: 40px;
+      display: grid;
+      grid-template-columns: 120px 1fr auto;
+      gap: 24px;
+      align-items: center;
+      padding: 22px 24px;
+      border: 1px solid #b9d8c9;
+      border-radius: 20px;
+      background: rgba(216, 238, 228, .62);
+    }
+    .decision-label { color: var(--green); font-weight: 800; font-size: 12px; letter-spacing: .12em; text-transform: uppercase; }
+    .decision-main { font-weight: 760; font-size: 18px; letter-spacing: -.015em; }
+    .decision-note { color: var(--muted); font-size: 13px; white-space: nowrap; }
+
+    section { padding: 46px 0; scroll-margin-top: 78px; }
+    .section-head { display: grid; grid-template-columns: 1fr 2fr; gap: 36px; margin-bottom: 28px; }
+    h2 {
+      margin-bottom: 8px;
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: clamp(30px, 4vw, 44px);
+      font-weight: 500;
+      letter-spacing: -.035em;
+      line-height: 1.05;
+    }
+    .section-intro { max-width: 730px; color: var(--muted); font-size: 17px; }
+
+    .metrics { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+    .metric {
+      min-height: 160px;
+      padding: 22px;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: rgba(255, 253, 247, .82);
+      box-shadow: var(--shadow);
+    }
+    .metric strong { display: block; margin-bottom: 8px; font-family: Georgia, serif; font-size: 44px; font-weight: 500; line-height: 1; }
+    .metric span { display: block; color: var(--muted); font-size: 14px; }
+    .metric small { display: block; margin-top: 12px; color: var(--green); font-size: 12px; font-weight: 700; }
+
+    .card-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+    .card {
+      padding: 28px;
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      background: var(--card);
+      box-shadow: var(--shadow);
+    }
+    .card h3 { margin-bottom: 12px; font-size: 18px; letter-spacing: -.02em; }
+    .card p:last-child { margin-bottom: 0; }
+    .good { border-top: 5px solid var(--green); }
+    .risk { border-top: 5px solid var(--red); }
+    .neutral { border-top: 5px solid var(--gold); }
+    .kicker { margin-bottom: 8px; color: var(--muted); font-size: 12px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
+    ul { margin: 0; padding-left: 19px; }
+    li { margin: 8px 0; }
+    li::marker { color: var(--green); }
+    .risk li::marker { color: var(--red); }
+
+    .architecture {
+      display: grid;
+      grid-template-columns: 1fr 54px 1fr;
+      gap: 18px;
+      align-items: stretch;
+    }
+    .arch-panel { padding: 24px; border: 1px solid var(--line); border-radius: 20px; background: var(--card); }
+    .arch-panel.target { color: white; border-color: var(--navy); background: var(--navy); }
+    .arch-panel h3 { margin-bottom: 18px; }
+    .stack { display: grid; gap: 9px; }
+    .layer { padding: 12px 14px; border: 1px solid var(--line); border-radius: 12px; background: #faf7ef; font-size: 14px; }
+    .target .layer { border-color: rgba(255,255,255,.18); background: rgba(255,255,255,.08); }
+    .arrow { display: grid; place-items: center; color: var(--green); font-size: 34px; }
+    .arch-note { margin-top: 15px; margin-bottom: 0; color: var(--muted); font-size: 13px; }
+    .target .arch-note { color: #c9d5d9; }
+
+    .table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 18px; background: var(--card); }
+    table { width: 100%; border-collapse: collapse; min-width: 760px; }
+    th, td { padding: 16px 18px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+    tr:last-child td { border-bottom: 0; }
+    th { color: var(--muted); background: #f8f5ed; font-size: 11px; letter-spacing: .12em; text-transform: uppercase; }
+    td { font-size: 14px; }
+    td:first-child { font-weight: 720; }
+    code { padding: 2px 6px; border-radius: 6px; background: #ece9df; font: 12px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace; }
+
+    .timeline { position: relative; display: grid; gap: 14px; }
+    .phase {
+      display: grid;
+      grid-template-columns: 92px 1.25fr 2fr 122px;
+      gap: 20px;
+      align-items: start;
+      padding: 22px;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: var(--card);
+    }
+    .phase-no { color: var(--green); font-family: Georgia, serif; font-size: 28px; }
+    .phase-title { font-weight: 760; letter-spacing: -.015em; }
+    .phase-detail { color: var(--muted); font-size: 14px; }
+    .estimate { justify-self: end; padding: 7px 10px; border-radius: 999px; background: var(--green-2); color: var(--green); font-size: 12px; font-weight: 800; white-space: nowrap; }
+    .gate { border-color: #dfc78f; background: var(--gold-2); }
+    .gate .phase-no { color: var(--gold); }
+    .gate .estimate { background: rgba(255,255,255,.55); color: #765011; }
+
+    .callout {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 28px;
+      align-items: center;
+      padding: 28px;
+      border-radius: 20px;
+      color: white;
+      background: var(--green);
+    }
+    .callout h3 { margin-bottom: 5px; font-family: Georgia, serif; font-size: 26px; font-weight: 500; }
+    .callout p { margin-bottom: 0; color: #d6ebe3; }
+    .callout strong { font-family: Georgia, serif; font-size: 36px; font-weight: 500; white-space: nowrap; }
+
+    .checks { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; counter-reset: checks; }
+    .check { padding: 22px; border: 1px solid var(--line); border-radius: 16px; background: var(--card); }
+    .check::before {
+      counter-increment: checks;
+      content: counter(checks, decimal-leading-zero);
+      display: block;
+      margin-bottom: 18px;
+      color: var(--green);
+      font: 700 12px ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+    .check h3 { margin-bottom: 7px; font-size: 16px; }
+    .check p { margin-bottom: 0; color: var(--muted); font-size: 13px; }
+
+    .sources { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .source {
+      display: block;
+      padding: 16px 18px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: rgba(255,255,255,.55);
+      text-decoration: none;
+    }
+    .source:hover { border-color: var(--green); }
+    .source strong { display: block; font-size: 14px; }
+    .source span { color: var(--muted); font-size: 12px; }
+
+    footer { padding: 32px 0 56px; color: var(--muted); font-size: 12px; }
+    .foot { display: flex; justify-content: space-between; gap: 24px; border-top: 1px solid var(--line); padding-top: 24px; }
+
+    @media (max-width: 860px) {
+      .nav { display: none; }
+      .hero { padding-top: 62px; }
+      .decision-strip, .section-head, .architecture, .phase { grid-template-columns: 1fr; }
+      .decision-note { white-space: normal; }
+      .arrow { transform: rotate(90deg); min-height: 40px; }
+      .metrics, .checks { grid-template-columns: 1fr 1fr; }
+      .phase { gap: 8px; }
+      .estimate { justify-self: start; }
+    }
+    @media (max-width: 580px) {
+      .shell { width: min(100% - 22px, 1180px); }
+      .metrics, .card-grid, .checks, .sources { grid-template-columns: 1fr; }
+      .hero { padding-top: 46px; }
+      h1 { font-size: 44px; }
+      .card, .metric { padding: 20px; }
+      .callout { grid-template-columns: 1fr; }
+    }
+
+    @media print {
+      .topbar { position: static; }
+      body { background: white; }
+      .card, .metric, .phase, .arch-panel { box-shadow: none; break-inside: avoid; }
+      section { padding: 25px 0; }
+      a { text-decoration: none; }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="shell topbar-inner">
+      <div class="brand"><span class="brand-mark">T→T</span><span>Tadoku architecture brief</span></div>
+      <nav class="nav" aria-label="Plan sections">
+        <a href="#snapshot">Snapshot</a>
+        <a href="#tradeoffs">Tradeoffs</a>
+        <a href="#plan">Plan</a>
+        <a href="#gates">Decision gates</a>
+        <a href="#sources">Sources</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <div class="shell hero">
+      <p class="eyebrow">Decision brief · 07 August 2026</p>
+      <h1>Move deliberately,<br>not all at once.</h1>
+      <p class="hero-copy">TanStack Start is a credible architectural fit for Tadoku’s interactive, self-hosted React apps. The upside is real—but this repository is coupled to Next.js at the session, routing, shared-UI, and container layers. Approve a measured pilot before funding the full migration.</p>
+      <div class="decision-strip">
+        <div class="decision-label">Recommendation</div>
+        <div class="decision-main">Conditional go: run a two-week foundation spike; defer the full portfolio commitment until its exit gate passes.</div>
+        <div class="decision-note">Confidence: medium-high</div>
+      </div>
+    </div>
+
+    <section id="snapshot">
+      <div class="shell">
+        <div class="section-head">
+          <div><p class="eyebrow">Repository snapshot</p><h2>This is a portfolio migration.</h2></div>
+          <p class="section-intro">Tadoku has four Next.js Pages Router apps, three of which are production services. The migration surface is modest in route count but unusually concentrated around global session hydration and shared framework-bound navigation components.</p>
+        </div>
+        <div class="metrics">
+          <div class="metric"><strong>4</strong><span>Next.js apps: webv2, auth, admin, styleguide</span><small>3 production workloads</small></div>
+          <div class="metric"><strong>67</strong><span>route/API files, excluding <code>_app</code> and <code>_document</code></span><small>49 production + 18 styleguide</small></div>
+          <div class="metric"><strong>98</strong><span>files importing Next.js across apps and the UI package</span><small>50 touch the router</small></div>
+          <div class="metric"><strong>0</strong><span>test/spec files inside the four app directories</span><small>largest delivery risk</small></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="tradeoffs">
+      <div class="shell">
+        <div class="section-head">
+          <div><p class="eyebrow">Pros &amp; cons</p><h2>The case is stronger for developer experience than for operations.</h2></div>
+          <p class="section-intro">Because Tadoku already self-hosts Next.js in Kubernetes, “deployment freedom” is not a decisive benefit. The strongest gains are type-safe routing/search state, a Vite-based workflow, explicit loading and middleware, and a model that matches this codebase’s client-interactive React style.</p>
+        </div>
+        <div class="card-grid">
+          <article class="card good">
+            <p class="kicker">Why move</p>
+            <h3>Better fit for the code Tadoku already has</h3>
+            <ul>
+              <li>Interactive React is the default; this Pages Router codebase does not use React Server Components today.</li>
+              <li>Typed path params and validated search params directly address the 29 dynamic route files and pagination-heavy URLs.</li>
+              <li>Route loaders, route context, and middleware can replace ad-hoc router effects with explicit data/auth boundaries.</li>
+              <li>Vite should simplify the local toolchain and remove the standalone-output workaround in the current Dockerfile.</li>
+              <li>Node/Docker remains supported through Nitro, preserving the existing Kubernetes deployment model.</li>
+            </ul>
+          </article>
+          <article class="card risk">
+            <p class="kicker">Why wait</p>
+            <h3>Maturity and migration tax are material</h3>
+            <ul>
+              <li>TanStack’s own documentation still labels Start a release candidate; the Nitro/Vite integration is also documented as actively evolving.</li>
+              <li>The official Next.js migration guide assumes App Router, while Tadoku uses Pages Router and global <code>_app.getInitialProps</code>.</li>
+              <li>Shared UI components import <code>next/link</code>, <code>next/router</code>, and <code>next/image</code>, so one app cannot move cleanly without an adapter seam.</li>
+              <li>Auth regressions could affect login, cookie clearing, role gates, banned users, and cross-subdomain return URLs.</li>
+              <li>No existing app test suite means parity must be built before routes are translated.</li>
+            </ul>
+          </article>
+          <article class="card neutral">
+            <p class="kicker">What stays</p>
+            <h3>Keep the migration boundary narrow</h3>
+            <ul>
+              <li>Do not redesign UI or modify Go services and API contracts.</li>
+              <li>Keep Ory Kratos and the existing cookie/domain topology.</li>
+              <li>Preserve every public pathname and HTTP status through the first cutover.</li>
+              <li>Keep React 18 initially; current Start package metadata accepts React 18 or 19.</li>
+              <li>Defer React Query v3 → TanStack Query v5 to a separate change unless compatibility forces it.</li>
+            </ul>
+          </article>
+          <article class="card neutral">
+            <p class="kicker">Cheaper alternative</p>
+            <h3>Modernize within Next.js first</h3>
+            <p>If the goal is primarily dependency health, not typed routing or Vite, upgrading Next.js and adding tests is lower risk. The framework switch earns its cost only if the team values TanStack Router’s type system and wants explicit control strongly enough to maintain a younger full-stack runtime.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="shell">
+        <div class="section-head">
+          <div><p class="eyebrow">Target shape</p><h2>Change the web shell, not the product core.</h2></div>
+          <p class="section-intro">Each hostname can move independently. A router-neutral UI layer and unchanged Go/Ory boundaries let old and new runtimes coexist while traffic switches at the ingress.</p>
+        </div>
+        <div class="architecture" role="img" aria-label="Current Next.js stack moving to a TanStack Start stack while preserving APIs and Ory">
+          <div class="arch-panel">
+            <h3>Today</h3>
+            <div class="stack">
+              <div class="layer">Next.js Pages Router × 4</div>
+              <div class="layer"><code>_app.getInitialProps</code> session hydration</div>
+              <div class="layer">UI package imports Next directly</div>
+              <div class="layer">Next standalone Node container</div>
+              <div class="layer">Go APIs + Ory Kratos</div>
+            </div>
+            <p class="arch-note">A framework concern reaches into shared components and app-wide auth.</p>
+          </div>
+          <div class="arrow" aria-hidden="true">→</div>
+          <div class="arch-panel target">
+            <h3>Target</h3>
+            <div class="stack">
+              <div class="layer">TanStack Start + Router × 4</div>
+              <div class="layer">request middleware + typed route context</div>
+              <div class="layer">router adapter consumed by shared UI</div>
+              <div class="layer">Vite + Nitro Node container</div>
+              <div class="layer">Same Go APIs + same Ory Kratos</div>
+            </div>
+            <p class="arch-note">Ingress chooses the runtime per hostname; rollback is a traffic switch.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="shell">
+        <div class="section-head">
+          <div><p class="eyebrow">Translation map</p><h2>Most pages translate mechanically. The edges do not.</h2></div>
+          <p class="section-intro">Route files are the visible work. Session propagation, runtime configuration, generated route types, shared navigation, metadata, redirects, and container output are the architectural work.</p>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Current pattern</th><th>TanStack Start target</th><th>Migration rule</th><th>Risk</th></tr></thead>
+            <tbody>
+              <tr><td><code>pages/logs/[id].tsx</code></td><td><code>routes/logs/$id.tsx</code></td><td>Read params from the generated Route API; validate IDs at the route edge.</td><td>Low</td></tr>
+              <tr><td><code>[[...page]].tsx</code> pagination</td><td>splat route first; typed search later</td><td>Preserve legacy URLs for parity. Normalize to validated search params only in a later, redirected change.</td><td>Medium</td></tr>
+              <tr><td><code>next/head</code></td><td>route <code>head</code> metadata</td><td>Snapshot title, canonical, robots, and social tags before conversion.</td><td>Medium</td></tr>
+              <tr><td><code>next/config</code></td><td>server env + explicitly public Vite env</td><td>Separate runtime secrets from public build-time values; test staging/production image promotion.</td><td>High</td></tr>
+              <tr><td><code>_app.getInitialProps</code></td><td>request middleware + root loader/context</td><td>Resolve Ory session server-side once, pass typed session/role context, authorize the API boundary independently.</td><td>Critical</td></tr>
+              <tr><td><code>pages/api/health.tsx</code></td><td>server route GET handler</td><td>Keep exact response/status semantics for Kubernetes probes.</td><td>Low</td></tr>
+              <tr><td><code>next/link</code> in <code>ui</code></td><td>injected router adapter</td><td>Make shared UI framework-neutral before moving the first production app.</td><td>High</td></tr>
+              <tr><td>Next standalone Docker output</td><td><code>.output/server/index.mjs</code></td><td>Build Nitro Node output in pnpm/Bazel-adjacent CI, run as non-root, preserve port/probes.</td><td>High</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section id="plan">
+      <div class="shell">
+        <div class="section-head">
+          <div><p class="eyebrow">Phased plan</p><h2>Prove the seams before moving customer traffic.</h2></div>
+          <p class="section-intro">Estimates are engineering effort, not elapsed time. They assume one or two experienced frontend engineers, no redesign, stable backend APIs, and app-by-app releases. Do not combine this work with a React or Query major-version upgrade.</p>
+        </div>
+        <div class="timeline">
+          <article class="phase">
+            <div class="phase-no">01</div><div class="phase-title">Baseline &amp; safety net</div>
+            <div class="phase-detail">Inventory route/status/metadata behavior; add Playwright smoke coverage for anonymous, user, banned, and admin sessions; record build time, bundle, SSR latency, and error rate.</div>
+            <div class="estimate">1–2 eng-weeks</div>
+          </article>
+          <article class="phase">
+            <div class="phase-no">02</div><div class="phase-title">Framework-neutral foundation</div>
+            <div class="phase-detail">Introduce link/navigation/image adapters in <code>ui</code>; centralize public/server config; create Start/Vite/Nitro template, health endpoint, Docker image, and Kubernetes deployment variant.</div>
+            <div class="estimate">1–2 eng-weeks</div>
+          </article>
+          <article class="phase">
+            <div class="phase-no">03</div><div class="phase-title">Low-risk pilot</div>
+            <div class="phase-detail">Move <code>styleguide</code> first. Verify UI parity, route generation, aliases, Tailwind, dev/build speed, image handling, and production container behavior without touching customer traffic.</div>
+            <div class="estimate">1 eng-week</div>
+          </article>
+          <article class="phase gate">
+            <div class="phase-no">G1</div><div class="phase-title">Foundation gate</div>
+            <div class="phase-detail"><strong>Continue only if:</strong> CI is stable; container/probes work; shared UI builds under both runtimes; measured dev/build improvement is meaningful; no blocker appears in Nitro or route generation.</div>
+            <div class="estimate">Go / no-go</div>
+          </article>
+          <article class="phase">
+            <div class="phase-no">04</div><div class="phase-title">Admin production pilot</div>
+            <div class="phase-detail">Migrate admin behind an internal canary. Implement Ory request middleware, admin role guards, the unauthorized endpoint, editor routes, error boundaries, and navigation parity. Keep the Next deployment warm.</div>
+            <div class="estimate">2–3 eng-weeks</div>
+          </article>
+          <article class="phase">
+            <div class="phase-no">05</div><div class="phase-title">Authentication app</div>
+            <div class="phase-detail">Translate six Ory flows and test login, registration, recovery, verification, post-registration, cookie deletion, return URLs, cross-subdomain behavior, and no-JS/error cases.</div>
+            <div class="estimate">2–3 eng-weeks</div>
+          </article>
+          <article class="phase gate">
+            <div class="phase-no">G2</div><div class="phase-title">Security &amp; operations gate</div>
+            <div class="phase-detail"><strong>Continue only if:</strong> session and RBAC parity pass; security review is clean; canary error/latency budgets hold for one full release window; rollback has been rehearsed.</div>
+            <div class="estimate">Go / no-go</div>
+          </article>
+          <article class="phase">
+            <div class="phase-no">06</div><div class="phase-title">Public web app</div>
+            <div class="phase-detail">Move webv2 by route family: static/content → leaderboards → contests → profiles → logs. Preserve metadata, legacy optional catch-all URLs, auth redirects, cache behavior, and form mutations.</div>
+            <div class="estimate">4–6 eng-weeks</div>
+          </article>
+          <article class="phase">
+            <div class="phase-no">07</div><div class="phase-title">Cutover &amp; retirement</div>
+            <div class="phase-detail">Canary each hostname, compare golden signals, switch ingress, hold the Next image for rollback, then remove Next dependencies/config and simplify the Docker build in a separate cleanup change.</div>
+            <div class="estimate">1–2 eng-weeks</div>
+          </article>
+        </div>
+        <div class="callout" style="margin-top:18px">
+          <div><h3>Planning range</h3><p>Includes foundations, all four apps, parity testing, canaries, and cleanup. Add 25–40% if test infrastructure or Ory fixtures cannot be established quickly.</p></div>
+          <strong>12–18 eng-weeks</strong>
+        </div>
+      </div>
+    </section>
+
+    <section id="gates">
+      <div class="shell">
+        <div class="section-head">
+          <div><p class="eyebrow">Acceptance criteria</p><h2>The migration is done when behavior is boring.</h2></div>
+          <p class="section-intro">A green build is necessary but insufficient. Use these gates for every production hostname, then keep the old deployment available through the rollback window.</p>
+        </div>
+        <div class="checks">
+          <article class="check"><h3>URL parity</h3><p>All legacy paths, redirects, status codes, query strings, and deep links match the baseline.</p></article>
+          <article class="check"><h3>Session parity</h3><p>Anonymous, user, banned, and admin journeys behave correctly on SSR and client navigation.</p></article>
+          <article class="check"><h3>Security boundary</h3><p>Every private API/server function authorizes independently; route guards are only the UX layer.</p></article>
+          <article class="check"><h3>SEO parity</h3><p>Titles, canonicals, robots, structured metadata, and rendered content match public-page snapshots.</p></article>
+          <article class="check"><h3>Performance budget</h3><p>No more than 10% regression in p75 SSR latency, web vitals, JS payload, or error rate.</p></article>
+          <article class="check"><h3>Operational parity</h3><p>Non-root container, health probes, logs, runtime configuration, and graceful shutdown work in Kubernetes.</p></article>
+          <article class="check"><h3>Dual-runtime UI</h3><p>The shared UI package contains no hard Next.js dependency outside an explicit adapter.</p></article>
+          <article class="check"><h3>Rollback</h3><p>Ingress can return to the warm Next deployment without a data migration or cookie invalidation.</p></article>
+          <article class="check"><h3>Release evidence</h3><p>One full canary window passes, and the baseline comparison is attached to the decision record.</p></article>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="shell">
+        <div class="section-head">
+          <div><p class="eyebrow">Final call</p><h2>Approve discovery, not destiny.</h2></div>
+          <div class="section-intro">
+            <p><strong>Proceed</strong> if typed routing, explicit data boundaries, and Vite are strategic priorities—and the team accepts maintaining a younger framework/runtime.</p>
+            <p><strong>Stay on Next.js</strong> if the motivation is mainly “newer tooling,” if auth test fixtures cannot be built, or if the foundation spike cannot demonstrate a measurable workflow benefit.</p>
+            <p><strong>Recommended next action:</strong> fund phases 01–03 only. The output should be a measured ADR and a production-shaped styleguide image, not a promise to migrate the other apps.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="sources">
+      <div class="shell">
+        <div class="section-head">
+          <div><p class="eyebrow">Evidence</p><h2>Primary sources &amp; assumptions</h2></div>
+          <p class="section-intro">Repository metrics were measured from commit <code>f3dba363</code>. Framework claims use current TanStack documentation and package metadata checked on 07 August 2026. Vendor comparison copy was treated as directional, not as independent benchmark evidence.</p>
+        </div>
+        <div class="sources">
+          <a class="source" href="https://tanstack.com/start/latest/docs/framework/react/overview" target="_blank" rel="noreferrer"><strong>TanStack Start overview</strong><span>RC status, SSR, streaming, server functions, build tools</span></a>
+          <a class="source" href="https://tanstack.com/start/latest/docs/framework/react/migrate-from-next-js" target="_blank" rel="noreferrer"><strong>Official Next.js migration guide</strong><span>App Router assumption, route translation, Vite/Nitro setup</span></a>
+          <a class="source" href="https://tanstack.com/router/latest/docs/routing/file-based-routing" target="_blank" rel="noreferrer"><strong>TanStack Router file routing</strong><span>Generated types, layouts, splats, code splitting</span></a>
+          <a class="source" href="https://tanstack.com/router/latest/docs/framework/react/guide/search-params" target="_blank" rel="noreferrer"><strong>Typed search params</strong><span>Validation and serialization model</span></a>
+          <a class="source" href="https://tanstack.com/start/latest/docs/framework/react/guide/authentication" target="_blank" rel="noreferrer"><strong>Authentication guidance</strong><span>Middleware, route context, API-boundary authorization</span></a>
+          <a class="source" href="https://tanstack.com/start/latest/docs/framework/react/guide/hosting" target="_blank" rel="noreferrer"><strong>Node/Docker hosting</strong><span>Nitro output, start command, active-development caveat</span></a>
+          <a class="source" href="https://tanstack.com/start/latest/docs/framework/react/guide/environment-variables" target="_blank" rel="noreferrer"><strong>Environment variables</strong><span>Server/private and client/public boundaries</span></a>
+          <a class="source" href="https://tanstack.com/start/latest/docs/framework/react/start-vs-nextjs" target="_blank" rel="noreferrer"><strong>Start vs Next.js</strong><span>Official philosophy comparison; vendor-authored</span></a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="shell foot"><span>Tadoku · Next.js → TanStack Start</span><span>Repository-specific planning brief · no application code changed</span></div>
+  </footer>
+</body>
+</html>

@@ -402,12 +402,13 @@
   }
 
   .example-canvas {
-    border: 1px solid var(--paper-color-rule-default);
+    border: 0;
     background: var(--paper-color-surface-raised);
   }
 
   .component-workbench {
     border: 1px solid var(--paper-color-rule-default);
+    overflow: hidden;
     background: var(--paper-color-surface-paper);
   }
 
@@ -546,7 +547,7 @@
     justify-content: space-between;
     gap: 1rem;
     padding: 1rem;
-    border-block-end: 1px solid var(--paper-color-rule-subtle);
+    border-block-end: 0;
   }
 
   .example-canvas__heading h2 {
@@ -607,7 +608,7 @@
     display: block;
     max-inline-size: none;
     block-size: 21rem;
-    border: 1px solid var(--paper-color-rule-strong);
+    border: 0;
     background: var(--paper-color-surface-paper);
   }
 

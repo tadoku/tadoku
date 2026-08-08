@@ -24,7 +24,7 @@ def _buildx_setup_command():
     'docker buildx inspect --bootstrap {builder} >/dev/null; '
   ).format(builder=builder)
 
-def frontend_build(image, project_name, package_trigger):
+def frontend_build(image, project_name, package_trigger, shared_package_manifest='./packages/ui/package.json'):
   if is_shared_cluster():
     command = (
       _buildx_setup_command() +
@@ -48,7 +48,7 @@ def frontend_build(image, project_name, package_trigger):
 
   package_triggers = [
     package_trigger,
-    './packages/ui/package.json',
+    shared_package_manifest,
     './package.json',
     './pnpm-lock.yaml',
     './pnpm-workspace.yaml',
@@ -96,3 +96,14 @@ frontend_admin = render_template('frontend/apps/admin/deployments/frontend-admin
 k8s_yaml(frontend_admin)
 k8s_resource("frontend-admin", labels=["frontend"])
 frontend_build('frontend-admin', 'admin', './apps/admin/package.json')
+
+# paper-styleguide
+frontend_paper_styleguide = render_template('frontend/apps/paper-styleguide/deployments/frontend-paper-styleguide.yaml', '.tilt/rendered/frontend/apps/paper-styleguide/deployments/frontend-paper-styleguide.yaml')
+k8s_yaml(frontend_paper_styleguide)
+k8s_resource("frontend-paper-styleguide", labels=["frontend"])
+frontend_build(
+  'frontend-paper-styleguide',
+  'paper-styleguide',
+  './apps/paper-styleguide/package.json',
+  './packages/paper-ui/package.json',
+)

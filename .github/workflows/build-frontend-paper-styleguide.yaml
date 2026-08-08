@@ -1,0 +1,140 @@
+name: build-frontend-paper-styleguide
+
+on:
+  pull_request:
+    paths:
+      - "frontend/apps/paper-styleguide/**"
+      - "frontend/packages/paper-ui/**"
+      - "frontend/scripts/check-paper-boundaries.mjs"
+      - "frontend/scripts/smoke-paper-image.sh"
+      - "frontend/paper-boundaries.json"
+      - "frontend/package.json"
+      - "frontend/pnpm-workspace.yaml"
+      - "frontend/pnpm-lock.yaml"
+      - "frontend/.npmrc"
+      - "frontend/.dockerignore"
+      - ".github/workflows/build-frontend-paper-styleguide.yaml"
+  push:
+    branches: [main]
+    paths:
+      - "frontend/apps/paper-styleguide/**"
+      - "frontend/packages/paper-ui/**"
+      - "frontend/scripts/check-paper-boundaries.mjs"
+      - "frontend/scripts/smoke-paper-image.sh"
+      - "frontend/paper-boundaries.json"
+      - "frontend/package.json"
+      - "frontend/pnpm-workspace.yaml"
+      - "frontend/pnpm-lock.yaml"
+      - "frontend/.npmrc"
+      - "frontend/.dockerignore"
+      - ".github/workflows/build-frontend-paper-styleguide.yaml"
+
+concurrency:
+  group: paper-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
+
+jobs:
+  boundaries:
+    name: paper / boundaries
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.10.0
+          run_install: false
+      - run: pnpm check:paper-boundaries
+        working-directory: frontend
+
+  quality:
+    name: paper / quality
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.10.0
+          run_install: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+          cache-dependency-path: frontend/pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+        working-directory: frontend
+      - run: pnpm --filter paper-ui lint
+        working-directory: frontend
+      - run: pnpm --filter paper-ui typecheck
+        working-directory: frontend
+      - run: pnpm --filter paper-ui test
+        working-directory: frontend
+      - run: pnpm --filter paper-ui build
+        working-directory: frontend
+      - run: pnpm --filter paper-ui consumer:ts49
+        working-directory: frontend
+      - run: pnpm --filter paper-ui pack:check
+        working-directory: frontend
+      - run: pnpm --filter paper-styleguide lint
+        working-directory: frontend
+      - run: pnpm --filter paper-styleguide typecheck
+        working-directory: frontend
+      - run: pnpm --filter paper-styleguide test
+        working-directory: frontend
+      - run: pnpm --filter paper-styleguide build
+        working-directory: frontend
+
+  static-image:
+    name: paper / static image
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build production image
+        run: docker build -f apps/paper-styleguide/Dockerfile -t paper-styleguide:ci .
+        working-directory: frontend
+      - name: Smoke production image
+        run: ./scripts/smoke-paper-image.sh paper-styleguide:ci
+        working-directory: frontend
+
+  publish:
+    name: paper / publish
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: [boundaries, quality, static-image]
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build and publish immutable Paper image
+        id: image
+        uses: docker/build-push-action@v6
+        with:
+          context: frontend
+          file: frontend/apps/paper-styleguide/Dockerfile
+          platforms: linux/amd64
+          push: true
+          tags: |
+            ghcr.io/tadoku/tadoku/frontend-paper-styleguide:${{ github.sha }}
+            ghcr.io/tadoku/tadoku/frontend-paper-styleguide:prod
+            ghcr.io/tadoku/tadoku/frontend-paper-styleguide:latest
+      - name: Record release identity
+        run: |
+          echo "### Tadoku Paper image" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Source: \`${GITHUB_SHA}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Digest: \`${{ steps.image.outputs.digest }}\`" >> "$GITHUB_STEP_SUMMARY"

@@ -1,0 +1,47 @@
+@layer paper-utilities {
+.paper-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  border: 0;
+  margin: -1px;
+  clip: rect(0, 0, 0, 0);
+  clip-path: inset(50%);
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.paper-focus-ring:focus-visible {
+  outline: var(--paper-focus-ring-width) solid var(--paper-color-focus-ring);
+  outline-offset: var(--paper-focus-ring-offset);
+}
+
+.paper-bg-canvas {
+  background: var(--paper-color-surface-canvas);
+}
+
+.paper-bg-paper {
+  background: var(--paper-color-surface-paper);
+}
+
+.paper-text-ink {
+  color: var(--paper-color-text-ink);
+}
+
+.paper-text-muted {
+  color: var(--paper-color-text-muted);
+}
+
+.paper-motion-quick {
+  transition-duration: var(--paper-motion-quick);
+}
+
+.paper-motion-standard {
+  transition-duration: var(--paper-motion-standard);
+}
+
+.paper-motion-deliberate {
+  transition-duration: var(--paper-motion-deliberate);
+}
+}

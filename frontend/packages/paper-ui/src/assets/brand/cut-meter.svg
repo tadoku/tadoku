@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Tadoku">
+  <defs>
+    <mask id="cut-meter-mask">
+      <rect width="64" height="64" fill="white"/>
+      <path d="M2 43L62 17" stroke="black" stroke-width="8"/>
+    </mask>
+  </defs>
+  <path fill="currentColor" mask="url(#cut-meter-mask)" d="M7 38h13v18H7zM25 24h14v32H25zM44 8h13v48H44z"/>
+</svg>

@@ -1,0 +1,7 @@
+@layer paper-tokens, paper-base, paper-recipes, paper-utilities;
+
+@import "../src/foundations/tokens.css";
+@import "../src/foundations/fonts.css";
+@import "../src/foundations/base.css";
+@import "./recipes.css";
+@import "./utilities.css";

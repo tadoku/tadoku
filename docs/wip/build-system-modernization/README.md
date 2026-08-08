@@ -2,7 +2,7 @@
 
 ## Status
 
-Planning complete. Implementation has not started.
+Phase 0 baseline captured. Rollout in progress.
 
 Last updated: 2026-08-08
 
@@ -22,12 +22,32 @@ statuses `Not started`, `In progress`, `Blocked`, and `Done`. A phase is not
 
 | Phase | Status | Pull request | Depends on | Evidence / notes |
 | --- | --- | --- | --- | --- |
-| 0. Capture the baseline | Not started | — | — | — |
+| 0. Capture the baseline | In progress | Pending | — | Baseline evidence recorded below. |
 | 1. Make rules Bazel 9-ready on Bazel 8 | Not started | — | Phase 0 | — |
 | 2. Upgrade Bazel to 9.2.0 | Not started | — | Phase 1 merged | — |
 | 3. Harden CI and dependency updates | Not started | — | Phase 2 merged | — |
 | 4. Clean up latent Bazel debt | Not started | — | Phase 3 merged | — |
 | 5. Complete rollout and close migration | Not started | — | Phases 0–4 | — |
+
+## Phase 0 baseline evidence
+
+Captured on 2026-08-08 from commit `935b8737`, based on remote `main` at
+`f3dba363`, before any dependency or rule changes:
+
+| Check | Result |
+| --- | --- |
+| Version pins | Bazel 8.7.0; `rules_go` 0.61.1; Gazelle 0.51.3; `rules_pkg` 1.2.0; `rules_oci` 2.3.0; Go 1.26.5 from `go.mod` |
+| Lockfile format | 24 |
+| Frozen dependencies | Pre-existing failure: the implementation of the `rules_python` `pip` extension or one of its transitive `.bzl` files changed |
+| Gazelle | Passed with lockfile updates disabled; no diff |
+| Build | All 142 targets passed |
+| Tests | All 16 tests passed |
+| OCI coverage | `load_images` and `push_images` each exactly covered six production service images |
+| Image loading | All six production service images loaded successfully |
+
+The frozen-dependency failure was observed without modifying
+`MODULE.bazel.lock`. Subsequent baseline commands used
+`--lockfile_mode=off` to keep Phase 0 read-only.
 
 ## Working rules
 
@@ -93,44 +113,44 @@ migration regressions.
 
 ### Steps
 
-- [ ] Set Phase 0 to `In progress` in the progress tracker.
+- [x] Set Phase 0 to `In progress` in the progress tracker.
 - [ ] Create a dedicated baseline pull request or issue and link it in the
       tracker.
-- [ ] Confirm the checkout is based on the latest `main` and has no unrelated
+- [x] Confirm the checkout is based on the latest `main` and has no unrelated
       changes.
-- [ ] Record the current values from `.bazelversion`, `MODULE.bazel`, and
+- [x] Record the current values from `.bazelversion`, `MODULE.bazel`, and
       `go.mod` in the pull request description.
-- [ ] Record the current lockfile format:
+- [x] Record the current lockfile format:
 
   ```sh
   jq .lockFileVersion MODULE.bazel.lock
   ```
 
-- [ ] Run the full dependency resolution check:
+- [x] Run the full dependency resolution check:
 
   ```sh
   bazel mod deps --lockfile_mode=error
   ```
 
-- [ ] If the lockfile check fails, record the exact error as pre-existing.
+- [x] If the lockfile check fails, record the exact error as pre-existing.
       Do not update the lockfile in Phase 0.
-- [ ] Verify Gazelle produces no diff:
+- [x] Verify Gazelle produces no diff:
 
   ```sh
   bazel run //:gazelle -- -mode=diff
   ```
 
-- [ ] Build and test all Bazel targets:
+- [x] Build and test all Bazel targets:
 
   ```sh
   bazel build //...
   bazel test //...
   ```
 
-- [ ] Run the two production image coverage queries from
+- [x] Run the two production image coverage queries from
       `.github/workflows/build-bazel.yaml` and confirm `//:load_images` and
       `//:push_images` cover every expected production target.
-- [ ] Run `bazel run //:load_images` and confirm all backend images load
+- [x] Run `bazel run //:load_images` and confirm all backend images load
       locally. Do not push images from a baseline branch.
 - [ ] Attach command output or the successful CI run to the tracking issue or
       pull request.

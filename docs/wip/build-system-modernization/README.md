@@ -25,7 +25,7 @@ statuses `Not started`, `In progress`, `Blocked`, and `Done`. A phase is not
 | 0. Capture the baseline | Done | [#765](https://github.com/tadoku/tadoku/pull/765) | — | Merged 2026-08-08 as `b6ba1845`; baseline evidence recorded below. |
 | 1. Make rules Bazel 9-ready on Bazel 8 | Done | [#766](https://github.com/tadoku/tadoku/pull/766) | Phase 0 | Merged 2026-08-08 as `be66af7e`; [full Bazel 8 CI passed](https://github.com/tadoku/tadoku/actions/runs/31237113928). |
 | 2. Upgrade Bazel to 9.2.0 | Done | [#767](https://github.com/tadoku/tadoku/pull/767) | Phase 1 merged | Merged 2026-08-08 as `42bba884`; [full Bazel 9 CI passed](https://github.com/tadoku/tadoku/actions/runs/31237357627). |
-| 3. Harden CI and dependency updates | In progress | Pending | Phase 2 merged | Local frozen-lock, build, test, OCI coverage/load, Trivy, Actionlint, and YAML-format gates passed; pull-request validation pending. |
+| 3. Harden CI and dependency updates | In progress | [#768](https://github.com/tadoku/tadoku/pull/768) | Phase 2 merged | Local frozen-lock, build, test, OCI coverage/load, Trivy, Actionlint, and YAML-format gates passed; pull-request validation pending. |
 | 4. Clean up latent Bazel debt | Not started | — | Phase 3 merged | — |
 | 5. Complete rollout and close migration | Not started | — | Phases 0–4 | — |
 
@@ -333,7 +333,7 @@ behavior explicit on GitHub-hosted runners.
 ### Steps
 
 - [x] Branch from `main` after Phase 2 is merged.
-- [x] Set Phase 3 to `In progress`; the pull request link remains pending.
+- [x] Set Phase 3 to `In progress` and link the pull request.
 - [x] Add `pull_request` to `.github/workflows/build-bazel.yaml` with the same
       relevant path filters as the push workflow.
 - [x] Add top-level `permissions: contents: read`.

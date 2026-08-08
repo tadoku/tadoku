@@ -178,6 +178,11 @@ describe('responsive visual contract', () => {
     )
   })
 
+  it('keeps the inactive Cut Meter asset out of the wordmark layout', () => {
+    expect(shellStyles).toContain('.paper-wordmark :where(img) {')
+    expect(shellStyles).not.toContain('.paper-wordmark img {')
+  })
+
   it('switches the Cut Meter to its canonical reversed asset in dark mode', () => {
     expect(shellStyles).toContain(
       ":root[data-theme='dark'] .paper-wordmark__mark--light",

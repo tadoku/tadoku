@@ -10,12 +10,12 @@ const shellStyles = readFileSync(
 )
 
 describe('component workbench visual contract', () => {
-  it('frames the isolated preview without adding borders inside it', () => {
+  it('uses the workbench as the only outer frame around the isolated preview', () => {
     expect(shellStyles).toMatch(
       /\.component-workbench \{[^}]*border: 1px solid var\(--paper-color-rule-default\);[^}]*overflow: hidden;/s,
     )
     expect(shellStyles).toMatch(
-      /\.example-canvas \{[^}]*border: 1px solid var\(--paper-color-rule-default\);[^}]*background: var\(--paper-color-surface-raised\);/s,
+      /\.example-canvas \{[^}]*border: 0;[^}]*background: var\(--paper-color-surface-raised\);/s,
     )
     expect(shellStyles).toMatch(
       /\.example-canvas__heading \{[^}]*border-block-end: 0;/s,

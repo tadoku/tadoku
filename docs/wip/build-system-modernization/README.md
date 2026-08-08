@@ -25,7 +25,7 @@ statuses `Not started`, `In progress`, `Blocked`, and `Done`. A phase is not
 | 0. Capture the baseline | Done | [#765](https://github.com/tadoku/tadoku/pull/765) | — | Merged 2026-08-08 as `b6ba1845`; baseline evidence recorded below. |
 | 1. Make rules Bazel 9-ready on Bazel 8 | Done | [#766](https://github.com/tadoku/tadoku/pull/766) | Phase 0 | Merged 2026-08-08 as `be66af7e`; [full Bazel 8 CI passed](https://github.com/tadoku/tadoku/actions/runs/31237113928). |
 | 2. Upgrade Bazel to 9.2.0 | Done | [#767](https://github.com/tadoku/tadoku/pull/767) | Phase 1 merged | Merged 2026-08-08 as `42bba884`; [full Bazel 9 CI passed](https://github.com/tadoku/tadoku/actions/runs/31237357627). |
-| 3. Harden CI and dependency updates | In progress | [#768](https://github.com/tadoku/tadoku/pull/768) | Phase 2 merged | Local frozen-lock, build, test, OCI coverage/load, Trivy, Actionlint, and YAML-format gates passed; pull-request validation pending. |
+| 3. Harden CI and dependency updates | In progress | [#768](https://github.com/tadoku/tadoku/pull/768) | Phase 2 merged | Local gates and the [full branch PR workflow](https://github.com/tadoku/tadoku/actions/runs/31237719680) passed; post-merge cache validation pending. |
 | 4. Clean up latent Bazel debt | Not started | — | Phase 3 merged | — |
 | 5. Complete rollout and close migration | Not started | — | Phases 0–4 | — |
 
@@ -363,7 +363,7 @@ behavior explicit on GitHub-hosted runners.
       reviewed once per update set.
 - [x] Do not configure Dependabot to combine Bazel updates with Go, pnpm, or
       GitHub Actions updates.
-- [ ] Validate the workflow on a pull request from a branch and, if practical,
+- [x] Validate the workflow on a pull request from a branch and, if practical,
       from a fork.
 - [ ] Merge and confirm the next scheduled or `main` run restores and saves
       the intended caches.

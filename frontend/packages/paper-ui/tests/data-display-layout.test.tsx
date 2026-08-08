@@ -189,6 +189,12 @@ describe("HeatmapChart", () => {
 });
 
 describe("Phase 3 data-display catalogue contracts", () => {
+  it("keeps every copied data-display example self-identifying with imports", () => {
+    for (const fixture of phaseThreeDataLayoutFixtures) {
+      expect(fixture.code, fixture.id).toContain('from "paper-ui"');
+    }
+  });
+
   it("publishes deterministic fixtures and complete valid Stable documents", () => {
     expect(
       validateCatalogRegistry({

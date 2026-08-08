@@ -93,7 +93,13 @@ export const phaseThreeDataLayoutFixtures = [
     densities: ["comfortable", "compact"],
     viewports: VIEWPORTS,
     deterministic: true,
-    code: `<Table caption="Recent reading" columns={columns} rows={[]} emptyMessage="No reading logged yet." />`,
+    code: `import { Table, type TableColumn } from "paper-ui";
+
+const columns = [
+  { id: "title", header: "Title", rowHeader: true, cell: (entry) => entry.title },
+] satisfies readonly TableColumn<{ title: string }>[];
+
+<Table caption="Recent reading" columns={columns} rows={[]} emptyMessage="No reading logged yet." />`,
     render: () => (
       <Table
         caption="Recent reading"

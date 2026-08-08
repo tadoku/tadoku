@@ -7,6 +7,7 @@ import { Modal } from "../components/overlays/Modal";
 import {
   defineCatalogDocument,
   defineCatalogFixture,
+  COMPONENT_PAGE_SECTION_KEYS,
   type CatalogDocument,
   type ComponentCategory,
   type ComponentDocumentationSections,
@@ -38,7 +39,7 @@ function componentSections(
   >,
 ): ComponentDocumentationSections {
   void name;
-  return { required: details };
+  return { required: details, pageSections: COMPONENT_PAGE_SECTION_KEYS };
 }
 
 interface ComponentDocumentOptions {
@@ -395,15 +396,15 @@ export const phaseTwoDocuments = [
     },
     sections: componentSections("Button", {
       overview: section("Overview", "Button expresses action hierarchy without changing native semantics."),
-      whenToUse: section("When to use", "Use it for immediate user-initiated operations."),
-      whenNotToUse: section("When not to use", "Use an anchor when activation navigates to a URL."),
-      choosingBetween: section("Choose between", "Default is the page's emphasized action; outline is neutral; ghost is low emphasis; link is an inline action; destructive is irreversible intent."),
+      whenToUse: section("When to use", "Use Button for an immediate user-initiated operation such as saving a log, applying a filter, or deleting an entry. Use one default button for the primary action in a local task; give supporting actions less emphasis."),
+      whenNotToUse: section("When not to use", "Use an anchor when activation navigates to a URL, including links styled with buttonClassName(). Do not use a disabled button as an explanation; keep the reason visible near the unavailable action."),
+      choosingBetween: section("Choose between", "Default is the emphasized action, outline is a neutral alternative, ghost is a low-emphasis toolbar action, and link is an action embedded in prose. Destructive communicates irreversible intent; it does not replace a confirmation when the consequence is difficult to undo."),
       anatomy: section("Anatomy", "A control contains an optional icon, a stable text label, and a lower interactive edge."),
       recommendedExample: section("Recommended example", "Save log is specific, short, and defaults to type=button."),
-      variants: section("Variants", "Default, outline, ghost, link, and destructive form one vocabulary across React and raw classes."),
-      statesAndAdaptation: section("States and adaptation", "Loading disables activation, retains the label, exposes aria-busy, and respects both densities."),
-      behavior: section("Behavior", "Buttons activate on Enter or Space. Explicitly opt into type=submit inside a React Hook Form and use methods.reset() for reset workflows."),
-      contentGuidance: section("Content guidance", "Use a verb phrase such as Save log; avoid vague labels such as OK."),
+      variants: section("Variants", "Use default for the main action in a task, outline for a visible alternative, ghost for compact secondary actions, link for button behavior that belongs inline with text, and destructive for a destructive operation. buttonClassName() gives a real anchor the same visual hierarchy without changing its navigation semantics."),
+      statesAndAdaptation: section("States and adaptation", "loading prevents repeat activation, sets aria-busy, keeps the original accessible name, and announces loadingLabel as a description. fullWidth is intended for constrained layouts; density changes sizing without changing hierarchy."),
+      behavior: section("Behavior", "Buttons activate on Enter or Space and default to type=button, preventing accidental form submission. Explicitly set type=submit inside a React Hook Form and submit through methods.handleSubmit(); use methods.reset() only for a deliberate reset workflow."),
+      contentGuidance: section("Content guidance", "Start with a specific verb and name the object when context is not obvious: Save log, Delete entry, or Clear filters. Keep the visible label stable while loading and avoid vague labels such as OK or Submit."),
       accessibility: section("Accessibility", "Keep an accessible name, do not convey danger through color alone, and preserve native anchor roles for navigation."),
       implementation: section("Implementation", "Button and buttonClassName() call the same recipe; load paper-ui/styles.css once at the application root."),
       apiReference: section("API reference", "ButtonProps adds variant, loading, loadingLabel, icons, and fullWidth to native button attributes."),
@@ -446,15 +447,15 @@ export const phaseTwoDocuments = [
     },
     sections: componentSections("Input", {
       overview: section("Overview", "Input owns the complete visible and semantic field relationship."),
-      whenToUse: section("When to use", "Use it for one-line values such as a reading-log title."),
-      whenNotToUse: section("When not to use", "Use TextArea for prose and Select or radio controls for constrained choices."),
-      choosingBetween: section("Choose between", "Read-only values remain focusable and selectable; disabled values are unavailable and omitted from submission."),
+      whenToUse: section("When to use", "Use Input for a short free-form value that fits on one line, such as a reading-log title, page count, email address, or password. Set the appropriate native type or inputMode so platform keyboards and validation can help."),
+      whenNotToUse: section("When not to use", "Use TextArea for prose and Select, radio controls, or Autocomplete when valid choices are known. Do not use placeholder text as the label: it disappears after entry and does not provide a persistent field name."),
+      choosingBetween: section("Choose between", "A read-only value remains focusable and selectable and is still submitted; a disabled value is unavailable and omitted from submission. Use readOnly when users may need to inspect or copy the value, and disabled only when the control does not currently participate in the form."),
       anatomy: section("Anatomy", "The field contains a persistent label, optional hint, native input, and validation message."),
       recommendedExample: section("Recommended example", "Log title demonstrates a useful label, constraint hint, required rule, and explicit submit action."),
       variants: section("Variants", "Text, email, password, numeric-input-mode, and other native types share the field anatomy."),
-      statesAndAdaptation: section("States and adaptation", "Required, invalid, read-only, and disabled states work in light/dark and comfortable/compact contexts."),
+      statesAndAdaptation: section("States and adaptation", "required adds the native required state and a visible marker. An invalid field sets aria-invalid and connects its alert message alongside any hint. Read-only remains operable for selection; disabled is visually muted and removed from interaction and submission."),
       behavior: section("Behavior", "Registration, value, blur, and validation state come from the nearest FormProvider."),
-      contentGuidance: section("Content guidance", "Labels name the value; hints explain format or consequence; errors tell the reader how to recover."),
+      contentGuidance: section("Content guidance", "Use a persistent noun phrase for the label. Add a hint only for a format, constraint, or consequence the label cannot carry. An error should explain how to fix the value—Enter the number of pages read is more useful than Invalid input."),
       accessibility: section("Accessibility", "htmlFor, aria-describedby, aria-invalid, and role=alert connect the field anatomy without relying on color."),
       implementation: section("Implementation", "Create methods with useForm(), wrap fields in FormProvider, and submit through methods.handleSubmit()."),
       apiReference: section("API reference", "InputProps requires name and label, accepts hint and register rules, and otherwise follows native input attributes."),

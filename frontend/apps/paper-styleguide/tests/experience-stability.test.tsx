@@ -256,12 +256,10 @@ describe('catalogue experience stability', () => {
     )
   })
 
-  it('links source metadata to the registry-owned repository path', () => {
+  it('keeps component registry metadata out of the user-facing guide', () => {
     render(<DocumentPage document={buttonDocument} />)
 
-    expect(screen.getByRole('link', { name: buttonDocument.sourcePath })).toHaveAttribute(
-      'href',
-      `https://github.com/tadoku/tadoku/blob/main/frontend/packages/paper-ui/${buttonDocument.sourcePath}`,
-    )
+    expect(screen.queryByRole('link', { name: buttonDocument.sourcePath })).not.toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: 'Metadata' })).not.toBeInTheDocument()
   })
 })

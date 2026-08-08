@@ -1,10 +1,9 @@
 import {
-  REQUIRED_COMPONENT_SECTION_KEYS,
   catalogRegistry,
   type CatalogDocument,
   type CatalogDocumentationSection,
+  type ComponentPageSectionKey,
 } from 'paper-ui/catalog'
-import { Fragment } from 'react'
 import { ComponentWorkbench } from './ComponentWorkbench'
 import { ExampleCanvas } from './ExampleCanvas'
 import { type OutlineItem, TableOfContents } from './TableOfContents'
@@ -92,39 +91,111 @@ function ComponentSection({
   )
 }
 
+const COMPONENT_PAGE_HEADINGS: Readonly<Record<ComponentPageSectionKey, string>> = {
+  usage: 'Usage',
+  examples: 'Examples',
+  variantsAndStates: 'Variants and states',
+  behavior: 'Behavior',
+  contentGuidance: 'Content guidance',
+  accessibility: 'Accessibility',
+}
+
+function SectionParagraphs({ section }: { section?: CatalogDocumentationSection }) {
+  return section ? (
+    <>{section.content.map((paragraph) => <p key={paragraph}>{paragraph}</p>)}</>
+  ) : null
+}
+
+function UsageSection({ document }: { document: CatalogDocument }) {
+  const sections = document.sections?.required
+  return (
+    <section id="usage" className="document-section">
+      <h2 className="paper-type-section">Usage</h2>
+      <h3>Use when</h3>
+      <SectionParagraphs section={sections?.whenToUse} />
+      <h3>Avoid when</h3>
+      <SectionParagraphs section={sections?.whenNotToUse} />
+      <h3>Choosing between components</h3>
+      <SectionParagraphs section={sections?.choosingBetween} />
+    </section>
+  )
+}
+
+function ExamplesSection({
+  document,
+  fixtures,
+}: {
+  document: CatalogDocument
+  fixtures: Parameters<typeof ComponentWorkbench>[0]['fixtures']
+}) {
+  return (
+    <section id="examples" className="document-section document-section--wide">
+      <h2 className="paper-type-section">Examples</h2>
+      <SectionParagraphs section={document.sections?.required.recommendedExample} />
+      <ComponentWorkbench document={document} fixtures={fixtures} />
+    </section>
+  )
+}
+
+function VariantsAndStatesSection({ document }: { document: CatalogDocument }) {
+  const sections = document.sections?.required
+  return (
+    <section id="variantsAndStates" className="document-section">
+      <h2 className="paper-type-section">Variants and states</h2>
+      <h3>Variants</h3>
+      <SectionParagraphs section={sections?.variants} />
+      <h3>States and adaptation</h3>
+      <SectionParagraphs section={sections?.statesAndAdaptation} />
+    </section>
+  )
+}
+
+function PublicComponentSection({
+  keyName,
+  document,
+  fixtures,
+}: {
+  keyName: ComponentPageSectionKey
+  document: CatalogDocument
+  fixtures: Parameters<typeof ComponentWorkbench>[0]['fixtures']
+}) {
+  if (keyName === 'usage') return <UsageSection document={document} />
+  if (keyName === 'examples') {
+    return <ExamplesSection document={document} fixtures={fixtures} />
+  }
+  if (keyName === 'variantsAndStates') {
+    return <VariantsAndStatesSection document={document} />
+  }
+
+  const sourceKey = keyName === 'contentGuidance' ? 'contentGuidance' : keyName
+  const section = document.sections?.required[sourceKey]
+  return section ? (
+    <ComponentSection id={keyName} section={section} />
+  ) : null
+}
+
 function ComponentDocumentPage({ document }: { document: CatalogDocument }) {
   const fixtures = catalogRegistry.fixtures.filter((fixture) =>
     document.fixtureIds.includes(fixture.id),
   )
-  const sections = document.sections?.required ?? {}
-  const outline: OutlineItem[] = REQUIRED_COMPONENT_SECTION_KEYS.flatMap((key) => {
-    const section = sections[key]
-    return section ? [{ id: key, label: section.heading }] : []
-  })
-  outline.push({ id: 'metadata', label: 'Metadata' })
+  const pageSections = document.sections?.pageSections ?? []
+  const outline: OutlineItem[] = pageSections.map((key) => ({
+    id: key,
+    label: COMPONENT_PAGE_HEADINGS[key],
+  }))
 
   return (
     <div className="document-layout">
       <article className="document-page">
         <Hero document={document} />
-        {REQUIRED_COMPONENT_SECTION_KEYS.map((key) => {
-          const section = sections[key]
-          if (!section) return null
-          return (
-            <Fragment key={key}>
-              <ComponentSection id={key} section={section} />
-              {key === 'recommendedExample' ? (
-                <div className="document-section--wide">
-                  <ComponentWorkbench document={document} fixtures={fixtures} />
-                </div>
-              ) : null}
-            </Fragment>
-          )
-        })}
-        <section id="metadata" className="document-section">
-          <h2 className="paper-type-section">Metadata</h2>
-          <Metadata document={document} />
-        </section>
+        {pageSections.map((key) => (
+          <PublicComponentSection
+            key={key}
+            keyName={key}
+            document={document}
+            fixtures={fixtures}
+          />
+        ))}
       </article>
       <TableOfContents items={outline} />
     </div>

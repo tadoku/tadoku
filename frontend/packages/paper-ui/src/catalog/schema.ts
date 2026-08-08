@@ -57,6 +57,20 @@ export const REQUIRED_COMPONENT_SECTION_KEYS = [
   "lifecycle",
 ] as const;
 
+/**
+ * The small set of topics that may appear in a consumer-facing component
+ * guide. The larger required-section contract records catalogue evidence;
+ * authors opt into only the topics whose copy is useful on the page.
+ */
+export const COMPONENT_PAGE_SECTION_KEYS = [
+  "usage",
+  "examples",
+  "variantsAndStates",
+  "behavior",
+  "contentGuidance",
+  "accessibility",
+] as const;
+
 export type CatalogKind = (typeof CATALOG_DOCUMENT_KINDS)[number];
 export type CatalogLifecycle = (typeof CATALOG_LIFECYCLES)[number];
 export type ComponentCategory = (typeof COMPONENT_CATEGORIES)[number];
@@ -65,6 +79,8 @@ export type FixtureTheme = (typeof FIXTURE_THEMES)[number];
 export type FixtureDensity = (typeof FIXTURE_DENSITIES)[number];
 export type RequiredComponentSectionKey =
   (typeof REQUIRED_COMPONENT_SECTION_KEYS)[number];
+export type ComponentPageSectionKey =
+  (typeof COMPONENT_PAGE_SECTION_KEYS)[number];
 
 export interface CatalogGuidance {
   readonly whenToUse: readonly string[];
@@ -129,6 +145,8 @@ export interface ComponentDocumentationSections {
    * registry validation requires every key before it can become Stable.
    */
   readonly required: Partial<RequiredComponentSections>;
+  /** Ordered, intentionally curated topics rendered on the public page. */
+  readonly pageSections: readonly ComponentPageSectionKey[];
   readonly optional?: readonly OptionalComponentSection[];
 }
 

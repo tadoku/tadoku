@@ -10,6 +10,7 @@ import {
 import {
   defineCatalogDocument,
   defineCatalogFixture,
+  COMPONENT_PAGE_SECTION_KEYS,
   type CatalogDocument,
   type ComponentDocumentationSections,
   type RequiredComponentSections,
@@ -85,7 +86,7 @@ function navigationSections(spec: NavigationDocSpec): ComponentDocumentationSect
     migration: { heading: "Migration", content: [spec.migration] },
     lifecycle: { heading: "Lifecycle", content: ["Stable in Paper 0.1.0 with deterministic fixtures and rendered semantic, keyboard, and router-boundary tests."] },
   };
-  return { required };
+  return { required, pageSections: COMPONENT_PAGE_SECTION_KEYS };
 }
 
 function navigationDocument(spec: NavigationDocSpec): CatalogDocument {

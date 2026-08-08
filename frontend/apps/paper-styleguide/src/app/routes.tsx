@@ -1,7 +1,9 @@
 import { catalogRegistry, type CatalogKind } from 'paper-ui/catalog'
+import { useEffect } from 'react'
 import { Link, Navigate, useLocation } from 'react-router-dom'
 import { DocumentPage } from '../documentation/DocumentPage'
 import { resolveCatalogRoute } from './catalogue'
+import { DESIGN_HISTORY_LINKS } from './designHistory'
 
 const INDEX_SECTIONS: readonly {
   id: string
@@ -10,6 +12,8 @@ const INDEX_SECTIONS: readonly {
 }[] = [
   { id: 'foundations', label: 'Foundations', kind: 'foundation' },
   { id: 'components', label: 'Components', kind: 'component' },
+  { id: 'patterns', label: 'Patterns', kind: 'pattern' },
+  { id: 'experiments', label: 'Experiments', kind: 'experiment' },
   { id: 'governance', label: 'Governance', kind: 'governance' },
 ]
 
@@ -59,12 +63,44 @@ export function CatalogIndex() {
           </section>
         )
       })}
+      <section
+        className="catalogue-index__section design-history"
+        aria-labelledby="design-history-title"
+      >
+        <h2 id="design-history-title" className="paper-type-section">
+          Design history
+        </h2>
+        <p>
+          Trace the decisions, evidence, and delivery gates behind the system.
+        </p>
+        <ul className="design-history__links">
+          {DESIGN_HISTORY_LINKS.map((entry) => (
+            <li key={entry.href}>
+              <a className="paper-focus-ring" href={entry.href}>
+                <strong>{entry.label}</strong>
+                <span>{entry.description}</span>
+              </a>
+            </li>
+          ))}
+        </ul>
+      </section>
     </article>
   )
 }
 
 export function ResolvedCatalogueRoute() {
   const location = useLocation()
+
+  useEffect(() => {
+    if (!location.hash) return
+    let id = location.hash.slice(1)
+    try {
+      id = decodeURIComponent(id)
+    } catch {
+      return
+    }
+    document.getElementById(id)?.scrollIntoView?.({ block: 'start' })
+  }, [location.hash, location.pathname])
 
   if (location.pathname === '/') return <CatalogIndex />
 

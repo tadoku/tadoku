@@ -32,6 +32,13 @@ function SectionCopy({ value, fallback }: { value: unknown; fallback: string }) 
   return <p>{copy || fallback}</p>
 }
 
+function sourceHref(sourcePath: string): string {
+  const repositoryPath = sourcePath.startsWith('docs/')
+    ? sourcePath
+    : `frontend/packages/paper-ui/${sourcePath}`
+  return `https://github.com/tadoku/tadoku/blob/main/${repositoryPath}`
+}
+
 function Metadata({ document }: { document: CatalogDocument }) {
   return (
     <dl className="metadata-list">
@@ -41,7 +48,11 @@ function Metadata({ document }: { document: CatalogDocument }) {
       </div>
       <div>
         <dt>Source</dt>
-        <dd><code>{document.sourcePath}</code></dd>
+        <dd>
+          <a className="text-link paper-focus-ring" href={sourceHref(document.sourcePath)}>
+            <code>{document.sourcePath}</code>
+          </a>
+        </dd>
       </div>
       <div>
         <dt>Dependencies</dt>
@@ -122,19 +133,25 @@ function ComponentDocumentPage({ document }: { document: CatalogDocument }) {
 }
 
 function GeneralDocumentPage({ document }: { document: CatalogDocument }) {
+  const fixture = catalogRegistry.fixtures.find((candidate) =>
+    document.fixtureIds.includes(candidate.id),
+  )
+
   return (
     <div className="document-layout">
       <article className="document-page">
         <div id="overview"><Hero document={document} /></div>
         <section id="guidance" className="document-section">
           <h2 className="paper-type-section">Guidance</h2>
-          <SectionCopy value={document.guidance} fallback="Detailed usage guidance will arrive with this catalogue slice." />
+          <SectionCopy value={document.guidance} fallback="No additional guidance is registered for this document." />
         </section>
         <section id="accessibility" className="document-section">
           <h2 className="paper-type-section">Accessibility</h2>
           <SectionCopy value={document.accessibility} fallback="Accessibility requirements are tracked in the catalogue registry." />
         </section>
-        <div id="preview" className="document-section document-section--wide"><ExampleCanvas /></div>
+        <div id="preview" className="document-section document-section--wide">
+          <ExampleCanvas fixture={fixture} />
+        </div>
         <section id="contract" className="document-section">
           <h2 className="paper-type-section">Public contract</h2>
           <SectionCopy value={document.api} fallback="This foundation does not expose a component API." />

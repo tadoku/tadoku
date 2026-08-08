@@ -4,7 +4,12 @@ import {
   XMarkIcon,
   iconClassName,
 } from 'paper-ui/icons'
-import { useEffect, useRef, useState } from 'react'
+import {
+  useEffect,
+  useRef,
+  useState,
+  type KeyboardEvent as ReactKeyboardEvent,
+} from 'react'
 import { Link } from 'react-router-dom'
 import { searchCatalog } from './catalogue'
 
@@ -25,6 +30,7 @@ export function CatalogueSearch({ documents }: CatalogueSearchProps) {
   const [query, setQuery] = useState('')
   const inputRef = useRef<HTMLInputElement>(null)
   const triggerRef = useRef<HTMLButtonElement>(null)
+  const resultRefs = useRef<Array<HTMLAnchorElement | null>>([])
   const results = searchCatalog(documents, query)
   const closeSearch = (restoreFocus = false) => {
     setOpen(false)
@@ -54,6 +60,43 @@ export function CatalogueSearch({ documents }: CatalogueSearchProps) {
   useEffect(() => {
     if (open) inputRef.current?.focus()
   }, [open])
+
+  function moveResult(
+    event: ReactKeyboardEvent<HTMLElement>,
+    currentIndex: number,
+  ) {
+    if (!['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(event.key)) return
+    event.preventDefault()
+    const nextIndex =
+      event.key === 'Home'
+        ? 0
+        : event.key === 'End'
+          ? results.length - 1
+          : (currentIndex + (event.key === 'ArrowDown' ? 1 : -1) +
+              results.length) %
+            results.length
+    resultRefs.current[nextIndex]?.focus()
+  }
+
+  function trapDialogFocus(event: ReactKeyboardEvent<HTMLElement>) {
+    if (event.key !== 'Tab') return
+    const focusable = Array.from(
+      event.currentTarget.querySelectorAll<HTMLElement>(
+        'button:not([disabled]), input:not([disabled]), a[href]',
+      ),
+    )
+    const first = focusable[0]
+    const last = focusable[focusable.length - 1]
+    if (!first || !last) return
+
+    if (event.shiftKey && document.activeElement === first) {
+      event.preventDefault()
+      last.focus()
+    } else if (!event.shiftKey && document.activeElement === last) {
+      event.preventDefault()
+      first.focus()
+    }
+  }
 
   return (
     <>
@@ -87,6 +130,7 @@ export function CatalogueSearch({ documents }: CatalogueSearchProps) {
             role="dialog"
             aria-modal="true"
             aria-labelledby="catalogue-search-title"
+            onKeyDown={trapDialogFocus}
           >
             <div className="search-dialog__heading">
               <h2 id="catalogue-search-title" className="paper-type-component">
@@ -112,18 +156,31 @@ export function CatalogueSearch({ documents }: CatalogueSearchProps) {
                 value={query}
                 placeholder="Try “color” or “foundations”"
                 onChange={(event) => setQuery(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === 'ArrowDown' && results.length > 0) {
+                    event.preventDefault()
+                    resultRefs.current[0]?.focus()
+                  } else if (event.key === 'ArrowUp' && results.length > 0) {
+                    event.preventDefault()
+                    resultRefs.current[results.length - 1]?.focus()
+                  }
+                }}
               />
             </label>
             <p className="search-count paper-type-metadata" aria-live="polite">
               {results.length} {results.length === 1 ? 'result' : 'results'}
             </p>
             <ul className="search-results">
-              {results.map((document) => (
+              {results.map((document, index) => (
                 <li key={document.id}>
                   <Link
+                    ref={(node) => {
+                      resultRefs.current[index] = node
+                    }}
                     className="search-result paper-focus-ring"
                     to={document.route}
                     onClick={() => closeSearch()}
+                    onKeyDown={(event) => moveResult(event, index)}
                   >
                     <span>
                       <strong>{document.name}</strong>

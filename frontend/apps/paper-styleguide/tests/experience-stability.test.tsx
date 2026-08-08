@@ -1,0 +1,179 @@
+import { render, screen, waitFor, within } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
+import { catalogRegistry } from 'paper-ui/catalog'
+import { MemoryRouter, Route, Routes } from 'react-router-dom'
+import { afterEach, describe, expect, it, vi } from 'vitest'
+import { CatalogueSearch } from '../src/app/CatalogueSearch'
+import { DocsShell } from '../src/app/DocsShell'
+import { DisplayPreferencesProvider } from '../src/app/preferences'
+import { CatalogIndex, ResolvedCatalogueRoute } from '../src/app/routes'
+import { DocumentPage } from '../src/documentation/DocumentPage'
+import { ExampleCanvas } from '../src/documentation/ExampleCanvas'
+
+const buttonDocument = catalogRegistry.documents.find(
+  (document) => document.id === 'component.button',
+)!
+const buttonFixture = catalogRegistry.fixtures.find((fixture) =>
+  buttonDocument.fixtureIds.includes(fixture.id),
+)!
+const loggingPatternDocument = catalogRegistry.documents.find(
+  (document) => document.id === 'pattern.logging',
+)!
+
+const originalScrollIntoView = HTMLElement.prototype.scrollIntoView
+
+afterEach(() => {
+  vi.restoreAllMocks()
+  if (originalScrollIntoView) {
+    HTMLElement.prototype.scrollIntoView = originalScrollIntoView
+  } else {
+    Reflect.deleteProperty(HTMLElement.prototype, 'scrollIntoView')
+  }
+  Reflect.deleteProperty(navigator, 'clipboard')
+})
+
+describe('catalogue experience stability', () => {
+  it('copies the registered example and announces successful feedback', async () => {
+    const user = userEvent.setup()
+    const writeText = vi.fn().mockResolvedValue(undefined)
+    Object.defineProperty(navigator, 'clipboard', {
+      configurable: true,
+      value: { writeText },
+    })
+    render(<DocumentPage document={buttonDocument} />)
+
+    await user.click(screen.getByRole('tab', { name: 'Code' }))
+    await user.click(screen.getByRole('button', { name: 'Copy code' }))
+
+    expect(writeText).toHaveBeenCalledWith(buttonFixture.code)
+    expect(screen.getByRole('status')).toHaveTextContent('Code copied')
+  })
+
+  it('keeps all workbench panels stable while switching views', async () => {
+    const user = userEvent.setup()
+    render(<DocumentPage document={buttonDocument} />)
+
+    const panels = screen.getAllByRole('tabpanel', { hidden: true })
+    expect(panels).toHaveLength(4)
+    const previewFrame = screen.getByTitle('Paper responsive component preview')
+
+    await user.click(screen.getByRole('tab', { name: 'Code' }))
+    await user.click(screen.getByRole('tab', { name: 'Preview' }))
+
+    expect(screen.getByTitle('Paper responsive component preview')).toBe(
+      previewFrame,
+    )
+  })
+
+  it('exposes exact iframe content widths for every viewport control', async () => {
+    const user = userEvent.setup()
+    render(<ExampleCanvas />)
+
+    await user.click(screen.getByRole('button', { name: 'Tablet, 768 pixels' }))
+    const frame = screen.getByTitle('Paper responsive component preview')
+    expect(frame).toHaveAttribute('width', '768')
+    expect(frame).toHaveStyle({ inlineSize: '768px', boxSizing: 'content-box' })
+  })
+
+  it('moves from search input to the first result with ArrowDown', async () => {
+    const user = userEvent.setup()
+    render(
+      <MemoryRouter>
+        <CatalogueSearch documents={catalogRegistry.documents} />
+      </MemoryRouter>,
+    )
+
+    await user.keyboard('/')
+    await user.type(screen.getByRole('searchbox'), 'button')
+    await user.keyboard('{ArrowDown}')
+
+    expect(
+      within(screen.getByRole('dialog')).getAllByRole('link')[0],
+    ).toHaveFocus()
+  })
+
+  it('focuses mobile navigation and preserves its accessible close path', async () => {
+    const user = userEvent.setup()
+    render(
+      <MemoryRouter>
+        <DisplayPreferencesProvider>
+          <DocsShell documents={catalogRegistry.documents}>Content</DocsShell>
+        </DisplayPreferencesProvider>
+      </MemoryRouter>,
+    )
+
+    await user.click(screen.getByRole('button', { name: 'Browse' }))
+    expect(screen.getByRole('button', { name: 'Close navigation' })).toHaveFocus()
+  })
+
+  it('scrolls direct hash routes to their documented section', async () => {
+    const scrollIntoView = vi.fn()
+    HTMLElement.prototype.scrollIntoView = scrollIntoView
+
+    render(
+      <MemoryRouter initialEntries={[`${buttonDocument.route}#accessibility`]}>
+        <Routes>
+          <Route path="*" element={<ResolvedCatalogueRoute />} />
+        </Routes>
+      </MemoryRouter>,
+    )
+
+    await waitFor(() => expect(scrollIntoView).toHaveBeenCalled())
+    expect(document.getElementById('accessibility')).not.toBeNull()
+  })
+
+  it('keeps local outline anchors and design history discoverable', () => {
+    const { unmount } = render(<DocumentPage document={buttonDocument} />)
+    expect(
+      screen.getByRole('link', { name: 'Accessibility' }),
+    ).toHaveAttribute('href', '#accessibility')
+    unmount()
+
+    render(
+      <MemoryRouter>
+        <CatalogIndex />
+      </MemoryRouter>,
+    )
+    const history = screen.getByRole('heading', { name: 'Design history' })
+      .closest('section')
+    expect(history).not.toBeNull()
+    expect(within(history!).getAllByRole('link')).toHaveLength(5)
+    expect(
+      within(history!).getByRole('link', { name: /Original refinement audit/u }),
+    ).toBeInTheDocument()
+    expect(
+      within(history!).getByRole('link', { name: /Visual studies/u }),
+    ).toBeInTheDocument()
+  })
+
+  it('indexes product patterns and experiments as distinct catalogue sections', () => {
+    render(
+      <MemoryRouter>
+        <CatalogIndex />
+      </MemoryRouter>,
+    )
+
+    expect(screen.getByRole('heading', { name: 'Patterns' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Experiments' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /LoggingStable/u })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /Logging v2Experimental/u })).toBeInTheDocument()
+  })
+
+  it('renders a registered fixture for a product-pattern document', () => {
+    render(<DocumentPage document={loggingPatternDocument} />)
+
+    expect(screen.getByTitle('Paper responsive component preview')).toHaveAttribute(
+      'data-fixture-id',
+      'pattern.logging-summary',
+    )
+  })
+
+  it('links source metadata to the registry-owned repository path', () => {
+    render(<DocumentPage document={buttonDocument} />)
+
+    expect(screen.getByRole('link', { name: buttonDocument.sourcePath })).toHaveAttribute(
+      'href',
+      `https://github.com/tadoku/tadoku/blob/main/frontend/packages/paper-ui/${buttonDocument.sourcePath}`,
+    )
+  })
+})

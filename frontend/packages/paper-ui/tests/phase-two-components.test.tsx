@@ -120,6 +120,9 @@ describe("Modal", () => {
     expect(screen.getByRole("dialog", { name: "Delete this log?" })).toHaveAccessibleDescription(
       "This cannot be undone.",
     );
+    const iconClose = document.querySelector(".paper-modal__icon-close");
+    expect(iconClose?.querySelector("svg")).not.toBeNull();
+    expect(iconClose).not.toHaveTextContent("×");
     await user.keyboard("{Escape}");
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
     expect(trigger).toHaveFocus();

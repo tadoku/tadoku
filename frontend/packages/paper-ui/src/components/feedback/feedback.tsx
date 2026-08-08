@@ -5,6 +5,7 @@ import {
   type PropsWithChildren,
   type ReactNode,
 } from "react";
+import { XMarkIcon, iconClassName } from "../../icons";
 import { buttonClassName } from "../actions/Button";
 
 export const FLASH_VARIANTS = ["information", "success", "warning", "danger"] as const;
@@ -201,7 +202,7 @@ function PaperToastViewport() {
             aria-label="Dismiss notification"
             onClick={() => manager.close(toast.id)}
           >
-            ×
+            <XMarkIcon className={iconClassName("prominent")} aria-hidden="true" />
           </button>
         </Toast.Root>
       ))}

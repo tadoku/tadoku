@@ -1,5 +1,6 @@
 import { Dialog } from "@base-ui/react/dialog";
 import { useState, type ReactNode } from "react";
+import { XMarkIcon, iconClassName } from "../../../icons";
 import { buttonClassName, type ButtonVariant } from "../../actions/Button";
 
 export interface ModalProps {
@@ -67,7 +68,7 @@ export function Modal({
                 className="paper-modal__icon-close"
                 aria-label={closeLabel}
               >
-                <span aria-hidden="true">×</span>
+                <XMarkIcon className={iconClassName("prominent")} aria-hidden="true" />
               </Dialog.Close>
             </header>
             <div className="paper-modal__content">{children}</div>

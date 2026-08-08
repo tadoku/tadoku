@@ -74,6 +74,10 @@ export interface NavbarProps {
   readonly navigation: readonly NavbarItem[];
   readonly brand: ReactNode;
   readonly brandHref: string;
+  /** Optional controls or account utilities rendered at the end of the bar. */
+  readonly actions?: ReactNode;
+  /** Set to false when the application provides its own narrow navigation pattern. */
+  readonly mobileNavigation?: boolean;
   readonly currentPath?: string;
   readonly renderLink?: NavigationLinkRenderer;
   readonly label?: string;
@@ -158,6 +162,8 @@ export function Navbar({
   navigation,
   brand,
   brandHref,
+  actions,
+  mobileNavigation = true,
   currentPath,
   renderLink,
   label = "Main navigation",
@@ -176,51 +182,57 @@ export function Navbar({
   };
 
   return (
-    <nav className="paper-navbar" aria-label={label} onKeyDown={mobileOpen ? onMobileKeyDown : undefined}>
+    <nav className="paper-navbar" aria-label={label} onKeyDown={mobileNavigation && mobileOpen ? onMobileKeyDown : undefined}>
       <div className="paper-navbar__inner">
         <div className="paper-navbar__brand">
           {renderNavigationLink(renderLink, { href: brandHref, children: brand })}
         </div>
-        <button
-          ref={mobileTriggerRef}
-          type="button"
-          className="paper-navbar__mobile-trigger"
-          aria-controls={menuId}
-          aria-expanded={mobileOpen}
-          aria-label={mobileOpen ? `Close ${menuLabel.toLocaleLowerCase()}` : `Open ${menuLabel.toLocaleLowerCase()}`}
-          onClick={() => setMobileOpen((open) => !open)}
-        >
-          {mobileOpen ? (
-            <XMarkIcon className={iconClassName("prominent")} aria-hidden="true" />
-          ) : (
-            <Bars3Icon className={iconClassName("prominent")} aria-hidden="true" />
-          )}
-        </button>
-        <div className="paper-navbar__desktop-links">
-          {navigation.map((item) => {
-            if (item.type === "dropdown") {
-              return <NavbarDropdownMenu key={item.id} item={item} currentPath={currentPath} renderLink={renderLink} />;
-            }
-            const current = linkIsCurrent(item, currentPath);
-            return renderNavigationLink(renderLink, {
-              href: item.href,
-              className: "paper-navbar__link",
-              "aria-current": current ? "page" : undefined,
-              "aria-disabled": item.disabled || undefined,
-              tabIndex: item.disabled ? -1 : undefined,
-              onClick: item.disabled ? disabledLinkClick : () => item.onSelect?.(),
-              children: item.label,
-            }, item.id);
-          })}
-        </div>
+        {navigation.length > 0 ? (
+          <div className="paper-navbar__desktop-links">
+            {navigation.map((item) => {
+              if (item.type === "dropdown") {
+                return <NavbarDropdownMenu key={item.id} item={item} currentPath={currentPath} renderLink={renderLink} />;
+              }
+              const current = linkIsCurrent(item, currentPath);
+              return renderNavigationLink(renderLink, {
+                href: item.href,
+                className: "paper-navbar__link",
+                "aria-current": current ? "page" : undefined,
+                "aria-disabled": item.disabled || undefined,
+                tabIndex: item.disabled ? -1 : undefined,
+                onClick: item.disabled ? disabledLinkClick : () => item.onSelect?.(),
+                children: item.label,
+              }, item.id);
+            })}
+          </div>
+        ) : null}
+        {actions ? <div className="paper-navbar__actions">{actions}</div> : null}
+        {mobileNavigation ? (
+          <button
+            ref={mobileTriggerRef}
+            type="button"
+            className="paper-navbar__mobile-trigger"
+            aria-controls={menuId}
+            aria-expanded={mobileOpen}
+            aria-label={mobileOpen ? `Close ${menuLabel.toLocaleLowerCase()}` : `Open ${menuLabel.toLocaleLowerCase()}`}
+            onClick={() => setMobileOpen((open) => !open)}
+          >
+            {mobileOpen ? (
+              <XMarkIcon className={iconClassName("prominent")} aria-hidden="true" />
+            ) : (
+              <Bars3Icon className={iconClassName("prominent")} aria-hidden="true" />
+            )}
+          </button>
+        ) : null}
       </div>
-      <div
-        id={menuId}
-        className="paper-navbar__mobile-panel"
-        data-open={mobileOpen ? "true" : "false"}
-        hidden={!mobileOpen}
-      >
-        {navigation.map((item) =>
+      {mobileNavigation ? (
+        <div
+          id={menuId}
+          className="paper-navbar__mobile-panel"
+          data-open={mobileOpen ? "true" : "false"}
+          hidden={!mobileOpen}
+        >
+          {navigation.map((item) =>
           item.type === "link" ? (
             <div key={item.id}>
               {renderNavigationLink(renderLink, {
@@ -260,8 +272,9 @@ export function Navbar({
               )}
             </section>
           ),
-        )}
-      </div>
+          )}
+        </div>
+      ) : null}
       {isLoading ? <div className="paper-navbar__loading" role="status"><span className="paper-sr-only">Loading navigation</span></div> : null}
     </nav>
   );

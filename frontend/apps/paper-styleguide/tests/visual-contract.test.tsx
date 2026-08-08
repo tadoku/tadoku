@@ -67,6 +67,7 @@ describe('responsive visual contract', () => {
     const search = screen.getByRole('button', { name: 'Search Paper' })
     const browse = screen.getByRole('button', { name: 'Browse' })
     const wordmark = screen.getByRole('link', { name: 'Tadoku Paper' })
+    const wordmarkContent = wordmark.querySelector('.docs-wordmark')
     const brandMarks = wordmark.querySelectorAll('img')
 
     expect(search.querySelector('svg')).not.toBeNull()
@@ -82,12 +83,41 @@ describe('responsive visual contract', () => {
         expect.stringContaining('cut-meter-reversed.svg'),
       ]),
     )
-    expect(getComputedStyle(wordmark).whiteSpace).toBe('nowrap')
+    expect(wordmarkContent).not.toBeNull()
+    expect(getComputedStyle(wordmarkContent!).whiteSpace).toBe('nowrap')
 
     await user.click(browse)
     expect(
       screen.getByRole('button', { name: 'Close navigation' }).querySelector('svg'),
     ).not.toBeNull()
+  })
+
+  it('uses the public Paper Navbar and Sidebar recipes for the application shell', () => {
+    render(
+      <MemoryRouter>
+        <DocsShell documents={catalogRegistry.documents}>Content</DocsShell>
+      </MemoryRouter>,
+    )
+
+    const headerNavigation = screen.getByRole('navigation', {
+      name: 'Main navigation',
+    })
+    const catalogueNavigation = screen.getByRole('navigation', {
+      name: 'Paper catalogue',
+    })
+
+    expect(headerNavigation).toHaveClass('paper-navbar')
+    expect(headerNavigation.closest('header')).toHaveClass('docs-navbar')
+    expect(headerNavigation.querySelector('.paper-navbar__actions')).not.toBeNull()
+    expect(headerNavigation).toContainElement(
+      screen.getByRole('button', { name: 'Search Paper' }),
+    )
+    expect(headerNavigation).toContainElement(
+      screen.getByRole('button', { name: 'Browse' }),
+    )
+    expect(screen.queryByRole('button', { name: 'Open menu' })).not.toBeInTheDocument()
+    expect(document.querySelector('.docs-header')).toBeNull()
+    expect(catalogueNavigation).toHaveClass('paper-sidebar')
   })
 
   it('groups the catalogue index by document kind', () => {
@@ -188,16 +218,16 @@ describe('responsive visual contract', () => {
   })
 
   it('keeps the inactive Cut Meter asset out of the wordmark layout', () => {
-    expect(styleguideStyles).toContain('.paper-wordmark :where(img) {')
-    expect(styleguideStyles).not.toContain('.paper-wordmark img {')
+    expect(styleguideStyles).toContain('.docs-wordmark :where(img) {')
+    expect(styleguideStyles).not.toContain('.docs-wordmark img {')
   })
 
   it('switches the Cut Meter to its canonical reversed asset in dark mode', () => {
     expect(styleguideStyles).toContain(
-      ":root[data-theme='dark'] .paper-wordmark__mark--light",
+      ":root[data-theme='dark'] .docs-wordmark__mark--light",
     )
     expect(styleguideStyles).toContain(
-      ":root[data-theme='dark'] .paper-wordmark__mark--dark",
+      ":root[data-theme='dark'] .docs-wordmark__mark--dark",
     )
   })
 })

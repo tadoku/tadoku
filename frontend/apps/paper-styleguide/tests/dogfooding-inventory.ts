@@ -36,16 +36,6 @@ export const CUSTOM_STYLE_ALLOWANCES: readonly CustomStyleAllowance[] = [
     reason: 'Search results are application navigation content, not form controls.',
   },
   {
-    key: 'src/styles/shell-layout.css:custom-background:.docs-header',
-    category: 'application-layout',
-    reason: 'The utility header composes Paper search and drawer controls.',
-  },
-  {
-    key: 'src/styles/shell-layout.css:custom-background:.docs-sidebar',
-    category: 'application-layout',
-    reason: 'The sticky aside positions the public Paper Sidebar recipe.',
-  },
-  {
     key: 'src/styles/workbench.css:custom-background:.code-view pre',
     category: 'content',
     reason: 'Source code needs a scrollable, monospace reading surface.',

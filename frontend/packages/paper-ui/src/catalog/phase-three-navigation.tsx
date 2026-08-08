@@ -118,7 +118,12 @@ function navigationDocument(spec: NavigationDocSpec): CatalogDocument {
       react: spec.react,
       cssClasses: spec.css,
       publicTypes: spec.types,
-      defaults: ["Links render as native anchors; renderLink may replace them without changing semantics."],
+      defaults: [
+        "Links render as native anchors; renderLink may replace them without changing semantics.",
+        ...(spec.name === "Navbar"
+          ? ["actions renders end-aligned utilities; mobileNavigation defaults to true and may be disabled when the application provides another narrow navigation pattern."]
+          : []),
+      ],
       invalidCombinations: [spec.avoid],
     },
     fixtureIds: [spec.fixtureId],
@@ -207,10 +212,10 @@ const specs: readonly NavigationDocSpec[] = [
     when: "Use once as the application's primary global navigation landmark.",
     avoid: "Do not use for local page sections, contextual actions, or authorization decisions.",
     choose: "Use Sidebar for grouped local destinations and ActionMenu for contextual commands.",
-    anatomy: "A brand link, direct destination links, optional Base UI dropdowns, a narrow disclosure button, and an optional named loading rail.",
-    variants: "Direct links and account dropdowns share the same current-path and renderLink contract.",
+    anatomy: "A brand link, direct destination links, optional Base UI dropdowns, an optional end-actions slot, a narrow disclosure button, and an optional named loading rail.",
+    variants: "Direct links and account dropdowns share the same current-path and renderLink contract. Set mobileNavigation to false when an application shell supplies a Drawer or another narrow navigation pattern.",
     states: "Review signed-out, signed-in, admin, banned, loading, open dropdown, open narrow menu, disabled destination, and long-label states.",
-    behavior: "Tab reaches links and triggers; Enter or Space opens disclosures; Base UI supplies menu arrows, Home/End, Escape, outside dismissal, and focus return.",
+    behavior: "Tab reaches links, end actions, and triggers; Enter or Space opens disclosures; Base UI supplies menu arrows, Home/End, Escape, outside dismissal, and focus return.",
     content: "Use short destination nouns and a specific account-group label; brand content must retain an accessible name.",
     accessibility: "Keep one named navigation landmark, aria-current on the active destination, expanded/control relationships on the narrow trigger, and owner-document portals.",
     migration: "Move Next route comparison and Link rendering into the application adapter; replace Headless UI disclosure/menu imports with Paper Navbar data.",

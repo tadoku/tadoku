@@ -1,6 +1,7 @@
 import {
   Button,
   Drawer,
+  Navbar,
   Sidebar,
   type NavigationLinkRenderer,
   type SidebarSection,
@@ -105,30 +106,40 @@ export function DocsShell({ documents, children }: DocsShellProps) {
       <a className="skip-link paper-focus-ring" href="#main-content">
         Skip to content
       </a>
-      <header className="docs-header">
-        <Link className="paper-wordmark paper-focus-ring" to="/">
-          <span aria-hidden="true">
-            <img
-              className="paper-wordmark__mark--light"
-              src={cutMeterUrl}
-              alt=""
-            />
-            <img
-              className="paper-wordmark__mark--dark"
-              src={cutMeterReversedUrl}
-              alt=""
-            />
-          </span>
-          <strong>Tadoku Paper</strong>
-        </Link>
-        <div className="docs-header__actions">
-          <CatalogueSearch documents={documents} />
-          <MobileCatalogueNavigation
-            key={location.key}
-            sections={sections}
-            currentPath={location.pathname}
-          />
-        </div>
+      <header className="docs-navbar">
+        <Navbar
+          brandHref="/"
+          navigation={[]}
+          renderLink={renderRouterLink}
+          mobileNavigation={false}
+          brand={
+            <span className="docs-wordmark">
+              <span aria-hidden="true">
+                <img
+                  className="docs-wordmark__mark--light"
+                  src={cutMeterUrl}
+                  alt=""
+                />
+                <img
+                  className="docs-wordmark__mark--dark"
+                  src={cutMeterReversedUrl}
+                  alt=""
+                />
+              </span>
+              <strong>Tadoku Paper</strong>
+            </span>
+          }
+          actions={
+            <>
+              <CatalogueSearch documents={documents} />
+              <MobileCatalogueNavigation
+                key={location.key}
+                sections={sections}
+                currentPath={location.pathname}
+              />
+            </>
+          }
+        />
       </header>
 
       <aside className="docs-sidebar">

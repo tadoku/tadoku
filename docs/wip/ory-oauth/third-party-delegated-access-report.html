@@ -1,0 +1,450 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="A repository-specific architecture report for adding secure third-party delegated access to Tadoku with Ory Hydra, Kratos, Oathkeeper, and Keto.">
+  <title>Tadoku third-party access — Ory OAuth architecture report</title>
+  <style>
+    :root {
+      --paper: #f5f1e8;
+      --paper-deep: #ebe3d4;
+      --surface: #fffdf8;
+      --surface-alt: #f8f3e9;
+      --ink: #242129;
+      --muted: #68616c;
+      --faint: #8d8490;
+      --line: #d9cfbf;
+      --line-strong: #aa9d8d;
+      --violet: #6257a8;
+      --violet-deep: #463b87;
+      --violet-soft: #ebe8fa;
+      --green: #28735b;
+      --green-soft: #e3f2eb;
+      --amber: #9a641f;
+      --amber-soft: #fff0d2;
+      --red: #a33d43;
+      --red-soft: #f9e5e5;
+      --blue: #2e668e;
+      --blue-soft: #e4f0f8;
+      --shadow: 4px 4px 0 rgba(70, 59, 135, .18);
+      --serif: Merriweather, Georgia, "Times New Roman", serif;
+      --sans: "Open Sans", Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      --mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background:
+        linear-gradient(rgba(98, 87, 168, .035) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(98, 87, 168, .035) 1px, transparent 1px),
+        var(--paper);
+      background-size: 24px 24px;
+      font: 16px/1.66 var(--sans);
+      text-rendering: optimizeLegibility;
+    }
+
+    a { color: var(--violet-deep); text-underline-offset: 3px; }
+    a:hover { color: var(--ink); }
+    a:focus-visible { outline: 3px solid rgba(98, 87, 168, .35); outline-offset: 3px; }
+    code, pre { font-family: var(--mono); }
+    code { font-size: .9em; }
+    h1, h2, h3, h4 { margin: 0; line-height: 1.16; }
+    h1, h2 { font-family: var(--serif); }
+    p { margin: 0; }
+    ul, ol { margin: 0; }
+
+    .shell { width: min(1200px, calc(100% - 40px)); margin: 0 auto; }
+    .masthead { padding: 64px 0 50px; border-bottom: 1px solid var(--line); }
+    .brandline { display: flex; align-items: center; gap: 12px; color: var(--violet-deep); font-size: 12px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
+    .mark { display: grid; grid-template-columns: repeat(3, 6px); align-items: end; gap: 3px; width: 32px; height: 32px; padding: 6px; color: white; background: var(--violet-deep); }
+    .mark i { display: block; background: currentColor; }
+    .mark i:nth-child(1) { height: 7px; }
+    .mark i:nth-child(2) { height: 12px; }
+    .mark i:nth-child(3) { height: 18px; clip-path: polygon(0 0, 100% 0, 100% 100%, 0 76%); }
+    h1 { max-width: 980px; margin-top: 28px; font-size: clamp(43px, 6.2vw, 78px); letter-spacing: -.035em; }
+    h1 em { color: var(--violet); font-style: normal; }
+    .lede { max-width: 850px; margin-top: 24px; color: #504a54; font-size: clamp(18px, 2vw, 23px); line-height: 1.52; }
+    .lede strong { color: var(--ink); }
+    .meta { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 30px; }
+    .meta span { padding: 6px 9px; border: 1px solid var(--line); background: rgba(255, 253, 248, .7); color: var(--muted); font-size: 12px; font-weight: 700; }
+
+    .nav-wrap { position: sticky; top: 0; z-index: 30; border-bottom: 1px solid var(--line); background: rgba(245, 241, 232, .93); backdrop-filter: blur(12px); }
+    nav { display: flex; gap: 2px; overflow-x: auto; padding: 9px 0; scrollbar-width: none; }
+    nav::-webkit-scrollbar { display: none; }
+    nav a { flex: 0 0 auto; padding: 7px 10px; color: var(--muted); font-size: 12px; font-weight: 800; text-decoration: none; }
+    nav a:hover { color: var(--ink); background: var(--surface); }
+
+    section { padding: 72px 0; border-bottom: 1px solid var(--line); scroll-margin-top: 55px; }
+    .section-head { display: grid; grid-template-columns: 180px minmax(0, 1fr); gap: 34px; margin-bottom: 34px; }
+    .section-kicker { color: var(--violet); font: 800 12px/1.4 var(--mono); letter-spacing: .08em; text-transform: uppercase; }
+    h2 { font-size: clamp(31px, 4vw, 48px); letter-spacing: -.025em; }
+    .section-intro { max-width: 800px; margin-top: 14px; color: var(--muted); font-size: 18px; }
+
+    .verdict { display: grid; grid-template-columns: 1.1fr .9fr; border: 1px solid var(--line-strong); background: var(--surface); box-shadow: var(--shadow); }
+    .verdict-main { padding: clamp(28px, 4.5vw, 54px); color: white; background: var(--violet-deep); }
+    .verdict-main .eyebrow { color: #d6cff9; font-size: 12px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; }
+    .verdict-main h3 { max-width: 600px; margin-top: 16px; font-family: var(--serif); font-size: clamp(29px, 3.3vw, 43px); }
+    .verdict-main p { margin-top: 18px; color: #eeeafd; font-size: 17px; }
+    .verdict-list { padding: 28px 32px; }
+    .verdict-item { display: grid; grid-template-columns: 28px 1fr; gap: 12px; padding: 16px 0; border-bottom: 1px solid var(--line); }
+    .verdict-item:last-child { border-bottom: 0; }
+    .verdict-item b { display: grid; place-items: center; width: 24px; height: 24px; color: var(--green); background: var(--green-soft); font-size: 12px; }
+    .verdict-item strong { display: block; }
+    .verdict-item span { display: block; margin-top: 3px; color: var(--muted); font-size: 13px; }
+
+    .decision-strip { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 24px; }
+    .decision { padding: 18px; border: 1px solid var(--line); background: var(--surface); }
+    .decision small { display: block; color: var(--faint); font-size: 10px; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; }
+    .decision strong { display: block; margin-top: 5px; font-size: 14px; }
+
+    .diagram { padding: 30px; overflow-x: auto; border: 1px solid var(--line); background: var(--surface); }
+    .architecture { display: grid; grid-template-columns: minmax(150px, 1fr) 44px minmax(170px, 1fr) 44px minmax(220px, 1.2fr) 44px minmax(180px, 1fr); align-items: center; min-width: 930px; }
+    .node { min-height: 128px; padding: 20px; border: 1px solid var(--line-strong); background: var(--surface-alt); }
+    .node.accent { border-color: var(--violet); background: var(--violet-soft); box-shadow: 3px 3px 0 rgba(98,87,168,.18); }
+    .node.gateway { border-color: var(--blue); background: var(--blue-soft); }
+    .node h3 { font-size: 17px; }
+    .node p { margin-top: 7px; color: var(--muted); font-size: 12px; }
+    .node .tag { display: inline-flex; margin-bottom: 9px; padding: 3px 6px; color: var(--violet-deep); background: white; font-size: 9px; font-weight: 900; letter-spacing: .07em; text-transform: uppercase; }
+    .arrow { color: var(--violet); font: 900 24px/1 var(--mono); text-align: center; }
+    .diagram-note { margin-top: 18px; color: var(--muted); font-size: 13px; }
+
+    .responsibility { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 22px; }
+    .role-card { padding: 20px; border-top: 4px solid var(--violet); background: var(--surface); }
+    .role-card:nth-child(2) { border-color: var(--blue); }
+    .role-card:nth-child(3) { border-color: var(--green); }
+    .role-card:nth-child(4) { border-color: var(--amber); }
+    .role-card h3 { font-size: 16px; }
+    .role-card p { margin-top: 7px; color: var(--muted); font-size: 13px; }
+
+    .flow { display: grid; gap: 0; counter-reset: flow; border: 1px solid var(--line); background: var(--surface); }
+    .flow-step { display: grid; grid-template-columns: 56px 180px 1fr; gap: 18px; padding: 19px 22px; border-bottom: 1px solid var(--line); counter-increment: flow; }
+    .flow-step:last-child { border-bottom: 0; }
+    .flow-step::before { content: counter(flow, decimal-leading-zero); color: var(--violet); font: 900 13px/1.6 var(--mono); }
+    .flow-step strong { font-size: 14px; }
+    .flow-step p { color: var(--muted); font-size: 13px; }
+    .flow-step code { color: var(--violet-deep); }
+
+    .callout { display: grid; grid-template-columns: 36px 1fr; gap: 14px; margin-top: 20px; padding: 20px; border-left: 4px solid var(--amber); background: var(--amber-soft); }
+    .callout.danger { border-color: var(--red); background: var(--red-soft); }
+    .callout.good { border-color: var(--green); background: var(--green-soft); }
+    .callout b:first-child { display: grid; place-items: center; width: 28px; height: 28px; color: white; background: var(--amber); }
+    .callout.danger b:first-child { background: var(--red); }
+    .callout.good b:first-child { background: var(--green); }
+    .callout strong { display: block; }
+    .callout p { margin-top: 4px; color: #5c4d3c; font-size: 13px; }
+    .callout.danger p { color: #684247; }
+    .callout.good p { color: #365b4e; }
+
+    .scope-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .panel { padding: 24px; border: 1px solid var(--line); background: var(--surface); }
+    .panel h3 { font-size: 19px; }
+    .panel > p { margin-top: 8px; color: var(--muted); font-size: 14px; }
+    .scope-table { display: grid; gap: 1px; margin-top: 18px; background: var(--line); }
+    .scope-row { display: grid; grid-template-columns: 145px 1fr; gap: 16px; padding: 12px 14px; background: var(--surface-alt); }
+    .scope-row code { color: var(--violet-deep); font-weight: 800; }
+    .scope-row span { color: var(--muted); font-size: 12px; }
+    .token-list { margin-top: 17px; padding-left: 19px; color: var(--muted); font-size: 13px; }
+    .token-list li { margin: 8px 0; }
+
+    pre { margin: 18px 0 0; padding: 20px; overflow-x: auto; color: #eeeafd; background: #282431; font-size: 12px; line-height: 1.62; }
+    .caption { margin-top: 9px; color: var(--faint); font-size: 11px; }
+
+    .findings { display: grid; gap: 10px; }
+    .finding { display: grid; grid-template-columns: 64px minmax(0, 1fr) 190px; gap: 20px; padding: 22px; border: 1px solid var(--line); background: var(--surface); }
+    .finding .level { align-self: start; padding: 5px 7px; color: var(--violet-deep); background: var(--violet-soft); font-size: 10px; font-weight: 900; text-align: center; text-transform: uppercase; }
+    .finding .level.blocker { color: #7b292f; background: var(--red-soft); }
+    .finding .level.gap { color: #72501c; background: var(--amber-soft); }
+    .finding h3 { font-size: 17px; }
+    .finding p { margin-top: 6px; color: var(--muted); font-size: 13px; }
+    .finding aside { align-self: start; color: var(--faint); font: 11px/1.55 var(--mono); overflow-wrap: anywhere; }
+
+    table { width: 100%; border: 1px solid var(--line); border-collapse: collapse; background: var(--surface); }
+    th, td { padding: 14px 16px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+    th { color: var(--muted); background: var(--surface-alt); font-size: 11px; letter-spacing: .07em; text-transform: uppercase; }
+    td { font-size: 13px; }
+    tr:last-child td { border-bottom: 0; }
+    .winner { color: var(--green); font-weight: 900; }
+    .no { color: var(--red); font-weight: 800; }
+
+    .security-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+    .security-card { padding: 20px; border: 1px solid var(--line); background: var(--surface); }
+    .security-card b { display: grid; place-items: center; width: 28px; height: 28px; color: white; background: var(--violet); font: 900 11px/1 var(--mono); }
+    .security-card h3 { margin-top: 14px; font-size: 16px; }
+    .security-card p { margin-top: 7px; color: var(--muted); font-size: 12px; }
+
+    .roadmap { display: grid; gap: 10px; counter-reset: phase; }
+    .phase { display: grid; grid-template-columns: 64px minmax(0, 1fr) 200px; gap: 20px; padding: 24px; border: 1px solid var(--line); background: var(--surface); counter-increment: phase; }
+    .phase::before { content: counter(phase, decimal-leading-zero); color: var(--violet); font: 900 15px/1.5 var(--mono); }
+    .phase h3 { font-size: 18px; }
+    .phase p { margin-top: 7px; color: var(--muted); font-size: 13px; }
+    .phase ul { margin-top: 10px; padding-left: 18px; color: var(--muted); font-size: 12px; }
+    .phase li { margin: 5px 0; }
+    .phase aside { align-self: start; padding-left: 16px; border-left: 1px solid var(--line); color: var(--faint); font-size: 11px; }
+    .phase aside strong { display: block; color: var(--ink); font-size: 12px; }
+
+    .acceptance { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 22px; }
+    .acceptance div { padding: 16px 18px; border: 1px solid var(--line); background: var(--surface-alt); font-size: 13px; }
+    .acceptance b { color: var(--green); }
+
+    .refs { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .ref { padding: 18px; border: 1px solid var(--line); background: var(--surface); }
+    .ref strong { display: block; font-size: 14px; }
+    .ref span { display: block; margin-top: 4px; color: var(--muted); font-size: 12px; }
+
+    footer { padding: 28px 0 48px; color: var(--faint); font-size: 12px; }
+    footer .shell { display: flex; justify-content: space-between; gap: 20px; }
+
+    @media (max-width: 900px) {
+      .section-head { grid-template-columns: 1fr; gap: 10px; }
+      .verdict, .scope-layout { grid-template-columns: 1fr; }
+      .decision-strip, .responsibility { grid-template-columns: repeat(2, 1fr); }
+      .security-grid { grid-template-columns: 1fr 1fr; }
+      .finding, .phase { grid-template-columns: 50px minmax(0, 1fr); }
+      .finding aside, .phase aside { grid-column: 2; }
+    }
+
+    @media (max-width: 620px) {
+      .shell { width: min(100% - 24px, 1200px); }
+      .masthead { padding-top: 42px; }
+      section { padding: 54px 0; }
+      .decision-strip, .responsibility, .security-grid, .acceptance, .refs { grid-template-columns: 1fr; }
+      .flow-step { grid-template-columns: 42px 1fr; }
+      .flow-step p { grid-column: 2; }
+      .finding, .phase { grid-template-columns: 1fr; }
+      .finding aside, .phase aside { grid-column: 1; }
+      .scope-row { grid-template-columns: 1fr; gap: 3px; }
+      footer .shell { display: block; }
+    }
+
+    @media print {
+      body { background: white; }
+      .nav-wrap { display: none; }
+      .shell { width: 100%; }
+      section { padding: 38px 0; }
+      .verdict, .diagram, .panel, .finding, .security-card, .phase, .ref { break-inside: avoid; box-shadow: none; }
+    }
+  </style>
+</head>
+<body>
+  <header class="masthead">
+    <div class="shell">
+      <div class="brandline"><span class="mark" aria-hidden="true"><i></i><i></i><i></i></span>Tadoku · architecture research</div>
+      <h1>Let third-party apps act for users—<em>without ever seeing a password.</em></h1>
+      <p class="lede"><strong>Add Ory Hydra as the delegated-authorization server.</strong> Use Authorization Code + PKCE, opaque access tokens, narrowly scoped public API routes, and Oathkeeper introspection so the existing Go services continue receiving the internal JWT format they already understand.</p>
+      <div class="meta"><span>Recommendation: proceed</span><span>Research date: 7 August 2026</span><span>Repository: tadoku/tadoku</span><span>Stack: Kratos · Hydra · Oathkeeper · Keto</span></div>
+    </div>
+  </header>
+
+  <div class="nav-wrap">
+    <nav class="shell" aria-label="Report sections">
+      <a href="#answer">Answer</a><a href="#architecture">Architecture</a><a href="#flow">User flow</a><a href="#scopes">Scopes & tokens</a><a href="#repo">Repo findings</a><a href="#security">Security</a><a href="#options">Options</a><a href="#roadmap">Roadmap</a><a href="#sources">Sources</a>
+    </nav>
+  </div>
+
+  <main>
+    <section id="answer">
+      <div class="shell">
+        <div class="section-head"><div class="section-kicker">01 / short answer</div><div><h2>OAuth is exactly the right mechanism; Hydra is the missing Ory component.</h2><p class="section-intro">Kratos should keep authenticating the human. Hydra should issue revocable delegated credentials to a named third-party client. Oathkeeper should validate those credentials at the edge. Keto should keep enforcing global user status and resource permissions.</p></div></div>
+        <div class="verdict">
+          <div class="verdict-main"><div class="eyebrow">Recommended target</div><h3>Ory Hydra + OAuth 2.0 Authorization Code with PKCE</h3><p>For the reading-tracker example, the app requests only <code>logs:write</code> and, if it must publish later while the user is away, <code>offline_access</code>. The user approves those permissions on Tadoku. The app receives tokens—not the user’s password or Kratos cookie.</p></div>
+          <div class="verdict-list">
+            <div class="verdict-item"><b>1</b><div><strong>OAuth for delegation</strong><span>OIDC is optional and only needed if clients also want “Sign in with Tadoku.”</span></div></div>
+            <div class="verdict-item"><b>2</b><div><strong>Opaque public tokens</strong><span>Hydra’s default format is immediately revocable and keeps internal claims private.</span></div></div>
+            <div class="verdict-item"><b>3</b><div><strong>One gateway boundary</strong><span>Oathkeeper introspects the token, enforces scopes, then mints the familiar internal JWT.</span></div></div>
+            <div class="verdict-item"><b>4</b><div><strong>A dedicated public API</strong><span>Start with one stable endpoint rather than exposing the broad internal API surface.</span></div></div>
+          </div>
+        </div>
+        <div class="decision-strip">
+          <div class="decision"><small>Grant</small><strong>Authorization Code</strong></div>
+          <div class="decision"><small>Code protection</small><strong>PKCE S256 for every client</strong></div>
+          <div class="decision"><small>Access token</small><strong>Opaque · 10–15 minutes</strong></div>
+          <div class="decision"><small>Background access</small><strong>Rotating refresh token</strong></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="architecture">
+      <div class="shell">
+        <div class="section-head"><div class="section-kicker">02 / architecture</div><div><h2>Add Hydra beside Kratos—not in place of it.</h2><p class="section-intro">Hydra deliberately does not manage users or passwords. Its login-and-consent app can reuse the existing Kratos browser session and pass the Kratos identity UUID to Hydra as the OAuth subject.</p></div></div>
+        <div class="diagram" role="img" aria-label="Third-party client uses Hydra and Kratos for authorization; Oathkeeper introspects tokens before forwarding an internal JWT to immersion-api">
+          <div class="architecture">
+            <div class="node"><span class="tag">External</span><h3>Reading tracker</h3><p>Opens the system browser, receives an authorization code, stores rotating tokens, and calls the public API.</p></div><div class="arrow">→</div>
+            <div class="node accent"><span class="tag">New</span><h3>Ory Hydra</h3><p>OAuth 2.0/OIDC protocol, client registry, grants, access/refresh tokens, introspection, revocation.</p></div><div class="arrow">↔</div>
+            <div class="node"><span class="tag">Existing identity</span><h3>Kratos + login/consent UI</h3><p>Authenticates the user through the existing Tadoku account experience and asks for explicit scopes.</p></div><div class="arrow">→</div>
+            <div class="node gateway"><span class="tag">Existing edge</span><h3>Oathkeeper → immersion-api</h3><p>Introspects the opaque token, requires <code>logs:write</code>, and emits the current internal signed JWT.</p></div>
+          </div>
+          <p class="diagram-note"><strong>Keto stays in the request path after authentication:</strong> it continues to supply admin/banned-user claims and later can express resource-level policy. OAuth scopes are the client grant boundary; Keto is not a substitute for consented scopes.</p>
+        </div>
+        <div class="responsibility">
+          <article class="role-card"><h3>Kratos · who is the human?</h3><p>Login, passkeys/passwords, MFA, recovery, identity traits, and browser sessions.</p></article>
+          <article class="role-card"><h3>Hydra · what did they delegate?</h3><p>Client registration, consent, scopes, grants, tokens, refresh, discovery, and revocation.</p></article>
+          <article class="role-card"><h3>Oathkeeper · is this request allowed in?</h3><p>Credential validation, scope/audience enforcement, and conversion to an internal JWT.</p></article>
+          <article class="role-card"><h3>Keto/domain · may this subject do it?</h3><p>Bans, roles, ownership, contest rules, and business authorization within Tadoku.</p></article>
+        </div>
+      </div>
+    </section>
+
+    <section id="flow">
+      <div class="shell">
+        <div class="section-head"><div class="section-kicker">03 / end-to-end</div><div><h2>What “Connect to Tadoku” should do.</h2><p class="section-intro">This is the standard browser-based authorization code flow. The third party never renders a Tadoku password field and never receives a Kratos session cookie.</p></div></div>
+        <div class="flow">
+          <div class="flow-step"><strong>Developer gets a client ID</strong><p>The developer can use a self-service “Create application” page. Tadoku records exact redirect URIs, client type, owner, privacy policy, and allowed scopes, then creates the Hydra client automatically. Manual approval is useful for an initial pilot or unusually sensitive scopes, but is not a protocol requirement.</p></div>
+          <div class="flow-step"><strong>User starts connection</strong><p>The tracker creates a high-entropy <code>state</code>, PKCE verifier, and S256 challenge, then opens Tadoku’s Hydra authorization endpoint in the system browser.</p></div>
+          <div class="flow-step"><strong>Kratos authenticates</strong><p>The Tadoku login/consent app checks the current Kratos session. If needed, it sends the user through the existing login/MFA experience.</p></div>
+          <div class="flow-step"><strong>User consents</strong><p>Tadoku shows the verified app name, developer, exact permissions, plain-language background-access meaning, privacy links, and Approve/Deny actions. No scope is silently added.</p></div>
+          <div class="flow-step"><strong>Hydra returns a code</strong><p>The browser redirects only to the registered URI. The client verifies <code>state</code> and exchanges the one-time code plus PKCE verifier at the token endpoint.</p></div>
+          <div class="flow-step"><strong>Tracker publishes</strong><p>The client calls <code>POST /api/v1/logs</code> with <code>Authorization: Bearer …</code>. The access token is short-lived; the request body uses the existing log contract.</p></div>
+          <div class="flow-step"><strong>Oathkeeper enforces</strong><p>The public route accepts Hydra bearer tokens only. Oathkeeper introspects the token, requires <code>logs:write</code>, verifies issuer/audience, and mints an internal JWT whose <code>sub</code> is the Kratos UUID.</p></div>
+          <div class="flow-step"><strong>User can disconnect</strong><p>A Connected Apps screen revokes the Hydra grant/token family. Opaque-token introspection makes revocation effective immediately when gateway caching is disabled.</p></div>
+        </div>
+        <div class="callout good"><b>✓</b><div><strong>The application can keep publishing without a password.</strong><p>It uses a refresh token only when the user explicitly approved offline access. Refresh tokens rotate and remain confined to the client’s secure storage.</p></div></div>
+        <div class="scope-layout" style="margin-top:14px">
+          <div class="panel"><h3>Registration can be low-friction</h3><p>OAuth still needs a distinct <code>client_id</code> so Tadoku can bind redirect URIs, identify the app on consent and audit logs, apply per-client limits, and let users revoke one app without affecting another. The good product experience is instant self-service registration for ordinary scopes—not one shared anonymous client and not an email-based approval queue.</p>
+            <ul class="token-list"><li><strong>Initial pilot:</strong> create the first one or two clients manually.</li><li><strong>Normal developer experience:</strong> a small authenticated developer page provisions Hydra through Tadoku’s backend.</li><li><strong>Later, if needed:</strong> protected dynamic client registration can automate deployments. Avoid completely open registration.</li></ul>
+          </div>
+          <div class="panel"><h3>Self-hosted Hydra needs Tadoku-owned screens</h3><p>Yes—but most of the authentication UI already exists. Add challenge-handling routes to the current auth frontend rather than building another account system.</p>
+            <ul class="token-list"><li><strong>Login adapter:</strong> check the Kratos session and accept Hydra’s login challenge; redirect through the existing login page only when signed out.</li><li><strong>Consent page:</strong> show the app and requested permissions, then approve or deny the consent challenge.</li><li><strong>Logout/error routes:</strong> handle Hydra logout challenges and protocol failures.</li><li><strong>Connected Apps:</strong> a Tadoku account page for reviewing and revoking grants.</li></ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="scopes">
+      <div class="shell">
+        <div class="section-head"><div class="section-kicker">04 / contract</div><div><h2>Start with one permission and one public endpoint.</h2><p class="section-intro">The safest launch is deliberately narrow. OAuth scopes describe what the user delegated to the client; the API must still derive the user ID from the validated token and apply normal domain rules.</p></div></div>
+        <div class="scope-layout">
+          <div class="panel"><h3>Initial scope vocabulary</h3><p>Grant only the smallest set needed by a client. Avoid a generic <code>api</code>, <code>write</code>, or wildcard scope.</p>
+            <div class="scope-table">
+              <div class="scope-row"><code>logs:write</code><span>Create reading/listening logs for the authenticated subject. It must never accept a caller-supplied user ID.</span></div>
+              <div class="scope-row"><code>logs:read</code><span>Future, separate permission to read the user’s own private log history.</span></div>
+              <div class="scope-row"><code>profile:read</code><span>Future, minimal stable profile fields. Do not bundle email unless genuinely needed.</span></div>
+              <div class="scope-row"><code>offline_access</code><span>Does not grant another API action. It asks Tadoku to issue a refresh token so the app can obtain new short-lived access tokens after the user closes the browser or signs out.</span></div>
+              <div class="scope-row"><code>openid</code><span>Only if a client also uses Tadoku as an identity provider. Not required merely to publish a log.</span></div>
+            </div>
+          </div>
+          <div class="panel"><h3>Recommended token profile</h3><p>Keep the credential exposed to third parties different from the credential trusted inside the cluster.</p>
+            <ul class="token-list">
+              <li><strong>External access token:</strong> Hydra opaque token, 10–15 minute TTL.</li>
+              <li><strong>Refresh token:</strong> opaque, rotated on use, replay/reuse detection enabled; begin with a 30-day idle and 180-day absolute grant policy.</li>
+              <li><strong>Internal token:</strong> Oathkeeper-signed short-lived JWT containing <code>sub</code>, credential kind, OAuth client ID, scopes, issuer, and audience.</li>
+              <li><strong>Audience:</strong> a stable Tadoku API identifier, checked at Oathkeeper.</li>
+              <li><strong>Introspection cache:</strong> off for launch; if load later requires caching, use a short bounded TTL and a patched Oathkeeper release.</li>
+            </ul>
+          </div>
+        </div>
+        <pre aria-label="Illustrative public API request">POST /api/v1/logs HTTP/1.1
+Host: api.tadoku.app
+Authorization: Bearer ory_at_…
+Content-Type: application/json
+
+{
+  "language_code": "jpn",
+  "activity_id": 1,
+  "amount": 24,
+  "tags": ["book"],
+  "description": "Chapter 4"
+}</pre>
+        <p class="caption">Illustrative API shape. Reuse the existing <code>POST /logs</code> request schema behind a new, versioned public route; do not expose the existing broad <code>/api/internal/immersion/&lt;**&gt;</code> rule to bearer clients.</p>
+        <div class="callout"><b>i</b><div><strong>Plain-language meaning of <code>offline_access</code></strong><p>Without it, the tracker can publish only until its short-lived access token expires—roughly 10–15 minutes in the proposed profile—then the user must reconnect. With it, Hydra also gives the app a rotating refresh token. The app still has only <code>logs:write</code>; it merely retains that permission while the user is not actively on Tadoku. The consent screen should say “Keep publishing in the background,” not expect users to understand the protocol name.</p></div></div>
+      </div>
+    </section>
+
+    <section id="repo">
+      <div class="shell">
+        <div class="section-head"><div class="section-kicker">05 / repository fit</div><div><h2>The current design is close—but has two launch blockers.</h2><p class="section-intro">The edge already converts Kratos sessions into Oathkeeper JWTs, and services already identify a user by the token subject. That makes Hydra integration unusually clean. The gaps are scope-aware public routing and profile-trait coupling.</p></div></div>
+        <div class="findings">
+          <article class="finding"><div class="level">fit</div><div><h3>Oathkeeper already normalizes identity for services.</h3><p>Every internal API rule uses <code>cookie_session</code> followed by the <code>id_token</code> mutator. Go services validate Oathkeeper JWKS and consume a unified user/service claim type. Hydra tokens can enter the same normalization point through <code>oauth2_introspection</code>.</p></div><aside>infra/dev/ory/access_rules.yaml:1–83<br>infra/dev/ory/oathkeeper_values.yaml:63–99<br>services/common/middleware/session.go:44–113</aside></article>
+          <article class="finding"><div class="level">fit</div><div><h3>The write domain already derives ownership from authenticated subject.</h3><p><code>LogCreate</code> ignores any caller-supplied user ID and assigns <code>req.userID</code> from <code>UserIdentity.Subject</code>. That is the correct invariant for delegated writes and should remain unchanged.</p></div><aside>services/immersion-api/domain/logcreate.go:77–100<br>services/immersion-api/http/rest/server_logcreate.go</aside></article>
+          <article class="finding"><div class="level blocker">blocker</div><div><h3>Delegated tokens must not overwrite Kratos profile data.</h3><p><code>LogCreate</code> calls <code>UserUpsert</code> before every write. <code>UserUpsert</code> copies <code>DisplayName</code> and the gateway JWT’s issue time from the authentication context; the SQL updates when that time is newer. An OAuth-normalized JWT will not carry a fresh Kratos session, so an empty or stale display name could replace the canonical value. Refactor this before enabling the public route: profile synchronization should fetch Kratos server-side or preserve existing fields when delegated credentials lack authoritative traits.</p></div><aside>services/immersion-api/domain/userupsert.go:29–41<br>services/immersion-api/storage/postgres/queries/users.sql:1–14<br>services/common/middleware/session.go:104–110</aside></article>
+          <article class="finding"><div class="level blocker">blocker</div><div><h3>Scopes need an explicit enforcement boundary.</h3><p>The current <code>UnifiedClaims</code> model has no client ID, credential kind, or scope fields, and the broad internal Oathkeeper rules fall back to <code>anonymous</code>. Add an exact public rule for each method/path with Hydra introspection and <code>required_scope</code>; propagate client/scopes into the internal JWT for audit and defense-in-depth.</p></div><aside>infra/dev/ory/access_rules.yaml:22–41<br>services/common/middleware/session.go:44–57<br>Oathkeeper config schema: oauth2_introspection.required_scope</aside></article>
+          <article class="finding"><div class="level gap">security</div><div><h3>The development Oathkeeper Helm chart is not pinned.</h3><p>The repository pins the Kratos chart but not Oathkeeper. Source alone cannot prove the deployed image version. Ory’s 2026 advisory includes a high-severity introspection-cache authentication bypass and a critical path-normalization bypass, fixed in v26.2.0. Inventory production and pin a patched release before OAuth traffic is accepted.</p></div><aside>infra/dev/ory/Tiltfile:24–35<br>Ory advisory: CVE-2026-33494 / 33496</aside></article>
+          <article class="finding"><div class="level gap">gap</div><div><h3>Hydra needs isolated persistence and private administration.</h3><p>Add a Hydra database/user to the Zalando Postgres dev resource, run Hydra’s own migrations as an independent deploy step, expose only the public authorization/token/discovery endpoints, and keep the Hydra admin API cluster-private. This should not be combined with dependent application behavior.</p></div><aside>k8s/dev/postgres.yaml<br>infra/dev/ory/Tiltfile<br>repository migration policy</aside></article>
+        </div>
+        <div class="callout danger"><b>!</b><div><strong>Do not “solve” the trait issue by embedding full Kratos sessions in long-lived OAuth grants.</strong><p>That would duplicate mutable identity data, expose unnecessary PII through introspection, and still become stale. Treat the Kratos identity UUID as the stable subject; resolve mutable profile data from its source of truth.</p></div></div>
+      </div>
+    </section>
+
+    <section id="security">
+      <div class="shell">
+        <div class="section-head"><div class="section-kicker">06 / security profile</div><div><h2>Build to today’s OAuth security BCP, not the 2012 minimum.</h2><p class="section-intro">RFC 9700, published in 2025, requires PKCE for public clients and recommends it for confidential clients. It also deprecates unsafe patterns such as implicit access-token delivery and the resource-owner password grant.</p></div></div>
+        <div class="security-grid">
+          <article class="security-card"><b>01</b><h3>Authorization Code + PKCE S256 only</h3><p>Require PKCE for public, native, SPA, and confidential clients. Reject downgrade attempts and constant challenges.</p></article>
+          <article class="security-card"><b>02</b><h3>System browser for native apps</h3><p>Never allow embedded webviews to collect Tadoku credentials. Prefer claimed HTTPS redirects; support loopback/native redirects carefully.</p></article>
+          <article class="security-card"><b>03</b><h3>Exact redirect URIs</h3><p>No wildcards, fragments, or open redirects. Permit HTTPS in production, with only the RFC-defined native-app exceptions.</p></article>
+          <article class="security-card"><b>04</b><h3>Opaque, revocable tokens</h3><p>Clients treat tokens as opaque. Oathkeeper asks Hydra whether each token is active, unexpired, unrevoked, and correctly scoped.</p></article>
+          <article class="security-card"><b>05</b><h3>Refresh rotation and secure storage</h3><p>Rotate refresh tokens, detect reuse, revoke the family on compromise, and require native secure storage or server-side secret vaults.</p></article>
+          <article class="security-card"><b>06</b><h3>State, issuer, and nonce</h3><p>Clients bind transaction-specific state; verify issuer to prevent mix-up; use nonce when OpenID Connect is requested.</p></article>
+          <article class="security-card"><b>07</b><h3>Consent is not a checkbox</h3><p>Show a verified app identity, exact requested actions, offline behavior, data handling links, and prior grants; do not preselect additions.</p></article>
+          <article class="security-card"><b>08</b><h3>Rate limits and audit events</h3><p>Rate-limit authorization, token, and public API endpoints. Record client ID, subject, scope, outcome, and request ID—never tokens.</p></article>
+          <article class="security-card"><b>09</b><h3>Operational revocation</h3><p>Users, admins, and clients need revocation paths. Account deletion and client disablement must revoke all related Hydra grants.</p></article>
+        </div>
+        <div class="callout"><b>!</b><div><strong>Oathkeeper security gate</strong><p>Before enabling <code>oauth2_introspection</code>, upgrade and pin Oathkeeper to the latest stable patched release, then review the current security advisories. Keep introspection caching disabled at launch; a prior official advisory covered cache-key confusion across introspection servers, so any later caching design must be reviewed against the selected release.</p></div></div>
+      </div>
+    </section>
+
+    <section id="options">
+      <div class="shell">
+        <div class="section-head"><div class="section-kicker">07 / alternatives</div><div><h2>Why this path is better than API keys or custom tokens.</h2><p class="section-intro">The recommendation minimizes new protocol code while fitting the existing Ory trust boundary.</p></div></div>
+        <div style="overflow-x:auto"><table>
+          <thead><tr><th>Option</th><th>User consent & revocation</th><th>Security / standards</th><th>Repository fit</th><th>Verdict</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Hydra + code/PKCE + Oathkeeper introspection</strong></td><td>First-class, client- and scope-specific</td><td>Standards-based; hardened implementation; opaque revocable tokens</td><td>Excellent: preserves Kratos and internal JWT middleware</td><td class="winner">Recommended</td></tr>
+            <tr><td>Personal access tokens</td><td>Manual and coarse; weak client identity</td><td>Easy to leak, copy, overscope, and forget</td><td>Simple initially; large long-term support burden</td><td>Only for tightly controlled developer tooling</td></tr>
+            <tr><td>Give apps Kratos sessions/passwords</td><td>No safe delegated grant</td><td>Credential sharing; broad session power; impossible scope isolation</td><td>Appears easy, breaks the security model</td><td class="no">Never</td></tr>
+            <tr><td>Custom signed “integration JWTs”</td><td>Must build client registry, grants, refresh, rotation, discovery, and revocation</td><td>Reimplements complex OAuth behavior</td><td>Duplicates Hydra and creates bespoke middleware</td><td class="no">Do not invent</td></tr>
+            <tr><td>Managed external authorization provider</td><td>Strong</td><td>Potentially strong; vendor-dependent</td><td>Possible, but adds identity mapping and external control plane</td><td>Consider only if operations/SLA outweigh Ory-stack coherence</td></tr>
+          </tbody>
+        </table></div>
+        <div class="callout good"><b>✓</b><div><strong>OIDC is a feature toggle, not a prerequisite.</strong><p>Ship OAuth delegated API access first. Add <code>openid</code>, ID tokens, userinfo claims, and “Sign in with Tadoku” only when a real third-party authentication use case appears.</p></div></div>
+      </div>
+    </section>
+
+    <section id="roadmap">
+      <div class="shell">
+        <div class="section-head"><div class="section-kicker">08 / delivery plan</div><div><h2>Ship this as small, independently deployable changes.</h2><p class="section-intro">The repository requires schema/data migrations to land and deploy separately from dependent behavior. Apply the same discipline to Hydra persistence and rollout.</p></div></div>
+        <div class="roadmap">
+          <article class="phase"><div><h3>Security baseline and architecture decision</h3><p>Inventory deployed Ory versions, pin patched charts/images, record issuer/audience/hostnames, token policy, redirect policy, scope vocabulary, and self-hosted-versus-Ory-Network decision.</p><ul><li>Confirm Oathkeeper ≥ v26.2.0.</li><li>Threat model and abuse cases.</li><li>ADR for opaque external tokens → internal JWT.</li></ul></div><aside><strong>No user-visible behavior</strong>Security prerequisite.</aside></article>
+          <article class="phase"><div><h3>Standalone Hydra persistence and deployment</h3><p>Provision the Hydra database and secrets, run Hydra migrations independently, deploy public/admin services with network isolation, publish discovery metadata, and establish key rotation and backups.</p><ul><li>Hydra public endpoints exposed through TLS.</li><li>Admin API cluster-private.</li><li>Database backup/restore tested.</li></ul></div><aside><strong>Standalone infra change</strong>Deploy before dependent code.</aside></article>
+          <article class="phase"><div><h3>Kratos-backed login and consent</h3><p>Extend the auth frontend with Hydra login, consent, logout, and error challenge handlers using Kratos’s existing session. Add a polished consent screen, client metadata validation, denial/error paths, and a small self-service client-registration page.</p><ul><li>Subject = Kratos identity UUID.</li><li>Reuse the existing Kratos login UI rather than creating another credential form.</li><li>No raw credentials handled by Hydra or clients.</li><li>Consent acceptance stores only necessary claims.</li></ul></div><aside><strong>Test browser flows</strong>Login, MFA, approve, deny, canceled session.</aside></article>
+          <article class="phase"><div><h3>Fix the user/profile identity boundary</h3><p>Write failing tests showing delegated requests cannot blank or stale-overwrite display names. Refactor profile sync so OAuth user identities require only a stable subject; resolve mutable Kratos traits server-side or preserve authoritative stored data.</p><ul><li>Differentiate credential kind in context.</li><li>Propagate OAuth client ID/scopes for auditing.</li><li>Keep domain interfaces narrow.</li></ul></div><aside><strong>Backend behavior change</strong>Test first; no schema change expected.</aside></article>
+          <article class="phase"><div><h3>One scoped public API route</h3><p>Add <code>POST /api/v1/logs</code> to a public OpenAPI contract with bearer security. Configure an exact Oathkeeper rule using Hydra introspection, issuer/audience checks, and <code>logs:write</code>. Reuse the existing domain command.</p><ul><li>No <code>anonymous</code> fallback.</li><li>Do not expose internal wildcard routes.</li><li>Return RFC-consistent 401/403 errors.</li></ul></div><aside><strong>Initial product slice</strong>The reading-tracker use case works end to end.</aside></article>
+          <article class="phase"><div><h3>Connected Apps, revocation, and operations</h3><p>Add user-facing connected-app management, admin client disablement, account-deletion cleanup, token-family revocation, audit search, rate limits, dashboards, and alerts.</p><ul><li>Show app, scopes, granted/last-used times.</li><li>Revoke without contacting the third party.</li><li>Redact tokens and authorization codes from logs.</li></ul></div><aside><strong>Launch gate</strong>No public partner onboarding before this phase.</aside></article>
+          <article class="phase"><div><h3>Partner pilot and expansion</h3><p>Start with one manually reviewed confidential or native client. Observe token, introspection, API, consent, and revocation behavior before adding read scopes, public developer registration, OIDC, dynamic registration, or device flow.</p><ul><li>Developer guide and sample client.</li><li>Contract/integration test suite.</li><li>Scope additions require explicit review.</li></ul></div><aside><strong>Controlled rollout</strong>One partner, one scope, one write endpoint.</aside></article>
+        </div>
+        <div class="acceptance">
+          <div><b>✓</b> A client can publish a log without possessing the user’s password or Kratos cookie.</div>
+          <div><b>✓</b> A token lacking <code>logs:write</code> cannot reach the log-create handler.</div>
+          <div><b>✓</b> Revoking a connection blocks the next uncached API call.</div>
+          <div><b>✓</b> Delegated writes cannot change or erase the user’s display name.</div>
+          <div><b>✓</b> Banned users remain blocked through the existing authorization pipeline.</div>
+          <div><b>✓</b> Tokens, codes, secrets, and PKCE verifiers do not appear in logs or traces.</div>
+        </div>
+      </div>
+    </section>
+
+    <section id="sources">
+      <div class="shell">
+        <div class="section-head"><div class="section-kicker">09 / sources</div><div><h2>Primary references used for this recommendation.</h2><p class="section-intro">The architecture is based on current Ory product behavior, IETF standards, and direct inspection of this repository.</p></div></div>
+        <div class="refs">
+          <a class="ref" href="https://www.ory.com/hydra"><strong>Ory Hydra — OAuth 2.0/OIDC server</strong><span>Hydra responsibilities, Kratos login/consent integration, opaque/JWT token trade-offs, and introspection.</span></a>
+          <a class="ref" href="https://www.ory.com/oathkeeper"><strong>Ory Oathkeeper — identity-aware proxy</strong><span>OAuth introspection, Kratos sessions, scope enforcement, and JWT mutation at the edge.</span></a>
+          <a class="ref" href="https://datatracker.ietf.org/doc/html/rfc9700"><strong>RFC 9700 — OAuth 2.0 Security BCP</strong><span>PKCE, code injection/mix-up defenses, redirect security, and deprecation of unsafe grants.</span></a>
+          <a class="ref" href="https://datatracker.ietf.org/doc/html/rfc8252"><strong>RFC 8252 — OAuth 2.0 for Native Apps</strong><span>System-browser authorization, PKCE, and native redirect URI patterns.</span></a>
+          <a class="ref" href="https://datatracker.ietf.org/doc/html/rfc7662"><strong>RFC 7662 — Token Introspection</strong><span>Active-token validation and metadata returned to protected resources.</span></a>
+          <a class="ref" href="https://datatracker.ietf.org/doc/html/rfc7009"><strong>RFC 7009 — Token Revocation</strong><span>Standard client-triggered revocation and unexpected token invalidation.</span></a>
+          <a class="ref" href="https://datatracker.ietf.org/doc/html/rfc8414"><strong>RFC 8414 — Authorization Server Metadata</strong><span>Well-known discovery metadata, issuer, endpoints, JWKS, and PKCE capability advertisement.</span></a>
+          <a class="ref" href="https://raw.githubusercontent.com/ory/oathkeeper/master/.schema/config.schema.json"><strong>Oathkeeper configuration schema</strong><span>Direct schema evidence for <code>oauth2_introspection</code>, required scopes, issuer/audience checks, and caching.</span></a>
+          <a class="ref" href="https://changelog.ory.com/announcements/security-advisory-ory-kratos-hydra-keto-oathkeeper-polis-v26-2-0"><strong>Ory v26.2.0 security advisory</strong><span>Path-normalization and introspection-cache authentication bypass fixes relevant to this rollout.</span></a>
+          <a class="ref" href="https://changelog.ory.com/announcements/graceful-token-rotation-in-ory-oauth2-ory-hydra"><strong>Ory refresh-token rotation</strong><span>Rotation chains, configurable grace behavior, and family revocation.</span></a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer><div class="shell"><span>Tadoku third-party delegated access · architecture research</span><span>Prepared 7 August 2026</span></div></footer>
+</body>
+</html>

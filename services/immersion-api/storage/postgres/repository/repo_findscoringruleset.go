@@ -69,6 +69,38 @@ func (r *Repository) FindScoringRuleSetByID(ctx context.Context, id uuid.UUID) (
 	return result, nil
 }
 
+func (r *Repository) FindContestScoringRuleSets(
+	ctx context.Context,
+	contestID uuid.UUID,
+) (*domain.ScoringRuleSet, *domain.ScoringRuleSet, error) {
+	ruleSetID, err := r.q.FindContestScoringRuleSetID(ctx, contestID)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, nil, domain.ErrNotFound
+		}
+
+		return nil, nil, fmt.Errorf("could not fetch contest scoring rule set: %w", err)
+	}
+	if !ruleSetID.Valid {
+		return nil, nil, nil
+	}
+
+	ruleSet, err := r.FindScoringRuleSetByID(ctx, ruleSetID.UUID)
+	if err != nil {
+		return nil, nil, err
+	}
+	if ruleSet.FallbackRuleSetID == nil {
+		return ruleSet, nil, nil
+	}
+
+	fallback, err := r.FindScoringRuleSetByID(ctx, *ruleSet.FallbackRuleSetID)
+	if err != nil {
+		return nil, nil, fmt.Errorf("could not fetch contest fallback scoring rule set: %w", err)
+	}
+
+	return ruleSet, fallback, nil
+}
+
 func loadScoringRuleSet(
 	ctx context.Context,
 	queries *postgres.Queries,

@@ -12,6 +12,8 @@ import (
 type LogContestUpdateRepository interface {
 	FetchOngoingContestRegistrations(context.Context, *RegistrationListOngoingRequest) (*ContestRegistrations, error)
 	FindLogByID(context.Context, *LogFindRequest) (*Log, error)
+	FindActivePlatformScoringRuleSet(context.Context) (*ScoringRuleSet, error)
+	FindContestScoringRuleSets(context.Context, uuid.UUID) (*ScoringRuleSet, *ScoringRuleSet, error)
 	UpdateLogContests(ctx context.Context, req *LogContestUpdateDBRequest) error
 }
 
@@ -30,20 +32,31 @@ type LogContestUpdateDBRequest struct {
 type LogContestAttach struct {
 	RegistrationID uuid.UUID
 	ContestID      uuid.UUID
+	Tracking       LogTracking
 }
 
 type LogContestUpdate struct {
-	repo  LogContestUpdateRepository
-	clock commondomain.Clock
+	repo             LogContestUpdateRepository
+	clock            commondomain.Clock
+	useScoringEngine bool
 }
 
 func NewLogContestUpdate(
 	repo LogContestUpdateRepository,
 	clock commondomain.Clock,
 ) *LogContestUpdate {
+	return NewLogContestUpdateWithScoringEngine(repo, clock, false)
+}
+
+func NewLogContestUpdateWithScoringEngine(
+	repo LogContestUpdateRepository,
+	clock commondomain.Clock,
+	enabled bool,
+) *LogContestUpdate {
 	return &LogContestUpdate{
-		repo:  repo,
-		clock: clock,
+		repo:             repo,
+		clock:            clock,
+		useScoringEngine: enabled,
 	}
 }
 
@@ -152,6 +165,7 @@ func (s *LogContestUpdate) Execute(ctx context.Context, req *LogContestUpdateReq
 			toAttach = append(toAttach, LogContestAttach{
 				RegistrationID: regID,
 				ContestID:      reg.ContestID,
+				Tracking:       log.Tracking,
 			})
 		}
 	}
@@ -168,6 +182,24 @@ func (s *LogContestUpdate) Execute(ctx context.Context, req *LogContestUpdateReq
 
 	if len(toAttach) > 0 && log.Tracking.Kind == "" {
 		return nil, fmt.Errorf("log tracking data is required for contest attachment: %w", ErrInvalidLog)
+	}
+
+	if s.useScoringEngine {
+		input := scoringInputFromTracking(int32(log.ActivityID), log.LanguageCode, log.Tags, log.Tracking)
+		for i := range toAttach {
+			contestTracking, scoringErr := resolveContestLogTracking(
+				ctx,
+				s.repo,
+				toAttach[i].ContestID,
+				toAttach[i].RegistrationID,
+				log.Tracking,
+				input,
+			)
+			if scoringErr != nil {
+				return nil, fmt.Errorf("could not score contest %s: %w", toAttach[i].ContestID, scoringErr)
+			}
+			toAttach[i].Tracking = contestTracking.Tracking
+		}
 	}
 
 	if err := s.repo.UpdateLogContests(ctx, &LogContestUpdateDBRequest{

@@ -14,19 +14,29 @@ import (
 )
 
 type mockLogCreateRepository struct {
-	registrations    *domain.ContestRegistrations
-	fetchRegErr      error
-	unit             *domain.Unit
-	findUnitErr      error
-	scoringRuleSet   *domain.ScoringRuleSet
-	scoringRuleErr   error
-	scoringRuleCalls int
-	createdLogID     *uuid.UUID
-	createErr        error
-	log              *domain.Log
-	findErr          error
-	createCalled     bool
-	createCalledWith *domain.LogCreateRequest
+	registrations     *domain.ContestRegistrations
+	fetchRegErr       error
+	unit              *domain.Unit
+	findUnitErr       error
+	scoringRuleSet    *domain.ScoringRuleSet
+	scoringRuleErr    error
+	scoringRuleCalls  int
+	contestRuleSets   map[uuid.UUID]*domain.ScoringRuleSet
+	contestFallbacks  map[uuid.UUID]*domain.ScoringRuleSet
+	contestScoringErr error
+	createdLogID      *uuid.UUID
+	createErr         error
+	log               *domain.Log
+	findErr           error
+	createCalled      bool
+	createCalledWith  *domain.LogCreateRequest
+}
+
+func (m *mockLogCreateRepository) FindContestScoringRuleSets(_ context.Context, contestID uuid.UUID) (*domain.ScoringRuleSet, *domain.ScoringRuleSet, error) {
+	if m.contestScoringErr != nil {
+		return nil, nil, m.contestScoringErr
+	}
+	return m.contestRuleSets[contestID], m.contestFallbacks[contestID], nil
 }
 
 func (m *mockLogCreateRepository) FetchOngoingContestRegistrations(ctx context.Context, req *domain.RegistrationListOngoingRequest) (*domain.ContestRegistrations, error) {
@@ -589,6 +599,63 @@ func TestLogCreate_Execute(t *testing.T) {
 		require.NotNil(t, tracking.ScoreProvenance)
 		assert.Nil(t, tracking.ScoreProvenance.RuleSetID)
 		assert.Equal(t, domain.ScoreSourceAmount, tracking.ScoreProvenance.Source)
+	})
+
+	t.Run("snapshots an independent contest score when enabled", func(t *testing.T) {
+		platformRuleSetID := uuid.New()
+		contestRuleSetID := uuid.New()
+		contestRuleID := uuid.New()
+		repo := &mockLogCreateRepository{
+			registrations: validRegistrations,
+			scoringRuleSet: &domain.ScoringRuleSet{
+				ID: platformRuleSetID,
+				Rules: []domain.ScoringRule{{
+					ID:          uuid.New(),
+					Priority:    1,
+					ActivityID:  1,
+					UnitKey:     domain.UnitKeyReadingPage,
+					ScoreSource: domain.ScoreSourceAmount,
+					Rate:        2,
+				}},
+			},
+			contestRuleSets: map[uuid.UUID]*domain.ScoringRuleSet{
+				contestID: {
+					ID:   contestRuleSetID,
+					Mode: domain.ScoringRuleSetModeReplace,
+					Rules: []domain.ScoringRule{{
+						ID:          contestRuleID,
+						Priority:    1,
+						ActivityID:  1,
+						UnitKey:     domain.UnitKeyReadingPage,
+						ScoreSource: domain.ScoreSourceAmount,
+						Rate:        0.5,
+					}},
+				},
+			},
+			createdLogID: &logID,
+			log:          createdLog,
+		}
+		clock := commondomain.NewMockClock(now)
+		svc := newLogCreateServiceWithScoringEngine(repo, clock)
+
+		_, err := svc.Execute(ctxWithUserSubject(userID.String()), &domain.LogCreateRequest{
+			RegistrationIDs: []uuid.UUID{registrationID},
+			UnitID:          &unitID,
+			ActivityID:      1,
+			LanguageCode:    "jpn",
+			Amount:          &amount100,
+		})
+
+		require.NoError(t, err)
+		assert.Equal(t, float32(200), repo.createCalledWith.Tracking().ComputedScore)
+		contestTrackings := repo.createCalledWith.ContestTrackings()
+		require.Len(t, contestTrackings, 1)
+		assert.Equal(t, registrationID, contestTrackings[0].RegistrationID)
+		assert.Equal(t, contestID, contestTrackings[0].ContestID)
+		assert.Equal(t, float32(50), contestTrackings[0].Tracking.ComputedScore)
+		require.NotNil(t, contestTrackings[0].Tracking.ScoreProvenance)
+		assert.Equal(t, &contestRuleSetID, contestTrackings[0].Tracking.ScoreProvenance.RuleSetID)
+		assert.Equal(t, []uuid.UUID{contestRuleID}, contestTrackings[0].Tracking.ScoreProvenance.RuleIDs)
 	})
 
 	t.Run("rejects the write when authoritative scoring fails", func(t *testing.T) {

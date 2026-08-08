@@ -868,6 +868,59 @@ func (q *Queries) UpdateLogEligibleOfficialLeaderboard(ctx context.Context, logI
 	return err
 }
 
+const updateOngoingContestLog = `-- name: UpdateOngoingContestLog :exec
+update contest_logs
+set
+  unit_key = $1,
+  amount = $2,
+  modifier = $3,
+  duration_seconds = $4,
+  computed_score = $5,
+  score_rule_set_id = $6,
+  score_rule_ids = $7,
+  score_rates = $8,
+  score_source = $9
+from contests
+where
+  contest_logs.log_id = $10
+  and contest_logs.contest_id = $11
+  and contest_logs.contest_id = contests.id
+  and contests.contest_end >= $12
+`
+
+type UpdateOngoingContestLogParams struct {
+	UnitKey         sql.NullString
+	Amount          sql.NullFloat64
+	Modifier        sql.NullFloat64
+	DurationSeconds sql.NullInt32
+	ComputedScore   sql.NullFloat64
+	ScoreRuleSetID  uuid.NullUUID
+	ScoreRuleIds    []uuid.UUID
+	ScoreRates      []float32
+	ScoreSource     sql.NullString
+	LogID           uuid.UUID
+	ContestID       uuid.UUID
+	Now             time.Time
+}
+
+func (q *Queries) UpdateOngoingContestLog(ctx context.Context, arg UpdateOngoingContestLogParams) error {
+	_, err := q.db.ExecContext(ctx, updateOngoingContestLog,
+		arg.UnitKey,
+		arg.Amount,
+		arg.Modifier,
+		arg.DurationSeconds,
+		arg.ComputedScore,
+		arg.ScoreRuleSetID,
+		pq.Array(arg.ScoreRuleIds),
+		pq.Array(arg.ScoreRates),
+		arg.ScoreSource,
+		arg.LogID,
+		arg.ContestID,
+		arg.Now,
+	)
+	return err
+}
+
 const updateOngoingContestLogs = `-- name: UpdateOngoingContestLogs :exec
 update contest_logs
 set

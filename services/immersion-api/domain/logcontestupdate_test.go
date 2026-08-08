@@ -14,15 +14,33 @@ import (
 )
 
 type mockLogContestUpdateRepository struct {
-	registrations    *domain.ContestRegistrations
-	fetchRegErr      error
-	log              *domain.Log
-	updatedLog       *domain.Log
-	findErr          error
-	updateErr        error
-	updateCalled     bool
-	updateCalledWith *domain.LogContestUpdateDBRequest
-	findCallCount    int
+	registrations     *domain.ContestRegistrations
+	fetchRegErr       error
+	log               *domain.Log
+	updatedLog        *domain.Log
+	findErr           error
+	updateErr         error
+	updateCalled      bool
+	updateCalledWith  *domain.LogContestUpdateDBRequest
+	findCallCount     int
+	contestRuleSets   map[uuid.UUID]*domain.ScoringRuleSet
+	contestFallbacks  map[uuid.UUID]*domain.ScoringRuleSet
+	contestScoringErr error
+	scoringRuleSet    *domain.ScoringRuleSet
+}
+
+func (m *mockLogContestUpdateRepository) FindActivePlatformScoringRuleSet(context.Context) (*domain.ScoringRuleSet, error) {
+	if m.scoringRuleSet != nil {
+		return m.scoringRuleSet, nil
+	}
+	return defaultScoringShadowRuleSet(), nil
+}
+
+func (m *mockLogContestUpdateRepository) FindContestScoringRuleSets(_ context.Context, contestID uuid.UUID) (*domain.ScoringRuleSet, *domain.ScoringRuleSet, error) {
+	if m.contestScoringErr != nil {
+		return nil, nil, m.contestScoringErr
+	}
+	return m.contestRuleSets[contestID], m.contestFallbacks[contestID], nil
 }
 
 func (m *mockLogContestUpdateRepository) FetchOngoingContestRegistrations(ctx context.Context, req *domain.RegistrationListOngoingRequest) (*domain.ContestRegistrations, error) {
@@ -279,6 +297,44 @@ func TestLogContestUpdate_Execute(t *testing.T) {
 		assert.Equal(t, contestID, repo.updateCalledWith.Attach[0].ContestID)
 		assert.Empty(t, repo.updateCalledWith.Detach)
 		assert.Equal(t, logID, result.ID)
+	})
+
+	t.Run("scores a newly attached contest independently when enabled", func(t *testing.T) {
+		contestRuleSetID := uuid.New()
+		contestRuleID := uuid.New()
+		repo := &mockLogContestUpdateRepository{
+			log:           baseLog,
+			updatedLog:    baseLog,
+			registrations: ongoingRegistrations,
+			contestRuleSets: map[uuid.UUID]*domain.ScoringRuleSet{
+				contestID: {
+					ID:   contestRuleSetID,
+					Mode: domain.ScoringRuleSetModeReplace,
+					Rules: []domain.ScoringRule{{
+						ID:          contestRuleID,
+						Priority:    1,
+						ActivityID:  1,
+						ScoreSource: domain.ScoreSourceAmount,
+						Rate:        0.25,
+					}},
+				},
+			},
+		}
+		clock := commondomain.NewMockClock(now)
+		svc := domain.NewLogContestUpdateWithScoringEngine(repo, clock, true)
+
+		_, err := svc.Execute(ctxWithUserSubject(userID.String()), &domain.LogContestUpdateRequest{
+			LogID:           logID,
+			RegistrationIDs: []uuid.UUID{registrationID},
+		})
+
+		require.NoError(t, err)
+		require.Len(t, repo.updateCalledWith.Attach, 1)
+		tracking := repo.updateCalledWith.Attach[0].Tracking
+		assert.Equal(t, float32(25), tracking.ComputedScore)
+		require.NotNil(t, tracking.ScoreProvenance)
+		assert.Equal(t, &contestRuleSetID, tracking.ScoreProvenance.RuleSetID)
+		assert.Equal(t, []uuid.UUID{contestRuleID}, tracking.ScoreProvenance.RuleIDs)
 	})
 
 	t.Run("snapshots duration-only score data when attaching a registration", func(t *testing.T) {

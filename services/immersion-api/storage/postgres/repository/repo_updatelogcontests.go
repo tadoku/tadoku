@@ -33,9 +33,8 @@ func (r *Repository) UpdateLogContests(ctx context.Context, req *domain.LogConte
 		}
 	}
 
-	tracking := req.Tracking
-
 	for _, attach := range req.Attach {
+		tracking := attach.Tracking
 		if err := qtx.CreateContestLogRelation(ctx, postgres.CreateContestLogRelationParams{
 			RegistrationID:  attach.RegistrationID,
 			LogID:           req.LogID,
@@ -44,6 +43,10 @@ func (r *Repository) UpdateLogContests(ctx context.Context, req *domain.LogConte
 			Modifier:        trackingModifier(tracking),
 			DurationSeconds: trackingDurationSeconds(tracking),
 			ComputedScore:   postgres.NewNullFloat64FromFloat32(tracking.ComputedScore),
+			ScoreRuleSetID:  scoreRuleSetID(tracking.ScoreProvenance),
+			ScoreRuleIds:    scoreRuleIDs(tracking.ScoreProvenance),
+			ScoreRates:      scoreRates(tracking.ScoreProvenance),
+			ScoreSource:     scoreSource(tracking.ScoreProvenance),
 		}); err != nil {
 			_ = tx.Rollback()
 			return fmt.Errorf("could not attach contest %s: %w", attach.ContestID, err)

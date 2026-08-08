@@ -25,6 +25,7 @@ export const routes = {
   contestUpdates: (id: string, page?: Page) =>
     `/contests/${id}/updates/${page ?? '1'}`,
   contestJoin: (id: string) => `/contests/${id}/registration`,
+  contestScoring: (id: string) => `/contests/${id}/scoring`,
   contestUserProfile: (contest_id: string, user_id: string, page?: Page) =>
     `/contests/${contest_id}/profile/${user_id}/${page ?? '1'}`,
 

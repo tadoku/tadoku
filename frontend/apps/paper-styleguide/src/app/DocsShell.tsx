@@ -12,7 +12,6 @@ import {
 import { Link, NavLink } from 'react-router-dom'
 import { buildNavigationGroups } from './catalogue'
 import { CatalogueSearch } from './CatalogueSearch'
-import { useDisplayPreferences } from './useDisplayPreferences'
 
 interface DocsShellProps extends PropsWithChildren {
   documents: readonly CatalogDocument[]
@@ -53,41 +52,6 @@ function CatalogueNavigation({
         </section>
       ))}
     </nav>
-  )
-}
-
-function PreferenceControls() {
-  const { theme, density, setTheme, setDensity } = useDisplayPreferences()
-
-  return (
-    <div className="shell-preferences" aria-label="Display preferences">
-      <label>
-        <span>Theme</span>
-        <select
-          value={theme}
-          onChange={(event) =>
-            setTheme(event.target.value === 'dark' ? 'dark' : 'light')
-          }
-        >
-          <option value="light">Light</option>
-          <option value="dark">Dark</option>
-        </select>
-      </label>
-      <label>
-        <span>Density</span>
-        <select
-          value={density}
-          onChange={(event) =>
-            setDensity(
-              event.target.value === 'compact' ? 'compact' : 'comfortable',
-            )
-          }
-        >
-          <option value="comfortable">Comfortable</option>
-          <option value="compact">Compact</option>
-        </select>
-      </label>
-    </div>
   )
 }
 
@@ -171,7 +135,6 @@ export function DocsShell({ documents, children }: DocsShellProps) {
       </header>
 
       <aside className="docs-sidebar">
-        <PreferenceControls />
         <CatalogueNavigation documents={documents} />
       </aside>
 
@@ -209,7 +172,6 @@ export function DocsShell({ documents, children }: DocsShellProps) {
                 />
               </button>
             </div>
-            <PreferenceControls />
             <CatalogueNavigation
               documents={documents}
               onNavigate={() => setMobileNavigationOpen(false)}

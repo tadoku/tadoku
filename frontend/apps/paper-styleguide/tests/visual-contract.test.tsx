@@ -7,7 +7,6 @@ import { MemoryRouter } from 'react-router-dom'
 import { describe, expect, it } from 'vitest'
 import { catalogRegistry } from 'paper-ui/catalog'
 import { DocsShell } from '../src/app/DocsShell'
-import { DisplayPreferencesProvider } from '../src/app/preferences'
 import { CatalogIndex, ResolvedCatalogueRoute } from '../src/app/routes'
 import { DocumentPage } from '../src/documentation/DocumentPage'
 import '../src/styles/shell.css'
@@ -67,11 +66,9 @@ describe('responsive visual contract', () => {
     const user = userEvent.setup()
     render(
       <MemoryRouter>
-        <DisplayPreferencesProvider>
-          <DocsShell documents={catalogRegistry.documents}>
-            <p>Page content</p>
-          </DocsShell>
-        </DisplayPreferencesProvider>
+        <DocsShell documents={catalogRegistry.documents}>
+          <p>Page content</p>
+        </DocsShell>
       </MemoryRouter>,
     )
 

@@ -5,7 +5,6 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { CatalogueSearch } from '../src/app/CatalogueSearch'
 import { DocsShell } from '../src/app/DocsShell'
-import { DisplayPreferencesProvider } from '../src/app/preferences'
 import { CatalogIndex, ResolvedCatalogueRoute } from '../src/app/routes'
 import { DocumentPage } from '../src/documentation/DocumentPage'
 import { ExampleCanvas } from '../src/documentation/ExampleCanvas'
@@ -96,14 +95,26 @@ describe('catalogue experience stability', () => {
     const user = userEvent.setup()
     render(
       <MemoryRouter>
-        <DisplayPreferencesProvider>
-          <DocsShell documents={catalogRegistry.documents}>Content</DocsShell>
-        </DisplayPreferencesProvider>
+        <DocsShell documents={catalogRegistry.documents}>Content</DocsShell>
       </MemoryRouter>,
     )
 
     await user.click(screen.getByRole('button', { name: 'Browse' }))
     expect(screen.getByRole('button', { name: 'Close navigation' })).toHaveFocus()
+  })
+
+  it('keeps display preferences out of catalogue navigation', async () => {
+    const user = userEvent.setup()
+    render(
+      <MemoryRouter>
+        <DocsShell documents={catalogRegistry.documents}>Content</DocsShell>
+      </MemoryRouter>,
+    )
+
+    expect(screen.queryByLabelText('Display preferences')).not.toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: 'Browse' }))
+    expect(screen.queryByLabelText('Display preferences')).not.toBeInTheDocument()
   })
 
   it('scrolls direct hash routes to their documented section', async () => {

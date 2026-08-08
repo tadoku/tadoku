@@ -16,6 +16,7 @@ This packet freezes the evidence and reversible architecture decisions required 
 - [Tokens and shared CSS recipes](adr-002-tokens-and-recipes.md)
 - [Catalogue, fixture, and route contracts](adr-003-catalogue-contract.md)
 - [Dependency and build baseline](adr-compatibility-dependency-baseline.md)
+- [TypeScript 7 compiler and TypeScript 6 tooling boundary](adr-typescript-7-tooling-boundary.md)
 - [Base UI import and wrapper boundary](adr-base-ui-import-boundary.md)
 - [Native versus Base UI ownership](adr-native-base-ui-ownership.md)
 

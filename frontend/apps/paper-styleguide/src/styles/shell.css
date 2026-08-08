@@ -203,7 +203,7 @@
     justify-content: space-between;
     gap: 0.5rem;
     padding: 0.55rem 0.65rem;
-    border-inline-start: 3px solid transparent;
+    border-inline-start: 3px solid var(--paper-color-rule-subtle);
     color: var(--paper-color-text-muted);
     text-decoration: none;
   }

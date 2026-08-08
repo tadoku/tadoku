@@ -358,6 +358,120 @@
     background: var(--paper-color-surface-raised);
   }
 
+  .component-workbench {
+    border: 1px solid var(--paper-color-rule-default);
+    background: var(--paper-color-surface-paper);
+  }
+
+  .component-workbench__toolbar {
+    display: flex;
+    align-items: end;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.75rem;
+    border-block-end: 1px solid var(--paper-color-rule-subtle);
+  }
+
+  .component-workbench__tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+  }
+
+  .component-workbench__tabs button {
+    min-block-size: var(--paper-control-height);
+    padding-inline: var(--paper-field-padding-inline);
+    border: 1px solid transparent;
+    border-block-end: 2px solid transparent;
+    color: var(--paper-color-text-muted);
+    background: transparent;
+  }
+
+  .component-workbench__tabs button:hover {
+    color: var(--paper-color-text-ink);
+    background: var(--paper-color-surface-raised);
+  }
+
+  .component-workbench__tabs button[aria-selected='true'] {
+    color: var(--paper-color-text-ink);
+    border-block-end-color: var(--paper-color-action-default);
+    font-weight: var(--paper-type-label-weight);
+  }
+
+  .component-workbench__fixture-select {
+    display: grid;
+    gap: 0.2rem;
+    min-inline-size: 12rem;
+    color: var(--paper-color-text-muted);
+    font-size: var(--paper-type-metadata-size);
+  }
+
+  .component-workbench__fixture-select select {
+    padding-inline: var(--paper-field-padding-inline);
+    border: 1px solid var(--paper-color-rule-field-edge);
+    border-block-end: 2px solid var(--paper-color-rule-action-edge);
+    background: var(--paper-color-surface-paper);
+  }
+
+  .component-workbench__panel {
+    min-block-size: 28rem;
+  }
+
+  .code-view,
+  .workbench-reference-grid {
+    padding: 1.25rem;
+  }
+
+  .code-view h3,
+  .workbench-reference-grid h4 {
+    margin-block-start: 0;
+  }
+
+  .code-view pre {
+    max-block-size: 32rem;
+    overflow: auto;
+    margin-block-end: 0;
+    padding: 1rem;
+    border-inline-start: 3px solid var(--paper-color-action-default);
+    color: var(--paper-color-text-ink);
+    background: var(--paper-color-surface-canvas);
+    font-family: var(--paper-font-monospace);
+    font-size: 0.875rem;
+    line-height: 1.6;
+    white-space: pre;
+  }
+
+  .workbench-reference-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+    gap: 1.5rem;
+  }
+
+  .workbench-reference-grid section {
+    padding-inline-start: 1rem;
+    border-inline-start: 3px solid var(--paper-color-rule-default);
+  }
+
+  .paper-fixture-stage {
+    min-block-size: 100%;
+    padding: 2rem;
+    color: var(--paper-color-text-ink);
+    background: var(--paper-color-surface-canvas);
+  }
+
+  .paper-fixture-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--paper-inline-gap);
+  }
+
+  .paper-fixture-stack,
+  .paper-fixture-stage form {
+    display: grid;
+    gap: 1rem;
+  }
+
   .example-canvas__heading {
     display: flex;
     justify-content: space-between;
@@ -610,6 +724,15 @@
     .canvas-controls fieldset,
     .canvas-viewport-button {
       flex: 1;
+    }
+
+    .component-workbench__toolbar {
+      align-items: stretch;
+      flex-direction: column;
+    }
+
+    .component-workbench__fixture-select {
+      inline-size: 100%;
     }
   }
 

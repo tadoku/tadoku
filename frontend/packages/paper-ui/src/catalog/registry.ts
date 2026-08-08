@@ -6,6 +6,7 @@ import {
   type CatalogRegistryInput,
 } from "./schema";
 import { validateCatalogRegistry } from "./validation";
+import { phaseTwoDocuments, phaseTwoFixtures } from "./phase-two";
 
 const REVIEW_DATE = "2026-08-08";
 const PACKAGE_VERSION = "0.1.0";
@@ -185,8 +186,12 @@ export function createCatalogRegistry(input: CatalogRegistryInput): CatalogRegis
 }
 
 export const catalogRegistry = createCatalogRegistry({
-  documents: [...foundationDocuments, ...governanceDocuments],
-  fixtures: [],
+  documents: [
+    ...foundationDocuments,
+    ...phaseTwoDocuments,
+    ...governanceDocuments,
+  ],
+  fixtures: phaseTwoFixtures,
   redirects: [
     { from: "/color", to: "/foundations/color" },
     { from: "/typography", to: "/foundations/typography" },

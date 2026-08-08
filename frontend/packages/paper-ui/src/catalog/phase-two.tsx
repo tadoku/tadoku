@@ -518,9 +518,9 @@ export const phaseTwoDocuments = [
   }),
   componentDocument({
     id: "component.action-menu",
-    route: "/components/overlays/action-menu",
+    route: "/components/actions/action-menu",
     name: "ActionMenu",
-    category: "overlays",
+    category: "actions",
     summary: "Presents a compact keyboard-operable set of contextual actions.",
     keywords: ["menu", "actions", "keyboard", "disabled", "destructive"],
     sourcePath: "src/components/overlays/ActionMenu/ActionMenu.tsx",

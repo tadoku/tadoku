@@ -11,6 +11,82 @@ export interface NavigationGroup {
   documents: CatalogDocument[]
 }
 
+// The catalogue is a learning path, not an inventory. Keep common foundations
+// and primitives ahead of increasingly contextual or specialized material.
+// Unknown groups and documents sort alphabetically after the curated entries,
+// so additions remain deterministic until their teaching position is chosen.
+const NAVIGATION_GROUP_ORDER = [
+  'foundation',
+  'actions',
+  'forms',
+  'feedback',
+  'navigation',
+  'overlays',
+  'data-display',
+  'pattern',
+  'experiment',
+  'governance',
+] as const
+
+const NAVIGATION_DOCUMENT_ORDER: Readonly<Record<string, readonly string[]>> = {
+  foundation: [
+    'Principles',
+    'Color',
+    'Typography',
+    'Spacing and density',
+    'Layout',
+    'Shape and borders',
+    'Elevation',
+    'Iconography',
+    'Motion',
+    'Brand',
+  ],
+  actions: ['Button', 'ButtonGroup', 'ActionMenu'],
+  forms: [
+    'Input',
+    'TextArea',
+    'Select',
+    'Checkbox',
+    'RadioSelect',
+    'RadioGroup',
+    'Autocomplete',
+    'MultiAutocomplete',
+    'TagsInput',
+    'AmountWithUnit',
+  ],
+  feedback: ['Flash', 'Loading', 'Toast'],
+  navigation: [
+    'Navbar',
+    'Sidebar',
+    'Breadcrumb',
+    'Tabbar',
+    'Pagination',
+    'VerticalTabbar',
+  ],
+  overlays: ['Modal'],
+  'data-display': ['Surface', 'Table', 'HeatmapChart'],
+  pattern: ['Logging'],
+  experiment: ['Logging v2'],
+  governance: ['Contributing', 'Changelog'],
+}
+
+function compareByCuratedOrder(
+  left: string,
+  right: string,
+  order: readonly string[],
+): number {
+  const leftIndex = order.indexOf(left)
+  const rightIndex = order.indexOf(right)
+
+  if (leftIndex !== -1 || rightIndex !== -1) {
+    if (leftIndex === -1) return 1
+    if (rightIndex === -1) return -1
+    return leftIndex - rightIndex
+  }
+
+  return left.localeCompare(right)
+}
+
 function normalizePath(path: string): string {
   const withoutQuery = path.split(/[?#]/u, 1)[0] || '/'
   const withLeadingSlash = withoutQuery.startsWith('/')
@@ -87,9 +163,15 @@ export function buildNavigationGroups(
     id,
     label: titleCase(id),
     documents: groupedDocuments.sort((left, right) =>
-      left.name.localeCompare(right.name),
+      compareByCuratedOrder(
+        left.name,
+        right.name,
+        NAVIGATION_DOCUMENT_ORDER[id] ?? [],
+      ),
     ),
-  })).sort((left, right) => left.label.localeCompare(right.label))
+  })).sort((left, right) =>
+    compareByCuratedOrder(left.id, right.id, NAVIGATION_GROUP_ORDER),
+  )
 }
 
 function searchableText(document: CatalogDocument): string {

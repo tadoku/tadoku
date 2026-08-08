@@ -45,3 +45,11 @@ export {
   governanceDocuments,
 } from "./registry";
 export { validateCatalogFixture, validateCatalogRegistry } from "./validation";
+export {
+  phaseThreeNavigationDocuments,
+  phaseThreeNavigationFixtures,
+} from "./phase-three-navigation";
+export {
+  phaseThreeDataLayoutDocuments,
+  phaseThreeDataLayoutFixtures,
+} from "./phase-three-data-layout";

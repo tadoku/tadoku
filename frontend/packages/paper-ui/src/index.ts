@@ -1,5 +1,12 @@
-export { chartPalette, chartSeries } from './foundations/chart-palette'
-export type { ChartSeries } from './foundations/chart-palette'
+export {
+  chartCategoryStyles,
+  chartPalette,
+  chartSeries,
+} from './foundations/chart-palette'
+export type {
+  ChartCategoryStyle,
+  ChartSeries,
+} from './foundations/chart-palette'
 export {
   BUTTON_VARIANTS,
   Button,
@@ -61,3 +68,37 @@ export {
   type ActionMenuItem,
   type ActionMenuProps,
 } from './components/overlays/ActionMenu'
+export {
+  HeatmapChart,
+  Table,
+  type HeatmapChartCell,
+  type HeatmapChartColumn,
+  type HeatmapChartProps,
+  type HeatmapChartRow,
+  type HeatmapChartValueContext,
+  type TableColumn,
+  type TableColumnAlignment,
+  type TableProps,
+} from './components/data-display'
+export {
+  Breadcrumb,
+  Navbar,
+  Pagination,
+  Sidebar,
+  Tabbar,
+  VerticalTabbar,
+  type BreadcrumbItem,
+  type BreadcrumbProps,
+  type NavbarItem,
+  type NavbarProps,
+  type NavigationDirectLink,
+  type NavigationDropdown,
+  type NavigationItem,
+  type NavigationLinkProps,
+  type NavigationLinkRenderer,
+  type PaginationProps,
+  type SidebarProps,
+  type SidebarSection,
+  type TabbarItem,
+  type TabbarProps,
+} from './components/navigation'

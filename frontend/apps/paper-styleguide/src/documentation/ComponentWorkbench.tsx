@@ -1,5 +1,5 @@
-import { useRef, useState, type KeyboardEvent } from 'react'
-import { buttonClassName } from 'paper-ui'
+import { useState } from 'react'
+import { Button, Surface, Tabs } from 'paper-ui'
 import type { CatalogDocument, CatalogFixture } from 'paper-ui/catalog'
 import { ExampleCanvas } from './ExampleCanvas'
 
@@ -38,30 +38,15 @@ export function ComponentWorkbench({
   document: CatalogDocument
   fixtures: readonly CatalogFixture[]
 }) {
-  const [view, setView] = useState<View>('preview')
   const [fixtureId, setFixtureId] = useState(fixtures[0]?.id ?? '')
   const [copyState, setCopyState] = useState<CopyState>('idle')
-  const tabRefs = useRef<Array<HTMLButtonElement | null>>([])
   const fixture =
     fixtures.find((candidate) => candidate.id === fixtureId) ?? fixtures[0]
 
-  function selectView(nextView: View) {
-    setView(nextView)
-  }
-
-  function moveTab(event: KeyboardEvent<HTMLButtonElement>, index: number) {
-    if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return
-    event.preventDefault()
-    const nextIndex =
-      event.key === 'Home'
-        ? 0
-        : event.key === 'End'
-          ? VIEWS.length - 1
-          : (index + (event.key === 'ArrowRight' ? 1 : -1) + VIEWS.length) %
-            VIEWS.length
-    const nextView = VIEWS[nextIndex]
-    selectView(nextView)
-    tabRefs.current[nextIndex]?.focus()
+  function changeFixture(nextFixture: CatalogFixture) {
+    if (nextFixture.id === fixtureId) return
+    setFixtureId(nextFixture.id)
+    setCopyState('idle')
   }
 
   async function copyCode() {
@@ -80,140 +65,97 @@ export function ComponentWorkbench({
   }
 
   return (
-    <section
+    <Surface
+      as="section"
       className="component-workbench"
       aria-label={`${document.name} examples`}
     >
-      <div className="component-workbench__toolbar">
-        <div
-          className="component-workbench__tabs"
-          role="tablist"
-          aria-label="Example views"
-        >
-          {VIEWS.map((candidate, index) => (
-            <button
-              key={candidate}
-              ref={(node) => {
-                tabRefs.current[index] = node
-              }}
-              id={`workbench-tab-${candidate}`}
-              type="button"
-              role="tab"
-              aria-selected={view === candidate}
-              aria-controls={`workbench-panel-${candidate}`}
-              tabIndex={view === candidate ? 0 : -1}
-              onKeyDown={(event) => moveTab(event, index)}
-              onClick={() => selectView(candidate)}
-            >
-              {label(candidate)}
-            </button>
-          ))}
+      <Tabs.Root defaultValue="preview">
+        <div className="component-workbench__tabs">
+          <Tabs.List aria-label="Example views">
+            {VIEWS.map((candidate) => (
+              <Tabs.Tab key={candidate} value={candidate}>
+                {label(candidate)}
+              </Tabs.Tab>
+            ))}
+          </Tabs.List>
         </div>
-        {fixtures.length > 1 ? (
-          <label className="component-workbench__fixture-select">
-            <span>Fixture</span>
-            <select
-              value={fixture?.id}
-              onChange={(event) => {
-                setFixtureId(event.target.value)
-                setCopyState('idle')
-              }}
-            >
-              {fixtures.map((candidate) => (
-                <option key={candidate.id} value={candidate.id}>
-                  {candidate.name}
-                </option>
-              ))}
-            </select>
-          </label>
-        ) : null}
-      </div>
 
-      <div
-        id="workbench-panel-preview"
-        role="tabpanel"
-        aria-labelledby="workbench-tab-preview"
-        className="component-workbench__panel"
-        hidden={view !== 'preview'}
-      >
-        <ExampleCanvas fixture={fixture} />
-      </div>
+        <Tabs.Panel value="preview" className="component-workbench__panel">
+          <ExampleCanvas
+            fixture={fixture}
+            fixtures={fixtures}
+            onFixtureChange={changeFixture}
+          />
+        </Tabs.Panel>
 
-      <div
-        id="workbench-panel-code"
-        role="tabpanel"
-        aria-labelledby="workbench-tab-code"
-        className="component-workbench__panel"
-        hidden={view !== 'code'}
-      >
-        <div className="code-view">
-          <div className="code-view__heading">
-            <div>
-              <h3>{fixture?.name ?? 'Example'}</h3>
-              <p>{fixture?.description}</p>
+        <Tabs.Panel value="code" className="component-workbench__panel">
+          <div className="code-view">
+            <div className="code-view__heading">
+              <div>
+                <h3>{fixture?.name ?? 'Example'}</h3>
+                <p>{fixture?.description}</p>
+              </div>
+              <div className="code-copy">
+                <Button
+                  variant="outline"
+                  className="code-copy__button"
+                  disabled={!fixture?.code}
+                  onClick={copyCode}
+                >
+                  {copyState === 'copied' ? 'Copied' : 'Copy code'}
+                </Button>
+                <span
+                  className="code-copy__status"
+                  role="status"
+                  aria-live="polite"
+                >
+                  {copyState === 'copied'
+                    ? 'Code copied to clipboard.'
+                    : copyState === 'error'
+                      ? 'Copy failed. Select the code and copy it manually.'
+                      : ''}
+                </span>
+              </div>
             </div>
-            <div className="code-copy">
-              <button
-                className={`${buttonClassName({ variant: 'outline' })} code-copy__button`}
-                type="button"
-                disabled={!fixture?.code}
-                onClick={copyCode}
-              >
-                {copyState === 'copied' ? 'Copied' : 'Copy code'}
-              </button>
-              <span className="code-copy__status" role="status" aria-live="polite">
-                {copyState === 'copied'
-                  ? 'Code copied to clipboard.'
-                  : copyState === 'error'
-                    ? 'Copy failed. Select the code and copy it manually.'
-                    : ''}
-              </span>
-            </div>
+            <pre tabIndex={0}>
+              <code>
+                {fixture?.code ?? 'No copyable example is registered.'}
+              </code>
+            </pre>
           </div>
-          <pre tabIndex={0}>
-            <code>{fixture?.code ?? 'No copyable example is registered.'}</code>
-          </pre>
-        </div>
-      </div>
+        </Tabs.Panel>
 
-      <div
-        id="workbench-panel-api"
-        role="tabpanel"
-        aria-labelledby="workbench-tab-api"
-        className="component-workbench__panel"
-        hidden={view !== 'api'}
-      >
-        <div className="workbench-reference-grid">
-          <ApiList title="React" items={document.api.react} />
-          <ApiList title="CSS and recipes" items={document.api.cssClasses} />
-          <ApiList title="Public types" items={document.api.publicTypes} />
-          <ApiList title="Defaults" items={document.api.defaults} />
-          <ApiList
-            title="Invalid combinations"
-            items={document.api.invalidCombinations}
-          />
-        </div>
-      </div>
+        <Tabs.Panel value="api" className="component-workbench__panel">
+          <div className="workbench-reference-grid">
+            <ApiList title="React" items={document.api.react} />
+            <ApiList title="CSS and recipes" items={document.api.cssClasses} />
+            <ApiList title="Public types" items={document.api.publicTypes} />
+            <ApiList title="Defaults" items={document.api.defaults} />
+            <ApiList
+              title="Invalid combinations"
+              items={document.api.invalidCombinations}
+            />
+          </div>
+        </Tabs.Panel>
 
-      <div
-        id="workbench-panel-accessibility"
-        role="tabpanel"
-        aria-labelledby="workbench-tab-accessibility"
-        className="component-workbench__panel"
-        hidden={view !== 'accessibility'}
-      >
-        <div className="workbench-reference-grid">
-          <ApiList
-            title="Requirements"
-            items={document.accessibility.requirements}
-          />
-          <ApiList title="Keyboard" items={document.accessibility.keyboard} />
-          <ApiList
-            title="Known constraints"
-            items={document.accessibility.knownConstraints}
-          />
-        </div>
-      </div>
-    </section>
+        <Tabs.Panel
+          value="accessibility"
+          className="component-workbench__panel"
+        >
+          <div className="workbench-reference-grid">
+            <ApiList
+              title="Requirements"
+              items={document.accessibility.requirements}
+            />
+            <ApiList title="Keyboard" items={document.accessibility.keyboard} />
+            <ApiList
+              title="Known constraints"
+              items={document.accessibility.knownConstraints}
+            />
+          </div>
+        </Tabs.Panel>
+      </Tabs.Root>
+    </Surface>
   )
 }

@@ -1,0 +1,127 @@
+@layer paper-styleguide {
+  /* Workbench iframe breakpoint indicator. */
+  @media (min-width: 48rem) {
+    .preview-breakpoint__narrow {
+      display: none;
+    }
+
+    .preview-breakpoint__wide {
+      display: inline;
+    }
+  }
+
+  /* Application and documentation layout. */
+  @media (max-width: 64rem) {
+    .docs-shell {
+      display: block;
+    }
+
+    .docs-sidebar {
+      display: none;
+    }
+
+    .mobile-nav-trigger {
+      display: inline-flex;
+    }
+
+    .document-layout {
+      grid-template-columns: minmax(0, 48rem);
+    }
+
+    .local-outline {
+      display: none;
+    }
+  }
+
+  /* Compact application, content, and workbench-iframe layout. */
+  @media (max-width: 48rem) {
+    .example-canvas__stage {
+      padding: 0.25rem;
+    }
+
+    .docs-header {
+      min-block-size: 4rem;
+    }
+
+    .shell-search-trigger__label,
+    .shell-search-trigger kbd {
+      display: none;
+    }
+
+    .shell-search-trigger {
+      inline-size: var(--paper-control-height);
+      justify-content: center;
+      padding-inline: 0;
+    }
+
+    .docs-main {
+      padding-block-start: 2rem;
+    }
+
+    .catalogue-index__hero {
+      margin-block-end: 2.5rem;
+    }
+
+    .catalogue-index__section + .catalogue-index__section {
+      margin-block-start: 2.5rem;
+    }
+
+    .document-card-grid {
+      gap: 0.75rem;
+    }
+
+    .document-card {
+      min-block-size: 0;
+      padding: 0.85rem;
+    }
+
+    .document-card p {
+      display: none;
+    }
+
+    .code-view__heading {
+      align-items: stretch;
+      flex-direction: column;
+    }
+
+    .code-copy {
+      justify-items: start;
+      min-inline-size: 0;
+    }
+
+    .metadata-strip {
+      grid-template-columns: 1fr 1fr;
+    }
+
+    .metadata-list > div {
+      grid-template-columns: 1fr;
+      gap: 0;
+    }
+  }
+
+  /* Preserve usable trigger targets at the narrow phone floor. */
+  @media (max-width: 23rem) {
+    .shell-search-trigger__label,
+    .mobile-nav-trigger__label,
+    .shell-search-trigger kbd {
+      display: none;
+    }
+
+    .mobile-nav-trigger {
+      inline-size: var(--paper-control-height);
+      justify-content: center;
+      padding-inline: 0;
+    }
+  }
+
+  /* Accessibility: add motion only to application-owned content. */
+  @media (prefers-reduced-motion: no-preference) {
+    .skip-link {
+      transition: transform var(--paper-motion-quick);
+    }
+
+    .search-result {
+      transition: background-color var(--paper-motion-quick);
+    }
+  }
+}

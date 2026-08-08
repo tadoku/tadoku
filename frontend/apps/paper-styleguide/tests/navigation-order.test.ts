@@ -23,7 +23,9 @@ describe('catalogue navigation learning order', () => {
       document('Table', 'data-display'),
       document('Logging', 'patterns', 'pattern'),
       document('Modal', 'overlays'),
+      document('Drawer', 'overlays'),
       document('Navbar', 'navigation'),
+      document('Tabs', 'navigation'),
       document('Flash', 'feedback'),
       document('Input', 'forms'),
       document('Button', 'actions'),
@@ -41,6 +43,16 @@ describe('catalogue navigation learning order', () => {
       'pattern',
       'governance',
     ])
+    expect(
+      buildNavigationGroups(documents)
+        .find(({ id }) => id === 'navigation')
+        ?.documents.map(({ name }) => name),
+    ).toEqual(['Navbar', 'Tabs'])
+    expect(
+      buildNavigationGroups(documents)
+        .find(({ id }) => id === 'overlays')
+        ?.documents.map(({ name }) => name),
+    ).toEqual(['Modal', 'Drawer'])
   })
 
   it('teaches common form controls before specialized combinations', () => {

@@ -1,0 +1,48 @@
+@layer paper-styleguide {
+  /* Search-result composition inside the public Paper Modal. */
+  .search-field {
+    margin: 0;
+  }
+
+  .search-count {
+    margin: 0;
+    padding-block: 0.75rem;
+    color: var(--paper-color-text-muted);
+  }
+
+  .search-result {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.85rem 0;
+    border-block-start: var(--paper-border-static-width) solid
+      var(--paper-color-rule-subtle);
+    color: var(--paper-color-text-ink);
+    text-decoration: none;
+  }
+
+  .search-result:hover {
+    background: var(--paper-color-surface-raised);
+  }
+
+  .search-result strong,
+  .search-result small {
+    display: block;
+  }
+
+  .search-result small {
+    margin-block-start: 0.2rem;
+    color: var(--paper-color-text-muted);
+  }
+
+  .lifecycle-badge {
+    align-self: start;
+    color: var(--paper-color-status-information);
+    font-size: var(--paper-type-metadata-size);
+  }
+
+  /* Documentation content links outside router-owned navigation. */
+  .text-link {
+    color: var(--paper-color-text-link);
+  }
+}

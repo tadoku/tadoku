@@ -1,0 +1,95 @@
+@layer paper-styleguide {
+  /* Workbench content: panels, source code, and API-reference composition. */
+  .component-workbench {
+    overflow: clip;
+    padding: 0;
+  }
+
+  .component-workbench__tabs {
+    min-inline-size: 0;
+    padding-inline: 0.75rem;
+  }
+
+  .component-workbench__panel {
+    min-inline-size: 0;
+    padding: 0;
+  }
+
+  .code-view,
+  .workbench-reference-grid {
+    padding: 1.25rem;
+  }
+
+  .code-view__heading {
+    display: flex;
+    align-items: start;
+    justify-content: space-between;
+    gap: 1rem;
+  }
+
+  .code-copy {
+    display: grid;
+    justify-items: end;
+    gap: 0.35rem;
+    min-inline-size: 12rem;
+  }
+
+  .code-copy__status {
+    min-block-size: var(--paper-type-metadata-line-height);
+    color: var(--paper-color-text-muted);
+    font-size: var(--paper-type-metadata-size);
+    text-align: end;
+  }
+
+  .code-view h3,
+  .workbench-reference-grid h4 {
+    margin-block-start: 0;
+  }
+
+  .code-view pre {
+    max-block-size: 32rem;
+    overflow: auto;
+    margin-block-end: 0;
+    padding: 1rem;
+    border-inline-start: var(--paper-accent-rail-width) solid
+      var(--paper-color-action-default);
+    color: var(--paper-color-text-ink);
+    background: var(--paper-color-surface-canvas);
+    font-family: var(--paper-font-monospace);
+    font-size: 0.875rem;
+    line-height: 1.6;
+    white-space: pre;
+  }
+
+  .workbench-reference-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+    gap: 1.5rem;
+  }
+
+  .workbench-reference-grid section {
+    padding-inline-start: 1rem;
+    border-inline-start: var(--paper-accent-rail-width) solid
+      var(--paper-color-rule-default);
+  }
+
+  /* Workbench iframe: fixture spacing without component appearance overrides. */
+  .paper-fixture-stage {
+    min-block-size: 100%;
+    padding: 0.5rem;
+    color: var(--paper-color-text-ink);
+  }
+
+  .paper-fixture-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--paper-inline-gap);
+  }
+
+  .paper-fixture-stack,
+  .paper-fixture-stage form {
+    display: grid;
+    gap: 1rem;
+  }
+}

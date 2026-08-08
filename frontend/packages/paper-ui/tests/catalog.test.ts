@@ -24,6 +24,7 @@ function requiredSections(): ComponentDocumentationSections {
         { heading: `Heading for ${key}`, content: [`Content for ${key}.`] },
       ]),
     ) as unknown as ComponentDocumentationSections["required"],
+    pageSections: ["usage", "examples", "behavior", "accessibility"],
   };
 }
 
@@ -184,7 +185,9 @@ describe("registry validation", () => {
   });
 
   it("reports every missing required Stable section", () => {
-    const candidate = document({ sections: { required: {} } });
+    const candidate = document({
+      sections: { required: {}, pageSections: ["usage"] },
+    });
     const result = validateCatalogRegistry(registry([candidate]));
 
     expect(result.valid).toBe(false);
@@ -238,7 +241,11 @@ describe("registry validation", () => {
       },
     } as ComponentDocumentationSections["required"];
     const result = validateCatalogRegistry(
-      registry([document({ sections: { required: requiredWithExtra } })]),
+      registry([
+        document({
+          sections: { required: requiredWithExtra, pageSections: ["usage"] },
+        }),
+      ]),
     );
 
     expect(codes(result)).toContain("invalid-section");

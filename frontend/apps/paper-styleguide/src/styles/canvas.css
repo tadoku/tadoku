@@ -1,0 +1,124 @@
+@layer paper-styleguide {
+  /* Workbench iframe controls and staging layout. */
+  .canvas-controls {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: end;
+    gap: 0.75rem;
+    padding: 1rem;
+  }
+
+  .canvas-controls__fixture,
+  .canvas-controls__viewport {
+    grid-column: 1 / -1;
+  }
+
+  .canvas-controls__title {
+    position: absolute;
+    inline-size: 1px;
+    block-size: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .canvas-controls__viewport {
+    min-inline-size: 0;
+  }
+
+  @media (min-width: 80rem) {
+    .canvas-controls {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .canvas-controls:has(.canvas-controls__fixture) {
+      grid-template-areas:
+        'fixture viewport viewport'
+        'theme density .';
+    }
+
+    .canvas-controls__fixture {
+      grid-area: fixture;
+    }
+
+    .canvas-controls__theme {
+      grid-area: theme;
+    }
+
+    .canvas-controls__density {
+      grid-area: density;
+    }
+
+    .canvas-controls:has(.canvas-controls__fixture) .canvas-controls__viewport {
+      grid-area: viewport;
+      grid-column: auto;
+    }
+  }
+
+  @container (min-width: 54rem) {
+    .canvas-controls {
+      grid-template-columns:
+        minmax(12rem, 1.25fr)
+        minmax(8rem, 0.75fr)
+        minmax(10rem, 0.9fr)
+        minmax(21rem, 1.5fr);
+      grid-template-areas: none;
+    }
+
+    .canvas-controls__fixture {
+      grid-area: auto;
+      grid-column: auto;
+    }
+
+    .canvas-controls__theme,
+    .canvas-controls__density,
+    .canvas-controls__viewport {
+      grid-area: auto;
+    }
+
+    .canvas-controls:has(.canvas-controls__fixture) .canvas-controls__viewport {
+      grid-area: auto;
+      grid-column: auto;
+    }
+  }
+
+  .canvas-status {
+    margin: 0;
+    padding: 0 1rem 0.75rem;
+    color: var(--paper-color-text-muted);
+  }
+
+  .example-canvas__stage {
+    max-inline-size: 100%;
+    overflow: auto;
+    padding: 0.5rem;
+  }
+
+  .example-canvas iframe {
+    display: block;
+    max-inline-size: none;
+    border: 0;
+  }
+
+  .preview-specimen {
+    margin: 2rem;
+    padding: 2rem;
+  }
+
+  .preview-specimen h3 {
+    margin-block: 0.4rem;
+  }
+
+  .preview-breakpoint {
+    margin-block-start: 1.5rem;
+    padding-block-start: 1rem;
+    border-block-start: var(--paper-border-static-width) solid
+      var(--paper-color-rule-subtle);
+    color: var(--paper-color-status-information);
+    font-weight: var(--paper-type-label-weight);
+  }
+
+  .preview-breakpoint__wide {
+    display: none;
+  }
+}

@@ -2,6 +2,7 @@ import {
   CATALOG_CATEGORIES,
   CATALOG_DOCUMENT_KINDS,
   CATALOG_LIFECYCLES,
+  COMPONENT_PAGE_SECTION_KEYS,
   COMPONENT_CATEGORIES,
   FIXTURE_DENSITIES,
   FIXTURE_THEMES,
@@ -322,6 +323,36 @@ function validateStableDocument(
       );
     }
   });
+
+  const pageSections = document.sections.pageSections;
+  if (!Array.isArray(pageSections) || pageSections.length === 0) {
+    addIssue(
+      issues,
+      "missing-stable-section",
+      `${path}.sections.pageSections`,
+      "Stable component pages must opt into at least one useful public topic",
+    );
+  } else {
+    const seenPageSections = new Set<string>();
+    pageSections.forEach((key, index) => {
+      if (!(COMPONENT_PAGE_SECTION_KEYS as readonly string[]).includes(key)) {
+        addIssue(
+          issues,
+          "invalid-section",
+          `${path}.sections.pageSections[${index}]`,
+          `Unsupported public component topic "${key}"`,
+        );
+      } else if (seenPageSections.has(key)) {
+        addIssue(
+          issues,
+          "invalid-section",
+          `${path}.sections.pageSections[${index}]`,
+          `Public component topic "${key}" is duplicated`,
+        );
+      }
+      seenPageSections.add(key);
+    });
+  }
 
   Object.keys(document.sections.required).forEach((key) => {
     if (!(REQUIRED_COMPONENT_SECTION_KEYS as readonly string[]).includes(key)) {

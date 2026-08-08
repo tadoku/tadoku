@@ -46,6 +46,15 @@
     background: var(--paper-color-surface-paper);
   }
 
+  .paper-input:is(input, textarea) {
+    border-color: var(--paper-color-rule-default);
+    border-block-end-color: var(--paper-color-rule-field-edge);
+  }
+
+  .paper-input:where(input, textarea):where(:hover:not(:disabled):not(:read-only)) {
+    border-color: var(--paper-color-rule-field-edge);
+  }
+
   .paper-input::placeholder {
     color: var(--paper-color-text-muted);
     opacity: 0.78;

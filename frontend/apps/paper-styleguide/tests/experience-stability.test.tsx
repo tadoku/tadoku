@@ -7,6 +7,7 @@ import { CatalogueSearch } from '../src/app/CatalogueSearch'
 import { DocsShell } from '../src/app/DocsShell'
 import { CatalogIndex, ResolvedCatalogueRoute } from '../src/app/routes'
 import { DocumentPage } from '../src/documentation/DocumentPage'
+import { ComponentWorkbench } from '../src/documentation/ComponentWorkbench'
 import { ExampleCanvas } from '../src/documentation/ExampleCanvas'
 
 const buttonDocument = catalogRegistry.documents.find(
@@ -56,6 +57,16 @@ describe('catalogue experience stability', () => {
     const panels = screen.getAllByRole('tabpanel', { hidden: true })
     expect(panels).toHaveLength(4)
     const previewFrame = screen.getByTitle('Paper responsive component preview')
+    const workbench = screen.getByRole('region', {
+      name: `${buttonDocument.name} examples`,
+    })
+    expect(workbench).toHaveClass('paper-surface-card')
+    expect(screen.getByRole('tablist', { name: 'Example views' })).toHaveClass(
+      'paper-tabs__list',
+    )
+    expect(
+      screen.getByRole('tablist', { name: 'Example views' }).parentElement,
+    ).toHaveClass('component-workbench__tabs')
 
     await user.click(screen.getByRole('tab', { name: 'Code' }))
     await user.click(screen.getByRole('tab', { name: 'Preview' }))
@@ -65,11 +76,51 @@ describe('catalogue experience stability', () => {
     )
   })
 
+  it('uses Paper controls and resets a removed fixture selection', async () => {
+    const user = userEvent.setup()
+    const fixtures = catalogRegistry.fixtures.filter((fixture) =>
+      buttonDocument.fixtureIds.includes(fixture.id),
+    )
+    expect(fixtures.length).toBeGreaterThan(1)
+
+    const { rerender } = render(
+      <ComponentWorkbench document={buttonDocument} fixtures={fixtures} />,
+    )
+    const fixtureSelect = screen.getByLabelText('Fixture')
+    expect(fixtureSelect).toHaveClass('paper-select')
+    const settings = screen.getByRole('group', { name: 'Preview settings' })
+    expect(within(settings).getByLabelText('Fixture')).toBe(fixtureSelect)
+
+    await user.selectOptions(fixtureSelect, fixtures[1].id)
+    expect(screen.getByTitle('Paper responsive component preview')).toHaveAttribute(
+      'data-fixture-id',
+      fixtures[1].id,
+    )
+
+    rerender(
+      <ComponentWorkbench document={buttonDocument} fixtures={[fixtures[0]]} />,
+    )
+    rerender(
+      <ComponentWorkbench document={buttonDocument} fixtures={fixtures} />,
+    )
+
+    expect(screen.getByTitle('Paper responsive component preview')).toHaveAttribute(
+      'data-fixture-id',
+      fixtures[0].id,
+    )
+
+    await user.click(screen.getByRole('tab', { name: 'Code' }))
+    expect(screen.getByRole('button', { name: 'Copy code' })).toHaveClass(
+      'paper-button',
+      'paper-button--outline',
+    )
+  })
+
   it('exposes exact iframe content widths for every viewport control', async () => {
     const user = userEvent.setup()
     render(<ExampleCanvas />)
 
-    await user.click(screen.getByRole('button', { name: 'Tablet, 768 pixels' }))
+    await user.click(screen.getByRole('radio', { name: 'Tablet' }))
     const frame = screen.getByTitle('Paper responsive component preview')
     expect(frame).toHaveAttribute('width', '768')
     expect(frame).toHaveStyle({ inlineSize: '768px', boxSizing: 'content-box' })
@@ -101,7 +152,66 @@ describe('catalogue experience stability', () => {
     )
 
     await user.click(screen.getByRole('button', { name: 'Browse' }))
+    expect(screen.getByRole('dialog', { name: 'Browse Paper' })).toHaveClass(
+      'paper-drawer',
+    )
     expect(screen.getByRole('button', { name: 'Close navigation' })).toHaveFocus()
+  })
+
+  it('uses the same ordered Paper Sidebar links on desktop and mobile', async () => {
+    const user = userEvent.setup()
+    render(
+      <MemoryRouter initialEntries={['/components/actions/button']}>
+        <DocsShell documents={catalogRegistry.documents}>Content</DocsShell>
+      </MemoryRouter>,
+    )
+
+    const desktopNavigation = screen.getByRole('navigation', {
+      name: 'Paper catalogue',
+    })
+    expect(desktopNavigation).toHaveClass('paper-sidebar')
+
+    await user.click(screen.getByRole('button', { name: 'Browse' }))
+    const navigations = Array.from(
+      document.querySelectorAll<HTMLElement>(
+        'nav[aria-label="Paper catalogue"]',
+      ),
+    )
+    expect(navigations).toHaveLength(2)
+    expect(navigations[1]).toHaveClass('paper-sidebar')
+    const linkLabels = navigations.map((navigation) =>
+      within(navigation)
+        .getAllByRole('link', { hidden: true })
+        .map((link) => link.textContent),
+    )
+    expect(linkLabels[1]).toEqual(linkLabels[0])
+    for (const navigation of navigations) {
+      expect(
+        within(navigation).getByRole('link', {
+          name: 'Button',
+          hidden: true,
+        }),
+      ).toHaveAttribute('aria-current', 'page')
+    }
+    const ids = Array.from(document.querySelectorAll<HTMLElement>('[id]')).map(
+      (element) => element.id,
+    )
+    expect(new Set(ids).size).toBe(ids.length)
+  })
+
+  it('closes mobile navigation after navigating', async () => {
+    const user = userEvent.setup()
+    render(
+      <MemoryRouter initialEntries={['/']}>
+        <DocsShell documents={catalogRegistry.documents}>Content</DocsShell>
+      </MemoryRouter>,
+    )
+
+    await user.click(screen.getByRole('button', { name: 'Browse' }))
+    const drawer = screen.getByRole('dialog', { name: 'Browse Paper' })
+    await user.click(within(drawer).getByRole('link', { name: 'Button' }))
+
+    expect(screen.queryByRole('dialog', { name: 'Browse Paper' })).not.toBeInTheDocument()
   })
 
   it('closes mobile navigation when the viewport crosses into desktop layout', async () => {
@@ -130,17 +240,15 @@ describe('catalogue experience stability', () => {
     } as MediaQueryList
     vi.stubGlobal('matchMedia', vi.fn(() => desktopBoundary))
 
-    const { container } = render(
+    render(
       <MemoryRouter>
         <DocsShell documents={catalogRegistry.documents}>Content</DocsShell>
       </MemoryRouter>,
     )
 
     const browse = screen.getByRole('button', { name: 'Browse' })
-    const backdrop = container.querySelector('.mobile-nav-backdrop')
-    const drawer = container.querySelector<HTMLElement>('.mobile-nav-drawer')
     await user.click(browse)
-    expect(backdrop).toHaveAttribute('data-open', 'true')
+    expect(screen.getByRole('dialog', { name: 'Browse Paper' })).toBeVisible()
 
     collapsed = false
     listeners.forEach((listener) =>
@@ -148,9 +256,7 @@ describe('catalogue experience stability', () => {
     )
 
     await waitFor(() => expect(browse).toHaveAttribute('aria-expanded', 'false'))
-    expect(backdrop).toHaveAttribute('data-open', 'false')
-    expect(backdrop).toHaveAttribute('aria-hidden', 'true')
-    expect(drawer?.inert).toBe(true)
+    expect(screen.queryByRole('dialog', { name: 'Browse Paper' })).not.toBeInTheDocument()
   })
 
   it('keeps display preferences out of catalogue navigation', async () => {
@@ -184,13 +290,13 @@ describe('catalogue experience stability', () => {
     ).not.toBeInTheDocument()
 
     await user.click(screen.getByRole('button', { name: 'Browse' }))
-    const navigations = screen.getAllByRole('navigation', {
+    const drawer = screen.getByRole('dialog', { name: 'Browse Paper' })
+    const mobileNavigation = within(drawer).getByRole('navigation', {
       name: 'Paper catalogue',
     })
-    expect(navigations).toHaveLength(2)
-    expect(within(navigations[1]).queryByText('Stable')).not.toBeInTheDocument()
+    expect(within(mobileNavigation).queryByText('Stable')).not.toBeInTheDocument()
     expect(
-      within(navigations[1]).queryByText('Experimental'),
+      within(mobileNavigation).queryByText('Experimental'),
     ).not.toBeInTheDocument()
   })
 
@@ -256,12 +362,10 @@ describe('catalogue experience stability', () => {
     )
   })
 
-  it('links source metadata to the registry-owned repository path', () => {
+  it('keeps component registry metadata out of the user-facing guide', () => {
     render(<DocumentPage document={buttonDocument} />)
 
-    expect(screen.getByRole('link', { name: buttonDocument.sourcePath })).toHaveAttribute(
-      'href',
-      `https://github.com/tadoku/tadoku/blob/main/frontend/packages/paper-ui/${buttonDocument.sourcePath}`,
-    )
+    expect(screen.queryByRole('link', { name: buttonDocument.sourcePath })).not.toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: 'Metadata' })).not.toBeInTheDocument()
   })
 })

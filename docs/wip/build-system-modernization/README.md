@@ -24,7 +24,7 @@ statuses `Not started`, `In progress`, `Blocked`, and `Done`. A phase is not
 | --- | --- | --- | --- | --- |
 | 0. Capture the baseline | Done | [#765](https://github.com/tadoku/tadoku/pull/765) | — | Merged 2026-08-08 as `b6ba1845`; baseline evidence recorded below. |
 | 1. Make rules Bazel 9-ready on Bazel 8 | Done | [#766](https://github.com/tadoku/tadoku/pull/766) | Phase 0 | Merged 2026-08-08 as `be66af7e`; [full Bazel 8 CI passed](https://github.com/tadoku/tadoku/actions/runs/31237113928). |
-| 2. Upgrade Bazel to 9.2.0 | In progress | Pending | Phase 1 merged | Bazel 9 frozen dependencies, Gazelle, build, tests, OCI coverage/loading, and Trivy passed locally. |
+| 2. Upgrade Bazel to 9.2.0 | In progress | [#767](https://github.com/tadoku/tadoku/pull/767) | Phase 1 merged | Bazel 9 frozen dependencies, Gazelle, build, tests, OCI coverage/loading, and Trivy passed locally. |
 | 3. Harden CI and dependency updates | Not started | — | Phase 2 merged | — |
 | 4. Clean up latent Bazel debt | Not started | — | Phase 3 merged | — |
 | 5. Complete rollout and close migration | Not started | — | Phases 0–4 | — |
@@ -254,7 +254,7 @@ for externally loaded shell rules.
 ### Steps
 
 - [x] Branch from `main` after Phase 1 is merged.
-- [x] Set Phase 2 to `In progress`; the pull request link remains pending.
+- [x] Set Phase 2 to `In progress` and link the pull request.
 - [x] Change `.bazelversion` from 8.7.0 to 9.2.0.
 - [x] Remove the stale `.bazelrc` comment that says the repository still needs
       a Bzlmod migration.

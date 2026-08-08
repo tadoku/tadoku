@@ -14,6 +14,25 @@ const flashDocument = catalogRegistry.documents.find(
   (document) => document.id === 'component.flash',
 )!
 
+const componentDocuments = catalogRegistry.documents.filter(
+  (document) => document.kind === 'component',
+)
+const acceptedOutlineLabels = new Set([
+  'Usage',
+  'Examples',
+  'Variants and states',
+  'Behavior',
+  'Content guidance',
+  'Accessibility',
+])
+const internalOutlineLabels = new Set([
+  'API reference',
+  'Implementation',
+  'Lifecycle',
+  'Metadata',
+  'Migration',
+])
+
 describe('Stable component documentation', () => {
   it('shows useful release metadata without a project owner field', () => {
     render(<DocumentPage document={buttonDocument} />)
@@ -42,6 +61,37 @@ describe('Stable component documentation', () => {
     expect(screen.queryByRole('heading', { name: 'Migration' })).not.toBeInTheDocument()
     expect(screen.queryByRole('heading', { name: 'Lifecycle' })).not.toBeInTheDocument()
     expect(screen.queryByRole('heading', { name: 'Metadata' })).not.toBeInTheDocument()
+  })
+
+  it('keeps every public component outline to at most six useful sections', () => {
+    expect(componentDocuments.length).toBeGreaterThan(0)
+
+    for (const document of componentDocuments) {
+      const { container, unmount } = render(<DocumentPage document={document} />)
+      const outline = within(container).getByRole('navigation', {
+        name: 'On this page',
+      })
+      const labels = within(outline)
+        .getAllByRole('link')
+        .map((link) => link.textContent ?? '')
+
+      expect(labels, document.id).toHaveLength(document.sections!.pageSections.length)
+      expect(labels.length, document.id).toBeLessThanOrEqual(6)
+      expect(labels.every((label) => acceptedOutlineLabels.has(label)), document.id).toBe(
+        true,
+      )
+      expect(labels.some((label) => internalOutlineLabels.has(label)), document.id).toBe(
+        false,
+      )
+
+      for (const label of internalOutlineLabels) {
+        expect(
+          within(container).queryByRole('heading', { name: label }),
+          `${document.id} exposed the internal ${label} section`,
+        ).not.toBeInTheDocument()
+      }
+      unmount()
+    }
   })
 
   it('keeps the retained Button, Input, and Flash guidance actionable', () => {

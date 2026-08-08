@@ -9,6 +9,25 @@ const shellStyles = readFileSync(
   'utf8',
 )
 
+function declarationsFor(selector: string): string[] {
+  return [...shellStyles.matchAll(/([^{}]+)\{([^{}]*)\}/gu)]
+    .filter((rule) =>
+      rule[1]
+        .split(',')
+        .map((candidate) => candidate.trim().replace(/\s+/gu, ' '))
+        .includes(selector),
+    )
+    .map((rule) => rule[2])
+}
+
+function borderValues(selector: string): string[] {
+  return declarationsFor(selector).flatMap((declarations) =>
+    [...declarations.matchAll(/border(?:-[a-z-]+)?\s*:\s*([^;}]+)/gu)].map(
+      (match) => match[1].trim(),
+    ),
+  )
+}
+
 describe('component workbench visual contract', () => {
   it('uses the workbench as the only outer frame around the isolated preview', () => {
     expect(shellStyles).toMatch(
@@ -18,10 +37,35 @@ describe('component workbench visual contract', () => {
       /\.example-canvas \{[^}]*border: 0;[^}]*background: var\(--paper-color-surface-raised\);/s,
     )
     expect(shellStyles).toMatch(
-      /\.example-canvas__heading \{[^}]*border-block-end: 0;/s,
+      /\.example-canvas__heading \{[^}]*border: 0;[^}]*border-block-end: 0;/s,
+    )
+    expect(shellStyles).toMatch(
+      /\.example-canvas__stage \{[^}]*border: 0;/s,
+    )
+    expect(shellStyles).toMatch(
+      /\.paper-fixture-stage \{[^}]*border: 0;/s,
     )
     expect(shellStyles).toMatch(
       /\.example-canvas iframe \{[^}]*max-inline-size: none;[^}]*border: 0;/s,
     )
+
+    const framelessPreviewLayers = [
+      '.example-canvas',
+      '.example-canvas__heading',
+      '.example-canvas__stage',
+      '.paper-fixture-stage',
+      '.example-canvas iframe',
+    ]
+
+    expect(borderValues('.component-workbench')).toEqual([
+      '1px solid var(--paper-color-rule-default)',
+    ])
+    for (const selector of framelessPreviewLayers) {
+      expect(borderValues(selector), selector).not.toHaveLength(0)
+      expect(
+        borderValues(selector).every((value) => value === '0'),
+        selector,
+      ).toBe(true)
+    }
   })
 })

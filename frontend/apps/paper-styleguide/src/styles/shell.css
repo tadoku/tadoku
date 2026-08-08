@@ -525,6 +525,7 @@
   .paper-fixture-stage {
     min-block-size: 100%;
     padding: 0.5rem;
+    border: 0;
     color: var(--paper-color-text-ink);
     background: var(--paper-color-surface-canvas);
   }
@@ -547,6 +548,7 @@
     justify-content: space-between;
     gap: 1rem;
     padding: 1rem;
+    border: 0;
     border-block-end: 0;
   }
 
@@ -601,6 +603,7 @@
     min-block-size: 24rem;
     overflow: auto;
     padding: 0.5rem;
+    border: 0;
     background: var(--paper-color-surface-canvas);
   }
 

@@ -402,7 +402,7 @@
   }
 
   .example-canvas {
-    border: 0;
+    border: 1px solid var(--paper-color-rule-default);
     background: var(--paper-color-surface-raised);
   }
 

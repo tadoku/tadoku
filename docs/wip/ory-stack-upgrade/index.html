@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="A repository-specific, staged plan for upgrading Tadoku's Ory Kratos, Keto, and Oathkeeper stack.">
+  <title>Tadoku · Ory stack upgrade plan</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #1f2026;
+      --muted: #62636c;
+      --faint: #85868e;
+      --paper: #f3f0e8;
+      --surface: #fffdf7;
+      --surface-strong: #ffffff;
+      --line: #dcd7c9;
+      --line-strong: #bdb6a5;
+      --indigo: #4d4dbb;
+      --indigo-deep: #34348c;
+      --indigo-soft: #ecebff;
+      --teal: #147d72;
+      --teal-soft: #e2f5f0;
+      --amber: #9a5b08;
+      --amber-soft: #fff1d5;
+      --red: #a93434;
+      --red-soft: #ffebeb;
+      --green: #287448;
+      --green-soft: #e8f6ed;
+      --shadow: 0 18px 45px rgba(44, 41, 32, .09);
+      --serif: Georgia, "Times New Roman", serif;
+      --sans: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      --mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 92% 0, rgba(77, 77, 187, .12), transparent 30rem),
+        radial-gradient(circle at 3% 33rem, rgba(20, 125, 114, .08), transparent 28rem),
+        var(--paper);
+      font-family: var(--sans);
+      font-size: 16px;
+      line-height: 1.58;
+      text-rendering: optimizeLegibility;
+    }
+
+    a { color: var(--indigo-deep); text-underline-offset: 3px; }
+    a:hover { color: var(--ink); }
+    a:focus-visible { outline: 3px solid rgba(77, 77, 187, .28); outline-offset: 3px; border-radius: 3px; }
+    code { font-family: var(--mono); font-size: .88em; }
+    p { margin: 0; }
+    ul, ol { margin: 0; }
+    .shell { width: min(1180px, calc(100% - 40px)); margin: 0 auto; }
+    .reading { width: min(820px, 100%); }
+
+    .hero { padding: 72px 0 50px; }
+    .kicker {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 22px;
+      color: var(--indigo-deep);
+      font-size: 12px;
+      font-weight: 850;
+      letter-spacing: .13em;
+      text-transform: uppercase;
+    }
+    .kicker::before { content: ""; width: 30px; height: 3px; border-radius: 2px; background: var(--indigo); }
+    h1, h2, h3, h4 { margin: 0; line-height: 1.12; letter-spacing: -.025em; }
+    h1 { max-width: 980px; font-family: var(--serif); font-size: clamp(45px, 7vw, 82px); }
+    h1 em { color: var(--indigo); font-style: normal; }
+    .lede { max-width: 850px; margin-top: 26px; color: #45464e; font-size: clamp(19px, 2vw, 23px); line-height: 1.48; }
+    .lede strong { color: var(--ink); }
+    .meta { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 34px; }
+    .pill { display: inline-flex; align-items: center; gap: 7px; padding: 7px 11px; border: 1px solid var(--line); border-radius: 999px; background: rgba(255, 253, 247, .8); color: var(--muted); font-size: 12px; font-weight: 750; }
+    .pill::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--teal); }
+
+    .facts { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-top: 40px; }
+    .fact { min-height: 128px; padding: 20px; border: 1px solid var(--line); border-radius: 14px; background: rgba(255, 253, 247, .88); box-shadow: 0 2px 10px rgba(44, 41, 32, .04); }
+    .fact strong { display: block; margin-bottom: 7px; font-family: var(--serif); font-size: 29px; line-height: 1.06; }
+    .fact span { color: var(--muted); font-size: 13px; line-height: 1.4; }
+
+    .nav-wrap { position: sticky; top: 0; z-index: 10; border-block: 1px solid var(--line); background: rgba(243, 240, 232, .92); backdrop-filter: blur(14px); }
+    .nav { display: flex; gap: 3px; padding: 9px 0; overflow-x: auto; scrollbar-width: none; }
+    .nav::-webkit-scrollbar { display: none; }
+    .nav a { flex: 0 0 auto; padding: 7px 10px; border-radius: 6px; color: var(--muted); font-size: 12px; font-weight: 800; text-decoration: none; }
+    .nav a:hover { color: var(--ink); background: var(--surface); }
+
+    section { padding: 72px 0; border-bottom: 1px solid var(--line); }
+    .section-head { display: grid; grid-template-columns: 175px minmax(0, 1fr); gap: 40px; margin-bottom: 34px; }
+    .section-no { color: var(--indigo); font-family: var(--mono); font-size: 13px; font-weight: 850; }
+    h2 { font-family: var(--serif); font-size: clamp(32px, 4vw, 50px); }
+    .section-intro { max-width: 780px; margin-top: 15px; color: var(--muted); font-size: 18px; }
+    h3 { font-family: var(--serif); font-size: 27px; }
+    h4 { font-size: 16px; }
+
+    .verdict { display: grid; grid-template-columns: 1.08fr .92fr; overflow: hidden; border: 1px solid var(--line-strong); border-radius: 20px; background: var(--line); box-shadow: var(--shadow); }
+    .verdict > div { padding: clamp(28px, 4vw, 48px); background: var(--surface-strong); }
+    .verdict .main { color: white; background: #24242b; }
+    .verdict .label { display: inline-block; margin-bottom: 20px; color: #b9b8ff; font-size: 11px; font-weight: 850; letter-spacing: .12em; text-transform: uppercase; }
+    .verdict h3 { font-size: clamp(30px, 4vw, 46px); }
+    .verdict .main p { margin-top: 20px; color: #c9c9d0; font-size: 17px; }
+    .plain-list { padding: 0; list-style: none; }
+    .plain-list li { display: grid; grid-template-columns: 23px minmax(0, 1fr); gap: 10px; padding: 13px 0; border-bottom: 1px solid var(--line); }
+    .plain-list li:last-child { border-bottom: 0; }
+    .plain-list li::before { content: "→"; color: var(--indigo); font-weight: 900; }
+    .plain-list strong { display: block; }
+    .plain-list span { display: block; margin-top: 2px; color: var(--muted); font-size: 13px; }
+
+    .table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 14px; background: var(--surface-strong); }
+    table { width: 100%; min-width: 760px; border-collapse: collapse; }
+    th, td { padding: 16px 17px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+    th { color: var(--muted); background: #faf8f1; font-size: 11px; letter-spacing: .07em; text-transform: uppercase; }
+    td { font-size: 14px; }
+    tr:last-child td { border-bottom: 0; }
+    td code { white-space: nowrap; }
+    .status { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 850; }
+    .status::before { content: ""; width: 7px; height: 7px; border-radius: 50%; }
+    .status.high::before { background: var(--red); }
+    .status.med::before { background: #d68a17; }
+    .status.low::before { background: var(--green); }
+
+    .note { margin-top: 14px; padding: 14px 16px; border-left: 3px solid var(--teal); background: rgba(226, 245, 240, .7); color: #3e5e59; font-size: 13px; }
+    .note.warn { border-left-color: var(--amber); background: rgba(255, 241, 213, .72); color: #6d531f; }
+    .note strong { color: var(--ink); }
+
+    .flow { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 26px; align-items: stretch; }
+    .flow-card { position: relative; min-height: 155px; padding: 19px; border: 1px solid var(--line); border-radius: 13px; background: var(--surface-strong); }
+    .flow-card:not(:last-child)::after { content: "→"; position: absolute; top: 50%; right: -20px; translate: 0 -50%; color: var(--indigo); font-size: 20px; font-weight: 900; }
+    .flow-card small { display: block; margin-bottom: 9px; color: var(--faint); font-size: 10px; font-weight: 850; letter-spacing: .08em; text-transform: uppercase; }
+    .flow-card strong { display: block; margin-bottom: 8px; font-size: 15px; }
+    .flow-card p { color: var(--muted); font-size: 12px; line-height: 1.45; }
+    .flow-card.risk { border-color: #e5bd79; background: #fffbf1; }
+
+    .cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 13px; }
+    .card { padding: 22px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface-strong); }
+    .card .tag { display: inline-flex; margin-bottom: 16px; padding: 4px 8px; border-radius: 999px; color: var(--indigo-deep); background: var(--indigo-soft); font-size: 10px; font-weight: 900; letter-spacing: .07em; text-transform: uppercase; }
+    .card .tag.teal { color: #12665d; background: var(--teal-soft); }
+    .card .tag.amber { color: #7b4b0a; background: var(--amber-soft); }
+    .card p { margin-top: 10px; color: var(--muted); font-size: 13px; }
+    .card ul { margin-top: 15px; padding-left: 18px; color: var(--muted); font-size: 13px; }
+    .card li + li { margin-top: 7px; }
+    .mt-24 { margin-top: 24px; }
+
+    .timeline { display: grid; gap: 12px; counter-reset: phase; }
+    .parallel-map { margin-bottom: 24px; }
+    .phase { counter-increment: phase; display: grid; grid-template-columns: 70px minmax(0, 1fr) 185px; gap: 22px; align-items: start; padding: 24px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface-strong); }
+    .phase-no { display: grid; place-items: center; width: 52px; height: 52px; border-radius: 50%; color: white; background: var(--indigo); font-family: var(--mono); font-weight: 850; }
+    .phase-no::before { content: counter(phase, decimal-leading-zero); }
+    .phase h3 { font-size: 24px; }
+    .phase p { margin-top: 8px; color: var(--muted); font-size: 14px; }
+    .phase ul { margin-top: 13px; padding-left: 18px; color: #494a52; font-size: 13px; }
+    .phase li + li { margin-top: 7px; }
+    .phase .task-list { padding-left: 0; list-style: none; }
+    .phase .task-list li { display: grid; grid-template-columns: 18px minmax(0, 1fr); gap: 8px; }
+    .phase .task-list li::before { content: "□"; color: var(--teal); font-weight: 900; }
+    .workstream { display: inline-flex; margin-bottom: 10px; padding: 4px 8px; border-radius: 999px; font-size: 9px; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; }
+    .workstream.parallel { color: #12665d; background: var(--teal-soft); }
+    .workstream.sequential { color: #7c4d0b; background: var(--amber-soft); }
+    .gate { padding: 14px; border-radius: 10px; background: #f7f5ee; }
+    .gate strong { display: block; color: var(--teal); font-size: 11px; letter-spacing: .07em; text-transform: uppercase; }
+    .gate span { display: block; margin-top: 6px; color: var(--muted); font-size: 12px; line-height: 1.4; }
+    .phase.migration { border-color: #d8a95f; }
+    .phase.migration .phase-no { background: var(--amber); }
+
+    .pr-stack { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .pr { padding: 20px; border: 1px solid var(--line); border-radius: 13px; background: var(--surface-strong); }
+    .pr-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
+    .pr-id { color: var(--indigo); font-family: var(--mono); font-size: 12px; font-weight: 850; }
+    .pr-type { padding: 3px 7px; border-radius: 999px; color: var(--muted); background: #f1efe8; font-size: 9px; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; }
+    .pr-type.db { color: #7c4d0b; background: var(--amber-soft); }
+    .pr p { margin-top: 8px; color: var(--muted); font-size: 13px; }
+
+    .matrix { display: grid; grid-template-columns: repeat(2, 1fr); gap: 13px; }
+    .checklist { padding: 22px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface-strong); }
+    .checklist h3 { font-size: 23px; }
+    .checklist ul { margin-top: 15px; padding: 0; list-style: none; }
+    .checklist li { display: grid; grid-template-columns: 18px minmax(0, 1fr); gap: 9px; padding: 8px 0; color: var(--muted); font-size: 13px; }
+    .checklist li::before { content: "□"; color: var(--teal); font-weight: 900; }
+
+    .estimate { display: grid; grid-template-columns: .9fr 1.1fr; overflow: hidden; border: 1px solid var(--line-strong); border-radius: 18px; background: var(--surface-strong); box-shadow: var(--shadow); }
+    .estimate .total { padding: 38px; color: white; background: var(--indigo-deep); }
+    .estimate .total strong { display: block; font-family: var(--serif); font-size: clamp(42px, 5vw, 66px); line-height: 1; }
+    .estimate .total span { display: block; margin-top: 12px; color: #d5d5ff; }
+    .estimate .detail { padding: 34px; }
+    .bar-row { display: grid; grid-template-columns: 185px minmax(0, 1fr) 58px; gap: 12px; align-items: center; padding: 9px 0; }
+    .bar-row span { color: var(--muted); font-size: 12px; }
+    .bar { height: 7px; overflow: hidden; border-radius: 999px; background: #ece9df; }
+    .bar i { display: block; width: var(--w); height: 100%; border-radius: inherit; background: var(--indigo); }
+    .bar-row b { font-family: var(--mono); font-size: 11px; }
+    .bar .w18 { width: 18%; }
+    .bar .w35 { width: 35%; }
+    .bar .w42 { width: 42%; }
+    .bar .w46 { width: 46%; }
+    .bar .w62 { width: 62%; }
+
+    .decision { padding: 30px; border: 1px solid #b9b8f1; border-radius: 16px; background: linear-gradient(135deg, #f5f4ff, #fffdf7); }
+    .decision h3 { font-size: 30px; }
+    .decision p { max-width: 800px; margin-top: 13px; color: var(--muted); }
+    .decision ol { margin-top: 20px; padding-left: 22px; }
+    .decision li + li { margin-top: 9px; }
+    .decision.after-estimate { margin-top: 22px; }
+
+    .sources { display: grid; grid-template-columns: 150px minmax(0, 1fr); gap: 35px; }
+    .sources ul { padding-left: 18px; }
+    .sources li + li { margin-top: 8px; }
+    .sources li { color: var(--muted); font-size: 13px; }
+    .sources h2 { font-size: 34px; }
+    .sources ul { margin-top: 20px; }
+    footer { padding: 35px 0 70px; color: var(--faint); font-size: 12px; }
+
+    @media (max-width: 940px) {
+      .facts { grid-template-columns: 1fr 1fr; }
+      .flow { grid-template-columns: 1fr; gap: 10px; }
+      .flow-card { min-height: auto; }
+      .flow-card:not(:last-child)::after { content: "↓"; top: auto; right: auto; bottom: -18px; left: 50%; translate: -50% 0; }
+      .cards { grid-template-columns: 1fr; }
+      .phase { grid-template-columns: 62px minmax(0, 1fr); }
+      .gate { grid-column: 2; }
+    }
+    @media (max-width: 720px) {
+      .shell { width: min(100% - 24px, 1180px); }
+      .hero { padding-top: 48px; }
+      .facts, .verdict, .pr-stack, .matrix, .estimate { grid-template-columns: 1fr; }
+      .section-head, .sources { grid-template-columns: 1fr; gap: 12px; }
+      .phase { grid-template-columns: 48px minmax(0, 1fr); gap: 13px; padding: 18px; }
+      .phase-no { width: 42px; height: 42px; font-size: 12px; }
+      .bar-row { grid-template-columns: 130px minmax(0, 1fr) 50px; }
+    }
+    @media print {
+      body { background: white; }
+      .nav-wrap { display: none; }
+      .hero, section { padding-block: 34px; }
+      .card, .phase, .pr, .checklist, .verdict, .estimate { break-inside: avoid; box-shadow: none; }
+      a { color: inherit; }
+    }
+  </style>
+</head>
+<body>
+  <header class="hero">
+    <div class="shell">
+      <div class="kicker">Production and repository assessment · 8 August 2026</div>
+      <h1>Make Kratos a controlled <em>big-bang cutover.</em></h1>
+      <p class="lede">The authoritative stack is the Argo CD deployment on <code>lke20948-ctx</code>. <strong>Kratos runs <code>v0.13.0</code> and its target schema is not compatible with old writers.</strong> The shortest safe path is to prepare everything in advance, stop the API and courier, run the standalone migration, and start <code>v26.2.0</code> immediately. Keto and Oathkeeper remain separate rollouts.</p>
+      <div class="meta">
+        <span class="pill">Scope: tadoku-argocd on LKE production</span>
+        <span class="pill">Target: chart 0.63.0 + app v26.2.0</span>
+        <span class="pill">Cutover budget: ≤5 minutes, subject to rehearsal</span>
+        <span class="pill">Observed Argo revision: a9100d9e</span>
+      </div>
+      <div class="facts">
+        <div class="fact"><strong>133 MiB</strong><span>Live Kratos PostgreSQL database; small enough for a short rehearsed cutover.</span></div>
+        <div class="fact"><strong>4,320</strong><span>Credential identifiers; one 10,000-row migration batch.</span></div>
+        <div class="fact"><strong>6,113</strong><span>Session-device rows; one 10,000-row migration batch.</span></div>
+        <div class="fact"><strong>35–61 sec</strong><span>Observed duration of the last three production backup Jobs.</span></div>
+      </div>
+    </div>
+  </header>
+
+  <div class="nav-wrap">
+    <nav class="nav shell" aria-label="Document sections">
+      <a href="#answer">Answer</a>
+      <a href="#inventory">Inventory</a>
+      <a href="#contracts">Contracts</a>
+      <a href="#risks">Risks</a>
+      <a href="#roadmap">Roadmap</a>
+      <a href="#prs">PR sequence</a>
+      <a href="#verification">Verification</a>
+      <a href="#rollback">Rollback</a>
+      <a href="#estimate">Estimate</a>
+      <a href="#sources">Sources</a>
+      <a href="#followups">Follow-ups</a>
+    </nav>
+  </div>
+
+  <main>
+    <section id="answer">
+      <div class="shell">
+        <div class="section-head">
+          <div class="section-no">01 / ANSWER</div>
+          <div>
+            <h2>What would it take?</h2>
+            <p class="section-intro">Yes: use a prepared big-bang Kratos cutover. It removes the unsafe mixed-version interval and concentrates downtime into backup, migration, pod readiness, and immediate verification.</p>
+          </div>
+        </div>
+        <div class="verdict">
+          <div class="main">
+            <span class="label">Recommendation</span>
+            <h3>Big bang is safer and faster than rolling Kratos.</h3>
+            <p>The live Deployment uses <code>RollingUpdate</code> with <code>maxSurge: 30%</code> and <code>maxUnavailable: 0</code>. A plain version bump can migrate the shared database while the v0.13.0 pod still accepts writes. The cutover must explicitly prevent that overlap.</p>
+          </div>
+          <div>
+            <ul class="plain-list">
+              <li><div><strong>Control production first</strong><span>Add a tested Argo deployment hold. Do not change credentials or signing keys during the Ory migration.</span></div></li>
+              <li><div><strong>Prove production contracts</strong><span>Cover cookies, browser flows, five proxy rules, the service exchange, permission tuples, and the PostSync admin seed.</span></div></li>
+              <li><div><strong>Pre-stage outside downtime</strong><span>Approve the migration PR, prepare an unsubmitted runtime patch, pre-pull the exact image digest, restore the rehearsal database, and have rollback commands ready.</span></div></li>
+              <li><div><strong>Freeze every old writer</strong><span>Hold Argo and stop both the Kratos API and courier before the standalone migration begins.</span></div></li>
+              <li><div><strong>Cut over immediately</strong><span>Take the final copy, migrate, deploy v26.2.0 with automigration disabled and <code>Recreate</code> strategy, then run focused smoke tests.</span></div></li>
+              <li><div><strong>Harden secrets afterward</strong><span>After the Ory verification gate, introduce Sealed Secrets with current values, then rotate every secret as separately verified follow-up work.</span></div></li>
+            </ul>
+          </div>
+        </div>
+        <p class="note warn"><strong>Do not use the chart's normal rolling path:</strong> Kratos <code>v0.13.0</code> is not write-compatible with the <code>v26.2.0</code> PostgreSQL schema. Keep chart automigration disabled and run the migration as an explicit Job only after all old writers are at zero. Keto <code>v25.4.0 → v26.2.0</code> has no schema-file delta; Oathkeeper has no database.</p>
+        <div class="cards mt-24">
+          <article class="card"><span class="tag teal">Benefit</span><h3>Shortest safe outage</h3><p>All preparation happens while v0.13.0 is still serving. The unavailable interval contains only the final copy, up to 47 post-v0.13 migration versions, v26.2.0 readiness, and critical smoke tests.</p></article>
+          <article class="card"><span class="tag amber">Trade-off</span><h3>Authentication is briefly unavailable</h3><p>Oathkeeper depends on Kratos <code>/sessions/whoami</code>, so authenticated requests fail closed while Kratos is stopped. Blue/green on the same database does not solve this compatibility boundary.</p></article>
+          <article class="card"><span class="tag">Success criterion</span><h3>≤5 minutes—or the measured truth</h3><p>Approve the production window after one successful timed rehearsal. Target at most five minutes from last old writer to healthy v26.2.0; if rehearsal is slower, publish the measured duration instead of forcing the budget.</p></article>
+        </div>
+      </div>
+    </section>
+
+    <section id="inventory">
+      <div class="shell">
+        <div class="section-head">
+          <div class="section-no">02 / INVENTORY</div>
+          <div>
+            <h2>What is actually running</h2>
+            <p class="section-intro">Observed directly from the healthy, synced <code>tadoku-*</code> Argo CD Applications and workload images on <code>lke20948-ctx</code>, then reconciled with <code>antonve/tadoku-argocd</code> at revision <code>a9100d9e</code>.</p>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th scope="col">Service</th><th scope="col">Live chart</th><th scope="col">Live app</th><th scope="col">Repository state</th><th scope="col">Target</th><th scope="col">Assessment</th></tr></thead>
+            <tbody>
+              <tr>
+                <td><strong>Kratos</strong><br>Identity and sessions</td>
+                <td><code>0.32.0</code></td>
+                <td><code>v0.13.0</code></td>
+                <td>Argo chart pinned; automigration enabled; daily backup. Root config declares <code>version: v0.11.1</code>.</td>
+                <td><code>0.63.0</code><br><code>v26.2.0</code></td>
+                <td><span class="status high">High risk</span></td>
+              </tr>
+              <tr>
+                <td><strong>Keto</strong><br>Permissions</td>
+                <td><code>0.60.1</code></td>
+                <td><code>v25.4.0</code></td>
+                <td>Argo chart pinned; init-container automigration; daily backup; PostSync admin seed.</td>
+                <td><code>0.63.0</code><br><code>v26.2.0</code></td>
+                <td><span class="status high">Medium–high</span></td>
+              </tr>
+              <tr>
+                <td><strong>Oathkeeper</strong><br>Edge auth proxy</td>
+                <td><code>0.60.1</code></td>
+                <td><code>v25.4.0</code></td>
+                <td>Argo chart pinned; stateless; five live access rules and one signing-key contract.</td>
+                <td><code>0.63.0</code><br><code>v26.2.0</code></td>
+                <td><span class="status med">Medium</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="note"><strong>Environment precedence:</strong> <code>homelab-dev</code> is disposable and useful for destructive rehearsal, but it is not the deployment baseline. Production runs in <code>tdk-prod-kratos</code>, <code>tdk-prod-keto</code>, and <code>tdk-prod-oathkeeper</code> on LKE.</p>
+        <p class="note"><strong>Cutover sizing:</strong> the live Kratos database is approximately 133 MiB, with 4,320 credential identifiers and 6,113 session-device rows. Each v26 PostgreSQL backfill fits within one 10,000-row batch. The last three Kratos backup Jobs completed in 35, 36, and 61 seconds.</p>
+        <p class="note"><strong>Backup evidence:</strong> both daily CronJobs reported successful runs on 8 August 2026. A successful job is not yet rollback proof; use production copies to create separate fresh Kratos and Keto databases on <code>homelab-dev</code> before approving migration.</p>
+        <p class="note warn"><strong>Accepted sequencing:</strong> the GitOps source contains production credentials and Oathkeeper signing material in tracked configuration. During the Ory migration, keep those values unchanged and prevent them from appearing in tickets, logs, diffs, or this plan. After the migration passes its immediate verification gate, introduce Sealed Secrets, remove plaintext from the active Git tree, and rotate all secrets.</p>
+      </div>
+    </section>
+
+    <section id="contracts">
+      <div class="shell">
+        <div class="section-head">
+          <div class="section-no">03 / CONTRACTS</div>
+          <div>
+            <h2>The dependency path</h2>
+            <p class="section-intro">The upgrade succeeds only if this whole chain remains stable. Kratos owns browser/session behavior; Oathkeeper translates it into downstream JWTs; Keto supplies authorization decisions.</p>
+          </div>
+        </div>
+        <div class="flow" role="img" aria-label="Authentication and authorization flow">
+          <div class="flow-card risk"><small>Browser</small><strong>Three Next.js apps</strong><p>Legacy <code>@ory/client</code> types and a custom self-service UI render every Kratos node.</p></div>
+          <div class="flow-card risk"><small>Identity</small><strong>Kratos · prod</strong><p>Session cookie, five self-service flows, identity database, courier, and admin identity lookup.</p></div>
+          <div class="flow-card"><small>Gateway</small><strong>Oathkeeper · prod</strong><p>Five live rules: four API routes and one service-token exchange.</p></div>
+          <div class="flow-card"><small>Token</small><strong>ID token + JWKS</strong><p>User and service claims are signed with the existing Oathkeeper key and consumed by APIs.</p></div>
+          <div class="flow-card risk"><small>Authorization</small><strong>Keto · prod</strong><p>Persistent tuples, OPL namespace, read/write APIs, and an Argo PostSync admin seed.</p></div>
+        </div>
+        <div class="cards mt-24">
+          <article class="card">
+            <span class="tag">Frontend surface</span>
+            <h3>28 reference-bearing files</h3>
+            <p><code>@ory/client 0.2.0-alpha.60</code> and <code>@ory/integrations 0.2.8</code> expose the old <code>V0alpha2Api</code> naming.</p>
+            <ul><li>Login, registration, recovery, verification, and settings</li><li>Generic UI-node rendering and error handling</li><li>Session hydration in auth, admin, and webv2</li></ul>
+          </article>
+          <article class="card">
+            <span class="tag teal">Backend surface</span>
+            <h3>Two generated clients</h3>
+            <p>Go currently uses Kratos client <code>v0.11.1</code> and Keto client <code>v0.11.0-alpha.0</code>.</p>
+            <ul><li>Kratos admin <code>ListIdentities</code></li><li>Keto permission checks and tuple writes</li><li>Unit coverage exists for Keto HTTP paths, not end-to-end compatibility</li></ul>
+          </article>
+          <article class="card">
+            <span class="tag amber">Operational surface</span>
+            <h3>Two DBs on shared Postgres</h3>
+            <p>Kratos and Keto use separate logical databases on one single-instance PostgreSQL 14 cluster with a 10Gi volume.</p>
+            <ul><li>Both charts run automigration</li><li>Daily object-storage backups exist but need restore proof</li><li>A database incident can affect more than one Tadoku service</li></ul>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section id="risks">
+      <div class="shell">
+        <div class="section-head">
+          <div class="section-no">04 / RISKS</div>
+          <div>
+            <h2>Where upgrades can break Tadoku</h2>
+            <p class="section-intro">The largest risks are production control, secret handling, and vendor database compatibility—not Kubernetes pod startup.</p>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th scope="col">Risk</th><th scope="col">Why it matters here</th><th scope="col">Control</th><th scope="col">Stop condition</th></tr></thead>
+            <tbody>
+              <tr><td><span class="status high">Tracked secrets</span></td><td>The GitOps source contains production database, mail, backup, webhook, and signing material.</td><td>Contain exposure during migration. After immediate Ory verification, adopt Sealed Secrets with unchanged values, then rotate and verify each secret category.</td><td>A value appears in migration output, or secret changes are mixed into an Ory migration/runtime deployment.</td></tr>
+              <tr><td><span class="status high">GitOps blast radius</span></td><td>All three Applications use auto-sync, prune, and self-heal with no sync window; merging to <code>main</code> can deploy immediately.</td><td>Use a maintenance sync window or temporary manual sync and pin the upgrade revision; rehearse the hold before migrations.</td><td>A test commit can reconcile into production without an explicit operator gate.</td></tr>
+              <tr><td><span class="status high">Unsafe rolling overlap</span></td><td>The live Kratos Deployment uses <code>RollingUpdate</code>, <code>maxSurge: 30%</code>, and <code>maxUnavailable: 0</code>, so the old writer stays live while a new pod starts.</td><td>Disable automigration, use an explicit migration Job, render the target with <code>Recreate</code>, and independently confirm API/courier replicas are zero before migrating.</td><td>Any v0.13.0 container remains running or a target pod can start migration automatically.</td></tr>
+              <tr><td><span class="status high">Kratos schema is not backward-compatible</span></td><td>v26.2.0 adds and backfills <code>identity_id</code>, then makes it <code>NOT NULL</code> on credential identifiers and session devices. v0.13.0 does not populate that field.</td><td>Stop Kratos and courier writers, take the final database copy, run the standalone migration, then deploy v26.2.0 in the same maintenance window.</td><td>Any v0.13.0 pod can write after the migration starts, or the target runtime is not ready to deploy immediately.</td></tr>
+              <tr><td><span class="status low">Keto has no schema delta</span></td><td>The official migration directory has no SQL/Go schema changes between v25.4.0 and v26.2.0.</td><td>Confirm <code>migrate sql status</code> on the fresh production copy; treat any reported pending migration as a stop condition.</td><td>Status is not clean or the rehearsal changes schema/data unexpectedly.</td></tr>
+              <tr><td><span class="status high">Flow/UI change</span></td><td>Kratos 1.2 enables two-step registration by default; the custom renderer must handle every new node and continuation.</td><td>Golden fixtures for each flow; temporarily enable legacy one-step registration only if the UI is not ready.</td><td>Any unrendered node, dead-end redirect, or missing CSRF field.</td></tr>
+              <tr><td><span class="status high">Session continuity</span></td><td>Oathkeeper calls <code>/sessions/whoami</code>; users rely on a long 720-hour session.</td><td>Capture an existing session before upgrade and verify it after every runtime step.</td><td>Cookie invalidation, altered subject, or changed <code>Extra</code> claim shape.</td></tr>
+              <tr><td><span class="status med">SDK churn</span></td><td>Legacy generated API names appear in frontend and Go adapters.</td><td>Keep narrow local adapters; update SDKs independently while server contracts are fixed.</td><td>SDK change forces server rollout in the same PR.</td></tr>
+              <tr><td><span class="status med">Proxy/JWT regression</span></td><td>Oathkeeper v26 tightens path cleaning and forwarded-header handling while minting custom user/service claims.</td><td>Compare token fixtures and ingress behavior; retain the active JWKS through rollout; exercise all five rules.</td><td>Issuer, audience, subject, path, scheme, redirect, or <code>session</code> claim changes.</td></tr>
+              <tr><td><span class="status med">Seed and source drift</span></td><td>Keto runs an internet-dependent PostSync Python seed, while Oathkeeper rules also exist in an unreferenced duplicate file.</td><td>Make the seed image/retries deterministic and establish one canonical access-rule source before version changes.</td><td>A normal Argo sync can fail or alter privileges for reasons unrelated to the chart.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section id="roadmap">
+      <div class="shell">
+        <div class="section-head">
+          <div class="section-no">05 / ROADMAP</div>
+          <div>
+            <h2>A gated upgrade sequence</h2>
+            <p class="section-intro">Each phase leaves the stack operable and produces evidence for the next decision.</p>
+          </div>
+        </div>
+        <div class="table-wrap parallel-map">
+          <table>
+            <thead><tr><th scope="col">Execution lane</th><th scope="col">Subagent split</th><th scope="col">Dependency</th></tr></thead>
+            <tbody>
+              <tr><td><span class="status low">Parallel</span></td><td>Argo deployment-gate work and read-only production baseline/contract scaffolding</td><td>The gate must be proven before any production mutation; read-only capture can proceed concurrently.</td></tr>
+              <tr><td><span class="status low">Parallel</span></td><td>Kratos copy/rehearsal, Keto copy/rehearsal, Oathkeeper contract tests, frontend adapter, and Go adapters</td><td>Each lane works in separate files and, for data work, a separate new <code>homelab-dev</code> database.</td></tr>
+              <tr><td><span class="status med">Sequential</span></td><td>Production schema migrations and runtime rollouts</td><td>Operator gate after every database and every Argo Application; never delegate concurrent production changes.</td></tr>
+              <tr><td><span class="status med">Post-migration</span></td><td>Sealed Secrets adoption, then full secret rotation</td><td>Begin after the immediate Ory verification gate; preserve values during Sealed Secrets cutover, then rotate one secret category at a time.</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="timeline">
+          <article class="phase">
+            <div class="phase-no" aria-hidden="true"></div>
+            <div><span class="workstream parallel">Parallel with baseline capture</span><h3>Add a production deploy hold</h3><p>Control Argo reconciliation before touching Ory versions while a second subagent starts read-only baseline capture.</p><ul class="task-list"><li>Add a tested Argo sync window or temporary manual-sync procedure for the three Ory Applications.</li><li>Pin the intended Git and chart revisions and require an operator render review before release.</li><li>Keep all current credentials and signing keys unchanged throughout the Ory migration.</li><li>Never place secret values in PR text, CI logs, migration output, or planning artifacts.</li></ul></div>
+            <div class="gate"><strong>Exit gate</strong><span>An operator can hold and release reconciliation predictably, and read-only production capture does not expose secret values.</span></div>
+          </article>
+
+          <article class="phase">
+            <div class="phase-no" aria-hidden="true"></div>
+            <div><span class="workstream parallel">Parallel: Kratos + Keto</span><h3>Copy production into fresh homelab databases</h3><p>Turn the current healthy Argo state into a recoverable, production-shaped rehearsal baseline.</p><ul class="task-list"><li>Record exact chart versions, images/digests, Argo revision, rendered manifests, database migration status, and row/size counts.</li><li>Take a production copy of each Ory logical database and restore Kratos and Keto into two newly created, uniquely named databases on <code>homelab-dev</code>.</li><li>Assign separate subagents to the Kratos and Keto copies; never point a rehearsal workload or migration command at a production DSN.</li><li>Verify identity, session, credential, relation-tuple, namespace, and migration-ledger consistency, then delete the temporary databases after evidence is captured.</li></ul></div>
+            <div class="gate"><strong>Exit gate</strong><span>Both production copies restore into their new <code>homelab-dev</code> databases and reproduce expected counts and current-runtime health.</span></div>
+          </article>
+
+          <article class="phase">
+            <div class="phase-no" aria-hidden="true"></div>
+            <div><span class="workstream parallel">Parallel by service</span><h3>Build the production contract harness</h3><p>Test the behavior Tadoku owns before changing any dependency.</p><ul class="task-list"><li>Kratos subagent: browser flows for login, registration, recovery, verification, settings, logout, and an existing long-lived session.</li><li>Keto subagent: allow/deny, tuple write/delete, namespace behavior, and deterministic PostSync seed checks.</li><li>Oathkeeper subagent: anonymous, cookie, HTML redirect, JSON 401, four path strips, user JWT, and the single S2S exchange.</li><li>Run read-only checks against production and the complete destructive suite against the fresh <code>homelab-dev</code> databases.</li></ul></div>
+            <div class="gate"><strong>Exit gate</strong><span>Critical contracts pass on the current production versions and twice on a restored disposable environment.</span></div>
+          </article>
+
+          <article class="phase">
+            <div class="phase-no" aria-hidden="true"></div>
+            <div><span class="workstream parallel">Parallel: frontend + Go</span><h3>Modernize client boundaries</h3><p>Remove application dependence on old generated names before the server jump.</p><ul class="task-list"><li>Frontend subagent: wrap Kratos calls behind a local adapter, then move from legacy <code>V0alpha2Api</code> to the current component SDK.</li><li>Keep the generic UI-node renderer exhaustive; fail loudly on unknown attribute types.</li><li>Go subagent: preserve narrow Tadoku interfaces and update generated Kratos/Keto clients behind them.</li><li>Deploy client changes independently against the current production server contracts.</li></ul></div>
+            <div class="gate"><strong>Exit gate</strong><span>New clients pass the harness against Kratos v0.13.0 and Keto/Oathkeeper v25.4.0.</span></div>
+          </article>
+
+          <article class="phase">
+            <div class="phase-no" aria-hidden="true"></div>
+            <div><span class="workstream parallel">Parallel: separate new DBs</span><h3>Rehearse the Kratos cutover and Keto no-op</h3><p>Use the production copies in fresh <code>homelab-dev</code> databases, not empty dev databases.</p><ul class="task-list"><li>Kratos subagent: stop v0.13.0 writers, run <code>v0.13.0 → v26.2.0</code>, and prove v26.2.0 identity/session writes immediately afterward.</li><li>Explicitly demonstrate that v0.13.0 cannot create credential identifiers or session devices after the target <code>NOT NULL identity_id</code> migration; do not plan an old-binary rollback.</li><li>Keto subagent: confirm no pending schema migration from <code>v25.4.0 → v26.2.0</code>, then test tuple reads/writes and pagination behavior against both binaries.</li><li>Run the exact Kratos sequence once and record writer shutdown, final copy, migration, pod readiness, smoke-test, and restoration timings.</li></ul></div>
+            <div class="gate"><strong>Exit gate</strong><span>The Kratos maintenance cutover is repeatable and timed; Keto reports no schema delta; full restoration is the rehearsed Kratos data rollback.</span></div>
+          </article>
+
+          <article class="phase">
+            <div class="phase-no" aria-hidden="true"></div>
+            <div><span class="workstream sequential">Sequential production gate</span><h3>Roll Keto, then Oathkeeper</h3><p>Remove the lower-risk service changes before opening the Kratos maintenance window.</p><ul class="task-list"><li>Keto: confirm clean migration status, then deploy chart <code>0.63.0</code> and app <code>v26.2.0</code>; no database mutation is expected.</li><li>Verify Keto permissions, tuple writes/deletes, pagination, OPL namespace, and deterministic PostSync seed.</li><li>Oathkeeper: deploy chart <code>0.63.0</code> and app <code>v26.2.0</code> while retaining active signing material.</li><li>Verify all five proxy rules, forwarded headers, redirects, user JWTs, and the service-token exchange before advancing.</li></ul></div>
+            <div class="gate"><strong>Exit gate</strong><span>Keto and Oathkeeper pass their complete immediate verification suites, with no unexplained Argo drift.</span></div>
+          </article>
+
+          <article class="phase migration">
+            <div class="phase-no" aria-hidden="true"></div>
+            <div><span class="workstream sequential">Sequential maintenance gate</span><h3>Execute the Kratos big bang</h3><p>Honor the standalone-migration rule without pretending the old runtime remains write-compatible.</p><ul class="task-list"><li>Before the window, disable chart automigration, render the target with <code>strategy.type: Recreate</code>, pre-pull the exact v26.2.0 image digest, and prepare an unsubmitted runtime patch plus a waiting reviewer.</li><li>At the window, hold Argo and scale the Kratos Deployment and courier StatefulSet to zero; confirm no v0.13.0 pod remains.</li><li>Take the final logical copy, then deploy the standalone manually synced migration Job pinned to the v26.2.0 digest.</li><li>After the migration is deployed, base the runtime PR on updated <code>main</code>, merge/sync it immediately, and keep automigration disabled.</li><li>Run the critical smoke suite, restore normal traffic, then complete the wider checklist; restore the pre-migration database if the critical gate fails.</li></ul></div>
+            <div class="gate"><strong>Exit gate</strong><span>Measured downtime is within the rehearsed budget and all auth flows, existing sessions, new identity/session writes, courier delivery, and Oathkeeper session checks pass.</span></div>
+          </article>
+
+          <article class="phase">
+            <div class="phase-no" aria-hidden="true"></div>
+            <div><span class="workstream sequential">Post-migration follow-up</span><h3>Introduce Sealed Secrets, then rotate all secrets</h3><p>Keep secret-platform work outside the Ory migration blast radius and begin after the immediate Ory verification gate.</p><ul class="task-list"><li>Deploy and verify the Sealed Secrets control plane independently of Ory version changes.</li><li>Move the current database, SMTP, backup, webhook, and Oathkeeper signing values into sealed resources without changing the effective values.</li><li>Verify all workloads, courier delivery, backups, permission checks, session validation, and JWT verification after the storage cutover.</li><li>Then rotate every secret category one at a time, preserving Oathkeeper verification overlap where required, and remove plaintext values from the active Git tree.</li></ul></div>
+            <div class="gate"><strong>Exit gate</strong><span>All live secret values are supplied through Sealed Secrets, every credential has been rotated and verified, and the active Git tree contains no plaintext secret material.</span></div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section id="prs">
+      <div class="shell">
+        <div class="section-head">
+          <div class="section-no">06 / PR SEQUENCE</div>
+          <div>
+            <h2>Atomic changes that can be reviewed</h2>
+            <p class="section-intro">This is the minimum sequence across <code>tadoku-argocd</code> and the application repository. PRs A+B can run in parallel; after the baseline gate, PRs C+D can run in parallel. PRs E–J are Ory production gates and remain sequential. PRs K–L are post-migration security work and also remain ordered. Kratos PR H lands and deploys independently while writers are stopped; PR I follows immediately in the same maintenance window.</p>
+          </div>
+        </div>
+        <div class="pr-stack">
+          <article class="pr"><div class="pr-top"><span class="pr-id">PR A</span><span class="pr-type">Parallel batch 1</span></div><h4>Add Argo deployment gates</h4><p>Sync window/manual-sync procedure, immutable upgrade revision, and render-diff checks.</p></article>
+          <article class="pr"><div class="pr-top"><span class="pr-id">PR B</span><span class="pr-type">Parallel batch 1</span></div><h4>Add Ory contract harness</h4><p>Browser, HTTP, JWT, tuple, seed, and existing-session coverage on current versions.</p></article>
+          <article class="pr"><div class="pr-top"><span class="pr-id">PR C</span><span class="pr-type">Parallel batch 2</span></div><h4>Modernize frontend Ory adapter</h4><p>Current SDK and exhaustive node rendering, with no server/chart change.</p></article>
+          <article class="pr"><div class="pr-top"><span class="pr-id">PR D</span><span class="pr-type">Parallel batch 2</span></div><h4>Modernize Go Ory adapters</h4><p>Keep narrow interfaces and update implementation dependencies plus tests.</p></article>
+          <article class="pr"><div class="pr-top"><span class="pr-id">PR E</span><span class="pr-type">Sequential gate</span></div><h4>Disable runtime automigration</h4><p>Kratos and Keto stay on current images and schemas; future migration becomes explicit.</p></article>
+          <article class="pr"><div class="pr-top"><span class="pr-id">PR F</span><span class="pr-type">Sequential · runtime</span></div><h4>Upgrade Keto</h4><p>Confirm clean migration status, then deploy chart 0.63.0 and app v26.2.0; no schema mutation is expected.</p></article>
+          <article class="pr"><div class="pr-top"><span class="pr-id">PR G</span><span class="pr-type">Sequential · runtime</span></div><h4>Upgrade Oathkeeper</h4><p>Chart 0.63.0 and app v26.2.0; keep active key material and prove five rules.</p></article>
+          <article class="pr"><div class="pr-top"><span class="pr-id">PR H</span><span class="pr-type db">Maintenance · migration</span></div><h4>Apply Kratos schema migration</h4><p>Stop v0.13.0 API/courier writers, take the final copy, then deploy the standalone manually synced Job.</p></article>
+          <article class="pr"><div class="pr-top"><span class="pr-id">PR I</span><span class="pr-type">Maintenance · runtime</span></div><h4>Upgrade Kratos immediately</h4><p>Deploy v26.2.0 in the same window and run identity/session write checks; automigration remains disabled.</p></article>
+          <article class="pr"><div class="pr-top"><span class="pr-id">PR J</span><span class="pr-type">Sequential · cleanup</span></div><h4>Restore normal GitOps flow</h4><p>Remove temporary Jobs, reconcile duplicate rules, and re-enable ordinary Argo automation after immediate verification.</p></article>
+          <article class="pr"><div class="pr-top"><span class="pr-id">PR K</span><span class="pr-type">Post-migration</span></div><h4>Adopt Sealed Secrets</h4><p>Move unchanged live values into sealed resources and prove workload parity; no secret rotation in this PR.</p></article>
+          <article class="pr"><div class="pr-top"><span class="pr-id">PR L</span><span class="pr-type">Post-migration</span></div><h4>Rotate all secrets</h4><p>Rotate and verify database, SMTP, backup, webhook, and signing material one category at a time.</p></article>
+        </div>
+      </div>
+    </section>
+
+    <section id="verification">
+      <div class="shell">
+        <div class="section-head">
+          <div class="section-no">07 / VERIFICATION</div>
+          <div>
+            <h2>Definition of done</h2>
+            <p class="section-intro">A green pod is not evidence that authentication, token exchange, or authorization still behaves correctly.</p>
+          </div>
+        </div>
+        <div class="matrix">
+          <article class="checklist"><h3>Kratos</h3><ul><li>Existing production-shaped cookie still resolves via <code>/sessions/whoami</code></li><li>New password login and logout</li><li>Registration and post-registration session hook</li><li>Recovery link and password reset</li><li>Verification flow UI</li><li>Settings/display-name update and courier delivery</li><li>Admin identity list/filter used by profile cache and seed job</li><li><code>tadoku.app</code> cookie domain, SameSite, CORS, return URLs, and base paths unchanged</li></ul></article>
+          <article class="checklist"><h3>Oathkeeper</h3><ul><li>Anonymous request becomes subject <code>guest</code></li><li>Session cookie becomes identity ID subject</li><li>HTML unauthorized response redirects to account UI</li><li>API unauthorized response stays JSON</li><li>All four API path strips reach the expected production services</li><li>User ID token keeps issuer, subject, type, and <code>session</code> shape</li><li>The single S2S exchange enforces source and target audiences</li><li>Ingress scheme/forwarded headers and active JWKS work before and after rollout</li></ul></article>
+          <article class="checklist"><h3>Keto</h3><ul><li>Known allow and deny checks</li><li>Batch checks preserve input/result association</li><li>Tuple create, duplicate create, list, and delete</li><li>OPL namespace compiles and expected transitive rules apply</li><li>Read/write services remain on ports 4466/4467</li><li>PostSync seed is deterministic and idempotent using Kratos identity lookup</li><li>Pagination tokens and migration status behave correctly on v26.2.0</li></ul></article>
+          <article class="checklist"><h3>GitOps and operations</h3><ul><li>Argo renders each multi-source Application at the pinned chart and Git revisions</li><li>Rendered service names/selectors match cross-namespace references</li><li>Sync hold, manual release, Git revert, and health checks are rehearsed</li><li>Production Kratos and Keto copies restore into separate fresh <code>homelab-dev</code> databases</li><li>Keto migration status reports no schema delta; Kratos v0.13.0 writers are stopped before migration</li><li>Backend tests and frontend typecheck/lint/build pass</li><li>The Ory migration completes without changing secrets; afterward every value is sealed and rotated</li><li>No secret, DSN, webhook, SMTP, or JWKS value appears in artifacts, logs, or the active Git tree after the security follow-up</li><li>The complete production verification checklist passes immediately before Sealed Secrets work begins</li></ul></article>
+          <article class="checklist"><h3>Big-bang cutover</h3><ul><li>One production-copy rehearsal records every cutover segment and completes successfully</li><li>The approved budget is at most five minutes, or is replaced with the slower measured rehearsal result</li><li>Kratos API and courier replica counts are zero before the migration Job starts</li><li>Chart automigration is disabled and the target Deployment renders with <code>Recreate</code> strategy</li><li>The final production copy is complete and restorable before the first schema change</li><li>v26.2.0 reaches readiness and creates a new identity, credential identifier, session, and session-device row</li><li>Maintenance mode ends only after existing-session <code>/sessions/whoami</code> and new login pass</li></ul></article>
+        </div>
+      </div>
+    </section>
+
+    <section id="rollback">
+      <div class="shell">
+        <div class="section-head">
+          <div class="section-no">08 / ROLLBACK</div>
+          <div>
+            <h2>Rollback is a data decision</h2>
+            <p class="section-intro">Argo CD owns production desired state. Roll runtime configuration back with an explicit Git revision; treat Kratos and Keto rollback as database decisions.</p>
+          </div>
+        </div>
+        <div class="cards">
+          <article class="card"><span class="tag teal">GitOps boundary</span><h3>Revert the pinned revision</h3><p>Hold auto-sync, revert the exact Application/value commit, inspect the rendered diff, sync deliberately, and verify health. Do not rely on stale Helm release metadata for rollback.</p></article>
+          <article class="card"><span class="tag amber">Kratos data boundary</span><h3>No old-binary rollback</h3><p>Kratos v0.13.0 cannot safely resume writes after the v26.2.0 schema migration. Fix forward with v26.2.0 or restore the complete pre-migration logical database before bringing v0.13.0 back.</p></article>
+          <article class="card"><span class="tag">Keto + Oathkeeper</span><h3>Runtime revert remains viable</h3><p>Keto has no schema delta on this exact path, and Oathkeeper is stateless. Revert their chart/image through Argo while retaining tuple data, signing keys, and downstream token contracts.</p></article>
+        </div>
+        <p class="note"><strong>Downtime versus recovery point:</strong> taking the final logical copy after writers stop preserves all committed data and currently costs about one minute. Taking it immediately before the freeze shortens downtime but creates a rollback data-loss window; use that option only if its measured RPO is explicitly accepted.</p>
+        <p class="note warn"><strong>Hard stop:</strong> never run an untested down migration or restore selected tables in place. Restore each Ory logical database as a consistent unit, and account for the shared single-instance PostgreSQL blast radius.</p>
+      </div>
+    </section>
+
+    <section id="estimate">
+      <div class="shell">
+        <div class="section-head">
+          <div class="section-no">09 / ESTIMATE</div>
+          <div>
+            <h2>Effort and scheduling</h2>
+            <p class="section-intro">Estimate assumes successful production-copy access and no upstream migration defect. Sealed Secrets implementation and rotation are included as post-migration work. Subagents can reduce elapsed preparation time by taking the marked lanes concurrently; production migrations, rollouts, and secret rotation do not overlap.</p>
+          </div>
+        </div>
+        <div class="estimate">
+          <div class="total"><strong>10–16</strong><span>total engineering days. Parallel subagent lanes can compress preparation; production uses immediate verification gates with no business soak. A new secret-management platform would add time.</span></div>
+          <div class="detail">
+            <div class="bar-row"><span>Argo gate + later secrets</span><div class="bar"><i class="w62"></i></div><b>2–4d</b></div>
+            <div class="bar-row"><span>Restore + baseline</span><div class="bar"><i class="w35"></i></div><b>1–2d</b></div>
+            <div class="bar-row"><span>Contract harness</span><div class="bar"><i class="w46"></i></div><b>2–3d</b></div>
+            <div class="bar-row"><span>Client modernization</span><div class="bar"><i class="w62"></i></div><b>2–3d</b></div>
+            <div class="bar-row"><span>Kratos cutover + Keto status</span><div class="bar"><i class="w46"></i></div><b>2–3d</b></div>
+            <div class="bar-row"><span>Three app rollouts</span><div class="bar"><i class="w42"></i></div><b>1–2d</b></div>
+          </div>
+        </div>
+        <div class="decision after-estimate">
+          <h3>Immediate next move</h3>
+          <p>Do not open a version-bump PR first. Control automatic deployment, then prove the upgrade against production copies in fresh <code>homelab-dev</code> databases. Keep every secret unchanged until the Ory migration passes immediate verification.</p>
+          <ol><li>Add and rehearse an Argo deployment hold for <code>tadoku-kratos</code>, <code>tadoku-keto</code>, and <code>tadoku-oathkeeper</code>.</li><li>Create new Kratos and Keto databases on <code>homelab-dev</code>, restore production copies into them, and run the two rehearsal lanes in parallel.</li><li>Confirm Keto has no schema delta; rehearse Kratos as a maintenance cutover with v0.13.0 writers stopped.</li><li>Complete the sequential production rollouts and immediate verification, then introduce Sealed Secrets and rotate every secret separately.</li></ol>
+        </div>
+      </div>
+    </section>
+
+    <section id="sources">
+      <div class="shell sources">
+        <div class="section-no">10 / SOURCES</div>
+        <div>
+          <h2>Evidence and references</h2>
+          <ul>
+            <li>Application evidence: <code>infra/dev/ory</code>, Ory client adapters, Go modules, and frontend package manifests in <code>tadoku/tadoku</code> at commit <code>f3dba363</code>.</li>
+            <li>GitOps evidence: Argo Application definitions and production Ory values in <code>antonve/tadoku-argocd</code> at synced revision <code>a9100d9e</code>. Secret values were deliberately excluded from this artifact.</li>
+            <li>Live evidence: synced/healthy Argo Applications, workload images, PostgreSQL topology, Kratos database/table sizes, current rolling strategy, and backup Job durations on <code>lke20948-ctx</code>, observed 8 August 2026.</li>
+            <li><a href="https://k8s.ory.sh/helm/charts/index.yaml">Official Ory Helm chart index</a> and <a href="https://github.com/ory/k8s/releases/tag/v0.63.0">Ory Kubernetes chart release 0.63.0</a>.</li>
+            <li>Kratos compatibility evidence: the v26.2.0 <a href="https://github.com/ory/kratos/blob/v26.2.0/persistence/sql/migrations/sql/20251104000000000000_identifiers_devices_identity_id.up.sql">nullable-column addition</a>, <a href="https://github.com/ory/kratos/blob/v26.2.0/persistence/sql/migrations/go/20251105000000000000_identity_id_not_null_fks.go">10,000-row batched PostgreSQL backfill</a>, and <a href="https://github.com/ory/kratos/blob/v26.2.0/persistence/sql/migrations/sql/20251105000000000003_identity_id_not_null_fks.postgres.up.sql">NOT NULL/FK enforcement</a>.</li>
+            <li>Old-writer evidence: Kratos v0.13.0 <a href="https://github.com/ory/kratos/blob/v0.13.0/identity/credentials.go#L116-L132">credential-identifier model</a> and <a href="https://github.com/ory/kratos/blob/v0.13.0/session/session.go#L45-L70">session-device model</a> do not carry the new <code>identity_id</code> field.</li>
+            <li>Chart behavior: Ory's <a href="https://github.com/ory/k8s/blob/v0.63.0/helm/charts/kratos/values.yaml">Kratos chart 0.63.0 values</a> expose the Deployment strategy and explicit Job/init-container automigration modes; the plan selects <code>Recreate</code> and a standalone Job.</li>
+            <li>Keto compatibility evidence: official <a href="https://github.com/ory/keto/compare/v25.4.0...v26.2.0">v25.4.0…v26.2.0 source comparison</a>; under <code>internal/persistence/sql/migrations</code>, only a migration test changes and no SQL/Go schema migration is added.</li>
+            <li><a href="https://github.com/ory/kratos/releases/tag/v26.2.0">Kratos v26.2.0</a>, <a href="https://github.com/ory/keto/releases/tag/v26.2.0">Keto v26.2.0</a>, and <a href="https://github.com/ory/oathkeeper/releases/tag/v26.2.0">Oathkeeper v26.2.0</a> release notes.</li>
+            <li>Environment rule: LKE/Argo is authoritative; <code>homelab-dev</code> is ephemeral and may be deleted or rebuilt for rehearsal.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section id="followups">
+      <div class="shell">
+        <div class="section-head">
+          <div class="section-no">11 / FOLLOW-UPS</div>
+          <div>
+            <h2>Improvements unlocked afterward</h2>
+            <p class="section-intro">Once Ory and Sealed Secrets are stable, turn this one-off cutover into a repeatable operating capability.</p>
+          </div>
+        </div>
+        <div class="cards">
+          <article class="card"><span class="tag teal">Availability</span><h3>Add an authentication maintenance response</h3><p>Give browser flows a clear retry page and APIs a deliberate <code>503</code> contract while Kratos is unavailable, rather than surfacing opaque Oathkeeper failures.</p></article>
+          <article class="card"><span class="tag">Automation</span><h3>Keep a reusable cutover preflight</h3><p>Automate image pre-pull, replica-zero confirmation, migration status, timers, smoke tests, and rollback readiness without embedding secret values.</p></article>
+          <article class="card"><span class="tag amber">Resilience</span><h3>Exercise restore and multi-replica Kratos</h3><p>Schedule recurring logical-restore drills, then evaluate two Kratos replicas and a disruption budget so ordinary runtime releases no longer depend on one pod.</p></article>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="shell">Tadoku Ory stack upgrade plan · LKE/Argo production assessment · revised 8 August 2026</div>
+  </footer>
+</body>
+</html>

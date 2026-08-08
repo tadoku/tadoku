@@ -187,6 +187,27 @@ describe('responsive visual contract', () => {
     )
   })
 
+  it('keeps the Browse header fixed while only its native-scroll navigation body moves', () => {
+    const { container } = render(
+      <MemoryRouter>
+        <DocsShell documents={catalogRegistry.documents}>Content</DocsShell>
+      </MemoryRouter>,
+    )
+
+    const drawer = container.querySelector('.mobile-nav-drawer')
+    const scrollBody = container.querySelector('.mobile-nav-drawer__body')
+
+    expect(drawer).toHaveClass('paper-elevation-showcase')
+    expect(scrollBody?.querySelector('.catalogue-nav')).not.toBeNull()
+    expect(shellStyles).toMatch(
+      /\.mobile-nav-drawer\s*\{[^}]*display:\s*flex;[^}]*flex-direction:\s*column;[^}]*overflow:\s*hidden;/s,
+    )
+    expect(shellStyles).toMatch(
+      /\.mobile-nav-drawer__body\s*\{[^}]*min-block-size:\s*0;[^}]*overflow-y:\s*auto;/s,
+    )
+    expect(shellStyles).not.toMatch(/scrollbar-width|::-webkit-scrollbar/)
+  })
+
   it('keeps the inactive Cut Meter asset out of the wordmark layout', () => {
     expect(shellStyles).toContain('.paper-wordmark :where(img) {')
     expect(shellStyles).not.toContain('.paper-wordmark img {')

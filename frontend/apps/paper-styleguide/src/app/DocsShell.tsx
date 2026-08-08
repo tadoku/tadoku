@@ -193,10 +193,12 @@ export function DocsShell({ documents, children }: DocsShellProps) {
               />
             </button>
           </div>
-          <CatalogueNavigation
-            documents={documents}
-            onNavigate={() => setMobileNavigationOpen(false)}
-          />
+          <div className="mobile-nav-drawer__body">
+            <CatalogueNavigation
+              documents={documents}
+              onNavigate={() => setMobileNavigationOpen(false)}
+            />
+          </div>
         </aside>
       </div>
 

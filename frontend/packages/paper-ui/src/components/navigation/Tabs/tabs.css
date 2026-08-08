@@ -6,17 +6,22 @@
   .paper-tabs__list {
     display: flex;
     align-items: end;
+    inline-size: 100%;
+    max-inline-size: 100%;
+    overflow-x: auto;
+    overflow-y: hidden;
     border-block-end: var(--paper-border-static-width) solid var(--paper-color-rule-default);
   }
 
   .paper-tabs__tab {
     display: inline-flex;
     position: relative;
+    flex: 0 0 auto;
     align-items: center;
     justify-content: center;
     min-block-size: var(--paper-control-height);
     padding: var(--paper-field-padding-block) var(--paper-field-padding-inline);
-    border: var(--paper-border-static-width) solid transparent;
+    border: 0;
     border-block-end: var(--paper-border-action-edge-width) solid transparent;
     border-radius: 0;
     color: var(--paper-color-text-muted);
@@ -37,10 +42,9 @@
   }
 
   .paper-tabs__tab[data-active] {
-    border-color: var(--paper-color-rule-default);
     border-block-end-color: var(--paper-color-action-default);
     color: var(--paper-color-text-ink);
-    background: var(--paper-color-surface-paper);
+    background: transparent;
   }
 
   .paper-tabs__tab:focus-visible {
@@ -74,19 +78,21 @@
   .paper-tabs[data-orientation="vertical"] .paper-tabs__list {
     flex-direction: column;
     align-items: stretch;
+    inline-size: auto;
+    max-inline-size: none;
+    overflow: visible;
     border-block-end: 0;
     border-inline-end: var(--paper-border-static-width) solid var(--paper-color-rule-default);
   }
 
   .paper-tabs[data-orientation="vertical"] .paper-tabs__tab {
     justify-content: start;
-    border-block-end-color: transparent;
+    border-block-end: 0;
     border-inline-end: var(--paper-border-action-edge-width) solid transparent;
     text-align: start;
   }
 
   .paper-tabs[data-orientation="vertical"] .paper-tabs__tab[data-active] {
-    border-color: var(--paper-color-rule-default);
     border-inline-end-color: var(--paper-color-action-default);
   }
 
@@ -111,7 +117,6 @@
     }
 
     .paper-tabs__tab[data-active] {
-      border-color: CanvasText;
       border-block-end-color: Highlight;
     }
 

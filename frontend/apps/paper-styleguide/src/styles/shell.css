@@ -97,7 +97,7 @@
     color: var(--paper-color-action-default);
   }
 
-  .paper-wordmark img {
+  .paper-wordmark :where(img) {
     display: block;
     inline-size: 100%;
     block-size: 100%;

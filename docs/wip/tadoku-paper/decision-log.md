@@ -2,7 +2,7 @@
 
 This is the permanent record of the Tadoku Paper planning discussion. The original audit remains preserved at [artifacts/design-system-refinement-audit.html](artifacts/design-system-refinement-audit.html) and [Presenter](https://presentr.lab/html/tadoku-design-system-refinement-audit).
 
-Last updated: 2026-08-07
+Last updated: 2026-08-08
 
 ## Final decision snapshot
 
@@ -31,18 +31,23 @@ Last updated: 2026-08-07
 - Package name: **`paper-ui`**.
 - `paper-ui` assumes React but must not depend on Next.js or Next-specific link, image, routing, or font APIs.
 - Both class recipes and optional React components are first-class public APIs and share one CSS implementation.
-- Standard button hierarchy is default, primary, and ghost. Danger is a composable tone; loading is a composable state.
+- Button variants use the shadcn vocabulary: default, outline, ghost, link, and destructive. The default variant is the emphasized violet action; outline is the neutral bordered action. Loading remains a composable state.
 - Every standard button state remains usable through classes without importing a component.
 - Loading visuals must be paired with `aria-busy="true"` and normally native disabled behavior.
+- A link never acquires button semantics: anchors may use the exported button recipe for button appearance, while `Button variant="link"` remains a button action with link-like appearance.
+- Base UI is the sole headless primitive layer for new Paper components. Native HTML remains preferred where it already supplies the correct behavior.
+- Headless UI remains only behind legacy `ui` during coexistence and is removed with each application cutover and ultimately from the repository.
 
 ### Documentation, tests, and migration
 
-- Replace the current style-guide `Showcase` with a complete documentation shell.
+- Build a new plain React + Vite application named `paper-styleguide`; do not migrate or mix Paper into the existing legacy styleguide.
+- Deploy the new catalogue at `paper.tadoku.app` throughout migration, then move it to `ui.tadoku.app` after the complete application migration.
+- Use temporary `t3-expose` URLs for live development review and the persistent Paper hostname for merged work.
 - Give each component a searchable route, complete state matrix, realistic Tadoku examples, co-located metadata/examples/tests, and lifecycle status.
 - Separate primitives/components, product patterns, and experiments.
 - Reuse named style-guide fixtures in Vitest, React Testing Library, `user-event`, and `jest-dom` behavior/accessibility tests.
 - Introduce `paper-ui` alongside legacy `ui` at the repository level, but never mix them inside one application.
-- Perform a complete migration per application in this order: style guide, admin, auth, webv2.
+- Build the Paper catalogue first, then perform complete application migrations in this order: admin, auth, webv2. The legacy styleguide remains at `ui.tadoku.app` until the final domain cutover.
 - Remove legacy `ui` only after the final migration and a repository-wide consumer search.
 
 ## Agreed scope
@@ -50,7 +55,7 @@ Last updated: 2026-08-07
 ### Implement in the upcoming plan
 
 - P0.1 — Introduce semantic design tokens.
-- P0.3 — Replace `Showcase` with a complete documentation shell.
+- P0.3 — Build a complete documentation shell in the new `paper-styleguide` application.
 - P1.1 — Use one route per component, with search.
 - P1.2 — Show the full component state matrix.
 - P1.3 — Rebuild foundation pages.
@@ -77,7 +82,8 @@ Last updated: 2026-08-07
 - Shared UI changes build and publish four application images independently.
 - Introduce `paper-ui` additively at the repository level while unmigrated applications continue using legacy `ui`.
 - Do not mix legacy `ui` and `paper-ui` inside an application; each application receives one complete migration.
-- Migrate in this order: style guide, admin, auth, webv2.
+- Do not mix Headless UI and Base UI within a Paper component. New Paper code uses Base UI or native HTML; legacy code retains Headless UI only until its application cutover.
+- Build and deploy `paper-styleguide` independently, then migrate admin, auth, and webv2 in that order. Move the Paper catalogue to `ui.tadoku.app` only after those migrations complete.
 - Keep the legacy package until repository searches show no remaining application consumers.
 - Preserve the existing audit report; do not overwrite its file or Presentr key.
 - Parallel sub-agents may implement independent work after the decisions and plan are locked.
@@ -380,4 +386,29 @@ Questions to resolve later:
 
 ## Plan status
 
-Ready to create the parallel implementation plan. No blocking design or architecture discussion remains.
+The implementation plan exists and is being updated as later architecture decisions are resolved.
+
+---
+
+## Discussion 4 — Paper styleguide, Button vocabulary, and primitive layer
+
+Status: resolved for implementation planning.
+
+### Button API and primitive preview v12
+
+- Presenter: `https://presentr.lab/html/tadoku-paper-button-api-base-ui-v12`
+- Archived source: [artifacts/tadoku-paper-button-api-base-ui-v12.html](artifacts/tadoku-paper-button-api-base-ui-v12.html)
+- The study compares shadcn's React Button and exported recipe architecture, link versus button semantics, explicit form button behavior, and Base UI versus Headless UI.
+
+### Decisions
+
+- **Button vocabulary:** adopt the shadcn-style variant names `default`, `outline`, `ghost`, `link`, and `destructive`.
+- **Visual mapping:** `default` is the filled emphasized action previously called primary; `outline` is the neutral bordered action previously called default.
+- **No required secondary variant:** only add a distinct secondary treatment later if a documented product hierarchy requires it.
+- **Loading:** loading remains a state that composes with any applicable variant through both the React and raw class APIs.
+- **Link semantics:** `Button variant="link"` renders a real button action with link-like presentation. Navigation renders a real anchor and receives button appearance through `buttonClassName()` or an anchor-specific `LinkButton` adapter.
+- **Forms:** Paper Button defaults to `type="button"`; submissions declare `type="submit"`. React Hook Form resets call `methods.reset()` rather than relying on implicit native reset behavior.
+- **Primitive layer:** use Base UI as Paper's headless behavior dependency. Do not use shadcn as the generated foundation; use its technical architecture and documentation patterns as reference.
+- **Headless UI:** do not introduce Headless UI into `paper-ui` or `paper-styleguide`. It remains an implementation detail of legacy `ui` until the relevant application migrates, after which the unused dependency is removed.
+- **Paper styleguide:** create `frontend/apps/paper-styleguide` from scratch with plain React and Vite. It consumes only `paper-ui`, is served as static assets in production, and does not use SSR.
+- **Preview and domains:** agents expose the Vite development server with `t3-expose` for temporary live review. Merged work deploys persistently to `paper.tadoku.app`; `ui.tadoku.app` continues serving the legacy guide until the full migration finishes, then switches atomically to Paper.

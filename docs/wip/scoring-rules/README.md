@@ -401,12 +401,12 @@ endpoint. All form changes must use `react-hook-form` and components from the
   - [x] Never change completed-contest snapshots implicitly.
   - [x] Confirm uncovered replacing rule sets award zero.
 
-- [ ] Add a score-preview API.
-  - [ ] Accept the same activity, unit, language, tags, amount, duration, and contest
+- [x] Add a score-preview API.
+  - [x] Accept the same activity, unit, language, tags, amount, duration, and contest
     selection as log submission.
-  - [ ] Return the platform estimate and applicable contest estimates.
-  - [ ] Return applied-rule information where appropriate.
-  - [ ] Return zero for uncovered inputs.
+  - [x] Return the platform estimate and applicable contest estimates.
+  - [x] Return applied-rule information where appropriate.
+  - [x] Return zero for uncovered inputs.
 
 - [ ] Move frontend estimates to score preview.
   - [ ] Use `react-hook-form` values for preview requests.

@@ -23,6 +23,12 @@ const (
 	TimePrimary   ActivityInputType = "time_primary"
 )
 
+// Defines values for ScoreEstimateSource.
+const (
+	Amount          ScoreEstimateSource = "amount"
+	DurationMinutes ScoreEstimateSource = "duration_minutes"
+)
+
 // Activities defines model for Activities.
 type Activities struct {
 	Activities []Activity `json:"activities"`
@@ -49,6 +55,12 @@ type ActivitySplitScore struct {
 	ActivityId   int     `json:"activity_id"`
 	ActivityName string  `json:"activity_name"`
 	Score        float32 `json:"score"`
+}
+
+// AppliedScoringRule defines model for AppliedScoringRule.
+type AppliedScoringRule struct {
+	Rate   float32            `json:"rate"`
+	RuleId openapi_types.UUID `json:"rule_id"`
 }
 
 // Contest defines model for Contest.
@@ -140,6 +152,13 @@ type ContestRegistrations struct {
 	NextPageToken string                `json:"next_page_token"`
 	Registrations []ContestRegistration `json:"registrations"`
 	TotalSize     int                   `json:"total_size"`
+}
+
+// ContestScoreEstimate defines model for ContestScoreEstimate.
+type ContestScoreEstimate struct {
+	ContestId      openapi_types.UUID `json:"contest_id"`
+	Estimate       ScoreEstimate      `json:"estimate"`
+	RegistrationId openapi_types.UUID `json:"registration_id"`
 }
 
 // ContestSummary defines model for ContestSummary.
@@ -265,6 +284,23 @@ type Score struct {
 	Score        float32 `json:"score"`
 }
 
+// ScoreEstimate defines model for ScoreEstimate.
+type ScoreEstimate struct {
+	RuleSetId *openapi_types.UUID  `json:"rule_set_id,omitempty"`
+	Rules     []AppliedScoringRule `json:"rules"`
+	Score     float32              `json:"score"`
+	Source    ScoreEstimateSource  `json:"source"`
+}
+
+// ScoreEstimateSource defines model for ScoreEstimate.Source.
+type ScoreEstimateSource string
+
+// ScorePreview defines model for ScorePreview.
+type ScorePreview struct {
+	Contests []ContestScoreEstimate `json:"contests"`
+	Platform ScoreEstimate          `json:"platform"`
+}
+
 // Scores defines model for Scores.
 type Scores = []Score
 
@@ -382,6 +418,18 @@ type LogCreateJSONBody struct {
 	UnitKey         *string               `json:"unit_key,omitempty"`
 }
 
+// ScorePreviewJSONBody defines parameters for ScorePreview.
+type ScorePreviewJSONBody struct {
+	ActivityId      int32                 `json:"activity_id"`
+	Amount          *float32              `json:"amount,omitempty"`
+	DurationSeconds *int32                `json:"duration_seconds,omitempty"`
+	LanguageCode    string                `json:"language_code"`
+	RegistrationIds *[]openapi_types.UUID `json:"registration_ids,omitempty"`
+	Tags            []string              `json:"tags"`
+	UnitId          *openapi_types.UUID   `json:"unit_id,omitempty"`
+	UnitKey         *string               `json:"unit_key,omitempty"`
+}
+
 // LogTagSuggestionsParams defines parameters for LogTagSuggestions.
 type LogTagSuggestionsParams struct {
 	Query *string `form:"query,omitempty" json:"query,omitempty"`
@@ -426,6 +474,9 @@ type LanguageUpdateJSONRequestBody LanguageUpdateJSONBody
 
 // LogCreateJSONRequestBody defines body for LogCreate for application/json ContentType.
 type LogCreateJSONRequestBody LogCreateJSONBody
+
+// ScorePreviewJSONRequestBody defines body for ScorePreview for application/json ContentType.
+type ScorePreviewJSONRequestBody ScorePreviewJSONBody
 
 // LogUpdateJSONRequestBody defines body for LogUpdate for application/json ContentType.
 type LogUpdateJSONRequestBody LogUpdateJSONBody
@@ -501,6 +552,9 @@ type ServerInterface interface {
 	// Fetches the configuration options for a log
 	// (GET /logs/configuration-options)
 	LogGetConfigurations(ctx echo.Context) error
+	// Previews platform and contest scores without creating a log
+	// (POST /logs/score-preview)
+	ScorePreview(ctx echo.Context) error
 	// Fetches tag suggestions for autocomplete
 	// (GET /logs/tag-suggestions)
 	LogTagSuggestions(ctx echo.Context, params LogTagSuggestionsParams) error
@@ -1024,6 +1078,17 @@ func (w *ServerInterfaceWrapper) LogGetConfigurations(ctx echo.Context) error {
 	return err
 }
 
+// ScorePreview converts echo context to params.
+func (w *ServerInterfaceWrapper) ScorePreview(ctx echo.Context) error {
+	var err error
+
+	ctx.Set(CookieAuthScopes, []string{""})
+
+	// Invoke the callback with all the unmarshalled arguments
+	err = w.Handler.ScorePreview(ctx)
+	return err
+}
+
 // LogTagSuggestions converts echo context to params.
 func (w *ServerInterfaceWrapper) LogTagSuggestions(ctx echo.Context) error {
 	var err error
@@ -1322,6 +1387,7 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 	router.GET(baseURL+"/leaderboard/yearly/:year", wrapper.FetchLeaderboardForYear)
 	router.POST(baseURL+"/logs", wrapper.LogCreate)
 	router.GET(baseURL+"/logs/configuration-options", wrapper.LogGetConfigurations)
+	router.POST(baseURL+"/logs/score-preview", wrapper.ScorePreview)
 	router.GET(baseURL+"/logs/tag-suggestions", wrapper.LogTagSuggestions)
 	router.DELETE(baseURL+"/logs/:id", wrapper.LogDeleteByID)
 	router.GET(baseURL+"/logs/:id", wrapper.LogFindByID)

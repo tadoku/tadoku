@@ -657,7 +657,16 @@
   }
 
   .mobile-nav-drawer {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
     transform: translateX(0);
+  }
+
+  .mobile-nav-drawer__body {
+    flex: 1;
+    min-block-size: 0;
+    overflow-y: auto;
   }
 
   .mobile-nav-backdrop[data-open='false'] .mobile-nav-drawer {
@@ -760,7 +769,6 @@
     .mobile-nav-drawer {
       inline-size: min(22rem, calc(100% - 2rem));
       block-size: 100%;
-      overflow-y: auto;
       border-inline-end: 1px solid var(--paper-color-rule-strong);
       background: var(--paper-color-surface-paper);
     }

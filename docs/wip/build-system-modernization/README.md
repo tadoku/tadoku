@@ -2,7 +2,7 @@
 
 ## Status
 
-Final rollout evidence captured. Closure pull request in progress.
+Migration complete.
 
 Last updated: 2026-08-08
 
@@ -19,14 +19,14 @@ Update this table in the same pull request that advances a phase. Use only the
 statuses `Not started`, `In progress`, `Blocked`, and `Done`. A phase is not
 `Done` until its exit criteria have passed on `main`.
 
-| Phase                                   | Status      | Pull request                                      | Depends on     | Evidence / notes                                                                                                                                                                                                    |
-| --------------------------------------- | ----------- | ------------------------------------------------- | -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 0. Capture the baseline                 | Done        | [#765](https://github.com/tadoku/tadoku/pull/765) | —              | Merged 2026-08-08 as `b6ba1845`; baseline evidence recorded below.                                                                                                                                                  |
-| 1. Make rules Bazel 9-ready on Bazel 8  | Done        | [#766](https://github.com/tadoku/tadoku/pull/766) | Phase 0        | Merged 2026-08-08 as `be66af7e`; [full Bazel 8 CI passed](https://github.com/tadoku/tadoku/actions/runs/31237113928).                                                                                               |
-| 2. Upgrade Bazel to 9.2.0               | Done        | [#767](https://github.com/tadoku/tadoku/pull/767) | Phase 1 merged | Merged 2026-08-08 as `42bba884`; [full Bazel 9 CI passed](https://github.com/tadoku/tadoku/actions/runs/31237357627).                                                                                               |
-| 3. Harden CI and dependency updates     | Done        | [#768](https://github.com/tadoku/tadoku/pull/768) | Phase 2 merged | Merged 2026-08-08 as `3eb06aac`; the [first hardened `main` run](https://github.com/tadoku/tadoku/actions/runs/31238030479) saved all three caches, restored them in the publish job, and published all six images. |
-| 4. Clean up latent Bazel debt           | Done        | [#771](https://github.com/tadoku/tadoku/pull/771) | Phase 3 merged | Merged 2026-08-08 as `55e23bfa`; the [final Phase 4 `main` run](https://github.com/tadoku/tadoku/actions/runs/31238429385) built, tested, scanned, and published all six images.                                    |
-| 5. Complete rollout and close migration | In progress | Pending                                           | Phases 0–4     | Closure evidence is recorded below; the documentation pull request remains pending.                                                                                                                                 |
+| Phase                                   | Status | Pull request                                      | Depends on     | Evidence / notes                                                                                                                                                                                                    |
+| --------------------------------------- | ------ | ------------------------------------------------- | -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 0. Capture the baseline                 | Done   | [#765](https://github.com/tadoku/tadoku/pull/765) | —              | Merged 2026-08-08 as `b6ba1845`; baseline evidence recorded below.                                                                                                                                                  |
+| 1. Make rules Bazel 9-ready on Bazel 8  | Done   | [#766](https://github.com/tadoku/tadoku/pull/766) | Phase 0        | Merged 2026-08-08 as `be66af7e`; [full Bazel 8 CI passed](https://github.com/tadoku/tadoku/actions/runs/31237113928).                                                                                               |
+| 2. Upgrade Bazel to 9.2.0               | Done   | [#767](https://github.com/tadoku/tadoku/pull/767) | Phase 1 merged | Merged 2026-08-08 as `42bba884`; [full Bazel 9 CI passed](https://github.com/tadoku/tadoku/actions/runs/31237357627).                                                                                               |
+| 3. Harden CI and dependency updates     | Done   | [#768](https://github.com/tadoku/tadoku/pull/768) | Phase 2 merged | Merged 2026-08-08 as `3eb06aac`; the [first hardened `main` run](https://github.com/tadoku/tadoku/actions/runs/31238030479) saved all three caches, restored them in the publish job, and published all six images. |
+| 4. Clean up latent Bazel debt           | Done   | [#771](https://github.com/tadoku/tadoku/pull/771) | Phase 3 merged | Merged 2026-08-08 as `55e23bfa`; the [final Phase 4 `main` run](https://github.com/tadoku/tadoku/actions/runs/31238429385) built, tested, scanned, and published all six images.                                    |
+| 5. Complete rollout and close migration | Done   | [#772](https://github.com/tadoku/tadoku/pull/772) | Phases 0–4     | Functional exit criteria passed on `main` at `55e23bfa`; final evidence is recorded below.                                                                                                                          |
 
 ## Phase 0 baseline evidence
 
@@ -448,8 +448,8 @@ turn this document into the durable record of the migration.
       the first generated pull request as the documented follow-up.
 - [x] Record final Bazel and rule versions in the progress tracker notes.
 - [x] Record any intentionally deferred items under Follow-ups.
-- [ ] Change the top-level status to `Migration complete`.
-- [ ] Mark Phase 5 `Done` in the progress tracker.
+- [x] Change the top-level status to `Migration complete`.
+- [x] Mark Phase 5 `Done` in the progress tracker.
 
 ### Closure evidence
 

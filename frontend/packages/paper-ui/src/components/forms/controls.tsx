@@ -141,32 +141,38 @@ export function Select({
   });
   return (
     <FieldFrame id={id} label={label} hint={hint} required={required} error={error?.message?.toString()}>
-      <select
-        {...props}
-        {...registration}
-        id={id}
-        required={required}
-        aria-invalid={error ? true : undefined}
-        aria-describedby={describedBy(id, hint, error)}
-        className="paper-input paper-select"
-      >
-        {placeholder ? <option value="">{placeholder}</option> : null}
-        {groups
-          ? groups.map((group) => (
-              <optgroup key={group.label} label={group.label}>
-                {group.options.map((option) => (
-                  <option key={option.value} value={option.value} disabled={option.disabled}>
-                    {option.label}
-                  </option>
-                ))}
-              </optgroup>
-            ))
-          : options.map((option) => (
-              <option key={option.value} value={option.value} disabled={option.disabled}>
-                {option.label}
-              </option>
-            ))}
-      </select>
+      <span className="paper-select__control">
+        <select
+          {...props}
+          {...registration}
+          id={id}
+          required={required}
+          aria-invalid={error ? true : undefined}
+          aria-describedby={describedBy(id, hint, error)}
+          className="paper-input paper-select"
+        >
+          {placeholder ? <option value="">{placeholder}</option> : null}
+          {groups
+            ? groups.map((group) => (
+                <optgroup key={group.label} label={group.label}>
+                  {group.options.map((option) => (
+                    <option key={option.value} value={option.value} disabled={option.disabled}>
+                      {option.label}
+                    </option>
+                  ))}
+                </optgroup>
+              ))
+            : options.map((option) => (
+                <option key={option.value} value={option.value} disabled={option.disabled}>
+                  {option.label}
+                </option>
+              ))}
+        </select>
+        <ChevronDownIcon
+          className={iconClassName("compact", "paper-select__icon")}
+          aria-hidden="true"
+        />
+      </span>
     </FieldFrame>
   );
 }

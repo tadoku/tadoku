@@ -7,7 +7,7 @@ The studies intentionally include rejected directions. They document why the fin
 ## Documents
 
 - [Decision log](decision-log.md)
-- [Implementation plan](implementation-plan.md)
+- [Implementation plan](implementation-plan.md) ([Presenter](https://presentr.lab/md/tadoku-paper-implementation-plan))
 - [Original design-system refinement audit](artifacts/design-system-refinement-audit.html)
 
 ## Visual studies

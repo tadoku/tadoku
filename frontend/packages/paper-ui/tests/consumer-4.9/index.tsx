@@ -5,8 +5,10 @@ import {
   buttonClassName,
   chartPalette,
   chartSeries,
+  type AutocompleteInputProps,
   type ButtonProps,
   type ChartSeries,
+  type ToastOptions,
 } from "paper-ui";
 import {
   CATALOG_LIFECYCLES,
@@ -36,8 +38,22 @@ const fixture: CatalogFixture = defineCatalogFixture({
 void CATALOG_LIFECYCLES;
 void chartPalette;
 const buttonProps: ButtonProps = { variant: "outline", children: "Review log" };
+const autocompleteProps: AutocompleteInputProps<{ id: string; label: string }> = {
+  name: "language",
+  label: "Language",
+  options: [{ id: "ja", label: "Japanese" }],
+  format: (option) => option.label,
+  getId: (option) => option.id,
+};
+const toast: ToastOptions = {
+  title: "Entry saved",
+  description: "12 pages added.",
+  priority: "low",
+};
 void buttonClassName({ variant: "outline" });
 void renderToString(createElement(Button, buttonProps));
+void autocompleteProps;
+void toast;
 void document;
 void series;
 void validateCatalogRegistry(registry);

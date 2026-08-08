@@ -2,7 +2,7 @@ import { createElement } from "react";
 import { renderToString } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 
-import { chartPalette, chartSeries } from "../src";
+import { Button, buttonClassName, chartPalette, chartSeries } from "../src";
 import {
   catalogRegistry,
   defineCatalogFixture,
@@ -31,6 +31,15 @@ describe("public source entries", () => {
 
     expect(renderToString(createElement("div", null, fixture.render()))).toContain(
       "Paper consumer",
+    );
+  });
+
+  it("server-renders the public component entry without browser globals", () => {
+    expect(renderToString(createElement(Button, null, "Save log"))).toContain(
+      "Save log",
+    );
+    expect(buttonClassName({ variant: "destructive" })).toContain(
+      "paper-button--destructive",
     );
   });
 });

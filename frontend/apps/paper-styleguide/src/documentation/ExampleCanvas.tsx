@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
+import type { CatalogFixture } from 'paper-ui/catalog'
 import type { PaperDensity, PaperTheme } from '../app/displayPreferences'
 
 const VIEWPORTS = [
@@ -32,7 +33,7 @@ function copyPaperStyles(target: Document) {
   }
 }
 
-export function ExampleCanvas() {
+export function ExampleCanvas({ fixture }: { fixture?: CatalogFixture }) {
   const [theme, setTheme] = useState<PaperTheme>('light')
   const [density, setDensity] = useState<PaperDensity>('comfortable')
   const [viewportId, setViewportId] = useState<(typeof VIEWPORTS)[number]['id']>(
@@ -126,7 +127,16 @@ export function ExampleCanvas() {
           }}
         />
       </div>
-      {previewRoot ? createPortal(<PreviewSpecimen />, previewRoot) : null}
+      {previewRoot
+        ? createPortal(
+            fixture ? (
+              <div className="paper-fixture-stage">{fixture.render()}</div>
+            ) : (
+              <PreviewSpecimen />
+            ),
+            previewRoot,
+          )
+        : null}
     </section>
   )
 }

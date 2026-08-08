@@ -180,6 +180,8 @@ export interface CatalogFixture {
    * function for known time, randomness, network, and router dependencies.
    */
   readonly deterministic: true;
+  /** Complete copyable consumer example for the catalogue Code view. */
+  readonly code?: string;
   readonly render: () => ReactNode;
 }
 

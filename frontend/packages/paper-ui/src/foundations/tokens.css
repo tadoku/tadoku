@@ -46,6 +46,7 @@
   --paper-color-action-default: var(--paper-private-action-default);
   --paper-color-action-hover: var(--paper-private-action-hover);
   --paper-color-action-active: var(--paper-private-action-active);
+  --paper-color-action-soft: var(--paper-private-accent-soft);
   --paper-color-action-text: var(--paper-private-inverse);
   --paper-color-action-destructive: var(--paper-private-danger);
   --paper-color-action-destructive-hover: var(--paper-private-danger-hover);
@@ -125,6 +126,7 @@
   --paper-color-action-default: var(--paper-private-action-default);
   --paper-color-action-hover: var(--paper-private-action-hover);
   --paper-color-action-active: var(--paper-private-action-active);
+  --paper-color-action-soft: var(--paper-private-accent-soft);
   --paper-color-action-text: var(--paper-private-inverse);
 
   --paper-color-chart-1: #9a8bea;

@@ -1,6 +1,13 @@
 import { createElement } from "react";
 import { renderToString } from "react-dom/server";
-import { chartPalette, chartSeries, type ChartSeries } from "paper-ui";
+import {
+  Button,
+  buttonClassName,
+  chartPalette,
+  chartSeries,
+  type ButtonProps,
+  type ChartSeries,
+} from "paper-ui";
 import {
   CATALOG_LIFECYCLES,
   catalogRegistry,
@@ -28,6 +35,9 @@ const fixture: CatalogFixture = defineCatalogFixture({
 
 void CATALOG_LIFECYCLES;
 void chartPalette;
+const buttonProps: ButtonProps = { variant: "outline", children: "Review log" };
+void buttonClassName({ variant: "outline" });
+void renderToString(createElement(Button, buttonProps));
 void document;
 void series;
 void validateCatalogRegistry(registry);

@@ -129,6 +129,23 @@ describe('responsive visual contract', () => {
     )
   })
 
+  it('collapses the catalogue sidebar into Browse at mid-size widths', () => {
+    const midSizeStyles = shellStyles.slice(
+      shellStyles.indexOf('@media (max-width: 64rem)'),
+      shellStyles.indexOf('@media (max-width: 48rem)'),
+    )
+
+    expect(midSizeStyles).toContain(
+      '.docs-shell {\n      display: block;\n    }',
+    )
+    expect(midSizeStyles).toContain(
+      '.docs-sidebar {\n      display: none;\n    }',
+    )
+    expect(midSizeStyles).toContain(
+      '.mobile-nav-trigger {\n      display: inline-flex;\n    }',
+    )
+  })
+
   it('switches the Cut Meter to its canonical reversed asset in dark mode', () => {
     expect(shellStyles).toContain(
       ":root[data-theme='dark'] .paper-wordmark__mark--light",

@@ -84,6 +84,9 @@ describe('responsive visual contract', () => {
     expect(browse.querySelector('svg')).not.toBeNull()
     expect(browse.querySelector('.mobile-nav-trigger__label')).not.toBeNull()
     expect(brandMarks).toHaveLength(2)
+    expect(shellStyles).toContain(
+      'inline-size: 2.25rem;\n    block-size: 2.25rem;\n    aspect-ratio: 1;',
+    )
     expect([...brandMarks].map((mark) => mark.getAttribute('src'))).toEqual(
       expect.arrayContaining([
         expect.stringContaining('cut-meter.svg'),

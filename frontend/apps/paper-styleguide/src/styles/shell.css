@@ -92,6 +92,7 @@
     display: grid;
     place-items: center;
     inline-size: 2.25rem;
+    block-size: 2.25rem;
     aspect-ratio: 1;
     color: var(--paper-color-action-default);
   }

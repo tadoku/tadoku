@@ -23,8 +23,8 @@ statuses `Not started`, `In progress`, `Blocked`, and `Done`. A phase is not
 | Phase | Status | Pull request | Depends on | Evidence / notes |
 | --- | --- | --- | --- | --- |
 | 0. Capture the baseline | Done | [#765](https://github.com/tadoku/tadoku/pull/765) | — | Merged 2026-08-08 as `b6ba1845`; baseline evidence recorded below. |
-| 1. Make rules Bazel 9-ready on Bazel 8 | In progress | [#766](https://github.com/tadoku/tadoku/pull/766) | Phase 0 | Bazel 8 frozen dependencies, Gazelle, build, tests, OCI coverage/loading, and Trivy passed locally. |
-| 2. Upgrade Bazel to 9.2.0 | Not started | — | Phase 1 merged | — |
+| 1. Make rules Bazel 9-ready on Bazel 8 | Done | [#766](https://github.com/tadoku/tadoku/pull/766) | Phase 0 | Merged 2026-08-08 as `be66af7e`; [full Bazel 8 CI passed](https://github.com/tadoku/tadoku/actions/runs/31237113928). |
+| 2. Upgrade Bazel to 9.2.0 | In progress | [#767](https://github.com/tadoku/tadoku/pull/767) | Phase 1 merged | Bazel 9 frozen dependencies, Gazelle, build, tests, OCI coverage/loading, and Trivy passed locally. |
 | 3. Harden CI and dependency updates | Not started | — | Phase 2 merged | — |
 | 4. Clean up latent Bazel debt | Not started | — | Phase 3 merged | — |
 | 5. Complete rollout and close migration | Not started | — | Phases 0–4 | — |
@@ -227,8 +227,8 @@ easy to isolate.
       image still loads.
 - [x] Review the lockfile diff for provenance and completeness, not for
       minimizing generated output.
-- [ ] Merge only when Bazel 8.7.0 remains green on `main`.
-- [ ] Record the merged pull request and CI run, then mark Phase 1 `Done`.
+- [x] Merge only when Bazel 8.7.0 remains green on `main`.
+- [x] Record the merged pull request and CI run, then mark Phase 1 `Done`.
 
 ### Exit criteria
 
@@ -253,33 +253,33 @@ for externally loaded shell rules.
 
 ### Steps
 
-- [ ] Branch from `main` after Phase 1 is merged.
-- [ ] Set Phase 2 to `In progress` and link the pull request.
-- [ ] Change `.bazelversion` from 8.7.0 to 9.2.0.
-- [ ] Remove the stale `.bazelrc` comment that says the repository still needs
+- [x] Branch from `main` after Phase 1 is merged.
+- [x] Set Phase 2 to `In progress` and link the pull request.
+- [x] Change `.bazelversion` from 8.7.0 to 9.2.0.
+- [x] Remove the stale `.bazelrc` comment that says the repository still needs
       a Bzlmod migration.
-- [ ] Remove `common --enable_workspace=false`; Bazel 9 has removed WORKSPACE
+- [x] Remove `common --enable_workspace=false`; Bazel 9 has removed WORKSPACE
       support and the flag is redundant.
-- [ ] Confirm Bazelisk resolves the new pin:
+- [x] Confirm Bazelisk resolves the new pin:
 
   ```sh
   bazel --version
   ```
 
-- [ ] Regenerate the lockfile with Bazel 9.2.0:
+- [x] Regenerate the lockfile with Bazel 9.2.0:
 
   ```sh
   bazel mod deps --lockfile_mode=update
   ```
 
-- [ ] Confirm the lockfile format changed to the Bazel 9 format and commit the
+- [x] Confirm the lockfile format changed to the Bazel 9 format and commit the
       complete generated rewrite:
 
   ```sh
   jq .lockFileVersion MODULE.bazel.lock
   ```
 
-- [ ] Run module graph and tidy checks:
+- [x] Run module graph and tidy checks:
 
   ```sh
   bazel mod graph --lockfile_mode=error
@@ -287,13 +287,13 @@ for externally loaded shell rules.
   git diff --exit-code MODULE.bazel
   ```
 
-- [ ] Verify frozen dependency resolution:
+- [x] Verify frozen dependency resolution:
 
   ```sh
   bazel mod deps --lockfile_mode=error
   ```
 
-- [ ] Verify Gazelle, build, and tests:
+- [x] Verify Gazelle, build, and tests:
 
   ```sh
   bazel run --lockfile_mode=error //:gazelle -- -mode=diff
@@ -301,10 +301,10 @@ for externally loaded shell rules.
   bazel test --lockfile_mode=error //...
   ```
 
-- [ ] Re-run both production image coverage queries.
-- [ ] Run `bazel run --lockfile_mode=error //:load_images`.
-- [ ] Run the same Trivy scan performed by the Bazel GitHub Actions workflow.
-- [ ] Confirm the pull request changes only Bazel configuration and generated
+- [x] Re-run both production image coverage queries.
+- [x] Run `bazel run --lockfile_mode=error //:load_images`.
+- [x] Run the same Trivy scan performed by the Bazel GitHub Actions workflow.
+- [x] Confirm the pull request changes only Bazel configuration and generated
       dependency state.
 - [ ] Merge and verify the first `main` build completes with Bazel 9.2.0.
 - [ ] Record the merge commit and CI run, then mark Phase 2 `Done`.

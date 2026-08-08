@@ -23,6 +23,7 @@ const originalScrollIntoView = HTMLElement.prototype.scrollIntoView
 
 afterEach(() => {
   vi.restoreAllMocks()
+  vi.unstubAllGlobals()
   if (originalScrollIntoView) {
     HTMLElement.prototype.scrollIntoView = originalScrollIntoView
   } else {
@@ -101,6 +102,55 @@ describe('catalogue experience stability', () => {
 
     await user.click(screen.getByRole('button', { name: 'Browse' }))
     expect(screen.getByRole('button', { name: 'Close navigation' })).toHaveFocus()
+  })
+
+  it('closes mobile navigation when the viewport crosses into desktop layout', async () => {
+    const user = userEvent.setup()
+    const listeners = new Set<(event: MediaQueryListEvent) => void>()
+    let collapsed = true
+    const desktopBoundary = {
+      get matches() {
+        return collapsed
+      },
+      media: '(max-width: 64rem)',
+      onchange: null,
+      addEventListener: vi.fn(
+        (_: string, listener: EventListenerOrEventListenerObject) => {
+          listeners.add(listener as (event: MediaQueryListEvent) => void)
+        },
+      ),
+      removeEventListener: vi.fn(
+        (_: string, listener: EventListenerOrEventListenerObject) => {
+          listeners.delete(listener as (event: MediaQueryListEvent) => void)
+        },
+      ),
+      addListener: vi.fn(),
+      removeListener: vi.fn(),
+      dispatchEvent: vi.fn(),
+    } as MediaQueryList
+    vi.stubGlobal('matchMedia', vi.fn(() => desktopBoundary))
+
+    const { container } = render(
+      <MemoryRouter>
+        <DocsShell documents={catalogRegistry.documents}>Content</DocsShell>
+      </MemoryRouter>,
+    )
+
+    const browse = screen.getByRole('button', { name: 'Browse' })
+    const backdrop = container.querySelector('.mobile-nav-backdrop')
+    const drawer = container.querySelector<HTMLElement>('.mobile-nav-drawer')
+    await user.click(browse)
+    expect(backdrop).toHaveAttribute('data-open', 'true')
+
+    collapsed = false
+    listeners.forEach((listener) =>
+      listener({ matches: false } as MediaQueryListEvent),
+    )
+
+    await waitFor(() => expect(browse).toHaveAttribute('aria-expanded', 'false'))
+    expect(backdrop).toHaveAttribute('data-open', 'false')
+    expect(backdrop).toHaveAttribute('aria-hidden', 'true')
+    expect(drawer?.inert).toBe(true)
   })
 
   it('keeps display preferences out of catalogue navigation', async () => {

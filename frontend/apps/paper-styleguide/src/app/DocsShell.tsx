@@ -60,6 +60,24 @@ export function DocsShell({ documents, children }: DocsShellProps) {
   const mobileCloseRef = useRef<HTMLButtonElement>(null)
 
   useEffect(() => {
+    if (
+      typeof window === 'undefined' ||
+      typeof window.matchMedia !== 'function'
+    ) {
+      return
+    }
+
+    const collapsedLayout = window.matchMedia('(max-width: 64rem)')
+    const closeOnDesktop = (event: MediaQueryListEvent) => {
+      if (!event.matches) setMobileNavigationOpen(false)
+    }
+
+    collapsedLayout.addEventListener('change', closeOnDesktop)
+    return () =>
+      collapsedLayout.removeEventListener('change', closeOnDesktop)
+  }, [])
+
+  useEffect(() => {
     if (!mobileNavigationOpen) return
     mobileCloseRef.current?.focus()
     const onKeyDown = (event: KeyboardEvent) => {

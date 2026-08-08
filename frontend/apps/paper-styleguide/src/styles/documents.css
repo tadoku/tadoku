@@ -37,13 +37,10 @@
     list-style: none;
   }
 
-  .design-history__links a {
+  .design-history__link {
     display: block;
     block-size: 100%;
-    padding: 1rem;
-    border: 1px solid var(--paper-color-rule-default);
     color: var(--paper-color-text-ink);
-    background: var(--paper-color-surface-raised);
     text-decoration: none;
   }
 
@@ -83,8 +80,6 @@
 
   .document-card {
     min-block-size: 11rem;
-    padding: 1.25rem;
-    border: 1px solid var(--paper-color-rule-default);
     color: var(--paper-color-text-ink);
     text-decoration: none;
   }
@@ -166,23 +161,11 @@
     position: sticky;
     inset-block-start: 6rem;
     align-self: start;
-    padding-inline-start: 1rem;
-    border-inline-start: 1px solid var(--paper-color-rule-subtle);
   }
 
   .local-outline h2 {
     margin-block-start: 0;
-  }
-
-  .local-outline a {
-    display: block;
-    padding-block: 0.35rem;
-    color: var(--paper-color-text-muted);
-    text-decoration: none;
-  }
-
-  .local-outline a:hover {
-    color: var(--paper-color-text-link);
+    margin-inline-start: var(--paper-field-padding-inline);
   }
 
 }

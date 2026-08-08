@@ -1,3 +1,4 @@
+import { Surface, surfaceClassName } from 'paper-ui'
 import { catalogRegistry, type CatalogKind } from 'paper-ui/catalog'
 import { useEffect } from 'react'
 import { Link, Navigate, useLocation } from 'react-router-dom'
@@ -51,7 +52,10 @@ export function CatalogIndex() {
               {documents.map((document) => (
                 <Link
                   key={document.id}
-                  className="document-card paper-surface-raised paper-elevation-floating paper-focus-ring"
+                  className={surfaceClassName({
+                    elevation: 'floating',
+                    className: 'document-card paper-focus-ring',
+                  })}
                   to={document.route}
                 >
                   <span className="paper-type-component">{document.name}</span>
@@ -76,7 +80,12 @@ export function CatalogIndex() {
         <ul className="design-history__links">
           {DESIGN_HISTORY_LINKS.map((entry) => (
             <li key={entry.href}>
-              <a className="paper-focus-ring" href={entry.href}>
+              <a
+                className={surfaceClassName({
+                  className: 'design-history__link paper-focus-ring',
+                })}
+                href={entry.href}
+              >
                 <strong>{entry.label}</strong>
                 <span>{entry.description}</span>
               </a>
@@ -113,7 +122,7 @@ export function ResolvedCatalogueRoute() {
   }
 
   return (
-    <section className="not-found paper-accent-rail">
+    <Surface as="section" accent className="not-found">
       <p className="eyebrow">404 · Outside the catalogue</p>
       <h1 className="paper-type-page">This Paper page does not exist.</h1>
       <p>
@@ -122,6 +131,6 @@ export function ResolvedCatalogueRoute() {
       <Link className="text-link paper-focus-ring" to="/">
         Return to the catalogue
       </Link>
-    </section>
+    </Surface>
   )
 }

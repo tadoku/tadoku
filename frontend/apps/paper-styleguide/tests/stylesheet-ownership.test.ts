@@ -41,7 +41,7 @@ describe('styleguide stylesheet ownership', () => {
       '.catalogue-nav__group + .catalogue-nav__group',
       'navigation.css',
     ],
-    ['.design-history__links a', 'documents.css'],
+    ['.design-history__link', 'documents.css'],
     ['.example-canvas', 'canvas-frame.css'],
     ['.component-workbench__panel', 'workbench.css'],
     ['.preview-specimen h3', 'canvas.css'],

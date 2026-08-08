@@ -31,11 +31,6 @@
     .local-outline {
       display: none;
     }
-
-    .example-canvas__heading {
-      align-items: start;
-      flex-direction: column;
-    }
   }
 
   /* Compact application, content, and workbench-iframe layout. */
@@ -101,26 +96,6 @@
     .metadata-list > div {
       grid-template-columns: 1fr;
       gap: 0;
-    }
-
-    .canvas-controls {
-      align-items: stretch;
-      flex-direction: column;
-      inline-size: 100%;
-    }
-
-    .canvas-controls fieldset,
-    .canvas-viewport-button {
-      flex: 1;
-    }
-
-    .component-workbench__toolbar {
-      align-items: stretch;
-      flex-direction: column;
-    }
-
-    .component-workbench__fixture-select {
-      inline-size: 100%;
     }
   }
 

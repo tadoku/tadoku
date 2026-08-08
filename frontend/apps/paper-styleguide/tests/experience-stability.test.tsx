@@ -64,6 +64,9 @@ describe('catalogue experience stability', () => {
     expect(screen.getByRole('tablist', { name: 'Example views' })).toHaveClass(
       'paper-tabs__list',
     )
+    expect(
+      screen.getByRole('tablist', { name: 'Example views' }).parentElement,
+    ).toHaveClass('component-workbench__tabs')
 
     await user.click(screen.getByRole('tab', { name: 'Code' }))
     await user.click(screen.getByRole('tab', { name: 'Preview' }))
@@ -85,6 +88,8 @@ describe('catalogue experience stability', () => {
     )
     const fixtureSelect = screen.getByLabelText('Fixture')
     expect(fixtureSelect).toHaveClass('paper-select')
+    const settings = screen.getByRole('group', { name: 'Preview settings' })
+    expect(within(settings).getByLabelText('Fixture')).toBe(fixtureSelect)
 
     await user.selectOptions(fixtureSelect, fixtures[1].id)
     expect(screen.getByTitle('Paper responsive component preview')).toHaveAttribute(
@@ -115,7 +120,7 @@ describe('catalogue experience stability', () => {
     const user = userEvent.setup()
     render(<ExampleCanvas />)
 
-    await user.click(screen.getByRole('button', { name: 'Tablet, 768 pixels' }))
+    await user.click(screen.getByRole('radio', { name: 'Tablet' }))
     const frame = screen.getByTitle('Paper responsive component preview')
     expect(frame).toHaveAttribute('width', '768')
     expect(frame).toHaveStyle({ inlineSize: '768px', boxSizing: 'content-box' })

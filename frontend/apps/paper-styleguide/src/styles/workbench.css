@@ -1,24 +1,18 @@
 @layer paper-styleguide {
   /* Workbench content: panels, source code, and API-reference composition. */
   .component-workbench {
-    overflow: hidden;
+    overflow: clip;
     padding: 0;
   }
 
-  .component-workbench__toolbar {
-    display: flex;
-    align-items: end;
-    justify-content: space-between;
-    gap: 1rem;
-    padding: 0.75rem;
-  }
-
-  .component-workbench__fixture-select {
-    min-inline-size: 12rem;
+  .component-workbench__tabs {
+    min-inline-size: 0;
+    padding-inline: 0.75rem;
   }
 
   .component-workbench__panel {
-    min-block-size: 28rem;
+    min-inline-size: 0;
+    padding: 0;
   }
 
   .code-view,

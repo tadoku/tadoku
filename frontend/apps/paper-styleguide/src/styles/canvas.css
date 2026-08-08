@@ -1,48 +1,95 @@
 @layer paper-styleguide {
   /* Workbench iframe controls and staging layout. */
-  .example-canvas__heading {
-    display: flex;
-    justify-content: space-between;
-    gap: 1rem;
+  .canvas-controls {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: end;
+    gap: 0.75rem;
     padding: 1rem;
   }
 
-  .example-canvas__heading h2 {
-    margin: 0.25rem 0 0;
+  .canvas-controls__fixture,
+  .canvas-controls__viewport {
+    grid-column: 1 / -1;
   }
 
-  .canvas-controls {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.75rem;
-    align-items: end;
-  }
-
-  .canvas-controls fieldset {
-    display: flex;
-    gap: var(--paper-inline-gap);
-    margin: 0;
-    padding: 0;
-    border: 0;
-  }
-
-  .canvas-controls legend {
+  .canvas-controls__title {
     position: absolute;
     inline-size: 1px;
     block-size: 1px;
     overflow: hidden;
-    clip: rect(0 0 0 0);
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .canvas-controls__viewport {
+    min-inline-size: 0;
+  }
+
+  @media (min-width: 80rem) {
+    .canvas-controls {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .canvas-controls:has(.canvas-controls__fixture) {
+      grid-template-areas:
+        'fixture viewport viewport'
+        'theme density .';
+    }
+
+    .canvas-controls__fixture {
+      grid-area: fixture;
+    }
+
+    .canvas-controls__theme {
+      grid-area: theme;
+    }
+
+    .canvas-controls__density {
+      grid-area: density;
+    }
+
+    .canvas-controls:has(.canvas-controls__fixture) .canvas-controls__viewport {
+      grid-area: viewport;
+      grid-column: auto;
+    }
+  }
+
+  @container (min-width: 54rem) {
+    .canvas-controls {
+      grid-template-columns:
+        minmax(12rem, 1.25fr)
+        minmax(8rem, 0.75fr)
+        minmax(10rem, 0.9fr)
+        minmax(21rem, 1.5fr);
+      grid-template-areas: none;
+    }
+
+    .canvas-controls__fixture {
+      grid-area: auto;
+      grid-column: auto;
+    }
+
+    .canvas-controls__theme,
+    .canvas-controls__density,
+    .canvas-controls__viewport {
+      grid-area: auto;
+    }
+
+    .canvas-controls:has(.canvas-controls__fixture) .canvas-controls__viewport {
+      grid-area: auto;
+      grid-column: auto;
+    }
   }
 
   .canvas-status {
     margin: 0;
-    padding: 0.5rem 1rem;
+    padding: 0 1rem 0.75rem;
     color: var(--paper-color-text-muted);
   }
 
   .example-canvas__stage {
     max-inline-size: 100%;
-    min-block-size: 24rem;
     overflow: auto;
     padding: 0.5rem;
   }
@@ -50,7 +97,6 @@
   .example-canvas iframe {
     display: block;
     max-inline-size: none;
-    block-size: 21rem;
     border: 0;
   }
 

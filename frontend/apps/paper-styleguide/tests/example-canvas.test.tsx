@@ -1,5 +1,5 @@
 import '@testing-library/jest-dom/vitest'
-import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { catalogRegistry } from 'paper-ui/catalog'
 import { afterEach, describe, expect, it, vi } from 'vitest'
@@ -15,35 +15,52 @@ describe('ExampleCanvas', () => {
     const frame = screen.getByTitle('Paper responsive component preview')
     expect(frame).toHaveAttribute('data-preview-width', '1280')
 
-    const phoneButton = screen.getByRole('button', {
-      name: 'Phone, 360 pixels',
+    const phoneOption = screen.getByRole('radio', {
+      name: 'Phone',
     })
-    const desktopButton = screen.getByRole('button', {
-      name: 'Desktop, 1280 pixels',
+    const desktopOption = screen.getByRole('radio', {
+      name: 'Desktop',
     })
-    expect(phoneButton).toHaveClass('paper-button', 'paper-button--outline')
-    expect(desktopButton).toHaveClass('paper-button', 'paper-button--default')
+    expect(phoneOption).not.toHaveClass('paper-button')
+    expect(desktopOption).toBeChecked()
+    expect(phoneOption).not.toHaveAttribute('aria-pressed')
 
-    await user.click(phoneButton)
+    await user.click(phoneOption)
     expect(frame).toHaveAttribute('data-preview-width', '360')
     expect(frame).toHaveStyle({ inlineSize: '360px' })
-    expect(phoneButton).toHaveAttribute('aria-pressed', 'true')
-    expect(phoneButton).toHaveClass('paper-button--default')
-    expect(desktopButton).toHaveClass('paper-button--outline')
+    expect(phoneOption).toBeChecked()
+    expect(desktopOption).not.toBeChecked()
+  })
+
+  it('presents a compact semantic settings region without a display heading', () => {
+    render(<ExampleCanvas />)
+
+    const settings = screen.getByRole('group', { name: 'Preview settings' })
+    expect(settings).toHaveClass('canvas-controls')
+    expect(within(settings).getByLabelText('Theme')).toHaveClass('paper-select')
+    expect(within(settings).getByLabelText('Density')).toHaveClass('paper-select')
+    expect(within(settings).getByRole('group', { name: 'Viewport' })).toHaveClass(
+      'paper-radio-select--segmented',
+    )
+    expect(within(settings).getAllByRole('radio')).toHaveLength(3)
+    expect(settings.querySelector('.paper-button')).toBeNull()
+    expect(settings.querySelector('[aria-pressed]')).toBeNull()
+    expect(screen.queryByText('Isolated preview')).not.toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: 'Real viewport canvas' })).not.toBeInTheDocument()
   })
 
   it('reports independent theme and density settings', async () => {
     const user = userEvent.setup()
     render(<ExampleCanvas />)
 
-    expect(screen.getByLabelText('Preview theme')).toHaveClass('paper-select')
-    expect(screen.getByLabelText('Preview density')).toHaveClass('paper-select')
+    expect(screen.getByLabelText('Theme')).toHaveClass('paper-select')
+    expect(screen.getByLabelText('Density')).toHaveClass('paper-select')
 
-    await user.selectOptions(screen.getByLabelText('Preview theme'), 'dark')
-    await user.selectOptions(screen.getByLabelText('Preview density'), 'compact')
+    await user.selectOptions(screen.getByLabelText('Theme'), 'dark')
+    await user.selectOptions(screen.getByLabelText('Density'), 'compact')
 
     expect(
-      screen.getByText('Desktop · 1280px · dark · compact'),
+      screen.getByText('Desktop · 1280 px · Dark · Compact'),
     ).toBeInTheDocument()
   })
 
@@ -65,8 +82,8 @@ describe('ExampleCanvas', () => {
       'comfortable',
     )
 
-    await user.selectOptions(screen.getByLabelText('Preview theme'), 'dark')
-    await user.selectOptions(screen.getByLabelText('Preview density'), 'compact')
+    await user.selectOptions(screen.getByLabelText('Theme'), 'dark')
+    await user.selectOptions(screen.getByLabelText('Density'), 'compact')
 
     await waitFor(() => {
       expect(frame.contentDocument?.documentElement).toHaveAttribute(
@@ -85,8 +102,8 @@ describe('ExampleCanvas', () => {
     const fixture = catalogRegistry.fixtures[0]
     const { rerender } = render(<ExampleCanvas fixture={fixture} />)
 
-    await user.selectOptions(screen.getByLabelText('Preview theme'), 'dark')
-    await user.selectOptions(screen.getByLabelText('Preview density'), 'compact')
+    await user.selectOptions(screen.getByLabelText('Theme'), 'dark')
+    await user.selectOptions(screen.getByLabelText('Density'), 'compact')
 
     rerender(
       <ExampleCanvas
@@ -99,8 +116,8 @@ describe('ExampleCanvas', () => {
     )
 
     await waitFor(() => {
-      expect(screen.getByLabelText('Preview theme')).toHaveValue('light')
-      expect(screen.getByLabelText('Preview density')).toHaveValue(
+      expect(screen.getByLabelText('Theme')).toHaveValue('light')
+      expect(screen.getByLabelText('Density')).toHaveValue(
         'comfortable',
       )
     })
@@ -115,6 +132,26 @@ describe('ExampleCanvas', () => {
       'data-preview-width',
       '360',
     )
-    expect(screen.getByText('Phone · 360px · light · comfortable')).toBeInTheDocument()
+    expect(screen.getByText('Phone · 360 px · Light · Comfortable')).toBeInTheDocument()
+  })
+
+  it('uses registered fixture viewport dimensions instead of the fallbacks', () => {
+    const fixture = catalogRegistry.fixtures[0]
+    render(
+      <ExampleCanvas
+        fixture={{
+          ...fixture,
+          viewports: [
+            { id: 'reader', label: 'Reader', width: 412, height: 915 },
+          ],
+        }}
+      />,
+    )
+
+    const frame = screen.getByTitle('Paper responsive component preview')
+    expect(frame).toHaveAttribute('width', '412')
+    expect(frame).toHaveAttribute('height', '915')
+    expect(frame).toHaveAttribute('data-preview-height', '915')
+    expect(screen.getByText('Reader · 412 px · Light · Comfortable')).toBeInTheDocument()
   })
 })

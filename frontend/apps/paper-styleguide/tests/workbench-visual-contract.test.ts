@@ -23,7 +23,7 @@ function borderValues(selector: string): string[] {
 describe('component workbench visual contract', () => {
   it('leaves the sole outer frame to Paper Surface', () => {
     expect(styleguideStyles).toMatch(
-      /\.component-workbench \{[^}]*overflow: hidden;/s,
+      /\.component-workbench \{[^}]*overflow: clip;/s,
     )
     expect(declarationsFor('.component-workbench').join('\n')).not.toMatch(
       /(?:border|background)\s*:/u,
@@ -31,7 +31,7 @@ describe('component workbench visual contract', () => {
 
     const framelessPreviewLayers = [
       '.example-canvas',
-      '.example-canvas__heading',
+      '.canvas-controls',
       '.example-canvas__stage',
       '.paper-fixture-stage',
       '.example-canvas iframe',
@@ -46,5 +46,22 @@ describe('component workbench visual contract', () => {
         /background\s*:/u,
       )
     }
+  })
+
+  it('keeps settings responsive and the stage as the preview overflow boundary', () => {
+    expect(styleguideStyles).toMatch(
+      /\.canvas-controls \{[^}]*display: grid;/su,
+    )
+    expect(styleguideStyles).toMatch(/@media \(min-width: 80rem\)/u)
+    expect(styleguideStyles).toMatch(/@container \(min-width: 54rem\)/u)
+    expect(declarationsFor('.example-canvas__stage').join('\n')).toMatch(
+      /overflow: auto;/u,
+    )
+    expect(declarationsFor('.component-workbench__panel').join('\n')).not.toMatch(
+      /min-block-size/u,
+    )
+    expect(declarationsFor('.example-canvas__stage').join('\n')).not.toMatch(
+      /min-block-size/u,
+    )
   })
 })

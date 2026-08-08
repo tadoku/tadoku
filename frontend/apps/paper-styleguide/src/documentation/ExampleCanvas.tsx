@@ -1,33 +1,50 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useId, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { FormProvider, useForm } from 'react-hook-form'
-import { Button, Select } from 'paper-ui'
+import { FormProvider, useForm, useFormContext } from 'react-hook-form'
+import { RadioSelect, Select } from 'paper-ui'
 import type {
   CatalogFixture,
+  CatalogFixtureViewport,
   FixtureDensity,
   FixtureTheme,
 } from 'paper-ui/catalog'
 import type { PaperDensity, PaperTheme } from '../app/displayPreferences'
 
-const VIEWPORTS = [
-  { id: 'phone', name: 'Phone', width: 360 },
-  { id: 'tablet', name: 'Tablet', width: 768 },
-  { id: 'desktop', name: 'Desktop', width: 1280 },
-] as const
+const FALLBACK_VIEWPORTS = [
+  { id: 'phone', label: 'Phone', width: 360, height: 720 },
+  { id: 'tablet', label: 'Tablet', width: 768, height: 800 },
+  { id: 'desktop', label: 'Desktop', width: 1280, height: 800 },
+] as const satisfies readonly CatalogFixtureViewport[]
 
 const THEMES: readonly FixtureTheme[] = ['light', 'dark']
 const DENSITIES: readonly FixtureDensity[] = ['comfortable', 'compact']
 
 interface CanvasFields {
+  fixtureId: string
   theme: PaperTheme
   density: PaperDensity
+  viewportId: string
 }
 
-function initialViewportId(): (typeof VIEWPORTS)[number]['id'] {
-  return typeof window.matchMedia === 'function' &&
+interface ExampleCanvasProps {
+  readonly fixture?: CatalogFixture
+  readonly fixtures?: readonly CatalogFixture[]
+  readonly onFixtureChange?: (fixture: CatalogFixture) => void
+}
+
+function preferredViewportId(
+  viewports: readonly CatalogFixtureViewport[],
+): string {
+  const preferredId =
+    typeof window.matchMedia === 'function' &&
     window.matchMedia('(max-width: 48rem)').matches
-    ? 'phone'
-    : 'desktop'
+      ? 'phone'
+      : 'desktop'
+  return (
+    viewports.find((viewport) => viewport.id === preferredId)?.id ??
+    viewports[0]?.id ??
+    'desktop'
+  )
 }
 
 function preferredTheme(themes: readonly FixtureTheme[]): PaperTheme {
@@ -38,6 +55,10 @@ function preferredDensity(densities: readonly FixtureDensity[]): PaperDensity {
   return densities.includes('comfortable')
     ? 'comfortable'
     : (densities[0] ?? 'comfortable')
+}
+
+function titleCase(value: string): string {
+  return `${value.charAt(0).toUpperCase()}${value.slice(1)}`
 }
 
 function PreviewSpecimen() {
@@ -73,42 +94,79 @@ function applyPreferences(
   target.documentElement.dataset.density = density
 }
 
-export function ExampleCanvas({ fixture }: { fixture?: CatalogFixture }) {
+function CanvasContent({
+  fixture: requestedFixture,
+  fixtures,
+  onFixtureChange,
+}: ExampleCanvasProps) {
+  const methods = useFormContext<CanvasFields>()
+  const settingsTitleId = useId()
+  const fixtureId = methods.watch('fixtureId')
+  const availableFixtures = useMemo(
+    () =>
+      fixtures?.length
+        ? fixtures
+        : requestedFixture
+          ? [requestedFixture]
+          : [],
+    [fixtures, requestedFixture],
+  )
+  const fixture =
+    availableFixtures.find((candidate) => candidate.id === fixtureId) ??
+    requestedFixture ??
+    availableFixtures[0]
   const themes = fixture?.themes.length ? fixture.themes : THEMES
   const densities = fixture?.densities.length ? fixture.densities : DENSITIES
+  const viewports = fixture?.viewports.length
+    ? fixture.viewports
+    : FALLBACK_VIEWPORTS
   const themeCollectionKey = themes.join(',')
   const densityCollectionKey = densities.join(',')
-  const methods = useForm<CanvasFields>({
-    defaultValues: {
-      theme: preferredTheme(themes),
-      density: preferredDensity(densities),
-    },
-  })
+  const viewportCollectionKey = viewports
+    .map(({ id, width, height }) => `${id}:${width}:${height}`)
+    .join(',')
   const theme = methods.watch('theme')
   const density = methods.watch('density')
-  const [viewportId, setViewportId] = useState<(typeof VIEWPORTS)[number]['id']>(
-    initialViewportId,
-  )
+  const viewportId = methods.watch('viewportId')
   const [previewRoot, setPreviewRoot] = useState<HTMLElement | null>(null)
   const frameDocumentRef = useRef<Document | null>(null)
-  const viewport = useMemo(
-    () => VIEWPORTS.find((candidate) => candidate.id === viewportId)!,
-    [viewportId],
-  )
+  const viewport =
+    viewports.find((candidate) => candidate.id === viewportId) ?? viewports[0]
+
+  useEffect(() => {
+    const selectedFixtureId = methods.getValues('fixtureId')
+    if (
+      availableFixtures.length &&
+      !availableFixtures.some((candidate) => candidate.id === selectedFixtureId)
+    ) {
+      methods.setValue('fixtureId', availableFixtures[0].id)
+    }
+  }, [availableFixtures, methods])
+
+  useEffect(() => {
+    if (fixture) onFixtureChange?.(fixture)
+  }, [fixture, onFixtureChange])
 
   useEffect(() => {
     const current = methods.getValues()
-    const nextTheme = themes.includes(current.theme)
-      ? current.theme
-      : preferredTheme(themes)
-    const nextDensity = densities.includes(current.density)
-      ? current.density
-      : preferredDensity(densities)
-
-    if (nextTheme !== current.theme || nextDensity !== current.density) {
-      methods.reset({ theme: nextTheme, density: nextDensity })
+    if (!themes.includes(current.theme)) {
+      methods.setValue('theme', preferredTheme(themes))
     }
-  }, [densities, densityCollectionKey, methods, themes, themeCollectionKey])
+    if (!densities.includes(current.density)) {
+      methods.setValue('density', preferredDensity(densities))
+    }
+    if (!viewports.some((candidate) => candidate.id === current.viewportId)) {
+      methods.setValue('viewportId', preferredViewportId(viewports))
+    }
+  }, [
+    densities,
+    densityCollectionKey,
+    methods,
+    themes,
+    themeCollectionKey,
+    viewportCollectionKey,
+    viewports,
+  ])
 
   useEffect(() => {
     const frameDocument = frameDocumentRef.current
@@ -116,90 +174,125 @@ export function ExampleCanvas({ fixture }: { fixture?: CatalogFixture }) {
     applyPreferences(frameDocument, theme, density)
   }, [density, theme])
 
+  if (!viewport) return null
+
   return (
-    <FormProvider {...methods}>
-      <section className="example-canvas" aria-labelledby="example-canvas-title">
-        <div className="example-canvas__heading">
-          <div>
-            <p className="eyebrow">Isolated preview</p>
-            <h2 id="example-canvas-title" className="paper-type-section">
-              Real viewport canvas
-            </h2>
-          </div>
-          <div className="canvas-controls">
+    <section className="example-canvas" aria-label="Isolated component preview">
+      <div
+        className="canvas-controls"
+        role="group"
+        aria-labelledby={settingsTitleId}
+      >
+        <h3
+          id={settingsTitleId}
+          className="canvas-controls__title paper-type-label"
+        >
+          Preview settings
+        </h3>
+        {availableFixtures.length > 1 ? (
+          <div className="canvas-controls__fixture">
             <Select
-              name="theme"
-              label="Theme"
-              aria-label="Preview theme"
-              options={themes.map((candidate) => ({
-                value: candidate,
-                label: candidate === 'dark' ? 'Dark' : 'Light',
+              name="fixtureId"
+              label="Fixture"
+              options={availableFixtures.map((candidate) => ({
+                value: candidate.id,
+                label: candidate.name,
               }))}
             />
-            <Select
-              name="density"
-              label="Density"
-              aria-label="Preview density"
-              options={densities.map((candidate) => ({
-                value: candidate,
-                label: candidate === 'compact' ? 'Compact' : 'Comfortable',
-              }))}
-            />
-            <fieldset>
-              <legend>Viewport</legend>
-              {VIEWPORTS.map((option) => {
-                const selected = viewportId === option.id
-                return (
-                  <Button
-                    key={option.id}
-                    variant={selected ? 'default' : 'outline'}
-                    className="canvas-viewport-button"
-                    aria-pressed={selected}
-                    aria-label={`${option.name}, ${option.width} pixels`}
-                    onClick={() => setViewportId(option.id)}
-                  >
-                    {option.name}
-                  </Button>
-                )
-              })}
-            </fieldset>
           </div>
-        </div>
-        <p className="canvas-status paper-type-metadata" aria-live="polite">
-          {viewport.name} · {viewport.width}px · {theme} · {density}
-        </p>
-        <div className="example-canvas__stage">
-          <iframe
-            title="Paper responsive component preview"
-            width={viewport.width}
-            data-fixture-id={fixture?.id}
-            srcDoc={'<!doctype html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head><body><div id="paper-preview-root"></div></body></html>'}
-            data-preview-width={viewport.width}
-            style={{
-              inlineSize: `${viewport.width}px`,
-              boxSizing: 'content-box',
-            }}
-            onLoad={(event) => {
-              const targetDocument = event.currentTarget.contentDocument
-              if (!targetDocument) return
-              copyPaperStyles(targetDocument)
-              applyPreferences(targetDocument, theme, density)
-              frameDocumentRef.current = targetDocument
-              setPreviewRoot(targetDocument.getElementById('paper-preview-root'))
-            }}
+        ) : null}
+        <div className="canvas-controls__theme">
+          <Select
+            name="theme"
+            label="Theme"
+            options={themes.map((candidate) => ({
+              value: candidate,
+              label: titleCase(candidate),
+            }))}
           />
         </div>
-        {previewRoot
-          ? createPortal(
-              fixture ? (
-                <div className="paper-fixture-stage">{fixture.render()}</div>
-              ) : (
-                <PreviewSpecimen />
-              ),
-              previewRoot,
-            )
-          : null}
-      </section>
+        <div className="canvas-controls__density">
+          <Select
+            name="density"
+            label="Density"
+            options={densities.map((candidate) => ({
+              value: candidate,
+              label: titleCase(candidate),
+            }))}
+          />
+        </div>
+        <div className="canvas-controls__viewport">
+          <RadioSelect
+            name="viewportId"
+            label="Viewport"
+            variant="segmented"
+            options={viewports.map((option) => ({
+              value: option.id,
+              label: option.label,
+            }))}
+          />
+        </div>
+      </div>
+      <p className="canvas-status paper-type-metadata" aria-live="polite">
+        {viewport.label} · {viewport.width} px · {titleCase(theme)} ·{' '}
+        {titleCase(density)}
+      </p>
+      <div className="example-canvas__stage">
+        <iframe
+          title="Paper responsive component preview"
+          width={viewport.width}
+          height={viewport.height}
+          data-fixture-id={fixture?.id}
+          srcDoc={'<!doctype html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head><body><div id="paper-preview-root"></div></body></html>'}
+          data-preview-width={viewport.width}
+          data-preview-height={viewport.height}
+          style={{
+            inlineSize: `${viewport.width}px`,
+            blockSize: `min(${viewport.height}px, 22rem)`,
+            boxSizing: 'content-box',
+            border: 0,
+          }}
+          onLoad={(event) => {
+            const targetDocument = event.currentTarget.contentDocument
+            if (!targetDocument) return
+            copyPaperStyles(targetDocument)
+            applyPreferences(targetDocument, theme, density)
+            frameDocumentRef.current = targetDocument
+            setPreviewRoot(targetDocument.getElementById('paper-preview-root'))
+          }}
+        />
+      </div>
+      {previewRoot
+        ? createPortal(
+            fixture ? (
+              <div className="paper-fixture-stage">{fixture.render()}</div>
+            ) : (
+              <PreviewSpecimen />
+            ),
+            previewRoot,
+          )
+        : null}
+    </section>
+  )
+}
+
+export function ExampleCanvas(props: ExampleCanvasProps) {
+  const initialFixture = props.fixture ?? props.fixtures?.[0]
+  const initialViewports = initialFixture?.viewports.length
+    ? initialFixture.viewports
+    : FALLBACK_VIEWPORTS
+  const methods = useForm<CanvasFields>({
+    defaultValues: {
+      fixtureId: initialFixture?.id ?? '',
+      theme: preferredTheme(initialFixture?.themes ?? THEMES),
+      density: preferredDensity(initialFixture?.densities ?? DENSITIES),
+      viewportId: preferredViewportId(initialViewports),
+    },
+  })
+
+  return (
+    <FormProvider {...methods}>
+      <CanvasContent {...props} />
     </FormProvider>
   )
 }

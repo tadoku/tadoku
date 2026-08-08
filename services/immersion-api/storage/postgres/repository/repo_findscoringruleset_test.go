@@ -3,6 +3,7 @@ package repository
 import (
 	"database/sql"
 	"testing"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
@@ -13,16 +14,24 @@ import (
 
 func TestScoringRuleSetToDomain(t *testing.T) {
 	ruleSetID := uuid.New()
+	contestID := uuid.New()
 	fallbackID := uuid.New()
 	baseRuleID := uuid.New()
 	modifierRuleID := uuid.New()
+	createdAt := time.Date(2026, 7, 1, 0, 0, 0, 0, time.UTC)
+	publishedAt := createdAt.Add(time.Hour)
 
 	result := scoringRuleSetToDomain(
 		postgres.ScoringRuleSet{
 			ID:                ruleSetID,
+			Scope:             "contest",
+			ContestID:         uuid.NullUUID{UUID: contestID, Valid: true},
 			Version:           2,
+			Status:            "published",
 			Mode:              sql.NullString{String: "override", Valid: true},
 			FallbackRuleSetID: uuid.NullUUID{UUID: fallbackID, Valid: true},
+			CreatedAt:         createdAt,
+			PublishedAt:       sql.NullTime{Time: publishedAt, Valid: true},
 		},
 		[]postgres.ScoringRule{
 			{
@@ -48,10 +57,15 @@ func TestScoringRuleSetToDomain(t *testing.T) {
 
 	require.NotNil(t, result)
 	assert.Equal(t, ruleSetID, result.ID)
+	assert.Equal(t, domain.ScoringRuleSetScopeContest, result.Scope)
+	assert.Equal(t, &contestID, result.ContestID)
 	assert.Equal(t, int32(2), result.Version)
+	assert.Equal(t, domain.ScoringRuleSetStatusPublished, result.Status)
 	assert.Equal(t, domain.ScoringRuleSetModeOverride, result.Mode)
 	require.NotNil(t, result.FallbackRuleSetID)
 	assert.Equal(t, fallbackID, *result.FallbackRuleSetID)
+	assert.Equal(t, createdAt, result.CreatedAt)
+	assert.Equal(t, &publishedAt, result.PublishedAt)
 	require.Len(t, result.Rules, 2)
 	assert.Equal(t, domain.UnitKeyReadingPage, result.Rules[0].UnitKey)
 	assert.Equal(t, "jpn", result.Rules[0].LanguageCode)

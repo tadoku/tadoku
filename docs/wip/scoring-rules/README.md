@@ -415,13 +415,13 @@ endpoint. All form changes must use `react-hook-form` and components from the
   - [x] Display platform and contest-specific estimates clearly.
   - [x] Keep the feature behind the existing flag until verified.
 
-- [ ] Add rule-set management APIs.
-  - [ ] Create draft rule-set versions.
-  - [ ] Validate priorities, matchers, score sources, and rates.
-  - [ ] Publish immutable versions.
-  - [ ] Activate platform versions.
-  - [ ] Configure contest mode and pinned fallback.
-  - [ ] Prevent implicit mutation of published rule sets.
+- [x] Add rule-set management APIs.
+  - [x] Create draft rule-set versions.
+  - [x] Validate priorities, matchers, score sources, and rates.
+  - [x] Publish immutable versions.
+  - [x] Activate platform versions.
+  - [x] Configure contest mode and pinned fallback.
+  - [x] Prevent implicit mutation of published rule sets.
 
 - [ ] Add contest scoring configuration UI.
   - [ ] Use components from the `ui` package.

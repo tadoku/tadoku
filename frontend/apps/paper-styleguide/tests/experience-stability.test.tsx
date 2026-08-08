@@ -117,6 +117,33 @@ describe('catalogue experience stability', () => {
     expect(screen.queryByLabelText('Display preferences')).not.toBeInTheDocument()
   })
 
+  it('keeps lifecycle status out of desktop and mobile catalogue navigation', async () => {
+    const user = userEvent.setup()
+    render(
+      <MemoryRouter>
+        <DocsShell documents={catalogRegistry.documents}>Content</DocsShell>
+      </MemoryRouter>,
+    )
+
+    const desktopNavigation = screen.getByRole('navigation', {
+      name: 'Paper catalogue',
+    })
+    expect(within(desktopNavigation).queryByText('Stable')).not.toBeInTheDocument()
+    expect(
+      within(desktopNavigation).queryByText('Experimental'),
+    ).not.toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: 'Browse' }))
+    const navigations = screen.getAllByRole('navigation', {
+      name: 'Paper catalogue',
+    })
+    expect(navigations).toHaveLength(2)
+    expect(within(navigations[1]).queryByText('Stable')).not.toBeInTheDocument()
+    expect(
+      within(navigations[1]).queryByText('Experimental'),
+    ).not.toBeInTheDocument()
+  })
+
   it('scrolls direct hash routes to their documented section', async () => {
     const scrollIntoView = vi.fn()
     HTMLElement.prototype.scrollIntoView = scrollIntoView

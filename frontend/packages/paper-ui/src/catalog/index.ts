@@ -55,3 +55,7 @@ export {
   phaseThreeDataLayoutDocuments,
   phaseThreeDataLayoutFixtures,
 } from "./phase-three-data-layout";
+export {
+  publishedPrimitiveDocuments,
+  publishedPrimitiveFixtures,
+} from "./published-primitives";

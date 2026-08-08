@@ -13,6 +13,12 @@ const inputDocument = catalogRegistry.documents.find(
 const flashDocument = catalogRegistry.documents.find(
   (document) => document.id === 'component.flash',
 )!
+const tabsDocument = catalogRegistry.documents.find(
+  (document) => document.id === 'component.tabs',
+)!
+const drawerDocument = catalogRegistry.documents.find(
+  (document) => document.id === 'component.drawer',
+)!
 
 const componentDocuments = catalogRegistry.documents.filter(
   (document) => document.kind === 'component',
@@ -106,6 +112,16 @@ describe('Stable component documentation', () => {
     rerender(<DocumentPage document={flashDocument} />)
     expect(screen.getByText(/Danger is reserved for an urgent failure/u)).toBeInTheDocument()
     expect(screen.getByText(/visible=false removes the message/u)).toBeInTheDocument()
+  })
+
+  it('teaches when Tabs and Drawer are the right primitives', () => {
+    const { rerender } = render(<DocumentPage document={tabsDocument} />)
+    expect(screen.getByText(/same local context/u)).toBeInTheDocument()
+    expect(screen.getByText(/^Use Tabbar for linked destinations/u)).toBeInTheDocument()
+
+    rerender(<DocumentPage document={drawerDocument} />)
+    expect(screen.getByText(/^Use Drawer for a supporting task/u)).toBeInTheDocument()
+    expect(screen.getByText(/dedicated page/u)).toBeInTheDocument()
   })
 
   it('switches Preview, Code, API, and Accessibility with arrow keys', async () => {

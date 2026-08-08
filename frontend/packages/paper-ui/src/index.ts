@@ -64,6 +64,12 @@ export {
 } from './components/feedback'
 export { Modal, type ModalProps } from './components/overlays/Modal'
 export {
+  DRAWER_PLACEMENTS,
+  Drawer,
+  type DrawerPlacement,
+  type DrawerProps,
+} from './components/overlays/Drawer'
+export {
   ActionMenu,
   type ActionMenuItem,
   type ActionMenuProps,
@@ -86,6 +92,11 @@ export {
   Pagination,
   Sidebar,
   Tabbar,
+  Tabs,
+  TabsList,
+  TabsPanel,
+  TabsRoot,
+  TabsTab,
   VerticalTabbar,
   type BreadcrumbItem,
   type BreadcrumbProps,
@@ -101,4 +112,10 @@ export {
   type SidebarSection,
   type TabbarItem,
   type TabbarProps,
+  type TabsListProps,
+  type TabsOrientation,
+  type TabsPanelProps,
+  type TabsRootProps,
+  type TabsTabProps,
+  type TabsValue,
 } from './components/navigation'

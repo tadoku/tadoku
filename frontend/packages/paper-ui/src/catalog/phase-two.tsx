@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import { ActionMenu } from "../components/overlays/ActionMenu";
 import { Button, buttonClassName } from "../components/actions/Button";
@@ -123,6 +123,28 @@ function InputErrorFixture() {
         required
       />
     </FormProvider>
+  );
+}
+
+function ComposableModalFixture() {
+  const [open, setOpen] = useState(false);
+  const searchRef = useRef<HTMLInputElement>(null);
+
+  return (
+    <Modal
+      trigger={<Button variant="ghost">Search Paper <kbd>Ctrl K</kbd></Button>}
+      title="Search Paper"
+      description="Search components and foundations."
+      open={open}
+      onOpenChange={setOpen}
+      initialFocus={searchRef}
+      footer={null}
+    >
+      <label>
+        Search catalogue
+        <input ref={searchRef} type="search" />
+      </label>
+    </Modal>
   );
 }
 
@@ -296,28 +318,39 @@ const methods = useForm({ defaultValues: { title: "August reading log" } });
     ),
   }),
   defineCatalogFixture({
-    id: "modal.long-content",
-    name: "Long modal content",
-    description: "Overflow remains inside a viewport-bounded dialog.",
-    tags: ["modal", "overflow", "long content"],
+    id: "modal.composable-search",
+    name: "Composable catalogue search",
+    description: "An application trigger controls a footerless dialog and its initial focus.",
+    tags: ["modal", "controlled", "trigger", "initial focus", "footerless"],
     themes: ["light", "dark"],
     densities: ["comfortable", "compact"],
     viewports: VIEWPORTS,
     deterministic: true,
-    code: `import { Modal } from "paper-ui";
+    code: `import { useRef, useState } from "react";
+import { Button, Modal } from "paper-ui";
 
-<Modal triggerLabel="Review rules" title="August challenge rules">
-  <p>Read the complete challenge rules before joining.</p>
-</Modal>`,
-    render: () => (
-      <Modal triggerLabel="Review rules" title="August challenge rules">
-        <p>
-          Log pages or minutes only after reading. Choose the language you read,
-          keep notes concise, and correct accidental duplicates before the contest
-          closes. Moderators may review unusual entries to keep the challenge fair.
-        </p>
-      </Modal>
-    ),
+function CatalogueSearch() {
+  const [open, setOpen] = useState(false);
+  const searchRef = useRef<HTMLInputElement>(null);
+
+  return (
+    <Modal
+      trigger={<Button variant="ghost">Search Paper <kbd>Ctrl K</kbd></Button>}
+      title="Search Paper"
+      description="Search components and foundations."
+      open={open}
+      onOpenChange={setOpen}
+      initialFocus={searchRef}
+      footer={null}
+    >
+      <label>
+        Search catalogue
+        <input ref={searchRef} type="search" />
+      </label>
+    </Modal>
+  );
+}`,
+    render: () => <ComposableModalFixture />,
   }),
   defineCatalogFixture({
     id: "action-menu.recommended",
@@ -472,7 +505,7 @@ export const phaseTwoDocuments = [
     summary: "Temporarily focuses attention while managing focus, dismissal, and return.",
     keywords: ["modal", "dialog", "overlay", "focus", "confirmation"],
     sourcePath: "src/components/overlays/Modal/Modal.tsx",
-    fixtureIds: ["modal.recommended", "modal.long-content"],
+    fixtureIds: ["modal.recommended", "modal.composable-search"],
     behaviorTestIds: ["modal.keyboard", "modal.focus-containment", "modal.focus-return"],
     guidance: {
       whenToUse: ["Require a focused decision or a short task without losing page context."],
@@ -502,14 +535,14 @@ export const phaseTwoDocuments = [
       whenNotToUse: section("When not to use", "Avoid it for passive notices, multi-step flows, or content that deserves a URL."),
       choosingBetween: section("Choose between", "Use Flash for non-blocking feedback, ActionMenu for contextual choices, and a page for sustained work."),
       anatomy: section("Anatomy", "Backdrop, viewport, titled popup, optional description, content, close affordance, and footer."),
-      recommendedExample: section("Recommended example", "Deletion review states what will be removed before the user commits elsewhere."),
-      variants: section("Variants", "Trigger hierarchy can vary; the modal surface and focus behavior stay consistent."),
-      statesAndAdaptation: section("States and adaptation", "The viewport scrolls long content and remains bounded at phone, tablet, and desktop widths."),
-      behavior: section("Behavior", "Base UI manages opening, focus containment, Escape/outside dismissal, and focus return."),
+      recommendedExample: section("Recommended example", "Deletion review demonstrates the standard action footer; catalogue search demonstrates an application trigger, controlled state, initial focus, and no footer."),
+      variants: section("Variants", "Use the standard triggerLabel and action contract for common confirmations. Pass an application-owned trigger and footer when the task needs a composed entry point or action layout; footer=null intentionally omits the footer."),
+      statesAndAdaptation: section("States and adaptation", "Use open with onOpenChange when application state or another control owns visibility. The viewport scrolls long content and remains bounded at phone, tablet, and desktop widths."),
+      behavior: section("Behavior", "Base UI manages opening, focus containment, Escape/outside dismissal, and focus return. initialFocus moves focus to an application-owned field when the default first focusable element is not the useful starting point."),
       contentGuidance: section("Content guidance", "Use a question for confirmation titles and put consequences in the description."),
       accessibility: section("Accessibility", "Title and description label the dialog; two close paths ensure touch-screen-reader escape."),
       implementation: section("Implementation", "Import Modal from paper-ui; Base UI remains a private interaction dependency."),
-      apiReference: section("API reference", "ModalProps supports controlled or uncontrolled open state, title, description, content, trigger, close, and optional primary action contracts."),
+      apiReference: section("API reference", "ModalProps supports controlled or uncontrolled open state, a standard or application-owned trigger, initialFocus, footer replacement or omission, title, description, content, close, and optional primary action contracts."),
       relatedPatterns: section("Related patterns", "Pair with destructive Button intent only when the action is genuinely destructive."),
       migration: section("Migration", "Replace legacy Dialog imports with Modal and remove application-owned portal/focus logic."),
       lifecycle: section("Lifecycle", "Stable in Paper 0.1.0 after keyboard, containment, dismissal, and return tests."),

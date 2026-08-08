@@ -1,6 +1,6 @@
 # ADR: Paper dependency and build baseline
 
-Status: Accepted for Phase 1  
+Status: Accepted for Phase 1; Paper compiler boundary superseded by `adr-typescript-7-tooling-boundary.md`
 Date: 2026-08-08
 
 ## Context

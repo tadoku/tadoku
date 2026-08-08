@@ -1,0 +1,201 @@
+@layer paper-tokens {
+:root,
+[data-theme="light"] {
+  color-scheme: light;
+
+  /* Private implementation palette. Product styles consume semantic aliases. */
+  --paper-private-canvas: #f2efe8;
+  --paper-private-paper: #fffefa;
+  --paper-private-raised: #ffffff;
+  --paper-private-overlay: #fffefa;
+  --paper-private-ink: #211a1d;
+  --paper-private-muted: #686064;
+  --paper-private-inverse: #fffefa;
+  --paper-private-rule-subtle: #e2ddd4;
+  --paper-private-rule-default: #c7c0b5;
+  --paper-private-rule-strong: #393235;
+  --paper-private-field-edge: #aba398;
+  --paper-private-accent: #5747b8;
+  --paper-private-accent-hover: #49399f;
+  --paper-private-accent-active: #40318c;
+  --paper-private-accent-edge: #35277f;
+  --paper-private-accent-soft: #e8e4fa;
+  --paper-private-action-default: #5747b8;
+  --paper-private-action-hover: #49399f;
+  --paper-private-action-active: #40318c;
+  --paper-private-information: #2f6f8f;
+  --paper-private-success: #3f7048;
+  --paper-private-warning: #8a5b16;
+  --paper-private-danger: #a33333;
+  --paper-private-danger-hover: #892828;
+  --paper-private-shadow: rgb(33 26 29 / 16%);
+
+  --paper-color-surface-canvas: var(--paper-private-canvas);
+  --paper-color-surface-paper: var(--paper-private-paper);
+  --paper-color-surface-raised: var(--paper-private-raised);
+  --paper-color-surface-overlay: var(--paper-private-overlay);
+  --paper-color-text-ink: var(--paper-private-ink);
+  --paper-color-text-muted: var(--paper-private-muted);
+  --paper-color-text-inverse: var(--paper-private-inverse);
+  --paper-color-text-link: var(--paper-private-accent);
+  --paper-color-rule-subtle: var(--paper-private-rule-subtle);
+  --paper-color-rule-default: var(--paper-private-rule-default);
+  --paper-color-rule-strong: var(--paper-private-rule-strong);
+  --paper-color-rule-field-edge: var(--paper-private-field-edge);
+  --paper-color-rule-action-edge: var(--paper-private-accent-edge);
+  --paper-color-action-default: var(--paper-private-action-default);
+  --paper-color-action-hover: var(--paper-private-action-hover);
+  --paper-color-action-active: var(--paper-private-action-active);
+  --paper-color-action-text: var(--paper-private-inverse);
+  --paper-color-action-destructive: var(--paper-private-danger);
+  --paper-color-action-destructive-hover: var(--paper-private-danger-hover);
+  --paper-color-status-information: var(--paper-private-information);
+  --paper-color-status-success: var(--paper-private-success);
+  --paper-color-status-warning: var(--paper-private-warning);
+  --paper-color-status-danger: var(--paper-private-danger);
+  --paper-color-focus-ring: var(--paper-private-accent);
+  --paper-color-focus-offset: var(--paper-private-canvas);
+
+  --paper-color-chart-1: #5747b8;
+  --paper-color-chart-2: #3f7048;
+  --paper-color-chart-3: #9b6a25;
+  --paper-color-chart-4: #2f6f8f;
+  --paper-color-chart-5: #a33333;
+  --paper-color-chart-6: #6c568c;
+  --paper-color-chart-7: #55716d;
+  --paper-color-chart-8: #83565d;
+
+  --paper-elevation-flat: none;
+  --paper-elevation-floating: 3px 3px 0 var(--paper-private-shadow);
+  --paper-elevation-showcase: 5px 5px 0 var(--paper-private-shadow);
+}
+
+[data-theme="dark"] {
+  color-scheme: dark;
+
+  --paper-private-canvas: #171517;
+  --paper-private-paper: #222022;
+  --paper-private-raised: #2b282b;
+  --paper-private-overlay: #2b282b;
+  --paper-private-ink: #f2eee8;
+  --paper-private-muted: #b8afb3;
+  --paper-private-inverse: #fffefa;
+  --paper-private-rule-subtle: #363235;
+  --paper-private-rule-default: #4e484b;
+  --paper-private-rule-strong: #81777c;
+  --paper-private-field-edge: #696166;
+  --paper-private-accent: #9a8bea;
+  --paper-private-accent-hover: #6d5cc7;
+  --paper-private-accent-active: #5747b8;
+  --paper-private-accent-edge: #40318c;
+  --paper-private-accent-soft: #332d52;
+  --paper-private-action-default: #5747b8;
+  --paper-private-action-hover: #6d5cc7;
+  --paper-private-action-active: #49399f;
+  --paper-private-information: #70acd0;
+  --paper-private-success: #7fb488;
+  --paper-private-warning: #ddb66f;
+  --paper-private-danger: #d77171;
+  --paper-private-danger-hover: #b94f4f;
+  --paper-private-shadow: rgb(0 0 0 / 48%);
+
+  --paper-color-surface-canvas: var(--paper-private-canvas);
+  --paper-color-surface-paper: var(--paper-private-paper);
+  --paper-color-surface-raised: var(--paper-private-raised);
+  --paper-color-surface-overlay: var(--paper-private-overlay);
+  --paper-color-text-ink: var(--paper-private-ink);
+  --paper-color-text-muted: var(--paper-private-muted);
+  --paper-color-text-inverse: var(--paper-private-inverse);
+  --paper-color-text-link: var(--paper-private-accent);
+  --paper-color-rule-subtle: var(--paper-private-rule-subtle);
+  --paper-color-rule-default: var(--paper-private-rule-default);
+  --paper-color-rule-strong: var(--paper-private-rule-strong);
+  --paper-color-rule-field-edge: var(--paper-private-field-edge);
+  --paper-color-rule-action-edge: var(--paper-private-accent-edge);
+  --paper-color-action-destructive: var(--paper-private-danger);
+  --paper-color-action-destructive-hover: var(--paper-private-danger-hover);
+  --paper-color-status-information: var(--paper-private-information);
+  --paper-color-status-success: var(--paper-private-success);
+  --paper-color-status-warning: var(--paper-private-warning);
+  --paper-color-status-danger: var(--paper-private-danger);
+  --paper-color-focus-ring: var(--paper-private-accent);
+  --paper-color-focus-offset: var(--paper-private-canvas);
+
+  /* Filled actions use a deeper violet and light text in dark mode. */
+  --paper-color-action-default: var(--paper-private-action-default);
+  --paper-color-action-hover: var(--paper-private-action-hover);
+  --paper-color-action-active: var(--paper-private-action-active);
+  --paper-color-action-text: var(--paper-private-inverse);
+
+  --paper-color-chart-1: #9a8bea;
+  --paper-color-chart-2: #7fb488;
+  --paper-color-chart-3: #ddb66f;
+  --paper-color-chart-4: #70acd0;
+  --paper-color-chart-5: #d77171;
+  --paper-color-chart-6: #b69ad0;
+  --paper-color-chart-7: #83aaa3;
+  --paper-color-chart-8: #c58e9b;
+}
+
+:root {
+  --paper-font-display: "Merriweather", Georgia, "Times New Roman", serif;
+  --paper-font-body: "Open Sans", Inter, ui-sans-serif, system-ui, -apple-system,
+    BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --paper-font-monospace: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+    "Liberation Mono", monospace;
+
+  --paper-type-display-size: 3rem;
+  --paper-type-display-line-height: 3.25rem;
+  --paper-type-display-weight: 700;
+  --paper-type-page-size: 2rem;
+  --paper-type-page-line-height: 2.375rem;
+  --paper-type-page-weight: 700;
+  --paper-type-section-size: 1.5rem;
+  --paper-type-section-line-height: 1.875rem;
+  --paper-type-section-weight: 700;
+  --paper-type-component-size: 1.125rem;
+  --paper-type-component-line-height: 1.5rem;
+  --paper-type-component-weight: 700;
+  --paper-type-label-size: 0.75rem;
+  --paper-type-label-line-height: 1rem;
+  --paper-type-label-weight: 700;
+  --paper-type-metadata-size: 0.75rem;
+  --paper-type-metadata-line-height: 1.125rem;
+  --paper-type-metadata-weight: 400;
+
+  --paper-focus-ring-width: 2px;
+  --paper-focus-ring-offset: 2px;
+  --paper-border-static-width: 1px;
+  --paper-border-field-edge-width: 2px;
+  --paper-border-action-edge-width: 2px;
+  --paper-accent-rail-width: 3px;
+  --paper-icon-size-compact: 1rem;
+  --paper-icon-size-default: 1.25rem;
+  --paper-icon-size-prominent: 1.5rem;
+  --paper-icon-size-empty-state: 3rem;
+  --paper-motion-quick: 120ms;
+  --paper-motion-standard: 180ms;
+  --paper-motion-deliberate: 240ms;
+}
+
+:root,
+[data-density="comfortable"] {
+  --paper-control-height: 2.75rem;
+  --paper-inline-gap: 0.625rem;
+  --paper-field-padding-block: 0.625rem;
+  --paper-field-padding-inline: 0.75rem;
+  --paper-type-body-size: 1rem;
+  --paper-type-body-line-height: 1.625rem;
+  --paper-type-body-weight: 400;
+}
+
+[data-density="compact"] {
+  --paper-control-height: 2.25rem;
+  --paper-inline-gap: 0.5rem;
+  --paper-field-padding-block: 0.375rem;
+  --paper-field-padding-inline: 0.625rem;
+  --paper-type-body-size: 0.875rem;
+  --paper-type-body-line-height: 1.375rem;
+  --paper-type-body-weight: 400;
+}
+}

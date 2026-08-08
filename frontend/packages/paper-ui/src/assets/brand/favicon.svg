@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <defs>
+    <mask id="favicon-mask">
+      <rect width="64" height="64" fill="white"/>
+      <path d="M2 43L62 17" stroke="black" stroke-width="10"/>
+    </mask>
+  </defs>
+  <path fill="#211a1d" mask="url(#favicon-mask)" d="M6 37h15v20H6zM24 23h16v34H24zM43 7h15v50H43z"/>
+</svg>

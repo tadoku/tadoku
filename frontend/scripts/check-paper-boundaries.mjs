@@ -7,6 +7,17 @@ const config = JSON.parse(await readFile(new URL('../paper-boundaries.json', imp
 if (config.schemaVersion !== 1) throw new Error(`Unsupported Paper boundary schema: ${config.schemaVersion}`)
 const sourceExtensions = new Set(['.js', '.jsx', '.mjs', '.cjs', '.ts', '.tsx', '.css'])
 const ignoredDirectories = new Set(['.next', 'dist', 'node_modules', 'coverage'])
+const legacyOnlyClasses = new Set([
+  'auto-format',
+  'h-stack',
+  'input-frame',
+  'kratos-form',
+  'modal-actions',
+  'modal-body',
+  'secondary',
+  'table-container',
+  'v-stack',
+])
 const violations = []
 
 async function sourceFiles(directory) {
@@ -24,7 +35,21 @@ function report(path, message) {
   violations.push(`${relative(new URL('..', root).pathname, path)}: ${message}`)
 }
 
-async function inspectTree(path, system) {
+function legacyClassesInMarkup(source) {
+  const found = new Set()
+  const attributes = source.matchAll(/class(?:Name)?\s*=\s*(?:["']([^"']*)["']|\{`([^`]*)`\})/g)
+  for (const attribute of attributes) {
+    const value = attribute[1] || attribute[2] || ''
+    const classes = value.split(/\s+/)
+    for (const className of classes) {
+      if (legacyOnlyClasses.has(className)) found.add(className)
+    }
+    if (classes.includes('btn') && classes.includes('primary')) found.add('btn primary')
+  }
+  return [...found]
+}
+
+async function inspectTree(path, system, requireStyles = false) {
   try {
     const manifestPath = join(path, 'package.json')
     const manifest = JSON.parse(await readFile(manifestPath, 'utf8'))
@@ -51,19 +76,22 @@ async function inspectTree(path, system) {
     if (/['"]paper-ui\/styles\.css['"]/.test(source)) paperStyleImports += 1
 
     if (system === 'paper') {
-      if (/['"]ui(?:\/[^'"]*)?['"]/.test(source)) report(file, 'legacy ui import in Paper code')
-      if (/['"](?:next(?:\/[^'"]*)?|@headlessui\/react)['"]/.test(source)) report(file, 'Next or Headless UI import in Paper code')
-    } else if (/['"]paper-ui(?:\/[^'"]*)?['"]/.test(source)) {
+      if (/(?:from\s+|import\s*(?:\(\s*)?|require\(\s*)['"]ui(?:\/[^'"]*)?['"]/.test(source)) report(file, 'legacy ui import in Paper code')
+      if (/(?:from\s+|import\s*(?:\(\s*)?|require\(\s*)['"](?:next(?:\/[^'"]*)?|@headlessui\/react)['"]/.test(source)) report(file, 'Next or Headless UI import in Paper code')
+      const legacyClasses = legacyClassesInMarkup(source)
+      if (legacyClasses.length) report(file, `legacy-only classes in Paper markup: ${legacyClasses.join(', ')}`)
+    } else if (/(?:from\s+|import\s*(?:\(\s*)?|require\(\s*)['"]paper-ui(?:\/[^'"]*)?['"]/.test(source)) {
       report(file, 'paper-ui import in an unmigrated application')
     }
   }
+  if (requireStyles && paperStyleImports !== 1) report(path, `paper-ui/styles.css imported ${paperStyleImports} times; expected exactly once`)
   if (paperStyleImports > 1) report(path, `paper-ui/styles.css imported ${paperStyleImports} times`)
 }
 
 for (const [application, system] of Object.entries(config.applications)) {
   const path = new URL(`../apps/${application}`, import.meta.url).pathname
   try {
-    await inspectTree(path, system)
+    await inspectTree(path, system, system === 'paper')
   } catch (error) {
     if (error?.code !== 'ENOENT' || application !== 'paper-styleguide') throw error
   }

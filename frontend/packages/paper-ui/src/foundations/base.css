@@ -1,0 +1,43 @@
+@layer paper-base {
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  background: var(--paper-color-surface-canvas);
+  color: var(--paper-color-text-ink);
+  font-family: var(--paper-font-body);
+  font-size: 100%;
+  line-height: var(--paper-type-body-line-height);
+  text-size-adjust: 100%;
+}
+
+body {
+  min-height: 100%;
+  margin: 0;
+  background: var(--paper-color-surface-canvas);
+  color: var(--paper-color-text-ink);
+  font-size: var(--paper-type-body-size);
+}
+
+button,
+input,
+select,
+textarea {
+  color: inherit;
+  font: inherit;
+}
+
+img,
+svg {
+  max-width: 100%;
+}
+
+:focus-visible {
+  outline: var(--paper-focus-ring-width) solid var(--paper-color-focus-ring);
+  outline-offset: var(--paper-focus-ring-offset);
+}
+
+}

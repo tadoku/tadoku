@@ -7,6 +7,7 @@ import { CatalogueSearch } from '../src/app/CatalogueSearch'
 import { DocsShell } from '../src/app/DocsShell'
 import { CatalogIndex, ResolvedCatalogueRoute } from '../src/app/routes'
 import { DocumentPage } from '../src/documentation/DocumentPage'
+import { ComponentWorkbench } from '../src/documentation/ComponentWorkbench'
 import { ExampleCanvas } from '../src/documentation/ExampleCanvas'
 
 const buttonDocument = catalogRegistry.documents.find(
@@ -56,12 +57,57 @@ describe('catalogue experience stability', () => {
     const panels = screen.getAllByRole('tabpanel', { hidden: true })
     expect(panels).toHaveLength(4)
     const previewFrame = screen.getByTitle('Paper responsive component preview')
+    const workbench = screen.getByRole('region', {
+      name: `${buttonDocument.name} examples`,
+    })
+    expect(workbench).toHaveClass('paper-surface-card')
+    expect(screen.getByRole('tablist', { name: 'Example views' })).toHaveClass(
+      'paper-tabs__list',
+    )
 
     await user.click(screen.getByRole('tab', { name: 'Code' }))
     await user.click(screen.getByRole('tab', { name: 'Preview' }))
 
     expect(screen.getByTitle('Paper responsive component preview')).toBe(
       previewFrame,
+    )
+  })
+
+  it('uses Paper controls and resets a removed fixture selection', async () => {
+    const user = userEvent.setup()
+    const fixtures = catalogRegistry.fixtures.filter((fixture) =>
+      buttonDocument.fixtureIds.includes(fixture.id),
+    )
+    expect(fixtures.length).toBeGreaterThan(1)
+
+    const { rerender } = render(
+      <ComponentWorkbench document={buttonDocument} fixtures={fixtures} />,
+    )
+    const fixtureSelect = screen.getByLabelText('Fixture')
+    expect(fixtureSelect).toHaveClass('paper-select')
+
+    await user.selectOptions(fixtureSelect, fixtures[1].id)
+    expect(screen.getByTitle('Paper responsive component preview')).toHaveAttribute(
+      'data-fixture-id',
+      fixtures[1].id,
+    )
+
+    rerender(
+      <ComponentWorkbench document={buttonDocument} fixtures={[fixtures[0]]} />,
+    )
+    rerender(
+      <ComponentWorkbench document={buttonDocument} fixtures={fixtures} />,
+    )
+
+    expect(screen.getByTitle('Paper responsive component preview')).toHaveAttribute(
+      'data-fixture-id',
+      fixtures[0].id,
+    )
+
+    await user.click(screen.getByRole('tab', { name: 'Code' }))
+    expect(screen.getByRole('button', { name: 'Copy code' })).toHaveClass(
+      'paper-button',
+      'paper-button--outline',
     )
   })
 

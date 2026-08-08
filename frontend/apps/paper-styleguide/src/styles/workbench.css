@@ -1,8 +1,7 @@
 @layer paper-styleguide {
   .component-workbench {
-    border: 1px solid var(--paper-color-rule-default);
     overflow: hidden;
-    background: var(--paper-color-surface-paper);
+    padding: 0;
   }
 
   .component-workbench__toolbar {
@@ -11,48 +10,10 @@
     justify-content: space-between;
     gap: 1rem;
     padding: 0.75rem;
-    border-block-end: 1px solid var(--paper-color-rule-subtle);
-  }
-
-  .component-workbench__tabs {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.25rem;
-  }
-
-  .component-workbench__tabs button {
-    min-block-size: var(--paper-control-height);
-    padding-inline: var(--paper-field-padding-inline);
-    border: 1px solid transparent;
-    border-block-end: 2px solid transparent;
-    color: var(--paper-color-text-muted);
-    background: transparent;
-  }
-
-  .component-workbench__tabs button:hover {
-    color: var(--paper-color-text-ink);
-    background: var(--paper-color-surface-raised);
-  }
-
-  .component-workbench__tabs button[aria-selected='true'] {
-    color: var(--paper-color-text-ink);
-    border-block-end-color: var(--paper-color-action-default);
-    font-weight: var(--paper-type-label-weight);
   }
 
   .component-workbench__fixture-select {
-    display: grid;
-    gap: 0.2rem;
     min-inline-size: 12rem;
-    color: var(--paper-color-text-muted);
-    font-size: var(--paper-type-metadata-size);
-  }
-
-  .component-workbench__fixture-select select {
-    padding-inline: var(--paper-field-padding-inline);
-    border: 1px solid var(--paper-color-rule-field-edge);
-    border-block-end: 2px solid var(--paper-color-rule-action-edge);
-    background: var(--paper-color-surface-paper);
   }
 
   .component-workbench__panel {
@@ -118,9 +79,7 @@
   .paper-fixture-stage {
     min-block-size: 100%;
     padding: 0.5rem;
-    border: 0;
     color: var(--paper-color-text-ink);
-    background: var(--paper-color-surface-canvas);
   }
 
   .paper-fixture-row {

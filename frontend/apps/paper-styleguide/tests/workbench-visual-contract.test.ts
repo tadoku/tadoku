@@ -21,24 +21,12 @@ function borderValues(selector: string): string[] {
 }
 
 describe('component workbench visual contract', () => {
-  it('uses the workbench as the only outer frame around the isolated preview', () => {
+  it('leaves the sole outer frame to Paper Surface', () => {
     expect(styleguideStyles).toMatch(
-      /\.component-workbench \{[^}]*border: 1px solid var\(--paper-color-rule-default\);[^}]*overflow: hidden;/s,
+      /\.component-workbench \{[^}]*overflow: hidden;/s,
     )
-    expect(styleguideStyles).toMatch(
-      /\.example-canvas \{[^}]*border: 0;[^}]*background: var\(--paper-color-surface-raised\);/s,
-    )
-    expect(styleguideStyles).toMatch(
-      /\.example-canvas__heading \{[^}]*border: 0;[^}]*border-block-end: 0;/s,
-    )
-    expect(styleguideStyles).toMatch(
-      /\.example-canvas__stage \{[^}]*border: 0;/s,
-    )
-    expect(styleguideStyles).toMatch(
-      /\.paper-fixture-stage \{[^}]*border: 0;/s,
-    )
-    expect(styleguideStyles).toMatch(
-      /\.example-canvas iframe \{[^}]*max-inline-size: none;[^}]*border: 0;/s,
+    expect(declarationsFor('.component-workbench').join('\n')).not.toMatch(
+      /(?:border|background)\s*:/u,
     )
 
     const framelessPreviewLayers = [
@@ -49,15 +37,14 @@ describe('component workbench visual contract', () => {
       '.example-canvas iframe',
     ]
 
-    expect(borderValues('.component-workbench')).toEqual([
-      '1px solid var(--paper-color-rule-default)',
-    ])
     for (const selector of framelessPreviewLayers) {
-      expect(borderValues(selector), selector).not.toHaveLength(0)
       expect(
         borderValues(selector).every((value) => value === '0'),
         selector,
       ).toBe(true)
+      expect(declarationsFor(selector).join('\n'), selector).not.toMatch(
+        /background\s*:/u,
+      )
     }
   })
 })

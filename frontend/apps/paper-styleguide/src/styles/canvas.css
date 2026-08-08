@@ -4,8 +4,6 @@
     justify-content: space-between;
     gap: 1rem;
     padding: 1rem;
-    border: 0;
-    border-block-end: 0;
   }
 
   .example-canvas__heading h2 {
@@ -21,6 +19,7 @@
 
   .canvas-controls fieldset {
     display: flex;
+    gap: var(--paper-inline-gap);
     margin: 0;
     padding: 0;
     border: 0;
@@ -34,24 +33,10 @@
     clip: rect(0 0 0 0);
   }
 
-  .canvas-viewport-button {
-    padding-inline: 0.65rem;
-  }
-
-  .canvas-viewport-button + .canvas-viewport-button {
-    border-inline-start: 0;
-  }
-
-  .canvas-viewport-button--active {
-    color: var(--paper-color-text-inverse);
-    background: var(--paper-color-action-default);
-  }
-
   .canvas-status {
     margin: 0;
     padding: 0.5rem 1rem;
     color: var(--paper-color-text-muted);
-    border-block-end: 1px solid var(--paper-color-rule-subtle);
   }
 
   .example-canvas__stage {
@@ -59,8 +44,6 @@
     min-block-size: 24rem;
     overflow: auto;
     padding: 0.5rem;
-    border: 0;
-    background: var(--paper-color-surface-canvas);
   }
 
   .example-canvas iframe {
@@ -68,13 +51,11 @@
     max-inline-size: none;
     block-size: 21rem;
     border: 0;
-    background: var(--paper-color-surface-paper);
   }
 
   .preview-specimen {
     margin: 2rem;
     padding: 2rem;
-    border: 1px solid var(--paper-color-rule-default);
   }
 
   .preview-specimen h3 {

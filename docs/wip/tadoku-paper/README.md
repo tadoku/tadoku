@@ -8,6 +8,8 @@ The studies intentionally include rejected directions. They document why the fin
 
 - [Decision log](decision-log.md)
 - [Implementation plan](implementation-plan.md) ([Presenter](https://presentr.lab/md/tadoku-paper-implementation-plan))
+- [Phase 4 gate report](artifacts/tadoku-paper-phase-4-gate.html) ([Presenter](https://presentr.lab/html/tadoku-paper-phase-4-gate))
+- [Phase 4 deployment evidence](research/phase-4-deployment-gate.md)
 - [Original design-system refinement audit](artifacts/design-system-refinement-audit.html)
 
 ## Visual studies
@@ -31,4 +33,4 @@ The original audit also remains published at [Presenter](https://presentr.lab/ht
 
 ## Status
 
-The discussion and implementation-planning phases are complete. The audit, visual studies, and decision log remain the design history; the implementation plan defines the phased delivery and application migrations.
+Phases 0–4 are complete and the authoritative Paper catalogue is live at [paper.tadoku.app](https://paper.tadoku.app). Execution stopped before Phase 5: Admin, Auth, webv2, and the legacy `ui.tadoku.app` deployment remain unchanged. The audit, visual studies, decision log, gate report, and implementation plan remain the permanent design and delivery history.

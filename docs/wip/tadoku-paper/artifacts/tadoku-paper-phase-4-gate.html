@@ -1,0 +1,228 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Tadoku Paper — Phase 4 Gate Report</title>
+    <style>
+      :root {
+        color-scheme: light dark;
+        --paper: #f4f0e8;
+        --sheet: #fffdf8;
+        --ink: #201a1c;
+        --muted: #6b6265;
+        --rule: #c9c0b5;
+        --violet: #5b46c6;
+        --green: #176b4b;
+        --green-soft: #dff3e9;
+        --amber: #8a5414;
+        --shadow: #d9d1c7;
+      }
+
+      * { box-sizing: border-box; }
+      html { background: var(--paper); color: var(--ink); font: 16px/1.55 system-ui, sans-serif; }
+      body { margin: 0; }
+      main { width: min(74rem, calc(100% - 2rem)); margin: 0 auto; padding: 2rem 0 6rem; }
+      header { border-inline-start: .4rem solid var(--violet); padding: 1rem 1.5rem 1.25rem; margin-bottom: 2rem; }
+      h1, h2, h3 { font-family: Georgia, serif; line-height: 1.08; text-wrap: balance; }
+      h1 { font-size: clamp(2.6rem, 8vw, 5.8rem); margin: .2rem 0 1rem; max-width: 12ch; }
+      h2 { font-size: clamp(1.7rem, 4vw, 2.6rem); margin: 3rem 0 1rem; }
+      h3 { font-size: 1.25rem; margin: 0 0 .5rem; }
+      p { max-width: 72ch; }
+      a { color: var(--violet); }
+      .eyebrow { color: var(--violet); font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
+      .lede { color: var(--muted); font-size: clamp(1.1rem, 2vw, 1.35rem); max-width: 65ch; }
+      .gate { display: inline-flex; align-items: center; gap: .6rem; background: var(--green-soft); color: var(--green); border: 2px solid var(--green); padding: .6rem .8rem; font-weight: 800; }
+      .gate::before { content: "✓"; font-size: 1.25rem; }
+      .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); gap: 1rem; }
+      .card { background: var(--sheet); border: 1px solid var(--rule); border-bottom: 3px solid var(--ink); padding: 1.1rem; box-shadow: .35rem .35rem 0 var(--shadow); }
+      .metric { font: 800 clamp(1.8rem, 5vw, 3rem)/1.1 Georgia, serif; display: block; }
+      .label { color: var(--muted); display: block; margin-top: .35rem; }
+      .panel { background: var(--sheet); border: 1px solid var(--rule); padding: clamp(1rem, 3vw, 1.75rem); overflow-x: auto; }
+      table { border-collapse: collapse; width: 100%; min-width: 42rem; }
+      th, td { border-bottom: 1px solid var(--rule); padding: .7rem .65rem; text-align: left; vertical-align: top; }
+      th { color: var(--muted); font-size: .8rem; letter-spacing: .06em; text-transform: uppercase; }
+      td:not(:first-child), th:not(:first-child) { text-align: right; }
+      code { background: color-mix(in srgb, var(--violet) 10%, transparent); padding: .1rem .25rem; }
+      ul { padding-inline-start: 1.3rem; }
+      li + li { margin-top: .45rem; }
+      .decision { border-inline-start: .35rem solid var(--green); padding: .8rem 1rem; background: var(--green-soft); }
+      .caution { border-inline-start: .35rem solid var(--amber); padding: .8rem 1rem; background: color-mix(in srgb, #f4d59a 35%, var(--sheet)); }
+      .mermaid { background: var(--sheet); border: 1px solid var(--rule); padding: 1rem; }
+      footer { margin-top: 4rem; color: var(--muted); border-top: 1px solid var(--rule); padding-top: 1rem; }
+
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --paper: #181416;
+          --sheet: #231e20;
+          --ink: #f6eee8;
+          --muted: #bfb4b5;
+          --rule: #4c4245;
+          --violet: #aa9aff;
+          --green: #7dd8ac;
+          --green-soft: #17382b;
+          --amber: #e5ae67;
+          --shadow: #0e0b0c;
+        }
+      }
+
+      @media (max-width: 36rem) {
+        main { width: min(100% - 1rem, 74rem); padding-top: 1rem; }
+        header { padding-inline-end: .5rem; }
+        .card { box-shadow: .2rem .2rem 0 var(--shadow); }
+      }
+
+      @media print {
+        :root { color-scheme: light; }
+        main { width: 100%; padding: 0; }
+        .card { box-shadow: none; }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <header>
+        <div class="eyebrow">Tadoku design system · 2026-08-08</div>
+        <h1>Paper is ready for application migration.</h1>
+        <p class="lede">Phase 4 is complete: the authoritative Paper catalogue is built, deployed, visually reviewed, production-smoked, and measured. Work stops here before Admin, Auth, or webv2 migration begins.</p>
+        <div class="gate">Phase 4 gate passed</div>
+      </header>
+
+      <section aria-labelledby="identity">
+        <h2 id="identity">Immutable production identity</h2>
+        <div class="cards">
+          <article class="card"><h3>Source</h3><span class="metric">f297aa7</span><span class="label">Phase 4 catalogue commit</span></article>
+          <article class="card"><h3>Image</h3><span class="metric">4f15ab54</span><span class="label">Immutable SHA-256 digest prefix</span></article>
+          <article class="card"><h3>Static bundle</h3><span class="metric">3.70 MB</span><span class="label">10 Vite output files, uncompressed</span></article>
+          <article class="card"><h3>Container</h3><span class="metric">22.33 MB</span><span class="label">Compressed linux/amd64 layers</span></article>
+        </div>
+        <p><code>ghcr.io/tadoku/tadoku/frontend-paper-styleguide:prod@sha256:4f15ab54ef5d6844df798ad3b08530f1a162ee0c6424a77977a362786a07b714</code></p>
+      </section>
+
+      <section aria-labelledby="sequence">
+        <h2 id="sequence">Delivered boundary</h2>
+        <pre class="mermaid">
+flowchart LR
+  P0[Phase 0\nResearch] --> P1[Phase 1\nFoundation]
+  P1 --> P2[Phase 2\nVertical slice]
+  P2 --> P3[Phase 3\nCatalogue]
+  P3 --> P4[Phase 4\nStabilize + deploy]
+  P4 --> STOP{{STOP}}
+  STOP -. explicit future authorization .-> P5[Phase 5\nAdmin migration]
+  classDef done fill:#dff3e9,stroke:#176b4b,color:#176b4b,stroke-width:2px;
+  classDef stop fill:#f4d59a,stroke:#8a5414,color:#8a5414,stroke-width:3px;
+  class P0,P1,P2,P3,P4 done;
+  class STOP stop;
+        </pre>
+      </section>
+
+      <section aria-labelledby="experience">
+        <h2 id="experience">Catalogue and visual QA</h2>
+        <div class="panel">
+          <ul>
+            <li>All 40 canonical catalogue routes are generated from one typed registry, with 17 planned legacy redirects.</li>
+            <li>Every stable component has instructional content, realistic Tadoku fixtures, source metadata, behavior coverage, and searchable navigation.</li>
+            <li>Preview, Code, API/Props, and Accessibility panels preserve iframe state; code copy uses the Clipboard API with accessible success/error feedback.</li>
+            <li>Phone, tablet, and desktop canvases use exact 360/768/1280 content-box widths so real media queries execute.</li>
+            <li>Keyboard search, result navigation, drawer/search focus containment, focus restoration, and deep-link scrolling were exercised in production.</li>
+            <li>The visual QA round fixed clipped accent rails, mobile header overflow, oversized index cards, leaked iframe resets, selected-control contrast, raw glyphs, and the dark wordmark.</li>
+          </ul>
+        </div>
+        <div class="cards" style="margin-top:1rem">
+          <article class="card"><h3>Mobile viewport</h3><span class="metric">320×700</span><span class="label">0 px horizontal overflow</span></article>
+          <article class="card"><h3>Deep link</h3><span class="metric">96 px</span><span class="label">Accessibility heading below sticky header</span></article>
+          <article class="card"><h3>Fixture width</h3><span class="metric">360 px</span><span class="label">Exact phone iframe width</span></article>
+          <article class="card"><h3>Automated UI</h3><span class="metric">104 tests</span><span class="label">73 paper-ui + 31 styleguide</span></article>
+        </div>
+      </section>
+
+      <section aria-labelledby="delivery">
+        <h2 id="delivery">Static delivery</h2>
+        <div class="panel">
+          <table>
+            <thead><tr><th>Check</th><th>Result</th><th>Evidence</th></tr></thead>
+            <tbody>
+              <tr><td>Nested document requests</td><td>Pass</td><td>All 40 canonical routes return the SPA shell</td></tr>
+              <tr><td>HTML caching</td><td>Pass</td><td><code>cache-control: no-cache</code></td></tr>
+              <tr><td>Hashed assets</td><td>Pass</td><td>gzip + one-year immutable cache</td></tr>
+              <tr><td>Missing assets</td><td>Pass</td><td><code>/assets/missing.*</code> returns 404</td></tr>
+              <tr><td>Sensitive dot paths</td><td>Pass</td><td><code>/.env</code> and <code>/.git/config</code> return 404</td></tr>
+              <tr><td>Health and rollout</td><td>Pass</td><td><code>/healthz</code> 200; maxUnavailable 0; one Ready endpoint retained</td></tr>
+              <tr><td>Pod state</td><td>Pass</td><td>1/1 Ready, zero restarts, exact digest</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section aria-labelledby="resources">
+        <h2 id="resources">Three-run production resource gate</h2>
+        <p>Each fresh pod completed 15 minutes idle, cold asset and canonical-route loads, representative navigation, five minutes at 1 request/second, one minute at concurrency 10, and five minutes recovery.</p>
+        <div class="cards">
+          <article class="card"><h3>Responses</h3><span class="metric">49,516</span><span class="label">0 failures including control runs</span></article>
+          <article class="card"><h3>Warm Ready</h3><span class="metric">2.0 s</span><span class="label">Worst container start → Ready</span></article>
+          <article class="card"><h3>Working peak</h3><span class="metric">11.48 MB</span><span class="label">17.1% of the 64Mi limit</span></article>
+          <article class="card"><h3>Burst throttle</h3><span class="metric">0.17%</span><span class="label">Worst; gate is below 5%</span></article>
+        </div>
+        <div class="panel" style="margin-top:1rem">
+          <table>
+            <thead><tr><th>Run</th><th>Ready</th><th>Idle CPU</th><th>Sustained CPU</th><th>Burst avg</th><th>Idle memory</th><th>Peak memory</th><th>Throttle</th><th>Recovery</th></tr></thead>
+            <tbody>
+              <tr><td>1</td><td>2.0 s</td><td>0.160m</td><td>0.328m</td><td>37.9m</td><td>4.45 MB</td><td>11.48 MB</td><td>0.17%</td><td>+4.2%</td></tr>
+              <tr><td>2</td><td>2.0 s</td><td>0.379m</td><td>0.336m</td><td>42.7m</td><td>6.23 MB</td><td>11.31 MB</td><td>0%</td><td>−6.2%</td></tr>
+              <tr><td>3</td><td>1.0 s</td><td>0.147m</td><td>0.341m</td><td>46.4m</td><td>4.29 MB</td><td>11.40 MB</td><td>0.17%</td><td>−7.4%</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>Three observer-neutral navigation controls added 60 requests with zero failures and zero throttled periods. The normal boundary snapshots run inside the tiny cgroup and explain isolated control increments.</p>
+      </section>
+
+      <section aria-labelledby="selection">
+        <h2 id="selection">Selected requests and limits</h2>
+        <div class="panel">
+          <table>
+            <thead><tr><th>Resource</th><th>Formula result</th><th>Selected</th><th>Decision</th></tr></thead>
+            <tbody>
+              <tr><td>CPU request</td><td>&lt;5m, floor 10m</td><td>10m</td><td>Sustained worst is 0.341m</td></tr>
+              <tr><td>CPU limit</td><td>110m from partial sampled p99</td><td>250m</td><td>Keep conservative ceiling; do not lower on a truncated API stream</td></tr>
+              <tr><td>Memory request</td><td>12Mi, floor 32Mi</td><td>32Mi</td><td>Navigation worst is 9.11 MB</td></tr>
+              <tr><td>Memory limit</td><td>24Mi, floor 64Mi</td><td>64Mi</td><td>Worst peak is 11.48 MB with &gt;52Mi headroom</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="decision"><strong>Decision:</strong> retain the deployed <code>10m/32Mi</code> requests and <code>250m/64Mi</code> limits. No GitOps resource change is warranted.</p>
+        <p class="caution"><strong>Measurement limitation:</strong> the cluster has no Metrics API, and the API server resets a continuous <code>kubectl exec</code> stream after roughly 30 seconds. The valid 27-second sample measured 52.626m p99; full-minute boundary counters are complete. The reproducible driver now uses three 20-second streams for future complete p99 collection.</p>
+      </section>
+
+      <section aria-labelledby="gates">
+        <h2 id="gates">Source and deployment gates</h2>
+        <div class="panel">
+          <ul>
+            <li><code>paper-ui</code>: 73 tests, lint, TypeScript 7 package check, build, TS 4.9 declaration consumer, pack smoke.</li>
+            <li><code>paper-styleguide</code>: 31 tests, lint, TypeScript 7 package check, Vite production build.</li>
+            <li>Full seven-project frontend build and Paper boundary scan passed.</li>
+            <li>Production Docker image build and static-image smoke passed before publication.</li>
+            <li>GitHub quality, image, boundary, and SQL checks passed on the source PR.</li>
+            <li>Production browser smoke passed at desktop and 320×700 mobile, in light/dark and key keyboard/focus flows during visual QA.</li>
+          </ul>
+        </div>
+      </section>
+
+      <section aria-labelledby="followups">
+        <h2 id="followups">Follow-up opportunities</h2>
+        <ul>
+          <li>Split the current 571.22 kB raw / 183.00 kB gzip application chunk by route or catalogue section. This is a performance improvement, not a static-server resource blocker.</li>
+          <li>Add cluster metrics and browser visual regression infrastructure, then cross-check one cgroup run against telemetry.</li>
+          <li>Begin Admin migration only under a new explicit authorization. Auth, webv2, and the legacy <code>ui.tadoku.app</code> deployment remain unchanged.</li>
+        </ul>
+      </section>
+
+      <footer>
+        <p>Authoritative catalogue: <a href="https://paper.tadoku.app">paper.tadoku.app</a> · Raw observations and the measurement driver live with the Tadoku Paper research archive.</p>
+      </footer>
+    </main>
+    <script type="module">
+      import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs";
+      mermaid.initialize({ startOnLoad: true, theme: matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "neutral" });
+    </script>
+  </body>
+</html>

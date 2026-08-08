@@ -1,4 +1,9 @@
 import type { CatalogDocument } from 'paper-ui/catalog'
+import {
+  MagnifyingGlassIcon,
+  XMarkIcon,
+  iconClassName,
+} from 'paper-ui/icons'
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { searchCatalog } from './catalogue'
@@ -56,11 +61,16 @@ export function CatalogueSearch({ documents }: CatalogueSearchProps) {
         ref={triggerRef}
         className="shell-search-trigger paper-focus-ring"
         type="button"
+        aria-label="Search Paper"
         aria-haspopup="dialog"
         aria-expanded={open}
         onClick={() => setOpen(true)}
       >
-        <span>Search Paper</span>
+        <MagnifyingGlassIcon
+          aria-hidden="true"
+          className={iconClassName('default')}
+        />
+        <span className="shell-search-trigger__label">Search Paper</span>
         <kbd aria-label="Command or Control K">⌘/Ctrl K</kbd>
       </button>
 
@@ -88,7 +98,10 @@ export function CatalogueSearch({ documents }: CatalogueSearchProps) {
                 aria-label="Close search"
                 onClick={() => closeSearch(true)}
               >
-                ×
+                <XMarkIcon
+                  aria-hidden="true"
+                  className={iconClassName('default')}
+                />
               </button>
             </div>
             <label className="search-field">

@@ -1,5 +1,7 @@
 import type { CatalogDocument } from 'paper-ui/catalog'
-import cutMeterUrl from 'paper-ui/assets/brand/cut-meter.svg'
+import cutMeterUrl from 'paper-ui/assets/brand/cut-meter.svg?no-inline'
+import cutMeterReversedUrl from 'paper-ui/assets/brand/cut-meter-reversed.svg?no-inline'
+import { Bars3Icon, XMarkIcon, iconClassName } from 'paper-ui/icons'
 import { type PropsWithChildren, useEffect, useRef, useState } from 'react'
 import { Link, NavLink } from 'react-router-dom'
 import { buildNavigationGroups } from './catalogue'
@@ -107,7 +109,16 @@ export function DocsShell({ documents, children }: DocsShellProps) {
       <header className="docs-header">
         <Link className="paper-wordmark paper-focus-ring" to="/">
           <span aria-hidden="true">
-            <img src={cutMeterUrl} alt="" />
+            <img
+              className="paper-wordmark__mark--light"
+              src={cutMeterUrl}
+              alt=""
+            />
+            <img
+              className="paper-wordmark__mark--dark"
+              src={cutMeterReversedUrl}
+              alt=""
+            />
           </span>
           <strong>Tadoku Paper</strong>
         </Link>
@@ -117,12 +128,16 @@ export function DocsShell({ documents, children }: DocsShellProps) {
             ref={mobileTriggerRef}
             className="mobile-nav-trigger paper-focus-ring"
             type="button"
+            aria-label="Browse"
             aria-controls="mobile-catalogue-navigation"
             aria-expanded={mobileNavigationOpen}
             onClick={() => setMobileNavigationOpen((value) => !value)}
           >
-            <span aria-hidden="true">☰</span>
-            <span>Browse</span>
+            <Bars3Icon
+              aria-hidden="true"
+              className={iconClassName('default')}
+            />
+            <span className="mobile-nav-trigger__label">Browse</span>
           </button>
         </div>
       </header>
@@ -158,7 +173,10 @@ export function DocsShell({ documents, children }: DocsShellProps) {
                   mobileTriggerRef.current?.focus()
                 }}
               >
-                ×
+                <XMarkIcon
+                  aria-hidden="true"
+                  className={iconClassName('default')}
+                />
               </button>
             </div>
             <PreferenceControls />

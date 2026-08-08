@@ -1,3 +1,15 @@
+/* Keep this structural inset unlayered so isolated preview/test documents that
+   do not implement cascade layers still reserve space for the public rail. */
+.catalogue-index__hero.paper-accent-rail,
+.document-hero.paper-accent-rail,
+.not-found.paper-accent-rail {
+  padding-inline-start: 1rem;
+}
+
+.paper-wordmark {
+  white-space: nowrap;
+}
+
 @layer paper-styleguide {
   :root {
     color-scheme: light;
@@ -15,19 +27,18 @@
     margin: 0;
   }
 
-  button,
-  input,
-  select {
+  /* Native .docs-shell button/input/select defaults stay scoped and use
+     :where() so component and selected-state recipes win the cascade. */
+  .docs-shell :where(button, input, select) {
     color: inherit;
     font: inherit;
   }
 
-  button,
-  select {
+  .docs-shell :where(button, select) {
     min-block-size: var(--paper-control-height);
   }
 
-  button {
+  .docs-shell :where(button) {
     cursor: pointer;
   }
 
@@ -74,6 +85,7 @@
     align-items: center;
     color: var(--paper-color-text-ink);
     text-decoration: none;
+    white-space: nowrap;
   }
 
   .paper-wordmark > span {
@@ -88,6 +100,15 @@
     display: block;
     inline-size: 100%;
     block-size: 100%;
+  }
+
+  .paper-wordmark__mark--dark,
+  :root[data-theme='dark'] .paper-wordmark__mark--light {
+    display: none;
+  }
+
+  :root[data-theme='dark'] .paper-wordmark__mark--dark {
+    display: block;
   }
 
   .docs-header__actions {
@@ -118,6 +139,8 @@
   }
 
   .shell-icon-button {
+    display: grid;
+    place-items: center;
     inline-size: var(--paper-control-height);
     padding: 0;
     font-size: var(--paper-type-section-size);
@@ -219,6 +242,14 @@
   .catalogue-index__hero {
     max-inline-size: 48rem;
     margin-block-end: 4rem;
+  }
+
+  .catalogue-index__section + .catalogue-index__section {
+    margin-block-start: 3.5rem;
+  }
+
+  .catalogue-index__section > h2 {
+    margin-block: 0 1rem;
   }
 
   .catalogue-index__hero h1,
@@ -325,7 +356,7 @@
     border-block-end: 1px solid var(--paper-color-rule-subtle);
   }
 
-  code {
+  .docs-shell code {
     overflow-wrap: anywhere;
     color: var(--paper-color-text-link);
   }
@@ -676,13 +707,15 @@
       min-block-size: 4rem;
     }
 
-    .shell-search-trigger > span,
+    .shell-search-trigger__label,
     .shell-search-trigger kbd {
       display: none;
     }
 
-    .shell-search-trigger::before {
-      content: 'Search';
+    .shell-search-trigger {
+      inline-size: var(--paper-control-height);
+      justify-content: center;
+      padding-inline: 0;
     }
 
     .mobile-nav-trigger {
@@ -691,6 +724,27 @@
 
     .docs-main {
       padding-block-start: 2rem;
+    }
+
+    .catalogue-index__hero {
+      margin-block-end: 2.5rem;
+    }
+
+    .catalogue-index__section + .catalogue-index__section {
+      margin-block-start: 2.5rem;
+    }
+
+    .document-card-grid {
+      gap: 0.75rem;
+    }
+
+    .document-card {
+      min-block-size: 0;
+      padding: 0.85rem;
+    }
+
+    .document-card p {
+      display: none;
     }
 
     .mobile-nav-drawer {
@@ -733,6 +787,20 @@
 
     .component-workbench__fixture-select {
       inline-size: 100%;
+    }
+  }
+
+  @media (max-width: 23rem) {
+    .shell-search-trigger__label,
+    .mobile-nav-trigger__label,
+    .shell-search-trigger kbd {
+      display: none;
+    }
+
+    .mobile-nav-trigger {
+      inline-size: var(--paper-control-height);
+      justify-content: center;
+      padding-inline: 0;
     }
   }
 

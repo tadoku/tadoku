@@ -145,7 +145,6 @@ function validateDocumentMetadata(
   const strings: ReadonlyArray<readonly [unknown, string]> = [
     [document.name, "name"],
     [document.summary, "summary"],
-    [document.owner, "owner"],
     [document.sourcePath, "sourcePath"],
     [document.packageVersion, "packageVersion"],
   ];

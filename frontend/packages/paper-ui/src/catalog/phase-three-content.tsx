@@ -9,7 +9,6 @@ import {
 
 const REVIEW_DATE = "2026-08-08";
 const PACKAGE_VERSION = "0.1.0";
-const OWNER = "Tadoku design systems";
 const VIEWPORTS = [
   { id: "phone", label: "Phone", width: 360, height: 720 },
   { id: "tablet", label: "Tablet", width: 768, height: 800 },
@@ -36,7 +35,6 @@ function guidanceDocument(options: GuidanceDocumentOptions): CatalogDocument {
     category: options.kind === "foundation" ? "foundations" : "governance",
     aliases: [],
     lifecycle: "Experimental",
-    owner: OWNER,
     reviewDate: REVIEW_DATE,
     packageVersion: PACKAGE_VERSION,
     guidance: {
@@ -210,7 +208,7 @@ export const phaseThreePatternDocuments = [
   defineCatalogDocument({
     id: "pattern.logging", route: "/patterns/logging", name: "Logging", kind: "pattern", category: "patterns", aliases: [],
     summary: "Composes Paper primitives into reading summaries, entry actions, and transparent contest state.",
-    keywords: ["logging", "reading", "contest", "summary"], lifecycle: "Stable", owner: OWNER, reviewDate: REVIEW_DATE,
+    keywords: ["logging", "reading", "contest", "summary"], lifecycle: "Stable", reviewDate: REVIEW_DATE,
     sourcePath: "src/catalog/phase-three-content.tsx", packageVersion: PACKAGE_VERSION,
     guidance: {
       whenToUse: ["Use for product flows that record reading and explain where it contributes."],
@@ -233,7 +231,7 @@ export const phaseThreeExperimentDocuments = [
   defineCatalogDocument({
     id: "experiment.logging-v2", route: "/experiments/logging-v2", name: "Logging v2", kind: "experiment", category: "experiments", aliases: [],
     summary: "Explores a clearer split between saving reading, reviewing details, and submitting to contests.",
-    keywords: ["logging", "experiment", "contest", "form"], lifecycle: "Experimental", owner: OWNER, reviewDate: REVIEW_DATE,
+    keywords: ["logging", "experiment", "contest", "form"], lifecycle: "Experimental", reviewDate: REVIEW_DATE,
     sourcePath: "src/catalog/phase-three-content.tsx", packageVersion: PACKAGE_VERSION,
     guidance: {
       whenToUse: ["Use only for evaluating the proposed logging flow."],
@@ -253,11 +251,11 @@ export const phaseThreeGovernanceDocuments = [
   guidanceDocument({
     id: "governance.contributing", route: "/contributing", name: "Contributing", kind: "governance",
     summary: "How Paper changes are proposed, implemented, tested, documented, reviewed, and promoted.",
-    keywords: ["contributing", "lifecycle", "ownership", "review", "deprecation"], sourcePath: "docs/wip/tadoku-paper/implementation-plan.md",
+    keywords: ["contributing", "lifecycle", "review", "deprecation"], sourcePath: "docs/wip/tadoku-paper/implementation-plan.md",
     whenToUse: ["Use before adding an export, token, fixture, route, or lifecycle change."],
-    content: ["Every change has an owner, canonical source, deterministic fixture, behavior evidence, migration note, and review date before Stable promotion.", "Experimental contracts may change. Stable contracts require migration-safe changes. Deprecated contracts name a registered replacement, removal timing, and exit path.", "Design history includes the refinement audit, visual studies, decision log, implementation plan, research packet, and accepted ADRs under docs/wip/tadoku-paper."],
+    content: ["Every change has a canonical source, deterministic fixture, behavior evidence, migration note, and review date before Stable promotion.", "Experimental contracts may change. Stable contracts require migration-safe changes. Deprecated contracts name a registered replacement, removal timing, and exit path.", "Design history includes the refinement audit, visual studies, decision log, implementation plan, research packet, and accepted ADRs under docs/wip/tadoku-paper."],
     requirements: ["Review semantics, keyboard behavior, reflow, both themes, both densities, and realistic content before promotion."],
-    publicContract: ["The catalogue registry is the source of lifecycle, ownership, route, fixture, source, and migration metadata."],
+    publicContract: ["The catalogue registry is the source of lifecycle, route, fixture, source, and migration metadata."],
   }),
   guidanceDocument({
     id: "governance.changelog", route: "/changelog", name: "Changelog", kind: "governance",

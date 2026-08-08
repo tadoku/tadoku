@@ -43,13 +43,13 @@ describe("Phase 3 foundation and product content", () => {
     }
   });
 
-  it("records lifecycle, deprecation, ownership, review, and design history guidance", () => {
+  it("records lifecycle, deprecation, review, and design history guidance", () => {
     const content = phaseThreeGovernanceDocuments
       .flatMap((document) => document.guidance.content)
       .join(" ");
     expect(content).toMatch(/lifecycle|Experimental/u);
     expect(content).toContain("Deprecated");
-    expect(content).toContain("owner");
+    expect(content).toContain("review date");
     expect(content).toContain("Design history");
   });
 

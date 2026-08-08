@@ -141,7 +141,6 @@ function document(spec: DocSpec): CatalogDocument {
     summary: spec.summary,
     keywords: [spec.name.toLocaleLowerCase(), spec.category, "paper"],
     lifecycle: "Stable",
-    owner: "Tadoku design systems",
     reviewDate: REVIEW_DATE,
     sourcePath: spec.sourcePath,
     packageVersion: "0.1.0",

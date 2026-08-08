@@ -56,7 +56,6 @@ function document(overrides: Partial<CatalogDocument> = {}): CatalogDocument {
     summary: "Triggers an immediate action.",
     keywords: ["button", "action"],
     lifecycle: "Stable",
-    owner: "Tadoku design systems",
     reviewDate: "2026-08-08",
     sourcePath: "src/components/actions/Button/Button.tsx",
     packageVersion: "0.1.0",
@@ -120,6 +119,10 @@ describe("the initial catalogue", () => {
     expect(REQUIRED_COMPONENT_SECTION_KEYS).toHaveLength(16);
     expect(REQUIRED_COMPONENT_SECTION_KEYS[0]).toBe("overview");
     expect(REQUIRED_COMPONENT_SECTION_KEYS[15]).toBe("lifecycle");
+  });
+
+  it("does not model a project owner for catalogue documents", () => {
+    expect(catalogRegistry.documents.every((entry) => !("owner" in entry))).toBe(true);
   });
 });
 
@@ -209,7 +212,6 @@ describe("registry validation", () => {
 
   it("enforces core metadata and real review dates", () => {
     const candidate = document({
-      owner: "",
       reviewDate: "2026-02-30",
       keywords: [],
     });
@@ -220,7 +222,6 @@ describe("registry validation", () => {
     );
     expect(result.issues.map((issue) => issue.path)).toEqual(
       expect.arrayContaining([
-        "documents[0].owner",
         "documents[0].reviewDate",
         "documents[0].keywords",
       ]),

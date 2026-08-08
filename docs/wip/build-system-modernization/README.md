@@ -22,7 +22,7 @@ statuses `Not started`, `In progress`, `Blocked`, and `Done`. A phase is not
 
 | Phase | Status | Pull request | Depends on | Evidence / notes |
 | --- | --- | --- | --- | --- |
-| 0. Capture the baseline | In progress | Pending | — | Baseline evidence recorded below. |
+| 0. Capture the baseline | In progress | [#765](https://github.com/tadoku/tadoku/pull/765) | — | Baseline evidence recorded below. |
 | 1. Make rules Bazel 9-ready on Bazel 8 | Not started | — | Phase 0 | — |
 | 2. Upgrade Bazel to 9.2.0 | Not started | — | Phase 1 merged | — |
 | 3. Harden CI and dependency updates | Not started | — | Phase 2 merged | — |
@@ -114,7 +114,7 @@ migration regressions.
 ### Steps
 
 - [x] Set Phase 0 to `In progress` in the progress tracker.
-- [ ] Create a dedicated baseline pull request or issue and link it in the
+- [x] Create a dedicated baseline pull request or issue and link it in the
       tracker.
 - [x] Confirm the checkout is based on the latest `main` and has no unrelated
       changes.
@@ -152,7 +152,7 @@ migration regressions.
       `//:push_images` cover every expected production target.
 - [x] Run `bazel run //:load_images` and confirm all backend images load
       locally. Do not push images from a baseline branch.
-- [ ] Attach command output or the successful CI run to the tracking issue or
+- [x] Attach command output or the successful CI run to the tracking issue or
       pull request.
 - [ ] Update this phase to `Done` only after the baseline evidence is recorded.
 

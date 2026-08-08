@@ -1,0 +1,24 @@
+@layer paper-recipes {
+  .paper-flash { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: start; gap: 0.75rem; padding: 0.9rem 1rem; border: 1px solid var(--paper-color-rule-default); border-inline-start: 4px solid var(--paper-color-status-information); background: var(--paper-color-surface-paper); }
+  .paper-flash--success { border-inline-start-color: var(--paper-color-status-success); }
+  .paper-flash--warning { border-inline-start-color: var(--paper-color-status-warning); }
+  .paper-flash--danger { border-inline-start-color: var(--paper-color-status-danger); }
+  .paper-flash__icon { display: grid; place-items: center; inline-size: var(--paper-icon-size-default); block-size: var(--paper-icon-size-default); }
+  .paper-flash__content { display: grid; gap: 0.2rem; }
+  .paper-flash__action { align-self: center; }
+  .paper-loading { display: inline-grid; place-items: center; }
+  .paper-loading__spinner { inline-size: 1.25rem; block-size: 1.25rem; border: 2px solid var(--paper-color-rule-default); border-block-start-color: var(--paper-color-action-default); border-radius: 50%; animation: paper-loading-spin 700ms linear infinite; }
+  .paper-loading--small .paper-loading__spinner { inline-size: 1rem; block-size: 1rem; }
+  .paper-loading--large .paper-loading__spinner { inline-size: 2rem; block-size: 2rem; border-width: 3px; }
+  .paper-surface-card { padding: 1rem; border: 1px solid var(--paper-color-rule-default); background: var(--paper-color-surface-paper); }
+  .paper-button-group { display: flex; flex-wrap: wrap; gap: var(--paper-inline-gap); }
+  .paper-button-group--end { justify-content: end; }
+  .paper-toast-viewport { position: fixed; z-index: 110; inset-block-end: 1rem; inset-inline-end: 1rem; display: flex; flex-direction: column; inline-size: min(24rem, calc(100vw - 2rem)); gap: 0.5rem; outline: 0; }
+  .paper-toast { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 0.75rem; padding: 0.85rem; border: 1px solid var(--paper-color-rule-strong); background: var(--paper-color-surface-overlay); transition: opacity var(--paper-motion-standard), transform var(--paper-motion-standard); }
+  .paper-toast[data-starting-style], .paper-toast[data-ending-style] { opacity: 0; transform: translateX(0.5rem); }
+  .paper-toast__content { display: grid; gap: 0.2rem; }
+  .paper-toast__title { font-weight: var(--paper-type-label-weight); }
+  .paper-toast__close { align-self: start; inline-size: 2rem; block-size: 2rem; border: 0; color: var(--paper-color-text-muted); background: transparent; cursor: pointer; }
+  @keyframes paper-loading-spin { to { transform: rotate(1turn); } }
+  @media (prefers-reduced-motion: reduce) { .paper-loading__spinner { animation: none; } .paper-toast { transition: none; } }
+}

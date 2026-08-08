@@ -116,6 +116,34 @@ describe("router-neutral navigation", () => {
     expect(disabledSelect).not.toHaveBeenCalled();
   });
 
+  it("scopes Sidebar section heading ids to each component instance", () => {
+    const sections = [{
+      id: "admin tools",
+      title: "Admin",
+      links: [{ id: "logs", label: "Logs", href: "/admin/logs" }],
+    }];
+    const { container } = render(
+      <>
+        <Sidebar label="Desktop navigation" sections={sections} />
+        <Sidebar label="Mobile navigation" sections={sections} />
+      </>,
+    );
+
+    const headings = Array.from(container.querySelectorAll<HTMLHeadingElement>(".paper-sidebar__title"));
+    const headingIds = headings.map((heading) => heading.id);
+    expect(new Set(headingIds)).toHaveProperty("size", headingIds.length);
+    for (const headingId of headingIds) {
+      expect(headingId).toMatch(/^[a-zA-Z][a-zA-Z0-9_-]*$/u);
+    }
+
+    for (const section of container.querySelectorAll<HTMLElement>(".paper-sidebar__section")) {
+      const labelledBy = section.getAttribute("aria-labelledby");
+      expect(labelledBy).toBeTruthy();
+      expect(container.querySelectorAll(`[id="${labelledBy}"]`)).toHaveLength(1);
+      expect(section.querySelector("h2")).toHaveAttribute("id", labelledBy);
+    }
+  });
+
   it("uses ordered Breadcrumb semantics with a non-link current page", () => {
     render(
       <Breadcrumb items={[

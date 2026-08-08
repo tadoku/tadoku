@@ -10,7 +10,9 @@ on:
     paths:
       - "services/**"
       - "tools/ci/**"
-      - "BUILD.bazel"
+      - "**/BUILD"
+      - "**/BUILD.bazel"
+      - "**/*.bzl"
       - ".bazelversion"
       - ".bazelrc"
       - "MODULE.bazel"
@@ -23,7 +25,9 @@ on:
     paths:
       - "services/**"
       - "tools/ci/**"
-      - "BUILD.bazel"
+      - "**/BUILD"
+      - "**/BUILD.bazel"
+      - "**/*.bzl"
       - ".bazelversion"
       - ".bazelrc"
       - "MODULE.bazel"

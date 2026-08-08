@@ -26,7 +26,7 @@ statuses `Not started`, `In progress`, `Blocked`, and `Done`. A phase is not
 | 1. Make rules Bazel 9-ready on Bazel 8 | Done | [#766](https://github.com/tadoku/tadoku/pull/766) | Phase 0 | Merged 2026-08-08 as `be66af7e`; [full Bazel 8 CI passed](https://github.com/tadoku/tadoku/actions/runs/31237113928). |
 | 2. Upgrade Bazel to 9.2.0 | Done | [#767](https://github.com/tadoku/tadoku/pull/767) | Phase 1 merged | Merged 2026-08-08 as `42bba884`; [full Bazel 9 CI passed](https://github.com/tadoku/tadoku/actions/runs/31237357627). |
 | 3. Harden CI and dependency updates | Done | [#768](https://github.com/tadoku/tadoku/pull/768) | Phase 2 merged | Merged 2026-08-08 as `3eb06aac`; the [first hardened `main` run](https://github.com/tadoku/tadoku/actions/runs/31238030479) saved all three caches, restored them in the publish job, and published all six images. |
-| 4. Clean up latent Bazel debt | In progress | Pending | Phase 3 merged | Both unreferenced generator rules were removed without changing generated APIs; Buildifier and the full local Bazel/OCI/Trivy gates passed. |
+| 4. Clean up latent Bazel debt | In progress | [#771](https://github.com/tadoku/tadoku/pull/771) | Phase 3 merged | Both unreferenced generator rules were removed without changing generated APIs; Buildifier and the full local Bazel/OCI/Trivy gates passed. CI paths now cover all Starlark build files. |
 | 5. Complete rollout and close migration | Not started | — | Phases 0–4 | — |
 
 ## Phase 0 baseline evidence
@@ -394,7 +394,7 @@ covered by normal Bazel analysis.
 ### Steps
 
 - [x] Branch from `main` after Phase 3 is merged.
-- [x] Set Phase 4 to `In progress`; the pull request link remains pending.
+- [x] Set Phase 4 to `In progress` and link the pull request.
 - [x] Confirm whether `build/openapi.bzl` and `build/oapi-codegen.bzl` have any
       intended consumer.
 - [x] For `build/openapi.bzl`, either delete it as obsolete or declare and test

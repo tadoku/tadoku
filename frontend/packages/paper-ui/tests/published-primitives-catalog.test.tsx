@@ -38,6 +38,29 @@ describe("published Tabs and Drawer catalogue contracts", () => {
   });
 });
 
+describe("segmented RadioSelect catalogue contract", () => {
+  it("publishes a real viewport-choice example with concise documentation", () => {
+    const document = documentById("component.radio-select");
+    const fixture = fixtureById("radio-select.viewport");
+
+    expect(document?.fixtureIds).toContain("radio-select.viewport");
+    expect(document?.sections?.pageSections).toEqual([
+      "usage",
+      "examples",
+      "variantsAndStates",
+      "behavior",
+      "contentGuidance",
+      "accessibility",
+    ]);
+    expect(document?.sections?.pageSections.length).toBeLessThanOrEqual(6);
+    expect(fixture?.code).toContain('variant="segmented"');
+    const markup = renderToString(<>{fixture?.render()}</>);
+    expect(markup).toContain("paper-radio-select--segmented");
+    expect(markup).toContain('type="radio"');
+    expect(markup).not.toContain("aria-pressed");
+  });
+});
+
 describe("Modal compositional catalogue extension", () => {
   it("documents a controlled, footerless, initial-focus composition", () => {
     const document = documentById("component.modal");

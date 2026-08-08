@@ -44,6 +44,36 @@ function NativeControls({ onSubmit }: { onSubmit: (values: unknown) => void }) {
   );
 }
 
+function SegmentedRadioSelect({
+  defaultViewport = "tablet",
+  onSubmit = () => undefined,
+}: {
+  defaultViewport?: string;
+  onSubmit?: (values: unknown) => void;
+}) {
+  const methods = useForm({ defaultValues: { viewport: defaultViewport } });
+  return (
+    <FormProvider {...methods}>
+      <form noValidate onSubmit={methods.handleSubmit(onSubmit)}>
+        <RadioSelect
+          name="viewport"
+          label="Preview size"
+          hint="Choose one viewport for the isolated preview."
+          variant="segmented"
+          required
+          options={[
+            { value: "phone", label: "Phone" },
+            { value: "tablet", label: "Tablet" },
+            { value: "desktop", label: "Desktop" },
+            { value: "wide", label: "Wide", disabled: true },
+          ]}
+        />
+        <Button type="submit">Apply viewport</Button>
+      </form>
+    </FormProvider>
+  );
+}
+
 function AutocompleteForm({ multiple = false, tags = false }: { multiple?: boolean; tags?: boolean }) {
   const methods = useForm({ defaultValues: { language: multiple ? [] : null } });
   return (
@@ -121,6 +151,46 @@ describe("native React Hook Form controls", () => {
     render(<AmountForm />);
     expect(screen.getByRole("spinbutton", { name: "Progress" })).toHaveValue(12);
     expect(screen.getByRole("combobox", { name: "Unit for progress" })).toHaveValue("pages");
+  });
+
+  it("renders segmented RadioSelect as one native exclusive choice", async () => {
+    const user = userEvent.setup();
+    const submit = vi.fn();
+    const { container } = render(<SegmentedRadioSelect onSubmit={submit} />);
+    const group = screen.getByRole("group", { name: /Preview size/u });
+    const radios = within(group).getAllByRole("radio");
+
+    expect(group).toHaveClass("paper-radio-select--segmented");
+    expect(radios).toHaveLength(4);
+    expect(screen.getByRole("radio", { name: "Tablet" })).toBeChecked();
+    expect(screen.getByRole("radio", { name: "Wide" })).toBeDisabled();
+    expect(container.querySelector("button[aria-pressed]")).toBeNull();
+    expect(group.querySelector(".paper-button")).toBeNull();
+
+    await user.click(screen.getByRole("radio", { name: "Phone" }));
+    expect(screen.getByRole("radio", { name: "Phone" })).toBeChecked();
+    expect(screen.getByRole("radio", { name: "Tablet" })).not.toBeChecked();
+    await user.click(screen.getByRole("button", { name: "Apply viewport" }));
+    expect(submit).toHaveBeenCalledWith(
+      expect.objectContaining({ viewport: "phone" }),
+      expect.anything(),
+    );
+  });
+
+  it("reports a missing required segmented choice on its native group and radios", async () => {
+    const user = userEvent.setup();
+    render(<SegmentedRadioSelect defaultViewport="" />);
+
+    await user.click(screen.getByRole("button", { name: "Apply viewport" }));
+
+    const group = screen.getByRole("group", { name: /Preview size/u });
+    expect(group).toHaveAttribute("aria-invalid", "true");
+    expect(group).toHaveAccessibleDescription(
+      "Choose one viewport for the isolated preview. Choose an option.",
+    );
+    for (const radio of within(group).getAllByRole("radio")) {
+      expect(radio).toHaveAttribute("aria-invalid", "true");
+    }
   });
 });
 

@@ -12,6 +12,7 @@ import {
   type ButtonProps,
   type ChartSeries,
   type DrawerProps,
+  type RadioSelectProps,
   type TabsRootProps,
   type ToastOptions,
 } from "paper-ui";
@@ -61,6 +62,17 @@ const drawerProps: DrawerProps = {
   title: "Filters",
   children: createElement("p", null, "Entry filters"),
 };
+const radioSelectProps: RadioSelectProps = {
+  name: "viewport",
+  label: "Preview size",
+  variant: "segmented",
+  required: true,
+  options: [
+    { value: "phone", label: "Phone" },
+    { value: "tablet", label: "Tablet" },
+    { value: "desktop", label: "Desktop" },
+  ],
+};
 void buttonClassName({ variant: "outline" });
 void renderToString(createElement(Button, buttonProps));
 void autocompleteProps;
@@ -79,6 +91,7 @@ void renderToString(
   ),
 );
 void renderToString(createElement(Drawer, drawerProps));
+void radioSelectProps;
 void document;
 void series;
 void validateCatalogRegistry(registry);

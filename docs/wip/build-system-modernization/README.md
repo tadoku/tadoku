@@ -24,8 +24,8 @@ statuses `Not started`, `In progress`, `Blocked`, and `Done`. A phase is not
 | --- | --- | --- | --- | --- |
 | 0. Capture the baseline | Done | [#765](https://github.com/tadoku/tadoku/pull/765) | — | Merged 2026-08-08 as `b6ba1845`; baseline evidence recorded below. |
 | 1. Make rules Bazel 9-ready on Bazel 8 | Done | [#766](https://github.com/tadoku/tadoku/pull/766) | Phase 0 | Merged 2026-08-08 as `be66af7e`; [full Bazel 8 CI passed](https://github.com/tadoku/tadoku/actions/runs/31237113928). |
-| 2. Upgrade Bazel to 9.2.0 | In progress | [#767](https://github.com/tadoku/tadoku/pull/767) | Phase 1 merged | Bazel 9 frozen dependencies, Gazelle, build, tests, OCI coverage/loading, and Trivy passed locally. |
-| 3. Harden CI and dependency updates | Not started | — | Phase 2 merged | — |
+| 2. Upgrade Bazel to 9.2.0 | Done | [#767](https://github.com/tadoku/tadoku/pull/767) | Phase 1 merged | Merged 2026-08-08 as `42bba884`; [full Bazel 9 CI passed](https://github.com/tadoku/tadoku/actions/runs/31237357627). |
+| 3. Harden CI and dependency updates | In progress | [#768](https://github.com/tadoku/tadoku/pull/768) | Phase 2 merged | Local gates and the [full branch PR workflow](https://github.com/tadoku/tadoku/actions/runs/31237719680) passed; post-merge cache validation pending. |
 | 4. Clean up latent Bazel debt | Not started | — | Phase 3 merged | — |
 | 5. Complete rollout and close migration | Not started | — | Phases 0–4 | — |
 
@@ -306,8 +306,8 @@ for externally loaded shell rules.
 - [x] Run the same Trivy scan performed by the Bazel GitHub Actions workflow.
 - [x] Confirm the pull request changes only Bazel configuration and generated
       dependency state.
-- [ ] Merge and verify the first `main` build completes with Bazel 9.2.0.
-- [ ] Record the merge commit and CI run, then mark Phase 2 `Done`.
+- [x] Merge and verify the first `main` build completes with Bazel 9.2.0.
+- [x] Record the merge commit and CI run, then mark Phase 2 `Done`.
 
 ### Exit criteria
 
@@ -332,38 +332,38 @@ behavior explicit on GitHub-hosted runners.
 
 ### Steps
 
-- [ ] Branch from `main` after Phase 2 is merged.
-- [ ] Set Phase 3 to `In progress` and link the pull request.
-- [ ] Add `pull_request` to `.github/workflows/build-bazel.yaml` with the same
+- [x] Branch from `main` after Phase 2 is merged.
+- [x] Set Phase 3 to `In progress` and link the pull request.
+- [x] Add `pull_request` to `.github/workflows/build-bazel.yaml` with the same
       relevant path filters as the push workflow.
-- [ ] Add top-level `permissions: contents: read`.
-- [ ] Grant `packages: write` only to the image publish job if it is required
+- [x] Add top-level `permissions: contents: read`.
+- [x] Grant `packages: write` only to the image publish job if it is required
       for GHCR publishing.
-- [ ] Add workflow concurrency so a newer commit cancels a superseded build
+- [x] Add workflow concurrency so a newer commit cancels a superseded build
       for the same branch or pull request.
-- [ ] Replace the manual `/home/runner/.cache/bazel` cache with
+- [x] Replace the manual `/home/runner/.cache/bazel` cache with
       `bazel-contrib/setup-bazel`.
-- [ ] Pin the setup action to a reviewed commit SHA, with its release version
+- [x] Pin the setup action to a reviewed commit SHA, with its release version
       documented in a comment.
-- [ ] Enable the Bazelisk download cache, repository cache, and per-workflow
+- [x] Enable the Bazelisk download cache, repository cache, and per-workflow
       disk cache.
-- [ ] Prevent pull requests from saving shared caches while still allowing
+- [x] Prevent pull requests from saving shared caches while still allowing
       cache restoration.
-- [ ] Add a dedicated frozen lockfile step before analysis:
+- [x] Add a dedicated frozen lockfile step before analysis:
 
   ```sh
   bazel mod deps --lockfile_mode=error
   ```
 
-- [ ] Pass `--lockfile_mode=error` to Gazelle, build, test, query, and image
+- [x] Pass `--lockfile_mode=error` to Gazelle, build, test, query, and image
       load invocations in CI where the command accepts it.
-- [ ] Add `.github/dependabot.yml` with a weekly `bazel` package ecosystem
+- [x] Add `.github/dependabot.yml` with a weekly `bazel` package ecosystem
       update at the repository root.
-- [ ] Group compatible Bazel rule updates so the regenerated lockfile is
+- [x] Group compatible Bazel rule updates so the regenerated lockfile is
       reviewed once per update set.
-- [ ] Do not configure Dependabot to combine Bazel updates with Go, pnpm, or
+- [x] Do not configure Dependabot to combine Bazel updates with Go, pnpm, or
       GitHub Actions updates.
-- [ ] Validate the workflow on a pull request from a branch and, if practical,
+- [x] Validate the workflow on a pull request from a branch and, if practical,
       from a fork.
 - [ ] Merge and confirm the next scheduled or `main` run restores and saves
       the intended caches.

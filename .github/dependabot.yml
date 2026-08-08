@@ -1,0 +1,14 @@
+version: 2
+updates:
+  - package-ecosystem: bazel
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      bazel-rules:
+        patterns:
+          - "rules_*"
+          - gazelle
+        update-types:
+          - minor
+          - patch

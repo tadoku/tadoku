@@ -1,10 +1,24 @@
 name: build-bazel
+
 on:
   schedule:
     # monthly at 5th of every month
     - cron: "0 0 5 * *"
 
   workflow_dispatch:
+  pull_request:
+    paths:
+      - "services/**"
+      - "tools/ci/**"
+      - "BUILD.bazel"
+      - ".bazelversion"
+      - ".bazelrc"
+      - "MODULE.bazel"
+      - "MODULE.bazel.lock"
+      - "go.mod"
+      - "go.sum"
+      - ".github/workflows/build-bazel.yaml"
+      - "!frontend/**"
   push:
     paths:
       - "services/**"
@@ -18,6 +32,14 @@ on:
       - "go.sum"
       - ".github/workflows/build-bazel.yaml"
       - "!frontend/**"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: build-bazel-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build:
     name: Build Tadoku
@@ -26,37 +48,43 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup cache
-        uses: actions/cache@v4
+      # bazel-contrib/setup-bazel 0.19.0
+      - name: Setup Bazel
+        uses: bazel-contrib/setup-bazel@c5acdfb288317d0b5c0bbd7a396a3dc868bb0f86
         with:
-          path: "/home/runner/.cache/bazel"
-          key: bazel-v5-${{ runner.os }}-${{ hashFiles('.bazelversion', '.bazelrc', 'MODULE.bazel', 'MODULE.bazel.lock', 'go.mod', 'go.sum') }}
+          bazelisk-cache: true
+          repository-cache: true
+          disk-cache: ${{ github.workflow }}
+          cache-save: ${{ github.event_name != 'pull_request' }}
+
+      - name: Verify frozen Bazel dependencies
+        run: bazel mod deps --lockfile_mode=error
 
       - name: Verify Gazelle
-        run: bazel run //:gazelle -- -mode=diff
+        run: bazel run --lockfile_mode=error //:gazelle -- -mode=diff
 
       - name: Build
-        run: bazel build //...
+        run: bazel build --lockfile_mode=error //...
 
       - name: Check push_images covers all production oci_push targets
         run: |
           diff \
-            <(bazel query 'attr(name, "^push$", kind("oci_push", //services/...))' | sort) \
-            <(bazel query 'kind("oci_push", labels(data, //:push_images))' | sort) \
+            <(bazel query --lockfile_mode=error 'attr(name, "^push$", kind("oci_push", //services/...))' | sort) \
+            <(bazel query --lockfile_mode=error 'kind("oci_push", labels(data, //:push_images))' | sort) \
           || { echo "//:push_images is out of sync with production oci_push targets named :push under //services/..." >&2; exit 1; }
 
       - name: Check load_images covers all production oci_load targets
         run: |
           diff \
-            <(bazel query 'filter("^//services/[^/]+:load$", attr(name, "^load$", kind("oci_load", //services/...)))' | sort) \
-            <(bazel query 'kind("oci_load", labels(data, //:load_images))' | sort) \
+            <(bazel query --lockfile_mode=error 'filter("^//services/[^/]+:load$", attr(name, "^load$", kind("oci_load", //services/...)))' | sort) \
+            <(bazel query --lockfile_mode=error 'kind("oci_load", labels(data, //:load_images))' | sort) \
           || { echo "//:load_images is out of sync with production oci_load targets named :load under //services/..." >&2; exit 1; }
 
       - name: Run tests
-        run: bazel test //...
+        run: bazel test --lockfile_mode=error //...
 
       - name: Load backend images for scanning
-        run: bazel run //:load_images
+        run: bazel run --lockfile_mode=error //:load_images
 
       - name: Install Trivy
         uses: aquasecurity/setup-trivy@81e514348e19b6112ce2a7e3ecbafe19c1e1f567 # v0.3.1
@@ -90,15 +118,23 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'
+    permissions:
+      contents: read
+      packages: write
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup cache
-        uses: actions/cache@v4
+      # bazel-contrib/setup-bazel 0.19.0
+      - name: Setup Bazel
+        uses: bazel-contrib/setup-bazel@c5acdfb288317d0b5c0bbd7a396a3dc868bb0f86
         with:
-          path: "/home/runner/.cache/bazel"
-          key: bazel-v5-${{ runner.os }}-${{ hashFiles('.bazelversion', '.bazelrc', 'MODULE.bazel', 'MODULE.bazel.lock', 'go.mod', 'go.sum') }}
+          bazelisk-cache: true
+          repository-cache: true
+          disk-cache: ${{ github.workflow }}
+
+      - name: Verify frozen Bazel dependencies
+        run: bazel mod deps --lockfile_mode=error
 
       - name: Push images
         run: |
@@ -108,4 +144,4 @@ jobs:
           cp /home/runner/.docker/config.json /tmp/docker/config.json
 
           # Push images
-          bazel run //:push_images
+          bazel run --lockfile_mode=error //:push_images

@@ -641,6 +641,25 @@
     background: var(--paper-color-surface-overlay);
   }
 
+  .mobile-nav-backdrop {
+    visibility: visible;
+    opacity: 1;
+  }
+
+  .mobile-nav-backdrop[data-open='false'] {
+    visibility: hidden;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .mobile-nav-drawer {
+    transform: translateX(0);
+  }
+
+  .mobile-nav-backdrop[data-open='false'] .mobile-nav-drawer {
+    transform: translateX(-100%);
+  }
+
   .search-dialog {
     inline-size: min(40rem, calc(100% - 2rem));
     max-block-size: min(42rem, calc(100vh - 4rem));
@@ -852,6 +871,18 @@
   }
 
   @media (prefers-reduced-motion: no-preference) {
+    .mobile-nav-backdrop {
+      transition: opacity var(--paper-motion-standard), visibility 0s linear;
+    }
+
+    .mobile-nav-backdrop[data-open='false'] {
+      transition-delay: 0s, var(--paper-motion-standard);
+    }
+
+    .mobile-nav-drawer {
+      transition: transform var(--paper-motion-standard);
+    }
+
     .skip-link,
     .catalogue-nav__link,
     .search-result {

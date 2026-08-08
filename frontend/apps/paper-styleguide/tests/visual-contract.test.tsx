@@ -146,6 +146,38 @@ describe('responsive visual contract', () => {
     )
   })
 
+  it('animates the Browse drawer while preserving reduced-motion safety', async () => {
+    const user = userEvent.setup()
+    const { container } = render(
+      <MemoryRouter>
+        <DocsShell documents={catalogRegistry.documents}>Content</DocsShell>
+      </MemoryRouter>,
+    )
+
+    const backdrop = container.querySelector('.mobile-nav-backdrop')
+    const drawer = container.querySelector<HTMLElement>('.mobile-nav-drawer')
+
+    expect(backdrop).toHaveAttribute('data-open', 'false')
+    expect(backdrop).toHaveAttribute('aria-hidden', 'true')
+    expect(drawer?.inert).toBe(true)
+
+    await user.click(screen.getByRole('button', { name: 'Browse' }))
+    expect(backdrop).toHaveAttribute('data-open', 'true')
+    expect(backdrop).toHaveAttribute('aria-hidden', 'false')
+    expect(drawer?.inert).toBe(false)
+
+    await user.click(screen.getByRole('button', { name: 'Close navigation' }))
+    expect(backdrop).toHaveAttribute('data-open', 'false')
+    expect(drawer?.inert).toBe(true)
+
+    expect(shellStyles).toContain(
+      '@media (prefers-reduced-motion: no-preference) {\n    .mobile-nav-backdrop {\n      transition: opacity var(--paper-motion-standard)',
+    )
+    expect(shellStyles).toContain(
+      '.mobile-nav-backdrop[data-open=\'false\'] .mobile-nav-drawer',
+    )
+  })
+
   it('switches the Cut Meter to its canonical reversed asset in dark mode', () => {
     expect(shellStyles).toContain(
       ":root[data-theme='dark'] .paper-wordmark__mark--light",

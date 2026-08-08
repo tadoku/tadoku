@@ -137,47 +137,50 @@ export function DocsShell({ documents, children }: DocsShellProps) {
         <CatalogueNavigation documents={documents} />
       </aside>
 
-      {mobileNavigationOpen ? (
-        <div
-          className="mobile-nav-backdrop"
-          role="presentation"
-          onMouseDown={(event) => {
-            if (event.target === event.currentTarget) {
-              setMobileNavigationOpen(false)
-            }
+      <div
+        className="mobile-nav-backdrop"
+        role="presentation"
+        data-open={mobileNavigationOpen ? 'true' : 'false'}
+        aria-hidden={!mobileNavigationOpen}
+        onMouseDown={(event) => {
+          if (event.target === event.currentTarget) {
+            setMobileNavigationOpen(false)
+          }
+        }}
+      >
+        <aside
+          ref={(node) => {
+            if (node) node.inert = !mobileNavigationOpen
           }}
+          id="mobile-catalogue-navigation"
+          className="mobile-nav-drawer paper-surface-raised paper-elevation-showcase"
+          aria-label="Mobile catalogue navigation"
+          onKeyDown={trapMobileFocus}
         >
-          <aside
-            id="mobile-catalogue-navigation"
-            className="mobile-nav-drawer paper-surface-raised paper-elevation-showcase"
-            aria-label="Mobile catalogue navigation"
-            onKeyDown={trapMobileFocus}
-          >
-            <div className="mobile-nav-drawer__heading">
-              <strong className="paper-type-component">Browse Paper</strong>
-              <button
-                ref={mobileCloseRef}
-                type="button"
-                className="shell-icon-button paper-focus-ring"
-                aria-label="Close navigation"
-                onClick={() => {
-                  setMobileNavigationOpen(false)
-                  mobileTriggerRef.current?.focus()
-                }}
-              >
-                <XMarkIcon
-                  aria-hidden="true"
-                  className={iconClassName('default')}
-                />
-              </button>
-            </div>
-            <CatalogueNavigation
-              documents={documents}
-              onNavigate={() => setMobileNavigationOpen(false)}
-            />
-          </aside>
-        </div>
-      ) : null}
+          <div className="mobile-nav-drawer__heading">
+            <strong className="paper-type-component">Browse Paper</strong>
+            <button
+              ref={mobileCloseRef}
+              type="button"
+              className="shell-icon-button paper-focus-ring"
+              aria-label="Close navigation"
+              onClick={() => {
+                setMobileNavigationOpen(false)
+                mobileTriggerRef.current?.focus()
+              }}
+            >
+              <XMarkIcon
+                aria-hidden="true"
+                className={iconClassName('default')}
+              />
+            </button>
+          </div>
+          <CatalogueNavigation
+            documents={documents}
+            onNavigate={() => setMobileNavigationOpen(false)}
+          />
+        </aside>
+      </div>
 
       <main id="main-content" className="docs-main" tabIndex={-1}>
         {children}

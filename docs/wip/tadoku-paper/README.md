@@ -25,6 +25,7 @@ The studies intentionally include rejected directions. They document why the fin
 | [Soft Cut Meter v9](artifacts/design-system-cut-meter-soft-v9.html) | Genuinely rounded cut constructions | [Open](https://presentr.lab/html/tadoku-cut-meter-soft-v9) |
 | [Typography and icons v10](artifacts/design-system-type-icon-baseline-v10.html) | Typography hierarchy, icon grammar, API direction, and regression baseline | [Open](https://presentr.lab/html/tadoku-type-icon-baseline-v10) |
 | [Button grammar v11](artifacts/tadoku-paper-button-grammar-v11.html) | Button variants, class/component parity, and `paper-ui` architecture | [Open](https://presentr.lab/html/tadoku-paper-button-grammar-v11) |
+| [Button API and primitive layer v12](artifacts/tadoku-paper-button-api-base-ui-v12.html) | Shadcn-inspired recipes, link/form semantics, and Base UI versus Headless UI | [Open](https://presentr.lab/html/tadoku-paper-button-api-base-ui-v12) |
 
 The original audit also remains published at [Presenter](https://presentr.lab/html/tadoku-design-system-refinement-audit).
 

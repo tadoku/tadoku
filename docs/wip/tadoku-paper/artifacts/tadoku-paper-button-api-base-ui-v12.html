@@ -1,0 +1,684 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Tadoku Paper — Button API and primitive layer study</title>
+    <meta
+      name="description"
+      content="An interactive study of shadcn button conventions, the proposed Tadoku Paper API, form actions, link semantics, and the Base UI migration boundary."
+    />
+    <style>
+      :root {
+        color-scheme: light;
+        --canvas: #efede6;
+        --paper: #fffefa;
+        --paper-raised: #f8f6ef;
+        --ink: #282428;
+        --muted: #6e686d;
+        --faint: #918a88;
+        --rule: #cec8bd;
+        --rule-strong: #8b847d;
+        --field-edge: #aaa49b;
+        --violet: #5747b8;
+        --violet-hover: #6858c7;
+        --violet-edge: #3e318a;
+        --violet-soft: #eeebff;
+        --danger: #a03232;
+        --danger-hover: #b53b3b;
+        --danger-edge: #6e2020;
+        --success: #2c694f;
+        --code: #211e24;
+        --code-ink: #f5f0fa;
+        --focus: #7564dc;
+        --shadow: #282428;
+        --serif: Merriweather, Georgia, "Times New Roman", serif;
+        --sans: "Open Sans", Inter, ui-sans-serif, system-ui, sans-serif;
+      }
+
+      html[data-theme="dark"] {
+        color-scheme: dark;
+        --canvas: #17151a;
+        --paper: #211f25;
+        --paper-raised: #29262d;
+        --ink: #f3eff5;
+        --muted: #c5bec8;
+        --faint: #99919d;
+        --rule: #4b4650;
+        --rule-strong: #77707d;
+        --field-edge: #655f69;
+        --violet: #9a8bea;
+        --violet-hover: #aa9cf2;
+        --violet-edge: #7163c6;
+        --violet-soft: #302b49;
+        --danger: #e27777;
+        --danger-hover: #ef8b8b;
+        --danger-edge: #9e4d4d;
+        --success: #7fc8a7;
+        --code: #100e12;
+        --code-ink: #f5f0fa;
+        --focus: #b1a4ff;
+        --shadow: #050407;
+      }
+
+      * { box-sizing: border-box; }
+      html { scroll-behavior: smooth; }
+      body {
+        margin: 0;
+        background: var(--canvas);
+        color: var(--ink);
+        font: 15px/1.65 var(--sans);
+      }
+      button, input { font: inherit; }
+      a { color: var(--violet); }
+      :focus-visible {
+        outline: 2px solid var(--focus);
+        outline-offset: 2px;
+      }
+
+      .topbar {
+        position: sticky;
+        top: 0;
+        z-index: 20;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 18px;
+        min-height: 58px;
+        padding: 10px clamp(18px, 4vw, 56px);
+        background: color-mix(in srgb, var(--paper) 94%, transparent);
+        border-bottom: 1px solid var(--rule);
+        backdrop-filter: blur(10px);
+      }
+      .brand { display: flex; align-items: center; gap: 12px; }
+      .meter { display: inline-flex; align-items: flex-end; gap: 3px; width: 30px; height: 28px; }
+      .meter i { position: relative; display: block; width: 7px; background: var(--ink); }
+      .meter i:nth-child(1) { height: 11px; }
+      .meter i:nth-child(2) { height: 18px; }
+      .meter i:nth-child(3) { height: 25px; }
+      .meter::after {
+        content: "";
+        position: absolute;
+        width: 30px;
+        height: 4px;
+        background: var(--paper);
+        transform: translateY(-9px) rotate(-15deg);
+        transform-origin: center;
+      }
+      .brand strong { font-family: var(--serif); font-size: 16px; letter-spacing: .01em; }
+      .brand span { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .12em; }
+      .theme-button {
+        min-height: 36px;
+        padding: 0 12px;
+        color: var(--ink);
+        background: var(--paper);
+        border: 1px solid var(--rule-strong);
+        border-bottom-width: 2px;
+        cursor: pointer;
+      }
+
+      .layout {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 240px;
+        gap: clamp(30px, 5vw, 72px);
+        width: min(1240px, calc(100% - 36px));
+        margin: 0 auto;
+        padding: 54px 0 90px;
+      }
+      main { min-width: 0; }
+      .toc {
+        position: sticky;
+        top: 86px;
+        align-self: start;
+        padding-left: 18px;
+        border-left: 4px solid var(--violet);
+      }
+      .toc strong { display: block; margin-bottom: 8px; font-size: 12px; text-transform: uppercase; letter-spacing: .12em; }
+      .toc a { display: block; padding: 4px 0; color: var(--muted); text-decoration: none; }
+      .toc a:hover { color: var(--violet); }
+
+      .eyebrow {
+        margin: 0 0 10px;
+        color: var(--violet);
+        font-weight: 700;
+        font-size: 12px;
+        letter-spacing: .14em;
+        text-transform: uppercase;
+      }
+      h1, h2, h3 { font-family: var(--serif); line-height: 1.18; }
+      h1 { max-width: 850px; margin: 0; font-size: clamp(38px, 6vw, 68px); letter-spacing: -.025em; }
+      h2 { margin: 0 0 12px; font-size: clamp(25px, 3vw, 34px); }
+      h3 { margin: 0 0 8px; font-size: 19px; }
+      .lede { max-width: 760px; margin: 22px 0 0; color: var(--muted); font-size: 18px; }
+      .rule-callout {
+        position: relative;
+        max-width: 900px;
+        margin: 34px 0 0;
+        padding: 20px 24px 20px 28px;
+        background: var(--paper);
+        border: 1px solid var(--rule);
+      }
+      .rule-callout::before {
+        content: "";
+        position: absolute;
+        inset: -1px auto -1px -1px;
+        width: 6px;
+        background: var(--violet);
+      }
+      .rule-callout strong { display: block; font: 700 21px/1.35 var(--serif); }
+      .rule-callout span { color: var(--muted); }
+
+      section { margin-top: 70px; scroll-margin-top: 90px; }
+      .section-intro { max-width: 760px; margin: 0 0 24px; color: var(--muted); }
+      .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
+      .card {
+        min-width: 0;
+        padding: 22px;
+        background: var(--paper);
+        border: 1px solid var(--rule);
+      }
+      .card.floating { box-shadow: 3px 3px 0 var(--shadow); border-color: var(--rule-strong); }
+      .card p { margin: 0 0 16px; color: var(--muted); }
+      .label {
+        display: inline-block;
+        margin-bottom: 12px;
+        color: var(--violet);
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: .12em;
+        text-transform: uppercase;
+      }
+      .specimen {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 12px;
+        min-height: 78px;
+        padding: 18px;
+        background: var(--paper-raised);
+        border: 1px solid var(--rule);
+      }
+
+      .btn,
+      .button-link {
+        --button-bg: var(--paper);
+        --button-fg: var(--ink);
+        --button-border: var(--rule-strong);
+        --button-edge: var(--rule-strong);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        min-height: 44px;
+        padding: 0 16px;
+        color: var(--button-fg);
+        background: var(--button-bg);
+        border: 1px solid var(--button-border);
+        border-bottom: 2px solid var(--button-edge);
+        border-radius: 0;
+        font-weight: 700;
+        line-height: 1;
+        text-decoration: none;
+        cursor: pointer;
+        transition: background 120ms ease, color 120ms ease, transform 120ms ease;
+      }
+      .btn:hover, .button-link:hover { background: color-mix(in srgb, var(--button-bg) 88%, var(--violet) 12%); }
+      .btn:active, .button-link:active { transform: translateY(1px); border-bottom-width: 1px; margin-bottom: 1px; }
+      .btn.primary, .button-link.primary {
+        --button-bg: var(--violet);
+        --button-fg: #fff;
+        --button-border: var(--violet-edge);
+        --button-edge: var(--violet-edge);
+      }
+      .btn.primary:hover, .button-link.primary:hover { --button-bg: var(--violet-hover); }
+      .btn.ghost, .button-link.ghost {
+        --button-bg: transparent;
+        --button-border: transparent;
+        --button-edge: transparent;
+        color: var(--violet);
+      }
+      .btn.danger, .button-link.danger {
+        --button-bg: var(--danger);
+        --button-fg: #fff;
+        --button-border: var(--danger-edge);
+        --button-edge: var(--danger-edge);
+      }
+      .btn.danger:hover, .button-link.danger:hover { --button-bg: var(--danger-hover); }
+      .btn.text-link {
+        min-height: auto;
+        padding: 3px 1px;
+        color: var(--violet);
+        background: transparent;
+        border: 0;
+        text-decoration: underline;
+        text-underline-offset: 4px;
+      }
+      .btn:disabled, .btn[aria-busy="true"] { opacity: .62; cursor: not-allowed; }
+      .spinner {
+        width: 15px;
+        height: 15px;
+        border: 2px solid currentColor;
+        border-right-color: transparent;
+        border-radius: 50%;
+        animation: spin .8s linear infinite;
+      }
+      @keyframes spin { to { transform: rotate(360deg); } }
+      @media (prefers-reduced-motion: reduce) {
+        *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+      }
+
+      pre {
+        overflow: auto;
+        margin: 14px 0 0;
+        padding: 16px;
+        color: var(--code-ink);
+        background: var(--code);
+        border-left: 4px solid var(--violet);
+        font: 12.5px/1.65 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        tab-size: 2;
+      }
+      code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+      .inline-code { padding: 2px 5px; background: var(--violet-soft); color: var(--ink); }
+
+      .semantic-table { width: 100%; border-collapse: collapse; background: var(--paper); border: 1px solid var(--rule); }
+      .semantic-table th, .semantic-table td { padding: 14px 16px; text-align: left; vertical-align: top; border-bottom: 1px solid var(--rule); }
+      .semantic-table th { font-size: 12px; letter-spacing: .08em; text-transform: uppercase; background: var(--paper-raised); }
+      .yes { color: var(--success); font-weight: 700; }
+      .no { color: var(--danger); font-weight: 700; }
+
+      .form-demo { display: grid; gap: 15px; }
+      .field { display: grid; gap: 6px; }
+      .field label { font-weight: 700; }
+      .field input {
+        min-height: 44px;
+        padding: 8px 11px;
+        color: var(--ink);
+        background: var(--paper);
+        border: 1px solid var(--rule);
+        border-bottom: 2px solid var(--field-edge);
+        border-radius: 0;
+      }
+      .form-actions { display: flex; flex-wrap: wrap; gap: 10px; padding-top: 4px; }
+      .form-status { min-height: 24px; margin: 0; color: var(--success); font-weight: 700; }
+
+      .architecture {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 36px minmax(0, 1fr);
+        align-items: center;
+        gap: 14px;
+      }
+      .stack { padding: 18px; background: var(--paper); border: 1px solid var(--rule); }
+      .stack strong { display: block; padding: 10px 12px; border: 1px solid var(--rule); background: var(--paper-raised); }
+      .stack strong + strong { margin-top: 8px; }
+      .stack .accent { color: #fff; background: var(--violet); border-color: var(--violet-edge); }
+      .arrow { color: var(--violet); font-size: 26px; font-weight: 700; text-align: center; }
+      .note { padding: 16px 18px; color: var(--muted); background: var(--violet-soft); border-left: 4px solid var(--violet); }
+      .sources { margin-top: 70px; padding-top: 24px; border-top: 1px solid var(--rule); color: var(--muted); }
+      .sources li { margin: 5px 0; }
+
+      @media (max-width: 900px) {
+        .layout { grid-template-columns: 1fr; }
+        .toc { position: static; grid-row: 1; }
+        .grid { grid-template-columns: 1fr; }
+      }
+      @media (max-width: 620px) {
+        .topbar { align-items: flex-start; }
+        .brand span { display: none; }
+        .layout { width: min(100% - 24px, 1240px); padding-top: 34px; }
+        .architecture { grid-template-columns: 1fr; }
+        .arrow { transform: rotate(90deg); }
+        .semantic-table { display: block; overflow-x: auto; }
+      }
+    </style>
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="brand">
+        <span class="meter" aria-hidden="true"><i></i><i></i><i></i></span>
+        <strong>Tadoku Paper</strong>
+        <span>API study · v12</span>
+      </div>
+      <button class="theme-button" type="button" id="theme-toggle" aria-pressed="false">Dark specimen</button>
+    </header>
+
+    <div class="layout">
+      <main>
+        <p class="eyebrow">Technical inspiration, not visual inheritance</p>
+        <h1>Buttons have appearance. Elements have meaning.</h1>
+        <p class="lede">
+          Shadcn’s strongest lesson is not a particular border radius or Tailwind class. It is the separation of a reusable variant recipe from the element that receives it. Paper can retain that idea while owning its class-first API and sharp Bookplate appearance.
+        </p>
+
+        <div class="rule-callout">
+          <strong>Navigation uses a link. An operation uses a button.</strong>
+          <span>Either element may share the same visual recipe, but styling must never overwrite its semantics.</span>
+        </div>
+
+        <section id="shadcn">
+          <p class="eyebrow">01 · Current convention</p>
+          <h2>How the shadcn Button API is shaped</h2>
+          <p class="section-intro">
+            Shadcn combines a React component with an exported variant recipe. The component handles button markup; the recipe can style another element without forcing button behavior onto it.
+          </p>
+
+          <div class="grid">
+            <article class="card floating">
+              <span class="label">React component</span>
+              <h3>Button variants</h3>
+              <p>Shadcn currently exposes visual variants through a typed prop.</p>
+              <div class="specimen">
+                <button type="button" class="btn primary">Default</button>
+                <button type="button" class="btn">Outline</button>
+                <button type="button" class="btn ghost">Ghost</button>
+                <button type="button" class="btn danger">Destructive</button>
+                <button type="button" class="btn text-link">Link style</button>
+              </div>
+              <pre><code>&lt;Button variant="default"&gt;Save&lt;/Button&gt;
+&lt;Button variant="outline"&gt;Cancel&lt;/Button&gt;
+&lt;Button variant="ghost"&gt;Close&lt;/Button&gt;
+&lt;Button variant="destructive"&gt;Delete&lt;/Button&gt;
+&lt;Button variant="link"&gt;Learn more&lt;/Button&gt;</code></pre>
+            </article>
+
+            <article class="card">
+              <span class="label">Important vocabulary difference</span>
+              <h3>Shadcn “default” is visually primary</h3>
+              <p>
+                Shadcn’s default variant is normally the filled emphasis. Paper has already assigned <span class="inline-code">default</span> to the neutral action and <span class="inline-code">primary</span> to the emphasized action. We should borrow the architecture, not its names blindly.
+              </p>
+              <table class="semantic-table">
+                <thead><tr><th>Intent</th><th>Shadcn</th><th>Paper</th></tr></thead>
+                <tbody>
+                  <tr><td>Main action</td><td><code>default</code></td><td><code>primary</code></td></tr>
+                  <tr><td>Neutral action</td><td><code>outline</code></td><td><code>default</code></td></tr>
+                  <tr><td>Quiet action</td><td><code>ghost</code></td><td><code>ghost</code></td></tr>
+                  <tr><td>Destructive meaning</td><td><code>destructive</code> variant</td><td><code>danger</code> tone</td></tr>
+                </tbody>
+              </table>
+            </article>
+          </div>
+        </section>
+
+        <section id="links">
+          <p class="eyebrow">02 · Link semantics</p>
+          <h2>Can a link be a button?</h2>
+          <p class="section-intro">
+            It can look like one. It should remain an anchor in the DOM. Base UI’s Button intentionally enforces button semantics, so shadcn’s Base UI implementation tells consumers to style the anchor with the exported recipe instead.
+          </p>
+
+          <div class="grid">
+            <article class="card">
+              <span class="label yes">Correct · navigation</span>
+              <h3>An anchor with button appearance</h3>
+              <div class="specimen">
+                <a class="button-link primary" href="#forms">Continue to forms →</a>
+              </div>
+              <pre><code>import { buttonVariants } from "@/components/ui/button"
+
+&lt;a
+  href="/contests"
+  className={buttonVariants({ variant: "default" })}
+&gt;
+  Browse contests
+&lt;/a&gt;</code></pre>
+            </article>
+
+            <article class="card">
+              <span class="label no">Incorrect · semantic disguise</span>
+              <h3>A Button forced to render an anchor</h3>
+              <div class="specimen" aria-hidden="true">
+                <span class="btn danger">Do not compose this</span>
+              </div>
+              <pre><code>// Avoid with the Base UI Button.
+// It applies role="button" and button keyboard behavior.
+&lt;Button render={&lt;a href="/contests" /&gt;} nativeButton={false}&gt;
+  Browse contests
+&lt;/Button&gt;</code></pre>
+            </article>
+          </div>
+
+          <div class="note" style="margin-top: 20px">
+            <strong>Paper direction:</strong> export one <code>buttonClassName()</code> recipe for buttons, anchors, and router links. An optional <code>LinkButton</code> may exist, but it must render a real anchor and must never wrap Base UI’s Button primitive.
+          </div>
+        </section>
+
+        <section id="forms">
+          <p class="eyebrow">03 · Forms</p>
+          <h2>Form buttons need explicit jobs</h2>
+          <p class="section-intro">
+            A submit button submits, a cancel button performs an ordinary action, and a React Hook Form reset should normally call <code>methods.reset()</code>. Their visual hierarchy follows intent rather than DOM order.
+          </p>
+
+          <div class="grid">
+            <article class="card floating">
+              <span class="label">Interactive form specimen</span>
+              <form id="demo-form" class="form-demo">
+                <div class="field">
+                  <label for="book-title">Book title</label>
+                  <input id="book-title" name="title" value="コンビニ人間" />
+                </div>
+                <div class="form-actions">
+                  <button class="btn primary" type="submit">Save log</button>
+                  <button class="btn" type="button" id="reset-action">Reset changes</button>
+                  <button class="btn ghost" type="button" id="cancel-action">Cancel</button>
+                </div>
+                <p class="form-status" id="form-status" role="status" aria-live="polite"></p>
+              </form>
+            </article>
+
+            <article class="card">
+              <span class="label">Paper React API</span>
+              <pre><code>&lt;form onSubmit={methods.handleSubmit(save)}&gt;
+  &lt;Button type="submit" variant="primary"&gt;
+    Save log
+  &lt;/Button&gt;
+
+  &lt;Button
+    type="button"
+    variant="default"
+    onClick={() =&gt; methods.reset()}
+  &gt;
+    Reset changes
+  &lt;/Button&gt;
+
+  &lt;Button type="button" variant="ghost" onClick={close}&gt;
+    Cancel
+  &lt;/Button&gt;
+&lt;/form&gt;</code></pre>
+              <p style="margin-top: 14px">
+                <strong>Rule:</strong> Paper’s Button defaults to <code>type="button"</code>. A form submission must say <code>type="submit"</code> explicitly, matching Base UI’s guidance and preventing accidental submissions.
+              </p>
+            </article>
+          </div>
+        </section>
+
+        <section id="loading">
+          <p class="eyebrow">04 · State composition</p>
+          <h2>Loading belongs to both APIs</h2>
+          <p class="section-intro">
+            The component API supplies safe behavior; the class API remains usable without an import. Neither API should make the visible label or accessible name disappear.
+          </p>
+          <div class="grid">
+            <article class="card">
+              <span class="label">React component</span>
+              <div class="specimen">
+                <button class="btn primary" type="button" aria-busy="true" disabled>
+                  <span class="spinner" aria-hidden="true"></span>
+                  Saving log
+                </button>
+              </div>
+              <pre><code>&lt;Button variant="primary" loading&gt;
+  Saving log
+&lt;/Button&gt;
+
+// Output includes:
+// class="btn primary loading"
+// aria-busy="true"
+// disabled</code></pre>
+            </article>
+            <article class="card">
+              <span class="label">Raw class recipe</span>
+              <div class="specimen">
+                <button class="btn primary" type="button" aria-busy="true" disabled>
+                  <span class="spinner" aria-hidden="true"></span>
+                  Saving log
+                </button>
+              </div>
+              <pre><code>&lt;button
+  type="button"
+  className="btn primary loading"
+  aria-busy="true"
+  disabled
+&gt;
+  Saving log
+&lt;/button&gt;</code></pre>
+            </article>
+          </div>
+        </section>
+
+        <section id="paper-api">
+          <p class="eyebrow">05 · Proposed Paper contract</p>
+          <h2>Borrow the recipe architecture</h2>
+          <p class="section-intro">
+            Paper should expose one typed recipe function, one public CSS vocabulary, and thin semantic React adapters. They are three entrances to the same implementation—not separate styling systems.
+          </p>
+
+          <table class="semantic-table">
+            <thead><tr><th>Use case</th><th>Recommended API</th><th>Rendered element</th></tr></thead>
+            <tbody>
+              <tr><td>Simple action without import</td><td><code>className="btn primary"</code></td><td><code>&lt;button&gt;</code></td></tr>
+              <tr><td>Action with loading convenience</td><td><code>&lt;Button loading&gt;</code></td><td><code>&lt;button&gt;</code></td></tr>
+              <tr><td>Plain navigation link styled as an action</td><td><code>buttonClassName(...)</code></td><td><code>&lt;a&gt;</code></td></tr>
+              <tr><td>Convenient ordinary anchor</td><td><code>&lt;LinkButton href="…"&gt;</code></td><td><code>&lt;a&gt;</code></td></tr>
+              <tr><td>Framework router link</td><td><code>buttonClassName(...)</code> on caller link</td><td>Router-owned anchor</td></tr>
+              <tr><td>Submit</td><td><code>&lt;Button type="submit" variant="primary"&gt;</code></td><td><code>&lt;button type="submit"&gt;</code></td></tr>
+            </tbody>
+          </table>
+
+          <div class="grid" style="margin-top: 20px">
+            <article class="card">
+              <span class="label">Classes</span>
+              <pre><code>&lt;button className="btn primary"&gt;Save&lt;/button&gt;
+&lt;button className="btn default danger"&gt;Delete&lt;/button&gt;
+&lt;button className="btn ghost" aria-label="Close"&gt;…&lt;/button&gt;</code></pre>
+            </article>
+            <article class="card">
+              <span class="label">Typed recipe</span>
+              <pre><code>buttonClassName({
+  variant: "primary",
+  tone: "neutral",
+  density: "comfortable",
+  loading: false,
+})</code></pre>
+            </article>
+          </div>
+        </section>
+
+        <section id="primitives">
+          <p class="eyebrow">06 · Primitive boundary</p>
+          <h2>Base UI replaces Headless UI; it does not wrap it</h2>
+          <p class="section-intro">
+            Both libraries solve the same underlying problem: unstyled accessible behavior. Layering them would duplicate roles, focus management, portals, hidden form inputs, and event handlers.
+          </p>
+
+          <div class="architecture">
+            <div class="stack">
+              <span class="label">Legacy applications</span>
+              <strong class="accent">Legacy ui API and styles</strong>
+              <strong>Headless UI behavior</strong>
+              <strong>React</strong>
+            </div>
+            <div class="arrow" aria-hidden="true">→</div>
+            <div class="stack">
+              <span class="label">Migrated applications</span>
+              <strong class="accent">Paper API, recipes, and tokens</strong>
+              <strong>Base UI behavior where needed</strong>
+              <strong>Native HTML where sufficient</strong>
+              <strong>React</strong>
+            </div>
+          </div>
+
+          <table class="semantic-table" style="margin-top: 22px">
+            <thead><tr><th>Question</th><th>Decision</th></tr></thead>
+            <tbody>
+              <tr><td>Can both packages exist in the repository?</td><td><span class="yes">Yes.</span> Legacy apps bring Headless UI through <code>ui</code>; Paper consumers bring Base UI through <code>paper-ui</code>.</td></tr>
+              <tr><td>Can one component use both?</td><td><span class="no">No.</span> Choose one behavior primitive and one owner for focus, state, and DOM semantics.</td></tr>
+              <tr><td>Should Paper expose Base UI directly?</td><td><span class="no">No.</span> Apps consume the Paper API so the primitive layer can evolve without an application rewrite.</td></tr>
+              <tr><td>Do simple Paper buttons need Base UI?</td><td>Usually no. Native <code>&lt;button&gt;</code> already supplies the correct semantics.</td></tr>
+              <tr><td>Where is Base UI valuable?</td><td>Dialog, menu, popover, combobox, autocomplete, custom select, tabs, tooltip, and other difficult interaction patterns.</td></tr>
+              <tr><td>When is Headless UI removed?</td><td>Per application at its Paper cutover, then from the repository after the last legacy consumer is gone.</td></tr>
+            </tbody>
+          </table>
+        </section>
+
+        <section id="recommendation">
+          <p class="eyebrow">07 · Recommendation</p>
+          <h2>The part worth copying is the separation of concerns</h2>
+          <div class="rule-callout">
+            <strong>Paper owns meaning, styling, and API. Base UI owns difficult interaction behavior.</strong>
+            <span>Shadcn remains a source of technical patterns and comparative examples, not a generated foundation or public dependency.</span>
+          </div>
+          <ul>
+            <li>Use native HTML for Button, Link, Input, TextArea, and other straightforward controls.</li>
+            <li>Use Base UI directly inside Paper for complex primitives.</li>
+            <li>Export public recipes independently of React components.</li>
+            <li>Keep links as anchors even when they look like buttons.</li>
+            <li>Require explicit form button types.</li>
+            <li>Preserve loading semantics in both the class and component APIs.</li>
+            <li>Do not expose Base UI or Headless UI types as Paper’s public contract unless unavoidable.</li>
+          </ul>
+        </section>
+
+        <footer class="sources">
+          <strong>Primary references</strong>
+          <ul>
+            <li><a href="https://ui.shadcn.com/docs/components/base/button">Shadcn Button documentation</a></li>
+            <li><a href="https://ui.shadcn.com/docs/forms/react-hook-form">Shadcn React Hook Form documentation</a></li>
+            <li><a href="https://base-ui.com/react/components/button">Base UI Button documentation</a></li>
+            <li><a href="https://base-ui.com/react/overview/accessibility">Base UI accessibility overview</a></li>
+          </ul>
+        </footer>
+      </main>
+
+      <nav class="toc" aria-label="On this page">
+        <strong>On this page</strong>
+        <a href="#shadcn">Shadcn API</a>
+        <a href="#links">Links and buttons</a>
+        <a href="#forms">Form actions</a>
+        <a href="#loading">Loading state</a>
+        <a href="#paper-api">Paper contract</a>
+        <a href="#primitives">Base vs Headless</a>
+        <a href="#recommendation">Recommendation</a>
+      </nav>
+    </div>
+
+    <script>
+      const root = document.documentElement
+      const themeButton = document.getElementById('theme-toggle')
+      themeButton.addEventListener('click', () => {
+        const dark = root.dataset.theme !== 'dark'
+        root.dataset.theme = dark ? 'dark' : 'light'
+        themeButton.setAttribute('aria-pressed', String(dark))
+        themeButton.textContent = dark ? 'Light specimen' : 'Dark specimen'
+      })
+
+      const form = document.getElementById('demo-form')
+      const field = document.getElementById('book-title')
+      const status = document.getElementById('form-status')
+      const initialValue = field.value
+
+      form.addEventListener('submit', event => {
+        event.preventDefault()
+        status.textContent = `Saved “${field.value}”`
+      })
+      document.getElementById('reset-action').addEventListener('click', () => {
+        field.value = initialValue
+        status.textContent = 'Changes reset through form state'
+        field.focus()
+      })
+      document.getElementById('cancel-action').addEventListener('click', () => {
+        status.textContent = 'Cancelled without submitting'
+      })
+    </script>
+  </body>
+</html>

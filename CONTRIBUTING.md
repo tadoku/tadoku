@@ -8,6 +8,12 @@ If you haven't already, come find us on our [Discord server](https://discord.gg/
 
 TODO: please ask on Discord if you need more info and this hasn't been written yet.
 
+### Design-system coexistence
+
+The legacy `ui` package remains the only design system used by `admin`, `auth`, `webv2`, and the legacy `styleguide` until each application receives its complete Tadoku Paper cutover. The new `paper-styleguide` is the first and initially only `paper-ui` application.
+
+Do not mix `ui` and `paper-ui` imports or styles in one application, import `paper-ui/src/*`, add Next.js or Headless UI dependencies to Paper, or load `paper-ui/styles.css` more than once. Run `cd frontend && pnpm check:paper-boundaries` when changing shared UI or an application boundary. The migration state is recorded in `frontend/paper-boundaries.json` and changes only in the coordinated cutover for an entire application.
+
 ## Testing
 
 Nearly all code should be tested. Please include a test so your contribution can be quickly reviewed. We're not aiming for 100% coverage here, just enough so we can refactor swiftly and have faith in the test suite.

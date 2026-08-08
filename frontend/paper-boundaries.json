@@ -1,0 +1,10 @@
+{
+  "schemaVersion": 1,
+  "applications": {
+    "paper-styleguide": "paper",
+    "styleguide": "legacy",
+    "admin": "legacy",
+    "auth": "legacy",
+    "webv2": "legacy"
+  }
+}

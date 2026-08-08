@@ -14,6 +14,7 @@
     "auth": "pnpm --filter 'auth' dev",
     "admin": "pnpm --filter 'admin' dev",
     "styleguide": "pnpm --filter 'styleguide' dev",
-    "build": "pnpm run -r build"
+    "build": "pnpm run -r build",
+    "check:paper-boundaries": "node scripts/check-paper-boundaries.mjs"
   }
 }

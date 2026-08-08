@@ -7,6 +7,10 @@ import {
 } from "./schema";
 import { validateCatalogRegistry } from "./validation";
 import { phaseTwoDocuments, phaseTwoFixtures } from "./phase-two";
+import {
+  phaseThreeFormsFeedbackDocuments,
+  phaseThreeFormsFeedbackFixtures,
+} from "./phase-three-forms-feedback";
 
 const REVIEW_DATE = "2026-08-08";
 const PACKAGE_VERSION = "0.1.0";
@@ -189,9 +193,10 @@ export const catalogRegistry = createCatalogRegistry({
   documents: [
     ...foundationDocuments,
     ...phaseTwoDocuments,
+    ...phaseThreeFormsFeedbackDocuments,
     ...governanceDocuments,
   ],
-  fixtures: phaseTwoFixtures,
+  fixtures: [...phaseTwoFixtures, ...phaseThreeFormsFeedbackFixtures],
   redirects: [
     { from: "/color", to: "/foundations/color" },
     { from: "/typography", to: "/foundations/typography" },

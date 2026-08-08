@@ -25,8 +25,8 @@ statuses `Not started`, `In progress`, `Blocked`, and `Done`. A phase is not
 | 0. Capture the baseline | Done | [#765](https://github.com/tadoku/tadoku/pull/765) | — | Merged 2026-08-08 as `b6ba1845`; baseline evidence recorded below. |
 | 1. Make rules Bazel 9-ready on Bazel 8 | Done | [#766](https://github.com/tadoku/tadoku/pull/766) | Phase 0 | Merged 2026-08-08 as `be66af7e`; [full Bazel 8 CI passed](https://github.com/tadoku/tadoku/actions/runs/31237113928). |
 | 2. Upgrade Bazel to 9.2.0 | Done | [#767](https://github.com/tadoku/tadoku/pull/767) | Phase 1 merged | Merged 2026-08-08 as `42bba884`; [full Bazel 9 CI passed](https://github.com/tadoku/tadoku/actions/runs/31237357627). |
-| 3. Harden CI and dependency updates | In progress | [#768](https://github.com/tadoku/tadoku/pull/768) | Phase 2 merged | Local gates and the [full branch PR workflow](https://github.com/tadoku/tadoku/actions/runs/31237719680) passed; post-merge cache validation pending. |
-| 4. Clean up latent Bazel debt | Not started | — | Phase 3 merged | — |
+| 3. Harden CI and dependency updates | Done | [#768](https://github.com/tadoku/tadoku/pull/768) | Phase 2 merged | Merged 2026-08-08 as `3eb06aac`; the [first hardened `main` run](https://github.com/tadoku/tadoku/actions/runs/31238030479) saved all three caches, restored them in the publish job, and published all six images. |
+| 4. Clean up latent Bazel debt | In progress | [#771](https://github.com/tadoku/tadoku/pull/771) | Phase 3 merged | Both unreferenced generator rules were removed without changing generated APIs; Buildifier and the full local Bazel/OCI/Trivy gates passed. CI paths now cover all Starlark build files. |
 | 5. Complete rollout and close migration | Not started | — | Phases 0–4 | — |
 
 ## Phase 0 baseline evidence
@@ -365,9 +365,9 @@ behavior explicit on GitHub-hosted runners.
       GitHub Actions updates.
 - [x] Validate the workflow on a pull request from a branch and, if practical,
       from a fork.
-- [ ] Merge and confirm the next scheduled or `main` run restores and saves
+- [x] Merge and confirm the next scheduled or `main` run restores and saves
       the intended caches.
-- [ ] Record the merge and CI evidence, then mark Phase 3 `Done`.
+- [x] Record the merge and CI evidence, then mark Phase 3 `Done`.
 
 ### Exit criteria
 
@@ -393,24 +393,24 @@ covered by normal Bazel analysis.
 
 ### Steps
 
-- [ ] Branch from `main` after Phase 3 is merged.
-- [ ] Set Phase 4 to `In progress` and link the pull request.
-- [ ] Confirm whether `build/openapi.bzl` and `build/oapi-codegen.bzl` have any
+- [x] Branch from `main` after Phase 3 is merged.
+- [x] Set Phase 4 to `In progress` and link the pull request.
+- [x] Confirm whether `build/openapi.bzl` and `build/oapi-codegen.bzl` have any
       intended consumer.
-- [ ] For `build/openapi.bzl`, either delete it as obsolete or declare and test
+- [x] For `build/openapi.bzl`, either delete it as obsolete or declare and test
       its `rules_openapi` dependency before loading it from a BUILD target.
-- [ ] For `build/oapi-codegen.bzl`, either delete it as obsolete or restore an
+- [x] For `build/oapi-codegen.bzl`, either delete it as obsolete or restore an
       explicit, hermetic code-generator target instead of the absent
       `//third_party/oapi-codegen` label.
-- [ ] Keep OpenAPI generator cleanup separate from generated OpenAPI API
+- [x] Keep OpenAPI generator cleanup separate from generated OpenAPI API
       changes. If generation output would change, stop and plan that as a
       dedicated follow-up.
-- [ ] Run Buildifier or the repository's accepted Starlark formatter/checker
+- [x] Run Buildifier or the repository's accepted Starlark formatter/checker
       across active BUILD and `.bzl` files.
-- [ ] Consider adding the documented Bazel lockfile merge driver entry to
+- [x] Consider adding the documented Bazel lockfile merge driver entry to
       `.gitattributes`; keep developer-local merge-driver setup optional.
-- [ ] Verify frozen dependencies, Gazelle, build, and tests again.
-- [ ] Record the outcome for both generator files in this document.
+- [x] Verify frozen dependencies, Gazelle, build, and tests again.
+- [x] Record the outcome for both generator files in this document.
 - [ ] Merge, record the pull request, and mark Phase 4 `Done`.
 
 ### Exit criteria

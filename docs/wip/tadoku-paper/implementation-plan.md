@@ -149,6 +149,51 @@ The new catalogue is a static Vite application. During development, agents expos
 6. **Keep changes reviewable.** Use atomic commits and small package/component PRs before the per-application deployment PRs.
 7. **Preserve history.** The audit, visual studies, and decision log remain unchanged and are linked from the finished style guide.
 
+## Autonomous execution protocol
+
+The implementation should minimize synchronous user input. An execution request starts Phase 0 immediately; passing a phase gate starts the next phase automatically when the required actions remain within the authority granted at kickoff.
+
+Agents follow these rules:
+
+- Read this plan, the decision log, repository instructions, and relevant current source before acting.
+- Treat recorded decisions as authoritative; do not reopen them because an implementation offers another reasonable preference.
+- Resolve reversible technical choices through evidence, a small spike, and an architecture decision record rather than asking the user.
+- Record non-blocking uncertainties and continue with unaffected work.
+- Batch progress into phase/gate reports instead of requesting approval for routine commits or implementation details.
+- Ask the user only when a choice changes product behavior or visual direction beyond this plan, required authority or credentials are missing, an irreversible external action is not pre-authorized, or safe alternatives have been exhausted.
+- Keep deployments rollback-capable and report the exact image/commit before each production cutover.
+
+### One-time kickoff authority
+
+The user can eliminate repeated operational prompts by including the desired authority in the execution request. The useful scopes are:
+
+- create branches, commits, and pull requests;
+- merge PRs after required checks and phase gates pass;
+- deploy the persistent `paper.tadoku.app` preview after its gate;
+- deploy admin, auth, and webv2 cutovers after their individual gates;
+- switch `ui.tadoku.app` and remove legacy source after the final gate.
+
+Authority for one item does not imply the others. Without explicit deployment or merge authority, agents complete and verify the work, then stop only at that external-action boundary.
+
+## Phase 0 research packet
+
+Phase 0 produces durable evidence under `docs/wip/tadoku-paper/research/` so later phases and fresh agents do not repeat discovery.
+
+| Research stream | Questions answered | Durable output |
+| --- | --- | --- |
+| Repository surface | Which exports, deep imports, selectors, classes, examples, routes, and Headless UI primitives exist and who consumes them? | Component/consumer matrix and selector inventory. |
+| Dependency compatibility | Which Base UI, Vite, router, test, and package-build versions work with the repository's React, TypeScript, Node, and pnpm constraints? | Compatibility matrix, lockfile spike, and ADRs. |
+| Primitive behavior | Which controls use native HTML and which use Base UI; do Dialog, Menu, Combobox, and Button meet the required semantics and composition model? | Disposable vertical spike plus keyboard/focus findings. |
+| CSS and recipes | How will static public classes, typed variant recipes, optional Tailwind mappings, themes, and densities share one implementation? | Recipe API ADR and generated-selector contract. |
+| Documentation/content | What legacy knowledge is worth carrying over, what becomes a Pattern or Experiment, and which old routes need redirects? | Page/route migration matrix and content gap report. |
+| Testing | What deterministic fixtures and behavior assertions replace the source-text test; what CI jobs and path filters are missing? | Test inventory, initial fixture map, and CI proposal. |
+| Fonts/brand/assets | Where do licensed font files and canonical logo geometry come from, and which production asset formats are required? | Asset provenance/license record and export list. |
+| Deployment | Where do image, ingress, Kubernetes, DNS, Tilt, and workflow changes live; how are static routes, health, caching, and rollback handled? | Deployment topology, cross-repository touchpoint list, and rollback runbook. |
+| Resource usage | What does the static container consume at startup, idle, and during representative navigation? | Measured recommendation for requests and limits. |
+| Application risk | Which admin, auth, and webv2 flows are critical, implicit-CSS-dependent, responsive, router-aware, or difficult to roll back? | Per-application smoke and risk matrices. |
+
+Research spikes are not production implementations. Keep only reusable tests or scaffolding that already meets the plan's package and quality contracts; otherwise preserve the findings and discard the spike through normal reviewable changes.
+
 ## Target architecture
 
 ### Package layout
@@ -474,6 +519,16 @@ Goal: give every parallel lane stable boundaries before implementation starts.
 
 Checklist:
 
+- [ ] Sync with current `main` while preserving the planning history and record the starting commit.
+- [ ] Create `docs/wip/tadoku-paper/research/` with an index linking every research output and ADR.
+- [ ] Produce the complete legacy component/consumer, selector/class, example, route, and Headless UI inventory.
+- [ ] Run an isolated compatibility spike for Base UI, Vite, the chosen router, Vitest, React Testing Library, and the package build against the repository's pinned React, TypeScript, Node, and pnpm versions.
+- [ ] Prototype Button/link recipes plus Base UI Dialog, Menu, and Combobox; record DOM, keyboard, focus, form, styling, bundle, and typing findings.
+- [ ] Decide native-versus-Base UI ownership for each component category and record it in an ADR.
+- [ ] Decide the typed recipe helper, CSS output, optional Tailwind mapping, and selector contract through a reversible spike and ADR.
+- [ ] Verify font licenses/provenance, canonical Cut Meter geometry, favicon needs, and distributable asset formats.
+- [ ] Locate all repository and cross-repository deployment touchpoints for `paper.tadoku.app`, static serving, health, ingress, image publication, and final hostname cutover.
+- [ ] Produce the route/content migration matrix, initial deterministic fixture map, CI gap report, and per-application risk/smoke matrices.
 - [ ] Record the final Button vocabulary: default, outline, ghost, link, destructive, and loading state.
 - [ ] Specify that `Button variant="link"` is an action and that anchors receive button appearance from `buttonClassName()` or an anchor adapter.
 - [ ] Decide the exact Base UI import strategy and the Paper-owned wrapper boundary.
@@ -487,7 +542,7 @@ Checklist:
 
 Repository guards must reject `ui` in migrated applications, `paper-ui` in unmigrated applications, private `paper-ui/src/*` imports, Next or Headless UI imports in Paper, and duplicate Paper stylesheet imports.
 
-**Phase gate:** the reviewed contract, inventories, route map, deployment/rollback design, smoke matrices, ownership map, and automated boundary checks all exist. No component implementation begins before this gate passes.
+**Phase gate:** the indexed research packet, compatibility/primitive spikes, ADRs, reviewed contract, inventories, route map, deployment/rollback design, smoke matrices, ownership map, and automated boundary checks all exist; no unresolved finding requires a product decision. No production component implementation begins before this gate passes.
 
 ### Phase 1 — Build the Paper foundation
 

@@ -6,6 +6,8 @@ This packet freezes the evidence and reversible architecture decisions required 
 
 [Phase 0 gate report](phase-0-gate.md): passed 2026-08-08.
 
+[Phase 1 deployment gate](phase-1-deployment-gate.md): passed 2026-08-08.
+
 ## Architecture decisions
 
 - [Package, export, and router boundary](adr-001-package-boundary.md)

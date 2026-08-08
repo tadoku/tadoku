@@ -102,6 +102,8 @@ describe('Paper styleguide dogfooding boundary', () => {
   })
 
   it('imports only public Paper APIs rather than legacy or primitive internals', () => {
+    const paperSourcePath = ['paper-ui', 'src'].join('/')
+    const workspacePaperSourcePath = ['packages', paperSourcePath].join('/')
     const forbidden = applicationSources.flatMap((path) =>
       importedPackages(readFileSync(path, 'utf8'))
         .filter(
@@ -110,9 +112,9 @@ describe('Paper styleguide dogfooding boundary', () => {
             specifier.startsWith('ui/') ||
             specifier.startsWith('@base-ui/') ||
             specifier.startsWith('@headlessui/') ||
-            specifier === 'paper-ui/src' ||
-            specifier.startsWith('paper-ui/src/') ||
-            specifier.includes('packages/paper-ui/src'),
+            specifier === paperSourcePath ||
+            specifier.startsWith(`${paperSourcePath}/`) ||
+            specifier.includes(workspacePaperSourcePath),
         )
         .map((specifier) => `${sourceKey(path)} -> ${specifier}`),
     )

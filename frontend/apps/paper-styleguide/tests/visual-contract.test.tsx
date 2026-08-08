@@ -102,17 +102,13 @@ describe('responsive visual contract', () => {
     expect(screen.getByRole('heading', { name: 'Governance' })).toBeInTheDocument()
   })
 
-  it('keeps shell element resets out of isolated component previews', () => {
-    expect(styleguideStyles).not.toContain('\n  button,\n  input,\n  select {')
-    expect(styleguideStyles).not.toContain('\n  button,\n  select {')
-    expect(styleguideStyles).not.toContain('\n  button {\n')
-    expect(styleguideStyles).not.toContain('\n  code {\n')
-    expect(styleguideStyles).toContain('.docs-shell button')
-  })
-
-  it('keeps scoped shell resets low-specificity so selected controls retain contrast', () => {
-    expect(styleguideStyles).not.toContain('\n  .docs-shell button,\n')
-    expect(styleguideStyles).toContain('.docs-shell :where(button, input, select)')
+  it('leaves native element and form-control foundations to Paper', () => {
+    expect(styleguideStyles).not.toMatch(
+      /\.docs-shell\s+:where\([^)]*(?:button|input|select)/u,
+    )
+    expect(styleguideStyles).not.toMatch(
+      /(?:^|[\s>,])(?:button|input|select)(?:\b|[\s:[.#>])/mu,
+    )
   })
 
   it('collapses both header actions to icons at the narrow phone floor', () => {

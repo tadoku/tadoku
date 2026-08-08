@@ -1,4 +1,5 @@
 @layer paper-styleguide {
+  /* Workbench iframe breakpoint indicator. */
   @media (min-width: 48rem) {
     .preview-breakpoint__narrow {
       display: none;
@@ -9,6 +10,7 @@
     }
   }
 
+  /* Application and documentation layout. */
   @media (max-width: 64rem) {
     .docs-shell {
       display: block;
@@ -20,21 +22,6 @@
 
     .mobile-nav-trigger {
       display: inline-flex;
-    }
-
-    .mobile-nav-backdrop {
-      display: block;
-    }
-
-    .mobile-nav-drawer {
-      inline-size: min(22rem, calc(100% - 2rem));
-      block-size: 100%;
-      border-inline-end: 1px solid var(--paper-color-rule-strong);
-      background: var(--paper-color-surface-paper);
-    }
-
-    .mobile-nav-drawer .catalogue-nav {
-      margin-inline: 1rem;
     }
 
     .document-layout {
@@ -51,6 +38,7 @@
     }
   }
 
+  /* Compact application, content, and workbench-iframe layout. */
   @media (max-width: 48rem) {
     .example-canvas__stage {
       padding: 0.25rem;
@@ -136,6 +124,7 @@
     }
   }
 
+  /* Preserve usable trigger targets at the narrow phone floor. */
   @media (max-width: 23rem) {
     .shell-search-trigger__label,
     .mobile-nav-trigger__label,
@@ -150,36 +139,14 @@
     }
   }
 
-  @media (forced-colors: active) {
-    .search-backdrop,
-    .mobile-nav-backdrop {
-      background: rgb(0 0 0 / 50%);
-      -webkit-backdrop-filter: none;
-      backdrop-filter: none;
-      forced-color-adjust: none;
-    }
-  }
-
+  /* Accessibility: add motion only to application-owned content. */
   @media (prefers-reduced-motion: no-preference) {
-    .mobile-nav-backdrop {
-      transition: opacity var(--paper-motion-standard), visibility 0s linear;
+    .skip-link {
+      transition: transform var(--paper-motion-quick);
     }
 
-    .mobile-nav-backdrop[data-open='false'] {
-      transition-delay: 0s, var(--paper-motion-standard);
-    }
-
-    .mobile-nav-drawer {
-      transition: transform var(--paper-motion-standard);
-    }
-
-    .skip-link,
-    .catalogue-nav__link,
     .search-result {
-      transition:
-        color var(--paper-motion-quick),
-        background-color var(--paper-motion-quick),
-        transform var(--paper-motion-quick);
+      transition: background-color var(--paper-motion-quick);
     }
   }
 }

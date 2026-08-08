@@ -8,7 +8,8 @@ import {
 } from './style-sources'
 
 function selectorsIn(source: string): string[] {
-  return [...source.matchAll(/([^{}]+)\{([^{}]*)\}/gu)].flatMap((rule) =>
+  const withoutComments = source.replace(/\/\*[\s\S]*?\*\//gu, '')
+  return [...withoutComments.matchAll(/([^{}]+)\{([^{}]*)\}/gu)].flatMap((rule) =>
     rule[1]
       .split(',')
       .map((selector) => selector.trim().replace(/\s+/gu, ' '))
@@ -34,7 +35,7 @@ describe('styleguide stylesheet ownership', () => {
   })
 
   it.each([
-    ['body', 'base.css'],
+    ['.skip-link:focus', 'base.css'],
     ['.paper-wordmark > span', 'shell-layout.css'],
     ['.canvas-controls .paper-field', 'controls.css'],
     ['.search-results', 'navigation.css'],
@@ -42,9 +43,37 @@ describe('styleguide stylesheet ownership', () => {
     ['.example-canvas', 'canvas-frame.css'],
     ['.component-workbench__panel', 'workbench.css'],
     ['.preview-specimen h3', 'canvas.css'],
-    ['.search-field .paper-field__label', 'overlays.css'],
+    ['.lifecycle-badge', 'overlays.css'],
     ['.preview-breakpoint__narrow', 'responsive.css'],
   ])('keeps %s owned once by %s', (selector, owner) => {
     expect(ownersFor(selector)).toEqual([owner])
+  })
+
+  it('contains no selectors left behind by migrated navigation and overlays', () => {
+    const selectors = importedStyleSources.flatMap(({ source }) =>
+      selectorsIn(source),
+    )
+    const obsoleteSelectors = selectors.filter((selector) =>
+      /(?:\.mobile-nav-(?:backdrop|drawer)|\.catalogue-nav(?:__|\b)|\.search-backdrop)/u.test(
+        selector,
+      ),
+    )
+
+    expect(obsoleteSelectors).toEqual([])
+  })
+
+  it('does not shadow native controls or Paper component state recipes', () => {
+    const selectors = importedStyleSources.flatMap(({ source }) =>
+      selectorsIn(source),
+    )
+    const shadowSelectors = selectors.filter(
+      (selector) =>
+        /(?:^|[\s>:])(?:button|input|select)(?:\b|[\s:[.#>])/u.test(selector) ||
+        /\.(?:paper-(?:button|select|input|tabs|sidebar|modal|drawer))(?:__|--|\b)/u.test(
+          selector,
+        ),
+    )
+
+    expect(shadowSelectors).toEqual([])
   })
 })

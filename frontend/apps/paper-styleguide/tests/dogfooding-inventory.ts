@@ -1,54 +1,53 @@
-export type DogfoodingDebtKind =
-  | 'manual-focus-trap'
-  | 'manual-tablist'
-  | 'native-button'
-  | 'native-input'
-  | 'native-select'
-  | 'surface-style'
+export type CustomStyleCategory =
+  | 'accessibility'
+  | 'application-layout'
+  | 'content'
+  | 'search-result-composition'
+  | 'workbench-iframe'
 
-export interface DogfoodingDebt {
+export interface CustomStyleAllowance {
   readonly key: string
-  readonly context: string
-  readonly destination: string
+  readonly category: CustomStyleCategory
+  readonly reason: string
 }
 
 /**
- * Checked migration ledger for app-owned UI in the Paper styleguide.
+ * Checked allowlist for high-risk app-owned presentation that cannot be
+ * expressed by a public Paper component.
  *
- * The companion contract test derives the keys from source. Migrating or
- * adding an item therefore requires an intentional ledger update. Keep the
- * destination phrased as a public Paper component or an explicit Paper API
- * gap; private paper-ui source paths are never a destination.
+ * The companion contract derives these keys from source. Paper component
+ * appearance and behavior never belong here: an entry must be application
+ * composition, content rendering, preview infrastructure, or accessibility.
  */
-export const DOGFOODING_DEBT: readonly DogfoodingDebt[] = [
+export const CUSTOM_STYLE_ALLOWANCES: readonly CustomStyleAllowance[] = [
   {
-    key: 'src/styles/workbench.css:surface-style:.code-view pre',
-    context: 'Source-code display surface',
-    destination: 'Paper code-block or Surface recipe',
+    key: 'src/documentation/ExampleCanvas.tsx:workbench-iframe#1',
+    category: 'workbench-iframe',
+    reason: 'A real iframe is required to exercise fixture media queries.',
   },
   {
-    key: 'src/styles/shell-layout.css:surface-style:.docs-header',
-    context: 'Styleguide header surface',
-    destination: 'Paper Navbar',
+    key: 'src/styles/base.css:custom-background:.skip-link',
+    category: 'accessibility',
+    reason: 'The skip link must remain visible above the sticky application shell.',
   },
   {
-    key: 'src/styles/shell-layout.css:surface-style:.docs-shell',
-    context: 'Styleguide application canvas',
-    destination: 'Paper application-shell layout API',
+    key: 'src/styles/overlays.css:custom-background:.search-result:hover',
+    category: 'search-result-composition',
+    reason: 'Search results are application navigation content, not form controls.',
   },
   {
-    key: 'src/styles/shell-layout.css:surface-style:.docs-sidebar',
-    context: 'Catalogue sidebar surface',
-    destination: 'Paper Sidebar',
+    key: 'src/styles/shell-layout.css:custom-background:.docs-header',
+    category: 'application-layout',
+    reason: 'The utility header composes Paper search and drawer controls.',
   },
   {
-    key: 'src/styles/responsive.css:surface-style:.mobile-nav-drawer',
-    context: 'Responsive catalogue drawer surface',
-    destination: 'Paper drawer primitive built on the public overlay API',
+    key: 'src/styles/shell-layout.css:custom-background:.docs-sidebar',
+    category: 'application-layout',
+    reason: 'The sticky aside positions the public Paper Sidebar recipe.',
   },
   {
-    key: 'src/styles/overlays.css:surface-style:.search-result:hover',
-    context: 'Search result hover surface',
-    destination: 'Paper command-results or navigation-item recipe',
+    key: 'src/styles/workbench.css:custom-background:.code-view pre',
+    category: 'content',
+    reason: 'Source code needs a scrollable, monospace reading surface.',
   },
 ]

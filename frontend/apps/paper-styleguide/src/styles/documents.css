@@ -1,4 +1,5 @@
 @layer paper-styleguide {
+  /* Documentation content and reading-layout composition. */
   .docs-main {
     min-inline-size: 0;
     padding: clamp(2rem, 5vw, 5rem) clamp(1rem, 5vw, 5rem) 7rem;
@@ -130,7 +131,8 @@
     gap: 1rem;
     margin-block-start: 2rem;
     padding-block-start: 1rem;
-    border-block-start: 1px solid var(--paper-color-rule-subtle);
+    border-block-start: var(--paper-border-static-width) solid
+      var(--paper-color-rule-subtle);
   }
 
   .metadata-strip dt,
@@ -149,7 +151,8 @@
     grid-template-columns: 9rem minmax(0, 1fr);
     gap: 1rem;
     padding-block: 0.75rem;
-    border-block-end: 1px solid var(--paper-color-rule-subtle);
+    border-block-end: var(--paper-border-static-width) solid
+      var(--paper-color-rule-subtle);
   }
 
   .docs-shell code {
@@ -167,5 +170,4 @@
     margin-block-start: 0;
     margin-inline-start: var(--paper-field-padding-inline);
   }
-
 }

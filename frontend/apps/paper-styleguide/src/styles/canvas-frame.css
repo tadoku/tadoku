@@ -1,4 +1,5 @@
 @layer paper-styleguide {
+  /* Workbench iframe: allow the preview region to shrink in parent layouts. */
   .example-canvas {
     min-inline-size: 0;
   }

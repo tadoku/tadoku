@@ -1,15 +1,7 @@
 @layer paper-styleguide {
+  /* Search-result composition inside the public Paper Modal. */
   .search-field {
     margin: 0;
-  }
-
-  .search-field .paper-field__label {
-    position: absolute;
-    inline-size: 1px;
-    block-size: 1px;
-    overflow: hidden;
-    clip-path: inset(50%);
-    white-space: nowrap;
   }
 
   .search-count {
@@ -23,7 +15,8 @@
     justify-content: space-between;
     gap: 1rem;
     padding: 0.85rem 0;
-    border-block-start: 1px solid var(--paper-color-rule-subtle);
+    border-block-start: var(--paper-border-static-width) solid
+      var(--paper-color-rule-subtle);
     color: var(--paper-color-text-ink);
     text-decoration: none;
   }
@@ -48,8 +41,8 @@
     font-size: var(--paper-type-metadata-size);
   }
 
+  /* Documentation content links outside router-owned navigation. */
   .text-link {
     color: var(--paper-color-text-link);
   }
-
 }

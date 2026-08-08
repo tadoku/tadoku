@@ -1,4 +1,5 @@
 @layer paper-styleguide {
+  /* Content and search-result composition; Paper owns navigation recipes. */
   .search-results,
   .local-outline ol {
     margin: 0;

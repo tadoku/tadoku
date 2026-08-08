@@ -1,4 +1,5 @@
 @layer paper-styleguide {
+  /* Workbench content: panels, source code, and API-reference composition. */
   .component-workbench {
     overflow: hidden;
     padding: 0;
@@ -56,7 +57,8 @@
     overflow: auto;
     margin-block-end: 0;
     padding: 1rem;
-    border-inline-start: 3px solid var(--paper-color-action-default);
+    border-inline-start: var(--paper-accent-rail-width) solid
+      var(--paper-color-action-default);
     color: var(--paper-color-text-ink);
     background: var(--paper-color-surface-canvas);
     font-family: var(--paper-font-monospace);
@@ -73,9 +75,11 @@
 
   .workbench-reference-grid section {
     padding-inline-start: 1rem;
-    border-inline-start: 3px solid var(--paper-color-rule-default);
+    border-inline-start: var(--paper-accent-rail-width) solid
+      var(--paper-color-rule-default);
   }
 
+  /* Workbench iframe: fixture spacing without component appearance overrides. */
   .paper-fixture-stage {
     min-block-size: 100%;
     padding: 0.5rem;
@@ -94,5 +98,4 @@
     display: grid;
     gap: 1rem;
   }
-
 }

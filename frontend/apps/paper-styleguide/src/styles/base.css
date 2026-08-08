@@ -10,37 +10,7 @@
 }
 
 @layer paper-styleguide {
-  :root {
-    color-scheme: light;
-  }
-
-  :root[data-theme='dark'] {
-    color-scheme: dark;
-  }
-
-  * {
-    box-sizing: border-box;
-  }
-
-  body {
-    margin: 0;
-  }
-
-  /* Native .docs-shell button/input/select defaults stay scoped and use
-     :where() so component and selected-state recipes win the cascade. */
-  .docs-shell :where(button, input, select) {
-    color: inherit;
-    font: inherit;
-  }
-
-  .docs-shell :where(button, select) {
-    min-block-size: var(--paper-control-height);
-  }
-
-  .docs-shell :where(button) {
-    cursor: pointer;
-  }
-
+  /* Accessibility: application skip-link placement above the sticky shell. */
   .skip-link {
     position: fixed;
     z-index: 100;

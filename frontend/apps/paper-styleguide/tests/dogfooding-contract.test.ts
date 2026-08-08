@@ -2,7 +2,7 @@ import { readFileSync, readdirSync } from 'node:fs'
 import { dirname, extname, relative, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
-import { DOGFOODING_DEBT, type DogfoodingDebtKind } from './dogfooding-inventory'
+import { CUSTOM_STYLE_ALLOWANCES } from './dogfooding-inventory'
 import { importedStyleSources } from './style-sources'
 
 const testDirectory = dirname(fileURLToPath(import.meta.url))
@@ -27,7 +27,7 @@ function sourceKey(path: string): string {
 
 function ordinalKeys(
   path: string,
-  kind: DogfoodingDebtKind,
+  kind: string,
   source: string,
   pattern: RegExp,
 ): string[] {
@@ -36,20 +36,21 @@ function ordinalKeys(
   )
 }
 
-function directSurfaceStyleKeys(): string[] {
+function customBackgroundKeys(): string[] {
   const keys = new Set<string>()
 
   for (const { key, source } of importedStyleSources) {
-    const rules = source.matchAll(/([^{}]+)\{([^{}]*)\}/gu)
+    const withoutComments = source.replace(/\/\*[\s\S]*?\*\//gu, '')
+    const rules = withoutComments.matchAll(/([^{}]+)\{([^{}]*)\}/gu)
 
     for (const rule of rules) {
-      if (!/background:\s*var\(--paper-color-surface-[^)]+\)/u.test(rule[2])) {
+      if (!/background:\s*var\(--paper-color-[^)]+\)/u.test(rule[2])) {
         continue
       }
       for (const selector of rule[1].split(',')) {
         const normalized = selector.trim().replace(/\s+/gu, ' ')
         if (normalized.startsWith('.')) {
-          keys.add(`${key}:surface-style:${normalized}`)
+          keys.add(`${key}:custom-background:${normalized}`)
         }
       }
     }
@@ -58,7 +59,7 @@ function directSurfaceStyleKeys(): string[] {
   return [...keys]
 }
 
-function discoveredDogfoodingDebt(): string[] {
+function discoveredForbiddenPrimitives(): string[] {
   const keys = applicationSources.flatMap((path) => {
     const source = readFileSync(path, 'utf8')
     return [
@@ -75,7 +76,16 @@ function discoveredDogfoodingDebt(): string[] {
     ]
   })
 
-  return [...keys, ...directSurfaceStyleKeys()].sort()
+  return keys.sort()
+}
+
+function discoveredCustomStyleAllowances(): string[] {
+  return [
+    ...customBackgroundKeys(),
+    ...applicationSources.flatMap((path) =>
+      ordinalKeys(path, 'workbench-iframe', readFileSync(path, 'utf8'), /<iframe\b/gu),
+    ),
+  ].sort()
 }
 
 function importedPackages(source: string): string[] {
@@ -110,10 +120,16 @@ describe('Paper styleguide dogfooding boundary', () => {
     expect(forbidden).toEqual([])
   })
 
-  it('keeps every remaining app-owned primitive and surface in the migration ledger', () => {
-    const inventoryKeys = DOGFOODING_DEBT.map((item) => item.key).sort()
+  it('has no app-owned form primitives, tablist, or overlay focus trap', () => {
+    expect(discoveredForbiddenPrimitives()).toEqual([])
+  })
+
+  it('keeps every remaining high-risk custom presentation boundary justified', () => {
+    const inventoryKeys = CUSTOM_STYLE_ALLOWANCES.map((item) => item.key).sort()
     expect(new Set(inventoryKeys).size).toBe(inventoryKeys.length)
-    expect(DOGFOODING_DEBT.every((item) => item.context && item.destination)).toBe(true)
-    expect(inventoryKeys).toEqual(discoveredDogfoodingDebt())
+    expect(
+      CUSTOM_STYLE_ALLOWANCES.every((item) => item.category && item.reason),
+    ).toBe(true)
+    expect(inventoryKeys).toEqual(discoveredCustomStyleAllowances())
   })
 })

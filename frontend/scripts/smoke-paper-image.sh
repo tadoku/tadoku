@@ -41,4 +41,9 @@ grep -qi '^cache-control: public, max-age=31536000, immutable' "$headers_file"
 missing_status="$(curl --silent --output /dev/null --write-out '%{http_code}' "http://127.0.0.1:${port}/assets/not-a-real-paper-asset.js")"
 test "$missing_status" = "404"
 
+for sensitive_path in '/.env' '/.git/config' '/api/.env' '/config.env'; do
+  sensitive_status="$(curl --silent --output /dev/null --write-out '%{http_code}' "http://127.0.0.1:${port}${sensitive_path}")"
+  test "$sensitive_status" = "404"
+done
+
 echo "Paper static image smoke passed on port ${port}."

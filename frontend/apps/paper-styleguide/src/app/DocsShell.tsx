@@ -44,7 +44,6 @@ function CatalogueNavigation({
                   onClick={onNavigate}
                 >
                   <span>{document.name}</span>
-                  <small>{document.lifecycle}</small>
                 </NavLink>
               </li>
             ))}

@@ -208,11 +208,6 @@
     text-decoration: none;
   }
 
-  .catalogue-nav__link small {
-    align-self: center;
-    font-size: var(--paper-type-metadata-size);
-  }
-
   .catalogue-nav__link:hover,
   .catalogue-nav__link--active {
     color: var(--paper-color-text-ink);

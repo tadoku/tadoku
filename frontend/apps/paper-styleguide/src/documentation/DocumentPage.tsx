@@ -70,7 +70,6 @@ function Hero({ document }: { document: CatalogDocument }) {
       <p className="document-summary">{document.summary}</p>
       <dl className="metadata-strip">
         <div><dt>Status</dt><dd>{document.lifecycle}</dd></div>
-        <div><dt>Owner</dt><dd>{document.owner}</dd></div>
         <div><dt>Version</dt><dd>{document.packageVersion}</dd></div>
         <div><dt>Reviewed</dt><dd>{document.reviewDate}</dd></div>
       </dl>

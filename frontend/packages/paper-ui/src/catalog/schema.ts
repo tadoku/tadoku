@@ -142,7 +142,6 @@ export interface CatalogDocument {
   readonly summary: string;
   readonly keywords: readonly string[];
   readonly lifecycle: CatalogLifecycle;
-  readonly owner: string;
   /** ISO 8601 calendar date (YYYY-MM-DD). */
   readonly reviewDate: string;
   readonly sourcePath: string;

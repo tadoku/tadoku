@@ -99,7 +99,6 @@ function navigationDocument(spec: NavigationDocSpec): CatalogDocument {
     summary: spec.summary,
     keywords: [spec.name.toLocaleLowerCase(), "navigation", "router neutral", "paper"],
     lifecycle: "Stable",
-    owner: "Tadoku design systems",
     reviewDate: REVIEW_DATE,
     sourcePath: "src/components/navigation/navigation.tsx",
     packageVersion: "0.1.0",

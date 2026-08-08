@@ -10,7 +10,6 @@ import {
 
 const REVIEW_DATE = "2026-08-08";
 const PACKAGE_VERSION = "0.1.0";
-const OWNER = "Tadoku design systems";
 const VIEWPORTS = [
   { id: "phone", label: "Phone", width: 360, height: 720 },
   { id: "tablet", label: "Tablet", width: 768, height: 800 },
@@ -209,7 +208,6 @@ function componentDocument(
     category: "data-display",
     aliases: [],
     lifecycle: "Stable",
-    owner: OWNER,
     reviewDate: REVIEW_DATE,
     packageVersion: PACKAGE_VERSION,
     dependencies: { documents: [], packages: ["paper-ui", "react"] },

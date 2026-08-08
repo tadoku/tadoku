@@ -16,7 +16,6 @@ function document(
     summary: `${overrides.name} guidance`,
     keywords: [],
     lifecycle: 'Experimental',
-    owner: 'Paper team',
     reviewDate: '2026-08-08',
     sourcePath: 'src/catalog.ts',
     packageVersion: '0.1.0',

@@ -9,6 +9,15 @@ const buttonDocument = catalogRegistry.documents.find(
 )!
 
 describe('Stable component documentation', () => {
+  it('shows useful release metadata without a project owner field', () => {
+    render(<DocumentPage document={buttonDocument} />)
+
+    expect(screen.getByText('Status')).toBeInTheDocument()
+    expect(screen.getByText('Version')).toBeInTheDocument()
+    expect(screen.getByText('Reviewed')).toBeInTheDocument()
+    expect(screen.queryByText('Owner')).not.toBeInTheDocument()
+  })
+
   it('renders the complete instructional sequence from registry metadata', () => {
     render(<DocumentPage document={buttonDocument} />)
 

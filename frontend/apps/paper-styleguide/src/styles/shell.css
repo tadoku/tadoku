@@ -162,14 +162,6 @@
     background: var(--paper-color-surface-paper);
   }
 
-  .shell-preferences {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 0.5rem;
-    margin-block-end: 1.5rem;
-  }
-
-  .shell-preferences label,
   .canvas-controls label {
     display: grid;
     gap: 0.25rem;
@@ -177,7 +169,6 @@
     font-size: var(--paper-type-metadata-size);
   }
 
-  .shell-preferences select,
   .canvas-controls select,
   .search-field input {
     inline-size: 100%;
@@ -817,7 +808,6 @@
       background: var(--paper-color-surface-paper);
     }
 
-    .mobile-nav-drawer .shell-preferences,
     .mobile-nav-drawer .catalogue-nav {
       margin-inline: 1rem;
     }

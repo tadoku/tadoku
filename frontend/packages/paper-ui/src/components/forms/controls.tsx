@@ -15,6 +15,7 @@ import {
   type FieldValues,
   type RegisterOptions,
 } from "react-hook-form";
+import { CheckIcon, ChevronDownIcon, XMarkIcon, iconClassName } from "../../icons";
 
 export interface Option<Value = string> {
   readonly value: Value;
@@ -386,7 +387,9 @@ function ComboboxPopup<Value>({
                 index={index}
                 className="paper-combobox__item"
               >
-                <Combobox.ItemIndicator className="paper-combobox__indicator" aria-hidden="true">✓</Combobox.ItemIndicator>
+                <Combobox.ItemIndicator className="paper-combobox__indicator" aria-hidden="true">
+                  <CheckIcon className={iconClassName("compact")} />
+                </Combobox.ItemIndicator>
                 <span>{format(option)}</span>
               </Combobox.Item>
             ))}
@@ -441,7 +444,9 @@ export function AutocompleteInput<Value>({
               if (node && node.ownerDocument.body !== portalContainer) setPortalContainer(node.ownerDocument.body);
             }}
           />
-          <Combobox.Trigger className="paper-combobox__trigger" aria-label={`Show ${label.toLocaleLowerCase()} options`}>⌄</Combobox.Trigger>
+          <Combobox.Trigger className="paper-combobox__trigger" aria-label={`Show ${label.toLocaleLowerCase()} options`}>
+            <ChevronDownIcon className={iconClassName("compact")} aria-hidden="true" />
+          </Combobox.Trigger>
         </div>
         <ComboboxPopup options={filtered} getId={getId} format={format} portalContainer={portalContainer} />
       </Combobox.Root>
@@ -491,7 +496,9 @@ export function AutocompleteMultiInput<Value>({
           {values.map((value) => (
             <Combobox.Chip key={getId(value)} className="paper-combobox__chip">
               {format(value)}
-              <Combobox.ChipRemove aria-label={`Remove ${format(value)}`}>×</Combobox.ChipRemove>
+              <Combobox.ChipRemove aria-label={`Remove ${format(value)}`}>
+                <XMarkIcon className={iconClassName("compact")} aria-hidden="true" />
+              </Combobox.ChipRemove>
             </Combobox.Chip>
           ))}
           <Combobox.Input
@@ -506,7 +513,9 @@ export function AutocompleteMultiInput<Value>({
               if (node && node.ownerDocument.body !== portalContainer) setPortalContainer(node.ownerDocument.body);
             }}
           />
-          <Combobox.Trigger className="paper-combobox__trigger" aria-label={`Show ${label.toLocaleLowerCase()} options`}>⌄</Combobox.Trigger>
+          <Combobox.Trigger className="paper-combobox__trigger" aria-label={`Show ${label.toLocaleLowerCase()} options`}>
+            <ChevronDownIcon className={iconClassName("compact")} aria-hidden="true" />
+          </Combobox.Trigger>
         </Combobox.Chips>
         <ComboboxPopup options={filtered} getId={getId} format={format} portalContainer={portalContainer} />
       </Combobox.Root>

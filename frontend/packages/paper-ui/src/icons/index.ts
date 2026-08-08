@@ -3,7 +3,6 @@ export {
   ArrowLeftIcon,
   ArrowRightIcon,
   Bars3Icon,
-  CheckIcon,
   ChevronDownIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
@@ -17,6 +16,7 @@ export {
 
 // Solid icons are reserved for status and confirmation.
 export {
+  CheckIcon,
   CheckCircleIcon,
   ExclamationCircleIcon,
   ExclamationTriangleIcon,

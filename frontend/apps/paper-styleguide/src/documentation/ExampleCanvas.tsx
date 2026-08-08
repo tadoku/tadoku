@@ -9,6 +9,13 @@ const VIEWPORTS = [
   { id: 'desktop', name: 'Desktop', width: 1280 },
 ] as const
 
+function initialViewportId(): (typeof VIEWPORTS)[number]['id'] {
+  return typeof window.matchMedia === 'function' &&
+    window.matchMedia('(max-width: 48rem)').matches
+    ? 'phone'
+    : 'desktop'
+}
+
 function PreviewSpecimen() {
   return (
     <article className="preview-specimen paper-surface paper-accent-rail">
@@ -37,7 +44,7 @@ export function ExampleCanvas({ fixture }: { fixture?: CatalogFixture }) {
   const [theme, setTheme] = useState<PaperTheme>('light')
   const [density, setDensity] = useState<PaperDensity>('comfortable')
   const [viewportId, setViewportId] = useState<(typeof VIEWPORTS)[number]['id']>(
-    'desktop',
+    initialViewportId,
   )
   const [previewRoot, setPreviewRoot] = useState<HTMLElement | null>(null)
   const frameDocumentRef = useRef<Document | null>(null)

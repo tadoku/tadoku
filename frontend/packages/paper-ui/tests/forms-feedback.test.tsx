@@ -125,6 +125,13 @@ describe("native React Hook Form controls", () => {
 });
 
 describe("Base UI autocomplete controls", () => {
+  it("uses Paper icons instead of text glyphs for combobox actions", () => {
+    render(<AutocompleteForm />);
+    const trigger = screen.getByRole("button", { name: "Show languages options" });
+    expect(trigger.querySelector("svg")).not.toBeNull();
+    expect(trigger).not.toHaveTextContent("⌄");
+  });
+
   it("filters and selects one option from the keyboard", async () => {
     const user = userEvent.setup();
     render(<AutocompleteForm />);
@@ -142,8 +149,10 @@ describe("Base UI autocomplete controls", () => {
     await user.click(input);
     await user.type(input, "jap");
     await user.keyboard("{ArrowDown}{Enter}");
-    expect(screen.getByRole("button", { name: "Remove Japanese" })).toBeInTheDocument();
-    await user.click(screen.getByRole("button", { name: "Remove Japanese" }));
+    const remove = screen.getByRole("button", { name: "Remove Japanese" });
+    expect(remove.querySelector("svg")).not.toBeNull();
+    expect(remove).not.toHaveTextContent("×");
+    await user.click(remove);
     expect(screen.getByTestId("value")).toHaveTextContent("[]");
   });
 
@@ -201,7 +210,9 @@ describe("feedback and action compositions", () => {
     expect(screen.getByText("Reading summary")).toHaveClass(surfaceClassName({ elevation: "floating", accent: true }));
     await user.click(screen.getByRole("button", { name: "Show notification" }));
     expect(await screen.findByText("Entry saved")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Dismiss notification" })).toBeInTheDocument();
+    const dismiss = screen.getByRole("button", { name: "Dismiss notification" });
+    expect(dismiss.querySelector("svg")).not.toBeNull();
+    expect(dismiss).not.toHaveTextContent("×");
   });
 
   it("keeps its toast viewport in the provider owner document", async () => {

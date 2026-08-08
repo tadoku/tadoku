@@ -1,8 +1,10 @@
 import '@testing-library/jest-dom/vitest'
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { ExampleCanvas } from '../src/documentation/ExampleCanvas'
+
+afterEach(() => vi.unstubAllGlobals())
 
 describe('ExampleCanvas', () => {
   it('uses an iframe with a real selected viewport width', async () => {
@@ -27,5 +29,17 @@ describe('ExampleCanvas', () => {
     expect(
       screen.getByText('Desktop · 1280px · dark · compact'),
     ).toBeInTheDocument()
+  })
+
+  it('starts with the phone canvas when the host viewport is narrow', () => {
+    vi.stubGlobal('matchMedia', vi.fn(() => ({ matches: true })))
+
+    render(<ExampleCanvas />)
+
+    expect(screen.getByTitle('Paper responsive component preview')).toHaveAttribute(
+      'data-preview-width',
+      '360',
+    )
+    expect(screen.getByText('Phone · 360px · light · comfortable')).toBeInTheDocument()
   })
 })

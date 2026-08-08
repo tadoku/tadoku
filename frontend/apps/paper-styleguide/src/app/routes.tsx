@@ -1,7 +1,17 @@
-import { catalogRegistry } from 'paper-ui/catalog'
+import { catalogRegistry, type CatalogKind } from 'paper-ui/catalog'
 import { Link, Navigate, useLocation } from 'react-router-dom'
 import { DocumentPage } from '../documentation/DocumentPage'
 import { resolveCatalogRoute } from './catalogue'
+
+const INDEX_SECTIONS: readonly {
+  id: string
+  label: string
+  kind: CatalogKind
+}[] = [
+  { id: 'foundations', label: 'Foundations', kind: 'foundation' },
+  { id: 'components', label: 'Components', kind: 'component' },
+  { id: 'governance', label: 'Governance', kind: 'governance' },
+]
 
 export function CatalogIndex() {
   return (
@@ -14,24 +24,41 @@ export function CatalogIndex() {
           patterns that keep Tadoku calm, accessible, and recognizably ours.
         </p>
       </header>
-      <section aria-labelledby="index-documents-title">
-        <h2 id="index-documents-title" className="paper-type-section">
-          Foundation documents
-        </h2>
-        <div className="document-card-grid">
-          {catalogRegistry.documents.map((document) => (
-            <Link
-              key={document.id}
-              className="document-card paper-surface-raised paper-elevation-floating paper-focus-ring"
-              to={document.route}
+      {INDEX_SECTIONS.map((section) => {
+        const documents = catalogRegistry.documents.filter(
+          (document) => document.kind === section.kind,
+        )
+
+        if (documents.length === 0) return null
+
+        return (
+          <section
+            key={section.id}
+            className="catalogue-index__section"
+            aria-labelledby={`index-${section.id}-title`}
+          >
+            <h2
+              id={`index-${section.id}-title`}
+              className="paper-type-section"
             >
-              <span className="paper-type-component">{document.name}</span>
-              <small>{document.lifecycle}</small>
-              <p>{document.summary}</p>
-            </Link>
-          ))}
-        </div>
-      </section>
+              {section.label}
+            </h2>
+            <div className="document-card-grid">
+              {documents.map((document) => (
+                <Link
+                  key={document.id}
+                  className="document-card paper-surface-raised paper-elevation-floating paper-focus-ring"
+                  to={document.route}
+                >
+                  <span className="paper-type-component">{document.name}</span>
+                  <small>{document.lifecycle}</small>
+                  <p>{document.summary}</p>
+                </Link>
+              ))}
+            </div>
+          </section>
+        )
+      })}
     </article>
   )
 }

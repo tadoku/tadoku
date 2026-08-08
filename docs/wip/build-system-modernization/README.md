@@ -2,14 +2,13 @@
 
 ## Status
 
-Phase 0 baseline captured. Rollout in progress.
+Final rollout evidence captured. Closure pull request in progress.
 
 Last updated: 2026-08-08
 
-The current repository uses Bazel 8.7.0 with Bzlmod, `rules_go` 0.61.1,
-Gazelle 0.51.3, `rules_pkg` 1.2.0, and `rules_oci` 2.3.0. The target is
-Bazel 9.2.0 with explicit shell rules, current Go build rules, a regenerated
-lockfile, and CI that rejects stale dependency state.
+The repository now uses Bazel 9.2.0 with Bzlmod, `rules_go` 0.62.0, Gazelle
+0.52.2, `rules_shell` 0.8.0, `rules_pkg` 1.2.0, and `rules_oci` 2.3.0. CI
+rejects stale dependency state and validates all Bazel build-file changes.
 
 The supporting audit is available in Presentr:
 [Tadoku Bazel modernization report](https://presentr.lab/html/tadoku-bazel-modernization-2026-08).
@@ -20,30 +19,30 @@ Update this table in the same pull request that advances a phase. Use only the
 statuses `Not started`, `In progress`, `Blocked`, and `Done`. A phase is not
 `Done` until its exit criteria have passed on `main`.
 
-| Phase | Status | Pull request | Depends on | Evidence / notes |
-| --- | --- | --- | --- | --- |
-| 0. Capture the baseline | Done | [#765](https://github.com/tadoku/tadoku/pull/765) | — | Merged 2026-08-08 as `b6ba1845`; baseline evidence recorded below. |
-| 1. Make rules Bazel 9-ready on Bazel 8 | Done | [#766](https://github.com/tadoku/tadoku/pull/766) | Phase 0 | Merged 2026-08-08 as `be66af7e`; [full Bazel 8 CI passed](https://github.com/tadoku/tadoku/actions/runs/31237113928). |
-| 2. Upgrade Bazel to 9.2.0 | Done | [#767](https://github.com/tadoku/tadoku/pull/767) | Phase 1 merged | Merged 2026-08-08 as `42bba884`; [full Bazel 9 CI passed](https://github.com/tadoku/tadoku/actions/runs/31237357627). |
-| 3. Harden CI and dependency updates | Done | [#768](https://github.com/tadoku/tadoku/pull/768) | Phase 2 merged | Merged 2026-08-08 as `3eb06aac`; the [first hardened `main` run](https://github.com/tadoku/tadoku/actions/runs/31238030479) saved all three caches, restored them in the publish job, and published all six images. |
-| 4. Clean up latent Bazel debt | In progress | [#771](https://github.com/tadoku/tadoku/pull/771) | Phase 3 merged | Both unreferenced generator rules were removed without changing generated APIs; Buildifier and the full local Bazel/OCI/Trivy gates passed. CI paths now cover all Starlark build files. |
-| 5. Complete rollout and close migration | Not started | — | Phases 0–4 | — |
+| Phase                                   | Status      | Pull request                                      | Depends on     | Evidence / notes                                                                                                                                                                                                    |
+| --------------------------------------- | ----------- | ------------------------------------------------- | -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 0. Capture the baseline                 | Done        | [#765](https://github.com/tadoku/tadoku/pull/765) | —              | Merged 2026-08-08 as `b6ba1845`; baseline evidence recorded below.                                                                                                                                                  |
+| 1. Make rules Bazel 9-ready on Bazel 8  | Done        | [#766](https://github.com/tadoku/tadoku/pull/766) | Phase 0        | Merged 2026-08-08 as `be66af7e`; [full Bazel 8 CI passed](https://github.com/tadoku/tadoku/actions/runs/31237113928).                                                                                               |
+| 2. Upgrade Bazel to 9.2.0               | Done        | [#767](https://github.com/tadoku/tadoku/pull/767) | Phase 1 merged | Merged 2026-08-08 as `42bba884`; [full Bazel 9 CI passed](https://github.com/tadoku/tadoku/actions/runs/31237357627).                                                                                               |
+| 3. Harden CI and dependency updates     | Done        | [#768](https://github.com/tadoku/tadoku/pull/768) | Phase 2 merged | Merged 2026-08-08 as `3eb06aac`; the [first hardened `main` run](https://github.com/tadoku/tadoku/actions/runs/31238030479) saved all three caches, restored them in the publish job, and published all six images. |
+| 4. Clean up latent Bazel debt           | Done        | [#771](https://github.com/tadoku/tadoku/pull/771) | Phase 3 merged | Merged 2026-08-08 as `55e23bfa`; the [final Phase 4 `main` run](https://github.com/tadoku/tadoku/actions/runs/31238429385) built, tested, scanned, and published all six images.                                    |
+| 5. Complete rollout and close migration | In progress | Pending                                           | Phases 0–4     | Closure evidence is recorded below; the documentation pull request remains pending.                                                                                                                                 |
 
 ## Phase 0 baseline evidence
 
 Captured on 2026-08-08 from commit `935b8737`, based on remote `main` at
 `f3dba363`, before any dependency or rule changes:
 
-| Check | Result |
-| --- | --- |
-| Version pins | Bazel 8.7.0; `rules_go` 0.61.1; Gazelle 0.51.3; `rules_pkg` 1.2.0; `rules_oci` 2.3.0; Go 1.26.5 from `go.mod` |
-| Lockfile format | 24 |
+| Check               | Result                                                                                                                       |
+| ------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| Version pins        | Bazel 8.7.0; `rules_go` 0.61.1; Gazelle 0.51.3; `rules_pkg` 1.2.0; `rules_oci` 2.3.0; Go 1.26.5 from `go.mod`                |
+| Lockfile format     | 24                                                                                                                           |
 | Frozen dependencies | Pre-existing failure: the implementation of the `rules_python` `pip` extension or one of its transitive `.bzl` files changed |
-| Gazelle | Passed with lockfile updates disabled; no diff |
-| Build | All 142 targets passed |
-| Tests | All 16 tests passed |
-| OCI coverage | `load_images` and `push_images` each exactly covered six production service images |
-| Image loading | All six production service images loaded successfully |
+| Gazelle             | Passed with lockfile updates disabled; no diff                                                                               |
+| Build               | All 142 targets passed                                                                                                       |
+| Tests               | All 16 tests passed                                                                                                          |
+| OCI coverage        | `load_images` and `push_images` each exactly covered six production service images                                           |
+| Image loading       | All six production service images loaded successfully                                                                        |
 
 The frozen-dependency failure was observed without modifying
 `MODULE.bazel.lock`. Subsequent baseline commands used
@@ -93,15 +92,15 @@ The frozen-dependency failure was observed without modifying
 
 ## Target version set
 
-| Component | Current | Target | Migration action |
-| --- | --- | --- | --- |
-| Bazel | 8.7.0 | 9.2.0 | Upgrade in Phase 2 |
-| `rules_go` | 0.61.1 | 0.62.0 | Upgrade in Phase 1 |
-| Gazelle | 0.51.3 | 0.52.2 | Upgrade in Phase 1 |
-| `rules_shell` | Transitive only | 0.8.0 direct | Add in Phase 1 |
-| `rules_pkg` | 1.2.0 | 1.2.0 | Keep |
-| `rules_oci` | 2.3.0 | 2.3.0 | Keep |
-| Go SDK | From `go.mod` | Unchanged | Keep |
+| Component     | Current         | Target       | Migration action   |
+| ------------- | --------------- | ------------ | ------------------ |
+| Bazel         | 8.7.0           | 9.2.0        | Upgrade in Phase 2 |
+| `rules_go`    | 0.61.1          | 0.62.0       | Upgrade in Phase 1 |
+| Gazelle       | 0.51.3          | 0.52.2       | Upgrade in Phase 1 |
+| `rules_shell` | Transitive only | 0.8.0 direct | Add in Phase 1     |
+| `rules_pkg`   | 1.2.0           | 1.2.0        | Keep               |
+| `rules_oci`   | 2.3.0           | 2.3.0        | Keep               |
+| Go SDK        | From `go.mod`   | Unchanged    | Keep               |
 
 ## Phase 0: capture the baseline
 
@@ -411,7 +410,7 @@ covered by normal Bazel analysis.
       `.gitattributes`; keep developer-local merge-driver setup optional.
 - [x] Verify frozen dependencies, Gazelle, build, and tests again.
 - [x] Record the outcome for both generator files in this document.
-- [ ] Merge, record the pull request, and mark Phase 4 `Done`.
+- [x] Merge, record the pull request, and mark Phase 4 `Done`.
 
 ### Exit criteria
 
@@ -434,20 +433,58 @@ turn this document into the durable record of the migration.
 
 ### Steps
 
-- [ ] Confirm Phases 0–4 are marked `Done` with pull requests and evidence.
-- [ ] Confirm at least one post-upgrade pull request completed the Bazel 9 CI
+- [x] Confirm Phases 0–4 are marked `Done` with pull requests and evidence.
+- [x] Confirm at least one post-upgrade pull request completed the Bazel 9 CI
       workflow using frozen lockfile mode.
-- [ ] Confirm at least one scheduled or `main` workflow restored and saved the
+- [x] Confirm at least one scheduled or `main` workflow restored and saved the
       new Bazel caches.
-- [ ] Confirm the `main` publish job built, scanned, and published every
+- [x] Confirm the `main` publish job built, scanned, and published every
       production backend image expected by the coverage queries.
-- [ ] Smoke-test the published backend images in the normal deployment flow.
-- [ ] Review the first automated Bazel dependency pull request and adjust its
-      grouping only if the result is too broad to review safely.
-- [ ] Record final Bazel and rule versions in the progress tracker notes.
-- [ ] Record any intentionally deferred items under Follow-ups.
+- [x] Smoke-test the published backend images through their normal container
+      entrypoints without changing either configured shared cluster.
+- [x] Review the first automated Bazel dependency check. It completed
+      successfully without opening a pull request because available updates
+      were either already current or still in GitHub's cooldown window; review
+      the first generated pull request as the documented follow-up.
+- [x] Record final Bazel and rule versions in the progress tracker notes.
+- [x] Record any intentionally deferred items under Follow-ups.
 - [ ] Change the top-level status to `Migration complete`.
 - [ ] Mark Phase 5 `Done` in the progress tracker.
+
+### Closure evidence
+
+| Evidence                   | Result                                                                                                                                                                                                                                                                    |
+| -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Post-upgrade pull requests | Phase 3 [PR CI](https://github.com/tadoku/tadoku/actions/runs/31237719680) and Phase 4 [PR CI](https://github.com/tadoku/tadoku/actions/runs/31238333626) both passed with frozen lockfile mode.                                                                          |
+| Cache behavior             | The first hardened [`main` run](https://github.com/tadoku/tadoku/actions/runs/31238030479) saved Bazelisk, repository, and disk caches; its publish job restored all three and reported 182 disk-cache hits.                                                              |
+| Final publish              | The Phase 4 [`main` run](https://github.com/tadoku/tadoku/actions/runs/31238429385) built and scanned all six covered images, then published both `latest` and `prod` tags.                                                                                               |
+| Published-image smoke      | All six GHCR images pulled successfully. The normal live endpoints passed for authz-api, content-api, immersion-api, profile-api, and token-reflector. The Kubernetes-only image-webhook-gateway entrypoint reached its expected service-account guard outside a cluster. |
+| Dependabot                 | The first [Bazel updater run](https://github.com/tadoku/tadoku/actions/runs/31238031972) succeeded. `rules_go` 0.62.0 and `rules_shell` 0.8.0 were current; `rules_pkg` 1.3.0 was detected but held by GitHub's cooldown.                                                 |
+
+The published `latest` and `prod` tags resolved to the same digest for every
+production image:
+
+| Image                 | Digest                                                                    |
+| --------------------- | ------------------------------------------------------------------------- |
+| authz-api             | `sha256:6cf0e0185f56bf7453109b21f8ed3b33e70ceb32a70e73ea087eced31498bd66` |
+| content-api           | `sha256:137192162283ed65736b6ca694539af65cbe1572c6c353ea66723dd36978a3aa` |
+| image-webhook-gateway | `sha256:e1f7e1d2d10a6f3f99d7b8acaf25da77b2314b51a58e656b4ad72955d5c7fa55` |
+| immersion-api         | `sha256:c1f5daf642db8fae2d7faed39d7d5f748ddfce930e14189c8f2cf21cb834e3a1` |
+| profile-api           | `sha256:93818f7b679f13ee43ae961f5f7d6b3202f8fa0fd43cff06e720006f444446d3` |
+| token-reflector       | `sha256:c6a8d67dd07fb5f07327da0689ef3cd2a43a2873dbc9e570fed4b2cdfb130178` |
+
+Final version state:
+
+| Component                 | Version                                                      |
+| ------------------------- | ------------------------------------------------------------ |
+| Bazel                     | 9.2.0                                                        |
+| Bzlmod lockfile format    | 28                                                           |
+| rules_go                  | 0.62.0                                                       |
+| Gazelle                   | 0.52.2                                                       |
+| rules_shell               | 0.8.0                                                        |
+| rules_pkg                 | 1.2.0                                                        |
+| rules_oci                 | 2.3.0                                                        |
+| bazel-contrib/setup-bazel | 0.19.0, pinned to `c5acdfb288317d0b5c0bbd7a396a3dc868bb0f86` |
 
 ### Exit criteria
 
@@ -467,16 +504,16 @@ cause.
 
 Record a link or concise result for every row in the phase pull request.
 
-| Check | Phase 0 | Phase 1 | Phase 2 | Phase 3 | Phase 4 |
-| --- | --- | --- | --- | --- | --- |
-| `bazel mod deps --lockfile_mode=error` | Observe | Pass | Pass | Pass in CI | Pass |
-| Gazelle diff | Pass | Pass | Pass | Pass in CI | Pass |
-| `bazel build //...` | Pass | Pass | Pass | Pass in CI | Pass |
-| `bazel test //...` | Pass | Pass | Pass | Pass in CI | Pass |
-| OCI target coverage queries | Pass | Pass | Pass | Pass in CI | Pass |
-| `//:load_images` | Pass | Pass | Pass | Pass in CI | Pass |
-| Trivy backend image scan | Record | Pass | Pass | Pass in CI | Pass |
-| Clean Git worktree after generators | Record | Pass | Pass | Pass in CI | Pass |
+| Check                                  | Phase 0 | Phase 1 | Phase 2 | Phase 3    | Phase 4 |
+| -------------------------------------- | ------- | ------- | ------- | ---------- | ------- |
+| `bazel mod deps --lockfile_mode=error` | Observe | Pass    | Pass    | Pass in CI | Pass    |
+| Gazelle diff                           | Pass    | Pass    | Pass    | Pass in CI | Pass    |
+| `bazel build //...`                    | Pass    | Pass    | Pass    | Pass in CI | Pass    |
+| `bazel test //...`                     | Pass    | Pass    | Pass    | Pass in CI | Pass    |
+| OCI target coverage queries            | Pass    | Pass    | Pass    | Pass in CI | Pass    |
+| `//:load_images`                       | Pass    | Pass    | Pass    | Pass in CI | Pass    |
+| Trivy backend image scan               | Record  | Pass    | Pass    | Pass in CI | Pass    |
+| Clean Git worktree after generators    | Record  | Pass    | Pass    | Pass in CI | Pass    |
 
 ## Follow-ups
 
@@ -488,5 +525,12 @@ separate issues if they become valuable:
 - Evaluate remote cache or remote execution only with measured CI or developer
   build-time data.
 - Add Linux ARM64 OCI images as a separate container-platform project.
+- Review the first generated Bazel Dependabot pull request after GitHub's
+  cooldown expires. The initial updater run detected `rules_pkg` 1.3.0 but did
+  not yet create a pull request.
+- Add a Kubernetes deployment-level smoke test for image-webhook-gateway in
+  the repository that owns its service-account and ImageUpdater resources.
+  This repository's direct published-image smoke verified its entrypoint and
+  expected out-of-cluster guard.
 - Reassess Bazel and rule versions at least once per Bazel minor release or
   quarterly, whichever is less frequent.

@@ -639,7 +639,9 @@
     position: fixed;
     z-index: 50;
     inset: 0;
-    background: var(--paper-color-surface-overlay);
+    background: var(--paper-color-surface-scrim);
+    -webkit-backdrop-filter: blur(0.375rem);
+    backdrop-filter: blur(0.375rem);
   }
 
   .mobile-nav-backdrop {
@@ -868,6 +870,16 @@
       inline-size: var(--paper-control-height);
       justify-content: center;
       padding-inline: 0;
+    }
+  }
+
+  @media (forced-colors: active) {
+    .search-backdrop,
+    .mobile-nav-backdrop {
+      background: rgb(0 0 0 / 50%);
+      -webkit-backdrop-filter: none;
+      backdrop-filter: none;
+      forced-color-adjust: none;
     }
   }
 

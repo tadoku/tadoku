@@ -3,7 +3,9 @@
     position: fixed;
     z-index: 80;
     inset: 0;
-    background: rgb(20 16 18 / 58%);
+    background: var(--paper-color-surface-scrim);
+    -webkit-backdrop-filter: blur(0.375rem);
+    backdrop-filter: blur(0.375rem);
     opacity: 1;
     transition: opacity var(--paper-motion-standard);
   }
@@ -98,6 +100,15 @@
     .paper-modal,
     .paper-modal__backdrop {
       transition: none;
+    }
+  }
+
+  @media (forced-colors: active) {
+    .paper-modal__backdrop {
+      background: rgb(0 0 0 / 50%);
+      -webkit-backdrop-filter: none;
+      backdrop-filter: none;
+      forced-color-adjust: none;
     }
   }
 }

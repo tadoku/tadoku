@@ -23,7 +23,7 @@ statuses `Not started`, `In progress`, `Blocked`, and `Done`. A phase is not
 | Phase | Status | Pull request | Depends on | Evidence / notes |
 | --- | --- | --- | --- | --- |
 | 0. Capture the baseline | Done | [#765](https://github.com/tadoku/tadoku/pull/765) | — | Merged 2026-08-08 as `b6ba1845`; baseline evidence recorded below. |
-| 1. Make rules Bazel 9-ready on Bazel 8 | In progress | Pending | Phase 0 | Bazel 8 frozen dependencies, Gazelle, build, tests, OCI coverage/loading, and Trivy passed locally. |
+| 1. Make rules Bazel 9-ready on Bazel 8 | In progress | [#766](https://github.com/tadoku/tadoku/pull/766) | Phase 0 | Bazel 8 frozen dependencies, Gazelle, build, tests, OCI coverage/loading, and Trivy passed locally. |
 | 2. Upgrade Bazel to 9.2.0 | Not started | — | Phase 1 merged | — |
 | 3. Harden CI and dependency updates | Not started | — | Phase 2 merged | — |
 | 4. Clean up latent Bazel debt | Not started | — | Phase 3 merged | — |
@@ -178,7 +178,7 @@ easy to isolate.
 ### Steps
 
 - [x] Branch from `main` after Phase 0 is complete.
-- [x] Set Phase 1 to `In progress`; the pull request link remains pending.
+- [x] Set Phase 1 to `In progress` and link the pull request.
 - [x] Add the direct shell dependency to `MODULE.bazel`:
 
   ```starlark

@@ -1,0 +1,1 @@
+{"responses":{"200":{"description":"successful operation","content":{"application/json":{"schema":{"type":"object","required":["participant_count","language_count","total_score"],"properties":{"participant_count":{"type":"integer"},"language_count":{"type":"integer"},"total_score":{"type":"number","format":"float"}},"title":"ContestSummary"}}}},"404":{"description":"not found"}}}

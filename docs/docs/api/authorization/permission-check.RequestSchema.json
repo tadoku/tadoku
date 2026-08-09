@@ -1,0 +1,1 @@
+{"title":"Body","body":{"required":true,"content":{"application/json":{"schema":{"type":"object","required":["namespace","object","relation"],"properties":{"namespace":{"type":"string","minLength":1},"object":{"type":"string","minLength":1},"relation":{"type":"string","minLength":1}},"title":"PermissionCheckRequest"}}}}}

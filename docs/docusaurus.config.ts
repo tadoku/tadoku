@@ -1,6 +1,7 @@
 import {themes as prismThemes} from 'prism-react-renderer';
 import type {Config} from '@docusaurus/types';
 import type * as Preset from '@docusaurus/preset-classic';
+import type * as OpenApiPlugin from 'docusaurus-plugin-openapi-docs';
 
 const config: Config = {
   title: 'Tadoku',
@@ -34,6 +35,7 @@ const config: Config = {
           sidebarPath: './sidebars.ts',
           editUrl: 'https://github.com/tadoku/tadoku/tree/main/docs/',
           routeBasePath: '/',
+          docItemComponent: '@theme/ApiItem',
         },
         blog: false,
         theme: {
@@ -42,6 +44,69 @@ const config: Config = {
       } satisfies Preset.Options,
     ],
   ],
+
+  plugins: [
+    'docusaurus-plugin-sass',
+    [
+      'docusaurus-plugin-openapi-docs',
+      {
+        id: 'openapi',
+        docsPluginId: 'classic',
+        config: {
+          immersion: {
+            specPath: '../services/immersion-api/http/rest/openapi/api.yaml',
+            outputDir: 'docs/api/immersion',
+            label: 'Immersion API',
+            downloadUrl:
+              'https://raw.githubusercontent.com/tadoku/tadoku/main/services/immersion-api/http/rest/openapi/api.yaml',
+            hideSendButton: true,
+            sidebarOptions: {
+              groupPathsBy: 'tag',
+              categoryLinkSource: 'tag',
+            },
+          } satisfies OpenApiPlugin.Options,
+          content: {
+            specPath: '../services/content-api/http/rest/openapi/api.yaml',
+            outputDir: 'docs/api/content',
+            label: 'Content API',
+            downloadUrl:
+              'https://raw.githubusercontent.com/tadoku/tadoku/main/services/content-api/http/rest/openapi/api.yaml',
+            hideSendButton: true,
+            sidebarOptions: {
+              groupPathsBy: 'tag',
+              categoryLinkSource: 'tag',
+            },
+          } satisfies OpenApiPlugin.Options,
+          profile: {
+            specPath: '../services/profile-api/http/rest/openapi/api.yaml',
+            outputDir: 'docs/api/profile',
+            label: 'Profile API',
+            downloadUrl:
+              'https://raw.githubusercontent.com/tadoku/tadoku/main/services/profile-api/http/rest/openapi/api.yaml',
+            hideSendButton: true,
+            sidebarOptions: {
+              groupPathsBy: 'tag',
+              categoryLinkSource: 'tag',
+            },
+          } satisfies OpenApiPlugin.Options,
+          authorization: {
+            specPath: '../services/authz-api/http/rest/openapi/api.yaml',
+            outputDir: 'docs/api/authorization',
+            label: 'Authorization API',
+            downloadUrl:
+              'https://raw.githubusercontent.com/tadoku/tadoku/main/services/authz-api/http/rest/openapi/api.yaml',
+            hideSendButton: true,
+            sidebarOptions: {
+              groupPathsBy: 'tag',
+              categoryLinkSource: 'tag',
+            },
+          } satisfies OpenApiPlugin.Options,
+        },
+      },
+    ],
+  ],
+
+  themes: ['docusaurus-theme-openapi-docs'],
 
   themeConfig: {
     colorMode: {
@@ -55,6 +120,11 @@ const config: Config = {
           sidebarId: 'docs',
           position: 'left',
           label: 'Docs',
+        },
+        {
+          to: '/api/',
+          position: 'left',
+          label: 'API Reference',
         },
         {
           href: 'https://github.com/tadoku/tadoku',
@@ -99,6 +169,10 @@ const config: Config = {
       theme: prismThemes.github,
       darkTheme: prismThemes.dracula,
       additionalLanguages: ['bash', 'sql', 'go', 'yaml', 'json'],
+    },
+    api: {
+      authPersistance: false,
+      requestCredentials: 'omit',
     },
   } satisfies Preset.ThemeConfig,
 };

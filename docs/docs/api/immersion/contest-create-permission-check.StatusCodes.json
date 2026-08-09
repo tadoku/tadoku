@@ -1,0 +1,1 @@
+{"responses":{"200":{"description":"Allowed to create a contest"},"403":{"description":"Not allowed to create a contest"}}}

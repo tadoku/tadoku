@@ -29,4 +29,5 @@ All content uses markdown.
 ## Important links
 
 - [Source code](https://github.com/tadoku/tadoku/tree/main/services/content-api)
-- [API Spec](https://github.com/tadoku/tadoku/blob/main/services/content-api/http/rest/openapi/api.yaml)
+- [API reference](../api/content/content-api)
+- [OpenAPI source](https://github.com/tadoku/tadoku/blob/main/services/content-api/http/rest/openapi/api.yaml)

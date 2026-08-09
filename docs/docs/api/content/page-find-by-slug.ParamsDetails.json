@@ -1,0 +1,1 @@
+{"parameters":[{"name":"slug","in":"path","description":"Slug of page to return","required":true,"schema":{"type":"string"}},{"name":"namespace","in":"path","required":true,"schema":{"type":"string"}}]}

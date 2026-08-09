@@ -92,10 +92,14 @@ describe("public source entries", () => {
       />,
     )).toContain("Convenience Store Woman");
     expect(renderToString(createElement(HeatmapChart, {
-      title: "Reading",
-      columns: [{ id: "mon", label: "Monday" }],
-      rows: [{ id: "week", label: "This week", cells: [{ value: 12 }] }],
-    }))).toContain("12");
+      id: "reading-2023",
+      year: 2023,
+      data: [{
+        date: "2023-01-02",
+        value: 12,
+        tooltip: "12 points on January 2, 2023",
+      }],
+    }))).toContain("Jan");
   });
 
   it("publishes Tabs compound and named APIs with consumer-owned props", () => {

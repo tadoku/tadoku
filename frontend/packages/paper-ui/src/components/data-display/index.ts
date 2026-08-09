@@ -6,9 +6,6 @@ export {
 } from "./Table";
 export {
   HeatmapChart,
-  type HeatmapChartCell,
-  type HeatmapChartColumn,
+  type HeatmapChartDatum,
   type HeatmapChartProps,
-  type HeatmapChartRow,
-  type HeatmapChartValueContext,
 } from "./HeatmapChart";

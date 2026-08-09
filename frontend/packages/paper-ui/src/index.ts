@@ -79,11 +79,8 @@ export {
 export {
   HeatmapChart,
   Table,
-  type HeatmapChartCell,
-  type HeatmapChartColumn,
+  type HeatmapChartDatum,
   type HeatmapChartProps,
-  type HeatmapChartRow,
-  type HeatmapChartValueContext,
   type TableColumn,
   type TableColumnAlignment,
   type TableProps,

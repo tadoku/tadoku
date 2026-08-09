@@ -142,7 +142,7 @@ export function DocsShell({ documents, children }: DocsShellProps) {
         />
       </header>
 
-      <aside className="docs-sidebar">
+      <aside className="docs-sidebar" data-density="compact">
         <Sidebar
           sections={sections}
           currentPath={location.pathname}

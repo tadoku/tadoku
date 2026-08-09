@@ -36,6 +36,11 @@ export const CUSTOM_STYLE_ALLOWANCES: readonly CustomStyleAllowance[] = [
     reason: 'Search results are application navigation content, not form controls.',
   },
   {
+    key: 'src/styles/shell-layout.css:custom-background:.docs-sidebar',
+    category: 'application-layout',
+    reason: 'The desktop catalogue lane needs a distinct Paper surface from the document canvas.',
+  },
+  {
     key: 'src/styles/workbench.css:custom-background:.code-view pre',
     category: 'content',
     reason: 'Source code needs a scrollable, monospace reading surface.',

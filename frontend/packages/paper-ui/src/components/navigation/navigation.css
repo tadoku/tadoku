@@ -177,6 +177,10 @@
     gap: 1.5rem;
   }
 
+  [data-density="compact"] .paper-sidebar {
+    gap: 1rem;
+  }
+
   .paper-sidebar__section,
   .paper-sidebar__list {
     display: grid;

@@ -120,6 +120,29 @@ describe('responsive visual contract', () => {
     expect(catalogueNavigation).toHaveClass('paper-sidebar')
   })
 
+  it('keeps the desktop catalogue on a light Paper surface with a subtle end rule', () => {
+    expect(styleguideStyles).toMatch(
+      /\.docs-sidebar\s*\{[^}]*border-inline-end:\s*var\(--paper-border-static-width\) solid var\(--paper-color-rule-subtle\);[^}]*background:\s*var\(--paper-color-surface-paper\);/su,
+    )
+  })
+
+  it('uses the compact Paper density for the desktop catalogue', () => {
+    render(
+      <MemoryRouter>
+        <DocsShell documents={catalogRegistry.documents}>Content</DocsShell>
+      </MemoryRouter>,
+    )
+
+    const catalogueNavigation = screen.getByRole('navigation', {
+      name: 'Paper catalogue',
+    })
+
+    expect(catalogueNavigation.closest('.docs-sidebar')).toHaveAttribute(
+      'data-density',
+      'compact',
+    )
+  })
+
   it('groups the catalogue index by document kind', () => {
     render(
       <MemoryRouter>

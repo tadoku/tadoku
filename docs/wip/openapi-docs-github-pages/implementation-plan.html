@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Tadoku OpenAPI Documentation on GitHub Pages — Implementation Plan</title>
+  <style>
+    :root {
+      color-scheme: light dark;
+      --paper: #fbfaf7;
+      --ink: #272333;
+      --muted: #686273;
+      --violet: #6d55c7;
+      --violet-soft: #eee9ff;
+      --mint: #dff5ea;
+      --amber: #fff1cd;
+      --rose: #ffe1e7;
+      --line: #d9d3df;
+      --card: #ffffff;
+      --shadow: 5px 5px 0 #d8d1e4;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      background:
+        linear-gradient(90deg, rgba(109, 85, 199, .035) 1px, transparent 1px),
+        linear-gradient(rgba(109, 85, 199, .035) 1px, transparent 1px),
+        var(--paper);
+      background-size: 28px 28px;
+      color: var(--ink);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.55;
+    }
+
+    main { width: min(1120px, calc(100% - 32px)); margin: 0 auto; padding: 48px 0 80px; }
+    h1, h2, h3 { line-height: 1.13; letter-spacing: -.025em; }
+    h1 { max-width: 900px; margin: 10px 0 16px; font-size: clamp(2.3rem, 6vw, 4.9rem); }
+    h2 { margin: 0 0 18px; font-size: clamp(1.55rem, 3vw, 2.15rem); }
+    h3 { margin: 0 0 10px; font-size: 1.08rem; }
+    p { margin: 0 0 14px; }
+    a { color: var(--violet); }
+    code { border: 1px solid var(--line); border-radius: 5px; background: #f4f1f8; padding: .08rem .34rem; color: #4e3a8d; }
+    .eyebrow { color: var(--violet); font-size: .78rem; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; }
+    .lede { max-width: 850px; color: var(--muted); font-size: 1.14rem; }
+    .meta { display: flex; flex-wrap: wrap; gap: 8px; margin: 22px 0 34px; }
+    .pill { border: 1px solid var(--ink); border-radius: 999px; background: var(--card); padding: 5px 11px; font-size: .79rem; font-weight: 700; }
+    .card { margin-top: 22px; border: 1.5px solid var(--ink); border-radius: 9px; background: var(--card); padding: clamp(20px, 3.5vw, 34px); box-shadow: var(--shadow); }
+    .decision { border-left: 8px solid var(--violet); }
+    .grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 16px; }
+    .span-4 { grid-column: span 4; }
+    .span-6 { grid-column: span 6; }
+    .span-8 { grid-column: span 8; }
+    .span-12 { grid-column: span 12; }
+    .mini { border: 1px solid var(--line); border-radius: 7px; padding: 17px; background: #fdfcfe; }
+    .mini p, .mini li { color: var(--muted); font-size: .93rem; }
+    .metric { font-size: 2.25rem; line-height: 1; font-weight: 850; color: var(--violet); }
+    .metric-label { margin-top: 7px; color: var(--muted); font-size: .83rem; }
+    .flow { display: grid; grid-template-columns: 1fr auto 1fr auto 1fr auto 1fr; align-items: center; gap: 10px; margin-top: 22px; }
+    .node { min-height: 96px; display: grid; place-content: center; border: 1.5px solid var(--ink); border-radius: 7px; background: #fff; padding: 14px; text-align: center; font-size: .88rem; font-weight: 750; }
+    .arrow { color: var(--violet); font-size: 1.5rem; font-weight: 900; }
+    .phase { position: relative; padding-left: 72px; }
+    .phase-number { position: absolute; top: 29px; left: 24px; display: grid; width: 34px; height: 34px; place-items: center; border: 1.5px solid var(--ink); border-radius: 50%; background: var(--violet-soft); font-weight: 850; }
+    .phase-meta { margin-bottom: 12px; color: var(--muted); font-size: .83rem; font-weight: 700; }
+    .checklist { list-style: none; margin: 14px 0 18px; padding: 0; }
+    .checklist li { position: relative; margin: 10px 0; padding-left: 30px; }
+    .checklist li::before { content: ""; position: absolute; top: .22rem; left: 0; width: 16px; height: 16px; border: 1.5px solid var(--ink); border-radius: 3px; background: #fff; }
+    .gate { border-left: 5px solid #238258; border-radius: 4px; background: var(--mint); padding: 13px 16px; }
+    .gate strong { color: #14583c; }
+    table { width: 100%; border-collapse: collapse; font-size: .92rem; }
+    th, td { border-bottom: 1px solid var(--line); padding: 12px 10px; text-align: left; vertical-align: top; }
+    th { color: var(--muted); font-size: .74rem; letter-spacing: .08em; text-transform: uppercase; }
+    .scope-public { color: #16623f; font-weight: 800; }
+    .scope-private { color: #a3334d; font-weight: 800; }
+    .risk-high { background: var(--rose); }
+    .risk-med { background: var(--amber); }
+    .criteria { counter-reset: criterion; display: grid; grid-template-columns: repeat(2, 1fr); gap: 13px; margin-top: 16px; }
+    .criterion { position: relative; min-height: 118px; border: 1px solid var(--line); border-radius: 7px; background: #fdfcfe; padding: 16px 16px 16px 52px; }
+    .criterion::before { counter-increment: criterion; content: counter(criterion); position: absolute; top: 16px; left: 15px; display: grid; width: 26px; height: 26px; place-items: center; border-radius: 50%; background: var(--violet); color: white; font-size: .8rem; font-weight: 850; }
+    .criterion strong { display: block; margin-bottom: 4px; }
+    .note { color: var(--muted); font-size: .89rem; }
+    .sources li { margin: 9px 0; }
+
+    @media (max-width: 780px) {
+      .span-4, .span-6, .span-8 { grid-column: span 12; }
+      .flow { grid-template-columns: 1fr; }
+      .arrow { transform: rotate(90deg); text-align: center; }
+      .criteria { grid-template-columns: 1fr; }
+      .phase { padding-left: 56px; }
+      .phase-number { left: 14px; }
+      table { display: block; overflow-x: auto; }
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root { --paper: #17151d; --ink: #eeeaf5; --muted: #b9b2c3; --line: #4c4656; --card: #211e29; --shadow: 5px 5px 0 #0d0c10; --violet-soft: #352b54; --mint: #193d30; --amber: #493b1f; --rose: #49252e; }
+      body { background-color: var(--paper); }
+      code { background: #2c2736; color: #c9b9ff; }
+      .mini, .criterion { background: #26222e; }
+      .node, .checklist li::before { background: #211e29; }
+      .scope-public { color: #76d9a7; }
+      .scope-private { color: #ff9db2; }
+      .gate strong { color: #9ce2bc; }
+    }
+  </style>
+</head>
+<body>
+<main>
+  <div class="eyebrow">Implementation plan · 9 August 2026</div>
+  <h1>Publish Tadoku’s OpenAPI specs as a useful GitHub Pages reference</h1>
+  <p class="lede">Extend the documentation site already deployed at <strong>tadoku.github.io/tadoku</strong>, generate navigable reference pages from the repository’s public OpenAPI contracts, and make drift or accidental internal-spec publication fail in CI.</p>
+  <div class="meta">
+    <span class="pill">Owner: Docs / API maintainers</span>
+    <span class="pill">Delivery: 1 PR</span>
+    <span class="pill">Risk: Medium</span>
+    <span class="pill">No backend deployment</span>
+  </div>
+
+  <section class="card decision">
+    <div class="eyebrow">Chosen direction</div>
+    <h2>One site, generated reference pages, an explicit public allowlist</h2>
+    <p>Keep Docusaurus and the current GitHub Actions Pages deployment. Upgrade Docusaurus from <code>3.9.2</code> to <code>3.10.2</code>, add <code>docusaurus-plugin-openapi-docs</code> and its theme at <code>5.1.3</code>, and generate MDX into a dedicated API Reference section. Check the generated output into Git and verify it against the source specs during every relevant pull request.</p>
+    <p>Publish only four explicitly named <code>api.yaml</code> files. Do not glob the OpenAPI directories: the two <code>internal-api.yaml</code> files contain service-to-service URLs and are outside the public documentation scope. Hide the request-sending UI for the first release; cookie-authenticated calls from the GitHub Pages origin require a separately reviewed CORS and CSRF posture.</p>
+  </section>
+
+  <section class="card">
+    <h2>Current state and target</h2>
+    <div class="grid">
+      <div class="mini span-4"><div class="metric">4</div><div class="metric-label">public API specifications</div></div>
+      <div class="mini span-4"><div class="metric">61</div><div class="metric-label">public operations to render</div></div>
+      <div class="mini span-4"><div class="metric">2</div><div class="metric-label">internal specs explicitly excluded</div></div>
+      <div class="mini span-6">
+        <h3>Benefits</h3>
+        <ul>
+          <li>Searchable, deep-linked API reference alongside existing architecture docs.</li>
+          <li>Specs remain the source of truth; CI detects stale generated pages.</li>
+          <li>No new host, deployment credentials, or Pages project is needed.</li>
+        </ul>
+      </div>
+      <div class="mini span-6">
+        <h3>Trade-offs</h3>
+        <ul>
+          <li>The renderer adds dependencies and requires a small Docusaurus upgrade.</li>
+          <li>Generated MDX creates reviewable repository churn when a contract changes.</li>
+          <li>Interactive requests wait until browser auth security is deliberately designed.</li>
+        </ul>
+      </div>
+    </div>
+    <div class="flow" role="img" aria-label="Publishing flow from allowlisted OpenAPI YAML through generated MDX and static build to GitHub Pages">
+      <div class="node">Allowlisted<br>OpenAPI YAML</div><div class="arrow">→</div>
+      <div class="node">Generate MDX<br>and sidebar slices</div><div class="arrow">→</div>
+      <div class="node">Typecheck +<br>static build</div><div class="arrow">→</div>
+      <div class="node">GitHub Pages<br><code>/tadoku/api/</code></div>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>Publication boundary</h2>
+    <table>
+      <thead><tr><th>Service</th><th>Source</th><th>Operations</th><th>Decision</th></tr></thead>
+      <tbody>
+        <tr><td>Authorization API</td><td><code>services/authz-api/http/rest/openapi/api.yaml</code></td><td>4</td><td class="scope-public">Publish</td></tr>
+        <tr><td>Content API</td><td><code>services/content-api/http/rest/openapi/api.yaml</code></td><td>21</td><td class="scope-public">Publish</td></tr>
+        <tr><td>Immersion API</td><td><code>services/immersion-api/http/rest/openapi/api.yaml</code></td><td>34</td><td class="scope-public">Publish</td></tr>
+        <tr><td>Profile API</td><td><code>services/profile-api/http/rest/openapi/api.yaml</code></td><td>2</td><td class="scope-public">Publish</td></tr>
+        <tr><td>Authorization internal API</td><td><code>services/authz-api/http/rest/openapi/internal-api.yaml</code></td><td>4</td><td class="scope-private">Exclude</td></tr>
+        <tr><td>Profile internal API</td><td><code>services/profile-api/http/rest/openapi/internal-api.yaml</code></td><td>1</td><td class="scope-private">Exclude</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section class="card phase">
+    <div class="phase-number">0</div>
+    <div class="eyebrow">Phase 0 · Baseline and safety contract</div>
+    <h2>Freeze what must remain true</h2>
+    <div class="phase-meta">Sequential prerequisite · Small · Docs owner</div>
+    <ul class="checklist">
+      <li>Record the existing Pages URL, base path <code>/tadoku/</code>, and a smoke-test list of representative existing documentation routes.</li>
+      <li>Encode the six-spec inventory above in the implementation notes and obtain maintainer confirmation that the four public files are safe to expose.</li>
+      <li>Record the expected count of 61 public operations and add a negative assertion for <code>/internal/v1/</code> and the internal service hostnames.</li>
+      <li>Capture a before-build of the current docs site so the Docusaurus upgrade can be checked for navigation or styling regressions.</li>
+    </ul>
+    <div class="gate"><strong>Gate 0:</strong> Maintainers approve the four-file public allowlist; existing Pages routes and the expected operation count are documented.</div>
+  </section>
+
+  <section class="card phase">
+    <div class="phase-number">1</div>
+    <div class="eyebrow">Phase 1 · Reproducible docs toolchain</div>
+    <h2>Move the docs build to pnpm and compatible pinned packages</h2>
+    <div class="phase-meta">Sequential foundation · Medium · Frontend/docs owner</div>
+    <ul class="checklist">
+      <li>Add <code>packageManager: pnpm@10.10.0</code> to <code>docs/package.json</code>, generate <code>docs/pnpm-lock.yaml</code>, and remove <code>docs/package-lock.json</code>.</li>
+      <li>Upgrade all Docusaurus packages together from <code>3.9.2</code> to <code>3.10.2</code>; pin the OpenAPI plugin and theme to <code>5.1.3</code> and include the theme’s required Sass plugin.</li>
+      <li>Use <code>pnpm/action-setup@v6</code> plus <code>actions/setup-node</code> in <code>deploy-docs.yaml</code>, caching against <code>docs/pnpm-lock.yaml</code>; install with <code>pnpm install --frozen-lockfile</code>.</li>
+      <li>Run <code>pnpm typecheck</code> and <code>pnpm build</code> before adding generated API pages; compare the representative routes and visual baseline from Phase 0.</li>
+    </ul>
+    <div class="gate"><strong>Gate 1:</strong> The current site builds with pnpm, typechecks cleanly, preserves <code>/tadoku/</code>, and the lockfile is reproducible in CI.</div>
+  </section>
+
+  <section class="card phase">
+    <div class="phase-number">2</div>
+    <div class="eyebrow">Phase 2 · API reference generation</div>
+    <h2>Generate pages for the public contracts</h2>
+    <div class="phase-meta">Parallel lane A after Gate 1 · Medium · API/docs owner</div>
+    <ul class="checklist">
+      <li>Register four named plugin configurations in <code>docs/docusaurus.config.ts</code>; use exact file paths rather than directory globs.</li>
+      <li>Generate output beneath <code>docs/docs/api/</code>, one stable directory per service, grouping endpoints by OpenAPI tag and generating service overview pages.</li>
+      <li>Set <code>hideSendButton: true</code>, keep credential persistence disabled, and link each overview to its source YAML on GitHub.</li>
+      <li>Add <code>api:generate</code> and <code>api:check</code> scripts. The check regenerates all four references and fails on <code>git diff --exit-code -- docs/docs/api</code>.</li>
+      <li>Commit the complete generated output. Do not hand-edit generated MDX; improvements belong in the source OpenAPI files or committed wrapper pages.</li>
+      <li>Verify that repeated operation IDs such as <code>ping</code> remain isolated by service directory and yield unique routes.</li>
+    </ul>
+    <div class="gate"><strong>Gate 2:</strong> A clean regeneration produces no diff, exactly 61 operations render, all four service overviews build, and no internal paths or hostnames appear in <code>docs/build</code>.</div>
+  </section>
+
+  <section class="card phase">
+    <div class="phase-number">3</div>
+    <div class="eyebrow">Phase 3 · Information architecture and reader guidance</div>
+    <h2>Make the generated pages understandable</h2>
+    <div class="phase-meta">Parallel lane B after Gate 1; integrate after Gate 2 · Small · Docs owner</div>
+    <ul class="checklist">
+      <li>Add an <code>API Reference</code> top-level navigation item and compose the four generated sidebar slices in this order: Immersion, Content, Profile, Authorization.</li>
+      <li>Create <code>docs/docs/api/index.md</code> with a service map, production base URLs, version labels, source links, and a clear distinction between anonymous and cookie-authenticated operations.</li>
+      <li>Explain that the first release is read-only documentation: code samples are illustrative and request execution is intentionally disabled.</li>
+      <li>Replace the existing service-page links that point only to raw YAML with links to the rendered reference, retaining a secondary “View source spec” link.</li>
+      <li>Check desktop and mobile navigation, light/dark appearance, endpoint anchors, schema expansion, and copyable code samples.</li>
+    </ul>
+    <div class="gate"><strong>Gate 3:</strong> A reader can reach each service reference in two clicks, understand its base URL and authentication model, and return to the existing service documentation without dead ends.</div>
+  </section>
+
+  <section class="card phase">
+    <div class="phase-number">4</div>
+    <div class="eyebrow">Phase 4 · CI and Pages delivery</div>
+    <h2>Build on pull requests; deploy only from main</h2>
+    <div class="phase-meta">Parallel lane C after Gate 1; integrate after Gates 2–3 · Medium · CI owner</div>
+    <ul class="checklist">
+      <li>Extend the workflow path filters to the four allowlisted spec paths. Do not include wildcard paths that would silently publish future internal specs.</li>
+      <li>Run docs verification on pull requests touching docs, the workflow, or an allowlisted spec: frozen install, API regeneration/drift check, typecheck, and production build.</li>
+      <li>Add <code>actions/configure-pages@v5</code> before artifact upload and use the current Pages artifact action; retain <code>pages: write</code>, <code>id-token: write</code>, the <code>github-pages</code> environment, and the serialized deployment group.</li>
+      <li>Condition the deploy job on a push to <code>main</code> or a manual dispatch so pull requests validate without publishing.</li>
+      <li>Upload only <code>docs/build</code>; fail before upload if generated docs drift, the static build fails, or the internal-spec negative check finds a match.</li>
+    </ul>
+    <div class="gate"><strong>Gate 4:</strong> A spec-only pull request runs the docs checks, a pull request cannot deploy, and a main-branch test deployment reports the expected Pages URL.</div>
+  </section>
+
+  <section class="card phase">
+    <div class="phase-number">5</div>
+    <div class="eyebrow">Phase 5 · Release verification</div>
+    <h2>Prove the public site matches the repository</h2>
+    <div class="phase-meta">Sequential release gate · Small · Reviewer + docs owner</div>
+    <ul class="checklist">
+      <li>Open the deployed site at <code>https://tadoku.github.io/tadoku/api/</code> and smoke-test one anonymous and one authenticated operation page per service.</li>
+      <li>Check all existing baseline routes, the API navbar entry, four service overviews, endpoint deep links, source-spec links, and the custom 404 behavior.</li>
+      <li>Search the built artifact and the deployed site for <code>internal-api</code>, <code>/internal/v1/</code>, <code>authz-api:8080</code>, and <code>profile-api:8080</code>; every check must be empty.</li>
+      <li>Confirm the GitHub Pages environment records the deployment and that a subsequent documentation-only change replaces it successfully.</li>
+      <li>Document rollback: revert the docs/plugin/workflow commits and redeploy the prior Docusaurus artifact; no service or database rollback is involved.</li>
+    </ul>
+    <div class="gate"><strong>Gate 5:</strong> All success criteria below pass against the production Pages URL and two maintainers sign off—one from API ownership and one from docs/frontend ownership.</div>
+  </section>
+
+  <section class="card">
+    <h2>Measurable success criteria</h2>
+    <div class="criteria">
+      <div class="criterion"><strong>Complete public coverage</strong>Four service overview pages and all 61 public operations are reachable under <code>/tadoku/api/</code>.</div>
+      <div class="criterion"><strong>No internal contract leakage</strong>The build and deployed output contain none of the two internal spec names, internal paths, or cluster-local server URLs.</div>
+      <div class="criterion"><strong>Automatic freshness</strong>Changing any allowlisted <code>api.yaml</code> triggers PR verification; stale generated MDX makes the check fail.</div>
+      <div class="criterion"><strong>Stable existing site</strong>The pre-recorded documentation URLs still return successfully and navigation remains usable on desktop and mobile.</div>
+      <div class="criterion"><strong>Reproducible delivery</strong>A frozen pnpm install, API generation, typecheck, and production build all pass from a clean checkout.</div>
+      <div class="criterion"><strong>Safe interaction model</strong>No “Send request” control is exposed; auth and production-server behavior are clearly explained.</div>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>Risk register</h2>
+    <table>
+      <thead><tr><th>Risk</th><th>Impact</th><th>Mitigation / evidence</th></tr></thead>
+      <tbody>
+        <tr><td>Internal specs are published by an overly broad glob.</td><td class="risk-high">High</td><td>Four exact config entries, four exact workflow paths, plus negative scans of the built output.</td></tr>
+        <tr><td>Cookie-authenticated “Try it” calls create CORS or CSRF problems.</td><td class="risk-high">High</td><td>Hide the send control and disable credential persistence until a separate security-reviewed design exists.</td></tr>
+        <tr><td>Docusaurus/plugin versions are incompatible.</td><td class="risk-med">Medium</td><td>Upgrade all Docusaurus packages together to 3.10.2 and pin plugin/theme 5.1.3; typecheck and build before reference integration.</td></tr>
+        <tr><td>Generated pages drift from YAML.</td><td class="risk-med">Medium</td><td>Regenerate in PR CI and fail on a generated-directory diff.</td></tr>
+        <tr><td>Large generated diffs reduce review quality.</td><td class="risk-med">Medium</td><td>Keep generated output isolated per service and require source-YAML review as the semantic change.</td></tr>
+        <tr><td>Pages only rebuilds when <code>docs/**</code> changes.</td><td class="risk-med">Medium</td><td>Add exact public-spec paths to workflow triggers and prove with a spec-only PR.</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section class="card">
+    <h2>Atomic delivery and parallel work</h2>
+    <div class="grid">
+      <div class="mini span-4"><h3>Commit 1 · Toolchain</h3><p>pnpm migration, Docusaurus upgrade, compatible renderer dependencies, unchanged-site proof.</p></div>
+      <div class="mini span-4"><h3>Commit 2 · Reference</h3><p>Allowlisted configs, generated MDX, API landing page, sidebar and service links.</p></div>
+      <div class="mini span-4"><h3>Commit 3 · Delivery</h3><p>PR verification, spec triggers, Pages configuration, internal-spec guard and release checks.</p></div>
+      <div class="mini span-12"><p><strong>Parallelization:</strong> after Gate 1, lane A can implement renderer/generation, lane B can draft the API landing page and link map, and lane C can prepare workflow conditions and negative checks. They merge only after their respective gates pass. No schema or data migration is involved.</p></div>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>Follow-up improvements this unlocks</h2>
+    <ul>
+      <li>Add Spectral or Redocly contract linting once a repository ruleset is agreed, then make it part of the same PR gate.</li>
+      <li>Improve <code>info.description</code>, tag descriptions, examples, error schemas, and deprecation notes in the source specs.</li>
+      <li>Publish release snapshots and a version selector when API versions begin to diverge from the current contracts.</li>
+      <li>Add site search indexing and API-reference analytics to learn which operations need better examples.</li>
+      <li>Design a separate, security-reviewed API explorer using a safe auth flow or proxy; do not simply enable credentialed cross-origin requests.</li>
+      <li>Optionally publish internal references to an authenticated site, using an independent allowlist and deployment target.</li>
+    </ul>
+  </section>
+
+  <section class="card sources">
+    <h2>Evidence and references</h2>
+    <ul>
+      <li>Repository evidence: <code>docs/docusaurus.config.ts</code>, <code>docs/sidebars.ts</code>, <code>docs/package.json</code>, <code>.github/workflows/deploy-docs.yaml</code>, and the six OpenAPI files inventoried above.</li>
+      <li><a href="https://github.com/PaloAltoNetworks/docusaurus-openapi-docs">Docusaurus OpenAPI Docs</a> documents the Docusaurus compatibility matrix, multi-spec generation, generated sidebars, and <code>hideSendButton</code>.</li>
+      <li><a href="https://docs.github.com/en/pages/getting-started-with-github-pages/using-custom-workflows-with-github-pages">GitHub Pages custom workflows</a> documents Pages configuration, artifact upload, deployment permissions, environments, and build/deploy job separation.</li>
+      <li><a href="https://github.com/pnpm/action-setup">pnpm/action-setup</a> documents version pinning through <code>packageManager</code> and CI installation/caching.</li>
+    </ul>
+    <p class="note">Version availability was checked on 9 August 2026: Docusaurus 3.10.2; OpenAPI plugin/theme 5.1.3; pnpm 10.10.0 in the workspace.</p>
+  </section>
+</main>
+</body>
+</html>

@@ -121,7 +121,7 @@ func main() {
 
 	// Service-per-function services
 	contestConfigurationOptions := immersiondomain.NewContestConfigurationOptions(postgresRepository)
-	logConfigurationOptions := immersiondomain.NewLogConfigurationOptions(postgresRepository)
+	logConfigurationOptions := immersiondomain.NewLogConfigurationOptionsWithScoringEngine(postgresRepository, cfg.ScoringEngineEnabled)
 	contestFindLatestOfficial := immersiondomain.NewContestFindLatestOfficial(postgresRepository)
 	contestSummaryFetch := immersiondomain.NewContestSummaryFetch(postgresRepository)
 	profileYearlyActivitySplit := immersiondomain.NewProfileYearlyActivitySplit(postgresRepository)

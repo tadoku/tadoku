@@ -699,6 +699,7 @@ const LogConfigurationOptions = z.object({
   activities: z.array(Activity),
   units: z.array(Unit),
   user_language_codes: z.array(z.string()).default([]),
+  scoring_engine_enabled: z.boolean(),
 })
 
 export type LogConfigurationOptions = z.infer<typeof LogConfigurationOptions>
@@ -716,6 +717,68 @@ export const useLogConfigurationOptions = (options?: { enabled?: boolean }) =>
       return LogConfigurationOptions.parse(await response.json())
     },
     options,
+  )
+
+export type ScorePreviewPayload = {
+  registration_ids?: string[]
+  language_code: string
+  activity_id: number
+  amount?: number
+  unit_id?: string
+  unit_key?: string
+  duration_seconds?: number
+  tags: string[]
+}
+
+const AppliedScoringRule = z.object({
+  rule_id: z.string(),
+  rate: z.number(),
+})
+
+const ScoreEstimate = z.object({
+  score: z.number(),
+  source: z.enum(['amount', 'duration_minutes']),
+  rule_set_id: z.string().optional(),
+  rules: z.array(AppliedScoringRule),
+})
+
+const ScorePreview = z.object({
+  platform: ScoreEstimate,
+  contests: z.array(
+    z.object({
+      registration_id: z.string(),
+      contest_id: z.string(),
+      estimate: ScoreEstimate,
+    }),
+  ),
+})
+
+export type ScorePreview = z.infer<typeof ScorePreview>
+
+export const useScorePreview = (
+  payload: ScorePreviewPayload | undefined,
+  options?: { enabled?: boolean },
+) =>
+  useQuery(
+    ['log', 'score-preview', payload],
+    async (): Promise<ScorePreview> => {
+      const response = await fetch(`${root}/logs/score-preview`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      })
+      if (response.status !== 200) {
+        throw new Error(response.status.toString())
+      }
+      return ScorePreview.parse(await response.json())
+    },
+    {
+      ...options,
+      enabled: payload !== undefined && options?.enabled !== false,
+      keepPreviousData: true,
+    },
   )
 
 const TagSuggestion = z.object({

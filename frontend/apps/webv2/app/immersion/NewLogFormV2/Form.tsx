@@ -7,20 +7,20 @@ import {
   LogConfigurationOptions,
   useCreateLogV2,
   useOngoingContestRegistrations,
+  useScorePreview,
 } from '@app/immersion/api'
 import { useRouter } from 'next/router'
 import { routes } from '@app/common/routes'
 import {
-  estimateScore,
   filterUnits,
   NewLogFormV2Schema,
   NewLogV2APISchema,
 } from '@app/immersion/NewLogFormV2/domain'
-import { formatScore } from '@app/common/format'
-import { useDebouncedCallback } from 'use-debounce'
+import { useDebounce, useDebouncedCallback } from 'use-debounce'
 import { useSessionOrRedirect } from '@app/common/session'
 import { useEffect } from 'react'
 import { AmountWithUnit, Option, OptionGroup, Select } from 'ui/components/Form'
+import { ScorePreviewEstimate } from '@app/immersion/components/ScorePreviewEstimate'
 
 interface Props {
   options: LogConfigurationOptions
@@ -82,8 +82,7 @@ export const LogFormV2 = ({
 
   const activityId = methods.watch('activityId')
   const languageCode = methods.watch('languageCode')
-  const unitId = methods.watch('amountUnit')
-  const amount = methods.watch('amountValue')
+  const formValues = methods.watch()
 
   const languagesAsOptions: Option[] = options.languages.map(it => ({
     value: it.code,
@@ -110,14 +109,23 @@ export const LogFormV2 = ({
     value: it.id,
     label: it.name,
   }))
-  const currentSelectedUnit = units.find(it => it.id === unitId)
   const activitiesAsOptions: Option[] = options.activities.map(it => ({
     value: it.id.toString(),
     label: it.name,
   }))
-  const estimatedScore = usesAmountUnit
-    ? estimateScore(amount, currentSelectedUnit)
+  const previewPayloadResult = NewLogV2APISchema.safeParse(formValues)
+  const [previewPayloadJSON] = useDebounce(
+    previewPayloadResult.success
+      ? JSON.stringify(previewPayloadResult.data)
+      : undefined,
+    300,
+  )
+  const previewPayload = previewPayloadJSON
+    ? JSON.parse(previewPayloadJSON)
     : undefined
+  const scorePreview = useScorePreview(previewPayload, {
+    enabled: options.scoring_engine_enabled,
+  })
 
   // Eagerly prefetch ongoing registrations (non-blocking)
   const registrations = useOngoingContestRegistrations()
@@ -266,10 +274,10 @@ export const LogFormV2 = ({
               </div>
             </div>
             <div className="-mx-4 -mb-4 mt-4 px-4 py-2 md:-mx-7 md:-mb-7 md:px-7 md:py-2 bg-slate-500/5 text-center lg:text-right font-mono">
-              Estimated score:{' '}
-              <strong>
-                {usesAmountUnit ? formatScore(estimatedScore) : '-'}
-              </strong>
+              <ScorePreviewEstimate
+                enabled={options.scoring_engine_enabled}
+                preview={scorePreview.data}
+              />
             </div>
           </div>
           <div className="h-stack spaced justify-end">

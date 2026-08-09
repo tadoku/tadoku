@@ -24,10 +24,11 @@ func (s *Server) LogGetConfigurations(ctx echo.Context) error {
 	}
 
 	res := openapi.LogConfigurationOptions{
-		Activities:        make([]openapi.Activity, len(opts.Activities)),
-		Languages:         make([]openapi.Language, len(opts.Languages)),
-		Units:             make([]openapi.Unit, len(opts.Units)),
-		UserLanguageCodes: &userLangCodes,
+		Activities:           make([]openapi.Activity, len(opts.Activities)),
+		Languages:            make([]openapi.Language, len(opts.Languages)),
+		Units:                make([]openapi.Unit, len(opts.Units)),
+		UserLanguageCodes:    &userLangCodes,
+		ScoringEngineEnabled: opts.ScoringEngineEnabled,
 	}
 
 	for i, it := range opts.Activities {

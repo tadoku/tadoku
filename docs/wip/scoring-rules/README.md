@@ -408,12 +408,12 @@ endpoint. All form changes must use `react-hook-form` and components from the
   - [x] Return applied-rule information where appropriate.
   - [x] Return zero for uncovered inputs.
 
-- [ ] Move frontend estimates to score preview.
-  - [ ] Use `react-hook-form` values for preview requests.
-  - [ ] Remove dependence on `unit.modifier`.
-  - [ ] Preserve the legacy form's visible workflow.
-  - [ ] Display platform and contest-specific estimates clearly.
-  - [ ] Keep the feature behind the existing flag until verified.
+- [x] Move frontend estimates to score preview.
+  - [x] Use `react-hook-form` values for preview requests.
+  - [x] Remove dependence on `unit.modifier`.
+  - [x] Preserve the legacy form's visible workflow.
+  - [x] Display platform and contest-specific estimates clearly.
+  - [x] Keep the feature behind the existing flag until verified.
 
 - [ ] Add rule-set management APIs.
   - [ ] Create draft rule-set versions.

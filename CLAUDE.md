@@ -40,6 +40,8 @@ cd frontend && pnpm build
 
 Migration PRs must remain compatible with the application version currently deployed. Additive migrations come before dependent code; destructive or cleanup migrations come in a later standalone PR only after the old code is no longer deployed. After a migration is merged and deployed, base dependent work on the updated `main` branch.
 
+**Do not create application-defined database functions, stored procedures, or triggers.** Keep business behavior in the application and domain layers. Use declarative database features such as `not null`, `check`, unique and foreign-key constraints, and indexes for data integrity and performance.
+
 **Always write tests for new backend functionality** — new domain services, repository methods, and HTTP handlers should have corresponding test coverage.
 
 **Always use `testify` for test assertions** — use `assert` for checks and `require` for fatal preconditions (`github.com/stretchr/testify/assert` and `github.com/stretchr/testify/require`). Never use raw `if err != nil { t.Fatal(...) }` patterns.

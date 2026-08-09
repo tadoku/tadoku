@@ -1,0 +1,70 @@
+---
+id: profile-yearly-contest-registrations-by-user-id
+title: "Fetches the contest registrations of a user for a given year"
+description: "Includes private contests for the current user and admins"
+sidebar_label: "Fetches the contest registrations of a user for a given year"
+hide_title: true
+hide_table_of_contents: true
+api: eJztV21v2zYQ/ivCfVkLyJHjdMOqb+nLBm/dUiTthi0IhLN0stlIJEtSTjRD/304SrLl2HHddB/3SS883svD5453K8jIpkZoJ5SEGKYyLaqMbKCNWKKjIFXSkXU2yJUJ3IKCtDKGpAsqSyZAmQWYlUJaCEFpMsh6phnEoI3KRUF/EZqift1quaS5sK4Vsq/qj5bM9A2E4HBuIb7u98BNCBoNluTI8MIKJJYEMbDRaQYhCHZWo1tA+DCCN4HKW++cCgy5ykgIwdDnShjKIHamohBsuqASIV6BqzWrts4IOYcQcmVKdGysEhk0Tbi2XhOag7ZZgK1j6sRSuJo9yMmli2McENLRnAw0zQ1LW62kJcsCk/GYH9u2bJWmZG1eFcEaeAjBn5d0LI9aFyL1C9Eny5tWA6tYFBe5x7azr2afKHVbnl6DpHuXaJxT4tQtsQGnHBaJFf+0x2TYuBOto4O13bhCoHssdUEQn47HTbije89ZbIcsbECldnUgcqaioe9sIFXAegLWMzQBZ3x04ITzX+9xLiQ6yt4J64DP9FDUZsjT3TC3lzduozFYQwgl3k8dlRbi78chiPb1sMUuzRLB5GbyDt4yYXWBdeJZGEKBcl7hnPY4JrIjCB0OjR0j3rtztOyWw3t2bQ7pk1pI3raJaRfNI/HLGBtvcQcWv3jYD427hUQG06uL0Q9nL0dnwcI5beMoInlyJ26FpkzgiTLziL+iP/tfMb+9N4o9TN71QUVMukTlyfTqIvH6kj7ghH2zybPJ+PTlc0biy5j9gholWdrid2/L/+zO9/gs7wlhHRoHG4KQzLzkhu7dr9Ys4+xvCS7+eS5SgcWTSdlFcijyyXhyFlyqSmbBKW/ZOq+HGwc8b8M65ETGQTTbgR8jvwPNMZt60DayM6UKQp8Jaxx3VwdQ5FhYYuk7SSb5mgQd7Pj6NE0NcQ1N8Mtojpwo6eHpTUank9Hpiw+nL+MXP8bj8d++ZOjsv1eaUUGOsn0YD7Kma0teIWfTF+4ELAp1R1myKVXh+l9334t9NXl33/8l7ttL3B7knwirv2f3g9qm1JqBQrqzCRe/x/uao6K7JMy6CpVRjlXh9pcCIXXlkvb/Hn2yKj0vS1VJl2gjSjS1r80lrT9vhgied20pNI1vMh+kwR+C7valx7Brf2TrVmPvZZoQSnILxaPAnBh03zHHEHHtsdGqbeWbqCu5o62mKlpxK91ACJbMsh8CKlNADD1PHWbqtjpBrSPUIhJlScZyrwvsoKW0MsLVV9zw9jmibgWdV+zGhita/Ep139W3Ij0hYlCmTm4NOmUTS9a2ALBsrryODoW17RFqwS2aSElaf2ydot+mH7id2wpgLtyimp2kquxi6R+zQs2iEoWM3k1fv/396i2zYdla4Jp3Mj4Z+4tEWVeiHJj5iYcNsu2g1gIbbAHrp5N2OuKBDoO5WJIMusnmwYW6niW+aSzsgHZ07yJdoPDc9kisOk5c+7aRZeP1gLeXFizhXb0JYaG4w7mG1WqGlj6aomn49+eKTA3x9U0ISzQCZ3xA1yvIhOX3rLs7D8T67LKrDs+DR2bJvRH1fJJMpiUWFX9BCLdUbwZXvmSe5MmhyfIJ7ngQm5smhAVhRsZD1C6dpylpN9i0M0Zyeq1z++e3H6Bp/gVvbZsR
+sidebar_class_name: "get api-method"
+info_path: api/immersion/immersion-api
+custom_edit_url: null
+hide_send_button: true
+---
+
+import MethodEndpoint from "@theme/ApiExplorer/MethodEndpoint";
+import ParamsDetails from "@theme/ParamsDetails";
+import RequestSchema from "@theme/RequestSchema";
+import StatusCodes from "@theme/StatusCodes";
+import OperationTabs from "@theme/OperationTabs";
+import TabItem from "@theme/TabItem";
+import Heading from "@theme/Heading";
+import Translate from "@docusaurus/Translate";
+
+<Heading
+  as={"h1"}
+  className={"openapi__heading"}
+  children={"Fetches the contest registrations of a user for a given year"}
+>
+</Heading>
+
+<MethodEndpoint
+  method={"get"}
+  path={"/users/{userId}/contest-registrations/{year}"}
+  context={"endpoint"}
+>
+  
+</MethodEndpoint>
+
+
+
+Includes private contests for the current user and admins
+
+<Heading
+  id={"request"}
+  as={"h2"}
+  className={"openapi-tabs__heading"}
+>
+  <Translate id="theme.openapi.request.title">Request</Translate>
+</Heading>
+
+<ParamsDetails
+  {...require("./profile-yearly-contest-registrations-by-user-id.ParamsDetails.json")}
+>
+  
+</ParamsDetails>
+
+<RequestSchema
+  {...require("./profile-yearly-contest-registrations-by-user-id.RequestSchema.json")}
+>
+  
+</RequestSchema>
+
+<StatusCodes
+  {...require("./profile-yearly-contest-registrations-by-user-id.StatusCodes.json")}
+>
+  
+</StatusCodes>
+
+
+      

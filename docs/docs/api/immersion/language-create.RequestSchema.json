@@ -1,0 +1,1 @@
+{"title":"Body","body":{"required":true,"content":{"application/json":{"schema":{"type":"object","required":["code","name"],"properties":{"code":{"type":"string","example":"jpa","description":"In ISO-639-3 https://en.wikipedia.org/wiki/Wikipedia:WikiProject_Languages/List_of_ISO_639-3_language_codes_(2019)"},"name":{"type":"string","example":"Japanese"}},"title":"Language"}}}}}

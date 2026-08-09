@@ -1,0 +1,1 @@
+{"parameters":[{"name":"namespace","in":"path","required":true,"schema":{"type":"string"}},{"name":"id","in":"path","description":"ID of page","required":true,"schema":{"type":"string"}},{"name":"contentId","in":"path","description":"Content ID of the version","required":true,"schema":{"type":"string","format":"uuid"}}]}

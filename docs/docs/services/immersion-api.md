@@ -36,4 +36,5 @@ All core functionality should live in this service.
 ## Important links
 
 - [Source code](https://github.com/tadoku/tadoku/tree/main/services/immersion-api)
-- [API Spec](https://github.com/tadoku/tadoku/blob/main/services/immersion-api/http/rest/openapi/api.yaml)
+- [API reference](../api/immersion/immersion-api)
+- [OpenAPI source](https://github.com/tadoku/tadoku/blob/main/services/immersion-api/http/rest/openapi/api.yaml)

@@ -7,6 +7,8 @@
     "docusaurus": "docusaurus",
     "start": "docusaurus start",
     "build": "docusaurus build",
+    "api:generate": "docusaurus clean-api-docs all && docusaurus gen-api-docs all",
+    "api:check": "pnpm api:generate && git diff --exit-code -- docs/api",
     "swizzle": "docusaurus swizzle",
     "deploy": "docusaurus deploy",
     "clear": "docusaurus clear",

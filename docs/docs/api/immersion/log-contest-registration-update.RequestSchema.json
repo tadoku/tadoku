@@ -1,0 +1,1 @@
+{"title":"Body","body":{"required":true,"content":{"application/json":{"schema":{"type":"object","required":["registration_ids"],"properties":{"registration_ids":{"type":"array","items":{"type":"string","format":"uuid"}}}}}}}}

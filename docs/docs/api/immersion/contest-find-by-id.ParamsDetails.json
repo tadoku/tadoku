@@ -1,0 +1,1 @@
+{"parameters":[{"name":"id","in":"path","description":"ID of contest to return","required":true,"schema":{"type":"string","format":"uuid"}}]}

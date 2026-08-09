@@ -1,0 +1,1 @@
+{"responses":{"200":{"description":"successful operation","content":{"application/json":{"schema":{"type":"object","required":["suggestions"],"properties":{"suggestions":{"type":"array","items":{"type":"object","required":["tag","count"],"properties":{"tag":{"type":"string"},"count":{"type":"integer"}},"title":"TagSuggestion"}}},"title":"TagSuggestions"}}}}}}

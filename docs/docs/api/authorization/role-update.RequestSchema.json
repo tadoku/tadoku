@@ -1,0 +1,1 @@
+{"title":"Body","body":{"required":true,"content":{"application/json":{"schema":{"type":"object","required":["role","reason"],"properties":{"role":{"type":"string","enum":["user","banned"]},"reason":{"type":"string","minLength":1,"maxLength":1000}},"title":"RoleUpdateRequest"}}}}}

@@ -1,0 +1,1 @@
+{"responses":{"200":{"description":"successful operation","content":{"application/json":{"schema":{"type":"object","required":["role"],"properties":{"role":{"type":"string","enum":["admin","user","guest","banned"]}},"title":"UserRole"}}}},"401":{"description":"unauthorized"},"503":{"description":"authorization unavailable"}}}

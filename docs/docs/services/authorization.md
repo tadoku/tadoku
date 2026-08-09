@@ -7,6 +7,11 @@ title: Authorization (Keto)
 
 This document describes how Tadoku uses Ory Keto for authorization, specifically for user roles (admin/banned).
 
+The public HTTP contract is available in the
+[Authorization API reference](../api/authorization/authz-api), with the
+[OpenAPI source](https://github.com/tadoku/tadoku/blob/main/services/authz-api/http/rest/openapi/api.yaml)
+kept in the repository.
+
 ## Overview
 
 - **Authentication (who are you?)** is handled by **Ory Kratos**. User JWTs include a stable subject id in the `sub` claim.

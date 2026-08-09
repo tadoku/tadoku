@@ -1,0 +1,1 @@
+{"parameters":[{"name":"namespace","in":"path","required":true,"schema":{"type":"string"}},{"name":"page_size","in":"query","required":false,"schema":{"type":"integer"}},{"name":"page","in":"query","required":false,"schema":{"type":"integer"}},{"name":"include_drafts","in":"query","required":false,"allowEmptyValue":true,"schema":{"type":"boolean"}}]}

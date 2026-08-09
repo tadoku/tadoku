@@ -1,0 +1,1 @@
+{"responses":{"200":{"description":"successful operation"},"403":{"description":"forbidden"},"404":{"description":"not found"}}}

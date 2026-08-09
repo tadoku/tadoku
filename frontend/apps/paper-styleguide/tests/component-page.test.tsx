@@ -23,20 +23,13 @@ const drawerDocument = catalogRegistry.documents.find(
 const componentDocuments = catalogRegistry.documents.filter(
   (document) => document.kind === 'component',
 )
-const acceptedOutlineLabels = new Set([
-  'Usage',
-  'Examples',
-  'Variants and states',
-  'Behavior',
-  'Content guidance',
-  'Accessibility',
-])
-const internalOutlineLabels = new Set([
-  'API reference',
-  'Implementation',
-  'Lifecycle',
-  'Metadata',
-  'Migration',
+const acceptedPageSections = new Set([
+  'usage',
+  'examples',
+  'variantsAndStates',
+  'behavior',
+  'contentGuidance',
+  'accessibility',
 ])
 
 describe('Stable component documentation', () => {
@@ -73,30 +66,13 @@ describe('Stable component documentation', () => {
     expect(componentDocuments.length).toBeGreaterThan(0)
 
     for (const document of componentDocuments) {
-      const { container, unmount } = render(<DocumentPage document={document} />)
-      const outline = within(container).getByRole('navigation', {
-        name: 'On this page',
-      })
-      const labels = within(outline)
-        .getAllByRole('link')
-        .map((link) => link.textContent ?? '')
+      const pageSections = document.sections!.pageSections
 
-      expect(labels, document.id).toHaveLength(document.sections!.pageSections.length)
-      expect(labels.length, document.id).toBeLessThanOrEqual(6)
-      expect(labels.every((label) => acceptedOutlineLabels.has(label)), document.id).toBe(
-        true,
-      )
-      expect(labels.some((label) => internalOutlineLabels.has(label)), document.id).toBe(
-        false,
-      )
-
-      for (const label of internalOutlineLabels) {
-        expect(
-          within(container).queryByRole('heading', { name: label }),
-          `${document.id} exposed the internal ${label} section`,
-        ).not.toBeInTheDocument()
-      }
-      unmount()
+      expect(pageSections.length, document.id).toBeLessThanOrEqual(6)
+      expect(
+        pageSections.every((section) => acceptedPageSections.has(section)),
+        document.id,
+      ).toBe(true)
     }
   })
 

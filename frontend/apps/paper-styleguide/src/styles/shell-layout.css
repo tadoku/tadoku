@@ -30,7 +30,6 @@
     block-size: 2rem;
     aspect-ratio: 1;
     color: var(--paper-color-action-default);
-    transform: translateY(-0.125rem);
   }
 
   .docs-wordmark :where(img) {

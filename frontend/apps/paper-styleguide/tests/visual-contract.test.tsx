@@ -96,12 +96,15 @@ describe('responsive visual contract', () => {
     ).not.toBeNull()
   })
 
-  it('optically centers the Cut Meter and label as an app wordmark', () => {
+  it('centers the Cut Meter and label without an app-specific offset', () => {
     expect(styleguideStyles).toMatch(
       /\.docs-wordmark\s*\{(?=[^}]*align-items:\s*center;)(?=[^}]*line-height:\s*1;)[^}]*\}/su,
     )
     expect(styleguideStyles).toMatch(
-      /\.docs-wordmark__mark\s*\{(?=[^}]*inline-size:\s*2rem;)(?=[^}]*block-size:\s*2rem;)(?=[^}]*transform:\s*translateY\(-0\.125rem\);)[^}]*\}/su,
+      /\.docs-wordmark__mark\s*\{(?=[^}]*inline-size:\s*2rem;)(?=[^}]*block-size:\s*2rem;)[^}]*\}/su,
+    )
+    expect(styleguideStyles).not.toMatch(
+      /\.docs-wordmark__mark\s*\{[^}]*transform:/su,
     )
     expect(styleguideStyles).toMatch(
       /\.docs-wordmark__label\s*\{[^}]*line-height:\s*1;/su,

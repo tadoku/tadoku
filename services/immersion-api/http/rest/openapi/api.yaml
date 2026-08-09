@@ -969,7 +969,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ScoringRuleSet"
-  /contests/{id}/scoring-rule-sets:
+  /contests/{id}/scoring/rule-sets:
     get:
       summary: Lists scoring rule-set versions owned by a contest
       operationId: scoringRuleSetListContest

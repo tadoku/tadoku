@@ -621,10 +621,10 @@ type ServerInterface interface {
 	// (POST /contests/{id}/registration)
 	ContestRegistrationUpsert(ctx echo.Context, id openapi_types.UUID) error
 	// Lists scoring rule-set versions owned by a contest
-	// (GET /contests/{id}/scoring-rule-sets)
+	// (GET /contests/{id}/scoring/rule-sets)
 	ScoringRuleSetListContest(ctx echo.Context, id openapi_types.UUID) error
 	// Creates a draft contest scoring rule-set version
-	// (POST /contests/{id}/scoring-rule-sets)
+	// (POST /contests/{id}/scoring/rule-sets)
 	ScoringRuleSetCreateContest(ctx echo.Context, id openapi_types.UUID) error
 	// Fetches the summary for a contest
 	// (GET /contests/{id}/summary)
@@ -1583,8 +1583,8 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 	router.GET(baseURL+"/contests/:id/profile/:user_id/scores", wrapper.ContestProfileFetchScores)
 	router.GET(baseURL+"/contests/:id/registration", wrapper.ContestFindRegistration)
 	router.POST(baseURL+"/contests/:id/registration", wrapper.ContestRegistrationUpsert)
-	router.GET(baseURL+"/contests/:id/scoring-rule-sets", wrapper.ScoringRuleSetListContest)
-	router.POST(baseURL+"/contests/:id/scoring-rule-sets", wrapper.ScoringRuleSetCreateContest)
+	router.GET(baseURL+"/contests/:id/scoring/rule-sets", wrapper.ScoringRuleSetListContest)
+	router.POST(baseURL+"/contests/:id/scoring/rule-sets", wrapper.ScoringRuleSetCreateContest)
 	router.GET(baseURL+"/contests/:id/summary", wrapper.ContestFetchSummary)
 	router.GET(baseURL+"/languages", wrapper.LanguageList)
 	router.POST(baseURL+"/languages", wrapper.LanguageCreate)

@@ -29,6 +29,21 @@ func TestScoringRuleSetCreatePlatformRejectsInvalidJSON(t *testing.T) {
 	assert.Equal(t, http.StatusBadRequest, recorder.Code)
 }
 
+func TestScoringRuleSetContestRoutesUseScoringNamespace(t *testing.T) {
+	echoServer := echo.New()
+	openapi.RegisterHandlers(echoServer, &Server{})
+
+	routes := make([]string, 0, len(echoServer.Routes()))
+	for _, route := range echoServer.Routes() {
+		routes = append(routes, route.Method+" "+route.Path)
+	}
+
+	assert.Contains(t, routes, http.MethodGet+" /contests/:id/scoring/rule-sets")
+	assert.Contains(t, routes, http.MethodPost+" /contests/:id/scoring/rule-sets")
+	assert.NotContains(t, routes, http.MethodGet+" /contests/:id/scoring-rule-sets")
+	assert.NotContains(t, routes, http.MethodPost+" /contests/:id/scoring-rule-sets")
+}
+
 func TestScoringRuleSetToAPIIncludesVersionAndMatchers(t *testing.T) {
 	ruleSetID := uuid.New()
 	contestID := uuid.New()

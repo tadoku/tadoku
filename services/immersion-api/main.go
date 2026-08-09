@@ -153,7 +153,7 @@ func main() {
 	languageCreate := immersiondomain.NewLanguageCreate(postgresRepository)
 	languageUpdate := immersiondomain.NewLanguageUpdate(postgresRepository)
 	tagSuggestions := immersiondomain.NewTagSuggestions(postgresRepository)
-	logContestUpdate := immersiondomain.NewLogContestUpdate(postgresRepository, clock)
+	logContestUpdate := immersiondomain.NewLogContestUpdateWithScoringEngine(postgresRepository, clock, cfg.ScoringEngineEnabled)
 
 	server := rest.NewServer(
 		contestConfigurationOptions,

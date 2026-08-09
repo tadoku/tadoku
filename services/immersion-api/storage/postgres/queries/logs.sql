@@ -329,6 +329,25 @@ where
   and contest_logs.contest_id = contests.id
   and contests.contest_end >= sqlc.arg('now');
 
+-- name: UpdateOngoingContestLog :exec
+update contest_logs
+set
+  unit_key = sqlc.arg('unit_key'),
+  amount = sqlc.arg('amount'),
+  modifier = sqlc.arg('modifier'),
+  duration_seconds = sqlc.arg('duration_seconds'),
+  computed_score = sqlc.arg('computed_score'),
+  score_rule_set_id = sqlc.arg('score_rule_set_id'),
+  score_rule_ids = sqlc.arg('score_rule_ids'),
+  score_rates = sqlc.arg('score_rates'),
+  score_source = sqlc.arg('score_source')
+from contests
+where
+  contest_logs.log_id = sqlc.arg('log_id')
+  and contest_logs.contest_id = sqlc.arg('contest_id')
+  and contest_logs.contest_id = contests.id
+  and contests.contest_end >= sqlc.arg('now');
+
 -- name: FetchOngoingContestIDsForLog :many
 select contest_logs.contest_id
 from contest_logs

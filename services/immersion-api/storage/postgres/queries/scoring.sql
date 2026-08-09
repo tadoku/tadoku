@@ -10,6 +10,12 @@ select *
 from scoring_rule_sets
 where id = sqlc.arg('id');
 
+-- name: FindContestScoringRuleSetID :one
+select scoring_rule_set_id
+from contests
+where id = sqlc.arg('contest_id')
+  and deleted_at is null;
+
 -- name: ListScoringRulesForRuleSet :many
 select *
 from scoring_rules

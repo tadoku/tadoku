@@ -88,7 +88,9 @@ function InputRecommendedFixture() {
           rules={{ required: "Enter a log title." }}
           required
         />
-        <Button type="submit">Save log</Button>
+        <div className="paper-fixture-row">
+          <Button type="submit">Save log</Button>
+        </div>
       </form>
     </FormProvider>
   );

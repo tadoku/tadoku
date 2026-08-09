@@ -64,4 +64,18 @@ describe('component workbench visual contract', () => {
       /min-block-size/u,
     )
   })
+
+  it('provides a flex action row that opts fixture buttons out of form-grid stretching', () => {
+    const formDeclarations = declarationsFor(
+      '.paper-fixture-stage form',
+    ).join('\n')
+    const actionRowDeclarations = declarationsFor('.paper-fixture-row').join(
+      '\n',
+    )
+
+    expect(formDeclarations).toMatch(/display:\s*grid;/u)
+    expect(actionRowDeclarations).toMatch(/display:\s*flex;/u)
+    expect(actionRowDeclarations).toMatch(/flex-wrap:\s*wrap;/u)
+    expect(actionRowDeclarations).toMatch(/align-items:\s*center;/u)
+  })
 })

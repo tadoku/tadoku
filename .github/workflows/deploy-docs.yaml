@@ -5,17 +5,23 @@ on:
     branches: [main]
     paths:
       - "docs/**"
+      - "services/authz-api/http/rest/openapi/api.yaml"
+      - "services/content-api/http/rest/openapi/api.yaml"
+      - "services/immersion-api/http/rest/openapi/api.yaml"
+      - "services/profile-api/http/rest/openapi/api.yaml"
+      - ".github/workflows/deploy-docs.yaml"
+  pull_request:
+    paths:
+      - "docs/**"
+      - "services/authz-api/http/rest/openapi/api.yaml"
+      - "services/content-api/http/rest/openapi/api.yaml"
+      - "services/immersion-api/http/rest/openapi/api.yaml"
+      - "services/profile-api/http/rest/openapi/api.yaml"
       - ".github/workflows/deploy-docs.yaml"
   workflow_dispatch:
 
 permissions:
   contents: read
-  pages: write
-  id-token: write
-
-concurrency:
-  group: pages-deploy
-  cancel-in-progress: false
 
 jobs:
   build:
@@ -23,26 +29,65 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - uses: pnpm/action-setup@v6
+        with:
+          package_json_file: docs/package.json
+
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: npm
-          cache-dependency-path: docs/package-lock.json
+          cache: pnpm
+          cache-dependency-path: docs/pnpm-lock.yaml
 
       - name: Install dependencies
         working-directory: docs
-        run: npm ci
+        run: pnpm install --frozen-lockfile
+
+      - name: Verify generated API reference
+        working-directory: docs
+        run: pnpm api:check
+
+      - name: Typecheck
+        working-directory: docs
+        run: pnpm typecheck
 
       - name: Build
         working-directory: docs
-        run: npm run build
+        run: pnpm build
+
+      - name: Verify public API publication boundary
+        working-directory: docs
+        shell: bash
+        run: |
+          endpoint_count="$(find docs/api -name '*.api.mdx' | wc -l | tr -d ' ')"
+          page_count="$(find build/api -name index.html | wc -l | tr -d ' ')"
+
+          test "$endpoint_count" = "61"
+          test "$page_count" = "66"
+
+          if rg -n 'internal-api|/internal/v1/|authz-api:8080|profile-api:8080' docs/api build/api; then
+            echo "Internal API content was found in the public API reference" >&2
+            exit 1
+          fi
+
+      - name: Configure GitHub Pages
+        if: github.event_name != 'pull_request'
+        uses: actions/configure-pages@v5
 
       - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
+        if: github.event_name != 'pull_request'
+        uses: actions/upload-pages-artifact@v4
         with:
           path: docs/build
 
   deploy:
+    if: github.event_name != 'pull_request'
+    permissions:
+      pages: write
+      id-token: write
+    concurrency:
+      group: pages-deploy
+      cancel-in-progress: false
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}

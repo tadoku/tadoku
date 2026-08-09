@@ -303,13 +303,23 @@ export function RadioGroup<Value extends string = string>({
     required: rules?.required ?? (required ? "Choose an option." : undefined),
   });
   return (
-    <fieldset className={`paper-choice-field${error ? " paper-field--invalid" : ""}`} aria-describedby={describedBy(id, hint, error)}>
+    <fieldset
+      className={`paper-choice-field${error ? " paper-field--invalid" : ""}`}
+      aria-describedby={describedBy(id, hint, error)}
+      aria-invalid={error ? true : undefined}
+    >
       <legend className="paper-field__label">{label}{required ? <span className="paper-field__required" aria-hidden="true">*</span> : null}</legend>
       {hint ? <p className="paper-field__hint" id={`${id}-hint`}>{hint}</p> : null}
       <div className="paper-radio-cards">
         {options.map((option) => (
           <label className="paper-radio-card" key={option.value}>
-            <input {...registration} type="radio" value={option.value} disabled={option.disabled} />
+            <input
+              {...registration}
+              type="radio"
+              value={option.value}
+              disabled={option.disabled}
+              aria-invalid={error ? true : undefined}
+            />
             <span><strong>{option.label}</strong><small>{option.description}</small></span>
           </label>
         ))}

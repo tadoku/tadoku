@@ -74,6 +74,7 @@ describe('responsive visual contract', () => {
 
     expect(search.querySelector('svg')).not.toBeNull()
     expect(browse.querySelector('svg')).not.toBeNull()
+    expect(browse).toHaveClass('paper-button--ghost')
     expect(browse.querySelector('.mobile-nav-trigger__label')).not.toBeNull()
     expect(brandMarks).toHaveLength(2)
     expect(styleguideStyles).toContain(

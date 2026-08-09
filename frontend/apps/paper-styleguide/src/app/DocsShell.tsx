@@ -74,7 +74,7 @@ function MobileCatalogueNavigation({
       trigger={
         <Button
           className="mobile-nav-trigger"
-          variant="outline"
+          variant="ghost"
           aria-label="Browse"
           leadingIcon={
             <Bars3Icon

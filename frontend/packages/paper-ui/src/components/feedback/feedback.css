@@ -1,8 +1,9 @@
 @layer paper-recipes {
-  .paper-flash { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: start; gap: 0.75rem; padding: 0.9rem 1rem; border: 1px solid var(--paper-color-rule-default); border-inline-start: 4px solid var(--paper-color-status-information); background: var(--paper-color-surface-paper); }
-  .paper-flash--success { border-inline-start-color: var(--paper-color-status-success); }
-  .paper-flash--warning { border-inline-start-color: var(--paper-color-status-warning); }
-  .paper-flash--danger { border-inline-start-color: var(--paper-color-status-danger); }
+  .paper-flash { --paper-flash-rail-color: var(--paper-color-status-information); position: relative; display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: start; gap: 0.75rem; padding: 0.9rem 1rem; padding-inline-start: calc(1rem + 3px); border: 1px solid var(--paper-color-rule-default); background: var(--paper-color-surface-paper); }
+  .paper-flash::before { position: absolute; inset-block: -1px; inset-inline-start: -1px; inline-size: 4px; background: var(--paper-flash-rail-color); content: ""; pointer-events: none; }
+  .paper-flash--success { --paper-flash-rail-color: var(--paper-color-status-success); }
+  .paper-flash--warning { --paper-flash-rail-color: var(--paper-color-status-warning); }
+  .paper-flash--danger { --paper-flash-rail-color: var(--paper-color-status-danger); }
   .paper-flash__icon { display: grid; place-items: center; inline-size: var(--paper-icon-size-default); block-size: var(--paper-icon-size-default); }
   .paper-flash__content { display: grid; gap: 0.2rem; }
   .paper-flash__action { align-self: center; }
@@ -20,5 +21,6 @@
   .paper-toast__title { font-weight: var(--paper-type-label-weight); }
   .paper-toast__close { align-self: start; inline-size: 2rem; block-size: 2rem; border: 0; color: var(--paper-color-text-muted); background: transparent; cursor: pointer; }
   @keyframes paper-loading-spin { to { transform: rotate(1turn); } }
+  @media (forced-colors: active) { .paper-flash::before { forced-color-adjust: none; background: CanvasText; } }
   @media (prefers-reduced-motion: reduce) { .paper-loading__spinner { animation: none; } .paper-toast { transition: none; } }
 }

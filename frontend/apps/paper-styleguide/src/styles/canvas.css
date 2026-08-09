@@ -26,58 +26,26 @@
     min-inline-size: 0;
   }
 
-  @media (min-width: 80rem) {
-    .canvas-controls {
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-    }
-
-    .canvas-controls:has(.canvas-controls__fixture) {
-      grid-template-areas:
-        'fixture viewport viewport'
-        'theme density .';
-    }
-
-    .canvas-controls__fixture {
-      grid-area: fixture;
-    }
-
-    .canvas-controls__theme {
-      grid-area: theme;
-    }
-
-    .canvas-controls__density {
-      grid-area: density;
-    }
-
-    .canvas-controls:has(.canvas-controls__fixture) .canvas-controls__viewport {
-      grid-area: viewport;
-      grid-column: auto;
-    }
+  .canvas-controls__fixture,
+  .canvas-controls__theme,
+  .canvas-controls__density {
+    min-inline-size: 0;
   }
 
   @container (min-width: 54rem) {
     .canvas-controls {
       grid-template-columns:
-        minmax(12rem, 1.25fr)
-        minmax(8rem, 0.75fr)
-        minmax(10rem, 0.9fr)
-        minmax(21rem, 1.5fr);
-      grid-template-areas: none;
+        minmax(0, 1.25fr)
+        minmax(0, 0.75fr)
+        minmax(0, 0.9fr)
+        minmax(0, 1.5fr);
     }
 
     .canvas-controls__fixture {
-      grid-area: auto;
       grid-column: auto;
     }
 
-    .canvas-controls__theme,
-    .canvas-controls__density,
-    .canvas-controls__viewport {
-      grid-area: auto;
-    }
-
     .canvas-controls:has(.canvas-controls__fixture) .canvas-controls__viewport {
-      grid-area: auto;
       grid-column: auto;
     }
   }

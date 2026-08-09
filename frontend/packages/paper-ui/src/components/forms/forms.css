@@ -33,9 +33,11 @@
   .paper-radio-card span { display: grid; gap: 0.2rem; }
   .paper-radio-card small { color: var(--paper-color-text-muted); }
   .paper-radio-card:has(input:disabled) { opacity: 0.55; cursor: not-allowed; }
-  .paper-compound-field { display: grid; grid-template-columns: minmax(0, 1fr) auto; }
-  .paper-compound-field .paper-input + .paper-input { border-inline-start: 0; }
-  .paper-compound-field__unit { inline-size: auto; min-inline-size: 6rem; }
+  .paper-compound-field { display: grid; grid-template-columns: minmax(0, 1fr) auto; min-block-size: var(--paper-control-height); border: var(--paper-border-static-width) solid var(--paper-color-rule-default); border-block-end: 0; background: var(--paper-color-surface-paper); }
+  .paper-compound-field > .paper-input { min-block-size: calc(var(--paper-control-height) - (var(--paper-border-static-width) * 2)); border: 0; border-block-end: var(--paper-border-field-edge-width) solid var(--paper-color-rule-field-edge); background: transparent; }
+  .paper-compound-field > .paper-compound-field__unit { inline-size: auto; min-inline-size: 6rem; border-inline-start: var(--paper-border-static-width) solid var(--paper-color-rule-default); }
+  .paper-field--invalid .paper-compound-field { border-color: var(--paper-color-status-danger); }
+  .paper-field--invalid .paper-compound-field > .paper-input { border-block-end-color: var(--paper-color-status-danger); }
   .paper-compound-field:has(> .paper-input:focus-visible) { --paper-compound-focus-color: var(--paper-color-focus-ring); outline: 3px solid color-mix(in srgb, var(--paper-compound-focus-color) 10%, transparent); outline-offset: 0; }
   .paper-compound-field > .paper-input:focus-visible { border-block-end-color: var(--paper-compound-focus-color); outline: 0; }
   .paper-field--invalid .paper-compound-field:has(> .paper-input:focus-visible) { --paper-compound-focus-color: var(--paper-color-status-danger); }
@@ -67,6 +69,11 @@
     .paper-radio-select__segment:has(input:disabled) { color: GrayText; }
     .paper-field--invalid.paper-radio-select--segmented .paper-radio-select__segment { border-color: Mark; border-block-end-color: Mark; }
     .paper-radio-card:has(input:focus-visible) { --paper-control-focus-color: Highlight; border-block-end-color: Highlight; outline: 3px solid Highlight; outline-offset: 0; box-shadow: none; }
+    .paper-compound-field { border-color: CanvasText; background: Canvas; }
+    .paper-compound-field > .paper-input { border-block-end-color: CanvasText; }
+    .paper-compound-field > .paper-compound-field__unit { border-inline-start-color: CanvasText; }
+    .paper-field--invalid .paper-compound-field { border-color: Mark; }
+    .paper-field--invalid .paper-compound-field > .paper-input { border-block-end-color: Mark; }
     .paper-compound-field:has(> .paper-input:focus-visible) { --paper-compound-focus-color: Highlight; outline: 3px solid Highlight; outline-offset: 0; }
     .paper-field--invalid .paper-compound-field:has(> .paper-input:focus-visible) { --paper-compound-focus-color: Highlight; }
     .paper-compound-field > .paper-input:focus-visible { border-block-end-color: Highlight; outline: 0; }

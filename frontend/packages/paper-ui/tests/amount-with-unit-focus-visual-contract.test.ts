@@ -8,6 +8,21 @@ const formsCss = readFileSync(
 );
 
 describe("AmountWithUnit focus visual contract", () => {
+  it("uses one parent-owned frame instead of two standalone control frames", () => {
+    expect(formsCss).toMatch(
+      /\.paper-compound-field\s*\{[^}]*border: var\(--paper-border-static-width\) solid var\(--paper-color-rule-default\);[^}]*border-block-end: 0;[^}]*background: var\(--paper-color-surface-paper\);/s,
+    );
+    expect(formsCss).toMatch(
+      /\.paper-compound-field > \.paper-input\s*\{[^}]*border: 0;[^}]*border-block-end: var\(--paper-border-field-edge-width\) solid var\(--paper-color-rule-field-edge\);/s,
+    );
+    expect(formsCss).toMatch(
+      /\.paper-compound-field > \.paper-compound-field__unit\s*\{[^}]*border-inline-start: var\(--paper-border-static-width\) solid var\(--paper-color-rule-default\);/s,
+    );
+    expect(formsCss).not.toMatch(
+      /\.paper-field--invalid \.paper-compound-field__unit\s*\{/s,
+    );
+  });
+
   it("puts one low-opacity action hug around the whole compound control", () => {
     expect(formsCss).toMatch(
       /\.paper-compound-field:has\(> \.paper-input:focus-visible\)\s*\{[^}]*--paper-compound-focus-color: var\(--paper-color-focus-ring\);[^}]*outline: 3px solid color-mix\(in srgb, var\(--paper-compound-focus-color\) 10%, transparent\);[^}]*outline-offset: 0;/s,

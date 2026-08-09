@@ -1,4 +1,5 @@
 import { readFileSync } from 'node:fs'
+import { createRequire } from 'node:module'
 import { resolve } from 'node:path'
 import { render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
@@ -6,12 +7,14 @@ import { describe, expect, it } from 'vitest'
 import { catalogRegistry } from 'paper-ui/catalog'
 import { DocsShell } from '../src/app/DocsShell'
 
+const require = createRequire(import.meta.url)
+
 const legacyWordmark = readFileSync(
   resolve('../../packages/ui/components/logo.svg'),
   'utf8',
 )
 const paperWordmark = readFileSync(
-  resolve('../../packages/paper-ui/src/assets/brand/wordmark-accent.svg'),
+  require.resolve('paper-ui/assets/brand/wordmark-accent.svg'),
   'utf8',
 )
 const legacyReversedWordmark = readFileSync(
@@ -19,7 +22,7 @@ const legacyReversedWordmark = readFileSync(
   'utf8',
 )
 const paperReversedWordmark = readFileSync(
-  resolve('../../packages/paper-ui/src/assets/brand/wordmark-reversed.svg'),
+  require.resolve('paper-ui/assets/brand/wordmark-reversed.svg'),
   'utf8',
 )
 

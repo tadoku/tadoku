@@ -1,13 +1,11 @@
 @layer paper-recipes {
-  .paper-table-region,
-  .paper-heatmap__region {
+  .paper-table-region {
     max-inline-size: 100%;
     overflow-x: auto;
     overscroll-behavior-inline: contain;
   }
 
-  .paper-table-region:focus,
-  .paper-heatmap__region:focus {
+  .paper-table-region:focus {
     scroll-behavior: smooth;
   }
 
@@ -30,8 +28,7 @@
     text-align: start;
   }
 
-  .paper-table__caption--screen-reader,
-  .paper-heatmap__table-caption {
+  .paper-table__caption--screen-reader {
     position: absolute;
     width: 1px;
     height: 1px;
@@ -79,179 +76,79 @@
   }
 
   .paper-heatmap {
-    display: grid;
-    max-inline-size: 100%;
-    gap: 0.75rem;
-    margin: 0;
-    color: var(--paper-color-text-ink);
-  }
-
-  .paper-heatmap__caption {
-    display: grid;
-    gap: 0.25rem;
-  }
-
-  .paper-heatmap__title {
-    font-family: var(--paper-font-display);
-    font-size: var(--paper-type-component-size);
-    line-height: var(--paper-type-component-line-height);
-  }
-
-  .paper-heatmap__description {
-    color: var(--paper-color-text-muted);
-  }
-
-  .paper-heatmap__legend {
-    display: flex;
-    align-items: center;
-    justify-content: end;
-    gap: 0.25rem;
-    color: var(--paper-color-text-muted);
-    font-size: var(--paper-type-metadata-size);
-    line-height: var(--paper-type-metadata-line-height);
-  }
-
-  .paper-heatmap__legend-step {
-    inline-size: 1rem;
-    block-size: 1rem;
-    border: var(--paper-border-static-width) solid var(--paper-color-rule-default);
-  }
-
-  .paper-heatmap__table {
-    inline-size: 100%;
-    min-inline-size: var(--paper-heatmap-min-inline-size);
-    border-collapse: separate;
-    border-spacing: 0.25rem;
-    font-variant-numeric: tabular-nums;
-  }
-
-  .paper-heatmap__corner,
-  .paper-heatmap__column-header,
-  .paper-heatmap__row-header {
-    padding: 0.375rem;
-    background: var(--paper-color-surface-canvas);
-    font-size: var(--paper-type-label-size);
-    font-weight: var(--paper-type-label-weight);
-    line-height: var(--paper-type-label-line-height);
-  }
-
-  .paper-heatmap__column-header {
-    min-inline-size: 3.5rem;
-    text-align: center;
-  }
-
-  .paper-heatmap__column-header abbr {
-    text-decoration: none;
-  }
-
-  .paper-heatmap__row-header {
-    position: sticky;
-    z-index: 1;
-    inset-inline-start: 0;
-    min-inline-size: 7rem;
-    border-inline-end: var(--paper-border-static-width) solid var(--paper-color-rule-default);
-    text-align: start;
+    display: block;
+    max-inline-size: none;
+    overflow: visible;
   }
 
   .paper-heatmap__cell {
-    min-inline-size: 3.5rem;
-    block-size: 3rem;
-    padding: 0.25rem;
-    border: var(--paper-border-static-width) solid var(--paper-color-rule-default);
-    background-color: color-mix(
-      in srgb,
-      var(--paper-heatmap-color) var(--paper-heatmap-strength, 12%),
-      var(--paper-color-surface-paper)
-    );
-    text-align: center;
-    vertical-align: middle;
+    fill: transparent;
+    shape-rendering: crispEdges;
   }
 
-  .paper-heatmap__empty {
-    padding: 1.5rem;
-    border-block: var(--paper-border-static-width) solid var(--paper-color-rule-default);
-    color: var(--paper-color-text-muted);
-    text-align: center;
+  .paper-heatmap__cell[data-level="0"] {
+    fill: var(--paper-color-rule-subtle);
   }
 
-  .paper-heatmap__cell[data-level="0"],
-  .paper-heatmap__legend-step[data-level="0"] {
-    --paper-heatmap-strength: 10%;
+  .paper-heatmap__cell[data-level="1"] {
+    fill: color-mix(in srgb, var(--paper-color-chart-7) 38%, var(--paper-color-surface-paper));
   }
 
-  .paper-heatmap__cell[data-level="1"],
-  .paper-heatmap__legend-step[data-level="1"] {
-    --paper-heatmap-strength: 26%;
+  .paper-heatmap__cell[data-level="2"] {
+    fill: color-mix(in srgb, var(--paper-color-chart-7) 60%, var(--paper-color-surface-paper));
   }
 
-  .paper-heatmap__cell[data-level="2"],
-  .paper-heatmap__legend-step[data-level="2"] {
-    --paper-heatmap-strength: 42%;
+  .paper-heatmap__cell[data-level="3"] {
+    fill: color-mix(in srgb, var(--paper-color-chart-7) 80%, var(--paper-color-surface-paper));
   }
 
-  .paper-heatmap__cell[data-level="3"],
-  .paper-heatmap__legend-step[data-level="3"] {
-    --paper-heatmap-strength: 58%;
+  .paper-heatmap__cell[data-level="4"] {
+    fill: var(--paper-color-chart-7);
   }
 
-  .paper-heatmap__cell[data-level="4"],
-  .paper-heatmap__legend-step[data-level="4"] {
-    --paper-heatmap-strength: 74%;
+  .paper-heatmap__cell:focus {
+    outline: none;
+    stroke: var(--paper-color-focus-ring);
+    stroke-width: var(--paper-focus-ring-width);
   }
 
-  .paper-heatmap__cell[data-level="missing"] {
-    --paper-heatmap-strength: 0%;
-    background-image: repeating-linear-gradient(
-      135deg,
-      transparent 0 0.3rem,
-      var(--paper-color-rule-subtle) 0.3rem 0.4rem
-    );
+  .paper-heatmap__axis-label {
+    fill: var(--paper-color-text-muted);
+    font-family: var(--paper-font-body);
+    font-size: 10px;
   }
 
-  .paper-heatmap--pattern-diagonal:not([data-level="missing"]) {
-    background-image: repeating-linear-gradient(
-      135deg,
-      transparent 0 0.4rem,
-      color-mix(in srgb, var(--paper-heatmap-color) 28%, transparent) 0.4rem 0.5rem
-    );
+  .paper-heatmap__tooltip-layer,
+  .paper-heatmap__tooltip {
+    pointer-events: none;
   }
 
-  .paper-heatmap--pattern-dots:not([data-level="missing"]) {
-    background-image: radial-gradient(
-      color-mix(in srgb, var(--paper-heatmap-color) 32%, transparent) 1px,
-      transparent 1px
-    );
-    background-size: 0.4rem 0.4rem;
+  .paper-heatmap__tooltip.hidden {
+    display: none;
   }
 
-  .paper-heatmap--pattern-crosshatch:not([data-level="missing"]) {
-    background-image:
-      linear-gradient(45deg, transparent 46%, color-mix(in srgb, var(--paper-heatmap-color) 26%, transparent) 46% 54%, transparent 54%),
-      linear-gradient(-45deg, transparent 46%, color-mix(in srgb, var(--paper-heatmap-color) 26%, transparent) 46% 54%, transparent 54%);
-    background-size: 0.55rem 0.55rem;
+  .paper-heatmap__tooltip-background {
+    fill: var(--paper-color-surface-overlay);
+    stroke: var(--paper-color-rule-strong);
+    stroke-width: var(--paper-border-static-width);
   }
 
-  .paper-heatmap__value {
-    display: inline-block;
-    min-inline-size: 1.75rem;
-    padding: 0.0625rem 0.2rem;
-    border: var(--paper-border-static-width) solid var(--paper-color-rule-default);
-    background: var(--paper-color-surface-paper);
-    color: var(--paper-color-text-ink);
+  .paper-heatmap__tooltip-text {
+    fill: var(--paper-color-text-ink);
+    font-family: var(--paper-font-body);
     font-size: var(--paper-type-metadata-size);
-    line-height: var(--paper-type-metadata-line-height);
   }
 
   @media (forced-colors: active) {
-    .paper-heatmap__cell,
-    .paper-heatmap__legend-step {
-      background: Canvas;
+    .paper-heatmap__cell {
+      fill: Canvas;
+      stroke: CanvasText;
+      stroke-width: 1px;
     }
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .paper-table-region:focus,
-    .paper-heatmap__region:focus {
+    .paper-table-region:focus {
       scroll-behavior: auto;
     }
   }

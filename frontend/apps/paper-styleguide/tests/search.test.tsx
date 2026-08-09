@@ -7,6 +7,31 @@ import { catalogRegistry } from 'paper-ui/catalog'
 import { CatalogueSearch } from '../src/app/CatalogueSearch'
 
 describe('CatalogueSearch', () => {
+  it('composes search from the standard Paper ghost Button', () => {
+    render(
+      <MemoryRouter>
+        <CatalogueSearch documents={catalogRegistry.documents} />
+      </MemoryRouter>,
+    )
+
+    const trigger = screen.getByRole('button', { name: 'Search Paper' })
+    const paperLabel = trigger.querySelector('.paper-button__label')
+    const visibleLabel = paperLabel?.querySelector(
+      ':scope > .shell-search-trigger__label',
+    )
+    const shortcut = paperLabel?.querySelector(
+      ':scope > kbd.shell-search-trigger__shortcut',
+    )
+
+    expect(trigger).toHaveClass('paper-button', 'paper-button--ghost')
+    expect(trigger).toHaveAccessibleName('Search Paper')
+    expect(trigger.querySelector('svg')).not.toBeNull()
+    expect(trigger.querySelector('.shell-search-trigger__content')).toBeNull()
+    expect(visibleLabel).toHaveTextContent(/^Search$/u)
+    expect(shortcut).toHaveTextContent(/^\/$/u)
+    expect(shortcut).toHaveAttribute('aria-hidden', 'true')
+  })
+
   it('opens from slash, focuses search, filters, and closes with Escape', async () => {
     const user = userEvent.setup()
     render(
@@ -48,7 +73,7 @@ describe('CatalogueSearch', () => {
     )
 
     const trigger = screen.getByRole('button', { name: 'Search Paper' })
-    expect(trigger).toHaveClass('paper-button', 'paper-button--outline')
+    expect(trigger).toHaveClass('paper-button')
 
     await user.click(trigger)
     const dialog = screen.getByRole('dialog', { name: 'Search Paper' })

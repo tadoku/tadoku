@@ -181,7 +181,9 @@ function LoggingExperimentFixture() {
         <Flash title="Experimental flow">Contest submission remains a separate confirmation step.</Flash>
         <Input name="title" label="Work" />
         <Input name="pages" label="Pages" inputMode="numeric" />
-        <Button type="submit">Review entry</Button>
+        <div className="paper-fixture-row">
+          <Button type="submit">Review entry</Button>
+        </div>
       </form>
     </FormProvider>
   );

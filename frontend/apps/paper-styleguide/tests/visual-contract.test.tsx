@@ -66,30 +66,54 @@ describe('responsive visual contract', () => {
 
     const search = screen.getByRole('button', { name: 'Search Paper' })
     const browse = screen.getByRole('button', { name: 'Browse' })
-    const wordmark = screen.getByRole('link', { name: 'Tadoku Paper' })
-    const wordmarkContent = wordmark.querySelector('.docs-wordmark')
+    const wordmark = screen.getByRole('link', { name: 'Tadoku' })
     const brandMarks = wordmark.querySelectorAll('img')
 
     expect(search.querySelector('svg')).not.toBeNull()
     expect(browse.querySelector('svg')).not.toBeNull()
+    expect(browse).toHaveClass('paper-button--ghost')
     expect(browse.querySelector('.mobile-nav-trigger__label')).not.toBeNull()
     expect(brandMarks).toHaveLength(2)
-    expect(styleguideStyles).toContain(
-      'inline-size: 2.25rem;\n    block-size: 2.25rem;\n    aspect-ratio: 1;',
+    expect(brandMarks[0]).toHaveAttribute(
+      'src',
+      expect.stringContaining('wordmark-accent.svg'),
     )
-    expect([...brandMarks].map((mark) => mark.getAttribute('src'))).toEqual(
-      expect.arrayContaining([
-        expect.stringContaining('cut-meter.svg'),
-        expect.stringContaining('cut-meter-reversed.svg'),
-      ]),
+    expect(brandMarks[1]).toHaveAttribute(
+      'src',
+      expect.stringContaining('wordmark-reversed.svg'),
     )
-    expect(wordmarkContent).not.toBeNull()
-    expect(getComputedStyle(wordmarkContent!).whiteSpace).toBe('nowrap')
+    for (const mark of brandMarks) {
+      expect(mark).toHaveAttribute('width', '126.4')
+      expect(mark).toHaveAttribute('height', '23.2')
+      expect(mark).toHaveAttribute('aria-hidden', 'true')
+    }
 
     await user.click(browse)
     expect(
       screen.getByRole('button', { name: 'Close navigation' }).querySelector('svg'),
     ).not.toBeNull()
+  })
+
+  it('renders the legacy wordmark at the original styleguide scale', () => {
+    expect(styleguideStyles).toMatch(
+      /\.docs-wordmark\s*\{(?=[^}]*inline-size:\s*126\.4px;)(?=[^}]*block-size:\s*23\.2px;)[^}]*\}/su,
+    )
+    expect(styleguideStyles).not.toMatch(/\.docs-wordmark\s*\{[^}]*transform:/su)
+  })
+
+  it('leaves the search trigger visual recipe to the public Paper Button', () => {
+    const searchSkinRules = [
+      ...styleguideStyles.matchAll(
+        /([^{}]*\.shell-search-trigger[^{}]*)\{([^}]*)\}/gu,
+      ),
+    ]
+      .map((match) => ({
+        selector: match[1].trim(),
+        declarations: match[2].trim().replace(/\s+/gu, ' '),
+      }))
+      .filter(({ declarations }) => declarations !== 'display: none;')
+
+    expect(searchSkinRules).toEqual([])
   })
 
   it('uses the public Paper Navbar and Sidebar recipes for the application shell', () => {
@@ -120,6 +144,29 @@ describe('responsive visual contract', () => {
     expect(catalogueNavigation).toHaveClass('paper-sidebar')
   })
 
+  it('keeps the desktop catalogue on a light Paper surface with a subtle end rule', () => {
+    expect(styleguideStyles).toMatch(
+      /\.docs-sidebar\s*\{[^}]*border-inline-end:\s*var\(--paper-border-static-width\) solid var\(--paper-color-rule-subtle\);[^}]*background:\s*var\(--paper-color-surface-paper\);/su,
+    )
+  })
+
+  it('uses the compact Paper density for the desktop catalogue', () => {
+    render(
+      <MemoryRouter>
+        <DocsShell documents={catalogRegistry.documents}>Content</DocsShell>
+      </MemoryRouter>,
+    )
+
+    const catalogueNavigation = screen.getByRole('navigation', {
+      name: 'Paper catalogue',
+    })
+
+    expect(catalogueNavigation.closest('.docs-sidebar')).toHaveAttribute(
+      'data-density',
+      'compact',
+    )
+  })
+
   it('groups the catalogue index by document kind', () => {
     render(
       <MemoryRouter>
@@ -141,10 +188,16 @@ describe('responsive visual contract', () => {
     )
   })
 
-  it('collapses both header actions to icons at the narrow phone floor', () => {
-    expect(styleguideStyles).toContain(
-      '.shell-search-trigger__label,\n    .mobile-nav-trigger__label,',
+  it('only hides search metadata responsively without reskinning the Button', () => {
+    const compactStyles = styleguideStyles.slice(
+      styleguideStyles.indexOf('@media (max-width: 48rem)'),
+      styleguideStyles.indexOf('@media (max-width: 23rem)'),
     )
+
+    expect(compactStyles).toMatch(
+      /\.shell-search-trigger__label,\s*\.shell-search-trigger__shortcut\s*\{\s*display:\s*none;\s*\}/su,
+    )
+    expect(compactStyles).not.toMatch(/\.shell-search-trigger\s*\{/u)
   })
 
   it('collapses the catalogue sidebar into Browse at mid-size widths', () => {
@@ -217,17 +270,13 @@ describe('responsive visual contract', () => {
     expect(styleguideStyles).not.toMatch(/scrollbar-width|::-webkit-scrollbar/)
   })
 
-  it('keeps the inactive Cut Meter asset out of the wordmark layout', () => {
-    expect(styleguideStyles).toContain('.docs-wordmark :where(img) {')
-    expect(styleguideStyles).not.toContain('.docs-wordmark img {')
-  })
-
-  it('switches the Cut Meter to its canonical reversed asset in dark mode', () => {
+  it('switches the wordmark to its exact legacy reversed asset in dark mode', () => {
     expect(styleguideStyles).toContain(
-      ":root[data-theme='dark'] .docs-wordmark__mark--light",
+      ":root[data-theme='dark'] .docs-wordmark__image--accent",
     )
     expect(styleguideStyles).toContain(
-      ":root[data-theme='dark'] .docs-wordmark__mark--dark",
+      ":root[data-theme='dark'] .docs-wordmark__image--reversed",
     )
+    expect(styleguideStyles).not.toContain('content: url(')
   })
 })

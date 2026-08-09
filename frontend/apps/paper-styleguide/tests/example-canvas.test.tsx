@@ -8,6 +8,40 @@ import { ExampleCanvas } from '../src/documentation/ExampleCanvas'
 afterEach(() => vi.unstubAllGlobals())
 
 describe('ExampleCanvas', () => {
+  it('keeps fixture, theme, and density together before the separate viewport control', () => {
+    const fixtures = catalogRegistry.fixtures.slice(0, 2)
+    expect(fixtures).toHaveLength(2)
+
+    render(<ExampleCanvas fixtures={fixtures} />)
+
+    const settings = screen.getByRole('group', { name: 'Preview settings' })
+    expect(within(settings).getByLabelText('Fixture')).toBeInTheDocument()
+    expect(
+      Array.from(settings.children).map((child) => child.className),
+    ).toEqual([
+      'canvas-controls__title paper-type-label',
+      'canvas-controls__fixture',
+      'canvas-controls__theme',
+      'canvas-controls__density',
+      'canvas-controls__viewport',
+    ])
+  })
+
+  it('omits the optional fixture control without leaving a placeholder', () => {
+    render(<ExampleCanvas />)
+
+    const settings = screen.getByRole('group', { name: 'Preview settings' })
+    expect(within(settings).queryByLabelText('Fixture')).not.toBeInTheDocument()
+    expect(
+      Array.from(settings.children).map((child) => child.className),
+    ).toEqual([
+      'canvas-controls__title paper-type-label',
+      'canvas-controls__theme',
+      'canvas-controls__density',
+      'canvas-controls__viewport',
+    ])
+  })
+
   it('uses an iframe with a real selected viewport width', async () => {
     const user = userEvent.setup()
     render(<ExampleCanvas />)

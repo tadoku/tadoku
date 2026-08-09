@@ -6,13 +6,14 @@ import {
 } from 'paper-ui/catalog'
 import { ComponentWorkbench } from './ComponentWorkbench'
 import { ExampleCanvas } from './ExampleCanvas'
+import { FoundationSpecimen } from './FoundationSpecimen'
 import { type OutlineItem, TableOfContents } from './TableOfContents'
 
 const FOUNDATION_OUTLINE: readonly OutlineItem[] = [
   { id: 'overview', label: 'Overview' },
   { id: 'guidance', label: 'Guidance' },
+  { id: 'specimen', label: 'Specimen' },
   { id: 'accessibility', label: 'Accessibility' },
-  { id: 'preview', label: 'Preview canvas' },
   { id: 'contract', label: 'Public contract' },
   { id: 'metadata', label: 'Metadata' },
 ]
@@ -29,6 +30,27 @@ function readable(value: unknown): string {
 function SectionCopy({ value, fallback }: { value: unknown; fallback: string }) {
   const copy = readable(value)
   return <p>{copy || fallback}</p>
+}
+
+function LabeledList({
+  heading,
+  items,
+}: {
+  heading: string
+  items: readonly string[]
+}) {
+  return (
+    <div className="document-list-group">
+      <h3>{heading}</h3>
+      {items.length > 0 ? (
+        <ul>
+          {items.map((item) => <li key={item}>{item}</li>)}
+        </ul>
+      ) : (
+        <p>None registered.</p>
+      )}
+    </div>
+  )
 }
 
 function sourceHref(sourcePath: string): string {
@@ -202,10 +224,67 @@ function ComponentDocumentPage({ document }: { document: CatalogDocument }) {
   )
 }
 
+function FoundationDocumentPage({ document }: { document: CatalogDocument }) {
+  return (
+    <div className="document-layout">
+      <article className="document-page">
+        <div id="overview"><Hero document={document} /></div>
+        <section
+          id="guidance"
+          className="document-section"
+          aria-labelledby="foundation-guidance-heading"
+        >
+          <h2 id="foundation-guidance-heading" className="paper-type-section">
+            Guidance
+          </h2>
+          <div className="document-list-grid">
+            <LabeledList heading="When to use" items={document.guidance.whenToUse} />
+            <LabeledList heading="Avoid when" items={document.guidance.whenNotToUse} />
+            <LabeledList heading="Guidance" items={document.guidance.content} />
+            <LabeledList heading="Common mistakes" items={document.guidance.commonMistakes} />
+          </div>
+        </section>
+        <div id="specimen" className="document-section document-section--wide">
+          <h2 className="paper-type-section">Specimen</h2>
+          <FoundationSpecimen document={document} />
+        </div>
+        <section id="accessibility" className="document-section">
+          <h2 className="paper-type-section">Accessibility</h2>
+          <div className="document-list-grid">
+            <LabeledList heading="Requirements" items={document.accessibility.requirements} />
+            <LabeledList heading="Keyboard" items={document.accessibility.keyboard} />
+            <LabeledList heading="Known constraints" items={document.accessibility.knownConstraints} />
+          </div>
+        </section>
+        <section id="contract" className="document-section">
+          <h2 className="paper-type-section">Public contract</h2>
+          <LabeledList heading="Defaults" items={document.api.defaults} />
+          <LabeledList heading="Not public API" items={document.api.invalidCombinations} />
+        </section>
+        <section id="metadata" className="document-section">
+          <h2 className="paper-type-section">Metadata</h2>
+          <Metadata document={document} />
+        </section>
+      </article>
+      <TableOfContents items={FOUNDATION_OUTLINE} />
+    </div>
+  )
+}
+
 function GeneralDocumentPage({ document }: { document: CatalogDocument }) {
   const fixture = catalogRegistry.fixtures.find((candidate) =>
     document.fixtureIds.includes(candidate.id),
   )
+  const outline = FOUNDATION_OUTLINE.filter((item) =>
+    item.id !== 'specimen',
+  )
+  const generalOutline = fixture
+    ? [
+        ...outline.slice(0, 3),
+        { id: 'preview', label: 'Preview canvas' },
+        ...outline.slice(3),
+      ]
+    : outline
 
   return (
     <div className="document-layout">
@@ -219,9 +298,11 @@ function GeneralDocumentPage({ document }: { document: CatalogDocument }) {
           <h2 className="paper-type-section">Accessibility</h2>
           <SectionCopy value={document.accessibility} fallback="Accessibility requirements are tracked in the catalogue registry." />
         </section>
-        <div id="preview" className="document-section document-section--wide">
-          <ExampleCanvas fixture={fixture} />
-        </div>
+        {fixture ? (
+          <div id="preview" className="document-section document-section--wide">
+            <ExampleCanvas fixture={fixture} />
+          </div>
+        ) : null}
         <section id="contract" className="document-section">
           <h2 className="paper-type-section">Public contract</h2>
           <SectionCopy value={document.api} fallback="This foundation does not expose a component API." />
@@ -231,13 +312,17 @@ function GeneralDocumentPage({ document }: { document: CatalogDocument }) {
           <Metadata document={document} />
         </section>
       </article>
-      <TableOfContents items={FOUNDATION_OUTLINE} />
+      <TableOfContents items={generalOutline} />
     </div>
   )
 }
 
 export function DocumentPage({ document }: { document: CatalogDocument }) {
-  return document.kind === 'component'
-    ? <ComponentDocumentPage document={document} />
-    : <GeneralDocumentPage document={document} />
+  if (document.kind === 'component') {
+    return <ComponentDocumentPage document={document} />
+  }
+  if (document.kind === 'foundation') {
+    return <FoundationDocumentPage document={document} />
+  }
+  return <GeneralDocumentPage document={document} />
 }

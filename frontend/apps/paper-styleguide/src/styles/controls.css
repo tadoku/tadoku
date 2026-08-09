@@ -1,6 +1,6 @@
 @layer paper-styleguide {
   /* Application layout: control groups size public Paper fields. */
   .canvas-controls .paper-field {
-    min-inline-size: 9rem;
+    min-inline-size: 0;
   }
 }

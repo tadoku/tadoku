@@ -145,6 +145,13 @@ describe("native React Hook Form controls", () => {
     const notes = screen.getByRole("textbox", { name: "Notes" });
     expect(notes).toHaveAttribute("aria-invalid", "true");
     expect(notes).toHaveAccessibleDescription("Keep spoilers out. This field is required.");
+
+    const format = screen.getByRole("group", { name: /Format/u });
+    expect(format).toHaveAttribute("aria-invalid", "true");
+    expect(format).toHaveAccessibleDescription("Choose an option.");
+    for (const radio of within(format).getAllByRole("radio")) {
+      expect(radio).toHaveAttribute("aria-invalid", "true");
+    }
   });
 
   it("keeps amount and unit as two explicit form fields", () => {

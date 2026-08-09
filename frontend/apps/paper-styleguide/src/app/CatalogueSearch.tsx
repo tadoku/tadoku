@@ -91,7 +91,7 @@ function CatalogueSearchDialog({ documents }: CatalogueSearchProps) {
       trigger={
         <Button
           className="shell-search-trigger"
-          variant="outline"
+          variant="ghost"
           aria-label="Search Paper"
           leadingIcon={
             <MagnifyingGlassIcon
@@ -100,8 +100,10 @@ function CatalogueSearchDialog({ documents }: CatalogueSearchProps) {
             />
           }
         >
-          <span className="shell-search-trigger__label">Search Paper</span>
-          <kbd aria-label="Command or Control K">⌘/Ctrl K</kbd>
+          <span className="shell-search-trigger__label">Search</span>
+          <kbd className="shell-search-trigger__shortcut" aria-hidden="true">
+            /
+          </kbd>
         </Button>
       }
     >

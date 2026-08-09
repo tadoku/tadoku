@@ -36,6 +36,11 @@
     text-decoration: none;
   }
 
+  .paper-navbar__brand {
+    display: flex;
+    align-items: center;
+  }
+
   .paper-navbar__desktop-links {
     display: flex;
     align-items: stretch;
@@ -175,6 +180,10 @@
   .paper-sidebar {
     display: grid;
     gap: 1.5rem;
+  }
+
+  [data-density="compact"] .paper-sidebar {
+    gap: 1rem;
   }
 
   .paper-sidebar__section,

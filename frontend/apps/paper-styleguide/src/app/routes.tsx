@@ -3,7 +3,7 @@ import { catalogRegistry, type CatalogKind } from 'paper-ui/catalog'
 import { useEffect } from 'react'
 import { Link, Navigate, useLocation } from 'react-router-dom'
 import { DocumentPage } from '../documentation/DocumentPage'
-import { resolveCatalogRoute } from './catalogue'
+import { buildNavigationGroups, resolveCatalogRoute } from './catalogue'
 import { DESIGN_HISTORY_LINKS } from './designHistory'
 
 const INDEX_SECTIONS: readonly {
@@ -19,6 +19,9 @@ const INDEX_SECTIONS: readonly {
 ]
 
 export function CatalogIndex() {
+  const orderedDocuments = buildNavigationGroups(catalogRegistry.documents)
+    .flatMap((group) => group.documents)
+
   return (
     <article className="catalogue-index">
       <header className="catalogue-index__hero paper-accent-rail">
@@ -30,7 +33,7 @@ export function CatalogIndex() {
         </p>
       </header>
       {INDEX_SECTIONS.map((section) => {
-        const documents = catalogRegistry.documents.filter(
+        const documents = orderedDocuments.filter(
           (document) => document.kind === section.kind,
         )
 

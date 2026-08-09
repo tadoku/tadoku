@@ -1,4 +1,4 @@
-import { render, screen, within } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import {
@@ -41,24 +41,45 @@ const rows: readonly ReadingRow[] = [
 ];
 
 const heatmapProps: HeatmapChartProps = {
-  title: "Daily reading",
-  description: "Pages read this week.",
-  columns: [
-    { id: "mon", label: "Monday", shortLabel: "Mon" },
-    { id: "tue", label: "Tuesday", shortLabel: "Tue" },
-    { id: "wed", label: "Wednesday", shortLabel: "Wed" },
-    { id: "thu", label: "Thursday", shortLabel: "Thu" },
+  id: "reading-activity-2023",
+  year: 2023,
+  data: [
+    { date: "2023-01-01", value: 0, tooltip: "0 points on January 1, 2023" },
+    { date: "2023-01-02", value: 10, tooltip: "10 points on January 2, 2023" },
+    { date: "2023-01-03", value: 30, tooltip: "30 points on January 3, 2023" },
+    { date: "2023-01-04", value: 60, tooltip: "60 points on January 4, 2023" },
+    { date: "2023-01-05", value: 100, tooltip: "100 points on January 5, 2023" },
   ],
-  rows: [
-    {
-      id: "week-1",
-      label: "Aug 3",
-      cells: [{ value: 0 }, { value: 50 }, { value: 100 }, { value: null }],
-    },
-  ],
-  domain: [0, 100],
-  formatValue: (value) => (value === null ? "No data" : `${value} pages`),
 };
+
+function calendarCells(svg: SVGSVGElement): readonly SVGRectElement[] {
+  return Array.from(
+    svg.querySelectorAll<SVGRectElement>('rect[width="10"][height="10"]'),
+  );
+}
+
+function intensityLevel(cell: SVGRectElement): string | undefined {
+  const explicitLevel = cell.getAttribute("data-level");
+  if (explicitLevel) return explicitLevel;
+
+  const legacyClasses = [
+    "fill-stone-200",
+    "fill-teal-300",
+    "fill-teal-500",
+    "fill-teal-700",
+    "fill-teal-900",
+  ];
+  const legacyLevel = legacyClasses.findIndex((className) =>
+    cell.classList.contains(className),
+  );
+  return legacyLevel === -1 ? undefined : String(legacyLevel);
+}
+
+function tooltipIsHidden(tooltip: SVGGElement): boolean {
+  return tooltip.classList.contains("hidden") ||
+    tooltip.hasAttribute("hidden") ||
+    tooltip.getAttribute("aria-hidden") === "true";
+}
 
 describe("Table", () => {
   it("renders native caption, column headers, and identifying row headers", () => {
@@ -111,80 +132,56 @@ describe("Table", () => {
 });
 
 describe("HeatmapChart", () => {
-  it("uses native table semantics and full accessible labels for abbreviated columns", () => {
-    render(<HeatmapChart {...heatmapProps} />);
+  it("renders the requested year as the original month-by-weekday SVG calendar", () => {
+    const { container } = render(<HeatmapChart {...heatmapProps} />);
 
-    const figure = screen.getByRole("figure", { name: "Daily reading" });
-    expect(figure).toHaveAccessibleDescription("Pages read this week.");
-    const region = within(figure).getByRole("region", {
-      name: "Daily reading data table",
-    });
-    expect(region).toHaveAttribute("tabindex", "0");
-    expect(within(region).getByRole("table", { name: "Daily reading data" })).toBeInTheDocument();
-    expect(within(region).getByRole("rowheader", { name: "Aug 3" })).toHaveAttribute(
-      "scope",
-      "row",
-    );
-    expect(within(region).getByRole("columnheader", { name: "Monday" })).toHaveTextContent(
-      "Mon",
-    );
+    const svg = container.querySelector("svg");
+    expect(svg).toBeInstanceOf(SVGSVGElement);
+    const labels = Array.from(svg!.querySelectorAll("text"), (label) => label.textContent);
+    expect(labels).toEqual(expect.arrayContaining([
+      "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+      "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
+    ]));
+    expect(labels).toEqual(expect.arrayContaining(["Mon", "Wed", "Fri", "Sun"]));
+
+    const cells = calendarCells(svg!);
+    expect(cells).toHaveLength(53 * 7);
+    expect(cells[0]).toHaveAttribute("x", "30");
+    expect(cells[0]).toHaveAttribute("y", "15");
+    expect(cells[1]).toHaveAttribute("y", "28");
+    expect(cells[7]).toHaveAttribute("x", "43");
+    expect(cells.every((cell) =>
+      cell.getAttribute("width") === "10" && cell.getAttribute("height") === "10"
+    )).toBe(true);
   });
 
-  it("prints every value and pairs chart-token intensity with a missing-data pattern", () => {
-    render(<HeatmapChart {...heatmapProps} colorIndex={3} />);
+  it("maps dated activity onto five intensity levels without changing cell geometry", () => {
+    const { container } = render(<HeatmapChart {...heatmapProps} />);
+    const svg = container.querySelector("svg")!;
+    const cells = calendarCells(svg);
 
-    const figure = screen.getByRole("figure", { name: "Daily reading" });
-    expect(figure.getAttribute("style")).toContain(
-      "--paper-heatmap-color: var(--paper-color-chart-4)",
-    );
-    expect(screen.getByText("0 pages").closest("td")).toHaveAttribute("data-level", "0");
-    expect(screen.getByText("50 pages").closest("td")).toHaveAttribute("data-level", "2");
-    expect(screen.getByText("100 pages").closest("td")).toHaveAttribute("data-level", "4");
-    expect(screen.getByText("No data").closest("td")).toHaveAttribute(
-      "data-level",
-      "missing",
-    );
+    // 2023 starts on Sunday. January 1 occupies the final row of the first
+    // week, followed by January 2-5 in the first four rows of the next week.
+    expect(intensityLevel(cells[6])).toBe("0");
+    expect(intensityLevel(cells[7])).toBe("1");
+    expect(intensityLevel(cells[8])).toBe("2");
+    expect(intensityLevel(cells[9])).toBe("3");
+    expect(intensityLevel(cells[10])).toBe("4");
   });
 
-  it("validates dimensions, finite values, and domain order", () => {
-    expect(() =>
-      renderToStaticMarkup(
-        <HeatmapChart
-          {...heatmapProps}
-          rows={[{ id: "short", label: "Short", cells: [{ value: 1 }] }]}
-        />,
-      ),
-    ).toThrow(/has 1 cells; expected 4/u);
+  it("reveals the supplied activity copy while its dated cell is hovered", () => {
+    const { container } = render(<HeatmapChart {...heatmapProps} />);
+    const svg = container.querySelector("svg")!;
+    const januaryFifth = calendarCells(svg)[10];
+    const tooltipText = screen.getByText("100 points on January 5, 2023");
+    const tooltip = tooltipText.closest("g");
 
-    expect(() =>
-      renderToStaticMarkup(
-        <HeatmapChart
-          {...heatmapProps}
-          rows={[{
-            id: "invalid",
-            label: "Invalid",
-            cells: [{ value: 1 }, { value: Number.NaN }, { value: 2 }, { value: 3 }],
-          }]}
-        />,
-      ),
-    ).toThrow(/finite numbers or null/u);
-
-    expect(() =>
-      renderToStaticMarkup(<HeatmapChart {...heatmapProps} domain={[10, 0]} />),
-    ).toThrow(/ascending order/u);
-  });
-
-  it("keeps matrix headers and an explicit state when rows are empty", () => {
-    render(
-      <HeatmapChart
-        {...heatmapProps}
-        rows={[]}
-        emptyMessage="No reading activity yet."
-      />,
-    );
-
-    expect(screen.getByRole("table", { name: "Daily reading data" })).toBeInTheDocument();
-    expect(screen.getByText("No reading activity yet.")).toHaveAttribute("colspan", "5");
+    expect(tooltip).toBeInstanceOf(SVGGElement);
+    expect(tooltipIsHidden(tooltip!)).toBe(true);
+    fireEvent.mouseOver(januaryFifth);
+    expect(tooltipIsHidden(tooltip!)).toBe(false);
+    fireEvent.mouseOut(januaryFifth);
+    expect(tooltipIsHidden(tooltip!)).toBe(true);
   });
 });
 
@@ -193,6 +190,26 @@ describe("Phase 3 data-display catalogue contracts", () => {
     for (const fixture of phaseThreeDataLayoutFixtures) {
       expect(fixture.code, fixture.id).toContain('from "paper-ui"');
     }
+  });
+
+  it("documents HeatmapChart with an original-style full-year activity fixture", () => {
+    const fixture = phaseThreeDataLayoutFixtures.find(
+      (candidate) => candidate.id === "heatmap-chart.reading-activity",
+    );
+    expect(fixture).toBeDefined();
+    expect(fixture!.name).toMatch(/year|annual|2023/iu);
+    expect(fixture!.description).toMatch(/year|calendar|daily activity/iu);
+    expect(fixture!.code).toContain("year={year}");
+    expect(fixture!.code).toContain("data={data}");
+    expect(fixture!.code).not.toContain("columns=");
+    expect(fixture!.code).not.toContain("rows=");
+
+    const { container } = render(fixture!.render());
+    const svg = container.querySelector("svg");
+    expect(svg).toBeInstanceOf(SVGSVGElement);
+    expect(calendarCells(svg!)).toHaveLength(53 * 7);
+    const labels = Array.from(svg!.querySelectorAll("text"), (label) => label.textContent);
+    expect(labels).toEqual(expect.arrayContaining(["Jan", "Dec"]));
   });
 
   it("publishes deterministic fixtures and complete valid Stable documents", () => {

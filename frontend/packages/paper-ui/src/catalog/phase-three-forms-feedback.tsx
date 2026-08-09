@@ -79,7 +79,9 @@ function FormFixture({ kind }: { kind: FixtureKind }) {
         {kind === "autocomplete" ? <AutocompleteInput name="autocomplete" label="Language" options={LANGUAGES} format={(option) => option.label} getId={(option) => option.id} placeholder="Search languages" /> : null}
         {kind === "multi-autocomplete" ? <AutocompleteMultiInput name="multiple" label="Languages" hint="Select every language used in the entry." options={LANGUAGES} format={(option) => option.label} getId={(option) => option.id} placeholder="Add language" /> : null}
         {kind === "tags" ? <TagsInput name="tags" label="Tags" options={["fiction", "history", "manga", "nonfiction"]} maxSelections={4} placeholder="Add tag" /> : null}
-        <Button type="submit">Save entry</Button>
+        <div className="paper-fixture-row">
+          <Button type="submit">Save entry</Button>
+        </div>
       </form>
     </FormProvider>
   );

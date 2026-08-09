@@ -41,12 +41,14 @@
   border-radius: 0;
 }
 
-.paper-elevation-floating {
+.paper-elevation-floating,
+.paper-surface-card.paper-elevation-floating {
   border-color: var(--paper-color-rule-strong);
   box-shadow: var(--paper-elevation-floating);
 }
 
-.paper-elevation-showcase {
+.paper-elevation-showcase,
+.paper-surface-card.paper-elevation-showcase {
   border-color: var(--paper-color-rule-strong);
   box-shadow: var(--paper-elevation-showcase);
 }

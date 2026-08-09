@@ -38,21 +38,30 @@
     inline-size: 100%;
     min-block-size: var(--paper-control-height);
     padding: var(--paper-field-padding-block) var(--paper-field-padding-inline);
-    border: var(--paper-border-static-width) solid var(--paper-color-rule-field-edge);
+    border: var(--paper-border-static-width) solid var(--paper-color-rule-default);
     border-block-end: var(--paper-border-field-edge-width) solid
-      var(--paper-color-rule-action-edge);
+      var(--paper-color-rule-field-edge);
     border-radius: 0;
     color: var(--paper-color-text-ink);
     background: var(--paper-color-surface-paper);
   }
 
-  .paper-input:is(input, textarea) {
-    border-color: var(--paper-color-rule-default);
-    border-block-end-color: var(--paper-color-rule-field-edge);
+  .paper-input:where(input, textarea):where(:hover:not(:disabled):not([readonly])) {
+    border-color: var(--paper-color-rule-field-edge);
   }
 
-  .paper-input:where(input, textarea):where(:hover:not(:disabled):not(:read-only)) {
+  .paper-input:where(select):where(:hover:not(:disabled)) {
     border-color: var(--paper-color-rule-field-edge);
+  }
+
+  .paper-input:focus-visible {
+    --paper-input-focus-color: var(--paper-color-focus-ring);
+
+    position: relative;
+    z-index: 1;
+    border-block-end-color: var(--paper-input-focus-color);
+    outline: 3px solid color-mix(in srgb, var(--paper-input-focus-color) 10%, transparent);
+    outline-offset: 0;
   }
 
   .paper-input::placeholder {
@@ -60,7 +69,7 @@
     opacity: 0.78;
   }
 
-  .paper-input:read-only {
+  .paper-input:is(input, textarea)[readonly] {
     border-block-end-color: var(--paper-color-rule-default);
     background: var(--paper-color-surface-raised);
   }
@@ -70,11 +79,25 @@
     border-block-end-color: var(--paper-color-status-danger);
   }
 
+  .paper-field--invalid .paper-input:focus-visible,
+  .paper-input[aria-invalid="true"]:focus-visible {
+    --paper-input-focus-color: var(--paper-color-status-danger);
+  }
+
   .paper-field--disabled {
     opacity: 0.56;
   }
 
   .paper-input:disabled {
     cursor: not-allowed;
+  }
+
+  @media (forced-colors: active) {
+    .paper-input:focus-visible {
+      border-block-end-color: Highlight;
+      outline: 3px solid Highlight;
+      outline-offset: 0;
+      box-shadow: none;
+    }
   }
 }

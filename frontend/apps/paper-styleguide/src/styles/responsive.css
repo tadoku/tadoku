@@ -40,14 +40,8 @@
     }
 
     .shell-search-trigger__label,
-    .shell-search-trigger kbd {
+    .shell-search-trigger__shortcut {
       display: none;
-    }
-
-    .shell-search-trigger {
-      inline-size: var(--paper-control-height);
-      justify-content: center;
-      padding-inline: 0;
     }
 
     .docs-main {
@@ -97,9 +91,7 @@
 
   /* Preserve usable trigger targets at the narrow phone floor. */
   @media (max-width: 23rem) {
-    .shell-search-trigger__label,
-    .mobile-nav-trigger__label,
-    .shell-search-trigger kbd {
+    .mobile-nav-trigger__label {
       display: none;
     }
 

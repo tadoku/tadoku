@@ -1,6 +1,8 @@
 @layer paper-styleguide {
   /* Application layout: responsive shell regions around Paper components. */
   .docs-shell {
+    --docs-navbar-block-size: calc(var(--paper-control-height) + var(--paper-border-static-width));
+
     min-block-size: 100vh;
     display: grid;
     grid-template-columns: 18rem minmax(0, 1fr);
@@ -9,43 +11,30 @@
 
   .docs-navbar {
     position: sticky;
+    z-index: 30;
     inset-block-start: 0;
     grid-column: 1 / -1;
   }
 
   .docs-wordmark {
-    display: inline-flex;
-    gap: 0.7rem;
-    align-items: center;
+    display: block;
+    inline-size: 126.4px;
+    block-size: 23.2px;
   }
 
-  .docs-wordmark > span {
-    display: grid;
-    place-items: center;
-    inline-size: 2.25rem;
-    block-size: 2.25rem;
-    aspect-ratio: 1;
-    color: var(--paper-color-action-default);
-  }
-
-  .docs-wordmark :where(img) {
+  .docs-wordmark__image {
     display: block;
     inline-size: 100%;
     block-size: 100%;
   }
 
-  .docs-wordmark__mark--dark,
-  :root[data-theme='dark'] .docs-wordmark__mark--light {
+  .docs-wordmark__image--reversed,
+  :root[data-theme='dark'] .docs-wordmark__image--accent {
     display: none;
   }
 
-  :root[data-theme='dark'] .docs-wordmark__mark--dark {
+  :root[data-theme='dark'] .docs-wordmark__image--reversed {
     display: block;
-  }
-
-  .shell-search-trigger kbd {
-    color: var(--paper-color-text-muted);
-    font-size: var(--paper-type-metadata-size);
   }
 
   .mobile-nav-trigger {
@@ -54,10 +43,12 @@
 
   .docs-sidebar {
     position: sticky;
-    inset-block-start: var(--paper-control-height);
+    inset-block-start: var(--docs-navbar-block-size);
     align-self: start;
-    block-size: calc(100vh - var(--paper-control-height));
+    block-size: calc(100vh - var(--docs-navbar-block-size));
     overflow-y: auto;
     padding: 1.25rem 1rem 3rem;
+    border-inline-end: var(--paper-border-static-width) solid var(--paper-color-rule-subtle);
+    background: var(--paper-color-surface-paper);
   }
 }

@@ -327,13 +327,13 @@ endpoint. All form changes must use `react-hook-form` and components from the
 
 ## Trunk-based rollout plan
 
-- [ ] Document the rule evaluation semantics in ADR 005.
-  - [ ] Rules use explicit priority ordering.
-  - [ ] Matchers use activity, stable unit key, language, and one normalized tag.
-  - [ ] Rules declare `score_source: amount | duration_minutes`.
-  - [ ] Amount-plus-duration logs use `amount`.
-  - [ ] Unmatched rules produce zero.
-  - [ ] Published rule sets are immutable and versioned.
+- [x] Document the rule evaluation semantics in ADR 005.
+  - [x] Rules use explicit priority ordering.
+  - [x] Matchers use activity, stable unit key, language, and one normalized tag.
+  - [x] Rules declare `score_source: amount | duration_minutes`.
+  - [x] Amount-plus-duration logs use `amount`.
+  - [x] Unmatched rules produce zero.
+  - [x] Published rule sets are immutable and versioned.
 
 - [x] Introduce stable, code-owned unit keys.
   - [x] Add keys such as `reading_page`, `reading_character`, and
@@ -453,33 +453,33 @@ A rollout item is complete only when its implementation subitems are checked,
 its relevant tests pass, generated files are current, and the change remains
 independently deployable.
 
-- [ ] Format changed backend Go files.
+- [x] Format changed backend Go files.
 
   ```sh
   gofmt -w services/
   ```
 
-- [ ] Regenerate sqlc after changing Postgres queries.
+- [x] Regenerate sqlc after changing Postgres queries.
 
   ```sh
   cd services/immersion-api/storage/postgres
   go generate
   ```
 
-- [ ] Regenerate OpenAPI code after changing the API specification.
+- [x] Regenerate OpenAPI code after changing the API specification.
 
   ```sh
   cd services/immersion-api/http/rest/openapi
   go generate
   ```
 
-- [ ] Regenerate Bazel metadata after adding files or changing Go dependencies.
+- [x] Regenerate Bazel metadata after adding files or changing Go dependencies.
 
   ```sh
   bazel run //:gazelle
   ```
 
-- [ ] Run focused domain, repository, and REST tests for the rollout slice.
+- [x] Run focused domain, repository, and REST tests for the rollout slice.
 
   ```sh
   bazel test //services/immersion-api/domain:domain_test
@@ -487,14 +487,14 @@ independently deployable.
   bazel test //services/immersion-api/http/rest:rest_test
   ```
 
-- [ ] Build and test all backend services before merging a completed slice.
+- [x] Build and test all backend services before merging a completed slice.
 
   ```sh
   bazel build //services/...
   bazel test //services/...
   ```
 
-- [ ] Typecheck and lint WebV2 after frontend or generated API changes.
+- [x] Typecheck and lint WebV2 after frontend or generated API changes.
 
   ```sh
   cd frontend
@@ -502,14 +502,14 @@ independently deployable.
   pnpm --filter webv2 lint
   ```
 
-- [ ] Build the frontend before merging a user-visible rollout slice.
+- [x] Build the frontend before merging a user-visible rollout slice.
 
   ```sh
   cd frontend
   pnpm build
   ```
 
-- [ ] Confirm generated files and build metadata have no unexplained diff.
+- [x] Confirm generated files and build metadata have no unexplained diff.
 
   ```sh
   git diff --check

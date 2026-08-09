@@ -1,0 +1,27 @@
+/* Keep this structural inset unlayered so isolated preview/test documents that
+   do not implement cascade layers still reserve space for the public rail. */
+.catalogue-index__hero.paper-accent-rail,
+.document-hero.paper-accent-rail,
+.not-found.paper-accent-rail {
+  padding-inline-start: 1rem;
+}
+.docs-wordmark {
+  white-space: nowrap;
+}
+@layer paper-styleguide {
+  /* Accessibility: application skip-link placement above the sticky shell. */
+  .skip-link {
+    position: fixed;
+    z-index: 100;
+    inset-block-start: var(--paper-inline-gap);
+    inset-inline-start: var(--paper-inline-gap);
+    padding: var(--paper-field-padding-block) var(--paper-field-padding-inline);
+    color: var(--paper-color-text-inverse);
+    background: var(--paper-color-action-default);
+    transform: translateY(-200%);
+  }
+
+  .skip-link:focus {
+    transform: translateY(0);
+  }
+}

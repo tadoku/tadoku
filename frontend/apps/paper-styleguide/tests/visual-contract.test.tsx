@@ -1,6 +1,3 @@
-import { readFileSync } from 'node:fs'
-import { dirname, resolve } from 'node:path'
-import { fileURLToPath } from 'node:url'
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
@@ -10,12 +7,7 @@ import { DocsShell } from '../src/app/DocsShell'
 import { CatalogIndex, ResolvedCatalogueRoute } from '../src/app/routes'
 import { DocumentPage } from '../src/documentation/DocumentPage'
 import '../src/styles/shell.css'
-
-const testDirectory = dirname(fileURLToPath(import.meta.url))
-const shellStyles = readFileSync(
-  resolve(testDirectory, '../src/styles/shell.css'),
-  'utf8',
-)
+import { styleguideStyles } from './style-sources'
 
 describe('responsive visual contract', () => {
   it('reserves inline space between the home hero accent rail and its copy', () => {
@@ -75,13 +67,14 @@ describe('responsive visual contract', () => {
     const search = screen.getByRole('button', { name: 'Search Paper' })
     const browse = screen.getByRole('button', { name: 'Browse' })
     const wordmark = screen.getByRole('link', { name: 'Tadoku Paper' })
+    const wordmarkContent = wordmark.querySelector('.docs-wordmark')
     const brandMarks = wordmark.querySelectorAll('img')
 
     expect(search.querySelector('svg')).not.toBeNull()
     expect(browse.querySelector('svg')).not.toBeNull()
     expect(browse.querySelector('.mobile-nav-trigger__label')).not.toBeNull()
     expect(brandMarks).toHaveLength(2)
-    expect(shellStyles).toContain(
+    expect(styleguideStyles).toContain(
       'inline-size: 2.25rem;\n    block-size: 2.25rem;\n    aspect-ratio: 1;',
     )
     expect([...brandMarks].map((mark) => mark.getAttribute('src'))).toEqual(
@@ -90,12 +83,41 @@ describe('responsive visual contract', () => {
         expect.stringContaining('cut-meter-reversed.svg'),
       ]),
     )
-    expect(getComputedStyle(wordmark).whiteSpace).toBe('nowrap')
+    expect(wordmarkContent).not.toBeNull()
+    expect(getComputedStyle(wordmarkContent!).whiteSpace).toBe('nowrap')
 
     await user.click(browse)
     expect(
       screen.getByRole('button', { name: 'Close navigation' }).querySelector('svg'),
     ).not.toBeNull()
+  })
+
+  it('uses the public Paper Navbar and Sidebar recipes for the application shell', () => {
+    render(
+      <MemoryRouter>
+        <DocsShell documents={catalogRegistry.documents}>Content</DocsShell>
+      </MemoryRouter>,
+    )
+
+    const headerNavigation = screen.getByRole('navigation', {
+      name: 'Main navigation',
+    })
+    const catalogueNavigation = screen.getByRole('navigation', {
+      name: 'Paper catalogue',
+    })
+
+    expect(headerNavigation).toHaveClass('paper-navbar')
+    expect(headerNavigation.closest('header')).toHaveClass('docs-navbar')
+    expect(headerNavigation.querySelector('.paper-navbar__actions')).not.toBeNull()
+    expect(headerNavigation).toContainElement(
+      screen.getByRole('button', { name: 'Search Paper' }),
+    )
+    expect(headerNavigation).toContainElement(
+      screen.getByRole('button', { name: 'Browse' }),
+    )
+    expect(screen.queryByRole('button', { name: 'Open menu' })).not.toBeInTheDocument()
+    expect(document.querySelector('.docs-header')).toBeNull()
+    expect(catalogueNavigation).toHaveClass('paper-sidebar')
   })
 
   it('groups the catalogue index by document kind', () => {
@@ -110,29 +132,25 @@ describe('responsive visual contract', () => {
     expect(screen.getByRole('heading', { name: 'Governance' })).toBeInTheDocument()
   })
 
-  it('keeps shell element resets out of isolated component previews', () => {
-    expect(shellStyles).not.toContain('\n  button,\n  input,\n  select {')
-    expect(shellStyles).not.toContain('\n  button,\n  select {')
-    expect(shellStyles).not.toContain('\n  button {\n')
-    expect(shellStyles).not.toContain('\n  code {\n')
-    expect(shellStyles).toContain('.docs-shell button')
-  })
-
-  it('keeps scoped shell resets low-specificity so selected controls retain contrast', () => {
-    expect(shellStyles).not.toContain('\n  .docs-shell button,\n')
-    expect(shellStyles).toContain('.docs-shell :where(button, input, select)')
+  it('leaves native element and form-control foundations to Paper', () => {
+    expect(styleguideStyles).not.toMatch(
+      /\.docs-shell\s+:where\([^)]*(?:button|input|select)/u,
+    )
+    expect(styleguideStyles).not.toMatch(
+      /(?:^|[\s>,])(?:button|input|select)(?:\b|[\s:[.#>])/mu,
+    )
   })
 
   it('collapses both header actions to icons at the narrow phone floor', () => {
-    expect(shellStyles).toContain(
+    expect(styleguideStyles).toContain(
       '.shell-search-trigger__label,\n    .mobile-nav-trigger__label,',
     )
   })
 
   it('collapses the catalogue sidebar into Browse at mid-size widths', () => {
-    const midSizeStyles = shellStyles.slice(
-      shellStyles.indexOf('@media (max-width: 64rem)'),
-      shellStyles.indexOf('@media (max-width: 48rem)'),
+    const midSizeStyles = styleguideStyles.slice(
+      styleguideStyles.indexOf('@media (max-width: 64rem)'),
+      styleguideStyles.indexOf('@media (max-width: 48rem)'),
     )
 
     expect(midSizeStyles).toContain(
@@ -146,79 +164,70 @@ describe('responsive visual contract', () => {
     )
   })
 
-  it('animates the Browse drawer while preserving reduced-motion safety', async () => {
+  it('delegates the Browse overlay and focus return to Paper Drawer', async () => {
     const user = userEvent.setup()
-    const { container } = render(
+    render(
       <MemoryRouter>
         <DocsShell documents={catalogRegistry.documents}>Content</DocsShell>
       </MemoryRouter>,
     )
 
-    const backdrop = container.querySelector('.mobile-nav-backdrop')
-    const drawer = container.querySelector<HTMLElement>('.mobile-nav-drawer')
-
-    expect(backdrop).toHaveAttribute('data-open', 'false')
-    expect(backdrop).toHaveAttribute('aria-hidden', 'true')
-    expect(drawer?.inert).toBe(true)
-
-    await user.click(screen.getByRole('button', { name: 'Browse' }))
-    expect(backdrop).toHaveAttribute('data-open', 'true')
-    expect(backdrop).toHaveAttribute('aria-hidden', 'false')
-    expect(drawer?.inert).toBe(false)
+    const browse = screen.getByRole('button', { name: 'Browse' })
+    await user.click(browse)
+    expect(screen.getByRole('dialog', { name: 'Browse Paper' })).toHaveClass(
+      'paper-drawer',
+    )
+    expect(document.querySelector('.paper-drawer__backdrop')).not.toBeNull()
 
     await user.click(screen.getByRole('button', { name: 'Close navigation' }))
-    expect(backdrop).toHaveAttribute('data-open', 'false')
-    expect(drawer?.inert).toBe(true)
-
-    expect(shellStyles).toContain(
-      '@media (prefers-reduced-motion: no-preference) {\n    .mobile-nav-backdrop {\n      transition: opacity var(--paper-motion-standard)',
-    )
-    expect(shellStyles).toContain(
-      '.mobile-nav-backdrop[data-open=\'false\'] .mobile-nav-drawer',
-    )
+    expect(screen.queryByRole('dialog', { name: 'Browse Paper' })).not.toBeInTheDocument()
+    expect(browse).toHaveFocus()
   })
 
-  it('uses the translucent semantic scrim for full-screen shell overlays', () => {
-    expect(shellStyles).toMatch(
-      /\.search-backdrop,\n {2}\.mobile-nav-backdrop \{[^}]*background: var\(--paper-color-surface-scrim\);[^}]*-webkit-backdrop-filter: blur\(0\.375rem\);[^}]*backdrop-filter: blur\(0\.375rem\);/s,
-    )
-    expect(shellStyles).toMatch(
-      /@media \(forced-colors: active\) \{[^}]*\.search-backdrop,\n {4}\.mobile-nav-backdrop \{[^}]*backdrop-filter: none;/s,
-    )
-  })
-
-  it('keeps the Browse header fixed while only its native-scroll navigation body moves', () => {
-    const { container } = render(
+  it('uses Paper overlay scrims for search and Browse', async () => {
+    const user = userEvent.setup()
+    render(
       <MemoryRouter>
         <DocsShell documents={catalogRegistry.documents}>Content</DocsShell>
       </MemoryRouter>,
     )
 
-    const drawer = container.querySelector('.mobile-nav-drawer')
-    const scrollBody = container.querySelector('.mobile-nav-drawer__body')
+    await user.click(screen.getByRole('button', { name: 'Browse' }))
+    expect(document.querySelector('.paper-drawer__backdrop')).not.toBeNull()
+    await user.click(screen.getByRole('button', { name: 'Close navigation' }))
+
+    await user.click(screen.getByRole('button', { name: 'Search Paper' }))
+    expect(document.querySelector('.paper-modal__backdrop')).not.toBeNull()
+  })
+
+  it('keeps the Browse header fixed while Paper Drawer owns the scrolling body', async () => {
+    const user = userEvent.setup()
+    render(
+      <MemoryRouter>
+        <DocsShell documents={catalogRegistry.documents}>Content</DocsShell>
+      </MemoryRouter>,
+    )
+
+    await user.click(screen.getByRole('button', { name: 'Browse' }))
+    const drawer = screen.getByRole('dialog', { name: 'Browse Paper' })
+    const scrollBody = drawer.querySelector('.paper-drawer__body')
 
     expect(drawer).toHaveClass('paper-elevation-showcase')
-    expect(scrollBody?.querySelector('.catalogue-nav')).not.toBeNull()
-    expect(shellStyles).toMatch(
-      /\.mobile-nav-drawer\s*\{[^}]*display:\s*flex;[^}]*flex-direction:\s*column;[^}]*overflow:\s*hidden;/s,
-    )
-    expect(shellStyles).toMatch(
-      /\.mobile-nav-drawer__body\s*\{[^}]*min-block-size:\s*0;[^}]*overflow-y:\s*auto;/s,
-    )
-    expect(shellStyles).not.toMatch(/scrollbar-width|::-webkit-scrollbar/)
+    expect(scrollBody?.querySelector('.paper-sidebar')).not.toBeNull()
+    expect(styleguideStyles).not.toMatch(/scrollbar-width|::-webkit-scrollbar/)
   })
 
   it('keeps the inactive Cut Meter asset out of the wordmark layout', () => {
-    expect(shellStyles).toContain('.paper-wordmark :where(img) {')
-    expect(shellStyles).not.toContain('.paper-wordmark img {')
+    expect(styleguideStyles).toContain('.docs-wordmark :where(img) {')
+    expect(styleguideStyles).not.toContain('.docs-wordmark img {')
   })
 
   it('switches the Cut Meter to its canonical reversed asset in dark mode', () => {
-    expect(shellStyles).toContain(
-      ":root[data-theme='dark'] .paper-wordmark__mark--light",
+    expect(styleguideStyles).toContain(
+      ":root[data-theme='dark'] .docs-wordmark__mark--light",
     )
-    expect(shellStyles).toContain(
-      ":root[data-theme='dark'] .paper-wordmark__mark--dark",
+    expect(styleguideStyles).toContain(
+      ":root[data-theme='dark'] .docs-wordmark__mark--dark",
     )
   })
 })

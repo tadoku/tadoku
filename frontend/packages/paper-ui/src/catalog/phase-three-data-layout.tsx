@@ -3,6 +3,7 @@ import { Table, type TableColumn } from "../components/data-display/Table";
 import {
   defineCatalogDocument,
   defineCatalogFixture,
+  COMPONENT_PAGE_SECTION_KEYS,
   type CatalogDocument,
   type ComponentDocumentationSections,
   type RequiredComponentSections,
@@ -143,7 +144,7 @@ const columns = [
 function completeSections(
   values: RequiredComponentSections,
 ): ComponentDocumentationSections {
-  return { required: values };
+  return { required: values, pageSections: COMPONENT_PAGE_SECTION_KEYS };
 }
 
 const tableSections = completeSections({

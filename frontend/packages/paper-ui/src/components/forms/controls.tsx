@@ -141,32 +141,38 @@ export function Select({
   });
   return (
     <FieldFrame id={id} label={label} hint={hint} required={required} error={error?.message?.toString()}>
-      <select
-        {...props}
-        {...registration}
-        id={id}
-        required={required}
-        aria-invalid={error ? true : undefined}
-        aria-describedby={describedBy(id, hint, error)}
-        className="paper-input paper-select"
-      >
-        {placeholder ? <option value="">{placeholder}</option> : null}
-        {groups
-          ? groups.map((group) => (
-              <optgroup key={group.label} label={group.label}>
-                {group.options.map((option) => (
-                  <option key={option.value} value={option.value} disabled={option.disabled}>
-                    {option.label}
-                  </option>
-                ))}
-              </optgroup>
-            ))
-          : options.map((option) => (
-              <option key={option.value} value={option.value} disabled={option.disabled}>
-                {option.label}
-              </option>
-            ))}
-      </select>
+      <span className="paper-select__control">
+        <select
+          {...props}
+          {...registration}
+          id={id}
+          required={required}
+          aria-invalid={error ? true : undefined}
+          aria-describedby={describedBy(id, hint, error)}
+          className="paper-input paper-select"
+        >
+          {placeholder ? <option value="">{placeholder}</option> : null}
+          {groups
+            ? groups.map((group) => (
+                <optgroup key={group.label} label={group.label}>
+                  {group.options.map((option) => (
+                    <option key={option.value} value={option.value} disabled={option.disabled}>
+                      {option.label}
+                    </option>
+                  ))}
+                </optgroup>
+              ))
+            : options.map((option) => (
+                <option key={option.value} value={option.value} disabled={option.disabled}>
+                  {option.label}
+                </option>
+              ))}
+        </select>
+        <ChevronDownIcon
+          className={iconClassName("compact", "paper-select__icon")}
+          aria-hidden="true"
+        />
+      </span>
     </FieldFrame>
   );
 }
@@ -210,9 +216,14 @@ export function Checkbox({
   );
 }
 
+export const RADIO_SELECT_VARIANTS = ["default", "segmented"] as const;
+
+export type RadioSelectVariant = (typeof RADIO_SELECT_VARIANTS)[number];
+
 export interface RadioSelectProps extends FieldContract {
   readonly options: readonly Option<string>[];
   readonly disabled?: boolean;
+  readonly variant?: RadioSelectVariant;
 }
 
 export function RadioSelect({
@@ -223,6 +234,7 @@ export function RadioSelect({
   required,
   options,
   disabled,
+  variant = "default",
 }: RadioSelectProps) {
   const id = `paper-radio-${useId().replace(/:/gu, "")}`;
   const { form, error } = useField(name);
@@ -230,15 +242,34 @@ export function RadioSelect({
     ...rules,
     required: rules?.required ?? (required ? "Choose an option." : undefined),
   });
+  const segmented = variant === "segmented";
   return (
-    <fieldset className={`paper-choice-field${error ? " paper-field--invalid" : ""}`} aria-describedby={describedBy(id, hint, error)}>
+    <fieldset
+      className={`paper-choice-field paper-radio-select paper-radio-select--${variant}${error ? " paper-field--invalid" : ""}`}
+      aria-describedby={describedBy(id, hint, error)}
+      aria-invalid={error ? true : undefined}
+      disabled={disabled}
+    >
       <legend className="paper-field__label">{label}{required ? <span className="paper-field__required" aria-hidden="true">*</span> : null}</legend>
       {hint ? <p className="paper-field__hint" id={`${id}-hint`}>{hint}</p> : null}
       <div className="paper-choice-list">
         {options.map((option) => (
-          <label className="paper-choice" key={option.value}>
-            <input {...registration} type="radio" value={option.value} disabled={disabled || option.disabled} />
-            <span>{option.label}</span>
+          <label className={segmented ? "paper-radio-select__segment" : "paper-choice"} key={option.value}>
+            <input
+              {...registration}
+              type="radio"
+              value={option.value}
+              disabled={option.disabled}
+              required={required}
+              aria-invalid={error ? true : undefined}
+            />
+            <span className={segmented ? "paper-radio-select__label" : undefined}>{option.label}</span>
+            {segmented ? (
+              <CheckIcon
+                className={iconClassName("compact", "paper-radio-select__check")}
+                aria-hidden="true"
+              />
+            ) : null}
           </label>
         ))}
       </div>

@@ -3,6 +3,7 @@ export {
   CATALOG_DOCUMENT_KINDS,
   CATALOG_LIFECYCLES,
   CatalogValidationError,
+  COMPONENT_PAGE_SECTION_KEYS,
   COMPONENT_CATEGORIES,
   defineCatalogDocument,
   defineCatalogFixture,
@@ -32,6 +33,7 @@ export type {
   CatalogValidationResult,
   ComponentCategory,
   ComponentDocumentationSections,
+  ComponentPageSectionKey,
   FixtureDensity,
   FixtureTheme,
   OptionalComponentSection,
@@ -53,3 +55,7 @@ export {
   phaseThreeDataLayoutDocuments,
   phaseThreeDataLayoutFixtures,
 } from "./phase-three-data-layout";
+export {
+  publishedPrimitiveDocuments,
+  publishedPrimitiveFixtures,
+} from "./published-primitives";

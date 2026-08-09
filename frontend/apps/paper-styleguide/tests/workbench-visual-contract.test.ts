@@ -1,27 +1,67 @@
-import { readFileSync } from 'node:fs'
-import { dirname, resolve } from 'node:path'
-import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
+import { styleguideStyles } from './style-sources'
 
-const testDirectory = dirname(fileURLToPath(import.meta.url))
-const shellStyles = readFileSync(
-  resolve(testDirectory, '../src/styles/shell.css'),
-  'utf8',
-)
+function declarationsFor(selector: string): string[] {
+  return [...styleguideStyles.matchAll(/([^{}]+)\{([^{}]*)\}/gu)]
+    .filter((rule) =>
+      rule[1]
+        .split(',')
+        .map((candidate) => candidate.trim().replace(/\s+/gu, ' '))
+        .includes(selector),
+    )
+    .map((rule) => rule[2])
+}
+
+function borderValues(selector: string): string[] {
+  return declarationsFor(selector).flatMap((declarations) =>
+    [...declarations.matchAll(/border(?:-[a-z-]+)?\s*:\s*([^;}]+)/gu)].map(
+      (match) => match[1].trim(),
+    ),
+  )
+}
 
 describe('component workbench visual contract', () => {
-  it('uses one outer frame without nesting decorative canvas borders', () => {
-    expect(shellStyles).toMatch(
-      /\.component-workbench \{[^}]*border: 1px solid var\(--paper-color-rule-default\);[^}]*overflow: hidden;/s,
+  it('leaves the sole outer frame to Paper Surface', () => {
+    expect(styleguideStyles).toMatch(
+      /\.component-workbench \{[^}]*overflow: clip;/s,
     )
-    expect(shellStyles).toMatch(
-      /\.example-canvas \{[^}]*border: 0;[^}]*background: var\(--paper-color-surface-raised\);/s,
+    expect(declarationsFor('.component-workbench').join('\n')).not.toMatch(
+      /(?:border|background)\s*:/u,
     )
-    expect(shellStyles).toMatch(
-      /\.example-canvas__heading \{[^}]*border-block-end: 0;/s,
+
+    const framelessPreviewLayers = [
+      '.example-canvas',
+      '.canvas-controls',
+      '.example-canvas__stage',
+      '.paper-fixture-stage',
+      '.example-canvas iframe',
+    ]
+
+    for (const selector of framelessPreviewLayers) {
+      expect(
+        borderValues(selector).every((value) => value === '0'),
+        selector,
+      ).toBe(true)
+      expect(declarationsFor(selector).join('\n'), selector).not.toMatch(
+        /background\s*:/u,
+      )
+    }
+  })
+
+  it('keeps settings responsive and the stage as the preview overflow boundary', () => {
+    expect(styleguideStyles).toMatch(
+      /\.canvas-controls \{[^}]*display: grid;/su,
     )
-    expect(shellStyles).toMatch(
-      /\.example-canvas iframe \{[^}]*max-inline-size: none;[^}]*border: 0;/s,
+    expect(styleguideStyles).toMatch(/@media \(min-width: 80rem\)/u)
+    expect(styleguideStyles).toMatch(/@container \(min-width: 54rem\)/u)
+    expect(declarationsFor('.example-canvas__stage').join('\n')).toMatch(
+      /overflow: auto;/u,
+    )
+    expect(declarationsFor('.component-workbench__panel').join('\n')).not.toMatch(
+      /min-block-size/u,
+    )
+    expect(declarationsFor('.example-canvas__stage').join('\n')).not.toMatch(
+      /min-block-size/u,
     )
   })
 })

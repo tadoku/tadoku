@@ -1,0 +1,148 @@
+@layer paper-recipes {
+  .paper-drawer__backdrop {
+    position: fixed;
+    z-index: 80;
+    inset: 0;
+    background: var(--paper-color-surface-scrim);
+    opacity: 1;
+    transition: opacity var(--paper-motion-standard);
+  }
+
+  .paper-drawer__viewport {
+    position: fixed;
+    z-index: 81;
+    inset: 0;
+    display: flex;
+    pointer-events: none;
+  }
+
+  .paper-drawer__viewport[data-placement="start"] {
+    justify-content: flex-start;
+  }
+
+  .paper-drawer__viewport[data-placement="end"] {
+    justify-content: flex-end;
+  }
+
+  .paper-drawer {
+    display: flex;
+    flex-direction: column;
+    inline-size: min(28rem, calc(100vw - var(--paper-control-height)));
+    block-size: 100%;
+    overflow: hidden;
+    border: var(--paper-border-static-width) solid var(--paper-color-rule-strong);
+    background: var(--paper-color-surface-overlay);
+    color: var(--paper-color-text-ink);
+    font-family: var(--paper-font-body);
+    font-size: var(--paper-type-body-size);
+    line-height: var(--paper-type-body-line-height);
+    pointer-events: auto;
+    transform: translateX(0);
+    transition: transform var(--paper-motion-standard);
+  }
+
+  .paper-drawer[data-placement="start"] {
+    border-block: 0;
+    border-inline-start: 0;
+  }
+
+  .paper-drawer[data-placement="end"] {
+    border-block: 0;
+    border-inline-end: 0;
+  }
+
+  .paper-drawer[data-placement="start"][data-starting-style],
+  .paper-drawer[data-placement="start"][data-ending-style] {
+    transform: translateX(-100%);
+  }
+
+  .paper-drawer[data-placement="end"][data-starting-style],
+  .paper-drawer[data-placement="end"][data-ending-style] {
+    transform: translateX(100%);
+  }
+
+  .paper-drawer:dir(rtl)[data-placement="start"][data-starting-style],
+  .paper-drawer:dir(rtl)[data-placement="start"][data-ending-style] {
+    transform: translateX(100%);
+  }
+
+  .paper-drawer:dir(rtl)[data-placement="end"][data-starting-style],
+  .paper-drawer:dir(rtl)[data-placement="end"][data-ending-style] {
+    transform: translateX(-100%);
+  }
+
+  .paper-drawer__backdrop[data-starting-style],
+  .paper-drawer__backdrop[data-ending-style] {
+    opacity: 0;
+  }
+
+  .paper-drawer__header {
+    display: flex;
+    flex: none;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--paper-inline-gap);
+    padding: var(--paper-field-padding-inline);
+    border-block-end: var(--paper-border-static-width) solid
+      var(--paper-color-rule-subtle);
+  }
+
+  .paper-drawer__heading {
+    min-inline-size: 0;
+  }
+
+  .paper-drawer__title {
+    margin: 0;
+    font-family: var(--paper-font-display);
+    font-size: var(--paper-type-section-size);
+    font-weight: var(--paper-type-section-weight);
+    line-height: var(--paper-type-section-line-height);
+  }
+
+  .paper-drawer__description {
+    margin: 0.375rem 0 0;
+    color: var(--paper-color-text-muted);
+  }
+
+  .paper-drawer__close {
+    flex: none;
+    inline-size: var(--paper-control-height);
+    padding-inline: 0;
+  }
+
+  .paper-drawer__body {
+    flex: 1 1 auto;
+    min-block-size: 0;
+    overflow-y: auto;
+    padding: var(--paper-field-padding-inline);
+    overscroll-behavior: contain;
+  }
+
+  .paper-drawer__footer {
+    display: flex;
+    flex: none;
+    justify-content: flex-end;
+    gap: var(--paper-inline-gap);
+    padding: var(--paper-field-padding-inline);
+    border-block-start: var(--paper-border-static-width) solid
+      var(--paper-color-rule-subtle);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .paper-drawer,
+    .paper-drawer__backdrop {
+      transition: none;
+    }
+  }
+
+  @media (forced-colors: active) {
+    .paper-drawer__backdrop {
+      background: rgb(0 0 0 / 50%);
+      forced-color-adjust: none;
+    }
+
+    .paper-drawer {
+      border-color: CanvasText;
+    }
+  }
+}

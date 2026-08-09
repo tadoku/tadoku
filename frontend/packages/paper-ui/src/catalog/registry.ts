@@ -25,6 +25,10 @@ import {
   phaseThreeNavigationDocuments,
   phaseThreeNavigationFixtures,
 } from "./phase-three-navigation";
+import {
+  publishedPrimitiveDocuments,
+  publishedPrimitiveFixtures,
+} from "./published-primitives";
 
 export const foundationDocuments = phaseThreeFoundationDocuments;
 export const governanceDocuments = phaseThreeGovernanceDocuments;
@@ -46,6 +50,7 @@ export const catalogRegistry = createCatalogRegistry({
     ...phaseTwoDocuments,
     ...phaseThreeFormsFeedbackDocuments,
     ...phaseThreeNavigationDocuments,
+    ...publishedPrimitiveDocuments,
     ...phaseThreeDataLayoutDocuments,
     ...phaseThreePatternDocuments,
     ...phaseThreeExperimentDocuments,
@@ -55,6 +60,7 @@ export const catalogRegistry = createCatalogRegistry({
     ...phaseTwoFixtures,
     ...phaseThreeFormsFeedbackFixtures,
     ...phaseThreeNavigationFixtures,
+    ...publishedPrimitiveFixtures,
     ...phaseThreeDataLayoutFixtures,
     ...phaseThreeContentFixtures,
   ],

@@ -21,14 +21,18 @@
   --paper-private-accent-active: #40318c;
   --paper-private-accent-edge: #35277f;
   --paper-private-accent-soft: #e8e4fa;
+  --paper-private-neutral-action-hover: #e9e5dc;
   --paper-private-action-default: #5747b8;
   --paper-private-action-hover: #49399f;
   --paper-private-action-active: #40318c;
+  --paper-private-action-destructive: #a33333;
+  --paper-private-action-destructive-hover: #892828;
   --paper-private-information: #2f6f8f;
   --paper-private-success: #3f7048;
   --paper-private-warning: #8a5b16;
   --paper-private-danger: #a33333;
   --paper-private-danger-hover: #892828;
+  --paper-private-danger-edge: #651b1b;
   --paper-private-shadow: rgb(33 26 29 / 16%);
 
   --paper-color-surface-canvas: var(--paper-private-canvas);
@@ -45,13 +49,15 @@
   --paper-color-rule-strong: var(--paper-private-rule-strong);
   --paper-color-rule-field-edge: var(--paper-private-field-edge);
   --paper-color-rule-action-edge: var(--paper-private-accent-edge);
+  --paper-color-rule-destructive-action-edge: var(--paper-private-danger-edge);
   --paper-color-action-default: var(--paper-private-action-default);
   --paper-color-action-hover: var(--paper-private-action-hover);
   --paper-color-action-active: var(--paper-private-action-active);
   --paper-color-action-soft: var(--paper-private-accent-soft);
+  --paper-color-action-neutral-hover: var(--paper-private-neutral-action-hover);
   --paper-color-action-text: var(--paper-private-inverse);
-  --paper-color-action-destructive: var(--paper-private-danger);
-  --paper-color-action-destructive-hover: var(--paper-private-danger-hover);
+  --paper-color-action-destructive: var(--paper-private-action-destructive);
+  --paper-color-action-destructive-hover: var(--paper-private-action-destructive-hover);
   --paper-color-status-information: var(--paper-private-information);
   --paper-color-status-success: var(--paper-private-success);
   --paper-color-status-warning: var(--paper-private-warning);
@@ -93,14 +99,18 @@
   --paper-private-accent-active: #5747b8;
   --paper-private-accent-edge: #40318c;
   --paper-private-accent-soft: #332d52;
-  --paper-private-action-default: #5747b8;
+  --paper-private-neutral-action-hover: #2d292c;
+  --paper-private-action-default: #6150bc;
   --paper-private-action-hover: #6d5cc7;
   --paper-private-action-active: #49399f;
+  --paper-private-action-destructive: #9f3d3d;
+  --paper-private-action-destructive-hover: #b14a4a;
   --paper-private-information: #70acd0;
   --paper-private-success: #7fb488;
   --paper-private-warning: #ddb66f;
   --paper-private-danger: #d77171;
   --paper-private-danger-hover: #b94f4f;
+  --paper-private-danger-edge: #6f2424;
   --paper-private-shadow: rgb(0 0 0 / 48%);
 
   --paper-color-surface-canvas: var(--paper-private-canvas);
@@ -117,8 +127,9 @@
   --paper-color-rule-strong: var(--paper-private-rule-strong);
   --paper-color-rule-field-edge: var(--paper-private-field-edge);
   --paper-color-rule-action-edge: var(--paper-private-accent-edge);
-  --paper-color-action-destructive: var(--paper-private-danger);
-  --paper-color-action-destructive-hover: var(--paper-private-danger-hover);
+  --paper-color-rule-destructive-action-edge: var(--paper-private-danger-edge);
+  --paper-color-action-destructive: var(--paper-private-action-destructive);
+  --paper-color-action-destructive-hover: var(--paper-private-action-destructive-hover);
   --paper-color-status-information: var(--paper-private-information);
   --paper-color-status-success: var(--paper-private-success);
   --paper-color-status-warning: var(--paper-private-warning);
@@ -131,6 +142,7 @@
   --paper-color-action-hover: var(--paper-private-action-hover);
   --paper-color-action-active: var(--paper-private-action-active);
   --paper-color-action-soft: var(--paper-private-accent-soft);
+  --paper-color-action-neutral-hover: var(--paper-private-neutral-action-hover);
   --paper-color-action-text: var(--paper-private-inverse);
 
   --paper-color-chart-1: #9a8bea;

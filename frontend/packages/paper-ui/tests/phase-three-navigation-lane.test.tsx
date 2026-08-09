@@ -57,6 +57,24 @@ describe("router-neutral navigation", () => {
     expect(trigger).toHaveFocus();
   });
 
+  it("composes end actions in the Navbar and can leave narrow navigation to an application shell", () => {
+    render(
+      <Navbar
+        brand="Tadoku Paper"
+        brandHref="/"
+        navigation={[]}
+        actions={<button type="button">Search Paper</button>}
+        mobileNavigation={false}
+      />,
+    );
+
+    const navigation = screen.getByRole("navigation", { name: "Main navigation" });
+    expect(within(navigation).getByRole("button", { name: "Search Paper" })).toBeInTheDocument();
+    expect(navigation.querySelector(".paper-navbar__actions")).not.toBeNull();
+    expect(screen.queryByRole("button", { name: "Open menu" })).not.toBeInTheDocument();
+    expect(navigation.querySelector(".paper-navbar__mobile-panel")).toBeNull();
+  });
+
   it("uses Base UI keyboard behavior for the Navbar account dropdown", async () => {
     const user = userEvent.setup();
     render(<Navbar brand="Tadoku" brandHref="/" navigation={navbarItems} />);
@@ -114,6 +132,34 @@ describe("router-neutral navigation", () => {
     expect(disabled).toHaveAttribute("tabindex", "-1");
     await user.click(disabled);
     expect(disabledSelect).not.toHaveBeenCalled();
+  });
+
+  it("scopes Sidebar section heading ids to each component instance", () => {
+    const sections = [{
+      id: "admin tools",
+      title: "Admin",
+      links: [{ id: "logs", label: "Logs", href: "/admin/logs" }],
+    }];
+    const { container } = render(
+      <>
+        <Sidebar label="Desktop navigation" sections={sections} />
+        <Sidebar label="Mobile navigation" sections={sections} />
+      </>,
+    );
+
+    const headings = Array.from(container.querySelectorAll<HTMLHeadingElement>(".paper-sidebar__title"));
+    const headingIds = headings.map((heading) => heading.id);
+    expect(new Set(headingIds)).toHaveProperty("size", headingIds.length);
+    for (const headingId of headingIds) {
+      expect(headingId).toMatch(/^[a-zA-Z][a-zA-Z0-9_-]*$/u);
+    }
+
+    for (const section of container.querySelectorAll<HTMLElement>(".paper-sidebar__section")) {
+      const labelledBy = section.getAttribute("aria-labelledby");
+      expect(labelledBy).toBeTruthy();
+      expect(container.querySelectorAll(`[id="${labelledBy}"]`)).toHaveLength(1);
+      expect(section.querySelector("h2")).toHaveAttribute("id", labelledBy);
+    }
   });
 
   it("uses ordered Breadcrumb semantics with a non-link current page", () => {

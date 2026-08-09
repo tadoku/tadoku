@@ -5,16 +5,31 @@ import { describe, expect, it } from "vitest";
 import {
   Breadcrumb,
   Button,
+  DRAWER_PLACEMENTS,
+  Drawer,
   HeatmapChart,
   Navbar,
   Pagination,
   Sidebar,
   Table,
   Tabbar,
+  Tabs,
+  TabsList,
+  TabsPanel,
+  TabsRoot,
+  TabsTab,
   VerticalTabbar,
   buttonClassName,
   chartPalette,
   chartSeries,
+  type DrawerPlacement,
+  type DrawerProps,
+  type TabsListProps,
+  type TabsOrientation,
+  type TabsPanelProps,
+  type TabsRootProps,
+  type TabsTabProps,
+  type TabsValue,
 } from "../src";
 import {
   catalogRegistry,
@@ -81,5 +96,40 @@ describe("public source entries", () => {
       columns: [{ id: "mon", label: "Monday" }],
       rows: [{ id: "week", label: "This week", cells: [{ value: 12 }] }],
     }))).toContain("12");
+  });
+
+  it("publishes Tabs compound and named APIs with consumer-owned props", () => {
+    const orientation: TabsOrientation = "horizontal";
+    const value: TabsValue = "reading";
+    const rootProps: TabsRootProps = { defaultValue: value, orientation };
+    const listProps: TabsListProps = { "aria-label": "Log views" };
+    const tabProps: TabsTabProps = { value, children: "Reading" };
+    const panelProps: TabsPanelProps = { value, children: "Reading log" };
+
+    expect(Tabs.Root).toBe(TabsRoot);
+    expect(Tabs.List).toBe(TabsList);
+    expect(Tabs.Tab).toBe(TabsTab);
+    expect(Tabs.Panel).toBe(TabsPanel);
+    expect(renderToString(
+      <TabsRoot {...rootProps}>
+        <TabsList {...listProps}>
+          <TabsTab {...tabProps} />
+        </TabsList>
+        <TabsPanel {...panelProps} />
+      </TabsRoot>,
+    )).toContain("Reading log");
+  });
+
+  it("publishes Drawer and its placement contract", () => {
+    const placement: DrawerPlacement = "end";
+    const props: DrawerProps = {
+      trigger: <button type="button">Review filters</button>,
+      title: "Filters",
+      placement,
+      children: <p>Language and contest filters</p>,
+    };
+
+    expect(DRAWER_PLACEMENTS).toEqual(["start", "end"]);
+    expect(renderToString(<Drawer {...props} />)).toContain("Review filters");
   });
 });

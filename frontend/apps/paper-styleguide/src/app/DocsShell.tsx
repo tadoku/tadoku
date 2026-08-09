@@ -7,8 +7,8 @@ import {
   type SidebarSection,
 } from 'paper-ui'
 import type { CatalogDocument } from 'paper-ui/catalog'
-import cutMeterUrl from 'paper-ui/assets/brand/cut-meter.svg?no-inline'
-import cutMeterReversedUrl from 'paper-ui/assets/brand/cut-meter-reversed.svg?no-inline'
+import wordmarkAccentUrl from 'paper-ui/assets/brand/wordmark-accent.svg?no-inline'
+import wordmarkReversedUrl from 'paper-ui/assets/brand/wordmark-reversed.svg?no-inline'
 import { Bars3Icon, iconClassName } from 'paper-ui/icons'
 import { type PropsWithChildren, useEffect, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
@@ -113,20 +113,23 @@ export function DocsShell({ documents, children }: DocsShellProps) {
           renderLink={renderRouterLink}
           mobileNavigation={false}
           brand={
-            <span className="docs-wordmark">
-              <span className="docs-wordmark__mark" aria-hidden="true">
-                <img
-                  className="docs-wordmark__mark--light"
-                  src={cutMeterUrl}
-                  alt=""
-                />
-                <img
-                  className="docs-wordmark__mark--dark"
-                  src={cutMeterReversedUrl}
-                  alt=""
-                />
-              </span>
-              <strong className="docs-wordmark__label">Tadoku Paper</strong>
+            <span className="docs-wordmark" role="img" aria-label="Tadoku">
+              <img
+                className="docs-wordmark__image docs-wordmark__image--accent"
+                src={wordmarkAccentUrl}
+                alt=""
+                aria-hidden="true"
+                width={126.4}
+                height={23.2}
+              />
+              <img
+                className="docs-wordmark__image docs-wordmark__image--reversed"
+                src={wordmarkReversedUrl}
+                alt=""
+                aria-hidden="true"
+                width={126.4}
+                height={23.2}
+              />
             </span>
           }
           actions={

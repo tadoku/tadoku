@@ -5,9 +5,6 @@
 .not-found.paper-accent-rail {
   padding-inline-start: 1rem;
 }
-.docs-wordmark {
-  white-space: nowrap;
-}
 @layer paper-styleguide {
   /* Accessibility: application skip-link placement above the sticky shell. */
   .skip-link {

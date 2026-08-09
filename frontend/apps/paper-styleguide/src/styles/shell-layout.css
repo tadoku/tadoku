@@ -17,38 +17,24 @@
   }
 
   .docs-wordmark {
-    display: inline-flex;
-    gap: 0.7rem;
-    align-items: center;
-    line-height: 1;
+    display: block;
+    inline-size: 126.4px;
+    block-size: 23.2px;
   }
 
-  .docs-wordmark__mark {
-    display: grid;
-    place-items: center;
-    inline-size: 2rem;
-    block-size: 2rem;
-    aspect-ratio: 1;
-    color: var(--paper-color-action-default);
-  }
-
-  .docs-wordmark :where(img) {
+  .docs-wordmark__image {
     display: block;
     inline-size: 100%;
     block-size: 100%;
   }
 
-  .docs-wordmark__mark--dark,
-  :root[data-theme='dark'] .docs-wordmark__mark--light {
+  .docs-wordmark__image--reversed,
+  :root[data-theme='dark'] .docs-wordmark__image--accent {
     display: none;
   }
 
-  :root[data-theme='dark'] .docs-wordmark__mark--dark {
+  :root[data-theme='dark'] .docs-wordmark__image--reversed {
     display: block;
-  }
-
-  .docs-wordmark__label {
-    line-height: 1;
   }
 
   .mobile-nav-trigger {

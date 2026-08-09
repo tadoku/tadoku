@@ -23,6 +23,8 @@ const required = [
   'dist/fonts.css',
   'dist/tailwind-preset.cjs',
   'dist/assets/brand/cut-meter.svg',
+  'dist/assets/brand/wordmark-accent.svg',
+  'dist/assets/brand/wordmark-reversed.svg',
   'dist/assets/brand/wordmark.svg',
   'dist/assets/fonts/merriweather-700.woff2',
   'dist/assets/fonts/open-sans-400.woff2',

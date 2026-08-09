@@ -10,11 +10,11 @@ The Cut Meter source follows the approved square-cut geometry exactly:
 inline use. The reversed and optional-accent exports are secondary variants;
 the violet bar never carries information the monochrome silhouette lacks.
 
-The cleaned wordmark preserves the repository-owned geometry and even-odd fill
-behavior from `frontend/packages/ui/components/logo.svg`, traced to repository
-commit `f13769b1437bf2d239c9f30cfe2a2d33174512e9`. Sketch metadata, fixed sizing,
-and the legacy bright violet were removed. These assets are covered by the
-repository's MIT license.
+The accent and reversed wordmarks preserve the original exported artwork from
+`frontend/packages/ui/components/logo.svg` and `logo-light.svg`, respectively,
+including the 158 by 29 view box, fixed sizing, colors, paths, and metadata.
+Their only byte-level difference is the package source's trailing newline.
+These assets are covered by the repository's MIT license.
 
 `favicon.svg` is the scalable source. The 16, 32, and 48 pixel SVGs declare
 their intended raster dimensions; `apple-touch-icon.svg` declares 180 pixels

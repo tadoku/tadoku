@@ -66,10 +66,7 @@ describe('responsive visual contract', () => {
 
     const search = screen.getByRole('button', { name: 'Search Paper' })
     const browse = screen.getByRole('button', { name: 'Browse' })
-    const wordmark = screen.getByRole('link', { name: 'Tadoku Paper' })
-    const wordmarkContent = wordmark.querySelector('.docs-wordmark')
-    const wordmarkMark = wordmark.querySelector('.docs-wordmark__mark')
-    const wordmarkLabel = wordmark.querySelector('.docs-wordmark__label')
+    const wordmark = screen.getByRole('link', { name: 'Tadoku' })
     const brandMarks = wordmark.querySelectorAll('img')
 
     expect(search.querySelector('svg')).not.toBeNull()
@@ -77,19 +74,19 @@ describe('responsive visual contract', () => {
     expect(browse).toHaveClass('paper-button--ghost')
     expect(browse.querySelector('.mobile-nav-trigger__label')).not.toBeNull()
     expect(brandMarks).toHaveLength(2)
-    expect(styleguideStyles).toContain(
-      'inline-size: 2rem;\n    block-size: 2rem;\n    aspect-ratio: 1;',
+    expect(brandMarks[0]).toHaveAttribute(
+      'src',
+      expect.stringContaining('wordmark-accent.svg'),
     )
-    expect([...brandMarks].map((mark) => mark.getAttribute('src'))).toEqual(
-      expect.arrayContaining([
-        expect.stringContaining('cut-meter.svg'),
-        expect.stringContaining('cut-meter-reversed.svg'),
-      ]),
+    expect(brandMarks[1]).toHaveAttribute(
+      'src',
+      expect.stringContaining('wordmark-reversed.svg'),
     )
-    expect(wordmarkContent).not.toBeNull()
-    expect(wordmarkMark).not.toBeNull()
-    expect(wordmarkLabel).toHaveTextContent('Tadoku Paper')
-    expect(getComputedStyle(wordmarkContent!).whiteSpace).toBe('nowrap')
+    for (const mark of brandMarks) {
+      expect(mark).toHaveAttribute('width', '126.4')
+      expect(mark).toHaveAttribute('height', '23.2')
+      expect(mark).toHaveAttribute('aria-hidden', 'true')
+    }
 
     await user.click(browse)
     expect(
@@ -97,19 +94,11 @@ describe('responsive visual contract', () => {
     ).not.toBeNull()
   })
 
-  it('centers the Cut Meter and label without an app-specific offset', () => {
+  it('renders the legacy wordmark at the original styleguide scale', () => {
     expect(styleguideStyles).toMatch(
-      /\.docs-wordmark\s*\{(?=[^}]*align-items:\s*center;)(?=[^}]*line-height:\s*1;)[^}]*\}/su,
+      /\.docs-wordmark\s*\{(?=[^}]*inline-size:\s*126\.4px;)(?=[^}]*block-size:\s*23\.2px;)[^}]*\}/su,
     )
-    expect(styleguideStyles).toMatch(
-      /\.docs-wordmark__mark\s*\{(?=[^}]*inline-size:\s*2rem;)(?=[^}]*block-size:\s*2rem;)[^}]*\}/su,
-    )
-    expect(styleguideStyles).not.toMatch(
-      /\.docs-wordmark__mark\s*\{[^}]*transform:/su,
-    )
-    expect(styleguideStyles).toMatch(
-      /\.docs-wordmark__label\s*\{[^}]*line-height:\s*1;/su,
-    )
+    expect(styleguideStyles).not.toMatch(/\.docs-wordmark\s*\{[^}]*transform:/su)
   })
 
   it('leaves the search trigger visual recipe to the public Paper Button', () => {
@@ -281,17 +270,13 @@ describe('responsive visual contract', () => {
     expect(styleguideStyles).not.toMatch(/scrollbar-width|::-webkit-scrollbar/)
   })
 
-  it('keeps the inactive Cut Meter asset out of the wordmark layout', () => {
-    expect(styleguideStyles).toContain('.docs-wordmark :where(img) {')
-    expect(styleguideStyles).not.toContain('.docs-wordmark img {')
-  })
-
-  it('switches the Cut Meter to its canonical reversed asset in dark mode', () => {
+  it('switches the wordmark to its exact legacy reversed asset in dark mode', () => {
     expect(styleguideStyles).toContain(
-      ":root[data-theme='dark'] .docs-wordmark__mark--light",
+      ":root[data-theme='dark'] .docs-wordmark__image--accent",
     )
     expect(styleguideStyles).toContain(
-      ":root[data-theme='dark'] .docs-wordmark__mark--dark",
+      ":root[data-theme='dark'] .docs-wordmark__image--reversed",
     )
+    expect(styleguideStyles).not.toContain('content: url(')
   })
 })

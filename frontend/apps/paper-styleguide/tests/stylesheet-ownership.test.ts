@@ -36,7 +36,7 @@ describe('styleguide stylesheet ownership', () => {
 
   it.each([
     ['.skip-link:focus', 'base.css'],
-    ['.docs-wordmark__mark', 'shell-layout.css'],
+    ['.docs-wordmark', 'shell-layout.css'],
     ['.canvas-controls .paper-field', 'controls.css'],
     ['.search-results', 'navigation.css'],
     ['.design-history__link', 'documents.css'],

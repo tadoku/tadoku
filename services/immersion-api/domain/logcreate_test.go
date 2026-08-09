@@ -601,6 +601,65 @@ func TestLogCreate_Execute(t *testing.T) {
 		assert.Equal(t, domain.ScoreSourceAmount, tracking.ScoreProvenance.Source)
 	})
 
+	t.Run("reuses the platform score for contests without rule sets", func(t *testing.T) {
+		secondRegistrationID := uuid.New()
+		secondContestID := uuid.New()
+		registrations := &domain.ContestRegistrations{
+			Registrations: []domain.ContestRegistration{
+				validRegistrations.Registrations[0],
+				{
+					ID:        secondRegistrationID,
+					ContestID: secondContestID,
+					UserID:    userID,
+					Languages: []domain.Language{{Code: "jpn", Name: "Japanese"}},
+					Contest: &domain.ContestView{
+						ID:       secondContestID,
+						Official: false,
+						AllowedActivities: []domain.Activity{
+							{ID: 1, Name: "Reading"},
+						},
+					},
+				},
+			},
+		}
+		platformRuleSetID := uuid.New()
+		platformRuleID := uuid.New()
+		repo := &mockLogCreateRepository{
+			registrations: registrations,
+			scoringRuleSet: &domain.ScoringRuleSet{
+				ID: platformRuleSetID,
+				Rules: []domain.ScoringRule{{
+					ID:          platformRuleID,
+					Priority:    1,
+					ActivityID:  1,
+					UnitKey:     domain.UnitKeyReadingPage,
+					ScoreSource: domain.ScoreSourceAmount,
+					Rate:        2,
+				}},
+			},
+			createdLogID: &logID,
+			log:          createdLog,
+		}
+		clock := commondomain.NewMockClock(now)
+		svc := newLogCreateServiceWithScoringEngine(repo, clock)
+
+		_, err := svc.Execute(ctxWithUserSubject(userID.String()), &domain.LogCreateRequest{
+			RegistrationIDs: []uuid.UUID{registrationID, secondRegistrationID},
+			UnitID:          &unitID,
+			ActivityID:      1,
+			LanguageCode:    "jpn",
+			Amount:          &amount100,
+		})
+
+		require.NoError(t, err)
+		assert.Equal(t, 1, repo.scoringRuleCalls)
+		platformTracking := repo.createCalledWith.Tracking()
+		contestTrackings := repo.createCalledWith.ContestTrackings()
+		require.Len(t, contestTrackings, 2)
+		assert.Equal(t, platformTracking, contestTrackings[0].Tracking)
+		assert.Equal(t, platformTracking, contestTrackings[1].Tracking)
+	})
+
 	t.Run("snapshots an independent contest score when enabled", func(t *testing.T) {
 		platformRuleSetID := uuid.New()
 		contestRuleSetID := uuid.New()

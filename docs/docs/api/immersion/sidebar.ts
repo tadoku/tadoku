@@ -120,6 +120,12 @@ const sidebar: SidebarsConfig = {
         },
         {
           type: "doc",
+          id: "api/immersion/score-preview",
+          label: "Previews platform and contest scores without creating a log",
+          className: "api-method post",
+        },
+        {
+          type: "doc",
           id: "api/immersion/log-find-by-id",
           label: "Fetches a log by id",
           className: "api-method get",
@@ -213,6 +219,48 @@ const sidebar: SidebarsConfig = {
           id: "api/immersion/fetch-leaderboard-global",
           label: "Fetches the global leaderboard",
           className: "api-method get",
+        },
+      ],
+    },
+    {
+      type: "category",
+      label: "scoring",
+      items: [
+        {
+          type: "doc",
+          id: "api/immersion/scoring-rule-set-list-platform",
+          label: "Lists platform scoring rule-set versions",
+          className: "api-method get",
+        },
+        {
+          type: "doc",
+          id: "api/immersion/scoring-rule-set-create-platform",
+          label: "Creates a draft platform scoring rule-set version",
+          className: "api-method post",
+        },
+        {
+          type: "doc",
+          id: "api/immersion/scoring-rule-set-list-contest",
+          label: "Lists scoring rule-set versions owned by a contest",
+          className: "api-method get",
+        },
+        {
+          type: "doc",
+          id: "api/immersion/scoring-rule-set-create-contest",
+          label: "Creates a draft contest scoring rule-set version",
+          className: "api-method post",
+        },
+        {
+          type: "doc",
+          id: "api/immersion/scoring-rule-set-publish",
+          label: "Publishes an immutable scoring rule-set version",
+          className: "api-method post",
+        },
+        {
+          type: "doc",
+          id: "api/immersion/scoring-rule-set-activate",
+          label: "Activates a published scoring rule-set version",
+          className: "api-method post",
         },
       ],
     },

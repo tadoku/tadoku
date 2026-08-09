@@ -127,7 +127,7 @@
     <h2>Current state and target</h2>
     <div class="grid">
       <div class="mini span-4"><div class="metric">4</div><div class="metric-label">public API specifications</div></div>
-      <div class="mini span-4"><div class="metric">61</div><div class="metric-label">public operations to render</div></div>
+      <div class="mini span-4"><div class="metric">68</div><div class="metric-label">public operations to render</div></div>
       <div class="mini span-4"><div class="metric">2</div><div class="metric-label">internal specs explicitly excluded</div></div>
       <div class="mini span-6">
         <h3>Benefits</h3>
@@ -161,7 +161,7 @@
       <tbody>
         <tr><td>Authorization API</td><td><code>services/authz-api/http/rest/openapi/api.yaml</code></td><td>4</td><td class="scope-public">Publish</td></tr>
         <tr><td>Content API</td><td><code>services/content-api/http/rest/openapi/api.yaml</code></td><td>21</td><td class="scope-public">Publish</td></tr>
-        <tr><td>Immersion API</td><td><code>services/immersion-api/http/rest/openapi/api.yaml</code></td><td>34</td><td class="scope-public">Publish</td></tr>
+        <tr><td>Immersion API</td><td><code>services/immersion-api/http/rest/openapi/api.yaml</code></td><td>41</td><td class="scope-public">Publish</td></tr>
         <tr><td>Profile API</td><td><code>services/profile-api/http/rest/openapi/api.yaml</code></td><td>2</td><td class="scope-public">Publish</td></tr>
         <tr><td>Authorization internal API</td><td><code>services/authz-api/http/rest/openapi/internal-api.yaml</code></td><td>4</td><td class="scope-private">Exclude</td></tr>
         <tr><td>Profile internal API</td><td><code>services/profile-api/http/rest/openapi/internal-api.yaml</code></td><td>1</td><td class="scope-private">Exclude</td></tr>
@@ -177,7 +177,7 @@
     <ul class="checklist">
       <li>Record the existing Pages URL, base path <code>/tadoku/</code>, and a smoke-test list of representative existing documentation routes.</li>
       <li>Encode the six-spec inventory above in the implementation notes and obtain maintainer confirmation that the four public files are safe to expose.</li>
-      <li>Record the expected count of 61 public operations and add a negative assertion for <code>/internal/v1/</code> and the internal service hostnames.</li>
+      <li>Record the expected count of 68 public operations and add a negative assertion for <code>/internal/v1/</code> and the internal service hostnames.</li>
       <li>Capture a before-build of the current docs site so the Docusaurus upgrade can be checked for navigation or styling regressions.</li>
     </ul>
     <div class="gate"><strong>Gate 0:</strong> Maintainers approve the four-file public allowlist; existing Pages routes and the expected operation count are documented.</div>
@@ -210,7 +210,7 @@
       <li>Commit the complete generated output. Do not hand-edit generated MDX; improvements belong in the source OpenAPI files or committed wrapper pages.</li>
       <li>Verify that repeated operation IDs such as <code>ping</code> remain isolated by service directory and yield unique routes.</li>
     </ul>
-    <div class="gate"><strong>Gate 2:</strong> A clean regeneration produces no diff, exactly 61 operations render, all four service overviews build, and no internal paths or hostnames appear in <code>docs/build</code>.</div>
+    <div class="gate"><strong>Gate 2:</strong> A clean regeneration produces no diff, exactly 68 operations render, all four service overviews build, and no internal paths or hostnames appear in <code>docs/build</code>.</div>
   </section>
 
   <section class="card phase">
@@ -261,7 +261,7 @@
   <section class="card">
     <h2>Measurable success criteria</h2>
     <div class="criteria">
-      <div class="criterion"><strong>Complete public coverage</strong>Four service overview pages and all 61 public operations are reachable under <code>/tadoku/api/</code>.</div>
+      <div class="criterion"><strong>Complete public coverage</strong>Four service overview pages and all 68 public operations are reachable under <code>/tadoku/api/</code>.</div>
       <div class="criterion"><strong>No internal contract leakage</strong>The build and deployed output contain none of the two internal spec names, internal paths, or cluster-local server URLs.</div>
       <div class="criterion"><strong>Automatic freshness</strong>Changing any allowlisted <code>api.yaml</code> triggers PR verification; stale generated MDX makes the check fail.</div>
       <div class="criterion"><strong>Stable existing site</strong>The pre-recorded documentation URLs still return successfully and navigation remains usable on desktop and mobile.</div>

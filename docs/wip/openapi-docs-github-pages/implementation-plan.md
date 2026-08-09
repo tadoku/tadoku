@@ -23,7 +23,7 @@ cross-origin security policy for requests from GitHub Pages.
 | --- | --- | ---: |
 | Authorization API | `services/authz-api/http/rest/openapi/api.yaml` | 4 |
 | Content API | `services/content-api/http/rest/openapi/api.yaml` | 21 |
-| Immersion API | `services/immersion-api/http/rest/openapi/api.yaml` | 34 |
+| Immersion API | `services/immersion-api/http/rest/openapi/api.yaml` | 41 |
 | Profile API | `services/profile-api/http/rest/openapi/api.yaml` | 2 |
 
 The following contracts are explicitly excluded:
@@ -59,7 +59,7 @@ Risks and mitigations:
 - [ ] Record the existing Pages URL, `/tadoku/` base path, and representative
       documentation routes.
 - [ ] Confirm that only the four public `api.yaml` files are publishable.
-- [ ] Record the expected total of 61 public operations.
+- [ ] Record the expected total of 68 public operations.
 - [ ] Add negative assertions for `/internal/v1/`, `authz-api:8080`, and
       `profile-api:8080`.
 - [ ] Build the current site before adding generated reference pages.
@@ -96,7 +96,7 @@ Phase 1 passes.
 - [ ] Ensure repeated operation IDs such as `ping` have unique service-scoped
       routes.
 
-Gate: clean regeneration creates no diff, all 61 public operations render, and
+Gate: clean regeneration creates no diff, all 68 public operations render, and
 no internal path or cluster-local server hostname appears in the build.
 
 ## Phase 3: integrate the reference into the documentation
@@ -148,7 +148,7 @@ API owner and docs/frontend owner approve the result.
 
 ## Measurable success criteria
 
-- Four service overview pages and all 61 public operations are reachable under
+- Four service overview pages and all 68 public operations are reachable under
   `/tadoku/api/`.
 - The built and deployed output contains no internal spec names,
   `/internal/v1/` routes, or cluster-local API hostnames.
@@ -178,4 +178,3 @@ API owner and docs/frontend owner approve the result.
 - Add documentation search and API-reference analytics.
 - Design a separately reviewed authenticated API explorer.
 - Optionally publish internal contracts to an authenticated documentation site.
-

@@ -8,7 +8,6 @@ import (
 )
 
 type contestScoringRuleSetFinder interface {
-	FindActivePlatformScoringRuleSet(context.Context) (*ScoringRuleSet, error)
 	FindContestScoringRuleSets(context.Context, uuid.UUID) (*ScoringRuleSet, *ScoringRuleSet, error)
 }
 
@@ -53,13 +52,7 @@ func resolveContestLogTracking(
 	}
 
 	tracking := platformTracking
-	if contestRuleSet == nil {
-		result, evaluateErr := EvaluateActivePlatformScore(ctx, finder, input)
-		if evaluateErr != nil {
-			return ContestLogTracking{}, fmt.Errorf("could not evaluate platform scoring rules: %w", evaluateErr)
-		}
-		ApplyScoringResult(&tracking, result)
-	} else {
+	if contestRuleSet != nil {
 		result, evaluateErr := EvaluateContestScore(input, *contestRuleSet, fallbackRuleSet)
 		if evaluateErr != nil {
 			return ContestLogTracking{}, fmt.Errorf("could not evaluate contest scoring rules: %w", evaluateErr)

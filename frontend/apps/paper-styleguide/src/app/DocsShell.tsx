@@ -114,7 +114,7 @@ export function DocsShell({ documents, children }: DocsShellProps) {
           mobileNavigation={false}
           brand={
             <span className="docs-wordmark">
-              <span aria-hidden="true">
+              <span className="docs-wordmark__mark" aria-hidden="true">
                 <img
                   className="docs-wordmark__mark--light"
                   src={cutMeterUrl}
@@ -126,7 +126,7 @@ export function DocsShell({ documents, children }: DocsShellProps) {
                   alt=""
                 />
               </span>
-              <strong>Tadoku Paper</strong>
+              <strong className="docs-wordmark__label">Tadoku Paper</strong>
             </span>
           }
           actions={

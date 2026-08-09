@@ -68,6 +68,8 @@ describe('responsive visual contract', () => {
     const browse = screen.getByRole('button', { name: 'Browse' })
     const wordmark = screen.getByRole('link', { name: 'Tadoku Paper' })
     const wordmarkContent = wordmark.querySelector('.docs-wordmark')
+    const wordmarkMark = wordmark.querySelector('.docs-wordmark__mark')
+    const wordmarkLabel = wordmark.querySelector('.docs-wordmark__label')
     const brandMarks = wordmark.querySelectorAll('img')
 
     expect(search.querySelector('svg')).not.toBeNull()
@@ -75,7 +77,7 @@ describe('responsive visual contract', () => {
     expect(browse.querySelector('.mobile-nav-trigger__label')).not.toBeNull()
     expect(brandMarks).toHaveLength(2)
     expect(styleguideStyles).toContain(
-      'inline-size: 2.25rem;\n    block-size: 2.25rem;\n    aspect-ratio: 1;',
+      'inline-size: 2rem;\n    block-size: 2rem;\n    aspect-ratio: 1;',
     )
     expect([...brandMarks].map((mark) => mark.getAttribute('src'))).toEqual(
       expect.arrayContaining([
@@ -84,12 +86,38 @@ describe('responsive visual contract', () => {
       ]),
     )
     expect(wordmarkContent).not.toBeNull()
+    expect(wordmarkMark).not.toBeNull()
+    expect(wordmarkLabel).toHaveTextContent('Tadoku Paper')
     expect(getComputedStyle(wordmarkContent!).whiteSpace).toBe('nowrap')
 
     await user.click(browse)
     expect(
       screen.getByRole('button', { name: 'Close navigation' }).querySelector('svg'),
     ).not.toBeNull()
+  })
+
+  it('optically centers the Cut Meter and label as an app wordmark', () => {
+    expect(styleguideStyles).toMatch(
+      /\.docs-wordmark\s*\{(?=[^}]*align-items:\s*center;)(?=[^}]*line-height:\s*1;)[^}]*\}/su,
+    )
+    expect(styleguideStyles).toMatch(
+      /\.docs-wordmark__mark\s*\{(?=[^}]*inline-size:\s*2rem;)(?=[^}]*block-size:\s*2rem;)(?=[^}]*transform:\s*translateY\(-0\.125rem\);)[^}]*\}/su,
+    )
+    expect(styleguideStyles).toMatch(
+      /\.docs-wordmark__label\s*\{[^}]*line-height:\s*1;/su,
+    )
+  })
+
+  it('styles search as a compact utility contained within the navbar', () => {
+    expect(styleguideStyles).toMatch(
+      /\.shell-search-trigger\s*\{(?=[^}]*min-block-size:\s*2\.25rem;)(?=[^}]*padding-inline:\s*0\.625rem;)(?=[^}]*border:\s*var\(--paper-border-static-width\) solid var\(--paper-color-rule-subtle\);)(?=[^}]*background:\s*var\(--paper-color-surface-raised\);)[^}]*\}/su,
+    )
+    expect(styleguideStyles).toMatch(
+      /\.shell-search-trigger:hover:not\(:disabled\)\s*\{(?=[^}]*border-color:\s*var\(--paper-color-rule-default\);)(?=[^}]*background:\s*var\(--paper-color-action-neutral-hover\);)[^}]*\}/su,
+    )
+    expect(styleguideStyles).toMatch(
+      /\.shell-search-trigger__shortcut\s*\{(?=[^}]*min-inline-size:\s*1\.5rem;)(?=[^}]*border:\s*var\(--paper-border-static-width\) solid var\(--paper-color-rule-subtle\);)(?=[^}]*background:\s*var\(--paper-color-surface-paper\);)(?=[^}]*font-size:\s*var\(--paper-type-metadata-size\);)[^}]*\}/su,
+    )
   })
 
   it('uses the public Paper Navbar and Sidebar recipes for the application shell', () => {
@@ -166,7 +194,7 @@ describe('responsive visual contract', () => {
 
   it('collapses both header actions to icons at the narrow phone floor', () => {
     expect(styleguideStyles).toContain(
-      '.shell-search-trigger__label,\n    .mobile-nav-trigger__label,',
+      '.shell-search-trigger__label,\n    .shell-search-trigger__shortcut',
     )
   })
 

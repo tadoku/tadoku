@@ -76,6 +76,26 @@ export const CUSTOM_STYLE_ALLOWANCES: readonly CustomStyleAllowance[] = [
     reason: 'The desktop catalogue lane needs a distinct Paper surface from the document canvas.',
   },
   {
+    key: 'src/styles/shell-layout.css:custom-background:.shell-search-trigger',
+    category: 'application-layout',
+    reason: 'The styleguide search utility needs a quiet raised boundary within the application navbar.',
+  },
+  {
+    key: 'src/styles/shell-layout.css:custom-background:.shell-search-trigger:active:not(:disabled)',
+    category: 'application-layout',
+    reason: 'The styleguide search utility preserves its neutral navbar treatment while pressed.',
+  },
+  {
+    key: 'src/styles/shell-layout.css:custom-background:.shell-search-trigger:hover:not(:disabled)',
+    category: 'application-layout',
+    reason: 'The styleguide search utility uses a token-driven neutral hover within the navbar.',
+  },
+  {
+    key: 'src/styles/shell-layout.css:custom-background:.shell-search-trigger__shortcut',
+    category: 'application-layout',
+    reason: 'The slash shortcut is application chrome that needs a distinct keycap surface.',
+  },
+  {
     key: 'src/styles/workbench.css:custom-background:.code-view pre',
     category: 'content',
     reason: 'Source code needs a scrollable, monospace reading surface.',

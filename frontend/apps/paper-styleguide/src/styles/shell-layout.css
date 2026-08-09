@@ -20,15 +20,17 @@
     display: inline-flex;
     gap: 0.7rem;
     align-items: center;
+    line-height: 1;
   }
 
-  .docs-wordmark > span {
+  .docs-wordmark__mark {
     display: grid;
     place-items: center;
-    inline-size: 2.25rem;
-    block-size: 2.25rem;
+    inline-size: 2rem;
+    block-size: 2rem;
     aspect-ratio: 1;
     color: var(--paper-color-action-default);
+    transform: translateY(-0.125rem);
   }
 
   .docs-wordmark :where(img) {
@@ -46,9 +48,47 @@
     display: block;
   }
 
-  .shell-search-trigger kbd {
+  .docs-wordmark__label {
+    line-height: 1;
+  }
+
+  .shell-search-trigger {
+    min-block-size: 2.25rem;
+    padding-block: 0.25rem;
+    padding-inline: 0.625rem;
+    border: var(--paper-border-static-width) solid var(--paper-color-rule-subtle);
+    background: var(--paper-color-surface-raised);
+  }
+
+  .shell-search-trigger:hover:not(:disabled) {
+    border-color: var(--paper-color-rule-default);
+    background: var(--paper-color-action-neutral-hover);
+  }
+
+  .shell-search-trigger:active:not(:disabled) {
+    border-color: var(--paper-color-rule-default);
+    background: var(--paper-color-action-neutral-hover);
+  }
+
+  .shell-search-trigger__content {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .shell-search-trigger__shortcut {
+    display: inline-grid;
+    place-items: center;
+    min-inline-size: 1.5rem;
+    min-block-size: 1.5rem;
+    padding-inline: 0.25rem;
+    border: var(--paper-border-static-width) solid var(--paper-color-rule-subtle);
     color: var(--paper-color-text-muted);
+    background: var(--paper-color-surface-paper);
+    font-family: var(--paper-font-monospace);
     font-size: var(--paper-type-metadata-size);
+    font-weight: var(--paper-type-body-weight);
+    line-height: 1;
   }
 
   .mobile-nav-trigger {

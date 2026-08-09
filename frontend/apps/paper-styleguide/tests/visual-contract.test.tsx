@@ -108,16 +108,19 @@ describe('responsive visual contract', () => {
     )
   })
 
-  it('styles search as a compact utility contained within the navbar', () => {
-    expect(styleguideStyles).toMatch(
-      /\.shell-search-trigger\s*\{(?=[^}]*min-block-size:\s*2\.25rem;)(?=[^}]*padding-inline:\s*0\.625rem;)(?=[^}]*border:\s*var\(--paper-border-static-width\) solid var\(--paper-color-rule-subtle\);)(?=[^}]*background:\s*var\(--paper-color-surface-raised\);)[^}]*\}/su,
-    )
-    expect(styleguideStyles).toMatch(
-      /\.shell-search-trigger:hover:not\(:disabled\)\s*\{(?=[^}]*border-color:\s*var\(--paper-color-rule-default\);)(?=[^}]*background:\s*var\(--paper-color-action-neutral-hover\);)[^}]*\}/su,
-    )
-    expect(styleguideStyles).toMatch(
-      /\.shell-search-trigger__shortcut\s*\{(?=[^}]*min-inline-size:\s*1\.5rem;)(?=[^}]*border:\s*var\(--paper-border-static-width\) solid var\(--paper-color-rule-subtle\);)(?=[^}]*background:\s*var\(--paper-color-surface-paper\);)(?=[^}]*font-size:\s*var\(--paper-type-metadata-size\);)[^}]*\}/su,
-    )
+  it('leaves the search trigger visual recipe to the public Paper Button', () => {
+    const searchSkinRules = [
+      ...styleguideStyles.matchAll(
+        /([^{}]*\.shell-search-trigger[^{}]*)\{([^}]*)\}/gu,
+      ),
+    ]
+      .map((match) => ({
+        selector: match[1].trim(),
+        declarations: match[2].trim().replace(/\s+/gu, ' '),
+      }))
+      .filter(({ declarations }) => declarations !== 'display: none;')
+
+    expect(searchSkinRules).toEqual([])
   })
 
   it('uses the public Paper Navbar and Sidebar recipes for the application shell', () => {
@@ -192,10 +195,16 @@ describe('responsive visual contract', () => {
     )
   })
 
-  it('collapses both header actions to icons at the narrow phone floor', () => {
-    expect(styleguideStyles).toContain(
-      '.shell-search-trigger__label,\n    .shell-search-trigger__shortcut',
+  it('only hides search metadata responsively without reskinning the Button', () => {
+    const compactStyles = styleguideStyles.slice(
+      styleguideStyles.indexOf('@media (max-width: 48rem)'),
+      styleguideStyles.indexOf('@media (max-width: 23rem)'),
     )
+
+    expect(compactStyles).toMatch(
+      /\.shell-search-trigger__label,\s*\.shell-search-trigger__shortcut\s*\{\s*display:\s*none;\s*\}/su,
+    )
+    expect(compactStyles).not.toMatch(/\.shell-search-trigger\s*\{/u)
   })
 
   it('collapses the catalogue sidebar into Browse at mid-size widths', () => {

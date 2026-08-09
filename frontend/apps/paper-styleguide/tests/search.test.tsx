@@ -7,7 +7,7 @@ import { catalogRegistry } from 'paper-ui/catalog'
 import { CatalogueSearch } from '../src/app/CatalogueSearch'
 
 describe('CatalogueSearch', () => {
-  it('presents search as a restrained navbar utility', () => {
+  it('composes search from the standard Paper ghost Button', () => {
     render(
       <MemoryRouter>
         <CatalogueSearch documents={catalogRegistry.documents} />
@@ -15,12 +15,18 @@ describe('CatalogueSearch', () => {
     )
 
     const trigger = screen.getByRole('button', { name: 'Search Paper' })
-    const visibleLabel = trigger.querySelector('.shell-search-trigger__label')
-    const shortcut = trigger.querySelector('kbd.shell-search-trigger__shortcut')
+    const paperLabel = trigger.querySelector('.paper-button__label')
+    const visibleLabel = paperLabel?.querySelector(
+      ':scope > .shell-search-trigger__label',
+    )
+    const shortcut = paperLabel?.querySelector(
+      ':scope > kbd.shell-search-trigger__shortcut',
+    )
 
     expect(trigger).toHaveClass('paper-button', 'paper-button--ghost')
     expect(trigger).toHaveAccessibleName('Search Paper')
     expect(trigger.querySelector('svg')).not.toBeNull()
+    expect(trigger.querySelector('.shell-search-trigger__content')).toBeNull()
     expect(visibleLabel).toHaveTextContent(/^Search$/u)
     expect(shortcut).toHaveTextContent(/^\/$/u)
     expect(shortcut).toHaveAttribute('aria-hidden', 'true')

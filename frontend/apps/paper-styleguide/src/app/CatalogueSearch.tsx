@@ -100,12 +100,10 @@ function CatalogueSearchDialog({ documents }: CatalogueSearchProps) {
             />
           }
         >
-          <span className="shell-search-trigger__content">
-            <span className="shell-search-trigger__label">Search</span>
-            <kbd className="shell-search-trigger__shortcut" aria-hidden="true">
-              /
-            </kbd>
-          </span>
+          <span className="shell-search-trigger__label">Search</span>
+          <kbd className="shell-search-trigger__shortcut" aria-hidden="true">
+            /
+          </kbd>
         </Button>
       }
     >

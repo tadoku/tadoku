@@ -119,14 +119,25 @@ func scoringRuleSetToDomain(
 	rules []postgres.ScoringRule,
 ) *domain.ScoringRuleSet {
 	result := &domain.ScoringRuleSet{
-		ID:      ruleSet.ID,
-		Version: ruleSet.Version,
-		Mode:    domain.ScoringRuleSetMode(ruleSet.Mode.String),
-		Rules:   make([]domain.ScoringRule, len(rules)),
+		ID:        ruleSet.ID,
+		Scope:     domain.ScoringRuleSetScope(ruleSet.Scope),
+		Version:   ruleSet.Version,
+		Status:    domain.ScoringRuleSetStatus(ruleSet.Status),
+		Mode:      domain.ScoringRuleSetMode(ruleSet.Mode.String),
+		Rules:     make([]domain.ScoringRule, len(rules)),
+		CreatedAt: ruleSet.CreatedAt,
+	}
+	if ruleSet.ContestID.Valid {
+		contestID := ruleSet.ContestID.UUID
+		result.ContestID = &contestID
 	}
 	if ruleSet.FallbackRuleSetID.Valid {
 		fallbackID := ruleSet.FallbackRuleSetID.UUID
 		result.FallbackRuleSetID = &fallbackID
+	}
+	if ruleSet.PublishedAt.Valid {
+		publishedAt := ruleSet.PublishedAt.Time
+		result.PublishedAt = &publishedAt
 	}
 	for i, rule := range rules {
 		result.Rules[i] = domain.ScoringRule{

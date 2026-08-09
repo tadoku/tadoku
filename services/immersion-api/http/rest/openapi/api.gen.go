@@ -25,8 +25,38 @@ const (
 
 // Defines values for ScoreEstimateSource.
 const (
-	Amount          ScoreEstimateSource = "amount"
-	DurationMinutes ScoreEstimateSource = "duration_minutes"
+	ScoreEstimateSourceAmount          ScoreEstimateSource = "amount"
+	ScoreEstimateSourceDurationMinutes ScoreEstimateSource = "duration_minutes"
+)
+
+// Defines values for ScoringRuleScoreSource.
+const (
+	ScoringRuleScoreSourceAmount          ScoringRuleScoreSource = "amount"
+	ScoringRuleScoreSourceDurationMinutes ScoringRuleScoreSource = "duration_minutes"
+)
+
+// Defines values for ScoringRuleSetMode.
+const (
+	ScoringRuleSetModeOverride ScoringRuleSetMode = "override"
+	ScoringRuleSetModeReplace  ScoringRuleSetMode = "replace"
+)
+
+// Defines values for ScoringRuleSetScope.
+const (
+	ScoringRuleSetScopeContest  ScoringRuleSetScope = "contest"
+	ScoringRuleSetScopePlatform ScoringRuleSetScope = "platform"
+)
+
+// Defines values for ScoringRuleSetStatus.
+const (
+	Draft     ScoringRuleSetStatus = "draft"
+	Published ScoringRuleSetStatus = "published"
+)
+
+// Defines values for ScoringRuleSetDraftMode.
+const (
+	ScoringRuleSetDraftModeOverride ScoringRuleSetDraftMode = "override"
+	ScoringRuleSetDraftModeReplace  ScoringRuleSetDraftMode = "replace"
 )
 
 // Activities defines model for Activities.
@@ -305,6 +335,61 @@ type ScorePreview struct {
 // Scores defines model for Scores.
 type Scores = []Score
 
+// ScoringRule defines model for ScoringRule.
+type ScoringRule struct {
+	ActivityId   int32                  `json:"activity_id"`
+	Id           *openapi_types.UUID    `json:"id,omitempty"`
+	LanguageCode *string                `json:"language_code,omitempty"`
+	Priority     int32                  `json:"priority"`
+	Rate         float32                `json:"rate"`
+	ScoreSource  ScoringRuleScoreSource `json:"score_source"`
+	Stackable    bool                   `json:"stackable"`
+	Tag          *string                `json:"tag,omitempty"`
+	UnitKey      *string                `json:"unit_key,omitempty"`
+}
+
+// ScoringRuleScoreSource defines model for ScoringRule.ScoreSource.
+type ScoringRuleScoreSource string
+
+// ScoringRuleSet defines model for ScoringRuleSet.
+type ScoringRuleSet struct {
+	Active            bool                 `json:"active"`
+	ContestId         *openapi_types.UUID  `json:"contest_id,omitempty"`
+	CreatedAt         time.Time            `json:"created_at"`
+	FallbackRuleSetId *openapi_types.UUID  `json:"fallback_rule_set_id,omitempty"`
+	Id                openapi_types.UUID   `json:"id"`
+	Mode              *ScoringRuleSetMode  `json:"mode,omitempty"`
+	PublishedAt       *time.Time           `json:"published_at,omitempty"`
+	Rules             []ScoringRule        `json:"rules"`
+	Scope             ScoringRuleSetScope  `json:"scope"`
+	Status            ScoringRuleSetStatus `json:"status"`
+	Version           int32                `json:"version"`
+}
+
+// ScoringRuleSetMode defines model for ScoringRuleSet.Mode.
+type ScoringRuleSetMode string
+
+// ScoringRuleSetScope defines model for ScoringRuleSet.Scope.
+type ScoringRuleSetScope string
+
+// ScoringRuleSetStatus defines model for ScoringRuleSet.Status.
+type ScoringRuleSetStatus string
+
+// ScoringRuleSetDraft defines model for ScoringRuleSetDraft.
+type ScoringRuleSetDraft struct {
+	FallbackRuleSetId *openapi_types.UUID      `json:"fallback_rule_set_id,omitempty"`
+	Mode              *ScoringRuleSetDraftMode `json:"mode,omitempty"`
+	Rules             []ScoringRule            `json:"rules"`
+}
+
+// ScoringRuleSetDraftMode defines model for ScoringRuleSetDraft.Mode.
+type ScoringRuleSetDraftMode string
+
+// ScoringRuleSets defines model for ScoringRuleSets.
+type ScoringRuleSets struct {
+	RuleSets []ScoringRuleSet `json:"rule_sets"`
+}
+
 // TagSuggestion defines model for TagSuggestion.
 type TagSuggestion struct {
 	Count int    `json:"count"`
@@ -467,6 +552,9 @@ type ContestModerationDetachLogJSONRequestBody ContestModerationDetachLogJSONBod
 // ContestRegistrationUpsertJSONRequestBody defines body for ContestRegistrationUpsert for application/json ContentType.
 type ContestRegistrationUpsertJSONRequestBody ContestRegistrationUpsertJSONBody
 
+// ScoringRuleSetCreateContestJSONRequestBody defines body for ScoringRuleSetCreateContest for application/json ContentType.
+type ScoringRuleSetCreateContestJSONRequestBody = ScoringRuleSetDraft
+
 // LanguageCreateJSONRequestBody defines body for LanguageCreate for application/json ContentType.
 type LanguageCreateJSONRequestBody = Language
 
@@ -484,6 +572,9 @@ type LogUpdateJSONRequestBody LogUpdateJSONBody
 
 // LogContestRegistrationUpdateJSONRequestBody defines body for LogContestRegistrationUpdate for application/json ContentType.
 type LogContestRegistrationUpdateJSONRequestBody LogContestRegistrationUpdateJSONBody
+
+// ScoringRuleSetCreatePlatformJSONRequestBody defines body for ScoringRuleSetCreatePlatform for application/json ContentType.
+type ScoringRuleSetCreatePlatformJSONRequestBody = ScoringRuleSetDraft
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
@@ -529,6 +620,12 @@ type ServerInterface interface {
 	// Creates or updates a registration for a contest
 	// (POST /contests/{id}/registration)
 	ContestRegistrationUpsert(ctx echo.Context, id openapi_types.UUID) error
+	// Lists scoring rule-set versions owned by a contest
+	// (GET /contests/{id}/scoring/rule-sets)
+	ScoringRuleSetListContest(ctx echo.Context, id openapi_types.UUID) error
+	// Creates a draft contest scoring rule-set version
+	// (POST /contests/{id}/scoring/rule-sets)
+	ScoringRuleSetCreateContest(ctx echo.Context, id openapi_types.UUID) error
 	// Fetches the summary for a contest
 	// (GET /contests/{id}/summary)
 	ContestFetchSummary(ctx echo.Context, id openapi_types.UUID) error
@@ -574,6 +671,18 @@ type ServerInterface interface {
 	// Checks if service is responsive
 	// (GET /ping)
 	Ping(ctx echo.Context) error
+	// Lists platform scoring rule-set versions
+	// (GET /scoring/rule-sets)
+	ScoringRuleSetListPlatform(ctx echo.Context) error
+	// Creates a draft platform scoring rule-set version
+	// (POST /scoring/rule-sets)
+	ScoringRuleSetCreatePlatform(ctx echo.Context) error
+	// Activates a published scoring rule-set version
+	// (POST /scoring/rule-sets/{id}/activate)
+	ScoringRuleSetActivate(ctx echo.Context, id openapi_types.UUID) error
+	// Publishes an immutable scoring rule-set version
+	// (POST /scoring/rule-sets/{id}/publish)
+	ScoringRuleSetPublish(ctx echo.Context, id openapi_types.UUID) error
 	// Fetches a activity split summary of a user for a given year
 	// (GET /users/{userId}/activity-split/{year})
 	ProfileYearlyActivitySplitByUserID(ctx echo.Context, userId openapi_types.UUID, year int) error
@@ -916,6 +1025,42 @@ func (w *ServerInterfaceWrapper) ContestRegistrationUpsert(ctx echo.Context) err
 	return err
 }
 
+// ScoringRuleSetListContest converts echo context to params.
+func (w *ServerInterfaceWrapper) ScoringRuleSetListContest(ctx echo.Context) error {
+	var err error
+	// ------------- Path parameter "id" -------------
+	var id openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithLocation("simple", false, "id", runtime.ParamLocationPath, ctx.Param("id"), &id)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter id: %s", err))
+	}
+
+	ctx.Set(CookieAuthScopes, []string{""})
+
+	// Invoke the callback with all the unmarshalled arguments
+	err = w.Handler.ScoringRuleSetListContest(ctx, id)
+	return err
+}
+
+// ScoringRuleSetCreateContest converts echo context to params.
+func (w *ServerInterfaceWrapper) ScoringRuleSetCreateContest(ctx echo.Context) error {
+	var err error
+	// ------------- Path parameter "id" -------------
+	var id openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithLocation("simple", false, "id", runtime.ParamLocationPath, ctx.Param("id"), &id)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter id: %s", err))
+	}
+
+	ctx.Set(CookieAuthScopes, []string{""})
+
+	// Invoke the callback with all the unmarshalled arguments
+	err = w.Handler.ScoringRuleSetCreateContest(ctx, id)
+	return err
+}
+
 // ContestFetchSummary converts echo context to params.
 func (w *ServerInterfaceWrapper) ContestFetchSummary(ctx echo.Context) error {
 	var err error
@@ -1187,6 +1332,64 @@ func (w *ServerInterfaceWrapper) Ping(ctx echo.Context) error {
 	return err
 }
 
+// ScoringRuleSetListPlatform converts echo context to params.
+func (w *ServerInterfaceWrapper) ScoringRuleSetListPlatform(ctx echo.Context) error {
+	var err error
+
+	ctx.Set(CookieAuthScopes, []string{""})
+
+	// Invoke the callback with all the unmarshalled arguments
+	err = w.Handler.ScoringRuleSetListPlatform(ctx)
+	return err
+}
+
+// ScoringRuleSetCreatePlatform converts echo context to params.
+func (w *ServerInterfaceWrapper) ScoringRuleSetCreatePlatform(ctx echo.Context) error {
+	var err error
+
+	ctx.Set(CookieAuthScopes, []string{""})
+
+	// Invoke the callback with all the unmarshalled arguments
+	err = w.Handler.ScoringRuleSetCreatePlatform(ctx)
+	return err
+}
+
+// ScoringRuleSetActivate converts echo context to params.
+func (w *ServerInterfaceWrapper) ScoringRuleSetActivate(ctx echo.Context) error {
+	var err error
+	// ------------- Path parameter "id" -------------
+	var id openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithLocation("simple", false, "id", runtime.ParamLocationPath, ctx.Param("id"), &id)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter id: %s", err))
+	}
+
+	ctx.Set(CookieAuthScopes, []string{""})
+
+	// Invoke the callback with all the unmarshalled arguments
+	err = w.Handler.ScoringRuleSetActivate(ctx, id)
+	return err
+}
+
+// ScoringRuleSetPublish converts echo context to params.
+func (w *ServerInterfaceWrapper) ScoringRuleSetPublish(ctx echo.Context) error {
+	var err error
+	// ------------- Path parameter "id" -------------
+	var id openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithLocation("simple", false, "id", runtime.ParamLocationPath, ctx.Param("id"), &id)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter id: %s", err))
+	}
+
+	ctx.Set(CookieAuthScopes, []string{""})
+
+	// Invoke the callback with all the unmarshalled arguments
+	err = w.Handler.ScoringRuleSetPublish(ctx, id)
+	return err
+}
+
 // ProfileYearlyActivitySplitByUserID converts echo context to params.
 func (w *ServerInterfaceWrapper) ProfileYearlyActivitySplitByUserID(ctx echo.Context) error {
 	var err error
@@ -1380,6 +1583,8 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 	router.GET(baseURL+"/contests/:id/profile/:user_id/scores", wrapper.ContestProfileFetchScores)
 	router.GET(baseURL+"/contests/:id/registration", wrapper.ContestFindRegistration)
 	router.POST(baseURL+"/contests/:id/registration", wrapper.ContestRegistrationUpsert)
+	router.GET(baseURL+"/contests/:id/scoring/rule-sets", wrapper.ScoringRuleSetListContest)
+	router.POST(baseURL+"/contests/:id/scoring/rule-sets", wrapper.ScoringRuleSetCreateContest)
 	router.GET(baseURL+"/contests/:id/summary", wrapper.ContestFetchSummary)
 	router.GET(baseURL+"/languages", wrapper.LanguageList)
 	router.POST(baseURL+"/languages", wrapper.LanguageCreate)
@@ -1395,6 +1600,10 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 	router.PUT(baseURL+"/logs/:id", wrapper.LogUpdate)
 	router.PUT(baseURL+"/logs/:id/contest-registrations", wrapper.LogContestRegistrationUpdate)
 	router.GET(baseURL+"/ping", wrapper.Ping)
+	router.GET(baseURL+"/scoring/rule-sets", wrapper.ScoringRuleSetListPlatform)
+	router.POST(baseURL+"/scoring/rule-sets", wrapper.ScoringRuleSetCreatePlatform)
+	router.POST(baseURL+"/scoring/rule-sets/:id/activate", wrapper.ScoringRuleSetActivate)
+	router.POST(baseURL+"/scoring/rule-sets/:id/publish", wrapper.ScoringRuleSetPublish)
 	router.GET(baseURL+"/users/:userId/activity-split/:year", wrapper.ProfileYearlyActivitySplitByUserID)
 	router.GET(baseURL+"/users/:userId/activity/:year", wrapper.ProfileYearlyActivityByUserID)
 	router.GET(baseURL+"/users/:userId/contest-registrations/:year", wrapper.ProfileYearlyContestRegistrationsByUserID)

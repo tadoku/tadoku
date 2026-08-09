@@ -41,6 +41,7 @@ func NewServer(
 	tagSuggestions *domain.TagSuggestions,
 	logContestUpdate *domain.LogContestUpdate,
 	scorePreview *domain.ScorePreview,
+	scoringRuleSetManagement *domain.ScoringRuleSetManagement,
 ) openapi.ServerInterface {
 	return &Server{
 		contestConfigurationOptions: contestConfigurationOptions,
@@ -77,6 +78,7 @@ func NewServer(
 		tagSuggestions:              tagSuggestions,
 		logContestUpdate:            logContestUpdate,
 		scorePreview:                scorePreview,
+		scoringRuleSetManagement:    scoringRuleSetManagement,
 	}
 }
 
@@ -115,4 +117,5 @@ type Server struct {
 	tagSuggestions              *domain.TagSuggestions
 	logContestUpdate            *domain.LogContestUpdate
 	scorePreview                *domain.ScorePreview
+	scoringRuleSetManagement    *domain.ScoringRuleSetManagement
 }

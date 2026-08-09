@@ -1,11 +1,15 @@
 import { useCurrentDateTime } from '@app/common/hooks'
-import { useSession } from '@app/common/session'
+import { useSession, useUserRole } from '@app/common/session'
 import { useContest, useContestRegistration } from '@app/immersion/api'
 import { useRouter } from 'next/router'
 import { Breadcrumb, ButtonGroup, Loading, Tabbar } from 'ui'
 import { DateTime, Interval } from 'luxon'
 import { HomeIcon } from '@heroicons/react/20/solid'
-import { PencilSquareIcon, PlusIcon } from '@heroicons/react/24/solid'
+import {
+  AdjustmentsHorizontalIcon,
+  PencilSquareIcon,
+  PlusIcon,
+} from '@heroicons/react/24/solid'
 import { routes } from '@app/common/routes'
 import { ContestLeaderboard } from '@app/immersion/ContestLeaderboard'
 import Head from 'next/head'
@@ -18,6 +22,7 @@ const Page = () => {
 
   const contest = useContest(id)
   const [session] = useSession()
+  const role = useUserRole()
 
   const registration = useContestRegistration(id, { enabled: !!session })
 
@@ -94,6 +99,13 @@ const Page = () => {
                 IconComponent: PencilSquareIcon,
                 style: 'primary',
                 visible: isOngoing && registration.data !== undefined,
+              },
+              {
+                href: routes.contestScoring(id),
+                label: 'Scoring rules',
+                IconComponent: AdjustmentsHorizontalIcon,
+                style: 'secondary',
+                visible: role === 'admin',
               },
             ]}
             orientation="right"

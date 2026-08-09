@@ -1,7 +1,11 @@
 import { useRouter } from 'next/router'
 import { Breadcrumb, ButtonGroup, Loading, Pagination, Tabbar } from 'ui'
 import { HomeIcon } from '@heroicons/react/20/solid'
-import { PencilSquareIcon, PlusIcon } from '@heroicons/react/24/solid'
+import {
+  AdjustmentsHorizontalIcon,
+  PencilSquareIcon,
+  PlusIcon,
+} from '@heroicons/react/24/solid'
 import { routes } from '@app/common/routes'
 import {
   useContest,
@@ -14,7 +18,7 @@ import { useEffect, useState } from 'react'
 import LogsList from '@app/immersion/LogsList'
 import { useCurrentDateTime } from '@app/common/hooks'
 import { DateTime, Interval } from 'luxon'
-import { useSession } from '@app/common/session'
+import { useSession, useUserRole } from '@app/common/session'
 
 const Page = () => {
   const router = useRouter()
@@ -45,6 +49,7 @@ const Page = () => {
   const logs = useContestLogs(filters)
 
   const [session] = useSession()
+  const role = useUserRole()
   const registration = useContestRegistration(id, { enabled: !!session })
 
   if (contest.isLoading || contest.isIdle) {
@@ -124,6 +129,13 @@ const Page = () => {
                 IconComponent: PencilSquareIcon,
                 style: 'primary',
                 visible: isOngoing && registration.data !== undefined,
+              },
+              {
+                href: routes.contestScoring(id),
+                label: 'Scoring rules',
+                IconComponent: AdjustmentsHorizontalIcon,
+                style: 'secondary',
+                visible: role === 'admin',
               },
             ]}
             orientation="right"

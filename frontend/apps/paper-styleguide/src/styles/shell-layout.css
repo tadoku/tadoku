@@ -1,6 +1,8 @@
 @layer paper-styleguide {
   /* Application layout: responsive shell regions around Paper components. */
   .docs-shell {
+    --docs-navbar-block-size: calc(var(--paper-control-height) + var(--paper-border-static-width));
+
     min-block-size: 100vh;
     display: grid;
     grid-template-columns: 18rem minmax(0, 1fr);
@@ -9,6 +11,7 @@
 
   .docs-navbar {
     position: sticky;
+    z-index: 30;
     inset-block-start: 0;
     grid-column: 1 / -1;
   }
@@ -54,9 +57,9 @@
 
   .docs-sidebar {
     position: sticky;
-    inset-block-start: var(--paper-control-height);
+    inset-block-start: var(--docs-navbar-block-size);
     align-self: start;
-    block-size: calc(100vh - var(--paper-control-height));
+    block-size: calc(100vh - var(--docs-navbar-block-size));
     overflow-y: auto;
     padding: 1.25rem 1rem 3rem;
     border-inline-end: var(--paper-border-static-width) solid var(--paper-color-rule-subtle);

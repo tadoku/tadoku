@@ -31,6 +31,41 @@ export const CUSTOM_STYLE_ALLOWANCES: readonly CustomStyleAllowance[] = [
     reason: 'The skip link must remain visible above the sticky application shell.',
   },
   {
+    key: 'src/styles/documents.css:custom-background:.foundation-motion__track span',
+    category: 'content',
+    reason: 'The motion foundation needs a visible token-driven marker to demonstrate duration roles.',
+  },
+  {
+    key: 'src/styles/documents.css:custom-background:.foundation-swatch--1',
+    category: 'content',
+    reason: 'The color foundation must render the canvas semantic token as documentation content.',
+  },
+  {
+    key: 'src/styles/documents.css:custom-background:.foundation-swatch--2',
+    category: 'content',
+    reason: 'The color foundation must render the paper semantic token as documentation content.',
+  },
+  {
+    key: 'src/styles/documents.css:custom-background:.foundation-swatch--3',
+    category: 'content',
+    reason: 'The color foundation must render the ink semantic token as documentation content.',
+  },
+  {
+    key: 'src/styles/documents.css:custom-background:.foundation-swatch--4',
+    category: 'content',
+    reason: 'The color foundation must render the action semantic token as documentation content.',
+  },
+  {
+    key: 'src/styles/documents.css:custom-background:.foundation-swatch--5',
+    category: 'content',
+    reason: 'The color foundation must render the success semantic token as documentation content.',
+  },
+  {
+    key: 'src/styles/documents.css:custom-background:.foundation-swatch--6',
+    category: 'content',
+    reason: 'The color foundation must render the first chart semantic token as documentation content.',
+  },
+  {
     key: 'src/styles/overlays.css:custom-background:.search-result:hover',
     category: 'search-result-composition',
     reason: 'Search results are application navigation content, not form controls.',

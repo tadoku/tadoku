@@ -55,6 +55,16 @@
     border-color: var(--paper-color-rule-field-edge);
   }
 
+  .paper-input:focus-visible {
+    --paper-input-focus-color: var(--paper-color-focus-ring);
+
+    position: relative;
+    z-index: 1;
+    border-block-end-color: var(--paper-input-focus-color);
+    outline: 3px solid color-mix(in srgb, var(--paper-input-focus-color) 10%, transparent);
+    outline-offset: 0;
+  }
+
   .paper-input::placeholder {
     color: var(--paper-color-text-muted);
     opacity: 0.78;
@@ -70,11 +80,25 @@
     border-block-end-color: var(--paper-color-status-danger);
   }
 
+  .paper-field--invalid .paper-input:focus-visible,
+  .paper-input[aria-invalid="true"]:focus-visible {
+    --paper-input-focus-color: var(--paper-color-status-danger);
+  }
+
   .paper-field--disabled {
     opacity: 0.56;
   }
 
   .paper-input:disabled {
     cursor: not-allowed;
+  }
+
+  @media (forced-colors: active) {
+    .paper-input:focus-visible {
+      border-block-end-color: Highlight;
+      outline: 3px solid Highlight;
+      outline-offset: 0;
+      box-shadow: none;
+    }
   }
 }

@@ -29,4 +29,34 @@ describe("Form control visual contract", () => {
       /\.paper-input\s*\{[^}]*border: var\(--paper-border-static-width\) solid var\(--paper-color-rule-field-edge\);[^}]*border-block-end: var\(--paper-border-field-edge-width\) solid\s*var\(--paper-color-rule-action-edge\);/s,
     );
   });
+
+  it("gives Paper inputs a zero-offset, low-opacity action hug on keyboard focus", () => {
+    expect(inputCss).toMatch(
+      /\.paper-input:focus-visible\s*\{[^}]*--paper-input-focus-color: var\(--paper-color-focus-ring\);[^}]*position: relative;[^}]*z-index: 1;[^}]*border-block-end-color: var\(--paper-input-focus-color\);[^}]*outline: 3px solid color-mix\(in srgb, var\(--paper-input-focus-color\) 10%, transparent\);[^}]*outline-offset: 0;/s,
+    );
+
+    const focusedRule = inputCss.match(
+      /\.paper-input:focus-visible\s*\{(?<declarations>[^}]*)\}/s,
+    )?.groups?.declarations;
+
+    expect(focusedRule).not.toMatch(/border[^:]*-width:/u);
+  });
+
+  it("keeps invalid focus entirely in the danger state", () => {
+    expect(inputCss).toMatch(
+      /\.paper-field--invalid \.paper-input:focus-visible,\s*\.paper-input\[aria-invalid="true"\]:focus-visible\s*\{[^}]*--paper-input-focus-color: var\(--paper-color-status-danger\);/s,
+    );
+
+    const invalidFocusRule = inputCss.match(
+      /\.paper-field--invalid \.paper-input:focus-visible,\s*\.paper-input\[aria-invalid="true"\]:focus-visible\s*\{(?<declarations>[^}]*)\}/s,
+    )?.groups?.declarations;
+
+    expect(invalidFocusRule).not.toMatch(/(?:border|outline|box-shadow)\s*:/u);
+  });
+
+  it("uses a system Highlight action hug in forced-colors mode", () => {
+    expect(inputCss).toMatch(
+      /@media \(forced-colors: active\)\s*\{[^}]*\.paper-input:focus-visible\s*\{[^}]*border-block-end-color: Highlight;[^}]*outline: 3px solid Highlight;[^}]*outline-offset: 0;[^}]*box-shadow: none;/s,
+    );
+  });
 });

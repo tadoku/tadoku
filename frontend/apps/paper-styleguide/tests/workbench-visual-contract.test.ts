@@ -76,7 +76,7 @@ describe('component workbench visual contract', () => {
     expect(styleguideStyles).toMatch(
       /\.canvas-controls \{[^}]*display: grid;/su,
     )
-    expect(styleguideStyles).toMatch(/@container \(min-width: 54rem\)/u)
+    expect(styleguideStyles).toMatch(/@container \(min-width: 40rem\)/u)
     expect(declarationsFor('.example-canvas__stage').join('\n')).toMatch(
       /overflow: auto;/u,
     )
@@ -115,6 +115,29 @@ describe('component workbench visual contract', () => {
     )
     expect(containerRules).toEqual(
       expect.arrayContaining([expect.stringMatching(/\.canvas-controls\b/u)]),
+    )
+  })
+
+  it('places the optional fixture beside theme and density while keeping viewport separate', () => {
+    const canvasStyles = importedStyleSources.find(
+      ({ key }) => key === 'src/styles/canvas.css',
+    )?.source
+    const wideRule = conditionalRuleBodies(canvasStyles ?? '', 'container').find(
+      (rule) => /\.canvas-controls\b/u.test(rule),
+    )
+
+    expect(wideRule).toBeDefined()
+    expect(wideRule).toMatch(
+      /\.canvas-controls:has\(\.canvas-controls__fixture\)\s*\{[^}]*grid-template-columns:\s*repeat\(3,\s*minmax\(0,\s*1fr\)\);/su,
+    )
+    expect(wideRule).toMatch(
+      /\.canvas-controls:not\(:has\(\.canvas-controls__fixture\)\)\s*\{[^}]*grid-template-columns:\s*repeat\(2,\s*minmax\(0,\s*1fr\)\);/su,
+    )
+    expect(wideRule).toMatch(
+      /\.canvas-controls__fixture,\s*\.canvas-controls__theme,\s*\.canvas-controls__density\s*\{[^}]*grid-column:\s*auto;/su,
+    )
+    expect(wideRule).toMatch(
+      /\.canvas-controls__viewport\s*\{[^}]*grid-column:\s*1\s*\/\s*-1;/su,
     )
   })
 

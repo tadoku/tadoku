@@ -48,4 +48,10 @@ describe("Select chevron visual contract", () => {
       /\.paper-select__icon\s*\{[^}]*inset-inline-end:\s*var\(--paper-field-padding-inline\);[^}]*pointer-events:\s*none;/s,
     );
   });
+
+  it("keeps the chevron above the focused Select stacking layer", () => {
+    expect(formsCss).toMatch(
+      /\.paper-select__icon\s*\{[^}]*z-index:\s*2;/s,
+    );
+  });
 });

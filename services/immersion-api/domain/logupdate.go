@@ -47,13 +47,14 @@ type LogUpdate struct {
 	clock            commondomain.Clock
 	validate         *validator.Validate
 	useScoringEngine bool
+	scoringObserver  ScoringShadowObserver
 }
 
 func NewLogUpdate(
 	repo LogUpdateRepository,
 	clock commondomain.Clock,
 ) *LogUpdate {
-	return NewLogUpdateWithScoringEngine(repo, clock, false)
+	return NewLogUpdateWithScoringObserver(repo, clock, false, nil)
 }
 
 func NewLogUpdateWithScoringEngine(
@@ -61,11 +62,21 @@ func NewLogUpdateWithScoringEngine(
 	clock commondomain.Clock,
 	enabled bool,
 ) *LogUpdate {
+	return NewLogUpdateWithScoringObserver(repo, clock, enabled, nil)
+}
+
+func NewLogUpdateWithScoringObserver(
+	repo LogUpdateRepository,
+	clock commondomain.Clock,
+	enabled bool,
+	observer ScoringShadowObserver,
+) *LogUpdate {
 	return &LogUpdate{
 		repo:             repo,
 		clock:            clock,
 		validate:         validator.New(),
 		useScoringEngine: enabled,
+		scoringObserver:  observer,
 	}
 }
 
@@ -124,8 +135,20 @@ func (s *LogUpdate) Execute(ctx context.Context, req *LogUpdateRequest) (*Log, e
 		Amount:          req.Amount,
 		DurationSeconds: req.DurationSeconds,
 	}
+	mode := ScoringShadowModeShadow
 	if s.useScoringEngine {
-		result, scoringErr := EvaluateActivePlatformScore(ctx, s.repo, scoringInput)
+		mode = ScoringShadowModeAuthoritative
+	}
+	result, scoringErr := EvaluateAndObservePlatformScoring(
+		ctx,
+		s.repo,
+		s.scoringObserver,
+		ScoringShadowOperationUpdate,
+		mode,
+		scoringInput,
+		req.tracking.ComputedScore,
+	)
+	if s.useScoringEngine {
 		if scoringErr != nil {
 			return nil, fmt.Errorf("could not score log: %w", scoringErr)
 		}
@@ -148,8 +171,8 @@ func (s *LogUpdate) Execute(ctx context.Context, req *LogUpdateRequest) (*Log, e
 			}
 			req.contestTrackings = append(req.contestTrackings, contestTracking)
 		}
-	} else {
-		RecordPlatformScoringShadow(ctx, s.repo, scoringInput, req.tracking.ComputedScore)
+	}
+	if !s.useScoringEngine {
 		req.now = s.clock.Now()
 	}
 

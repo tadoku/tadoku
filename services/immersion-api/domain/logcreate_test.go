@@ -802,4 +802,48 @@ func TestLogCreate_Execute(t *testing.T) {
 		require.NoError(t, err)
 		assert.True(t, repo.createCalledWith.EligibleOfficialLeaderboard())
 	})
+
+	t.Run("observes one create comparison in shadow mode", func(t *testing.T) {
+		repo := &mockLogCreateRepository{createdLogID: &logID, log: createdLog}
+		clock := commondomain.NewMockClock(now)
+		observer := &recordingScoringShadowObserver{}
+		userUpsert := domain.NewUserUpsert(&mockUserUpsertRepositoryForLog{})
+		svc := domain.NewLogCreateWithScoringObserver(repo, clock, userUpsert, false, observer)
+
+		_, err := svc.Execute(ctxWithUserSubject(userID.String()), &domain.LogCreateRequest{
+			UnitID:       &unitID,
+			ActivityID:   1,
+			LanguageCode: "jpn",
+			Amount:       &amount100,
+		})
+
+		require.NoError(t, err)
+		assert.Equal(t, 1, repo.scoringRuleCalls)
+		require.Len(t, observer.observations, 1)
+		assert.Equal(t, domain.ScoringShadowOperationCreate, observer.observations[0].Operation)
+		assert.Equal(t, domain.ScoringShadowModeShadow, observer.observations[0].Mode)
+		assert.Equal(t, domain.ScoringShadowOutcomeMatch, observer.observations[0].Outcome)
+	})
+
+	t.Run("observes an authoritative create error before rejecting the write", func(t *testing.T) {
+		repo := &mockLogCreateRepository{scoringRuleErr: errors.New("scoring unavailable")}
+		clock := commondomain.NewMockClock(now)
+		observer := &recordingScoringShadowObserver{}
+		userUpsert := domain.NewUserUpsert(&mockUserUpsertRepositoryForLog{})
+		svc := domain.NewLogCreateWithScoringObserver(repo, clock, userUpsert, true, observer)
+
+		_, err := svc.Execute(ctxWithUserSubject(userID.String()), &domain.LogCreateRequest{
+			UnitID:       &unitID,
+			ActivityID:   1,
+			LanguageCode: "jpn",
+			Amount:       &amount100,
+		})
+
+		assert.Error(t, err)
+		assert.False(t, repo.createCalled)
+		assert.Equal(t, 1, repo.scoringRuleCalls)
+		require.Len(t, observer.observations, 1)
+		assert.Equal(t, domain.ScoringShadowModeAuthoritative, observer.observations[0].Mode)
+		assert.Equal(t, domain.ScoringShadowOutcomeError, observer.observations[0].Outcome)
+	})
 }

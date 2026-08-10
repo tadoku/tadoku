@@ -14,10 +14,20 @@ import (
 type mockActivePlatformScoringRuleSetFinder struct {
 	ruleSet *domain.ScoringRuleSet
 	err     error
+	calls   int
 }
 
 func (m *mockActivePlatformScoringRuleSetFinder) FindActivePlatformScoringRuleSet(context.Context) (*domain.ScoringRuleSet, error) {
+	m.calls++
 	return m.ruleSet, m.err
+}
+
+type recordingScoringShadowObserver struct {
+	observations []domain.ScoringShadowObservation
+}
+
+func (o *recordingScoringShadowObserver) ObserveScoringShadow(_ context.Context, observation domain.ScoringShadowObservation) {
+	o.observations = append(o.observations, observation)
 }
 
 func TestEvaluatePlatformScoringShadow(t *testing.T) {
@@ -132,4 +142,94 @@ func TestEvaluatePlatformScoringShadowUsesDurationMinutes(t *testing.T) {
 	require.NoError(t, err)
 	assert.False(t, comparison.Mismatch)
 	assert.InDelta(t, float32(0.6), comparison.RuleResult.Score, 0.0001)
+}
+
+func TestEvaluateAndObservePlatformScoringRecordsOneMutuallyExclusiveOutcome(t *testing.T) {
+	amount := float32(10)
+	matchingRuleSet := func(rate float32) *domain.ScoringRuleSet {
+		return &domain.ScoringRuleSet{
+			ID: uuid.New(),
+			Rules: []domain.ScoringRule{{
+				ID:          uuid.New(),
+				Priority:    1,
+				ActivityID:  1,
+				UnitKey:     domain.UnitKeyReadingPage,
+				ScoreSource: domain.ScoreSourceAmount,
+				Rate:        rate,
+			}},
+		}
+	}
+	unmatchedRuleSet := &domain.ScoringRuleSet{
+		ID: uuid.New(),
+		Rules: []domain.ScoringRule{{
+			ID:          uuid.New(),
+			Priority:    1,
+			ActivityID:  2,
+			ScoreSource: domain.ScoreSourceAmount,
+			Rate:        1,
+		}},
+	}
+
+	testCases := []struct {
+		name      string
+		ruleSet   *domain.ScoringRuleSet
+		err       error
+		outcome   domain.ScoringShadowOutcome
+		wantError bool
+	}{
+		{name: "match", ruleSet: matchingRuleSet(1), outcome: domain.ScoringShadowOutcomeMatch},
+		{name: "mismatch", ruleSet: matchingRuleSet(2), outcome: domain.ScoringShadowOutcomeMismatch},
+		{name: "unmatched", ruleSet: unmatchedRuleSet, outcome: domain.ScoringShadowOutcomeUnmatched},
+		{name: "error", err: errors.New("database connection details must stay private"), outcome: domain.ScoringShadowOutcomeError, wantError: true},
+	}
+	modes := []domain.ScoringShadowMode{
+		domain.ScoringShadowModeShadow,
+		domain.ScoringShadowModeAuthoritative,
+	}
+
+	for _, mode := range modes {
+		for _, testCase := range testCases {
+			t.Run(string(mode)+"/"+testCase.name, func(t *testing.T) {
+				finder := &mockActivePlatformScoringRuleSetFinder{ruleSet: testCase.ruleSet, err: testCase.err}
+				observer := &recordingScoringShadowObserver{}
+
+				_, err := domain.EvaluateAndObservePlatformScoring(
+					context.Background(),
+					finder,
+					observer,
+					domain.ScoringShadowOperationCreate,
+					mode,
+					domain.ScoringInput{
+						ActivityID:   1,
+						UnitKey:      domain.UnitKeyReadingPage,
+						LanguageCode: "jpn",
+						Amount:       &amount,
+					},
+					10,
+				)
+
+				if testCase.wantError {
+					assert.Error(t, err)
+				} else {
+					require.NoError(t, err)
+				}
+				assert.Equal(t, 1, finder.calls, "the engine must be evaluated exactly once")
+				require.Len(t, observer.observations, 1, "one comparison must produce one outcome")
+				observation := observer.observations[0]
+				assert.Equal(t, testCase.outcome, observation.Outcome)
+				assert.Equal(t, mode, observation.Mode)
+				assert.Equal(t, domain.ScoringShadowOperationCreate, observation.Operation)
+				assert.Equal(t, domain.ScoreSourceAmount, observation.ScoreSource)
+				assert.Equal(t, int32(1), observation.ActivityID)
+				if testCase.wantError {
+					assert.Equal(t, "evaluation_failed", observation.ErrorType)
+					assert.NotContains(t, observation.ErrorType, "database")
+				} else {
+					require.NotNil(t, observation.EngineScore)
+					require.NotNil(t, observation.AbsoluteDelta)
+					require.NotNil(t, observation.RelativeDelta)
+				}
+			})
+		}
+	}
 }

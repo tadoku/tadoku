@@ -34,7 +34,10 @@ spec:
         image: immersion-api-image
         imagePullPolicy: IfNotPresent
         ports:
-        - containerPort: 8000
+        - name: http
+          containerPort: 8000
+        - name: metrics
+          containerPort: 9090
         env:
           - name: API_POSTGRES_URL
             value: "postgres://immersion:dev-foobar@tadoku-dev-db.default/immersion?sslmode=require"
@@ -56,6 +59,8 @@ spec:
             value: "immersion-api"
           - name: API_SCORING_ENGINE_ENABLED
             value: "false"
+          - name: API_METRICS_PORT
+            value: "9090"
         volumeMounts:
         - name: k8s-token
           mountPath: /var/run/secrets/tokens
@@ -96,6 +101,23 @@ spec:
   - port: 80
     targetPort: 8000
     name: http
+  selector:
+    app: immersion-api
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: immersion-api-metrics
+  namespace: tdk-immersion-api
+  labels:
+    app: immersion-api
+    service: immersion-api-metrics
+spec:
+  type: ClusterIP
+  ports:
+  - port: 9090
+    targetPort: metrics
+    name: metrics
   selector:
     app: immersion-api
 ---

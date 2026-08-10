@@ -2,13 +2,64 @@ package domain
 
 import (
 	"context"
+	"errors"
 	"fmt"
-	"log/slog"
 	"math"
+
+	"github.com/google/uuid"
 )
 
 type activePlatformScoringRuleSetFinder interface {
 	FindActivePlatformScoringRuleSet(context.Context) (*ScoringRuleSet, error)
+}
+
+type ScoringShadowOutcome string
+
+const (
+	ScoringShadowOutcomeMatch     ScoringShadowOutcome = "match"
+	ScoringShadowOutcomeMismatch  ScoringShadowOutcome = "mismatch"
+	ScoringShadowOutcomeUnmatched ScoringShadowOutcome = "unmatched"
+	ScoringShadowOutcomeError     ScoringShadowOutcome = "error"
+)
+
+type ScoringShadowOperation string
+
+const (
+	ScoringShadowOperationCreate ScoringShadowOperation = "create"
+	ScoringShadowOperationUpdate ScoringShadowOperation = "update"
+)
+
+type ScoringShadowMode string
+
+const (
+	ScoringShadowModeShadow        ScoringShadowMode = "shadow"
+	ScoringShadowModeAuthoritative ScoringShadowMode = "authoritative"
+)
+
+// ScoringShadowObservation is the privacy-reviewed data contract passed to the
+// telemetry adapter. It intentionally contains no user, registration, or log
+// identifiers and no user-authored content.
+type ScoringShadowObservation struct {
+	Outcome        ScoringShadowOutcome
+	Operation      ScoringShadowOperation
+	Mode           ScoringShadowMode
+	ActivityID     int32
+	UnitKey        string
+	LanguageCode   string
+	ScoreSource    ScoreSource
+	LegacyScore    float32
+	EngineScore    *float32
+	AbsoluteDelta  *float64
+	RelativeDelta  *float64
+	RuleSetID      *uuid.UUID
+	AppliedRuleIDs []uuid.UUID
+	ErrorType      string
+}
+
+// ScoringShadowObserver is defined where scoring comparisons are consumed so
+// the domain does not depend on an observability implementation.
+type ScoringShadowObserver interface {
+	ObserveScoringShadow(context.Context, ScoringShadowObservation)
 }
 
 type ScoringShadowComparison struct {
@@ -49,48 +100,89 @@ func EvaluateActivePlatformScore(
 	return EvaluateScoringRuleSet(input, *ruleSet)
 }
 
-func RecordPlatformScoringShadow(
+// EvaluateAndObservePlatformScoring evaluates the engine exactly once and
+// records exactly one mutually exclusive outcome. Observer failures cannot
+// affect scoring because the observer has no error return.
+func EvaluateAndObservePlatformScoring(
 	ctx context.Context,
 	finder activePlatformScoringRuleSetFinder,
+	observer ScoringShadowObserver,
+	operation ScoringShadowOperation,
+	mode ScoringShadowMode,
 	input ScoringInput,
-	interimScore float32,
-) {
-	comparison, err := EvaluatePlatformScoringShadow(ctx, finder, input, interimScore)
+	legacyScore float32,
+) (ScoringResult, error) {
+	result, err := EvaluateActivePlatformScore(ctx, finder, input)
+	observation := ScoringShadowObservation{
+		Operation:    operation,
+		Mode:         mode,
+		ActivityID:   input.ActivityID,
+		UnitKey:      input.UnitKey,
+		LanguageCode: input.LanguageCode,
+		ScoreSource:  scoringShadowScoreSource(input),
+		LegacyScore:  legacyScore,
+	}
 	if err != nil {
-		slog.ErrorContext(
-			ctx,
-			"scoring shadow evaluation failed",
-			"activity_id", input.ActivityID,
-			"unit_key", input.UnitKey,
-			"language_code", input.LanguageCode,
-			"error", err,
-		)
-		return
+		observation.Outcome = ScoringShadowOutcomeError
+		observation.ErrorType = scoringShadowErrorType(err)
+		observeScoringShadow(ctx, observer, observation)
+		return ScoringResult{}, err
 	}
-	if !comparison.RuleResult.Matched {
-		slog.WarnContext(
-			ctx,
-			"scoring shadow input unmatched",
-			"activity_id", input.ActivityID,
-			"unit_key", input.UnitKey,
-			"language_code", input.LanguageCode,
-			"score_source", comparison.RuleResult.ScoreSource,
-			"interim_score", interimScore,
-		)
-		return
+
+	engineScore := result.Score
+	absoluteDelta := math.Abs(float64(legacyScore - result.Score))
+	scale := math.Max(math.Abs(float64(legacyScore)), math.Abs(float64(result.Score)))
+	relativeDelta := float64(0)
+	if scale > 0 {
+		relativeDelta = absoluteDelta / scale
 	}
-	if comparison.Mismatch {
-		slog.WarnContext(
-			ctx,
-			"scoring shadow mismatch",
-			"activity_id", input.ActivityID,
-			"unit_key", input.UnitKey,
-			"language_code", input.LanguageCode,
-			"score_source", comparison.RuleResult.ScoreSource,
-			"interim_score", interimScore,
-			"rule_score", comparison.RuleResult.Score,
-			"rule_set_id", comparison.RuleResult.AppliedRuleSetID,
-		)
+	observation.EngineScore = &engineScore
+	observation.AbsoluteDelta = &absoluteDelta
+	observation.RelativeDelta = &relativeDelta
+	observation.RuleSetID = result.AppliedRuleSetID
+	observation.AppliedRuleIDs = make([]uuid.UUID, len(result.AppliedRules))
+	for index, rule := range result.AppliedRules {
+		observation.AppliedRuleIDs[index] = rule.RuleID
+	}
+
+	switch {
+	case !result.Matched:
+		observation.Outcome = ScoringShadowOutcomeUnmatched
+	case scoringScoresEqual(legacyScore, result.Score):
+		observation.Outcome = ScoringShadowOutcomeMatch
+	default:
+		observation.Outcome = ScoringShadowOutcomeMismatch
+	}
+	observeScoringShadow(ctx, observer, observation)
+	return result, nil
+}
+
+func observeScoringShadow(ctx context.Context, observer ScoringShadowObserver, observation ScoringShadowObservation) {
+	if observer != nil {
+		observer.ObserveScoringShadow(ctx, observation)
+	}
+}
+
+func scoringShadowScoreSource(input ScoringInput) ScoreSource {
+	if input.Amount != nil {
+		return ScoreSourceAmount
+	}
+	if input.DurationSeconds != nil {
+		return ScoreSourceDurationMinutes
+	}
+	return ""
+}
+
+func scoringShadowErrorType(err error) string {
+	switch {
+	case errors.Is(err, ErrScoringRuleSetNotFound):
+		return "scoring_rule_set_not_found"
+	case errors.Is(err, ErrInvalidScoringRuleSet):
+		return "invalid_scoring_rule_set"
+	case errors.Is(err, ErrInvalidLog):
+		return "invalid_scoring_input"
+	default:
+		return "evaluation_failed"
 	}
 }
 

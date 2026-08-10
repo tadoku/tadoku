@@ -510,4 +510,51 @@ func TestLogUpdate_Execute(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, []string{"book", "fiction"}, repo.updateCalledWith.Tags)
 	})
+
+	t.Run("observes one update comparison in shadow mode", func(t *testing.T) {
+		repo := &mockLogUpdateRepository{
+			log:        makeLog(userID),
+			updatedLog: &domain.Log{ID: logID, UserID: userID, ActivityID: 1},
+		}
+		clock := commondomain.NewMockClock(now)
+		observer := &recordingScoringShadowObserver{}
+		svc := domain.NewLogUpdateWithScoringObserver(repo, clock, false, observer)
+
+		_, err := svc.Execute(ctxWithUserSubject(userID.String()), &domain.LogUpdateRequest{
+			LogID:  logID,
+			UnitID: &unitID,
+			Amount: &amount10,
+		})
+
+		require.NoError(t, err)
+		assert.Equal(t, 1, repo.scoringRuleCalls)
+		require.Len(t, observer.observations, 1)
+		assert.Equal(t, domain.ScoringShadowOperationUpdate, observer.observations[0].Operation)
+		assert.Equal(t, domain.ScoringShadowModeShadow, observer.observations[0].Mode)
+		assert.Equal(t, domain.ScoringShadowOutcomeMatch, observer.observations[0].Outcome)
+	})
+
+	t.Run("observes an authoritative update error before rejecting the write", func(t *testing.T) {
+		repo := &mockLogUpdateRepository{
+			log:            makeLog(userID),
+			scoringRuleErr: errors.New("scoring unavailable"),
+		}
+		clock := commondomain.NewMockClock(now)
+		observer := &recordingScoringShadowObserver{}
+		svc := domain.NewLogUpdateWithScoringObserver(repo, clock, true, observer)
+
+		_, err := svc.Execute(ctxWithUserSubject(userID.String()), &domain.LogUpdateRequest{
+			LogID:  logID,
+			UnitID: &unitID,
+			Amount: &amount10,
+		})
+
+		assert.Error(t, err)
+		assert.False(t, repo.updateCalled)
+		assert.Equal(t, 1, repo.scoringRuleCalls)
+		require.Len(t, observer.observations, 1)
+		assert.Equal(t, domain.ScoringShadowOperationUpdate, observer.observations[0].Operation)
+		assert.Equal(t, domain.ScoringShadowModeAuthoritative, observer.observations[0].Mode)
+		assert.Equal(t, domain.ScoringShadowOutcomeError, observer.observations[0].Outcome)
+	})
 }

@@ -54,6 +54,7 @@ type LogCreate struct {
 	validate         *validator.Validate
 	userUpsert       *UserUpsert
 	useScoringEngine bool
+	scoringObserver  ScoringShadowObserver
 }
 
 func NewLogCreate(
@@ -61,7 +62,7 @@ func NewLogCreate(
 	clock commondomain.Clock,
 	userUpsert *UserUpsert,
 ) *LogCreate {
-	return NewLogCreateWithScoringEngine(repo, clock, userUpsert, false)
+	return NewLogCreateWithScoringObserver(repo, clock, userUpsert, false, nil)
 }
 
 func NewLogCreateWithScoringEngine(
@@ -70,12 +71,23 @@ func NewLogCreateWithScoringEngine(
 	userUpsert *UserUpsert,
 	enabled bool,
 ) *LogCreate {
+	return NewLogCreateWithScoringObserver(repo, clock, userUpsert, enabled, nil)
+}
+
+func NewLogCreateWithScoringObserver(
+	repo LogCreateRepository,
+	clock commondomain.Clock,
+	userUpsert *UserUpsert,
+	enabled bool,
+	observer ScoringShadowObserver,
+) *LogCreate {
 	return &LogCreate{
 		repo:             repo,
 		clock:            clock,
 		validate:         validator.New(),
 		userUpsert:       userUpsert,
 		useScoringEngine: enabled,
+		scoringObserver:  observer,
 	}
 }
 
@@ -179,8 +191,20 @@ func (s *LogCreate) Execute(ctx context.Context, req *LogCreateRequest) (*Log, e
 		Amount:          req.Amount,
 		DurationSeconds: req.DurationSeconds,
 	}
+	mode := ScoringShadowModeShadow
 	if s.useScoringEngine {
-		result, scoringErr := EvaluateActivePlatformScore(ctx, s.repo, scoringInput)
+		mode = ScoringShadowModeAuthoritative
+	}
+	result, scoringErr := EvaluateAndObservePlatformScoring(
+		ctx,
+		s.repo,
+		s.scoringObserver,
+		ScoringShadowOperationCreate,
+		mode,
+		scoringInput,
+		req.tracking.ComputedScore,
+	)
+	if s.useScoringEngine {
 		if scoringErr != nil {
 			return nil, fmt.Errorf("could not score log: %w", scoringErr)
 		}
@@ -200,8 +224,6 @@ func (s *LogCreate) Execute(ctx context.Context, req *LogCreateRequest) (*Log, e
 			}
 			req.contestTrackings = append(req.contestTrackings, contestTracking)
 		}
-	} else {
-		RecordPlatformScoringShadow(ctx, s.repo, scoringInput, req.tracking.ComputedScore)
 	}
 
 	req.year = int16(s.clock.Now().Year())

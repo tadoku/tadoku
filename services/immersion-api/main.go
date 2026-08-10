@@ -4,6 +4,8 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"log/slog"
+	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
@@ -20,6 +22,7 @@ import (
 	immersiondomain "github.com/tadoku/tadoku/services/immersion-api/domain"
 	"github.com/tadoku/tadoku/services/immersion-api/http/rest"
 	"github.com/tadoku/tadoku/services/immersion-api/http/rest/openapi"
+	"github.com/tadoku/tadoku/services/immersion-api/observability"
 	"github.com/tadoku/tadoku/services/immersion-api/storage/postgres/repository"
 	valkeystore "github.com/tadoku/tadoku/services/immersion-api/storage/valkey"
 
@@ -44,6 +47,7 @@ type Config struct {
 	SentryDSN              string  `envconfig:"sentry_dns"`
 	SentryTracesSampleRate float64 `validate:"required_with=SentryDSN" envconfig:"sentry_traces_sample_rate"`
 	ScoringEngineEnabled   bool    `envconfig:"scoring_engine_enabled" default:"false"`
+	MetricsPort            int64   `envconfig:"metrics_port" default:"9090"`
 }
 
 func main() {
@@ -84,6 +88,20 @@ func main() {
 
 	leaderboardStore := valkeystore.NewLeaderboardStore(valkeyClient, clock)
 	leaderboardUpdater := immersiondomain.NewLeaderboardUpdater(leaderboardStore, postgresRepository)
+	scoringMetrics := observability.NewScoringShadowMetrics(cfg.ScoringEngineEnabled)
+	scoringObserver := observability.NewScoringShadowObserver(
+		scoringMetrics,
+		slog.New(slog.NewJSONHandler(os.Stdout, nil)),
+	)
+	metricsMux := http.NewServeMux()
+	metricsMux.Handle("/metrics", scoringMetrics)
+	metricsServer := observability.NewMetricsServer(
+		fmt.Sprintf("0.0.0.0:%d", cfg.MetricsPort),
+		metricsMux,
+	)
+	if err := metricsServer.Start(); err != nil {
+		panic(fmt.Errorf("could not start internal metrics server: %w", err))
+	}
 
 	// Start leaderboard outbox worker for async leaderboard sync
 	outboxWorker := immersiondomain.NewLeaderboardOutboxWorker(postgresRepository, leaderboardUpdater, clock, 500*time.Millisecond)
@@ -146,8 +164,8 @@ func main() {
 	contestModerationDetachLog := immersiondomain.NewContestModerationDetachLog(postgresRepository)
 	userUpsert := immersiondomain.NewUserUpsert(postgresRepository)
 	registrationUpsert := immersiondomain.NewRegistrationUpsert(postgresRepository, userUpsert)
-	logCreate := immersiondomain.NewLogCreateWithScoringEngine(postgresRepository, clock, userUpsert, cfg.ScoringEngineEnabled)
-	logUpdate := immersiondomain.NewLogUpdateWithScoringEngine(postgresRepository, clock, cfg.ScoringEngineEnabled)
+	logCreate := immersiondomain.NewLogCreateWithScoringObserver(postgresRepository, clock, userUpsert, cfg.ScoringEngineEnabled, scoringObserver)
+	logUpdate := immersiondomain.NewLogUpdateWithScoringObserver(postgresRepository, clock, cfg.ScoringEngineEnabled, scoringObserver)
 	contestCreate := immersiondomain.NewContestCreate(postgresRepository, clock, userUpsert)
 	languageList := immersiondomain.NewLanguageList(postgresRepository)
 	languageCreate := immersiondomain.NewLanguageCreate(postgresRepository)
@@ -208,12 +226,19 @@ func main() {
 	// Wait for interrupt signal
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
-	<-quit
+	select {
+	case <-quit:
+	case metricsErr := <-metricsServer.Errors():
+		slog.Error("internal metrics server stopped", "error", metricsErr)
+	}
 
 	// Graceful shutdown
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	if err := e.Shutdown(ctx); err != nil {
-		e.Logger.Fatal(err)
+		slog.Error("could not gracefully shut down application server", "error", err)
+	}
+	if err := metricsServer.Shutdown(ctx); err != nil {
+		slog.Error("could not gracefully shut down metrics server", "error", err)
 	}
 }

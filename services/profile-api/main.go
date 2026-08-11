@@ -1,7 +1,6 @@
 package main
 
 import (
-	"database/sql"
 	"fmt"
 	"time"
 
@@ -11,6 +10,7 @@ import (
 	ketoclient "github.com/tadoku/tadoku/services/common/client/keto"
 	"github.com/tadoku/tadoku/services/common/health"
 	tadokumiddleware "github.com/tadoku/tadoku/services/common/middleware"
+	"github.com/tadoku/tadoku/services/common/postgresconfig"
 	"github.com/tadoku/tadoku/services/profile-api/cache"
 	"github.com/tadoku/tadoku/services/profile-api/client/ory"
 	profiledomain "github.com/tadoku/tadoku/services/profile-api/domain"
@@ -19,13 +19,12 @@ import (
 
 	"github.com/getsentry/sentry-go"
 	sentryecho "github.com/getsentry/sentry-go/echo"
-	_ "github.com/jackc/pgx/v4/stdlib"
+	"github.com/jackc/pgx/v4/stdlib"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 )
 
 type Config struct {
-	PostgresURL            string  `validate:"required" envconfig:"postgres_url"`
 	Port                   int64   `validate:"required"`
 	JWKS                   string  `validate:"required"`
 	KratosURL              string  `validate:"required" envconfig:"kratos_url"`
@@ -45,10 +44,15 @@ func main() {
 		panic(fmt.Errorf("could not configure server: %w", err))
 	}
 
-	psql, err := sql.Open("pgx", cfg.PostgresURL)
+	postgresConfig, err := postgresconfig.Load("API_POSTGRES", "API_POSTGRES_URL")
+	if err != nil {
+		panic(fmt.Errorf("could not configure postgres: %w", err))
+	}
+	connConfig, err := postgresConfig.ConnConfig()
 	if err != nil {
 		panic(err)
 	}
+	psql := stdlib.OpenDB(*connConfig)
 
 	kratosClient := ory.NewKratosClient(cfg.KratosURL)
 	userCache := cache.NewUserCache(kratosClient, 5*time.Minute)

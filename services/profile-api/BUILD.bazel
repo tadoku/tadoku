@@ -12,6 +12,7 @@ go_library(
         "//services/common/client/keto",
         "//services/common/health",
         "//services/common/middleware",
+        "//services/common/postgresconfig",
         "//services/profile-api/cache",
         "//services/profile-api/client/ory",
         "//services/profile-api/domain",

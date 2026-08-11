@@ -78,10 +78,16 @@ spec:
           args:
             - "-source"
             - "file:///migrations"
-            - "-database"
-            - "postgres://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@io-postgres.shared.svc.cluster.local:5432/tadoku_prod_content"
             - "inspect"
           env:
+            - name: POSTGRES_HOST
+              value: io-postgres.shared.svc.cluster.local
+            - name: POSTGRES_PORT
+              value: "5432"
+            - name: POSTGRES_DATABASE
+              value: tadoku_prod_content
+            - name: POSTGRES_SSLMODE
+              value: require
             - name: POSTGRES_USER
               valueFrom:
                 secretKeyRef:
@@ -164,12 +170,16 @@ version `12`:
 ```text
 /migrate-recovery \
   -source file:///migrations \
-  -database "$DATABASE_URL" \
   -expected-version 13 \
   -target-version 12 \
   -confirm-target-version 12 \
   force
 ```
+
+Set `POSTGRES_HOST`, `POSTGRES_PORT`, `POSTGRES_DATABASE`, `POSTGRES_SSLMODE`,
+`POSTGRES_USER`, and `POSTGRES_PASSWORD` in the command environment. The
+deprecated `-database` URL flag exists only as a bounded operator escape hatch;
+do not use it in Kubernetes workload arguments or automation.
 
 The command refuses to run if:
 

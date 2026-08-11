@@ -4,7 +4,6 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 DB_NAME="tadoku-dev-db"
 DB_NAMESPACE="${TADOKU_DEV_NAMESPACE:-default}"
-DB_PASSWORD="${TADOKU_DEV_DB_PASSWORD:-dev-foobar}"
 ADMIN_EMAIL="${TADOKU_DEV_ADMIN_EMAIL:-dev@tadoku.app}"
 ADMIN_PASSWORD="${TADOKU_DEV_ADMIN_PASSWORD:-tadoku}"
 READER_EMAIL="${TADOKU_DEV_READER_EMAIL:-reader@tadoku.app}"
@@ -46,11 +45,11 @@ wait_for_db() {
     --timeout=300s
 }
 
-psql_url() {
-  local database="$1"
-  local user="$2"
-  printf 'postgres://%s:%s@%s.%s/%s?sslmode=require' \
-    "$user" "$DB_PASSWORD" "$DB_NAME" "$DB_NAMESPACE" "$database"
+database_password() {
+  local user="$1"
+  kubectl -n "$DB_NAMESPACE" get secret \
+    "${user}.${DB_NAME}.credentials.postgresql.acid.zalan.do" \
+    -o jsonpath='{.data.password}' | base64 --decode
 }
 
 wait_for_relation() {
@@ -58,11 +57,13 @@ wait_for_relation() {
   local user="$2"
   local relation="$3"
   local pod
+  local database_password_value
   pod="$(db_pod)"
+  database_password_value="$(database_password "$user")"
 
   for _ in $(seq 1 120); do
-    if kubectl -n "$DB_NAMESPACE" exec "$pod" -- env PGPASSWORD="$DB_PASSWORD" \
-      psql -X -qAt "$(psql_url "$database" "$user")" \
+    if kubectl -n "$DB_NAMESPACE" exec "$pod" -- env PGPASSWORD="$database_password_value" PGSSLMODE=require \
+      psql -X -qAt -h "${DB_NAME}.${DB_NAMESPACE}" -U "$user" -d "$database" \
       -c "select coalesce(to_regclass('public.${relation}') is not null, false)" 2>/dev/null | grep -q '^t$'; then
       return 0
     fi
@@ -179,12 +180,14 @@ refresh_identity_password() {
   local pod
   pod="$(db_pod)"
 
-  kubectl -n "$DB_NAMESPACE" exec -i "$pod" -- env PGPASSWORD="$DB_PASSWORD" \
+  local database_password_value
+  database_password_value="$(database_password kratos)"
+  kubectl -n "$DB_NAMESPACE" exec -i "$pod" -- env PGPASSWORD="$database_password_value" PGSSLMODE=require \
     psql -X -q \
       -v ON_ERROR_STOP=1 \
       -v "seed_email=${email}" \
       -v "seed_password=${password}" \
-      "$(psql_url kratos kratos)" <<'SQL'
+      -h "${DB_NAME}.${DB_NAMESPACE}" -U kratos -d kratos <<'SQL'
 create extension if not exists pgcrypto;
 update identity_credentials ic
 set config = jsonb_set(
@@ -271,12 +274,14 @@ run_seed_sql() {
   pod="$(db_pod)"
 
   echo "seeding ${database} from ${file#"$ROOT"/}"
-  kubectl -n "$DB_NAMESPACE" exec -i "$pod" -- env PGPASSWORD="$DB_PASSWORD" \
+  local database_password_value
+  database_password_value="$(database_password "$user")"
+  kubectl -n "$DB_NAMESPACE" exec -i "$pod" -- env PGPASSWORD="$database_password_value" PGSSLMODE=require \
     psql -X \
       -v ON_ERROR_STOP=1 \
       -v "admin_user_id=${ADMIN_USER_ID}" \
       -v "reader_user_id=${READER_USER_ID}" \
-      "$(psql_url "$database" "$user")" < "$file"
+      -h "${DB_NAME}.${DB_NAMESPACE}" -U "$user" -d "$database" < "$file"
 }
 
 require_cmd kubectl

@@ -107,7 +107,29 @@ func TestRunRejectsInvalidArgumentsBeforeInitialization(t *testing.T) {
 
 	assert.Equal(t, 2, exitCode)
 	assert.False(t, factoryCalled)
-	assert.Contains(t, stderr.String(), "-database is required")
+	assert.Contains(t, stderr.String(), "expected command: up")
+}
+
+func TestRunUsesIndividualPostgresEnvironment(t *testing.T) {
+	t.Setenv("POSTGRES_HOST", "db")
+	t.Setenv("POSTGRES_DATABASE", "database")
+	t.Setenv("POSTGRES_USER", "user")
+	t.Setenv("POSTGRES_PASSWORD", "sentinel:/?#")
+	t.Setenv("POSTGRES_SSLMODE", "require")
+	var stderr bytes.Buffer
+
+	exitCode := run(
+		[]string{"-source", "file:///migrations", "up"},
+		&bytes.Buffer{},
+		&stderr,
+		func(_, databaseURL string) (migration, error) {
+			assert.Contains(t, databaseURL, "sentinel%3A%2F%3F%23")
+			return nil, errors.New("sentinel:/?#")
+		},
+	)
+
+	assert.Equal(t, 1, exitCode)
+	assert.NotContains(t, stderr.String(), "sentinel")
 }
 
 func TestRunInitializationFailure(t *testing.T) {

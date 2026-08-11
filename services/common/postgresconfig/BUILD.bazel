@@ -1,0 +1,19 @@
+load("@rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "postgresconfig",
+    srcs = ["config.go"],
+    importpath = "github.com/tadoku/tadoku/services/common/postgresconfig",
+    visibility = ["//visibility:public"],
+    deps = ["@com_github_jackc_pgx_v4//:pgx"],
+)
+
+go_test(
+    name = "postgresconfig_test",
+    srcs = ["config_test.go"],
+    embed = [":postgresconfig"],
+    deps = [
+        "@com_github_stretchr_testify//assert",
+        "@com_github_stretchr_testify//require",
+    ],
+)

@@ -7,6 +7,7 @@ go_library(
     importpath = "github.com/tadoku/tadoku/services/common/migrate-recovery",
     visibility = ["//visibility:private"],
     deps = [
+        "//services/common/postgresconfig",
         "@com_github_golang_migrate_migrate_v4//:migrate",
         "@com_github_golang_migrate_migrate_v4//database/postgres",
         "@com_github_golang_migrate_migrate_v4//source/file",

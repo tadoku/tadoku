@@ -7,8 +7,10 @@ import (
 	"io"
 	"os"
 	"strconv"
+	"strings"
 
 	"github.com/golang-migrate/migrate/v4"
+	"github.com/tadoku/tadoku/services/common/postgresconfig"
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 )
@@ -25,13 +27,13 @@ func newMigration(sourceURL, databaseURL string) (migration, error) {
 	return migrate.New(sourceURL, databaseURL)
 }
 
-func closeMigration(runner migration, stderr io.Writer) bool {
+func closeMigration(runner migration, stderr io.Writer, redact func(any) string) bool {
 	sourceErr, databaseErr := runner.Close()
 	if sourceErr != nil {
-		fmt.Fprintf(stderr, "migrate-recovery: close source: %v\n", sourceErr)
+		fmt.Fprintf(stderr, "migrate-recovery: close source: %s\n", redact(sourceErr))
 	}
 	if databaseErr != nil {
-		fmt.Fprintf(stderr, "migrate-recovery: close database: %v\n", databaseErr)
+		fmt.Fprintf(stderr, "migrate-recovery: close database: %s\n", redact(databaseErr))
 	}
 	return sourceErr == nil && databaseErr == nil
 }
@@ -41,7 +43,7 @@ func run(args []string, stdout, stderr io.Writer, factory migrationFactory) int 
 	flags.SetOutput(stderr)
 
 	sourceURL := flags.String("source", "", "migration source URL")
-	databaseURL := flags.String("database", "", "database URL")
+	databaseURL := flags.String("database", "", "deprecated database URL escape hatch")
 	expectedVersion := flags.Int("expected-version", 0, "dirty version observed during inspection")
 	targetVersion := flags.Int("target-version", 0, "version matching the verified physical schema")
 	confirmation := flags.String("confirm-target-version", "", "repeat target version to confirm metadata repair")
@@ -51,10 +53,6 @@ func run(args []string, stdout, stderr io.Writer, factory migrationFactory) int 
 	}
 	if *sourceURL == "" {
 		fmt.Fprintln(stderr, "migrate-recovery: -source is required")
-		return 2
-	}
-	if *databaseURL == "" {
-		fmt.Fprintln(stderr, "migrate-recovery: -database is required")
 		return 2
 	}
 	if flags.NArg() != 1 {
@@ -103,16 +101,33 @@ func run(args []string, stdout, stderr io.Writer, factory migrationFactory) int 
 		}
 	}
 
+	var postgresConfig postgresconfig.Config
+	if *databaseURL == "" {
+		var err error
+		postgresConfig, err = postgresconfig.Load("POSTGRES", "POSTGRES_URL")
+		if err != nil {
+			fmt.Fprintf(stderr, "migrate-recovery: postgres configuration: %v\n", err)
+			return 2
+		}
+		*databaseURL = postgresConfig.URL()
+	}
+	redact := func(value any) string {
+		result := postgresConfig.Redact(value)
+		if *databaseURL != "" {
+			result = strings.ReplaceAll(result, *databaseURL, "[REDACTED]")
+		}
+		return result
+	}
 	runner, err := factory(*sourceURL, *databaseURL)
 	if err != nil {
-		fmt.Fprintf(stderr, "migrate-recovery: initialize: %v\n", err)
+		fmt.Fprintf(stderr, "migrate-recovery: initialize: %s\n", redact(err))
 		return 1
 	}
 
 	version, dirty, versionErr := runner.Version()
 	if versionErr != nil && !errors.Is(versionErr, migrate.ErrNilVersion) {
-		fmt.Fprintf(stderr, "migrate-recovery: inspect: %v\n", versionErr)
-		closeMigration(runner, stderr)
+		fmt.Fprintf(stderr, "migrate-recovery: inspect: %s\n", redact(versionErr))
+		closeMigration(runner, stderr, redact)
 		return 1
 	}
 
@@ -122,7 +137,7 @@ func run(args []string, stdout, stderr io.Writer, factory migrationFactory) int 
 		} else {
 			fmt.Fprintf(stdout, "version=%d dirty=%t\n", version, dirty)
 		}
-		if !closeMigration(runner, stderr) {
+		if !closeMigration(runner, stderr, redact) {
 			return 1
 		}
 		return 0
@@ -130,12 +145,12 @@ func run(args []string, stdout, stderr io.Writer, factory migrationFactory) int 
 
 	if errors.Is(versionErr, migrate.ErrNilVersion) {
 		fmt.Fprintln(stderr, "migrate-recovery: refusing force: database has no migration version")
-		closeMigration(runner, stderr)
+		closeMigration(runner, stderr, redact)
 		return 1
 	}
 	if !dirty {
 		fmt.Fprintf(stderr, "migrate-recovery: refusing force: version %d is not dirty\n", version)
-		closeMigration(runner, stderr)
+		closeMigration(runner, stderr, redact)
 		return 1
 	}
 	if int(version) != *expectedVersion {
@@ -145,13 +160,13 @@ func run(args []string, stdout, stderr io.Writer, factory migrationFactory) int 
 			*expectedVersion,
 			version,
 		)
-		closeMigration(runner, stderr)
+		closeMigration(runner, stderr, redact)
 		return 1
 	}
 
 	if err := runner.Force(*targetVersion); err != nil {
-		fmt.Fprintf(stderr, "migrate-recovery: force: %v\n", err)
-		closeMigration(runner, stderr)
+		fmt.Fprintf(stderr, "migrate-recovery: force: %s\n", redact(err))
+		closeMigration(runner, stderr, redact)
 		return 1
 	}
 
@@ -159,16 +174,16 @@ func run(args []string, stdout, stderr io.Writer, factory migrationFactory) int 
 	if *targetVersion == -1 {
 		if !errors.Is(forcedVersionErr, migrate.ErrNilVersion) || forcedDirty {
 			fmt.Fprintln(stderr, "migrate-recovery: force verification failed")
-			closeMigration(runner, stderr)
+			closeMigration(runner, stderr, redact)
 			return 1
 		}
 	} else if forcedVersionErr != nil || forcedDirty || int(forcedVersion) != *targetVersion {
 		fmt.Fprintln(stderr, "migrate-recovery: force verification failed")
-		closeMigration(runner, stderr)
+		closeMigration(runner, stderr, redact)
 		return 1
 	}
 
-	if !closeMigration(runner, stderr) {
+	if !closeMigration(runner, stderr, redact) {
 		return 1
 	}
 	fmt.Fprintf(stdout, "forced version=%d dirty=false\n", *targetVersion)

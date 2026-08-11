@@ -25,10 +25,18 @@ spec:
           image: authz-api-image
           imagePullPolicy: IfNotPresent
           command: ["/migrate"]
-          args: ["-source", "file:///migrations", "-database", "$(DATABASE_URL)", "up"]
+          args: ["-source", "file:///migrations", "up"]
           env:
-            - name: DATABASE_URL
-              value: "postgres://authz:dev-foobar@tadoku-dev-db.default/authz?sslmode=require"
+            - name: POSTGRES_HOST
+              value: tadoku-dev-db.default
+            - name: POSTGRES_DATABASE
+              value: authz
+            - name: POSTGRES_SSLMODE
+              value: require
+            - name: POSTGRES_USER
+              valueFrom: {secretKeyRef: {name: authz.tadoku-dev-db.credentials.postgresql.acid.zalan.do, key: username}}
+            - name: POSTGRES_PASSWORD
+              valueFrom: {secretKeyRef: {name: authz.tadoku-dev-db.credentials.postgresql.acid.zalan.do, key: password}}
       containers:
         - name: authz-api
           image: authz-api-image
@@ -36,8 +44,16 @@ spec:
           ports:
             - containerPort: 8000
           env:
-            - name: API_POSTGRES_URL
-              value: "postgres://authz:dev-foobar@tadoku-dev-db.default/authz?sslmode=require"
+            - name: API_POSTGRES_HOST
+              value: tadoku-dev-db.default
+            - name: API_POSTGRES_DATABASE
+              value: authz
+            - name: API_POSTGRES_SSLMODE
+              value: require
+            - name: API_POSTGRES_USER
+              valueFrom: {secretKeyRef: {name: authz.tadoku-dev-db.credentials.postgresql.acid.zalan.do, key: username}}
+            - name: API_POSTGRES_PASSWORD
+              valueFrom: {secretKeyRef: {name: authz.tadoku-dev-db.credentials.postgresql.acid.zalan.do, key: password}}
             - name: API_PORT
               value: "8000"
             - name: API_JWKS

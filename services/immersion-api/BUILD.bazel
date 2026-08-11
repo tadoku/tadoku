@@ -13,6 +13,7 @@ go_library(
         "//services/common/domain",
         "//services/common/health",
         "//services/common/middleware",
+        "//services/common/postgresconfig",
         "//services/immersion-api/client/ory",
         "//services/immersion-api/domain",
         "//services/immersion-api/http/rest",

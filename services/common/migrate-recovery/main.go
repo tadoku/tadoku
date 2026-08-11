@@ -7,7 +7,6 @@ import (
 	"io"
 	"os"
 	"strconv"
-	"strings"
 
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/tadoku/tadoku/services/common/postgresconfig"
@@ -43,7 +42,6 @@ func run(args []string, stdout, stderr io.Writer, factory migrationFactory) int 
 	flags.SetOutput(stderr)
 
 	sourceURL := flags.String("source", "", "migration source URL")
-	databaseURL := flags.String("database", "", "deprecated database URL escape hatch")
 	expectedVersion := flags.Int("expected-version", 0, "dirty version observed during inspection")
 	targetVersion := flags.Int("target-version", 0, "version matching the verified physical schema")
 	confirmation := flags.String("confirm-target-version", "", "repeat target version to confirm metadata repair")
@@ -101,24 +99,16 @@ func run(args []string, stdout, stderr io.Writer, factory migrationFactory) int 
 		}
 	}
 
-	var postgresConfig postgresconfig.Config
-	if *databaseURL == "" {
-		var err error
-		postgresConfig, err = postgresconfig.Load("POSTGRES", "POSTGRES_URL")
-		if err != nil {
-			fmt.Fprintf(stderr, "migrate-recovery: postgres configuration: %v\n", err)
-			return 2
-		}
-		*databaseURL = postgresConfig.URL()
+	postgresConfig, err := postgresconfig.Load("POSTGRES", "POSTGRES_URL")
+	if err != nil {
+		fmt.Fprintf(stderr, "migrate-recovery: postgres configuration: %v\n", err)
+		return 2
 	}
+	databaseURL := postgresConfig.URL()
 	redact := func(value any) string {
-		result := postgresConfig.Redact(value)
-		if *databaseURL != "" {
-			result = strings.ReplaceAll(result, *databaseURL, "[REDACTED]")
-		}
-		return result
+		return postgresConfig.Redact(value)
 	}
-	runner, err := factory(*sourceURL, *databaseURL)
+	runner, err := factory(*sourceURL, databaseURL)
 	if err != nil {
 		fmt.Fprintf(stderr, "migrate-recovery: initialize: %s\n", redact(err))
 		return 1

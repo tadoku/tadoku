@@ -178,8 +178,8 @@ version `12`:
 
 Set `POSTGRES_HOST`, `POSTGRES_PORT`, `POSTGRES_DATABASE`, `POSTGRES_SSLMODE`,
 `POSTGRES_USER`, and `POSTGRES_PASSWORD` in the command environment. The
-deprecated `-database` URL flag exists only as a bounded operator escape hatch;
-do not use it in Kubernetes workload arguments or automation.
+command rejects both `POSTGRES_URL` and the removed `-database` URL flag so
+credentials cannot be supplied as a complete URL.
 
 The command refuses to run if:
 

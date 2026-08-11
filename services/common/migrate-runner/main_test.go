@@ -18,6 +18,15 @@ type fakeMigration struct {
 	closeCalled      bool
 }
 
+func setPostgresEnvironment(t *testing.T) {
+	t.Helper()
+	t.Setenv("POSTGRES_HOST", "db")
+	t.Setenv("POSTGRES_DATABASE", "database")
+	t.Setenv("POSTGRES_USER", "user")
+	t.Setenv("POSTGRES_PASSWORD", "password")
+	t.Setenv("POSTGRES_SSLMODE", "require")
+}
+
 func (m *fakeMigration) Up() error {
 	m.upCalled = true
 	return m.upErr
@@ -29,17 +38,18 @@ func (m *fakeMigration) Close() (error, error) {
 }
 
 func TestRunSuccessfulMigration(t *testing.T) {
+	setPostgresEnvironment(t)
 	runner := &fakeMigration{}
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer
 
 	exitCode := run(
-		[]string{"-source", "file:///migrations", "-database", "postgres://database", "up"},
+		[]string{"-source", "file:///migrations", "up"},
 		&stdout,
 		&stderr,
 		func(sourceURL, databaseURL string) (migration, error) {
 			assert.Equal(t, "file:///migrations", sourceURL)
-			assert.Equal(t, "postgres://database", databaseURL)
+			assert.Equal(t, "postgres://user:password@db:5432/database?sslmode=require", databaseURL)
 			return runner, nil
 		},
 	)
@@ -52,12 +62,13 @@ func TestRunSuccessfulMigration(t *testing.T) {
 }
 
 func TestRunNoChangeSucceeds(t *testing.T) {
+	setPostgresEnvironment(t)
 	runner := &fakeMigration{upErr: migrate.ErrNoChange}
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer
 
 	exitCode := run(
-		[]string{"-source", "file:///migrations", "-database", "postgres://database", "up"},
+		[]string{"-source", "file:///migrations", "up"},
 		&stdout,
 		&stderr,
 		func(string, string) (migration, error) {
@@ -72,12 +83,13 @@ func TestRunNoChangeSucceeds(t *testing.T) {
 }
 
 func TestRunMigrationFailureFailsAndCloses(t *testing.T) {
+	setPostgresEnvironment(t)
 	runner := &fakeMigration{upErr: errors.New("migration failed")}
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer
 
 	exitCode := run(
-		[]string{"-source", "file:///migrations", "-database", "postgres://database", "up"},
+		[]string{"-source", "file:///migrations", "up"},
 		&stdout,
 		&stderr,
 		func(string, string) (migration, error) {
@@ -110,6 +122,19 @@ func TestRunRejectsInvalidArgumentsBeforeInitialization(t *testing.T) {
 	assert.Contains(t, stderr.String(), "expected command: up")
 }
 
+func TestRunRejectsRemovedDatabaseFlag(t *testing.T) {
+	var stderr bytes.Buffer
+	exitCode := run(
+		[]string{"-source", "file:///migrations", "-database", "postgres://database", "up"},
+		&bytes.Buffer{},
+		&stderr,
+		func(string, string) (migration, error) { return nil, nil },
+	)
+
+	assert.Equal(t, 2, exitCode)
+	assert.Contains(t, stderr.String(), "flag provided but not defined: -database")
+}
+
 func TestRunUsesIndividualPostgresEnvironment(t *testing.T) {
 	t.Setenv("POSTGRES_HOST", "db")
 	t.Setenv("POSTGRES_DATABASE", "database")
@@ -133,11 +158,12 @@ func TestRunUsesIndividualPostgresEnvironment(t *testing.T) {
 }
 
 func TestRunInitializationFailure(t *testing.T) {
+	setPostgresEnvironment(t)
 	var stderr bytes.Buffer
 	expectedErr := errors.New("cannot initialize")
 
 	exitCode := run(
-		[]string{"-source", "file:///migrations", "-database", "postgres://database", "up"},
+		[]string{"-source", "file:///migrations", "up"},
 		&bytes.Buffer{},
 		&stderr,
 		func(string, string) (migration, error) {

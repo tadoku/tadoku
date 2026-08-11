@@ -49,6 +49,11 @@ func (m *fakeMigration) Close() (error, error) {
 
 func runWithFake(t *testing.T, args []string, runner *fakeMigration) (int, string, string) {
 	t.Helper()
+	t.Setenv("POSTGRES_HOST", "db")
+	t.Setenv("POSTGRES_DATABASE", "database")
+	t.Setenv("POSTGRES_USER", "user")
+	t.Setenv("POSTGRES_PASSWORD", "password")
+	t.Setenv("POSTGRES_SSLMODE", "require")
 
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer
@@ -58,7 +63,7 @@ func runWithFake(t *testing.T, args []string, runner *fakeMigration) (int, strin
 		&stderr,
 		func(sourceURL, databaseURL string) (migration, error) {
 			assert.Equal(t, "file:///migrations", sourceURL)
-			assert.Equal(t, "postgres://database", databaseURL)
+			assert.Equal(t, "postgres://user:password@db:5432/database?sslmode=require", databaseURL)
 			return runner, nil
 		},
 	)
@@ -69,7 +74,7 @@ func TestInspectCleanVersion(t *testing.T) {
 	runner := &fakeMigration{version: 12}
 	exitCode, stdout, stderr := runWithFake(
 		t,
-		[]string{"-source", "file:///migrations", "-database", "postgres://database", "inspect"},
+		[]string{"-source", "file:///migrations", "inspect"},
 		runner,
 	)
 
@@ -83,7 +88,7 @@ func TestInspectDirtyVersion(t *testing.T) {
 	runner := &fakeMigration{version: 13, dirty: true}
 	exitCode, stdout, stderr := runWithFake(
 		t,
-		[]string{"-source", "file:///migrations", "-database", "postgres://database", "inspect"},
+		[]string{"-source", "file:///migrations", "inspect"},
 		runner,
 	)
 
@@ -96,7 +101,7 @@ func TestInspectDatabaseWithoutVersion(t *testing.T) {
 	runner := &fakeMigration{versionErr: migrate.ErrNilVersion}
 	exitCode, stdout, stderr := runWithFake(
 		t,
-		[]string{"-source", "file:///migrations", "-database", "postgres://database", "inspect"},
+		[]string{"-source", "file:///migrations", "inspect"},
 		runner,
 	)
 
@@ -111,7 +116,6 @@ func TestForceDirtyVersion(t *testing.T) {
 		t,
 		[]string{
 			"-source", "file:///migrations",
-			"-database", "postgres://database",
 			"-expected-version", "13",
 			"-target-version", "12",
 			"-confirm-target-version", "12",
@@ -134,7 +138,6 @@ func TestForceCanResetToNilVersion(t *testing.T) {
 		t,
 		[]string{
 			"-source", "file:///migrations",
-			"-database", "postgres://database",
 			"-expected-version", "1",
 			"-target-version", "-1",
 			"-confirm-target-version", "-1",
@@ -155,7 +158,6 @@ func TestForceRejectsCleanDatabase(t *testing.T) {
 		t,
 		[]string{
 			"-source", "file:///migrations",
-			"-database", "postgres://database",
 			"-expected-version", "13",
 			"-target-version", "12",
 			"-confirm-target-version", "12",
@@ -176,7 +178,6 @@ func TestForceRejectsUnexpectedDirtyVersion(t *testing.T) {
 		t,
 		[]string{
 			"-source", "file:///migrations",
-			"-database", "postgres://database",
 			"-expected-version", "13",
 			"-target-version", "12",
 			"-confirm-target-version", "12",
@@ -197,7 +198,6 @@ func TestForceRejectsConfirmationMismatchBeforeInitialization(t *testing.T) {
 	exitCode := run(
 		[]string{
 			"-source", "file:///migrations",
-			"-database", "postgres://database",
 			"-expected-version", "13",
 			"-target-version", "12",
 			"-confirm-target-version", "11",
@@ -221,7 +221,6 @@ func TestForceRequiresEveryGuard(t *testing.T) {
 	exitCode := run(
 		[]string{
 			"-source", "file:///migrations",
-			"-database", "postgres://database",
 			"-expected-version", "13",
 			"-target-version", "12",
 			"force",
@@ -242,7 +241,6 @@ func TestForceRejectsTargetBeyondDirtyVersion(t *testing.T) {
 	exitCode := run(
 		[]string{
 			"-source", "file:///migrations",
-			"-database", "postgres://database",
 			"-expected-version", "13",
 			"-target-version", "14",
 			"-confirm-target-version", "14",
@@ -267,7 +265,7 @@ func TestInspectReportsVersionAndCloseFailures(t *testing.T) {
 	}
 	exitCode, stdout, stderr := runWithFake(
 		t,
-		[]string{"-source", "file:///migrations", "-database", "postgres://database", "inspect"},
+		[]string{"-source", "file:///migrations", "inspect"},
 		runner,
 	)
 
@@ -288,7 +286,6 @@ func TestForceReportsFailureAndCloses(t *testing.T) {
 		t,
 		[]string{
 			"-source", "file:///migrations",
-			"-database", "postgres://database",
 			"-expected-version", "13",
 			"-target-version", "12",
 			"-confirm-target-version", "12",
@@ -313,7 +310,6 @@ func TestForceVerifiesUpdatedMetadata(t *testing.T) {
 		t,
 		[]string{
 			"-source", "file:///migrations",
-			"-database", "postgres://database",
 			"-expected-version", "13",
 			"-target-version", "12",
 			"-confirm-target-version", "12",
@@ -332,7 +328,7 @@ func TestRejectsUnsupportedCommandBeforeInitialization(t *testing.T) {
 	var stderr bytes.Buffer
 	factoryCalled := false
 	exitCode := run(
-		[]string{"-source", "file:///migrations", "-database", "postgres://database", "down"},
+		[]string{"-source", "file:///migrations", "down"},
 		&bytes.Buffer{},
 		&stderr,
 		func(string, string) (migration, error) {

@@ -39,7 +39,7 @@ func TestLoadRejectsPartialMixedAndInvalid(t *testing.T) {
 		setIndividual(t)
 		t.Setenv("TEST_URL", "postgres://legacy")
 		_, err := Load("TEST", "TEST_URL")
-		assert.ErrorContains(t, err, "mixes deprecated")
+		assert.ErrorContains(t, err, "no longer supported")
 	})
 	t.Run("port", func(t *testing.T) {
 		setIndividual(t)
@@ -55,11 +55,9 @@ func TestLoadRejectsPartialMixedAndInvalid(t *testing.T) {
 	})
 }
 
-func TestLegacyAndRedaction(t *testing.T) {
+func TestLegacyIsRejected(t *testing.T) {
 	const legacy = "postgres://user:sentinel-secret@db/database?sslmode=require"
 	t.Setenv("TEST_URL", legacy)
-	cfg, err := Load("TEST", "TEST_URL")
-	require.NoError(t, err)
-	assert.Equal(t, legacy, cfg.URL())
-	assert.NotContains(t, cfg.Redact(fmt.Errorf("failed %s sentinel-secret", legacy)), "sentinel-secret")
+	_, err := Load("TEST", "TEST_URL")
+	assert.ErrorContains(t, err, "no longer supported")
 }

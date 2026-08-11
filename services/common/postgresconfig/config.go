@@ -23,30 +23,19 @@ var allowedSSLModes = map[string]bool{
 type Config struct {
 	Host, Database, User, Password, SSLMode string
 	Port                                    uint16
-	legacyURL                               string
 }
 
-// Load reads PREFIX_HOST, PORT, DATABASE, USER, PASSWORD, and SSLMODE. During
-// the compatibility release, legacyName is accepted only when no individual
-// field is present.
+// Load reads PREFIX_HOST, PORT, DATABASE, USER, PASSWORD, and SSLMODE. The
+// removed legacy URL variable is rejected explicitly so regressions fail closed.
 func Load(prefix, legacyName string) (Config, error) {
 	keys := []string{"HOST", "PORT", "DATABASE", "USER", "PASSWORD", "SSLMODE"}
 	values := make(map[string]string, len(keys))
-	individualPresent := false
 	for _, key := range keys {
-		value, present := os.LookupEnv(prefix + "_" + key)
-		values[key] = value
-		individualPresent = individualPresent || present
+		values[key] = os.Getenv(prefix + "_" + key)
 	}
-	legacy, legacyPresent := os.LookupEnv(legacyName)
-	if legacyPresent && individualPresent {
-		return Config{}, fmt.Errorf("postgres configuration mixes deprecated %s with individual fields", legacyName)
-	}
+	_, legacyPresent := os.LookupEnv(legacyName)
 	if legacyPresent {
-		if strings.TrimSpace(legacy) == "" {
-			return Config{}, fmt.Errorf("%s must not be empty", legacyName)
-		}
-		return Config{legacyURL: legacy}, nil
+		return Config{}, fmt.Errorf("%s is no longer supported; use individual postgres fields", legacyName)
 	}
 
 	missing := make([]string, 0)
@@ -73,9 +62,6 @@ func Load(prefix, legacyName string) (Config, error) {
 }
 
 func (c Config) URL() string {
-	if c.legacyURL != "" {
-		return c.legacyURL
-	}
 	u := &url.URL{Scheme: "postgres", User: url.UserPassword(c.User, c.Password), Host: net.JoinHostPort(c.Host, strconv.Itoa(int(c.Port))), Path: "/" + c.Database}
 	query := u.Query()
 	query.Set("sslmode", c.SSLMode)
@@ -95,14 +81,9 @@ func (c Config) String() string { return "postgres configuration (credentials re
 
 func (c Config) Redact(value any) string {
 	result := fmt.Sprint(value)
-	for _, secret := range []string{c.Password, c.legacyURL} {
+	for _, secret := range []string{c.Password} {
 		if secret != "" {
 			result = strings.ReplaceAll(result, secret, "[REDACTED]")
-		}
-	}
-	if parsed, err := url.Parse(c.legacyURL); err == nil && parsed.User != nil {
-		if password, ok := parsed.User.Password(); ok && password != "" {
-			result = strings.ReplaceAll(result, password, "[REDACTED]")
 		}
 	}
 	return result

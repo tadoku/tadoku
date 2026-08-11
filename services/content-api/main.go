@@ -1,7 +1,6 @@
 package main
 
 import (
-	"database/sql"
 	"fmt"
 
 	"github.com/go-playground/validator/v10"
@@ -11,6 +10,7 @@ import (
 	commondomain "github.com/tadoku/tadoku/services/common/domain"
 	"github.com/tadoku/tadoku/services/common/health"
 	tadokumiddleware "github.com/tadoku/tadoku/services/common/middleware"
+	"github.com/tadoku/tadoku/services/common/postgresconfig"
 	"github.com/tadoku/tadoku/services/content-api/domain"
 	"github.com/tadoku/tadoku/services/content-api/http/rest"
 	"github.com/tadoku/tadoku/services/content-api/http/rest/openapi"
@@ -18,13 +18,12 @@ import (
 
 	"github.com/getsentry/sentry-go"
 	sentryecho "github.com/getsentry/sentry-go/echo"
-	_ "github.com/jackc/pgx/v4/stdlib"
+	"github.com/jackc/pgx/v4/stdlib"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 )
 
 type Config struct {
-	PostgresURL            string  `validate:"required" envconfig:"postgres_url"`
 	Port                   int64   `validate:"required"`
 	JWKS                   string  `validate:"required"`
 	KetoReadURL            string  `validate:"required" envconfig:"keto_read_url"`
@@ -43,10 +42,15 @@ func main() {
 		panic(fmt.Errorf("could not configure server: %w", err))
 	}
 
-	psql, err := sql.Open("pgx", cfg.PostgresURL)
+	postgresConfig, err := postgresconfig.Load("API_POSTGRES", "API_POSTGRES_URL")
+	if err != nil {
+		panic(fmt.Errorf("could not configure postgres: %w", err))
+	}
+	connConfig, err := postgresConfig.ConnConfig()
 	if err != nil {
 		panic(err)
 	}
+	psql := stdlib.OpenDB(*connConfig)
 
 	pageRepository := postgres.NewPageRepository(psql)
 	postRepository := postgres.NewPostRepository(psql)

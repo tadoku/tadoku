@@ -2,13 +2,10 @@ package observability
 
 import (
 	"context"
-	"fmt"
 	"log/slog"
-	"net/http"
-	"sort"
 	"strconv"
-	"sync"
 
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/tadoku/tadoku/services/immersion-api/domain"
 )
 
@@ -22,20 +19,31 @@ type scoringShadowLabels struct {
 	scoreSource domain.ScoreSource
 }
 
-// ScoringShadowMetrics is both a bounded in-memory metric registry and a
-// Prometheus text exposition handler. Only values from the approved label
-// contract are accepted.
+// ScoringShadowMetrics records only values from the approved bounded label
+// contract into the service's Prometheus registry.
 type ScoringShadowMetrics struct {
-	mu          sync.RWMutex
-	comparisons map[scoringShadowLabels]uint64
-	enabled     bool
+	comparisons *prometheus.CounterVec
+	enabled     prometheus.Gauge
 }
 
-func NewScoringShadowMetrics(engineEnabled bool) *ScoringShadowMetrics {
-	return &ScoringShadowMetrics{
-		comparisons: make(map[scoringShadowLabels]uint64),
-		enabled:     engineEnabled,
+func NewScoringShadowMetrics(registry *prometheus.Registry, engineEnabled bool) *ScoringShadowMetrics {
+	comparisons := prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "tadoku_scoring_shadow_comparisons_total",
+			Help: "Legacy-to-engine scoring comparisons.",
+		},
+		[]string{"outcome", "operation", "mode", "activity_id", "score_source"},
+	)
+	enabled := prometheus.NewGauge(prometheus.GaugeOpts{
+		Name: "tadoku_scoring_engine_enabled",
+		Help: "Whether the scoring engine is authoritative.",
+	})
+	if engineEnabled {
+		enabled.Set(1)
 	}
+	registry.MustRegister(comparisons, enabled)
+
+	return &ScoringShadowMetrics{comparisons: comparisons, enabled: enabled}
 }
 
 func (m *ScoringShadowMetrics) record(observation domain.ScoringShadowObservation) bool {
@@ -50,51 +58,14 @@ func (m *ScoringShadowMetrics) record(observation domain.ScoringShadowObservatio
 		return false
 	}
 
-	m.mu.Lock()
-	m.comparisons[labels]++
-	m.mu.Unlock()
+	m.comparisons.WithLabelValues(
+		string(labels.outcome),
+		string(labels.operation),
+		string(labels.mode),
+		strconv.FormatInt(int64(labels.activityID), 10),
+		string(labels.scoreSource),
+	).Inc()
 	return true
-}
-
-func (m *ScoringShadowMetrics) ServeHTTP(response http.ResponseWriter, request *http.Request) {
-	if request.Method != http.MethodGet {
-		response.Header().Set("Allow", http.MethodGet)
-		http.Error(response, "method not allowed", http.StatusMethodNotAllowed)
-		return
-	}
-
-	response.Header().Set("Content-Type", "text/plain; version=0.0.4; charset=utf-8")
-	m.mu.RLock()
-	labels := make([]scoringShadowLabels, 0, len(m.comparisons))
-	for label := range m.comparisons {
-		labels = append(labels, label)
-	}
-	sort.Slice(labels, func(i, j int) bool {
-		return metricLabelSortKey(labels[i]) < metricLabelSortKey(labels[j])
-	})
-
-	_, _ = fmt.Fprintln(response, "# HELP tadoku_scoring_shadow_comparisons_total Legacy-to-engine scoring comparisons.")
-	_, _ = fmt.Fprintln(response, "# TYPE tadoku_scoring_shadow_comparisons_total counter")
-	for _, label := range labels {
-		_, _ = fmt.Fprintf(
-			response,
-			"tadoku_scoring_shadow_comparisons_total{outcome=%q,operation=%q,mode=%q,activity_id=%q,score_source=%q} %d\n",
-			label.outcome,
-			label.operation,
-			label.mode,
-			strconv.FormatInt(int64(label.activityID), 10),
-			label.scoreSource,
-			m.comparisons[label],
-		)
-	}
-	_, _ = fmt.Fprintln(response, "# HELP tadoku_scoring_engine_enabled Whether the scoring engine is authoritative.")
-	_, _ = fmt.Fprintln(response, "# TYPE tadoku_scoring_engine_enabled gauge")
-	if m.enabled {
-		_, _ = fmt.Fprintln(response, "tadoku_scoring_engine_enabled 1")
-	} else {
-		_, _ = fmt.Fprintln(response, "tadoku_scoring_engine_enabled 0")
-	}
-	m.mu.RUnlock()
 }
 
 func validScoringShadowLabels(labels scoringShadowLabels) bool {
@@ -125,14 +96,6 @@ func validScoringShadowLabels(labels scoringShadowLabels) bool {
 		return false
 	}
 	return true
-}
-
-func metricLabelSortKey(labels scoringShadowLabels) string {
-	return string(labels.outcome) + "\x00" +
-		string(labels.operation) + "\x00" +
-		string(labels.mode) + "\x00" +
-		strconv.FormatInt(int64(labels.activityID), 10) + "\x00" +
-		string(labels.scoreSource)
 }
 
 type ScoringShadowObserver struct {

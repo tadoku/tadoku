@@ -9,15 +9,15 @@ import (
 	"time"
 )
 
-type MetricsServer struct {
+type Server struct {
 	server   *http.Server
 	mu       sync.RWMutex
 	listener net.Listener
 	errors   chan error
 }
 
-func NewMetricsServer(address string, handler http.Handler) *MetricsServer {
-	return &MetricsServer{
+func NewServer(address string, handler http.Handler) *Server {
+	return &Server{
 		server: &http.Server{
 			Addr:              address,
 			Handler:           handler,
@@ -28,7 +28,7 @@ func NewMetricsServer(address string, handler http.Handler) *MetricsServer {
 	}
 }
 
-func (s *MetricsServer) Start() error {
+func (s *Server) Start() error {
 	listener, err := net.Listen("tcp", s.server.Addr)
 	if err != nil {
 		return err
@@ -45,7 +45,7 @@ func (s *MetricsServer) Start() error {
 	return nil
 }
 
-func (s *MetricsServer) Addr() string {
+func (s *Server) Addr() string {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 	if s.listener == nil {
@@ -54,10 +54,10 @@ func (s *MetricsServer) Addr() string {
 	return s.listener.Addr().String()
 }
 
-func (s *MetricsServer) Errors() <-chan error {
+func (s *Server) Errors() <-chan error {
 	return s.errors
 }
 
-func (s *MetricsServer) Shutdown(ctx context.Context) error {
+func (s *Server) Shutdown(ctx context.Context) error {
 	return s.server.Shutdown(ctx)
 }

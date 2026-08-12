@@ -4,23 +4,24 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"io"
 	"log/slog"
 	"net/http"
 	"net/http/httptest"
 	"reflect"
 	"strings"
 	"testing"
-	"time"
 
 	"github.com/google/uuid"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/tadoku/tadoku/services/immersion-api/domain"
 )
 
 func TestScoringShadowMetricsExportsBoundedLabelsAndExactCounts(t *testing.T) {
-	metrics := NewScoringShadowMetrics(true)
+	registry := prometheus.NewRegistry()
+	metrics := NewScoringShadowMetrics(registry, true)
 	observer := NewScoringShadowObserver(metrics, nil)
 	observation := domain.ScoringShadowObservation{
 		Outcome:      domain.ScoringShadowOutcomeMatch,
@@ -40,12 +41,12 @@ func TestScoringShadowMetricsExportsBoundedLabelsAndExactCounts(t *testing.T) {
 	observer.ObserveScoringShadow(context.Background(), invalid)
 
 	recorder := httptest.NewRecorder()
-	metrics.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/metrics", nil))
+	promhttp.HandlerFor(registry, promhttp.HandlerOpts{}).ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/metrics", nil))
 	body := recorder.Body.String()
 
 	assert.Equal(t, http.StatusOK, recorder.Code)
-	assert.Equal(t, "text/plain; version=0.0.4; charset=utf-8", recorder.Header().Get("Content-Type"))
-	assert.Contains(t, body, `tadoku_scoring_shadow_comparisons_total{outcome="match",operation="create",mode="authoritative",activity_id="1",score_source="amount"} 2`)
+	assert.True(t, strings.HasPrefix(recorder.Header().Get("Content-Type"), "text/plain; version=0.0.4; charset=utf-8"))
+	assert.Contains(t, body, `tadoku_scoring_shadow_comparisons_total{activity_id="1",mode="authoritative",operation="create",outcome="match",score_source="amount"} 2`)
 	assert.Equal(t, 1, strings.Count(body, "tadoku_scoring_shadow_comparisons_total{"))
 	assert.Contains(t, body, "tadoku_scoring_engine_enabled 1")
 	assert.NotContains(t, body, "language_code")
@@ -53,18 +54,8 @@ func TestScoringShadowMetricsExportsBoundedLabelsAndExactCounts(t *testing.T) {
 	assert.NotContains(t, body, "user-controlled-source")
 }
 
-func TestScoringShadowMetricsRejectsNonGETRequests(t *testing.T) {
-	metrics := NewScoringShadowMetrics(false)
-	recorder := httptest.NewRecorder()
-
-	metrics.ServeHTTP(recorder, httptest.NewRequest(http.MethodPost, "/metrics", nil))
-
-	assert.Equal(t, http.StatusMethodNotAllowed, recorder.Code)
-	assert.Equal(t, http.MethodGet, recorder.Header().Get("Allow"))
-}
-
 func TestScoringShadowObserverWritesSanitizedBoundedJSONAnomalies(t *testing.T) {
-	metrics := NewScoringShadowMetrics(false)
+	metrics := NewScoringShadowMetrics(prometheus.NewRegistry(), false)
 	var output bytes.Buffer
 	logger := slog.New(slog.NewJSONHandler(&output, nil))
 	observer := NewScoringShadowObserver(metrics, logger)
@@ -124,7 +115,7 @@ func TestScoringShadowObserverWritesSanitizedBoundedJSONAnomalies(t *testing.T) 
 }
 
 func TestScoringShadowObserverDoesNotLogMatchesOrRawErrors(t *testing.T) {
-	metrics := NewScoringShadowMetrics(false)
+	metrics := NewScoringShadowMetrics(prometheus.NewRegistry(), false)
 	var output bytes.Buffer
 	observer := NewScoringShadowObserver(metrics, slog.New(slog.NewJSONHandler(&output, nil)))
 	base := domain.ScoringShadowObservation{
@@ -159,45 +150,4 @@ func TestScoringShadowObservationPrivacyContractHasNoProhibitedFields(t *testing
 	for _, prohibited := range []string{"userid", "registrationid", "logid", "tags", "description", "uri", "header", "requestbody", "rawerror"} {
 		assert.NotContains(t, joined, prohibited)
 	}
-}
-
-func TestMetricsServerStartsAndShutsDownGracefully(t *testing.T) {
-	requestStarted := make(chan struct{})
-	releaseRequest := make(chan struct{})
-	handler := http.HandlerFunc(func(response http.ResponseWriter, _ *http.Request) {
-		close(requestStarted)
-		<-releaseRequest
-		response.WriteHeader(http.StatusNoContent)
-	})
-	server := NewMetricsServer("127.0.0.1:0", handler)
-	require.NoError(t, server.Start())
-
-	requestDone := make(chan error, 1)
-	go func() {
-		response, err := http.Get("http://" + server.Addr())
-		if err == nil {
-			_, _ = io.Copy(io.Discard, response.Body)
-			err = response.Body.Close()
-		}
-		requestDone <- err
-	}()
-	<-requestStarted
-
-	shutdownDone := make(chan error, 1)
-	shutdownContext, cancel := context.WithTimeout(context.Background(), 2*time.Second)
-	defer cancel()
-	go func() {
-		shutdownDone <- server.Shutdown(shutdownContext)
-	}()
-
-	select {
-	case err := <-shutdownDone:
-		require.Failf(t, "shutdown returned before active request completed", "error: %v", err)
-	case <-time.After(25 * time.Millisecond):
-	}
-	close(releaseRequest)
-	require.NoError(t, <-requestDone)
-	require.NoError(t, <-shutdownDone)
-	_, err := http.Get("http://" + server.Addr())
-	assert.Error(t, err)
 }

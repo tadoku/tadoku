@@ -18,6 +18,7 @@ go_library(
         "//services/common/client/kratos",
         "//services/common/health",
         "//services/common/middleware",
+        "//services/common/observability",
         "//services/common/postgresconfig",
         "@com_github_getsentry_sentry_go//:sentry-go",
         "@com_github_getsentry_sentry_go//echo",

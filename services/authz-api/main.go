@@ -19,6 +19,7 @@ import (
 	kratosclient "github.com/tadoku/tadoku/services/common/client/kratos"
 	"github.com/tadoku/tadoku/services/common/health"
 	tadokumiddleware "github.com/tadoku/tadoku/services/common/middleware"
+	commonobservability "github.com/tadoku/tadoku/services/common/observability"
 	"github.com/tadoku/tadoku/services/common/postgresconfig"
 
 	"github.com/getsentry/sentry-go"
@@ -37,6 +38,7 @@ type Config struct {
 	KetoReadURL            string  `validate:"required" envconfig:"keto_read_url"`
 	KetoWriteURL           string  `validate:"required" envconfig:"keto_write_url"`
 	ServiceName            string  `envconfig:"service_name" default:"authz-api"`
+	MetricsPort            int64   `envconfig:"metrics_port" default:"9090"`
 	SentryDSN              string  `envconfig:"sentry_dns"`
 	SentryTracesSampleRate float64 `validate:"required_with=SentryDSN" envconfig:"sentry_traces_sample_rate"`
 }
@@ -80,6 +82,14 @@ func main() {
 	rolesSvc := commonroles.NewKetoService(ketoAuthz, "app", "tadoku")
 	roleMgmt := commonroles.NewKetoManager(ketoAuthz, "app", "tadoku")
 	postgresRepository := repository.NewRepository(psql)
+	serviceMetrics := commonobservability.NewMetrics(psql, cfg.ServiceName)
+	metricsServer := commonobservability.NewServer(
+		fmt.Sprintf("0.0.0.0:%d", cfg.MetricsPort),
+		serviceMetrics.Handler(),
+	)
+	if err := metricsServer.Start(); err != nil {
+		panic(fmt.Errorf("could not start internal metrics server: %w", err))
+	}
 
 	roleGet := domain.NewRoleGet(rolesSvc)
 	roleUpdate := domain.NewRoleUpdate(kratosClient, postgresRepository, rolesSvc, roleMgmt)
@@ -96,6 +106,7 @@ func main() {
 	)
 
 	e := echo.New()
+	e.Use(serviceMetrics.Middleware())
 	e.Use(middleware.Recover())
 
 	// Health endpoints: allow K8s probes without auth, require admin if JWT is present
@@ -135,11 +146,18 @@ func main() {
 
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
-	<-quit
+	select {
+	case <-quit:
+	case metricsErr := <-metricsServer.Errors():
+		e.Logger.Errorf("internal metrics server stopped: %v", metricsErr)
+	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	if err := e.Shutdown(ctx); err != nil {
-		e.Logger.Fatal(err)
+		e.Logger.Errorf("could not gracefully shut down application server: %v", err)
+	}
+	if err := metricsServer.Shutdown(ctx); err != nil {
+		e.Logger.Errorf("could not gracefully shut down metrics server: %v", err)
 	}
 }

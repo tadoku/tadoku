@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
-	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
@@ -17,6 +16,7 @@ import (
 	"github.com/tadoku/tadoku/services/common/domain"
 	"github.com/tadoku/tadoku/services/common/health"
 	tadokumiddleware "github.com/tadoku/tadoku/services/common/middleware"
+	commonobservability "github.com/tadoku/tadoku/services/common/observability"
 	"github.com/tadoku/tadoku/services/common/postgresconfig"
 	"github.com/tadoku/tadoku/services/immersion-api/client/ory"
 	immersiondomain "github.com/tadoku/tadoku/services/immersion-api/domain"
@@ -92,16 +92,15 @@ func main() {
 
 	leaderboardStore := valkeystore.NewLeaderboardStore(valkeyClient, clock)
 	leaderboardUpdater := immersiondomain.NewLeaderboardUpdater(leaderboardStore, postgresRepository)
-	scoringMetrics := observability.NewScoringShadowMetrics(cfg.ScoringEngineEnabled)
+	serviceMetrics := commonobservability.NewMetrics(psql, cfg.ServiceName)
+	scoringMetrics := observability.NewScoringShadowMetrics(serviceMetrics.Registry(), cfg.ScoringEngineEnabled)
 	scoringObserver := observability.NewScoringShadowObserver(
 		scoringMetrics,
 		slog.New(slog.NewJSONHandler(os.Stdout, nil)),
 	)
-	metricsMux := http.NewServeMux()
-	metricsMux.Handle("/metrics", scoringMetrics)
-	metricsServer := observability.NewMetricsServer(
+	metricsServer := commonobservability.NewServer(
 		fmt.Sprintf("0.0.0.0:%d", cfg.MetricsPort),
-		metricsMux,
+		serviceMetrics.Handler(),
 	)
 	if err := metricsServer.Start(); err != nil {
 		panic(fmt.Errorf("could not start internal metrics server: %w", err))
@@ -114,6 +113,7 @@ func main() {
 	go outboxWorker.Run(workerCtx)
 
 	e := echo.New()
+	e.Use(serviceMetrics.Middleware())
 	e.Use(middleware.Recover())
 
 	// Health endpoints: allow K8s probes without auth, require admin if JWT is present

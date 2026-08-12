@@ -1,0 +1,31 @@
+load("@rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "observability",
+    srcs = [
+        "metrics.go",
+        "server.go",
+    ],
+    importpath = "github.com/tadoku/tadoku/services/common/observability",
+    visibility = ["//visibility:public"],
+    deps = [
+        "@com_github_labstack_echo_v4//:echo",
+        "@com_github_prometheus_client_golang//prometheus",
+        "@com_github_prometheus_client_golang//prometheus/collectors",
+        "@com_github_prometheus_client_golang//prometheus/promhttp",
+    ],
+)
+
+go_test(
+    name = "observability_test",
+    srcs = [
+        "metrics_test.go",
+        "server_test.go",
+    ],
+    embed = [":observability"],
+    deps = [
+        "@com_github_labstack_echo_v4//:echo",
+        "@com_github_stretchr_testify//assert",
+        "@com_github_stretchr_testify//require",
+    ],
+)

@@ -1,7 +1,12 @@
 package main
 
 import (
+	"context"
 	"fmt"
+	"log/slog"
+	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
 	"github.com/go-playground/validator/v10"
@@ -10,6 +15,7 @@ import (
 	ketoclient "github.com/tadoku/tadoku/services/common/client/keto"
 	"github.com/tadoku/tadoku/services/common/health"
 	tadokumiddleware "github.com/tadoku/tadoku/services/common/middleware"
+	commonobservability "github.com/tadoku/tadoku/services/common/observability"
 	"github.com/tadoku/tadoku/services/common/postgresconfig"
 	"github.com/tadoku/tadoku/services/profile-api/cache"
 	"github.com/tadoku/tadoku/services/profile-api/client/ory"
@@ -30,6 +36,7 @@ type Config struct {
 	KratosURL              string  `validate:"required" envconfig:"kratos_url"`
 	KetoReadURL            string  `validate:"required" envconfig:"keto_read_url"`
 	ServiceName            string  `envconfig:"service_name" default:"profile-api"`
+	MetricsPort            int64   `envconfig:"metrics_port" default:"9090"`
 	SentryDSN              string  `envconfig:"sentry_dns"`
 	SentryTracesSampleRate float64 `validate:"required_with=SentryDSN" envconfig:"sentry_traces_sample_rate"`
 }
@@ -59,10 +66,19 @@ func main() {
 	userCache.Start()
 
 	rolesSvc := commonroles.NewKetoService(ketoclient.NewReadClient(cfg.KetoReadURL), "app", "tadoku")
+	serviceMetrics := commonobservability.NewMetrics(psql, cfg.ServiceName)
+	metricsServer := commonobservability.NewServer(
+		fmt.Sprintf("0.0.0.0:%d", cfg.MetricsPort),
+		serviceMetrics.Handler(),
+	)
+	if err := metricsServer.Start(); err != nil {
+		panic(fmt.Errorf("could not start internal metrics server: %w", err))
+	}
 
 	userList := profiledomain.NewUserList(userCache, rolesSvc)
 
 	e := echo.New()
+	e.Use(serviceMetrics.Middleware())
 	e.Use(middleware.Recover())
 
 	// Health endpoints: allow K8s probes without auth, require admin if JWT is present
@@ -99,6 +115,27 @@ func main() {
 
 	defer userCache.Stop()
 
-	fmt.Printf("profile-api is now available at: http://localhost:%d/v2\n", cfg.Port)
-	e.Logger.Fatal(e.Start(fmt.Sprintf("0.0.0.0:%d", cfg.Port)))
+	go func() {
+		fmt.Printf("profile-api is now available at: http://localhost:%d/v2\n", cfg.Port)
+		if err := e.Start(fmt.Sprintf("0.0.0.0:%d", cfg.Port)); err != nil {
+			e.Logger.Info("shutting down the server")
+		}
+	}()
+
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	select {
+	case <-quit:
+	case metricsErr := <-metricsServer.Errors():
+		slog.Error("internal metrics server stopped", "error", metricsErr)
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	if err := e.Shutdown(ctx); err != nil {
+		slog.Error("could not gracefully shut down application server", "error", err)
+	}
+	if err := metricsServer.Shutdown(ctx); err != nil {
+		slog.Error("could not gracefully shut down metrics server", "error", err)
+	}
 }

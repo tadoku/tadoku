@@ -2,13 +2,13 @@ load("@rules_go//go:def.bzl", "go_library", "go_test")
 
 go_library(
     name = "observability",
-    srcs = [
-        "scoring_shadow.go",
-        "server.go",
-    ],
+    srcs = ["scoring_shadow.go"],
     importpath = "github.com/tadoku/tadoku/services/immersion-api/observability",
     visibility = ["//visibility:public"],
-    deps = ["//services/immersion-api/domain"],
+    deps = [
+        "//services/immersion-api/domain",
+        "@com_github_prometheus_client_golang//prometheus",
+    ],
 )
 
 go_test(
@@ -18,6 +18,8 @@ go_test(
     deps = [
         "//services/immersion-api/domain",
         "@com_github_google_uuid//:uuid",
+        "@com_github_prometheus_client_golang//prometheus",
+        "@com_github_prometheus_client_golang//prometheus/promhttp",
         "@com_github_stretchr_testify//assert",
         "@com_github_stretchr_testify//require",
     ],

@@ -41,6 +41,7 @@ use_repo(
     "com_github_ory_keto_client_go",
     "com_github_ory_kratos_client_go",
     "com_github_pkg_errors",
+    "com_github_prometheus_client_golang",
     "com_github_sahilm_fuzzy",
     "com_github_stretchr_testify",
     "com_github_valkey_io_valkey_go",

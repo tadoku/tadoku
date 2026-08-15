@@ -79,9 +79,7 @@ export const EditLogForm = ({ options, log }: Props) => {
   const previewPayload = previewPayloadJSON
     ? JSON.parse(previewPayloadJSON)
     : undefined
-  const scorePreview = useScorePreview(previewPayload, {
-    enabled: options.scoring_engine_enabled,
-  })
+  const scorePreview = useScorePreview(previewPayload)
 
   const router = useRouter()
   const updateLogMutation = useUpdateLog(updatedLog => {
@@ -178,7 +176,6 @@ export const EditLogForm = ({ options, log }: Props) => {
             </div>
             <div className="-mx-4 -mb-4 mt-4 px-4 py-2 md:-mx-7 md:-mb-7 md:px-7 md:py-2 bg-slate-500/5 text-center lg:text-right font-mono">
               <ScorePreviewEstimate
-                enabled={options.scoring_engine_enabled}
                 preview={scorePreview.data}
               />
             </div>

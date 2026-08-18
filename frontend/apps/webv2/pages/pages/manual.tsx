@@ -160,27 +160,27 @@ const Page: NextPage<Props> = () => (
           <tbody>
             <tr>
               <td className="font-bold">Japanese</td>
-              <td>1</td>
-              <td>0.05</td>
-              <td>0.0025</td>
+              <td>10</td>
+              <td>0.5</td>
+              <td>0.025</td>
             </tr>
             <tr>
               <td className="font-bold">Chinese</td>
-              <td>1</td>
-              <td>0.05</td>
-              <td>0.0025</td>
+              <td>10</td>
+              <td>0.5</td>
+              <td>0.025</td>
             </tr>
             <tr>
               <td className="font-bold">Korean</td>
-              <td>1</td>
-              <td>0.05</td>
-              <td>0.0025</td>
+              <td>10</td>
+              <td>0.5</td>
+              <td>0.025</td>
             </tr>
             <tr>
               <td className="font-bold">All other languages</td>
-              <td>1</td>
-              <td>0.05</td>
-              <td>0.0008333</td>
+              <td>10</td>
+              <td>0.5</td>
+              <td>0.0083333</td>
             </tr>
           </tbody>
         </table>

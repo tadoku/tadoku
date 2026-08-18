@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Restore Dense Listening — Scoring Engine Status and Implementation Plan</title>
+  <style>
+    :root {
+      color-scheme: light dark;
+      --paper: #f7f4ec;
+      --ink: #26212e;
+      --muted: #696270;
+      --violet: #6548b8;
+      --violet-soft: #ece5ff;
+      --green: #186a49;
+      --green-soft: #dff4e9;
+      --amber: #8b5a08;
+      --amber-soft: #fff0c7;
+      --red: #9b3048;
+      --red-soft: #ffe0e7;
+      --blue-soft: #e2efff;
+      --line: #d6cfda;
+      --card: #fffdfa;
+      --shadow: 6px 6px 0 #d7cfdf;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      background:
+        linear-gradient(90deg, rgba(101,72,184,.035) 1px, transparent 1px),
+        linear-gradient(rgba(101,72,184,.035) 1px, transparent 1px),
+        var(--paper);
+      background-size: 28px 28px;
+      color: var(--ink);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.55;
+    }
+    main { width: min(1120px, calc(100% - 30px)); margin: 0 auto; padding: 46px 0 82px; }
+    h1, h2, h3 { line-height: 1.12; letter-spacing: -.025em; }
+    h1 { max-width: 960px; margin: 8px 0 15px; font-size: clamp(2.4rem, 6vw, 5rem); }
+    h2 { margin: 0 0 17px; font-size: clamp(1.5rem, 3vw, 2.15rem); }
+    h3 { margin: 0 0 9px; font-size: 1.05rem; }
+    p { margin: 0 0 14px; }
+    a { color: var(--violet); }
+    code { border: 1px solid var(--line); border-radius: 5px; background: #f2eef8; padding: .08rem .34rem; color: #4c358b; }
+    .eyebrow { color: var(--violet); font-size: .77rem; font-weight: 850; letter-spacing: .14em; text-transform: uppercase; }
+    .lede { max-width: 900px; color: var(--muted); font-size: 1.15rem; }
+    .meta { display: flex; flex-wrap: wrap; gap: 8px; margin: 21px 0 34px; }
+    .pill { border: 1px solid var(--ink); border-radius: 999px; background: var(--card); padding: 5px 11px; font-size: .79rem; font-weight: 760; }
+    .card { margin-top: 22px; border: 1.5px solid var(--ink); border-radius: 9px; background: var(--card); padding: clamp(20px, 3.5vw, 34px); box-shadow: var(--shadow); }
+    .decision { border-left: 8px solid var(--violet); }
+    .warning { border-left: 8px solid #d79118; }
+    .grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 15px; }
+    .span-3 { grid-column: span 3; }
+    .span-4 { grid-column: span 4; }
+    .span-6 { grid-column: span 6; }
+    .span-8 { grid-column: span 8; }
+    .span-12 { grid-column: span 12; }
+    .mini { border: 1px solid var(--line); border-radius: 7px; padding: 17px; background: #fdfbff; }
+    .mini p, .mini li { color: var(--muted); font-size: .93rem; }
+    .metric { font-size: 2.3rem; line-height: 1; font-weight: 880; color: var(--violet); }
+    .metric-label { margin-top: 7px; color: var(--muted); font-size: .82rem; }
+    .state { display: inline-block; border-radius: 999px; padding: 3px 9px; font-size: .72rem; font-weight: 850; text-transform: uppercase; letter-spacing: .06em; }
+    .done { background: var(--green-soft); color: var(--green); }
+    .blocked { background: var(--amber-soft); color: var(--amber); }
+    .missing { background: var(--red-soft); color: var(--red); }
+    .phase { position: relative; padding-left: 72px; }
+    .phase-number { position: absolute; top: 29px; left: 24px; display: grid; width: 34px; height: 34px; place-items: center; border: 1.5px solid var(--ink); border-radius: 50%; background: var(--violet-soft); font-weight: 850; }
+    .phase-meta { margin-bottom: 12px; color: var(--muted); font-size: .83rem; font-weight: 730; }
+    .checklist { list-style: none; margin: 14px 0 18px; padding: 0; }
+    .checklist li { position: relative; margin: 10px 0; padding-left: 30px; }
+    .checklist li::before { content: ""; position: absolute; top: .22rem; left: 0; width: 16px; height: 16px; border: 1.5px solid var(--ink); border-radius: 3px; background: #fff; }
+    .gate { border-left: 5px solid var(--green); border-radius: 4px; background: var(--green-soft); padding: 13px 16px; }
+    .gate strong { color: var(--green); }
+    table { width: 100%; border-collapse: collapse; font-size: .92rem; }
+    th, td { border-bottom: 1px solid var(--line); padding: 12px 10px; text-align: left; vertical-align: top; }
+    th { color: var(--muted); font-size: .73rem; letter-spacing: .08em; text-transform: uppercase; }
+    .criteria { counter-reset: criterion; display: grid; grid-template-columns: repeat(2, 1fr); gap: 13px; margin-top: 16px; }
+    .criterion { position: relative; min-height: 120px; border: 1px solid var(--line); border-radius: 7px; background: #fdfbff; padding: 16px 16px 16px 52px; }
+    .criterion::before { counter-increment: criterion; content: counter(criterion); position: absolute; top: 16px; left: 15px; display: grid; width: 26px; height: 26px; place-items: center; border-radius: 50%; background: var(--violet); color: white; font-size: .8rem; font-weight: 850; }
+    .criterion strong { display: block; margin-bottom: 4px; }
+    .risk-high { background: var(--red-soft); color: var(--red); font-weight: 800; }
+    .risk-med { background: var(--amber-soft); color: var(--amber); font-weight: 800; }
+    .risk-low { background: var(--green-soft); color: var(--green); font-weight: 800; }
+    .note { color: var(--muted); font-size: .88rem; }
+    .mermaid-wrap { margin-top: 18px; border: 1px solid var(--line); border-radius: 8px; background: #fbf9ff; padding: 18px; overflow-x: auto; }
+    .sources li { margin: 9px 0; }
+    @media (max-width: 800px) {
+      .span-3, .span-4, .span-6, .span-8 { grid-column: span 12; }
+      .criteria { grid-template-columns: 1fr; }
+      .phase { padding-left: 56px; }
+      .phase-number { left: 14px; }
+      table { display: block; overflow-x: auto; }
+    }
+    @media (prefers-color-scheme: dark) {
+      :root { --paper:#17151d; --ink:#eeeaf5; --muted:#bbb4c4; --line:#4b4555; --card:#211e29; --shadow:6px 6px 0 #0d0c10; --violet-soft:#352b54; --green-soft:#193d30; --amber-soft:#493b1f; --red-soft:#49252e; --blue-soft:#24364f; }
+      code { background:#2d2836; color:#cbbcff; }
+      .mini, .criterion, .mermaid-wrap { background:#26222e; }
+      .checklist li::before { background:#211e29; }
+    }
+  </style>
+</head>
+<body>
+<main>
+  <div class="eyebrow">Scoring engine status + implementation plan · Phase 0 findings updated 18 August 2026</div>
+  <h1>Dense listening is one rollout gate and one product control away</h1>
+  <p class="lede">The new scoring engine is substantially complete and running in production shadow mode. Dense listening is missing because V2 records Listening as duration-only, while the existing dense modifier matches the legacy <code>listening_dense_minutes</code> amount unit. The shortest durable path is to finish the authoritative-engine cutover, model “high density” as an explicit <code>dense</code> tag, and expose that choice directly in the form.</p>
+  <div class="meta">
+    <span class="pill">Production engine: shadow</span>
+    <span class="pill">Scope: Listening create + edit</span>
+    <span class="pill">Delivery: one parity data migration, then rule/UI work</span>
+    <span class="pill">Risk: medium until parity gate clears</span>
+  </div>
+
+  <section class="card warning">
+    <div class="eyebrow">Bottom line</div>
+    <h2>Do not add the dense control before the engine becomes authoritative</h2>
+    <p>The score-preview endpoint already evaluates the new engine even while production writes still use the interim scorer. Shipping a <code>dense</code> control first could preview <strong>36 points</strong> for 60 dense minutes but persist only <strong>24 points</strong>. The deployment order is therefore a correctness requirement: close shadow parity, enable authoritative scoring, activate the dense duration rule, then expose the form control.</p>
+  </section>
+
+  <section class="card">
+    <h2>Where the scoring engine is today</h2>
+    <div class="grid">
+      <div class="mini span-3"><div class="metric">108</div><div class="metric-label">production shadow matches since current process start</div></div>
+      <div class="mini span-3"><div class="metric">1</div><div class="metric-label">Writing / amount mismatch explained; fix prepared, not deployed</div></div>
+      <div class="mini span-3"><div class="metric">0</div><div class="metric-label">observed unmatched or evaluation-error series</div></div>
+      <div class="mini span-3"><div class="metric">off</div><div class="metric-label"><code>API_SCORING_ENGINE_ENABLED</code> in production</div></div>
+    </div>
+    <table>
+      <thead><tr><th>Capability</th><th>Status</th><th>Evidence</th></tr></thead>
+      <tbody>
+        <tr><td>Pure rule evaluator: priority, base rule, stackable modifiers, amount/duration source</td><td><span class="state done">Merged</span></td><td><code>domain/scoring.go</code> and focused engine tests</td></tr>
+        <tr><td>Stable unit keys and versioned rule storage</td><td><span class="state done">Merged</span></td><td>Migrations 0018–0021; active platform v1 seeded</td></tr>
+        <tr><td>Score provenance and independent contest snapshots</td><td><span class="state done">Merged</span></td><td>Base and contest logs snapshot applied rule IDs, rates, source, and result</td></tr>
+        <tr><td>Score preview and contest rule management</td><td><span class="state done">Merged</span></td><td>Preview API, platform/contest management API, contest rule editor</td></tr>
+        <tr><td>Production authoritative cutover</td><td><span class="state blocked">Gated</span></td><td>Production reports <code>tadoku_scoring_engine_enabled 0</code>; immutable parity rule-set v2 must deploy and pass a fresh shadow window</td></tr>
+        <tr><td>Duration-based dense Listening input</td><td><span class="state missing">Missing</span></td><td>V2 sends duration without a unit; platform v1 has no <code>duration_minutes + tag=dense</code> rule</td></tr>
+        <tr><td>Interim scorer removal and legacy generated-column cleanup</td><td><span class="state blocked">Later</span></td><td>Explicitly remains unchecked in the scoring rollout document</td></tr>
+      </tbody>
+    </table>
+    <p class="note">Production snapshot taken read-only from the running <code>immersion-api</code> deployment at approximately 14:48 UTC on 18 August 2026. Counter totals reset when the process restarts, so matrix tests remain necessary even after a clean traffic window.</p>
+  </section>
+
+  <section class="card warning">
+    <div class="eyebrow">Phase 0 execution finding</div>
+    <h2>The evaluator is correct; the intentional Writing boost never reached version control</h2>
+    <p>The observed mismatch was an 80-character Japanese Writing log. Legacy scoring used the production unit modifier <code>0.025</code> and persisted <strong>2 points</strong>; platform rule-set v1 used <code>0.0025</code> and evaluated <strong>0.2 points</strong>. The complete matrix shows the same exact 10× difference for every Writing unit: page <code>10 vs 1</code>, sentence <code>0.5 vs 0.05</code>, high-rate characters <code>0.025 vs 0.0025</code>, and fallback characters <code>0.00833333 vs 0.000833333</code>.</p>
+    <table>
+      <thead><tr><th>Evidence</th><th>Finding</th><th>Consequence</th></tr></thead>
+      <tbody>
+        <tr><td>Production score snapshots</td><td>All 163 non-deleted Writing logs since the first on 19 February 2023 use the 10× rates.</td><td>The output-activity boost is established compatibility behavior for this no-user-visible-change gate.</td></tr>
+        <tr><td>Product + repository history</td><td>The product owner confirms Writing and Speaking were intentionally boosted relative to input activities. Issue #603, “Review scoring for output activities,” was closed “Done” on 29 April 2023 without a commit or PR; migration 0001 and the public manual retained the old Writing values.</td><td>The decision was applied to production data but not propagated to versioned seed data or documentation. There is no database audit trail proving the exact edit time.</td></tr>
+        <tr><td>Deterministic matrix</td><td>25 unit/language rows × three representative amounts reproduce 27 Writing failures and no non-Writing failures.</td><td>Traffic-only shadow validation was too sparse; exhaustive configuration parity must be a release gate.</td></tr>
+        <tr><td>Prepared resolution</td><td>Standalone migration 0023 creates published platform rule-set v2, copies all 30 rules, changes only Writing amount rates, and activates v2.</td><td>Rule-set v1, legacy units, and historical score snapshots remain immutable. The production engine flag stays off.</td></tr>
+      </tbody>
+    </table>
+    <p class="note"><strong>Documentation follow-up:</strong> the public Writing table is stale and must be corrected to the established boosted rates. Any future Writing policy change should still use a new immutable rule-set version, not an incidental parity edit.</p>
+  </section>
+
+  <section class="card decision">
+    <div class="eyebrow">Chosen direction</div>
+    <h2>Use the engine’s existing tag matcher; stop extending the legacy unit model</h2>
+    <p>Add a stackable platform rule for Listening with <code>score_source=duration_minutes</code>, <code>tag=dense</code>, and <code>rate=1.5</code>. In V2 create and edit forms, show a first-class checkbox labeled <strong>High density</strong>, with helper text such as “Few breaks, for example an audiobook.” The checkbox adds or removes the normalized <code>dense</code> tag through <code>react-hook-form</code>. The live score preview then makes the effect explicit.</p>
+    <div class="grid">
+      <div class="mini span-6">
+        <h3>Benefits</h3>
+        <ul>
+          <li>Uses rule matching, normalization, previews, provenance, and contest fallback behavior that already exist.</li>
+          <li>Requires no database schema or data migration and no new API field.</li>
+          <li>Moves toward the ADR’s planned removal of <code>listening_dense_minutes</code>.</li>
+          <li>Preserves old clients: legacy amount + high-density-unit logs keep scoring as before.</li>
+        </ul>
+      </div>
+      <div class="mini span-6">
+        <h3>Trade-offs</h3>
+        <ul>
+          <li><code>dense</code> becomes a score-affecting tag and needs a clearly owned product meaning.</li>
+          <li>Published scores remain snapshots; old ambiguous duration logs cannot be identified safely for automatic repair.</li>
+          <li>Existing custom contests pinned to platform v1 will not silently inherit the new rule.</li>
+          <li>The platform rule-management API exists, but there is not yet a platform rule editor UI.</li>
+        </ul>
+      </div>
+    </div>
+    <div class="mermaid-wrap">
+      <pre class="mermaid">
+flowchart LR
+  A[60 minutes Listening] --> B{High density?}
+  B -- No --> C[duration base<br/>60 × 0.4]
+  B -- Yes --> D[add normalized tag: dense]
+  D --> E[duration base<br/>60 × 0.4]
+  E --> F[dense modifier<br/>× 1.5]
+  C --> G[24 points]
+  F --> H[36 points]
+  H --> I[Snapshot score + rule provenance]
+  G --> I
+      </pre>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>Viable alternatives considered</h2>
+    <table>
+      <thead><tr><th>Option</th><th>What it requires</th><th>Assessment</th></tr></thead>
+      <tbody>
+        <tr><td><strong>A. Explicit dense tag</strong></td><td>New platform rule-set version plus a form control mapped to <code>tags</code>.</td><td><strong>Choose.</strong> Smallest coherent path; already supported end to end by the engine.</td></tr>
+        <tr><td>B. Allow duration + <code>listening_dense_minutes</code></td><td>Relax domain tracking validation, preserve unit data for duration-only logs, change repository mappings, add duration rules, and expand tests.</td><td>Works, but deepens coupling to a legacy unit the ADR intends to remove.</td></tr>
+        <tr><td>C. Add a new density/intensity API field</td><td>New API contract, domain type, persistence decision, contest semantics, migration or derived mapping, and client rollout.</td><td>Potentially cleaner for a broader future intensity taxonomy, but excessive for restoring the existing binary choice.</td></tr>
+        <tr><td>D. Infer density from media tags such as <code>audiobook</code></td><td>Rules that treat a media category as scoring intent.</td><td>Reject. Not every audiobook is high density, and the user must retain an explicit choice.</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section class="card decision">
+    <div class="eyebrow">Legacy compatibility boundary</div>
+    <h2>Do not rewrite existing dense-minute logs during the feature restoration</h2>
+    <p>Existing dense Listening logs are explicit legacy amount/unit inputs: an amount measured with <code>unit_key=listening_dense_minutes</code>. Their score is already a historical snapshot. Activating platform v2 must not reinterpret or rewrite those rows. Instead, v2 is a strict superset of v1: it retains the existing <code>amount + listening_dense_minutes</code> modifier and adds the new <code>duration_minutes + tag=dense</code> modifier.</p>
+    <div class="grid">
+      <div class="mini span-6">
+        <h3>At dense-restoration launch</h3>
+        <ul>
+          <li>Leave existing amount, unit key, computed score, and provenance unchanged.</li>
+          <li>Continue accepting old clients and the ordinary legacy form.</li>
+          <li>Recognize a legacy dense unit as “High density” when displaying or editing the log, even if it has no <code>dense</code> tag.</li>
+          <li>Keep the amount-unit dense rule in every active platform version while any old writer remains.</li>
+        </ul>
+      </div>
+      <div class="mini span-6">
+        <h3>When logging flow v1 is retired</h3>
+        <ul>
+          <li>First make V2 read and edit both legacy amount/minute logs and canonical duration/tag logs correctly.</li>
+          <li>Normalize any remaining legacy API writes in the backend so old clients cannot create new rows that miss duration or density metadata after the backfill.</li>
+          <li>After the V2 UI becomes the only site flow, ship a standalone additive data migration for historical time-primary minute logs, without recalculating their scores.</li>
+          <li>Only after old API clients are retired should a later standalone cleanup remove legacy write support, unit configuration, or obsolete tracking fields.</li>
+        </ul>
+      </div>
+    </div>
+    <p class="note">This conversion should cover all v1 minute-based logs for time-primary activities, not only dense Listening: copy the submitted minute amount into duration metadata, and additionally mark the explicit dense Listening/Speaking units with normalized density metadata. A dense legacy unit proves density intent, but conversion from floating-point minutes to integer seconds still needs an explicit rounding policy. Snapshot scores and provenance must never be recomputed merely because representation changes.</p>
+  </section>
+
+  <section class="card">
+    <div class="eyebrow">Logging flow v1 decommission sequence</div>
+    <h2>Convert additively, then remove compatibility later</h2>
+    <table>
+      <thead><tr><th>Step</th><th>Delivery unit</th><th>Required behavior</th><th>Gate</th></tr></thead>
+      <tbody>
+        <tr><td>1. Dual-read/edit</td><td>Application PR</td><td>V2 recognizes legacy minute units, shows dense state correctly, and preserves old snapshots on read/edit.</td><td>Representative plain/dense Listening and Speaking v1 logs work in V2.</td></tr>
+        <tr><td>2. Normalize old-client writes</td><td>Application PR</td><td>When a supported client still sends a time-primary minute unit, also snapshot canonical duration and density metadata while retaining the legacy amount/unit fields.</td><td>Every newly written legacy-shaped row is discoverable through the canonical metadata.</td></tr>
+        <tr><td>3. Retire the site’s v1 flow</td><td>Frontend rollout</td><td>All site users create new time-primary logs through V2 duration plus the explicit High density choice.</td><td>Production verification shows V2 create/edit stable and no site route emits the v1 payload.</td></tr>
+        <tr><td>4. Backfill historical rows</td><td>Standalone data-migration PR</td><td>Populate <code>duration_seconds</code> from submitted minute amounts in base and contest snapshots; add normalized density metadata for explicit dense units; leave score/provenance and legacy fields intact.</td><td>Row counts reconcile, no snapshot score changes, and the migration is idempotent.</td></tr>
+        <tr><td>5. Retire external compatibility</td><td>Later application PR</td><td>After telemetry and a communicated client cutoff, stop accepting deprecated minute-unit writes.</td><td>No supported client uses the old payload.</td></tr>
+        <tr><td>6. Physical cleanup</td><td>Later standalone migration</td><td>Remove obsolete unit rows/columns or constraints only after deployed code no longer reads them.</td><td>Clean production verification with no legacy read/write dependency.</td></tr>
+      </tbody>
+    </table>
+    <p class="note">The repository requires schema/data migrations to land and deploy independently from dependent runtime changes. Steps 4 and 6 therefore cannot share a commit, pull request, or deployment with application behavior.</p>
+  </section>
+
+  <section class="card phase">
+    <div class="phase-number">0</div>
+    <div class="eyebrow">Phase 0 · Close the production parity gate</div>
+    <h2>Explain the one mismatch before changing authority</h2>
+    <div class="phase-meta">Sequential prerequisite · Backend + operations · No user-visible change</div>
+    <ul class="checklist">
+      <li>✅ Reproduced the Writing/amount anomaly from bounded production fields without collecting user-authored text.</li>
+      <li>✅ Added a deterministic 25-row × three-amount parity matrix, including all language overrides and a fractional amount.</li>
+      <li>✅ Prepared immutable platform rule-set v2 in standalone migration 0023; disposable Postgres apply/down/up checks and the full domain suite pass.</li>
+      <li>◐ PR <a href="https://github.com/tadoku/tadoku/pull/803">#803</a> is present in the production frontend image built minutes after merge. Authenticated browser verification of issue <a href="https://github.com/tadoku/tadoku/issues/798">#798</a> remains outstanding, so the issue stays open.</li>
+      <li>○ Land and deploy migration 0023 independently, then record a fresh shadow window with no <code>mismatch</code>, <code>unmatched</code>, or <code>error</code> outcomes.</li>
+    </ul>
+    <div class="gate"><strong>Gate 0 status — implementation passes, production observation pending:</strong> The matrix and migration checks pass locally and the mismatch has a documented cause. The gate remains closed until migration 0023 is independently merged/deployed, #798 is verified while authenticated, and a fresh production shadow window is clean. Keep the production flag off.</div>
+  </section>
+
+  <section class="card phase">
+    <div class="phase-number">1</div>
+    <div class="eyebrow">Phase 1 · Make the engine authoritative</div>
+    <h2>Complete the rollout already built</h2>
+    <div class="phase-meta">Sequential release gate · Operations + backend · Reversible configuration change</div>
+    <ul class="checklist">
+      <li>Capture pre-cutover totals for effective scores, recent logs, contest snapshots, leaderboard aggregates, and shadow counters without collecting user-authored content.</li>
+      <li>Enable <code>API_SCORING_ENGINE_ENABLED=true</code> in the production deployment through the normal configuration/GitOps path.</li>
+      <li>Verify <code>tadoku_scoring_engine_enabled 1</code>, successful create/update traffic, valid rule provenance, and zero authoritative <code>error</code> or <code>unmatched</code> outcomes.</li>
+      <li>Exercise legacy amount-only, duration-only, and amount-plus-duration inputs; confirm amount still wins when both are supplied.</li>
+      <li>Confirm platform scores, ongoing contest snapshots, completed contest immutability, and outbox-driven leaderboards agree with Postgres.</li>
+    </ul>
+    <div class="gate"><strong>Gate 1:</strong> The authoritative engine remains healthy through the agreed observation window, representative writes have correct provenance, and aggregates converge. If the gate fails, stop the dense rollout; any live rollback requires explicit operator approval under the repository policy.</div>
+  </section>
+
+  <section class="card phase">
+    <div class="phase-number">2</div>
+    <div class="eyebrow">Phase 2 · Publish dense duration scoring</div>
+    <h2>Create platform rule-set v3 without rewriting history</h2>
+    <div class="phase-meta">Backend/rule configuration · Can be prepared in parallel with Phase 3, activated first</div>
+    <ul class="checklist">
+      <li>Create a complete platform draft by copying the active rules and adding one modifier: Listening, <code>duration_minutes</code>, tag <code>dense</code>, stackable, rate <code>1.5</code>, with a unique priority after the Listening duration base.</li>
+      <li>Copy parity rule-set v2 and retain its Listening amount rules, including the <code>listening_dense_minutes</code> modifier, so legacy forms, clients, and edits continue to score correctly.</li>
+      <li>Add domain tests proving 60 plain minutes score 24, 60 dense minutes score 36, unrelated tags do not modify the score, and the modifier never scores without a base.</li>
+      <li>Cover score preview, create, update, and contest attachment so base and contest snapshots preserve the selected base and modifier provenance in order.</li>
+      <li>Publish the immutable draft and activate it only after Gate 1. Confirm activation does not alter historical log or contest snapshots.</li>
+      <li>Document custom-contest behavior: no contest rule set reuses the active platform score; override sets use their pinned fallback; replace sets must opt into dense explicitly.</li>
+    </ul>
+    <div class="gate"><strong>Gate 2:</strong> Against the active platform version, preview and persisted create/update results are 24 for 60 plain minutes and 36 for 60 dense minutes, with matching rule provenance and contest behavior. Historical rows remain unchanged.</div>
+  </section>
+
+  <section class="card phase">
+    <div class="phase-number">3</div>
+    <div class="eyebrow">Phase 3 · Restore the user-facing choice</div>
+    <h2>Add a clear High density control to V2 create and edit</h2>
+    <div class="phase-meta">Frontend lane · May develop after Gate 0; may deploy only after Gate 2</div>
+    <ul class="checklist">
+      <li>Add a <code>Checkbox</code> from the <code>ui</code> package for Listening only, labeled “High density” with the manual’s “few breaks” explanation.</li>
+      <li>Bind it through <code>react-hook-form</code>; checking adds one normalized <code>dense</code> tag, unchecking removes it, and editing an existing tagged log initializes the control as checked.</li>
+      <li>For a legacy amount/unit log, derive the visible High density state from either the <code>dense</code> tag or the selected <code>listening_dense_minutes</code> unit; do not silently convert its tracking representation on save.</li>
+      <li>Keep the generic tags control consistent: prevent duplicate <code>dense</code> values and decide visibly whether the scoring tag remains a normal tag chip or is represented only by the checkbox.</li>
+      <li>Use the existing debounced preview to show the score change immediately and retain the current error/loading behavior.</li>
+      <li>Add frontend schema/transform tests for create and edit, activity switching, tag normalization, ten-tag limits, and plain versus dense preview payloads.</li>
+      <li>Verify desktop/mobile create and edit flows with keyboard navigation and a screen-reader-accessible description.</li>
+    </ul>
+    <div class="gate"><strong>Gate 3:</strong> A user can create and edit a dense Listening log without touching units or manually correcting the score; the preview and saved detail both show 36 points for 60 minutes, while the unchecked path remains 24.</div>
+  </section>
+
+  <section class="card phase">
+    <div class="phase-number">4</div>
+    <div class="eyebrow">Phase 4 · Release verification and closeout</div>
+    <h2>Prove compatibility before broadening V2</h2>
+    <div class="phase-meta">Sequential QA + production observation · Backend, frontend, operations</div>
+    <ul class="checklist">
+      <li>Run backend formatting, Gazelle, focused Bazel tests, then <code>bazel build //services/...</code> and <code>bazel test //services/...</code>.</li>
+      <li>Run WebV2 typecheck, lint, and full pnpm build; no OpenAPI or sqlc generation is needed unless the implementation unexpectedly changes those sources.</li>
+      <li>Regression-test the ordinary legacy form with plain and high-density amount units; old clients must remain valid.</li>
+      <li>Regression-test an existing legacy dense-unit log through read and edit paths, confirming that its density is shown correctly, its amount/unit representation is preserved, and its score does not drift.</li>
+      <li>Observe production engine outcomes, create/update error rates, and leaderboard convergence after the UI release.</li>
+      <li>Close #798 after deployment verification and open a dedicated dense-listening issue/PR trail if one does not yet exist.</li>
+      <li>Communicate that previously created duration-only logs cannot be auto-classified as dense. They need an explicit one-time edit because historical snapshots and user intent must not be guessed.</li>
+    </ul>
+    <div class="gate"><strong>Gate 4:</strong> Seven days of production use show no scoring anomalies attributable to the change, legacy paths remain green, and no new dense Listening log requires manual score correction.</div>
+  </section>
+
+  <section class="card">
+    <h2>Measurable success criteria</h2>
+    <div class="criteria">
+      <div class="criterion"><strong>Correct dense score</strong>60 minutes of Listening with High density selected previews and persists 36 points (<code>60 × 0.4 × 1.5</code>).</div>
+      <div class="criterion"><strong>Correct plain score</strong>The same input without High density previews and persists 24 points, with no modifier in provenance.</div>
+      <div class="criterion"><strong>No preview/write split</strong>For sampled plain and dense creates/updates, the previewed platform and contest scores equal the persisted snapshots.</div>
+      <div class="criterion"><strong>Safe cutover</strong>Production reports the engine enabled and zero unexplained mismatch, unmatched, or error outcomes over the release observation window.</div>
+      <div class="criterion"><strong>Backward compatibility</strong>Legacy amount/unit clients—including high-density minute inputs—continue to create valid logs with unchanged visible behavior.</div>
+      <div class="criterion"><strong>Snapshot integrity</strong>Activating the new platform rule set changes only future evaluations; existing base and completed-contest scores remain byte-for-byte unchanged.</div>
+      <div class="criterion"><strong>Legacy edit safety</strong>An existing <code>listening_dense_minutes</code> log is displayed as High density and can be edited without representation conversion or score drift.</div>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>Risk register</h2>
+    <table>
+      <thead><tr><th>Risk</th><th>Level</th><th>Mitigation</th></tr></thead>
+      <tbody>
+        <tr><td>Engine authority is enabled with an unexplained parity defect.</td><td class="risk-high">High</td><td>Gate on the deterministic unit/language matrix plus a clean production shadow window.</td></tr>
+        <tr><td>The form previews the dense rule while writes still use the interim scorer.</td><td class="risk-high">High</td><td>Hard deployment order: authoritative engine → active dense rule → UI control.</td></tr>
+        <tr><td>Rule activation unexpectedly changes old scores.</td><td class="risk-high">High</td><td>Scores are snapshots; assert historical rows and completed contests before and after activation.</td></tr>
+        <tr><td>Custom contests appear inconsistent.</td><td class="risk-med">Medium</td><td>Document pinned fallback semantics in the editor and test override/replace/no-custom-rule cases.</td></tr>
+        <tr><td><code>dense</code> collides with free-text tag behavior.</td><td class="risk-med">Medium</td><td>Make the control explicit, normalize once, prevent duplicates, and document that it affects scoring.</td></tr>
+        <tr><td>Unmarked duration-only logs are silently treated as dense without evidence of user intent.</td><td class="risk-high">High</td><td>Infer density only from the explicit legacy dense unit or a user-selected <code>dense</code> marker; never infer it from description or media tags.</td></tr>
+        <tr><td>Platform v3 drops the legacy dense amount rule too early.</td><td class="risk-high">High</td><td>Make v3 additive, retain the unit matcher, and test legacy create/edit until every supported writer has migrated.</td></tr>
+        <tr><td>A representation migration accidentally recalculates historical snapshots.</td><td class="risk-high">High</td><td>Separate metadata backfill from cleanup, ship migrations independently, and prohibit score/provenance rewrites.</td></tr>
+        <tr><td>The change balloons into a tracking-model migration.</td><td class="risk-low">Low</td><td>Keep the first release within existing tags, rules, snapshots, previews, and APIs.</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section class="card">
+    <h2>Atomic delivery and parallel work</h2>
+    <div class="grid">
+      <div class="mini span-4"><h3>Workstream A · Parity and cutover</h3><p>Explain the mismatch, add matrix coverage, then complete the authoritative-engine rollout. This is the critical path.</p></div>
+      <div class="mini span-4"><h3>Workstream B · Rule version</h3><p>Prepare and test the complete platform draft with the dense duration modifier. Activate only after A passes.</p></div>
+      <div class="mini span-4"><h3>Workstream C · Form affordance</h3><p>Build create/edit checkbox and form-transform coverage in parallel. Deploy only after B is active.</p></div>
+      <div class="mini span-12"><p><strong>Merge/deploy order:</strong> parity fix and authoritative flag first; rule-set activation second; frontend control and manual wording third. If Phase 0 requires code and Phase 3 is ready, keep the UI undeployed or explicitly gated so preview cannot promise a score that writes will not persist.</p></div>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>Follow-up improvements this unlocks</h2>
+    <ul>
+      <li>Add the equivalent first-class dense Speaking control using the existing <code>1.4×</code> semantics.</li>
+      <li>Build a platform scoring-rule editor with draft preview/diff support so platform versions do not require direct API orchestration.</li>
+      <li>Add a user-confirmed bulk correction flow for known historical dense logs; never infer intent from descriptions or media tags.</li>
+      <li>Remove <code>ComputeInterimLogScore</code> after an agreed authoritative observation window.</li>
+      <li>Execute the staged logging-v1 decommission sequence: switch supported writers to V2, preserve the already-backfilled stable unit keys, snapshot <code>score</code> into <code>computed_score</code> for legacy-only rows in a standalone retirement migration, retire external compatibility, then clean up obsolete generated/unit data separately. Do not recalculate historical scores.</li>
+      <li>Close the remaining production verification checklist and then broaden V2 beyond administrators.</li>
+    </ul>
+  </section>
+
+  <section class="card sources">
+    <h2>Evidence trail</h2>
+    <ul>
+      <li>Rollout tracker: <code>docs/wip/scoring-rules/README.md</code> — engine implementation is checked off; production verification and interim-bridge removal remain open.</li>
+      <li>Scoring semantics: <code>services/immersion-api/domain/scoring.go</code>; dense tags are already covered by evaluator tests.</li>
+      <li>Current mismatch in representation: <code>frontend/apps/webv2/app/immersion/NewLogFormV2/domain.tsx</code> emits duration-only requests for time-primary activities; <code>services/immersion-api/domain/logtracking.go</code> couples units to amount tracking.</li>
+      <li>Initial platform rules: migration <code>0021_scoring_rule_storage.up.sql</code> has Listening duration base <code>0.4</code> but dense only as an amount-unit modifier.</li>
+      <li>Phase 0 parity fix: migration <code>0023_platform_scoring_rule_set_v2.up.sql</code> preserves the production Writing rates in a new immutable version; <code>domain/scoring_test.go</code> contains the exhaustive legacy-unit matrix.</li>
+      <li>Historical dense inventory: production contains 3,661 non-deleted <code>listening_dense_minutes</code> rows; all already have the stable key, 3,510 still rely on the legacy score snapshot, and none has engine provenance because authority remains off.</li>
+      <li>Product rule: <code>frontend/apps/webv2/pages/pages/manual.tsx</code> defines high density as media with few breaks and scores it at <code>0.6</code> per minute.</li>
+      <li>Recent merged work: PRs <a href="https://github.com/tadoku/tadoku/pull/709">#709</a>, <a href="https://github.com/tadoku/tadoku/pull/742">#742</a>, <a href="https://github.com/tadoku/tadoku/pull/744">#744</a>, <a href="https://github.com/tadoku/tadoku/pull/745">#745</a>, <a href="https://github.com/tadoku/tadoku/pull/746">#746</a>, <a href="https://github.com/tadoku/tadoku/pull/747">#747</a>, <a href="https://github.com/tadoku/tadoku/pull/748">#748</a>, <a href="https://github.com/tadoku/tadoku/pull/749">#749</a>, <a href="https://github.com/tadoku/tadoku/pull/799">#799</a>, and <a href="https://github.com/tadoku/tadoku/pull/803">#803</a>.</li>
+    </ul>
+  </section>
+</main>
+<script type="module">
+  import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs";
+  mermaid.initialize({ startOnLoad: true, theme: window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'default', securityLevel: 'strict' });
+</script>
+</body>
+</html>

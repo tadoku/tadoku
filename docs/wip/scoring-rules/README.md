@@ -121,12 +121,14 @@ enforce the non-null and log-tracking constraints. The enforcement migration
 must only run after every live API writer has the preceding application change;
 otherwise a rolling deployment could reject writes from an old pod.
 
-## Initial parity rule set
+## Platform parity rule sets
 
-The first published platform rule set must reproduce the public scoring manual
-for amount-and-unit inputs. The public manual is authoritative where the legacy
-database modifiers differ. Shadow mode should therefore reach zero unexplained
-differences before the rule set becomes authoritative.
+The active platform rule set must reproduce established production scoring for
+amount-and-unit inputs. The Writing output-activity boost was applied to the
+production unit modifiers in 2023 but was not propagated to the original seed
+migration or public manual. Platform rule-set v2 restores that compatibility;
+shadow mode must reach zero unexplained differences before the rule set becomes
+authoritative.
 
 ### Amount rules
 
@@ -140,18 +142,18 @@ differences before the rule set becomes authoritative.
 | Reading | `reading_character` | any | base | 0.000833333 |
 | Listening | any | any | base | 0.4 |
 | Listening | `listening_dense_minutes` | any | modifier | 1.5 |
-| Writing | `writing_page` | any | base | 1 |
-| Writing | `writing_sentence` | any | base | 0.05 |
-| Writing | `writing_character` | Japanese, Korean, and Chinese variants | base | 0.0025 |
-| Writing | `writing_character` | any | base | 0.000833333 |
+| Writing | `writing_page` | any | base | 10 |
+| Writing | `writing_sentence` | any | base | 0.5 |
+| Writing | `writing_character` | Japanese, Korean, and Chinese variants | base | 0.025 |
+| Writing | `writing_character` | any | base | 0.00833333 |
 | Speaking | any | any | base | 0.5 |
 | Speaking | `speaking_dense_minutes` | any | modifier | 1.4 |
 | Study | `study_minute` | any | base | 0.5 |
 
 The high-rate character language codes currently represented by database unit
 rows are `jpn`, `kor`, `zho`, `cmn`, `yue`, and `wuu`. Their language-specific
-rule is a more-specific non-stackable base with rate `0.0025`; it wins before
-the broad character base and is not modeled as a `3x` modifier.
+rule is a more-specific non-stackable base; it wins before the broad character
+base and is not modeled as a `3x` modifier.
 
 ### Duration rules
 

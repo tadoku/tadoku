@@ -398,6 +398,102 @@ func TestEvaluateScoringRuleSetRejectsInvalidConfigurationAndInput(t *testing.T)
 	})
 }
 
+func TestPlatformRuleSetV2MatchesProductionLegacyUnitMatrix(t *testing.T) {
+	type legacyUnit struct {
+		name         string
+		activityID   int32
+		unitKey      string
+		languageCode string
+		modifier     float32
+	}
+
+	legacyUnits := []legacyUnit{
+		{name: "reading/page", activityID: 1, unitKey: domain.UnitKeyReadingPage, modifier: 1},
+		{name: "reading/two-column-page/jpn", activityID: 1, unitKey: domain.UnitKeyReadingTwoColumnPage, languageCode: "jpn", modifier: 1.6},
+		{name: "reading/comic-page", activityID: 1, unitKey: domain.UnitKeyReadingComicPage, modifier: 0.2},
+		{name: "reading/sentence", activityID: 1, unitKey: domain.UnitKeyReadingSentence, modifier: 0.05},
+		{name: "reading/character/default", activityID: 1, unitKey: domain.UnitKeyReadingCharacter, modifier: 0.000833333},
+		{name: "reading/character/jpn", activityID: 1, unitKey: domain.UnitKeyReadingCharacter, languageCode: "jpn", modifier: 0.0025},
+		{name: "reading/character/kor", activityID: 1, unitKey: domain.UnitKeyReadingCharacter, languageCode: "kor", modifier: 0.0025},
+		{name: "reading/character/zho", activityID: 1, unitKey: domain.UnitKeyReadingCharacter, languageCode: "zho", modifier: 0.0025},
+		{name: "reading/character/cmn", activityID: 1, unitKey: domain.UnitKeyReadingCharacter, languageCode: "cmn", modifier: 0.0025},
+		{name: "reading/character/yue", activityID: 1, unitKey: domain.UnitKeyReadingCharacter, languageCode: "yue", modifier: 0.0025},
+		{name: "reading/character/wuu", activityID: 1, unitKey: domain.UnitKeyReadingCharacter, languageCode: "wuu", modifier: 0.0025},
+		{name: "listening/minute", activityID: 2, unitKey: domain.UnitKeyListeningMinute, modifier: 0.4},
+		{name: "listening/dense-minute", activityID: 2, unitKey: domain.UnitKeyListeningDenseMinutes, modifier: 0.6},
+		{name: "writing/page", activityID: 3, unitKey: domain.UnitKeyWritingPage, modifier: 10},
+		{name: "writing/sentence", activityID: 3, unitKey: domain.UnitKeyWritingSentence, modifier: 0.5},
+		{name: "writing/character/default", activityID: 3, unitKey: domain.UnitKeyWritingCharacter, modifier: 0.00833333},
+		{name: "writing/character/jpn", activityID: 3, unitKey: domain.UnitKeyWritingCharacter, languageCode: "jpn", modifier: 0.025},
+		{name: "writing/character/kor", activityID: 3, unitKey: domain.UnitKeyWritingCharacter, languageCode: "kor", modifier: 0.025},
+		{name: "writing/character/zho", activityID: 3, unitKey: domain.UnitKeyWritingCharacter, languageCode: "zho", modifier: 0.025},
+		{name: "writing/character/cmn", activityID: 3, unitKey: domain.UnitKeyWritingCharacter, languageCode: "cmn", modifier: 0.025},
+		{name: "writing/character/yue", activityID: 3, unitKey: domain.UnitKeyWritingCharacter, languageCode: "yue", modifier: 0.025},
+		{name: "writing/character/wuu", activityID: 3, unitKey: domain.UnitKeyWritingCharacter, languageCode: "wuu", modifier: 0.025},
+		{name: "speaking/minute", activityID: 4, unitKey: domain.UnitKeySpeakingMinute, modifier: 0.5},
+		{name: "speaking/dense-minute", activityID: 4, unitKey: domain.UnitKeySpeakingDenseMinutes, modifier: 0.7},
+		{name: "study/minute", activityID: 5, unitKey: domain.UnitKeyStudyMinute, modifier: 0.5},
+	}
+
+	newRule := func(priority, activityID int32, unitKey, languageCode string, rate float32, stackable bool) domain.ScoringRule {
+		return domain.ScoringRule{
+			ID:           uuid.New(),
+			Priority:     priority,
+			Stackable:    stackable,
+			ActivityID:   activityID,
+			UnitKey:      unitKey,
+			LanguageCode: languageCode,
+			ScoreSource:  domain.ScoreSourceAmount,
+			Rate:         rate,
+		}
+	}
+	highRateCharacterLanguages := []string{"jpn", "kor", "zho", "cmn", "yue", "wuu"}
+	rules := []domain.ScoringRule{
+		newRule(100, 1, domain.UnitKeyReadingTwoColumnPage, "jpn", 1.6, false),
+		newRule(110, 1, domain.UnitKeyReadingPage, "", 1, false),
+		newRule(120, 1, domain.UnitKeyReadingComicPage, "", 0.2, false),
+		newRule(130, 1, domain.UnitKeyReadingSentence, "", 0.05, false),
+	}
+	for i, languageCode := range highRateCharacterLanguages {
+		rules = append(rules, newRule(int32(140+i), 1, domain.UnitKeyReadingCharacter, languageCode, 0.0025, false))
+	}
+	rules = append(rules,
+		newRule(150, 1, domain.UnitKeyReadingCharacter, "", 0.000833333, false),
+		newRule(200, 2, "", "", 0.4, false),
+		newRule(210, 2, domain.UnitKeyListeningDenseMinutes, "", 1.5, true),
+		newRule(300, 3, domain.UnitKeyWritingPage, "", 10, false),
+		newRule(310, 3, domain.UnitKeyWritingSentence, "", 0.5, false),
+	)
+	for i, languageCode := range highRateCharacterLanguages {
+		rules = append(rules, newRule(int32(320+i), 3, domain.UnitKeyWritingCharacter, languageCode, 0.025, false))
+	}
+	rules = append(rules,
+		newRule(330, 3, domain.UnitKeyWritingCharacter, "", 0.00833333, false),
+		newRule(400, 4, "", "", 0.5, false),
+		newRule(410, 4, domain.UnitKeySpeakingDenseMinutes, "", 1.4, true),
+		newRule(500, 5, domain.UnitKeyStudyMinute, "", 0.5, false),
+	)
+	ruleSet := domain.ScoringRuleSet{ID: uuid.New(), Version: 2, Rules: rules}
+	amounts := []float32{1, 80, 80.25}
+
+	for _, unit := range legacyUnits {
+		for _, amount := range amounts {
+			t.Run(unit.name, func(t *testing.T) {
+				result, err := domain.EvaluateScoringRuleSet(domain.ScoringInput{
+					ActivityID:   unit.activityID,
+					UnitKey:      unit.unitKey,
+					LanguageCode: unit.languageCode,
+					Amount:       &amount,
+				}, ruleSet)
+
+				require.NoError(t, err)
+				require.True(t, result.Matched)
+				assert.InDelta(t, amount*unit.modifier, result.Score, 0.000001)
+			})
+		}
+	}
+}
+
 func TestEvaluateContestScore(t *testing.T) {
 	amount := float32(100)
 	input := domain.ScoringInput{

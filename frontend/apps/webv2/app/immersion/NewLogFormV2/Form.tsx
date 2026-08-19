@@ -21,37 +21,15 @@ import { useSessionOrRedirect } from '@app/common/session'
 import { useEffect } from 'react'
 import { AmountWithUnit, Option, OptionGroup, Select } from 'ui/components/Form'
 import { ScorePreviewEstimate } from '@app/immersion/components/ScorePreviewEstimate'
+import {
+  getLastLoggedActivityId,
+  getLastLoggedLanguage,
+  storeLastLoggedPreferences,
+} from '@app/immersion/NewLogFormV2/preferences'
 
 interface Props {
   options: LogConfigurationOptions
   defaultValues?: Partial<NewLogFormV2Schema>
-}
-
-const LAST_LOGGED_LANGUAGE_STORAGE_KEY = 'log-form-v2:last-logged-language'
-
-const getLastLoggedLanguage = () => {
-  if (typeof window === 'undefined') {
-    return null
-  }
-
-  try {
-    return window.localStorage.getItem(LAST_LOGGED_LANGUAGE_STORAGE_KEY)
-  } catch {
-    return null
-  }
-}
-
-const storeLastLoggedLanguage = (languageCode: string) => {
-  if (typeof window === 'undefined') {
-    return
-  }
-
-  try {
-    window.localStorage.setItem(
-      LAST_LOGGED_LANGUAGE_STORAGE_KEY,
-      languageCode,
-    )
-  } catch {}
 }
 
 export const LogFormV2 = ({
@@ -130,7 +108,7 @@ export const LogFormV2 = ({
 
   const router = useRouter()
   const createLogMutation = useCreateLogV2(log => {
-    storeLastLoggedLanguage(log.language.code)
+    storeLastLoggedPreferences(log.language.code, log.activity.id)
 
     const hasRegistrations =
       registrations.data &&
@@ -152,31 +130,61 @@ export const LogFormV2 = ({
   }
 
   useEffect(() => {
-    if (originalDefaultValues?.languageCode !== undefined) {
+    let restoredLanguageCode = methods.getValues('languageCode')
+    let restoredActivityId = methods.getValues('activityId')
+    let restoredPreference = false
+
+    if (originalDefaultValues?.languageCode === undefined) {
+      const lastLoggedLanguage = getLastLoggedLanguage()
+      if (
+        lastLoggedLanguage !== null &&
+        options.languages.some(
+          language => language.code === lastLoggedLanguage,
+        )
+      ) {
+        restoredLanguageCode = lastLoggedLanguage
+        methods.setValue('languageCode', lastLoggedLanguage)
+        restoredPreference = true
+      }
+    }
+
+    if (originalDefaultValues?.activityId === undefined) {
+      const lastLoggedActivityId = getLastLoggedActivityId(
+        options.activities,
+      )
+      if (lastLoggedActivityId !== null) {
+        restoredActivityId = lastLoggedActivityId
+        methods.setValue('activityId', lastLoggedActivityId)
+        restoredPreference = true
+      }
+    }
+
+    if (!restoredPreference) {
       return
     }
 
-    const lastLoggedLanguage = getLastLoggedLanguage()
-    if (
-      lastLoggedLanguage === null ||
-      !options.languages.some(language => language.code === lastLoggedLanguage)
-    ) {
+    const restoredActivity = options.activities.find(
+      activity => activity.id === restoredActivityId,
+    )
+    if ((restoredActivity?.input_type ?? 'amount_primary') === 'time_primary') {
+      methods.setValue('amountUnit', undefined)
       return
     }
 
-    methods.setValue('languageCode', lastLoggedLanguage)
     methods.setValue(
       'amountUnit',
       filterUnits(
         options.units,
-        methods.getValues('activityId'),
-        lastLoggedLanguage,
+        restoredActivityId,
+        restoredLanguageCode,
       )[0]?.id,
     )
   }, [
     methods,
+    options.activities,
     options.languages,
     options.units,
+    originalDefaultValues?.activityId,
     originalDefaultValues?.languageCode,
   ])
 

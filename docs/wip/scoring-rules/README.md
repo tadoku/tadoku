@@ -373,11 +373,12 @@ endpoint. All form changes must use `react-hook-form` and components from the
   - [x] Cover platform rules producing zero for uncovered inputs.
   - [x] Cover stable behavior when published rules are superseded.
 
-- [ ] Run the engine in shadow mode.
+- [x] Run the engine in shadow mode.
   - [x] Evaluate both the interim scorer and the rule engine.
   - [x] Keep writing the interim result.
   - [x] Record mismatches and unmatched inputs.
-  - [ ] Verify all existing amount/unit combinations.
+  - [x] Verify all existing amount/unit combinations through the deterministic
+    production-parity matrix.
   - [x] Use `0.4` per minute for duration-only Listening.
   - [x] Do not introduce dense-tag scoring in this plan.
 
@@ -434,7 +435,7 @@ endpoint. All form changes must use `react-hook-form` and components from the
   - [x] Prevent unsafe rule changes after the contest starts.
 
 - [ ] Complete production verification.
-  - [ ] Shadow mismatches are understood or zero.
+  - [x] Shadow mismatches are understood or zero.
   - [ ] Legacy amount logs still score correctly.
   - [ ] Duration-only Listening uses `0.4`.
   - [ ] Uncovered contest inputs score zero.
@@ -518,16 +519,22 @@ independently deployable.
   bazel run //:gazelle -- -mode=diff
   ```
 
-- [ ] Verify shadow mode before switching authoritative scoring.
-  - [ ] The ordinary-user feature gate remains disabled.
-  - [ ] Legacy amount/unit requests still succeed.
-  - [ ] Existing unit/language combinations have zero unexplained mismatches.
-  - [ ] Duration rules match the documented parity rates.
-  - [ ] Unmatched inputs resolve to zero without rejecting writes.
-  - [ ] Shadow diagnostics contain no descriptions, tags, user identifiers, or
+- [x] Verify shadow mode before switching authoritative scoring.
+  - [x] The ordinary-user feature gate remains disabled.
+  - [x] Legacy amount/unit requests still succeed.
+  - [x] Existing unit/language combinations have zero unexplained mismatches.
+  - [x] Duration rules match the documented parity rates.
+  - [x] Unmatched inputs resolve to zero without rejecting writes.
+  - [x] Shadow diagnostics contain no descriptions, tags, user identifiers, or
     other user content.
 
 - [ ] Verify production after switching authoritative scoring.
+  - [x] GitOps enables the production engine and the live metric reports
+    `tadoku_scoring_engine_enabled 1`.
+  - [x] The replacement pod is Ready with zero restarts; liveness and readiness
+    return HTTP 200; Argo CD reports Synced/Healthy.
+  - [x] Immediate active-log, contest-snapshot, and completed-contest aggregate
+    totals remain unchanged across the cutover.
   - [ ] Historical effective scores and leaderboard totals remain unchanged.
   - [ ] New amount-only logs contain valid score snapshots and provenance.
   - [ ] New duration-only logs contain valid score snapshots and provenance.

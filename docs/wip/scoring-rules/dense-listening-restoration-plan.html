@@ -103,43 +103,43 @@
 </head>
 <body>
 <main>
-  <div class="eyebrow">Scoring engine status + implementation plan · Phase 0 findings updated 18 August 2026</div>
-  <h1>Dense listening is one rollout gate and one product control away</h1>
-  <p class="lede">The new scoring engine is substantially complete and running in production shadow mode. Dense listening is missing because V2 records Listening as duration-only, while the existing dense modifier matches the legacy <code>listening_dense_minutes</code> amount unit. The shortest durable path is to finish the authoritative-engine cutover, model “high density” as an explicit <code>dense</code> tag, and expose that choice directly in the form.</p>
+  <div class="eyebrow">Scoring engine status + implementation plan · Production cutover updated 19 August 2026</div>
+  <h1>Dense listening is one rule version and one product control away</h1>
+  <p class="lede">The new scoring engine is authoritative in production. Dense listening remains missing because V2 records Listening as duration-only, while the existing dense modifier matches the legacy <code>listening_dense_minutes</code> amount unit. The shortest durable path is now to model “high density” as an explicit <code>dense</code> tag in a new immutable rule-set version and expose that choice directly in the form.</p>
   <div class="meta">
-    <span class="pill">Production engine: shadow</span>
+    <span class="pill">Production engine: authoritative</span>
     <span class="pill">Scope: Listening create + edit</span>
-    <span class="pill">Delivery: one parity data migration, then rule/UI work</span>
-    <span class="pill">Risk: medium until parity gate clears</span>
+    <span class="pill">Delivery: parity deployed; next rule v3, then UI</span>
+    <span class="pill">Risk: medium until first-write evidence clears</span>
   </div>
 
   <section class="card warning">
     <div class="eyebrow">Bottom line</div>
-    <h2>Do not add the dense control before the engine becomes authoritative</h2>
-    <p>The score-preview endpoint already evaluates the new engine even while production writes still use the interim scorer. Shipping a <code>dense</code> control first could preview <strong>36 points</strong> for 60 dense minutes but persist only <strong>24 points</strong>. The deployment order is therefore a correctness requirement: close shadow parity, enable authoritative scoring, activate the dense duration rule, then expose the form control.</p>
+    <h2>Authority is live; keep the dense control gated on rule-set v3</h2>
+    <p>The first ordering constraint is now satisfied: production writes use the same authoritative engine as score preview. The remaining correctness requirement is to activate the <code>duration_minutes + dense</code> rule before exposing the control; otherwise the form would offer a choice that cannot change the saved score. The deployment order remains: verify first authoritative writes, activate the dense duration rule, then expose the form control.</p>
   </section>
 
   <section class="card">
     <h2>Where the scoring engine is today</h2>
     <div class="grid">
-      <div class="mini span-3"><div class="metric">108</div><div class="metric-label">production shadow matches since current process start</div></div>
-      <div class="mini span-3"><div class="metric">1</div><div class="metric-label">Writing / amount mismatch explained; fix prepared, not deployed</div></div>
+      <div class="mini span-3"><div class="metric">17</div><div class="metric-label">post-v2 production shadow matches before owner-approved cutover</div></div>
+      <div class="mini span-3"><div class="metric">23</div><div class="metric-label">clean production migration with parity rule-set v2 active</div></div>
       <div class="mini span-3"><div class="metric">0</div><div class="metric-label">observed unmatched or evaluation-error series</div></div>
-      <div class="mini span-3"><div class="metric">off</div><div class="metric-label"><code>API_SCORING_ENGINE_ENABLED</code> in production</div></div>
+      <div class="mini span-3"><div class="metric">on</div><div class="metric-label"><code>API_SCORING_ENGINE_ENABLED</code> in production</div></div>
     </div>
     <table>
       <thead><tr><th>Capability</th><th>Status</th><th>Evidence</th></tr></thead>
       <tbody>
         <tr><td>Pure rule evaluator: priority, base rule, stackable modifiers, amount/duration source</td><td><span class="state done">Merged</span></td><td><code>domain/scoring.go</code> and focused engine tests</td></tr>
-        <tr><td>Stable unit keys and versioned rule storage</td><td><span class="state done">Merged</span></td><td>Migrations 0018–0021; active platform v1 seeded</td></tr>
+        <tr><td>Stable unit keys and versioned rule storage</td><td><span class="state done">Merged</span></td><td>Migrations 0018–0023; active platform v2 published with 30 rules</td></tr>
         <tr><td>Score provenance and independent contest snapshots</td><td><span class="state done">Merged</span></td><td>Base and contest logs snapshot applied rule IDs, rates, source, and result</td></tr>
         <tr><td>Score preview and contest rule management</td><td><span class="state done">Merged</span></td><td>Preview API, platform/contest management API, contest rule editor</td></tr>
-        <tr><td>Production authoritative cutover</td><td><span class="state blocked">Gated</span></td><td>Production reports <code>tadoku_scoring_engine_enabled 0</code>; immutable parity rule-set v2 must deploy and pass a fresh shadow window</td></tr>
-        <tr><td>Duration-based dense Listening input</td><td><span class="state missing">Missing</span></td><td>V2 sends duration without a unit; platform v1 has no <code>duration_minutes + tag=dense</code> rule</td></tr>
+        <tr><td>Production authoritative cutover</td><td><span class="state done">Enabled</span></td><td>GitOps PR #122 deployed on 19 August; production reports <code>tadoku_scoring_engine_enabled 1</code>, with the new pod Ready and immediate integrity checks clean</td></tr>
+        <tr><td>Duration-based dense Listening input</td><td><span class="state missing">Missing</span></td><td>V2 sends duration without a unit; platform v2 has no <code>duration_minutes + tag=dense</code> rule</td></tr>
         <tr><td>Interim scorer removal and legacy generated-column cleanup</td><td><span class="state blocked">Later</span></td><td>Explicitly remains unchecked in the scoring rollout document</td></tr>
       </tbody>
     </table>
-    <p class="note">Production snapshot taken read-only from the running <code>immersion-api</code> deployment at approximately 14:48 UTC on 18 August 2026. Counter totals reset when the process restarts, so matrix tests remain necessary even after a clean traffic window.</p>
+    <p class="note">Cutover snapshot taken read-only from the running <code>immersion-api</code> deployment at approximately 02:34 UTC on 19 August 2026. Counter totals reset when the process restarts. No write arrived during the immediate verification interval, so first authoritative provenance remains an explicit follow-up rather than an assumed result.</p>
   </section>
 
   <section class="card warning">
@@ -152,10 +152,10 @@
         <tr><td>Production score snapshots</td><td>All 163 non-deleted Writing logs since the first on 19 February 2023 use the 10× rates.</td><td>The output-activity boost is established compatibility behavior for this no-user-visible-change gate.</td></tr>
         <tr><td>Product + repository history</td><td>The product owner confirms Writing and Speaking were intentionally boosted relative to input activities. Issue #603, “Review scoring for output activities,” was closed “Done” on 29 April 2023 without a commit or PR; migration 0001 and the public manual retained the old Writing values.</td><td>The decision was applied to production data but not propagated to versioned seed data or documentation. There is no database audit trail proving the exact edit time.</td></tr>
         <tr><td>Deterministic matrix</td><td>25 unit/language rows × three representative amounts reproduce 27 Writing failures and no non-Writing failures.</td><td>Traffic-only shadow validation was too sparse; exhaustive configuration parity must be a release gate.</td></tr>
-        <tr><td>Prepared resolution</td><td>Standalone migration 0023 creates published platform rule-set v2, copies all 30 rules, changes only Writing amount rates, and activates v2.</td><td>Rule-set v1, legacy units, and historical score snapshots remain immutable. The production engine flag stays off.</td></tr>
+        <tr><td>Deployed resolution</td><td>Standalone migration 0023 created published platform rule-set v2, copied all 30 rules, changed only Writing amount rates, and activated v2.</td><td>Rule-set v1, legacy units, and historical score snapshots remain immutable. The production engine became authoritative only after the migration deployed cleanly.</td></tr>
       </tbody>
     </table>
-    <p class="note"><strong>Documentation follow-up:</strong> the public Writing table is stale and must be corrected to the established boosted rates. Any future Writing policy change should still use a new immutable rule-set version, not an incidental parity edit.</p>
+    <p class="note"><strong>Documentation follow-up completed:</strong> PR #805 corrected the public Writing table to the established boosted rates. Any future Writing policy change should still use a new immutable rule-set version, not an incidental parity edit.</p>
   </section>
 
   <section class="card decision">
@@ -264,10 +264,10 @@ flowchart LR
       <li>✅ Reproduced the Writing/amount anomaly from bounded production fields without collecting user-authored text.</li>
       <li>✅ Added a deterministic 25-row × three-amount parity matrix, including all language overrides and a fractional amount.</li>
       <li>✅ Prepared immutable platform rule-set v2 in standalone migration 0023; disposable Postgres apply/down/up checks and the full domain suite pass.</li>
-      <li>◐ PR <a href="https://github.com/tadoku/tadoku/pull/803">#803</a> is present in the production frontend image built minutes after merge. Authenticated browser verification of issue <a href="https://github.com/tadoku/tadoku/issues/798">#798</a> remains outstanding, so the issue stays open.</li>
-      <li>○ Land and deploy migration 0023 independently, then record a fresh shadow window with no <code>mismatch</code>, <code>unmatched</code>, or <code>error</code> outcomes.</li>
+      <li>✅ PR <a href="https://github.com/tadoku/tadoku/pull/803">#803</a> is in production; the product owner confirmed the authenticated flow manually and issue <a href="https://github.com/tadoku/tadoku/issues/798">#798</a> closed on 19 August.</li>
+      <li>✅ Migration 0023 deployed independently with <code>dirty=false</code>; platform v2 is active with 30 rules, followed by 17 fresh shadow matches and no mismatch, unmatched, or error outcome.</li>
     </ul>
-    <div class="gate"><strong>Gate 0 status — implementation passes, production observation pending:</strong> The matrix and migration checks pass locally and the mismatch has a documented cause. The gate remains closed until migration 0023 is independently merged/deployed, #798 is verified while authenticated, and a fresh production shadow window is clean. Keep the production flag off.</div>
+    <div class="gate"><strong>Gate 0 closed:</strong> The deterministic matrix passes, migration 0023 is clean in production, #798 was manually verified, and fresh parity-v2 shadow traffic had no adverse outcome. The product owner explicitly accepted this evidence and authorized the cutover without a longer observation window.</div>
   </section>
 
   <section class="card phase">
@@ -276,13 +276,13 @@ flowchart LR
     <h2>Complete the rollout already built</h2>
     <div class="phase-meta">Sequential release gate · Operations + backend · Reversible configuration change</div>
     <ul class="checklist">
-      <li>Capture pre-cutover totals for effective scores, recent logs, contest snapshots, leaderboard aggregates, and shadow counters without collecting user-authored content.</li>
-      <li>Enable <code>API_SCORING_ENGINE_ENABLED=true</code> in the production deployment through the normal configuration/GitOps path.</li>
-      <li>Verify <code>tadoku_scoring_engine_enabled 1</code>, successful create/update traffic, valid rule provenance, and zero authoritative <code>error</code> or <code>unmatched</code> outcomes.</li>
-      <li>Exercise legacy amount-only, duration-only, and amount-plus-duration inputs; confirm amount still wins when both are supplied.</li>
-      <li>Confirm platform scores, ongoing contest snapshots, completed contest immutability, and outbox-driven leaderboards agree with Postgres.</li>
+      <li>✅ Captured pre-cutover totals for effective scores, recent logs, contest snapshots, and shadow counters without collecting user-authored content.</li>
+      <li>✅ Enabled <code>API_SCORING_ENGINE_ENABLED=true</code> through GitOps PR #122; Argo CD is Synced/Healthy and the new pod is Ready with zero restarts.</li>
+      <li>◐ Verified <code>tadoku_scoring_engine_enabled 1</code>, HTTP 200 liveness/readiness, and no immediate authoritative error, unmatched, or 5xx log entry. Successful write traffic and provenance remain pending because no write arrived during the immediate interval.</li>
+      <li>○ Exercise legacy amount-only, duration-only, and amount-plus-duration inputs; confirm amount still wins when both are supplied.</li>
+      <li>◐ Active-log, contest-snapshot, and completed-contest aggregate totals were unchanged across cutover. Confirm outbox-driven leaderboard convergence after the first authoritative write.</li>
     </ul>
-    <div class="gate"><strong>Gate 1:</strong> The authoritative engine remains healthy through the agreed observation window, representative writes have correct provenance, and aggregates converge. If the gate fails, stop the dense rollout; any live rollback requires explicit operator approval under the repository policy.</div>
+    <div class="gate"><strong>Gate 1 status — cutover healthy, write evidence pending:</strong> Authority is live and immediate deployment/integrity checks pass. Before activating platform v3, verify representative authoritative writes, rule provenance, contest snapshots, and leaderboard convergence. If the gate fails, stop the dense rollout; any live rollback requires explicit operator approval under the repository policy.</div>
   </section>
 
   <section class="card phase">
@@ -396,7 +396,7 @@ flowchart LR
       <li>Current mismatch in representation: <code>frontend/apps/webv2/app/immersion/NewLogFormV2/domain.tsx</code> emits duration-only requests for time-primary activities; <code>services/immersion-api/domain/logtracking.go</code> couples units to amount tracking.</li>
       <li>Initial platform rules: migration <code>0021_scoring_rule_storage.up.sql</code> has Listening duration base <code>0.4</code> but dense only as an amount-unit modifier.</li>
       <li>Phase 0 parity fix: migration <code>0023_platform_scoring_rule_set_v2.up.sql</code> preserves the production Writing rates in a new immutable version; <code>domain/scoring_test.go</code> contains the exhaustive legacy-unit matrix.</li>
-      <li>Historical dense inventory: production contains 3,661 non-deleted <code>listening_dense_minutes</code> rows; all already have the stable key, 3,510 still rely on the legacy score snapshot, and none has engine provenance because authority remains off.</li>
+      <li>Historical dense inventory at the Phase 0 snapshot: production contained 3,661 non-deleted <code>listening_dense_minutes</code> rows; all already had the stable key, 3,510 still relied on the legacy score snapshot, and none had engine provenance because authority was off when those rows were written.</li>
       <li>Product rule: <code>frontend/apps/webv2/pages/pages/manual.tsx</code> defines high density as media with few breaks and scores it at <code>0.6</code> per minute.</li>
       <li>Recent merged work: PRs <a href="https://github.com/tadoku/tadoku/pull/709">#709</a>, <a href="https://github.com/tadoku/tadoku/pull/742">#742</a>, <a href="https://github.com/tadoku/tadoku/pull/744">#744</a>, <a href="https://github.com/tadoku/tadoku/pull/745">#745</a>, <a href="https://github.com/tadoku/tadoku/pull/746">#746</a>, <a href="https://github.com/tadoku/tadoku/pull/747">#747</a>, <a href="https://github.com/tadoku/tadoku/pull/748">#748</a>, <a href="https://github.com/tadoku/tadoku/pull/749">#749</a>, <a href="https://github.com/tadoku/tadoku/pull/799">#799</a>, and <a href="https://github.com/tadoku/tadoku/pull/803">#803</a>.</li>
     </ul>

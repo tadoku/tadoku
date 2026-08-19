@@ -21,6 +21,7 @@ const activityTags: Record<number, ActivityTagSuggestion[]> = {
   ],
   // Listening
   2: [
+    { tag: 'dense' },
     { tag: 'audiobook' },
     { tag: 'podcast' },
     { tag: 'anime' },

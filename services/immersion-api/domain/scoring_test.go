@@ -359,6 +359,143 @@ func TestEvaluateScoringRuleSet(t *testing.T) {
 	})
 }
 
+func TestDenseListeningTagAppliesOnlyToDurationMinutes(t *testing.T) {
+	amountBaseRuleID := uuid.New()
+	legacyDenseRuleID := uuid.New()
+	durationBaseRuleID := uuid.New()
+	denseTagRuleID := uuid.New()
+	ruleSet := domain.ScoringRuleSet{
+		ID: uuid.New(),
+		Rules: []domain.ScoringRule{
+			{
+				ID:          amountBaseRuleID,
+				Priority:    200,
+				ActivityID:  2,
+				ScoreSource: domain.ScoreSourceAmount,
+				Rate:        0.4,
+			},
+			{
+				ID:          legacyDenseRuleID,
+				Priority:    210,
+				Stackable:   true,
+				ActivityID:  2,
+				UnitKey:     domain.UnitKeyListeningDenseMinutes,
+				ScoreSource: domain.ScoreSourceAmount,
+				Rate:        1.5,
+			},
+			{
+				ID:          denseTagRuleID,
+				Priority:    220,
+				Stackable:   true,
+				ActivityID:  2,
+				Tag:         "dense",
+				ScoreSource: domain.ScoreSourceDurationMinutes,
+				Rate:        1.5,
+			},
+			{
+				ID:          durationBaseRuleID,
+				Priority:    610,
+				ActivityID:  2,
+				ScoreSource: domain.ScoreSourceDurationMinutes,
+				Rate:        0.4,
+			},
+		},
+	}
+	amount := float32(60)
+	durationSeconds := int32(3600)
+
+	tests := []struct {
+		name             string
+		input            domain.ScoringInput
+		wantScore        float32
+		wantSource       domain.ScoreSource
+		wantAppliedRules []domain.AppliedScoringRule
+	}{
+		{
+			name: "plain duration minutes keep the base rate",
+			input: domain.ScoringInput{
+				ActivityID:      2,
+				DurationSeconds: &durationSeconds,
+			},
+			wantScore:  24,
+			wantSource: domain.ScoreSourceDurationMinutes,
+			wantAppliedRules: []domain.AppliedScoringRule{
+				{RuleID: durationBaseRuleID, Rate: 0.4},
+			},
+		},
+		{
+			name: "dense tag boosts duration minutes",
+			input: domain.ScoringInput{
+				ActivityID:      2,
+				Tags:            []string{"dense"},
+				DurationSeconds: &durationSeconds,
+			},
+			wantScore:  36,
+			wantSource: domain.ScoreSourceDurationMinutes,
+			wantAppliedRules: []domain.AppliedScoringRule{
+				{RuleID: durationBaseRuleID, Rate: 0.4},
+				{RuleID: denseTagRuleID, Rate: 1.5},
+			},
+		},
+		{
+			name: "legacy dense-minute amount keeps its existing rate",
+			input: domain.ScoringInput{
+				ActivityID: 2,
+				UnitKey:    domain.UnitKeyListeningDenseMinutes,
+				Tags:       []string{"dense"},
+				Amount:     &amount,
+			},
+			wantScore:  36,
+			wantSource: domain.ScoreSourceAmount,
+			wantAppliedRules: []domain.AppliedScoringRule{
+				{RuleID: amountBaseRuleID, Rate: 0.4},
+				{RuleID: legacyDenseRuleID, Rate: 1.5},
+			},
+		},
+		{
+			name: "dense tag does not boost legacy normal-minute amounts",
+			input: domain.ScoringInput{
+				ActivityID: 2,
+				UnitKey:    domain.UnitKeyListeningMinute,
+				Tags:       []string{"dense"},
+				Amount:     &amount,
+			},
+			wantScore:  24,
+			wantSource: domain.ScoreSourceAmount,
+			wantAppliedRules: []domain.AppliedScoringRule{
+				{RuleID: amountBaseRuleID, Rate: 0.4},
+			},
+		},
+		{
+			name: "amount remains authoritative when both inputs are present",
+			input: domain.ScoringInput{
+				ActivityID:      2,
+				UnitKey:         domain.UnitKeyListeningDenseMinutes,
+				Tags:            []string{"dense"},
+				Amount:          &amount,
+				DurationSeconds: &durationSeconds,
+			},
+			wantScore:  36,
+			wantSource: domain.ScoreSourceAmount,
+			wantAppliedRules: []domain.AppliedScoringRule{
+				{RuleID: amountBaseRuleID, Rate: 0.4},
+				{RuleID: legacyDenseRuleID, Rate: 1.5},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result, err := domain.EvaluateScoringRuleSet(tt.input, ruleSet)
+
+			require.NoError(t, err)
+			assert.InDelta(t, tt.wantScore, result.Score, 0.0001)
+			assert.Equal(t, tt.wantSource, result.ScoreSource)
+			assert.Equal(t, tt.wantAppliedRules, result.AppliedRules)
+		})
+	}
+}
+
 func TestEvaluateScoringRuleSetRejectsInvalidConfigurationAndInput(t *testing.T) {
 	amount := float32(1)
 

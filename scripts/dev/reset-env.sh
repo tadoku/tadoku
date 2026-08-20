@@ -37,13 +37,23 @@ rollout_wait_if_present() {
 
 tilt_config_value() {
   local key="$1"
-  local file
-  for file in "$ROOT/tilt_config.json" "$ROOT/tilt_config.json.example"; do
-    if [ -f "$file" ]; then
-      sed -n 's/.*"'"$key"'"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' "$file" | head -n 1
-      return 0
+  sed -n 's/.*"'"$key"'"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' "$TILT_CONFIG_PATH" | head -n 1
+}
+
+resolve_tilt_config() {
+  local config_path="${TADOKU_TILT_CONFIG:-$ROOT/tilt_config.json}"
+  if [[ "$config_path" != /* ]]; then
+    config_path="$ROOT/$config_path"
+  fi
+  if [ ! -f "$config_path" ]; then
+    if [ -n "${TADOKU_TILT_CONFIG:-}" ]; then
+      echo "TADOKU_TILT_CONFIG points to a missing file: $config_path" >&2
+    else
+      echo "missing Tilt config: set TADOKU_TILT_CONFIG to a shared config path or copy tilt_config.json.example to tilt_config.json" >&2
     fi
-  done
+    exit 1
+  fi
+  printf '%s\n' "$config_path"
 }
 
 wait_for_db_pod() {
@@ -62,6 +72,7 @@ wait_for_db_pod() {
 }
 
 require_cmd kubectl
+TILT_CONFIG_PATH="$(resolve_tilt_config)"
 
 SHARED_CONTEXT="${TADOKU_SHARED_K8S_CONTEXT:-$(tilt_config_value shared_k8s_context)}"
 SHARED_CONTEXT="${SHARED_CONTEXT:-dev-lab}"

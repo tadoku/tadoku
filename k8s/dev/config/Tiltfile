@@ -5,10 +5,18 @@ repo_root = os.path.abspath(os.path.join(os.getcwd(), '..', '..', '..'))
 def repo_path(path):
     return os.path.join(repo_root, path)
 
-config_path = repo_path('tilt_config.json')
-user_config_exists = os.path.exists(config_path)
-if not user_config_exists:
-    config_path = repo_path('tilt_config.json.example')
+config_path_env = os.getenv('TADOKU_TILT_CONFIG', '')
+config_path = (
+    os.path.abspath(config_path_env) if config_path_env != '' else
+    repo_path('tilt_config.json')
+)
+if not os.path.exists(config_path):
+    if config_path_env != '':
+        fail('TADOKU_TILT_CONFIG points to a missing file: {}'.format(config_path))
+    fail(
+        'missing Tilt config: set TADOKU_TILT_CONFIG to a shared config path ' +
+        'or copy tilt_config.json.example to tilt_config.json'
+    )
 
 tilt_config = read_json(config_path)
 

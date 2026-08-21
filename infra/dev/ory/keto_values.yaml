@@ -4,7 +4,7 @@ keto:
     type: initContainer
 
   config:
-    dsn: postgres://keto:dev-foobar@tadoku-dev-db:5432/keto?sslmode=require
+    dsn: postgres://keto@tadoku-dev-db:5432/keto?sslmode=require
 
     log:
       level: debug
@@ -36,6 +36,19 @@ service:
     port: 4467
 
 deployment:
+  extraEnv:
+    - name: PGPASSWORD
+      valueFrom:
+        secretKeyRef:
+          name: keto.tadoku-dev-db.credentials.postgresql.acid.zalan.do
+          key: password
+  automigration:
+    extraEnv:
+      - name: PGPASSWORD
+        valueFrom:
+          secretKeyRef:
+            name: keto.tadoku-dev-db.credentials.postgresql.acid.zalan.do
+            key: password
   extraVolumes:
     - name: keto-namespaces
       configMap:

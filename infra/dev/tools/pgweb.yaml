@@ -17,11 +17,38 @@ spec:
       containers:
         - name: pgweb
           image: sosedoff/pgweb
+          command:
+            - /bin/sh
+            - -ec
+          args:
+            - |
+              escaped_user=$(printf '%s' "$PGUSER" | sed 's/\\/\\\\/g; s/:/\\:/g')
+              escaped_password=$(printf '%s' "$PGPASSWORD" | sed 's/\\/\\\\/g; s/:/\\:/g')
+              printf 'tadoku-dev-db:5432:immersion:%s:%s\n' "$escaped_user" "$escaped_password" > /tmp/pgpass
+              chmod 600 /tmp/pgpass
+              unset PGPASSWORD
+              exec /usr/bin/pgweb \
+                --bind=0.0.0.0 \
+                --listen=8081 \
+                --host=tadoku-dev-db \
+                --port=5432 \
+                --user="$PGUSER" \
+                --db=immersion \
+                --ssl=require \
+                --passfile=/tmp/pgpass
           ports:
             - containerPort: 8081
           env:
-            - name: PGWEB_DATABASE_URL
-              value: "postgres://immersion:dev-foobar@tadoku-dev-db/immersion?sslmode=require"
+            - name: PGUSER
+              valueFrom:
+                secretKeyRef:
+                  name: immersion.tadoku-dev-db.credentials.postgresql.acid.zalan.do
+                  key: username
+            - name: PGPASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: immersion.tadoku-dev-db.credentials.postgresql.acid.zalan.do
+                  key: password
 ---
 apiVersion: v1
 kind: Service

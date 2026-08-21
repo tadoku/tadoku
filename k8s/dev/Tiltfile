@@ -38,6 +38,10 @@ local_resource(
     resource_deps=['tadoku-dev-db'],
 )
 
+# The Zalando operator creates credentials beside the Postgres resource in
+# default, while each API runs in its own namespace. Copy only the four API
+# credentials after provisioning; the target Namespace owns each copy so Tilt
+# teardown garbage-collects it with the rest of that API's dev resources.
 local_resource(
     'tadoku-dev-db-credentials',
     cmd=[

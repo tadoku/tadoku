@@ -2,6 +2,7 @@ kratos:
   development: {{TADOKU_KRATOS_DEVELOPMENT}}
   automigration:
     enabled: true
+    type: initContainer
 
   identitySchemas:
     "identity.default.schema.json": |
@@ -55,7 +56,7 @@ kratos:
 
   # kratos config https://www.ory.sh/docs/kratos/reference/configuration
   config:
-    dsn: postgres://kratos:dev-foobar@tadoku-dev-db:5432/kratos?sslmode=require
+    dsn: postgres://kratos@tadoku-dev-db:5432/kratos?sslmode=require
     secrets:
       default:
         - dev-kratos-default-secret-1
@@ -158,3 +159,18 @@ kratos:
         base_url: "{{TADOKU_AUTH_URL}}/admin/"
         request_log:
           disable_for_health: true
+
+deployment:
+  extraEnv:
+    - name: PGPASSWORD
+      valueFrom:
+        secretKeyRef:
+          name: kratos.tadoku-dev-db.credentials.postgresql.acid.zalan.do
+          key: password
+  automigration:
+    extraEnv:
+      - name: PGPASSWORD
+        valueFrom:
+          secretKeyRef:
+            name: kratos.tadoku-dev-db.credentials.postgresql.acid.zalan.do
+            key: password

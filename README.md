@@ -11,7 +11,10 @@ The documentation for this repository can be found at https://tadoku.github.io/t
 ## Dev Environment
 
 Use `k8s/dev/` through the root `Tiltfile` for both shared and local clusters.
-Copy `tilt_config.json.example` to `tilt_config.json` for machine-specific hostnames, registries, and contexts.
+Set `TADOKU_TILT_CONFIG` to a machine-level config path so the same config works
+across Git worktrees, or copy `tilt_config.json.example` to the gitignored
+`tilt_config.json` for a checkout-local override. Tilt fails closed when neither
+is configured.
 
 Common commands:
 

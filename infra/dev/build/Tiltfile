@@ -11,6 +11,16 @@ load(
 def _sh_quote(value):
   return "'" + value.replace("'", "'\"'\"'") + "'"
 
+def anonymous_docker_config_prefix():
+  # The shared dev registry accepts anonymous pushes. Isolate both Buildx and
+  # Bazel from any developer/admin credentials in the ambient Docker config.
+  return (
+    'TADOKU_DEV_DOCKER_CONFIG="${TADOKU_DEV_DOCKER_CONFIG:-${XDG_CACHE_HOME:-/tmp}/tadoku/docker-anonymous}"; ' +
+    'mkdir -p "$TADOKU_DEV_DOCKER_CONFIG"; ' +
+    'printf "{}\\n" > "$TADOKU_DEV_DOCKER_CONFIG/config.json"; ' +
+    'export DOCKER_CONFIG="$TADOKU_DEV_DOCKER_CONFIG"; '
+  )
+
 def _local_image_load_command(image_ref):
   if local_cluster_type == 'kind':
     command = 'kind load docker-image'
@@ -30,10 +40,11 @@ def _local_image_load_command(image_ref):
   fail('unsupported local_cluster_type %r; expected kind, minikube, or a daemon-sharing type' % local_cluster_type)
 
 def _bazel_env_prefix():
+  prefix = anonymous_docker_config_prefix()
   ca_file = dev_registry_ca_file()
   if ca_file:
-    return 'SSL_CERT_FILE={ca_file} '.format(ca_file=_sh_quote(ca_file))
-  return ''
+    prefix += 'SSL_CERT_FILE={ca_file} '.format(ca_file=_sh_quote(ca_file))
+  return prefix
 
 def bazel_build(image, target, deps):
   dest = target.replace('//', 'bazel/').replace(':load', ":latest")
@@ -41,8 +52,7 @@ def bazel_build(image, target, deps):
   push_to_registry = is_shared_cluster()
   output_ref_file = ''
   if push_to_registry:
-    command = (
-      _bazel_env_prefix() +
+    command = _bazel_env_prefix() + (
       'bazel run --platforms={bazel_platform} {push_target} -- ' +
       '--repository $EXPECTED_REGISTRY/$EXPECTED_IMAGE --tag $EXPECTED_TAG').format(
         bazel_platform=_sh_quote(dev_bazel_platform()),

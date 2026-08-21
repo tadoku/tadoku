@@ -16,7 +16,15 @@ We use [Tilt](https://tilt.dev/) to deploy all our backend services & dependenci
 3. Install [Tilt](https://docs.tilt.dev/install.html).
 4. Install [kubectl](https://kubernetes.io/docs/tasks/tools/).
 5. Point kubectl at the cluster you want to use (see below).
-6. Copy `tilt_config.json.example` to `tilt_config.json` and set the local hostnames for your cluster. This file is gitignored.
+6. Create a machine-level config and point `TADOKU_TILT_CONFIG` at it so it is shared by all Git worktrees, or copy `tilt_config.json.example` to the gitignored `tilt_config.json` for a checkout-local override:
+
+   ```sh
+   mkdir -p "$HOME/.config/tadoku"
+   cp tilt_config.json.example "$HOME/.config/tadoku/tilt_config.json"
+   export TADOKU_TILT_CONFIG="$HOME/.config/tadoku/tilt_config.json"
+   ```
+
+   Edit the selected config with the hostnames, registries, and contexts for your cluster. Tilt fails before making cluster changes when the environment variable points to a missing file or neither config source exists. The example file is a template and is never loaded automatically.
 7. Read the [Getting Started Tutorial](https://docs.tilt.dev/tutorial.html) for Tilt to get familiar with it.
 8. Run `$ tilt up` in the root of this repository.
 9. Seed data is applied by the `dev-seed` Tilt resource once the services are up (see below); it can also be re-run manually from within Tilt or via `make dev-seed`.
@@ -50,7 +58,7 @@ For local contexts, backend images are built with Bazel and are not pushed to a 
 
 Prerequisite: the configured registry hostname must resolve from your machine, and your Docker daemon must trust the registry endpoint (via an insecure-registry entry for HTTP, or the platform TLS certificate once available) before Tilt can push images.
 
-Copy `tilt_config.json.example` to the gitignored `tilt_config.json`, then replace the placeholder values with your private operator values. Keep real hostnames, registry names, and context names in private config only. The context keys can also be set via environment variables (`shared_k8s_context` → `TADOKU_SHARED_K8S_CONTEXT`, `local_k8s_context` → `TADOKU_LOCAL_K8S_CONTEXT`); environment variables take precedence over `tilt_config.json`. Shared-cluster mode stays disabled until a shared context is configured via `shared_k8s_context` or `TADOKU_SHARED_K8S_CONTEXT`; there is no committed default.
+Use the machine-level config selected by `TADOKU_TILT_CONFIG`, or copy `tilt_config.json.example` to the gitignored `tilt_config.json`, then replace the placeholder values with your private operator values. Keep real hostnames, registry names, and context names in private config only. The explicit config path takes precedence over the checkout-local file. The context keys can also be set via environment variables (`shared_k8s_context` → `TADOKU_SHARED_K8S_CONTEXT`, `local_k8s_context` → `TADOKU_LOCAL_K8S_CONTEXT`); environment variables take precedence over values in the selected config. Shared-cluster mode stays disabled until a shared context is configured via `shared_k8s_context` or `TADOKU_SHARED_K8S_CONTEXT`; there is no committed default.
 
 Fetch the dev-cluster kubeconfig after creating `infra/dev/.env.local` from `infra/dev/.env.example`:
 
@@ -95,7 +103,7 @@ make dev-logs    # stream Tilt logs
 
 Seeding (`dev-seed`, also a Tilt resource that runs automatically once the backend services are ready) creates two Kratos identities — an admin `dev@tadoku.app` and a regular user `reader@tadoku.app`, both with password `tadoku` — grants the admin a Keto admin relation, and loads deterministic contests, activity logs, profile, and content data into the `immersion`, `profile`, and `content` databases. The seed is idempotent and safe to re-run: identities created by the seed carry a `seeded_by: tadoku-dev-seed` admin metadata marker, and re-running the seed refreshes their password to the currently configured value, so password overrides take effect on the next `dev-seed`. Identities without the marker (real or manually created accounts) are never modified, even if their email matches. Defaults can be overridden with `TADOKU_DEV_NAMESPACE`, `TADOKU_DEV_DB_PASSWORD`, `TADOKU_DEV_ADMIN_EMAIL`/`TADOKU_DEV_ADMIN_PASSWORD`, and `TADOKU_DEV_READER_EMAIL`/`TADOKU_DEV_READER_PASSWORD`.
 
-Resetting (`dev-reset`, also available as a manual-only `dev-reset` Tilt resource) is destructive: it deletes the Zalando operator-managed `tadoku-dev-db` cluster and its persistent volume claims, reapplies the `postgresql` custom resource, restarts the backend services so their startup migrations run against the fresh database, and then reseeds. The script refuses to run unless the current kubectl context matches a known dev context (`shared_k8s_context`/`local_k8s_context` from `tilt_config.json`, or the `TADOKU_SHARED_K8S_CONTEXT`/`TADOKU_LOCAL_K8S_CONTEXT` env vars), and requires typing the context name to confirm when targeting the shared cluster. Ordinary `tilt down`/`tilt up` keeps data since the database uses persistent volumes.
+Resetting (`dev-reset`, also available as a manual-only `dev-reset` Tilt resource) is destructive: it deletes the Zalando operator-managed `tadoku-dev-db` cluster and its persistent volume claims, reapplies the `postgresql` custom resource, restarts the backend services so their startup migrations run against the fresh database, and then reseeds. The script refuses to run unless the current kubectl context matches a known dev context (`shared_k8s_context`/`local_k8s_context` from the selected Tilt config, or the `TADOKU_SHARED_K8S_CONTEXT`/`TADOKU_LOCAL_K8S_CONTEXT` env vars), and requires typing the context name to confirm when targeting the shared cluster. Ordinary `tilt down`/`tilt up` keeps data since the database uses persistent volumes.
 
 ## Can't connect connect to service/database
 

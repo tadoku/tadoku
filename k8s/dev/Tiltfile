@@ -14,17 +14,45 @@ if not is_shared_cluster():
     postgres_deps.append('postgres-operator')
 k8s_resource(
     objects=[
-        'authz.tadoku-dev-db.credentials.postgresql.acid.zalan.do:secret:default',
-        'content.tadoku-dev-db.credentials.postgresql.acid.zalan.do:secret:default',
-        'immersion.tadoku-dev-db.credentials.postgresql.acid.zalan.do:secret:default',
-        'keto.tadoku-dev-db.credentials.postgresql.acid.zalan.do:secret:default',
-        'kratos.tadoku-dev-db.credentials.postgresql.acid.zalan.do:secret:default',
-        'profile.tadoku-dev-db.credentials.postgresql.acid.zalan.do:secret:default',
         'tadoku-dev-db:postgresql:default',
     ],
     new_name='tadoku-dev-db',
     labels=['infra'],
     resource_deps=postgres_deps,
+)
+
+local_resource(
+    'tadoku-dev-db-ready',
+    cmd=[
+        'kubectl',
+        '--context',
+        k8s_context(),
+        '--namespace',
+        'default',
+        'wait',
+        '--for=jsonpath={.status.PostgresClusterStatus}=Running',
+        'postgresql.acid.zalan.do/tadoku-dev-db',
+        '--timeout=300s',
+    ],
+    labels=['tools'],
+    resource_deps=['tadoku-dev-db'],
+)
+
+# The Zalando operator creates credentials beside the Postgres resource in
+# default, while each API runs in its own namespace. Copy only the four API
+# credentials after provisioning; the target Namespace owns each copy so Tilt
+# teardown garbage-collects it with the rest of that API's dev resources.
+local_resource(
+    'tadoku-dev-db-credentials',
+    cmd=[
+        repo_path('scripts/dev/sync-db-secrets.sh'),
+        k8s_context(),
+    ],
+    deps=[
+        repo_path('scripts/dev/sync-db-secrets.sh'),
+    ],
+    labels=['infra'],
+    resource_deps=['tadoku-dev-db-ready', 'uncategorized'],
 )
 
 ingress_yaml = render_template('k8s/dev/ingress.yaml', '.tilt/rendered/k8s/dev/ingress.yaml')

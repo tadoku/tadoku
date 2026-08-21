@@ -134,6 +134,7 @@ insert into logs (
   language_code,
   log_activity_id,
   unit_id,
+  unit_key,
   "description",
   amount,
   modifier,
@@ -150,6 +151,7 @@ values
     'jpn',
     1,
     (select id from log_units where log_activity_id = 1 and name = 'Page' and language_code is null limit 1),
+    (select unit_key from log_units where log_activity_id = 1 and name = 'Page' and language_code is null limit 1),
     'Seeded reading log',
     42,
     1,
@@ -164,6 +166,7 @@ values
     :'reader_user_id'::uuid,
     'jpn',
     2,
+    null,
     null,
     'Seeded listening log',
     null,
@@ -180,6 +183,7 @@ values
     'spa',
     1,
     (select id from log_units where log_activity_id = 1 and name = 'Page' and language_code is null limit 1),
+    (select unit_key from log_units where log_activity_id = 1 and name = 'Page' and language_code is null limit 1),
     'Seeded Spanish reading',
     18,
     1,
@@ -195,6 +199,7 @@ set
   language_code = excluded.language_code,
   log_activity_id = excluded.log_activity_id,
   unit_id = excluded.unit_id,
+  unit_key = excluded.unit_key,
   "description" = excluded."description",
   amount = excluded.amount,
   modifier = excluded.modifier,
@@ -207,17 +212,43 @@ set
 insert into contest_logs (
   contest_id,
   log_id,
+  unit_key,
   amount,
   modifier,
   duration_seconds,
   computed_score
 )
 values
-  ('00000000-0000-4000-8000-000000000101', '00000000-0000-4000-8000-000000000301', 42, 1, null, 42),
-  ('00000000-0000-4000-8000-000000000101', '00000000-0000-4000-8000-000000000302', null, null, 3600, 30),
-  ('00000000-0000-4000-8000-000000000101', '00000000-0000-4000-8000-000000000303', 18, 1, null, 18)
+  (
+    '00000000-0000-4000-8000-000000000101',
+    '00000000-0000-4000-8000-000000000301',
+    (select unit_key from logs where id = '00000000-0000-4000-8000-000000000301'),
+    42,
+    1,
+    null,
+    42
+  ),
+  (
+    '00000000-0000-4000-8000-000000000101',
+    '00000000-0000-4000-8000-000000000302',
+    (select unit_key from logs where id = '00000000-0000-4000-8000-000000000302'),
+    null,
+    null,
+    3600,
+    30
+  ),
+  (
+    '00000000-0000-4000-8000-000000000101',
+    '00000000-0000-4000-8000-000000000303',
+    (select unit_key from logs where id = '00000000-0000-4000-8000-000000000303'),
+    18,
+    1,
+    null,
+    18
+  )
 on conflict (contest_id, log_id) do update
 set
+  unit_key = excluded.unit_key,
   amount = excluded.amount,
   modifier = excluded.modifier,
   duration_seconds = excluded.duration_seconds,

@@ -2,8 +2,10 @@
 
 load('./k8s/dev/config/Tiltfile', 'dev_registry', 'is_shared_cluster', 'local_k8s_context', 'shared_k8s_context')
 
-allowed_k8s_contexts = [local_k8s_context]
-if shared_k8s_context != '':
+allowed_k8s_contexts = ['homelab-dev']
+if local_k8s_context not in allowed_k8s_contexts:
+    allowed_k8s_contexts.append(local_k8s_context)
+if shared_k8s_context != '' and shared_k8s_context not in allowed_k8s_contexts:
     allowed_k8s_contexts.append(shared_k8s_context)
 allow_k8s_contexts(allowed_k8s_contexts)
 

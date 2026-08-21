@@ -11,4 +11,4 @@ k8s_resource("mailhog", labels=["tools"])
 
 # pgweb (postgres client)
 k8s_yaml('./pgweb.yaml')
-k8s_resource("pgweb", labels=["tools"])
+k8s_resource("pgweb", labels=["tools"], resource_deps=["tadoku-dev-db-ready"])

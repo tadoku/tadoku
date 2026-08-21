@@ -121,18 +121,20 @@ kubectl -n "$DB_NAMESPACE" wait \
   -l "application=spilo,cluster-name=${DB_NAME}" \
   --timeout=300s
 
+"$ROOT/scripts/dev/sync-db-secrets.sh" "$CURRENT_CONTEXT"
+
 echo "restarting services so startup migrations run against the fresh database..."
 rollout_restart_if_present default kratos
-rollout_restart_if_present default keto-read
-rollout_restart_if_present default keto-write
+rollout_restart_if_present default keto
+rollout_restart_if_present default pgweb
 rollout_restart_if_present tdk-authz-api authz-api
 rollout_restart_if_present tdk-content-api content-api
 rollout_restart_if_present tdk-immersion-api immersion-api
 rollout_restart_if_present tdk-profile-api profile-api
 
 rollout_wait_if_present default kratos
-rollout_wait_if_present default keto-read
-rollout_wait_if_present default keto-write
+rollout_wait_if_present default keto
+rollout_wait_if_present default pgweb
 rollout_wait_if_present tdk-authz-api authz-api
 rollout_wait_if_present tdk-content-api content-api
 rollout_wait_if_present tdk-immersion-api immersion-api

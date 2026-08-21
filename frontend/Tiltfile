@@ -19,15 +19,17 @@ def _buildx_output():
 def _buildx_setup_command():
   builder = _sh_quote(dev_buildx_builder())
   return (
-    'docker buildx inspect {builder} >/dev/null 2>&1 || ' +
-    'docker buildx create --name {builder} --driver docker-container >/dev/null; ' +
-    'docker buildx inspect --bootstrap {builder} >/dev/null; '
-  ).format(builder=builder)
+    'TADOKU_FRONTEND_DOCKER_CONFIG="${XDG_CACHE_HOME:-/tmp}/tadoku/frontend-buildx-anonymous"; ' +
+    'mkdir -p "$TADOKU_FRONTEND_DOCKER_CONFIG"; ' +
+    'export DOCKER_CONFIG="$TADOKU_FRONTEND_DOCKER_CONFIG"; ' +
+    'docker buildx inspect ' + builder + ' >/dev/null 2>&1 || ' +
+    'docker buildx create --name ' + builder + ' --driver docker-container >/dev/null; ' +
+    'docker buildx inspect --bootstrap ' + builder + ' >/dev/null; '
+  )
 
 def frontend_build(image, project_name, package_trigger, shared_package_manifest='./packages/ui/package.json'):
   if is_shared_cluster():
-    command = (
-      _buildx_setup_command() +
+    command = _buildx_setup_command() + (
       'docker buildx build --builder {builder} --platform {platform} -f ./Dockerfile.dev ' +
       '--build-arg PROJECT_NAME={project_name} ' +
       '--provenance=false --sbom=false ' +

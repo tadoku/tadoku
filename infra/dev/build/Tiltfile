@@ -14,9 +14,8 @@ def _sh_quote(value):
 def anonymous_docker_config_prefix():
   # The shared dev registry accepts anonymous pushes. Isolate both Buildx and
   # Bazel from any developer/admin credentials in the ambient Docker config.
-  # Keep the legacy default directory so existing Buildx metadata is reused.
   return (
-    'TADOKU_DEV_DOCKER_CONFIG="${TADOKU_DEV_DOCKER_CONFIG:-${XDG_CACHE_HOME:-/tmp}/tadoku/frontend-buildx-anonymous}"; ' +
+    'TADOKU_DEV_DOCKER_CONFIG="${TADOKU_DEV_DOCKER_CONFIG:-${XDG_CACHE_HOME:-/tmp}/tadoku/docker-anonymous}"; ' +
     'mkdir -p "$TADOKU_DEV_DOCKER_CONFIG"; ' +
     'export DOCKER_CONFIG="$TADOKU_DEV_DOCKER_CONFIG"; '
   )

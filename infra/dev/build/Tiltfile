@@ -17,6 +17,7 @@ def anonymous_docker_config_prefix():
   return (
     'TADOKU_DEV_DOCKER_CONFIG="${TADOKU_DEV_DOCKER_CONFIG:-${XDG_CACHE_HOME:-/tmp}/tadoku/docker-anonymous}"; ' +
     'mkdir -p "$TADOKU_DEV_DOCKER_CONFIG"; ' +
+    'printf "{}\\n" > "$TADOKU_DEV_DOCKER_CONFIG/config.json"; ' +
     'export DOCKER_CONFIG="$TADOKU_DEV_DOCKER_CONFIG"; '
   )
 

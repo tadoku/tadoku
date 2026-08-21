@@ -10,22 +10,5 @@ helm_resource('mailhog',
 k8s_resource("mailhog", labels=["tools"])
 
 # pgweb (postgres client)
-local_resource(
-    "tadoku-dev-db-ready",
-    cmd=[
-        "kubectl",
-        "--context",
-        k8s_context(),
-        "--namespace",
-        "default",
-        "wait",
-        "--for=jsonpath={.status.PostgresClusterStatus}=Running",
-        "postgresql.acid.zalan.do/tadoku-dev-db",
-        "--timeout=300s",
-    ],
-    labels=["tools"],
-    resource_deps=["tadoku-dev-db"],
-)
-
 k8s_yaml('./pgweb.yaml')
 k8s_resource("pgweb", labels=["tools"], resource_deps=["tadoku-dev-db-ready"])

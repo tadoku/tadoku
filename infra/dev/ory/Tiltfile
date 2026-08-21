@@ -17,7 +17,7 @@ helm_resource('kratos',
                 '-f', kratos_values,
               ],
               deps=['./kratos_values.yaml'],
-              resource_deps=['helm-repo-ory', 'tadoku-dev-db'])
+              resource_deps=['helm-repo-ory', 'tadoku-dev-db-ready'])
 
 k8s_resource("kratos", labels=["auth"])
 
@@ -45,7 +45,7 @@ helm_resource('keto',
                 '-f', './keto_values.yaml',
               ],
               deps=['./keto_values.yaml', './namespaces.keto.ts'],
-              resource_deps=['helm-repo-ory', 'tadoku-dev-db'])
+              resource_deps=['helm-repo-ory', 'tadoku-dev-db-ready'])
 
 k8s_resource("keto", labels=["auth"])
 k8s_resource(

@@ -21,6 +21,36 @@ k8s_resource(
     resource_deps=postgres_deps,
 )
 
+local_resource(
+    'tadoku-dev-db-ready',
+    cmd=[
+        'kubectl',
+        '--context',
+        k8s_context(),
+        '--namespace',
+        'default',
+        'wait',
+        '--for=jsonpath={.status.PostgresClusterStatus}=Running',
+        'postgresql.acid.zalan.do/tadoku-dev-db',
+        '--timeout=300s',
+    ],
+    labels=['tools'],
+    resource_deps=['tadoku-dev-db'],
+)
+
+local_resource(
+    'tadoku-dev-db-credentials',
+    cmd=[
+        repo_path('scripts/dev/sync-db-secrets.sh'),
+        k8s_context(),
+    ],
+    deps=[
+        repo_path('scripts/dev/sync-db-secrets.sh'),
+    ],
+    labels=['infra'],
+    resource_deps=['tadoku-dev-db-ready', 'uncategorized'],
+)
+
 ingress_yaml = render_template('k8s/dev/ingress.yaml', '.tilt/rendered/k8s/dev/ingress.yaml')
 k8s_yaml(ingress_yaml)
 k8s_resource(

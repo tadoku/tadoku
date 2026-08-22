@@ -39,8 +39,8 @@ export const EditLogForm = ({ options, log }: Props) => {
   const defaultValues: Partial<NewLogFormV2Schema> = {
     languageCode: log.language.code,
     activityId: log.activity.id,
-    amountValue: log.amount,
-    amountUnit: log.unit_id,
+    amountValue: usesAmountUnit ? log.amount : undefined,
+    amountUnit: usesAmountUnit ? log.unit_id : undefined,
     durationMinutes:
       log.duration_seconds !== undefined
         ? log.duration_seconds / 60

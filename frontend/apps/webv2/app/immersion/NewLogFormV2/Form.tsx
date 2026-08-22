@@ -167,6 +167,7 @@ export const LogFormV2 = ({
       activity => activity.id === restoredActivityId,
     )
     if ((restoredActivity?.input_type ?? 'amount_primary') === 'time_primary') {
+      methods.setValue('amountValue', undefined)
       methods.setValue('amountUnit', undefined)
       return
     }

@@ -103,6 +103,54 @@
   mutators:
     - handler: id_token
 
+- id: "tadoku:flipt:operator"
+  match:
+    url: "{{TADOKU_FLIPT_URL}}/<**>"
+    methods:
+      - GET
+      - POST
+      - PUT
+      - DELETE
+      - PATCH
+  authenticators:
+    - handler: cookie_session
+  authorizer:
+    handler: remote_json
+    config:
+      remote: http://authz-api.tdk-authz-api/internal/v1/proxy/admin-check
+      headers:
+        Authorization: 'Bearer {{ env "OATHKEEPER_AUTHZ_TOKEN" }}'
+      payload: |
+        {
+          "subject": "{{ print .Subject }}"
+        }
+  mutators:
+    - handler: noop
+  upstream:
+    preserve_host: true
+    url: "http://flipt.tdk-flipt.svc.cluster.local:8080"
+
+- id: "tadoku:flipt:evaluation:snapshot"
+  match:
+    url: "http://oathkeeper-proxy.default:4455/flipt/internal/v1/evaluation/snapshot/namespace/default"
+    methods:
+      - GET
+  authenticators:
+    - handler: jwt
+      config:
+        jwks_urls:
+          - http://oathkeeper-api.default:4456/.well-known/jwks.json
+        target_audience:
+          - flipt-evaluation
+  authorizer:
+    handler: allow
+  mutators:
+    - handler: noop
+  upstream:
+    preserve_host: false
+    url: "http://flipt.tdk-flipt.svc.cluster.local:8080"
+    strip_path: /flipt
+
 - id: "echo"
   upstream:
     preserve_host: true
@@ -174,6 +222,58 @@
             "type": "service",
             "sub": "{{ .Subject }}",
             "aud": ["authz-api"]
+          }
+  upstream:
+    url: "http://token-reflector.tdk-token-reflector"
+
+- id: "s2s:immersion-to-flipt-evaluation"
+  match:
+    url: "http://oathkeeper-proxy.default:4455/token-exchange/flipt-evaluation/immersion-api"
+    methods:
+      - GET
+  authenticators:
+    - handler: jwt
+      config:
+        jwks_urls:
+          - http://token-reflector.tdk-token-reflector/jwks
+        target_audience:
+          - immersion-api
+  authorizer:
+    handler: allow
+  mutators:
+    - handler: id_token
+      config:
+        claims: |
+          {
+            "type": "service",
+            "sub": "{{ .Subject }}",
+            "aud": ["flipt-evaluation"]
+          }
+  upstream:
+    url: "http://token-reflector.tdk-token-reflector"
+
+- id: "s2s:frontend-to-flipt-evaluation"
+  match:
+    url: "http://oathkeeper-proxy.default:4455/token-exchange/flipt-evaluation/frontend-webv2"
+    methods:
+      - GET
+  authenticators:
+    - handler: jwt
+      config:
+        jwks_urls:
+          - http://token-reflector.tdk-token-reflector/jwks
+        target_audience:
+          - frontend-webv2
+  authorizer:
+    handler: allow
+  mutators:
+    - handler: id_token
+      config:
+        claims: |
+          {
+            "type": "service",
+            "sub": "{{ .Subject }}",
+            "aud": ["flipt-evaluation"]
           }
   upstream:
     url: "http://token-reflector.tdk-token-reflector"

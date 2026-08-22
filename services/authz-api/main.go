@@ -14,6 +14,7 @@ import (
 	"github.com/tadoku/tadoku/services/authz-api/http/rest"
 	"github.com/tadoku/tadoku/services/authz-api/http/rest/openapi"
 	"github.com/tadoku/tadoku/services/authz-api/http/rest/openapi/internalapi"
+	"github.com/tadoku/tadoku/services/authz-api/http/rest/openapi/proxyapi"
 	commonroles "github.com/tadoku/tadoku/services/common/authz/roles"
 	ketoclient "github.com/tadoku/tadoku/services/common/client/keto"
 	kratosclient "github.com/tadoku/tadoku/services/common/client/kratos"
@@ -37,6 +38,7 @@ type Config struct {
 	KratosURL              string  `validate:"required" envconfig:"kratos_url"`
 	KetoReadURL            string  `validate:"required" envconfig:"keto_read_url"`
 	KetoWriteURL           string  `validate:"required" envconfig:"keto_write_url"`
+	OathkeeperAuthzToken   string  `validate:"required" envconfig:"oathkeeper_authz_token"`
 	ServiceName            string  `envconfig:"service_name" default:"authz-api"`
 	MetricsPort            int64   `envconfig:"metrics_port" default:"9090"`
 	SentryDSN              string  `envconfig:"sentry_dns"`
@@ -96,6 +98,7 @@ func main() {
 	publicPermissionCheck := domain.NewPublicPermissionCheck(ketoAuthz, publicPermAllowlist)
 	internalPermissionCheck := domain.NewInternalPermissionCheck(ketoAuthz)
 	relationshipWriter := domain.NewRelationshipWriter(ketoAuthz, relMutationAllowlist)
+	proxyAdminCheck := domain.NewProxyAdminCheck(ketoAuthz)
 
 	server := rest.NewServer(
 		roleGet,
@@ -103,6 +106,7 @@ func main() {
 		publicPermissionCheck,
 		internalPermissionCheck,
 		relationshipWriter,
+		proxyAdminCheck,
 	)
 
 	e := echo.New()
@@ -114,6 +118,9 @@ func main() {
 	pgChecker := health.NewPostgresChecker("postgres", psql)
 	e.GET("/livez", health.LivezHandler, optAuth)
 	e.GET("/readyz", health.ReadyzHandler([]health.HealthChecker{pgChecker}), optAuth)
+
+	proxy := e.Group("", rest.OathkeeperAuthorization(cfg.OathkeeperAuthzToken))
+	proxyapi.RegisterHandlers(proxy, server)
 
 	// Business endpoints: full auth middleware stack
 	api := e.Group("")

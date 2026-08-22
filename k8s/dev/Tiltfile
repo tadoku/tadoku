@@ -63,6 +63,7 @@ k8s_resource(
         'tadoku-api:ingress:default',
         'tadoku-auth-web:ingress:default',
         'tadoku-auth-stripped:ingress:default',
+        'tadoku-flipt:ingress:default',
         'tadoku-admin-web:ingress:default',
         'tadoku-tools-stripped:ingress:default',
     ],
@@ -72,11 +73,39 @@ k8s_resource(
         'frontend-webv2',
         'frontend-auth',
         'frontend-admin',
+        'flipt',
         'oathkeeper',
         'kratos',
         'mailhog',
         'pgweb',
     ],
+)
+
+k8s_yaml('./flipt.yaml')
+k8s_resource(
+    objects=[
+        'tdk-flipt:namespace',
+        'default-deny:networkpolicy:tdk-flipt',
+        'allow-dns-egress:networkpolicy:tdk-flipt',
+        'allow-oathkeeper-ingress:networkpolicy:tdk-flipt',
+        'allow-monitoring-ingress:networkpolicy:tdk-flipt',
+    ],
+    new_name='flipt-network',
+    labels=['infra'],
+)
+k8s_resource(
+    objects=[
+        'flipt:serviceaccount:tdk-flipt',
+        'flipt:configmap:tdk-flipt',
+    ],
+    new_name='flipt-config',
+    labels=['infra'],
+    resource_deps=['flipt-network'],
+)
+k8s_resource(
+    'flipt',
+    labels=['infra'],
+    resource_deps=['flipt-config', 'oathkeeper'],
 )
 
 include('../../infra/dev/ory/Tiltfile')

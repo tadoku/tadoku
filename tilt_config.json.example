@@ -12,8 +12,10 @@
     "hosts": {
       "app": "langlog.be",
       "auth": "account.langlog.be",
-      "admin": "admin.langlog.be"
+      "admin": "admin.langlog.be",
+      "flipt": "flags.langlog.be"
     },
+    "oathkeeper_authz_token": "<required: generate with openssl rand -hex 32>",
     "cookie_domain": "langlog.be",
     "tls": {
       "enabled": false
@@ -35,8 +37,10 @@
     "hosts": {
       "app": "tadoku.example.invalid",
       "auth": "account.tadoku.example.invalid",
-      "admin": "admin.tadoku.example.invalid"
+      "admin": "admin.tadoku.example.invalid",
+      "flipt": "flags.tadoku.example.invalid"
     },
+    "oathkeeper_authz_token": "<required: generate with openssl rand -hex 32>",
     "cookie_domain": "tadoku.example.invalid",
     "tls": {
       "enabled": true,
@@ -44,7 +48,8 @@
       "secret_names": {
         "app": "tadoku-dev-app-tls",
         "auth": "tadoku-dev-auth-tls",
-        "admin": "tadoku-dev-admin-tls"
+        "admin": "tadoku-dev-admin-tls",
+        "flipt": "tadoku-dev-flipt-tls"
       }
     }
   }

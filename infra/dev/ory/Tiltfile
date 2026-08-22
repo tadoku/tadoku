@@ -8,6 +8,7 @@ helm_repo('ory', 'https://k8s.ory.sh/helm/charts', resource_name='helm-repo-ory'
 kratos_values = render_template('infra/dev/ory/kratos_values.yaml', '.tilt/rendered/infra/dev/ory/kratos_values.yaml')
 oathkeeper_values = render_template('infra/dev/ory/oathkeeper_values.yaml', '.tilt/rendered/infra/dev/ory/oathkeeper_values.yaml')
 access_rules = render_template('infra/dev/ory/access_rules.yaml', '.tilt/rendered/infra/dev/ory/access_rules.yaml')
+oathkeeper_authz_secret = render_template('infra/dev/ory/oathkeeper_authz_secret.yaml', '.tilt/rendered/infra/dev/ory/oathkeeper_authz_secret.yaml')
 
 # kratos
 helm_resource('kratos',
@@ -23,13 +24,15 @@ k8s_resource("kratos", labels=["auth"])
 
 # oathkeeper
 k8s_yaml(secret_yaml_generic('dev-oathkeeper-jwks', from_file=['jwks.json=./jwks-dev.json']))
+k8s_yaml(oathkeeper_authz_secret)
 helm_resource('oathkeeper',
               'ory/oathkeeper',
               flags=[
+                '--version=0.63.0',
                 '--set-file', 'oathkeeper.accessRules=%s' % access_rules,
                 '-f', oathkeeper_values,
               ],
-              deps=['./access_rules.yaml', './oathkeeper_values.yaml'],
+              deps=['./access_rules.yaml', './oathkeeper_values.yaml', './oathkeeper_authz_secret.yaml'],
               resource_deps=['helm-repo-ory'])
 
 k8s_resource("oathkeeper", labels=["auth"])

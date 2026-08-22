@@ -3,7 +3,7 @@ oathkeeper:
     log:
       level: debug
       format: json
-      leak_sensitive_values: true
+      leak_sensitive_values: false
 
     serve:
       proxy:
@@ -83,6 +83,13 @@ oathkeeper:
       allow:
         enabled: true
 
+      remote_json:
+        enabled: true
+        config:
+          # Per-rule settings override this schema-required, fail-closed fallback.
+          remote: http://127.0.0.1
+          payload: '{}'
+
     mutators:
       noop:
         enabled: true
@@ -99,6 +106,13 @@ oathkeeper:
             }
 
 deployment:
+  automountServiceAccountToken: false
+  extraEnv:
+    - name: OATHKEEPER_AUTHZ_TOKEN
+      valueFrom:
+        secretKeyRef:
+          name: dev-oathkeeper-authz
+          key: token
   extraVolumes:
     - name: jwks
       secret:

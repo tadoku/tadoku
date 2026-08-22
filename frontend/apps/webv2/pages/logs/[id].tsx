@@ -28,7 +28,7 @@ const Page = () => {
   const log = useLog(id)
   const role = useUserRole()
 
-  if (log.isLoading || log.isIdle || role === undefined) {
+  if (log.isLoading || log.isIdle) {
     return <Loading />
   }
 
@@ -42,6 +42,10 @@ const Page = () => {
         Could not load page, please try again later.
       </span>
     )
+  }
+
+  if (role === undefined) {
+    return <Loading />
   }
 
   if (role === 'admin') {

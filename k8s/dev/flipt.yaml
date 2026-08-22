@@ -1,0 +1,283 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: tdk-flipt
+  labels:
+    app.kubernetes.io/name: flipt
+    app.kubernetes.io/part-of: tadoku
+    pod-security.kubernetes.io/enforce: restricted
+    pod-security.kubernetes.io/audit: restricted
+    pod-security.kubernetes.io/warn: restricted
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: flipt
+  namespace: tdk-flipt
+  labels:
+    app.kubernetes.io/name: flipt
+    app.kubernetes.io/part-of: tadoku
+automountServiceAccountToken: false
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: flipt
+  namespace: tdk-flipt
+  labels:
+    app.kubernetes.io/name: flipt
+    app.kubernetes.io/part-of: tadoku
+data:
+  default.yml: |
+    version: "2.0"
+    log:
+      level: INFO
+      encoding: json
+      grpc_level: ERROR
+    server:
+      protocol: http
+      host: 0.0.0.0
+      http_port: 8080
+      grpc_port: 9000
+    storage:
+      local:
+        backend:
+          type: memory
+    environments:
+      local:
+        name: local
+        default: true
+        storage: local
+    metrics:
+      enabled: true
+      exporter: prometheus
+    diagnostics:
+      profiling:
+        enabled: false
+    meta:
+      check_for_updates: false
+      telemetry_enabled: false
+      state_directory: /home/flipt/.config/flipt
+    ui:
+      enabled: true
+      topbar:
+        label: Local - disposable state
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: flipt
+  namespace: tdk-flipt
+  labels:
+    app.kubernetes.io/name: flipt
+    app.kubernetes.io/part-of: tadoku
+spec:
+  replicas: 1
+  revisionHistoryLimit: 2
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: flipt
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: flipt
+        app.kubernetes.io/part-of: tadoku
+    spec:
+      serviceAccountName: flipt
+      automountServiceAccountToken: false
+      enableServiceLinks: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 100
+        runAsGroup: 1000
+        fsGroup: 1000
+        fsGroupChangePolicy: OnRootMismatch
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: flipt
+          image: docker.flipt.io/flipt/flipt:v2.11.0@sha256:d20384874048ef6ac326f4937cee64f1db175a1878a87db32916cc8db46c740e
+          imagePullPolicy: IfNotPresent
+          command:
+            - /flipt
+            - server
+          args:
+            - --config
+            - /etc/flipt/config/default.yml
+          env:
+            - name: HOME
+              value: /home/flipt
+            - name: TMPDIR
+              value: /tmp
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+            - name: grpc
+              containerPort: 9000
+              protocol: TCP
+          startupProbe:
+            httpGet:
+              path: /health
+              port: http
+            periodSeconds: 2
+            timeoutSeconds: 2
+            failureThreshold: 30
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            periodSeconds: 5
+            timeoutSeconds: 2
+            failureThreshold: 3
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            periodSeconds: 10
+            timeoutSeconds: 2
+            failureThreshold: 3
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 250m
+              memory: 256Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            privileged: false
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 100
+            seccompProfile:
+              type: RuntimeDefault
+          volumeMounts:
+            - name: config
+              mountPath: /etc/flipt/config/default.yml
+              subPath: default.yml
+              readOnly: true
+            - name: state
+              mountPath: /home/flipt/.config/flipt
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: config
+          configMap:
+            name: flipt
+            defaultMode: 0444
+        - name: state
+          emptyDir:
+            medium: Memory
+            sizeLimit: 16Mi
+        - name: tmp
+          emptyDir:
+            medium: Memory
+            sizeLimit: 64Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: flipt
+  namespace: tdk-flipt
+  labels:
+    app.kubernetes.io/name: flipt
+    app.kubernetes.io/part-of: tadoku
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/path: /metrics
+    prometheus.io/port: "8080"
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: flipt
+  ports:
+    - name: http
+      port: 8080
+      targetPort: http
+      protocol: TCP
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny
+  namespace: tdk-flipt
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+    - Egress
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-dns-egress
+  namespace: tdk-flipt
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: flipt
+  policyTypes:
+    - Egress
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+          podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - port: 53
+          protocol: UDP
+        - port: 53
+          protocol: TCP
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-oathkeeper-ingress
+  namespace: tdk-flipt
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: flipt
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: default
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: oathkeeper
+              app.kubernetes.io/instance: oathkeeper
+      ports:
+        - port: 8080
+          protocol: TCP
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-monitoring-ingress
+  namespace: tdk-flipt
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: flipt
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: monitoring
+      ports:
+        - port: 8080
+          protocol: TCP

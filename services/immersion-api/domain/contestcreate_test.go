@@ -21,7 +21,7 @@ type mockContestCreateRepository struct {
 	userUpsertCalled  bool
 	languageExists    map[string]bool
 	languageExistsErr error
-	languageLookups   []string
+	languageBatches   [][]string
 }
 
 func (m *mockContestCreateRepository) CreateContest(ctx context.Context, req *domain.ContestCreateRequest) (*domain.ContestCreateResponse, error) {
@@ -38,15 +38,20 @@ func (m *mockContestCreateRepository) UpsertUser(ctx context.Context, req *domai
 	return nil
 }
 
-func (m *mockContestCreateRepository) LanguageExists(_ context.Context, code string) (bool, error) {
-	m.languageLookups = append(m.languageLookups, code)
+func (m *mockContestCreateRepository) LanguagesExist(_ context.Context, codes []string) (bool, error) {
+	m.languageBatches = append(m.languageBatches, append([]string(nil), codes...))
 	if m.languageExistsErr != nil {
 		return false, m.languageExistsErr
 	}
 	if m.languageExists == nil {
 		return true, nil
 	}
-	return m.languageExists[code], nil
+	for _, code := range codes {
+		if !m.languageExists[code] {
+			return false, nil
+		}
+	}
+	return true, nil
 }
 
 func TestContestCreate_Execute(t *testing.T) {
@@ -163,6 +168,7 @@ func TestContestCreate_Execute(t *testing.T) {
 
 		assert.NoError(t, err)
 		assert.Equal(t, expectedResult, result)
+		assert.Empty(t, repo.languageBatches)
 		assert.True(t, repo.createCalled)
 	})
 
@@ -202,7 +208,7 @@ func TestContestCreate_Execute(t *testing.T) {
 
 		assert.NoError(t, err)
 		assert.Equal(t, expectedResult, result)
-		assert.Equal(t, []string{"jpn", "kor"}, repo.languageLookups)
+		assert.Equal(t, [][]string{{"jpn", "kor"}}, repo.languageBatches)
 		assert.True(t, repo.createCalled)
 	})
 
@@ -222,7 +228,7 @@ func TestContestCreate_Execute(t *testing.T) {
 		_, err := svc.Execute(ctxWithUserIdentity(uuid.NewString(), "TestUser"), request)
 
 		assert.ErrorIs(t, err, domain.ErrInvalidContest)
-		assert.Equal(t, []string{"invalid"}, repo.languageLookups)
+		assert.Equal(t, [][]string{{"invalid"}}, repo.languageBatches)
 		assert.False(t, repo.createCalled)
 	})
 
@@ -242,7 +248,7 @@ func TestContestCreate_Execute(t *testing.T) {
 		_, err := svc.Execute(ctxWithUserIdentity(uuid.NewString(), "TestUser"), request)
 
 		assert.ErrorIs(t, err, domain.ErrInvalidContest)
-		assert.Equal(t, []string{"jpn", "invalid"}, repo.languageLookups)
+		assert.Equal(t, [][]string{{"jpn", "invalid"}}, repo.languageBatches)
 		assert.False(t, repo.createCalled)
 	})
 
@@ -263,7 +269,7 @@ func TestContestCreate_Execute(t *testing.T) {
 		_, err := svc.Execute(ctxWithUserIdentity(uuid.NewString(), "TestUser"), request)
 
 		assert.ErrorIs(t, err, lookupErr)
-		assert.Equal(t, []string{"jpn"}, repo.languageLookups)
+		assert.Equal(t, [][]string{{"jpn"}}, repo.languageBatches)
 		assert.False(t, repo.createCalled)
 	})
 }

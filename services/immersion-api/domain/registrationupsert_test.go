@@ -26,7 +26,7 @@ type mockRegistrationUpsertRepository struct {
 	detachErr         error
 	languageExists    map[string]bool
 	languageExistsErr error
-	languageLookups   []string
+	languageBatches   [][]string
 }
 
 func (m *mockRegistrationUpsertRepository) FindContestByID(ctx context.Context, req *domain.ContestFindRequest) (*domain.ContestView, error) {
@@ -49,15 +49,20 @@ func (m *mockRegistrationUpsertRepository) DetachContestLogsForLanguages(ctx con
 	return m.detachErr
 }
 
-func (m *mockRegistrationUpsertRepository) LanguageExists(_ context.Context, code string) (bool, error) {
-	m.languageLookups = append(m.languageLookups, code)
+func (m *mockRegistrationUpsertRepository) LanguagesExist(_ context.Context, codes []string) (bool, error) {
+	m.languageBatches = append(m.languageBatches, append([]string(nil), codes...))
 	if m.languageExistsErr != nil {
 		return false, m.languageExistsErr
 	}
 	if m.languageExists == nil {
 		return true, nil
 	}
-	return m.languageExists[code], nil
+	for _, code := range codes {
+		if !m.languageExists[code] {
+			return false, nil
+		}
+	}
+	return true, nil
 }
 
 type mockUserUpsertRepositoryForReg struct {
@@ -315,7 +320,7 @@ func TestRegistrationUpsert_Execute(t *testing.T) {
 		})
 
 		require.NoError(t, err)
-		assert.Equal(t, []string{"jpn", "kor"}, repo.languageLookups)
+		assert.Equal(t, [][]string{{"jpn", "kor"}}, repo.languageBatches)
 		assert.True(t, repo.upsertCalled)
 	})
 
@@ -335,7 +340,7 @@ func TestRegistrationUpsert_Execute(t *testing.T) {
 		})
 
 		assert.ErrorIs(t, err, domain.ErrInvalidContestRegistration)
-		assert.Equal(t, []string{"invalid"}, repo.languageLookups)
+		assert.Equal(t, [][]string{{"invalid"}}, repo.languageBatches)
 		assert.False(t, repo.upsertCalled)
 	})
 
@@ -355,7 +360,7 @@ func TestRegistrationUpsert_Execute(t *testing.T) {
 		})
 
 		assert.ErrorIs(t, err, domain.ErrInvalidContestRegistration)
-		assert.Equal(t, []string{"jpn", "invalid"}, repo.languageLookups)
+		assert.Equal(t, [][]string{{"jpn", "invalid"}}, repo.languageBatches)
 		assert.False(t, repo.upsertCalled)
 	})
 
@@ -376,7 +381,7 @@ func TestRegistrationUpsert_Execute(t *testing.T) {
 		})
 
 		assert.ErrorIs(t, err, lookupErr)
-		assert.Equal(t, []string{"jpn"}, repo.languageLookups)
+		assert.Equal(t, [][]string{{"jpn"}}, repo.languageBatches)
 		assert.False(t, repo.upsertCalled)
 	})
 }

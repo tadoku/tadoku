@@ -27,16 +27,41 @@ const Page = () => {
   const log = useLog(id)
   const role = useUserRole()
 
-  if (log.isLoading || log.isIdle || role === undefined) {
+  if (log.isLoading || log.isIdle) {
     return <Loading />
   }
 
   if (log.isError) {
+    if (log.error instanceof Error && log.error.message === '404') {
+      return (
+        <>
+          <Head>
+            <title>Log not found - Tadoku</title>
+          </Head>
+          <div className="max-w-2xl">
+            <h1 className="title">Log not found</h1>
+            <p className="mt-2">
+              This log may have been deleted, or the link may be incorrect.
+            </p>
+            <div className="mt-4">
+              <Link href={routes.home()} className="btn">
+                Back to home
+              </Link>
+            </div>
+          </div>
+        </>
+      )
+    }
+
     return (
       <span className="flash error">
         Could not load page, please try again later.
       </span>
     )
+  }
+
+  if (role === undefined) {
+    return <Loading />
   }
 
   if (role === 'admin') {

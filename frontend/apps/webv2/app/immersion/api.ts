@@ -1088,7 +1088,13 @@ export const useLog = (id: string, options?: { enabled?: boolean }) =>
 
       return Log.parse(await response.json())
     },
-    options,
+    {
+      ...options,
+      retry: (failureCount, error) =>
+        error instanceof Error && error.message === '404'
+          ? false
+          : failureCount < 3,
+    },
   )
 
 const UserActivityScore = z.object({

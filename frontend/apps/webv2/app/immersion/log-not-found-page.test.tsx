@@ -27,12 +27,6 @@ vi.mock('next/router', () => ({
   useRouter: () => ({ query: { id: 'deleted-log' } }),
 }))
 
-vi.mock('next/error', () => ({
-  default: ({ statusCode }: { statusCode: number }) => (
-    <main>Not found ({statusCode})</main>
-  ),
-}))
-
 import LogPage from '../../pages/logs/[id]'
 
 describe('log details errors', () => {
@@ -50,7 +44,15 @@ describe('log details errors', () => {
       isLoading: false,
     })
 
-    expect(renderToStaticMarkup(<LogPage />)).toContain('Not found (404)')
+    const markup = renderToStaticMarkup(<LogPage />)
+
+    expect(markup).toContain('Log not found')
+    expect(markup).toContain(
+      'This log may have been deleted, or the link may be incorrect.',
+    )
+    expect(markup).toContain('href="/"')
+    expect(markup).toContain('class="btn primary"')
+    expect(markup).not.toContain('next-error-h1')
   })
 
   it('keeps the transient error message for other failures', () => {
@@ -75,6 +77,6 @@ describe('log details errors', () => {
       isLoading: false,
     })
 
-    expect(renderToStaticMarkup(<LogPage />)).toContain('Not found (404)')
+    expect(renderToStaticMarkup(<LogPage />)).toContain('Log not found')
   })
 })

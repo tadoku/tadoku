@@ -14,7 +14,6 @@ import { LogDetailsV2 } from '@app/immersion/LogDetailsV2'
 import { HomeIcon, TrashIcon } from '@heroicons/react/20/solid'
 import { XMarkIcon } from '@heroicons/react/24/outline'
 import { DateTime } from 'luxon'
-import ErrorPage from 'next/error'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
 import { useState } from 'react'
@@ -34,7 +33,26 @@ const Page = () => {
 
   if (log.isError) {
     if (log.error instanceof Error && log.error.message === '404') {
-      return <ErrorPage statusCode={404} />
+      return (
+        <>
+          <Head>
+            <title>Log not found - Tadoku</title>
+          </Head>
+          <div className="max-w-2xl">
+            <div className="card">
+              <h1 className="title">Log not found</h1>
+              <p className="subtitle mt-2">
+                This log may have been deleted, or the link may be incorrect.
+              </p>
+              <div className="mt-4">
+                <Link href={routes.home()} className="btn primary">
+                  Back to home
+                </Link>
+              </div>
+            </div>
+          </div>
+        </>
+      )
     }
 
     return (

@@ -2,7 +2,7 @@ package domain
 
 import (
 	"context"
-	"log/slog"
+	"fmt"
 
 	"github.com/google/uuid"
 )
@@ -77,84 +77,82 @@ func NewLeaderboardUpdater(store LeaderboardStore, repo LeaderboardRepository) *
 // UpdateUserContestScore recalculates a user's total score for a contest
 // from the database and updates it in the store. If the leaderboard doesn't
 // exist in the store yet, a full rebuild is performed.
-func (u *LeaderboardUpdater) UpdateUserContestScore(ctx context.Context, contestID uuid.UUID, userID uuid.UUID) {
+func (u *LeaderboardUpdater) UpdateUserContestScore(ctx context.Context, contestID uuid.UUID, userID uuid.UUID) error {
 	score, err := u.repo.FetchUserContestScore(ctx, contestID, userID)
 	if err != nil {
-		slog.ErrorContext(ctx, "failed to fetch user contest score", "contest_id", contestID, "user_id", userID, "error", err)
-		return
+		return fmt.Errorf("fetch user contest score: %w", err)
 	}
 
 	updated, err := u.store.UpdateContestScore(ctx, contestID, userID, score)
 	if err != nil {
-		slog.ErrorContext(ctx, "failed to update user contest score", "contest_id", contestID, "user_id", userID, "error", err)
-		return
+		return fmt.Errorf("update user contest score: %w", err)
 	}
 	if updated {
-		return
+		return nil
 	}
 
 	// Leaderboard doesn't exist in store yet, do a full rebuild
-	u.RebuildContestLeaderboard(ctx, contestID)
+	return u.RebuildContestLeaderboard(ctx, contestID)
 }
 
 // UpdateUserOfficialScores recalculates a user's yearly and global scores
 // from the database and updates them in the store atomically. If either
 // leaderboard doesn't exist, a full rebuild of that leaderboard is performed.
-func (u *LeaderboardUpdater) UpdateUserOfficialScores(ctx context.Context, year int, userID uuid.UUID) {
+func (u *LeaderboardUpdater) UpdateUserOfficialScores(ctx context.Context, year int, userID uuid.UUID) error {
 	yearlyScore, err := u.repo.FetchUserYearlyScore(ctx, year, userID)
 	if err != nil {
-		slog.ErrorContext(ctx, "failed to fetch user yearly score", "year", year, "user_id", userID, "error", err)
-		return
+		return fmt.Errorf("fetch user yearly score: %w", err)
 	}
 
 	globalScore, err := u.repo.FetchUserGlobalScore(ctx, userID)
 	if err != nil {
-		slog.ErrorContext(ctx, "failed to fetch user global score", "user_id", userID, "error", err)
-		return
+		return fmt.Errorf("fetch user global score: %w", err)
 	}
 
 	yearlyUpdated, globalUpdated, err := u.store.UpdateOfficialScores(ctx, year, userID, yearlyScore, globalScore)
 	if err != nil {
-		slog.ErrorContext(ctx, "failed to update user official scores", "year", year, "user_id", userID, "error", err)
-		return
+		return fmt.Errorf("update user official scores: %w", err)
 	}
 
 	// If either leaderboard didn't exist, rebuild both together
 	if !yearlyUpdated || !globalUpdated {
-		u.RebuildOfficialLeaderboards(ctx, year)
+		return u.RebuildOfficialLeaderboards(ctx, year)
 	}
+
+	return nil
 }
 
 // RebuildContestLeaderboard fetches all scores from the database and
 // fully rebuilds the contest leaderboard in the store.
-func (u *LeaderboardUpdater) RebuildContestLeaderboard(ctx context.Context, contestID uuid.UUID) {
+func (u *LeaderboardUpdater) RebuildContestLeaderboard(ctx context.Context, contestID uuid.UUID) error {
 	scores, err := u.repo.FetchAllContestLeaderboardScores(ctx, contestID)
 	if err != nil {
-		slog.ErrorContext(ctx, "failed to fetch contest leaderboard scores for rebuild", "contest_id", contestID, "error", err)
-		return
+		return fmt.Errorf("fetch contest leaderboard scores for rebuild: %w", err)
 	}
 
 	if err := u.store.RebuildContestLeaderboard(ctx, contestID, scores); err != nil {
-		slog.ErrorContext(ctx, "failed to rebuild contest leaderboard", "contest_id", contestID, "error", err)
+		return fmt.Errorf("rebuild contest leaderboard: %w", err)
 	}
+
+	return nil
 }
 
 // RebuildOfficialLeaderboards fetches all scores from the database and
 // atomically rebuilds both yearly and global leaderboards in the store.
-func (u *LeaderboardUpdater) RebuildOfficialLeaderboards(ctx context.Context, year int) {
+func (u *LeaderboardUpdater) RebuildOfficialLeaderboards(ctx context.Context, year int) error {
 	yearlyScores, err := u.repo.FetchAllYearlyLeaderboardScores(ctx, year)
 	if err != nil {
-		slog.ErrorContext(ctx, "failed to fetch yearly leaderboard scores for rebuild", "year", year, "error", err)
-		return
+		return fmt.Errorf("fetch yearly leaderboard scores for rebuild: %w", err)
 	}
 
 	globalScores, err := u.repo.FetchAllGlobalLeaderboardScores(ctx)
 	if err != nil {
-		slog.ErrorContext(ctx, "failed to fetch global leaderboard scores for rebuild", "error", err)
-		return
+		return fmt.Errorf("fetch global leaderboard scores for rebuild: %w", err)
 	}
 
 	if err := u.store.RebuildOfficialLeaderboards(ctx, year, yearlyScores, globalScores); err != nil {
-		slog.ErrorContext(ctx, "failed to rebuild official leaderboards", "year", year, "error", err)
+		return fmt.Errorf("rebuild official leaderboards: %w", err)
 	}
+
+	return nil
 }

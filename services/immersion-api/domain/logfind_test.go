@@ -8,6 +8,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/tadoku/tadoku/services/immersion-api/domain"
 )
 
@@ -137,24 +138,43 @@ func TestLogFind_Execute(t *testing.T) {
 	}
 }
 
-func TestLogFind_NoSession(t *testing.T) {
+func TestLogFind_GuestReturnsNotFoundForDeletedLog(t *testing.T) {
 	logID := uuid.New()
-	ownerUserID := uuid.New()
 
 	repo := &logFindRepositoryMock{
+		err: domain.ErrNotFound,
+	}
+	service := domain.NewLogFind(repo)
+
+	ctx := ctxWithGuest()
+
+	result, err := service.Execute(ctx, &domain.LogFindRequest{ID: logID})
+
+	assert.ErrorIs(t, err, domain.ErrNotFound)
+	assert.Nil(t, result)
+	require.NotNil(t, repo.capturedRequest)
+	assert.False(t, repo.capturedRequest.IncludeDeleted)
+}
+
+func TestLogFind_GuestCanFindActiveLogWithoutRegistrations(t *testing.T) {
+	repo := &logFindRepositoryMock{
 		log: &domain.Log{
-			ID:     logID,
-			UserID: ownerUserID,
+			ID:         uuid.New(),
+			UserID:     uuid.New(),
+			ActivityID: 1,
+			Registrations: []domain.ContestRegistrationReference{
+				{RegistrationID: uuid.New()},
+			},
 		},
 	}
 	service := domain.NewLogFind(repo)
 
-	ctx := context.Background() // No session
+	result, err := service.Execute(ctxWithGuest(), &domain.LogFindRequest{ID: repo.log.ID})
 
-	result, err := service.Execute(ctx, &domain.LogFindRequest{ID: logID})
-
-	assert.ErrorIs(t, err, domain.ErrUnauthorized)
-	assert.Nil(t, result)
+	require.NoError(t, err)
+	require.NotNil(t, result)
+	assert.False(t, repo.capturedRequest.IncludeDeleted)
+	assert.Nil(t, result.Registrations)
 }
 
 func copyLog(l *domain.Log) *domain.Log {

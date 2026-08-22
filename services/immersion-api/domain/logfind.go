@@ -25,18 +25,20 @@ func NewLogFind(repo LogFindRepository) *LogFind {
 }
 
 func (s *LogFind) Execute(ctx context.Context, req *LogFindRequest) (*Log, error) {
-	// Check authorization before making DB call
 	session := commondomain.ParseUserIdentity(ctx)
-	if session == nil {
-		return nil, ErrUnauthorized
+	userID := uuid.Nil
+	admin := false
+	authenticated := session != nil && session.Subject != "guest"
+	if authenticated {
+		var err error
+		userID, err = uuid.Parse(session.Subject)
+		if err != nil {
+			return nil, ErrUnauthorized
+		}
+		admin = isAdmin(ctx)
 	}
 
-	userID, err := uuid.Parse(session.Subject)
-	if err != nil {
-		return nil, ErrUnauthorized
-	}
-
-	req.IncludeDeleted = isAdmin(ctx)
+	req.IncludeDeleted = admin
 
 	log, err := s.repo.FindLogByID(ctx, req)
 	if err != nil {
@@ -48,9 +50,8 @@ func (s *LogFind) Execute(ctx context.Context, req *LogFindRequest) (*Log, error
 	}
 
 	// Needed to prevent leaking private registrations, only show to admins and the owner of the log
-	isAdmin := isAdmin(ctx)
-	isOwner := log.UserID == userID
-	if !isAdmin && !isOwner {
+	isOwner := authenticated && log.UserID == userID
+	if !admin && !isOwner {
 		log.Registrations = nil
 	}
 

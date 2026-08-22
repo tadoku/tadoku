@@ -2,6 +2,7 @@ package domain_test
 
 import (
 	"context"
+	"errors"
 	"testing"
 	"time"
 
@@ -20,9 +21,12 @@ type mockRegistrationUpsertRepository struct {
 	upsertCalled     bool
 	upsertCalledWith *domain.RegistrationUpsertRequest
 
-	detachCalled     bool
-	detachCalledWith *domain.DetachContestLogsForLanguagesRequest
-	detachErr        error
+	detachCalled      bool
+	detachCalledWith  *domain.DetachContestLogsForLanguagesRequest
+	detachErr         error
+	languageExists    map[string]bool
+	languageExistsErr error
+	languageLookups   []string
 }
 
 func (m *mockRegistrationUpsertRepository) FindContestByID(ctx context.Context, req *domain.ContestFindRequest) (*domain.ContestView, error) {
@@ -43,6 +47,17 @@ func (m *mockRegistrationUpsertRepository) DetachContestLogsForLanguages(ctx con
 	m.detachCalled = true
 	m.detachCalledWith = req
 	return m.detachErr
+}
+
+func (m *mockRegistrationUpsertRepository) LanguageExists(_ context.Context, code string) (bool, error) {
+	m.languageLookups = append(m.languageLookups, code)
+	if m.languageExistsErr != nil {
+		return false, m.languageExistsErr
+	}
+	if m.languageExists == nil {
+		return true, nil
+	}
+	return m.languageExists[code], nil
 }
 
 type mockUserUpsertRepositoryForReg struct {
@@ -282,5 +297,86 @@ func TestRegistrationUpsert_Execute(t *testing.T) {
 		require.NoError(t, err)
 		assert.True(t, repo.upsertCalled)
 		assert.Equal(t, existingRegID, repo.upsertCalledWith.ID())
+	})
+
+	t.Run("allows known language codes", func(t *testing.T) {
+		userRepo := &mockUserUpsertRepositoryForReg{}
+		userUpsert := domain.NewUserUpsert(userRepo)
+		repo := &mockRegistrationUpsertRepository{
+			contest:        validContest,
+			findRegErr:     domain.ErrNotFound,
+			languageExists: map[string]bool{"jpn": true, "kor": true},
+		}
+		svc := domain.NewRegistrationUpsert(repo, userUpsert)
+
+		err := svc.Execute(ctxWithUserSubject(userID.String()), &domain.RegistrationUpsertRequest{
+			ContestID:     contestID,
+			LanguageCodes: []string{"jpn", "kor"},
+		})
+
+		require.NoError(t, err)
+		assert.Equal(t, []string{"jpn", "kor"}, repo.languageLookups)
+		assert.True(t, repo.upsertCalled)
+	})
+
+	t.Run("rejects an unknown language code for an unrestricted contest", func(t *testing.T) {
+		userRepo := &mockUserUpsertRepositoryForReg{}
+		userUpsert := domain.NewUserUpsert(userRepo)
+		repo := &mockRegistrationUpsertRepository{
+			contest:        validContest,
+			findRegErr:     domain.ErrNotFound,
+			languageExists: map[string]bool{"invalid": false},
+		}
+		svc := domain.NewRegistrationUpsert(repo, userUpsert)
+
+		err := svc.Execute(ctxWithUserSubject(userID.String()), &domain.RegistrationUpsertRequest{
+			ContestID:     contestID,
+			LanguageCodes: []string{"invalid"},
+		})
+
+		assert.ErrorIs(t, err, domain.ErrInvalidContestRegistration)
+		assert.Equal(t, []string{"invalid"}, repo.languageLookups)
+		assert.False(t, repo.upsertCalled)
+	})
+
+	t.Run("rejects a mixed list containing an unknown language code", func(t *testing.T) {
+		userRepo := &mockUserUpsertRepositoryForReg{}
+		userUpsert := domain.NewUserUpsert(userRepo)
+		repo := &mockRegistrationUpsertRepository{
+			contest:        validContest,
+			findRegErr:     domain.ErrNotFound,
+			languageExists: map[string]bool{"jpn": true, "invalid": false},
+		}
+		svc := domain.NewRegistrationUpsert(repo, userUpsert)
+
+		err := svc.Execute(ctxWithUserSubject(userID.String()), &domain.RegistrationUpsertRequest{
+			ContestID:     contestID,
+			LanguageCodes: []string{"jpn", "invalid"},
+		})
+
+		assert.ErrorIs(t, err, domain.ErrInvalidContestRegistration)
+		assert.Equal(t, []string{"jpn", "invalid"}, repo.languageLookups)
+		assert.False(t, repo.upsertCalled)
+	})
+
+	t.Run("returns a language lookup error without upserting a registration", func(t *testing.T) {
+		lookupErr := errors.New("language repository unavailable")
+		userRepo := &mockUserUpsertRepositoryForReg{}
+		userUpsert := domain.NewUserUpsert(userRepo)
+		repo := &mockRegistrationUpsertRepository{
+			contest:           validContest,
+			findRegErr:        domain.ErrNotFound,
+			languageExistsErr: lookupErr,
+		}
+		svc := domain.NewRegistrationUpsert(repo, userUpsert)
+
+		err := svc.Execute(ctxWithUserSubject(userID.String()), &domain.RegistrationUpsertRequest{
+			ContestID:     contestID,
+			LanguageCodes: []string{"jpn"},
+		})
+
+		assert.ErrorIs(t, err, lookupErr)
+		assert.Equal(t, []string{"jpn"}, repo.languageLookups)
+		assert.False(t, repo.upsertCalled)
 	})
 }

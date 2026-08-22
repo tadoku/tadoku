@@ -12,6 +12,7 @@ import (
 type RegistrationUpsertRepository interface {
 	FindContestByID(context.Context, *ContestFindRequest) (*ContestView, error)
 	FindRegistrationForUser(context.Context, *RegistrationFindRequest) (*ContestRegistration, error)
+	LanguageExists(context.Context, string) (bool, error)
 	UpsertContestRegistration(context.Context, *RegistrationUpsertRequest) error
 	DetachContestLogsForLanguages(context.Context, *DetachContestLogsForLanguagesRequest) error
 }
@@ -82,6 +83,16 @@ func (s *RegistrationUpsert) Execute(ctx context.Context, req *RegistrationUpser
 
 	if len(req.LanguageCodes) < 1 || len(req.LanguageCodes) > 3 {
 		return fmt.Errorf("invalid language code length: %w", ErrInvalidContestRegistration)
+	}
+
+	for _, code := range req.LanguageCodes {
+		exists, err := s.repo.LanguageExists(ctx, code)
+		if err != nil {
+			return fmt.Errorf("could not check whether language %s exists: %w", code, err)
+		}
+		if !exists {
+			return fmt.Errorf("language %s does not exist: %w", code, ErrInvalidContestRegistration)
+		}
 	}
 
 	// check if languages are allowed by contest

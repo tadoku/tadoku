@@ -50,8 +50,12 @@ describe('log details errors', () => {
     expect(markup).toContain(
       'This log may have been deleted, or the link may be incorrect.',
     )
+    expect(markup).toContain('<p class="mt-2">')
+    expect(markup).not.toContain('<p class="subtitle')
+    expect(markup).not.toContain('class="card"')
     expect(markup).toContain('href="/"')
-    expect(markup).toContain('class="btn primary"')
+    expect(markup).toContain('class="btn"')
+    expect(markup).not.toContain('class="btn primary"')
     expect(markup).not.toContain('next-error-h1')
   })
 

@@ -39,16 +39,14 @@ const Page = () => {
             <title>Log not found - Tadoku</title>
           </Head>
           <div className="max-w-2xl">
-            <div className="card">
-              <h1 className="title">Log not found</h1>
-              <p className="subtitle mt-2">
-                This log may have been deleted, or the link may be incorrect.
-              </p>
-              <div className="mt-4">
-                <Link href={routes.home()} className="btn primary">
-                  Back to home
-                </Link>
-              </div>
+            <h1 className="title">Log not found</h1>
+            <p className="mt-2">
+              This log may have been deleted, or the link may be incorrect.
+            </p>
+            <div className="mt-4">
+              <Link href={routes.home()} className="btn">
+                Back to home
+              </Link>
             </div>
           </div>
         </>

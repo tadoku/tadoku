@@ -35,7 +35,7 @@ func (m *mockContestCreateRepository) UpsertUser(ctx context.Context, req *domai
 }
 
 func TestContestCreate_Execute(t *testing.T) {
-	now := time.Now()
+	now := time.Date(2026, time.August, 22, 15, 30, 0, 0, time.UTC)
 	clock := commondomain.NewMockClock(now)
 
 	validRequest := &domain.ContestCreateRequest{
@@ -149,6 +149,106 @@ func TestContestCreate_Execute(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, expectedResult, result)
 		assert.True(t, repo.createCalled)
+	})
+
+	t.Run("allows user to create contest starting today", func(t *testing.T) {
+		repo := &mockContestCreateRepository{}
+		userUpsert := domain.NewUserUpsert(repo)
+		svc := domain.NewContestCreate(repo, clock, userUpsert)
+
+		ctx := ctxWithUserIdentity(uuid.NewString(), "TestUser")
+		request := &domain.ContestCreateRequest{
+			ContestStart:            time.Date(2026, time.August, 22, 0, 0, 0, 0, time.UTC),
+			ContestEnd:              time.Date(2026, time.August, 22, 0, 0, 0, 0, time.UTC),
+			RegistrationEnd:         time.Date(2026, time.August, 22, 0, 0, 0, 0, time.UTC),
+			Title:                   "same-day round",
+			ActivityTypeIDAllowList: []int32{1, 2},
+		}
+
+		_, err := svc.Execute(ctx, request)
+
+		assert.NoError(t, err)
+		assert.True(t, repo.createCalled)
+	})
+
+	t.Run("rejects user contest starting before today", func(t *testing.T) {
+		repo := &mockContestCreateRepository{}
+		userUpsert := domain.NewUserUpsert(repo)
+		svc := domain.NewContestCreate(repo, clock, userUpsert)
+
+		ctx := ctxWithUserIdentity(uuid.NewString(), "TestUser")
+		request := &domain.ContestCreateRequest{
+			ContestStart:            time.Date(2026, time.August, 21, 0, 0, 0, 0, time.UTC),
+			ContestEnd:              time.Date(2026, time.August, 23, 0, 0, 0, 0, time.UTC),
+			RegistrationEnd:         time.Date(2026, time.August, 22, 0, 0, 0, 0, time.UTC),
+			Title:                   "past round",
+			ActivityTypeIDAllowList: []int32{1, 2},
+		}
+
+		_, err := svc.Execute(ctx, request)
+
+		assert.ErrorIs(t, err, domain.ErrInvalidContest)
+		assert.False(t, repo.createCalled)
+	})
+
+	t.Run("rejects user contest ending before today", func(t *testing.T) {
+		repo := &mockContestCreateRepository{}
+		userUpsert := domain.NewUserUpsert(repo)
+		svc := domain.NewContestCreate(repo, clock, userUpsert)
+
+		ctx := ctxWithUserIdentity(uuid.NewString(), "TestUser")
+		request := &domain.ContestCreateRequest{
+			ContestStart:            time.Date(2026, time.August, 20, 0, 0, 0, 0, time.UTC),
+			ContestEnd:              time.Date(2026, time.August, 21, 0, 0, 0, 0, time.UTC),
+			RegistrationEnd:         time.Date(2026, time.August, 20, 0, 0, 0, 0, time.UTC),
+			Title:                   "past round",
+			ActivityTypeIDAllowList: []int32{1, 2},
+		}
+
+		_, err := svc.Execute(ctx, request)
+
+		assert.ErrorIs(t, err, domain.ErrInvalidContest)
+		assert.False(t, repo.createCalled)
+	})
+
+	t.Run("allows admin to create contest in the past", func(t *testing.T) {
+		repo := &mockContestCreateRepository{}
+		userUpsert := domain.NewUserUpsert(repo)
+		svc := domain.NewContestCreate(repo, clock, userUpsert)
+
+		ctx := ctxWithAdminIdentity(uuid.NewString(), "Admin")
+		request := &domain.ContestCreateRequest{
+			ContestStart:            time.Date(2026, time.August, 20, 0, 0, 0, 0, time.UTC),
+			ContestEnd:              time.Date(2026, time.August, 21, 0, 0, 0, 0, time.UTC),
+			RegistrationEnd:         time.Date(2026, time.August, 20, 0, 0, 0, 0, time.UTC),
+			Title:                   "past round",
+			ActivityTypeIDAllowList: []int32{1, 2},
+		}
+
+		_, err := svc.Execute(ctx, request)
+
+		assert.NoError(t, err)
+		assert.True(t, repo.createCalled)
+	})
+
+	t.Run("rejects admin contest starting after it ends", func(t *testing.T) {
+		repo := &mockContestCreateRepository{}
+		userUpsert := domain.NewUserUpsert(repo)
+		svc := domain.NewContestCreate(repo, clock, userUpsert)
+
+		ctx := ctxWithAdminIdentity(uuid.NewString(), "Admin")
+		request := &domain.ContestCreateRequest{
+			ContestStart:            time.Date(2026, time.August, 23, 0, 0, 0, 0, time.UTC),
+			ContestEnd:              time.Date(2026, time.August, 22, 0, 0, 0, 0, time.UTC),
+			RegistrationEnd:         time.Date(2026, time.August, 22, 0, 0, 0, 0, time.UTC),
+			Title:                   "backwards round",
+			ActivityTypeIDAllowList: []int32{1, 2},
+		}
+
+		_, err := svc.Execute(ctx, request)
+
+		assert.ErrorIs(t, err, domain.ErrInvalidContest)
+		assert.False(t, repo.createCalled)
 	})
 
 	t.Run("returns forbidden when user exceeds yearly limit", func(t *testing.T) {

@@ -123,7 +123,8 @@ func (s *ContestCreate) Execute(ctx context.Context, req *ContestCreateRequest) 
 
 	if !isAdmin(ctx) {
 		now := s.clock.Now()
-		if now.After(req.ContestEnd) || now.After(req.ContestStart) {
+		today := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, time.UTC)
+		if req.ContestEnd.Before(today) || req.ContestStart.Before(today) {
 			return nil, fmt.Errorf("contest cannot be in the past or already have started: %w", ErrInvalidContest)
 		}
 	}

@@ -4,6 +4,12 @@ import { filterUnits } from '@app/immersion/NewLogForm/domain'
 
 export { filterUnits }
 
+const optionalNumber = z.preprocess(
+  value =>
+    typeof value === 'number' && Number.isNaN(value) ? undefined : value,
+  z.number({ invalid_type_error: 'Please enter a number' }).optional(),
+)
+
 const optionalPositiveNumber = z.preprocess(
   value =>
     typeof value === 'number' && Number.isNaN(value) ? undefined : value,
@@ -17,7 +23,7 @@ export const NewLogFormV2Schema = z
   .object({
     languageCode: z.string().length(3, 'invalid language'),
     activityId: z.number(),
-    amountValue: optionalPositiveNumber,
+    amountValue: optionalNumber,
     amountUnit: z.string().optional(),
     durationMinutes: optionalPositiveNumber,
     allUnits: z.array(Unit),
@@ -30,10 +36,12 @@ export const NewLogFormV2Schema = z
     const inputType = activity?.input_type ?? 'amount_primary'
     const unit = log.allUnits.find(it => it.id === log.amountUnit)
     const hasAmount = log.amountValue !== undefined
+    const hasPositiveAmount =
+      log.amountValue !== undefined && log.amountValue > 0
     const hasUnit = log.amountUnit !== undefined && log.amountUnit !== ''
     const hasDuration = log.durationMinutes !== undefined
     const hasValidAmountUnit =
-      hasAmount && hasUnit && unit?.log_activity_id === log.activityId
+      hasPositiveAmount && hasUnit && unit?.log_activity_id === log.activityId
     const durationSeconds = durationSecondsFromMinutes(log.durationMinutes)
 
     if (durationSeconds !== undefined && durationSeconds <= 0) {
@@ -45,7 +53,19 @@ export const NewLogFormV2Schema = z
     }
 
     if (inputType === 'time_primary') {
-      if (!hasDuration && !hasValidAmountUnit) {
+      if (hasDuration) {
+        return
+      }
+
+      if (hasAmount && !hasPositiveAmount) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['amountValue'],
+          message: 'Amount must be greater than 0',
+        })
+      }
+
+      if (!hasValidAmountUnit) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
           path: ['durationMinutes'],
@@ -60,6 +80,12 @@ export const NewLogFormV2Schema = z
         code: z.ZodIssueCode.custom,
         path: ['amountValue'],
         message: 'Amount is required',
+      })
+    } else if (!hasPositiveAmount) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['amountValue'],
+        message: 'Amount must be greater than 0',
       })
     }
 
@@ -89,6 +115,7 @@ export const NewLogV2APISchema = NewLogFormV2Schema.transform(log => {
   const unit = log.allUnits.find(it => it.id === log.amountUnit)
   const hasValidAmountUnit =
     log.amountValue !== undefined &&
+    log.amountValue > 0 &&
     log.amountUnit !== undefined &&
     log.amountUnit !== '' &&
     unit?.log_activity_id === log.activityId

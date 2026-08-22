@@ -1,0 +1,52 @@
+openapi: 3.0.3
+info:
+  title: authz-api-oathkeeper-callback
+  description: Internal callback API used only by Oathkeeper authorization rules
+  license:
+    name: MIT
+    url: https://github.com/tadoku/tadoku/blob/main/LICENSE
+  version: 1.0.0
+servers:
+  - url: http://authz-api:8080/
+paths:
+  /internal/v1/proxy/admin-check:
+    post:
+      summary: Authorizes a Kratos subject as a Tadoku administrator
+      operationId: proxyAdminCheck
+      tags: [proxy]
+      security:
+        - oathkeeperCallbackAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProxyAdminCheckRequest"
+      responses:
+        "200":
+          description: subject is a Tadoku administrator; the empty response is required by Oathkeeper remote_json
+        "400":
+          description: invalid request
+        "401":
+          description: missing or invalid Oathkeeper callback credential
+        "403":
+          description: subject is not a Tadoku administrator
+        "503":
+          description: authorization unavailable
+components:
+  schemas:
+    ProxyAdminCheckRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - subject
+      properties:
+        subject:
+          type: string
+          format: uuid
+          minLength: 1
+  securitySchemes:
+    oathkeeperCallbackAuth:
+      type: http
+      scheme: bearer
+      description: Shared callback token presented only by Oathkeeper

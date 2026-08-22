@@ -12,6 +12,7 @@ go_library(
         "//services/authz-api/http/rest",
         "//services/authz-api/http/rest/openapi",
         "//services/authz-api/http/rest/openapi/internalapi",
+        "//services/authz-api/http/rest/openapi/proxyapi",
         "//services/authz-api/storage/postgres/repository",
         "//services/common/authz/roles",
         "//services/common/client/keto",

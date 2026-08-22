@@ -7,6 +7,7 @@ go_library(
         "moderationaudit.go",
         "permissioncheck_internal.go",
         "permissioncheck_public.go",
+        "proxyadmincheck.go",
         "relationshipwrite.go",
         "roleget.go",
         "roleupdate.go",
@@ -25,6 +26,7 @@ go_test(
     name = "domain_test",
     srcs = [
         "permissioncheck_public_test.go",
+        "proxyadmincheck_test.go",
         "roleupdate_test.go",
     ],
     deps = [

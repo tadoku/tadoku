@@ -4,6 +4,7 @@ import (
 	"github.com/tadoku/tadoku/services/authz-api/domain"
 	"github.com/tadoku/tadoku/services/authz-api/http/rest/openapi"
 	"github.com/tadoku/tadoku/services/authz-api/http/rest/openapi/internalapi"
+	"github.com/tadoku/tadoku/services/authz-api/http/rest/openapi/proxyapi"
 )
 
 type Server struct {
@@ -12,6 +13,7 @@ type Server struct {
 	publicPermissionCheck   *domain.PublicPermissionCheck
 	internalPermissionCheck *domain.InternalPermissionCheck
 	relationshipWriter      *domain.RelationshipWriter
+	proxyAdminCheck         *domain.ProxyAdminCheck
 }
 
 func NewServer(
@@ -20,6 +22,7 @@ func NewServer(
 	publicPermissionCheck *domain.PublicPermissionCheck,
 	internalPermissionCheck *domain.InternalPermissionCheck,
 	relationshipWriter *domain.RelationshipWriter,
+	proxyAdminCheck *domain.ProxyAdminCheck,
 ) *Server {
 	return &Server{
 		roleGet:                 roleGet,
@@ -27,8 +30,10 @@ func NewServer(
 		publicPermissionCheck:   publicPermissionCheck,
 		internalPermissionCheck: internalPermissionCheck,
 		relationshipWriter:      relationshipWriter,
+		proxyAdminCheck:         proxyAdminCheck,
 	}
 }
 
 var _ openapi.ServerInterface = (*Server)(nil)
 var _ internalapi.ServerInterface = (*Server)(nil)
+var _ proxyapi.ServerInterface = (*Server)(nil)

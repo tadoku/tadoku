@@ -12,6 +12,7 @@ import (
 
 type ContestCreateRepository interface {
 	GetContestsByUserCountForYear(context.Context, time.Time, uuid.UUID) (int32, error)
+	LanguagesExist(context.Context, []string) (bool, error)
 	CreateContest(context.Context, *ContestCreateRequest) (*ContestCreateResponse, error)
 }
 
@@ -118,6 +119,16 @@ func (s *ContestCreate) Execute(ctx context.Context, req *ContestCreateRequest) 
 	for _, activityID := range req.ActivityTypeIDAllowList {
 		if !IsValidActivityID(activityID) {
 			return nil, fmt.Errorf("activity %d is not valid: %w", activityID, ErrInvalidContest)
+		}
+	}
+
+	if len(req.LanguageCodeAllowList) > 0 {
+		exists, err := s.repo.LanguagesExist(ctx, req.LanguageCodeAllowList)
+		if err != nil {
+			return nil, fmt.Errorf("could not check whether languages exist: %w", err)
+		}
+		if !exists {
+			return nil, fmt.Errorf("one or more languages do not exist: %w", ErrInvalidContest)
 		}
 	}
 

@@ -63,6 +63,7 @@ go_test(
     srcs = [
         "logtracking_test.go",
         "repo_findscoringruleset_test.go",
+        "repo_languageexists_test.go",
     ],
     embed = [":repository"],
     deps = [

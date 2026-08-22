@@ -2,6 +2,7 @@ package domain_test
 
 import (
 	"context"
+	"errors"
 	"testing"
 	"time"
 
@@ -12,12 +13,15 @@ import (
 )
 
 type mockContestCreateRepository struct {
-	createCalled     bool
-	createResult     *domain.ContestCreateResponse
-	createErr        error
-	contestCount     int32
-	contestCountErr  error
-	userUpsertCalled bool
+	createCalled      bool
+	createResult      *domain.ContestCreateResponse
+	createErr         error
+	contestCount      int32
+	contestCountErr   error
+	userUpsertCalled  bool
+	languageExists    map[string]bool
+	languageExistsErr error
+	languageBatches   [][]string
 }
 
 func (m *mockContestCreateRepository) CreateContest(ctx context.Context, req *domain.ContestCreateRequest) (*domain.ContestCreateResponse, error) {
@@ -32,6 +36,22 @@ func (m *mockContestCreateRepository) GetContestsByUserCountForYear(ctx context.
 func (m *mockContestCreateRepository) UpsertUser(ctx context.Context, req *domain.UserUpsertRequest) error {
 	m.userUpsertCalled = true
 	return nil
+}
+
+func (m *mockContestCreateRepository) LanguagesExist(_ context.Context, codes []string) (bool, error) {
+	m.languageBatches = append(m.languageBatches, append([]string(nil), codes...))
+	if m.languageExistsErr != nil {
+		return false, m.languageExistsErr
+	}
+	if m.languageExists == nil {
+		return true, nil
+	}
+	for _, code := range codes {
+		if !m.languageExists[code] {
+			return false, nil
+		}
+	}
+	return true, nil
 }
 
 func TestContestCreate_Execute(t *testing.T) {
@@ -148,6 +168,7 @@ func TestContestCreate_Execute(t *testing.T) {
 
 		assert.NoError(t, err)
 		assert.Equal(t, expectedResult, result)
+		assert.Empty(t, repo.languageBatches)
 		assert.True(t, repo.createCalled)
 	})
 
@@ -263,6 +284,92 @@ func TestContestCreate_Execute(t *testing.T) {
 		_, err := svc.Execute(ctx, validRequest)
 
 		assert.ErrorIs(t, err, domain.ErrForbidden)
+		assert.False(t, repo.createCalled)
+	})
+
+	t.Run("allows known language codes", func(t *testing.T) {
+		expectedResult := &domain.ContestCreateResponse{ID: uuid.New(), Title: "language round"}
+		repo := &mockContestCreateRepository{
+			createResult:   expectedResult,
+			languageExists: map[string]bool{"jpn": true, "kor": true},
+		}
+		userUpsert := domain.NewUserUpsert(repo)
+		svc := domain.NewContestCreate(repo, clock, userUpsert)
+		request := &domain.ContestCreateRequest{
+			ContestStart:            now.Add(30 * 24 * time.Hour),
+			ContestEnd:              now.Add(45 * 24 * time.Hour),
+			RegistrationEnd:         now.Add(40 * 24 * time.Hour),
+			Title:                   "language round",
+			ActivityTypeIDAllowList: []int32{1},
+			LanguageCodeAllowList:   []string{"jpn", "kor"},
+		}
+
+		result, err := svc.Execute(ctxWithUserIdentity(uuid.NewString(), "TestUser"), request)
+
+		assert.NoError(t, err)
+		assert.Equal(t, expectedResult, result)
+		assert.Equal(t, [][]string{{"jpn", "kor"}}, repo.languageBatches)
+		assert.True(t, repo.createCalled)
+	})
+
+	t.Run("rejects an unknown language code", func(t *testing.T) {
+		repo := &mockContestCreateRepository{languageExists: map[string]bool{"invalid": false}}
+		userUpsert := domain.NewUserUpsert(repo)
+		svc := domain.NewContestCreate(repo, clock, userUpsert)
+		request := &domain.ContestCreateRequest{
+			ContestStart:            now.Add(30 * 24 * time.Hour),
+			ContestEnd:              now.Add(45 * 24 * time.Hour),
+			RegistrationEnd:         now.Add(40 * 24 * time.Hour),
+			Title:                   "language round",
+			ActivityTypeIDAllowList: []int32{1},
+			LanguageCodeAllowList:   []string{"invalid"},
+		}
+
+		_, err := svc.Execute(ctxWithUserIdentity(uuid.NewString(), "TestUser"), request)
+
+		assert.ErrorIs(t, err, domain.ErrInvalidContest)
+		assert.Equal(t, [][]string{{"invalid"}}, repo.languageBatches)
+		assert.False(t, repo.createCalled)
+	})
+
+	t.Run("rejects a mixed list containing an unknown language code", func(t *testing.T) {
+		repo := &mockContestCreateRepository{languageExists: map[string]bool{"jpn": true, "invalid": false}}
+		userUpsert := domain.NewUserUpsert(repo)
+		svc := domain.NewContestCreate(repo, clock, userUpsert)
+		request := &domain.ContestCreateRequest{
+			ContestStart:            now.Add(30 * 24 * time.Hour),
+			ContestEnd:              now.Add(45 * 24 * time.Hour),
+			RegistrationEnd:         now.Add(40 * 24 * time.Hour),
+			Title:                   "language round",
+			ActivityTypeIDAllowList: []int32{1},
+			LanguageCodeAllowList:   []string{"jpn", "invalid"},
+		}
+
+		_, err := svc.Execute(ctxWithUserIdentity(uuid.NewString(), "TestUser"), request)
+
+		assert.ErrorIs(t, err, domain.ErrInvalidContest)
+		assert.Equal(t, [][]string{{"jpn", "invalid"}}, repo.languageBatches)
+		assert.False(t, repo.createCalled)
+	})
+
+	t.Run("returns a language lookup error without creating a contest", func(t *testing.T) {
+		lookupErr := errors.New("language repository unavailable")
+		repo := &mockContestCreateRepository{languageExistsErr: lookupErr}
+		userUpsert := domain.NewUserUpsert(repo)
+		svc := domain.NewContestCreate(repo, clock, userUpsert)
+		request := &domain.ContestCreateRequest{
+			ContestStart:            now.Add(30 * 24 * time.Hour),
+			ContestEnd:              now.Add(45 * 24 * time.Hour),
+			RegistrationEnd:         now.Add(40 * 24 * time.Hour),
+			Title:                   "language round",
+			ActivityTypeIDAllowList: []int32{1},
+			LanguageCodeAllowList:   []string{"jpn"},
+		}
+
+		_, err := svc.Execute(ctxWithUserIdentity(uuid.NewString(), "TestUser"), request)
+
+		assert.ErrorIs(t, err, lookupErr)
+		assert.Equal(t, [][]string{{"jpn"}}, repo.languageBatches)
 		assert.False(t, repo.createCalled)
 	})
 }

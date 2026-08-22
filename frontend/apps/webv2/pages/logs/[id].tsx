@@ -14,6 +14,7 @@ import { LogDetailsV2 } from '@app/immersion/LogDetailsV2'
 import { HomeIcon, TrashIcon } from '@heroicons/react/20/solid'
 import { XMarkIcon } from '@heroicons/react/24/outline'
 import { DateTime } from 'luxon'
+import ErrorPage from 'next/error'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
 import { useState } from 'react'
@@ -32,6 +33,10 @@ const Page = () => {
   }
 
   if (log.isError) {
+    if (log.error instanceof Error && log.error.message === '404') {
+      return <ErrorPage statusCode={404} />
+    }
+
     return (
       <span className="flash error">
         Could not load page, please try again later.

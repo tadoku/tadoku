@@ -1,14 +1,28 @@
 load('ext://helm_resource', 'helm_resource', 'helm_repo')
-load('ext://secret', 'secret_yaml_generic')
+load('ext://secret', 'secret_from_dict', 'secret_yaml_generic')
 load('ext://configmap', 'configmap_yaml')
-load('./../../../k8s/dev/config/Tiltfile', 'render_template')
+load('./../../../k8s/dev/config/Tiltfile', 'render_template', 'repo_path')
 
 helm_repo('ory', 'https://k8s.ory.sh/helm/charts', resource_name='helm-repo-ory', labels=["auth"])
 
 kratos_values = render_template('infra/dev/ory/kratos_values.yaml', '.tilt/rendered/infra/dev/ory/kratos_values.yaml')
 oathkeeper_values = render_template('infra/dev/ory/oathkeeper_values.yaml', '.tilt/rendered/infra/dev/ory/oathkeeper_values.yaml')
 access_rules = render_template('infra/dev/ory/access_rules.yaml', '.tilt/rendered/infra/dev/ory/access_rules.yaml')
-oathkeeper_authz_secret = render_template('infra/dev/ory/oathkeeper_authz_secret.yaml', '.tilt/rendered/infra/dev/ory/oathkeeper_authz_secret.yaml')
+
+oathkeeper_authz_token_script = repo_path('infra/dev/ory/resolve_oathkeeper_authz_token.py')
+read_file(oathkeeper_authz_token_script)
+oathkeeper_authz_token = str(local(
+    [
+        'python3',
+        oathkeeper_authz_token_script,
+        '--context',
+        k8s_context(),
+        '--cache',
+        repo_path('.tilt/generated/oathkeeper_authz_token'),
+    ],
+    quiet=True,
+    echo_off=True,
+)).strip()
 
 # kratos
 helm_resource('kratos',
@@ -24,7 +38,16 @@ k8s_resource("kratos", labels=["auth"])
 
 # oathkeeper
 k8s_yaml(secret_yaml_generic('dev-oathkeeper-jwks', from_file=['jwks.json=./jwks-dev.json']))
-k8s_yaml(oathkeeper_authz_secret)
+k8s_yaml(secret_from_dict(
+    'dev-oathkeeper-authz',
+    namespace='default',
+    inputs={'token': oathkeeper_authz_token},
+))
+k8s_yaml(secret_from_dict(
+    'dev-oathkeeper-authz',
+    namespace='tdk-authz-api',
+    inputs={'token': oathkeeper_authz_token},
+))
 helm_resource('oathkeeper',
               'ory/oathkeeper',
               flags=[
@@ -32,7 +55,7 @@ helm_resource('oathkeeper',
                 '--set-file', 'oathkeeper.accessRules=%s' % access_rules,
                 '-f', oathkeeper_values,
               ],
-              deps=['./access_rules.yaml', './oathkeeper_values.yaml', './oathkeeper_authz_secret.yaml'],
+              deps=['./access_rules.yaml', './oathkeeper_values.yaml', oathkeeper_authz_token_script],
               resource_deps=['helm-repo-ory'])
 
 k8s_resource("oathkeeper", labels=["auth"])

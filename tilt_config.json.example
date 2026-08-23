@@ -15,7 +15,6 @@
       "admin": "admin.langlog.be",
       "flipt": "flags.langlog.be"
     },
-    "oathkeeper_authz_token": "<required: generate with openssl rand -hex 32>",
     "cookie_domain": "langlog.be",
     "tls": {
       "enabled": false
@@ -40,7 +39,6 @@
       "admin": "admin.tadoku.example.invalid",
       "flipt": "flags.tadoku.example.invalid"
     },
-    "oathkeeper_authz_token": "<required: generate with openssl rand -hex 32>",
     "cookie_domain": "tadoku.example.invalid",
     "tls": {
       "enabled": true,

@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 import argparse
 import json
-import re
 import sys
 from pathlib import Path
 
@@ -129,18 +128,6 @@ def main() -> None:
         env_config, "kratos_development", scheme != "https"
     )
 
-    oathkeeper_authz_token = env_config.get("oathkeeper_authz_token", "")
-    if (
-        not isinstance(oathkeeper_authz_token, str)
-        or len(oathkeeper_authz_token) < 32
-        or oathkeeper_authz_token.startswith("<")
-        or re.fullmatch(r"[A-Za-z0-9._~-]+", oathkeeper_authz_token) is None
-    ):
-        config_error(
-            '"{env}.oathkeeper_authz_token" must be at least 32 URL-safe characters; '
-            'generate one with "openssl rand -hex 32"'.format(env=args.environment)
-        )
-
     redirect_annotations = {}
     if ssl_redirect:
         redirect_annotations = {
@@ -166,7 +153,6 @@ def main() -> None:
         "{{TADOKU_AUTH_URL}}": scheme + "://" + hosts["auth"],
         "{{TADOKU_ADMIN_URL}}": scheme + "://" + hosts["admin"],
         "{{TADOKU_FLIPT_URL}}": scheme + "://" + hosts["flipt"],
-        "{{TADOKU_OATHKEEPER_AUTHZ_TOKEN}}": oathkeeper_authz_token,
         "{{TADOKU_COOKIE_DOMAIN}}": env_config["cookie_domain"],
         "{{TADOKU_COOKIE_SECURE}}": str(scheme == "https").lower(),
         "{{TADOKU_KRATOS_DEVELOPMENT}}": str(kratos_development).lower(),

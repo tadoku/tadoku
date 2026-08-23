@@ -14,6 +14,8 @@ spec:
         app: frontend-webv2
         tier: web
     spec:
+      serviceAccountName: frontend-webv2
+      automountServiceAccountToken: false
       containers:
       - name: frontend-webv2
         image: frontend-webv2
@@ -43,6 +45,30 @@ spec:
           value: "1000"
         - name: CHOKIDAR_USEPOLLING
           value: "true"
+        - name: OATHKEEPER_URL
+          value: http://oathkeeper-proxy.default:4455
+        - name: FLIPT_URL
+          value: http://oathkeeper-proxy.default:4455/flipt
+        - name: FLIPT_ENVIRONMENT
+          value: local
+        - name: FLIPT_NAMESPACE
+          value: default
+        - name: FLIPT_UPDATE_INTERVAL
+          value: "30"
+        - name: FLIPT_STARTUP_TIMEOUT
+          value: "3000"
+        volumeMounts:
+        - name: k8s-token
+          mountPath: /var/run/secrets/tokens
+          readOnly: true
+      volumes:
+      - name: k8s-token
+        projected:
+          sources:
+          - serviceAccountToken:
+              path: token
+              expirationSeconds: 3600
+              audience: frontend-webv2
 ---
 apiVersion: v1
 kind: Service
@@ -57,3 +83,9 @@ spec:
       protocol: TCP
   selector:
     app: frontend-webv2
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: frontend-webv2
+automountServiceAccountToken: false

@@ -1,4 +1,5 @@
 import { useFormContext } from 'react-hook-form'
+import { inputMaxLength } from './displayName'
 import { NodeInputProps } from './helpers'
 
 export function NodeInputDefault<T>(props: NodeInputProps) {
@@ -32,6 +33,7 @@ export function NodeInputDefault<T>(props: NodeInputProps) {
           id={attributes.name}
           onClick={onClick}
           type={isID ? 'email' : attributes.type}
+          maxLength={inputMaxLength(attributes.name)}
           disabled={attributes.disabled || disabled}
           className="input"
         />

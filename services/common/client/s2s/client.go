@@ -1,6 +1,7 @@
 package s2s
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -42,6 +43,12 @@ func NewClient(oathkeeperURL string) *Client {
 
 // GetToken returns a JWT for calling the target service.
 func (c *Client) GetToken(targetService string) (string, error) {
+	return c.GetTokenContext(context.Background(), targetService)
+}
+
+// GetTokenContext returns a JWT for calling the target service and binds an
+// uncached token exchange to the caller's cancellation and deadline.
+func (c *Client) GetTokenContext(ctx context.Context, targetService string) (string, error) {
 	c.mu.RLock()
 	if cached, ok := c.tokenCache[targetService]; ok {
 		if time.Now().Before(cached.expiresAt) {
@@ -57,7 +64,7 @@ func (c *Client) GetToken(targetService string) (string, error) {
 	}
 
 	url := fmt.Sprintf("%s/token-exchange/%s", c.oathkeeperURL, targetService)
-	req, err := http.NewRequest("GET", url, nil)
+	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
 	if err != nil {
 		return "", fmt.Errorf("failed to create request: %w", err)
 	}

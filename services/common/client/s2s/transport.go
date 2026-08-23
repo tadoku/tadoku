@@ -30,7 +30,7 @@ func (t *AuthTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 		return nil, fmt.Errorf("target service is required")
 	}
 
-	token, err := t.Client.GetToken(t.TargetService)
+	token, err := t.Client.GetTokenContext(req.Context(), t.TargetService)
 	if err != nil {
 		return nil, err
 	}

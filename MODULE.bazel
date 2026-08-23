@@ -45,6 +45,7 @@ use_repo(
     "com_github_sahilm_fuzzy",
     "com_github_stretchr_testify",
     "com_github_valkey_io_valkey_go",
+    "io_flipt_go_flipt_client",
     "org_golang_x_sync",
 )
 

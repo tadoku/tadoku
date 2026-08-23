@@ -4,6 +4,8 @@ load("@rules_shell//shell:sh_binary.bzl", "sh_binary")
 # gazelle:prefix github.com/tadoku/tadoku
 gazelle(name = "gazelle")
 
+exports_files(["feature-flags.contract.json"])
+
 # Loads all service images in one `bazel run //:load_images` invocation.
 # Used by CI (.github/workflows/build-bazel.yaml); add new production oci_load
 # targets to both args and data below.

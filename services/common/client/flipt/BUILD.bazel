@@ -1,0 +1,24 @@
+load("@rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "flipt",
+    srcs = ["client.go"],
+    importpath = "github.com/tadoku/tadoku/services/common/client/flipt",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//services/common/featureflags",
+        "@io_flipt_go_flipt_client//:flipt-client",
+    ],
+)
+
+go_test(
+    name = "flipt_test",
+    srcs = ["client_test.go"],
+    embed = [":flipt"],
+    deps = [
+        "//services/common/featureflags",
+        "@com_github_stretchr_testify//assert",
+        "@com_github_stretchr_testify//require",
+        "@io_flipt_go_flipt_client//:flipt-client",
+    ],
+)

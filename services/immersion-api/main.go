@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
@@ -12,8 +13,11 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/kelseyhightower/envconfig"
 	commonroles "github.com/tadoku/tadoku/services/common/authz/roles"
+	fliptclient "github.com/tadoku/tadoku/services/common/client/flipt"
 	ketoclient "github.com/tadoku/tadoku/services/common/client/keto"
+	"github.com/tadoku/tadoku/services/common/client/s2s"
 	"github.com/tadoku/tadoku/services/common/domain"
+	"github.com/tadoku/tadoku/services/common/featureflags"
 	"github.com/tadoku/tadoku/services/common/health"
 	tadokumiddleware "github.com/tadoku/tadoku/services/common/middleware"
 	commonobservability "github.com/tadoku/tadoku/services/common/observability"
@@ -35,18 +39,24 @@ import (
 )
 
 type Config struct {
-	Port                   int64   `validate:"required"`
-	JWKS                   string  `validate:"required"`
-	KratosURL              string  `validate:"required" envconfig:"kratos_url"`
-	OathkeeperURL          string  `validate:"required" envconfig:"oathkeeper_url"`
-	KetoReadURL            string  `validate:"required" envconfig:"keto_read_url"`
-	KetoWriteURL           string  `validate:"required" envconfig:"keto_write_url"`
-	ValkeyURL              string  `validate:"required" envconfig:"valkey_url"`
-	ServiceName            string  `envconfig:"service_name" default:"immersion-api"`
-	SentryDSN              string  `envconfig:"sentry_dns"`
-	SentryTracesSampleRate float64 `validate:"required_with=SentryDSN" envconfig:"sentry_traces_sample_rate"`
-	ScoringEngineEnabled   bool    `envconfig:"scoring_engine_enabled" default:"false"`
-	MetricsPort            int64   `envconfig:"metrics_port" default:"9090"`
+	Port                   int64         `validate:"required"`
+	JWKS                   string        `validate:"required"`
+	KratosURL              string        `validate:"required" envconfig:"kratos_url"`
+	OathkeeperURL          string        `validate:"required" envconfig:"oathkeeper_url"`
+	KetoReadURL            string        `validate:"required" envconfig:"keto_read_url"`
+	KetoWriteURL           string        `validate:"required" envconfig:"keto_write_url"`
+	ValkeyURL              string        `validate:"required" envconfig:"valkey_url"`
+	ServiceName            string        `envconfig:"service_name" default:"immersion-api"`
+	SentryDSN              string        `envconfig:"sentry_dns"`
+	SentryTracesSampleRate float64       `validate:"required_with=SentryDSN" envconfig:"sentry_traces_sample_rate"`
+	ScoringEngineEnabled   bool          `envconfig:"scoring_engine_enabled" default:"false"`
+	MetricsPort            int64         `envconfig:"metrics_port" default:"9090"`
+	FliptURL               string        `envconfig:"flipt_url" default:"http://oathkeeper-proxy.default:4455/flipt"`
+	FliptEnvironment       string        `envconfig:"flipt_environment" default:"local"`
+	FliptNamespace         string        `envconfig:"flipt_namespace" default:"default"`
+	FliptUpdateInterval    time.Duration `envconfig:"flipt_update_interval" default:"30s"`
+	FliptRequestTimeout    time.Duration `envconfig:"flipt_request_timeout" default:"5s"`
+	FliptStartupTimeout    time.Duration `envconfig:"flipt_startup_timeout" default:"3s"`
 }
 
 func main() {
@@ -93,6 +103,38 @@ func main() {
 	leaderboardStore := valkeystore.NewLeaderboardStore(valkeyClient, clock)
 	leaderboardUpdater := immersiondomain.NewLeaderboardUpdater(leaderboardStore, postgresRepository)
 	serviceMetrics := commonobservability.NewMetrics(psql, cfg.ServiceName)
+	featureFlagMetrics := featureflags.NewMetrics(serviceMetrics.Registry(), clock)
+	s2sClient := s2s.NewClient(cfg.OathkeeperURL)
+	fliptHTTPClient := &http.Client{
+		Transport: s2s.NewAuthTransport(s2sClient, "flipt-evaluation/immersion-api", http.DefaultTransport),
+	}
+	fliptProvider, err := fliptclient.New(context.Background(), fliptclient.Config{
+		URL:            cfg.FliptURL,
+		Environment:    cfg.FliptEnvironment,
+		Namespace:      cfg.FliptNamespace,
+		UpdateInterval: cfg.FliptUpdateInterval,
+		RequestTimeout: cfg.FliptRequestTimeout,
+		StartupTimeout: cfg.FliptStartupTimeout,
+		HTTPClient:     fliptHTTPClient,
+	}, featureFlagMetrics)
+	if err != nil {
+		// Provider failures are deliberately non-fatal. The typed evaluator
+		// preserves legacy behavior from its code-owned defaults.
+		slog.Warn("feature flag provider unavailable; using safe defaults")
+	}
+	if fliptProvider != nil {
+		defer func() {
+			closeCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+			defer cancel()
+			if err := fliptProvider.Close(closeCtx); err != nil {
+				slog.Warn("feature flag provider shutdown failed")
+			}
+		}()
+	}
+	featureFlagEvaluator := featureflags.NewEvaluator(fliptProvider, featureFlagMetrics, clock)
+	// Phase 2 establishes the evaluator without changing product behavior.
+	// The first narrow domain consumer is introduced with the Phase 3 slice.
+	_ = featureFlagEvaluator
 	scoringMetrics := observability.NewScoringShadowMetrics(serviceMetrics.Registry(), cfg.ScoringEngineEnabled)
 	scoringObserver := observability.NewScoringShadowObserver(
 		scoringMetrics,

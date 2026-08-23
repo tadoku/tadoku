@@ -26,7 +26,13 @@ export const ContestRegistrationFormSchema = z.object({
       }),
     )
     .max(3, 'Cannot select more than 3 languages')
-    .min(1, 'Must select at least 1 languages'),
+    .min(1, 'Must select at least 1 languages')
+    .refine(
+      languages =>
+        new Set(languages.map(language => language.code)).size ===
+        languages.length,
+      'Cannot select the same language more than once',
+    ),
   languages: z
     .array(
       z.object({

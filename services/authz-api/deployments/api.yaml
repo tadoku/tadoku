@@ -64,6 +64,11 @@ spec:
               value: "http://keto-read.default:4466"
             - name: API_KETO_WRITE_URL
               value: "http://keto-write.default:4467"
+            - name: API_OATHKEEPER_AUTHZ_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: dev-oathkeeper-authz
+                  key: token
             - name: SERVICE_NAME
               value: "authz-api"
           readinessProbe:

@@ -1,13 +1,15 @@
-load("@rules_go//go:def.bzl", "go_library")
+load("@rules_go//go:def.bzl", "go_library", "go_test")
 
 go_library(
     name = "rest",
     srcs = [
         "errors.go",
+        "oathkeeperauthorization.go",
         "server.go",
         "server_internal.go",
         "server_permissioncheck.go",
         "server_ping.go",
+        "server_proxyadmincheck.go",
         "server_roleget.go",
         "server_roleupdate.go",
     ],
@@ -17,11 +19,26 @@ go_library(
         "//services/authz-api/domain",
         "//services/authz-api/http/rest/openapi",
         "//services/authz-api/http/rest/openapi/internalapi",
+        "//services/authz-api/http/rest/openapi/proxyapi",
         "//services/common/client/keto",
         "//services/common/domain",
         "//services/common/http/httperr",
         "@com_github_deepmap_oapi_codegen//pkg/types",
         "@com_github_google_uuid//:uuid",
         "@com_github_labstack_echo_v4//:echo",
+    ],
+)
+
+go_test(
+    name = "rest_test",
+    srcs = ["server_proxyadmincheck_test.go"],
+    deps = [
+        ":rest",
+        "//services/authz-api/domain",
+        "//services/authz-api/http/rest/openapi/proxyapi",
+        "//services/common/client/keto",
+        "@com_github_labstack_echo_v4//:echo",
+        "@com_github_stretchr_testify//assert",
+        "@com_github_stretchr_testify//require",
     ],
 )

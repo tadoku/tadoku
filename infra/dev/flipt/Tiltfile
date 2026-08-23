@@ -1,0 +1,43 @@
+# -*- mode: Python -*-
+
+load('./../../../k8s/dev/config/Tiltfile', 'render_template')
+
+flipt_ingress = render_template(
+    'infra/dev/flipt/ingress.yaml',
+    '.tilt/rendered/infra/dev/flipt/ingress.yaml',
+)
+
+k8s_yaml('./flipt.yaml')
+k8s_yaml(flipt_ingress)
+
+k8s_resource(
+    objects=[
+        'tdk-flipt:namespace',
+        'default-deny:networkpolicy:tdk-flipt',
+        'allow-dns-egress:networkpolicy:tdk-flipt',
+        'allow-oathkeeper-ingress:networkpolicy:tdk-flipt',
+        'allow-monitoring-ingress:networkpolicy:tdk-flipt',
+    ],
+    new_name='flipt-network',
+    labels=['infra'],
+)
+k8s_resource(
+    objects=[
+        'flipt:serviceaccount:tdk-flipt',
+        'flipt:configmap:tdk-flipt',
+    ],
+    new_name='flipt-config',
+    labels=['infra'],
+    resource_deps=['flipt-network'],
+)
+k8s_resource(
+    'flipt',
+    labels=['infra'],
+    resource_deps=['flipt-config', 'oathkeeper'],
+)
+k8s_resource(
+    objects=['tadoku-flipt:ingress:default'],
+    new_name='flipt-ingress',
+    labels=['infra'],
+    resource_deps=['flipt', 'oathkeeper'],
+)

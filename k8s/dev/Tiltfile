@@ -80,6 +80,7 @@ k8s_resource(
 )
 
 include('../../infra/dev/ory/Tiltfile')
+include('../../infra/dev/flipt/Tiltfile')
 include('../../infra/dev/valkey/Tiltfile')
 include('../../infra/dev/tools/Tiltfile')
 

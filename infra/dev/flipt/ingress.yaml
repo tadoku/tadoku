@@ -1,0 +1,19 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: tadoku-flipt
+{{TADOKU_FLIPT_INGRESS_ANNOTATIONS}}
+spec:
+{{TADOKU_FLIPT_TLS_BLOCK}}
+  ingressClassName: {{TADOKU_INGRESS_CLASS}}
+  rules:
+    - host: {{TADOKU_FLIPT_HOST}}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: oathkeeper-proxy
+                port:
+                  number: 4455

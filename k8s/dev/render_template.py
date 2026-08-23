@@ -70,7 +70,7 @@ def main() -> None:
     hosts = env_config.get("hosts")
     if not isinstance(hosts, dict):
         config_error('missing "{env}.hosts" section'.format(env=args.environment))
-    for key in ("app", "auth", "admin"):
+    for key in ("app", "auth", "admin", "flipt"):
         if key not in hosts:
             config_error(
                 'missing "{env}.hosts.{key}"'.format(env=args.environment, key=key)
@@ -113,6 +113,7 @@ def main() -> None:
         "app": tls_secrets.get("app", "tadoku-dev-app-tls"),
         "auth": tls_secrets.get("auth", "tadoku-dev-auth-tls"),
         "admin": tls_secrets.get("admin", "tadoku-dev-admin-tls"),
+        "flipt": tls_secrets.get("flipt", "tadoku-dev-flipt-tls"),
     }
 
     ssl_redirect = bool_config(env_config, "ssl_redirect", tls_enabled)
@@ -147,9 +148,11 @@ def main() -> None:
         "{{TADOKU_APP_HOST}}": hosts["app"],
         "{{TADOKU_AUTH_HOST}}": hosts["auth"],
         "{{TADOKU_ADMIN_HOST}}": hosts["admin"],
+        "{{TADOKU_FLIPT_HOST}}": hosts["flipt"],
         "{{TADOKU_APP_URL}}": scheme + "://" + hosts["app"],
         "{{TADOKU_AUTH_URL}}": scheme + "://" + hosts["auth"],
         "{{TADOKU_ADMIN_URL}}": scheme + "://" + hosts["admin"],
+        "{{TADOKU_FLIPT_URL}}": scheme + "://" + hosts["flipt"],
         "{{TADOKU_COOKIE_DOMAIN}}": env_config["cookie_domain"],
         "{{TADOKU_COOKIE_SECURE}}": str(scheme == "https").lower(),
         "{{TADOKU_KRATOS_DEVELOPMENT}}": str(kratos_development).lower(),
@@ -165,6 +168,9 @@ def main() -> None:
         "{{TADOKU_ADMIN_WEB_INGRESS_ANNOTATIONS}}": annotations_block(
             cert_annotations | redirect_annotations
         ),
+        "{{TADOKU_FLIPT_INGRESS_ANNOTATIONS}}": annotations_block(
+            cert_annotations | redirect_annotations
+        ),
         "{{TADOKU_REDIRECT_ANNOTATION_LINES}}": annotation_lines(
             redirect_annotations
         ),
@@ -175,6 +181,9 @@ def main() -> None:
         if tls_enabled
         else "",
         "{{TADOKU_ADMIN_TLS_BLOCK}}": tls_block(hosts["admin"], secret_names["admin"])
+        if tls_enabled
+        else "",
+        "{{TADOKU_FLIPT_TLS_BLOCK}}": tls_block(hosts["flipt"], secret_names["flipt"])
         if tls_enabled
         else "",
     }

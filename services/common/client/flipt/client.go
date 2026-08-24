@@ -1,9 +1,12 @@
 package flipt
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"net/url"
 	"strings"
@@ -38,10 +41,11 @@ type sdkClient interface {
 
 // Client adapts the concrete Flipt SDK to Tadoku's vendor-neutral evaluator.
 type Client struct {
-	mu     sync.RWMutex
-	client sdkClient
-	cancel context.CancelFunc
-	closed bool
+	mu         sync.RWMutex
+	client     sdkClient
+	fetchState *providerFetchState
+	cancel     context.CancelFunc
+	closed     bool
 }
 
 func New(ctx context.Context, cfg Config, observer Observer) (*Client, error) {
@@ -63,9 +67,10 @@ func newClient(ctx context.Context, cfg Config, observer Observer, factory sdkFa
 		return nil, err
 	}
 
-	httpClient := withObservability(cfg.HTTPClient, observer)
+	fetchState := newProviderFetchState(cfg.Namespace, observer)
+	httpClient := withObservability(cfg.HTTPClient, fetchState)
 	lifetimeCtx, cancel := context.WithCancel(ctx)
-	client := &Client{cancel: cancel}
+	client := &Client{fetchState: fetchState, cancel: cancel}
 	results := make(chan initializationResult, 1)
 	go func() {
 		sdk, err := factory(
@@ -120,8 +125,11 @@ func newClient(ctx context.Context, cfg Config, observer Observer, factory sdkFa
 }
 
 func (c *Client) install(client sdkClient, observer Observer) {
+	if c.fetchState != nil && client.Err() == nil {
+		c.fetchState.confirmPendingSnapshot()
+	}
 	status := featureflags.InitializationStatusReady
-	if client.Err() != nil {
+	if c.isStale(client) {
 		status = featureflags.InitializationStatusFallback
 	}
 
@@ -169,12 +177,22 @@ func (c *Client) EvaluateBoolean(ctx context.Context, request featureflags.Evalu
 	if response == nil || response.FlagKey == "" || response.FlagKey != request.FlagKey {
 		return featureflags.ProviderResult{}, featureflags.ErrInvalidResponse
 	}
+	if c.fetchState != nil && client.Err() == nil {
+		c.fetchState.confirmPendingSnapshot()
+	}
 
 	return featureflags.ProviderResult{
 		Enabled: response.Enabled,
 		Reason:  response.Reason,
-		Stale:   client.Err() != nil,
+		Stale:   c.isStale(client),
 	}, nil
+}
+
+func (c *Client) isStale(client sdkClient) bool {
+	if c.fetchState != nil {
+		return c.fetchState.isStale(client.Err() != nil)
+	}
+	return client.Err() != nil
 }
 
 func (c *Client) Close(ctx context.Context) error {
@@ -245,7 +263,7 @@ func observeInitialization(observer Observer, status featureflags.Initialization
 	}
 }
 
-func withObservability(client *http.Client, observer Observer) *http.Client {
+func withObservability(client *http.Client, state *providerFetchState) *http.Client {
 	if client == nil {
 		client = &http.Client{}
 	}
@@ -254,29 +272,175 @@ func withObservability(client *http.Client, observer Observer) *http.Client {
 	if base == nil {
 		base = http.DefaultTransport
 	}
-	cloned.Transport = &observedTransport{base: base, observer: observer}
+	cloned.Transport = &observedTransport{base: base, state: state}
 	return &cloned
 }
 
 type observedTransport struct {
-	base     http.RoundTripper
-	observer Observer
+	base  http.RoundTripper
+	state *providerFetchState
 }
 
 func (t *observedTransport) RoundTrip(request *http.Request) (*http.Response, error) {
 	response, err := t.base.RoundTrip(request)
 	if err != nil {
-		if t.observer != nil {
-			t.observer.ObserveProviderError("fetch")
+		if t.state != nil {
+			t.state.failed()
 		}
 		return response, err
 	}
-	if response.StatusCode == http.StatusOK || response.StatusCode == http.StatusNotModified {
-		if t.observer != nil {
-			t.observer.ObserveConfigRefresh()
+
+	switch response.StatusCode {
+	case http.StatusOK:
+		body, readErr := io.ReadAll(response.Body)
+		_ = response.Body.Close()
+		response.Body = io.NopCloser(bytes.NewReader(body))
+		if readErr != nil {
+			if t.state != nil {
+				t.state.failed()
+			}
+			return nil, fmt.Errorf("read Flipt snapshot response: %w", readErr)
 		}
-	} else if t.observer != nil {
-		t.observer.ObserveProviderError("fetch")
+		if t.state != nil {
+			if err := t.state.acceptSnapshot(body); err != nil {
+				t.state.failed()
+			} else {
+				t.state.snapshotReceived(response.Header.Get("ETag"))
+			}
+		}
+	case http.StatusNotModified:
+		if t.state != nil {
+			if t.state.canAcceptNotModified(request.Header.Get("If-None-Match")) {
+				t.state.unchangedSnapshot()
+			} else {
+				t.state.failed()
+			}
+		}
+	default:
+		if t.state != nil {
+			t.state.failed()
+		}
 	}
 	return response, nil
+}
+
+type providerFetchState struct {
+	mu            sync.RWMutex
+	namespace     string
+	observer      Observer
+	observed      bool
+	stale         bool
+	hasSnapshot   bool
+	pending       bool
+	recovered     bool
+	pendingETag   string
+	confirmedETag string
+}
+
+func newProviderFetchState(namespace string, observer Observer) *providerFetchState {
+	return &providerFetchState{namespace: namespace, observer: observer, stale: true}
+}
+
+func (s *providerFetchState) acceptSnapshot(payload []byte) error {
+	var snapshot struct {
+		Namespace *struct {
+			Key string `json:"key"`
+		} `json:"namespace"`
+		Flags []struct {
+			Key string `json:"key"`
+		} `json:"flags"`
+		Digest string `json:"digest"`
+	}
+	if err := json.Unmarshal(payload, &snapshot); err != nil {
+		return fmt.Errorf("decode Flipt snapshot: %w", err)
+	}
+	if snapshot.Namespace == nil || snapshot.Namespace.Key != s.namespace {
+		return errors.New("Flipt snapshot namespace does not match configuration")
+	}
+	if snapshot.Flags == nil {
+		return errors.New("Flipt snapshot flags are missing")
+	}
+	if snapshot.Digest == "" {
+		return errors.New("Flipt snapshot digest is missing")
+	}
+	for _, flag := range snapshot.Flags {
+		if flag.Key == "" {
+			return errors.New("Flipt snapshot contains a flag without a key")
+		}
+	}
+
+	return nil
+}
+
+func (s *providerFetchState) snapshotReceived(etag string) {
+	s.mu.Lock()
+	s.observed = true
+	s.pending = true
+	s.recovered = false
+	s.pendingETag = etag
+	s.mu.Unlock()
+}
+
+func (s *providerFetchState) confirmPendingSnapshot() {
+	s.mu.Lock()
+	if !s.pending {
+		s.mu.Unlock()
+		return
+	}
+	s.observed = true
+	s.stale = false
+	s.hasSnapshot = true
+	s.pending = false
+	s.recovered = false
+	s.confirmedETag = s.pendingETag
+	s.pendingETag = ""
+	s.mu.Unlock()
+	if s.observer != nil {
+		s.observer.ObserveConfigRefresh()
+	}
+}
+
+func (s *providerFetchState) unchangedSnapshot() {
+	s.mu.Lock()
+	wasStale := s.stale
+	s.observed = true
+	s.stale = false
+	s.pending = false
+	s.recovered = s.recovered || wasStale
+	s.pendingETag = ""
+	s.mu.Unlock()
+	if s.observer != nil {
+		s.observer.ObserveConfigRefresh()
+	}
+}
+
+func (s *providerFetchState) failed() {
+	s.mu.Lock()
+	s.observed = true
+	s.stale = true
+	s.pending = false
+	s.recovered = false
+	s.pendingETag = ""
+	s.mu.Unlock()
+	if s.observer != nil {
+		s.observer.ObserveProviderError("fetch")
+	}
+}
+
+func (s *providerFetchState) canAcceptNotModified(etag string) bool {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	return s.hasSnapshot && etag != "" && etag == s.confirmedETag
+}
+
+func (s *providerFetchState) isStale(sdkError bool) bool {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	if !s.observed {
+		return sdkError
+	}
+	if sdkError && !s.recovered {
+		return true
+	}
+	return s.stale
 }

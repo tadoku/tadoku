@@ -36,7 +36,7 @@ func (o *recordingObserver) ObserveEvaluation(observation Observation) {
 }
 
 func TestRegistryOwnsPilotKeyAndSafeDefault(t *testing.T) {
-	assert.Equal(t, "release.log-entry-v2", ReleaseLogEntryV2.Key())
+	assert.Equal(t, "release-log-entry-v2", ReleaseLogEntryV2.Key())
 	assert.False(t, ReleaseLogEntryV2.SafeDefault())
 }
 
@@ -55,7 +55,7 @@ func TestEvaluatorUsesOnlyStableSubjectAndAllowlistedContext(t *testing.T) {
 
 	assert.True(t, enabled)
 	require.Len(t, provider.requests, 1)
-	assert.Equal(t, "release.log-entry-v2", provider.requests[0].FlagKey)
+	assert.Equal(t, "release-log-entry-v2", provider.requests[0].FlagKey)
 	assert.Equal(t, subject, provider.requests[0].EntityID)
 	assert.Equal(t, map[string]string{"authenticated": "true"}, provider.requests[0].Context)
 	assert.NotContains(t, provider.requests[0].Context, "email")

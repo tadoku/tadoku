@@ -3,9 +3,13 @@ package flipt
 import (
 	"context"
 	"errors"
+	"fmt"
+	"io"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -86,14 +90,14 @@ func TestClientMapsSuccessfulAndStaleBooleanDecisions(t *testing.T) {
 			sdk := &fakeSDKClient{
 				response: &fliptsdk.BooleanEvaluationResponse{
 					Enabled: true,
-					FlagKey: "release.log-entry-v2",
+					FlagKey: "release-log-entry-v2",
 					Reason:  "MATCH_EVALUATION_REASON",
 				},
 				stateErr: tt.stateErr,
 			}
 			client := &Client{client: sdk}
 			request := featureflags.EvaluationRequest{
-				FlagKey:  "release.log-entry-v2",
+				FlagKey:  "release-log-entry-v2",
 				EntityID: "4c47b265-6987-4bc1-8933-006168a31793",
 				Context:  map[string]string{"authenticated": "true"},
 			}
@@ -126,7 +130,7 @@ func TestClientRejectsMalformedAndMissingResponses(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			client := &Client{client: tt.sdk}
-			_, err := client.EvaluateBoolean(context.Background(), featureflags.EvaluationRequest{FlagKey: "release.log-entry-v2"})
+			_, err := client.EvaluateBoolean(context.Background(), featureflags.EvaluationRequest{FlagKey: "release-log-entry-v2"})
 			if tt.wantError != nil {
 				assert.ErrorIs(t, err, tt.wantError)
 			} else {
@@ -139,10 +143,10 @@ func TestClientRejectsMalformedAndMissingResponses(t *testing.T) {
 func TestClientHonorsCancellationWithoutCallingSDK(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
-	sdk := &fakeSDKClient{response: &fliptsdk.BooleanEvaluationResponse{FlagKey: "release.log-entry-v2"}}
+	sdk := &fakeSDKClient{response: &fliptsdk.BooleanEvaluationResponse{FlagKey: "release-log-entry-v2"}}
 	client := &Client{client: sdk}
 
-	_, err := client.EvaluateBoolean(ctx, featureflags.EvaluationRequest{FlagKey: "release.log-entry-v2"})
+	_, err := client.EvaluateBoolean(ctx, featureflags.EvaluationRequest{FlagKey: "release-log-entry-v2"})
 
 	assert.ErrorIs(t, err, context.Canceled)
 	assert.Nil(t, sdk.request)
@@ -171,8 +175,263 @@ func TestNewUsesFallbackWhenFliptIsEmptyOrUnavailable(t *testing.T) {
 	statuses, _, providerErrors := observer.snapshot()
 	assert.Equal(t, []featureflags.InitializationStatus{featureflags.InitializationStatusFallback}, statuses)
 	assert.Contains(t, providerErrors, "fetch")
-	_, err = client.EvaluateBoolean(context.Background(), featureflags.EvaluationRequest{FlagKey: "release.log-entry-v2", EntityID: "4c47b265-6987-4bc1-8933-006168a31793"})
+	_, err = client.EvaluateBoolean(context.Background(), featureflags.EvaluationRequest{FlagKey: "release-log-entry-v2", EntityID: "4c47b265-6987-4bc1-8933-006168a31793"})
 	assert.ErrorIs(t, err, featureflags.ErrFlagNotFound)
+}
+
+func TestNewDoesNotMarkMalformedSnapshotAsFresh(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(response http.ResponseWriter, _ *http.Request) {
+		response.WriteHeader(http.StatusOK)
+		_, _ = response.Write([]byte(`{"version":`))
+	}))
+	t.Cleanup(server.Close)
+	observer := &recordingObserver{}
+
+	client, err := New(context.Background(), Config{
+		URL:            server.URL,
+		Environment:    "local",
+		Namespace:      "default",
+		UpdateInterval: time.Minute,
+		RequestTimeout: time.Second,
+		StartupTimeout: time.Second,
+	}, observer)
+	if client != nil {
+		t.Cleanup(func() { require.NoError(t, client.Close(context.Background())) })
+	}
+
+	assert.Error(t, err)
+	_, refreshes, providerErrors := observer.snapshot()
+	assert.Zero(t, refreshes)
+	assert.Contains(t, providerErrors, "fetch")
+}
+
+func TestNewDoesNotMarkSemanticallyInvalidSnapshotAsFresh(t *testing.T) {
+	invalidSnapshot := strings.Replace(booleanSnapshot(nil), `"rollouts": []`, `"rollouts": {}`, 1)
+	server := httptest.NewServer(http.HandlerFunc(func(response http.ResponseWriter, _ *http.Request) {
+		response.WriteHeader(http.StatusOK)
+		_, _ = response.Write([]byte(invalidSnapshot))
+	}))
+	t.Cleanup(server.Close)
+	observer := &recordingObserver{}
+
+	client, err := New(context.Background(), Config{
+		URL:            server.URL,
+		Environment:    "local",
+		Namespace:      "default",
+		UpdateInterval: time.Minute,
+		RequestTimeout: time.Second,
+		StartupTimeout: time.Second,
+	}, observer)
+	if client != nil {
+		t.Cleanup(func() { require.NoError(t, client.Close(context.Background())) })
+	}
+
+	assert.Error(t, err)
+	statuses, refreshes, providerErrors := observer.snapshot()
+	assert.Zero(t, refreshes)
+	assert.Equal(t, []featureflags.InitializationStatus{featureflags.InitializationStatusError}, statuses)
+	assert.Contains(t, providerErrors, "initialization")
+}
+
+func TestClientClearsStaleAfterUnchangedSnapshotRecovers(t *testing.T) {
+	var mode atomic.Int32
+	server := httptest.NewServer(http.HandlerFunc(func(response http.ResponseWriter, _ *http.Request) {
+		switch mode.Load() {
+		case 0:
+			response.Header().Set("ETag", `"v1"`)
+			_, _ = response.Write([]byte(booleanSnapshot(nil)))
+		case 1:
+			response.WriteHeader(http.StatusNotFound)
+		default:
+			response.WriteHeader(http.StatusNotModified)
+		}
+	}))
+	t.Cleanup(server.Close)
+	observer := &recordingObserver{}
+	client, err := New(context.Background(), Config{
+		URL:            server.URL,
+		Environment:    "local",
+		Namespace:      "default",
+		UpdateInterval: time.Second,
+		RequestTimeout: time.Second,
+		StartupTimeout: time.Second,
+	}, observer)
+	require.NoError(t, err)
+	t.Cleanup(func() { require.NoError(t, client.Close(context.Background())) })
+
+	mode.Store(1)
+	require.Eventually(t, func() bool {
+		return client.client.Err() != nil
+	}, 3*time.Second, 20*time.Millisecond)
+	mode.Store(2)
+	require.Eventually(t, func() bool {
+		_, refreshes, _ := observer.snapshot()
+		return refreshes >= 3
+	}, 4*time.Second, 20*time.Millisecond)
+
+	result, err := client.EvaluateBoolean(context.Background(), featureflags.EvaluationRequest{
+		FlagKey:  "release-log-entry-v2",
+		EntityID: "4c47b265-6987-4bc1-8933-006168a31793",
+	})
+	require.NoError(t, err)
+	assert.False(t, result.Stale)
+}
+
+func TestClientConfirmsChangedSnapshotAfterRecovery(t *testing.T) {
+	var mode atomic.Int32
+	changedServed := make(chan struct{})
+	var changedOnce sync.Once
+	server := httptest.NewServer(http.HandlerFunc(func(response http.ResponseWriter, _ *http.Request) {
+		switch mode.Load() {
+		case 0:
+			response.Header().Set("ETag", `"v1"`)
+			_, _ = response.Write([]byte(booleanSnapshot(nil)))
+		case 1:
+			response.WriteHeader(http.StatusNotFound)
+		case 2:
+			response.Header().Set("ETag", `"v2"`)
+			changedOnce.Do(func() { close(changedServed) })
+			changed := strings.Replace(booleanSnapshot(nil), `"enabled": false`, `"enabled": true`, 1)
+			_, _ = response.Write([]byte(changed))
+		default:
+			response.WriteHeader(http.StatusNotModified)
+		}
+	}))
+	t.Cleanup(server.Close)
+	observer := &recordingObserver{}
+	client, err := New(context.Background(), Config{
+		URL:            server.URL,
+		Environment:    "local",
+		Namespace:      "default",
+		UpdateInterval: time.Second,
+		RequestTimeout: time.Second,
+		StartupTimeout: time.Second,
+	}, observer)
+	require.NoError(t, err)
+	t.Cleanup(func() { require.NoError(t, client.Close(context.Background())) })
+
+	mode.Store(1)
+	require.Eventually(t, func() bool { return client.client.Err() != nil }, 3*time.Second, 20*time.Millisecond)
+	mode.Store(2)
+	select {
+	case <-changedServed:
+	case <-time.After(3 * time.Second):
+		require.Fail(t, "changed snapshot was not fetched")
+	}
+	require.Eventually(t, func() bool { return client.client.Err() == nil }, 3*time.Second, 20*time.Millisecond)
+	_, refreshesBeforeEvaluation, _ := observer.snapshot()
+	assert.Equal(t, 1, refreshesBeforeEvaluation)
+
+	result, err := client.EvaluateBoolean(context.Background(), featureflags.EvaluationRequest{
+		FlagKey:  "release-log-entry-v2",
+		EntityID: "4c47b265-6987-4bc1-8933-006168a31793",
+	})
+	require.NoError(t, err)
+	assert.True(t, result.Enabled)
+	assert.False(t, result.Stale)
+	_, refreshesAfterEvaluation, _ := observer.snapshot()
+	assert.Equal(t, 2, refreshesAfterEvaluation)
+}
+
+func TestPinnedSDKSupportsNamedAndStickyPercentageTargeting(t *testing.T) {
+	t.Run("named UUID", func(t *testing.T) {
+		targetedID := "4c47b265-6987-4bc1-8933-006168a31793"
+		client := newSnapshotClient(t, booleanSnapshot([]string{fmt.Sprintf(`{
+                    "type": "SEGMENT_ROLLOUT_TYPE",
+                    "rank": 1,
+                    "segment": {
+                        "value": true,
+                        "segmentOperator": "OR_SEGMENT_OPERATOR",
+                        "segments": [{
+                                "key": "named-maintainer",
+                                "matchType": "ANY_SEGMENT_MATCH_TYPE",
+                                "constraints": [{
+                                    "type": "ENTITY_ID_CONSTRAINT_COMPARISON_TYPE",
+                                    "property": "entity",
+                                    "operator": "eq",
+                                    "value": %q
+                                }]
+                            }]
+                    }
+                }`, targetedID)}))
+
+		targeted, err := client.EvaluateBoolean(context.Background(), featureflags.EvaluationRequest{
+			FlagKey: "release-log-entry-v2", EntityID: targetedID,
+		})
+		require.NoError(t, err)
+		other, err := client.EvaluateBoolean(context.Background(), featureflags.EvaluationRequest{
+			FlagKey: "release-log-entry-v2", EntityID: "978dc423-2868-481f-b30d-4a88cf791903",
+		})
+		require.NoError(t, err)
+		assert.True(t, targeted.Enabled)
+		assert.False(t, other.Enabled)
+	})
+
+	t.Run("sticky percentage", func(t *testing.T) {
+		client := newSnapshotClient(t, booleanSnapshot([]string{`{
+                    "type": "THRESHOLD_ROLLOUT_TYPE",
+                    "rank": 1,
+                    "threshold": {"percentage": 50.0, "value": true}
+                }`}))
+		seen := map[bool]bool{}
+		for i := range 100 {
+			entityID := fmt.Sprintf("00000000-0000-4000-8000-%012d", i)
+			first, err := client.EvaluateBoolean(context.Background(), featureflags.EvaluationRequest{
+				FlagKey: "release-log-entry-v2", EntityID: entityID,
+			})
+			require.NoError(t, err)
+			seen[first.Enabled] = true
+			for range 3 {
+				repeated, err := client.EvaluateBoolean(context.Background(), featureflags.EvaluationRequest{
+					FlagKey: "release-log-entry-v2", EntityID: entityID,
+				})
+				require.NoError(t, err)
+				assert.Equal(t, first.Enabled, repeated.Enabled)
+			}
+		}
+		assert.Equal(t, map[bool]bool{false: true, true: true}, seen)
+	})
+}
+
+func newSnapshotClient(t *testing.T, snapshot string) *Client {
+	t.Helper()
+	server := httptest.NewServer(http.HandlerFunc(func(response http.ResponseWriter, _ *http.Request) {
+		response.Header().Set("ETag", `"fixture"`)
+		_, _ = response.Write([]byte(snapshot))
+	}))
+	t.Cleanup(server.Close)
+	client, err := New(context.Background(), Config{
+		URL:            server.URL,
+		Environment:    "local",
+		Namespace:      "default",
+		UpdateInterval: time.Minute,
+		RequestTimeout: time.Second,
+		StartupTimeout: time.Second,
+	}, nil)
+	require.NoError(t, err)
+	t.Cleanup(func() { require.NoError(t, client.Close(context.Background())) })
+	return client
+}
+
+func booleanSnapshot(rollouts []string) string {
+	if rollouts == nil {
+		rollouts = []string{}
+	}
+	return fmt.Sprintf(`{
+        "namespace": {"key": "default"},
+        "flags": [{
+			"key": "release-log-entry-v2",
+			"name": "",
+			"description": "",
+			"enabled": false,
+			"type": "BOOLEAN_FLAG_TYPE",
+			"createdAt": "2026-08-24T06:01:42Z",
+			"updatedAt": "2026-08-24T06:01:42Z",
+			"rules": [],
+			"rollouts": [%s]
+		}],
+		"digest": "f86fe0149bc542c8b350e994b869ee5370411c12"
+    }`, strings.Join(rollouts, ","))
 }
 
 func TestConfigRequiresExplicitSafeBounds(t *testing.T) {
@@ -211,7 +470,7 @@ func TestNewReturnsAtStartupBudgetAndInstallsClientAfterRecovery(t *testing.T) {
 	sdk := &fakeSDKClient{
 		response: &fliptsdk.BooleanEvaluationResponse{
 			Enabled: true,
-			FlagKey: "release.log-entry-v2",
+			FlagKey: "release-log-entry-v2",
 			Reason:  "MATCH_EVALUATION_REASON",
 		},
 	}
@@ -231,12 +490,12 @@ func TestNewReturnsAtStartupBudgetAndInstallsClientAfterRecovery(t *testing.T) {
 
 	require.NoError(t, err)
 	assert.Less(t, time.Since(started), time.Second)
-	_, err = client.EvaluateBoolean(context.Background(), featureflags.EvaluationRequest{FlagKey: "release.log-entry-v2"})
+	_, err = client.EvaluateBoolean(context.Background(), featureflags.EvaluationRequest{FlagKey: "release-log-entry-v2"})
 	assert.Error(t, err)
 
 	close(release)
 	require.Eventually(t, func() bool {
-		result, err := client.EvaluateBoolean(context.Background(), featureflags.EvaluationRequest{FlagKey: "release.log-entry-v2"})
+		result, err := client.EvaluateBoolean(context.Background(), featureflags.EvaluationRequest{FlagKey: "release-log-entry-v2"})
 		return err == nil && result.Enabled
 	}, time.Second, 10*time.Millisecond)
 	statuses, _, _ := observer.snapshot()
@@ -251,23 +510,43 @@ func TestObservedTransportTracksRefreshesAndBoundedFetchErrors(t *testing.T) {
 	observer := &recordingObserver{}
 	statuses := []int{http.StatusOK, http.StatusNotModified, http.StatusServiceUnavailable}
 	transport := &observedTransport{
-		observer: observer,
+		state: newProviderFetchState("default", observer),
 		base: roundTripperFunc(func(_ *http.Request) (*http.Response, error) {
 			status := statuses[0]
 			statuses = statuses[1:]
-			return &http.Response{StatusCode: status, Body: http.NoBody}, nil
+			body := io.ReadCloser(http.NoBody)
+			header := make(http.Header)
+			if status == http.StatusOK {
+				body = io.NopCloser(strings.NewReader(booleanSnapshot(nil)))
+				header.Set("ETag", `"fixture"`)
+			}
+			return &http.Response{StatusCode: status, Body: body, Header: header}, nil
 		}),
 	}
 	request := httptest.NewRequest(http.MethodGet, "http://flipt/snapshot", nil)
 
-	for range 3 {
-		_, err := transport.RoundTrip(request)
-		require.NoError(t, err)
-	}
+	_, err := transport.RoundTrip(request)
+	require.NoError(t, err)
+	transport.state.confirmPendingSnapshot()
+	request.Header.Set("If-None-Match", `"fixture"`)
+	_, err = transport.RoundTrip(request)
+	require.NoError(t, err)
+	_, err = transport.RoundTrip(request)
+	require.NoError(t, err)
 
 	_, refreshes, providerErrors := observer.snapshot()
 	assert.Equal(t, 2, refreshes)
 	assert.Equal(t, []string{"fetch"}, providerErrors)
+}
+
+func TestFetchStateOnlyAcceptsNotModifiedForConfirmedETag(t *testing.T) {
+	state := newProviderFetchState("default", nil)
+	state.snapshotReceived(`"v1"`)
+	state.confirmPendingSnapshot()
+	state.failed()
+
+	assert.False(t, state.canAcceptNotModified(`"uninstalled-v2"`))
+	assert.True(t, state.canAcceptNotModified(`"v1"`))
 }
 
 func TestCloseReleasesSDK(t *testing.T) {

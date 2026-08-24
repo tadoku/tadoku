@@ -8,6 +8,7 @@ go_library(
     ],
     importpath = "github.com/tadoku/tadoku/services/common/client/s2s",
     visibility = ["//visibility:public"],
+    deps = ["//services/common/domain"],
 )
 
 go_test(
@@ -15,6 +16,7 @@ go_test(
     srcs = ["transport_test.go"],
     embed = [":s2s"],
     deps = [
+        "//services/common/domain",
         "@com_github_stretchr_testify//assert",
         "@com_github_stretchr_testify//require",
     ],

@@ -37,7 +37,7 @@ describe('GET /api/feature-flags', () => {
 
     expect(response.status).toHaveBeenCalledWith(200)
     expect(response.json).toHaveBeenCalledWith({
-      decisions: { 'release.log-entry-v2': false },
+      decisions: { 'release-log-entry-v2': false },
     })
     expect(mocks.toSession).not.toHaveBeenCalled()
     expect(mocks.decisionsForSession).not.toHaveBeenCalled()
@@ -50,7 +50,7 @@ describe('GET /api/feature-flags', () => {
     }
     mocks.toSession.mockResolvedValue({ data: session })
     mocks.decisionsForSession.mockResolvedValue({
-      'release.log-entry-v2': true,
+      'release-log-entry-v2': true,
     })
 
     await handler(
@@ -67,7 +67,7 @@ describe('GET /api/feature-flags', () => {
     )
     expect(mocks.decisionsForSession).toHaveBeenCalledWith(session)
     expect(response.json).toHaveBeenCalledWith({
-      decisions: { 'release.log-entry-v2': true },
+      decisions: { 'release-log-entry-v2': true },
     })
   })
 
@@ -85,7 +85,7 @@ describe('GET /api/feature-flags', () => {
 
     expect(response.status).toHaveBeenCalledWith(200)
     expect(response.json).toHaveBeenCalledWith({
-      decisions: { 'release.log-entry-v2': false },
+      decisions: { 'release-log-entry-v2': false },
     })
   })
 

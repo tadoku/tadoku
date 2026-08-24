@@ -1,6 +1,6 @@
 {
   "booleanFlags": {
-    "release.log-entry-v2": {
+    "release-log-entry-v2": {
       "safeDefault": false
     }
   }

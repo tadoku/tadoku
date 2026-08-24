@@ -104,7 +104,7 @@ func main() {
 	leaderboardUpdater := immersiondomain.NewLeaderboardUpdater(leaderboardStore, postgresRepository)
 	serviceMetrics := commonobservability.NewMetrics(psql, cfg.ServiceName)
 	featureFlagMetrics := featureflags.NewMetrics(serviceMetrics.Registry(), clock)
-	s2sClient := s2s.NewClient(cfg.OathkeeperURL)
+	s2sClient := s2s.NewClient(cfg.OathkeeperURL, clock)
 	fliptHTTPClient := &http.Client{
 		Transport: s2s.NewAuthTransport(s2sClient, "flipt-evaluation/immersion-api", http.DefaultTransport),
 	}

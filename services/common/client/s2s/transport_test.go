@@ -6,11 +6,13 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"sync/atomic"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	commondomain "github.com/tadoku/tadoku/services/common/domain"
 )
 
 func TestAuthTransportCancelsTokenExchangeWithRequest(t *testing.T) {
@@ -27,6 +29,7 @@ func TestAuthTransportCancelsTokenExchangeWithRequest(t *testing.T) {
 		oathkeeperURL: server.URL,
 		k8sTokenPath:  tokenPath,
 		httpClient:    &http.Client{Timeout: time.Second},
+		clock:         commondomain.NewMockClock(time.Time{}),
 		tokenCache:    make(map[string]*cachedToken),
 	}
 	transport := NewAuthTransport(client, "flipt-evaluation/immersion-api", http.DefaultTransport)
@@ -47,4 +50,35 @@ func TestAuthTransportCancelsTokenExchangeWithRequest(t *testing.T) {
 	case <-time.After(200 * time.Millisecond):
 		assert.Fail(t, "token exchange did not honor request cancellation")
 	}
+}
+
+func TestClientUsesInjectedClockForTokenCacheExpiry(t *testing.T) {
+	var exchanges atomic.Int32
+	server := httptest.NewServer(http.HandlerFunc(func(response http.ResponseWriter, _ *http.Request) {
+		exchanges.Add(1)
+		response.Header().Set("Content-Type", "application/json")
+		_, _ = response.Write([]byte(`{"access_token":"token","token_type":"bearer","expires_in":600}`))
+	}))
+	t.Cleanup(server.Close)
+	tokenPath := filepath.Join(t.TempDir(), "token")
+	require.NoError(t, os.WriteFile(tokenPath, []byte("projected-token"), 0o600))
+	clock := commondomain.NewMockClock(time.Date(2026, 8, 24, 6, 0, 0, 0, time.UTC))
+	client := &Client{
+		oathkeeperURL: server.URL,
+		k8sTokenPath:  tokenPath,
+		httpClient:    &http.Client{Timeout: time.Second},
+		clock:         clock,
+		tokenCache:    make(map[string]*cachedToken),
+	}
+
+	_, err := client.GetTokenContext(context.Background(), "flipt-evaluation/immersion-api")
+	require.NoError(t, err)
+	_, err = client.GetTokenContext(context.Background(), "flipt-evaluation/immersion-api")
+	require.NoError(t, err)
+	assert.EqualValues(t, 1, exchanges.Load())
+
+	clock.SetTime(clock.Now().Add(301 * time.Second))
+	_, err = client.GetTokenContext(context.Background(), "flipt-evaluation/immersion-api")
+	require.NoError(t, err)
+	assert.EqualValues(t, 2, exchanges.Load())
 }

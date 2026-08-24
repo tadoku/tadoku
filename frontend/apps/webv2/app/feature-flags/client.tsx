@@ -25,6 +25,7 @@ export const FeatureFlagRefresh = ({ children }: { children: ReactNode }) => {
     const refresh = () => {
       controller?.abort()
       controller = new AbortController()
+      setDecisions({ ...defaultFeatureFlagDecisions })
 
       void fetch('/api/feature-flags', {
         credentials: 'same-origin',

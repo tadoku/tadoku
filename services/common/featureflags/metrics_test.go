@@ -41,9 +41,9 @@ func TestMetricsExposeOnlyBoundedLabelsAndConfigAge(t *testing.T) {
 
 	assert.Contains(t, body, `tadoku_feature_flag_provider_initializations_total{status="fallback"} 1`)
 	assert.Contains(t, body, `tadoku_feature_flag_config_age_seconds 25`)
-	assert.Contains(t, body, `tadoku_feature_flag_evaluations_total{enabled="false",flag_key="release.log-entry-v2",reason="provider_error",source="safe_default"} 1`)
+	assert.Contains(t, body, `tadoku_feature_flag_evaluations_total{enabled="false",flag_key="release-log-entry-v2",reason="provider_error",source="safe_default"} 1`)
 	assert.Contains(t, body, `tadoku_feature_flag_errors_total{kind="provider_error",operation="evaluation"} 1`)
-	assert.Contains(t, body, `tadoku_feature_flag_evaluations_total{enabled="true",flag_key="release.log-entry-v2",reason="other",source="safe_default"} 1`)
+	assert.Contains(t, body, `tadoku_feature_flag_evaluations_total{enabled="true",flag_key="release-log-entry-v2",reason="other",source="safe_default"} 1`)
 	assert.Equal(t, 2, strings.Count(body, "tadoku_feature_flag_evaluations_total{"))
 	assert.NotContains(t, body, "entity")
 	assert.NotContains(t, body, "user_id")

@@ -2,6 +2,7 @@
 
 import { Provider } from 'jotai'
 import {
+  act,
   cleanup,
   fireEvent,
   render,
@@ -31,7 +32,7 @@ vi.mock('next/router', () => ({
 }))
 
 const FlagValue = () => {
-  const enabled = useFeatureFlag('release.log-entry-v2')
+  const enabled = useFeatureFlag('release-log-entry-v2')
   return <output>{enabled ? 'enabled' : 'disabled'}</output>
 }
 
@@ -44,7 +45,7 @@ const Wrapper = ({
 }) => (
   <Provider
     initialValues={[
-      [featureFlagDecisionsAtom, { 'release.log-entry-v2': enabled }],
+      [featureFlagDecisionsAtom, { 'release-log-entry-v2': enabled }],
     ]}
   >
     {children}
@@ -83,15 +84,13 @@ describe('feature flag browser state', () => {
     expect(screen.getByText('disabled')).toBeTruthy()
   })
 
-  it('refreshes a decision after navigation without remounting a form', async () => {
-    const fetchMock = vi
-      .mocked(fetch)
-      .mockResolvedValue(
-        new Response(
-          JSON.stringify({ decisions: { 'release.log-entry-v2': false } }),
-          { status: 200, headers: { 'Content-Type': 'application/json' } },
-        ),
-      )
+  it('uses the legacy default while refreshing after navigation without remounting a form', async () => {
+    let resolveRefresh: (response: Response) => void = () => {}
+    const fetchMock = vi.mocked(fetch).mockReturnValue(
+      new Promise(resolve => {
+        resolveRefresh = resolve
+      }),
+    )
 
     render(
       <Wrapper enabled>
@@ -107,7 +106,7 @@ describe('feature flag browser state', () => {
     const input = screen.getByLabelText('Draft') as HTMLInputElement
     fireEvent.change(input, { target: { value: 'unsaved form value' } })
 
-    routerEvents.emit()
+    act(() => routerEvents.emit())
 
     await waitFor(() => expect(screen.getByText('disabled')).toBeTruthy())
     expect(input.value).toBe('unsaved form value')
@@ -116,9 +115,19 @@ describe('feature flag browser state', () => {
       cache: 'no-store',
       signal: expect.any(AbortSignal),
     })
+
+    resolveRefresh(
+      new Response(
+        JSON.stringify({ decisions: { 'release-log-entry-v2': true } }),
+        { status: 200, headers: { 'Content-Type': 'application/json' } },
+      ),
+    )
+
+    await waitFor(() => expect(screen.getByText('enabled')).toBeTruthy())
+    expect(input.value).toBe('unsaved form value')
   })
 
-  it('keeps the hydrated decision when refresh fails', async () => {
+  it('keeps the legacy default when refresh fails', async () => {
     vi.mocked(fetch).mockRejectedValue(new Error('provider unavailable'))
 
     render(
@@ -128,9 +137,9 @@ describe('feature flag browser state', () => {
         </FeatureFlagRefresh>
       </Wrapper>,
     )
-    routerEvents.emit()
+    act(() => routerEvents.emit())
 
     await waitFor(() => expect(fetch).toHaveBeenCalled())
-    expect(screen.getByText('enabled')).toBeTruthy()
+    expect(screen.getByText('disabled')).toBeTruthy()
   })
 })

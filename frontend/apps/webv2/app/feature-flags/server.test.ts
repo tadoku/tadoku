@@ -33,7 +33,7 @@ afterEach(() => {
 describe('server feature flag evaluator', () => {
   it('does not initialize Flipt for an unauthenticated request', async () => {
     await expect(server.decisionsForSession(undefined)).resolves.toEqual({
-      'release.log-entry-v2': false,
+      'release-log-entry-v2': false,
     })
     expect(mocks.init).not.toHaveBeenCalled()
   })
@@ -43,7 +43,7 @@ describe('server feature flag evaluator', () => {
     mocks.init.mockRejectedValue(new Error('snapshot returned 404'))
 
     await expect(server.decisionsForSession(session)).resolves.toEqual({
-      'release.log-entry-v2': false,
+      'release-log-entry-v2': false,
     })
   })
 
@@ -55,14 +55,14 @@ describe('server feature flag evaluator', () => {
       .mockResolvedValueOnce({ evaluateBoolean, close: vi.fn() })
 
     await expect(server.decisionsForSession(session)).resolves.toEqual({
-      'release.log-entry-v2': false,
+      'release-log-entry-v2': false,
     })
 
     await vi.advanceTimersByTimeAsync(30_000)
 
     expect(mocks.init).toHaveBeenCalledTimes(2)
     await expect(server.decisionsForSession(session)).resolves.toEqual({
-      'release.log-entry-v2': true,
+      'release-log-entry-v2': true,
     })
   })
 
@@ -71,10 +71,10 @@ describe('server feature flag evaluator', () => {
     mocks.init.mockResolvedValue({ evaluateBoolean, close: vi.fn() })
 
     await expect(server.decisionsForSession(session)).resolves.toEqual({
-      'release.log-entry-v2': true,
+      'release-log-entry-v2': true,
     })
     expect(evaluateBoolean).toHaveBeenCalledWith({
-      flagKey: 'release.log-entry-v2',
+      flagKey: 'release-log-entry-v2',
       entityId: '123e4567-e89b-12d3-a456-426614174000',
       context: { authenticated: 'true' },
     })
@@ -103,7 +103,7 @@ describe('server feature flag evaluator', () => {
     })
 
     await expect(server.decisionsForSession(session)).resolves.toEqual({
-      'release.log-entry-v2': false,
+      'release-log-entry-v2': false,
     })
     expect(JSON.stringify(warn.mock.calls)).not.toContain('sensitive@example.com')
     expect(JSON.stringify(warn.mock.calls)).not.toContain(session.identity.id)
@@ -117,7 +117,7 @@ describe('server feature flag evaluator', () => {
 
     await expect(server.decisionsForSession(malformedSession)).resolves.toEqual(
       {
-        'release.log-entry-v2': false,
+        'release-log-entry-v2': false,
       },
     )
     expect(mocks.init).not.toHaveBeenCalled()

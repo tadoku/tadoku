@@ -17,6 +17,7 @@ export function NodeInputDefault<T>(props: NodeInputProps) {
   }
 
   const isID = node.meta.label?.text === 'ID'
+  const isDisplayName = attributes.name === 'traits.display_name'
   const label = isID ? 'Email' : node.meta.label?.text
 
   // Render a generic text input field.
@@ -32,6 +33,8 @@ export function NodeInputDefault<T>(props: NodeInputProps) {
           id={attributes.name}
           onClick={onClick}
           type={isID ? 'email' : attributes.type}
+          minLength={isDisplayName ? 2 : undefined}
+          maxLength={isDisplayName ? 32 : undefined}
           disabled={attributes.disabled || disabled}
           className="input"
         />

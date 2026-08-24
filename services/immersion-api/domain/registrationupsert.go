@@ -85,6 +85,14 @@ func (s *RegistrationUpsert) Execute(ctx context.Context, req *RegistrationUpser
 		return fmt.Errorf("invalid language code length: %w", ErrInvalidContestRegistration)
 	}
 
+	languageCodes := make(map[string]struct{}, len(req.LanguageCodes))
+	for _, code := range req.LanguageCodes {
+		if _, exists := languageCodes[code]; exists {
+			return fmt.Errorf("duplicate language code %s: %w", code, ErrInvalidContestRegistration)
+		}
+		languageCodes[code] = struct{}{}
+	}
+
 	exists, err := s.repo.LanguagesExist(ctx, req.LanguageCodes)
 	if err != nil {
 		return fmt.Errorf("could not check whether languages exist: %w", err)

@@ -160,6 +160,31 @@ func TestRegistrationUpsert_Execute(t *testing.T) {
 		assert.False(t, repo.upsertCalled)
 	})
 
+	t.Run("rejects duplicate language codes without changing registration data", func(t *testing.T) {
+		userRepo := &mockUserUpsertRepositoryForReg{}
+		userUpsert := domain.NewUserUpsert(userRepo)
+		repo := &mockRegistrationUpsertRepository{
+			contest: validContest,
+			registration: &domain.ContestRegistration{
+				ID:        uuid.New(),
+				ContestID: contestID,
+				UserID:    userID,
+				Languages: []domain.Language{{Code: "kor", Name: "Korean"}},
+			},
+		}
+		svc := domain.NewRegistrationUpsert(repo, userUpsert)
+
+		err := svc.Execute(ctxWithUserSubject(userID.String()), &domain.RegistrationUpsertRequest{
+			ContestID:     contestID,
+			LanguageCodes: []string{"jpn", "jpn"},
+		})
+
+		assert.ErrorIs(t, err, domain.ErrInvalidContestRegistration)
+		assert.Empty(t, repo.languageBatches)
+		assert.False(t, repo.detachCalled)
+		assert.False(t, repo.upsertCalled)
+	})
+
 	t.Run("returns error when language not allowed by contest", func(t *testing.T) {
 		userRepo := &mockUserUpsertRepositoryForReg{}
 		userUpsert := domain.NewUserUpsert(userRepo)

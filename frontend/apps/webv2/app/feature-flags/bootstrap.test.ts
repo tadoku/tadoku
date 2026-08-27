@@ -2,6 +2,12 @@ import { Session } from '@ory/client'
 import { describe, expect, it, vi } from 'vitest'
 import { bootstrapFeatureFlagDecisions } from './bootstrap'
 
+vi.mock('next/config', () => ({
+  default: () => ({
+    publicRuntimeConfig: { apiEndpoint: 'https://tadoku.test/api/internal' },
+  }),
+}))
+
 const session = {
   identity: { id: '123e4567-e89b-12d3-a456-426614174000' },
 } as unknown as Session
@@ -26,7 +32,7 @@ describe('bootstrapFeatureFlagDecisions', () => {
       ),
     ).resolves.toEqual({ 'release-log-entry-v2': true })
     expect(request).toHaveBeenCalledWith(
-      'http://127.0.0.1:3000/api/feature-flags',
+      'https://tadoku.test/api/internal/immersion/feature-flags',
       {
         cache: 'no-store',
         headers: { cookie: 'ory_kratos_session=secret' },
@@ -59,10 +65,13 @@ describe('bootstrapFeatureFlagDecisions', () => {
 
   it('bounds a stalled same-origin bootstrap request', async () => {
     vi.useFakeTimers()
-    const request = vi.fn((_: RequestInfo | URL, init?: RequestInit) =>
-      new Promise<Response>((_, reject) => {
-        init?.signal?.addEventListener('abort', () => reject(init.signal?.reason))
-      }),
+    const request = vi.fn(
+      (_: RequestInfo | URL, init?: RequestInit) =>
+        new Promise<Response>((_, reject) => {
+          init?.signal?.addEventListener('abort', () =>
+            reject(init.signal?.reason),
+          )
+        }),
     ) as typeof fetch
 
     const result = bootstrapFeatureFlagDecisions(
@@ -76,7 +85,7 @@ describe('bootstrapFeatureFlagDecisions', () => {
 
     await expect(result).resolves.toEqual({ 'release-log-entry-v2': false })
     expect(request).toHaveBeenCalledWith(
-      'http://127.0.0.1:3000/api/feature-flags',
+      'https://tadoku.test/api/internal/immersion/feature-flags',
       expect.objectContaining({ signal: expect.any(AbortSignal) }),
     )
     vi.useRealTimers()
@@ -111,5 +120,28 @@ describe('bootstrapFeatureFlagDecisions', () => {
       ),
     ).resolves.toEqual({ 'release-log-entry-v2': false })
     expect(request).not.toHaveBeenCalled()
+  })
+
+  it('returns only allowlisted decisions from the immersion API', async () => {
+    const request = vi.fn().mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          decisions: {
+            'release-log-entry-v2': true,
+            'unregistered-flag': true,
+          },
+        }),
+        { status: 200 },
+      ),
+    )
+
+    await expect(
+      bootstrapFeatureFlagDecisions(
+        session,
+        'ory_kratos_session=secret',
+        true,
+        request,
+      ),
+    ).resolves.toEqual({ 'release-log-entry-v2': true })
   })
 })

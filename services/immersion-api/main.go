@@ -51,12 +51,22 @@ type Config struct {
 	SentryTracesSampleRate float64       `validate:"required_with=SentryDSN" envconfig:"sentry_traces_sample_rate"`
 	ScoringEngineEnabled   bool          `envconfig:"scoring_engine_enabled" default:"false"`
 	MetricsPort            int64         `envconfig:"metrics_port" default:"9090"`
+	FliptEnabled           bool          `envconfig:"flipt_enabled" default:"false"`
 	FliptURL               string        `envconfig:"flipt_url" default:"http://oathkeeper-proxy.default:4455/flipt"`
 	FliptEnvironment       string        `envconfig:"flipt_environment" default:"local"`
 	FliptNamespace         string        `envconfig:"flipt_namespace" default:"default"`
 	FliptUpdateInterval    time.Duration `envconfig:"flipt_update_interval" default:"30s"`
 	FliptRequestTimeout    time.Duration `envconfig:"flipt_request_timeout" default:"5s"`
 	FliptStartupTimeout    time.Duration `envconfig:"flipt_startup_timeout" default:"3s"`
+}
+
+type featureFlagProviderInitializer func() (*fliptclient.Client, error)
+
+func initializeFeatureFlagProvider(cfg Config, initialize featureFlagProviderInitializer) (*fliptclient.Client, error) {
+	if !cfg.FliptEnabled {
+		return nil, nil
+	}
+	return initialize()
 }
 
 func main() {
@@ -104,22 +114,22 @@ func main() {
 	leaderboardUpdater := immersiondomain.NewLeaderboardUpdater(leaderboardStore, postgresRepository)
 	serviceMetrics := commonobservability.NewMetrics(psql, cfg.ServiceName)
 	featureFlagMetrics := featureflags.NewMetrics(serviceMetrics.Registry(), clock)
-	s2sClient := s2s.NewClient(cfg.OathkeeperURL, clock)
-	fliptHTTPClient := &http.Client{
-		Transport: s2s.NewAuthTransport(s2sClient, "flipt-evaluation/immersion-api", http.DefaultTransport),
-	}
-	fliptProvider, err := fliptclient.New(context.Background(), fliptclient.Config{
-		URL:            cfg.FliptURL,
-		Environment:    cfg.FliptEnvironment,
-		Namespace:      cfg.FliptNamespace,
-		UpdateInterval: cfg.FliptUpdateInterval,
-		RequestTimeout: cfg.FliptRequestTimeout,
-		StartupTimeout: cfg.FliptStartupTimeout,
-		HTTPClient:     fliptHTTPClient,
-	}, featureFlagMetrics)
+	fliptProvider, err := initializeFeatureFlagProvider(cfg, func() (*fliptclient.Client, error) {
+		s2sClient := s2s.NewClient(cfg.OathkeeperURL, clock)
+		fliptHTTPClient := &http.Client{
+			Transport: s2s.NewAuthTransport(s2sClient, "flipt-evaluation/immersion-api", http.DefaultTransport),
+		}
+		return fliptclient.New(context.Background(), fliptclient.Config{
+			URL:            cfg.FliptURL,
+			Environment:    cfg.FliptEnvironment,
+			Namespace:      cfg.FliptNamespace,
+			UpdateInterval: cfg.FliptUpdateInterval,
+			RequestTimeout: cfg.FliptRequestTimeout,
+			StartupTimeout: cfg.FliptStartupTimeout,
+			HTTPClient:     fliptHTTPClient,
+		}, featureFlagMetrics)
+	})
 	if err != nil {
-		// Provider failures are deliberately non-fatal. The typed evaluator
-		// preserves legacy behavior from its code-owned defaults.
 		slog.Warn("feature flag provider unavailable; using safe defaults")
 	}
 	if fliptProvider != nil {
@@ -132,9 +142,6 @@ func main() {
 		}()
 	}
 	featureFlagEvaluator := featureflags.NewEvaluator(fliptProvider, featureFlagMetrics, clock)
-	// Phase 2 establishes the evaluator without changing product behavior.
-	// The first narrow domain consumer is introduced with the Phase 3 slice.
-	_ = featureFlagEvaluator
 	scoringMetrics := observability.NewScoringShadowMetrics(serviceMetrics.Registry(), cfg.ScoringEngineEnabled)
 	scoringObserver := observability.NewScoringShadowObserver(
 		scoringMetrics,
@@ -257,6 +264,7 @@ func main() {
 		logContestUpdate,
 		scorePreview,
 		scoringRuleSetManagement,
+		featureFlagEvaluator,
 	)
 
 	openapi.RegisterHandlersWithBaseURL(api, server, "")

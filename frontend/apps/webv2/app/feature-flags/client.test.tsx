@@ -31,6 +31,12 @@ vi.mock('next/router', () => ({
   useRouter: () => ({ events: routerEvents }),
 }))
 
+vi.mock('next/config', () => ({
+  default: () => ({
+    publicRuntimeConfig: { apiEndpoint: 'https://tadoku.test/api/internal' },
+  }),
+}))
+
 const FlagValue = () => {
   const enabled = useFeatureFlag('release-log-entry-v2')
   return <output>{enabled ? 'enabled' : 'disabled'}</output>
@@ -110,11 +116,14 @@ describe('feature flag browser state', () => {
 
     await waitFor(() => expect(screen.getByText('disabled')).toBeTruthy())
     expect(input.value).toBe('unsaved form value')
-    expect(fetchMock).toHaveBeenCalledWith('/api/feature-flags', {
-      credentials: 'same-origin',
-      cache: 'no-store',
-      signal: expect.any(AbortSignal),
-    })
+    expect(fetchMock).toHaveBeenCalledWith(
+      'https://tadoku.test/api/internal/immersion/feature-flags',
+      {
+        credentials: 'include',
+        cache: 'no-store',
+        signal: expect.any(AbortSignal),
+      },
+    )
 
     resolveRefresh(
       new Response(
@@ -141,5 +150,36 @@ describe('feature flag browser state', () => {
 
     await waitFor(() => expect(fetch).toHaveBeenCalled())
     expect(screen.getByText('disabled')).toBeTruthy()
+  })
+
+  it('bounds a stalled browser refresh and keeps the form mounted', async () => {
+    vi.useFakeTimers()
+    vi.mocked(fetch).mockImplementation((_, init) => {
+      const signal = init?.signal
+      return new Promise<Response>((_, reject) => {
+        signal?.addEventListener('abort', () => reject(signal.reason))
+      })
+    })
+
+    render(
+      <Wrapper enabled>
+        <FeatureFlagRefresh timeoutMilliseconds={50}>
+          <label>
+            Draft
+            <input defaultValue="before navigation" />
+          </label>
+          <FlagValue />
+        </FeatureFlagRefresh>
+      </Wrapper>,
+    )
+    const input = screen.getByLabelText('Draft') as HTMLInputElement
+    fireEvent.change(input, { target: { value: 'unsaved form value' } })
+
+    act(() => routerEvents.emit())
+    await act(() => vi.advanceTimersByTimeAsync(50))
+
+    expect(screen.getByText('disabled')).toBeTruthy()
+    expect(input.value).toBe('unsaved form value')
+    vi.useRealTimers()
   })
 })

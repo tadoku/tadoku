@@ -103,7 +103,7 @@ func (e *Evaluator) Boolean(ctx context.Context, flag BooleanFlag, user *commond
 	if err := ctx.Err(); err != nil {
 		return defaultResult(EvaluationReasonCanceled, true)
 	}
-	if user == nil || user.Subject == "" {
+	if user == nil || user.Subject == "" || user.Subject == "guest" {
 		return defaultResult(EvaluationReasonAnonymous, false)
 	}
 	subject, err := uuid.Parse(user.Subject)

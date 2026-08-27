@@ -33,11 +33,10 @@ to be added to `tilt_config.json` before running `tilt up`.
 
 ## Application access
 
-Application SDKs use the internal base URL
+Backend application SDKs use the internal base URL
 `http://oathkeeper-proxy.default:4455/flipt`. They first exchange their
 projected Kubernetes service-account token at
-`/token-exchange/flipt-evaluation/immersion-api` or
-`/token-exchange/flipt-evaluation/frontend-webv2`, then send the returned
+`/token-exchange/flipt-evaluation/immersion-api`, then send the returned
 Oathkeeper-signed JWT as a bearer token. The evaluation rule accepts only
 `GET` on the `default` namespace snapshot endpoint and strips `/flipt` before
 forwarding to Flipt. Management paths and the streaming endpoint are not

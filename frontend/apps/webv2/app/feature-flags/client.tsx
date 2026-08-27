@@ -1,4 +1,5 @@
 import { atom, useAtomValue, useSetAtom } from 'jotai'
+import getConfig from 'next/config'
 import { useRouter } from 'next/router'
 import React, { useEffect } from 'react'
 import type { ReactNode } from 'react'
@@ -8,6 +9,9 @@ import {
 } from './registry'
 import type { FeatureFlagDecisions, FeatureFlagKey } from './registry'
 
+const { publicRuntimeConfig } = getConfig()
+const featureFlagEndpoint = `${publicRuntimeConfig.apiEndpoint}/immersion/feature-flags`
+
 export const featureFlagDecisionsAtom = atom<FeatureFlagDecisions>({
   ...defaultFeatureFlagDecisions,
 })
@@ -15,7 +19,13 @@ export const featureFlagDecisionsAtom = atom<FeatureFlagDecisions>({
 export const useFeatureFlag = (flag: FeatureFlagKey) =>
   useAtomValue(featureFlagDecisionsAtom)[flag]
 
-export const FeatureFlagRefresh = ({ children }: { children: ReactNode }) => {
+export const FeatureFlagRefresh = ({
+  children,
+  timeoutMilliseconds = 3_000,
+}: {
+  children: ReactNode
+  timeoutMilliseconds?: number
+}) => {
   const router = useRouter()
   const setDecisions = useSetAtom(featureFlagDecisionsAtom)
 
@@ -25,12 +35,17 @@ export const FeatureFlagRefresh = ({ children }: { children: ReactNode }) => {
     const refresh = () => {
       controller?.abort()
       controller = new AbortController()
+      const currentController = controller
       setDecisions({ ...defaultFeatureFlagDecisions })
+      const timeout = setTimeout(
+        () => currentController.abort(),
+        timeoutMilliseconds,
+      )
 
-      void fetch('/api/feature-flags', {
-        credentials: 'same-origin',
+      void fetch(featureFlagEndpoint, {
+        credentials: 'include',
         cache: 'no-store',
-        signal: controller.signal,
+        signal: currentController.signal,
       })
         .then(async response => {
           if (!response.ok) {
@@ -41,6 +56,7 @@ export const FeatureFlagRefresh = ({ children }: { children: ReactNode }) => {
         })
         .then(setDecisions)
         .catch(() => {})
+        .finally(() => clearTimeout(timeout))
     }
 
     router.events.on('routeChangeComplete', refresh)
@@ -48,7 +64,7 @@ export const FeatureFlagRefresh = ({ children }: { children: ReactNode }) => {
       controller?.abort()
       router.events.off('routeChangeComplete', refresh)
     }
-  }, [router.events, setDecisions])
+  }, [router.events, setDecisions, timeoutMilliseconds])
 
   return <>{children}</>
 }

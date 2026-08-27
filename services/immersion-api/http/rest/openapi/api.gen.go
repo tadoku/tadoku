@@ -226,6 +226,16 @@ type Contests struct {
 	TotalSize     int    `json:"total_size"`
 }
 
+// FeatureFlagDecisions defines model for FeatureFlagDecisions.
+type FeatureFlagDecisions struct {
+	ReleaseLogEntryV2 bool `json:"release-log-entry-v2"`
+}
+
+// FeatureFlagDecisionsResponse defines model for FeatureFlagDecisionsResponse.
+type FeatureFlagDecisionsResponse struct {
+	Decisions FeatureFlagDecisions `json:"decisions"`
+}
+
 // Language defines model for Language.
 type Language struct {
 	// Code In ISO-639-3 https://en.wikipedia.org/wiki/Wikipedia:WikiProject_Languages/List_of_ISO_639-3_language_codes_(2019)
@@ -629,6 +639,9 @@ type ServerInterface interface {
 	// Fetches the summary for a contest
 	// (GET /contests/{id}/summary)
 	ContestFetchSummary(ctx echo.Context, id openapi_types.UUID) error
+	// Returns public feature flag decisions for the current user
+	// (GET /feature-flags)
+	FeatureFlagDecisions(ctx echo.Context) error
 	// Lists all languages (admin only)
 	// (GET /languages)
 	LanguageList(ctx echo.Context) error
@@ -1074,6 +1087,15 @@ func (w *ServerInterfaceWrapper) ContestFetchSummary(ctx echo.Context) error {
 
 	// Invoke the callback with all the unmarshalled arguments
 	err = w.Handler.ContestFetchSummary(ctx, id)
+	return err
+}
+
+// FeatureFlagDecisions converts echo context to params.
+func (w *ServerInterfaceWrapper) FeatureFlagDecisions(ctx echo.Context) error {
+	var err error
+
+	// Invoke the callback with all the unmarshalled arguments
+	err = w.Handler.FeatureFlagDecisions(ctx)
 	return err
 }
 
@@ -1586,6 +1608,7 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 	router.GET(baseURL+"/contests/:id/scoring/rule-sets", wrapper.ScoringRuleSetListContest)
 	router.POST(baseURL+"/contests/:id/scoring/rule-sets", wrapper.ScoringRuleSetCreateContest)
 	router.GET(baseURL+"/contests/:id/summary", wrapper.ContestFetchSummary)
+	router.GET(baseURL+"/feature-flags", wrapper.FeatureFlagDecisions)
 	router.GET(baseURL+"/languages", wrapper.LanguageList)
 	router.POST(baseURL+"/languages", wrapper.LanguageCreate)
 	router.PUT(baseURL+"/languages/:code", wrapper.LanguageUpdate)

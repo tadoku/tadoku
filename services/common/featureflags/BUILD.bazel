@@ -5,6 +5,7 @@ go_library(
     srcs = [
         "evaluator.go",
         "metrics.go",
+        "public.go",
         "registry.go",
     ],
     importpath = "github.com/tadoku/tadoku/services/common/featureflags",
@@ -22,6 +23,7 @@ go_test(
         "contract_test.go",
         "evaluator_test.go",
         "metrics_test.go",
+        "public_test.go",
     ],
     data = ["//:feature-flags.contract.json"],
     embed = [":featureflags"],

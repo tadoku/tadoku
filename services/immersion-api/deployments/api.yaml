@@ -67,6 +67,8 @@ spec:
             value: "redis://valkey-immersion.default:6379"
           - name: API_FLIPT_URL
             value: "http://oathkeeper-proxy.default:4455/flipt"
+          - name: API_FLIPT_ENABLED
+            value: "true"
           - name: API_FLIPT_ENVIRONMENT
             value: "local"
           - name: API_FLIPT_NAMESPACE

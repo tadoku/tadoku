@@ -1,4 +1,4 @@
-load("@rules_go//go:def.bzl", "go_binary", "go_library")
+load("@rules_go//go:def.bzl", "go_binary", "go_library", "go_test")
 load("@rules_oci//oci:defs.bzl", "oci_image", "oci_load", "oci_push")
 load("@rules_pkg//:pkg.bzl", "pkg_tar")
 
@@ -33,6 +33,17 @@ go_library(
         "@com_github_labstack_echo_v4//:echo",
         "@com_github_labstack_echo_v4//middleware",
         "@com_github_valkey_io_valkey_go//:valkey-go",
+    ],
+)
+
+go_test(
+    name = "immersion-api_test",
+    srcs = ["main_test.go"],
+    embed = [":immersion-api_lib"],
+    deps = [
+        "//services/common/client/flipt",
+        "@com_github_stretchr_testify//assert",
+        "@com_github_stretchr_testify//require",
     ],
 )
 

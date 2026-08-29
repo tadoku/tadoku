@@ -1,13 +1,54 @@
 # -*- mode: Python -*-
 
-load('./../../../k8s/dev/config/Tiltfile', 'render_template')
+load('./../../../k8s/dev/config/Tiltfile', 'render_template', 'repo_path')
+
+seed_path = repo_path('infra/dev/flipt/seed/default/features.yaml')
+# Register the canonical seed as a Tilt dependency so edits re-evaluate this
+# include, refresh the checksum annotation, and replace the Flipt pod.
+read_file(seed_path)
+seed_checksum = str(local(
+    [
+        'python3',
+        '-c',
+        'import hashlib, pathlib, sys; print(hashlib.sha256(pathlib.Path(sys.argv[1]).read_bytes()).hexdigest())',
+        seed_path,
+    ],
+    quiet=True,
+)).strip()
+seed_base64 = str(local(
+    [
+        'python3',
+        '-c',
+        'import base64, pathlib, sys; print(base64.b64encode(pathlib.Path(sys.argv[1]).read_bytes()).decode())',
+        seed_path,
+    ],
+    quiet=True,
+)).strip()
+
+flipt_manifest = str(read_file('./flipt.yaml')).replace(
+    '__FLIPT_SEED_SHA256__',
+    seed_checksum,
+)
+seed_manifest = '''
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: flipt-seed
+  namespace: tdk-flipt
+  labels:
+    app.kubernetes.io/name: flipt
+    app.kubernetes.io/part-of: tadoku
+binaryData:
+  features.yaml: {seed_base64}
+'''.format(seed_base64=seed_base64)
 
 flipt_ingress = render_template(
     'infra/dev/flipt/ingress.yaml',
     '.tilt/rendered/infra/dev/flipt/ingress.yaml',
 )
 
-k8s_yaml('./flipt.yaml')
+k8s_yaml(blob(flipt_manifest))
+k8s_yaml(blob(seed_manifest))
 k8s_yaml(flipt_ingress)
 
 k8s_resource(
@@ -25,6 +66,7 @@ k8s_resource(
     objects=[
         'flipt:serviceaccount:tdk-flipt',
         'flipt:configmap:tdk-flipt',
+        'flipt-seed:configmap:tdk-flipt',
     ],
     new_name='flipt-config',
     labels=['infra'],

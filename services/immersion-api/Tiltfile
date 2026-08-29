@@ -10,4 +10,15 @@ bazel_build(
   deps=['./', './../common/'],
 )
 
-k8s_resource('immersion-api', labels=["backend"], resource_deps=["tadoku-dev-db-credentials", "kratos", "keto", "valkey-immersion"])
+k8s_resource(
+  'immersion-api',
+  labels=["backend"],
+  resource_deps=[
+    "tadoku-dev-db-credentials",
+    "flipt",
+    "kratos",
+    "keto",
+    "oathkeeper",
+    "valkey-immersion",
+  ],
+)

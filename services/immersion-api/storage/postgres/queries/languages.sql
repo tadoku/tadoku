@@ -34,4 +34,4 @@ update languages set name = sqlc.arg('name') where code = sqlc.arg('code');
 -- name: ListDistinctLanguageCodesForUser :many
 select distinct language_code
 from logs
-where user_id = sqlc.arg('user_id') and deleted_at is null;
+where logs.user_id = sqlc.arg('user_id') and logs.deleted_at is null;

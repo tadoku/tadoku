@@ -19,7 +19,7 @@ set
   scoring_rule_set_id = $1,
   updated_at = $2
 where id = $3
-  and deleted_at is null
+  and contests.deleted_at is null
 `
 
 type ActivateContestScoringRuleSetParams struct {
@@ -188,7 +188,7 @@ const findContestScoringRuleSetID = `-- name: FindContestScoringRuleSetID :one
 select scoring_rule_set_id
 from contests
 where id = $1
-  and deleted_at is null
+  and contests.deleted_at is null
 `
 
 func (q *Queries) FindContestScoringRuleSetID(ctx context.Context, contestID uuid.UUID) (uuid.NullUUID, error) {

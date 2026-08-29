@@ -164,7 +164,7 @@ select
 from logs
 where
   eligible_official_leaderboard = true
-  and deleted_at is null
+  and logs.deleted_at is null
 group by user_id
 having sum(coalesce(computed_score, score)) > 0
 `
@@ -229,7 +229,7 @@ with leaderboard as (
   inner join users on users.id = contest_registrations.user_id
   where
     contest_id = $3
-    and deleted_at is null
+    and contest_registrations.deleted_at is null
     and ($4 = any(language_codes) or $4 is null)
 ), enriched_leaderboard as (
   select
@@ -340,7 +340,7 @@ from logs
 where
   user_id = $1
   and eligible_official_leaderboard = true
-  and deleted_at is null
+  and logs.deleted_at is null
 `
 
 // Returns a single user's total global score (official logs only).
@@ -360,7 +360,7 @@ where
   year = $1
   and user_id = $2
   and eligible_official_leaderboard = true
-  and deleted_at is null
+  and logs.deleted_at is null
 `
 
 type UserYearlyScoreParams struct {
@@ -481,7 +481,7 @@ from logs
 where
   year = $1
   and eligible_official_leaderboard = true
-  and deleted_at is null
+  and logs.deleted_at is null
 group by user_id
 having sum(coalesce(computed_score, score)) > 0
 `

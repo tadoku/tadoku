@@ -83,3 +83,38 @@ func TestGeneratedLeaderboardQueriesUseEffectiveScore(t *testing.T) {
 	assert.Contains(t, yearlyLeaderboardAllScores, "having sum(coalesce(computed_score, score)) > 0")
 	assert.Contains(t, globalLeaderboardAllScores, "having sum(coalesce(computed_score, score)) > 0")
 }
+
+func TestGeneratedJoinedQueriesQualifyDeletedAt(t *testing.T) {
+	tests := []struct {
+		name     string
+		query    string
+		expected string
+	}{
+		{
+			name:     "FindLogByID",
+			query:    findLogByID,
+			expected: "or logs.deleted_at is null",
+		},
+		{
+			name:     "ListContests",
+			query:    listContests,
+			expected: "or contests.deleted_at is null",
+		},
+		{
+			name:     "FindContestByID",
+			query:    findContestById,
+			expected: "or contests.deleted_at is null",
+		},
+		{
+			name:     "LeaderboardForContest",
+			query:    leaderboardForContest,
+			expected: "and contest_registrations.deleted_at is null",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Contains(t, tt.query, tt.expected)
+		})
+	}
+}

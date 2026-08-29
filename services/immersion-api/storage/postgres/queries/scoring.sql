@@ -14,7 +14,7 @@ where id = sqlc.arg('id');
 select scoring_rule_set_id
 from contests
 where id = sqlc.arg('contest_id')
-  and deleted_at is null;
+  and contests.deleted_at is null;
 
 -- name: ListScoringRulesForRuleSet :many
 select *
@@ -117,4 +117,4 @@ set
   scoring_rule_set_id = sqlc.arg('rule_set_id'),
   updated_at = sqlc.arg('updated_at')
 where id = sqlc.arg('contest_id')
-  and deleted_at is null;
+  and contests.deleted_at is null;

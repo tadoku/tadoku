@@ -139,7 +139,7 @@ with eligible_logs as (
   inner join languages on (languages.code = logs.language_code)
   left join log_units on (log_units.id = logs.unit_id)
   where
-    (sqlc.arg('include_deleted')::boolean or deleted_at is null)
+    (sqlc.arg('include_deleted')::boolean or logs.deleted_at is null)
     and logs.user_id = sqlc.arg('user_id')
 )
 select
@@ -183,7 +183,7 @@ inner join languages on (languages.code = logs.language_code)
 left join log_units on (log_units.id = logs.unit_id)
 inner join users on (users.id = logs.user_id)
 where
-  (sqlc.arg('include_deleted')::boolean or deleted_at is null)
+  (sqlc.arg('include_deleted')::boolean or logs.deleted_at is null)
   and logs.id = sqlc.arg('id');
 
 -- name: FindAttachedContestRegistrationsForLog :many
@@ -214,7 +214,7 @@ from logs
 where
   user_id = sqlc.arg('user_id')
   and year = sqlc.arg('year')
-  and deleted_at is null
+  and logs.deleted_at is null
 group by "date"
 order by date asc;
 
@@ -228,7 +228,7 @@ inner join languages on (languages.code = logs.language_code)
 where
   user_id = sqlc.arg('user_id')
   and year = sqlc.arg('year')
-  and deleted_at is null
+  and logs.deleted_at is null
 group by language_code, languages.name
 order by score desc;
 
@@ -240,7 +240,7 @@ from logs
 where
   user_id = sqlc.arg('user_id')
   and year = sqlc.arg('year')
-  and deleted_at is null
+  and logs.deleted_at is null
 group by logs.log_activity_id
 order by score desc;
 
@@ -249,7 +249,7 @@ update logs
 set deleted_at = now()
 where
   id = sqlc.arg('log_id')
-  and deleted_at is null;
+  and logs.deleted_at is null;
 
 -- name: CheckIfLogCanBeDeleted :one
 select (not(true = any(
@@ -309,7 +309,7 @@ set
   updated_at = sqlc.arg('now')
 where
   id = sqlc.arg('log_id')
-  and deleted_at is null;
+  and logs.deleted_at is null;
 
 -- name: UpdateOngoingContestLogs :exec
 update contest_logs

@@ -62,7 +62,7 @@ func (q *Queries) GetLanguagesByCode(ctx context.Context, languageCodes []string
 const listDistinctLanguageCodesForUser = `-- name: ListDistinctLanguageCodesForUser :many
 select distinct language_code
 from logs
-where user_id = $1 and deleted_at is null
+where logs.user_id = $1 and logs.deleted_at is null
 `
 
 func (q *Queries) ListDistinctLanguageCodesForUser(ctx context.Context, userID uuid.UUID) ([]string, error) {

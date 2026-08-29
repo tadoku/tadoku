@@ -1,9 +1,17 @@
 package rest
 
 import (
+	"context"
+
+	commondomain "github.com/tadoku/tadoku/services/common/domain"
+	"github.com/tadoku/tadoku/services/common/featureflags"
 	"github.com/tadoku/tadoku/services/immersion-api/domain"
 	"github.com/tadoku/tadoku/services/immersion-api/http/rest/openapi"
 )
+
+type publicFeatureFlagEvaluator interface {
+	EvaluatePublic(context.Context, *commondomain.UserIdentity) featureflags.PublicDecisions
+}
 
 // NewServer creates a new server conforming to the OpenAPI spec
 func NewServer(
@@ -42,6 +50,7 @@ func NewServer(
 	logContestUpdate *domain.LogContestUpdate,
 	scorePreview *domain.ScorePreview,
 	scoringRuleSetManagement *domain.ScoringRuleSetManagement,
+	featureFlagDecisions publicFeatureFlagEvaluator,
 ) openapi.ServerInterface {
 	return &Server{
 		contestConfigurationOptions: contestConfigurationOptions,
@@ -79,6 +88,7 @@ func NewServer(
 		logContestUpdate:            logContestUpdate,
 		scorePreview:                scorePreview,
 		scoringRuleSetManagement:    scoringRuleSetManagement,
+		featureFlagDecisions:        featureFlagDecisions,
 	}
 }
 
@@ -118,4 +128,5 @@ type Server struct {
 	logContestUpdate            *domain.LogContestUpdate
 	scorePreview                *domain.ScorePreview
 	scoringRuleSetManagement    *domain.ScoringRuleSetManagement
+	featureFlagDecisions        publicFeatureFlagEvaluator
 }

@@ -1,0 +1,39 @@
+load("@rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "featureflags",
+    srcs = [
+        "evaluator.go",
+        "metrics.go",
+        "public.go",
+        "registry.go",
+    ],
+    importpath = "github.com/tadoku/tadoku/services/common/featureflags",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//services/common/domain",
+        "@com_github_google_uuid//:uuid",
+        "@com_github_prometheus_client_golang//prometheus",
+    ],
+)
+
+go_test(
+    name = "featureflags_test",
+    srcs = [
+        "contract_test.go",
+        "evaluator_test.go",
+        "metrics_test.go",
+        "public_test.go",
+    ],
+    data = ["//:feature-flags.contract.json"],
+    embed = [":featureflags"],
+    deps = [
+        "//services/common/domain",
+        "@com_github_google_uuid//:uuid",
+        "@com_github_prometheus_client_golang//prometheus",
+        "@com_github_prometheus_client_golang//prometheus/promhttp",
+        "@com_github_stretchr_testify//assert",
+        "@com_github_stretchr_testify//require",
+        "@rules_go//go/tools/bazel",
+    ],
+)

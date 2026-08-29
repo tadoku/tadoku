@@ -21,6 +21,7 @@ go_library(
         "server_contestprofilefetchactivity.go",
         "server_contestprofilefetchscores.go",
         "server_contestregistrationupsert.go",
+        "server_featureflagdecisions.go",
         "server_fetchleaderboardforyear.go",
         "server_fetchleaderboardglobal.go",
         "server_languagecreate.go",
@@ -46,6 +47,8 @@ go_library(
     importpath = "github.com/tadoku/tadoku/services/immersion-api/http/rest",
     visibility = ["//visibility:public"],
     deps = [
+        "//services/common/domain",
+        "//services/common/featureflags",
         "//services/common/http/httperr",
         "//services/immersion-api/domain",
         "//services/immersion-api/http/rest/openapi",
@@ -59,6 +62,7 @@ go_test(
     name = "rest_test",
     srcs = [
         "mappers_test.go",
+        "server_featureflagdecisions_test.go",
         "server_loglist_test.go",
         "server_scorepreview_test.go",
         "server_scoringrulesetmanagement_test.go",
@@ -66,6 +70,7 @@ go_test(
     embed = [":rest"],
     deps = [
         "//services/common/domain",
+        "//services/common/featureflags",
         "//services/common/testutil/authzctx",
         "//services/immersion-api/domain",
         "//services/immersion-api/http/rest/openapi",

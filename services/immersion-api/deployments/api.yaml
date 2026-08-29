@@ -65,6 +65,20 @@ spec:
             value: "http://keto-write.default:4467"
           - name: API_VALKEY_URL
             value: "redis://valkey-immersion.default:6379"
+          - name: API_FLIPT_URL
+            value: "http://oathkeeper-proxy.default:4455/flipt"
+          - name: API_FLIPT_ENABLED
+            value: "true"
+          - name: API_FLIPT_ENVIRONMENT
+            value: "local"
+          - name: API_FLIPT_NAMESPACE
+            value: "default"
+          - name: API_FLIPT_UPDATE_INTERVAL
+            value: "30s"
+          - name: API_FLIPT_REQUEST_TIMEOUT
+            value: "5s"
+          - name: API_FLIPT_STARTUP_TIMEOUT
+            value: "3s"
           - name: SERVICE_NAME
             value: "immersion-api"
           - name: API_SCORING_ENGINE_ENABLED

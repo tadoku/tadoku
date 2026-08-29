@@ -1066,6 +1066,22 @@ paths:
             text/plain:
               schema:
                 type: string
+  /feature-flags:
+    get:
+      summary: Returns public feature flag decisions for the current user
+      operationId: featureFlagDecisions
+      tags: [metadata]
+      responses:
+        "200":
+          description: Public feature flag decisions
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FeatureFlagDecisionsResponse"
   /languages:
     get:
       summary: Lists all languages (admin only)
@@ -1146,6 +1162,22 @@ paths:
           description: language not found
 components:
   schemas:
+    FeatureFlagDecisions:
+      type: object
+      additionalProperties: false
+      required:
+        - release-log-entry-v2
+      properties:
+        release-log-entry-v2:
+          type: boolean
+    FeatureFlagDecisionsResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - decisions
+      properties:
+        decisions:
+          $ref: "#/components/schemas/FeatureFlagDecisions"
     UserProfile:
       type: object
       required:

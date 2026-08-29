@@ -251,29 +251,3 @@
           }
   upstream:
     url: "http://token-reflector.tdk-token-reflector"
-
-- id: "s2s:frontend-to-flipt-evaluation"
-  match:
-    url: "http://oathkeeper-proxy.default:4455/token-exchange/flipt-evaluation/frontend-webv2"
-    methods:
-      - GET
-  authenticators:
-    - handler: jwt
-      config:
-        jwks_urls:
-          - http://token-reflector.tdk-token-reflector/jwks
-        target_audience:
-          - frontend-webv2
-  authorizer:
-    handler: allow
-  mutators:
-    - handler: id_token
-      config:
-        claims: |
-          {
-            "type": "service",
-            "sub": "{{ .Subject }}",
-            "aud": ["flipt-evaluation"]
-          }
-  upstream:
-    url: "http://token-reflector.tdk-token-reflector"

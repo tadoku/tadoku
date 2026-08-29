@@ -1,0 +1,10 @@
+version: "1.4"
+namespace:
+  key: default
+  name: Default
+flags:
+  - key: release-log-entry-v2
+    name: Release log entry v2
+    type: BOOLEAN_FLAG_TYPE
+    description: Use the second-generation log entry flow.
+    enabled: false

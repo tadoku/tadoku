@@ -1,0 +1,17 @@
+load("@rules_go//go:def.bzl", "go_test")
+
+go_test(
+    name = "flipt_test",
+    srcs = ["flipt_test.go"],
+    data = [
+        "Tiltfile",
+        "flipt.yaml",
+        "seed/default/features.yaml",
+        "//:feature-flags.contract.json",
+    ],
+    deps = [
+        "@com_github_stretchr_testify//assert",
+        "@com_github_stretchr_testify//require",
+        "@rules_go//go/tools/bazel",
+    ],
+)

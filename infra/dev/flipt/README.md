@@ -1,15 +1,24 @@
 # Flipt development
 
 The local Flipt deployment is deliberately separate from production. It has a
-single `local` environment backed only by Flipt's in-memory storage. It has no
-Git remote or credential, persistent volume, database, or cache, and its pod is
-not allowed general internet egress.
+single `local` environment backed by a writable Git repository on a
+memory-backed `emptyDir`. It has no Git remote or credential, persistent
+volume, database, or cache, and its pod is not allowed general internet
+egress.
 
-Local flag state is disposable. Restarting or replacing the Flipt pod may
-return it to an empty state. Developers create the flags they need through the
-Oathkeeper-protected local Flipt UI; the repository does not seed or promote
-local flag definitions. Tadoku applications must remain usable with their
-compiled safe defaults when that state is empty or unavailable.
+Tilt initializes that repository from the canonical definitions under
+`infra/dev/flipt/seed/`. The seed contains every application-registered flag
+at its compiled safe default. Developers can change flags through the
+Oathkeeper-protected UI while the pod is running; replacing the pod discards
+those edits and restores the committed seed. Changing the seed checksum also
+changes the pod template, so Tilt replaces Flipt and reruns initialization.
+Tadoku applications must still remain usable with their compiled safe defaults
+when Flipt is unavailable.
+
+The bootstrap init container contains Git and creates the disposable local
+repository before Flipt starts. The main Flipt image is not expected to contain
+Git. Both images and the init container's restricted security context are
+pinned in `flipt.yaml`.
 
 Prometheus-format metrics are available to the cluster monitoring workload at
 `/metrics`. The Service is cluster-internal, and NetworkPolicies accept Flipt

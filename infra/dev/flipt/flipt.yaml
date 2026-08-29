@@ -41,13 +41,17 @@ data:
       grpc_port: 9000
     storage:
       local:
+        name: local
+        branch: main
         backend:
-          type: memory
+          type: local
+          path: /var/lib/flipt
     environments:
       local:
         name: local
         default: true
         storage: local
+        directory: default
     metrics:
       enabled: true
       exporter: prometheus
@@ -81,6 +85,8 @@ spec:
       app.kubernetes.io/name: flipt
   template:
     metadata:
+      annotations:
+        tadoku.dev/flipt-seed-sha256: __FLIPT_SEED_SHA256__
       labels:
         app.kubernetes.io/name: flipt
         app.kubernetes.io/part-of: tadoku
@@ -96,6 +102,57 @@ spec:
         fsGroupChangePolicy: OnRootMismatch
         seccompProfile:
           type: RuntimeDefault
+      initContainers:
+        - name: initialize-seed
+          image: docker.io/alpine/git:2.47.2@sha256:062a01ad7a0eb17cff382bc5e26086b4d710e56dfdfdf001109a49b6d9bd378c
+          imagePullPolicy: IfNotPresent
+          command:
+            - /bin/sh
+            - -ec
+          args:
+            - |
+              mkdir -p /var/lib/flipt/default
+              cp -R /seed/. /var/lib/flipt/default/
+              chmod 0644 /var/lib/flipt/default/features.yaml
+              cd /var/lib/flipt
+              git init --initial-branch=main
+              git config --global --add safe.directory /var/lib/flipt
+              git config user.name "Tadoku Tilt"
+              git config user.email "tilt@tadoku.local"
+              git add default/features.yaml
+              git commit -m "Initialize canonical local feature flags"
+          env:
+            - name: HOME
+              value: /tmp
+            - name: TMPDIR
+              value: /tmp
+          resources:
+            requests:
+              cpu: 10m
+              memory: 16Mi
+            limits:
+              cpu: 100m
+              memory: 64Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            privileged: false
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 100
+            runAsGroup: 1000
+            seccompProfile:
+              type: RuntimeDefault
+          volumeMounts:
+            - name: seed
+              mountPath: /seed
+              readOnly: true
+            - name: repository
+              mountPath: /var/lib/flipt
+            - name: tmp
+              mountPath: /tmp
       containers:
         - name: flipt
           image: docker.flipt.io/flipt/flipt:v2.11.0@sha256:d20384874048ef6ac326f4937cee64f1db175a1878a87db32916cc8db46c740e
@@ -164,6 +221,8 @@ spec:
               readOnly: true
             - name: state
               mountPath: /home/flipt/.config/flipt
+            - name: repository
+              mountPath: /var/lib/flipt
             - name: tmp
               mountPath: /tmp
       volumes:
@@ -171,6 +230,14 @@ spec:
           configMap:
             name: flipt
             defaultMode: 0444
+        - name: seed
+          configMap:
+            name: flipt-seed
+            defaultMode: 0444
+        - name: repository
+          emptyDir:
+            medium: Memory
+            sizeLimit: 32Mi
         - name: state
           emptyDir:
             medium: Memory

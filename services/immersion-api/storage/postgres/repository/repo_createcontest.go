@@ -15,6 +15,10 @@ func (r *Repository) CreateContest(ctx context.Context, req *domain.ContestCreat
 	}
 
 	qtx := r.q.WithTx(tx)
+	if err = lockUserForMutation(ctx, qtx, req.OwnerUserID); err != nil {
+		_ = tx.Rollback()
+		return nil, err
+	}
 
 	id, err := qtx.CreateContest(ctx, postgres.CreateContestParams{
 		OwnerUserID:             req.OwnerUserID,

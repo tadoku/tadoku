@@ -1,0 +1,52 @@
+openapi: 3.0.3
+info:
+  title: immersion-api-internal
+  description: Internal API for service-to-service communication
+  license:
+    name: MIT
+    url: https://github.com/tadoku/tadoku/blob/main/LICENSE
+  version: 1.0.0
+servers:
+  - url: http://immersion-api:8080/
+paths:
+  /internal/v1/account-deletion-locks:
+    post:
+      summary: Idempotently prevents further mutations for an account
+      operationId: internalAccountDeletionLock
+      tags: [internal]
+      security:
+        - serviceAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AccountDeletionLockRequest'
+      responses:
+        '204':
+          description: account is locked or was already locked
+        '400':
+          description: invalid request
+        '401':
+          description: caller is not a service identity
+        '403':
+          description: caller is not profile-api
+components:
+  schemas:
+    AccountDeletionLockRequest:
+      type: object
+      required:
+        - user_id
+        - request_id
+      properties:
+        user_id:
+          type: string
+          format: uuid
+        request_id:
+          type: string
+          format: uuid
+  securitySchemes:
+    serviceAuth:
+      type: http
+      scheme: bearer
+      description: JWT token for service-to-service authentication (ES256)

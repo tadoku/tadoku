@@ -23,6 +23,11 @@ const (
 	TimePrimary   ActivityInputType = "time_primary"
 )
 
+// Defines values for ErrorResponseError.
+const (
+	ErrorResponseErrorAccountDeletionInProgress ErrorResponseError = "account_deletion_in_progress"
+)
+
 // Defines values for ScoreEstimateSource.
 const (
 	ScoreEstimateSourceAmount          ScoreEstimateSource = "amount"
@@ -225,6 +230,14 @@ type Contests struct {
 	NextPageToken string `json:"next_page_token"`
 	TotalSize     int    `json:"total_size"`
 }
+
+// ErrorResponse defines model for ErrorResponse.
+type ErrorResponse struct {
+	Error ErrorResponseError `json:"error"`
+}
+
+// ErrorResponseError defines model for ErrorResponse.Error.
+type ErrorResponseError string
 
 // FeatureFlagDecisions defines model for FeatureFlagDecisions.
 type FeatureFlagDecisions struct {
@@ -444,6 +457,9 @@ type UserProfile struct {
 	DisplayName string             `json:"display_name"`
 	Id          openapi_types.UUID `json:"id"`
 }
+
+// AccountDeletionInProgress defines model for AccountDeletionInProgress.
+type AccountDeletionInProgress = ErrorResponse
 
 // ContestListParams defines parameters for ContestList.
 type ContestListParams struct {

@@ -14,6 +14,10 @@ func (r *Repository) UpdateLog(ctx context.Context, req *domain.LogUpdateRequest
 		return fmt.Errorf("could not start transaction: %w", err)
 	}
 	qtx := r.q.WithTx(tx)
+	if err = lockUserForMutation(ctx, qtx, req.UserID()); err != nil {
+		_ = tx.Rollback()
+		return err
+	}
 
 	// Fetch outbox context before changes
 	logCtx, err := qtx.FetchLogOutboxContext(ctx, req.LogID)

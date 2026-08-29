@@ -2,18 +2,20 @@ package domain
 
 import (
 	"errors"
+	"fmt"
 
 	commondomain "github.com/tadoku/tadoku/services/common/domain"
 )
 
 // Common errors
 var (
-	ErrRequestInvalid   = commondomain.ErrRequestInvalid
-	ErrNotFound         = commondomain.ErrNotFound
-	ErrForbidden        = commondomain.ErrForbidden
-	ErrAuthzUnavailable = commondomain.ErrAuthzUnavailable
-	ErrUnauthorized     = commondomain.ErrUnauthorized
-	ErrConflict         = commondomain.ErrConflict
+	ErrRequestInvalid            = commondomain.ErrRequestInvalid
+	ErrNotFound                  = commondomain.ErrNotFound
+	ErrForbidden                 = commondomain.ErrForbidden
+	ErrAuthzUnavailable          = commondomain.ErrAuthzUnavailable
+	ErrUnauthorized              = commondomain.ErrUnauthorized
+	ErrConflict                  = commondomain.ErrConflict
+	ErrAccountDeletionInProgress = fmt.Errorf("account deletion in progress: %w", commondomain.ErrConflict)
 )
 
 // Log errors

@@ -14,6 +14,10 @@ func (r *Repository) DeleteLog(ctx context.Context, req *domain.LogDeleteRequest
 		return fmt.Errorf("could not start transaction: %w", err)
 	}
 	qtx := r.q.WithTx(tx)
+	if err = lockUserForMutation(ctx, qtx, req.UserID()); err != nil {
+		_ = tx.Rollback()
+		return err
+	}
 
 	isValid, err := qtx.CheckIfLogCanBeDeleted(ctx, postgres.CheckIfLogCanBeDeletedParams{
 		Now:   req.Now(),

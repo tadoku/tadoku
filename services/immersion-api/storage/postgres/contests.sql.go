@@ -19,7 +19,7 @@ update contests
 set deleted_at = now()
 where
   id = $1
-  and deleted_at is null
+  and contests.deleted_at is null
 returning id
 `
 
@@ -65,7 +65,7 @@ select
   $1::boolean as include_deleted
 from contests
 where
-  ($1::boolean or deleted_at is null)
+  ($1::boolean or contests.deleted_at is null)
   and (owner_user_id = $2 or $2 is null)
   and (official = $3)
 `
@@ -170,7 +170,7 @@ from contests
 inner join users on users.id = contests.owner_user_id
 where
   contests.id = $1
-  and ($2::boolean or deleted_at is null)
+  and ($2::boolean or contests.deleted_at is null)
 order by created_at desc
 `
 
@@ -326,7 +326,7 @@ select
 from contests
 inner join users on users.id = contests.owner_user_id
 where
-  ($1::boolean or deleted_at is null)
+  ($1::boolean or contests.deleted_at is null)
   and (owner_user_id = $2 or $2 is null)
   and official = $3
   and ("private" = false or ($4::boolean or owner_user_id = $2))
@@ -420,7 +420,7 @@ set
   updated_at = now()
 where
   id = $7
-  and deleted_at is null
+  and contests.deleted_at is null
 returning id
 `
 

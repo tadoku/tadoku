@@ -182,7 +182,7 @@ update logs
 set deleted_at = now()
 where
   id = $1
-  and deleted_at is null
+  and logs.deleted_at is null
 `
 
 func (q *Queries) DeleteLog(ctx context.Context, logID uuid.UUID) error {
@@ -337,7 +337,7 @@ inner join languages on (languages.code = logs.language_code)
 where
   user_id = $1
   and year = $2
-  and deleted_at is null
+  and logs.deleted_at is null
 group by language_code, languages.name
 order by score desc
 `
@@ -470,7 +470,7 @@ inner join languages on (languages.code = logs.language_code)
 left join log_units on (log_units.id = logs.unit_id)
 inner join users on (users.id = logs.user_id)
 where
-  ($1::boolean or deleted_at is null)
+  ($1::boolean or logs.deleted_at is null)
   and logs.id = $2
 `
 
@@ -701,7 +701,7 @@ with eligible_logs as (
   inner join languages on (languages.code = logs.language_code)
   left join log_units on (log_units.id = logs.unit_id)
   where
-    ($3::boolean or deleted_at is null)
+    ($3::boolean or logs.deleted_at is null)
     and logs.user_id = $4
 )
 select
@@ -813,7 +813,7 @@ set
   updated_at = $12
 where
   id = $13
-  and deleted_at is null
+  and logs.deleted_at is null
 `
 
 type UpdateLogParams struct {
@@ -980,7 +980,7 @@ from logs
 where
   user_id = $1
   and year = $2
-  and deleted_at is null
+  and logs.deleted_at is null
 group by "date"
 order by date asc
 `
@@ -1027,7 +1027,7 @@ from logs
 where
   user_id = $1
   and year = $2
-  and deleted_at is null
+  and logs.deleted_at is null
 group by logs.log_activity_id
 order by score desc
 `

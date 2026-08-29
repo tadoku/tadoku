@@ -44,7 +44,7 @@ set
   updated_at = now()
 where
   id = sqlc.arg('id')
-  and deleted_at is null
+  and contests.deleted_at is null
 returning id;
 
 -- name: CancelContest :one
@@ -52,7 +52,7 @@ update contests
 set deleted_at = now()
 where
   id = sqlc.arg('id')
-  and deleted_at is null
+  and contests.deleted_at is null
 returning id;
 
 -- name: ListContests :many
@@ -75,7 +75,7 @@ select
 from contests
 inner join users on users.id = contests.owner_user_id
 where
-  (sqlc.arg('include_deleted')::boolean or deleted_at is null)
+  (sqlc.arg('include_deleted')::boolean or contests.deleted_at is null)
   and (owner_user_id = sqlc.narg('user_id') or sqlc.narg('user_id') is null)
   and official = sqlc.arg('official')
   and ("private" = false or (sqlc.arg('include_private')::boolean or owner_user_id = sqlc.narg('user_id')))
@@ -104,7 +104,7 @@ from contests
 inner join users on users.id = contests.owner_user_id
 where
   contests.id = sqlc.arg('id')
-  and (sqlc.arg('include_deleted')::boolean or deleted_at is null)
+  and (sqlc.arg('include_deleted')::boolean or contests.deleted_at is null)
 order by created_at desc;
 
 -- name: ContestsMetadata :one
@@ -113,7 +113,7 @@ select
   sqlc.arg('include_deleted')::boolean as include_deleted
 from contests
 where
-  (sqlc.arg('include_deleted')::boolean or deleted_at is null)
+  (sqlc.arg('include_deleted')::boolean or contests.deleted_at is null)
   and (owner_user_id = sqlc.narg('user_id') or sqlc.narg('user_id') is null)
   and (official = sqlc.arg('official'));
 

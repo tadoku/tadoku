@@ -28,7 +28,7 @@ with leaderboard as (
   inner join users on users.id = contest_registrations.user_id
   where
     contest_id = sqlc.arg('contest_id')
-    and deleted_at is null
+    and contest_registrations.deleted_at is null
     and (sqlc.narg('language_code') = any(language_codes) or sqlc.narg('language_code') is null)
 ), enriched_leaderboard as (
   select
@@ -127,7 +127,7 @@ from logs
 where
   year = sqlc.arg('year')
   and eligible_official_leaderboard = true
-  and deleted_at is null
+  and logs.deleted_at is null
 group by user_id
 having sum(coalesce(computed_score, score)) > 0;
 
@@ -140,7 +140,7 @@ select
 from logs
 where
   eligible_official_leaderboard = true
-  and deleted_at is null
+  and logs.deleted_at is null
 group by user_id
 having sum(coalesce(computed_score, score)) > 0;
 
@@ -166,7 +166,7 @@ where
   year = sqlc.arg('year')
   and user_id = sqlc.arg('user_id')
   and eligible_official_leaderboard = true
-  and deleted_at is null;
+  and logs.deleted_at is null;
 
 -- name: UserGlobalScore :one
 -- Returns a single user's total global score (official logs only).
@@ -177,7 +177,7 @@ from logs
 where
   user_id = sqlc.arg('user_id')
   and eligible_official_leaderboard = true
-  and deleted_at is null;
+  and logs.deleted_at is null;
 
 -- name: GlobalLeaderboard :many
 with leaderboard as (

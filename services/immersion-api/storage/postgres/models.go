@@ -94,6 +94,7 @@ type Log struct {
 	ScoreRuleIds                []uuid.UUID
 	ScoreRates                  []float32
 	ScoreSource                 sql.NullString
+	FrozenAt                    sql.NullTime
 }
 
 type LogTag struct {
@@ -152,10 +153,12 @@ type ScoringRuleSet struct {
 }
 
 type User struct {
-	ID          uuid.UUID
-	DisplayName string
-	CreatedAt   time.Time
-	UpdatedAt   time.Time
+	ID               uuid.UUID
+	DisplayName      string
+	CreatedAt        time.Time
+	UpdatedAt        time.Time
+	DeletionLockedAt sql.NullTime
+	DeletedAt        sql.NullTime
 }
 
 type UserRole struct {

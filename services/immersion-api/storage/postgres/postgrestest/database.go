@@ -58,7 +58,7 @@ func OpenMigratedDatabase(t testing.TB) *sql.DB {
 	require.NoError(t, err)
 	require.NoError(t, testDB.Ping())
 
-	migrationDirectory := migrationDirectory(t)
+	migrationDirectory := validatedMigrationDirectory(t)
 	migrationSourceURL := (&url.URL{Scheme: "file", Path: migrationDirectory}).String()
 	migrator, err := migrate.New(migrationSourceURL, testDatabaseURL.String())
 	require.NoError(t, err)
@@ -71,7 +71,7 @@ func OpenMigratedDatabase(t testing.TB) *sql.DB {
 	return testDB
 }
 
-func migrationDirectory(t testing.TB) string {
+func validatedMigrationDirectory(t testing.TB) string {
 	t.Helper()
 
 	firstMigration, err := bazel.Runfile("services/immersion-api/storage/postgres/migrations/0001_init.up.sql")

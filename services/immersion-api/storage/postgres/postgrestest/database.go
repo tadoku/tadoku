@@ -58,7 +58,7 @@ func OpenMigratedDatabase(t testing.TB) *sql.DB {
 	require.NoError(t, err)
 	require.NoError(t, testDB.Ping())
 
-	migrationDirectory := filepath.Dir(migrationPaths(t)[0])
+	migrationDirectory := migrationDirectory(t)
 	migrationSourceURL := (&url.URL{Scheme: "file", Path: migrationDirectory}).String()
 	migrator, err := migrate.New(migrationSourceURL, testDatabaseURL.String())
 	require.NoError(t, err)
@@ -71,13 +71,14 @@ func OpenMigratedDatabase(t testing.TB) *sql.DB {
 	return testDB
 }
 
-func migrationPaths(t testing.TB) []string {
+func migrationDirectory(t testing.TB) string {
 	t.Helper()
 
 	firstMigration, err := bazel.Runfile("services/immersion-api/storage/postgres/migrations/0001_init.up.sql")
 	require.NoError(t, err)
+	directory := filepath.Dir(firstMigration)
 
-	entries, err := os.ReadDir(filepath.Dir(firstMigration))
+	entries, err := os.ReadDir(directory)
 	require.NoError(t, err)
 
 	paths := make([]string, 0, len(entries))
@@ -85,7 +86,7 @@ func migrationPaths(t testing.TB) []string {
 		if entry.IsDir() || !strings.HasSuffix(entry.Name(), ".up.sql") {
 			continue
 		}
-		paths = append(paths, filepath.Join(filepath.Dir(firstMigration), entry.Name()))
+		paths = append(paths, filepath.Join(directory, entry.Name()))
 	}
 	sort.Strings(paths)
 	require.NotEmpty(t, paths)
@@ -96,5 +97,5 @@ func migrationPaths(t testing.TB) []string {
 		require.Truef(t, strings.HasPrefix(filepath.Base(path), expectedPrefix), "migration sequence contains a gap at %s", path)
 	}
 
-	return paths
+	return directory
 }

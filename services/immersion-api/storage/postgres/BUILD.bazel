@@ -32,7 +32,16 @@ go_library(
 
 go_test(
     name = "postgres_test",
-    srcs = ["helpers_test.go"],
+    srcs = [
+        "helpers_test.go",
+        "migrated_queries_test.go",
+    ],
     embed = [":postgres"],
-    deps = ["@com_github_stretchr_testify//assert"],
+    env_inherit = ["IMMERSION_TEST_POSTGRES_URL"],
+    deps = [
+        "//services/immersion-api/storage/postgres/postgrestest",
+        "@com_github_google_uuid//:uuid",
+        "@com_github_stretchr_testify//assert",
+        "@com_github_stretchr_testify//require",
+    ],
 )

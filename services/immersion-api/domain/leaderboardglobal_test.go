@@ -281,6 +281,33 @@ func TestLeaderboardGlobal_StoreRebuildError(t *testing.T) {
 	assert.NotNil(t, repo.capturedRequest, "should fall back to Postgres")
 }
 
+func TestLeaderboardGlobal_RebuildSourceError(t *testing.T) {
+	want := &domain.Leaderboard{Entries: []domain.LeaderboardEntry{}, TotalSize: 0}
+	store := &leaderboardGlobalStoreMock{}
+	repo := &leaderboardGlobalRepositoryMock{
+		leaderboard:  want,
+		allScoresErr: errors.New("rebuild query failed"),
+	}
+	service := domain.NewLeaderboardGlobal(repo, store)
+
+	got, err := service.Execute(context.Background(), &domain.LeaderboardGlobalRequest{PageSize: 25})
+
+	require.NoError(t, err)
+	assert.Same(t, want, got)
+	assert.NotNil(t, repo.capturedRequest, "should fall back to the paginated Postgres query")
+}
+
+func TestLeaderboardGlobal_FallbackRepositoryError(t *testing.T) {
+	store := &leaderboardGlobalStoreMock{fetchErr: errors.New("valkey down")}
+	repo := &leaderboardGlobalRepositoryMock{err: domain.ErrNotFound}
+	service := domain.NewLeaderboardGlobal(repo, store)
+
+	got, err := service.Execute(context.Background(), &domain.LeaderboardGlobalRequest{PageSize: 25})
+
+	assert.Nil(t, got)
+	assert.ErrorIs(t, err, domain.ErrNotFound)
+}
+
 func TestLeaderboardGlobal_Pagination(t *testing.T) {
 	u1 := uuid.New()
 

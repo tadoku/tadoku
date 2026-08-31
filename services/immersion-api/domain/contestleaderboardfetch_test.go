@@ -295,3 +295,38 @@ func TestContestLeaderboardFetch_StoreRebuildError(t *testing.T) {
 	assert.Same(t, want, got)
 	assert.NotNil(t, repo.capturedRequest, "should fall back to Postgres")
 }
+
+func TestContestLeaderboardFetch_RebuildSourceError(t *testing.T) {
+	contestID := uuid.New()
+	want := &domain.Leaderboard{Entries: []domain.LeaderboardEntry{}, TotalSize: 0}
+	store := &contestLeaderboardFetchStoreMock{}
+	repo := &contestLeaderboardFetchRepositoryMock{
+		leaderboard:  want,
+		allScoresErr: errors.New("rebuild query failed"),
+	}
+	service := domain.NewContestLeaderboardFetch(repo, store)
+
+	got, err := service.Execute(context.Background(), &domain.ContestLeaderboardFetchRequest{
+		ContestID: contestID,
+		PageSize:  25,
+	})
+
+	require.NoError(t, err)
+	assert.Same(t, want, got)
+	assert.NotNil(t, repo.capturedRequest, "should fall back to the paginated Postgres query")
+}
+
+func TestContestLeaderboardFetch_FallbackRepositoryError(t *testing.T) {
+	contestID := uuid.New()
+	store := &contestLeaderboardFetchStoreMock{fetchErr: errors.New("valkey down")}
+	repo := &contestLeaderboardFetchRepositoryMock{err: domain.ErrNotFound}
+	service := domain.NewContestLeaderboardFetch(repo, store)
+
+	got, err := service.Execute(context.Background(), &domain.ContestLeaderboardFetchRequest{
+		ContestID: contestID,
+		PageSize:  25,
+	})
+
+	assert.Nil(t, got)
+	assert.ErrorIs(t, err, domain.ErrNotFound)
+}

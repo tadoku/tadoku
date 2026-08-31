@@ -61,14 +61,19 @@ go_library(
 go_test(
     name = "repository_test",
     srcs = [
+        "logcreate_integration_test.go",
         "logtracking_test.go",
         "repo_findscoringruleset_test.go",
         "repo_languageexists_test.go",
     ],
     embed = [":repository"],
+    env_inherit = ["IMMERSION_TEST_POSTGRES_URL"],
     deps = [
+        "//services/common/domain",
+        "//services/common/testutil/authzctx",
         "//services/immersion-api/domain",
         "//services/immersion-api/storage/postgres",
+        "//services/immersion-api/storage/postgres/postgrestest",
         "@com_github_google_uuid//:uuid",
         "@com_github_stretchr_testify//assert",
         "@com_github_stretchr_testify//require",

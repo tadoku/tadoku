@@ -34,5 +34,6 @@ go_test(
     name = "postgres_test",
     srcs = ["helpers_test.go"],
     embed = [":postgres"],
+    env_inherit = ["IMMERSION_TEST_POSTGRES_URL"],
     deps = ["@com_github_stretchr_testify//assert"],
 )

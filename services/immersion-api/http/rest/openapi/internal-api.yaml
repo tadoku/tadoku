@@ -9,6 +9,30 @@ info:
 servers:
   - url: http://immersion-api:8080/
 paths:
+  /internal/v1/account-deletion-scrubs:
+    post:
+      summary: Idempotently anonymizes and removes immersion data for a locked account
+      operationId: internalAccountDeletionScrub
+      tags: [internal]
+      security:
+        - serviceAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AccountDeletionScrubRequest'
+      responses:
+        '204':
+          description: account data is scrubbed or was already scrubbed
+        '400':
+          description: invalid request
+        '401':
+          description: caller is not a service identity
+        '403':
+          description: caller is not profile-api
+        '409':
+          description: account is not locked or owns a running contest
   /internal/v1/account-deletion-locks:
     post:
       summary: Idempotently prevents further mutations for an account
@@ -33,6 +57,18 @@ paths:
           description: caller is not profile-api
 components:
   schemas:
+    AccountDeletionScrubRequest:
+      type: object
+      required:
+        - user_id
+        - request_id
+      properties:
+        user_id:
+          type: string
+          format: uuid
+        request_id:
+          type: string
+          format: uuid
     AccountDeletionLockRequest:
       type: object
       required:

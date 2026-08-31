@@ -4,6 +4,7 @@ go_library(
     name = "domain",
     srcs = [
         "accountdeletionlock.go",
+        "accountdeletionscrub.go",
         "activities.go",
         "authz.go",
         "contestconfigurationoptions.go",
@@ -70,6 +71,7 @@ go_test(
     name = "domain_test",
     srcs = [
         "accountdeletionlock_test.go",
+        "accountdeletionscrub_test.go",
         "activities_test.go",
         "contestconfigurationoptions_test.go",
         "contestcreate_test.go",

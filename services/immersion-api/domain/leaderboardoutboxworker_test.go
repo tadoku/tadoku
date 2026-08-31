@@ -39,9 +39,13 @@ type mockLeaderboardOutboxUpdater struct {
 	contestCalls         []mockLeaderboardOutboxContestCall
 	officialCalls        []mockLeaderboardOutboxOfficialCall
 	rebuildOfficialCalls []int
+	removeContestCalls   []mockLeaderboardOutboxContestCall
+	removeOfficialCalls  []mockLeaderboardOutboxOfficialCall
 	contestErr           error
 	officialErr          error
 	rebuildOfficialErr   error
+	removeContestErr     error
+	removeOfficialErr    error
 	rebuildCalled        chan int
 }
 
@@ -63,6 +67,16 @@ func (m *mockLeaderboardOutboxUpdater) UpdateUserContestScore(ctx context.Contex
 func (m *mockLeaderboardOutboxUpdater) UpdateUserOfficialScores(ctx context.Context, year int, userID uuid.UUID) error {
 	m.officialCalls = append(m.officialCalls, mockLeaderboardOutboxOfficialCall{Year: year, UserID: userID})
 	return m.officialErr
+}
+
+func (m *mockLeaderboardOutboxUpdater) RemoveUserContestScore(_ context.Context, contestID uuid.UUID, userID uuid.UUID) error {
+	m.removeContestCalls = append(m.removeContestCalls, mockLeaderboardOutboxContestCall{ContestID: contestID, UserID: userID})
+	return m.removeContestErr
+}
+
+func (m *mockLeaderboardOutboxUpdater) RemoveUserOfficialScores(_ context.Context, year int, userID uuid.UUID) error {
+	m.removeOfficialCalls = append(m.removeOfficialCalls, mockLeaderboardOutboxOfficialCall{Year: year, UserID: userID})
+	return m.removeOfficialErr
 }
 
 func (m *mockLeaderboardOutboxUpdater) RebuildOfficialLeaderboards(ctx context.Context, year int) error {
@@ -123,6 +137,37 @@ func TestLeaderboardOutboxWorker_ProcessEvent(t *testing.T) {
 		assert.Equal(t, 2026, updater.officialCalls[0].Year)
 		assert.Equal(t, userID, updater.officialCalls[0].UserID)
 		assert.Equal(t, []int64{2}, repo.markedIDs)
+	})
+
+	t.Run("processes account deletion removal events", func(t *testing.T) {
+		updater := &mockLeaderboardOutboxUpdater{}
+		repo := &mockLeaderboardOutboxRepository{events: []domain.LeaderboardOutboxEvent{
+			{ID: 3, EventType: "remove_contest_score", UserID: userID, ContestID: &contestID},
+			{ID: 4, EventType: "remove_official_scores", UserID: userID, Year: &year2026},
+		}}
+
+		worker := domain.NewLeaderboardOutboxWorker(repo, updater, &mockClock{now: now}, time.Second)
+		worker.ProcessBatchForTest(context.Background())
+
+		require.Len(t, updater.removeContestCalls, 1)
+		assert.Equal(t, contestID, updater.removeContestCalls[0].ContestID)
+		assert.Equal(t, userID, updater.removeContestCalls[0].UserID)
+		require.Len(t, updater.removeOfficialCalls, 1)
+		assert.Equal(t, year2026, updater.removeOfficialCalls[0].Year)
+		assert.Equal(t, userID, updater.removeOfficialCalls[0].UserID)
+		assert.Equal(t, []int64{3, 4}, repo.markedIDs)
+	})
+
+	t.Run("keeps deletion removals pending when valkey fails", func(t *testing.T) {
+		updater := &mockLeaderboardOutboxUpdater{removeContestErr: errors.New("valkey unavailable")}
+		repo := &mockLeaderboardOutboxRepository{events: []domain.LeaderboardOutboxEvent{
+			{ID: 3, EventType: "remove_contest_score", UserID: userID, ContestID: &contestID},
+		}}
+
+		worker := domain.NewLeaderboardOutboxWorker(repo, updater, &mockClock{now: now}, time.Second)
+		worker.ProcessBatchForTest(context.Background())
+
+		assert.Empty(t, repo.markedIDs)
 	})
 
 	t.Run("keeps refresh_official_scores events pending when the cache update fails", func(t *testing.T) {

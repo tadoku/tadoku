@@ -56,16 +56,17 @@ offset sqlc.arg('start_from');
 -- name: YearlyLeaderboard :many
 with leaderboard as (
   select
-    user_id,
+    logs.user_id,
     sum(coalesce(computed_score, score)) as score
   from logs
+  inner join users on users.id = logs.user_id and users.deleted_at is null
   where
     logs.year = sqlc.arg('year')
     and eligible_official_leaderboard = true
     and logs.deleted_at is null
     and (logs.language_code = sqlc.narg('language_code') or sqlc.narg('language_code') is null)
     and (logs.log_activity_id = sqlc.narg('activity_id')::integer or sqlc.narg('activity_id') is null)
-  group by user_id
+  group by logs.user_id
 ), ranked_leaderboard as (
   select
     user_id,
@@ -121,27 +122,29 @@ where
 -- Returns all user scores for a year without pagination/ranking.
 -- Used for rebuilding the Redis leaderboard sorted set.
 select
-  user_id,
+  logs.user_id,
   sum(coalesce(computed_score, score))::real as score
 from logs
+inner join users on users.id = logs.user_id and users.deleted_at is null
 where
   year = sqlc.arg('year')
   and eligible_official_leaderboard = true
   and logs.deleted_at is null
-group by user_id
+group by logs.user_id
 having sum(coalesce(computed_score, score)) > 0;
 
 -- name: GlobalLeaderboardAllScores :many
 -- Returns all user scores globally without pagination/ranking.
 -- Used for rebuilding the Redis leaderboard sorted set.
 select
-  user_id,
+  logs.user_id,
   sum(coalesce(computed_score, score))::real as score
 from logs
+inner join users on users.id = logs.user_id and users.deleted_at is null
 where
   eligible_official_leaderboard = true
   and logs.deleted_at is null
-group by user_id
+group by logs.user_id
 having sum(coalesce(computed_score, score)) > 0;
 
 -- name: UserContestScore :one
@@ -162,6 +165,7 @@ where
 select
   coalesce(sum(coalesce(computed_score, score)), 0)::real as score
 from logs
+inner join users on users.id = logs.user_id and users.deleted_at is null
 where
   year = sqlc.arg('year')
   and user_id = sqlc.arg('user_id')
@@ -174,6 +178,7 @@ where
 select
   coalesce(sum(coalesce(computed_score, score)), 0)::real as score
 from logs
+inner join users on users.id = logs.user_id and users.deleted_at is null
 where
   user_id = sqlc.arg('user_id')
   and eligible_official_leaderboard = true
@@ -182,15 +187,16 @@ where
 -- name: GlobalLeaderboard :many
 with leaderboard as (
   select
-    user_id,
+    logs.user_id,
     sum(coalesce(computed_score, score)) as score
   from logs
+  inner join users on users.id = logs.user_id and users.deleted_at is null
   where
     eligible_official_leaderboard = true
     and logs.deleted_at is null
     and (logs.language_code = sqlc.narg('language_code') or sqlc.narg('language_code') is null)
     and (logs.log_activity_id = sqlc.narg('activity_id')::integer or sqlc.narg('activity_id') is null)
-  group by user_id
+  group by logs.user_id
 ), ranked_leaderboard as (
   select
     user_id,

@@ -16,6 +16,8 @@ var (
 	ErrUnauthorized              = commondomain.ErrUnauthorized
 	ErrConflict                  = commondomain.ErrConflict
 	ErrAccountDeletionInProgress = fmt.Errorf("account deletion in progress: %w", commondomain.ErrConflict)
+	ErrAccountDeletionNotLocked  = fmt.Errorf("account deletion is not locked: %w", commondomain.ErrConflict)
+	ErrRunningContestOwned       = fmt.Errorf("account owns a running contest: %w", commondomain.ErrConflict)
 )
 
 // Log errors
@@ -24,6 +26,7 @@ var (
 	ErrInvalidScoringRuleSet  = errors.New("invalid scoring rule set")
 	ErrScoringRuleSetNotFound = errors.New("scoring rule set not found")
 	ErrInvalidTags            = errors.New("invalid tags")
+	ErrLogFrozen              = fmt.Errorf("log is frozen: %w", commondomain.ErrConflict)
 )
 
 // Contest errors

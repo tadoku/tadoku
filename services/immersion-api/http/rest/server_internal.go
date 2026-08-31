@@ -13,12 +13,41 @@ type accountDeletionLocker interface {
 	Execute(context.Context, *domain.AccountDeletionLockRequest) error
 }
 
-type InternalServer struct {
-	accountDeletionLock accountDeletionLocker
+type accountDeletionScrubber interface {
+	Execute(context.Context, *domain.AccountDeletionScrubRequest) error
 }
 
-func NewInternalServer(accountDeletionLock accountDeletionLocker) *InternalServer {
-	return &InternalServer{accountDeletionLock: accountDeletionLock}
+type InternalServer struct {
+	accountDeletionLock  accountDeletionLocker
+	accountDeletionScrub accountDeletionScrubber
+}
+
+func NewInternalServer(accountDeletionLock accountDeletionLocker, accountDeletionScrub accountDeletionScrubber) *InternalServer {
+	return &InternalServer{
+		accountDeletionLock:  accountDeletionLock,
+		accountDeletionScrub: accountDeletionScrub,
+	}
+}
+
+func (s *InternalServer) InternalAccountDeletionScrub(ctx echo.Context) error {
+	var body internalapi.InternalAccountDeletionScrubJSONRequestBody
+	if err := ctx.Bind(&body); err != nil {
+		return ctx.NoContent(http.StatusBadRequest)
+	}
+
+	err := s.accountDeletionScrub.Execute(ctx.Request().Context(), &domain.AccountDeletionScrubRequest{
+		UserID:    body.UserId,
+		RequestID: body.RequestId,
+	})
+	if err != nil {
+		if handled, responseErr := handleCommonErrors(ctx, err); handled {
+			return responseErr
+		}
+		ctx.Echo().Logger.Error("could not scrub account: ", err)
+		return ctx.NoContent(http.StatusInternalServerError)
+	}
+
+	return ctx.NoContent(http.StatusNoContent)
 }
 
 var _ internalapi.ServerInterface = (*InternalServer)(nil)

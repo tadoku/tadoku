@@ -241,18 +241,44 @@ func TestLeaderboardGlobal_CacheMiss(t *testing.T) {
 }
 
 func TestLeaderboardGlobal_StoreFetchError(t *testing.T) {
+	want := &domain.Leaderboard{
+		Entries:   []domain.LeaderboardEntry{},
+		TotalSize: 0,
+	}
 	store := &leaderboardGlobalStoreMock{
 		fetchErr: errors.New("valkey down"),
 	}
-	repo := &leaderboardGlobalRepositoryMock{}
+	repo := &leaderboardGlobalRepositoryMock{leaderboard: want}
 	service := domain.NewLeaderboardGlobal(repo, store)
 
-	_, err := service.Execute(context.Background(), &domain.LeaderboardGlobalRequest{
+	got, err := service.Execute(context.Background(), &domain.LeaderboardGlobalRequest{
 		PageSize: 25,
 	})
 
-	assert.Error(t, err)
-	assert.Contains(t, err.Error(), "valkey down")
+	require.NoError(t, err)
+	assert.Same(t, want, got)
+	assert.NotNil(t, repo.capturedRequest, "should fall back to Postgres")
+}
+
+func TestLeaderboardGlobal_StoreRebuildError(t *testing.T) {
+	want := &domain.Leaderboard{
+		Entries:   []domain.LeaderboardEntry{},
+		TotalSize: 0,
+	}
+	store := &leaderboardGlobalStoreMock{
+		rebuildErr: errors.New("valkey down"),
+	}
+	repo := &leaderboardGlobalRepositoryMock{
+		leaderboard: want,
+		allScores:   []domain.LeaderboardScore{{UserID: uuid.New(), Score: 100}},
+	}
+	service := domain.NewLeaderboardGlobal(repo, store)
+
+	got, err := service.Execute(context.Background(), &domain.LeaderboardGlobalRequest{PageSize: 25})
+
+	require.NoError(t, err)
+	assert.Same(t, want, got)
+	assert.NotNil(t, repo.capturedRequest, "should fall back to Postgres")
 }
 
 func TestLeaderboardGlobal_Pagination(t *testing.T) {

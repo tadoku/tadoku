@@ -4,6 +4,8 @@ go_library(
     name = "repository",
     srcs = [
         "accountdeletionlock.go",
+        "accountdeletionscrub.go",
+        "logmutation.go",
         "logtracking.go",
         "outbox.go",
         "repo_activityforcontestuser.go",
@@ -63,6 +65,7 @@ go_test(
     name = "repository_test",
     srcs = [
         "accountdeletionlock_integration_test.go",
+        "accountdeletionscrub_integration_test.go",
         "logcreate_integration_test.go",
         "logtracking_test.go",
         "repo_findscoringruleset_test.go",

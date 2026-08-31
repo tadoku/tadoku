@@ -3,6 +3,7 @@ load("@rules_go//go:def.bzl", "go_library", "go_test")
 go_library(
     name = "postgres",
     srcs = [
+        "account_deletion.sql.go",
         "contest_profile.sql.go",
         "contests.sql.go",
         "db.go",

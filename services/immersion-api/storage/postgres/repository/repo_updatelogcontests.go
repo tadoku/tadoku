@@ -19,6 +19,10 @@ func (r *Repository) UpdateLogContests(ctx context.Context, req *domain.LogConte
 		_ = tx.Rollback()
 		return err
 	}
+	if err = lockLogForMutation(ctx, qtx, req.LogID); err != nil {
+		_ = tx.Rollback()
+		return err
+	}
 
 	// Fetch log context before changes to capture pre-change eligible flag
 	logCtxBefore, err := qtx.FetchLogOutboxContext(ctx, req.LogID)

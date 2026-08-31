@@ -183,6 +183,7 @@ set deleted_at = now()
 where
   id = $1
   and logs.deleted_at is null
+  and logs.frozen_at is null
 `
 
 func (q *Queries) DeleteLog(ctx context.Context, logID uuid.UUID) error {
@@ -382,7 +383,7 @@ select
   contests.title,
   contest_registrations.id,
   contests.contest_end,
-  owner_users.display_name as owner_user_display_name,
+  case when owner_users.deleted_at is not null then 'Deleted organizer' else owner_users.display_name end::varchar as owner_user_display_name,
   contests.official,
   coalesce(contest_logs.computed_score, contest_logs.score) as score
 from contest_logs
@@ -796,6 +797,21 @@ func (q *Queries) ListLogsForUser(ctx context.Context, arg ListLogsForUserParams
 	return items, nil
 }
 
+const lockLogForMutation = `-- name: LockLogForMutation :one
+select frozen_at
+from logs
+where id = $1
+  and deleted_at is null
+for update
+`
+
+func (q *Queries) LockLogForMutation(ctx context.Context, logID uuid.UUID) (sql.NullTime, error) {
+	row := q.db.QueryRowContext(ctx, lockLogForMutation, logID)
+	var frozen_at sql.NullTime
+	err := row.Scan(&frozen_at)
+	return frozen_at, err
+}
+
 const updateLog = `-- name: UpdateLog :exec
 update logs
 set
@@ -814,6 +830,7 @@ set
 where
   id = $13
   and logs.deleted_at is null
+  and logs.frozen_at is null
 `
 
 type UpdateLogParams struct {
@@ -880,9 +897,11 @@ set
   score_rule_ids = $7,
   score_rates = $8,
   score_source = $9
-from contests
+from contests, logs
 where
   contest_logs.log_id = $10
+  and logs.id = contest_logs.log_id
+  and logs.frozen_at is null
   and contest_logs.contest_id = $11
   and contest_logs.contest_id = contests.id
   and contests.contest_end >= $12
@@ -933,9 +952,11 @@ set
   score_rule_ids = $7,
   score_rates = $8,
   score_source = $9
-from contests
+from contests, logs
 where
   contest_logs.log_id = $10
+  and logs.id = contest_logs.log_id
+  and logs.frozen_at is null
   and contest_logs.contest_id = contests.id
   and contests.contest_end >= $11
 `

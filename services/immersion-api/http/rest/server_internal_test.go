@@ -20,6 +20,16 @@ type accountDeletionLockerMock struct {
 	err error
 }
 
+type accountDeletionScrubberMock struct {
+	req *domain.AccountDeletionScrubRequest
+	err error
+}
+
+func (m *accountDeletionScrubberMock) Execute(_ context.Context, req *domain.AccountDeletionScrubRequest) error {
+	m.req = req
+	return m.err
+}
+
 func (m *accountDeletionLockerMock) Execute(_ context.Context, req *domain.AccountDeletionLockRequest) error {
 	m.req = req
 	return m.err
@@ -29,7 +39,7 @@ func TestInternalAccountDeletionLock(t *testing.T) {
 	userID := uuid.New()
 	requestID := uuid.New()
 	locker := &accountDeletionLockerMock{}
-	server := NewInternalServer(locker)
+	server := NewInternalServer(locker, &accountDeletionScrubberMock{})
 	e := echo.New()
 	req := httptest.NewRequest(http.MethodPost, "/internal/v1/account-deletion-locks", strings.NewReader(
 		`{"user_id":"`+userID.String()+`","request_id":"`+requestID.String()+`"}`,
@@ -56,7 +66,7 @@ func TestInternalAccountDeletionLockMapsDomainErrors(t *testing.T) {
 		"unexpected": {errors.New("database unavailable"), http.StatusInternalServerError},
 	} {
 		t.Run(name, func(t *testing.T) {
-			server := NewInternalServer(&accountDeletionLockerMock{err: tc.err})
+			server := NewInternalServer(&accountDeletionLockerMock{err: tc.err}, &accountDeletionScrubberMock{})
 			e := echo.New()
 			req := httptest.NewRequest(http.MethodPost, "/", strings.NewReader(
 				`{"user_id":"`+uuid.NewString()+`","request_id":"`+uuid.NewString()+`"}`,
@@ -66,6 +76,49 @@ func TestInternalAccountDeletionLockMapsDomainErrors(t *testing.T) {
 
 			require.NoError(t, server.InternalAccountDeletionLock(e.NewContext(req, recorder)))
 			assert.Equal(t, tc.status, recorder.Code)
+		})
+	}
+}
+
+func TestInternalAccountDeletionScrub(t *testing.T) {
+	userID := uuid.New()
+	requestID := uuid.New()
+	scrubber := &accountDeletionScrubberMock{}
+	server := NewInternalServer(&accountDeletionLockerMock{}, scrubber)
+	e := echo.New()
+	req := httptest.NewRequest(http.MethodPost, "/internal/v1/account-deletion-scrubs", strings.NewReader(
+		`{"user_id":"`+userID.String()+`","request_id":"`+requestID.String()+`"}`,
+	))
+	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	recorder := httptest.NewRecorder()
+
+	require.NoError(t, server.InternalAccountDeletionScrub(e.NewContext(req, recorder)))
+	assert.Equal(t, http.StatusNoContent, recorder.Code)
+	require.NotNil(t, scrubber.req)
+	assert.Equal(t, userID, scrubber.req.UserID)
+	assert.Equal(t, requestID, scrubber.req.RequestID)
+}
+
+func TestInternalAccountDeletionScrubMapsConflicts(t *testing.T) {
+	for name, tc := range map[string]struct {
+		err  error
+		code string
+	}{
+		"not locked":      {domain.ErrAccountDeletionNotLocked, "account_deletion_not_locked"},
+		"running contest": {domain.ErrRunningContestOwned, "running_contest_owned"},
+	} {
+		t.Run(name, func(t *testing.T) {
+			server := NewInternalServer(&accountDeletionLockerMock{}, &accountDeletionScrubberMock{err: tc.err})
+			e := echo.New()
+			req := httptest.NewRequest(http.MethodPost, "/", strings.NewReader(
+				`{"user_id":"`+uuid.NewString()+`","request_id":"`+uuid.NewString()+`"}`,
+			))
+			req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+			recorder := httptest.NewRecorder()
+
+			require.NoError(t, server.InternalAccountDeletionScrub(e.NewContext(req, recorder)))
+			assert.Equal(t, http.StatusConflict, recorder.Code)
+			assert.JSONEq(t, `{"error":"`+tc.code+`"}`, recorder.Body.String())
 		})
 	}
 }

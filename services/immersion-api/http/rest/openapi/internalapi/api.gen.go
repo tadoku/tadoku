@@ -27,8 +27,17 @@ type AccountDeletionLockRequest struct {
 	UserId    openapi_types.UUID `json:"user_id"`
 }
 
+// AccountDeletionScrubRequest defines model for AccountDeletionScrubRequest.
+type AccountDeletionScrubRequest struct {
+	RequestId openapi_types.UUID `json:"request_id"`
+	UserId    openapi_types.UUID `json:"user_id"`
+}
+
 // InternalAccountDeletionLockJSONRequestBody defines body for InternalAccountDeletionLock for application/json ContentType.
 type InternalAccountDeletionLockJSONRequestBody = AccountDeletionLockRequest
+
+// InternalAccountDeletionScrubJSONRequestBody defines body for InternalAccountDeletionScrub for application/json ContentType.
+type InternalAccountDeletionScrubJSONRequestBody = AccountDeletionScrubRequest
 
 // RequestEditorFn  is the function signature for the RequestEditor callback function
 type RequestEditorFn func(ctx context.Context, req *http.Request) error
@@ -107,6 +116,11 @@ type ClientInterface interface {
 	InternalAccountDeletionLockWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	InternalAccountDeletionLock(ctx context.Context, body InternalAccountDeletionLockJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// InternalAccountDeletionScrub request with any body
+	InternalAccountDeletionScrubWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	InternalAccountDeletionScrub(ctx context.Context, body InternalAccountDeletionScrubJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 }
 
 func (c *Client) InternalAccountDeletionLockWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
@@ -123,6 +137,30 @@ func (c *Client) InternalAccountDeletionLockWithBody(ctx context.Context, conten
 
 func (c *Client) InternalAccountDeletionLock(ctx context.Context, body InternalAccountDeletionLockJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewInternalAccountDeletionLockRequest(c.Server, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) InternalAccountDeletionScrubWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewInternalAccountDeletionScrubRequestWithBody(c.Server, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) InternalAccountDeletionScrub(ctx context.Context, body InternalAccountDeletionScrubJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewInternalAccountDeletionScrubRequest(c.Server, body)
 	if err != nil {
 		return nil, err
 	}
@@ -154,6 +192,46 @@ func NewInternalAccountDeletionLockRequestWithBody(server string, contentType st
 	}
 
 	operationPath := fmt.Sprintf("/internal/v1/account-deletion-locks")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewInternalAccountDeletionScrubRequest calls the generic InternalAccountDeletionScrub builder with application/json body
+func NewInternalAccountDeletionScrubRequest(server string, body InternalAccountDeletionScrubJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewInternalAccountDeletionScrubRequestWithBody(server, "application/json", bodyReader)
+}
+
+// NewInternalAccountDeletionScrubRequestWithBody generates requests for InternalAccountDeletionScrub with any type of body
+func NewInternalAccountDeletionScrubRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/internal/v1/account-deletion-scrubs")
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -220,6 +298,11 @@ type ClientWithResponsesInterface interface {
 	InternalAccountDeletionLockWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*InternalAccountDeletionLockResponse, error)
 
 	InternalAccountDeletionLockWithResponse(ctx context.Context, body InternalAccountDeletionLockJSONRequestBody, reqEditors ...RequestEditorFn) (*InternalAccountDeletionLockResponse, error)
+
+	// InternalAccountDeletionScrub request with any body
+	InternalAccountDeletionScrubWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*InternalAccountDeletionScrubResponse, error)
+
+	InternalAccountDeletionScrubWithResponse(ctx context.Context, body InternalAccountDeletionScrubJSONRequestBody, reqEditors ...RequestEditorFn) (*InternalAccountDeletionScrubResponse, error)
 }
 
 type InternalAccountDeletionLockResponse struct {
@@ -243,6 +326,27 @@ func (r InternalAccountDeletionLockResponse) StatusCode() int {
 	return 0
 }
 
+type InternalAccountDeletionScrubResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+}
+
+// Status returns HTTPResponse.Status
+func (r InternalAccountDeletionScrubResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r InternalAccountDeletionScrubResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
 // InternalAccountDeletionLockWithBodyWithResponse request with arbitrary body returning *InternalAccountDeletionLockResponse
 func (c *ClientWithResponses) InternalAccountDeletionLockWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*InternalAccountDeletionLockResponse, error) {
 	rsp, err := c.InternalAccountDeletionLockWithBody(ctx, contentType, body, reqEditors...)
@@ -258,6 +362,23 @@ func (c *ClientWithResponses) InternalAccountDeletionLockWithResponse(ctx contex
 		return nil, err
 	}
 	return ParseInternalAccountDeletionLockResponse(rsp)
+}
+
+// InternalAccountDeletionScrubWithBodyWithResponse request with arbitrary body returning *InternalAccountDeletionScrubResponse
+func (c *ClientWithResponses) InternalAccountDeletionScrubWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*InternalAccountDeletionScrubResponse, error) {
+	rsp, err := c.InternalAccountDeletionScrubWithBody(ctx, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseInternalAccountDeletionScrubResponse(rsp)
+}
+
+func (c *ClientWithResponses) InternalAccountDeletionScrubWithResponse(ctx context.Context, body InternalAccountDeletionScrubJSONRequestBody, reqEditors ...RequestEditorFn) (*InternalAccountDeletionScrubResponse, error) {
+	rsp, err := c.InternalAccountDeletionScrub(ctx, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseInternalAccountDeletionScrubResponse(rsp)
 }
 
 // ParseInternalAccountDeletionLockResponse parses an HTTP response from a InternalAccountDeletionLockWithResponse call
@@ -276,11 +397,30 @@ func ParseInternalAccountDeletionLockResponse(rsp *http.Response) (*InternalAcco
 	return response, nil
 }
 
+// ParseInternalAccountDeletionScrubResponse parses an HTTP response from a InternalAccountDeletionScrubWithResponse call
+func ParseInternalAccountDeletionScrubResponse(rsp *http.Response) (*InternalAccountDeletionScrubResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &InternalAccountDeletionScrubResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	return response, nil
+}
+
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
 	// Idempotently prevents further mutations for an account
 	// (POST /internal/v1/account-deletion-locks)
 	InternalAccountDeletionLock(ctx echo.Context) error
+	// Idempotently anonymizes and removes immersion data for a locked account
+	// (POST /internal/v1/account-deletion-scrubs)
+	InternalAccountDeletionScrub(ctx echo.Context) error
 }
 
 // ServerInterfaceWrapper converts echo contexts to parameters.
@@ -296,6 +436,17 @@ func (w *ServerInterfaceWrapper) InternalAccountDeletionLock(ctx echo.Context) e
 
 	// Invoke the callback with all the unmarshalled arguments
 	err = w.Handler.InternalAccountDeletionLock(ctx)
+	return err
+}
+
+// InternalAccountDeletionScrub converts echo context to params.
+func (w *ServerInterfaceWrapper) InternalAccountDeletionScrub(ctx echo.Context) error {
+	var err error
+
+	ctx.Set(ServiceAuthScopes, []string{""})
+
+	// Invoke the callback with all the unmarshalled arguments
+	err = w.Handler.InternalAccountDeletionScrub(ctx)
 	return err
 }
 
@@ -328,5 +479,6 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 	}
 
 	router.POST(baseURL+"/internal/v1/account-deletion-locks", wrapper.InternalAccountDeletionLock)
+	router.POST(baseURL+"/internal/v1/account-deletion-scrubs", wrapper.InternalAccountDeletionScrub)
 
 }

@@ -17,6 +17,8 @@ type mockLeaderboardStore struct {
 	updateOfficialCalls  []storeUpdateOfficialCall
 	rebuildContestCalls  []storeRebuildContestCall
 	rebuildOfficialCalls []storeRebuildOfficialCall
+	removeContestCalls   []mockLeaderboardOutboxContestCall
+	removeOfficialCalls  []mockLeaderboardOutboxOfficialCall
 
 	// Control behavior
 	updateContestExists  bool
@@ -26,6 +28,8 @@ type mockLeaderboardStore struct {
 	updateOfficialErr    error
 	rebuildContestErr    error
 	rebuildOfficialErr   error
+	removeContestErr     error
+	removeOfficialErr    error
 }
 
 type storeUpdateContestCall struct {
@@ -64,6 +68,16 @@ func (m *mockLeaderboardStore) UpdateOfficialScores(ctx context.Context, year in
 		Year: year, UserID: userID, YearlyScore: yearlyScore, GlobalScore: globalScore,
 	})
 	return m.updateOfficialYearly, m.updateOfficialGlobal, m.updateOfficialErr
+}
+
+func (m *mockLeaderboardStore) RemoveContestScore(_ context.Context, contestID uuid.UUID, userID uuid.UUID) error {
+	m.removeContestCalls = append(m.removeContestCalls, mockLeaderboardOutboxContestCall{ContestID: contestID, UserID: userID})
+	return m.removeContestErr
+}
+
+func (m *mockLeaderboardStore) RemoveOfficialScores(_ context.Context, year int, userID uuid.UUID) error {
+	m.removeOfficialCalls = append(m.removeOfficialCalls, mockLeaderboardOutboxOfficialCall{Year: year, UserID: userID})
+	return m.removeOfficialErr
 }
 
 func (m *mockLeaderboardStore) RebuildContestLeaderboard(ctx context.Context, contestID uuid.UUID, scores []domain.LeaderboardScore) error {
@@ -373,4 +387,21 @@ func TestLeaderboardUpdater_UpdateUserOfficialScores(t *testing.T) {
 		assert.ErrorIs(t, err, rebuildErr)
 		require.Len(t, store.rebuildOfficialCalls, 1)
 	})
+}
+
+func TestLeaderboardUpdater_RemoveUserScores(t *testing.T) {
+	ctx := context.Background()
+	userID := uuid.New()
+	contestID := uuid.New()
+	store := &mockLeaderboardStore{}
+	updater := domain.NewLeaderboardUpdater(store, &mockLeaderboardRepo{})
+
+	require.NoError(t, updater.RemoveUserContestScore(ctx, contestID, userID))
+	require.NoError(t, updater.RemoveUserOfficialScores(ctx, 2026, userID))
+	require.Len(t, store.removeContestCalls, 1)
+	assert.Equal(t, contestID, store.removeContestCalls[0].ContestID)
+	assert.Equal(t, userID, store.removeContestCalls[0].UserID)
+	require.Len(t, store.removeOfficialCalls, 1)
+	assert.Equal(t, 2026, store.removeOfficialCalls[0].Year)
+	assert.Equal(t, userID, store.removeOfficialCalls[0].UserID)
 }

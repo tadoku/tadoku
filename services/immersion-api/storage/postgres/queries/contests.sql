@@ -59,7 +59,7 @@ returning id;
 select
   contests.id,
   owner_user_id,
-  users.display_name as owner_user_display_name,
+  case when users.deleted_at is not null then 'Deleted organizer' else users.display_name end::varchar as owner_user_display_name,
   "private",
   contest_start,
   contest_end,
@@ -87,7 +87,7 @@ offset sqlc.arg('start_from');
 select
   contests.id,
   owner_user_id,
-  users.display_name as owner_user_display_name,
+  case when users.deleted_at is not null then 'Deleted organizer' else users.display_name end::varchar as owner_user_display_name,
   "private",
   contest_start,
   contest_end,
@@ -121,7 +121,7 @@ where
 select
   contests.id,
   owner_user_id,
-  users.display_name as owner_user_display_name,
+  case when users.deleted_at is not null then 'Deleted organizer' else users.display_name end::varchar as owner_user_display_name,
   "private",
   contest_start,
   contest_end,

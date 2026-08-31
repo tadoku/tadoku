@@ -66,15 +66,16 @@ func (q *Queries) ContestLeaderboardAllScores(ctx context.Context, contestID uui
 const globalLeaderboard = `-- name: GlobalLeaderboard :many
 with leaderboard as (
   select
-    user_id,
+    logs.user_id,
     sum(coalesce(computed_score, score)) as score
   from logs
+  inner join users on users.id = logs.user_id and users.deleted_at is null
   where
     eligible_official_leaderboard = true
     and logs.deleted_at is null
     and (logs.language_code = $3 or $3 is null)
     and (logs.log_activity_id = $4::integer or $4 is null)
-  group by user_id
+  group by logs.user_id
 ), ranked_leaderboard as (
   select
     user_id,
@@ -159,13 +160,14 @@ func (q *Queries) GlobalLeaderboard(ctx context.Context, arg GlobalLeaderboardPa
 
 const globalLeaderboardAllScores = `-- name: GlobalLeaderboardAllScores :many
 select
-  user_id,
+  logs.user_id,
   sum(coalesce(computed_score, score))::real as score
 from logs
+inner join users on users.id = logs.user_id and users.deleted_at is null
 where
   eligible_official_leaderboard = true
   and logs.deleted_at is null
-group by user_id
+group by logs.user_id
 having sum(coalesce(computed_score, score)) > 0
 `
 
@@ -337,6 +339,7 @@ const userGlobalScore = `-- name: UserGlobalScore :one
 select
   coalesce(sum(coalesce(computed_score, score)), 0)::real as score
 from logs
+inner join users on users.id = logs.user_id and users.deleted_at is null
 where
   user_id = $1
   and eligible_official_leaderboard = true
@@ -356,6 +359,7 @@ const userYearlyScore = `-- name: UserYearlyScore :one
 select
   coalesce(sum(coalesce(computed_score, score)), 0)::real as score
 from logs
+inner join users on users.id = logs.user_id and users.deleted_at is null
 where
   year = $1
   and user_id = $2
@@ -380,16 +384,17 @@ func (q *Queries) UserYearlyScore(ctx context.Context, arg UserYearlyScoreParams
 const yearlyLeaderboard = `-- name: YearlyLeaderboard :many
 with leaderboard as (
   select
-    user_id,
+    logs.user_id,
     sum(coalesce(computed_score, score)) as score
   from logs
+  inner join users on users.id = logs.user_id and users.deleted_at is null
   where
     logs.year = $3
     and eligible_official_leaderboard = true
     and logs.deleted_at is null
     and (logs.language_code = $4 or $4 is null)
     and (logs.log_activity_id = $5::integer or $5 is null)
-  group by user_id
+  group by logs.user_id
 ), ranked_leaderboard as (
   select
     user_id,
@@ -475,14 +480,15 @@ func (q *Queries) YearlyLeaderboard(ctx context.Context, arg YearlyLeaderboardPa
 
 const yearlyLeaderboardAllScores = `-- name: YearlyLeaderboardAllScores :many
 select
-  user_id,
+  logs.user_id,
   sum(coalesce(computed_score, score))::real as score
 from logs
+inner join users on users.id = logs.user_id and users.deleted_at is null
 where
   year = $1
   and eligible_official_leaderboard = true
   and logs.deleted_at is null
-group by user_id
+group by logs.user_id
 having sum(coalesce(computed_score, score)) > 0
 `
 

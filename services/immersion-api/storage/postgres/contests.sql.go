@@ -153,7 +153,7 @@ const findContestById = `-- name: FindContestById :one
 select
   contests.id,
   owner_user_id,
-  users.display_name as owner_user_display_name,
+  case when users.deleted_at is not null then 'Deleted organizer' else users.display_name end::varchar as owner_user_display_name,
   "private",
   contest_start,
   contest_end,
@@ -224,7 +224,7 @@ const findLatestOfficialContest = `-- name: FindLatestOfficialContest :one
 select
   contests.id,
   owner_user_id,
-  users.display_name as owner_user_display_name,
+  case when users.deleted_at is not null then 'Deleted organizer' else users.display_name end::varchar as owner_user_display_name,
   "private",
   contest_start,
   contest_end,
@@ -310,7 +310,7 @@ const listContests = `-- name: ListContests :many
 select
   contests.id,
   owner_user_id,
-  users.display_name as owner_user_display_name,
+  case when users.deleted_at is not null then 'Deleted organizer' else users.display_name end::varchar as owner_user_display_name,
   "private",
   contest_start,
   contest_end,

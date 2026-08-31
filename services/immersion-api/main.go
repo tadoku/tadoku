@@ -228,6 +228,7 @@ func main() {
 	scorePreview := immersiondomain.NewScorePreview(postgresRepository, clock)
 	scoringRuleSetManagement := immersiondomain.NewScoringRuleSetManagement(postgresRepository, clock)
 	accountDeletionLock := immersiondomain.NewAccountDeletionLock(postgresRepository, clock)
+	accountDeletionScrub := immersiondomain.NewAccountDeletionScrub(postgresRepository, clock)
 
 	server := rest.NewServer(
 		contestConfigurationOptions,
@@ -269,7 +270,7 @@ func main() {
 	)
 
 	openapi.RegisterHandlersWithBaseURL(api, server, "")
-	internalServer := rest.NewInternalServer(accountDeletionLock)
+	internalServer := rest.NewInternalServer(accountDeletionLock, accountDeletionScrub)
 	internal := api.Group("", tadokumiddleware.RequireServiceIdentity())
 	rest.RegisterInternalRoutes(internal, internalServer)
 

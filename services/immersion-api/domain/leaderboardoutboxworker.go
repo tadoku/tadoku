@@ -33,6 +33,8 @@ type LeaderboardOutboxWorkerRepository interface {
 type LeaderboardOutboxUpdater interface {
 	UpdateUserContestScore(ctx context.Context, contestID uuid.UUID, userID uuid.UUID) error
 	UpdateUserOfficialScores(ctx context.Context, year int, userID uuid.UUID) error
+	RemoveUserContestScore(ctx context.Context, contestID uuid.UUID, userID uuid.UUID) error
+	RemoveUserOfficialScores(ctx context.Context, year int, userID uuid.UUID) error
 	RebuildOfficialLeaderboards(ctx context.Context, year int) error
 }
 
@@ -171,6 +173,20 @@ func (w *LeaderboardOutboxWorker) processEvent(ctx context.Context, event Leader
 			return nil
 		}
 		return w.updater.UpdateUserOfficialScores(ctx, *event.Year, event.UserID)
+
+	case "remove_contest_score":
+		if event.ContestID == nil {
+			slog.ErrorContext(ctx, "outbox worker: remove_contest_score event missing contest_id", "event_id", event.ID)
+			return nil
+		}
+		return w.updater.RemoveUserContestScore(ctx, *event.ContestID, event.UserID)
+
+	case "remove_official_scores":
+		if event.Year == nil {
+			slog.ErrorContext(ctx, "outbox worker: remove_official_scores event missing year", "event_id", event.ID)
+			return nil
+		}
+		return w.updater.RemoveUserOfficialScores(ctx, *event.Year, event.UserID)
 
 	default:
 		// Unknown event types are also permanent payload errors rather than

@@ -87,6 +87,18 @@ func TestLeaderboardStorePublicOperationsApplyOperationTimeout(t *testing.T) {
 			},
 		},
 		{
+			name: "remove contest score",
+			run: func(ctx context.Context) {
+				_ = store.RemoveContestScore(ctx, contestID, userID)
+			},
+		},
+		{
+			name: "remove official scores",
+			run: func(ctx context.Context) {
+				_ = store.RemoveOfficialScores(ctx, 2026, userID)
+			},
+		},
+		{
 			name: "rebuild contest leaderboard",
 			run: func(ctx context.Context) {
 				_ = store.RebuildContestLeaderboard(ctx, contestID, scores)

@@ -203,22 +203,36 @@ func (s *LeaderboardStore) UpdateOfficialScores(ctx context.Context, year int, u
 }
 
 func (s *LeaderboardStore) RemoveContestScore(ctx context.Context, contestID uuid.UUID, userID uuid.UUID) error {
+	ctx, cancel := s.withOperationTimeout(ctx)
+	defer cancel()
+
 	key := contestLeaderboardKey(contestID)
 	cmd := s.client.B().Zrem().Key(key).Member(userID.String()).Build()
 	if err := s.client.Do(ctx, cmd).Error(); err != nil {
-		return fmt.Errorf("failed to remove contest leaderboard score for key %s: %w", key, err)
+		wrappedErr := fmt.Errorf("failed to remove contest leaderboard score for key %s: %w", key, err)
+		s.observeResult(ctx, domain.LeaderboardCacheKindContest, domain.LeaderboardCacheOperationUpdate, wrappedErr)
+		return wrappedErr
 	}
+	s.observeResult(ctx, domain.LeaderboardCacheKindContest, domain.LeaderboardCacheOperationUpdate, nil)
 	return nil
 }
 
 func (s *LeaderboardStore) RemoveOfficialScores(ctx context.Context, year int, userID uuid.UUID) error {
+	ctx, cancel := s.withOperationTimeout(ctx)
+	defer cancel()
+
 	yearlyKey := yearlyLeaderboardKey(year)
 	if err := removeOfficialScoresScript.Exec(ctx, s.client,
 		[]string{yearlyKey, globalLeaderboardKey},
 		[]string{userID.String()},
 	).Error(); err != nil {
-		return fmt.Errorf("failed to remove official leaderboard scores: %w", err)
+		wrappedErr := fmt.Errorf("failed to remove official leaderboard scores: %w", err)
+		s.observeResult(ctx, domain.LeaderboardCacheKindYearly, domain.LeaderboardCacheOperationUpdate, wrappedErr)
+		s.observeResult(ctx, domain.LeaderboardCacheKindGlobal, domain.LeaderboardCacheOperationUpdate, wrappedErr)
+		return wrappedErr
 	}
+	s.observeResult(ctx, domain.LeaderboardCacheKindYearly, domain.LeaderboardCacheOperationUpdate, nil)
+	s.observeResult(ctx, domain.LeaderboardCacheKindGlobal, domain.LeaderboardCacheOperationUpdate, nil)
 	return nil
 }
 

@@ -54,16 +54,16 @@ func (s *LeaderboardYearly) Execute(ctx context.Context, req *LeaderboardYearlyR
 	year := int(req.Year)
 	lbPage, exists, err := s.store.FetchYearlyLeaderboardPage(ctx, year, req.Page, req.PageSize)
 	if err != nil {
-		return nil, fmt.Errorf("failed to fetch yearly leaderboard from store: %w", err)
+		return s.repo.FetchYearlyLeaderboard(ctx, req)
 	}
 
 	if !exists {
 		allScores, err := s.repo.FetchAllYearlyLeaderboardScores(ctx, year)
 		if err != nil {
-			return nil, fmt.Errorf("failed to fetch all yearly scores for rebuild: %w", err)
+			return s.repo.FetchYearlyLeaderboard(ctx, req)
 		}
 		if err := s.store.RebuildYearlyLeaderboard(ctx, year, allScores); err != nil {
-			return nil, fmt.Errorf("failed to rebuild yearly leaderboard: %w", err)
+			return s.repo.FetchYearlyLeaderboard(ctx, req)
 		}
 		return s.repo.FetchYearlyLeaderboard(ctx, req)
 	}

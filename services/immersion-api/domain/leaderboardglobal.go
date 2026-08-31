@@ -52,16 +52,16 @@ func (s *LeaderboardGlobal) Execute(ctx context.Context, req *LeaderboardGlobalR
 
 	lbPage, exists, err := s.store.FetchGlobalLeaderboardPage(ctx, req.Page, req.PageSize)
 	if err != nil {
-		return nil, fmt.Errorf("failed to fetch global leaderboard from store: %w", err)
+		return s.repo.FetchGlobalLeaderboard(ctx, req)
 	}
 
 	if !exists {
 		allScores, err := s.repo.FetchAllGlobalLeaderboardScores(ctx)
 		if err != nil {
-			return nil, fmt.Errorf("failed to fetch all global scores for rebuild: %w", err)
+			return s.repo.FetchGlobalLeaderboard(ctx, req)
 		}
 		if err := s.store.RebuildGlobalLeaderboard(ctx, allScores); err != nil {
-			return nil, fmt.Errorf("failed to rebuild global leaderboard: %w", err)
+			return s.repo.FetchGlobalLeaderboard(ctx, req)
 		}
 		return s.repo.FetchGlobalLeaderboard(ctx, req)
 	}

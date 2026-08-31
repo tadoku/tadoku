@@ -53,16 +53,16 @@ func (s *ContestLeaderboardFetch) Execute(ctx context.Context, req *ContestLeade
 
 	lbPage, exists, err := s.store.FetchContestLeaderboardPage(ctx, req.ContestID, req.Page, req.PageSize)
 	if err != nil {
-		return nil, fmt.Errorf("failed to fetch contest leaderboard from store: %w", err)
+		return s.repo.FetchContestLeaderboard(ctx, req)
 	}
 
 	if !exists {
 		allScores, err := s.repo.FetchAllContestLeaderboardScores(ctx, req.ContestID)
 		if err != nil {
-			return nil, fmt.Errorf("failed to fetch all contest scores for rebuild: %w", err)
+			return s.repo.FetchContestLeaderboard(ctx, req)
 		}
 		if err := s.store.RebuildContestLeaderboard(ctx, req.ContestID, allScores); err != nil {
-			return nil, fmt.Errorf("failed to rebuild contest leaderboard: %w", err)
+			return s.repo.FetchContestLeaderboard(ctx, req)
 		}
 		return s.repo.FetchContestLeaderboard(ctx, req)
 	}

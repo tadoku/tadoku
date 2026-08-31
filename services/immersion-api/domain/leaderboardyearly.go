@@ -27,12 +27,21 @@ type LeaderboardYearlyRequest struct {
 }
 
 type LeaderboardYearly struct {
-	repo  LeaderboardYearlyRepository
-	store LeaderboardYearlyStore
+	repo          LeaderboardYearlyRepository
+	store         LeaderboardYearlyStore
+	cacheObserver LeaderboardCacheObserver
 }
 
 func NewLeaderboardYearly(repo LeaderboardYearlyRepository, store LeaderboardYearlyStore) *LeaderboardYearly {
-	return &LeaderboardYearly{repo: repo, store: store}
+	return NewLeaderboardYearlyWithCacheObserver(repo, store, nil)
+}
+
+func NewLeaderboardYearlyWithCacheObserver(
+	repo LeaderboardYearlyRepository,
+	store LeaderboardYearlyStore,
+	cacheObserver LeaderboardCacheObserver,
+) *LeaderboardYearly {
+	return &LeaderboardYearly{repo: repo, store: store, cacheObserver: cacheObserver}
 }
 
 func (s *LeaderboardYearly) Execute(ctx context.Context, req *LeaderboardYearlyRequest) (*Leaderboard, error) {
@@ -54,17 +63,21 @@ func (s *LeaderboardYearly) Execute(ctx context.Context, req *LeaderboardYearlyR
 	year := int(req.Year)
 	lbPage, exists, err := s.store.FetchYearlyLeaderboardPage(ctx, year, req.Page, req.PageSize)
 	if err != nil {
+		s.observeFallback(ctx, LeaderboardCacheOperationFetch, err)
 		return s.repo.FetchYearlyLeaderboard(ctx, req)
 	}
 
 	if !exists {
 		allScores, err := s.repo.FetchAllYearlyLeaderboardScores(ctx, year)
 		if err != nil {
+			s.observeFallback(ctx, LeaderboardCacheOperationRebuild, err)
 			return s.repo.FetchYearlyLeaderboard(ctx, req)
 		}
 		if err := s.store.RebuildYearlyLeaderboard(ctx, year, allScores); err != nil {
+			s.observeFallback(ctx, LeaderboardCacheOperationRebuild, err)
 			return s.repo.FetchYearlyLeaderboard(ctx, req)
 		}
+		s.observeFallback(ctx, LeaderboardCacheOperationFetch, nil)
 		return s.repo.FetchYearlyLeaderboard(ctx, req)
 	}
 
@@ -90,4 +103,13 @@ func (s *LeaderboardYearly) Execute(ctx context.Context, req *LeaderboardYearlyR
 		TotalSize:     lbPage.TotalCount,
 		NextPageToken: nextPageToken,
 	}, nil
+}
+
+func (s *LeaderboardYearly) observeFallback(ctx context.Context, operation LeaderboardCacheOperation, err error) {
+	observeLeaderboardCache(ctx, s.cacheObserver, LeaderboardCacheObservation{
+		Kind:      LeaderboardCacheKindYearly,
+		Operation: operation,
+		Outcome:   LeaderboardCacheOutcomeFallback,
+		Err:       err,
+	})
 }

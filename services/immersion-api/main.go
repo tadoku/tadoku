@@ -141,9 +141,17 @@ func main() {
 		panic(err)
 	}
 
-	leaderboardStore := valkeystore.NewLeaderboardStore(valkeyClient, clock, cfg.ValkeyOperationTimeout)
-	leaderboardUpdater := immersiondomain.NewLeaderboardUpdater(leaderboardStore, postgresRepository)
 	serviceMetrics := commonobservability.NewMetrics(psql, cfg.ServiceName)
+	serviceLogger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
+	leaderboardCacheMetrics := observability.NewLeaderboardCacheMetrics(serviceMetrics.Registry())
+	leaderboardCacheObserver := observability.NewLeaderboardCacheObserver(leaderboardCacheMetrics, serviceLogger)
+	leaderboardStore := valkeystore.NewLeaderboardStoreWithCacheObserver(
+		valkeyClient,
+		clock,
+		cfg.ValkeyOperationTimeout,
+		leaderboardCacheObserver,
+	)
+	leaderboardUpdater := immersiondomain.NewLeaderboardUpdater(leaderboardStore, postgresRepository)
 	featureFlagMetrics := featureflags.NewMetrics(serviceMetrics.Registry(), clock)
 	fliptProvider, err := initializeFeatureFlagProvider(cfg, func() (*fliptclient.Client, error) {
 		s2sClient := s2s.NewClient(cfg.OathkeeperURL, clock)
@@ -174,10 +182,7 @@ func main() {
 	}
 	featureFlagEvaluator := featureflags.NewEvaluator(fliptProvider, featureFlagMetrics, clock)
 	scoringMetrics := observability.NewScoringShadowMetrics(serviceMetrics.Registry(), cfg.ScoringEngineEnabled)
-	scoringObserver := observability.NewScoringShadowObserver(
-		scoringMetrics,
-		slog.New(slog.NewJSONHandler(os.Stdout, nil)),
-	)
+	scoringObserver := observability.NewScoringShadowObserver(scoringMetrics, serviceLogger)
 	metricsServer := commonobservability.NewServer(
 		fmt.Sprintf("0.0.0.0:%d", cfg.MetricsPort),
 		serviceMetrics.Handler(),
@@ -234,9 +239,21 @@ func main() {
 	logListForContest := immersiondomain.NewLogListForContest(postgresRepository)
 	registrationFind := immersiondomain.NewRegistrationFind(postgresRepository)
 	registrationListYearly := immersiondomain.NewRegistrationListYearly(postgresRepository)
-	contestLeaderboardFetch := immersiondomain.NewContestLeaderboardFetch(postgresRepository, leaderboardStore)
-	leaderboardYearly := immersiondomain.NewLeaderboardYearly(postgresRepository, leaderboardStore)
-	leaderboardGlobal := immersiondomain.NewLeaderboardGlobal(postgresRepository, leaderboardStore)
+	contestLeaderboardFetch := immersiondomain.NewContestLeaderboardFetchWithCacheObserver(
+		postgresRepository,
+		leaderboardStore,
+		leaderboardCacheObserver,
+	)
+	leaderboardYearly := immersiondomain.NewLeaderboardYearlyWithCacheObserver(
+		postgresRepository,
+		leaderboardStore,
+		leaderboardCacheObserver,
+	)
+	leaderboardGlobal := immersiondomain.NewLeaderboardGlobalWithCacheObserver(
+		postgresRepository,
+		leaderboardStore,
+		leaderboardCacheObserver,
+	)
 	profileContest := immersiondomain.NewProfileContest(postgresRepository)
 	profileContestActivity := immersiondomain.NewProfileContestActivity(postgresRepository)
 	profileYearlyActivity := immersiondomain.NewProfileYearlyActivity(postgresRepository)

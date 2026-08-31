@@ -50,3 +50,13 @@ type LeaderboardCacheObservation struct {
 type LeaderboardCacheObserver interface {
 	ObserveLeaderboardCache(context.Context, LeaderboardCacheObservation)
 }
+
+func observeLeaderboardCache(
+	ctx context.Context,
+	observer LeaderboardCacheObserver,
+	observation LeaderboardCacheObservation,
+) {
+	if observer != nil {
+		observer.ObserveLeaderboardCache(ctx, observation)
+	}
+}

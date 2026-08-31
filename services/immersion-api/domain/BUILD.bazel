@@ -84,6 +84,7 @@ go_test(
         "languagecreate_test.go",
         "languagelist_test.go",
         "languageupdate_test.go",
+        "leaderboardcache_test.go",
         "leaderboardglobal_test.go",
         "leaderboardoutboxworker_test.go",
         "leaderboardrank_test.go",

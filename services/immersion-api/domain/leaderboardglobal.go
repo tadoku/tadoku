@@ -26,12 +26,21 @@ type LeaderboardGlobalRequest struct {
 }
 
 type LeaderboardGlobal struct {
-	repo  LeaderboardGlobalRepository
-	store LeaderboardGlobalStore
+	repo          LeaderboardGlobalRepository
+	store         LeaderboardGlobalStore
+	cacheObserver LeaderboardCacheObserver
 }
 
 func NewLeaderboardGlobal(repo LeaderboardGlobalRepository, store LeaderboardGlobalStore) *LeaderboardGlobal {
-	return &LeaderboardGlobal{repo: repo, store: store}
+	return NewLeaderboardGlobalWithCacheObserver(repo, store, nil)
+}
+
+func NewLeaderboardGlobalWithCacheObserver(
+	repo LeaderboardGlobalRepository,
+	store LeaderboardGlobalStore,
+	cacheObserver LeaderboardCacheObserver,
+) *LeaderboardGlobal {
+	return &LeaderboardGlobal{repo: repo, store: store, cacheObserver: cacheObserver}
 }
 
 func (s *LeaderboardGlobal) Execute(ctx context.Context, req *LeaderboardGlobalRequest) (*Leaderboard, error) {
@@ -52,17 +61,21 @@ func (s *LeaderboardGlobal) Execute(ctx context.Context, req *LeaderboardGlobalR
 
 	lbPage, exists, err := s.store.FetchGlobalLeaderboardPage(ctx, req.Page, req.PageSize)
 	if err != nil {
+		s.observeFallback(ctx, LeaderboardCacheOperationFetch, err)
 		return s.repo.FetchGlobalLeaderboard(ctx, req)
 	}
 
 	if !exists {
 		allScores, err := s.repo.FetchAllGlobalLeaderboardScores(ctx)
 		if err != nil {
+			s.observeFallback(ctx, LeaderboardCacheOperationRebuild, err)
 			return s.repo.FetchGlobalLeaderboard(ctx, req)
 		}
 		if err := s.store.RebuildGlobalLeaderboard(ctx, allScores); err != nil {
+			s.observeFallback(ctx, LeaderboardCacheOperationRebuild, err)
 			return s.repo.FetchGlobalLeaderboard(ctx, req)
 		}
+		s.observeFallback(ctx, LeaderboardCacheOperationFetch, nil)
 		return s.repo.FetchGlobalLeaderboard(ctx, req)
 	}
 
@@ -88,4 +101,13 @@ func (s *LeaderboardGlobal) Execute(ctx context.Context, req *LeaderboardGlobalR
 		TotalSize:     lbPage.TotalCount,
 		NextPageToken: nextPageToken,
 	}, nil
+}
+
+func (s *LeaderboardGlobal) observeFallback(ctx context.Context, operation LeaderboardCacheOperation, err error) {
+	observeLeaderboardCache(ctx, s.cacheObserver, LeaderboardCacheObservation{
+		Kind:      LeaderboardCacheKindGlobal,
+		Operation: operation,
+		Outcome:   LeaderboardCacheOutcomeFallback,
+		Err:       err,
+	})
 }

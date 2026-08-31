@@ -103,14 +103,27 @@ type LeaderboardStore struct {
 	client           valkeylib.Client
 	clock            commondomain.Clock
 	operationTimeout time.Duration
+	observer         domain.LeaderboardCacheObserver
 }
 
 // NewLeaderboardStore creates a new LeaderboardStore backed by the given Valkey client.
 func NewLeaderboardStore(client valkeylib.Client, clock commondomain.Clock, operationTimeout time.Duration) *LeaderboardStore {
+	return NewLeaderboardStoreWithCacheObserver(client, clock, operationTimeout, nil)
+}
+
+// NewLeaderboardStoreWithCacheObserver creates a leaderboard store with
+// process-local cache health observation.
+func NewLeaderboardStoreWithCacheObserver(
+	client valkeylib.Client,
+	clock commondomain.Clock,
+	operationTimeout time.Duration,
+	observer domain.LeaderboardCacheObserver,
+) *LeaderboardStore {
 	return &LeaderboardStore{
 		client:           client,
 		clock:            clock,
 		operationTimeout: operationTimeout,
+		observer:         observer,
 	}
 }
 
@@ -132,10 +145,18 @@ func (s *LeaderboardStore) UpdateContestScore(ctx context.Context, contestID uui
 
 	result, err := updateScoreScript.Exec(ctx, s.client, []string{key}, []string{scoreStr, member}).ToInt64()
 	if err != nil {
-		return false, fmt.Errorf("failed to update contest leaderboard score for key %s: %w", key, err)
+		wrappedErr := fmt.Errorf("failed to update contest leaderboard score for key %s: %w", key, err)
+		s.observe(ctx, domain.LeaderboardCacheKindContest, domain.LeaderboardCacheOperationUpdate, domain.LeaderboardCacheOutcomeFailure, wrappedErr)
+		return false, wrappedErr
 	}
 
-	return result == 1, nil
+	updated := result == 1
+	outcome := domain.LeaderboardCacheOutcomeSuccess
+	if !updated {
+		outcome = domain.LeaderboardCacheOutcomeMiss
+	}
+	s.observe(ctx, domain.LeaderboardCacheKindContest, domain.LeaderboardCacheOperationUpdate, outcome, nil)
+	return updated, nil
 }
 
 func (s *LeaderboardStore) UpdateOfficialScores(ctx context.Context, year int, userID uuid.UUID, yearlyScore float64, globalScore float64) (bool, bool, error) {
@@ -152,11 +173,24 @@ func (s *LeaderboardStore) UpdateOfficialScores(ctx context.Context, year int, u
 		[]string{yearlyScoreStr, globalScoreStr, member},
 	).ToInt64()
 	if err != nil {
-		return false, false, fmt.Errorf("failed to update official leaderboard scores: %w", err)
+		wrappedErr := fmt.Errorf("failed to update official leaderboard scores: %w", err)
+		s.observe(ctx, domain.LeaderboardCacheKindYearly, domain.LeaderboardCacheOperationUpdate, domain.LeaderboardCacheOutcomeFailure, wrappedErr)
+		s.observe(ctx, domain.LeaderboardCacheKindGlobal, domain.LeaderboardCacheOperationUpdate, domain.LeaderboardCacheOutcomeFailure, wrappedErr)
+		return false, false, wrappedErr
 	}
 
 	yearlyUpdated := result&1 == 1
 	globalUpdated := result&2 == 2
+	yearlyOutcome := domain.LeaderboardCacheOutcomeSuccess
+	if !yearlyUpdated {
+		yearlyOutcome = domain.LeaderboardCacheOutcomeMiss
+	}
+	globalOutcome := domain.LeaderboardCacheOutcomeSuccess
+	if !globalUpdated {
+		globalOutcome = domain.LeaderboardCacheOutcomeMiss
+	}
+	s.observe(ctx, domain.LeaderboardCacheKindYearly, domain.LeaderboardCacheOperationUpdate, yearlyOutcome, nil)
+	s.observe(ctx, domain.LeaderboardCacheKindGlobal, domain.LeaderboardCacheOperationUpdate, globalOutcome, nil)
 	return yearlyUpdated, globalUpdated, nil
 }
 
@@ -165,7 +199,9 @@ func (s *LeaderboardStore) RebuildContestLeaderboard(ctx context.Context, contes
 	defer cancel()
 
 	key := contestLeaderboardKey(contestID)
-	return s.rebuildLeaderboard(ctx, key, scores)
+	err := s.rebuildLeaderboard(ctx, key, scores)
+	s.observeResult(ctx, domain.LeaderboardCacheKindContest, domain.LeaderboardCacheOperationRebuild, err)
+	return err
 }
 
 func (s *LeaderboardStore) RebuildOfficialLeaderboards(ctx context.Context, year int, yearlyScores []domain.LeaderboardScore, globalScores []domain.LeaderboardScore) error {
@@ -190,17 +226,22 @@ func (s *LeaderboardStore) RebuildOfficialLeaderboards(ctx context.Context, year
 
 	err := rebuildOfficialScript.Exec(ctx, s.client, []string{yearlyKey, globalLeaderboardKey}, args).Error()
 	if err != nil {
-		return fmt.Errorf("failed to rebuild official leaderboards: %w", err)
+		wrappedErr := fmt.Errorf("failed to rebuild official leaderboards: %w", err)
+		s.observeOfficialRebuild(ctx, wrappedErr)
+		return wrappedErr
 	}
 
 	ts := strconv.FormatInt(s.clock.Now().Unix(), 10)
 	for _, key := range []string{yearlyKey, globalLeaderboardKey} {
 		setCmd := s.client.B().Set().Key(lastUpdatedKey(key)).Value(ts).Build()
 		if err := s.client.Do(ctx, setCmd).Error(); err != nil {
-			return fmt.Errorf("failed to set last_updated marker for key %s: %w", key, err)
+			wrappedErr := fmt.Errorf("failed to set last_updated marker for key %s: %w", key, err)
+			s.observeOfficialRebuild(ctx, wrappedErr)
+			return wrappedErr
 		}
 	}
 
+	s.observeOfficialRebuild(ctx, nil)
 	return nil
 }
 
@@ -208,39 +249,94 @@ func (s *LeaderboardStore) FetchGlobalLeaderboardPage(ctx context.Context, page,
 	ctx, cancel := s.withOperationTimeout(ctx)
 	defer cancel()
 
-	return s.fetchLeaderboardPage(ctx, globalLeaderboardKey, page, pageSize)
+	result, exists, err := s.fetchLeaderboardPage(ctx, globalLeaderboardKey, page, pageSize)
+	s.observeFetch(ctx, domain.LeaderboardCacheKindGlobal, exists, err)
+	return result, exists, err
 }
 
 func (s *LeaderboardStore) FetchYearlyLeaderboardPage(ctx context.Context, year int, page, pageSize int) (*domain.LeaderboardPage, bool, error) {
 	ctx, cancel := s.withOperationTimeout(ctx)
 	defer cancel()
 
-	return s.fetchLeaderboardPage(ctx, yearlyLeaderboardKey(year), page, pageSize)
+	result, exists, err := s.fetchLeaderboardPage(ctx, yearlyLeaderboardKey(year), page, pageSize)
+	s.observeFetch(ctx, domain.LeaderboardCacheKindYearly, exists, err)
+	return result, exists, err
 }
 
 func (s *LeaderboardStore) FetchContestLeaderboardPage(ctx context.Context, contestID uuid.UUID, page, pageSize int) (*domain.LeaderboardPage, bool, error) {
 	ctx, cancel := s.withOperationTimeout(ctx)
 	defer cancel()
 
-	return s.fetchLeaderboardPage(ctx, contestLeaderboardKey(contestID), page, pageSize)
+	result, exists, err := s.fetchLeaderboardPage(ctx, contestLeaderboardKey(contestID), page, pageSize)
+	s.observeFetch(ctx, domain.LeaderboardCacheKindContest, exists, err)
+	return result, exists, err
 }
 
 func (s *LeaderboardStore) RebuildGlobalLeaderboard(ctx context.Context, scores []domain.LeaderboardScore) error {
 	ctx, cancel := s.withOperationTimeout(ctx)
 	defer cancel()
 
-	return s.rebuildLeaderboard(ctx, globalLeaderboardKey, scores)
+	err := s.rebuildLeaderboard(ctx, globalLeaderboardKey, scores)
+	s.observeResult(ctx, domain.LeaderboardCacheKindGlobal, domain.LeaderboardCacheOperationRebuild, err)
+	return err
 }
 
 func (s *LeaderboardStore) RebuildYearlyLeaderboard(ctx context.Context, year int, scores []domain.LeaderboardScore) error {
 	ctx, cancel := s.withOperationTimeout(ctx)
 	defer cancel()
 
-	return s.rebuildLeaderboard(ctx, yearlyLeaderboardKey(year), scores)
+	err := s.rebuildLeaderboard(ctx, yearlyLeaderboardKey(year), scores)
+	s.observeResult(ctx, domain.LeaderboardCacheKindYearly, domain.LeaderboardCacheOperationRebuild, err)
+	return err
 }
 
 func (s *LeaderboardStore) withOperationTimeout(ctx context.Context) (context.Context, context.CancelFunc) {
 	return context.WithTimeout(ctx, s.operationTimeout)
+}
+
+func (s *LeaderboardStore) observeFetch(ctx context.Context, kind domain.LeaderboardCacheKind, exists bool, err error) {
+	outcome := domain.LeaderboardCacheOutcomeSuccess
+	if err != nil {
+		outcome = domain.LeaderboardCacheOutcomeFailure
+	} else if !exists {
+		outcome = domain.LeaderboardCacheOutcomeMiss
+	}
+	s.observe(ctx, kind, domain.LeaderboardCacheOperationFetch, outcome, err)
+}
+
+func (s *LeaderboardStore) observeResult(
+	ctx context.Context,
+	kind domain.LeaderboardCacheKind,
+	operation domain.LeaderboardCacheOperation,
+	err error,
+) {
+	outcome := domain.LeaderboardCacheOutcomeSuccess
+	if err != nil {
+		outcome = domain.LeaderboardCacheOutcomeFailure
+	}
+	s.observe(ctx, kind, operation, outcome, err)
+}
+
+func (s *LeaderboardStore) observeOfficialRebuild(ctx context.Context, err error) {
+	s.observeResult(ctx, domain.LeaderboardCacheKindYearly, domain.LeaderboardCacheOperationRebuild, err)
+	s.observeResult(ctx, domain.LeaderboardCacheKindGlobal, domain.LeaderboardCacheOperationRebuild, err)
+}
+
+func (s *LeaderboardStore) observe(
+	ctx context.Context,
+	kind domain.LeaderboardCacheKind,
+	operation domain.LeaderboardCacheOperation,
+	outcome domain.LeaderboardCacheOutcome,
+	err error,
+) {
+	if s.observer != nil {
+		s.observer.ObserveLeaderboardCache(ctx, domain.LeaderboardCacheObservation{
+			Kind:      kind,
+			Operation: operation,
+			Outcome:   outcome,
+			Err:       err,
+		})
+	}
 }
 
 func lastUpdatedKey(key string) string {

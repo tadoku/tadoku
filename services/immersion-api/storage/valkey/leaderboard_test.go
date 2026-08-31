@@ -19,6 +19,17 @@ type contextCapturingClient struct {
 	contexts []context.Context
 }
 
+type recordingCacheObserver struct {
+	observations []domain.LeaderboardCacheObservation
+}
+
+func (o *recordingCacheObserver) ObserveLeaderboardCache(
+	_ context.Context,
+	observation domain.LeaderboardCacheObservation,
+) {
+	o.observations = append(o.observations, observation)
+}
+
 func (c *contextCapturingClient) Do(ctx context.Context, cmd valkeylib.Completed) valkeylib.ValkeyResult {
 	c.contexts = append(c.contexts, ctx)
 	return c.Client.Do(ctx, cmd)
@@ -155,4 +166,24 @@ func TestLeaderboardStoreOperationTimeoutHonorsShorterParentDeadline(t *testing.
 	operationDeadline, ok := client.contexts[0].Deadline()
 	require.True(t, ok)
 	assert.Equal(t, parentDeadline, operationDeadline)
+}
+
+func TestLeaderboardStoreObservesValkeyFailure(t *testing.T) {
+	client := newUnavailableContextCapturingClient(t)
+	observer := &recordingCacheObserver{}
+	store := NewLeaderboardStoreWithCacheObserver(
+		client,
+		commondomain.NewMockClock(time.Date(2026, 8, 31, 0, 0, 0, 0, time.UTC)),
+		time.Second,
+		observer,
+	)
+
+	_, _, err := store.FetchGlobalLeaderboardPage(context.Background(), 0, 25)
+
+	require.Error(t, err)
+	require.Len(t, observer.observations, 1)
+	assert.Equal(t, domain.LeaderboardCacheKindGlobal, observer.observations[0].Kind)
+	assert.Equal(t, domain.LeaderboardCacheOperationFetch, observer.observations[0].Operation)
+	assert.Equal(t, domain.LeaderboardCacheOutcomeFailure, observer.observations[0].Outcome)
+	assert.ErrorIs(t, observer.observations[0].Err, err)
 }

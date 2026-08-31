@@ -21,6 +21,7 @@ go_library(
         "languagecreate.go",
         "languagelist.go",
         "languageupdate.go",
+        "leaderboardcache.go",
         "leaderboardglobal.go",
         "leaderboardoutboxworker.go",
         "leaderboardrank.go",

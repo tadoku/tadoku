@@ -1,4 +1,4 @@
-load("@rules_go//go:def.bzl", "go_library")
+load("@rules_go//go:def.bzl", "go_library", "go_test")
 
 go_library(
     name = "valkey",
@@ -9,6 +9,20 @@ go_library(
         "//services/common/domain",
         "//services/immersion-api/domain",
         "@com_github_google_uuid//:uuid",
+        "@com_github_valkey_io_valkey_go//:valkey-go",
+    ],
+)
+
+go_test(
+    name = "valkey_test",
+    srcs = ["leaderboard_test.go"],
+    embed = [":valkey"],
+    deps = [
+        "//services/common/domain",
+        "//services/immersion-api/domain",
+        "@com_github_google_uuid//:uuid",
+        "@com_github_stretchr_testify//assert",
+        "@com_github_stretchr_testify//require",
         "@com_github_valkey_io_valkey_go//:valkey-go",
     ],
 )

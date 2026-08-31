@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strconv"
+	"time"
 
 	"github.com/google/uuid"
 	commondomain "github.com/tadoku/tadoku/services/common/domain"
@@ -99,13 +100,18 @@ return 0
 
 // LeaderboardStore implements domain.LeaderboardStore using Valkey sorted sets.
 type LeaderboardStore struct {
-	client valkeylib.Client
-	clock  commondomain.Clock
+	client           valkeylib.Client
+	clock            commondomain.Clock
+	operationTimeout time.Duration
 }
 
 // NewLeaderboardStore creates a new LeaderboardStore backed by the given Valkey client.
-func NewLeaderboardStore(client valkeylib.Client, clock commondomain.Clock) *LeaderboardStore {
-	return &LeaderboardStore{client: client, clock: clock}
+func NewLeaderboardStore(client valkeylib.Client, clock commondomain.Clock, operationTimeout time.Duration) *LeaderboardStore {
+	return &LeaderboardStore{
+		client:           client,
+		clock:            clock,
+		operationTimeout: operationTimeout,
+	}
 }
 
 func contestLeaderboardKey(contestID uuid.UUID) string {
@@ -117,6 +123,9 @@ func yearlyLeaderboardKey(year int) string {
 }
 
 func (s *LeaderboardStore) UpdateContestScore(ctx context.Context, contestID uuid.UUID, userID uuid.UUID, score float64) (bool, error) {
+	ctx, cancel := s.withOperationTimeout(ctx)
+	defer cancel()
+
 	key := contestLeaderboardKey(contestID)
 	scoreStr := strconv.FormatFloat(score, 'f', -1, 64)
 	member := userID.String()
@@ -130,6 +139,9 @@ func (s *LeaderboardStore) UpdateContestScore(ctx context.Context, contestID uui
 }
 
 func (s *LeaderboardStore) UpdateOfficialScores(ctx context.Context, year int, userID uuid.UUID, yearlyScore float64, globalScore float64) (bool, bool, error) {
+	ctx, cancel := s.withOperationTimeout(ctx)
+	defer cancel()
+
 	yearlyKey := yearlyLeaderboardKey(year)
 	yearlyScoreStr := strconv.FormatFloat(yearlyScore, 'f', -1, 64)
 	globalScoreStr := strconv.FormatFloat(globalScore, 'f', -1, 64)
@@ -149,11 +161,17 @@ func (s *LeaderboardStore) UpdateOfficialScores(ctx context.Context, year int, u
 }
 
 func (s *LeaderboardStore) RebuildContestLeaderboard(ctx context.Context, contestID uuid.UUID, scores []domain.LeaderboardScore) error {
+	ctx, cancel := s.withOperationTimeout(ctx)
+	defer cancel()
+
 	key := contestLeaderboardKey(contestID)
 	return s.rebuildLeaderboard(ctx, key, scores)
 }
 
 func (s *LeaderboardStore) RebuildOfficialLeaderboards(ctx context.Context, year int, yearlyScores []domain.LeaderboardScore, globalScores []domain.LeaderboardScore) error {
+	ctx, cancel := s.withOperationTimeout(ctx)
+	defer cancel()
+
 	yearlyKey := yearlyLeaderboardKey(year)
 
 	// Build args: [yearlyCount, yearlyScore1, yearlyMember1, ..., globalScore1, globalMember1, ...]
@@ -187,23 +205,42 @@ func (s *LeaderboardStore) RebuildOfficialLeaderboards(ctx context.Context, year
 }
 
 func (s *LeaderboardStore) FetchGlobalLeaderboardPage(ctx context.Context, page, pageSize int) (*domain.LeaderboardPage, bool, error) {
+	ctx, cancel := s.withOperationTimeout(ctx)
+	defer cancel()
+
 	return s.fetchLeaderboardPage(ctx, globalLeaderboardKey, page, pageSize)
 }
 
 func (s *LeaderboardStore) FetchYearlyLeaderboardPage(ctx context.Context, year int, page, pageSize int) (*domain.LeaderboardPage, bool, error) {
+	ctx, cancel := s.withOperationTimeout(ctx)
+	defer cancel()
+
 	return s.fetchLeaderboardPage(ctx, yearlyLeaderboardKey(year), page, pageSize)
 }
 
 func (s *LeaderboardStore) FetchContestLeaderboardPage(ctx context.Context, contestID uuid.UUID, page, pageSize int) (*domain.LeaderboardPage, bool, error) {
+	ctx, cancel := s.withOperationTimeout(ctx)
+	defer cancel()
+
 	return s.fetchLeaderboardPage(ctx, contestLeaderboardKey(contestID), page, pageSize)
 }
 
 func (s *LeaderboardStore) RebuildGlobalLeaderboard(ctx context.Context, scores []domain.LeaderboardScore) error {
+	ctx, cancel := s.withOperationTimeout(ctx)
+	defer cancel()
+
 	return s.rebuildLeaderboard(ctx, globalLeaderboardKey, scores)
 }
 
 func (s *LeaderboardStore) RebuildYearlyLeaderboard(ctx context.Context, year int, scores []domain.LeaderboardScore) error {
+	ctx, cancel := s.withOperationTimeout(ctx)
+	defer cancel()
+
 	return s.rebuildLeaderboard(ctx, yearlyLeaderboardKey(year), scores)
+}
+
+func (s *LeaderboardStore) withOperationTimeout(ctx context.Context) (context.Context, context.CancelFunc) {
+	return context.WithTimeout(ctx, s.operationTimeout)
 }
 
 func lastUpdatedKey(key string) string {

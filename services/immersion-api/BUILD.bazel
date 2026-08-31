@@ -42,8 +42,11 @@ go_test(
     embed = [":immersion-api_lib"],
     deps = [
         "//services/common/client/flipt",
+        "@com_github_go_playground_validator_v10//:validator",
+        "@com_github_kelseyhightower_envconfig//:envconfig",
         "@com_github_stretchr_testify//assert",
         "@com_github_stretchr_testify//require",
+        "@com_github_valkey_io_valkey_go//:valkey-go",
     ],
 )
 

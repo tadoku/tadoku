@@ -46,6 +46,8 @@ type Config struct {
 	KetoReadURL            string        `validate:"required" envconfig:"keto_read_url"`
 	KetoWriteURL           string        `validate:"required" envconfig:"keto_write_url"`
 	ValkeyURL              string        `validate:"required" envconfig:"valkey_url"`
+	ValkeyDialTimeout      time.Duration `validate:"gt=0" envconfig:"valkey_dial_timeout" default:"1s"`
+	ValkeyOperationTimeout time.Duration `validate:"gt=0" envconfig:"valkey_operation_timeout" default:"1s"`
 	ServiceName            string        `envconfig:"service_name" default:"immersion-api"`
 	SentryDSN              string        `envconfig:"sentry_dns"`
 	SentryTracesSampleRate float64       `validate:"required_with=SentryDSN" envconfig:"sentry_traces_sample_rate"`
@@ -62,6 +64,37 @@ type Config struct {
 
 type featureFlagProviderInitializer func() (*fliptclient.Client, error)
 
+type valkeyClientInitializer func(valkey.ClientOption) (valkey.Client, error)
+
+func initializeValkeyClient(cfg Config, initialize valkeyClientInitializer) (valkey.Client, error) {
+	if cfg.ValkeyDialTimeout <= 0 {
+		return nil, fmt.Errorf("valkey dial timeout must be positive")
+	}
+
+	option, err := valkey.ParseURL(cfg.ValkeyURL)
+	if err != nil {
+		return nil, fmt.Errorf("could not parse valkey url: %w", err)
+	}
+	if len(option.InitAddress) != 1 {
+		return nil, fmt.Errorf("valkey url must configure exactly one standalone address")
+	}
+	option.Dialer.Timeout = cfg.ValkeyDialTimeout
+	option.ForceSingleClient = true
+	option.DisableRetry = true
+
+	client, err := initialize(option)
+	if client == nil {
+		if err == nil {
+			err = fmt.Errorf("initializer returned a nil client")
+		}
+		return nil, fmt.Errorf("could not connect to valkey: %w", err)
+	}
+	if err != nil {
+		slog.Warn("valkey unavailable at startup; starting in degraded mode", "error", err)
+	}
+	return client, nil
+}
+
 func initializeFeatureFlagProvider(cfg Config, initialize featureFlagProviderInitializer) (*fliptclient.Client, error) {
 	if !cfg.FliptEnabled {
 		return nil, nil
@@ -71,7 +104,9 @@ func initializeFeatureFlagProvider(cfg Config, initialize featureFlagProviderIni
 
 func main() {
 	cfg := Config{}
-	envconfig.Process("API", &cfg)
+	if err := envconfig.Process("API", &cfg); err != nil {
+		panic(fmt.Errorf("could not configure server: %w", err))
+	}
 
 	validate := validator.New()
 	err := validate.Struct(cfg)
@@ -95,13 +130,9 @@ func main() {
 	var ketoAuthz ketoclient.AuthorizationClient = ketoclient.NewClient(cfg.KetoReadURL, cfg.KetoWriteURL)
 	rolesSvc := commonroles.NewKetoService(ketoAuthz, "app", "tadoku")
 
-	valkeyOpt, err := valkey.ParseURL(cfg.ValkeyURL)
+	valkeyClient, err := initializeValkeyClient(cfg, valkey.NewClient)
 	if err != nil {
-		panic(fmt.Errorf("could not parse valkey url: %w", err))
-	}
-	valkeyClient, err := valkey.NewClient(valkeyOpt)
-	if err != nil {
-		panic(fmt.Errorf("could not connect to valkey: %w", err))
+		panic(err)
 	}
 	defer valkeyClient.Close()
 
@@ -110,7 +141,7 @@ func main() {
 		panic(err)
 	}
 
-	leaderboardStore := valkeystore.NewLeaderboardStore(valkeyClient, clock)
+	leaderboardStore := valkeystore.NewLeaderboardStore(valkeyClient, clock, cfg.ValkeyOperationTimeout)
 	leaderboardUpdater := immersiondomain.NewLeaderboardUpdater(leaderboardStore, postgresRepository)
 	serviceMetrics := commonobservability.NewMetrics(psql, cfg.ServiceName)
 	featureFlagMetrics := featureflags.NewMetrics(serviceMetrics.Registry(), clock)

@@ -50,11 +50,25 @@ func TestLeaderboardCacheMetricsExportsBoundedLabelsAndTracksDegradedState(t *te
 		observer.ObserveLeaderboardCache(context.Background(), observation)
 	}
 
-	observer.ObserveLeaderboardCache(context.Background(), domain.LeaderboardCacheObservation{
-		Kind:      domain.LeaderboardCacheKind("user-controlled-kind"),
-		Operation: domain.LeaderboardCacheOperationFetch,
-		Outcome:   domain.LeaderboardCacheOutcomeFailure,
-	})
+	for _, invalid := range []domain.LeaderboardCacheObservation{
+		{
+			Kind:      domain.LeaderboardCacheKind("user-controlled-kind"),
+			Operation: domain.LeaderboardCacheOperationFetch,
+			Outcome:   domain.LeaderboardCacheOutcomeFailure,
+		},
+		{
+			Kind:      domain.LeaderboardCacheKindGlobal,
+			Operation: domain.LeaderboardCacheOperation("user-controlled-operation"),
+			Outcome:   domain.LeaderboardCacheOutcomeFailure,
+		},
+		{
+			Kind:      domain.LeaderboardCacheKindGlobal,
+			Operation: domain.LeaderboardCacheOperationFetch,
+			Outcome:   domain.LeaderboardCacheOutcome("user-controlled-outcome"),
+		},
+	} {
+		observer.ObserveLeaderboardCache(context.Background(), invalid)
+	}
 
 	recorder := httptest.NewRecorder()
 	promhttp.HandlerFor(registry, promhttp.HandlerOpts{}).ServeHTTP(
@@ -72,10 +86,13 @@ func TestLeaderboardCacheMetricsExportsBoundedLabelsAndTracksDegradedState(t *te
 	assert.Contains(t, body, "tadoku_leaderboard_cache_degraded 1")
 	assert.NotContains(t, body, "password")
 	assert.NotContains(t, body, "user-controlled-kind")
+	assert.NotContains(t, body, "user-controlled-operation")
+	assert.NotContains(t, body, "user-controlled-outcome")
 }
 
 func TestLeaderboardCacheObserverLogsOnlyHealthTransitions(t *testing.T) {
-	metrics := NewLeaderboardCacheMetrics(prometheus.NewRegistry())
+	registry := prometheus.NewRegistry()
+	metrics := NewLeaderboardCacheMetrics(registry)
 	var output bytes.Buffer
 	observer := NewLeaderboardCacheObserver(metrics, slog.New(slog.NewJSONHandler(&output, nil)))
 	ctx := context.Background()
@@ -132,6 +149,13 @@ func TestLeaderboardCacheObserverLogsOnlyHealthTransitions(t *testing.T) {
 	assert.Equal(t, "healthy", recovered["state"])
 	assert.Equal(t, "success", recovered["outcome"])
 	assert.NotContains(t, recovered, "error")
+
+	recorder := httptest.NewRecorder()
+	promhttp.HandlerFor(registry, promhttp.HandlerOpts{}).ServeHTTP(
+		recorder,
+		httptest.NewRequest(http.MethodGet, "/metrics", nil),
+	)
+	assert.Contains(t, recorder.Body.String(), "tadoku_leaderboard_cache_degraded 0")
 }
 
 func TestLeaderboardCacheObserverIsNilSafe(t *testing.T) {

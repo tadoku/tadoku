@@ -56,6 +56,14 @@ end
 return result
 `)
 
+// removeOfficialScoresScript removes the user even when either leaderboard key
+// is absent. ZREM is idempotent, so deletion outbox events are safe to retry.
+var removeOfficialScoresScript = valkeylib.NewLuaScript(`
+redis.call('ZREM', KEYS[1], ARGV[1])
+redis.call('ZREM', KEYS[2], ARGV[1])
+return 0
+`)
+
 // rebuildScript atomically deletes and repopulates a sorted set.
 //
 // KEYS[1] = sorted set key
@@ -192,6 +200,26 @@ func (s *LeaderboardStore) UpdateOfficialScores(ctx context.Context, year int, u
 	s.observe(ctx, domain.LeaderboardCacheKindYearly, domain.LeaderboardCacheOperationUpdate, yearlyOutcome, nil)
 	s.observe(ctx, domain.LeaderboardCacheKindGlobal, domain.LeaderboardCacheOperationUpdate, globalOutcome, nil)
 	return yearlyUpdated, globalUpdated, nil
+}
+
+func (s *LeaderboardStore) RemoveContestScore(ctx context.Context, contestID uuid.UUID, userID uuid.UUID) error {
+	key := contestLeaderboardKey(contestID)
+	cmd := s.client.B().Zrem().Key(key).Member(userID.String()).Build()
+	if err := s.client.Do(ctx, cmd).Error(); err != nil {
+		return fmt.Errorf("failed to remove contest leaderboard score for key %s: %w", key, err)
+	}
+	return nil
+}
+
+func (s *LeaderboardStore) RemoveOfficialScores(ctx context.Context, year int, userID uuid.UUID) error {
+	yearlyKey := yearlyLeaderboardKey(year)
+	if err := removeOfficialScoresScript.Exec(ctx, s.client,
+		[]string{yearlyKey, globalLeaderboardKey},
+		[]string{userID.String()},
+	).Error(); err != nil {
+		return fmt.Errorf("failed to remove official leaderboard scores: %w", err)
+	}
+	return nil
 }
 
 func (s *LeaderboardStore) RebuildContestLeaderboard(ctx context.Context, contestID uuid.UUID, scores []domain.LeaderboardScore) error {

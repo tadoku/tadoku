@@ -192,7 +192,7 @@ select
   contests.title,
   contest_registrations.id,
   contests.contest_end,
-  owner_users.display_name as owner_user_display_name,
+  case when owner_users.deleted_at is not null then 'Deleted organizer' else owner_users.display_name end::varchar as owner_user_display_name,
   contests.official,
   coalesce(contest_logs.computed_score, contest_logs.score) as score
 from contest_logs
@@ -249,7 +249,15 @@ update logs
 set deleted_at = now()
 where
   id = sqlc.arg('log_id')
-  and logs.deleted_at is null;
+  and logs.deleted_at is null
+  and logs.frozen_at is null;
+
+-- name: LockLogForMutation :one
+select frozen_at
+from logs
+where id = sqlc.arg('log_id')
+  and deleted_at is null
+for update;
 
 -- name: CheckIfLogCanBeDeleted :one
 select (not(true = any(
@@ -309,7 +317,8 @@ set
   updated_at = sqlc.arg('now')
 where
   id = sqlc.arg('log_id')
-  and logs.deleted_at is null;
+  and logs.deleted_at is null
+  and logs.frozen_at is null;
 
 -- name: UpdateOngoingContestLogs :exec
 update contest_logs
@@ -323,9 +332,11 @@ set
   score_rule_ids = sqlc.arg('score_rule_ids'),
   score_rates = sqlc.arg('score_rates'),
   score_source = sqlc.arg('score_source')
-from contests
+from contests, logs
 where
   contest_logs.log_id = sqlc.arg('log_id')
+  and logs.id = contest_logs.log_id
+  and logs.frozen_at is null
   and contest_logs.contest_id = contests.id
   and contests.contest_end >= sqlc.arg('now');
 
@@ -341,9 +352,11 @@ set
   score_rule_ids = sqlc.arg('score_rule_ids'),
   score_rates = sqlc.arg('score_rates'),
   score_source = sqlc.arg('score_source')
-from contests
+from contests, logs
 where
   contest_logs.log_id = sqlc.arg('log_id')
+  and logs.id = contest_logs.log_id
+  and logs.frozen_at is null
   and contest_logs.contest_id = sqlc.arg('contest_id')
   and contest_logs.contest_id = contests.id
   and contests.contest_end >= sqlc.arg('now');

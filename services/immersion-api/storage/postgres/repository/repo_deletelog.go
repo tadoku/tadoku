@@ -18,6 +18,10 @@ func (r *Repository) DeleteLog(ctx context.Context, req *domain.LogDeleteRequest
 		_ = tx.Rollback()
 		return err
 	}
+	if err = lockLogForMutation(ctx, qtx, req.LogID); err != nil {
+		_ = tx.Rollback()
+		return err
+	}
 
 	isValid, err := qtx.CheckIfLogCanBeDeleted(ctx, postgres.CheckIfLogCanBeDeletedParams{
 		Now:   req.Now(),

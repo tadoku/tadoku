@@ -42,11 +42,31 @@ type LeaderboardStore interface {
 	// Returns which leaderboards were updated (yearlyUpdated, globalUpdated).
 	UpdateOfficialScores(ctx context.Context, year int, userID uuid.UUID, yearlyScore float64, globalScore float64) (yearlyUpdated bool, globalUpdated bool, err error)
 
+	// RemoveContestScore idempotently removes a user from a contest leaderboard.
+	RemoveContestScore(ctx context.Context, contestID uuid.UUID, userID uuid.UUID) error
+
+	// RemoveOfficialScores idempotently removes a user from a yearly leaderboard and the global leaderboard.
+	RemoveOfficialScores(ctx context.Context, year int, userID uuid.UUID) error
+
 	// RebuildContestLeaderboard atomically replaces a contest leaderboard with the given scores.
 	RebuildContestLeaderboard(ctx context.Context, contestID uuid.UUID, scores []LeaderboardScore) error
 
 	// RebuildOfficialLeaderboards atomically replaces both yearly and global leaderboards.
 	RebuildOfficialLeaderboards(ctx context.Context, year int, yearlyScores []LeaderboardScore, globalScores []LeaderboardScore) error
+}
+
+func (u *LeaderboardUpdater) RemoveUserContestScore(ctx context.Context, contestID uuid.UUID, userID uuid.UUID) error {
+	if err := u.store.RemoveContestScore(ctx, contestID, userID); err != nil {
+		return fmt.Errorf("remove user contest score: %w", err)
+	}
+	return nil
+}
+
+func (u *LeaderboardUpdater) RemoveUserOfficialScores(ctx context.Context, year int, userID uuid.UUID) error {
+	if err := u.store.RemoveOfficialScores(ctx, year, userID); err != nil {
+		return fmt.Errorf("remove user official scores: %w", err)
+	}
+	return nil
 }
 
 // LeaderboardRepository provides queries for fetching leaderboard scores

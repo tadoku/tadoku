@@ -227,6 +227,7 @@ func main() {
 	logContestUpdate := immersiondomain.NewLogContestUpdateWithScoringEngine(postgresRepository, clock, cfg.ScoringEngineEnabled)
 	scorePreview := immersiondomain.NewScorePreview(postgresRepository, clock)
 	scoringRuleSetManagement := immersiondomain.NewScoringRuleSetManagement(postgresRepository, clock)
+	accountDeletionLock := immersiondomain.NewAccountDeletionLock(postgresRepository, clock)
 
 	server := rest.NewServer(
 		contestConfigurationOptions,
@@ -268,6 +269,9 @@ func main() {
 	)
 
 	openapi.RegisterHandlersWithBaseURL(api, server, "")
+	internalServer := rest.NewInternalServer(accountDeletionLock)
+	internal := api.Group("", tadokumiddleware.RequireServiceIdentity())
+	rest.RegisterInternalRoutes(internal, internalServer)
 
 	// Start server in goroutine
 	go func() {

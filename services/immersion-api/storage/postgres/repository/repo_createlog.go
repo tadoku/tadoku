@@ -15,6 +15,10 @@ func (r *Repository) CreateLog(ctx context.Context, req *domain.LogCreateRequest
 		return nil, fmt.Errorf("could not create log: %w", err)
 	}
 	qtx := r.q.WithTx(tx)
+	if err = lockUserForMutation(ctx, qtx, req.UserID()); err != nil {
+		_ = tx.Rollback()
+		return nil, err
+	}
 
 	id := uuid.New()
 	tracking := req.Tracking()

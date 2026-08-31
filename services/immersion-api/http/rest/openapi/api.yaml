@@ -34,6 +34,8 @@ paths:
           description: Invalid contest
         "403":
           description: Not allowed to create this contest
+        "409":
+          $ref: "#/components/responses/AccountDeletionInProgress"
     get:
       summary: Lists all the contests, paginated
       operationId: contestList
@@ -178,6 +180,8 @@ paths:
           description: language combination is invalid
         "404":
           description: contest not found
+        "409":
+          $ref: "#/components/responses/AccountDeletionInProgress"
   /contests/{id}/leaderboard:
     get:
       summary: Fetches the leaderboard for a contest
@@ -326,6 +330,8 @@ paths:
           description: forbidden (not contest admin or site admin)
         "404":
           description: contest or log not found
+        "409":
+          $ref: "#/components/responses/AccountDeletionInProgress"
   /contests/{id}/profile/{user_id}/scores:
     get:
       summary: Fetches the scores of a user profile in a contest
@@ -463,6 +469,8 @@ paths:
                 $ref: "#/components/schemas/Log"
         "400":
           description: invalid submission
+        "409":
+          $ref: "#/components/responses/AccountDeletionInProgress"
   /logs/score-preview:
     post:
       summary: Previews platform and contest scores without creating a log
@@ -557,6 +565,8 @@ paths:
           description: forbidden
         "404":
           description: not found
+        "409":
+          $ref: "#/components/responses/AccountDeletionInProgress"
     put:
       summary: Updates an existing log
       operationId: logUpdate
@@ -613,6 +623,8 @@ paths:
           description: forbidden
         "404":
           description: not found
+        "409":
+          $ref: "#/components/responses/AccountDeletionInProgress"
   /logs/{id}/contest-registrations:
     put:
       summary: Updates the contest registrations for a log
@@ -657,6 +669,8 @@ paths:
           description: forbidden (not log owner)
         "404":
           description: log not found
+        "409":
+          $ref: "#/components/responses/AccountDeletionInProgress"
   /logs/configuration-options:
     get:
       summary: Fetches the configuration options for a log
@@ -1161,7 +1175,23 @@ paths:
         "404":
           description: language not found
 components:
+  responses:
+    AccountDeletionInProgress:
+      description: account deletion is in progress
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
   schemas:
+    ErrorResponse:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: string
+          enum:
+            - account_deletion_in_progress
     FeatureFlagDecisions:
       type: object
       additionalProperties: false

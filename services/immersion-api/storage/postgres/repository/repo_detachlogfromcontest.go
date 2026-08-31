@@ -20,6 +20,18 @@ func (r *Repository) DetachLogFromContest(ctx context.Context, req *domain.Conte
 	}
 	qtx := r.q.WithTx(tx)
 
+	// Resolve and lock the affected account before writing the immutable audit
+	// row or changing contest data. The moderator is not the mutation subject.
+	logCtx, err := qtx.FetchLogOutboxContext(ctx, req.LogID)
+	if err != nil {
+		_ = tx.Rollback()
+		return fmt.Errorf("could not fetch log context: %w", err)
+	}
+	if err = lockUserForMutation(ctx, qtx, logCtx.UserID); err != nil {
+		_ = tx.Rollback()
+		return err
+	}
+
 	// Create audit log entry
 	metadata := map[string]interface{}{
 		"contest_id": req.ContestID.String(),
@@ -40,13 +52,6 @@ func (r *Repository) DetachLogFromContest(ctx context.Context, req *domain.Conte
 	if err != nil {
 		_ = tx.Rollback()
 		return fmt.Errorf("could not create audit log: %w", err)
-	}
-
-	// Look up the log owner for the outbox event
-	logCtx, err := qtx.FetchLogOutboxContext(ctx, req.LogID)
-	if err != nil {
-		_ = tx.Rollback()
-		return fmt.Errorf("could not fetch log context: %w", err)
 	}
 
 	// Detach log from contest

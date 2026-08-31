@@ -15,6 +15,10 @@ func (r *Repository) DetachContestLogsForLanguages(ctx context.Context, req *dom
 		return fmt.Errorf("could not start transaction: %w", err)
 	}
 	qtx := r.q.WithTx(tx)
+	if err = lockUserForMutation(ctx, qtx, req.UserID); err != nil {
+		_ = tx.Rollback()
+		return err
+	}
 
 	err = qtx.DetachContestLogsForLanguages(ctx, postgres.DetachContestLogsForLanguagesParams{
 		ContestID:     req.ContestID,

@@ -3,6 +3,7 @@ load("@rules_go//go:def.bzl", "go_library", "go_test")
 go_library(
     name = "domain",
     srcs = [
+        "accountdeletionlock.go",
         "activities.go",
         "authz.go",
         "contestconfigurationoptions.go",
@@ -68,6 +69,7 @@ go_library(
 go_test(
     name = "domain_test",
     srcs = [
+        "accountdeletionlock_test.go",
         "activities_test.go",
         "contestconfigurationoptions_test.go",
         "contestcreate_test.go",

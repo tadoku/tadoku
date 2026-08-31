@@ -2,6 +2,8 @@ package repository
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 	"fmt"
 
 	"github.com/tadoku/tadoku/services/immersion-api/domain"
@@ -9,11 +11,14 @@ import (
 )
 
 func (r *Repository) UpsertUser(ctx context.Context, req *domain.UserUpsertRequest) error {
-	if err := r.q.UpsertUser(ctx, postgres.UpsertUserParams{
+	if _, err := r.q.UpsertUser(ctx, postgres.UpsertUserParams{
 		ID:               req.ID,
 		DisplayName:      req.DisplayName,
 		SessionCreatedAt: req.SessionCreatedAt,
 	}); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return domain.ErrAccountDeletionInProgress
+		}
 		return fmt.Errorf("could not update user: %w", err)
 	}
 

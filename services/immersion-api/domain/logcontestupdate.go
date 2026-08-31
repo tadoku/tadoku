@@ -27,7 +27,12 @@ type LogContestUpdateDBRequest struct {
 	Tracking LogTracking
 	Attach   []LogContestAttach
 	Detach   []uuid.UUID // contest_ids to remove
+
+	// Set by domain layer (unexported: only domain can write, others read via getters)
+	userID uuid.UUID
 }
+
+func (r *LogContestUpdateDBRequest) UserID() uuid.UUID { return r.userID }
 
 type LogContestAttach struct {
 	RegistrationID uuid.UUID
@@ -207,6 +212,7 @@ func (s *LogContestUpdate) Execute(ctx context.Context, req *LogContestUpdateReq
 		Tracking: log.Tracking,
 		Attach:   toAttach,
 		Detach:   toDetach,
+		userID:   log.UserID,
 	}); err != nil {
 		return nil, fmt.Errorf("could not update log contests: %w", err)
 	}

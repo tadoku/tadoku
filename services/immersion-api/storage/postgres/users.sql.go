@@ -7,6 +7,7 @@ package postgres
 
 import (
 	"context"
+	"database/sql"
 	"time"
 
 	"github.com/google/uuid"
@@ -45,7 +46,52 @@ func (q *Queries) FindUserDisplayNames(ctx context.Context, ids []uuid.UUID) ([]
 	return items, nil
 }
 
-const upsertUser = `-- name: UpsertUser :exec
+const lockAccountForDeletion = `-- name: LockAccountForDeletion :exec
+insert into users (
+  id,
+  display_name,
+  deletion_locked_at
+) values (
+  $1,
+  '',
+  $2
+) on conflict (id) do
+update set
+  deletion_locked_at = coalesce(users.deletion_locked_at, excluded.deletion_locked_at)
+`
+
+type LockAccountForDeletionParams struct {
+	ID       uuid.UUID
+	LockedAt sql.NullTime
+}
+
+func (q *Queries) LockAccountForDeletion(ctx context.Context, arg LockAccountForDeletionParams) error {
+	_, err := q.db.ExecContext(ctx, lockAccountForDeletion, arg.ID, arg.LockedAt)
+	return err
+}
+
+const lockUserForMutation = `-- name: LockUserForMutation :one
+select id, display_name, created_at, updated_at, deletion_locked_at, deleted_at
+from users
+where id = $1
+for update
+`
+
+func (q *Queries) LockUserForMutation(ctx context.Context, id uuid.UUID) (User, error) {
+	row := q.db.QueryRowContext(ctx, lockUserForMutation, id)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.DisplayName,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.DeletionLockedAt,
+		&i.DeletedAt,
+	)
+	return i, err
+}
+
+const upsertUser = `-- name: UpsertUser :one
 insert into users (
   id,
   display_name
@@ -54,10 +100,18 @@ insert into users (
   $2
 ) on conflict (id) do
 update set
-  display_name = $2,
-  updated_at = now()
+  display_name = case
+    when users.updated_at < $3 then $2
+    else users.display_name
+  end,
+  updated_at = case
+    when users.updated_at < $3 then now()
+    else users.updated_at
+  end
 where
-    users.updated_at < $3
+  users.deletion_locked_at is null
+  and users.deleted_at is null
+returning id
 `
 
 type UpsertUserParams struct {
@@ -66,7 +120,9 @@ type UpsertUserParams struct {
 	SessionCreatedAt time.Time
 }
 
-func (q *Queries) UpsertUser(ctx context.Context, arg UpsertUserParams) error {
-	_, err := q.db.ExecContext(ctx, upsertUser, arg.ID, arg.DisplayName, arg.SessionCreatedAt)
-	return err
+func (q *Queries) UpsertUser(ctx context.Context, arg UpsertUserParams) (uuid.UUID, error) {
+	row := q.db.QueryRowContext(ctx, upsertUser, arg.ID, arg.DisplayName, arg.SessionCreatedAt)
+	var id uuid.UUID
+	err := row.Scan(&id)
+	return id, err
 }

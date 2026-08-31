@@ -15,6 +15,10 @@ func (r *Repository) UpsertContestRegistration(ctx context.Context, req *domain.
 		return fmt.Errorf("could not start transaction: %w", err)
 	}
 	qtx := r.q.WithTx(tx)
+	if err = lockUserForMutation(ctx, qtx, req.UserID()); err != nil {
+		_ = tx.Rollback()
+		return err
+	}
 
 	_, err = qtx.UpsertContestRegistration(ctx, postgres.UpsertContestRegistrationParams{
 		ID:            req.ID(),

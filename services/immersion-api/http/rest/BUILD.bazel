@@ -24,6 +24,7 @@ go_library(
         "server_featureflagdecisions.go",
         "server_fetchleaderboardforyear.go",
         "server_fetchleaderboardglobal.go",
+        "server_internal.go",
         "server_languagecreate.go",
         "server_languagelist.go",
         "server_languageupdate.go",
@@ -52,6 +53,7 @@ go_library(
         "//services/common/http/httperr",
         "//services/immersion-api/domain",
         "//services/immersion-api/http/rest/openapi",
+        "//services/immersion-api/http/rest/openapi/internalapi",
         "@com_github_deepmap_oapi_codegen//pkg/types",
         "@com_github_google_uuid//:uuid",
         "@com_github_labstack_echo_v4//:echo",
@@ -61,8 +63,10 @@ go_library(
 go_test(
     name = "rest_test",
     srcs = [
+        "errors_test.go",
         "mappers_test.go",
         "server_featureflagdecisions_test.go",
+        "server_internal_test.go",
         "server_loglist_test.go",
         "server_scorepreview_test.go",
         "server_scoringrulesetmanagement_test.go",

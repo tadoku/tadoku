@@ -1,1 +1,1 @@
-{"responses":{"200":{"description":"successful operation"},"400":{"description":"language combination is invalid"},"404":{"description":"contest not found"}}}
+{"responses":{"200":{"description":"successful operation"},"400":{"description":"language combination is invalid"},"404":{"description":"contest not found"},"409":{"description":"account deletion is in progress","content":{"application/json":{"schema":{"type":"object","required":["error"],"properties":{"error":{"type":"string","enum":["account_deletion_in_progress"]}},"title":"ErrorResponse"}}}}}}

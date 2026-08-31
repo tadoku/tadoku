@@ -18,10 +18,12 @@ type LogDeleteRequest struct {
 	LogID uuid.UUID
 
 	// Set by domain layer (unexported: only domain can write, others read via getters)
-	now time.Time
+	now    time.Time
+	userID uuid.UUID
 }
 
-func (r *LogDeleteRequest) Now() time.Time { return r.now }
+func (r *LogDeleteRequest) Now() time.Time    { return r.now }
+func (r *LogDeleteRequest) UserID() uuid.UUID { return r.userID }
 
 type LogDelete struct {
 	repo  LogDeleteRepository
@@ -62,6 +64,7 @@ func (s *LogDelete) Execute(ctx context.Context, req *LogDeleteRequest) error {
 	}
 
 	req.now = s.clock.Now()
+	req.userID = log.UserID
 
 	if err := s.repo.DeleteLog(ctx, req); err != nil {
 		return err

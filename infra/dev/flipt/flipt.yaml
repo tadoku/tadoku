@@ -51,7 +51,6 @@ data:
         name: local
         default: true
         storage: local
-        directory: default
     metrics:
       enabled: true
       exporter: prometheus
@@ -112,7 +111,7 @@ spec:
           args:
             - |
               mkdir -p /var/lib/flipt/default
-              cp -R /seed/. /var/lib/flipt/default/
+              cp -L /seed/features.yaml /var/lib/flipt/default/features.yaml
               chmod 0644 /var/lib/flipt/default/features.yaml
               cd /var/lib/flipt
               git init --initial-branch=main

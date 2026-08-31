@@ -47,6 +47,8 @@ func TestDeploymentBootstrapsRestrictedDisposableGitRepository(t *testing.T) {
 
 	assert.Contains(t, manifest, "tadoku.dev/flipt-seed-sha256: __FLIPT_SEED_SHA256__")
 	assert.Contains(t, manifest, "image: docker.io/alpine/git:2.47.2@sha256:")
+	assert.Contains(t, manifest, "cp -L /seed/features.yaml /var/lib/flipt/default/features.yaml")
+	assert.NotContains(t, manifest, "cp -R /seed/. /var/lib/flipt/default/")
 	assert.Contains(t, manifest, "git init --initial-branch=main")
 	assert.Contains(t, manifest, "chmod 0644 /var/lib/flipt/default/features.yaml")
 	assert.Contains(t, manifest, "git config --global --add safe.directory /var/lib/flipt")
@@ -66,7 +68,7 @@ func TestFliptUsesLocalSeededStorageWithoutRemote(t *testing.T) {
 	manifest := string(readRunfile(t, "infra/dev/flipt/flipt.yaml"))
 	assert.Contains(t, manifest, "type: local\n          path: /var/lib/flipt")
 	assert.Contains(t, manifest, "branch: main")
-	assert.Contains(t, manifest, "directory: default")
+	assert.NotContains(t, manifest, "directory: default")
 	assert.NotContains(t, manifest, "remote:")
 
 	tiltfile := string(readRunfile(t, "infra/dev/flipt/Tiltfile"))

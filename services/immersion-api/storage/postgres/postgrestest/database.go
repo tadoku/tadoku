@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
+	"sync"
 	"testing"
 
 	"github.com/bazelbuild/rules_go/go/tools/bazel"
@@ -20,6 +21,8 @@ import (
 )
 
 const databaseURLEnvironmentVariable = "IMMERSION_TEST_POSTGRES_URL"
+
+var cachedValidatedMigrationDirectory = sync.OnceValues(findValidatedMigrationDirectory)
 
 // OpenMigratedDatabase creates an isolated database and applies every checked-in
 // immersion migration. The caller receives a database at the same schema version
@@ -58,7 +61,8 @@ func OpenMigratedDatabase(t testing.TB) *sql.DB {
 	require.NoError(t, err)
 	require.NoError(t, testDB.Ping())
 
-	migrationDirectory := validatedMigrationDirectory(t)
+	migrationDirectory, err := cachedValidatedMigrationDirectory()
+	require.NoError(t, err)
 	migrationSourceURL := (&url.URL{Scheme: "file", Path: migrationDirectory}).String()
 	migrator, err := migrate.New(migrationSourceURL, testDatabaseURL.String())
 	require.NoError(t, err)
@@ -71,15 +75,17 @@ func OpenMigratedDatabase(t testing.TB) *sql.DB {
 	return testDB
 }
 
-func validatedMigrationDirectory(t testing.TB) string {
-	t.Helper()
-
+func findValidatedMigrationDirectory() (string, error) {
 	firstMigration, err := bazel.Runfile("services/immersion-api/storage/postgres/migrations/0001_init.up.sql")
-	require.NoError(t, err)
+	if err != nil {
+		return "", fmt.Errorf("could not resolve first immersion migration: %w", err)
+	}
 	directory := filepath.Dir(firstMigration)
 
 	entries, err := os.ReadDir(directory)
-	require.NoError(t, err)
+	if err != nil {
+		return "", fmt.Errorf("could not read immersion migration directory: %w", err)
+	}
 
 	paths := make([]string, 0, len(entries))
 	for _, entry := range entries {
@@ -89,13 +95,19 @@ func validatedMigrationDirectory(t testing.TB) string {
 		paths = append(paths, filepath.Join(directory, entry.Name()))
 	}
 	sort.Strings(paths)
-	require.NotEmpty(t, paths)
-	require.Equal(t, "0001_init.up.sql", filepath.Base(paths[0]))
+	if len(paths) == 0 {
+		return "", fmt.Errorf("immersion migration directory contains no up migrations")
+	}
+	if filepath.Base(paths[0]) != "0001_init.up.sql" {
+		return "", fmt.Errorf("immersion migration sequence does not start at 0001: %s", paths[0])
+	}
 
 	for index, path := range paths {
 		expectedPrefix := fmt.Sprintf("%04d_", index+1)
-		require.Truef(t, strings.HasPrefix(filepath.Base(path), expectedPrefix), "migration sequence contains a gap at %s", path)
+		if !strings.HasPrefix(filepath.Base(path), expectedPrefix) {
+			return "", fmt.Errorf("immersion migration sequence contains a gap at %s", path)
+		}
 	}
 
-	return directory
+	return directory, nil
 }

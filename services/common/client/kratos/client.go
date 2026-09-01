@@ -56,3 +56,45 @@ func (c *Client) ListIdentities(ctx context.Context, perPage int64, page int64) 
 	}
 	return identities, nil
 }
+
+func (c *Client) DeactivateIdentity(ctx context.Context, id uuid.UUID) error {
+	statePatch := kratosapi.NewJsonPatch("replace", "/state")
+	statePatch.SetValue(kratosapi.IDENTITYSTATE_INACTIVE)
+	req := c.client.IdentityApi.PatchIdentity(ctx, id.String()).JsonPatch([]kratosapi.JsonPatch{*statePatch})
+	_, res, err := c.client.IdentityApi.PatchIdentityExecute(req)
+	if err != nil {
+		if responseStatus(res, http.StatusNotFound) {
+			return nil
+		}
+		return fmt.Errorf("could not deactivate identity: %w", err)
+	}
+	return nil
+}
+
+func (c *Client) DeleteIdentitySessions(ctx context.Context, id uuid.UUID) error {
+	req := c.client.IdentityApi.DeleteIdentitySessions(ctx, id.String())
+	res, err := c.client.IdentityApi.DeleteIdentitySessionsExecute(req)
+	if err != nil {
+		if responseStatus(res, http.StatusNotFound) {
+			return nil
+		}
+		return fmt.Errorf("could not delete identity sessions: %w", err)
+	}
+	return nil
+}
+
+func (c *Client) DeleteIdentity(ctx context.Context, id uuid.UUID) error {
+	req := c.client.IdentityApi.DeleteIdentity(ctx, id.String())
+	res, err := c.client.IdentityApi.DeleteIdentityExecute(req)
+	if err != nil {
+		if responseStatus(res, http.StatusNotFound) {
+			return nil
+		}
+		return fmt.Errorf("could not delete identity: %w", err)
+	}
+	return nil
+}
+
+func responseStatus(res *http.Response, status int) bool {
+	return res != nil && res.StatusCode == status
+}

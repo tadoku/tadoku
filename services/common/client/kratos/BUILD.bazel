@@ -1,4 +1,4 @@
-load("@rules_go//go:def.bzl", "go_library")
+load("@rules_go//go:def.bzl", "go_library", "go_test")
 
 go_library(
     name = "kratos",
@@ -8,5 +8,16 @@ go_library(
     deps = [
         "@com_github_google_uuid//:uuid",
         "@com_github_ory_kratos_client_go//:kratos-client-go",
+    ],
+)
+
+go_test(
+    name = "kratos_test",
+    srcs = ["client_test.go"],
+    deps = [
+        ":kratos",
+        "@com_github_google_uuid//:uuid",
+        "@com_github_stretchr_testify//assert",
+        "@com_github_stretchr_testify//require",
     ],
 )

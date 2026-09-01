@@ -3,6 +3,7 @@ package domain
 import (
 	"context"
 	"fmt"
+	"log/slog"
 
 	"github.com/google/uuid"
 )
@@ -53,7 +54,8 @@ func (s *ContestLeaderboardFetch) Execute(ctx context.Context, req *ContestLeade
 
 	lbPage, exists, err := s.store.FetchContestLeaderboardPage(ctx, req.ContestID, req.Page, req.PageSize)
 	if err != nil {
-		return nil, fmt.Errorf("failed to fetch contest leaderboard from store: %w", err)
+		slog.WarnContext(ctx, "contest leaderboard cache unavailable; falling back to Postgres", "error", err)
+		return s.repo.FetchContestLeaderboard(ctx, req)
 	}
 
 	if !exists {
@@ -62,7 +64,8 @@ func (s *ContestLeaderboardFetch) Execute(ctx context.Context, req *ContestLeade
 			return nil, fmt.Errorf("failed to fetch all contest scores for rebuild: %w", err)
 		}
 		if err := s.store.RebuildContestLeaderboard(ctx, req.ContestID, allScores); err != nil {
-			return nil, fmt.Errorf("failed to rebuild contest leaderboard: %w", err)
+			slog.WarnContext(ctx, "contest leaderboard cache rebuild failed; falling back to Postgres", "error", err)
+			return s.repo.FetchContestLeaderboard(ctx, req)
 		}
 		return s.repo.FetchContestLeaderboard(ctx, req)
 	}

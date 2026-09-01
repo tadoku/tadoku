@@ -3,6 +3,7 @@ package domain
 import (
 	"context"
 	"fmt"
+	"log/slog"
 
 	"github.com/google/uuid"
 )
@@ -52,7 +53,8 @@ func (s *LeaderboardGlobal) Execute(ctx context.Context, req *LeaderboardGlobalR
 
 	lbPage, exists, err := s.store.FetchGlobalLeaderboardPage(ctx, req.Page, req.PageSize)
 	if err != nil {
-		return nil, fmt.Errorf("failed to fetch global leaderboard from store: %w", err)
+		slog.WarnContext(ctx, "global leaderboard cache unavailable; falling back to Postgres", "error", err)
+		return s.repo.FetchGlobalLeaderboard(ctx, req)
 	}
 
 	if !exists {
@@ -61,7 +63,8 @@ func (s *LeaderboardGlobal) Execute(ctx context.Context, req *LeaderboardGlobalR
 			return nil, fmt.Errorf("failed to fetch all global scores for rebuild: %w", err)
 		}
 		if err := s.store.RebuildGlobalLeaderboard(ctx, allScores); err != nil {
-			return nil, fmt.Errorf("failed to rebuild global leaderboard: %w", err)
+			slog.WarnContext(ctx, "global leaderboard cache rebuild failed; falling back to Postgres", "error", err)
+			return s.repo.FetchGlobalLeaderboard(ctx, req)
 		}
 		return s.repo.FetchGlobalLeaderboard(ctx, req)
 	}

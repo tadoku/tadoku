@@ -243,17 +243,46 @@ func TestLeaderboardYearly_CacheMiss(t *testing.T) {
 }
 
 func TestLeaderboardYearly_StoreFetchError(t *testing.T) {
+	want := &domain.Leaderboard{
+		Entries:   []domain.LeaderboardEntry{},
+		TotalSize: 0,
+	}
 	store := &leaderboardYearlyStoreMock{
 		fetchErr: errors.New("valkey down"),
 	}
-	repo := &leaderboardYearlyRepositoryMock{}
+	repo := &leaderboardYearlyRepositoryMock{leaderboard: want}
 	service := domain.NewLeaderboardYearly(repo, store)
 
-	_, err := service.Execute(context.Background(), &domain.LeaderboardYearlyRequest{
+	got, err := service.Execute(context.Background(), &domain.LeaderboardYearlyRequest{
 		Year:     2024,
 		PageSize: 25,
 	})
 
-	assert.Error(t, err)
-	assert.Contains(t, err.Error(), "valkey down")
+	require.NoError(t, err)
+	assert.Same(t, want, got)
+	assert.NotNil(t, repo.capturedRequest, "should fall back to Postgres")
+}
+
+func TestLeaderboardYearly_StoreRebuildError(t *testing.T) {
+	want := &domain.Leaderboard{
+		Entries:   []domain.LeaderboardEntry{},
+		TotalSize: 0,
+	}
+	store := &leaderboardYearlyStoreMock{
+		rebuildErr: errors.New("valkey down"),
+	}
+	repo := &leaderboardYearlyRepositoryMock{
+		leaderboard: want,
+		allScores:   []domain.LeaderboardScore{{UserID: uuid.New(), Score: 100}},
+	}
+	service := domain.NewLeaderboardYearly(repo, store)
+
+	got, err := service.Execute(context.Background(), &domain.LeaderboardYearlyRequest{
+		Year:     2024,
+		PageSize: 25,
+	})
+
+	require.NoError(t, err)
+	assert.Same(t, want, got)
+	assert.NotNil(t, repo.capturedRequest, "should fall back to Postgres")
 }

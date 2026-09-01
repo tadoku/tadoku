@@ -250,18 +250,48 @@ func TestContestLeaderboardFetch_CacheMiss(t *testing.T) {
 
 func TestContestLeaderboardFetch_StoreFetchError(t *testing.T) {
 	contestID := uuid.New()
+	want := &domain.Leaderboard{
+		Entries:   []domain.LeaderboardEntry{},
+		TotalSize: 0,
+	}
 
 	store := &contestLeaderboardFetchStoreMock{
 		fetchErr: errors.New("valkey down"),
 	}
-	repo := &contestLeaderboardFetchRepositoryMock{}
+	repo := &contestLeaderboardFetchRepositoryMock{leaderboard: want}
 	service := domain.NewContestLeaderboardFetch(repo, store)
 
-	_, err := service.Execute(context.Background(), &domain.ContestLeaderboardFetchRequest{
+	got, err := service.Execute(context.Background(), &domain.ContestLeaderboardFetchRequest{
 		ContestID: contestID,
 		PageSize:  25,
 	})
 
-	assert.Error(t, err)
-	assert.Contains(t, err.Error(), "valkey down")
+	require.NoError(t, err)
+	assert.Same(t, want, got)
+	assert.NotNil(t, repo.capturedRequest, "should fall back to Postgres")
+}
+
+func TestContestLeaderboardFetch_StoreRebuildError(t *testing.T) {
+	contestID := uuid.New()
+	want := &domain.Leaderboard{
+		Entries:   []domain.LeaderboardEntry{},
+		TotalSize: 0,
+	}
+	store := &contestLeaderboardFetchStoreMock{
+		rebuildErr: errors.New("valkey down"),
+	}
+	repo := &contestLeaderboardFetchRepositoryMock{
+		leaderboard: want,
+		allScores:   []domain.LeaderboardScore{{UserID: uuid.New(), Score: 100}},
+	}
+	service := domain.NewContestLeaderboardFetch(repo, store)
+
+	got, err := service.Execute(context.Background(), &domain.ContestLeaderboardFetchRequest{
+		ContestID: contestID,
+		PageSize:  25,
+	})
+
+	require.NoError(t, err)
+	assert.Same(t, want, got)
+	assert.NotNil(t, repo.capturedRequest, "should fall back to Postgres")
 }

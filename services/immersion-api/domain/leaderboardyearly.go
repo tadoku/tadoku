@@ -3,6 +3,7 @@ package domain
 import (
 	"context"
 	"fmt"
+	"log/slog"
 
 	"github.com/google/uuid"
 )
@@ -54,7 +55,8 @@ func (s *LeaderboardYearly) Execute(ctx context.Context, req *LeaderboardYearlyR
 	year := int(req.Year)
 	lbPage, exists, err := s.store.FetchYearlyLeaderboardPage(ctx, year, req.Page, req.PageSize)
 	if err != nil {
-		return nil, fmt.Errorf("failed to fetch yearly leaderboard from store: %w", err)
+		slog.WarnContext(ctx, "yearly leaderboard cache unavailable; falling back to Postgres", "error", err)
+		return s.repo.FetchYearlyLeaderboard(ctx, req)
 	}
 
 	if !exists {
@@ -63,7 +65,8 @@ func (s *LeaderboardYearly) Execute(ctx context.Context, req *LeaderboardYearlyR
 			return nil, fmt.Errorf("failed to fetch all yearly scores for rebuild: %w", err)
 		}
 		if err := s.store.RebuildYearlyLeaderboard(ctx, year, allScores); err != nil {
-			return nil, fmt.Errorf("failed to rebuild yearly leaderboard: %w", err)
+			slog.WarnContext(ctx, "yearly leaderboard cache rebuild failed; falling back to Postgres", "error", err)
+			return s.repo.FetchYearlyLeaderboard(ctx, req)
 		}
 		return s.repo.FetchYearlyLeaderboard(ctx, req)
 	}

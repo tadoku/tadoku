@@ -5,26 +5,19 @@ import { routes } from '@app/common/routes'
 import { EditLogForm } from '@app/immersion/EditLogForm/Form'
 import { useRouter } from 'next/router'
 import Head from 'next/head'
-import { useSessionOrRedirect, useUserRole } from '@app/common/session'
+import { useSessionOrRedirect } from '@app/common/session'
 import { useLatchedFeatureFlag } from '@app/feature-flags/client'
 
 const Page = () => {
   const router = useRouter()
   const id = router.query['id']?.toString() ?? ''
-  const role = useUserRole()
-  const useV2 = useLatchedFeatureFlag(
-    'release-log-entry-v2',
-    role !== undefined,
-    role === 'admin',
-  )
+  const useV2 = useLatchedFeatureFlag('release-log-entry-v2')
   const log = useLog(id, { enabled: !!id })
   const options = useLogConfigurationOptions()
 
   useSessionOrRedirect()
 
   if (
-    role === undefined ||
-    useV2 === undefined ||
     log.isLoading ||
     log.isIdle ||
     options.isLoading

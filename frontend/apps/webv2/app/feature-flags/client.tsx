@@ -21,14 +21,12 @@ export const useFeatureFlag = (flag: FeatureFlagKey) =>
 
 export const useLatchedFeatureFlag = (
   flag: FeatureFlagKey,
-  ready = true,
-  enabledOverride = false,
-): boolean | undefined => {
+): boolean => {
   const enabled = useFeatureFlag(flag)
   const latched = useRef<boolean>()
 
-  if (ready && latched.current === undefined) {
-    latched.current = enabledOverride || enabled
+  if (latched.current === undefined) {
+    latched.current = enabled
   }
 
   return latched.current

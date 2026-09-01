@@ -8,7 +8,7 @@ import {
 } from '@app/common/format'
 import { useCurrentDateTime } from '@app/common/hooks'
 import { routes } from '@app/common/routes'
-import { useSession, useUserRole } from '@app/common/session'
+import { useSession } from '@app/common/session'
 import { Log, useDeleteLog, useLog } from '@app/immersion/api'
 import { LogDetailsV2 } from '@app/immersion/LogDetailsV2'
 import { HomeIcon, TrashIcon } from '@heroicons/react/20/solid'
@@ -26,12 +26,7 @@ const Page = () => {
   const router = useRouter()
   const id = router.query['id']?.toString() ?? ''
   const log = useLog(id)
-  const role = useUserRole()
-  const useV2 = useLatchedFeatureFlag(
-    'release-log-entry-v2',
-    role !== undefined,
-    role === 'admin',
-  )
+  const useV2 = useLatchedFeatureFlag('release-log-entry-v2')
 
   if (log.isLoading || log.isIdle) {
     return <Loading />
@@ -64,10 +59,6 @@ const Page = () => {
         Could not load page, please try again later.
       </span>
     )
-  }
-
-  if (role === undefined || useV2 === undefined) {
-    return <Loading />
   }
 
   if (useV2) {

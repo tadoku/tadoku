@@ -11,18 +11,13 @@ import { LogFormV2 } from '@app/immersion/NewLogFormV2/Form'
 import { useRouter } from 'next/router'
 import { getQueryStringIntParameter } from '@app/common/router'
 import Head from 'next/head'
-import { useSessionOrRedirect, useUserRole } from '@app/common/session'
+import { useSessionOrRedirect } from '@app/common/session'
 import { useLatchedFeatureFlag } from '@app/feature-flags/client'
 
 interface Props {}
 
 const Page: NextPage<Props> = () => {
-  const role = useUserRole()
-  const useV2 = useLatchedFeatureFlag(
-    'release-log-entry-v2',
-    role !== undefined,
-    role === 'admin',
-  )
+  const useV2 = useLatchedFeatureFlag('release-log-entry-v2')
   const options = useLogConfigurationOptions()
   const registrations = useOngoingContestRegistrations({
     enabled: useV2 === false,
@@ -32,10 +27,6 @@ const Page: NextPage<Props> = () => {
 
   const router = useRouter()
   const amount = getQueryStringIntParameter(router.query['amount'], 0)
-
-  if (role === undefined || useV2 === undefined) {
-    return <Loading />
-  }
 
   return (
     <>

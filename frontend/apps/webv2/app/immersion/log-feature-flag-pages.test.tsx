@@ -10,14 +10,12 @@ const {
   useLog,
   useLogConfigurationOptions,
   useOngoingContestRegistrations,
-  useUserRole,
 } = vi.hoisted(() => ({
   featureDecision: { enabled: false },
   useLatchedFeatureFlag: vi.fn(),
   useLog: vi.fn(),
   useLogConfigurationOptions: vi.fn(),
   useOngoingContestRegistrations: vi.fn(),
-  useUserRole: vi.fn(),
 }))
 
 vi.mock('@app/feature-flags/client', () => ({ useLatchedFeatureFlag }))
@@ -25,7 +23,6 @@ vi.mock('@app/feature-flags/client', () => ({ useLatchedFeatureFlag }))
 vi.mock('@app/common/session', () => ({
   useSession: () => [{ identity: { id: 'user-id' } }],
   useSessionOrRedirect: vi.fn(),
-  useUserRole,
 }))
 
 vi.mock('@app/common/hooks', () => ({
@@ -137,14 +134,9 @@ describe('release-log-entry-v2 pages', () => {
     useLog.mockReset()
     useLogConfigurationOptions.mockReset()
     useOngoingContestRegistrations.mockReset()
-    useUserRole.mockReset()
 
     featureDecision.enabled = false
-    useLatchedFeatureFlag.mockImplementation(
-      (_flag: string, _ready: boolean, enabledOverride = false) =>
-        enabledOverride || featureDecision.enabled,
-    )
-    useUserRole.mockReturnValue('user')
+    useLatchedFeatureFlag.mockImplementation(() => featureDecision.enabled)
     useLogConfigurationOptions.mockReturnValue(optionsResult)
     useOngoingContestRegistrations.mockReturnValue(registrationsResult)
     useLog.mockReturnValue({
@@ -164,20 +156,6 @@ describe('release-log-entry-v2 pages', () => {
     const details = renderToStaticMarkup(<LogDetailsPage />)
     expect(details).toContain('Log details')
     expect(details).not.toContain('v2 log details')
-  })
-
-  it('preserves the existing V2 journey for admins when the flag is disabled', () => {
-    useUserRole.mockReturnValue('admin')
-
-    expect(renderToStaticMarkup(<NewLogPage />)).toContain('v2 create form')
-    expect(renderToStaticMarkup(<LogDetailsPage />)).toContain('v2 log details')
-    expect(renderToStaticMarkup(<EditLogPage />)).toContain('v2 edit form')
-
-    expect(useLatchedFeatureFlag).toHaveBeenCalledWith(
-      'release-log-entry-v2',
-      true,
-      true,
-    )
   })
 
   it('renders V2 create and details pages for a targeted non-admin', () => {

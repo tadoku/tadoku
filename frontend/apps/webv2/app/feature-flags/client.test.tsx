@@ -43,16 +43,8 @@ const FlagValue = () => {
   return <output>{enabled ? 'enabled' : 'disabled'}</output>
 }
 
-const LatchedFlagValue = ({
-  enabledOverride = false,
-}: {
-  enabledOverride?: boolean
-}) => {
-  const enabled = useLatchedFeatureFlag(
-    'release-log-entry-v2',
-    true,
-    enabledOverride,
-  )
+const LatchedFlagValue = () => {
+  const enabled = useLatchedFeatureFlag('release-log-entry-v2')
   const setDecisions = useSetAtom(featureFlagDecisionsAtom)
 
   return (
@@ -145,16 +137,6 @@ describe('feature flag browser state', () => {
     )
 
     expect(screen.getByText('latched disabled')).toBeTruthy()
-  })
-
-  it('allows an existing behavior to override a disabled flag', () => {
-    render(
-      <Wrapper>
-        <LatchedFlagValue enabledOverride />
-      </Wrapper>,
-    )
-
-    expect(screen.getByLabelText('V2 draft')).toBeTruthy()
   })
 
   it('uses the legacy default while refreshing after navigation without remounting a form', async () => {

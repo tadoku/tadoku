@@ -167,6 +167,48 @@
     url: "http://flipt.tdk-flipt.svc.cluster.local:8080"
     strip_path: /flipt
 
+- id: "tadoku:flipt:management:feature-access:get"
+  match:
+    url: "http://oathkeeper-proxy.default:4455/flipt-management/api/v2/environments/local/namespaces/default/resources/flipt.core.Segment/release-log-entry-v2-access"
+    methods:
+      - GET
+  authenticators:
+    - handler: jwt
+      config:
+        jwks_urls:
+          - http://oathkeeper-api.default:4456/.well-known/jwks.json
+        target_audience:
+          - flipt-management
+  authorizer:
+    handler: allow
+  mutators:
+    - handler: noop
+  upstream:
+    preserve_host: false
+    url: "http://flipt.tdk-flipt.svc.cluster.local:8080"
+    strip_path: /flipt-management
+
+- id: "tadoku:flipt:management:feature-access:update"
+  match:
+    url: "http://oathkeeper-proxy.default:4455/flipt-management/api/v2/environments/local/namespaces/default/resources"
+    methods:
+      - PUT
+  authenticators:
+    - handler: jwt
+      config:
+        jwks_urls:
+          - http://oathkeeper-api.default:4456/.well-known/jwks.json
+        target_audience:
+          - flipt-management
+  authorizer:
+    handler: allow
+  mutators:
+    - handler: noop
+  upstream:
+    preserve_host: false
+    url: "http://flipt.tdk-flipt.svc.cluster.local:8080"
+    strip_path: /flipt-management
+
 - id: "echo"
   upstream:
     preserve_host: true
@@ -264,6 +306,32 @@
             "type": "service",
             "sub": "{{ .Subject }}",
             "aud": ["flipt-evaluation"]
+          }
+  upstream:
+    url: "http://token-reflector.tdk-token-reflector"
+
+- id: "s2s:immersion-to-flipt-management"
+  match:
+    url: "http://oathkeeper-proxy.default:4455/token-exchange/flipt-management/immersion-api"
+    methods:
+      - GET
+  authenticators:
+    - handler: jwt
+      config:
+        jwks_urls:
+          - http://token-reflector.tdk-token-reflector/jwks
+        target_audience:
+          - immersion-api
+  authorizer:
+    handler: allow
+  mutators:
+    - handler: id_token
+      config:
+        claims: |
+          {
+            "type": "service",
+            "sub": "{{ .Subject }}",
+            "aud": ["flipt-management"]
           }
   upstream:
     url: "http://token-reflector.tdk-token-reflector"

@@ -51,6 +51,7 @@ func NewServer(
 	scorePreview *domain.ScorePreview,
 	scoringRuleSetManagement *domain.ScoringRuleSetManagement,
 	featureFlagDecisions publicFeatureFlagEvaluator,
+	featureAccess *domain.FeatureAccess,
 ) openapi.ServerInterface {
 	return &Server{
 		contestConfigurationOptions: contestConfigurationOptions,
@@ -89,6 +90,7 @@ func NewServer(
 		scorePreview:                scorePreview,
 		scoringRuleSetManagement:    scoringRuleSetManagement,
 		featureFlagDecisions:        featureFlagDecisions,
+		featureAccess:               featureAccess,
 	}
 }
 
@@ -129,4 +131,5 @@ type Server struct {
 	scorePreview                *domain.ScorePreview
 	scoringRuleSetManagement    *domain.ScoringRuleSetManagement
 	featureFlagDecisions        publicFeatureFlagEvaluator
+	featureAccess               *domain.FeatureAccess
 }

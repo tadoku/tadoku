@@ -28,6 +28,17 @@ const (
 	ErrorResponseErrorAccountDeletionInProgress ErrorResponseError = "account_deletion_in_progress"
 )
 
+// Defines values for FeatureAccessResponseEnvironment.
+const (
+	Local      FeatureAccessResponseEnvironment = "local"
+	Production FeatureAccessResponseEnvironment = "production"
+)
+
+// Defines values for ManagedFeatureFlagKey.
+const (
+	ReleaseLogEntryV2 ManagedFeatureFlagKey = "release-log-entry-v2"
+)
+
 // Defines values for ScoreEstimateSource.
 const (
 	ScoreEstimateSourceAmount          ScoreEstimateSource = "amount"
@@ -239,6 +250,17 @@ type ErrorResponse struct {
 // ErrorResponseError defines model for ErrorResponse.Error.
 type ErrorResponseError string
 
+// FeatureAccessResponse defines model for FeatureAccessResponse.
+type FeatureAccessResponse struct {
+	Changed     bool                             `json:"changed"`
+	Enabled     bool                             `json:"enabled"`
+	Environment FeatureAccessResponseEnvironment `json:"environment"`
+	Revision    string                           `json:"revision"`
+}
+
+// FeatureAccessResponseEnvironment defines model for FeatureAccessResponse.Environment.
+type FeatureAccessResponseEnvironment string
+
 // FeatureFlagDecisions defines model for FeatureFlagDecisions.
 type FeatureFlagDecisions struct {
 	ReleaseLogEntryV2 bool `json:"release-log-entry-v2"`
@@ -317,6 +339,9 @@ type Logs struct {
 	NextPageToken string `json:"next_page_token"`
 	TotalSize     int    `json:"total_size"`
 }
+
+// ManagedFeatureFlagKey defines model for ManagedFeatureFlagKey.
+type ManagedFeatureFlagKey string
 
 // PaginatedList defines model for PaginatedList.
 type PaginatedList struct {
@@ -604,6 +629,15 @@ type ScoringRuleSetCreatePlatformJSONRequestBody = ScoringRuleSetDraft
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
+	// Revokes named-user access to an allowlisted feature flag (admin only)
+	// (DELETE /admin/feature-flags/{flagKey}/users/{userId})
+	FeatureAccessRevoke(ctx echo.Context, flagKey ManagedFeatureFlagKey, userId openapi_types.UUID) error
+	// Returns named-user access for an allowlisted feature flag (admin only)
+	// (GET /admin/feature-flags/{flagKey}/users/{userId})
+	FeatureAccessGet(ctx echo.Context, flagKey ManagedFeatureFlagKey, userId openapi_types.UUID) error
+	// Grants named-user access to an allowlisted feature flag (admin only)
+	// (PUT /admin/feature-flags/{flagKey}/users/{userId})
+	FeatureAccessGrant(ctx echo.Context, flagKey ManagedFeatureFlagKey, userId openapi_types.UUID) error
 	// Lists all the contests, paginated
 	// (GET /contests)
 	ContestList(ctx echo.Context, params ContestListParams) error
@@ -735,6 +769,84 @@ type ServerInterface interface {
 // ServerInterfaceWrapper converts echo contexts to parameters.
 type ServerInterfaceWrapper struct {
 	Handler ServerInterface
+}
+
+// FeatureAccessRevoke converts echo context to params.
+func (w *ServerInterfaceWrapper) FeatureAccessRevoke(ctx echo.Context) error {
+	var err error
+	// ------------- Path parameter "flagKey" -------------
+	var flagKey ManagedFeatureFlagKey
+
+	err = runtime.BindStyledParameterWithLocation("simple", false, "flagKey", runtime.ParamLocationPath, ctx.Param("flagKey"), &flagKey)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter flagKey: %s", err))
+	}
+
+	// ------------- Path parameter "userId" -------------
+	var userId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithLocation("simple", false, "userId", runtime.ParamLocationPath, ctx.Param("userId"), &userId)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter userId: %s", err))
+	}
+
+	ctx.Set(CookieAuthScopes, []string{""})
+
+	// Invoke the callback with all the unmarshalled arguments
+	err = w.Handler.FeatureAccessRevoke(ctx, flagKey, userId)
+	return err
+}
+
+// FeatureAccessGet converts echo context to params.
+func (w *ServerInterfaceWrapper) FeatureAccessGet(ctx echo.Context) error {
+	var err error
+	// ------------- Path parameter "flagKey" -------------
+	var flagKey ManagedFeatureFlagKey
+
+	err = runtime.BindStyledParameterWithLocation("simple", false, "flagKey", runtime.ParamLocationPath, ctx.Param("flagKey"), &flagKey)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter flagKey: %s", err))
+	}
+
+	// ------------- Path parameter "userId" -------------
+	var userId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithLocation("simple", false, "userId", runtime.ParamLocationPath, ctx.Param("userId"), &userId)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter userId: %s", err))
+	}
+
+	ctx.Set(CookieAuthScopes, []string{""})
+
+	// Invoke the callback with all the unmarshalled arguments
+	err = w.Handler.FeatureAccessGet(ctx, flagKey, userId)
+	return err
+}
+
+// FeatureAccessGrant converts echo context to params.
+func (w *ServerInterfaceWrapper) FeatureAccessGrant(ctx echo.Context) error {
+	var err error
+	// ------------- Path parameter "flagKey" -------------
+	var flagKey ManagedFeatureFlagKey
+
+	err = runtime.BindStyledParameterWithLocation("simple", false, "flagKey", runtime.ParamLocationPath, ctx.Param("flagKey"), &flagKey)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter flagKey: %s", err))
+	}
+
+	// ------------- Path parameter "userId" -------------
+	var userId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithLocation("simple", false, "userId", runtime.ParamLocationPath, ctx.Param("userId"), &userId)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter userId: %s", err))
+	}
+
+	ctx.Set(CookieAuthScopes, []string{""})
+
+	// Invoke the callback with all the unmarshalled arguments
+	err = w.Handler.FeatureAccessGrant(ctx, flagKey, userId)
+	return err
 }
 
 // ContestList converts echo context to params.
@@ -1607,6 +1719,9 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 		Handler: si,
 	}
 
+	router.DELETE(baseURL+"/admin/feature-flags/:flagKey/users/:userId", wrapper.FeatureAccessRevoke)
+	router.GET(baseURL+"/admin/feature-flags/:flagKey/users/:userId", wrapper.FeatureAccessGet)
+	router.PUT(baseURL+"/admin/feature-flags/:flagKey/users/:userId", wrapper.FeatureAccessGrant)
 	router.GET(baseURL+"/contests", wrapper.ContestList)
 	router.POST(baseURL+"/contests", wrapper.ContestCreate)
 	router.GET(baseURL+"/contests/configuration-options", wrapper.ContestGetConfigurations)

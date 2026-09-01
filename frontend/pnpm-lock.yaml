@@ -96,6 +96,18 @@ importers:
         specifier: ^3.20.2
         version: 3.25.76
     devDependencies:
+      '@testing-library/dom':
+        specifier: 10.4.1
+        version: 10.4.1
+      '@testing-library/jest-dom':
+        specifier: 6.9.1
+        version: 6.9.1
+      '@testing-library/react':
+        specifier: 16.3.2
+        version: 16.3.2(@testing-library/dom@10.4.1)(@types/react-dom@18.0.6)(@types/react@18.0.20)(react-dom@18.2.0(react@18.2.0))(react@18.2.0)
+      '@testing-library/user-event':
+        specifier: 14.6.3
+        version: 14.6.3(@testing-library/dom@10.4.1)
       '@types/dompurify':
         specifier: ^3.2.0
         version: 3.2.0
@@ -123,12 +135,18 @@ importers:
       eslint-config-next:
         specifier: ^13.1.1
         version: 13.5.11(eslint@8.29.0)(typescript@4.9.3)
+      jsdom:
+        specifier: 27.0.1
+        version: 27.0.1
       postcss:
         specifier: ^8.5.23
         version: 8.5.23
       tailwindcss:
         specifier: ^3.2.4
         version: 3.4.18
+      vitest:
+        specifier: 4.1.10
+        version: 4.1.10(@types/node@18.7.18)(jsdom@27.0.1)(vite@6.4.3(@types/node@18.7.18)(jiti@1.21.7)(yaml@2.7.1))
 
   apps/auth:
     dependencies:

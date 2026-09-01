@@ -5,9 +5,17 @@ import {
   NoSymbolIcon,
   CheckCircleIcon,
   HomeIcon,
+  KeyIcon,
 } from '@heroicons/react/20/solid'
 import Head from 'next/head'
-import { ActionMenu, Breadcrumb, Loading, Modal, Pagination, TextArea } from 'ui'
+import {
+  ActionMenu,
+  Breadcrumb,
+  Loading,
+  Modal,
+  Pagination,
+  TextArea,
+} from 'ui'
 import { NextPageWithLayout } from './_app'
 import { getDashboardLayout } from '@app/ui/DashboardLayout'
 import { useUserList, useUpdateUserRole, UserListEntry } from '@app/common/api'
@@ -16,20 +24,27 @@ import { DateTime } from 'luxon'
 import { useQueryClient } from 'react-query'
 import { toast } from 'react-toastify'
 import { FormProvider, useForm } from 'react-hook-form'
+import { FeatureAccessModal } from '@app/feature-access/FeatureAccessModal'
 
 function RoleBadge({ role }: { role?: string }) {
   if (role === 'admin') {
     return (
-      <span className="tag bg-purple-100 text-purple-800 justify-center w-16">Admin</span>
+      <span className="tag bg-purple-100 text-purple-800 justify-center w-16">
+        Admin
+      </span>
     )
   }
   if (role === 'banned') {
     return (
-      <span className="tag bg-red-100 text-red-800 justify-center w-16">Banned</span>
+      <span className="tag bg-red-100 text-red-800 justify-center w-16">
+        Banned
+      </span>
     )
   }
   return (
-    <span className="tag bg-slate-100 text-slate-600 justify-center w-16">User</span>
+    <span className="tag bg-slate-100 text-slate-600 justify-center w-16">
+      User
+    </span>
   )
 }
 
@@ -38,6 +53,9 @@ const Page: NextPageWithLayout = () => {
   const [search, setSearch] = useState('')
   const [modalOpen, setModalOpen] = useState(false)
   const [selectedUser, setSelectedUser] = useState<UserListEntry | null>(null)
+  const [featureAccessOpen, setFeatureAccessOpen] = useState(false)
+  const [featureAccessUser, setFeatureAccessUser] =
+    useState<UserListEntry | null>(null)
   const pageSize = 20
   const queryClient = useQueryClient()
 
@@ -139,7 +157,11 @@ const Page: NextPageWithLayout = () => {
             Search
           </button>
           {search ? (
-            <button type="button" className="btn ghost" onClick={handleClearSearch}>
+            <button
+              type="button"
+              className="btn ghost"
+              onClick={handleClearSearch}
+            >
               Clear
             </button>
           ) : null}
@@ -199,35 +221,46 @@ const Page: NextPageWithLayout = () => {
                         : 'N/A'}
                     </td>
                     <td className="default">
-                      {user.role !== 'admin' ? (
-                        <ActionMenu
-                          orientation="right"
-                          links={[
-                            user.role === 'banned'
-                              ? {
-                                  label: 'Unban User',
-                                  href: '#',
-                                  IconComponent: CheckCircleIcon,
-                                  onClick: () => {
-                                    setSelectedUser(user)
-                                    setModalOpen(true)
-                                  },
-                                }
-                              : {
-                                  label: 'Ban User',
-                                  href: '#',
-                                  IconComponent: NoSymbolIcon,
-                                  type: 'danger' as const,
-                                  onClick: () => {
-                                    setSelectedUser(user)
-                                    setModalOpen(true)
-                                  },
-                                },
-                          ]}
-                        >
-                          <EllipsisVerticalIcon className="w-5 h-5" />
-                        </ActionMenu>
-                      ) : null}
+                      <ActionMenu
+                        orientation="right"
+                        links={[
+                          {
+                            label: 'Feature access',
+                            href: '#',
+                            IconComponent: KeyIcon,
+                            onClick: () => {
+                              setFeatureAccessUser(user)
+                              setFeatureAccessOpen(true)
+                            },
+                          },
+                          ...(user.role !== 'admin'
+                            ? [
+                                user.role === 'banned'
+                                  ? {
+                                      label: 'Unban User',
+                                      href: '#',
+                                      IconComponent: CheckCircleIcon,
+                                      onClick: () => {
+                                        setSelectedUser(user)
+                                        setModalOpen(true)
+                                      },
+                                    }
+                                  : {
+                                      label: 'Ban User',
+                                      href: '#',
+                                      IconComponent: NoSymbolIcon,
+                                      type: 'danger' as const,
+                                      onClick: () => {
+                                        setSelectedUser(user)
+                                        setModalOpen(true)
+                                      },
+                                    },
+                              ]
+                            : []),
+                        ]}
+                      >
+                        <EllipsisVerticalIcon className="w-5 h-5" />
+                      </ActionMenu>
                     </td>
                   </tr>
                 ))}
@@ -237,7 +270,9 @@ const Page: NextPageWithLayout = () => {
                       colSpan={5}
                       className="default h-32 font-bold text-center text-xl text-slate-400"
                     >
-                      {search ? 'No users found matching your search' : 'No users found'}
+                      {search
+                        ? 'No users found matching your search'
+                        : 'No users found'}
                     </td>
                   </tr>
                 ) : null}
@@ -265,8 +300,12 @@ const Page: NextPageWithLayout = () => {
         <FormProvider {...modalMethods}>
           <p className="modal-body">
             {isBanning
-              ? `Are you sure you want to ban ${selectedUser?.display_name || 'this user'}? They will no longer be able to access the site.`
-              : `Are you sure you want to unban ${selectedUser?.display_name || 'this user'}? They will regain access to the site.`}
+              ? `Are you sure you want to ban ${
+                  selectedUser?.display_name || 'this user'
+                }? They will no longer be able to access the site.`
+              : `Are you sure you want to unban ${
+                  selectedUser?.display_name || 'this user'
+                }? They will regain access to the site.`}
           </p>
           <div className="modal-body">
             <TextArea
@@ -293,8 +332,8 @@ const Page: NextPageWithLayout = () => {
                   ? 'Banning...'
                   : 'Unbanning...'
                 : isBanning
-                  ? 'Yes, ban user'
-                  : 'Yes, unban user'}
+                ? 'Yes, ban user'
+                : 'Yes, unban user'}
             </button>
             <button
               type="button"
@@ -309,6 +348,17 @@ const Page: NextPageWithLayout = () => {
           </div>
         </FormProvider>
       </Modal>
+
+      <FeatureAccessModal
+        isOpen={featureAccessOpen}
+        setIsOpen={open => {
+          const nextOpen =
+            typeof open === 'function' ? open(featureAccessOpen) : open
+          setFeatureAccessOpen(nextOpen)
+          if (!nextOpen) setFeatureAccessUser(null)
+        }}
+        user={featureAccessUser}
+      />
     </>
   )
 }

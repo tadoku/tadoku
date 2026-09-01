@@ -18,6 +18,7 @@ var (
 	ErrAccountDeletionInProgress = fmt.Errorf("account deletion in progress: %w", commondomain.ErrConflict)
 	ErrAccountDeletionNotLocked  = fmt.Errorf("account deletion is not locked: %w", commondomain.ErrConflict)
 	ErrRunningContestOwned       = fmt.Errorf("account owns a running contest: %w", commondomain.ErrConflict)
+	ErrFeatureAccessUnavailable  = errors.New("feature access unavailable")
 )
 
 // Log errors

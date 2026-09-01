@@ -22,6 +22,7 @@ import (
 	tadokumiddleware "github.com/tadoku/tadoku/services/common/middleware"
 	commonobservability "github.com/tadoku/tadoku/services/common/observability"
 	"github.com/tadoku/tadoku/services/common/postgresconfig"
+	"github.com/tadoku/tadoku/services/immersion-api/client/fliptmanagement"
 	"github.com/tadoku/tadoku/services/immersion-api/client/ory"
 	immersiondomain "github.com/tadoku/tadoku/services/immersion-api/domain"
 	"github.com/tadoku/tadoku/services/immersion-api/http/rest"
@@ -59,6 +60,7 @@ type Config struct {
 	FliptUpdateInterval    time.Duration `envconfig:"flipt_update_interval" default:"30s"`
 	FliptRequestTimeout    time.Duration `envconfig:"flipt_request_timeout" default:"5s"`
 	FliptStartupTimeout    time.Duration `envconfig:"flipt_startup_timeout" default:"3s"`
+	FliptManagementURL     string        `envconfig:"flipt_management_url" default:"http://oathkeeper-proxy.default:4455/flipt-management"`
 }
 
 type featureFlagProviderInitializer func() (*fliptclient.Client, error)
@@ -177,6 +179,19 @@ func main() {
 		}()
 	}
 	featureFlagEvaluator := featureflags.NewEvaluator(fliptProvider, featureFlagMetrics, clock)
+	s2sClient := s2s.NewClient(cfg.OathkeeperURL, clock)
+	featureAccessHTTPClient := &http.Client{
+		Timeout: cfg.FliptRequestTimeout,
+		Transport: s2s.NewAuthTransport(
+			s2sClient,
+			"flipt-management/immersion-api",
+			http.DefaultTransport,
+		),
+	}
+	featureAccessStore := fliptmanagement.NewClient(fliptmanagement.Config{
+		URL: cfg.FliptManagementURL, Environment: cfg.FliptEnvironment, HTTPClient: featureAccessHTTPClient,
+	})
+	featureAccess := immersiondomain.NewFeatureAccess(featureAccessStore, postgresRepository)
 	scoringMetrics := observability.NewScoringShadowMetrics(serviceMetrics.Registry(), cfg.ScoringEngineEnabled)
 	scoringObserver := observability.NewScoringShadowObserver(scoringMetrics, serviceLogger)
 	metricsServer := commonobservability.NewServer(
@@ -300,6 +315,7 @@ func main() {
 		scorePreview,
 		scoringRuleSetManagement,
 		featureFlagEvaluator,
+		featureAccess,
 	)
 
 	openapi.RegisterHandlersWithBaseURL(api, server, "")

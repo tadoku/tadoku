@@ -1,4 +1,4 @@
-version: "1.4"
+version: "1.6"
 namespace:
   key: default
   name: Default
@@ -8,3 +8,20 @@ flags:
     type: BOOLEAN_FLAG_TYPE
     description: Use the second-generation log entry flow.
     enabled: false
+    rollouts:
+      - description: Enabled for explicitly granted users.
+        segment:
+          keys:
+            - release-log-entry-v2-access
+          operator: OR_SEGMENT_OPERATOR
+          value: true
+segments:
+  - key: release-log-entry-v2-access
+    name: Release log entry v2 access
+    description: Kratos UUIDs explicitly granted access to release log entry v2.
+    match_type: ALL_MATCH_TYPE
+    constraints:
+      - type: ENTITY_ID_COMPARISON_TYPE
+        property: entityId
+        operator: isoneof
+        value: []

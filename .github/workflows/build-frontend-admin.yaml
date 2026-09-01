@@ -53,6 +53,9 @@ jobs:
       - name: Install dependencies
         run: pnpm install
 
+      - name: Test project
+        run: pnpm --filter admin test
+
       - name: Build project
         run: pnpm --filter admin run build
 

@@ -286,30 +286,3 @@ func TestLeaderboardYearly_StoreRebuildError(t *testing.T) {
 	assert.Same(t, want, got)
 	assert.NotNil(t, repo.capturedRequest, "should fall back to Postgres")
 }
-
-func TestLeaderboardYearly_RebuildSourceError(t *testing.T) {
-	want := &domain.Leaderboard{Entries: []domain.LeaderboardEntry{}, TotalSize: 0}
-	store := &leaderboardYearlyStoreMock{}
-	repo := &leaderboardYearlyRepositoryMock{
-		leaderboard:  want,
-		allScoresErr: errors.New("rebuild query failed"),
-	}
-	service := domain.NewLeaderboardYearly(repo, store)
-
-	got, err := service.Execute(context.Background(), &domain.LeaderboardYearlyRequest{Year: 2024, PageSize: 25})
-
-	require.NoError(t, err)
-	assert.Same(t, want, got)
-	assert.NotNil(t, repo.capturedRequest, "should fall back to the paginated Postgres query")
-}
-
-func TestLeaderboardYearly_FallbackRepositoryError(t *testing.T) {
-	store := &leaderboardYearlyStoreMock{fetchErr: errors.New("valkey down")}
-	repo := &leaderboardYearlyRepositoryMock{err: domain.ErrNotFound}
-	service := domain.NewLeaderboardYearly(repo, store)
-
-	got, err := service.Execute(context.Background(), &domain.LeaderboardYearlyRequest{Year: 2024, PageSize: 25})
-
-	assert.Nil(t, got)
-	assert.ErrorIs(t, err, domain.ErrNotFound)
-}

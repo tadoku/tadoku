@@ -1,9 +1,7 @@
 package main
 
 import (
-	"bytes"
 	"errors"
-	"log/slog"
 	"testing"
 	"time"
 
@@ -21,15 +19,14 @@ type stubValkeyClient struct {
 
 func validConfig() Config {
 	return Config{
-		Port:                   8080,
-		JWKS:                   "jwks",
-		KratosURL:              "http://kratos",
-		OathkeeperURL:          "http://oathkeeper",
-		KetoReadURL:            "http://keto-read",
-		KetoWriteURL:           "http://keto-write",
-		ValkeyURL:              "redis://valkey:6379",
-		ValkeyDialTimeout:      time.Second,
-		ValkeyOperationTimeout: time.Second,
+		Port:          8080,
+		JWKS:          "jwks",
+		KratosURL:     "http://kratos",
+		OathkeeperURL: "http://oathkeeper",
+		KetoReadURL:   "http://keto-read",
+		KetoWriteURL:  "http://keto-write",
+		ValkeyURL:     "redis://valkey:6379",
+		ValkeyTimeout: time.Second,
 	}
 }
 
@@ -47,45 +44,18 @@ func TestDisabledFliptDoesNotInitializeProvider(t *testing.T) {
 	assert.False(t, called)
 }
 
-func TestValkeyTimeoutDefaultsArePositiveAndAtMostOneSecond(t *testing.T) {
+func TestValkeyTimeoutDefaultsToOneSecond(t *testing.T) {
 	cfg := Config{}
 
 	require.NoError(t, envconfig.Process("IMMERSION_API_CONFIG_TEST", &cfg))
-	assert.Positive(t, cfg.ValkeyDialTimeout)
-	assert.LessOrEqual(t, cfg.ValkeyDialTimeout, time.Second)
-	assert.Positive(t, cfg.ValkeyOperationTimeout)
-	assert.LessOrEqual(t, cfg.ValkeyOperationTimeout, time.Second)
+	assert.Equal(t, time.Second, cfg.ValkeyTimeout)
 }
 
-func TestConfigRejectsNonPositiveValkeyTimeouts(t *testing.T) {
-	tests := []struct {
-		name   string
-		modify func(*Config)
-	}{
-		{
-			name: "dial timeout",
-			modify: func(cfg *Config) {
-				cfg.ValkeyDialTimeout = 0
-			},
-		},
-		{
-			name: "operation timeout",
-			modify: func(cfg *Config) {
-				cfg.ValkeyOperationTimeout = -time.Second
-			},
-		},
-	}
+func TestConfigRejectsNonPositiveValkeyTimeout(t *testing.T) {
+	cfg := validConfig()
+	cfg.ValkeyTimeout = 0
 
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			cfg := validConfig()
-			test.modify(&cfg)
-
-			err := validator.New().Struct(cfg)
-
-			require.Error(t, err)
-		})
-	}
+	require.Error(t, validator.New().Struct(cfg))
 }
 
 func TestInitializeValkeyClientConfiguresBoundedStandaloneClient(t *testing.T) {
@@ -94,8 +64,8 @@ func TestInitializeValkeyClientConfiguresBoundedStandaloneClient(t *testing.T) {
 	var captured valkey.ClientOption
 
 	initialized, err := initializeValkeyClient(Config{
-		ValkeyURL:         "redis://valkey:6379/3",
-		ValkeyDialTimeout: dialTimeout,
+		ValkeyURL:     "redis://valkey:6379/3",
+		ValkeyTimeout: dialTimeout,
 	}, func(option valkey.ClientOption) (valkey.Client, error) {
 		captured = option
 		return client, nil
@@ -113,29 +83,24 @@ func TestInitializeValkeyClientConfiguresBoundedStandaloneClient(t *testing.T) {
 func TestInitializeValkeyClientContinuesWithClientAfterInitialDialFailure(t *testing.T) {
 	client := &stubValkeyClient{}
 	dialErr := errors.New("valkey unavailable")
-	var logs bytes.Buffer
-	originalLogger := slog.Default()
-	slog.SetDefault(slog.New(slog.NewTextHandler(&logs, nil)))
-	t.Cleanup(func() { slog.SetDefault(originalLogger) })
 
 	initialized, err := initializeValkeyClient(Config{
-		ValkeyURL:         "redis://valkey:6379",
-		ValkeyDialTimeout: time.Second,
+		ValkeyURL:     "redis://valkey:6379",
+		ValkeyTimeout: time.Second,
 	}, func(valkey.ClientOption) (valkey.Client, error) {
 		return client, dialErr
 	})
 
 	require.NoError(t, err)
 	assert.Same(t, client, initialized)
-	assert.Contains(t, logs.String(), "starting in degraded mode")
 }
 
 func TestInitializeValkeyClientRejectsInitialFailureWithoutClient(t *testing.T) {
 	dialErr := errors.New("valkey unavailable")
 
 	client, err := initializeValkeyClient(Config{
-		ValkeyURL:         "redis://valkey:6379",
-		ValkeyDialTimeout: time.Second,
+		ValkeyURL:     "redis://valkey:6379",
+		ValkeyTimeout: time.Second,
 	}, func(valkey.ClientOption) (valkey.Client, error) {
 		return nil, dialErr
 	})
@@ -149,8 +114,8 @@ func TestInitializeValkeyClientRejectsMalformedURL(t *testing.T) {
 	called := false
 
 	client, err := initializeValkeyClient(Config{
-		ValkeyURL:         "://not-a-valkey-url",
-		ValkeyDialTimeout: time.Second,
+		ValkeyURL:     "://not-a-valkey-url",
+		ValkeyTimeout: time.Second,
 	}, func(valkey.ClientOption) (valkey.Client, error) {
 		called = true
 		return &stubValkeyClient{}, nil
@@ -166,8 +131,8 @@ func TestInitializeValkeyClientRejectsMultipleAddresses(t *testing.T) {
 	called := false
 
 	client, err := initializeValkeyClient(Config{
-		ValkeyURL:         "redis://valkey-a:6379?addr=valkey-b:6379",
-		ValkeyDialTimeout: time.Second,
+		ValkeyURL:     "redis://valkey-a:6379?addr=valkey-b:6379",
+		ValkeyTimeout: time.Second,
 	}, func(valkey.ClientOption) (valkey.Client, error) {
 		called = true
 		return &stubValkeyClient{}, nil

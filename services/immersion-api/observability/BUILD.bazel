@@ -2,10 +2,7 @@ load("@rules_go//go:def.bzl", "go_library", "go_test")
 
 go_library(
     name = "observability",
-    srcs = [
-        "leaderboard_cache.go",
-        "scoring_shadow.go",
-    ],
+    srcs = ["scoring_shadow.go"],
     importpath = "github.com/tadoku/tadoku/services/immersion-api/observability",
     visibility = ["//visibility:public"],
     deps = [
@@ -16,10 +13,7 @@ go_library(
 
 go_test(
     name = "observability_test",
-    srcs = [
-        "leaderboard_cache_test.go",
-        "scoring_shadow_test.go",
-    ],
+    srcs = ["scoring_shadow_test.go"],
     embed = [":observability"],
     deps = [
         "//services/immersion-api/domain",

@@ -46,8 +46,7 @@ type Config struct {
 	KetoReadURL            string        `validate:"required" envconfig:"keto_read_url"`
 	KetoWriteURL           string        `validate:"required" envconfig:"keto_write_url"`
 	ValkeyURL              string        `validate:"required" envconfig:"valkey_url"`
-	ValkeyDialTimeout      time.Duration `validate:"gt=0" envconfig:"valkey_dial_timeout" default:"1s"`
-	ValkeyOperationTimeout time.Duration `validate:"gt=0" envconfig:"valkey_operation_timeout" default:"1s"`
+	ValkeyTimeout          time.Duration `validate:"gt=0" envconfig:"valkey_timeout" default:"1s"`
 	ServiceName            string        `envconfig:"service_name" default:"immersion-api"`
 	SentryDSN              string        `envconfig:"sentry_dns"`
 	SentryTracesSampleRate float64       `validate:"required_with=SentryDSN" envconfig:"sentry_traces_sample_rate"`
@@ -67,8 +66,8 @@ type featureFlagProviderInitializer func() (*fliptclient.Client, error)
 type valkeyClientInitializer func(valkey.ClientOption) (valkey.Client, error)
 
 func initializeValkeyClient(cfg Config, initialize valkeyClientInitializer) (valkey.Client, error) {
-	if cfg.ValkeyDialTimeout <= 0 {
-		return nil, fmt.Errorf("valkey dial timeout must be positive")
+	if cfg.ValkeyTimeout <= 0 {
+		return nil, fmt.Errorf("valkey timeout must be positive")
 	}
 
 	option, err := valkey.ParseURL(cfg.ValkeyURL)
@@ -78,7 +77,7 @@ func initializeValkeyClient(cfg Config, initialize valkeyClientInitializer) (val
 	if len(option.InitAddress) != 1 {
 		return nil, fmt.Errorf("valkey url must configure exactly one standalone address")
 	}
-	option.Dialer.Timeout = cfg.ValkeyDialTimeout
+	option.Dialer.Timeout = cfg.ValkeyTimeout
 	option.ForceSingleClient = true
 	option.DisableRetry = true
 
@@ -143,13 +142,10 @@ func main() {
 
 	serviceMetrics := commonobservability.NewMetrics(psql, cfg.ServiceName)
 	serviceLogger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
-	leaderboardCacheMetrics := observability.NewLeaderboardCacheMetrics(serviceMetrics.Registry())
-	leaderboardCacheObserver := observability.NewLeaderboardCacheObserver(leaderboardCacheMetrics, serviceLogger)
-	leaderboardStore := valkeystore.NewLeaderboardStoreWithCacheObserver(
+	leaderboardStore := valkeystore.NewLeaderboardStore(
 		valkeyClient,
 		clock,
-		cfg.ValkeyOperationTimeout,
-		leaderboardCacheObserver,
+		cfg.ValkeyTimeout,
 	)
 	leaderboardUpdater := immersiondomain.NewLeaderboardUpdater(leaderboardStore, postgresRepository)
 	featureFlagMetrics := featureflags.NewMetrics(serviceMetrics.Registry(), clock)
@@ -239,21 +235,9 @@ func main() {
 	logListForContest := immersiondomain.NewLogListForContest(postgresRepository)
 	registrationFind := immersiondomain.NewRegistrationFind(postgresRepository)
 	registrationListYearly := immersiondomain.NewRegistrationListYearly(postgresRepository)
-	contestLeaderboardFetch := immersiondomain.NewContestLeaderboardFetchWithCacheObserver(
-		postgresRepository,
-		leaderboardStore,
-		leaderboardCacheObserver,
-	)
-	leaderboardYearly := immersiondomain.NewLeaderboardYearlyWithCacheObserver(
-		postgresRepository,
-		leaderboardStore,
-		leaderboardCacheObserver,
-	)
-	leaderboardGlobal := immersiondomain.NewLeaderboardGlobalWithCacheObserver(
-		postgresRepository,
-		leaderboardStore,
-		leaderboardCacheObserver,
-	)
+	contestLeaderboardFetch := immersiondomain.NewContestLeaderboardFetch(postgresRepository, leaderboardStore)
+	leaderboardYearly := immersiondomain.NewLeaderboardYearly(postgresRepository, leaderboardStore)
+	leaderboardGlobal := immersiondomain.NewLeaderboardGlobal(postgresRepository, leaderboardStore)
 	profileContest := immersiondomain.NewProfileContest(postgresRepository)
 	profileContestActivity := immersiondomain.NewProfileContestActivity(postgresRepository)
 	profileYearlyActivity := immersiondomain.NewProfileYearlyActivity(postgresRepository)

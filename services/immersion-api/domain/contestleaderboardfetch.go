@@ -3,6 +3,7 @@ package domain
 import (
 	"context"
 	"fmt"
+	"log/slog"
 
 	"github.com/google/uuid"
 )
@@ -27,21 +28,12 @@ type ContestLeaderboardFetchRequest struct {
 }
 
 type ContestLeaderboardFetch struct {
-	repo          ContestLeaderboardFetchRepository
-	store         ContestLeaderboardFetchStore
-	cacheObserver LeaderboardCacheObserver
+	repo  ContestLeaderboardFetchRepository
+	store ContestLeaderboardFetchStore
 }
 
 func NewContestLeaderboardFetch(repo ContestLeaderboardFetchRepository, store ContestLeaderboardFetchStore) *ContestLeaderboardFetch {
-	return NewContestLeaderboardFetchWithCacheObserver(repo, store, nil)
-}
-
-func NewContestLeaderboardFetchWithCacheObserver(
-	repo ContestLeaderboardFetchRepository,
-	store ContestLeaderboardFetchStore,
-	cacheObserver LeaderboardCacheObserver,
-) *ContestLeaderboardFetch {
-	return &ContestLeaderboardFetch{repo: repo, store: store, cacheObserver: cacheObserver}
+	return &ContestLeaderboardFetch{repo: repo, store: store}
 }
 
 func (s *ContestLeaderboardFetch) Execute(ctx context.Context, req *ContestLeaderboardFetchRequest) (*Leaderboard, error) {
@@ -62,21 +54,19 @@ func (s *ContestLeaderboardFetch) Execute(ctx context.Context, req *ContestLeade
 
 	lbPage, exists, err := s.store.FetchContestLeaderboardPage(ctx, req.ContestID, req.Page, req.PageSize)
 	if err != nil {
-		s.observeFallback(ctx, LeaderboardCacheOperationFetch, err)
+		slog.WarnContext(ctx, "contest leaderboard cache unavailable; falling back to Postgres", "error", err)
 		return s.repo.FetchContestLeaderboard(ctx, req)
 	}
 
 	if !exists {
 		allScores, err := s.repo.FetchAllContestLeaderboardScores(ctx, req.ContestID)
 		if err != nil {
-			s.observeFallback(ctx, LeaderboardCacheOperationRebuild, err)
-			return s.repo.FetchContestLeaderboard(ctx, req)
+			return nil, fmt.Errorf("failed to fetch all contest scores for rebuild: %w", err)
 		}
 		if err := s.store.RebuildContestLeaderboard(ctx, req.ContestID, allScores); err != nil {
-			s.observeFallback(ctx, LeaderboardCacheOperationRebuild, err)
+			slog.WarnContext(ctx, "contest leaderboard cache rebuild failed; falling back to Postgres", "error", err)
 			return s.repo.FetchContestLeaderboard(ctx, req)
 		}
-		s.observeFallback(ctx, LeaderboardCacheOperationFetch, nil)
 		return s.repo.FetchContestLeaderboard(ctx, req)
 	}
 
@@ -102,13 +92,4 @@ func (s *ContestLeaderboardFetch) Execute(ctx context.Context, req *ContestLeade
 		TotalSize:     lbPage.TotalCount,
 		NextPageToken: nextPageToken,
 	}, nil
-}
-
-func (s *ContestLeaderboardFetch) observeFallback(ctx context.Context, operation LeaderboardCacheOperation, err error) {
-	observeLeaderboardCache(ctx, s.cacheObserver, LeaderboardCacheObservation{
-		Kind:      LeaderboardCacheKindContest,
-		Operation: operation,
-		Outcome:   LeaderboardCacheOutcomeFallback,
-		Err:       err,
-	})
 }

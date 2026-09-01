@@ -65,9 +65,7 @@ spec:
             value: "http://keto-write.default:4467"
           - name: API_VALKEY_URL
             value: "redis://valkey-immersion.default:6379"
-          - name: API_VALKEY_DIAL_TIMEOUT
-            value: "1s"
-          - name: API_VALKEY_OPERATION_TIMEOUT
+          - name: API_VALKEY_TIMEOUT
             value: "1s"
           - name: API_FLIPT_URL
             value: "http://oathkeeper-proxy.default:4455/flipt"

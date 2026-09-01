@@ -21,20 +21,12 @@ bounded by these settings:
 
 | Environment variable | Default | Purpose |
 | --- | --- | --- |
-| `API_VALKEY_DIAL_TIMEOUT` | `1s` | Maximum duration of a connection attempt. |
-| `API_VALKEY_OPERATION_TIMEOUT` | `1s` | Maximum duration of one leaderboard cache operation. |
-
-The metrics endpoint exports
-`tadoku_leaderboard_cache_operations_total{kind,operation,outcome}` and
-`tadoku_leaderboard_cache_degraded`. Structured logs are emitted when the
-process first observes the cache as degraded and when a later successful
-operation confirms recovery. Errors are logged but never used as metric labels.
+| `API_VALKEY_TIMEOUT` | `1s` | Maximum duration of a Valkey connection attempt or leaderboard operation. |
 
 To verify degraded behavior in development, stop the `valkey-immersion`
 resource, confirm the API remains ready and leaderboard requests return
 Postgres-backed responses, create or update a score, then restore Valkey.
-Without restarting `immersion-api`, confirm the outbox event is processed, the
-degraded gauge returns to zero, and a recovery log is emitted.
+Without restarting `immersion-api`, confirm the outbox event is processed.
 
 ## Code generation
 

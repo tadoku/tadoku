@@ -6,21 +6,33 @@ import { EditLogForm } from '@app/immersion/EditLogForm/Form'
 import { useRouter } from 'next/router'
 import Head from 'next/head'
 import { useSessionOrRedirect, useUserRole } from '@app/common/session'
+import { useLatchedFeatureFlag } from '@app/feature-flags/client'
 
 const Page = () => {
   const router = useRouter()
   const id = router.query['id']?.toString() ?? ''
   const role = useUserRole()
+  const useV2 = useLatchedFeatureFlag(
+    'release-log-entry-v2',
+    role !== undefined,
+    role === 'admin',
+  )
   const log = useLog(id, { enabled: !!id })
   const options = useLogConfigurationOptions()
 
   useSessionOrRedirect()
 
-  if (role === undefined || log.isLoading || log.isIdle || options.isLoading) {
+  if (
+    role === undefined ||
+    useV2 === undefined ||
+    log.isLoading ||
+    log.isIdle ||
+    options.isLoading
+  ) {
     return <Loading />
   }
 
-  if (role !== 'admin') {
+  if (!useV2) {
     return (
       <span className="flash error">This feature is not yet available.</span>
     )

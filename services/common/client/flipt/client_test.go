@@ -539,6 +539,39 @@ func TestObservedTransportTracksRefreshesAndBoundedFetchErrors(t *testing.T) {
 	assert.Equal(t, []string{"fetch"}, providerErrors)
 }
 
+func TestObservedTransportConfirmsRecoveredSnapshotOnMatchingNotModified(t *testing.T) {
+	observer := &recordingObserver{}
+	statuses := []int{http.StatusOK, http.StatusNotModified}
+	state := newProviderFetchState("default", observer)
+	transport := &observedTransport{
+		state: state,
+		base: roundTripperFunc(func(_ *http.Request) (*http.Response, error) {
+			status := statuses[0]
+			statuses = statuses[1:]
+			body := io.ReadCloser(http.NoBody)
+			header := make(http.Header)
+			if status == http.StatusOK {
+				body = io.NopCloser(strings.NewReader(booleanSnapshot(nil)))
+				header.Set("ETag", `"recovered"`)
+			}
+			return &http.Response{StatusCode: status, Body: body, Header: header}, nil
+		}),
+	}
+	request := httptest.NewRequest(http.MethodGet, "http://flipt/snapshot", nil)
+
+	_, err := transport.RoundTrip(request)
+	require.NoError(t, err)
+	request.Header.Set("If-None-Match", `"recovered"`)
+	_, err = transport.RoundTrip(request)
+	require.NoError(t, err)
+
+	_, refreshes, providerErrors := observer.snapshot()
+	assert.Equal(t, 1, refreshes)
+	assert.Empty(t, providerErrors)
+	assert.False(t, state.isStale(false))
+	assert.True(t, state.canAcceptNotModified(`"recovered"`))
+}
+
 func TestFetchStateOnlyAcceptsNotModifiedForConfirmedETag(t *testing.T) {
 	state := newProviderFetchState("default", nil)
 	state.snapshotReceived(`"v1"`)

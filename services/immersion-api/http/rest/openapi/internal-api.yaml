@@ -9,6 +9,34 @@ info:
 servers:
   - url: http://immersion-api:8080/
 paths:
+  /internal/v1/account-deletion-eligibility:
+    post:
+      summary: Checks whether an account owns a running contest that blocks deletion
+      operationId: internalAccountDeletionEligibility
+      tags: [internal]
+      security:
+        - serviceAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AccountDeletionEligibilityRequest'
+      responses:
+        '204':
+          description: account is currently eligible for deletion
+        '400':
+          description: invalid request
+        '401':
+          description: caller is not a service identity
+        '403':
+          description: caller is not profile-api
+        '409':
+          description: account owns at least one running contest
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccountDeletionEligibilityConflict'
   /internal/v1/account-deletion-scrubs:
     post:
       summary: Idempotently anonymizes and removes immersion data for a locked account
@@ -55,8 +83,31 @@ paths:
           description: caller is not a service identity
         '403':
           description: caller is not profile-api
+        '409':
+          description: account owns a running contest
 components:
   schemas:
+    AccountDeletionEligibilityRequest:
+      type: object
+      required:
+        - user_id
+      properties:
+        user_id:
+          type: string
+          format: uuid
+    AccountDeletionEligibilityConflict:
+      type: object
+      required:
+        - error
+        - available_after
+      properties:
+        error:
+          type: string
+          enum:
+            - running_contest_owned
+        available_after:
+          type: string
+          format: date-time
     AccountDeletionScrubRequest:
       type: object
       required:

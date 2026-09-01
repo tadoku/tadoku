@@ -26,18 +26,19 @@ from users
 where id = sqlc.arg('id')
 for update;
 
--- name: LockAccountForDeletion :exec
+-- name: EnsureAccountDeletionTarget :exec
 insert into users (
   id,
-  display_name,
-  deletion_locked_at
+  display_name
 ) values (
   sqlc.arg('id'),
-  '',
-  sqlc.arg('locked_at')
-) on conflict (id) do
-update set
-  deletion_locked_at = coalesce(users.deletion_locked_at, excluded.deletion_locked_at);
+  ''
+) on conflict (id) do nothing;
+
+-- name: SetAccountDeletionLock :exec
+update users
+set deletion_locked_at = coalesce(deletion_locked_at, sqlc.arg('locked_at'))
+where id = sqlc.arg('id');
 
 -- name: FindUserDisplayNames :many
 select id, display_name from users where id = any(sqlc.arg('ids')::uuid[]);

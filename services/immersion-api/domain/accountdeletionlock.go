@@ -47,7 +47,7 @@ func (s *AccountDeletionLock) Execute(ctx context.Context, req *AccountDeletionL
 		return ErrRequestInvalid
 	}
 
-	req.lockedAt = s.clock.Now()
+	req.lockedAt = s.clock.Now().UTC()
 	if err := s.repo.LockAccountForDeletion(ctx, req); err != nil {
 		return fmt.Errorf("could not lock account for deletion: %w", err)
 	}

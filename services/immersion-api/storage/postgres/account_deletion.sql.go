@@ -121,6 +121,29 @@ func (q *Queries) DetachNonHistoricalLogsForAccount(ctx context.Context, arg Det
 	return err
 }
 
+const findRunningOwnedContestAvailableAfter = `-- name: FindRunningOwnedContestAvailableAfter :one
+select (contest_end + 1)::timestamp as available_after
+from contests
+where owner_user_id = $1
+  and deleted_at is null
+  and contest_start <= $2::timestamp::date
+  and (contest_end + 1)::timestamp > $2::timestamp
+order by contest_end desc
+limit 1
+`
+
+type FindRunningOwnedContestAvailableAfterParams struct {
+	UserID    uuid.UUID
+	CheckedAt time.Time
+}
+
+func (q *Queries) FindRunningOwnedContestAvailableAfter(ctx context.Context, arg FindRunningOwnedContestAvailableAfterParams) (time.Time, error) {
+	row := q.db.QueryRowContext(ctx, findRunningOwnedContestAvailableAfter, arg.UserID, arg.CheckedAt)
+	var available_after time.Time
+	err := row.Scan(&available_after)
+	return available_after, err
+}
+
 const freezeHistoricalLogsForAccount = `-- name: FreezeHistoricalLogsForAccount :exec
 update logs
 set
@@ -146,29 +169,6 @@ type FreezeHistoricalLogsForAccountParams struct {
 func (q *Queries) FreezeHistoricalLogsForAccount(ctx context.Context, arg FreezeHistoricalLogsForAccountParams) error {
 	_, err := q.db.ExecContext(ctx, freezeHistoricalLogsForAccount, arg.DeletedAt, arg.UserID)
 	return err
-}
-
-const hasRunningOwnedContest = `-- name: HasRunningOwnedContest :one
-select exists (
-  select 1
-  from contests
-  where owner_user_id = $1
-    and deleted_at is null
-    and contest_start <= $2::date
-    and (contest_end + 1)::timestamp > $2
-) as has_running_contest
-`
-
-type HasRunningOwnedContestParams struct {
-	UserID    uuid.UUID
-	DeletedAt time.Time
-}
-
-func (q *Queries) HasRunningOwnedContest(ctx context.Context, arg HasRunningOwnedContestParams) (bool, error) {
-	row := q.db.QueryRowContext(ctx, hasRunningOwnedContest, arg.UserID, arg.DeletedAt)
-	var has_running_contest bool
-	err := row.Scan(&has_running_contest)
-	return has_running_contest, err
 }
 
 const listNonHistoricalContestIDsForAccount = `-- name: ListNonHistoricalContestIDsForAccount :many

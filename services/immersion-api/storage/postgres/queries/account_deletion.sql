@@ -4,15 +4,15 @@ from users
 where id = sqlc.arg('user_id')
 for update;
 
--- name: HasRunningOwnedContest :one
-select exists (
-  select 1
-  from contests
-  where owner_user_id = sqlc.arg('user_id')
-    and deleted_at is null
-    and contest_start <= sqlc.arg('deleted_at')::date
-    and (contest_end + 1)::timestamp > sqlc.arg('deleted_at')
-) as has_running_contest;
+-- name: FindRunningOwnedContestAvailableAfter :one
+select (contest_end + 1)::timestamp as available_after
+from contests
+where owner_user_id = sqlc.arg('user_id')
+  and deleted_at is null
+  and contest_start <= sqlc.arg('checked_at')::timestamp::date
+  and (contest_end + 1)::timestamp > sqlc.arg('checked_at')::timestamp
+order by contest_end desc
+limit 1;
 
 -- name: ListNonHistoricalContestIDsForAccount :many
 select distinct associated_contests.contest_id

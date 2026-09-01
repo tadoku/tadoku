@@ -1,7 +1,7 @@
 import { atom, useAtomValue, useSetAtom } from 'jotai'
 import getConfig from 'next/config'
 import { useRouter } from 'next/router'
-import React, { useEffect } from 'react'
+import React, { useEffect, useRef } from 'react'
 import type { ReactNode } from 'react'
 import {
   defaultFeatureFlagDecisions,
@@ -18,6 +18,19 @@ export const featureFlagDecisionsAtom = atom<FeatureFlagDecisions>({
 
 export const useFeatureFlag = (flag: FeatureFlagKey) =>
   useAtomValue(featureFlagDecisionsAtom)[flag]
+
+export const useLatchedFeatureFlag = (
+  flag: FeatureFlagKey,
+): boolean => {
+  const enabled = useFeatureFlag(flag)
+  const latched = useRef<boolean>()
+
+  if (latched.current === undefined) {
+    latched.current = enabled
+  }
+
+  return latched.current
+}
 
 export const FeatureFlagRefresh = ({
   children,

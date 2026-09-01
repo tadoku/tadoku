@@ -8,7 +8,7 @@ import {
 } from '@app/common/format'
 import { useCurrentDateTime } from '@app/common/hooks'
 import { routes } from '@app/common/routes'
-import { useSession, useUserRole } from '@app/common/session'
+import { useSession } from '@app/common/session'
 import { Log, useDeleteLog, useLog } from '@app/immersion/api'
 import { LogDetailsV2 } from '@app/immersion/LogDetailsV2'
 import { HomeIcon, TrashIcon } from '@heroicons/react/20/solid'
@@ -20,12 +20,13 @@ import { useState } from 'react'
 import { Breadcrumb, ButtonGroup, Loading, Modal } from 'ui'
 import { toast } from 'react-toastify'
 import Head from 'next/head'
+import { useLatchedFeatureFlag } from '@app/feature-flags/client'
 
 const Page = () => {
   const router = useRouter()
   const id = router.query['id']?.toString() ?? ''
   const log = useLog(id)
-  const role = useUserRole()
+  const useV2 = useLatchedFeatureFlag('release-log-entry-v2')
 
   if (log.isLoading || log.isIdle) {
     return <Loading />
@@ -60,11 +61,7 @@ const Page = () => {
     )
   }
 
-  if (role === undefined) {
-    return <Loading />
-  }
-
-  if (role === 'admin') {
+  if (useV2) {
     return (
       <>
         <Head>

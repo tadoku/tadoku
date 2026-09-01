@@ -40,6 +40,22 @@
   mutators:
     - handler: id_token
 
+- id: "tadoku:immersion:feature-flags:internal"
+  upstream:
+    preserve_host: true
+    url: "http://immersion-api.tdk-immersion-api:80"
+    strip_path: /api/internal/immersion/
+  match:
+    url: "http://oathkeeper-proxy.default:4455/api/internal/immersion/feature-flags"
+    methods:
+      - GET
+  authenticators:
+    - handler: cookie_session
+  authorizer:
+    handler: allow
+  mutators:
+    - handler: id_token
+
 - id: "tadoku:authz:api"
   upstream:
     preserve_host: true

@@ -3,6 +3,12 @@ const nextConfig = {
   output: 'standalone',
   reactStrictMode: true,
   swcMinify: true,
+  serverRuntimeConfig: {
+    apiEndpoint:
+      process.env.NEXT_SERVER_API_ENDPOINT ??
+      process.env.NEXT_PUBLIC_API_ENDPOINT ??
+      'https://tadoku.app/api/internal',
+  },
   publicRuntimeConfig: {
     // TODO: Figure out why this isn't getting passed to the client despite being opted-out from automatic static optimization
     kratosPublicEndpoint:

@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { Provider } from 'jotai'
+import { Provider, useSetAtom } from 'jotai'
 import {
   act,
   cleanup,
@@ -15,6 +15,7 @@ import {
   FeatureFlagRefresh,
   featureFlagDecisionsAtom,
   useFeatureFlag,
+  useLatchedFeatureFlag,
 } from './client'
 
 const routerEvents = vi.hoisted(() => {
@@ -40,6 +41,30 @@ vi.mock('next/config', () => ({
 const FlagValue = () => {
   const enabled = useFeatureFlag('release-log-entry-v2')
   return <output>{enabled ? 'enabled' : 'disabled'}</output>
+}
+
+const LatchedFlagValue = () => {
+  const enabled = useLatchedFeatureFlag('release-log-entry-v2')
+  const setDecisions = useSetAtom(featureFlagDecisionsAtom)
+
+  return (
+    <>
+      <button
+        type="button"
+        onClick={() => setDecisions({ 'release-log-entry-v2': false })}
+      >
+        Disable
+      </button>
+      {enabled ? (
+        <label>
+          V2 draft
+          <input defaultValue="before decision change" />
+        </label>
+      ) : (
+        <output>latched disabled</output>
+      )}
+    </>
+  )
 }
 
 const Wrapper = ({
@@ -88,6 +113,30 @@ describe('feature flag browser state', () => {
     )
 
     expect(screen.getByText('disabled')).toBeTruthy()
+  })
+
+  it('keeps a mounted feature flow stable until the next mount', () => {
+    const mounted = render(
+      <Wrapper enabled>
+        <LatchedFlagValue />
+      </Wrapper>,
+    )
+
+    const input = screen.getByLabelText('V2 draft') as HTMLInputElement
+    fireEvent.change(input, { target: { value: 'unsaved form value' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Disable' }))
+
+    expect(input.value).toBe('unsaved form value')
+    expect(screen.getByLabelText('V2 draft')).toBe(input)
+    mounted.unmount()
+
+    render(
+      <Wrapper>
+        <LatchedFlagValue />
+      </Wrapper>,
+    )
+
+    expect(screen.getByText('latched disabled')).toBeTruthy()
   })
 
   it('uses the legacy default while refreshing after navigation without remounting a form', async () => {

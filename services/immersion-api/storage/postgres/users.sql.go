@@ -14,6 +14,21 @@ import (
 	"github.com/lib/pq"
 )
 
+const ensureAccountDeletionTarget = `-- name: EnsureAccountDeletionTarget :exec
+insert into users (
+  id,
+  display_name
+) values (
+  $1,
+  ''
+) on conflict (id) do nothing
+`
+
+func (q *Queries) EnsureAccountDeletionTarget(ctx context.Context, id uuid.UUID) error {
+	_, err := q.db.ExecContext(ctx, ensureAccountDeletionTarget, id)
+	return err
+}
+
 const findUserDisplayNames = `-- name: FindUserDisplayNames :many
 select id, display_name from users where id = any($1::uuid[])
 `
@@ -46,30 +61,6 @@ func (q *Queries) FindUserDisplayNames(ctx context.Context, ids []uuid.UUID) ([]
 	return items, nil
 }
 
-const lockAccountForDeletion = `-- name: LockAccountForDeletion :exec
-insert into users (
-  id,
-  display_name,
-  deletion_locked_at
-) values (
-  $1,
-  '',
-  $2
-) on conflict (id) do
-update set
-  deletion_locked_at = coalesce(users.deletion_locked_at, excluded.deletion_locked_at)
-`
-
-type LockAccountForDeletionParams struct {
-	ID       uuid.UUID
-	LockedAt sql.NullTime
-}
-
-func (q *Queries) LockAccountForDeletion(ctx context.Context, arg LockAccountForDeletionParams) error {
-	_, err := q.db.ExecContext(ctx, lockAccountForDeletion, arg.ID, arg.LockedAt)
-	return err
-}
-
 const lockUserForMutation = `-- name: LockUserForMutation :one
 select id, display_name, created_at, updated_at, deletion_locked_at, deleted_at
 from users
@@ -89,6 +80,22 @@ func (q *Queries) LockUserForMutation(ctx context.Context, id uuid.UUID) (User, 
 		&i.DeletedAt,
 	)
 	return i, err
+}
+
+const setAccountDeletionLock = `-- name: SetAccountDeletionLock :exec
+update users
+set deletion_locked_at = coalesce(deletion_locked_at, $1)
+where id = $2
+`
+
+type SetAccountDeletionLockParams struct {
+	LockedAt sql.NullTime
+	ID       uuid.UUID
+}
+
+func (q *Queries) SetAccountDeletionLock(ctx context.Context, arg SetAccountDeletionLockParams) error {
+	_, err := q.db.ExecContext(ctx, setAccountDeletionLock, arg.LockedAt, arg.ID)
+	return err
 }
 
 const upsertUser = `-- name: UpsertUser :one

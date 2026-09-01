@@ -26,11 +26,43 @@ func lockUserForMutation(ctx context.Context, q *postgres.Queries, userID uuid.U
 }
 
 func (r *Repository) LockAccountForDeletion(ctx context.Context, req *domain.AccountDeletionLockRequest) error {
-	if err := r.q.LockAccountForDeletion(ctx, postgres.LockAccountForDeletionParams{
+	tx, err := r.psql.BeginTx(ctx, nil)
+	if err != nil {
+		return fmt.Errorf("could not start transaction: %w", err)
+	}
+	defer func() { _ = tx.Rollback() }()
+
+	qtx := r.q.WithTx(tx)
+	if err := qtx.EnsureAccountDeletionTarget(ctx, req.UserID); err != nil {
+		return fmt.Errorf("could not ensure account deletion target: %w", err)
+	}
+	target, err := qtx.LockAccountDeletionTarget(ctx, req.UserID)
+	if err != nil {
+		return fmt.Errorf("could not lock account deletion target: %w", err)
+	}
+	if target.DeletionLockedAt.Valid || target.DeletedAt.Valid {
+		if err := tx.Commit(); err != nil {
+			return fmt.Errorf("could not commit existing account deletion lock: %w", err)
+		}
+		return nil
+	}
+
+	availableAfter, err := findRunningOwnedContestAvailableAfter(ctx, qtx, req.UserID, req.LockedAt())
+	if err != nil {
+		return fmt.Errorf("could not check running contest ownership: %w", err)
+	}
+	if availableAfter != nil {
+		return domain.ErrRunningContestOwned
+	}
+
+	if err := qtx.SetAccountDeletionLock(ctx, postgres.SetAccountDeletionLockParams{
 		ID:       req.UserID,
 		LockedAt: sql.NullTime{Time: req.LockedAt(), Valid: true},
 	}); err != nil {
-		return fmt.Errorf("could not lock account for deletion: %w", err)
+		return fmt.Errorf("could not set account deletion lock: %w", err)
+	}
+	if err := tx.Commit(); err != nil {
+		return fmt.Errorf("could not commit account deletion lock: %w", err)
 	}
 	return nil
 }

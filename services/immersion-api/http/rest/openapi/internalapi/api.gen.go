@@ -12,6 +12,7 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"time"
 
 	openapi_types "github.com/deepmap/oapi-codegen/pkg/types"
 	"github.com/labstack/echo/v4"
@@ -20,6 +21,25 @@ import (
 const (
 	ServiceAuthScopes = "serviceAuth.Scopes"
 )
+
+// Defines values for AccountDeletionEligibilityConflictError.
+const (
+	RunningContestOwned AccountDeletionEligibilityConflictError = "running_contest_owned"
+)
+
+// AccountDeletionEligibilityConflict defines model for AccountDeletionEligibilityConflict.
+type AccountDeletionEligibilityConflict struct {
+	AvailableAfter time.Time                               `json:"available_after"`
+	Error          AccountDeletionEligibilityConflictError `json:"error"`
+}
+
+// AccountDeletionEligibilityConflictError defines model for AccountDeletionEligibilityConflict.Error.
+type AccountDeletionEligibilityConflictError string
+
+// AccountDeletionEligibilityRequest defines model for AccountDeletionEligibilityRequest.
+type AccountDeletionEligibilityRequest struct {
+	UserId openapi_types.UUID `json:"user_id"`
+}
 
 // AccountDeletionLockRequest defines model for AccountDeletionLockRequest.
 type AccountDeletionLockRequest struct {
@@ -32,6 +52,9 @@ type AccountDeletionScrubRequest struct {
 	RequestId openapi_types.UUID `json:"request_id"`
 	UserId    openapi_types.UUID `json:"user_id"`
 }
+
+// InternalAccountDeletionEligibilityJSONRequestBody defines body for InternalAccountDeletionEligibility for application/json ContentType.
+type InternalAccountDeletionEligibilityJSONRequestBody = AccountDeletionEligibilityRequest
 
 // InternalAccountDeletionLockJSONRequestBody defines body for InternalAccountDeletionLock for application/json ContentType.
 type InternalAccountDeletionLockJSONRequestBody = AccountDeletionLockRequest
@@ -112,6 +135,11 @@ func WithRequestEditorFn(fn RequestEditorFn) ClientOption {
 
 // The interface specification for the client above.
 type ClientInterface interface {
+	// InternalAccountDeletionEligibility request with any body
+	InternalAccountDeletionEligibilityWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	InternalAccountDeletionEligibility(ctx context.Context, body InternalAccountDeletionEligibilityJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// InternalAccountDeletionLock request with any body
 	InternalAccountDeletionLockWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
@@ -121,6 +149,30 @@ type ClientInterface interface {
 	InternalAccountDeletionScrubWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	InternalAccountDeletionScrub(ctx context.Context, body InternalAccountDeletionScrubJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+}
+
+func (c *Client) InternalAccountDeletionEligibilityWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewInternalAccountDeletionEligibilityRequestWithBody(c.Server, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) InternalAccountDeletionEligibility(ctx context.Context, body InternalAccountDeletionEligibilityJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewInternalAccountDeletionEligibilityRequest(c.Server, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
 }
 
 func (c *Client) InternalAccountDeletionLockWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
@@ -169,6 +221,46 @@ func (c *Client) InternalAccountDeletionScrub(ctx context.Context, body Internal
 		return nil, err
 	}
 	return c.Client.Do(req)
+}
+
+// NewInternalAccountDeletionEligibilityRequest calls the generic InternalAccountDeletionEligibility builder with application/json body
+func NewInternalAccountDeletionEligibilityRequest(server string, body InternalAccountDeletionEligibilityJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewInternalAccountDeletionEligibilityRequestWithBody(server, "application/json", bodyReader)
+}
+
+// NewInternalAccountDeletionEligibilityRequestWithBody generates requests for InternalAccountDeletionEligibility with any type of body
+func NewInternalAccountDeletionEligibilityRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/internal/v1/account-deletion-eligibility")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
 }
 
 // NewInternalAccountDeletionLockRequest calls the generic InternalAccountDeletionLock builder with application/json body
@@ -294,6 +386,11 @@ func WithBaseURL(baseURL string) ClientOption {
 
 // ClientWithResponsesInterface is the interface specification for the client with responses above.
 type ClientWithResponsesInterface interface {
+	// InternalAccountDeletionEligibility request with any body
+	InternalAccountDeletionEligibilityWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*InternalAccountDeletionEligibilityResponse, error)
+
+	InternalAccountDeletionEligibilityWithResponse(ctx context.Context, body InternalAccountDeletionEligibilityJSONRequestBody, reqEditors ...RequestEditorFn) (*InternalAccountDeletionEligibilityResponse, error)
+
 	// InternalAccountDeletionLock request with any body
 	InternalAccountDeletionLockWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*InternalAccountDeletionLockResponse, error)
 
@@ -303,6 +400,28 @@ type ClientWithResponsesInterface interface {
 	InternalAccountDeletionScrubWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*InternalAccountDeletionScrubResponse, error)
 
 	InternalAccountDeletionScrubWithResponse(ctx context.Context, body InternalAccountDeletionScrubJSONRequestBody, reqEditors ...RequestEditorFn) (*InternalAccountDeletionScrubResponse, error)
+}
+
+type InternalAccountDeletionEligibilityResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON409      *AccountDeletionEligibilityConflict
+}
+
+// Status returns HTTPResponse.Status
+func (r InternalAccountDeletionEligibilityResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r InternalAccountDeletionEligibilityResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
 }
 
 type InternalAccountDeletionLockResponse struct {
@@ -347,6 +466,23 @@ func (r InternalAccountDeletionScrubResponse) StatusCode() int {
 	return 0
 }
 
+// InternalAccountDeletionEligibilityWithBodyWithResponse request with arbitrary body returning *InternalAccountDeletionEligibilityResponse
+func (c *ClientWithResponses) InternalAccountDeletionEligibilityWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*InternalAccountDeletionEligibilityResponse, error) {
+	rsp, err := c.InternalAccountDeletionEligibilityWithBody(ctx, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseInternalAccountDeletionEligibilityResponse(rsp)
+}
+
+func (c *ClientWithResponses) InternalAccountDeletionEligibilityWithResponse(ctx context.Context, body InternalAccountDeletionEligibilityJSONRequestBody, reqEditors ...RequestEditorFn) (*InternalAccountDeletionEligibilityResponse, error) {
+	rsp, err := c.InternalAccountDeletionEligibility(ctx, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseInternalAccountDeletionEligibilityResponse(rsp)
+}
+
 // InternalAccountDeletionLockWithBodyWithResponse request with arbitrary body returning *InternalAccountDeletionLockResponse
 func (c *ClientWithResponses) InternalAccountDeletionLockWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*InternalAccountDeletionLockResponse, error) {
 	rsp, err := c.InternalAccountDeletionLockWithBody(ctx, contentType, body, reqEditors...)
@@ -379,6 +515,32 @@ func (c *ClientWithResponses) InternalAccountDeletionScrubWithResponse(ctx conte
 		return nil, err
 	}
 	return ParseInternalAccountDeletionScrubResponse(rsp)
+}
+
+// ParseInternalAccountDeletionEligibilityResponse parses an HTTP response from a InternalAccountDeletionEligibilityWithResponse call
+func ParseInternalAccountDeletionEligibilityResponse(rsp *http.Response) (*InternalAccountDeletionEligibilityResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &InternalAccountDeletionEligibilityResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest AccountDeletionEligibilityConflict
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON409 = &dest
+
+	}
+
+	return response, nil
 }
 
 // ParseInternalAccountDeletionLockResponse parses an HTTP response from a InternalAccountDeletionLockWithResponse call
@@ -415,6 +577,9 @@ func ParseInternalAccountDeletionScrubResponse(rsp *http.Response) (*InternalAcc
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
+	// Checks whether an account owns a running contest that blocks deletion
+	// (POST /internal/v1/account-deletion-eligibility)
+	InternalAccountDeletionEligibility(ctx echo.Context) error
 	// Idempotently prevents further mutations for an account
 	// (POST /internal/v1/account-deletion-locks)
 	InternalAccountDeletionLock(ctx echo.Context) error
@@ -426,6 +591,17 @@ type ServerInterface interface {
 // ServerInterfaceWrapper converts echo contexts to parameters.
 type ServerInterfaceWrapper struct {
 	Handler ServerInterface
+}
+
+// InternalAccountDeletionEligibility converts echo context to params.
+func (w *ServerInterfaceWrapper) InternalAccountDeletionEligibility(ctx echo.Context) error {
+	var err error
+
+	ctx.Set(ServiceAuthScopes, []string{""})
+
+	// Invoke the callback with all the unmarshalled arguments
+	err = w.Handler.InternalAccountDeletionEligibility(ctx)
+	return err
 }
 
 // InternalAccountDeletionLock converts echo context to params.
@@ -478,6 +654,7 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 		Handler: si,
 	}
 
+	router.POST(baseURL+"/internal/v1/account-deletion-eligibility", wrapper.InternalAccountDeletionEligibility)
 	router.POST(baseURL+"/internal/v1/account-deletion-locks", wrapper.InternalAccountDeletionLock)
 	router.POST(baseURL+"/internal/v1/account-deletion-scrubs", wrapper.InternalAccountDeletionScrub)
 

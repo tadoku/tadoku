@@ -3,6 +3,7 @@ load("@rules_go//go:def.bzl", "go_library", "go_test")
 go_library(
     name = "domain",
     srcs = [
+        "accountdeletioneligibility.go",
         "accountdeletionlock.go",
         "accountdeletionscrub.go",
         "activities.go",
@@ -70,6 +71,7 @@ go_library(
 go_test(
     name = "domain_test",
     srcs = [
+        "accountdeletioneligibility_test.go",
         "accountdeletionlock_test.go",
         "accountdeletionscrub_test.go",
         "activities_test.go",

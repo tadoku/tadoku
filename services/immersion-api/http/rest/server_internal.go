@@ -17,16 +17,52 @@ type accountDeletionScrubber interface {
 	Execute(context.Context, *domain.AccountDeletionScrubRequest) error
 }
 
-type InternalServer struct {
-	accountDeletionLock  accountDeletionLocker
-	accountDeletionScrub accountDeletionScrubber
+type accountDeletionEligibilityChecker interface {
+	Execute(context.Context, *domain.AccountDeletionEligibilityRequest) (*domain.AccountDeletionEligibilityResult, error)
 }
 
-func NewInternalServer(accountDeletionLock accountDeletionLocker, accountDeletionScrub accountDeletionScrubber) *InternalServer {
+type InternalServer struct {
+	accountDeletionLock        accountDeletionLocker
+	accountDeletionScrub       accountDeletionScrubber
+	accountDeletionEligibility accountDeletionEligibilityChecker
+}
+
+func NewInternalServer(
+	accountDeletionLock accountDeletionLocker,
+	accountDeletionScrub accountDeletionScrubber,
+	accountDeletionEligibility accountDeletionEligibilityChecker,
+) *InternalServer {
 	return &InternalServer{
-		accountDeletionLock:  accountDeletionLock,
-		accountDeletionScrub: accountDeletionScrub,
+		accountDeletionLock:        accountDeletionLock,
+		accountDeletionScrub:       accountDeletionScrub,
+		accountDeletionEligibility: accountDeletionEligibility,
 	}
+}
+
+func (s *InternalServer) InternalAccountDeletionEligibility(ctx echo.Context) error {
+	var body internalapi.InternalAccountDeletionEligibilityJSONRequestBody
+	if err := ctx.Bind(&body); err != nil {
+		return ctx.NoContent(http.StatusBadRequest)
+	}
+
+	result, err := s.accountDeletionEligibility.Execute(ctx.Request().Context(), &domain.AccountDeletionEligibilityRequest{
+		UserID: body.UserId,
+	})
+	if err != nil {
+		if handled, responseErr := handleCommonErrors(ctx, err); handled {
+			return responseErr
+		}
+		ctx.Echo().Logger.Error("could not check account deletion eligibility: ", err)
+		return ctx.NoContent(http.StatusInternalServerError)
+	}
+	if !result.Eligible() {
+		return ctx.JSON(http.StatusConflict, internalapi.AccountDeletionEligibilityConflict{
+			Error:          internalapi.RunningContestOwned,
+			AvailableAfter: *result.AvailableAfter,
+		})
+	}
+
+	return ctx.NoContent(http.StatusNoContent)
 }
 
 func (s *InternalServer) InternalAccountDeletionScrub(ctx echo.Context) error {

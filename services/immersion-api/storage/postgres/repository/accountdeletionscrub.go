@@ -33,14 +33,11 @@ func (r *Repository) ScrubAccount(ctx context.Context, req *domain.AccountDeleti
 		return domain.ErrAccountDeletionNotLocked
 	}
 
-	hasRunningContest, err := qtx.HasRunningOwnedContest(ctx, postgres.HasRunningOwnedContestParams{
-		UserID:    req.UserID,
-		DeletedAt: req.DeletedAt(),
-	})
+	availableAfter, err := findRunningOwnedContestAvailableAfter(ctx, qtx, req.UserID, req.DeletedAt())
 	if err != nil {
 		return fmt.Errorf("could not classify owned contests: %w", err)
 	}
-	if hasRunningContest {
+	if availableAfter != nil {
 		return domain.ErrRunningContestOwned
 	}
 

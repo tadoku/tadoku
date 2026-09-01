@@ -3,6 +3,7 @@ load("@rules_go//go:def.bzl", "go_library", "go_test")
 go_library(
     name = "repository",
     srcs = [
+        "accountdeletioneligibility.go",
         "accountdeletionlock.go",
         "accountdeletionscrub.go",
         "logmutation.go",
@@ -64,6 +65,7 @@ go_library(
 go_test(
     name = "repository_test",
     srcs = [
+        "accountdeletioneligibility_integration_test.go",
         "accountdeletionlock_integration_test.go",
         "accountdeletionscrub_integration_test.go",
         "logcreate_integration_test.go",

@@ -3,6 +3,7 @@ load("@rules_go//go:def.bzl", "go_library", "go_test")
 go_library(
     name = "domain",
     srcs = [
+        "accountdeletionprofile.go",
         "authz.go",
         "errors.go",
         "interfaces.go",
@@ -14,6 +15,7 @@ go_library(
     deps = [
         "//services/common/authz/roles",
         "//services/common/domain",
+        "@com_github_google_uuid//:uuid",
         "@com_github_sahilm_fuzzy//:fuzzy",
     ],
 )
@@ -21,6 +23,7 @@ go_library(
 go_test(
     name = "domain_test",
     srcs = [
+        "accountdeletionprofile_test.go",
         "roles_context_test.go",
         "userlist_test.go",
     ],
@@ -28,6 +31,7 @@ go_test(
         ":domain",
         "//services/common/authz/roles",
         "//services/common/testutil/authzctx",
+        "@com_github_google_uuid//:uuid",
         "@com_github_stretchr_testify//assert",
         "@com_github_stretchr_testify//require",
     ],

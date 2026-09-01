@@ -5,7 +5,10 @@ go_library(
     srcs = ["usercache.go"],
     importpath = "github.com/tadoku/tadoku/services/profile-api/cache",
     visibility = ["//visibility:public"],
-    deps = ["//services/profile-api/domain"],
+    deps = [
+        "//services/profile-api/domain",
+        "@com_github_google_uuid//:uuid",
+    ],
 )
 
 go_test(
@@ -14,6 +17,7 @@ go_test(
     deps = [
         ":cache",
         "//services/profile-api/domain",
+        "@com_github_google_uuid//:uuid",
         "@com_github_stretchr_testify//assert",
         "@com_github_stretchr_testify//require",
     ],

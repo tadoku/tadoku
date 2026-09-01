@@ -6,22 +6,37 @@ import (
 	"sync"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/tadoku/tadoku/services/profile-api/domain"
 )
 
-type UserCache struct {
-	mu      sync.RWMutex
-	users   []domain.UserCacheEntry
-	kratos  domain.KratosClient
-	refresh time.Duration
-	cancel  context.CancelFunc
+// AccountDeletionSuppressionRepository provides the durable set of accepted
+// deletions that must never appear in the user cache.
+type AccountDeletionSuppressionRepository interface {
+	ListAccountDeletionSuppressedIdentityIDs(context.Context) ([]uuid.UUID, error)
 }
 
-func NewUserCache(kratos domain.KratosClient, refresh time.Duration) *UserCache {
+type UserCache struct {
+	mu                    sync.RWMutex
+	users                 []domain.UserCacheEntry
+	suppressedIdentityIDs map[string]struct{}
+	kratos                domain.KratosClient
+	suppressionRepository AccountDeletionSuppressionRepository
+	refresh               time.Duration
+	cancel                context.CancelFunc
+}
+
+func NewUserCache(
+	kratos domain.KratosClient,
+	suppressionRepository AccountDeletionSuppressionRepository,
+	refresh time.Duration,
+) *UserCache {
 	return &UserCache{
-		kratos:  kratos,
-		refresh: refresh,
-		users:   []domain.UserCacheEntry{},
+		kratos:                kratos,
+		suppressionRepository: suppressionRepository,
+		refresh:               refresh,
+		users:                 []domain.UserCacheEntry{},
+		suppressedIdentityIDs: make(map[string]struct{}),
 	}
 }
 
@@ -102,15 +117,50 @@ func (c *UserCache) refreshUsers(ctx context.Context) error {
 		page++
 	}
 
+	suppressedIdentityIDs, err := c.suppressionRepository.ListAccountDeletionSuppressedIdentityIDs(ctx)
+	if err != nil {
+		c.mu.Lock()
+		c.users = []domain.UserCacheEntry{}
+		c.mu.Unlock()
+		return err
+	}
+
 	c.mu.Lock()
-	c.users = allUsers
+	for _, identityID := range suppressedIdentityIDs {
+		c.suppressedIdentityIDs[identityID.String()] = struct{}{}
+	}
+	visibleUsers := make([]domain.UserCacheEntry, 0, len(allUsers))
+	for _, user := range allUsers {
+		if _, suppressed := c.suppressedIdentityIDs[user.ID]; suppressed {
+			continue
+		}
+		visibleUsers = append(visibleUsers, user)
+	}
+	c.users = visibleUsers
 	c.mu.Unlock()
 
-	if len(allUsers) > 20000 {
-		log.Printf("UserCache: WARNING - cache contains %d users, consider alternative approach", len(allUsers))
+	if len(visibleUsers) > 20000 {
+		log.Printf("UserCache: WARNING - cache contains %d users, consider alternative approach", len(visibleUsers))
 	}
-	log.Printf("UserCache: refreshed with %d users", len(allUsers))
+	log.Printf("UserCache: refreshed with %d users", len(visibleUsers))
 	return nil
+}
+
+// SuppressAndEvict keeps an accepted deletion out of the cache immediately and
+// prevents an in-flight or later Kratos refresh from reintroducing it.
+func (c *UserCache) SuppressAndEvict(identityID uuid.UUID) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	id := identityID.String()
+	c.suppressedIdentityIDs[id] = struct{}{}
+	visibleUsers := make([]domain.UserCacheEntry, 0, len(c.users))
+	for _, user := range c.users {
+		if user.ID != id {
+			visibleUsers = append(visibleUsers, user)
+		}
+	}
+	c.users = visibleUsers
 }
 
 // GetUsers returns a copy of all cached users

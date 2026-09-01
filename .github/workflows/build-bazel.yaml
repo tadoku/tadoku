@@ -50,6 +50,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       IMMERSION_TEST_POSTGRES_URL: postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable
+      PROFILE_TEST_POSTGRES_URL: postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable
     services:
       postgres:
         image: postgres:17

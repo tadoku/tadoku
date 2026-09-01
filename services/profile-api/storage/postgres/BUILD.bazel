@@ -3,10 +3,13 @@ load("@rules_go//go:def.bzl", "go_library")
 go_library(
     name = "postgres",
     srcs = [
+        "account_deletion.sql.go",
         "db.go",
         "generate.go",
         "helpers.go",
+        "models.go",
     ],
     importpath = "github.com/tadoku/tadoku/services/profile-api/storage/postgres",
     visibility = ["//visibility:public"],
+    deps = ["@com_github_google_uuid//:uuid"],
 )

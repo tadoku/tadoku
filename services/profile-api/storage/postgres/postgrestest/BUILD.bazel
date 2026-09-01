@@ -1,0 +1,18 @@
+load("@rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "postgrestest",
+    srcs = ["database.go"],
+    data = ["//services/profile-api/storage/postgres/migrations:up_files"],
+    importpath = "github.com/tadoku/tadoku/services/profile-api/storage/postgres/postgrestest",
+    visibility = ["//services/profile-api/storage/postgres:__subpackages__"],
+    deps = [
+        "@com_github_golang_migrate_migrate_v4//:migrate",
+        "@com_github_golang_migrate_migrate_v4//database/postgres",
+        "@com_github_golang_migrate_migrate_v4//source/file",
+        "@com_github_google_uuid//:uuid",
+        "@com_github_lib_pq//:pq",
+        "@com_github_stretchr_testify//require",
+        "@rules_go//go/tools/bazel",
+    ],
+)

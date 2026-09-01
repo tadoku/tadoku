@@ -22,6 +22,7 @@ import (
 	profiledomain "github.com/tadoku/tadoku/services/profile-api/domain"
 	"github.com/tadoku/tadoku/services/profile-api/http/rest"
 	"github.com/tadoku/tadoku/services/profile-api/http/rest/openapi"
+	profilerepository "github.com/tadoku/tadoku/services/profile-api/storage/postgres/repository"
 
 	"github.com/getsentry/sentry-go"
 	sentryecho "github.com/getsentry/sentry-go/echo"
@@ -62,7 +63,8 @@ func main() {
 	psql := stdlib.OpenDB(*connConfig)
 
 	kratosClient := ory.NewKratosClient(cfg.KratosURL)
-	userCache := cache.NewUserCache(kratosClient, 5*time.Minute)
+	profileRepository := profilerepository.NewRepository(psql)
+	userCache := cache.NewUserCache(kratosClient, profileRepository, 5*time.Minute)
 	userCache.Start()
 
 	rolesSvc := commonroles.NewKetoService(ketoclient.NewReadClient(cfg.KetoReadURL), "app", "tadoku")

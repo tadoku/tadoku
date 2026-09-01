@@ -7,8 +7,10 @@ import {
 } from './registry'
 import type { FeatureFlagDecisions } from './registry'
 
-const { publicRuntimeConfig } = getConfig()
-const featureFlagEndpoint = `${publicRuntimeConfig.apiEndpoint}/immersion/feature-flags`
+const { publicRuntimeConfig, serverRuntimeConfig } = getConfig()
+const featureFlagEndpoint = `${
+  serverRuntimeConfig?.apiEndpoint ?? publicRuntimeConfig.apiEndpoint
+}/immersion/feature-flags`
 
 export const bootstrapFeatureFlagDecisions = async (
   session: Session | undefined,

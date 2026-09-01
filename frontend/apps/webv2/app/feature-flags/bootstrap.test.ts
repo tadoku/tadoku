@@ -5,6 +5,9 @@ import { bootstrapFeatureFlagDecisions } from './bootstrap'
 vi.mock('next/config', () => ({
   default: () => ({
     publicRuntimeConfig: { apiEndpoint: 'https://tadoku.test/api/internal' },
+    serverRuntimeConfig: {
+      apiEndpoint: 'http://oathkeeper-proxy:4455/api/internal',
+    },
   }),
 }))
 
@@ -32,7 +35,7 @@ describe('bootstrapFeatureFlagDecisions', () => {
       ),
     ).resolves.toEqual({ 'release-log-entry-v2': true })
     expect(request).toHaveBeenCalledWith(
-      'https://tadoku.test/api/internal/immersion/feature-flags',
+      'http://oathkeeper-proxy:4455/api/internal/immersion/feature-flags',
       {
         cache: 'no-store',
         headers: { cookie: 'ory_kratos_session=secret' },
@@ -85,7 +88,7 @@ describe('bootstrapFeatureFlagDecisions', () => {
 
     await expect(result).resolves.toEqual({ 'release-log-entry-v2': false })
     expect(request).toHaveBeenCalledWith(
-      'https://tadoku.test/api/internal/immersion/feature-flags',
+      'http://oathkeeper-proxy:4455/api/internal/immersion/feature-flags',
       expect.objectContaining({ signal: expect.any(AbortSignal) }),
     )
     vi.useRealTimers()

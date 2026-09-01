@@ -5,6 +5,7 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 SQLC_PACKAGES=(
   "services/immersion-api/storage/postgres"
   "services/content-api/storage/postgres"
+  "services/profile-api/storage/postgres"
 )
 
 require_cmd() {

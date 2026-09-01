@@ -1,0 +1,27 @@
+load("@rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "repository",
+    srcs = [
+        "accountdeletionprofile.go",
+        "repository.go",
+    ],
+    importpath = "github.com/tadoku/tadoku/services/profile-api/storage/postgres/repository",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//services/profile-api/storage/postgres",
+        "@com_github_google_uuid//:uuid",
+    ],
+)
+
+go_test(
+    name = "repository_test",
+    srcs = ["accountdeletionprofile_integration_test.go"],
+    embed = [":repository"],
+    deps = [
+        "//services/profile-api/storage/postgres/postgrestest",
+        "@com_github_google_uuid//:uuid",
+        "@com_github_stretchr_testify//assert",
+        "@com_github_stretchr_testify//require",
+    ],
+)

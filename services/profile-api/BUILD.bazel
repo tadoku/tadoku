@@ -19,6 +19,7 @@ go_library(
         "//services/profile-api/domain",
         "//services/profile-api/http/rest",
         "//services/profile-api/http/rest/openapi",
+        "//services/profile-api/storage/postgres/repository",
         "@com_github_getsentry_sentry_go//:sentry-go",
         "@com_github_getsentry_sentry_go//echo",
         "@com_github_go_playground_validator_v10//:validator",

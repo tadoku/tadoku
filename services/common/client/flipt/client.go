@@ -310,11 +310,7 @@ func (t *observedTransport) RoundTrip(request *http.Request) (*http.Response, er
 		}
 	case http.StatusNotModified:
 		if t.state != nil {
-			if t.state.canAcceptNotModified(request.Header.Get("If-None-Match")) {
-				t.state.unchangedSnapshot()
-			} else {
-				t.state.failed()
-			}
+			t.state.snapshotNotModified(request.Header.Get("If-None-Match"))
 		}
 	default:
 		if t.state != nil {
@@ -400,8 +396,31 @@ func (s *providerFetchState) confirmPendingSnapshot() {
 	}
 }
 
-func (s *providerFetchState) unchangedSnapshot() {
+func (s *providerFetchState) snapshotNotModified(etag string) {
 	s.mu.Lock()
+	accepted := etag != ""
+	if s.pending {
+		accepted = accepted && etag == s.pendingETag
+		if accepted {
+			s.hasSnapshot = true
+			s.confirmedETag = s.pendingETag
+		}
+	} else {
+		accepted = accepted && s.hasSnapshot && etag == s.confirmedETag
+	}
+	if !accepted {
+		s.observed = true
+		s.stale = true
+		s.pending = false
+		s.recovered = false
+		s.pendingETag = ""
+		s.mu.Unlock()
+		if s.observer != nil {
+			s.observer.ObserveProviderError("fetch")
+		}
+		return
+	}
+
 	wasStale := s.stale
 	s.observed = true
 	s.stale = false
@@ -425,12 +444,6 @@ func (s *providerFetchState) failed() {
 	if s.observer != nil {
 		s.observer.ObserveProviderError("fetch")
 	}
-}
-
-func (s *providerFetchState) canAcceptNotModified(etag string) bool {
-	s.mu.RLock()
-	defer s.mu.RUnlock()
-	return s.hasSnapshot && etag != "" && etag == s.confirmedETag
 }
 
 func (s *providerFetchState) isStale(sdkError bool) bool {

@@ -541,7 +541,7 @@ func TestObservedTransportTracksRefreshesAndBoundedFetchErrors(t *testing.T) {
 
 func TestObservedTransportConfirmsRecoveredSnapshotOnMatchingNotModified(t *testing.T) {
 	observer := &recordingObserver{}
-	statuses := []int{http.StatusOK, http.StatusNotModified}
+	statuses := []int{http.StatusOK, http.StatusNotModified, http.StatusNotModified}
 	state := newProviderFetchState("default", observer)
 	transport := &observedTransport{
 		state: state,
@@ -564,22 +564,42 @@ func TestObservedTransportConfirmsRecoveredSnapshotOnMatchingNotModified(t *test
 	request.Header.Set("If-None-Match", `"recovered"`)
 	_, err = transport.RoundTrip(request)
 	require.NoError(t, err)
+	_, err = transport.RoundTrip(request)
+	require.NoError(t, err)
+
+	_, refreshes, providerErrors := observer.snapshot()
+	assert.Equal(t, 2, refreshes)
+	assert.Empty(t, providerErrors)
+	assert.False(t, state.isStale(false))
+}
+
+func TestFetchStateRejectsMismatchedPendingETagWithoutReplacingConfirmedSnapshot(t *testing.T) {
+	observer := &recordingObserver{}
+	state := newProviderFetchState("default", observer)
+	state.snapshotReceived(`"v1"`)
+	state.confirmPendingSnapshot()
+	state.snapshotReceived(`"v2"`)
+
+	state.snapshotNotModified(`"v1"`)
 
 	_, refreshes, providerErrors := observer.snapshot()
 	assert.Equal(t, 1, refreshes)
-	assert.Empty(t, providerErrors)
+	assert.Equal(t, []string{"fetch"}, providerErrors)
+	assert.True(t, state.isStale(false))
+
+	state.snapshotNotModified(`"v1"`)
+
+	_, refreshes, providerErrors = observer.snapshot()
+	assert.Equal(t, 2, refreshes)
+	assert.Equal(t, []string{"fetch"}, providerErrors)
 	assert.False(t, state.isStale(false))
-	assert.True(t, state.canAcceptNotModified(`"recovered"`))
-}
 
-func TestFetchStateOnlyAcceptsNotModifiedForConfirmedETag(t *testing.T) {
-	state := newProviderFetchState("default", nil)
-	state.snapshotReceived(`"v1"`)
-	state.confirmPendingSnapshot()
-	state.failed()
+	state.snapshotNotModified("")
 
-	assert.False(t, state.canAcceptNotModified(`"uninstalled-v2"`))
-	assert.True(t, state.canAcceptNotModified(`"v1"`))
+	_, refreshes, providerErrors = observer.snapshot()
+	assert.Equal(t, 2, refreshes)
+	assert.Equal(t, []string{"fetch", "fetch"}, providerErrors)
+	assert.True(t, state.isStale(false))
 }
 
 func TestCloseReleasesSDK(t *testing.T) {

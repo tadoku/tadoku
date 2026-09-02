@@ -35,7 +35,27 @@ func TestContentSchemaMatchesCanonicalSource(t *testing.T) {
 	var version int
 	var dirty bool
 	require.NoError(t, target.QueryRow("select version, dirty from schema_migrations").Scan(&version, &dirty))
-	require.Equal(t, 28, version)
+	require.Equal(t, 29, version)
+	require.False(t, dirty)
+}
+
+func TestProfileSchemaMatchesCanonicalSource(t *testing.T) {
+	target := openMigratedDatabase(t, "services/immersion-api/storage/postgres/migrations/0001_init.up.sql")
+	source := openMigratedDatabase(t, "services/profile-api/storage/postgres/migrations/0001_init.up.sql")
+	tables := []string{"account_deletion_requests", "profiles"}
+
+	require.Equal(t, schemaFingerprint(t, source, tables), schemaFingerprint(t, target, tables))
+	for _, table := range tables {
+		var count int64
+		err := target.QueryRow("select count(*) from " + pq.QuoteIdentifier(table)).Scan(&count)
+		require.NoError(t, err)
+		require.Zero(t, count, "canonical target table %s must start empty", table)
+	}
+
+	var version int
+	var dirty bool
+	require.NoError(t, target.QueryRow("select version, dirty from schema_migrations").Scan(&version, &dirty))
+	require.Equal(t, 29, version)
 	require.False(t, dirty)
 }
 

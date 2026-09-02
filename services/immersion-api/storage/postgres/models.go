@@ -12,6 +12,33 @@ import (
 	"github.com/google/uuid"
 )
 
+type AccountDeletionRequest struct {
+	ID                     uuid.UUID
+	IdentityID             uuid.UUID
+	Status                 string
+	ResumeStatus           sql.NullString
+	AcceptedAt             time.Time
+	DiscordChannelID       sql.NullString
+	DiscordMessageID       sql.NullString
+	QueuedAt               sql.NullTime
+	AccessLockedAt         sql.NullTime
+	ImmersionScrubbedAt    sql.NullTime
+	CachesReconciledAt     sql.NullTime
+	AuthorizationRemovedAt sql.NullTime
+	IdentityDeletedAt      sql.NullTime
+	CompletedAt            sql.NullTime
+	AttemptCount           int32
+	NextAttemptAt          sql.NullTime
+	LastErrorCode          sql.NullString
+	LeaseOwner             uuid.NullUUID
+	LeaseExpiresAt         sql.NullTime
+	LeaseGeneration        int64
+	ManualAttentionAt      sql.NullTime
+	RemediationDueAt       sql.NullTime
+	CreatedAt              time.Time
+	UpdatedAt              time.Time
+}
+
 type Announcement struct {
 	ID        uuid.UUID
 	Namespace string
@@ -177,6 +204,12 @@ type PostsContent struct {
 	Title     string
 	Content   string
 	CreatedAt time.Time
+}
+
+type Profile struct {
+	UserID    uuid.UUID
+	CreatedAt time.Time
+	UpdatedAt time.Time
 }
 
 type ScoringRule struct {

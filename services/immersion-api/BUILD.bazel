@@ -18,6 +18,7 @@ go_library(
         "//services/common/middleware",
         "//services/common/observability",
         "//services/common/postgresconfig",
+        "//services/immersion-api/client/fliptmanagement",
         "//services/immersion-api/client/ory",
         "//services/immersion-api/domain",
         "//services/immersion-api/http/rest",

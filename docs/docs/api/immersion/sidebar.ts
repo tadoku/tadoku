@@ -288,6 +288,24 @@ const sidebar: SidebarsConfig = {
       items: [
         {
           type: "doc",
+          id: "api/immersion/feature-access-get",
+          label: "Returns named-user access for an allowlisted feature flag (admin only)",
+          className: "api-method get",
+        },
+        {
+          type: "doc",
+          id: "api/immersion/feature-access-grant",
+          label: "Grants named-user access to an allowlisted feature flag (admin only)",
+          className: "api-method put",
+        },
+        {
+          type: "doc",
+          id: "api/immersion/feature-access-revoke",
+          label: "Revokes named-user access to an allowlisted feature flag (admin only)",
+          className: "api-method delete",
+        },
+        {
+          type: "doc",
           id: "api/immersion/language-list",
           label: "Lists all languages (admin only)",
           className: "api-method get",

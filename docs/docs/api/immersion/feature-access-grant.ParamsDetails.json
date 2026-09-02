@@ -1,0 +1,1 @@
+{"parameters":[{"name":"flagKey","in":"path","required":true,"schema":{"type":"string","enum":["release-log-entry-v2"],"title":"ManagedFeatureFlagKey"}},{"name":"userId","in":"path","required":true,"schema":{"type":"string","format":"uuid"}}]}

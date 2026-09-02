@@ -62,8 +62,8 @@ jobs:
           endpoint_count="$(find docs/api -name '*.api.mdx' | wc -l | tr -d ' ')"
           page_count="$(find build/api -name index.html | wc -l | tr -d ' ')"
 
-          test "$endpoint_count" = "69"
-          test "$page_count" = "74"
+          test "$endpoint_count" = "72"
+          test "$page_count" = "77"
 
           if rg -n 'internal-api|/internal/v1/|authz-api:8080|profile-api:8080' docs/api build/api; then
             echo "Internal API content was found in the public API reference" >&2

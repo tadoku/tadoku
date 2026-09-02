@@ -1096,6 +1096,82 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/FeatureFlagDecisionsResponse"
+  /admin/feature-flags/{flagKey}/users/{userId}:
+    parameters:
+      - name: flagKey
+        in: path
+        required: true
+        schema:
+          $ref: "#/components/schemas/ManagedFeatureFlagKey"
+      - name: userId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    get:
+      summary: Returns named-user access for an allowlisted feature flag (admin only)
+      operationId: featureAccessGet
+      tags: [admin]
+      security:
+        - cookieAuth: []
+      responses:
+        "200":
+          description: Named-user feature access
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FeatureAccessResponse"
+        "400":
+          description: invalid request
+        "401":
+          description: unauthorized
+        "403":
+          description: forbidden (not admin)
+        "502":
+          description: feature configuration unavailable
+    put:
+      summary: Grants named-user access to an allowlisted feature flag (admin only)
+      operationId: featureAccessGrant
+      tags: [admin]
+      security:
+        - cookieAuth: []
+      responses:
+        "200":
+          description: Updated named-user feature access
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FeatureAccessResponse"
+        "400":
+          description: invalid request
+        "401":
+          description: unauthorized
+        "403":
+          description: forbidden (not admin)
+        "502":
+          description: feature configuration unavailable
+    delete:
+      summary: Revokes named-user access to an allowlisted feature flag (admin only)
+      operationId: featureAccessRevoke
+      tags: [admin]
+      security:
+        - cookieAuth: []
+      responses:
+        "200":
+          description: Updated named-user feature access
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FeatureAccessResponse"
+        "400":
+          description: invalid request
+        "401":
+          description: unauthorized
+        "403":
+          description: forbidden (not admin)
+        "502":
+          description: feature configuration unavailable
   /languages:
     get:
       summary: Lists all languages (admin only)
@@ -1208,6 +1284,31 @@ components:
       properties:
         decisions:
           $ref: "#/components/schemas/FeatureFlagDecisions"
+    ManagedFeatureFlagKey:
+      type: string
+      enum:
+        - release-log-entry-v2
+    FeatureAccessResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - enabled
+        - changed
+        - environment
+        - revision
+      properties:
+        enabled:
+          type: boolean
+        changed:
+          type: boolean
+        environment:
+          type: string
+          enum:
+            - local
+            - production
+        revision:
+          type: string
+          pattern: "^[0-9a-f]{40}$"
     UserProfile:
       type: object
       required:

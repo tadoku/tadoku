@@ -81,6 +81,8 @@ spec:
             value: "5s"
           - name: API_FLIPT_STARTUP_TIMEOUT
             value: "3s"
+          - name: API_FLIPT_MANAGEMENT_URL
+            value: "http://oathkeeper-proxy.default:4455/flipt-management"
           - name: SERVICE_NAME
             value: "immersion-api"
           - name: API_SCORING_ENGINE_ENABLED

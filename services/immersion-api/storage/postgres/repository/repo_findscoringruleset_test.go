@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"context"
 	"database/sql"
 	"testing"
 	"time"
@@ -10,7 +11,81 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/tadoku/tadoku/services/immersion-api/domain"
 	"github.com/tadoku/tadoku/services/immersion-api/storage/postgres"
+	"github.com/tadoku/tadoku/services/immersion-api/storage/postgres/postgrestest"
 )
+
+func TestActivePlatformScoringRulesSupportReadingPageTags(t *testing.T) {
+	testDB := postgrestest.OpenMigratedDatabase(t)
+	repo := NewRepository(testDB)
+	ruleSet, err := repo.FindActivePlatformScoringRuleSet(context.Background())
+	require.NoError(t, err)
+	require.NotNil(t, ruleSet)
+	assert.Equal(t, int32(4), ruleSet.Version)
+
+	amount := float32(10)
+	tests := []struct {
+		name         string
+		unitKey      string
+		languageCode string
+		tags         []string
+		wantScore    float32
+	}{
+		{name: "ordinary pages", unitKey: domain.UnitKeyReadingPage, languageCode: "jpn", wantScore: 10},
+		{name: "Japanese two-column page tag", unitKey: domain.UnitKeyReadingPage, languageCode: "jpn", tags: []string{"two_column"}, wantScore: 16},
+		{name: "English two-column tag remains informational", unitKey: domain.UnitKeyReadingPage, languageCode: "eng", tags: []string{"two_column"}, wantScore: 10},
+		{name: "comic page tag", unitKey: domain.UnitKeyReadingPage, languageCode: "eng", tags: []string{"comic"}, wantScore: 2},
+		{name: "manga page tag", unitKey: domain.UnitKeyReadingPage, languageCode: "jpn", tags: []string{"manga"}, wantScore: 2},
+		{name: "legacy two-column page unit", unitKey: domain.UnitKeyReadingTwoColumnPage, languageCode: "jpn", wantScore: 16},
+		{name: "legacy comic page unit", unitKey: domain.UnitKeyReadingComicPage, languageCode: "eng", wantScore: 2},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result, evaluateErr := domain.EvaluateScoringRuleSet(domain.ScoringInput{
+				ActivityID:   1,
+				UnitKey:      tt.unitKey,
+				LanguageCode: tt.languageCode,
+				Tags:         tt.tags,
+				Amount:       &amount,
+			}, *ruleSet)
+
+			require.NoError(t, evaluateErr)
+			assert.Equal(t, tt.wantScore, result.Score)
+		})
+	}
+}
+
+func TestActivePlatformScoringRulesSupportDenseSpeakingDuration(t *testing.T) {
+	testDB := postgrestest.OpenMigratedDatabase(t)
+	repo := NewRepository(testDB)
+	ruleSet, err := repo.FindActivePlatformScoringRuleSet(context.Background())
+	require.NoError(t, err)
+	require.NotNil(t, ruleSet)
+	assert.Equal(t, int32(4), ruleSet.Version)
+
+	durationSeconds := int32(600)
+	tests := []struct {
+		name      string
+		tags      []string
+		wantScore float32
+	}{
+		{name: "plain speaking", wantScore: 5},
+		{name: "dense speaking", tags: []string{"dense"}, wantScore: 7},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result, evaluateErr := domain.EvaluateScoringRuleSet(domain.ScoringInput{
+				ActivityID:      4,
+				Tags:            tt.tags,
+				DurationSeconds: &durationSeconds,
+			}, *ruleSet)
+
+			require.NoError(t, evaluateErr)
+			assert.InDelta(t, tt.wantScore, result.Score, 0.0001)
+		})
+	}
+}
 
 func TestScoringRuleSetToDomain(t *testing.T) {
 	ruleSetID := uuid.New()

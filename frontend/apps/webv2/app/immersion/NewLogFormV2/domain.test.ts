@@ -4,7 +4,7 @@ vi.mock('next/config', () => ({
   default: () => ({ publicRuntimeConfig: { apiEndpoint: '' } }),
 }))
 
-import { NewLogV2APISchema } from './domain'
+import { filterUnits, NewLogV2APISchema } from './domain'
 
 const amountActivity = {
   id: 101,
@@ -96,5 +96,46 @@ describe('NewLogV2APISchema', () => {
     })
 
     expect(result.success).toBe(false)
+  })
+})
+
+describe('filterUnits', () => {
+  it('keeps legacy reading page variants out of the V2 amount selector', () => {
+    const readingUnits = [
+      {
+        id: 'page',
+        unit_key: 'reading_page',
+        log_activity_id: 1,
+        name: 'Page',
+        modifier: 1,
+      },
+      {
+        id: 'two-column-page',
+        unit_key: 'reading_two_column_page',
+        log_activity_id: 1,
+        name: '2 Column page',
+        modifier: 1.6,
+        language_code: 'jpn',
+      },
+      {
+        id: 'comic-page',
+        unit_key: 'reading_comic_page',
+        log_activity_id: 1,
+        name: 'Comic page',
+        modifier: 0.2,
+      },
+      {
+        id: 'sentence',
+        unit_key: 'reading_sentence',
+        log_activity_id: 1,
+        name: 'Sentence',
+        modifier: 0.05,
+      },
+    ]
+
+    expect(filterUnits(readingUnits, 1, 'jpn').map(unit => unit.unit_key)).toEqual([
+      'reading_page',
+      'reading_sentence',
+    ])
   })
 })

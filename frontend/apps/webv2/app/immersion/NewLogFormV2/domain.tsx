@@ -1,8 +1,20 @@
 import { z } from 'zod'
 import { Activity, Unit } from '@app/immersion/api'
-import { filterUnits } from '@app/immersion/NewLogForm/domain'
+import { filterUnits as filterLegacyUnits } from '@app/immersion/NewLogForm/domain'
 
-export { filterUnits }
+const legacyReadingUnitKeys = new Set([
+  'reading_two_column_page',
+  'reading_comic_page',
+])
+
+export const filterUnits = (
+  units: Unit[],
+  activityId: number | undefined,
+  languageCode: string | undefined,
+) =>
+  filterLegacyUnits(units, activityId, languageCode).filter(
+    unit => !legacyReadingUnitKeys.has(unit.unit_key),
+  )
 
 const optionalNumber = z.preprocess(
   value =>

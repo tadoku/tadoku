@@ -44,8 +44,11 @@ export const LogFormV2 = ({
     activityId: defaultActivity.id,
     amountUnit:
       defaultActivityInputType === 'amount_primary'
-        ? options.units.filter(it => it.log_activity_id === defaultActivity.id)[0]
-            ?.id
+        ? filterUnits(
+            options.units,
+            defaultActivity.id,
+            originalDefaultValues?.languageCode,
+          )[0]?.id
         : undefined,
     allUnits: options.units,
     allActivities: options.activities,

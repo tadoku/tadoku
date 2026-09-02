@@ -1,9 +1,9 @@
+import React from 'react'
 import { useFormContext } from 'react-hook-form'
 
 interface ActivityTagSuggestion {
   tag: string
-  // Future: modifiers for score adjustments
-  // modifiers?: { unitId: string; multiplier: number }[]
+  modifier?: boolean
 }
 
 const activityTags: Record<number, ActivityTagSuggestion[]> = {
@@ -11,8 +11,9 @@ const activityTags: Record<number, ActivityTagSuggestion[]> = {
   1: [
     { tag: 'book' },
     { tag: 'ebook' },
-    { tag: 'manga' },
-    { tag: 'comic' },
+    { tag: 'manga', modifier: true },
+    { tag: 'comic', modifier: true },
+    { tag: 'two_column', modifier: true },
     { tag: 'fiction' },
     { tag: 'non-fiction' },
     { tag: 'web page' },
@@ -21,7 +22,7 @@ const activityTags: Record<number, ActivityTagSuggestion[]> = {
   ],
   // Listening
   2: [
-    { tag: 'dense' },
+    { tag: 'dense', modifier: true },
     { tag: 'audiobook' },
     { tag: 'podcast' },
     { tag: 'anime' },
@@ -41,6 +42,7 @@ const activityTags: Record<number, ActivityTagSuggestion[]> = {
   ],
   // Speaking
   4: [
+    { tag: 'dense', modifier: true },
     { tag: 'conversation' },
     { tag: 'presentation' },
     { tag: 'shadowing' },
@@ -64,9 +66,11 @@ interface TagsSidebarProps {
 export function TagsSidebar({ activityId }: TagsSidebarProps) {
   const { watch, getValues, setValue } = useFormContext()
   const tags: string[] = watch('tags') ?? []
-  const suggestions: ActivityTagSuggestion[] = activityId != null ? (activityTags[activityId] ?? []) : []
+  const allSuggestions = activityId != null ? (activityTags[activityId] ?? []) : []
+  const modifiers = allSuggestions.filter(({ modifier }) => modifier)
+  const suggestions = allSuggestions.filter(({ modifier }) => !modifier)
 
-  if (suggestions.length === 0) return null
+  if (modifiers.length === 0 && suggestions.length === 0) return null
 
   const isAtLimit = tags.length >= MAX_TAGS
 
@@ -79,29 +83,45 @@ export function TagsSidebar({ activityId }: TagsSidebarProps) {
     }
   }
 
+  const renderSuggestions = (items: ActivityTagSuggestion[]) => (
+    <div className="flex flex-wrap gap-2">
+      {items.map(({ tag }) => {
+        const isSelected = tags.includes(tag)
+        return (
+          <button
+            key={tag}
+            type="button"
+            onClick={() => handleToggle(tag)}
+            disabled={!isSelected && isAtLimit}
+            className={`tag cursor-pointer transition-colors border border-b-2 border-black/5 lg:border-black/15 bg-black/5 lg:bg-white ${
+              isSelected ? 'opacity-70 line-through' : 'hover:bg-slate-50'
+            } ${
+              !isSelected && isAtLimit
+                ? 'opacity-50 cursor-not-allowed'
+                : ''
+            }`}
+          >
+            {tag}
+          </button>
+        )
+      })}
+    </div>
+  )
+
   return (
-    <div className="v-stack gap-2 mt-4 lg:mt-0">
-      <span className="subtitle text-sm">Common tags</span>
-      <div className="flex flex-wrap gap-2">
-        {suggestions.map(({ tag }) => {
-          const isSelected = tags.includes(tag)
-          return (
-            <button
-              key={tag}
-              type="button"
-              onClick={() => handleToggle(tag)}
-              disabled={!isSelected && isAtLimit}
-              className={`tag cursor-pointer transition-colors border border-b-2 border-black/5 lg:border-black/15 bg-black/5 lg:bg-white ${
-                isSelected
-                  ? 'opacity-70 line-through'
-                  : 'hover:bg-slate-50'
-              } ${!isSelected && isAtLimit ? 'opacity-50 cursor-not-allowed' : ''}`}
-            >
-              {tag}
-            </button>
-          )
-        })}
-      </div>
+    <div className="v-stack gap-4 mt-4 lg:mt-0">
+      {modifiers.length > 0 && (
+        <section className="v-stack gap-2">
+          <span className="subtitle text-sm">Score modifiers</span>
+          {renderSuggestions(modifiers)}
+        </section>
+      )}
+      {suggestions.length > 0 && (
+        <section className="v-stack gap-2">
+          <span className="subtitle text-sm">Common tags</span>
+          {renderSuggestions(suggestions)}
+        </section>
+      )}
     </div>
   )
 }

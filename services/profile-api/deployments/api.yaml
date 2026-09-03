@@ -20,20 +20,6 @@ spec:
         app: profile-api
     spec:
       serviceAccountName: profile-api
-      initContainers:
-        - name: migrations
-          image: profile-api-image
-          imagePullPolicy: IfNotPresent
-          command: ['/migrate']
-          args: ['-source', 'file:///migrations', 'up']
-          env:
-          - {name: POSTGRES_HOST, value: tadoku-dev-db.default}
-          - {name: POSTGRES_DATABASE, value: profile}
-          - {name: POSTGRES_SSLMODE, value: require}
-          - name: POSTGRES_USER
-            valueFrom: {secretKeyRef: {name: profile.tadoku-dev-db.credentials.postgresql.acid.zalan.do, key: username}}
-          - name: POSTGRES_PASSWORD
-            valueFrom: {secretKeyRef: {name: profile.tadoku-dev-db.credentials.postgresql.acid.zalan.do, key: password}}
       containers:
       - name: profile-api
         image: profile-api-image

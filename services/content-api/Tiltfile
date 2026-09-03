@@ -10,4 +10,5 @@ bazel_build(
   deps=['./', './../common/'],
 )
 
-k8s_resource('content-api', labels=["backend"], resource_deps=["tadoku-dev-db-credentials", "keto"])
+k8s_resource('content-api-source-schema', labels=["tools"], resource_deps=["tadoku-dev-db-credentials"])
+k8s_resource('content-api', labels=["backend"], resource_deps=["content-api-source-schema", "keto"])

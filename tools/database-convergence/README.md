@@ -79,3 +79,5 @@ Before target writes resume, any non-zero command exit, failed JSON gate, contra
 After target writes resume, do not use `--reset-target` and do not switch back casually. Repair forward, or obtain explicit approval for a separately designed reverse synchronization or restore.
 
 The importer does not pause traffic, alter DSNs, change grants, take backups, run application contracts, or approve an observation window. Those stay explicit operator actions.
+
+The development manifests retain clean-cluster support through separate `*-api-source-schema` Jobs using the frozen Content 3, Profile 2, and Authz 2 migration directories. API Deployments have no migration init container, and the dev Jobs point only to the legacy source database names.

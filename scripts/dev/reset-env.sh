@@ -35,6 +35,51 @@ rollout_wait_if_present() {
   fi
 }
 
+run_legacy_source_migration() {
+  local namespace="$1"
+  local deployment="$2"
+  local database="$3"
+  local database_user="$4"
+  local image
+  local pod_name
+  local overrides
+
+  image="$(kubectl -n "$namespace" get deployment "$deployment" -o jsonpath='{.spec.template.spec.containers[0].image}')"
+  if [ -z "$image" ]; then
+    echo "cannot resolve image for ${namespace}/${deployment}" >&2
+    exit 1
+  fi
+  pod_name="${deployment}-source-schema-reset-${RANDOM}-${RANDOM}"
+  overrides="$(jq -cn \
+    --arg pod_name "$pod_name" \
+    --arg image "$image" \
+    --arg database "$database" \
+    --arg database_user "$database_user" \
+    --arg secret_name "${database_user}.${DB_NAME}.credentials.postgresql.acid.zalan.do" \
+    '{spec:{activeDeadlineSeconds:300,restartPolicy:"Never",containers:[{
+      name:$pod_name,
+      image:$image,
+      command:["/migrate"],
+      args:["-source","file:///migrations","up"],
+      env:[
+        {name:"POSTGRES_HOST",value:"tadoku-dev-db.default"},
+        {name:"POSTGRES_DATABASE",value:$database},
+        {name:"POSTGRES_SSLMODE",value:"require"},
+        {name:"POSTGRES_USER",valueFrom:{secretKeyRef:{name:$secret_name,key:"username"}}},
+        {name:"POSTGRES_PASSWORD",valueFrom:{secretKeyRef:{name:$secret_name,key:"password"}}}
+      ]
+    }]}}')"
+
+  echo "provisioning frozen ${database} source schema..."
+  kubectl -n "$namespace" run "$pod_name" \
+    --rm \
+    --attach \
+    --restart=Never \
+    --pod-running-timeout=120s \
+    --image="$image" \
+    --overrides="$overrides"
+}
+
 tilt_config_value() {
   local key="$1"
   sed -n 's/.*"'"$key"'"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' "$TILT_CONFIG_PATH" | head -n 1
@@ -72,6 +117,7 @@ wait_for_db_pod() {
 }
 
 require_cmd kubectl
+require_cmd jq
 TILT_CONFIG_PATH="$(resolve_tilt_config)"
 
 SHARED_CONTEXT="${TADOKU_SHARED_K8S_CONTEXT:-$(tilt_config_value shared_k8s_context)}"
@@ -123,7 +169,11 @@ kubectl -n "$DB_NAMESPACE" wait \
 
 "$ROOT/scripts/dev/sync-db-secrets.sh" "$CURRENT_CONTEXT"
 
-echo "restarting services so startup migrations run against the fresh database..."
+run_legacy_source_migration tdk-content-api content-api content content
+run_legacy_source_migration tdk-profile-api profile-api profile profile
+run_legacy_source_migration tdk-authz-api authz-api authz authz
+
+echo "restarting services against the fresh database..."
 rollout_restart_if_present default kratos
 rollout_restart_if_present default keto
 rollout_restart_if_present default pgweb

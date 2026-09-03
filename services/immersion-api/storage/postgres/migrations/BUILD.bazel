@@ -21,6 +21,7 @@ go_test(
     data = [
         ":up_files",
         "//services/content-api/storage/postgres/migrations:up_files",
+        "//services/profile-api/storage/postgres/migrations:up_files",
     ],
     env_inherit = ["IMMERSION_TEST_POSTGRES_URL"],
     deps = [

@@ -12,6 +12,20 @@ import (
 	"github.com/google/uuid"
 )
 
+type Announcement struct {
+	ID        uuid.UUID
+	Namespace string
+	Title     string
+	Content   string
+	Style     string
+	Href      sql.NullString
+	StartsAt  time.Time
+	EndsAt    time.Time
+	CreatedAt time.Time
+	UpdatedAt time.Time
+	DeletedAt sql.NullTime
+}
+
 type Contest struct {
 	ID                      uuid.UUID
 	OwnerUserID             uuid.UUID
@@ -122,9 +136,47 @@ type ModerationAuditLog struct {
 	CreatedAt   time.Time
 }
 
+type Page struct {
+	ID               uuid.UUID
+	Namespace        string
+	Slug             string
+	CurrentContentID uuid.UUID
+	PublishedAt      sql.NullTime
+	CreatedAt        time.Time
+	UpdatedAt        time.Time
+	DeletedAt        sql.NullTime
+}
+
+type PagesContent struct {
+	ID        uuid.UUID
+	PageID    uuid.UUID
+	Title     string
+	Html      string
+	CreatedAt time.Time
+}
+
 type PlatformScoringConfig struct {
 	Singleton       bool
 	ActiveRuleSetID uuid.UUID
+}
+
+type Post struct {
+	ID               uuid.UUID
+	Namespace        string
+	Slug             string
+	CurrentContentID uuid.UUID
+	PublishedAt      sql.NullTime
+	CreatedAt        time.Time
+	UpdatedAt        time.Time
+	DeletedAt        sql.NullTime
+}
+
+type PostsContent struct {
+	ID        uuid.UUID
+	PostID    uuid.UUID
+	Title     string
+	Content   string
+	CreatedAt time.Time
 }
 
 type ScoringRule struct {

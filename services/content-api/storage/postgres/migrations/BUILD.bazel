@@ -1,5 +1,11 @@
 load("@rules_pkg//:pkg.bzl", "pkg_tar")
 
+filegroup(
+    name = "up_files",
+    srcs = glob(["*.up.sql"]),
+    visibility = ["//services/immersion-api/storage/postgres/migrations:__pkg__"],
+)
+
 pkg_tar(
     name = "tar",
     srcs = glob(["**/*.sql"]),

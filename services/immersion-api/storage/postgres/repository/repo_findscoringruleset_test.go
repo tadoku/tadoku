@@ -20,23 +20,28 @@ func TestActivePlatformScoringRulesSupportReadingPageTags(t *testing.T) {
 	ruleSet, err := repo.FindActivePlatformScoringRuleSet(context.Background())
 	require.NoError(t, err)
 	require.NotNil(t, ruleSet)
-	assert.Equal(t, int32(4), ruleSet.Version)
+	assert.Equal(t, int32(5), ruleSet.Version)
 
-	amount := float32(10)
+	amount := float32(200)
 	tests := []struct {
 		name         string
 		unitKey      string
 		languageCode string
 		tags         []string
 		wantScore    float32
+		wantRate     float32
 	}{
-		{name: "ordinary pages", unitKey: domain.UnitKeyReadingPage, languageCode: "jpn", wantScore: 10},
-		{name: "Japanese two-column page tag", unitKey: domain.UnitKeyReadingPage, languageCode: "jpn", tags: []string{"two_column"}, wantScore: 16},
-		{name: "English two-column tag remains informational", unitKey: domain.UnitKeyReadingPage, languageCode: "eng", tags: []string{"two_column"}, wantScore: 10},
-		{name: "comic page tag", unitKey: domain.UnitKeyReadingPage, languageCode: "eng", tags: []string{"comic"}, wantScore: 2},
-		{name: "manga page tag", unitKey: domain.UnitKeyReadingPage, languageCode: "jpn", tags: []string{"manga"}, wantScore: 2},
-		{name: "legacy two-column page unit", unitKey: domain.UnitKeyReadingTwoColumnPage, languageCode: "jpn", wantScore: 16},
-		{name: "legacy comic page unit", unitKey: domain.UnitKeyReadingComicPage, languageCode: "eng", wantScore: 2},
+		{name: "ordinary pages", unitKey: domain.UnitKeyReadingPage, languageCode: "jpn", wantScore: 200, wantRate: 1},
+		{name: "Japanese two-column page tag", unitKey: domain.UnitKeyReadingPage, languageCode: "jpn", tags: []string{"two_column"}, wantScore: 320, wantRate: 1.6},
+		{name: "English two-column tag remains informational", unitKey: domain.UnitKeyReadingPage, languageCode: "eng", tags: []string{"two_column"}, wantScore: 200, wantRate: 1},
+		{name: "comic page tag", unitKey: domain.UnitKeyReadingPage, languageCode: "eng", tags: []string{"comic"}, wantScore: 40, wantRate: 0.2},
+		{name: "manga page tag", unitKey: domain.UnitKeyReadingPage, languageCode: "jpn", tags: []string{"manga"}, wantScore: 40, wantRate: 0.2},
+		{name: "comic wins over two-column", unitKey: domain.UnitKeyReadingPage, languageCode: "jpn", tags: []string{"comic", "two_column"}, wantScore: 40, wantRate: 0.2},
+		{name: "manga wins over two-column", unitKey: domain.UnitKeyReadingPage, languageCode: "jpn", tags: []string{"manga", "two_column"}, wantScore: 40, wantRate: 0.2},
+		{name: "tag order does not change precedence", unitKey: domain.UnitKeyReadingPage, languageCode: "jpn", tags: []string{"two_column", "comic"}, wantScore: 40, wantRate: 0.2},
+		{name: "comic and manga win over two-column", unitKey: domain.UnitKeyReadingPage, languageCode: "jpn", tags: []string{"comic", "manga", "two_column"}, wantScore: 40, wantRate: 0.2},
+		{name: "legacy two-column page unit", unitKey: domain.UnitKeyReadingTwoColumnPage, languageCode: "jpn", wantScore: 320, wantRate: 1.6},
+		{name: "legacy comic page unit", unitKey: domain.UnitKeyReadingComicPage, languageCode: "eng", wantScore: 40, wantRate: 0.2},
 	}
 
 	for _, tt := range tests {
@@ -51,6 +56,8 @@ func TestActivePlatformScoringRulesSupportReadingPageTags(t *testing.T) {
 
 			require.NoError(t, evaluateErr)
 			assert.Equal(t, tt.wantScore, result.Score)
+			require.Len(t, result.AppliedRules, 1)
+			assert.InDelta(t, tt.wantRate, result.AppliedRules[0].Rate, 0.0001)
 		})
 	}
 }
@@ -61,7 +68,7 @@ func TestActivePlatformScoringRulesSupportDenseSpeakingDuration(t *testing.T) {
 	ruleSet, err := repo.FindActivePlatformScoringRuleSet(context.Background())
 	require.NoError(t, err)
 	require.NotNil(t, ruleSet)
-	assert.Equal(t, int32(4), ruleSet.Version)
+	assert.Equal(t, int32(5), ruleSet.Version)
 
 	durationSeconds := int32(600)
 	tests := []struct {

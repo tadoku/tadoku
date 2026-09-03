@@ -44,10 +44,10 @@ var serviceSpecs = map[string]serviceSpec{
 	"content": {
 		sourceLedgerVersion: 3,
 		tables: []tableSpec{
-			{name: "pages", key: "id", columns: []string{"id", "namespace", "slug", "current_content_id", "published_at", "created_at", "updated_at", "deleted_at"}, nullable: []string{"published_at", "deleted_at"}, deleteRank: 4},
-			{name: "pages_content", key: "id", columns: []string{"id", "page_id", "title", "html", "created_at"}, deleteRank: 5},
-			{name: "posts", key: "id", columns: []string{"id", "namespace", "slug", "current_content_id", "published_at", "created_at", "updated_at", "deleted_at"}, nullable: []string{"published_at", "deleted_at"}, deleteRank: 2},
-			{name: "posts_content", key: "id", columns: []string{"id", "post_id", "title", "content", "created_at"}, deleteRank: 3},
+			{name: "pages", key: "id", columns: []string{"id", "namespace", "slug", "current_content_id", "published_at", "created_at", "updated_at", "deleted_at"}, nullable: []string{"published_at", "deleted_at"}, deleteRank: 5},
+			{name: "pages_content", key: "id", columns: []string{"id", "page_id", "title", "html", "created_at"}, deleteRank: 4},
+			{name: "posts", key: "id", columns: []string{"id", "namespace", "slug", "current_content_id", "published_at", "created_at", "updated_at", "deleted_at"}, nullable: []string{"published_at", "deleted_at"}, deleteRank: 3},
+			{name: "posts_content", key: "id", columns: []string{"id", "post_id", "title", "content", "created_at"}, deleteRank: 2},
 			{name: "announcements", key: "id", columns: []string{"id", "namespace", "title", "content", "style", "href", "starts_at", "ends_at", "created_at", "updated_at", "deleted_at"}, nullable: []string{"href", "deleted_at"}, deleteRank: 1},
 		},
 	},

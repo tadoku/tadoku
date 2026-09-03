@@ -1,0 +1,39 @@
+load("@rules_go//go:def.bzl", "go_binary", "go_library", "go_test")
+
+go_library(
+    name = "database-convergence_lib",
+    srcs = ["main.go"],
+    importpath = "github.com/tadoku/tadoku/tools/database-convergence",
+    visibility = ["//visibility:private"],
+    deps = ["@com_github_lib_pq//:pq"],
+)
+
+go_binary(
+    name = "database-convergence",
+    embed = [":database-convergence_lib"],
+    visibility = ["//visibility:public"],
+)
+
+go_test(
+    name = "database-convergence_test",
+    size = "medium",
+    srcs = ["main_test.go"],
+    data = [
+        "//services/authz-api/storage/postgres/migrations:up_files",
+        "//services/content-api/storage/postgres/migrations:up_files",
+        "//services/immersion-api/storage/postgres/migrations:up_files",
+        "//services/profile-api/storage/postgres/migrations:up_files",
+    ],
+    embed = [":database-convergence_lib"],
+    env_inherit = ["IMMERSION_TEST_POSTGRES_URL"],
+    deps = [
+        "@com_github_golang_migrate_migrate_v4//:migrate",
+        "@com_github_golang_migrate_migrate_v4//database/postgres",
+        "@com_github_golang_migrate_migrate_v4//source/file",
+        "@com_github_google_uuid//:uuid",
+        "@com_github_lib_pq//:pq",
+        "@com_github_stretchr_testify//assert",
+        "@com_github_stretchr_testify//require",
+        "@rules_go//go/tools/bazel",
+    ],
+)

@@ -4,7 +4,10 @@ load("@rules_pkg//:pkg.bzl", "pkg_tar")
 filegroup(
     name = "up_files",
     srcs = glob(["*.up.sql"]),
-    visibility = ["//services/immersion-api/storage/postgres/postgrestest:__pkg__"],
+    visibility = [
+        "//services/immersion-api/storage/postgres/postgrestest:__pkg__",
+        "//tools/database-convergence:__pkg__",
+    ],
 )
 
 pkg_tar(

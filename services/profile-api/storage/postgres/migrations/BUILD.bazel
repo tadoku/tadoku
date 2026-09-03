@@ -6,6 +6,7 @@ filegroup(
     visibility = [
         "//services/immersion-api/storage/postgres/migrations:__pkg__",
         "//services/profile-api/storage/postgres:__subpackages__",
+        "//tools/database-convergence:__pkg__",
     ],
 )
 

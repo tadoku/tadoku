@@ -35,7 +35,7 @@ func TestContentSchemaMatchesCanonicalSource(t *testing.T) {
 	var version int
 	var dirty bool
 	require.NoError(t, target.QueryRow("select version, dirty from schema_migrations").Scan(&version, &dirty))
-	require.Equal(t, 27, version)
+	require.Equal(t, 28, version)
 	require.False(t, dirty)
 }
 

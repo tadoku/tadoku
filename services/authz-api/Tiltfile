@@ -9,4 +9,4 @@ bazel_build(
   deps=["./", "./../common/"],
 )
 
-k8s_resource("authz-api", labels=["backend"], resource_deps=["tadoku-dev-db-credentials", "kratos", "keto"])
+k8s_resource("authz-api", labels=["backend"], resource_deps=["immersion-api", "kratos", "keto"])

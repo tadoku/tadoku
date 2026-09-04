@@ -79,7 +79,7 @@ cleanup() {
 }
 trap cleanup EXIT
 
-sync_secret authz tdk-authz-api
-sync_secret content tdk-content-api
+sync_secret immersion tdk-authz-api
+sync_secret immersion tdk-content-api
 sync_secret immersion tdk-immersion-api
-sync_secret profile tdk-profile-api
+sync_secret immersion tdk-profile-api

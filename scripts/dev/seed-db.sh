@@ -296,12 +296,12 @@ refresh_identity_password "$READER_EMAIL" "$READER_PASSWORD"
 seed_keto_admin "$ADMIN_USER_ID"
 
 wait_for_relation immersion immersion users
-wait_for_relation content content pages
-wait_for_relation profile profile profiles
+wait_for_relation immersion immersion pages
+wait_for_relation immersion immersion profiles
 
 run_seed_sql immersion immersion "$ROOT/scripts/dev/seed/immersion.sql"
-run_seed_sql profile profile "$ROOT/scripts/dev/seed/profile.sql"
-run_seed_sql content content "$ROOT/scripts/dev/seed/content.sql"
+run_seed_sql immersion immersion "$ROOT/scripts/dev/seed/profile.sql"
+run_seed_sql immersion immersion "$ROOT/scripts/dev/seed/content.sql"
 
 echo "dev seed complete"
 echo "admin: ${ADMIN_EMAIL} / ${ADMIN_PASSWORD}"

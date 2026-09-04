@@ -43,5 +43,6 @@ pkg_tar(
         "//services/content-api:__pkg__",
         "//services/immersion-api:__pkg__",
         "//services/profile-api:__pkg__",
+        "//services/tadoku-api/migrations:__pkg__",
     ],
 )

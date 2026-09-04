@@ -8,19 +8,13 @@ spec:
   teamId: tadoku
   numberOfInstances: 1
   users:
-    authz: []
-    content: []
     immersion: []
     keto: []
     kratos: []
-    profile: []
   databases:
-    authz: authz
-    content: content
     immersion: immersion
     keto: keto
     kratos: kratos
-    profile: profile
   postgresql:
     version: "17"
   volume:

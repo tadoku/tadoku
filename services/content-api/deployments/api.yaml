@@ -3,37 +3,6 @@ kind: Namespace
 metadata:
   name: tdk-content-api
 ---
-apiVersion: batch/v1
-kind: Job
-metadata:
-  name: content-api-source-schema
-  namespace: tdk-content-api
-  labels:
-    app: content-api-source-schema
-spec:
-  activeDeadlineSeconds: 300
-  backoffLimit: 3
-  template:
-    metadata:
-      labels:
-        app: content-api-source-schema
-    spec:
-      restartPolicy: Never
-      containers:
-        - name: migrations
-          image: content-api-image
-          imagePullPolicy: IfNotPresent
-          command: ['/migrate']
-          args: ['-source', 'file:///migrations', 'up']
-          env:
-          - {name: POSTGRES_HOST, value: tadoku-dev-db.default}
-          - {name: POSTGRES_DATABASE, value: content}
-          - {name: POSTGRES_SSLMODE, value: require}
-          - name: POSTGRES_USER
-            valueFrom: {secretKeyRef: {name: content.tadoku-dev-db.credentials.postgresql.acid.zalan.do, key: username}}
-          - name: POSTGRES_PASSWORD
-            valueFrom: {secretKeyRef: {name: content.tadoku-dev-db.credentials.postgresql.acid.zalan.do, key: password}}
----
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -59,12 +28,12 @@ spec:
         - containerPort: 8000
         env:
           - {name: API_POSTGRES_HOST, value: tadoku-dev-db.default}
-          - {name: API_POSTGRES_DATABASE, value: content}
+          - {name: API_POSTGRES_DATABASE, value: immersion}
           - {name: API_POSTGRES_SSLMODE, value: require}
           - name: API_POSTGRES_USER
-            valueFrom: {secretKeyRef: {name: content.tadoku-dev-db.credentials.postgresql.acid.zalan.do, key: username}}
+            valueFrom: {secretKeyRef: {name: immersion.tadoku-dev-db.credentials.postgresql.acid.zalan.do, key: username}}
           - name: API_POSTGRES_PASSWORD
-            valueFrom: {secretKeyRef: {name: content.tadoku-dev-db.credentials.postgresql.acid.zalan.do, key: password}}
+            valueFrom: {secretKeyRef: {name: immersion.tadoku-dev-db.credentials.postgresql.acid.zalan.do, key: password}}
           - name: API_PORT
             value: "8000"
           - name: API_JWKS

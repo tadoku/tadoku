@@ -10,6 +10,16 @@ bazel_build(
   deps=['./', './../common/'],
 )
 
+bazel_build(
+  'tadoku-api-migrations-image',
+  '//services/tadoku-api/migrations:load',
+  deps=[
+    './../common/migrate-runner/',
+    './storage/postgres/migrations/',
+    './../tadoku-api/migrations/',
+  ],
+)
+
 k8s_resource(
   'immersion-api',
   labels=["backend"],

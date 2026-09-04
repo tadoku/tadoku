@@ -19,6 +19,7 @@ sh_binary(
         "$(rlocationpath //services/immersion-api:load)",
         "$(rlocationpath //services/profile-api:load)",
         "$(rlocationpath //services/tadoku-api:load)",
+        "$(rlocationpath //services/tadoku-api/migrations:load)",
         "$(rlocationpath //services/token-reflector:load)",
     ],
     data = [
@@ -28,6 +29,7 @@ sh_binary(
         "//services/immersion-api:load",
         "//services/profile-api:load",
         "//services/tadoku-api:load",
+        "//services/tadoku-api/migrations:load",
         "//services/token-reflector:load",
         "@bazel_tools//tools/bash/runfiles",
     ],
@@ -46,6 +48,7 @@ sh_binary(
         "$(rlocationpath //services/immersion-api:push)",
         "$(rlocationpath //services/profile-api:push)",
         "$(rlocationpath //services/tadoku-api:push)",
+        "$(rlocationpath //services/tadoku-api/migrations:push)",
         "$(rlocationpath //services/token-reflector:push)",
     ],
     data = [
@@ -55,6 +58,7 @@ sh_binary(
         "//services/immersion-api:push",
         "//services/profile-api:push",
         "//services/tadoku-api:push",
+        "//services/tadoku-api/migrations:push",
         "//services/token-reflector:push",
         "@bazel_tools//tools/bash/runfiles",
     ],

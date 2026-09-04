@@ -1,5 +1,5 @@
 load("@rules_go//go:def.bzl", "go_test")
-load("@rules_oci//oci:defs.bzl", "oci_image")
+load("@rules_oci//oci:defs.bzl", "oci_image", "oci_load", "oci_push")
 
 alias(
     name = "canonical_tar",
@@ -14,6 +14,33 @@ oci_image(
         "//services/common/migrate-runner:layer",
         ":canonical_tar",
     ],
+    visibility = ["//visibility:public"],
+)
+
+oci_load(
+    name = "load",
+    image = ":image",
+    repo_tags = [
+        "ghcr.io/tadoku/tadoku/tadoku-api-migrations:latest",
+        "bazel/services/tadoku-api/migrations:latest",
+    ],
+    visibility = ["//visibility:public"],
+)
+
+oci_push(
+    name = "dev_push",
+    image = ":image",
+    visibility = ["//visibility:public"],
+)
+
+oci_push(
+    name = "push",
+    image = ":image",
+    remote_tags = [
+        "latest",
+        "prod",
+    ],
+    repository = "ghcr.io/tadoku/tadoku/tadoku-api-migrations",
     visibility = ["//visibility:public"],
 )
 

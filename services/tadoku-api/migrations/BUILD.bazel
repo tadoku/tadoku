@@ -1,0 +1,34 @@
+load("@rules_go//go:def.bzl", "go_test")
+load("@rules_oci//oci:defs.bzl", "oci_image")
+
+alias(
+    name = "canonical_tar",
+    actual = "//services/immersion-api/storage/postgres/migrations:tar",
+)
+
+oci_image(
+    name = "image",
+    base = "@distroless_base_linux_amd64",
+    entrypoint = ["/migrate"],
+    tars = [
+        "//services/common/migrate-runner:layer",
+        ":canonical_tar",
+    ],
+    visibility = ["//visibility:public"],
+)
+
+go_test(
+    name = "migrations_test",
+    srcs = ["migrations_test.go"],
+    data = ["//services/immersion-api/storage/postgres/migrations:up_files"],
+    env_inherit = ["IMMERSION_TEST_POSTGRES_URL"],
+    deps = [
+        "@com_github_golang_migrate_migrate_v4//:migrate",
+        "@com_github_golang_migrate_migrate_v4//database/postgres",
+        "@com_github_golang_migrate_migrate_v4//source/file",
+        "@com_github_google_uuid//:uuid",
+        "@com_github_lib_pq//:pq",
+        "@com_github_stretchr_testify//require",
+        "@rules_go//go/tools/bazel",
+    ],
+)

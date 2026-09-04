@@ -51,6 +51,19 @@ EOF
 
 cat >"$fake_bin/pg_dump" <<'EOF'
 #!/usr/bin/env bash
+for required_argument in --schema=data --extension=uuid-ossp; do
+  found=no
+  for argument in "$@"; do
+    if [ "$argument" = "$required_argument" ]; then
+      found=yes
+      break
+    fi
+  done
+  [ "$found" = yes ] || {
+    echo "missing dump scope: $required_argument" >&2
+    exit 1
+  }
+done
 for argument in "$@"; do
   case "$argument" in --file=*) printf 'dump' >"${argument#--file=}" ;; esac
 done

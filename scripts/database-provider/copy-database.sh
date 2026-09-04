@@ -8,16 +8,16 @@ usage() {
 Usage: copy-database.sh <backup.dump>
 
 Required environment:
-  TADOKU_COPY_SOURCE_DSN
-  TADOKU_COPY_TARGET_DSN
-  TADOKU_COPY_EXPECTED_VERSION
-  TADOKU_COPY_WRITES_PAUSED=yes
+  ORY_COPY_SOURCE_DSN
+  ORY_COPY_TARGET_DSN
+  ORY_COPY_WRITES_PAUSED=yes
 
 Optional environment:
-  TADOKU_COPY_SCHEMA                 Application schema (default: data)
+  ORY_COPY_SCHEMA                 Ory schema (default: data)
 
-The target application schema must be empty and the backup path must not exist.
-The script retains the protected custom-format dump after a transactional restore.
+Copies one Kratos or Keto data schema. The target schema must be empty, its
+role search_path must include the Ory schema, and the backup path must not
+exist. The protected custom-format dump is retained after restore.
 EOF
 }
 
@@ -41,11 +41,19 @@ server_identity() {
 }
 
 ledger() {
-  query "$1" "select version::text || ':' || dirty::text from ${schema}.schema_migrations"
+  query "$1" "select version::text || ':' || version_self::text from ${schema}.schema_migration order by version, version_self"
 }
 
 table_names() {
-  query "$1" "select tablename from pg_tables where schemaname = '${schema}' and tablename <> 'schema_migrations' order by tablename"
+  query "$1" "select tablename from pg_tables where schemaname = '${schema}' order by tablename"
+}
+
+schema_inventory() {
+  query "$1" "select pg_class.relkind::text || ':' || pg_class.relname from pg_class join pg_namespace on pg_namespace.oid = pg_class.relnamespace where pg_namespace.nspname = '${schema}' and pg_class.relkind in ('r', 'p', 'i', 'S') order by pg_class.relkind, pg_class.relname"
+}
+
+sequence_values() {
+  query "$1" "select sequencename || ':' || coalesce(last_value::text, '') from pg_sequences where schemaname = '${schema}' order by sequencename"
 }
 
 fingerprints() {
@@ -65,17 +73,15 @@ if [ "$#" -ne 1 ]; then
 fi
 
 backup_path="$1"
-source_dsn="${TADOKU_COPY_SOURCE_DSN:-}"
-target_dsn="${TADOKU_COPY_TARGET_DSN:-}"
-expected_version="${TADOKU_COPY_EXPECTED_VERSION:-}"
-schema="${TADOKU_COPY_SCHEMA:-data}"
+source_dsn="${ORY_COPY_SOURCE_DSN:-}"
+target_dsn="${ORY_COPY_TARGET_DSN:-}"
+schema="${ORY_COPY_SCHEMA:-data}"
 
-[ -n "$source_dsn" ] || fail "TADOKU_COPY_SOURCE_DSN is required"
-[ -n "$target_dsn" ] || fail "TADOKU_COPY_TARGET_DSN is required"
+[ -n "$source_dsn" ] || fail "ORY_COPY_SOURCE_DSN is required"
+[ -n "$target_dsn" ] || fail "ORY_COPY_TARGET_DSN is required"
 [ "$source_dsn" != "$target_dsn" ] || fail "source and target DSNs must differ"
-[[ "$expected_version" =~ ^[1-9][0-9]*$ ]] || fail "TADOKU_COPY_EXPECTED_VERSION must be a positive integer"
-[ "${TADOKU_COPY_WRITES_PAUSED:-}" = "yes" ] || fail "pause and drain writes, then set TADOKU_COPY_WRITES_PAUSED=yes"
-[[ "$schema" =~ ^[a-z_][a-z0-9_]*$ ]] || fail "TADOKU_COPY_SCHEMA is not a safe PostgreSQL identifier"
+[ "${ORY_COPY_WRITES_PAUSED:-}" = "yes" ] || fail "pause and drain writes, then set ORY_COPY_WRITES_PAUSED=yes"
+[[ "$schema" =~ ^[a-z_][a-z0-9_]*$ ]] || fail "ORY_COPY_SCHEMA is not a safe PostgreSQL identifier"
 [ ! -e "$backup_path" ] || fail "backup already exists: $backup_path"
 [ -d "$(dirname -- "$backup_path")" ] || fail "backup directory does not exist: $(dirname -- "$backup_path")"
 
@@ -87,43 +93,41 @@ source_identity="$(server_identity "$source_dsn")"
 target_identity="$(server_identity "$target_dsn")"
 [ "$source_identity" != "$target_identity" ] || fail "source and target resolve to the same database"
 
+target_search_path_ok="$(query "$target_dsn" "select exists (select 1 from unnest(string_to_array(current_setting('search_path'), ',')) as item where btrim(item, ' \"') = '${schema}')")"
+[ "$target_search_path_ok" = "t" ] || fail "target role search_path does not include $schema"
+
 source_ledger="$(ledger "$source_dsn")"
-[ "$source_ledger" = "${expected_version}:false" ] || \
-  fail "unexpected source migration state (expected ${expected_version}:false, got $source_ledger)"
+[ -n "$source_ledger" ] || fail "source Ory migration ledger is empty"
 
 target_relations="$(query "$target_dsn" "select count(*) from pg_class join pg_namespace on pg_namespace.oid = pg_class.relnamespace where pg_namespace.nspname = '${schema}' and pg_class.relkind in ('r', 'p', 'v', 'm', 'S')")"
 [ "$target_relations" = "0" ] || fail "target schema $schema is not empty"
 
 partial_backup="$(mktemp "${backup_path}.partial.XXXXXX")"
-source_fingerprints="$(mktemp "${TMPDIR:-/tmp}/tadoku-source-fingerprints.XXXXXX")"
-target_fingerprints="$(mktemp "${TMPDIR:-/tmp}/tadoku-target-fingerprints.XXXXXX")"
+source_fingerprints="$(mktemp "${TMPDIR:-/tmp}/ory-source-fingerprints.XXXXXX")"
+target_fingerprints="$(mktemp "${TMPDIR:-/tmp}/ory-target-fingerprints.XXXXXX")"
 cleanup() {
   rm -f -- "$partial_backup" "$source_fingerprints" "$target_fingerprints"
 }
 trap cleanup EXIT
 
 fingerprints "$source_dsn" >"$source_fingerprints"
-pg_dump \
-  --dbname="$source_dsn" \
-  --format=custom \
-  --no-owner \
-  --no-privileges \
-  --schema="$schema" \
-  --extension=uuid-ossp \
-  --file="$partial_backup"
+source_inventory="$(schema_inventory "$source_dsn")"
+source_sequences="$(sequence_values "$source_dsn")"
+pg_dump --dbname="$source_dsn" --schema="$schema" --format=custom --no-owner --no-privileges --file="$partial_backup"
 mv -- "$partial_backup" "$backup_path"
 partial_backup=""
 
 pg_restore --dbname="$target_dsn" --exit-on-error --single-transaction --no-owner --no-privileges "$backup_path"
 
 target_ledger="$(ledger "$target_dsn")"
-[ "$target_ledger" = "$source_ledger" ] || \
-  fail "target migration state differs after restore (source $source_ledger, target $target_ledger)"
+[ "$target_ledger" = "$source_ledger" ] || fail "Ory migration ledger differs after restore"
+[ "$(schema_inventory "$target_dsn")" = "$source_inventory" ] || fail "schema object inventory differs after restore"
+[ "$(sequence_values "$target_dsn")" = "$source_sequences" ] || fail "sequence values differ after restore"
 
 fingerprints "$target_dsn" >"$target_fingerprints"
 cmp --silent "$source_fingerprints" "$target_fingerprints" || fail "table fingerprints differ after restore"
 
-echo "copied $source_identity to $target_identity"
-echo "migration state: $target_ledger"
+echo "copied Ory schema $schema from $source_identity to $target_identity"
+echo "migration rows: $(printf '%s\n' "$target_ledger" | wc -l | tr -d ' ')"
 echo "backup: $backup_path"
 echo "backup sha256: $(sha256sum "$backup_path" | cut -d ' ' -f 1)"

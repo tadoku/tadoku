@@ -21,8 +21,8 @@ spec:
     spec:
       serviceAccountName: immersion-api
       initContainers:
-        - name: migrations
-          image: immersion-api-image
+        - name: tadoku-migrations
+          image: tadoku-api-migrations-image
           imagePullPolicy: IfNotPresent
           command: ['/migrate']
           args: ['-source', 'file:///migrations', 'up']

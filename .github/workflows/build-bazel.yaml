@@ -97,7 +97,7 @@ jobs:
       - name: Check load_images covers all production oci_load targets
         run: |
           diff \
-            <(bazel query --lockfile_mode=error 'filter("^//services/[^/]+:load$", attr(name, "^load$", kind("oci_load", //services/...)))' | sort) \
+            <(bazel query --lockfile_mode=error 'attr(name, "^load$", kind("oci_load", //services/...))' | sort) \
             <(bazel query --lockfile_mode=error 'kind("oci_load", labels(data, //:load_images))' | sort) \
           || { echo "//:load_images is out of sync with production oci_load targets named :load under //services/..." >&2; exit 1; }
 
@@ -121,6 +121,7 @@ jobs:
             ghcr.io/tadoku/tadoku/immersion-api:latest
             ghcr.io/tadoku/tadoku/profile-api:latest
             ghcr.io/tadoku/tadoku/tadoku-api:latest
+            ghcr.io/tadoku/tadoku/tadoku-api-migrations:latest
             ghcr.io/tadoku/tadoku/token-reflector:latest
         run: |
           scan_status=0

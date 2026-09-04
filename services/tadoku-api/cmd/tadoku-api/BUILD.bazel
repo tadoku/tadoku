@@ -1,0 +1,30 @@
+load("@rules_go//go:def.bzl", "go_binary", "go_library", "go_test")
+
+go_library(
+    name = "tadoku-api_lib",
+    srcs = ["main.go"],
+    importpath = "github.com/tadoku/tadoku/services/tadoku-api/cmd/tadoku-api",
+    visibility = ["//visibility:private"],
+    deps = [
+        "//services/common/observability",
+        "//services/tadoku-api/transport/http",
+        "@com_github_go_playground_validator_v10//:validator",
+        "@com_github_kelseyhightower_envconfig//:envconfig",
+    ],
+)
+
+go_binary(
+    name = "tadoku-api",
+    embed = [":tadoku-api_lib"],
+    visibility = ["//visibility:public"],
+)
+
+go_test(
+    name = "tadoku-api_test",
+    srcs = ["main_test.go"],
+    embed = [":tadoku-api_lib"],
+    deps = [
+        "@com_github_stretchr_testify//assert",
+        "@com_github_stretchr_testify//require",
+    ],
+)

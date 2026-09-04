@@ -1,0 +1,41 @@
+load("@rules_oci//oci:defs.bzl", "oci_image", "oci_load", "oci_push")
+load("@rules_pkg//:pkg.bzl", "pkg_tar")
+
+pkg_tar(
+    name = "app_layer",
+    srcs = ["//services/tadoku-api/cmd/tadoku-api"],
+)
+
+oci_image(
+    name = "image",
+    base = "@distroless_base_linux_amd64",
+    entrypoint = ["/tadoku-api"],
+    tars = [":app_layer"],
+)
+
+oci_load(
+    name = "load",
+    image = ":image",
+    repo_tags = [
+        "ghcr.io/tadoku/tadoku/tadoku-api:latest",
+        "bazel/services/tadoku-api:latest",
+    ],
+    visibility = ["//visibility:public"],
+)
+
+oci_push(
+    name = "dev_push",
+    image = ":image",
+    visibility = ["//visibility:public"],
+)
+
+oci_push(
+    name = "push",
+    image = ":image",
+    remote_tags = [
+        "latest",
+        "prod",
+    ],
+    repository = "ghcr.io/tadoku/tadoku/tadoku-api",
+    visibility = ["//visibility:public"],
+)

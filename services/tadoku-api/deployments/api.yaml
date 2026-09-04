@@ -1,0 +1,82 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: tdk-tadoku-api
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tadoku-api
+  namespace: tdk-tadoku-api
+  labels:
+    app: tadoku-api
+spec:
+  selector:
+    matchLabels:
+      app: tadoku-api
+  template:
+    metadata:
+      labels:
+        app: tadoku-api
+    spec:
+      containers:
+        - name: tadoku-api
+          image: tadoku-api-image
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 8000
+            - name: metrics
+              containerPort: 9090
+          env:
+            - {name: API_PORT, value: "8000"}
+            - {name: API_METRICS_PORT, value: "9090"}
+            - {name: API_SERVICE_NAME, value: tadoku-api}
+            - {name: API_AUTHZ_URL, value: "http://authz-api.tdk-authz-api"}
+            - {name: API_CONTENT_URL, value: "http://content-api.tdk-content-api"}
+            - {name: API_IMMERSION_URL, value: "http://immersion-api.tdk-immersion-api"}
+            - {name: API_PROFILE_URL, value: "http://profile-api.tdk-profile-api"}
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: http
+            initialDelaySeconds: 2
+            periodSeconds: 3
+          livenessProbe:
+            httpGet:
+              path: /livez
+              port: http
+            initialDelaySeconds: 2
+            periodSeconds: 3
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: tadoku-api
+  namespace: tdk-tadoku-api
+  labels:
+    app: tadoku-api
+    service: tadoku-api
+spec:
+  ports:
+    - port: 80
+      targetPort: http
+      name: http
+  selector:
+    app: tadoku-api
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: tadoku-api-metrics
+  namespace: tdk-tadoku-api
+  labels:
+    app: tadoku-api
+    service: tadoku-api-metrics
+spec:
+  ports:
+    - port: 9090
+      targetPort: metrics
+      name: metrics
+  selector:
+    app: tadoku-api

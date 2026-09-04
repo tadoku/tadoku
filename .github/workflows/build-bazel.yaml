@@ -120,6 +120,7 @@ jobs:
             ghcr.io/tadoku/tadoku/image-webhook-gateway:latest
             ghcr.io/tadoku/tadoku/immersion-api:latest
             ghcr.io/tadoku/tadoku/profile-api:latest
+            ghcr.io/tadoku/tadoku/tadoku-api:latest
             ghcr.io/tadoku/tadoku/token-reflector:latest
         run: |
           scan_status=0

@@ -103,7 +103,14 @@ cleanup() {
 trap cleanup EXIT
 
 fingerprints "$source_dsn" >"$source_fingerprints"
-pg_dump --dbname="$source_dsn" --format=custom --no-owner --no-privileges --file="$partial_backup"
+pg_dump \
+  --dbname="$source_dsn" \
+  --format=custom \
+  --no-owner \
+  --no-privileges \
+  --schema="$schema" \
+  --extension=uuid-ossp \
+  --file="$partial_backup"
 mv -- "$partial_backup" "$backup_path"
 partial_backup=""
 

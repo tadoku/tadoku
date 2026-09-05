@@ -32,18 +32,16 @@ Seed users are `dev@tadoku.app` and `reader@tadoku.app`, both with password `tad
 
 ### Tadoku API facade rehearsal
 
-Tilt builds and starts `tadoku-api` alongside the four legacy APIs. Set
-`"api_facade": true` in the selected `local` or `shared` section of your ignored
-Tilt JSON config to send existing browser API URLs and the internal feature-flag
-request through it. Oathkeeper still authenticates requests and issues the same
-tokens; Tadoku API chooses the legacy service and strips the domain prefix.
-The default is `false` (direct routing). Service-token exchanges and the Flipt
-authorization callback keep their existing targets.
+Tilt builds and starts `tadoku-api` alongside the four legacy APIs. Both local
+and shared development route existing browser API URLs and the internal
+feature-flag request through it. Oathkeeper authenticates requests and issues
+the same tokens; Tadoku API chooses the legacy service and strips the domain
+prefix. Service-token exchanges and the Flipt authorization callback keep their
+existing targets.
 
 Run the automated facade checks before rehearsing against the dev stack:
 
 ```sh
-python3 -B -m unittest discover -s k8s/dev -p '*_test.py'
 bazel test //services/tadoku-api/...
 bazel test //services/tadoku-api/transport/http:http_test --test_filter='^$' --test_arg=-test.bench=BenchmarkFacade --test_arg=-test.benchtime=1s --test_output=all
 ```

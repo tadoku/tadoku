@@ -73,6 +73,7 @@ k8s_resource(
         'frontend-auth',
         'frontend-admin',
         'oathkeeper',
+        'tadoku-api',
         'kratos',
         'mailhog',
         'pgweb',

@@ -4,7 +4,6 @@
   "local_cluster_type": "orbstack",
   "local_cluster_name": "",
   "local": {
-    "api_facade": false,
     "ingress_class": "kong",
     "registry": "",
     "scheme": "http",
@@ -22,7 +21,6 @@
     }
   },
   "shared": {
-    "api_facade": false,
     "ingress_class": "nginx",
     "registry": "registry.internal.example",
     "build": {

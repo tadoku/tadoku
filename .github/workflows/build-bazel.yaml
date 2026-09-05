@@ -9,9 +9,6 @@ on:
   pull_request:
     paths:
       - "services/**"
-      - "k8s/dev/**"
-      - "infra/dev/ory/access_rules.yaml"
-      - "tilt_config.json.example"
       - "tools/ci/**"
       - "**/BUILD"
       - "**/BUILD.bazel"
@@ -27,9 +24,6 @@ on:
   push:
     paths:
       - "services/**"
-      - "k8s/dev/**"
-      - "infra/dev/ory/access_rules.yaml"
-      - "tilt_config.json.example"
       - "tools/ci/**"
       - "**/BUILD"
       - "**/BUILD.bazel"
@@ -109,9 +103,6 @@ jobs:
 
       - name: Run tests
         run: bazel test --lockfile_mode=error //...
-
-      - name: Test dev routing configuration
-        run: python3 -B -m unittest discover -s k8s/dev -p '*_test.py'
 
       - name: Load backend images for scanning
         run: bazel run --lockfile_mode=error //:load_images

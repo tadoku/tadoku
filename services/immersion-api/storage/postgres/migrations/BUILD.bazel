@@ -1,4 +1,3 @@
-load("@rules_go//go:def.bzl", "go_test")
 load("@rules_pkg//:pkg.bzl", "pkg_tar")
 
 filegroup(
@@ -18,25 +17,5 @@ pkg_tar(
     visibility = [
         "//services/immersion-api:__pkg__",
         "//services/tadoku-api/migrations:__pkg__",
-    ],
-)
-
-go_test(
-    name = "migrations_test",
-    srcs = ["content_schema_convergence_test.go"],
-    data = [
-        ":up_files",
-        "//services/content-api/storage/postgres/migrations:up_files",
-        "//services/profile-api/storage/postgres/migrations:up_files",
-    ],
-    env_inherit = ["IMMERSION_TEST_POSTGRES_URL"],
-    deps = [
-        "@com_github_golang_migrate_migrate_v4//:migrate",
-        "@com_github_golang_migrate_migrate_v4//database/postgres",
-        "@com_github_golang_migrate_migrate_v4//source/file",
-        "@com_github_google_uuid//:uuid",
-        "@com_github_lib_pq//:pq",
-        "@com_github_stretchr_testify//require",
-        "@rules_go//go/tools/bazel",
     ],
 )

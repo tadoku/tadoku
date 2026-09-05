@@ -10,9 +10,16 @@ go_library(
 
 go_test(
     name = "http_test",
-    srcs = ["proxy_test.go"],
+    srcs = [
+        "proxy_contract_test.go",
+        "proxy_test.go",
+    ],
     embed = [":http"],
     deps = [
+        "//services/common/domain",
+        "//services/common/middleware",
+        "@com_github_golang_jwt_jwt_v4//:jwt",
+        "@com_github_labstack_echo_v4//:echo",
         "@com_github_prometheus_client_golang//prometheus",
         "@com_github_stretchr_testify//assert",
         "@com_github_stretchr_testify//require",

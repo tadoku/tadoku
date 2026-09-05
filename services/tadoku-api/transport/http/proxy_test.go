@@ -67,10 +67,10 @@ func TestHandlerProxiesEachLegacyPrefix(t *testing.T) {
 		wantPath string
 		body     string
 	}{
-		{name: "authz", method: stdhttp.MethodGet, path: "/api/internal/authz/ping?detail=full", wantPath: "/ping"},
-		{name: "content", method: stdhttp.MethodPost, path: "/api/internal/content/pages/blog", wantPath: "/pages/blog", body: `{"title":"hello"}`},
-		{name: "immersion", method: stdhttp.MethodPatch, path: "/api/internal/immersion/logs/a%2Fb", wantPath: "/logs/a%2Fb", body: `{"amount":10}`},
-		{name: "profile", method: stdhttp.MethodDelete, path: "/api/internal/profile/users/old", wantPath: "/users/old"},
+		{name: "authz", method: stdhttp.MethodGet, path: "/authz/ping?detail=full", wantPath: "/ping"},
+		{name: "content", method: stdhttp.MethodPost, path: "/content/pages/blog", wantPath: "/pages/blog", body: `{"title":"hello"}`},
+		{name: "immersion", method: stdhttp.MethodPatch, path: "/immersion/logs/a%2Fb", wantPath: "/logs/a%2Fb", body: `{"amount":10}`},
+		{name: "profile", method: stdhttp.MethodDelete, path: "/profile/users/old", wantPath: "/users/old"},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
@@ -136,7 +136,7 @@ func TestHandlerGeneratesAndForwardsCorrelationID(t *testing.T) {
 	}, stdhttp.DefaultTransport, time.Second, prometheus.NewRegistry(), slog.New(slog.NewJSONHandler(&logs, nil)))
 	require.NoError(t, err)
 	response := httptest.NewRecorder()
-	handler.ServeHTTP(response, httptest.NewRequest(stdhttp.MethodGet, "/api/internal/content/ping", nil))
+	handler.ServeHTTP(response, httptest.NewRequest(stdhttp.MethodGet, "/content/ping", nil))
 
 	generatedID := response.Header().Get(correlationHeader)
 	assert.NotEmpty(t, generatedID)
@@ -151,7 +151,7 @@ func TestHandlerReturnsBadGatewayWhenUpstreamIsUnavailable(t *testing.T) {
 
 	handler := newTestHandler(t, url, time.Second)
 	response := httptest.NewRecorder()
-	handler.ServeHTTP(response, httptest.NewRequest(stdhttp.MethodGet, "/api/internal/authz/ping", nil))
+	handler.ServeHTTP(response, httptest.NewRequest(stdhttp.MethodGet, "/authz/ping", nil))
 
 	assert.Equal(t, stdhttp.StatusBadGateway, response.Code)
 	assert.Equal(t, "Bad Gateway\n", response.Body.String())
@@ -168,7 +168,7 @@ func TestHandlerTimesOutAndCancelsUpstreamRequest(t *testing.T) {
 
 	handler := newTestHandlerWithTransport(t, transport, 20*time.Millisecond)
 	response := httptest.NewRecorder()
-	handler.ServeHTTP(response, httptest.NewRequest(stdhttp.MethodPost, "/api/internal/immersion/logs", bytes.NewBufferString("body")))
+	handler.ServeHTTP(response, httptest.NewRequest(stdhttp.MethodPost, "/immersion/logs", bytes.NewBufferString("body")))
 
 	assert.Equal(t, stdhttp.StatusGatewayTimeout, response.Code)
 	select {
@@ -189,6 +189,7 @@ func TestHandlerHealthAndUnknownRoutes(t *testing.T) {
 		{path: "/livez", status: stdhttp.StatusOK, body: "ok"},
 		{path: "/readyz", status: stdhttp.StatusOK, body: `{"status":"ready","checks":[]}`},
 		{path: "/internal/v1/ping", status: stdhttp.StatusNotFound, body: "404 page not found\n"},
+		{path: "/api/internal/content/ping", status: stdhttp.StatusNotFound, body: "404 page not found\n"},
 	} {
 		response := httptest.NewRecorder()
 		handler.ServeHTTP(response, httptest.NewRequest(stdhttp.MethodGet, test.path, nil))
@@ -220,7 +221,7 @@ func TestNewHandlerRejectsInvalidConfiguration(t *testing.T) {
 	}
 }
 
-func newTestHandler(t *testing.T, upstream string, timeout time.Duration) stdhttp.Handler {
+func newTestHandler(t testing.TB, upstream string, timeout time.Duration) stdhttp.Handler {
 	t.Helper()
 	handler, err := NewHandler(Upstreams{
 		Authz: upstream, Content: upstream, Immersion: upstream, Profile: upstream,
@@ -256,7 +257,7 @@ func TestRequestCancellationIsPreserved(t *testing.T) {
 
 	handler := newTestHandlerWithTransport(t, transport, time.Second)
 	ctx, cancel := context.WithCancel(context.Background())
-	request := httptest.NewRequest(stdhttp.MethodGet, "/api/internal/profile/users", nil).WithContext(ctx)
+	request := httptest.NewRequest(stdhttp.MethodGet, "/profile/users", nil).WithContext(ctx)
 	done := make(chan struct{})
 	go func() {
 		handler.ServeHTTP(httptest.NewRecorder(), request)

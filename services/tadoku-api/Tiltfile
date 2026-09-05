@@ -1,0 +1,15 @@
+load('./../../infra/dev/build/Tiltfile', 'bazel_build')
+
+k8s_yaml('./deployments/api.yaml')
+
+bazel_build(
+    'tadoku-api-image',
+    '//services/tadoku-api:load',
+    deps=['./', './../common/'],
+)
+
+k8s_resource(
+    'tadoku-api',
+    labels=['backend'],
+    resource_deps=['authz-api', 'content-api', 'immersion-api', 'profile-api'],
+)

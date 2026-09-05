@@ -63,11 +63,13 @@ func NewHandler(upstreams Upstreams, transport stdhttp.RoundTripper, requestTime
 		_, _ = response.Write([]byte(`{"status":"ready","checks":[]}`))
 	})
 
+	// The gateway removes its external prefix before forwarding here. Native
+	// endpoints can replace these domain proxy routes without that prefix.
 	routes := []route{
-		{name: "authz", prefix: "/api/internal/authz/", target: upstreams.Authz},
-		{name: "content", prefix: "/api/internal/content/", target: upstreams.Content},
-		{name: "immersion", prefix: "/api/internal/immersion/", target: upstreams.Immersion},
-		{name: "profile", prefix: "/api/internal/profile/", target: upstreams.Profile},
+		{name: "authz", prefix: "/authz/", target: upstreams.Authz},
+		{name: "content", prefix: "/content/", target: upstreams.Content},
+		{name: "immersion", prefix: "/immersion/", target: upstreams.Immersion},
+		{name: "profile", prefix: "/profile/", target: upstreams.Profile},
 	}
 	for _, current := range routes {
 		target, err := parseTarget(current.target)

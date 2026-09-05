@@ -35,9 +35,11 @@ Seed users are `dev@tadoku.app` and `reader@tadoku.app`, both with password `tad
 Tilt builds and starts `tadoku-api` alongside the four legacy APIs. Both local
 and shared development route existing browser API URLs and the internal
 feature-flag request through it. Oathkeeper authenticates requests and issues
-the same tokens; Tadoku API chooses the legacy service and strips the domain
-prefix. Service-token exchanges and the Flipt authorization callback keep their
-existing targets.
+the same tokens, then strips `/api/internal`. Tadoku API receives domain paths
+such as `/content/pages/blog`, chooses the legacy service, and forwards
+`/pages/blog`. Native endpoints can replace those proxy routes without knowing
+the external gateway prefix. Service-token exchanges and the Flipt authorization
+callback keep their existing targets.
 
 Run the automated facade checks before rehearsing against the dev stack:
 

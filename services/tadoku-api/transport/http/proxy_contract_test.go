@@ -77,7 +77,7 @@ func TestFacadePreservesLegacyIdentityAndAudienceChecks(t *testing.T) {
 						authorization = "Bearer " + signed
 					}
 					var directBody []byte
-					for index, url := range []string{upstream.URL + "/identity", facade.URL + "/api/internal/" + service + "/identity"} {
+					for index, url := range []string{upstream.URL + "/identity", facade.URL + "/" + service + "/identity"} {
 						request, err := stdhttp.NewRequest(stdhttp.MethodGet, url, nil)
 						require.NoError(t, err)
 						request.Header.Set("Authorization", authorization)
@@ -127,7 +127,7 @@ func TestFacadePreservesLegacyResponses(t *testing.T) {
 			direct, err := client.Get(upstream.URL + "/response")
 			require.NoError(t, err)
 			defer direct.Body.Close()
-			proxied, err := client.Get(facade.URL + "/api/internal/content/response")
+			proxied, err := client.Get(facade.URL + "/content/response")
 			require.NoError(t, err)
 			defer proxied.Body.Close()
 			assert.Equal(t, direct.StatusCode, proxied.StatusCode)
@@ -158,7 +158,7 @@ func TestFacadeStreamsResponseBeforeUpstreamFinishes(t *testing.T) {
 	t.Cleanup(upstream.Close)
 	facade := httptest.NewServer(newTestHandler(t, upstream.URL, 5*time.Second))
 	t.Cleanup(facade.Close)
-	response, err := (&stdhttp.Client{Timeout: 5 * time.Second}).Get(facade.URL + "/api/internal/immersion/events")
+	response, err := (&stdhttp.Client{Timeout: 5 * time.Second}).Get(facade.URL + "/immersion/events")
 	require.NoError(t, err)
 	defer response.Body.Close()
 	first := make([]byte, len("data: first\n\n"))
@@ -181,7 +181,7 @@ func BenchmarkFacade(b *testing.B) {
 	client := &stdhttp.Client{Timeout: 5 * time.Second}
 	for _, route := range []struct{ name, url string }{
 		{"direct", upstream.URL + "/pages/example"},
-		{"proxy", facade.URL + "/api/internal/content/pages/example"},
+		{"proxy", facade.URL + "/content/pages/example"},
 	} {
 		b.Run(route.name, func(b *testing.B) {
 			b.ReportAllocs()

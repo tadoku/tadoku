@@ -2,6 +2,7 @@
   upstream:
     preserve_host: true
     url: "http://tadoku-api.tdk-tadoku-api:80"
+    strip_path: /api/internal
   match:
     url: "{{TADOKU_APP_URL}}/api/internal/content/<**>"
     methods:
@@ -22,6 +23,7 @@
   upstream:
     preserve_host: true
     url: "http://tadoku-api.tdk-tadoku-api:80"
+    strip_path: /api/internal
   match:
     url: "{{TADOKU_APP_URL}}/api/internal/immersion/<**>"
     methods:
@@ -42,6 +44,7 @@
   upstream:
     preserve_host: true
     url: "http://tadoku-api.tdk-tadoku-api:80"
+    strip_path: /api/internal
   match:
     url: "http://oathkeeper-proxy.default:4455/api/internal/immersion/feature-flags"
     methods:
@@ -57,6 +60,7 @@
   upstream:
     preserve_host: true
     url: "http://tadoku-api.tdk-tadoku-api:80"
+    strip_path: /api/internal
   match:
     url: "{{TADOKU_APP_URL}}/api/internal/authz/<**>"
     methods:
@@ -77,6 +81,7 @@
   upstream:
     preserve_host: true
     url: "http://tadoku-api.tdk-tadoku-api:80"
+    strip_path: /api/internal
   match:
     url: "{{TADOKU_APP_URL}}/api/internal/profile/<**>"
     methods:

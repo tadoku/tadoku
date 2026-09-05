@@ -188,6 +188,19 @@ def main() -> None:
         else "",
     }
 
+    # Oathkeeper strips the prefix only when it talks to a legacy API directly.
+    # In facade mode Tadoku API needs the full prefix to choose its upstream.
+    api_facade = bool_config(env_config, "api_facade", False)
+    for service in ("authz", "content", "immersion", "profile"):
+        replacements["{{TADOKU_" + service.upper() + "_UPSTREAM}}"] = (
+            "http://tadoku-api.tdk-tadoku-api:80"
+            if api_facade
+            else "http://{0}-api.tdk-{0}-api:80".format(service)
+        )
+        replacements["{{TADOKU_" + service.upper() + "_STRIP_PATH}}"] = (
+            "" if api_facade else "/api/internal/{}/".format(service)
+        )
+
     src = Path(args.src)
     dst = Path(args.dst)
     content = src.read_text(encoding="utf-8")

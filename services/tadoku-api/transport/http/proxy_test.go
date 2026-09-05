@@ -220,7 +220,7 @@ func TestNewHandlerRejectsInvalidConfiguration(t *testing.T) {
 	}
 }
 
-func newTestHandler(t *testing.T, upstream string, timeout time.Duration) stdhttp.Handler {
+func newTestHandler(t testing.TB, upstream string, timeout time.Duration) stdhttp.Handler {
 	t.Helper()
 	handler, err := NewHandler(Upstreams{
 		Authz: upstream, Content: upstream, Immersion: upstream, Profile: upstream,

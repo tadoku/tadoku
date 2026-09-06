@@ -1,0 +1,177 @@
+import { useState } from 'react'
+import { FormProvider, useForm, useWatch } from 'react-hook-form'
+import { Link, useParams, useSearchParams } from 'react-router-dom'
+import { Breadcrumb, Button, Checkbox, HeatmapChart, Input, Select, Tabbar, buttonClassName, chartPalette, type NavigationLinkProps } from 'paper-ui'
+import { ChevronLeftIcon, ChevronRightIcon, PlusIcon, XMarkIcon } from 'paper-ui/icons'
+import { formatDate, formatNumber, scoreLog, users, type SampleLog } from '../data'
+import { usePlayground, useScenario } from '../state'
+import './records.css'
+
+const renderLink = ({ href, ...props }: NavigationLinkProps) => <Link className="text-link" to={href} {...props} />
+const years = [2026, 2025, 2024, 2023]
+
+type ActivityFilters = { period: string; languages: string[]; activities: string[]; query: string }
+const emptyFilters: ActivityFilters = { period: 'all', languages: [], activities: [], query: '' }
+
+export function filterActivityLogs(logs: readonly SampleLog[], filters: ActivityFilters) {
+  const query = filters.query.trim().toLocaleLowerCase()
+  return logs.filter(log =>
+    (filters.period === 'all' || log.date.startsWith(filters.period)) &&
+    (!filters.languages.length || filters.languages.includes(log.language)) &&
+    (!filters.activities.length || filters.activities.includes(log.activity)) &&
+    (!query || [log.title, log.language, log.activity, log.note, log.media, ...log.tags].join(' ').toLocaleLowerCase().includes(query)),
+  ).sort((left, right) => right.date.localeCompare(left.date))
+}
+
+export function summarizeActivity(logs: readonly SampleLog[]) {
+  const daily = new Map<string, number>()
+  const languages = new Map<string, number>()
+  const activities = new Map<string, number>()
+  for (const log of logs) {
+    const score = scoreLog(log)
+    daily.set(log.date.slice(0, 10), (daily.get(log.date.slice(0, 10)) ?? 0) + score)
+    languages.set(log.language, (languages.get(log.language) ?? 0) + score)
+    activities.set(log.activity, (activities.get(log.activity) ?? 0) + score)
+  }
+  const days = [...daily.keys()].sort()
+  let longestStreak = 0
+  let streak = 0
+  days.forEach((day, index) => {
+    streak = index > 0 && Date.parse(day) - Date.parse(days[index - 1]) === 86_400_000 ? streak + 1 : 1
+    longestStreak = Math.max(longestStreak, streak)
+  })
+  return {
+    total: [...daily.values()].reduce((sum, value) => sum + value, 0),
+    entries: logs.length,
+    days: daily.size,
+    longestStreak,
+    daily: [...daily].map(([date, value]) => ({ date, value, tooltip: `${formatDate(date)}: ${formatNumber(value)} personal points` })),
+    languages: [...languages].sort((left, right) => right[1] - left[1]),
+    activities: [...activities].sort((left, right) => right[1] - left[1]),
+    contestIds: [...new Set(logs.flatMap(log => log.submissions.map(submission => submission.contestId)))],
+  }
+}
+
+function ActivityRows({ logs, compact = false }: { logs: readonly SampleLog[]; compact?: boolean }) {
+  return <ol className={`records-entries${compact ? ' records-entries--compact' : ''}`}>
+    {logs.map(log => <li key={log.id}>
+      <time dateTime={log.date} className="records-entry-date">{formatDate(log.date)}</time>
+      <div className="min-w-0">
+        <Link className="records-entry-title text-link" to={`/logs/${log.id}`}>{log.title || `${log.language} ${log.activity.toLocaleLowerCase()}`}</Link>
+        <p className="records-entry-meta">{log.language} · {log.activity} · {formatNumber(log.amount)} {log.unit}</p>
+        {!compact && log.note ? <p className="records-entry-note">{log.note}</p> : null}
+      </div>
+      <span className="records-entry-score" aria-label={`${formatNumber(scoreLog(log))} personal points`}>{formatNumber(scoreLog(log))}<small>points</small></span>
+    </li>)}
+  </ol>
+}
+
+function ActivityLog({ logs, owner, year }: { logs: readonly SampleLog[]; owner: boolean; year: number }) {
+  const [filtersOpen, setFiltersOpen] = useState(false)
+  const [applied, setApplied] = useState<ActivityFilters>({ ...emptyFilters, period: String(year) })
+  const methods = useForm<ActivityFilters>({ defaultValues: { ...emptyFilters, period: String(year) } })
+  const query = useWatch({ control: methods.control, name: 'query' }) ?? ''
+  const filtered = filterActivityLogs(logs, { ...applied, query })
+  const languages = [...new Set(logs.map(log => log.language))].sort()
+  const chips = [
+    ...(applied.period !== 'all' ? [{ kind: 'period' as const, value: applied.period }] : []),
+    ...applied.languages.map(value => ({ kind: 'languages' as const, value })),
+    ...applied.activities.map(value => ({ kind: 'activities' as const, value })),
+  ]
+  const reset = () => { methods.reset(emptyFilters); setApplied(emptyFilters) }
+  const removeFilter = (kind: 'period' | 'languages' | 'activities', value: string) => {
+    const next = kind === 'period' ? { ...applied, period: 'all' } : { ...applied, [kind]: applied[kind].filter(item => item !== value) }
+    setApplied(next)
+    methods.reset({ ...next, query })
+  }
+
+  return <section className="page-section records-activity" aria-labelledby="activity-heading">
+    <div className="section-heading records-section-heading">
+      <div><h2 className="paper-type-section" id="activity-heading">Activity log</h2><p className="muted">The reading and listening behind the numbers.</p></div>
+      {owner ? <Link className={buttonClassName()} to="/logs/new"><PlusIcon className="paper-icon-default" aria-hidden="true" />Log activity</Link> : null}
+    </div>
+    <FormProvider {...methods}>
+      <form onSubmit={methods.handleSubmit(values => { setApplied(values); setFiltersOpen(false) })} className="records-filter-form">
+        <div className="records-search-row">
+          <Input name="query" label="Search activity" type="search" placeholder="Title, language, note or tag" />
+          <Button variant="outline" aria-expanded={filtersOpen} aria-controls="activity-filters" onClick={() => setFiltersOpen(!filtersOpen)}>Filters{chips.length ? ` (${chips.length})` : ''}</Button>
+        </div>
+        <div id="activity-filters" hidden={!filtersOpen}>
+          <div className="records-filter-panel">
+            <Select name="period" label="Period" options={[{ value: 'all', label: 'All time' }, ...years.map(year => ({ value: String(year), label: String(year) }))]} />
+            <fieldset className="records-filter-group"><legend>Languages</legend>{languages.map(language => <Checkbox key={language} name="languages" value={language} label={language} />)}</fieldset>
+            <fieldset className="records-filter-group"><legend>Activities</legend>{['Reading', 'Listening'].map(activity => <Checkbox key={activity} name="activities" value={activity} label={activity} />)}</fieldset>
+            <div className="records-filter-actions"><Button variant="outline" onClick={reset}>Reset</Button><Button type="submit">Apply filters</Button></div>
+          </div>
+        </div>
+      </form>
+    </FormProvider>
+    {chips.length ? <div className="records-filter-chips" aria-label="Applied filters">
+      {chips.map(chip => <Button key={`${chip.kind}-${chip.value}`} variant="outline" onClick={() => removeFilter(chip.kind, chip.value)} aria-label={`Remove ${chip.value} filter`} trailingIcon={<XMarkIcon className="paper-icon-compact" />}>{chip.value}</Button>)}
+      <Button variant="link" onClick={reset}>Clear all</Button>
+    </div> : null}
+    <p className="records-result-count" role="status">{filtered.length} of {logs.length} entries</p>
+    {filtered.length ? <ActivityRows logs={filtered} /> : <div className="empty-state"><h3 className="paper-type-component">No activity matches these filters.</h3><p>Try another title or include more dates and languages.</p><Button variant="outline" onClick={reset}>Clear search and filters</Button></div>}
+  </section>
+}
+
+export function ProfilePage({ activity = false }: { activity?: boolean }) {
+  const { userId } = useParams()
+  const [params, setParams] = useSearchParams()
+  const { logs, contests, user, viewer, userId: viewerId, displayName } = usePlayground()
+  const [scenario] = useScenario('profile')
+  const foundProfile = users.find(candidate => candidate.id === userId)
+  const profile = foundProfile?.id === viewerId ? { ...foundProfile, name: displayName } : foundProfile
+  const selected = Number(params.get('year') ?? 2026)
+  const year = years.includes(selected) ? selected : 2026
+  const contestContext = contests.find(contest => contest.id === params.get('contest'))
+  const viewParams = new URLSearchParams({ year: String(year) })
+  if (contestContext) viewParams.set('contest', contestContext.id)
+  if (params.has('scenario')) viewParams.set('scenario', scenario)
+  const viewQuery = `?${viewParams}`
+  const ownLogs = scenario === 'empty' ? [] : logs.filter(log => log.userId === userId)
+  const yearLogs = filterActivityLogs(ownLogs, { ...emptyFilters, period: String(year) })
+  const summary = summarizeActivity(yearLogs)
+  const owner = viewer !== 'guest' && user?.id === userId
+  const yearIndex = years.indexOf(year)
+  const changeYear = (next: number) => { const values = new URLSearchParams(params); values.set('year', String(next)); setParams(values) }
+
+  if (!profile) return <section className="empty-state"><h1 className="paper-type-page">Profile not found</h1><p>This account is not in the playground’s sample community.</p><Link className={buttonClassName()} to="/leaderboard/latest">Explore the leaderboard</Link></section>
+
+  return <>
+    <Breadcrumb items={[{ id: 'home', label: 'Home', href: '/' }, { id: 'profile', label: profile.name }]} renderLink={renderLink} />
+    <header className="page-header records-profile-header">
+      <div className="records-identity"><span className="records-avatar" aria-hidden="true">{profile.name.slice(0, 2).toLocaleUpperCase()}</span><div><h1 className="paper-type-page">{profile.name}</h1><p className="muted">Tracking since {String(profile.joined).slice(0, 4)} · UTC</p></div></div>
+      {owner ? <Link className={buttonClassName({ variant: 'outline' })} to="/settings">Edit profile</Link> : null}
+    </header>
+    {contestContext ? <p className="records-profile-context">Viewing {profile.name}’s personal record from <Link className="text-link" to={`/contests/${contestContext.id}/leaderboard`}>{contestContext.title} standings</Link>. Contest scores are shown on that board.</p> : null}
+    <Tabbar label="Profile views" renderLink={renderLink} links={[{ id: 'overview', label: 'Overview', href: `/users/${profile.id}${viewQuery}`, current: !activity }, { id: 'activity', label: 'Activity log', href: `/users/${profile.id}/activity${viewQuery}`, current: activity }]} />
+    {activity ? <ActivityLog key={`${profile.id}-${year}`} logs={ownLogs} owner={owner} year={year} /> : <>
+      <section className="page-section" aria-labelledby="profile-year-heading">
+        <div className="section-heading records-section-heading records-year-heading"><div><h2 className="paper-type-section" id="profile-year-heading">{owner ? 'Your' : `${profile.name}’s`} year in immersion</h2><p className="muted">Personal activity in {year}. Every summary follows this year.</p></div>
+          <div className="records-year-control" aria-label="Profile year"><Button variant="outline" aria-label="Previous year" disabled={yearIndex === years.length - 1} onClick={() => changeYear(years[yearIndex + 1])}><ChevronLeftIcon className="paper-icon-default" /></Button><strong aria-live="polite">{year}</strong><Button variant="outline" aria-label="Next year" disabled={yearIndex === 0} onClick={() => changeYear(years[yearIndex - 1])}><ChevronRightIcon className="paper-icon-default" /></Button></div>
+        </div>
+        <dl className="stat-grid records-profile-stats"><div className="stat"><dt>Personal score</dt><dd>{formatNumber(summary.total)}<small>Points across this year’s activity</small></dd></div><div className="stat"><dt>Entries</dt><dd>{summary.entries}<small>{summary.days} active days</small></dd></div><div className="stat"><dt>Languages</dt><dd>{summary.languages.length}<small>{summary.languages[0] ? `${summary.languages[0][0]} leads` : 'A new language awaits'}</small></dd></div><div className="stat"><dt>Contests</dt><dd>{summary.contestIds.length}<small>With submitted activity</small></dd></div></dl>
+      </section>
+      <section className="records-rhythm page-section" aria-labelledby="rhythm-heading">
+        <div className="section-heading records-section-heading"><div><h2 className="paper-type-section" id="rhythm-heading">Immersion rhythm</h2><p className="muted">Daily personal score in {year}</p></div><Link className="text-link" to="/guide/scoring">How scoring works</Link></div>
+        <div className="records-heatmap-scroll paper-focus-ring" role="region" aria-label={`Daily immersion calendar for ${year}; scroll for all months`} tabIndex={0}><HeatmapChart id={`profile-${profile.id}-${year}`} year={year} data={summary.daily} /></div>
+        <p className="records-chart-caption">{summary.days} active days · Longest streak: {summary.longestStreak} {summary.longestStreak === 1 ? 'day' : 'days'}<span>Stronger color means more activity.</span></p>
+      </section>
+      <div className="records-overview-columns">
+        <div>
+          <section className="page-section" aria-labelledby="language-heading"><div className="section-heading records-section-heading"><div><h2 className="paper-type-section" id="language-heading">Score by language</h2><p className="muted">Each language’s part of your personal score</p></div></div>
+            {summary.languages.length ? <ol className="records-breakdown">{summary.languages.map(([language, score], index) => <li key={language}><div><span>{language}</span><strong>{formatNumber(score)} <small>points</small></strong></div><span className="records-bar-track" aria-hidden="true"><span style={{ width: `${summary.total ? score / summary.total * 100 : 0}%`, backgroundColor: chartPalette[index % chartPalette.length] }} /></span></li>)}</ol> : <p className="muted">No activity recorded in {year}.</p>}
+          </section>
+          <section className="page-section" aria-labelledby="history-heading"><div className="section-heading records-section-heading"><div><h2 className="paper-type-section" id="history-heading">Contest history</h2><p className="muted">Contest contributions from your {year} activity</p></div><Link className="text-link" to="/contests/official">All contests</Link></div>
+            {summary.contestIds.length ? <ul className="records-contest-history">{summary.contestIds.map(id => { const contest = contests.find(item => item.id === id); const score = yearLogs.flatMap(log => log.submissions).filter(submission => submission.contestId === id).reduce((sum, item) => sum + item.score, 0); return <li key={id}><div><Link className="text-link" to={`/contests/${id}`}>{contest?.title ?? 'Contest'}</Link><p className="muted">{contest ? `${formatDate(contest.start)} – ${formatDate(contest.end)}` : 'Submitted activity'}</p></div><strong>{formatNumber(score)}<small>contest points</small></strong></li> })}</ul> : <p className="muted">No contest submissions in {year}. Personal activity still counts here.</p>}
+          </section>
+        </div>
+        <aside>
+          <section className="page-section" aria-labelledby="mix-heading"><div className="section-heading records-section-heading"><div><h2 className="paper-type-section" id="mix-heading">Activity mix</h2><p className="muted">Share of personal points</p></div></div><dl className="records-activity-mix">{summary.activities.map(([name, score]) => <div key={name}><dt>{name}</dt><dd>{summary.total ? Math.round(score / summary.total * 100) : 0}%</dd></div>)}</dl>{!summary.entries ? <p className="muted">Reading and listening will appear after a first log.</p> : null}</section>
+          <section className="page-section" aria-labelledby="recent-heading"><div className="section-heading records-section-heading"><div><h2 className="paper-type-section" id="recent-heading">Recent activity</h2><p className="muted">Latest entries in {year}</p></div><Link className="text-link" to={`/users/${profile.id}/activity${viewQuery}`}>View all</Link></div>{yearLogs.length ? <ActivityRows logs={yearLogs.slice(0, 3)} compact /> : <p className="muted">No entries for this year.</p>}</section>
+        </aside>
+      </div>
+    </>}
+  </>
+}

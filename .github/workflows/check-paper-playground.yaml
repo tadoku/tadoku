@@ -1,0 +1,53 @@
+name: check-paper-playground
+
+on:
+  pull_request:
+    paths:
+      - "frontend/apps/paper-playground/**"
+      - "frontend/packages/paper-ui/**"
+      - "frontend/paper-boundaries.json"
+      - "frontend/pnpm-lock.yaml"
+      - ".github/workflows/check-paper-playground.yaml"
+  push:
+    branches: [main]
+    paths:
+      - "frontend/apps/paper-playground/**"
+      - "frontend/packages/paper-ui/**"
+      - "frontend/paper-boundaries.json"
+      - "frontend/pnpm-lock.yaml"
+      - ".github/workflows/check-paper-playground.yaml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: playground-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+# The playground is an unpublished application study. This workflow only checks it.
+jobs:
+  quality:
+    name: playground / quality
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.10.0
+          run_install: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+          cache-dependency-path: frontend/pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm check:paper-boundaries
+      - run: pnpm --filter paper-ui build
+      - run: pnpm --filter paper-playground lint
+      - run: pnpm --filter paper-playground typecheck
+      - run: pnpm --filter paper-playground test
+      - run: pnpm --filter paper-playground build

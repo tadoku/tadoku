@@ -1,0 +1,179 @@
+.records-profile-header,
+.records-identity,
+.records-year-control,
+.records-filter-chips,
+.records-filter-actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+.records-profile-header { justify-content: space-between; flex-wrap: wrap; }
+.records-identity { min-width: 0; gap: 1.25rem; }
+.records-avatar {
+  display: grid;
+  place-items: center;
+  flex: 0 0 4rem;
+  block-size: 4rem;
+  border: 1px solid var(--paper-color-rule-default);
+  color: var(--paper-color-text-ink);
+  background: var(--paper-color-surface-paper);
+  font: 700 1.4rem var(--paper-font-display);
+}
+.records-year-control { gap: .5rem; }
+.records-year-control strong { min-inline-size: 4rem; text-align: center; font-variant-numeric: tabular-nums; }
+.records-profile-stats { margin-block-start: 1.5rem; }
+.records-profile-stats dd { margin: .5rem 0 0; font-size: 2rem; line-height: 1.3; font-weight: 700; font-variant-numeric: tabular-nums; }
+.records-section-heading { display: flex; align-items: start; justify-content: space-between; flex-wrap: wrap; gap: .75rem 1.5rem; }
+.records-section-heading h2 { margin: 0; }
+.records-section-heading p { margin: .5rem 0 0; }
+.records-section-heading > .text-link { font-size: .8125rem; }
+.records-profile-stats small { display: block; margin-block-start: .5rem; color: var(--paper-color-text-muted); font-size: .8125rem; font-weight: 400; line-height: 1.6; }
+.records-profile-context { max-inline-size: 68ch; margin-block: -1rem 1.5rem; font-size: .875rem; color: var(--paper-color-text-muted); }
+.records-rhythm { padding: 1.5rem; background: var(--paper-color-surface-paper); border: 1px solid var(--paper-color-rule-default); }
+.records-heatmap-scroll { max-inline-size: 100%; overflow-x: auto; padding-block: 1.5rem .75rem; }
+.records-heatmap-scroll .paper-heatmap { display: block; margin-inline: auto; }
+.records-chart-caption { display: flex; justify-content: space-between; gap: .5rem 1.5rem; flex-wrap: wrap; margin: .75rem 0 0; color: var(--paper-color-text-muted); font-size: .8125rem; }
+.records-overview-columns { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); gap: 3rem; }
+.records-overview-columns > * { min-width: 0; }
+.records-breakdown,
+.records-contest-history,
+.records-entries { list-style: none; padding: 0; margin: 0; }
+.records-breakdown li + li { margin-block-start: 1.25rem; }
+.records-breakdown li > div { display: flex; justify-content: space-between; gap: 1rem; margin-block-end: .5rem; }
+.records-breakdown strong { font-variant-numeric: tabular-nums; }
+.records-breakdown small { font-weight: 400; color: var(--paper-color-text-muted); }
+.records-bar-track { display: block; block-size: .5rem; background: var(--paper-color-rule-subtle); }
+.records-bar-track > span { display: block; block-size: 100%; min-inline-size: 2px; }
+.records-contest-history li { display: flex; gap: 1rem; justify-content: space-between; padding-block: 1rem; border-block-end: 1px solid var(--paper-color-rule-default); }
+.records-contest-history p { margin: .375rem 0 0; font-size: .8125rem; }
+.records-contest-history strong { text-align: end; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.records-contest-history strong small { display: block; color: var(--paper-color-text-muted); font-size: .6875rem; font-weight: 400; }
+.records-activity-mix { margin: 0; }
+.records-activity-mix > div { display: flex; justify-content: space-between; gap: 1rem; padding-block: .75rem; border-block-end: 1px solid var(--paper-color-rule-default); }
+.records-activity-mix dd { margin: 0; font-weight: 700; font-variant-numeric: tabular-nums; }
+.records-entries > li { display: grid; grid-template-columns: 7rem minmax(0, 1fr) auto; gap: 1rem; align-items: start; padding-block: 1.25rem; border-block-end: 1px solid var(--paper-color-rule-default); }
+.records-entry-date { color: var(--paper-color-text-muted); font-size: .8125rem; }
+.records-entry-title { font-weight: 600; text-decoration-thickness: 1px; text-underline-offset: .2em; }
+.records-entry-meta { margin: .375rem 0 0; color: var(--paper-color-text-muted); font-size: .8125rem; }
+.records-entry-note { margin: .5rem 0 0; font-size: .875rem; }
+.records-entry-score { text-align: end; font-weight: 700; font-variant-numeric: tabular-nums; }
+.records-entry-score small { display: block; color: var(--paper-color-text-muted); font-size: .6875rem; font-weight: 400; }
+.records-entries--compact > li { grid-template-columns: minmax(0, 1fr) auto; gap: .75rem; }
+.records-entries--compact .records-entry-date { grid-column: 1 / -1; }
+.records-search-row { display: flex; align-items: end; gap: 1rem; }
+.records-search-row .paper-field { flex: 1; }
+.records-filter-panel { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1.5rem; padding: 1.5rem; margin-block-start: 1rem; border: 1px solid var(--paper-color-rule-default); background: var(--paper-color-surface-paper); }
+.records-filter-group { border: 0; padding: 0; margin: 0; min-width: 0; }
+.records-filter-group legend { margin-block-end: .75rem; font-weight: 600; }
+.records-filter-group > .paper-choice-field + .paper-choice-field { margin-block-start: .75rem; }
+.records-filter-actions { grid-column: 1 / -1; justify-content: flex-end; flex-wrap: wrap; }
+.records-filter-chips { flex-wrap: wrap; margin-block-start: 1rem; gap: .5rem; }
+.records-result-count { margin: 1.5rem 0 0; color: var(--paper-color-text-muted); font-size: .875rem; }
+.records-log-notice { margin-block: 1.5rem; }
+.records-log-sheet { margin-block-start: 1.5rem; padding: 2rem; }
+.records-log-title { display: flex; justify-content: space-between; align-items: start; gap: 1.5rem; margin-block-start: 1rem; }
+.records-log-title > div { min-width: 0; }
+.records-log-title h1 { max-inline-size: 24ch; margin: 0; font-size: 2rem; line-height: 1.35; }
+.records-log-title > .paper-button { flex-shrink: 0; }
+.records-log-title p { margin: .875rem 0 0; font-size: .875rem; }
+.records-log-measure { display: flex; align-items: baseline; flex-wrap: wrap; gap: 1rem 3rem; margin-block: 2rem 1.5rem; padding-block: 1.5rem; border-block: 1px solid var(--paper-color-rule-default); }
+.records-log-measure p { display: flex; align-items: baseline; flex-wrap: wrap; gap: .75rem; margin: 0; }
+.records-log-measure p > strong { font-size: 3rem; line-height: 1; font-variant-numeric: tabular-nums; }
+.records-log-measure p > span { color: var(--paper-color-text-muted); }
+.records-log-measure .records-log-time > strong { font-size: 1.5rem; }
+.records-log-time { color: var(--paper-color-text-muted); font-size: .9375rem; }
+.records-log-note { max-inline-size: 65ch; margin-block: 0 1.25rem; line-height: 1.75; }
+.records-tags { display: flex; flex-wrap: wrap; list-style: none; margin: 0; padding: 0; gap: .5rem 1rem; color: var(--paper-color-text-muted); font-size: .8125rem; }
+.records-log-score-grid { display: grid; grid-template-columns: minmax(0, .9fr) minmax(0, 1.4fr); gap: 2rem; margin-block-start: 2rem; padding-block-start: 2rem; border-block-start: 1px solid var(--paper-color-rule-default); }
+.records-log-score-grid > * { min-width: 0; }
+.records-log-score-grid--no-notes { margin-block-start: 0; padding-block-start: 0; border-block-start: 0; }
+.records-log-score-grid h2 { margin: 0 0 1rem; font-size: 1.25rem; }
+.records-personal-score { padding-inline-end: 2rem; border-inline-end: 1px solid var(--paper-color-rule-default); }
+.records-score-number { display: flex; gap: .5rem; align-items: baseline; margin: 1.25rem 0; font-size: 2.5rem; line-height: 1; font-weight: 700; font-variant-numeric: tabular-nums; }
+.records-score-number > span { font-size: .875rem; font-weight: 400; color: var(--paper-color-text-muted); }
+.records-score-explanation { margin-block-start: 1rem; font-size: .8125rem; }
+.records-score-explanation summary { cursor: pointer; color: var(--paper-color-text-link); text-underline-offset: .2em; }
+.records-score-explanation[open] summary { margin-block-end: .75rem; }
+.records-score-explanation p { margin-block: .5rem; max-inline-size: 58ch; }
+.records-contributions { list-style: none; padding: 0; margin: 0; }
+.records-contributions > li { padding-block: 1rem 1.25rem; border-block-end: 1px solid var(--paper-color-rule-default); }
+.records-contributions > li:first-child { padding-block-start: 0; }
+.records-contribution-title { display: flex; justify-content: space-between; gap: 1.25rem; font-weight: 600; }
+.records-contribution-title strong { text-align: end; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.records-contribution-title small { display: block; font-size: .6875rem; font-weight: 400; color: var(--paper-color-text-muted); }
+.records-contribution-meta { margin: .5rem 0 0; font-size: .75rem; color: var(--paper-color-text-muted); }
+.records-visibility-note { padding: 1rem; background: var(--paper-color-surface-canvas); border: 1px solid var(--paper-color-rule-default); font-size: .875rem; }
+.records-visibility-note h3 { margin: 0 0 .75rem; font: 600 .9375rem var(--paper-font-body); }
+.records-visibility-note p { margin: 0; }
+.records-scope-note { margin-block: 1rem; color: var(--paper-color-text-muted); font-size: .8125rem; line-height: 1.6; }
+.records-log-footer { display: flex; justify-content: space-between; gap: 1.5rem; align-items: start; margin-block-start: 1.5rem; font-size: .8125rem; }
+.records-log-footer p { margin: 0 0 .5rem; }
+.records-maintenance { flex-shrink: 0; text-align: end; }
+.records-maintenance summary { cursor: pointer; padding-block: .5rem; }
+.records-log-result { margin-block-start: 1.5rem; }
+.records-log-result h1:focus { outline: none; }
+.records-submission-choices { display: grid; gap: 1.25rem; }
+.records-submission-empty { margin-block: 1.5rem; }
+.records-admin-layout { display: grid; grid-template-columns: 12rem minmax(0, 1fr); gap: 2.5rem; align-items: start; }
+.records-admin-sidebar { position: sticky; top: 1.5rem; }
+.records-admin-return { display: inline-block; margin-block-start: 2rem; font-size: .8125rem; }
+.records-admin-main { min-width: 0; }
+.records-admin-mobile { display: none; }
+.records-admin-heading { display: flex; justify-content: space-between; align-items: start; flex-wrap: wrap; gap: 1rem 1.5rem; margin-block-start: 1.5rem; }
+.records-admin-heading > div { flex: 1 1 24rem; }
+.records-admin-heading .page-lead { font-size: 1rem; margin-block-end: 0; }
+.records-admin-notice { margin-block: 1.5rem; }
+.records-admin-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1.5rem; margin-block: 2rem; }
+.records-admin-stats .stat > span { display: block; font-size: .8125rem; margin-block-end: .5rem; }
+.records-admin-stats .stat > small { display: block; margin-block-start: .375rem; font-size: .75rem; }
+.records-admin-attention { padding: 1.5rem; border: 1px solid var(--paper-color-rule-default); background: var(--paper-color-surface-paper); }
+.records-admin-queue { margin: 0; padding: 0; list-style: none; }
+.records-admin-queue > li { display: flex; justify-content: space-between; gap: 1.5rem; align-items: start; padding-block: 1.25rem; border-block-start: 1px solid var(--paper-color-rule-default); }
+.records-admin-queue > li:last-child { padding-block-end: 0; }
+.records-admin-queue > li > .paper-button { flex-shrink: 0; }
+.records-admin-queue p { margin: .5rem 0 0; max-inline-size: 60ch; font-size: .8125rem; color: var(--paper-color-text-muted); }
+.records-admin-bottom { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
+.records-admin-contest { margin: 0; }
+.records-admin-contest > div { display: flex; justify-content: space-between; gap: 1rem; font-size: .8125rem; padding-block: .75rem; border-block-end: 1px solid var(--paper-color-rule-default); }
+.records-admin-contest dd { margin: 0; font-weight: 600; text-align: end; }
+.records-admin-quick { display: flex; flex-wrap: wrap; gap: .75rem; }
+.records-admin-status { border-block-start: 1px solid var(--paper-color-rule-default); padding-block-start: 1.5rem; }
+.records-admin-status h2 { margin: 0; font-size: 1.125rem; }
+.records-admin-status p { margin-block: .5rem 1rem; font-size: .8125rem; }
+.records-admin-status dl { display: flex; flex-wrap: wrap; gap: 1rem 2rem; margin: 0; }
+.records-admin-status dl > div { display: flex; gap: .75rem; font-size: .75rem; }
+.records-admin-status dd { margin: 0; color: var(--paper-color-status-success); }
+.records-admin-record p { margin: .5rem 0 0; max-inline-size: 56ch; color: var(--paper-color-text-muted); font-size: .8125rem; font-weight: 400; }
+@media (max-width: 48rem) {
+  .records-overview-columns { grid-template-columns: minmax(0, 1fr); gap: 0; }
+  .records-filter-panel { grid-template-columns: 1fr 1fr; }
+  .records-filter-panel > .paper-field { grid-column: 1 / -1; }
+  .records-rhythm { padding: 1rem; }
+  .records-year-heading { align-items: start; }
+  .records-log-sheet { padding: 1.5rem; }
+  .records-log-score-grid { gap: 1.5rem; }
+  .records-personal-score { padding-inline-end: 1.5rem; }
+  .records-admin-layout { grid-template-columns: minmax(0, 1fr); }
+  .records-admin-sidebar { display: none; }
+  .records-admin-mobile { display: block; margin-block-end: 1.5rem; }
+  .records-admin-bottom { grid-template-columns: minmax(0, 1fr); gap: 0; }
+}
+@media (max-width: 32rem) {
+  .records-entries > li { grid-template-columns: minmax(0, 1fr) auto; gap: .75rem; }
+  .records-entry-date { grid-column: 1 / -1; }
+  .records-search-row { flex-wrap: wrap; }
+  .records-search-row .paper-field { flex-basis: 100%; }
+  .records-filter-panel { grid-template-columns: minmax(0, 1fr); }
+  .records-identity { gap: 1rem; }
+  .records-log-sheet { padding: 1rem; }
+  .records-log-title { flex-wrap: wrap; }
+  .records-log-title h1 { font-size: 1.5rem; }
+  .records-log-measure { margin-block: 1.5rem; }
+  .records-log-score-grid { grid-template-columns: minmax(0, 1fr); }
+  .records-personal-score { border-inline-end: 0; border-block-end: 1px solid var(--paper-color-rule-default); padding: 0 0 1.5rem; }
+  .records-log-footer { flex-direction: column; }
+  .records-maintenance { text-align: start; }
+  .records-admin-stats { grid-template-columns: minmax(0, 1fr); }
+  .records-admin-queue > li { flex-direction: column; gap: .75rem; }
+  .records-admin-attention { padding: 1rem; }
+}

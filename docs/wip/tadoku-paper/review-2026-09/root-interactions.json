@@ -1,0 +1,14 @@
+{
+  "inputSaved": "Saved: September reading",
+  "inputError": "Enter a log title.",
+  "modalFits": {
+    "width": 294,
+    "viewport": 341
+  },
+  "modalFocusReturned": true,
+  "modalDeletion": "Example log deleted",
+  "tableEmpty": true,
+  "heatmapEmpty": "No reading activity recorded in 2023.\n\nMon\nWed\nFri\nSun\nJan\nFeb\nMar\nApr\nMay\nJun\nJul\nAug\nSep\nOct\nNov\nDec",
+  "linkContained": "Preview destination: #logs. Navigation stays in this example.",
+  "frameUrl": "about:srcdoc"
+}

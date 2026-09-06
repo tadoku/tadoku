@@ -37,8 +37,12 @@ describe("Button visual contract", () => {
     expect(buttonCss).toMatch(
       /\.paper-button--outline:hover:not\(:disabled\)[^{]*\{[^}]*background: var\(--paper-color-action-neutral-hover\);/s,
     );
-    expect(buttonCss).toMatch(
-      /\[data-density="compact"\] \.paper-button\s*\{[^}]*min-block-size: 2\.25rem;[^}]*padding: 0\.375rem 0\.6875rem 0\.3125rem;[^}]*font-size: 0\.875rem;/s,
-    );
+    // An ancestor selector leaks through a nested comfortable boundary and also
+    // overrides the zero padding/height of link buttons.
+    expect(buttonCss).not.toMatch(/\[data-density="compact"\] \.paper-button/);
+    expect(buttonCss).toContain("padding: var(--paper-button-padding);");
+    expect(buttonCss).toContain("font-size: var(--paper-button-font-size);");
+    expect(tokensCss).toMatch(/\[data-density="comfortable"\]\s*\{[^}]*--paper-button-padding: 0\.5625rem 0\.9375rem 0\.5rem;[^}]*--paper-button-font-size: 1em;/s);
+    expect(tokensCss).toMatch(/\[data-density="compact"\]\s*\{[^}]*--paper-button-padding: 0\.375rem 0\.6875rem 0\.3125rem;[^}]*--paper-button-font-size: 0\.875rem;/s);
   });
 });

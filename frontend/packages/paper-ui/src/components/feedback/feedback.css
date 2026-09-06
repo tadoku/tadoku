@@ -1,11 +1,13 @@
 @layer paper-recipes {
-  .paper-flash { --paper-flash-rail-color: var(--paper-color-status-information); position: relative; display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: start; gap: 0.75rem; padding: 0.9rem 1rem; padding-inline-start: calc(1rem + 3px); border: 1px solid var(--paper-color-rule-default); background: var(--paper-color-surface-paper); }
+  .paper-flash { --paper-flash-rail-color: var(--paper-color-status-information); position: relative; display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: start; gap: 0.75rem; padding: 0.9rem 1rem; padding-inline-start: calc(1rem + 3px); border: 1px solid var(--paper-color-rule-default); background: var(--paper-color-surface-paper); }
+  .paper-flash:has(> .paper-flash__icon) { grid-template-columns: auto minmax(0, 1fr) auto; }
+  .paper-flash__content:only-child { grid-column: 1 / -1; }
   .paper-flash::before { position: absolute; inset-block: -1px; inset-inline-start: -1px; inline-size: 4px; background: var(--paper-flash-rail-color); content: ""; pointer-events: none; }
   .paper-flash--success { --paper-flash-rail-color: var(--paper-color-status-success); }
   .paper-flash--warning { --paper-flash-rail-color: var(--paper-color-status-warning); }
   .paper-flash--danger { --paper-flash-rail-color: var(--paper-color-status-danger); }
   .paper-flash__icon { display: grid; place-items: center; inline-size: var(--paper-icon-size-default); block-size: var(--paper-icon-size-default); }
-  .paper-flash__content { display: grid; gap: 0.2rem; }
+  .paper-flash__content { min-inline-size: 0; overflow-wrap: anywhere; display: grid; gap: 0.2rem; }
   .paper-flash__action { align-self: center; }
   .paper-loading { display: inline-grid; place-items: center; }
   .paper-loading__spinner { inline-size: 1.25rem; block-size: 1.25rem; border: 2px solid var(--paper-color-rule-default); border-block-start-color: var(--paper-color-action-default); border-radius: 50%; animation: paper-loading-spin 700ms linear infinite; }
@@ -18,7 +20,8 @@
   .paper-toast { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 0.75rem; padding: 0.85rem; border: 1px solid var(--paper-color-rule-strong); background: var(--paper-color-surface-overlay); transition: opacity var(--paper-motion-standard), transform var(--paper-motion-standard); }
   .paper-toast[data-starting-style], .paper-toast[data-ending-style] { opacity: 0; transform: translateX(0.5rem); }
   .paper-toast__content { display: grid; gap: 0.2rem; }
-  .paper-toast__title { font-weight: var(--paper-type-label-weight); }
+  .paper-toast__title { margin: 0; font-size: var(--paper-type-body-size); line-height: 1.25; font-weight: var(--paper-type-label-weight); }
+  .paper-toast__content > p { margin: 0; }
   .paper-toast__close { align-self: start; inline-size: 2rem; block-size: 2rem; border: 0; color: var(--paper-color-text-muted); background: transparent; cursor: pointer; }
   @keyframes paper-loading-spin { to { transform: rotate(1turn); } }
   @media (forced-colors: active) { .paper-flash::before { forced-color-adjust: none; background: CanvasText; } }

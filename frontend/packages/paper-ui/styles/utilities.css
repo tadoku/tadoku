@@ -44,4 +44,31 @@
 .paper-motion-deliberate {
   transition-duration: var(--paper-motion-deliberate);
 }
+
+/* Composition stays fluid; applications own page grids and breakpoints. */
+.paper-stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--paper-stack-gap, var(--paper-space-4));
+  min-inline-size: 0;
+}
+
+.paper-stack > * {
+  margin-block: 0;
+  min-inline-size: 0;
+}
+
+.paper-cluster {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--paper-cluster-gap, var(--paper-inline-gap));
+  min-inline-size: 0;
+}
+
+.paper-measure {
+  max-inline-size: 65ch;
+  overflow-wrap: anywhere;
+}
+
 }

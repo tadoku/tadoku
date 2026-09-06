@@ -1,7 +1,7 @@
 import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { catalogRegistry } from 'paper-ui/catalog'
-import { MemoryRouter, Route, Routes } from 'react-router-dom'
+import { Link, MemoryRouter, Route, Routes } from 'react-router-dom'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { CatalogueSearch } from '../src/app/CatalogueSearch'
 import { DocsShell } from '../src/app/DocsShell'
@@ -34,6 +34,18 @@ afterEach(() => {
 })
 
 describe('catalogue experience stability', () => {
+  it('starts a newly selected catalogue page at the top', async () => {
+    const user = userEvent.setup()
+    const scrollTo = vi.spyOn(window, 'scrollTo').mockImplementation(() => {})
+    render(<MemoryRouter initialEntries={[buttonDocument.route]}>
+      <Link to="/foundations/layout">Next document</Link>
+      <ResolvedCatalogueRoute />
+    </MemoryRouter>)
+    scrollTo.mockClear()
+    await user.click(screen.getByRole('link', { name: 'Next document' }))
+    expect(scrollTo).toHaveBeenCalledWith({ top: 0, left: 0, behavior: 'instant' })
+  })
+
   it('copies the registered example and announces successful feedback', async () => {
     const user = userEvent.setup()
     const writeText = vi.fn().mockResolvedValue(undefined)

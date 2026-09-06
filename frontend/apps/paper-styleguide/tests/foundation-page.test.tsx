@@ -1,7 +1,7 @@
 import { render, screen, within } from '@testing-library/react'
 import { catalogRegistry, type CatalogDocument } from 'paper-ui/catalog'
 import cutMeterUrl from 'paper-ui/assets/brand/cut-meter.svg?no-inline'
-import wordmarkUrl from 'paper-ui/assets/brand/wordmark.svg?no-inline'
+import wordmarkUrl from 'paper-ui/assets/brand/wordmark-accent.svg?no-inline'
 import { MemoryRouter } from 'react-router-dom'
 import { describe, expect, it } from 'vitest'
 import { DocsShell } from '../src/app/DocsShell'
@@ -34,7 +34,7 @@ function foundation(id: string): CatalogDocument {
 const foundationSpecimens = [
   {
     id: 'foundation.principles',
-    markers: [foundation('foundation.principles').guidance.whenToUse[0]],
+    markers: ['Your reading this week', 'Turn a principle into a decision'],
   },
   {
     id: 'foundation.color',
@@ -63,7 +63,7 @@ const foundationSpecimens = [
   },
   {
     id: 'foundation.layout',
-    markers: [foundation('foundation.layout').guidance.content[0]],
+    markers: ['paper-stack', 'paper-cluster', 'paper-measure', 'Responsive page grid'],
   },
   {
     id: 'foundation.shape-and-borders',
@@ -84,7 +84,7 @@ const foundationSpecimens = [
   },
   {
     id: 'foundation.iconography',
-    markers: ['PlusIcon', 'CheckCircleIcon', 'paper-icon-compact'],
+    markers: ['PlusIcon', 'CheckCircleIcon', 'iconClassName'],
   },
   {
     id: 'foundation.motion',
@@ -160,11 +160,8 @@ describe('foundation documents', () => {
     render(<DocumentPage document={foundation('foundation.brand')} />)
 
     const specimen = screen.getByRole('region', { name: 'Brand specimen' })
-    expect(within(specimen).getByRole('img', { name: 'Cut Meter' })).toHaveAttribute(
-      'src',
-      cutMeterUrl,
-    )
-    expect(within(specimen).getByRole('img', { name: 'Tadoku' })).toHaveAttribute(
+    expect(specimen.querySelector(`img[src="${cutMeterUrl}"]`)).toHaveAttribute('alt', '')
+    expect(within(specimen).getAllByRole('img', { name: 'Tadoku' })[0]).toHaveAttribute(
       'src',
       wordmarkUrl,
     )
@@ -223,4 +220,17 @@ describe('foundation documents', () => {
     expect(indexNames).toEqual(sidebarNames)
     expect(indexNames).toEqual(FOUNDATION_LEARNING_PATH)
   })
+})
+
+it('keeps foundation documentation outside the themed visual canvas', () => {
+  render(<DocumentPage document={foundation('foundation.layout')} />)
+  const reference = screen.getByRole('table', { name: 'Public composition utilities' })
+  expect(reference.closest('[data-theme]')).toBeNull()
+  expect(screen.queryByText('Setup required by these examples')).not.toBeInTheDocument()
+})
+
+it('shows one semantic color per reference row', () => {
+  render(<DocumentPage document={foundation('foundation.color')} />)
+  const colors = screen.getByRole('table', { name: 'Semantic color reference' })
+  expect(within(colors).getAllByRole('row')).toHaveLength(38)
 })

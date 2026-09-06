@@ -109,7 +109,7 @@ describe('Stable component documentation', () => {
     preview.focus()
     await user.keyboard('{ArrowRight}')
     expect(within(tabs).getByRole('tab', { name: 'Code' })).toHaveFocus()
-    expect(screen.getByText(/import \{ Button/u)).toBeInTheDocument()
+    expect(screen.getByRole('tabpanel', { name: 'Code' })).toHaveTextContent(/import\s+\{[^}]*\bButton/u)
 
     await user.keyboard('{ArrowRight}')
     expect(within(tabs).getByRole('tab', { name: 'API / Props' })).toHaveFocus()

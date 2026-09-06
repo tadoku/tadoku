@@ -25,7 +25,7 @@ function expectSubmitActionRow(label: string) {
   const submit = screen.getByRole("button", { name: label });
 
   expect(submit).toHaveAttribute("type", "submit");
-  expect(submit.parentElement).toHaveClass("paper-fixture-row");
+  expect(submit.parentElement?.matches(".paper-fixture-row, .paper-cluster")).toBe(true);
 }
 
 describe("form fixture action layout", () => {

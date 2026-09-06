@@ -56,13 +56,14 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
 
   const registration = form.register(name, {
     ...rules,
+    disabled,
     required: rules?.required ?? (required ? "This field is required." : undefined),
   });
   const subscribedFormState = useFormState({ control: form.control, name });
   const error = form.getFieldState(name, subscribedFormState).error;
   const hintId = hint ? `${id}-hint` : undefined;
   const errorId = error ? `${id}-error` : undefined;
-  const describedBy = [hintId, errorId].filter(Boolean).join(" ") || undefined;
+  const describedBy = [hintId, errorId, props["aria-describedby"]].filter(Boolean).join(" ") || undefined;
 
   return (
     <div

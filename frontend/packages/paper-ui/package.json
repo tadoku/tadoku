@@ -38,7 +38,8 @@
     "build": "tsup && node scripts/build-assets.mjs",
     "pack:check": "node scripts/check-package.mjs",
     "consumer:ts49": "node ../../node_modules/typescript-4/bin/tsc --noEmit -p tests/consumer-4.9/tsconfig.json",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "examples:check": "node scripts/check-examples.mjs"
   },
   "peerDependencies": {
     "react": "18.2.0",

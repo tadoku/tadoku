@@ -32,21 +32,6 @@ interface ExampleCanvasProps {
   readonly onFixtureChange?: (fixture: CatalogFixture) => void
 }
 
-function preferredViewportId(
-  viewports: readonly CatalogFixtureViewport[],
-): string {
-  const preferredId =
-    typeof window.matchMedia === 'function' &&
-    window.matchMedia('(max-width: 48rem)').matches
-      ? 'phone'
-      : 'desktop'
-  return (
-    viewports.find((viewport) => viewport.id === preferredId)?.id ??
-    viewports[0]?.id ??
-    'desktop'
-  )
-}
-
 function preferredTheme(themes: readonly FixtureTheme[]): PaperTheme {
   return themes.includes('light') ? 'light' : (themes[0] ?? 'light')
 }
@@ -130,8 +115,25 @@ function CanvasContent({
   const viewportId = methods.watch('viewportId')
   const [previewRoot, setPreviewRoot] = useState<HTMLElement | null>(null)
   const frameDocumentRef = useRef<Document | null>(null)
-  const viewport =
-    viewports.find((candidate) => candidate.id === viewportId) ?? viewports[0]
+  const stageRef = useRef<HTMLDivElement | null>(null)
+  const [availableWidth, setAvailableWidth] = useState(360)
+  const [previewDestination, setPreviewDestination] = useState<{ fixtureId: string; href: string } | null>(null)
+  const isFit = viewportId === 'fit'
+  const viewport = isFit
+    ? { id: 'fit', label: 'Fit', width: availableWidth, height: 800 }
+    : viewports.find((candidate) => candidate.id === viewportId) ?? viewports[0]
+
+  useEffect(() => {
+    const stage = stageRef.current
+    if (!stage || typeof ResizeObserver === 'undefined') return
+    const observer = new ResizeObserver(([entry]) => {
+      if (entry && entry.contentRect.width > 0) {
+        setAvailableWidth(Math.floor(entry.contentRect.width))
+      }
+    })
+    observer.observe(stage)
+    return () => observer.disconnect()
+  }, [])
 
   useEffect(() => {
     const selectedFixtureId = methods.getValues('fixtureId')
@@ -155,8 +157,8 @@ function CanvasContent({
     if (!densities.includes(current.density)) {
       methods.setValue('density', preferredDensity(densities))
     }
-    if (!viewports.some((candidate) => candidate.id === current.viewportId)) {
-      methods.setValue('viewportId', preferredViewportId(viewports))
+    if (current.viewportId !== 'fit' && !viewports.some((candidate) => candidate.id === current.viewportId)) {
+      methods.setValue('viewportId', 'fit')
     }
   }, [
     densities,
@@ -182,6 +184,9 @@ function CanvasContent({
         className="canvas-controls"
         role="group"
         aria-labelledby={settingsTitleId}
+        onChange={(event) => {
+          if ((event.target as HTMLSelectElement).name === 'fixtureId') setPreviewDestination(null)
+        }}
       >
         <h3
           id={settingsTitleId}
@@ -226,10 +231,10 @@ function CanvasContent({
             name="viewportId"
             label="Viewport"
             variant="segmented"
-            options={viewports.map((option) => ({
+            options={[{ value: 'fit', label: 'Fit' }, ...viewports.map((option) => ({
               value: option.id,
               label: option.label,
-            }))}
+            }))]}
           />
         </div>
       </div>
@@ -237,17 +242,22 @@ function CanvasContent({
         {viewport.label} · {viewport.width} px · {titleCase(theme)} ·{' '}
         {titleCase(density)}
       </p>
-      <div className="example-canvas__stage">
+      {previewDestination && previewDestination.fixtureId === fixture?.id && (
+        <p className="canvas-status paper-type-metadata" role="status">
+          Preview destination: {previewDestination.href}. Navigation stays in this example.
+        </p>
+      )}
+      <div className="example-canvas__stage" ref={stageRef}>
         <iframe
           title="Paper responsive component preview"
-          width={viewport.width}
+          width={isFit ? '100%' : viewport.width}
           height={viewport.height}
           data-fixture-id={fixture?.id}
           srcDoc={'<!doctype html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head><body><div id="paper-preview-root"></div></body></html>'}
           data-preview-width={viewport.width}
           data-preview-height={viewport.height}
           style={{
-            inlineSize: `${viewport.width}px`,
+            inlineSize: isFit ? '100%' : `${viewport.width}px`,
             blockSize: `min(${viewport.height}px, 22rem)`,
             boxSizing: 'content-box',
             border: 0,
@@ -265,7 +275,18 @@ function CanvasContent({
       {previewRoot
         ? createPortal(
             fixture ? (
-              <div className="paper-fixture-stage">{fixture.render()}</div>
+              <div key={fixture.id} className="paper-fixture-stage" onClick={(event) => {
+                const link = (event.target as Element).closest?.('a[href]')
+                if (!link || event.defaultPrevented) return
+                event.preventDefault()
+                const href = link.getAttribute('href')!
+                setPreviewDestination({ fixtureId: fixture.id, href })
+                if (href.startsWith('#')) {
+                  try {
+                    link.ownerDocument.getElementById(decodeURIComponent(href.slice(1)))?.scrollIntoView?.({ block: 'nearest' })
+                  } catch { /* A malformed example fragment has no scroll target. */ }
+                }
+              }}>{fixture.render()}</div>
             ) : (
               <PreviewSpecimen />
             ),
@@ -278,15 +299,12 @@ function CanvasContent({
 
 export function ExampleCanvas(props: ExampleCanvasProps) {
   const initialFixture = props.fixture ?? props.fixtures?.[0]
-  const initialViewports = initialFixture?.viewports.length
-    ? initialFixture.viewports
-    : FALLBACK_VIEWPORTS
   const methods = useForm<CanvasFields>({
     defaultValues: {
       fixtureId: initialFixture?.id ?? '',
       theme: preferredTheme(initialFixture?.themes ?? THEMES),
       density: preferredDensity(initialFixture?.densities ?? DENSITIES),
-      viewportId: preferredViewportId(initialViewports),
+      viewportId: 'fit',
     },
   })
 

@@ -1,0 +1,142 @@
+[
+  {
+    "route": "/",
+    "width": 1280,
+    "theme": "light",
+    "heading": "Paper makes the interface legible.",
+    "documentOverflow": false,
+    "errors": []
+  },
+  {
+    "route": "/setup",
+    "width": 1280,
+    "theme": "light",
+    "heading": "Setup",
+    "documentOverflow": false,
+    "errors": []
+  },
+  {
+    "route": "/components/actions/button",
+    "width": 1280,
+    "theme": "light",
+    "heading": "Button",
+    "documentOverflow": false,
+    "frame": 590,
+    "errors": []
+  },
+  {
+    "route": "/components/forms/input",
+    "width": 1280,
+    "theme": "light",
+    "heading": "Input",
+    "documentOverflow": false,
+    "frame": 590,
+    "errors": []
+  },
+  {
+    "route": "/components/overlays/modal",
+    "width": 1280,
+    "theme": "light",
+    "heading": "Modal",
+    "documentOverflow": false,
+    "frame": 590,
+    "errors": []
+  },
+  {
+    "route": "/components/actions/action-menu",
+    "width": 1280,
+    "theme": "light",
+    "heading": "ActionMenu",
+    "documentOverflow": false,
+    "frame": 590,
+    "errors": []
+  },
+  {
+    "route": "/components/data-display/table",
+    "width": 1280,
+    "theme": "light",
+    "heading": "Table",
+    "documentOverflow": false,
+    "frame": 590,
+    "errors": []
+  },
+  {
+    "route": "/components/data-display/heatmap-chart",
+    "width": 1280,
+    "theme": "light",
+    "heading": "HeatmapChart",
+    "documentOverflow": false,
+    "frame": 590,
+    "errors": []
+  },
+  {
+    "route": "/",
+    "width": 390,
+    "theme": "dark examples",
+    "heading": "Paper makes the interface legible.",
+    "documentOverflow": false,
+    "errors": []
+  },
+  {
+    "route": "/setup",
+    "width": 390,
+    "theme": "dark examples",
+    "heading": "Setup",
+    "documentOverflow": false,
+    "errors": []
+  },
+  {
+    "route": "/components/actions/button",
+    "width": 390,
+    "theme": "dark examples",
+    "heading": "Button",
+    "documentOverflow": false,
+    "frame": 341,
+    "errors": []
+  },
+  {
+    "route": "/components/forms/input",
+    "width": 390,
+    "theme": "dark examples",
+    "heading": "Input",
+    "documentOverflow": false,
+    "frame": 341,
+    "errors": []
+  },
+  {
+    "route": "/components/overlays/modal",
+    "width": 390,
+    "theme": "dark examples",
+    "heading": "Modal",
+    "documentOverflow": false,
+    "frame": 341,
+    "errors": []
+  },
+  {
+    "route": "/components/actions/action-menu",
+    "width": 390,
+    "theme": "dark examples",
+    "heading": "ActionMenu",
+    "documentOverflow": false,
+    "frame": 341,
+    "errors": []
+  },
+  {
+    "route": "/components/data-display/table",
+    "width": 390,
+    "theme": "dark examples",
+    "heading": "Table",
+    "documentOverflow": false,
+    "frame": 341,
+    "errors": []
+  },
+  {
+    "route": "/components/data-display/heatmap-chart",
+    "width": 390,
+    "theme": "dark examples",
+    "heading": "HeatmapChart",
+    "documentOverflow": false,
+    "frame": 341,
+    "errors": []
+  }
+]

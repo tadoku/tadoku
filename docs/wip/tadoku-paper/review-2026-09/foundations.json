@@ -1,0 +1,437 @@
+{
+  "date": "2026-09-05",
+  "scope": "10 foundations, Logging pattern, Logging v2, Contributing and Changelog",
+  "shared_fixes": [
+    "Setup moved to dedicated /setup page by root; repeated setup blocks removed.",
+    "Foundation prose/reference/code remain in the document theme; only live canvases use example appearance.",
+    "GuideCode uses shared syntax-highlighting CodeBlock.",
+    "Readable named scroll regions replace compressed table words; neutral documentation headings no longer override paper-stack spacing.",
+    "10 app-local React example modules supply both the live render and displayed ?raw source."
+  ],
+  "verification_status": "Final feedback implementation verified against rebuilt paper-ui: all 14 pages inspected in Chromium at desktop and mobile sizes; 320px overflow checks passed. Final source modules typecheck and targeted tests pass.",
+  "pages": [
+    {
+      "id": "foundation.principles",
+      "path": "/foundations/principles",
+      "before": "Generic principle names did not connect to product decisions.",
+      "fixes": [
+        "Reading-summary example paired with specific use/avoid decisions.",
+        "Actual live example and displayed source now share one module."
+      ],
+      "checks": {
+        "earlier_browser_review": [
+          "Screenshot inspected at 1280px desktop and 360px mobile.",
+          "No page-level horizontal overflow measured at 320px.",
+          "Theme/density controls exercised."
+        ],
+        "final_feedback_review": [
+          "No page overflow at 1280px",
+          "Screenshot captured at 1280px",
+          "No page overflow at 360px",
+          "Screenshot captured at 360px",
+          "No page overflow at 320px",
+          "Dark/compact controls affect canvases only; docs/code remain neutral",
+          "Desktop and mobile screenshots visually inspected."
+        ]
+      },
+      "open_decisions": []
+    },
+    {
+      "id": "foundation.color",
+      "path": "/foundations/color",
+      "before": "Swatch grid did not provide a scannable per-color reference; theme colored explanatory documentation.",
+      "fixes": [
+        "One row for each of all 37 public semantic colors, paired light/dark swatches, named purpose and CSS variable.",
+        "Documented four available color classes before variables.",
+        "Only visual comparison canvases follow example theme/density."
+      ],
+      "checks": {
+        "earlier_browser_review": [
+          "Screenshot inspected at 1280px desktop and 360px mobile.",
+          "No page-level horizontal overflow measured at 320px.",
+          "Theme/density controls exercised."
+        ],
+        "final_feedback_review": [
+          "No page overflow at 1280px",
+          "Screenshot captured at 1280px",
+          "No page overflow at 360px",
+          "Screenshot captured at 360px",
+          "No page overflow at 320px",
+          "Dark/compact controls affect canvases only; docs/code remain neutral",
+          "Desktop and mobile screenshots visually inspected."
+        ]
+      },
+      "open_decisions": []
+    },
+    {
+      "id": "foundation.typography",
+      "path": "/foundations/typography",
+      "before": "Type samples lacked complete composition and font coverage limits.",
+      "fixes": [
+        "Role scale plus size/line-height/weight/use reference.",
+        "Real composition shares exact displayed source.",
+        "Documented bundled weights, semantic heading levels, zoom and platform fallback."
+      ],
+      "checks": {
+        "earlier_browser_review": [
+          "Screenshot inspected at 1280px desktop and 360px mobile.",
+          "No page-level horizontal overflow measured at 320px.",
+          "Theme/density controls exercised."
+        ],
+        "final_feedback_review": [
+          "No page overflow at 1280px",
+          "Screenshot captured at 1280px",
+          "No page overflow at 360px",
+          "Screenshot captured at 360px",
+          "No page overflow at 320px",
+          "Dark/compact controls affect canvases only; docs/code remain neutral",
+          "Desktop and mobile screenshots visually inspected."
+        ]
+      },
+      "open_decisions": [
+        "Decide whether consistent CJK glyph coverage/metrics require bundled language fonts or whether platform fallbacks remain acceptable. Current docs make fallback explicit."
+      ]
+    },
+    {
+      "id": "foundation.spacing-and-density",
+      "path": "/foundations/spacing-and-density",
+      "before": "No usable spacing scale or class guide; nested comfortable buttons shrank to 36px under a compact ancestor.",
+      "fixes": [
+        "Finite paper-p-* and paper-gap-* classes for 1, 2, 3, 4, 6, 8, 12, explained as quarter-rem steps like Tailwind p-4.",
+        "Documented padding vs gap, px/rem, use cases, density boundaries and touch implications.",
+        "Real comfortable/compact forms and exact-source container/form examples.",
+        "Button padding/font size now inherit from the nearest density scope; preserves 44px/36px geometry."
+      ],
+      "checks": {
+        "earlier_browser_review": [
+          "Screenshot inspected at 1280px desktop and 360px mobile.",
+          "No page-level horizontal overflow measured at 320px.",
+          "Theme/density controls exercised."
+        ],
+        "final_feedback_review": [
+          "No page overflow at 1280px",
+          "Screenshot captured at 1280px",
+          "No page overflow at 360px",
+          "Screenshot captured at 360px",
+          "No page overflow at 320px",
+          "Dark/compact controls affect canvases only; docs/code remain neutral",
+          "Desktop and mobile screenshots visually inspected."
+        ]
+      },
+      "open_decisions": []
+    },
+    {
+      "id": "foundation.layout",
+      "path": "/foundations/layout",
+      "before": "Documented layout classes were absent; private styleguide classes stood in for public usage.",
+      "fixes": [
+        "Implemented/documented public stack, wrapping cluster and 65ch measure utilities.",
+        "Documented spacing-class overrides, application-owned grids and keyboard-focusable overflow regions.",
+        "Live composition and overflow example use the exact displayed source."
+      ],
+      "checks": {
+        "earlier_browser_review": [
+          "Screenshot inspected at 1280px desktop and 360px mobile.",
+          "No page-level horizontal overflow measured at 320px.",
+          "Theme/density controls exercised."
+        ],
+        "final_feedback_review": [
+          "No page overflow at 1280px",
+          "Screenshot captured at 1280px",
+          "No page overflow at 360px",
+          "Screenshot captured at 360px",
+          "No page overflow at 320px",
+          "Dark/compact controls affect canvases only; docs/code remain neutral",
+          "Desktop and mobile screenshots visually inspected."
+        ]
+      },
+      "open_decisions": []
+    },
+    {
+      "id": "foundation.shape-and-borders",
+      "path": "/foundations/shape-and-borders",
+      "before": "Accent rail sample and token names did not explain perimeter joins or composition.",
+      "fixes": [
+        "Accent rail aligns with bordered Surface outer edge and remains square; borderless rail uses host bounds.",
+        "Examples show bordered/borderless/status rails; documented padding, pseudo-element ownership, focus separation and RTL.",
+        "Exact-source composition example."
+      ],
+      "checks": {
+        "earlier_browser_review": [
+          "Screenshot inspected at 1280px desktop and 360px mobile.",
+          "No page-level horizontal overflow measured at 320px.",
+          "Theme/density controls exercised."
+        ],
+        "final_feedback_review": [
+          "No page overflow at 1280px",
+          "Screenshot captured at 1280px",
+          "No page overflow at 360px",
+          "Screenshot captured at 360px",
+          "No page overflow at 320px",
+          "Dark/compact controls affect canvases only; docs/code remain neutral",
+          "Desktop and mobile screenshots visually inspected."
+        ]
+      },
+      "open_decisions": []
+    },
+    {
+      "id": "foundation.elevation",
+      "path": "/foundations/elevation",
+      "before": "Samples did not establish when elevation is appropriate or distinguish appearance from overlay behavior.",
+      "fixes": [
+        "Compared flat/floating/showcase with offset references.",
+        "Documented clipping and focus-management limitations.",
+        "Exact-source flat summary example."
+      ],
+      "checks": {
+        "earlier_browser_review": [
+          "Screenshot inspected at 1280px desktop and 360px mobile.",
+          "No page-level horizontal overflow measured at 320px.",
+          "Theme/density controls exercised."
+        ],
+        "final_feedback_review": [
+          "No page overflow at 1280px",
+          "Screenshot captured at 1280px",
+          "No page overflow at 360px",
+          "Screenshot captured at 360px",
+          "No page overflow at 320px",
+          "Dark/compact controls affect canvases only; docs/code remain neutral",
+          "Desktop and mobile screenshots visually inspected."
+        ]
+      },
+      "open_decisions": []
+    },
+    {
+      "id": "foundation.iconography",
+      "path": "/foundations/iconography",
+      "before": "Icon helper obscured the direct CSS API.",
+      "fixes": [
+        "Direct paper-icon-compact/default/prominent/empty-state class reference and glyph samples.",
+        "Primary live/source example uses direct classes and accessible icon actions.",
+        "Explained iconClassName as optional class-string helper only."
+      ],
+      "checks": {
+        "earlier_browser_review": [
+          "Screenshot inspected at 1280px desktop and 360px mobile.",
+          "No page-level horizontal overflow measured at 320px.",
+          "Theme/density controls exercised."
+        ],
+        "final_feedback_review": [
+          "No page overflow at 1280px",
+          "Screenshot captured at 1280px",
+          "No page overflow at 360px",
+          "Screenshot captured at 360px",
+          "No page overflow at 320px",
+          "Dark/compact controls affect canvases only; docs/code remain neutral",
+          "Desktop and mobile screenshots visually inspected."
+        ]
+      },
+      "open_decisions": []
+    },
+    {
+      "id": "foundation.motion",
+      "path": "/foundations/motion",
+      "before": "Static marker samples did not demonstrate duration or reduced-motion behavior.",
+      "fixes": [
+        "User-triggered 120/180/240ms comparison.",
+        "Instructional CSS explicitly includes reduced-motion override and property guidance."
+      ],
+      "checks": {
+        "earlier_browser_review": [
+          "Screenshot inspected at 1280px desktop and 360px mobile.",
+          "No page-level horizontal overflow measured at 320px.",
+          "Theme/density controls exercised."
+        ],
+        "final_feedback_review": [
+          "No page overflow at 1280px",
+          "Screenshot captured at 1280px",
+          "No page overflow at 360px",
+          "Screenshot captured at 360px",
+          "No page overflow at 320px",
+          "Dark/compact controls affect canvases only; docs/code remain neutral",
+          "Desktop and mobile screenshots visually inspected."
+        ]
+      },
+      "open_decisions": []
+    },
+    {
+      "id": "foundation.brand",
+      "path": "/foundations/brand",
+      "before": "Light preview used monochrome wordmark, losing the approved violet K.",
+      "fixes": [
+        "Restored original wordmark-accent.svg in light preview and exact-source brand link.",
+        "Documented original/reversed/monochrome assets, dimensions, naming and bundler requirements."
+      ],
+      "checks": {
+        "earlier_browser_review": [
+          "Screenshot inspected at 1280px desktop and 360px mobile.",
+          "No page-level horizontal overflow measured at 320px.",
+          "Theme/density controls exercised."
+        ],
+        "final_feedback_review": [
+          "No page overflow at 1280px",
+          "Screenshot captured at 1280px",
+          "No page overflow at 360px",
+          "Screenshot captured at 360px",
+          "No page overflow at 320px",
+          "Dark/compact controls affect canvases only; docs/code remain neutral",
+          "Desktop and mobile screenshots visually inspected."
+        ]
+      },
+      "open_decisions": [
+        "Formal minimum display size and required clear space are not specified. Current example dimensions are not a newly approved brand standard."
+      ]
+    },
+    {
+      "id": "pattern.logging",
+      "path": "/patterns/logging",
+      "before": "Static summary actions and minimal pattern guidance did not show usable behavior.",
+      "fixes": [
+        "View/hide details action works.",
+        "Documented saved-reading versus contest-submission status, privacy and application responsibilities.",
+        "Removed repeated setup content; setup has a dedicated page."
+      ],
+      "checks": {
+        "earlier_browser_review": [
+          "Screenshot inspected at 1280px desktop and 360px mobile.",
+          "No page-level horizontal overflow measured at 320px.",
+          "Theme/density controls exercised."
+        ],
+        "final_feedback_review": [
+          "No page overflow at 1280px",
+          "Screenshot captured at 1280px",
+          "No page overflow at 360px",
+          "Screenshot captured at 360px",
+          "No page overflow at 320px",
+          "Desktop and mobile screenshots visually inspected.",
+          "Rechecked after installing temporary CJK browser fallback font: multilingual title visible.",
+          "View/hide details action passed in rebuilt iframe."
+        ]
+      },
+      "open_decisions": []
+    },
+    {
+      "id": "experiment.logging-v2",
+      "path": "/experiments/logging-v2",
+      "before": "Prototype did not demonstrate review/edit state or define persistence boundary.",
+      "fixes": [
+        "Validated entry moves to review with focus on heading; editing preserves values and returns focus to title.",
+        "Explicit preview-only confirmation and unresolved product choices.",
+        "Removed repeated setup content."
+      ],
+      "checks": {
+        "earlier_browser_review": [
+          "Screenshot inspected at 1280px desktop and 360px mobile.",
+          "No page-level horizontal overflow measured at 320px.",
+          "Theme/density controls exercised."
+        ],
+        "final_feedback_review": [
+          "No page overflow at 1280px",
+          "Screenshot captured at 1280px",
+          "No page overflow at 360px",
+          "Screenshot captured at 360px",
+          "No page overflow at 320px",
+          "Desktop and mobile screenshots visually inspected.",
+          "Rechecked after installing temporary CJK browser fallback font: multilingual title visible.",
+          "Review/edit actions preserve title and move focus to review heading then Work input."
+        ]
+      },
+      "open_decisions": [
+        "Decide whether review is mandatory and whether saving reading and contest submission are separate actions; determine eligibility rules.",
+        "Prototype currently includes work/pages only. Language, reading date, units and actual pending/error/success persistence states require the chosen product flow before implementation."
+      ]
+    },
+    {
+      "id": "governance.contributing",
+      "path": "/contributing",
+      "before": "Lifecycle and section-presence checks were being treated as sufficient completion evidence.",
+      "fixes": [
+        "Concrete contribution procedure, example completeness rules, rendered-review requirements and validation commands.",
+        "Lifecycle meanings and actual release impact documented."
+      ],
+      "checks": {
+        "earlier_browser_review": [
+          "Screenshot inspected at 1280px desktop and 360px mobile.",
+          "No page-level horizontal overflow measured at 320px."
+        ],
+        "final_feedback_review": [
+          "No page overflow at 1280px",
+          "Screenshot captured at 1280px",
+          "No page overflow at 360px",
+          "Screenshot captured at 360px",
+          "No page overflow at 320px",
+          "Desktop and mobile screenshots visually inspected."
+        ]
+      },
+      "open_decisions": []
+    },
+    {
+      "id": "governance.changelog",
+      "path": "/changelog",
+      "before": "Catalogue dates and phase completion implied more readiness than evidence supported.",
+      "fixes": [
+        "Separated unreleased current review from repository history and actual deployment.",
+        "Documented consumer impact and separate application migration status."
+      ],
+      "checks": {
+        "earlier_browser_review": [
+          "Screenshot inspected at 1280px desktop and 360px mobile.",
+          "No page-level horizontal overflow measured at 320px."
+        ],
+        "final_feedback_review": [
+          "No page overflow at 1280px",
+          "Screenshot captured at 1280px",
+          "No page overflow at 360px",
+          "Screenshot captured at 360px",
+          "No page overflow at 320px",
+          "Desktop and mobile screenshots visually inspected."
+        ]
+      },
+      "open_decisions": []
+    }
+  ],
+  "verified_earlier_regressions": {
+    "button_density": "Browser measured comfortable 44px buttons+inputs and compact 36px buttons+inputs even under a compact outer preview. Button visual contract failed before fix and passed after.",
+    "logging": "View/hide details works; review/edit focus and value preservation verified in browser.",
+    "motion": "User action changed markers; computed durations 120/180/240ms."
+  },
+  "tests_before_source_extraction": [
+    "37 foundation styleguide tests passed.",
+    "3 foundation recipe tests passed.",
+    "Own changed foundation files lint passed after source extraction."
+  ],
+  "final_verification": {
+    "styleguide_tests": "37 targeted foundation tests passed after actual-source extraction.",
+    "package_recipe_tests": "3 foundation recipe tests passed; 2 Button visual contract tests previously passed after fail-first fix.",
+    "typecheck": "paper-styleguide typecheck passed after rebuilt package.",
+    "lint": "FoundationSpecimen, FoundationGuide, 10 foundation example modules and example checks passed ESLint.",
+    "css_geometry": {
+      "padding_and_gap_steps_px": [
+        4,
+        8,
+        12,
+        16,
+        24,
+        32,
+        48
+      ],
+      "nested_comfortable_button_and_input_px": 44,
+      "nested_compact_button_and_input_px": 36,
+      "compact_link_padding_px": 0
+    },
+    "source_parity": "10 app-local JSX examples import the same module for render and ?raw display. Logging pattern/v2 now use canonical package example modules extracted by the forms agent.",
+    "motion": "Compare action moves markers; prefers-reduced-motion yields 0s transitions in Chromium.",
+    "semantic_colors": "All 37 public semantic color tokens are present, one per row with light/dark swatches.",
+    "font_environment": "Initial headless environment had only DejaVu and could not display Japanese. Added Noto Sans CJK JP to temporary browser fonts only; final Logging screenshots display \u30b3\u30f3\u30d3\u30cb\u4eba\u9593. No CJK font dependency added to the package.",
+    "notes": [
+      "The responsive component iframe remains a bounded 352px-high viewport. Taller Logging v2 forms scroll within it; navigation agent confirmed this is intentional for overlay/viewport demonstrations.",
+      "Examples are local demonstrations. No application migration, persistence, production release or deployment performed."
+    ]
+  },
+  "durable_screenshots": [
+    "docs/wip/tadoku-paper/review-2026-09/foundation-evidence/color-reference.png",
+    "docs/wip/tadoku-paper/review-2026-09/foundation-evidence/brand-final.png",
+    "docs/wip/tadoku-paper/review-2026-09/foundation-evidence/logging-final-360.png"
+  ],
+  "additional_screenshots": "/tmp/paper-browser/foundations (desktop/mobile captures for every assigned page; additional dark/compact captures and focused source views)"
+}

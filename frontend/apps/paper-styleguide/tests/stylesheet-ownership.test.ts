@@ -30,7 +30,7 @@ describe('styleguide stylesheet ownership', () => {
       importedStyleSpecifiers.length,
     )
     expect(stylesheetNames).toEqual(
-      ['shell.css', ...expectedStyleImports.map((path) => basename(path))].sort(),
+      ['shell.css', 'tailwind.css', ...expectedStyleImports.map((path) => basename(path))].sort(),
     )
   })
 

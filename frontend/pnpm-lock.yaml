@@ -143,7 +143,7 @@ importers:
         version: 8.5.23
       tailwindcss:
         specifier: ^3.2.4
-        version: 3.4.18
+        version: 3.4.18(yaml@2.7.1)
       vitest:
         specifier: 4.1.10
         version: 4.1.10(@types/node@18.7.18)(jsdom@27.0.1)(vite@6.4.3(@types/node@18.7.18)(jiti@1.21.7)(yaml@2.7.1))
@@ -216,13 +216,16 @@ importers:
         version: 8.5.23
       tailwindcss:
         specifier: ^3.2.4
-        version: 3.4.18
+        version: 3.4.18(yaml@2.7.1)
 
   apps/paper-styleguide:
     dependencies:
       paper-ui:
         specifier: workspace:*
         version: link:../../packages/paper-ui
+      prismjs:
+        specifier: 1.30.0
+        version: 1.30.0
       react:
         specifier: 18.2.0
         version: 18.2.0
@@ -254,6 +257,9 @@ importers:
       '@types/node':
         specifier: 20.19.25
         version: 20.19.25
+      '@types/prismjs':
+        specifier: ^1.26.6
+        version: 1.26.6
       '@types/react':
         specifier: 18.0.26
         version: 18.0.26
@@ -266,6 +272,9 @@ importers:
       '@vitejs/plugin-react':
         specifier: 4.7.0
         version: 4.7.0(vite@6.4.3(@types/node@20.19.25)(jiti@1.21.7)(yaml@2.7.1))
+      autoprefixer:
+        specifier: 10.4.21
+        version: 10.4.21(postcss@8.5.23)
       eslint:
         specifier: 9.39.2
         version: 9.39.2(jiti@1.21.7)
@@ -278,6 +287,12 @@ importers:
       jsdom:
         specifier: 27.0.1
         version: 27.0.1
+      postcss:
+        specifier: 8.5.23
+        version: 8.5.23
+      tailwindcss:
+        specifier: 3.4.18
+        version: 3.4.18(yaml@2.7.1)
       typescript:
         specifier: npm:@typescript/typescript6@6.0.2
         version: '@typescript/typescript6@6.0.2'
@@ -377,7 +392,7 @@ importers:
         version: 8.5.23
       tailwindcss:
         specifier: ^3.2.4
-        version: 3.4.18
+        version: 3.4.18(yaml@2.7.1)
 
   apps/webv2:
     dependencies:
@@ -495,7 +510,7 @@ importers:
         version: 8.5.23
       tailwindcss:
         specifier: ^3.2.4
-        version: 3.4.18
+        version: 3.4.18(yaml@2.7.1)
       vitest:
         specifier: 4.1.10
         version: 4.1.10(@types/node@18.7.18)(jsdom@27.0.1)(vite@6.4.3(@types/node@18.7.18)(jiti@1.21.7)(yaml@2.7.1))
@@ -586,7 +601,7 @@ importers:
         version: 2.2.0(react@18.2.0)
       '@tailwindcss/forms':
         specifier: ^0.5.3
-        version: 0.5.10(tailwindcss@3.4.18)
+        version: 0.5.10(tailwindcss@3.4.18(yaml@2.7.1))
       '@types/node':
         specifier: 18.11.10
         version: 18.11.10
@@ -632,7 +647,7 @@ importers:
         version: 8.5.23
       tailwindcss:
         specifier: ^3.2.4
-        version: 3.4.18
+        version: 3.4.18(yaml@2.7.1)
 
 packages:
 
@@ -1931,6 +1946,9 @@ packages:
 
   '@types/node@20.19.25':
     resolution: {integrity: sha512-ZsJzA5thDQMSQO788d7IocwwQbI8B5OPzmqNvpf3NY/+MHDAS759Wo0gd2WQeXYt5AAAQjzcrTVC6SKCuYgoCQ==}
+
+  '@types/prismjs@1.26.6':
+    resolution: {integrity: sha512-vqlvI7qlMvcCBbVe0AKAb4f97//Hy0EBTaiW8AalRnG/xAN5zOiWWyrNqNXeq8+KAuvRewjCVY1+IPxk4RdNYw==}
 
   '@types/prop-types@15.7.14':
     resolution: {integrity: sha512-gNMvNH49DJ7OJYv+KAKn0Xp45p8PLl6zo2YnvDIbTd4J6MER2BmWN49TG7n9LvkyihINxeKW8+3bfS2yDC9dzQ==}
@@ -4118,18 +4136,6 @@ packages:
     peerDependencies:
       postcss: ^8.4.21
 
-  postcss-load-config@4.0.2:
-    resolution: {integrity: sha512-bSVhyJGL00wMVoPUzAVAnbEoWyqRxkjv64tUl427SKnPrENtq6hJwUojroMz2VB+Q1edmi4IfrAPpami5VVgMQ==}
-    engines: {node: '>= 14'}
-    peerDependencies:
-      postcss: '>=8.0.9'
-      ts-node: '>=9.0.0'
-    peerDependenciesMeta:
-      postcss:
-        optional: true
-      ts-node:
-        optional: true
-
   postcss-load-config@6.0.1:
     resolution: {integrity: sha512-oPtTM4oerL+UXmx+93ytZVN82RrlY/wPUV8IeDxFrzIjXOLF1pN+EmKPLbubvKHT2HC20xXsCAH2Z+CKV6Oz/g==}
     engines: {node: '>= 18'}
@@ -6252,10 +6258,10 @@ snapshots:
     dependencies:
       tslib: 2.8.1
 
-  '@tailwindcss/forms@0.5.10(tailwindcss@3.4.18)':
+  '@tailwindcss/forms@0.5.10(tailwindcss@3.4.18(yaml@2.7.1))':
     dependencies:
       mini-svg-data-uri: 1.4.4
-      tailwindcss: 3.4.18
+      tailwindcss: 3.4.18(yaml@2.7.1)
 
   '@tanstack/react-table@8.21.3(react-dom@18.2.0(react@18.2.0))(react@18.2.0)':
     dependencies:
@@ -6389,6 +6395,8 @@ snapshots:
   '@types/node@20.19.25':
     dependencies:
       undici-types: 6.21.0
+
+  '@types/prismjs@1.26.6': {}
 
   '@types/prop-types@15.7.14': {}
 
@@ -8921,13 +8929,6 @@ snapshots:
       camelcase-css: 2.0.1
       postcss: 8.5.23
 
-  postcss-load-config@4.0.2(postcss@8.5.23):
-    dependencies:
-      lilconfig: 3.1.3
-      yaml: 2.7.1
-    optionalDependencies:
-      postcss: 8.5.23
-
   postcss-load-config@6.0.1(jiti@1.21.7)(postcss@8.5.23)(yaml@2.7.1):
     dependencies:
       lilconfig: 3.1.3
@@ -9515,7 +9516,7 @@ snapshots:
 
   tabbable@6.4.0: {}
 
-  tailwindcss@3.4.18:
+  tailwindcss@3.4.18(yaml@2.7.1):
     dependencies:
       '@alloc/quick-lru': 5.2.0
       arg: 5.0.2
@@ -9534,13 +9535,14 @@ snapshots:
       postcss: 8.5.23
       postcss-import: 15.1.0(postcss@8.5.23)
       postcss-js: 4.0.1(postcss@8.5.23)
-      postcss-load-config: 4.0.2(postcss@8.5.23)
+      postcss-load-config: 6.0.1(jiti@1.21.7)(postcss@8.5.23)(yaml@2.7.1)
       postcss-nested: 6.2.0(postcss@8.5.23)
       postcss-selector-parser: 6.1.2
       resolve: 1.22.10
       sucrase: 3.35.0
     transitivePeerDependencies:
-      - ts-node
+      - tsx
+      - yaml
 
   text-table@0.2.0: {}
 
@@ -10047,7 +10049,8 @@ snapshots:
 
   yallist@3.1.1: {}
 
-  yaml@2.7.1: {}
+  yaml@2.7.1:
+    optional: true
 
   yocto-queue@0.1.0: {}
 

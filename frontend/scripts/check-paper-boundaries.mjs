@@ -49,6 +49,21 @@ function legacyClassesInMarkup(source) {
   return [...found]
 }
 
+function moduleSpecifiers(source) {
+  // Consume literals whole so tutorial snippets cannot introduce import tokens.
+  // Comments are discarded between tokens, including between `from` and a path.
+  const tokens = (source.match(/\/\*[\s\S]*?\*\/|\/\/[^\n]*|"(?:\\[\s\S]|[^"\\])*"|'(?:\\[\s\S]|[^'\\])*'|`(?:\\[\s\S]|[^`\\])*`|[\w$]+|[^\s]/g) || [])
+    .filter((token) => !token.startsWith('//') && !token.startsWith('/*'))
+  const modules = []
+  for (let index = 0; index < tokens.length; index += 1) {
+    const token = tokens[index]
+    if (token !== 'import' && token !== 'from' && token !== 'require') continue
+    const next = tokens[index + 1] === '(' ? tokens[index + 2] : tokens[index + 1]
+    if (next?.startsWith('"') || next?.startsWith("'")) modules.push(next.slice(1, -1))
+  }
+  return modules
+}
+
 async function inspectTree(path, system, requireStyles = false) {
   try {
     const manifestPath = join(path, 'package.json')
@@ -72,15 +87,16 @@ async function inspectTree(path, system, requireStyles = false) {
   let paperStyleImports = 0
   for (const file of await sourceFiles(path)) {
     const source = await readFile(file, 'utf8')
-    if (/paper-ui\/src\//.test(source)) report(file, 'private paper-ui source import')
-    if (/['"]paper-ui\/styles\.css['"]/.test(source)) paperStyleImports += 1
+    const modules = moduleSpecifiers(source)
+    if (modules.some((name) => name.startsWith('paper-ui/src/'))) report(file, 'private paper-ui source import')
+    paperStyleImports += modules.filter((name) => name === 'paper-ui/styles.css').length
 
     if (system === 'paper') {
-      if (/(?:from\s+|import\s*(?:\(\s*)?|require\(\s*)['"]ui(?:\/[^'"]*)?['"]/.test(source)) report(file, 'legacy ui import in Paper code')
-      if (/(?:from\s+|import\s*(?:\(\s*)?|require\(\s*)['"](?:next(?:\/[^'"]*)?|@headlessui\/react)['"]/.test(source)) report(file, 'Next or Headless UI import in Paper code')
+      if (modules.some((name) => name === 'ui' || name.startsWith('ui/'))) report(file, 'legacy ui import in Paper code')
+      if (modules.some((name) => name === 'next' || name.startsWith('next/') || name === '@headlessui/react' || name.startsWith('@headlessui/react/'))) report(file, 'Next or Headless UI import in Paper code')
       const legacyClasses = legacyClassesInMarkup(source)
       if (legacyClasses.length) report(file, `legacy-only classes in Paper markup: ${legacyClasses.join(', ')}`)
-    } else if (/(?:from\s+|import\s*(?:\(\s*)?|require\(\s*)['"]paper-ui(?:\/[^'"]*)?['"]/.test(source)) {
+    } else if (modules.some((name) => name === 'paper-ui' || name.startsWith('paper-ui/'))) {
       report(file, 'paper-ui import in an unmigrated application')
     }
   }

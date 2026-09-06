@@ -6,7 +6,8 @@
     justify-content: center;
     min-block-size: var(--paper-control-height);
     gap: 0.5rem;
-    padding: 0.5625rem 0.9375rem 0.5rem;
+    padding: var(--paper-button-padding);
+    font-size: var(--paper-button-font-size);
     border: var(--paper-border-static-width) solid var(--paper-color-action-default);
     border-block-end-color: var(--paper-color-rule-action-edge);
     border-block-end-width: var(--paper-border-action-edge-width);
@@ -105,12 +106,6 @@
     place-items: center;
     inline-size: var(--paper-icon-size-default);
     block-size: var(--paper-icon-size-default);
-  }
-
-  [data-density="compact"] .paper-button {
-    min-block-size: 2.25rem;
-    padding: 0.375rem 0.6875rem 0.3125rem;
-    font-size: 0.875rem;
   }
 
   .paper-button__icon > svg {

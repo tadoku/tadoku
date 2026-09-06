@@ -96,6 +96,13 @@ export interface CatalogAccessibility {
 }
 
 export interface CatalogApiContract {
+  readonly props?: readonly {
+    readonly name: string;
+    readonly type: string;
+    readonly description: string;
+    readonly defaultValue?: string;
+    readonly required?: boolean;
+  }[];
   readonly react: readonly string[];
   readonly cssClasses: readonly string[];
   readonly publicTypes: readonly string[];

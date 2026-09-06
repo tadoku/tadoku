@@ -35,6 +35,9 @@
   }
 
   .paper-input {
+    font-family: var(--paper-font-body);
+    font-size: var(--paper-type-body-size);
+    line-height: 1.25;
     inline-size: 100%;
     min-block-size: var(--paper-control-height);
     padding: var(--paper-field-padding-block) var(--paper-field-padding-inline);

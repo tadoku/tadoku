@@ -1,0 +1,32 @@
+[
+  {
+    "id": "foundation.typography",
+    "field": "api",
+    "oldCount": 283,
+    "newCount": 300
+  },
+  {
+    "id": "foundation.spacing-and-density",
+    "field": "api",
+    "oldCount": 220,
+    "newCount": 277
+  },
+  {
+    "id": "foundation.spacing-and-density",
+    "field": "guidance",
+    "oldCount": 639,
+    "newCount": 729
+  },
+  {
+    "id": "foundation.iconography",
+    "field": "api",
+    "oldCount": 219,
+    "newCount": 300
+  },
+  {
+    "id": "component.action-menu",
+    "field": "api",
+    "oldCount": 1165,
+    "newCount": 1380
+  }
+]

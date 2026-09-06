@@ -63,14 +63,13 @@
 
   .workbench-reference-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+    grid-template-columns: minmax(0, 1fr);
     gap: 1.5rem;
   }
 
   .workbench-reference-grid section {
-    padding-inline-start: 1rem;
-    border-inline-start: var(--paper-accent-rail-width) solid
-      var(--paper-color-rule-default);
+    padding: 0;
+    border: 0;
   }
 
   /* Workbench iframe: fixture spacing without component appearance overrides. */
@@ -92,4 +91,30 @@
     display: grid;
     gap: 1rem;
   }
+}
+
+@layer paper-styleguide {
+  .workbench-props-table { table-layout: fixed; }
+  .workbench-prop-default { margin: 0 0 0.5rem; font-size: 0.8125rem; }
+  .workbench-api code { overflow-wrap: normal; word-break: normal; }
+  .workbench-prop-type { display: block; margin-block-start: 0.4rem; font-size: 0.8125rem; font-weight: normal; }
+  .workbench-api { padding: 1.25rem; display: grid; gap: 2rem; }
+  .workbench-api .workbench-reference-grid { padding: 0; }
+  .workbench-reference-grid h4 { margin: 0 0 0.5rem; }
+  .workbench-reference-grid ul { margin: 0; padding-inline-start: 1.25rem; }
+  .workbench-reference-grid li + li { margin-block-start: 0.4rem; }
+  .workbench-reference-grid code { overflow-wrap: normal; word-break: normal; }
+  .workbench-reference-grid li { overflow-wrap: anywhere; }
+  .paper-code-block { max-inline-size: 100%; overflow: auto; padding: 1rem; font: 0.8125rem/1.65 var(--paper-font-monospace); white-space: pre; }
+  .docs-shell .paper-code-block code { color: var(--paper-color-text-ink); overflow-wrap: normal; }
+  .paper-code-block .token.comment { color: var(--paper-color-text-muted); }
+  .paper-code-block .token.keyword,
+  .paper-code-block .token.tag { color: var(--paper-color-action-default); }
+  .paper-code-block .token.string,
+  .paper-code-block .token.attr-value { color: var(--paper-color-status-success); }
+  .paper-code-block .token.function,
+  .paper-code-block .token.class-name,
+  .paper-code-block .token.number { color: var(--paper-color-text-link); }
+  .paper-code-block .token.attr-name,
+  .paper-code-block .token.operator { color: var(--paper-color-status-danger); }
 }

@@ -1,13 +1,15 @@
-import { FormProvider, useForm } from "react-hook-form";
-import { Button, ButtonGroup, Flash, Input, Surface } from "../index";
+import Example46 from "./examples/experiment.logging-v2-entry";
+import Example46Source from "./examples/experiment.logging-v2-entry.tsx?raw";
+import Example45 from "./examples/pattern.logging-summary";
+import Example45Source from "./examples/pattern.logging-summary.tsx?raw";
 import {
-  defineCatalogDocument,
-  defineCatalogFixture,
-  type CatalogDocument,
-  type CatalogRedirect,
+defineCatalogDocument,
+defineCatalogFixture,
+type CatalogDocument,
+type CatalogRedirect,
 } from "./schema";
 
-const REVIEW_DATE = "2026-08-08";
+const REVIEW_DATE = "2026-09-05";
 const PACKAGE_VERSION = "0.1.0";
 const VIEWPORTS = [
   { id: "phone", label: "Phone", width: 360, height: 720 },
@@ -46,7 +48,7 @@ function guidanceDocument(options: GuidanceDocumentOptions): CatalogDocument {
     accessibility: {
       requirements: options.requirements,
       keyboard: [],
-      knownConstraints: ["The comprehensive WCAG and forced-colors audit remains tracked separately."],
+      knownConstraints: ["Review these roles in the consuming screen; a foundation sample cannot certify an application’s accessibility."],
     },
     api: {
       react: [],
@@ -83,39 +85,39 @@ export const phaseThreeFoundationDocuments = [
     whenToUse: ["Choose a semantic role for every product color."],
     content: ["Warm paper neutrals carry structure while ink violet is reserved for action, focus, and small annotation-like accents.", "Status and chart colors always need text, shape, pattern, or position as a second cue."],
     requirements: ["Use semantic aliases and preserve text/action contrast in both themes."],
-    publicContract: ["Public custom properties use the --paper-color-* families."],
+    publicContract: ["Use bg-canvas, bg-paper, text-ink, text-muted and other semantic colors through paper-ui/tailwind-preset. Custom CSS can use the --paper-color-* properties."],
   }),
   guidanceDocument({
     id: "foundation.typography", route: "/foundations/typography", name: "Typography", kind: "foundation",
     summary: "Merriweather editorial hierarchy with Open Sans for interface copy and dense controls.",
     keywords: ["typography", "fonts", "hierarchy", "prose"], sourcePath: "src/foundations/fonts.css",
     whenToUse: ["Use named type roles instead of choosing ad hoc sizes or weights."],
-    content: ["Merriweather is limited to display, page, and section hierarchy. Open Sans carries component titles, labels, metadata, and body copy.", "Self-hosted 400, 600, and 700 weights keep emphasis honest and delivery framework-independent."],
+    content: ["Merriweather is limited to display, page, and section hierarchy. Open Sans carries component titles, labels, metadata, and body copy.", "Merriweather is shipped at 700; Open Sans at 400, 600, and 700. The full paper-ui/styles.css entry includes the bundled fonts. Other weights and scripts may fall back to browser fonts."],
     requirements: ["Respect zoom, user font settings, and readable line lengths."],
-    publicContract: ["Use paper-type-display, paper-type-page, paper-type-section, paper-type-component, paper-type-label, and paper-type-metadata."],
+    publicContract: ["Use paper-type-display, paper-type-page, paper-type-section, paper-type-component, paper-type-body, paper-type-label, and paper-type-metadata."],
   }),
   guidanceDocument({
     id: "foundation.spacing-and-density", route: "/foundations/spacing-and-density", name: "Spacing and density", kind: "foundation",
     summary: "A shared spacing rhythm with comfortable 44px and compact 36px control contracts.",
     keywords: ["spacing", "density", "compact", "comfortable"], sourcePath: "src/foundations/tokens.css",
     whenToUse: ["Apply one density at an application or bounded preview root."],
-    content: ["Comfortable is the product default; compact is for information-dense administration without shrinking icon-only targets below an accessible size."],
+    content: ["Use ordinary Tailwind utilities through paper-ui/tailwind-preset: p-4 for 16px padding, gap-2 for 8px between flex/grid children, px-6 for horizontal padding and mt-8 for space before a section. Paper’s preferred 1/2/3/4/6/8/12 values map to semantic tokens; Tailwind’s remaining scale and responsive variants stay available. Comfortable is the product default; compact changes control height, field padding, inline gaps and body type. Page spacing and headings stay fixed.", "Use comfortable for touch-heavy reading flows. Compact controls are 36px minimum; icon-only actions need an explicit 44px target."],
     requirements: ["Density may change spacing and type roles but not semantics, names, or focus visibility."],
-    publicContract: ["Set data-density to comfortable or compact at a root boundary."],
+    publicContract: ["Use p-*, px-*, m-* and gap-* through the Paper Tailwind preset on composition containers; set data-density to comfortable or compact at a root boundary. The standalone stylesheet exposes CSS variables without duplicating Tailwind spacing classes."],
   }),
   guidanceDocument({
     id: "foundation.shape-and-borders", route: "/foundations/shape-and-borders", name: "Shape and borders", kind: "foundation",
     summary: "Square geometry, quiet rules, straight accent rails, and deliberate lower edges.",
-    keywords: ["shape", "borders", "rules", "accent rail"], sourcePath: "src/foundations/tokens.css",
+    keywords: ["shape", "borders", "rules", "accent rail"], sourcePath: "styles/recipes.css",
     whenToUse: ["Use borders to explain structure or interaction, never to decorate every region."],
-    content: ["Static surfaces use a quiet one-pixel rule. Pale controls receive a subtle two-pixel lower edge; filled actions keep a stronger action edge.", "A colored accent rail replaces the left hairline and overlays its endpoints so no mitered joins appear."],
+    content: ["Static surfaces use a quiet one-pixel rule. Pale controls receive a subtle two-pixel lower edge; filled actions keep a stronger action edge.", "A 3px accent rail covers the leading hairline of a bordered Surface and meets its top and bottom edges squarely. Borderless rails stay within their host’s height."],
     requirements: ["Focus rings remain distinct from borders and status rails."],
     publicContract: ["Use paper-accent-rail and the public field/action recipes."],
   }),
   guidanceDocument({
     id: "foundation.elevation", route: "/foundations/elevation", name: "Elevation", kind: "foundation",
     summary: "Flat ordinary surfaces with hard-offset depth for floating and rare showcase layers.",
-    keywords: ["elevation", "shadow", "overlay", "surface"], sourcePath: "src/foundations/tokens.css",
+    keywords: ["elevation", "shadow", "overlay", "surface"], sourcePath: "styles/recipes.css",
     whenToUse: ["Use floating for transient layers and showcase only for deliberate demonstrations."],
     content: ["Ordinary cards remain flat. Floating uses a three-pixel hard offset; showcase uses five pixels and should stay rare."],
     requirements: ["Elevation must not be the only cue for hierarchy or interactivity."],
@@ -128,7 +130,7 @@ export const phaseThreeFoundationDocuments = [
     whenToUse: ["Use an icon when it improves recognition or saves space without obscuring the action."],
     content: ["Outline icons represent navigation and actions; solid icons represent confirmation and status. Sizes are compact 16px, default 20px, prominent 24px, and 48px only for empty-state illustration."],
     requirements: ["Decorative icons are hidden; icon-only controls have stable accessible names."],
-    publicContract: ["Import curated symbols and iconClassName from paper-ui/icons."],
+    publicContract: ["Import icons from paper-ui/icons and use paper-icon-compact/default/prominent/empty-state classes. iconClassName is an optional string helper."],
   }),
   guidanceDocument({
     id: "foundation.motion", route: "/foundations/motion", name: "Motion", kind: "foundation",
@@ -142,11 +144,11 @@ export const phaseThreeFoundationDocuments = [
   guidanceDocument({
     id: "foundation.layout", route: "/foundations/layout", name: "Layout", kind: "foundation",
     summary: "Responsive page width, prose measure, stack, cluster, and overflow guidance.",
-    keywords: ["layout", "responsive", "measure", "stack"], sourcePath: "src/foundations/base.css",
+    keywords: ["layout", "responsive", "measure", "stack"], sourcePath: "styles/utilities.css",
     whenToUse: ["Compose pages from document flow first, then add grids only when relationships require them."],
     content: ["Keep reading copy to a legible measure, let controls wrap before they overflow, and place horizontal data inside an explicitly labelled scroll region."],
     requirements: ["Layouts reflow at 320 CSS pixels without losing content or two-dimensional scrolling."],
-    publicContract: ["Paper utilities cover stacks, clusters, fixture rows, and readable measures."],
+    publicContract: ["Public utilities: paper-stack (vertical flow, --paper-stack-gap), paper-cluster (wrapping actions, --paper-cluster-gap), paper-measure (65ch). Applications own page grids, widths, breakpoints and scroll-region semantics. Fixture classes are catalogue-only."],
   }),
   guidanceDocument({
     id: "foundation.brand", route: "/foundations/brand", name: "Brand", kind: "foundation",
@@ -159,50 +161,20 @@ export const phaseThreeFoundationDocuments = [
   }),
 ] as const;
 
-function ReadingLogPatternFixture() {
-  return (
-    <Surface as="article" accent>
-      <p className="paper-type-metadata">AUGUST JAPANESE</p>
-      <h3 className="paper-type-component">Today’s reading</h3>
-      <p>48 pages of コンビニ人間 · private notes saved</p>
-      <ButtonGroup actions={[
-        { id: "view", label: "View log", href: "#view-log", variant: "outline" },
-        { id: "continue", label: "Add reading", onSelect: () => undefined },
-      ]} />
-    </Surface>
-  );
-}
-
-function LoggingExperimentFixture() {
-  const methods = useForm({ defaultValues: { title: "コンビニ人間", pages: "48" } });
-  return (
-    <FormProvider {...methods}>
-      <form className="paper-fixture-form" onSubmit={methods.handleSubmit(() => undefined)}>
-        <Flash title="Experimental flow">Contest submission remains a separate confirmation step.</Flash>
-        <Input name="title" label="Work" />
-        <Input name="pages" label="Pages" inputMode="numeric" />
-        <div className="paper-fixture-row">
-          <Button type="submit">Review entry</Button>
-        </div>
-      </form>
-    </FormProvider>
-  );
-}
-
 export const phaseThreeContentFixtures = [
   defineCatalogFixture({
     id: "pattern.logging-summary", name: "Reading-log summary", description: "A realistic summary with explicit navigation and continuation actions.",
     tags: ["logging", "pattern", "reading"], themes: ["light", "dark"], densities: ["comfortable", "compact"], viewports: VIEWPORTS,
     deterministic: true,
-    code: `import { ButtonGroup, Surface } from "paper-ui";\n\n<Surface as="article" accent>\n  <h3>Today’s reading</h3>\n  <p>48 pages of コンビニ人間</p>\n  <ButtonGroup actions={actions} />\n</Surface>`,
-    render: () => <ReadingLogPatternFixture />,
+    code: Example45Source,
+    render: () => <Example45 />,
   }),
   defineCatalogFixture({
     id: "experiment.logging-v2-entry", name: "Logging v2 entry", description: "A deterministic experiment separating saved reading from contest submission.",
     tags: ["logging", "experiment", "form"], themes: ["light", "dark"], densities: ["comfortable", "compact"], viewports: VIEWPORTS,
     deterministic: true,
-    code: `import { Button, Flash, Input } from "paper-ui";\nimport { FormProvider, useForm } from "react-hook-form";\n\n<FormProvider {...methods}>\n  <form onSubmit={methods.handleSubmit(reviewEntry)}>\n    <Flash title="Experimental flow">Contest submission is separate.</Flash>\n    <Input name="title" label="Work" />\n    <Input name="pages" label="Pages" inputMode="numeric" />\n    <Button type="submit">Review entry</Button>\n  </form>\n</FormProvider>`,
-    render: () => <LoggingExperimentFixture />,
+    code: Example46Source,
+    render: () => <Example46 />,
   }),
 ] as const;
 
@@ -264,7 +236,7 @@ export const phaseThreeGovernanceDocuments = [
     summary: "Meaningful package, component, documentation, deployment, and migration changes.",
     keywords: ["changelog", "release", "version", "migration"], sourcePath: "docs/wip/tadoku-paper/research",
     whenToUse: ["Consult before upgrading Paper or changing an application integration."],
-    content: ["0.1.0 establishes semantic foundations, the complete catalogue contract, static delivery at paper.tadoku.app, framework-neutral components, and TypeScript 4.9-compatible built declarations.", "TypeScript 7.0.2 performs Paper typechecks while the TypeScript 6 compatibility API remains available to ESLint and declaration tooling."],
+    content: ["0.1.0 establishes semantic foundations, the complete catalogue contract, static delivery at paper.tadoku.app, framework-neutral components, and TypeScript 4.9-compatible built declarations.", "Current review (unreleased) adds usable foundation examples, a spacing scale and layout utilities, and corrects accent-rail perimeter alignment. Documentation coverage is not an application migration or release approval."],
     requirements: ["Record behavior, accessibility, API, or migration consequences instead of listing filenames alone."],
     publicContract: ["Release identity is the merged Tadoku commit plus immutable container digest recorded at each deployment gate."],
   }),

@@ -1,0 +1,65 @@
+import { Button, Flash, RadioSelect } from 'paper-ui'
+import { useState } from 'react'
+import { FormProvider, useForm } from 'react-hook-form'
+
+export default function Example() {
+  const [savedValues, setSavedValues] = useState<Record<
+    string,
+    unknown
+  > | null>(null)
+  const methods = useForm({ defaultValues: { viewport: 'desktop' } })
+  return (
+    <FormProvider {...methods}>
+      <form
+        className="paper-stack"
+        style={{ maxWidth: '32rem' }}
+        noValidate
+        onSubmit={methods.handleSubmit(values => setSavedValues(values))}
+      >
+        <RadioSelect
+          name="viewport"
+          label="Preview size"
+          hint="Choose one viewport for the isolated preview."
+          variant="segmented"
+          required
+          options={[
+            { value: 'phone', label: 'Phone' },
+            { value: 'tablet', label: 'Tablet' },
+            { value: 'desktop', label: 'Desktop' },
+          ]}
+        />
+        <div className="paper-cluster">
+          <Button type="submit">Save entry</Button>
+          <Button
+            variant="outline"
+            onClick={() => {
+              methods.reset()
+              setSavedValues(null)
+            }}
+          >
+            Reset
+          </Button>
+        </div>
+        {savedValues ? (
+          <Flash variant="success" title="Entry saved">
+            <pre
+              style={{
+                whiteSpace: 'pre-wrap',
+                overflowWrap: 'anywhere',
+                margin: 0,
+              }}
+            >
+              {JSON.stringify(savedValues, null, 2)}
+            </pre>
+          </Flash>
+        ) : null}
+        <details>
+          <summary>Current form values</summary>
+          <pre style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>
+            {JSON.stringify(methods.watch(), null, 2)}
+          </pre>
+        </details>
+      </form>
+    </FormProvider>
+  )
+}

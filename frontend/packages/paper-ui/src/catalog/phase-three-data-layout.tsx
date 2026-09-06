@@ -1,166 +1,190 @@
-import { DateTime, Interval } from "luxon";
-import { HeatmapChart } from "../components/data-display/HeatmapChart";
-import { Table, type TableColumn } from "../components/data-display/Table";
+import Example44 from "./examples/heatmap-chart.empty";
+import Example44Source from "./examples/heatmap-chart.empty.tsx?raw";
+import Example43 from "./examples/heatmap-chart.reading-activity";
+import Example43Source from "./examples/heatmap-chart.reading-activity.tsx?raw";
+import Example42 from "./examples/table.empty";
+import Example42Source from "./examples/table.empty.tsx?raw";
+import Example41 from "./examples/table.reading-log";
+import Example41Source from "./examples/table.reading-log.tsx?raw";
 import {
-  defineCatalogDocument,
-  defineCatalogFixture,
-  COMPONENT_PAGE_SECTION_KEYS,
-  type CatalogDocument,
-  type ComponentDocumentationSections,
-  type RequiredComponentSections,
+COMPONENT_PAGE_SECTION_KEYS,
+defineCatalogDocument,
+defineCatalogFixture,
+type CatalogDocument,
+type ComponentDocumentationSections,
+type RequiredComponentSections,
 } from "./schema";
 
-const REVIEW_DATE = "2026-08-08";
+const REVIEW_DATE = "2026-09-05";
 const PACKAGE_VERSION = "0.1.0";
-const VIEWPORTS = [
-  { id: "phone", label: "Phone", width: 360, height: 720 },
-  { id: "tablet", label: "Tablet", width: 768, height: 800 },
-  { id: "desktop", label: "Desktop", width: 1280, height: 800 },
-] as const;
-
-interface ReadingRow {
-  readonly id: string;
-  readonly title: string;
-  readonly language: string;
-  readonly progress: number;
-  readonly status: string;
-}
-
-const readingRows: readonly ReadingRow[] = [
-  { id: "1", title: "The Housekeeper and the Professor", language: "Japanese", progress: 184, status: "Finished" },
-  { id: "2", title: "Convenience Store Woman", language: "Japanese", progress: 73, status: "Reading" },
-  { id: "3", title: "The Three-Body Problem", language: "Chinese", progress: 42, status: "Reading" },
-];
-
-const readingColumns: readonly TableColumn<ReadingRow>[] = [
-  { id: "title", header: "Title", rowHeader: true, width: "18rem", cell: (row) => row.title },
-  { id: "language", header: "Language", cell: (row) => row.language },
-  { id: "progress", header: "Pages", align: "end", cell: (row) => row.progress },
-  { id: "status", header: "Status", cell: (row) => row.status },
-];
-
-const heatmapYear = 2023;
-const heatmapData = Interval.fromDateTimes(
-  DateTime.fromObject({ year: heatmapYear, month: 1, day: 1 }),
-  DateTime.fromObject({ year: heatmapYear, month: 12, day: 31 }).endOf("day"),
-).splitBy({ day: 1 }).flatMap((interval, index) => {
-  const date = interval.start;
-  if (date === null) return [];
-  const value = index % 5 === 0 ? 0 : ((index * 37) % 100) + 1;
-  return [{
-    date: date.toISODate() ?? "",
-    value,
-    tooltip: `${value} points on ${date.toLocaleString(DateTime.DATE_FULL)}`,
-  }];
-});
-
 export const phaseThreeDataLayoutFixtures = [
-  defineCatalogFixture({
-    id: "table.reading-log",
-    name: "Reading log table",
-    description: "A responsive reading log with native column and row headers.",
-    tags: ["table", "responsive", "row headers", "reading log"],
-    themes: ["light", "dark"],
-    densities: ["comfortable", "compact"],
-    viewports: VIEWPORTS,
-    deterministic: true,
-    code: `import { Table } from "paper-ui";
-
-<Table
-  caption="Recent reading"
-  rows={entries}
-  getRowKey={(entry) => entry.id}
-  columns={[
-    { id: "title", header: "Title", rowHeader: true, cell: (entry) => entry.title },
-    { id: "language", header: "Language", cell: (entry) => entry.language },
-    { id: "pages", header: "Pages", align: "end", cell: (entry) => entry.pages },
-  ]}
-/>`,
-    render: () => (
-      <Table
-        caption="Recent reading"
-        rows={readingRows}
-        columns={readingColumns}
-        getRowKey={(row) => row.id}
-      />
-    ),
-  }),
-  defineCatalogFixture({
-    id: "table.empty",
-    name: "Empty reading log",
-    description: "An empty table keeps its caption, headers, and explicit state message.",
-    tags: ["table", "empty", "status"],
-    themes: ["light", "dark"],
-    densities: ["comfortable", "compact"],
-    viewports: VIEWPORTS,
-    deterministic: true,
-    code: `import { Table, type TableColumn } from "paper-ui";
-
-const columns = [
-  { id: "title", header: "Title", rowHeader: true, cell: (entry) => entry.title },
-] satisfies readonly TableColumn<{ title: string }>[];
-
-<Table caption="Recent reading" columns={columns} rows={[]} emptyMessage="No reading logged yet." />`,
-    render: () => (
-      <Table
-        caption="Recent reading"
-        rows={[]}
-        columns={readingColumns}
-        emptyMessage="No reading logged yet."
-      />
-    ),
-  }),
-  defineCatalogFixture({
-    id: "heatmap-chart.reading-activity",
-    name: "2023 annual reading activity",
-    description: "A full-year calendar of daily activity using the original compact week-by-week geometry.",
-    tags: ["heatmap", "chart", "calendar", "annual activity"],
-    themes: ["light", "dark"],
-    densities: ["comfortable", "compact"],
-    viewports: VIEWPORTS,
-    deterministic: true,
-    code: `import { DateTime, Interval } from "luxon";
-import { HeatmapChart } from "paper-ui";
-
-const year = 2023;
-const data = Interval.fromDateTimes(
-  DateTime.fromObject({ year, month: 1, day: 1 }),
-  DateTime.fromObject({ year, month: 12, day: 31 }).endOf("day"),
-).splitBy({ day: 1 }).flatMap((interval, index) => {
-  const date = interval.start;
-  if (date === null) return [];
-  const value = index % 5 === 0 ? 0 : ((index * 37) % 100) + 1;
-  return [{
-    date: date.toISODate(),
-    value,
-    tooltip: value + " points on " + date.toLocaleString(DateTime.DATE_FULL),
-  }];
-});
-
-<HeatmapChart id="reading-activity" year={year} data={data} />`,
-    render: () => (
-      <HeatmapChart
-        id="reading-activity"
-        year={heatmapYear}
-        data={heatmapData}
-      />
-    ),
-  }),
+  defineCatalogFixture({ ...{
+  "id": "table.reading-log",
+  "name": "Reading log table",
+  "description": "A responsive reading log with native column and row headers.",
+  "tags": [
+    "table",
+    "responsive",
+    "row headers",
+    "reading log"
+  ],
+  "themes": [
+    "light",
+    "dark"
+  ],
+  "densities": [
+    "comfortable",
+    "compact"
+  ],
+  "viewports": [
+    {
+      "id": "phone",
+      "label": "Phone",
+      "width": 360,
+      "height": 720
+    },
+    {
+      "id": "tablet",
+      "label": "Tablet",
+      "width": 768,
+      "height": 800
+    },
+    {
+      "id": "desktop",
+      "label": "Desktop",
+      "width": 1280,
+      "height": 800
+    }
+  ],
+  "deterministic": true
+}, code: Example41Source, render: () => <Example41 /> }),
+  defineCatalogFixture({ ...{
+  "id": "table.empty",
+  "name": "Empty reading log",
+  "description": "An empty table keeps its caption, headers, and explicit state message.",
+  "tags": [
+    "table",
+    "empty",
+    "status"
+  ],
+  "themes": [
+    "light",
+    "dark"
+  ],
+  "densities": [
+    "comfortable",
+    "compact"
+  ],
+  "viewports": [
+    {
+      "id": "phone",
+      "label": "Phone",
+      "width": 360,
+      "height": 720
+    },
+    {
+      "id": "tablet",
+      "label": "Tablet",
+      "width": 768,
+      "height": 800
+    },
+    {
+      "id": "desktop",
+      "label": "Desktop",
+      "width": 1280,
+      "height": 800
+    }
+  ],
+  "deterministic": true
+}, code: Example42Source, render: () => <Example42 /> }),
+  defineCatalogFixture({ ...{
+  "id": "heatmap-chart.reading-activity",
+  "name": "2023 annual reading activity",
+  "description": "A full-year calendar of daily activity using the original compact week-by-week geometry.",
+  "tags": [
+    "heatmap",
+    "chart",
+    "calendar",
+    "annual activity"
+  ],
+  "themes": [
+    "light",
+    "dark"
+  ],
+  "densities": [
+    "comfortable",
+    "compact"
+  ],
+  "viewports": [
+    {
+      "id": "phone",
+      "label": "Phone",
+      "width": 360,
+      "height": 720
+    },
+    {
+      "id": "tablet",
+      "label": "Tablet",
+      "width": 768,
+      "height": 800
+    },
+    {
+      "id": "desktop",
+      "label": "Desktop",
+      "width": 1280,
+      "height": 800
+    }
+  ],
+  "deterministic": true
+}, code: Example43Source, render: () => <Example43 /> }),
+  defineCatalogFixture({ ...{
+  "id": "heatmap-chart.empty",
+  "name": "Year without activity",
+  "description": "Missing dates use the zero-activity baseline; provide an explicit explanation alongside the chart.",
+  "tags": [
+    "heatmap",
+    "empty"
+  ],
+  "themes": [
+    "light",
+    "dark"
+  ],
+  "densities": [
+    "comfortable",
+    "compact"
+  ],
+  "viewports": [
+    {
+      "id": "phone",
+      "label": "Phone",
+      "width": 360,
+      "height": 720
+    },
+    {
+      "id": "tablet",
+      "label": "Tablet",
+      "width": 768,
+      "height": 800
+    },
+    {
+      "id": "desktop",
+      "label": "Desktop",
+      "width": 1280,
+      "height": 800
+    }
+  ],
+  "deterministic": true
+}, code: Example44Source, render: () => <Example44 /> })
 ] as const;
 
-function completeSections(
-  values: RequiredComponentSections,
-): ComponentDocumentationSections {
-  return { required: values, pageSections: COMPONENT_PAGE_SECTION_KEYS };
-}
-
+function completeSections(values: RequiredComponentSections): ComponentDocumentationSections { return { required: values, pageSections: COMPONENT_PAGE_SECTION_KEYS }; }
 const tableSections = completeSections({
   overview: { heading: "Overview", content: ["Table presents comparable records in native rows and columns while Paper supplies restrained rules, density, and responsive overflow."] },
   whenToUse: { heading: "When to use", content: ["Use Table when readers need to scan or compare several records across the same fields."] },
   whenNotToUse: { heading: "When not to use", content: ["Do not use Table for prose, a single record, or layouts whose cells do not have meaningful row and column relationships."] },
   choosingBetween: { heading: "Choosing between", content: ["Use a list for one-dimensional content, Surface for one grouped summary, and HeatmapChart when a compact annual calendar communicates daily activity."] },
   anatomy: { heading: "Anatomy", content: ["A labelled scroll region contains a native caption, column-header row, body rows, optional row headers, and an explicit empty state."] },
-  recommendedExample: { heading: "Recommended example", content: ["Identify reading-log rows by title, align numeric progress to the end, and provide stable keys from application data."] },
+  recommendedExample: { heading: "Recommended example", content: ["The reading log identifies each row by title, aligns pages to the end, and uses stable IDs. Switch to Empty reading log to compare the preserved headers and empty message. On a phone, focus the labelled table region and scroll horizontally to inspect all columns."] },
   variants: { heading: "Variants", content: ["Captions may be visible or screen-reader-only; columns may align start, center, or end and one identifying column may become row headers."] },
   statesAndAdaptation: { heading: "States and adaptation", content: ["Empty data retains the table structure. Narrow viewports preserve native semantics and expose horizontal keyboard scrolling instead of converting cells into ambiguous cards."] },
   behavior: { heading: "Behavior", content: ["The region receives focus for keyboard scrolling; Table does not own sorting, selection, pagination, loading, or data fetching."] },
@@ -170,7 +194,7 @@ const tableSections = completeSections({
   apiReference: { heading: "API reference", content: ["TableProps<Row> accepts caption, columns, rows, getRowKey, emptyMessage, captionVisibility, minWidth, and native region attributes; TableColumn<Row> defines header and cell rendering."] },
   relatedPatterns: { heading: "Related patterns", content: ["Related contracts include Surface for summaries, HeatmapChart for magnitude matrices, and ButtonGroup for a small visible set of row actions."] },
   migration: { heading: "Migration", content: ["Replace copied responsive-table wrappers, preserve native table markup, move data operations to the application, and explicitly identify row headers."] },
-  lifecycle: { heading: "Lifecycle", content: ["Stable in Paper 0.1.0; changes to native semantics, responsive overflow, or generic column typing require compatibility review."] },
+  lifecycle: { heading: "Lifecycle", content: ["Stable in Paper 0.1.0; changes to native semantics, responsive overflow, or generic column typing require compatibility review."] }
 });
 
 const heatmapSections = completeSections({
@@ -179,7 +203,7 @@ const heatmapSections = completeSections({
   whenNotToUse: { heading: "When not to use", content: ["Do not use it for exact record comparison, multiple unrelated series, negative-versus-positive direction, or trends that need a continuous axis."] },
   choosingBetween: { heading: "Choosing between", content: ["Use Table for exact multi-field records, a line chart for continuous trends, and HeatmapChart for a familiar contribution-calendar overview of daily activity."] },
   anatomy: { heading: "Anatomy", content: ["Sparse weekday labels and month labels frame a full year of 10 by 10 pixel cells separated by 3 pixel gaps. An SVG tooltip layer stays above every cell."] },
-  recommendedExample: { heading: "Recommended example", content: ["Pass the reporting year and one dated record per day. Include concise tooltip copy with the value, unit, and full date."] },
+  recommendedExample: { heading: "Recommended example", content: ["Hover, touch, or Tab to a populated date to inspect its full date and points. At a narrow width, scroll the chart horizontally. Compare with Year without activity to see why empty data also needs explanatory text."] },
   variants: { heading: "Variants", content: ["The calendar geometry is intentionally fixed. Zero activity uses the neutral cell color, while positive values occupy four theme-aware intensity bands relative to the year's maximum."] },
   statesAndAdaptation: { heading: "States and adaptation", content: ["Days without a record count as zero. Cells outside the requested year remain transparent, and an all-zero year stays on the neutral baseline."] },
   behavior: { heading: "Behavior", content: ["HeatmapChart maps ISO dates into week and weekday positions, uses the last repeated date value, scales positive activity against the annual maximum, and reveals supplied copy on hover, touch, or keyboard focus."] },
@@ -246,6 +270,72 @@ export const phaseThreeDataLayoutDocuments = [
     },
     api: {
       react: ["Table"],
+      props: [
+  {
+    "name": "caption",
+    "type": "ReactNode",
+    "description": "Names the data and its labelled scrolling region.",
+    "required": true
+  },
+  {
+    "name": "rows",
+    "type": "readonly Row[]",
+    "description": "Records to compare; supply an empty array for the empty state.",
+    "required": true
+  },
+  {
+    "name": "columns",
+    "type": "readonly TableColumn<Row>[]",
+    "description": "At least one column, each with id, header and cell(row, index).",
+    "required": true
+  },
+  {
+    "name": "columns[].rowHeader",
+    "type": "boolean",
+    "description": "Marks the cell that identifies the record as a row header.",
+    "defaultValue": "false"
+  },
+  {
+    "name": "columns[].align",
+    "type": "\"start\" | \"center\" | \"end\"",
+    "description": "Align numeric quantities to the end for comparison.",
+    "defaultValue": "start"
+  },
+  {
+    "name": "columns[].width",
+    "type": "string",
+    "description": "Optional CSS width hint; content can still influence native table sizing."
+  },
+  {
+    "name": "getRowKey",
+    "type": "(row, index) => Key",
+    "description": "Use stable data IDs when records can reorder.",
+    "defaultValue": "row index"
+  },
+  {
+    "name": "captionVisibility",
+    "type": "\"visible\" | \"screen-reader\"",
+    "description": "Hide only if nearby visible context already identifies the data.",
+    "defaultValue": "visible"
+  },
+  {
+    "name": "emptyMessage",
+    "type": "ReactNode",
+    "description": "Specific empty state and useful next action.",
+    "defaultValue": "No data to display."
+  },
+  {
+    "name": "minWidth",
+    "type": "string",
+    "description": "Minimum table width before its own region scrolls; choose for the data.",
+    "defaultValue": "max(30, columns.length × 9) rem"
+  },
+  {
+    "name": "tableClassName",
+    "type": "string",
+    "description": "Optional class on the native table; className applies to the outer region."
+  }
+],
       cssClasses: ["paper-table-region", "paper-table", "paper-table__*"],
       publicTypes: ["TableProps<Row>", "TableColumn<Row>", "TableColumnAlignment"],
       defaults: ["Caption is visible, cells align to start, and minWidth derives from the column count."],
@@ -264,7 +354,7 @@ export const phaseThreeDataLayoutDocuments = [
     summary: "Shows a full year of dated activity in the original compact week-by-week calendar.",
     keywords: ["heatmap", "chart", "calendar", "activity", "year"],
     sourcePath: "src/components/data-display/HeatmapChart.tsx",
-    fixtureIds: ["heatmap-chart.reading-activity"],
+    fixtureIds: ["heatmap-chart.reading-activity", "heatmap-chart.empty"],
     behaviorTestIds: ["heatmap.calendar-geometry", "heatmap.intensity-bands", "heatmap.tooltip-interaction"],
     guidance: {
       whenToUse: ["Show the rhythm and intensity of daily activity across one calendar year."],
@@ -279,6 +369,43 @@ export const phaseThreeDataLayoutDocuments = [
     },
     api: {
       react: ["HeatmapChart"],
+      props: [
+  {
+    "name": "id",
+    "type": "string",
+    "description": "Unique per mounted chart for its tooltip layer.",
+    "required": true
+  },
+  {
+    "name": "year",
+    "type": "number",
+    "description": "Calendar year to display.",
+    "required": true
+  },
+  {
+    "name": "data",
+    "type": "readonly HeatmapChartDatum[]",
+    "description": "ISO date, nonnegative value and optional tooltip for each activity record.",
+    "required": true
+  },
+  {
+    "name": "data[].date",
+    "type": "string",
+    "description": "YYYY-MM-DD calendar date within the year. Missing dates show zero.",
+    "required": true
+  },
+  {
+    "name": "data[].value",
+    "type": "number",
+    "description": "Activity magnitude in a consistent unit. Colors scale to the year’s maximum.",
+    "required": true
+  },
+  {
+    "name": "data[].tooltip",
+    "type": "string",
+    "description": "Full date, quantity and unit. Enables keyboard-focusable cell detail."
+  }
+],
       cssClasses: ["paper-heatmap", "paper-heatmap__*"],
       publicTypes: ["HeatmapChartProps", "HeatmapChartDatum"],
       defaults: ["Missing dates have value zero; positive values use four bands relative to the maximum value in the requested year."],

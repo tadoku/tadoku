@@ -1,0 +1,52 @@
+import { useState } from 'react'
+import { Navbar } from 'paper-ui'
+
+const navbarNavigation = [
+  { type: 'link', id: 'home', label: 'Home', href: '#home' },
+  { type: 'link', id: 'contests', label: 'Contests', href: '#contests' },
+  { type: 'link', id: 'manual', label: 'Manual', href: '#manual' },
+  {
+    type: 'dropdown',
+    id: 'account',
+    label: 'Account',
+    links: [
+      { id: 'profile', label: 'Profile', href: '#profile' },
+      { id: 'settings', label: 'Settings', href: '#settings' },
+    ],
+  },
+] as const
+
+export default function NavbarExample() {
+  const [path, setPath] = useState('#home')
+  return (
+    <div className="paper-stack">
+      <Navbar
+        brand="Tadoku"
+        brandHref="#home"
+        currentPath={path}
+        navigation={navbarNavigation}
+        renderLink={props => (
+          <a
+            {...props}
+            onClick={event => {
+              props.onClick?.(event)
+              if (!event.defaultPrevented) setPath(props.href)
+            }}
+          />
+        )}
+      />
+      <p role="status">
+        Selected destination: {path.slice(1)}. These fragment links keep this
+        example on the page.
+      </p>
+      <h3>Route loading</h3>
+      <Navbar
+        brand="Tadoku"
+        brandHref="#home"
+        navigation={[]}
+        mobileNavigation={false}
+        isLoading
+      />
+    </div>
+  )
+}

@@ -188,7 +188,7 @@ describe("HeatmapChart", () => {
 describe("Phase 3 data-display catalogue contracts", () => {
   it("keeps every copied data-display example self-identifying with imports", () => {
     for (const fixture of phaseThreeDataLayoutFixtures) {
-      expect(fixture.code, fixture.id).toContain('from "paper-ui"');
+      expect(fixture.code, fixture.id).toMatch(/from ['"]paper-ui['"]/);
     }
   });
 
@@ -199,8 +199,8 @@ describe("Phase 3 data-display catalogue contracts", () => {
     expect(fixture).toBeDefined();
     expect(fixture!.name).toMatch(/year|annual|2023/iu);
     expect(fixture!.description).toMatch(/year|calendar|daily activity/iu);
-    expect(fixture!.code).toContain("year={year}");
-    expect(fixture!.code).toContain("data={data}");
+    expect(fixture!.code).toContain("year={heatmapYear}");
+    expect(fixture!.code).toContain("data={heatmapData}");
     expect(fixture!.code).not.toContain("columns=");
     expect(fixture!.code).not.toContain("rows=");
 

@@ -1,4 +1,4 @@
-import { render, screen, within } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import {
@@ -35,6 +35,15 @@ const navbarItems = [
 ] as const;
 
 describe("router-neutral navigation", () => {
+  it("returns the Navbar example to Home when its brand is selected", async () => {
+    const user = userEvent.setup();
+    render(<>{phaseThreeNavigationFixtures.find((fixture) => fixture.id === "navigation.navbar.primary")!.render()}</>);
+    await user.click(screen.getAllByRole("link", { name: "Contests" })[0]);
+    expect(screen.getByText(/Selected destination: contests/)).toBeInTheDocument();
+    await user.click(screen.getAllByRole("link", { name: "Tadoku" })[0]);
+    expect(screen.getByText(/Selected destination: home/)).toBeInTheDocument();
+  });
+
   it("renders Navbar links through the consumer adapter and restores mobile trigger focus on Escape", async () => {
     const user = userEvent.setup();
     render(
@@ -197,6 +206,26 @@ describe("router-neutral navigation", () => {
     expect(screen.queryByRole("tab")).not.toBeInTheDocument();
   });
 
+  it("reveals the current horizontal destination without scrolling again on unrelated renders", () => {
+    const measure = vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockImplementation(function (this: HTMLElement) {
+      const list = this.classList.contains("paper-tabbar__list");
+      const statistics = this.getAttribute("href") === "/stats";
+      return { left: list ? 0 : statistics ? 240 : -160, right: list ? 200 : statistics ? 360 : -60 } as DOMRect;
+    });
+    try {
+      const links = [{ id: "entries", label: "Entries", href: "/entries" }, { id: "stats", label: "Statistics", href: "/stats" }];
+      const { rerender } = render(<Tabbar links={links} currentPath="/stats" />);
+      const list = screen.getByRole("list");
+      expect(list.scrollLeft).toBe(160);
+      rerender(<Tabbar links={[...links]} currentPath="/stats" label="Renamed navigation" />);
+      expect(list.scrollLeft).toBe(160);
+      rerender(<Tabbar links={links} currentPath="/entries" />);
+      expect(list.scrollLeft).toBe(0);
+    } finally {
+      measure.mockRestore();
+    }
+  });
+
   it("paginates with callbacks and disables unavailable edge controls", async () => {
     const user = userEvent.setup();
     const onPageChange = vi.fn();
@@ -234,6 +263,14 @@ describe("router-neutral navigation", () => {
     expect(onPageChange).toHaveBeenCalledWith(1);
   });
 
+  it.each(["ctrlKey", "metaKey", "shiftKey", "altKey"])("preserves modified pagination navigation for %s", (modifier) => {
+    const onPageChange = vi.fn();
+    render(<Pagination totalPages={3} currentPage={2} getHref={(page) => `#page-${page}`} onPageChange={onPageChange} />);
+    const allowed = fireEvent.click(screen.getByRole("link", { name: "Next page" }), { [modifier]: true });
+    expect(onPageChange).not.toHaveBeenCalled();
+    expect(allowed).toBe(true);
+  });
+
   it("ships complete Stable catalog records and deterministic fixtures", () => {
     expect(phaseThreeNavigationDocuments).toHaveLength(6);
     expect(phaseThreeNavigationFixtures).toHaveLength(6);
@@ -256,7 +293,7 @@ describe("router-neutral navigation", () => {
     }
     for (const fixture of phaseThreeNavigationFixtures) {
       expect(fixture.deterministic).toBe(true);
-      expect(fixture.code).toContain('from "paper-ui"');
+      expect(fixture.code).toMatch(/from ['"]paper-ui['"]/);
     }
   });
 });

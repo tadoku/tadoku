@@ -73,8 +73,8 @@ function FieldFrame({
   );
 }
 
-function describedBy(id: string, hint?: string, error?: unknown): string | undefined {
-  return [hint ? `${id}-hint` : undefined, error ? `${id}-error` : undefined]
+function describedBy(id: string, hint?: string, error?: unknown, external?: string): string | undefined {
+  return [hint ? `${id}-hint` : undefined, error ? `${id}-error` : undefined, external]
     .filter(Boolean)
     .join(" ") || undefined;
 }
@@ -96,6 +96,7 @@ export function TextArea({
   const { form, error } = useField(name);
   const registration = form.register(name, {
     ...rules,
+    disabled: props.disabled,
     required: rules?.required ?? (required ? "This field is required." : undefined),
   });
   return (
@@ -106,7 +107,7 @@ export function TextArea({
         id={id}
         required={required}
         aria-invalid={error ? true : undefined}
-        aria-describedby={describedBy(id, hint, error)}
+        aria-describedby={describedBy(id, hint, error, props["aria-describedby"])}
         className="paper-input paper-textarea"
       />
     </FieldFrame>
@@ -137,6 +138,7 @@ export function Select({
   const { form, error } = useField(name);
   const registration = form.register(name, {
     ...rules,
+    disabled: props.disabled,
     required: rules?.required ?? (required ? "Choose an option." : undefined),
   });
   return (
@@ -148,7 +150,7 @@ export function Select({
           id={id}
           required={required}
           aria-invalid={error ? true : undefined}
-          aria-describedby={describedBy(id, hint, error)}
+          aria-describedby={describedBy(id, hint, error, props["aria-describedby"])}
           className="paper-input paper-select"
         >
           {placeholder ? <option value="">{placeholder}</option> : null}
@@ -194,6 +196,7 @@ export function Checkbox({
   const { form, error } = useField(name);
   const registration = form.register(name, {
     ...rules,
+    disabled: props.disabled,
     required: rules?.required ?? (required ? "Select this option to continue." : undefined),
   });
   return (
@@ -206,7 +209,7 @@ export function Checkbox({
           type="checkbox"
           required={required}
           aria-invalid={error ? true : undefined}
-          aria-describedby={describedBy(id, hint, error)}
+          aria-describedby={describedBy(id, hint, error, props["aria-describedby"])}
         />
         <span>{label}</span>
       </label>
@@ -240,6 +243,7 @@ export function RadioSelect({
   const { form, error } = useField(name);
   const registration = form.register(name, {
     ...rules,
+    disabled: disabled,
     required: rules?.required ?? (required ? "Choose an option." : undefined),
   });
   const segmented = variant === "segmented";
@@ -317,6 +321,7 @@ export function RadioGroup<Value extends string = string>({
               {...registration}
               type="radio"
               value={option.value}
+              required={required}
               disabled={option.disabled}
               aria-invalid={error ? true : undefined}
             />
@@ -344,6 +349,10 @@ export function AmountWithUnit({
   units,
   unitsLabel,
   hint,
+  required,
+  min,
+  max,
+  disabled,
   ...props
 }: AmountWithUnitProps) {
   const id = `paper-amount-${useId().replace(/:/gu, "")}`;
@@ -354,25 +363,36 @@ export function AmountWithUnit({
   const unitError = form.getFieldState(unitName, unitState).error;
   const error = amountError ?? unitError;
   return (
-    <FieldFrame id={id} label={label} hint={hint} error={error?.message?.toString()}>
+    <FieldFrame id={id} label={label} hint={hint} required={required} error={error?.message?.toString()}>
       <div className="paper-compound-field" role="group" aria-labelledby={`${id}-label`}>
         <input
           {...props}
-          {...form.register(amountName, { valueAsNumber: true })}
+          {...form.register(amountName, {
+            valueAsNumber: true,
+            disabled,
+            required: required ? "Enter an amount." : undefined,
+            min: min === undefined ? undefined : { value: min, message: `Enter at least ${min}.` },
+            max: max === undefined ? undefined : { value: max, message: `Enter no more than ${max}.` },
+          })}
+          required={required}
+          min={min}
+          max={max}
+          disabled={disabled}
           id={id}
           type="number"
           className="paper-input"
           aria-invalid={amountError ? true : undefined}
-          aria-describedby={describedBy(id, hint, error)}
+          aria-describedby={describedBy(id, hint, error, props["aria-describedby"])}
         />
         <select
-          {...form.register(unitName)}
+          {...form.register(unitName, { disabled })}
+          disabled={disabled}
           aria-label={unitsLabel ?? `Unit for ${label.toLocaleLowerCase()}`}
           className="paper-input paper-compound-field__unit"
           aria-invalid={unitError ? true : undefined}
-          aria-describedby={describedBy(id, hint, error)}
+          aria-describedby={describedBy(id, hint, error, props["aria-describedby"])}
         >
-          {units.map((unit) => <option key={unit.value} value={unit.value}>{unit.label}</option>)}
+          {units.map((unit) => <option key={unit.value} value={unit.value} disabled={unit.disabled}>{unit.label}</option>)}
         </select>
       </div>
     </FieldFrame>
@@ -447,6 +467,7 @@ export function AutocompleteInput<Value>({
   name,
   label,
   hint,
+  required,
   options,
   format,
   getId,
@@ -457,12 +478,12 @@ export function AutocompleteInput<Value>({
 }: AutocompleteInputProps<Value>) {
   const id = `paper-autocomplete-${useId().replace(/:/gu, "")}`;
   const { form, error } = useField(name);
-  const { field } = useController({ name, control: form.control });
+  const { field } = useController({ name, control: form.control, rules: { required: required ? "Choose an option." : undefined } });
   const [query, setQuery] = useState("");
   const [portalContainer, setPortalContainer] = useState<HTMLElement | null>(null);
   const filtered = useFilteredOptions(options, query, format, match, maxResults);
   return (
-    <FieldFrame id={id} label={label} hint={hint} error={error?.message?.toString()}>
+    <FieldFrame id={id} label={label} hint={hint} required={required} error={error?.message?.toString()}>
       <Combobox.Root
         items={options}
         filteredItems={filtered}
@@ -476,6 +497,8 @@ export function AutocompleteInput<Value>({
         <div className="paper-combobox__input-group">
           <Combobox.Input
             id={id}
+            onBlur={field.onBlur}
+            aria-required={required || undefined}
             placeholder={placeholder}
             className="paper-input"
             aria-invalid={error ? true : undefined}
@@ -503,6 +526,7 @@ export function AutocompleteMultiInput<Value>({
   name,
   label,
   hint,
+  required,
   options,
   format,
   getId,
@@ -514,20 +538,22 @@ export function AutocompleteMultiInput<Value>({
 }: AutocompleteMultiInputProps<Value>) {
   const id = `paper-multiautocomplete-${useId().replace(/:/gu, "")}`;
   const { form, error } = useField(name);
-  const { field } = useController({ name, control: form.control, defaultValue: [] });
+  const { field } = useController({ name, control: form.control, defaultValue: [], rules: { required: required ? "Choose at least one option." : undefined } });
   const values = (field.value ?? []) as Value[];
   const [query, setQuery] = useState("");
   const [portalContainer, setPortalContainer] = useState<HTMLElement | null>(null);
   const filtered = useFilteredOptions(options, query, format, match, maxResults);
   const atLimit = maxSelections !== undefined && values.length >= maxSelections;
   return (
-    <FieldFrame id={id} label={label} hint={hint} error={error?.message?.toString()}>
+    <FieldFrame id={id} label={label} hint={hint} required={required} error={error?.message?.toString()}>
       <Combobox.Root
         multiple
         items={options}
         filteredItems={filtered}
         value={values}
-        onValueChange={(value) => field.onChange(value)}
+        onValueChange={(value) => {
+          if (maxSelections === undefined || value.length <= maxSelections || value.length < values.length) field.onChange(value);
+        }}
         onInputValueChange={setQuery}
         itemToStringLabel={format}
         isItemEqualToValue={(left, right) => getId(left) === getId(right)}
@@ -544,6 +570,8 @@ export function AutocompleteMultiInput<Value>({
           ))}
           <Combobox.Input
             id={id}
+            onBlur={field.onBlur}
+            aria-required={required || undefined}
             placeholder={atLimit ? "Maximum selections reached" : placeholder}
             className="paper-combobox__chip-input"
             disabled={disabled || atLimit}
@@ -554,7 +582,7 @@ export function AutocompleteMultiInput<Value>({
               if (node && node.ownerDocument.body !== portalContainer) setPortalContainer(node.ownerDocument.body);
             }}
           />
-          <Combobox.Trigger className="paper-combobox__trigger" aria-label={`Show ${label.toLocaleLowerCase()} options`}>
+          <Combobox.Trigger disabled={disabled || atLimit} className="paper-combobox__trigger" aria-label={`Show ${label.toLocaleLowerCase()} options`}>
             <ChevronDownIcon className={iconClassName("compact")} aria-hidden="true" />
           </Combobox.Trigger>
         </Combobox.Chips>

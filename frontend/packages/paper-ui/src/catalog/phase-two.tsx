@@ -1,26 +1,37 @@
-import { useEffect, useRef, useState } from "react";
-import { FormProvider, useForm } from "react-hook-form";
-import { ActionMenu } from "../components/overlays/ActionMenu";
-import { Button, buttonClassName } from "../components/actions/Button";
-import { Input } from "../components/forms/Input";
-import { Modal } from "../components/overlays/Modal";
+import Example10 from "./examples/action-menu.recommended";
+import Example10Source from "./examples/action-menu.recommended.tsx?raw";
+import Example4 from "./examples/button.classes";
+import Example4Source from "./examples/button.classes.tsx?raw";
+import Example3 from "./examples/button.icons-disabled";
+import Example3Source from "./examples/button.icons-disabled.tsx?raw";
+import Example1 from "./examples/button.loading";
+import Example1Source from "./examples/button.loading.tsx?raw";
+import Example2 from "./examples/button.narrow";
+import Example2Source from "./examples/button.narrow.tsx?raw";
+import Example0 from "./examples/button.variants";
+import Example0Source from "./examples/button.variants.tsx?raw";
+import Example7 from "./examples/input.error";
+import Example7Source from "./examples/input.error.tsx?raw";
+import Example5 from "./examples/input.recommended";
+import Example5Source from "./examples/input.recommended.tsx?raw";
+import Example6 from "./examples/input.states";
+import Example6Source from "./examples/input.states.tsx?raw";
+import Example9 from "./examples/modal.composable-search";
+import Example9Source from "./examples/modal.composable-search.tsx?raw";
+import Example8 from "./examples/modal.recommended";
+import Example8Source from "./examples/modal.recommended.tsx?raw";
 import {
-  defineCatalogDocument,
-  defineCatalogFixture,
-  COMPONENT_PAGE_SECTION_KEYS,
-  type CatalogDocument,
-  type ComponentCategory,
-  type ComponentDocumentationSections,
-  type RequiredComponentSectionKey,
+COMPONENT_PAGE_SECTION_KEYS,
+defineCatalogDocument,
+defineCatalogFixture,
+type CatalogDocument,
+type ComponentCategory,
+type ComponentDocumentationSections,
+type RequiredComponentSectionKey,
 } from "./schema";
 
-const REVIEW_DATE = "2026-08-08";
+const REVIEW_DATE = "2026-09-05";
 const PACKAGE_VERSION = "0.1.0";
-const VIEWPORTS = [
-  { id: "phone", label: "Phone", width: 360, height: 720 },
-  { id: "tablet", label: "Tablet", width: 768, height: 800 },
-  { id: "desktop", label: "Desktop", width: 1280, height: 800 },
-] as const;
 
 function section(
   heading: string,
@@ -74,431 +85,973 @@ function componentDocument(options: ComponentDocumentOptions): CatalogDocument {
   });
 }
 
-function InputRecommendedFixture() {
-  const methods = useForm<{ title: string }>({
-    defaultValues: { title: "August reading log" },
-  });
-  return (
-    <FormProvider {...methods}>
-      <form noValidate onSubmit={methods.handleSubmit(() => undefined)}>
-        <Input
-          name="title"
-          label="Log title"
-          hint="Give this reading session a short, recognizable name."
-          rules={{ required: "Enter a log title." }}
-          required
-        />
-        <div className="paper-fixture-row">
-          <Button type="submit">Save log</Button>
-        </div>
-      </form>
-    </FormProvider>
-  );
-}
-
-function InputStatesFixture() {
-  const methods = useForm({
-    defaultValues: { readonly: "Japanese", disabled: "Archived" },
-  });
-  return (
-    <FormProvider {...methods}>
-      <div className="paper-fixture-stack">
-        <Input name="readonly" label="Language" readOnly />
-        <Input name="disabled" label="Status" disabled />
-      </div>
-    </FormProvider>
-  );
-}
-
-function InputErrorFixture() {
-  const methods = useForm<{ pages: string }>({ defaultValues: { pages: "" } });
-  useEffect(() => {
-    methods.setError("pages", { message: "Enter the number of pages read." });
-  }, [methods]);
-  return (
-    <FormProvider {...methods}>
-      <Input
-        name="pages"
-        label="Pages read"
-        hint="Use whole pages."
-        inputMode="numeric"
-        required
-      />
-    </FormProvider>
-  );
-}
-
-function ComposableModalFixture() {
-  const [open, setOpen] = useState(false);
-  const searchRef = useRef<HTMLInputElement>(null);
-
-  return (
-    <Modal
-      trigger={<Button variant="ghost">Search Paper <kbd>Ctrl K</kbd></Button>}
-      title="Search Paper"
-      description="Search components and foundations."
-      open={open}
-      onOpenChange={setOpen}
-      initialFocus={searchRef}
-      footer={null}
-    >
-      <label>
-        Search catalogue
-        <input ref={searchRef} type="search" />
-      </label>
-    </Modal>
-  );
-}
-
 export const phaseTwoFixtures = [
   defineCatalogFixture({
-    id: "button.variants",
-    name: "Button variants",
-    description: "The complete action hierarchy beside a semantic anchor.",
-    tags: ["button", "variants", "anchor"],
-    themes: ["light", "dark"],
-    densities: ["comfortable", "compact"],
-    viewports: VIEWPORTS,
-    deterministic: true,
-    code: `import { Button, buttonClassName } from "paper-ui";
-
-<Button>Save log</Button>
-<Button variant="outline">Cancel</Button>
-<Button variant="ghost">More options</Button>
-<Button variant="link">Clear filters</Button>
-<Button variant="destructive">Delete log</Button>
-<a className={buttonClassName({ variant: "outline" })} href="/logs">
-  View logs
-</a>`,
-    render: () => (
-      <div className="paper-fixture-row">
-        <Button>Save log</Button>
-        <Button variant="outline">Cancel</Button>
-        <Button variant="ghost">More options</Button>
-        <Button variant="link">Clear filters</Button>
-        <Button variant="destructive">Delete log</Button>
-        <a className={buttonClassName({ variant: "outline" })} href="#logs">
-          View logs
-        </a>
-      </div>
-    ),
+  "id": "button.variants",
+  "name": "Button variants",
+  "description": "The complete action hierarchy beside a semantic anchor.",
+  "tags": [
+    "button",
+    "variants",
+    "anchor"
+  ],
+  "themes": [
+    "light",
+    "dark"
+  ],
+  "densities": [
+    "comfortable",
+    "compact"
+  ],
+  "viewports": [
+    {
+      "id": "phone",
+      "label": "Phone",
+      "width": 360,
+      "height": 720
+    },
+    {
+      "id": "tablet",
+      "label": "Tablet",
+      "width": 768,
+      "height": 800
+    },
+    {
+      "id": "desktop",
+      "label": "Desktop",
+      "width": 1280,
+      "height": 800
+    }
+  ],
+  "deterministic": true,
+    code: Example0Source, render: () => <Example0 />
   }),
   defineCatalogFixture({
-    id: "button.loading",
-    name: "Loading action",
-    description: "A busy action keeps its visible and accessible name stable.",
-    tags: ["button", "loading", "disabled"],
-    themes: ["light", "dark"],
-    densities: ["comfortable", "compact"],
-    viewports: VIEWPORTS,
-    deterministic: true,
-    code: `import { Button } from "paper-ui";
-
-<Button loading loadingLabel="Saving reading log">
-  Save log
-</Button>`,
-    render: () => (
-      <Button loading loadingLabel="Saving reading log">
-        Save log
-      </Button>
-    ),
+  "id": "button.loading",
+  "name": "Loading action",
+  "description": "A busy action keeps its visible and accessible name stable.",
+  "tags": [
+    "button",
+    "loading",
+    "disabled"
+  ],
+  "themes": [
+    "light",
+    "dark"
+  ],
+  "densities": [
+    "comfortable",
+    "compact"
+  ],
+  "viewports": [
+    {
+      "id": "phone",
+      "label": "Phone",
+      "width": 360,
+      "height": 720
+    },
+    {
+      "id": "tablet",
+      "label": "Tablet",
+      "width": 768,
+      "height": 800
+    },
+    {
+      "id": "desktop",
+      "label": "Desktop",
+      "width": 1280,
+      "height": 800
+    }
+  ],
+  "deterministic": true,
+    code: Example1Source, render: () => <Example1 />
   }),
   defineCatalogFixture({
-    id: "button.narrow",
-    name: "Long, full-width action",
-    description: "Long localized content at a narrow viewport.",
-    tags: ["button", "full width", "long content", "narrow"],
-    themes: ["light", "dark"],
-    densities: ["comfortable", "compact"],
-    viewports: VIEWPORTS,
-    deterministic: true,
-    code: `import { Button } from "paper-ui";
-
-<Button fullWidth>Add this finished book to the August reading log</Button>`,
-    render: () => (
-      <Button fullWidth>Add this finished book to the August reading log</Button>
-    ),
+  "id": "button.narrow",
+  "name": "Long, full-width action",
+  "description": "Long localized content at a narrow viewport.",
+  "tags": [
+    "button",
+    "full width",
+    "long content",
+    "narrow"
+  ],
+  "themes": [
+    "light",
+    "dark"
+  ],
+  "densities": [
+    "comfortable",
+    "compact"
+  ],
+  "viewports": [
+    {
+      "id": "phone",
+      "label": "Phone",
+      "width": 360,
+      "height": 720
+    },
+    {
+      "id": "tablet",
+      "label": "Tablet",
+      "width": 768,
+      "height": 800
+    },
+    {
+      "id": "desktop",
+      "label": "Desktop",
+      "width": 1280,
+      "height": 800
+    }
+  ],
+  "deterministic": true,
+    code: Example2Source, render: () => <Example2 />
   }),
   defineCatalogFixture({
-    id: "input.recommended",
-    name: "Reading-log title",
-    description: "Label, hint, required rule, value, and submission in one field.",
-    tags: ["input", "form", "required", "hint"],
-    themes: ["light", "dark"],
-    densities: ["comfortable", "compact"],
-    viewports: VIEWPORTS,
-    deterministic: true,
-    code: `import { Button, Input } from "paper-ui";
-import { FormProvider, useForm } from "react-hook-form";
-
-const methods = useForm({ defaultValues: { title: "August reading log" } });
-<FormProvider {...methods}>
-  <form onSubmit={methods.handleSubmit(saveLog)}>
-    <Input
-      name="title"
-      label="Log title"
-      hint="Give this reading session a short, recognizable name."
-      rules={{ required: "Enter a log title." }}
-      required
-    />
-    <Button type="submit">Save log</Button>
-  </form>
-</FormProvider>`,
-    render: () => <InputRecommendedFixture />,
+  "id": "button.icons-disabled",
+  "name": "Icons and unavailable actions",
+  "description": "A labelled action with a decorative icon, an explicitly named icon-only control, and an unavailable action with its reason.",
+  "tags": [
+    "button",
+    "icons",
+    "disabled"
+  ],
+  "themes": [
+    "light",
+    "dark"
+  ],
+  "densities": [
+    "comfortable",
+    "compact"
+  ],
+  "viewports": [
+    {
+      "id": "phone",
+      "label": "Phone",
+      "width": 360,
+      "height": 720
+    },
+    {
+      "id": "tablet",
+      "label": "Tablet",
+      "width": 768,
+      "height": 800
+    },
+    {
+      "id": "desktop",
+      "label": "Desktop",
+      "width": 1280,
+      "height": 800
+    }
+  ],
+  "deterministic": true,
+    code: Example3Source, render: () => <Example3 />
   }),
   defineCatalogFixture({
-    id: "input.states",
-    name: "Read-only and disabled",
-    description: "Two non-editable states with distinct native semantics.",
-    tags: ["input", "readonly", "disabled"],
-    themes: ["light", "dark"],
-    densities: ["comfortable", "compact"],
-    viewports: VIEWPORTS,
-    deterministic: true,
-    code: `import { Input } from "paper-ui";
-
-<Input name="language" label="Language" readOnly />
-<Input name="status" label="Status" disabled />`,
-    render: () => <InputStatesFixture />,
+  "id": "button.classes",
+  "name": "Native elements with public classes",
+  "description": "Use the public CSS recipe directly when a React wrapper is unnecessary. Native roles, disabled state and busy semantics stay explicit.",
+  "tags": [
+    "button",
+    "classes",
+    "native"
+  ],
+  "themes": [
+    "light",
+    "dark"
+  ],
+  "densities": [
+    "comfortable",
+    "compact"
+  ],
+  "viewports": [
+    {
+      "id": "phone",
+      "label": "Phone",
+      "width": 360,
+      "height": 720
+    },
+    {
+      "id": "tablet",
+      "label": "Tablet",
+      "width": 768,
+      "height": 800
+    },
+    {
+      "id": "desktop",
+      "label": "Desktop",
+      "width": 1280,
+      "height": 800
+    }
+  ],
+  "deterministic": true,
+    code: Example4Source, render: () => <Example4 />
   }),
   defineCatalogFixture({
-    id: "input.error",
-    name: "Validation error",
-    description: "Hint and error remain associated with the invalid input.",
-    tags: ["input", "error", "accessibility"],
-    themes: ["light", "dark"],
-    densities: ["comfortable", "compact"],
-    viewports: VIEWPORTS,
-    deterministic: true,
-    code: `import { Input } from "paper-ui";
-
-<Input
-  name="pages"
-  label="Pages read"
-  hint="Use whole pages."
-  inputMode="numeric"
-  required
-/>`,
-    render: () => <InputErrorFixture />,
+  "id": "input.recommended",
+  "name": "Reading-log title",
+  "description": "Label, hint, required rule, value, and submission in one field.",
+  "tags": [
+    "input",
+    "form",
+    "required",
+    "hint"
+  ],
+  "themes": [
+    "light",
+    "dark"
+  ],
+  "densities": [
+    "comfortable",
+    "compact"
+  ],
+  "viewports": [
+    {
+      "id": "phone",
+      "label": "Phone",
+      "width": 360,
+      "height": 720
+    },
+    {
+      "id": "tablet",
+      "label": "Tablet",
+      "width": 768,
+      "height": 800
+    },
+    {
+      "id": "desktop",
+      "label": "Desktop",
+      "width": 1280,
+      "height": 800
+    }
+  ],
+  "deterministic": true,
+    code: Example5Source, render: () => <Example5 />
   }),
   defineCatalogFixture({
-    id: "modal.recommended",
-    name: "Confirm log deletion",
-    description: "A focused modal with explanatory copy and two close paths.",
-    tags: ["modal", "focus", "destructive"],
-    themes: ["light", "dark"],
-    densities: ["comfortable", "compact"],
-    viewports: VIEWPORTS,
-    deterministic: true,
-    code: `import { Modal } from "paper-ui";
-
-<Modal
-  triggerLabel="Review deletion"
-  triggerVariant="destructive"
-  title="Delete this reading log?"
-  description="This removes the log from your history."
-  closeLabel="Keep log"
-  action={{ label: "Delete log", variant: "destructive", onAction: deleteLog }}
->
-  <p>August Japanese reading · 1,240 pages</p>
-</Modal>`,
-    render: () => (
-      <Modal
-        triggerLabel="Review deletion"
-        triggerVariant="destructive"
-        title="Delete this reading log?"
-        description="This removes the log from your history."
-        closeLabel="Keep log"
-        action={{
-          label: "Delete log",
-          variant: "destructive",
-          onAction: () => undefined,
-        }}
-      >
-        <p>August Japanese reading · 1,240 pages</p>
-      </Modal>
-    ),
+  "id": "input.states",
+  "name": "Read-only and disabled",
+  "description": "Two non-editable states with distinct native semantics.",
+  "tags": [
+    "input",
+    "readonly",
+    "disabled"
+  ],
+  "themes": [
+    "light",
+    "dark"
+  ],
+  "densities": [
+    "comfortable",
+    "compact"
+  ],
+  "viewports": [
+    {
+      "id": "phone",
+      "label": "Phone",
+      "width": 360,
+      "height": 720
+    },
+    {
+      "id": "tablet",
+      "label": "Tablet",
+      "width": 768,
+      "height": 800
+    },
+    {
+      "id": "desktop",
+      "label": "Desktop",
+      "width": 1280,
+      "height": 800
+    }
+  ],
+  "deterministic": true,
+    code: Example6Source, render: () => <Example6 />
   }),
   defineCatalogFixture({
-    id: "modal.composable-search",
-    name: "Composable catalogue search",
-    description: "An application trigger controls a footerless dialog and its initial focus.",
-    tags: ["modal", "controlled", "trigger", "initial focus", "footerless"],
-    themes: ["light", "dark"],
-    densities: ["comfortable", "compact"],
-    viewports: VIEWPORTS,
-    deterministic: true,
-    code: `import { useRef, useState } from "react";
-import { Button, Modal } from "paper-ui";
-
-function CatalogueSearch() {
-  const [open, setOpen] = useState(false);
-  const searchRef = useRef<HTMLInputElement>(null);
-
-  return (
-    <Modal
-      trigger={<Button variant="ghost">Search Paper <kbd>Ctrl K</kbd></Button>}
-      title="Search Paper"
-      description="Search components and foundations."
-      open={open}
-      onOpenChange={setOpen}
-      initialFocus={searchRef}
-      footer={null}
-    >
-      <label>
-        Search catalogue
-        <input ref={searchRef} type="search" />
-      </label>
-    </Modal>
-  );
-}`,
-    render: () => <ComposableModalFixture />,
+  "id": "input.error",
+  "name": "Validation error",
+  "description": "Hint and error remain associated with the invalid input.",
+  "tags": [
+    "input",
+    "error",
+    "accessibility"
+  ],
+  "themes": [
+    "light",
+    "dark"
+  ],
+  "densities": [
+    "comfortable",
+    "compact"
+  ],
+  "viewports": [
+    {
+      "id": "phone",
+      "label": "Phone",
+      "width": 360,
+      "height": 720
+    },
+    {
+      "id": "tablet",
+      "label": "Tablet",
+      "width": 768,
+      "height": 800
+    },
+    {
+      "id": "desktop",
+      "label": "Desktop",
+      "width": 1280,
+      "height": 800
+    }
+  ],
+  "deterministic": true,
+    code: Example7Source, render: () => <Example7 />
   }),
   defineCatalogFixture({
-    id: "action-menu.recommended",
-    name: "Reading-log actions",
-    description: "Common, unavailable, and destructive actions in one menu.",
-    tags: ["action menu", "keyboard", "disabled", "destructive"],
-    themes: ["light", "dark"],
-    densities: ["comfortable", "compact"],
-    viewports: VIEWPORTS,
-    deterministic: true,
-    code: `import { ActionMenu } from "paper-ui";
-
-<ActionMenu
-  label="Log actions"
-  items={[
-    { id: "edit", label: "Edit log", onSelect: editLog },
-    { id: "duplicate", label: "Duplicate log", disabled: true, onSelect: duplicateLog },
-    { id: "delete", label: "Delete log", destructive: true, onSelect: deleteLog },
-  ]}
-/>`,
-    render: () => (
-      <ActionMenu
-        label="Log actions"
-        items={[
-          { id: "edit", label: "Edit log", onSelect: () => undefined },
-          {
-            id: "duplicate",
-            label: "Duplicate log",
-            disabled: true,
-            onSelect: () => undefined,
-          },
-          {
-            id: "delete",
-            label: "Delete log",
-            destructive: true,
-            onSelect: () => undefined,
-          },
-        ]}
-      />
-    ),
+  "id": "modal.recommended",
+  "name": "Confirm log deletion",
+  "description": "Confirm a local demo deletion, or keep the log with either dismissal path.",
+  "tags": [
+    "modal",
+    "focus",
+    "destructive"
+  ],
+  "themes": [
+    "light",
+    "dark"
+  ],
+  "densities": [
+    "comfortable",
+    "compact"
+  ],
+  "viewports": [
+    {
+      "id": "phone",
+      "label": "Phone",
+      "width": 360,
+      "height": 720
+    },
+    {
+      "id": "tablet",
+      "label": "Tablet",
+      "width": 768,
+      "height": 800
+    },
+    {
+      "id": "desktop",
+      "label": "Desktop",
+      "width": 1280,
+      "height": 800
+    }
+  ],
+  "deterministic": true,
+    code: Example8Source, render: () => <Example8 />
   }),
+  defineCatalogFixture({
+  "id": "modal.composable-search",
+  "name": "Composable catalogue search",
+  "description": "A controlled footerless dialog focuses a real form field and filters local examples.",
+  "tags": [
+    "modal",
+    "controlled",
+    "trigger",
+    "initial focus",
+    "footerless"
+  ],
+  "themes": [
+    "light",
+    "dark"
+  ],
+  "densities": [
+    "comfortable",
+    "compact"
+  ],
+  "viewports": [
+    {
+      "id": "phone",
+      "label": "Phone",
+      "width": 360,
+      "height": 720
+    },
+    {
+      "id": "tablet",
+      "label": "Tablet",
+      "width": 768,
+      "height": 800
+    },
+    {
+      "id": "desktop",
+      "label": "Desktop",
+      "width": 1280,
+      "height": 800
+    }
+  ],
+  "deterministic": true,
+    code: Example9Source, render: () => <Example9 />
+  }),
+  defineCatalogFixture({
+  "id": "action-menu.recommended",
+  "name": "Reading-log actions",
+  "description": "Common, unavailable, and destructive actions in one menu.",
+  "tags": [
+    "action menu",
+    "keyboard",
+    "disabled",
+    "destructive"
+  ],
+  "themes": [
+    "light",
+    "dark"
+  ],
+  "densities": [
+    "comfortable",
+    "compact"
+  ],
+  "viewports": [
+    {
+      "id": "phone",
+      "label": "Phone",
+      "width": 360,
+      "height": 720
+    },
+    {
+      "id": "tablet",
+      "label": "Tablet",
+      "width": 768,
+      "height": 800
+    },
+    {
+      "id": "desktop",
+      "label": "Desktop",
+      "width": 1280,
+      "height": 800
+    }
+  ],
+  "deterministic": true,
+    code: Example10Source, render: () => <Example10 />
+  })
 ] as const;
 
 export const phaseTwoDocuments = [
-  componentDocument({
-    id: "component.button",
-    route: "/components/actions/button",
-    name: "Button",
-    category: "actions",
-    summary: "Triggers an immediate action with explicit hierarchy and safe defaults.",
-    keywords: ["button", "action", "loading", "anchor", "submit"],
-    sourcePath: "src/components/actions/Button/Button.tsx",
-    fixtureIds: ["button.variants", "button.loading", "button.narrow"],
-    behaviorTestIds: ["button.semantics", "button.recipe-parity", "button.loading"],
-    guidance: {
-      whenToUse: ["Trigger an immediate operation such as saving or deleting."],
-      whenNotToUse: ["Use an anchor for navigation to another resource."],
-      content: ["Start with a specific verb and keep labels stable while loading."],
-      commonMistakes: ["Do not use the link variant to turn navigation into a button."],
+  defineCatalogDocument({
+  "id": "component.button",
+  "route": "/components/actions/button",
+  "name": "Button",
+  "category": "actions",
+  "summary": "Triggers an immediate action with explicit hierarchy and safe defaults.",
+  "keywords": [
+    "button",
+    "action",
+    "loading",
+    "anchor",
+    "submit"
+  ],
+  "sourcePath": "src/components/actions/Button/Button.tsx",
+  "fixtureIds": [
+    "button.variants",
+    "button.loading",
+    "button.narrow",
+    "button.icons-disabled",
+    "button.classes"
+  ],
+  "behaviorTestIds": [
+    "button.semantics",
+    "button.recipe-parity",
+    "button.loading"
+  ],
+  "guidance": {
+    "whenToUse": [
+      "Trigger an immediate operation such as saving or deleting."
+    ],
+    "whenNotToUse": [
+      "Use an anchor for navigation to another resource."
+    ],
+    "content": [
+      "Start with a specific verb and keep labels stable while loading."
+    ],
+    "commonMistakes": [
+      "Do not use the link variant to turn navigation into a button."
+    ]
+  },
+  "accessibility": {
+    "requirements": [
+      "Provide a stable accessible name and visible focus."
+    ],
+    "keyboard": [
+      "Enter and Space activate a button; anchors retain native Enter behavior."
+    ],
+    "knownConstraints": [
+      "Icon-only actions need an explicit aria-label."
+    ]
+  },
+  "api": {
+    "react": [
+      "Button"
+    ],
+    "props": [
+      {
+        "name": "variant",
+        "type": "\"default\" | \"outline\" | \"ghost\" | \"link\" | \"destructive\"",
+        "description": "Choose emphasis by the action’s role. Link styling still renders a button.",
+        "defaultValue": "default"
+      },
+      {
+        "name": "type",
+        "type": "\"button\" | \"submit\" | \"reset\"",
+        "description": "Use submit explicitly for form submission; call methods.reset() for RHF resets.",
+        "defaultValue": "button"
+      },
+      {
+        "name": "loading",
+        "type": "boolean",
+        "description": "Disables repeat activation and announces progress without replacing the label.",
+        "defaultValue": "false"
+      },
+      {
+        "name": "loadingLabel",
+        "type": "string",
+        "description": "Accessible progress description; name the pending operation.",
+        "defaultValue": "Working"
+      },
+      {
+        "name": "disabled",
+        "type": "boolean",
+        "description": "Makes an unavailable action inert. Keep its reason visible nearby.",
+        "defaultValue": "false"
+      },
+      {
+        "name": "fullWidth",
+        "type": "boolean",
+        "description": "Fills the available inline width; long labels may wrap.",
+        "defaultValue": "false"
+      },
+      {
+        "name": "leadingIcon / trailingIcon",
+        "type": "ReactNode",
+        "description": "Decorative icons; provide aria-label on icon-only actions."
+      },
+      {
+        "name": "children",
+        "type": "ReactNode",
+        "description": "A concise visible action label."
+      },
+      {
+        "name": "onClick",
+        "type": "MouseEventHandler<HTMLButtonElement>",
+        "description": "Application-owned action handler. Native button attributes and refs are forwarded."
+      }
+    ],
+    "cssClasses": [
+      "paper-button",
+      "buttonClassName()"
+    ],
+    "publicTypes": [
+      "ButtonProps",
+      "ButtonVariant",
+      "ButtonRecipeOptions"
+    ],
+    "defaults": [
+      "variant=default",
+      "type=button",
+      "loading=false"
+    ],
+    "invalidCombinations": [
+      "Do not put href on Button; style a real anchor with buttonClassName()."
+    ]
+  },
+  "migration": {
+    "legacy": [
+      "ui Button",
+      "btn primary",
+      "btn secondary",
+      "btn danger"
+    ],
+    "notes": [
+      "Map intent: primary to default, secondary to outline, danger to destructive."
+    ]
+  },
+  "sections": {
+    "required": {
+      "overview": {
+        "heading": "Overview",
+        "content": [
+          "Button expresses action hierarchy without changing native semantics."
+        ]
+      },
+      "whenToUse": {
+        "heading": "When to use",
+        "content": [
+          "Use Button for an immediate user-initiated operation such as saving a log, applying a filter, or deleting an entry. Use one default button for the primary action in a local task; give supporting actions less emphasis."
+        ]
+      },
+      "whenNotToUse": {
+        "heading": "When not to use",
+        "content": [
+          "Use an anchor when activation navigates to a URL, including links styled with buttonClassName(). Do not use a disabled button as an explanation; keep the reason visible near the unavailable action."
+        ]
+      },
+      "choosingBetween": {
+        "heading": "Choose between",
+        "content": [
+          "Default is the emphasized action, outline is a neutral alternative, ghost is a low-emphasis toolbar action, and link is an action embedded in prose. Destructive communicates irreversible intent; it does not replace a confirmation when the consequence is difficult to undo."
+        ]
+      },
+      "anatomy": {
+        "heading": "Anatomy",
+        "content": [
+          "A control contains an optional icon, a stable text label, and a lower interactive edge."
+        ]
+      },
+      "recommendedExample": {
+        "heading": "Recommended example",
+        "content": [
+          "Compare action emphasis, then select Loading, Icons and unavailable actions, or Native elements with public classes. The native example uses the same recipe without requiring the Button wrapper; supply native type, disabled and aria-busy attributes yourself."
+        ]
+      },
+      "variants": {
+        "heading": "Variants",
+        "content": [
+          "Use default for the main action in a task, outline for a visible alternative, ghost for compact secondary actions, link for button behavior that belongs inline with text, and destructive for a destructive operation. buttonClassName() gives a real anchor the same visual hierarchy without changing its navigation semantics."
+        ]
+      },
+      "statesAndAdaptation": {
+        "heading": "States and adaptation",
+        "content": [
+          "loading prevents repeat activation, sets aria-busy, keeps the original accessible name, and announces loadingLabel as a description. fullWidth is intended for constrained layouts; density changes sizing without changing hierarchy."
+        ]
+      },
+      "behavior": {
+        "heading": "Behavior",
+        "content": [
+          "Buttons activate on Enter or Space and default to type=button, preventing accidental form submission. Explicitly set type=submit inside a React Hook Form and submit through methods.handleSubmit(); use methods.reset() only for a deliberate reset workflow."
+        ]
+      },
+      "contentGuidance": {
+        "heading": "Content guidance",
+        "content": [
+          "Start with a specific verb and name the object when context is not obvious: Save log, Delete entry, or Clear filters. Keep the visible label stable while loading and avoid vague labels such as OK or Submit."
+        ]
+      },
+      "accessibility": {
+        "heading": "Accessibility",
+        "content": [
+          "Keep an accessible name, do not convey danger through color alone, and preserve native anchor roles for navigation."
+        ]
+      },
+      "implementation": {
+        "heading": "Implementation",
+        "content": [
+          "Button and buttonClassName() call the same recipe; load paper-ui/styles.css once at the application root."
+        ]
+      },
+      "apiReference": {
+        "heading": "API reference",
+        "content": [
+          "ButtonProps adds variant, loading, loadingLabel, icons, and fullWidth to native button attributes."
+        ]
+      },
+      "relatedPatterns": {
+        "heading": "Related patterns",
+        "content": [
+          "Use Modal for focused confirmation and ActionMenu when several contextual actions compete."
+        ]
+      },
+      "migration": {
+        "heading": "Migration",
+        "content": [
+          "Review old primary, secondary, and danger classes by semantic job instead of renaming mechanically."
+        ]
+      },
+      "lifecycle": {
+        "heading": "Lifecycle",
+        "content": [
+          "Stable in Paper 0.1.0; behavior and variant vocabulary are migration-ready."
+        ]
+      }
     },
-    accessibility: {
-      requirements: ["Provide a stable accessible name and visible focus."],
-      keyboard: ["Enter and Space activate a button; anchors retain native Enter behavior."],
-      knownConstraints: ["Icon-only actions need an explicit aria-label."],
+    "pageSections": [
+      "usage",
+      "examples",
+      "variantsAndStates",
+      "behavior",
+      "contentGuidance",
+      "accessibility"
+    ]
+  },
+  "kind": "component",
+  "aliases": [],
+  "lifecycle": "Stable",
+  "reviewDate": "2026-09-05",
+  "packageVersion": "0.1.0",
+  "dependencies": {
+    "documents": [],
+    "packages": [
+      "paper-ui"
+    ]
+  },
+  "changelog": [
+    {
+      "date": "2026-09-05",
+      "note": "Published the Stable Phase 2 contract."
+    }
+  ]
+}),
+  defineCatalogDocument({
+  "id": "component.input",
+  "route": "/components/forms/input",
+  "name": "Input",
+  "category": "forms",
+  "summary": "Collects one line of text with complete field anatomy and form state.",
+  "keywords": [
+    "input",
+    "field",
+    "form",
+    "error",
+    "hint"
+  ],
+  "sourcePath": "src/components/forms/Input/Input.tsx",
+  "fixtureIds": [
+    "input.recommended",
+    "input.states",
+    "input.error"
+  ],
+  "behaviorTestIds": [
+    "input.associations",
+    "input.validation",
+    "input.native-states"
+  ],
+  "guidance": {
+    "whenToUse": [
+      "Collect a short, free-form value in a React Hook Form."
+    ],
+    "whenNotToUse": [
+      "Use a choice control when the set of valid values is known."
+    ],
+    "content": [
+      "Use a visible noun label and a hint only when it adds constraints or context."
+    ],
+    "commonMistakes": [
+      "Do not use placeholder text as the only label."
+    ]
+  },
+  "accessibility": {
+    "requirements": [
+      "Associate label, hint, and error IDs with the native input."
+    ],
+    "keyboard": [
+      "The native input follows platform text-editing behavior."
+    ],
+    "knownConstraints": [
+      "Input requires a react-hook-form FormProvider."
+    ]
+  },
+  "api": {
+    "react": [
+      "Input"
+    ],
+    "props": [
+      {
+        "name": "name",
+        "type": "string",
+        "description": "React Hook Form field path.",
+        "required": true
+      },
+      {
+        "name": "label",
+        "type": "string",
+        "description": "Persistent visible label.",
+        "required": true
+      },
+      {
+        "name": "hint",
+        "type": "string",
+        "description": "Format, constraint or consequence; associated with the input."
+      },
+      {
+        "name": "rules",
+        "type": "RegisterOptions",
+        "description": "Validation messages and constraints supplied to React Hook Form."
+      },
+      {
+        "name": "required",
+        "type": "boolean",
+        "description": "Sets the native required attribute, label marker and a default RHF required rule.",
+        "defaultValue": "false"
+      },
+      {
+        "name": "type / inputMode",
+        "type": "native input attributes",
+        "description": "Use type for input semantics and inputMode for the platform keyboard.",
+        "defaultValue": "text"
+      },
+      {
+        "name": "readOnly",
+        "type": "boolean",
+        "description": "Allows focus and copying while preventing edits.",
+        "defaultValue": "false"
+      },
+      {
+        "name": "disabled",
+        "type": "boolean",
+        "description": "Makes the field unavailable.",
+        "defaultValue": "false"
+      },
+      {
+        "name": "id / ref",
+        "type": "string / Ref<HTMLInputElement>",
+        "description": "Optional explicit ID or imperative focus target."
+      }
+    ],
+    "cssClasses": [
+      "paper-field",
+      "paper-input"
+    ],
+    "publicTypes": [
+      "InputProps"
+    ],
+    "defaults": [
+      "Native text input behavior",
+      "Errors come from react-hook-form state"
+    ],
+    "invalidCombinations": [
+      "Do not render Input outside FormProvider."
+    ]
+  },
+  "migration": {
+    "legacy": [
+      "ui/components/Form Input"
+    ],
+    "notes": [
+      "Keep names and validation rules in react-hook-form; replace implicit global field styling."
+    ]
+  },
+  "sections": {
+    "required": {
+      "overview": {
+        "heading": "Overview",
+        "content": [
+          "Input owns the complete visible and semantic field relationship."
+        ]
+      },
+      "whenToUse": {
+        "heading": "When to use",
+        "content": [
+          "Use Input for a short free-form value that fits on one line, such as a reading-log title, page count, email address, or password. Set the appropriate native type or inputMode so platform keyboards and validation can help."
+        ]
+      },
+      "whenNotToUse": {
+        "heading": "When not to use",
+        "content": [
+          "Use TextArea for prose and Select, radio controls, or Autocomplete when valid choices are known. Do not use placeholder text as the label: it disappears after entry and does not provide a persistent field name."
+        ]
+      },
+      "choosingBetween": {
+        "heading": "Choose between",
+        "content": [
+          "A read-only value remains focusable and selectable and is still submitted; a disabled value is unavailable and omitted from submission. Use readOnly when users may need to inspect or copy the value, and disabled only when the control does not currently participate in the form."
+        ]
+      },
+      "anatomy": {
+        "heading": "Anatomy",
+        "content": [
+          "The field contains a persistent label, optional hint, native input, and validation message."
+        ]
+      },
+      "recommendedExample": {
+        "heading": "Recommended example",
+        "content": [
+          "Edit the log title and save it to see the submitted value. Clear it and save again to test the error and focus behavior. The other examples compare non-editable fields and a server-supplied error."
+        ]
+      },
+      "variants": {
+        "heading": "Variants",
+        "content": [
+          "Text, email, password, numeric-input-mode, and other native types share the field anatomy."
+        ]
+      },
+      "statesAndAdaptation": {
+        "heading": "States and adaptation",
+        "content": [
+          "required adds the native required state and a visible marker. An invalid field sets aria-invalid and connects its alert message alongside any hint. Read-only remains operable for selection; disabled is visually muted and removed from interaction and submission."
+        ]
+      },
+      "behavior": {
+        "heading": "Behavior",
+        "content": [
+          "Registration, value, blur, and validation state come from the nearest FormProvider."
+        ]
+      },
+      "contentGuidance": {
+        "heading": "Content guidance",
+        "content": [
+          "Use a persistent noun phrase for the label. Add a hint only for a format, constraint, or consequence the label cannot carry. An error should explain how to fix the value—Enter the number of pages read is more useful than Invalid input."
+        ]
+      },
+      "accessibility": {
+        "heading": "Accessibility",
+        "content": [
+          "htmlFor, aria-describedby, aria-invalid, and role=alert connect the field anatomy without relying on color."
+        ]
+      },
+      "implementation": {
+        "heading": "Implementation",
+        "content": [
+          "Create methods with useForm(), wrap fields in FormProvider, and submit through methods.handleSubmit()."
+        ]
+      },
+      "apiReference": {
+        "heading": "API reference",
+        "content": [
+          "InputProps requires name and label, accepts hint and register rules, and otherwise follows native input attributes."
+        ]
+      },
+      "relatedPatterns": {
+        "heading": "Related patterns",
+        "content": [
+          "Button submits the surrounding form; future choice controls reuse the same field anatomy."
+        ]
+      },
+      "migration": {
+        "heading": "Migration",
+        "content": [
+          "Move validation into register rules and remove application-owned label/error selectors."
+        ]
+      },
+      "lifecycle": {
+        "heading": "Lifecycle",
+        "content": [
+          "Stable in Paper 0.1.0 with deterministic associations and React Hook Form ownership."
+        ]
+      }
     },
-    api: {
-      react: ["Button"],
-      cssClasses: ["paper-button", "buttonClassName()"],
-      publicTypes: ["ButtonProps", "ButtonVariant", "ButtonRecipeOptions"],
-      defaults: ["variant=default", "type=button", "loading=false"],
-      invalidCombinations: ["Do not put href on Button; style a real anchor with buttonClassName()."],
-    },
-    migration: {
-      legacy: ["ui Button", "btn primary", "btn secondary", "btn danger"],
-      notes: ["Map intent: primary to default, secondary to outline, danger to destructive."],
-    },
-    sections: componentSections("Button", {
-      overview: section("Overview", "Button expresses action hierarchy without changing native semantics."),
-      whenToUse: section("When to use", "Use Button for an immediate user-initiated operation such as saving a log, applying a filter, or deleting an entry. Use one default button for the primary action in a local task; give supporting actions less emphasis."),
-      whenNotToUse: section("When not to use", "Use an anchor when activation navigates to a URL, including links styled with buttonClassName(). Do not use a disabled button as an explanation; keep the reason visible near the unavailable action."),
-      choosingBetween: section("Choose between", "Default is the emphasized action, outline is a neutral alternative, ghost is a low-emphasis toolbar action, and link is an action embedded in prose. Destructive communicates irreversible intent; it does not replace a confirmation when the consequence is difficult to undo."),
-      anatomy: section("Anatomy", "A control contains an optional icon, a stable text label, and a lower interactive edge."),
-      recommendedExample: section("Recommended example", "Save log is specific, short, and defaults to type=button."),
-      variants: section("Variants", "Use default for the main action in a task, outline for a visible alternative, ghost for compact secondary actions, link for button behavior that belongs inline with text, and destructive for a destructive operation. buttonClassName() gives a real anchor the same visual hierarchy without changing its navigation semantics."),
-      statesAndAdaptation: section("States and adaptation", "loading prevents repeat activation, sets aria-busy, keeps the original accessible name, and announces loadingLabel as a description. fullWidth is intended for constrained layouts; density changes sizing without changing hierarchy."),
-      behavior: section("Behavior", "Buttons activate on Enter or Space and default to type=button, preventing accidental form submission. Explicitly set type=submit inside a React Hook Form and submit through methods.handleSubmit(); use methods.reset() only for a deliberate reset workflow."),
-      contentGuidance: section("Content guidance", "Start with a specific verb and name the object when context is not obvious: Save log, Delete entry, or Clear filters. Keep the visible label stable while loading and avoid vague labels such as OK or Submit."),
-      accessibility: section("Accessibility", "Keep an accessible name, do not convey danger through color alone, and preserve native anchor roles for navigation."),
-      implementation: section("Implementation", "Button and buttonClassName() call the same recipe; load paper-ui/styles.css once at the application root."),
-      apiReference: section("API reference", "ButtonProps adds variant, loading, loadingLabel, icons, and fullWidth to native button attributes."),
-      relatedPatterns: section("Related patterns", "Use Modal for focused confirmation and ActionMenu when several contextual actions compete."),
-      migration: section("Migration", "Review old primary, secondary, and danger classes by semantic job instead of renaming mechanically."),
-      lifecycle: section("Lifecycle", "Stable in Paper 0.1.0; behavior and variant vocabulary are migration-ready."),
-    }),
-  }),
-  componentDocument({
-    id: "component.input",
-    route: "/components/forms/input",
-    name: "Input",
-    category: "forms",
-    summary: "Collects one line of text with complete field anatomy and form state.",
-    keywords: ["input", "field", "form", "error", "hint"],
-    sourcePath: "src/components/forms/Input/Input.tsx",
-    fixtureIds: ["input.recommended", "input.states", "input.error"],
-    behaviorTestIds: ["input.associations", "input.validation", "input.native-states"],
-    guidance: {
-      whenToUse: ["Collect a short, free-form value in a React Hook Form."],
-      whenNotToUse: ["Use a choice control when the set of valid values is known."],
-      content: ["Use a visible noun label and a hint only when it adds constraints or context."],
-      commonMistakes: ["Do not use placeholder text as the only label."],
-    },
-    accessibility: {
-      requirements: ["Associate label, hint, and error IDs with the native input."],
-      keyboard: ["The native input follows platform text-editing behavior."],
-      knownConstraints: ["Input requires a react-hook-form FormProvider."],
-    },
-    api: {
-      react: ["Input"],
-      cssClasses: ["paper-field", "paper-input"],
-      publicTypes: ["InputProps"],
-      defaults: ["Native text input behavior", "Errors come from react-hook-form state"],
-      invalidCombinations: ["Do not render Input outside FormProvider."],
-    },
-    migration: {
-      legacy: ["ui/components/Form Input"],
-      notes: ["Keep names and validation rules in react-hook-form; replace implicit global field styling."],
-    },
-    sections: componentSections("Input", {
-      overview: section("Overview", "Input owns the complete visible and semantic field relationship."),
-      whenToUse: section("When to use", "Use Input for a short free-form value that fits on one line, such as a reading-log title, page count, email address, or password. Set the appropriate native type or inputMode so platform keyboards and validation can help."),
-      whenNotToUse: section("When not to use", "Use TextArea for prose and Select, radio controls, or Autocomplete when valid choices are known. Do not use placeholder text as the label: it disappears after entry and does not provide a persistent field name."),
-      choosingBetween: section("Choose between", "A read-only value remains focusable and selectable and is still submitted; a disabled value is unavailable and omitted from submission. Use readOnly when users may need to inspect or copy the value, and disabled only when the control does not currently participate in the form."),
-      anatomy: section("Anatomy", "The field contains a persistent label, optional hint, native input, and validation message."),
-      recommendedExample: section("Recommended example", "Log title demonstrates a useful label, constraint hint, required rule, and explicit submit action."),
-      variants: section("Variants", "Text, email, password, numeric-input-mode, and other native types share the field anatomy."),
-      statesAndAdaptation: section("States and adaptation", "required adds the native required state and a visible marker. An invalid field sets aria-invalid and connects its alert message alongside any hint. Read-only remains operable for selection; disabled is visually muted and removed from interaction and submission."),
-      behavior: section("Behavior", "Registration, value, blur, and validation state come from the nearest FormProvider."),
-      contentGuidance: section("Content guidance", "Use a persistent noun phrase for the label. Add a hint only for a format, constraint, or consequence the label cannot carry. An error should explain how to fix the value—Enter the number of pages read is more useful than Invalid input."),
-      accessibility: section("Accessibility", "htmlFor, aria-describedby, aria-invalid, and role=alert connect the field anatomy without relying on color."),
-      implementation: section("Implementation", "Create methods with useForm(), wrap fields in FormProvider, and submit through methods.handleSubmit()."),
-      apiReference: section("API reference", "InputProps requires name and label, accepts hint and register rules, and otherwise follows native input attributes."),
-      relatedPatterns: section("Related patterns", "Button submits the surrounding form; future choice controls reuse the same field anatomy."),
-      migration: section("Migration", "Move validation into register rules and remove application-owned label/error selectors."),
-      lifecycle: section("Lifecycle", "Stable in Paper 0.1.0 with deterministic associations and React Hook Form ownership."),
-    }),
-  }),
+    "pageSections": [
+      "usage",
+      "examples",
+      "variantsAndStates",
+      "behavior",
+      "contentGuidance",
+      "accessibility"
+    ]
+  },
+  "kind": "component",
+  "aliases": [],
+  "lifecycle": "Stable",
+  "reviewDate": "2026-09-05",
+  "packageVersion": "0.1.0",
+  "dependencies": {
+    "documents": [],
+    "packages": [
+      "paper-ui"
+    ]
+  },
+  "changelog": [
+    {
+      "date": "2026-09-05",
+      "note": "Published the Stable Phase 2 contract."
+    }
+  ]
+}),
   componentDocument({
     id: "component.modal",
     route: "/components/overlays/modal",
@@ -522,6 +1075,74 @@ export const phaseTwoDocuments = [
     },
     api: {
       react: ["Modal"],
+      props: [
+  {
+    "name": "title",
+    "type": "string",
+    "description": "Visible title and accessible dialog name.",
+    "required": true
+  },
+  {
+    "name": "children",
+    "type": "ReactNode",
+    "description": "A short bounded task or confirmation content.",
+    "required": true
+  },
+  {
+    "name": "description",
+    "type": "string",
+    "description": "Explain the consequence or task; associated with the dialog."
+  },
+  {
+    "name": "triggerLabel",
+    "type": "string",
+    "description": "Name for the standard trigger; required unless supplying trigger."
+  },
+  {
+    "name": "trigger",
+    "type": "ReactElement",
+    "description": "Application-owned trigger receiving dialog behavior and ARIA state."
+  },
+  {
+    "name": "triggerVariant",
+    "type": "ButtonVariant",
+    "description": "Appearance of the standard trigger.",
+    "defaultValue": "default"
+  },
+  {
+    "name": "open / onOpenChange",
+    "type": "boolean / (open: boolean) => void",
+    "description": "Provide both for controlled state; close after successful async work."
+  },
+  {
+    "name": "defaultOpen",
+    "type": "boolean",
+    "description": "Initial open state for an uncontrolled dialog.",
+    "defaultValue": "false"
+  },
+  {
+    "name": "initialFocus",
+    "type": "boolean | RefObject<HTMLElement> | callback",
+    "description": "Choose the initial focus target; use a field ref for editing tasks."
+  },
+  {
+    "name": "closeLabel",
+    "type": "string",
+    "description": "Label for header and standard footer dismissal.",
+    "defaultValue": "Close"
+  },
+  {
+    "name": "action",
+    "type": "{ label, variant?, disabled?, onAction }",
+    "description": "Optional synchronous action in the standard footer. Activation also closes the dialog."
+  },
+  {
+    "name": "footer",
+    "type": "ReactNode",
+    "description": "Replace the standard footer, or pass null to omit it. Use for async actions.",
+    "defaultValue": "standard action/close footer"
+  }
+],
       cssClasses: [],
       publicTypes: ["ModalProps"],
       defaults: ["modal=true", "triggerVariant=default", "closeLabel=Close"],
@@ -537,10 +1158,10 @@ export const phaseTwoDocuments = [
       whenNotToUse: section("When not to use", "Avoid it for passive notices, multi-step flows, or content that deserves a URL."),
       choosingBetween: section("Choose between", "Use Flash for non-blocking feedback, ActionMenu for contextual choices, and a page for sustained work."),
       anatomy: section("Anatomy", "Backdrop, viewport, titled popup, optional description, content, close affordance, and footer."),
-      recommendedExample: section("Recommended example", "Deletion review demonstrates the standard action footer; catalogue search demonstrates an application trigger, controlled state, initial focus, and no footer."),
+      recommendedExample: section("Recommended example", "Review deletion and choose Delete log to see a local confirmation. Keep log, Escape, and the header close leave the value unchanged. Search examples demonstrates controlled state, initial focus, and a footerless search field."),
       variants: section("Variants", "Use the standard triggerLabel and action contract for common confirmations. Pass an application-owned trigger and footer when the task needs a composed entry point or action layout; footer=null intentionally omits the footer."),
       statesAndAdaptation: section("States and adaptation", "Use open with onOpenChange when application state or another control owns visibility. The viewport scrolls long content and remains bounded at phone, tablet, and desktop widths."),
-      behavior: section("Behavior", "Base UI manages opening, focus containment, Escape/outside dismissal, and focus return. initialFocus moves focus to an application-owned field when the default first focusable element is not the useful starting point."),
+      behavior: section("Behavior", "Base UI manages opening, focus containment, Escape/outside dismissal, and focus return. initialFocus targets an application-owned field. The standard action closes immediately; for an asynchronous save, use controlled open state and a custom footer, keep errors inside the dialog, and close only after success."),
       contentGuidance: section("Content guidance", "Use a question for confirmation titles and put consequences in the description."),
       accessibility: section("Accessibility", "Title and description label the dialog; two close paths ensure touch-screen-reader escape."),
       implementation: section("Implementation", "Import Modal from paper-ui; Base UI remains a private interaction dependency."),
@@ -573,6 +1194,50 @@ export const phaseTwoDocuments = [
     },
     api: {
       react: ["ActionMenu"],
+      props: [
+  { "name": "iconOnly", "type": "boolean", "defaultValue": "false", "description": "Show a labelled ellipsis instead of text and chevron. Give label the row or item context, such as Actions for August Japanese reading log." },
+  {
+    "name": "label",
+    "type": "string",
+    "description": "Visible trigger name identifying which object the actions affect.",
+    "required": true
+  },
+  {
+    "name": "items",
+    "type": "readonly ActionMenuItem[]",
+    "description": "Stable id, visible label and onSelect callback for each action.",
+    "required": true
+  },
+  {
+    "name": "items[].disabled",
+    "type": "boolean",
+    "description": "Keeps an action visible but unavailable; explain why outside the menu.",
+    "defaultValue": "false"
+  },
+  {
+    "name": "items[].destructive",
+    "type": "boolean",
+    "description": "Highlights destructive intent; does not add confirmation.",
+    "defaultValue": "false"
+  },
+  {
+    "name": "items[].icon",
+    "type": "ReactNode",
+    "description": "Optional decorative icon beside the label."
+  },
+  {
+    "name": "triggerVariant",
+    "type": "ButtonVariant",
+    "description": "Choose an appropriate trigger hierarchy.",
+    "defaultValue": "outline"
+  },
+  {
+    "name": "defaultOpen",
+    "type": "boolean",
+    "description": "Initial open state; normally leave closed.",
+    "defaultValue": "false"
+  }
+],
       cssClasses: [],
       publicTypes: ["ActionMenuProps", "ActionMenuItem"],
       defaults: ["triggerVariant=outline", "loopFocus=true"],
@@ -588,7 +1253,7 @@ export const phaseTwoDocuments = [
       whenNotToUse: section("When not to use", "Do not hide the main task or global navigation in a contextual action menu."),
       choosingBetween: section("Choose between", "Use Button for one visible action, Modal for a focused decision, and ActionMenu for a compact action set."),
       anatomy: section("Anatomy", "A named trigger anchors a floating menu containing text-labelled action items."),
-      recommendedExample: section("Recommended example", "Reading-log actions place common editing first, unavailable duplication in place, and deletion last."),
+      recommendedExample: section("Recommended example", "Open Log actions with the keyboard or pointer, select Edit log, and read the outcome below. Duplication stays disabled with its reason visible. Delete demonstrates intent only; real data deletion should request confirmation."),
       variants: section("Variants", "The trigger may use an appropriate Button variant; destructive styling belongs to the item, not the whole menu."),
       statesAndAdaptation: section("States and adaptation", "Highlighted, disabled, destructive, open, and closed states retain non-color cues and density sizing."),
       behavior: section("Behavior", "Base UI owns trigger activation, placement, roving focus, typeahead, dismissal, selection, and focus return."),

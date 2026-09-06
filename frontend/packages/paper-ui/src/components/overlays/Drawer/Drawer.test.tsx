@@ -1,3 +1,4 @@
+import { publishedPrimitiveFixtures } from "../../../catalog/published-primitives";
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { useState } from "react";
@@ -94,3 +95,21 @@ describe("Drawer", () => {
     frame.remove();
   });
 });
+
+  it("applies drawer filters and restores its trigger, while dismissal leaves committed filters unchanged", async () => {
+    const user = userEvent.setup();
+    const drawer = publishedPrimitiveFixtures.find((fixture) => fixture.id === "drawer.filters");
+    render(<>{drawer?.render()}</>);
+    const trigger = screen.getByRole("button", { name: "Review filters" });
+    await user.click(trigger);
+    await user.selectOptions(screen.getByLabelText("Language"), "Japanese");
+    await user.click(screen.getByRole("button", { name: "Apply filters" }));
+    expect(screen.getByRole("status")).toHaveTextContent("Showing: Japanese");
+    expect(trigger).toHaveFocus();
+    await user.click(trigger);
+    await user.selectOptions(screen.getByLabelText("Language"), "French");
+    await user.keyboard("{Escape}");
+    expect(screen.getByRole("status")).toHaveTextContent("Showing: Japanese");
+    await user.click(trigger);
+    expect(screen.getByLabelText("Language")).toHaveValue("Japanese");
+  });

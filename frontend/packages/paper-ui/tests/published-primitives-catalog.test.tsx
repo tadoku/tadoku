@@ -31,9 +31,9 @@ describe("published Tabs and Drawer catalogue contracts", () => {
     const tabs = fixtureById("tabs.content");
     const drawer = fixtureById("drawer.filters");
 
-    expect(tabs?.code).toContain('import { Tabs } from "paper-ui"');
+    expect(tabs?.code).toMatch(/import\s+\{[^}]*\bTabs\b[^}]*\}\s+from ['"]paper-ui['"]/);
     expect(renderToString(<>{tabs?.render()}</>)).toContain("paper-tabs__tab");
-    expect(drawer?.code).toContain('import { Button, Drawer } from "paper-ui"');
+    expect(drawer?.code).toMatch(/import\s+\{[^}]*\bDrawer\b[^}]*\}\s+from ['"]paper-ui['"]/);
     expect(renderToString(<>{drawer?.render()}</>)).toContain("Review filters");
   });
 });
@@ -73,6 +73,6 @@ describe("Modal compositional catalogue extension", () => {
     expect(code).toContain("onOpenChange={setOpen}");
     expect(code).toContain("initialFocus={searchRef}");
     expect(code).toContain("footer={null}");
-    expect(renderToString(<>{fixture?.render()}</>)).toContain("Search Paper");
+    expect(renderToString(<>{fixture?.render()}</>)).toContain("Search examples");
   });
 });

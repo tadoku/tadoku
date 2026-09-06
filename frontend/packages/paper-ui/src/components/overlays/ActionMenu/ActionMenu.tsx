@@ -1,6 +1,7 @@
 import { Menu } from "@base-ui/react/menu";
 import { useState, type ReactNode } from "react";
 import { buttonClassName, type ButtonVariant } from "../../actions/Button";
+import { ChevronDownIcon, EllipsisHorizontalIcon, iconClassName } from "../../../icons";
 
 export interface ActionMenuItem {
   readonly id: string;
@@ -16,6 +17,8 @@ export interface ActionMenuProps {
   readonly items: readonly ActionMenuItem[];
   readonly triggerVariant?: ButtonVariant;
   readonly defaultOpen?: boolean;
+  /** Use the labelled ellipsis trigger when the surrounding item provides context. */
+  readonly iconOnly?: boolean;
 }
 
 export function ActionMenu({
@@ -23,6 +26,7 @@ export function ActionMenu({
   items,
   triggerVariant = "outline",
   defaultOpen,
+  iconOnly = false,
 }: ActionMenuProps) {
   const [portalContainer, setPortalContainer] = useState<HTMLElement | null>(null);
 
@@ -35,9 +39,13 @@ export function ActionMenu({
           }
         }}
         className={buttonClassName({ variant: triggerVariant })}
+        aria-label={iconOnly ? label : undefined}
+        title={iconOnly ? label : undefined}
       >
-        <span>{label}</span>
-        <span aria-hidden="true">▾</span>
+        {iconOnly ? <EllipsisHorizontalIcon className={iconClassName()} aria-hidden="true" /> : <>
+          <span>{label}</span>
+          <ChevronDownIcon className={iconClassName("compact")} aria-hidden="true" />
+        </>}
       </Menu.Trigger>
       <Menu.Portal container={portalContainer}>
         <Menu.Positioner

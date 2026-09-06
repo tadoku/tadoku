@@ -181,6 +181,15 @@
   --paper-type-metadata-line-height: 1.125rem;
   --paper-type-metadata-weight: 400;
 
+  /* Fixed composition rhythm; density changes controls, not page hierarchy. */
+  --paper-space-1: 0.25rem;
+  --paper-space-2: 0.5rem;
+  --paper-space-3: 0.75rem;
+  --paper-space-4: 1rem;
+  --paper-space-6: 1.5rem;
+  --paper-space-8: 2rem;
+  --paper-space-12: 3rem;
+
   --paper-focus-ring-width: 2px;
   --paper-focus-ring-offset: 2px;
   --paper-border-static-width: 1px;
@@ -199,6 +208,9 @@
 :root,
 [data-density="comfortable"] {
   --paper-control-height: 2.75rem;
+  --paper-button-padding: 0.5625rem 0.9375rem 0.5rem;
+  --paper-button-font-size: 1em;
+  --paper-radio-min-width: 7rem;
   --paper-inline-gap: 0.625rem;
   --paper-field-padding-block: 0.625rem;
   --paper-field-padding-inline: 0.75rem;
@@ -209,6 +221,9 @@
 
 [data-density="compact"] {
   --paper-control-height: 2.25rem;
+  --paper-button-padding: 0.375rem 0.6875rem 0.3125rem;
+  --paper-button-font-size: 0.875rem;
+  --paper-radio-min-width: 6rem;
   --paper-inline-gap: 0.5rem;
   --paper-field-padding-block: 0.375rem;
   --paper-field-padding-inline: 0.625rem;

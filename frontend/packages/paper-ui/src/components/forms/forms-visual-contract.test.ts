@@ -27,7 +27,8 @@ describe("segmented RadioSelect visual contract", () => {
     expect(formsCss).toContain("var(--paper-color-text-ink)");
     expect(formsCss).toContain("var(--paper-color-action-soft)");
     expect(formsCss).toContain("var(--paper-color-rule-action-edge)");
-    expect(formsCss).toContain('[data-density="compact"] .paper-radio-select__segment');
+    expect(formsCss).toContain("min-inline-size: var(--paper-radio-min-width)");
+    expect(formsCss).not.toContain('[data-density="compact"] .paper-radio-select__segment');
   });
 
   it("covers focus, disabled, invalid, logical direction, and forced colors", () => {

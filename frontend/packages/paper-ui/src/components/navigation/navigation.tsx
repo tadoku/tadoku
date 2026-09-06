@@ -1,6 +1,7 @@
 import { Menu } from "@base-ui/react/menu";
 import {
   useId,
+  useEffect,
   cloneElement,
   useRef,
   useState,
@@ -402,8 +403,28 @@ function TabbarList({
   renderLink,
   orientation,
 }: TabbarProps & { readonly orientation: "horizontal" | "vertical" }) {
+  const listRef = useRef<HTMLUListElement>(null);
+  const currentId = links.find((link) => linkIsCurrent(link, currentPath))?.id;
+  useEffect(() => {
+    const list = listRef.current;
+    if (!list || orientation !== "horizontal" || !currentId) return;
+    const revealCurrent = () => {
+      const current = list.querySelector('[aria-current="page"]');
+      if (!current) return;
+      const viewport = list.getBoundingClientRect();
+      const destination = current.getBoundingClientRect();
+      if (destination.left < viewport.left) list.scrollLeft += destination.left - viewport.left;
+      else if (destination.right > viewport.right) list.scrollLeft += destination.right - viewport.right;
+    };
+    revealCurrent();
+    if (typeof ResizeObserver === "undefined") return;
+    const observer = new ResizeObserver(revealCurrent);
+    observer.observe(list);
+    return () => observer.disconnect();
+  }, [currentId, orientation]);
+
   return (
-    <ul className={`paper-tabbar__list paper-tabbar__list--${orientation}`}>
+    <ul ref={listRef} className={`paper-tabbar__list paper-tabbar__list--${orientation}`}>
       {links.map((link) => {
         const current = linkIsCurrent(link, currentPath);
         return (
@@ -489,7 +510,7 @@ export function Pagination({
   }
 
   const activate = (page: number) => (event: MouseEvent<HTMLAnchorElement>) => {
-    if (!onPageChange) return;
+    if (!onPageChange || event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
     event.preventDefault();
     onPageChange(page);
   };

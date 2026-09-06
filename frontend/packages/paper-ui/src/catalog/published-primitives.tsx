@@ -1,17 +1,18 @@
-import type { ReactNode } from "react";
-import { Button } from "../components/actions/Button";
-import { Drawer } from "../components/overlays/Drawer";
-import { Tabs } from "../components/navigation/Tabs";
+import { type ReactNode } from "react";
+import Example48 from "./examples/drawer.filters";
+import Example48Source from "./examples/drawer.filters.tsx?raw";
+import Example47 from "./examples/tabs.content";
+import Example47Source from "./examples/tabs.content.tsx?raw";
 import {
-  COMPONENT_PAGE_SECTION_KEYS,
-  defineCatalogDocument,
-  defineCatalogFixture,
-  type CatalogDocument,
-  type ComponentDocumentationSections,
-  type RequiredComponentSections,
+COMPONENT_PAGE_SECTION_KEYS,
+defineCatalogDocument,
+defineCatalogFixture,
+type CatalogDocument,
+type ComponentDocumentationSections,
+type RequiredComponentSections,
 } from "./schema";
 
-const REVIEW_DATE = "2026-08-08";
+const REVIEW_DATE = "2026-09-05";
 const VIEWPORTS = [
   { id: "phone", label: "Phone", width: 360, height: 720 },
   { id: "tablet", label: "Tablet", width: 768, height: 800 },
@@ -61,62 +62,8 @@ function fixture(
 }
 
 export const publishedPrimitiveFixtures = [
-  fixture({
-    id: "tabs.content",
-    name: "Reading log views",
-    description: "Peer views of one reading log with automatic keyboard selection.",
-    tags: ["tabs", "content", "keyboard", "disabled"],
-    code: `import { Tabs } from "paper-ui";
-
-<Tabs.Root defaultValue="summary">
-  <Tabs.List aria-label="Reading log views">
-    <Tabs.Tab value="summary">Summary</Tabs.Tab>
-    <Tabs.Tab value="entries">Entries</Tabs.Tab>
-    <Tabs.Tab value="moderation" disabled>Moderation</Tabs.Tab>
-  </Tabs.List>
-  <Tabs.Panel value="summary">1,240 pages read in Japanese.</Tabs.Panel>
-  <Tabs.Panel value="entries">12 reading entries.</Tabs.Panel>
-  <Tabs.Panel value="moderation">No moderation notes.</Tabs.Panel>
-</Tabs.Root>`,
-    render: () => (
-      <Tabs.Root defaultValue="summary">
-        <Tabs.List aria-label="Reading log views">
-          <Tabs.Tab value="summary">Summary</Tabs.Tab>
-          <Tabs.Tab value="entries">Entries</Tabs.Tab>
-          <Tabs.Tab value="moderation" disabled>Moderation</Tabs.Tab>
-        </Tabs.List>
-        <Tabs.Panel value="summary">1,240 pages read in Japanese.</Tabs.Panel>
-        <Tabs.Panel value="entries">12 reading entries.</Tabs.Panel>
-        <Tabs.Panel value="moderation">No moderation notes.</Tabs.Panel>
-      </Tabs.Root>
-    ),
-  }),
-  fixture({
-    id: "drawer.filters",
-    name: "Reading-entry filters",
-    description: "A supporting filter task that preserves the entries page context.",
-    tags: ["drawer", "filters", "footer", "end placement"],
-    code: `import { Button, Drawer } from "paper-ui";
-
-<Drawer
-  trigger={<Button variant="outline">Review filters</Button>}
-  title="Entry filters"
-  description="Narrow the reading entries shown on this page."
-  footer={<Button>Apply filters</Button>}
->
-  <p>Choose a language, contest, or date range.</p>
-</Drawer>`,
-    render: () => (
-      <Drawer
-        trigger={<Button variant="outline">Review filters</Button>}
-        title="Entry filters"
-        description="Narrow the reading entries shown on this page."
-        footer={<Button>Apply filters</Button>}
-      >
-        <p>Choose a language, contest, or date range.</p>
-      </Drawer>
-    ),
-  }),
+  fixture({ id: "tabs.content", name: "Reading log views", description: "Compare automatic horizontal selection with a controlled vertical list that waits for Enter or Space.", tags: ["tabs", "keyboard", "controlled"], code: Example47Source, render: () => <Example47 /> }),
+  fixture({ id: "drawer.filters", name: "Reading-entry filters", description: "Apply a real language filter, cancel without saving, and compare end/start placement and optional footer.", tags: ["drawer", "keyboard", "controlled"], code: Example48Source, render: () => <Example48 /> }),
 ] as const;
 
 const tabsSections: RequiredComponentSections = {
@@ -125,13 +72,13 @@ const tabsSections: RequiredComponentSections = {
   whenNotToUse: { heading: "When not to use", content: ["Use Tabbar for linked destinations with their own URLs, and use ordinary headings when readers should see every section together."] },
   choosingBetween: { heading: "Choose between", content: ["Tabs changes content in place. Tabbar and VerticalTabbar navigate to linked destinations and preserve native link behavior."] },
   anatomy: { heading: "Anatomy", content: ["A Tabs root contains one labelled list, two or more tabs, and one panel for each value."] },
-  recommendedExample: { heading: "Recommended example", content: ["Reading log views keeps each tab next to its matching panel and includes a real disabled state."] },
-  variants: { heading: "Variants", content: ["Use horizontal orientation by default; reserve vertical orientation for layouts with enough width for a stable side rail."] },
+  recommendedExample: { heading: "Recommended example", content: ["Compare automatic horizontal selection with controlled vertical selection. The horizontal example skips disabled Moderation. The vertical example uses activateOnFocus={false}: arrow keys move focus without changing the panel until Enter or Space."] },
+  variants: { heading: "Variants", content: ["Use horizontal orientation by default. The second example uses vertical orientation and controlled value/onValueChange. Vertical orientation does not collapse automatically; choose horizontal when the available width cannot fit a side list and readable panel."] },
   statesAndAdaptation: { heading: "States and adaptation", content: ["Selected, focused, hovered, and disabled tabs retain distinct non-color cues. Horizontal lists scroll at narrow widths."] },
-  behavior: { heading: "Behavior", content: ["Arrow keys move focus and select automatically; Home and End move to the first and last enabled tabs. Inactive panels stay mounted by default so local state is preserved."] },
+  behavior: { heading: "Behavior", content: ["Horizontal lists use Left/Right; vertical lists use Up/Down. Home and End reach the first/last enabled tab; loopFocus defaults to true. activateOnFocus defaults to true; set false when switching would cause expensive work. Inactive panels stay mounted by default, retaining local state. Set keepMounted={false} on a panel only when discarding that state is intentional."] },
   contentGuidance: { heading: "Content guidance", content: ["Use short parallel nouns such as Summary and Entries. The tab-list label should name the set, not repeat the word tabs."] },
   accessibility: { heading: "Accessibility", content: ["Give Tabs.List an accessible label, keep a panel for every tab value, and do not place linked page navigation in a tab role."] },
-  implementation: { heading: "Implementation", content: ["Import the compound Tabs API or the named TabsRoot, TabsList, TabsTab, and TabsPanel exports from paper-ui."] },
+  implementation: { heading: "Implementation", content: ["Import Tabs and paper-ui/styles.css. Pair every Tab value with a Panel value, and supply defaultValue for an uncontrolled root or value plus onValueChange for controlled state. Do not mix these state models. Give List an aria-label or aria-labelledby."] },
   apiReference: { heading: "API reference", content: ["TabsRootProps controls value and orientation; TabsListProps controls activation and focus looping; TabsTabProps and TabsPanelProps share string values."] },
   relatedPatterns: { heading: "Related patterns", content: ["Use Tabbar for URL-backed destinations and Drawer for supporting work that temporarily covers the current view."] },
   migration: { heading: "Migration", content: ["Replace application-owned role, aria-selected, roving-tabindex, and panel visibility logic with the matching Tabs parts."] },
@@ -144,13 +91,13 @@ const drawerSections: RequiredComponentSections = {
   whenNotToUse: { heading: "When not to use", content: ["Use Modal for a small focused decision and a dedicated page for long, multi-step, or linkable work."] },
   choosingBetween: { heading: "Choose between", content: ["Drawer allows more vertical content and page context than Modal; Sidebar remains persistent navigation rather than a modal task surface."] },
   anatomy: { heading: "Anatomy", content: ["An application-owned trigger opens a titled sheet with an optional description, scrolling body, footer, and labelled close action."] },
-  recommendedExample: { heading: "Recommended example", content: ["Reading-entry filters keeps the page visible, explains the filter scope, and places the commit action in the footer."] },
+  recommendedExample: { heading: "Recommended example", content: ["Open Review filters, choose a language, then Apply filters: the sheet closes and the result summary updates. Cancel, Escape and outside dismissal discard the draft on next open. Reading help demonstrates start placement and a footerless sheet."] },
   variants: { heading: "Variants", content: ["Placement is start or end in logical reading direction. Prefer end for supporting tasks unless navigation hierarchy calls for start."] },
-  statesAndAdaptation: { heading: "States and adaptation", content: ["The sheet is viewport-bounded, its body scrolls independently, and reduced-motion preferences remove transitions."] },
-  behavior: { heading: "Behavior", content: ["Base UI contains focus, blocks background interaction, closes on Escape or outside press, and restores focus to the trigger. Controlled and uncontrolled open state are supported."] },
+  statesAndAdaptation: { heading: "States and adaptation", content: ["End placement opens from the reading-direction end; start opens from the beginning. The sheet is at most 28rem wide and leaves one control-width of backdrop visible on narrow screens. Its body scrolls independently, while header and footer stay visible. Reduced-motion removes transitions."] },
+  behavior: { heading: "Behavior", content: ["Opening contains focus and blocks background interaction. Escape, outside press and Close dismiss and restore trigger focus. Use defaultOpen for an uncontrolled sheet or open/onOpenChange for a controlled one. Drawer does not save data or confirm unsaved changes; decide the draft policy in the application, as the example does."] },
   contentGuidance: { heading: "Content guidance", content: ["Use a brief noun title, add a description only when it clarifies scope, and keep persistent commit or cancel actions in the footer."] },
-  accessibility: { heading: "Accessibility", content: ["Keep a visible title, supply an accurate trigger name, and preserve the close button as an additional dismissal path."] },
-  implementation: { heading: "Implementation", content: ["Import Drawer and Button from paper-ui; pass application content and controls without importing Base UI dialog parts."] },
+  accessibility: { heading: "Accessibility", content: ["Keep a visible title, supply an accurate trigger name, and preserve the close button. Tab and Shift+Tab stay within the sheet; Escape returns to the opener. Use the Phone preview to verify close and footer actions remain reachable while the body scrolls."] },
+  implementation: { heading: "Implementation", content: ["Import Drawer, Button and the form controls from paper-ui; load paper-ui/styles.css once. Wrap the form in FormProvider. The footer lives outside the body form, so give the form a unique id from useId and the submit button a matching form attribute. Update controlled open state after a successful submit; retain the draft and display an error if saving fails."] },
   apiReference: { heading: "API reference", content: ["DrawerProps accepts trigger, title, description, children, footer, placement, closeLabel, and controlled or uncontrolled open state. DrawerPlacement is start or end."] },
   relatedPatterns: { heading: "Related patterns", content: ["Use Modal for compact decisions, Sidebar for persistent local navigation, and a page for durable workflows."] },
   migration: { heading: "Migration", content: ["Replace application-owned portal, backdrop, focus trap, and slide animation code while retaining the application trigger and body content."] },
@@ -179,6 +126,7 @@ export const publishedPrimitiveDocuments = [
     },
     api: {
       react: ["Tabs", "TabsRoot", "TabsList", "TabsTab", "TabsPanel"],
+      props: [{"name": "Root.defaultValue", "type": "string", "description": "Initial active Tab value for an uncontrolled root. Choose an enabled tab."}, {"name": "Root.value / onValueChange", "type": "string / (value: string) => void", "description": "Controlled selection. Update value from the callback; use instead of defaultValue."}, {"name": "Root.orientation", "type": "\"horizontal\" | \"vertical\"", "defaultValue": "horizontal", "description": "List layout and arrow-key axis. No automatic breakpoint switching."}, {"name": "List.aria-label / aria-labelledby", "type": "string", "required": true, "description": "Name the content-view group with one of these attributes."}, {"name": "List.activateOnFocus", "type": "boolean", "defaultValue": "true", "description": "Select as keyboard focus moves. Set false to require Enter/Space before changing panels."}, {"name": "List.loopFocus", "type": "boolean", "defaultValue": "true", "description": "Wrap focus at the first and last enabled tab."}, {"name": "Tab.value / Panel.value", "type": "string", "required": true, "description": "Matching unique value associates a tab and its panel."}, {"name": "Tab.disabled", "type": "boolean", "defaultValue": "false", "description": "Prevent selection and skip this tab during keyboard navigation. Explain unavailability nearby."}, {"name": "Panel.keepMounted", "type": "boolean", "defaultValue": "true", "description": "Keep hidden panel state in the DOM. False unmounts inactive panels."}, {"name": "className / ref / native attributes", "type": "per-part HTML props", "description": "Root/List/Panel forward div props and refs; Tab forwards button props and ref."}],
       cssClasses: ["paper-tabs", "paper-tabs__list", "paper-tabs__tab", "paper-tabs__panel"],
       publicTypes: ["TabsValue", "TabsOrientation", "TabsRootProps", "TabsListProps", "TabsTabProps", "TabsPanelProps"],
       defaults: ["orientation=horizontal", "activateOnFocus=true", "loopFocus=true", "keepMounted=true"],
@@ -210,6 +158,7 @@ export const publishedPrimitiveDocuments = [
     },
     api: {
       react: ["Drawer", "DRAWER_PLACEMENTS"],
+      props: [{"name": "trigger", "type": "ReactElement", "required": true, "description": "A focusable button that accepts merged props and a ref; Paper Button works directly."}, {"name": "title", "type": "ReactNode", "required": true, "description": "Visible heading that names the modal dialog."}, {"name": "children", "type": "ReactNode", "required": true, "description": "Scrollable body. The application owns content and form state."}, {"name": "description", "type": "ReactNode", "description": "Optional supporting copy associated with the dialog."}, {"name": "footer", "type": "ReactNode", "description": "Optional persistent actions outside the body. Link submit buttons to a form by id."}, {"name": "placement", "type": "\"start\" | \"end\"", "defaultValue": "end", "description": "Logical side of the viewport, following reading direction."}, {"name": "open / onOpenChange", "type": "boolean / (open: boolean) => void", "description": "Controlled open state. Apply the callback so Escape, outside press and close work."}, {"name": "defaultOpen", "type": "boolean", "defaultValue": "false", "description": "Initial open state for an uncontrolled drawer; do not combine with open."}, {"name": "closeLabel", "type": "string", "defaultValue": "Close", "description": "Accessible label for the built-in close button. Localize when needed."}],
       cssClasses: ["paper-drawer", "paper-drawer__body", "paper-drawer__footer"],
       publicTypes: ["DrawerProps", "DrawerPlacement"],
       defaults: ["placement=end", "closeLabel=Close", "modal=true"],

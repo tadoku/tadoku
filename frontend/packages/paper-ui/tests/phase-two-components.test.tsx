@@ -171,6 +171,22 @@ describe("Modal", () => {
 });
 
 describe("ActionMenu", () => {
+  it("uses the curated chevron and offers a named icon-only trigger", async () => {
+    const user = userEvent.setup();
+    const onSelect = vi.fn();
+    const items = [{ id: "edit", label: "Edit log", onSelect }];
+    const { rerender } = render(<ActionMenu label="Log actions" items={items} />);
+    const trigger = screen.getByRole("button", { name: "Log actions" });
+    expect(trigger).not.toHaveTextContent("▾");
+    expect(trigger.querySelector("svg.paper-icon-compact")).not.toBeNull();
+    rerender(<ActionMenu label="Log actions" items={items} iconOnly />);
+    expect(trigger).toHaveAccessibleName("Log actions");
+    expect(trigger.textContent).toBe("");
+    await user.click(trigger);
+    await user.click(await screen.findByRole("menuitem", { name: "Edit log" }));
+    expect(onSelect).toHaveBeenCalledOnce();
+  });
+
   it("left-aligns its menu with the trigger", async () => {
     const user = userEvent.setup();
     render(

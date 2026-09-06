@@ -2,6 +2,7 @@ import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { FormProvider, useForm } from "react-hook-form";
 import { describe, expect, it, vi } from "vitest";
+import { phaseThreeFormsFeedbackFixtures } from "../src/catalog/phase-three-forms-feedback";
 import {
   AmountWithUnit,
   AutocompleteInput,
@@ -10,6 +11,7 @@ import {
   ButtonGroup,
   Checkbox,
   Flash,
+  Input,
   Loading,
   RadioGroup,
   RadioSelect,
@@ -27,6 +29,32 @@ const LANGUAGES = [
   { id: "zh", label: "Chinese" },
   { id: "ko", label: "Korean" },
 ] as const;
+
+describe("form usage examples", () => {
+  it.each(["textarea.reading-notes", "select.language", "radio-select.viewport", "radio-group.format", "amount.progress", "autocomplete.language", "multi-autocomplete.languages", "tags.entry"])("demonstrates required validation in %s.empty", async (id) => {
+    const fixture = phaseThreeFormsFeedbackFixtures.find((entry) => entry.id === `${id}.empty`);
+    const user = userEvent.setup();
+    render(<>{fixture!.render()}</>);
+    await user.click(screen.getByRole("button", { name: "Save entry" }));
+    expect(await screen.findByRole("alert")).not.toBeEmptyDOMElement();
+    expect(screen.queryByText("Entry saved")).not.toBeInTheDocument();
+  });
+
+  it("saves the submitted values and resets the example", async () => {
+    const fixture = phaseThreeFormsFeedbackFixtures.find((entry) => entry.id === "textarea.reading-notes.empty");
+    const user = userEvent.setup();
+    render(<>{fixture!.render()}</>);
+    const input = screen.getByRole("textbox", { name: /Reading notes/u });
+    await user.type(input, "Finished chapter three.");
+    await user.click(screen.getByRole("button", { name: "Save entry" }));
+    expect(await screen.findByRole("status")).toHaveTextContent("Finished chapter three.");
+    await user.clear(input);
+    expect(screen.getByRole("status")).toHaveTextContent("Finished chapter three.");
+    await user.click(screen.getByRole("button", { name: "Reset" }));
+    expect(screen.queryByRole("status")).not.toBeInTheDocument();
+    expect(input).toHaveValue("");
+  });
+});
 
 function NativeControls({ onSubmit }: { onSubmit: (values: unknown) => void }) {
   const methods = useForm({ defaultValues: { notes: "", language: "", public: false, pace: "", format: "" } });
@@ -119,10 +147,36 @@ function ToastTrigger() {
 }
 
 describe("native React Hook Form controls", () => {
+  it("preserves caller descriptions alongside built-in hints", () => {
+    function DescribedFields() {
+      const methods = useForm({ defaultValues: { title: "", notes: "", language: "", public: false, progressValue: 1, progressUnit: "pages" } });
+      return <FormProvider {...methods}><p id="visibility-policy">Visible to contest moderators.</p><Input name="title" label="Title" hint="A short title." aria-describedby="visibility-policy" /><TextArea name="notes" label="Notes" hint="No spoilers." aria-describedby="visibility-policy" /><Select name="language" label="Language" hint="Reading language." options={[]} aria-describedby="visibility-policy" /><Checkbox name="public" label="Public entry" hint="Shown on your profile." aria-describedby="visibility-policy" /><AmountWithUnit name="progress" label="Progress" hint="Completed pages." units={[{ value: "pages", label: "pages" }]} aria-describedby="visibility-policy" /></FormProvider>;
+    }
+    render(<DescribedFields />);
+    for (const label of ["Title", "Notes", "Language", "Public entry"]) {
+      expect(screen.getByLabelText(label)).toHaveAccessibleDescription(/Visible to contest moderators\./u);
+    }
+    expect(screen.getByLabelText("Notes")).toHaveAccessibleDescription("No spoilers. Visible to contest moderators.");
+    expect(screen.getByRole("spinbutton", { name: "Progress" })).toHaveAccessibleDescription("Completed pages. Visible to contest moderators.");
+  });
+
+  it("omits disabled input values while retaining read-only values", async () => {
+    const submit = vi.fn();
+    function DisabledFields() {
+      const methods = useForm({ defaultValues: { disabledTitle: "Unavailable", readonlyTitle: "Reading log", notes: "Hidden note", language: "ja", public: true, viewport: "phone" } });
+      return <FormProvider {...methods}><form noValidate onSubmit={methods.handleSubmit(submit)}><Input name="disabledTitle" label="Unavailable title" disabled required /><Input name="readonlyTitle" label="Read-only title" readOnly /><TextArea name="notes" label="Notes" disabled /><Select name="language" label="Language" options={[{ value: "ja", label: "Japanese" }]} disabled /><Checkbox name="public" label="Public" disabled /><RadioSelect name="viewport" label="Viewport" options={[{ value: "phone", label: "Phone" }]} disabled /><Button type="submit">Save</Button></form></FormProvider>;
+    }
+    const user = userEvent.setup();
+    render(<DisabledFields />);
+    await user.click(screen.getByRole("button", { name: "Save" }));
+    expect(submit).toHaveBeenCalledWith({ disabledTitle: undefined, readonlyTitle: "Reading log", notes: undefined, language: undefined, public: undefined, viewport: undefined }, expect.anything());
+  });
+
   it("submits associated native values", async () => {
     const user = userEvent.setup();
     const submit = vi.fn();
     render(<NativeControls onSubmit={submit} />);
+    expect(screen.getByRole("radio", { name: /Book/u })).toBeRequired();
     await user.type(screen.getByRole("textbox", { name: "Notes" }), "Finished chapter two");
     await user.selectOptions(screen.getByRole("combobox", { name: "Language" }), "ja");
     await user.click(screen.getByRole("checkbox", { name: "Show on my profile" }));
@@ -158,6 +212,21 @@ describe("native React Hook Form controls", () => {
     render(<AmountForm />);
     expect(screen.getByRole("spinbutton", { name: "Progress" })).toHaveValue(12);
     expect(screen.getByRole("combobox", { name: "Unit for progress" })).toHaveValue("pages");
+  });
+
+  it("validates compound amount bounds and disables the complete compound control", async () => {
+    function ConstrainedAmount({ disabled = false }: { disabled?: boolean }) {
+      const methods = useForm({ defaultValues: { progressValue: 0, progressUnit: "pages" } });
+      return <FormProvider {...methods}><form noValidate onSubmit={methods.handleSubmit(() => undefined)}><AmountWithUnit name="progress" label="Progress" min={1} required disabled={disabled} units={[{ value: "pages", label: "pages" }, { value: "minutes", label: "minutes", disabled: true }]} /><Button type="submit">Save</Button></form></FormProvider>;
+    }
+    const user = userEvent.setup();
+    const { rerender } = render(<ConstrainedAmount />);
+    expect(screen.getByRole("option", { name: "minutes" })).toBeDisabled();
+    await user.click(screen.getByRole("button", { name: "Save" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent("Enter at least 1.");
+    rerender(<ConstrainedAmount disabled />);
+    expect(screen.getByRole("spinbutton", { name: /Progress/u })).toBeDisabled();
+    expect(screen.getByRole("combobox", { name: "Unit for progress" })).toBeDisabled();
   });
 
   it("renders segmented RadioSelect as one native exclusive choice", async () => {
@@ -202,6 +271,34 @@ describe("native React Hook Form controls", () => {
 });
 
 describe("Base UI autocomplete controls", () => {
+  it("validates required selections on blur and exposes the error relationship", async () => {
+    function RequiredAutocomplete() {
+      const methods = useForm({ mode: "onBlur", defaultValues: { language: null } });
+      return <FormProvider {...methods}><AutocompleteInput name="language" label="Language" required options={LANGUAGES} format={(option) => option.label} getId={(option) => option.id} /><button>Next</button></FormProvider>;
+    }
+    const user = userEvent.setup();
+    render(<RequiredAutocomplete />);
+    const input = screen.getByRole("combobox", { name: /Language/u });
+    await user.click(input);
+    await user.keyboard("{Escape}{Tab}");
+    expect(await screen.findByRole("alert")).toHaveTextContent("Choose an option.");
+    expect(input).toHaveAttribute("aria-required", "true");
+    expect(input).toHaveAccessibleDescription("Choose an option.");
+  });
+
+  it("prevents opening and adding beyond the tag limit while keeping removal available", async () => {
+    function LimitedTags() {
+      const methods = useForm({ defaultValues: { tags: ["fiction"] } });
+      return <FormProvider {...methods}><TagsInput name="tags" label="Tags" options={["fiction", "history"]} maxSelections={1} /></FormProvider>;
+    }
+    const user = userEvent.setup();
+    render(<LimitedTags />);
+    expect(screen.getByRole("button", { name: "Show tags options" })).toBeDisabled();
+    await user.click(screen.getByRole("button", { name: "Remove fiction" }));
+    expect(screen.getByRole("combobox", { name: "Tags" })).not.toBeDisabled();
+    expect(screen.getByRole("button", { name: "Show tags options" })).not.toBeDisabled();
+  });
+
   it("uses Paper icons instead of text glyphs for combobox actions", () => {
     render(<AutocompleteForm />);
     const trigger = screen.getByRole("button", { name: "Show languages options" });

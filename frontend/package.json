@@ -16,6 +16,7 @@
     "styleguide": "pnpm --filter 'styleguide' dev",
     "paper-styleguide": "pnpm --filter 'paper-styleguide' dev",
     "build": "pnpm run -r build",
-    "check:paper-boundaries": "node scripts/check-paper-boundaries.mjs"
+    "check:paper-boundaries": "node scripts/check-paper-boundaries.mjs",
+    "paper-playground": "pnpm --filter paper-playground dev"
   }
 }

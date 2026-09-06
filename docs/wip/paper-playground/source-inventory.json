@@ -1,0 +1,1694 @@
+{
+  "schema_version": 1,
+  "source": {
+    "url": "https://draft.apps.lab/documents/tadoku-redesign-master.html?version=3",
+    "pinned_version": 3,
+    "read_at": "2026-09-06",
+    "method": "Read all nine decoded chapter texts and the full scripts in each interactive product chapter. Exact sample literals copied from JavaScript objects; this inventory is not inferred from static HTML alone.",
+    "chapters": [
+      {
+        "id": "overview",
+        "title": "Start here",
+        "description": "The consolidated direction",
+        "kind": "review_document"
+      },
+      {
+        "id": "home",
+        "title": "Homepage states",
+        "description": "Six scenarios from the homepage study",
+        "kind": "product_study"
+      },
+      {
+        "id": "home-review",
+        "title": "Homepage review",
+        "description": "The full original review and phased proposal",
+        "kind": "review_document"
+      },
+      {
+        "id": "profile",
+        "title": "Profile & shell",
+        "description": "Overview, activity filters and admin shell, source v2",
+        "kind": "product_study"
+      },
+      {
+        "id": "guide",
+        "title": "About & Guide",
+        "description": "Information architecture options and four page designs",
+        "kind": "product_study"
+      },
+      {
+        "id": "leaderboard",
+        "title": "Leaderboard",
+        "description": "Scopes, filters and participant states",
+        "kind": "product_study"
+      },
+      {
+        "id": "contests",
+        "title": "Contests",
+        "description": "Discovery, personal contests and lifecycle states",
+        "kind": "product_study"
+      },
+      {
+        "id": "log",
+        "title": "Log details",
+        "description": "Activity record, score context and permissions",
+        "kind": "product_study"
+      },
+      {
+        "id": "decisions",
+        "title": "Decisions & handoff",
+        "description": "Open choices, coverage and validation",
+        "kind": "review_document"
+      }
+    ]
+  },
+  "coverage": {
+    "chapter_count": 9,
+    "product_study_count": 6,
+    "review_document_count": 3,
+    "product_design_count": 11,
+    "canonical_route_count": 15,
+    "counts_exclude": "Context-specific detail aliases and supporting local action forms are additional; admin sidebar destinations are not separately designed master pages.",
+    "named_scenarios": {
+      "home": 6,
+      "profile_shell_views": 3,
+      "guide_pages": 4,
+      "guide_ia_options": 3,
+      "leaderboard": 9,
+      "contests": 6,
+      "log": 7
+    },
+    "review_documents": {
+      "overview": "Product direction and source consolidation; preserve in report, do not turn into a fake customer page.",
+      "home-review": "Original analysis and rollout proposal; use hierarchy/acceptance criteria, do not embed the report as application UI.",
+      "decisions": "Open choices, policies and handoff gates; preserve in final report/decision log."
+    }
+  },
+  "shared_direction": {
+    "brand": {
+      "font_headings": "Merriweather",
+      "font_body": "Open Sans",
+      "canvas": "#f2efe8",
+      "paper": "#fffefa",
+      "ink": "#211a1d",
+      "rule": "#c7c0b5",
+      "accent": "#5747b8",
+      "geometry": "Square; flat ordinary surfaces; restrained hard-offset showcase elevation; use the current Paper wordmark with both ink and violet mark pieces."
+    },
+    "navigation": [
+      "Logo → home",
+      "Leaderboard",
+      "Contests",
+      "Guide (B default; alternate IA preview remains available)",
+      "Log activity",
+      "Account menu → Profile, Account settings, Admin workspace, Log out",
+      "About in footer",
+      "Admin is a separate marked shell"
+    ],
+    "language": [
+      "Use Log activity consistently",
+      "Reading and Listening are activities",
+      "Book, manga, game, podcast and video are media descriptors",
+      "My contests means organized contests",
+      "Unlisted means accessible by link, not private"
+    ],
+    "data_semantics": [
+      "All fixture times explicitly UTC",
+      "Round dates and registration deadline are different",
+      "Latest official can be upcoming, live or ended",
+      "Personal, contest, yearly and all-time scores have explicit separate scopes",
+      "Language/activity filter recalculates ranks; name search preserves ranks",
+      "Absent owner-only submission data does not mean zero submissions",
+      "Post-round personal edits may leave contest snapshots unchanged"
+    ],
+    "responsive": [
+      "Verify at least1280px and390px; no document horizontal overflow except clearly named data regions",
+      "One h1 per product page",
+      "Readable body measure below70characters",
+      "Mobile navigation and data tables remain operable by keyboard",
+      "No ambient animation; respect reduced motion"
+    ],
+    "implementation": [
+      "Fresh unpublished paper-playground app; no legacy ui mixing",
+      "Use actual Paper React components, CSS recipes and standard Tailwind classes backed by Paper preset",
+      "Use react-hook-form for all local form fields and validation",
+      "Do not embed original HTML studies or copy their custom controls/styles wholesale",
+      "Keep prototype scenario/IA/theme controls outside the product-content flow",
+      "All sample actions operate only on local fixture state; no live network writes",
+      "Meaningful feedback and navigation for every visible CTA; no href=# dead links"
+    ]
+  },
+  "page_groups": [
+    {
+      "id": "home",
+      "chapter": "home",
+      "designs": [
+        "Home"
+      ],
+      "routes": [
+        "/"
+      ],
+      "default_scenario": "guest-live",
+      "required_scenarios": [
+        {
+          "id": "guest-live",
+          "label": "Guest during a live round",
+          "as_of": "2026-09-05",
+          "expected": [
+            "Contest-first hero with Join Round 5 action",
+            "Current round top five, dates, registration deadline and community totals",
+            "Sign-in/create-account handoff preserves intended contest"
+          ]
+        },
+        {
+          "id": "member-open",
+          "label": "Signed-in member who has not joined",
+          "as_of": "2026-09-05",
+          "expected": [
+            "Join Round 5 action",
+            "Registration deadline and eligible activities",
+            "Separate joining from logging in supporting copy"
+          ]
+        },
+        {
+          "id": "participant-live",
+          "label": "Registered participant during a live round",
+          "as_of": "2026-09-05",
+          "expected": [
+            "Log activity primary action",
+            "Current-user standing beside top five even when outside top five",
+            "View my progress preserves profile and contest context"
+          ]
+        },
+        {
+          "id": "upcoming",
+          "label": "Registration is open before a round",
+          "as_of": "2026-09-05",
+          "expected": [
+            "Round 6 begins 1 November and runs through 14 November",
+            "Registration closes 7 November",
+            "Upcoming panel gives start date; no invented live countdown"
+          ]
+        },
+        {
+          "id": "between",
+          "label": "Between official rounds",
+          "as_of": "2026-10-01",
+          "expected": [
+            "Track activity primary action",
+            "Next round date and registration information",
+            "Last finished round recap in the same board surface"
+          ]
+        },
+        {
+          "id": "unavailable",
+          "label": "Contest data temporarily unavailable",
+          "as_of": "2026-09-05",
+          "expected": [
+            "Useful error board with retry",
+            "Independent local logging action remains available in this deliberately isolated scenario",
+            "No implication that all production writes are available during a general outage"
+          ]
+        }
+      ],
+      "must_work_interactions": [
+        "Change all six scenarios from a separate prototype control",
+        "Join opens local sign-in/registration flow and completes to participant state",
+        "Log activity opens a usable local form",
+        "Full leaderboard links to the selected contest board",
+        "Profile links preserve chosen identity",
+        "Retry replaces unavailable sample with available board",
+        "How it works and next schedule links resolve to Guide and Contests"
+      ],
+      "visual_direction": [
+        "One display promise beside one emphasized current-contest ledger",
+        "Mobile order: promise, primary action, board, then explanation",
+        "Top five is a compact semantic table, not podium cards",
+        "Three quiet how-it-works steps and a compact next-round line",
+        "Merriweather heading, Open Sans body/data, no stock photo or repeated card mosaic",
+        "Only the contest ledger receives showcase hard-offset elevation"
+      ],
+      "source_limits": [
+        "Source homepage people differ from later leaderboard samples. Use one shared sample set across linked implementation pages; copied source values remain provenance below.",
+        "Older source uses Log immersion and New log. Normalize all application actions to Log activity.",
+        "Older source between-round recap is July; when the scenario date is October, September is the last finished official round. Keep the scenario coherent."
+      ]
+    },
+    {
+      "id": "profile",
+      "chapter": "profile",
+      "designs": [
+        "Profile overview",
+        "Profile activity log",
+        "Admin dashboard"
+      ],
+      "routes": [
+        "/users/:userId",
+        "/users/:userId/activity",
+        "/admin"
+      ],
+      "default_scenario": "profile",
+      "required_scenarios": [
+        {
+          "id": "profile",
+          "label": "Public profile overview",
+          "expected": [
+            "Identity, tracking-since and UTC context",
+            "Local Overview and Activity log navigation",
+            "Year selector for 2026, 2025, 2024 and 2023",
+            "Four headline totals, daily heatmap, language totals, activity breakdown, contest history and recent public entries"
+          ]
+        },
+        {
+          "id": "activity",
+          "label": "Searchable activity log",
+          "expected": [
+            "Chronological records with title, language, activity, units, date, optional note and personal score",
+            "Search field and expandable filter panel",
+            "Applied filter chips with individual removal",
+            "Result count, no-matches copy and reset action"
+          ]
+        },
+        {
+          "id": "admin",
+          "label": "Visibly separate admin workspace",
+          "expected": [
+            "Admin-marked header and grouped sidebar",
+            "Dashboard metrics, needs-attention queue, quick actions, current-contest snapshot and system status",
+            "Back to Tadoku action restores public workspace"
+          ]
+        }
+      ],
+      "derived_states": [
+        "Oldest/newest year disables corresponding arrow",
+        "Activity filter panel open/closed",
+        "Search no matches",
+        "Account menu open/closed",
+        "Mobile public navigation open/closed",
+        "Mobile admin sidebar open/closed",
+        "Owner edit controls and visitor read-only controls"
+      ],
+      "must_work_interactions": [
+        "Overview/activity links retain user identity",
+        "Year changes every summary, chart and list consistently; source only changed headline totals and must not be reproduced as that incomplete behavior",
+        "Year controls stop at available data boundaries",
+        "Search filters complete local activity set",
+        "Period, language and activity filters combine; Apply closes panel",
+        "Individual filter removal, Clear all and Reset restore expected records",
+        "Activity rows open matching log details",
+        "Contest history links preserve selected contest",
+        "Account menu handles outside click and Escape and routes to profile, settings and admin",
+        "Admin sections and quick actions open meaningful local destination/flow; do not use href=# or pretend live administrative changes",
+        "Back to Tadoku and mobile navigation work by keyboard"
+      ],
+      "visual_direction": [
+        "Identity → local view → year → totals → rhythm → breakdown → detail",
+        "Responsive analytical layout with main/aside roles, not uniform cards",
+        "Heatmap stays inside its named scrollable data region at phone width",
+        "Separate public/admin navigation modes share brand and account context",
+        "Administrative status is explicitly sample data, never a claim of real service health"
+      ],
+      "source_limits": [
+        "The source is a three-view shell concept, not eight designed admin CRUD screens. Sidebar links name Posts, Pages, Announcements, Languages, Contests, Users and Reports; those are supporting handoffs, not seven further master-document page designs.",
+        "Source profile labels Watching/Gaming as activity categories. Canonical master treats Reading/Listening as activities and video/game as media. Normalize sample entries accordingly.",
+        "Source August Tadoku / 31 days and August admin snapshot conflict with official dates in the master. Use consistent September Round 5 fixtures.",
+        "Year controls in source update only headline totals. Implementation should use coherent per-year fixture datasets."
+      ]
+    },
+    {
+      "id": "guide",
+      "chapter": "guide",
+      "designs": [
+        "About Tadoku",
+        "Start here",
+        "Scoring & rules",
+        "Questions & help"
+      ],
+      "routes": [
+        "/about",
+        "/guide",
+        "/guide/scoring",
+        "/guide/questions"
+      ],
+      "legacy_aliases": {
+        "/pages/about": "/about",
+        "/pages/manual": "/guide",
+        "/pages/rules": "/guide/scoring",
+        "/pages/faq": "/guide/questions"
+      },
+      "default_ia": "guide",
+      "required_scenarios": [
+        {
+          "id": "about",
+          "label": "About Tadoku",
+          "expected": [
+            "Community mission and year-round immersion context",
+            "History: 2010 Twitter reading contest, 2018 Twitter changes, 2023 broader platform",
+            "Maintainer/open-source contribution invitation",
+            "Contest, GitHub and contact routes"
+          ]
+        },
+        {
+          "id": "manual",
+          "label": "Start here",
+          "expected": [
+            "Choose participation; read/listen and log; understand where activity counts",
+            "Joining and submitting remain separate steps",
+            "Choose up to three languages during registration",
+            "Links to local contest, logging, sample log and profile flows"
+          ]
+        },
+        {
+          "id": "rules",
+          "label": "Scoring & rules",
+          "expected": [
+            "UTC timing and distinct registration/round deadlines",
+            "Honest participation and repeat eligibility",
+            "Personal vs contest scoring contexts",
+            "Clear indication that example rates are illustrative",
+            "Unresolved repeat/playback/moderation wording retained in review notes, not asserted as a new policy"
+          ]
+        },
+        {
+          "id": "faq",
+          "label": "Questions & help",
+          "expected": [
+            "Six searchable expandable answers",
+            "Search result count",
+            "No matches and Clear search",
+            "Contextual routes to contests, logging, score details, unlisted contest and contact"
+          ]
+        }
+      ],
+      "information_architectures": [
+        {
+          "id": "separate",
+          "label": "A · Four familiar pages",
+          "global_entry": "Learn",
+          "local_labels": {
+            "about": "About",
+            "manual": "Manual",
+            "rules": "Rules",
+            "faq": "FAQ"
+          }
+        },
+        {
+          "id": "guide",
+          "label": "B · Guide plus About",
+          "global_entry": "Guide",
+          "recommended_default": true,
+          "local_labels": {
+            "about": "About Tadoku",
+            "manual": "Start here",
+            "rules": "Scoring & rules",
+            "faq": "Questions & help"
+          },
+          "about_location": "Footer and Guide navigation"
+        },
+        {
+          "id": "tasks",
+          "label": "C · Task-based help",
+          "global_entry": "Help",
+          "local_labels": {
+            "about": "About Tadoku",
+            "manual": "Join & track",
+            "rules": "Understand scores",
+            "faq": "Get help"
+          },
+          "about_location": "Footer"
+        }
+      ],
+      "must_work_interactions": [
+        "All four content routes are independently deep-linkable",
+        "A/B/C selector changes global entry and local labels while preserving underlying page and content; put this control in prototype inspector",
+        "FAQ search matches question and answer text",
+        "FAQ answer disclosure is native details or equivalent keyboard-accessible component",
+        "Clear search restores all six questions and focuses search",
+        "Legacy page aliases route to canonical equivalent",
+        "All internal help CTAs lead to actual local page/flow"
+      ],
+      "visual_direction": [
+        "Readable editorial measure, clear section rhythm and in-page navigation",
+        "About has mission/history rather than duplicate operating instructions",
+        "Practical help owns one explanation per topic",
+        "Avoid forcing long explanatory copy into narrow multi-column panels"
+      ],
+      "source_limits": [
+        "Help IA is proposed, not approved. B is a reasonable prototype default, while A and C stay reviewable.",
+        "The master does not settle repeat scoring modifiers, playback rules, update-window wording or moderation policy. Keep these as explicit report decisions and do not invent authoritative formulas."
+      ]
+    },
+    {
+      "id": "leaderboard",
+      "chapter": "leaderboard",
+      "designs": [
+        "Leaderboard"
+      ],
+      "routes": [
+        "/leaderboard/latest",
+        "/leaderboard/yearly/:year",
+        "/leaderboard/all-time"
+      ],
+      "context_routes": [
+        "/contests/:contestId/leaderboard"
+      ],
+      "default_scenario": "participant",
+      "required_scenarios": [
+        {
+          "id": "participant",
+          "label": "Live round · participant",
+          "as_of": "2026-09-05",
+          "expected": [
+            "Log activity action",
+            "Personal standing and Find my row",
+            "Round dates and open registration"
+          ]
+        },
+        {
+          "id": "guest",
+          "label": "Live round · guest",
+          "as_of": "2026-09-05",
+          "expected": [
+            "Sign in to join",
+            "No personal standing or account logging action"
+          ]
+        },
+        {
+          "id": "member",
+          "label": "Live round · member, not joined",
+          "as_of": "2026-09-05",
+          "expected": [
+            "Join this round",
+            "No contest personal row until joined"
+          ]
+        },
+        {
+          "id": "closed",
+          "label": "Live round · registration closed",
+          "as_of": "2026-09-24",
+          "expected": [
+            "Running round with closed registration",
+            "Browse contests action",
+            "No misleading Join control"
+          ]
+        },
+        {
+          "id": "closed-participant",
+          "label": "Registration closed · participant",
+          "as_of": "2026-09-24",
+          "expected": [
+            "Registered user can still Log activity",
+            "Personal standing remains available"
+          ]
+        },
+        {
+          "id": "upcoming",
+          "label": "Upcoming round",
+          "as_of": "2026-08-28",
+          "expected": [
+            "Open registration before September starts",
+            "No scores before round start",
+            "Useful first-entry empty state"
+          ]
+        },
+        {
+          "id": "ended",
+          "label": "Latest round has ended",
+          "as_of": "2026-10-01",
+          "expected": [
+            "Round complete context and final results",
+            "Browse contests action"
+          ]
+        },
+        {
+          "id": "empty",
+          "label": "No participants yet",
+          "as_of": "2026-09-05",
+          "expected": [
+            "No participants contest empty state",
+            "When switched to aggregate scope, no official scores for period message"
+          ]
+        },
+        {
+          "id": "error",
+          "label": "Standings unavailable",
+          "as_of": "2026-09-05",
+          "expected": [
+            "Try again",
+            "Keep available contest context visible",
+            "Do not display made-up rows or personal rank"
+          ]
+        }
+      ],
+      "derived_states": [
+        "Name query no matches",
+        "Second page of sample participants",
+        "Tied scores share rank and skip next place",
+        "Zero score shown as 0",
+        "Japanese/Spanish and Reading/Listening filters",
+        "Selected year 2026/2025/2024"
+      ],
+      "must_work_interactions": [
+        "Latest official/yearly/all-time scopes switch correctly and preserve meaningful context",
+        "Year selector changes yearly dataset",
+        "Language and activity filters recalculate score and rank from the complete local sample set",
+        "Name search preserves the selected board rank and only narrows displayed participants",
+        "Pagination uses entire filtered set, six rows per source page",
+        "Find my row clears name search, opens correct page and focuses current-user row",
+        "Participant links open corresponding user; contest scope also preserves contest context",
+        "Recent activity opens corresponding logs",
+        "Retry exits error scenario",
+        "Empty-state action links to contests; no-match action clears query"
+      ],
+      "visual_direction": [
+        "Compact semantic table with Rank, Participant and Score",
+        "Right-aligned tabular numbers, explicit tied rank and selected-user marker",
+        "Contest dates/registration and concise scope explanation in aside",
+        "Personal standing supports everyone, not only a podium",
+        "Phone layout retains all data without page-level horizontal overflow"
+      ],
+      "source_limits": [
+        "Aggregate source fixture scores use arbitrary multipliers only for demonstration. Production annual/all-time values must come from eligible official logs, not sums of community scores.",
+        "Current API needs server-wide name lookup and current-user rank lookup beyond loaded page. Local complete-set filtering is legitimate only in unpublished prototype.",
+        "Existing entries support rank, tie, name, user ID and score; no invented image/streak/language-badge contract."
+      ]
+    },
+    {
+      "id": "contests",
+      "chapter": "contests",
+      "designs": [
+        "Contests discovery"
+      ],
+      "routes": [
+        "/contests/official",
+        "/contests/community",
+        "/contests/mine"
+      ],
+      "context_routes": [
+        "/contests/:contestId"
+      ],
+      "default_scenario": "member",
+      "required_scenarios": [
+        {
+          "id": "member",
+          "label": "Active participant",
+          "as_of": "2026-09-05",
+          "expected": [
+            "Current official round emphasized",
+            "Log activity for joined live round",
+            "Join for eligible open rounds"
+          ]
+        },
+        {
+          "id": "guest",
+          "label": "Signed out",
+          "as_of": "2026-09-05",
+          "expected": [
+            "Public official/community browsing",
+            "Sign in to join",
+            "My contests sign-in gate"
+          ]
+        },
+        {
+          "id": "between",
+          "label": "Between official rounds",
+          "as_of": "2026-10-01",
+          "expected": [
+            "Upcoming Round 6 becomes emphasized official contest",
+            "September contests marked ended",
+            "October French contest live"
+          ]
+        },
+        {
+          "id": "empty",
+          "label": "No contests organized",
+          "as_of": "2026-09-05",
+          "expected": [
+            "My contests initial collection",
+            "You have not organized a contest yet",
+            "Explore official contests recovery"
+          ]
+        },
+        {
+          "id": "creator",
+          "label": "Organizer with permission",
+          "as_of": "2026-09-05",
+          "expected": [
+            "Create contest action visible",
+            "My contests initial collection includes owned public and unlisted contests",
+            "Manage only owned contests"
+          ]
+        },
+        {
+          "id": "unavailable",
+          "label": "Data unavailable",
+          "as_of": "2026-09-05",
+          "expected": [
+            "Collection error and retry",
+            "No fabricated totals"
+          ]
+        }
+      ],
+      "derived_states": [
+        "No matching title/language/date filter",
+        "Live round with registration closed",
+        "Upcoming round with registration open",
+        "Unlisted owned contest visible only in My contests or direct link",
+        "Expanded contest detail"
+      ],
+      "must_work_interactions": [
+        "Official/Community/My contests collection tabs resolve to independent paths",
+        "Search title or language over complete local set",
+        "All dates/Live/Upcoming/Past filter combines with search",
+        "Empty filters clear or restore official collection",
+        "Details disclose description, registration, eligibility and relevant actions",
+        "Selected contest links preserve identity in detail and standings",
+        "Local registration chooses/upgrades up to three languages and marks participant",
+        "Create/manage local form only for organizer permission scenario",
+        "Unlisted contests excluded from Official/Community discovery",
+        "Retry restores available collection"
+      ],
+      "visual_direction": [
+        "One emphasized current/upcoming official feature with date timeline",
+        "Compact comparable rows for community and owned contests",
+        "Separate lifecycle label from registration availability",
+        "Grouping: Happening now, Coming up, Past contests",
+        "Unlisted explanation says accessible with link"
+      ],
+      "source_limits": [
+        "My contests means organized contests, not joined rounds. Keep this source contract.",
+        "Registration model has a deadline, not a separate opening date. Upcoming does not imply registration closed.",
+        "Participant-aware actions require extra registration state beyond existing list contract.",
+        "No fabricated participant counts or organizer metadata added as API promises."
+      ]
+    },
+    {
+      "id": "log",
+      "chapter": "log",
+      "designs": [
+        "Log details"
+      ],
+      "routes": [
+        "/logs/:logId"
+      ],
+      "default_scenario": "reading",
+      "required_scenarios": [
+        {
+          "id": "reading",
+          "label": "Your reading log",
+          "as_of": "2026-09-05",
+          "expected": [
+            "42 pages and optional 45 minutes separately",
+            "Personal 42 points; official 42 and community 22.5 in separate score contexts",
+            "Owner Edit, Manage submissions and More actions"
+          ]
+        },
+        {
+          "id": "listening",
+          "label": "Your listening log",
+          "as_of": "2026-09-05",
+          "expected": [
+            "35 minutes listened",
+            "Personal 17.5; official 17.5; community 35 sample scores",
+            "Listening uses duration as primary measure"
+          ]
+        },
+        {
+          "id": "visitor",
+          "label": "Someone else’s log",
+          "as_of": "2026-09-05",
+          "expected": [
+            "No edit, delete or submission controls",
+            "Contest submission visibility explanation",
+            "Absent submission array is not mislabelled No contest submissions"
+          ]
+        },
+        {
+          "id": "personal",
+          "label": "No contest submissions",
+          "as_of": "2026-09-05",
+          "expected": [
+            "Fallback title Japanese reading",
+            "Time not recorded instead of 0",
+            "No tags and useful submission CTA",
+            "Do not imply private visibility"
+          ]
+        },
+        {
+          "id": "ended",
+          "label": "After a contest ends",
+          "as_of": "2026-10-03",
+          "expected": [
+            "Current personal record 48 pages and 50 min, score48",
+            "Saved contest scores remain42 and22.5",
+            "Edit personal record allowed while closed contest submission controls unavailable"
+          ]
+        },
+        {
+          "id": "missing",
+          "label": "Log not found",
+          "expected": [
+            "Useful missing page and activity-history route"
+          ]
+        },
+        {
+          "id": "unavailable",
+          "label": "Temporary error",
+          "expected": [
+            "Retry and activity-history route"
+          ]
+        }
+      ],
+      "derived_states": [
+        "Score explanation expanded",
+        "Delete confirmation open, cancelled, escaped and confirmed",
+        "Deleted state with Restore sample",
+        "Edited local record",
+        "Manage submissions with no eligible contests"
+      ],
+      "must_work_interactions": [
+        "Log routes resolve actual selected sample title/owner/units, not a shared anonymous detail screen",
+        "Each How this was scored disclosure exposes its own illustrative saved snapshot",
+        "Owner editing updates personal record; ended contest snapshots stay fixed",
+        "Manage submissions chooses local eligible contests; ineligible ones explain why",
+        "Delete hidden behind More actions; Modal cancel/Escape preserve record; confirmed deletion affects local prototype only",
+        "Deletion result receives focus and supports Restore sample",
+        "Visitor never gets owner-only controls or submission data",
+        "Retry restores requested sample",
+        "Breadcrumbs, owner, contest and help links preserve relevant identity/context"
+      ],
+      "visual_direction": [
+        "Activity and amount first, then personal/contest score contexts",
+        "No combined total of personal and contest points",
+        "Edit secondary; destructive action quiet and confirmed",
+        "Clear labels for unavailable time, ownership and frozen scoring",
+        "Readable formulas behind disclosures instead of overwhelming record"
+      ],
+      "source_limits": [
+        "Current saved-log contract lacks historical rule/source provenance. Prototype can display explicit fixture snapshots, but production must not reconstruct history from today’s formula.",
+        "Nonowner/nonadmin endpoint strips registration references. Preserve that boundary.",
+        "Ended contest does not make the entire log read-only; obey separate edit and attachment windows in a future backend integration."
+      ]
+    }
+  ],
+  "supporting_local_flows": [
+    {
+      "id": "sign-in",
+      "purpose": "Complete signed-out Join/Log/My contests handoffs",
+      "minimum_behavior": [
+        "Local form accepts demo display name/account; validate required fields",
+        "Preserve intended destination; finish to member state",
+        "Explicitly a demo account in prototype controls; no credentials or real authentication"
+      ]
+    },
+    {
+      "id": "contest-registration",
+      "purpose": "Join chosen round and demonstrate eligibility",
+      "minimum_behavior": [
+        "Selected contest details and separate UTC deadlines",
+        "Select one to three languages via existing Paper controls",
+        "Respect open/closed registration",
+        "Save local membership and return to selected contest; joined action changes to Log activity for live rounds"
+      ]
+    },
+    {
+      "id": "log-create-edit",
+      "purpose": "Make primary Log activity and owner Edit usable",
+      "minimum_behavior": [
+        "RHF fields for language, activity, amount/unit, optional tracked time/title/tags",
+        "Required/numeric validation and usable errors",
+        "Local score preview labelled sample",
+        "Save local record and route to its detail; reset/cancel safely",
+        "On edit preserve fixed language/activity if following current source contract",
+        "Ended-contest snapshots remain unchanged"
+      ]
+    },
+    {
+      "id": "log-submissions",
+      "purpose": "Demonstrate separate contest eligibility/contributions",
+      "minimum_behavior": [
+        "Choose eligible registrations with reasons for unavailable choices",
+        "Update local contest attachments only",
+        "No eligible registrations state links to contest discovery",
+        "Visitor boundary and ended submission windows respected"
+      ]
+    },
+    {
+      "id": "contest-create-manage",
+      "purpose": "Exercise organizer controls without real permissions service",
+      "minimum_behavior": [
+        "Available only in organizer scenario",
+        "Local RHF form for title, dates/deadline, languages/activities and listing visibility",
+        "Validate dates and required title",
+        "Created contest appears in owned collection; unlisted stays out of public discovery"
+      ]
+    },
+    {
+      "id": "profile-account-admin-actions",
+      "purpose": "Complete visible secondary CTAs",
+      "minimum_behavior": [
+        "Edit profile/account settings can use local Drawer/Modal form with saved feedback",
+        "Admin work queue can show local record detail with state-changing review action",
+        "New post/page/announcement actions can open a simple usable local editor or clearly scoped supporting route",
+        "No display of live system health or real moderator action"
+      ]
+    }
+  ],
+  "unresolved_choices_and_prototype_defaults": [
+    {
+      "id": "help-ia",
+      "choice": "A four pages vs B Guide+About vs C task help",
+      "prototype_default": "B Guide+About; preserve all three IA options in inspector",
+      "production_gate": "Human IA approval and inbound-link/anchor inventory"
+    },
+    {
+      "id": "homepage-priority",
+      "choice": "Contest-first homepage proposed, not approved in source",
+      "prototype_default": "Use contest-first hierarchy; preserve all six states for review",
+      "production_gate": "Comprehension/usability check; do not claim measured conversion lift"
+    },
+    {
+      "id": "organized-vs-joined",
+      "choice": "Whether participation should have its own collection",
+      "prototype_default": "My contests remains organized; selected contest/profile carries membership; do not silently redefine",
+      "production_gate": "Separate joined-contest name/query if requested"
+    },
+    {
+      "id": "public-log-scores",
+      "choice": "Public viewer access to contest contribution list",
+      "prototype_default": "Hide owner-only submission list; explain visibility rather than emptiness",
+      "production_gate": "Explicit product/API change required to expose it"
+    },
+    {
+      "id": "scoring-history",
+      "choice": "How saved historical rules and source units are returned",
+      "prototype_default": "Fixture includes labelled saved scoring explanations only",
+      "production_gate": "Persisted scoring provenance contract"
+    },
+    {
+      "id": "repeat-playback-policy",
+      "choice": "Legacy halve-amount wording vs scoring modifiers and playback guidance",
+      "prototype_default": "Avoid new authoritative rates; route to contextual explanation and record unresolved policy in report",
+      "production_gate": "Content owner reconciles one rule source; never apply both adjustments"
+    },
+    {
+      "id": "post-round-windows",
+      "choice": "Precise future UI edit/submission grace rules",
+      "prototype_default": "Show clear active and safely-after-window fixtures; personal edit works while saved contest score stays fixed",
+      "production_gate": "Server eligibility remains authority"
+    },
+    {
+      "id": "moderation-policy",
+      "choice": "Warning/ban wording differs across old Rules and FAQ",
+      "prototype_default": "Honest-record and contact guidance; local admin demo does not establish policy",
+      "production_gate": "Content review aligns escalation wording"
+    },
+    {
+      "id": "sample-coherence",
+      "choice": "Imported homepage/profile samples differ from later studies",
+      "prototype_default": "Choose shared stable IDs and coherent per-year/per-contest data; normalize deprecated activity labels and official round names",
+      "production_gate": "No gate for unpublished fixtures; report that source numbers remain illustrative"
+    },
+    {
+      "id": "rank-and-discovery-api",
+      "choice": "Complete-set name lookup, current-rank lookup, list filtering and membership context",
+      "prototype_default": "Local complete fixture sets implement every interaction correctly",
+      "production_gate": "Server-backed queries covering all pages before production"
+    },
+    {
+      "id": "brand-cjk",
+      "choice": "Formal brand minimum sizes/clear space and CJK font bundling remain earlier styleguide decisions",
+      "prototype_default": "Use current Paper brand at tested dimensions and existing script fallback; verify visible Japanese text in browser",
+      "production_gate": "Separate typography/brand choice if fallback inconsistent"
+    }
+  ],
+  "source_fixtures": {
+    "homepage": {
+      "liveRows": [
+        [
+          1,
+          "Bijak",
+          "1,698.3"
+        ],
+        [
+          2,
+          "antonve",
+          "1,095.5"
+        ],
+        [
+          3,
+          "ruby",
+          "788.3"
+        ],
+        [
+          4,
+          "PatChatGC",
+          "749.6"
+        ],
+        [
+          5,
+          "KanjiEater",
+          "530.6"
+        ]
+      ],
+      "recapRows": [
+        [
+          1,
+          "ruby",
+          "4,598.6"
+        ],
+        [
+          2,
+          "ryun",
+          "3,095.4"
+        ],
+        [
+          3,
+          "Arabra",
+          "2,853.3"
+        ]
+      ],
+      "states": {
+        "guest-live": {
+          "name": "Guest during a live round",
+          "status": "Round 5 is live",
+          "tone": "live",
+          "headline": "Read more. Listen more. Keep going together.",
+          "lede": "Tadoku turns language immersion into friendly seasonal contests. Log what you read and listen to, watch your score grow, and build a habit that outlasts the round.",
+          "primary": "Join Round 5",
+          "secondary": "How Tadoku works",
+          "fineprint": "Free to join · Registration closes 23 September",
+          "navLogin": "Log in",
+          "navAction": "Join Tadoku",
+          "board": "live",
+          "boardName": "2026 Round 5",
+          "boardDate": "1–30 September · Day 5 of 30",
+          "boardLink": "Full leaderboard"
+        },
+        "member-open": {
+          "name": "Signed-in member who has not joined",
+          "status": "Registration closes 23 September",
+          "tone": "future",
+          "headline": "Round 5 is moving. There’s still time to join.",
+          "lede": "Choose the languages you want to immerse in, join the official round, and let the community’s progress give your daily habit a little extra pull.",
+          "primary": "Join Round 5",
+          "secondary": "View contest details",
+          "fineprint": "Joining a contest and logging activity are separate steps",
+          "navLogin": "Aiko",
+          "navAction": "New log",
+          "board": "live",
+          "boardName": "2026 Round 5",
+          "boardDate": "1–30 September · Day 5 of 30",
+          "boardLink": "Full leaderboard"
+        },
+        "participant-live": {
+          "name": "Registered participant during a live round",
+          "status": "You’re participating in Round 5",
+          "tone": "live",
+          "headline": "Keep your immersion moving.",
+          "lede": "You’re 12th with 136 points. Log today’s reading or listening and follow the friendly pace of everyone immersing alongside you.",
+          "primary": "Log immersion",
+          "secondary": "View my progress",
+          "fineprint": "Scores may take a few seconds to update",
+          "navLogin": "Aiko",
+          "navAction": "New log",
+          "board": "participant",
+          "boardName": "2026 Round 5",
+          "boardDate": "1–30 September · Day 5 of 30",
+          "boardLink": "Full leaderboard"
+        },
+        "upcoming": {
+          "name": "Registration is open before a round",
+          "status": "Registration is open",
+          "tone": "future",
+          "headline": "The next round starts 1 November.",
+          "lede": "Pick your language now, decide what you want to read or listen to, and start the next two-week immersion sprint with the community.",
+          "primary": "Join Round 6",
+          "secondary": "Track without a contest",
+          "fineprint": "Registration closes 7 November",
+          "navLogin": "Log in",
+          "navAction": "Join Tadoku",
+          "board": "upcoming",
+          "boardName": "2026 Round 6",
+          "boardDate": "1–14 November · Two-week round",
+          "boardLink": "Contest details"
+        },
+        "between": {
+          "name": "Between official rounds",
+          "status": "The next round starts 1 November",
+          "tone": "quiet",
+          "headline": "Keep immersing between rounds.",
+          "lede": "Contests add momentum, but the habit is yours year-round. Track what you read and listen to today, then bring that rhythm into the next official round.",
+          "primary": "Track today’s immersion",
+          "secondary": "Get ready for Round 6",
+          "fineprint": "You can track progress without joining a contest",
+          "navLogin": "Log in",
+          "navAction": "Join Tadoku",
+          "board": "recap",
+          "boardName": "2026 Round 4 recap",
+          "boardDate": "1–31 July · Final results",
+          "boardLink": "See final board"
+        },
+        "unavailable": {
+          "name": "Contest data is temporarily unavailable",
+          "status": "Contest updates are delayed",
+          "tone": "error",
+          "headline": "Your immersion can keep going.",
+          "lede": "The current contest board is temporarily unavailable. You can still log reading and listening now; submitted activity will appear when updates resume.",
+          "primary": "Log immersion",
+          "secondary": "Try leaderboard again",
+          "fineprint": "Demo scenario: logging is available; only standings are delayed",
+          "navLogin": "Aiko",
+          "navAction": "New log",
+          "board": "unavailable",
+          "boardName": "Current contest",
+          "boardDate": "Leaderboard temporarily unavailable",
+          "boardLink": "Status"
+        }
+      }
+    },
+    "leaderboard": {
+      "people": [
+        [
+          "Mika",
+          [
+            680,
+            160,
+            180,
+            60
+          ]
+        ],
+        [
+          "Noor",
+          [
+            360,
+            170,
+            210,
+            90
+          ]
+        ],
+        [
+          "Sora",
+          [
+            550,
+            110,
+            80,
+            20
+          ]
+        ],
+        [
+          "Elliot",
+          [
+            210,
+            160,
+            270,
+            120
+          ]
+        ],
+        [
+          "Anton",
+          [
+            370,
+            80,
+            110,
+            40
+          ]
+        ],
+        [
+          "Jun",
+          [
+            300,
+            100,
+            65,
+            35
+          ]
+        ],
+        [
+          "Lea",
+          [
+            180,
+            75,
+            110,
+            35
+          ]
+        ],
+        [
+          "Robin",
+          [
+            110,
+            55,
+            145,
+            20
+          ]
+        ],
+        [
+          "Camille",
+          [
+            80,
+            55,
+            100,
+            45
+          ]
+        ],
+        [
+          "Sam",
+          [
+            75,
+            35,
+            55,
+            35
+          ]
+        ],
+        [
+          "Alex",
+          [
+            35,
+            15,
+            40,
+            10
+          ]
+        ],
+        [
+          "Taylor",
+          [
+            0,
+            0,
+            0,
+            0
+          ]
+        ]
+      ],
+      "scoreVectorOrder": [
+        "ja.reading",
+        "ja.listening",
+        "es.reading",
+        "es.listening"
+      ],
+      "rowsPerPage": 6,
+      "yearFactors": {
+        "2024": 10,
+        "2025": 12,
+        "2026": 8
+      },
+      "allTimeFactor": 61
+    },
+    "contests": [
+      {
+        "id": "round5",
+        "scope": "official",
+        "title": "2026 Round 5",
+        "month": "Sep",
+        "day": "01",
+        "dates": "1–30 September 2026",
+        "start": "1 September",
+        "end": "30 September",
+        "registration": "23 September",
+        "state": "live",
+        "open": true,
+        "languages": "All languages",
+        "activities": "Reading and listening",
+        "description": "A month of immersion, in the languages you are learning.",
+        "joined": true
+      },
+      {
+        "id": "round6",
+        "scope": "official",
+        "title": "2026 Round 6",
+        "month": "Nov",
+        "day": "01",
+        "dates": "1–14 November 2026",
+        "start": "1 November",
+        "end": "14 November",
+        "registration": "7 November",
+        "state": "upcoming",
+        "open": true,
+        "languages": "All languages",
+        "activities": "Reading and listening",
+        "description": "The next official round. Choose your languages and make time for immersion."
+      },
+      {
+        "id": "round4",
+        "scope": "official",
+        "title": "2026 Round 4",
+        "month": "Jul",
+        "day": "01",
+        "dates": "1–31 July 2026",
+        "start": "1 July",
+        "end": "31 July",
+        "registration": "24 July",
+        "state": "ended",
+        "open": false,
+        "languages": "All languages",
+        "activities": "Reading and listening",
+        "description": "Browse the results from the July round."
+      },
+      {
+        "id": "round3",
+        "scope": "official",
+        "title": "2026 Round 3",
+        "month": "May",
+        "day": "01",
+        "dates": "1–14 May 2026",
+        "start": "1 May",
+        "end": "14 May",
+        "registration": "7 May",
+        "state": "ended",
+        "open": false,
+        "languages": "All languages",
+        "activities": "Reading and listening",
+        "description": "Browse the results from the May round."
+      },
+      {
+        "id": "novels",
+        "scope": "community",
+        "title": "Japanese novel club",
+        "month": "Sep",
+        "day": "01",
+        "dates": "1–30 September 2026",
+        "start": "1 September",
+        "end": "30 September",
+        "registration": "15 September",
+        "state": "live",
+        "open": true,
+        "languages": "Japanese",
+        "activities": "Reading",
+        "description": "Bring a novel and read a little each day."
+      },
+      {
+        "id": "listening",
+        "scope": "community",
+        "title": "September listening hour",
+        "month": "Sep",
+        "day": "01",
+        "dates": "1–30 September 2026",
+        "start": "1 September",
+        "end": "30 September",
+        "registration": "1 September",
+        "state": "live",
+        "open": false,
+        "languages": "All languages",
+        "activities": "Listening",
+        "description": "A month of podcasts, audiobooks and conversations."
+      },
+      {
+        "id": "french",
+        "scope": "community",
+        "title": "Autumn in French",
+        "month": "Oct",
+        "day": "01",
+        "dates": "1–31 October 2026",
+        "start": "1 October",
+        "end": "31 October",
+        "registration": "5 October",
+        "state": "upcoming",
+        "open": true,
+        "languages": "French",
+        "activities": "Reading and listening",
+        "description": "Find something good to read or listen to in French.",
+        "owned": true
+      },
+      {
+        "id": "summer",
+        "scope": "community",
+        "title": "Summer reading weekend",
+        "month": "Aug",
+        "day": "22",
+        "dates": "22–23 August 2026",
+        "start": "22 August",
+        "end": "23 August",
+        "registration": "22 August",
+        "state": "ended",
+        "open": false,
+        "languages": "All languages",
+        "activities": "Reading",
+        "description": "The weekend is over. The reading stays with you."
+      },
+      {
+        "id": "friends",
+        "scope": "community",
+        "title": "Our Sunday reading group",
+        "month": "Sep",
+        "day": "06",
+        "dates": "6–27 September 2026",
+        "start": "6 September",
+        "end": "27 September",
+        "registration": "13 September",
+        "state": "upcoming",
+        "open": true,
+        "languages": "Japanese, Korean",
+        "activities": "Reading",
+        "description": "A shared reading challenge for the group.",
+        "owned": true,
+        "unlisted": true
+      }
+    ],
+    "profileYears": {
+      "2023": {
+        "score": "74,590",
+        "entries": "214",
+        "languages": "1",
+        "contests": "3"
+      },
+      "2024": {
+        "score": "96,210",
+        "entries": "268",
+        "languages": "2",
+        "contests": "3"
+      },
+      "2025": {
+        "score": "114,680",
+        "entries": "301",
+        "languages": "2",
+        "contests": "4"
+      },
+      "2026": {
+        "score": "128,420",
+        "entries": "342",
+        "languages": "3",
+        "contests": "5"
+      }
+    },
+    "logs": {
+      "reading": {
+        "owner": true,
+        "title": "コンビニ人間 — finished chapter 3",
+        "activity": "Reading",
+        "measure": "42",
+        "unit": "pages",
+        "time": "45 min",
+        "tags": [
+          "fiction",
+          "bookclub"
+        ],
+        "personal": "42",
+        "personalFormula": "42 pages × 1 point per page = 42 personal points.",
+        "contests": [
+          {
+            "title": "2026 Round 5",
+            "kind": "Official Tadoku contest",
+            "status": "In progress",
+            "score": "42",
+            "formula": "42 pages × 1 point per page = 42 points in this round."
+          },
+          {
+            "title": "September reading circle",
+            "kind": "Community contest",
+            "status": "In progress",
+            "score": "22.5",
+            "formula": "45 tracked minutes × 0.5 points per minute = 22.5 points in this contest."
+          }
+        ]
+      },
+      "listening": {
+        "owner": true,
+        "title": "Nihongo con Teppei — episode 920",
+        "activity": "Listening",
+        "measure": "35",
+        "unit": "minutes",
+        "time": null,
+        "tags": [
+          "podcast"
+        ],
+        "personal": "17.5",
+        "personalFormula": "35 tracked minutes × 0.5 points per minute = 17.5 personal points.",
+        "contests": [
+          {
+            "title": "2026 Round 5",
+            "kind": "Official Tadoku contest",
+            "status": "In progress",
+            "score": "17.5",
+            "formula": "35 tracked minutes × 0.5 points per minute = 17.5 points in this round."
+          },
+          {
+            "title": "September listening circle",
+            "kind": "Community contest",
+            "status": "In progress",
+            "score": "35",
+            "formula": "35 tracked minutes × 1 point per minute = 35 points in this contest."
+          }
+        ]
+      },
+      "visitor": {
+        "owner": false,
+        "title": "コンビニ人間 — finished chapter 3",
+        "activity": "Reading",
+        "measure": "42",
+        "unit": "pages",
+        "time": "45 min",
+        "tags": [
+          "fiction",
+          "bookclub"
+        ],
+        "personal": "42",
+        "personalFormula": "42 pages × 1 point per page = 42 personal points.",
+        "contests": [
+          {
+            "title": "2026 Round 5",
+            "kind": "Official Tadoku contest",
+            "status": "In progress",
+            "score": "42",
+            "formula": "42 pages × 1 point per page = 42 points in this round."
+          },
+          {
+            "title": "September reading circle",
+            "kind": "Community contest",
+            "status": "In progress",
+            "score": "22.5",
+            "formula": "45 tracked minutes × 0.5 points per minute = 22.5 points in this contest."
+          }
+        ]
+      },
+      "personal": {
+        "owner": true,
+        "title": "Japanese reading",
+        "activity": "Reading",
+        "measure": "42",
+        "unit": "pages",
+        "time": "unrecorded",
+        "tags": [],
+        "personal": "42",
+        "personalFormula": "42 pages × 1 point per page = 42 personal points.",
+        "contests": []
+      },
+      "ended": {
+        "owner": true,
+        "title": "コンビニ人間 — finished chapter 3",
+        "activity": "Reading",
+        "measure": "48",
+        "unit": "pages",
+        "time": "50 min",
+        "tags": [
+          "fiction",
+          "bookclub"
+        ],
+        "personal": "48",
+        "personalFormula": "48 pages × 1 point per page = 48 personal points. The personal record was corrected after the round ended.",
+        "contests": [
+          {
+            "title": "2026 Round 5",
+            "kind": "Official Tadoku contest",
+            "status": "Ended 30 September",
+            "score": "42",
+            "formula": "Saved at submission: 42 pages × 1 point per page = 42 points. Later personal-log edits do not change this finished-contest snapshot."
+          },
+          {
+            "title": "September reading circle",
+            "kind": "Community contest",
+            "status": "Ended 30 September",
+            "score": "22.5",
+            "formula": "Saved at submission: 45 tracked minutes × 0.5 points per minute = 22.5 points. Later personal-log edits do not change this finished-contest snapshot."
+          }
+        ]
+      }
+    }
+  },
+  "additional_source_fixtures": {
+    "profile_activity": [
+      {
+        "id": "reading-konbini",
+        "date": "2026-08-28",
+        "title": "小説・コンビニ人間",
+        "language": "Japanese",
+        "source_activity": "Reading",
+        "proposed_activity": "Reading",
+        "media": "book",
+        "amount": 42,
+        "unit": "pages",
+        "score": 420,
+        "note": "Finished chapter six"
+      },
+      {
+        "id": "reading-prince",
+        "date": "2026-08-27",
+        "title": "Le Petit Prince",
+        "language": "French",
+        "source_activity": "Reading",
+        "proposed_activity": "Reading",
+        "media": "book",
+        "amount": 18,
+        "unit": "pages",
+        "score": 180
+      },
+      {
+        "id": "listening-diner",
+        "date": "2026-08-26",
+        "title": "Midnight Diner",
+        "language": "Japanese",
+        "source_activity": "Watching",
+        "proposed_activity": "Listening",
+        "media": "video",
+        "amount": 24,
+        "unit": "minutes",
+        "score": 240
+      },
+      {
+        "id": "reading-nhk",
+        "date": "2026-08-24",
+        "title": "NHK Easy",
+        "language": "Japanese",
+        "source_activity": "Reading",
+        "proposed_activity": "Reading",
+        "media": "article",
+        "amount": 6,
+        "unit": "pages",
+        "score": 60
+      },
+      {
+        "id": "listening-innerfrench",
+        "date": "2026-08-23",
+        "title": "InnerFrench",
+        "language": "French",
+        "source_activity": "Listening",
+        "proposed_activity": "Listening",
+        "media": "podcast",
+        "amount": 38,
+        "unit": "minutes",
+        "score": 380
+      },
+      {
+        "id": "reading-sennaar",
+        "date": "2025-12-19",
+        "title": "Chants of Sennaar",
+        "language": "Spanish",
+        "source_activity": "Gaming",
+        "proposed_activity": "Reading",
+        "media": "game",
+        "amount": 52,
+        "unit": "minutes",
+        "score": 520
+      }
+    ],
+    "profile_breakdown_2026": {
+      "active_days": 187,
+      "longest_streak_days": 18,
+      "language_scores": {
+        "Japanese": 88240,
+        "French": 28110,
+        "Spanish": 12070
+      },
+      "source_activity_percentages": {
+        "Reading": 68,
+        "Listening": 21,
+        "Gaming": 11
+      },
+      "normalization_note": "Do not invent a third activity from media. Recalculate Reading/Listening mix from normalized sample logs."
+    },
+    "admin_source_metrics": {
+      "total_users": 18429,
+      "new_users_month": 126,
+      "active_contest_participants": 842,
+      "open_reports": 7,
+      "reports_need_review": 3,
+      "languages": 46,
+      "contest_entries": 8921,
+      "note": "These source dashboard values are illustrative and internally separate from the public leaderboard sample. Label sample data and use coherent current contest title."
+    },
+    "admin_sections": {
+      "Overview": [
+        "Dashboard"
+      ],
+      "Content": [
+        "Posts",
+        "Pages",
+        "Announcements"
+      ],
+      "Platform": [
+        "Languages",
+        "Contests"
+      ],
+      "Moderation": [
+        "Users",
+        "Reports"
+      ]
+    },
+    "admin_attention": [
+      "Review three reported user profiles",
+      "Approve September contest announcement",
+      "Check two unrecognized language requests"
+    ],
+    "faq_questions": [
+      "Can I join a contest after it has started?",
+      "I can’t find my language. What should I do?",
+      "Do I have to enter a contest to track activity?",
+      "Why does my log have more than one score?",
+      "Does a private contest hide everything from others?",
+      "How do I report a problem or suggest a feature?"
+    ]
+  },
+  "validation_targets": [
+    "All11product page designs and15canonical URLs have a real Paper implementation and deep-link routing",
+    "All28named Home/Leaderboard/Contests/Log scenarios (6+9+6+7) are reachable and show required behavior",
+    "All3profile/admin views,4profile years,4guide pages and3guide IA options work",
+    "Complete principal journey: home → contest → local registration → log activity → log detail → leaderboard → contextual profile",
+    "Complete owner/public and local deletion/restore flows with keyboard focus management",
+    "Search/reset/pagination and rank-preserving name query verified on complete fixture data",
+    "Desktop and390px phone, light/dark and relevant density combinations have no unintended document overflow",
+    "No JavaScript errors, legacy ui imports, dead placeholder links or direct production writes",
+    "Final report distinguishes actual shipped prototype behavior, Paper changes, tested pages and unresolved production decisions"
+  ],
+  "recommended_lanes": [
+    {
+      "lane": "A",
+      "owns": [
+        "Home",
+        "About",
+        "Start here",
+        "Scoring & rules",
+        "Questions & help"
+      ],
+      "reason": "Public landing/editorial hierarchy plus6home states and3help IAoptions"
+    },
+    {
+      "lane": "B",
+      "owns": [
+        "Leaderboard",
+        "Contests",
+        "Selected contest detail/registration/organizer flows"
+      ],
+      "reason": "Shared contest identity, sample rows, scope and filtering semantics"
+    },
+    {
+      "lane": "C",
+      "owns": [
+        "Profile overview",
+        "Activity log",
+        "Admin dashboard",
+        "Log details"
+      ],
+      "reason": "Shared user/log identity, owner boundary and analytical/detail layouts"
+    },
+    {
+      "lane": "Root integration",
+      "owns": [
+        "Fresh app scaffold and public/admin routing shell",
+        "Shared fixture contracts and local state",
+        "Primary logging flow",
+        "Tailwind/Paper gaps",
+        "Styleguide updates",
+        "Cross-page browser verification",
+        "Draft final report and merge workflow"
+      ],
+      "reason": "Avoid competing shared-file edits; agents report reusable component failures to root"
+    }
+  ]
+}

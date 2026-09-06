@@ -27,6 +27,8 @@ export interface TableProps<Row>
   readonly columns: readonly TableColumn<Row>[];
   readonly rows: readonly Row[];
   readonly getRowKey?: (row: Row, rowIndex: number) => Key;
+  /** Native row attributes for focus targets, current records and application styling. */
+  readonly getRowProps?: (row: Row, rowIndex: number) => HTMLAttributes<HTMLTableRowElement>;
   readonly emptyMessage?: ReactNode;
   /** The table's minimum inline size before its keyboard-scrollable region overflows. */
   readonly minWidth?: string;
@@ -51,6 +53,7 @@ export function Table<Row>({
   columns,
   rows,
   getRowKey,
+  getRowProps,
   emptyMessage = "No data to display.",
   minWidth = `${Math.max(30, columns.length * 9)}rem`,
   tableClassName,
@@ -113,7 +116,7 @@ export function Table<Row>({
             </tr>
           ) : (
             rows.map((row, rowIndex) => (
-              <tr key={getRowKey?.(row, rowIndex) ?? rowIndex}>
+              <tr {...getRowProps?.(row, rowIndex)} key={getRowKey?.(row, rowIndex) ?? rowIndex}>
                 {columns.map((column) => {
                   const Cell = column.rowHeader ? "th" : "td";
                   return (

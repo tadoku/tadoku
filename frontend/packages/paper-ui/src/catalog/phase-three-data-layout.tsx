@@ -191,7 +191,7 @@ const tableSections = completeSections({
   contentGuidance: { heading: "Content guidance", content: ["Write concise noun headers, use a caption that names the data set, format values consistently, and state an actionable empty message."] },
   accessibility: { heading: "Accessibility", content: ["Always provide a meaningful caption, mark the identifying column with rowHeader when rows need names, and never communicate state with alignment or color alone."] },
   implementation: { heading: "Implementation", content: ["Pass immutable rows and column definitions. Load paper-ui/styles.css once and keep interactive controls inside cells natively labelled."] },
-  apiReference: { heading: "API reference", content: ["TableProps<Row> accepts caption, columns, rows, getRowKey, emptyMessage, captionVisibility, minWidth, and native region attributes; TableColumn<Row> defines header and cell rendering."] },
+  apiReference: { heading: "API reference", content: ["TableProps<Row> accepts caption, columns, rows, getRowKey, getRowProps, emptyMessage, captionVisibility, minWidth, and native region attributes; TableColumn<Row> defines header and cell rendering. Use getRowProps for a row ID, tabIndex, aria-current or custom class; getRowKey continues to own stable React identity."] },
   relatedPatterns: { heading: "Related patterns", content: ["Related contracts include Surface for summaries, HeatmapChart for magnitude matrices, and ButtonGroup for a small visible set of row actions."] },
   migration: { heading: "Migration", content: ["Replace copied responsive-table wrappers, preserve native table markup, move data operations to the application, and explicitly identify row headers."] },
   lifecycle: { heading: "Lifecycle", content: ["Stable in Paper 0.1.0; changes to native semantics, responsive overflow, or generic column typing require compatibility review."] }
@@ -311,6 +311,11 @@ export const phaseThreeDataLayoutDocuments = [
     "type": "(row, index) => Key",
     "description": "Use stable data IDs when records can reorder.",
     "defaultValue": "row index"
+  },
+  {
+    "name": "getRowProps",
+    "type": "(row, index) => HTMLAttributes<HTMLTableRowElement>",
+    "description": "Set a stable row ID and tabIndex=-1 for a Find my row action, or add aria-current and a class to identify the current record. Keep navigation on real links in cells; this does not turn a row into an interactive control."
   },
   {
     "name": "captionVisibility",

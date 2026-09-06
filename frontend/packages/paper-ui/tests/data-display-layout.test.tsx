@@ -82,6 +82,31 @@ function tooltipIsHidden(tooltip: SVGGElement): boolean {
 }
 
 describe("Table", () => {
+  it("forwards native row attributes so a current record can be identified and focused across reordering", () => {
+    const getRowProps = (row: ReadingRow) => ({
+      id: `reading-${row.id}`,
+      tabIndex: -1,
+      "aria-current": row.id === "book-2" ? "true" as const : undefined,
+      className: row.id === "book-2" ? "current-reading" : undefined,
+    });
+    const { rerender } = render(
+      <Table caption="Reading rows" columns={columns} rows={rows}
+        getRowKey={(row) => row.id} getRowProps={getRowProps} />,
+    );
+    const current = screen.getByRole("row", { name: "The Three-Body Problem 42" });
+    expect(current).toHaveAttribute("id", "reading-book-2");
+    expect(current).toHaveAttribute("aria-current", "true");
+    expect(current).toHaveClass("current-reading");
+    current.focus();
+    expect(current).toHaveFocus();
+    rerender(
+      <Table caption="Reading rows" columns={columns} rows={[...rows].reverse()}
+        getRowKey={(row) => row.id} getRowProps={getRowProps} />,
+    );
+    expect(screen.getByRole("row", { name: "The Three-Body Problem 42" })).toBe(current);
+    expect(current).toHaveFocus();
+  });
+
   it("renders native caption, column headers, and identifying row headers", () => {
     render(
       <Table

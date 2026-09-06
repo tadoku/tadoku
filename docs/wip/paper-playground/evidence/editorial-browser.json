@@ -1,0 +1,1084 @@
+{
+  "checkedAt": "2026-09-06T16:40:13.801Z",
+  "origin": "http://127.0.0.1:33946",
+  "results": [
+    {
+      "id": "home-guest-live",
+      "route": "/?scenario=guest-live",
+      "width": 1440,
+      "title": "Read more. Listen more. Keep going together. · Tadoku",
+      "heading": "Read more. Listen more. Keep going together.",
+      "headings": 1,
+      "viewport": 1440,
+      "scrollWidth": 1440,
+      "theme": "light",
+      "density": "comfortable",
+      "fonts": [
+        "Merriweather",
+        "Open Sans"
+      ],
+      "emptyLinks": 0,
+      "localNavigation": [],
+      "screenshot": "editorial/home-guest-live-1440.jpg",
+      "errors": []
+    },
+    {
+      "id": "home-guest-live",
+      "route": "/?scenario=guest-live",
+      "width": 390,
+      "title": "Read more. Listen more. Keep going together. · Tadoku",
+      "heading": "Read more. Listen more. Keep going together.",
+      "headings": 1,
+      "viewport": 390,
+      "scrollWidth": 390,
+      "theme": "light",
+      "density": "comfortable",
+      "fonts": [
+        "Merriweather",
+        "Open Sans"
+      ],
+      "emptyLinks": 0,
+      "localNavigation": [],
+      "screenshot": "editorial/home-guest-live-390.jpg",
+      "errors": []
+    },
+    {
+      "id": "home-member-open",
+      "route": "/?scenario=member-open",
+      "width": 1440,
+      "title": "Round 5 is moving. There’s still time to join. · Tadoku",
+      "heading": "Round 5 is moving. There’s still time to join.",
+      "headings": 1,
+      "viewport": 1440,
+      "scrollWidth": 1440,
+      "theme": "light",
+      "density": "comfortable",
+      "fonts": [
+        "Merriweather",
+        "Open Sans"
+      ],
+      "emptyLinks": 0,
+      "localNavigation": [],
+      "screenshot": "editorial/home-member-open-1440.jpg",
+      "errors": []
+    },
+    {
+      "id": "home-member-open",
+      "route": "/?scenario=member-open",
+      "width": 390,
+      "title": "Round 5 is moving. There’s still time to join. · Tadoku",
+      "heading": "Round 5 is moving. There’s still time to join.",
+      "headings": 1,
+      "viewport": 390,
+      "scrollWidth": 390,
+      "theme": "light",
+      "density": "comfortable",
+      "fonts": [
+        "Merriweather",
+        "Open Sans"
+      ],
+      "emptyLinks": 0,
+      "localNavigation": [],
+      "screenshot": "editorial/home-member-open-390.jpg",
+      "errors": []
+    },
+    {
+      "id": "home-participant-live",
+      "route": "/?scenario=participant-live",
+      "width": 1440,
+      "title": "Keep your immersion moving. · Tadoku",
+      "heading": "Keep your immersion moving.",
+      "headings": 1,
+      "viewport": 1440,
+      "scrollWidth": 1440,
+      "theme": "light",
+      "density": "comfortable",
+      "fonts": [
+        "Merriweather",
+        "Open Sans"
+      ],
+      "emptyLinks": 0,
+      "localNavigation": [],
+      "screenshot": "editorial/home-participant-live-1440.jpg",
+      "errors": []
+    },
+    {
+      "id": "home-participant-live",
+      "route": "/?scenario=participant-live",
+      "width": 390,
+      "title": "Keep your immersion moving. · Tadoku",
+      "heading": "Keep your immersion moving.",
+      "headings": 1,
+      "viewport": 390,
+      "scrollWidth": 390,
+      "theme": "light",
+      "density": "comfortable",
+      "fonts": [
+        "Merriweather",
+        "Open Sans"
+      ],
+      "emptyLinks": 0,
+      "localNavigation": [],
+      "screenshot": "editorial/home-participant-live-390.jpg",
+      "errors": []
+    },
+    {
+      "id": "home-upcoming",
+      "route": "/?scenario=upcoming",
+      "width": 1440,
+      "title": "The next round starts 1 November. · Tadoku",
+      "heading": "The next round starts 1 November.",
+      "headings": 1,
+      "viewport": 1440,
+      "scrollWidth": 1440,
+      "theme": "light",
+      "density": "comfortable",
+      "fonts": [
+        "Merriweather",
+        "Open Sans"
+      ],
+      "emptyLinks": 0,
+      "localNavigation": [],
+      "screenshot": "editorial/home-upcoming-1440.jpg",
+      "errors": []
+    },
+    {
+      "id": "home-upcoming",
+      "route": "/?scenario=upcoming",
+      "width": 390,
+      "title": "The next round starts 1 November. · Tadoku",
+      "heading": "The next round starts 1 November.",
+      "headings": 1,
+      "viewport": 390,
+      "scrollWidth": 390,
+      "theme": "light",
+      "density": "comfortable",
+      "fonts": [
+        "Merriweather",
+        "Open Sans"
+      ],
+      "emptyLinks": 0,
+      "localNavigation": [],
+      "screenshot": "editorial/home-upcoming-390.jpg",
+      "errors": []
+    },
+    {
+      "id": "home-between",
+      "route": "/?scenario=between",
+      "width": 1440,
+      "title": "Keep immersing between rounds. · Tadoku",
+      "heading": "Keep immersing between rounds.",
+      "headings": 1,
+      "viewport": 1440,
+      "scrollWidth": 1440,
+      "theme": "light",
+      "density": "comfortable",
+      "fonts": [
+        "Merriweather",
+        "Open Sans"
+      ],
+      "emptyLinks": 0,
+      "localNavigation": [],
+      "screenshot": "editorial/home-between-1440.jpg",
+      "errors": []
+    },
+    {
+      "id": "home-between",
+      "route": "/?scenario=between",
+      "width": 390,
+      "title": "Keep immersing between rounds. · Tadoku",
+      "heading": "Keep immersing between rounds.",
+      "headings": 1,
+      "viewport": 390,
+      "scrollWidth": 390,
+      "theme": "light",
+      "density": "comfortable",
+      "fonts": [
+        "Merriweather",
+        "Open Sans"
+      ],
+      "emptyLinks": 0,
+      "localNavigation": [],
+      "screenshot": "editorial/home-between-390.jpg",
+      "errors": []
+    },
+    {
+      "id": "home-unavailable",
+      "route": "/?scenario=unavailable",
+      "width": 1440,
+      "title": "Your immersion can keep going. · Tadoku",
+      "heading": "Your immersion can keep going.",
+      "headings": 1,
+      "viewport": 1440,
+      "scrollWidth": 1440,
+      "theme": "light",
+      "density": "comfortable",
+      "fonts": [
+        "Merriweather",
+        "Open Sans"
+      ],
+      "emptyLinks": 0,
+      "localNavigation": [],
+      "screenshot": "editorial/home-unavailable-1440.jpg",
+      "errors": []
+    },
+    {
+      "id": "home-unavailable",
+      "route": "/?scenario=unavailable",
+      "width": 390,
+      "title": "Your immersion can keep going. · Tadoku",
+      "heading": "Your immersion can keep going.",
+      "headings": 1,
+      "viewport": 390,
+      "scrollWidth": 390,
+      "theme": "light",
+      "density": "comfortable",
+      "fonts": [
+        "Merriweather",
+        "Open Sans"
+      ],
+      "emptyLinks": 0,
+      "localNavigation": [],
+      "screenshot": "editorial/home-unavailable-390.jpg",
+      "errors": []
+    },
+    {
+      "id": "about-guide",
+      "route": "/about",
+      "ia": "guide",
+      "width": 1440,
+      "title": "A little more immersion. A little company along the way. · Tadoku",
+      "heading": "A little more immersion. A little company along the way.",
+      "headings": 1,
+      "viewport": 1440,
+      "scrollWidth": 1440,
+      "theme": "light",
+      "density": "comfortable",
+      "fonts": [
+        "Merriweather",
+        "Open Sans"
+      ],
+      "emptyLinks": 0,
+      "localNavigation": [
+        "Start here",
+        "Scoring & rules",
+        "Questions & help",
+        "About Tadoku"
+      ],
+      "screenshot": "editorial/about-guide-1440.jpg",
+      "errors": []
+    },
+    {
+      "id": "about-guide",
+      "route": "/about",
+      "ia": "guide",
+      "width": 390,
+      "title": "A little more immersion. A little company along the way. · Tadoku",
+      "heading": "A little more immersion. A little company along the way.",
+      "headings": 1,
+      "viewport": 390,
+      "scrollWidth": 390,
+      "theme": "light",
+      "density": "comfortable",
+      "fonts": [
+        "Merriweather",
+        "Open Sans"
+      ],
+      "emptyLinks": 0,
+      "localNavigation": [
+        "Start here",
+        "Scoring & rules",
+        "Questions & help",
+        "About Tadoku"
+      ],
+      "screenshot": "editorial/about-guide-390.jpg",
+      "errors": []
+    },
+    {
+      "id": "about-separate",
+      "route": "/about",
+      "ia": "separate",
+      "width": 1440,
+      "title": "A little more immersion. A little company along the way. · Tadoku",
+      "heading": "A little more immersion. A little company along the way.",
+      "headings": 1,
+      "viewport": 1440,
+      "scrollWidth": 1440,
+      "theme": "light",
+      "density": "comfortable",
+      "fonts": [
+        "Merriweather",
+        "Open Sans"
+      ],
+      "emptyLinks": 0,
+      "localNavigation": [
+        "About",
+        "Manual",
+        "Rules",
+        "FAQ"
+      ],
+      "screenshot": "editorial/about-separate-1440.jpg",
+      "errors": []
+    },
+    {
+      "id": "about-separate",
+      "route": "/about",
+      "ia": "separate",
+      "width": 390,
+      "title": "A little more immersion. A little company along the way. · Tadoku",
+      "heading": "A little more immersion. A little company along the way.",
+      "headings": 1,
+      "viewport": 390,
+      "scrollWidth": 390,
+      "theme": "light",
+      "density": "comfortable",
+      "fonts": [
+        "Merriweather",
+        "Open Sans"
+      ],
+      "emptyLinks": 0,
+      "localNavigation": [
+        "About",
+        "Manual",
+        "Rules",
+        "FAQ"
+      ],
+      "screenshot": "editorial/about-separate-390.jpg",
+      "errors": []
+    },
+    {
+      "id": "about-tasks",
+      "route": "/about",
+      "ia": "tasks",
+      "width": 1440,
+      "title": "A little more immersion. A little company along the way. · Tadoku",
+      "heading": "A little more immersion. A little company along the way.",
+      "headings": 1,
+      "viewport": 1440,
+      "scrollWidth": 1440,
+      "theme": "light",
+      "density": "comfortable",
+      "fonts": [
+        "Merriweather",
+        "Open Sans"
+      ],
+      "emptyLinks": 0,
+      "localNavigation": [
+        "Join & track",
+        "Understand scores",
+        "Get help"
+      ],
+      "screenshot": "editorial/about-tasks-1440.jpg",
+      "errors": []
+    },
+    {
+      "id": "about-tasks",
+      "route": "/about",
+      "ia": "tasks",
+      "width": 390,
+      "title": "A little more immersion. A little company along the way. · Tadoku",
+      "heading": "A little more immersion. A little company along the way.",
+      "headings": 1,
+      "viewport": 390,
+      "scrollWidth": 390,
+      "theme": "light",
+      "density": "comfortable",
+      "fonts": [
+        "Merriweather",
+        "Open Sans"
+      ],
+      "emptyLinks": 0,
+      "localNavigation": [
+        "Join & track",
+        "Understand scores",
+        "Get help"
+      ],
+      "screenshot": "editorial/about-tasks-390.jpg",
+      "errors": []
+    },
+    {
+      "id": "manual-guide",
+      "route": "/guide",
+      "ia": "guide",
+      "width": 1440,
+      "title": "Make your first entry. · Tadoku",
+      "heading": "Make your first entry.",
+      "headings": 1,
+      "viewport": 1440,
+      "scrollWidth": 1440,
+      "theme": "light",
+      "density": "comfortable",
+      "fonts": [
+        "Merriweather",
+        "Open Sans"
+      ],
+      "emptyLinks": 0,
+      "localNavigation": [
+        "Start here",
+        "Scoring & rules",
+        "Questions & help",
+        "About Tadoku"
+      ],
+      "screenshot": "editorial/manual-guide-1440.jpg",
+      "errors": []
+    },
+    {
+      "id": "manual-guide",
+      "route": "/guide",
+      "ia": "guide",
+      "width": 390,
+      "title": "Make your first entry. · Tadoku",
+      "heading": "Make your first entry.",
+      "headings": 1,
+      "viewport": 390,
+      "scrollWidth": 390,
+      "theme": "light",
+      "density": "comfortable",
+      "fonts": [
+        "Merriweather",
+        "Open Sans"
+      ],
+      "emptyLinks": 0,
+      "localNavigation": [
+        "Start here",
+        "Scoring & rules",
+        "Questions & help",
+        "About Tadoku"
+      ],
+      "screenshot": "editorial/manual-guide-390.jpg",
+      "errors": []
+    },
+    {
+      "id": "manual-separate",
+      "route": "/guide",
+      "ia": "separate",
+      "width": 1440,
+      "title": "Make your first entry. · Tadoku",
+      "heading": "Make your first entry.",
+      "headings": 1,
+      "viewport": 1440,
+      "scrollWidth": 1440,
+      "theme": "light",
+      "density": "comfortable",
+      "fonts": [
+        "Merriweather",
+        "Open Sans"
+      ],
+      "emptyLinks": 0,
+      "localNavigation": [
+        "About",
+        "Manual",
+        "Rules",
+        "FAQ"
+      ],
+      "screenshot": "editorial/manual-separate-1440.jpg",
+      "errors": []
+    },
+    {
+      "id": "manual-separate",
+      "route": "/guide",
+      "ia": "separate",
+      "width": 390,
+      "title": "Make your first entry. · Tadoku",
+      "heading": "Make your first entry.",
+      "headings": 1,
+      "viewport": 390,
+      "scrollWidth": 390,
+      "theme": "light",
+      "density": "comfortable",
+      "fonts": [
+        "Merriweather",
+        "Open Sans"
+      ],
+      "emptyLinks": 0,
+      "localNavigation": [
+        "About",
+        "Manual",
+        "Rules",
+        "FAQ"
+      ],
+      "screenshot": "editorial/manual-separate-390.jpg",
+      "errors": []
+    },
+    {
+      "id": "manual-tasks",
+      "route": "/guide",
+      "ia": "tasks",
+      "width": 1440,
+      "title": "Make your first entry. · Tadoku",
+      "heading": "Make your first entry.",
+      "headings": 1,
+      "viewport": 1440,
+      "scrollWidth": 1440,
+      "theme": "light",
+      "density": "comfortable",
+      "fonts": [
+        "Merriweather",
+        "Open Sans"
+      ],
+      "emptyLinks": 0,
+      "localNavigation": [
+        "Join & track",
+        "Understand scores",
+        "Get help"
+      ],
+      "screenshot": "editorial/manual-tasks-1440.jpg",
+      "errors": []
+    },
+    {
+      "id": "manual-tasks",
+      "route": "/guide",
+      "ia": "tasks",
+      "width": 390,
+      "title": "Make your first entry. · Tadoku",
+      "heading": "Make your first entry.",
+      "headings": 1,
+      "viewport": 390,
+      "scrollWidth": 390,
+      "theme": "light",
+      "density": "comfortable",
+      "fonts": [
+        "Merriweather",
+        "Open Sans"
+      ],
+      "emptyLinks": 0,
+      "localNavigation": [
+        "Join & track",
+        "Understand scores",
+        "Get help"
+      ],
+      "screenshot": "editorial/manual-tasks-390.jpg",
+      "errors": []
+    },
+    {
+      "id": "rules-guide",
+      "route": "/guide/scoring",
+      "ia": "guide",
+      "width": 1440,
+      "title": "Fair play. Clear scores. · Tadoku",
+      "heading": "Fair play. Clear scores.",
+      "headings": 1,
+      "viewport": 1440,
+      "scrollWidth": 1440,
+      "theme": "light",
+      "density": "comfortable",
+      "fonts": [
+        "Merriweather",
+        "Open Sans"
+      ],
+      "emptyLinks": 0,
+      "localNavigation": [
+        "Start here",
+        "Scoring & rules",
+        "Questions & help",
+        "About Tadoku"
+      ],
+      "screenshot": "editorial/rules-guide-1440.jpg",
+      "errors": []
+    },
+    {
+      "id": "rules-guide",
+      "route": "/guide/scoring",
+      "ia": "guide",
+      "width": 390,
+      "title": "Fair play. Clear scores. · Tadoku",
+      "heading": "Fair play. Clear scores.",
+      "headings": 1,
+      "viewport": 390,
+      "scrollWidth": 390,
+      "theme": "light",
+      "density": "comfortable",
+      "fonts": [
+        "Merriweather",
+        "Open Sans"
+      ],
+      "emptyLinks": 0,
+      "localNavigation": [
+        "Start here",
+        "Scoring & rules",
+        "Questions & help",
+        "About Tadoku"
+      ],
+      "screenshot": "editorial/rules-guide-390.jpg",
+      "errors": []
+    },
+    {
+      "id": "rules-separate",
+      "route": "/guide/scoring",
+      "ia": "separate",
+      "width": 1440,
+      "title": "Fair play. Clear scores. · Tadoku",
+      "heading": "Fair play. Clear scores.",
+      "headings": 1,
+      "viewport": 1440,
+      "scrollWidth": 1440,
+      "theme": "light",
+      "density": "comfortable",
+      "fonts": [
+        "Merriweather",
+        "Open Sans"
+      ],
+      "emptyLinks": 0,
+      "localNavigation": [
+        "About",
+        "Manual",
+        "Rules",
+        "FAQ"
+      ],
+      "screenshot": "editorial/rules-separate-1440.jpg",
+      "errors": []
+    },
+    {
+      "id": "rules-separate",
+      "route": "/guide/scoring",
+      "ia": "separate",
+      "width": 390,
+      "title": "Fair play. Clear scores. · Tadoku",
+      "heading": "Fair play. Clear scores.",
+      "headings": 1,
+      "viewport": 390,
+      "scrollWidth": 390,
+      "theme": "light",
+      "density": "comfortable",
+      "fonts": [
+        "Merriweather",
+        "Open Sans"
+      ],
+      "emptyLinks": 0,
+      "localNavigation": [
+        "About",
+        "Manual",
+        "Rules",
+        "FAQ"
+      ],
+      "screenshot": "editorial/rules-separate-390.jpg",
+      "errors": []
+    },
+    {
+      "id": "rules-tasks",
+      "route": "/guide/scoring",
+      "ia": "tasks",
+      "width": 1440,
+      "title": "Fair play. Clear scores. · Tadoku",
+      "heading": "Fair play. Clear scores.",
+      "headings": 1,
+      "viewport": 1440,
+      "scrollWidth": 1440,
+      "theme": "light",
+      "density": "comfortable",
+      "fonts": [
+        "Merriweather",
+        "Open Sans"
+      ],
+      "emptyLinks": 0,
+      "localNavigation": [
+        "Join & track",
+        "Understand scores",
+        "Get help"
+      ],
+      "screenshot": "editorial/rules-tasks-1440.jpg",
+      "errors": []
+    },
+    {
+      "id": "rules-tasks",
+      "route": "/guide/scoring",
+      "ia": "tasks",
+      "width": 390,
+      "title": "Fair play. Clear scores. · Tadoku",
+      "heading": "Fair play. Clear scores.",
+      "headings": 1,
+      "viewport": 390,
+      "scrollWidth": 390,
+      "theme": "light",
+      "density": "comfortable",
+      "fonts": [
+        "Merriweather",
+        "Open Sans"
+      ],
+      "emptyLinks": 0,
+      "localNavigation": [
+        "Join & track",
+        "Understand scores",
+        "Get help"
+      ],
+      "screenshot": "editorial/rules-tasks-390.jpg",
+      "errors": []
+    },
+    {
+      "id": "faq-guide",
+      "route": "/guide/questions",
+      "ia": "guide",
+      "width": 1440,
+      "title": "What would you like to know? · Tadoku",
+      "heading": "What would you like to know?",
+      "headings": 1,
+      "viewport": 1440,
+      "scrollWidth": 1440,
+      "theme": "light",
+      "density": "comfortable",
+      "fonts": [
+        "Merriweather",
+        "Open Sans"
+      ],
+      "emptyLinks": 0,
+      "localNavigation": [
+        "Start here",
+        "Scoring & rules",
+        "Questions & help",
+        "About Tadoku"
+      ],
+      "screenshot": "editorial/faq-guide-1440.jpg",
+      "errors": []
+    },
+    {
+      "id": "faq-guide",
+      "route": "/guide/questions",
+      "ia": "guide",
+      "width": 390,
+      "title": "What would you like to know? · Tadoku",
+      "heading": "What would you like to know?",
+      "headings": 1,
+      "viewport": 390,
+      "scrollWidth": 390,
+      "theme": "light",
+      "density": "comfortable",
+      "fonts": [
+        "Merriweather",
+        "Open Sans"
+      ],
+      "emptyLinks": 0,
+      "localNavigation": [
+        "Start here",
+        "Scoring & rules",
+        "Questions & help",
+        "About Tadoku"
+      ],
+      "screenshot": "editorial/faq-guide-390.jpg",
+      "errors": []
+    },
+    {
+      "id": "faq-separate",
+      "route": "/guide/questions",
+      "ia": "separate",
+      "width": 1440,
+      "title": "What would you like to know? · Tadoku",
+      "heading": "What would you like to know?",
+      "headings": 1,
+      "viewport": 1440,
+      "scrollWidth": 1440,
+      "theme": "light",
+      "density": "comfortable",
+      "fonts": [
+        "Merriweather",
+        "Open Sans"
+      ],
+      "emptyLinks": 0,
+      "localNavigation": [
+        "About",
+        "Manual",
+        "Rules",
+        "FAQ"
+      ],
+      "screenshot": "editorial/faq-separate-1440.jpg",
+      "errors": []
+    },
+    {
+      "id": "faq-separate",
+      "route": "/guide/questions",
+      "ia": "separate",
+      "width": 390,
+      "title": "What would you like to know? · Tadoku",
+      "heading": "What would you like to know?",
+      "headings": 1,
+      "viewport": 390,
+      "scrollWidth": 390,
+      "theme": "light",
+      "density": "comfortable",
+      "fonts": [
+        "Merriweather",
+        "Open Sans"
+      ],
+      "emptyLinks": 0,
+      "localNavigation": [
+        "About",
+        "Manual",
+        "Rules",
+        "FAQ"
+      ],
+      "screenshot": "editorial/faq-separate-390.jpg",
+      "errors": []
+    },
+    {
+      "id": "faq-tasks",
+      "route": "/guide/questions",
+      "ia": "tasks",
+      "width": 1440,
+      "title": "What would you like to know? · Tadoku",
+      "heading": "What would you like to know?",
+      "headings": 1,
+      "viewport": 1440,
+      "scrollWidth": 1440,
+      "theme": "light",
+      "density": "comfortable",
+      "fonts": [
+        "Merriweather",
+        "Open Sans"
+      ],
+      "emptyLinks": 0,
+      "localNavigation": [
+        "Join & track",
+        "Understand scores",
+        "Get help"
+      ],
+      "screenshot": "editorial/faq-tasks-1440.jpg",
+      "errors": []
+    },
+    {
+      "id": "faq-tasks",
+      "route": "/guide/questions",
+      "ia": "tasks",
+      "width": 390,
+      "title": "What would you like to know? · Tadoku",
+      "heading": "What would you like to know?",
+      "headings": 1,
+      "viewport": 390,
+      "scrollWidth": 390,
+      "theme": "light",
+      "density": "comfortable",
+      "fonts": [
+        "Merriweather",
+        "Open Sans"
+      ],
+      "emptyLinks": 0,
+      "localNavigation": [
+        "Join & track",
+        "Understand scores",
+        "Get help"
+      ],
+      "screenshot": "editorial/faq-tasks-390.jpg",
+      "errors": []
+    },
+    {
+      "id": "home-participant-dark",
+      "route": "/?scenario=participant-live",
+      "width": 1440,
+      "theme": "dark",
+      "density": "compact",
+      "title": "Keep your immersion moving. · Tadoku",
+      "heading": "Keep your immersion moving.",
+      "headings": 1,
+      "viewport": 1440,
+      "scrollWidth": 1440,
+      "fonts": [
+        "Merriweather",
+        "Open Sans"
+      ],
+      "emptyLinks": 0,
+      "localNavigation": [],
+      "screenshot": "editorial/home-participant-dark-1440.jpg",
+      "errors": []
+    },
+    {
+      "id": "home-participant-dark",
+      "route": "/?scenario=participant-live",
+      "width": 390,
+      "theme": "dark",
+      "density": "compact",
+      "title": "Keep your immersion moving. · Tadoku",
+      "heading": "Keep your immersion moving.",
+      "headings": 1,
+      "viewport": 390,
+      "scrollWidth": 390,
+      "fonts": [
+        "Merriweather",
+        "Open Sans"
+      ],
+      "emptyLinks": 0,
+      "localNavigation": [],
+      "screenshot": "editorial/home-participant-dark-390.jpg",
+      "errors": []
+    },
+    {
+      "id": "faq-dark",
+      "route": "/guide/questions",
+      "width": 390,
+      "theme": "dark",
+      "density": "compact",
+      "title": "What would you like to know? · Tadoku",
+      "heading": "What would you like to know?",
+      "headings": 1,
+      "viewport": 390,
+      "scrollWidth": 390,
+      "fonts": [
+        "Merriweather",
+        "Open Sans"
+      ],
+      "emptyLinks": 0,
+      "localNavigation": [
+        "Start here",
+        "Scoring & rules",
+        "Questions & help",
+        "About Tadoku"
+      ],
+      "screenshot": "editorial/faq-dark-390.jpg",
+      "errors": []
+    },
+    {
+      "id": "rules-dark",
+      "route": "/guide/scoring",
+      "width": 390,
+      "theme": "dark",
+      "density": "compact",
+      "title": "Fair play. Clear scores. · Tadoku",
+      "heading": "Fair play. Clear scores.",
+      "headings": 1,
+      "viewport": 390,
+      "scrollWidth": 390,
+      "fonts": [
+        "Merriweather",
+        "Open Sans"
+      ],
+      "emptyLinks": 0,
+      "localNavigation": [
+        "Start here",
+        "Scoring & rules",
+        "Questions & help",
+        "About Tadoku"
+      ],
+      "screenshot": "editorial/rules-dark-390.jpg",
+      "errors": []
+    },
+    {
+      "id": "manual-dark",
+      "route": "/guide",
+      "width": 1440,
+      "theme": "dark",
+      "density": "compact",
+      "title": "Make your first entry. · Tadoku",
+      "heading": "Make your first entry.",
+      "headings": 1,
+      "viewport": 1440,
+      "scrollWidth": 1440,
+      "fonts": [
+        "Merriweather",
+        "Open Sans"
+      ],
+      "emptyLinks": 0,
+      "localNavigation": [
+        "Start here",
+        "Scoring & rules",
+        "Questions & help",
+        "About Tadoku"
+      ],
+      "screenshot": "editorial/manual-dark-1440.jpg",
+      "errors": []
+    },
+    {
+      "id": "about-dark",
+      "route": "/about",
+      "width": 390,
+      "theme": "dark",
+      "density": "compact",
+      "title": "A little more immersion. A little company along the way. · Tadoku",
+      "heading": "A little more immersion. A little company along the way.",
+      "headings": 1,
+      "viewport": 390,
+      "scrollWidth": 390,
+      "fonts": [
+        "Merriweather",
+        "Open Sans"
+      ],
+      "emptyLinks": 0,
+      "localNavigation": [
+        "Start here",
+        "Scoring & rules",
+        "Questions & help",
+        "About Tadoku"
+      ],
+      "screenshot": "editorial/about-dark-390.jpg",
+      "errors": []
+    },
+    {
+      "id": "faq-search-clear-keyboard",
+      "status": "passed",
+      "screenshot": "editorial/faq-answer-search-390.jpg"
+    },
+    {
+      "id": "guide-ia-controls",
+      "status": "passed",
+      "options": [
+        "separate",
+        "tasks",
+        "guide"
+      ]
+    }
+  ],
+  "failures": [],
+  "headerChecks": [
+    {
+      "viewport": 390,
+      "lines": 1,
+      "width": 124,
+      "height": 44,
+      "scrollWidth": 390,
+      "displayName": "long",
+      "status": "passed"
+    },
+    {
+      "viewport": 380,
+      "lines": 1,
+      "width": 124,
+      "height": 44,
+      "scrollWidth": 380,
+      "displayName": "long",
+      "status": "passed"
+    },
+    {
+      "viewport": 320,
+      "lines": 1,
+      "width": 124,
+      "height": 44,
+      "scrollWidth": 320,
+      "displayName": "long",
+      "status": "passed"
+    },
+    {
+      "viewport": 768,
+      "lines": 1,
+      "width": 124,
+      "height": 44,
+      "scrollWidth": 768,
+      "displayName": "long",
+      "status": "passed"
+    },
+    {
+      "viewport": 1440,
+      "lines": 1,
+      "width": 124,
+      "height": 44,
+      "scrollWidth": 1440,
+      "displayName": "long",
+      "status": "passed"
+    }
+  ],
+  "journeys": [
+    {
+      "scenario": "guest-live",
+      "path": "Home → registration → sign-in when needed → saved registration → participant home → Log activity",
+      "status": "passed"
+    },
+    {
+      "scenario": "member-open",
+      "path": "Home → registration → sign-in when needed → saved registration → participant home → Log activity",
+      "status": "passed"
+    }
+  ],
+  "scoreJourney": {
+    "status": "passed",
+    "before": "8Anton You600",
+    "after": "3Anton You1,100",
+    "board": "3AntonYou1,100",
+    "removed": "8Anton You600",
+    "screenshot": "editorial/home-after-submission-390.jpg"
+  }
+}

@@ -84,11 +84,6 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
           </span>
         ) : null}
       </label>
-      {hint ? (
-        <p className="paper-field__hint" id={hintId}>
-          {hint}
-        </p>
-      ) : null}
       <input
         {...props}
         {...registration}
@@ -104,6 +99,11 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
           assignRef(forwardedRef, node);
         }}
       />
+      {hint ? (
+        <p className="paper-field__hint" id={hintId}>
+          {hint}
+        </p>
+      ) : null}
       {error ? (
         <p className="paper-field__error" id={errorId} role="alert">
           {error.message?.toString() || "Check this field."}

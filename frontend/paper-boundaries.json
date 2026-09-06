@@ -5,6 +5,7 @@
     "styleguide": "legacy",
     "admin": "legacy",
     "auth": "legacy",
-    "webv2": "legacy"
+    "webv2": "legacy",
+    "paper-playground": "paper"
   }
 }

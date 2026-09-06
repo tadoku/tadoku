@@ -1,0 +1,238 @@
+
+> frontend@ build /var/lib/t3/worktrees/tadoku/t3code-a6ef6616/frontend
+> pnpm run -r build
+
+Scope: 8 of 9 workspace projects
+packages/paper-ui build$ tsup && node scripts/build-assets.mjs
+packages/paper-ui build: CLI Building entry: {"index":"src/index.ts","icons":"src/icons/index.ts","catalog":"src/catalog/index.ts"}
+packages/paper-ui build: CLI Using tsconfig: tsconfig.json
+packages/paper-ui build: CLI tsup v8.5.1
+packages/paper-ui build: CLI Using tsup config: /var/lib/t3/worktrees/tadoku/t3code-a6ef6616/frontend/packages/paper-ui/tsup.config.ts
+packages/paper-ui build: CLI Target: es2020
+packages/paper-ui build: CLI Cleaning output folder
+packages/paper-ui build: ESM Build start
+packages/paper-ui build: ESM dist/icons.js       1.14 KB
+packages/paper-ui build: ESM dist/index.js       68.36 KB
+packages/paper-ui build: ESM dist/catalog.js     422.69 KB
+packages/paper-ui build: ESM dist/icons.js.map   1.47 KB
+packages/paper-ui build: ESM dist/index.js.map   129.27 KB
+packages/paper-ui build: ESM dist/catalog.js.map 642.41 KB
+packages/paper-ui build: ESM ⚡️ Build success in 34ms
+packages/paper-ui build: DTS Build start
+packages/paper-ui build: DTS ⚡️ Build success in 2722ms
+packages/paper-ui build: DTS dist/catalog.d.ts 15.00 KB
+packages/paper-ui build: DTS dist/icons.d.ts   806.00 B
+packages/paper-ui build: DTS dist/index.d.ts   22.14 KB
+packages/paper-ui build: Done
+apps/admin build$ next build
+apps/auth build$ next build
+apps/paper-playground build$ vite build
+apps/paper-styleguide build$ vite build
+apps/paper-playground build: vite v6.4.3 building for production...
+apps/paper-styleguide build: vite v6.4.3 building for production...
+apps/paper-playground build: transforming...
+apps/paper-styleguide build: transforming...
+apps/admin build:    Creating an optimized production build ...
+apps/auth build:    Linting and checking validity of types ...
+apps/paper-styleguide build: Browserslist: browsers data (caniuse-lite) is 17 months old. Please run:
+apps/paper-styleguide build:   npx update-browserslist-db@latest
+apps/paper-styleguide build:   Why you should do it regularly: https://github.com/browserslist/update-db#readme
+apps/paper-playground build: Browserslist: browsers data (caniuse-lite) is 17 months old. Please run:
+apps/paper-playground build:   npx update-browserslist-db@latest
+apps/paper-playground build:   Why you should do it regularly: https://github.com/browserslist/update-db#readme
+apps/auth build:    Creating an optimized production build ...
+apps/admin build:  ✓ Compiled successfully
+apps/admin build:    Linting and checking validity of types ...
+apps/paper-playground build: ✓ 1033 modules transformed.
+apps/paper-styleguide build: ✓ 1067 modules transformed.
+apps/paper-playground build: rendering chunks...
+apps/paper-styleguide build: rendering chunks...
+apps/auth build:  ✓ Compiled successfully
+apps/auth build:    Collecting page data ...
+apps/paper-styleguide build: computing gzip size...
+apps/paper-styleguide build: dist/assets/cut-meter-CeIVuDqD.svg             0.38 kB │ gzip:   0.28 kB
+apps/paper-styleguide build: dist/assets/cut-meter-reversed-CjiN-wF-.svg    0.39 kB │ gzip:   0.28 kB
+apps/paper-styleguide build: dist/index.html                                0.52 kB │ gzip:   0.32 kB
+apps/paper-styleguide build: dist/assets/wordmark-accent-DG1v_e1J.svg       4.06 kB │ gzip:   1.74 kB
+apps/paper-styleguide build: dist/assets/wordmark-reversed-Mt2ChE5z.svg     4.08 kB │ gzip:   1.74 kB
+apps/paper-styleguide build: dist/assets/open-sans-700-CDFmF5Hg.woff2      57.75 kB
+apps/paper-styleguide build: dist/assets/open-sans-600-CXiIsNvT.woff2      59.70 kB
+apps/paper-styleguide build: dist/assets/open-sans-400-BCI9iKGv.woff2      59.70 kB
+apps/paper-styleguide build: dist/assets/merriweather-700-Cc1Z997k.woff2  367.81 kB
+apps/paper-styleguide build: dist/assets/index-iyAh3Hef.css                83.92 kB │ gzip:  13.18 kB
+apps/paper-styleguide build: dist/assets/index-BbF3PMW8.js                928.90 kB │ gzip: 274.07 kB │ map: 3,571.31 kB
+apps/paper-styleguide build: ✓ built in 3.38s
+apps/paper-styleguide build: (!) Some chunks are larger than 500 kB after minification. Consider:
+apps/paper-styleguide build: - Using dynamic import() to code-split the application
+apps/paper-styleguide build: - Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+apps/paper-styleguide build: - Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+apps/paper-styleguide build: Done
+apps/styleguide build$ next build
+apps/paper-playground build: computing gzip size...
+apps/paper-playground build: dist/index.html                                0.57 kB │ gzip:   0.37 kB
+apps/paper-playground build: dist/assets/wordmark-accent-DG1v_e1J.svg       4.06 kB │ gzip:   1.74 kB
+apps/paper-playground build: dist/assets/wordmark-reversed-Mt2ChE5z.svg     4.08 kB │ gzip:   1.74 kB
+apps/paper-playground build: dist/assets/open-sans-700-CDFmF5Hg.woff2      57.75 kB
+apps/paper-playground build: dist/assets/open-sans-600-CXiIsNvT.woff2      59.70 kB
+apps/paper-playground build: dist/assets/open-sans-400-BCI9iKGv.woff2      59.70 kB
+apps/paper-playground build: dist/assets/merriweather-700-Cc1Z997k.woff2  367.81 kB
+apps/paper-playground build: dist/assets/contests-BJZrmBci.css              6.56 kB │ gzip:   1.59 kB
+apps/paper-playground build: dist/assets/editorial-lb5hLUcK.css             8.25 kB │ gzip:   1.91 kB
+apps/paper-playground build: dist/assets/records-TQJkXDim.css              12.62 kB │ gzip:   2.41 kB
+apps/paper-playground build: dist/assets/index-2QQp8P5g.css                64.01 kB │ gzip:   9.98 kB
+apps/paper-playground build: dist/assets/PlusIcon-D9o7sKop.js               0.52 kB │ gzip:   0.39 kB │ map:     1.47 kB
+apps/paper-playground build: dist/assets/HomePage-9r_phQlp.js               9.25 kB │ gzip:   3.29 kB │ map:    19.35 kB
+apps/paper-playground build: dist/assets/LeaderboardPage-CJPFaOB8.js       12.01 kB │ gzip:   4.46 kB │ map:    28.89 kB
+apps/paper-playground build: dist/assets/LogPage-CCjpXJJU.js               12.78 kB │ gzip:   4.60 kB │ map:    29.28 kB
+apps/paper-playground build: dist/assets/AdminPage-DBYcsSg-.js             13.11 kB │ gzip:   3.92 kB │ map:    27.37 kB
+apps/paper-playground build: dist/assets/ProfilePages-B-8vut5o.js          13.60 kB │ gzip:   4.28 kB │ map:    32.32 kB
+apps/paper-playground build: dist/assets/GuidePage-BjXUDG_r.js             13.68 kB │ gzip:   4.66 kB │ map:    23.83 kB
+apps/paper-playground build: dist/assets/ContestsPage-BfG6VJps.js          20.56 kB │ gzip:   5.96 kB │ map:    45.64 kB
+apps/paper-playground build: dist/assets/index-CeMUvQQz.js                557.06 kB │ gzip: 182.00 kB │ map: 2,714.18 kB
+apps/paper-playground build: ✓ built in 3.54s
+apps/paper-playground build: (!) Some chunks are larger than 500 kB after minification. Consider:
+apps/paper-playground build: - Using dynamic import() to code-split the application
+apps/paper-playground build: - Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+apps/paper-playground build: - Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+apps/paper-playground build: Done
+apps/webv2 build$ next build
+apps/auth build: Warning: You have opted-out of Automatic Static Optimization due to `getInitialProps` in `pages/_app`. This does not opt-out pages with `getStaticProps`
+apps/auth build: Read more: https://nextjs.org/docs/messages/opt-out-auto-static-optimization
+apps/auth build:    Finalizing page optimization ...
+apps/auth build:    Collecting build traces ...
+apps/styleguide build:    Linting and checking validity of types ...
+apps/webv2 build:    Creating an optimized production build ...
+apps/admin build:    Collecting page data ...
+apps/admin build: Warning: You have opted-out of Automatic Static Optimization due to `getInitialProps` in `pages/_app`. This does not opt-out pages with `getStaticProps`
+apps/admin build: Read more: https://nextjs.org/docs/messages/opt-out-auto-static-optimization
+apps/admin build:    Finalizing page optimization ...
+apps/admin build:    Collecting build traces ...
+apps/styleguide build:    Creating an optimized production build ...
+apps/webv2 build:  ✓ Compiled successfully
+apps/webv2 build:    Linting and checking validity of types ...
+apps/styleguide build:  ✓ Compiled successfully
+apps/styleguide build:    Collecting page data ...
+apps/webv2 build:    Collecting page data ...
+apps/styleguide build:    Generating static pages (0/20) ...
+apps/webv2 build: Warning: You have opted-out of Automatic Static Optimization due to `getInitialProps` in `pages/_app`. This does not opt-out pages with `getStaticProps`
+apps/webv2 build: Read more: https://nextjs.org/docs/messages/opt-out-auto-static-optimization
+apps/styleguide build:    Generating static pages (5/20)
+apps/webv2 build:    Finalizing page optimization ...
+apps/webv2 build:    Collecting build traces ...
+apps/styleguide build:    Generating static pages (10/20)
+apps/styleguide build:    Generating static pages (15/20)
+apps/styleguide build:  ✓ Generating static pages (20/20)
+apps/styleguide build:    Finalizing page optimization ...
+apps/styleguide build:    Collecting build traces ...
+apps/auth build: Route (pages)                              Size     First Load JS
+apps/auth build: ┌ λ /                                      3.02 kB         188 kB
+apps/auth build: ├   /_app                                  0 B             151 kB
+apps/auth build: ├ λ /404                                   178 B           152 kB
+apps/auth build: ├ λ /account-recovery                      943 B           189 kB
+apps/auth build: ├ λ /login                                 1.16 kB         189 kB
+apps/auth build: ├ λ /post-registration                     322 B           152 kB
+apps/auth build: ├ λ /register                              3.05 kB         188 kB
+apps/auth build: └ λ /verification                          2.96 kB         188 kB
+apps/auth build: + First Load JS shared by all              162 kB
+apps/auth build:   ├ chunks/framework-8e279965036b6169.js   45.4 kB
+apps/auth build:   ├ chunks/main-e7dd4fa71e3f71a3.js        32.9 kB
+apps/auth build:   ├ chunks/pages/_app-462798b4ad7422ce.js  72.2 kB
+apps/auth build:   ├ chunks/webpack-6af0e3c12b874bb0.js     1.03 kB
+apps/auth build:   └ css/5d35a414d995b130.css               10.3 kB
+apps/auth build: λ  (Server)  server-side renders at runtime (uses getInitialProps or getServerSideProps)
+apps/auth build: Done
+apps/admin build: Route (pages)                              Size     First Load JS
+apps/admin build: ┌ λ /                                      1.96 kB         239 kB
+apps/admin build: ├   /_app                                  0 B             233 kB
+apps/admin build: ├ λ /404                                   177 B           233 kB
+apps/admin build: ├ λ /announcements                         262 B           233 kB
+apps/admin build: ├ λ /announcements/[namespace]             5.16 kB         238 kB
+apps/admin build: ├ λ /announcements/[namespace]/[id]/edit   1.66 kB         506 kB
+apps/admin build: ├ λ /announcements/[namespace]/new         807 B           505 kB
+apps/admin build: ├ λ /api/unauthorized                      0 B             233 kB
+apps/admin build: ├ λ /languages                             68.6 kB         301 kB
+apps/admin build: ├ λ /pages                                 257 B           233 kB
+apps/admin build: ├ λ /pages/[namespace]                     1.82 kB         625 kB
+apps/admin build: ├ λ /pages/[namespace]/[id]                3.28 kB         627 kB
+apps/admin build: ├ λ /pages/[namespace]/[id]/edit           669 B           628 kB
+apps/admin build: ├ λ /pages/[namespace]/new                 3.34 kB         627 kB
+apps/admin build: ├ λ /posts                                 256 B           233 kB
+apps/admin build: ├ λ /posts/[namespace]                     2.13 kB         688 kB
+apps/admin build: ├ λ /posts/[namespace]/[id]                3.57 kB         690 kB
+apps/admin build: ├ λ /posts/[namespace]/[id]/edit           1.02 kB         691 kB
+apps/admin build: ├ λ /posts/[namespace]/new                 3.64 kB         690 kB
+apps/admin build: └ λ /users                                 4.06 kB         241 kB
+apps/admin build: + First Load JS shared by all              245 kB
+apps/admin build:   ├ chunks/framework-3498e85901b324c1.js   45.4 kB
+apps/admin build:   ├ chunks/main-19e1b2ca6459c11c.js        32.9 kB
+apps/admin build:   ├ chunks/pages/_app-1acea21baff4b7aa.js  151 kB
+apps/admin build:   ├ chunks/webpack-5ad20647fec19952.js     3.5 kB
+apps/admin build:   └ css/ddc6d87ed5796b10.css               11.9 kB
+apps/admin build: λ  (Server)  server-side renders at runtime (uses getInitialProps or getServerSideProps)
+apps/admin build: Done
+apps/webv2 build: Route (pages)                                     Size     First Load JS
+apps/webv2 build: ┌ λ /                                             4.09 kB         307 kB
+apps/webv2 build: ├   /_app                                         0 B             300 kB
+apps/webv2 build: ├ λ /404                                          174 B           300 kB
+apps/webv2 build: ├ λ /api/health                                   0 B             300 kB
+apps/webv2 build: ├ λ /api/unauthorized                             0 B             300 kB
+apps/webv2 build: ├ λ /blog/[[...page]]                             1.77 kB         301 kB
+apps/webv2 build: ├ λ /blog/posts/[slug]                            1.1 kB          301 kB
+apps/webv2 build: ├ λ /contests/[id]/leaderboard/[[...page]]        1.51 kB         308 kB
+apps/webv2 build: ├ λ /contests/[id]/profile/[user_id]/[[...page]]  5.35 kB         377 kB
+apps/webv2 build: ├ λ /contests/[id]/registration                   3.88 kB         307 kB
+apps/webv2 build: ├ λ /contests/[id]/scoring                        4.04 kB         307 kB
+apps/webv2 build: ├ λ /contests/[id]/updates/[[...page]]            4.33 kB         307 kB
+apps/webv2 build: ├ λ /contests/my-contests/[[...page]]             2.37 kB         305 kB
+apps/webv2 build: ├ λ /contests/new                                 3.41 kB         306 kB
+apps/webv2 build: ├ λ /contests/official/[[...page]]                2.31 kB         305 kB
+apps/webv2 build: ├ λ /contests/user-contests/[[...page]]           2.32 kB         305 kB
+apps/webv2 build: ├ λ /leaderboard/all-time/[[...page]]             2.38 kB         305 kB
+apps/webv2 build: ├ λ /leaderboard/latest/[[...page]]               1.03 kB         308 kB
+apps/webv2 build: ├ λ /leaderboard/yearly/[year]/[[...page]]        2.57 kB         305 kB
+apps/webv2 build: ├ λ /logs/[id]                                    4.42 kB         307 kB
+apps/webv2 build: ├ λ /logs/[id]/contests                           3.88 kB         307 kB
+apps/webv2 build: ├ λ /logs/[id]/edit                               2.1 kB          310 kB
+apps/webv2 build: ├ λ /logs/new                                     3.46 kB         312 kB
+apps/webv2 build: ├ λ /page-counter                                 1.38 kB         301 kB
+apps/webv2 build: ├ λ /pages/[slug]                                 12 kB           312 kB
+apps/webv2 build: ├ λ /pages/manual                                 3.33 kB         303 kB
+apps/webv2 build: ├ λ /profile/[id]/statistics/[[...year]]          3.56 kB         376 kB
+apps/webv2 build: └ λ /profile/[id]/updates/[[...page]]             3.62 kB         307 kB
+apps/webv2 build: + First Load JS shared by all                     313 kB
+apps/webv2 build:   ├ chunks/framework-eb4d2845ca2ece4b.js          45.4 kB
+apps/webv2 build:   ├ chunks/main-8fed5fa1ef6e1522.js               32.9 kB
+apps/webv2 build:   ├ chunks/pages/_app-61b7c6e5037d688d.js         220 kB
+apps/webv2 build:   ├ chunks/webpack-02d592a7e9b78814.js            1.8 kB
+apps/webv2 build:   └ css/e3829d2af6a0d5c3.css                      13.3 kB
+apps/webv2 build: λ  (Server)  server-side renders at runtime (uses getInitialProps or getServerSideProps)
+apps/webv2 build: Done
+apps/styleguide build: Route (pages)                              Size     First Load JS
+apps/styleguide build: ┌ ○ /                                      1.01 kB         442 kB
+apps/styleguide build: ├   /_app                                  0 B             195 kB
+apps/styleguide build: ├ ○ /404                                   182 B           195 kB
+apps/styleguide build: ├ ○ /action-menu                           2.2 kB          443 kB
+apps/styleguide build: ├ ○ /branding                              1.59 kB         443 kB
+apps/styleguide build: ├ ○ /breadcrumb                            1.8 kB          443 kB
+apps/styleguide build: ├ ○ /buttons                               3.21 kB         444 kB
+apps/styleguide build: ├ ○ /charts                                1 MB           1.44 MB
+apps/styleguide build: ├ ○ /color                                 623 B           195 kB
+apps/styleguide build: ├ ○ /flash                                 2.49 kB         444 kB
+apps/styleguide build: ├ ○ /forms                                 19.9 kB         461 kB
+apps/styleguide build: ├ ○ /logging                               2.05 kB         443 kB
+apps/styleguide build: ├ ○ /logging-v2                            6.18 kB         447 kB
+apps/styleguide build: ├ ○ /modals                                2.18 kB         443 kB
+apps/styleguide build: ├ ○ /navigation                            4.28 kB         445 kB
+apps/styleguide build: ├ ○ /pagination                            1.61 kB         443 kB
+apps/styleguide build: ├ ○ /tables                                16.6 kB         458 kB
+apps/styleguide build: ├ ○ /templates                             1.73 kB         443 kB
+apps/styleguide build: ├ ○ /toasts                                2.09 kB         443 kB
+apps/styleguide build: └ ○ /typography                            1.67 kB         443 kB
+apps/styleguide build: + First Load JS shared by all              207 kB
+apps/styleguide build:   ├ chunks/framework-80ea8c0f440c6a32.js   45.4 kB
+apps/styleguide build:   ├ chunks/main-6b8a993c33b672e6.js        33 kB
+apps/styleguide build:   ├ chunks/pages/_app-5269818cb2e893f3.js  115 kB
+apps/styleguide build:   ├ chunks/webpack-445a5fe7cadeec28.js     1.02 kB
+apps/styleguide build:   └ css/dd3e826f7aba85c3.css               11.9 kB
+apps/styleguide build: ○  (Static)  automatically rendered as static HTML (uses no initial props)
+apps/styleguide build: Done

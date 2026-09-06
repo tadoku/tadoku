@@ -1,0 +1,82 @@
+{
+  "results": [
+    {
+      "id": "home",
+      "path": "/",
+      "scenario": "participant-live",
+      "title": "Keep your immersion moving. · Tadoku",
+      "screenshot": "evidence/report/home.jpg"
+    },
+    {
+      "id": "profile",
+      "path": "/users/anton",
+      "scenario": null,
+      "title": "Anton · Tadoku",
+      "screenshot": "evidence/report/profile.jpg"
+    },
+    {
+      "id": "activity",
+      "path": "/users/anton/activity",
+      "scenario": null,
+      "title": "Anton · Tadoku",
+      "screenshot": "evidence/report/activity.jpg"
+    },
+    {
+      "id": "admin",
+      "path": "/admin",
+      "scenario": null,
+      "title": "Dashboard · Tadoku",
+      "screenshot": "evidence/report/admin.jpg"
+    },
+    {
+      "id": "about",
+      "path": "/about",
+      "scenario": null,
+      "title": "A little more immersion. A little company along the way. · Tadoku",
+      "screenshot": "evidence/report/about.jpg"
+    },
+    {
+      "id": "guide",
+      "path": "/guide",
+      "scenario": null,
+      "title": "Make your first entry. · Tadoku",
+      "screenshot": "evidence/report/guide.jpg"
+    },
+    {
+      "id": "scoring",
+      "path": "/guide/scoring",
+      "scenario": null,
+      "title": "Fair play. Clear scores. · Tadoku",
+      "screenshot": "evidence/report/scoring.jpg"
+    },
+    {
+      "id": "questions",
+      "path": "/guide/questions",
+      "scenario": null,
+      "title": "What would you like to know? · Tadoku",
+      "screenshot": "evidence/report/questions.jpg"
+    },
+    {
+      "id": "leaderboard",
+      "path": "/leaderboard/latest",
+      "scenario": "participant",
+      "title": "Leaderboard · Tadoku",
+      "screenshot": "evidence/report/leaderboard.jpg"
+    },
+    {
+      "id": "contests",
+      "path": "/contests/official",
+      "scenario": "member",
+      "title": "Contests · Tadoku",
+      "screenshot": "evidence/report/contests.jpg"
+    },
+    {
+      "id": "log",
+      "path": "/logs/reading-konbini",
+      "scenario": "reading",
+      "title": "コンビニ人間 — finished chapter 3 · Tadoku",
+      "screenshot": "evidence/report/log.jpg"
+    }
+  ],
+  "errors": []
+}

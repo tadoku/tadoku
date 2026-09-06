@@ -147,6 +147,39 @@ function ToastTrigger() {
 }
 
 describe("native React Hook Form controls", () => {
+  it("places helper text after controls so optional hints do not offset a row of fields", () => {
+    function HintedFields() {
+      const methods = useForm({ defaultValues: { title: "", date: "2026-08-31", notes: "", language: "", public: false, progressValue: 1, progressUnit: "pages", pace: "", format: "" } });
+      return (
+        <FormProvider {...methods}>
+          <Input name="title" label="Title" />
+          <Input name="date" label="Date" type="date" hint="The date you read." />
+          <TextArea name="notes" label="Notes" hint="No spoilers." />
+          <Select name="language" label="Language" hint="Reading language." options={[]} />
+          <Checkbox name="public" label="Public entry" hint="Shown on your profile." />
+          <AmountWithUnit name="progress" label="Progress" hint="Completed pages." units={[{ value: "pages", label: "pages" }]} />
+          <RadioSelect name="pace" label="Pace" hint="Choose a pace." options={[{ value: "pages", label: "Pages" }]} />
+          <RadioGroup name="format" label="Format" hint="Choose a format." options={[{ value: "book", label: "Book", description: "Printed or digital" }]} />
+        </FormProvider>
+      );
+    }
+    render(<HintedFields />);
+    for (const label of ["Date", "Notes", "Language", "Public entry", "Progress"]) {
+      const control = screen.getByLabelText(label, { selector: "input, textarea, select" });
+      const hint = document.getElementById(control.getAttribute("aria-describedby")!);
+      expect(hint).not.toBeNull();
+      expect(control.compareDocumentPosition(hint!) & Node.DOCUMENT_POSITION_FOLLOWING).not.toBe(0);
+      expect(control).toHaveAccessibleDescription(hint!.textContent!);
+    }
+    for (const name of ["Pace", "Format"]) {
+      const group = screen.getByRole("group", { name });
+      const hint = document.getElementById(group.getAttribute("aria-describedby")!);
+      const radio = within(group).getByRole("radio");
+      expect(radio.compareDocumentPosition(hint!) & Node.DOCUMENT_POSITION_FOLLOWING).not.toBe(0);
+      expect(group).toHaveAccessibleDescription(hint!.textContent!);
+    }
+  });
+
   it("preserves caller descriptions alongside built-in hints", () => {
     function DescribedFields() {
       const methods = useForm({ defaultValues: { title: "", notes: "", language: "", public: false, progressValue: 1, progressUnit: "pages" } });
@@ -271,6 +304,48 @@ describe("native React Hook Form controls", () => {
 });
 
 describe("Base UI autocomplete controls", () => {
+  it.each([false, true])("preserves a %s multi-selection when Escape dismisses and is pressed again after closing", async (multiple) => {
+    const user = userEvent.setup();
+    render(<AutocompleteForm multiple={multiple} />);
+    const input = screen.getByRole("combobox", { name: "Languages" });
+    await user.type(input, "Japanese");
+    await user.click(await screen.findByRole("option", { name: "Japanese" }));
+    expect(screen.getByTestId("value")).toHaveTextContent('"id":"ja"');
+    input.focus();
+    await user.keyboard("{Escape}{Escape}");
+    expect(screen.queryByRole("listbox")).not.toBeInTheDocument();
+    expect(screen.getByTestId("value")).toHaveTextContent('"id":"ja"');
+    if (multiple) expect(screen.getByRole("button", { name: "Remove Japanese" })).toBeVisible();
+    else expect(input).toHaveValue("Japanese");
+  });
+
+  it.each([false, true])("runs consumer validation for a %s multi-selection field and exposes its recovery message", async (multiple) => {
+    const saved = vi.fn();
+    function ValidatedAutocomplete() {
+      const methods = useForm<{ language: typeof LANGUAGES[number] | typeof LANGUAGES[number][] }>({ defaultValues: { language: multiple ? [LANGUAGES[0]] : LANGUAGES[0] } });
+      const common = { name: "language", label: "Contest language", options: LANGUAGES,
+        format: (value: typeof LANGUAGES[number]) => value.label,
+        getId: (value: typeof LANGUAGES[number]) => value.id,
+        rules: { validate: (value: unknown) => (multiple ? Array.isArray(value) && value.length === 2 : (value as typeof LANGUAGES[number])?.id === "ko") || "Choose an eligible contest language." },
+      };
+      return <FormProvider {...methods}><form onSubmit={methods.handleSubmit(saved)}>
+        {multiple ? <AutocompleteMultiInput {...common} /> : <AutocompleteInput {...common} />}
+        <Button type="submit">Save registration</Button>
+        <Button onClick={() => methods.setValue("language", multiple ? [LANGUAGES[0], LANGUAGES[2]] : LANGUAGES[2], { shouldValidate: true })}>Use eligible selection</Button>
+      </form></FormProvider>;
+    }
+    const user = userEvent.setup();
+    render(<ValidatedAutocomplete />);
+    await user.click(screen.getByRole("button", { name: "Save registration" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent("Choose an eligible contest language.");
+    expect(screen.getByRole("combobox", { name: "Contest language" })).toHaveAccessibleDescription("Choose an eligible contest language.");
+    expect(saved).not.toHaveBeenCalled();
+    await user.click(screen.getByRole("button", { name: "Use eligible selection" }));
+    await user.click(screen.getByRole("button", { name: "Save registration" }));
+    expect(saved).toHaveBeenCalledTimes(1);
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  });
+
   it("validates required selections on blur and exposes the error relationship", async () => {
     function RequiredAutocomplete() {
       const methods = useForm({ mode: "onBlur", defaultValues: { language: null } });

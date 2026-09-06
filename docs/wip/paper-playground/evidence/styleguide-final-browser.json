@@ -1,0 +1,102 @@
+{
+  "checkedAt": "2026-09-06T17:11:14.014Z",
+  "origin": "http://127.0.0.1:12907",
+  "results": [
+    {
+      "example": "Input",
+      "status": "passed",
+      "inputMetrics": [
+        {
+          "titleTop": 29.59375,
+          "dateTop": 29.59375,
+          "titleHeight": 44,
+          "dateHeight": 44,
+          "hintTop": 79.1875,
+          "dateBottom": 73.59375,
+          "dateValue": "2026-08-31",
+          "theme": "light",
+          "density": "comfortable"
+        },
+        {
+          "titleTop": 29.59375,
+          "dateTop": 29.59375,
+          "titleHeight": 36,
+          "dateHeight": 36,
+          "hintTop": 71.1875,
+          "dateBottom": 65.59375,
+          "dateValue": "2026-08-31",
+          "theme": "light",
+          "density": "compact"
+        },
+        {
+          "titleTop": 29.59375,
+          "dateTop": 29.59375,
+          "titleHeight": 44,
+          "dateHeight": 44,
+          "hintTop": 79.1875,
+          "dateBottom": 73.59375,
+          "dateValue": "2026-08-31",
+          "theme": "dark",
+          "density": "comfortable"
+        },
+        {
+          "titleTop": 29.59375,
+          "dateTop": 29.59375,
+          "titleHeight": 36,
+          "dateHeight": 36,
+          "hintTop": 71.1875,
+          "dateBottom": 65.59375,
+          "dateValue": "2026-08-31",
+          "theme": "dark",
+          "density": "compact"
+        }
+      ],
+      "exactSourceMatch": true,
+      "source": "input.recommended.tsx",
+      "characters": 1273,
+      "highlightedTokens": 238,
+      "screenshot": "styleguide-final/input-mixed-hints-dark-compact.jpg"
+    },
+    {
+      "example": "Table",
+      "status": "passed",
+      "focus": {
+        "focused": true,
+        "title": "Convenience Store Woman",
+        "tabIndex": -1,
+        "focusVisible": true
+      },
+      "exactSourceMatch": true,
+      "source": "table.reading-log.tsx",
+      "characters": 1818,
+      "highlightedTokens": 324,
+      "screenshot": "styleguide-final/table-current-reading-focus.jpg"
+    },
+    {
+      "example": "MultiAutocomplete",
+      "status": "passed",
+      "customValidation": "One selected language blocks save; two selected languages save successfully.",
+      "selectedAfterEscape": [
+        "Japanese"
+      ],
+      "savedValues": {
+        "multiple": [
+          {
+            "id": "ja",
+            "label": "Japanese"
+          },
+          {
+            "id": "ko",
+            "label": "Korean"
+          }
+        ]
+      },
+      "exactSourceMatch": true,
+      "source": "multi-autocomplete.languages.tsx",
+      "characters": 2174,
+      "highlightedTokens": 390,
+      "screenshot": "styleguide-final/multi-autocomplete-validated.jpg"
+    }
+  ],
+  "errors": []
+}

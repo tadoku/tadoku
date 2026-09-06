@@ -1,6 +1,7 @@
 @layer paper-recipes {
   .paper-field {
     display: grid;
+    align-content: start;
     gap: 0.35rem;
     inline-size: 100%;
     max-inline-size: 32rem;
@@ -51,6 +52,11 @@
 
   .paper-input:where(input, textarea):where(:hover:not(:disabled):not([readonly])) {
     border-color: var(--paper-color-rule-field-edge);
+  }
+
+  /* Native date/time segments otherwise add padding inside the control padding. */
+  .paper-input::-webkit-datetime-edit-fields-wrapper {
+    padding: 0;
   }
 
   .paper-input:where(select):where(:hover:not(:disabled)) {

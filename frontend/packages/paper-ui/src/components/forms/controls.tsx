@@ -66,8 +66,8 @@ function FieldFrame({
         {label}
         {required ? <span className="paper-field__required" aria-hidden="true">*</span> : null}
       </label>
-      {hint ? <p className="paper-field__hint" id={`${id}-hint`}>{hint}</p> : null}
       {children}
+      {hint ? <p className="paper-field__hint" id={`${id}-hint`}>{hint}</p> : null}
       {error ? <p className="paper-field__error" id={`${id}-error`} role="alert">{error}</p> : null}
     </div>
   );
@@ -255,7 +255,6 @@ export function RadioSelect({
       disabled={disabled}
     >
       <legend className="paper-field__label">{label}{required ? <span className="paper-field__required" aria-hidden="true">*</span> : null}</legend>
-      {hint ? <p className="paper-field__hint" id={`${id}-hint`}>{hint}</p> : null}
       <div className="paper-choice-list">
         {options.map((option) => (
           <label className={segmented ? "paper-radio-select__segment" : "paper-choice"} key={option.value}>
@@ -277,6 +276,7 @@ export function RadioSelect({
           </label>
         ))}
       </div>
+      {hint ? <p className="paper-field__hint" id={`${id}-hint`}>{hint}</p> : null}
       {error ? <p className="paper-field__error" id={`${id}-error`} role="alert">{error.message?.toString()}</p> : null}
     </fieldset>
   );
@@ -313,7 +313,6 @@ export function RadioGroup<Value extends string = string>({
       aria-invalid={error ? true : undefined}
     >
       <legend className="paper-field__label">{label}{required ? <span className="paper-field__required" aria-hidden="true">*</span> : null}</legend>
-      {hint ? <p className="paper-field__hint" id={`${id}-hint`}>{hint}</p> : null}
       <div className="paper-radio-cards">
         {options.map((option) => (
           <label className="paper-radio-card" key={option.value}>
@@ -329,6 +328,7 @@ export function RadioGroup<Value extends string = string>({
           </label>
         ))}
       </div>
+      {hint ? <p className="paper-field__hint" id={`${id}-hint`}>{hint}</p> : null}
       {error ? <p className="paper-field__error" id={`${id}-error`} role="alert">{error.message?.toString()}</p> : null}
     </fieldset>
   );
@@ -399,7 +399,7 @@ export function AmountWithUnit({
   );
 }
 
-interface AutocompleteContract<Value> extends Omit<FieldContract, "rules"> {
+interface AutocompleteContract<Value> extends FieldContract {
   readonly options: readonly Value[];
   readonly format: (option: Value) => string;
   readonly getId: (option: Value) => string;
@@ -468,6 +468,7 @@ export function AutocompleteInput<Value>({
   label,
   hint,
   required,
+  rules,
   options,
   format,
   getId,
@@ -478,7 +479,7 @@ export function AutocompleteInput<Value>({
 }: AutocompleteInputProps<Value>) {
   const id = `paper-autocomplete-${useId().replace(/:/gu, "")}`;
   const { form, error } = useField(name);
-  const { field } = useController({ name, control: form.control, rules: { required: required ? "Choose an option." : undefined } });
+  const { field } = useController({ name, control: form.control, rules: { ...rules, required: rules?.required ?? (required ? "Choose an option." : undefined) } });
   const [query, setQuery] = useState("");
   const [portalContainer, setPortalContainer] = useState<HTMLElement | null>(null);
   const filtered = useFilteredOptions(options, query, format, match, maxResults);
@@ -488,8 +489,14 @@ export function AutocompleteInput<Value>({
         items={options}
         filteredItems={filtered}
         value={(field.value as Value | null) ?? null}
-        onValueChange={(value) => field.onChange(value)}
-        onInputValueChange={setQuery}
+        onValueChange={(value, details) => {
+          if (details.reason === "escape-key") details.cancel();
+          else field.onChange(value);
+        }}
+        onInputValueChange={(value, details) => {
+          if (details.reason === "escape-key") details.cancel();
+          else setQuery(value);
+        }}
         itemToStringLabel={format}
         isItemEqualToValue={(left, right) => getId(left) === getId(right)}
         disabled={disabled}
@@ -527,6 +534,7 @@ export function AutocompleteMultiInput<Value>({
   label,
   hint,
   required,
+  rules,
   options,
   format,
   getId,
@@ -538,7 +546,7 @@ export function AutocompleteMultiInput<Value>({
 }: AutocompleteMultiInputProps<Value>) {
   const id = `paper-multiautocomplete-${useId().replace(/:/gu, "")}`;
   const { form, error } = useField(name);
-  const { field } = useController({ name, control: form.control, defaultValue: [], rules: { required: required ? "Choose at least one option." : undefined } });
+  const { field } = useController({ name, control: form.control, defaultValue: [], rules: { ...rules, required: rules?.required ?? (required ? "Choose at least one option." : undefined) } });
   const values = (field.value ?? []) as Value[];
   const [query, setQuery] = useState("");
   const [portalContainer, setPortalContainer] = useState<HTMLElement | null>(null);
@@ -551,10 +559,14 @@ export function AutocompleteMultiInput<Value>({
         items={options}
         filteredItems={filtered}
         value={values}
-        onValueChange={(value) => {
-          if (maxSelections === undefined || value.length <= maxSelections || value.length < values.length) field.onChange(value);
+        onValueChange={(value, details) => {
+          if (details.reason === "escape-key") details.cancel();
+          else if (maxSelections === undefined || value.length <= maxSelections || value.length < values.length) field.onChange(value);
         }}
-        onInputValueChange={setQuery}
+        onInputValueChange={(value, details) => {
+          if (details.reason === "escape-key") details.cancel();
+          else setQuery(value);
+        }}
         itemToStringLabel={format}
         isItemEqualToValue={(left, right) => getId(left) === getId(right)}
         disabled={disabled}

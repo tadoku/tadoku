@@ -1,0 +1,742 @@
+{
+  "checkedAt": "2026-09-06T17:23:54.846Z",
+  "baseUrl": "http://127.0.0.1:33946",
+  "pages": [
+    {
+      "name": "profile-overview",
+      "path": "/users/anton?scenario=profile",
+      "mode": "desktop-light",
+      "h1": [
+        "Anton"
+      ],
+      "width": 1280,
+      "documentWidth": 1280,
+      "theme": "light",
+      "density": "comfortable",
+      "headingFont": "Merriweather, Georgia, \"Times New Roman\", serif"
+    },
+    {
+      "name": "profile-2025",
+      "path": "/users/anton?scenario=profile&year=2025",
+      "mode": "desktop-light",
+      "h1": [
+        "Anton"
+      ],
+      "width": 1280,
+      "documentWidth": 1280,
+      "theme": "light",
+      "density": "comfortable",
+      "headingFont": "Merriweather, Georgia, \"Times New Roman\", serif"
+    },
+    {
+      "name": "profile-2024",
+      "path": "/users/anton?scenario=profile&year=2024",
+      "mode": "desktop-light",
+      "h1": [
+        "Anton"
+      ],
+      "width": 1280,
+      "documentWidth": 1280,
+      "theme": "light",
+      "density": "comfortable",
+      "headingFont": "Merriweather, Georgia, \"Times New Roman\", serif"
+    },
+    {
+      "name": "profile-2023",
+      "path": "/users/anton?scenario=profile&year=2023",
+      "mode": "desktop-light",
+      "h1": [
+        "Anton"
+      ],
+      "width": 1280,
+      "documentWidth": 1280,
+      "theme": "light",
+      "density": "comfortable",
+      "headingFont": "Merriweather, Georgia, \"Times New Roman\", serif"
+    },
+    {
+      "name": "profile-visitor",
+      "path": "/users/mei?scenario=visitor",
+      "mode": "desktop-light",
+      "h1": [
+        "Mei"
+      ],
+      "width": 1280,
+      "documentWidth": 1280,
+      "theme": "light",
+      "density": "comfortable",
+      "headingFont": "Merriweather, Georgia, \"Times New Roman\", serif"
+    },
+    {
+      "name": "profile-empty",
+      "path": "/users/anton?scenario=empty",
+      "mode": "desktop-light",
+      "h1": [
+        "Anton"
+      ],
+      "width": 1280,
+      "documentWidth": 1280,
+      "theme": "light",
+      "density": "comfortable",
+      "headingFont": "Merriweather, Georgia, \"Times New Roman\", serif"
+    },
+    {
+      "name": "profile-activity",
+      "path": "/users/anton/activity?scenario=profile",
+      "mode": "desktop-light",
+      "h1": [
+        "Anton"
+      ],
+      "width": 1280,
+      "documentWidth": 1280,
+      "theme": "light",
+      "density": "comfortable",
+      "headingFont": "Merriweather, Georgia, \"Times New Roman\", serif"
+    },
+    {
+      "name": "log-reading",
+      "path": "/logs/reading-konbini?scenario=reading",
+      "mode": "desktop-light",
+      "h1": [
+        "コンビニ人間 — finished chapter 3"
+      ],
+      "width": 1280,
+      "documentWidth": 1280,
+      "theme": "light",
+      "density": "comfortable",
+      "headingFont": "Merriweather, Georgia, \"Times New Roman\", serif"
+    },
+    {
+      "name": "log-listening",
+      "path": "/logs/reading-konbini?scenario=listening",
+      "mode": "desktop-light",
+      "h1": [
+        "Nihongo con Teppei — episode 920"
+      ],
+      "width": 1280,
+      "documentWidth": 1280,
+      "theme": "light",
+      "density": "comfortable",
+      "headingFont": "Merriweather, Georgia, \"Times New Roman\", serif"
+    },
+    {
+      "name": "log-visitor",
+      "path": "/logs/reading-konbini?scenario=visitor",
+      "mode": "desktop-light",
+      "h1": [
+        "コンビニ人間 — finished chapter 3"
+      ],
+      "width": 1280,
+      "documentWidth": 1280,
+      "theme": "light",
+      "density": "comfortable",
+      "headingFont": "Merriweather, Georgia, \"Times New Roman\", serif"
+    },
+    {
+      "name": "log-personal",
+      "path": "/logs/reading-konbini?scenario=personal",
+      "mode": "desktop-light",
+      "h1": [
+        "Japanese reading"
+      ],
+      "width": 1280,
+      "documentWidth": 1280,
+      "theme": "light",
+      "density": "comfortable",
+      "headingFont": "Merriweather, Georgia, \"Times New Roman\", serif"
+    },
+    {
+      "name": "log-ended",
+      "path": "/logs/reading-konbini?scenario=ended",
+      "mode": "desktop-light",
+      "h1": [
+        "コンビニ人間 — finished chapter 3"
+      ],
+      "width": 1280,
+      "documentWidth": 1280,
+      "theme": "light",
+      "density": "comfortable",
+      "headingFont": "Merriweather, Georgia, \"Times New Roman\", serif"
+    },
+    {
+      "name": "log-missing",
+      "path": "/logs/reading-konbini?scenario=missing",
+      "mode": "desktop-light",
+      "h1": [
+        "Log not found"
+      ],
+      "width": 1280,
+      "documentWidth": 1280,
+      "theme": "light",
+      "density": "comfortable",
+      "headingFont": "Merriweather, Georgia, \"Times New Roman\", serif"
+    },
+    {
+      "name": "log-unavailable",
+      "path": "/logs/reading-konbini?scenario=unavailable",
+      "mode": "desktop-light",
+      "h1": [
+        "This log couldn’t be loaded"
+      ],
+      "width": 1280,
+      "documentWidth": 1280,
+      "theme": "light",
+      "density": "comfortable",
+      "headingFont": "Merriweather, Georgia, \"Times New Roman\", serif"
+    },
+    {
+      "name": "admin-dashboard",
+      "path": "/admin",
+      "mode": "desktop-light",
+      "h1": [
+        "Dashboard"
+      ],
+      "width": 1280,
+      "documentWidth": 1280,
+      "theme": "light",
+      "density": "comfortable",
+      "headingFont": "Merriweather, Georgia, \"Times New Roman\", serif"
+    },
+    {
+      "name": "admin-posts",
+      "path": "/admin/posts",
+      "mode": "desktop-light",
+      "h1": [
+        "Posts"
+      ],
+      "width": 1280,
+      "documentWidth": 1280,
+      "theme": "light",
+      "density": "comfortable",
+      "headingFont": "Merriweather, Georgia, \"Times New Roman\", serif"
+    },
+    {
+      "name": "admin-pages",
+      "path": "/admin/pages",
+      "mode": "desktop-light",
+      "h1": [
+        "Pages"
+      ],
+      "width": 1280,
+      "documentWidth": 1280,
+      "theme": "light",
+      "density": "comfortable",
+      "headingFont": "Merriweather, Georgia, \"Times New Roman\", serif"
+    },
+    {
+      "name": "admin-announcements",
+      "path": "/admin/announcements",
+      "mode": "desktop-light",
+      "h1": [
+        "Announcements"
+      ],
+      "width": 1280,
+      "documentWidth": 1280,
+      "theme": "light",
+      "density": "comfortable",
+      "headingFont": "Merriweather, Georgia, \"Times New Roman\", serif"
+    },
+    {
+      "name": "admin-languages",
+      "path": "/admin/languages",
+      "mode": "desktop-light",
+      "h1": [
+        "Languages"
+      ],
+      "width": 1280,
+      "documentWidth": 1280,
+      "theme": "light",
+      "density": "comfortable",
+      "headingFont": "Merriweather, Georgia, \"Times New Roman\", serif"
+    },
+    {
+      "name": "admin-contests",
+      "path": "/admin/contests",
+      "mode": "desktop-light",
+      "h1": [
+        "Contests"
+      ],
+      "width": 1280,
+      "documentWidth": 1280,
+      "theme": "light",
+      "density": "comfortable",
+      "headingFont": "Merriweather, Georgia, \"Times New Roman\", serif"
+    },
+    {
+      "name": "admin-users",
+      "path": "/admin/users",
+      "mode": "desktop-light",
+      "h1": [
+        "Users"
+      ],
+      "width": 1280,
+      "documentWidth": 1280,
+      "theme": "light",
+      "density": "comfortable",
+      "headingFont": "Merriweather, Georgia, \"Times New Roman\", serif"
+    },
+    {
+      "name": "admin-reports",
+      "path": "/admin/reports",
+      "mode": "desktop-light",
+      "h1": [
+        "Reports"
+      ],
+      "width": 1280,
+      "documentWidth": 1280,
+      "theme": "light",
+      "density": "comfortable",
+      "headingFont": "Merriweather, Georgia, \"Times New Roman\", serif"
+    },
+    {
+      "name": "profile-overview",
+      "path": "/users/anton?scenario=profile",
+      "mode": "phone-dark",
+      "h1": [
+        "Anton"
+      ],
+      "width": 390,
+      "documentWidth": 390,
+      "theme": "dark",
+      "density": "compact",
+      "headingFont": "Merriweather, Georgia, \"Times New Roman\", serif"
+    },
+    {
+      "name": "profile-2025",
+      "path": "/users/anton?scenario=profile&year=2025",
+      "mode": "phone-dark",
+      "h1": [
+        "Anton"
+      ],
+      "width": 390,
+      "documentWidth": 390,
+      "theme": "dark",
+      "density": "compact",
+      "headingFont": "Merriweather, Georgia, \"Times New Roman\", serif"
+    },
+    {
+      "name": "profile-2024",
+      "path": "/users/anton?scenario=profile&year=2024",
+      "mode": "phone-dark",
+      "h1": [
+        "Anton"
+      ],
+      "width": 390,
+      "documentWidth": 390,
+      "theme": "dark",
+      "density": "compact",
+      "headingFont": "Merriweather, Georgia, \"Times New Roman\", serif"
+    },
+    {
+      "name": "profile-2023",
+      "path": "/users/anton?scenario=profile&year=2023",
+      "mode": "phone-dark",
+      "h1": [
+        "Anton"
+      ],
+      "width": 390,
+      "documentWidth": 390,
+      "theme": "dark",
+      "density": "compact",
+      "headingFont": "Merriweather, Georgia, \"Times New Roman\", serif"
+    },
+    {
+      "name": "profile-visitor",
+      "path": "/users/mei?scenario=visitor",
+      "mode": "phone-dark",
+      "h1": [
+        "Mei"
+      ],
+      "width": 390,
+      "documentWidth": 390,
+      "theme": "dark",
+      "density": "compact",
+      "headingFont": "Merriweather, Georgia, \"Times New Roman\", serif"
+    },
+    {
+      "name": "profile-empty",
+      "path": "/users/anton?scenario=empty",
+      "mode": "phone-dark",
+      "h1": [
+        "Anton"
+      ],
+      "width": 390,
+      "documentWidth": 390,
+      "theme": "dark",
+      "density": "compact",
+      "headingFont": "Merriweather, Georgia, \"Times New Roman\", serif"
+    },
+    {
+      "name": "profile-activity",
+      "path": "/users/anton/activity?scenario=profile",
+      "mode": "phone-dark",
+      "h1": [
+        "Anton"
+      ],
+      "width": 390,
+      "documentWidth": 390,
+      "theme": "dark",
+      "density": "compact",
+      "headingFont": "Merriweather, Georgia, \"Times New Roman\", serif"
+    },
+    {
+      "name": "log-reading",
+      "path": "/logs/reading-konbini?scenario=reading",
+      "mode": "phone-dark",
+      "h1": [
+        "コンビニ人間 — finished chapter 3"
+      ],
+      "width": 390,
+      "documentWidth": 390,
+      "theme": "dark",
+      "density": "compact",
+      "headingFont": "Merriweather, Georgia, \"Times New Roman\", serif"
+    },
+    {
+      "name": "log-listening",
+      "path": "/logs/reading-konbini?scenario=listening",
+      "mode": "phone-dark",
+      "h1": [
+        "Nihongo con Teppei — episode 920"
+      ],
+      "width": 390,
+      "documentWidth": 390,
+      "theme": "dark",
+      "density": "compact",
+      "headingFont": "Merriweather, Georgia, \"Times New Roman\", serif"
+    },
+    {
+      "name": "log-visitor",
+      "path": "/logs/reading-konbini?scenario=visitor",
+      "mode": "phone-dark",
+      "h1": [
+        "コンビニ人間 — finished chapter 3"
+      ],
+      "width": 390,
+      "documentWidth": 390,
+      "theme": "dark",
+      "density": "compact",
+      "headingFont": "Merriweather, Georgia, \"Times New Roman\", serif"
+    },
+    {
+      "name": "log-personal",
+      "path": "/logs/reading-konbini?scenario=personal",
+      "mode": "phone-dark",
+      "h1": [
+        "Japanese reading"
+      ],
+      "width": 390,
+      "documentWidth": 390,
+      "theme": "dark",
+      "density": "compact",
+      "headingFont": "Merriweather, Georgia, \"Times New Roman\", serif"
+    },
+    {
+      "name": "log-ended",
+      "path": "/logs/reading-konbini?scenario=ended",
+      "mode": "phone-dark",
+      "h1": [
+        "コンビニ人間 — finished chapter 3"
+      ],
+      "width": 390,
+      "documentWidth": 390,
+      "theme": "dark",
+      "density": "compact",
+      "headingFont": "Merriweather, Georgia, \"Times New Roman\", serif"
+    },
+    {
+      "name": "log-missing",
+      "path": "/logs/reading-konbini?scenario=missing",
+      "mode": "phone-dark",
+      "h1": [
+        "Log not found"
+      ],
+      "width": 390,
+      "documentWidth": 390,
+      "theme": "dark",
+      "density": "compact",
+      "headingFont": "Merriweather, Georgia, \"Times New Roman\", serif"
+    },
+    {
+      "name": "log-unavailable",
+      "path": "/logs/reading-konbini?scenario=unavailable",
+      "mode": "phone-dark",
+      "h1": [
+        "This log couldn’t be loaded"
+      ],
+      "width": 390,
+      "documentWidth": 390,
+      "theme": "dark",
+      "density": "compact",
+      "headingFont": "Merriweather, Georgia, \"Times New Roman\", serif"
+    },
+    {
+      "name": "admin-dashboard",
+      "path": "/admin",
+      "mode": "phone-dark",
+      "h1": [
+        "Dashboard"
+      ],
+      "width": 390,
+      "documentWidth": 390,
+      "theme": "dark",
+      "density": "compact",
+      "headingFont": "Merriweather, Georgia, \"Times New Roman\", serif"
+    },
+    {
+      "name": "admin-posts",
+      "path": "/admin/posts",
+      "mode": "phone-dark",
+      "h1": [
+        "Posts"
+      ],
+      "width": 390,
+      "documentWidth": 390,
+      "theme": "dark",
+      "density": "compact",
+      "headingFont": "Merriweather, Georgia, \"Times New Roman\", serif"
+    },
+    {
+      "name": "admin-pages",
+      "path": "/admin/pages",
+      "mode": "phone-dark",
+      "h1": [
+        "Pages"
+      ],
+      "width": 390,
+      "documentWidth": 390,
+      "theme": "dark",
+      "density": "compact",
+      "headingFont": "Merriweather, Georgia, \"Times New Roman\", serif"
+    },
+    {
+      "name": "admin-announcements",
+      "path": "/admin/announcements",
+      "mode": "phone-dark",
+      "h1": [
+        "Announcements"
+      ],
+      "width": 390,
+      "documentWidth": 390,
+      "theme": "dark",
+      "density": "compact",
+      "headingFont": "Merriweather, Georgia, \"Times New Roman\", serif"
+    },
+    {
+      "name": "admin-languages",
+      "path": "/admin/languages",
+      "mode": "phone-dark",
+      "h1": [
+        "Languages"
+      ],
+      "width": 390,
+      "documentWidth": 390,
+      "theme": "dark",
+      "density": "compact",
+      "headingFont": "Merriweather, Georgia, \"Times New Roman\", serif"
+    },
+    {
+      "name": "admin-contests",
+      "path": "/admin/contests",
+      "mode": "phone-dark",
+      "h1": [
+        "Contests"
+      ],
+      "width": 390,
+      "documentWidth": 390,
+      "theme": "dark",
+      "density": "compact",
+      "headingFont": "Merriweather, Georgia, \"Times New Roman\", serif"
+    },
+    {
+      "name": "admin-users",
+      "path": "/admin/users",
+      "mode": "phone-dark",
+      "h1": [
+        "Users"
+      ],
+      "width": 390,
+      "documentWidth": 390,
+      "theme": "dark",
+      "density": "compact",
+      "headingFont": "Merriweather, Georgia, \"Times New Roman\", serif"
+    },
+    {
+      "name": "admin-reports",
+      "path": "/admin/reports",
+      "mode": "phone-dark",
+      "h1": [
+        "Reports"
+      ],
+      "width": 390,
+      "documentWidth": 390,
+      "theme": "dark",
+      "density": "compact",
+      "headingFont": "Merriweather, Georgia, \"Times New Roman\", serif"
+    }
+  ],
+  "interactions": [
+    {
+      "id": "activity-filters",
+      "result": "passed",
+      "details": "Combined year/language/activity filtering, individual chip removal, no-match search, and clear/reset work at390px."
+    },
+    {
+      "id": "profile-year",
+      "result": "passed",
+      "details": "Year controls change the calendar and preserve selected year/contest in local navigation; oldest-year boundary disables Previous."
+    },
+    {
+      "id": "contest-submissions",
+      "result": "passed",
+      "details": "Owner can remove and add an eligible submission; Reading rejects listening-only contest, and reading-circle keeps its22.5points rule."
+    },
+    {
+      "id": "score-disclosure",
+      "result": "passed",
+      "details": "Personal scoring explanation opens with its own units and rate."
+    },
+    {
+      "id": "delete-cancel-escape-restore",
+      "result": "passed",
+      "details": "Delete modal initially focuses Keep log; Escape and cancel preserve entry; confirm deletes locally and focuses result; Restore returns entry."
+    },
+    {
+      "id": "missing-time-eligibility",
+      "result": "passed",
+      "details": "Personal record with no tracked reading time shows explicit ineligibility for time-scored contest."
+    },
+    {
+      "id": "owner-edit-handoff",
+      "result": "passed",
+      "details": "Owner scenario carries signed-in state into real edit form."
+    },
+    {
+      "id": "log-retry",
+      "result": "passed",
+      "details": "Retry restores requested sample record."
+    },
+    {
+      "id": "admin-mobile-review",
+      "result": "passed",
+      "details": "Mobile Sidebar Drawer closes after navigation; report review saves local status and gives feedback."
+    },
+    {
+      "id": "admin-content-create",
+      "result": "passed",
+      "details": "Local new-post form validates and saves a new draft into the Posts collection."
+    },
+    {
+      "id": "october-create-edit-reopen-1280",
+      "result": "passed",
+      "details": "1280px light/comfortable: Home between → October personal log → detail → edit → save and direct edit without asOf preserve date, language and activity. No document overflow."
+    },
+    {
+      "id": "backdated-context-1280",
+      "result": "passed",
+      "details": "A September record created in an October 8 context retains the later context through detail, edit and cancel."
+    },
+    {
+      "id": "context-closed-snapshots-1280",
+      "result": "passed",
+      "details": "Editing an existing September record as of October 5 updates its personal amount while preserving both finished contributions and disabling submission management."
+    },
+    {
+      "id": "fixed-listening-1280",
+      "result": "passed",
+      "details": "Disabled activity preserves Listening and minutes when saving an edited note."
+    },
+    {
+      "id": "october-create-edit-reopen-390",
+      "result": "passed",
+      "details": "390px dark/compact: Home between → October personal log → detail → edit → save and direct edit without asOf preserve date, language and activity. No document overflow."
+    },
+    {
+      "id": "backdated-context-390",
+      "result": "passed",
+      "details": "A September record created in an October 8 context retains the later context through detail, edit and cancel."
+    },
+    {
+      "id": "context-closed-snapshots-390",
+      "result": "passed",
+      "details": "Editing an existing September record as of October 5 updates its personal amount while preserving both finished contributions and disabling submission management."
+    },
+    {
+      "id": "fixed-listening-390",
+      "result": "passed",
+      "details": "Disabled activity preserves Listening and minutes when saving an edited note."
+    }
+  ],
+  "errors": [],
+  "implementation": {
+    "productDesigns": [
+      "Profile overview",
+      "Profile activity log",
+      "Admin dashboard",
+      "Log details"
+    ],
+    "supportingAdminRoutes": [
+      "/admin/posts",
+      "/admin/pages",
+      "/admin/announcements",
+      "/admin/languages",
+      "/admin/contests",
+      "/admin/users",
+      "/admin/reports"
+    ],
+    "pages": [
+      "frontend/apps/paper-playground/src/pages/ProfilePages.tsx",
+      "frontend/apps/paper-playground/src/pages/LogPage.tsx",
+      "frontend/apps/paper-playground/src/pages/AdminPage.tsx"
+    ],
+    "changes": [
+      {
+        "scope": "playground",
+        "change": "All profile summaries, calendar, language totals, activity mix, recent activity and contest history derive from the selected year’s actual sample logs."
+      },
+      {
+        "scope": "playground",
+        "change": "Activity search combines applied year, language and activity filters; filter chips are individually removable and no-match recovery resets fields."
+      },
+      {
+        "scope": "playground",
+        "change": "Profile navigation retains the chosen year and contest context, with a contextual return to the selected standings."
+      },
+      {
+        "scope": "playground",
+        "change": "Log details preserve actual route identity except an explicit scenario choice; visitors never receive edit/delete/submission controls or owner-only breakdowns."
+      },
+      {
+        "scope": "playground",
+        "change": "Per-contest sample scoring uses a shared scoreSubmission helper; required tracked time and registered languages are enforced; closed scoring snapshots remain unchanged."
+      },
+      {
+        "scope": "playground",
+        "change": "Owner submission management, safe deletion, cancel/Escape, focused deletion result and sample restoration work with Paper Modal and RHF controls."
+      },
+      {
+        "scope": "playground",
+        "change": "Admin Sidebar has desktop and Drawer navigation, every section resolves, and local content creation/review updates collections and dashboard queues."
+      },
+      {
+        "scope": "composition",
+        "change": "Public Paper typography recipes and semantic link colors are explicit; optional notes/tags do not leave an extra empty divider in log details."
+      }
+    ],
+    "verification": {
+      "focusedTestsPassed": 12,
+      "lintErrors": 0,
+      "lintWarnings": "Four Fast Refresh warnings from colocated pure functions exported for behavior tests.",
+      "appTypecheck": "passed",
+      "routeViewportChecks": 44,
+      "browserInteractionFlows": 10,
+      "javascriptErrors": 0,
+      "documentOverflowCases": 0
+    },
+    "limits": [
+      "All data and scoring rates are illustrative samples. Production score history needs saved rule provenance.",
+      "Admin editor/review changes remain in the mounted local admin workspace; they do not publish or mutate a live service.",
+      "Public log submission visibility and ended-contest edit semantics follow the pinned source; production permissions and timing must remain server-authoritative."
+    ]
+  }
+}

@@ -955,7 +955,7 @@ export const phaseTwoDocuments = [
       "anatomy": {
         "heading": "Anatomy",
         "content": [
-          "The field contains a persistent label, optional hint, native input, and validation message."
+          "The field contains a persistent label, native input, optional hint, and validation message. Hints sit below controls so fields with and without hints align in a row."
         ]
       },
       "recommendedExample": {

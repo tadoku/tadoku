@@ -1,0 +1,87 @@
+{
+  "checkedAt": "2026-09-06T17:25:06.244545+00:00",
+  "paper": {
+    "testsPassed": 201,
+    "testFiles": 31,
+    "lint": "passed",
+    "typecheck": "passed",
+    "build": "passed",
+    "copyableExamplesCompiled": 49,
+    "ts49Consumer": "passed",
+    "validatedPackageFiles": 36
+  },
+  "styleguide": {
+    "testsPassed": 141,
+    "testFiles": 21,
+    "lintErrors": 0,
+    "lintWarnings": 1,
+    "typecheck": "passed"
+  },
+  "playground": {
+    "testsPassed": 41,
+    "testFiles": 6,
+    "lintErrors": 0,
+    "lintWarnings": 8,
+    "typecheck": "passed",
+    "finalBuild": "passed"
+  },
+  "boundaries": {
+    "testsPassed": 3,
+    "packageImportCheck": "passed"
+  },
+  "workspaceBuild": {
+    "status": "passed",
+    "applications": [
+      "admin",
+      "auth",
+      "webv2",
+      "styleguide",
+      "paper-styleguide",
+      "paper-playground"
+    ],
+    "log": "workspace-build.log",
+    "finalPlaygroundRebuildAfterLogEdits": "playground-build.log"
+  },
+  "browser": {
+    "layoutStateChecks": 132,
+    "reportPageCaptures": 11,
+    "documentOverflowCases": 0,
+    "javascriptErrors": 0,
+    "engines": [
+      "Chromium"
+    ],
+    "portableBrowserCI": false
+  },
+  "testFiles": [
+    {
+      "file": "tests/contests.test.tsx",
+      "tests": 9,
+      "status": "passed"
+    },
+    {
+      "file": "tests/editorial.test.tsx",
+      "tests": 10,
+      "status": "passed"
+    },
+    {
+      "file": "tests/journeys.test.tsx",
+      "tests": 2,
+      "status": "passed"
+    },
+    {
+      "file": "tests/log-editor.test.tsx",
+      "tests": 7,
+      "status": "passed"
+    },
+    {
+      "file": "tests/records.test.tsx",
+      "tests": 12,
+      "status": "passed"
+    },
+    {
+      "file": "tests/state.test.tsx",
+      "tests": 1,
+      "status": "passed"
+    }
+  ]
+}

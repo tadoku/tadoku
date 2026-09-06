@@ -271,6 +271,48 @@ describe("native React Hook Form controls", () => {
 });
 
 describe("Base UI autocomplete controls", () => {
+  it.each([false, true])("preserves a %s multi-selection when Escape dismisses and is pressed again after closing", async (multiple) => {
+    const user = userEvent.setup();
+    render(<AutocompleteForm multiple={multiple} />);
+    const input = screen.getByRole("combobox", { name: "Languages" });
+    await user.type(input, "Japanese");
+    await user.click(await screen.findByRole("option", { name: "Japanese" }));
+    expect(screen.getByTestId("value")).toHaveTextContent('"id":"ja"');
+    input.focus();
+    await user.keyboard("{Escape}{Escape}");
+    expect(screen.queryByRole("listbox")).not.toBeInTheDocument();
+    expect(screen.getByTestId("value")).toHaveTextContent('"id":"ja"');
+    if (multiple) expect(screen.getByRole("button", { name: "Remove Japanese" })).toBeVisible();
+    else expect(input).toHaveValue("Japanese");
+  });
+
+  it.each([false, true])("runs consumer validation for a %s multi-selection field and exposes its recovery message", async (multiple) => {
+    const saved = vi.fn();
+    function ValidatedAutocomplete() {
+      const methods = useForm<{ language: typeof LANGUAGES[number] | typeof LANGUAGES[number][] }>({ defaultValues: { language: multiple ? [LANGUAGES[0]] : LANGUAGES[0] } });
+      const common = { name: "language", label: "Contest language", options: LANGUAGES,
+        format: (value: typeof LANGUAGES[number]) => value.label,
+        getId: (value: typeof LANGUAGES[number]) => value.id,
+        rules: { validate: (value: unknown) => (multiple ? Array.isArray(value) && value.length === 2 : (value as typeof LANGUAGES[number])?.id === "ko") || "Choose an eligible contest language." },
+      };
+      return <FormProvider {...methods}><form onSubmit={methods.handleSubmit(saved)}>
+        {multiple ? <AutocompleteMultiInput {...common} /> : <AutocompleteInput {...common} />}
+        <Button type="submit">Save registration</Button>
+        <Button onClick={() => methods.setValue("language", multiple ? [LANGUAGES[0], LANGUAGES[2]] : LANGUAGES[2], { shouldValidate: true })}>Use eligible selection</Button>
+      </form></FormProvider>;
+    }
+    const user = userEvent.setup();
+    render(<ValidatedAutocomplete />);
+    await user.click(screen.getByRole("button", { name: "Save registration" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent("Choose an eligible contest language.");
+    expect(screen.getByRole("combobox", { name: "Contest language" })).toHaveAccessibleDescription("Choose an eligible contest language.");
+    expect(saved).not.toHaveBeenCalled();
+    await user.click(screen.getByRole("button", { name: "Use eligible selection" }));
+    await user.click(screen.getByRole("button", { name: "Save registration" }));
+    expect(saved).toHaveBeenCalledTimes(1);
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  });
+
   it("validates required selections on blur and exposes the error relationship", async () => {
     function RequiredAutocomplete() {
       const methods = useForm({ mode: "onBlur", defaultValues: { language: null } });

@@ -25,9 +25,10 @@ export default function Example() {
         <AutocompleteMultiInput
           name="multiple"
           label="Languages"
-          hint="Select up to two languages used in the entry."
+          hint="Choose two languages for this bilingual entry."
           required
           maxSelections={2}
+          rules={{ validate: selected => selected.length === 2 || "Choose two languages for this bilingual entry." }}
           options={LANGUAGES}
           format={option => option.label}
           getId={option => option.id}

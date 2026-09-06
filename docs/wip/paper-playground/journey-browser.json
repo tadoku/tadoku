@@ -1,0 +1,15 @@
+{
+  "steps": [
+    "Guest sign-in returns to intended contest registration",
+    "Registration saves and returns to the selected contest",
+    "New activity saves an entity record and selected contest contribution",
+    "Editing returns to the same log ID",
+    "Saved activity appears in profile history",
+    "Leaderboard applies local score delta; Find my row pages and focuses the participant",
+    "Name search preserves the full-board rank",
+    "Changing destination resets document scroll",
+    "Delete confirmation cancels with Escape"
+  ],
+  "errors": [],
+  "logPath": "/logs/local-ea7fcfab-d837-432b-ba3b-95dc65169311"
+}

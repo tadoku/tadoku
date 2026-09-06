@@ -5,14 +5,14 @@ import {
   type ComponentPageSectionKey,
 } from 'paper-ui/catalog'
 import { ComponentWorkbench } from './ComponentWorkbench'
-import { ExampleCanvas } from './ExampleCanvas'
 import { FoundationSpecimen } from './FoundationSpecimen'
+import { GovernanceGuide } from './FoundationGuide'
 import { type OutlineItem, TableOfContents } from './TableOfContents'
 
 const FOUNDATION_OUTLINE: readonly OutlineItem[] = [
   { id: 'overview', label: 'Overview' },
+  { id: 'specimen', label: 'Examples and usage' },
   { id: 'guidance', label: 'Guidance' },
-  { id: 'specimen', label: 'Specimen' },
   { id: 'accessibility', label: 'Accessibility' },
   { id: 'contract', label: 'Public contract' },
   { id: 'metadata', label: 'Metadata' },
@@ -39,6 +39,7 @@ function LabeledList({
   heading: string
   items: readonly string[]
 }) {
+  if (!items.length) return null
   return (
     <div className="document-list-group">
       <h3>{heading}</h3>
@@ -139,6 +140,9 @@ function UsageSection({ document }: { document: CatalogDocument }) {
       <SectionParagraphs section={sections?.whenNotToUse} />
       <h3>Choosing between components</h3>
       <SectionParagraphs section={sections?.choosingBetween} />
+      <h3>How it is composed</h3>
+      <SectionParagraphs section={sections?.anatomy} />
+      <LabeledList heading="Common mistakes" items={document.guidance.commonMistakes} />
     </section>
   )
 }
@@ -154,6 +158,7 @@ function ExamplesSection({
     <section id="examples" className="document-section document-section--wide">
       <h2 className="paper-type-section">Examples</h2>
       <SectionParagraphs section={document.sections?.required.recommendedExample} />
+      <SectionParagraphs section={document.sections?.required.implementation} />
       <ComponentWorkbench document={document} fixtures={fixtures} />
     </section>
   )
@@ -229,6 +234,10 @@ function FoundationDocumentPage({ document }: { document: CatalogDocument }) {
     <div className="document-layout">
       <article className="document-page">
         <div id="overview"><Hero document={document} /></div>
+        <div id="specimen" className="document-section document-section--wide">
+          <h2 className="paper-type-section">Examples and usage</h2>
+          <FoundationSpecimen document={document} />
+        </div>
         <section
           id="guidance"
           className="document-section"
@@ -244,10 +253,7 @@ function FoundationDocumentPage({ document }: { document: CatalogDocument }) {
             <LabeledList heading="Common mistakes" items={document.guidance.commonMistakes} />
           </div>
         </section>
-        <div id="specimen" className="document-section document-section--wide">
-          <h2 className="paper-type-section">Specimen</h2>
-          <FoundationSpecimen document={document} />
-        </div>
+
         <section id="accessibility" className="document-section">
           <h2 className="paper-type-section">Accessibility</h2>
           <div className="document-list-grid">
@@ -285,6 +291,7 @@ function GeneralDocumentPage({ document }: { document: CatalogDocument }) {
         ...outline.slice(3),
       ]
     : outline
+  const outlineWithUsage = [...generalOutline, { id: 'usage', label: 'Usage' }]
 
   return (
     <div className="document-layout">
@@ -300,9 +307,10 @@ function GeneralDocumentPage({ document }: { document: CatalogDocument }) {
         </section>
         {fixture ? (
           <div id="preview" className="document-section document-section--wide">
-            <ExampleCanvas fixture={fixture} />
+            <ComponentWorkbench document={document} fixtures={[fixture]} />
           </div>
         ) : null}
+        <GovernanceGuide document={document} />
         <section id="contract" className="document-section">
           <h2 className="paper-type-section">Public contract</h2>
           <SectionCopy value={document.api} fallback="This foundation does not expose a component API." />
@@ -312,7 +320,7 @@ function GeneralDocumentPage({ document }: { document: CatalogDocument }) {
           <Metadata document={document} />
         </section>
       </article>
-      <TableOfContents items={generalOutline} />
+      <TableOfContents items={outlineWithUsage} />
     </div>
   )
 }

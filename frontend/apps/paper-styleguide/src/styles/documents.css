@@ -162,8 +162,8 @@
 
   .document-list-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr));
-    gap: 1rem 2rem;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1.75rem;
   }
 
   .document-list-group h3 {
@@ -433,4 +433,15 @@
     margin-block-start: 0;
     margin-inline-start: var(--paper-field-padding-inline);
   }
+}
+
+@layer paper-styleguide {
+  .document-section > h2 { margin-block: 0 1.25rem; }
+  .document-section > h3 { margin-block: 1.75rem 0.625rem; }
+  .document-section > h2 + h3 { margin-block-start: 0; }
+  .document-section > p { margin-block: 0 1rem; }
+  .document-list-group + .document-list-group { margin-block-start: 1.75rem; }
+  .document-list-grid > .document-list-group { margin-block-start: 0; }
+  .document-list-group h3 { margin-block: 0 0.625rem; }
+  .document-section + .document-section { margin-block-start: 3rem; }
 }

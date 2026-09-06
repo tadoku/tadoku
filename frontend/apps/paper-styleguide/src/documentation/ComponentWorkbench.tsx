@@ -1,7 +1,8 @@
 import { useState } from 'react'
-import { Button, Surface, Tabs } from 'paper-ui'
+import { Button, Surface, Table, Tabs } from 'paper-ui'
 import type { CatalogDocument, CatalogFixture } from 'paper-ui/catalog'
 import { ExampleCanvas } from './ExampleCanvas'
+import { CodeBlock } from './CodeBlock'
 
 const VIEWS = ['preview', 'code', 'api', 'accessibility'] as const
 type View = (typeof VIEWS)[number]
@@ -12,16 +13,23 @@ function label(view: View): string {
   return `${view.charAt(0).toUpperCase()}${view.slice(1)}`
 }
 
-function ApiList({ title, items }: { title: string; items: readonly string[] }) {
+function ApiList({
+  title,
+  items,
+  code = false,
+}: {
+  title: string
+  items: readonly string[]
+  code?: boolean
+}) {
+  if (!items.length) return null
   return (
     <section>
       <h4>{title}</h4>
       {items.length ? (
         <ul>
-          {items.map((item) => (
-            <li key={item}>
-              <code>{item}</code>
-            </li>
+          {items.map(item => (
+            <li key={item}>{code ? <code>{item}</code> : item}</li>
           ))}
         </ul>
       ) : (
@@ -41,7 +49,7 @@ export function ComponentWorkbench({
   const [fixtureId, setFixtureId] = useState(fixtures[0]?.id ?? '')
   const [copyState, setCopyState] = useState<CopyState>('idle')
   const fixture =
-    fixtures.find((candidate) => candidate.id === fixtureId) ?? fixtures[0]
+    fixtures.find(candidate => candidate.id === fixtureId) ?? fixtures[0]
 
   function changeFixture(nextFixture: CatalogFixture) {
     if (nextFixture.id === fixtureId) return
@@ -73,7 +81,7 @@ export function ComponentWorkbench({
       <Tabs.Root defaultValue="preview">
         <div className="component-workbench__tabs">
           <Tabs.List aria-label="Example views">
-            {VIEWS.map((candidate) => (
+            {VIEWS.map(candidate => (
               <Tabs.Tab key={candidate} value={candidate}>
                 {label(candidate)}
               </Tabs.Tab>
@@ -113,29 +121,99 @@ export function ComponentWorkbench({
                   {copyState === 'copied'
                     ? 'Code copied to clipboard.'
                     : copyState === 'error'
-                      ? 'Copy failed. Select the code and copy it manually.'
-                      : ''}
+                    ? 'Copy failed. Select the code and copy it manually.'
+                    : ''}
                 </span>
               </div>
             </div>
-            <pre tabIndex={0}>
-              <code>
-                {fixture?.code ?? 'No copyable example is registered.'}
-              </code>
-            </pre>
+            <CodeBlock
+              code={fixture?.code ?? 'No copyable example is registered.'}
+            />
           </div>
         </Tabs.Panel>
 
         <Tabs.Panel value="api" className="component-workbench__panel">
-          <div className="workbench-reference-grid">
-            <ApiList title="React" items={document.api.react} />
-            <ApiList title="CSS and recipes" items={document.api.cssClasses} />
-            <ApiList title="Public types" items={document.api.publicTypes} />
-            <ApiList title="Defaults" items={document.api.defaults} />
-            <ApiList
-              title="Invalid combinations"
-              items={document.api.invalidCombinations}
-            />
+          <div className="workbench-api">
+            {document.api.props?.length ? (
+              <Table
+                caption={`${document.name} props`}
+                tableClassName="workbench-props-table"
+                rows={document.api.props}
+                getRowKey={prop => prop.name}
+                minWidth="34rem"
+                columns={[
+                  {
+                    id: 'name',
+                    header: 'Prop / Type',
+                    rowHeader: true,
+                    width: '40%',
+                    cell: prop => (
+                      <>
+                        <code>{prop.name}</code>
+                        <span className="workbench-prop-type">
+                          <code>{prop.type}</code>
+                        </span>
+                      </>
+                    ),
+                  },
+                  {
+                    id: 'description',
+                    header: 'Usage',
+                    cell: prop => (
+                      <>
+                        <p className="workbench-prop-default">
+                          {prop.required ? (
+                            <strong>Required</strong>
+                          ) : (
+                            <>
+                              Default: <code>{prop.defaultValue ?? '—'}</code>
+                            </>
+                          )}
+                        </p>
+                        {prop.description}
+                      </>
+                    ),
+                  },
+                ]}
+              />
+            ) : null}
+            {document.api.cssClasses.length ? (
+              <Table
+                caption="CSS classes and helpers"
+                rows={document.api.cssClasses}
+                getRowKey={name => name}
+                minWidth="25rem"
+                columns={[
+                  {
+                    id: 'name',
+                    header: 'Name',
+                    rowHeader: true,
+                    cell: name => <code>{name}</code>,
+                  },
+                  {
+                    id: 'kind',
+                    header: 'Use',
+                    cell: name =>
+                      name.includes('(')
+                        ? 'Optional JavaScript helper that returns CSS class names.'
+                        : 'CSS class: use in className or class.',
+                  },
+                ]}
+              />
+            ) : null}
+            <div className="workbench-reference-grid">
+              <ApiList title="React exports" items={document.api.react} code />
+              <ApiList
+                title="Public types"
+                items={document.api.publicTypes}
+                code
+              />
+              <ApiList title="Defaults" items={document.api.defaults} />
+              <ApiList
+                title="Invalid combinations"
+                items={document.api.invalidCombinations}
+              />
+            </div>
           </div>
         </Tabs.Panel>
 

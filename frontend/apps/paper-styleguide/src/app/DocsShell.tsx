@@ -26,7 +26,7 @@ const renderRouterLink: NavigationLinkRenderer = ({ href, ...props }) => (
 function navigationSections(
   documents: readonly CatalogDocument[],
 ): readonly SidebarSection[] {
-  return buildNavigationGroups(documents).map((group) => ({
+  return [{ id: 'getting-started', title: 'Getting started', links: [{ id: 'setup', label: 'Setup', href: '/setup' }] }, ...buildNavigationGroups(documents).map((group) => ({
     id: group.id,
     title: group.label,
     links: group.documents.map((document) => ({
@@ -34,7 +34,7 @@ function navigationSections(
       label: document.name,
       href: document.route,
     })),
-  }))
+  }))]
 }
 
 function MobileCatalogueNavigation({

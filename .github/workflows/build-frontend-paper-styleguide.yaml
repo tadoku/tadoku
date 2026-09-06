@@ -6,6 +6,7 @@ on:
       - "frontend/apps/paper-styleguide/**"
       - "frontend/packages/paper-ui/**"
       - "frontend/scripts/check-paper-boundaries.mjs"
+      - "frontend/scripts/check-paper-boundaries.test.mjs"
       - "frontend/scripts/smoke-paper-image.sh"
       - "frontend/paper-boundaries.json"
       - "frontend/package.json"
@@ -20,6 +21,7 @@ on:
       - "frontend/apps/paper-styleguide/**"
       - "frontend/packages/paper-ui/**"
       - "frontend/scripts/check-paper-boundaries.mjs"
+      - "frontend/scripts/check-paper-boundaries.test.mjs"
       - "frontend/scripts/smoke-paper-image.sh"
       - "frontend/paper-boundaries.json"
       - "frontend/package.json"
@@ -52,6 +54,8 @@ jobs:
           run_install: false
       - run: pnpm check:paper-boundaries
         working-directory: frontend
+      - run: node --test scripts/check-paper-boundaries.test.mjs
+        working-directory: frontend
 
   quality:
     name: paper / quality
@@ -77,6 +81,8 @@ jobs:
       - run: pnpm --filter paper-ui test
         working-directory: frontend
       - run: pnpm --filter paper-ui build
+        working-directory: frontend
+      - run: pnpm --filter paper-ui examples:check
         working-directory: frontend
       - run: pnpm --filter paper-ui consumer:ts49
         working-directory: frontend

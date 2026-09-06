@@ -85,7 +85,7 @@ type Prop = NonNullable<CatalogDocument["api"]["props"]>[number];
 const fieldProps: readonly Prop[] = [
   { name: "name", type: "string", required: true, description: "Path in the enclosing useForm values. Initialize it through defaultValues, then use reset to load another record." },
   { name: "label", type: "string", required: true, description: "Persistent visible label; do not replace it with a placeholder." },
-  { name: "hint", type: "string", description: "Help shown between the label and control and connected through aria-describedby." },
+  { name: "hint", type: "string", description: "Help shown below the control and connected through aria-describedby. Optional hints do not shift adjacent controls out of alignment." },
   { name: "required", type: "boolean", defaultValue: "false (RadioGroup: true)", description: "Marks the decision as required and validates it through React Hook Form." },
 ];
 const validationProp: Prop = { name: "rules", type: "RegisterOptions", description: "React Hook Form validation, including custom recovery messages. Use noValidate on the form so inline errors handle submission." };
@@ -104,7 +104,7 @@ const formSetup = "Import from paper-ui and load paper-ui/styles.css once at the
 const details: Record<string, { example: string; anatomy: string; variants: string; states: string; content: string; implementation: string; props: readonly Prop[] }> = {
   "component.textarea": {
     example: "Edit the reading note and save it. The empty example demonstrates required validation: submit blank, then enter a note and resubmit to clear the error.",
-    anatomy: "A persistent label, optional hint, resizable native textarea, and inline error share one field relationship.",
+    anatomy: "A persistent label, resizable native textarea, optional hint, and inline error share one field relationship.",
     variants: "One multiline presentation. Set rows for the expected starting length; the user can resize vertically. Density changes padding, not the meaning of the field.",
     states: "The populated and empty examples share the same required rule. Invalid submission displays an associated recovery message and focuses the field. Native disabled and readOnly have different purposes: unavailable editing versus selectable text that cannot change.",
     content: "Label the value, such as Reading notes. Use the hint for visibility or spoiler policy. Put examples in a placeholder only when they remain useful after the hint.", implementation: formSetup,
@@ -112,7 +112,7 @@ const details: Record<string, { example: string; anatomy: string; variants: stri
   },
   "component.select": {
     example: "Choose a reading language. The second example starts with a placeholder so Save entry demonstrates the required-choice error before selection.",
-    anatomy: "Label and hint precede a native select with a decorative chevron; an error follows the control.",
+    anatomy: "A label precedes a native select with a decorative chevron; hint and error text follow the control.",
     variants: "Use options for a flat list or groups for native optgroups. When groups is supplied it replaces options; pass options={[]} for a grouped-only select.",
     states: "An empty string selects the placeholder. Required rejects that value. Individual options and the entire control can be disabled; no custom menu is substituted on mobile.",
     content: "Use parallel labels and an instructional placeholder such as Choose a language. A placeholder is an empty option, not a meaningful saved choice.", implementation: formSetup,

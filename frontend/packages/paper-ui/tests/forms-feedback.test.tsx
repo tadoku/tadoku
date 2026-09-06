@@ -147,6 +147,39 @@ function ToastTrigger() {
 }
 
 describe("native React Hook Form controls", () => {
+  it("places helper text after controls so optional hints do not offset a row of fields", () => {
+    function HintedFields() {
+      const methods = useForm({ defaultValues: { title: "", date: "2026-08-31", notes: "", language: "", public: false, progressValue: 1, progressUnit: "pages", pace: "", format: "" } });
+      return (
+        <FormProvider {...methods}>
+          <Input name="title" label="Title" />
+          <Input name="date" label="Date" type="date" hint="The date you read." />
+          <TextArea name="notes" label="Notes" hint="No spoilers." />
+          <Select name="language" label="Language" hint="Reading language." options={[]} />
+          <Checkbox name="public" label="Public entry" hint="Shown on your profile." />
+          <AmountWithUnit name="progress" label="Progress" hint="Completed pages." units={[{ value: "pages", label: "pages" }]} />
+          <RadioSelect name="pace" label="Pace" hint="Choose a pace." options={[{ value: "pages", label: "Pages" }]} />
+          <RadioGroup name="format" label="Format" hint="Choose a format." options={[{ value: "book", label: "Book", description: "Printed or digital" }]} />
+        </FormProvider>
+      );
+    }
+    render(<HintedFields />);
+    for (const label of ["Date", "Notes", "Language", "Public entry", "Progress"]) {
+      const control = screen.getByLabelText(label, { selector: "input, textarea, select" });
+      const hint = document.getElementById(control.getAttribute("aria-describedby")!);
+      expect(hint).not.toBeNull();
+      expect(control.compareDocumentPosition(hint!) & Node.DOCUMENT_POSITION_FOLLOWING).not.toBe(0);
+      expect(control).toHaveAccessibleDescription(hint!.textContent!);
+    }
+    for (const name of ["Pace", "Format"]) {
+      const group = screen.getByRole("group", { name });
+      const hint = document.getElementById(group.getAttribute("aria-describedby")!);
+      const radio = within(group).getByRole("radio");
+      expect(radio.compareDocumentPosition(hint!) & Node.DOCUMENT_POSITION_FOLLOWING).not.toBe(0);
+      expect(group).toHaveAccessibleDescription(hint!.textContent!);
+    }
+  });
+
   it("preserves caller descriptions alongside built-in hints", () => {
     function DescribedFields() {
       const methods = useForm({ defaultValues: { title: "", notes: "", language: "", public: false, progressValue: 1, progressUnit: "pages" } });

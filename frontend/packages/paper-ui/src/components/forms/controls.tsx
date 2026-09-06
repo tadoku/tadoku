@@ -66,8 +66,8 @@ function FieldFrame({
         {label}
         {required ? <span className="paper-field__required" aria-hidden="true">*</span> : null}
       </label>
-      {hint ? <p className="paper-field__hint" id={`${id}-hint`}>{hint}</p> : null}
       {children}
+      {hint ? <p className="paper-field__hint" id={`${id}-hint`}>{hint}</p> : null}
       {error ? <p className="paper-field__error" id={`${id}-error`} role="alert">{error}</p> : null}
     </div>
   );
@@ -255,7 +255,6 @@ export function RadioSelect({
       disabled={disabled}
     >
       <legend className="paper-field__label">{label}{required ? <span className="paper-field__required" aria-hidden="true">*</span> : null}</legend>
-      {hint ? <p className="paper-field__hint" id={`${id}-hint`}>{hint}</p> : null}
       <div className="paper-choice-list">
         {options.map((option) => (
           <label className={segmented ? "paper-radio-select__segment" : "paper-choice"} key={option.value}>
@@ -277,6 +276,7 @@ export function RadioSelect({
           </label>
         ))}
       </div>
+      {hint ? <p className="paper-field__hint" id={`${id}-hint`}>{hint}</p> : null}
       {error ? <p className="paper-field__error" id={`${id}-error`} role="alert">{error.message?.toString()}</p> : null}
     </fieldset>
   );
@@ -313,7 +313,6 @@ export function RadioGroup<Value extends string = string>({
       aria-invalid={error ? true : undefined}
     >
       <legend className="paper-field__label">{label}{required ? <span className="paper-field__required" aria-hidden="true">*</span> : null}</legend>
-      {hint ? <p className="paper-field__hint" id={`${id}-hint`}>{hint}</p> : null}
       <div className="paper-radio-cards">
         {options.map((option) => (
           <label className="paper-radio-card" key={option.value}>
@@ -329,6 +328,7 @@ export function RadioGroup<Value extends string = string>({
           </label>
         ))}
       </div>
+      {hint ? <p className="paper-field__hint" id={`${id}-hint`}>{hint}</p> : null}
       {error ? <p className="paper-field__error" id={`${id}-error`} role="alert">{error.message?.toString()}</p> : null}
     </fieldset>
   );

@@ -1,0 +1,185 @@
+{
+  "rows": [
+    {
+      "name": "navbar",
+      "route": "navigation/navbar",
+      "width": 590,
+      "height": 900,
+      "theme": "light",
+      "density": "comfortable",
+      "scrollWidth": 590,
+      "screenshot": "/var/lib/t3/worktrees/tadoku/t3code-a6ef6616/docs/wip/tadoku-paper/review-2026-09/screenshots/navbar-1280-light-comfortable.png"
+    },
+    {
+      "name": "sidebar",
+      "route": "navigation/sidebar",
+      "width": 590,
+      "height": 900,
+      "theme": "light",
+      "density": "comfortable",
+      "scrollWidth": 590,
+      "screenshot": "/var/lib/t3/worktrees/tadoku/t3code-a6ef6616/docs/wip/tadoku-paper/review-2026-09/screenshots/sidebar-1280-light-comfortable.png"
+    },
+    {
+      "name": "breadcrumb",
+      "route": "navigation/breadcrumb",
+      "width": 590,
+      "height": 900,
+      "theme": "light",
+      "density": "comfortable",
+      "scrollWidth": 590,
+      "screenshot": "/var/lib/t3/worktrees/tadoku/t3code-a6ef6616/docs/wip/tadoku-paper/review-2026-09/screenshots/breadcrumb-1280-light-comfortable.png"
+    },
+    {
+      "name": "tabbar",
+      "route": "navigation/tabbar",
+      "width": 590,
+      "height": 900,
+      "theme": "light",
+      "density": "comfortable",
+      "scrollWidth": 590,
+      "screenshot": "/var/lib/t3/worktrees/tadoku/t3code-a6ef6616/docs/wip/tadoku-paper/review-2026-09/screenshots/tabbar-1280-light-comfortable.png"
+    },
+    {
+      "name": "vertical-tabbar",
+      "route": "navigation/vertical-tabbar",
+      "width": 590,
+      "height": 900,
+      "theme": "light",
+      "density": "comfortable",
+      "scrollWidth": 590,
+      "screenshot": "/var/lib/t3/worktrees/tadoku/t3code-a6ef6616/docs/wip/tadoku-paper/review-2026-09/screenshots/vertical-tabbar-1280-light-comfortable.png"
+    },
+    {
+      "name": "pagination",
+      "route": "navigation/pagination",
+      "width": 590,
+      "height": 900,
+      "theme": "light",
+      "density": "comfortable",
+      "scrollWidth": 590,
+      "screenshot": "/var/lib/t3/worktrees/tadoku/t3code-a6ef6616/docs/wip/tadoku-paper/review-2026-09/screenshots/pagination-1280-light-comfortable.png"
+    },
+    {
+      "name": "tabs",
+      "route": "navigation/tabs",
+      "width": 590,
+      "height": 900,
+      "theme": "light",
+      "density": "comfortable",
+      "scrollWidth": 590,
+      "screenshot": "/var/lib/t3/worktrees/tadoku/t3code-a6ef6616/docs/wip/tadoku-paper/review-2026-09/screenshots/tabs-1280-light-comfortable.png"
+    },
+    {
+      "name": "drawer",
+      "route": "overlays/drawer",
+      "width": 590,
+      "height": 900,
+      "theme": "light",
+      "density": "comfortable",
+      "scrollWidth": 590,
+      "screenshot": "/var/lib/t3/worktrees/tadoku/t3code-a6ef6616/docs/wip/tadoku-paper/review-2026-09/screenshots/drawer-1280-light-comfortable.png"
+    },
+    {
+      "name": "action-menu",
+      "route": "actions/action-menu",
+      "width": 590,
+      "height": 900,
+      "theme": "light",
+      "density": "comfortable",
+      "scrollWidth": 590,
+      "screenshot": "/var/lib/t3/worktrees/tadoku/t3code-a6ef6616/docs/wip/tadoku-paper/review-2026-09/screenshots/action-menu-1280-light-comfortable.png"
+    },
+    {
+      "name": "navbar",
+      "route": "navigation/navbar",
+      "width": 341,
+      "height": 844,
+      "theme": "dark",
+      "density": "compact",
+      "scrollWidth": 341,
+      "screenshot": "/var/lib/t3/worktrees/tadoku/t3code-a6ef6616/docs/wip/tadoku-paper/review-2026-09/screenshots/navbar-390-dark-compact.png"
+    },
+    {
+      "name": "sidebar",
+      "route": "navigation/sidebar",
+      "width": 341,
+      "height": 844,
+      "theme": "dark",
+      "density": "compact",
+      "scrollWidth": 341,
+      "screenshot": "/var/lib/t3/worktrees/tadoku/t3code-a6ef6616/docs/wip/tadoku-paper/review-2026-09/screenshots/sidebar-390-dark-compact.png"
+    },
+    {
+      "name": "breadcrumb",
+      "route": "navigation/breadcrumb",
+      "width": 341,
+      "height": 844,
+      "theme": "dark",
+      "density": "compact",
+      "scrollWidth": 341,
+      "screenshot": "/var/lib/t3/worktrees/tadoku/t3code-a6ef6616/docs/wip/tadoku-paper/review-2026-09/screenshots/breadcrumb-390-dark-compact.png"
+    },
+    {
+      "name": "tabbar",
+      "route": "navigation/tabbar",
+      "width": 341,
+      "height": 844,
+      "theme": "dark",
+      "density": "compact",
+      "scrollWidth": 341,
+      "screenshot": "/var/lib/t3/worktrees/tadoku/t3code-a6ef6616/docs/wip/tadoku-paper/review-2026-09/screenshots/tabbar-390-dark-compact.png"
+    },
+    {
+      "name": "vertical-tabbar",
+      "route": "navigation/vertical-tabbar",
+      "width": 341,
+      "height": 844,
+      "theme": "dark",
+      "density": "compact",
+      "scrollWidth": 341,
+      "screenshot": "/var/lib/t3/worktrees/tadoku/t3code-a6ef6616/docs/wip/tadoku-paper/review-2026-09/screenshots/vertical-tabbar-390-dark-compact.png"
+    },
+    {
+      "name": "pagination",
+      "route": "navigation/pagination",
+      "width": 341,
+      "height": 844,
+      "theme": "dark",
+      "density": "compact",
+      "scrollWidth": 341,
+      "screenshot": "/var/lib/t3/worktrees/tadoku/t3code-a6ef6616/docs/wip/tadoku-paper/review-2026-09/screenshots/pagination-390-dark-compact.png"
+    },
+    {
+      "name": "tabs",
+      "route": "navigation/tabs",
+      "width": 341,
+      "height": 844,
+      "theme": "dark",
+      "density": "compact",
+      "scrollWidth": 341,
+      "screenshot": "/var/lib/t3/worktrees/tadoku/t3code-a6ef6616/docs/wip/tadoku-paper/review-2026-09/screenshots/tabs-390-dark-compact.png"
+    },
+    {
+      "name": "drawer",
+      "route": "overlays/drawer",
+      "width": 341,
+      "height": 844,
+      "theme": "dark",
+      "density": "compact",
+      "scrollWidth": 341,
+      "screenshot": "/var/lib/t3/worktrees/tadoku/t3code-a6ef6616/docs/wip/tadoku-paper/review-2026-09/screenshots/drawer-390-dark-compact.png"
+    },
+    {
+      "name": "action-menu",
+      "route": "actions/action-menu",
+      "width": 341,
+      "height": 844,
+      "theme": "dark",
+      "density": "compact",
+      "scrollWidth": 341,
+      "screenshot": "/var/lib/t3/worktrees/tadoku/t3code-a6ef6616/docs/wip/tadoku-paper/review-2026-09/screenshots/action-menu-390-dark-compact.png"
+    }
+  ],
+  "actionMenu": "Both triggers open and select; Escape restores ellipsis trigger focus."
+}

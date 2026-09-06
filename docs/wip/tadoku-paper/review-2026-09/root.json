@@ -1,0 +1,55 @@
+{
+  "pages": [
+    {
+      "name": "Catalogue index",
+      "route": "/",
+      "changes": "Added a starting path to Setup, composition and forms; retained complete navigation inventory.",
+      "verification": "Desktop1280/light and390px/dark compact examples; screenshots inspected; no outer overflow or browser runtime errors."
+    },
+    {
+      "name": "Setup",
+      "route": "/setup",
+      "changes": "Created one setup destination for dependencies, stylesheet/theme/density, CSS/React composition and React Hook Form.",
+      "verification": "Desktop1280/light and390px/dark compact examples; screenshots inspected; no outer overflow or browser runtime errors."
+    },
+    {
+      "name": "Button",
+      "route": "/components/actions/button",
+      "changes": "Complete variants/loading/narrow/icon/native-class examples; full class list, props and usage. Nested density fixed.",
+      "verification": "Desktop1280/light and390px/dark compact examples; screenshots inspected; no outer overflow or browser runtime errors."
+    },
+    {
+      "name": "Input",
+      "route": "/components/forms/input",
+      "changes": "Real save/validation results, full prop reference and three canonical examples;44/36px density and disabled registration fixed.",
+      "verification": "Desktop1280/light and390px/dark compact examples; screenshots inspected; no outer overflow or browser runtime errors."
+    },
+    {
+      "name": "Modal",
+      "route": "/components/overlays/modal",
+      "changes": "Real local deletion, cancel/focus behavior, controlled RHF search and complete modal API.",
+      "verification": "Desktop1280/light and390px/dark compact examples; screenshots inspected; no outer overflow or browser runtime errors."
+    },
+    {
+      "name": "ActionMenu",
+      "route": "/components/actions/action-menu",
+      "changes": "Real outcomes and disabled reason; curated chevron and labelled icon-only ellipsis alternative.",
+      "verification": "Desktop1280/light and390px/dark compact examples; screenshots inspected; no outer overflow or browser runtime errors."
+    },
+    {
+      "name": "Table",
+      "route": "/components/data-display/table",
+      "changes": "Complete typed rows/columns and empty fixture; usage, alignment, caption and overflow contract.",
+      "verification": "Desktop1280/light and390px/dark compact examples; screenshots inspected; no outer overflow or browser runtime errors."
+    },
+    {
+      "name": "HeatmapChart",
+      "route": "/components/data-display/heatmap-chart",
+      "changes": "Complete deterministic year/data generation and zero-activity example; data shape, keyboard and scrolling guidance.",
+      "verification": "Desktop1280/light and390px/dark compact examples; screenshots inspected; no outer overflow or browser runtime errors."
+    }
+  ],
+  "interaction_evidence": "root-interactions.json",
+  "matrix": "root-browser.json",
+  "open_decisions": []
+}

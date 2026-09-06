@@ -1,0 +1,777 @@
+{
+  "date": "2026-09-05",
+  "lane": "forms-feedback",
+  "status": "Complete: all 14 pages reviewed across 56 browser configurations, with interactions and screenshot inspection.",
+  "preview": "https://t3-1496df156de4a7589efee61c.lab",
+  "pages": [
+    {
+      "path": "/components/forms/textarea",
+      "matrix": [
+        {
+          "width": 1280,
+          "theme": "light",
+          "density": "comfortable",
+          "overflow": false,
+          "controls": [
+            {
+              "className": "paper-input paper-textarea",
+              "height": 128
+            }
+          ],
+          "screenshot": "forms-textarea-1280-light.png"
+        },
+        {
+          "width": 360,
+          "theme": "light",
+          "density": "comfortable",
+          "overflow": false,
+          "controls": [
+            {
+              "className": "paper-input paper-textarea",
+              "height": 128
+            }
+          ]
+        },
+        {
+          "width": 360,
+          "theme": "dark",
+          "density": "compact",
+          "overflow": false,
+          "controls": [
+            {
+              "className": "paper-input paper-textarea",
+              "height": 128
+            }
+          ],
+          "screenshot": "forms-textarea-360-dark.png"
+        },
+        {
+          "width": 1280,
+          "theme": "dark",
+          "density": "compact",
+          "overflow": false,
+          "controls": [
+            {
+              "className": "paper-input paper-textarea",
+              "height": 128
+            }
+          ]
+        }
+      ],
+      "interactions": [
+        "Empty fixture starts empty, Save entry exposes required inline error.",
+        "Valid multiline content saves with visible submitted value."
+      ]
+    },
+    {
+      "path": "/components/forms/select",
+      "matrix": [
+        {
+          "width": 1280,
+          "theme": "light",
+          "density": "comfortable",
+          "overflow": false,
+          "controls": [
+            {
+              "className": "paper-input paper-select",
+              "height": 44
+            }
+          ],
+          "screenshot": "forms-select-1280-light.png"
+        },
+        {
+          "width": 360,
+          "theme": "light",
+          "density": "comfortable",
+          "overflow": false,
+          "controls": [
+            {
+              "className": "paper-input paper-select",
+              "height": 44
+            }
+          ]
+        },
+        {
+          "width": 360,
+          "theme": "dark",
+          "density": "compact",
+          "overflow": false,
+          "controls": [
+            {
+              "className": "paper-input paper-select",
+              "height": 36
+            }
+          ],
+          "screenshot": "forms-select-360-dark.png"
+        },
+        {
+          "width": 1280,
+          "theme": "dark",
+          "density": "compact",
+          "overflow": false,
+          "controls": [
+            {
+              "className": "paper-input paper-select",
+              "height": 36
+            }
+          ]
+        }
+      ],
+      "interactions": [
+        "Empty fixture starts empty, Save entry exposes required inline error.",
+        "Native selection Chinese saves language:zh."
+      ]
+    },
+    {
+      "path": "/components/forms/checkbox",
+      "matrix": [
+        {
+          "width": 1280,
+          "theme": "light",
+          "density": "comfortable",
+          "overflow": false,
+          "controls": [],
+          "screenshot": "forms-checkbox-1280-light.png"
+        },
+        {
+          "width": 360,
+          "theme": "light",
+          "density": "comfortable",
+          "overflow": false,
+          "controls": []
+        },
+        {
+          "width": 360,
+          "theme": "dark",
+          "density": "compact",
+          "overflow": false,
+          "controls": [],
+          "screenshot": "forms-checkbox-360-dark.png"
+        },
+        {
+          "width": 1280,
+          "theme": "dark",
+          "density": "compact",
+          "overflow": false,
+          "controls": []
+        }
+      ],
+      "interactions": [
+        "Unchecked is valid and saves public:false."
+      ]
+    },
+    {
+      "path": "/components/forms/radio-select",
+      "matrix": [
+        {
+          "width": 1280,
+          "theme": "light",
+          "density": "comfortable",
+          "overflow": false,
+          "controls": [
+            {
+              "className": "paper-radio-select__segment",
+              "height": 44
+            },
+            {
+              "className": "paper-radio-select__segment",
+              "height": 44
+            },
+            {
+              "className": "paper-radio-select__segment",
+              "height": 44
+            }
+          ],
+          "screenshot": "forms-radio-select-1280-light.png"
+        },
+        {
+          "width": 360,
+          "theme": "light",
+          "density": "comfortable",
+          "overflow": false,
+          "controls": [
+            {
+              "className": "paper-radio-select__segment",
+              "height": 44
+            },
+            {
+              "className": "paper-radio-select__segment",
+              "height": 44
+            },
+            {
+              "className": "paper-radio-select__segment",
+              "height": 44
+            }
+          ]
+        },
+        {
+          "width": 360,
+          "theme": "dark",
+          "density": "compact",
+          "overflow": false,
+          "controls": [
+            {
+              "className": "paper-radio-select__segment",
+              "height": 36
+            },
+            {
+              "className": "paper-radio-select__segment",
+              "height": 36
+            },
+            {
+              "className": "paper-radio-select__segment",
+              "height": 36
+            }
+          ],
+          "screenshot": "forms-radio-select-360-dark.png"
+        },
+        {
+          "width": 1280,
+          "theme": "dark",
+          "density": "compact",
+          "overflow": false,
+          "controls": [
+            {
+              "className": "paper-radio-select__segment",
+              "height": 36
+            },
+            {
+              "className": "paper-radio-select__segment",
+              "height": 36
+            },
+            {
+              "className": "paper-radio-select__segment",
+              "height": 36
+            }
+          ]
+        }
+      ],
+      "interactions": [
+        "Empty fixture starts empty, Save entry exposes required inline error.",
+        "Native arrow selection and valid save work; empty selection reports error."
+      ]
+    },
+    {
+      "path": "/components/forms/radio-group",
+      "matrix": [
+        {
+          "width": 1280,
+          "theme": "light",
+          "density": "comfortable",
+          "overflow": false,
+          "controls": [],
+          "screenshot": "forms-radio-group-1280-light.png"
+        },
+        {
+          "width": 360,
+          "theme": "light",
+          "density": "comfortable",
+          "overflow": false,
+          "controls": []
+        },
+        {
+          "width": 360,
+          "theme": "dark",
+          "density": "compact",
+          "overflow": false,
+          "controls": [],
+          "screenshot": "forms-radio-group-360-dark.png"
+        },
+        {
+          "width": 1280,
+          "theme": "dark",
+          "density": "compact",
+          "overflow": false,
+          "controls": []
+        }
+      ],
+      "interactions": [
+        "Empty fixture starts empty, Save entry exposes required inline error.",
+        "Native arrow selection and valid save work; empty selection reports error."
+      ]
+    },
+    {
+      "path": "/components/forms/amount-with-unit",
+      "matrix": [
+        {
+          "width": 1280,
+          "theme": "light",
+          "density": "comfortable",
+          "overflow": false,
+          "controls": [
+            {
+              "className": "paper-compound-field",
+              "height": 44
+            },
+            {
+              "className": "paper-input",
+              "height": 43
+            },
+            {
+              "className": "paper-input paper-compound-field__unit",
+              "height": 43
+            }
+          ],
+          "screenshot": "forms-amount-with-unit-1280-light.png"
+        },
+        {
+          "width": 360,
+          "theme": "light",
+          "density": "comfortable",
+          "overflow": false,
+          "controls": [
+            {
+              "className": "paper-compound-field",
+              "height": 44
+            },
+            {
+              "className": "paper-input",
+              "height": 43
+            },
+            {
+              "className": "paper-input paper-compound-field__unit",
+              "height": 43
+            }
+          ]
+        },
+        {
+          "width": 360,
+          "theme": "dark",
+          "density": "compact",
+          "overflow": false,
+          "controls": [
+            {
+              "className": "paper-compound-field",
+              "height": 36
+            },
+            {
+              "className": "paper-input",
+              "height": 35
+            },
+            {
+              "className": "paper-input paper-compound-field__unit",
+              "height": 35
+            }
+          ],
+          "screenshot": "forms-amount-with-unit-360-dark.png"
+        },
+        {
+          "width": 1280,
+          "theme": "dark",
+          "density": "compact",
+          "overflow": false,
+          "controls": [
+            {
+              "className": "paper-compound-field",
+              "height": 36
+            },
+            {
+              "className": "paper-input",
+              "height": 35
+            },
+            {
+              "className": "paper-input paper-compound-field__unit",
+              "height": 35
+            }
+          ]
+        }
+      ],
+      "interactions": [
+        "Empty fixture starts empty, Save entry exposes required inline error.",
+        "Zero rejected; 48minutes saves paired numeric amount/unit."
+      ]
+    },
+    {
+      "path": "/components/forms/autocomplete",
+      "matrix": [
+        {
+          "width": 1280,
+          "theme": "light",
+          "density": "comfortable",
+          "overflow": false,
+          "controls": [
+            {
+              "className": "paper-input",
+              "height": 44
+            }
+          ],
+          "screenshot": "forms-autocomplete-1280-light.png"
+        },
+        {
+          "width": 360,
+          "theme": "light",
+          "density": "comfortable",
+          "overflow": false,
+          "controls": [
+            {
+              "className": "paper-input",
+              "height": 44
+            }
+          ]
+        },
+        {
+          "width": 360,
+          "theme": "dark",
+          "density": "compact",
+          "overflow": false,
+          "controls": [
+            {
+              "className": "paper-input",
+              "height": 36
+            }
+          ],
+          "screenshot": "forms-autocomplete-360-dark.png"
+        },
+        {
+          "width": 1280,
+          "theme": "dark",
+          "density": "compact",
+          "overflow": false,
+          "controls": [
+            {
+              "className": "paper-input",
+              "height": 36
+            }
+          ]
+        }
+      ],
+      "interactions": [
+        "Empty fixture starts empty, Save entry exposes required inline error.",
+        "Typing Ch, ArrowDown andEnter selects Chinese object; required error clears."
+      ]
+    },
+    {
+      "path": "/components/forms/multi-autocomplete",
+      "matrix": [
+        {
+          "width": 1280,
+          "theme": "light",
+          "density": "comfortable",
+          "overflow": false,
+          "controls": [],
+          "screenshot": "forms-multi-autocomplete-1280-light.png"
+        },
+        {
+          "width": 360,
+          "theme": "light",
+          "density": "comfortable",
+          "overflow": false,
+          "controls": []
+        },
+        {
+          "width": 360,
+          "theme": "dark",
+          "density": "compact",
+          "overflow": false,
+          "controls": [],
+          "screenshot": "forms-multi-autocomplete-360-dark.png"
+        },
+        {
+          "width": 1280,
+          "theme": "dark",
+          "density": "compact",
+          "overflow": false,
+          "controls": []
+        }
+      ],
+      "interactions": [
+        "Empty fixture starts empty, Save entry exposes required inline error.",
+        "Keyboard selects known value, saves, named chip removal restores required error."
+      ]
+    },
+    {
+      "path": "/components/forms/tags-input",
+      "matrix": [
+        {
+          "width": 1280,
+          "theme": "light",
+          "density": "comfortable",
+          "overflow": false,
+          "controls": [],
+          "screenshot": "forms-tags-input-1280-light.png"
+        },
+        {
+          "width": 360,
+          "theme": "light",
+          "density": "comfortable",
+          "overflow": false,
+          "controls": []
+        },
+        {
+          "width": 360,
+          "theme": "dark",
+          "density": "compact",
+          "overflow": false,
+          "controls": [],
+          "screenshot": "forms-tags-input-360-dark.png"
+        },
+        {
+          "width": 1280,
+          "theme": "dark",
+          "density": "compact",
+          "overflow": false,
+          "controls": []
+        }
+      ],
+      "interactions": [
+        "Empty fixture starts empty, Save entry exposes required inline error.",
+        "Keyboard selects known value, saves, named chip removal restores required error."
+      ]
+    },
+    {
+      "path": "/components/actions/button-group",
+      "matrix": [
+        {
+          "width": 1280,
+          "theme": "light",
+          "density": "comfortable",
+          "overflow": false,
+          "controls": [],
+          "screenshot": "actions-button-group-1280-light.png"
+        },
+        {
+          "width": 360,
+          "theme": "light",
+          "density": "comfortable",
+          "overflow": false,
+          "controls": []
+        },
+        {
+          "width": 360,
+          "theme": "dark",
+          "density": "compact",
+          "overflow": false,
+          "controls": [],
+          "screenshot": "actions-button-group-360-dark.png"
+        },
+        {
+          "width": 1280,
+          "theme": "dark",
+          "density": "compact",
+          "overflow": false,
+          "controls": []
+        }
+      ],
+      "interactions": [
+        "Edit changes local status; Delete remains disabled."
+      ]
+    },
+    {
+      "path": "/components/feedback/flash",
+      "matrix": [
+        {
+          "width": 1280,
+          "theme": "light",
+          "density": "comfortable",
+          "overflow": false,
+          "controls": [],
+          "screenshot": "feedback-flash-1280-light.png"
+        },
+        {
+          "width": 360,
+          "theme": "light",
+          "density": "comfortable",
+          "overflow": false,
+          "controls": []
+        },
+        {
+          "width": 360,
+          "theme": "dark",
+          "density": "compact",
+          "overflow": false,
+          "controls": [],
+          "screenshot": "feedback-flash-360-dark.png"
+        },
+        {
+          "width": 1280,
+          "theme": "dark",
+          "density": "compact",
+          "overflow": false,
+          "controls": []
+        }
+      ],
+      "interactions": [
+        "Danger uses alert; three nonurgent statuses polite; Review dates links to concrete context."
+      ]
+    },
+    {
+      "path": "/components/feedback/loading",
+      "matrix": [
+        {
+          "width": 1280,
+          "theme": "light",
+          "density": "comfortable",
+          "overflow": false,
+          "controls": [],
+          "screenshot": "feedback-loading-1280-light.png"
+        },
+        {
+          "width": 360,
+          "theme": "light",
+          "density": "comfortable",
+          "overflow": false,
+          "controls": []
+        },
+        {
+          "width": 360,
+          "theme": "dark",
+          "density": "compact",
+          "overflow": false,
+          "controls": [],
+          "screenshot": "feedback-loading-360-dark.png"
+        },
+        {
+          "width": 1280,
+          "theme": "dark",
+          "density": "compact",
+          "overflow": false,
+          "controls": []
+        }
+      ],
+      "interactions": [
+        "Three named loading statuses; reduced-motion emulation checked."
+      ]
+    },
+    {
+      "path": "/components/data-display/surface",
+      "matrix": [
+        {
+          "width": 1280,
+          "theme": "light",
+          "density": "comfortable",
+          "overflow": false,
+          "controls": [],
+          "screenshot": "data-display-surface-1280-light.png"
+        },
+        {
+          "width": 360,
+          "theme": "light",
+          "density": "comfortable",
+          "overflow": false,
+          "controls": []
+        },
+        {
+          "width": 360,
+          "theme": "dark",
+          "density": "compact",
+          "overflow": false,
+          "controls": [],
+          "screenshot": "data-display-surface-360-dark.png"
+        },
+        {
+          "width": 1280,
+          "theme": "dark",
+          "density": "compact",
+          "overflow": false,
+          "controls": []
+        }
+      ],
+      "interactions": [
+        "Four semantic articles compare flat/floating/showcase and independent accent rail."
+      ]
+    },
+    {
+      "path": "/components/feedback/toast",
+      "matrix": [
+        {
+          "width": 1280,
+          "theme": "light",
+          "density": "comfortable",
+          "overflow": false,
+          "controls": [],
+          "screenshot": "feedback-toast-1280-light.png"
+        },
+        {
+          "width": 360,
+          "theme": "light",
+          "density": "comfortable",
+          "overflow": false,
+          "controls": []
+        },
+        {
+          "width": 360,
+          "theme": "dark",
+          "density": "compact",
+          "overflow": false,
+          "controls": [],
+          "screenshot": "feedback-toast-360-dark.png"
+        },
+        {
+          "width": 1280,
+          "theme": "dark",
+          "density": "compact",
+          "overflow": false,
+          "controls": []
+        }
+      ],
+      "interactions": [
+        "Success and high-priority failure queue; Dismiss all removes both."
+      ]
+    }
+  ],
+  "fixes": [
+    "Complete form examples include imports, provider, default values, validation, visible saved values and reset. All 49 catalogue examples now render imported TSX modules and display the exact same source files.",
+    "Required autocomplete validation, blur/error relationships, selection limits, numeric amount validation and disabled semantics are preserved.",
+    "Single-line controls and chip areas use explicit control typography. TextArea keeps prose leading.",
+    "Segmented radio controls inherit the nearest density scope.",
+    "AmountWithUnit constrains the native unit selector to the compound control height.",
+    "Flash gives content the flexible column when its optional icon is absent, preventing mobile overflow.",
+    "Toast headings and descriptions reset browser margins so queued notifications fit the example viewport.",
+    "Changing the selected fixture remounts its example, so empty fixtures do not retain previous form values or saved states."
+  ],
+  "tests": "All 49 displayed examples match their canonical TSX files and compile against the published API. TypeScript 4.9 consumer check, package typecheck and lint pass. Six focused density and feedback CSS regressions pass. The root agent owns the final full-suite result.",
+  "openQuestions": [
+    {
+      "page": "RadioSelect",
+      "question": "Should segmented choices wrap onto multiple rows on narrow screens, or should guidance limit segmented sets to labels that fit on one row?",
+      "current": "Existing wrapping is preserved. Phone, Tablet and Desktop span two rows at 360px."
+    },
+    {
+      "page": "Flash",
+      "question": "Should Flash status rails share the 3px foundation accent width or retain the existing 4px status rail?",
+      "current": "The existing 4px status width is preserved. Layout overflow is fixed without changing the status palette or rail width."
+    }
+  ],
+  "pending": [],
+  "sourceParity": {
+    "status": "implemented and verified",
+    "fixtureCount": 49,
+    "canonicalDirectory": "frontend/packages/paper-ui/src/catalog/examples",
+    "mechanism": "Catalogue imports actual TSX modules and exact same files via ?raw. Build-time text loader supplies code; no browser eval or hand-copied markup.",
+    "verification": [
+      "Every fixture code value equals its canonical TSX source file.",
+      "All 49 published consumer examples typecheck.",
+      "TypeScript 4.9 consumer check passes.",
+      "Package typecheck and lint pass; the root agent owns the final full-suite result."
+    ],
+    "bundleBytes": {
+      "before": 327013,
+      "after": 428170,
+      "gzipBefore": 73103,
+      "gzipAfter": 79604
+    },
+    "note": "The bundle includes formatted source text and all live example modules. Compressed growth is 6,501 bytes. No runtime dependency was added."
+  },
+  "browser": {
+    "engine": "Local headless Chromium through the existing Playwright installation after the collaborative preview host became unavailable.",
+    "viewports": [
+      1280,
+      360
+    ],
+    "themes": [
+      "light",
+      "dark"
+    ],
+    "densities": [
+      "comfortable",
+      "compact"
+    ],
+    "configurationsPerPage": 4,
+    "screenshots": "/tmp/paper-browser/forms",
+    "measurement": "Single-line Input, Select, RadioSelect, AmountWithUnit, MultiAutocomplete and TagsInput measure 44px comfortable and 36px compact. TextArea retains a 128px minimum and readable prose leading."
+  },
+  "integrator_decisions": [
+    "Retain segmented wrapping as the existing responsive contract; guidance should favor short labels and use a different choice control for unwieldy sets.",
+    "Retain the existing4px Flash status rail as distinct from the3px foundation accent rail. No change needed for this pass; documented for user review."
+  ]
+}

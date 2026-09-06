@@ -1,0 +1,120 @@
+{
+  "reviewedAt": "2026-09-05",
+  "scope": "Navbar, Sidebar, Breadcrumb, Tabbar, VerticalTabbar, Pagination, Tabs, Drawer; shared ExampleCanvas and route behavior; ActionMenu trigger feedback",
+  "browser": {
+    "initialTool": "T3 collaborative browser tab_6",
+    "initialOrigin": "https://t3-1496df156de4a7589efee61c.lab",
+    "desktop": "1280x800 outer viewport; Fit 575px iframe; Light/Comfortable",
+    "mobile": "390x844 outer viewport; Fit 326px iframe; Dark/Compact",
+    "exactViewports": "Navbar additionally reviewed in exact 1280px Desktop and 360px Phone preview modes",
+    "limitations": "Original T3 screenshots were visually inspected in tool results, not saved as files. Final screenshots after user feedback are being saved under screenshots/. Intermediate theme/overlay frames need 500ms settling before comparison.",
+    "finalTool": "Local Playwright Chromium, http://127.0.0.1:57326",
+    "finalMatrix": "18 checks: nine pages (the original eight plus ActionMenu), each at 1280x900 Light/Comfortable and 390x844 Dark/Compact. Both iframe and outer document overflow checks passed. All eight final mobile screenshots and the ActionMenu alternatives were visually inspected.",
+    "evidenceFiles": [
+      "navigation-browser-matrix.json",
+      "navigation-keyboard.json",
+      "screenshots/preview-link-contained.png",
+      "screenshots/action-menu-ellipsis-open.png",
+      "screenshots/drawer-open-dark.png"
+    ],
+    "finalFitWidths": "590px desktop and 341px mobile in local headless Chromium; scrollbar allocation differs from the T3 browser."
+  },
+  "pages": [
+    {
+      "name": "Navbar",
+      "route": "/components/navigation/navbar",
+      "documentation": "Complete setup, router adapter contract, current-path behavior and real destination callbacks; dropdown/mobile/loading examples.",
+      "visual": "Desktop and mobile theme/density checks passed without outer overflow. Dropdown portal stayed in iframe. Phone disclosure exposed all destinations.",
+      "keyboard": "Actual coordinate click followed by ArrowDown focused Profile; Escape closed Account and restored trigger focus. Mobile Escape collapsed disclosure and restored Open menu focus.",
+      "fix": "Navbar specimen brand link now updates Home through the same consumer renderLink adapter as other destinations; failing brand regression passed."
+    },
+    {
+      "name": "Sidebar",
+      "route": "/components/navigation/sidebar",
+      "documentation": "Grouped sections, current and disabled links, router responsibilities and disabled explanation.",
+      "visual": "Current accent rail, section spacing and disabled state visually inspected at both viewport/theme/density pairs; no horizontal overflow.",
+      "interaction": "Local Playwright clicked Users then Imports. Both callbacks updated the current selection, the iframe URL remained about:srcdoc, and the outer route stayed /components/navigation/sidebar."
+    },
+    {
+      "name": "Breadcrumb",
+      "route": "/components/navigation/breadcrumb",
+      "documentation": "Parent links versus non-link current item, responsive ancestor hiding and long labels explained with complete fixture data.",
+      "visual": "Readable parent/current pair at narrow widths; no horizontal overflow in either reviewed pair."
+    },
+    {
+      "name": "Tabbar",
+      "route": "/components/navigation/tabbar",
+      "documentation": "Native links versus Tabs selection distinction, router adapter and explicit selected route examples.",
+      "visual": "Native inner horizontal overflow worked without widening the page. Initial selected My contests was partly outside 326px viewport.",
+      "fix": "Added current destination reveal on mount, current-id changes and list resizing. Only list.scrollLeft changes; unrelated renders do not repeat scrolling.",
+      "validation": "The regression failed before the fix, then passed: scrollLeft is 160 on initial render, remains 160 on an unrelated fresh-array rerender, and returns to 0 when the route changes to the first link. Final Playwright checks confirmed that the selected link stays inside the scroll container at desktop and mobile widths."
+    },
+    {
+      "name": "VerticalTabbar",
+      "route": "/components/navigation/vertical-tabbar",
+      "documentation": "Full route-link fixture and public props; distinct from local tab panels.",
+      "visual": "Selected left rule, label wrapping and content spacing inspected in both pairs; no document overflow."
+    },
+    {
+      "name": "Pagination",
+      "route": "/components/navigation/pagination",
+      "documentation": "Working 24-page state, page/entry summary and disabled one-page boundary; callback/href modes explained.",
+      "visual": "Narrow Previous/Next layout and disabled boundary controls fit both pairs.",
+      "fix": "Existing diff preserves modified-link native behavior when href and onPageChange are both supplied.",
+      "validation": "Regression in phase-three-navigation-lane.test.tsx."
+    },
+    {
+      "name": "Tabs",
+      "route": "/components/navigation/tabs",
+      "documentation": "Automatic horizontal tabs, disabled option and controlled manual vertical tabs; full setup and mounted-panel contract.",
+      "visual": "Horizontal and vertical specimens inspected in both pairs. Long combined specimen scrolls inside iframe.",
+      "keyboard": "Actual browser ArrowRight changed Summary to Entries, then wrapped past disabled Moderation to Summary. Vertical ArrowDown moved focus to Entries without selecting; Enter then selected Entries."
+    },
+    {
+      "name": "Drawer",
+      "route": "/components/overlays/drawer",
+      "documentation": "Functional RHF filter form with Apply/Cancel, draft reset on reopen, start placement and footerless help; unique form id joins footer submit to body form.",
+      "visual": "Dark/compact narrow modal fully visible after transition, header close and footer actions reachable; no horizontal overflow.",
+      "interaction": "Browser applied Japanese; opening a French draft then Escape left saved Japanese unchanged and returned focus to Review filters. Unit regression covers Apply/Cancel/reopen."
+    }
+  ],
+  "sharedFixes": [
+    {
+      "issue": "Preview default Desktop width hid much of the example behind horizontal scrolling.",
+      "change": "Fit mode defaults to actual measured available width; explicit Phone/Tablet/Desktop still preserve exact breakpoint widths.",
+      "validation": "ExampleCanvas fitting/resizing tests passed."
+    },
+    {
+      "issue": "Switching two fixtures rendered by the same component retained the first fixture form/result state.",
+      "change": "Key fixture stage by fixture.id.",
+      "validation": "Actual Select fixture regression failed with ja retained; after fix empty fixture starts empty, no saved Flash persists, Dark preference survives and required validation works."
+    },
+    {
+      "issue": "Changing catalogue pages retained scroll position.",
+      "change": "Route effect scrolls to top for routes without a hash; direct hash routes continue to reveal their section.",
+      "validation": "The regression failed before the fix and passed afterward. The browser scrolled Tabbar to 1971px, selected Sidebar, and confirmed window.scrollY === 0."
+    },
+    {
+      "issue": "Example anchors could navigate away from the srcdoc iframe and break the preview.",
+      "change": "Preview stage prevents anchor default navigation after the component selection callback, announces destination, and scrolls existing local fragment targets. Public navigation components retain their normal app APIs.",
+      "validation": "The regression failed before the fix and passed afterward. Repeated Users and Imports link clicks updated selection, retained about:srcdoc, and showed the destination without breaking the preview."
+    },
+    {
+      "issue": "ActionMenu used an unstyled filled triangle glyph and offered no compact alternative.",
+      "change": "Use curated outline chevron for labelled trigger; add iconOnly ellipsis with required accessible label and an example contextual row.",
+      "validation": "The regression failed before the fix and passed afterward. The browser exercised both trigger styles, selected Edit log, and confirmed Escape restored focus to the ellipsis trigger. Desktop and mobile screenshots were inspected."
+    }
+  ],
+  "tests": {
+    "package": "193/193 tests passed across 30 files after source extraction, including navigation, ActionMenu, Drawer, Tabs and consumer contracts.",
+    "styleguide": "139/139 tests passed across 20 files.",
+    "targetedLint": "All changed navigation, ActionMenu, ExampleCanvas, route and test files pass lint.",
+    "typecheckAndBuild": "paper-ui build passed; paper-styleguide typecheck and production build passed. Styleguide lint has zero errors and an existing React Hook Form compiler warning.",
+    "parallelValidation": "The forms agent reports that all 49 examples compile and the TypeScript 4.9 consumer check passed.",
+    "laterChange": "After the broad checks, the forms agent fixed Flash CSS overflow with a failing then passing focused test. Assets were rebuilt for its browser review."
+  },
+  "openDesignQuestions": [],
+  "observations": [
+    "The shared preview viewport stays bounded at 22rem tall; longer forms scroll inside it. This preserves a real viewport and gives Drawers room, but very short examples retain blank space."
+  ]
+}

@@ -225,7 +225,9 @@ describe('feature flag browser state', () => {
     fireEvent.change(input, { target: { value: 'unsaved form value' } })
 
     act(() => routerEvents.emit())
-    await act(() => vi.advanceTimersByTimeAsync(50))
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(50)
+    })
 
     expect(screen.getByText('disabled')).toBeTruthy()
     expect(input.value).toBe('unsaved form value')

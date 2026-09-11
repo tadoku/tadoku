@@ -14,9 +14,11 @@ export function AmountWithUnit<T extends FieldValues>(
   props: AmountWithUnitProps<T>,
 ) {
   const { name, label, units, unitsLabel, ...inputProps } = props
+  const amountName: string = `${name}Value`
 
   const {
     register,
+    setValue,
     formState: { errors },
   } = useFormContext()
 
@@ -50,7 +52,33 @@ export function AmountWithUnit<T extends FieldValues>(
           type="number"
           {...inputProps}
           id={`${name}Value`}
-          {...register(`${name}Value`, { valueAsNumber: true })}
+          {...register(amountName, { valueAsNumber: true })}
+          onPaste={event => {
+            inputProps.onPaste?.(event)
+            if (
+              event.defaultPrevented ||
+              inputProps.disabled ||
+              inputProps.readOnly
+            ) {
+              return
+            }
+
+            const pasted = event.clipboardData.getData('text/plain')
+            const trimmed = pasted.trim()
+            if (trimmed === pasted) return
+
+            // Trim before the browser sanitizes pasted whitespace in number inputs.
+            const numericInput =
+              event.currentTarget.cloneNode() as HTMLInputElement
+            numericInput.value = trimmed
+            if (!Number.isFinite(numericInput.valueAsNumber)) return
+
+            event.preventDefault()
+            setValue(amountName, numericInput.valueAsNumber, {
+              shouldDirty: true,
+              shouldValidate: true,
+            })
+          }}
           className="!border-l-0 !border-t-0 !border-b-0 !border-r border-black/10 focus:!border-black/10 !h-full !bg-none focus:!ring-0 focus:!outline-none w-full"
           aria-invalid={amountFieldHasError ? 'true' : 'false'}
           aria-describedby={amountFieldHasError ? `${name}-error` : undefined}

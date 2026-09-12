@@ -1,0 +1,193 @@
+{
+  "scope": [
+    "Home (six scenarios)",
+    "About Tadoku",
+    "Start here",
+    "Scoring & rules",
+    "Questions & help",
+    "Shared application shell and mobile account/navigation controls"
+  ],
+  "changes": [
+    "Unified shell header, content and footer around 1160px content width and shared 28/20/16px gutters.",
+    "Composed the home invitation and round ledger as one balanced section; deliberate three-line guest heading, aligned table/header/statistics gutters and quieter participant links.",
+    "Reduced the home supporting-section spacing and removed the duplicate retry action from the unavailable scenario.",
+    "Bounded guide prose, removed duplicate page-name text, aligned the section navigation with the heading and grouped in-page links with consistent separators.",
+    "Shortened the oversized mobile About heading and tightened the getting-started introduction.",
+    "Aligned wrapped FAQ questions and answers, using native details disclosures with consistent right-side chevrons.",
+    "Simplified the scoring comparison to context and its example rule beside the score, keeping every value readable on a 273px mobile content column.",
+    "Added a decorative custom ActionMenu trigger icon and exported UserCircleIcon for recognizable account navigation.",
+    "Kept icon-only ActionMenu controls 44\u00d744 at both densities and shortened the smallest-screen log action to Log while preserving its Log activity accessible name.",
+    "Made the shared Navbar menu trigger 44\u00d744 and nonshrinking regardless density."
+  ],
+  "visualCoverage": {
+    "home1280light": [
+      "guest-live",
+      "member-open",
+      "participant-live",
+      "upcoming",
+      "between",
+      "unavailable"
+    ],
+    "home320light": [
+      "guest-live",
+      "member-open",
+      "participant-live",
+      "upcoming",
+      "between",
+      "unavailable"
+    ],
+    "guide1280light": [
+      "/about",
+      "/guide",
+      "/guide/scoring",
+      "/guide/questions"
+    ],
+    "guide1280dark": [
+      "/about",
+      "/guide",
+      "/guide/scoring",
+      "/guide/questions"
+    ],
+    "guide390light": [
+      "/about",
+      "/guide",
+      "/guide/scoring",
+      "/guide/questions"
+    ],
+    "overflow": "No document or child overflow found in all six home scenarios at320px; guide pages fit343px reading column at390px viewport.",
+    "guideIa320": {
+      "separate": [
+        "/about",
+        "/guide",
+        "/guide/scoring",
+        "/guide/questions"
+      ],
+      "tasks": [
+        "/about",
+        "/guide",
+        "/guide/scoring",
+        "/guide/questions"
+      ]
+    },
+    "home320DarkCompact": [
+      "participant-live"
+    ],
+    "scoring320": {
+      "tableWidth": 273,
+      "containerWidth": 273,
+      "rowHeights": [
+        68,
+        68.5
+      ],
+      "overflow": false,
+      "comparisonValuesPreserved": true
+    }
+  },
+  "behaviorChecks": [
+    "FAQ search registration returns 1 question; opening its disclosure reveals the answer.",
+    "FAQ unmatched search shows the empty state; Clear search restores 6 questions and returns focus to the input.",
+    "Unavailable home Retry standings restores participant-live and 5 leaderboard rows.",
+    "Custom account icon remains decorative; ArrowDown opens its menu and Escape restores trigger focus (component test).",
+    "Alternative guide navigation labels render correctly on all 4 routes at 320px in both separate and tasks modes.",
+    "The account menu fits within the 320px viewport and Escape closes it and returns focus to its trigger after the closing transition."
+  ],
+  "checks": {
+    "paperTypecheck": "passed",
+    "targetedESLint": "passed: App, Home, Guide, ActionMenu, icons",
+    "phaseTwoComponentTests": "12 passed"
+  },
+  "geometry": {
+    "shellBefore1280": {
+      "logoX": 24.5,
+      "contentX": 52.5,
+      "footerX": 52.5,
+      "aligned": false
+    },
+    "shellAfter1280": {
+      "logoX": 52.5,
+      "contentX": 52.5,
+      "footerX": 52.5,
+      "aligned": true
+    },
+    "shellAfter320": {
+      "logoX": 16,
+      "contentX": 16,
+      "footerX": 16,
+      "aligned": true
+    },
+    "mobileBefore320": {
+      "logoWidth": 62.6484375,
+      "menuWidth": 34.4609375,
+      "logoToLogGap": 0
+    },
+    "mobileAfterComfortable320": {
+      "logoWidth": 80,
+      "account": [
+        44,
+        44
+      ],
+      "menu": [
+        44,
+        44
+      ],
+      "overflow": false
+    },
+    "compactBeforeFinalNavbarFix": {
+      "account": [
+        44,
+        44
+      ],
+      "menu": [
+        44,
+        36
+      ]
+    },
+    "compactAfterFinalNavbarFix": {
+      "width": 320,
+      "logoWidth": 80,
+      "account": [
+        44,
+        44
+      ],
+      "menu": [
+        44,
+        44
+      ],
+      "overflow": false
+    },
+    "compact390AfterFinalNavbarFix": {
+      "account": [
+        44,
+        44
+      ],
+      "menu": [
+        44,
+        44
+      ]
+    }
+  },
+  "screenshots": {
+    "homeBefore": "/var/lib/t3/userdata/browser-artifacts/browser-screenshot-t3-ff08555d5d6ded8a5d7d06de-lab-mty18e1w-cb4972f5.png",
+    "guideBefore": "/var/lib/t3/userdata/browser-artifacts/browser-screenshot-t3-ff08555d5d6ded8a5d7d06de-lab-mty192vn-a598cbd9.png",
+    "homeGuestDesktop": "/var/lib/t3/userdata/browser-artifacts/browser-screenshot-t3-ff08555d5d6ded8a5d7d06de-lab-mty1em6o-abfab6df.png",
+    "homeMemberDesktop": "/var/lib/t3/userdata/browser-artifacts/browser-screenshot-t3-ff08555d5d6ded8a5d7d06de-lab-mty1k7zg-cd97f3df.png",
+    "homeParticipantDesktop": "/var/lib/t3/userdata/browser-artifacts/browser-screenshot-t3-ff08555d5d6ded8a5d7d06de-lab-mty1jhgy-db701d51.png",
+    "homeUpcomingDesktop": "/var/lib/t3/userdata/browser-artifacts/browser-screenshot-t3-ff08555d5d6ded8a5d7d06de-lab-mty1ji1p-bbec0d1a.png",
+    "homeBetweenDesktop": "/var/lib/t3/userdata/browser-artifacts/browser-screenshot-t3-ff08555d5d6ded8a5d7d06de-lab-mty1jj7b-b715914e.png",
+    "guideStartDesktop": "/var/lib/t3/userdata/browser-artifacts/browser-screenshot-t3-ff08555d5d6ded8a5d7d06de-lab-mty1ex6p-8907eafa.png",
+    "guideAboutDark": "/var/lib/t3/userdata/browser-artifacts/browser-screenshot-t3-ff08555d5d6ded8a5d7d06de-lab-mty1ljt9-a06e95af.png",
+    "guideStartDark": "/var/lib/t3/userdata/browser-artifacts/browser-screenshot-t3-ff08555d5d6ded8a5d7d06de-lab-mty1lklz-5e9013cd.png",
+    "guideScoringDark": "/var/lib/t3/userdata/browser-artifacts/browser-screenshot-t3-ff08555d5d6ded8a5d7d06de-lab-mty1ll4j-c434ae98.png",
+    "guideQuestionsDark": "/var/lib/t3/userdata/browser-artifacts/browser-screenshot-t3-ff08555d5d6ded8a5d7d06de-lab-mty1llm4-e38b80fb.png",
+    "faqMobileExpanded": "/var/lib/t3/userdata/browser-artifacts/browser-screenshot-t3-ff08555d5d6ded8a5d7d06de-lab-mty1i847-64436cc2.png",
+    "header320Comfortable": "/var/lib/t3/userdata/browser-artifacts/browser-screenshot-t3-ff08555d5d6ded8a5d7d06de-lab-mty1qp1v-788f0233.png",
+    "scoring320Before": "/var/lib/t3/userdata/browser-artifacts/browser-screenshot-t3-ff08555d5d6ded8a5d7d06de-lab-mty1wrfu-496cac7e.png",
+    "scoring320After": "/var/lib/t3/userdata/browser-artifacts/browser-screenshot-t3-ff08555d5d6ded8a5d7d06de-lab-mty1xsiu-12ef8a49.png",
+    "guideSeparate320": "/var/lib/t3/userdata/browser-artifacts/browser-screenshot-t3-ff08555d5d6ded8a5d7d06de-lab-mty1wnr0-a13cf2ba.png",
+    "guideTasks320": "/var/lib/t3/userdata/browser-artifacts/browser-screenshot-t3-ff08555d5d6ded8a5d7d06de-lab-mty1wpen-82c684b6.png",
+    "homeDarkCompact320": "/var/lib/t3/userdata/browser-artifacts/browser-screenshot-t3-ff08555d5d6ded8a5d7d06de-lab-mty1z51o-2e050d0e.png",
+    "homeDarkCompactLedger320": "/var/lib/t3/userdata/browser-artifacts/browser-screenshot-t3-ff08555d5d6ded8a5d7d06de-lab-mty1z5gm-ecb1d5e2.png",
+    "mobileAccountMenu": "/var/lib/t3/userdata/browser-artifacts/browser-screenshot-t3-ff08555d5d6ded8a5d7d06de-lab-mty226of-0f16d1a3.png"
+  },
+  "remainingDecisions": []
+}

@@ -1,0 +1,14 @@
+load("@rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "timex",
+    srcs = ["timex.go"],
+    importpath = "github.com/tadoku/tadoku/services/tadoku-api/internal/timex",
+    visibility = ["//services/tadoku-api:__subpackages__"],
+)
+
+go_test(
+    name = "timex_test",
+    srcs = ["timex_test.go"],
+    deps = [":timex"],
+)

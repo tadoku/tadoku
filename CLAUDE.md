@@ -44,7 +44,7 @@ Migration PRs must remain compatible with the application version currently depl
 
 **Always write tests for new backend functionality** — new domain services, repository methods, and HTTP handlers should have corresponding test coverage.
 
-**Always use `testify` for test assertions** — use `assert` for checks and `require` for fatal preconditions (`github.com/stretchr/testify/assert` and `github.com/stretchr/testify/require`). Never use raw `if err != nil { t.Fatal(...) }` patterns.
+**Use Go's standard `testing` functionality for new or rewritten backend tests.** Use ordinary comparisons, `t.Fatalf` for failed prerequisites, `t.Errorf` for independent checks, and `t.Cleanup` for resource cleanup. Compare errors with `errors.Is`/`errors.As`. Do not add Testify, another assertion framework, or a homegrown assertion DSL. Existing tests do not need a bulk rewrite; convert them when their relevant slice is migrated or in a separately scoped mechanical change.
 
 **SQL style: always use lowercase keywords** (select, create table, not SELECT, CREATE TABLE)
 
@@ -67,6 +67,8 @@ CI runs the same script on every pull request and fails if code generation chang
 **Use "Repository" for persistent source-of-truth data, "Store" for everything else** — `Repository` interfaces access the primary database (Postgres) where authoritative data lives. `Store` interfaces access auxiliary storage (e.g. Valkey/Redis) for caches, derived data, pub/sub, coordination state, or any non-authoritative data. Implementations live under `storage/postgres/` and `storage/valkey/` respectively.
 
 **Never call `time.Now()` directly** — always inject `commondomain.Clock` and use `clock.Now()`. This applies to domain services, repository methods, and background workers. The clock is created in `main.go` and threaded through constructors. This makes time-dependent code testable via `mockClock`.
+
+For new native `tadoku-api` code, use `internal/timex.Now()` for business time instead of an injected clock. Its implementation and wall-clock tests may read `time.Now()` directly; real timers and deadlines remain independent. Tests using `timex.TheWorld`, including their parent tests, must not use `t.Parallel`. Leave legacy clock consumers unchanged until their slice is migrated.
 
 **Domain must not import storage packages** — the `domain` package must never import from `storage/postgres`, `storage/valkey`, or any other storage layer. Define domain types and interfaces in the domain package; the storage layer implements them. Repository methods should convert between sqlc types and domain types internally.
 

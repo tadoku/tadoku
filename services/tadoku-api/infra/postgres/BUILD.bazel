@@ -1,0 +1,35 @@
+load("@rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "postgres",
+    srcs = ["transaction.go"],
+    importpath = "github.com/tadoku/tadoku/services/tadoku-api/infra/postgres",
+    visibility = ["//services/tadoku-api:__subpackages__"],
+    deps = [
+        "@com_github_jackc_pgx_v5//:pgx",
+        "@com_github_jackc_pgx_v5//pgconn",
+        "@com_github_jackc_pgx_v5//pgxpool",
+    ],
+)
+
+go_test(
+    name = "postgres_test",
+    srcs = [
+        "sqlc_compat_test.go",
+        "transaction_test.go",
+    ],
+    args = ["-test.parallel=4"],
+    env_inherit = ["TADOKU_TEST_POSTGRES_URL"],
+    tags = [
+        "no-cache",
+        "no-remote-exec",
+        "requires-network",
+    ],
+    deps = [
+        ":postgres",
+        "//services/tadoku-api/infra/postgres/internal/pgxcompat",
+        "@com_github_jackc_pgx_v5//:pgx",
+        "@com_github_jackc_pgx_v5//pgconn",
+        "@com_github_jackc_pgx_v5//pgxpool",
+    ],
+)

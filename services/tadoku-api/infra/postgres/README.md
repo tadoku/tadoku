@@ -52,6 +52,9 @@ docker stop tadoku-helper-tests
 
 CI reuses its disposable PostgreSQL service and runs both normal and race tests.
 The transaction test target disables result caching and remote execution.
+Its top-level tests run in parallel, capped at four by the Bazel target. Each
+test creates its own pool and fixture before issuing SQL; subtests remain
+sequential. Tests using `timex.TheWorld` remain sequential in their own package.
 Coverage includes cross-repository commit/rollback, panic, cancellation before
 and after writes, deferred-constraint commit failure, pool reuse, nested/wrong
 pool/ended context rejection, concurrent independent transactions, and direct

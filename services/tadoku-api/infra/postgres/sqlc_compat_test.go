@@ -21,6 +21,7 @@ var (
 )
 
 func TestSQLCUsesNativeExecutorWithoutAdapter(t *testing.T) {
+	t.Parallel()
 	pool := openPool(t)
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()

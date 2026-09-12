@@ -164,6 +164,7 @@ func (r noteRepository) Count(ctx context.Context) (int, error) {
 }
 
 func TestRunInTransactionCommitsBothParticipantsAndReadsWrites(t *testing.T) {
+	t.Parallel()
 	ctx, f := newFixture(t)
 	type requestKey struct{}
 	parent := context.WithValue(ctx, requestKey{}, "request-17")
@@ -218,6 +219,7 @@ type rejection struct{ reason string }
 func (e *rejection) Error() string { return e.reason }
 
 func TestRunInTransactionCallbackErrorRollsBackAndPreservesIdentity(t *testing.T) {
+	t.Parallel()
 	ctx, f := newFixture(t)
 	denied := &rejection{"synthetic refusal"}
 	primary := fmt.Errorf("business operation: %w", denied)
@@ -254,6 +256,7 @@ func TestRunInTransactionCallbackErrorRollsBackAndPreservesIdentity(t *testing.T
 }
 
 func TestRunInTransactionPanicRollsBackAndRepanicsOriginalValue(t *testing.T) {
+	t.Parallel()
 	ctx, f := newFixture(t)
 	panicValue := &struct{ label string }{"original panic"}
 	var retained context.Context
@@ -289,6 +292,7 @@ func TestRunInTransactionPanicRollsBackAndRepanicsOriginalValue(t *testing.T) {
 }
 
 func TestRunInTransactionDeferredConstraintFailsAtCommitWithoutReplay(t *testing.T) {
+	t.Parallel()
 	ctx, f := newFixture(t)
 	calls := 0
 	var retained context.Context
@@ -333,6 +337,7 @@ func TestRunInTransactionDeferredConstraintFailsAtCommitWithoutReplay(t *testing
 }
 
 func TestRunInTransactionFailedBeginNeverCallsWork(t *testing.T) {
+	t.Parallel()
 	t.Run("already canceled", func(t *testing.T) {
 		db := openPool(t)
 		ctx, cancel := context.WithCancel(context.Background())
@@ -374,6 +379,7 @@ func TestRunInTransactionFailedBeginNeverCallsWork(t *testing.T) {
 }
 
 func TestRunInTransactionCancellationBoundsBlockedSQLAndLeavesPoolUsable(t *testing.T) {
+	t.Parallel()
 	ctx, f := newFixture(t)
 	lock, err := f.db.Begin(ctx)
 	if err != nil {
@@ -418,6 +424,7 @@ func TestRunInTransactionCancellationBoundsBlockedSQLAndLeavesPoolUsable(t *test
 }
 
 func TestRunInTransactionCancellationAfterWritesCleansUpWithoutReplacingOutcome(t *testing.T) {
+	t.Parallel()
 	for _, outcome := range []string{"nil callback error", "callback error", "panic"} {
 		t.Run(outcome, func(t *testing.T) {
 			ctx, f := newFixture(t)
@@ -507,6 +514,7 @@ func TestRunInTransactionCancellationAfterWritesCleansUpWithoutReplacingOutcome(
 }
 
 func TestRunInTransactionRejectsNestedAndWrongDatabaseWithoutEscapedWrites(t *testing.T) {
+	t.Parallel()
 	for _, mode := range []string{"nested same pool", "nested other pool", "wrong repository"} {
 		t.Run(mode, func(t *testing.T) {
 			ctx, f := newFixture(t)
@@ -544,6 +552,7 @@ func TestRunInTransactionRejectsNestedAndWrongDatabaseWithoutEscapedWrites(t *te
 }
 
 func TestExecutorSupportsPoolAndTransactionSQLSurface(t *testing.T) {
+	t.Parallel()
 	var _ postgres.DBTX = (*pgxpool.Pool)(nil)
 	var _ postgres.DBTX = (pgx.Tx)(nil)
 	ctx, f := newFixture(t)
@@ -601,6 +610,7 @@ func TestExecutorSupportsPoolAndTransactionSQLSurface(t *testing.T) {
 }
 
 func TestExecutorForwardsCancellationForEveryOperation(t *testing.T) {
+	t.Parallel()
 	db := openPool(t)
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
@@ -642,6 +652,7 @@ func TestExecutorForwardsCancellationForEveryOperation(t *testing.T) {
 }
 
 func TestRunInTransactionRejectsRestartingEndedContext(t *testing.T) {
+	t.Parallel()
 	ctx, f := newFixture(t)
 	var retained context.Context
 	if err := postgres.RunInTransaction(ctx, f.db, func(child context.Context) error {
@@ -658,6 +669,7 @@ func TestRunInTransactionRejectsRestartingEndedContext(t *testing.T) {
 }
 
 func TestIndependentConcurrentContextsRemainIsolated(t *testing.T) {
+	t.Parallel()
 	ctx, f := newFixture(t)
 	ready := make(chan int, 2)
 	release := make(chan struct{})

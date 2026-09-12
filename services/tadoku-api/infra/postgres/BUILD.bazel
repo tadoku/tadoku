@@ -18,6 +18,7 @@ go_test(
         "sqlc_compat_test.go",
         "transaction_test.go",
     ],
+    args = ["-test.parallel=4"],
     env_inherit = ["TADOKU_TEST_POSTGRES_URL"],
     tags = [
         "no-cache",

@@ -43,9 +43,9 @@ function ContestFacts({ contest, asOf }: { contest: SampleContest; asOf: string 
 }
 function ContestFeature({ contest, asOf }: { contest: SampleContest; asOf: string }) {
   const { viewer, joinedContests } = usePlayground()
-  return <Surface as="article" accent className="contest-feature">
-    <div className="contest-feature__body"><ContestStatus contest={contest} asOf={asOf} /><h2 className="paper-type-section"><Link to={contestPath(contest, asOf)}>{contest.title}</Link></h2><p>{contest.description}</p><p className="muted">{contest.languages.join(', ')} · {contest.activities.join(' and ')}</p>
-      {viewer !== 'guest' && joinedContests.includes(contest.id) ? <p><strong>You’re registered.</strong> {contestStatus(contest, asOf) === 'upcoming' ? 'Your next round is on the calendar.' : 'Keep your immersion going.'}</p> : null}
+  return <Surface as="article" className="contest-feature">
+    <div className="contest-feature__body"><div className="contest-feature__heading"><h2 className="paper-type-section"><Link to={contestPath(contest, asOf)}>{contest.title}</Link></h2><ContestStatus contest={contest} asOf={asOf} /></div><p>{contest.description}</p><p className="muted">{contest.languages.join(', ')} · {contest.activities.join(' and ')}</p>
+      {viewer !== 'guest' && joinedContests.includes(contest.id) ? <p><strong>You’re registered.</strong></p> : null}
       <div className="flex flex-wrap gap-3"><ContestPrimaryAction contest={contest} asOf={asOf} prominent /><Link className={buttonClassName({ variant: 'outline' })} to={contestPath(contest, asOf, '/leaderboard')}>View standings</Link></div>
     </div>
     <div className="contest-feature__timeline"><ContestFacts contest={contest} asOf={asOf} /><Link className="text-link" to="/guide">Read the contest guide</Link></div>
@@ -92,12 +92,11 @@ export function ContestsPage() {
   const clearFilters = () => { methods.reset(); methods.setFocus('query') }
 
   return <>
-    <header className="page-header contest-page-header"><div><h1 className="paper-type-page">Contests</h1><p className="page-lead">A shared time to read, listen and keep going.</p></div>{canCreate ? <Link className={buttonClassName()} to={`/contests/new?asOf=${asOf}`}>Create contest</Link> : null}</header>
+    <header className="page-header contest-page-header"><div><h1 className="paper-type-page">Contests</h1><p className="page-lead">{descriptions[scope]}</p></div>{canCreate ? <Link className={buttonClassName()} to={`/contests/new?asOf=${asOf}`}>Create contest</Link> : null}</header>
     <Tabbar label="Contest collections" links={(['official', 'community', 'mine'] as const).map(id => ({ id, label: scopeLabels[id], href: `/contests/${id}${location.search}`, current: scope === id, onSelect: () => methods.reset() }))} renderLink={({ href, ...props }) => <Link to={href} {...props} />} />
-    <div className="contest-collection-intro"><p>{descriptions[scope]}</p><small className="muted">All dates and deadlines use UTC.</small></div>
     {blocked ? <section className="empty-state"><h2 className="paper-type-section">Your contests, in one place.</h2><p>Sign in to see the contests you organize. You can still browse official rounds and public community challenges.</p><Link className={buttonClassName()} to={`/sign-in?next=${encodeURIComponent('/contests/mine')}`}>Sign in</Link></section> : isError ? <section className="empty-state" role="alert"><h2 className="paper-type-section">Contests could not be loaded.</h2><p>Try loading this collection again.</p><Button onClick={() => setScenario('member')}>Try again</Button></section> : <>
-      <FormProvider {...methods}><form className="contest-filters" onSubmit={event => event.preventDefault()}><Input name="query" label="Find a contest" type="search" placeholder="Search title or language" /><Select name="period" label="Dates" options={[{ value: 'all', label: 'All dates' }, { value: 'live', label: 'Live now' }, { value: 'upcoming', label: 'Upcoming' }, { value: 'ended', label: 'Past contests' }]} />{query || period !== 'all' ? <Button variant="ghost" onClick={clearFilters}>Clear filters</Button> : null}</form></FormProvider>
-      <p className="contest-count muted" role="status">{rows.length} {rows.length === 1 ? 'contest' : 'contests'}{query.trim() || period !== 'all' ? ' match your filters' : ''}</p>
+      <div className="contest-toolbar"><FormProvider {...methods}><form className="contest-filters" onSubmit={event => event.preventDefault()}><Input name="query" label="Find a contest" type="search" placeholder="Search title or language" /><Select name="period" label="Dates" options={[{ value: 'all', label: 'All dates' }, { value: 'live', label: 'Live now' }, { value: 'upcoming', label: 'Upcoming' }, { value: 'ended', label: 'Past contests' }]} />{query || period !== 'all' ? <Button variant="ghost" onClick={clearFilters}>Clear filters</Button> : null}</form></FormProvider>
+      <p className="contest-count muted" role="status">{rows.length} {rows.length === 1 ? 'contest' : 'contests'}{query.trim() || period !== 'all' ? ' match your filters' : ''}</p></div>
       {rows.length === 0 ? <section className="empty-state"><h2 className="paper-type-section">{scope === 'mine' && collectionRows.length === 0 && !query && period === 'all' ? 'You haven’t organized a contest yet.' : 'No contests match these filters.'}</h2><p>{scope === 'mine' && collectionRows.length === 0 && !query && period === 'all' ? 'Find a round to join in Official or Community. Accounts with organizer permission can also create a contest.' : 'Try another title or language, or include all dates.'}</p>{scope === 'mine' && collectionRows.length === 0 && !query && period === 'all' ? <Link className={buttonClassName({ variant: 'outline' })} to="/contests/official">Explore official contests</Link> : <Button variant="outline" onClick={clearFilters}>Clear filters</Button>}</section> : <>
         {feature ? <ContestFeature contest={feature} asOf={asOf} /> : null}
         {(['live', 'upcoming', 'ended'] as const).map(status => {
@@ -107,6 +106,7 @@ export function ContestsPage() {
         })}
       </>}
     </>}
+    <p className="contest-time-note muted">All contest dates and registration deadlines use UTC.</p>
   </>
 }
 
@@ -124,12 +124,12 @@ export function ContestDetailPage() {
   const joined = viewer !== 'guest' && joinedContests.includes(contest.id)
   const canManage = ['organizer', 'admin'].includes(viewer) && contest.ownerId === userId
   return <>
-    <p className="mb-6"><Link className="text-link" to={contest.unlisted && contest.ownerId === userId && viewer !== 'guest' ? '/contests/mine' : `/contests/${contest.scope}`}>Back to {contest.unlisted && contest.ownerId === userId && viewer !== 'guest' ? 'my contests' : `${contest.scope} contests`}</Link></p>
-    <header className="page-header"><div className="flex flex-wrap gap-2 mb-4"><ContestStatus contest={contest} asOf={asOf} /><span className="status-tag">{contest.scope === 'official' ? 'Official round' : 'Community contest'}</span>{contest.unlisted ? <span className="status-tag">Unlisted</span> : null}</div><h1 className="paper-type-page">{contest.title}</h1><p className="page-lead">{contest.description}</p></header>
+    <Link className="text-link page-back-link" to={contest.unlisted && contest.ownerId === userId && viewer !== 'guest' ? '/contests/mine' : `/contests/${contest.scope}`}>Back to {contest.unlisted && contest.ownerId === userId && viewer !== 'guest' ? 'my contests' : `${contest.scope} contests`}</Link>
+    <header className="page-header"><div className="contest-detail-heading"><h1 className="paper-type-page">{contest.title}</h1><ContestStatus contest={contest} asOf={asOf} />{contest.unlisted ? <span className="status-tag">Unlisted</span> : null}</div><p className="page-lead">{contest.description}</p></header>
     {params.has('registered') && joined ? <Flash variant="success" title="Registration saved">You’re registered for {contest.title}. Choose a registered language when you log activity.</Flash> : null}
     {params.has('saved') ? <Flash variant="success" title="Contest saved">Your contest details have been updated.</Flash> : null}
-    <div className="page-columns page-section"><section>
-      <h2 className="paper-type-section section-heading">Make time for immersion</h2><p className="max-w-prose">Read or listen to something you enjoy. Record the time or amount, then submit eligible activity to this contest. Joining a round and submitting your logs are separate steps.</p>
+    <div className="page-columns contest-detail-layout"><section className="contest-detail-body">
+      <h2 className="paper-type-section section-heading">Taking part</h2><p>Join this contest, then submit your reading or listening as you go. Choose a registered language and one of the activities below when you log.</p>
       <dl className="contest-eligibility"><div><dt>Languages</dt><dd>{contest.languages.join(', ')}</dd></div><div><dt>Activities</dt><dd>{contest.activities.join(' and ')}</dd></div></dl>
       {contest.unlisted ? <Flash variant="information" title="Accessible with the link">Anyone with this link can view and join while registration is open. This contest is excluded from public discovery; it is not a private space.</Flash> : null}
       {joined ? <p><strong>You are registered.</strong>{registrations[contest.id]?.length ? ` Your languages: ${registrations[contest.id].join(', ')}.` : ''}</p> : null}
@@ -151,9 +151,9 @@ export function ContestRegistrationPage() {
   const allowed = contest.languages.includes('All languages') ? supportedLanguages : contest.languages
   const submit = methods.handleSubmit(values => { joinContest(contest.id, values.languages); navigate(`${contestPath(contest, asOf)}&registered=1`) })
   return <>
-    <p className="mb-6"><Link className="text-link" to={contestPath(contest, asOf)}>Back to {contest.title}</Link></p>
+    <Link className="text-link page-back-link" to={contestPath(contest, asOf)}>Back to {contest.title}</Link>
     <header className="page-header"><h1 className="paper-type-page">Join {contest.title}</h1><p className="page-lead">Choose the languages you’ll read or listen in. You can register up to three.</p></header>
-    <div className="page-columns"><section>
+    <div className="page-columns contest-registration-layout"><section>
       {!registrationIsOpen(contest, asOf) ? <section className="empty-state"><h2 className="paper-type-section">Registration is closed.</h2><p>{contestStatus(contest, asOf) === 'live' ? 'This round is still running. Participants who already registered can continue logging.' : 'Browse another round to join, or explore the results from this one.'}</p><ContestPrimaryAction contest={contest} asOf={asOf} /></section> : viewer === 'guest' ? <section className="empty-state"><h2 className="paper-type-section">Sign in to choose your languages.</h2><p>You’ll return to this registration after signing in.</p><Link className={buttonClassName()} to={`/sign-in?next=${encodeURIComponent(contestPath(contest, asOf, '/registration'))}`}>Sign in to join</Link></section> : <FormProvider {...methods}><form onSubmit={submit} className="app-form" noValidate><div className="app-form__fields"><AutocompleteMultiInput name="languages" label="Your languages" hint="Choose one to three languages. Remove a language to make room for another." options={allowed} format={value => value} getId={value => value} required maxSelections={3} rules={{ validate: value => Array.isArray(value) && value.length >= 1 && value.length <= 3 && value.every(language => allowed.includes(language)) || 'Choose one to three of the available languages.' }} /><p className="muted">Allowed activities: {contest.activities.join(' and ')}. After joining, choose which eligible logs to submit; joining does not submit past activity automatically.</p></div><div className="app-form__actions"><Button type="submit">Save registration</Button><Link className={buttonClassName({ variant: 'outline' })} to={contestPath(contest, asOf)}>Cancel</Link></div></form></FormProvider>}
     </section><aside className="contest-detail-timeline"><h2 className="paper-type-component">Your round</h2><ContestFacts contest={contest} asOf={asOf} /></aside></div>
   </>
@@ -180,7 +180,7 @@ export function ContestEditorPage() {
     navigate(`${contestPath(next, asOf)}&saved=1`)
   })
   return <>
-    <p className="mb-6"><Link className="text-link" to={contest ? contestPath(contest, asOf) : '/contests/mine'}>{contest ? `Back to ${contest.title}` : 'Back to my contests'}</Link></p>
+    <Link className="text-link page-back-link" to={contest ? contestPath(contest, asOf) : '/contests/mine'}>{contest ? `Back to ${contest.title}` : 'Back to my contests'}</Link>
     <header className="page-header"><h1 className="paper-type-page">{contest ? 'Manage contest' : 'Create a community contest'}</h1><p className="page-lead">Set a shared window for immersion, with clear dates and eligibility.</p></header>
     <FormProvider {...methods}><form onSubmit={save} noValidate className="app-form contest-editor-form"><div className="app-form__fields">
       <Input name="title" label="Contest title" required maxLength={100} rules={{ validate: value => Boolean(value?.trim()) || 'Enter a contest title.' }} />

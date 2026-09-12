@@ -1,4 +1,3 @@
-import { useEffect, useRef } from 'react'
 import { FormProvider, useForm, useWatch } from 'react-hook-form'
 import { Link, useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { AutocompleteMultiInput, Button, Checkbox, Flash, Input, Select, Surface, Tabbar, TextArea, buttonClassName } from 'paper-ui'
@@ -8,7 +7,8 @@ import { usePlayground, useScenario } from '../state'
 import './contests.css'
 
 const statusLabels = { live: 'Live now', upcoming: 'Upcoming', ended: 'Ended' }
-const scopeLabels = { official: 'Official', community: 'Community', mine: 'My contests' }
+const scopeLabels = { official: 'Official', community: 'Community', participating: 'Participating', managed: 'Managed by me' }
+type ContestCollection = keyof typeof scopeLabels
 
 function useContestDate() {
   const [scenario] = useScenario('contests')
@@ -52,58 +52,53 @@ function ContestFeature({ contest, asOf }: { contest: SampleContest; asOf: strin
     <div className="contest-feature__timeline"><ContestFacts contest={contest} asOf={asOf} /><Link className="text-link" to="/guide">Read the contest guide</Link></div>
   </Surface>
 }
-function ContestRow({ contest, asOf }: { contest: SampleContest; asOf: string }) {
+function ContestRow({ contest, asOf, managed = false }: { contest: SampleContest; asOf: string; managed?: boolean }) {
   const { viewer, userId, joinedContests } = usePlayground()
   const date = new Date(contestStart(contest.start))
   const canManage = ['organizer', 'admin'].includes(viewer) && contest.ownerId === userId
   return <article className="contest-row">
     <div className="contest-date" aria-hidden="true"><span>{new Intl.DateTimeFormat(undefined, { month: 'short', year: 'numeric' }).format(date)}</span><strong>{new Intl.DateTimeFormat(undefined, { day: '2-digit' }).format(date)}</strong></div>
     <div className="contest-row__body"><div className="flex flex-wrap items-center gap-2"><h3 className="paper-type-component"><Link className="text-link" to={contestPath(contest, asOf)}>{contest.title}</Link></h3>{contest.unlisted ? <span className="status-tag">Unlisted</span> : null}</div><p>{formatDateRange(contestStart(contest.start), contestEnd(contest.end))}</p><p className="muted">{contest.languages.join(', ')} · {contest.activities.join(' and ')}</p></div>
-    <div className="contest-row__actions"><ContestStatus contest={contest} asOf={asOf} /><ContestPrimaryAction contest={contest} asOf={asOf} /></div>
-    <details className="contest-row__details"><summary>Contest details</summary><div><p>{contest.description}</p><p><strong>{registrationIsOpen(contest, asOf) ? `Registration until ${formatDateTime(contestEnd(contest.registrationDeadline))}.` : 'Registration closed.'}</strong>{viewer !== 'guest' && joinedContests.includes(contest.id) ? ' You are registered.' : ''}</p>{contest.unlisted ? <p>Anyone with the link can view this contest. It does not appear in public discovery.</p> : null}<div className="flex flex-wrap gap-x-6 gap-y-2"><Link className="text-link" to={contestPath(contest, asOf, '/leaderboard')}>{contestStatus(contest, asOf) === 'ended' ? 'View final standings' : 'View standings'}</Link><Link className="text-link" to="/guide/scoring">How contest scoring works</Link>{canManage ? <Link className="text-link" to={contestPath(contest, asOf, '/edit')}>Manage contest</Link> : null}</div></div></details>
+    <div className="contest-row__actions"><ContestStatus contest={contest} asOf={asOf} />{managed ? <Link className={buttonClassName({ variant: 'outline' })} to={contestPath(contest, asOf, canManage ? '/edit' : '')}>{canManage ? 'Manage contest' : 'View contest'}</Link> : <ContestPrimaryAction contest={contest} asOf={asOf} />}</div>
+    <details className="contest-row__details"><summary>Contest details</summary><div><p>{contest.description}</p><p><strong>{registrationIsOpen(contest, asOf) ? `Registration until ${formatDateTime(contestEnd(contest.registrationDeadline))}.` : 'Registration closed.'}</strong>{viewer !== 'guest' && joinedContests.includes(contest.id) ? ' You are registered.' : ''}</p>{contest.unlisted ? <p>Anyone with the link can view this contest. It does not appear in public discovery.</p> : null}<div className="flex flex-wrap gap-x-6 gap-y-2"><Link className="text-link" to={contestPath(contest, asOf, '/leaderboard')}>{contestStatus(contest, asOf) === 'ended' ? 'View final standings' : 'View standings'}</Link><Link className="text-link" to="/guide/scoring">How contest scoring works</Link>{canManage && !managed ? <Link className="text-link" to={contestPath(contest, asOf, '/edit')}>Manage contest</Link> : null}</div></div></details>
   </article>
 }
 
 export function ContestsPage() {
   const location = useLocation()
-  const navigate = useNavigate()
-  const { contests, viewer, userId } = usePlayground()
+  const { contests, viewer, userId, joinedContests } = usePlayground()
   const [scenario, setScenario] = useScenario('contests')
   const asOf = useContestDate()
   const collection = location.pathname.split('/')[2]
-  const scope = collection === 'community' || collection === 'mine' ? collection : 'official'
+  const scope: ContestCollection = collection === 'mine' ? 'managed' : collection === 'community' || collection === 'participating' || collection === 'managed' ? collection : 'official'
   const methods = useForm({ defaultValues: { query: '', period: 'all' } })
   const { query = '', period = 'all' } = useWatch({ control: methods.control })
-  const requestedScenario = new URLSearchParams(location.search).get('scenario')
-  const initializedScenario = useRef<string | null>(null)
-  // A named scenario starts in its authored collection; subsequent tab navigation stays user-controlled.
-  useEffect(() => {
-    if (initializedScenario.current === requestedScenario) return
-    initializedScenario.current = requestedScenario
-    if (requestedScenario === 'empty' || requestedScenario === 'creator') navigate(`/contests/mine?scenario=${requestedScenario}`, { replace: true })
-  }, [requestedScenario, navigate])
-  const blocked = scope === 'mine' && viewer === 'guest'
+  const signedIn = viewer !== 'guest'
+  const blocked = !signedIn && (scope === 'participating' || scope === 'managed')
+  const managedContests = signedIn && scenario !== 'empty' ? contests.filter(contest => contest.ownerId === userId || contest.moderatorIds?.includes(userId)) : []
+  const collections: ContestCollection[] = ['official', 'community', ...(signedIn ? ['participating' as const] : []), ...(managedContests.length ? ['managed' as const] : [])]
   const isError = scenario === 'unavailable'
   const canCreate = ['organizer', 'admin'].includes(viewer)
-  const collectionRows = contests.filter(contest => scope === 'mine' ? contest.ownerId === userId && scenario !== 'empty' : !contest.unlisted && contest.scope === scope)
+  const collectionRows = scope === 'managed' ? managedContests : contests.filter(contest => scope === 'participating' ? signedIn && joinedContests.includes(contest.id) : !contest.unlisted && contest.scope === scope)
   const rows = collectionRows.filter(contest => (period === 'all' || contestStatus(contest, asOf) === period) && `${contest.title} ${contest.languages.join(' ')}`.toLocaleLowerCase().includes(query.trim().toLocaleLowerCase()))
     .sort((left, right) => left.start.localeCompare(right.start) || left.title.localeCompare(right.title))
   const feature = scope === 'official' && !query.trim() && period === 'all' ? rows.find(contest => contestStatus(contest, asOf) === 'live') ?? rows.find(contest => contestStatus(contest, asOf) === 'upcoming') : undefined
-  const descriptions = { official: 'Official rounds bring the Tadoku community together throughout the year.', community: 'Public challenges organized by Tadoku members. Check the languages and activities before joining.', mine: 'Contests you organize, including unlisted contests. Your participation is shown on each contest’s page.' }
+  const descriptions = { official: 'Official rounds bring the Tadoku community together throughout the year.', community: 'Public challenges organized by Tadoku members. Check the languages and activities before joining.', participating: 'Contests you’ve joined, including past rounds.', managed: 'Contests you organize or moderate, including unlisted contests.' }
+  const emptyCollection = collectionRows.length === 0 && !query && period === 'all' && (scope === 'participating' || scope === 'managed')
   const clearFilters = () => { methods.reset(); methods.setFocus('query') }
 
   return <>
     <header className="page-header contest-page-header"><div><h1 className="paper-type-page">Contests</h1><p className="page-lead">{descriptions[scope]}</p></div>{canCreate ? <Link className={buttonClassName()} to={`/contests/new?asOf=${asOf}`}>Create contest</Link> : null}</header>
-    <Tabbar label="Contest collections" links={(['official', 'community', 'mine'] as const).map(id => ({ id, label: scopeLabels[id], href: `/contests/${id}${location.search}`, current: scope === id, onSelect: () => methods.reset() }))} renderLink={({ href, ...props }) => <Link to={href} {...props} />} />
-    {blocked ? <section className="empty-state"><h2 className="paper-type-section">Your contests, in one place.</h2><p>Sign in to see the contests you organize. You can still browse official rounds and public community challenges.</p><Link className={buttonClassName()} to={`/sign-in?next=${encodeURIComponent('/contests/mine')}`}>Sign in</Link></section> : isError ? <section className="empty-state" role="alert"><h2 className="paper-type-section">Contests could not be loaded.</h2><p>Try loading this collection again.</p><Button onClick={() => setScenario('member')}>Try again</Button></section> : <>
+    <div className="contest-collections"><Tabbar label="Contest collections" links={collections.map(id => ({ id, label: scopeLabels[id], href: `/contests/${id}${location.search}`, current: scope === id, onSelect: () => methods.reset() }))} renderLink={({ href, ...props }) => <Link to={href} {...props} />} /></div>
+    {blocked ? <section className="empty-state"><h2 className="paper-type-section">{scope === 'participating' ? 'Sign in to see the contests you’ve joined.' : 'Sign in to see the contests you manage.'}</h2><p>You can still browse official rounds and public community challenges.</p><Link className={buttonClassName()} to={`/sign-in?next=${encodeURIComponent(`/contests/${scope}`)}`}>Sign in</Link></section> : isError ? <section className="empty-state" role="alert"><h2 className="paper-type-section">Contests could not be loaded.</h2><p>Try loading this collection again.</p><Button onClick={() => setScenario('member')}>Try again</Button></section> : <>
       <div className="contest-toolbar"><FormProvider {...methods}><form className="contest-filters" onSubmit={event => event.preventDefault()}><Input name="query" label="Find a contest" type="search" placeholder="Search title or language" /><Select name="period" label="Dates" options={[{ value: 'all', label: 'All dates' }, { value: 'live', label: 'Live now' }, { value: 'upcoming', label: 'Upcoming' }, { value: 'ended', label: 'Past contests' }]} />{query || period !== 'all' ? <Button variant="ghost" onClick={clearFilters}>Clear filters</Button> : null}</form></FormProvider>
       <p className="contest-count muted" role="status">{rows.length} {rows.length === 1 ? 'contest' : 'contests'}{query.trim() || period !== 'all' ? ' match your filters' : ''}</p></div>
-      {rows.length === 0 ? <section className="empty-state"><h2 className="paper-type-section">{scope === 'mine' && collectionRows.length === 0 && !query && period === 'all' ? 'You haven’t organized a contest yet.' : 'No contests match these filters.'}</h2><p>{scope === 'mine' && collectionRows.length === 0 && !query && period === 'all' ? 'Find a round to join in Official or Community. Accounts with organizer permission can also create a contest.' : 'Try another title or language, or include all dates.'}</p>{scope === 'mine' && collectionRows.length === 0 && !query && period === 'all' ? <Link className={buttonClassName({ variant: 'outline' })} to="/contests/official">Explore official contests</Link> : <Button variant="outline" onClick={clearFilters}>Clear filters</Button>}</section> : <>
+      {rows.length === 0 ? <section className="empty-state"><h2 className="paper-type-section">{emptyCollection ? scope === 'participating' ? 'You haven’t joined a contest yet.' : 'You don’t manage any contests yet.' : 'No contests match these filters.'}</h2><p>{emptyCollection ? scope === 'participating' ? 'Join an official round or community challenge to see it here.' : 'Contests appear here when you organize them or are assigned as a moderator.' : 'Try another title or language, or include all dates.'}</p>{emptyCollection ? <Link className={buttonClassName({ variant: 'outline' })} to="/contests/official">Explore official contests</Link> : <Button variant="outline" onClick={clearFilters}>Clear filters</Button>}</section> : <>
         {feature ? <ContestFeature contest={feature} asOf={asOf} /> : null}
         {(['live', 'upcoming', 'ended'] as const).map(status => {
           const group = rows.filter(contest => contest.id !== feature?.id && contestStatus(contest, asOf) === status)
           if (status === 'ended') group.reverse()
-          return group.length > 0 ? <section className="contest-group" key={status} aria-label={{ live: 'Happening now', upcoming: 'Coming up', ended: 'Past contests' }[status]}><h2 className="paper-type-section">{{ live: 'Happening now', upcoming: 'Coming up', ended: 'Past contests' }[status]}</h2>{group.map(contest => <ContestRow key={contest.id} contest={contest} asOf={asOf} />)}</section> : null
+          return group.length > 0 ? <section className="contest-group" key={status} aria-label={{ live: 'Happening now', upcoming: 'Coming up', ended: 'Past contests' }[status]}><h2 className="paper-type-section">{{ live: 'Happening now', upcoming: 'Coming up', ended: 'Past contests' }[status]}</h2>{group.map(contest => <ContestRow key={contest.id} contest={contest} asOf={asOf} managed={scope === 'managed'} />)}</section> : null
         })}
       </>}
     </>}
@@ -125,7 +120,7 @@ export function ContestDetailPage() {
   const joined = viewer !== 'guest' && joinedContests.includes(contest.id)
   const canManage = ['organizer', 'admin'].includes(viewer) && contest.ownerId === userId
   return <>
-    <Link className="text-link page-back-link" to={contest.unlisted && contest.ownerId === userId && viewer !== 'guest' ? '/contests/mine' : `/contests/${contest.scope}`}>Back to {contest.unlisted && contest.ownerId === userId && viewer !== 'guest' ? 'my contests' : `${contest.scope} contests`}</Link>
+    <Link className="text-link page-back-link" to={contest.unlisted && contest.ownerId === userId && viewer !== 'guest' ? '/contests/managed' : `/contests/${contest.scope}`}>Back to {contest.unlisted && contest.ownerId === userId && viewer !== 'guest' ? 'managed contests' : `${contest.scope} contests`}</Link>
     <header className="page-header"><div className="contest-detail-heading"><h1 className="paper-type-page">{contest.title}</h1><ContestStatus contest={contest} asOf={asOf} />{contest.unlisted ? <span className="status-tag">Unlisted</span> : null}</div><p className="page-lead">{contest.description}</p></header>
     {params.has('registered') && joined ? <Flash variant="success" title="Registration saved">You’re registered for {contest.title}. Choose a registered language when you log activity.</Flash> : null}
     {params.has('saved') ? <Flash variant="success" title="Contest saved">Your contest details have been updated.</Flash> : null}
@@ -191,7 +186,7 @@ export function ContestEditorPage() {
       <Input name="registrationDeadline" label="Registration closes (UTC)" type="date" required hint={registrationDeadline ? `Your time: ${formatDateTime(contestEnd(registrationDeadline))}. Must close on or before the round ends.` : 'Must close on or before the round ends.'} rules={{ validate: value => value <= methods.getValues('end') || 'Registration must close on or before the round ends.' }} />
       <fieldset className="contest-form-group"><legend className="paper-type-component">Languages</legend><Checkbox name="allLanguages" label="Allow all languages" />{!allLanguages ? <AutocompleteMultiInput name="languages" label="Allowed languages" options={supportedLanguages} format={value => value} getId={value => value} required rules={{ validate: value => methods.getValues('allLanguages') || Array.isArray(value) && value.length > 0 || 'Choose at least one allowed language.' }} /> : <p className="muted">Participants choose up to three languages when registering.</p>}</fieldset>
       <fieldset className="contest-form-group"><legend className="paper-type-component">Activities</legend><Checkbox name="reading" label="Reading" rules={{ validate: () => methods.getValues('reading') || methods.getValues('listening') || 'Choose at least one activity.' }} /><Checkbox name="listening" label="Listening" /></fieldset>
-      <fieldset className="contest-form-group"><legend className="paper-type-component">Discovery</legend><Checkbox name="unlisted" label="Unlisted — accessible with the link" hint="Unlisted contests appear in My contests and can be opened by anyone with their link. They are excluded from public discovery." /></fieldset>
-    </div><div className="app-form__actions"><Button type="submit">{contest ? 'Save changes' : 'Create contest'}</Button><Link className={buttonClassName({ variant: 'outline' })} to={contest ? contestPath(contest, asOf) : '/contests/mine'}>Cancel</Link></div></form></FormProvider>
+      <fieldset className="contest-form-group"><legend className="paper-type-component">Discovery</legend><Checkbox name="unlisted" label="Unlisted — accessible with the link" hint="Unlisted contests are accessible to anyone with the link. They appear in Managed by me and in each participant’s joined contests, but not in public discovery." /></fieldset>
+    </div><div className="app-form__actions"><Button type="submit">{contest ? 'Save changes' : 'Create contest'}</Button><Link className={buttonClassName({ variant: 'outline' })} to={contest ? contestPath(contest, asOf) : '/contests/managed'}>Cancel</Link></div></form></FormProvider>
   </>
 }

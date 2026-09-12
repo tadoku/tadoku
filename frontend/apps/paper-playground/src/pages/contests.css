@@ -58,6 +58,7 @@
 .contest-form-group > p { margin: 0; }
 .contest-editor-form { max-width: 40rem; }
 .standings-workspace { display: grid; grid-template-columns: minmax(0,1fr) 256px; align-items: start; gap: 32px; margin-top: 20px; }
+.standings-main { min-width: 0; }
 .standings-sheet { min-width: 0; background: var(--paper-color-surface-paper); border: 1px solid var(--paper-color-rule-default); }
 .standings-context { display: flex; justify-content: space-between; gap: 20px; align-items: center; padding: 20px; }
 .standings-context > div:first-child { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 16px; }
@@ -65,8 +66,8 @@
 .standings-context__title { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 12px; }
 .standings-context h2 { margin: 0; font-size: 1.375rem; }
 .standings-context p { margin: 0; font-size: .8125rem; }
-.standings-year { min-width: 100px; }
 .standings-filters { display: grid; grid-template-columns: 1fr 1fr minmax(180px,1.25fr); gap: 12px; padding: 0 20px 20px; }
+.standings-filters--yearly { grid-template-columns: minmax(88px,.6fr) 1fr 1fr minmax(180px,1.25fr); }
 .standings-filter-toggle { white-space: nowrap; }
 .standings-filter-toggle[aria-expanded="true"] svg { transform: rotate(180deg); }
 .standings-filter-summary { display: flex; align-items: center; justify-content: space-between; gap: 8px 16px; padding: 0 20px 12px; }
@@ -96,11 +97,11 @@
 .standings-activity a:hover { text-decoration: underline; }
 .standings-activity small { display: block; margin-top: 2px; }
 .standings-footnote { max-width: 76ch; margin: 16px 0 0; font-size: .8125rem; line-height: 1.65; }
-.standings-footnote a { display: inline-block; margin-inline-start: 8px; }
 @media (max-width: 1050px) {
   .standings-workspace { grid-template-columns: minmax(0,1fr) 224px; gap: 24px; }
   .standings-filters { grid-template-columns: 1fr 1fr; }
   .standings-filters > .paper-field:nth-child(3) { grid-column: 1 / -1; }
+  .standings-filters--yearly > .paper-field:nth-child(3) { grid-column: auto; }
 }
 @media (max-width: 800px) {
   .standings-workspace { grid-template-columns: minmax(0,1fr); }
@@ -128,8 +129,6 @@
   .contest-eligibility { grid-template-columns: 1fr; gap: 16px; }
   .standings-workspace { margin-top: 20px; }
   .standings-context { padding: 20px 16px 16px; gap: 12px; align-items: start; }
-  .standings-context:has(.standings-year) { flex-wrap: wrap; }
-  .standings-context:has(.standings-year) .standings-context__actions { width: 100%; justify-content: space-between; }
   .standings-context p { font-size: .8125rem; line-height: 1.6; }
   .standings-context h2 { font-size: 1.125rem; }
   .standings-filters { padding: 0 16px 16px; }

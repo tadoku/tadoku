@@ -29,6 +29,70 @@ function standing(name: string) {
 }
 
 describe('leaderboard population and context', () => {
+  it('shows contest eligibility and named moderators, with the freshness note before the sidebar', () => {
+    open('/leaderboard/latest?scenario=participant')
+    const conditions = screen.getByRole('region', { name: 'Contest conditions' })
+    expect(within(conditions).getByText('All languages allowed')).toBeVisible()
+    expect(within(conditions).getByText('All activities allowed')).toBeVisible()
+    expect(within(conditions).getByRole('link', { name: 'Kai' })).toHaveAttribute('href', '/users/kai')
+    expect(within(conditions).getByRole('link', { name: 'Mei' })).toHaveAttribute('href', '/users/mei')
+    expect(within(conditions).getByText('Registration')).toBeVisible()
+    expect(screen.queryByText('Taking part')).not.toBeInTheDocument()
+    const freshness = screen.getByText(/Leaderboard updates may take a few seconds/)
+    expect(freshness).toHaveTextContent('T means a tie.')
+    expect(screen.getByRole('navigation', { name: 'Standings pages' }).compareDocumentPosition(freshness) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    expect(freshness.compareDocumentPosition(conditions) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    expect(screen.queryByText(/filters recalculate ranks/)).not.toBeInTheDocument()
+  })
+
+  it.each([
+    ['novels', 'Japanese only', 'Reading only', 'Ari', 'ari'],
+    ['listening', 'All languages allowed', 'Listening only', 'Lina', 'lina'],
+    ['friends', 'Japanese, Korean only', 'Reading only', 'Anton', 'anton'],
+  ])('shows the actual restrictions and moderator for %s, even without standings', (id, languages, activities, moderator, moderatorId) => {
+    open(`/contests/${id}/leaderboard?scenario=participant`)
+    const conditions = screen.getByRole('region', { name: 'Contest conditions' })
+    expect(within(conditions).getByText(languages)).toBeVisible()
+    expect(within(conditions).getByText(activities)).toBeVisible()
+    expect(within(conditions).getByRole('link', { name: moderator })).toHaveAttribute('href', `/users/${moderatorId}`)
+  })
+
+  it.each(['/leaderboard/yearly/2026', '/leaderboard/all-time'])('does not show contest restrictions or moderators for %s', path => {
+    open(path)
+    expect(screen.queryByRole('region', { name: 'Contest conditions' })).not.toBeInTheDocument()
+    expect(screen.queryByText('Moderators')).not.toBeInTheDocument()
+    expect(screen.getByText(/Leaderboard updates may take a few seconds/)).toBeVisible()
+  })
+
+  it('opens yearly filters with Year first, lets them collapse, and resets defaults when changing scope', async () => {
+    const user = userEvent.setup()
+    open('/leaderboard/latest?scenario=participant')
+    await user.click(screen.getByRole('link', { name: 'Yearly' }))
+    const toggle = screen.getByRole('button', { name: 'Filters' })
+    const panel = document.getElementById(toggle.getAttribute('aria-controls')!)!
+    expect(toggle).toHaveAttribute('aria-expanded', 'true')
+    expect(within(panel).getAllByRole('combobox')[0]).toHaveAccessibleName('Year')
+    await user.selectOptions(screen.getByRole('combobox', { name: 'Year' }), '2025')
+    expect(screen.getByRole('combobox', { name: 'Year' })).toHaveValue('2025')
+    expect(toggle).toHaveAttribute('aria-expanded', 'true')
+    await user.click(toggle)
+    expect(toggle).toHaveAttribute('aria-expanded', 'false')
+    expect(screen.queryByRole('combobox', { name: 'Year' })).not.toBeInTheDocument()
+    await user.click(screen.getByRole('link', { name: 'Latest official' }))
+    expect(toggle).toHaveAttribute('aria-expanded', 'false')
+    await user.click(toggle)
+    await user.click(screen.getByRole('link', { name: 'All time' }))
+    expect(toggle).toHaveAttribute('aria-expanded', 'false')
+    await user.click(screen.getByRole('link', { name: 'Yearly' }))
+    expect(toggle).toHaveAttribute('aria-expanded', 'true')
+  })
+
+  it.each(['empty', 'error'])('keeps the year selection accessible when yearly standings are %s', scenario => {
+    open(`/leaderboard/yearly/2026?scenario=${scenario}`)
+    expect(screen.getByRole('button', { name: 'Filters' })).toHaveAttribute('aria-expanded', 'true')
+    expect(screen.getByRole('combobox', { name: 'Year' })).toBeVisible()
+  })
+
   it('starts with filters collapsed, preserves applied filters when closed, and clears them without reopening', async () => {
     const user = userEvent.setup()
     open('/leaderboard/latest?scenario=participant')
@@ -64,7 +128,7 @@ describe('leaderboard population and context', () => {
     expect(screen.getByRole('table').querySelectorAll('tbody tr')).toHaveLength(6)
     expect(standing('Anton')).toBeNull()
     expect(standing('Elliot').cells[0]).toHaveTextContent('T6')
-    await user.click(screen.getByRole('button', { name: 'Find my row' }))
+    await user.click(screen.getByRole('button', { name: 'Jump to me' }))
     expect(standing('Anton')).toHaveFocus()
     expect(within(standing('Anton')).getByRole('link', { name: 'Anton' })).toHaveAttribute('href', '/users/anton?contest=round5')
     expect(standing('Anton').cells[0]).toHaveTextContent('8')
@@ -120,7 +184,7 @@ describe('leaderboard population and context', () => {
     view.unmount()
     open('/leaderboard/latest?scenario=error')
     expect(screen.queryByRole('table')).not.toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: 'Find my row' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Jump to me' })).not.toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: 'Try again' }))
     expect(screen.getByRole('table')).toBeVisible()
   })

@@ -34,7 +34,10 @@ export function LeaderboardPage() {
   const isEmpty = scenario === 'empty' || (scope === 'contest' && status === 'upcoming') || (scope === 'year' && !['2026', '2025', '2024'].includes(year))
   const methods = useForm<BoardFilters>({ defaultValues: { language: 'all', activity: 'all', query: '', year } })
   const { language = 'all', activity = 'all', query = '' } = useWatch({ control: methods.control })
-  const [filtersOpen, setFiltersOpen] = useState(false)
+  const [filterExpansion, setFilterExpansion] = useState({ scope, open: scope === 'year' })
+  if (filterExpansion.scope !== scope) setFilterExpansion({ scope, open: scope === 'year' })
+  const filtersOpen = filterExpansion.open
+  const showFilters = scope === 'year' || (!isError && !isEmpty)
   const filtersId = useId()
   const filtersToggle = useRef<HTMLButtonElement>(null)
   const appliedFilters = [language !== 'all' ? language : '', activity !== 'all' ? activity : '', query.trim() ? `Name: ${query.trim()}` : ''].filter(Boolean)
@@ -95,6 +98,7 @@ export function LeaderboardPage() {
   ]
   const recent = logs.filter(log => log.date <= asOf && log.submissions.some(submission => submission.contestId === contest?.id)).sort((left, right) => right.date.localeCompare(left.date)).slice(0, 3)
   const title = scope === 'contest' ? contest?.title ?? 'Contest not found' : 'Official standings'
+  const moderators = (contest?.moderatorIds ?? []).map(id => users.find(person => person.id === id)).filter(person => person !== undefined)
 
   const roundAction = scope === 'contest' && contest ? status === 'live' && joined ? <Link className={buttonClassName({ variant: 'outline' })} to={`/logs/new?contest=${contest.id}&asOf=${asOf}`}>Log activity</Link> : registrationOpen ? <Link className={buttonClassName()} to={viewer === 'guest' ? signInHref : registrationHref}>{viewer === 'guest' ? 'Sign in to join' : joined ? 'Update registration' : 'Join this round'}</Link> : <Link className={buttonClassName({ variant: 'outline' })} to="/contests/official">Browse contests</Link> : null
 
@@ -108,20 +112,21 @@ export function LeaderboardPage() {
     ]} renderLink={({ href, ...props }) => <Link to={href} {...props} />} />
     {!contest && scope === 'contest' ? <section className="empty-state"><h2 className="paper-type-section">This contest is not available.</h2><p>Check the link or find another round.</p><Link className={buttonClassName()} to="/contests/official">Browse contests</Link></section> : <>
       <div className="standings-workspace">
+        <div className="standings-main">
         <section className="standings-sheet" aria-label="Standings">
           <div className="standings-context">
             <div><div className="standings-context__title"><h2 className="paper-type-section">{title}</h2>{scope === 'contest' && contest ? <span className="status-tag" data-status={status}>{status === 'ended' ? 'Complete' : status === 'upcoming' ? 'Upcoming' : 'Live now'}</span> : null}</div>{scope === 'contest' && contest ? <p className="muted">{formatDateRange(contestStart(contest.start), contestEnd(contest.end))}</p> : null}</div>
             <div className="standings-context__actions">
-              {scope === 'year' ? <FormProvider {...methods}><div className="standings-year"><Select name="year" label="Year" value={year} options={['2026', '2025', '2024'].map(value => ({ value, label: value }))} onInput={event => navigate(`/leaderboard/yearly/${event.currentTarget.value}${location.search}`)} /></div></FormProvider> : null}
-              {!isError && !isEmpty ? <Button ref={filtersToggle} variant="ghost" className="standings-filter-toggle" aria-expanded={filtersOpen} aria-controls={filtersId} onClick={() => setFiltersOpen(!filtersOpen)} trailingIcon={<ChevronDownIcon className="paper-icon-compact" />}>Filters{appliedFilters.length ? ` (${appliedFilters.length})` : ''}</Button> : null}
+              {showFilters ? <Button ref={filtersToggle} variant="ghost" className="standings-filter-toggle" aria-expanded={filtersOpen} aria-controls={filtersId} onClick={() => setFilterExpansion({ scope, open: !filtersOpen })} trailingIcon={<ChevronDownIcon className="paper-icon-compact" />}>Filters{appliedFilters.length ? ` (${appliedFilters.length})` : ''}</Button> : null}
             </div>
           </div>
-          {!isError && !isEmpty ? <><div id={filtersId} hidden={!filtersOpen}><FormProvider {...methods}><form className="standings-filters" onSubmit={event => event.preventDefault()}>
+          {showFilters ? <><div id={filtersId} hidden={!filtersOpen}><FormProvider {...methods}><form className={`standings-filters${scope === 'year' ? ' standings-filters--yearly' : ''}`} onSubmit={event => event.preventDefault()}>
+            {scope === 'year' ? <Select name="year" label="Year" value={year} options={['2026', '2025', '2024'].map(value => ({ value, label: value }))} onInput={event => navigate(`/leaderboard/yearly/${event.currentTarget.value}${location.search}`)} /> : null}
             <Select name="language" label="Language" options={[{ value: 'all', label: 'All languages' }, ...supportedLanguages.map(value => ({ value, label: value }))]} />
             <Select name="activity" label="Activity" options={[{ value: 'all', label: 'All activities' }, { value: 'Reading', label: 'Reading' }, { value: 'Listening', label: 'Listening' }]} />
             <Input name="query" label="Find a participant" type="search" placeholder="Search by name" />
           </form></FormProvider></div>{appliedFilters.length ? <div className="standings-filter-summary" aria-label="Applied filters"><p>{appliedFilters.join(' · ')}</p><Button variant="link" onClick={clearFilters}>Clear all</Button></div> : null}</> : null}
-          {showSelf ? <div className="standings-personal"><p><strong>Your rank: {self.tied ? 'T' : '#'}{self.rank}</strong><span>{formatNumber(self.score)} points</span></p><Button variant="ghost" onClick={findMyRow}>Find my row</Button></div> : null}
+          {showSelf ? <div className="standings-personal"><p><strong>Your rank: {self.tied ? 'T' : '#'}{self.rank}</strong><span>{formatNumber(self.score)} points</span></p><Button variant="ghost" onClick={findMyRow}>Jump to me</Button></div> : null}
           {isError || isEmpty || visible.length === 0 ? <section className="empty-state" aria-live="polite">
             <h2 className="paper-type-section">{isError ? 'Standings could not be loaded' : isEmpty || ranked.length === 0 ? scope === 'contest' ? 'The first page is yours to write' : 'No official scores for this period' : 'No participants match that name'}</h2>
             <p>{isError ? 'Try loading the standings again. The available contest details are still shown alongside.' : isEmpty || ranked.length === 0 ? scope === 'contest' ? status === 'upcoming' ? 'Scores begin when the round starts. Join now, then return after your first eligible activity.' : 'No participants are listed yet. Join the round and log your first activity.' : 'Scores will appear here when eligible activity is logged in this period.' : 'Try another display name. Searching does not change anyone’s rank.'}</p>
@@ -131,14 +136,20 @@ export function LeaderboardPage() {
             <div className="standings-pagination"><p className="muted" role="status">{(page - 1) * pageSize + 1}–{Math.min(page * pageSize, visible.length)} of {visible.length} {query.trim() ? 'matches' : 'participants'}</p><Pagination totalPages={totalPages} currentPage={page} onPageChange={next => setPageState({ key: filterKey, page: next })} label="Standings pages" /></div>
           </>}
         </section>
+        <p className="standings-footnote muted">Leaderboard updates may take a few seconds. <abbr title="Tied rank">T</abbr> means a tie.</p>
+        </div>
         <aside className="standings-aside">
-          <section><h2 className="paper-type-component">{scope === 'contest' ? 'Taking part' : 'About these standings'}</h2>
-            {scope === 'contest' && contest ? <><p>{joined && status === 'live' ? 'You’re registered for this round. Submit your reading and listening until the round ends.' : status === 'ended' ? 'This round has finished. Your results are here whenever you want to look back.' : status === 'upcoming' ? 'Join now and start logging when the round begins.' : !registrationOpen ? 'This round is still running for registered participants.' : 'Join the round, then submit eligible activity as you go.'}</p><dl className="contest-facts"><div><dt>Registration</dt><dd>{registrationOpen ? `Until ${formatDateTime(contestEnd(contest.registrationDeadline))}` : 'Closed to new participants'}</dd></div><div><dt>Participants</dt><dd>{isError ? 'Unavailable' : isEmpty ? 0 : ranked.length}</dd></div></dl><Link className="text-link" to={contestHref()}>Contest details &amp; schedule</Link></> : <><p>Includes eligible official activity for this period. Community contest scores are not added together to make this board.</p></>}
+          <section aria-labelledby="standings-about-heading"><h2 id="standings-about-heading" className="paper-type-component">{scope === 'contest' ? 'Contest conditions' : 'About these standings'}</h2>
+            {scope === 'contest' && contest ? <><dl className="contest-facts">
+              <div><dt>Languages</dt><dd>{contest.languages.includes('All languages') ? 'All languages allowed' : `${contest.languages.join(', ')} only`}</dd></div>
+              <div><dt>Activities</dt><dd>{contest.activities.includes('Reading') && contest.activities.includes('Listening') ? 'All activities allowed' : `${contest.activities.join(', ')} only`}</dd></div>
+              <div><dt>Moderators</dt><dd>{moderators.length ? moderators.map((person, index) => <span key={person.id}>{index ? ', ' : ''}<Link className="text-link" to={`/users/${person.id}`}>{person.name}</Link></span>) : 'Not listed'}</dd></div>
+              <div><dt>Registration</dt><dd>{registrationOpen ? `Until ${formatDateTime(contestEnd(contest.registrationDeadline))}` : 'Closed to new participants'}</dd></div>
+            </dl><Link className="text-link" to={contestHref()}>Contest details &amp; schedule</Link></> : <p>Includes eligible official activity for this period. Community contest scores are not added together to make this board.</p>}
           </section>
           {scope === 'contest' && status === 'live' && !isError && !isEmpty && recent.length > 0 ? <section><h2 className="paper-type-component">Recent activity</h2><ul className="standings-activity">{recent.map(log => <li key={log.id}><Link className="text-link" to={`/logs/${log.id}?contest=${contest?.id}`}><span>{users.find(person => person.id === log.userId)?.name ?? log.userId}</span><span>+{formatNumber(log.submissions.find(submission => submission.contestId === contest?.id)?.score ?? 0)}</span></Link><small className="muted">{log.activity} · {formatDate(log.date)}</small></li>)}</ul></section> : null}
         </aside>
       </div>
-      <p className="standings-footnote muted">Language and activity filters recalculate ranks; name search keeps them. <abbr title="Tied rank">T</abbr> means a tie. <Link className="text-link" to="/guide/scoring">How scoring works</Link></p>
     </>}
   </>
 }

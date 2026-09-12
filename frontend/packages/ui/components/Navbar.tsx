@@ -310,7 +310,7 @@ const NavigationAction = ({ label, href }: NavigationActionProps) => {
           event.preventDefault()
         }
       }}
-      className="btn ghost !h-11 shrink-0 whitespace-nowrap px-2 text-secondary md:text-xs lg:text-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+      className="btn primary border-0 !h-11 md:!h-auto shrink-0 whitespace-nowrap px-2 py-1 lg:px-3 lg:py-2 md:text-xs lg:text-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
     >
       {label}
     </Link>

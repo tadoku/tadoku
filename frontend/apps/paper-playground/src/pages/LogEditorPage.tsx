@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Link, Navigate, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { FormProvider, useForm, useWatch } from 'react-hook-form'
 import { Button, Checkbox, Flash, Input, Select, TagsInput, TextArea, ToggleSelect, buttonClassName, useToast } from 'paper-ui'
+import { ChevronDownIcon } from 'paper-ui/icons'
 import { compatibleModifiers, contestStatus, formatNumber, modifierRates, personalScoreExplanation, sampleToday, scoreLog, scoreSubmission, supportedLanguages, type Activity, type LogModifier, type LogUnit, type SampleLog } from '../data'
 import { usePlayground } from '../state'
 import { RecentLogPicker } from './RecentLogPicker'
@@ -146,8 +147,8 @@ function LogForm({ existing }: { existing?: SampleLog }) {
           <div className="log-editor__score" aria-live="polite"><span>Estimated score</span><strong data-empty={!Number.isFinite(amount) || amount <= 0 || undefined}>{estimate}</strong></div>
           <Link className="text-link log-editor__scoring-link" to="/guide/scoring">How scoring works</Link>
         </div></fieldset>
-        <details className="log-editor__metadata" open={metadataOpen} onToggle={event => setMetadataOpen(event.currentTarget.open)}>
-          <summary>Metadata{values.tags?.length ? <span> · {values.tags.length} {values.tags.length === 1 ? 'tag' : 'tags'}</span> : null}</summary>
+        <details className="log-editor__disclosure log-editor__metadata" open={metadataOpen} onToggle={event => setMetadataOpen(event.currentTarget.open)}>
+          <summary><span>Metadata{values.tags?.length ? <span className="log-editor__metadata-count"> · {values.tags.length} {values.tags.length === 1 ? 'tag' : 'tags'}</span> : null}</span><ChevronDownIcon className="paper-icon-compact" aria-hidden="true" /></summary>
           <div className="log-editor__fields">
             <TagsInput name="tags" label="Tags" options={[...new Set(['fiction', 'bookclub', 'daily', 'podcast', ...app.logs.filter(log => log.userId === app.userId).flatMap(log => log.tags)])]} placeholder="Type a tag…" hint="Type a tag and press Enter to add it." />
             {activity === 'Reading' && <Input name="minutes" label="Time spent reading" type="number" min="0" step="1" hint="Optional, in minutes." rules={{ validate: value => value === '' || Number.isFinite(Number(value)) && Number(value) >= 0 || 'Use zero or a positive duration.' }} />}

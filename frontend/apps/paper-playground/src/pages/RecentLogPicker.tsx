@@ -21,7 +21,7 @@ export function RecentLogPicker({ logs, onSelect }: { logs: readonly SampleLog[]
     firstAdded.current = null
   }, [visible])
 
-  return <details className="recent-log-picker" ref={details}>
+  return <details className="log-editor__disclosure recent-log-picker" ref={details}>
     <summary><span>Use a recent log</span><ChevronDownIcon className="paper-icon-compact" aria-hidden="true" /></summary>
     {sorted.length ? <>
       <ul className="recent-log-picker__list" aria-label="Recent activity entries" data-scrollable={sorted.length > 5 || undefined} ref={list}>

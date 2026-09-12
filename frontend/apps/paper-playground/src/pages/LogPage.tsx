@@ -100,15 +100,16 @@ function LogRecord({ id, scenario, onRetry }: { id?: string; scenario: string; o
     <Breadcrumb items={[{ id: 'activity', label: owner ? 'Your activity' : `${name}’s activity`, href: `/users/${log.userId}/activity` }, { id: 'log', label: 'Log details' }]} renderLink={renderLink} />
     {ended ? <Flash className="records-log-notice" title="The contests are finished">You can still edit your personal record. Their saved points stay unchanged.</Flash> : null}
     {saved ? <Flash variant="success" className="records-log-notice">Contest submissions saved.</Flash> : null}
-    <Surface as="article" className="records-log-sheet">
+    <article className="records-log-sheet">
       <header className="records-log-header">
         <div className="meta-row"><strong>{log.language}</strong><span>{log.activity}</span><span>{log.media}</span></div>
         <div className="records-log-title"><div><h1 className="paper-type-page">{log.title || `${log.language} ${log.activity.toLocaleLowerCase()}`}</h1><p className="muted">Logged by <Link className="text-link" to={`/users/${log.userId}`}>{name}</Link> on <time dateTime={log.date}>{formatDate(log.date)}</time> · UTC</p></div>{owner ? <Link className={buttonClassName({ variant: 'outline' })} to={`/logs/${log.id}/edit?asOf=${asOf}`}><PencilSquareIcon className="paper-icon-default" aria-hidden="true" />Edit log</Link> : null}</div>
       </header>
+      <div className="records-log-body"><Surface as="section" className="records-log-entry" aria-label="Recorded activity">
       <div className="records-log-measure"><p><strong>{formatNumber(log.amount)}</strong><span>{log.unit} {log.activity === 'Reading' ? 'read' : 'listened'}</span></p>{log.activity === 'Reading' ? <p className="records-log-time">{log.minutes === undefined ? 'Time not recorded' : <><strong>{formatNumber(log.minutes)} min</strong><span>time spent</span></>}</p> : null}</div>
       {log.note ? <p className="records-log-note">{log.note}</p> : null}
       {log.tags.length ? <ul className="records-tags" aria-label="Tags">{log.tags.map(tag => <li key={tag}>#{tag}</li>)}</ul> : null}
-      <div className={`records-log-score-grid${!log.note && !log.tags.length ? ' records-log-score-grid--no-notes' : ''}`}>
+      </Surface><div className="records-log-score-grid">
         <section className="records-personal-score" aria-labelledby="personal-score-heading"><h2 className="paper-type-section" id="personal-score-heading">Personal score</h2><p className="records-score-number">{formatNumber(scoreLog(log))}<span>points</span></p><p className="muted">Counts toward {owner ? 'your' : `${name}’s`} personal activity totals.</p><ScoreExplanation basis={`${formatNumber(log.amount)} ${log.unit} × ${log.activity === 'Reading' ? '1 point per page' : '0.5 points per minute'} = ${formatNumber(scoreLog(log))} personal points.${ended ? ' The personal record was corrected after the contest finished.' : ''}`} /></section>
         <section aria-labelledby="contributions-heading"><div className="records-contribution-heading"><h2 className="paper-type-section" id="contributions-heading">Contest contributions</h2></div>
           {!owner ? <p className="records-visibility-note">Contest submissions are visible to the log’s owner.</p> : <>
@@ -121,8 +122,8 @@ function LogRecord({ id, scenario, onRetry }: { id?: string; scenario: string; o
             {!ended ? <SubmissionManager key={log.id} log={log} asOf={asOf} onSaved={() => setSaved(true)} /> : null}
           </>}
         </section>
-      </div>
-    </Surface>
+      </div></div>
+    </article>
     <footer className="records-log-footer"><div><p className="muted">Viewed as of {formatDate(asOf)}.{ended ? ' Contest submission windows are closed.' : ''}</p><Link className="text-link" to="/guide/scoring">How logging and scoring work</Link></div>{owner ? <details className="records-maintenance"><summary>More actions</summary><Modal trigger={<Button variant="ghost" leadingIcon={<TrashIcon className="paper-icon-default" />}>Delete log</Button>} title="Delete this log?" description="This removes the activity from your personal history and its contest submissions." initialFocus={cancelRef} open={deleteOpen} onOpenChange={setDeleteOpen} footer={<><Button ref={cancelRef} variant="outline" onClick={() => setDeleteOpen(false)}>Keep log</Button><Button variant="destructive" onClick={() => { setDeleteOpen(false); removeLog(log.id); setDeleted(log) }}>Delete log</Button></>}><p>“{log.title || `${log.language} ${log.activity.toLocaleLowerCase()}`}” will be removed from this playground. You can restore the sample afterward.</p></Modal></details> : null}</footer>
   </>
 }

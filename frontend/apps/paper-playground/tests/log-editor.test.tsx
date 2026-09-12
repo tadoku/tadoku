@@ -1,4 +1,5 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes, useParams } from 'react-router-dom'
 import { ToastProvider } from 'paper-ui'
 import { beforeEach, expect, it } from 'vitest'
@@ -182,7 +183,7 @@ it('drops incompatible modifiers when changing activity or reading unit and save
   expect(screen.getByRole('button', { name: /Manga ×/ })).toHaveAttribute('aria-pressed', 'false')
   fireEvent.change(screen.getByRole('combobox', { name: 'Activity' }), { target: { value: 'Listening' } })
   expect(screen.queryByRole('button', { name: /Two column ×/ })).not.toBeInTheDocument()
-  fireEvent.click(screen.getByRole('checkbox', { name: /Passive listening/ }))
+  fireEvent.click(screen.getByRole('button', { name: /Passive listening/ }))
   fireEvent.change(screen.getByRole('combobox', { name: 'Activity' }), { target: { value: 'Reading' } })
   expect(screen.getByRole('button', { name: /Two column ×/ })).toHaveAttribute('aria-pressed', 'false')
   fireEvent.click(screen.getByRole('button', { name: /Manga ×/ }))
@@ -203,7 +204,7 @@ it('copies a listening entry without its previous duration and saves its compati
   fireEvent.click(screen.getByRole('button', { name: 'Use this log' }))
   expect(screen.getByRole('combobox', { name: 'Activity' })).toHaveValue('Listening')
   expect(screen.getByLabelText(/Minutes listened/)).toHaveValue(null)
-  expect(screen.getByRole('checkbox', { name: /Passive listening/ })).toBeChecked()
+  expect(screen.getByRole('button', { name: /Passive listening/ })).toHaveAttribute('aria-pressed', 'true')
   openMetadata()
   expect(screen.queryByLabelText('Time spent reading')).not.toBeInTheDocument()
   fireEvent.change(screen.getByLabelText(/Minutes listened/), { target: { value: '15' } })
@@ -226,4 +227,22 @@ it('remembers whether metadata should start expanded on subsequent forms', async
   form.unmount()
   show('/logs/new')
   expect(screen.getByText(/^Metadata/).closest('details')).not.toHaveAttribute('open')
+})
+
+
+it('adds a custom tag without advancing the log form or losing input focus', async () => {
+  const user = userEvent.setup()
+  show('/logs/new')
+  await user.type(screen.getByLabelText(/Pages read/), '12')
+  await user.click(screen.getByText(/^Metadata/))
+  const input = screen.getByRole('combobox', { name: 'Tags' })
+  await user.type(input, 'train reading{Enter}')
+  expect(screen.getByRole('button', { name: 'Remove train reading' })).toBeInTheDocument()
+  expect(input).toHaveFocus()
+  expect(input).toHaveValue('')
+  expect(screen.getByRole('button', { name: 'Next' })).toBeVisible()
+  await next()
+  await user.click(screen.getByRole('button', { name: 'Save activity' }))
+  const saved = JSON.parse((await screen.findByLabelText('Saved record')).textContent || '{}')
+  expect(saved.tags).toEqual(['train reading'])
 })

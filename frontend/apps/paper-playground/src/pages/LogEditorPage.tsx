@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link, Navigate, useNavigate, useParams, useSearchParams } from 'react-router-dom'
-import { FormProvider, useController, useForm, useWatch } from 'react-hook-form'
-import { CheckIcon } from 'paper-ui/icons'
-import { Button, Checkbox, Flash, Input, Select, TagsInput, TextArea, buttonClassName, useToast } from 'paper-ui'
-import { compatibleModifiers, contestStatus, formatDate, formatNumber, modifierRates, personalScoreExplanation, sampleToday, scoreLog, scoreSubmission, supportedLanguages, type Activity, type LogModifier, type LogUnit, type SampleLog } from '../data'
+import { FormProvider, useForm, useWatch } from 'react-hook-form'
+import { Button, Checkbox, Flash, Input, Select, TagsInput, TextArea, ToggleSelect, buttonClassName, useToast } from 'paper-ui'
+import { compatibleModifiers, contestStatus, formatNumber, modifierRates, personalScoreExplanation, sampleToday, scoreLog, scoreSubmission, supportedLanguages, type Activity, type LogModifier, type LogUnit, type SampleLog } from '../data'
 import { usePlayground } from '../state'
+import { RecentLogPicker } from './RecentLogPicker'
 import './log-editor.css'
 
 type LogFields = {
@@ -49,7 +49,7 @@ function LogForm({ existing }: { existing?: SampleLog }) {
     title: existing?.title || '', language: existing?.language || 'Japanese', activity: existing?.activity || 'Reading',
     amount: existing?.amount ?? '', unit: existing?.unit || 'pages', modifiers: existing?.modifiers || [],
     minutes: existing?.minutes ?? '', date: existing?.date || today, note: existing?.note || '', tags: existing?.tags || [],
-    media: existing?.media || 'Book', submissions: existing?.submissions.filter(s => !closedSubmissions.some(closed => closed.contestId === s.contestId)).map(s => s.contestId) || [params.get('contest')].filter((id): id is string => Boolean(id)),
+    media: existing?.media || '', submissions: existing?.submissions.filter(s => !closedSubmissions.some(closed => closed.contestId === s.contestId)).map(s => s.contestId) || [params.get('contest')].filter((id): id is string => Boolean(id)),
     expandMetadata: metadataPreference(),
   } })
   const values = useWatch({ control: methods.control })
@@ -59,18 +59,12 @@ function LogForm({ existing }: { existing?: SampleLog }) {
   const amount = Number(values.amount)
   const minutes = Number(values.minutes)
   const modifiers = compatibleModifiers(activity, unit, values.modifiers || [])
-  const { field: modifierField } = useController({ control: methods.control, name: 'modifiers' })
   const [step, setStep] = useState(1)
-  const [visibleLogs, setVisibleLogs] = useState(5)
   const [origin, setOrigin] = useState<SampleLog | null>(null)
   const [beforePrefill, setBeforePrefill] = useState<PrefillSnapshot | null>(null)
   const [metadataOpen, setMetadataOpen] = useState(metadataPreference)
-  const recentDetails = useRef<HTMLDetailsElement>(null)
-  const recentList = useRef<HTMLDivElement>(null)
-  const firstAddedLog = useRef<number | null>(null)
   const stepHeading = useRef<HTMLParagraphElement>(null)
   const initialStep = useRef(true)
-  const recentLogs = app.logs.filter(log => log.userId === app.userId).sort((a, b) => b.date.localeCompare(a.date))
   const eligible = app.contests.filter(c => app.joinedContests.includes(c.id) && contestStatus(c, today) === 'live' && (values.date || '') >= c.start && (values.date || '') <= c.end && c.activities.includes(activity) && (c.languages.includes('All languages') || c.languages.includes(language)) && (!app.registrations[c.id] || app.registrations[c.id].includes(language)) && (c.id !== 'reading-circle' || minutes > 0))
 
   useEffect(() => {
@@ -83,13 +77,6 @@ function LogForm({ existing }: { existing?: SampleLog }) {
   useEffect(() => {
     try { localStorage.setItem(metadataPreferenceKey, String(values.expandMetadata)) } catch { /* The form still works when browser storage is unavailable. */ }
   }, [values.expandMetadata])
-
-  useEffect(() => {
-    if (firstAddedLog.current !== null) {
-      recentList.current?.querySelectorAll<HTMLButtonElement>('button')[firstAddedLog.current]?.focus()
-      firstAddedLog.current = null
-    }
-  }, [visibleLogs])
 
   useEffect(() => {
     if (initialStep.current) { initialStep.current = false; return }
@@ -105,7 +92,6 @@ function LogForm({ existing }: { existing?: SampleLog }) {
       tags: [...log.tags], media: log.media, amount: '', minutes: '',
     })
     setOrigin(log)
-    if (recentDetails.current) recentDetails.current.open = false
     requestAnimationFrame(() => methods.setFocus('amount'))
   }
 
@@ -142,22 +128,11 @@ function LogForm({ existing }: { existing?: SampleLog }) {
     <FormProvider {...methods}><form className="log-editor__form" noValidate onSubmit={methods.handleSubmit(saveLog, errors => {
       const field = Object.keys(errors)[0] as keyof LogFields
       setStep(field === 'date' ? 2 : 1)
-      if (['minutes', 'tags', 'note', 'media'].includes(field)) setMetadataOpen(true)
+      if (['minutes', 'tags', 'note'].includes(field)) setMetadataOpen(true)
       requestAnimationFrame(() => methods.setFocus(field))
     })}>
       <div className="log-editor__step-content" hidden={step !== 1}>
-        {!existing && <details className="log-editor__recent" ref={recentDetails}>
-          <summary>Use a recent log</summary>
-          <p className="log-editor__hint">Copy its details and enter a new amount.</p>
-          <div className="log-editor__recent-list" ref={recentList}>
-            {recentLogs.slice(0, visibleLogs).map(log => <div className="log-editor__recent-row" key={log.id}>
-              <div className="log-editor__recent-copy"><strong>{logTitle(log)}</strong><span>{log.language} · {log.activity} · {log.unit}</span><time dateTime={log.date}>{formatDate(log.date)}</time></div>
-              <Button variant="ghost" onClick={() => applyRecent(log)}>Use this log</Button>
-            </div>)}
-            {!recentLogs.length && <p className="log-editor__hint">Your recent entries will appear here after you save your first log.</p>}
-          </div>
-          {recentLogs.length > 0 && <div className="log-editor__recent-footer"><span role="status">{Math.min(visibleLogs, recentLogs.length)} recent entries shown{visibleLogs >= recentLogs.length ? ' · End of history' : ''}</span><Button variant="ghost" disabled={visibleLogs >= recentLogs.length} onClick={() => { firstAddedLog.current = visibleLogs; setVisibleLogs(count => count + 5) }}>{visibleLogs >= recentLogs.length ? 'All logs shown' : 'Show more'}</Button></div>}
-        </details>}
+        {!existing && <RecentLogPicker logs={app.logs.filter(log => log.userId === app.userId)} onSelect={applyRecent} />}
         {origin && <div className="log-editor__reuse-notice" role="status"><div><strong>Using {logTitle(origin)}</strong><p>Details copied. Enter the amount for this new log.</p></div>{beforePrefill && <Button variant="ghost" onClick={undoRecent}>Undo</Button>}</div>}
         <fieldset className="log-editor__section"><legend>What are you logging?</legend><div className="log-editor__fields">
           <div className="log-editor__row"><Select name="language" label="Language" disabled={Boolean(existing)} value={existing?.language} required={!existing} options={supportedLanguages.map(value => ({ value, label: value }))} /><Select name="activity" label="Activity" disabled={Boolean(existing)} value={existing?.activity} options={[{ value: 'Reading', label: 'Reading' }, { value: 'Listening', label: 'Listening' }]} /></div>
@@ -165,17 +140,17 @@ function LogForm({ existing }: { existing?: SampleLog }) {
           <Input name="title" label="What did you read or listen to?" hint="Optional. A book, episode, article, or anything you enjoyed." maxLength={180} />
         </div></fieldset>
         <fieldset className="log-editor__section"><legend>Scoring</legend><div className="log-editor__fields">
-          <div className="log-editor__amount"><Input name="amount" label={quantityLabel} type="number" min="0.01" step="any" placeholder="Enter today’s amount" required rules={{ valueAsNumber: true, min: { value: .01, message: 'Enter an amount greater than zero.' }, max: { value: 1000000, message: 'Check this amount.' } }} />{activity === 'Reading' && <Select name="unit" label="Unit" options={['pages', 'sentences', 'characters'].map(value => ({ value, label: value }))} />}</div>
+          <div className="log-editor__amount"><Input name="amount" label={quantityLabel} type="number" min="0.01" step="any" placeholder="0" required rules={{ valueAsNumber: true, min: { value: .01, message: 'Enter an amount greater than zero.' }, max: { value: 1000000, message: 'Check this amount.' } }} />{activity === 'Reading' && <Select name="unit" label="Unit" options={['pages', 'sentences', 'characters'].map(value => ({ value, label: value }))} />}</div>
           {origin && <p className="log-editor__hint">Previous entry: {formatNumber(origin.amount)} {origin.unit}.</p>}
-          {activity === 'Reading' && unit === 'pages' ? <fieldset className="log-editor__modifier-group"><legend>Score modifiers</legend><div className="log-editor__modifiers">{readingModifiers.map(modifier => <Button key={modifier} variant={modifiers.includes(modifier) ? 'outline' : 'ghost'} aria-pressed={modifiers.includes(modifier)} leadingIcon={modifiers.includes(modifier) ? <CheckIcon className="paper-icon-default" aria-hidden="true" /> : undefined} onClick={() => modifierField.onChange(modifiers.includes(modifier) ? [] : [modifier])}>{modifier} <span>×{modifierRates[modifier]}</span></Button>)}</div></fieldset> : activity === 'Listening' ? <Checkbox name="modifiers" value="Passive listening" label={`Passive listening ×${modifierRates['Passive listening']}`} /> : <p className="log-editor__hint">No score modifiers for this unit.</p>}
-          <div className="log-editor__score" aria-live="polite"><span>Estimated score</span><strong>{estimate}</strong></div>
+          {activity === 'Reading' && unit !== 'pages' ? <p className="log-editor__hint">No score modifiers for this unit.</p> : <ToggleSelect name="modifiers" label="Score modifiers" options={(activity === 'Reading' ? readingModifiers : ['Passive listening'] as LogModifier[]).map(value => ({ value, label: value, description: `×${modifierRates[value]}` }))} />}
+          <div className="log-editor__score" aria-live="polite"><span>Estimated score</span><strong data-empty={!Number.isFinite(amount) || amount <= 0 || undefined}>{estimate}</strong></div>
           <Link className="text-link log-editor__scoring-link" to="/guide/scoring">How scoring works</Link>
         </div></fieldset>
         <details className="log-editor__metadata" open={metadataOpen} onToggle={event => setMetadataOpen(event.currentTarget.open)}>
           <summary>Metadata{values.tags?.length ? <span> · {values.tags.length} {values.tags.length === 1 ? 'tag' : 'tags'}</span> : null}</summary>
           <div className="log-editor__fields">
-            <TagsInput name="tags" label="Tags" options={[...new Set(['fiction', 'bookclub', 'daily', 'podcast', ...app.logs.filter(log => log.userId === app.userId).flatMap(log => log.tags)])]} hint="Optional. Choose tags to find this entry again." />
-            <div className="log-editor__row">{activity === 'Reading' && <Input name="minutes" label="Time spent reading" type="number" min="0" step="1" hint="Optional, in minutes." rules={{ validate: value => value === '' || Number.isFinite(Number(value)) && Number(value) >= 0 || 'Use zero or a positive duration.' }} />}<Select name="media" label="Medium" options={['Book', 'Article', 'Manga', 'Game', 'Podcast', 'Video', 'Audiobook', 'Conversation'].map(value => ({ value, label: value }))} /></div>
+            <TagsInput name="tags" label="Tags" options={[...new Set(['fiction', 'bookclub', 'daily', 'podcast', ...app.logs.filter(log => log.userId === app.userId).flatMap(log => log.tags)])]} placeholder="Type a tag…" hint="Type a tag and press Enter to add it." />
+            {activity === 'Reading' && <Input name="minutes" label="Time spent reading" type="number" min="0" step="1" hint="Optional, in minutes." rules={{ validate: value => value === '' || Number.isFinite(Number(value)) && Number(value) >= 0 || 'Use zero or a positive duration.' }} />}
             <TextArea name="note" label="Notes" rows={3} hint="Optional. Keep a thought, a new word, or where you left off." />
             <Checkbox name="expandMetadata" label="Expand section by default" />
           </div>
@@ -192,7 +167,7 @@ function LogForm({ existing }: { existing?: SampleLog }) {
     </form></FormProvider>
     <aside className="log-editor__aside" aria-labelledby="log-score-heading">
       <h2 id="log-score-heading">Estimated score</h2>
-      <p className="log-editor__aside-score" aria-live="polite">{estimate}</p>
+      <p className="log-editor__aside-score" data-empty={!Number.isFinite(amount) || amount <= 0 || undefined} aria-live="polite">{estimate}</p>
       {Number.isFinite(amount) && amount > 0 && <p className="log-editor__aside-basis">{personalScoreExplanation({ activity, language, amount, unit, modifiers })}</p>}
       <p>Contest scores may use a different rule.</p>
       <Link className="text-link" to="/guide/scoring">How scoring works</Link>

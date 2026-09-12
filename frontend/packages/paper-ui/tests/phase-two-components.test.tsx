@@ -201,7 +201,7 @@ describe("ActionMenu", () => {
     expect(onSelect).toHaveBeenCalledOnce();
   });
 
-  it("left-aligns its menu with the trigger", async () => {
+  it("aligns the menu to the end of its trigger", async () => {
     const user = userEvent.setup();
     render(
       <ActionMenu
@@ -212,7 +212,7 @@ describe("ActionMenu", () => {
 
     await user.click(screen.getByRole("button", { name: "Log actions" }));
     const menu = await screen.findByRole("menu", { name: "Log actions" });
-    expect(menu.parentElement).toHaveAttribute("data-align", "start");
+    expect(menu.parentElement).toHaveAttribute("data-align", "end");
   });
 
   it("supports keyboard selection and skips disabled items", async () => {

@@ -54,7 +54,7 @@ export function ActionMenu({
         <Menu.Positioner
           className="paper-action-menu__positioner"
           sideOffset={6}
-          align="start"
+          align="end"
         >
           <Menu.Popup className="paper-action-menu paper-elevation-floating">
             {items.map((item) => (

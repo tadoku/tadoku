@@ -152,8 +152,8 @@ function Rules() {
     <>
       <p className="guide-introduction">The competition is friendly. The record should be honest. Every contest has its own dates, permitted activities and scoring rules; check that context before submitting.</p>
       <section className="guide-section" id="dates">
-        <h2>Dates use UTC</h2>
-        <p>The registration deadline and contest end date are different. A round may still be running after it stops accepting new participants. Activity must fall within the contest’s eligible period.</p>
+        <h2>Contest times are local to you</h2>
+        <p>Contest start times and deadlines are shown in your device’s time zone. Activity dates stay on the day you recorded. The registration deadline and contest end date are different. A round may still be running after it stops accepting new participants. Activity must fall within the contest’s eligible period.</p>
         <Link className="text-link" to="/contests/round5">See a contest’s dates and rules</Link>
       </section>
       <section className="guide-section" id="fair-participation">

@@ -2,7 +2,8 @@ import { useEffect, useRef } from 'react'
 import { FormProvider, useForm, useWatch } from 'react-hook-form'
 import { Link, useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { AutocompleteMultiInput, Button, Checkbox, Flash, Input, Select, Surface, Tabbar, TextArea, buttonClassName } from 'paper-ui'
-import { contestStatus, formatDate, supportedLanguages, type Activity, type SampleContest } from '../data'
+import { contestStatus, supportedLanguages, type Activity, type SampleContest } from '../data'
+import { contestEnd, contestStart, formatDateRange, formatDateTime } from '../dates'
 import { usePlayground, useScenario } from '../state'
 import './contests.css'
 
@@ -36,9 +37,9 @@ function ContestPrimaryAction({ contest, asOf, prominent = false }: { contest: S
 }
 function ContestFacts({ contest, asOf }: { contest: SampleContest; asOf: string }) {
   return <dl className="contest-facts">
-    <div><dt>Round begins</dt><dd>{formatDate(contest.start)}, 00:00 UTC</dd></div>
-    <div><dt>Round ends</dt><dd>{formatDate(contest.end)}, 23:59 UTC</dd></div>
-    <div><dt>Joining this round</dt><dd>{registrationIsOpen(contest, asOf) ? `Open until ${formatDate(contest.registrationDeadline)}, 23:59 UTC` : 'Registration closed'}</dd></div>
+    <div><dt>Round begins</dt><dd>{formatDateTime(contestStart(contest.start))}</dd></div>
+    <div><dt>Round ends</dt><dd>{formatDateTime(contestEnd(contest.end))}</dd></div>
+    <div><dt>Joining this round</dt><dd>{registrationIsOpen(contest, asOf) ? `Open until ${formatDateTime(contestEnd(contest.registrationDeadline))}` : 'Registration closed'}</dd></div>
   </dl>
 }
 function ContestFeature({ contest, asOf }: { contest: SampleContest; asOf: string }) {
@@ -53,13 +54,13 @@ function ContestFeature({ contest, asOf }: { contest: SampleContest; asOf: strin
 }
 function ContestRow({ contest, asOf }: { contest: SampleContest; asOf: string }) {
   const { viewer, userId, joinedContests } = usePlayground()
-  const date = new Date(`${contest.start}T00:00:00Z`)
+  const date = new Date(contestStart(contest.start))
   const canManage = ['organizer', 'admin'].includes(viewer) && contest.ownerId === userId
   return <article className="contest-row">
-    <div className="contest-date" aria-hidden="true"><span>{new Intl.DateTimeFormat('en', { month: 'short', timeZone: 'UTC' }).format(date)} {date.getUTCFullYear()}</span><strong>{date.getUTCDate().toString().padStart(2, '0')}</strong></div>
-    <div className="contest-row__body"><div className="flex flex-wrap items-center gap-2"><h3 className="paper-type-component"><Link className="text-link" to={contestPath(contest, asOf)}>{contest.title}</Link></h3>{contest.unlisted ? <span className="status-tag">Unlisted</span> : null}</div><p>{formatDate(contest.start)} – {formatDate(contest.end)}</p><p className="muted">{contest.languages.join(', ')} · {contest.activities.join(' and ')}</p></div>
+    <div className="contest-date" aria-hidden="true"><span>{new Intl.DateTimeFormat(undefined, { month: 'short', year: 'numeric' }).format(date)}</span><strong>{new Intl.DateTimeFormat(undefined, { day: '2-digit' }).format(date)}</strong></div>
+    <div className="contest-row__body"><div className="flex flex-wrap items-center gap-2"><h3 className="paper-type-component"><Link className="text-link" to={contestPath(contest, asOf)}>{contest.title}</Link></h3>{contest.unlisted ? <span className="status-tag">Unlisted</span> : null}</div><p>{formatDateRange(contestStart(contest.start), contestEnd(contest.end))}</p><p className="muted">{contest.languages.join(', ')} · {contest.activities.join(' and ')}</p></div>
     <div className="contest-row__actions"><ContestStatus contest={contest} asOf={asOf} /><ContestPrimaryAction contest={contest} asOf={asOf} /></div>
-    <details className="contest-row__details"><summary>Contest details</summary><div><p>{contest.description}</p><p><strong>{registrationIsOpen(contest, asOf) ? `Registration until ${formatDate(contest.registrationDeadline)}, 23:59 UTC.` : 'Registration closed.'}</strong>{viewer !== 'guest' && joinedContests.includes(contest.id) ? ' You are registered.' : ''}</p>{contest.unlisted ? <p>Anyone with the link can view this contest. It does not appear in public discovery.</p> : null}<div className="flex flex-wrap gap-x-6 gap-y-2"><Link className="text-link" to={contestPath(contest, asOf, '/leaderboard')}>{contestStatus(contest, asOf) === 'ended' ? 'View final standings' : 'View standings'}</Link><Link className="text-link" to="/guide/scoring">How contest scoring works</Link>{canManage ? <Link className="text-link" to={contestPath(contest, asOf, '/edit')}>Manage contest</Link> : null}</div></div></details>
+    <details className="contest-row__details"><summary>Contest details</summary><div><p>{contest.description}</p><p><strong>{registrationIsOpen(contest, asOf) ? `Registration until ${formatDateTime(contestEnd(contest.registrationDeadline))}.` : 'Registration closed.'}</strong>{viewer !== 'guest' && joinedContests.includes(contest.id) ? ' You are registered.' : ''}</p>{contest.unlisted ? <p>Anyone with the link can view this contest. It does not appear in public discovery.</p> : null}<div className="flex flex-wrap gap-x-6 gap-y-2"><Link className="text-link" to={contestPath(contest, asOf, '/leaderboard')}>{contestStatus(contest, asOf) === 'ended' ? 'View final standings' : 'View standings'}</Link><Link className="text-link" to="/guide/scoring">How contest scoring works</Link>{canManage ? <Link className="text-link" to={contestPath(contest, asOf, '/edit')}>Manage contest</Link> : null}</div></div></details>
   </article>
 }
 
@@ -106,7 +107,7 @@ export function ContestsPage() {
         })}
       </>}
     </>}
-    <p className="contest-time-note muted">All contest dates and registration deadlines use UTC.</p>
+    <p className="contest-time-note muted">Contest times are shown in your local time zone.</p>
   </>
 }
 
@@ -136,7 +137,7 @@ export function ContestDetailPage() {
       <div className="flex flex-wrap gap-3 my-6"><ContestPrimaryAction contest={contest} asOf={asOf} prominent /><Link className={buttonClassName({ variant: 'outline' })} to={contestPath(contest, asOf, '/leaderboard')}>View standings</Link>{canManage ? <Link className={buttonClassName({ variant: 'ghost' })} to={contestPath(contest, asOf, '/edit')}>Manage contest</Link> : null}</div>
       {joined && registrationIsOpen(contest, asOf) && contestStatus(contest, asOf) === 'live' ? <p><Link className="text-link" to={contestPath(contest, asOf, '/registration')}>Update your registered languages</Link></p> : null}
       <p className="muted">Personal tracking stays available outside contest rounds. A contest’s eligibility and saved score can differ from your personal total.</p><Link className="text-link" to="/guide/scoring">Understand scores and eligibility</Link>
-    </section><aside className="contest-detail-timeline"><h2 className="paper-type-component">Dates &amp; registration</h2><ContestFacts contest={contest} asOf={asOf} /><p className="muted">All times are UTC. Registration can close before a live round ends; registered participants can continue logging until the end.</p></aside></div>
+    </section><aside className="contest-detail-timeline"><h2 className="paper-type-component">Dates &amp; registration</h2><ContestFacts contest={contest} asOf={asOf} /><p className="muted">Times are shown in your local time zone. Registration can close before a live round ends; registered participants can continue logging until the end.</p></aside></div>
   </>
 }
 
@@ -168,6 +169,7 @@ export function ContestEditorPage() {
   const contest = contests.find(item => item.id === contestId)
   const methods = useForm<ContestFields>({ defaultValues: { title: contest?.title ?? '', description: contest?.description ?? '', start: contest?.start ?? '2026-10-01', end: contest?.end ?? '2026-10-31', registrationDeadline: contest?.registrationDeadline ?? '2026-10-05', allLanguages: !contest || contest.languages.includes('All languages'), languages: contest?.languages.filter(language => language !== 'All languages') ?? [], reading: contest?.activities.includes('Reading') ?? true, listening: contest?.activities.includes('Listening') ?? true, unlisted: contest?.unlisted ?? false } })
   const allLanguages = useWatch({ control: methods.control, name: 'allLanguages' })
+  const [start, end, registrationDeadline] = useWatch({ control: methods.control, name: ['start', 'end', 'registrationDeadline'] })
   const canManage = ['organizer', 'admin'].includes(viewer) && (!contestId || contest?.ownerId === userId)
   if (contestId && !contest) return <ContestNotFound />
   if (!canManage) return <><header className="page-header"><h1 className="paper-type-page">Organizer access required</h1></header><section className="empty-state"><p>Creating contests requires organizer permission. You can manage only the contests you organize.</p><Link className={buttonClassName({ variant: 'outline' })} to="/contests/official">Browse contests</Link></section></>
@@ -185,8 +187,8 @@ export function ContestEditorPage() {
     <FormProvider {...methods}><form onSubmit={save} noValidate className="app-form contest-editor-form"><div className="app-form__fields">
       <Input name="title" label="Contest title" required maxLength={100} rules={{ validate: value => Boolean(value?.trim()) || 'Enter a contest title.' }} />
       <TextArea name="description" label="What is this contest about?" rows={3} required rules={{ validate: value => Boolean(value?.trim()) || 'Describe what participants will do.' }} />
-      <div className="app-form__row"><Input name="start" label="Begins (UTC)" type="date" required /><Input name="end" label="Ends (UTC)" type="date" required rules={{ validate: value => value >= methods.getValues('start') || 'The end date must be on or after the start date.' }} /></div>
-      <Input name="registrationDeadline" label="Registration closes (UTC)" type="date" required hint="Registration may close before or after the round begins, up to the round’s end." rules={{ validate: value => value <= methods.getValues('end') || 'Registration must close on or before the round ends.' }} />
+      <div className="app-form__row"><Input name="start" label="Begins (UTC)" type="date" required hint={start ? `Your time: ${formatDateTime(contestStart(start))}` : undefined} /><Input name="end" label="Ends (UTC)" type="date" required hint={end ? `Your time: ${formatDateTime(contestEnd(end))}` : undefined} rules={{ validate: value => value >= methods.getValues('start') || 'The end date must be on or after the start date.' }} /></div>
+      <Input name="registrationDeadline" label="Registration closes (UTC)" type="date" required hint={registrationDeadline ? `Your time: ${formatDateTime(contestEnd(registrationDeadline))}. Must close on or before the round ends.` : 'Must close on or before the round ends.'} rules={{ validate: value => value <= methods.getValues('end') || 'Registration must close on or before the round ends.' }} />
       <fieldset className="contest-form-group"><legend className="paper-type-component">Languages</legend><Checkbox name="allLanguages" label="Allow all languages" />{!allLanguages ? <AutocompleteMultiInput name="languages" label="Allowed languages" options={supportedLanguages} format={value => value} getId={value => value} required rules={{ validate: value => methods.getValues('allLanguages') || Array.isArray(value) && value.length > 0 || 'Choose at least one allowed language.' }} /> : <p className="muted">Participants choose up to three languages when registering.</p>}</fieldset>
       <fieldset className="contest-form-group"><legend className="paper-type-component">Activities</legend><Checkbox name="reading" label="Reading" rules={{ validate: () => methods.getValues('reading') || methods.getValues('listening') || 'Choose at least one activity.' }} /><Checkbox name="listening" label="Listening" /></fieldset>
       <fieldset className="contest-form-group"><legend className="paper-type-component">Discovery</legend><Checkbox name="unlisted" label="Unlisted — accessible with the link" hint="Unlisted contests appear in My contests and can be opened by anyone with their link. They are excluded from public discovery." /></fieldset>

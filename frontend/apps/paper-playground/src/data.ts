@@ -70,5 +70,5 @@ export function scoreSubmission(log: Pick<SampleLog, 'activity'|'amount'|'unit'|
   return { contestId, score, basis: `${formatNumber(amount)} ${unit} × ${rate} ${rate === 1 ? 'point' : 'points'} per ${timedReading || log.unit === 'minutes' ? 'minute' : 'page'} = ${formatNumber(score)} points. Sample contest rule.` }
 }
 export function formatNumber(value: number) { return new Intl.NumberFormat('en',{maximumFractionDigits:1}).format(value) }
-export function formatDate(value: string) { return new Intl.DateTimeFormat('en-GB',{day:'numeric',month:'short',year:'numeric',timeZone:'UTC'}).format(new Date(value.length===10?`${value}T00:00:00Z`:value)) }
+export { formatDate } from './dates'
 export function contestStatus(contest: SampleContest, asOf=sampleToday): 'live'|'upcoming'|'ended' { return asOf < contest.start ? 'upcoming' : asOf > contest.end ? 'ended' : 'live' }

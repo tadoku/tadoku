@@ -1,6 +1,7 @@
 import { Button, Surface, Table, buttonClassName } from 'paper-ui'
 import { Link } from 'react-router-dom'
-import { formatNumber, initialLogs, leaderboardPeople, users } from '../data'
+import { formatNumber, initialContests, initialLogs, leaderboardPeople, users } from '../data'
+import { contestEnd, contestStart, formatDate, formatDateRange, formatDateTime } from '../dates'
 import { usePlayground, useScenario } from '../state'
 import './editorial.css'
 
@@ -13,10 +14,10 @@ const homeContent = {
     primaryHref: '/contests/round5/registration',
     secondary: 'How Tadoku works',
     secondaryHref: '/guide',
-    note: 'Free to join. Registration closes 23 September.',
+    note: 'Free to join.',
   },
   'member-open': {
-    status: 'Registration closes 23 September',
+    status: 'Registration is open',
     headline: 'Round 5 is moving. There’s still time to join.',
     description: 'Choose the languages you want to immerse in, join the official round, and let the community’s progress give your daily habit a little extra pull.',
     primary: 'Join Round 5',
@@ -37,16 +38,16 @@ const homeContent = {
   },
   upcoming: {
     status: 'Registration is open',
-    headline: 'The next round starts 1 November.',
+    headline: 'Make time for the next round.',
     description: 'Choose your languages now and find something you want to read or listen to. Start the next two-week immersion sprint with the community.',
     primary: 'Join Round 6',
     primaryHref: '/contests/round6/registration',
     secondary: 'Track without a contest',
     secondaryHref: '/logs/new',
-    note: 'Registration closes 7 November.',
+    note: 'Registration is open.',
   },
   between: {
-    status: 'The next round starts 1 November',
+    status: 'Registration for Round 6 is open',
     headline: 'Keep immersing between rounds.',
     description: 'Contests add momentum, but the habit is yours year-round. Track what you read and listen to today, then bring that rhythm into the next official round.',
     primary: 'Log activity',
@@ -69,7 +70,7 @@ const homeContent = {
 
 export function HomePage() {
   const [scenario, setScenario] = useScenario('home')
-  const { user, userId, joinedContests, logs } = usePlayground()
+  const { user, userId, joinedContests, logs, contests } = usePlayground()
   const content = homeContent[scenario as keyof typeof homeContent] ?? homeContent['guest-live']
   const participant = scenario === 'participant-live'
   const upcoming = scenario === 'upcoming'
@@ -93,6 +94,9 @@ export function HomePage() {
   const points = ranked.reduce((total, person) => total + person.score, 0)
   const languageCount = new Set(['Japanese', 'Spanish', ...logs.filter(log => log.date <= asOf && log.submissions.some(submission => submission.contestId === 'round5')).map(log => log.language)]).size
   const selectedContest = upcoming ? 'round6' : 'round5'
+  const contest = contests.find(item => item.id === selectedContest) ?? initialContests[upcoming ? 1 : 0]
+  const period = formatDateRange(contestStart(contest.start), contestEnd(contest.end))
+  const nextContest = contests.find(item => item.id === 'round6') ?? initialContests[1]
   const alreadyJoined = user && joinedContests.includes(selectedContest)
   const retryScenario = !user ? 'guest-live' : joinedContests.includes('round5') ? 'participant-live' : 'member-open'
   const primaryHref = between ? `/logs/new?asOf=${asOf}` : upcoming && alreadyJoined ? '/logs/new' : content.primaryHref
@@ -109,14 +113,14 @@ export function HomePage() {
             <Link to={primaryHref} className={buttonClassName()}>{primaryLabel}</Link>
             <Link to={content.secondaryHref} className="text-link">{content.secondary}</Link>
           </div>
-          <p className="home-fineprint">{content.note}</p>
+          <p className="home-fineprint">{upcoming || scenario === 'guest-live' ? `${scenario === 'guest-live' ? 'Free to join. ' : ''}Registration closes ${formatDateTime(contestEnd(contest.registrationDeadline))}.` : content.note}</p>
         </div>
 
         <Surface as="section" elevation="showcase" accent className="home-ledger p-0" aria-labelledby="home-board-title">
           <header className="home-ledger-header">
             <div>
               <h2 id="home-board-title">{upcoming ? '2026 Round 6' : between ? '2026 Round 5 recap' : unavailable ? 'Current contest' : '2026 Round 5'}</h2>
-              <p>{upcoming ? '1–14 November 2026' : between ? '1–30 September 2026 · Final results' : unavailable ? 'Standings temporarily unavailable' : '1–30 September 2026 · Day 5 of 30'}</p>
+              <p>{unavailable ? 'Standings temporarily unavailable' : <>{period}{between ? ' · Final results' : upcoming ? '' : ' · Day 5 of 30'}</>}</p>
             </div>
             {!unavailable && <Link to={`/contests/${selectedContest}${upcoming ? '' : '/leaderboard'}${between ? '?scenario=ended' : ''}`} className="text-link">{upcoming ? 'Contest details' : between ? 'See final board' : 'Full leaderboard'}</Link>}
           </header>
@@ -133,10 +137,10 @@ export function HomePage() {
                 <div><dt>Activities</dt><dd>Reading & listening</dd></div>
               </dl>
               <div className="home-ledger-message">
-                <p className="home-start-date"><span>Starts</span><strong>1 November</strong></p>
+                <p className="home-start-date"><span>Starts</span><strong>{formatDate(contestStart(contest.start))}</strong></p>
                 <h3>Make space for immersion</h3>
                 <p>Choose up to three languages. Contest scoring begins when the round starts.</p>
-                <p className="home-fineprint">Registration closes 7 November. All dates use UTC.</p>
+                <p className="home-fineprint">{formatDateTime(contestStart(contest.start))}. Times are local to you.</p>
               </div>
             </>
           ) : (
@@ -181,11 +185,11 @@ export function HomePage() {
         </ol>
       </section>
 
-      <section className="home-schedule" aria-labelledby="home-next-title">
-        <div><h2 id="home-next-title">Next official round</h2><p>1–14 November 2026</p></div>
-        <p>Track your immersion anytime. Registration for Round 6 is open until 7 November.</p>
+      {!upcoming && <section className="home-schedule" aria-labelledby="home-next-title">
+        <div><h2 id="home-next-title">Next official round</h2><p>{formatDateRange(contestStart(nextContest.start), contestEnd(nextContest.end))}</p></div>
+        <p>Registration closes {formatDateTime(contestEnd(nextContest.registrationDeadline))}.</p>
         <Link className="text-link" to="/contests/round6">See the schedule</Link>
-      </section>
+      </section>}
     </div>
   )
 }

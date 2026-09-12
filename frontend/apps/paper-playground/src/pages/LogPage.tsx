@@ -4,6 +4,7 @@ import { Link, useParams, useSearchParams } from 'react-router-dom'
 import { Breadcrumb, Button, Checkbox, Flash, Modal, Surface, buttonClassName, type NavigationLinkProps } from 'paper-ui'
 import { PencilSquareIcon, TrashIcon } from 'paper-ui/icons'
 import { contestStatus, formatDate, formatNumber, sampleToday, scoreLog, scoreSubmission, users, type SampleContest, type SampleLog, type Submission } from '../data'
+import { contestEnd, contestStart, formatDateRange } from '../dates'
 import { usePlayground, useScenario } from '../state'
 import './records.css'
 
@@ -48,7 +49,7 @@ function SubmissionManager({ log, asOf, onSaved }: { log: SampleLog; asOf: strin
       <form onSubmit={methods.handleSubmit(values => { saveLog({ ...log, submissions: updateSubmissions(log, Object.entries(values.selected).filter(([, selected]) => selected).map(([id]) => id), contests, joinedContests, registrations, asOf) }); setOpen(false); onSaved() })}>
         {choices.length ? <div className="records-submission-choices">{choices.map(contest => {
           const reason = submissionEligibility(log, contest, joinedContests, registrations, asOf)
-          return <div key={contest.id}><Checkbox name={`selected.${contest.id}`} label={contest.title} disabled={Boolean(reason)} hint={reason ?? `${formatDate(contest.start)} – ${formatDate(contest.end)} · Eligible`} /></div>
+          return <div key={contest.id}><Checkbox name={`selected.${contest.id}`} label={contest.title} disabled={Boolean(reason)} hint={reason ?? `${formatDateRange(contestStart(contest.start), contestEnd(contest.end))} · Eligible`} /></div>
         })}</div> : null}
         {!available.length ? <div className="records-submission-empty"><h3 className="paper-type-component">No eligible contests</h3><p>Check the activity date, language, and your registrations. This activity already counts in your personal history.</p><Link className="text-link" to={`/contests/official?asOf=${asOf}`} onClick={() => setOpen(false)}>Find a contest to join</Link></div> : <p className="muted text-sm">Removing a selection removes that contest contribution. Your personal record stays the same.</p>}
         <div className="app-form__actions"><Button type="submit" disabled={!available.length}>Save submissions</Button><Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button></div>
@@ -103,7 +104,7 @@ function LogRecord({ id, scenario, onRetry }: { id?: string; scenario: string; o
     <article className="records-log-sheet">
       <header className="records-log-header">
         <div className="meta-row"><strong>{log.language}</strong><span>{log.activity}</span><span>{log.media}</span></div>
-        <div className="records-log-title"><div><h1 className="paper-type-page">{log.title || `${log.language} ${log.activity.toLocaleLowerCase()}`}</h1><p className="muted">Logged by <Link className="text-link" to={`/users/${log.userId}`}>{name}</Link> on <time dateTime={log.date}>{formatDate(log.date)}</time> · UTC</p></div>{owner ? <Link className={buttonClassName({ variant: 'outline' })} to={`/logs/${log.id}/edit?asOf=${asOf}`}><PencilSquareIcon className="paper-icon-default" aria-hidden="true" />Edit log</Link> : null}</div>
+        <div className="records-log-title"><div><h1 className="paper-type-page">{log.title || `${log.language} ${log.activity.toLocaleLowerCase()}`}</h1><p className="muted">Logged by <Link className="text-link" to={`/users/${log.userId}`}>{name}</Link> on <time dateTime={log.date}>{formatDate(log.date)}</time></p></div>{owner ? <Link className={buttonClassName({ variant: 'outline' })} to={`/logs/${log.id}/edit?asOf=${asOf}`}><PencilSquareIcon className="paper-icon-default" aria-hidden="true" />Edit log</Link> : null}</div>
       </header>
       <div className="records-log-body"><Surface as="section" className="records-log-entry" aria-label="Recorded activity">
       <div className="records-log-measure"><p><strong>{formatNumber(log.amount)}</strong><span>{log.unit} {log.activity === 'Reading' ? 'read' : 'listened'}</span></p>{log.activity === 'Reading' ? <p className="records-log-time">{log.minutes === undefined ? 'Time not recorded' : <><strong>{formatNumber(log.minutes)} min</strong><span>time spent</span></>}</p> : null}</div>

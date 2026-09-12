@@ -9,6 +9,7 @@ import { HomePage } from '../src/pages/HomePage'
 import { LeaderboardPage } from '../src/pages/LeaderboardPage'
 import { LogPage } from '../src/pages/LogPage'
 import { PlaygroundProvider } from '../src/state'
+import { formatDate } from '../src/dates'
 
 beforeEach(() => localStorage.clear())
 
@@ -63,7 +64,7 @@ it('keeps the between-rounds date through creating, viewing and editing an activ
   await user.type(screen.getByLabelText(/Pages read/), '10')
   await user.click(screen.getByRole('button', { name: 'Save activity' }))
   expect(await screen.findByRole('heading', { name: 'October reading' })).toBeVisible()
-  expect(screen.getByText(/Viewed as of 1 Oct 2026/)).toBeVisible()
+  expect(screen.getByText(`Viewed as of ${formatDate('2026-10-01')}.`)).toBeVisible()
   const edit=screen.getByRole('link', { name: 'Edit log' })
   expect(edit.getAttribute('href')).toContain('asOf=2026-10-01')
   await user.click(edit)
@@ -73,6 +74,6 @@ it('keeps the between-rounds date through creating, viewing and editing an activ
   await user.type(screen.getByLabelText(/Pages read/), '12')
   await user.click(screen.getByRole('button', { name: 'Save changes' }))
   expect(await screen.findByRole('heading', { name: 'October reading' })).toBeVisible()
-  expect(screen.getByText(/Viewed as of 1 Oct 2026/)).toBeVisible()
+  expect(screen.getByText(`Viewed as of ${formatDate('2026-10-01')}.`)).toBeVisible()
   expect(screen.getByRole('link', { name: 'Edit log' }).getAttribute('href')).toContain('asOf=2026-10-01')
 })

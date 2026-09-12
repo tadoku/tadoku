@@ -5,17 +5,18 @@ body { margin: 0; }
 a { text-underline-offset: .2em; }
 .text-link { color: var(--paper-color-text-link); }
 .muted { color: var(--paper-color-text-muted); }
-.app-shell { min-height: 100vh; display: flex; flex-direction: column; }
+.app-shell { --app-gutter: 28px; --app-content-width: 1160px; min-height: 100vh; display: flex; flex-direction: column; }
 .app-header { border-bottom: 1px solid var(--paper-color-rule-default); background: var(--paper-color-surface-paper); }
-.app-header .paper-navbar { max-width: 1240px; margin: 0 auto; border: 0; }
-.app-header .paper-navbar__inner { padding-block: 8px; }
+.app-header .paper-navbar { max-width: calc(var(--app-content-width) + var(--app-gutter) * 2); padding-inline: var(--app-gutter); margin: 0 auto; border: 0; }
+.app-header .paper-navbar__inner { padding: 8px 0; }
+.app-header .paper-navbar__mobile-panel { padding-inline: 0; }
 .app-header-actions { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
 .app-account-menu--desktop .paper-button > span { max-width: 18ch; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .app-account-menu--mobile { display: none; }
 .app-wordmark { display: block; width: 142px; height: auto; }
-.app-content { width: 100%; max-width: 1216px; padding: 48px 28px 64px; margin-inline: auto; flex: 1; min-width: 0; }
-.app-footer { border-top: 1px solid var(--paper-color-rule-default); padding: 24px 28px 32px; }
-.app-footer__inner { max-width: 1160px; margin: auto; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 16px; }
+.app-content { width: 100%; max-width: calc(var(--app-content-width) + var(--app-gutter) * 2); padding: 48px var(--app-gutter) 64px; margin-inline: auto; flex: 1; min-width: 0; }
+.app-footer { border-top: 1px solid var(--paper-color-rule-default); padding: 24px var(--app-gutter) 32px; }
+.app-footer__inner { max-width: var(--app-content-width); margin: auto; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 16px; }
 .app-footer nav { display: flex; flex-wrap: wrap; gap: 24px; }
 .page-header { margin-bottom: 32px; }
 .page-header h1 { margin: 0 0 12px; }
@@ -43,8 +44,8 @@ a { text-underline-offset: .2em; }
 .app-form__row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
 .app-form__actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 24px; }
 .app-admin-label { border-left: 1px solid var(--paper-color-rule-default); padding-left: 16px; font-weight: 600; }
-@media (max-width: 800px) { .page-columns { grid-template-columns: minmax(0,1fr); gap: 28px; } .app-content { padding: 32px 20px 48px; } .app-wordmark { width: 120px; } }
-@media (max-width: 520px) { .app-content { padding: 28px 16px 40px; } .app-footer { padding-inline: 16px; } .page-header { margin-bottom: 24px; } .stat-grid { grid-template-columns: repeat(2,minmax(0,1fr)); gap: 20px; } .stat { padding-left: 12px; } .app-form__row { grid-template-columns: 1fr; } .app-wordmark { width: 106px; } .app-account-label { display:none; } .app-admin-label { font-size:.8rem; padding-left:8px; } }
+@media (max-width: 800px) { .app-shell { --app-gutter: 20px; } .page-columns { grid-template-columns: minmax(0,1fr); gap: 28px; } .app-content { padding-block: 32px 48px; } .app-wordmark { width: 120px; } }
+@media (max-width: 520px) { .app-shell { --app-gutter: 16px; } .app-content { padding-block: 28px 40px; } .page-header { margin-bottom: 24px; } .stat-grid { grid-template-columns: repeat(2,minmax(0,1fr)); gap: 20px; } .stat { padding-left: 12px; } .app-form__row { grid-template-columns: 1fr; } .app-wordmark { width: 106px; } .app-account-label { display:none; } .app-admin-label { font-size:.8rem; padding-left:8px; } }
 @media (min-width: 768px) and (max-width: 1000px) { .app-account-menu--desktop .paper-button > span { max-width: 10ch; } }
 @media (width < 48rem) { .app-account-menu--desktop { display: none; } .app-account-menu--mobile { display: inline-flex; } }
-@media (max-width: 360px) { .app-header .paper-navbar__inner { padding-inline: 8px; gap: 0; } .app-header-actions { gap: 0; } .app-wordmark { width: 80px; } }
+@media (max-width: 360px) { .app-header .paper-navbar__inner { gap: 0; } .app-header-actions { gap: 0; } .app-wordmark { width: 80px; } }

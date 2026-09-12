@@ -1,0 +1,7 @@
+{
+  "route": "/leaderboard/latest?scenario=participant",
+  "viewport": { "width": 1280, "height": 800 },
+  "shell": { "aligned": false, "brandLeft": 24.5, "contentLeft": 52.5, "footerLeft": 52.5 },
+  "firstRankingRowTop": 770.28125,
+  "screenshot": "/var/lib/t3/userdata/browser-artifacts/browser-screenshot-t3-ff08555d5d6ded8a5d7d06de-lab-mty17blb-17083547.png"
+}

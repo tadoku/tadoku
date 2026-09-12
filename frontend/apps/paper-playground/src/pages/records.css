@@ -1,8 +1,6 @@
 .records-profile-header,
 .records-identity,
-.records-year-control,
-.records-filter-chips,
-.records-filter-actions { display: flex; align-items: center; gap: 1rem; }
+.records-year-control { display: flex; align-items: center; gap: 1rem; }
 .records-profile-header { justify-content: space-between; flex-wrap: wrap; margin-block-start: 1.5rem; }
 .records-activity .records-section-heading > div { flex: 1 1 10rem; }
 .records-identity { min-width: 0; gap: 1.25rem; }
@@ -67,16 +65,14 @@
 .records-entries--compact > li:first-child { padding-block-start: 0; }
 .records-entries--compact .records-entry-date { grid-column: 1 / -1; padding: 0; }
 .records-entries--compact .records-entry-title { font-size: .9375rem; }
-.records-search-row { display: flex; align-items: end; gap: .75rem; }
-.records-search-row .paper-field { flex: 1; }
-.records-filter-form { padding: 1.25rem; border: 1px solid var(--paper-color-rule-default); background: var(--paper-color-surface-paper); }
-.records-filter-panel { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1.5rem; padding-block-start: 1.5rem; margin-block-start: 1.5rem; border-block-start: 1px solid var(--paper-color-rule-default); }
-.records-filter-group { border: 0; padding: 0; margin: 0; min-width: 0; }
-.records-filter-group legend { margin-block-end: .75rem; font-size: .875rem; font-weight: 600; }
-.records-filter-group > .paper-choice-field + .paper-choice-field { margin-block-start: .75rem; }
-.records-filter-actions { grid-column: 1 / -1; justify-content: flex-end; flex-wrap: wrap; }
-.records-filter-summary { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: .5rem 1rem; padding-block: 1rem; border-block-end: 1px solid var(--paper-color-rule-default); }
-.records-filter-chips { flex-wrap: wrap; gap: .5rem; }
+.records-activity .records-section-heading > .records-activity-actions { display: flex; flex: 0 1 auto; align-items: center; flex-wrap: wrap; gap: .5rem; }
+.records-filter-toggle { white-space: nowrap; }
+.records-filter-toggle[aria-expanded="true"] svg { transform: rotate(180deg); }
+.records-filter-panel { display: grid; grid-template-columns: minmax(88px,.6fr) 1fr 1fr minmax(180px,1.25fr); gap: .75rem; padding-block-end: 1.25rem; }
+.records-filter-summary { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: .5rem 1rem; padding-block-end: 1rem; border-block-end: 1px solid var(--paper-color-rule-default); }
+.records-applied-filters { display: flex; align-items: center; gap: .5rem 1rem; min-inline-size: 0; }
+.records-applied-filters p { margin: 0; font-size: .8125rem; overflow-wrap: anywhere; }
+.records-applied-filters .paper-button { flex-shrink: 0; }
 .records-result-count { margin: 0; color: var(--paper-color-text-muted); font-size: .8125rem; }
 .records-log-notice { margin-block: 1.5rem; }
 .records-log-sheet { margin-block-start: 1.5rem; }
@@ -180,8 +176,7 @@
   .records-profile-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.5rem 2rem; }
   .records-profile-stats .stat { padding: 0; border: 0; }
   .records-overview-columns { grid-template-columns: minmax(0, 1fr); gap: 0; }
-  .records-filter-panel { grid-template-columns: 1fr 1fr; }
-  .records-filter-panel > .paper-field { grid-column: 1 / -1; }
+  .records-filter-panel { grid-template-columns: minmax(0,1fr) minmax(0,1fr); }
   .records-log-body { grid-template-columns: minmax(0, 1fr); }
   .records-log-score-grid { padding-inline-start: 0; padding-block-start: 1.5rem; border-inline-start: 0; border-block-start: 1px solid var(--paper-color-rule-default); grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 2rem; }
   .records-log-score-grid > section + section { padding: 0; border: 0; }
@@ -197,7 +192,6 @@
   .records-profile-stats small { font-size: .75rem; }
   .records-entries > li { grid-template-columns: minmax(0, 1fr) 3rem; gap: .375rem 1rem; }
   .records-entry-date { grid-column: 1 / -1; padding: 0; }
-  .records-filter-form { padding: 1rem; }
   .records-filter-panel { grid-template-columns: minmax(0, 1fr); }
   .records-profile-header { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: start; }
   .records-identity { gap: 1rem; }

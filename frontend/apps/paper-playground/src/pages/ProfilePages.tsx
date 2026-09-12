@@ -1,8 +1,8 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { FormProvider, useForm, useWatch } from 'react-hook-form'
 import { Link, useParams, useSearchParams } from 'react-router-dom'
-import { Breadcrumb, Button, Checkbox, HeatmapChart, Input, Select, Tabbar, buttonClassName, chartPalette, type NavigationLinkProps } from 'paper-ui'
-import { ChevronLeftIcon, ChevronRightIcon, PlusIcon, XMarkIcon } from 'paper-ui/icons'
+import { AutocompleteMultiInput, Breadcrumb, Button, HeatmapChart, Input, Select, Tabbar, buttonClassName, chartPalette, type NavigationLinkProps } from 'paper-ui'
+import { ChevronDownIcon, ChevronLeftIcon, ChevronRightIcon, PlusIcon } from 'paper-ui/icons'
 import { formatDate, formatNumber, scoreLog, users, type SampleLog } from '../data'
 import { contestEnd, contestStart, formatDateRange } from '../dates'
 import { usePlayground, useScenario } from '../state'
@@ -67,49 +67,41 @@ function ActivityRows({ logs, compact = false }: { logs: readonly SampleLog[]; c
   </ol>
 }
 
-function ActivityLog({ logs, owner, year }: { logs: readonly SampleLog[]; owner: boolean; year: number }) {
+function ActivityLog({ logs, owner }: { logs: readonly SampleLog[]; owner: boolean }) {
   const [filtersOpen, setFiltersOpen] = useState(false)
-  const [applied, setApplied] = useState<ActivityFilters>({ ...emptyFilters, period: String(year) })
-  const methods = useForm<ActivityFilters>({ defaultValues: { ...emptyFilters, period: String(year) } })
-  const query = useWatch({ control: methods.control, name: 'query' }) ?? ''
-  const filtered = filterActivityLogs(logs, { ...applied, query })
+  const filtersToggle = useRef<HTMLButtonElement>(null)
+  const methods = useForm<ActivityFilters>({ defaultValues: emptyFilters })
+  const values = useWatch({ control: methods.control })
+  const applied = { ...emptyFilters, ...values }
+  const filtered = filterActivityLogs(logs, applied)
   const languages = [...new Set(logs.map(log => log.language))].sort()
-  const chips = [
-    ...(applied.period !== 'all' ? [{ kind: 'period' as const, value: applied.period }] : []),
-    ...applied.languages.map(value => ({ kind: 'languages' as const, value })),
-    ...applied.activities.map(value => ({ kind: 'activities' as const, value })),
+  const appliedFilters = [
+    ...(applied.period !== 'all' ? [applied.period] : []),
+    ...applied.languages,
+    ...applied.activities,
+    ...(applied.query.trim() ? [`Search: ${applied.query.trim()}`] : []),
   ]
-  const reset = () => { methods.reset(emptyFilters); setApplied(emptyFilters) }
-  const removeFilter = (kind: 'period' | 'languages' | 'activities', value: string) => {
-    const next = kind === 'period' ? { ...applied, period: 'all' } : { ...applied, [kind]: applied[kind].filter(item => item !== value) }
-    setApplied(next)
-    methods.reset({ ...next, query })
+  const reset = () => {
+    methods.reset(emptyFilters)
+    filtersToggle.current?.focus()
   }
 
   return <section className="page-section records-activity" aria-labelledby="activity-heading">
     <div className="section-heading records-section-heading">
       <div><h2 className="paper-type-section" id="activity-heading">Activity log</h2></div>
-      {owner && logs.length ? <Link className={buttonClassName()} to="/logs/new"><PlusIcon className="paper-icon-default" aria-hidden="true" />Log activity</Link> : null}
+      {logs.length ? <div className="records-activity-actions"><Button ref={filtersToggle} variant="ghost" className="records-filter-toggle" aria-expanded={filtersOpen} aria-controls="activity-filters" onClick={() => setFiltersOpen(!filtersOpen)} trailingIcon={<ChevronDownIcon className="paper-icon-compact" />}>Filters{appliedFilters.length ? ` (${appliedFilters.length})` : ''}</Button>{owner ? <Link className={buttonClassName()} to="/logs/new"><PlusIcon className="paper-icon-default" aria-hidden="true" />Log activity</Link> : null}</div> : null}
     </div>
     {logs.length ? <>
-    <FormProvider {...methods}>
-      <form onSubmit={methods.handleSubmit(values => { setApplied(values); setFiltersOpen(false) })} className="records-filter-form">
-        <div className="records-search-row">
-          <Input name="query" label="Search activity" type="search" placeholder="Title, language, note or tag" />
-          <Button variant="outline" aria-expanded={filtersOpen} aria-controls="activity-filters" onClick={() => setFiltersOpen(!filtersOpen)}>Filters{chips.length ? ` (${chips.length})` : ''}</Button>
-        </div>
-        <div id="activity-filters" hidden={!filtersOpen}>
-          <div className="records-filter-panel">
-            <Select name="period" label="Period" options={[{ value: 'all', label: 'All time' }, ...years.map(year => ({ value: String(year), label: String(year) }))]} />
-            <fieldset className="records-filter-group"><legend>Languages</legend>{languages.map(language => <Checkbox key={language} name="languages" value={language} label={language} />)}</fieldset>
-            <fieldset className="records-filter-group"><legend>Activities</legend>{['Reading', 'Listening'].map(activity => <Checkbox key={activity} name="activities" value={activity} label={activity} />)}</fieldset>
-            <div className="records-filter-actions"><Button variant="outline" onClick={reset}>Reset</Button><Button type="submit">Apply filters</Button></div>
-          </div>
-        </div>
+    <div id="activity-filters" hidden={!filtersOpen}><FormProvider {...methods}>
+      <form onSubmit={event => event.preventDefault()} className="records-filter-panel">
+        <Select name="period" label="Period" options={[{ value: 'all', label: 'All time' }, ...years.map(year => ({ value: String(year), label: String(year) }))]} />
+        <AutocompleteMultiInput name="languages" label="Languages" placeholder="All languages" options={languages} format={value => value} getId={value => value} />
+        <AutocompleteMultiInput name="activities" label="Activities" placeholder="All activities" options={['Reading', 'Listening']} format={value => value} getId={value => value} />
+        <Input name="query" label="Search activity" type="search" placeholder="Title, note or tag" />
       </form>
-    </FormProvider>
-    <div className="records-filter-summary">{chips.length ? <div className="records-filter-chips" aria-label="Applied filters">
-      {chips.map(chip => <Button key={`${chip.kind}-${chip.value}`} variant="outline" onClick={() => removeFilter(chip.kind, chip.value)} aria-label={`Remove ${chip.value} filter`} trailingIcon={<XMarkIcon className="paper-icon-compact" />}>{chip.value}</Button>)}
+    </FormProvider></div>
+    <div className="records-filter-summary">{appliedFilters.length ? <div className="records-applied-filters" aria-label="Applied filters">
+      <p>{appliedFilters.join(' · ')}</p>
       <Button variant="link" onClick={reset}>Clear all</Button>
     </div> : null}
     <p className="records-result-count" role="status">{filtered.length} of {logs.length} entries</p></div>
@@ -149,9 +141,9 @@ export function ProfilePage({ activity = false }: { activity?: boolean }) {
     </header>
     {contestContext ? <p className="records-profile-context">Viewing {profile.name}’s personal record from <Link className="text-link" to={`/contests/${contestContext.id}/leaderboard`}>{contestContext.title} standings</Link>. Contest scores are shown on that board.</p> : null}
     <Tabbar label="Profile views" renderLink={renderLink} links={[{ id: 'overview', label: 'Overview', href: `/users/${profile.id}${viewQuery}`, current: !activity }, { id: 'activity', label: 'Activity log', href: `/users/${profile.id}/activity${viewQuery}`, current: activity }]} />
-    {activity ? <ActivityLog key={`${profile.id}-${year}`} logs={ownLogs} owner={owner} year={year} /> : <>
+    {activity ? <ActivityLog key={profile.id} logs={ownLogs} owner={owner} /> : <>
       <section className="page-section records-year" aria-labelledby="profile-year-heading">
-        <div className="section-heading records-section-heading records-year-heading"><div><h2 className="paper-type-section" id="profile-year-heading">{owner ? 'Your' : `${profile.name}’s`} year in immersion</h2></div>
+        <div className="section-heading records-section-heading records-year-heading"><div><h2 className="paper-type-section" id="profile-year-heading">{profile.name}’s activity</h2></div>
           <div className="records-year-control" aria-label="Profile year"><Button variant="ghost" aria-label="Previous year" disabled={yearIndex === years.length - 1} onClick={() => changeYear(years[yearIndex + 1])}><ChevronLeftIcon className="paper-icon-default" /></Button><strong aria-live="polite">{year}</strong><Button variant="ghost" aria-label="Next year" disabled={yearIndex === 0} onClick={() => changeYear(years[yearIndex - 1])}><ChevronRightIcon className="paper-icon-default" /></Button></div>
         </div>
         {summary.entries ? <><dl className="stat-grid records-profile-stats"><div className="stat"><dt>Personal score</dt><dd>{formatNumber(summary.total)}</dd></div><div className="stat"><dt>Entries</dt><dd>{summary.entries}<small>{summary.days} active days</small></dd></div><div className="stat"><dt>Languages</dt><dd>{summary.languages.length}<small>{summary.languages[0] ? `${summary.languages[0][0]} leads` : 'A new language awaits'}</small></dd></div><div className="stat"><dt>Contests</dt><dd>{summary.contestIds.length}</dd></div></dl>

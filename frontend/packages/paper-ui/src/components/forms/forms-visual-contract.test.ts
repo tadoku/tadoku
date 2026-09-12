@@ -119,8 +119,6 @@ describe("choice and multi-value control action hug", () => {
     expect(controlsSource).toMatch(
       /<Combobox\.Chips className="paper-combobox__chips">/s,
     );
-    expect(controlsSource).toMatch(
-      /export function TagsInput\([^)]*\)\s*\{\s*return <AutocompleteMultiInput/s,
-    );
+    expect(controlsSource).toContain('className="paper-combobox__chips paper-tags-input"');
   });
 });

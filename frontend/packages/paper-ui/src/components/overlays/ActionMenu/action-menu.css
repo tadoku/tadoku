@@ -1,4 +1,12 @@
 @layer paper-recipes {
+  .paper-action-menu__trigger--icon-only {
+    inline-size: 44px;
+    min-inline-size: 44px;
+    min-block-size: 44px;
+    padding: 0;
+    flex-shrink: 0;
+  }
+
   .paper-action-menu__positioner {
     z-index: 90;
     outline: 0;

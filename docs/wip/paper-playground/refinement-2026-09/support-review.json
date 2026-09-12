@@ -1,0 +1,314 @@
+{
+  "scope": [
+    "/logs/new",
+    "/logs/reading-konbini/edit",
+    "/settings",
+    "/sign-in",
+    "/contact",
+    "404"
+  ],
+  "viewports": [
+    1280,
+    390
+  ],
+  "appearance": "All six routes visually inspected in light mode; Settings also inspected after saving dark mode and compact density.",
+  "assessment": "Form group headings, hint placement, full-width and paired-field edges, action grouping and secondary guidance now form a coherent flow. All six mobile routes fit the viewport. One mobile score-order issue was found, fixed by root, and rechecked.",
+  "finding": {
+    "issue": "On mobile, the log score preview originally appeared after Save activity/Save changes.",
+    "before": {
+      "new": {
+        "saveTop": 1563.296875,
+        "previewTop": 1639.296875
+      },
+      "edit": {
+        "saveTop": 1660.28125,
+        "previewTop": 1736.28125
+      }
+    },
+    "resolution": "Root placed the shared PersonalScore summary before the mobile save actions and preserved the desktop sidebar.",
+    "verification": [
+      {
+        "overflow": false,
+        "route": "/logs/new",
+        "scoreBeforeSave": true,
+        "visibleScoreHeadings": 1,
+        "visibleScorePreviews": 1,
+        "width": 390
+      },
+      {
+        "overflow": false,
+        "route": "/logs/reading-konbini/edit",
+        "scoreBeforeSave": true,
+        "visibleScoreHeadings": 1,
+        "visibleScorePreviews": 1,
+        "width": 390
+      },
+      {
+        "overflow": false,
+        "route": "/logs/new",
+        "scoreBeforeSave": true,
+        "visibleScoreHeadings": 1,
+        "visibleScorePreviews": 1,
+        "width": 1280
+      },
+      {
+        "overflow": false,
+        "route": "/logs/reading-konbini/edit",
+        "scoreBeforeSave": true,
+        "visibleScoreHeadings": 1,
+        "visibleScorePreviews": 1,
+        "width": 1280
+      }
+    ]
+  },
+  "interactions": [
+    {
+      "check": "Invalid log amount",
+      "result": "Entering -1 and activating Save activity keeps /logs/new open, marks amount invalid, shows Enter an amount greater than zero, and focuses the amount field. No log was saved."
+    },
+    {
+      "check": "Settings save and restore",
+      "result": "Saved display name Anton review check, then restored Anton. Saved dark/compact appearance, inspected it, and restored light/comfortable. Final persisted state confirmed Anton/light/comfortable."
+    },
+    {
+      "check": "Keyboard order",
+      "result": "Settings Tab order proceeds from display name to theme, density and Save settings; Enter submits. Contact Tab proceeds from message to Prepare message; Enter prepares the draft."
+    },
+    {
+      "check": "Contact prepare",
+      "result": "Prepared a local Question draft. Message prepared appears, its container receives focus, and the draft preserves the topic/message line breaks. No message was sent."
+    },
+    {
+      "check": "Final compact icon targets",
+      "result": "At 320px and 390px, both account and hamburger triggers measure 44×44px in compact density. The 320px wordmark remains 80px wide with no overflow."
+    }
+  ],
+  "measurements": [
+    {
+      "asideY": 1639.296875,
+      "fields": [
+        {
+          "left": 16,
+          "name": "title",
+          "right": 359
+        },
+        {
+          "left": 16,
+          "name": "amount",
+          "right": 359
+        },
+        {
+          "left": 16,
+          "name": "date",
+          "right": 359
+        },
+        {
+          "left": 16,
+          "name": "minutes",
+          "right": 359
+        },
+        {
+          "left": 16,
+          "name": "note",
+          "right": 359
+        },
+        {
+          "left": 21,
+          "name": "paper-multiautocomplete-r17",
+          "right": 310
+        },
+        {
+          "left": -1,
+          "name": "base-ui-:r1a:-hidden-input",
+          "right": 0
+        },
+        {
+          "left": 20,
+          "name": "submissions",
+          "right": 38.3984375
+        }
+      ],
+      "overflow": false,
+      "route": "/logs/new",
+      "saveY": 1563.296875,
+      "width": 390
+    },
+    {
+      "asideY": 1736.28125,
+      "fields": [
+        {
+          "left": 16,
+          "name": "title",
+          "right": 359
+        },
+        {
+          "left": 16,
+          "name": "amount",
+          "right": 359
+        },
+        {
+          "left": 16,
+          "name": "date",
+          "right": 359
+        },
+        {
+          "left": 16,
+          "name": "minutes",
+          "right": 359
+        },
+        {
+          "left": 16,
+          "name": "note",
+          "right": 359
+        },
+        {
+          "left": 21,
+          "name": "paper-multiautocomplete-r17",
+          "right": 310
+        },
+        {
+          "left": -1,
+          "name": "base-ui-:r1a:-hidden-input",
+          "right": 0
+        },
+        {
+          "left": 20,
+          "name": "submissions",
+          "right": 38.3984375
+        },
+        {
+          "left": 20,
+          "name": "submissions",
+          "right": 38.3984375
+        }
+      ],
+      "overflow": false,
+      "route": "/logs/reading-konbini/edit",
+      "saveY": 1660.28125,
+      "width": 390
+    },
+    {
+      "fields": [
+        {
+          "left": 16,
+          "name": "name",
+          "right": 359
+        }
+      ],
+      "overflow": false,
+      "route": "/settings",
+      "saveY": 700.265625,
+      "width": 390
+    },
+    {
+      "fields": [],
+      "overflow": false,
+      "route": "/sign-in",
+      "saveY": 410.796875,
+      "width": 390
+    },
+    {
+      "asideY": 744.375,
+      "fields": [
+        {
+          "left": 16,
+          "name": "message",
+          "right": 359
+        }
+      ],
+      "overflow": false,
+      "route": "/contact",
+      "saveY": 595.578125,
+      "width": 390
+    },
+    {
+      "fields": [],
+      "overflow": false,
+      "route": "/no-such-page-review",
+      "width": 390
+    }
+  ],
+  "screenshots": [
+    {
+      "route": "/logs/new",
+      "width": 1280,
+      "path": "/var/lib/t3/userdata/browser-artifacts/browser-screenshot-t3-ff08555d5d6ded8a5d7d06de-lab-mty25cik-154f1b4d.png"
+    },
+    {
+      "route": "/logs/reading-konbini/edit",
+      "path": "/var/lib/t3/userdata/browser-artifacts/browser-screenshot-t3-ff08555d5d6ded8a5d7d06de-lab-mty26djw-08845a5b.png",
+      "width": 1280
+    },
+    {
+      "route": "/settings",
+      "path": "/var/lib/t3/userdata/browser-artifacts/browser-screenshot-t3-ff08555d5d6ded8a5d7d06de-lab-mty26ems-51fac835.png",
+      "width": 1280
+    },
+    {
+      "route": "/sign-in",
+      "path": "/var/lib/t3/userdata/browser-artifacts/browser-screenshot-t3-ff08555d5d6ded8a5d7d06de-lab-mty26ez9-fdb23802.png",
+      "width": 1280
+    },
+    {
+      "route": "/contact",
+      "path": "/var/lib/t3/userdata/browser-artifacts/browser-screenshot-t3-ff08555d5d6ded8a5d7d06de-lab-mty26fhh-5cd3d44b.png",
+      "width": 1280
+    },
+    {
+      "route": "/no-such-page-review",
+      "path": "/var/lib/t3/userdata/browser-artifacts/browser-screenshot-t3-ff08555d5d6ded8a5d7d06de-lab-mty26go0-4d9e4cfd.png",
+      "width": 1280
+    },
+    {
+      "route": "/logs/new",
+      "path": "/var/lib/t3/userdata/browser-artifacts/browser-screenshot-t3-ff08555d5d6ded8a5d7d06de-lab-mty27cvx-204ac5ec.png",
+      "width": 390
+    },
+    {
+      "route": "/logs/reading-konbini/edit",
+      "path": "/var/lib/t3/userdata/browser-artifacts/browser-screenshot-t3-ff08555d5d6ded8a5d7d06de-lab-mty27e3r-026c8401.png",
+      "width": 390
+    },
+    {
+      "route": "/settings",
+      "path": "/var/lib/t3/userdata/browser-artifacts/browser-screenshot-t3-ff08555d5d6ded8a5d7d06de-lab-mty27ejy-bb2e7e75.png",
+      "width": 390
+    },
+    {
+      "route": "/sign-in",
+      "path": "/var/lib/t3/userdata/browser-artifacts/browser-screenshot-t3-ff08555d5d6ded8a5d7d06de-lab-mty27fmg-20e2be3a.png",
+      "width": 390
+    },
+    {
+      "route": "/contact",
+      "path": "/var/lib/t3/userdata/browser-artifacts/browser-screenshot-t3-ff08555d5d6ded8a5d7d06de-lab-mty27gpq-d3a49477.png",
+      "width": 390
+    },
+    {
+      "route": "/no-such-page-review",
+      "path": "/var/lib/t3/userdata/browser-artifacts/browser-screenshot-t3-ff08555d5d6ded8a5d7d06de-lab-mty27hqe-7c2e76b3.png",
+      "width": 390
+    },
+    {
+      "route": "/settings",
+      "width": 390,
+      "theme": "dark",
+      "density": "compact",
+      "path": "/var/lib/t3/userdata/browser-artifacts/browser-screenshot-t3-ff08555d5d6ded8a5d7d06de-lab-mty2cucu-19afdd18.png"
+    },
+    {
+      "route": "/contact",
+      "width": 390,
+      "state": "prepared local draft",
+      "path": "/var/lib/t3/userdata/browser-artifacts/browser-screenshot-t3-ff08555d5d6ded8a5d7d06de-lab-mty2cy0t-7fc9a310.png"
+    },
+    {
+      "route": "/logs/new",
+      "width": 390,
+      "state": "score before Save",
+      "path": "/var/lib/t3/userdata/browser-artifacts/browser-screenshot-t3-ff08555d5d6ded8a5d7d06de-lab-mty2do39-93b4ecb4.png"
+    }
+  ],
+  "remainingFindings": [],
+  "sourceChangesByPeerReviewer": "None; root implemented the reported mobile score-order correction."
+}

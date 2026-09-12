@@ -45,4 +45,19 @@ describe("Button visual contract", () => {
     expect(tokensCss).toMatch(/\[data-density="comfortable"\]\s*\{[^}]*--paper-button-padding: 0\.5625rem 0\.9375rem 0\.5rem;[^}]*--paper-button-font-size: 1em;/s);
     expect(tokensCss).toMatch(/\[data-density="compact"\]\s*\{[^}]*--paper-button-padding: 0\.375rem 0\.6875rem 0\.3125rem;[^}]*--paper-button-font-size: 0\.875rem;/s);
   });
+
+  it.each([
+    ["outline", "var(--paper-color-action-neutral-hover)"],
+    ["ghost", "var(--paper-color-action-neutral-hover)"],
+    ["link", "transparent"],
+    ["destructive", "var(--paper-color-action-destructive-hover)"],
+  ])("preserves %s colors when pressed without hovering", (variant, background) => {
+    // Keyboard and touch presses can match :active without :hover. The generic
+    // active violet otherwise wins over the variant's normal background and
+    // pairs it with dark neutral text (or changes a destructive action to violet).
+    const selector = `.paper-button--${variant}:active:not(:disabled)`;
+    const rule = [...buttonCss.matchAll(/([^{}]+)\{([^{}]*)\}/gu)]
+      .find((match) => match[1].split(",").some((value) => value.trim() === selector));
+    expect(rule?.[2] ?? "").toContain(`background: ${background};`);
+  });
 });

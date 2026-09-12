@@ -1,0 +1,199 @@
+{
+  "reviewDate": "2026-09-12",
+  "branch": "t3code/paper-visual-refinement",
+  "result": "passed",
+  "verificationSources": [
+    "Root confirmed final command results; broad suites were not repeated by the evidence reviewer.",
+    "Browser measurements and interaction checks in the linked evidence files."
+  ],
+  "automatedChecks": [
+    {
+      "check": "Paper UI tests",
+      "passed": 204,
+      "status": "passed"
+    },
+    {
+      "check": "Paper styleguide tests",
+      "passed": 141,
+      "status": "passed"
+    },
+    {
+      "check": "Paper playground tests",
+      "passed": 41,
+      "status": "passed",
+      "note": "Rerun after the mobile PersonalScore placement fix at 07:28 UTC."
+    },
+    {
+      "check": "Paper boundary regression tests",
+      "passed": 3,
+      "status": "passed",
+      "source": "Root confirmed completed session 16509."
+    },
+    {
+      "check": "Typechecks",
+      "projects": [
+        "paper-ui",
+        "paper-styleguide",
+        "paper-playground"
+      ],
+      "status": "passed"
+    },
+    {
+      "check": "Lint",
+      "projects": [
+        "paper-ui",
+        "paper-styleguide",
+        "paper-playground"
+      ],
+      "status": "passed with existing advisories"
+    },
+    {
+      "check": "Builds",
+      "projects": [
+        "paper-ui",
+        "paper-styleguide",
+        "paper-playground"
+      ],
+      "status": "passed",
+      "note": "Playground build rerun after mobile score placement; documentation-only changes also rebuilt."
+    },
+    {
+      "check": "Public example verification",
+      "examples": 49,
+      "status": "passed"
+    },
+    {
+      "check": "TypeScript 4.9 consumer compatibility",
+      "status": "passed"
+    },
+    {
+      "check": "Package verification",
+      "files": 36,
+      "status": "passed"
+    },
+    {
+      "check": "Paper import boundaries",
+      "status": "passed"
+    },
+    {
+      "check": "Whitespace validation",
+      "command": "git diff --check",
+      "status": "passed"
+    }
+  ],
+  "automatedTestTotal": 389,
+  "browserChecks": {
+    "rootViewportMatrix": {
+      "file": "viewport-checks.json",
+      "checks": 30,
+      "distinctRoutes": 15,
+      "widths": [
+        320,
+        768
+      ],
+      "allAligned": true,
+      "pageOverflowCount": 0,
+      "brokenImageCount": 0
+    },
+    "competition": {
+      "file": "competition-review.json",
+      "routeViewportChecks": 48,
+      "additionalCompactDarkChecks": 24,
+      "pageOverflowCount": 0,
+      "leaderboardParticipantFirstRow": {
+        "desktop": {
+          "viewport": 1280,
+          "beforePx": 770.3,
+          "afterPx": 485.6
+        },
+        "mobile": {
+          "viewport": 390,
+          "beforePx": 994.4,
+          "afterPx": 653.6
+        },
+        "appearance": "comfortable/light",
+        "note": "The final mobile layout uses one filter per row below 440px so selected values remain readable."
+      },
+      "multiInput": {
+        "geometryCombinations": 8,
+        "widths": [
+          320,
+          390
+        ],
+        "densities": [
+          "comfortable",
+          "compact"
+        ],
+        "themes": [
+          "light",
+          "dark"
+        ],
+        "allPassed": true,
+        "rightInsetPx": 1,
+        "targetPx": [
+          44,
+          44
+        ],
+        "interactions": [
+          "Dropdown opens",
+          "Third selection disables input and trigger at the limit",
+          "Removing a selection re-enables both controls",
+          "Escape preserves selections and input focus",
+          "Long chip text wraps without overlapping the dropdown or overflowing the page"
+        ]
+      },
+      "singleAutocomplete": {
+        "controlHeightsPx": {
+          "comfortable": 44,
+          "compact": 36
+        },
+        "targetPx": [
+          44,
+          44
+        ],
+        "rightInsetPx": 0
+      }
+    },
+    "supportForms": {
+      "file": "support-review.json",
+      "routes": 6,
+      "widths": [
+        1280,
+        390
+      ],
+      "scorePreviewBeforeSave": true,
+      "visibleScorePreviewsPerViewport": 1,
+      "interactions": [
+        "Invalid amount keeps the form open, exposes the validation message and focuses the field",
+        "Settings save and keyboard navigation",
+        "Contact prepares and focuses a local draft without sending it"
+      ]
+    },
+    "editorial": "editorial-review.json",
+    "recordsAndAdmin": "records-review.json",
+    "peerScreenshots": "peer-screenshots.json"
+  },
+  "previewAvailability": [
+    {
+      "url": "https://t3-ff08555d5d6ded8a5d7d06de.lab/leaderboard/latest",
+      "httpStatus": 200
+    },
+    {
+      "url": "https://t3-ae17b0722f74311813aae851.lab/components/forms/autocomplete",
+      "httpStatus": 200
+    }
+  ],
+  "sourcePeerReview": {
+    "files": [
+      "frontend/apps/paper-playground/src/SupportingPages.tsx",
+      "frontend/apps/paper-playground/src/styles.css"
+    ],
+    "finding": "No additional concrete behavior regression found. Desktop and mobile score summaries share one component and mutually exclusive CSS visibility; the support review confirms exactly one visible summary before saving."
+  },
+  "caveats": [
+    "The playground uses sample data and browser-local state. Authentication, administration, scoring fixtures and contact preparation are demonstrations, not live backend workflows.",
+    "Visual checks use the collaborative Chromium browser with viewport emulation; they do not constitute exhaustive device/browser, accessibility or performance certification.",
+    "Some saved screenshots and raw measurements document intermediate iterations. finalMobileLeaderboard and sharedControlFix in competition-review.json supersede the earlier mobile leaderboard and picker images.",
+    "Existing Fast Refresh, React Hook Form compiler, Browserslist age and bundle-size advisories remain; no failing build, typecheck, lint or test gate remains."
+  ]
+}

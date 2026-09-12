@@ -5,6 +5,7 @@ import { beforeEach, describe, expect, it } from 'vitest'
 import { GuidePage } from '../src/pages/GuidePage'
 import { HomePage } from '../src/pages/HomePage'
 import { initialLogs } from '../src/data'
+import { contestEnd, contestStart, formatDateRange, formatDateTime } from '../src/dates'
 import { PlaygroundProvider, usePlayground } from '../src/state'
 
 beforeEach(() => localStorage.clear())
@@ -33,8 +34,8 @@ describe('homepage journeys', () => {
   it('separates the upcoming round dates from its registration deadline', () => {
     renderHome('upcoming')
     expect(screen.getByRole('link', { name: 'Join Round 6' })).toHaveAttribute('href', '/contests/round6/registration')
-    expect(within(screen.getByRole('region', { name: '2026 Round 6' })).getByText('1–14 November 2026')).toBeInTheDocument()
-    expect(screen.getByText('Registration closes 7 November.')).toBeInTheDocument()
+    expect(within(screen.getByRole('region', { name: '2026 Round 6' })).getByText(formatDateRange(contestStart('2026-11-01'), contestEnd('2026-11-14')), { normalizer: text => text })).toBeInTheDocument()
+    expect(screen.getByText(`Registration closes ${formatDateTime(contestEnd('2026-11-07'))}.`, { normalizer: text => text })).toBeInTheDocument()
     expect(screen.queryByRole('table')).not.toBeInTheDocument()
   })
 

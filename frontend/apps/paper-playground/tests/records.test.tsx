@@ -76,12 +76,45 @@ it('keeps the requested record when no scenario override is present', () => {
 
 it('clears a no-match activity search and its filters', async () => {
   renderRoute('/users/anton/activity?scenario=profile')
+  fireEvent.click(screen.getByRole('button', { name: 'Filters' }))
   fireEvent.change(screen.getByLabelText('Search activity'), { target: { value: 'no matching book here' } })
   expect(await screen.findByText('No activity matches these filters.')).toBeInTheDocument()
   fireEvent.click(screen.getByRole('button', { name: 'Clear search and filters' }))
   expect(screen.getByLabelText('Search activity')).toHaveValue('')
   expect(screen.queryByText('No activity matches these filters.')).not.toBeInTheDocument()
   expect(within(screen.getByRole('status')).getByText(/entries/)).toBeInTheDocument()
+})
+
+it('starts the activity log with every year in newest-first order, regardless of the overview year', () => {
+  const { container } = renderRoute('/users/anton/activity?year=2023')
+  const dates = [...container.querySelectorAll('.records-entries time')].map(time => time.getAttribute('datetime'))
+  const expected = initialLogs.filter(log => log.userId === 'anton').map(log => log.date).sort().reverse()
+  expect(dates).toEqual(expected)
+  expect(screen.getByRole('button', { name: 'Filters' })).toHaveAttribute('aria-expanded', 'false')
+  expect(screen.queryByRole('combobox', { name: 'Period' })).not.toBeInTheDocument()
+})
+
+it('updates activity filters immediately and retains selections when collapsed', async () => {
+  const user = userEvent.setup()
+  const { container } = renderRoute('/users/anton/activity')
+  await user.click(screen.getByRole('button', { name: 'Filters' }))
+  await user.selectOptions(screen.getByRole('combobox', { name: 'Period' }), '2025')
+  expect([...container.querySelectorAll('.records-entries time')].every(time => time.getAttribute('datetime')!.startsWith('2025'))).toBe(true)
+  await user.click(screen.getByRole('button', { name: 'Show languages options' }))
+  await user.click(await screen.findByRole('option', { name: 'Japanese' }))
+  await user.click(await screen.findByRole('option', { name: 'French' }))
+  await user.keyboard('{Escape}')
+  const expected = filterActivityLogs(initialLogs.filter(log => log.userId === 'anton'), { period: '2025', languages: ['Japanese', 'French'], activities: [], query: '' })
+  expect(container.querySelectorAll('.records-entries > li')).toHaveLength(expected.length)
+  await user.click(screen.getByRole('button', { name: 'Filters (3)' }))
+  expect(screen.queryByRole('combobox', { name: 'Languages' })).not.toBeInTheDocument()
+  expect(container.querySelectorAll('.records-entries > li')).toHaveLength(expected.length)
+  await user.click(screen.getByRole('button', { name: 'Filters (3)' }))
+  expect(screen.getByRole('button', { name: 'Remove Japanese' })).toBeInTheDocument()
+  expect(screen.getByRole('button', { name: 'Remove French' })).toBeInTheDocument()
+  await user.click(screen.getByRole('button', { name: 'Clear all' }))
+  expect(screen.getByRole('combobox', { name: 'Period' })).toHaveValue('all')
+  expect(container.querySelectorAll('.records-entries > li')).toHaveLength(initialLogs.filter(log => log.userId === 'anton').length)
 })
 
 it('keeps deletion cancellable and restores the deleted local sample', async () => {

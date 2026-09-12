@@ -21,7 +21,7 @@ const labels = {
 
 const headings: Record<GuideSection, { title: string; description: string }> = {
   about: {
-    title: 'A little more immersion. A little company along the way.',
+    title: 'A little more immersion, together.',
     description: 'A community built around spending time with the languages you want to understand.',
   },
   manual: {
@@ -112,7 +112,7 @@ function About() {
 function Manual() {
   return (
     <>
-      <p className="guide-introduction">Your first log is enough to get started. You can record immersion throughout the year; a contest adds a shared period and a leaderboard.</p>
+      <p className="guide-introduction">You can log immersion anytime. Join a contest when you’d like a little company and a shared goal.</p>
       <ol className="guide-steps">
         <li id="participate">
           <h2>Choose how you want to participate</h2>
@@ -152,8 +152,8 @@ function Rules() {
     <>
       <p className="guide-introduction">The competition is friendly. The record should be honest. Every contest has its own dates, permitted activities and scoring rules; check that context before submitting.</p>
       <section className="guide-section" id="dates">
-        <h2>Dates use UTC</h2>
-        <p>The registration deadline and contest end date are different. A round may still be running after it stops accepting new participants. Activity must fall within the contest’s eligible period.</p>
+        <h2>Contest times are local to you</h2>
+        <p>Contest start times and deadlines are shown in your device’s time zone. Activity dates stay on the day you recorded. The registration deadline and contest end date are different. A round may still be running after it stops accepting new participants. Activity must fall within the contest’s eligible period.</p>
         <Link className="text-link" to="/contests/round5">See a contest’s dates and rules</Link>
       </section>
       <section className="guide-section" id="fair-participation">
@@ -167,13 +167,29 @@ function Rules() {
       </section>
       <section className="guide-section" id="scores">
         <h2>Understand the score you see</h2>
-        <p>Reading and listening can be measured in pages or time. A log’s personal score and its contest scores are separate records. Never add them together to describe that log.</p>
+        <p>Record reading in pages, sentences or characters, and listening in minutes. A log’s personal score and its contest scores are separate records. Never add them together to describe that log.</p>
         <Table
-          caption="One record, two scoring contexts"
+          caption="Personal score units in this playground"
           minWidth="0"
           columns={[
-            { id: 'context', header: 'Context', rowHeader: true, cell: row => row.context },
-            { id: 'rule', header: 'Example rule', cell: row => row.rule },
+            { id: 'unit', header: 'Unit', rowHeader: true, cell: row => row.unit },
+            { id: 'rate', header: 'Sample conversion', cell: row => row.rate },
+          ]}
+          rows={[
+            { unit: 'Pages', rate: '1 point per page' },
+            { unit: 'Sentences', rate: '1 point per 20 sentences' },
+            { unit: 'Characters · Japanese, Korean, Chinese, Mandarin', rate: '1 point per 400 characters' },
+            { unit: 'Characters · other languages', rate: 'About 1 point per 1,200 characters' },
+            { unit: 'Listening minutes', rate: '0.5 points per minute' },
+          ]}
+        />
+        <p>For pages, choose at most one modifier: Manga or Comic multiplies the score by 0.2; Two column by 1.6. Passive listening multiplies the listening score by 0.5. The reading and listening circle contests use their own fixed minute rates without these personal modifiers.</p>
+        <Table
+          caption="One record, two scoring contexts"
+          captionVisibility="screen-reader"
+          minWidth="0"
+          columns={[
+            { id: 'context', header: 'Context and example rule', rowHeader: true, cell: row => <span className="guide-score-context">{row.context}<small>{row.rule}</small></span> },
             { id: 'score', header: 'Score', align: 'end', cell: row => row.score },
           ]}
           rows={[
@@ -261,7 +277,6 @@ export function GuidePage({ page }: { page: GuideSection }) {
       </nav>
       <article className="guide-article">
         <header className="guide-header">
-          <p className="guide-page-name">{currentLabels[page]}</p>
           <h1>{headings[page].title}</h1>
           <p className="page-lead">{headings[page].description}</p>
           {inPageLinks[page] && <nav className="guide-contents" aria-label="On this page">{inPageLinks[page]?.map(link => <a key={link.id} href={`#${link.id}`} className="text-link">{link.label}</a>)}</nav>}

@@ -66,6 +66,53 @@ describe("router-neutral navigation", () => {
     expect(trigger).toHaveFocus();
   });
 
+  it("closes mobile navigation from brand and same-route action links without closing for disabled links or commands", async () => {
+    const user = userEvent.setup();
+    render(<Navbar brand={<span>Tadoku</span>} brandHref="/" currentPath="/logs/new"
+      navigation={[{ type: "link", id: "disabled", label: "Unavailable", href: "/unavailable", disabled: true }]}
+      actions={<><a href="/logs/new" onClick={(event) => event.preventDefault()}><span>Log activity</span></a><button type="button">Search</button></>}
+      renderLink={(props) => <a {...props} onClick={(event) => { event.preventDefault(); props.onClick?.(event); }} />}
+    />);
+    const trigger = screen.getByRole("button", { name: "Open menu" });
+    await user.click(trigger);
+    await user.click(screen.getAllByRole("link", { name: "Unavailable" })[1]);
+    expect(trigger).toHaveAttribute("aria-expanded", "true");
+    await user.click(screen.getByRole("button", { name: "Search" }));
+    expect(trigger).toHaveAttribute("aria-expanded", "true");
+    await user.click(screen.getByRole("link", { name: "Log activity" }));
+    expect(trigger).toHaveAttribute("aria-expanded", "false");
+    await user.click(trigger);
+    await user.click(screen.getByRole("link", { name: "Tadoku" }));
+    expect(trigger).toHaveAttribute("aria-expanded", "false");
+  });
+
+  it("closes mobile account actions and restores trigger focus on Escape from the footer", async () => {
+    const user = userEvent.setup();
+    const signOut = vi.fn();
+    render(
+      <Navbar brand="Tadoku" brandHref="/" navigation={navbarItems.slice(0, 2)}
+        mobileFooter={(closeMenu) => <>
+          <a href="/profile" onClick={(event) => { event.preventDefault(); closeMenu(); }}>My profile</a>
+          <button type="button" onClick={() => { signOut(); closeMenu(); }}>Log out</button>
+        </>}
+      />,
+    );
+    const trigger = screen.getByRole("button", { name: "Open menu" });
+    expect(screen.queryByRole("link", { name: "My profile" })).not.toBeInTheDocument();
+    await user.click(trigger);
+    await user.click(screen.getByRole("link", { name: "My profile" }));
+    expect(trigger).toHaveAttribute("aria-expanded", "false");
+    await user.click(trigger);
+    screen.getByRole("button", { name: "Log out" }).focus();
+    await user.keyboard("{Escape}");
+    expect(trigger).toHaveAttribute("aria-expanded", "false");
+    expect(trigger).toHaveFocus();
+    await user.click(trigger);
+    await user.click(screen.getByRole("button", { name: "Log out" }));
+    expect(signOut).toHaveBeenCalledOnce();
+    expect(trigger).toHaveAttribute("aria-expanded", "false");
+  });
+
   it("composes end actions in the Navbar and can leave narrow navigation to an application shell", () => {
     render(
       <Navbar

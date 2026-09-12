@@ -38,7 +38,10 @@ const initialState: LocalState = {viewer:'guest',joinedContests:['round5','readi
 const storageKey='tadoku-paper-playground-v1'
 function readState():LocalState {
   try { const saved=JSON.parse(localStorage.getItem(storageKey)||'null') as LocalState|null
-    if(saved&&Array.isArray(saved.logs)&&Array.isArray(saved.contests)&&Array.isArray(saved.joinedContests))return {...initialState,...saved}
+    if(saved&&Array.isArray(saved.logs)&&Array.isArray(saved.contests)&&Array.isArray(saved.joinedContests))return {...initialState,...saved,
+      // Older previews predate moderator metadata; keep all other saved contest edits.
+      contests:saved.contests.map(contest=>({...contest,moderatorIds:contest.moderatorIds??initialContests.find(sample=>sample.id===contest.id)?.moderatorIds})),
+    }
   } catch { /* Local storage may be disabled; the playground still works in memory. */ }
   return initialState
 }

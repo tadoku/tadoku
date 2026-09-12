@@ -19,7 +19,7 @@ export default function Example() {
         <TagsInput
           name="tags"
           label="Tags"
-          hint="Choose up to four existing tags. New tags cannot be created here."
+          hint="Choose a suggestion or type a new tag and press Enter. Add up to four tags."
           required
           options={['fiction', 'history', 'manga', 'nonfiction']}
           maxSelections={4}

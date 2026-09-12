@@ -60,12 +60,33 @@ export function App() {
   useEffect(()=>{if(location.hash){const id=decodeURIComponent(location.hash.slice(1));requestAnimationFrame(()=>document.getElementById(id)?.scrollIntoView())}},[location.hash,location.pathname])
   return <div className="app-shell">
     <a className={`${buttonClassName()} app-skip`} href="#main-content">Skip to content</a>
-    <header className="app-header"><Navbar brand={<div className="flex items-center gap-2"><img className="app-wordmark" src={app.theme==='dark'?reversedWordmark:wordmark} width="158" height="29" alt="Tadoku"/>{admin&&<span className="app-admin-label">Admin</span>}</div>} brandHref="/" navigation={nav} renderLink={({href,...props})=><Link to={href} {...props}/>} mobileNavigation={!admin} actions={admin?<Link to="/" className={buttonClassName({variant:'outline'})}>Back to Tadoku</Link>:<div className="app-header-actions">{app.viewer!=='guest'&&<Link to="/logs/new" className={buttonClassName({className:'whitespace-nowrap shrink-0'})}>Log activity</Link>}{app.viewer==='guest'?<Link to={`/sign-in?next=${encodeURIComponent(location.pathname)}`} className={buttonClassName({variant:'outline'})}>Sign in</Link>:<><span className="app-account-menu--desktop"><ActionMenu label={app.user?.name||'Account'} triggerVariant="ghost" items={accountItems}/></span><span className="app-account-menu--mobile"><ActionMenu label={`${app.user?.name||'Your'} account menu`} iconOnly triggerVariant="ghost" items={accountItems}/></span></>}</div>} /></header>
+    <header className="app-header">
+      <Navbar
+        brand={<div className="flex items-center gap-2"><img className="app-wordmark" src={app.theme==='dark'?reversedWordmark:wordmark} width="158" height="29" alt="Tadoku"/>{admin&&<span className="app-admin-label">Admin</span>}</div>}
+        brandHref="/" navigation={nav} renderLink={({href,...props})=><Link to={href} {...props}/>}
+        mobileNavigation={!admin}
+        actions={admin ? <Link to="/" className={buttonClassName({variant:'outline'})}>Back to Tadoku</Link> :
+          <div className="app-header-actions">
+            {app.viewer==='guest' ? <Link to={`/sign-in?next=${encodeURIComponent(location.pathname)}`} className={buttonClassName({variant:'outline'})}>Sign in</Link> : <>
+              <span className="app-account-menu--desktop"><ActionMenu label={app.user?.name||'Account'} triggerVariant="ghost" items={accountItems}/></span>
+              <Link to="/logs/new" className={buttonClassName({className:'whitespace-nowrap shrink-0'})}>Log activity</Link>
+            </>}
+          </div>}
+        mobileFooter={app.viewer==='guest' ? undefined : closeMenu =>
+          <section className="app-mobile-account" aria-label={`${app.user?.name||'Your'} account`}>
+            <p className="app-mobile-account__name">{app.user?.name||'Account'}</p>
+            <Link className="paper-navbar__mobile-link" to="/users/anton" aria-current={location.pathname==='/users/anton'?'page':undefined} onClick={closeMenu}>My profile</Link>
+            <Link className="paper-navbar__mobile-link" to="/settings" aria-current={location.pathname==='/settings'?'page':undefined} onClick={closeMenu}>Account settings</Link>
+            {app.viewer==='admin'&&<Link className="paper-navbar__mobile-link" to="/admin" onClick={closeMenu}>Admin workspace</Link>}
+            <Button variant="ghost" className="paper-navbar__mobile-link justify-start" onClick={()=>{closeMenu();app.setViewer('guest');navigate('/')}}>Log out</Button>
+          </section>}
+      />
+    </header>
     <main id="main-content" className="app-content" tabIndex={-1}><Suspense fallback={<Loading label="Loading page"/>}><Routes>
       <Route path="/" element={<HomePage/>}/>
       <Route path="/about" element={<GuidePage page="about"/>}/><Route path="/guide" element={<GuidePage page="manual"/>}/><Route path="/guide/scoring" element={<GuidePage page="rules"/>}/><Route path="/guide/questions" element={<GuidePage page="faq"/>}/>
       <Route path="/leaderboard" element={<Navigate to="/leaderboard/latest" replace/>}/><Route path="/leaderboard/latest" element={<LeaderboardPage/>}/><Route path="/leaderboard/yearly/:year" element={<LeaderboardPage/>}/><Route path="/leaderboard/all-time" element={<LeaderboardPage/>}/><Route path="/contests/:contestId/leaderboard" element={<LeaderboardPage/>}/>
-      <Route path="/contests" element={<Navigate to="/contests/official" replace/>}/><Route path="/contests/official" element={<ContestsPage/>}/><Route path="/contests/community" element={<ContestsPage/>}/><Route path="/contests/mine" element={<ContestsPage/>}/><Route path="/contests/new" element={<ContestEditorPage/>}/><Route path="/contests/:contestId/edit" element={<ContestEditorPage/>}/><Route path="/contests/:contestId/registration" element={<ContestRegistrationPage/>}/><Route path="/contests/:contestId" element={<ContestDetailPage/>}/>
+      <Route path="/contests" element={<Navigate to="/contests/official" replace/>}/><Route path="/contests/official" element={<ContestsPage/>}/><Route path="/contests/community" element={<ContestsPage/>}/><Route path="/contests/participating" element={<ContestsPage/>}/><Route path="/contests/managed" element={<ContestsPage/>}/><Route path="/contests/mine" element={<ContestsPage/>}/><Route path="/contests/new" element={<ContestEditorPage/>}/><Route path="/contests/:contestId/edit" element={<ContestEditorPage/>}/><Route path="/contests/:contestId/registration" element={<ContestRegistrationPage/>}/><Route path="/contests/:contestId" element={<ContestDetailPage/>}/>
       <Route path="/users/:userId" element={<ProfilePage/>}/><Route path="/users/:userId/activity" element={<ProfilePage activity/>}/>
       <Route path="/logs/new" element={<LogEditorPage/>}/><Route path="/logs/:logId/edit" element={<LogEditorPage/>}/><Route path="/logs/reading" element={<Navigate to="/logs/reading-konbini" replace/>}/><Route path="/logs/listening" element={<Navigate to="/logs/listening-teppei" replace/>}/><Route path="/logs/:logId" element={<LogPage/>}/>
       <Route path="/admin" element={<AdminPage/>}/><Route path="/admin/:section" element={<AdminPage/>}/>
@@ -77,4 +98,3 @@ export function App() {
     <ToastContainer />
   </div>
 }
-

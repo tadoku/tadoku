@@ -10,7 +10,6 @@ import {
   UserIcon,
   WrenchScrewdriverIcon,
 } from '@heroicons/react/20/solid'
-import { PlusIcon } from '@heroicons/react/24/outline'
 import { useLogoutHandler, useSession, useUserRole } from '@app/common/session'
 import { useCurrentLocation } from '@app/common/hooks'
 import { routes } from '@app/common/routes'
@@ -33,9 +32,8 @@ export default function Navigation() {
     ? [
         {
           type: 'action',
-          label: 'New log',
+          label: 'Log activity',
           href: routes.logCreate(),
-          IconComponent: PlusIcon,
         },
         {
           type: 'dropdown',

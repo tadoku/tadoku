@@ -73,10 +73,12 @@ describe('New log header action', () => {
   it('links directly to New log for signed-in readers', () => {
     render(<Navigation />)
     // JSDOM has no Tailwind layout: desktop and mobile copies are both present.
-    const actions = screen.getAllByRole('link', { name: 'New log' })
+    const actions = screen.getAllByRole('link', { name: 'Log activity' })
     expect(actions).toHaveLength(2)
     for (const action of actions) {
       expect(action.getAttribute('href')).toBe('/logs/new')
+      expect(action.textContent).toBe('Log activity')
+      expect(action.querySelector('svg')).toBeNull()
     }
     fireEvent.click(actions[0])
     expect(state.navigate).toHaveBeenCalledWith('/logs/new')
@@ -91,7 +93,7 @@ describe('New log header action', () => {
 
       await waitFor(() => {
         // Only the desktop copy remains; there is no duplicate in the drawer.
-        expect(screen.getAllByRole('link', { name: 'New log' })).toHaveLength(1)
+        expect(screen.getAllByRole('link', { name: 'Log activity' })).toHaveLength(1)
         expect(
           screen.getByRole('button', { name: 'Close main menu' }),
         ).toBeTruthy()
@@ -99,7 +101,7 @@ describe('New log header action', () => {
       expect(screen.getByRole('link', { name: 'Profile' })).toBeTruthy()
       fireEvent.click(screen.getByRole('button', { name: 'Close main menu' }))
       await waitFor(() =>
-        expect(screen.getAllByRole('link', { name: 'New log' })).toHaveLength(
+        expect(screen.getAllByRole('link', { name: 'Log activity' })).toHaveLength(
           2,
         ),
       )
@@ -109,17 +111,17 @@ describe('New log header action', () => {
   it('does not expose New log when signed out', () => {
     state.signedIn = false
     render(<Navigation />)
-    expect(screen.queryByRole('link', { name: 'New log' })).toBeNull()
+    expect(screen.queryByRole('link', { name: 'Log activity' })).toBeNull()
     expect(screen.getByRole('link', { name: 'Log in' })).toBeTruthy()
     expect(screen.getByRole('link', { name: 'Sign up' })).toBeTruthy()
     fireEvent.click(screen.getByRole('button', { name: 'Open main menu' }))
-    expect(screen.queryByRole('link', { name: 'New log' })).toBeNull()
+    expect(screen.queryByRole('link', { name: 'Log activity' })).toBeNull()
   })
 
   it('does not navigate away from an in-progress New log form', () => {
     state.pathname = '/logs/new'
     render(<Navigation />)
-    const action = screen.getAllByRole('link', { name: 'New log' })[0]
+    const action = screen.getAllByRole('link', { name: 'Log activity' })[0]
     expect(action.getAttribute('aria-current')).toBe('page')
     fireEvent.click(action)
     expect(state.navigate).not.toHaveBeenCalled()

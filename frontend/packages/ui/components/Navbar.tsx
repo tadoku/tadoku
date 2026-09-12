@@ -40,7 +40,6 @@ export interface NavigationActionProps {
   type: 'action'
   label: string
   href: string
-  IconComponent: ComponentType<any>
 }
 
 interface Props {
@@ -289,11 +288,7 @@ export function Navbar({
   )
 }
 
-const NavigationAction = ({
-  label,
-  href,
-  IconComponent,
-}: NavigationActionProps) => {
+const NavigationAction = ({ label, href }: NavigationActionProps) => {
   const router = useRouter()
   const isCurrent = router.pathname === href
 
@@ -315,15 +310,9 @@ const NavigationAction = ({
           event.preventDefault()
         }
       }}
-      className="btn ghost group relative !h-11 !w-11 shrink-0 !p-0 text-secondary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+      className="btn ghost !h-11 shrink-0 whitespace-nowrap px-2 text-secondary md:text-xs lg:text-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
     >
-      <IconComponent className="!h-4 !w-4" aria-hidden="true" />
-      <span
-        aria-hidden="true"
-        className="pointer-events-none absolute right-0 top-full z-50 mt-1 hidden whitespace-nowrap bg-secondary px-2 py-1 text-xs font-normal text-white group-hover:block group-focus-visible:block"
-      >
-        {label}
-      </span>
+      {label}
     </Link>
   )
 }
@@ -395,7 +384,7 @@ const DropDown = ({ label, links }: NavigationDropDownProps) => (
   <div className="">
     <Menu as="div" className="relative">
       <div>
-        <MenuButton className="max-w-32 lg:max-w-48 text-secondary hover:bg-secondary/5 focus:bg-secondary/5 text-xs px-2 py-1 lg:px-3 lg:py-2 lg:text-sm font-bold flex items-center justify-center">
+        <MenuButton className="max-w-24 lg:max-w-48 text-secondary hover:bg-secondary/5 focus:bg-secondary/5 text-xs px-2 py-1 lg:px-3 lg:py-2 lg:text-sm font-bold flex items-center justify-center">
           <span className="sr-only">Open navigation menu</span>
           <span className="truncate">{label}</span>
           <ChevronDownIcon

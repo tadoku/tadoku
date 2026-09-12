@@ -131,6 +131,48 @@ it('shows only your newest entries and appends five older ones without replacing
 })
 
 
+it('searches the full recent history, restores the newest entries when cleared, and never submits the log form', async () => {
+  const user = userEvent.setup()
+  const logs: SampleLog[] = Array.from({ length: 11 }, (_, index) => ({ ...initialLogs[0], id: `search-${index}`, title: `History entry ${index}`, tags: [], date: `2026-08-${String(index + 1).padStart(2, '0')}` }))
+  logs[0] = { ...logs[0], title: 'Older novel', language: 'French', activity: 'Listening', unit: 'minutes', tags: ['bookclub'] }
+  logs.push({ ...logs[0], id: 'another-reader', userId: 'mei', date: '2026-09-05' })
+  localStorage.setItem('tadoku-paper-playground-v1', JSON.stringify({ viewer: 'participant', logs, contests: initialContests, joinedContests: [] }))
+  show('/logs/new')
+  fireEvent.change(screen.getByLabelText(/Pages read/), { target: { value: '20' } })
+  fireEvent.click(screen.getByText('Use a recent log'))
+  fireEvent.click(screen.getByRole('button', { name: 'Show more' }))
+  expect(screen.getAllByRole('button', { name: 'Use this log' })).toHaveLength(10)
+
+  const search = screen.getByRole('searchbox', { name: 'Search recent logs' })
+  await user.type(search, '  OLDER NOVEL  {Enter}')
+  expect(screen.getAllByRole('button', { name: 'Use this log' })).toHaveLength(1)
+  expect(screen.getByText('Older novel')).toBeVisible()
+  expect(screen.getByRole('button', { name: 'Next' })).toBeVisible()
+  expect(screen.queryByRole('button', { name: 'Save activity' })).not.toBeInTheDocument()
+  expect(screen.getByLabelText(/Pages read/)).toHaveValue(20)
+  expect(search).toHaveFocus()
+
+  for (const query of ['BOOKCLUB', 'french', 'listening']) {
+    await user.clear(search)
+    await user.type(search, query)
+    expect(screen.getAllByRole('button', { name: 'Use this log' })).toHaveLength(1)
+    expect(screen.getByText('Older novel')).toBeVisible()
+  }
+  await user.clear(search)
+  await user.type(search, 'no such entry')
+  expect(screen.getByText('No matching logs.')).toBeVisible()
+  expect(screen.queryByRole('button', { name: 'Use this log' })).not.toBeInTheDocument()
+  expect(search).toBeVisible()
+  await user.clear(search)
+  expect(screen.getAllByRole('button', { name: 'Use this log' })).toHaveLength(5)
+  expect(screen.getAllByText(/History entry \d+/).map(row => row.textContent)).toEqual(['History entry 10', 'History entry 9', 'History entry 8', 'History entry 7', 'History entry 6'])
+  await user.type(search, 'older')
+  await user.click(screen.getByRole('button', { name: 'Use this log' }))
+  expect(screen.getByLabelText('What did you read or listen to?')).toHaveValue('Older novel')
+  expect(screen.getByLabelText(/Minutes listened/)).toHaveValue(null)
+  await waitFor(() => expect(screen.getByLabelText(/Minutes listened/)).toHaveFocus())
+})
+
 it('reuses stable details, clears new quantities, preserves draft context and can undo the copy', async () => {
   const source: SampleLog = { ...initialLogs[0], title: 'One Piece volume 45', date: '2026-09-02', amount: 30, minutes: 50, tags: ['manga', 'fiction'], media: 'Manga', modifiers: ['Manga'] }
   localStorage.setItem('tadoku-paper-playground-v1', JSON.stringify({ viewer: 'participant', logs: [source], contests: initialContests, joinedContests: ['round5', 'reading-circle'] }))

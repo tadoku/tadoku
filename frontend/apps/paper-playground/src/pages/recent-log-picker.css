@@ -1,3 +1,16 @@
+.recent-log-picker__search { position: relative; margin-block: 4px 12px; }
+.recent-log-picker__search > .paper-field__label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 .recent-log-picker__list {
   max-block-size: min(22rem, 55vh);
   margin: 0;

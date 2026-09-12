@@ -171,6 +171,20 @@ describe("Modal", () => {
 });
 
 describe("ActionMenu", () => {
+  it("keeps a custom account icon decorative and retains keyboard focus", async () => {
+    const user = userEvent.setup();
+    render(<ActionMenu label="Anton account menu" iconOnly
+      triggerIcon={<svg data-testid="account-icon"><title>Account</title></svg>}
+      items={[{ id: "profile", label: "My profile", onSelect: vi.fn() }]} />);
+    const trigger = screen.getByRole("button", { name: "Anton account menu" });
+    expect(screen.getByTestId("account-icon").closest('[aria-hidden="true"]')).not.toBeNull();
+    trigger.focus();
+    await user.keyboard("{ArrowDown}");
+    expect(await screen.findByRole("menuitem", { name: "My profile" })).toBeVisible();
+    await user.keyboard("{Escape}");
+    expect(trigger).toHaveFocus();
+  });
+
   it("uses the curated chevron and offers a named icon-only trigger", async () => {
     const user = userEvent.setup();
     const onSelect = vi.fn();

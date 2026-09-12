@@ -88,8 +88,11 @@
   .paper-navbar__mobile-trigger {
     display: none;
     place-items: center;
-    inline-size: var(--paper-control-height);
-    block-size: var(--paper-control-height);
+    inline-size: 44px;
+    block-size: 44px;
+    min-inline-size: 44px;
+    min-block-size: 44px;
+    flex: none;
     padding: 0;
     border: 0;
     color: var(--paper-color-text-ink);

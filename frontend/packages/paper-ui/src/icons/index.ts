@@ -11,6 +11,7 @@ export {
   PencilSquareIcon,
   PlusIcon,
   TrashIcon,
+  UserCircleIcon,
   XMarkIcon,
 } from "@heroicons/react/24/outline";
 

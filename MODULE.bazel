@@ -34,6 +34,7 @@ use_repo(
     "com_github_jackc_pgconn",
     "com_github_jackc_pgerrcode",
     "com_github_jackc_pgx_v4",
+    "com_github_jackc_pgx_v5",
     "com_github_kelseyhightower_envconfig",
     "com_github_labstack_echo_v4",
     "com_github_lib_pq",

@@ -51,6 +51,7 @@ jobs:
     env:
       IMMERSION_TEST_POSTGRES_URL: postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable
       PROFILE_TEST_POSTGRES_URL: postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable
+      TADOKU_TEST_POSTGRES_URL: postgres://postgres:postgres@127.0.0.1:5432/postgres?sslmode=disable
     services:
       postgres:
         image: postgres:17
@@ -103,6 +104,12 @@ jobs:
 
       - name: Run tests
         run: bazel test --lockfile_mode=error //...
+
+      - name: Race-test native API helpers
+        run: >-
+          bazel test --lockfile_mode=error --@rules_go//go/config:race
+          //services/tadoku-api/internal/timex:timex_test
+          //services/tadoku-api/infra/postgres:postgres_test
 
       - name: Load backend images for scanning
         run: bazel run --lockfile_mode=error //:load_images

@@ -6,6 +6,7 @@ SQLC_PACKAGES=(
   "services/immersion-api/storage/postgres"
   "services/content-api/storage/postgres"
   "services/profile-api/storage/postgres"
+  "services/tadoku-api/infra/postgres/testdata/sqlc"
 )
 
 require_cmd() {
@@ -56,7 +57,7 @@ sqlc_binary() {
 }
 
 for package_dir in "${SQLC_PACKAGES[@]}"; do
-  sqlc_version="$(sed -nE 's|^//go:generate go install github.com/kyleconroy/sqlc/cmd/sqlc@v([^[:space:]]+)$|\1|p' "$ROOT/${package_dir}/generate.go")"
+  sqlc_version="$(sed -nE 's#^//go:generate go install github.com/(kyleconroy|sqlc-dev)/sqlc/cmd/sqlc@v([^[:space:]]+)$#\2#p' "$ROOT/${package_dir}/generate.go")"
   if [ -z "$sqlc_version" ]; then
     echo "could not determine the pinned sqlc version for ${package_dir}" >&2
     exit 1

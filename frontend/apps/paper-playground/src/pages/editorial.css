@@ -49,7 +49,7 @@
 .guide-layout { display: grid; grid-template-columns: 184px minmax(0, 720px); gap: 56px; align-items: start; }
 .guide-navigation { display: flex; flex-direction: column; gap: 4px; position: sticky; top: 28px; }
 .guide-navigation a { display: flex; align-items: center; min-height: 44px; padding: 10px 12px; border-left: 2px solid transparent; color: var(--paper-color-text-muted); line-height: 1.5; font-size: .875rem; text-decoration: none; }
-.guide-navigation a[aria-current="page"] { border-left-color: var(--paper-color-text-link); color: var(--paper-color-text-ink); background: var(--paper-color-action-soft); font-weight: 700; }
+.guide-navigation a[aria-current="page"] { border-left-color: var(--paper-color-text-link); color: var(--paper-color-text-ink); background: var(--paper-color-surface-paper); font-weight: 700; }
 .guide-navigation a:hover { color: var(--paper-color-text-link); text-decoration: underline; }
 .guide-article { min-width: 0; }
 .guide-header { margin-bottom: 28px; }

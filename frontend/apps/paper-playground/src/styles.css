@@ -49,25 +49,19 @@ a { text-underline-offset: .2em; }
 .app-form__section > legend { float: left; width: 100%; margin-bottom: 20px; padding: 0; font-size: 1.0625rem; font-weight: 700; line-height: 1.5; }
 .app-form__section > legend + * { clear: both; }
 .app-form__description { margin: 0 0 16px; max-width: 60ch; color: var(--paper-color-text-muted); font-size: .875rem; line-height: 1.65; }
-.app-form__choices { display: grid; gap: 12px; }
-.app-form__choices + .paper-flash { margin-top: 20px; }
 .app-form__actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 28px; }
 .app-editor-layout { display: grid; grid-template-columns: minmax(0, 680px) minmax(0, 260px); gap: 64px; align-items: start; max-width: 1004px; }
 .app-editor-aside { min-width: 0; padding-left: 24px; border-left: 1px solid var(--paper-color-rule-default); font-size: .875rem; line-height: 1.7; }
 .app-editor-aside h2 { margin: 0 0 12px; font-family: var(--paper-font-body); font-size: 1rem; line-height: 1.5; }
 .app-editor-aside p { margin: 0 0 16px; color: var(--paper-color-text-muted); }
 .app-editor-aside a + h2 { margin-top: 32px; }
-.app-editor-aside .app-score-preview { margin: 0 0 16px; }
-.app-score-preview strong { margin-right: 4px; color: var(--paper-color-text-ink); font-family: var(--paper-font-display); font-size: 2rem; font-variant-numeric: tabular-nums; }
-.app-editor-aside .app-editor-aside__note { margin: 24px 0 0; padding-top: 16px; border-top: 1px solid var(--paper-color-rule-subtle); font-size: .8125rem; }
-.app-editor-aside--mobile { display: none; }
 .app-entry { padding-block: 24px; }
 .app-entry__account { padding: 28px; border: 1px solid var(--paper-color-rule-default); background: var(--paper-color-surface-paper); }
 .app-entry__account h2 { margin: 0 0 12px; font-family: var(--paper-font-body); font-size: 1.125rem; }
 .app-entry__account p { margin: 0; max-width: 48ch; color: var(--paper-color-text-muted); }
 .app-admin-label { border-left: 1px solid var(--paper-color-rule-default); padding-left: 16px; font-weight: 600; }
 @media (max-width: 800px) { .app-shell { --app-gutter: 20px; } .page-columns { grid-template-columns: minmax(0,1fr); gap: 28px; } .app-content { padding-block: 32px 48px; } .app-wordmark { width: 120px; } }
-@media (max-width: 800px) { .app-editor-layout { grid-template-columns: minmax(0, 680px); gap: 32px; } .app-editor-aside { padding: 24px 0 0; border-left: 0; border-top: 1px solid var(--paper-color-rule-default); max-width: 60ch; } .app-editor-aside--desktop { display: none; } .app-editor-aside--mobile { display: block; margin-top: 32px; } }
+@media (max-width: 800px) { .app-editor-layout { grid-template-columns: minmax(0, 680px); gap: 32px; } .app-editor-aside { padding: 24px 0 0; border-left: 0; border-top: 1px solid var(--paper-color-rule-default); max-width: 60ch; } }
 @media (max-width: 520px) { .app-shell { --app-gutter: 16px; } .app-content { padding-block: 28px 40px; } .page-header { margin-bottom: 24px; } .stat-grid { grid-template-columns: repeat(2,minmax(0,1fr)); gap: 20px; } .stat { padding-left: 12px; } .app-form__row { grid-template-columns: 1fr; } .app-wordmark { width: 106px; } .app-account-label { display:none; } .app-admin-label { font-size:.8rem; padding-left:8px; } }
 @media (min-width: 768px) and (max-width: 1000px) { .app-account-menu--desktop .paper-button > span { max-width: 10ch; } }
 @media (width < 48rem) { .app-account-menu--desktop { display: none; } .app-account-menu--mobile { display: inline-flex; } }

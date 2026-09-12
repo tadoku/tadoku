@@ -3,7 +3,7 @@ import { Link, Navigate, useNavigate, useParams, useSearchParams } from 'react-r
 import { FormProvider, useController, useForm, useWatch } from 'react-hook-form'
 import { CheckIcon } from 'paper-ui/icons'
 import { Button, Checkbox, Flash, Input, Select, TagsInput, TextArea, buttonClassName, useToast } from 'paper-ui'
-import { compatibleModifiers, contestStatus, formatDate, formatNumber, modifierRates, sampleToday, scoreLog, scoreSubmission, supportedLanguages, type Activity, type LogModifier, type LogUnit, type SampleLog } from '../data'
+import { compatibleModifiers, contestStatus, formatDate, formatNumber, modifierRates, personalScoreExplanation, sampleToday, scoreLog, scoreSubmission, supportedLanguages, type Activity, type LogModifier, type LogUnit, type SampleLog } from '../data'
 import { usePlayground } from '../state'
 import './log-editor.css'
 
@@ -138,6 +138,7 @@ function LogForm({ existing }: { existing?: SampleLog }) {
       <h1 className="paper-type-page">{existing ? 'Edit activity' : 'Log activity'}</h1>
       <p className="log-editor__step" ref={stepHeading} tabIndex={-1}>{step === 1 ? 'Log details' : 'Choose contests'} · {step} of 2</p>
     </header>
+    <div className="log-editor__layout">
     <FormProvider {...methods}><form className="log-editor__form" noValidate onSubmit={methods.handleSubmit(saveLog, errors => {
       const field = Object.keys(errors)[0] as keyof LogFields
       setStep(field === 'date' ? 2 : 1)
@@ -189,5 +190,13 @@ function LogForm({ existing }: { existing?: SampleLog }) {
       </div>
       <div className="log-editor__actions">{step === 1 ? <><Link to={detailHref} className={buttonClassName({ variant: 'ghost' })}>Cancel</Link><Button type="submit">Next</Button></> : <><Button variant="ghost" onClick={() => setStep(1)}>Back</Button><Button type="submit">{existing ? 'Save changes' : 'Save activity'}</Button></>}</div>
     </form></FormProvider>
+    <aside className="log-editor__aside" aria-labelledby="log-score-heading">
+      <h2 id="log-score-heading">Estimated score</h2>
+      <p className="log-editor__aside-score" aria-live="polite">{estimate}</p>
+      {Number.isFinite(amount) && amount > 0 && <p className="log-editor__aside-basis">{personalScoreExplanation({ activity, language, amount, unit, modifiers })}</p>}
+      <p>Contest scores may use a different rule.</p>
+      <Link className="text-link" to="/guide/scoring">How scoring works</Link>
+    </aside>
+    </div>
   </section>
 }

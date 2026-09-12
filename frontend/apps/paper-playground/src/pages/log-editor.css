@@ -1,4 +1,6 @@
 .log-editor { width: 100%; max-width: 700px; margin-inline: auto; }
+.log-editor__layout { min-width: 0; }
+.log-editor__aside { display: none; }
 .log-editor__header { margin-bottom: 24px; }
 .log-editor__step { margin: 0; color: var(--paper-color-text-muted); font-size: .875rem; }
 .log-editor__form { display: grid; gap: 20px; min-width: 0; }
@@ -53,6 +55,18 @@
 .log-editor__review p { margin: 4px 0 0; color: var(--paper-color-text-muted); font-size: .875rem; }
 .log-editor__contests { display: grid; gap: 20px; margin-top: 20px; }
 .log-editor__contests > div { min-width: 0; }
+
+@media (min-width: 1024px) {
+  .log-editor { max-width: 1040px; }
+  .log-editor__layout { display: grid; grid-template-columns: minmax(0, 700px) minmax(220px, 1fr); gap: 48px; align-items: start; }
+  .log-editor__aside { display: block; position: sticky; top: 24px; min-width: 0; padding: 4px 0 4px 24px; border-inline-start: 1px solid var(--paper-color-rule-default); }
+  .log-editor__aside h2 { margin: 0 0 16px; font-family: var(--paper-font-body); font-size: 1rem; line-height: 1.5; }
+  .log-editor__aside p { margin: 0 0 16px; color: var(--paper-color-text-muted); font-size: .875rem; line-height: 1.7; }
+  .log-editor__aside .log-editor__aside-score { color: var(--paper-color-text-ink); font-family: var(--paper-font-display); font-size: 1.75rem; line-height: 1.4; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .log-editor__aside .log-editor__aside-basis { padding-bottom: 16px; border-bottom: 1px solid var(--paper-color-rule-subtle); }
+  .log-editor__aside > a { font-size: .875rem; }
+  .log-editor__score, .log-editor__scoring-link, .log-editor__review > span { display: none; }
+}
 
 @media (max-width: 520px) {
   .log-editor__form { gap: 16px; }

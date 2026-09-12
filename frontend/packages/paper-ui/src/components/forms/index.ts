@@ -1,4 +1,5 @@
 export { Input, type InputProps } from "./Input";
+export { ToggleSelect, type ToggleSelectProps } from "./ToggleSelect";
 export {
   AmountWithUnit,
   AutocompleteInput,

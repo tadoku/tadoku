@@ -12,7 +12,7 @@ const actionMenuSource = await readFile(
 )
 
 const mobilePanelStart = navbarSource.indexOf(
-  '<DisclosurePanel className="sm:hidden">',
+  '<DisclosurePanel className="md:hidden">',
 )
 const mobilePanelEnd = navbarSource.indexOf(
   '</DisclosurePanel>',

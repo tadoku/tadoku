@@ -21,7 +21,5 @@ go_test(
         "@com_github_golang_jwt_jwt_v4//:jwt",
         "@com_github_labstack_echo_v4//:echo",
         "@com_github_prometheus_client_golang//prometheus",
-        "@com_github_stretchr_testify//assert",
-        "@com_github_stretchr_testify//require",
     ],
 )

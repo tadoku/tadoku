@@ -7,12 +7,12 @@ import (
 	"log/slog"
 	stdhttp "net/http"
 	"net/http/httptest"
+	"slices"
+	"strings"
 	"testing"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 type receivedRequest struct {
@@ -33,7 +33,9 @@ func TestHandlerProxiesEachLegacyPrefix(t *testing.T) {
 		received[name] = make(chan receivedRequest, 1)
 		servers[name] = httptest.NewServer(stdhttp.HandlerFunc(func(response stdhttp.ResponseWriter, request *stdhttp.Request) {
 			body, err := io.ReadAll(request.Body)
-			require.NoError(t, err)
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
 			received[name] <- receivedRequest{
 				method:        request.Method,
 				path:          request.URL.EscapedPath(),
@@ -56,7 +58,9 @@ func TestHandlerProxiesEachLegacyPrefix(t *testing.T) {
 		Authz: servers["authz"].URL, Content: servers["content"].URL,
 		Immersion: servers["immersion"].URL, Profile: servers["profile"].URL,
 	}, stdhttp.DefaultTransport, time.Second, registry, slog.New(slog.NewJSONHandler(&logs, nil)))
-	require.NoError(t, err)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
 	facade := httptest.NewServer(handler)
 	defer facade.Close()
 
@@ -75,50 +79,86 @@ func TestHandlerProxiesEachLegacyPrefix(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			request, err := stdhttp.NewRequest(test.method, facade.URL+test.path, bytes.NewBufferString(test.body))
-			require.NoError(t, err)
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
 			request.Host = "app.tadoku.test"
 			request.Header.Set("Authorization", "Bearer oathkeeper-identity")
 			request.Header.Set(correlationHeader, "request-"+test.name)
 
 			response, err := facade.Client().Do(request)
-			require.NoError(t, err)
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
 			defer response.Body.Close()
 			body, err := io.ReadAll(response.Body)
-			require.NoError(t, err)
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
 
-			assert.Equal(t, stdhttp.StatusAccepted, response.StatusCode)
-			assert.Equal(t, "from-"+test.name, string(body))
-			assert.Equal(t, test.name, response.Header.Get("X-Legacy-Upstream"))
-			assert.Equal(t, "request-"+test.name, response.Header.Get(correlationHeader))
+			if response.StatusCode != stdhttp.StatusAccepted {
+				t.Errorf("got %v, want %v", response.StatusCode, stdhttp.StatusAccepted)
+			}
+			if string(body) != "from-"+test.name {
+				t.Errorf("got %v, want %v", string(body), "from-"+test.name)
+			}
+			if response.Header.Get("X-Legacy-Upstream") != test.name {
+				t.Errorf("got %v, want %v", response.Header.Get("X-Legacy-Upstream"), test.name)
+			}
+			if response.Header.Get(correlationHeader) != "request-"+test.name {
+				t.Errorf("got %v, want %v", response.Header.Get(correlationHeader), "request-"+test.name)
+			}
 
 			var got receivedRequest
 			select {
 			case got = <-received[test.name]:
 			case <-time.After(time.Second):
-				require.Fail(t, "request did not reach expected upstream")
+				t.Fatal("request did not reach expected upstream")
 			}
-			assert.Equal(t, test.method, got.method)
-			assert.Equal(t, test.body, got.body)
-			assert.Equal(t, "Bearer oathkeeper-identity", got.authorization)
-			assert.Equal(t, "request-"+test.name, got.correlationID)
-			assert.Equal(t, "app.tadoku.test", got.host)
-			assert.Equal(t, test.wantPath, got.path)
+			if got.method != test.method {
+				t.Errorf("got %v, want %v", got.method, test.method)
+			}
+			if got.body != test.body {
+				t.Errorf("got %v, want %v", got.body, test.body)
+			}
+			if got.authorization != "Bearer oathkeeper-identity" {
+				t.Errorf("got %v, want %v", got.authorization, "Bearer oathkeeper-identity")
+			}
+			if got.correlationID != "request-"+test.name {
+				t.Errorf("got %v, want %v", got.correlationID, "request-"+test.name)
+			}
+			if got.host != "app.tadoku.test" {
+				t.Errorf("got %v, want %v", got.host, "app.tadoku.test")
+			}
+			if got.path != test.wantPath {
+				t.Errorf("got %v, want %v", got.path, test.wantPath)
+			}
 			if test.name == "authz" {
-				assert.Equal(t, "detail=full", got.rawQuery)
+				if got.rawQuery != "detail=full" {
+					t.Errorf("got %v, want %v", got.rawQuery, "detail=full")
+				}
 			}
 		})
 	}
 
 	metricFamilies, err := registry.Gather()
-	require.NoError(t, err)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
 	metricNames := make([]string, 0, len(metricFamilies))
 	for _, family := range metricFamilies {
 		metricNames = append(metricNames, family.GetName())
 	}
-	assert.Contains(t, metricNames, "tadoku_api_proxy_request_duration_seconds")
+	if !slices.Contains(metricNames, "tadoku_api_proxy_request_duration_seconds") {
+		t.Errorf("missing %v in %v", "tadoku_api_proxy_request_duration_seconds", metricNames)
+	}
 	for _, test := range tests {
-		assert.Contains(t, logs.String(), `"correlation_id":"request-`+test.name+`"`)
-		assert.Contains(t, logs.String(), `"upstream":"`+test.name+`"`)
+		if !strings.Contains(logs.String(), `"correlation_id":"request-`+test.name+`"`) {
+			t.Errorf("missing %v in %v", `"correlation_id":"request-`+test.name+`"`, logs.String())
+		}
+		if !strings.Contains(logs.String(), `"upstream":"`+test.name+`"`) {
+			t.Errorf("missing %v in %v", `"upstream":"`+test.name+`"`, logs.String())
+		}
 	}
 }
 
@@ -134,14 +174,22 @@ func TestHandlerGeneratesAndForwardsCorrelationID(t *testing.T) {
 	handler, err := NewHandler(Upstreams{
 		Authz: upstream.URL, Content: upstream.URL, Immersion: upstream.URL, Profile: upstream.URL,
 	}, stdhttp.DefaultTransport, time.Second, prometheus.NewRegistry(), slog.New(slog.NewJSONHandler(&logs, nil)))
-	require.NoError(t, err)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
 	response := httptest.NewRecorder()
 	handler.ServeHTTP(response, httptest.NewRequest(stdhttp.MethodGet, "/content/ping", nil))
 
 	generatedID := response.Header().Get(correlationHeader)
-	assert.NotEmpty(t, generatedID)
-	assert.Equal(t, generatedID, <-receivedID)
-	assert.Contains(t, logs.String(), `"correlation_id":"`+generatedID+`"`)
+	if len(generatedID) == 0 {
+		t.Errorf("expected a nonempty value")
+	}
+	if got := <-receivedID; got != generatedID {
+		t.Errorf("got %v, want %v", got, generatedID)
+	}
+	if !strings.Contains(logs.String(), `"correlation_id":"`+generatedID+`"`) {
+		t.Errorf("missing %v in %v", `"correlation_id":"`+generatedID+`"`, logs.String())
+	}
 }
 
 func TestHandlerReturnsBadGatewayWhenUpstreamIsUnavailable(t *testing.T) {
@@ -153,9 +201,15 @@ func TestHandlerReturnsBadGatewayWhenUpstreamIsUnavailable(t *testing.T) {
 	response := httptest.NewRecorder()
 	handler.ServeHTTP(response, httptest.NewRequest(stdhttp.MethodGet, "/authz/ping", nil))
 
-	assert.Equal(t, stdhttp.StatusBadGateway, response.Code)
-	assert.Equal(t, "Bad Gateway\n", response.Body.String())
-	assert.NotEmpty(t, response.Header().Get(correlationHeader))
+	if response.Code != stdhttp.StatusBadGateway {
+		t.Errorf("got %v, want %v", response.Code, stdhttp.StatusBadGateway)
+	}
+	if response.Body.String() != "Bad Gateway\n" {
+		t.Errorf("got %v, want %v", response.Body.String(), "Bad Gateway\n")
+	}
+	if len(response.Header().Get(correlationHeader)) == 0 {
+		t.Errorf("expected a nonempty value")
+	}
 }
 
 func TestHandlerTimesOutAndCancelsUpstreamRequest(t *testing.T) {
@@ -170,11 +224,13 @@ func TestHandlerTimesOutAndCancelsUpstreamRequest(t *testing.T) {
 	response := httptest.NewRecorder()
 	handler.ServeHTTP(response, httptest.NewRequest(stdhttp.MethodPost, "/immersion/logs", bytes.NewBufferString("body")))
 
-	assert.Equal(t, stdhttp.StatusGatewayTimeout, response.Code)
+	if response.Code != stdhttp.StatusGatewayTimeout {
+		t.Errorf("got %v, want %v", response.Code, stdhttp.StatusGatewayTimeout)
+	}
 	select {
 	case <-cancelled:
 	case <-time.After(time.Second):
-		require.Fail(t, "upstream request was not cancelled")
+		t.Fatal("upstream request was not cancelled")
 	}
 }
 
@@ -193,8 +249,12 @@ func TestHandlerHealthAndUnknownRoutes(t *testing.T) {
 	} {
 		response := httptest.NewRecorder()
 		handler.ServeHTTP(response, httptest.NewRequest(stdhttp.MethodGet, test.path, nil))
-		assert.Equal(t, test.status, response.Code)
-		assert.Equal(t, test.body, response.Body.String())
+		if response.Code != test.status {
+			t.Errorf("got %v, want %v", response.Code, test.status)
+		}
+		if response.Body.String() != test.body {
+			t.Errorf("got %v, want %v", response.Body.String(), test.body)
+		}
 	}
 }
 
@@ -216,7 +276,9 @@ func TestNewHandlerRejectsInvalidConfiguration(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			_, err := NewHandler(test.upstreams, stdhttp.DefaultTransport, test.timeout, prometheus.NewRegistry(), slog.Default())
-			assert.Error(t, err)
+			if err == nil {
+				t.Errorf("expected an error")
+			}
 		})
 	}
 }
@@ -226,7 +288,9 @@ func newTestHandler(t testing.TB, upstream string, timeout time.Duration) stdhtt
 	handler, err := NewHandler(Upstreams{
 		Authz: upstream, Content: upstream, Immersion: upstream, Profile: upstream,
 	}, stdhttp.DefaultTransport, timeout, prometheus.NewRegistry(), slog.New(slog.NewTextHandler(io.Discard, nil)))
-	require.NoError(t, err)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
 	return handler
 }
 
@@ -235,7 +299,9 @@ func newTestHandlerWithTransport(t *testing.T, transport stdhttp.RoundTripper, t
 	handler, err := NewHandler(Upstreams{
 		Authz: "http://authz", Content: "http://content", Immersion: "http://immersion", Profile: "http://profile",
 	}, transport, timeout, prometheus.NewRegistry(), slog.New(slog.NewTextHandler(io.Discard, nil)))
-	require.NoError(t, err)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
 	return handler
 }
 
@@ -266,18 +332,18 @@ func TestRequestCancellationIsPreserved(t *testing.T) {
 	select {
 	case <-started:
 	case <-time.After(time.Second):
-		require.Fail(t, "request did not reach upstream")
+		t.Fatal("request did not reach upstream")
 	}
 	cancel()
 
 	select {
 	case <-cancelled:
 	case <-time.After(time.Second):
-		require.Fail(t, "upstream request was not cancelled")
+		t.Fatal("upstream request was not cancelled")
 	}
 	select {
 	case <-done:
 	case <-time.After(time.Second):
-		require.Fail(t, "proxy did not return after cancellation")
+		t.Fatal("proxy did not return after cancellation")
 	}
 }

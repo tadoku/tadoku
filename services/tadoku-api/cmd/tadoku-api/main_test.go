@@ -9,9 +9,6 @@ import (
 	"net/http/httptest"
 	"testing"
 	"time"
-
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func TestApplicationStartsAndShutsDown(t *testing.T) {
@@ -24,22 +21,34 @@ func TestApplicationStartsAndShutsDown(t *testing.T) {
 		IdleTimeout: time.Second, ShutdownTimeout: time.Second,
 	}
 	app, err := start(cfg, slog.New(slog.NewTextHandler(io.Discard, nil)))
-	require.NoError(t, err)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
 
 	_, port, err := net.SplitHostPort(app.listener.Addr().String())
-	require.NoError(t, err)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
 	address := net.JoinHostPort("127.0.0.1", port)
 	response, err := http.Get("http://" + address + "/readyz")
-	require.NoError(t, err)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
 	defer response.Body.Close()
-	assert.Equal(t, http.StatusOK, response.StatusCode)
+	if response.StatusCode != http.StatusOK {
+		t.Errorf("got %v, want %v", response.StatusCode, http.StatusOK)
+	}
 
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
-	require.NoError(t, app.wait(ctx))
+	if err := app.wait(ctx); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
 
 	_, err = http.Get("http://" + address + "/livez")
-	assert.Error(t, err)
+	if err == nil {
+		t.Errorf("expected an error")
+	}
 }
 
 func TestLoadConfigUsesValidatedDefaults(t *testing.T) {
@@ -49,9 +58,19 @@ func TestLoadConfigUsesValidatedDefaults(t *testing.T) {
 	t.Setenv("API_PROFILE_URL", "http://profile")
 
 	cfg, err := loadConfig()
-	require.NoError(t, err)
-	assert.Equal(t, 8000, cfg.Port)
-	assert.Equal(t, 9090, cfg.MetricsPort)
-	assert.Equal(t, "tadoku-api", cfg.ServiceName)
-	assert.Equal(t, 30*time.Second, cfg.RequestTimeout)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if cfg.Port != 8000 {
+		t.Errorf("got %v, want %v", cfg.Port, 8000)
+	}
+	if cfg.MetricsPort != 9090 {
+		t.Errorf("got %v, want %v", cfg.MetricsPort, 9090)
+	}
+	if cfg.ServiceName != "tadoku-api" {
+		t.Errorf("got %v, want %v", cfg.ServiceName, "tadoku-api")
+	}
+	if cfg.RequestTimeout != 30*time.Second {
+		t.Errorf("got %v, want %v", cfg.RequestTimeout, 30*time.Second)
+	}
 }

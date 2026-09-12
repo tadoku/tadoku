@@ -23,8 +23,4 @@ go_test(
     name = "tadoku-api_test",
     srcs = ["main_test.go"],
     embed = [":tadoku-api_lib"],
-    deps = [
-        "@com_github_stretchr_testify//assert",
-        "@com_github_stretchr_testify//require",
-    ],
 )

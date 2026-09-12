@@ -167,7 +167,23 @@ function Rules() {
       </section>
       <section className="guide-section" id="scores">
         <h2>Understand the score you see</h2>
-        <p>Reading and listening can be measured in pages or time. A log’s personal score and its contest scores are separate records. Never add them together to describe that log.</p>
+        <p>Record reading in pages, sentences or characters, and listening in minutes. A log’s personal score and its contest scores are separate records. Never add them together to describe that log.</p>
+        <Table
+          caption="Personal score units in this playground"
+          minWidth="0"
+          columns={[
+            { id: 'unit', header: 'Unit', rowHeader: true, cell: row => row.unit },
+            { id: 'rate', header: 'Sample conversion', cell: row => row.rate },
+          ]}
+          rows={[
+            { unit: 'Pages', rate: '1 point per page' },
+            { unit: 'Sentences', rate: '1 point per 20 sentences' },
+            { unit: 'Characters · Japanese, Korean, Chinese, Mandarin', rate: '1 point per 400 characters' },
+            { unit: 'Characters · other languages', rate: 'About 1 point per 1,200 characters' },
+            { unit: 'Listening minutes', rate: '0.5 points per minute' },
+          ]}
+        />
+        <p>For pages, choose at most one modifier: Manga or Comic multiplies the score by 0.2; Two column by 1.6. Passive listening multiplies the listening score by 0.5. The reading and listening circle contests use their own fixed minute rates without these personal modifiers.</p>
         <Table
           caption="One record, two scoring contexts"
           captionVisibility="screen-reader"

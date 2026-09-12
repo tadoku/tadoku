@@ -3,7 +3,7 @@ import { FormProvider, useForm } from 'react-hook-form'
 import { Link, useParams, useSearchParams } from 'react-router-dom'
 import { Breadcrumb, Button, Checkbox, Flash, Modal, Surface, buttonClassName, type NavigationLinkProps } from 'paper-ui'
 import { PencilSquareIcon, TrashIcon } from 'paper-ui/icons'
-import { contestStatus, formatDate, formatNumber, sampleToday, scoreLog, scoreSubmission, users, type SampleContest, type SampleLog, type Submission } from '../data'
+import { contestStatus, formatDate, formatNumber, personalScoreExplanation, sampleToday, scoreLog, scoreSubmission, users, type SampleContest, type SampleLog, type Submission } from '../data'
 import { contestEnd, contestStart, formatDateRange } from '../dates'
 import { usePlayground, useScenario } from '../state'
 import './records.css'
@@ -111,7 +111,7 @@ function LogRecord({ id, scenario, onRetry }: { id?: string; scenario: string; o
       {log.note ? <p className="records-log-note">{log.note}</p> : null}
       {log.tags.length ? <ul className="records-tags" aria-label="Tags">{log.tags.map(tag => <li key={tag}>#{tag}</li>)}</ul> : null}
       </Surface><div className="records-log-score-grid">
-        <section className="records-personal-score" aria-labelledby="personal-score-heading"><h2 className="paper-type-section" id="personal-score-heading">Personal score</h2><p className="records-score-number">{formatNumber(scoreLog(log))}<span>points</span></p><p className="muted">Counts toward {owner ? 'your' : `${name}’s`} personal activity totals.</p><ScoreExplanation basis={`${formatNumber(log.amount)} ${log.unit} × ${log.activity === 'Reading' ? '1 point per page' : '0.5 points per minute'} = ${formatNumber(scoreLog(log))} personal points.${ended ? ' The personal record was corrected after the contest finished.' : ''}`} /></section>
+        <section className="records-personal-score" aria-labelledby="personal-score-heading"><h2 className="paper-type-section" id="personal-score-heading">Personal score</h2><p className="records-score-number">{formatNumber(scoreLog(log))}<span>points</span></p><p className="muted">Counts toward {owner ? 'your' : `${name}’s`} personal activity totals.</p><ScoreExplanation basis={`${personalScoreExplanation(log)}${ended ? ' The personal record was corrected after the contest finished.' : ''}`} /></section>
         <section aria-labelledby="contributions-heading"><div className="records-contribution-heading"><h2 className="paper-type-section" id="contributions-heading">Contest contributions</h2></div>
           {!owner ? <p className="records-visibility-note">Contest submissions are visible to the log’s owner.</p> : <>
             {log.submissions.length ? <ul className="records-contributions">{log.submissions.map(submission => {

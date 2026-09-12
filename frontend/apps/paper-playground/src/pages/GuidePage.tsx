@@ -21,7 +21,7 @@ const labels = {
 
 const headings: Record<GuideSection, { title: string; description: string }> = {
   about: {
-    title: 'A little more immersion. A little company along the way.',
+    title: 'A little more immersion, together.',
     description: 'A community built around spending time with the languages you want to understand.',
   },
   manual: {
@@ -112,7 +112,7 @@ function About() {
 function Manual() {
   return (
     <>
-      <p className="guide-introduction">Your first log is enough to get started. You can record immersion throughout the year; a contest adds a shared period and a leaderboard.</p>
+      <p className="guide-introduction">You can log immersion anytime. Join a contest when you’d like a little company and a shared goal.</p>
       <ol className="guide-steps">
         <li id="participate">
           <h2>Choose how you want to participate</h2>
@@ -170,10 +170,10 @@ function Rules() {
         <p>Reading and listening can be measured in pages or time. A log’s personal score and its contest scores are separate records. Never add them together to describe that log.</p>
         <Table
           caption="One record, two scoring contexts"
+          captionVisibility="screen-reader"
           minWidth="0"
           columns={[
-            { id: 'context', header: 'Context', rowHeader: true, cell: row => row.context },
-            { id: 'rule', header: 'Example rule', cell: row => row.rule },
+            { id: 'context', header: 'Context and example rule', rowHeader: true, cell: row => <span className="guide-score-context">{row.context}<small>{row.rule}</small></span> },
             { id: 'score', header: 'Score', align: 'end', cell: row => row.score },
           ]}
           rows={[
@@ -261,7 +261,6 @@ export function GuidePage({ page }: { page: GuideSection }) {
       </nav>
       <article className="guide-article">
         <header className="guide-header">
-          <p className="guide-page-name">{currentLabels[page]}</p>
           <h1>{headings[page].title}</h1>
           <p className="page-lead">{headings[page].description}</p>
           {inPageLinks[page] && <nav className="guide-contents" aria-label="On this page">{inPageLinks[page]?.map(link => <a key={link.id} href={`#${link.id}`} className="text-link">{link.label}</a>)}</nav>}

@@ -61,8 +61,8 @@ const homeContent = {
     description: 'The current contest board is temporarily unavailable. Your personal activity log is available, so you can keep a record of today’s reading and listening.',
     primary: 'Log activity',
     primaryHref: '/logs/new',
-    secondary: 'Try leaderboard again',
-    secondaryHref: '/contests/round5/leaderboard',
+    secondary: 'View my progress',
+    secondaryHref: '/users/anton',
     note: 'Only the contest board is unavailable right now.',
   },
 }
@@ -103,11 +103,11 @@ export function HomePage() {
       <section className="home-hero" aria-labelledby="home-title">
         <div className="home-promise">
           <p className="home-status" data-tone={unavailable ? 'warning' : between || upcoming ? 'quiet' : 'live'}>{upcoming && alreadyJoined ? 'You’re registered for Round 6' : content.status}</p>
-          <h1 id="home-title">{content.headline}</h1>
+          <h1 id="home-title">{scenario === 'guest-live' ? <>Read more.<br />{' '}Listen more.<br />{' '}Keep going together.</> : content.headline}</h1>
           <p className="home-lead">{participant && myStanding ? `You’re ${myStanding.rank}${myStanding.rank === 1 ? 'st' : myStanding.rank === 2 ? 'nd' : myStanding.rank === 3 ? 'rd' : 'th'} with ${formatNumber(myStanding.score)} points. ` : ''}{content.description}</p>
-          <div className="home-actions flex flex-wrap items-center gap-4">
+          <div className="home-actions">
             <Link to={primaryHref} className={buttonClassName()}>{primaryLabel}</Link>
-            {unavailable ? <Button variant="link" onClick={() => setScenario(retryScenario)}>{content.secondary}</Button> : <Link to={content.secondaryHref} className="text-link">{content.secondary}</Link>}
+            <Link to={content.secondaryHref} className="text-link">{content.secondary}</Link>
           </div>
           <p className="home-fineprint">{content.note}</p>
         </div>
@@ -152,8 +152,8 @@ export function HomePage() {
                 captionVisibility="screen-reader"
                 minWidth="0"
                 columns={[
-                  { id: 'rank', header: 'Rank', width: '3.75rem', cell: row => row.rank },
-                  { id: 'person', header: 'Participant', rowHeader: true, cell: row => <Link className="text-link" to={`/users/${row.userId}?contest=round5`}>{row.name}</Link> },
+                  { id: 'rank', header: 'Rank', width: '4.5rem', cell: row => row.rank },
+                  { id: 'person', header: 'Participant', rowHeader: true, cell: row => <Link className="home-person-link" to={`/users/${row.userId}?contest=round5`}>{row.name}</Link> },
                   { id: 'score', header: 'Score', align: 'end', cell: row => formatNumber(row.score) },
                 ]}
                 rows={rows}
@@ -162,7 +162,7 @@ export function HomePage() {
               {participant && myStanding && (
                 <div className="home-your-standing" aria-label="Your standing in Round 5">
                   <span>{myStanding.rank}</span>
-                  <Link className="text-link" to={`/users/${userId}?contest=round5`}>{user?.name ?? 'Anton'} <small>You</small></Link>
+                  <Link className="home-person-link" to={`/users/${userId}?contest=round5`}>{user?.name ?? 'Anton'} <small>You</small></Link>
                   <strong>{formatNumber(myStanding.score)}</strong>
                 </div>
               )}

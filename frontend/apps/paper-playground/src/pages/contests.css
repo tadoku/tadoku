@@ -61,11 +61,17 @@
 .standings-sheet { min-width: 0; background: var(--paper-color-surface-paper); border: 1px solid var(--paper-color-rule-default); }
 .standings-context { display: flex; justify-content: space-between; gap: 20px; align-items: center; padding: 20px; }
 .standings-context > div:first-child { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 16px; }
+.standings-context__actions { display: flex; flex-shrink: 0; align-items: end; gap: 12px; }
 .standings-context__title { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 12px; }
 .standings-context h2 { margin: 0; font-size: 1.375rem; }
 .standings-context p { margin: 0; font-size: .8125rem; }
 .standings-year { min-width: 100px; }
 .standings-filters { display: grid; grid-template-columns: 1fr 1fr minmax(180px,1.25fr); gap: 12px; padding: 0 20px 20px; }
+.standings-filter-toggle { white-space: nowrap; }
+.standings-filter-toggle[aria-expanded="true"] svg { transform: rotate(180deg); }
+.standings-filter-summary { display: flex; align-items: center; justify-content: space-between; gap: 8px 16px; padding: 0 20px 12px; }
+.standings-filter-summary p { margin: 0; font-size: .8125rem; overflow-wrap: anywhere; }
+.standings-filter-summary .paper-button { flex-shrink: 0; }
 .standings-personal { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 4px 12px 4px 20px; border-top: 1px solid var(--paper-color-rule-default); }
 .standings-personal p { display: flex; flex-wrap: wrap; gap: 2px 16px; margin: 0; font-size: .875rem; }
 .standings-personal strong { white-space: nowrap; }
@@ -122,9 +128,12 @@
   .contest-eligibility { grid-template-columns: 1fr; gap: 16px; }
   .standings-workspace { margin-top: 20px; }
   .standings-context { padding: 20px 16px 16px; gap: 12px; align-items: start; }
+  .standings-context:has(.standings-year) { flex-wrap: wrap; }
+  .standings-context:has(.standings-year) .standings-context__actions { width: 100%; justify-content: space-between; }
   .standings-context p { font-size: .8125rem; line-height: 1.6; }
   .standings-context h2 { font-size: 1.125rem; }
   .standings-filters { padding: 0 16px 16px; }
+  .standings-filter-summary { padding-inline: 16px; }
   .standings-personal { padding: 6px 8px 6px 16px; }
   .standings-personal p { display: block; font-size: .8125rem; }
   .standings-personal span { display: block; margin-top: 2px; }

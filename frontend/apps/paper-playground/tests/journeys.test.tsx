@@ -48,6 +48,7 @@ it('lets a participant log their registered German language and filter its conte
   expect(await screen.findByRole('heading', { name: 'A chapter in German' })).toBeVisible()
   await user.click(screen.getByRole('link', { name: '2026 Round 5' }))
   await user.click(screen.getByRole('link', { name: 'View standings' }))
+  await user.click(screen.getByRole('button', { name: 'Filters' }))
   await user.selectOptions(screen.getByRole('combobox', { name: 'Language' }), 'German')
   const standing = within(screen.getByRole('table')).getByRole('row', { name: /Anton/ })
   expect(within(standing).getByRole('cell', { name: '10' })).toBeVisible()

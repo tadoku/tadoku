@@ -177,12 +177,12 @@ export function ContestEditorPage() {
     const activities: Activity[] = []
     if (values.reading) activities.push('Reading')
     if (values.listening) activities.push('Listening')
-    const next: SampleContest = { id: contest?.id ?? `contest-${crypto.randomUUID()}`, title: values.title.trim(), description: values.description.trim(), start: values.start, end: values.end, registrationDeadline: values.registrationDeadline, languages: values.allLanguages ? ['All languages'] : values.languages, activities, unlisted: values.unlisted, scope: contest?.scope ?? 'community', ownerId: userId }
+    const next: SampleContest = { id: contest?.id ?? `contest-${crypto.randomUUID()}`, title: values.title.trim(), description: values.description.trim(), start: values.start, end: values.end, registrationDeadline: values.registrationDeadline, languages: values.allLanguages ? ['All languages'] : values.languages, activities, unlisted: values.unlisted, scope: contest?.scope ?? 'community', ownerId: userId, moderatorIds: contest ? contest.moderatorIds : [userId] }
     saveContest(next)
     navigate(`${contestPath(next, asOf)}&saved=1`)
   })
   return <>
-    <Link className="text-link page-back-link" to={contest ? contestPath(contest, asOf) : '/contests/mine'}>{contest ? `Back to ${contest.title}` : 'Back to my contests'}</Link>
+    <Link className="text-link page-back-link" to={contest ? contestPath(contest, asOf) : '/contests/managed'}>{contest ? `Back to ${contest.title}` : 'Back to contests'}</Link>
     <header className="page-header"><h1 className="paper-type-page">{contest ? 'Manage contest' : 'Create a community contest'}</h1><p className="page-lead">Set a shared window for immersion, with clear dates and eligibility.</p></header>
     <FormProvider {...methods}><form onSubmit={save} noValidate className="app-form contest-editor-form"><div className="app-form__fields">
       <Input name="title" label="Contest title" required maxLength={100} rules={{ validate: value => Boolean(value?.trim()) || 'Enter a contest title.' }} />

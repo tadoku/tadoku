@@ -257,8 +257,8 @@ function Tooltip({
   });
 
   useEffect(() => {
-    if (textRef.current === null) return;
-    const textRect = textRef.current.getBoundingClientRect();
+    if (!visible || textRef.current === null) return;
+    const textRect = textRef.current.getBBox();
     const width = textRect.width + 12;
     const height = textRect.height + 12;
     const arrowX =

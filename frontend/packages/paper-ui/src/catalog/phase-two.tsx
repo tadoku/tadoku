@@ -829,7 +829,8 @@ export const phaseTwoDocuments = [
       "Use a choice control when the set of valid values is known."
     ],
     "content": [
-      "Use a visible noun label and a hint only when it adds constraints or context."
+      "Use a visible noun label and a hint only when it adds constraints or context.",
+      "Fields fill their parent column. Set a readable width on the form, such as w-full max-w-2xl, then group related fields with grid gap-4 sm:grid-cols-2. A full-width field and a two-field row share the same outside edges."
     ],
     "commonMistakes": [
       "Do not use placeholder text as the only label."
@@ -961,7 +962,7 @@ export const phaseTwoDocuments = [
       "recommendedExample": {
         "heading": "Recommended example",
         "content": [
-          "Edit the log title and save it to see the submitted value. Clear it and save again to test the error and focus behavior. The other examples compare non-editable fields and a server-supplied error."
+          "Edit the full-width log title and the paired Pages read and Date fields, then save to see their submitted values. The row shares the title field’s outside edges, and both controls align even though only Date has a hint. Clear the title and save again to test error and focus behavior."
         ]
       },
       "variants": {
@@ -985,7 +986,8 @@ export const phaseTwoDocuments = [
       "contentGuidance": {
         "heading": "Content guidance",
         "content": [
-          "Use a persistent noun phrase for the label. Add a hint only for a format, constraint, or consequence the label cannot carry. An error should explain how to fix the value—Enter the number of pages read is more useful than Invalid input."
+          "Use a persistent noun phrase for the label. Add a hint only for a format, constraint, or consequence the label cannot carry. An error should explain how to fix the value—Enter the number of pages read is more useful than Invalid input.",
+          "Fields fill their parent column. Set a readable width on the form, such as w-full max-w-2xl, then group related fields with grid gap-4 sm:grid-cols-2. A full-width field and a two-field row share the same outside edges."
         ]
       },
       "accessibility": {
@@ -1195,7 +1197,8 @@ export const phaseTwoDocuments = [
     api: {
       react: ["ActionMenu"],
       props: [
-  { "name": "iconOnly", "type": "boolean", "defaultValue": "false", "description": "Show a labelled ellipsis instead of text and chevron. Give label the row or item context, such as Actions for August Japanese reading log." },
+  { "name": "iconOnly", "type": "boolean", "defaultValue": "false", "description": "Show a named icon instead of text and chevron, with a 44px target in both densities. Defaults to an ellipsis; use triggerIcon for a recognizable account or context icon. Give label the full action context." },
+  { "name": "triggerIcon", "type": "ReactNode", "description": "Optional decorative replacement for the default trigger icon. Paper supplies its size and hides it from assistive technology; label supplies the accessible name." },
   {
     "name": "label",
     "type": "string",

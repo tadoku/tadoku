@@ -146,7 +146,7 @@ export const phaseThreeFoundationDocuments = [
     summary: "Responsive page width, prose measure, stack, cluster, and overflow guidance.",
     keywords: ["layout", "responsive", "measure", "stack"], sourcePath: "styles/utilities.css",
     whenToUse: ["Compose pages from document flow first, then add grids only when relationships require them."],
-    content: ["Keep reading copy to a legible measure, let controls wrap before they overflow, and place horizontal data inside an explicitly labelled scroll region."],
+    content: ["Keep reading copy to a legible measure, let controls wrap before they overflow, and place horizontal data inside an explicitly labelled scroll region.", "Use the same maximum width and responsive gutters on the header, main content and footer. A narrower article or form is an intentional column within that shared frame.", "Fields fill their parent column. Put the maximum width on the form or field group, not on individual controls. Keep labels and controls aligned when adjacent fields have different hints.", "Compose the first screen around its main task: filters and rankings belong together; form instructions belong next to the fields they explain. Give supporting context less weight than the content people came to use."],
     requirements: ["Layouts reflow at 320 CSS pixels without losing content or two-dimensional scrolling."],
     publicContract: ["Public utilities: paper-stack (vertical flow, --paper-stack-gap), paper-cluster (wrapping actions, --paper-cluster-gap), paper-measure (65ch). Applications own page grids, widths, breakpoints and scroll-region semantics. Fixture classes are catalogue-only."],
   }),

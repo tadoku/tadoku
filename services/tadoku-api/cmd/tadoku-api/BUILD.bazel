@@ -6,10 +6,18 @@ go_library(
     importpath = "github.com/tadoku/tadoku/services/tadoku-api/cmd/tadoku-api",
     visibility = ["//visibility:private"],
     deps = [
-        "//services/common/observability",
+        "//services/common/postgresconfig",
+        "//services/tadoku-api/app",
+        "//services/tadoku-api/features/access",
+        "//services/tadoku-api/features/content",
+        "//services/tadoku-api/infra/postgres",
         "//services/tadoku-api/transport/http",
         "@com_github_go_playground_validator_v10//:validator",
+        "@com_github_jackc_pgx_v5//pgxpool",
         "@com_github_kelseyhightower_envconfig//:envconfig",
+        "@com_github_prometheus_client_golang//prometheus",
+        "@com_github_prometheus_client_golang//prometheus/collectors",
+        "@com_github_prometheus_client_golang//prometheus/promhttp",
     ],
 )
 
@@ -23,4 +31,16 @@ go_test(
     name = "tadoku-api_test",
     srcs = ["main_test.go"],
     embed = [":tadoku-api_lib"],
+    env_inherit = ["TADOKU_TEST_POSTGRES_URL"],
+    tags = [
+        "no-cache",
+        "no-remote-exec",
+        "requires-network",
+    ],
+    deps = [
+        "//services/common/postgresconfig",
+        "//services/tadoku-api/internal/testauth",
+        "//services/tadoku-api/internal/testpostgres",
+        "@com_github_golang_jwt_jwt_v4//:jwt",
+    ],
 )

@@ -1,0 +1,40 @@
+load("@rules_go//go:def.bzl", "go_library", "go_test")
+
+go_test(
+    name = "content_test",
+    srcs = ["repository_test.go"],
+    args = ["-test.parallel=4"],
+    env_inherit = ["TADOKU_TEST_POSTGRES_URL"],
+    tags = [
+        "no-cache",
+        "no-remote-exec",
+        "requires-network",
+    ],
+    deps = [
+        ":content",
+        "//services/tadoku-api/infra/postgres",
+        "//services/tadoku-api/internal/testpostgres",
+    ],
+)
+
+go_library(
+    name = "content",
+    srcs = [
+        "content.go",
+        "repository.go",
+    ],
+    importpath = "github.com/tadoku/tadoku/services/tadoku-api/features/content",
+    visibility = [
+        "//services/tadoku-api/app:__pkg__",
+        "//services/tadoku-api/cmd/tadoku-api:__pkg__",
+        "//services/tadoku-api/e2e:__pkg__",
+    ],
+    deps = [
+        "//services/tadoku-api/generated/sqlc/content",
+        "//services/tadoku-api/infra/postgres",
+        "//services/tadoku-api/internal/timex",
+        "@com_github_google_uuid//:uuid",
+        "@com_github_jackc_pgx_v5//pgtype",
+        "@com_github_jackc_pgx_v5//pgxpool",
+    ],
+)

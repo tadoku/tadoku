@@ -36,6 +36,16 @@ spec:
             - {name: API_CONTENT_URL, value: "http://content-api.tdk-content-api"}
             - {name: API_IMMERSION_URL, value: "http://immersion-api.tdk-immersion-api"}
             - {name: API_PROFILE_URL, value: "http://profile-api.tdk-profile-api"}
+            - {name: API_JWKS, value: "http://oathkeeper-api.default:4456/.well-known/jwks.json"}
+            - {name: API_KETO_READ_URL, value: "http://keto-read.default:4466"}
+            - {name: API_POSTGRES_HOST, value: tadoku-dev-db.default}
+            - {name: API_POSTGRES_DATABASE, value: immersion}
+            - {name: API_POSTGRES_SSLMODE, value: require}
+            - {name: API_POSTGRES_MAX_CONNECTIONS, value: "4"}
+            - name: API_POSTGRES_USER
+              valueFrom: {secretKeyRef: {name: immersion.tadoku-dev-db.credentials.postgresql.acid.zalan.do, key: username}}
+            - name: API_POSTGRES_PASSWORD
+              valueFrom: {secretKeyRef: {name: immersion.tadoku-dev-db.credentials.postgresql.acid.zalan.do, key: password}}
           readinessProbe:
             httpGet:
               path: /readyz

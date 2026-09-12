@@ -1,0 +1,16 @@
+load("@rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "access",
+    srcs = ["access.go"],
+    importpath = "github.com/tadoku/tadoku/services/tadoku-api/features/access",
+    visibility = [
+        "//services/tadoku-api/app:__pkg__",
+        "//services/tadoku-api/cmd/tadoku-api:__pkg__",
+        "//services/tadoku-api/e2e:__pkg__",
+    ],
+    deps = [
+        "//services/common/authz/roles",
+        "//services/common/client/keto",
+    ],
+)

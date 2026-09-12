@@ -32,7 +32,9 @@ type route struct {
 	target string
 }
 
-func NewHandler(upstreams Upstreams, transport stdhttp.RoundTripper, requestTimeout time.Duration, registerer prometheus.Registerer, logger *slog.Logger) (stdhttp.Handler, error) {
+// NewProxyHandler builds the legacy fallback; production always wraps it with
+// NewHandler and its required native dependencies.
+func NewProxyHandler(upstreams Upstreams, transport stdhttp.RoundTripper, requestTimeout time.Duration, registerer prometheus.Registerer, logger *slog.Logger) (stdhttp.Handler, error) {
 	if requestTimeout <= 0 {
 		return nil, fmt.Errorf("request timeout must be positive")
 	}

@@ -1,0 +1,10 @@
+load("@rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "testauth",
+    testonly = True,
+    srcs = ["issuer.go"],
+    importpath = "github.com/tadoku/tadoku/services/tadoku-api/internal/testauth",
+    visibility = ["//services/tadoku-api:__subpackages__"],
+    deps = ["@com_github_golang_jwt_jwt_v4//:jwt"],
+)

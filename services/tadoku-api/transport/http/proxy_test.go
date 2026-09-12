@@ -54,7 +54,7 @@ func TestHandlerProxiesEachLegacyPrefix(t *testing.T) {
 
 	var logs bytes.Buffer
 	registry := prometheus.NewRegistry()
-	handler, err := NewHandler(Upstreams{
+	handler, err := NewProxyHandler(Upstreams{
 		Authz: servers["authz"].URL, Content: servers["content"].URL,
 		Immersion: servers["immersion"].URL, Profile: servers["profile"].URL,
 	}, stdhttp.DefaultTransport, time.Second, registry, slog.New(slog.NewJSONHandler(&logs, nil)))
@@ -171,7 +171,7 @@ func TestHandlerGeneratesAndForwardsCorrelationID(t *testing.T) {
 	defer upstream.Close()
 
 	var logs bytes.Buffer
-	handler, err := NewHandler(Upstreams{
+	handler, err := NewProxyHandler(Upstreams{
 		Authz: upstream.URL, Content: upstream.URL, Immersion: upstream.URL, Profile: upstream.URL,
 	}, stdhttp.DefaultTransport, time.Second, prometheus.NewRegistry(), slog.New(slog.NewJSONHandler(&logs, nil)))
 	if err != nil {
@@ -275,7 +275,7 @@ func TestNewHandlerRejectsInvalidConfiguration(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			_, err := NewHandler(test.upstreams, stdhttp.DefaultTransport, test.timeout, prometheus.NewRegistry(), slog.Default())
+			_, err := NewProxyHandler(test.upstreams, stdhttp.DefaultTransport, test.timeout, prometheus.NewRegistry(), slog.Default())
 			if err == nil {
 				t.Errorf("expected an error")
 			}
@@ -285,7 +285,7 @@ func TestNewHandlerRejectsInvalidConfiguration(t *testing.T) {
 
 func newTestHandler(t testing.TB, upstream string, timeout time.Duration) stdhttp.Handler {
 	t.Helper()
-	handler, err := NewHandler(Upstreams{
+	handler, err := NewProxyHandler(Upstreams{
 		Authz: upstream, Content: upstream, Immersion: upstream, Profile: upstream,
 	}, stdhttp.DefaultTransport, timeout, prometheus.NewRegistry(), slog.New(slog.NewTextHandler(io.Discard, nil)))
 	if err != nil {
@@ -296,7 +296,7 @@ func newTestHandler(t testing.TB, upstream string, timeout time.Duration) stdhtt
 
 func newTestHandlerWithTransport(t *testing.T, transport stdhttp.RoundTripper, timeout time.Duration) stdhttp.Handler {
 	t.Helper()
-	handler, err := NewHandler(Upstreams{
+	handler, err := NewProxyHandler(Upstreams{
 		Authz: "http://authz", Content: "http://content", Immersion: "http://immersion", Profile: "http://profile",
 	}, transport, timeout, prometheus.NewRegistry(), slog.New(slog.NewTextHandler(io.Discard, nil)))
 	if err != nil {

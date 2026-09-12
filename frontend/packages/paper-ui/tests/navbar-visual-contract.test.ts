@@ -45,7 +45,7 @@ describe("Navbar visual contract", () => {
       ['.paper-sidebar__link[aria-current="page"]::before', "background", ["surface-paper"]],
       ['.paper-tabbar__list--horizontal .paper-tabbar__link[aria-current="page"]', "box-shadow", ["surface-canvas", "surface-raised"]],
       ['.paper-tabbar__list--vertical .paper-tabbar__link[aria-current="page"]', "box-shadow", ["surface-canvas", "surface-raised"]],
-      ['.paper-pagination__page[aria-current="page"]', "border-color", ["surface-canvas", "surface-paper"]],
+      ['.paper-pagination__page[aria-current="page"]', "box-shadow", ["surface-canvas", "surface-paper", "action-neutral-hover"]],
     ] as const;
     for (const [selector, property, surfaces] of marks) {
       const foreground = luminance(color(declaration(selector, property)));

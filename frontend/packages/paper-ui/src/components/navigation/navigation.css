@@ -317,7 +317,7 @@
 
   .paper-tabbar__link:hover {
     color: var(--paper-color-text-ink);
-    background: var(--paper-color-surface-raised);
+    background: color-mix(in srgb, var(--paper-color-text-ink) 4%, transparent);
   }
 
   .paper-tabbar__list--horizontal .paper-tabbar__link[aria-current="page"] {

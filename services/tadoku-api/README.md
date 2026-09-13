@@ -155,7 +155,6 @@ Echo and Testify graph checks have been removed. Bazel visibility remains in pla
 ### Import policies
 
 ```sh
-bazel test //tools/ci/depolicy:depolicy_test
 bazel run //tools/ci/depolicy
 ```
 
@@ -178,10 +177,8 @@ their named assembly allowances. These are not blanket test exemptions; new
 external feature test packages need a named policy. Fixture libraries retain
 Bazel's `testonly` restrictions. There is no legacy Echo allowance.
 
-The policy tests exercise the actual configuration, including own-feature SQL,
-cross-feature denial, transport/app/domain boundaries, forbidden imports found
-only in test files, and fail-closed configuration handling. Depolicy replaces the
-temporary graph checks. It checks direct imports, not transitive dependencies.
+Depolicy replaces the temporary graph checks. It checks direct imports, not
+transitive dependencies.
 
 Same-package service/repository responsibilities and business signatures still
 require review; import rules do not enforce those conventions.

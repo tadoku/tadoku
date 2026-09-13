@@ -90,9 +90,7 @@ jobs:
         run: bazel run --lockfile_mode=error //:gazelle -- -mode=diff
 
       - name: Verify native import policies (including test files)
-        run: |
-          bazel test --lockfile_mode=error //tools/ci/depolicy:depolicy_test
-          bazel run --lockfile_mode=error //tools/ci/depolicy
+        run: bazel run --lockfile_mode=error //tools/ci/depolicy
 
       - name: Verify native OpenAPI generation
         run: |

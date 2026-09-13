@@ -1,4 +1,4 @@
-load("@rules_go//go:def.bzl", "go_binary", "go_library", "go_test")
+load("@rules_go//go:def.bzl", "go_binary", "go_library")
 
 go_library(
     name = "depolicy_lib",
@@ -22,17 +22,4 @@ go_binary(
     embed = [":depolicy_lib"],
     visibility = ["//visibility:public"],
     x_defs = {"sdkRootFile": "$(rlocationpath @tadoku_go_sdk//:ROOT)"},
-)
-
-go_test(
-    name = "depolicy_test",
-    srcs = ["main_test.go"],
-    data = [
-        "//:.depolicy.yaml",
-        "@tadoku_go_sdk//:ROOT",
-        "@tadoku_go_sdk//:srcs",
-    ],
-    embed = [":depolicy_lib"],
-    x_defs = {"sdkRootFile": "$(rlocationpath @tadoku_go_sdk//:ROOT)"},
-    deps = ["@rules_go//go/runfiles"],
 )

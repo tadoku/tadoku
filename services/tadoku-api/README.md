@@ -117,24 +117,28 @@ different times. No extra request-context wrapper is needed. The pool-closing fa
 has isolated dependencies. Repository/transaction tests retain their independent
 databases and may run in parallel.
 
-HTTP cases use `testdata/<testName>/<expectedStatus>_<caseName>/`. For example:
+HTTP cases derive their name from the operation, expected status and description.
+For example, `APITestName("ListActiveAnnouncements", http.StatusOK, "without", "auth")`
+produces `ListActiveAnnouncements/200_without_auth`, used for both the subtest and
+its fixture directory:
 
 ```text
-e2e/testdata/list_active_announcements/200_plain/
+e2e/testdata/ListActiveAnnouncements/200_without_auth/
   setup.sql
   request.http
   golden.http
 ```
 
-The announcements test has an explicit, hard-coded Go table. Each row names the
-behavior being checked and its fixture directory, so the test is understandable
-without opening every fixture. Add a case by adding a descriptive table row and
+The announcements test has an explicit, hard-coded Go table. Each row declares
+`description []string` and `want` as an HTTP status constant; there is no separate
+fixture-name field to keep in sync. Add a case by adding a descriptive table row and
 its three fixture files; do not discover cases from directories. Each case owns its seed,
 including an explicit comment-only `setup.sql` for an empty database. Shared
 cleanup runs before that SQL. The `golden.http` file contains the request label
 and complete expected response. Tests parse the request files with `net/http`,
 execute the production
-handler without credentials, and compare status, headers and body directly.
+handler without credentials, check the HTTP status against the table's `want`,
+and compare the entire response, including status, headers and body, with the golden.
 Explicit seed IDs and frozen business time make responses deterministic; only
 HTTP line endings are normalized. Missing or changed goldens fail the test.
 There is no automatic recording mode: edit and review the expected files for an

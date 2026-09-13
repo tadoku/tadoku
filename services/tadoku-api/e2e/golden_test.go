@@ -13,9 +13,13 @@ import (
 	"testing"
 )
 
+func APITestName(operation string, status int, description ...string) string {
+	return fmt.Sprintf("%s/%d_%s", operation, status, strings.Join(description, "_"))
+}
+
 // checkHTTPGolden sends the checked-in HTTP request through the production
 // handler and compares its complete response with the reviewed golden file.
-func checkHTTPGolden(t *testing.T, handler http.Handler, directory string) {
+func checkHTTPGolden(t *testing.T, handler http.Handler, directory string, wantStatus int) {
 	t.Helper()
 
 	input, err := os.ReadFile(filepath.Join(directory, "request.http"))
@@ -32,6 +36,10 @@ func checkHTTPGolden(t *testing.T, handler http.Handler, directory string) {
 	handler.ServeHTTP(recorder, request)
 	response := recorder.Result()
 	defer response.Body.Close()
+
+	if response.StatusCode != wantStatus {
+		t.Errorf("HTTP status=%d, want %d", response.StatusCode, wantStatus)
+	}
 
 	dump, err := httputil.DumpResponse(response, true)
 	if err != nil {

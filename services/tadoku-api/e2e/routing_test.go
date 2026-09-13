@@ -29,10 +29,10 @@ func TestRouterWorksWithoutLegacyProxyRoutes(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	path := filepath.Join("testdata", "list_active_announcements", "200_plain")
+	path := filepath.Join("testdata", APITestName("ListActiveAnnouncements", http.StatusOK, "without", "auth"))
 	reset(t, filepath.Join(path, "setup.sql"))
 	timex.TheWorld(time.Date(2026, 9, 12, 12, 0, 0, 0, time.UTC), func() {
-		checkHTTPGolden(t, handler, path)
+		checkHTTPGolden(t, handler, path, http.StatusOK)
 	})
 
 	for _, test := range []struct {

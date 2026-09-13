@@ -1,6 +1,7 @@
 package e2e_test
 
 import (
+	"net/http"
 	"path/filepath"
 	"testing"
 	"time"
@@ -10,41 +11,42 @@ import (
 
 func TestListActiveAnnouncements(t *testing.T) {
 	tests := []struct {
-		name    string
-		fixture string
+		description []string
+		want        int
 	}{
 		{
-			name:    "lists active announcements without authentication",
-			fixture: "200_plain",
+			description: []string{"without", "auth"},
+			want:        http.StatusOK,
 		},
 		{
-			name:    "decodes a slash in the namespace",
-			fixture: "200_escaped_slash",
+			description: []string{"escaped", "slash", "namespace"},
+			want:        http.StatusOK,
 		},
 		{
-			name:    "decodes a space in the namespace",
-			fixture: "200_escaped_space",
+			description: []string{"escaped", "space", "namespace"},
+			want:        http.StatusOK,
 		},
 		{
-			name:    "accepts a Unicode namespace",
-			fixture: "200_unicode",
+			description: []string{"unicode", "namespace"},
+			want:        http.StatusOK,
 		},
 		{
-			name:    "returns an empty array when no announcements exist",
-			fixture: "200_empty",
+			description: []string{"without", "announcements"},
+			want:        http.StatusOK,
 		},
 		{
-			name:    "filters publication windows and deleted rows, returning the newest ten",
-			fixture: "200_publication_window_and_limit",
+			description: []string{"active", "undeleted", "newest", "ten"},
+			want:        http.StatusOK,
 		},
 	}
 
 	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			path := filepath.Join("testdata", "list_active_announcements", test.fixture)
+		name := APITestName("ListActiveAnnouncements", test.want, test.description...)
+		t.Run(name, func(t *testing.T) {
+			path := filepath.Join("testdata", name)
 			reset(t, filepath.Join(path, "setup.sql"))
 			timex.TheWorld(time.Date(2026, 9, 12, 12, 0, 0, 0, time.UTC), func() {
-				checkHTTPGolden(t, api.handler, path)
+				checkHTTPGolden(t, api.handler, path, test.want)
 			})
 
 			if api.proxied.Load() != 0 {

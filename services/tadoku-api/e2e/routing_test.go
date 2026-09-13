@@ -19,7 +19,7 @@ import (
 func TestRouterWorksWithoutLegacyProxyRoutes(t *testing.T) {
 	// Construct the same application router but do not attach legacy routes.
 	// Normal scenarios continue to use the single suite-level router.
-	repository := content.NewRepository(api.db.Pool)
+	repository := content.NewAnnouncementsRepository(api.db.Pool)
 	service := content.NewService(repository)
 	application := app.New(service)
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))

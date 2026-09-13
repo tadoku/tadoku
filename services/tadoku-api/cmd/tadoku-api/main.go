@@ -115,7 +115,7 @@ func start(cfg config, logger *slog.Logger) (*application, error) {
 		}
 	}()
 
-	contentRepository := content.NewRepository(pool)
+	contentRepository := content.NewAnnouncementsRepository(pool)
 	contentService := content.NewService(contentRepository)
 	api := app.New(contentService)
 

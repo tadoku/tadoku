@@ -2,7 +2,7 @@ load("@rules_go//go:def.bzl", "go_library", "go_test")
 
 go_test(
     name = "content_test",
-    srcs = ["repository_test.go"],
+    srcs = ["announcements_repository_test.go"],
     args = ["-test.parallel=4"],
     data = glob(["testdata/*.sql"]),
     env_inherit = ["TADOKU_TEST_POSTGRES_URL"],
@@ -21,8 +21,8 @@ go_test(
 go_library(
     name = "content",
     srcs = [
+        "announcements_repository.go",
         "content.go",
-        "repository.go",
     ],
     importpath = "github.com/tadoku/tadoku/services/tadoku-api/features/content",
     visibility = [

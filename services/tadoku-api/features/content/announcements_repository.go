@@ -12,17 +12,17 @@ import (
 	"github.com/tadoku/tadoku/services/tadoku-api/infra/postgres"
 )
 
-type Repository struct {
+type AnnouncementsRepository struct {
 	db *pgxpool.Pool
 }
 
-func NewRepository(db *pgxpool.Pool) *Repository {
-	return &Repository{
+func NewAnnouncementsRepository(db *pgxpool.Pool) *AnnouncementsRepository {
+	return &AnnouncementsRepository{
 		db: db,
 	}
 }
 
-func (r *Repository) ListActiveAnnouncements(ctx context.Context, namespace string, cutoff time.Time, limit int32) ([]Announcement, error) {
+func (r *AnnouncementsRepository) ListActiveAnnouncements(ctx context.Context, namespace string, cutoff time.Time, limit int32) ([]Announcement, error) {
 	executor, err := postgres.Executor(ctx, r.db)
 	if err != nil {
 		return nil, err

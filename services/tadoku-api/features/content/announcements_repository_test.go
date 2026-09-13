@@ -11,7 +11,7 @@ import (
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/testpostgres"
 )
 
-func TestRepositoryUsesSuppliedPolicyAndTransaction(t *testing.T) {
+func TestAnnouncementsRepositoryUsesSuppliedPolicyAndTransaction(t *testing.T) {
 	t.Parallel()
 	db, err := testpostgres.New(t.Context())
 	if err != nil {
@@ -27,7 +27,7 @@ func TestRepositoryUsesSuppliedPolicyAndTransaction(t *testing.T) {
 	if err := db.Reset(t.Context(), "testdata/announcements.sql"); err != nil {
 		t.Fatal(err)
 	}
-	repository := content.NewRepository(db.Pool)
+	repository := content.NewAnnouncementsRepository(db.Pool)
 	items, err := repository.ListActiveAnnouncements(context.Background(), "main", cutoff, 1)
 	if err != nil {
 		t.Fatal(err)

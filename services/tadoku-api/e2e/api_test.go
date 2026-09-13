@@ -58,7 +58,7 @@ func newTestAPI(ctx context.Context) (*testAPI, error) {
 	}
 	api := &testAPI{db: db}
 
-	repository := content.NewRepository(api.db.Pool)
+	repository := content.NewAnnouncementsRepository(api.db.Pool)
 	service := content.NewService(repository)
 	application := app.New(service)
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))

@@ -26,12 +26,12 @@ type Announcement struct {
 var ErrInvalidNamespace = errors.New("namespace is required")
 
 type Service struct {
-	repository *Repository
+	announcements *AnnouncementsRepository
 }
 
-func NewService(repository *Repository) *Service {
+func NewService(announcements *AnnouncementsRepository) *Service {
 	return &Service{
-		repository: repository,
+		announcements: announcements,
 	}
 }
 
@@ -41,5 +41,5 @@ func (s *Service) ListActiveAnnouncements(ctx context.Context, namespace string)
 	}
 
 	// Publication policy belongs here; persistence only applies these inputs.
-	return s.repository.ListActiveAnnouncements(ctx, namespace, timex.Now(), 10)
+	return s.announcements.ListActiveAnnouncements(ctx, namespace, timex.Now(), 10)
 }

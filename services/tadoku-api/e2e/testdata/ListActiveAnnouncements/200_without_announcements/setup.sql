@@ -1,0 +1,1 @@
+-- No announcement rows: only migration-seeded reference data remains.

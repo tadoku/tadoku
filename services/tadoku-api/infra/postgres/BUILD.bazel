@@ -2,7 +2,10 @@ load("@rules_go//go:def.bzl", "go_library", "go_test")
 
 go_library(
     name = "postgres",
-    srcs = ["transaction.go"],
+    srcs = [
+        "pool.go",
+        "transaction.go",
+    ],
     importpath = "github.com/tadoku/tadoku/services/tadoku-api/infra/postgres",
     visibility = ["//services/tadoku-api:__subpackages__"],
     deps = [
@@ -15,6 +18,7 @@ go_library(
 go_test(
     name = "postgres_test",
     srcs = [
+        "pool_test.go",
         "sqlc_compat_test.go",
         "transaction_test.go",
     ],
@@ -28,6 +32,8 @@ go_test(
     deps = [
         ":postgres",
         "//services/tadoku-api/infra/postgres/internal/pgxcompat",
+        "//services/tadoku-api/internal/testpostgres",
+        "@com_github_google_uuid//:uuid",
         "@com_github_jackc_pgx_v5//:pgx",
         "@com_github_jackc_pgx_v5//pgconn",
         "@com_github_jackc_pgx_v5//pgxpool",

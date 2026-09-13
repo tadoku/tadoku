@@ -14,7 +14,11 @@ bazel_dep(name = "rules_shell", version = "0.8.0")
 
 ## Go version
 go_sdk = use_extension("@rules_go//go:extensions.bzl", "go_sdk")
-go_sdk.from_file(go_mod = "//:go.mod")
+go_sdk.from_file(
+    name = "tadoku_go_sdk",
+    go_mod = "//:go.mod",
+)
+use_repo(go_sdk, "tadoku_go_sdk")
 
 ## Read deps from go.mod
 go_deps = use_extension("@gazelle//:extensions.bzl", "go_deps")
@@ -25,6 +29,7 @@ use_repo(
     go_deps,
     "com_github_bwmarrin_discordgo",
     "com_github_deepmap_oapi_codegen",
+    "com_github_getkin_kin_openapi",
     "com_github_getsentry_sentry_go",
     "com_github_go_playground_validator_v10",
     "com_github_golang_jwt_jwt",
@@ -44,10 +49,12 @@ use_repo(
     "com_github_pkg_errors",
     "com_github_prometheus_client_golang",
     "com_github_sahilm_fuzzy",
+    "com_github_satorunooshie_depolicy",
     "com_github_stretchr_testify",
     "com_github_valkey_io_valkey_go",
     "io_flipt_go_flipt_client",
     "org_golang_x_sync",
+    "org_golang_x_tools",
 )
 
 # Packaging

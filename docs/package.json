@@ -7,8 +7,8 @@
     "docusaurus": "docusaurus",
     "start": "docusaurus start",
     "build": "docusaurus build",
-    "api:generate": "docusaurus clean-api-docs all && docusaurus gen-api-docs all",
-    "api:check": "pnpm api:generate && git diff --exit-code -- docs/api",
+    "api:generate": "node scripts/prepare-api-specs.mjs && docusaurus clean-api-docs all && docusaurus gen-api-docs all",
+    "api:check": "node --test scripts/api-contract.test.mjs && pnpm api:generate && git diff --exit-code -- docs/api",
     "swizzle": "docusaurus swizzle",
     "deploy": "docusaurus deploy",
     "clear": "docusaurus clear",
@@ -34,7 +34,8 @@
     "@docusaurus/module-type-aliases": "3.10.2",
     "@docusaurus/tsconfig": "3.10.2",
     "@docusaurus/types": "3.10.2",
-    "typescript": "~5.6.2"
+    "typescript": "~5.6.2",
+    "yaml": "1.10.2"
   },
   "browserslist": {
     "production": [

@@ -5,6 +5,7 @@ filegroup(
     srcs = glob(["*.up.sql"]),
     visibility = [
         "//services/immersion-api/storage/postgres/postgrestest:__pkg__",
+        "//services/tadoku-api/internal/testpostgres:__pkg__",
         "//services/tadoku-api/migrations:__pkg__",
     ],
 )

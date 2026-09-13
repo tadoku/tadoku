@@ -1,0 +1,12 @@
+load("@rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "openapi",
+    srcs = ["api.gen.go"],
+    importpath = "github.com/tadoku/tadoku/services/tadoku-api/generated/openapi",
+    visibility = [
+        "//services/tadoku-api/e2e:__pkg__",
+        "//services/tadoku-api/transport/http:__pkg__",
+    ],
+    deps = ["@com_github_deepmap_oapi_codegen//pkg/types"],
+)

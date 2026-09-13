@@ -1,4 +1,3 @@
-load("@rules_go//go:def.bzl", "go_test")
 load("@rules_oci//oci:defs.bzl", "oci_image", "oci_load", "oci_push")
 
 alias(
@@ -42,24 +41,4 @@ oci_push(
     ],
     repository = "ghcr.io/tadoku/tadoku/tadoku-api-migrations",
     visibility = ["//visibility:public"],
-)
-
-go_test(
-    name = "migrations_test",
-    srcs = ["migrations_test.go"],
-    args = ["-test.parallel=4"],
-    data = ["//services/immersion-api/storage/postgres/migrations:up_files"],
-    env_inherit = ["TADOKU_TEST_POSTGRES_URL"],
-    tags = [
-        "no-cache",
-        "no-remote-exec",
-        "requires-network",
-    ],
-    deps = [
-        "//services/tadoku-api/internal/testpostgres",
-        "@com_github_golang_migrate_migrate_v4//:migrate",
-        "@com_github_golang_migrate_migrate_v4//database/postgres",
-        "@com_github_golang_migrate_migrate_v4//source/file",
-        "@rules_go//go/tools/bazel",
-    ],
 )

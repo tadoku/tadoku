@@ -89,10 +89,10 @@ jobs:
       - name: Verify Gazelle
         run: bazel run --lockfile_mode=error //:gazelle -- -mode=diff
 
-      - name: Verify native import policies (including test files)
+      - name: Verify Tadoku API import policies (including test files)
         run: bazel run --lockfile_mode=error //tools/ci/depolicy
 
-      - name: Verify native OpenAPI generation
+      - name: Verify Tadoku API OpenAPI generation
         run: |
           ./scripts/generate-openapi.sh
           git diff --exit-code -- services/tadoku-api/generated/openapi
@@ -117,7 +117,7 @@ jobs:
       - name: Run tests
         run: bazel test --lockfile_mode=error //...
 
-      - name: Race-test native API slice and helpers
+      - name: Race-test Tadoku API and helpers
         run: >-
           bazel test --lockfile_mode=error --@rules_go//go/config:race
           //services/tadoku-api/internal/timex:timex_test

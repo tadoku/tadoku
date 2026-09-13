@@ -171,11 +171,18 @@ or package downloads at runtime. Missing/invalid or nested configuration, an
 empty scope, uncovered/ambiguous packages and denied imports fail the check.
 Compilation/type checking remains in the ordinary Bazel build.
 
-Same-package tests use their production policy. External test packages use a
-synthetic `<directory>/_test` identity so feature-name captures cannot overlap
-their named assembly allowances. These are not blanket test exemptions; new
-external feature test packages need a named policy. Fixture libraries retain
-Bazel's `testonly` restrictions. There is no legacy Echo allowance.
+Policies describe layer direction: transport uses application operations and
+HTTP contract types; application code composes features; features use their own
+domain and generated SQL plus infrastructure; infrastructure and domain code
+cannot import application or transport code. Shared internal utilities sit below
+these layers. Startup and integration tests are assembly boundaries.
+
+Rules use layer/feature patterns, not lists of utility, database-driver or provider
+packages. Standard-library and third-party imports are outside this local-layer
+check; dependency choices still follow the repository's development guidelines.
+Same-package and external-package tests both use their directory's layer policy,
+without synthetic package names or per-feature test exceptions. Fixture libraries
+retain Bazel's `testonly` restrictions.
 
 Depolicy replaces the temporary graph checks. It checks direct imports, not
 transitive dependencies.

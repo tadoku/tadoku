@@ -1,4 +1,4 @@
-// Command depolicy runs the upstream import analyzer over the native API tree.
+// Command depolicy runs the upstream import analyzer over the Tadoku API tree.
 // It intentionally parses every Go file, including tests and inactive build tags;
 // compilation/type checking remains the responsibility of the normal Bazel build.
 package main
@@ -63,7 +63,7 @@ func check(root string, out io.Writer) error {
 			return walkErr
 		}
 		if entry.Type()&os.ModeSymlink != 0 {
-			return fmt.Errorf("unexpected symlink in native source tree: %s", path)
+			return fmt.Errorf("unexpected symlink in Tadoku API source tree: %s", path)
 		}
 		if entry.IsDir() || !strings.HasSuffix(path, ".go") {
 			return nil
@@ -88,11 +88,6 @@ func check(root string, out io.Writer) error {
 		pkgPath := config.Module.Path + "/" + filepath.ToSlash(rel)
 		if strings.HasSuffix(path, "_test.go") {
 			tests++
-			if strings.HasSuffix(file.Name.Name, "_test") {
-				// Keep external tests disjoint from feature-name captures. They get
-				// a named /_test policy, not a blanket test exemption.
-				pkgPath += "/_test"
-			}
 		}
 		pass := &analysis.Pass{
 			Analyzer: depolicy.Analyzer,
@@ -119,11 +114,11 @@ func check(root string, out io.Writer) error {
 		return err
 	}
 	if files == tests || tests == 0 {
-		return fmt.Errorf("expected native source and test files; checked %d files, %d tests", files, tests)
+		return fmt.Errorf("expected Tadoku API source and test files; checked %d files, %d tests", files, tests)
 	}
 	fmt.Fprintf(out, "Depolicy checked %d Go files (%d test files); %d violations\n", files, tests, violations)
 	if violations != 0 {
-		return fmt.Errorf("native import policy failed")
+		return fmt.Errorf("Tadoku API import policy failed")
 	}
 	return nil
 }

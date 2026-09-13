@@ -46,6 +46,14 @@ Migration PRs must remain compatible with the application version currently depl
 
 **Use Go's standard `testing` functionality for new or rewritten backend tests.** Use ordinary comparisons, `t.Fatalf` for failed prerequisites, `t.Errorf` for independent checks, and `t.Cleanup` for resource cleanup. Compare errors with `errors.Is`/`errors.As`. Do not add Testify, another assertion framework, or a homegrown assertion DSL. Existing tests do not need a bulk rewrite; convert them when their relevant slice is migrated or in a separately scoped mechanical change.
 
+### Native Tadoku API slices
+
+**Keep each runtime slice small and reviewable.** Implement the requested operation without bringing along legacy service identities, audience checks, authorization features, or compatibility servers. The first announcements-list slice is deliberately unprotected; authentication and shared ban enforcement are deferred to a separately reviewed change. Existing proxied routes retain their upstream behavior.
+
+**Test endpoint access at the minimum required level, not with a full auth matrix.** For an unprotected endpoint, send a request without credentials. Test the endpoint's response and business behavior against real PostgreSQL. When shared authentication/authorization middleware is introduced, test invalid credentials, role levels, banned users and provider failures once at the middleware boundary, not again for every endpoint. Provider-protocol tests belong with the provider adapter; do not embed ad hoc Keto emulators in endpoint fixtures or boot legacy services for response comparisons.
+
+**Write for readability.** Separate setup, execution, error handling and response mapping with whitespace. Put unrelated struct fields and composite-literal entries on separate lines. Split application and transport operations into files by functionality, such as `announcements.go`, and use descriptive operation names such as `ListActiveAnnouncements`. Keep constructors and resource lifecycle code visibly separate from endpoint behavior.
+
 **SQL style: always use lowercase keywords** (select, create table, not SELECT, CREATE TABLE)
 
 ### sqlc code generation

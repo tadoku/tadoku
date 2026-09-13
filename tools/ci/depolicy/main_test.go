@@ -44,8 +44,7 @@ func TestImportPolicies(t *testing.T) {
 		{"infrastructure-feature", "infra/postgres", "db.go", "postgres", "services/tadoku-api/features/content", "import-denied"},
 		{"internal-feature", "internal/timex", "clock.go", "timex", "services/tadoku-api/features/content", "import-denied"},
 		{"generated-feature", "generated/sqlc/content", "db.go", "content", "services/tadoku-api/features/content", "import-denied"},
-		{"legacy-echo", "e2e/legacy", "content.go", "legacy", "github.com/labstack/echo/v4", ""},
-		{"legacy-testify", "e2e/legacy", "content_test.go", "legacy_test", "github.com/stretchr/testify/require", "import-denied"},
+		{"retired-legacy-fixture", "e2e/legacy", "content.go", "legacy", "github.com/labstack/echo/v4", "uncovered-package"},
 		{"e2e-echo", "e2e", "endpoint_test.go", "e2e_test", "github.com/labstack/echo/v4", "import-denied"},
 		{"uncovered", "unplanned", "file.go", "unplanned", "fmt", "uncovered-package"},
 	} {

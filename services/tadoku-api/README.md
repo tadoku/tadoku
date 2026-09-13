@@ -3,17 +3,20 @@
 `GET /content/announcements/{namespace}/active` is implemented natively, by
 default. Other operations retain the existing proxy ownership, including HEAD
 and OPTIONS on that path. A native failure never falls back to Content.
-Externally the gateway adds `/api`; its routes and audiences are unchanged.
+This read is deliberately **unprotected**: it does not validate JWTs, call Keto,
+check bans or interpret service audiences. Authentication and shared authorization
+will be separate reviewed increments. Existing proxied routes are unchanged.
+Externally the gateway still adds `/api`.
 
 ## Code ownership
 
 ```
 transport/http -> app -> features/content -> generated/sqlc/content
-                     -> features/access  -> existing Keto client
 cmd/tadoku-api constructs and closes the shared pgx/v5 pool and HTTP resources
 ```
 
-Content service chooses one `timex.Now()` cutoff and a limit of ten. Its concrete
+`app/announcements.go` exposes `ListActiveAnnouncements`. Content service chooses
+one `timex.Now()` cutoff and a limit of ten. Its concrete
 repository only queries and maps rows. `postgres.Executor` makes the repository
 usable inside a future app-owned transaction; this read does not open an
 unnecessary transaction. There are no new feature/repository interfaces.
@@ -40,38 +43,26 @@ The contract tests compare all 81 operations and their component/security shapes
 Manually registered health and metrics endpoints are separately inventoried in
 the contract's `x-tadoku-operational-surfaces` metadata, not rendered as product API.
 
-The native endpoint preserves Content's existing middleware behavior:
-
-| Caller/result | Response |
-| --- | --- |
-| Gateway-issued guest JWT, ordinary user, admin | 200 |
-| Missing/malformed bearer header | 400, legacy JSON error |
-| Invalid/expired JWT | 401, legacy JSON error |
-| Service JWT without the `content-api` audience | 403, empty body |
-| Banned user (including banned admin) | 403, empty body |
-| Keto evaluation unavailable | Existing fail-open public-read policy |
-| Valid user JWT missing `iat` | Legacy 500 JSON, without reproducing the panic |
-| Database/read failure | 500, empty body; no fallback |
-
-The current legacy verifier does **not** enforce an issuer and does not configure
-background JWKS refresh. This slice preserves both behaviors; changing them is
-separate security/provider work. Caller-supplied identity headers are not trusted.
-Do not reuse the public-read fail-open rule for administrative operations.
+The native read returns the existing announcement JSON shape, including nullable
+hrefs and an empty array when nothing is active. Publication windows, soft deletion,
+namespace filtering, descending order and the ten-item limit remain unchanged.
+Database failures return 500 without falling back to the proxy. There is no legacy
+server comparison or duplicated authentication matrix in its tests.
 
 ## Runtime configuration
 
 In addition to the existing four upstream URLs, startup now requires:
 
-- `API_JWKS`, `API_KETO_READ_URL` (same endpoints used by Content).
 - Individual `API_POSTGRES_HOST`, `PORT` (default 5432), `DATABASE`, `USER`,
   `PASSWORD`, `SSLMODE` fields. `API_POSTGRES_URL` remains rejected.
 - `API_POSTGRES_MAX_CONNECTIONS` (default 4, validated range 1–32).
 
-Startup pings PostgreSQL and fetches signing keys before opening listeners.
+Startup pings PostgreSQL before opening listeners. No JWKS or Keto config is needed.
 `/readyz` checks PostgreSQL; `/livez` remains independent of dependency health.
-Native route metrics use bounded labels in
-`tadoku_api_native_request_duration_seconds`; the existing proxy metrics remain.
-Shutdown closes request/metrics listeners, the pool, JWKS resources and idle HTTP
+The existing proxy metrics and Go process metrics remain on the metrics listener
+(`API_METRICS_PORT`, default 9090). They describe proxy request volume/latency/errors
+and process health. This thin slice adds no native-specific metric family.
+Shutdown closes request/metrics listeners, the pool and idle HTTP
 connections. The dev deployment uses the existing disposable development DB role;
 secret synchronization and reset scripts include Tadoku API.
 
@@ -93,16 +84,20 @@ complete canonical migration history. Do not point them at shared dev or product
 
 ```sh
 bazel test //services/tadoku-api/... --test_output=errors
-bazel test //services/tadoku-api/e2e:e2e_test --test_output=all \
-  --test_arg=-test.run=^$ --test_arg=-test.bench=BenchmarkAnnouncementRead \
-  --test_arg=-test.benchtime=1000x
 ```
 
-E2E tests assemble production constructors and real JWT/Keto adapters against
-controlled HTTP responses, plus real PostgreSQL. Only the dedicated test-only
-`e2e/legacy` package imports Echo/legacy HTTP bindings. Bazel visibility restricts
-native local dependencies. CI checks import policies, the transitive runtime Echo
-ban, OpenAPI generation, sqlc generation and the database suites.
+E2E tests assemble production constructors with real PostgreSQL and no credentials.
+The fallback is a simple HTTP sentinel, not a legacy service. Tests check response
+mapping, namespace encoding, publication boundaries, ordering, limit, empty results,
+read failures, cancellation and route ownership.
+
+**Testing decision:** endpoint tests prove the minimum access level and business
+behavior. When auth middleware is added, test its credential/role/ban/failure matrix
+once at that boundary. Do not repeat that matrix or emulate Keto in every endpoint
+fixture. This rule is also recorded in `AGENTS.md` for future agents.
+
+CI checks Depolicy, OpenAPI/sqlc generation and the database suites. The standalone
+Echo and Testify graph checks have been removed. Bazel visibility remains in place.
 
 ### Import policies
 
@@ -127,14 +122,13 @@ Compilation/type checking remains in the ordinary Bazel build.
 Same-package tests use their production policy. External test packages use a
 synthetic `<directory>/_test` identity so feature-name captures cannot overlap
 their named assembly allowances. These are not blanket test exemptions; new
-external feature test packages need a named policy. Fixture libraries and the
-legacy comparison also retain Bazel's `testonly` restrictions.
+external feature test packages need a named policy. Fixture libraries retain
+Bazel's `testonly` restrictions. There is no legacy Echo allowance.
 
 The policy tests exercise the actual configuration, including own-feature SQL,
 cross-feature denial, transport/app/domain boundaries, forbidden imports found
 only in test files, and fail-closed configuration handling. Depolicy replaces the
-temporary Testify graph check. The separate transitive Echo graph check remains
-because direct-import analysis cannot detect Echo hidden behind a dependency.
+temporary graph checks. It checks direct imports, not transitive dependencies.
 
 Same-package service/repository responsibilities and business signatures still
 require review; import rules do not enforce those conventions.

@@ -13,7 +13,6 @@ go_library(
         "@com_github_golang_migrate_migrate_v4//source/file",
         "@com_github_google_uuid//:uuid",
         "@com_github_jackc_pgx_v5//pgxpool",
-        "@com_github_lib_pq//:pq",
         "@rules_go//go/tools/bazel",
     ],
 )

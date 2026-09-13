@@ -11,22 +11,35 @@ import (
 )
 
 type Announcement struct {
-	ID                                     uuid.UUID
-	Namespace, Title, Content, Style       string
-	Href                                   *string
-	StartsAt, EndsAt, CreatedAt, UpdatedAt time.Time
+	ID        uuid.UUID
+	Namespace string
+	Title     string
+	Content   string
+	Style     string
+	Href      *string
+	StartsAt  time.Time
+	EndsAt    time.Time
+	CreatedAt time.Time
+	UpdatedAt time.Time
 }
 
 var ErrInvalidNamespace = errors.New("namespace is required")
 
-type Service struct{ repository *Repository }
+type Service struct {
+	repository *Repository
+}
 
-func NewService(repository *Repository) *Service { return &Service{repository: repository} }
+func NewService(repository *Repository) *Service {
+	return &Service{
+		repository: repository,
+	}
+}
 
-func (s *Service) ActiveAnnouncements(ctx context.Context, namespace string) ([]Announcement, error) {
+func (s *Service) ListActiveAnnouncements(ctx context.Context, namespace string) ([]Announcement, error) {
 	if namespace == "" {
 		return nil, ErrInvalidNamespace
 	}
+
 	// Publication policy belongs here; persistence only applies these inputs.
 	return s.repository.ListActiveAnnouncements(ctx, namespace, timex.Now(), 10)
 }

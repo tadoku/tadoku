@@ -8,7 +8,6 @@ go_library(
     deps = [
         "//services/common/postgresconfig",
         "//services/tadoku-api/app",
-        "//services/tadoku-api/features/access",
         "//services/tadoku-api/features/content",
         "//services/tadoku-api/infra/postgres",
         "//services/tadoku-api/transport/http",
@@ -39,8 +38,6 @@ go_test(
     ],
     deps = [
         "//services/common/postgresconfig",
-        "//services/tadoku-api/internal/testauth",
         "//services/tadoku-api/internal/testpostgres",
-        "@com_github_golang_jwt_jwt_v4//:jwt",
     ],
 )

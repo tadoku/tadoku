@@ -57,7 +57,7 @@ func TestRepositoryUsesSuppliedPolicyAndTransaction(t *testing.T) {
 
 func TestEmptyNamespaceIsRejectedBeforeStorage(t *testing.T) {
 	service := content.NewService(nil)
-	_, err := service.ActiveAnnouncements(context.Background(), "")
+	_, err := service.ListActiveAnnouncements(context.Background(), "")
 	if !errors.Is(err, content.ErrInvalidNamespace) {
 		t.Errorf("error=%v want invalid namespace", err)
 	}

@@ -118,8 +118,10 @@ e2e/testdata/list_active_announcements/200_plain/
   golden.http
 ```
 
-One table-driven announcements test discovers the case directories. Add a case
-by adding those three files, without editing Go code. Each case owns its seed,
+The announcements test has an explicit, hard-coded Go table. Each row names the
+behavior being checked and its fixture directory, so the test is understandable
+without opening every fixture. Add a case by adding a descriptive table row and
+its three fixture files; do not discover cases from directories. Each case owns its seed,
 including an explicit comment-only `setup.sql` for an empty database. Shared
 cleanup runs before that SQL. The `golden.http` file contains the request label
 and complete expected response. Tests parse the request files with `net/http`,

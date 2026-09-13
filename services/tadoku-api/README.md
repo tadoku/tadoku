@@ -86,10 +86,20 @@ complete canonical migration history. Do not point them at shared dev or product
 bazel test //services/tadoku-api/... --test_output=errors
 ```
 
-E2E tests assemble production constructors with real PostgreSQL and no credentials.
+`newTestAPI` assembles the production HTTP stack with an isolated PostgreSQL database.
 The fallback is a simple HTTP sentinel, not a legacy service. Tests check response
 mapping, namespace encoding, publication boundaries, ordering, limit, empty results,
 read failures, cancellation and route ownership.
+
+Announcement requests live in `e2e/testdata/announcements/*.request.http`; the
+matching `*.golden.http` files contain the request label and complete expected
+HTTP response. Tests parse the request files with `net/http`, execute the production
+handler without credentials, and compare status, headers and body directly.
+Explicit seed IDs and frozen business time make responses deterministic; only
+HTTP line endings are normalized. Missing or changed goldens fail the test.
+There is no automatic recording mode: edit and review the expected files for an
+intentional contract change. Lifecycle tests stay focused on startup/shutdown,
+not a growing list of endpoint assertions.
 
 **Testing decision:** endpoint tests prove the minimum access level and business
 behavior. When auth middleware is added, test its credential/role/ban/failure matrix

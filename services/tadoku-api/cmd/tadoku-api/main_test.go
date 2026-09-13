@@ -72,7 +72,7 @@ func TestApplicationStartsAndShutsDown(t *testing.T) {
 		}
 	})
 
-	// The real listener serves readiness and the public announcement read.
+	// Verify the application is ready to accept requests.
 	_, port, err := net.SplitHostPort(app.listener.Addr().String())
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -88,23 +88,6 @@ func TestApplicationStartsAndShutsDown(t *testing.T) {
 	}
 	if app.pool.Config().MaxConns != 4 {
 		t.Errorf("pool max=%d", app.pool.Config().MaxConns)
-	}
-
-	request, err := http.NewRequest("GET", "http://"+address+"/content/announcements/empty/active", nil)
-	if err != nil {
-		t.Fatal(err)
-	}
-	active, err := (&http.Client{Timeout: time.Second}).Do(request)
-	if err != nil {
-		t.Fatal(err)
-	}
-	body, err := io.ReadAll(active.Body)
-	_ = active.Body.Close()
-	if err != nil {
-		t.Fatal(err)
-	}
-	if active.StatusCode != 200 || string(body) != "{\"announcements\":[]}\n" {
-		t.Errorf("native listener: status=%d body=%s", active.StatusCode, body)
 	}
 
 	// Existing process metrics still use their own listener.

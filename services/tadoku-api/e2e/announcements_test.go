@@ -1,76 +1,35 @@
 package e2e_test
 
 import (
-	"encoding/json"
 	"fmt"
-	"net/http"
-	"net/http/httptest"
-	"reflect"
 	"testing"
 	"time"
 
-	"github.com/google/uuid"
-	"github.com/tadoku/tadoku/services/tadoku-api/generated/openapi"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/timex"
 )
 
 func TestListActiveAnnouncementsWithoutAuthentication(t *testing.T) {
-	f := newFixture(t)
+	api := newTestAPI(t)
 	cutoff := time.Date(2026, 9, 12, 12, 0, 0, 0, time.UTC)
-	start := cutoff.Add(-time.Hour)
-	end := cutoff.Add(time.Hour)
 
-	for _, test := range []struct {
+	for i, test := range []struct {
 		name      string
 		namespace string
-		path      string
 	}{
-		{name: "plain", namespace: "main", path: "main"},
-		{name: "escaped slash", namespace: "a/b", path: "a%2Fb"},
-		{name: "escaped space", namespace: "hello world", path: "hello%20world"},
-		{name: "unicode", namespace: "日本語", path: "%E6%97%A5%E6%9C%AC%E8%AA%9E"},
+		{name: "plain", namespace: "main"},
+		{name: "escaped_slash", namespace: "a/b"},
+		{name: "escaped_space", namespace: "hello world"},
+		{name: "unicode", namespace: "日本語"},
 	} {
 		t.Run(test.name, func(t *testing.T) {
-			seedID := f.db.SeedAnnouncement(t, test.namespace, "Announcement", start, end, false)
-			id := uuid.MustParse(seedID)
-
-			request := httptest.NewRequest(http.MethodGet, "/content/announcements/"+test.path+"/active", nil)
-			response := httptest.NewRecorder()
+			id := fmt.Sprintf("11111111-1111-4111-8111-%012d", i+1)
+			api.db.SeedAnnouncement(t, id, test.namespace, "Announcement", cutoff.Add(-time.Hour), cutoff.Add(time.Hour), false)
 
 			timex.TheWorld(cutoff, func() {
-				f.handler.ServeHTTP(response, request)
+				checkHTTPGolden(t, api.handler, test.name)
 			})
 
-			if response.Code != http.StatusOK {
-				t.Fatalf("status=%d body=%s", response.Code, response.Body)
-			}
-			if contentType := response.Header().Get("Content-Type"); contentType != "application/json; charset=UTF-8" {
-				t.Errorf("Content-Type=%q", contentType)
-			}
-
-			var got openapi.ContentAnnouncements
-			if err := json.Unmarshal(response.Body.Bytes(), &got); err != nil {
-				t.Fatalf("decode announcements: %v", err)
-			}
-
-			want := openapi.ContentAnnouncements{
-				Announcements: []openapi.ContentAnnouncement{{
-					Id:        &id,
-					Namespace: &test.namespace,
-					Title:     "Announcement",
-					Content:   "<p>Announcement</p>",
-					Style:     openapi.ContentAnnouncementStyle("info"),
-					Href:      nil,
-					StartsAt:  start,
-					EndsAt:    end,
-					CreatedAt: &start,
-					UpdatedAt: &start,
-				}},
-			}
-			if !reflect.DeepEqual(got, want) {
-				t.Errorf("response=%+v, want %+v", got, want)
-			}
-			if f.proxied.Load() != 0 {
+			if api.proxied.Load() != 0 {
 				t.Error("native read contacted an upstream")
 			}
 		})
@@ -78,10 +37,10 @@ func TestListActiveAnnouncementsWithoutAuthentication(t *testing.T) {
 }
 
 func TestActiveAnnouncementPublicationWindowAndLimit(t *testing.T) {
-	f := newFixture(t)
+	api := newTestAPI(t)
 	cutoff := time.Date(2026, 9, 12, 12, 0, 0, 0, time.UTC)
 
-	for _, row := range []struct {
+	for i, row := range []struct {
 		title   string
 		start   time.Time
 		end     time.Time
@@ -92,58 +51,26 @@ func TestActiveAnnouncementPublicationWindowAndLimit(t *testing.T) {
 		{title: "future", start: cutoff.Add(time.Microsecond), end: cutoff.Add(time.Hour)},
 		{title: "deleted", start: cutoff.Add(-time.Minute), end: cutoff.Add(time.Hour), deleted: true},
 	} {
-		f.db.SeedAnnouncement(t, "main", row.title, row.start, row.end, row.deleted)
+		id := fmt.Sprintf("22222222-2222-4222-8222-%012d", i+1)
+		api.db.SeedAnnouncement(t, id, "main", row.title, row.start, row.end, row.deleted)
 	}
 
 	for i := 1; i <= 12; i++ {
+		id := fmt.Sprintf("33333333-3333-4333-8333-%012d", i)
 		title := fmt.Sprintf("older %02d", i)
 		start := cutoff.Add(-time.Duration(i) * time.Minute)
-		f.db.SeedAnnouncement(t, "main", title, start, cutoff.Add(time.Hour), false)
+		api.db.SeedAnnouncement(t, id, "main", title, start, cutoff.Add(time.Hour), false)
 	}
-	f.db.SeedAnnouncement(t, "other", "other namespace", cutoff, cutoff.Add(time.Hour), false)
-
-	request := httptest.NewRequest(http.MethodGet, "/content/announcements/main/active", nil)
-	response := httptest.NewRecorder()
+	api.db.SeedAnnouncement(t, "44444444-4444-4444-8444-444444444444", "other", "other namespace", cutoff, cutoff.Add(time.Hour), false)
 
 	timex.TheWorld(cutoff, func() {
-		f.handler.ServeHTTP(response, request)
+		checkHTTPGolden(t, api.handler, "publication_window_and_limit")
 	})
-
-	if response.Code != http.StatusOK {
-		t.Fatalf("status=%d body=%s", response.Code, response.Body)
-	}
-
-	var got openapi.ContentAnnouncements
-	if err := json.Unmarshal(response.Body.Bytes(), &got); err != nil {
-		t.Fatalf("decode announcements: %v", err)
-	}
-	if len(got.Announcements) != 10 {
-		t.Fatalf("got %d announcements, want 10", len(got.Announcements))
-	}
-
-	for i, item := range got.Announcements {
-		want := "starts now"
-		if i > 0 {
-			want = fmt.Sprintf("older %02d", i)
-		}
-		if item.Title != want {
-			t.Errorf("item %d=%q, want %q", i, item.Title, want)
-		}
-	}
 }
 
 func TestListActiveAnnouncementsReturnsEmptyArray(t *testing.T) {
 	t.Parallel()
-	f := newFixture(t)
+	api := newTestAPI(t)
 
-	request := httptest.NewRequest(http.MethodGet, "/content/announcements/empty/active", nil)
-	response := httptest.NewRecorder()
-	f.handler.ServeHTTP(response, request)
-
-	if response.Code != http.StatusOK {
-		t.Fatalf("status=%d body=%s", response.Code, response.Body)
-	}
-	if response.Body.String() != "{\"announcements\":[]}\n" {
-		t.Errorf("empty response=%s", response.Body)
-	}
+	checkHTTPGolden(t, api.handler, "empty")
 }

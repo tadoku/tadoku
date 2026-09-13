@@ -16,27 +16,29 @@ import (
 	transport "github.com/tadoku/tadoku/services/tadoku-api/transport/http"
 )
 
-type fixture struct {
+// testAPI assembles the production HTTP stack with an isolated database and a
+// sentinel upstream for routes that have not migrated yet.
+type testAPI struct {
 	db      *testpostgres.Database
 	handler http.Handler
 	proxied atomic.Int32
 }
 
-func newFixture(t *testing.T) *fixture {
+func newTestAPI(t *testing.T) *testAPI {
 	t.Helper()
 
-	f := &fixture{
+	api := &testAPI{
 		db: testpostgres.New(t),
 	}
 
 	upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		f.proxied.Add(1)
+		api.proxied.Add(1)
 		w.Header().Set("X-Proxied", "yes")
 		w.WriteHeader(http.StatusNoContent)
 	}))
 	t.Cleanup(upstream.Close)
 
-	repository := content.NewRepository(f.db.Pool)
+	repository := content.NewRepository(api.db.Pool)
 	service := content.NewService(repository)
 	application := app.New(service)
 	upstreams := transport.Upstreams{
@@ -48,9 +50,9 @@ func newFixture(t *testing.T) *fixture {
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
 
 	var err error
-	f.handler, err = transport.NewHandler(
+	api.handler, err = transport.NewHandler(
 		application,
-		f.db.Pool.Ping,
+		api.db.Pool.Ping,
 		upstreams,
 		http.DefaultTransport,
 		time.Second,
@@ -61,5 +63,5 @@ func newFixture(t *testing.T) *fixture {
 		t.Fatalf("create API handler: %v", err)
 	}
 
-	return f
+	return api
 }

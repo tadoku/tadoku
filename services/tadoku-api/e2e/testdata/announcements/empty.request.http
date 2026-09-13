@@ -1,0 +1,3 @@
+GET /content/announcements/empty/active HTTP/1.1
+Host: tadoku.test
+

@@ -107,11 +107,10 @@ func New(t testing.TB) *Database {
 	}
 }
 
-// SeedAnnouncement only writes fixture data; the caller chooses publication times.
-func (d *Database) SeedAnnouncement(t testing.TB, namespace, title string, start, end time.Time, deleted bool) string {
+// SeedAnnouncement only writes test data; the caller chooses the ID and times.
+func (d *Database) SeedAnnouncement(t testing.TB, id, namespace, title string, start, end time.Time, deleted bool) {
 	t.Helper()
 
-	id := uuid.NewString()
 	var deletion *time.Time
 	if deleted {
 		deletion = &start
@@ -123,6 +122,4 @@ func (d *Database) SeedAnnouncement(t testing.TB, namespace, title string, start
 	if err != nil {
 		t.Fatalf("seed announcement: %v", err)
 	}
-
-	return id
 }

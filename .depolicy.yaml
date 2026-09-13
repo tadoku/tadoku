@@ -156,9 +156,7 @@ policies:
             - local:services/tadoku-api/app
             - local:services/tadoku-api/features/*
             - local:services/tadoku-api/transport/http
-            - local:services/tadoku-api/generated/openapi
             - local:services/tadoku-api/internal/...
-            - external:github.com/google/uuid
             - external:github.com/prometheus/client_golang/prometheus
 
   - id: schema-and-contract-tests

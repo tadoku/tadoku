@@ -15,8 +15,9 @@ func TestRepositoryUsesSuppliedPolicyAndTransaction(t *testing.T) {
 	t.Parallel()
 	db := testpostgres.New(t)
 	cutoff := time.Date(2026, 9, 12, 0, 0, 0, 0, time.UTC)
-	id := db.SeedAnnouncement(t, "main", "older", cutoff.Add(-time.Hour), cutoff.Add(time.Hour), false)
-	db.SeedAnnouncement(t, "main", "newer", cutoff, cutoff.Add(time.Hour), false)
+	id := "11111111-1111-4111-8111-111111111111"
+	db.SeedAnnouncement(t, id, "main", "older", cutoff.Add(-time.Hour), cutoff.Add(time.Hour), false)
+	db.SeedAnnouncement(t, "22222222-2222-4222-8222-222222222222", "main", "newer", cutoff, cutoff.Add(time.Hour), false)
 	repository := content.NewRepository(db.Pool)
 	items, err := repository.ListActiveAnnouncements(context.Background(), "main", cutoff, 1)
 	if err != nil {

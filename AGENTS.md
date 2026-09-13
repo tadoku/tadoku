@@ -52,6 +52,8 @@ Migration PRs must remain compatible with the application version currently depl
 
 **Test endpoint access at the minimum required level, not with a full auth matrix.** For an unprotected endpoint, send a request without credentials. Test the endpoint's response and business behavior against real PostgreSQL. When shared authentication/authorization middleware is introduced, test invalid credentials, role levels, banned users and provider failures once at the middleware boundary, not again for every endpoint. Provider-protocol tests belong with the provider adapter; do not embed ad hoc Keto emulators in endpoint fixtures or boot legacy services for response comparisons.
 
+**Keep HTTP contracts in reviewable files.** Store endpoint requests as `.request.http` files and complete expected responses as `.golden.http` files. Compare status, headers and body directly, without decoding into the same generated types used by the handler. Seed deterministic IDs and freeze business time; normalize only HTTP line endings. Tests must never rewrite goldens automatically. Review contract changes in the files themselves. Keep endpoint assertions out of process-lifecycle tests.
+
 **Write for readability.** Separate setup, execution, error handling and response mapping with whitespace. Put unrelated struct fields and composite-literal entries on separate lines. Split application and transport operations into files by functionality, such as `announcements.go`, and use descriptive operation names such as `ListActiveAnnouncements`. Keep constructors and resource lifecycle code visibly separate from endpoint behavior.
 
 **SQL style: always use lowercase keywords** (select, create table, not SELECT, CREATE TABLE)

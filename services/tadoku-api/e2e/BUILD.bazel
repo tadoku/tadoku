@@ -4,10 +4,12 @@ go_test(
     name = "e2e_test",
     srcs = [
         "announcements_test.go",
-        "fixture_test.go",
+        "api_test.go",
+        "golden_test.go",
         "routing_test.go",
     ],
     args = ["-test.parallel=4"],
+    data = glob(["testdata/**/*.http"]),
     env_inherit = ["TADOKU_TEST_POSTGRES_URL"],
     tags = [
         "no-cache",
@@ -17,11 +19,9 @@ go_test(
     deps = [
         "//services/tadoku-api/app",
         "//services/tadoku-api/features/content",
-        "//services/tadoku-api/generated/openapi",
         "//services/tadoku-api/internal/testpostgres",
         "//services/tadoku-api/internal/timex",
         "//services/tadoku-api/transport/http",
-        "@com_github_google_uuid//:uuid",
         "@com_github_prometheus_client_golang//prometheus",
     ],
 )

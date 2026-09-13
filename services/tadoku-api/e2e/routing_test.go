@@ -9,17 +9,17 @@ import (
 
 func TestReadFailureDoesNotFallBack(t *testing.T) {
 	t.Parallel()
-	f := newFixture(t)
-	f.db.Pool.Close()
+	api := newTestAPI(t)
+	api.db.Pool.Close()
 
 	request := httptest.NewRequest(http.MethodGet, "/content/announcements/main/active", nil)
 	response := httptest.NewRecorder()
-	f.handler.ServeHTTP(response, request)
+	api.handler.ServeHTTP(response, request)
 
 	if response.Code != http.StatusInternalServerError || response.Body.Len() != 0 {
 		t.Errorf("database failure: status=%d body=%s", response.Code, response.Body)
 	}
-	if f.proxied.Load() != 0 {
+	if api.proxied.Load() != 0 {
 		t.Error("failed native read fell back to the proxy")
 	}
 
@@ -28,7 +28,7 @@ func TestReadFailureDoesNotFallBack(t *testing.T) {
 		"/readyz": http.StatusServiceUnavailable,
 	} {
 		response := httptest.NewRecorder()
-		f.handler.ServeHTTP(response, httptest.NewRequest(http.MethodGet, path, nil))
+		api.handler.ServeHTTP(response, httptest.NewRequest(http.MethodGet, path, nil))
 		if response.Code != status {
 			t.Errorf("%s status=%d, want %d", path, response.Code, status)
 		}
@@ -37,13 +37,13 @@ func TestReadFailureDoesNotFallBack(t *testing.T) {
 
 func TestUnclaimedMethodsRemainProxied(t *testing.T) {
 	t.Parallel()
-	f := newFixture(t)
+	api := newTestAPI(t)
 
 	for _, method := range []string{http.MethodHead, http.MethodOptions, http.MethodPost, http.MethodDelete, http.MethodPatch} {
 		t.Run(method, func(t *testing.T) {
 			request := httptest.NewRequest(method, "/content/announcements/main/active", nil)
 			response := httptest.NewRecorder()
-			f.handler.ServeHTTP(response, request)
+			api.handler.ServeHTTP(response, request)
 
 			if response.Header().Get("X-Proxied") != "yes" {
 				t.Errorf("%s was not proxied", method)
@@ -54,19 +54,19 @@ func TestUnclaimedMethodsRemainProxied(t *testing.T) {
 
 func TestCanceledNativeReadDoesNotFallBack(t *testing.T) {
 	t.Parallel()
-	f := newFixture(t)
+	api := newTestAPI(t)
 
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
 
 	request := httptest.NewRequest(http.MethodGet, "/content/announcements/main/active", nil).WithContext(ctx)
 	response := httptest.NewRecorder()
-	f.handler.ServeHTTP(response, request)
+	api.handler.ServeHTTP(response, request)
 
 	if response.Code != http.StatusInternalServerError {
 		t.Errorf("canceled read: status=%d", response.Code)
 	}
-	if f.proxied.Load() != 0 {
+	if api.proxied.Load() != 0 {
 		t.Error("canceled native read fell back to the proxy")
 	}
 }

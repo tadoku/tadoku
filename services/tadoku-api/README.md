@@ -1,4 +1,4 @@
-# Tadoku API: first native slice
+# Tadoku API
 
 `GET /content/announcements/{namespace}/active` is implemented natively, by
 default. Other operations retain the existing proxy ownership, including HEAD
@@ -14,6 +14,14 @@ Externally the gateway still adds `/api`.
 transport/http -> app -> features/content -> generated/sqlc/content
 cmd/tadoku-api constructs and closes the shared pgx/v5 pool and HTTP resources
 ```
+
+`transport/http/router.go` constructs the application router with standard
+method/path registrations, request deadlines and its own health checks. It does
+not depend on upstream URLs, proxy transports or proxy metrics. Startup separately
+calls `RegisterProxyRoutes` to attach the temporary legacy routes. That call and
+`proxy.go` can be removed when the migration is complete without changing the
+application router or announcement handler. The temporary HEAD override lives
+in `proxy.go`; the application route is an ordinary GET registration.
 
 `app/announcements.go` exposes `ListActiveAnnouncements`. Content service chooses
 one `timex.Now()` cutoff and a limit of ten. Its concrete

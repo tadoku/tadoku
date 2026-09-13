@@ -54,9 +54,12 @@ func TestHandlerProxiesEachLegacyPrefix(t *testing.T) {
 
 	var logs bytes.Buffer
 	registry := prometheus.NewRegistry()
-	handler, err := NewProxyHandler(Upstreams{
-		Authz: servers["authz"].URL, Content: servers["content"].URL,
-		Immersion: servers["immersion"].URL, Profile: servers["profile"].URL,
+	handler := stdhttp.NewServeMux()
+	err := RegisterProxyRoutes(handler, Upstreams{
+		Authz:     servers["authz"].URL,
+		Content:   servers["content"].URL,
+		Immersion: servers["immersion"].URL,
+		Profile:   servers["profile"].URL,
 	}, stdhttp.DefaultTransport, time.Second, registry, slog.New(slog.NewJSONHandler(&logs, nil)))
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -171,8 +174,12 @@ func TestHandlerGeneratesAndForwardsCorrelationID(t *testing.T) {
 	defer upstream.Close()
 
 	var logs bytes.Buffer
-	handler, err := NewProxyHandler(Upstreams{
-		Authz: upstream.URL, Content: upstream.URL, Immersion: upstream.URL, Profile: upstream.URL,
+	handler := stdhttp.NewServeMux()
+	err := RegisterProxyRoutes(handler, Upstreams{
+		Authz:     upstream.URL,
+		Content:   upstream.URL,
+		Immersion: upstream.URL,
+		Profile:   upstream.URL,
 	}, stdhttp.DefaultTransport, time.Second, prometheus.NewRegistry(), slog.New(slog.NewJSONHandler(&logs, nil)))
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -234,7 +241,7 @@ func TestHandlerTimesOutAndCancelsUpstreamRequest(t *testing.T) {
 	}
 }
 
-func TestHandlerHealthAndUnknownRoutes(t *testing.T) {
+func TestProxyDoesNotOwnHealthOrUnknownRoutes(t *testing.T) {
 	handler := newTestHandler(t, "http://127.0.0.1:1", time.Second)
 
 	for _, test := range []struct {
@@ -242,8 +249,8 @@ func TestHandlerHealthAndUnknownRoutes(t *testing.T) {
 		status int
 		body   string
 	}{
-		{path: "/livez", status: stdhttp.StatusOK, body: "ok"},
-		{path: "/readyz", status: stdhttp.StatusOK, body: `{"status":"ready","checks":[]}`},
+		{path: "/livez", status: stdhttp.StatusNotFound, body: "404 page not found\n"},
+		{path: "/readyz", status: stdhttp.StatusNotFound, body: "404 page not found\n"},
 		{path: "/internal/v1/ping", status: stdhttp.StatusNotFound, body: "404 page not found\n"},
 		{path: "/api/internal/content/ping", status: stdhttp.StatusNotFound, body: "404 page not found\n"},
 	} {
@@ -258,10 +265,12 @@ func TestHandlerHealthAndUnknownRoutes(t *testing.T) {
 	}
 }
 
-func TestNewHandlerRejectsInvalidConfiguration(t *testing.T) {
+func TestRegisterProxyRoutesRejectsInvalidConfiguration(t *testing.T) {
 	valid := Upstreams{
-		Authz: "http://authz", Content: "http://content",
-		Immersion: "http://immersion", Profile: "http://profile",
+		Authz:     "http://authz",
+		Content:   "http://content",
+		Immersion: "http://immersion",
+		Profile:   "http://profile",
 	}
 
 	tests := []struct {
@@ -275,7 +284,7 @@ func TestNewHandlerRejectsInvalidConfiguration(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			_, err := NewProxyHandler(test.upstreams, stdhttp.DefaultTransport, test.timeout, prometheus.NewRegistry(), slog.Default())
+			err := RegisterProxyRoutes(stdhttp.NewServeMux(), test.upstreams, stdhttp.DefaultTransport, test.timeout, prometheus.NewRegistry(), slog.Default())
 			if err == nil {
 				t.Errorf("expected an error")
 			}
@@ -285,8 +294,12 @@ func TestNewHandlerRejectsInvalidConfiguration(t *testing.T) {
 
 func newTestHandler(t testing.TB, upstream string, timeout time.Duration) stdhttp.Handler {
 	t.Helper()
-	handler, err := NewProxyHandler(Upstreams{
-		Authz: upstream, Content: upstream, Immersion: upstream, Profile: upstream,
+	handler := stdhttp.NewServeMux()
+	err := RegisterProxyRoutes(handler, Upstreams{
+		Authz:     upstream,
+		Content:   upstream,
+		Immersion: upstream,
+		Profile:   upstream,
 	}, stdhttp.DefaultTransport, timeout, prometheus.NewRegistry(), slog.New(slog.NewTextHandler(io.Discard, nil)))
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -296,8 +309,12 @@ func newTestHandler(t testing.TB, upstream string, timeout time.Duration) stdhtt
 
 func newTestHandlerWithTransport(t *testing.T, transport stdhttp.RoundTripper, timeout time.Duration) stdhttp.Handler {
 	t.Helper()
-	handler, err := NewProxyHandler(Upstreams{
-		Authz: "http://authz", Content: "http://content", Immersion: "http://immersion", Profile: "http://profile",
+	handler := stdhttp.NewServeMux()
+	err := RegisterProxyRoutes(handler, Upstreams{
+		Authz:     "http://authz",
+		Content:   "http://content",
+		Immersion: "http://immersion",
+		Profile:   "http://profile",
 	}, transport, timeout, prometheus.NewRegistry(), slog.New(slog.NewTextHandler(io.Discard, nil)))
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)

@@ -13,7 +13,6 @@ func listActiveAnnouncements(application *app.Application, logger *slog.Logger) 
 		items, err := application.ListActiveAnnouncements(r.Context(), r.PathValue("namespace"))
 		if err != nil {
 			logger.ErrorContext(r.Context(), "list active announcements failed",
-				"correlation_id", correlationID(r),
 				"error", err,
 			)
 			w.WriteHeader(stdhttp.StatusInternalServerError)

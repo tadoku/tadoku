@@ -4,8 +4,8 @@ go_library(
     name = "http",
     srcs = [
         "announcements.go",
-        "native.go",
         "proxy.go",
+        "router.go",
     ],
     importpath = "github.com/tadoku/tadoku/services/tadoku-api/transport/http",
     visibility = ["//visibility:public"],

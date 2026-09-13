@@ -32,20 +32,30 @@ type route struct {
 	target string
 }
 
-// NewProxyHandler builds the legacy fallback; production always wraps it with
-// NewHandler and its required native dependencies.
-func NewProxyHandler(upstreams Upstreams, transport stdhttp.RoundTripper, requestTimeout time.Duration, registerer prometheus.Registerer, logger *slog.Logger) (stdhttp.Handler, error) {
+// RegisterProxyRoutes attaches temporary legacy routes to the application router.
+// Remove this registration when all operations are handled by Tadoku API.
+func RegisterProxyRoutes(
+	mux *stdhttp.ServeMux,
+	upstreams Upstreams,
+	transport stdhttp.RoundTripper,
+	requestTimeout time.Duration,
+	registerer prometheus.Registerer,
+	logger *slog.Logger,
+) error {
+	if mux == nil {
+		return fmt.Errorf("router is required")
+	}
 	if requestTimeout <= 0 {
-		return nil, fmt.Errorf("request timeout must be positive")
+		return fmt.Errorf("request timeout must be positive")
 	}
 	if transport == nil {
-		return nil, fmt.Errorf("transport is required")
+		return fmt.Errorf("transport is required")
 	}
 	if registerer == nil {
-		return nil, fmt.Errorf("metrics registerer is required")
+		return fmt.Errorf("metrics registerer is required")
 	}
 	if logger == nil {
-		return nil, fmt.Errorf("logger is required")
+		return fmt.Errorf("logger is required")
 	}
 
 	duration := prometheus.NewHistogramVec(prometheus.HistogramOpts{
@@ -53,20 +63,10 @@ func NewProxyHandler(upstreams Upstreams, transport stdhttp.RoundTripper, reques
 		Help: "Duration of requests proxied to legacy APIs.",
 	}, []string{"route", "upstream", "mode", "status"})
 	if err := registerer.Register(duration); err != nil {
-		return nil, fmt.Errorf("register proxy metrics: %w", err)
+		return fmt.Errorf("register proxy metrics: %w", err)
 	}
 
-	mux := stdhttp.NewServeMux()
-	mux.HandleFunc("GET /livez", func(response stdhttp.ResponseWriter, _ *stdhttp.Request) {
-		_, _ = response.Write([]byte("ok"))
-	})
-	mux.HandleFunc("GET /readyz", func(response stdhttp.ResponseWriter, _ *stdhttp.Request) {
-		response.Header().Set("Content-Type", "application/json")
-		_, _ = response.Write([]byte(`{"status":"ready","checks":[]}`))
-	})
-
-	// The gateway removes its external prefix before forwarding here. Native
-	// endpoints can replace these domain proxy routes without that prefix.
+	// The gateway removes its external prefix before forwarding here.
 	routes := []route{
 		{name: "authz", prefix: "/authz/", target: upstreams.Authz},
 		{name: "content", prefix: "/content/", target: upstreams.Content},
@@ -76,12 +76,20 @@ func NewProxyHandler(upstreams Upstreams, transport stdhttp.RoundTripper, reques
 	for _, current := range routes {
 		target, err := parseTarget(current.target)
 		if err != nil {
-			return nil, fmt.Errorf("%s upstream: %w", current.name, err)
+			return fmt.Errorf("%s upstream: %w", current.name, err)
 		}
-		mux.Handle(current.prefix, observe(current, requestTimeout, newReverseProxy(current, target, transport, logger), duration, logger))
+
+		handler := observe(current, requestTimeout, newReverseProxy(current, target, transport, logger), duration, logger)
+		mux.Handle(current.prefix, handler)
+
+		if current.name == "content" {
+			// ServeMux GET routes also match HEAD. Keep HEAD on the legacy API
+			// until that operation is migrated; this exception is proxy-only.
+			mux.Handle("HEAD /content/announcements/{namespace}/active", handler)
+		}
 	}
 
-	return mux, nil
+	return nil
 }
 
 func parseTarget(raw string) (*url.URL, error) {

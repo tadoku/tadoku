@@ -47,7 +47,7 @@ func runTests(m *testing.M) (code int) {
 // testAPI owns the production handler and an in-process sentinel transport.
 type testAPI struct {
 	db      *testpostgres.Database
-	handler http.Handler
+	handler *http.ServeMux
 	proxied atomic.Int32
 }
 
@@ -61,17 +61,21 @@ func newTestAPI(ctx context.Context) (*testAPI, error) {
 	repository := content.NewRepository(api.db.Pool)
 	service := content.NewService(repository)
 	application := app.New(service)
+	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
+
+	api.handler, err = transport.NewHandler(application, api.db.Pool.Ping, time.Second, logger)
+	if err != nil {
+		return nil, errors.Join(fmt.Errorf("create API handler: %w", err), db.Close())
+	}
+
 	upstreams := transport.Upstreams{
 		Authz:     "http://upstream.test",
 		Content:   "http://upstream.test",
 		Immersion: "http://upstream.test",
 		Profile:   "http://upstream.test",
 	}
-	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
-
-	api.handler, err = transport.NewHandler(
-		application,
-		api.db.Pool.Ping,
+	err = transport.RegisterProxyRoutes(
+		api.handler,
 		upstreams,
 		api,
 		time.Second,
@@ -79,7 +83,7 @@ func newTestAPI(ctx context.Context) (*testAPI, error) {
 		logger,
 	)
 	if err != nil {
-		return nil, errors.Join(fmt.Errorf("create API handler: %w", err), db.Close())
+		return nil, errors.Join(fmt.Errorf("register proxy routes: %w", err), db.Close())
 	}
 
 	return api, nil

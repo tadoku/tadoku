@@ -2,10 +2,79 @@ package e2e_test
 
 import (
 	"context"
+	"io"
+	"log/slog"
 	"net/http"
 	"net/http/httptest"
+	"path/filepath"
 	"testing"
+	"time"
+
+	"github.com/tadoku/tadoku/services/tadoku-api/app"
+	"github.com/tadoku/tadoku/services/tadoku-api/features/content"
+	"github.com/tadoku/tadoku/services/tadoku-api/internal/timex"
+	transport "github.com/tadoku/tadoku/services/tadoku-api/transport/http"
 )
+
+func TestRouterWorksWithoutLegacyProxyRoutes(t *testing.T) {
+	// Construct the same application router but do not attach legacy routes.
+	// Normal scenarios continue to use the single suite-level router.
+	repository := content.NewRepository(api.db.Pool)
+	service := content.NewService(repository)
+	application := app.New(service)
+	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
+
+	handler, err := transport.NewHandler(application, api.db.Pool.Ping, time.Second, logger)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	path := filepath.Join("testdata", "list_active_announcements", "200_plain")
+	reset(t, filepath.Join(path, "setup.sql"))
+	timex.TheWorld(time.Date(2026, 9, 12, 12, 0, 0, 0, time.UTC), func() {
+		checkHTTPGolden(t, handler, path)
+	})
+
+	for _, test := range []struct {
+		name   string
+		method string
+		path   string
+		status int
+	}{
+		{
+			name:   "liveness does not need a proxy",
+			method: http.MethodGet,
+			path:   "/livez",
+			status: http.StatusOK,
+		},
+		{
+			name:   "readiness does not need a proxy",
+			method: http.MethodGet,
+			path:   "/readyz",
+			status: http.StatusOK,
+		},
+		{
+			name:   "unimplemented paths are not found",
+			method: http.MethodGet,
+			path:   "/content/pages/example",
+			status: http.StatusNotFound,
+		},
+		{
+			name:   "unsupported methods are rejected",
+			method: http.MethodPost,
+			path:   "/content/announcements/main/active",
+			status: http.StatusMethodNotAllowed,
+		},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			response := httptest.NewRecorder()
+			handler.ServeHTTP(response, httptest.NewRequest(test.method, test.path, nil))
+			if response.Code != test.status {
+				t.Errorf("status=%d, want %d", response.Code, test.status)
+			}
+		})
+	}
+}
 
 func TestReadFailureDoesNotFallBack(t *testing.T) {
 	// Closing the pool must not destroy the shared suite's database dependency.

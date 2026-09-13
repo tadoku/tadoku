@@ -117,17 +117,22 @@ func start(cfg config, logger *slog.Logger) (*application, error) {
 
 	contentRepository := content.NewRepository(pool)
 	contentService := content.NewService(contentRepository)
-	native := app.New(contentService)
+	api := app.New(contentService)
 
+	handler, err := transporthttp.NewHandler(api, pool.Ping, cfg.RequestTimeout, logger)
+	if err != nil {
+		return nil, err
+	}
+
+	// Temporary legacy routes; the application router stands on its own.
 	upstreams := transporthttp.Upstreams{
 		Authz:     cfg.AuthzURL,
 		Content:   cfg.ContentURL,
 		Immersion: cfg.ImmersionURL,
 		Profile:   cfg.ProfileURL,
 	}
-	handler, err := transporthttp.NewHandler(
-		native,
-		pool.Ping,
+	err = transporthttp.RegisterProxyRoutes(
+		handler,
 		upstreams,
 		transport,
 		cfg.RequestTimeout,
@@ -190,7 +195,6 @@ func start(cfg config, logger *slog.Logger) (*application, error) {
 	started = true
 	logger.Info("tadoku-api started",
 		"address", listener.Addr(),
-		"mode", "native-and-proxy",
 		"postgres_max_connections", cfg.PostgresMaxConnections,
 	)
 

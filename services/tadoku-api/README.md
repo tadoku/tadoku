@@ -86,10 +86,27 @@ complete canonical migration history. Do not point them at shared dev or product
 bazel test //services/tadoku-api/... --test_output=errors
 ```
 
-`newTestAPI` assembles the production HTTP stack with an isolated PostgreSQL database.
-The fallback is a simple HTTP sentinel, not a legacy service. Tests check response
+`TestMain` creates one disposable database, applies migrations and constructs the
+production HTTP router once for the E2E suite. Both requests and the fallback
+sentinel execute in process, without HTTP listeners. Tests check response
 mapping, namespace encoding, publication boundaries, ordering, limit, empty results,
 read failures, cancellation and route ownership.
+
+HTTP scenarios run sequentially and call `reset` before each scenario, not between
+dependent requests. `internal/testpostgres/cleanup.sql` explicitly lists mutable
+tables to truncate with `restart identity`. Add tables there as their slices gain
+tests; do not discover tables automatically or use `cascade`. Static data from
+migrations and `schema_migrations` are preserved. Scenario data lives in SQL files
+under `e2e/testdata/announcements/`; fixtures are not generated in Go. Reset and
+seeding commit before requests run, so application transactions commit normally.
+There is no outer rollback transaction and no change to `RunInTransaction`.
+
+Database helpers take contexts and return errors, with explicit `Close` cleanup
+instead of `testing.TB`. Suite teardown preserves test failures and reports cleanup
+failures; partial setup also cleans up. Business time is frozen once around the
+suite; no extra request-context wrapper is needed. The pool-closing failure test
+has isolated dependencies. Repository/transaction tests retain their independent
+databases and may run in parallel.
 
 Announcement requests live in `e2e/testdata/announcements/*.request.http`; the
 matching `*.golden.http` files contain the request label and complete expected

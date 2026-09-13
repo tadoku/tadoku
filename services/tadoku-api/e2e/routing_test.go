@@ -8,8 +8,16 @@ import (
 )
 
 func TestReadFailureDoesNotFallBack(t *testing.T) {
-	t.Parallel()
-	api := newTestAPI(t)
+	// Closing the pool must not destroy the shared suite's database dependency.
+	api, err := newTestAPI(t.Context())
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() {
+		if err := api.db.Close(); err != nil {
+			t.Error(err)
+		}
+	})
 	api.db.Pool.Close()
 
 	request := httptest.NewRequest(http.MethodGet, "/content/announcements/main/active", nil)
@@ -36,11 +44,9 @@ func TestReadFailureDoesNotFallBack(t *testing.T) {
 }
 
 func TestUnclaimedMethodsRemainProxied(t *testing.T) {
-	t.Parallel()
-	api := newTestAPI(t)
-
 	for _, method := range []string{http.MethodHead, http.MethodOptions, http.MethodPost, http.MethodDelete, http.MethodPatch} {
 		t.Run(method, func(t *testing.T) {
+			reset(t)
 			request := httptest.NewRequest(method, "/content/announcements/main/active", nil)
 			response := httptest.NewRecorder()
 			api.handler.ServeHTTP(response, request)
@@ -53,8 +59,7 @@ func TestUnclaimedMethodsRemainProxied(t *testing.T) {
 }
 
 func TestCanceledNativeReadDoesNotFallBack(t *testing.T) {
-	t.Parallel()
-	api := newTestAPI(t)
+	reset(t)
 
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()

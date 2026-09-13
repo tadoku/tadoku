@@ -18,7 +18,15 @@ import (
 )
 
 func TestApplicationStartsAndShutsDown(t *testing.T) {
-	db := testpostgres.New(t)
+	db, err := testpostgres.New(t.Context())
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() {
+		if err := db.Close(); err != nil {
+			t.Error(err)
+		}
+	})
 
 	databaseURL, err := url.Parse(db.DSN)
 	if err != nil {

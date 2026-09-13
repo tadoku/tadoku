@@ -16,7 +16,15 @@ import (
 
 func TestCanonicalHistoryReachesVersion29AndThenDoesNothing(t *testing.T) {
 	t.Parallel()
-	db := testpostgres.New(t)
+	db, err := testpostgres.New(t.Context())
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() {
+		if err := db.Close(); err != nil {
+			t.Error(err)
+		}
+	})
 	var version int
 	var dirty bool
 	if err := db.Pool.QueryRow(context.Background(), "select version, dirty from schema_migrations").Scan(&version, &dirty); err != nil {

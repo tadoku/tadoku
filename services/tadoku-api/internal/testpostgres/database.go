@@ -4,12 +4,13 @@ package testpostgres
 
 import (
 	"context"
+	_ "embed"
+	"errors"
 	"fmt"
 	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
-	"testing"
 	"time"
 
 	"github.com/bazelbuild/rules_go/go/tools/bazel"
@@ -17,21 +18,23 @@ import (
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type Database struct {
 	Pool *pgxpool.Pool
 	DSN  string
+
+	admin *pgxpool.Pool
+	name  string
 }
 
-func New(t testing.TB) *Database {
-	t.Helper()
-
+func New(ctx context.Context) (_ *Database, err error) {
 	raw := os.Getenv("TADOKU_TEST_POSTGRES_URL")
 	u, err := url.Parse(raw)
-	if err != nil || u == nil {
-		t.Fatal("TADOKU_TEST_POSTGRES_URL must be a disposable loopback PostgreSQL DSN")
+	if err != nil || u == nil || u.User == nil {
+		return nil, errors.New("TADOKU_TEST_POSTGRES_URL must be a disposable loopback PostgreSQL DSN")
 	}
 
 	password, _ := u.User.Password()
@@ -39,87 +42,123 @@ func New(t testing.TB) *Database {
 		(u.Hostname() != "localhost" && u.Hostname() != "127.0.0.1") ||
 		u.Port() == "" ||
 		u.Path != "/postgres" ||
+		u.RawPath != "" ||
+		u.Opaque != "" ||
 		u.User.Username() != "postgres" ||
 		password != "postgres" ||
 		u.RawQuery != "sslmode=disable" ||
 		u.Fragment != "" {
-		t.Fatal("TADOKU_TEST_POSTGRES_URL must use postgres:postgres on loopback with an explicit port, /postgres and sslmode=disable")
+		return nil, errors.New("TADOKU_TEST_POSTGRES_URL must use postgres:postgres on loopback with an explicit port, /postgres and sslmode=disable")
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
 	defer cancel()
 
 	admin, err := pgxpool.New(ctx, raw)
 	if err != nil {
-		t.Fatalf("open test admin: %v", err)
+		return nil, fmt.Errorf("open test admin: %w", err)
 	}
-	t.Cleanup(admin.Close)
+	db := &Database{admin: admin}
+	defer func() {
+		if err != nil {
+			err = errors.Join(err, db.Close())
+		}
+	}()
 
 	name := "tadoku_native_test_" + strings.ReplaceAll(uuid.NewString(), "-", "")
 	if _, err := admin.Exec(ctx, `create database "`+name+`"`); err != nil {
-		t.Fatalf("create disposable database: %v", err)
+		return nil, fmt.Errorf("create disposable database: %w", err)
 	}
-	t.Cleanup(func() {
-		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-		defer cancel()
-		if _, err := admin.Exec(ctx, `drop database "`+name+`" with (force)`); err != nil {
-			t.Errorf("drop disposable database: %v", err)
-		}
-	})
+	db.name = name
 
 	u.Path = "/" + name
-	dsn := u.String()
+	db.DSN = u.String()
 
 	first, err := bazel.Runfile("services/immersion-api/storage/postgres/migrations/0001_init.up.sql")
 	if err != nil {
-		t.Fatalf("resolve canonical migrations: %v", err)
+		return nil, fmt.Errorf("resolve canonical migrations: %w", err)
 	}
 
-	migrator, err := migrate.New((&url.URL{Scheme: "file", Path: filepath.Dir(first)}).String(), dsn)
+	migrator, err := migrate.New((&url.URL{Scheme: "file", Path: filepath.Dir(first)}).String(), db.DSN)
 	if err != nil {
-		t.Fatalf("open canonical migrations: %v", err)
+		return nil, fmt.Errorf("open canonical migrations: %w", err)
 	}
 
 	migrationErr := migrator.Up()
 	sourceErr, databaseErr := migrator.Close()
-	if migrationErr != nil {
-		t.Fatalf("migrate test database: %v", migrationErr)
-	}
-	if sourceErr != nil || databaseErr != nil {
-		t.Fatalf("close migrator: %v, %v", sourceErr, databaseErr)
+	if err := errors.Join(migrationErr, sourceErr, databaseErr); err != nil {
+		return nil, fmt.Errorf("migrate test database: %w", err)
 	}
 
-	cfg, err := pgxpool.ParseConfig(dsn)
+	cfg, err := pgxpool.ParseConfig(db.DSN)
 	if err != nil {
-		t.Fatal(err)
+		return nil, fmt.Errorf("configure test pool: %w", err)
 	}
 	cfg.MaxConns = 4
 
-	pool, err := pgxpool.NewWithConfig(ctx, cfg)
+	db.Pool, err = pgxpool.NewWithConfig(ctx, cfg)
 	if err != nil {
-		t.Fatal(err)
+		return nil, fmt.Errorf("open test pool: %w", err)
 	}
-	t.Cleanup(pool.Close)
-
-	return &Database{
-		Pool: pool,
-		DSN:  dsn,
+	if err := db.Pool.Ping(ctx); err != nil {
+		return nil, fmt.Errorf("ping test pool: %w", err)
 	}
+	return db, nil
 }
 
-// SeedAnnouncement only writes test data; the caller chooses the ID and times.
-func (d *Database) SeedAnnouncement(t testing.TB, id, namespace, title string, start, end time.Time, deleted bool) {
-	t.Helper()
-
-	var deletion *time.Time
-	if deleted {
-		deletion = &start
+// Close releases the pool and drops only the database created by New. Cleanup
+// has its own deadline so canceled tests can still release their resources.
+func (d *Database) Close() error {
+	if d.Pool != nil {
+		d.Pool.Close()
 	}
+	defer d.admin.Close()
+	if d.name != "" {
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+		if _, err := d.admin.Exec(ctx, `drop database "`+d.name+`" with (force)`); err != nil {
+			return fmt.Errorf("drop disposable database: %w", err)
+		}
+	}
+	return nil
+}
 
-	_, err := d.Pool.Exec(context.Background(), `insert into announcements
-		(id, namespace, title, content, style, href, starts_at, ends_at, created_at, updated_at, deleted_at)
-		values ($1,$2,$3,$4,'info',null,$5,$6,$5,$5,$7)`, id, namespace, title, fmt.Sprintf("<p>%s</p>", title), start, end, deletion)
+//go:embed cleanup.sql
+var cleanupSQL string
+
+// Reset clears the explicitly listed mutable tables and loads SQL fixtures.
+// Setup commits before requests run; it never encloses application transactions.
+// Call only between sequential scenarios, after their database work has finished.
+func (d *Database) Reset(ctx context.Context, seedFiles ...string) (err error) {
+	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
+	defer cancel()
+
+	tx, err := d.Pool.Begin(ctx)
 	if err != nil {
-		t.Fatalf("seed announcement: %v", err)
+		return fmt.Errorf("begin test reset: %w", err)
 	}
+	defer func() {
+		cleanupCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		if rollbackErr := tx.Rollback(cleanupCtx); rollbackErr != nil && !errors.Is(rollbackErr, pgx.ErrTxClosed) {
+			err = errors.Join(err, fmt.Errorf("rollback test reset: %w", rollbackErr))
+		}
+	}()
+
+	if _, err := tx.Exec(ctx, cleanupSQL); err != nil {
+		return fmt.Errorf("execute cleanup.sql: %w", err)
+	}
+	for _, path := range seedFiles {
+		seed, err := os.ReadFile(path)
+		if err != nil {
+			return fmt.Errorf("read seed %s: %w", path, err)
+		}
+		if _, err := tx.Exec(ctx, string(seed)); err != nil {
+			return fmt.Errorf("execute seed %s: %w", path, err)
+		}
+	}
+	if err := tx.Commit(ctx); err != nil {
+		return fmt.Errorf("commit test reset: %w", err)
+	}
+	return nil
 }

@@ -1,10 +1,13 @@
 package e2e_test
 
 import (
+	"context"
+	"errors"
+	"fmt"
 	"io"
 	"log/slog"
 	"net/http"
-	"net/http/httptest"
+	"os"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -13,55 +16,93 @@ import (
 	"github.com/tadoku/tadoku/services/tadoku-api/app"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/content"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/testpostgres"
+	"github.com/tadoku/tadoku/services/tadoku-api/internal/timex"
 	transport "github.com/tadoku/tadoku/services/tadoku-api/transport/http"
 )
 
-// testAPI assembles the production HTTP stack with an isolated database and a
-// sentinel upstream for routes that have not migrated yet.
+var api *testAPI
+
+func TestMain(m *testing.M) {
+	os.Exit(runTests(m))
+}
+
+func runTests(m *testing.M) (code int) {
+	var err error
+	api, err = newTestAPI(context.Background())
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return 1
+	}
+	defer func() {
+		if err := api.db.Close(); err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			if code == 0 {
+				code = 1
+			}
+		}
+	}()
+
+	timex.TheWorld(time.Date(2026, 9, 12, 12, 0, 0, 0, time.UTC), func() {
+		code = m.Run()
+	})
+	return code
+}
+
+// testAPI owns the production handler and an in-process sentinel transport.
 type testAPI struct {
 	db      *testpostgres.Database
 	handler http.Handler
 	proxied atomic.Int32
 }
 
-func newTestAPI(t *testing.T) *testAPI {
-	t.Helper()
-
-	api := &testAPI{
-		db: testpostgres.New(t),
+func newTestAPI(ctx context.Context) (*testAPI, error) {
+	db, err := testpostgres.New(ctx)
+	if err != nil {
+		return nil, err
 	}
-
-	upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		api.proxied.Add(1)
-		w.Header().Set("X-Proxied", "yes")
-		w.WriteHeader(http.StatusNoContent)
-	}))
-	t.Cleanup(upstream.Close)
+	api := &testAPI{db: db}
 
 	repository := content.NewRepository(api.db.Pool)
 	service := content.NewService(repository)
 	application := app.New(service)
 	upstreams := transport.Upstreams{
-		Authz:     upstream.URL,
-		Content:   upstream.URL,
-		Immersion: upstream.URL,
-		Profile:   upstream.URL,
+		Authz:     "http://upstream.test",
+		Content:   "http://upstream.test",
+		Immersion: "http://upstream.test",
+		Profile:   "http://upstream.test",
 	}
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
 
-	var err error
 	api.handler, err = transport.NewHandler(
 		application,
 		api.db.Pool.Ping,
 		upstreams,
-		http.DefaultTransport,
+		api,
 		time.Second,
 		prometheus.NewRegistry(),
 		logger,
 	)
 	if err != nil {
-		t.Fatalf("create API handler: %v", err)
+		return nil, errors.Join(fmt.Errorf("create API handler: %w", err), db.Close())
 	}
 
-	return api
+	return api, nil
+}
+
+func (a *testAPI) RoundTrip(request *http.Request) (*http.Response, error) {
+	a.proxied.Add(1)
+	return &http.Response{
+		StatusCode: http.StatusNoContent,
+		Header:     http.Header{"X-Proxied": {"yes"}},
+		Body:       http.NoBody,
+		Request:    request,
+	}, nil
+}
+
+func reset(t *testing.T, seedFiles ...string) {
+	t.Helper()
+	if err := api.db.Reset(t.Context(), seedFiles...); err != nil {
+		t.Fatal(err)
+	}
+	api.proxied.Store(0)
 }

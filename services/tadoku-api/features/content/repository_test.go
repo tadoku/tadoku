@@ -13,11 +13,20 @@ import (
 
 func TestRepositoryUsesSuppliedPolicyAndTransaction(t *testing.T) {
 	t.Parallel()
-	db := testpostgres.New(t)
+	db, err := testpostgres.New(t.Context())
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() {
+		if err := db.Close(); err != nil {
+			t.Error(err)
+		}
+	})
 	cutoff := time.Date(2026, 9, 12, 0, 0, 0, 0, time.UTC)
 	id := "11111111-1111-4111-8111-111111111111"
-	db.SeedAnnouncement(t, id, "main", "older", cutoff.Add(-time.Hour), cutoff.Add(time.Hour), false)
-	db.SeedAnnouncement(t, "22222222-2222-4222-8222-222222222222", "main", "newer", cutoff, cutoff.Add(time.Hour), false)
+	if err := db.Reset(t.Context(), "testdata/announcements.sql"); err != nil {
+		t.Fatal(err)
+	}
 	repository := content.NewRepository(db.Pool)
 	items, err := repository.ListActiveAnnouncements(context.Background(), "main", cutoff, 1)
 	if err != nil {

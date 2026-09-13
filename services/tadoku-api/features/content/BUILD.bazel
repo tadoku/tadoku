@@ -4,6 +4,7 @@ go_test(
     name = "content_test",
     srcs = ["repository_test.go"],
     args = ["-test.parallel=4"],
+    data = glob(["testdata/*.sql"]),
     env_inherit = ["TADOKU_TEST_POSTGRES_URL"],
     tags = [
         "no-cache",

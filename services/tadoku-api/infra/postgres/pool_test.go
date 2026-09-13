@@ -16,7 +16,15 @@ import (
 
 func TestPoolWorksWithOnlyAnnouncementReadGrants(t *testing.T) {
 	t.Parallel()
-	db := testpostgres.New(t)
+	db, err := testpostgres.New(t.Context())
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() {
+		if err := db.Close(); err != nil {
+			t.Error(err)
+		}
+	})
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	name := "tadoku_reader_test_" + strings.ReplaceAll(uuid.NewString(), "-", "")

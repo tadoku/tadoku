@@ -8,8 +8,10 @@ go_test(
         "golden_test.go",
         "routing_test.go",
     ],
-    args = ["-test.parallel=4"],
-    data = glob(["testdata/**/*.http"]),
+    data = glob([
+        "testdata/**/*.http",
+        "testdata/**/*.sql",
+    ]),
     env_inherit = ["TADOKU_TEST_POSTGRES_URL"],
     tags = [
         "no-cache",

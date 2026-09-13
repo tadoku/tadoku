@@ -44,13 +44,23 @@ func TestListActiveAnnouncements(t *testing.T) {
 		name := APITestName("ListActiveAnnouncements", test.want, test.description...)
 		t.Run(name, func(t *testing.T) {
 			path := filepath.Join("testdata", name)
-			reset(t, filepath.Join(path, "setup.sql"))
-			timex.TheWorld(time.Date(2026, 9, 12, 12, 0, 0, 0, time.UTC), func() {
-				checkHTTPGolden(t, api.handler, path, test.want)
-			})
+			for _, implementation := range []struct {
+				name    string
+				handler http.Handler
+			}{
+				{name: "tadoku-api", handler: api.handler},
+				{name: "content-api", handler: legacyContent.handler},
+			} {
+				t.Run(implementation.name, func(t *testing.T) {
+					reset(t, filepath.Join(path, "setup.sql"))
+					timex.TheWorld(time.Date(2026, 9, 12, 12, 0, 0, 0, time.UTC), func() {
+						checkHTTPGolden(t, implementation.handler, path, test.want)
+					})
 
-			if api.proxied.Load() != 0 {
-				t.Error("native read contacted an upstream")
+					if api.proxied.Load() != 0 {
+						t.Error("native read contacted an upstream")
+					}
+				})
 			}
 		})
 	}

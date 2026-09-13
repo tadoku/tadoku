@@ -20,6 +20,7 @@ import (
 )
 
 var api *testAPI
+var legacyContent *legacyContentAPI
 
 func TestMain(m *testing.M) {
 	os.Exit(runTests(m))
@@ -33,13 +34,23 @@ func runTests(m *testing.M) (code int) {
 		return 1
 	}
 	defer func() {
-		if err := api.db.Close(); err != nil {
+		var legacyErr error
+		if legacyContent != nil {
+			legacyErr = legacyContent.db.Close()
+		}
+		if err := errors.Join(legacyErr, api.db.Close()); err != nil {
 			fmt.Fprintln(os.Stderr, err)
 			if code == 0 {
 				code = 1
 			}
 		}
 	}()
+
+	legacyContent, err = newLegacyContentAPI(context.Background(), api.db.DSN)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return 1
+	}
 
 	return m.Run()
 }

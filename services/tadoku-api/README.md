@@ -54,8 +54,9 @@ the contract's `x-tadoku-operational-surfaces` metadata, not rendered as product
 The native read returns the existing announcement JSON shape, including nullable
 hrefs and an empty array when nothing is active. Publication windows, soft deletion,
 namespace filtering, descending order and the ten-item limit remain unchanged.
-Database failures return 500 without falling back to the proxy. There is no legacy
-server comparison or duplicated authentication matrix in its tests.
+Database failures return 500 without falling back to the proxy. The native and
+legacy announcement handlers share the same request/response golden tests;
+authentication middleware is outside that comparison.
 
 ## Runtime configuration
 
@@ -95,15 +96,16 @@ bazel test //services/tadoku-api/... --test_output=errors
 ```
 
 `TestMain` creates one disposable database, applies migrations and constructs the
-production HTTP router once for the E2E suite. Both requests and the fallback
-sentinel execute in process, without HTTP listeners. Tests check response
-mapping, namespace encoding, publication boundaries, ordering, limit, empty results,
-read failures, cancellation and route ownership.
+native production HTTP router and legacy Content handler once for the E2E suite.
+Both handlers and the fallback sentinel execute in process, without HTTP listeners.
+Tests check response mapping, namespace encoding, publication boundaries, ordering,
+limit, empty results, read failures, cancellation and route ownership.
 
-HTTP scenarios run sequentially and call `reset` before each scenario, not between
-dependent requests. `internal/testpostgres/cleanup.sql` explicitly lists mutable
-tables to truncate with `restart identity`. Add tables there as their slices gain
-tests; do not discover tables automatically or use `cascade`. Static data from
+HTTP scenarios run sequentially and call `reset` before each implementation of each
+scenario, not between dependent requests. `internal/testpostgres/cleanup.sql`
+explicitly lists mutable tables to truncate with `restart identity`. Add tables
+there as their slices gain tests; do not discover tables automatically or use
+`cascade`. Static data from
 migrations and `schema_migrations` are preserved. Each case has its own SQL setup;
 fixtures are not generated in Go. Reset and seeding commit before requests run,
 so application transactions commit normally.
@@ -144,6 +146,35 @@ HTTP line endings are normalized. Missing or changed goldens fail the test.
 There is no automatic recording mode: edit and review the expected files for an
 intentional contract change. Lifecycle tests stay focused on startup/shutdown,
 not a growing list of endpoint assertions.
+
+### Legacy parity
+
+The six announcements cases each run as `tadoku-api` and `content-api` subtests.
+Both consume the same unchanged `setup.sql`, `request.http` and `golden.http`;
+each must independently match the full response. The legacy side uses Content's
+production generated route registration (mounted at `/content`), handler, domain
+operation, PostgreSQL repository and generated query. Unused legacy operations
+are not initialized. These dependencies are confined to the Bazel test target;
+the native binary does not acquire Echo or a legacy service dependency.
+
+The legacy SQL calls PostgreSQL's `now()`, whereas the native operation supplies
+`timex.Now()`. A test-only connection wrapper binds the legacy query's two `now()`
+calls to that same scenario clock. It accepts only the active-announcements query
+name, two clock calls and its original namespace argument; unexpected shapes fail.
+All other SQL filtering, ordering, limits and row mapping execute unchanged against
+real PostgreSQL. No fixture timestamps or response fields are shifted or ignored.
+The comparison does **not** verify the legacy choice of database clock, gateway
+rewriting, authentication, or infrastructure middleware. Production code and
+generated SQL are untouched.
+
+```sh
+bazel test //services/tadoku-api/e2e:e2e_test \
+  --test_filter=TestListActiveAnnouncements --test_output=errors
+```
+
+The existing CI E2E and race targets include these comparisons automatically.
+Add future migrated operations explicitly; do not add a general service launcher
+or duplicate per-implementation fixtures.
 
 Pool-failure, cancellation and proxy-routing checks remain separate Go tests;
 they exercise dependency behavior rather than SQL-defined response cases.

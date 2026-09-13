@@ -103,4 +103,4 @@ policies:
       rules:
         - use: language-dependencies
         - id: test-assembly
-          allow: [local:services/tadoku-api/...]
+          allow: [local:services/...]

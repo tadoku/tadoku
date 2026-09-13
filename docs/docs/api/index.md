@@ -6,16 +6,17 @@ slug: /api/
 
 # API Reference
 
-Tadoku's public HTTP APIs are documented directly from the OpenAPI contracts
-used by the services. The reference reflects the current contracts on the
-`main` branch.
+Tadoku's public HTTP APIs are documented from the single
+[Tadoku API contract](https://github.com/tadoku/tadoku/blob/main/services/tadoku-api/spec/openapi.yaml).
+The four sections below are filtered public views of that source. The reference
+reflects `main`; native and proxied operations retain the same public URLs.
 
-| Service | Version | Production base URL | Reference | Source |
-| --- | --- | --- | --- | --- |
-| Immersion | 2.0.0 | `https://tadoku.app/api/immersion/` | [Browse endpoints](./immersion/immersion-api) | [OpenAPI YAML](https://github.com/tadoku/tadoku/blob/main/services/immersion-api/http/rest/openapi/api.yaml) |
-| Content | 1.0.0 | `https://tadoku.app/api/content/` | [Browse endpoints](./content/content-api) | [OpenAPI YAML](https://github.com/tadoku/tadoku/blob/main/services/content-api/http/rest/openapi/api.yaml) |
-| Profile | 1.0.0 | `https://tadoku.app/api/profile/` | [Browse endpoints](./profile/profile-api) | [OpenAPI YAML](https://github.com/tadoku/tadoku/blob/main/services/profile-api/http/rest/openapi/api.yaml) |
-| Authorization | 1.0.0 | `https://tadoku.app/api/authz/` | [Browse endpoints](./authorization/authz-api) | [OpenAPI YAML](https://github.com/tadoku/tadoku/blob/main/services/authz-api/http/rest/openapi/api.yaml) |
+| Domain | Version | Production base URL | Reference |
+| --- | --- | --- | --- |
+| Immersion | 2.0.0 | `https://tadoku.app/api/immersion/` | [Browse endpoints](./immersion/immersion-api) |
+| Content | 1.0.0 | `https://tadoku.app/api/content/` | [Browse endpoints](./content/content-api) |
+| Profile | 1.0.0 | `https://tadoku.app/api/profile/` | [Browse endpoints](./profile/profile-api) |
+| Authorization | 1.0.0 | `https://tadoku.app/api/authz/` | [Browse endpoints](./authorization/authz-api) |
 
 ## Authentication
 
@@ -32,4 +33,3 @@ Pages origin need a separately reviewed cross-origin authentication policy.
 
 Only public, externally routed API specifications are published here. Internal
 service-to-service contracts are intentionally excluded from this site.
-

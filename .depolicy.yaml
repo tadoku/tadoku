@@ -1,0 +1,202 @@
+# Tadoku API only: tools/ci/depolicy supplies the exact scope, including tests.
+# First matching import rule wins. Every package must match exactly one policy.
+version: 1
+
+rule-sets:
+  native:
+    - id: no-testify-or-echo
+      deny: [external:github.com/stretchr/testify/..., external:github.com/labstack/echo/...]
+  standard:
+    - id: standard-library
+      allow: [std:...]
+
+policies:
+  - id: transport
+    packages: [local:services/tadoku-api/transport/http, local:services/tadoku-api/transport/http/_test]
+    imports:
+      default: deny
+      rules:
+        - use: native
+        - id: no-sql
+          deny: [std:database/sql/...]
+        - use: standard
+        - id: http-boundary
+          allow:
+            - local:services/tadoku-api/transport/http
+            - local:services/tadoku-api/app
+            - local:services/tadoku-api/generated/openapi
+            - external:github.com/golang-jwt/jwt/v4
+            - external:github.com/MicahParks/keyfunc
+            - external:github.com/prometheus/client_golang/prometheus/...
+
+  - id: application
+    packages: [local:services/tadoku-api/app, local:services/tadoku-api/app/_test]
+    imports:
+      default: deny
+      rules:
+        - id: no-sql
+          deny: [std:database/sql/...]
+        - use: standard
+        - id: composition
+          allow:
+            - local:services/tadoku-api/app
+            - local:services/tadoku-api/features/*
+            - local:services/tadoku-api/infra/postgres
+            - local:services/tadoku-api/internal/timex
+
+  - id: feature
+    packages: ["local:services/tadoku-api/features/{feature}"]
+    imports:
+      default: deny
+      rules:
+        - use: native
+        - use: standard
+        - id: own-data-and-infrastructure
+          allow:
+            - local:services/tadoku-api/features/{feature}/domain/...
+            - local:services/tadoku-api/generated/sqlc/{feature}/...
+            - local:services/tadoku-api/infra/...
+            - local:services/tadoku-api/internal/timex
+            - external:...
+        - id: existing-keto-adapters
+          allow: [local:services/common/authz/roles, local:services/common/client/keto]
+
+  - id: pure-domain
+    packages: ["local:services/tadoku-api/features/{feature}/domain/..."]
+    imports:
+      default: deny
+      rules:
+        - id: no-sql
+          deny: [std:database/sql/...]
+        - use: standard
+        - id: domain-values
+          allow:
+            - local:services/tadoku-api/features/{feature}/domain/...
+            - local:services/tadoku-api/internal/timex
+            - external:github.com/google/uuid
+
+  - id: infrastructure
+    packages: [local:services/tadoku-api/infra/postgres, local:services/tadoku-api/infra/postgres/internal/..., local:services/tadoku-api/infra/postgres/testdata/...]
+    imports:
+      default: deny
+      rules:
+        - use: standard
+        - id: infrastructure-dependencies
+          allow: [local:services/tadoku-api/infra/..., external:github.com/jackc/pgx/v5/...]
+
+  - id: generated
+    packages: [local:services/tadoku-api/generated/..., local:services/tadoku-api/sql/...]
+    imports:
+      default: deny
+      rules:
+        - use: native
+        - use: standard
+        - id: generated-dependencies
+          allow: [local:services/tadoku-api/generated/..., external:...]
+
+  - id: internal
+    packages: [local:services/tadoku-api/internal/...]
+    imports:
+      default: deny
+      rules:
+        - use: native
+        - use: standard
+        - id: utility-dependencies
+          allow: [local:services/tadoku-api/internal/..., external:...]
+
+  - id: construction
+    packages: [local:services/tadoku-api/cmd/tadoku-api]
+    imports:
+      default: deny
+      rules:
+        - use: native
+        - use: standard
+        - id: production-assembly
+          allow:
+            - local:services/tadoku-api/app
+            - local:services/tadoku-api/features/*
+            - local:services/tadoku-api/infra/postgres
+            - local:services/tadoku-api/transport/http
+            - local:services/common/postgresconfig
+            - external:...
+        - id: startup-test-fixtures
+          allow: [local:services/tadoku-api/internal/testauth, local:services/tadoku-api/internal/testpostgres]
+
+  # Named external-test assembly exceptions; none applies to production packages.
+  - id: content-repository-tests
+    packages: [local:services/tadoku-api/features/content/_test]
+    imports:
+      default: deny
+      rules:
+        - use: standard
+        - id: content-fixture
+          allow:
+            - local:services/tadoku-api/features/content
+            - local:services/tadoku-api/infra/postgres
+            - local:services/tadoku-api/internal/testpostgres
+
+  - id: postgres-tests
+    packages: [local:services/tadoku-api/infra/postgres/_test]
+    imports:
+      default: deny
+      rules:
+        - use: standard
+        - id: database-fixture
+          allow:
+            - local:services/tadoku-api/infra/postgres/...
+            - local:services/tadoku-api/internal/testpostgres
+            - external:github.com/jackc/pgx/v5/...
+            - external:github.com/google/uuid
+
+  - id: e2e-tests
+    packages: [local:services/tadoku-api/e2e/_test]
+    imports:
+      default: deny
+      rules:
+        - use: native
+        - use: standard
+        - id: endpoint-assembly
+          allow:
+            - local:services/tadoku-api/app
+            - local:services/tadoku-api/features/*
+            - local:services/tadoku-api/transport/http
+            - local:services/tadoku-api/generated/openapi
+            - local:services/tadoku-api/internal/...
+            - local:services/tadoku-api/e2e/legacy
+            - external:github.com/golang-jwt/jwt/v4
+            - external:github.com/prometheus/client_golang/prometheus
+
+  # Remove with the old Content/proxy comparison. Bazel also marks this testonly.
+  - id: legacy-comparison
+    packages: [local:services/tadoku-api/e2e/legacy, local:services/tadoku-api/e2e/legacy/_test]
+    imports:
+      default: deny
+      rules:
+        - use: standard
+        - id: legacy-http-fixture
+          allow:
+            - local:services/content-api/...
+            - local:services/common/authz/roles
+            - local:services/common/client/keto
+            - local:services/common/middleware
+            - local:services/common/domain
+            - local:services/tadoku-api/transport/http
+            - external:github.com/labstack/echo/v4
+            - external:github.com/labstack/echo/v4/middleware
+            - external:github.com/golang-jwt/jwt/v4
+            - external:github.com/prometheus/client_golang/prometheus
+
+  - id: schema-and-contract-tests
+    packages: [local:services/tadoku-api/migrations/_test, local:services/tadoku-api/spec/_test]
+    imports:
+      default: deny
+      rules:
+        - use: standard
+        - id: contract-fixtures
+          allow:
+            - local:services/tadoku-api/internal/testpostgres
+            - external:github.com/bazelbuild/rules_go/go/tools/bazel
+            - external:github.com/golang-migrate/migrate/v4
+            - external:github.com/golang-migrate/migrate/v4/database/postgres
+            - external:github.com/golang-migrate/migrate/v4/source/file
+            - external:github.com/getkin/kin-openapi/openapi3

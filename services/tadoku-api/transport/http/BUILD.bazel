@@ -2,10 +2,20 @@ load("@rules_go//go:def.bzl", "go_library", "go_test")
 
 go_library(
     name = "http",
-    srcs = ["proxy.go"],
+    srcs = [
+        "auth.go",
+        "native.go",
+        "proxy.go",
+    ],
     importpath = "github.com/tadoku/tadoku/services/tadoku-api/transport/http",
     visibility = ["//visibility:public"],
-    deps = ["@com_github_prometheus_client_golang//prometheus"],
+    deps = [
+        "//services/tadoku-api/app",
+        "//services/tadoku-api/generated/openapi",
+        "@com_github_golang_jwt_jwt_v4//:jwt",
+        "@com_github_micahparks_keyfunc//:keyfunc",
+        "@com_github_prometheus_client_golang//prometheus",
+    ],
 )
 
 go_test(
@@ -15,13 +25,5 @@ go_test(
         "proxy_test.go",
     ],
     embed = [":http"],
-    deps = [
-        "//services/common/domain",
-        "//services/common/middleware",
-        "@com_github_golang_jwt_jwt_v4//:jwt",
-        "@com_github_labstack_echo_v4//:echo",
-        "@com_github_prometheus_client_golang//prometheus",
-        "@com_github_stretchr_testify//assert",
-        "@com_github_stretchr_testify//require",
-    ],
+    deps = ["@com_github_prometheus_client_golang//prometheus"],
 )

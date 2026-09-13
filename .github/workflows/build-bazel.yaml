@@ -10,6 +10,7 @@ on:
     paths:
       - "services/**"
       - "tools/ci/**"
+      - ".depolicy.yaml"
       - "**/BUILD"
       - "**/BUILD.bazel"
       - "**/*.bzl"
@@ -19,12 +20,14 @@ on:
       - "MODULE.bazel.lock"
       - "go.mod"
       - "go.sum"
+      - "scripts/generate-openapi.sh"
       - ".github/workflows/build-bazel.yaml"
       - "!frontend/**"
   push:
     paths:
       - "services/**"
       - "tools/ci/**"
+      - ".depolicy.yaml"
       - "**/BUILD"
       - "**/BUILD.bazel"
       - "**/*.bzl"
@@ -34,6 +37,7 @@ on:
       - "MODULE.bazel.lock"
       - "go.mod"
       - "go.sum"
+      - "scripts/generate-openapi.sh"
       - ".github/workflows/build-bazel.yaml"
       - "!frontend/**"
 
@@ -85,6 +89,23 @@ jobs:
       - name: Verify Gazelle
         run: bazel run --lockfile_mode=error //:gazelle -- -mode=diff
 
+      # Depolicy checks direct imports; this catches Echo hidden behind adapters.
+      - name: Verify native runtime has no transitive Echo dependency
+        shell: bash
+        run: |
+          forbidden_runtime="$(bazel query --lockfile_mode=error 'filter("com_github_labstack_echo", deps(//services/tadoku-api/cmd/tadoku-api:tadoku-api))')"
+          test -z "$forbidden_runtime" || { echo "$forbidden_runtime"; exit 1; }
+
+      - name: Verify native import policies (including test files)
+        run: |
+          bazel test --lockfile_mode=error //tools/ci/depolicy:depolicy_test
+          bazel run --lockfile_mode=error //tools/ci/depolicy
+
+      - name: Verify native OpenAPI generation
+        run: |
+          ./scripts/generate-openapi.sh
+          git diff --exit-code -- services/tadoku-api/generated/openapi
+
       - name: Build
         run: bazel build --lockfile_mode=error //...
 
@@ -105,11 +126,15 @@ jobs:
       - name: Run tests
         run: bazel test --lockfile_mode=error //...
 
-      - name: Race-test native API helpers
+      - name: Race-test native API slice and helpers
         run: >-
           bazel test --lockfile_mode=error --@rules_go//go/config:race
           //services/tadoku-api/internal/timex:timex_test
           //services/tadoku-api/infra/postgres:postgres_test
+          //services/tadoku-api/features/content:content_test
+          //services/tadoku-api/e2e:e2e_test
+          //services/tadoku-api/cmd/tadoku-api:tadoku-api_test
+          //services/tadoku-api/transport/http:http_test
 
       - name: Load backend images for scanning
         run: bazel run --lockfile_mode=error //:load_images

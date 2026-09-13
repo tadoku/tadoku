@@ -1,0 +1,4107 @@
+# Canonical Tadoku HTTP contract. Legacy specs are frozen build/compatibility inputs.
+openapi: 3.0.3
+info:
+  title: Tadoku API
+  version: 1.0.0
+  license:
+    name: MIT
+    url: https://github.com/tadoku/tadoku/blob/main/LICENSE
+  description: Canonical contract for native and proxied Tadoku operations.
+    Internal and callback entries are an inventory, not a gateway exposure
+    change; their existing direct callers keep the upstream URLs recorded in
+    x-tadoku-sources.
+servers:
+  - url: https://tadoku.app/api
+x-tadoku-operational-surfaces:
+  description: >-
+    Manually registered operational endpoints are not business API operations and are excluded
+    from the public documentation projection. Each API exposes GET /livez and GET /readyz on
+    its own HTTP listener, and GET /metrics on its separate metrics listener. Legacy health
+    endpoints retain their optional-auth middleware. No gateway exposure changes are implied.
+  apis:
+    - tadoku-api
+    - authz-api
+    - content-api
+    - immersion-api
+    - profile-api
+  health_paths: [/livez, /readyz]
+  metrics_path: /metrics
+x-tadoku-sources:
+  Authz:
+    domain: authz
+    exposure: public
+    path: services/authz-api/http/rest/openapi/api.yaml
+    info:
+      title: authz-api
+      license:
+        name: MIT
+        url: https://github.com/tadoku/tadoku/blob/main/LICENSE
+      version: 1.0.0
+    servers:
+      - url: https://tadoku.app/api/authz/
+  Content:
+    domain: content
+    exposure: public
+    path: services/content-api/http/rest/openapi/api.yaml
+    info:
+      title: content-api
+      license:
+        name: MIT
+        url: https://github.com/tadoku/tadoku/blob/main/LICENSE
+      version: 1.0.0
+    servers:
+      - url: https://tadoku.app/api/content/
+    externalDocs:
+      description: Find out more about Tadoku
+      url: https://tadoku.github.io/tadoku/
+  Immersion:
+    domain: immersion
+    exposure: public
+    path: services/immersion-api/http/rest/openapi/api.yaml
+    info:
+      title: immersion-api
+      license:
+        name: MIT
+        url: https://github.com/tadoku/tadoku/blob/main/LICENSE
+      version: 2.0.0
+    servers:
+      - url: https://tadoku.app/api/immersion/
+    externalDocs:
+      description: Find out more about Tadoku
+      url: https://tadoku.github.io/tadoku/
+  Profile:
+    domain: profile
+    exposure: public
+    path: services/profile-api/http/rest/openapi/api.yaml
+    info:
+      title: profile-api
+      license:
+        name: MIT
+        url: https://github.com/tadoku/tadoku/blob/main/LICENSE
+      version: 1.0.0
+    servers:
+      - url: https://tadoku.app/api/profile/
+    externalDocs:
+      description: Find out more about Tadoku
+      url: https://tadoku.github.io/tadoku/
+  AuthzInternal:
+    domain: authz
+    exposure: internal
+    path: services/authz-api/http/rest/openapi/internal-api.yaml
+    info:
+      title: authz-api-internal
+      description: Internal API for service-to-service communication
+      license:
+        name: MIT
+        url: https://github.com/tadoku/tadoku/blob/main/LICENSE
+      version: 1.0.0
+    servers:
+      - url: http://authz-api:8080/
+  AuthzProxy:
+    domain: authz
+    exposure: callback
+    path: services/authz-api/http/rest/openapi/proxy-api.yaml
+    info:
+      title: authz-api-oathkeeper-callback
+      description: Internal callback API used only by Oathkeeper authorization rules
+      license:
+        name: MIT
+        url: https://github.com/tadoku/tadoku/blob/main/LICENSE
+      version: 1.0.0
+    servers:
+      - url: http://authz-api:8080/
+  ImmersionInternal:
+    domain: immersion
+    exposure: internal
+    path: services/immersion-api/http/rest/openapi/internal-api.yaml
+    info:
+      title: immersion-api-internal
+      description: Internal API for service-to-service communication
+      license:
+        name: MIT
+        url: https://github.com/tadoku/tadoku/blob/main/LICENSE
+      version: 1.0.0
+    servers:
+      - url: http://immersion-api:8080/
+  ProfileInternal:
+    domain: profile
+    exposure: internal
+    path: services/profile-api/http/rest/openapi/internal-api.yaml
+    info:
+      title: profile-api-internal
+      description: Internal API for service-to-service communication
+      license:
+        name: MIT
+        url: https://github.com/tadoku/tadoku/blob/main/LICENSE
+      version: 1.0.0
+    servers:
+      - url: http://profile-api:8080/
+paths:
+  /authz/ping:
+    get:
+      summary: Checks if service is responsive
+      operationId: AuthzPing
+      tags:
+        - metadata
+      responses:
+        "200":
+          description: successful operation
+          content:
+            text/plain:
+              schema:
+                type: string
+      x-tadoku-source: Authz
+      x-tadoku-exposure: public
+      x-tadoku-owner: legacy
+      x-legacy-path: /ping
+      x-legacy-operation-id: ping
+  /authz/current-user/role:
+    get:
+      summary: Fetches the role of the current user
+      operationId: AuthzRoleGet
+      tags:
+        - role
+      security:
+        - AuthzcookieAuth: []
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthzUserRole"
+        "401":
+          description: unauthorized
+        "503":
+          description: authorization unavailable
+      x-tadoku-source: Authz
+      x-tadoku-exposure: public
+      x-tadoku-owner: legacy
+      x-legacy-path: /current-user/role
+      x-legacy-operation-id: roleGet
+  "/authz/users/{id}/role":
+    put:
+      summary: Update user role (admin only)
+      operationId: AuthzRoleUpdate
+      tags:
+        - admin
+      security:
+        - AuthzcookieAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AuthzRoleUpdateRequest"
+      responses:
+        "200":
+          description: successful operation
+        "400":
+          description: invalid request
+        "401":
+          description: unauthorized
+        "403":
+          description: forbidden (not admin, or target is admin)
+        "404":
+          description: user not found
+        "503":
+          description: authorization unavailable
+      x-tadoku-source: Authz
+      x-tadoku-exposure: public
+      x-tadoku-owner: legacy
+      x-legacy-path: /users/{id}/role
+      x-legacy-operation-id: roleUpdate
+  /authz/permission/check:
+    post:
+      summary: Checks if the current user has a specific permission
+      operationId: AuthzPermissionCheck
+      tags:
+        - permissions
+      security:
+        - AuthzcookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AuthzPermissionCheckRequest"
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthzPermissionCheckResponse"
+        "400":
+          description: invalid request
+        "401":
+          description: unauthorized
+        "403":
+          description: forbidden (not allowlisted)
+        "503":
+          description: authorization unavailable
+      x-tadoku-source: Authz
+      x-tadoku-exposure: public
+      x-tadoku-owner: legacy
+      x-legacy-path: /permission/check
+      x-legacy-operation-id: permissionCheck
+  "/content/pages/{namespace}/{slug}":
+    get:
+      summary: Returns page content for a given slug
+      operationId: ContentPageFindBySlug
+      tags:
+        - pages
+      parameters:
+        - name: slug
+          in: path
+          description: Slug of page to return
+          required: true
+          schema:
+            type: string
+        - name: namespace
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ContentPage"
+        "404":
+          description: Page not found or not published
+      x-tadoku-source: Content
+      x-tadoku-exposure: public
+      x-tadoku-owner: legacy
+      x-legacy-path: /pages/{namespace}/{slug}
+      x-legacy-operation-id: pageFindBySlug
+    put:
+      summary: Updates an existing page
+      operationId: ContentPageUpdate
+      tags:
+        - pages
+      security:
+        - ContentcookieAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ContentPage"
+      parameters:
+        - name: namespace
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: slug
+          in: path
+          description: ID of page
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ContentPage"
+        "400":
+          description: Invalid page
+        "404":
+          description: Page does not exist and cannot be updated
+      x-tadoku-source: Content
+      x-tadoku-exposure: public
+      x-tadoku-owner: legacy
+      x-legacy-path: /pages/{namespace}/{id}
+      x-legacy-operation-id: pageUpdate
+    delete:
+      summary: Deletes an existing page
+      operationId: ContentPageDelete
+      tags:
+        - pages
+      security:
+        - ContentcookieAuth: []
+      parameters:
+        - name: namespace
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: slug
+          in: path
+          description: ID of page
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: successful operation
+        "403":
+          description: Not allowed
+        "404":
+          description: Page not found
+      x-tadoku-source: Content
+      x-tadoku-exposure: public
+      x-tadoku-owner: legacy
+      x-legacy-path: /pages/{namespace}/{id}
+      x-legacy-operation-id: pageDelete
+  "/content/pages/{namespace}":
+    post:
+      summary: Creates a new page
+      operationId: ContentPageCreate
+      tags:
+        - pages
+      security:
+        - ContentcookieAuth: []
+      parameters:
+        - name: namespace
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ContentPage"
+      responses:
+        "201":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ContentPage"
+        "400":
+          description: Invalid page
+      x-tadoku-source: Content
+      x-tadoku-exposure: public
+      x-tadoku-owner: legacy
+      x-legacy-path: /pages/{namespace}
+      x-legacy-operation-id: pageCreate
+    get:
+      summary: lists all pages
+      operationId: ContentPageList
+      tags:
+        - pages
+      security:
+        - ContentcookieAuth: []
+      parameters:
+        - name: namespace
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: page_size
+          in: query
+          required: false
+          schema:
+            type: integer
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+        - name: include_drafts
+          in: query
+          required: false
+          allowEmptyValue: true
+          schema:
+            type: boolean
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ContentPages"
+      x-tadoku-source: Content
+      x-tadoku-exposure: public
+      x-tadoku-owner: legacy
+      x-legacy-path: /pages/{namespace}
+      x-legacy-operation-id: pageList
+  "/content/pages/{namespace}/{id}/versions":
+    get:
+      summary: Lists all versions of a page
+      operationId: ContentPageVersionList
+      tags:
+        - pages
+      security:
+        - ContentcookieAuth: []
+      parameters:
+        - name: namespace
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: id
+          in: path
+          description: ID of page
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ContentPageVersions"
+        "403":
+          description: Not allowed
+        "404":
+          description: Page not found
+      x-tadoku-source: Content
+      x-tadoku-exposure: public
+      x-tadoku-owner: legacy
+      x-legacy-path: /pages/{namespace}/{id}/versions
+      x-legacy-operation-id: pageVersionList
+  "/content/pages/{namespace}/{id}/versions/{contentId}":
+    get:
+      summary: Gets a specific version of a page
+      operationId: ContentPageVersionGet
+      tags:
+        - pages
+      security:
+        - ContentcookieAuth: []
+      parameters:
+        - name: namespace
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: id
+          in: path
+          description: ID of page
+          required: true
+          schema:
+            type: string
+        - name: contentId
+          in: path
+          description: Content ID of the version
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ContentPageVersion"
+        "403":
+          description: Not allowed
+        "404":
+          description: Page or version not found
+      x-tadoku-source: Content
+      x-tadoku-exposure: public
+      x-tadoku-owner: legacy
+      x-legacy-path: /pages/{namespace}/{id}/versions/{contentId}
+      x-legacy-operation-id: pageVersionGet
+  "/content/posts/{namespace}/{slug}":
+    get:
+      summary: Returns page content for a given slug
+      operationId: ContentPostFindBySlug
+      tags:
+        - posts
+      parameters:
+        - name: slug
+          in: path
+          description: Slug of post to return
+          required: true
+          schema:
+            type: string
+        - name: namespace
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ContentPost"
+        "404":
+          description: Post not found or not published
+      x-tadoku-source: Content
+      x-tadoku-exposure: public
+      x-tadoku-owner: legacy
+      x-legacy-path: /posts/{namespace}/{slug}
+      x-legacy-operation-id: postFindBySlug
+    put:
+      summary: Updates an existing post
+      operationId: ContentPostUpdate
+      tags:
+        - posts
+      security:
+        - ContentcookieAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ContentPost"
+      parameters:
+        - name: slug
+          in: path
+          description: ID of post
+          required: true
+          schema:
+            type: string
+        - name: namespace
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ContentPost"
+        "400":
+          description: Invalid post
+        "404":
+          description: Post does not exist and cannot be updated
+      x-tadoku-source: Content
+      x-tadoku-exposure: public
+      x-tadoku-owner: legacy
+      x-legacy-path: /posts/{namespace}/{id}
+      x-legacy-operation-id: postUpdate
+    delete:
+      summary: Deletes an existing post
+      operationId: ContentPostDelete
+      tags:
+        - posts
+      security:
+        - ContentcookieAuth: []
+      parameters:
+        - name: slug
+          in: path
+          description: ID of post
+          required: true
+          schema:
+            type: string
+        - name: namespace
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: successful operation
+        "403":
+          description: Not allowed
+        "404":
+          description: Post not found
+      x-tadoku-source: Content
+      x-tadoku-exposure: public
+      x-tadoku-owner: legacy
+      x-legacy-path: /posts/{namespace}/{id}
+      x-legacy-operation-id: postDelete
+  "/content/posts/{namespace}":
+    post:
+      summary: Creates a new post
+      operationId: ContentPostCreate
+      tags:
+        - posts
+      security:
+        - ContentcookieAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ContentPost"
+      parameters:
+        - name: namespace
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "201":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ContentPost"
+        "400":
+          description: Invalid post
+      x-tadoku-source: Content
+      x-tadoku-exposure: public
+      x-tadoku-owner: legacy
+      x-legacy-path: /posts/{namespace}
+      x-legacy-operation-id: postCreate
+    get:
+      summary: lists all posts
+      operationId: ContentPostList
+      tags:
+        - posts
+      parameters:
+        - name: namespace
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: page_size
+          in: query
+          required: false
+          schema:
+            type: integer
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+        - name: include_drafts
+          in: query
+          required: false
+          allowEmptyValue: true
+          schema:
+            type: boolean
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ContentPosts"
+      x-tadoku-source: Content
+      x-tadoku-exposure: public
+      x-tadoku-owner: legacy
+      x-legacy-path: /posts/{namespace}
+      x-legacy-operation-id: postList
+  "/content/posts/{namespace}/{id}/versions":
+    get:
+      summary: Lists all versions of a post
+      operationId: ContentPostVersionList
+      tags:
+        - posts
+      security:
+        - ContentcookieAuth: []
+      parameters:
+        - name: namespace
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: id
+          in: path
+          description: ID of post
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ContentPostVersions"
+        "403":
+          description: Not allowed
+        "404":
+          description: Post not found
+      x-tadoku-source: Content
+      x-tadoku-exposure: public
+      x-tadoku-owner: legacy
+      x-legacy-path: /posts/{namespace}/{id}/versions
+      x-legacy-operation-id: postVersionList
+  "/content/posts/{namespace}/{id}/versions/{contentId}":
+    get:
+      summary: Gets a specific version of a post
+      operationId: ContentPostVersionGet
+      tags:
+        - posts
+      security:
+        - ContentcookieAuth: []
+      parameters:
+        - name: namespace
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: id
+          in: path
+          description: ID of post
+          required: true
+          schema:
+            type: string
+        - name: contentId
+          in: path
+          description: Content ID of the version
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ContentPostVersion"
+        "403":
+          description: Not allowed
+        "404":
+          description: Post or version not found
+      x-tadoku-source: Content
+      x-tadoku-exposure: public
+      x-tadoku-owner: legacy
+      x-legacy-path: /posts/{namespace}/{id}/versions/{contentId}
+      x-legacy-operation-id: postVersionGet
+  "/content/announcements/{namespace}/active":
+    get:
+      summary: Lists currently active announcements
+      operationId: ContentAnnouncementListActive
+      tags:
+        - announcements
+      parameters:
+        - name: namespace
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ContentAnnouncements"
+      x-tadoku-source: Content
+      x-tadoku-exposure: public
+      x-tadoku-owner: native
+      x-legacy-path: /announcements/{namespace}/active
+      x-legacy-operation-id: announcementListActive
+  "/content/announcements/{namespace}":
+    post:
+      summary: Creates a new announcement
+      operationId: ContentAnnouncementCreate
+      tags:
+        - announcements
+      security:
+        - ContentcookieAuth: []
+      parameters:
+        - name: namespace
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ContentAnnouncement"
+      responses:
+        "201":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ContentAnnouncement"
+        "400":
+          description: Invalid announcement
+      x-tadoku-source: Content
+      x-tadoku-exposure: public
+      x-tadoku-owner: legacy
+      x-legacy-path: /announcements/{namespace}
+      x-legacy-operation-id: announcementCreate
+    get:
+      summary: Lists all announcements
+      operationId: ContentAnnouncementList
+      tags:
+        - announcements
+      security:
+        - ContentcookieAuth: []
+      parameters:
+        - name: namespace
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: page_size
+          in: query
+          required: false
+          schema:
+            type: integer
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ContentAnnouncementList"
+      x-tadoku-source: Content
+      x-tadoku-exposure: public
+      x-tadoku-owner: legacy
+      x-legacy-path: /announcements/{namespace}
+      x-legacy-operation-id: announcementList
+  "/content/announcements/{namespace}/{id}":
+    get:
+      summary: Gets an announcement by ID
+      operationId: ContentAnnouncementFindByID
+      tags:
+        - announcements
+      security:
+        - ContentcookieAuth: []
+      parameters:
+        - name: namespace
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: id
+          in: path
+          description: ID of announcement
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ContentAnnouncement"
+        "403":
+          description: Not allowed
+        "404":
+          description: Announcement not found
+      x-tadoku-source: Content
+      x-tadoku-exposure: public
+      x-tadoku-owner: legacy
+      x-legacy-path: /announcements/{namespace}/{id}
+      x-legacy-operation-id: announcementFindByID
+    put:
+      summary: Updates an existing announcement
+      operationId: ContentAnnouncementUpdate
+      tags:
+        - announcements
+      security:
+        - ContentcookieAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ContentAnnouncement"
+      parameters:
+        - name: namespace
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: id
+          in: path
+          description: ID of announcement
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ContentAnnouncement"
+        "400":
+          description: Invalid announcement
+        "404":
+          description: Announcement does not exist and cannot be updated
+      x-tadoku-source: Content
+      x-tadoku-exposure: public
+      x-tadoku-owner: legacy
+      x-legacy-path: /announcements/{namespace}/{id}
+      x-legacy-operation-id: announcementUpdate
+    delete:
+      summary: Deletes an existing announcement
+      operationId: ContentAnnouncementDelete
+      tags:
+        - announcements
+      security:
+        - ContentcookieAuth: []
+      parameters:
+        - name: namespace
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: id
+          in: path
+          description: ID of announcement
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: successful operation
+        "403":
+          description: Not allowed
+        "404":
+          description: Announcement not found
+      x-tadoku-source: Content
+      x-tadoku-exposure: public
+      x-tadoku-owner: legacy
+      x-legacy-path: /announcements/{namespace}/{id}
+      x-legacy-operation-id: announcementDelete
+  /content/ping:
+    get:
+      summary: Checks if service is responsive
+      operationId: ContentPing
+      tags:
+        - metadata
+      responses:
+        "200":
+          description: successful operation
+          content:
+            text/plain:
+              schema:
+                type: string
+      x-tadoku-source: Content
+      x-tadoku-exposure: public
+      x-tadoku-owner: legacy
+      x-legacy-path: /ping
+      x-legacy-operation-id: ping
+  /immersion/contests:
+    post:
+      summary: Creates a new contest
+      operationId: ImmersionContestCreate
+      tags:
+        - contests
+      security:
+        - ImmersioncookieAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ImmersionContest"
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ImmersionContest"
+        "400":
+          description: Invalid contest
+        "403":
+          description: Not allowed to create this contest
+        "409":
+          $ref: "#/components/responses/ImmersionAccountDeletionInProgress"
+      x-tadoku-source: Immersion
+      x-tadoku-exposure: public
+      x-tadoku-owner: legacy
+      x-legacy-path: /contests
+      x-legacy-operation-id: contestCreate
+    get:
+      summary: Lists all the contests, paginated
+      operationId: ImmersionContestList
+      tags:
+        - contests
+      parameters:
+        - name: page_size
+          in: query
+          required: false
+          schema:
+            type: integer
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+        - name: include_deleted
+          in: query
+          required: false
+          allowEmptyValue: true
+          schema:
+            type: boolean
+        - name: official
+          in: query
+          required: false
+          allowEmptyValue: true
+          schema:
+            type: boolean
+        - name: user_id
+          in: query
+          required: false
+          allowEmptyValue: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ImmersionContests"
+      x-tadoku-source: Immersion
+      x-tadoku-exposure: public
+      x-tadoku-owner: legacy
+      x-legacy-path: /contests
+      x-legacy-operation-id: contestList
+  /immersion/contests/create-permissions:
+    get:
+      summary: Check if user has permission to create a new contest
+      operationId: ImmersionContestCreatePermissionCheck
+      tags:
+        - contests
+      security:
+        - ImmersioncookieAuth: []
+      responses:
+        "200":
+          description: Allowed to create a contest
+        "403":
+          description: Not allowed to create a contest
+      x-tadoku-source: Immersion
+      x-tadoku-exposure: public
+      x-tadoku-owner: legacy
+      x-legacy-path: /contests/create-permissions
+      x-legacy-operation-id: contestCreatePermissionCheck
+  "/immersion/contests/{id}":
+    get:
+      summary: Fetches a contest by id
+      operationId: ImmersionContestFindByID
+      tags:
+        - contests
+      parameters:
+        - name: id
+          in: path
+          description: ID of contest to return
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ImmersionContestView"
+        "404":
+          description: not found
+      x-tadoku-source: Immersion
+      x-tadoku-exposure: public
+      x-tadoku-owner: legacy
+      x-legacy-path: /contests/{id}
+      x-legacy-operation-id: contestFindByID
+  /immersion/contests/latest-official:
+    get:
+      summary: Fetches the latest official contest
+      operationId: ImmersionContestFindLatestOfficial
+      tags:
+        - contests
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ImmersionContestView"
+        "404":
+          description: not found
+      x-tadoku-source: Immersion
+      x-tadoku-exposure: public
+      x-tadoku-owner: legacy
+      x-legacy-path: /contests/latest-official
+      x-legacy-operation-id: contestFindLatestOfficial
+  "/immersion/contests/{id}/registration":
+    get:
+      summary: Fetches a contest registration if it exists
+      operationId: ImmersionContestFindRegistration
+      tags:
+        - contests
+      security:
+        - ImmersioncookieAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ImmersionContestRegistration"
+        "404":
+          description: not found
+      x-tadoku-source: Immersion
+      x-tadoku-exposure: public
+      x-tadoku-owner: legacy
+      x-legacy-path: /contests/{id}/registration
+      x-legacy-operation-id: contestFindRegistration
+    post:
+      summary: Creates or updates a registration for a contest
+      operationId: ImmersionContestRegistrationUpsert
+      tags:
+        - contests
+      security:
+        - ImmersioncookieAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - language_codes
+              properties:
+                language_codes:
+                  type: array
+                  items:
+                    type: string
+      responses:
+        "200":
+          description: successful operation
+        "400":
+          description: language combination is invalid
+        "404":
+          description: contest not found
+        "409":
+          $ref: "#/components/responses/ImmersionAccountDeletionInProgress"
+      x-tadoku-source: Immersion
+      x-tadoku-exposure: public
+      x-tadoku-owner: legacy
+      x-legacy-path: /contests/{id}/registration
+      x-legacy-operation-id: contestRegistrationUpsert
+  "/immersion/contests/{id}/leaderboard":
+    get:
+      summary: Fetches the leaderboard for a contest
+      operationId: ImmersionContestFetchLeaderboard
+      tags:
+        - contests
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: page_size
+          in: query
+          required: false
+          schema:
+            type: integer
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+        - name: language_code
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: activity_id
+          in: query
+          required: false
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ImmersionLeaderboard"
+        "404":
+          description: not found
+      x-tadoku-source: Immersion
+      x-tadoku-exposure: public
+      x-tadoku-owner: legacy
+      x-legacy-path: /contests/{id}/leaderboard
+      x-legacy-operation-id: contestFetchLeaderboard
+  "/immersion/contests/{id}/summary":
+    get:
+      summary: Fetches the summary for a contest
+      operationId: ImmersionContestFetchSummary
+      tags:
+        - contests
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ImmersionContestSummary"
+        "404":
+          description: not found
+      x-tadoku-source: Immersion
+      x-tadoku-exposure: public
+      x-tadoku-owner: legacy
+      x-legacy-path: /contests/{id}/summary
+      x-legacy-operation-id: contestFetchSummary
+  "/immersion/contests/{id}/logs":
+    get:
+      summary: Lists the logs attached to a contest
+      operationId: ImmersionContestListLogs
+      tags:
+        - contests
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: include_deleted
+          in: query
+          required: false
+          allowEmptyValue: true
+          schema:
+            type: boolean
+        - name: page_size
+          in: query
+          required: false
+          schema:
+            type: integer
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+        - name: user_id
+          in: query
+          required: false
+          allowEmptyValue: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ImmersionLogs"
+        "404":
+          description: not found
+      x-tadoku-source: Immersion
+      x-tadoku-exposure: public
+      x-tadoku-owner: legacy
+      x-legacy-path: /contests/{id}/logs
+      x-legacy-operation-id: contestListLogs
+  "/immersion/contests/{id}/moderation/detach/{log_id}":
+    post:
+      summary: Detaches a log from a contest (moderation action)
+      operationId: ImmersionContestModerationDetachLog
+      tags:
+        - contests
+      security:
+        - ImmersioncookieAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: log_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - reason
+              properties:
+                reason:
+                  type: string
+                  minLength: 1
+                  maxLength: 1000
+      responses:
+        "200":
+          description: successful operation
+        "401":
+          description: unauthorized
+        "403":
+          description: forbidden (not contest admin or site admin)
+        "404":
+          description: contest or log not found
+        "409":
+          $ref: "#/components/responses/ImmersionAccountDeletionInProgress"
+      x-tadoku-source: Immersion
+      x-tadoku-exposure: public
+      x-tadoku-owner: legacy
+      x-legacy-path: /contests/{id}/moderation/detach/{log_id}
+      x-legacy-operation-id: contestModerationDetachLog
+  "/immersion/contests/{id}/profile/{user_id}/scores":
+    get:
+      summary: Fetches the scores of a user profile in a contest
+      operationId: ImmersionContestProfileFetchScores
+      tags:
+        - contests_profile
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: user_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ImmersionContestProfileScores"
+        "404":
+          description: not found
+      x-tadoku-source: Immersion
+      x-tadoku-exposure: public
+      x-tadoku-owner: legacy
+      x-legacy-path: /contests/{id}/profile/{user_id}/scores
+      x-legacy-operation-id: contestProfileFetchScores
+  "/immersion/contests/{id}/profile/{user_id}/activity":
+    get:
+      summary: Fetches the activity of a user profile in a contest
+      operationId: ImmersionContestProfileFetchActivity
+      tags:
+        - contests_profile
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: user_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ImmersionContestProfileActivity"
+        "404":
+          description: not found
+      x-tadoku-source: Immersion
+      x-tadoku-exposure: public
+      x-tadoku-owner: legacy
+      x-legacy-path: /contests/{id}/profile/{user_id}/activity
+      x-legacy-operation-id: contestProfileFetchActivity
+  /immersion/contests/ongoing-registrations:
+    get:
+      summary: Fetches all the ongoing contest registrations of the logged in user,
+        always in a single page
+      operationId: ImmersionContestFindOngoingRegistrations
+      tags:
+        - contests
+      security:
+        - ImmersioncookieAuth: []
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ImmersionContestRegistrations"
+      x-tadoku-source: Immersion
+      x-tadoku-exposure: public
+      x-tadoku-owner: legacy
+      x-legacy-path: /contests/ongoing-registrations
+      x-legacy-operation-id: contestFindOngoingRegistrations
+  /immersion/contests/configuration-options:
+    get:
+      summary: Fetches the configuration options for a new contest
+      operationId: ImmersionContestGetConfigurations
+      tags:
+        - contests
+      security:
+        - ImmersioncookieAuth: []
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ImmersionContestConfigurationOptions"
+      x-tadoku-source: Immersion
+      x-tadoku-exposure: public
+      x-tadoku-owner: legacy
+      x-legacy-path: /contests/configuration-options
+      x-legacy-operation-id: contestGetConfigurations
+  /immersion/logs:
+    post:
+      summary: Submits a new log
+      operationId: ImmersionLogCreate
+      tags:
+        - logs
+      security:
+        - ImmersioncookieAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - language_code
+                - activity_id
+                - tags
+              properties:
+                registration_ids:
+                  type: array
+                  items:
+                    type: string
+                    format: uuid
+                language_code:
+                  type: string
+                  example: zho
+                activity_id:
+                  format: int32
+                  type: integer
+                amount:
+                  type: number
+                  format: float
+                unit_id:
+                  type: string
+                  format: uuid
+                unit_key:
+                  type: string
+                duration_seconds:
+                  type: integer
+                  format: int32
+                tags:
+                  type: array
+                  items:
+                    type: string
+                  example:
+                    - book
+                    - fiction
+                description:
+                  type: string
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ImmersionLog"
+        "400":
+          description: invalid submission
+        "409":
+          $ref: "#/components/responses/ImmersionAccountDeletionInProgress"
+      x-tadoku-source: Immersion
+      x-tadoku-exposure: public
+      x-tadoku-owner: legacy
+      x-legacy-path: /logs
+      x-legacy-operation-id: logCreate
+  /immersion/logs/score-preview:
+    post:
+      summary: Previews platform and contest scores without creating a log
+      operationId: ImmersionScorePreview
+      tags:
+        - logs
+      security:
+        - ImmersioncookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - language_code
+                - activity_id
+                - tags
+              properties:
+                registration_ids:
+                  type: array
+                  items:
+                    type: string
+                    format: uuid
+                language_code:
+                  type: string
+                  example: jpn
+                activity_id:
+                  format: int32
+                  type: integer
+                amount:
+                  type: number
+                  format: float
+                unit_id:
+                  type: string
+                  format: uuid
+                unit_key:
+                  type: string
+                duration_seconds:
+                  type: integer
+                  format: int32
+                tags:
+                  type: array
+                  items:
+                    type: string
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ImmersionScorePreview"
+        "400":
+          description: invalid preview input
+      x-tadoku-source: Immersion
+      x-tadoku-exposure: public
+      x-tadoku-owner: legacy
+      x-legacy-path: /logs/score-preview
+      x-legacy-operation-id: scorePreview
+  "/immersion/logs/{id}":
+    get:
+      summary: Fetches a log by id
+      operationId: ImmersionLogFindByID
+      tags:
+        - logs
+      parameters:
+        - name: id
+          in: path
+          description: ID of log to return
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ImmersionLog"
+        "404":
+          description: not found
+      x-tadoku-source: Immersion
+      x-tadoku-exposure: public
+      x-tadoku-owner: legacy
+      x-legacy-path: /logs/{id}
+      x-legacy-operation-id: logFindByID
+    delete:
+      summary: Deletes a log by id
+      operationId: ImmersionLogDeleteByID
+      tags:
+        - logs
+      parameters:
+        - name: id
+          in: path
+          description: ID of log to delete
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: successful operation
+        "403":
+          description: forbidden
+        "404":
+          description: not found
+        "409":
+          $ref: "#/components/responses/ImmersionAccountDeletionInProgress"
+      x-tadoku-source: Immersion
+      x-tadoku-exposure: public
+      x-tadoku-owner: legacy
+      x-legacy-path: /logs/{id}
+      x-legacy-operation-id: logDeleteByID
+    put:
+      summary: Updates an existing log
+      operationId: ImmersionLogUpdate
+      tags:
+        - logs
+      security:
+        - ImmersioncookieAuth: []
+      parameters:
+        - name: id
+          in: path
+          description: ID of log to update
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - tags
+              properties:
+                amount:
+                  type: number
+                  format: float
+                unit_id:
+                  type: string
+                  format: uuid
+                unit_key:
+                  type: string
+                duration_seconds:
+                  type: integer
+                  format: int32
+                tags:
+                  type: array
+                  items:
+                    type: string
+                  example:
+                    - book
+                    - fiction
+                description:
+                  type: string
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ImmersionLog"
+        "400":
+          description: invalid request
+        "401":
+          description: unauthorized
+        "403":
+          description: forbidden
+        "404":
+          description: not found
+        "409":
+          $ref: "#/components/responses/ImmersionAccountDeletionInProgress"
+      x-tadoku-source: Immersion
+      x-tadoku-exposure: public
+      x-tadoku-owner: legacy
+      x-legacy-path: /logs/{id}
+      x-legacy-operation-id: logUpdate
+  "/immersion/logs/{id}/contest-registrations":
+    put:
+      summary: Updates the contest registrations for a log
+      operationId: ImmersionLogContestRegistrationUpdate
+      tags:
+        - logs
+      security:
+        - ImmersioncookieAuth: []
+      parameters:
+        - name: id
+          in: path
+          description: ID of log
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - registration_ids
+              properties:
+                registration_ids:
+                  type: array
+                  items:
+                    type: string
+                    format: uuid
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ImmersionLog"
+        "400":
+          description: invalid registration selection
+        "401":
+          description: unauthorized
+        "403":
+          description: forbidden (not log owner)
+        "404":
+          description: log not found
+        "409":
+          $ref: "#/components/responses/ImmersionAccountDeletionInProgress"
+      x-tadoku-source: Immersion
+      x-tadoku-exposure: public
+      x-tadoku-owner: legacy
+      x-legacy-path: /logs/{id}/contest-registrations
+      x-legacy-operation-id: logContestRegistrationUpdate
+  /immersion/logs/configuration-options:
+    get:
+      summary: Fetches the configuration options for a log
+      operationId: ImmersionLogGetConfigurations
+      tags:
+        - logs
+      security:
+        - ImmersioncookieAuth: []
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ImmersionLogConfigurationOptions"
+      x-tadoku-source: Immersion
+      x-tadoku-exposure: public
+      x-tadoku-owner: legacy
+      x-legacy-path: /logs/configuration-options
+      x-legacy-operation-id: logGetConfigurations
+  /immersion/logs/tag-suggestions:
+    get:
+      summary: Fetches tag suggestions for autocomplete
+      operationId: ImmersionLogTagSuggestions
+      tags:
+        - logs
+      security:
+        - ImmersioncookieAuth: []
+      parameters:
+        - name: query
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ImmersionTagSuggestions"
+      x-tadoku-source: Immersion
+      x-tadoku-exposure: public
+      x-tadoku-owner: legacy
+      x-legacy-path: /logs/tag-suggestions
+      x-legacy-operation-id: logTagSuggestions
+  "/immersion/users/{userId}/profile":
+    get:
+      summary: Fetches a profile of a user
+      operationId: ImmersionProfileFindByUserID
+      tags:
+        - profile
+      parameters:
+        - name: userId
+          in: path
+          description: ID of user to return
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ImmersionUserProfile"
+        "404":
+          description: not found
+      x-tadoku-source: Immersion
+      x-tadoku-exposure: public
+      x-tadoku-owner: legacy
+      x-legacy-path: /users/{userId}/profile
+      x-legacy-operation-id: profileFindByUserID
+  "/immersion/users/{userId}/activity/{year}":
+    get:
+      summary: Fetches a activity summary of a user for a given year
+      operationId: ImmersionProfileYearlyActivityByUserID
+      tags:
+        - profile
+      parameters:
+        - name: userId
+          in: path
+          description: ID of user to return
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: year
+          in: path
+          description: year of activity to fetch
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ImmersionUserActivity"
+        "404":
+          description: not found
+      x-tadoku-source: Immersion
+      x-tadoku-exposure: public
+      x-tadoku-owner: legacy
+      x-legacy-path: /users/{userId}/activity/{year}
+      x-legacy-operation-id: profileYearlyActivityByUserID
+  "/immersion/users/{userId}/scores/{year}":
+    get:
+      summary: Fetches the scores of a user for a given year
+      operationId: ImmersionProfileYearlyScoresByUserID
+      tags:
+        - profile
+      parameters:
+        - name: userId
+          in: path
+          description: ID of user to return
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: year
+          in: path
+          description: year of activity to fetch
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ImmersionProfileScores"
+        "404":
+          description: not found
+      x-tadoku-source: Immersion
+      x-tadoku-exposure: public
+      x-tadoku-owner: legacy
+      x-legacy-path: /users/{userId}/scores/{year}
+      x-legacy-operation-id: profileYearlyScoresByUserID
+  "/immersion/users/{user_id}/logs":
+    get:
+      summary: Lists the logs of a user
+      operationId: ImmersionProfileListLogs
+      tags:
+        - profile
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: include_deleted
+          in: query
+          required: false
+          allowEmptyValue: true
+          schema:
+            type: boolean
+        - name: page_size
+          in: query
+          required: false
+          schema:
+            type: integer
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ImmersionLogs"
+        "404":
+          description: not found
+      x-tadoku-source: Immersion
+      x-tadoku-exposure: public
+      x-tadoku-owner: legacy
+      x-legacy-path: /users/{user_id}/logs
+      x-legacy-operation-id: profileListLogs
+  "/immersion/users/{userId}/contest-registrations/{year}":
+    get:
+      summary: Fetches the contest registrations of a user for a given year
+      description: Includes private contests for the current user and admins
+      operationId: ImmersionProfileYearlyContestRegistrationsByUserID
+      tags:
+        - profile
+      parameters:
+        - name: userId
+          in: path
+          description: ID of user to return
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: year
+          in: path
+          description: year of activity to fetch
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ImmersionContestRegistrations"
+      x-tadoku-source: Immersion
+      x-tadoku-exposure: public
+      x-tadoku-owner: legacy
+      x-legacy-path: /users/{userId}/contest-registrations/{year}
+      x-legacy-operation-id: profileYearlyContestRegistrationsByUserID
+  "/immersion/users/{userId}/activity-split/{year}":
+    get:
+      summary: Fetches a activity split summary of a user for a given year
+      operationId: ImmersionProfileYearlyActivitySplitByUserID
+      tags:
+        - profile
+      parameters:
+        - name: userId
+          in: path
+          description: ID of user to return
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: year
+          in: path
+          description: year of activity to fetch
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ImmersionActivitySplit"
+        "404":
+          description: not found
+      x-tadoku-source: Immersion
+      x-tadoku-exposure: public
+      x-tadoku-owner: legacy
+      x-legacy-path: /users/{userId}/activity-split/{year}
+      x-legacy-operation-id: profileYearlyActivitySplitByUserID
+  "/immersion/leaderboard/yearly/{year}":
+    get:
+      summary: Fetches the leaderboard for a given year
+      operationId: ImmersionFetchLeaderboardForYear
+      tags:
+        - leaderboard
+      parameters:
+        - name: year
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: page_size
+          in: query
+          required: false
+          schema:
+            type: integer
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+        - name: language_code
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: activity_id
+          in: query
+          required: false
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ImmersionLeaderboard"
+        "404":
+          description: not found
+      x-tadoku-source: Immersion
+      x-tadoku-exposure: public
+      x-tadoku-owner: legacy
+      x-legacy-path: /leaderboard/yearly/{year}
+      x-legacy-operation-id: fetchLeaderboardForYear
+  /immersion/leaderboard/global:
+    get:
+      summary: Fetches the global leaderboard
+      operationId: ImmersionFetchLeaderboardGlobal
+      tags:
+        - leaderboard
+      parameters:
+        - name: page_size
+          in: query
+          required: false
+          schema:
+            type: integer
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+        - name: language_code
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: activity_id
+          in: query
+          required: false
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ImmersionLeaderboard"
+        "404":
+          description: not found
+      x-tadoku-source: Immersion
+      x-tadoku-exposure: public
+      x-tadoku-owner: legacy
+      x-legacy-path: /leaderboard/global
+      x-legacy-operation-id: fetchLeaderboardGlobal
+  /immersion/scoring/rule-sets:
+    get:
+      summary: Lists platform scoring rule-set versions
+      operationId: ImmersionScoringRuleSetListPlatform
+      tags:
+        - scoring
+      security:
+        - ImmersioncookieAuth: []
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ImmersionScoringRuleSets"
+      x-tadoku-source: Immersion
+      x-tadoku-exposure: public
+      x-tadoku-owner: legacy
+      x-legacy-path: /scoring/rule-sets
+      x-legacy-operation-id: scoringRuleSetListPlatform
+    post:
+      summary: Creates a draft platform scoring rule-set version
+      operationId: ImmersionScoringRuleSetCreatePlatform
+      tags:
+        - scoring
+      security:
+        - ImmersioncookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ImmersionScoringRuleSetDraft"
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ImmersionScoringRuleSet"
+      x-tadoku-source: Immersion
+      x-tadoku-exposure: public
+      x-tadoku-owner: legacy
+      x-legacy-path: /scoring/rule-sets
+      x-legacy-operation-id: scoringRuleSetCreatePlatform
+  "/immersion/contests/{id}/scoring/rule-sets":
+    get:
+      summary: Lists scoring rule-set versions owned by a contest
+      operationId: ImmersionScoringRuleSetListContest
+      tags:
+        - scoring
+      security:
+        - ImmersioncookieAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ImmersionScoringRuleSets"
+      x-tadoku-source: Immersion
+      x-tadoku-exposure: public
+      x-tadoku-owner: legacy
+      x-legacy-path: /contests/{id}/scoring/rule-sets
+      x-legacy-operation-id: scoringRuleSetListContest
+    post:
+      summary: Creates a draft contest scoring rule-set version
+      operationId: ImmersionScoringRuleSetCreateContest
+      tags:
+        - scoring
+      security:
+        - ImmersioncookieAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ImmersionScoringRuleSetDraft"
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ImmersionScoringRuleSet"
+      x-tadoku-source: Immersion
+      x-tadoku-exposure: public
+      x-tadoku-owner: legacy
+      x-legacy-path: /contests/{id}/scoring/rule-sets
+      x-legacy-operation-id: scoringRuleSetCreateContest
+  "/immersion/scoring/rule-sets/{id}/publish":
+    post:
+      summary: Publishes an immutable scoring rule-set version
+      operationId: ImmersionScoringRuleSetPublish
+      tags:
+        - scoring
+      security:
+        - ImmersioncookieAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ImmersionScoringRuleSet"
+      x-tadoku-source: Immersion
+      x-tadoku-exposure: public
+      x-tadoku-owner: legacy
+      x-legacy-path: /scoring/rule-sets/{id}/publish
+      x-legacy-operation-id: scoringRuleSetPublish
+  "/immersion/scoring/rule-sets/{id}/activate":
+    post:
+      summary: Activates a published scoring rule-set version
+      operationId: ImmersionScoringRuleSetActivate
+      tags:
+        - scoring
+      security:
+        - ImmersioncookieAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "204":
+          description: activated
+      x-tadoku-source: Immersion
+      x-tadoku-exposure: public
+      x-tadoku-owner: legacy
+      x-legacy-path: /scoring/rule-sets/{id}/activate
+      x-legacy-operation-id: scoringRuleSetActivate
+  /immersion/ping:
+    get:
+      summary: Checks if service is responsive
+      operationId: ImmersionPing
+      tags:
+        - metadata
+      responses:
+        "200":
+          description: successful operation
+          content:
+            text/plain:
+              schema:
+                type: string
+      x-tadoku-source: Immersion
+      x-tadoku-exposure: public
+      x-tadoku-owner: legacy
+      x-legacy-path: /ping
+      x-legacy-operation-id: ping
+  /immersion/feature-flags:
+    get:
+      summary: Returns public feature flag decisions for the current user
+      operationId: ImmersionFeatureFlagDecisions
+      tags:
+        - metadata
+      responses:
+        "200":
+          description: Public feature flag decisions
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ImmersionFeatureFlagDecisionsResponse"
+      x-tadoku-source: Immersion
+      x-tadoku-exposure: public
+      x-tadoku-owner: legacy
+      x-legacy-path: /feature-flags
+      x-legacy-operation-id: featureFlagDecisions
+  "/immersion/admin/feature-flags/{flagKey}/users/{userId}":
+    get:
+      summary: Returns named-user access for an allowlisted feature flag (admin only)
+      operationId: ImmersionFeatureAccessGet
+      tags:
+        - admin
+      security:
+        - ImmersioncookieAuth: []
+      responses:
+        "200":
+          description: Named-user feature access
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ImmersionFeatureAccessResponse"
+        "400":
+          description: invalid request
+        "401":
+          description: unauthorized
+        "403":
+          description: forbidden (not admin)
+        "502":
+          description: feature configuration unavailable
+      parameters:
+        - &a1
+          name: flagKey
+          in: path
+          required: true
+          schema:
+            $ref: "#/components/schemas/ImmersionManagedFeatureFlagKey"
+        - &a2
+          name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      x-tadoku-source: Immersion
+      x-tadoku-exposure: public
+      x-tadoku-owner: legacy
+      x-legacy-path: /admin/feature-flags/{flagKey}/users/{userId}
+      x-legacy-operation-id: featureAccessGet
+    put:
+      summary: Grants named-user access to an allowlisted feature flag (admin only)
+      operationId: ImmersionFeatureAccessGrant
+      tags:
+        - admin
+      security:
+        - ImmersioncookieAuth: []
+      responses:
+        "200":
+          description: Updated named-user feature access
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ImmersionFeatureAccessResponse"
+        "400":
+          description: invalid request
+        "401":
+          description: unauthorized
+        "403":
+          description: forbidden (not admin)
+        "502":
+          description: feature configuration unavailable
+      parameters:
+        - *a1
+        - *a2
+      x-tadoku-source: Immersion
+      x-tadoku-exposure: public
+      x-tadoku-owner: legacy
+      x-legacy-path: /admin/feature-flags/{flagKey}/users/{userId}
+      x-legacy-operation-id: featureAccessGrant
+    delete:
+      summary: Revokes named-user access to an allowlisted feature flag (admin only)
+      operationId: ImmersionFeatureAccessRevoke
+      tags:
+        - admin
+      security:
+        - ImmersioncookieAuth: []
+      responses:
+        "200":
+          description: Updated named-user feature access
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ImmersionFeatureAccessResponse"
+        "400":
+          description: invalid request
+        "401":
+          description: unauthorized
+        "403":
+          description: forbidden (not admin)
+        "502":
+          description: feature configuration unavailable
+      parameters:
+        - *a1
+        - *a2
+      x-tadoku-source: Immersion
+      x-tadoku-exposure: public
+      x-tadoku-owner: legacy
+      x-legacy-path: /admin/feature-flags/{flagKey}/users/{userId}
+      x-legacy-operation-id: featureAccessRevoke
+  /immersion/languages:
+    get:
+      summary: Lists all languages (admin only)
+      operationId: ImmersionLanguageList
+      tags:
+        - admin
+      security:
+        - ImmersioncookieAuth: []
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ImmersionLanguages"
+        "401":
+          description: unauthorized
+        "403":
+          description: forbidden (not admin)
+      x-tadoku-source: Immersion
+      x-tadoku-exposure: public
+      x-tadoku-owner: legacy
+      x-legacy-path: /languages
+      x-legacy-operation-id: languageList
+    post:
+      summary: Creates a new language (admin only)
+      operationId: ImmersionLanguageCreate
+      tags:
+        - admin
+      security:
+        - ImmersioncookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ImmersionLanguage"
+      responses:
+        "200":
+          description: successful operation
+        "400":
+          description: invalid request
+        "401":
+          description: unauthorized
+        "403":
+          description: forbidden (not admin)
+        "409":
+          description: language with this code already exists
+      x-tadoku-source: Immersion
+      x-tadoku-exposure: public
+      x-tadoku-owner: legacy
+      x-legacy-path: /languages
+      x-legacy-operation-id: languageCreate
+  "/immersion/languages/{code}":
+    put:
+      summary: Updates an existing language (admin only)
+      operationId: ImmersionLanguageUpdate
+      tags:
+        - admin
+      security:
+        - ImmersioncookieAuth: []
+      parameters:
+        - name: code
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+              properties:
+                name:
+                  type: string
+                  minLength: 1
+                  maxLength: 100
+      responses:
+        "200":
+          description: successful operation
+        "400":
+          description: invalid request
+        "401":
+          description: unauthorized
+        "403":
+          description: forbidden (not admin)
+        "404":
+          description: language not found
+      x-tadoku-source: Immersion
+      x-tadoku-exposure: public
+      x-tadoku-owner: legacy
+      x-legacy-path: /languages/{code}
+      x-legacy-operation-id: languageUpdate
+  /profile/ping:
+    get:
+      summary: Checks if service is responsive
+      operationId: ProfilePing
+      tags:
+        - metadata
+      responses:
+        "200":
+          description: successful operation
+          content:
+            text/plain:
+              schema:
+                type: string
+      x-tadoku-source: Profile
+      x-tadoku-exposure: public
+      x-tadoku-owner: legacy
+      x-legacy-path: /ping
+      x-legacy-operation-id: ping
+  /profile/users:
+    get:
+      summary: Lists all users (admin only)
+      operationId: ProfileUsersList
+      tags:
+        - admin
+      security:
+        - ProfilecookieAuth: []
+      parameters:
+        - name: page_size
+          in: query
+          required: false
+          schema:
+            type: integer
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+        - name: query
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Fuzzy search on display name and email
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProfileUserList"
+        "401":
+          description: unauthorized
+        "403":
+          description: forbidden (not admin)
+      x-tadoku-source: Profile
+      x-tadoku-exposure: public
+      x-tadoku-owner: legacy
+      x-legacy-path: /users
+      x-legacy-operation-id: usersList
+  /authz/internal/v1/ping:
+    get:
+      summary: Internal health check for service-to-service calls
+      operationId: AuthzInternalInternalPing
+      tags:
+        - internal
+      security:
+        - AuthzInternalserviceAuth: []
+      responses:
+        "200":
+          description: successful operation
+          content:
+            text/plain:
+              schema:
+                type: string
+        "401":
+          description: unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthzInternalErrorResponse"
+      x-tadoku-source: AuthzInternal
+      x-tadoku-exposure: internal
+      x-tadoku-owner: legacy
+      x-legacy-path: /internal/v1/ping
+      x-legacy-operation-id: internalPing
+  /authz/internal/v1/permission/check:
+    post:
+      summary: Checks a permission for an arbitrary subject (no allowlist)
+      operationId: AuthzInternalInternalPermissionCheck
+      tags:
+        - internal
+      security:
+        - AuthzInternalserviceAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AuthzInternalInternalPermissionCheckRequest"
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthzInternalPermissionCheckResponse"
+        "400":
+          description: invalid request
+        "401":
+          description: unauthorized
+        "503":
+          description: authorization unavailable
+      x-tadoku-source: AuthzInternal
+      x-tadoku-exposure: internal
+      x-tadoku-owner: legacy
+      x-legacy-path: /internal/v1/permission/check
+      x-legacy-operation-id: internalPermissionCheck
+  /authz/internal/v1/relationships:
+    post:
+      summary: Creates a relation tuple in Keto (allowlisted per-service)
+      operationId: AuthzInternalInternalRelationshipCreate
+      tags:
+        - internal
+      security:
+        - AuthzInternalserviceAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AuthzInternalRelationshipWriteRequest"
+      responses:
+        "200":
+          description: successful operation
+        "400":
+          description: invalid request
+        "401":
+          description: unauthorized
+        "403":
+          description: forbidden (not allowlisted)
+        "503":
+          description: authorization unavailable
+      x-tadoku-source: AuthzInternal
+      x-tadoku-exposure: internal
+      x-tadoku-owner: legacy
+      x-legacy-path: /internal/v1/relationships
+      x-legacy-operation-id: internalRelationshipCreate
+    delete:
+      summary: Deletes a relation tuple in Keto (allowlisted per-service)
+      operationId: AuthzInternalInternalRelationshipDelete
+      tags:
+        - internal
+      security:
+        - AuthzInternalserviceAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AuthzInternalRelationshipWriteRequest"
+      responses:
+        "200":
+          description: successful operation
+        "400":
+          description: invalid request
+        "401":
+          description: unauthorized
+        "403":
+          description: forbidden (not allowlisted)
+        "503":
+          description: authorization unavailable
+      x-tadoku-source: AuthzInternal
+      x-tadoku-exposure: internal
+      x-tadoku-owner: legacy
+      x-legacy-path: /internal/v1/relationships
+      x-legacy-operation-id: internalRelationshipDelete
+  /authz/internal/v1/proxy/admin-check:
+    post:
+      summary: Authorizes a Kratos subject as a Tadoku administrator
+      operationId: AuthzProxyProxyAdminCheck
+      tags:
+        - proxy
+      security:
+        - AuthzProxyoathkeeperCallbackAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AuthzProxyProxyAdminCheckRequest"
+      responses:
+        "200":
+          description: subject is a Tadoku administrator; the empty response is required
+            by Oathkeeper remote_json
+        "400":
+          description: invalid request
+        "401":
+          description: missing or invalid Oathkeeper callback credential
+        "403":
+          description: subject is not a Tadoku administrator
+        "503":
+          description: authorization unavailable
+      x-tadoku-source: AuthzProxy
+      x-tadoku-exposure: callback
+      x-tadoku-owner: legacy
+      x-legacy-path: /internal/v1/proxy/admin-check
+      x-legacy-operation-id: proxyAdminCheck
+  /immersion/internal/v1/account-deletion-eligibility:
+    post:
+      summary: Checks whether an account owns a running contest that blocks deletion
+      operationId: ImmersionInternalInternalAccountDeletionEligibility
+      tags:
+        - internal
+      security:
+        - ImmersionInternalserviceAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ImmersionInternalAccountDeletionEligibilityRequest"
+      responses:
+        "204":
+          description: account is currently eligible for deletion
+        "400":
+          description: invalid request
+        "401":
+          description: caller is not a service identity
+        "403":
+          description: caller is not profile-api
+        "409":
+          description: account owns at least one running contest
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ImmersionInternalAccountDeletionEligibilityConflict"
+      x-tadoku-source: ImmersionInternal
+      x-tadoku-exposure: internal
+      x-tadoku-owner: legacy
+      x-legacy-path: /internal/v1/account-deletion-eligibility
+      x-legacy-operation-id: internalAccountDeletionEligibility
+  /immersion/internal/v1/account-deletion-scrubs:
+    post:
+      summary: Idempotently anonymizes and removes immersion data for a locked account
+      operationId: ImmersionInternalInternalAccountDeletionScrub
+      tags:
+        - internal
+      security:
+        - ImmersionInternalserviceAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ImmersionInternalAccountDeletionScrubRequest"
+      responses:
+        "204":
+          description: account data is scrubbed or was already scrubbed
+        "400":
+          description: invalid request
+        "401":
+          description: caller is not a service identity
+        "403":
+          description: caller is not profile-api
+        "409":
+          description: account is not locked or owns a running contest
+      x-tadoku-source: ImmersionInternal
+      x-tadoku-exposure: internal
+      x-tadoku-owner: legacy
+      x-legacy-path: /internal/v1/account-deletion-scrubs
+      x-legacy-operation-id: internalAccountDeletionScrub
+  /immersion/internal/v1/account-deletion-locks:
+    post:
+      summary: Idempotently prevents further mutations for an account
+      operationId: ImmersionInternalInternalAccountDeletionLock
+      tags:
+        - internal
+      security:
+        - ImmersionInternalserviceAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ImmersionInternalAccountDeletionLockRequest"
+      responses:
+        "204":
+          description: account is locked or was already locked
+        "400":
+          description: invalid request
+        "401":
+          description: caller is not a service identity
+        "403":
+          description: caller is not profile-api
+        "409":
+          description: account owns a running contest
+      x-tadoku-source: ImmersionInternal
+      x-tadoku-exposure: internal
+      x-tadoku-owner: legacy
+      x-legacy-path: /internal/v1/account-deletion-locks
+      x-legacy-operation-id: internalAccountDeletionLock
+  /profile/internal/v1/ping:
+    get:
+      summary: Internal health check for service-to-service calls
+      operationId: ProfileInternalInternalPing
+      tags:
+        - internal
+      security:
+        - ProfileInternalserviceAuth: []
+      responses:
+        "200":
+          description: successful operation
+          content:
+            text/plain:
+              schema:
+                type: string
+        "401":
+          description: unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProfileInternalErrorResponse"
+      x-tadoku-source: ProfileInternal
+      x-tadoku-exposure: internal
+      x-tadoku-owner: legacy
+      x-legacy-path: /internal/v1/ping
+      x-legacy-operation-id: internalPing
+components:
+  schemas:
+    AuthzUserRole:
+      type: object
+      required:
+        - role
+      properties:
+        role:
+          type: string
+          enum:
+            - admin
+            - user
+            - guest
+            - banned
+    AuthzRoleUpdateRequest:
+      type: object
+      required:
+        - role
+        - reason
+      properties:
+        role:
+          type: string
+          enum:
+            - user
+            - banned
+        reason:
+          type: string
+          minLength: 1
+          maxLength: 1000
+    AuthzPermissionCheckRequest:
+      type: object
+      required:
+        - namespace
+        - object
+        - relation
+      properties:
+        namespace:
+          type: string
+          minLength: 1
+        object:
+          type: string
+          minLength: 1
+        relation:
+          type: string
+          minLength: 1
+    AuthzPermissionCheckResponse:
+      type: object
+      required:
+        - allowed
+      properties:
+        allowed:
+          type: boolean
+    ContentPage:
+      type: object
+      required:
+        - slug
+        - title
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: d7e82f70-f7b9-4952-8258-1e4d16f0c244
+        slug:
+          type: string
+          example: welcome-to-tadoku
+        title:
+          type: string
+          example: Welcome to Tadoku!
+        html:
+          type: string
+          example: <p>Example page!</p>
+        published_at:
+          type: string
+          format: date-time
+          example: 2022-12-14T19:48:00Z
+        created_at:
+          type: string
+          format: date-time
+          example: 2022-12-14T19:48:00Z
+        updated_at:
+          type: string
+          format: date-time
+          example: 2022-12-14T19:48:00Z
+    ContentPages:
+      allOf:
+        - $ref: "#/components/schemas/ContentPaginatedList"
+        - type: object
+          required:
+            - pages
+          properties:
+            pages:
+              type: array
+              maxItems: 50
+              items:
+                $ref: "#/components/schemas/ContentPage"
+    ContentPost:
+      type: object
+      required:
+        - slug
+        - title
+        - content
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: d7e82f70-f7b9-4952-8258-1e4d16f0c244
+        namespace:
+          type: string
+          example: tadoku
+        slug:
+          type: string
+          example: welcome-to-tadoku
+        title:
+          type: string
+          example: Welcome to Tadoku!
+        content:
+          type: string
+          format: markdown
+          example: This an example **with markdown**.
+        published_at:
+          type: string
+          format: date-time
+          example: 2022-12-14T19:48:00Z
+        created_at:
+          type: string
+          format: date-time
+          example: 2022-12-14T19:48:00Z
+        updated_at:
+          type: string
+          format: date-time
+          example: 2022-12-14T19:48:00Z
+    ContentPosts:
+      allOf:
+        - $ref: "#/components/schemas/ContentPaginatedList"
+        - type: object
+          required:
+            - posts
+          properties:
+            posts:
+              type: array
+              maxItems: 50
+              items:
+                $ref: "#/components/schemas/ContentPost"
+    ContentPageVersion:
+      type: object
+      required:
+        - id
+        - version
+        - title
+        - created_at
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Content ID of this version
+        version:
+          type: integer
+          example: 1
+          description: Version number (starting at 1)
+        title:
+          type: string
+        html:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+    ContentPageVersions:
+      type: object
+      required:
+        - versions
+      properties:
+        versions:
+          type: array
+          items:
+            $ref: "#/components/schemas/ContentPageVersion"
+    ContentPostVersion:
+      type: object
+      required:
+        - id
+        - version
+        - title
+        - created_at
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Content ID of this version
+        version:
+          type: integer
+          example: 1
+          description: Version number (starting at 1)
+        title:
+          type: string
+        content:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+    ContentPostVersions:
+      type: object
+      required:
+        - versions
+      properties:
+        versions:
+          type: array
+          items:
+            $ref: "#/components/schemas/ContentPostVersion"
+    ContentAnnouncement:
+      type: object
+      required:
+        - title
+        - content
+        - style
+        - starts_at
+        - ends_at
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: d7e82f70-f7b9-4952-8258-1e4d16f0c244
+        namespace:
+          type: string
+          example: tadoku
+        title:
+          type: string
+          example: Scheduled Maintenance
+        content:
+          type: string
+          format: markdown
+          example: The site will be down for maintenance on **Friday**.
+        style:
+          type: string
+          enum:
+            - success
+            - warning
+            - error
+            - info
+          example: warning
+        href:
+          type: string
+          nullable: true
+          example: https://tadoku.app/blog/posts/maintenance
+        starts_at:
+          type: string
+          format: date-time
+          example: 2022-12-14T19:48:00Z
+        ends_at:
+          type: string
+          format: date-time
+          example: 2022-12-15T19:48:00Z
+        created_at:
+          type: string
+          format: date-time
+          example: 2022-12-14T19:48:00Z
+        updated_at:
+          type: string
+          format: date-time
+          example: 2022-12-14T19:48:00Z
+    ContentAnnouncements:
+      type: object
+      required:
+        - announcements
+      properties:
+        announcements:
+          type: array
+          items:
+            $ref: "#/components/schemas/ContentAnnouncement"
+    ContentAnnouncementList:
+      allOf:
+        - $ref: "#/components/schemas/ContentPaginatedList"
+        - type: object
+          required:
+            - announcements
+          properties:
+            announcements:
+              type: array
+              maxItems: 50
+              items:
+                $ref: "#/components/schemas/ContentAnnouncement"
+    ContentPaginatedList:
+      type: object
+      required:
+        - next_page_token
+        - total_size
+      properties:
+        total_size:
+          type: integer
+          example: 100
+        next_page_token:
+          type: string
+          description: is empty if there's no next page
+          example: "3"
+    ImmersionErrorResponse:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: string
+          enum:
+            - account_deletion_in_progress
+    ImmersionFeatureFlagDecisions:
+      type: object
+      additionalProperties: false
+      required:
+        - release-log-entry-v2
+      properties:
+        release-log-entry-v2:
+          type: boolean
+    ImmersionFeatureFlagDecisionsResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - decisions
+      properties:
+        decisions:
+          $ref: "#/components/schemas/ImmersionFeatureFlagDecisions"
+    ImmersionManagedFeatureFlagKey:
+      type: string
+      enum:
+        - release-log-entry-v2
+    ImmersionFeatureAccessResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - enabled
+        - changed
+        - environment
+        - revision
+      properties:
+        enabled:
+          type: boolean
+        changed:
+          type: boolean
+        environment:
+          type: string
+          enum:
+            - local
+            - production
+        revision:
+          type: string
+          pattern: ^[0-9a-f]{40}$
+    ImmersionUserProfile:
+      type: object
+      required:
+        - id
+        - display_name
+        - created_at
+      properties:
+        id:
+          type: string
+          format: uuid
+        display_name:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+          example: 2022-12-14T19:48:00Z
+    ImmersionUserActivityScore:
+      type: object
+      required:
+        - date
+        - score
+      properties:
+        date:
+          type: string
+          format: date
+          example: "2022-12-14"
+        score:
+          type: number
+          format: float
+    ImmersionUserActivity:
+      type: object
+      required:
+        - total_updates
+        - scores
+      properties:
+        total_updates:
+          type: integer
+        scores:
+          type: array
+          items:
+            $ref: "#/components/schemas/ImmersionUserActivityScore"
+    ImmersionActivitySplitScore:
+      type: object
+      required:
+        - activity_id
+        - activity_name
+        - score
+      properties:
+        activity_id:
+          type: integer
+        activity_name:
+          type: string
+        score:
+          type: number
+          format: float
+    ImmersionActivitySplit:
+      type: object
+      required:
+        - activities
+      properties:
+        activities:
+          type: array
+          items:
+            $ref: "#/components/schemas/ImmersionActivitySplitScore"
+    ImmersionLogConfigurationOptions:
+      allOf:
+        - $ref: "#/components/schemas/ImmersionLanguages"
+        - $ref: "#/components/schemas/ImmersionActivities"
+        - $ref: "#/components/schemas/ImmersionUnits"
+        - type: object
+          required:
+            - scoring_engine_enabled
+          properties:
+            user_language_codes:
+              type: array
+              items:
+                type: string
+            scoring_engine_enabled:
+              type: boolean
+    ImmersionUnit:
+      type: object
+      required:
+        - id
+        - unit_key
+        - log_activity_id
+        - name
+        - modifier
+      properties:
+        id:
+          type: string
+          format: uuid
+        unit_key:
+          type: string
+          example: reading_page
+        log_activity_id:
+          type: integer
+        name:
+          type: string
+          example: Page
+        modifier:
+          type: number
+          example: 3.14
+        language_code:
+          type: string
+          example: jpa
+    ImmersionUnits:
+      type: object
+      required:
+        - units
+      properties:
+        units:
+          type: array
+          items:
+            $ref: "#/components/schemas/ImmersionUnit"
+    ImmersionTagSuggestion:
+      type: object
+      required:
+        - tag
+        - count
+      properties:
+        tag:
+          type: string
+        count:
+          type: integer
+    ImmersionTagSuggestions:
+      type: object
+      required:
+        - suggestions
+      properties:
+        suggestions:
+          type: array
+          items:
+            $ref: "#/components/schemas/ImmersionTagSuggestion"
+    ImmersionContestConfigurationOptions:
+      allOf:
+        - $ref: "#/components/schemas/ImmersionLanguages"
+        - $ref: "#/components/schemas/ImmersionActivities"
+        - type: object
+          required:
+            - can_create_official_round
+          properties:
+            can_create_official_round:
+              type: boolean
+    ImmersionLanguage:
+      type: object
+      required:
+        - code
+        - name
+      properties:
+        code:
+          type: string
+          example: jpa
+          description: In ISO-639-3
+            https://en.wikipedia.org/wiki/Wikipedia:WikiProject_Languages/List_of_ISO_639-3_language_codes_(2019)
+        name:
+          type: string
+          example: Japanese
+    ImmersionLanguages:
+      type: object
+      required:
+        - languages
+      properties:
+        languages:
+          type: array
+          items:
+            $ref: "#/components/schemas/ImmersionLanguage"
+    ImmersionActivity:
+      type: object
+      required:
+        - id
+        - name
+      properties:
+        id:
+          format: int32
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: Reading
+        default:
+          type: boolean
+        input_type:
+          type: string
+          enum:
+            - amount_primary
+            - time_primary
+    ImmersionActivities:
+      type: object
+      required:
+        - activities
+      properties:
+        activities:
+          type: array
+          items:
+            $ref: "#/components/schemas/ImmersionActivity"
+    ImmersionContestBase:
+      type: object
+      required:
+        - contest_start
+        - contest_end
+        - registration_end
+        - title
+        - private
+        - official
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+          example: 2023 Round 1
+        description:
+          type: string
+        contest_start:
+          type: string
+          format: date
+        contest_end:
+          type: string
+          format: date
+        registration_end:
+          type: string
+          format: date
+        private:
+          type: boolean
+        official:
+          type: boolean
+          example: false
+        owner_user_id:
+          type: string
+          format: uuid
+        owner_user_display_name:
+          type: string
+          example: john
+        created_at:
+          type: string
+          format: date-time
+          example: 2022-12-14T19:48:00Z
+        updated_at:
+          type: string
+          format: date-time
+          example: 2022-12-14T19:48:00Z
+        deleted:
+          type: boolean
+    ImmersionContest:
+      allOf:
+        - $ref: "#/components/schemas/ImmersionContestBase"
+        - type: object
+          required:
+            - language_code_allow_list
+            - activity_type_id_allow_list
+          properties:
+            language_code_allow_list:
+              type: array
+              items:
+                type: string
+              example:
+                - jpa
+                - zho
+                - kor
+            activity_type_id_allow_list:
+              type: array
+              items:
+                type: integer
+                format: int32
+              example:
+                - 1
+                - 2
+    ImmersionContestView:
+      allOf:
+        - $ref: "#/components/schemas/ImmersionContestBase"
+        - type: object
+          required:
+            - allowed_languages
+            - allowed_activities
+          properties:
+            allowed_languages:
+              type: array
+              items:
+                $ref: "#/components/schemas/ImmersionLanguage"
+            allowed_activities:
+              type: array
+              items:
+                $ref: "#/components/schemas/ImmersionActivity"
+    ImmersionContests:
+      allOf:
+        - $ref: "#/components/schemas/ImmersionPaginatedList"
+        - type: object
+          required:
+            - contests
+          properties:
+            contests:
+              type: array
+              maxItems: 50
+              items:
+                $ref: "#/components/schemas/ImmersionContest"
+    ImmersionContestSummary:
+      type: object
+      required:
+        - participant_count
+        - language_count
+        - total_score
+      properties:
+        participant_count:
+          type: integer
+        language_count:
+          type: integer
+        total_score:
+          type: number
+          format: float
+    ImmersionContestRegistration:
+      type: object
+      required:
+        - contest_id
+        - user_id
+        - user_display_name
+        - languages
+      properties:
+        id:
+          type: string
+          format: uuid
+        contest_id:
+          type: string
+          format: uuid
+        user_id:
+          type: string
+          format: uuid
+        user_display_name:
+          type: string
+          example: john
+        languages:
+          type: array
+          items:
+            $ref: "#/components/schemas/ImmersionLanguage"
+        contest:
+          $ref: "#/components/schemas/ImmersionContestView"
+    ImmersionContestRegistrations:
+      allOf:
+        - $ref: "#/components/schemas/ImmersionPaginatedList"
+        - type: object
+          required:
+            - registrations
+          properties:
+            registrations:
+              type: array
+              maxItems: 50
+              items:
+                $ref: "#/components/schemas/ImmersionContestRegistration"
+    ImmersionContestRegistrationReference:
+      type: object
+      required:
+        - contest_id
+        - contest_end
+        - registration_id
+        - title
+      properties:
+        registration_id:
+          type: string
+          format: uuid
+        contest_id:
+          type: string
+          format: uuid
+        contest_end:
+          type: string
+          format: date
+        title:
+          type: string
+          example: January 2026
+        owner_user_display_name:
+          type: string
+        official:
+          type: boolean
+        score:
+          type: number
+          format: float
+    ImmersionLeaderboardEntry:
+      type: object
+      required:
+        - rank
+        - user_id
+        - user_display_name
+        - score
+        - is_tie
+      properties:
+        rank:
+          type: integer
+        user_id:
+          type: string
+          format: uuid
+        user_display_name:
+          type: string
+          example: john
+        score:
+          type: number
+          format: float
+        is_tie:
+          type: boolean
+    ImmersionLeaderboard:
+      allOf:
+        - $ref: "#/components/schemas/ImmersionPaginatedList"
+        - type: object
+          required:
+            - entries
+          properties:
+            entries:
+              type: array
+              items:
+                $ref: "#/components/schemas/ImmersionLeaderboardEntry"
+    ImmersionScore:
+      type: object
+      required:
+        - language_code
+        - score
+      properties:
+        language_code:
+          type: string
+          example: zho
+        language_name:
+          type: string
+          example: Chinese
+        score:
+          type: number
+          format: float
+    ImmersionAppliedScoringRule:
+      type: object
+      required:
+        - rule_id
+        - rate
+      properties:
+        rule_id:
+          type: string
+          format: uuid
+        rate:
+          type: number
+          format: float
+    ImmersionScoreEstimate:
+      type: object
+      required:
+        - score
+        - source
+        - rules
+      properties:
+        score:
+          type: number
+          format: float
+        source:
+          type: string
+          enum:
+            - amount
+            - duration_minutes
+        rule_set_id:
+          type: string
+          format: uuid
+        rules:
+          type: array
+          items:
+            $ref: "#/components/schemas/ImmersionAppliedScoringRule"
+    ImmersionContestScoreEstimate:
+      type: object
+      required:
+        - registration_id
+        - contest_id
+        - estimate
+      properties:
+        registration_id:
+          type: string
+          format: uuid
+        contest_id:
+          type: string
+          format: uuid
+        estimate:
+          $ref: "#/components/schemas/ImmersionScoreEstimate"
+    ImmersionScorePreview:
+      type: object
+      required:
+        - platform
+        - contests
+      properties:
+        platform:
+          $ref: "#/components/schemas/ImmersionScoreEstimate"
+        contests:
+          type: array
+          items:
+            $ref: "#/components/schemas/ImmersionContestScoreEstimate"
+    ImmersionScoringRule:
+      type: object
+      required:
+        - priority
+        - stackable
+        - activity_id
+        - score_source
+        - rate
+      properties:
+        id:
+          type: string
+          format: uuid
+        priority:
+          type: integer
+          format: int32
+        stackable:
+          type: boolean
+        activity_id:
+          type: integer
+          format: int32
+        unit_key:
+          type: string
+        language_code:
+          type: string
+        tag:
+          type: string
+        score_source:
+          type: string
+          enum:
+            - amount
+            - duration_minutes
+        rate:
+          type: number
+          format: float
+    ImmersionScoringRuleSetDraft:
+      type: object
+      required:
+        - rules
+      properties:
+        mode:
+          type: string
+          enum:
+            - override
+            - replace
+        fallback_rule_set_id:
+          type: string
+          format: uuid
+        rules:
+          type: array
+          items:
+            $ref: "#/components/schemas/ImmersionScoringRule"
+    ImmersionScoringRuleSet:
+      type: object
+      required:
+        - id
+        - scope
+        - version
+        - status
+        - active
+        - rules
+        - created_at
+      properties:
+        id:
+          type: string
+          format: uuid
+        scope:
+          type: string
+          enum:
+            - platform
+            - contest
+        contest_id:
+          type: string
+          format: uuid
+        version:
+          type: integer
+          format: int32
+        status:
+          type: string
+          enum:
+            - draft
+            - published
+        active:
+          type: boolean
+        mode:
+          type: string
+          enum:
+            - override
+            - replace
+        fallback_rule_set_id:
+          type: string
+          format: uuid
+        rules:
+          type: array
+          items:
+            $ref: "#/components/schemas/ImmersionScoringRule"
+        created_at:
+          type: string
+          format: date-time
+        published_at:
+          type: string
+          format: date-time
+    ImmersionScoringRuleSets:
+      type: object
+      required:
+        - rule_sets
+      properties:
+        rule_sets:
+          type: array
+          items:
+            $ref: "#/components/schemas/ImmersionScoringRuleSet"
+    ImmersionScores:
+      type: array
+      items:
+        $ref: "#/components/schemas/ImmersionScore"
+    ImmersionProfileScores:
+      type: object
+      required:
+        - overall_score
+        - scores
+      properties:
+        overall_score:
+          type: number
+          format: float
+        scores:
+          $ref: "#/components/schemas/ImmersionScores"
+    ImmersionContestProfileScores:
+      allOf:
+        - $ref: "#/components/schemas/ImmersionProfileScores"
+        - type: object
+          required:
+            - registration
+          properties:
+            registration:
+              $ref: "#/components/schemas/ImmersionContestRegistration"
+    ImmersionContestProfileActivity:
+      type: object
+      required:
+        - rows
+      properties:
+        rows:
+          type: array
+          items:
+            $ref: "#/components/schemas/ImmersionContestProfileActivityRow"
+    ImmersionContestProfileActivityRow:
+      type: object
+      required:
+        - date
+        - language_code
+        - score
+      properties:
+        date:
+          type: string
+          format: date
+        language_code:
+          type: string
+          example: zho
+        score:
+          type: number
+          format: float
+    ImmersionLog:
+      type: object
+      required:
+        - id
+        - user_id
+        - language
+        - activity
+        - unit_id
+        - unit_name
+        - tags
+        - amount
+        - modifier
+        - score
+        - created_at
+        - deleted
+      properties:
+        id:
+          type: string
+          format: uuid
+        user_id:
+          type: string
+          format: uuid
+        user_display_name:
+          type: string
+        description:
+          type: string
+        language:
+          $ref: "#/components/schemas/ImmersionLanguage"
+        activity:
+          $ref: "#/components/schemas/ImmersionActivity"
+        unit_id:
+          type: string
+          format: uuid
+        unit_key:
+          type: string
+          example: reading_page
+        unit_name:
+          type: string
+          example: page
+        tags:
+          type: array
+          items:
+            type: string
+          example:
+            - Book
+            - Fiction
+        amount:
+          type: number
+          format: float
+        modifier:
+          type: number
+          format: float
+        score:
+          type: number
+          format: float
+        duration_seconds:
+          type: integer
+          format: int32
+        registrations:
+          type: array
+          items:
+            $ref: "#/components/schemas/ImmersionContestRegistrationReference"
+        created_at:
+          type: string
+          format: date-time
+        deleted:
+          type: boolean
+    ImmersionLogs:
+      allOf:
+        - $ref: "#/components/schemas/ImmersionPaginatedList"
+        - type: object
+          required:
+            - logs
+          properties:
+            logs:
+              type: array
+              items:
+                $ref: "#/components/schemas/ImmersionLog"
+    ImmersionPaginatedList:
+      type: object
+      required:
+        - next_page_token
+        - total_size
+      properties:
+        total_size:
+          type: integer
+          example: 100
+        next_page_token:
+          type: string
+          description: is empty if there's no next page
+          example: "3"
+    ProfileUserList:
+      type: object
+      required:
+        - users
+        - total_size
+      properties:
+        users:
+          type: array
+          items:
+            $ref: "#/components/schemas/ProfileUserListEntry"
+        total_size:
+          type: integer
+    ProfileUserListEntry:
+      type: object
+      required:
+        - id
+        - display_name
+        - email
+        - created_at
+      properties:
+        id:
+          type: string
+        display_name:
+          type: string
+        email:
+          type: string
+        created_at:
+          type: string
+        role:
+          type: string
+    AuthzInternalErrorResponse:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: string
+    AuthzInternalPermissionCheckResponse:
+      type: object
+      required:
+        - allowed
+      properties:
+        allowed:
+          type: boolean
+    AuthzInternalSubjectSet:
+      type: object
+      required:
+        - namespace
+        - object
+        - relation
+      properties:
+        namespace:
+          type: string
+          minLength: 1
+        object:
+          type: string
+          minLength: 1
+        relation:
+          type: string
+          minLength: 1
+    AuthzInternalInternalPermissionCheckRequest:
+      type: object
+      required:
+        - namespace
+        - object
+        - relation
+      properties:
+        namespace:
+          type: string
+          minLength: 1
+        object:
+          type: string
+          minLength: 1
+        relation:
+          type: string
+          minLength: 1
+        subject_id:
+          type: string
+        subject_set:
+          $ref: "#/components/schemas/AuthzInternalSubjectSet"
+    AuthzInternalRelationshipWriteRequest:
+      type: object
+      required:
+        - namespace
+        - object
+        - relation
+      properties:
+        namespace:
+          type: string
+          minLength: 1
+        object:
+          type: string
+          minLength: 1
+        relation:
+          type: string
+          minLength: 1
+        subject_id:
+          type: string
+        subject_set:
+          $ref: "#/components/schemas/AuthzInternalSubjectSet"
+    AuthzProxyProxyAdminCheckRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - subject
+      properties:
+        subject:
+          type: string
+          format: uuid
+          minLength: 1
+    ImmersionInternalAccountDeletionEligibilityRequest:
+      type: object
+      required:
+        - user_id
+      properties:
+        user_id:
+          type: string
+          format: uuid
+    ImmersionInternalAccountDeletionEligibilityConflict:
+      type: object
+      required:
+        - error
+        - available_after
+      properties:
+        error:
+          type: string
+          enum:
+            - running_contest_owned
+        available_after:
+          type: string
+          format: date-time
+    ImmersionInternalAccountDeletionScrubRequest:
+      type: object
+      required:
+        - user_id
+        - request_id
+      properties:
+        user_id:
+          type: string
+          format: uuid
+        request_id:
+          type: string
+          format: uuid
+    ImmersionInternalAccountDeletionLockRequest:
+      type: object
+      required:
+        - user_id
+        - request_id
+      properties:
+        user_id:
+          type: string
+          format: uuid
+        request_id:
+          type: string
+          format: uuid
+    ProfileInternalErrorResponse:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: string
+  securitySchemes:
+    AuthzcookieAuth:
+      type: apiKey
+      in: cookie
+      name: ory_kratos_session
+    ContentcookieAuth:
+      type: apiKey
+      in: cookie
+      name: ory_kratos_session
+    ImmersioncookieAuth:
+      type: apiKey
+      in: cookie
+      name: ory_kratos_session
+    ProfilecookieAuth:
+      type: apiKey
+      in: cookie
+      name: ory_kratos_session
+    AuthzInternalserviceAuth:
+      type: http
+      scheme: bearer
+      description: JWT token for service-to-service authentication (ES256)
+    AuthzProxyoathkeeperCallbackAuth:
+      type: http
+      scheme: bearer
+      description: Shared callback token presented only by Oathkeeper
+    ImmersionInternalserviceAuth:
+      type: http
+      scheme: bearer
+      description: JWT token for service-to-service authentication (ES256)
+    ProfileInternalserviceAuth:
+      type: http
+      scheme: bearer
+      description: JWT token for service-to-service authentication (ES256)
+  responses:
+    ImmersionAccountDeletionInProgress:
+      description: account deletion is in progress
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ImmersionErrorResponse"

@@ -47,15 +47,19 @@ oci_push(
 go_test(
     name = "migrations_test",
     srcs = ["migrations_test.go"],
+    args = ["-test.parallel=4"],
     data = ["//services/immersion-api/storage/postgres/migrations:up_files"],
-    env_inherit = ["IMMERSION_TEST_POSTGRES_URL"],
+    env_inherit = ["TADOKU_TEST_POSTGRES_URL"],
+    tags = [
+        "no-cache",
+        "no-remote-exec",
+        "requires-network",
+    ],
     deps = [
+        "//services/tadoku-api/internal/testpostgres",
         "@com_github_golang_migrate_migrate_v4//:migrate",
         "@com_github_golang_migrate_migrate_v4//database/postgres",
         "@com_github_golang_migrate_migrate_v4//source/file",
-        "@com_github_google_uuid//:uuid",
-        "@com_github_lib_pq//:pq",
-        "@com_github_stretchr_testify//require",
         "@rules_go//go/tools/bazel",
     ],
 )

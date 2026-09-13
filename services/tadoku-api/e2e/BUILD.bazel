@@ -1,0 +1,26 @@
+load("@rules_go//go:def.bzl", "go_test")
+
+go_test(
+    name = "e2e_test",
+    srcs = ["announcements_test.go"],
+    args = ["-test.parallel=4"],
+    env_inherit = ["TADOKU_TEST_POSTGRES_URL"],
+    tags = [
+        "no-cache",
+        "no-remote-exec",
+        "requires-network",
+    ],
+    deps = [
+        "//services/tadoku-api/app",
+        "//services/tadoku-api/e2e/legacy",
+        "//services/tadoku-api/features/access",
+        "//services/tadoku-api/features/content",
+        "//services/tadoku-api/generated/openapi",
+        "//services/tadoku-api/internal/testauth",
+        "//services/tadoku-api/internal/testpostgres",
+        "//services/tadoku-api/internal/timex",
+        "//services/tadoku-api/transport/http",
+        "@com_github_golang_jwt_jwt_v4//:jwt",
+        "@com_github_prometheus_client_golang//prometheus",
+    ],
+)

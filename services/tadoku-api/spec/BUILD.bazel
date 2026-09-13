@@ -1,0 +1,11 @@
+load("@rules_go//go:def.bzl", "go_test")
+
+go_test(
+    name = "spec_test",
+    srcs = ["openapi_test.go"],
+    data = ["openapi.yaml"],
+    deps = [
+        "@com_github_getkin_kin_openapi//openapi3",
+        "@rules_go//go/tools/bazel",
+    ],
+)

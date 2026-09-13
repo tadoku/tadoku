@@ -11,5 +11,5 @@ bazel_build(
 k8s_resource(
     'tadoku-api',
     labels=['backend'],
-    resource_deps=['authz-api', 'content-api', 'immersion-api', 'profile-api'],
+    resource_deps=['tadoku-dev-db-credentials', 'oathkeeper', 'keto', 'authz-api', 'content-api', 'immersion-api', 'profile-api'],
 )

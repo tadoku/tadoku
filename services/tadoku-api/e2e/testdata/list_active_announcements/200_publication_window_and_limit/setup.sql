@@ -1,4 +1,4 @@
--- Business time is fixed at 2026-09-12 12:00:00 UTC in TestMain.
+-- This announcement case freezes business time at 2026-09-12 12:00:00 UTC.
 insert into announcements (id, namespace, title, content, starts_at, ends_at, created_at, updated_at, deleted_at)
 values
   ('22222222-2222-4222-8222-000000000001', 'main', 'starts now', '<p>starts now</p>',

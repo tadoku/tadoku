@@ -16,7 +16,6 @@ import (
 	"github.com/tadoku/tadoku/services/tadoku-api/app"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/content"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/testpostgres"
-	"github.com/tadoku/tadoku/services/tadoku-api/internal/timex"
 	transport "github.com/tadoku/tadoku/services/tadoku-api/transport/http"
 )
 
@@ -42,10 +41,7 @@ func runTests(m *testing.M) (code int) {
 		}
 	}()
 
-	timex.TheWorld(time.Date(2026, 9, 12, 12, 0, 0, 0, time.UTC), func() {
-		code = m.Run()
-	})
-	return code
+	return m.Run()
 }
 
 // testAPI owns the production handler and an in-process sentinel transport.

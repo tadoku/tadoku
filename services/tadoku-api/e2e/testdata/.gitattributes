@@ -1,2 +1,2 @@
 # HTTP requests require an empty line after the headers, even without a body.
-*.request.http whitespace=-blank-at-eof
+request.http whitespace=-blank-at-eof

@@ -96,27 +96,43 @@ HTTP scenarios run sequentially and call `reset` before each scenario, not betwe
 dependent requests. `internal/testpostgres/cleanup.sql` explicitly lists mutable
 tables to truncate with `restart identity`. Add tables there as their slices gain
 tests; do not discover tables automatically or use `cascade`. Static data from
-migrations and `schema_migrations` are preserved. Scenario data lives in SQL files
-under `e2e/testdata/announcements/`; fixtures are not generated in Go. Reset and
-seeding commit before requests run, so application transactions commit normally.
+migrations and `schema_migrations` are preserved. Each case has its own SQL setup;
+fixtures are not generated in Go. Reset and seeding commit before requests run,
+so application transactions commit normally.
 There is no outer rollback transaction and no change to `RunInTransaction`.
 
 Database helpers take contexts and return errors, with explicit `Close` cleanup
 instead of `testing.TB`. Suite teardown preserves test failures and reports cleanup
-failures; partial setup also cleans up. Business time is frozen once around the
-suite; no extra request-context wrapper is needed. The pool-closing failure test
+failures; partial setup also cleans up. Freeze business time inside the tests that
+need it, not in `TestMain`; a scenario can use separate `timex.TheWorld` scopes for
+different times. No extra request-context wrapper is needed. The pool-closing failure test
 has isolated dependencies. Repository/transaction tests retain their independent
 databases and may run in parallel.
 
-Announcement requests live in `e2e/testdata/announcements/*.request.http`; the
-matching `*.golden.http` files contain the request label and complete expected
-HTTP response. Tests parse the request files with `net/http`, execute the production
+HTTP cases use `testdata/<testName>/<expectedStatus>_<caseName>/`. For example:
+
+```text
+e2e/testdata/list_active_announcements/200_plain/
+  setup.sql
+  request.http
+  golden.http
+```
+
+One table-driven announcements test discovers the case directories. Add a case
+by adding those three files, without editing Go code. Each case owns its seed,
+including an explicit comment-only `setup.sql` for an empty database. Shared
+cleanup runs before that SQL. The `golden.http` file contains the request label
+and complete expected response. Tests parse the request files with `net/http`,
+execute the production
 handler without credentials, and compare status, headers and body directly.
 Explicit seed IDs and frozen business time make responses deterministic; only
 HTTP line endings are normalized. Missing or changed goldens fail the test.
 There is no automatic recording mode: edit and review the expected files for an
 intentional contract change. Lifecycle tests stay focused on startup/shutdown,
 not a growing list of endpoint assertions.
+
+Pool-failure, cancellation and proxy-routing checks remain separate Go tests;
+they exercise dependency behavior rather than SQL-defined response cases.
 
 **Testing decision:** endpoint tests prove the minimum access level and business
 behavior. When auth middleware is added, test its credential/role/ban/failure matrix

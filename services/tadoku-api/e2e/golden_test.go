@@ -15,11 +15,10 @@ import (
 
 // checkHTTPGolden sends the checked-in HTTP request through the production
 // handler and compares its complete response with the reviewed golden file.
-func checkHTTPGolden(t *testing.T, handler http.Handler, name string) {
+func checkHTTPGolden(t *testing.T, handler http.Handler, directory string) {
 	t.Helper()
 
-	path := filepath.Join("testdata", "announcements", name)
-	input, err := os.ReadFile(path + ".request.http")
+	input, err := os.ReadFile(filepath.Join(directory, "request.http"))
 	if err != nil {
 		t.Fatalf("read request: %v", err)
 	}
@@ -41,11 +40,12 @@ func checkHTTPGolden(t *testing.T, handler http.Handler, name string) {
 	got := fmt.Sprintf(">>> %s %s\n%s", request.Method, request.RequestURI, dump)
 	got = strings.ReplaceAll(got, "\r\n", "\n")
 
-	want, err := os.ReadFile(path + ".golden.http")
+	goldenPath := filepath.Join(directory, "golden.http")
+	want, err := os.ReadFile(goldenPath)
 	if err != nil {
 		t.Fatalf("read golden: %v", err)
 	}
 	if got != string(want) {
-		t.Errorf("HTTP response differs from %s.golden.http\n--- got ---\n%s\n--- want ---\n%s", path, got, want)
+		t.Errorf("HTTP response differs from %s\n--- got ---\n%s\n--- want ---\n%s", goldenPath, got, want)
 	}
 }

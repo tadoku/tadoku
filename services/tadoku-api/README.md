@@ -101,12 +101,40 @@ bazel test //services/tadoku-api/e2e:e2e_test --test_output=all \
 E2E tests assemble production constructors and real JWT/Keto adapters against
 controlled HTTP responses, plus real PostgreSQL. Only the dedicated test-only
 `e2e/legacy` package imports Echo/legacy HTTP bindings. Bazel visibility restricts
-native local dependencies. CI checks the transitive runtime Echo ban, subtree
-Testify ban, OpenAPI generation, sqlc generation and the database suites.
+native local dependencies. CI checks import policies, the transitive runtime Echo
+ban, OpenAPI generation, sqlc generation and the database suites.
 
-**Remaining architecture gate:** Depolicy has not been added: the inspected
-upstream revision has no license. Bazel visibility and graph checks are useful
-but are not a replacement claim for all planned import rules. Adoption still
-needs permission, explicit configuration validation, positive/negative fixtures
-and proof that test-file imports are checked. Same-package responsibilities and
-business signatures still require review.
+### Import policies
+
+```sh
+bazel test //tools/ci/depolicy:depolicy_test
+bazel run //tools/ci/depolicy
+```
+
+Depolicy is pinned to `d754cd9f261c92d7422a34c7f4b721044ea0b8c3` in `go.mod`.
+Installation was explicitly approved on 13 September 2026 after review of the
+upstream license-file absence. This records project approval, not a change to
+upstream licensing.
+
+The Bazel runner validates the root `.depolicy.yaml` and `go.mod`, then invokes
+the unmodified upstream analyzer on every Go file in this subtree. Tests,
+generated code and inactive build-tag files are included. It uses Bazel's pinned
+SDK sources to classify standard-library imports, with no system Go installation
+or package downloads at runtime. Missing/invalid or nested configuration, an
+empty scope, uncovered/ambiguous packages and denied imports fail the check.
+Compilation/type checking remains in the ordinary Bazel build.
+
+Same-package tests use their production policy. External test packages use a
+synthetic `<directory>/_test` identity so feature-name captures cannot overlap
+their named assembly allowances. These are not blanket test exemptions; new
+external feature test packages need a named policy. Fixture libraries and the
+legacy comparison also retain Bazel's `testonly` restrictions.
+
+The policy tests exercise the actual configuration, including own-feature SQL,
+cross-feature denial, transport/app/domain boundaries, forbidden imports found
+only in test files, and fail-closed configuration handling. Depolicy replaces the
+temporary Testify graph check. The separate transitive Echo graph check remains
+because direct-import analysis cannot detect Echo hidden behind a dependency.
+
+Same-package service/repository responsibilities and business signatures still
+require review; import rules do not enforce those conventions.

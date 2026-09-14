@@ -323,7 +323,7 @@ func newTestHandlerWithTransport(t *testing.T, transport stdhttp.RoundTripper, t
 }
 
 func newProxyTestRouter() *Router {
-	return &Router{mux: stdhttp.NewServeMux()}
+	return &Router{rootMux: stdhttp.NewServeMux()}
 }
 
 type roundTripFunc func(*stdhttp.Request) (*stdhttp.Response, error)

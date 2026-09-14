@@ -42,7 +42,7 @@ func RegisterProxyRoutes(
 	registerer prometheus.Registerer,
 	logger *slog.Logger,
 ) error {
-	if router == nil || router.mux == nil {
+	if router == nil || router.rootMux == nil {
 		return fmt.Errorf("router is required")
 	}
 	if requestTimeout <= 0 {
@@ -80,12 +80,12 @@ func RegisterProxyRoutes(
 		}
 
 		handler := observe(current, requestTimeout, newReverseProxy(current, target, transport, logger), duration, logger)
-		router.mux.Handle(current.prefix, handler)
+		router.rootMux.Handle(current.prefix, handler)
 
 		if current.name == "content" {
 			// ServeMux GET routes also match HEAD. Keep HEAD on the legacy API
 			// until that operation is migrated; this exception is proxy-only.
-			router.mux.Handle("HEAD /content/announcements/{namespace}/active", handler)
+			router.rootMux.Handle("HEAD /content/announcements/{namespace}/active", handler)
 		}
 	}
 

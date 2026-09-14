@@ -14,25 +14,25 @@ import (
 // Router keeps application routes behind shared middleware while allowing this
 // package to attach probes and temporary legacy proxies outside it.
 type Router struct {
-	mux                  *stdhttp.ServeMux
-	application          *stdhttp.ServeMux
-	protectedApplication stdhttp.Handler
+	rootMux                     *stdhttp.ServeMux
+	applicationMux              *stdhttp.ServeMux
+	protectedApplicationHandler stdhttp.Handler
 }
 
 // Handle registers an application route behind the shared middleware.
 func (r *Router) Handle(pattern string, handler stdhttp.Handler) {
-	r.application.Handle(pattern, handler)
-	r.mux.Handle(pattern, r.protectedApplication)
+	r.applicationMux.Handle(pattern, handler)
+	r.rootMux.Handle(pattern, r.protectedApplicationHandler)
 }
 
 // HandleFunc registers an application route behind the shared middleware.
 func (r *Router) HandleFunc(pattern string, handler func(stdhttp.ResponseWriter, *stdhttp.Request)) {
-	r.application.HandleFunc(pattern, handler)
-	r.mux.Handle(pattern, r.protectedApplication)
+	r.applicationMux.HandleFunc(pattern, handler)
+	r.rootMux.Handle(pattern, r.protectedApplicationHandler)
 }
 
 func (r *Router) ServeHTTP(w stdhttp.ResponseWriter, request *stdhttp.Request) {
-	r.mux.ServeHTTP(w, request)
+	r.rootMux.ServeHTTP(w, request)
 }
 
 // NewHandler builds the application router without any legacy upstreams.
@@ -61,14 +61,14 @@ func NewHandler(
 	}
 
 	router := &Router{
-		mux:         stdhttp.NewServeMux(),
-		application: stdhttp.NewServeMux(),
+		rootMux:        stdhttp.NewServeMux(),
+		applicationMux: stdhttp.NewServeMux(),
 	}
-	router.protectedApplication = withRequestTimeout(timeout, authenticate(rejectBanned(router.application)))
-	router.mux.HandleFunc("GET /livez", func(w stdhttp.ResponseWriter, _ *stdhttp.Request) {
+	router.protectedApplicationHandler = withRequestTimeout(timeout, authenticate(rejectBanned(router.applicationMux)))
+	router.rootMux.HandleFunc("GET /livez", func(w stdhttp.ResponseWriter, _ *stdhttp.Request) {
 		_, _ = w.Write([]byte("ok"))
 	})
-	router.mux.Handle("GET /readyz", withRequestTimeout(timeout, readinessHandler(ready)))
+	router.rootMux.Handle("GET /readyz", withRequestTimeout(timeout, readinessHandler(ready)))
 	router.Handle(
 		"GET /content/announcements/{namespace}/active",
 		listActiveAnnouncements(application, logger),

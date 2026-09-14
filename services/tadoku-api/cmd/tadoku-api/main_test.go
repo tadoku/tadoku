@@ -50,6 +50,7 @@ func TestApplicationStartsAndShutsDown(t *testing.T) {
 		MetricsPort: 0,
 		ServiceName: "tadoku-api-test",
 		JWKS:        jwks.URL,
+		KetoReadURL: upstream.URL,
 
 		AuthzURL:     upstream.URL,
 		ContentURL:   upstream.URL,
@@ -144,6 +145,7 @@ func TestApplicationStartsAndShutsDown(t *testing.T) {
 
 func TestLoadConfigUsesValidatedDefaults(t *testing.T) {
 	t.Setenv("API_JWKS", "http://jwks.test")
+	t.Setenv("API_KETO_READ_URL", "http://keto-read.test")
 	t.Setenv("API_AUTHZ_URL", "http://authz")
 	t.Setenv("API_CONTENT_URL", "http://content")
 	t.Setenv("API_IMMERSION_URL", "http://immersion")
@@ -174,9 +176,19 @@ func TestLoadConfigUsesValidatedDefaults(t *testing.T) {
 	if cfg.JWKS != "http://jwks.test" {
 		t.Errorf("JWKS=%q", cfg.JWKS)
 	}
+	if cfg.KetoReadURL != "http://keto-read.test" {
+		t.Errorf("Keto read URL=%q", cfg.KetoReadURL)
+	}
 	t.Setenv("API_JWKS", "")
 	if _, err := loadConfig(); err == nil || !strings.Contains(err.Error(), "JWKS") {
 		t.Errorf("missing JWKS configuration error=%v", err)
+	}
+	t.Setenv("API_JWKS", "http://jwks.test")
+	for _, ketoURL := range []string{"", "not-a-url", "ftp://keto-read.test"} {
+		t.Setenv("API_KETO_READ_URL", ketoURL)
+		if _, err := loadConfig(); err == nil || !strings.Contains(err.Error(), "KetoReadURL") {
+			t.Errorf("Keto read URL %q error=%v", ketoURL, err)
+		}
 	}
 }
 

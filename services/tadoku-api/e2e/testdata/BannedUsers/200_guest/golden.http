@@ -1,0 +1,10 @@
+>>> GET /test/banned
+HTTP/1.1 200 OK
+Connection: close
+Content-Type: application/json; charset=UTF-8
+X-Test-Identity-Created-At: 2026-09-12T11:59:00Z
+X-Test-Identity-Display-Name: 
+X-Test-Identity-Email: 
+X-Test-Identity-Subject: guest
+
+{"status":"success"}

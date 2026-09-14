@@ -21,8 +21,11 @@ application router or migrated handlers.
 
 The router requires authentication middleware for application business handlers.
 Startup always constructs it from the configured gateway JWKS; there is no opt-out
-or feature flag. Health probes and temporary proxy registrations keep their existing
-behavior. Verified user claims travel in request context through `internal/identity`.
+or feature flag. Register application routes through the router's `Handle` or
+`HandleFunc` methods during construction; every such route inherits the shared
+request deadline, authentication and ban check. Health probes and temporary proxy
+registrations keep their existing behavior. Verified user claims travel in request
+context through `internal/identity`.
 
 Application operations compose features. Feature services own business decisions;
 repositories only query and map rows. `postgres.Executor` lets repositories use
@@ -67,11 +70,12 @@ In addition to the existing four upstream URLs, startup now requires:
   `PASSWORD`, `SSLMODE` fields. `API_POSTGRES_URL` remains rejected.
 - `API_POSTGRES_MAX_CONNECTIONS` (default 4, validated range 1–32).
 - `API_JWKS`, the gateway's public signing-key URL.
+- `API_KETO_READ_URL`, the Keto read API URL. Tadoku API receives no Keto write
+  URL or credential.
 
 Startup fetches JWKS within `API_DIAL_TIMEOUT` and pings PostgreSQL before opening
 listeners. Either failure aborts startup. Signing keys remain cached until restart;
-there is no periodic refresh or refresh on an unknown key ID. No Keto configuration
-is needed.
+there is no periodic refresh or refresh on an unknown key ID.
 `/readyz` checks PostgreSQL; `/livez` remains independent of dependency health.
 The existing proxy metrics and Go process metrics remain on the metrics listener
 (`API_METRICS_PORT`, default 9090). They describe proxy request volume/latency/errors
@@ -84,8 +88,14 @@ Authentication verifies bearer JWT signatures and the existing `exp`, `nbf` and
 `iat` time constraints. `exp` remains optional, and `iat` has no maximum age.
 Issuer and audience are not additionally restricted. Subject, email, display name
 and issued-at time are propagated; the identity's `CreatedAt` means token issue
-time, not account creation time. No role, ban, permission or service-audience
-policy runs here.
+time, not account creation time. JWT parsing itself performs no role, ban,
+permission or service-audience policy. After authentication, the application router checks
+the authenticated subject's direct `app:tadoku#banned` relation once. Missing,
+empty and signed `guest` subjects skip Keto. A ban returns an empty 403, including
+for administrators. Keto read errors are logged and deliberately fail open to
+preserve the existing availability policy. Unlike legacy role enrichment, this
+narrow check has no unrelated administrator lookup whose failure could discard a
+successful ban result. Request deadlines bound the provider call.
 
 Missing or malformed bearer headers return the legacy 400 JSON error; extracted
 but invalid JWTs return its 401 JSON error. Anonymous gateway traffic supplies a
@@ -109,6 +119,9 @@ loopback port, database `postgres`, credentials `postgres:postgres` and exactly
 `sslmode=disable`. Missing or unsafe configuration fails before any connection;
 new tests never skip. Fixtures create random disposable databases and apply the
 complete canonical migration history. Do not point them at shared dev or production.
+Relationship scenarios also start a pinned, official Linux x86-64 Keto v25.4.0
+SQLite-enabled executable under Bazel. Each helper owns an in-memory, loopback-only
+process using `infra/dev/ory/namespaces.keto.ts`; it never accepts an external target.
 
 ```sh
 bazel test //services/tadoku-api/... --test_output=errors
@@ -125,7 +138,8 @@ scenario, not between dependent requests. `internal/testpostgres/cleanup.sql`
 explicitly lists mutable tables to truncate with `restart identity`. Add tables
 there as their slices gain tests; do not discover tables automatically or use
 `cascade`. Static data from migrations and `schema_migrations` are preserved.
-Cases needing seed data have their own SQL setup; fixtures are not generated in Go.
+Cases needing seed data have their own SQL and/or relationship setup; fixtures are
+not generated in Go.
 Reset and seeding commit before requests run,
 so application transactions commit normally.
 There is no outer rollback transaction and no change to `RunInTransaction`.
@@ -145,6 +159,7 @@ subtest and its fixture directory:
 ```text
 e2e/testdata/<operation>/<status>_<description>/
   setup.sql       # optional
+  relationships.json # optional Keto relation-tuple array
   request.http
   golden.http
 ```
@@ -153,8 +168,9 @@ Each operation's tests use an explicit Go table. Each row declares
 `description []string` and `want` as an HTTP status constant; there is no separate
 fixture-name field to keep in sync. Add a case by adding a descriptive table row and
 its request and golden files; do not discover cases from directories. Add `setup.sql`
-only when the case needs seed data. Shared cleanup always runs; an absent setup file
-is skipped, while other read errors and invalid SQL still fail and roll back reset.
+or `relationships.json` only when the case needs that seed data. Shared PostgreSQL
+and Keto cleanup always runs; absent setup files are skipped, while other read,
+decode and provider errors fail the scenario.
 The `golden.http` file contains the request label
 and complete expected response. Tests parse the request files with `net/http`,
 execute the production handler at the operation's minimum required access level,
@@ -170,7 +186,8 @@ not a growing list of endpoint assertions.
 
 For every migrated operation, run each case against the native API and its
 corresponding legacy API in separately named subtests. Both consume the same
-`setup.sql`, `request.http` and `golden.http`; each must independently match the
+optional `setup.sql` and `relationships.json` plus required `request.http` and
+`golden.http`; each must independently match the
 full response. Use production route registration, handlers, domain operations,
 repositories and generated queries, mounting the legacy routes at the matching
 API prefix. Initialize only the dependencies the tested operations need. Confine
@@ -199,20 +216,79 @@ they exercise dependency behavior rather than SQL-defined response cases.
 
 Endpoint contract tests explicitly supply passthrough authentication so their
 credential-free request fixtures remain focused on business behavior. Authentication
-scenarios wrap a test-only success handler with real authentication middleware.
-The comparison handler uses legacy `VerifyJWT` and `Identity`, without authorization
-or business endpoints. Both consume the same signed HTTP requests and goldens.
-Test-only identity headers prove downstream context propagation, and a small separate
-check verifies authentication wiring in the production router. No test endpoint is
-added to production.
+scenarios register `GET /test/authentication` through the real production `Router`
+with a test-only success handler. The comparison handler uses legacy `VerifyJWT` and
+`Identity`, without authorization or business endpoints. Both consume the same signed
+HTTP requests and goldens. Test-only identity headers prove downstream context
+propagation. A routing regression verifies these fixture handlers retain normal
+method/path dispatch, while the transport router test proves all registered application
+routes inherit the shared gates. No test endpoint is added to production.
 
 The suite serves a synthetic checked-in public JWKS locally; private keys and live
 identity providers are not needed. Each authentication scenario temporarily binds
 `jwt/v4.TimeFunc` to the scoped application clock and restores it on return. These
 scenarios and their parents must not run in parallel. Intentional compatibility
 differences use `skipParity` in the same table and run only against Tadoku API.
-Provider failures are tested at middleware construction; authentication matrices
-are not repeated for every operation. Authorization remains a separate change.
+Ban-policy scenarios register `GET /test/banned` on the same production router and
+compare it with legacy `VerifyJWT`, `Identity`,
+`RolesFromKeto` and `RejectBannedUsers` using the same real Keto fixture. Provider
+fail-open behavior and deadlines are tested at the narrow middleware boundary;
+authentication matrices are not repeated for every operation.
+
+Authentication goldens run at the fixed instant `2026-09-12T12:00:00Z`
+(`1789214400`). Reuse an existing signed user request when only its Keto relationship
+tuples change. When a scenario needs different JWT claims, generate a new synthetic
+key and token locally with Node's built-in cryptography, then append the printed public
+JWK to the existing `keys` array without removing any checked-in keys. Run this from
+the repository root with Node.js and `jq` installed:
+
+```sh
+fixture_output=$(mktemp)
+node <<'NODE' > "$fixture_output"
+const { generateKeyPairSync, randomUUID, sign } = require("node:crypto");
+
+const { privateKey, publicKey } = generateKeyPairSync("rsa", { modulusLength: 2048 });
+const kid = `tadoku-fixture-${randomUUID()}`;
+const publicJWK = {
+  ...publicKey.export({ format: "jwk" }),
+  kid,
+  use: "sig",
+  alg: "RS256",
+};
+const claims = {
+  iss: "http://oathkeeper-api/",
+  sub: "22222222-2222-4222-8222-222222222222",
+  iat: 1789214400,
+  nbf: 1789214400,
+  exp: 1789218000,
+  type: "user",
+  session: {
+    identity: {
+      traits: {
+        display_name: "Fixture User",
+        email: "fixture@example.test",
+      },
+    },
+  },
+};
+const encode = value => Buffer.from(JSON.stringify(value)).toString("base64url");
+const signingInput = `${encode({ alg: "RS256", typ: "JWT", kid })}.${encode(claims)}`;
+const signature = sign("RSA-SHA256", Buffer.from(signingInput), privateKey).toString("base64url");
+
+process.stdout.write(JSON.stringify({ publicJWK, token: `${signingInput}.${signature}` }, null, 2));
+NODE
+
+jq --slurpfile fixture "$fixture_output" \
+  '.keys += [$fixture[0].publicJWK]' \
+  services/tadoku-api/e2e/testdata/authentication.jwks.json \
+  > services/tadoku-api/e2e/testdata/authentication.jwks.json.new
+jq -r .token "$fixture_output"
+```
+
+Review the `.new` JWKS before replacing the fixture and paste the printed token into
+the new `request.http`. The private key exists only inside that Node process. Editing
+claims in a token by hand invalidates its signature, so rerun the recipe instead.
+Never use production signing keys or tokens in fixtures.
 
 CI checks Depolicy, OpenAPI/sqlc generation and the database suites. The standalone
 Echo and Testify graph checks have been removed. Bazel visibility remains in place.

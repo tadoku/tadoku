@@ -11,6 +11,30 @@ import (
 	"github.com/tadoku/tadoku/services/tadoku-api/app"
 )
 
+// Router keeps application routes behind shared middleware while allowing this
+// package to attach probes and temporary legacy proxies outside it.
+type Router struct {
+	rootMux                     *stdhttp.ServeMux
+	applicationMux              *stdhttp.ServeMux
+	protectedApplicationHandler stdhttp.Handler
+}
+
+// Handle registers an application route behind the shared middleware.
+func (r *Router) Handle(pattern string, handler stdhttp.Handler) {
+	r.applicationMux.Handle(pattern, handler)
+	r.rootMux.Handle(pattern, r.protectedApplicationHandler)
+}
+
+// HandleFunc registers an application route behind the shared middleware.
+func (r *Router) HandleFunc(pattern string, handler func(stdhttp.ResponseWriter, *stdhttp.Request)) {
+	r.applicationMux.HandleFunc(pattern, handler)
+	r.rootMux.Handle(pattern, r.protectedApplicationHandler)
+}
+
+func (r *Router) ServeHTTP(w stdhttp.ResponseWriter, request *stdhttp.Request) {
+	r.rootMux.ServeHTTP(w, request)
+}
+
 // NewHandler builds the application router without any legacy upstreams.
 func NewHandler(
 	application *app.Application,
@@ -18,7 +42,8 @@ func NewHandler(
 	timeout time.Duration,
 	logger *slog.Logger,
 	authenticate func(stdhttp.Handler) stdhttp.Handler,
-) (*stdhttp.ServeMux, error) {
+	rejectBanned func(stdhttp.Handler) stdhttp.Handler,
+) (*Router, error) {
 	if application == nil || ready == nil {
 		return nil, fmt.Errorf("application and readiness are required")
 	}
@@ -31,18 +56,25 @@ func NewHandler(
 	if authenticate == nil {
 		return nil, fmt.Errorf("authentication middleware is required")
 	}
+	if rejectBanned == nil {
+		return nil, fmt.Errorf("banned-user middleware is required")
+	}
 
-	mux := stdhttp.NewServeMux()
-	mux.HandleFunc("GET /livez", func(w stdhttp.ResponseWriter, _ *stdhttp.Request) {
+	router := &Router{
+		rootMux:        stdhttp.NewServeMux(),
+		applicationMux: stdhttp.NewServeMux(),
+	}
+	router.protectedApplicationHandler = withRequestTimeout(timeout, authenticate(rejectBanned(router.applicationMux)))
+	router.rootMux.HandleFunc("GET /livez", func(w stdhttp.ResponseWriter, _ *stdhttp.Request) {
 		_, _ = w.Write([]byte("ok"))
 	})
-	mux.Handle("GET /readyz", withRequestTimeout(timeout, readinessHandler(ready)))
-	mux.Handle(
+	router.rootMux.Handle("GET /readyz", withRequestTimeout(timeout, readinessHandler(ready)))
+	router.Handle(
 		"GET /content/announcements/{namespace}/active",
-		withRequestTimeout(timeout, authenticate(listActiveAnnouncements(application, logger))),
+		listActiveAnnouncements(application, logger),
 	)
 
-	return mux, nil
+	return router, nil
 }
 
 func withRequestTimeout(timeout time.Duration, next stdhttp.Handler) stdhttp.Handler {

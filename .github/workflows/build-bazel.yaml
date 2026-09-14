@@ -120,6 +120,7 @@ jobs:
       - name: Race-test Tadoku API and helpers
         run: >-
           bazel test --lockfile_mode=error --@rules_go//go/config:race
+          //services/tadoku-api/internal/testketo:testketo_test
           //services/tadoku-api/internal/timex:timex_test
           //services/tadoku-api/infra/postgres:postgres_test
           //services/tadoku-api/features/content:content_test

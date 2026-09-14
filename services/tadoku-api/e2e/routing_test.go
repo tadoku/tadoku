@@ -24,13 +24,13 @@ func TestRouterWorksWithoutLegacyProxyRoutes(t *testing.T) {
 	application := app.New(service)
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
 
-	handler, err := transport.NewHandler(application, api.db.Pool.Ping, time.Second, logger, withoutAuthentication)
+	handler, err := transport.NewHandler(application, api.db.Pool.Ping, time.Second, logger, skipAuthentication, skipBanCheck)
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	path := filepath.Join("testdata", APITestName("ListActiveAnnouncements", http.StatusOK, "without", "auth"))
-	reset(t, filepath.Join(path, "setup.sql"))
+	resetCase(t, path)
 	timex.TheWorld(time.Date(2026, 9, 12, 12, 0, 0, 0, time.UTC), func() {
 		checkHTTPGolden(t, handler, path, http.StatusOK)
 	})
@@ -71,6 +71,28 @@ func TestRouterWorksWithoutLegacyProxyRoutes(t *testing.T) {
 			handler.ServeHTTP(response, httptest.NewRequest(test.method, test.path, nil))
 			if response.Code != test.status {
 				t.Errorf("status=%d, want %d", response.Code, test.status)
+			}
+		})
+	}
+}
+
+func TestMiddlewareFixtureRoutesUseApplicationRouter(t *testing.T) {
+	for _, test := range []struct {
+		name   string
+		method string
+		path   string
+		want   int
+	}{
+		{name: "authentication method", method: http.MethodPost, path: "/test/authentication", want: http.StatusMethodNotAllowed},
+		{name: "ban method", method: http.MethodPost, path: "/test/banned", want: http.StatusMethodNotAllowed},
+		{name: "unknown path", method: http.MethodGet, path: "/test/missing", want: http.StatusNotFound},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			response := httptest.NewRecorder()
+			api.authenticatedHandler.ServeHTTP(response, httptest.NewRequest(test.method, test.path, nil))
+
+			if response.Code != test.want {
+				t.Errorf("status=%d, want %d", response.Code, test.want)
 			}
 		})
 	}

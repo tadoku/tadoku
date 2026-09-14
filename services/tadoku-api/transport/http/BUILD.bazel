@@ -5,6 +5,7 @@ go_library(
     srcs = [
         "announcements.go",
         "authentication.go",
+        "banned_users.go",
         "proxy.go",
         "router.go",
     ],
@@ -24,6 +25,7 @@ go_test(
     name = "http_test",
     srcs = [
         "authentication_test.go",
+        "banned_users_test.go",
         "proxy_contract_test.go",
         "proxy_test.go",
     ],

@@ -154,7 +154,7 @@ func TestAuthentication(t *testing.T) {
 
 func checkAuthenticationGolden(t *testing.T, handler http.Handler, path string, want int) {
 	t.Helper()
-	reset(t, filepath.Join(path, "setup.sql"))
+	resetCase(t, path)
 
 	// Both parsers validate RegisteredClaims using jwt/v4's clock. Keep this
 	// override test-only, scoped and sequential, just like the SQL clock binding.

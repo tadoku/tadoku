@@ -9,13 +9,16 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"path/filepath"
 	"sync/atomic"
 	"testing"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
+	ketoclient "github.com/tadoku/tadoku/services/common/client/keto"
 	"github.com/tadoku/tadoku/services/tadoku-api/app"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/content"
+	"github.com/tadoku/tadoku/services/tadoku-api/internal/testketo"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/testpostgres"
 	transport "github.com/tadoku/tadoku/services/tadoku-api/transport/http"
 )
@@ -23,7 +26,9 @@ import (
 var api *testAPI
 var legacyContent *legacyContentAPI
 var legacyAuthentication http.Handler
+var legacyBannedUsers http.Handler
 var authenticationJWKS *httptest.Server
+var keto *testketo.Fixture
 
 func TestMain(m *testing.M) {
 	os.Exit(runTests(m))
@@ -41,10 +46,15 @@ func runTests(m *testing.M) (code int) {
 	}))
 	defer authenticationJWKS.Close()
 	legacyAuthentication = newLegacyAuthenticationHandler(authenticationJWKS.URL)
+	keto, err = testketo.New(context.Background())
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return 1
+	}
 
 	api, err = newTestAPI(context.Background())
 	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
+		fmt.Fprintln(os.Stderr, errors.Join(err, keto.Close()))
 		return 1
 	}
 	defer func() {
@@ -52,7 +62,7 @@ func runTests(m *testing.M) (code int) {
 		if legacyContent != nil {
 			legacyErr = legacyContent.db.Close()
 		}
-		if err := errors.Join(legacyErr, api.db.Close()); err != nil {
+		if err := errors.Join(legacyErr, api.db.Close(), keto.Close()); err != nil {
 			fmt.Fprintln(os.Stderr, err)
 			if code == 0 {
 				code = 1
@@ -65,6 +75,7 @@ func runTests(m *testing.M) (code int) {
 		fmt.Fprintln(os.Stderr, err)
 		return 1
 	}
+	legacyBannedUsers = newLegacyBannedUsersHandler(authenticationJWKS.URL, keto.ReadURL())
 
 	return m.Run()
 }
@@ -75,6 +86,7 @@ type testAPI struct {
 	handler              *http.ServeMux
 	authenticatedHandler *http.ServeMux
 	authentication       http.Handler
+	bannedUsers          http.Handler
 	proxied              atomic.Int32
 }
 
@@ -90,7 +102,7 @@ func newTestAPI(ctx context.Context) (*testAPI, error) {
 	application := app.New(service)
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
 
-	api.handler, err = transport.NewHandler(application, api.db.Pool.Ping, time.Second, logger, withoutAuthentication)
+	api.handler, err = transport.NewHandler(application, api.db.Pool.Ping, time.Second, logger, withoutAuthentication, withoutAuthentication)
 	if err != nil {
 		return nil, errors.Join(fmt.Errorf("create API handler: %w", err), db.Close())
 	}
@@ -98,11 +110,16 @@ func newTestAPI(ctx context.Context) (*testAPI, error) {
 	if err != nil {
 		return nil, errors.Join(err, db.Close())
 	}
-	api.authenticatedHandler, err = transport.NewHandler(application, api.db.Pool.Ping, time.Second, logger, authenticate)
+	reader := ketoclient.NewReadClient(keto.ReadURL())
+	rejectBanned := transport.RejectBannedUsers(func(ctx context.Context, subjectID string) (bool, error) {
+		return reader.CheckPermission(ctx, "app", "tadoku", "banned", ketoclient.Subject{ID: subjectID})
+	}, logger)
+	api.authenticatedHandler, err = transport.NewHandler(application, api.db.Pool.Ping, time.Second, logger, authenticate, rejectBanned)
 	if err != nil {
 		return nil, errors.Join(fmt.Errorf("create authenticated API handler: %w", err), db.Close())
 	}
 	api.authentication = authenticate(http.HandlerFunc(authenticationSuccess))
+	api.bannedUsers = authenticate(rejectBanned(http.HandlerFunc(bannedUsersSuccess)))
 
 	upstreams := transport.Upstreams{
 		Authz:     "http://upstream.test",
@@ -143,8 +160,30 @@ func (a *testAPI) RoundTrip(request *http.Request) (*http.Response, error) {
 
 func reset(t *testing.T, seedFiles ...string) {
 	t.Helper()
-	if err := api.db.Reset(t.Context(), seedFiles...); err != nil {
+	var postgresSeeds, ketoSeeds []string
+	for _, seedFile := range seedFiles {
+		switch filepath.Ext(seedFile) {
+		case ".sql":
+			postgresSeeds = append(postgresSeeds, seedFile)
+		case ".json":
+			ketoSeeds = append(ketoSeeds, seedFile)
+		default:
+			t.Fatalf("unsupported seed file: %s", seedFile)
+		}
+	}
+	if err := api.db.Reset(t.Context(), postgresSeeds...); err != nil {
+		t.Fatal(err)
+	}
+	if err := keto.Reset(t.Context(), ketoSeeds...); err != nil {
 		t.Fatal(err)
 	}
 	api.proxied.Store(0)
+}
+
+func resetCase(t *testing.T, directory string) {
+	t.Helper()
+	reset(t,
+		filepath.Join(directory, "setup.sql"),
+		filepath.Join(directory, "relationships.json"),
+	)
 }

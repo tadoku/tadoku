@@ -88,7 +88,7 @@ func (c *legacyClockConn) QueryContext(ctx context.Context, query string, args [
 func TestLegacyClockFollowsScenarioTime(t *testing.T) {
 	active := filepath.Join("testdata", APITestName("ListActiveAnnouncements", http.StatusOK, "without", "auth"))
 	empty := filepath.Join("testdata", APITestName("ListActiveAnnouncements", http.StatusOK, "without", "announcements"))
-	reset(t, filepath.Join(active, "setup.sql"))
+	resetCase(t, active)
 
 	timex.TheWorld(time.Date(2026, 9, 12, 12, 0, 0, 0, time.UTC), func() {
 		checkHTTPGolden(t, legacyContent.handler, active, http.StatusOK)

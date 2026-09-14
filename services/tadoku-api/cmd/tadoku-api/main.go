@@ -7,6 +7,7 @@ import (
 	"log/slog"
 	"net"
 	"net/http"
+	"net/url"
 	"os"
 	"os/signal"
 	"syscall"
@@ -18,6 +19,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/collectors"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	ketoclient "github.com/tadoku/tadoku/services/common/client/keto"
 	"github.com/tadoku/tadoku/services/common/postgresconfig"
 	"github.com/tadoku/tadoku/services/tadoku-api/app"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/content"
@@ -30,6 +32,7 @@ type config struct {
 	MetricsPort int    `validate:"gt=0,lte=65535" envconfig:"metrics_port" default:"9090"`
 	ServiceName string `validate:"required" envconfig:"service_name" default:"tadoku-api"`
 	JWKS        string `validate:"required"`
+	KetoReadURL string `validate:"required" envconfig:"keto_read_url"`
 
 	AuthzURL     string `validate:"required" envconfig:"authz_url"`
 	ContentURL   string `validate:"required" envconfig:"content_url"`
@@ -55,8 +58,11 @@ func loadConfig() (config, error) {
 	if err := validator.New().Struct(cfg); err != nil {
 		return config{}, fmt.Errorf("validate config: %w", err)
 	}
+	ketoURL, err := url.ParseRequestURI(cfg.KetoReadURL)
+	if err != nil || ketoURL.Host == "" || (ketoURL.Scheme != "http" && ketoURL.Scheme != "https") {
+		return config{}, fmt.Errorf("validate config: KetoReadURL must be an HTTP(S) URL")
+	}
 
-	var err error
 	cfg.Postgres, err = postgresconfig.Load("API_POSTGRES", "API_POSTGRES_URL")
 	if err != nil {
 		return config{}, err
@@ -123,8 +129,12 @@ func start(cfg config, logger *slog.Logger) (*application, error) {
 	contentRepository := content.NewAnnouncementsRepository(pool)
 	contentService := content.NewService(contentRepository)
 	api := app.New(contentService)
+	keto := ketoclient.NewReadClient(cfg.KetoReadURL)
+	rejectBanned := transporthttp.RejectBannedUsers(func(ctx context.Context, subjectID string) (bool, error) {
+		return keto.CheckPermission(ctx, "app", "tadoku", "banned", ketoclient.Subject{ID: subjectID})
+	}, logger)
 
-	handler, err := transporthttp.NewHandler(api, pool.Ping, cfg.RequestTimeout, logger, authenticate)
+	handler, err := transporthttp.NewHandler(api, pool.Ping, cfg.RequestTimeout, logger, authenticate, rejectBanned)
 	if err != nil {
 		return nil, err
 	}

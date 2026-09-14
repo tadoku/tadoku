@@ -37,9 +37,14 @@ func TestAuthenticationRequiresConfiguration(t *testing.T) {
 		})
 	}
 
-	_, err := NewHandler(app.New(nil), func(context.Context) error { return nil }, time.Second, slog.Default(), nil)
+	passthrough := func(next stdhttp.Handler) stdhttp.Handler { return next }
+	_, err := NewHandler(app.New(nil), func(context.Context) error { return nil }, time.Second, slog.Default(), nil, passthrough)
 	if err == nil {
 		t.Error("router accepted missing authentication middleware")
+	}
+	_, err = NewHandler(app.New(nil), func(context.Context) error { return nil }, time.Second, slog.Default(), passthrough, nil)
+	if err == nil {
+		t.Error("router accepted missing banned-user middleware")
 	}
 }
 

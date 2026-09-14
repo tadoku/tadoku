@@ -18,6 +18,7 @@ func NewHandler(
 	timeout time.Duration,
 	logger *slog.Logger,
 	authenticate func(stdhttp.Handler) stdhttp.Handler,
+	rejectBanned func(stdhttp.Handler) stdhttp.Handler,
 ) (*stdhttp.ServeMux, error) {
 	if application == nil || ready == nil {
 		return nil, fmt.Errorf("application and readiness are required")
@@ -31,6 +32,9 @@ func NewHandler(
 	if authenticate == nil {
 		return nil, fmt.Errorf("authentication middleware is required")
 	}
+	if rejectBanned == nil {
+		return nil, fmt.Errorf("banned-user middleware is required")
+	}
 
 	mux := stdhttp.NewServeMux()
 	mux.HandleFunc("GET /livez", func(w stdhttp.ResponseWriter, _ *stdhttp.Request) {
@@ -39,7 +43,7 @@ func NewHandler(
 	mux.Handle("GET /readyz", withRequestTimeout(timeout, readinessHandler(ready)))
 	mux.Handle(
 		"GET /content/announcements/{namespace}/active",
-		withRequestTimeout(timeout, authenticate(listActiveAnnouncements(application, logger))),
+		withRequestTimeout(timeout, authenticate(rejectBanned(listActiveAnnouncements(application, logger)))),
 	)
 
 	return mux, nil

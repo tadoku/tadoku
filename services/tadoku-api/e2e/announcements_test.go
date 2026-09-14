@@ -52,7 +52,7 @@ func TestListActiveAnnouncements(t *testing.T) {
 				{name: "content-api", handler: legacyContent.handler},
 			} {
 				t.Run(implementation.name, func(t *testing.T) {
-					reset(t, filepath.Join(path, "setup.sql"))
+					resetCase(t, path)
 					timex.TheWorld(time.Date(2026, 9, 12, 12, 0, 0, 0, time.UTC), func() {
 						checkHTTPGolden(t, implementation.handler, path, test.want)
 					})

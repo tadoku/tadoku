@@ -24,13 +24,13 @@ func TestRouterWorksWithoutLegacyProxyRoutes(t *testing.T) {
 	application := app.New(service)
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
 
-	handler, err := transport.NewHandler(application, api.db.Pool.Ping, time.Second, logger, withoutAuthentication)
+	handler, err := transport.NewHandler(application, api.db.Pool.Ping, time.Second, logger, withoutAuthentication, withoutAuthentication)
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	path := filepath.Join("testdata", APITestName("ListActiveAnnouncements", http.StatusOK, "without", "auth"))
-	reset(t, filepath.Join(path, "setup.sql"))
+	resetCase(t, path)
 	timex.TheWorld(time.Date(2026, 9, 12, 12, 0, 0, 0, time.UTC), func() {
 		checkHTTPGolden(t, handler, path, http.StatusOK)
 	})

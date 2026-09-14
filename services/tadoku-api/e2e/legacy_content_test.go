@@ -15,6 +15,8 @@ import (
 	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/stdlib"
 	"github.com/labstack/echo/v4"
+	commondomain "github.com/tadoku/tadoku/services/common/domain"
+	"github.com/tadoku/tadoku/services/common/middleware"
 	"github.com/tadoku/tadoku/services/content-api/domain"
 	"github.com/tadoku/tadoku/services/content-api/http/rest"
 	"github.com/tadoku/tadoku/services/content-api/http/rest/openapi"
@@ -23,8 +25,9 @@ import (
 )
 
 type legacyContentAPI struct {
-	db      *sql.DB
-	handler http.Handler
+	db                   *sql.DB
+	handler              http.Handler
+	authenticatedHandler http.Handler
 }
 
 func newLegacyContentAPI(ctx context.Context, dsn string) (*legacyContentAPI, error) {
@@ -51,7 +54,22 @@ func newLegacyContentAPI(ctx context.Context, dsn string) (*legacyContentAPI, er
 	// Authentication and infrastructure middleware are outside this contract test.
 	openapi.RegisterHandlersWithBaseURL(router, server, "/content")
 
-	return &legacyContentAPI{db: db, handler: router}, nil
+	authenticated := echo.New()
+	authenticated.Logger.SetOutput(io.Discard)
+	api := authenticated.Group("")
+	api.Use(middleware.VerifyJWT(authenticationJWKS.URL))
+	api.Use(middleware.Identity())
+	api.Use(func(next echo.HandlerFunc) echo.HandlerFunc {
+		return func(c echo.Context) error {
+			if user := commondomain.ParseUserIdentity(c.Request().Context()); user != nil {
+				writeIdentityHeaders(c.Response().Header(), user.Subject, user.DisplayName, user.Email, user.CreatedAt)
+			}
+			return next(c)
+		}
+	})
+	openapi.RegisterHandlersWithBaseURL(api, server, "/content")
+
+	return &legacyContentAPI{db: db, handler: router, authenticatedHandler: authenticated}, nil
 }
 
 // The legacy query reads PostgreSQL's now(), not the application clock. Bind

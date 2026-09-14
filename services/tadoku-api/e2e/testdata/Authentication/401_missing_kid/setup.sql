@@ -1,0 +1,1 @@
+-- No stored user data is required for authentication.

@@ -24,7 +24,7 @@ func TestRouterWorksWithoutLegacyProxyRoutes(t *testing.T) {
 	application := app.New(service)
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
 
-	handler, err := transport.NewHandler(application, api.db.Pool.Ping, time.Second, logger)
+	handler, err := transport.NewHandler(application, api.db.Pool.Ping, time.Second, logger, withoutAuthentication)
 	if err != nil {
 		t.Fatal(err)
 	}

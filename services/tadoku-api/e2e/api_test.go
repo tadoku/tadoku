@@ -7,6 +7,7 @@ import (
 	"io"
 	"log/slog"
 	"net/http"
+	"net/http/httptest"
 	"os"
 	"sync/atomic"
 	"testing"
@@ -21,13 +22,24 @@ import (
 
 var api *testAPI
 var legacyContent *legacyContentAPI
+var authenticationJWKS *httptest.Server
 
 func TestMain(m *testing.M) {
 	os.Exit(runTests(m))
 }
 
 func runTests(m *testing.M) (code int) {
-	var err error
+	jwks, err := os.ReadFile("testdata/authentication.jwks.json")
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return 1
+	}
+	authenticationJWKS = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write(jwks)
+	}))
+	defer authenticationJWKS.Close()
+
 	api, err = newTestAPI(context.Background())
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
@@ -57,9 +69,10 @@ func runTests(m *testing.M) (code int) {
 
 // testAPI owns the production handler and an in-process sentinel transport.
 type testAPI struct {
-	db      *testpostgres.Database
-	handler *http.ServeMux
-	proxied atomic.Int32
+	db                   *testpostgres.Database
+	handler              *http.ServeMux
+	authenticatedHandler *http.ServeMux
+	proxied              atomic.Int32
 }
 
 func newTestAPI(ctx context.Context) (*testAPI, error) {
@@ -74,9 +87,19 @@ func newTestAPI(ctx context.Context) (*testAPI, error) {
 	application := app.New(service)
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
 
-	api.handler, err = transport.NewHandler(application, api.db.Pool.Ping, time.Second, logger)
+	api.handler, err = transport.NewHandler(application, api.db.Pool.Ping, time.Second, logger, withoutAuthentication)
 	if err != nil {
 		return nil, errors.Join(fmt.Errorf("create API handler: %w", err), db.Close())
+	}
+	authenticate, err := transport.NewAuthentication(authenticationJWKS.URL, time.Second)
+	if err != nil {
+		return nil, errors.Join(err, db.Close())
+	}
+	api.authenticatedHandler, err = transport.NewHandler(application, api.db.Pool.Ping, time.Second, logger,
+		func(next http.Handler) http.Handler { return authenticate(observeUserIdentity(next)) },
+	)
+	if err != nil {
+		return nil, errors.Join(fmt.Errorf("create authenticated API handler: %w", err), db.Close())
 	}
 
 	upstreams := transport.Upstreams{
@@ -85,20 +108,26 @@ func newTestAPI(ctx context.Context) (*testAPI, error) {
 		Immersion: "http://upstream.test",
 		Profile:   "http://upstream.test",
 	}
-	err = transport.RegisterProxyRoutes(
-		api.handler,
-		upstreams,
-		api,
-		time.Second,
-		prometheus.NewRegistry(),
-		logger,
-	)
-	if err != nil {
-		return nil, errors.Join(fmt.Errorf("register proxy routes: %w", err), db.Close())
+	for _, handler := range []*http.ServeMux{api.handler, api.authenticatedHandler} {
+		err = transport.RegisterProxyRoutes(
+			handler,
+			upstreams,
+			api,
+			time.Second,
+			prometheus.NewRegistry(),
+			logger,
+		)
+		if err != nil {
+			return nil, errors.Join(fmt.Errorf("register proxy routes: %w", err), db.Close())
+		}
 	}
 
 	return api, nil
 }
+
+// Endpoint contract scenarios deliberately exclude shared authentication.
+// Production construction always supplies real authentication middleware.
+func withoutAuthentication(next http.Handler) http.Handler { return next }
 
 func (a *testAPI) RoundTrip(request *http.Request) (*http.Response, error) {
 	a.proxied.Add(1)

@@ -29,6 +29,7 @@ type config struct {
 	Port        int    `validate:"gt=0,lte=65535" default:"8000"`
 	MetricsPort int    `validate:"gt=0,lte=65535" envconfig:"metrics_port" default:"9090"`
 	ServiceName string `validate:"required" envconfig:"service_name" default:"tadoku-api"`
+	JWKS        string `validate:"required"`
 
 	AuthzURL     string `validate:"required" envconfig:"authz_url"`
 	ContentURL   string `validate:"required" envconfig:"content_url"`
@@ -79,6 +80,10 @@ type application struct {
 
 func start(cfg config, logger *slog.Logger) (*application, error) {
 	logger = logger.With("service", cfg.ServiceName)
+	authenticate, err := transporthttp.NewAuthentication(cfg.JWKS, cfg.DialTimeout)
+	if err != nil {
+		return nil, err
+	}
 
 	metrics := prometheus.NewRegistry()
 	metrics.MustRegister(
@@ -119,7 +124,7 @@ func start(cfg config, logger *slog.Logger) (*application, error) {
 	contentService := content.NewService(contentRepository)
 	api := app.New(contentService)
 
-	handler, err := transporthttp.NewHandler(api, pool.Ping, cfg.RequestTimeout, logger)
+	handler, err := transporthttp.NewHandler(api, pool.Ping, cfg.RequestTimeout, logger, authenticate)
 	if err != nil {
 		return nil, err
 	}

@@ -40,11 +40,16 @@ func TestApplicationStartsAndShutsDown(t *testing.T) {
 
 	upstream := httptest.NewServer(http.NotFoundHandler())
 	t.Cleanup(upstream.Close)
+	jwks := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		_, _ = w.Write([]byte(`{"keys":[]}`))
+	}))
+	t.Cleanup(jwks.Close)
 
 	cfg := config{
 		Port:        0,
 		MetricsPort: 0,
 		ServiceName: "tadoku-api-test",
+		JWKS:        jwks.URL,
 
 		AuthzURL:     upstream.URL,
 		ContentURL:   upstream.URL,
@@ -138,6 +143,7 @@ func TestApplicationStartsAndShutsDown(t *testing.T) {
 }
 
 func TestLoadConfigUsesValidatedDefaults(t *testing.T) {
+	t.Setenv("API_JWKS", "http://jwks.test")
 	t.Setenv("API_AUTHZ_URL", "http://authz")
 	t.Setenv("API_CONTENT_URL", "http://content")
 	t.Setenv("API_IMMERSION_URL", "http://immersion")
@@ -164,5 +170,27 @@ func TestLoadConfigUsesValidatedDefaults(t *testing.T) {
 	}
 	if cfg.PostgresMaxConnections != 4 {
 		t.Errorf("pool limit=%d want=4", cfg.PostgresMaxConnections)
+	}
+	if cfg.JWKS != "http://jwks.test" {
+		t.Errorf("JWKS=%q", cfg.JWKS)
+	}
+	t.Setenv("API_JWKS", "")
+	if _, err := loadConfig(); err == nil || !strings.Contains(err.Error(), "JWKS") {
+		t.Errorf("missing JWKS configuration error=%v", err)
+	}
+}
+
+func TestApplicationRejectsUnavailableJWKSBeforeStarting(t *testing.T) {
+	provider := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusServiceUnavailable)
+	}))
+	t.Cleanup(provider.Close)
+
+	app, err := start(config{
+		JWKS:        provider.URL,
+		DialTimeout: time.Second,
+	}, slog.New(slog.NewTextHandler(io.Discard, nil)))
+	if app != nil || err == nil || !strings.Contains(err.Error(), "fetch authentication JWKS") {
+		t.Errorf("startup with unavailable JWKS: application=%v error=%v", app, err)
 	}
 }

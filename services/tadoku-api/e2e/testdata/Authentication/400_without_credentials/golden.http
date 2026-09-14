@@ -1,0 +1,6 @@
+>>> GET /content/announcements/main/active
+HTTP/1.1 400 Bad Request
+Connection: close
+Content-Type: application/json; charset=UTF-8
+
+{"message":"missing or malformed jwt"}

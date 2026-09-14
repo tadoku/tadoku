@@ -5,12 +5,6 @@ handlers own migrated operations; operations not yet migrated retain their exist
 proxy ownership. A native failure never falls back to a legacy service.
 Externally the gateway still adds `/api`.
 
-**Current native coverage:** `GET /content/announcements/{namespace}/active`.
-HEAD and OPTIONS on that path remain proxied. This read is deliberately
-**unprotected**: it does not validate JWTs, call Keto, check bans or interpret
-service audiences. Authentication and shared authorization
-will be separate reviewed increments. Existing proxied routes are unchanged.
-
 ## Code ownership
 
 ```
@@ -23,14 +17,12 @@ method/path registrations, request deadlines and its own health checks. It does
 not depend on upstream URLs, proxy transports or proxy metrics. Startup separately
 calls `RegisterProxyRoutes` to attach the temporary legacy routes. That call and
 `proxy.go` can be removed when the migration is complete without changing the
-application router or announcement handler. The temporary HEAD override lives
-in `proxy.go`; the application route is an ordinary GET registration.
+application router or migrated handlers.
 
-For example, `app/announcements.go` exposes `ListActiveAnnouncements`.
-Content service chooses one `timex.Now()` cutoff and a limit of ten. Its concrete
-repository only queries and maps rows. `postgres.Executor` makes the repository
-usable inside a future app-owned transaction; this read does not open an
-unnecessary transaction. There are no new feature/repository interfaces.
+Application operations compose features. Feature services own business decisions;
+repositories only query and map rows. `postgres.Executor` lets repositories use
+the active app-owned transaction. Open transactions only when the operation needs
+one; do not add feature or repository interfaces solely for mocking.
 
 ## Contract and compatibility
 
@@ -80,12 +72,11 @@ connections. The dev deployment uses the existing disposable development DB role
 secret synchronization and reset scripts include Tadoku API.
 
 **Production activation is not part of this change.** Provision a dedicated
-runtime credential with connect/schema-usage/select-on-announcements grants, not
+runtime credential with only the grants required by the application, not
 a migration/admin DSN. Confirm provider TLS/pooling settings and the coexistence
 connection budget: two native replicas default to eight connections, in addition
 to the still-running legacy pools. Update production secrets/manifests and complete
 the master rollout gate under separate release authorization before deployment.
-No schema migration or write-owner handoff is required for this read.
 
 ## Verification
 
@@ -123,13 +114,12 @@ different times. No extra request-context wrapper is needed. The pool-closing fa
 has isolated dependencies. Repository/transaction tests retain their independent
 databases and may run in parallel.
 
-HTTP cases derive their name from the operation, expected status and description.
-For example, `APITestName("ListActiveAnnouncements", http.StatusOK, "without", "auth")`
-produces `ListActiveAnnouncements/200_without_auth`, used for both the subtest and
-its fixture directory:
+HTTP cases derive their name from the operation, expected status and description
+using `APITestName(operation, status, description...)`. Use the same name for the
+subtest and its fixture directory:
 
 ```text
-e2e/testdata/ListActiveAnnouncements/200_without_auth/
+e2e/testdata/<operation>/<status>_<description>/
   setup.sql
   request.http
   golden.http
@@ -170,12 +160,6 @@ unchanged against real PostgreSQL. Do not shift or ignore fixture timestamps or
 response fields to make a comparison pass. Such bindings do not verify the legacy
 choice of clock. Gateway rewriting, authentication and infrastructure middleware
 also remain outside endpoint parity; test them at their respective boundaries.
-
-**Current coverage and clock-binding limit:** the six cases in
-`e2e/announcements_test.go` run against Tadoku API and Content API.
-`e2e/legacy_content_test.go` binds the active-announcements query's two `now()` calls
-to `timex.Now()`, accepting only that query name and its original namespace argument.
-Other legacy queries require their own reviewed clock handling where needed.
 
 ```sh
 bazel test //services/tadoku-api/e2e:e2e_test --test_output=errors
@@ -233,3 +217,7 @@ transitive dependencies.
 
 Same-package service/repository responsibilities and business signatures still
 require review; import rules do not enforce those conventions.
+
+## Migration notes
+
+Track deferred cleanup in the [migration log](MIGRATION_LOG.md).

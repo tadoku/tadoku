@@ -4,6 +4,7 @@ go_library(
     name = "http",
     srcs = [
         "announcements.go",
+        "authentication.go",
         "proxy.go",
         "router.go",
     ],
@@ -12,6 +13,9 @@ go_library(
     deps = [
         "//services/tadoku-api/app",
         "//services/tadoku-api/generated/openapi",
+        "//services/tadoku-api/internal/identity",
+        "@com_github_golang_jwt_jwt_v4//:jwt",
+        "@com_github_micahparks_keyfunc//:keyfunc",
         "@com_github_prometheus_client_golang//prometheus",
     ],
 )
@@ -19,9 +23,16 @@ go_library(
 go_test(
     name = "http_test",
     srcs = [
+        "authentication_test.go",
         "proxy_contract_test.go",
         "proxy_test.go",
     ],
     embed = [":http"],
-    deps = ["@com_github_prometheus_client_golang//prometheus"],
+    deps = [
+        "//services/tadoku-api/app",
+        "//services/tadoku-api/internal/identity",
+        "@com_github_golang_jwt_jwt_v4//:jwt",
+        "@com_github_micahparks_keyfunc//:keyfunc",
+        "@com_github_prometheus_client_golang//prometheus",
+    ],
 )

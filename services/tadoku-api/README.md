@@ -19,6 +19,11 @@ calls `RegisterProxyRoutes` to attach the temporary legacy routes. That call and
 `proxy.go` can be removed when the migration is complete without changing the
 application router or migrated handlers.
 
+The router requires authentication middleware for application business handlers.
+Startup always constructs it from the configured gateway JWKS; there is no opt-out
+or feature flag. Health probes and temporary proxy registrations keep their existing
+behavior. Verified user claims travel in request context through `internal/identity`.
+
 Application operations compose features. Feature services own business decisions;
 repositories only query and map rows. `postgres.Executor` lets repositories use
 the active app-owned transaction. Open transactions only when the operation needs
@@ -61,8 +66,12 @@ In addition to the existing four upstream URLs, startup now requires:
 - Individual `API_POSTGRES_HOST`, `PORT` (default 5432), `DATABASE`, `USER`,
   `PASSWORD`, `SSLMODE` fields. `API_POSTGRES_URL` remains rejected.
 - `API_POSTGRES_MAX_CONNECTIONS` (default 4, validated range 1–32).
+- `API_JWKS`, the gateway's public signing-key URL.
 
-Startup pings PostgreSQL before opening listeners. No JWKS or Keto config is needed.
+Startup fetches JWKS within `API_DIAL_TIMEOUT` and pings PostgreSQL before opening
+listeners. Either failure aborts startup. Signing keys remain cached until restart;
+there is no periodic refresh or refresh on an unknown key ID. No Keto configuration
+is needed.
 `/readyz` checks PostgreSQL; `/livez` remains independent of dependency health.
 The existing proxy metrics and Go process metrics remain on the metrics listener
 (`API_METRICS_PORT`, default 9090). They describe proxy request volume/latency/errors
@@ -70,6 +79,21 @@ and process health. This thin slice adds no native-specific metric family.
 Shutdown closes request/metrics listeners, the pool and idle HTTP
 connections. The dev deployment uses the existing disposable development DB role;
 secret synchronization and reset scripts include Tadoku API.
+
+Authentication verifies bearer JWT signatures and the existing `exp`, `nbf` and
+`iat` time constraints. `exp` remains optional, and `iat` has no maximum age.
+Issuer and audience are not additionally restricted. Subject, email, display name
+and issued-at time are propagated; the identity's `CreatedAt` means token issue
+time, not account creation time. No role, ban, permission or service-audience
+policy runs here.
+
+Missing or malformed bearer headers return the legacy 400 JSON error; extracted
+but invalid JWTs return its 401 JSON error. Anonymous gateway traffic supplies a
+signed user token with subject `guest`, so it is distinct from a direct request
+without credentials. Signed tokens missing `iat` now return 401 instead of the
+legacy identity middleware's panic/500. Service tokens are unsupported and return
+401; they are never converted into human identities. These two cases intentionally
+differ from legacy behavior.
 
 **Production activation is not part of this change.** Provision a dedicated
 runtime credential with only the grants required by the application, not
@@ -101,7 +125,7 @@ scenario, not between dependent requests. `internal/testpostgres/cleanup.sql`
 explicitly lists mutable tables to truncate with `restart identity`. Add tables
 there as their slices gain tests; do not discover tables automatically or use
 `cascade`. Static data from migrations and `schema_migrations` are preserved.
-Each case has its own SQL setup; fixtures are not generated in Go.
+Cases needing seed data have their own SQL setup; fixtures are not generated in Go.
 Reset and seeding commit before requests run,
 so application transactions commit normally.
 There is no outer rollback transaction and no change to `RunInTransaction`.
@@ -120,7 +144,7 @@ subtest and its fixture directory:
 
 ```text
 e2e/testdata/<operation>/<status>_<description>/
-  setup.sql
+  setup.sql       # optional
   request.http
   golden.http
 ```
@@ -128,9 +152,10 @@ e2e/testdata/<operation>/<status>_<description>/
 Each operation's tests use an explicit Go table. Each row declares
 `description []string` and `want` as an HTTP status constant; there is no separate
 fixture-name field to keep in sync. Add a case by adding a descriptive table row and
-its three fixture files; do not discover cases from directories. Each case owns its seed,
-including an explicit comment-only `setup.sql` for an empty database. Shared
-cleanup runs before that SQL. The `golden.http` file contains the request label
+its request and golden files; do not discover cases from directories. Add `setup.sql`
+only when the case needs seed data. Shared cleanup always runs; an absent setup file
+is skipped, while other read errors and invalid SQL still fail and roll back reset.
+The `golden.http` file contains the request label
 and complete expected response. Tests parse the request files with `net/http`,
 execute the production handler at the operation's minimum required access level,
 check the HTTP status against the table's `want`, and compare the entire response,
@@ -172,10 +197,22 @@ or duplicate per-implementation fixtures.
 Pool-failure, cancellation and proxy-routing checks remain separate Go tests;
 they exercise dependency behavior rather than SQL-defined response cases.
 
-**Testing decision:** endpoint tests prove the minimum access level and business
-behavior. When auth middleware is added, test its credential/role/ban/failure matrix
-once at that boundary. Do not repeat that matrix or emulate Keto in every endpoint
-fixture. This rule is also recorded in `AGENTS.md` for future agents.
+Endpoint contract tests explicitly supply passthrough authentication so their
+credential-free request fixtures remain focused on business behavior. Authentication
+scenarios wrap a test-only success handler with real authentication middleware.
+The comparison handler uses legacy `VerifyJWT` and `Identity`, without authorization
+or business endpoints. Both consume the same signed HTTP requests and goldens.
+Test-only identity headers prove downstream context propagation, and a small separate
+check verifies authentication wiring in the production router. No test endpoint is
+added to production.
+
+The suite serves a synthetic checked-in public JWKS locally; private keys and live
+identity providers are not needed. Each authentication scenario temporarily binds
+`jwt/v4.TimeFunc` to the scoped application clock and restores it on return. These
+scenarios and their parents must not run in parallel. Intentional compatibility
+differences use `skipParity` in the same table and run only against Tadoku API.
+Provider failures are tested at middleware construction; authentication matrices
+are not repeated for every operation. Authorization remains a separate change.
 
 CI checks Depolicy, OpenAPI/sqlc generation and the database suites. The standalone
 Echo and Testify graph checks have been removed. Bazel visibility remains in place.

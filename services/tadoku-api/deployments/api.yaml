@@ -32,6 +32,7 @@ spec:
             - {name: API_PORT, value: "8000"}
             - {name: API_METRICS_PORT, value: "9090"}
             - {name: API_SERVICE_NAME, value: tadoku-api}
+            - {name: API_JWKS, value: "http://oathkeeper-api.default:4456/.well-known/jwks.json"}
             - {name: API_AUTHZ_URL, value: "http://authz-api.tdk-authz-api"}
             - {name: API_CONTENT_URL, value: "http://content-api.tdk-content-api"}
             - {name: API_IMMERSION_URL, value: "http://immersion-api.tdk-immersion-api"}

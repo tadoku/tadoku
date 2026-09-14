@@ -48,6 +48,84 @@ func TestAuthenticationRequiresConfiguration(t *testing.T) {
 	}
 }
 
+func TestNewApplicationRoutesInheritSharedMiddleware(t *testing.T) {
+	type authenticationContextKey struct{}
+
+	var authenticationCompositions, banCompositions, authenticated, checkedBans int
+	authenticatedRequest := authenticationContextKey{}
+	authenticate := func(next stdhttp.Handler) stdhttp.Handler {
+		authenticationCompositions++
+		return stdhttp.HandlerFunc(func(w stdhttp.ResponseWriter, r *stdhttp.Request) {
+			authenticated++
+			if _, ok := r.Context().Deadline(); !ok {
+				t.Error("authentication did not inherit the request timeout")
+			}
+			if r.URL.Path == "/test/auth-failure" {
+				w.WriteHeader(stdhttp.StatusUnauthorized)
+				return
+			}
+			next.ServeHTTP(w, r.WithContext(context.WithValue(r.Context(), authenticatedRequest, true)))
+		})
+	}
+	rejectBanned := func(next stdhttp.Handler) stdhttp.Handler {
+		banCompositions++
+		return stdhttp.HandlerFunc(func(w stdhttp.ResponseWriter, r *stdhttp.Request) {
+			checkedBans++
+			if authenticated, _ := r.Context().Value(authenticatedRequest).(bool); !authenticated {
+				t.Error("ban check ran before authentication")
+			}
+			if r.URL.Path != "/test/a/b" {
+				w.WriteHeader(stdhttp.StatusForbidden)
+				return
+			}
+			next.ServeHTTP(w, r)
+		})
+	}
+	router, err := NewHandler(app.New(nil), func(context.Context) error { return nil }, time.Second, slog.Default(), authenticate, rejectBanned)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if authenticationCompositions != 1 || banCompositions != 1 {
+		t.Fatalf("authentication compositions=%d ban compositions=%d, want 1 each", authenticationCompositions, banCompositions)
+	}
+	for _, path := range []string{"/test/first", "/test/second"} {
+		router.Handle("GET "+path, stdhttp.HandlerFunc(func(w stdhttp.ResponseWriter, _ *stdhttp.Request) {
+			t.Error("application handler bypassed the shared ban check")
+			w.WriteHeader(stdhttp.StatusNoContent)
+		}))
+		response := httptest.NewRecorder()
+		router.ServeHTTP(response, httptest.NewRequest(stdhttp.MethodGet, path, nil))
+		if response.Code != stdhttp.StatusForbidden {
+			t.Errorf("%s status=%d, want 403", path, response.Code)
+		}
+	}
+	router.HandleFunc("GET /test/auth-failure", func(stdhttp.ResponseWriter, *stdhttp.Request) {
+		t.Error("application handler bypassed failed authentication")
+	})
+	response := httptest.NewRecorder()
+	router.ServeHTTP(response, httptest.NewRequest(stdhttp.MethodGet, "/test/auth-failure", nil))
+	if response.Code != stdhttp.StatusUnauthorized {
+		t.Errorf("auth failure status=%d, want 401", response.Code)
+	}
+	router.HandleFunc("GET /test/{value}", func(w stdhttp.ResponseWriter, r *stdhttp.Request) {
+		if value := r.PathValue("value"); value != "a/b" {
+			t.Errorf("path value=%q, want %q", value, "a/b")
+		}
+		w.WriteHeader(stdhttp.StatusNoContent)
+	})
+	response = httptest.NewRecorder()
+	router.ServeHTTP(response, httptest.NewRequest(stdhttp.MethodGet, "/test/a%2Fb", nil))
+	if response.Code != stdhttp.StatusNoContent {
+		t.Errorf("escaped path status=%d, want 204", response.Code)
+	}
+	if authenticationCompositions != 1 || banCompositions != 1 {
+		t.Errorf("authentication compositions=%d ban compositions=%d, want 1 each", authenticationCompositions, banCompositions)
+	}
+	if authenticated != 4 || checkedBans != 3 {
+		t.Errorf("authentication calls=%d ban checks=%d, want 4 and 3", authenticated, checkedBans)
+	}
+}
+
 func TestAuthenticationRejectsFailedJWKSFetch(t *testing.T) {
 	for _, test := range []struct {
 		name   string

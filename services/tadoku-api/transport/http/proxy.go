@@ -35,14 +35,14 @@ type route struct {
 // RegisterProxyRoutes attaches temporary legacy routes to the application router.
 // Remove this registration when all operations are handled by Tadoku API.
 func RegisterProxyRoutes(
-	mux *stdhttp.ServeMux,
+	router *Router,
 	upstreams Upstreams,
 	transport stdhttp.RoundTripper,
 	requestTimeout time.Duration,
 	registerer prometheus.Registerer,
 	logger *slog.Logger,
 ) error {
-	if mux == nil {
+	if router == nil || router.mux == nil {
 		return fmt.Errorf("router is required")
 	}
 	if requestTimeout <= 0 {
@@ -80,12 +80,12 @@ func RegisterProxyRoutes(
 		}
 
 		handler := observe(current, requestTimeout, newReverseProxy(current, target, transport, logger), duration, logger)
-		mux.Handle(current.prefix, handler)
+		router.mux.Handle(current.prefix, handler)
 
 		if current.name == "content" {
 			// ServeMux GET routes also match HEAD. Keep HEAD on the legacy API
 			// until that operation is migrated; this exception is proxy-only.
-			mux.Handle("HEAD /content/announcements/{namespace}/active", handler)
+			router.mux.Handle("HEAD /content/announcements/{namespace}/active", handler)
 		}
 	}
 

@@ -83,8 +83,8 @@ func runTests(m *testing.M) (code int) {
 // testAPI owns the production handler and an in-process sentinel transport.
 type testAPI struct {
 	db                   *testpostgres.Database
-	handler              *http.ServeMux
-	authenticatedHandler *http.ServeMux
+	handler              *transport.Router
+	authenticatedHandler *transport.Router
 	authentication       http.Handler
 	bannedUsers          http.Handler
 	proxied              atomic.Int32
@@ -127,7 +127,7 @@ func newTestAPI(ctx context.Context) (*testAPI, error) {
 		Immersion: "http://upstream.test",
 		Profile:   "http://upstream.test",
 	}
-	for _, handler := range []*http.ServeMux{api.handler, api.authenticatedHandler} {
+	for _, handler := range []*transport.Router{api.handler, api.authenticatedHandler} {
 		err = transport.RegisterProxyRoutes(
 			handler,
 			upstreams,

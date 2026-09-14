@@ -11,6 +11,30 @@ import (
 	"github.com/tadoku/tadoku/services/tadoku-api/app"
 )
 
+// Router keeps application routes behind shared middleware while allowing this
+// package to attach probes and temporary legacy proxies outside it.
+type Router struct {
+	mux                  *stdhttp.ServeMux
+	application          *stdhttp.ServeMux
+	protectedApplication stdhttp.Handler
+}
+
+// Handle registers an application route behind the shared middleware.
+func (r *Router) Handle(pattern string, handler stdhttp.Handler) {
+	r.application.Handle(pattern, handler)
+	r.mux.Handle(pattern, r.protectedApplication)
+}
+
+// HandleFunc registers an application route behind the shared middleware.
+func (r *Router) HandleFunc(pattern string, handler func(stdhttp.ResponseWriter, *stdhttp.Request)) {
+	r.application.HandleFunc(pattern, handler)
+	r.mux.Handle(pattern, r.protectedApplication)
+}
+
+func (r *Router) ServeHTTP(w stdhttp.ResponseWriter, request *stdhttp.Request) {
+	r.mux.ServeHTTP(w, request)
+}
+
 // NewHandler builds the application router without any legacy upstreams.
 func NewHandler(
 	application *app.Application,
@@ -19,7 +43,7 @@ func NewHandler(
 	logger *slog.Logger,
 	authenticate func(stdhttp.Handler) stdhttp.Handler,
 	rejectBanned func(stdhttp.Handler) stdhttp.Handler,
-) (*stdhttp.ServeMux, error) {
+) (*Router, error) {
 	if application == nil || ready == nil {
 		return nil, fmt.Errorf("application and readiness are required")
 	}
@@ -36,17 +60,21 @@ func NewHandler(
 		return nil, fmt.Errorf("banned-user middleware is required")
 	}
 
-	mux := stdhttp.NewServeMux()
-	mux.HandleFunc("GET /livez", func(w stdhttp.ResponseWriter, _ *stdhttp.Request) {
+	router := &Router{
+		mux:         stdhttp.NewServeMux(),
+		application: stdhttp.NewServeMux(),
+	}
+	router.protectedApplication = withRequestTimeout(timeout, authenticate(rejectBanned(router.application)))
+	router.mux.HandleFunc("GET /livez", func(w stdhttp.ResponseWriter, _ *stdhttp.Request) {
 		_, _ = w.Write([]byte("ok"))
 	})
-	mux.Handle("GET /readyz", withRequestTimeout(timeout, readinessHandler(ready)))
-	mux.Handle(
+	router.mux.Handle("GET /readyz", withRequestTimeout(timeout, readinessHandler(ready)))
+	router.Handle(
 		"GET /content/announcements/{namespace}/active",
-		withRequestTimeout(timeout, authenticate(rejectBanned(listActiveAnnouncements(application, logger)))),
+		listActiveAnnouncements(application, logger),
 	)
 
-	return mux, nil
+	return router, nil
 }
 
 func withRequestTimeout(timeout time.Duration, next stdhttp.Handler) stdhttp.Handler {

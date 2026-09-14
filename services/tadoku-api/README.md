@@ -21,8 +21,11 @@ application router or migrated handlers.
 
 The router requires authentication middleware for application business handlers.
 Startup always constructs it from the configured gateway JWKS; there is no opt-out
-or feature flag. Health probes and temporary proxy registrations keep their existing
-behavior. Verified user claims travel in request context through `internal/identity`.
+or feature flag. Register application routes through the router's `Handle` or
+`HandleFunc` methods during construction; every such route inherits the shared
+request deadline, authentication and ban check. Health probes and temporary proxy
+registrations keep their existing behavior. Verified user claims travel in request
+context through `internal/identity`.
 
 Application operations compose features. Feature services own business decisions;
 repositories only query and map rows. `postgres.Executor` lets repositories use

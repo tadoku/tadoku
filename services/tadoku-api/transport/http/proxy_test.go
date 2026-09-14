@@ -54,7 +54,7 @@ func TestHandlerProxiesEachLegacyPrefix(t *testing.T) {
 
 	var logs bytes.Buffer
 	registry := prometheus.NewRegistry()
-	handler := stdhttp.NewServeMux()
+	handler := newProxyTestRouter()
 	err := RegisterProxyRoutes(handler, Upstreams{
 		Authz:     servers["authz"].URL,
 		Content:   servers["content"].URL,
@@ -174,7 +174,7 @@ func TestHandlerGeneratesAndForwardsCorrelationID(t *testing.T) {
 	defer upstream.Close()
 
 	var logs bytes.Buffer
-	handler := stdhttp.NewServeMux()
+	handler := newProxyTestRouter()
 	err := RegisterProxyRoutes(handler, Upstreams{
 		Authz:     upstream.URL,
 		Content:   upstream.URL,
@@ -284,7 +284,7 @@ func TestRegisterProxyRoutesRejectsInvalidConfiguration(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			err := RegisterProxyRoutes(stdhttp.NewServeMux(), test.upstreams, stdhttp.DefaultTransport, test.timeout, prometheus.NewRegistry(), slog.Default())
+			err := RegisterProxyRoutes(newProxyTestRouter(), test.upstreams, stdhttp.DefaultTransport, test.timeout, prometheus.NewRegistry(), slog.Default())
 			if err == nil {
 				t.Errorf("expected an error")
 			}
@@ -294,7 +294,7 @@ func TestRegisterProxyRoutesRejectsInvalidConfiguration(t *testing.T) {
 
 func newTestHandler(t testing.TB, upstream string, timeout time.Duration) stdhttp.Handler {
 	t.Helper()
-	handler := stdhttp.NewServeMux()
+	handler := newProxyTestRouter()
 	err := RegisterProxyRoutes(handler, Upstreams{
 		Authz:     upstream,
 		Content:   upstream,
@@ -309,7 +309,7 @@ func newTestHandler(t testing.TB, upstream string, timeout time.Duration) stdhtt
 
 func newTestHandlerWithTransport(t *testing.T, transport stdhttp.RoundTripper, timeout time.Duration) stdhttp.Handler {
 	t.Helper()
-	handler := stdhttp.NewServeMux()
+	handler := newProxyTestRouter()
 	err := RegisterProxyRoutes(handler, Upstreams{
 		Authz:     "http://authz",
 		Content:   "http://content",
@@ -320,6 +320,10 @@ func newTestHandlerWithTransport(t *testing.T, transport stdhttp.RoundTripper, t
 		t.Fatalf("unexpected error: %v", err)
 	}
 	return handler
+}
+
+func newProxyTestRouter() *Router {
+	return &Router{mux: stdhttp.NewServeMux()}
 }
 
 type roundTripFunc func(*stdhttp.Request) (*stdhttp.Response, error)

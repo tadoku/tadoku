@@ -1,13 +1,20 @@
 package e2e_test
 
 import (
+	"bufio"
+	"bytes"
+	"io"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"path/filepath"
 	"testing"
 	"time"
 
 	"github.com/golang-jwt/jwt/v4"
+	"github.com/labstack/echo/v4"
+	commondomain "github.com/tadoku/tadoku/services/common/domain"
+	"github.com/tadoku/tadoku/services/common/middleware"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/identity"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/timex"
 )
@@ -16,6 +23,7 @@ func TestAuthentication(t *testing.T) {
 	tests := []struct {
 		description []string
 		want        int
+		skipParity  bool
 	}{
 		{
 			description: []string{"user"},
@@ -109,6 +117,18 @@ func TestAuthentication(t *testing.T) {
 			description: []string{"invalid", "token", "after", "malformed", "header"},
 			want:        http.StatusUnauthorized,
 		},
+		{
+			// Legacy Identity panics when iat is missing.
+			description: []string{"missing", "iat"},
+			want:        http.StatusUnauthorized,
+			skipParity:  true,
+		},
+		{
+			// Service identities are intentionally unsupported by Tadoku API.
+			description: []string{"service", "token"},
+			want:        http.StatusUnauthorized,
+			skipParity:  true,
+		},
 	}
 	for _, test := range tests {
 		name := APITestName("Authentication", test.want, test.description...)
@@ -118,36 +138,16 @@ func TestAuthentication(t *testing.T) {
 				name    string
 				handler http.Handler
 			}{
-				{name: "tadoku-api", handler: api.authenticatedHandler},
-				{name: "content-api", handler: legacyContent.authenticatedHandler},
+				{name: "tadoku-api", handler: api.authentication},
+				{name: "legacy", handler: legacyAuthentication},
 			} {
 				t.Run(implementation.name, func(t *testing.T) {
+					if test.skipParity && implementation.name == "legacy" {
+						t.Skip("intentional authentication difference")
+					}
 					checkAuthenticationGolden(t, implementation.handler, path, test.want)
 				})
 			}
-		})
-	}
-}
-
-// Missing iat previously panicked in legacy Identity. Service identities are
-// unsupported by Tadoku API. These intentional differences are not parity cases.
-func TestAuthenticationTadokuOnly(t *testing.T) {
-	for _, test := range []struct {
-		description []string
-		want        int
-	}{
-		{
-			description: []string{"missing", "iat"},
-			want:        http.StatusUnauthorized,
-		},
-		{
-			description: []string{"service", "token"},
-			want:        http.StatusUnauthorized,
-		},
-	} {
-		name := APITestName("TadokuAuthentication", test.want, test.description...)
-		t.Run(name, func(t *testing.T) {
-			checkAuthenticationGolden(t, api.authenticatedHandler, filepath.Join("testdata", name), test.want)
 		})
 	}
 }
@@ -165,21 +165,33 @@ func checkAuthenticationGolden(t *testing.T, handler http.Handler, path string, 
 	timex.TheWorld(time.Date(2026, 9, 12, 12, 0, 0, 0, time.UTC), func() {
 		checkHTTPGolden(t, handler, path, want)
 	})
-	if api.proxied.Load() != 0 {
-		t.Error("authentication request contacted an upstream")
-	}
 }
 
-// Observe the request downstream of real authentication, then execute the real
-// application handler. The shared goldens prove context propagation as well as
-// the HTTP result without adding an identity endpoint or a production test hook.
-func observeUserIdentity(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if user := identity.FromContext(r.Context()); user != nil {
-			writeIdentityHeaders(w.Header(), user.Subject, user.DisplayName, user.Email, user.CreatedAt)
+// End the middleware chain here so authentication goldens do not exercise a
+// business endpoint. Both success handlers observe the real downstream context.
+func authenticationSuccess(w http.ResponseWriter, r *http.Request) {
+	if user := identity.FromContext(r.Context()); user != nil {
+		writeIdentityHeaders(w.Header(), user.Subject, user.DisplayName, user.Email, user.CreatedAt)
+	}
+	writeAuthenticationSuccess(w)
+}
+
+func newLegacyAuthenticationHandler(jwksURL string) http.Handler {
+	router := echo.New()
+	router.Logger.SetOutput(io.Discard)
+	router.GET("/test/authentication", func(c echo.Context) error {
+		if user := commondomain.ParseUserIdentity(c.Request().Context()); user != nil {
+			writeIdentityHeaders(c.Response().Header(), user.Subject, user.DisplayName, user.Email, user.CreatedAt)
 		}
-		next.ServeHTTP(w, r)
-	})
+		writeAuthenticationSuccess(c.Response())
+		return nil
+	}, middleware.VerifyJWT(jwksURL), middleware.Identity())
+	return router
+}
+
+func writeAuthenticationSuccess(w http.ResponseWriter) {
+	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+	_, _ = w.Write([]byte("{\"status\":\"success\"}\n"))
 }
 
 func writeIdentityHeaders(header http.Header, subject, displayName, email string, createdAt time.Time) {
@@ -187,6 +199,50 @@ func writeIdentityHeaders(header http.Header, subject, displayName, email string
 	header.Set("X-Test-Identity-Display-Name", displayName)
 	header.Set("X-Test-Identity-Email", email)
 	header.Set("X-Test-Identity-Created-At", createdAt.UTC().Format(time.RFC3339))
+}
+
+func TestAuthenticationWiring(t *testing.T) {
+	input, err := os.ReadFile("testdata/Authentication/200_user/request.http")
+	if err != nil {
+		t.Fatal(err)
+	}
+	validRequest, err := http.ReadRequest(bufio.NewReader(bytes.NewReader(input)))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer validRequest.Body.Close()
+
+	previous := jwt.TimeFunc
+	jwt.TimeFunc = timex.Now
+	defer func() { jwt.TimeFunc = previous }()
+
+	timex.TheWorld(time.Date(2026, 9, 12, 12, 0, 0, 0, time.UTC), func() {
+		for _, test := range []struct {
+			name          string
+			authorization string
+			want          int
+		}{
+			{name: "missing", want: http.StatusBadRequest},
+			{name: "invalid", authorization: "Bearer invalid-token", want: http.StatusUnauthorized},
+			{name: "valid", authorization: validRequest.Header.Get("Authorization"), want: http.StatusOK},
+		} {
+			t.Run(test.name, func(t *testing.T) {
+				reset(t)
+				request := httptest.NewRequest(http.MethodGet, "/content/announcements/main/active", nil)
+				if test.authorization != "" {
+					request.Header.Set("Authorization", test.authorization)
+				}
+				response := httptest.NewRecorder()
+				api.authenticatedHandler.ServeHTTP(response, request)
+				if response.Code != test.want {
+					t.Errorf("status=%d, want %d", response.Code, test.want)
+				}
+				if api.proxied.Load() != 0 {
+					t.Error("protected route contacted an upstream")
+				}
+			})
+		}
+	})
 }
 
 func TestAuthenticationDoesNotChangeProbesOrProxyRoutes(t *testing.T) {

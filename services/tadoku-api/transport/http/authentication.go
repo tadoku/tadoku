@@ -11,9 +11,9 @@ import (
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/identity"
 )
 
-// NewAuthentication loads the gateway's signing keys once and verifies user JWTs.
+// NewJWTAuthentication loads the gateway's signing keys once and verifies user JWTs.
 // It performs no role, ban, permission, or service-audience checks.
-func NewAuthentication(jwksURL string, timeout time.Duration) (func(stdhttp.Handler) stdhttp.Handler, error) {
+func NewJWTAuthentication(jwksURL string, timeout time.Duration) (func(stdhttp.Handler) stdhttp.Handler, error) {
 	if jwksURL == "" || timeout <= 0 {
 		return nil, fmt.Errorf("JWKS URL and positive fetch timeout are required")
 	}

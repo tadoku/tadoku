@@ -80,7 +80,7 @@ type application struct {
 
 func start(cfg config, logger *slog.Logger) (*application, error) {
 	logger = logger.With("service", cfg.ServiceName)
-	authenticate, err := transporthttp.NewAuthentication(cfg.JWKS, cfg.DialTimeout)
+	authenticate, err := transporthttp.NewJWTAuthentication(cfg.JWKS, cfg.DialTimeout)
 	if err != nil {
 		return nil, err
 	}

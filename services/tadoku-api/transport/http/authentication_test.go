@@ -31,7 +31,7 @@ func TestAuthenticationRequiresConfiguration(t *testing.T) {
 		{name: "negative timeout", url: "http://jwks.test", timeout: -time.Second},
 	} {
 		t.Run(test.name, func(t *testing.T) {
-			if _, err := NewAuthentication(test.url, test.timeout); err == nil {
+			if _, err := NewJWTAuthentication(test.url, test.timeout); err == nil {
 				t.Error("invalid authentication configuration accepted")
 			}
 		})
@@ -59,7 +59,7 @@ func TestAuthenticationRejectsFailedJWKSFetch(t *testing.T) {
 			}))
 			t.Cleanup(server.Close)
 
-			_, err := NewAuthentication(server.URL, time.Second)
+			_, err := NewJWTAuthentication(server.URL, time.Second)
 			if err == nil {
 				t.Fatal("failed JWKS fetch accepted")
 			}
@@ -83,7 +83,7 @@ func TestAuthenticationBoundsJWKSFetch(t *testing.T) {
 	}))
 	t.Cleanup(server.Close)
 
-	_, err := NewAuthentication(server.URL, 20*time.Millisecond)
+	_, err := NewJWTAuthentication(server.URL, 20*time.Millisecond)
 	if !errors.Is(err, context.DeadlineExceeded) {
 		t.Fatalf("JWKS fetch error=%v, want deadline exceeded", err)
 	}
@@ -103,7 +103,7 @@ func TestAuthenticationUsesCachedKeys(t *testing.T) {
 	}))
 	t.Cleanup(server.Close)
 
-	authenticate, err := NewAuthentication(server.URL, time.Second)
+	authenticate, err := NewJWTAuthentication(server.URL, time.Second)
 	if err != nil {
 		t.Fatal(err)
 	}

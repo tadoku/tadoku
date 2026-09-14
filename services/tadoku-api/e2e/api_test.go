@@ -22,6 +22,7 @@ import (
 
 var api *testAPI
 var legacyContent *legacyContentAPI
+var legacyAuthentication http.Handler
 var authenticationJWKS *httptest.Server
 
 func TestMain(m *testing.M) {
@@ -39,6 +40,7 @@ func runTests(m *testing.M) (code int) {
 		_, _ = w.Write(jwks)
 	}))
 	defer authenticationJWKS.Close()
+	legacyAuthentication = newLegacyAuthenticationHandler(authenticationJWKS.URL)
 
 	api, err = newTestAPI(context.Background())
 	if err != nil {
@@ -72,6 +74,7 @@ type testAPI struct {
 	db                   *testpostgres.Database
 	handler              *http.ServeMux
 	authenticatedHandler *http.ServeMux
+	authentication       http.Handler
 	proxied              atomic.Int32
 }
 
@@ -91,16 +94,15 @@ func newTestAPI(ctx context.Context) (*testAPI, error) {
 	if err != nil {
 		return nil, errors.Join(fmt.Errorf("create API handler: %w", err), db.Close())
 	}
-	authenticate, err := transport.NewAuthentication(authenticationJWKS.URL, time.Second)
+	authenticate, err := transport.NewJWTAuthentication(authenticationJWKS.URL, time.Second)
 	if err != nil {
 		return nil, errors.Join(err, db.Close())
 	}
-	api.authenticatedHandler, err = transport.NewHandler(application, api.db.Pool.Ping, time.Second, logger,
-		func(next http.Handler) http.Handler { return authenticate(observeUserIdentity(next)) },
-	)
+	api.authenticatedHandler, err = transport.NewHandler(application, api.db.Pool.Ping, time.Second, logger, authenticate)
 	if err != nil {
 		return nil, errors.Join(fmt.Errorf("create authenticated API handler: %w", err), db.Close())
 	}
+	api.authentication = authenticate(http.HandlerFunc(authenticationSuccess))
 
 	upstreams := transport.Upstreams{
 		Authz:     "http://upstream.test",

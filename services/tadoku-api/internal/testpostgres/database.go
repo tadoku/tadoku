@@ -126,7 +126,8 @@ func (d *Database) Close() error {
 //go:embed cleanup.sql
 var cleanupSQL string
 
-// Reset clears the explicitly listed mutable tables and loads SQL fixtures.
+// Reset clears the explicitly listed mutable tables and loads existing SQL fixtures.
+// Missing seed files mean no setup is needed; other read and SQL errors fail reset.
 // Setup commits before requests run; it never encloses application transactions.
 // Call only between sequential scenarios, after their database work has finished.
 func (d *Database) Reset(ctx context.Context, seedFiles ...string) (err error) {
@@ -150,6 +151,9 @@ func (d *Database) Reset(ctx context.Context, seedFiles ...string) (err error) {
 	}
 	for _, path := range seedFiles {
 		seed, err := os.ReadFile(path)
+		if errors.Is(err, os.ErrNotExist) {
+			continue
+		}
 		if err != nil {
 			return fmt.Errorf("read seed %s: %w", path, err)
 		}

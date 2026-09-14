@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/jackc/pgx/v5"
@@ -35,7 +36,8 @@ func TestResetClearsWritesAndPreservesStaticData(t *testing.T) {
 	if err := db.Pool.QueryRow(t.Context(), staticState).Scan(&before); err != nil {
 		t.Fatal(err)
 	}
-	if err := db.Reset(t.Context(), "testdata/announcements.sql"); err != nil {
+	missingSeed := filepath.Join(t.TempDir(), "setup.sql")
+	if err := db.Reset(t.Context(), missingSeed, "testdata/announcements.sql", missingSeed); err != nil {
 		t.Fatal(err)
 	}
 
@@ -64,7 +66,7 @@ func TestResetClearsWritesAndPreservesStaticData(t *testing.T) {
 	`); err != nil {
 		t.Fatal(err)
 	}
-	if err := db.Reset(t.Context()); err != nil {
+	if err := db.Reset(t.Context(), missingSeed); err != nil {
 		t.Fatal(err)
 	}
 	if err := reader.QueryRow(t.Context(), "select count(*) from announcements").Scan(&count); err != nil {
@@ -95,10 +97,15 @@ func TestResetClearsWritesAndPreservesStaticData(t *testing.T) {
 	if _, err := reader.Exec(t.Context(), "update announcements set title = 'keep me' where namespace = 'main'"); err != nil {
 		t.Fatal(err)
 	}
-	for _, file := range []string{"testdata/missing.sql", "testdata/invalid.sql"} {
+	for _, file := range []string{"testdata", "testdata/invalid.sql"} {
 		t.Run(file, func(t *testing.T) {
-			if err := db.Reset(t.Context(), "testdata/announcements.sql", file); err == nil {
-				t.Fatal("accepted a missing or invalid seed")
+			err := db.Reset(t.Context(), "testdata/announcements.sql", file)
+			if err == nil {
+				t.Fatal("accepted an unreadable or invalid seed")
+			}
+			var pathError *os.PathError
+			if file == "testdata" && !errors.As(err, &pathError) {
+				t.Errorf("seed read error was not preserved: %v", err)
 			}
 			if err := reader.QueryRow(t.Context(), "select count(*), min(title) filter (where namespace = 'main') from announcements").Scan(&count, &title); err != nil {
 				t.Fatal(err)

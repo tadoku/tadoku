@@ -125,7 +125,7 @@ scenario, not between dependent requests. `internal/testpostgres/cleanup.sql`
 explicitly lists mutable tables to truncate with `restart identity`. Add tables
 there as their slices gain tests; do not discover tables automatically or use
 `cascade`. Static data from migrations and `schema_migrations` are preserved.
-Each case has its own SQL setup; fixtures are not generated in Go.
+Cases needing seed data have their own SQL setup; fixtures are not generated in Go.
 Reset and seeding commit before requests run,
 so application transactions commit normally.
 There is no outer rollback transaction and no change to `RunInTransaction`.
@@ -144,7 +144,7 @@ subtest and its fixture directory:
 
 ```text
 e2e/testdata/<operation>/<status>_<description>/
-  setup.sql
+  setup.sql       # optional
   request.http
   golden.http
 ```
@@ -152,9 +152,10 @@ e2e/testdata/<operation>/<status>_<description>/
 Each operation's tests use an explicit Go table. Each row declares
 `description []string` and `want` as an HTTP status constant; there is no separate
 fixture-name field to keep in sync. Add a case by adding a descriptive table row and
-its three fixture files; do not discover cases from directories. Each case owns its seed,
-including an explicit comment-only `setup.sql` for an empty database. Shared
-cleanup runs before that SQL. The `golden.http` file contains the request label
+its request and golden files; do not discover cases from directories. Add `setup.sql`
+only when the case needs seed data. Shared cleanup always runs; an absent setup file
+is skipped, while other read errors and invalid SQL still fail and roll back reset.
+The `golden.http` file contains the request label
 and complete expected response. Tests parse the request files with `net/http`,
 execute the production handler at the operation's minimum required access level,
 check the HTTP status against the table's `want`, and compare the entire response,
@@ -198,18 +199,18 @@ they exercise dependency behavior rather than SQL-defined response cases.
 
 Endpoint contract tests explicitly supply passthrough authentication so their
 credential-free request fixtures remain focused on business behavior. Authentication
-scenarios use separately constructed suite-level handlers with the real production
-router's authentication wrapping. The comparison handler uses legacy `VerifyJWT`
-and `Identity` with production route registration; it omits authorization middleware.
-Both implementations consume the same SQL setup, signed HTTP requests and goldens.
-A test-only downstream observer adds identity headers before the real handler runs,
-so a successful response proves context propagation without a product identity endpoint.
+scenarios wrap a test-only success handler with real authentication middleware.
+The comparison handler uses legacy `VerifyJWT` and `Identity`, without authorization
+or business endpoints. Both consume the same signed HTTP requests and goldens.
+Test-only identity headers prove downstream context propagation, and a small separate
+check verifies authentication wiring in the production router. No test endpoint is
+added to production.
 
 The suite serves a synthetic checked-in public JWKS locally; private keys and live
 identity providers are not needed. Each authentication scenario temporarily binds
 `jwt/v4.TimeFunc` to the scoped application clock and restores it on return. These
 scenarios and their parents must not run in parallel. Intentional compatibility
-differences have separate Tadoku API goldens, not misleading shared expectations.
+differences use `skipParity` in the same table and run only against Tadoku API.
 Provider failures are tested at middleware construction; authentication matrices
 are not repeated for every operation. Authorization remains a separate change.
 

@@ -129,10 +129,7 @@ func start(cfg config, logger *slog.Logger) (*application, error) {
 	contentRepository := content.NewAnnouncementsRepository(pool)
 	contentService := content.NewService(contentRepository)
 	api := app.New(contentService)
-	keto := ketoclient.NewReadClient(cfg.KetoReadURL)
-	rejectBanned := transporthttp.RejectBannedUsers(func(ctx context.Context, subjectID string) (bool, error) {
-		return keto.CheckPermission(ctx, "app", "tadoku", "banned", ketoclient.Subject{ID: subjectID})
-	}, logger)
+	rejectBanned := newBannedUserMiddleware(cfg.KetoReadURL, logger)
 
 	handler, err := transporthttp.NewHandler(api, pool.Ping, cfg.RequestTimeout, logger, authenticate, rejectBanned)
 	if err != nil {
@@ -214,6 +211,13 @@ func start(cfg config, logger *slog.Logger) (*application, error) {
 	)
 
 	return app, nil
+}
+
+func newBannedUserMiddleware(ketoReadURL string, logger *slog.Logger) func(http.Handler) http.Handler {
+	keto := ketoclient.NewReadClient(ketoReadURL)
+	return transporthttp.RejectBannedUsers(func(ctx context.Context, subjectID string) (bool, error) {
+		return keto.CheckPermission(ctx, "app", "tadoku", "banned", ketoclient.Subject{ID: subjectID})
+	}, logger)
 }
 
 func (app *application) wait(ctx context.Context) error {

@@ -1,17 +1,14 @@
 # Tadoku API
 
-`GET /content/announcements/{namespace}/active` is implemented natively, by
-default. Other operations retain the existing proxy ownership, including HEAD
-and OPTIONS on that path. A native failure never falls back to Content.
-This read is deliberately **unprotected**: it does not validate JWTs, call Keto,
-check bans or interpret service audiences. Authentication and shared authorization
-will be separate reviewed increments. Existing proxied routes are unchanged.
+Tadoku API replaces the legacy backend services operation by operation. Native
+handlers own migrated operations; operations not yet migrated retain their existing
+proxy ownership. A native failure never falls back to a legacy service.
 Externally the gateway still adds `/api`.
 
 ## Code ownership
 
 ```
-transport/http -> app -> features/content -> generated/sqlc/content
+transport/http -> app -> features/<feature> -> generated/sqlc/<feature>
 cmd/tadoku-api constructs and closes the shared pgx/v5 pool and HTTP resources
 ```
 
@@ -20,14 +17,12 @@ method/path registrations, request deadlines and its own health checks. It does
 not depend on upstream URLs, proxy transports or proxy metrics. Startup separately
 calls `RegisterProxyRoutes` to attach the temporary legacy routes. That call and
 `proxy.go` can be removed when the migration is complete without changing the
-application router or announcement handler. The temporary HEAD override lives
-in `proxy.go`; the application route is an ordinary GET registration.
+application router or migrated handlers.
 
-`app/announcements.go` exposes `ListActiveAnnouncements`. Content service chooses
-one `timex.Now()` cutoff and a limit of ten. Its concrete
-repository only queries and maps rows. `postgres.Executor` makes the repository
-usable inside a future app-owned transaction; this read does not open an
-unnecessary transaction. There are no new feature/repository interfaces.
+Application operations compose features. Feature services own business decisions;
+repositories only query and map rows. `postgres.Executor` lets repositories use
+the active app-owned transaction. Open transactions only when the operation needs
+one; do not add feature or repository interfaces solely for mocking.
 
 ## Contract and compatibility
 
@@ -51,11 +46,13 @@ The contract tests compare all 81 operations and their component/security shapes
 Manually registered health and metrics endpoints are separately inventoried in
 the contract's `x-tadoku-operational-surfaces` metadata, not rendered as product API.
 
-The native read returns the existing announcement JSON shape, including nullable
-hrefs and an empty array when nothing is active. Publication windows, soft deletion,
-namespace filtering, descending order and the ten-item limit remain unchanged.
-Database failures return 500 without falling back to the proxy. There is no legacy
-server comparison or duplicated authentication matrix in its tests.
+Every migrated operation must preserve its existing API inputs, outputs and
+business behavior, including response status, headers, field shapes, nullability,
+empty results, filtering, ordering and limits where applicable. Prove parity by
+running the same request/response golden cases against the native and corresponding
+legacy handlers. Native failures must not fall back to the proxy. Test shared
+authentication and infrastructure middleware at their own boundaries,
+not duplicated in each endpoint's parity cases.
 
 ## Runtime configuration
 
@@ -75,12 +72,11 @@ connections. The dev deployment uses the existing disposable development DB role
 secret synchronization and reset scripts include Tadoku API.
 
 **Production activation is not part of this change.** Provision a dedicated
-runtime credential with connect/schema-usage/select-on-announcements grants, not
+runtime credential with only the grants required by the application, not
 a migration/admin DSN. Confirm provider TLS/pooling settings and the coexistence
 connection budget: two native replicas default to eight connections, in addition
 to the still-running legacy pools. Update production secrets/manifests and complete
 the master rollout gate under separate release authorization before deployment.
-No schema migration or write-owner handoff is required for this read.
 
 ## Verification
 
@@ -95,17 +91,18 @@ bazel test //services/tadoku-api/... --test_output=errors
 ```
 
 `TestMain` creates one disposable database, applies migrations and constructs the
-production HTTP router once for the E2E suite. Both requests and the fallback
-sentinel execute in process, without HTTP listeners. Tests check response
-mapping, namespace encoding, publication boundaries, ordering, limit, empty results,
-read failures, cancellation and route ownership.
+native production HTTP router and the legacy handlers required by the E2E suite
+once. Handlers and the fallback sentinel execute in process, without HTTP listeners.
+Cover each operation's response mapping, input handling, business rules and relevant
+boundaries; keep dependency-failure and route-ownership checks alongside those cases.
 
-HTTP scenarios run sequentially and call `reset` before each scenario, not between
-dependent requests. `internal/testpostgres/cleanup.sql` explicitly lists mutable
-tables to truncate with `restart identity`. Add tables there as their slices gain
-tests; do not discover tables automatically or use `cascade`. Static data from
-migrations and `schema_migrations` are preserved. Each case has its own SQL setup;
-fixtures are not generated in Go. Reset and seeding commit before requests run,
+HTTP scenarios run sequentially and call `reset` before each implementation of each
+scenario, not between dependent requests. `internal/testpostgres/cleanup.sql`
+explicitly lists mutable tables to truncate with `restart identity`. Add tables
+there as their slices gain tests; do not discover tables automatically or use
+`cascade`. Static data from migrations and `schema_migrations` are preserved.
+Each case has its own SQL setup; fixtures are not generated in Go.
+Reset and seeding commit before requests run,
 so application transactions commit normally.
 There is no outer rollback transaction and no change to `RunInTransaction`.
 
@@ -117,33 +114,60 @@ different times. No extra request-context wrapper is needed. The pool-closing fa
 has isolated dependencies. Repository/transaction tests retain their independent
 databases and may run in parallel.
 
-HTTP cases derive their name from the operation, expected status and description.
-For example, `APITestName("ListActiveAnnouncements", http.StatusOK, "without", "auth")`
-produces `ListActiveAnnouncements/200_without_auth`, used for both the subtest and
-its fixture directory:
+HTTP cases derive their name from the operation, expected status and description
+using `APITestName(operation, status, description...)`. Use the same name for the
+subtest and its fixture directory:
 
 ```text
-e2e/testdata/ListActiveAnnouncements/200_without_auth/
+e2e/testdata/<operation>/<status>_<description>/
   setup.sql
   request.http
   golden.http
 ```
 
-The announcements test has an explicit, hard-coded Go table. Each row declares
+Each operation's tests use an explicit Go table. Each row declares
 `description []string` and `want` as an HTTP status constant; there is no separate
 fixture-name field to keep in sync. Add a case by adding a descriptive table row and
 its three fixture files; do not discover cases from directories. Each case owns its seed,
 including an explicit comment-only `setup.sql` for an empty database. Shared
 cleanup runs before that SQL. The `golden.http` file contains the request label
 and complete expected response. Tests parse the request files with `net/http`,
-execute the production
-handler without credentials, check the HTTP status against the table's `want`,
-and compare the entire response, including status, headers and body, with the golden.
+execute the production handler at the operation's minimum required access level,
+check the HTTP status against the table's `want`, and compare the entire response,
+including status, headers and body, with the golden.
 Explicit seed IDs and frozen business time make responses deterministic; only
 HTTP line endings are normalized. Missing or changed goldens fail the test.
 There is no automatic recording mode: edit and review the expected files for an
 intentional contract change. Lifecycle tests stay focused on startup/shutdown,
 not a growing list of endpoint assertions.
+
+### Legacy parity
+
+For every migrated operation, run each case against the native API and its
+corresponding legacy API in separately named subtests. Both consume the same
+`setup.sql`, `request.http` and `golden.http`; each must independently match the
+full response. Use production route registration, handlers, domain operations,
+repositories and generated queries, mounting the legacy routes at the matching
+API prefix. Initialize only the dependencies the tested operations need. Confine
+legacy assembly to test targets; do not add legacy service or framework dependencies
+to the native runtime.
+
+Time-dependent cases must give both implementations the same controlled time input.
+When a legacy query reads the database clock, bind that input explicitly in test-only
+code. Reject unsupported query shapes instead of silently applying a generic SQL
+rewrite. Apart from clock binding, execute production queries and row mapping
+unchanged against real PostgreSQL. Do not shift or ignore fixture timestamps or
+response fields to make a comparison pass. Such bindings do not verify the legacy
+choice of clock. Gateway rewriting, authentication and infrastructure middleware
+also remain outside endpoint parity; test them at their respective boundaries.
+
+```sh
+bazel test //services/tadoku-api/e2e:e2e_test --test_output=errors
+```
+
+The existing CI E2E and race targets include these comparisons automatically.
+Add future migrated operations explicitly; do not add a general service launcher
+or duplicate per-implementation fixtures.
 
 Pool-failure, cancellation and proxy-routing checks remain separate Go tests;
 they exercise dependency behavior rather than SQL-defined response cases.
@@ -193,3 +217,7 @@ transitive dependencies.
 
 Same-package service/repository responsibilities and business signatures still
 require review; import rules do not enforce those conventions.
+
+## Migration notes
+
+Track deferred cleanup in the [migration log](MIGRATION_LOG.md).

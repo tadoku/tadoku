@@ -1,12 +1,8 @@
 package e2e_test
 
 import (
-	"bufio"
-	"bytes"
 	"io"
 	"net/http"
-	"net/http/httptest"
-	"os"
 	"path/filepath"
 	"testing"
 	"time"
@@ -42,7 +38,7 @@ func TestBannedUsers(t *testing.T) {
 				name    string
 				handler http.Handler
 			}{
-				{name: "tadoku-api", handler: api.bannedUsers},
+				{name: "tadoku-api", handler: api.authenticatedHandler},
 				{name: "legacy", handler: legacyBannedUsers},
 			} {
 				t.Run(implementation.name, func(t *testing.T) {
@@ -84,51 +80,4 @@ func newLegacyBannedUsersHandler(jwksURL, ketoReadURL string) http.Handler {
 		middleware.RejectBannedUsers(),
 	)
 	return router
-}
-
-func TestBannedUsersProductionWiring(t *testing.T) {
-	path := filepath.Join("testdata", APITestName("BannedUsers", http.StatusForbidden, "banned"))
-	input, err := os.ReadFile(filepath.Join(path, "request.http"))
-	if err != nil {
-		t.Fatal(err)
-	}
-	validRequest, err := http.ReadRequest(bufio.NewReader(bytes.NewReader(input)))
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer validRequest.Body.Close()
-
-	previous := jwt.TimeFunc
-	jwt.TimeFunc = timex.Now
-	defer func() { jwt.TimeFunc = previous }()
-	timex.TheWorld(time.Date(2026, 9, 12, 12, 0, 0, 0, time.UTC), func() {
-		for _, test := range []struct {
-			name          string
-			relationships string
-			want          int
-		}{
-			{name: "banned", relationships: filepath.Join(path, "relationships.json"), want: http.StatusForbidden},
-			{name: "allowed", want: http.StatusOK},
-		} {
-			t.Run(test.name, func(t *testing.T) {
-				if test.relationships == "" {
-					reset(t)
-				} else {
-					reset(t, test.relationships)
-				}
-				request := httptest.NewRequest(http.MethodGet, "/content/announcements/main/active", nil)
-				request.Header.Set("Authorization", validRequest.Header.Get("Authorization"))
-				response := httptest.NewRecorder()
-
-				api.authenticatedHandler.ServeHTTP(response, request)
-
-				if response.Code != test.want {
-					t.Errorf("status=%d, want %d", response.Code, test.want)
-				}
-				if api.proxied.Load() != 0 {
-					t.Error("protected route contacted an upstream")
-				}
-			})
-		}
-	})
 }

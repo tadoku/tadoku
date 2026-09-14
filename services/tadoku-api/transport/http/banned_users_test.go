@@ -14,24 +14,20 @@ import (
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/identity"
 )
 
-func TestRejectBannedUsers(t *testing.T) {
+func TestRejectBannedUsersIdentityGuardsAndProviderErrors(t *testing.T) {
 	providerErr := errors.New("provider unavailable")
 	for _, test := range []struct {
 		name        string
 		user        *identity.User
 		banned      bool
 		checkErr    error
-		want        int
 		wantChecks  int
 		wantSubject string
 	}{
-		{name: "missing identity skips check", want: stdhttp.StatusNoContent},
-		{name: "empty subject skips check", user: &identity.User{}, want: stdhttp.StatusNoContent},
-		{name: "guest skips check", user: &identity.User{Subject: "guest"}, want: stdhttp.StatusNoContent},
-		{name: "allowed user", user: &identity.User{Subject: "allowed"}, want: stdhttp.StatusNoContent, wantChecks: 1, wantSubject: "allowed"},
-		{name: "banned user", user: &identity.User{Subject: "banned"}, banned: true, want: stdhttp.StatusForbidden, wantChecks: 1, wantSubject: "banned"},
-		{name: "provider error wins over banned result", user: &identity.User{Subject: "uncertain"}, banned: true, checkErr: providerErr, want: stdhttp.StatusNoContent, wantChecks: 1, wantSubject: "uncertain"},
-		{name: "provider failure fails open", user: &identity.User{Subject: "outage"}, checkErr: providerErr, want: stdhttp.StatusNoContent, wantChecks: 1, wantSubject: "outage"},
+		{name: "missing identity skips check"},
+		{name: "empty subject skips check", user: &identity.User{}},
+		{name: "provider error wins over banned result", user: &identity.User{Subject: "uncertain"}, banned: true, checkErr: providerErr, wantChecks: 1, wantSubject: "uncertain"},
+		{name: "provider failure fails open", user: &identity.User{Subject: "outage"}, checkErr: providerErr, wantChecks: 1, wantSubject: "outage"},
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			checks := 0
@@ -54,21 +50,17 @@ func TestRejectBannedUsers(t *testing.T) {
 
 			handler.ServeHTTP(response, request)
 
-			if response.Code != test.want {
-				t.Errorf("status=%d, want %d", response.Code, test.want)
+			if response.Code != stdhttp.StatusNoContent {
+				t.Errorf("status=%d, want %d", response.Code, stdhttp.StatusNoContent)
 			}
 			if checks != test.wantChecks || subject != test.wantSubject {
 				t.Errorf("checks=%d subject=%q, want %d %q", checks, subject, test.wantChecks, test.wantSubject)
 			}
-			wantDownstream := 1
-			if test.want == stdhttp.StatusForbidden {
-				wantDownstream = 0
+			if downstreamCalls != 1 {
+				t.Errorf("downstream calls=%d, want 1", downstreamCalls)
 			}
-			if downstreamCalls != wantDownstream {
-				t.Errorf("downstream calls=%d, want %d", downstreamCalls, wantDownstream)
-			}
-			if test.banned && response.Body.Len() != 0 {
-				t.Errorf("forbidden body=%q, want empty", response.Body.String())
+			if response.Body.Len() != 0 {
+				t.Errorf("response body=%q, want empty", response.Body.String())
 			}
 		})
 	}

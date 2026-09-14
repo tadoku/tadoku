@@ -1,12 +1,9 @@
 package e2e_test
 
 import (
-	"bufio"
-	"bytes"
 	"io"
 	"net/http"
 	"net/http/httptest"
-	"os"
 	"path/filepath"
 	"testing"
 	"time"
@@ -138,7 +135,7 @@ func TestAuthentication(t *testing.T) {
 				name    string
 				handler http.Handler
 			}{
-				{name: "tadoku-api", handler: api.authentication},
+				{name: "tadoku-api", handler: api.authenticatedHandler},
 				{name: "legacy", handler: legacyAuthentication},
 			} {
 				t.Run(implementation.name, func(t *testing.T) {
@@ -199,50 +196,6 @@ func writeIdentityHeaders(header http.Header, subject, displayName, email string
 	header.Set("X-Test-Identity-Display-Name", displayName)
 	header.Set("X-Test-Identity-Email", email)
 	header.Set("X-Test-Identity-Created-At", createdAt.UTC().Format(time.RFC3339))
-}
-
-func TestAuthenticationWiring(t *testing.T) {
-	input, err := os.ReadFile("testdata/Authentication/200_user/request.http")
-	if err != nil {
-		t.Fatal(err)
-	}
-	validRequest, err := http.ReadRequest(bufio.NewReader(bytes.NewReader(input)))
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer validRequest.Body.Close()
-
-	previous := jwt.TimeFunc
-	jwt.TimeFunc = timex.Now
-	defer func() { jwt.TimeFunc = previous }()
-
-	timex.TheWorld(time.Date(2026, 9, 12, 12, 0, 0, 0, time.UTC), func() {
-		for _, test := range []struct {
-			name          string
-			authorization string
-			want          int
-		}{
-			{name: "missing", want: http.StatusBadRequest},
-			{name: "invalid", authorization: "Bearer invalid-token", want: http.StatusUnauthorized},
-			{name: "valid", authorization: validRequest.Header.Get("Authorization"), want: http.StatusOK},
-		} {
-			t.Run(test.name, func(t *testing.T) {
-				reset(t)
-				request := httptest.NewRequest(http.MethodGet, "/content/announcements/main/active", nil)
-				if test.authorization != "" {
-					request.Header.Set("Authorization", test.authorization)
-				}
-				response := httptest.NewRecorder()
-				api.authenticatedHandler.ServeHTTP(response, request)
-				if response.Code != test.want {
-					t.Errorf("status=%d, want %d", response.Code, test.want)
-				}
-				if api.proxied.Load() != 0 {
-					t.Error("protected route contacted an upstream")
-				}
-			})
-		}
-	})
 }
 
 func TestAuthenticationDoesNotChangeProbesOrProxyRoutes(t *testing.T) {

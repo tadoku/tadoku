@@ -216,24 +216,79 @@ they exercise dependency behavior rather than SQL-defined response cases.
 
 Endpoint contract tests explicitly supply passthrough authentication so their
 credential-free request fixtures remain focused on business behavior. Authentication
-scenarios wrap a test-only success handler with real authentication middleware.
-The comparison handler uses legacy `VerifyJWT` and `Identity`, without authorization
-or business endpoints. Both consume the same signed HTTP requests and goldens.
-Test-only identity headers prove downstream context propagation, and a small separate
-check verifies authentication wiring in the production router. No test endpoint is
-added to production.
+scenarios register `GET /test/authentication` through the real production `Router`
+with a test-only success handler. The comparison handler uses legacy `VerifyJWT` and
+`Identity`, without authorization or business endpoints. Both consume the same signed
+HTTP requests and goldens. Test-only identity headers prove downstream context
+propagation. A routing regression verifies these fixture handlers retain normal
+method/path dispatch, while the transport router test proves all registered application
+routes inherit the shared gates. No test endpoint is added to production.
 
 The suite serves a synthetic checked-in public JWKS locally; private keys and live
 identity providers are not needed. Each authentication scenario temporarily binds
 `jwt/v4.TimeFunc` to the scoped application clock and restores it on return. These
 scenarios and their parents must not run in parallel. Intentional compatibility
 differences use `skipParity` in the same table and run only against Tadoku API.
-Ban-policy scenarios wrap a test-only success handler with the real authentication
-and ban middleware and compare it with legacy `VerifyJWT`, `Identity`,
+Ban-policy scenarios register `GET /test/banned` on the same production router and
+compare it with legacy `VerifyJWT`, `Identity`,
 `RolesFromKeto` and `RejectBannedUsers` using the same real Keto fixture. Provider
 fail-open behavior and deadlines are tested at the narrow middleware boundary;
-authentication matrices are not repeated for every operation. A separate small
-check proves the production router applies both shared gates.
+authentication matrices are not repeated for every operation.
+
+Authentication goldens run at the fixed instant `2026-09-12T12:00:00Z`
+(`1789214400`). Reuse an existing signed user request when only its Keto relationship
+tuples change. When a scenario needs different JWT claims, generate a new synthetic
+key and token locally with Node's built-in cryptography, then append the printed public
+JWK to the existing `keys` array without removing any checked-in keys. Run this from
+the repository root with Node.js and `jq` installed:
+
+```sh
+fixture_output=$(mktemp)
+node <<'NODE' > "$fixture_output"
+const { generateKeyPairSync, randomUUID, sign } = require("node:crypto");
+
+const { privateKey, publicKey } = generateKeyPairSync("rsa", { modulusLength: 2048 });
+const kid = `tadoku-fixture-${randomUUID()}`;
+const publicJWK = {
+  ...publicKey.export({ format: "jwk" }),
+  kid,
+  use: "sig",
+  alg: "RS256",
+};
+const claims = {
+  iss: "http://oathkeeper-api/",
+  sub: "22222222-2222-4222-8222-222222222222",
+  iat: 1789214400,
+  nbf: 1789214400,
+  exp: 1789218000,
+  type: "user",
+  session: {
+    identity: {
+      traits: {
+        display_name: "Fixture User",
+        email: "fixture@example.test",
+      },
+    },
+  },
+};
+const encode = value => Buffer.from(JSON.stringify(value)).toString("base64url");
+const signingInput = `${encode({ alg: "RS256", typ: "JWT", kid })}.${encode(claims)}`;
+const signature = sign("RSA-SHA256", Buffer.from(signingInput), privateKey).toString("base64url");
+
+process.stdout.write(JSON.stringify({ publicJWK, token: `${signingInput}.${signature}` }, null, 2));
+NODE
+
+jq --slurpfile fixture "$fixture_output" \
+  '.keys += [$fixture[0].publicJWK]' \
+  services/tadoku-api/e2e/testdata/authentication.jwks.json \
+  > services/tadoku-api/e2e/testdata/authentication.jwks.json.new
+jq -r .token "$fixture_output"
+```
+
+Review the `.new` JWKS before replacing the fixture and paste the printed token into
+the new `request.http`. The private key exists only inside that Node process. Editing
+claims in a token by hand invalidates its signature, so rerun the recipe instead.
+Never use production signing keys or tokens in fixtures.
 
 CI checks Depolicy, OpenAPI/sqlc generation and the database suites. The standalone
 Echo and Testify graph checks have been removed. Bazel visibility remains in place.

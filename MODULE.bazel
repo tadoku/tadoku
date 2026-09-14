@@ -3,10 +3,20 @@ module(
     version = "1.0.0",
 )
 
+http_archive = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
+
+http_archive(
+    name = "keto_v25_4_0",
+    build_file_content = "exports_files([\"keto\"])\n",
+    sha256 = "9241ee405b3ed0ecd03e3506ecc8485dd8d8a05e5dc9ea011853eb5800ed31c9",
+    urls = ["https://github.com/ory/keto/releases/download/v25.4.0/keto_25.4.0-linux_sqlite_64bit.tar.gz"],
+)
+
 # Golang
 
 bazel_dep(name = "rules_go", version = "0.62.0")
 bazel_dep(name = "gazelle", version = "0.52.2")
+bazel_dep(name = "platforms", version = "1.1.0")
 
 # Shell
 

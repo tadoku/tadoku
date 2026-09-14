@@ -1,0 +1,38 @@
+load("@rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "testketo",
+    testonly = True,
+    srcs = ["keto.go"],
+    data = [
+        "//infra/dev/ory:namespaces.keto.ts",
+        "@keto_v25_4_0//:keto",
+    ],
+    importpath = "github.com/tadoku/tadoku/services/tadoku-api/internal/testketo",
+    target_compatible_with = [
+        "@platforms//cpu:x86_64",
+        "@platforms//os:linux",
+    ],
+    visibility = ["//services/tadoku-api:__subpackages__"],
+    deps = ["@rules_go//go/runfiles"],
+)
+
+go_test(
+    name = "testketo_test",
+    srcs = ["keto_test.go"],
+    data = [
+        "testdata/bad.json",
+        "testdata/invalid.json",
+        "testdata/relationships.json",
+    ],
+    embed = [":testketo"],
+    tags = [
+        "no-cache",
+        "no-remote-exec",
+        "requires-network",
+    ],
+    target_compatible_with = [
+        "@platforms//cpu:x86_64",
+        "@platforms//os:linux",
+    ],
+)

@@ -1,0 +1,18 @@
+[
+  {
+    "namespace": "app",
+    "object": "tadoku",
+    "relation": "banned",
+    "subject_id": "banned-user"
+  },
+  {
+    "namespace": "User",
+    "object": "group-members",
+    "relation": "members",
+    "subject_set": {
+      "namespace": "app",
+      "object": "tadoku",
+      "relation": "admins"
+    }
+  }
+]

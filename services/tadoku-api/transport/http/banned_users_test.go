@@ -12,7 +12,63 @@ import (
 	"time"
 
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/identity"
+	"github.com/tadoku/tadoku/services/tadoku-api/internal/permissions"
 )
+
+func TestBanLookupFailureBlocksPrivilegeChecks(t *testing.T) {
+	providerErr := errors.New("ban lookup failed")
+	for _, test := range []struct {
+		name  string
+		check func(*permissions.Checker, context.Context) (bool, error)
+	}{
+		{name: "conditional admin privilege", check: func(checker *permissions.Checker, ctx context.Context) (bool, error) {
+			return checker.IsAdmin(ctx)
+		}},
+		{name: "admin-only operation", check: func(checker *permissions.Checker, ctx context.Context) (bool, error) {
+			err := checker.RequireAdmin(ctx)
+			return err == nil, err
+		}},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			banChecks := 0
+			adminChecks := 0
+			checker := permissions.NewChecker(func(context.Context, string) (bool, error) {
+				adminChecks++
+				return true, nil
+			})
+			rejectBanned := RejectBannedUsers(func(context.Context, string) (bool, error) {
+				banChecks++
+				return false, providerErr
+			}, slog.New(slog.NewTextHandler(io.Discard, nil)))
+			handler := rejectBanned(stdhttp.HandlerFunc(func(w stdhttp.ResponseWriter, r *stdhttp.Request) {
+				allowed, err := test.check(checker, r.Context())
+				if !errors.Is(err, permissions.ErrUnavailable) || !errors.Is(err, providerErr) {
+					t.Errorf("permission error=%v, want unavailable preserving ban lookup error", err)
+				}
+				if allowed {
+					w.WriteHeader(stdhttp.StatusNoContent)
+					return
+				}
+				w.WriteHeader(stdhttp.StatusServiceUnavailable)
+			}))
+			request := httptest.NewRequest(stdhttp.MethodGet, "/test/permissions", nil)
+			request = request.WithContext(identity.WithUser(request.Context(), &identity.User{Subject: "admin"}))
+			response := httptest.NewRecorder()
+
+			handler.ServeHTTP(response, request)
+
+			if response.Code != stdhttp.StatusServiceUnavailable {
+				t.Errorf("status=%d, want %d", response.Code, stdhttp.StatusServiceUnavailable)
+			}
+			if banChecks != 1 {
+				t.Errorf("ban checks=%d, want 1", banChecks)
+			}
+			if adminChecks != 0 {
+				t.Errorf("admin checks=%d, want 0", adminChecks)
+			}
+		})
+	}
+}
 
 func TestRejectBannedUsersIdentityGuardsAndProviderErrors(t *testing.T) {
 	providerErr := errors.New("provider unavailable")

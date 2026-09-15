@@ -102,10 +102,12 @@ time, not account creation time. JWT parsing itself performs no role, ban,
 permission or service-audience policy. After authentication, the application router checks
 the authenticated subject's direct `app:tadoku#banned` relation once. Missing,
 empty and signed `guest` subjects skip Keto. A ban returns an empty 403, including
-for administrators. Keto read errors are logged and deliberately fail open to
-preserve the existing availability policy. Unlike legacy role enrichment, this
-narrow check has no unrelated administrator lookup whose failure could discard a
-successful ban result. Request deadlines bound the provider call.
+for administrators. Keto ban read errors are logged and deliberately allow
+unprivileged handlers to continue, preserving the existing availability policy.
+The failed lookup is kept in the request context so a later administrator check
+returns unavailable without another ban query. Unlike legacy role enrichment,
+this narrow check has no unrelated administrator lookup whose failure could
+discard a successful ban result. Request deadlines bound the provider call.
 
 Missing or malformed bearer headers return the legacy 400 JSON error; extracted
 but invalid JWTs return its 401 JSON error. Anonymous gateway traffic supplies a
@@ -158,9 +160,9 @@ Database helpers take contexts and return errors, with explicit `Close` cleanup
 instead of `testing.TB`. Suite teardown preserves test failures and reports cleanup
 failures; partial setup also cleans up. Freeze business time inside the tests that
 need it, not in `TestMain`; a scenario can use separate `timex.TheWorld` scopes for
-different times. No extra request-context wrapper is needed. The pool-closing failure test
-has isolated dependencies. Repository/transaction tests retain their independent
-databases and may run in parallel.
+different times. No test-only request-context wrapper is needed. The pool-closing
+failure test has isolated dependencies. Repository/transaction tests retain their
+independent databases and may run in parallel.
 
 HTTP cases derive their name from the operation, expected status and description
 using `APITestName(operation, status, description...)`. Use the same name for the

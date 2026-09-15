@@ -77,13 +77,29 @@ policies:
           allow: [local:services/tadoku-api/generated/...]
 
   - id: internal
-    packages: [local:services/tadoku-api/internal/...]
+    packages:
+      - local:services/tadoku-api/internal/identity/...
+      - local:services/tadoku-api/internal/testketo/...
+      - local:services/tadoku-api/internal/testpostgres/...
+      - local:services/tadoku-api/internal/timex/...
     imports:
       default: deny
       rules:
         - use: language-dependencies
         - id: utility-dependencies
           allow: [local:services/tadoku-api/internal/...]
+
+  - id: permissions
+    packages: [local:services/tadoku-api/internal/permissions/...]
+    imports:
+      default: deny
+      rules:
+        - use: language-dependencies
+        - id: identity-and-keto-client
+          allow:
+            - local:services/tadoku-api/internal/permissions/...
+            - local:services/tadoku-api/internal/identity/...
+            - local:services/common/client/keto
 
   - id: construction
     packages: [local:services/tadoku-api/cmd/...]

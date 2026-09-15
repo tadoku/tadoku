@@ -11,6 +11,20 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const countAnnouncements = `-- name: CountAnnouncements :one
+select count(id)
+from announcements
+where deleted_at is null
+  and namespace = $1
+`
+
+func (q *Queries) CountAnnouncements(ctx context.Context, namespace string) (int64, error) {
+	row := q.db.QueryRow(ctx, countAnnouncements, namespace)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const listActiveAnnouncements = `-- name: ListActiveAnnouncements :many
 select id, namespace, title, content, style, href,
        starts_at, ends_at, created_at, updated_at
@@ -51,6 +65,67 @@ func (q *Queries) ListActiveAnnouncements(ctx context.Context, arg ListActiveAnn
 	items := []ListActiveAnnouncementsRow{}
 	for rows.Next() {
 		var i ListActiveAnnouncementsRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.Namespace,
+			&i.Title,
+			&i.Content,
+			&i.Style,
+			&i.Href,
+			&i.StartsAt,
+			&i.EndsAt,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listAnnouncements = `-- name: ListAnnouncements :many
+select id, namespace, title, content, style, href,
+       starts_at, ends_at, created_at, updated_at
+from announcements
+where deleted_at is null
+  and namespace = $1
+order by created_at desc
+limit $3
+offset $2
+`
+
+type ListAnnouncementsParams struct {
+	Namespace   string
+	StartFrom   int32
+	ResultLimit int32
+}
+
+type ListAnnouncementsRow struct {
+	ID        pgtype.UUID
+	Namespace string
+	Title     string
+	Content   string
+	Style     string
+	Href      pgtype.Text
+	StartsAt  pgtype.Timestamp
+	EndsAt    pgtype.Timestamp
+	CreatedAt pgtype.Timestamp
+	UpdatedAt pgtype.Timestamp
+}
+
+func (q *Queries) ListAnnouncements(ctx context.Context, arg ListAnnouncementsParams) ([]ListAnnouncementsRow, error) {
+	rows, err := q.db.Query(ctx, listAnnouncements, arg.Namespace, arg.StartFrom, arg.ResultLimit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []ListAnnouncementsRow{}
+	for rows.Next() {
+		var i ListAnnouncementsRow
 		if err := rows.Scan(
 			&i.ID,
 			&i.Namespace,

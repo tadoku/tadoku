@@ -167,11 +167,16 @@ from announcements
 where
   deleted_at is null
   and "namespace" = $1
-  and starts_at <= now()
-  and ends_at > now()
+  and starts_at <= $2::timestamptz
+  and ends_at > $2::timestamptz
 order by starts_at desc
 limit 10
 `
+
+type ListActiveAnnouncementsParams struct {
+	Namespace string
+	Now       time.Time
+}
 
 type ListActiveAnnouncementsRow struct {
 	ID        uuid.UUID
@@ -186,8 +191,8 @@ type ListActiveAnnouncementsRow struct {
 	UpdatedAt time.Time
 }
 
-func (q *Queries) ListActiveAnnouncements(ctx context.Context, namespace string) ([]ListActiveAnnouncementsRow, error) {
-	rows, err := q.db.QueryContext(ctx, listActiveAnnouncements, namespace)
+func (q *Queries) ListActiveAnnouncements(ctx context.Context, arg ListActiveAnnouncementsParams) ([]ListActiveAnnouncementsRow, error) {
+	rows, err := q.db.QueryContext(ctx, listActiveAnnouncements, arg.Namespace, arg.Now)
 	if err != nil {
 		return nil, err
 	}

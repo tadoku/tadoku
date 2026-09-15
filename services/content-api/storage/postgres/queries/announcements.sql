@@ -104,7 +104,7 @@ from announcements
 where
   deleted_at is null
   and "namespace" = sqlc.arg('namespace')
-  and starts_at <= now()
-  and ends_at > now()
+  and starts_at <= sqlc.arg('now')::timestamptz
+  and ends_at > sqlc.arg('now')::timestamptz
 order by starts_at desc
 limit 10;

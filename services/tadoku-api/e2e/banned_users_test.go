@@ -1,20 +1,16 @@
 package e2e_test
 
 import (
-	"io"
-	"net/http"
-	"path/filepath"
-	"testing"
-	"time"
-
-	"github.com/golang-jwt/jwt/v4"
 	"github.com/labstack/echo/v4"
 	commonroles "github.com/tadoku/tadoku/services/common/authz/roles"
 	ketoclient "github.com/tadoku/tadoku/services/common/client/keto"
 	commondomain "github.com/tadoku/tadoku/services/common/domain"
 	"github.com/tadoku/tadoku/services/common/middleware"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/identity"
-	"github.com/tadoku/tadoku/services/tadoku-api/internal/timex"
+	"io"
+	"net/http"
+	"path/filepath"
+	"testing"
 )
 
 func TestBannedUsers(t *testing.T) {
@@ -38,18 +34,11 @@ func TestBannedUsers(t *testing.T) {
 				name    string
 				handler http.Handler
 			}{
-				{name: "tadoku-api", handler: api.authenticatedHandler},
+				{name: "tadoku-api", handler: api.handler},
 				{name: "legacy", handler: legacyBannedUsers},
 			} {
 				t.Run(implementation.name, func(t *testing.T) {
-					resetCase(t, path)
-
-					previous := jwt.TimeFunc
-					jwt.TimeFunc = timex.Now
-					defer func() { jwt.TimeFunc = previous }()
-					timex.TheWorld(time.Date(2026, 9, 12, 12, 0, 0, 0, time.UTC), func() {
-						checkHTTPGolden(t, implementation.handler, path, test.want)
-					})
+					checkCaseGolden(t, implementation.handler, path, test.want)
 				})
 			}
 		})

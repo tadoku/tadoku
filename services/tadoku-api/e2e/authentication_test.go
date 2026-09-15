@@ -8,12 +8,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/golang-jwt/jwt/v4"
 	"github.com/labstack/echo/v4"
 	commondomain "github.com/tadoku/tadoku/services/common/domain"
 	"github.com/tadoku/tadoku/services/common/middleware"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/identity"
-	"github.com/tadoku/tadoku/services/tadoku-api/internal/timex"
 )
 
 func TestAuthentication(t *testing.T) {
@@ -135,33 +133,18 @@ func TestAuthentication(t *testing.T) {
 				name    string
 				handler http.Handler
 			}{
-				{name: "tadoku-api", handler: api.authenticatedHandler},
+				{name: "tadoku-api", handler: api.handler},
 				{name: "legacy", handler: legacyAuthentication},
 			} {
 				t.Run(implementation.name, func(t *testing.T) {
 					if test.skipParity && implementation.name == "legacy" {
 						t.Skip("intentional authentication difference")
 					}
-					checkAuthenticationGolden(t, implementation.handler, path, test.want)
+					checkCaseGolden(t, implementation.handler, path, test.want)
 				})
 			}
 		})
 	}
-}
-
-func checkAuthenticationGolden(t *testing.T, handler http.Handler, path string, want int) {
-	t.Helper()
-	resetCase(t, path)
-
-	// Both parsers validate RegisteredClaims using jwt/v4's clock. Keep this
-	// override test-only, scoped and sequential, just like the SQL clock binding.
-	previous := jwt.TimeFunc
-	jwt.TimeFunc = timex.Now
-	defer func() { jwt.TimeFunc = previous }()
-
-	timex.TheWorld(time.Date(2026, 9, 12, 12, 0, 0, 0, time.UTC), func() {
-		checkHTTPGolden(t, handler, path, want)
-	})
 }
 
 // End the middleware chain here so authentication goldens do not exercise a
@@ -221,7 +204,7 @@ func TestAuthenticationDoesNotChangeProbesOrProxyRoutes(t *testing.T) {
 					request.Header.Set("Authorization", authorization)
 				}
 				response := httptest.NewRecorder()
-				api.authenticatedHandler.ServeHTTP(response, request)
+				api.handler.ServeHTTP(response, request)
 				if response.Code != test.want {
 					t.Errorf("authorization=%q status=%d, want %d", authorization, response.Code, test.want)
 				}

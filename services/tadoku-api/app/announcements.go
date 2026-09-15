@@ -17,10 +17,9 @@ func (a *Application) ListAnnouncements(ctx context.Context, namespace string, p
 	}
 
 	var result *content.AnnouncementList
-	err := postgres.RunInTransaction(ctx, a.db, func(ctx context.Context) error {
-		var err error
+	err := postgres.RunInTransaction(ctx, a.db, func(ctx context.Context) (err error) {
 		result, err = a.content.ListAnnouncements(ctx, namespace, pageSize, page)
-		return err
+		return
 	})
 	return result, err
 }

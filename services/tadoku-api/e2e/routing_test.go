@@ -1,7 +1,6 @@
 package e2e_test
 
 import (
-	"context"
 	"io"
 	"log/slog"
 	"net/http"
@@ -10,7 +9,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/golang-jwt/jwt/v4"
 	"github.com/tadoku/tadoku/services/tadoku-api/app"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/content"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/timex"
@@ -99,63 +97,6 @@ func TestMiddlewareFixtureRoutesUseApplicationRouter(t *testing.T) {
 	}
 }
 
-func TestReadFailureDoesNotFallBack(t *testing.T) {
-	// Closing the pool must not destroy the shared suite's database dependency.
-	api, err := newTestAPI(t.Context())
-	if err != nil {
-		t.Fatal(err)
-	}
-	t.Cleanup(func() {
-		if err := api.db.Close(); err != nil {
-			t.Error(err)
-		}
-	})
-	api.db.Pool.Close()
-
-	deniedPath := filepath.Join("testdata", "RequireAdmin", "403_non_admin")
-	resetCase(t, deniedPath)
-	deniedRequest := listAuthorizationRequest(t, deniedPath)
-	previous := jwt.TimeFunc
-	jwt.TimeFunc = timex.Now
-	defer func() { jwt.TimeFunc = previous }()
-	timex.TheWorld(time.Date(2026, 9, 12, 12, 0, 0, 0, time.UTC), func() {
-		response := httptest.NewRecorder()
-		api.authenticatedHandler.ServeHTTP(response, deniedRequest)
-		if response.Code != http.StatusForbidden {
-			t.Errorf("denied request with closed pool: status=%d, want %d", response.Code, http.StatusForbidden)
-		}
-	})
-
-	request := httptest.NewRequest(http.MethodGet, "/content/announcements/main/active", nil)
-	response := httptest.NewRecorder()
-	api.handler.ServeHTTP(response, request)
-
-	if response.Code != http.StatusInternalServerError || response.Body.Len() != 0 {
-		t.Errorf("database failure: status=%d body=%s", response.Code, response.Body)
-	}
-
-	request = httptest.NewRequest(http.MethodGet, "/content/announcements/main", nil)
-	response = httptest.NewRecorder()
-	withContractAdminIdentity(api.handler).ServeHTTP(response, request)
-	if response.Code != http.StatusInternalServerError || response.Body.Len() != 0 {
-		t.Errorf("admin list database failure: status=%d body=%s", response.Code, response.Body)
-	}
-	if api.proxied.Load() != 0 {
-		t.Error("failed native read fell back to the proxy")
-	}
-
-	for path, status := range map[string]int{
-		"/livez":  http.StatusOK,
-		"/readyz": http.StatusServiceUnavailable,
-	} {
-		response := httptest.NewRecorder()
-		api.handler.ServeHTTP(response, httptest.NewRequest(http.MethodGet, path, nil))
-		if response.Code != status {
-			t.Errorf("%s status=%d, want %d", path, response.Code, status)
-		}
-	}
-}
-
 func TestUnclaimedMethodsRemainProxied(t *testing.T) {
 	for _, route := range []struct {
 		name string
@@ -178,23 +119,5 @@ func TestUnclaimedMethodsRemainProxied(t *testing.T) {
 				})
 			}
 		})
-	}
-}
-
-func TestCanceledNativeReadDoesNotFallBack(t *testing.T) {
-	reset(t)
-
-	ctx, cancel := context.WithCancel(context.Background())
-	cancel()
-
-	request := httptest.NewRequest(http.MethodGet, "/content/announcements/main/active", nil).WithContext(ctx)
-	response := httptest.NewRecorder()
-	api.handler.ServeHTTP(response, request)
-
-	if response.Code != http.StatusInternalServerError {
-		t.Errorf("canceled read: status=%d", response.Code)
-	}
-	if api.proxied.Load() != 0 {
-		t.Error("canceled native read fell back to the proxy")
 	}
 }

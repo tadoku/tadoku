@@ -1,12 +1,8 @@
 package e2e_test
 
 import (
-	"bufio"
-	"bytes"
 	"errors"
 	"net/http"
-	"net/http/httptest"
-	"os"
 	"path/filepath"
 	"testing"
 	"time"
@@ -55,64 +51,45 @@ func TestListAnnouncements(t *testing.T) {
 	}
 }
 
-func TestListAnnouncementsAuthorizationWiring(t *testing.T) {
+func TestListAnnouncementsAuthorization(t *testing.T) {
 	for _, test := range []struct {
-		fixture string
-		want    int
+		description []string
+		want        int
 	}{
-		{fixture: "204_admin", want: http.StatusOK},
-		{fixture: "403_non_admin", want: http.StatusForbidden},
+		{description: []string{"admin"}, want: http.StatusOK},
+		{description: []string{"non", "admin"}, want: http.StatusForbidden},
 	} {
-		t.Run(test.fixture, func(t *testing.T) {
-			path := filepath.Join("testdata", "RequireAdmin", test.fixture)
+		name := APITestName("ListAnnouncements", test.want, test.description...)
+		t.Run(name, func(t *testing.T) {
+			path := filepath.Join("testdata", name)
 			resetCase(t, path)
-			request := listAuthorizationRequest(t, path)
 
 			previous := jwt.TimeFunc
 			jwt.TimeFunc = timex.Now
 			defer func() { jwt.TimeFunc = previous }()
 			timex.TheWorld(time.Date(2026, 9, 12, 12, 0, 0, 0, time.UTC), func() {
-				response := httptest.NewRecorder()
-				api.authenticatedHandler.ServeHTTP(response, request)
-				if response.Code != test.want {
-					t.Errorf("status=%d, want %d", response.Code, test.want)
-				}
+				checkHTTPGolden(t, api.authenticatedHandler, path, test.want)
 			})
+			if api.proxied.Load() != 0 {
+				t.Error("authorization check fell back to the proxy")
+			}
 		})
 	}
 }
 
 func TestListAnnouncementsRejectsFailedBanLookup(t *testing.T) {
-	reset(t)
-	request := httptest.NewRequest(http.MethodGet, "/content/announcements/main", nil)
-	ctx := permissions.WithBanLookupError(request.Context(), errors.New("ban lookup failed"))
-	response := httptest.NewRecorder()
-
-	withContractAdminIdentity(api.handler).ServeHTTP(response, request.WithContext(ctx))
-
-	if response.Code != http.StatusServiceUnavailable || response.Body.Len() != 0 {
-		t.Errorf("failed ban lookup: status=%d body=%q, want empty 503", response.Code, response.Body.String())
-	}
+	path := filepath.Join("testdata", APITestName("ListAnnouncements", http.StatusServiceUnavailable, "failed", "ban", "lookup"))
+	resetCase(t, path)
+	// Exercise the application permission check with the shared ban gate's
+	// failure context. Provider behavior is covered by the middleware tests.
+	handler := withContractAdminIdentity(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := permissions.WithBanLookupError(r.Context(), errors.New("ban lookup failed"))
+		api.handler.ServeHTTP(w, r.WithContext(ctx))
+	}))
+	checkHTTPGolden(t, handler, path, http.StatusServiceUnavailable)
 	if api.proxied.Load() != 0 {
 		t.Error("failed permission check fell back to the proxy")
 	}
-}
-
-func listAuthorizationRequest(t *testing.T, directory string) *http.Request {
-	t.Helper()
-	data, err := os.ReadFile(filepath.Join(directory, "request.http"))
-	if err != nil {
-		t.Fatal(err)
-	}
-	request, err := http.ReadRequest(bufio.NewReader(bytes.NewReader(data)))
-	if err != nil {
-		t.Fatal(err)
-	}
-	t.Cleanup(func() { _ = request.Body.Close() })
-	request.URL.Path = "/content/announcements/main"
-	request.URL.RawPath = ""
-	request.RequestURI = request.URL.RequestURI()
-	return request
 }
 
 func TestListActiveAnnouncements(t *testing.T) {

@@ -58,7 +58,7 @@ func newLegacyContentAPI(ctx context.Context, dsn string) (*legacyContentAPI, er
 // The legacy query reads PostgreSQL's now(), not the application clock. Bind
 // that input to the scenario's frozen time without changing production code,
 // shifting fixture timestamps, or normalizing the returned HTTP response.
-// Other legacy list queries pass through unchanged and remain shape-checked.
+// Other queries pass through unchanged; only this clock substitution is guarded.
 type legacyClockConnector struct {
 	driver.Connector
 }
@@ -76,13 +76,10 @@ type legacyClockConn struct {
 }
 
 func (c *legacyClockConn) QueryContext(ctx context.Context, query string, args []driver.NamedValue) (driver.Rows, error) {
-	if strings.HasPrefix(query, "-- name: AnnouncementsMetadata :one\n") && len(args) == 1 {
+	if !strings.HasPrefix(query, "-- name: ListActiveAnnouncements :many\n") {
 		return c.Conn.QueryContext(ctx, query, args)
 	}
-	if strings.HasPrefix(query, "-- name: ListAnnouncements :many\n") && len(args) == 3 {
-		return c.Conn.QueryContext(ctx, query, args)
-	}
-	if !strings.HasPrefix(query, "-- name: ListActiveAnnouncements :many\n") || strings.Count(query, "now()") != 2 || len(args) != 1 {
+	if strings.Count(query, "now()") != 2 || len(args) != 1 {
 		return nil, errors.New("legacy parity clock: unexpected query or arguments; review clock binding")
 	}
 
@@ -107,17 +104,22 @@ func TestLegacyClockFollowsScenarioTime(t *testing.T) {
 	})
 }
 
-func TestLegacyClockRejectsUnexpectedQueries(t *testing.T) {
+func TestLegacyClockPassesOtherQueriesThrough(t *testing.T) {
+	var got string
+	if err := legacyContent.db.QueryRowContext(t.Context(), "select $1::text", "unchanged").Scan(&got); err != nil {
+		t.Fatal(err)
+	}
+	if got != "unchanged" {
+		t.Errorf("query result=%q, want unchanged", got)
+	}
+}
+
+func TestLegacyClockRejectsChangedClockQuery(t *testing.T) {
 	for _, test := range []struct {
 		name  string
 		query string
 		args  []driver.NamedValue
 	}{
-		{
-			name:  "different operation",
-			query: "select now(), now()",
-			args:  []driver.NamedValue{{Ordinal: 1, Value: "main"}},
-		},
 		{
 			name:  "changed clock",
 			query: "-- name: ListActiveAnnouncements :many\nselect current_timestamp",

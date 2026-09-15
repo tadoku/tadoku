@@ -1,5 +1,5 @@
-# Generated HTTP types
+# Generated HTTP contract
 
-Run `./scripts/generate-openapi.sh` from the repository root. This is the only
-native HTTP DTO package; it is generated from `../../spec/openapi.yaml` without
-framework or server bindings. Do not edit generated Go code.
+Run `./scripts/generate-openapi.sh` from the repository root. The shared DTOs and
+the selected standard-library strict-server bindings are generated from the single
+canonical `../../spec/openapi.yaml`. Do not edit generated Go code.

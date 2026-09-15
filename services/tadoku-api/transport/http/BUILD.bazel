@@ -27,6 +27,7 @@ go_test(
     srcs = [
         "authentication_test.go",
         "banned_users_test.go",
+        "generated_test.go",
         "proxy_contract_test.go",
         "proxy_test.go",
     ],

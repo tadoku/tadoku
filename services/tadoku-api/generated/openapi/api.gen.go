@@ -9,6 +9,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"time"
@@ -1067,8 +1068,17 @@ type ProfileUserListEntry struct {
 // ImmersionAccountDeletionInProgress defines model for ImmersionAccountDeletionInProgress.
 type ImmersionAccountDeletionInProgress = ImmersionErrorResponse
 
+// ContentAnnouncementListParams defines parameters for ContentAnnouncementList.
+type ContentAnnouncementListParams struct {
+	PageSize *int `form:"page_size,omitempty" json:"page_size,omitempty"`
+	Page     *int `form:"page,omitempty" json:"page,omitempty"`
+}
+
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
+	// ContentAnnouncementList Lists all announcements
+	// (GET /content/announcements/{namespace})
+	ContentAnnouncementList(w http.ResponseWriter, r *http.Request, namespace string, params ContentAnnouncementListParams)
 	// ContentAnnouncementListActive Lists currently active announcements
 	// (GET /content/announcements/{namespace}/active)
 	ContentAnnouncementListActive(w http.ResponseWriter, r *http.Request, namespace string)
@@ -1082,6 +1092,61 @@ type ServerInterfaceWrapper struct {
 }
 
 type MiddlewareFunc func(http.Handler) http.Handler
+
+// ContentAnnouncementList operation middleware
+func (siw *ServerInterfaceWrapper) ContentAnnouncementList(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "namespace" -------------
+	var namespace string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "namespace", r.PathValue("namespace"), &namespace, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "namespace", Err: err})
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ContentAnnouncementListParams
+
+	// ------------- Optional query parameter "page_size" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "page_size", r.URL.Query(), &params.PageSize, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "page_size"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "page_size", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "page" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "page", r.URL.Query(), &params.Page, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "page"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "page", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ContentAnnouncementList(w, r, namespace, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
 
 // ContentAnnouncementListActive operation middleware
 func (siw *ServerInterfaceWrapper) ContentAnnouncementListActive(w http.ResponseWriter, r *http.Request) {
@@ -1230,11 +1295,35 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	}
 
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/content/announcements/{namespace}/active", wrapper.ContentAnnouncementListActive)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/content/announcements/{namespace}", wrapper.ContentAnnouncementList)
 
 	return m
 }
 
 type ImmersionAccountDeletionInProgressJSONResponse ImmersionErrorResponse
+
+type ContentAnnouncementListRequestObject struct {
+	Namespace string `json:"namespace"`
+	Params    ContentAnnouncementListParams
+}
+
+type ContentAnnouncementListResponseObject interface {
+	VisitContentAnnouncementListResponse(w http.ResponseWriter) error
+}
+
+type ContentAnnouncementList200JSONResponse ContentAnnouncementList
+
+func (response ContentAnnouncementList200JSONResponse) VisitContentAnnouncementListResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
 
 type ContentAnnouncementListActiveRequestObject struct {
 	Namespace string `json:"namespace"`
@@ -1260,6 +1349,9 @@ func (response ContentAnnouncementListActive200JSONResponse) VisitContentAnnounc
 
 // StrictServerInterface represents all server handlers.
 type StrictServerInterface interface {
+	// ContentAnnouncementList Lists all announcements
+	// (GET /content/announcements/{namespace})
+	ContentAnnouncementList(ctx context.Context, request ContentAnnouncementListRequestObject) (ContentAnnouncementListResponseObject, error)
 	// ContentAnnouncementListActive Lists currently active announcements
 	// (GET /content/announcements/{namespace}/active)
 	ContentAnnouncementListActive(ctx context.Context, request ContentAnnouncementListActiveRequestObject) (ContentAnnouncementListActiveResponseObject, error)
@@ -1302,6 +1394,33 @@ type strictHandler struct {
 	ssi         StrictServerInterface
 	middlewares []StrictMiddlewareFunc
 	options     StrictHTTPServerOptions
+}
+
+// ContentAnnouncementList operation middleware
+func (sh *strictHandler) ContentAnnouncementList(w http.ResponseWriter, r *http.Request, namespace string, params ContentAnnouncementListParams) {
+	var request ContentAnnouncementListRequestObject
+
+	request.Namespace = namespace
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ContentAnnouncementList(ctx, request.(ContentAnnouncementListRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ContentAnnouncementList")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ContentAnnouncementListResponseObject); ok {
+		if err := validResponse.VisitContentAnnouncementListResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
 }
 
 // ContentAnnouncementListActive operation middleware

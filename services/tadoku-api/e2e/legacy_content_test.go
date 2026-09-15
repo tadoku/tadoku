@@ -42,7 +42,8 @@ func newLegacyContentAPI(ctx context.Context, dsn string) (*legacyContentAPI, er
 	server := rest.NewServer(
 		nil, nil, nil, nil, nil, nil, nil, nil, // Page operations are not exercised.
 		nil, nil, nil, nil, nil, nil, nil, nil, // Post operations are not exercised.
-		nil, nil, nil, nil, nil, // Other announcement operations are not exercised.
+		nil, nil, nil, nil, // Other announcement operations are not exercised.
+		domain.NewAnnouncementList(repository),
 		domain.NewAnnouncementListActive(repository),
 	)
 	router := echo.New()
@@ -57,7 +58,7 @@ func newLegacyContentAPI(ctx context.Context, dsn string) (*legacyContentAPI, er
 // The legacy query reads PostgreSQL's now(), not the application clock. Bind
 // that input to the scenario's frozen time without changing production code,
 // shifting fixture timestamps, or normalizing the returned HTTP response.
-// This deliberately supports only the active-announcements query.
+// Other legacy list queries pass through unchanged and remain shape-checked.
 type legacyClockConnector struct {
 	driver.Connector
 }
@@ -75,8 +76,13 @@ type legacyClockConn struct {
 }
 
 func (c *legacyClockConn) QueryContext(ctx context.Context, query string, args []driver.NamedValue) (driver.Rows, error) {
-	if !strings.HasPrefix(query, "-- name: ListActiveAnnouncements :many\n") ||
-		strings.Count(query, "now()") != 2 || len(args) != 1 {
+	if strings.HasPrefix(query, "-- name: AnnouncementsMetadata :one\n") && len(args) == 1 {
+		return c.Conn.QueryContext(ctx, query, args)
+	}
+	if strings.HasPrefix(query, "-- name: ListAnnouncements :many\n") && len(args) == 3 {
+		return c.Conn.QueryContext(ctx, query, args)
+	}
+	if !strings.HasPrefix(query, "-- name: ListActiveAnnouncements :many\n") || strings.Count(query, "now()") != 2 || len(args) != 1 {
 		return nil, errors.New("legacy parity clock: unexpected query or arguments; review clock binding")
 	}
 

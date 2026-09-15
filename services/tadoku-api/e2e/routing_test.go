@@ -10,6 +10,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/golang-jwt/jwt/v4"
 	"github.com/tadoku/tadoku/services/tadoku-api/app"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/content"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/timex"
@@ -21,7 +22,7 @@ func TestRouterWorksWithoutLegacyProxyRoutes(t *testing.T) {
 	// Normal scenarios continue to use the single suite-level router.
 	repository := content.NewAnnouncementsRepository(api.db.Pool)
 	service := content.NewService(repository)
-	application := app.New(service)
+	application := app.New(service, api.db.Pool, nil)
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
 
 	handler, err := transport.NewHandler(application, api.db.Pool.Ping, time.Second, logger, skipAuthentication, skipBanCheck)
@@ -111,12 +112,33 @@ func TestReadFailureDoesNotFallBack(t *testing.T) {
 	})
 	api.db.Pool.Close()
 
+	deniedPath := filepath.Join("testdata", "RequireAdmin", "403_non_admin")
+	resetCase(t, deniedPath)
+	deniedRequest := listAuthorizationRequest(t, deniedPath)
+	previous := jwt.TimeFunc
+	jwt.TimeFunc = timex.Now
+	defer func() { jwt.TimeFunc = previous }()
+	timex.TheWorld(time.Date(2026, 9, 12, 12, 0, 0, 0, time.UTC), func() {
+		response := httptest.NewRecorder()
+		api.authenticatedHandler.ServeHTTP(response, deniedRequest)
+		if response.Code != http.StatusForbidden {
+			t.Errorf("denied request with closed pool: status=%d, want %d", response.Code, http.StatusForbidden)
+		}
+	})
+
 	request := httptest.NewRequest(http.MethodGet, "/content/announcements/main/active", nil)
 	response := httptest.NewRecorder()
 	api.handler.ServeHTTP(response, request)
 
 	if response.Code != http.StatusInternalServerError || response.Body.Len() != 0 {
 		t.Errorf("database failure: status=%d body=%s", response.Code, response.Body)
+	}
+
+	request = httptest.NewRequest(http.MethodGet, "/content/announcements/main", nil)
+	response = httptest.NewRecorder()
+	withContractAdminIdentity(api.handler).ServeHTTP(response, request)
+	if response.Code != http.StatusInternalServerError || response.Body.Len() != 0 {
+		t.Errorf("admin list database failure: status=%d body=%s", response.Code, response.Body)
 	}
 	if api.proxied.Load() != 0 {
 		t.Error("failed native read fell back to the proxy")
@@ -135,15 +157,25 @@ func TestReadFailureDoesNotFallBack(t *testing.T) {
 }
 
 func TestUnclaimedMethodsRemainProxied(t *testing.T) {
-	for _, method := range []string{http.MethodHead, http.MethodOptions, http.MethodPost, http.MethodDelete, http.MethodPatch} {
-		t.Run(method, func(t *testing.T) {
-			reset(t)
-			request := httptest.NewRequest(method, "/content/announcements/main/active", nil)
-			response := httptest.NewRecorder()
-			api.handler.ServeHTTP(response, request)
+	for _, route := range []struct {
+		name string
+		path string
+	}{
+		{name: "active list", path: "/content/announcements/main/active"},
+		{name: "admin list", path: "/content/announcements/main"},
+	} {
+		t.Run(route.name, func(t *testing.T) {
+			for _, method := range []string{http.MethodHead, http.MethodOptions, http.MethodPost, http.MethodDelete, http.MethodPatch} {
+				t.Run(method, func(t *testing.T) {
+					reset(t)
+					request := httptest.NewRequest(method, route.path, nil)
+					response := httptest.NewRecorder()
+					api.handler.ServeHTTP(response, request)
 
-			if response.Header().Get("X-Proxied") != "yes" {
-				t.Errorf("%s was not proxied", method)
+					if response.Header().Get("X-Proxied") != "yes" {
+						t.Errorf("%s was not proxied", method)
+					}
+				})
 			}
 		})
 	}

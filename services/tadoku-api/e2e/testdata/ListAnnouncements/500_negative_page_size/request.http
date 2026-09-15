@@ -1,0 +1,3 @@
+GET /content/announcements/main?page_size=-1 HTTP/1.1
+Host: api.test
+

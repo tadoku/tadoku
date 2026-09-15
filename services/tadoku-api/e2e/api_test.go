@@ -15,9 +15,11 @@ import (
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
+	commonroles "github.com/tadoku/tadoku/services/common/authz/roles"
 	ketoclient "github.com/tadoku/tadoku/services/common/client/keto"
 	"github.com/tadoku/tadoku/services/tadoku-api/app"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/content"
+	"github.com/tadoku/tadoku/services/tadoku-api/internal/identity"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/permissions"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/testketo"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/testpostgres"
@@ -105,12 +107,14 @@ func newTestAPI(ctx context.Context) (_ *testAPI, err error) {
 	}()
 	api := &testAPI{db: db}
 
+	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
+	reader := ketoclient.NewReadClient(keto.ReadURL())
 	repository := content.NewAnnouncementsRepository(api.db.Pool)
 	service := content.NewService(repository)
-	application := app.New(service)
-	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
+	contractPermissions := permissions.NewChecker(func(context.Context, string) (bool, error) { return true, nil })
+	contractApplication := app.New(service, api.db.Pool, contractPermissions)
 
-	api.handler, err = transport.NewHandler(application, api.db.Pool.Ping, time.Second, logger, skipAuthentication, skipBanCheck)
+	api.handler, err = transport.NewHandler(contractApplication, api.db.Pool.Ping, time.Second, logger, skipAuthentication, skipBanCheck)
 	if err != nil {
 		return nil, fmt.Errorf("create API handler: %w", err)
 	}
@@ -118,14 +122,14 @@ func newTestAPI(ctx context.Context) (_ *testAPI, err error) {
 	if err != nil {
 		return nil, err
 	}
-	reader := ketoclient.NewReadClient(keto.ReadURL())
 	rejectBanned := transport.RejectBannedUsers(func(ctx context.Context, subjectID string) (bool, error) {
 		return reader.CheckPermission(ctx, "app", "tadoku", "banned", ketoclient.Subject{ID: subjectID})
 	}, logger)
 	permissionChecker := permissions.NewChecker(func(ctx context.Context, subjectID string) (bool, error) {
 		return reader.CheckPermission(ctx, "app", "tadoku", "admins", ketoclient.Subject{ID: subjectID})
 	})
-	api.authenticatedHandler, err = transport.NewHandler(application, api.db.Pool.Ping, time.Second, logger, authenticate, rejectBanned)
+	authenticatedApplication := app.New(service, api.db.Pool, permissionChecker)
+	api.authenticatedHandler, err = transport.NewHandler(authenticatedApplication, api.db.Pool.Ping, time.Second, logger, authenticate, rejectBanned)
 	if err != nil {
 		return nil, fmt.Errorf("create authenticated API handler: %w", err)
 	}
@@ -162,6 +166,18 @@ func newTestAPI(ctx context.Context) (_ *testAPI, err error) {
 // construction has no opt-out and always supplies the real middleware.
 func skipAuthentication(next http.Handler) http.Handler { return next }
 func skipBanCheck(next http.Handler) http.Handler       { return next }
+
+func withContractAdminIdentity(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := identity.WithUser(r.Context(), &identity.User{Subject: "contract-admin"})
+		ctx = commonroles.WithClaims(ctx, commonroles.Claims{
+			Subject:       "contract-admin",
+			Authenticated: true,
+			Admin:         true,
+		})
+		next.ServeHTTP(w, r.WithContext(ctx))
+	})
+}
 
 func (a *testAPI) RoundTrip(request *http.Request) (*http.Response, error) {
 	a.proxied.Add(1)

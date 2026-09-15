@@ -851,7 +851,7 @@ paths:
                 $ref: "#/components/schemas/ContentAnnouncementList"
       x-tadoku-source: Content
       x-tadoku-exposure: public
-      x-tadoku-owner: legacy
+      x-tadoku-owner: native
       x-legacy-path: /announcements/{namespace}
       x-legacy-operation-id: announcementList
   "/content/announcements/{namespace}/{id}":

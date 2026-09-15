@@ -44,3 +44,51 @@ func (s *server) ContentAnnouncementListActive(
 
 	return response, nil
 }
+
+func (s *server) ContentAnnouncementList(
+	ctx context.Context,
+	request openapi.ContentAnnouncementListRequestObject,
+) (openapi.ContentAnnouncementListResponseObject, error) {
+	pageSize, page := 0, 0
+	if request.Params.PageSize != nil {
+		pageSize = *request.Params.PageSize
+	}
+	if request.Params.Page != nil {
+		page = *request.Params.Page
+	}
+
+	result, err := s.application.ListAnnouncements(ctx, request.Namespace, pageSize, page)
+	if err != nil {
+		s.logger.ErrorContext(ctx, "list announcements failed",
+			"error", err,
+		)
+		return nil, err
+	}
+
+	response := openapi.ContentAnnouncementList200JSONResponse{
+		Announcements: make([]openapi.ContentAnnouncement, 0, len(result.Announcements)),
+		NextPageToken: result.NextPageToken,
+		TotalSize:     result.TotalSize,
+	}
+	for _, item := range result.Announcements {
+		href := nullable.NewNullNullable[string]()
+		if item.Href != nil {
+			href = nullable.NewNullableWithValue(*item.Href)
+		}
+
+		response.Announcements = append(response.Announcements, openapi.ContentAnnouncement{
+			Id:        &item.ID,
+			Namespace: &item.Namespace,
+			Title:     item.Title,
+			Content:   item.Content,
+			Style:     openapi.ContentAnnouncementStyle(item.Style),
+			Href:      href,
+			StartsAt:  item.StartsAt,
+			EndsAt:    item.EndsAt,
+			CreatedAt: &item.CreatedAt,
+			UpdatedAt: &item.UpdatedAt,
+		})
+	}
+
+	return response, nil
+}

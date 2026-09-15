@@ -4,6 +4,7 @@ import test from 'node:test';
 import {parseContract, sourceView} from './api-contract.mjs';
 
 const contract = parseContract(await readFile('../services/tadoku-api/spec/openapi.yaml', 'utf8'));
+const serverCodegen = parseContract(await readFile('../services/tadoku-api/spec/server-codegen.yaml', 'utf8'));
 
 test('all retained wire contracts survive the merge, including internal callers', async () => {
   let operations = 0;
@@ -39,14 +40,14 @@ test('all retained wire contracts survive the merge, including internal callers'
   assert.equal(publicOperations, 72);
 });
 
-test('only the active-announcement read is owned by native code', () => {
+test('native-owned operations match server generation', () => {
   const owned = [];
-  for (const [path, item] of Object.entries(contract.paths)) {
-    for (const [method, operation] of Object.entries(item)) {
+  for (const item of Object.values(contract.paths)) {
+    for (const operation of Object.values(item)) {
       assert.ok(['native', 'legacy'].includes(operation['x-tadoku-owner']));
       assert.ok(['public', 'internal', 'callback'].includes(operation['x-tadoku-exposure']));
-      if (operation['x-tadoku-owner'] === 'native') owned.push(`${method} ${path}`);
+      if (operation['x-tadoku-owner'] === 'native') owned.push(operation.operationId);
     }
   }
-  assert.deepEqual(owned, ['get /content/announcements/{namespace}/active']);
+  assert.deepEqual(owned.sort(), [...serverCodegen['output-options']['include-operation-ids']].sort());
 });

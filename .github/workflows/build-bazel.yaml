@@ -10,7 +10,7 @@ on:
     paths:
       - "services/**"
       - "tools/ci/**"
-      - "tools/oapi-codegen-v2/**"
+      - "tools/oapi-codegen/**"
       - ".depolicy.yaml"
       - "**/BUILD"
       - "**/BUILD.bazel"
@@ -29,7 +29,7 @@ on:
     paths:
       - "services/**"
       - "tools/ci/**"
-      - "tools/oapi-codegen-v2/**"
+      - "tools/oapi-codegen/**"
       - ".depolicy.yaml"
       - "**/BUILD"
       - "**/BUILD.bazel"

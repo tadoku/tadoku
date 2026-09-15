@@ -1,14 +1,14 @@
-module(name = "tadoku_oapi_codegen_v2")
+module(name = "tadoku_oapi_codegen")
 
 bazel_dep(name = "rules_go", version = "0.62.0")
 bazel_dep(name = "gazelle", version = "0.52.2")
 
 go_sdk = use_extension("@rules_go//go:extensions.bzl", "go_sdk")
 go_sdk.from_file(
-    name = "tadoku_oapi_codegen_v2_go_sdk",
+    name = "tadoku_oapi_codegen_go_sdk",
     go_mod = "//:go.mod",
 )
-use_repo(go_sdk, "tadoku_oapi_codegen_v2_go_sdk")
+use_repo(go_sdk, "tadoku_oapi_codegen_go_sdk")
 
 go_deps = use_extension("@gazelle//:extensions.bzl", "go_deps")
 go_deps.from_file(go_mod = "//:go.mod")

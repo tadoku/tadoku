@@ -1,1 +1,1 @@
-ignore_directories(["tools/oapi-codegen-v2"])
+ignore_directories(["tools/oapi-codegen"])

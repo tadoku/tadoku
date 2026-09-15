@@ -52,8 +52,8 @@ wire URLs. Original upstream server/path metadata preserves the inventory of
 direct internal callers; the merge does not make those routes public.
 
 Run `./scripts/generate-openapi.sh` for the shared DTOs and standard-library
-strict-server bindings. The isolated oapi-codegen v2 tool module under
-`tools/oapi-codegen-v2` generates every canonical component schema while
+strict-server bindings. The isolated oapi-codegen tool module under
+`tools/oapi-codegen` generates every canonical component schema while
 `spec/server-codegen.yaml` limits server registration to operations owned by this
 application. Generation runs through Bazel and writes one checked-in output file.
 The Bazel binary has no Go module build-info header, so read its pin from the tool

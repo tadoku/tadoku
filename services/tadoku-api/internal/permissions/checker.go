@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 
+	ketoclient "github.com/tadoku/tadoku/services/common/client/keto"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/identity"
 )
 
@@ -33,6 +34,21 @@ func WithBanLookupError(ctx context.Context, err error) context.Context {
 
 func NewChecker(lookupAdmin func(context.Context, string) (bool, error)) *Checker {
 	return &Checker{lookupAdmin: lookupAdmin}
+}
+
+// KetoReader is the permission lookup required by the checker.
+type KetoReader interface {
+	CheckPermission(context.Context, string, string, string, ketoclient.Subject) (bool, error)
+}
+
+// NewKetoChecker checks admin membership using the shared application relation.
+func NewKetoChecker(client KetoReader) *Checker {
+	if client == nil {
+		return NewChecker(nil)
+	}
+	return NewChecker(func(ctx context.Context, subjectID string) (bool, error) {
+		return client.CheckPermission(ctx, "app", "tadoku", "admins", ketoclient.Subject{ID: subjectID})
+	})
 }
 
 func (c *Checker) IsAdmin(ctx context.Context) (bool, error) {

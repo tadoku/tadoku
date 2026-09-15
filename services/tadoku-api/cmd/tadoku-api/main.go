@@ -128,9 +128,7 @@ func start(cfg config, logger *slog.Logger) (*application, error) {
 	}()
 
 	keto := ketoclient.NewReadClient(cfg.KetoReadURL)
-	permissionChecker := permissions.NewChecker(func(ctx context.Context, subjectID string) (bool, error) {
-		return keto.CheckPermission(ctx, "app", "tadoku", "admins", ketoclient.Subject{ID: subjectID})
-	})
+	permissionChecker := permissions.NewKetoChecker(keto)
 	contentRepository := content.NewAnnouncementsRepository(pool)
 	contentService := content.NewService(contentRepository)
 	api := app.New(contentService, pool, permissionChecker)

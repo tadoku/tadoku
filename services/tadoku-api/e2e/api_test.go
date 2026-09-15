@@ -125,9 +125,7 @@ func newTestAPI(ctx context.Context) (_ *testAPI, err error) {
 	rejectBanned := transport.RejectBannedUsers(func(ctx context.Context, subjectID string) (bool, error) {
 		return reader.CheckPermission(ctx, "app", "tadoku", "banned", ketoclient.Subject{ID: subjectID})
 	}, logger)
-	permissionChecker := permissions.NewChecker(func(ctx context.Context, subjectID string) (bool, error) {
-		return reader.CheckPermission(ctx, "app", "tadoku", "admins", ketoclient.Subject{ID: subjectID})
-	})
+	permissionChecker := permissions.NewKetoChecker(reader)
 	authenticatedApplication := app.New(service, api.db.Pool, permissionChecker)
 	api.authenticatedHandler, err = transport.NewHandler(authenticatedApplication, api.db.Pool.Ping, time.Second, logger, authenticate, rejectBanned)
 	if err != nil {

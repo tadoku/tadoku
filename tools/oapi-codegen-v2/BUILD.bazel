@@ -1,0 +1,6 @@
+exports_files([
+    "MODULE.bazel",
+    "MODULE.bazel.lock",
+    "go.mod",
+    "go.sum",
+])

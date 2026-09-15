@@ -1,0 +1,8 @@
+package: openapi
+generate:
+  models: false
+  std-http-server: true
+  strict-server: true
+output-options:
+  include-operation-ids:
+    - ContentAnnouncementListActive

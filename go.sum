@@ -219,6 +219,8 @@ github.com/ory/keto-client-go v0.11.0-alpha.0 h1:CJyKa6DhiYVDDtHa0DR//wkhLH8SXgW
 github.com/ory/keto-client-go v0.11.0-alpha.0/go.mod h1:z/TmfbuoIU3DAHiv5a+cTyHXYc5mQDx38Ve8g2kYI00=
 github.com/ory/kratos-client-go v0.11.1 h1:2f+WZ94NReAUQlxdV/pp1ipScy5o5gYLHt2ThSNHHeA=
 github.com/ory/kratos-client-go v0.11.1/go.mod h1:G31LzGZxgtMblK36qaTPWjG5OqnUWrncO1MjKkHsFUE=
+github.com/oapi-codegen/runtime v1.6.0 h1:7Xx+GlueD6nRuyKoCPzL434Jfi3BetbiJOrzCHp/VPU=
+github.com/oapi-codegen/runtime v1.6.0/go.mod h1:GwV7hC2hviaMzj+ITfHVRESK5J2W/GefVwIND/bMGvU=
 github.com/pingcap/errors v0.11.4 h1:lFuQV/oaUMGcD2tqt+01ROSmJs75VG1ToEOkZIZ4nE4=
 github.com/pingcap/errors v0.11.4/go.mod h1:Oi8TUi2kEtXXLMJk9l1cGmz20kV3TaQ0usTwv5KuLY8=
 github.com/pkg/diff v0.0.0-20210226163009-20ebb0f2a09e/go.mod h1:pJLUxLENpZxwdsKMEsNbx1VGcRFpLqf3715MtcvvzbA=

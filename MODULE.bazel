@@ -56,6 +56,7 @@ use_repo(
     "com_github_micahparks_keyfunc",
     "com_github_ory_keto_client_go",
     "com_github_ory_kratos_client_go",
+    "com_github_oapi_codegen_runtime",
     "com_github_pkg_errors",
     "com_github_prometheus_client_golang",
     "com_github_sahilm_fuzzy",

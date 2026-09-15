@@ -104,6 +104,15 @@ func TestIsAdminFailsClosed(t *testing.T) {
 	}
 }
 
+func TestRequireAuthenticatedIsIdentityOnly(t *testing.T) {
+	ctx := identity.WithUser(t.Context(), &identity.User{Subject: "user"})
+	ctx = WithBanLookupError(ctx, errors.New("ban lookup failed"))
+
+	if err := (*Checker)(nil).RequireAuthenticated(ctx); err != nil {
+		t.Errorf("RequireAuthenticated error=%v, want nil", err)
+	}
+}
+
 func TestRequirements(t *testing.T) {
 	tests := []struct {
 		name      string

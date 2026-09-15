@@ -15,6 +15,7 @@ go_library(
         "//services/tadoku-api/app",
         "//services/tadoku-api/generated/openapi",
         "//services/tadoku-api/internal/identity",
+        "//services/tadoku-api/internal/permissions",
         "@com_github_golang_jwt_jwt_v4//:jwt",
         "@com_github_micahparks_keyfunc//:keyfunc",
         "@com_github_prometheus_client_golang//prometheus",
@@ -33,6 +34,7 @@ go_test(
     deps = [
         "//services/tadoku-api/app",
         "//services/tadoku-api/internal/identity",
+        "//services/tadoku-api/internal/permissions",
         "@com_github_golang_jwt_jwt_v4//:jwt",
         "@com_github_micahparks_keyfunc//:keyfunc",
         "@com_github_prometheus_client_golang//prometheus",

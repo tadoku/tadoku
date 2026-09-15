@@ -16,9 +16,19 @@ var (
 )
 
 // Checker evaluates identity and admin-role requirements for the verified user.
-// Callers apply ban policy separately; these methods do not check ban status.
+// A shared ban gate may record an inconclusive lookup so privileges fail closed.
 type Checker struct {
 	lookupAdmin func(context.Context, string) (bool, error)
+}
+
+type banLookupErrorKey struct{}
+
+// WithBanLookupError records a failed shared ban lookup for later privilege checks.
+func WithBanLookupError(ctx context.Context, err error) context.Context {
+	if err == nil {
+		return ctx
+	}
+	return context.WithValue(ctx, banLookupErrorKey{}, err)
 }
 
 func NewChecker(lookupAdmin func(context.Context, string) (bool, error)) *Checker {
@@ -29,6 +39,9 @@ func (c *Checker) IsAdmin(ctx context.Context) (bool, error) {
 	user := identity.FromContext(ctx)
 	if user == nil || user.Subject == "" || user.Subject == "guest" {
 		return false, nil
+	}
+	if err, _ := ctx.Value(banLookupErrorKey{}).(error); err != nil {
+		return false, fmt.Errorf("%w: check ban permission: %w", ErrUnavailable, err)
 	}
 	if c == nil || c.lookupAdmin == nil {
 		return false, ErrUnavailable

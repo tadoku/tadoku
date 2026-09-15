@@ -6,6 +6,7 @@ import (
 	stdhttp "net/http"
 
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/identity"
+	"github.com/tadoku/tadoku/services/tadoku-api/internal/permissions"
 )
 
 // RejectBannedUsers blocks authenticated users with the app:tadoku#banned relation.
@@ -25,7 +26,8 @@ func RejectBannedUsers(
 			banned, err := check(r.Context(), user.Subject)
 			if err != nil {
 				logger.Error("banned-user check unavailable; allowing request", "subject", user.Subject, "error", err)
-				next.ServeHTTP(w, r)
+				ctx := permissions.WithBanLookupError(r.Context(), err)
+				next.ServeHTTP(w, r.WithContext(ctx))
 				return
 			}
 			if banned {

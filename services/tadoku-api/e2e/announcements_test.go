@@ -3,6 +3,7 @@ package e2e_test
 import (
 	"bufio"
 	"bytes"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -11,6 +12,7 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v4"
+	"github.com/tadoku/tadoku/services/tadoku-api/internal/permissions"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/timex"
 )
 
@@ -77,6 +79,22 @@ func TestListAnnouncementsAuthorizationWiring(t *testing.T) {
 				}
 			})
 		})
+	}
+}
+
+func TestListAnnouncementsRejectsFailedBanLookup(t *testing.T) {
+	reset(t)
+	request := httptest.NewRequest(http.MethodGet, "/content/announcements/main", nil)
+	ctx := permissions.WithBanLookupError(request.Context(), errors.New("ban lookup failed"))
+	response := httptest.NewRecorder()
+
+	withContractAdminIdentity(api.handler).ServeHTTP(response, request.WithContext(ctx))
+
+	if response.Code != http.StatusServiceUnavailable || response.Body.Len() != 0 {
+		t.Errorf("failed ban lookup: status=%d body=%q, want empty 503", response.Code, response.Body.String())
+	}
+	if api.proxied.Load() != 0 {
+		t.Error("failed permission check fell back to the proxy")
 	}
 }
 

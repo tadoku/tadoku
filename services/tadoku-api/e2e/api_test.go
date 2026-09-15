@@ -18,6 +18,7 @@ import (
 	ketoclient "github.com/tadoku/tadoku/services/common/client/keto"
 	"github.com/tadoku/tadoku/services/tadoku-api/app"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/content"
+	"github.com/tadoku/tadoku/services/tadoku-api/internal/permissions"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/testketo"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/testpostgres"
 	transport "github.com/tadoku/tadoku/services/tadoku-api/transport/http"
@@ -27,6 +28,7 @@ var api *testAPI
 var legacyContent *legacyContentAPI
 var legacyAuthentication http.Handler
 var legacyBannedUsers http.Handler
+var legacyPermissions http.Handler
 var authenticationJWKS *httptest.Server
 var keto *testketo.Fixture
 
@@ -77,6 +79,7 @@ func runTests(m *testing.M) (code int) {
 	}
 	defer func() { cleanupErr = errors.Join(cleanupErr, legacyContent.db.Close()) }()
 	legacyBannedUsers = newLegacyBannedUsersHandler(authenticationJWKS.URL, keto.ReadURL())
+	legacyPermissions = newLegacyPermissionsHandler(authenticationJWKS.URL, keto.ReadURL())
 
 	return m.Run()
 }
@@ -119,12 +122,17 @@ func newTestAPI(ctx context.Context) (_ *testAPI, err error) {
 	rejectBanned := transport.RejectBannedUsers(func(ctx context.Context, subjectID string) (bool, error) {
 		return reader.CheckPermission(ctx, "app", "tadoku", "banned", ketoclient.Subject{ID: subjectID})
 	}, logger)
+	permissionChecker := permissions.NewChecker(func(ctx context.Context, subjectID string) (bool, error) {
+		return reader.CheckPermission(ctx, "app", "tadoku", "admins", ketoclient.Subject{ID: subjectID})
+	})
 	api.authenticatedHandler, err = transport.NewHandler(application, api.db.Pool.Ping, time.Second, logger, authenticate, rejectBanned)
 	if err != nil {
 		return nil, fmt.Errorf("create authenticated API handler: %w", err)
 	}
 	api.authenticatedHandler.HandleFunc("GET /test/authentication", authenticationSuccess)
 	api.authenticatedHandler.HandleFunc("GET /test/banned", bannedUsersSuccess)
+	api.authenticatedHandler.HandleFunc("GET /test/permissions/admin", requireAdmin(permissionChecker))
+	api.authenticatedHandler.HandleFunc("GET /test/permissions/check", checkAdmin(permissionChecker))
 
 	upstreams := transport.Upstreams{
 		Authz:     "http://upstream.test",

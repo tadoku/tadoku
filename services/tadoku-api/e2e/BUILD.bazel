@@ -9,6 +9,7 @@ go_test(
         "banned_users_test.go",
         "golden_test.go",
         "legacy_content_test.go",
+        "permissions_test.go",
         "routing_test.go",
     ],
     data = glob([
@@ -30,6 +31,7 @@ go_test(
         "//services/common/authz/roles",
         "//services/common/client/keto",
         "//services/common/domain",
+        "//services/common/http/httperr",
         "//services/common/middleware",
         "//services/content-api/domain",
         "//services/content-api/http/rest",
@@ -38,6 +40,7 @@ go_test(
         "//services/tadoku-api/app",
         "//services/tadoku-api/features/content",
         "//services/tadoku-api/internal/identity",
+        "//services/tadoku-api/internal/permissions",
         "//services/tadoku-api/internal/testketo",
         "//services/tadoku-api/internal/testpostgres",
         "//services/tadoku-api/internal/timex",

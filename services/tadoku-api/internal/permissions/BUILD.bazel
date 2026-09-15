@@ -1,0 +1,16 @@
+load("@rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "permissions",
+    srcs = ["checker.go"],
+    importpath = "github.com/tadoku/tadoku/services/tadoku-api/internal/permissions",
+    visibility = ["//services/tadoku-api:__subpackages__"],
+    deps = ["//services/tadoku-api/internal/identity"],
+)
+
+go_test(
+    name = "permissions_test",
+    srcs = ["checker_test.go"],
+    embed = [":permissions"],
+    deps = ["//services/tadoku-api/internal/identity"],
+)

@@ -15,11 +15,9 @@ import (
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
-	commonroles "github.com/tadoku/tadoku/services/common/authz/roles"
 	ketoclient "github.com/tadoku/tadoku/services/common/client/keto"
 	"github.com/tadoku/tadoku/services/tadoku-api/app"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/content"
-	"github.com/tadoku/tadoku/services/tadoku-api/internal/identity"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/permissions"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/testketo"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/testpostgres"
@@ -67,14 +65,14 @@ func runTests(m *testing.M) (code int) {
 	}
 	defer func() { cleanupErr = errors.Join(cleanupErr, keto.Close()) }()
 
-	api, err = newTestAPI(context.Background())
+	api, err = newTestAPI(context.Background(), keto.ReadURL())
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		return 1
 	}
 	defer func() { cleanupErr = errors.Join(cleanupErr, api.db.Close()) }()
 
-	legacyContent, err = newLegacyContentAPI(context.Background(), api.db.DSN)
+	legacyContent, err = newLegacyContentAPI(context.Background(), api.db.DSN, authenticationJWKS.URL, keto.ReadURL())
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		return 1
@@ -88,13 +86,12 @@ func runTests(m *testing.M) (code int) {
 
 // testAPI owns the production handler and an in-process sentinel transport.
 type testAPI struct {
-	db                   *testpostgres.Database
-	handler              *transport.Router
-	authenticatedHandler *transport.Router
-	proxied              atomic.Int32
+	db      *testpostgres.Database
+	handler *transport.Router
+	proxied atomic.Int32
 }
 
-func newTestAPI(ctx context.Context) (_ *testAPI, err error) {
+func newTestAPI(ctx context.Context, ketoReadURL string) (_ *testAPI, err error) {
 	db, err := testpostgres.New(ctx)
 	if err != nil {
 		return nil, err
@@ -106,18 +103,34 @@ func newTestAPI(ctx context.Context) (_ *testAPI, err error) {
 		}
 	}()
 	api := &testAPI{db: db}
+	api.handler, err = newTestRouter(db, ketoReadURL)
+	if err != nil {
+		return nil, err
+	}
 
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
-	reader := ketoclient.NewReadClient(keto.ReadURL())
-	repository := content.NewAnnouncementsRepository(api.db.Pool)
-	service := content.NewService(repository)
-	contractPermissions := permissions.NewChecker(func(context.Context, string) (bool, error) { return true, nil })
-	contractApplication := app.New(service, api.db.Pool, contractPermissions)
-
-	api.handler, err = transport.NewHandler(contractApplication, api.db.Pool.Ping, time.Second, logger, skipAuthentication, skipBanCheck)
-	if err != nil {
-		return nil, fmt.Errorf("create API handler: %w", err)
+	upstreams := transport.Upstreams{
+		Authz:     "http://upstream.test",
+		Content:   "http://upstream.test",
+		Immersion: "http://upstream.test",
+		Profile:   "http://upstream.test",
 	}
+	err = transport.RegisterProxyRoutes(api.handler, upstreams, api, time.Second, prometheus.NewRegistry(), logger)
+	if err != nil {
+		return nil, fmt.Errorf("register proxy routes: %w", err)
+	}
+
+	complete = true
+	return api, nil
+}
+
+func newTestRouter(db *testpostgres.Database, ketoReadURL string) (*transport.Router, error) {
+	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
+	reader := ketoclient.NewReadClient(ketoReadURL)
+	permissionChecker := permissions.NewKetoChecker(reader)
+	repository := content.NewAnnouncementsRepository(db.Pool)
+	service := content.NewService(repository)
+	application := app.New(service, db.Pool, permissionChecker)
 	authenticate, err := transport.NewJWTAuthentication(authenticationJWKS.URL, time.Second)
 	if err != nil {
 		return nil, err
@@ -125,56 +138,15 @@ func newTestAPI(ctx context.Context) (_ *testAPI, err error) {
 	rejectBanned := transport.RejectBannedUsers(func(ctx context.Context, subjectID string) (bool, error) {
 		return reader.CheckPermission(ctx, "app", "tadoku", "banned", ketoclient.Subject{ID: subjectID})
 	}, logger)
-	permissionChecker := permissions.NewKetoChecker(reader)
-	authenticatedApplication := app.New(service, api.db.Pool, permissionChecker)
-	api.authenticatedHandler, err = transport.NewHandler(authenticatedApplication, api.db.Pool.Ping, time.Second, logger, authenticate, rejectBanned)
+	handler, err := transport.NewHandler(application, db.Pool.Ping, time.Second, logger, authenticate, rejectBanned)
 	if err != nil {
-		return nil, fmt.Errorf("create authenticated API handler: %w", err)
+		return nil, fmt.Errorf("create API handler: %w", err)
 	}
-	api.authenticatedHandler.HandleFunc("GET /test/authentication", authenticationSuccess)
-	api.authenticatedHandler.HandleFunc("GET /test/banned", bannedUsersSuccess)
-	api.authenticatedHandler.HandleFunc("GET /test/permissions/admin", requireAdmin(permissionChecker))
-	api.authenticatedHandler.HandleFunc("GET /test/permissions/check", checkAdmin(permissionChecker))
-
-	upstreams := transport.Upstreams{
-		Authz:     "http://upstream.test",
-		Content:   "http://upstream.test",
-		Immersion: "http://upstream.test",
-		Profile:   "http://upstream.test",
-	}
-	for _, handler := range []*transport.Router{api.handler, api.authenticatedHandler} {
-		err = transport.RegisterProxyRoutes(
-			handler,
-			upstreams,
-			api,
-			time.Second,
-			prometheus.NewRegistry(),
-			logger,
-		)
-		if err != nil {
-			return nil, fmt.Errorf("register proxy routes: %w", err)
-		}
-	}
-
-	complete = true
-	return api, nil
-}
-
-// Endpoint-contract scenarios deliberately skip both shared gates. Production
-// construction has no opt-out and always supplies the real middleware.
-func skipAuthentication(next http.Handler) http.Handler { return next }
-func skipBanCheck(next http.Handler) http.Handler       { return next }
-
-func withContractAdminIdentity(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ctx := identity.WithUser(r.Context(), &identity.User{Subject: "contract-admin"})
-		ctx = commonroles.WithClaims(ctx, commonroles.Claims{
-			Subject:       "contract-admin",
-			Authenticated: true,
-			Admin:         true,
-		})
-		next.ServeHTTP(w, r.WithContext(ctx))
-	})
+	handler.HandleFunc("GET /test/authentication", authenticationSuccess)
+	handler.HandleFunc("GET /test/banned", bannedUsersSuccess)
+	handler.HandleFunc("GET /test/permissions/admin", requireAdmin(permissionChecker))
+	handler.HandleFunc("GET /test/permissions/check", checkAdmin(permissionChecker))
+	return handler, nil
 }
 
 func (a *testAPI) RoundTrip(request *http.Request) (*http.Response, error) {

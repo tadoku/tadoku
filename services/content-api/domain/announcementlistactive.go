@@ -3,12 +3,14 @@ package domain
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/go-playground/validator/v10"
+	commondomain "github.com/tadoku/tadoku/services/common/domain"
 )
 
 type AnnouncementListActiveRepository interface {
-	ListActiveAnnouncements(ctx context.Context, namespace string) ([]Announcement, error)
+	ListActiveAnnouncements(ctx context.Context, namespace string, now time.Time) ([]Announcement, error)
 }
 
 type AnnouncementListActiveRequest struct {
@@ -21,12 +23,14 @@ type AnnouncementListActiveResponse struct {
 
 type AnnouncementListActive struct {
 	repo     AnnouncementListActiveRepository
+	clock    commondomain.Clock
 	validate *validator.Validate
 }
 
-func NewAnnouncementListActive(repo AnnouncementListActiveRepository) *AnnouncementListActive {
+func NewAnnouncementListActive(repo AnnouncementListActiveRepository, clock commondomain.Clock) *AnnouncementListActive {
 	return &AnnouncementListActive{
 		repo:     repo,
+		clock:    clock,
 		validate: validator.New(),
 	}
 }
@@ -36,7 +40,7 @@ func (s *AnnouncementListActive) Execute(ctx context.Context, req *AnnouncementL
 		return nil, fmt.Errorf("%w: %v", ErrRequestInvalid, err)
 	}
 
-	announcements, err := s.repo.ListActiveAnnouncements(ctx, req.Namespace)
+	announcements, err := s.repo.ListActiveAnnouncements(ctx, req.Namespace, s.clock.Now())
 	if err != nil {
 		return nil, err
 	}

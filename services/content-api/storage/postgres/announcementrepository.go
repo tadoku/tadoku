@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/tadoku/tadoku/services/content-api/domain"
@@ -148,8 +149,11 @@ func (r *AnnouncementRepository) ListAnnouncements(ctx context.Context, namespac
 	}, nil
 }
 
-func (r *AnnouncementRepository) ListActiveAnnouncements(ctx context.Context, namespace string) ([]domain.Announcement, error) {
-	rows, err := r.q.ListActiveAnnouncements(ctx, namespace)
+func (r *AnnouncementRepository) ListActiveAnnouncements(ctx context.Context, namespace string, now time.Time) ([]domain.Announcement, error) {
+	rows, err := r.q.ListActiveAnnouncements(ctx, ListActiveAnnouncementsParams{
+		Namespace: namespace,
+		Now:       now,
+	})
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return []domain.Announcement{}, nil

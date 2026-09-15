@@ -6,17 +6,15 @@ import (
 	"net/http/httptest"
 	"path/filepath"
 	"testing"
-	"time"
 
-	"github.com/golang-jwt/jwt/v4"
-	"github.com/tadoku/tadoku/services/tadoku-api/internal/timex"
+	"github.com/tadoku/tadoku/services/tadoku-api/internal/testketo"
 )
 
 func TestDatabaseUnavailable(t *testing.T) {
 	reset(t)
 	// Only destructive dependency tests construct another API: closing its pool
 	// must not break the suite-level router used by normal HTTP scenarios.
-	isolated, err := newTestAPI(t.Context())
+	isolated, err := newTestAPI(t.Context(), keto.ReadURL())
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -29,19 +27,14 @@ func TestDatabaseUnavailable(t *testing.T) {
 
 	t.Run("permission denial precedes database access", func(t *testing.T) {
 		path := filepath.Join("testdata", APITestName("ListAnnouncements", http.StatusForbidden, "non", "admin"))
-		previous := jwt.TimeFunc
-		jwt.TimeFunc = timex.Now
-		defer func() { jwt.TimeFunc = previous }()
-		timex.TheWorld(time.Date(2026, 9, 12, 12, 0, 0, 0, time.UTC), func() {
-			checkHTTPGolden(t, isolated.authenticatedHandler, path, http.StatusForbidden)
-		})
+		checkCaseGolden(t, isolated.handler, path, http.StatusForbidden)
 	})
 
 	t.Run("reads fail without proxy fallback", func(t *testing.T) {
 		for _, operation := range []string{"ListActiveAnnouncements", "ListAnnouncements"} {
 			t.Run(operation, func(t *testing.T) {
 				path := filepath.Join("testdata", APITestName(operation, http.StatusInternalServerError, "read", "failure"))
-				checkHTTPGolden(t, withContractAdminIdentity(isolated.handler), path, http.StatusInternalServerError)
+				checkCaseGolden(t, isolated.handler, path, http.StatusInternalServerError)
 			})
 		}
 	})
@@ -61,6 +54,67 @@ func TestDatabaseUnavailable(t *testing.T) {
 			}
 		}
 	})
+}
+
+func TestListAnnouncementsRejectsFailedBanLookup(t *testing.T) {
+	path := filepath.Join("testdata", APITestName("ListAnnouncements", http.StatusServiceUnavailable, "failed", "ban", "lookup"))
+	resetCase(t, path)
+	// Stop a separate real Keto process so the production middleware records
+	// the provider failure. Never stop the shared suite's Keto dependency.
+	provider, err := testketo.New(t.Context())
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() {
+		if err := provider.Close(); err != nil {
+			t.Error(err)
+		}
+	})
+	if err := provider.Reset(t.Context(), filepath.Join(path, "relationships.json")); err != nil {
+		t.Fatal(err)
+	}
+	isolated, err := newTestAPI(t.Context(), provider.ReadURL())
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() {
+		if err := isolated.db.Close(); err != nil {
+			t.Error(err)
+		}
+	})
+	legacy, err := newLegacyContentAPI(t.Context(), isolated.db.DSN, authenticationJWKS.URL, provider.ReadURL())
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() {
+		if err := legacy.db.Close(); err != nil {
+			t.Error(err)
+		}
+	})
+	// First prove the seeded admin can access both APIs with this provider.
+	adminPath := filepath.Join("testdata", APITestName("ListAnnouncements", http.StatusOK, "admin"))
+	checkHTTPGolden(t, isolated.handler, adminPath, http.StatusOK)
+	checkHTTPGolden(t, legacy.handler, adminPath, http.StatusOK)
+	if err := provider.Close(); err != nil {
+		t.Fatal(err)
+	}
+	for _, implementation := range []struct {
+		name    string
+		handler http.Handler
+	}{
+		{name: "tadoku-api", handler: isolated.handler},
+		{name: "content-api", handler: legacy.handler},
+	} {
+		t.Run(implementation.name, func(t *testing.T) {
+			if err := isolated.db.Reset(t.Context()); err != nil {
+				t.Fatal(err)
+			}
+			checkHTTPGolden(t, implementation.handler, path, http.StatusServiceUnavailable)
+		})
+	}
+	if isolated.proxied.Load() != 0 {
+		t.Error("failed permission check fell back to the proxy")
+	}
 }
 
 func TestCanceledReadDoesNotFallBack(t *testing.T) {

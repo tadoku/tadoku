@@ -8,5 +8,9 @@ go_library(
         "//services/tadoku-api/e2e:__pkg__",
         "//services/tadoku-api/transport/http:__pkg__",
     ],
-    deps = ["@com_github_deepmap_oapi_codegen//pkg/types"],
+    deps = [
+        "@com_github_oapi_codegen_nullable//:nullable",
+        "@com_github_oapi_codegen_runtime//:runtime",
+        "@com_github_oapi_codegen_runtime//types",
+    ],
 )

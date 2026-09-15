@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/tadoku/tadoku/services/tadoku-api/app"
+	"github.com/tadoku/tadoku/services/tadoku-api/generated/openapi"
 )
 
 // Router keeps application routes behind shared middleware while allowing this
@@ -18,6 +19,13 @@ type Router struct {
 	applicationMux              *stdhttp.ServeMux
 	protectedApplicationHandler stdhttp.Handler
 }
+
+type server struct {
+	application *app.Application
+	logger      *slog.Logger
+}
+
+var _ openapi.StrictServerInterface = (*server)(nil)
 
 // Handle registers an application route behind the shared middleware.
 func (r *Router) Handle(pattern string, handler stdhttp.Handler) {
@@ -69,10 +77,30 @@ func NewHandler(
 		_, _ = w.Write([]byte("ok"))
 	})
 	router.rootMux.Handle("GET /readyz", withRequestTimeout(timeout, readinessHandler(ready)))
-	router.Handle(
-		"GET /content/announcements/{namespace}/active",
-		listActiveAnnouncements(application, logger),
+	strictServer := openapi.NewStrictHandlerWithOptions(
+		&server{
+			application: application,
+			logger:      logger,
+		},
+		nil,
+		openapi.StrictHTTPServerOptions{
+			RequestErrorHandlerFunc: func(w stdhttp.ResponseWriter, _ *stdhttp.Request, err error) {
+				writeJSON(w, stdhttp.StatusBadRequest, map[string]string{"message": err.Error()})
+			},
+			ResponseErrorHandlerFunc: func(w stdhttp.ResponseWriter, _ *stdhttp.Request, _ error) {
+				w.WriteHeader(stdhttp.StatusInternalServerError)
+			},
+		},
 	)
+	openapi.HandlerWithOptions(strictServer, openapi.StdHTTPServerOptions{
+		BaseRouter: router,
+		Middlewares: []openapi.MiddlewareFunc{
+			withJSONCharsetCompatibility,
+		},
+		ErrorHandlerFunc: func(w stdhttp.ResponseWriter, _ *stdhttp.Request, err error) {
+			writeJSON(w, stdhttp.StatusBadRequest, map[string]string{"message": err.Error()})
+		},
+	})
 
 	return router, nil
 }
@@ -97,6 +125,27 @@ func readinessHandler(ready func(context.Context) error) stdhttp.Handler {
 
 		_, _ = w.Write([]byte(`{"status":"ready","checks":[{"name":"postgres","status":"ok"}]}`))
 	})
+}
+
+func withJSONCharsetCompatibility(next stdhttp.Handler) stdhttp.Handler {
+	return stdhttp.HandlerFunc(func(w stdhttp.ResponseWriter, r *stdhttp.Request) {
+		next.ServeHTTP(&jsonCharsetResponseWriter{ResponseWriter: w}, r)
+	})
+}
+
+type jsonCharsetResponseWriter struct {
+	stdhttp.ResponseWriter
+}
+
+func (w *jsonCharsetResponseWriter) WriteHeader(status int) {
+	if w.Header().Get("Content-Type") == "application/json" {
+		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+	}
+	w.ResponseWriter.WriteHeader(status)
+}
+
+func (w *jsonCharsetResponseWriter) Unwrap() stdhttp.ResponseWriter {
+	return w.ResponseWriter
 }
 
 func writeJSON(w stdhttp.ResponseWriter, status int, value any) {

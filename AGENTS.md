@@ -113,9 +113,9 @@ bazel run //:gazelle
 # 6. Regenerate sqlc code after modifying SQL queries
 ./scripts/generate-sqlc.sh
 
-# 7. Regenerate OpenAPI code (after modifying OpenAPI specs)
-cd services/immersion-api/http/rest/openapi && go generate
-cd services/content-api/http/rest/openapi && go generate
+# 7. Regenerate Tadoku API OpenAPI code (after modifying its canonical spec)
+./scripts/generate-openapi.sh
+# Legacy service OpenAPI output is frozen until those services are retired.
 
 # 8. Before creating PR
 bazel build //services/... && bazel test //services/...

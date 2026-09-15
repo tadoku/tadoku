@@ -1,0 +1,10 @@
+package: openapi
+generate:
+  models: true
+  std-http-server: true
+  strict-server: true
+output-options:
+  include-operation-ids:
+    - ContentAnnouncementListActive
+  nullable-type: true
+  skip-prune: true

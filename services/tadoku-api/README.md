@@ -51,17 +51,17 @@ path; their old parameter names are recorded for compatibility. This changes no
 wire URLs. Original upstream server/path metadata preserves the inventory of
 direct internal callers; the merge does not make those routes public.
 
-Run `./scripts/generate-openapi.sh` for the shared DTO package and the standard
-library strict-server bindings. The DTO generator remains oapi-codegen v1.12.4,
-pinned in the root `go.mod`; its `skip-prune` output keeps every retained operation's
-types available. Server generation uses the isolated oapi-codegen v2 tool module
-under `tools/oapi-codegen-v2` and `spec/server-codegen.yaml` selects only operations
-owned by this application. Both generators run through Bazel and write checked-in
-output. Their Bazel binaries have no Go module build-info header, so read the pins
-from their `go.mod` files rather than generated headers. Generated routes register
+Run `./scripts/generate-openapi.sh` for the shared DTOs and standard-library
+strict-server bindings. The isolated oapi-codegen v2 tool module under
+`tools/oapi-codegen-v2` generates every canonical component schema while
+`spec/server-codegen.yaml` limits server registration to operations owned by this
+application. Generation runs through Bazel and writes one checked-in output file.
+The Bazel binary has no Go module build-info header, so read its pin from the tool
+module's `go.mod` rather than the generated header. Generated routes register
 through the application `Router` as their base router, preserving its shared
 deadline, authentication and ban checks. Run `./scripts/generate-sqlc.sh` for SQL
-output. The native query uses sqlc v1.31.1/pgx-v5; legacy generators are unchanged.
+output. Legacy service OpenAPI output remains frozen on v1.12.4 until those services
+are retired. The native query uses sqlc v1.31.1/pgx-v5.
 
 Documentation builds filtered public views from the canonical contract. They
 retain the four existing documentation sections/URLs, not four independent API

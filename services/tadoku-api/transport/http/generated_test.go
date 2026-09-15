@@ -1,9 +1,13 @@
 package http
 
 import (
+	"encoding/json"
 	stdhttp "net/http"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/oapi-codegen/nullable"
+	"github.com/tadoku/tadoku/services/tadoku-api/generated/openapi"
 )
 
 func TestJSONCharsetCompatibility(t *testing.T) {
@@ -56,5 +60,34 @@ func TestJSONCharsetResponseWriterUnwraps(t *testing.T) {
 
 	if got := w.Unwrap(); got != response {
 		t.Errorf("Unwrap() = %T, want original response writer", got)
+	}
+}
+
+func TestGeneratedNullableStringJSON(t *testing.T) {
+	tests := []struct {
+		name string
+		href nullable.Nullable[string]
+		want string
+	}{
+		{name: "null", href: nullable.NewNullNullable[string](), want: "null"},
+		{name: "value", href: nullable.NewNullableWithValue("https://tadoku.app/announcement"), want: `"https://tadoku.app/announcement"`},
+		{name: "empty string", href: nullable.NewNullableWithValue(""), want: `""`},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			body, err := json.Marshal(openapi.ContentAnnouncement{Href: test.href})
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			var fields map[string]json.RawMessage
+			if err := json.Unmarshal(body, &fields); err != nil {
+				t.Fatal(err)
+			}
+			if got := string(fields["href"]); got != test.want {
+				t.Errorf("href = %s, want %s", got, test.want)
+			}
+		})
 	}
 }

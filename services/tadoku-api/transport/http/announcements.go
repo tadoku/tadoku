@@ -3,6 +3,7 @@ package http
 import (
 	"context"
 
+	"github.com/oapi-codegen/nullable"
 	"github.com/tadoku/tadoku/services/tadoku-api/generated/openapi"
 )
 
@@ -22,13 +23,18 @@ func (s *server) ContentAnnouncementListActive(
 		Announcements: make([]openapi.ContentAnnouncement, 0, len(items)),
 	}
 	for _, item := range items {
+		href := nullable.NewNullNullable[string]()
+		if item.Href != nil {
+			href = nullable.NewNullableWithValue(*item.Href)
+		}
+
 		response.Announcements = append(response.Announcements, openapi.ContentAnnouncement{
 			Id:        &item.ID,
 			Namespace: &item.Namespace,
 			Title:     item.Title,
 			Content:   item.Content,
 			Style:     openapi.ContentAnnouncementStyle(item.Style),
-			Href:      item.Href,
+			Href:      href,
 			StartsAt:  item.StartsAt,
 			EndsAt:    item.EndsAt,
 			CreatedAt: &item.CreatedAt,

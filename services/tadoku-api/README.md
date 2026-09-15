@@ -32,6 +32,16 @@ repositories only query and map rows. `postgres.Executor` lets repositories use
 the active app-owned transaction. Open transactions only when the operation needs
 one; do not add feature or repository interfaces solely for mocking.
 
+Application operations and feature services that need authorization receive a
+named `*permissions.Checker` and call `RequireAuthenticated`, `RequireAdmin` or
+`IsAdmin` explicitly. Do not enforce administrator access with HTTP middleware.
+Construction for a protected slice binds the checker to the request-scoped
+`app:tadoku#admins` Keto lookup; the checker derives its subject from the verified
+`internal/identity` context and does not cache results. The shared HTTP ban gate
+remains separate and must not be duplicated in feature operations. Direct
+invocation outside the application router must provide its own equivalent baseline
+ban policy.
+
 ## Contract and compatibility
 
 `spec/openapi.yaml` is the one canonical contract: 72 public operations plus nine

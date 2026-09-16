@@ -6,6 +6,7 @@ import (
 	"errors"
 	"net/http"
 	"net/url"
+	"os"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -30,6 +31,17 @@ func TestResetSeedsAndClearsEveryNamespace(t *testing.T) {
 	if err := fixture.Reset(t.Context(), "missing.json", filepath.Join("testdata", "relationships.json")); err != nil {
 		t.Fatal(err)
 	}
+	configPath := fixture.command.Args[len(fixture.command.Args)-1]
+	configFiles, err := os.ReadDir(filepath.Dir(configPath))
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, file := range configFiles {
+		if file.Name() != filepath.Base(configPath) {
+			t.Errorf("runtime file %s shares Keto's watched config directory", file.Name())
+		}
+	}
+
 	for _, namespace := range []string{"app", "User"} {
 		if count := relationshipCount(t, fixture, namespace); count != 1 {
 			t.Errorf("%s relationship count=%d, want 1", namespace, count)

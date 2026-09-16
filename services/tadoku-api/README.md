@@ -74,9 +74,9 @@ Every migrated operation must preserve its existing API inputs, outputs and
 business behavior, including response status, headers, field shapes, nullability,
 empty results, filtering, ordering and limits where applicable. Prove parity by
 running the same request/response golden cases against the native and corresponding
-legacy handlers. Native failures must not fall back to the proxy. Test shared
-authentication and infrastructure middleware at their own boundaries,
-not duplicated in each endpoint's parity cases.
+legacy handlers with real authentication and authorization. Native failures must
+not fall back to the proxy. Keep exhaustive authentication and infrastructure
+failure matrices at their own boundaries instead of duplicating them per endpoint.
 
 ## Runtime configuration
 
@@ -147,7 +147,9 @@ bazel test //services/tadoku-api/... --test_output=errors
 
 `TestMain` creates one disposable database, applies migrations and constructs the
 native production HTTP router and the legacy handlers required by the E2E suite
-once. Handlers and the fallback sentinel execute in process, without HTTP listeners.
+once, using real JWT verification, ban checks and Keto-backed permissions. There
+is no second bypass router or injected administrator identity. Handlers and the
+fallback sentinel execute in process, without HTTP listeners.
 Cover each operation's response mapping, input handling, business rules and relevant
 boundaries; keep dependency-failure and route-ownership checks alongside those cases.
 
@@ -212,14 +214,14 @@ API prefix. Initialize only the dependencies the tested operations need. Confine
 legacy assembly to test targets; do not add legacy service or framework dependencies
 to the native runtime.
 
-Time-dependent cases must give both implementations the same controlled time input.
-When a legacy query reads the database clock, bind that input explicitly in test-only
-code. Reject unsupported query shapes instead of silently applying a generic SQL
-rewrite. Apart from clock binding, execute production queries and row mapping
-unchanged against real PostgreSQL. Do not shift or ignore fixture timestamps or
-response fields to make a comparison pass. Such bindings do not verify the legacy
-choice of clock. Gateway rewriting, authentication and infrastructure middleware
-also remain outside endpoint parity; test them at their respective boundaries.
+Time-dependent cases give both implementations the same controlled time through
+their ordinary clock dependencies. If legacy behavior reads the database clock,
+introduce an explicit application-clock input rather than rewriting its SQL in a
+test connector. Execute the production queries and row mapping unchanged against
+real PostgreSQL; never shift or ignore fixture timestamps or response fields to
+make a comparison pass. JWT verification, identity propagation, ban checks and endpoint
+permissions run in both implementations. Gateway token issuance/rewriting and
+unrelated infrastructure remain outside these in-process comparisons.
 
 ```sh
 bazel test //services/tadoku-api/e2e:e2e_test --test_output=errors
@@ -232,9 +234,12 @@ or duplicate per-implementation fixtures.
 Pool-failure, cancellation and proxy-routing checks remain separate Go tests;
 they exercise dependency behavior rather than SQL-defined response cases.
 
-Endpoint contract tests explicitly supply passthrough authentication so their
-credential-free request fixtures remain focused on business behavior. Authentication
-scenarios register `GET /test/authentication` through the real production `Router`
+Endpoint fixtures contain synthetic signed JWTs and any required Keto relationships.
+Administrator scenarios seed explicit admin tuples; public scenarios use signed
+guest tokens, as the gateway does. An absent relationship file grants no roles.
+No endpoint test bypasses authentication, injects an administrator claim, or uses
+an always-allow permission checker. Focused authentication
+scenarios register `GET /test/authentication` through the same production `Router`
 with a test-only success handler. The comparison handler uses legacy `VerifyJWT` and
 `Identity`, without authorization or business endpoints. Both consume the same signed
 HTTP requests and goldens. Test-only identity headers prove downstream context
@@ -243,8 +248,9 @@ method/path dispatch, while the transport router test proves all registered appl
 routes inherit the shared gates. No test endpoint is added to production.
 
 The suite serves a synthetic checked-in public JWKS locally; private keys and live
-identity providers are not needed. Each authentication scenario temporarily binds
-`jwt/v4.TimeFunc` to the scoped application clock and restores it on return. These
+identity providers are not needed. The HTTP runner temporarily fixes
+`jwt/v4.TimeFunc` at the signed fixtures' verification instant and restores it on
+return. Business-clock tests may advance `timex` independently of token expiry. These
 scenarios and their parents must not run in parallel. Intentional compatibility
 differences use `skipParity` in the same table and run only against Tadoku API.
 Ban-policy scenarios register `GET /test/banned` on the same production router and

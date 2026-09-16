@@ -69,6 +69,7 @@ go_test(
     ],
     deps = [
         ":domain",
+        "//services/common/domain",
         "//services/common/testutil/authzctx",
         "@com_github_google_uuid//:uuid",
         "@com_github_stretchr_testify//assert",

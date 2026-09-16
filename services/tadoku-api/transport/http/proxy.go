@@ -86,6 +86,7 @@ func RegisterProxyRoutes(
 			// ServeMux GET routes also match HEAD. Keep HEAD on the legacy API
 			// until that operation is migrated; this exception is proxy-only.
 			router.rootMux.Handle("HEAD /content/announcements/{namespace}/active", handler)
+			router.rootMux.Handle("HEAD /content/announcements/{namespace}", handler)
 		}
 	}
 

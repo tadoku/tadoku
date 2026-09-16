@@ -12,5 +12,10 @@ go_library(
         "//services/tadoku-api/e2e:__pkg__",
         "//services/tadoku-api/transport/http:__pkg__",
     ],
-    deps = ["//services/tadoku-api/features/content"],
+    deps = [
+        "//services/tadoku-api/features/content",
+        "//services/tadoku-api/infra/postgres",
+        "//services/tadoku-api/internal/permissions",
+        "@com_github_jackc_pgx_v5//pgxpool",
+    ],
 )

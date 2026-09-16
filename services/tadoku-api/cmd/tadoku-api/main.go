@@ -24,6 +24,7 @@ import (
 	"github.com/tadoku/tadoku/services/tadoku-api/app"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/content"
 	"github.com/tadoku/tadoku/services/tadoku-api/infra/postgres"
+	"github.com/tadoku/tadoku/services/tadoku-api/internal/permissions"
 	transporthttp "github.com/tadoku/tadoku/services/tadoku-api/transport/http"
 )
 
@@ -126,9 +127,11 @@ func start(cfg config, logger *slog.Logger) (*application, error) {
 		}
 	}()
 
+	keto := ketoclient.NewReadClient(cfg.KetoReadURL)
+	permissionChecker := permissions.NewKetoChecker(keto)
 	contentRepository := content.NewAnnouncementsRepository(pool)
 	contentService := content.NewService(contentRepository)
-	api := app.New(contentService)
+	api := app.New(contentService, pool, permissionChecker)
 	rejectBanned := newBannedUserMiddleware(cfg.KetoReadURL, logger)
 
 	handler, err := transporthttp.NewHandler(api, pool.Ping, cfg.RequestTimeout, logger, authenticate, rejectBanned)

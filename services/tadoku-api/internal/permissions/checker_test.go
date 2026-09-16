@@ -5,8 +5,43 @@ import (
 	"errors"
 	"testing"
 
+	ketoclient "github.com/tadoku/tadoku/services/common/client/keto"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/identity"
 )
+
+type ketoLookup func(context.Context, string, string, string, ketoclient.Subject) (bool, error)
+
+func (f ketoLookup) CheckPermission(ctx context.Context, namespace, object, relation string, subject ketoclient.Subject) (bool, error) {
+	return f(ctx, namespace, object, relation, subject)
+}
+
+func TestKetoCheckerUsesAdminRelation(t *testing.T) {
+	ctx := identity.WithUser(t.Context(), &identity.User{Subject: "reader"})
+	providerErr := errors.New("keto unavailable")
+	calls := 0
+	checker := NewKetoChecker(ketoLookup(func(gotCtx context.Context, namespace, object, relation string, subject ketoclient.Subject) (bool, error) {
+		calls++
+		if gotCtx != ctx {
+			t.Error("Keto did not receive request context")
+		}
+		if namespace != "app" || object != "tadoku" || relation != "admins" || subject.ID != "reader" || subject.Set != nil {
+			t.Errorf("unexpected Keto tuple: %q %q %q %+v", namespace, object, relation, subject)
+		}
+		return true, providerErr
+	}))
+	allowed, err := checker.IsAdmin(ctx)
+	if allowed || !errors.Is(err, ErrUnavailable) || !errors.Is(err, providerErr) {
+		t.Errorf("IsAdmin=(%t, %v), want false and wrapped provider failure", allowed, err)
+	}
+	if calls != 1 {
+		t.Errorf("Keto calls=%d, want 1", calls)
+	}
+
+	allowed, err = NewKetoChecker(nil).IsAdmin(ctx)
+	if allowed || !errors.Is(err, ErrUnavailable) {
+		t.Errorf("nil Keto client: IsAdmin=(%t, %v), want (false, ErrUnavailable)", allowed, err)
+	}
+}
 
 func TestIsAdminIdentityAndLookupBoundaries(t *testing.T) {
 	tests := []struct {

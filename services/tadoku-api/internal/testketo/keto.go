@@ -62,9 +62,15 @@ func New(ctx context.Context) (result *Fixture, resultErr error) {
 		}
 	}()
 
+	// Keto watches the config's parent directory and logs filesystem events.
+	// Keep runtime files outside it so log writes cannot trigger a feedback loop.
+	configDir := filepath.Join(dir, "config")
+	if err := os.Mkdir(configDir, 0o700); err != nil {
+		return nil, fmt.Errorf("create Keto config directory: %w", err)
+	}
+	configPath := filepath.Join(configDir, "keto.json")
 	readAddress := filepath.Join(dir, "read-address")
 	writeAddress := filepath.Join(dir, "write-address")
-	configPath := filepath.Join(dir, "keto.json")
 	logPath := filepath.Join(dir, "keto.log")
 	config := map[string]any{
 		"dsn": "memory",

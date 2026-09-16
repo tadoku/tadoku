@@ -7,6 +7,7 @@ go_test(
         "api_test.go",
         "authentication_test.go",
         "banned_users_test.go",
+        "dependency_failure_test.go",
         "golden_test.go",
         "legacy_content_test.go",
         "permissions_test.go",

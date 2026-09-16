@@ -169,7 +169,8 @@ instead of `testing.TB`. Suite teardown preserves test failures and reports clea
 failures; partial setup also cleans up. Freeze business time inside the tests that
 need it, not in `TestMain`; a scenario can use separate `timex.TheWorld` scopes for
 different times. No test-only request-context wrapper is needed. The pool-closing
-failure test has isolated dependencies. Repository/transaction tests retain their
+failure test opens a second pool on the shared DSN and closes it; it does not
+create another migrated database. Repository/transaction tests retain their
 independent databases and may run in parallel.
 
 HTTP cases derive their name from the operation, expected status and description

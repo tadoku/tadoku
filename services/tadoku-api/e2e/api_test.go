@@ -14,6 +14,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/prometheus/client_golang/prometheus"
 	ketoclient "github.com/tadoku/tadoku/services/common/client/keto"
 	"github.com/tadoku/tadoku/services/tadoku-api/app"
@@ -24,7 +25,7 @@ import (
 	transport "github.com/tadoku/tadoku/services/tadoku-api/transport/http"
 )
 
-var api *testAPI
+var api *suite
 var legacyContent *legacyContentAPI
 var legacyAuthentication http.Handler
 var legacyBannedUsers http.Handler
@@ -64,7 +65,7 @@ func runTests(m *testing.M) (code int) {
 	}
 	defer func() { cleanupErr = errors.Join(cleanupErr, keto.Close()) }()
 
-	api, err = newTestAPI(context.Background(), keto.ReadURL())
+	api, err = newTestAPI(context.Background(), keto)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		return 1
@@ -82,14 +83,15 @@ func runTests(m *testing.M) (code int) {
 	return m.Run()
 }
 
-// testAPI owns the production handler and an in-process sentinel transport.
-type testAPI struct {
+// suite owns the stores a handler reads. Reset only those stores.
+type suite struct {
 	db      *testpostgres.Database
+	keto    *testketo.Fixture
 	handler *transport.Router
 	proxied atomic.Int32
 }
 
-func newTestAPI(ctx context.Context, ketoReadURL string) (_ *testAPI, err error) {
+func newTestAPI(ctx context.Context, ketoFixture *testketo.Fixture) (_ *suite, err error) {
 	db, err := testpostgres.New(ctx)
 	if err != nil {
 		return nil, err
@@ -100,35 +102,27 @@ func newTestAPI(ctx context.Context, ketoReadURL string) (_ *testAPI, err error)
 			err = errors.Join(err, db.Close())
 		}
 	}()
-	api := &testAPI{db: db}
-	api.handler, err = newTestRouter(db, ketoReadURL)
+
+	handler, err := newTestRouter(db.Pool, ketoFixture.ReadURL())
 	if err != nil {
 		return nil, err
 	}
-
-	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
-	upstreams := transport.Upstreams{
-		Authz:     "http://upstream.test",
-		Content:   "http://upstream.test",
-		Immersion: "http://upstream.test",
-		Profile:   "http://upstream.test",
-	}
-	err = transport.RegisterProxyRoutes(api.handler, upstreams, api, time.Second, prometheus.NewRegistry(), logger)
-	if err != nil {
-		return nil, fmt.Errorf("register proxy routes: %w", err)
+	api := &suite{db: db, keto: ketoFixture, handler: handler}
+	if err := registerSentinelProxy(api); err != nil {
+		return nil, err
 	}
 
 	complete = true
 	return api, nil
 }
 
-func newTestRouter(db *testpostgres.Database, ketoReadURL string) (*transport.Router, error) {
+func newTestRouter(pool *pgxpool.Pool, ketoReadURL string) (*transport.Router, error) {
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
 	reader := ketoclient.NewReadClient(ketoReadURL)
 	permissionChecker := permissions.NewKetoChecker(reader)
-	repository := content.NewAnnouncementsRepository(db.Pool)
+	repository := content.NewAnnouncementsRepository(pool)
 	service := content.NewService(repository)
-	application := app.New(service, db.Pool, permissionChecker)
+	application := app.New(service, pool, permissionChecker)
 	authenticate, err := transport.NewJWTAuthentication(authenticationJWKS.URL, time.Second)
 	if err != nil {
 		return nil, err
@@ -136,17 +130,31 @@ func newTestRouter(db *testpostgres.Database, ketoReadURL string) (*transport.Ro
 	rejectBanned := transport.RejectBannedUsers(func(ctx context.Context, subjectID string) (bool, error) {
 		return reader.CheckPermission(ctx, "app", "tadoku", "banned", ketoclient.Subject{ID: subjectID})
 	}, logger)
-	handler, err := transport.NewHandler(application, db.Pool.Ping, time.Second, logger, authenticate, rejectBanned)
+	handler, err := transport.NewHandler(application, pool.Ping, time.Second, logger, authenticate, rejectBanned)
 	if err != nil {
 		return nil, fmt.Errorf("create API handler: %w", err)
 	}
-	handler.HandleFunc("GET /test/authentication", authenticationSuccess)
-	handler.HandleFunc("GET /test/banned", bannedUsersSuccess)
+	handler.HandleFunc("GET /test/authentication", observeIdentity)
+	handler.HandleFunc("GET /test/banned", observeIdentity)
 	return handler, nil
 }
 
-func (a *testAPI) RoundTrip(request *http.Request) (*http.Response, error) {
-	a.proxied.Add(1)
+func registerSentinelProxy(s *suite) error {
+	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
+	upstreams := transport.Upstreams{
+		Authz:     "http://upstream.test",
+		Content:   "http://upstream.test",
+		Immersion: "http://upstream.test",
+		Profile:   "http://upstream.test",
+	}
+	if err := transport.RegisterProxyRoutes(s.handler, upstreams, s, time.Second, prometheus.NewRegistry(), logger); err != nil {
+		return fmt.Errorf("register proxy routes: %w", err)
+	}
+	return nil
+}
+
+func (s *suite) RoundTrip(request *http.Request) (*http.Response, error) {
+	s.proxied.Add(1)
 	return &http.Response{
 		StatusCode: http.StatusNoContent,
 		Header:     http.Header{"X-Proxied": {"yes"}},
@@ -155,32 +163,32 @@ func (a *testAPI) RoundTrip(request *http.Request) (*http.Response, error) {
 	}, nil
 }
 
-func reset(t *testing.T, seedFiles ...string) {
+func (s *suite) reset(t *testing.T, caseDir string) {
 	t.Helper()
 	var postgresSeeds, ketoSeeds []string
-	for _, seedFile := range seedFiles {
-		switch filepath.Ext(seedFile) {
-		case ".sql":
-			postgresSeeds = append(postgresSeeds, seedFile)
-		case ".json":
-			ketoSeeds = append(ketoSeeds, seedFile)
-		default:
-			t.Fatalf("unsupported seed file: %s", seedFile)
+	if caseDir != "" {
+		postgresSeeds = []string{filepath.Join(caseDir, "setup.sql")}
+		ketoSeeds = []string{filepath.Join(caseDir, "relationships.json")}
+	}
+	if s.db != nil {
+		if err := s.db.Reset(t.Context(), postgresSeeds...); err != nil {
+			t.Fatal(err)
 		}
 	}
-	if err := api.db.Reset(t.Context(), postgresSeeds...); err != nil {
-		t.Fatal(err)
+	if s.keto != nil {
+		if err := s.keto.Reset(t.Context(), ketoSeeds...); err != nil {
+			t.Fatal(err)
+		}
 	}
-	if err := keto.Reset(t.Context(), ketoSeeds...); err != nil {
-		t.Fatal(err)
-	}
-	api.proxied.Store(0)
+	s.proxied.Store(0)
 }
 
-func resetCase(t *testing.T, directory string) {
+func openClosedPool(t *testing.T, dsn string) *pgxpool.Pool {
 	t.Helper()
-	reset(t,
-		filepath.Join(directory, "setup.sql"),
-		filepath.Join(directory, "relationships.json"),
-	)
+	pool, err := pgxpool.New(t.Context(), dsn)
+	if err != nil {
+		t.Fatal(err)
+	}
+	pool.Close()
+	return pool
 }

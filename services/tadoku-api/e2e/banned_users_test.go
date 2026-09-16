@@ -1,16 +1,15 @@
 package e2e_test
 
 import (
+	"io"
+	"net/http"
+	"testing"
+
 	"github.com/labstack/echo/v4"
 	commonroles "github.com/tadoku/tadoku/services/common/authz/roles"
 	ketoclient "github.com/tadoku/tadoku/services/common/client/keto"
 	commondomain "github.com/tadoku/tadoku/services/common/domain"
 	"github.com/tadoku/tadoku/services/common/middleware"
-	"github.com/tadoku/tadoku/services/tadoku-api/internal/identity"
-	"io"
-	"net/http"
-	"path/filepath"
-	"testing"
 )
 
 func TestBannedUsers(t *testing.T) {
@@ -29,27 +28,12 @@ func TestBannedUsers(t *testing.T) {
 	for _, test := range tests {
 		name := APITestName("BannedUsers", test.want, test.description...)
 		t.Run(name, func(t *testing.T) {
-			path := filepath.Join("testdata", name)
-			for _, implementation := range []struct {
-				name    string
-				handler http.Handler
-			}{
-				{name: "tadoku-api", handler: api.handler},
-				{name: "legacy", handler: legacyBannedUsers},
-			} {
-				t.Run(implementation.name, func(t *testing.T) {
-					checkCaseGolden(t, implementation.handler, path, test.want)
-				})
-			}
+			runCase(t, api, name, test.want,
+				implementation{name: "tadoku-api", handler: api.handler},
+				implementation{name: "legacy", handler: legacyBannedUsers},
+			)
 		})
 	}
-}
-
-func bannedUsersSuccess(w http.ResponseWriter, r *http.Request) {
-	if user := identity.FromContext(r.Context()); user != nil {
-		writeIdentityHeaders(w.Header(), user.Subject, user.DisplayName, user.Email, user.CreatedAt)
-	}
-	writeAuthenticationSuccess(w)
 }
 
 func newLegacyBannedUsersHandler(jwksURL, ketoReadURL string) http.Handler {

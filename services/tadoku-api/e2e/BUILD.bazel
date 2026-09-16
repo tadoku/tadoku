@@ -47,6 +47,7 @@ go_test(
         "@com_github_golang_jwt_jwt_v4//:jwt",
         "@com_github_jackc_pgx_v4//:pgx",
         "@com_github_jackc_pgx_v4//stdlib",
+        "@com_github_jackc_pgx_v5//pgxpool",
         "@com_github_labstack_echo_v4//:echo",
         "@com_github_prometheus_client_golang//prometheus",
     ],

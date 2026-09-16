@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/content"
 	"github.com/tadoku/tadoku/services/tadoku-api/infra/postgres"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/testpostgres"
@@ -51,6 +52,13 @@ func TestAnnouncementsRepositoryUsesSuppliedPolicyAndTransaction(t *testing.T) {
 		if len(items) != 1 || items[0].Title != "uncommitted" {
 			t.Errorf("transaction read: %+v", items)
 		}
+		item, err := repository.FindAnnouncementByID(ctx, "main", uuid.MustParse(id))
+		if err != nil {
+			return err
+		}
+		if item.Title != "uncommitted" {
+			t.Errorf("transaction lookup: %+v", item)
+		}
 		return wantRollback
 	})
 	if !errors.Is(err, wantRollback) {
@@ -62,6 +70,17 @@ func TestAnnouncementsRepositoryUsesSuppliedPolicyAndTransaction(t *testing.T) {
 	}
 	if len(items) != 1 || items[0].Title != "older" {
 		t.Errorf("rolled back read: %+v", items)
+	}
+	item, err := repository.FindAnnouncementByID(t.Context(), "main", uuid.MustParse(id))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if item.Title != "older" {
+		t.Errorf("rolled back lookup: %+v", item)
+	}
+	_, err = repository.FindAnnouncementByID(t.Context(), "other", uuid.MustParse(id))
+	if !errors.Is(err, content.ErrAnnouncementNotFound) {
+		t.Errorf("wrong namespace error=%v, want announcement not found", err)
 	}
 }
 

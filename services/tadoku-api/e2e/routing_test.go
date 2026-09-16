@@ -67,6 +67,7 @@ func TestUnclaimedMethodsRemainProxied(t *testing.T) {
 	}{
 		{name: "active list", path: "/content/announcements/main/active"},
 		{name: "admin list", path: "/content/announcements/main"},
+		{name: "by ID", path: "/content/announcements/main/11111111-1111-4111-8111-111111111111"},
 	} {
 		t.Run(route.name, func(t *testing.T) {
 			for _, method := range []string{http.MethodHead, http.MethodOptions, http.MethodPost, http.MethodDelete, http.MethodPatch} {

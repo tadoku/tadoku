@@ -24,6 +24,24 @@ func NewAnnouncementsRepository(db *pgxpool.Pool) *AnnouncementsRepository {
 	}
 }
 
+func (r *AnnouncementsRepository) DeleteAnnouncement(ctx context.Context, namespace string, id uuid.UUID, deletedAt time.Time) error {
+	executor, err := postgres.Executor(ctx, r.db)
+	if err != nil {
+		return err
+	}
+
+	err = queries.New(executor).DeleteAnnouncement(ctx, queries.DeleteAnnouncementParams{
+		Namespace: namespace,
+		ID:        pgtype.UUID{Bytes: id, Valid: true},
+		DeletedAt: pgtype.Timestamp{Time: deletedAt, Valid: true},
+	})
+	if err != nil {
+		return fmt.Errorf("delete announcement: %w", err)
+	}
+
+	return nil
+}
+
 func (r *AnnouncementsRepository) FindAnnouncementByID(ctx context.Context, namespace string, id uuid.UUID) (*Announcement, error) {
 	executor, err := postgres.Executor(ctx, r.db)
 	if err != nil {

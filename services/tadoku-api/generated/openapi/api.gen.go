@@ -1082,6 +1082,9 @@ type ServerInterface interface {
 	// ContentAnnouncementListActive Lists currently active announcements
 	// (GET /content/announcements/{namespace}/active)
 	ContentAnnouncementListActive(w http.ResponseWriter, r *http.Request, namespace string)
+	// ContentAnnouncementFindByID Gets an announcement by ID
+	// (GET /content/announcements/{namespace}/{id})
+	ContentAnnouncementFindByID(w http.ResponseWriter, r *http.Request, namespace string, id string)
 }
 
 // ServerInterfaceWrapper converts contexts to parameters.
@@ -1165,6 +1168,41 @@ func (siw *ServerInterfaceWrapper) ContentAnnouncementListActive(w http.Response
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.ContentAnnouncementListActive(w, r, namespace)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ContentAnnouncementFindByID operation middleware
+func (siw *ServerInterfaceWrapper) ContentAnnouncementFindByID(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "namespace" -------------
+	var namespace string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "namespace", r.PathValue("namespace"), &namespace, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "namespace", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", r.PathValue("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ContentAnnouncementFindByID(w, r, namespace, id)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -1296,6 +1334,7 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/content/announcements/{namespace}/active", wrapper.ContentAnnouncementListActive)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/content/announcements/{namespace}", wrapper.ContentAnnouncementList)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/content/announcements/{namespace}/{id}", wrapper.ContentAnnouncementFindByID)
 
 	return m
 }
@@ -1347,6 +1386,45 @@ func (response ContentAnnouncementListActive200JSONResponse) VisitContentAnnounc
 	return err
 }
 
+type ContentAnnouncementFindByIDRequestObject struct {
+	Namespace string `json:"namespace"`
+	Id        string `json:"id"`
+}
+
+type ContentAnnouncementFindByIDResponseObject interface {
+	VisitContentAnnouncementFindByIDResponse(w http.ResponseWriter) error
+}
+
+type ContentAnnouncementFindByID200JSONResponse ContentAnnouncement
+
+func (response ContentAnnouncementFindByID200JSONResponse) VisitContentAnnouncementFindByIDResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ContentAnnouncementFindByID403Response struct {
+}
+
+func (response ContentAnnouncementFindByID403Response) VisitContentAnnouncementFindByIDResponse(w http.ResponseWriter) error {
+	w.WriteHeader(403)
+	return nil
+}
+
+type ContentAnnouncementFindByID404Response struct {
+}
+
+func (response ContentAnnouncementFindByID404Response) VisitContentAnnouncementFindByIDResponse(w http.ResponseWriter) error {
+	w.WriteHeader(404)
+	return nil
+}
+
 // StrictServerInterface represents all server handlers.
 type StrictServerInterface interface {
 	// ContentAnnouncementList Lists all announcements
@@ -1355,6 +1433,9 @@ type StrictServerInterface interface {
 	// ContentAnnouncementListActive Lists currently active announcements
 	// (GET /content/announcements/{namespace}/active)
 	ContentAnnouncementListActive(ctx context.Context, request ContentAnnouncementListActiveRequestObject) (ContentAnnouncementListActiveResponseObject, error)
+	// ContentAnnouncementFindByID Gets an announcement by ID
+	// (GET /content/announcements/{namespace}/{id})
+	ContentAnnouncementFindByID(ctx context.Context, request ContentAnnouncementFindByIDRequestObject) (ContentAnnouncementFindByIDResponseObject, error)
 }
 
 type StrictHandlerFunc func(ctx context.Context, w http.ResponseWriter, r *http.Request, request any) (any, error)
@@ -1442,6 +1523,33 @@ func (sh *strictHandler) ContentAnnouncementListActive(w http.ResponseWriter, r 
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(ContentAnnouncementListActiveResponseObject); ok {
 		if err := validResponse.VisitContentAnnouncementListActiveResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ContentAnnouncementFindByID operation middleware
+func (sh *strictHandler) ContentAnnouncementFindByID(w http.ResponseWriter, r *http.Request, namespace string, id string) {
+	var request ContentAnnouncementFindByIDRequestObject
+
+	request.Namespace = namespace
+	request.Id = id
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ContentAnnouncementFindByID(ctx, request.(ContentAnnouncementFindByIDRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ContentAnnouncementFindByID")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ContentAnnouncementFindByIDResponseObject); ok {
+		if err := validResponse.VisitContentAnnouncementFindByIDResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

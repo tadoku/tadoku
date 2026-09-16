@@ -17,6 +17,7 @@ import (
 // Router keeps application routes behind shared middleware while allowing this
 // package to attach probes and temporary legacy proxies outside it.
 type Router struct {
+	rootHandler                 stdhttp.Handler
 	rootMux                     *stdhttp.ServeMux
 	applicationMux              *stdhttp.ServeMux
 	protectedApplicationHandler stdhttp.Handler
@@ -42,7 +43,7 @@ func (r *Router) HandleFunc(pattern string, handler func(stdhttp.ResponseWriter,
 }
 
 func (r *Router) ServeHTTP(w stdhttp.ResponseWriter, request *stdhttp.Request) {
-	r.rootMux.ServeHTTP(w, request)
+	r.rootHandler.ServeHTTP(w, request)
 }
 
 // NewHandler builds the application router without any legacy upstreams.
@@ -74,6 +75,7 @@ func NewHandler(
 		rootMux:        stdhttp.NewServeMux(),
 		applicationMux: stdhttp.NewServeMux(),
 	}
+	router.rootHandler = router.rootMux
 	router.protectedApplicationHandler = withRequestTimeout(timeout, authenticate(rejectBanned(router.applicationMux)))
 	router.rootMux.HandleFunc("GET /livez", func(w stdhttp.ResponseWriter, _ *stdhttp.Request) {
 		_, _ = w.Write([]byte("ok"))
@@ -92,6 +94,8 @@ func NewHandler(
 			ResponseErrorHandlerFunc: func(w stdhttp.ResponseWriter, _ *stdhttp.Request, err error) {
 				status := stdhttp.StatusInternalServerError
 				switch {
+				case errors.Is(err, errInvalidAnnouncementID):
+					status = stdhttp.StatusBadRequest
 				case errors.Is(err, permissions.ErrUnauthorized):
 					status = stdhttp.StatusUnauthorized
 				case errors.Is(err, permissions.ErrForbidden):

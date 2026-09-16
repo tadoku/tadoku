@@ -25,6 +25,51 @@ func (q *Queries) CountAnnouncements(ctx context.Context, namespace string) (int
 	return count, err
 }
 
+const findAnnouncementByID = `-- name: FindAnnouncementByID :one
+select id, namespace, title, content, style, href,
+       starts_at, ends_at, created_at, updated_at
+from announcements
+where deleted_at is null
+  and namespace = $1
+  and id = $2
+`
+
+type FindAnnouncementByIDParams struct {
+	Namespace string
+	ID        pgtype.UUID
+}
+
+type FindAnnouncementByIDRow struct {
+	ID        pgtype.UUID
+	Namespace string
+	Title     string
+	Content   string
+	Style     string
+	Href      pgtype.Text
+	StartsAt  pgtype.Timestamp
+	EndsAt    pgtype.Timestamp
+	CreatedAt pgtype.Timestamp
+	UpdatedAt pgtype.Timestamp
+}
+
+func (q *Queries) FindAnnouncementByID(ctx context.Context, arg FindAnnouncementByIDParams) (FindAnnouncementByIDRow, error) {
+	row := q.db.QueryRow(ctx, findAnnouncementByID, arg.Namespace, arg.ID)
+	var i FindAnnouncementByIDRow
+	err := row.Scan(
+		&i.ID,
+		&i.Namespace,
+		&i.Title,
+		&i.Content,
+		&i.Style,
+		&i.Href,
+		&i.StartsAt,
+		&i.EndsAt,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
 const listActiveAnnouncements = `-- name: ListActiveAnnouncements :many
 select id, namespace, title, content, style, href,
        starts_at, ends_at, created_at, updated_at

@@ -73,6 +73,12 @@ func RegisterProxyRoutes(
 		{name: "immersion", prefix: "/immersion/", target: upstreams.Immersion},
 		{name: "profile", prefix: "/profile/", target: upstreams.Profile},
 	}
+	// ServeMux GET patterns also match HEAD, and wildcard HEAD exceptions can
+	// conflict with more-specific GET patterns. Keep HEAD on the legacy prefixes
+	// in a separate proxy-only dispatcher; probes still use the regular root mux.
+	headRoutes := stdhttp.NewServeMux()
+	headRoutes.Handle("/", router.rootMux)
+
 	for _, current := range routes {
 		target, err := parseTarget(current.target)
 		if err != nil {
@@ -81,14 +87,15 @@ func RegisterProxyRoutes(
 
 		handler := observe(current, requestTimeout, newReverseProxy(current, target, transport, logger), duration, logger)
 		router.rootMux.Handle(current.prefix, handler)
-
-		if current.name == "content" {
-			// ServeMux GET routes also match HEAD. Keep HEAD on the legacy API
-			// until that operation is migrated; this exception is proxy-only.
-			router.rootMux.Handle("HEAD /content/announcements/{namespace}/active", handler)
-			router.rootMux.Handle("HEAD /content/announcements/{namespace}", handler)
-		}
+		headRoutes.Handle(current.prefix, handler)
 	}
+	router.rootHandler = stdhttp.HandlerFunc(func(w stdhttp.ResponseWriter, r *stdhttp.Request) {
+		if r.Method == stdhttp.MethodHead {
+			headRoutes.ServeHTTP(w, r)
+			return
+		}
+		router.rootMux.ServeHTTP(w, r)
+	})
 
 	return nil
 }

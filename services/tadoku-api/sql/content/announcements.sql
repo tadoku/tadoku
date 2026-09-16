@@ -1,3 +1,11 @@
+-- name: FindAnnouncementByID :one
+select id, namespace, title, content, style, href,
+       starts_at, ends_at, created_at, updated_at
+from announcements
+where deleted_at is null
+  and namespace = sqlc.arg(namespace)
+  and id = sqlc.arg(id);
+
 -- name: CountAnnouncements :one
 select count(id)
 from announcements

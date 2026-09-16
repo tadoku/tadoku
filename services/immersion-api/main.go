@@ -119,7 +119,7 @@ func main() {
 	if err != nil {
 		panic(fmt.Errorf("could not configure postgres: %w", err))
 	}
-	connConfig, err := postgresConfig.ConnConfig()
+	connConfig, err := postgresConfig.WithApplicationName(cfg.ServiceName).ConnConfig()
 	if err != nil {
 		panic(err)
 	}

@@ -63,7 +63,7 @@ func runWithFake(t *testing.T, args []string, runner *fakeMigration) (int, strin
 		&stderr,
 		func(sourceURL, databaseURL string) (migration, error) {
 			assert.Equal(t, "file:///migrations", sourceURL)
-			assert.Equal(t, "postgres://user:password@db:5432/database?sslmode=require", databaseURL)
+			assert.Equal(t, "postgres://user:password@db:5432/database?application_name=migrate-recovery&sslmode=require", databaseURL)
 			return runner, nil
 		},
 	)

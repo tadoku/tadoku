@@ -13,6 +13,7 @@ func TestListAnnouncements(t *testing.T) {
 	}{
 		{description: []string{"admin"}, want: http.StatusOK},
 		{description: []string{"non", "admin"}, want: http.StatusForbidden},
+		{description: []string{"guest"}, want: http.StatusUnauthorized},
 		{description: []string{"without", "credentials"}, want: http.StatusBadRequest},
 		{description: []string{"without", "announcements"}, want: http.StatusOK},
 		{description: []string{"default", "page", "and", "namespace"}, want: http.StatusOK},

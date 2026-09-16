@@ -28,7 +28,6 @@ var api *testAPI
 var legacyContent *legacyContentAPI
 var legacyAuthentication http.Handler
 var legacyBannedUsers http.Handler
-var legacyPermissions http.Handler
 var authenticationJWKS *httptest.Server
 var keto *testketo.Fixture
 
@@ -79,7 +78,6 @@ func runTests(m *testing.M) (code int) {
 	}
 	defer func() { cleanupErr = errors.Join(cleanupErr, legacyContent.db.Close()) }()
 	legacyBannedUsers = newLegacyBannedUsersHandler(authenticationJWKS.URL, keto.ReadURL())
-	legacyPermissions = newLegacyPermissionsHandler(authenticationJWKS.URL, keto.ReadURL())
 
 	return m.Run()
 }
@@ -144,8 +142,6 @@ func newTestRouter(db *testpostgres.Database, ketoReadURL string) (*transport.Ro
 	}
 	handler.HandleFunc("GET /test/authentication", authenticationSuccess)
 	handler.HandleFunc("GET /test/banned", bannedUsersSuccess)
-	handler.HandleFunc("GET /test/permissions/admin", requireAdmin(permissionChecker))
-	handler.HandleFunc("GET /test/permissions/check", checkAdmin(permissionChecker))
 	return handler, nil
 }
 

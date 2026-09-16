@@ -119,11 +119,11 @@ jobs:
           || { echo "//:load_images is out of sync with production oci_load targets named :load under //services/..." >&2; exit 1; }
 
       - name: Run tests
-        run: bazel test --lockfile_mode=error //...
+        run: bazel test --lockfile_mode=error --test_output=errors //...
 
       - name: Race-test Tadoku API and helpers
         run: >-
-          bazel test --lockfile_mode=error --@rules_go//go/config:race
+          bazel test --lockfile_mode=error --test_output=errors --@rules_go//go/config:race
           //services/tadoku-api/internal/permissions:permissions_test
           //services/tadoku-api/internal/testketo:testketo_test
           //services/tadoku-api/internal/timex:timex_test

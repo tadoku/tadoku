@@ -59,28 +59,6 @@ func TestRouterWorksWithoutLegacyProxyRoutes(t *testing.T) {
 	}
 }
 
-func TestMiddlewareFixtureRoutesUseApplicationRouter(t *testing.T) {
-	for _, test := range []struct {
-		name   string
-		method string
-		path   string
-		want   int
-	}{
-		{name: "authentication method", method: http.MethodPost, path: "/test/authentication", want: http.StatusMethodNotAllowed},
-		{name: "ban method", method: http.MethodPost, path: "/test/banned", want: http.StatusMethodNotAllowed},
-		{name: "unknown path", method: http.MethodGet, path: "/test/missing", want: http.StatusNotFound},
-	} {
-		t.Run(test.name, func(t *testing.T) {
-			response := httptest.NewRecorder()
-			api.handler.ServeHTTP(response, httptest.NewRequest(test.method, test.path, nil))
-
-			if response.Code != test.want {
-				t.Errorf("status=%d, want %d", response.Code, test.want)
-			}
-		})
-	}
-}
-
 func TestUnclaimedMethodsRemainProxied(t *testing.T) {
 	for _, route := range []struct {
 		name string

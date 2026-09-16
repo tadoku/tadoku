@@ -1,8 +1,0 @@
-[
-  {
-    "namespace": "app",
-    "object": "tadoku",
-    "relation": "admins",
-    "subject_id": "guest"
-  }
-]

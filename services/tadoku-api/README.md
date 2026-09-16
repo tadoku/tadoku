@@ -243,9 +243,8 @@ scenarios register `GET /test/authentication` through the same production `Route
 with a test-only success handler. The comparison handler uses legacy `VerifyJWT` and
 `Identity`, without authorization or business endpoints. Both consume the same signed
 HTTP requests and goldens. Test-only identity headers prove downstream context
-propagation. A routing regression verifies these fixture handlers retain normal
-method/path dispatch, while the transport router test proves all registered application
-routes inherit the shared gates. No test endpoint is added to production.
+propagation. The transport router test proves all registered application routes
+inherit the shared gates. No test endpoint is added to production.
 
 The suite serves a synthetic checked-in public JWKS locally; private keys and live
 identity providers are not needed. The HTTP runner temporarily fixes

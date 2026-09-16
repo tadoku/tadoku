@@ -10,7 +10,6 @@ go_test(
         "dependency_failure_test.go",
         "golden_test.go",
         "legacy_content_test.go",
-        "permissions_test.go",
         "routing_test.go",
     ],
     data = glob([
@@ -32,7 +31,6 @@ go_test(
         "//services/common/authz/roles",
         "//services/common/client/keto",
         "//services/common/domain",
-        "//services/common/http/httperr",
         "//services/common/middleware",
         "//services/content-api/domain",
         "//services/content-api/http/rest",

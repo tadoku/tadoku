@@ -2,7 +2,6 @@ package e2e_test
 
 import (
 	"net/http"
-	"path/filepath"
 	"testing"
 )
 
@@ -28,22 +27,10 @@ func TestListAnnouncements(t *testing.T) {
 	for _, test := range tests {
 		name := APITestName("ListAnnouncements", test.want, test.description...)
 		t.Run(name, func(t *testing.T) {
-			path := filepath.Join("testdata", name)
-			for _, implementation := range []struct {
-				name    string
-				handler http.Handler
-			}{
-				{name: "tadoku-api", handler: api.handler},
-				{name: "content-api", handler: legacyContent.handler},
-			} {
-				t.Run(implementation.name, func(t *testing.T) {
-					checkCaseGolden(t, implementation.handler, path, test.want)
-
-					if api.proxied.Load() != 0 {
-						t.Error("native read contacted an upstream")
-					}
-				})
-			}
+			runCase(t, api, name, test.want,
+				implementation{name: "tadoku-api", handler: api.handler},
+				implementation{name: "content-api", handler: legacyContent.handler},
+			)
 		})
 	}
 }
@@ -53,51 +40,21 @@ func TestListActiveAnnouncements(t *testing.T) {
 		description []string
 		want        int
 	}{
-		{
-			description: []string{"guest"},
-			want:        http.StatusOK,
-		},
-		{
-			description: []string{"escaped", "slash", "namespace"},
-			want:        http.StatusOK,
-		},
-		{
-			description: []string{"escaped", "space", "namespace"},
-			want:        http.StatusOK,
-		},
-		{
-			description: []string{"unicode", "namespace"},
-			want:        http.StatusOK,
-		},
-		{
-			description: []string{"without", "announcements"},
-			want:        http.StatusOK,
-		},
-		{
-			description: []string{"active", "undeleted", "newest", "ten"},
-			want:        http.StatusOK,
-		},
+		{description: []string{"guest"}, want: http.StatusOK},
+		{description: []string{"escaped", "slash", "namespace"}, want: http.StatusOK},
+		{description: []string{"escaped", "space", "namespace"}, want: http.StatusOK},
+		{description: []string{"unicode", "namespace"}, want: http.StatusOK},
+		{description: []string{"without", "announcements"}, want: http.StatusOK},
+		{description: []string{"active", "undeleted", "newest", "ten"}, want: http.StatusOK},
 	}
 
 	for _, test := range tests {
 		name := APITestName("ListActiveAnnouncements", test.want, test.description...)
 		t.Run(name, func(t *testing.T) {
-			path := filepath.Join("testdata", name)
-			for _, implementation := range []struct {
-				name    string
-				handler http.Handler
-			}{
-				{name: "tadoku-api", handler: api.handler},
-				{name: "content-api", handler: legacyContent.handler},
-			} {
-				t.Run(implementation.name, func(t *testing.T) {
-					checkCaseGolden(t, implementation.handler, path, test.want)
-
-					if api.proxied.Load() != 0 {
-						t.Error("native read contacted an upstream")
-					}
-				})
-			}
+			runCase(t, api, name, test.want,
+				implementation{name: "tadoku-api", handler: api.handler},
+				implementation{name: "content-api", handler: legacyContent.handler},
+			)
 		})
 	}
 }

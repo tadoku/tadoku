@@ -4,7 +4,6 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
-	"path/filepath"
 	"testing"
 	"time"
 
@@ -128,28 +127,21 @@ func TestAuthentication(t *testing.T) {
 	for _, test := range tests {
 		name := APITestName("Authentication", test.want, test.description...)
 		t.Run(name, func(t *testing.T) {
-			path := filepath.Join("testdata", name)
-			for _, implementation := range []struct {
-				name    string
-				handler http.Handler
-			}{
-				{name: "tadoku-api", handler: api.handler},
-				{name: "legacy", handler: legacyAuthentication},
-			} {
-				t.Run(implementation.name, func(t *testing.T) {
-					if test.skipParity && implementation.name == "legacy" {
-						t.Skip("intentional authentication difference")
-					}
-					checkCaseGolden(t, implementation.handler, path, test.want)
-				})
+			legacy := implementation{name: "legacy", handler: legacyAuthentication}
+			if test.skipParity {
+				legacy.skip = "intentional authentication difference"
 			}
+			runCase(t, api, name, test.want,
+				implementation{name: "tadoku-api", handler: api.handler},
+				legacy,
+			)
 		})
 	}
 }
 
 // End the middleware chain here so authentication goldens do not exercise a
 // business endpoint. Both success handlers observe the real downstream context.
-func authenticationSuccess(w http.ResponseWriter, r *http.Request) {
+func observeIdentity(w http.ResponseWriter, r *http.Request) {
 	if user := identity.FromContext(r.Context()); user != nil {
 		writeIdentityHeaders(w.Header(), user.Subject, user.DisplayName, user.Email, user.CreatedAt)
 	}
@@ -198,7 +190,7 @@ func TestAuthenticationDoesNotChangeProbesOrProxyRoutes(t *testing.T) {
 	} {
 		t.Run(test.method+" "+test.path, func(t *testing.T) {
 			for _, authorization := range []string{"", "Bearer invalid-token"} {
-				reset(t)
+				api.reset(t, "")
 				request := httptest.NewRequest(test.method, test.path, nil)
 				if authorization != "" {
 					request.Header.Set("Authorization", authorization)

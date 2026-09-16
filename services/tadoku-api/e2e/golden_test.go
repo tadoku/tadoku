@@ -17,28 +17,46 @@ import (
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/timex"
 )
 
+var fixtureInstant = time.Date(2026, 9, 12, 12, 0, 0, 0, time.UTC)
+
 func APITestName(operation string, status int, description ...string) string {
 	return fmt.Sprintf("%s/%d_%s", operation, status, strings.Join(description, "_"))
 }
 
-func checkCaseGolden(t *testing.T, handler http.Handler, directory string, wantStatus int) {
-	t.Helper()
-	resetCase(t, directory)
-	timex.TheWorld(time.Date(2026, 9, 12, 12, 0, 0, 0, time.UTC), func() {
-		checkHTTPGolden(t, handler, directory, wantStatus)
-	})
+type implementation struct {
+	name    string
+	handler http.Handler
+	skip    string
 }
 
-// checkHTTPGolden sends the checked-in HTTP request through the production
-// handler and compares its complete response with the reviewed golden file.
+func atFixtureInstant(fn func()) {
+	previous := jwt.TimeFunc
+	jwt.TimeFunc = func() time.Time { return fixtureInstant }
+	defer func() { jwt.TimeFunc = previous }()
+	timex.TheWorld(fixtureInstant, fn)
+}
+
+func runCase(t *testing.T, s *suite, name string, want int, implementations ...implementation) {
+	t.Helper()
+	dir := filepath.Join("testdata", name)
+	for _, impl := range implementations {
+		t.Run(impl.name, func(t *testing.T) {
+			if impl.skip != "" {
+				t.Skip(impl.skip)
+			}
+			s.reset(t, dir)
+			atFixtureInstant(func() { checkHTTPGolden(t, impl.handler, dir, want) })
+			if s.proxied.Load() != 0 {
+				t.Error("handler contacted an upstream")
+			}
+		})
+	}
+}
+
+// checkHTTPGolden sends the checked-in HTTP request through the handler and
+// compares its complete response with the reviewed golden file.
 func checkHTTPGolden(t *testing.T, handler http.Handler, directory string, wantStatus int) {
 	t.Helper()
-
-	// Verify fixture signatures and time claims at their fixed valid instant.
-	// Business-clock tests may advance timex independently of token expiry.
-	previous := jwt.TimeFunc
-	jwt.TimeFunc = func() time.Time { return time.Date(2026, 9, 12, 12, 0, 0, 0, time.UTC) }
-	defer func() { jwt.TimeFunc = previous }()
 
 	input, err := os.ReadFile(filepath.Join(directory, "request.http"))
 	if err != nil {

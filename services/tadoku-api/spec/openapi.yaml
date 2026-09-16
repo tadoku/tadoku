@@ -816,7 +816,7 @@ paths:
           description: Invalid announcement
       x-tadoku-source: Content
       x-tadoku-exposure: public
-      x-tadoku-owner: legacy
+      x-tadoku-owner: native
       x-legacy-path: /announcements/{namespace}
       x-legacy-operation-id: announcementCreate
     get:

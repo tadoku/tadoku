@@ -25,6 +25,46 @@ func (q *Queries) CountAnnouncements(ctx context.Context, namespace string) (int
 	return count, err
 }
 
+const createAnnouncement = `-- name: CreateAnnouncement :exec
+insert into announcements (
+  id, namespace, title, content, style, href,
+  starts_at, ends_at, created_at, updated_at
+) values (
+  $1, $2, $3, $4,
+  $5, $6, $7, $8,
+  $9, $10
+)
+`
+
+type CreateAnnouncementParams struct {
+	ID        pgtype.UUID
+	Namespace string
+	Title     string
+	Content   string
+	Style     string
+	Href      pgtype.Text
+	StartsAt  pgtype.Timestamp
+	EndsAt    pgtype.Timestamp
+	CreatedAt pgtype.Timestamp
+	UpdatedAt pgtype.Timestamp
+}
+
+func (q *Queries) CreateAnnouncement(ctx context.Context, arg CreateAnnouncementParams) error {
+	_, err := q.db.Exec(ctx, createAnnouncement,
+		arg.ID,
+		arg.Namespace,
+		arg.Title,
+		arg.Content,
+		arg.Style,
+		arg.Href,
+		arg.StartsAt,
+		arg.EndsAt,
+		arg.CreatedAt,
+		arg.UpdatedAt,
+	)
+	return err
+}
+
 const deleteAnnouncement = `-- name: DeleteAnnouncement :exec
 update announcements
 set deleted_at = $1::timestamp

@@ -7,7 +7,9 @@ insert into announcements (
   style,
   href,
   starts_at,
-  ends_at
+  ends_at,
+  created_at,
+  updated_at
 ) values (
   sqlc.arg('id'),
   sqlc.arg('namespace'),
@@ -16,7 +18,9 @@ insert into announcements (
   sqlc.arg('style'),
   sqlc.arg('href'),
   sqlc.arg('starts_at'),
-  sqlc.arg('ends_at')
+  sqlc.arg('ends_at'),
+  sqlc.arg('created_at'),
+  sqlc.arg('updated_at')
 ) returning id;
 
 -- name: FindAnnouncementByID :one

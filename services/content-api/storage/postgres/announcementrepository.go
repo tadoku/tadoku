@@ -34,6 +34,8 @@ func (r *AnnouncementRepository) CreateAnnouncement(ctx context.Context, a *doma
 		Href:      NewNullString(a.Href),
 		StartsAt:  a.StartsAt,
 		EndsAt:    a.EndsAt,
+		CreatedAt: a.CreatedAt,
+		UpdatedAt: a.UpdatedAt,
 	})
 	if err != nil {
 		return fmt.Errorf("could not create announcement: %w", err)

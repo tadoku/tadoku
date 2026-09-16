@@ -2,7 +2,10 @@ load("@rules_go//go:def.bzl", "go_library", "go_test")
 
 go_test(
     name = "content_test",
-    srcs = ["announcements_repository_test.go"],
+    srcs = [
+        "announcement_create_test.go",
+        "announcements_repository_test.go",
+    ],
     args = ["-test.parallel=4"],
     data = glob(["testdata/*.sql"]),
     env_inherit = ["TADOKU_TEST_POSTGRES_URL"],
@@ -15,6 +18,7 @@ go_test(
         ":content",
         "//services/tadoku-api/infra/postgres",
         "//services/tadoku-api/internal/testpostgres",
+        "//services/tadoku-api/internal/timex",
         "@com_github_google_uuid//:uuid",
     ],
 )
@@ -22,6 +26,7 @@ go_test(
 go_library(
     name = "content",
     srcs = [
+        "announcement_create.go",
         "announcement_delete.go",
         "announcements_repository.go",
         "content.go",

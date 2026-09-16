@@ -74,7 +74,7 @@ func TestUnclaimedMethodsRemainProxied(t *testing.T) {
 		{
 			name:    "admin list",
 			path:    "/content/announcements/main",
-			methods: []string{http.MethodHead, http.MethodOptions, http.MethodPost, http.MethodPut, http.MethodDelete, http.MethodPatch},
+			methods: []string{http.MethodHead, http.MethodOptions, http.MethodPut, http.MethodDelete, http.MethodPatch},
 		},
 		{
 			name:    "by ID",

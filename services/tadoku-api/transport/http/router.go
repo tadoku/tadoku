@@ -90,8 +90,8 @@ func NewHandler(
 		},
 		nil,
 		openapi.StrictHTTPServerOptions{
-			RequestErrorHandlerFunc: func(w stdhttp.ResponseWriter, _ *stdhttp.Request, err error) {
-				writeJSON(w, stdhttp.StatusBadRequest, map[string]string{"message": err.Error()})
+			RequestErrorHandlerFunc: func(w stdhttp.ResponseWriter, _ *stdhttp.Request, _ error) {
+				w.WriteHeader(stdhttp.StatusBadRequest)
 			},
 			ResponseErrorHandlerFunc: func(w stdhttp.ResponseWriter, _ *stdhttp.Request, err error) {
 				status := stdhttp.StatusInternalServerError
@@ -113,6 +113,7 @@ func NewHandler(
 		BaseRouter: router,
 		Middlewares: []openapi.MiddlewareFunc{
 			withJSONCharsetCompatibility,
+			withAnnouncementBodyCompatibility,
 		},
 		ErrorHandlerFunc: func(w stdhttp.ResponseWriter, _ *stdhttp.Request, err error) {
 			writeJSON(w, stdhttp.StatusBadRequest, map[string]string{"message": err.Error()})

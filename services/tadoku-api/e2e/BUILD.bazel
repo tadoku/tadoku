@@ -3,6 +3,7 @@ load("@rules_go//go:def.bzl", "go_test")
 go_test(
     name = "e2e_test",
     srcs = [
+        "announcement_create_test.go",
         "announcement_delete_test.go",
         "announcements_test.go",
         "api_test.go",
@@ -46,6 +47,7 @@ go_test(
         "//services/tadoku-api/internal/timex",
         "//services/tadoku-api/transport/http",
         "@com_github_golang_jwt_jwt_v4//:jwt",
+        "@com_github_google_uuid//:uuid",
         "@com_github_jackc_pgx_v4//:pgx",
         "@com_github_jackc_pgx_v4//stdlib",
         "@com_github_jackc_pgx_v5//pgxpool",

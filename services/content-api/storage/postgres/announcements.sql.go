@@ -38,7 +38,9 @@ insert into announcements (
   style,
   href,
   starts_at,
-  ends_at
+  ends_at,
+  created_at,
+  updated_at
 ) values (
   $1,
   $2,
@@ -47,7 +49,9 @@ insert into announcements (
   $5,
   $6,
   $7,
-  $8
+  $8,
+  $9,
+  $10
 ) returning id
 `
 
@@ -60,6 +64,8 @@ type CreateAnnouncementParams struct {
 	Href      sql.NullString
 	StartsAt  time.Time
 	EndsAt    time.Time
+	CreatedAt time.Time
+	UpdatedAt time.Time
 }
 
 func (q *Queries) CreateAnnouncement(ctx context.Context, arg CreateAnnouncementParams) (uuid.UUID, error) {
@@ -72,6 +78,8 @@ func (q *Queries) CreateAnnouncement(ctx context.Context, arg CreateAnnouncement
 		arg.Href,
 		arg.StartsAt,
 		arg.EndsAt,
+		arg.CreatedAt,
+		arg.UpdatedAt,
 	)
 	var id uuid.UUID
 	err := row.Scan(&id)

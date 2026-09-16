@@ -3,6 +3,7 @@ package http
 import (
 	"context"
 	"errors"
+	"net/http"
 
 	"github.com/google/uuid"
 	"github.com/oapi-codegen/nullable"
@@ -10,9 +11,14 @@ import (
 	"github.com/tadoku/tadoku/services/tadoku-api/generated/openapi"
 )
 
-// The legacy spec omits malformed-ID responses; preserve its empty 400 through
-// the transport error handler without changing the shared contract.
-var errInvalidAnnouncementID = errors.New("invalid announcement ID")
+// The legacy spec omits this response, so keep its empty 400 local to the
+// operation rather than classifying endpoint-specific errors in the router.
+type announcementFindByIDBadRequestResponse struct{}
+
+func (announcementFindByIDBadRequestResponse) VisitContentAnnouncementFindByIDResponse(w http.ResponseWriter) error {
+	w.WriteHeader(http.StatusBadRequest)
+	return nil
+}
 
 func (s *server) ContentAnnouncementFindByID(
 	ctx context.Context,
@@ -20,7 +26,7 @@ func (s *server) ContentAnnouncementFindByID(
 ) (openapi.ContentAnnouncementFindByIDResponseObject, error) {
 	id, err := uuid.Parse(request.Id)
 	if err != nil {
-		return nil, errInvalidAnnouncementID
+		return announcementFindByIDBadRequestResponse{}, nil
 	}
 
 	item, err := s.application.FindAnnouncementByID(ctx, request.Namespace, id)

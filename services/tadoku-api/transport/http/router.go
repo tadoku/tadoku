@@ -94,8 +94,6 @@ func NewHandler(
 			ResponseErrorHandlerFunc: func(w stdhttp.ResponseWriter, _ *stdhttp.Request, err error) {
 				status := stdhttp.StatusInternalServerError
 				switch {
-				case errors.Is(err, errInvalidAnnouncementID):
-					status = stdhttp.StatusBadRequest
 				case errors.Is(err, permissions.ErrUnauthorized):
 					status = stdhttp.StatusUnauthorized
 				case errors.Is(err, permissions.ErrForbidden):

@@ -57,7 +57,7 @@ kratos:
 
   # kratos config https://www.ory.sh/docs/kratos/reference/configuration
   config:
-    dsn: postgres://kratos@tadoku-dev-db:5432/kratos?sslmode=require
+    dsn: postgres://kratos@tadoku-dev-db:5432/kratos?sslmode=require&application_name=kratos
     secrets:
       default:
         - dev-kratos-default-secret-1

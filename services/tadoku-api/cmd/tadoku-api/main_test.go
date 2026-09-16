@@ -103,6 +103,9 @@ func TestApplicationStartsAndShutsDown(t *testing.T) {
 	if app.pool.Config().MaxConns != 4 {
 		t.Errorf("pool max=%d", app.pool.Config().MaxConns)
 	}
+	if got := app.pool.Config().ConnConfig.RuntimeParams["application_name"]; got != cfg.ServiceName {
+		t.Errorf("application_name=%q want=%q", got, cfg.ServiceName)
+	}
 
 	// Existing process metrics still use their own listener.
 	_, metricsPort, err := net.SplitHostPort(app.metricsListener.Addr().String())

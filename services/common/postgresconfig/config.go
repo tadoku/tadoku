@@ -23,6 +23,7 @@ var allowedSSLModes = map[string]bool{
 type Config struct {
 	Host, Database, User, Password, SSLMode string
 	Port                                    uint16
+	ApplicationName                         string
 }
 
 // Load reads PREFIX_HOST, PORT, DATABASE, USER, PASSWORD, and SSLMODE. The
@@ -61,10 +62,20 @@ func Load(prefix, legacyName string) (Config, error) {
 	return Config{Host: values["HOST"], Port: uint16(port), Database: values["DATABASE"], User: values["USER"], Password: values["PASSWORD"], SSLMode: values["SSLMODE"]}, nil
 }
 
+// WithApplicationName labels connections in pg_stat_activity and PlanetScale
+// Insights. Set this from the process identity, not from the environment.
+func (c Config) WithApplicationName(name string) Config {
+	c.ApplicationName = strings.TrimSpace(name)
+	return c
+}
+
 func (c Config) URL() string {
 	u := &url.URL{Scheme: "postgres", User: url.UserPassword(c.User, c.Password), Host: net.JoinHostPort(c.Host, strconv.Itoa(int(c.Port))), Path: "/" + c.Database}
 	query := u.Query()
 	query.Set("sslmode", c.SSLMode)
+	if c.ApplicationName != "" {
+		query.Set("application_name", c.ApplicationName)
+	}
 	u.RawQuery = query.Encode()
 	return u.String()
 }

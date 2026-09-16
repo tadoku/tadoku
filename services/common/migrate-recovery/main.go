@@ -9,9 +9,9 @@ import (
 	"strconv"
 
 	"github.com/golang-migrate/migrate/v4"
-	"github.com/tadoku/tadoku/services/common/postgresconfig"
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
+	"github.com/tadoku/tadoku/services/common/postgresconfig"
 )
 
 type migration interface {
@@ -104,7 +104,7 @@ func run(args []string, stdout, stderr io.Writer, factory migrationFactory) int 
 		fmt.Fprintf(stderr, "migrate-recovery: postgres configuration: %v\n", err)
 		return 2
 	}
-	databaseURL := postgresConfig.URL()
+	databaseURL := postgresConfig.WithApplicationName("migrate-recovery").URL()
 	redact := func(value any) string {
 		return postgresConfig.Redact(value)
 	}

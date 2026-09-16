@@ -251,3 +251,47 @@ func (q *Queries) ListAnnouncements(ctx context.Context, arg ListAnnouncementsPa
 	}
 	return items, nil
 }
+
+const updateAnnouncement = `-- name: UpdateAnnouncement :one
+update announcements
+set title = $1,
+    content = $2,
+    style = $3,
+    href = $4,
+    starts_at = $5,
+    ends_at = $6,
+    updated_at = $7
+where id = $8
+  and namespace = $9
+  and deleted_at is null
+returning id
+`
+
+type UpdateAnnouncementParams struct {
+	Title     string
+	Content   string
+	Style     string
+	Href      pgtype.Text
+	StartsAt  pgtype.Timestamp
+	EndsAt    pgtype.Timestamp
+	UpdatedAt pgtype.Timestamp
+	ID        pgtype.UUID
+	Namespace string
+}
+
+func (q *Queries) UpdateAnnouncement(ctx context.Context, arg UpdateAnnouncementParams) (pgtype.UUID, error) {
+	row := q.db.QueryRow(ctx, updateAnnouncement,
+		arg.Title,
+		arg.Content,
+		arg.Style,
+		arg.Href,
+		arg.StartsAt,
+		arg.EndsAt,
+		arg.UpdatedAt,
+		arg.ID,
+		arg.Namespace,
+	)
+	var id pgtype.UUID
+	err := row.Scan(&id)
+	return id, err
+}

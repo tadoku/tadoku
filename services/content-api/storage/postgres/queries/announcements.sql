@@ -51,7 +51,7 @@ set
   href = sqlc.arg('href'),
   starts_at = sqlc.arg('starts_at'),
   ends_at = sqlc.arg('ends_at'),
-  updated_at = now()
+  updated_at = sqlc.arg('updated_at')
 where
   id = sqlc.arg('id') and
   deleted_at is null

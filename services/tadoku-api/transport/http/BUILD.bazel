@@ -5,6 +5,7 @@ go_library(
     srcs = [
         "announcement_create.go",
         "announcement_delete.go",
+        "announcement_update.go",
         "announcements.go",
         "authentication.go",
         "banned_users.go",

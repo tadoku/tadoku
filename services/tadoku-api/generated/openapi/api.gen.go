@@ -1078,6 +1078,9 @@ type ContentAnnouncementListParams struct {
 // ContentAnnouncementCreateJSONRequestBody defines body for ContentAnnouncementCreate for application/json ContentType.
 type ContentAnnouncementCreateJSONRequestBody = ContentAnnouncement
 
+// ContentAnnouncementUpdateJSONRequestBody defines body for ContentAnnouncementUpdate for application/json ContentType.
+type ContentAnnouncementUpdateJSONRequestBody = ContentAnnouncement
+
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
 	// ContentAnnouncementList Lists all announcements
@@ -1095,6 +1098,9 @@ type ServerInterface interface {
 	// ContentAnnouncementFindByID Gets an announcement by ID
 	// (GET /content/announcements/{namespace}/{id})
 	ContentAnnouncementFindByID(w http.ResponseWriter, r *http.Request, namespace string, id string)
+	// ContentAnnouncementUpdate Updates an existing announcement
+	// (PUT /content/announcements/{namespace}/{id})
+	ContentAnnouncementUpdate(w http.ResponseWriter, r *http.Request, namespace string, id string)
 }
 
 // ServerInterfaceWrapper converts contexts to parameters.
@@ -1283,6 +1289,41 @@ func (siw *ServerInterfaceWrapper) ContentAnnouncementFindByID(w http.ResponseWr
 	handler.ServeHTTP(w, r)
 }
 
+// ContentAnnouncementUpdate operation middleware
+func (siw *ServerInterfaceWrapper) ContentAnnouncementUpdate(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "namespace" -------------
+	var namespace string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "namespace", r.PathValue("namespace"), &namespace, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "namespace", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", r.PathValue("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ContentAnnouncementUpdate(w, r, namespace, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 type UnescapedCookieParamError struct {
 	ParamName string
 	Err       error
@@ -1408,6 +1449,7 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/content/announcements/{namespace}", wrapper.ContentAnnouncementCreate)
 	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/content/announcements/{namespace}/{id}", wrapper.ContentAnnouncementDelete)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/content/announcements/{namespace}/{id}", wrapper.ContentAnnouncementFindByID)
+	m.HandleFunc(http.MethodPut+" "+options.BaseURL+"/content/announcements/{namespace}/{id}", wrapper.ContentAnnouncementUpdate)
 
 	return m
 }
@@ -1562,6 +1604,46 @@ func (response ContentAnnouncementFindByID404Response) VisitContentAnnouncementF
 	return nil
 }
 
+type ContentAnnouncementUpdateRequestObject struct {
+	Namespace string `json:"namespace"`
+	Id        string `json:"id"`
+	Body      *ContentAnnouncementUpdateJSONRequestBody
+}
+
+type ContentAnnouncementUpdateResponseObject interface {
+	VisitContentAnnouncementUpdateResponse(w http.ResponseWriter) error
+}
+
+type ContentAnnouncementUpdate200JSONResponse ContentAnnouncement
+
+func (response ContentAnnouncementUpdate200JSONResponse) VisitContentAnnouncementUpdateResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ContentAnnouncementUpdate400Response struct {
+}
+
+func (response ContentAnnouncementUpdate400Response) VisitContentAnnouncementUpdateResponse(w http.ResponseWriter) error {
+	w.WriteHeader(400)
+	return nil
+}
+
+type ContentAnnouncementUpdate404Response struct {
+}
+
+func (response ContentAnnouncementUpdate404Response) VisitContentAnnouncementUpdateResponse(w http.ResponseWriter) error {
+	w.WriteHeader(404)
+	return nil
+}
+
 // StrictServerInterface represents all server handlers.
 type StrictServerInterface interface {
 	// ContentAnnouncementList Lists all announcements
@@ -1579,6 +1661,9 @@ type StrictServerInterface interface {
 	// ContentAnnouncementFindByID Gets an announcement by ID
 	// (GET /content/announcements/{namespace}/{id})
 	ContentAnnouncementFindByID(ctx context.Context, request ContentAnnouncementFindByIDRequestObject) (ContentAnnouncementFindByIDResponseObject, error)
+	// ContentAnnouncementUpdate Updates an existing announcement
+	// (PUT /content/announcements/{namespace}/{id})
+	ContentAnnouncementUpdate(ctx context.Context, request ContentAnnouncementUpdateRequestObject) (ContentAnnouncementUpdateResponseObject, error)
 }
 
 type StrictHandlerFunc func(ctx context.Context, w http.ResponseWriter, r *http.Request, request any) (any, error)
@@ -1756,6 +1841,43 @@ func (sh *strictHandler) ContentAnnouncementFindByID(w http.ResponseWriter, r *h
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(ContentAnnouncementFindByIDResponseObject); ok {
 		if err := validResponse.VisitContentAnnouncementFindByIDResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ContentAnnouncementUpdate operation middleware
+func (sh *strictHandler) ContentAnnouncementUpdate(w http.ResponseWriter, r *http.Request, namespace string, id string) {
+	var request ContentAnnouncementUpdateRequestObject
+
+	request.Namespace = namespace
+	request.Id = id
+
+	var body ContentAnnouncementUpdateJSONRequestBody
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		if !errors.Is(err, io.EOF) {
+			sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+			return
+		}
+	} else {
+		request.Body = &body
+	}
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ContentAnnouncementUpdate(ctx, request.(ContentAnnouncementUpdateRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ContentAnnouncementUpdate")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ContentAnnouncementUpdateResponseObject); ok {
+		if err := validResponse.VisitContentAnnouncementUpdateResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

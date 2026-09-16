@@ -10,5 +10,6 @@ output-options:
     - ContentAnnouncementFindByID
     - ContentAnnouncementList
     - ContentAnnouncementListActive
+    - ContentAnnouncementUpdate
   nullable-type: true
   skip-prune: true

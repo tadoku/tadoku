@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -19,7 +20,8 @@ func Open(ctx context.Context, dsn string, maxConnections int32) (*pgxpool.Pool,
 		return nil, err
 	}
 	cfg.MaxConns = maxConnections
-	cfg.MinConns = 0
+	cfg.MinConns = 1
+	cfg.ConnConfig.DefaultQueryExecMode = pgx.QueryExecModeCacheStatement
 
 	pool, err := pgxpool.NewWithConfig(ctx, cfg)
 	if err != nil {

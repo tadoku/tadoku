@@ -107,6 +107,9 @@ func TestApplicationStartsAndShutsDown(t *testing.T) {
 	if app.pool.Config().MaxConns != 4 {
 		t.Errorf("pool max=%d", app.pool.Config().MaxConns)
 	}
+	if app.pool.Config().MinConns != 1 {
+		t.Errorf("pool min=%d", app.pool.Config().MinConns)
+	}
 	if got := app.pool.Config().ConnConfig.RuntimeParams["application_name"]; got != cfg.ServiceName {
 		t.Errorf("application_name=%q want=%q", got, cfg.ServiceName)
 	}

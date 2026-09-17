@@ -42,6 +42,7 @@ go_test(
         "panic_recovery_test.go",
         "proxy_contract_test.go",
         "proxy_test.go",
+        "router_test.go",
     ],
     embed = [":http"],
     deps = [

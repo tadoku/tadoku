@@ -130,11 +130,19 @@ func newTestAPI(ctx context.Context, ketoFixture *testketo.Fixture) (_ *suite, e
 }
 
 func newTestRouter(ctx context.Context, pool *pgxpool.Pool, ketoReadURL string) (*transport.Router, error) {
+	return newTestRouterWithTimeout(ctx, pool, ketoReadURL, time.Second)
+}
+
+func newTestRouterWithTimeout(ctx context.Context, pool *pgxpool.Pool, ketoReadURL string, timeout time.Duration) (*transport.Router, error) {
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
-	return newTestRouterWithLogger(ctx, pool, ketoReadURL, logger)
+	return newTestRouterWithLoggerAndTimeout(ctx, pool, ketoReadURL, logger, timeout)
 }
 
 func newTestRouterWithLogger(ctx context.Context, pool *pgxpool.Pool, ketoReadURL string, logger *slog.Logger) (*transport.Router, error) {
+	return newTestRouterWithLoggerAndTimeout(ctx, pool, ketoReadURL, logger, time.Second)
+}
+
+func newTestRouterWithLoggerAndTimeout(ctx context.Context, pool *pgxpool.Pool, ketoReadURL string, logger *slog.Logger, timeout time.Duration) (*transport.Router, error) {
 	reader := ketoclient.NewReadClient(ketoReadURL)
 	permissionChecker := permissions.NewKetoChecker(reader)
 	repository := content.NewAnnouncementsRepository(pool)
@@ -147,7 +155,7 @@ func newTestRouterWithLogger(ctx context.Context, pool *pgxpool.Pool, ketoReadUR
 	rejectBanned := transport.RejectBannedUsers(func(ctx context.Context, subjectID string) (bool, error) {
 		return reader.CheckPermission(ctx, "app", "tadoku", "banned", ketoclient.Subject{ID: subjectID})
 	}, logger)
-	handler, err := transport.NewHandler(application, pool.Ping, time.Second, prometheus.NewRegistry(), logger, authenticate, rejectBanned)
+	handler, err := transport.NewHandler(application, pool.Ping, timeout, prometheus.NewRegistry(), logger, authenticate, rejectBanned)
 	if err != nil {
 		return nil, fmt.Errorf("create API handler: %w", err)
 	}

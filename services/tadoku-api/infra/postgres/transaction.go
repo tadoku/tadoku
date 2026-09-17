@@ -11,12 +11,18 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
 )
 
 var (
-	ErrNestedTransaction = errors.New("postgres: nested transaction")
-	ErrWrongDatabase     = errors.New("postgres: transaction belongs to another database handle")
+	ErrNestedTransaction  = errors.New("postgres: nested transaction")
+	ErrWrongDatabase      = errors.New("postgres: transaction belongs to another database handle")
+	errAcquisitionTimeout = errors.New("postgres: connection acquisition timed out")
 )
+
+const acquisitionTimeout = 5 * time.Second
+
+func noRelease() {}
 
 // DBTX is the native pgx/sqlc execution surface shared by *pgxpool.Pool and pgx.Tx.
 type DBTX interface {
@@ -33,22 +39,40 @@ type scope struct {
 	done atomic.Bool
 }
 
-// Executor selects the active transaction for db, or db itself outside a scope.
+// Executor selects the active transaction for db, or acquires a connection outside a scope.
 // Repositories must resolve it with the operation's context and pass that same
-// context to SQL calls. Do not retain executors or rows past RunInTransaction.
+// context to SQL calls, then defer release. Do not retain executors or rows past
+// release or RunInTransaction.
 // An ended scope returns pgx.ErrTxClosed; it never falls back to the pool.
-func Executor(ctx context.Context, db *pgxpool.Pool) (DBTX, error) {
+func Executor(ctx context.Context, db *pgxpool.Pool) (DBTX, func(), error) {
 	s, ok := ctx.Value(scopeKey{}).(*scope)
 	if !ok {
-		return db, nil
+		return acquire(ctx, db)
 	}
 	if s.db != db {
-		return nil, ErrWrongDatabase
+		return nil, noRelease, ErrWrongDatabase
 	}
 	if s.done.Load() {
-		return nil, pgx.ErrTxClosed
+		return nil, noRelease, pgx.ErrTxClosed
 	}
-	return s.tx, nil
+	return s.tx, noRelease, nil
+}
+
+func acquire(ctx context.Context, db *pgxpool.Pool) (*pgxpool.Conn, func(), error) {
+	acquireCtx, cancel := context.WithTimeout(ctx, acquisitionTimeout)
+	connection, err := db.Acquire(acquireCtx)
+	acquireErr := acquireCtx.Err()
+	cancel()
+	if err != nil {
+		if parentErr := ctx.Err(); parentErr != nil {
+			return nil, noRelease, parentErr
+		}
+		if errors.Is(acquireErr, context.DeadlineExceeded) {
+			return nil, noRelease, errx.NewUnavailableError("acquire postgres connection", errAcquisitionTimeout)
+		}
+		return nil, noRelease, fmt.Errorf("postgres: acquire: %w", err)
+	}
+	return connection, connection.Release, nil
 }
 
 // RunInTransaction calls work once with a child context and commits only when it succeeds.
@@ -71,7 +95,12 @@ func RunInTransaction(ctx context.Context, db *pgxpool.Pool, work func(context.C
 	if err := ctx.Err(); err != nil {
 		return err
 	}
-	tx, err := db.Begin(ctx)
+	connection, release, err := acquire(ctx, db)
+	if err != nil {
+		return err
+	}
+	defer release()
+	tx, err := connection.Begin(ctx)
 	if err != nil {
 		return fmt.Errorf("postgres: begin: %w", err)
 	}

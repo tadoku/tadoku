@@ -40,10 +40,11 @@ func TestAnnouncementsRepositoryUsesSuppliedPolicyAndTransaction(t *testing.T) {
 	}
 	wantRollback := errors.New("stop after read")
 	err = postgres.RunInTransaction(context.Background(), db.Pool, func(ctx context.Context) error {
-		executor, err := postgres.Executor(ctx, db.Pool)
+		executor, release, err := postgres.Executor(ctx, db.Pool)
 		if err != nil {
 			return err
 		}
+		defer release()
 		if _, err := executor.Exec(ctx, "update announcements set title = 'uncommitted' where id = $1", id); err != nil {
 			return err
 		}

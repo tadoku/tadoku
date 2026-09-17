@@ -112,19 +112,21 @@ type bookRepository struct {
 }
 
 func (r bookRepository) Add(ctx context.Context, id int, title string) error {
-	q, err := postgres.Executor(ctx, r.db)
+	q, release, err := postgres.Executor(ctx, r.db)
 	if err != nil {
 		return err
 	}
+	defer release()
 	_, err = q.Exec(ctx, "insert into "+r.schema+".book(id, title) values ($1, $2)", id, title)
 	return err
 }
 
 func (r bookRepository) Count(ctx context.Context) (int, error) {
-	q, err := postgres.Executor(ctx, r.db)
+	q, release, err := postgres.Executor(ctx, r.db)
 	if err != nil {
 		return 0, err
 	}
+	defer release()
 	var count int
 	err = q.QueryRow(ctx, "select count(*) from "+r.schema+".book").Scan(&count)
 	return count, err
@@ -136,29 +138,32 @@ type noteRepository struct {
 }
 
 func (r noteRepository) Add(ctx context.Context, id, bookID int) error {
-	q, err := postgres.Executor(ctx, r.db)
+	q, release, err := postgres.Executor(ctx, r.db)
 	if err != nil {
 		return err
 	}
+	defer release()
 	_, err = q.Exec(ctx, "insert into "+r.schema+".note(id, book_id) values ($1, $2)", id, bookID)
 	return err
 }
 
 func (r noteRepository) BookTitle(ctx context.Context, id int) (string, error) {
-	q, err := postgres.Executor(ctx, r.db)
+	q, release, err := postgres.Executor(ctx, r.db)
 	if err != nil {
 		return "", err
 	}
+	defer release()
 	var title string
 	err = q.QueryRow(ctx, "select b.title from "+r.schema+".note n join "+r.schema+".book b on b.id = n.book_id where n.id = $1", id).Scan(&title)
 	return title, err
 }
 
 func (r noteRepository) Count(ctx context.Context) (int, error) {
-	q, err := postgres.Executor(ctx, r.db)
+	q, release, err := postgres.Executor(ctx, r.db)
 	if err != nil {
 		return 0, err
 	}
+	defer release()
 	var count int
 	err = q.QueryRow(ctx, "select count(*) from "+r.schema+".note").Scan(&count)
 	return count, err
@@ -284,7 +289,7 @@ func TestRunInTransactionPanicRollsBackAndRepanicsOriginalValue(t *testing.T) {
 	if count, err := f.notes.Count(ctx); err != nil || count != 0 {
 		t.Errorf("panic rollback note count=%d, error=%v, want 0", count, err)
 	}
-	if _, err := postgres.Executor(retained, f.db); !errors.Is(err, pgx.ErrTxClosed) {
+	if _, _, err := postgres.Executor(retained, f.db); !errors.Is(err, pgx.ErrTxClosed) {
 		t.Errorf("ended panicked context error=%v, want pgx.ErrTxClosed", err)
 	}
 	if err := f.books.Add(ctx, 1, "pool reused"); err != nil {
@@ -327,7 +332,7 @@ func TestRunInTransactionDeferredConstraintFailsAtCommitWithoutReplay(t *testing
 	if count, err := f.notes.Count(ctx); err != nil || count != 0 {
 		t.Errorf("failed-commit note count=%d, error=%v, want 0", count, err)
 	}
-	if _, err := postgres.Executor(retained, f.db); !errors.Is(err, pgx.ErrTxClosed) {
+	if _, _, err := postgres.Executor(retained, f.db); !errors.Is(err, pgx.ErrTxClosed) {
 		t.Errorf("ended commit-failure context error=%v, want pgx.ErrTxClosed", err)
 	}
 	if err := postgres.RunInTransaction(ctx, f.db, func(child context.Context) error {
@@ -383,6 +388,83 @@ func TestRunInTransactionFailedBeginNeverCallsWork(t *testing.T) {
 			t.Errorf("blocked begin: error=%v, called=%v", err, called)
 		}
 	})
+}
+
+func TestRunInTransactionPoolAcquisitionTimeoutIsUnavailable(t *testing.T) {
+	t.Parallel()
+	db := openPool(t)
+	ctx, cancel := context.WithTimeout(context.Background(), 7*time.Second)
+	defer cancel()
+
+	connections := make([]*pgxpool.Conn, 0, db.Config().MaxConns)
+	for range db.Config().MaxConns {
+		connection, err := db.Acquire(ctx)
+		if err != nil {
+			t.Fatalf("reserve pool connection: %v", err)
+		}
+		connections = append(connections, connection)
+	}
+	defer func() {
+		for _, connection := range connections {
+			connection.Release()
+		}
+	}()
+
+	started := time.Now()
+	called := false
+	err := postgres.RunInTransaction(ctx, db, func(context.Context) error {
+		called = true
+		return nil
+	})
+	elapsed := time.Since(started)
+
+	if called {
+		t.Error("transaction callback ran without a connection")
+	}
+	if errx.KindOf(err) != errx.Unavailable {
+		t.Errorf("acquisition error=%v, want unavailable", err)
+	}
+	if errors.Is(err, context.DeadlineExceeded) {
+		t.Errorf("acquisition error=%v masquerades as parent deadline", err)
+	}
+	if elapsed < 4*time.Second || elapsed > 6*time.Second {
+		t.Errorf("acquisition elapsed=%v, want about 5s", elapsed)
+	}
+	if ctx.Err() != nil {
+		t.Errorf("parent context expired: %v", ctx.Err())
+	}
+	for _, connection := range connections {
+		connection.Release()
+	}
+	connections = nil
+	executor, release, err := postgres.Executor(ctx, db)
+	if err != nil {
+		t.Fatalf("reuse pool after acquisition timeout: %v", err)
+	}
+	defer release()
+	var value int
+	if err := executor.QueryRow(ctx, "select 17").Scan(&value); err != nil || value != 17 {
+		t.Errorf("query after acquisition timeout: value=%d error=%v", value, err)
+	}
+}
+
+func TestExecutorSQLCanOutliveAcquisitionBudget(t *testing.T) {
+	t.Parallel()
+	db := openPool(t)
+	ctx, cancel := context.WithTimeout(context.Background(), 8*time.Second)
+	defer cancel()
+
+	executor, release, err := postgres.Executor(ctx, db)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer release()
+	time.Sleep(5100 * time.Millisecond)
+
+	var value int
+	if err := executor.QueryRow(ctx, "select 17").Scan(&value); err != nil || value != 17 {
+		t.Errorf("query after acquisition budget: value=%d error=%v", value, err)
+	}
 }
 
 func TestRunInTransactionCancellationBoundsBlockedSQLAndLeavesPoolUsable(t *testing.T) {
@@ -449,10 +531,11 @@ func TestRunInTransactionCancellationAfterWritesCleansUpWithoutReplacingOutcome(
 				err = postgres.RunInTransaction(parent, f.db, func(child context.Context) error {
 					calls++
 					retained = child
-					q, err := postgres.Executor(child, f.db)
+					q, release, err := postgres.Executor(child, f.db)
 					if err != nil {
 						return err
 					}
+					defer release()
 					if err := q.QueryRow(child, "select pg_backend_pid()").Scan(&transactionPID); err != nil {
 						return err
 					}
@@ -510,7 +593,7 @@ func TestRunInTransactionCancellationAfterWritesCleansUpWithoutReplacingOutcome(
 			if count, err := f.notes.Count(ctx); err != nil || count != 0 {
 				t.Errorf("canceled note writes escaped: count=%d, error=%v", count, err)
 			}
-			if _, err := postgres.Executor(retained, f.db); !errors.Is(err, pgx.ErrTxClosed) {
+			if _, _, err := postgres.Executor(retained, f.db); !errors.Is(err, pgx.ErrTxClosed) {
 				t.Errorf("ended canceled context error=%v, want pgx.ErrTxClosed", err)
 			}
 			if err := f.books.Add(ctx, 1, "pool reused"); err != nil {
@@ -565,12 +648,15 @@ func TestExecutorSupportsPoolAndTransactionSQLSurface(t *testing.T) {
 	ctx, f := newFixture(t)
 	for _, transactional := range []bool{false, true} {
 		work := func(ctx context.Context) error {
-			q, err := postgres.Executor(ctx, f.db)
+			q, release, err := postgres.Executor(ctx, f.db)
 			if err != nil {
 				return err
 			}
-			if !transactional && q != f.db {
-				return errors.New("ordinary executor is not the native pool")
+			defer release()
+			if !transactional {
+				if _, ok := q.(*pgxpool.Conn); !ok {
+					return errors.New("ordinary executor is not an acquired pool connection")
+				}
 			}
 			if transactional {
 				if _, ok := q.(pgx.Tx); !ok {
@@ -624,10 +710,11 @@ func TestExecutorForwardsCancellationForEveryOperation(t *testing.T) {
 	for _, transactional := range []bool{false, true} {
 		for _, operation := range []string{"exec", "query", "query row"} {
 			work := func(ctx context.Context) error {
-				q, err := postgres.Executor(ctx, db)
+				q, release, err := postgres.Executor(ctx, db)
 				if err != nil {
 					return err
 				}
+				defer release()
 				canceled, stop := context.WithCancel(ctx)
 				stop()
 				switch operation {

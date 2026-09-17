@@ -28,6 +28,8 @@ type server struct {
 	logger      *slog.Logger
 }
 
+const readinessTimeout = 2 * time.Second
+
 var _ openapi.StrictServerInterface = (*server)(nil)
 
 // Handle registers an application route behind the shared middleware.
@@ -102,7 +104,7 @@ func NewHandler(
 	router.rootMux.HandleFunc("GET /livez", func(w stdhttp.ResponseWriter, _ *stdhttp.Request) {
 		_, _ = w.Write([]byte("ok"))
 	})
-	router.rootMux.Handle("GET /readyz", withRequestTimeout(timeout, readinessHandler(ready)))
+	router.rootMux.Handle("GET /readyz", withRequestTimeout(readinessTimeout, readinessHandler(ready)))
 	strictServer := openapi.NewStrictHandlerWithOptions(
 		&server{
 			application: application,

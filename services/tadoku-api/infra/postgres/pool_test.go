@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/tadoku/tadoku/services/tadoku-api/infra/postgres"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/testpostgres"
@@ -77,6 +78,12 @@ func TestPoolWorksWithOnlyAnnouncementReadGrants(t *testing.T) {
 
 	if pool.Config().MaxConns != 2 {
 		t.Errorf("max connections=%d", pool.Config().MaxConns)
+	}
+	if pool.Config().MinConns != 1 {
+		t.Errorf("min connections=%d", pool.Config().MinConns)
+	}
+	if mode := pool.Config().ConnConfig.DefaultQueryExecMode; mode != pgx.QueryExecModeCacheStatement {
+		t.Errorf("query execution mode=%v, want cache statement", mode)
 	}
 
 	var count int

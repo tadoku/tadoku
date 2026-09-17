@@ -1,13 +1,19 @@
 package e2e_test
 
 import (
+	"bufio"
 	"bytes"
 	"context"
 	"log/slog"
 	"net/http"
 	"net/http/httptest"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
+	"time"
+
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 // Exercise each shared dependency failure once. Do not add endpoint-specific cases
@@ -136,4 +142,69 @@ func TestDependencyFailures(t *testing.T) {
 			}
 		}
 	})
+}
+
+func TestPoolSaturationBoundsReadinessAndApplicationRequests(t *testing.T) {
+	config, err := pgxpool.ParseConfig(api.db.DSN)
+	if err != nil {
+		t.Fatal(err)
+	}
+	config.MaxConns = 1
+	config.MinConns = 0
+	pool, err := pgxpool.NewWithConfig(t.Context(), config)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(pool.Close)
+
+	connection, err := pool.Acquire(t.Context())
+	if err != nil {
+		t.Fatal(err)
+	}
+	released := false
+	defer func() {
+		if !released {
+			connection.Release()
+		}
+	}()
+	handler, err := newTestRouterWithTimeout(t.Context(), pool, keto.ReadURL(), 7*time.Second)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	started := time.Now()
+	response := httptest.NewRecorder()
+	handler.ServeHTTP(response, httptest.NewRequest(http.MethodGet, "/readyz", nil))
+	if elapsed := time.Since(started); elapsed < time.Second || elapsed > 3*time.Second {
+		t.Errorf("readiness elapsed=%v, want about 2s", elapsed)
+	}
+	if response.Code != http.StatusServiceUnavailable {
+		t.Errorf("readiness status=%d, want %d", response.Code, http.StatusServiceUnavailable)
+	}
+
+	input, err := os.ReadFile(filepath.Join("testdata", APITestName("ListActiveAnnouncements", http.StatusOK, "guest"), "request.http"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	request, err := http.ReadRequest(bufio.NewReader(bytes.NewReader(input)))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer request.Body.Close()
+
+	started = time.Now()
+	response = httptest.NewRecorder()
+	atFixtureInstant(func() { handler.ServeHTTP(response, request) })
+	if elapsed := time.Since(started); elapsed < 4*time.Second || elapsed > 6*time.Second {
+		t.Errorf("application request elapsed=%v, want about 5s", elapsed)
+	}
+	if response.Code != http.StatusServiceUnavailable {
+		t.Errorf("application status=%d, want %d", response.Code, http.StatusServiceUnavailable)
+	}
+
+	connection.Release()
+	released = true
+	if err := pool.Ping(t.Context()); err != nil {
+		t.Errorf("reuse pool after saturation: %v", err)
+	}
 }

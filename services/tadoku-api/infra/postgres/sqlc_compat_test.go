@@ -30,10 +30,11 @@ func TestSQLCUsesNativeExecutorWithoutAdapter(t *testing.T) {
 		// A temporary table is scoped to the transaction's connection; no
 		// permanent application table or migration is created by this test.
 		err := postgres.RunInTransaction(ctx, pool, func(ctx context.Context) error {
-			db, err := postgres.Executor(ctx, pool)
+			db, release, err := postgres.Executor(ctx, pool)
 			if err != nil {
 				return err
 			}
+			defer release()
 			if _, err := db.Exec(ctx, "create temporary table query_compat_items (id integer primary key, label text not null) on commit drop"); err != nil {
 				return err
 			}
@@ -71,10 +72,11 @@ func TestSQLCUsesNativeExecutorWithoutAdapter(t *testing.T) {
 		}
 	}
 	// Pool-based execution also passes directly to generated bindings.
-	db, err := postgres.Executor(ctx, pool)
+	db, release, err := postgres.Executor(ctx, pool)
 	if err != nil {
 		t.Fatal(err)
 	}
+	defer release()
 	_ = queries.New(db)
 	if err := pool.Ping(ctx); err != nil {
 		t.Errorf("pool reuse after generated-query scopes: %v", err)

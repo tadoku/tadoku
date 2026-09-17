@@ -110,7 +110,13 @@ In addition to the existing four upstream URLs, startup now requires:
 Startup fetches JWKS within `API_DIAL_TIMEOUT` and pings PostgreSQL before opening
 listeners. Either failure aborts startup. Signing keys remain cached until restart;
 there is no periodic refresh or refresh on an unknown key ID.
-`/readyz` checks PostgreSQL; `/livez` remains independent of dependency health.
+The pool keeps one idle connection, clamped within the configured maximum, and
+uses pgx's cached-statement query mode explicitly. Application database work gets
+five seconds to acquire a connection before returning 503; parent cancellation
+and deadlines still take precedence. `/readyz` gets its own two-second deadline
+and acquires a real PostgreSQL connection. A saturated pool therefore fails
+readiness promptly and lets Kubernetes shed traffic from that replica. `/livez`
+remains independent of dependency health.
 The existing proxy metrics and Go process metrics remain on the metrics listener
 (`API_METRICS_PORT`, default 9090). They describe proxy request volume/latency/errors
 and process health. This thin slice adds no native-specific metric family.
@@ -147,9 +153,14 @@ intentionally differ from legacy behavior.
 **Production activation is not part of this change.** Provision a dedicated
 runtime credential with only the grants required by the application, not
 a migration/admin DSN. Confirm provider TLS/pooling settings and the coexistence
-connection budget: two native replicas default to eight connections, in addition
-to the still-running legacy pools. Update production secrets/manifests and complete
-the master rollout gate under separate release authorization before deployment.
+connection budget: two native replicas default to eight maximum connections and
+keep at least one connection each, in addition to the still-running legacy pools.
+Cached statements require prepared-statement support. PgBouncer transaction mode
+can support them on modern versions when `max_prepared_statements` is nonzero, so
+verify the deployed pooler version and setting before activation; choose a
+different pgx query mode only in a separately reviewed configuration change if
+that check fails. Update production secrets/manifests and complete the master
+rollout gate under separate release authorization before deployment.
 
 ## Verification
 

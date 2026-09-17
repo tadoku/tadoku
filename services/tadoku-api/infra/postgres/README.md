@@ -6,18 +6,25 @@ the database handle with `Executor(ctx, pool)` for each operation, then pass it
 directly to native pgx-compatible sqlc queries:
 
 ```go
-db, err := postgres.Executor(ctx, r.pool)
+db, release, err := postgres.Executor(ctx, r.pool)
 if err != nil {
     return err
 }
+defer release()
 return queries.New(db).InsertItem(ctx, params)
 ```
 
-Outside a transaction, `Executor` returns the pool. Inside one, it returns the
-active transaction. Wrong-pool, nested, and ended transaction scopes fail; an
-ended context never falls back to the pool. There are no retries or savepoints.
-All work and row iteration must finish before the callback returns. Do not run
-parallel SQL on one transaction or hold it across network/cache operations.
+Outside a transaction, `Executor` acquires one connection for at most five
+seconds and the caller owns it until `release`. Acquisition saturation is an
+unavailable application error; cancellation or expiry of the parent context is
+returned unchanged. SQL continues under the original context, so the acquisition
+budget does not become a query deadline. Inside a transaction, `Executor` returns
+the active transaction and a no-op release; `RunInTransaction` owns the acquired
+connection through commit or rollback. Wrong-pool, nested, and ended transaction
+scopes fail; an ended context never falls back to the pool. There are no retries
+or savepoints. All work and row iteration must finish before release or before
+the callback returns. Do not run parallel SQL on one transaction or hold it
+across network/cache operations.
 
 Callback errors and panics retain their identity. Cleanup gets an independent
 five-second timeout so cancellation does not prevent the rollback attempt.

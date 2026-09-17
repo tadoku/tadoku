@@ -165,6 +165,8 @@ func (s *suite) RoundTrip(request *http.Request) (*http.Response, error) {
 
 func (s *suite) reset(t *testing.T, caseDir string) {
 	t.Helper()
+	requireKnownCaseFiles(t, caseDir)
+
 	var postgresSeeds, ketoSeeds []string
 	if caseDir != "" {
 		postgresSeeds = []string{filepath.Join(caseDir, "setup.sql")}
@@ -185,6 +187,68 @@ func (s *suite) reset(t *testing.T, caseDir string) {
 
 func (s *suite) resetProxyCount() {
 	s.proxied.Store(0)
+}
+
+func requireKnownCaseFiles(t *testing.T, caseDir string) {
+	t.Helper()
+	if caseDir == "" {
+		return
+	}
+
+	if err := checkKnownCaseFiles(caseDir); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func checkKnownCaseFiles(caseDir string) error {
+	entries, err := os.ReadDir(caseDir)
+	if err != nil {
+		return err
+	}
+
+	for _, entry := range entries {
+		switch entry.Name() {
+		case "request.http", "golden.http", "setup.sql", "relationships.json":
+		default:
+			return fmt.Errorf("unknown entry %q in case directory %s", entry.Name(), caseDir)
+		}
+	}
+
+	return nil
+}
+
+func TestRequireKnownCaseFilesRejectsUnknownFilename(t *testing.T) {
+	dir := t.TempDir()
+	if err := os.WriteFile(filepath.Join(dir, "relationship.json"), nil, 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	err := checkKnownCaseFiles(dir)
+	if err == nil {
+		t.Fatal("expected unknown filename to fail")
+	}
+
+	want := fmt.Sprintf("unknown entry %q in case directory %s", "relationship.json", dir)
+	if err.Error() != want {
+		t.Fatalf("error = %q, want %q", err, want)
+	}
+}
+
+func TestRequireKnownCaseFilesRejectsUnexpectedDirectory(t *testing.T) {
+	dir := t.TempDir()
+	if err := os.Mkdir(filepath.Join(dir, "extra"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+
+	err := checkKnownCaseFiles(dir)
+	if err == nil {
+		t.Fatal("expected unexpected directory to fail")
+	}
+
+	want := fmt.Sprintf("unknown entry %q in case directory %s", "extra", dir)
+	if err.Error() != want {
+		t.Fatalf("error = %q, want %q", err, want)
+	}
 }
 
 func openClosedPool(t *testing.T, dsn string) *pgxpool.Pool {

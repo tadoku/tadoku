@@ -30,9 +30,9 @@ func (p CreateAnnouncementParameters) Validate() error {
 	return nil
 }
 
-func (s *Service) CreateAnnouncement(ctx context.Context, parameters CreateAnnouncementParameters) (*Announcement, error) {
+func (s *Service) CreateAnnouncement(ctx context.Context, parameters CreateAnnouncementParameters) error {
 	if err := parameters.Validate(); err != nil {
-		return nil, err
+		return err
 	}
 
 	now := timex.Now()
@@ -48,8 +48,5 @@ func (s *Service) CreateAnnouncement(ctx context.Context, parameters CreateAnnou
 		CreatedAt: now,
 		UpdatedAt: now,
 	}
-	if err := s.announcements.CreateAnnouncement(ctx, item); err != nil {
-		return nil, err
-	}
-	return item, nil
+	return s.announcements.CreateAnnouncement(ctx, item)
 }

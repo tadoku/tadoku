@@ -1,6 +1,6 @@
 >>> POST /content/announcements/main
 HTTP/1.1 201 Created
-Content-Length: 300
+Content-Length: 314
 Content-Type: application/json; charset=UTF-8
 
-{"content":"Read this","created_at":"2026-09-12T12:00:00Z","ends_at":"2026-09-14T18:00:00Z","href":"https://example.test/news","id":"11111111-1111-4111-8111-111111111111","namespace":"main","starts_at":"2026-09-13T01:00:00Z","style":"info","title":"Announcement","updated_at":"2026-09-12T12:00:00Z"}
+{"content":"Read this","created_at":"2026-09-12T12:00:00Z","ends_at":"2026-09-14T18:00:00.987654Z","href":"https://example.test/news","id":"11111111-1111-4111-8111-111111111111","namespace":"main","starts_at":"2026-09-13T01:00:00.123456Z","style":"info","title":"Announcement","updated_at":"2026-09-12T12:00:00Z"}

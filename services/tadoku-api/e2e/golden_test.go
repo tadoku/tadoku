@@ -29,12 +29,6 @@ type implementation struct {
 	skip    string
 }
 
-type goldenRequest struct {
-	requestFile string
-	goldenFile  string
-	want        int
-}
-
 func atFixtureInstant(fn func()) {
 	previous := jwt.TimeFunc
 	jwt.TimeFunc = func() time.Time { return fixtureInstant }
@@ -44,15 +38,6 @@ func atFixtureInstant(fn func()) {
 
 func runCase(t *testing.T, s *suite, name string, want int, implementations ...implementation) {
 	t.Helper()
-	runCaseRequests(t, s, name, []goldenRequest{{
-		requestFile: "request.http",
-		goldenFile:  "golden.http",
-		want:        want,
-	}}, implementations...)
-}
-
-func runCaseRequests(t *testing.T, s *suite, name string, requests []goldenRequest, implementations ...implementation) {
-	t.Helper()
 	dir := filepath.Join("testdata", name)
 	for _, impl := range implementations {
 		t.Run(impl.name, func(t *testing.T) {
@@ -60,11 +45,7 @@ func runCaseRequests(t *testing.T, s *suite, name string, requests []goldenReque
 				t.Skip(impl.skip)
 			}
 			s.reset(t, dir)
-			atFixtureInstant(func() {
-				for _, request := range requests {
-					checkHTTPGoldenFiles(t, impl.handler, dir, request.requestFile, request.goldenFile, request.want)
-				}
-			})
+			atFixtureInstant(func() { checkHTTPGolden(t, impl.handler, dir, want) })
 			if s.proxied.Load() != 0 {
 				t.Error("handler contacted an upstream")
 			}
@@ -76,13 +57,8 @@ func runCaseRequests(t *testing.T, s *suite, name string, requests []goldenReque
 // compares its complete response with the reviewed golden file.
 func checkHTTPGolden(t *testing.T, handler http.Handler, directory string, wantStatus int) {
 	t.Helper()
-	checkHTTPGoldenFiles(t, handler, directory, "request.http", "golden.http", wantStatus)
-}
 
-func checkHTTPGoldenFiles(t *testing.T, handler http.Handler, directory, requestFile, goldenFile string, wantStatus int) {
-	t.Helper()
-
-	input, err := os.ReadFile(filepath.Join(directory, requestFile))
+	input, err := os.ReadFile(filepath.Join(directory, "request.http"))
 	if err != nil {
 		t.Fatalf("read request: %v", err)
 	}
@@ -106,7 +82,7 @@ func checkHTTPGoldenFiles(t *testing.T, handler http.Handler, directory, request
 		t.Fatalf("format response: %v", err)
 	}
 
-	goldenPath := filepath.Join(directory, goldenFile)
+	goldenPath := filepath.Join(directory, "golden.http")
 	want, err := os.ReadFile(goldenPath)
 	if err != nil {
 		t.Fatalf("read golden: %v", err)

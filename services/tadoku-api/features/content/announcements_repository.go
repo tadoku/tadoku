@@ -33,7 +33,7 @@ func (r *AnnouncementsRepository) DeleteAnnouncement(ctx context.Context, namesp
 	err = queries.New(executor).DeleteAnnouncement(ctx, queries.DeleteAnnouncementParams{
 		Namespace: namespace,
 		ID:        pgtype.UUID{Bytes: id, Valid: true},
-		DeletedAt: pgtype.Timestamp{Time: deletedAt.UTC(), Valid: true},
+		DeletedAt: postgres.Timestamp(deletedAt),
 	})
 	if err != nil {
 		return fmt.Errorf("delete announcement: %w", err)
@@ -59,10 +59,10 @@ func (r *AnnouncementsRepository) CreateAnnouncement(ctx context.Context, item *
 		Content:   item.Content,
 		Style:     item.Style,
 		Href:      href,
-		StartsAt:  pgtype.Timestamp{Time: item.StartsAt.UTC(), Valid: true},
-		EndsAt:    pgtype.Timestamp{Time: item.EndsAt.UTC(), Valid: true},
-		CreatedAt: pgtype.Timestamp{Time: item.CreatedAt.UTC(), Valid: true},
-		UpdatedAt: pgtype.Timestamp{Time: item.UpdatedAt.UTC(), Valid: true},
+		StartsAt:  postgres.Timestamp(item.StartsAt),
+		EndsAt:    postgres.Timestamp(item.EndsAt),
+		CreatedAt: postgres.Timestamp(item.CreatedAt),
+		UpdatedAt: postgres.Timestamp(item.UpdatedAt),
 	})
 	if err != nil {
 		return fmt.Errorf("create announcement: %w", err)
@@ -87,9 +87,9 @@ func (r *AnnouncementsRepository) UpdateAnnouncement(ctx context.Context, item *
 		Content:   item.Content,
 		Style:     item.Style,
 		Href:      href,
-		StartsAt:  pgtype.Timestamp{Time: item.StartsAt.UTC(), Valid: true},
-		EndsAt:    pgtype.Timestamp{Time: item.EndsAt.UTC(), Valid: true},
-		UpdatedAt: pgtype.Timestamp{Time: item.UpdatedAt.UTC(), Valid: true},
+		StartsAt:  postgres.Timestamp(item.StartsAt),
+		EndsAt:    postgres.Timestamp(item.EndsAt),
+		UpdatedAt: postgres.Timestamp(item.UpdatedAt),
 	})
 	if errors.Is(err, pgx.ErrNoRows) {
 		return ErrAnnouncementNotFound
@@ -196,7 +196,7 @@ func (r *AnnouncementsRepository) ListActiveAnnouncements(ctx context.Context, n
 
 	rows, err := queries.New(executor).ListActiveAnnouncements(ctx, queries.ListActiveAnnouncementsParams{
 		Namespace:   namespace,
-		Cutoff:      pgtype.Timestamp{Time: cutoff.UTC(), Valid: true},
+		Cutoff:      postgres.Timestamp(cutoff),
 		ResultLimit: limit,
 	})
 	if err != nil {

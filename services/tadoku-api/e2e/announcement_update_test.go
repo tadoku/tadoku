@@ -17,6 +17,8 @@ func TestUpdateAnnouncement(t *testing.T) {
 		{description: []string{"empty", "href"}, want: http.StatusOK},
 		{description: []string{"whitespace", "fields"}, want: http.StatusOK},
 		{description: []string{"trailing", "json"}, want: http.StatusOK},
+		// Legacy stores timestamp offsets as wall-clock fields instead of UTC instants.
+		{description: []string{"offset", "dates"}, want: http.StatusOK, skipParity: true},
 		{description: []string{"whitespace", "body", "guest"}, want: http.StatusBadRequest},
 		{description: []string{"missing", "title"}, want: http.StatusBadRequest},
 		{description: []string{"missing", "content"}, want: http.StatusBadRequest},
@@ -51,6 +53,9 @@ func TestUpdateAnnouncement(t *testing.T) {
 			legacy := implementation{name: "content-api", handler: legacyContent.handler}
 			if test.skipParity {
 				legacy.skip = "intentional JSON-only decoding difference"
+				if test.want == http.StatusOK {
+					legacy.skip = "legacy stores timestamp offsets as wall-clock fields"
+				}
 			}
 			runCase(t, api, name, test.want,
 				implementation{name: "tadoku-api", handler: api.handler},

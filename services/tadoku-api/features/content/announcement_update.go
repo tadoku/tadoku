@@ -27,14 +27,14 @@ func (p UpdateAnnouncementParameters) Validate() error {
 	return nil
 }
 
-func (s *Service) UpdateAnnouncement(ctx context.Context, parameters UpdateAnnouncementParameters) (*Announcement, error) {
+func (s *Service) UpdateAnnouncement(ctx context.Context, parameters UpdateAnnouncementParameters) error {
 	if err := parameters.Validate(); err != nil {
-		return nil, err
+		return err
 	}
 
 	announcement, err := s.announcements.FindAnnouncementByID(ctx, parameters.Namespace, parameters.ID)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	announcement.Title = parameters.Title
@@ -45,8 +45,5 @@ func (s *Service) UpdateAnnouncement(ctx context.Context, parameters UpdateAnnou
 	announcement.EndsAt = parameters.EndsAt
 	announcement.UpdatedAt = timex.Now()
 
-	if err := s.announcements.UpdateAnnouncement(ctx, announcement); err != nil {
-		return nil, err
-	}
-	return announcement, nil
+	return s.announcements.UpdateAnnouncement(ctx, announcement)
 }

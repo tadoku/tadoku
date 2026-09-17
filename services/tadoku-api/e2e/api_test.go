@@ -208,7 +208,7 @@ func checkKnownCaseFiles(caseDir string) error {
 
 	for _, entry := range entries {
 		switch entry.Name() {
-		case "request.http", "golden.http", "setup.sql", "relationships.json":
+		case "request.http", "golden.http", "readback.request.http", "readback.golden.http", "setup.sql", "relationships.json":
 		default:
 			return fmt.Errorf("unknown entry %q in case directory %s", entry.Name(), caseDir)
 		}

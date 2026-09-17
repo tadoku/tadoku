@@ -10,6 +10,7 @@ func TestCreateAnnouncement(t *testing.T) {
 		description []string
 		want        int
 		skipParity  bool
+		readback    bool
 	}{
 		{description: []string{"admin"}, want: http.StatusCreated},
 		{description: []string{"null", "href"}, want: http.StatusCreated},
@@ -17,7 +18,9 @@ func TestCreateAnnouncement(t *testing.T) {
 		{description: []string{"empty", "href"}, want: http.StatusCreated},
 		{description: []string{"ignored", "server", "fields"}, want: http.StatusCreated},
 		{description: []string{"trailing", "json"}, want: http.StatusCreated},
-		{description: []string{"offset", "dates"}, want: http.StatusCreated},
+		// Legacy stores timestamp offsets as wall-clock fields instead of UTC instants.
+		{description: []string{"offset", "dates"}, want: http.StatusCreated, skipParity: true},
+		{description: []string{"offset", "dates", "readback"}, want: http.StatusCreated, skipParity: true, readback: true},
 		{description: []string{"empty", "title"}, want: http.StatusBadRequest},
 		{description: []string{"empty", "content"}, want: http.StatusBadRequest},
 		{description: []string{"invalid", "style"}, want: http.StatusBadRequest},
@@ -51,8 +54,23 @@ func TestCreateAnnouncement(t *testing.T) {
 			legacy := implementation{name: "content-api", handler: legacyContent.handler}
 			if test.skipParity {
 				legacy.skip = "intentional JSON-only decoding difference"
+				if test.want == http.StatusCreated {
+					legacy.skip = "legacy stores timestamp offsets as wall-clock fields"
+				}
 			}
-			runCase(t, api, name, test.want,
+			requests := []goldenRequest{{
+				requestFile: "request.http",
+				goldenFile:  "golden.http",
+				want:        test.want,
+			}}
+			if test.readback {
+				requests = append(requests, goldenRequest{
+					requestFile: "readback.request.http",
+					goldenFile:  "readback.golden.http",
+					want:        http.StatusOK,
+				})
+			}
+			runCaseRequests(t, api, name, requests,
 				implementation{name: "tadoku-api", handler: api.handler},
 				legacy,
 			)

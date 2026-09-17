@@ -3,7 +3,6 @@ package http
 import (
 	"context"
 	"errors"
-	"net/http"
 
 	"github.com/google/uuid"
 	"github.com/oapi-codegen/nullable"
@@ -11,22 +10,13 @@ import (
 	"github.com/tadoku/tadoku/services/tadoku-api/generated/openapi"
 )
 
-// The legacy spec omits this response, so keep its empty 400 local to the
-// operation rather than classifying endpoint-specific errors in the router.
-type announcementFindByIDBadRequestResponse struct{}
-
-func (announcementFindByIDBadRequestResponse) VisitContentAnnouncementFindByIDResponse(w http.ResponseWriter) error {
-	w.WriteHeader(http.StatusBadRequest)
-	return nil
-}
-
 func (s *server) ContentAnnouncementFindByID(
 	ctx context.Context,
 	request openapi.ContentAnnouncementFindByIDRequestObject,
 ) (openapi.ContentAnnouncementFindByIDResponseObject, error) {
 	id, err := uuid.Parse(request.Id)
 	if err != nil {
-		return announcementFindByIDBadRequestResponse{}, nil
+		return nil, errInvalidUUID
 	}
 
 	item, err := s.application.FindAnnouncementByID(ctx, request.Namespace, id)

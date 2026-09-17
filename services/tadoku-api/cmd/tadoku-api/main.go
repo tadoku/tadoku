@@ -73,6 +73,8 @@ func loadConfig() (config, error) {
 }
 
 type application struct {
+	ctx          context.Context
+	cancel       context.CancelFunc
 	server       *http.Server
 	listener     net.Listener
 	serverErrors chan error
@@ -138,9 +140,17 @@ func (c *pgxPoolCollector) Collect(metrics chan<- prometheus.Metric) {
 	metrics <- prometheus.MustNewConstMetric(c.acquireDuration, prometheus.CounterValue, stats.AcquireDuration().Seconds())
 }
 
-func start(cfg config, logger *slog.Logger) (*application, error) {
+func start(ctx context.Context, cfg config, logger *slog.Logger) (*application, error) {
+	ctx, cancel := context.WithCancel(ctx)
+	started := false
+	defer func() {
+		if !started {
+			cancel()
+		}
+	}()
+
 	logger = logger.With("service", cfg.ServiceName)
-	authenticate, err := transporthttp.NewJWTAuthentication(cfg.JWKS, cfg.DialTimeout)
+	authenticate, err := transporthttp.NewJWTAuthentication(ctx, cfg.JWKS, cfg.DialTimeout, logger)
 	if err != nil {
 		return nil, err
 	}
@@ -159,7 +169,7 @@ func start(cfg config, logger *slog.Logger) (*application, error) {
 		ExpectContinueTimeout: time.Second,
 	}
 
-	startupContext, cancelStartup := context.WithTimeout(context.Background(), cfg.DialTimeout)
+	startupContext, cancelStartup := context.WithTimeout(ctx, cfg.DialTimeout)
 	defer cancelStartup()
 
 	pool, err := postgres.Open(startupContext, cfg.Postgres.WithApplicationName(cfg.ServiceName).URL(), cfg.PostgresMaxConnections)
@@ -168,7 +178,6 @@ func start(cfg config, logger *slog.Logger) (*application, error) {
 		return nil, fmt.Errorf("open postgres: %s", cfg.Postgres.Redact(err))
 	}
 
-	started := false
 	defer func() {
 		if !started {
 			pool.Close()
@@ -238,6 +247,8 @@ func start(cfg config, logger *slog.Logger) (*application, error) {
 	}
 
 	app := &application{
+		ctx:             ctx,
+		cancel:          cancel,
 		server:          server,
 		listener:        listener,
 		serverErrors:    make(chan error, 2),
@@ -276,12 +287,13 @@ func newBannedUserMiddleware(ketoReadURL string, logger *slog.Logger) func(http.
 	}, logger)
 }
 
-func (app *application) wait(ctx context.Context) error {
+func (app *application) wait() error {
 	var runErr error
 	select {
-	case <-ctx.Done():
+	case <-app.ctx.Done():
 	case runErr = <-app.serverErrors:
 	}
+	app.cancel()
 
 	shutdownContext, cancel := context.WithTimeout(context.Background(), app.shutdownTimeout)
 	defer cancel()
@@ -305,21 +317,20 @@ func (app *application) wait(ctx context.Context) error {
 
 func main() {
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
+	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	defer stop()
 
 	cfg, err := loadConfig()
 	if err != nil {
 		panic(err)
 	}
 
-	app, err := start(cfg, logger)
+	app, err := start(ctx, cfg, logger)
 	if err != nil {
 		panic(err)
 	}
 
-	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
-	defer stop()
-
-	if err := app.wait(ctx); err != nil {
+	if err := app.wait(); err != nil {
 		panic(err)
 	}
 }

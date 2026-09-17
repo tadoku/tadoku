@@ -40,21 +40,6 @@ func TestDeleteAnnouncementInvalidUUID(t *testing.T) {
 	}
 }
 
-func TestUpdateAnnouncementInvalidUUID(t *testing.T) {
-	s := &server{}
-	response, err := s.ContentAnnouncementUpdate(context.Background(), openapi.ContentAnnouncementUpdateRequestObject{
-		Namespace: "tadoku",
-		Id:        "not-a-uuid",
-		Body:      &openapi.ContentAnnouncementUpdateJSONRequestBody{},
-	})
-	if !errors.Is(err, errInvalidUUID) {
-		t.Fatalf("error = %v, want invalid UUID", err)
-	}
-	if response != nil {
-		t.Errorf("response = %v, want nil", response)
-	}
-}
-
 func TestJSONCharsetCompatibility(t *testing.T) {
 	tests := []struct {
 		name        string

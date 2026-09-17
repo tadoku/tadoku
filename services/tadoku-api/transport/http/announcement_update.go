@@ -24,8 +24,7 @@ func (s *server) ContentAnnouncementUpdate(
 
 	body := request.Body
 	var href *string
-	if body.Href.IsSpecified() && !body.Href.IsNull() {
-		value := body.Href.MustGet()
+	if value, err := body.Href.Get(); err == nil {
 		href = &value
 	}
 

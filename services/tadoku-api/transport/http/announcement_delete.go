@@ -17,9 +17,7 @@ func (s *server) ContentAnnouncementDelete(
 	}
 
 	if err := s.application.DeleteAnnouncement(ctx, request.Namespace, id); err != nil {
-		s.logger.ErrorContext(ctx, "delete announcement failed",
-			"error", err,
-		)
+		s.logOperationError(ctx, "delete announcement", err)
 		return nil, err
 	}
 

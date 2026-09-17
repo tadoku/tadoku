@@ -1,9 +1,12 @@
 package e2e_test
 
 import (
+	"bytes"
 	"context"
+	"log/slog"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 )
 
@@ -11,7 +14,9 @@ import (
 // when the same dependency and failure behavior are already covered here.
 func TestDependencyFailures(t *testing.T) {
 	closedPool := openClosedPool(t, api.db.DSN)
-	handler, err := newTestRouter(t.Context(), closedPool, keto.ReadURL())
+	var logs bytes.Buffer
+	logger := slog.New(slog.NewTextHandler(&logs, &slog.HandlerOptions{Level: slog.LevelDebug}))
+	handler, err := newTestRouterWithLogger(t.Context(), closedPool, keto.ReadURL(), logger)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -33,6 +38,8 @@ func TestDependencyFailures(t *testing.T) {
 		want        int
 		suite       *suite
 		handler     http.Handler
+		logMessage  string
+		logLevel    slog.Level
 	}{
 		{
 			operation:   "FindAnnouncementByID",
@@ -40,6 +47,8 @@ func TestDependencyFailures(t *testing.T) {
 			want:        http.StatusForbidden,
 			suite:       poolClosed,
 			handler:     poolClosed.handler,
+			logMessage:  "find announcement by ID rejected",
+			logLevel:    slog.LevelDebug,
 		},
 		{
 			operation:   "FindAnnouncementByID",
@@ -47,6 +56,8 @@ func TestDependencyFailures(t *testing.T) {
 			want:        http.StatusInternalServerError,
 			suite:       poolClosed,
 			handler:     poolClosed.handler,
+			logMessage:  "find announcement by ID failed",
+			logLevel:    slog.LevelError,
 		},
 		{
 			operation:   "ListAnnouncements",
@@ -54,6 +65,8 @@ func TestDependencyFailures(t *testing.T) {
 			want:        http.StatusForbidden,
 			suite:       poolClosed,
 			handler:     poolClosed.handler,
+			logMessage:  "list announcements rejected",
+			logLevel:    slog.LevelDebug,
 		},
 		{
 			operation:   "ListActiveAnnouncements",
@@ -61,6 +74,8 @@ func TestDependencyFailures(t *testing.T) {
 			want:        http.StatusInternalServerError,
 			suite:       poolClosed,
 			handler:     poolClosed.handler,
+			logMessage:  "list active announcements failed",
+			logLevel:    slog.LevelError,
 		},
 		{
 			operation:   "ListAnnouncements",
@@ -68,6 +83,8 @@ func TestDependencyFailures(t *testing.T) {
 			want:        http.StatusInternalServerError,
 			suite:       poolClosed,
 			handler:     poolClosed.handler,
+			logMessage:  "list announcements failed",
+			logLevel:    slog.LevelError,
 		},
 		{
 			subtest:     "canceled read",
@@ -86,9 +103,21 @@ func TestDependencyFailures(t *testing.T) {
 			subtest = name
 		}
 		t.Run(subtest, func(t *testing.T) {
+			logs.Reset()
 			runCase(t, test.suite, name, test.want,
 				implementation{name: "tadoku-api", handler: test.handler},
 			)
+
+			if test.logMessage == "" {
+				return
+			}
+			wantLog := "level=" + test.logLevel.String() + " msg=\"" + test.logMessage + "\""
+			if !strings.Contains(logs.String(), wantLog) {
+				t.Errorf("logs do not contain %q:\n%s", wantLog, logs.String())
+			}
+			if test.logLevel < slog.LevelError && strings.Contains(logs.String(), "level=ERROR") {
+				t.Errorf("client failure produced ERROR log:\n%s", logs.String())
+			}
 		})
 	}
 

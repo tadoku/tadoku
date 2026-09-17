@@ -19,9 +19,7 @@ func (s *server) ContentAnnouncementFindByID(
 
 	item, err := s.application.FindAnnouncementByID(ctx, request.Namespace, id)
 	if err != nil {
-		s.logger.ErrorContext(ctx, "find announcement by ID failed",
-			"error", err,
-		)
+		s.logOperationError(ctx, "find announcement by ID", err)
 		return nil, err
 	}
 
@@ -50,9 +48,7 @@ func (s *server) ContentAnnouncementListActive(
 ) (openapi.ContentAnnouncementListActiveResponseObject, error) {
 	items, err := s.application.ListActiveAnnouncements(ctx, request.Namespace)
 	if err != nil {
-		s.logger.ErrorContext(ctx, "list active announcements failed",
-			"error", err,
-		)
+		s.logOperationError(ctx, "list active announcements", err)
 		return nil, err
 	}
 
@@ -96,9 +92,7 @@ func (s *server) ContentAnnouncementList(
 
 	result, err := s.application.ListAnnouncements(ctx, request.Namespace, pageSize, page)
 	if err != nil {
-		s.logger.ErrorContext(ctx, "list announcements failed",
-			"error", err,
-		)
+		s.logOperationError(ctx, "list announcements", err)
 		return nil, err
 	}
 

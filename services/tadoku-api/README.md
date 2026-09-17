@@ -222,8 +222,13 @@ and complete expected response. Tests parse the request files with `net/http`,
 execute the production handler at the operation's minimum required access level,
 check the HTTP status against the table's `want`, and compare the entire response,
 including status, headers and body, with the golden.
-Explicit seed IDs and frozen business time make responses deterministic; only
-HTTP line endings are normalized. Missing or changed goldens fail the test.
+Explicit seed IDs and frozen business time make responses deterministic.
+Buffered response goldens use `httputil.DumpResponse`: when `ContentLength` is
+unknown, fill it from the recorder body's byte length before serialization.
+Preserve known declared lengths and explicitly set `Connection` headers. The
+resulting `Content-Length` framing treats an omitted length and an explicitly
+correct one as equivalent. Apart from completing the unknown length, only HTTP
+line endings are normalized. Missing or changed goldens fail the test.
 There is no automatic recording mode: edit and review the expected files for an
 intentional contract change. Lifecycle tests stay focused on startup/shutdown,
 not a growing list of endpoint assertions.

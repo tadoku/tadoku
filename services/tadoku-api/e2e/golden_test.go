@@ -4,9 +4,9 @@ import (
 	"bufio"
 	"bytes"
 	"fmt"
-	"io"
 	"net/http"
 	"net/http/httptest"
+	"net/http/httputil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -77,7 +77,7 @@ func checkHTTPGolden(t *testing.T, handler http.Handler, directory string, wantS
 		t.Errorf("HTTP status=%d, want %d", response.StatusCode, wantStatus)
 	}
 
-	got, err := formatHTTPGolden(request, response)
+	got, err := formatHTTPGolden(request, recorder)
 	if err != nil {
 		t.Fatalf("format response: %v", err)
 	}
@@ -92,37 +92,116 @@ func checkHTTPGolden(t *testing.T, handler http.Handler, directory string, wantS
 	}
 }
 
-// formatHTTPGolden renders the request line, status, sorted headers, and body.
-// Connection is omitted so httptest's missing Content-Length cannot inject
-// Connection: close. Content-Length and Transfer-Encoding are never added.
-func formatHTTPGolden(request *http.Request, response *http.Response) (string, error) {
-	var buf bytes.Buffer
-
-	fmt.Fprintf(&buf, ">>> %s %s\n", request.Method, request.RequestURI)
-
-	text := response.Status
-	if text == "" {
-		text = http.StatusText(response.StatusCode)
-		if text == "" {
-			text = fmt.Sprintf("status code %d", response.StatusCode)
-		}
-	} else {
-		text = strings.TrimPrefix(text, fmt.Sprintf("%d ", response.StatusCode))
+// formatHTTPGolden completes an unknown response length from the buffered body
+// before serializing the response and normalizing HTTP line endings.
+func formatHTTPGolden(request *http.Request, recorder *httptest.ResponseRecorder) (string, error) {
+	response := recorder.Result()
+	if response.ContentLength == -1 {
+		response.ContentLength = int64(recorder.Body.Len())
 	}
-	fmt.Fprintf(&buf, "HTTP/%d.%d %03d %s\n", response.ProtoMajor, response.ProtoMinor, response.StatusCode, text)
 
-	headers := response.Header.Clone()
-	headers.Del("Connection")
-	if err := headers.Write(&buf); err != nil {
-		return "", err
-	}
-	buf.WriteByte('\n')
-
-	body, err := io.ReadAll(response.Body)
+	dump, err := httputil.DumpResponse(response, true)
 	if err != nil {
 		return "", err
 	}
-	buf.Write(body)
 
-	return strings.ReplaceAll(buf.String(), "\r\n", "\n"), nil
+	return fmt.Sprintf(">>> %s %s\n%s", request.Method, request.RequestURI, strings.ReplaceAll(string(dump), "\r\n", "\n")), nil
+}
+
+func TestFormatHTTPGolden(t *testing.T) {
+	tests := []struct {
+		name      string
+		status    int
+		headers   http.Header
+		body      string
+		want      string
+		wantError bool
+	}{
+		{
+			name:    "body and repeated headers",
+			status:  http.StatusOK,
+			headers: http.Header{"Set-Cookie": {"a=1", "b=2"}},
+			body:    "ok",
+			want:    "HTTP/1.1 200 OK\nContent-Length: 2\nContent-Type: text/plain; charset=utf-8\nSet-Cookie: a=1\nSet-Cookie: b=2\n\nok",
+		},
+		{
+			name:   "empty error",
+			status: http.StatusBadRequest,
+			want:   "HTTP/1.1 400 Bad Request\nContent-Length: 0\n\n",
+		},
+		{
+			name:   "no content",
+			status: http.StatusNoContent,
+			want:   "HTTP/1.1 204 No Content\n\n",
+		},
+		{
+			name:   "not modified",
+			status: http.StatusNotModified,
+			want:   "HTTP/1.1 304 Not Modified\n\n",
+		},
+		{
+			name:    "explicit keep alive",
+			status:  http.StatusOK,
+			headers: http.Header{"Connection": {"keep-alive"}},
+			body:    "ok",
+			want:    "HTTP/1.1 200 OK\nContent-Length: 2\nConnection: keep-alive\nContent-Type: text/plain; charset=utf-8\n\nok",
+		},
+		{
+			name:    "explicit close",
+			status:  http.StatusOK,
+			headers: http.Header{"Connection": {"close"}},
+			body:    "ok",
+			want:    "HTTP/1.1 200 OK\nContent-Length: 2\nConnection: close\nContent-Type: text/plain; charset=utf-8\n\nok",
+		},
+		{
+			name:    "declared length",
+			status:  http.StatusOK,
+			headers: http.Header{"Content-Length": {"2"}},
+			body:    "ok",
+			want:    "HTTP/1.1 200 OK\nContent-Length: 2\nContent-Type: text/plain; charset=utf-8\n\nok",
+		},
+		{
+			name:      "incorrect declared length",
+			status:    http.StatusOK,
+			headers:   http.Header{"Content-Length": {"5"}},
+			body:      "ok",
+			wantError: true,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			request := httptest.NewRequest(http.MethodGet, "/", nil)
+			recorder := httptest.NewRecorder()
+			for name, values := range test.headers {
+				for _, value := range values {
+					recorder.Header().Add(name, value)
+				}
+			}
+			if test.body != "" {
+				recorder.Header().Set("Content-Type", "text/plain; charset=utf-8")
+			}
+			recorder.WriteHeader(test.status)
+			if test.body != "" {
+				recorder.WriteString(test.body)
+			}
+			t.Cleanup(func() { recorder.Result().Body.Close() })
+
+			got, err := formatHTTPGolden(request, recorder)
+			if test.wantError {
+				if err == nil {
+					t.Fatalf("format response succeeded with an incorrect declared length: %q", got)
+				}
+				return
+			}
+			if err != nil {
+				t.Fatalf("format response: %v", err)
+			}
+
+			want := ">>> GET /\n" + test.want
+			if got != want {
+				t.Errorf("HTTP golden=%q, want %q", got, want)
+			}
+		})
+	}
 }

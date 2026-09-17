@@ -1,5 +1,6 @@
 >>> GET /content/announcements/a%2Fb/active
 HTTP/1.1 200 OK
+Content-Length: 326
 Content-Type: application/json; charset=UTF-8
 
 {"announcements":[{"content":"\u003cp\u003eAnnouncement\u003c/p\u003e","created_at":"2026-09-12T11:00:00Z","ends_at":"2026-09-12T13:00:00Z","href":null,"id":"11111111-1111-4111-8111-000000000002","namespace":"a/b","starts_at":"2026-09-12T11:00:00Z","style":"info","title":"Announcement","updated_at":"2026-09-12T11:00:00Z"}]}

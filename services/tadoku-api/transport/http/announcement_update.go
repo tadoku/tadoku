@@ -28,13 +28,15 @@ func (s *server) ContentAnnouncementUpdate(
 		href = &value
 	}
 
-	item, err := s.application.UpdateAnnouncement(ctx, request.Namespace, id, app.UpdateAnnouncementParameters{
-		Title:    body.Title,
-		Content:  body.Content,
-		Style:    string(body.Style),
-		Href:     href,
-		StartsAt: body.StartsAt,
-		EndsAt:   body.EndsAt,
+	item, err := s.application.UpdateAnnouncement(ctx, app.UpdateAnnouncementParameters{
+		ID:        id,
+		Namespace: request.Namespace,
+		Title:     body.Title,
+		Content:   body.Content,
+		Style:     string(body.Style),
+		Href:      href,
+		StartsAt:  body.StartsAt,
+		EndsAt:    body.EndsAt,
 	})
 	if err != nil {
 		s.logger.ErrorContext(ctx, "update announcement failed", "error", err)

@@ -15,13 +15,20 @@ import (
 
 func TestUpdateAnnouncementParametersValidation(t *testing.T) {
 	parameters := content.UpdateAnnouncementParameters{
-		Title:    "Title",
-		Content:  "Content",
-		Style:    "info",
-		StartsAt: time.Date(2026, 9, 12, 0, 0, 0, 0, time.UTC),
-		EndsAt:   time.Date(2026, 9, 13, 0, 0, 0, 0, time.UTC),
+		ID:        uuid.MustParse("11111111-1111-4111-8111-111111111111"),
+		Namespace: "main",
+		Title:     "Title",
+		Content:   "Content",
+		Style:     "info",
+		StartsAt:  time.Date(2026, 9, 12, 0, 0, 0, 0, time.UTC),
+		EndsAt:    time.Date(2026, 9, 13, 0, 0, 0, 0, time.UTC),
 	}
-	if err := parameters.Validate(""); !errors.Is(err, content.ErrInvalidAnnouncement) {
+	if err := parameters.Validate(); err != nil {
+		t.Fatalf("valid parameters rejected: %v", err)
+	}
+
+	parameters.Namespace = ""
+	if err := parameters.Validate(); !errors.Is(err, content.ErrInvalidAnnouncement) {
 		t.Errorf("error=%v, want invalid announcement", err)
 	}
 }

@@ -9,28 +9,30 @@ import (
 )
 
 type UpdateAnnouncementParameters struct {
-	Title    string
-	Content  string
-	Style    string
-	Href     *string
-	StartsAt time.Time
-	EndsAt   time.Time
+	ID        uuid.UUID
+	Namespace string
+	Title     string
+	Content   string
+	Style     string
+	Href      *string
+	StartsAt  time.Time
+	EndsAt    time.Time
 }
 
-func (p UpdateAnnouncementParameters) Validate(namespace string) error {
-	if namespace == "" || p.Title == "" || p.Content == "" ||
+func (p UpdateAnnouncementParameters) Validate() error {
+	if p.Namespace == "" || p.Title == "" || p.Content == "" ||
 		!IsValidAnnouncementStyle(p.Style) || !timex.IsValidRange(p.StartsAt, p.EndsAt) {
 		return ErrInvalidAnnouncement
 	}
 	return nil
 }
 
-func (s *Service) UpdateAnnouncement(ctx context.Context, namespace string, id uuid.UUID, parameters UpdateAnnouncementParameters) (*Announcement, error) {
-	if err := parameters.Validate(namespace); err != nil {
+func (s *Service) UpdateAnnouncement(ctx context.Context, parameters UpdateAnnouncementParameters) (*Announcement, error) {
+	if err := parameters.Validate(); err != nil {
 		return nil, err
 	}
 
-	announcement, err := s.announcements.FindAnnouncementByID(ctx, namespace, id)
+	announcement, err := s.announcements.FindAnnouncementByID(ctx, parameters.Namespace, parameters.ID)
 	if err != nil {
 		return nil, err
 	}

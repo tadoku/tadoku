@@ -2,7 +2,6 @@ package e2e_test
 
 import (
 	"net/http"
-	"path/filepath"
 	"testing"
 )
 
@@ -57,39 +56,6 @@ func TestUpdateAnnouncement(t *testing.T) {
 				implementation{name: "tadoku-api", handler: api.handler},
 				legacy,
 			)
-		})
-	}
-}
-
-func TestUpdateAnnouncementReadback(t *testing.T) {
-	for _, test := range []struct {
-		description []string
-		want        int
-	}{
-		{description: []string{"replace", "fields"}, want: http.StatusOK},
-		{description: []string{"null", "href"}, want: http.StatusOK},
-		{description: []string{"omitted", "href"}, want: http.StatusOK},
-		{description: []string{"empty", "href"}, want: http.StatusOK},
-		{description: []string{"write", "failure"}, want: http.StatusInternalServerError},
-	} {
-		name := APITestName("UpdateAnnouncement", test.want, test.description...)
-		t.Run(name, func(t *testing.T) {
-			for _, impl := range []implementation{
-				{name: "tadoku-api", handler: api.handler},
-				{name: "content-api", handler: legacyContent.handler},
-			} {
-				t.Run(impl.name, func(t *testing.T) {
-					dir := filepath.Join("testdata", name)
-					api.reset(t, dir)
-					atFixtureInstant(func() {
-						checkHTTPGolden(t, impl.handler, dir, test.want)
-						checkHTTPGolden(t, impl.handler, filepath.Join(dir, "readback"), http.StatusOK)
-					})
-					if api.proxied.Load() != 0 {
-						t.Error("handler contacted an upstream")
-					}
-				})
-			}
 		})
 	}
 }

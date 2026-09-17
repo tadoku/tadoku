@@ -85,7 +85,7 @@ func TestUnclaimedMethodsRemainProxied(t *testing.T) {
 		t.Run(route.name, func(t *testing.T) {
 			for _, method := range route.methods {
 				t.Run(method, func(t *testing.T) {
-					api.reset(t, "")
+					api.resetProxyCount()
 					request := httptest.NewRequest(method, route.path, nil)
 					response := httptest.NewRecorder()
 					api.handler.ServeHTTP(response, request)

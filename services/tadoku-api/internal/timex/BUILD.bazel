@@ -8,6 +8,7 @@ go_library(
     ],
     importpath = "github.com/tadoku/tadoku/services/tadoku-api/internal/timex",
     visibility = ["//services/tadoku-api:__subpackages__"],
+    deps = ["//services/tadoku-api/internal/timex/internal/clockstate"],
 )
 
 go_test(
@@ -16,5 +17,8 @@ go_test(
         "range_test.go",
         "timex_test.go",
     ],
-    deps = [":timex"],
+    deps = [
+        ":timex",
+        "//services/tadoku-api/internal/timex/timextest",
+    ],
 )

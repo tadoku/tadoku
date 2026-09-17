@@ -15,7 +15,7 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v4"
-	"github.com/tadoku/tadoku/services/tadoku-api/internal/timex"
+	"github.com/tadoku/tadoku/services/tadoku-api/internal/timex/timextest"
 )
 
 var fixtureInstant = time.Date(2026, 9, 12, 12, 0, 0, 0, time.UTC)
@@ -38,7 +38,7 @@ func atFixtureInstant(fn func()) {
 	previous := jwt.TimeFunc
 	jwt.TimeFunc = func() time.Time { return fixtureInstant }
 	defer func() { jwt.TimeFunc = previous }()
-	timex.TheWorld(fixtureInstant, fn)
+	timextest.TheWorld(fixtureInstant, fn)
 }
 
 func runCase(t *testing.T, s *suite, name string, want int, implementations ...implementation) {

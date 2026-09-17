@@ -186,8 +186,8 @@ func (s *suite) reset(t *testing.T, caseDir string) {
 
 	var postgresSeeds, ketoSeeds []string
 	if caseDir != "" {
-		postgresSeeds = []string{filepath.Join(caseDir, "setup.sql")}
-		ketoSeeds = []string{filepath.Join(caseDir, "relationships.json")}
+		postgresSeeds = fixtureSeeds(caseDir, "setup.sql")
+		ketoSeeds = fixtureSeeds(caseDir, "relationships.json")
 	}
 	if s.db != nil {
 		if err := s.db.Reset(t.Context(), postgresSeeds...); err != nil {
@@ -200,6 +200,21 @@ func (s *suite) reset(t *testing.T, caseDir string) {
 		}
 	}
 	s.proxied.Store(0)
+}
+
+func fixtureSeeds(caseDir, name string) []string {
+	caseSeed := filepath.Join(caseDir, name)
+	info, err := os.Stat(caseSeed)
+	if err == nil && info.Mode().IsRegular() && info.Size() == 0 {
+		return nil
+	}
+	if !errors.Is(err, os.ErrNotExist) {
+		return []string{caseSeed}
+	}
+	if _, err := os.Lstat(caseSeed); !errors.Is(err, os.ErrNotExist) {
+		return []string{caseSeed}
+	}
+	return []string{filepath.Join(filepath.Dir(caseDir), name)}
 }
 
 func (s *suite) resetProxyCount() {
@@ -265,6 +280,72 @@ func TestRequireKnownCaseFilesRejectsUnexpectedDirectory(t *testing.T) {
 	want := fmt.Sprintf("unknown entry %q in case directory %s", "extra", dir)
 	if err.Error() != want {
 		t.Fatalf("error = %q, want %q", err, want)
+	}
+}
+
+func TestFixtureSeed(t *testing.T) {
+	testdata := t.TempDir()
+	operationDir := filepath.Join(testdata, "Operation")
+	caseDir := filepath.Join(operationDir, "200_case")
+	if err := os.MkdirAll(caseDir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+
+	operationSeed := filepath.Join(operationDir, "setup.sql")
+	if err := os.WriteFile(operationSeed, []byte("operation"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if got := fixtureSeeds(caseDir, "setup.sql"); len(got) != 1 || got[0] != operationSeed {
+		t.Errorf("fallback seeds = %v, want [%s]", got, operationSeed)
+	}
+
+	caseSeed := filepath.Join(caseDir, "setup.sql")
+	if err := os.WriteFile(caseSeed, []byte("case"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if got := fixtureSeeds(caseDir, "setup.sql"); len(got) != 1 || got[0] != caseSeed {
+		t.Errorf("case override = %v, want [%s]", got, caseSeed)
+	}
+	if err := os.WriteFile(caseSeed, nil, 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := checkKnownCaseFiles(caseDir); err != nil {
+		t.Errorf("zero-byte sentinel rejected by case guard: %v", err)
+	}
+	if got := fixtureSeeds(caseDir, "setup.sql"); len(got) != 0 {
+		t.Errorf("zero-byte override = %v, want no seeds", got)
+	}
+
+	if err := os.Remove(caseSeed); err != nil {
+		t.Fatal(err)
+	}
+	emptyTarget := filepath.Join(testdata, "empty.sql")
+	if err := os.WriteFile(emptyTarget, nil, 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Symlink(emptyTarget, caseSeed); err != nil {
+		t.Fatal(err)
+	}
+	if got := fixtureSeeds(caseDir, "setup.sql"); len(got) != 0 {
+		t.Errorf("symlinked zero-byte override = %v, want no seeds", got)
+	}
+	if err := os.Remove(emptyTarget); err != nil {
+		t.Fatal(err)
+	}
+	if got := fixtureSeeds(caseDir, "setup.sql"); len(got) != 1 || got[0] != caseSeed {
+		t.Errorf("dangling case override = %v, want unreadable case seed [%s]", got, caseSeed)
+	}
+	if err := os.Remove(caseSeed); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Remove(operationSeed); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(testdata, "setup.sql"), []byte("global"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if got := fixtureSeeds(caseDir, "setup.sql"); len(got) != 1 || got[0] != operationSeed {
+		t.Errorf("bounded fallback = %v, want missing operation seed [%s]", got, operationSeed)
 	}
 }
 

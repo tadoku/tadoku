@@ -182,15 +182,15 @@ type statusRecorder struct {
 }
 
 func (r *statusRecorder) WriteHeader(status int) {
-	if status >= 100 && status < 200 {
-		r.ResponseWriter.WriteHeader(status)
-		return
-	}
 	if r.status != 0 {
 		return
 	}
-	r.status = status
+	if status >= 100 && status < 200 && status != stdhttp.StatusSwitchingProtocols {
+		r.ResponseWriter.WriteHeader(status)
+		return
+	}
 	r.ResponseWriter.WriteHeader(status)
+	r.status = status
 }
 
 func (r *statusRecorder) Write(body []byte) (int, error) {
@@ -201,6 +201,13 @@ func (r *statusRecorder) Write(body []byte) (int, error) {
 }
 
 func (r *statusRecorder) Unwrap() stdhttp.ResponseWriter { return r.ResponseWriter }
+
+func (r *statusRecorder) FlushError() error {
+	if r.status == 0 {
+		r.status = stdhttp.StatusOK
+	}
+	return stdhttp.NewResponseController(r.ResponseWriter).Flush()
+}
 
 type correlationIDKey struct{}
 

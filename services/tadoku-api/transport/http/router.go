@@ -74,7 +74,7 @@ func NewHandler(
 		applicationMux: stdhttp.NewServeMux(),
 	}
 	router.rootHandler = router.rootMux
-	router.protectedApplicationHandler = withRequestTimeout(timeout, authenticate(rejectBanned(router.applicationMux)))
+	router.protectedApplicationHandler = withPanicRecovery(logger, withRequestTimeout(timeout, authenticate(rejectBanned(router.applicationMux))))
 	router.rootMux.HandleFunc("GET /livez", func(w stdhttp.ResponseWriter, _ *stdhttp.Request) {
 		_, _ = w.Write([]byte("ok"))
 	})

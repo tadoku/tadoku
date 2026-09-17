@@ -138,12 +138,23 @@ func TestIsAdminFailsClosed(t *testing.T) {
 	}
 }
 
-func TestRequireAuthenticatedIsIdentityOnly(t *testing.T) {
+func TestRequireAuthenticatedFailsClosedWhenBanLookupIsUnknown(t *testing.T) {
+	providerErr := errors.New("ban lookup failed")
+	ctx := identity.WithUser(t.Context(), &identity.User{Subject: "user"})
+	ctx = WithBanLookupError(ctx, providerErr)
+
+	err := (*Checker)(nil).RequireAuthenticated(ctx)
+	if errx.KindOf(err) != errx.Unavailable || !errors.Is(err, providerErr) {
+		t.Errorf("RequireAuthenticated error=%v, want unavailable preserving ban lookup error", err)
+	}
+}
+
+func TestRequireAuthenticatedAllowingUnknownBan(t *testing.T) {
 	ctx := identity.WithUser(t.Context(), &identity.User{Subject: "user"})
 	ctx = WithBanLookupError(ctx, errors.New("ban lookup failed"))
 
-	if err := (*Checker)(nil).RequireAuthenticated(ctx); err != nil {
-		t.Errorf("RequireAuthenticated error=%v, want nil", err)
+	if err := (*Checker)(nil).RequireAuthenticatedAllowingUnknownBan(ctx); err != nil {
+		t.Errorf("RequireAuthenticatedAllowingUnknownBan error=%v, want nil", err)
 	}
 }
 

@@ -44,14 +44,18 @@ in error text or wrap category sentinels. Legacy error types and mapping stay
 unchanged. Add call-site context only when it contributes useful diagnostics.
 
 Application operations and feature services that need authorization receive a
-named `*permissions.Checker` and call `RequireAuthenticated`, `RequireAdmin` or
-`IsAdmin` explicitly. Do not enforce administrator access with HTTP middleware.
+named `*permissions.Checker` and call `RequireAuthenticated`,
+`RequireAuthenticatedAllowingUnknownBan`, `RequireAdmin` or `IsAdmin` explicitly.
+Do not enforce administrator access with HTTP middleware.
 Construction for a protected slice binds the checker to the request-scoped
 `app:tadoku#admins` Keto lookup; the checker derives its subject from the verified
 `internal/identity` context and does not cache results. The shared HTTP ban gate
 remains separate and must not be duplicated in feature operations. Direct
 invocation outside the application router must provide its own equivalent baseline
-ban policy.
+ban policy. `RequireAuthenticated` and administrator checks fail closed when the
+shared ban lookup is inconclusive. `RequireAuthenticatedAllowingUnknownBan` is an
+explicit availability opt-out for read-only operations. Operations that mutate
+state must never use the fail-open variant.
 
 ## Contract and compatibility
 
@@ -124,11 +128,12 @@ permission or service-audience policy. After authentication, the application rou
 the authenticated subject's direct `app:tadoku#banned` relation once. Missing,
 empty and signed `guest` subjects skip Keto. A ban returns an empty 403, including
 for administrators. Keto ban read errors are logged and deliberately allow
-unprivileged handlers to continue, preserving the existing availability policy.
-The failed lookup is kept in the request context so a later administrator check
-returns unavailable without another ban query. Unlike legacy role enrichment,
-this narrow check has no unrelated administrator lookup whose failure could
-discard a successful ban result. Request deadlines bound the provider call.
+the shared gate to continue, preserving the existing availability policy for
+explicitly opted-in read operations. The failed lookup is kept in the request
+context so authenticated and administrator checks return unavailable without
+another ban query. Unlike legacy role enrichment, this narrow check has no
+unrelated administrator lookup whose failure could discard a successful ban
+result. Request deadlines bound the provider call.
 
 Missing or malformed bearer headers return the legacy 400 JSON error; extracted
 but invalid JWTs return its 401 JSON error. Anonymous gateway traffic supplies a

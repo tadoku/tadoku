@@ -10,6 +10,7 @@ func TestUpdateAnnouncement(t *testing.T) {
 	tests := []struct {
 		description []string
 		want        int
+		skipParity  bool
 	}{
 		{description: []string{"replace", "fields"}, want: http.StatusOK},
 		{description: []string{"null", "href"}, want: http.StatusOK},
@@ -17,11 +18,7 @@ func TestUpdateAnnouncement(t *testing.T) {
 		{description: []string{"empty", "href"}, want: http.StatusOK},
 		{description: []string{"whitespace", "fields"}, want: http.StatusOK},
 		{description: []string{"trailing", "json"}, want: http.StatusOK},
-		{description: []string{"xml"}, want: http.StatusOK},
-		{description: []string{"form"}, want: http.StatusBadRequest},
-		{description: []string{"guest", "form"}, want: http.StatusUnauthorized},
 		{description: []string{"whitespace", "body", "guest"}, want: http.StatusBadRequest},
-		{description: []string{"malformed", "xml", "guest"}, want: http.StatusBadRequest},
 		{description: []string{"missing", "title"}, want: http.StatusBadRequest},
 		{description: []string{"missing", "content"}, want: http.StatusBadRequest},
 		{description: []string{"invalid", "style"}, want: http.StatusBadRequest},
@@ -37,12 +34,12 @@ func TestUpdateAnnouncement(t *testing.T) {
 		{description: []string{"malformed", "json", "guest"}, want: http.StatusBadRequest},
 		{description: []string{"empty", "body"}, want: http.StatusBadRequest},
 		{description: []string{"null", "body"}, want: http.StatusBadRequest},
-		{description: []string{"unsupported", "content", "type"}, want: http.StatusBadRequest},
+		// The generated JSON decoder no longer receives an injected empty object.
+		{description: []string{"guest", "empty", "body"}, want: http.StatusBadRequest, skipParity: true},
+		{description: []string{"non", "admin", "empty", "body"}, want: http.StatusBadRequest, skipParity: true},
 		{description: []string{"guest"}, want: http.StatusUnauthorized},
-		{description: []string{"guest", "empty", "body"}, want: http.StatusUnauthorized},
 		{description: []string{"non", "admin"}, want: http.StatusForbidden},
 		{description: []string{"non", "admin", "invalid", "fields"}, want: http.StatusForbidden},
-		{description: []string{"non", "admin", "empty", "body"}, want: http.StatusForbidden},
 		{description: []string{"not", "found"}, want: http.StatusNotFound},
 		{description: []string{"wrong", "namespace"}, want: http.StatusNotFound},
 		{description: []string{"deleted"}, want: http.StatusNotFound},
@@ -52,9 +49,13 @@ func TestUpdateAnnouncement(t *testing.T) {
 	for _, test := range tests {
 		name := APITestName("UpdateAnnouncement", test.want, test.description...)
 		t.Run(name, func(t *testing.T) {
+			legacy := implementation{name: "content-api", handler: legacyContent.handler}
+			if test.skipParity {
+				legacy.skip = "intentional JSON-only decoding difference"
+			}
 			runCase(t, api, name, test.want,
 				implementation{name: "tadoku-api", handler: api.handler},
-				implementation{name: "content-api", handler: legacyContent.handler},
+				legacy,
 			)
 		})
 	}

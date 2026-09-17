@@ -814,6 +814,8 @@ paths:
                 $ref: "#/components/schemas/ContentAnnouncement"
         "400":
           description: Invalid announcement
+        "409":
+          description: Announcement already exists
       x-tadoku-source: Content
       x-tadoku-exposure: public
       x-tadoku-owner: native

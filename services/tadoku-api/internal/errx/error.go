@@ -11,6 +11,7 @@ const (
 	Unauthorized
 	Forbidden
 	NotFound
+	Conflict
 	Unavailable
 )
 
@@ -34,6 +35,10 @@ func NewForbiddenError(message string) *Error {
 
 func NewNotFoundError(message string) *Error {
 	return &Error{Kind: NotFound, Message: message}
+}
+
+func NewConflictError(message string) *Error {
+	return &Error{Kind: Conflict, Message: message}
 }
 
 // NewUnavailableError preserves the underlying cause, which may be nil.

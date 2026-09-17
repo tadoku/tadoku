@@ -3,12 +3,11 @@ package content
 
 import (
 	"context"
-	"fmt"
 	"strconv"
 	"time"
 
 	"github.com/google/uuid"
-	commondomain "github.com/tadoku/tadoku/services/common/domain"
+	"github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/timex"
 )
 
@@ -41,8 +40,14 @@ func IsValidAnnouncementStyle(style string) bool {
 }
 
 var (
-	ErrInvalidNamespace     = fmt.Errorf("namespace is required: %w", commondomain.ErrRequestInvalid)
-	ErrAnnouncementNotFound = fmt.Errorf("announcement not found: %w", commondomain.ErrNotFound)
+	ErrInvalidNamespace = &errx.Error{
+		Kind:    errx.InvalidInput,
+		Message: "namespace is required",
+	}
+	ErrAnnouncementNotFound = &errx.Error{
+		Kind:    errx.NotFound,
+		Message: "announcement not found",
+	}
 )
 
 type Service struct {

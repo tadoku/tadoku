@@ -3,10 +3,9 @@ package permissions
 
 import (
 	"context"
-	"fmt"
 
 	ketoclient "github.com/tadoku/tadoku/services/common/client/keto"
-	commondomain "github.com/tadoku/tadoku/services/common/domain"
+	"github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/identity"
 )
 
@@ -51,18 +50,33 @@ func (c *Checker) IsAdmin(ctx context.Context) (bool, error) {
 		return false, nil
 	}
 	if err, _ := ctx.Value(banLookupErrorKey{}).(error); err != nil {
-		return false, fmt.Errorf("%w: check ban permission: %w", commondomain.ErrAuthzUnavailable, err)
+		return false, &errx.Error{
+			Kind:    errx.Unavailable,
+			Message: "check ban permission",
+			Cause:   err,
+		}
 	}
 	if c == nil || c.lookupAdmin == nil {
-		return false, commondomain.ErrAuthzUnavailable
+		return false, &errx.Error{
+			Kind:    errx.Unavailable,
+			Message: "permissions unavailable",
+		}
 	}
 
 	allowed, err := c.lookupAdmin(ctx, user.Subject)
 	if err != nil {
-		return false, fmt.Errorf("%w: check admin permission: %w", commondomain.ErrAuthzUnavailable, err)
+		return false, &errx.Error{
+			Kind:    errx.Unavailable,
+			Message: "check admin permission",
+			Cause:   err,
+		}
 	}
 	if err := ctx.Err(); err != nil {
-		return false, fmt.Errorf("%w: check admin permission: %w", commondomain.ErrAuthzUnavailable, err)
+		return false, &errx.Error{
+			Kind:    errx.Unavailable,
+			Message: "check admin permission",
+			Cause:   err,
+		}
 	}
 	return allowed, nil
 }
@@ -70,7 +84,10 @@ func (c *Checker) IsAdmin(ctx context.Context) (bool, error) {
 func (c *Checker) RequireAuthenticated(ctx context.Context) error {
 	user := identity.FromContext(ctx)
 	if user == nil || user.Subject == "" || user.Subject == "guest" {
-		return commondomain.ErrUnauthorized
+		return &errx.Error{
+			Kind:    errx.Unauthorized,
+			Message: "unauthorized",
+		}
 	}
 	return nil
 }
@@ -85,7 +102,10 @@ func (c *Checker) RequireAdmin(ctx context.Context) error {
 		return err
 	}
 	if !allowed {
-		return commondomain.ErrForbidden
+		return &errx.Error{
+			Kind:    errx.Forbidden,
+			Message: "forbidden",
+		}
 	}
 	return nil
 }

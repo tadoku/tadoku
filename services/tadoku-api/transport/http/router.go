@@ -8,13 +8,9 @@ import (
 	stdhttp "net/http"
 	"time"
 
-	commondomain "github.com/tadoku/tadoku/services/common/domain"
-	"github.com/tadoku/tadoku/services/common/http/httperr"
 	"github.com/tadoku/tadoku/services/tadoku-api/app"
 	"github.com/tadoku/tadoku/services/tadoku-api/generated/openapi"
 )
-
-var errInvalidUUID = fmt.Errorf("invalid UUID: %w", commondomain.ErrRequestInvalid)
 
 // Router keeps application routes behind shared middleware while allowing this
 // package to attach probes and temporary legacy proxies outside it.
@@ -94,11 +90,7 @@ func NewHandler(
 				w.WriteHeader(stdhttp.StatusBadRequest)
 			},
 			ResponseErrorHandlerFunc: func(w stdhttp.ResponseWriter, _ *stdhttp.Request, err error) {
-				status, ok := httperr.StatusCode(err)
-				if !ok {
-					status = stdhttp.StatusInternalServerError
-				}
-				w.WriteHeader(status)
+				w.WriteHeader(errorStatus(err))
 			},
 		},
 	)

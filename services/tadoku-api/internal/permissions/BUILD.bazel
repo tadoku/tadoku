@@ -7,7 +7,7 @@ go_library(
     visibility = ["//services/tadoku-api:__subpackages__"],
     deps = [
         "//services/common/client/keto",
-        "//services/common/domain",
+        "//services/tadoku-api/internal/errx",
         "//services/tadoku-api/internal/identity",
     ],
 )
@@ -18,7 +18,7 @@ go_test(
     embed = [":permissions"],
     deps = [
         "//services/common/client/keto",
-        "//services/common/domain",
+        "//services/tadoku-api/internal/errx",
         "//services/tadoku-api/internal/identity",
     ],
 )

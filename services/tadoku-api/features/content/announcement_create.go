@@ -2,15 +2,17 @@ package content
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"github.com/google/uuid"
-	commondomain "github.com/tadoku/tadoku/services/common/domain"
+	"github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/timex"
 )
 
-var ErrInvalidAnnouncement = fmt.Errorf("invalid announcement: %w", commondomain.ErrRequestInvalid)
+var ErrInvalidAnnouncement = &errx.Error{
+	Kind:    errx.InvalidInput,
+	Message: "invalid announcement",
+}
 
 type CreateAnnouncementParameters struct {
 	ID        uuid.UUID

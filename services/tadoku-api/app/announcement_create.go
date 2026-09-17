@@ -8,7 +8,7 @@ import (
 
 type CreateAnnouncementParameters = content.CreateAnnouncementParameters
 
-func (a *Application) CreateAnnouncement(ctx context.Context, parameters CreateAnnouncementParameters) (*content.Announcement, error) {
+func (a *Application) CreateAnnouncement(ctx context.Context, parameters CreateAnnouncementParameters) (*Announcement, error) {
 	if err := a.permissions.RequireAdmin(ctx); err != nil {
 		return nil, err
 	}

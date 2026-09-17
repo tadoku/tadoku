@@ -53,8 +53,6 @@ func runCase(t *testing.T, s *suite, name string, want int, implementations ...i
 	}
 }
 
-// checkHTTPGolden sends the checked-in HTTP request through the handler and
-// compares its complete response with the reviewed golden file.
 func checkHTTPGolden(t *testing.T, handler http.Handler, directory string, wantStatus int) {
 	t.Helper()
 

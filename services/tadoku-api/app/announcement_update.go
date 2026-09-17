@@ -9,12 +9,12 @@ import (
 
 type UpdateAnnouncementParameters = content.UpdateAnnouncementParameters
 
-func (a *Application) UpdateAnnouncement(ctx context.Context, parameters UpdateAnnouncementParameters) (*content.Announcement, error) {
+func (a *Application) UpdateAnnouncement(ctx context.Context, parameters UpdateAnnouncementParameters) (*Announcement, error) {
 	if err := a.permissions.RequireAdmin(ctx); err != nil {
 		return nil, err
 	}
 
-	var result *content.Announcement
+	var result *Announcement
 	err := postgres.RunInTransaction(ctx, a.db, func(ctx context.Context) (err error) {
 		result, err = a.content.UpdateAnnouncement(ctx, parameters)
 		return

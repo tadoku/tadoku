@@ -1,4 +1,3 @@
-// Package content owns editorial content and its persistence.
 package content
 
 import (
@@ -30,13 +29,28 @@ type AnnouncementList struct {
 	NextPageToken string
 }
 
-func IsValidAnnouncementStyle(style string) bool {
+func isValidAnnouncementStyle(style string) bool {
 	switch style {
 	case "success", "warning", "error", "info":
 		return true
 	default:
 		return false
 	}
+}
+
+func requireID(id uuid.UUID) error {
+	if id == uuid.Nil {
+		return ErrInvalidAnnouncement
+	}
+	return nil
+}
+
+func validateAnnouncementFields(namespace, title, content, style string, startsAt, endsAt time.Time) error {
+	if namespace == "" || title == "" || content == "" ||
+		!isValidAnnouncementStyle(style) || !timex.IsValidRange(startsAt, endsAt) {
+		return ErrInvalidAnnouncement
+	}
+	return nil
 }
 
 var (

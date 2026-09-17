@@ -3,8 +3,6 @@ package http
 import (
 	"context"
 
-	"github.com/google/uuid"
-	"github.com/oapi-codegen/nullable"
 	"github.com/tadoku/tadoku/services/tadoku-api/app"
 	"github.com/tadoku/tadoku/services/tadoku-api/generated/openapi"
 )
@@ -17,9 +15,9 @@ func (s *server) ContentAnnouncementUpdate(
 		return openapi.ContentAnnouncementUpdate400Response{}, nil
 	}
 
-	id, err := uuid.Parse(request.Id)
+	id, err := parseAnnouncementID(request.Id)
 	if err != nil {
-		return nil, errInvalidUUID
+		return nil, err
 	}
 
 	body := request.Body
@@ -43,20 +41,5 @@ func (s *server) ContentAnnouncementUpdate(
 		return nil, err
 	}
 
-	responseHref := nullable.NewNullNullable[string]()
-	if item.Href != nil {
-		responseHref = nullable.NewNullableWithValue(*item.Href)
-	}
-	return openapi.ContentAnnouncementUpdate200JSONResponse{
-		Id:        &item.ID,
-		Namespace: &item.Namespace,
-		Title:     item.Title,
-		Content:   item.Content,
-		Style:     openapi.ContentAnnouncementStyle(item.Style),
-		Href:      responseHref,
-		StartsAt:  item.StartsAt,
-		EndsAt:    item.EndsAt,
-		CreatedAt: &item.CreatedAt,
-		UpdatedAt: &item.UpdatedAt,
-	}, nil
+	return openapi.ContentAnnouncementUpdate200JSONResponse(contentAnnouncement(item)), nil
 }

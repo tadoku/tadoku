@@ -102,9 +102,6 @@ func newFixture(t *testing.T) (context.Context, fixture) {
 	return ctx, fixture{db, schema, bookRepository{db, schema}, noteRepository{db, schema}}
 }
 
-// These independent concrete participants stand in for two feature repositories.
-// Their business methods accept context and business values, with SQL plumbing
-// confined to the repository implementation.
 type bookRepository struct {
 	db     *pgxpool.Pool
 	schema string

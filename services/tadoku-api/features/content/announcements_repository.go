@@ -48,17 +48,13 @@ func (r *AnnouncementsRepository) CreateAnnouncement(ctx context.Context, item *
 		return err
 	}
 
-	var href pgtype.Text
-	if item.Href != nil {
-		href = pgtype.Text{String: *item.Href, Valid: true}
-	}
 	err = queries.New(executor).CreateAnnouncement(ctx, queries.CreateAnnouncementParams{
 		ID:        pgtype.UUID{Bytes: item.ID, Valid: true},
 		Namespace: item.Namespace,
 		Title:     item.Title,
 		Content:   item.Content,
 		Style:     item.Style,
-		Href:      href,
+		Href:      hrefToText(item.Href),
 		StartsAt:  pgtype.Timestamp{Time: item.StartsAt, Valid: true},
 		EndsAt:    pgtype.Timestamp{Time: item.EndsAt, Valid: true},
 		CreatedAt: pgtype.Timestamp{Time: item.CreatedAt, Valid: true},
@@ -76,17 +72,13 @@ func (r *AnnouncementsRepository) UpdateAnnouncement(ctx context.Context, item *
 		return err
 	}
 
-	var href pgtype.Text
-	if item.Href != nil {
-		href = pgtype.Text{String: *item.Href, Valid: true}
-	}
 	_, err = queries.New(executor).UpdateAnnouncement(ctx, queries.UpdateAnnouncementParams{
 		ID:        pgtype.UUID{Bytes: item.ID, Valid: true},
 		Namespace: item.Namespace,
 		Title:     item.Title,
 		Content:   item.Content,
 		Style:     item.Style,
-		Href:      href,
+		Href:      hrefToText(item.Href),
 		StartsAt:  pgtype.Timestamp{Time: item.StartsAt, Valid: true},
 		EndsAt:    pgtype.Timestamp{Time: item.EndsAt, Valid: true},
 		UpdatedAt: pgtype.Timestamp{Time: item.UpdatedAt, Valid: true},
@@ -117,23 +109,8 @@ func (r *AnnouncementsRepository) FindAnnouncementByID(ctx context.Context, name
 		return nil, fmt.Errorf("find announcement by ID: %w", err)
 	}
 
-	var href *string
-	if row.Href.Valid {
-		href = &row.Href.String
-	}
-
-	return &Announcement{
-		ID:        uuid.UUID(row.ID.Bytes),
-		Namespace: row.Namespace,
-		Title:     row.Title,
-		Content:   row.Content,
-		Style:     row.Style,
-		Href:      href,
-		StartsAt:  row.StartsAt.Time,
-		EndsAt:    row.EndsAt.Time,
-		CreatedAt: row.CreatedAt.Time,
-		UpdatedAt: row.UpdatedAt.Time,
-	}, nil
+	item := announcementFrom(row.ID, row.Namespace, row.Title, row.Content, row.Style, row.Href, row.StartsAt, row.EndsAt, row.CreatedAt, row.UpdatedAt)
+	return &item, nil
 }
 
 func (r *AnnouncementsRepository) CountAnnouncements(ctx context.Context, namespace string) (int, error) {
@@ -166,23 +143,7 @@ func (r *AnnouncementsRepository) ListAnnouncements(ctx context.Context, namespa
 
 	result := make([]Announcement, 0, len(rows))
 	for _, row := range rows {
-		var href *string
-		if row.Href.Valid {
-			href = &row.Href.String
-		}
-
-		result = append(result, Announcement{
-			ID:        uuid.UUID(row.ID.Bytes),
-			Namespace: row.Namespace,
-			Title:     row.Title,
-			Content:   row.Content,
-			Style:     row.Style,
-			Href:      href,
-			StartsAt:  row.StartsAt.Time,
-			EndsAt:    row.EndsAt.Time,
-			CreatedAt: row.CreatedAt.Time,
-			UpdatedAt: row.UpdatedAt.Time,
-		})
+		result = append(result, announcementFrom(row.ID, row.Namespace, row.Title, row.Content, row.Style, row.Href, row.StartsAt, row.EndsAt, row.CreatedAt, row.UpdatedAt))
 	}
 
 	return result, nil
@@ -205,24 +166,38 @@ func (r *AnnouncementsRepository) ListActiveAnnouncements(ctx context.Context, n
 
 	result := make([]Announcement, 0, len(rows))
 	for _, row := range rows {
-		var href *string
-		if row.Href.Valid {
-			href = &row.Href.String
-		}
-
-		result = append(result, Announcement{
-			ID:        uuid.UUID(row.ID.Bytes),
-			Namespace: row.Namespace,
-			Title:     row.Title,
-			Content:   row.Content,
-			Style:     row.Style,
-			Href:      href,
-			StartsAt:  row.StartsAt.Time,
-			EndsAt:    row.EndsAt.Time,
-			CreatedAt: row.CreatedAt.Time,
-			UpdatedAt: row.UpdatedAt.Time,
-		})
+		result = append(result, announcementFrom(row.ID, row.Namespace, row.Title, row.Content, row.Style, row.Href, row.StartsAt, row.EndsAt, row.CreatedAt, row.UpdatedAt))
 	}
 
 	return result, nil
+}
+
+func hrefFromText(value pgtype.Text) *string {
+	if !value.Valid {
+		return nil
+	}
+	href := value.String
+	return &href
+}
+
+func hrefToText(value *string) pgtype.Text {
+	if value == nil {
+		return pgtype.Text{}
+	}
+	return pgtype.Text{String: *value, Valid: true}
+}
+
+func announcementFrom(id pgtype.UUID, namespace, title, content, style string, href pgtype.Text, startsAt, endsAt, createdAt, updatedAt pgtype.Timestamp) Announcement {
+	return Announcement{
+		ID:        uuid.UUID(id.Bytes),
+		Namespace: namespace,
+		Title:     title,
+		Content:   content,
+		Style:     style,
+		Href:      hrefFromText(href),
+		StartsAt:  startsAt.Time,
+		EndsAt:    endsAt.Time,
+		CreatedAt: createdAt.Time,
+		UpdatedAt: updatedAt.Time,
+	}
 }

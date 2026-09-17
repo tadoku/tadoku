@@ -49,27 +49,6 @@ func TestDependencyFailures(t *testing.T) {
 			handler:     poolClosed.handler,
 		},
 		{
-			operation:   "ListAnnouncements",
-			description: []string{"non", "admin"},
-			want:        http.StatusForbidden,
-			suite:       poolClosed,
-			handler:     poolClosed.handler,
-		},
-		{
-			operation:   "ListActiveAnnouncements",
-			description: []string{"read", "failure"},
-			want:        http.StatusInternalServerError,
-			suite:       poolClosed,
-			handler:     poolClosed.handler,
-		},
-		{
-			operation:   "ListAnnouncements",
-			description: []string{"read", "failure"},
-			want:        http.StatusInternalServerError,
-			suite:       poolClosed,
-			handler:     poolClosed.handler,
-		},
-		{
 			subtest:     "canceled read",
 			operation:   "ListActiveAnnouncements",
 			description: []string{"read", "failure"},

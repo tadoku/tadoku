@@ -8,7 +8,9 @@ import (
 	"github.com/tadoku/tadoku/services/tadoku-api/infra/postgres"
 )
 
-func (a *Application) FindAnnouncementByID(ctx context.Context, namespace string, id uuid.UUID) (*content.Announcement, error) {
+type Announcement = content.Announcement
+
+func (a *Application) FindAnnouncementByID(ctx context.Context, namespace string, id uuid.UUID) (*Announcement, error) {
 	if err := a.permissions.RequireAdmin(ctx); err != nil {
 		return nil, err
 	}
@@ -16,7 +18,7 @@ func (a *Application) FindAnnouncementByID(ctx context.Context, namespace string
 	return a.content.FindAnnouncementByID(ctx, namespace, id)
 }
 
-func (a *Application) ListActiveAnnouncements(ctx context.Context, namespace string) ([]content.Announcement, error) {
+func (a *Application) ListActiveAnnouncements(ctx context.Context, namespace string) ([]Announcement, error) {
 	return a.content.ListActiveAnnouncements(ctx, namespace)
 }
 

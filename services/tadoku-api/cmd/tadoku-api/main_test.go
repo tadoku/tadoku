@@ -86,7 +86,6 @@ func TestApplicationStartsAndShutsDown(t *testing.T) {
 		}
 	})
 
-	// Verify the application is ready to accept requests.
 	_, port, err := net.SplitHostPort(app.listener.Addr().String())
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -107,7 +106,6 @@ func TestApplicationStartsAndShutsDown(t *testing.T) {
 		t.Errorf("application_name=%q want=%q", got, cfg.ServiceName)
 	}
 
-	// Existing process metrics still use their own listener.
 	_, metricsPort, err := net.SplitHostPort(app.metricsListener.Addr().String())
 	if err != nil {
 		t.Fatal(err)
@@ -126,7 +124,6 @@ func TestApplicationStartsAndShutsDown(t *testing.T) {
 		t.Error("process metrics not exported")
 	}
 
-	// Shutdown closes both listeners and the shared database pool.
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
 	if err := app.wait(ctx); err != nil {

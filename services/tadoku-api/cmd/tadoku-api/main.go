@@ -132,14 +132,13 @@ func start(cfg config, logger *slog.Logger) (*application, error) {
 	contentRepository := content.NewAnnouncementsRepository(pool)
 	contentService := content.NewService(contentRepository)
 	api := app.New(contentService, pool, permissionChecker)
-	rejectBanned := newBannedUserMiddleware(cfg.KetoReadURL, logger)
+	rejectBanned := newBannedUserMiddleware(keto, logger)
 
 	handler, err := transporthttp.NewHandler(api, pool.Ping, cfg.RequestTimeout, logger, authenticate, rejectBanned)
 	if err != nil {
 		return nil, err
 	}
 
-	// Temporary legacy routes; the application router stands on its own.
 	upstreams := transporthttp.Upstreams{
 		Authz:     cfg.AuthzURL,
 		Content:   cfg.ContentURL,
@@ -216,8 +215,7 @@ func start(cfg config, logger *slog.Logger) (*application, error) {
 	return app, nil
 }
 
-func newBannedUserMiddleware(ketoReadURL string, logger *slog.Logger) func(http.Handler) http.Handler {
-	keto := ketoclient.NewReadClient(ketoReadURL)
+func newBannedUserMiddleware(keto permissions.KetoReader, logger *slog.Logger) func(http.Handler) http.Handler {
 	return transporthttp.RejectBannedUsers(func(ctx context.Context, subjectID string) (bool, error) {
 		return keto.CheckPermission(ctx, "app", "tadoku", "banned", ketoclient.Subject{ID: subjectID})
 	}, logger)

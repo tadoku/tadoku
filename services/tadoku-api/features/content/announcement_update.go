@@ -20,11 +20,7 @@ type UpdateAnnouncementParameters struct {
 }
 
 func (p UpdateAnnouncementParameters) Validate() error {
-	if p.Namespace == "" || p.Title == "" || p.Content == "" ||
-		!IsValidAnnouncementStyle(p.Style) || !timex.IsValidRange(p.StartsAt, p.EndsAt) {
-		return ErrInvalidAnnouncement
-	}
-	return nil
+	return validateAnnouncementFields(p.Namespace, p.Title, p.Content, p.Style, p.StartsAt, p.EndsAt)
 }
 
 func (s *Service) UpdateAnnouncement(ctx context.Context, parameters UpdateAnnouncementParameters) (*Announcement, error) {

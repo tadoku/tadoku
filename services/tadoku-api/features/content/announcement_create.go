@@ -23,11 +23,10 @@ type CreateAnnouncementParameters struct {
 }
 
 func (p CreateAnnouncementParameters) Validate() error {
-	if p.ID == uuid.Nil || p.Namespace == "" || p.Title == "" || p.Content == "" ||
-		!IsValidAnnouncementStyle(p.Style) || !timex.IsValidRange(p.StartsAt, p.EndsAt) {
-		return ErrInvalidAnnouncement
+	if err := requireID(p.ID); err != nil {
+		return err
 	}
-	return nil
+	return validateAnnouncementFields(p.Namespace, p.Title, p.Content, p.Style, p.StartsAt, p.EndsAt)
 }
 
 func (s *Service) CreateAnnouncement(ctx context.Context, parameters CreateAnnouncementParameters) (*Announcement, error) {

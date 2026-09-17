@@ -39,6 +39,7 @@ go_test(
     ],
     embed = [":http"],
     deps = [
+        "//services/common/domain",
         "//services/tadoku-api/app",
         "//services/tadoku-api/generated/openapi",
         "//services/tadoku-api/internal/identity",

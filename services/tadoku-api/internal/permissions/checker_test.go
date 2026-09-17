@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	ketoclient "github.com/tadoku/tadoku/services/common/client/keto"
+	commondomain "github.com/tadoku/tadoku/services/common/domain"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/identity"
 )
 
@@ -30,7 +31,7 @@ func TestKetoCheckerUsesAdminRelation(t *testing.T) {
 		return true, providerErr
 	}))
 	allowed, err := checker.IsAdmin(ctx)
-	if allowed || !errors.Is(err, ErrUnavailable) || !errors.Is(err, providerErr) {
+	if allowed || !errors.Is(err, commondomain.ErrAuthzUnavailable) || !errors.Is(err, providerErr) {
 		t.Errorf("IsAdmin=(%t, %v), want false and wrapped provider failure", allowed, err)
 	}
 	if calls != 1 {
@@ -38,8 +39,8 @@ func TestKetoCheckerUsesAdminRelation(t *testing.T) {
 	}
 
 	allowed, err = NewKetoChecker(nil).IsAdmin(ctx)
-	if allowed || !errors.Is(err, ErrUnavailable) {
-		t.Errorf("nil Keto client: IsAdmin=(%t, %v), want (false, ErrUnavailable)", allowed, err)
+	if allowed || !errors.Is(err, commondomain.ErrAuthzUnavailable) {
+		t.Errorf("nil Keto client: IsAdmin=(%t, %v), want (false, ErrAuthzUnavailable)", allowed, err)
 	}
 }
 
@@ -107,7 +108,7 @@ func TestIsAdminFailsClosed(t *testing.T) {
 	if allowed {
 		t.Error("IsAdmin allowed a provider result with an error")
 	}
-	for _, target := range []error{ErrUnavailable, providerErr} {
+	for _, target := range []error{commondomain.ErrAuthzUnavailable, providerErr} {
 		if !errors.Is(err, target) {
 			t.Errorf("error %v does not match %v", err, target)
 		}
@@ -119,8 +120,8 @@ func TestIsAdminFailsClosed(t *testing.T) {
 		return true, nil
 	})
 	allowed, err = checker.IsAdmin(canceledCtx)
-	if allowed || !errors.Is(err, ErrUnavailable) || !errors.Is(err, context.Canceled) {
-		t.Errorf("IsAdmin=(%t, %v), want (false, ErrUnavailable wrapping context.Canceled)", allowed, err)
+	if allowed || !errors.Is(err, commondomain.ErrAuthzUnavailable) || !errors.Is(err, context.Canceled) {
+		t.Errorf("IsAdmin=(%t, %v), want (false, ErrAuthzUnavailable wrapping context.Canceled)", allowed, err)
 	}
 
 	for _, test := range []struct {
@@ -132,8 +133,8 @@ func TestIsAdminFailsClosed(t *testing.T) {
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			allowed, err := test.checker.IsAdmin(identity.WithUser(t.Context(), &identity.User{Subject: "admin"}))
-			if allowed || !errors.Is(err, ErrUnavailable) {
-				t.Errorf("IsAdmin=(%t, %v), want (false, ErrUnavailable)", allowed, err)
+			if allowed || !errors.Is(err, commondomain.ErrAuthzUnavailable) {
+				t.Errorf("IsAdmin=(%t, %v), want (false, ErrAuthzUnavailable)", allowed, err)
 			}
 		})
 	}
@@ -158,12 +159,12 @@ func TestRequirements(t *testing.T) {
 		wantAdmin error
 		wantCalls int
 	}{
-		{name: "missing identity", wantAuth: ErrUnauthorized, wantAdmin: ErrUnauthorized},
-		{name: "empty subject", user: &identity.User{}, wantAuth: ErrUnauthorized, wantAdmin: ErrUnauthorized},
-		{name: "guest", user: &identity.User{Subject: "guest"}, wantAuth: ErrUnauthorized, wantAdmin: ErrUnauthorized},
-		{name: "non-admin", user: &identity.User{Subject: "reader"}, wantAdmin: ErrForbidden, wantCalls: 1},
+		{name: "missing identity", wantAuth: commondomain.ErrUnauthorized, wantAdmin: commondomain.ErrUnauthorized},
+		{name: "empty subject", user: &identity.User{}, wantAuth: commondomain.ErrUnauthorized, wantAdmin: commondomain.ErrUnauthorized},
+		{name: "guest", user: &identity.User{Subject: "guest"}, wantAuth: commondomain.ErrUnauthorized, wantAdmin: commondomain.ErrUnauthorized},
+		{name: "non-admin", user: &identity.User{Subject: "reader"}, wantAdmin: commondomain.ErrForbidden, wantCalls: 1},
 		{name: "admin", user: &identity.User{Subject: "admin"}, allowed: true, wantCalls: 1},
-		{name: "provider unavailable", user: &identity.User{Subject: "admin"}, lookupErr: context.DeadlineExceeded, wantAdmin: ErrUnavailable, wantCalls: 1},
+		{name: "provider unavailable", user: &identity.User{Subject: "admin"}, lookupErr: context.DeadlineExceeded, wantAdmin: commondomain.ErrAuthzUnavailable, wantCalls: 1},
 	}
 
 	for _, test := range tests {

@@ -11,6 +11,7 @@ import (
 	"testing"
 	"time"
 
+	commondomain "github.com/tadoku/tadoku/services/common/domain"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/identity"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/permissions"
 )
@@ -42,7 +43,7 @@ func TestBanLookupFailureBlocksPrivilegeChecks(t *testing.T) {
 			}, slog.New(slog.NewTextHandler(io.Discard, nil)))
 			handler := rejectBanned(stdhttp.HandlerFunc(func(w stdhttp.ResponseWriter, r *stdhttp.Request) {
 				allowed, err := test.check(checker, r.Context())
-				if !errors.Is(err, permissions.ErrUnavailable) || !errors.Is(err, providerErr) {
+				if !errors.Is(err, commondomain.ErrAuthzUnavailable) || !errors.Is(err, providerErr) {
 					t.Errorf("permission error=%v, want unavailable preserving ban lookup error", err)
 				}
 				if allowed {

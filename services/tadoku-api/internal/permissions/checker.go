@@ -10,12 +10,6 @@ import (
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/identity"
 )
 
-var (
-	ErrUnauthorized = commondomain.ErrUnauthorized
-	ErrForbidden    = commondomain.ErrForbidden
-	ErrUnavailable  = fmt.Errorf("permissions unavailable: %w", commondomain.ErrAuthzUnavailable)
-)
-
 // Checker evaluates identity and admin-role requirements for the verified user.
 // A shared ban gate may record an inconclusive lookup so privileges fail closed.
 type Checker struct {
@@ -57,18 +51,18 @@ func (c *Checker) IsAdmin(ctx context.Context) (bool, error) {
 		return false, nil
 	}
 	if err, _ := ctx.Value(banLookupErrorKey{}).(error); err != nil {
-		return false, fmt.Errorf("%w: check ban permission: %w", ErrUnavailable, err)
+		return false, fmt.Errorf("%w: check ban permission: %w", commondomain.ErrAuthzUnavailable, err)
 	}
 	if c == nil || c.lookupAdmin == nil {
-		return false, ErrUnavailable
+		return false, commondomain.ErrAuthzUnavailable
 	}
 
 	allowed, err := c.lookupAdmin(ctx, user.Subject)
 	if err != nil {
-		return false, fmt.Errorf("%w: check admin permission: %w", ErrUnavailable, err)
+		return false, fmt.Errorf("%w: check admin permission: %w", commondomain.ErrAuthzUnavailable, err)
 	}
 	if err := ctx.Err(); err != nil {
-		return false, fmt.Errorf("%w: check admin permission: %w", ErrUnavailable, err)
+		return false, fmt.Errorf("%w: check admin permission: %w", commondomain.ErrAuthzUnavailable, err)
 	}
 	return allowed, nil
 }
@@ -76,7 +70,7 @@ func (c *Checker) IsAdmin(ctx context.Context) (bool, error) {
 func (c *Checker) RequireAuthenticated(ctx context.Context) error {
 	user := identity.FromContext(ctx)
 	if user == nil || user.Subject == "" || user.Subject == "guest" {
-		return ErrUnauthorized
+		return commondomain.ErrUnauthorized
 	}
 	return nil
 }
@@ -91,7 +85,7 @@ func (c *Checker) RequireAdmin(ctx context.Context) error {
 		return err
 	}
 	if !allowed {
-		return ErrForbidden
+		return commondomain.ErrForbidden
 	}
 	return nil
 }

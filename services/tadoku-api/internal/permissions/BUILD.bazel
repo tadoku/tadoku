@@ -18,6 +18,7 @@ go_test(
     embed = [":permissions"],
     deps = [
         "//services/common/client/keto",
+        "//services/common/domain",
         "//services/tadoku-api/internal/identity",
     ],
 )

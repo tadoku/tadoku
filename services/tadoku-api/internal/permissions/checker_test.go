@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	ketoclient "github.com/tadoku/tadoku/services/common/client/keto"
+	"github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/identity"
 )
 
@@ -30,7 +31,7 @@ func TestKetoCheckerUsesAdminRelation(t *testing.T) {
 		return true, providerErr
 	}))
 	allowed, err := checker.IsAdmin(ctx)
-	if allowed || !errors.Is(err, ErrUnavailable) || !errors.Is(err, providerErr) {
+	if allowed || errx.KindOf(err) != errx.Unavailable || !errors.Is(err, providerErr) {
 		t.Errorf("IsAdmin=(%t, %v), want false and wrapped provider failure", allowed, err)
 	}
 	if calls != 1 {
@@ -38,8 +39,8 @@ func TestKetoCheckerUsesAdminRelation(t *testing.T) {
 	}
 
 	allowed, err = NewKetoChecker(nil).IsAdmin(ctx)
-	if allowed || !errors.Is(err, ErrUnavailable) {
-		t.Errorf("nil Keto client: IsAdmin=(%t, %v), want (false, ErrUnavailable)", allowed, err)
+	if allowed || errx.KindOf(err) != errx.Unavailable {
+		t.Errorf("nil Keto client: IsAdmin=(%t, %v), want false and unavailable kind", allowed, err)
 	}
 }
 
@@ -107,10 +108,8 @@ func TestIsAdminFailsClosed(t *testing.T) {
 	if allowed {
 		t.Error("IsAdmin allowed a provider result with an error")
 	}
-	for _, target := range []error{ErrUnavailable, providerErr} {
-		if !errors.Is(err, target) {
-			t.Errorf("error %v does not match %v", err, target)
-		}
+	if errx.KindOf(err) != errx.Unavailable || !errors.Is(err, providerErr) {
+		t.Errorf("error=%v, want unavailable kind preserving provider failure", err)
 	}
 
 	canceledCtx, cancel := context.WithCancel(identity.WithUser(t.Context(), &identity.User{Subject: "admin"}))
@@ -119,8 +118,8 @@ func TestIsAdminFailsClosed(t *testing.T) {
 		return true, nil
 	})
 	allowed, err = checker.IsAdmin(canceledCtx)
-	if allowed || !errors.Is(err, ErrUnavailable) || !errors.Is(err, context.Canceled) {
-		t.Errorf("IsAdmin=(%t, %v), want (false, ErrUnavailable wrapping context.Canceled)", allowed, err)
+	if allowed || errx.KindOf(err) != errx.Unavailable || !errors.Is(err, context.Canceled) {
+		t.Errorf("IsAdmin=(%t, %v), want false and unavailable kind wrapping context.Canceled", allowed, err)
 	}
 
 	for _, test := range []struct {
@@ -132,8 +131,8 @@ func TestIsAdminFailsClosed(t *testing.T) {
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			allowed, err := test.checker.IsAdmin(identity.WithUser(t.Context(), &identity.User{Subject: "admin"}))
-			if allowed || !errors.Is(err, ErrUnavailable) {
-				t.Errorf("IsAdmin=(%t, %v), want (false, ErrUnavailable)", allowed, err)
+			if allowed || errx.KindOf(err) != errx.Unavailable {
+				t.Errorf("IsAdmin=(%t, %v), want false and unavailable kind", allowed, err)
 			}
 		})
 	}
@@ -154,16 +153,16 @@ func TestRequirements(t *testing.T) {
 		user      *identity.User
 		allowed   bool
 		lookupErr error
-		wantAuth  error
-		wantAdmin error
+		wantAuth  errx.Kind
+		wantAdmin errx.Kind
 		wantCalls int
 	}{
-		{name: "missing identity", wantAuth: ErrUnauthorized, wantAdmin: ErrUnauthorized},
-		{name: "empty subject", user: &identity.User{}, wantAuth: ErrUnauthorized, wantAdmin: ErrUnauthorized},
-		{name: "guest", user: &identity.User{Subject: "guest"}, wantAuth: ErrUnauthorized, wantAdmin: ErrUnauthorized},
-		{name: "non-admin", user: &identity.User{Subject: "reader"}, wantAdmin: ErrForbidden, wantCalls: 1},
+		{name: "missing identity", wantAuth: errx.Unauthorized, wantAdmin: errx.Unauthorized},
+		{name: "empty subject", user: &identity.User{}, wantAuth: errx.Unauthorized, wantAdmin: errx.Unauthorized},
+		{name: "guest", user: &identity.User{Subject: "guest"}, wantAuth: errx.Unauthorized, wantAdmin: errx.Unauthorized},
+		{name: "non-admin", user: &identity.User{Subject: "reader"}, wantAdmin: errx.Forbidden, wantCalls: 1},
 		{name: "admin", user: &identity.User{Subject: "admin"}, allowed: true, wantCalls: 1},
-		{name: "provider unavailable", user: &identity.User{Subject: "admin"}, lookupErr: context.DeadlineExceeded, wantAdmin: ErrUnavailable, wantCalls: 1},
+		{name: "provider unavailable", user: &identity.User{Subject: "admin"}, lookupErr: context.DeadlineExceeded, wantAdmin: errx.Unavailable, wantCalls: 1},
 	}
 
 	for _, test := range tests {
@@ -179,12 +178,12 @@ func TestRequirements(t *testing.T) {
 				return test.allowed, test.lookupErr
 			})
 
-			if err := checker.RequireAuthenticated(ctx); !errors.Is(err, test.wantAuth) || (err != nil) != (test.wantAuth != nil) {
-				t.Errorf("RequireAuthenticated error=%v, want %v", err, test.wantAuth)
+			if err := checker.RequireAuthenticated(ctx); errx.KindOf(err) != test.wantAuth || (err == nil) != (test.wantAuth == errx.Unknown) {
+				t.Errorf("RequireAuthenticated error=%v, want kind %v (nil for Unknown)", err, test.wantAuth)
 			}
 			err := checker.RequireAdmin(ctx)
-			if !errors.Is(err, test.wantAdmin) || (err != nil) != (test.wantAdmin != nil) {
-				t.Errorf("RequireAdmin error=%v, want %v", err, test.wantAdmin)
+			if errx.KindOf(err) != test.wantAdmin || (err == nil) != (test.wantAdmin == errx.Unknown) {
+				t.Errorf("RequireAdmin error=%v, want kind %v (nil for Unknown)", err, test.wantAdmin)
 			}
 			if test.lookupErr != nil && !errors.Is(err, test.lookupErr) {
 				t.Errorf("RequireAdmin error=%v does not preserve %v", err, test.lookupErr)

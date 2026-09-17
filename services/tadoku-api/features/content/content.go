@@ -3,11 +3,11 @@ package content
 
 import (
 	"context"
-	"errors"
 	"strconv"
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/timex"
 )
 
@@ -30,9 +30,18 @@ type AnnouncementList struct {
 	NextPageToken string
 }
 
+func IsValidAnnouncementStyle(style string) bool {
+	switch style {
+	case "success", "warning", "error", "info":
+		return true
+	default:
+		return false
+	}
+}
+
 var (
-	ErrInvalidNamespace     = errors.New("namespace is required")
-	ErrAnnouncementNotFound = errors.New("announcement not found")
+	ErrInvalidNamespace     = errx.NewInvalidInputError("namespace is required")
+	ErrAnnouncementNotFound = errx.NewNotFoundError("announcement not found")
 )
 
 type Service struct {

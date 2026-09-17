@@ -32,6 +32,17 @@ repositories only query and map rows. `postgres.Executor` lets repositories use
 the active app-owned transaction. Open transactions only when the operation needs
 one; do not add feature or repository interfaces solely for mocking.
 
+Application errors use `internal/errx.Error`, which carries a transport-neutral
+`Kind`, a message and an optional cause. Use named constructors such as
+`errx.NewInvalidInputError(message)` or `errx.NewUnavailableError(message, cause)`;
+the latter accepts `nil` when there is no underlying cause.
+`errx.KindOf` reads the outermost typed
+error using `errors.As`; the HTTP boundary maps its kind to a status, with unknown
+or unclassified errors returning 500. Ordinary `%w` wrapping preserves metadata,
+and `Unwrap` preserves causes for `errors.Is`/`errors.As`. Do not encode categories
+in error text or wrap category sentinels. Legacy error types and mapping stay
+unchanged. Add call-site context only when it contributes useful diagnostics.
+
 Application operations and feature services that need authorization receive a
 named `*permissions.Checker` and call `RequireAuthenticated`, `RequireAdmin` or
 `IsAdmin` explicitly. Do not enforce administrator access with HTTP middleware.
@@ -132,6 +143,13 @@ the master rollout gate under separate release authorization before deployment.
 
 ## Verification
 
+Prefer real-database repository tests plus HTTP E2Es over testing feature services
+in isolation. Repository tests are highly recommended for query behavior, row
+mapping, constraints and persistence; E2Es cover feature-service orchestration and
+the HTTP contract. Keep parameter validation and pure domain rules in unit tests.
+Do not add database-backed feature-service tests or repeat dependency-failure
+matrices for each endpoint using an already-tested dependency.
+
 Native integration tests require `TADOKU_TEST_POSTGRES_URL` pointing to an explicit
 loopback port, database `postgres`, credentials `postgres:postgres` and exactly
 `sslmode=disable`. Missing or unsafe configuration fails before any connection;
@@ -151,7 +169,12 @@ once, using real JWT verification, ban checks and Keto-backed permissions. There
 is no second bypass router or injected administrator identity. Handlers and the
 fallback sentinel execute in process, without HTTP listeners.
 Cover each operation's response mapping, input handling, business rules and relevant
-boundaries; keep dependency-failure and route-ownership checks alongside those cases.
+boundaries. Keep shared dependency-failure and route-ownership checks at their own
+boundaries instead of repeating them for every operation.
+
+New API request bodies use the generated JSON decoder. Do not add XML/form adapters
+or non-JSON request fixtures to reproduce legacy binder behavior. Mark intentional
+JSON-decoding differences in the parity test table.
 
 HTTP scenarios run sequentially and call `reset` before each implementation of each
 scenario, not between dependent requests. `internal/testpostgres/cleanup.sql`
@@ -185,7 +208,9 @@ e2e/testdata/<operation>/<status>_<description>/
   golden.http
 ```
 
-Each operation's tests use an explicit Go table. Each row declares
+Each operation's HTTP tests use one explicit Go golden-case table, without separate
+generated-ID, readback or hand-decoded response tests. Persistence assertions belong
+in repository tests. Each row declares
 `description []string` and `want` as an HTTP status constant; there is no separate
 fixture-name field to keep in sync. Add a case by adding a descriptive table row and
 its request and golden files; do not discover cases from directories. Add `setup.sql`

@@ -2,11 +2,9 @@ package http
 
 import (
 	"context"
-	"errors"
 
 	"github.com/google/uuid"
 	"github.com/oapi-codegen/nullable"
-	"github.com/tadoku/tadoku/services/tadoku-api/app"
 	"github.com/tadoku/tadoku/services/tadoku-api/generated/openapi"
 )
 
@@ -20,9 +18,6 @@ func (s *server) ContentAnnouncementFindByID(
 	}
 
 	item, err := s.application.FindAnnouncementByID(ctx, request.Namespace, id)
-	if errors.Is(err, app.ErrAnnouncementNotFound) {
-		return openapi.ContentAnnouncementFindByID404Response{}, nil
-	}
 	if err != nil {
 		s.logger.ErrorContext(ctx, "find announcement by ID failed",
 			"error", err,

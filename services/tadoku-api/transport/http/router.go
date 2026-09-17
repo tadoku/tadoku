@@ -3,7 +3,6 @@ package http
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"log/slog"
 	stdhttp "net/http"
@@ -11,10 +10,7 @@ import (
 
 	"github.com/tadoku/tadoku/services/tadoku-api/app"
 	"github.com/tadoku/tadoku/services/tadoku-api/generated/openapi"
-	"github.com/tadoku/tadoku/services/tadoku-api/internal/permissions"
 )
-
-var errInvalidUUID = errors.New("invalid UUID")
 
 // Router keeps application routes behind shared middleware while allowing this
 // package to attach probes and temporary legacy proxies outside it.
@@ -90,22 +86,11 @@ func NewHandler(
 		},
 		nil,
 		openapi.StrictHTTPServerOptions{
-			RequestErrorHandlerFunc: func(w stdhttp.ResponseWriter, _ *stdhttp.Request, err error) {
-				writeJSON(w, stdhttp.StatusBadRequest, map[string]string{"message": err.Error()})
+			RequestErrorHandlerFunc: func(w stdhttp.ResponseWriter, _ *stdhttp.Request, _ error) {
+				w.WriteHeader(stdhttp.StatusBadRequest)
 			},
 			ResponseErrorHandlerFunc: func(w stdhttp.ResponseWriter, _ *stdhttp.Request, err error) {
-				status := stdhttp.StatusInternalServerError
-				switch {
-				case errors.Is(err, errInvalidUUID):
-					status = stdhttp.StatusBadRequest
-				case errors.Is(err, permissions.ErrUnauthorized):
-					status = stdhttp.StatusUnauthorized
-				case errors.Is(err, permissions.ErrForbidden):
-					status = stdhttp.StatusForbidden
-				case errors.Is(err, permissions.ErrUnavailable):
-					status = stdhttp.StatusServiceUnavailable
-				}
-				w.WriteHeader(status)
+				w.WriteHeader(errorStatus(err))
 			},
 		},
 	)

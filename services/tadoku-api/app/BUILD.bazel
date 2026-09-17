@@ -3,6 +3,7 @@ load("@rules_go//go:def.bzl", "go_library")
 go_library(
     name = "app",
     srcs = [
+        "announcement_create.go",
         "announcement_delete.go",
         "announcements.go",
         "app.go",

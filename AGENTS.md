@@ -44,6 +44,8 @@ Migration PRs must remain compatible with the application version currently depl
 
 **Always write tests for new backend functionality** — new domain services, repository methods, and HTTP handlers should have corresponding test coverage.
 
+**Prefer repository tests plus HTTP E2Es over isolated feature-service tests.** Real-database repository tests are highly recommended for query behavior, row mapping, constraints and persistence. Exercise feature-service orchestration through HTTP E2Es; do not add database-backed feature-service tests. Use unit tests for pure parameter validation and domain rules. Cover shared dependency failures at their boundaries once, not again for every endpoint using those dependencies.
+
 **Use Go's standard `testing` functionality for new or rewritten backend tests.** Use ordinary comparisons, `t.Fatalf` for failed prerequisites, `t.Errorf` for independent checks, and `t.Cleanup` for resource cleanup. Compare errors with `errors.Is`/`errors.As`. Do not add Testify, another assertion framework, or a homegrown assertion DSL. Existing tests do not need a bulk rewrite; convert them when their relevant slice is migrated or in a separately scoped mechanical change.
 
 ### Native Tadoku API slices
@@ -63,6 +65,8 @@ Migration PRs must remain compatible with the application version currently depl
 **Share the HTTP E2E router, not scenario state.** Initialize the disposable database, migrations and production router once in `TestMain`. Run HTTP scenarios sequentially, resetting before each scenario and loading starting data from SQL files. Reuse `internal/testpostgres/cleanup.sql`, which explicitly lists mutable tables to truncate with `restart identity`; no table discovery or `cascade`. Preserve migration-seeded static tables and migration bookkeeping. Add newly tested mutable tables to that one file. Requests within a scenario use normal application transactions and real commits, not an outer test transaction. Database helpers return errors and provide explicit cleanup without depending on `testing.TB`. Keep pool-closing failure tests isolated; independently isolated repository/transaction tests may remain parallel.
 
 **Write for readability.** Separate setup, execution, error handling and response mapping with whitespace. Put unrelated struct fields and composite-literal entries on separate lines. Split application and transport operations into files by functionality, and use descriptive operation names. Keep constructors and resource lifecycle code visibly separate from endpoint behavior.
+
+**Keep each operation's HTTP E2Es in one golden-case table.** Do not add separate generated-ID, persistence-readback or hand-decoded response tests beside it. Put persistence assertions in repository tests. Request-body fixtures use JSON only.
 
 **SQL style: always use lowercase keywords** (select, create table, not SELECT, CREATE TABLE)
 

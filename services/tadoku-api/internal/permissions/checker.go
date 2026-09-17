@@ -3,17 +3,10 @@ package permissions
 
 import (
 	"context"
-	"errors"
-	"fmt"
 
 	ketoclient "github.com/tadoku/tadoku/services/common/client/keto"
+	"github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/identity"
-)
-
-var (
-	ErrUnauthorized = errors.New("unauthorized")
-	ErrForbidden    = errors.New("forbidden")
-	ErrUnavailable  = errors.New("permissions unavailable")
 )
 
 // Checker evaluates identity and admin-role requirements for the verified user.
@@ -57,18 +50,18 @@ func (c *Checker) IsAdmin(ctx context.Context) (bool, error) {
 		return false, nil
 	}
 	if err, _ := ctx.Value(banLookupErrorKey{}).(error); err != nil {
-		return false, fmt.Errorf("%w: check ban permission: %w", ErrUnavailable, err)
+		return false, errx.NewUnavailableError("check ban permission", err)
 	}
 	if c == nil || c.lookupAdmin == nil {
-		return false, ErrUnavailable
+		return false, errx.NewUnavailableError("permissions unavailable", nil)
 	}
 
 	allowed, err := c.lookupAdmin(ctx, user.Subject)
 	if err != nil {
-		return false, fmt.Errorf("%w: check admin permission: %w", ErrUnavailable, err)
+		return false, errx.NewUnavailableError("check admin permission", err)
 	}
 	if err := ctx.Err(); err != nil {
-		return false, fmt.Errorf("%w: check admin permission: %w", ErrUnavailable, err)
+		return false, errx.NewUnavailableError("check admin permission", err)
 	}
 	return allowed, nil
 }
@@ -76,7 +69,7 @@ func (c *Checker) IsAdmin(ctx context.Context) (bool, error) {
 func (c *Checker) RequireAuthenticated(ctx context.Context) error {
 	user := identity.FromContext(ctx)
 	if user == nil || user.Subject == "" || user.Subject == "guest" {
-		return ErrUnauthorized
+		return errx.NewUnauthorizedError("unauthorized")
 	}
 	return nil
 }
@@ -91,7 +84,7 @@ func (c *Checker) RequireAdmin(ctx context.Context) error {
 		return err
 	}
 	if !allowed {
-		return ErrForbidden
+		return errx.NewForbiddenError("forbidden")
 	}
 	return nil
 }

@@ -11,6 +11,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"time"
 
@@ -1074,11 +1075,17 @@ type ContentAnnouncementListParams struct {
 	Page     *int `form:"page,omitempty" json:"page,omitempty"`
 }
 
+// ContentAnnouncementCreateJSONRequestBody defines body for ContentAnnouncementCreate for application/json ContentType.
+type ContentAnnouncementCreateJSONRequestBody = ContentAnnouncement
+
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
 	// ContentAnnouncementList Lists all announcements
 	// (GET /content/announcements/{namespace})
 	ContentAnnouncementList(w http.ResponseWriter, r *http.Request, namespace string, params ContentAnnouncementListParams)
+	// ContentAnnouncementCreate Creates a new announcement
+	// (POST /content/announcements/{namespace})
+	ContentAnnouncementCreate(w http.ResponseWriter, r *http.Request, namespace string)
 	// ContentAnnouncementListActive Lists currently active announcements
 	// (GET /content/announcements/{namespace}/active)
 	ContentAnnouncementListActive(w http.ResponseWriter, r *http.Request, namespace string)
@@ -1145,6 +1152,32 @@ func (siw *ServerInterfaceWrapper) ContentAnnouncementList(w http.ResponseWriter
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.ContentAnnouncementList(w, r, namespace, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ContentAnnouncementCreate operation middleware
+func (siw *ServerInterfaceWrapper) ContentAnnouncementCreate(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "namespace" -------------
+	var namespace string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "namespace", r.PathValue("namespace"), &namespace, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "namespace", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ContentAnnouncementCreate(w, r, namespace)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -1372,6 +1405,7 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/content/announcements/{namespace}/active", wrapper.ContentAnnouncementListActive)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/content/announcements/{namespace}", wrapper.ContentAnnouncementList)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/content/announcements/{namespace}", wrapper.ContentAnnouncementCreate)
 	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/content/announcements/{namespace}/{id}", wrapper.ContentAnnouncementDelete)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/content/announcements/{namespace}/{id}", wrapper.ContentAnnouncementFindByID)
 
@@ -1401,6 +1435,37 @@ func (response ContentAnnouncementList200JSONResponse) VisitContentAnnouncementL
 	w.WriteHeader(200)
 	_, err := buf.WriteTo(w)
 	return err
+}
+
+type ContentAnnouncementCreateRequestObject struct {
+	Namespace string `json:"namespace"`
+	Body      *ContentAnnouncementCreateJSONRequestBody
+}
+
+type ContentAnnouncementCreateResponseObject interface {
+	VisitContentAnnouncementCreateResponse(w http.ResponseWriter) error
+}
+
+type ContentAnnouncementCreate201JSONResponse ContentAnnouncement
+
+func (response ContentAnnouncementCreate201JSONResponse) VisitContentAnnouncementCreateResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(201)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ContentAnnouncementCreate400Response struct {
+}
+
+func (response ContentAnnouncementCreate400Response) VisitContentAnnouncementCreateResponse(w http.ResponseWriter) error {
+	w.WriteHeader(400)
+	return nil
 }
 
 type ContentAnnouncementListActiveRequestObject struct {
@@ -1502,6 +1567,9 @@ type StrictServerInterface interface {
 	// ContentAnnouncementList Lists all announcements
 	// (GET /content/announcements/{namespace})
 	ContentAnnouncementList(ctx context.Context, request ContentAnnouncementListRequestObject) (ContentAnnouncementListResponseObject, error)
+	// ContentAnnouncementCreate Creates a new announcement
+	// (POST /content/announcements/{namespace})
+	ContentAnnouncementCreate(ctx context.Context, request ContentAnnouncementCreateRequestObject) (ContentAnnouncementCreateResponseObject, error)
 	// ContentAnnouncementListActive Lists currently active announcements
 	// (GET /content/announcements/{namespace}/active)
 	ContentAnnouncementListActive(ctx context.Context, request ContentAnnouncementListActiveRequestObject) (ContentAnnouncementListActiveResponseObject, error)
@@ -1572,6 +1640,42 @@ func (sh *strictHandler) ContentAnnouncementList(w http.ResponseWriter, r *http.
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(ContentAnnouncementListResponseObject); ok {
 		if err := validResponse.VisitContentAnnouncementListResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ContentAnnouncementCreate operation middleware
+func (sh *strictHandler) ContentAnnouncementCreate(w http.ResponseWriter, r *http.Request, namespace string) {
+	var request ContentAnnouncementCreateRequestObject
+
+	request.Namespace = namespace
+
+	var body ContentAnnouncementCreateJSONRequestBody
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		if !errors.Is(err, io.EOF) {
+			sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+			return
+		}
+	} else {
+		request.Body = &body
+	}
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ContentAnnouncementCreate(ctx, request.(ContentAnnouncementCreateRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ContentAnnouncementCreate")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ContentAnnouncementCreateResponseObject); ok {
+		if err := validResponse.VisitContentAnnouncementCreateResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

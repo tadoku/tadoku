@@ -7,6 +7,8 @@ import (
 	"testing"
 )
 
+// Exercise each shared dependency failure once. Do not add endpoint-specific cases
+// when the same dependency and failure behavior are already covered here.
 func TestDependencyFailures(t *testing.T) {
 	closedPool := openClosedPool(t, api.db.DSN)
 	handler, err := newTestRouter(closedPool, keto.ReadURL())

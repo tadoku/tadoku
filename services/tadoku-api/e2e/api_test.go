@@ -3,6 +3,7 @@ package e2e_test
 import (
 	"context"
 	"errors"
+	"flag"
 	"fmt"
 	"io"
 	"log/slog"
@@ -33,10 +34,16 @@ var authenticationJWKS *httptest.Server
 var keto *testketo.Fixture
 
 func TestMain(m *testing.M) {
+	flag.Parse()
 	os.Exit(runTests(m))
 }
 
 func runTests(m *testing.M) (code int) {
+	if *updateGoldens && os.Getenv("CI") != "" {
+		fmt.Fprintln(os.Stderr, "-update-goldens is disabled in CI")
+		return 1
+	}
+
 	var cleanupErr error
 	defer func() {
 		if cleanupErr != nil {

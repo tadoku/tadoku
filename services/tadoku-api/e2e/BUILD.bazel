@@ -22,7 +22,11 @@ go_test(
         "testdata/**/*.json",
         "testdata/**/*.sql",
     ]) + ["//services/tadoku-api/spec:openapi.yaml"],
-    env_inherit = ["TADOKU_TEST_POSTGRES_URL"],
+    env_inherit = [
+        "CI",
+        "TADOKU_GOLDEN_SOURCE_ROOT",
+        "TADOKU_TEST_POSTGRES_URL",
+    ],
     tags = [
         "no-cache",
         "no-remote-exec",

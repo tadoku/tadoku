@@ -233,9 +233,27 @@ unknown, fill it from the recorder body's byte length before serialization.
 Preserve known declared lengths and explicitly set `Connection` headers. The
 resulting `Content-Length` framing treats an omitted length and an explicitly
 correct one as equivalent. Apart from completing the unknown length, only HTTP
-line endings are normalized. Missing or changed goldens fail the test.
-There is no automatic recording mode: edit and review the expected files for an
-intentional contract change. Lifecycle tests stay focused on startup/shutdown,
+line endings are normalized. Missing or changed goldens fail the test by default.
+
+To regenerate existing goldens intentionally, run this uncached command from the
+repository root:
+
+```sh
+TADOKU_GOLDEN_SOURCE_ROOT="$PWD/services/tadoku-api/e2e/testdata" \
+  bazel test //services/tadoku-api/e2e:e2e_test \
+  --test_env=TADOKU_GOLDEN_SOURCE_ROOT \
+  --test_arg=-update-goldens \
+  --cache_test_results=no \
+  --test_output=all
+```
+
+The explicit source root makes the command write checked-in fixtures instead of
+runfiles copies. Only the native Tadoku API response records each existing file;
+the legacy implementation then compares against it and still fails on divergence.
+The update path never creates a missing golden or records a response with an
+unexpected status, and it exits before dependency startup when `CI` is set. Review
+every rewritten path and the complete Git diff, then explain the intentional
+contract change in the PR body. Lifecycle tests stay focused on startup/shutdown,
 not a growing list of endpoint assertions.
 
 ### Legacy parity

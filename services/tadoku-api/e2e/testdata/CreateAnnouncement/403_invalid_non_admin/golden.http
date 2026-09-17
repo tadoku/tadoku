@@ -1,4 +1,4 @@
 >>> POST /content/announcements/main
 HTTP/1.1 403 Forbidden
-Connection: close
+Content-Length: 0
 

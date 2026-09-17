@@ -1,7 +1,9 @@
 package http
 
 import (
+	"context"
 	"encoding/json"
+	"errors"
 	stdhttp "net/http"
 	"net/http/httptest"
 	"testing"
@@ -9,6 +11,20 @@ import (
 	"github.com/oapi-codegen/nullable"
 	"github.com/tadoku/tadoku/services/tadoku-api/generated/openapi"
 )
+
+func TestFindAnnouncementByIDInvalidUUID(t *testing.T) {
+	s := &server{}
+	response, err := s.ContentAnnouncementFindByID(context.Background(), openapi.ContentAnnouncementFindByIDRequestObject{
+		Namespace: "tadoku",
+		Id:        "not-a-uuid",
+	})
+	if !errors.Is(err, errInvalidUUID) {
+		t.Fatalf("error = %v, want invalid UUID", err)
+	}
+	if response != nil {
+		t.Errorf("response = %v, want nil", response)
+	}
+}
 
 func TestJSONCharsetCompatibility(t *testing.T) {
 	tests := []struct {

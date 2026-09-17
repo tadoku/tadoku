@@ -5,6 +5,32 @@ import (
 	"testing"
 )
 
+func TestFindAnnouncementByID(t *testing.T) {
+	tests := []struct {
+		description []string
+		want        int
+	}{
+		{description: []string{"admin"}, want: http.StatusOK},
+		{description: []string{"null", "href"}, want: http.StatusOK},
+		{description: []string{"invalid", "id"}, want: http.StatusBadRequest},
+		{description: []string{"guest"}, want: http.StatusUnauthorized},
+		{description: []string{"non", "admin"}, want: http.StatusForbidden},
+		{description: []string{"not", "found"}, want: http.StatusNotFound},
+		{description: []string{"wrong", "namespace"}, want: http.StatusNotFound},
+		{description: []string{"deleted"}, want: http.StatusNotFound},
+	}
+
+	for _, test := range tests {
+		name := APITestName("FindAnnouncementByID", test.want, test.description...)
+		t.Run(name, func(t *testing.T) {
+			runCase(t, api, name, test.want,
+				implementation{name: "tadoku-api", handler: api.handler},
+				implementation{name: "content-api", handler: legacyContent.handler},
+			)
+		})
+	}
+}
+
 func TestListAnnouncements(t *testing.T) {
 	tests := []struct {
 		description []string

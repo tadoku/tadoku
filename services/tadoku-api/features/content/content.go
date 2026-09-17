@@ -30,7 +30,10 @@ type AnnouncementList struct {
 	NextPageToken string
 }
 
-var ErrInvalidNamespace = errors.New("namespace is required")
+var (
+	ErrInvalidNamespace     = errors.New("namespace is required")
+	ErrAnnouncementNotFound = errors.New("announcement not found")
+)
 
 type Service struct {
 	announcements *AnnouncementsRepository
@@ -40,6 +43,10 @@ func NewService(announcements *AnnouncementsRepository) *Service {
 	return &Service{
 		announcements: announcements,
 	}
+}
+
+func (s *Service) FindAnnouncementByID(ctx context.Context, namespace string, id uuid.UUID) (*Announcement, error) {
+	return s.announcements.FindAnnouncementByID(ctx, namespace, id)
 }
 
 func (s *Service) ListActiveAnnouncements(ctx context.Context, namespace string) ([]Announcement, error) {

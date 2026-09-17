@@ -1,0 +1,4 @@
+>>> GET /content/announcements/main/11111111-1111-4111-8111-111111111111
+HTTP/1.1 401 Unauthorized
+Connection: close
+

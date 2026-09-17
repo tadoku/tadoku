@@ -16,6 +16,7 @@ go_library(
         "//services/tadoku-api/features/content",
         "//services/tadoku-api/infra/postgres",
         "//services/tadoku-api/internal/permissions",
+        "@com_github_google_uuid//:uuid",
         "@com_github_jackc_pgx_v5//pgxpool",
     ],
 )

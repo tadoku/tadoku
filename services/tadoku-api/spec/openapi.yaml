@@ -887,7 +887,7 @@ paths:
           description: Announcement not found
       x-tadoku-source: Content
       x-tadoku-exposure: public
-      x-tadoku-owner: legacy
+      x-tadoku-owner: native
       x-legacy-path: /announcements/{namespace}/{id}
       x-legacy-operation-id: announcementFindByID
     put:

@@ -17,6 +17,7 @@ go_library(
         "//services/tadoku-api/internal/identity",
         "//services/tadoku-api/internal/permissions",
         "@com_github_golang_jwt_jwt_v4//:jwt",
+        "@com_github_google_uuid//:uuid",
         "@com_github_micahparks_keyfunc//:keyfunc",
         "@com_github_oapi_codegen_nullable//:nullable",
         "@com_github_prometheus_client_golang//prometheus",

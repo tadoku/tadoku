@@ -2,10 +2,52 @@ package http
 
 import (
 	"context"
+	"errors"
 
+	"github.com/google/uuid"
 	"github.com/oapi-codegen/nullable"
+	"github.com/tadoku/tadoku/services/tadoku-api/app"
 	"github.com/tadoku/tadoku/services/tadoku-api/generated/openapi"
 )
+
+func (s *server) ContentAnnouncementFindByID(
+	ctx context.Context,
+	request openapi.ContentAnnouncementFindByIDRequestObject,
+) (openapi.ContentAnnouncementFindByIDResponseObject, error) {
+	id, err := uuid.Parse(request.Id)
+	if err != nil {
+		return nil, errInvalidUUID
+	}
+
+	item, err := s.application.FindAnnouncementByID(ctx, request.Namespace, id)
+	if errors.Is(err, app.ErrAnnouncementNotFound) {
+		return openapi.ContentAnnouncementFindByID404Response{}, nil
+	}
+	if err != nil {
+		s.logger.ErrorContext(ctx, "find announcement by ID failed",
+			"error", err,
+		)
+		return nil, err
+	}
+
+	href := nullable.NewNullNullable[string]()
+	if item.Href != nil {
+		href = nullable.NewNullableWithValue(*item.Href)
+	}
+
+	return openapi.ContentAnnouncementFindByID200JSONResponse{
+		Id:        &item.ID,
+		Namespace: &item.Namespace,
+		Title:     item.Title,
+		Content:   item.Content,
+		Style:     openapi.ContentAnnouncementStyle(item.Style),
+		Href:      href,
+		StartsAt:  item.StartsAt,
+		EndsAt:    item.EndsAt,
+		CreatedAt: &item.CreatedAt,
+		UpdatedAt: &item.UpdatedAt,
+	}, nil
+}
 
 func (s *server) ContentAnnouncementListActive(
 	ctx context.Context,

@@ -36,6 +36,8 @@ type AnnouncementList struct {
 	NextPageToken string
 }
 
+const AnnouncementListMaxPageSize = 100
+
 func IsValidAnnouncementStyle(style string) bool {
 	switch style {
 	case "success", "warning", "error", "info":
@@ -104,8 +106,8 @@ func (s *Service) ListAnnouncements(ctx context.Context, namespace string, pageS
 	if pageSize == 0 {
 		pageSize = 10
 	}
-	if pageSize > 100 {
-		pageSize = 100
+	if pageSize > AnnouncementListMaxPageSize {
+		pageSize = AnnouncementListMaxPageSize
 	}
 
 	offset := int64(page)

@@ -7,6 +7,7 @@ type Kind uint8
 
 const (
 	Unknown Kind = iota
+	Internal
 	InvalidInput
 	Unauthorized
 	Forbidden
@@ -19,6 +20,10 @@ type Error struct {
 	kind    Kind
 	message string
 	cause   error
+}
+
+func NewInternalError(message string) *Error {
+	return &Error{kind: Internal, message: message}
 }
 
 func NewInvalidInputError(message string) *Error {
@@ -38,7 +43,7 @@ func NewNotFoundError(message string) *Error {
 }
 
 func NewConflictError(message string) *Error {
-	return &Error{Kind: Conflict, Message: message}
+	return &Error{kind: Conflict, message: message}
 }
 
 // NewUnavailableError preserves the underlying cause, which may be nil.
@@ -57,6 +62,9 @@ func (e *Error) Error() string {
 }
 
 func (e *Error) Unwrap() error {
+	if e == nil {
+		return nil
+	}
 	return e.cause
 }
 

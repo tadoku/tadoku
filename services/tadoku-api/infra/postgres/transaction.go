@@ -4,13 +4,13 @@ package postgres
 import (
 	"context"
 	"errors"
-	"fmt"
 	"sync/atomic"
 	"time"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
 )
 
 var (
@@ -73,7 +73,7 @@ func RunInTransaction(ctx context.Context, db *pgxpool.Pool, work func(context.C
 	}
 	tx, err := db.Begin(ctx)
 	if err != nil {
-		return fmt.Errorf("postgres: begin: %w", err)
+		return errx.NewUnavailableError("postgres: begin", err)
 	}
 	s := &scope{db: db, tx: tx}
 	defer func() {
@@ -93,7 +93,7 @@ func RunInTransaction(ctx context.Context, db *pgxpool.Pool, work func(context.C
 		return err
 	}
 	if err := tx.Commit(ctx); err != nil {
-		return fmt.Errorf("postgres: commit: %w", err)
+		return errx.NewUnavailableError("postgres: commit", err)
 	}
 	return nil
 }

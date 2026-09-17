@@ -2,6 +2,7 @@ package http
 
 import (
 	"context"
+	"errors"
 	stdhttp "net/http"
 
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
@@ -18,7 +19,16 @@ func (s *server) logOperationError(ctx context.Context, operation string, err er
 }
 
 func errorStatus(err error) int {
+	switch {
+	case errors.Is(err, context.DeadlineExceeded):
+		return stdhttp.StatusGatewayTimeout
+	case errors.Is(err, context.Canceled):
+		return 499
+	}
+
 	switch errx.KindOf(err) {
+	case errx.Internal:
+		return stdhttp.StatusInternalServerError
 	case errx.InvalidInput:
 		return stdhttp.StatusBadRequest
 	case errx.Unauthorized:

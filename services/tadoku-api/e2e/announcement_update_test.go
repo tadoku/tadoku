@@ -44,7 +44,8 @@ func TestUpdateAnnouncement(t *testing.T) {
 		{description: []string{"not", "found"}, want: http.StatusNotFound},
 		{description: []string{"wrong", "namespace"}, want: http.StatusNotFound},
 		{description: []string{"deleted"}, want: http.StatusNotFound},
-		{description: []string{"write", "failure"}, want: http.StatusInternalServerError},
+		// Native repository driver failures are unavailable; legacy returns 500.
+		{description: []string{"write", "failure"}, want: http.StatusServiceUnavailable, skipParity: "native returns 503 for a repository driver failure; legacy returns 500"},
 	}
 
 	for _, test := range tests {

@@ -15,6 +15,7 @@ import (
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/tadoku/tadoku/services/tadoku-api/infra/postgres"
+	"github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
 )
 
 const testDSNVariable = "TADOKU_TEST_POSTGRES_URL"
@@ -314,6 +315,9 @@ func TestRunInTransactionDeferredConstraintFailsAtCommitWithoutReplay(t *testing
 	if !errors.Is(err, pgError) {
 		t.Errorf("commit error cause was not preserved: %v", err)
 	}
+	if got := errx.KindOf(err); got != errx.Unavailable {
+		t.Errorf("commit error kind=%v, want unavailable", got)
+	}
 	if calls != 1 {
 		t.Errorf("callback replayed: calls=%d", calls)
 	}
@@ -355,6 +359,9 @@ func TestRunInTransactionFailedBeginNeverCallsWork(t *testing.T) {
 		err := postgres.RunInTransaction(context.Background(), db, func(context.Context) error { called = true; return nil })
 		if err == nil || called {
 			t.Errorf("closed-pool begin: error=%v, called=%v", err, called)
+		}
+		if got := errx.KindOf(err); got != errx.Unavailable {
+			t.Errorf("closed-pool begin kind=%v, want unavailable", got)
 		}
 	})
 	t.Run("waiting for pool connection", func(t *testing.T) {

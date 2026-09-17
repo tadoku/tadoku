@@ -26,6 +26,20 @@ func TestFindAnnouncementByIDInvalidUUID(t *testing.T) {
 	}
 }
 
+func TestDeleteAnnouncementInvalidUUID(t *testing.T) {
+	s := &server{}
+	response, err := s.ContentAnnouncementDelete(context.Background(), openapi.ContentAnnouncementDeleteRequestObject{
+		Namespace: "tadoku",
+		Id:        "not-a-uuid",
+	})
+	if !errors.Is(err, errInvalidUUID) {
+		t.Fatalf("error = %v, want invalid UUID", err)
+	}
+	if response != nil {
+		t.Errorf("response = %v, want nil", response)
+	}
+}
+
 func TestJSONCharsetCompatibility(t *testing.T) {
 	tests := []struct {
 		name        string

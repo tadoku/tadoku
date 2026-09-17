@@ -3,6 +3,7 @@ load("@rules_go//go:def.bzl", "go_test")
 go_test(
     name = "e2e_test",
     srcs = [
+        "announcement_delete_test.go",
         "announcements_test.go",
         "api_test.go",
         "authentication_test.go",

@@ -62,15 +62,28 @@ func TestRouterWorksWithoutLegacyProxyRoutes(t *testing.T) {
 
 func TestUnclaimedMethodsRemainProxied(t *testing.T) {
 	for _, route := range []struct {
-		name string
-		path string
+		name    string
+		path    string
+		methods []string
 	}{
-		{name: "active list", path: "/content/announcements/main/active"},
-		{name: "admin list", path: "/content/announcements/main"},
-		{name: "by ID", path: "/content/announcements/main/11111111-1111-4111-8111-111111111111"},
+		{
+			name:    "active list",
+			path:    "/content/announcements/main/active",
+			methods: []string{http.MethodHead, http.MethodOptions, http.MethodPost, http.MethodPut, http.MethodPatch},
+		},
+		{
+			name:    "admin list",
+			path:    "/content/announcements/main",
+			methods: []string{http.MethodHead, http.MethodOptions, http.MethodPost, http.MethodPut, http.MethodDelete, http.MethodPatch},
+		},
+		{
+			name:    "by ID",
+			path:    "/content/announcements/main/11111111-1111-4111-8111-111111111111",
+			methods: []string{http.MethodHead, http.MethodOptions, http.MethodPost, http.MethodPut, http.MethodPatch},
+		},
 	} {
 		t.Run(route.name, func(t *testing.T) {
-			for _, method := range []string{http.MethodHead, http.MethodOptions, http.MethodPost, http.MethodDelete, http.MethodPatch} {
+			for _, method := range route.methods {
 				t.Run(method, func(t *testing.T) {
 					api.reset(t, "")
 					request := httptest.NewRequest(method, route.path, nil)

@@ -84,6 +84,65 @@ func TestAnnouncementsRepositoryUsesSuppliedPolicyAndTransaction(t *testing.T) {
 	}
 }
 
+func TestAnnouncementsRepositoryDeleteAnnouncement(t *testing.T) {
+	t.Parallel()
+	db, err := testpostgres.New(t.Context())
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() {
+		if err := db.Close(); err != nil {
+			t.Error(err)
+		}
+	})
+	if err := db.Reset(t.Context(), "testdata/announcements.sql"); err != nil {
+		t.Fatal(err)
+	}
+
+	id := uuid.MustParse("11111111-1111-4111-8111-111111111111")
+	deletedAt := time.Date(2026, 9, 12, 12, 0, 0, 0, time.UTC)
+	repository := content.NewAnnouncementsRepository(db.Pool)
+	const snapshotSQL = `select (to_jsonb(announcements) - 'deleted_at')::text, deleted_at
+		from announcements where id = $1`
+	var before string
+	var initialDeletedAt *time.Time
+	if err := db.Pool.QueryRow(t.Context(), snapshotSQL, id).Scan(&before, &initialDeletedAt); err != nil {
+		t.Fatal(err)
+	}
+	if initialDeletedAt != nil {
+		t.Fatal("seed announcement is already deleted")
+	}
+
+	if err := repository.DeleteAnnouncement(t.Context(), "other", id, deletedAt); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := repository.FindAnnouncementByID(t.Context(), "main", id); err != nil {
+		t.Fatalf("wrong namespace must not delete the announcement: %v", err)
+	}
+	if err := repository.DeleteAnnouncement(t.Context(), "main", id, deletedAt); err != nil {
+		t.Fatal(err)
+	}
+	if err := repository.DeleteAnnouncement(t.Context(), "main", id, deletedAt.Add(time.Hour)); err != nil {
+		t.Fatal(err)
+	}
+
+	var after string
+	var gotDeletedAt time.Time
+	if err := db.Pool.QueryRow(t.Context(), snapshotSQL, id).Scan(&after, &gotDeletedAt); err != nil {
+		t.Fatalf("soft-deleted row must still exist: %v", err)
+	}
+	if after != before {
+		t.Errorf("deletion changed fields other than deleted_at:\nbefore %s\nafter %s", before, after)
+	}
+	if !gotDeletedAt.Equal(deletedAt) {
+		t.Errorf("deleted_at=%v, want original timestamp %v", gotDeletedAt, deletedAt)
+	}
+	otherID := uuid.MustParse("22222222-2222-4222-8222-222222222222")
+	if _, err := repository.FindAnnouncementByID(t.Context(), "main", otherID); err != nil {
+		t.Errorf("other announcements must remain visible: %v", err)
+	}
+}
+
 func TestEmptyNamespaceIsRejectedBeforeStorage(t *testing.T) {
 	service := content.NewService(nil)
 	_, err := service.ListActiveAnnouncements(context.Background(), "")

@@ -22,6 +22,7 @@ go_test(
 go_library(
     name = "content",
     srcs = [
+        "announcement_delete.go",
         "announcements_repository.go",
         "content.go",
     ],

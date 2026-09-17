@@ -1,3 +1,10 @@
+-- name: DeleteAnnouncement :exec
+update announcements
+set deleted_at = sqlc.arg(deleted_at)::timestamp
+where deleted_at is null
+  and namespace = sqlc.arg(namespace)
+  and id = sqlc.arg(id);
+
 -- name: FindAnnouncementByID :one
 select id, namespace, title, content, style, href,
        starts_at, ends_at, created_at, updated_at

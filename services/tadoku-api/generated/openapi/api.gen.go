@@ -1082,6 +1082,9 @@ type ServerInterface interface {
 	// ContentAnnouncementListActive Lists currently active announcements
 	// (GET /content/announcements/{namespace}/active)
 	ContentAnnouncementListActive(w http.ResponseWriter, r *http.Request, namespace string)
+	// ContentAnnouncementDelete Deletes an existing announcement
+	// (DELETE /content/announcements/{namespace}/{id})
+	ContentAnnouncementDelete(w http.ResponseWriter, r *http.Request, namespace string, id string)
 	// ContentAnnouncementFindByID Gets an announcement by ID
 	// (GET /content/announcements/{namespace}/{id})
 	ContentAnnouncementFindByID(w http.ResponseWriter, r *http.Request, namespace string, id string)
@@ -1168,6 +1171,41 @@ func (siw *ServerInterfaceWrapper) ContentAnnouncementListActive(w http.Response
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.ContentAnnouncementListActive(w, r, namespace)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ContentAnnouncementDelete operation middleware
+func (siw *ServerInterfaceWrapper) ContentAnnouncementDelete(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "namespace" -------------
+	var namespace string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "namespace", r.PathValue("namespace"), &namespace, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "namespace", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", r.PathValue("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ContentAnnouncementDelete(w, r, namespace, id)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -1334,6 +1372,7 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/content/announcements/{namespace}/active", wrapper.ContentAnnouncementListActive)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/content/announcements/{namespace}", wrapper.ContentAnnouncementList)
+	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/content/announcements/{namespace}/{id}", wrapper.ContentAnnouncementDelete)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/content/announcements/{namespace}/{id}", wrapper.ContentAnnouncementFindByID)
 
 	return m
@@ -1386,6 +1425,39 @@ func (response ContentAnnouncementListActive200JSONResponse) VisitContentAnnounc
 	return err
 }
 
+type ContentAnnouncementDeleteRequestObject struct {
+	Namespace string `json:"namespace"`
+	Id        string `json:"id"`
+}
+
+type ContentAnnouncementDeleteResponseObject interface {
+	VisitContentAnnouncementDeleteResponse(w http.ResponseWriter) error
+}
+
+type ContentAnnouncementDelete204Response struct {
+}
+
+func (response ContentAnnouncementDelete204Response) VisitContentAnnouncementDeleteResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type ContentAnnouncementDelete403Response struct {
+}
+
+func (response ContentAnnouncementDelete403Response) VisitContentAnnouncementDeleteResponse(w http.ResponseWriter) error {
+	w.WriteHeader(403)
+	return nil
+}
+
+type ContentAnnouncementDelete404Response struct {
+}
+
+func (response ContentAnnouncementDelete404Response) VisitContentAnnouncementDeleteResponse(w http.ResponseWriter) error {
+	w.WriteHeader(404)
+	return nil
+}
+
 type ContentAnnouncementFindByIDRequestObject struct {
 	Namespace string `json:"namespace"`
 	Id        string `json:"id"`
@@ -1433,6 +1505,9 @@ type StrictServerInterface interface {
 	// ContentAnnouncementListActive Lists currently active announcements
 	// (GET /content/announcements/{namespace}/active)
 	ContentAnnouncementListActive(ctx context.Context, request ContentAnnouncementListActiveRequestObject) (ContentAnnouncementListActiveResponseObject, error)
+	// ContentAnnouncementDelete Deletes an existing announcement
+	// (DELETE /content/announcements/{namespace}/{id})
+	ContentAnnouncementDelete(ctx context.Context, request ContentAnnouncementDeleteRequestObject) (ContentAnnouncementDeleteResponseObject, error)
 	// ContentAnnouncementFindByID Gets an announcement by ID
 	// (GET /content/announcements/{namespace}/{id})
 	ContentAnnouncementFindByID(ctx context.Context, request ContentAnnouncementFindByIDRequestObject) (ContentAnnouncementFindByIDResponseObject, error)
@@ -1523,6 +1598,33 @@ func (sh *strictHandler) ContentAnnouncementListActive(w http.ResponseWriter, r 
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(ContentAnnouncementListActiveResponseObject); ok {
 		if err := validResponse.VisitContentAnnouncementListActiveResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ContentAnnouncementDelete operation middleware
+func (sh *strictHandler) ContentAnnouncementDelete(w http.ResponseWriter, r *http.Request, namespace string, id string) {
+	var request ContentAnnouncementDeleteRequestObject
+
+	request.Namespace = namespace
+	request.Id = id
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ContentAnnouncementDelete(ctx, request.(ContentAnnouncementDeleteRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ContentAnnouncementDelete")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ContentAnnouncementDeleteResponseObject); ok {
+		if err := validResponse.VisitContentAnnouncementDeleteResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

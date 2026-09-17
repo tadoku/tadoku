@@ -25,6 +25,25 @@ func (q *Queries) CountAnnouncements(ctx context.Context, namespace string) (int
 	return count, err
 }
 
+const deleteAnnouncement = `-- name: DeleteAnnouncement :exec
+update announcements
+set deleted_at = $1::timestamp
+where deleted_at is null
+  and namespace = $2
+  and id = $3
+`
+
+type DeleteAnnouncementParams struct {
+	DeletedAt pgtype.Timestamp
+	Namespace string
+	ID        pgtype.UUID
+}
+
+func (q *Queries) DeleteAnnouncement(ctx context.Context, arg DeleteAnnouncementParams) error {
+	_, err := q.db.Exec(ctx, deleteAnnouncement, arg.DeletedAt, arg.Namespace, arg.ID)
+	return err
+}
+
 const findAnnouncementByID = `-- name: FindAnnouncementByID :one
 select id, namespace, title, content, style, href,
        starts_at, ends_at, created_at, updated_at

@@ -2,15 +2,15 @@ package content
 
 import (
 	"context"
-	"errors"
+	"fmt"
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/tadoku/tadoku/services/tadoku-api/internal/datex"
+	commondomain "github.com/tadoku/tadoku/services/common/domain"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/timex"
 )
 
-var ErrInvalidAnnouncement = errors.New("invalid announcement")
+var ErrInvalidAnnouncement = fmt.Errorf("invalid announcement: %w", commondomain.ErrRequestInvalid)
 
 type CreateAnnouncementParameters struct {
 	ID        uuid.UUID
@@ -25,7 +25,7 @@ type CreateAnnouncementParameters struct {
 
 func (p CreateAnnouncementParameters) Validate() error {
 	if p.ID == uuid.Nil || p.Namespace == "" || p.Title == "" || p.Content == "" ||
-		!IsValidAnnouncementStyle(p.Style) || !datex.IsValidRange(p.StartsAt, p.EndsAt) {
+		!IsValidAnnouncementStyle(p.Style) || !timex.IsValidRange(p.StartsAt, p.EndsAt) {
 		return ErrInvalidAnnouncement
 	}
 	return nil

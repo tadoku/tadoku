@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	commondomain "github.com/tadoku/tadoku/services/common/domain"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/content"
 )
 
@@ -48,8 +49,12 @@ func TestCreateAnnouncementParametersValidation(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			parameters := valid
 			test.change(&parameters)
-			if err := parameters.Validate(); !errors.Is(err, content.ErrInvalidAnnouncement) {
+			err := parameters.Validate()
+			if !errors.Is(err, content.ErrInvalidAnnouncement) {
 				t.Errorf("error=%v, want invalid announcement", err)
+			}
+			if !errors.Is(err, commondomain.ErrRequestInvalid) {
+				t.Errorf("error=%v, want invalid-input category", err)
 			}
 		})
 	}

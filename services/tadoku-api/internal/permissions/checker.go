@@ -3,17 +3,17 @@ package permissions
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
 	ketoclient "github.com/tadoku/tadoku/services/common/client/keto"
+	commondomain "github.com/tadoku/tadoku/services/common/domain"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/identity"
 )
 
 var (
-	ErrUnauthorized = errors.New("unauthorized")
-	ErrForbidden    = errors.New("forbidden")
-	ErrUnavailable  = errors.New("permissions unavailable")
+	ErrUnauthorized = commondomain.ErrUnauthorized
+	ErrForbidden    = commondomain.ErrForbidden
+	ErrUnavailable  = fmt.Errorf("permissions unavailable: %w", commondomain.ErrAuthzUnavailable)
 )
 
 // Checker evaluates identity and admin-role requirements for the verified user.

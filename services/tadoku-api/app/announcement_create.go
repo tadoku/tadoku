@@ -6,8 +6,6 @@ import (
 	"github.com/tadoku/tadoku/services/tadoku-api/features/content"
 )
 
-var ErrInvalidAnnouncement = content.ErrInvalidAnnouncement
-
 type CreateAnnouncementParameters = content.CreateAnnouncementParameters
 
 func (a *Application) CreateAnnouncement(ctx context.Context, parameters CreateAnnouncementParameters) (*content.Announcement, error) {

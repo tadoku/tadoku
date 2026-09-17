@@ -32,6 +32,12 @@ repositories only query and map rows. `postgres.Executor` lets repositories use
 the active app-owned transaction. Open transactions only when the operation needs
 one; do not add feature or repository interfaces solely for mocking.
 
+Feature errors wrap transport-neutral categories from `services/common/domain`
+using `%w`; they do not carry HTTP status codes. The HTTP router maps those
+categories through `services/common/http/httperr.StatusCode`, with unknown errors
+returning 500. Keep feature-specific error identity available through `errors.Is`,
+and add wrapping at call sites only when it contributes useful diagnostic context.
+
 Application operations and feature services that need authorization receive a
 named `*permissions.Checker` and call `RequireAuthenticated`, `RequireAdmin` or
 `IsAdmin` explicitly. Do not enforce administrator access with HTTP middleware.
@@ -197,7 +203,9 @@ e2e/testdata/<operation>/<status>_<description>/
   golden.http
 ```
 
-Each operation's tests use an explicit Go table. Each row declares
+Each operation's HTTP tests use one explicit Go golden-case table, without separate
+generated-ID, readback or hand-decoded response tests. Persistence assertions belong
+in repository tests. Each row declares
 `description []string` and `want` as an HTTP status constant; there is no separate
 fixture-name field to keep in sync. Add a case by adding a descriptive table row and
 its request and golden files; do not discover cases from directories. Add `setup.sql`

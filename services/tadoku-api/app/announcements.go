@@ -8,8 +8,6 @@ import (
 	"github.com/tadoku/tadoku/services/tadoku-api/infra/postgres"
 )
 
-var ErrAnnouncementNotFound = content.ErrAnnouncementNotFound
-
 func (a *Application) FindAnnouncementByID(ctx context.Context, namespace string, id uuid.UUID) (*content.Announcement, error) {
 	if err := a.permissions.RequireAdmin(ctx); err != nil {
 		return nil, err

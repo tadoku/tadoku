@@ -1,10 +1,10 @@
-package datex_test
+package timex_test
 
 import (
 	"testing"
 	"time"
 
-	"github.com/tadoku/tadoku/services/tadoku-api/internal/datex"
+	"github.com/tadoku/tadoku/services/tadoku-api/internal/timex"
 )
 
 func TestIsValidRange(t *testing.T) {
@@ -26,7 +26,7 @@ func TestIsValidRange(t *testing.T) {
 		{name: "same instant different zone", start: start, end: start.In(time.FixedZone("offset", 2*60*60))},
 	} {
 		t.Run(test.name, func(t *testing.T) {
-			if got := datex.IsValidRange(test.start, test.end); got != test.want {
+			if got := timex.IsValidRange(test.start, test.end); got != test.want {
 				t.Errorf("IsValidRange(%v, %v) = %t, want %t", test.start, test.end, got, test.want)
 			}
 		})

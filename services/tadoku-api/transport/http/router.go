@@ -3,18 +3,18 @@ package http
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"log/slog"
 	stdhttp "net/http"
 	"time"
 
+	commondomain "github.com/tadoku/tadoku/services/common/domain"
+	"github.com/tadoku/tadoku/services/common/http/httperr"
 	"github.com/tadoku/tadoku/services/tadoku-api/app"
 	"github.com/tadoku/tadoku/services/tadoku-api/generated/openapi"
-	"github.com/tadoku/tadoku/services/tadoku-api/internal/permissions"
 )
 
-var errInvalidUUID = errors.New("invalid UUID")
+var errInvalidUUID = fmt.Errorf("invalid UUID: %w", commondomain.ErrRequestInvalid)
 
 // Router keeps application routes behind shared middleware while allowing this
 // package to attach probes and temporary legacy proxies outside it.
@@ -94,16 +94,9 @@ func NewHandler(
 				w.WriteHeader(stdhttp.StatusBadRequest)
 			},
 			ResponseErrorHandlerFunc: func(w stdhttp.ResponseWriter, _ *stdhttp.Request, err error) {
-				status := stdhttp.StatusInternalServerError
-				switch {
-				case errors.Is(err, errInvalidUUID):
-					status = stdhttp.StatusBadRequest
-				case errors.Is(err, permissions.ErrUnauthorized):
-					status = stdhttp.StatusUnauthorized
-				case errors.Is(err, permissions.ErrForbidden):
-					status = stdhttp.StatusForbidden
-				case errors.Is(err, permissions.ErrUnavailable):
-					status = stdhttp.StatusServiceUnavailable
+				status, ok := httperr.StatusCode(err)
+				if !ok {
+					status = stdhttp.StatusInternalServerError
 				}
 				w.WriteHeader(status)
 			},

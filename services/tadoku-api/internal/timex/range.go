@@ -1,5 +1,4 @@
-// Package datex provides shared date and time validation.
-package datex
+package timex
 
 import "time"
 

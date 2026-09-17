@@ -149,9 +149,6 @@ func (e *Evaluator) Boolean(ctx context.Context, flag BooleanFlag, user *commond
 }
 
 func (e *Evaluator) now() time.Time {
-	if e.clock == nil {
-		return time.Time{}
-	}
 	return e.clock.Now()
 }
 

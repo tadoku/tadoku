@@ -10,7 +10,6 @@ import (
 
 const checkTimeout = 2 * time.Second
 
-// LivezHandler returns 200 OK if the process is alive.
 func LivezHandler(c echo.Context) error {
 	return c.String(http.StatusOK, "ok")
 }

@@ -65,10 +65,6 @@ func NewMetrics(db *sql.DB, databaseName string) *Metrics {
 	}
 }
 
-func (m *Metrics) Registerer() prometheus.Registerer {
-	return m.registry
-}
-
 func (m *Metrics) Registry() *prometheus.Registry {
 	return m.registry
 }

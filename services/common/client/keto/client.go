@@ -9,8 +9,6 @@ import (
 	"golang.org/x/sync/errgroup"
 )
 
-// Subject represents the subject of a permission check or relation tuple.
-//
 // Keto supports two encodings:
 // - Direct subject: subject_id
 // - Subject set: subject_set (namespace, object, relation)
@@ -29,7 +27,6 @@ type SubjectSet struct {
 	Relation  string
 }
 
-// AuthorizationReader is the read-only interface for authorization checks and lookups.
 type AuthorizationReader interface {
 	CheckPermission(ctx context.Context, namespace, object, relation string, subject Subject) (bool, error)
 	CheckPermissions(ctx context.Context, checks []PermissionCheck) []PermissionResult
@@ -39,20 +36,17 @@ type AuthorizationReader interface {
 	ListSubjectIDsForRelation(ctx context.Context, namespace, object, relation string) ([]string, error)
 }
 
-// AuthorizationClient can both check permissions and manage relation tuples.
 type AuthorizationClient interface {
 	AuthorizationReader
 	AddRelation(ctx context.Context, namespace, object, relation string, subject Subject) error
 	DeleteRelation(ctx context.Context, namespace, object, relation string, subject Subject) error
 }
 
-// Client implements AuthorizationClient.
 type Client struct {
 	readClient  *keto.APIClient
 	writeClient *keto.APIClient
 }
 
-// Compile-time interface compliance checks.
 var (
 	_ AuthorizationReader = (*Client)(nil)
 	_ AuthorizationClient = (*Client)(nil)
@@ -82,9 +76,7 @@ func NewReadClient(readURL string) AuthorizationReader {
 	}
 }
 
-// CheckPermission checks if a subject has a relation on an object.
-// Returns (true, nil) if allowed, (false, nil) if denied, or (false, error) on failure.
-// Note: Keto returns HTTP 403 when permission is denied, which is treated as (false, nil).
+// Keto returns HTTP 403 when permission is denied, which is treated as (false, nil).
 func (c *Client) CheckPermission(ctx context.Context, namespace, object, relation string, subject Subject) (bool, error) {
 	req := c.readClient.PermissionApi.CheckPermission(ctx).
 		Namespace(namespace).
@@ -149,7 +141,6 @@ func (c *Client) ListSubjectIDsForRelation(ctx context.Context, namespace, objec
 	}
 }
 
-// AddRelation creates a relation tuple in Keto.
 func (c *Client) AddRelation(ctx context.Context, namespace, object, relation string, subject Subject) error {
 	if c.writeClient == nil {
 		return fmt.Errorf("keto write client not configured")
@@ -186,7 +177,6 @@ func (c *Client) AddRelation(ctx context.Context, namespace, object, relation st
 	return nil
 }
 
-// DeleteRelation removes a relation tuple from Keto.
 func (c *Client) DeleteRelation(ctx context.Context, namespace, object, relation string, subject Subject) error {
 	if c.writeClient == nil {
 		return fmt.Errorf("keto write client not configured")
@@ -220,7 +210,6 @@ func (c *Client) DeleteRelation(ctx context.Context, namespace, object, relation
 	return nil
 }
 
-// PermissionCheck represents a single permission check request.
 type PermissionCheck struct {
 	Namespace string
 	Object    string
@@ -228,20 +217,17 @@ type PermissionCheck struct {
 	Subject   Subject
 }
 
-// PermissionResult represents the result of a single permission check.
 type PermissionResult struct {
 	Check   PermissionCheck
 	Allowed bool
 	Err     error
 }
 
-// DefaultMaxConcurrency is the default maximum number of concurrent permission checks.
-const DefaultMaxConcurrency = 10
+const defaultMaxConcurrency = 10
 
-// CheckPermissions checks multiple permissions in parallel.
-// Returns results in the same order as the input checks.
-// Limits concurrency to DefaultMaxConcurrency to avoid overwhelming the server.
-// Respects context cancellation - cancelled checks will have ctx.Err() in their result.
+// CheckPermissions checks multiple permissions in parallel and returns results
+// in input order. Concurrency is capped to avoid overwhelming Keto.
+// Cancelled checks record ctx.Err() instead of failing the batch.
 func (c *Client) CheckPermissions(ctx context.Context, checks []PermissionCheck) []PermissionResult {
 	results := make([]PermissionResult, len(checks))
 	if len(checks) == 0 {
@@ -249,7 +235,7 @@ func (c *Client) CheckPermissions(ctx context.Context, checks []PermissionCheck)
 	}
 
 	g, ctx := errgroup.WithContext(ctx)
-	g.SetLimit(DefaultMaxConcurrency)
+	g.SetLimit(defaultMaxConcurrency)
 
 	for i, check := range checks {
 		i, check := i, check

@@ -7,20 +7,24 @@ import (
 	ketoclient "github.com/tadoku/tadoku/services/common/client/keto"
 )
 
-// Service evaluates roles for a given subject ID.
 // Subject IDs are expected to be Kratos identity IDs (token "sub").
 type Service interface {
 	ClaimsForSubject(ctx context.Context, subjectID string) (Claims, error)
 	ClaimsForSubjects(ctx context.Context, subjectIDs []string) (map[string]Claims, error)
 }
 
+type ketoReader interface {
+	CheckPermissions(ctx context.Context, checks []ketoclient.PermissionCheck) []ketoclient.PermissionResult
+	ListSubjectIDsForRelation(ctx context.Context, namespace, object, relation string) ([]string, error)
+}
+
 type KetoService struct {
-	keto      ketoclient.AuthorizationReader
+	keto      ketoReader
 	namespace string
 	object    string
 }
 
-func NewKetoService(keto ketoclient.AuthorizationReader, namespace, object string) *KetoService {
+func NewKetoService(keto ketoReader, namespace, object string) *KetoService {
 	return &KetoService{
 		keto:      keto,
 		namespace: namespace,

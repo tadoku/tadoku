@@ -38,7 +38,6 @@ func FromContext(ctx context.Context) Claims {
 
 func IsAuthenticated(ctx context.Context) bool { return FromContext(ctx).Authenticated }
 func IsAdmin(ctx context.Context) bool         { return FromContext(ctx).Admin }
-func IsBanned(ctx context.Context) bool        { return FromContext(ctx).Banned }
 
 // RequireAuthenticated returns nil if the caller is authenticated.
 // It returns commondomain.ErrUnauthorized if the caller is not authenticated.

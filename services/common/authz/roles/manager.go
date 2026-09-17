@@ -6,19 +6,23 @@ import (
 	ketoclient "github.com/tadoku/tadoku/services/common/client/keto"
 )
 
-// TODO: This should not be in common but rather in profile-api when the role management endpoints live there
 type Manager interface {
 	SetAdmin(ctx context.Context, subjectID string, enabled bool) error
 	SetBanned(ctx context.Context, subjectID string, enabled bool) error
 }
 
+type ketoWriter interface {
+	AddRelation(ctx context.Context, namespace, object, relation string, subject ketoclient.Subject) error
+	DeleteRelation(ctx context.Context, namespace, object, relation string, subject ketoclient.Subject) error
+}
+
 type KetoManager struct {
-	keto      ketoclient.AuthorizationClient
+	keto      ketoWriter
 	namespace string
 	object    string
 }
 
-func NewKetoManager(keto ketoclient.AuthorizationClient, namespace, object string) *KetoManager {
+func NewKetoManager(keto ketoWriter, namespace, object string) *KetoManager {
 	return &KetoManager{
 		keto:      keto,
 		namespace: namespace,

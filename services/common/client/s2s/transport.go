@@ -5,32 +5,29 @@ import (
 	"net/http"
 )
 
-// AuthTransport attaches an S2S bearer token to every request.
-type AuthTransport struct {
-	Base          http.RoundTripper
-	Client        *Client
-	TargetService string
+type authTransport struct {
+	base          http.RoundTripper
+	client        *Client
+	targetService string
 }
 
-// NewAuthTransport returns a RoundTripper that injects S2S auth headers.
 func NewAuthTransport(client *Client, targetService string, base http.RoundTripper) http.RoundTripper {
-	return &AuthTransport{
-		Base:          base,
-		Client:        client,
-		TargetService: targetService,
+	return &authTransport{
+		base:          base,
+		client:        client,
+		targetService: targetService,
 	}
 }
 
-// RoundTrip implements http.RoundTripper.
-func (t *AuthTransport) RoundTrip(req *http.Request) (*http.Response, error) {
-	if t.Client == nil {
+func (t *authTransport) RoundTrip(req *http.Request) (*http.Response, error) {
+	if t.client == nil {
 		return nil, fmt.Errorf("s2s client is required")
 	}
-	if t.TargetService == "" {
+	if t.targetService == "" {
 		return nil, fmt.Errorf("target service is required")
 	}
 
-	token, err := t.Client.GetTokenContext(req.Context(), t.TargetService)
+	token, err := t.client.GetTokenContext(req.Context(), t.targetService)
 	if err != nil {
 		return nil, err
 	}
@@ -39,7 +36,7 @@ func (t *AuthTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 	clone.Header = req.Header.Clone()
 	clone.Header.Set("Authorization", "Bearer "+token)
 
-	base := t.Base
+	base := t.base
 	if base == nil {
 		base = http.DefaultTransport
 	}

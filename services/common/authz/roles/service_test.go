@@ -16,14 +16,6 @@ type fakeKeto struct {
 	listSubjectsErr error
 }
 
-func (f *fakeKeto) CheckPermission(ctx context.Context, namespace, object, relation string, subject ketoclient.Subject) (bool, error) {
-	r, ok := f.results[relation]
-	if !ok {
-		return false, errors.New("missing relation in fake")
-	}
-	return r.Allowed, r.Err
-}
-
 func (f *fakeKeto) CheckPermissions(ctx context.Context, checks []ketoclient.PermissionCheck) []ketoclient.PermissionResult {
 	out := make([]ketoclient.PermissionResult, 0, len(checks))
 	for _, c := range checks {

@@ -14,7 +14,7 @@ import (
 	commondomain "github.com/tadoku/tadoku/services/common/domain"
 )
 
-type TokenResponse struct {
+type tokenResponse struct {
 	AccessToken string `json:"access_token"`
 	TokenType   string `json:"token_type"`
 	ExpiresIn   int    `json:"expires_in"`
@@ -43,11 +43,6 @@ func NewClient(oathkeeperURL string, clock commondomain.Clock) *Client {
 		clock:         clock,
 		tokenCache:    make(map[string]*cachedToken),
 	}
-}
-
-// GetToken returns a JWT for calling the target service.
-func (c *Client) GetToken(targetService string) (string, error) {
-	return c.GetTokenContext(context.Background(), targetService)
 }
 
 // GetTokenContext returns a JWT for calling the target service and binds an
@@ -87,7 +82,7 @@ func (c *Client) GetTokenContext(ctx context.Context, targetService string) (str
 		return "", fmt.Errorf("token exchange failed: %s - %s", resp.Status, string(body))
 	}
 
-	var tokenResp TokenResponse
+	var tokenResp tokenResponse
 	if err := json.NewDecoder(resp.Body).Decode(&tokenResp); err != nil {
 		return "", fmt.Errorf("failed to decode token response: %w", err)
 	}

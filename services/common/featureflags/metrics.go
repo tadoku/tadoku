@@ -117,9 +117,6 @@ func (m *Metrics) currentConfigAge() float64 {
 }
 
 func (m *Metrics) now() time.Time {
-	if m.clock == nil {
-		return time.Time{}
-	}
 	return m.clock.Now()
 }
 

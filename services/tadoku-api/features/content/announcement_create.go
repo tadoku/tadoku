@@ -9,10 +9,7 @@ import (
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/timex"
 )
 
-var ErrInvalidAnnouncement = &errx.Error{
-	Kind:    errx.InvalidInput,
-	Message: "invalid announcement",
-}
+var ErrInvalidAnnouncement = errx.NewInvalidInputError("invalid announcement")
 
 type CreateAnnouncementParameters struct {
 	ID        uuid.UUID

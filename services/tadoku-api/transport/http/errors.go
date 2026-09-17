@@ -6,10 +6,7 @@ import (
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
 )
 
-var errInvalidUUID = &errx.Error{
-	Kind:    errx.InvalidInput,
-	Message: "invalid UUID",
-}
+var errInvalidUUID = errx.NewInvalidInputError("invalid UUID")
 
 func errorStatus(err error) int {
 	switch errx.KindOf(err) {

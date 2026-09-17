@@ -20,6 +20,27 @@ type Error struct {
 	Cause   error
 }
 
+func NewInvalidInputError(message string) *Error {
+	return &Error{Kind: InvalidInput, Message: message}
+}
+
+func NewUnauthorizedError(message string) *Error {
+	return &Error{Kind: Unauthorized, Message: message}
+}
+
+func NewForbiddenError(message string) *Error {
+	return &Error{Kind: Forbidden, Message: message}
+}
+
+func NewNotFoundError(message string) *Error {
+	return &Error{Kind: NotFound, Message: message}
+}
+
+// NewUnavailableError preserves the underlying cause, which may be nil.
+func NewUnavailableError(message string, cause error) *Error {
+	return &Error{Kind: Unavailable, Message: message, Cause: cause}
+}
+
 func (e *Error) Error() string {
 	if e.Cause == nil {
 		return e.Message

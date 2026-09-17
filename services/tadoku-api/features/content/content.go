@@ -40,14 +40,8 @@ func IsValidAnnouncementStyle(style string) bool {
 }
 
 var (
-	ErrInvalidNamespace = &errx.Error{
-		Kind:    errx.InvalidInput,
-		Message: "namespace is required",
-	}
-	ErrAnnouncementNotFound = &errx.Error{
-		Kind:    errx.NotFound,
-		Message: "announcement not found",
-	}
+	ErrInvalidNamespace     = errx.NewInvalidInputError("namespace is required")
+	ErrAnnouncementNotFound = errx.NewNotFoundError("announcement not found")
 )
 
 type Service struct {

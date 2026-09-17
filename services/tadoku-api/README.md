@@ -33,7 +33,10 @@ the active app-owned transaction. Open transactions only when the operation need
 one; do not add feature or repository interfaces solely for mocking.
 
 Application errors use `internal/errx.Error`, which carries a transport-neutral
-`Kind`, a message and an optional cause. `errx.KindOf` reads the outermost typed
+`Kind`, a message and an optional cause. Use named constructors such as
+`errx.NewInvalidInputError(message)` or `errx.NewUnavailableError(message, cause)`;
+the latter accepts `nil` when there is no underlying cause.
+`errx.KindOf` reads the outermost typed
 error using `errors.As`; the HTTP boundary maps its kind to a status, with unknown
 or unclassified errors returning 500. Ordinary `%w` wrapping preserves metadata,
 and `Unwrap` preserves causes for `errors.Is`/`errors.As`. Do not encode categories

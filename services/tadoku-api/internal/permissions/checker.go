@@ -50,33 +50,18 @@ func (c *Checker) IsAdmin(ctx context.Context) (bool, error) {
 		return false, nil
 	}
 	if err, _ := ctx.Value(banLookupErrorKey{}).(error); err != nil {
-		return false, &errx.Error{
-			Kind:    errx.Unavailable,
-			Message: "check ban permission",
-			Cause:   err,
-		}
+		return false, errx.NewUnavailableError("check ban permission", err)
 	}
 	if c == nil || c.lookupAdmin == nil {
-		return false, &errx.Error{
-			Kind:    errx.Unavailable,
-			Message: "permissions unavailable",
-		}
+		return false, errx.NewUnavailableError("permissions unavailable", nil)
 	}
 
 	allowed, err := c.lookupAdmin(ctx, user.Subject)
 	if err != nil {
-		return false, &errx.Error{
-			Kind:    errx.Unavailable,
-			Message: "check admin permission",
-			Cause:   err,
-		}
+		return false, errx.NewUnavailableError("check admin permission", err)
 	}
 	if err := ctx.Err(); err != nil {
-		return false, &errx.Error{
-			Kind:    errx.Unavailable,
-			Message: "check admin permission",
-			Cause:   err,
-		}
+		return false, errx.NewUnavailableError("check admin permission", err)
 	}
 	return allowed, nil
 }
@@ -84,10 +69,7 @@ func (c *Checker) IsAdmin(ctx context.Context) (bool, error) {
 func (c *Checker) RequireAuthenticated(ctx context.Context) error {
 	user := identity.FromContext(ctx)
 	if user == nil || user.Subject == "" || user.Subject == "guest" {
-		return &errx.Error{
-			Kind:    errx.Unauthorized,
-			Message: "unauthorized",
-		}
+		return errx.NewUnauthorizedError("unauthorized")
 	}
 	return nil
 }
@@ -102,10 +84,7 @@ func (c *Checker) RequireAdmin(ctx context.Context) error {
 		return err
 	}
 	if !allowed {
-		return &errx.Error{
-			Kind:    errx.Forbidden,
-			Message: "forbidden",
-		}
+		return errx.NewForbiddenError("forbidden")
 	}
 	return nil
 }

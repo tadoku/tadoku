@@ -129,7 +129,7 @@ func newTestRouter(ctx context.Context, pool *pgxpool.Pool, ketoReadURL string) 
 	repository := content.NewAnnouncementsRepository(pool)
 	service := content.NewService(repository)
 	application := app.New(service, pool, permissionChecker)
-	authenticate, err := transport.NewJWTAuthentication(ctx, authenticationJWKS.URL, time.Second, logger)
+	authenticate, err := transport.NewJWTAuthentication(ctx, authenticationJWKS.URL, time.Second, 24*time.Hour, "http://oathkeeper-api/", logger)
 	if err != nil {
 		return nil, err
 	}

@@ -33,6 +33,7 @@ type config struct {
 	MetricsPort int    `validate:"gt=0,lte=65535" envconfig:"metrics_port" default:"9090"`
 	ServiceName string `validate:"required" envconfig:"service_name" default:"tadoku-api"`
 	JWKS        string `validate:"required"`
+	JWTIssuer   string `envconfig:"jwt_issuer"`
 	KetoReadURL string `validate:"required" envconfig:"keto_read_url"`
 
 	AuthzURL     string `validate:"required" envconfig:"authz_url"`
@@ -44,6 +45,7 @@ type config struct {
 	Postgres               postgresconfig.Config `ignored:"true"`
 
 	DialTimeout           time.Duration `validate:"gt=0" envconfig:"dial_timeout" default:"3s"`
+	MaxTokenAge           time.Duration `validate:"gt=0" envconfig:"max_token_age" default:"24h"`
 	ResponseHeaderTimeout time.Duration `validate:"gt=0" envconfig:"response_header_timeout" default:"10s"`
 	RequestTimeout        time.Duration `validate:"gt=0" envconfig:"request_timeout" default:"30s"`
 	IdleTimeout           time.Duration `validate:"gt=0" envconfig:"idle_timeout" default:"30s"`
@@ -150,7 +152,7 @@ func start(ctx context.Context, cfg config, logger *slog.Logger) (*application, 
 	}()
 
 	logger = logger.With("service", cfg.ServiceName)
-	authenticate, err := transporthttp.NewJWTAuthentication(ctx, cfg.JWKS, cfg.DialTimeout, logger)
+	authenticate, err := transporthttp.NewJWTAuthentication(ctx, cfg.JWKS, cfg.DialTimeout, cfg.MaxTokenAge, cfg.JWTIssuer, logger)
 	if err != nil {
 		return nil, err
 	}

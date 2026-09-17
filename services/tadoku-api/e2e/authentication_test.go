@@ -33,15 +33,18 @@ func TestAuthentication(t *testing.T) {
 		},
 		{
 			description: []string{"without", "exp"},
-			want:        http.StatusOK,
+			want:        http.StatusUnauthorized,
+			skipParity:  true,
 		},
 		{
 			description: []string{"old", "iat"},
-			want:        http.StatusOK,
+			want:        http.StatusUnauthorized,
+			skipParity:  true,
 		},
 		{
-			description: []string{"other", "issuer", "audience"},
-			want:        http.StatusOK,
+			description: []string{"wrong", "issuer"},
+			want:        http.StatusUnauthorized,
+			skipParity:  true,
 		},
 		{
 			description: []string{"lowercase", "bearer"},

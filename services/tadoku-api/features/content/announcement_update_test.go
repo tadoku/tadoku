@@ -13,16 +13,15 @@ import (
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/testpostgres"
 )
 
-func TestUpdateAnnouncementRequiresNamespace(t *testing.T) {
-	service := content.NewService(nil)
-	_, err := service.UpdateAnnouncement(t.Context(), "", uuid.New(), content.AnnouncementUpdateRequest{
+func TestUpdateAnnouncementParametersValidation(t *testing.T) {
+	parameters := content.UpdateAnnouncementParameters{
 		Title:    "Title",
 		Content:  "Content",
 		Style:    "info",
 		StartsAt: time.Date(2026, 9, 12, 0, 0, 0, 0, time.UTC),
 		EndsAt:   time.Date(2026, 9, 13, 0, 0, 0, 0, time.UTC),
-	})
-	if !errors.Is(err, content.ErrInvalidAnnouncement) {
+	}
+	if err := parameters.Validate(""); !errors.Is(err, content.ErrInvalidAnnouncement) {
 		t.Errorf("error=%v, want invalid announcement", err)
 	}
 }

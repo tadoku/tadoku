@@ -30,7 +30,7 @@ func (s *server) ContentAnnouncementUpdate(
 		href = &value
 	}
 
-	item, err := s.application.UpdateAnnouncement(ctx, request.Namespace, id, app.AnnouncementUpdateRequest{
+	item, err := s.application.UpdateAnnouncement(ctx, request.Namespace, id, app.UpdateAnnouncementParameters{
 		Title:    body.Title,
 		Content:  body.Content,
 		Style:    string(body.Style),

@@ -8,19 +8,19 @@ import (
 	"github.com/tadoku/tadoku/services/tadoku-api/infra/postgres"
 )
 
-type AnnouncementUpdateRequest = content.AnnouncementUpdateRequest
+type UpdateAnnouncementParameters = content.UpdateAnnouncementParameters
 
-func (a *Application) UpdateAnnouncement(ctx context.Context, namespace string, id uuid.UUID, req AnnouncementUpdateRequest) (*content.Announcement, error) {
+func (a *Application) UpdateAnnouncement(ctx context.Context, namespace string, id uuid.UUID, parameters UpdateAnnouncementParameters) (*content.Announcement, error) {
 	if err := a.permissions.RequireAdmin(ctx); err != nil {
 		return nil, err
 	}
-	if err := req.Validate(namespace); err != nil {
+	if err := parameters.Validate(namespace); err != nil {
 		return nil, err
 	}
 
 	var result *content.Announcement
 	err := postgres.RunInTransaction(ctx, a.db, func(ctx context.Context) (err error) {
-		result, err = a.content.UpdateAnnouncement(ctx, namespace, id, req)
+		result, err = a.content.UpdateAnnouncement(ctx, namespace, id, parameters)
 		return
 	})
 	return result, err

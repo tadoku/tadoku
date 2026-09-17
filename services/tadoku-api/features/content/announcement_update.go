@@ -5,10 +5,11 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/tadoku/tadoku/services/tadoku-api/internal/datex"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/timex"
 )
 
-type AnnouncementUpdateRequest struct {
+type UpdateAnnouncementParameters struct {
 	Title    string
 	Content  string
 	Style    string
@@ -17,21 +18,16 @@ type AnnouncementUpdateRequest struct {
 	EndsAt   time.Time
 }
 
-func (req AnnouncementUpdateRequest) Validate(namespace string) error {
-	if namespace == "" || req.Title == "" || req.Content == "" ||
-		req.StartsAt.IsZero() || req.EndsAt.IsZero() || !req.EndsAt.After(req.StartsAt) {
-		return ErrInvalidAnnouncement
-	}
-	switch req.Style {
-	case "success", "warning", "error", "info":
-	default:
+func (p UpdateAnnouncementParameters) Validate(namespace string) error {
+	if namespace == "" || p.Title == "" || p.Content == "" ||
+		!IsValidAnnouncementStyle(p.Style) || !datex.IsValidRange(p.StartsAt, p.EndsAt) {
 		return ErrInvalidAnnouncement
 	}
 	return nil
 }
 
-func (s *Service) UpdateAnnouncement(ctx context.Context, namespace string, id uuid.UUID, req AnnouncementUpdateRequest) (*Announcement, error) {
-	if err := req.Validate(namespace); err != nil {
+func (s *Service) UpdateAnnouncement(ctx context.Context, namespace string, id uuid.UUID, parameters UpdateAnnouncementParameters) (*Announcement, error) {
+	if err := parameters.Validate(namespace); err != nil {
 		return nil, err
 	}
 
@@ -40,12 +36,12 @@ func (s *Service) UpdateAnnouncement(ctx context.Context, namespace string, id u
 		return nil, err
 	}
 
-	announcement.Title = req.Title
-	announcement.Content = req.Content
-	announcement.Style = req.Style
-	announcement.Href = req.Href
-	announcement.StartsAt = req.StartsAt
-	announcement.EndsAt = req.EndsAt
+	announcement.Title = parameters.Title
+	announcement.Content = parameters.Content
+	announcement.Style = parameters.Style
+	announcement.Href = parameters.Href
+	announcement.StartsAt = parameters.StartsAt
+	announcement.EndsAt = parameters.EndsAt
 	announcement.UpdatedAt = timex.Now()
 
 	if err := s.announcements.UpdateAnnouncement(ctx, announcement); err != nil {

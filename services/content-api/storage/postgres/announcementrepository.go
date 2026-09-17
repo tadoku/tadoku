@@ -77,6 +77,7 @@ func (r *AnnouncementRepository) UpdateAnnouncement(ctx context.Context, a *doma
 		Href:      NewNullString(a.Href),
 		StartsAt:  a.StartsAt,
 		EndsAt:    a.EndsAt,
+		UpdatedAt: a.UpdatedAt,
 	})
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {

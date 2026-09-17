@@ -317,9 +317,9 @@ set
   href = $5,
   starts_at = $6,
   ends_at = $7,
-  updated_at = now()
+  updated_at = $8
 where
-  id = $8 and
+  id = $9 and
   deleted_at is null
 returning id
 `
@@ -332,6 +332,7 @@ type UpdateAnnouncementParams struct {
 	Href      sql.NullString
 	StartsAt  time.Time
 	EndsAt    time.Time
+	UpdatedAt time.Time
 	ID        uuid.UUID
 }
 
@@ -344,6 +345,7 @@ func (q *Queries) UpdateAnnouncement(ctx context.Context, arg UpdateAnnouncement
 		arg.Href,
 		arg.StartsAt,
 		arg.EndsAt,
+		arg.UpdatedAt,
 		arg.ID,
 	)
 	var id uuid.UUID

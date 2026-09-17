@@ -70,6 +70,36 @@ func (r *AnnouncementsRepository) CreateAnnouncement(ctx context.Context, item *
 	return nil
 }
 
+func (r *AnnouncementsRepository) UpdateAnnouncement(ctx context.Context, item *Announcement) error {
+	executor, err := postgres.Executor(ctx, r.db)
+	if err != nil {
+		return err
+	}
+
+	var href pgtype.Text
+	if item.Href != nil {
+		href = pgtype.Text{String: *item.Href, Valid: true}
+	}
+	_, err = queries.New(executor).UpdateAnnouncement(ctx, queries.UpdateAnnouncementParams{
+		ID:        pgtype.UUID{Bytes: item.ID, Valid: true},
+		Namespace: item.Namespace,
+		Title:     item.Title,
+		Content:   item.Content,
+		Style:     item.Style,
+		Href:      href,
+		StartsAt:  pgtype.Timestamp{Time: item.StartsAt, Valid: true},
+		EndsAt:    pgtype.Timestamp{Time: item.EndsAt, Valid: true},
+		UpdatedAt: pgtype.Timestamp{Time: item.UpdatedAt, Valid: true},
+	})
+	if errors.Is(err, pgx.ErrNoRows) {
+		return ErrAnnouncementNotFound
+	}
+	if err != nil {
+		return fmt.Errorf("update announcement: %w", err)
+	}
+	return nil
+}
+
 func (r *AnnouncementsRepository) FindAnnouncementByID(ctx context.Context, namespace string, id uuid.UUID) (*Announcement, error) {
 	executor, err := postgres.Executor(ctx, r.db)
 	if err != nil {

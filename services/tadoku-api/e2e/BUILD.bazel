@@ -5,6 +5,7 @@ go_test(
     srcs = [
         "announcement_create_test.go",
         "announcement_delete_test.go",
+        "announcement_update_test.go",
         "announcements_test.go",
         "api_test.go",
         "authentication_test.go",

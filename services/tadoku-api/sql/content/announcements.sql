@@ -49,3 +49,17 @@ where deleted_at is null
   and ends_at > sqlc.arg(cutoff)::timestamp
 order by starts_at desc
 limit sqlc.arg(result_limit);
+
+-- name: UpdateAnnouncement :one
+update announcements
+set title = sqlc.arg(title),
+    content = sqlc.arg(content),
+    style = sqlc.arg(style),
+    href = sqlc.narg(href),
+    starts_at = sqlc.arg(starts_at),
+    ends_at = sqlc.arg(ends_at),
+    updated_at = sqlc.arg(updated_at)
+where id = sqlc.arg(id)
+  and namespace = sqlc.arg(namespace)
+  and deleted_at is null
+returning id;

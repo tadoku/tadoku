@@ -35,7 +35,7 @@ select id, namespace, title, content, style, href,
 from announcements
 where deleted_at is null
   and namespace = sqlc.arg(namespace)
-order by created_at desc
+order by created_at desc, id desc
 limit sqlc.arg(result_limit)
 offset sqlc.arg(start_from)::bigint;
 
@@ -47,7 +47,7 @@ where deleted_at is null
   and namespace = sqlc.arg(namespace)
   and starts_at <= sqlc.arg(cutoff)::timestamp
   and ends_at > sqlc.arg(cutoff)::timestamp
-order by starts_at desc
+order by starts_at desc, id desc
 limit sqlc.arg(result_limit);
 
 -- name: UpdateAnnouncement :one

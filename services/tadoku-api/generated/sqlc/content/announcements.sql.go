@@ -137,7 +137,7 @@ where deleted_at is null
   and namespace = $1
   and starts_at <= $2::timestamp
   and ends_at > $2::timestamp
-order by starts_at desc
+order by starts_at desc, id desc
 limit $3
 `
 
@@ -197,7 +197,7 @@ select id, namespace, title, content, style, href,
 from announcements
 where deleted_at is null
   and namespace = $1
-order by created_at desc
+order by created_at desc, id desc
 limit $3
 offset $2::bigint
 `

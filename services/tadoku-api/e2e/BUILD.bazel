@@ -2,6 +2,7 @@ load("@rules_go//go:def.bzl", "go_test")
 
 go_test(
     name = "e2e_test",
+    size = "medium",
     srcs = [
         "announcement_create_test.go",
         "announcement_delete_test.go",

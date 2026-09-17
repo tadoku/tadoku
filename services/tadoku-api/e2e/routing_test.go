@@ -1,10 +1,16 @@
 package e2e_test
 
 import (
+	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"path/filepath"
+	"regexp"
+	"strings"
 	"testing"
+
+	"github.com/bazelbuild/rules_go/go/tools/bazel"
+	"github.com/getkin/kin-openapi/openapi3"
 )
 
 func TestRouterWorksWithoutLegacyProxyRoutes(t *testing.T) {
@@ -60,41 +66,33 @@ func TestRouterWorksWithoutLegacyProxyRoutes(t *testing.T) {
 	}
 }
 
-func TestUnclaimedMethodsRemainProxied(t *testing.T) {
-	for _, route := range []struct {
-		name    string
-		path    string
-		methods []string
-	}{
-		{
-			name:    "active list",
-			path:    "/content/announcements/main/active",
-			methods: []string{http.MethodHead, http.MethodOptions, http.MethodPost, http.MethodPatch},
-		},
-		{
-			name:    "admin list",
-			path:    "/content/announcements/main",
-			methods: []string{http.MethodHead, http.MethodOptions, http.MethodPut, http.MethodDelete, http.MethodPatch},
-		},
-		{
-			name:    "by ID",
-			path:    "/content/announcements/main/11111111-1111-4111-8111-111111111111",
-			methods: []string{http.MethodHead, http.MethodOptions, http.MethodPost, http.MethodPatch},
-		},
-	} {
-		t.Run(route.name, func(t *testing.T) {
-			for _, method := range route.methods {
-				t.Run(method, func(t *testing.T) {
-					api.resetProxyCount()
-					request := httptest.NewRequest(method, route.path, nil)
-					response := httptest.NewRecorder()
-					api.handler.ServeHTTP(response, request)
-
-					if response.Header().Get("X-Proxied") != "yes" {
-						t.Errorf("%s was not proxied", method)
-					}
-				})
+func TestContractRouteOwnership(t *testing.T) {
+	specPath, err := bazel.Runfile("services/tadoku-api/spec/openapi.yaml")
+	if err != nil {
+		t.Fatal(err)
+	}
+	contract, err := openapi3.NewLoader().LoadFromFile(specPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	pathParameters := regexp.MustCompile(`\{[^}]+\}`)
+	for path, pathItem := range contract.Paths {
+		for method, operation := range pathItem.Operations() {
+			ownerJSON, ok := operation.Extensions["x-tadoku-owner"].(json.RawMessage)
+			var owner string
+			if !ok || json.Unmarshal(ownerJSON, &owner) != nil || (owner != "legacy" && owner != "native") {
+				t.Fatalf("%s %s has invalid x-tadoku-owner %s", method, path, ownerJSON)
 			}
-		})
+			requestPath := strings.NewReplacer("{year}", "2026", "{flagKey}", "release-log-entry-v2").Replace(path)
+			requestPath = pathParameters.ReplaceAllString(requestPath, "11111111-1111-4111-8111-111111111111")
+			t.Run(method+" "+requestPath, func(t *testing.T) {
+				response := httptest.NewRecorder()
+				api.handler.ServeHTTP(response, httptest.NewRequest(method, requestPath, nil))
+				proxied := response.Header().Get("X-Proxied") == "yes"
+				if want := owner == "legacy"; proxied != want {
+					t.Errorf("%s %s (x-tadoku-owner: %s): proxied = %t, want %t", method, requestPath, owner, proxied, want)
+				}
+			})
+		}
 	}
 }

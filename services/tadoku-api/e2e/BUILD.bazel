@@ -20,7 +20,7 @@ go_test(
         "testdata/**/*.http",
         "testdata/**/*.json",
         "testdata/**/*.sql",
-    ]),
+    ]) + ["//services/tadoku-api/spec:openapi.yaml"],
     env_inherit = ["TADOKU_TEST_POSTGRES_URL"],
     tags = [
         "no-cache",
@@ -48,11 +48,13 @@ go_test(
         "//services/tadoku-api/internal/testpostgres",
         "//services/tadoku-api/internal/timex",
         "//services/tadoku-api/transport/http",
+        "@com_github_getkin_kin_openapi//openapi3",
         "@com_github_golang_jwt_jwt_v4//:jwt",
         "@com_github_jackc_pgx_v4//:pgx",
         "@com_github_jackc_pgx_v4//stdlib",
         "@com_github_jackc_pgx_v5//pgxpool",
         "@com_github_labstack_echo_v4//:echo",
         "@com_github_prometheus_client_golang//prometheus",
+        "@rules_go//go/tools/bazel",
     ],
 )

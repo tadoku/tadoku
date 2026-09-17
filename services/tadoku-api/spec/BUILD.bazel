@@ -1,5 +1,10 @@
 load("@rules_go//go:def.bzl", "go_test")
 
+exports_files(
+    ["openapi.yaml"],
+    visibility = ["//services/tadoku-api/e2e:__pkg__"],
+)
+
 go_test(
     name = "spec_test",
     srcs = ["openapi_test.go"],

@@ -37,7 +37,7 @@ where deleted_at is null
   and namespace = sqlc.arg(namespace)
 order by created_at desc
 limit sqlc.arg(result_limit)
-offset sqlc.arg(start_from);
+offset sqlc.arg(start_from)::bigint;
 
 -- name: ListActiveAnnouncements :many
 select id, namespace, title, content, style, href,

@@ -199,12 +199,12 @@ where deleted_at is null
   and namespace = $1
 order by created_at desc
 limit $3
-offset $2
+offset $2::bigint
 `
 
 type ListAnnouncementsParams struct {
 	Namespace   string
-	StartFrom   int32
+	StartFrom   int64
 	ResultLimit int32
 }
 

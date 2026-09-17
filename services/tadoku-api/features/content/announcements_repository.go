@@ -149,7 +149,7 @@ func (r *AnnouncementsRepository) CountAnnouncements(ctx context.Context, namesp
 	return int(total), nil
 }
 
-func (r *AnnouncementsRepository) ListAnnouncements(ctx context.Context, namespace string, limit, offset int32) ([]Announcement, error) {
+func (r *AnnouncementsRepository) ListAnnouncements(ctx context.Context, namespace string, limit int32, offset int64) ([]Announcement, error) {
 	executor, err := postgres.Executor(ctx, r.db)
 	if err != nil {
 		return nil, err

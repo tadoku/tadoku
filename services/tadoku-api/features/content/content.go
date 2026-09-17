@@ -41,6 +41,7 @@ func IsValidAnnouncementStyle(style string) bool {
 
 var (
 	ErrInvalidNamespace     = errx.NewInvalidInputError("namespace is required")
+	ErrInvalidPagination    = errx.NewInvalidInputError("invalid pagination")
 	ErrAnnouncementNotFound = errx.NewNotFoundError("announcement not found")
 )
 
@@ -72,6 +73,9 @@ func (s *Service) ListAnnouncements(ctx context.Context, namespace string, pageS
 		return nil, ErrInvalidNamespace
 	}
 
+	if pageSize < 0 || page < 0 {
+		return nil, ErrInvalidPagination
+	}
 	if pageSize == 0 {
 		pageSize = 10
 	}
@@ -83,13 +87,21 @@ func (s *Service) ListAnnouncements(ctx context.Context, namespace string, pageS
 	if err != nil {
 		return nil, err
 	}
-	announcements, err := s.announcements.ListAnnouncements(ctx, namespace, int32(pageSize), int32(page*pageSize))
+	if page > totalSize/pageSize {
+		return &AnnouncementList{
+			Announcements: []Announcement{},
+			TotalSize:     totalSize,
+		}, nil
+	}
+
+	offset := int64(page) * int64(pageSize)
+	announcements, err := s.announcements.ListAnnouncements(ctx, namespace, int32(pageSize), offset)
 	if err != nil {
 		return nil, err
 	}
 
 	nextPageToken := ""
-	if (page*pageSize)+pageSize < totalSize {
+	if int64(pageSize) < int64(totalSize)-offset {
 		nextPageToken = strconv.Itoa(page + 1)
 	}
 

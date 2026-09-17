@@ -2,7 +2,6 @@ package http
 
 import (
 	"context"
-	"errors"
 
 	"github.com/google/uuid"
 	"github.com/oapi-codegen/nullable"
@@ -38,12 +37,6 @@ func (s *server) ContentAnnouncementUpdate(
 		StartsAt: body.StartsAt,
 		EndsAt:   body.EndsAt,
 	})
-	if errors.Is(err, app.ErrInvalidAnnouncement) {
-		return openapi.ContentAnnouncementUpdate400Response{}, nil
-	}
-	if errors.Is(err, app.ErrAnnouncementNotFound) {
-		return openapi.ContentAnnouncementUpdate404Response{}, nil
-	}
 	if err != nil {
 		s.logger.ErrorContext(ctx, "update announcement failed", "error", err)
 		return nil, err

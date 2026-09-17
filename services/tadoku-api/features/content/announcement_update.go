@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/tadoku/tadoku/services/tadoku-api/internal/datex"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/timex"
 )
 
@@ -20,7 +19,7 @@ type UpdateAnnouncementParameters struct {
 
 func (p UpdateAnnouncementParameters) Validate(namespace string) error {
 	if namespace == "" || p.Title == "" || p.Content == "" ||
-		!IsValidAnnouncementStyle(p.Style) || !datex.IsValidRange(p.StartsAt, p.EndsAt) {
+		!IsValidAnnouncementStyle(p.Style) || !timex.IsValidRange(p.StartsAt, p.EndsAt) {
 		return ErrInvalidAnnouncement
 	}
 	return nil

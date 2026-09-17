@@ -21,7 +21,8 @@ type UpdateAnnouncementParameters struct {
 
 func (p UpdateAnnouncementParameters) Validate() error {
 	if p.Namespace == "" || p.Title == "" || p.Content == "" ||
-		!IsValidAnnouncementStyle(p.Style) || !timex.IsValidRange(p.StartsAt, p.EndsAt) {
+		!IsValidAnnouncementStyle(p.Style) || !isValidAnnouncementHref(p.Href) ||
+		!timex.IsValidRange(p.StartsAt, p.EndsAt) {
 		return ErrInvalidAnnouncement
 	}
 	return nil

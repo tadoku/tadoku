@@ -4,13 +4,18 @@ package content
 import (
 	"context"
 	"math"
+	"net/url"
 	"strconv"
+	"strings"
 	"time"
+	"unicode/utf8"
 
 	"github.com/google/uuid"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/timex"
 )
+
+const announcementHrefMaxLength = 2048
 
 type Announcement struct {
 	ID        uuid.UUID
@@ -38,6 +43,25 @@ func IsValidAnnouncementStyle(style string) bool {
 	default:
 		return false
 	}
+}
+
+func isValidAnnouncementHref(href *string) bool {
+	if href == nil || *href == "" {
+		return true
+	}
+	if utf8.RuneCountInString(*href) > announcementHrefMaxLength {
+		return false
+	}
+
+	parsed, err := url.Parse(*href)
+	if err != nil {
+		return false
+	}
+	if parsed.Scheme == "http" || parsed.Scheme == "https" {
+		return true
+	}
+	return parsed.Scheme == "" && strings.HasPrefix(*href, "/") &&
+		!strings.HasPrefix(*href, "//") && !strings.HasPrefix(*href, `/\`)
 }
 
 var (

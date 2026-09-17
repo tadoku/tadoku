@@ -15,7 +15,7 @@ func Now() time.Time {
 	if fixed := fixedTime.Load(); fixed != nil {
 		return *fixed
 	}
-	return time.Now().UTC()
+	return time.Now().UTC().Truncate(time.Microsecond)
 }
 
 // TheWorld calls fn while Now returns instant in UTC for all goroutines in the

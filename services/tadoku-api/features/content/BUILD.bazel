@@ -20,6 +20,7 @@ go_test(
         "//services/tadoku-api/infra/postgres",
         "//services/tadoku-api/internal/errx",
         "//services/tadoku-api/internal/testpostgres",
+        "//services/tadoku-api/internal/timex",
         "@com_github_google_uuid//:uuid",
     ],
 )

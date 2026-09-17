@@ -14,9 +14,6 @@ func (a *Application) UpdateAnnouncement(ctx context.Context, namespace string, 
 	if err := a.permissions.RequireAdmin(ctx); err != nil {
 		return nil, err
 	}
-	if err := parameters.Validate(namespace); err != nil {
-		return nil, err
-	}
 
 	var result *content.Announcement
 	err := postgres.RunInTransaction(ctx, a.db, func(ctx context.Context) (err error) {

@@ -27,10 +27,14 @@ request deadline, authentication and ban check. Health probes and temporary prox
 registrations keep their existing behavior. Verified user claims travel in request
 context through `internal/identity`.
 
-Application operations compose features. Feature services own business decisions;
-repositories only query and map rows. `postgres.Executor` lets repositories use
-the active app-owned transaction. Open transactions only when the operation needs
-one; do not add feature or repository interfaces solely for mocking.
+Application operations compose features. This is the intended role for the
+immersion-api slices, where operations will combine features such as contests,
+leaderboards and logs. In the current content-api slice, the application layer
+only owns authorization placement and transaction boundaries. Feature services
+own business decisions; repositories only query and map rows. `postgres.Executor`
+lets repositories use the active app-owned transaction. Open transactions only
+when the operation needs one; do not add feature or repository interfaces solely
+for mocking.
 
 Application errors use `internal/errx.Error`, which carries a transport-neutral
 `Kind`, a message and an optional cause. Use named constructors such as
@@ -56,6 +60,22 @@ ban policy. `RequireAuthenticated` and administrator checks fail closed when the
 shared ban lookup is inconclusive. `RequireAuthenticatedAllowingUnknownBan` is an
 explicit availability opt-out for read-only operations. Operations that mutate
 state must never use the fail-open variant.
+
+`IsAdmin` is retained for the immersion-api migration, where an operation may need
+the permission result as input to a business decision. It is not dead surface even
+though the current content-api operations use `RequireAdmin`.
+
+### Shared schema ownership
+
+**Decision, 17 September 2026.** The shared database is a deliberate interim state
+of the strangler migration. `migrations/BUILD.bazel` packages
+`//services/immersion-api/storage/postgres/migrations:tar`, so the immersion-api
+migration history is canonical. Content-api retains a byte-identical copy of the
+announcements DDL, but that copy does not define Tadoku API's schema history.
+
+This coupling means a migration added for another service can silently change
+Tadoku API's runtime schema and disposable-test baseline. Review changes to the
+canonical history as a cross-service contract until schema ownership is separated.
 
 ## Contract and compatibility
 
@@ -92,6 +112,16 @@ running the same request/response golden cases against the native and correspond
 legacy handlers with real authentication and authorization. Native failures must
 not fall back to the proxy. Keep exhaustive authentication and infrastructure
 failure matrices at their own boundaries instead of duplicating them per endpoint.
+
+Method ownership is temporarily asymmetric while the legacy proxy remains. A
+`HEAD` request for a migrated content path is handled by the proxy-only dispatcher,
+where the more-specific `/content/` pattern selects content-api, while `GET` for the
+same URL is handled by Tadoku API. After the proxy is deleted, `net/http` matches
+`HEAD` with the native `GET` pattern, so Tadoku API owns the request and applies its
+authentication and ban checks. The server suppresses response-body bytes for
+`HEAD`, but the native `GET` handler still determines the work, status and headers.
+Proxy retirement must explicitly review `HEAD` compatibility rather than assuming
+that `GET` parity covers it.
 
 ## Runtime configuration
 
@@ -290,6 +320,11 @@ bazel test //services/tadoku-api/e2e:e2e_test --test_output=errors
 The existing CI E2E and race targets include these comparisons automatically.
 Add future migrated operations explicitly; do not add a general service launcher
 or duplicate per-implementation fixtures.
+
+Parity is temporary migration proof. Once every endpoint owned by a legacy service
+has migrated, observe the replacement for one to seven days, then delete the legacy
+service together with its parity subtests and Bazel dependencies. Do not retain a
+legacy service indefinitely only to keep parity proof runnable.
 
 Pool-failure, cancellation and proxy-routing checks remain separate Go tests;
 they exercise dependency behavior rather than SQL-defined response cases.

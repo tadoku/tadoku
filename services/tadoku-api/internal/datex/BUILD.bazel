@@ -1,0 +1,14 @@
+load("@rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "datex",
+    srcs = ["datex.go"],
+    importpath = "github.com/tadoku/tadoku/services/tadoku-api/internal/datex",
+    visibility = ["//services/tadoku-api:__subpackages__"],
+)
+
+go_test(
+    name = "datex_test",
+    srcs = ["datex_test.go"],
+    deps = [":datex"],
+)

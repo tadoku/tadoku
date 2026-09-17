@@ -8,12 +8,12 @@ import (
 
 var ErrInvalidAnnouncement = content.ErrInvalidAnnouncement
 
-type CreateAnnouncementRequest = content.CreateAnnouncementRequest
+type CreateAnnouncementParameters = content.CreateAnnouncementParameters
 
-func (a *Application) CreateAnnouncement(ctx context.Context, request content.CreateAnnouncementRequest) (*content.Announcement, error) {
+func (a *Application) CreateAnnouncement(ctx context.Context, parameters CreateAnnouncementParameters) (*content.Announcement, error) {
 	if err := a.permissions.RequireAdmin(ctx); err != nil {
 		return nil, err
 	}
 
-	return a.content.CreateAnnouncement(ctx, request)
+	return a.content.CreateAnnouncement(ctx, parameters)
 }

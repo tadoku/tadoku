@@ -30,6 +30,15 @@ type AnnouncementList struct {
 	NextPageToken string
 }
 
+func IsValidAnnouncementStyle(style string) bool {
+	switch style {
+	case "success", "warning", "error", "info":
+		return true
+	default:
+		return false
+	}
+}
+
 var (
 	ErrInvalidNamespace     = errors.New("namespace is required")
 	ErrAnnouncementNotFound = errors.New("announcement not found")

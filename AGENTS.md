@@ -44,6 +44,8 @@ Migration PRs must remain compatible with the application version currently depl
 
 **Always write tests for new backend functionality** — new domain services, repository methods, and HTTP handlers should have corresponding test coverage.
 
+**Prefer repository tests plus HTTP E2Es over isolated feature-service tests.** Real-database repository tests are highly recommended for query behavior, row mapping, constraints and persistence. Exercise feature-service orchestration through HTTP E2Es; do not add database-backed feature-service tests. Use unit tests for pure parameter validation and domain rules. Cover shared dependency failures at their boundaries once, not again for every endpoint using those dependencies.
+
 **Use Go's standard `testing` functionality for new or rewritten backend tests.** Use ordinary comparisons, `t.Fatalf` for failed prerequisites, `t.Errorf` for independent checks, and `t.Cleanup` for resource cleanup. Compare errors with `errors.Is`/`errors.As`. Do not add Testify, another assertion framework, or a homegrown assertion DSL. Existing tests do not need a bulk rewrite; convert them when their relevant slice is migrated or in a separately scoped mechanical change.
 
 ### Native Tadoku API slices

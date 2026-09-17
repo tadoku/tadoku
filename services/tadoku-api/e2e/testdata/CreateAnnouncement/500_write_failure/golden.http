@@ -1,4 +1,0 @@
->>> POST /content/announcements/main
-HTTP/1.1 500 Internal Server Error
-Connection: close
-

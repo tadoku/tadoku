@@ -7,6 +7,8 @@ import (
 	"testing"
 )
 
+// Exercise each shared dependency failure once. Do not add endpoint-specific cases
+// when the same dependency and failure behavior are already covered here.
 func TestDependencyFailures(t *testing.T) {
 	closedPool := openClosedPool(t, api.db.DSN)
 	handler, err := newTestRouter(closedPool, keto.ReadURL())
@@ -32,20 +34,6 @@ func TestDependencyFailures(t *testing.T) {
 		suite       *suite
 		handler     http.Handler
 	}{
-		{
-			operation:   "CreateAnnouncement",
-			description: []string{"non", "admin"},
-			want:        http.StatusForbidden,
-			suite:       poolClosed,
-			handler:     poolClosed.handler,
-		},
-		{
-			operation:   "CreateAnnouncement",
-			description: []string{"write", "failure"},
-			want:        http.StatusInternalServerError,
-			suite:       poolClosed,
-			handler:     poolClosed.handler,
-		},
 		{
 			operation:   "FindAnnouncementByID",
 			description: []string{"non", "admin"},

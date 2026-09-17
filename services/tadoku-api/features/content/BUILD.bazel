@@ -18,7 +18,6 @@ go_test(
         ":content",
         "//services/tadoku-api/infra/postgres",
         "//services/tadoku-api/internal/testpostgres",
-        "//services/tadoku-api/internal/timex",
         "@com_github_google_uuid//:uuid",
     ],
 )
@@ -40,6 +39,7 @@ go_library(
     deps = [
         "//services/tadoku-api/generated/sqlc/content",
         "//services/tadoku-api/infra/postgres",
+        "//services/tadoku-api/internal/datex",
         "//services/tadoku-api/internal/timex",
         "@com_github_google_uuid//:uuid",
         "@com_github_jackc_pgx_v5//:pgx",

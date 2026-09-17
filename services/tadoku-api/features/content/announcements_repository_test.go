@@ -3,6 +3,7 @@ package content_test
 import (
 	"context"
 	"errors"
+	"reflect"
 	"testing"
 	"time"
 
@@ -140,6 +141,67 @@ func TestAnnouncementsRepositoryDeleteAnnouncement(t *testing.T) {
 	otherID := uuid.MustParse("22222222-2222-4222-8222-222222222222")
 	if _, err := repository.FindAnnouncementByID(t.Context(), "main", otherID); err != nil {
 		t.Errorf("other announcements must remain visible: %v", err)
+	}
+}
+
+func TestAnnouncementsRepositoryCreateAnnouncement(t *testing.T) {
+	t.Parallel()
+	db, err := testpostgres.New(t.Context())
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() {
+		if err := db.Close(); err != nil {
+			t.Error(err)
+		}
+	})
+	repository := content.NewAnnouncementsRepository(db.Pool)
+	instant := time.Date(2026, 9, 12, 12, 0, 0, 0, time.UTC)
+	emptyHref, href := "", "https://example.test/announcement"
+	for _, test := range []struct {
+		name string
+		href *string
+	}{
+		{name: "null href"},
+		{name: "empty href", href: &emptyHref},
+		{name: "href", href: &href},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			item := &content.Announcement{
+				ID:        uuid.New(),
+				Namespace: "main",
+				Title:     "Title",
+				Content:   "Content",
+				Style:     "warning",
+				Href:      test.href,
+				StartsAt:  instant,
+				EndsAt:    instant.Add(time.Hour),
+				CreatedAt: instant.Add(-2 * time.Hour),
+				UpdatedAt: instant.Add(-time.Hour),
+			}
+			if err := repository.CreateAnnouncement(t.Context(), item); err != nil {
+				t.Fatal(err)
+			}
+			got, err := repository.FindAnnouncementByID(t.Context(), item.Namespace, item.ID)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if !reflect.DeepEqual(got, item) {
+				t.Errorf("persisted=%+v, want %+v", got, item)
+			}
+			duplicate := *item
+			duplicate.Title = "must not replace the original"
+			if err := repository.CreateAnnouncement(t.Context(), &duplicate); err == nil {
+				t.Fatal("duplicate ID was accepted")
+			}
+			got, err = repository.FindAnnouncementByID(t.Context(), item.Namespace, item.ID)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if !reflect.DeepEqual(got, item) {
+				t.Errorf("duplicate creation changed original: %+v", got)
+			}
+		})
 	}
 }
 

@@ -27,7 +27,7 @@ func (s *server) ContentAnnouncementCreate(
 		href = &value
 	}
 
-	item, err := s.application.CreateAnnouncement(ctx, app.CreateAnnouncementRequest{
+	item, err := s.application.CreateAnnouncement(ctx, app.CreateAnnouncementParameters{
 		ID:        id,
 		Namespace: request.Namespace,
 		Title:     body.Title,

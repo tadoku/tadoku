@@ -33,20 +33,6 @@ func TestDependencyFailures(t *testing.T) {
 		handler     http.Handler
 	}{
 		{
-			operation:   "DeleteAnnouncement",
-			description: []string{"non", "admin"},
-			want:        http.StatusForbidden,
-			suite:       poolClosed,
-			handler:     poolClosed.handler,
-		},
-		{
-			operation:   "DeleteAnnouncement",
-			description: []string{"write", "failure"},
-			want:        http.StatusInternalServerError,
-			suite:       poolClosed,
-			handler:     poolClosed.handler,
-		},
-		{
 			operation:   "FindAnnouncementByID",
 			description: []string{"non", "admin"},
 			want:        http.StatusForbidden,

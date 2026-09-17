@@ -183,6 +183,10 @@ func (s *suite) reset(t *testing.T, caseDir string) {
 	s.proxied.Store(0)
 }
 
+func (s *suite) resetProxyCount() {
+	s.proxied.Store(0)
+}
+
 func openClosedPool(t *testing.T, dsn string) *pgxpool.Pool {
 	t.Helper()
 	pool, err := pgxpool.New(t.Context(), dsn)

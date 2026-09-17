@@ -190,7 +190,7 @@ func TestAuthenticationDoesNotChangeProbesOrProxyRoutes(t *testing.T) {
 	} {
 		t.Run(test.method+" "+test.path, func(t *testing.T) {
 			for _, authorization := range []string{"", "Bearer invalid-token"} {
-				api.reset(t, "")
+				api.resetProxyCount()
 				request := httptest.NewRequest(test.method, test.path, nil)
 				if authorization != "" {
 					request.Header.Set("Authorization", authorization)

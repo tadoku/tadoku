@@ -4,9 +4,9 @@ import (
 	"bufio"
 	"bytes"
 	"fmt"
+	"io"
 	"net/http"
 	"net/http/httptest"
-	"net/http/httputil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -77,12 +77,10 @@ func checkHTTPGolden(t *testing.T, handler http.Handler, directory string, wantS
 		t.Errorf("HTTP status=%d, want %d", response.StatusCode, wantStatus)
 	}
 
-	dump, err := httputil.DumpResponse(response, true)
+	got, err := formatHTTPGolden(request, response)
 	if err != nil {
-		t.Fatalf("dump response: %v", err)
+		t.Fatalf("format response: %v", err)
 	}
-	got := fmt.Sprintf(">>> %s %s\n%s", request.Method, request.RequestURI, dump)
-	got = strings.ReplaceAll(got, "\r\n", "\n")
 
 	goldenPath := filepath.Join(directory, "golden.http")
 	want, err := os.ReadFile(goldenPath)
@@ -92,4 +90,39 @@ func checkHTTPGolden(t *testing.T, handler http.Handler, directory string, wantS
 	if got != string(want) {
 		t.Errorf("HTTP response differs from %s\n--- got ---\n%s\n--- want ---\n%s", goldenPath, got, want)
 	}
+}
+
+// formatHTTPGolden renders the request line, status, sorted headers, and body.
+// Connection is omitted so httptest's missing Content-Length cannot inject
+// Connection: close. Content-Length and Transfer-Encoding are never added.
+func formatHTTPGolden(request *http.Request, response *http.Response) (string, error) {
+	var buf bytes.Buffer
+
+	fmt.Fprintf(&buf, ">>> %s %s\n", request.Method, request.RequestURI)
+
+	text := response.Status
+	if text == "" {
+		text = http.StatusText(response.StatusCode)
+		if text == "" {
+			text = fmt.Sprintf("status code %d", response.StatusCode)
+		}
+	} else {
+		text = strings.TrimPrefix(text, fmt.Sprintf("%d ", response.StatusCode))
+	}
+	fmt.Fprintf(&buf, "HTTP/%d.%d %03d %s\n", response.ProtoMajor, response.ProtoMinor, response.StatusCode, text)
+
+	headers := response.Header.Clone()
+	headers.Del("Connection")
+	if err := headers.Write(&buf); err != nil {
+		return "", err
+	}
+	buf.WriteByte('\n')
+
+	body, err := io.ReadAll(response.Body)
+	if err != nil {
+		return "", err
+	}
+	buf.Write(body)
+
+	return strings.ReplaceAll(buf.String(), "\r\n", "\n"), nil
 }

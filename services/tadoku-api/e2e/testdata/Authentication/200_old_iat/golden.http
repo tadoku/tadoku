@@ -1,6 +1,5 @@
 >>> GET /test/authentication
 HTTP/1.1 200 OK
-Connection: close
 Content-Type: application/json; charset=UTF-8
 X-Test-Identity-Created-At: 2000-01-01T00:00:00Z
 X-Test-Identity-Display-Name: Reader One

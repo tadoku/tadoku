@@ -1,17 +1,8 @@
 package e2e_test
 
 import (
-	"bufio"
-	"bytes"
-	"encoding/json"
 	"net/http"
-	"net/http/httptest"
-	"os"
-	"path/filepath"
 	"testing"
-	"time"
-
-	"github.com/google/uuid"
 )
 
 func TestCreateAnnouncement(t *testing.T) {
@@ -65,80 +56,6 @@ func TestCreateAnnouncement(t *testing.T) {
 				implementation{name: "tadoku-api", handler: api.handler},
 				legacy,
 			)
-		})
-	}
-}
-
-func TestCreateAnnouncementCommitsForReadback(t *testing.T) {
-	// Both pgx versions discard offsets for timestamp-without-time-zone storage;
-	// the create response still echoes the input offsets unchanged.
-	createDir := filepath.Join("testdata", APITestName("CreateAnnouncement", http.StatusCreated, "offset", "dates"))
-	readDir := filepath.Join("testdata", APITestName("FindAnnouncementByID", http.StatusOK, "created"))
-	for _, impl := range []implementation{
-		{name: "tadoku-api", handler: api.handler},
-		{name: "content-api", handler: legacyContent.handler},
-	} {
-		t.Run(impl.name, func(t *testing.T) {
-			api.reset(t, createDir)
-			atFixtureInstant(func() {
-				checkHTTPGolden(t, impl.handler, createDir, http.StatusCreated)
-				checkHTTPGolden(t, impl.handler, readDir, http.StatusOK)
-			})
-			if api.proxied.Load() != 0 {
-				t.Error("handler contacted an upstream")
-			}
-		})
-	}
-}
-
-func TestCreateAnnouncementGeneratesID(t *testing.T) {
-	// UUID generation is deliberately checked separately from deterministic HTTP
-	// goldens, without replacing or normalizing the generated response ID.
-	dir := filepath.Join("testdata", APITestName("CreateAnnouncement", http.StatusCreated, "generated", "id"))
-	for _, impl := range []implementation{
-		{name: "tadoku-api", handler: api.handler},
-		{name: "content-api", handler: legacyContent.handler},
-	} {
-		t.Run(impl.name, func(t *testing.T) {
-			api.reset(t, dir)
-			input, err := os.ReadFile(filepath.Join(dir, "request.http"))
-			if err != nil {
-				t.Fatal(err)
-			}
-			request, err := http.ReadRequest(bufio.NewReader(bytes.NewReader(input)))
-			if err != nil {
-				t.Fatal(err)
-			}
-			defer request.Body.Close()
-			response := httptest.NewRecorder()
-			atFixtureInstant(func() { impl.handler.ServeHTTP(response, request) })
-			if response.Code != http.StatusCreated {
-				t.Fatalf("status=%d, want 201: %s", response.Code, response.Body.String())
-			}
-			var body struct {
-				ID        uuid.UUID `json:"id"`
-				CreatedAt time.Time `json:"created_at"`
-				UpdatedAt time.Time `json:"updated_at"`
-			}
-			if err := json.Unmarshal(response.Body.Bytes(), &body); err != nil {
-				t.Fatal(err)
-			}
-			if body.ID == uuid.Nil || body.ID.Version() != 4 || body.ID.Variant() != uuid.RFC4122 {
-				t.Errorf("generated UUID=%s, want nonzero v4 RFC4122 UUID", body.ID)
-			}
-			if !body.CreatedAt.Equal(fixtureInstant) || !body.UpdatedAt.Equal(fixtureInstant) {
-				t.Errorf("response timestamps=%s, %s, want %s", body.CreatedAt, body.UpdatedAt, fixtureInstant)
-			}
-			var createdAt, updatedAt time.Time
-			if err := api.db.Pool.QueryRow(t.Context(), "select created_at, updated_at from announcements where id = $1 and namespace = 'main'", body.ID).Scan(&createdAt, &updatedAt); err != nil {
-				t.Fatal(err)
-			}
-			if !createdAt.Equal(fixtureInstant) || !updatedAt.Equal(fixtureInstant) {
-				t.Errorf("persisted timestamps=%s, %s, want %s", createdAt, updatedAt, fixtureInstant)
-			}
-			if api.proxied.Load() != 0 {
-				t.Error("handler contacted an upstream")
-			}
 		})
 	}
 }

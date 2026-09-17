@@ -66,6 +66,8 @@ Migration PRs must remain compatible with the application version currently depl
 
 **Write for readability.** Separate setup, execution, error handling and response mapping with whitespace. Put unrelated struct fields and composite-literal entries on separate lines. Split application and transport operations into files by functionality, and use descriptive operation names. Keep constructors and resource lifecycle code visibly separate from endpoint behavior.
 
+**Keep each operation's HTTP E2Es in one golden-case table.** Do not add separate generated-ID, persistence-readback or hand-decoded response tests beside it. Put persistence assertions in repository tests. Request-body fixtures use JSON only.
+
 **SQL style: always use lowercase keywords** (select, create table, not SELECT, CREATE TABLE)
 
 ### sqlc code generation

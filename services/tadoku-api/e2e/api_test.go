@@ -130,7 +130,7 @@ func newTestRouter(pool *pgxpool.Pool, ketoReadURL string) (*transport.Router, e
 	rejectBanned := transport.RejectBannedUsers(func(ctx context.Context, subjectID string) (bool, error) {
 		return reader.CheckPermission(ctx, "app", "tadoku", "banned", ketoclient.Subject{ID: subjectID})
 	}, logger)
-	handler, err := transport.NewHandler(application, pool.Ping, time.Second, logger, authenticate, rejectBanned)
+	handler, err := transport.NewHandler(application, pool.Ping, time.Second, prometheus.NewRegistry(), logger, authenticate, rejectBanned)
 	if err != nil {
 		return nil, fmt.Errorf("create API handler: %w", err)
 	}
@@ -147,7 +147,7 @@ func registerSentinelProxy(s *suite) error {
 		Immersion: "http://upstream.test",
 		Profile:   "http://upstream.test",
 	}
-	if err := transport.RegisterProxyRoutes(s.handler, upstreams, s, time.Second, prometheus.NewRegistry(), logger); err != nil {
+	if err := transport.RegisterProxyRoutes(s.handler, upstreams, s, time.Second, logger); err != nil {
 		return fmt.Errorf("register proxy routes: %w", err)
 	}
 	return nil

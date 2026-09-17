@@ -125,6 +125,16 @@ func TestApplicationStartsAndShutsDown(t *testing.T) {
 	if !strings.Contains(string(metricsBody), "go_goroutines") {
 		t.Error("process metrics not exported")
 	}
+	for _, name := range []string{
+		"tadoku_api_postgres_pool_acquire_count_total",
+		"tadoku_api_postgres_pool_acquired_connections",
+		"tadoku_api_postgres_pool_empty_acquire_count_total",
+		"tadoku_api_postgres_pool_acquire_duration_seconds_total",
+	} {
+		if !strings.Contains(string(metricsBody), name) {
+			t.Errorf("pool metric %q not exported", name)
+		}
+	}
 
 	// Shutdown closes both listeners and the shared database pool.
 	ctx, cancel := context.WithCancel(context.Background())

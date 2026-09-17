@@ -8,6 +8,7 @@ import (
 	stdhttp "net/http"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/tadoku/tadoku/services/tadoku-api/app"
 	"github.com/tadoku/tadoku/services/tadoku-api/generated/openapi"
 )
@@ -19,6 +20,7 @@ type Router struct {
 	rootMux                     *stdhttp.ServeMux
 	applicationMux              *stdhttp.ServeMux
 	protectedApplicationHandler stdhttp.Handler
+	requestDuration             *prometheus.HistogramVec
 }
 
 type server struct {
@@ -49,6 +51,7 @@ func NewHandler(
 	application *app.Application,
 	ready func(context.Context) error,
 	timeout time.Duration,
+	registerer prometheus.Registerer,
 	logger *slog.Logger,
 	authenticate func(stdhttp.Handler) stdhttp.Handler,
 	rejectBanned func(stdhttp.Handler) stdhttp.Handler,
@@ -58,6 +61,9 @@ func NewHandler(
 	}
 	if timeout <= 0 {
 		return nil, fmt.Errorf("request timeout must be positive")
+	}
+	if registerer == nil {
+		return nil, fmt.Errorf("metrics registerer is required")
 	}
 	if logger == nil {
 		return nil, fmt.Errorf("logger is required")
@@ -69,12 +75,25 @@ func NewHandler(
 		return nil, fmt.Errorf("banned-user middleware is required")
 	}
 
+	requestDuration, err := newRequestDuration(registerer)
+	if err != nil {
+		return nil, err
+	}
 	router := &Router{
-		rootMux:        stdhttp.NewServeMux(),
-		applicationMux: stdhttp.NewServeMux(),
+		rootMux:         stdhttp.NewServeMux(),
+		applicationMux:  stdhttp.NewServeMux(),
+		requestDuration: requestDuration,
 	}
 	router.rootHandler = router.rootMux
-	router.protectedApplicationHandler = withPanicRecovery(logger, withRequestTimeout(timeout, authenticate(rejectBanned(router.applicationMux))))
+	router.protectedApplicationHandler = observe(
+		nativeRouteLabel,
+		"",
+		"native",
+		timeout,
+		withPanicRecovery(logger, authenticate(rejectBanned(router.applicationMux))),
+		requestDuration,
+		logger,
+	)
 	router.rootMux.HandleFunc("GET /livez", func(w stdhttp.ResponseWriter, _ *stdhttp.Request) {
 		_, _ = w.Write([]byte("ok"))
 	})

@@ -132,6 +132,13 @@ the master rollout gate under separate release authorization before deployment.
 
 ## Verification
 
+Prefer real-database repository tests plus HTTP E2Es over testing feature services
+in isolation. Repository tests are highly recommended for query behavior, row
+mapping, constraints and persistence; E2Es cover feature-service orchestration and
+the HTTP contract. Keep parameter validation and pure domain rules in unit tests.
+Do not add database-backed feature-service tests or repeat dependency-failure
+matrices for each endpoint using an already-tested dependency.
+
 Native integration tests require `TADOKU_TEST_POSTGRES_URL` pointing to an explicit
 loopback port, database `postgres`, credentials `postgres:postgres` and exactly
 `sslmode=disable`. Missing or unsafe configuration fails before any connection;
@@ -151,7 +158,12 @@ once, using real JWT verification, ban checks and Keto-backed permissions. There
 is no second bypass router or injected administrator identity. Handlers and the
 fallback sentinel execute in process, without HTTP listeners.
 Cover each operation's response mapping, input handling, business rules and relevant
-boundaries; keep dependency-failure and route-ownership checks alongside those cases.
+boundaries. Keep shared dependency-failure and route-ownership checks at their own
+boundaries instead of repeating them for every operation.
+
+New API request bodies use the generated JSON decoder. Do not add XML/form adapters
+or non-JSON request fixtures to reproduce legacy binder behavior. Mark intentional
+JSON-decoding differences in the parity test table.
 
 HTTP scenarios run sequentially and call `reset` before each implementation of each
 scenario, not between dependent requests. `internal/testpostgres/cleanup.sql`

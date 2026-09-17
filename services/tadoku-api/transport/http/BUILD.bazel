@@ -3,7 +3,6 @@ load("@rules_go//go:def.bzl", "go_library", "go_test")
 go_library(
     name = "http",
     srcs = [
-        "announcement_body.go",
         "announcement_create.go",
         "announcement_delete.go",
         "announcements.go",

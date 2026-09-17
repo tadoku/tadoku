@@ -175,18 +175,19 @@ func writeIdentityHeaders(header http.Header, subject, displayName, email string
 
 func TestAuthenticationDoesNotChangeProbesOrProxyRoutes(t *testing.T) {
 	for _, test := range []struct {
-		method string
-		path   string
-		want   int
+		method  string
+		path    string
+		want    int
+		proxied bool
 	}{
 		{method: http.MethodGet, path: "/livez", want: http.StatusOK},
 		{method: http.MethodGet, path: "/readyz", want: http.StatusOK},
-		{method: http.MethodGet, path: "/authz/ping", want: http.StatusNoContent},
-		{method: http.MethodGet, path: "/content/ping", want: http.StatusNoContent},
-		{method: http.MethodGet, path: "/immersion/ping", want: http.StatusNoContent},
-		{method: http.MethodGet, path: "/profile/ping", want: http.StatusNoContent},
-		{method: http.MethodHead, path: "/content/announcements/main/active", want: http.StatusNoContent},
-		{method: http.MethodPost, path: "/content/announcements/main/active", want: http.StatusNoContent},
+		{method: http.MethodGet, path: "/authz/ping", want: http.StatusNoContent, proxied: true},
+		{method: http.MethodGet, path: "/content/ping", want: http.StatusNoContent, proxied: true},
+		{method: http.MethodGet, path: "/immersion/ping", want: http.StatusNoContent, proxied: true},
+		{method: http.MethodGet, path: "/profile/ping", want: http.StatusNoContent, proxied: true},
+		{method: http.MethodHead, path: "/content/announcements/main/active", want: http.StatusNoContent, proxied: true},
+		{method: http.MethodPost, path: "/content/announcements/main/active", want: http.StatusNoContent, proxied: true},
 	} {
 		t.Run(test.method+" "+test.path, func(t *testing.T) {
 			for _, authorization := range []string{"", "Bearer invalid-token"} {
@@ -200,7 +201,7 @@ func TestAuthenticationDoesNotChangeProbesOrProxyRoutes(t *testing.T) {
 				if response.Code != test.want {
 					t.Errorf("authorization=%q status=%d, want %d", authorization, response.Code, test.want)
 				}
-				if got := api.proxied.Load(); (test.want == http.StatusNoContent) != (got == 1) {
+				if got := api.proxied.Load(); (got == 1) != test.proxied {
 					t.Errorf("unexpected upstream request count: %d", got)
 				}
 			}

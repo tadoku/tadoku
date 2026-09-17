@@ -117,7 +117,7 @@ func TestAnnouncementsRepositoryListAnnouncementsBreaksCreatedAtTiesByID(t *test
 	}
 	repository := content.NewAnnouncementsRepository(db.Pool)
 	for attempt := 0; attempt < 5; attempt++ {
-		items, err := repository.ListAnnouncements(t.Context(), "main", 3, 0)
+		items, _, err := repository.ListAnnouncements(t.Context(), "main", 3, 0)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -188,6 +188,34 @@ func TestAnnouncementsRepositoryDeleteAnnouncement(t *testing.T) {
 	otherID := uuid.MustParse("22222222-2222-4222-8222-222222222222")
 	if _, err := repository.FindAnnouncementByID(t.Context(), "main", otherID); err != nil {
 		t.Errorf("other announcements must remain visible: %v", err)
+	}
+}
+
+func TestAnnouncementsRepositoryListAnnouncementsReturnsTotalForEmptyPage(t *testing.T) {
+	t.Parallel()
+	db, err := testpostgres.New(t.Context())
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() {
+		if err := db.Close(); err != nil {
+			t.Error(err)
+		}
+	})
+	if err := db.Reset(t.Context(), "testdata/announcements.sql"); err != nil {
+		t.Fatal(err)
+	}
+
+	repository := content.NewAnnouncementsRepository(db.Pool)
+	items, total, err := repository.ListAnnouncements(t.Context(), "main", 10, 10)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(items) != 0 {
+		t.Errorf("items=%d, want empty page", len(items))
+	}
+	if total != 2 {
+		t.Errorf("total=%d, want 2", total)
 	}
 }
 

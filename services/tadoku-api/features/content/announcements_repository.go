@@ -136,23 +136,10 @@ func (r *AnnouncementsRepository) FindAnnouncementByID(ctx context.Context, name
 	}, nil
 }
 
-func (r *AnnouncementsRepository) CountAnnouncements(ctx context.Context, namespace string) (int, error) {
+func (r *AnnouncementsRepository) ListAnnouncements(ctx context.Context, namespace string, limit int32, offset int64) ([]Announcement, int, error) {
 	executor, err := postgres.Executor(ctx, r.db)
 	if err != nil {
-		return 0, err
-	}
-
-	total, err := queries.New(executor).CountAnnouncements(ctx, namespace)
-	if err != nil {
-		return 0, fmt.Errorf("count announcements: %w", err)
-	}
-	return int(total), nil
-}
-
-func (r *AnnouncementsRepository) ListAnnouncements(ctx context.Context, namespace string, limit int32, offset int64) ([]Announcement, error) {
-	executor, err := postgres.Executor(ctx, r.db)
-	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 
 	rows, err := queries.New(executor).ListAnnouncements(ctx, queries.ListAnnouncementsParams{
@@ -161,11 +148,17 @@ func (r *AnnouncementsRepository) ListAnnouncements(ctx context.Context, namespa
 		StartFrom:   offset,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("list announcements: %w", err)
+		return nil, 0, fmt.Errorf("list announcements: %w", err)
 	}
 
 	result := make([]Announcement, 0, len(rows))
+	var total int
 	for _, row := range rows {
+		total = int(row.TotalSize)
+		if !row.ID.Valid {
+			continue
+		}
+
 		var href *string
 		if row.Href.Valid {
 			href = &row.Href.String
@@ -173,10 +166,10 @@ func (r *AnnouncementsRepository) ListAnnouncements(ctx context.Context, namespa
 
 		result = append(result, Announcement{
 			ID:        uuid.UUID(row.ID.Bytes),
-			Namespace: row.Namespace,
-			Title:     row.Title,
-			Content:   row.Content,
-			Style:     row.Style,
+			Namespace: row.Namespace.String,
+			Title:     row.Title.String,
+			Content:   row.Content.String,
+			Style:     row.Style.String,
 			Href:      href,
 			StartsAt:  row.StartsAt.Time,
 			EndsAt:    row.EndsAt.Time,
@@ -185,7 +178,7 @@ func (r *AnnouncementsRepository) ListAnnouncements(ctx context.Context, namespa
 		})
 	}
 
-	return result, nil
+	return result, total, nil
 }
 
 func (r *AnnouncementsRepository) ListActiveAnnouncements(ctx context.Context, namespace string, cutoff time.Time, limit int32) ([]Announcement, error) {

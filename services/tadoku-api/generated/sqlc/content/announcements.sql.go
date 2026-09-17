@@ -11,20 +11,6 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-const countAnnouncements = `-- name: CountAnnouncements :one
-select count(id)
-from announcements
-where deleted_at is null
-  and namespace = $1
-`
-
-func (q *Queries) CountAnnouncements(ctx context.Context, namespace string) (int64, error) {
-	row := q.db.QueryRow(ctx, countAnnouncements, namespace)
-	var count int64
-	err := row.Scan(&count)
-	return count, err
-}
-
 const createAnnouncement = `-- name: CreateAnnouncement :exec
 insert into announcements (
   id, namespace, title, content, style, href,
@@ -192,14 +178,28 @@ func (q *Queries) ListActiveAnnouncements(ctx context.Context, arg ListActiveAnn
 }
 
 const listAnnouncements = `-- name: ListAnnouncements :many
-select id, namespace, title, content, style, href,
-       starts_at, ends_at, created_at, updated_at
-from announcements
-where deleted_at is null
-  and namespace = $1
-order by created_at desc, id desc
-limit $3
-offset $2::bigint
+with matches as materialized (
+  select id, namespace, title, content, style, href,
+         starts_at, ends_at, created_at, updated_at
+  from announcements
+  where deleted_at is null
+    and namespace = $1
+), page as (
+  select id, namespace, title, content, style, href, starts_at, ends_at, created_at, updated_at
+  from matches
+  order by created_at desc, id desc
+  limit $3
+  offset $2::bigint
+), total as (
+  select count(*) as total_size
+  from matches
+)
+select page.id, page.namespace, page.title, page.content, page.style, page.href,
+       page.starts_at, page.ends_at, page.created_at, page.updated_at,
+       total.total_size
+from total
+left join page on true
+order by page.created_at desc, page.id desc
 `
 
 type ListAnnouncementsParams struct {
@@ -210,15 +210,16 @@ type ListAnnouncementsParams struct {
 
 type ListAnnouncementsRow struct {
 	ID        pgtype.UUID
-	Namespace string
-	Title     string
-	Content   string
-	Style     string
+	Namespace pgtype.Text
+	Title     pgtype.Text
+	Content   pgtype.Text
+	Style     pgtype.Text
 	Href      pgtype.Text
 	StartsAt  pgtype.Timestamp
 	EndsAt    pgtype.Timestamp
 	CreatedAt pgtype.Timestamp
 	UpdatedAt pgtype.Timestamp
+	TotalSize int64
 }
 
 func (q *Queries) ListAnnouncements(ctx context.Context, arg ListAnnouncementsParams) ([]ListAnnouncementsRow, error) {
@@ -241,6 +242,7 @@ func (q *Queries) ListAnnouncements(ctx context.Context, arg ListAnnouncementsPa
 			&i.EndsAt,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.TotalSize,
 		); err != nil {
 			return nil, err
 		}

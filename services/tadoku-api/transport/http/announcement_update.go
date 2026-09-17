@@ -20,7 +20,7 @@ func (s *server) ContentAnnouncementUpdate(
 
 	id, err := uuid.Parse(request.Id)
 	if err != nil {
-		return openapi.ContentAnnouncementUpdate400Response{}, nil
+		return nil, errInvalidUUID
 	}
 
 	body := request.Body

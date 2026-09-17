@@ -52,6 +52,16 @@ type Client struct {
 	writeClient *keto.APIClient
 }
 
+// Option configures a read client.
+type Option func(*keto.Configuration)
+
+// WithHTTPClient configures the HTTP client used for Keto requests.
+func WithHTTPClient(client *http.Client) Option {
+	return func(cfg *keto.Configuration) {
+		cfg.HTTPClient = client
+	}
+}
+
 // Compile-time interface compliance checks.
 var (
 	_ AuthorizationReader = (*Client)(nil)
@@ -73,9 +83,12 @@ func NewClient(readURL, writeURL string) *Client {
 
 // NewReadClient creates a client that can only check permissions.
 // Relation operations will return an error.
-func NewReadClient(readURL string) AuthorizationReader {
+func NewReadClient(readURL string, opts ...Option) AuthorizationReader {
 	readCfg := keto.NewConfiguration()
 	readCfg.Servers = keto.ServerConfigurations{{URL: readURL}}
+	for _, opt := range opts {
+		opt(readCfg)
+	}
 
 	return &Client{
 		readClient: keto.NewAPIClient(readCfg),

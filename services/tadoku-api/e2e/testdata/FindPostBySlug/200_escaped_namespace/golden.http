@@ -1,0 +1,6 @@
+>>> GET /content/posts/news%20archive/welcome
+HTTP/1.1 200 OK
+Content-Length: 168
+Content-Type: application/json; charset=UTF-8
+
+{"content":"\u003cp\u003eRead this\u003c/p\u003e","id":"11111111-1111-4111-8111-111111111111","published_at":"2026-09-11T10:00:00Z","slug":"welcome","title":"Welcome"}

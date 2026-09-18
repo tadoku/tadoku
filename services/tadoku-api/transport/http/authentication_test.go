@@ -10,6 +10,7 @@ import (
 	"log/slog"
 	stdhttp "net/http"
 	"net/http/httptest"
+	"sync"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -20,6 +21,12 @@ import (
 	"github.com/tadoku/tadoku/services/tadoku-api/app"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/identity"
 )
+
+type writerFunc func([]byte) (int, error)
+
+func (write writerFunc) Write(p []byte) (int, error) {
+	return write(p)
+}
 
 func TestAuthenticationRequiresConfiguration(t *testing.T) {
 	if _, err := NewJWTAuthentication(nil, "http://jwks.test", time.Second, slog.Default()); err == nil {
@@ -324,6 +331,9 @@ func TestAuthenticationCancelsRefreshWithLifetime(t *testing.T) {
 	refreshStarted := make(chan struct{})
 	refreshCanceled := make(chan struct{})
 	releaseRefresh := make(chan struct{})
+	refreshFailed := make(chan struct{})
+	releaseRefreshFailure := make(chan struct{})
+	var logRefreshFailure sync.Once
 	var fetches atomic.Int32
 	server := httptest.NewServer(stdhttp.HandlerFunc(func(w stdhttp.ResponseWriter, r *stdhttp.Request) {
 		if fetches.Add(1) == 1 {
@@ -342,9 +352,17 @@ func TestAuthenticationCancelsRefreshWithLifetime(t *testing.T) {
 		close(releaseRefresh)
 		server.Close()
 	})
+	logger := slog.New(slog.NewTextHandler(writerFunc(func(p []byte) (int, error) {
+		logRefreshFailure.Do(func() {
+			close(refreshFailed)
+			<-releaseRefreshFailure
+		})
+		return len(p), nil
+	}), nil))
+	t.Cleanup(func() { close(releaseRefreshFailure) })
 
 	lifetime, cancelLifetime := context.WithCancel(t.Context())
-	authenticate, err := NewJWTAuthentication(lifetime, server.URL, time.Minute, slog.Default())
+	authenticate, err := NewJWTAuthentication(lifetime, server.URL, time.Minute, logger)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -363,19 +381,31 @@ func TestAuthenticationCancelsRefreshWithLifetime(t *testing.T) {
 	handler := authenticate(stdhttp.HandlerFunc(func(stdhttp.ResponseWriter, *stdhttp.Request) {
 		t.Error("unknown signing key reached downstream handler")
 	}))
-	request := httptest.NewRequest(stdhttp.MethodGet, "/", nil)
-	request.Header.Set("Authorization", "Bearer "+signed)
-	handlerDone := make(chan struct{})
-	go func() {
-		handler.ServeHTTP(httptest.NewRecorder(), request)
-		close(handlerDone)
-	}()
+	serve := func(ctx context.Context) <-chan struct{} {
+		done := make(chan struct{})
+		request := httptest.NewRequest(stdhttp.MethodGet, "/", nil).WithContext(ctx)
+		request.Header.Set("Authorization", "Bearer "+signed)
+		go func() {
+			handler.ServeHTTP(httptest.NewRecorder(), request)
+			close(done)
+		}()
+		return done
+	}
+	requestContext, cancelRequest := context.WithCancel(t.Context())
+	handlerDone := serve(requestContext)
 
 	select {
 	case <-refreshStarted:
 	case <-time.After(time.Second):
 		t.Fatal("unknown signing key did not start a JWKS refresh")
 	}
+	cancelRequest()
+	select {
+	case <-handlerDone:
+	case <-time.After(time.Second):
+		t.Error("authentication kept waiting after its request was canceled")
+	}
+
 	cancelLifetime()
 	select {
 	case <-refreshCanceled:
@@ -383,8 +413,16 @@ func TestAuthenticationCancelsRefreshWithLifetime(t *testing.T) {
 		t.Error("canceling authentication lifetime did not cancel the JWKS provider request")
 	}
 	select {
-	case <-handlerDone:
+	case <-refreshFailed:
 	case <-time.After(time.Second):
-		t.Error("authentication kept waiting after its lifetime was canceled")
+		t.Fatal("authentication did not finish the canceled JWKS refresh")
+	}
+
+	stoppedRequestContext, cancelStoppedRequest := context.WithCancel(context.Background())
+	t.Cleanup(cancelStoppedRequest)
+	select {
+	case <-serve(stoppedRequestContext):
+	case <-time.After(time.Second):
+		t.Error("authentication kept waiting after its lifetime ended")
 	}
 }

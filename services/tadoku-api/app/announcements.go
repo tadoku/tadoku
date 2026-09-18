@@ -30,5 +30,9 @@ func (a *Application) ListAnnouncements(ctx context.Context, namespace string, p
 		result, err = a.content.ListAnnouncements(ctx, namespace, pageSize, page)
 		return
 	})
-	return result, err
+	if err != nil {
+		// The callback may succeed before the transaction fails to commit.
+		return nil, err
+	}
+	return result, nil
 }

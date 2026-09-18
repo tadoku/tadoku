@@ -22,9 +22,7 @@ var (
 
 const acquisitionTimeout = 5 * time.Second
 
-func noRelease() {}
-
-// DBTX is the native pgx/sqlc execution surface shared by *pgxpool.Pool and pgx.Tx.
+// DBTX is the native pgx/sqlc execution surface shared by the bounded pool and pgx.Tx.
 type DBTX interface {
 	Exec(context.Context, string, ...any) (pgconn.CommandTag, error)
 	Query(context.Context, string, ...any) (pgx.Rows, error)
@@ -39,40 +37,150 @@ type scope struct {
 	done atomic.Bool
 }
 
-// Executor selects the active transaction for db, or acquires a connection outside a scope.
-// Repositories must resolve it with the operation's context and pass that same
-// context to SQL calls, then defer release. Do not retain executors or rows past
-// release or RunInTransaction.
-// An ended scope returns pgx.ErrTxClosed; it never falls back to the pool.
-func Executor(ctx context.Context, db *pgxpool.Pool) (DBTX, func(), error) {
-	s, ok := ctx.Value(scopeKey{}).(*scope)
-	if !ok {
-		return acquire(ctx, db)
-	}
-	if s.db != db {
-		return nil, noRelease, ErrWrongDatabase
-	}
-	if s.done.Load() {
-		return nil, noRelease, pgx.ErrTxClosed
-	}
-	return s.tx, noRelease, nil
+type boundedPool struct {
+	db *pgxpool.Pool
 }
 
-func acquire(ctx context.Context, db *pgxpool.Pool) (*pgxpool.Conn, func(), error) {
+type releasingRows struct {
+	pgx.Rows
+	connection *pgxpool.Conn
+}
+
+func (r *releasingRows) Close() {
+	r.Rows.Close()
+	r.release()
+}
+
+func (r *releasingRows) Next() bool {
+	next := r.Rows.Next()
+	if !next {
+		r.Close()
+	}
+	return next
+}
+
+func (r *releasingRows) Scan(dest ...any) error {
+	err := r.Rows.Scan(dest...)
+	if err != nil {
+		r.Close()
+	}
+	return err
+}
+
+func (r *releasingRows) Values() ([]any, error) {
+	values, err := r.Rows.Values()
+	if err != nil {
+		r.Close()
+	}
+	return values, err
+}
+
+func (r *releasingRows) release() {
+	if r.connection != nil {
+		r.connection.Release()
+		r.connection = nil
+	}
+}
+
+type releasingRow struct {
+	pgx.Row
+	connection *pgxpool.Conn
+}
+
+func (r *releasingRow) Scan(dest ...any) error {
+	defer r.release()
+	return r.Row.Scan(dest...)
+}
+
+func (r *releasingRow) release() {
+	if r.connection != nil {
+		r.connection.Release()
+		r.connection = nil
+	}
+}
+
+type errorRow struct {
+	err error
+}
+
+func (r errorRow) Scan(...any) error {
+	return r.err
+}
+
+func (p *boundedPool) Exec(ctx context.Context, sql string, arguments ...any) (pgconn.CommandTag, error) {
+	connection, err := acquire(ctx, p.db)
+	if err != nil {
+		return pgconn.CommandTag{}, err
+	}
+	defer connection.Release()
+
+	return connection.Exec(ctx, sql, arguments...)
+}
+
+func (p *boundedPool) Query(ctx context.Context, sql string, arguments ...any) (pgx.Rows, error) {
+	connection, err := acquire(ctx, p.db)
+	if err != nil {
+		return nil, err
+	}
+
+	rows, err := connection.Query(ctx, sql, arguments...)
+	if err != nil {
+		connection.Release()
+		return nil, err
+	}
+
+	return &releasingRows{
+		Rows:       rows,
+		connection: connection,
+	}, nil
+}
+
+func (p *boundedPool) QueryRow(ctx context.Context, sql string, arguments ...any) pgx.Row {
+	connection, err := acquire(ctx, p.db)
+	if err != nil {
+		return errorRow{err: err}
+	}
+
+	return &releasingRow{
+		Row:        connection.QueryRow(ctx, sql, arguments...),
+		connection: connection,
+	}
+}
+
+// Executor selects the active transaction for db, or a bounded pool executor outside a scope.
+// Repositories must resolve it with the operation's context and pass that same
+// context to SQL calls. Finish row iteration in the repository method, and do
+// not retain transactional executors or rows past RunInTransaction.
+// An ended scope returns pgx.ErrTxClosed; it never falls back to the pool.
+func Executor(ctx context.Context, db *pgxpool.Pool) (DBTX, error) {
+	s, ok := ctx.Value(scopeKey{}).(*scope)
+	if !ok {
+		return &boundedPool{db: db}, nil
+	}
+	if s.db != db {
+		return nil, ErrWrongDatabase
+	}
+	if s.done.Load() {
+		return nil, pgx.ErrTxClosed
+	}
+	return s.tx, nil
+}
+
+func acquire(ctx context.Context, db *pgxpool.Pool) (*pgxpool.Conn, error) {
 	acquireCtx, cancel := context.WithTimeout(ctx, acquisitionTimeout)
 	connection, err := db.Acquire(acquireCtx)
 	acquireErr := acquireCtx.Err()
 	cancel()
 	if err != nil {
 		if parentErr := ctx.Err(); parentErr != nil {
-			return nil, noRelease, parentErr
+			return nil, parentErr
 		}
 		if errors.Is(acquireErr, context.DeadlineExceeded) {
-			return nil, noRelease, errx.NewUnavailableError("acquire postgres connection", errAcquisitionTimeout)
+			return nil, errx.NewUnavailableError("acquire postgres connection", errAcquisitionTimeout)
 		}
-		return nil, noRelease, fmt.Errorf("postgres: acquire: %w", err)
+		return nil, fmt.Errorf("postgres: acquire: %w", err)
 	}
-	return connection, connection.Release, nil
+	return connection, nil
 }
 
 // RunInTransaction calls work once with a child context and commits only when it succeeds.
@@ -95,11 +203,11 @@ func RunInTransaction(ctx context.Context, db *pgxpool.Pool, work func(context.C
 	if err := ctx.Err(); err != nil {
 		return err
 	}
-	connection, release, err := acquire(ctx, db)
+	connection, err := acquire(ctx, db)
 	if err != nil {
 		return err
 	}
-	defer release()
+	defer connection.Release()
 	tx, err := connection.Begin(ctx)
 	if err != nil {
 		return fmt.Errorf("postgres: begin: %w", err)

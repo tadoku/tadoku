@@ -28,11 +28,10 @@ func NewAnnouncementsRepository(db *pgxpool.Pool) *AnnouncementsRepository {
 }
 
 func (r *AnnouncementsRepository) DeleteAnnouncement(ctx context.Context, namespace string, id uuid.UUID, deletedAt time.Time) error {
-	executor, release, err := postgres.Executor(ctx, r.db)
+	executor, err := postgres.Executor(ctx, r.db)
 	if err != nil {
 		return err
 	}
-	defer release()
 
 	err = queries.New(executor).DeleteAnnouncement(ctx, queries.DeleteAnnouncementParams{
 		Namespace: namespace,
@@ -47,11 +46,10 @@ func (r *AnnouncementsRepository) DeleteAnnouncement(ctx context.Context, namesp
 }
 
 func (r *AnnouncementsRepository) CreateAnnouncement(ctx context.Context, item *Announcement) error {
-	executor, release, err := postgres.Executor(ctx, r.db)
+	executor, err := postgres.Executor(ctx, r.db)
 	if err != nil {
 		return err
 	}
-	defer release()
 
 	var href pgtype.Text
 	if item.Href != nil {
@@ -80,11 +78,10 @@ func (r *AnnouncementsRepository) CreateAnnouncement(ctx context.Context, item *
 }
 
 func (r *AnnouncementsRepository) UpdateAnnouncement(ctx context.Context, item *Announcement) error {
-	executor, release, err := postgres.Executor(ctx, r.db)
+	executor, err := postgres.Executor(ctx, r.db)
 	if err != nil {
 		return err
 	}
-	defer release()
 
 	var href pgtype.Text
 	if item.Href != nil {
@@ -111,11 +108,10 @@ func (r *AnnouncementsRepository) UpdateAnnouncement(ctx context.Context, item *
 }
 
 func (r *AnnouncementsRepository) FindAnnouncementByID(ctx context.Context, namespace string, id uuid.UUID) (*Announcement, error) {
-	executor, release, err := postgres.Executor(ctx, r.db)
+	executor, err := postgres.Executor(ctx, r.db)
 	if err != nil {
 		return nil, err
 	}
-	defer release()
 
 	row, err := queries.New(executor).FindAnnouncementByID(ctx, queries.FindAnnouncementByIDParams{
 		Namespace: namespace,
@@ -148,11 +144,10 @@ func (r *AnnouncementsRepository) FindAnnouncementByID(ctx context.Context, name
 }
 
 func (r *AnnouncementsRepository) ListAnnouncements(ctx context.Context, namespace string, limit int32, offset int64) ([]Announcement, int, error) {
-	executor, release, err := postgres.Executor(ctx, r.db)
+	executor, err := postgres.Executor(ctx, r.db)
 	if err != nil {
 		return nil, 0, err
 	}
-	defer release()
 
 	rows, err := queries.New(executor).ListAnnouncements(ctx, queries.ListAnnouncementsParams{
 		Namespace:   namespace,
@@ -194,11 +189,10 @@ func (r *AnnouncementsRepository) ListAnnouncements(ctx context.Context, namespa
 }
 
 func (r *AnnouncementsRepository) ListActiveAnnouncements(ctx context.Context, namespace string, cutoff time.Time, limit int32) ([]Announcement, error) {
-	executor, release, err := postgres.Executor(ctx, r.db)
+	executor, err := postgres.Executor(ctx, r.db)
 	if err != nil {
 		return nil, err
 	}
-	defer release()
 
 	rows, err := queries.New(executor).ListActiveAnnouncements(ctx, queries.ListActiveAnnouncementsParams{
 		Namespace:   namespace,

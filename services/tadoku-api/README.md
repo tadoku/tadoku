@@ -112,11 +112,13 @@ listeners. Either failure aborts startup. Signing keys remain cached until resta
 there is no periodic refresh or refresh on an unknown key ID.
 The pool keeps one idle connection, clamped within the configured maximum, and
 uses pgx's cached-statement query mode explicitly. Application database work gets
-five seconds to acquire a connection before returning 503; parent cancellation
-and deadlines still take precedence. `/readyz` gets its own two-second deadline
-and acquires a real PostgreSQL connection. A saturated pool therefore fails
-readiness promptly and lets Kubernetes shed traffic from that replica. `/livez`
-remains independent of dependency health.
+five seconds to acquire a connection before returning 503. Unclassified database
+failures remain 500, and parent cancellation and deadlines still take precedence.
+The PostgreSQL executor releases connections at the SQL result boundary, so
+repositories use sqlc without managing pool ownership. `/readyz` gets its own
+two-second deadline and acquires a real PostgreSQL connection. A saturated pool
+therefore fails readiness promptly and lets Kubernetes shed traffic from that
+replica. `/livez` remains independent of dependency health.
 The existing proxy metrics and Go process metrics remain on the metrics listener
 (`API_METRICS_PORT`, default 9090). They describe proxy request volume/latency/errors
 and process health. This thin slice adds no native-specific metric family.

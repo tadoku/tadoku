@@ -6,25 +6,28 @@ the database handle with `Executor(ctx, pool)` for each operation, then pass it
 directly to native pgx-compatible sqlc queries:
 
 ```go
-db, release, err := postgres.Executor(ctx, r.pool)
+db, err := postgres.Executor(ctx, r.pool)
 if err != nil {
     return err
 }
-defer release()
 return queries.New(db).InsertItem(ctx, params)
 ```
 
-Outside a transaction, `Executor` acquires one connection for at most five
-seconds and the caller owns it until `release`. Acquisition saturation is an
-unavailable application error; cancellation or expiry of the parent context is
-returned unchanged. SQL continues under the original context, so the acquisition
-budget does not become a query deadline. Inside a transaction, `Executor` returns
-the active transaction and a no-op release; `RunInTransaction` owns the acquired
-connection through commit or rollback. Wrong-pool, nested, and ended transaction
-scopes fail; an ended context never falls back to the pool. There are no retries
-or savepoints. All work and row iteration must finish before release or before
-the callback returns. Do not run parallel SQL on one transaction or hold it
-across network/cache operations.
+Outside a transaction, `Executor` returns a sqlc-compatible executor that gives
+each SQL operation at most five seconds to acquire a connection. `Exec` releases
+the connection on return, `QueryRow` after `Scan`, and `Query` when its rows close
+or are exhausted. Callers use generated queries normally and do not manage pool
+connections. An internal acquisition timeout is an unavailable application
+error; cancellation or expiry of the parent context is returned unchanged, and
+other acquisition failures remain unclassified database errors. SQL runs under
+the original context, so the acquisition budget does not become a query deadline.
+
+Inside a transaction, `Executor` returns the active transaction and
+`RunInTransaction` owns its acquired connection through commit or rollback.
+Wrong-pool, nested, and ended transaction scopes fail; an ended context never
+falls back to the pool. There are no retries or savepoints. All row iteration must
+finish before the repository method or transaction callback returns. Do not run
+parallel SQL on one transaction or hold it across network/cache operations.
 
 Callback errors and panics retain their identity. Cleanup gets an independent
 five-second timeout so cancellation does not prevent the rollback attempt.

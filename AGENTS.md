@@ -101,18 +101,16 @@ For new native `tadoku-api` code, use `internal/timex.Now()` for business time i
 ```sh
 # 1. Make changes
 
-# 2. Compile affected targets (fast; example)
-bazel build //services/tadoku-api/spec:all
+# 2. Compile (fast)
+bazel build //services/...
 
-# 3. Run affected tests
+# 3. Run tests
+bazel test //services/... # everything
 bazel test //services/immersion-api/domain/command:command_test # one test file
 bazel test //services/immersion-api/domain/command:command_test --test_filter=TestValidateAndNormalizeTags # specific function
 
-# Broaden to //services/... only when the change scope or shared behavior warrants it,
-# or when focused checks leave unresolved failures.
-
-# 4. Format changed Go files before committing (example)
-gofmt -w services/tadoku-api/spec/openapi_test.go
+# 4. Format before committing
+gofmt -w services/
 
 # 5. Regenerate BUILD.bazel files (after adding/removing Go files or changing deps/imports)
 # CI fails if these are stale (it runs `bazel run //:gazelle -- -mode=diff`)
@@ -125,8 +123,8 @@ bazel run //:gazelle
 ./scripts/generate-openapi.sh
 # Legacy service OpenAPI output is frozen until those services are retired.
 
-# 8. Before creating PR, confirm the affected checks and required generators and
-# CI consistency checks have passed. Rerun only after relevant changes or to resolve failures.
+# 8. Before creating PR
+bazel build //services/... && bazel test //services/...
 ```
 
 ## Dev Environment

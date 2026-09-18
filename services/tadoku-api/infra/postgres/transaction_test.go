@@ -396,28 +396,50 @@ func TestRunInTransactionCancellationBoundsBlockedSQLAndLeavesPoolUsable(t *test
 	if _, err := lock.Exec(ctx, "lock table "+f.schema+".book in access exclusive mode"); err != nil {
 		t.Fatalf("lock synthetic table: %v", err)
 	}
-	blocked, cancel := context.WithTimeout(ctx, 200*time.Millisecond)
+	blocked, cancel := context.WithCancel(ctx)
 	defer cancel()
 	result := make(chan error, 1)
-	entered := make(chan struct{})
 	go func() {
 		result <- postgres.RunInTransaction(blocked, f.db, func(child context.Context) error {
-			close(entered)
 			return f.books.Add(child, 1, "must be canceled")
 		})
 	}()
+
+	// Observe the insert waiting on this fixture's table lock before canceling.
+	// Starting a short deadline before Begin races with connection setup on CI.
+	waiting, stopWaiting := context.WithTimeout(ctx, 5*time.Second)
+	defer stopWaiting()
+	ticker := time.NewTicker(10 * time.Millisecond)
+	defer ticker.Stop()
+	for {
+		var waitingForLock bool
+		err := lock.QueryRow(waiting, `select exists (
+			select 1 from pg_locks
+			where relation = $1::regclass and mode = 'RowExclusiveLock' and not granted
+		)`, f.schema+".book").Scan(&waitingForLock)
+		if err != nil {
+			t.Fatalf("observe blocked SQL: %v", err)
+		}
+		if waitingForLock {
+			break
+		}
+		select {
+		case err := <-result:
+			t.Fatalf("transaction completed before SQL waited for the lock: %v", err)
+		case <-waiting.Done():
+			t.Fatal("SQL did not wait for the table lock within the setup bound")
+		case <-ticker.C:
+		}
+	}
+
+	cancel()
 	select {
 	case err := <-result:
-		if !errors.Is(err, context.DeadlineExceeded) {
-			t.Errorf("blocked SQL error=%v, want context.DeadlineExceeded", err)
+		if !errors.Is(err, context.Canceled) {
+			t.Errorf("blocked SQL error=%v, want context.Canceled", err)
 		}
 	case <-time.After(5 * time.Second):
 		t.Fatal("blocked SQL exceeded the cancellation bound")
-	}
-	select {
-	case <-entered:
-	default:
-		t.Error("deadline expired during Begin instead of reaching blocked SQL")
 	}
 	if err := lock.Rollback(ctx); err != nil {
 		t.Fatalf("release table lock: %v", err)

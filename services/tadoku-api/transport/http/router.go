@@ -85,12 +85,17 @@ func NewHandler(
 		requestDuration: requestDuration,
 	}
 	router.rootHandler = router.rootMux
+
+	applicationHandler := stdhttp.Handler(router.applicationMux)
+	applicationHandler = rejectBanned(applicationHandler)
+	applicationHandler = authenticate(applicationHandler)
+	applicationHandler = withPanicRecovery(logger, applicationHandler)
 	router.protectedApplicationHandler = observe(
 		nativeRouteLabel,
 		"",
 		"native",
 		timeout,
-		withPanicRecovery(logger, authenticate(rejectBanned(router.applicationMux))),
+		applicationHandler,
 		requestDuration,
 		logger,
 	)

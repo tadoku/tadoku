@@ -9,9 +9,27 @@ import (
 	"testing"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/tadoku/tadoku/services/tadoku-api/app"
 )
+
+func TestGeneratedCorrelationIDIsUUIDv7(t *testing.T) {
+	request := httptest.NewRequest(stdhttp.MethodGet, "/", nil)
+	request = request.WithContext(withCorrelationID(request.Context(), ""))
+
+	generated := correlationID(request)
+	id, err := uuid.Parse(generated)
+	if err != nil {
+		t.Fatalf("parse generated correlation ID: %v", err)
+	}
+	if got := id.String(); generated != got {
+		t.Errorf("generated correlation ID = %q, want canonical %q", generated, got)
+	}
+	if got := id.Version(); got != uuid.Version(7) {
+		t.Errorf("version = %d, want 7", got)
+	}
+}
 
 func TestNativeRequestMetricUsesMatchedPattern(t *testing.T) {
 	registry := prometheus.NewRegistry()

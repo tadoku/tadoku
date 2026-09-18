@@ -2,14 +2,13 @@ package http
 
 import (
 	"context"
-	"crypto/rand"
-	"encoding/hex"
 	"fmt"
 	"log/slog"
 	stdhttp "net/http"
 	"strconv"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
@@ -111,12 +110,7 @@ type correlationIDKey struct{}
 
 func withCorrelationID(ctx context.Context, id string) context.Context {
 	if id == "" {
-		var value [16]byte
-		if _, err := rand.Read(value[:]); err == nil {
-			id = hex.EncodeToString(value[:])
-		} else {
-			id = "unavailable"
-		}
+		id = uuid.Must(uuid.NewV7()).String()
 	}
 	return context.WithValue(ctx, correlationIDKey{}, id)
 }

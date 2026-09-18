@@ -10,7 +10,6 @@ go_test(
     srcs = ["openapi_test.go"],
     data = ["openapi.yaml"],
     deps = [
-        "//services/tadoku-api/features/content",
         "@com_github_getkin_kin_openapi//openapi3",
         "@rules_go//go/tools/bazel",
     ],

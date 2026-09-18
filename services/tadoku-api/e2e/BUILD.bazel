@@ -17,6 +17,7 @@ go_test(
         "legacy_content_test.go",
         "post_delete_test.go",
         "post_find_test.go",
+        "post_list_test.go",
         "routing_test.go",
     ],
     data = glob([

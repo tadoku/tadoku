@@ -680,7 +680,7 @@ paths:
                 $ref: "#/components/schemas/ContentPosts"
       x-tadoku-source: Content
       x-tadoku-exposure: public
-      x-tadoku-owner: legacy
+      x-tadoku-owner: native
       x-legacy-path: /posts/{namespace}
       x-legacy-operation-id: postList
   "/content/posts/{namespace}/{id}/versions":

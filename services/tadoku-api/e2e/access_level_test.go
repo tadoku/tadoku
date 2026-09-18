@@ -30,6 +30,7 @@ var operationAccess = map[string]accessLevel{
 	"ContentAnnouncementUpdate":     accessAdmin,
 	"ContentPostDelete":             accessAdmin,
 	"ContentPostFindBySlug":         accessPublic,
+	"ContentPostList":               accessPublic,
 }
 
 var operationFixtures = map[string]string{

@@ -1,0 +1,6 @@
+>>> GET /content/posts/main?include_drafts=true
+HTTP/1.1 200 OK
+Content-Length: 925
+Content-Type: application/json; charset=UTF-8
+
+{"next_page_token":"","posts":[{"content":"Future content","created_at":"2026-09-12T11:40:00Z","id":"10000000-0000-4000-8000-000000000006","published_at":"2026-09-12T12:00:01Z","slug":"post-6","title":"Scheduled post","updated_at":"2026-09-12T11:40:00Z"},{"content":"Draft content","created_at":"2026-09-12T11:10:00Z","id":"10000000-0000-4000-8000-000000000003","slug":"post-3","title":"Draft post","updated_at":"2026-09-12T11:10:00Z"},{"content":"Available at the publication instant","created_at":"2026-09-12T11:00:00Z","id":"10000000-0000-4000-8000-000000000002","published_at":"2026-09-12T12:00:00Z","slug":"post-2","title":"Published now","updated_at":"2026-09-12T11:00:00Z"},{"content":"Current **content**","created_at":"2026-09-12T10:00:00Z","id":"10000000-0000-4000-8000-000000000001","published_at":"2026-09-12T11:00:00Z","slug":"post-1","title":"Revised post","updated_at":"2026-09-12T11:01:00Z"}],"total_size":4}

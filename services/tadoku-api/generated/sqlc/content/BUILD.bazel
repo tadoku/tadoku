@@ -8,6 +8,7 @@ go_library(
         "models.go",
         "post_delete.sql.go",
         "post_find.sql.go",
+        "post_list.sql.go",
     ],
     importpath = "github.com/tadoku/tadoku/services/tadoku-api/generated/sqlc/content",
     visibility = [

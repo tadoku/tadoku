@@ -42,7 +42,9 @@ Migration PRs must remain compatible with the application version currently depl
 
 **Do not create application-defined database functions, stored procedures, or triggers.** Keep business behavior in the application and domain layers. Use declarative database features such as `not null`, `check`, unique and foreign-key constraints, and indexes for data integrity and performance.
 
-**Always write tests for new backend functionality** — new domain services, repository methods, and HTTP handlers should have corresponding test coverage.
+**Test meaningful behavior and risk, not every change.** Add coverage where a regression would matter, especially for production authentication and endpoint parity, persistence and data integrity, and nontrivial domain rules. There is no automatic test-per-method or test-per-change requirement. No new test is a valid choice for trivial, documentation-only, generated-output-only, and test-removal changes.
+
+**Do not add low-value tests.** Skip tautological assertions that mirror the implementation, trivial constant or schema equality checks, pass-through or error-wrapper assertions without distinct behavior, and coverage already provided at a shared boundary. Do not export internals, broaden visibility, or add dependencies or abstractions solely to enable such assertions. When a test is explicitly removed, do not recreate equivalent coverage elsewhere unless requested.
 
 **Prefer repository tests plus HTTP E2Es over isolated feature-service tests.** Real-database repository tests are highly recommended for query behavior, row mapping, constraints and persistence. Exercise feature-service orchestration through HTTP E2Es; do not add database-backed feature-service tests. Use unit tests for pure parameter validation and domain rules. Cover shared dependency failures at their boundaries once, not again for every endpoint using those dependencies.
 
@@ -99,16 +101,18 @@ For new native `tadoku-api` code, use `internal/timex.Now()` for business time i
 ```sh
 # 1. Make changes
 
-# 2. Compile (fast)
-bazel build //services/...
+# 2. Compile affected targets (fast; example)
+bazel build //services/tadoku-api/spec:all
 
-# 3. Run tests
-bazel test //services/... # everything
+# 3. Run affected tests
 bazel test //services/immersion-api/domain/command:command_test # one test file
 bazel test //services/immersion-api/domain/command:command_test --test_filter=TestValidateAndNormalizeTags # specific function
 
-# 4. Format before committing
-gofmt -w services/
+# Broaden to //services/... only when the change scope or shared behavior warrants it,
+# or when focused checks leave unresolved failures.
+
+# 4. Format changed Go files before committing (example)
+gofmt -w services/tadoku-api/spec/openapi_test.go
 
 # 5. Regenerate BUILD.bazel files (after adding/removing Go files or changing deps/imports)
 # CI fails if these are stale (it runs `bazel run //:gazelle -- -mode=diff`)
@@ -121,8 +125,8 @@ bazel run //:gazelle
 ./scripts/generate-openapi.sh
 # Legacy service OpenAPI output is frozen until those services are retired.
 
-# 8. Before creating PR
-bazel build //services/... && bazel test //services/...
+# 8. Before creating PR, confirm the affected checks and required generators and
+# CI consistency checks have passed. Rerun only after relevant changes or to resolve failures.
 ```
 
 ## Dev Environment
@@ -144,5 +148,5 @@ Use `make dev-seed` (`scripts/dev/seed-db.sh`) to rerun the idempotent seed data
 
 When a bug is reported, follow this process:
 
-1. **Write a failing test first** — Don't start by trying to fix the bug. Instead, write a test that reproduces the bug and confirms it fails.
-2. **Use subagents to fix** — Have subagents attempt to fix the bug and prove the fix by making the test pass.
+1. **Reproduce the bug first** — Use the smallest useful existing test, build, lint check, or manual scenario. Add a regression test when it protects meaningful behavior. If you claim a test fails before the fix, verify that it compiles and fails for the intended behavioral reason.
+2. **Use subagents to fix** — Have subagents implement the fix and prove it against the reproduction and affected checks.

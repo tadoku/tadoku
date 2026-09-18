@@ -41,6 +41,8 @@ func TestPostsRepositoryFindUsesCurrentContentAndNamespace(t *testing.T) {
 	repository := content.NewPostsRepository(db.Pool)
 	id := uuid.MustParse("11111111-1111-4111-8111-111111111111")
 	publishedAt := time.Date(2026, 9, 11, 10, 0, 0, 0, time.UTC)
+	createdAt := time.Date(2026, 9, 10, 8, 0, 0, 0, time.UTC)
+	updatedAt := time.Date(2026, 9, 11, 9, 30, 0, 0, time.UTC)
 	want := &content.Post{
 		ID:          id,
 		Namespace:   "main",
@@ -48,8 +50,8 @@ func TestPostsRepositoryFindUsesCurrentContentAndNamespace(t *testing.T) {
 		Title:       "Current title",
 		Content:     "Current content",
 		PublishedAt: &publishedAt,
-		CreatedAt:   time.Date(2026, 9, 10, 8, 0, 0, 0, time.UTC),
-		UpdatedAt:   time.Date(2026, 9, 11, 9, 30, 0, 0, time.UTC),
+		CreatedAt:   &createdAt,
+		UpdatedAt:   &updatedAt,
 	}
 	for name, find := range map[string]func() (*content.Post, error){
 		"slug": func() (*content.Post, error) { return repository.FindPostBySlug(t.Context(), "main", "welcome") },

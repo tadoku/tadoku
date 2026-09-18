@@ -9,29 +9,29 @@ import (
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
 )
 
-func (a *Application) FindPostBySlug(ctx context.Context, namespace, slug string) (*content.Post, bool, error) {
+func (a *Application) FindPostBySlug(ctx context.Context, namespace, slug string) (*content.Post, error) {
 	post, err := a.content.FindPostBySlug(ctx, namespace, slug)
 	if err == nil {
-		return post, false, nil
+		return post, nil
 	}
 	if !errors.Is(err, content.ErrPostNotFound) && errx.KindOf(err) != errx.InvalidInput {
-		return nil, false, err
+		return nil, err
 	}
 
 	id, err := uuid.Parse(slug)
 	if err != nil {
-		return nil, false, content.ErrPostNotFound
+		return nil, content.ErrPostNotFound
 	}
 	if err := a.permissions.RequireAdmin(ctx); err != nil {
 		if errx.KindOf(err) == errx.Forbidden {
-			return nil, false, err
+			return nil, err
 		}
-		return nil, false, content.ErrPostNotFound
+		return nil, content.ErrPostNotFound
 	}
 
 	post, err = a.content.FindPostByID(ctx, namespace, id)
 	if err != nil {
-		return nil, false, content.ErrPostNotFound
+		return nil, content.ErrPostNotFound
 	}
-	return post, true, nil
+	return post, nil
 }

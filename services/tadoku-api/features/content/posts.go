@@ -14,8 +14,8 @@ type Post struct {
 	Title       string
 	Content     string
 	PublishedAt *time.Time
-	CreatedAt   time.Time
-	UpdatedAt   time.Time
+	CreatedAt   *time.Time
+	UpdatedAt   *time.Time
 }
 
 var ErrPostNotFound = errx.NewNotFoundError("post not found")

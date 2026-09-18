@@ -23,6 +23,9 @@ func (s *Service) FindPostBySlug(ctx context.Context, namespace, slug string) (*
 	if post.PublishedAt == nil || post.PublishedAt.After(timex.Now()) {
 		return nil, ErrPostNotFound
 	}
+
+	post.CreatedAt = nil
+	post.UpdatedAt = nil
 	return post, nil
 }
 

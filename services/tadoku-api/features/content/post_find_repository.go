@@ -63,7 +63,7 @@ func postFromFindRow(row queries.FindPostBySlugRow) *Post {
 		Title:       row.Title,
 		Content:     row.Content,
 		PublishedAt: publishedAt,
-		CreatedAt:   row.CreatedAt.Time,
-		UpdatedAt:   row.UpdatedAt.Time,
+		CreatedAt:   &row.CreatedAt.Time,
+		UpdatedAt:   &row.UpdatedAt.Time,
 	}
 }

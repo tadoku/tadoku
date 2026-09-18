@@ -38,7 +38,7 @@ func NewNotFoundError(message string) *Error {
 }
 
 func NewConflictError(message string) *Error {
-	return &Error{Kind: Conflict, Message: message}
+	return &Error{kind: Conflict, message: message}
 }
 
 // NewUnavailableError preserves the underlying cause, which may be nil.

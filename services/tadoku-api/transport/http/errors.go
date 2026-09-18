@@ -11,18 +11,18 @@ import (
 var errInvalidUUID = errx.NewInvalidInputError("invalid UUID")
 
 func (s *server) logOperationError(ctx context.Context, operation string, err error) {
-	if errorStatus(err) >= stdhttp.StatusInternalServerError {
+	if errorStatus(ctx, err) >= stdhttp.StatusInternalServerError {
 		s.logger.ErrorContext(ctx, operation+" failed", "error", err)
 		return
 	}
 	s.logger.DebugContext(ctx, operation+" rejected", "error", err)
 }
 
-func errorStatus(err error) int {
+func errorStatus(ctx context.Context, err error) int {
 	switch {
 	case errors.Is(err, context.DeadlineExceeded):
 		return stdhttp.StatusGatewayTimeout
-	case errors.Is(err, context.Canceled):
+	case errors.Is(err, context.Canceled) && errors.Is(ctx.Err(), context.Canceled):
 		return 499
 	}
 

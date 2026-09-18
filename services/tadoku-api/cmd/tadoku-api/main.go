@@ -192,12 +192,16 @@ func start(ctx context.Context, cfg config, logger *slog.Logger) (*application, 
 		newPGXPoolCollector(pool),
 	)
 
-	keto := ketoclient.NewReadClient(cfg.KetoReadURL)
+	ketoHTTP := &http.Client{
+		Transport: transport,
+		Timeout:   2 * time.Second,
+	}
+	keto := ketoclient.NewReadClient(cfg.KetoReadURL, ketoclient.WithHTTPClient(ketoHTTP))
 	permissionChecker := permissions.NewKetoChecker(keto)
 	contentRepository := content.NewAnnouncementsRepository(pool)
 	contentService := content.NewService(contentRepository)
 	api := app.New(contentService, pool, permissionChecker)
-	rejectBanned := newBannedUserMiddleware(cfg.KetoReadURL, logger)
+	rejectBanned := newBannedUserMiddleware(keto, logger)
 
 	handler, err := transporthttp.NewHandler(api, pool.Ping, cfg.RequestTimeout, metrics, logger, authenticate, rejectBanned)
 	if err != nil {
@@ -282,8 +286,7 @@ func start(ctx context.Context, cfg config, logger *slog.Logger) (*application, 
 	return app, nil
 }
 
-func newBannedUserMiddleware(ketoReadURL string, logger *slog.Logger) func(http.Handler) http.Handler {
-	keto := ketoclient.NewReadClient(ketoReadURL)
+func newBannedUserMiddleware(keto ketoclient.AuthorizationReader, logger *slog.Logger) func(http.Handler) http.Handler {
 	return transporthttp.RejectBannedUsers(func(ctx context.Context, subjectID string) (bool, error) {
 		return keto.CheckPermission(ctx, "app", "tadoku", "banned", ketoclient.Subject{ID: subjectID})
 	}, logger)

@@ -10,6 +10,7 @@ go_library(
         "app.go",
         "post_delete.go",
         "post_find.go",
+        "post_list.go",
     ],
     importpath = "github.com/tadoku/tadoku/services/tadoku-api/app",
     visibility = [

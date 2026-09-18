@@ -13,5 +13,6 @@ output-options:
     - ContentAnnouncementUpdate
     - ContentPostDelete
     - ContentPostFindBySlug
+    - ContentPostList
   nullable-type: true
   skip-prune: true

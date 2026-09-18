@@ -1075,6 +1075,13 @@ type ContentAnnouncementListParams struct {
 	Page     *int `form:"page,omitempty" json:"page,omitempty"`
 }
 
+// ContentPostListParams defines parameters for ContentPostList.
+type ContentPostListParams struct {
+	PageSize      *int  `form:"page_size,omitempty" json:"page_size,omitempty"`
+	Page          *int  `form:"page,omitempty" json:"page,omitempty"`
+	IncludeDrafts *bool `form:"include_drafts,omitempty" json:"include_drafts,omitempty"`
+}
+
 // ContentAnnouncementCreateJSONRequestBody defines body for ContentAnnouncementCreate for application/json ContentType.
 type ContentAnnouncementCreateJSONRequestBody = ContentAnnouncement
 
@@ -1101,6 +1108,9 @@ type ServerInterface interface {
 	// ContentAnnouncementUpdate Updates an existing announcement
 	// (PUT /content/announcements/{namespace}/{id})
 	ContentAnnouncementUpdate(w http.ResponseWriter, r *http.Request, namespace string, id string)
+	// ContentPostList lists all posts
+	// (GET /content/posts/{namespace})
+	ContentPostList(w http.ResponseWriter, r *http.Request, namespace string, params ContentPostListParams)
 	// ContentPostDelete Deletes an existing post
 	// (DELETE /content/posts/{namespace}/{slug})
 	ContentPostDelete(w http.ResponseWriter, r *http.Request, namespace string, slug string)
@@ -1330,6 +1340,74 @@ func (siw *ServerInterfaceWrapper) ContentAnnouncementUpdate(w http.ResponseWrit
 	handler.ServeHTTP(w, r)
 }
 
+// ContentPostList operation middleware
+func (siw *ServerInterfaceWrapper) ContentPostList(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "namespace" -------------
+	var namespace string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "namespace", r.PathValue("namespace"), &namespace, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "namespace", Err: err})
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ContentPostListParams
+
+	// ------------- Optional query parameter "page_size" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "page_size", r.URL.Query(), &params.PageSize, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "page_size"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "page_size", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "page" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "page", r.URL.Query(), &params.Page, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "page"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "page", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "include_drafts" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "include_drafts", r.URL.Query(), &params.IncludeDrafts, runtime.BindQueryParameterOptions{Type: "boolean", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "include_drafts"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "include_drafts", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ContentPostList(w, r, namespace, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // ContentPostDelete operation middleware
 func (siw *ServerInterfaceWrapper) ContentPostDelete(w http.ResponseWriter, r *http.Request) {
 
@@ -1522,6 +1600,7 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 
 	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/content/posts/{namespace}/{slug}", wrapper.ContentPostDelete)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/content/posts/{namespace}/{slug}", wrapper.ContentPostFindBySlug)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/content/posts/{namespace}", wrapper.ContentPostList)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/content/announcements/{namespace}/active", wrapper.ContentAnnouncementListActive)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/content/announcements/{namespace}", wrapper.ContentAnnouncementList)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/content/announcements/{namespace}", wrapper.ContentAnnouncementCreate)
@@ -1730,6 +1809,29 @@ func (response ContentAnnouncementUpdate404Response) VisitContentAnnouncementUpd
 	return nil
 }
 
+type ContentPostListRequestObject struct {
+	Namespace string `json:"namespace"`
+	Params    ContentPostListParams
+}
+
+type ContentPostListResponseObject interface {
+	VisitContentPostListResponse(w http.ResponseWriter) error
+}
+
+type ContentPostList200JSONResponse ContentPosts
+
+func (response ContentPostList200JSONResponse) VisitContentPostListResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
 type ContentPostDeleteRequestObject struct {
 	Namespace string `json:"namespace"`
 	Slug      string `json:"slug"`
@@ -1814,6 +1916,9 @@ type StrictServerInterface interface {
 	// ContentAnnouncementUpdate Updates an existing announcement
 	// (PUT /content/announcements/{namespace}/{id})
 	ContentAnnouncementUpdate(ctx context.Context, request ContentAnnouncementUpdateRequestObject) (ContentAnnouncementUpdateResponseObject, error)
+	// ContentPostList lists all posts
+	// (GET /content/posts/{namespace})
+	ContentPostList(ctx context.Context, request ContentPostListRequestObject) (ContentPostListResponseObject, error)
 	// ContentPostDelete Deletes an existing post
 	// (DELETE /content/posts/{namespace}/{slug})
 	ContentPostDelete(ctx context.Context, request ContentPostDeleteRequestObject) (ContentPostDeleteResponseObject, error)
@@ -2034,6 +2139,33 @@ func (sh *strictHandler) ContentAnnouncementUpdate(w http.ResponseWriter, r *htt
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(ContentAnnouncementUpdateResponseObject); ok {
 		if err := validResponse.VisitContentAnnouncementUpdateResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ContentPostList operation middleware
+func (sh *strictHandler) ContentPostList(w http.ResponseWriter, r *http.Request, namespace string, params ContentPostListParams) {
+	var request ContentPostListRequestObject
+
+	request.Namespace = namespace
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ContentPostList(ctx, request.(ContentPostListRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ContentPostList")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ContentPostListResponseObject); ok {
+		if err := validResponse.VisitContentPostListResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

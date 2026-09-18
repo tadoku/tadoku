@@ -1,0 +1,6 @@
+>>> GET /content/posts/main?page_size=2
+HTTP/1.1 200 OK
+Content-Length: 471
+Content-Type: application/json; charset=UTF-8
+
+{"next_page_token":"1","posts":[{"content":"Content 3","created_at":"2026-09-12T09:00:00Z","id":"10000000-0000-4000-8000-000000000003","published_at":"2026-09-12T11:00:00Z","slug":"post-3","title":"Post 3","updated_at":"2026-09-12T09:00:00Z"},{"content":"Content 2","created_at":"2026-09-12T09:00:00Z","id":"10000000-0000-4000-8000-000000000002","published_at":"2026-09-12T11:00:00Z","slug":"post-2","title":"Post 2","updated_at":"2026-09-12T09:00:00Z"}],"total_size":3}

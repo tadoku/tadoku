@@ -14,6 +14,7 @@ go_library(
         "panic_recovery.go",
         "post_delete.go",
         "post_find.go",
+        "post_list.go",
         "proxy.go",
         "router.go",
     ],

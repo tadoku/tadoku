@@ -23,21 +23,29 @@ where deleted_at is null
   and namespace = sqlc.arg(namespace)
   and id = sqlc.arg(id);
 
--- name: CountAnnouncements :one
-select count(id)
-from announcements
-where deleted_at is null
-  and namespace = sqlc.arg(namespace);
-
 -- name: ListAnnouncements :many
-select id, namespace, title, content, style, href,
-       starts_at, ends_at, created_at, updated_at
-from announcements
-where deleted_at is null
-  and namespace = sqlc.arg(namespace)
-order by created_at desc, id desc
-limit sqlc.arg(result_limit)
-offset sqlc.arg(start_from)::bigint;
+with matches as materialized (
+  select id, namespace, title, content, style, href,
+         starts_at, ends_at, created_at, updated_at
+  from announcements
+  where deleted_at is null
+    and namespace = sqlc.arg(namespace)
+), page as (
+  select *
+  from matches
+  order by created_at desc, id desc
+  limit sqlc.arg(result_limit)
+  offset sqlc.arg(start_from)::bigint
+), total as (
+  select count(*) as total_size
+  from matches
+)
+select page.id, page.namespace, page.title, page.content, page.style, page.href,
+       page.starts_at, page.ends_at, page.created_at, page.updated_at,
+       total.total_size
+from total
+left join page on true
+order by page.created_at desc, page.id desc;
 
 -- name: ListActiveAnnouncements :many
 select id, namespace, title, content, style, href,

@@ -3,6 +3,7 @@ package content
 
 import (
 	"context"
+	"math"
 	"strconv"
 	"time"
 
@@ -83,19 +84,14 @@ func (s *Service) ListAnnouncements(ctx context.Context, namespace string, pageS
 		pageSize = 100
 	}
 
-	totalSize, err := s.announcements.CountAnnouncements(ctx, namespace)
-	if err != nil {
-		return nil, err
-	}
-	if page > totalSize/pageSize {
-		return &AnnouncementList{
-			Announcements: []Announcement{},
-			TotalSize:     totalSize,
-		}, nil
+	offset := int64(page)
+	if page > math.MaxInt64/pageSize {
+		offset = math.MaxInt64
+	} else {
+		offset *= int64(pageSize)
 	}
 
-	offset := int64(page) * int64(pageSize)
-	announcements, err := s.announcements.ListAnnouncements(ctx, namespace, int32(pageSize), offset)
+	announcements, totalSize, err := s.announcements.ListAnnouncements(ctx, namespace, int32(pageSize), offset)
 	if err != nil {
 		return nil, err
 	}

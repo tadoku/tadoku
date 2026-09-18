@@ -5,7 +5,6 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/content"
-	"github.com/tadoku/tadoku/services/tadoku-api/infra/postgres"
 )
 
 func (a *Application) FindAnnouncementByID(ctx context.Context, namespace string, id uuid.UUID) (*content.Announcement, error) {
@@ -25,14 +24,5 @@ func (a *Application) ListAnnouncements(ctx context.Context, namespace string, p
 		return nil, err
 	}
 
-	var result *content.AnnouncementList
-	err := postgres.RunInTransaction(ctx, a.db, func(ctx context.Context) (err error) {
-		result, err = a.content.ListAnnouncements(ctx, namespace, pageSize, page)
-		return
-	})
-	if err != nil {
-		// The callback may succeed before the transaction fails to commit.
-		return nil, err
-	}
-	return result, nil
+	return a.content.ListAnnouncements(ctx, namespace, pageSize, page)
 }

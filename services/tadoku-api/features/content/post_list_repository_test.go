@@ -98,6 +98,8 @@ func TestPostsRepositoryListPosts(t *testing.T) {
 					continue
 				}
 				publishedAt := cutoff.UTC()
+				createdAt := time.Date(2026, 9, 11, 10, 0, 0, 0, time.UTC)
+				updatedAt := time.Date(2026, 9, 12, 11, 0, 0, 0, time.UTC)
 				want := content.Post{
 					ID:          item.ID,
 					Namespace:   "main",
@@ -105,8 +107,8 @@ func TestPostsRepositoryListPosts(t *testing.T) {
 					Title:       "Current title",
 					Content:     "Current content",
 					PublishedAt: &publishedAt,
-					CreatedAt:   time.Date(2026, 9, 11, 10, 0, 0, 0, time.UTC),
-					UpdatedAt:   time.Date(2026, 9, 12, 11, 0, 0, 0, time.UTC),
+					CreatedAt:   &createdAt,
+					UpdatedAt:   &updatedAt,
 				}
 				if !reflect.DeepEqual(item, want) {
 					t.Errorf("post=%+v, want %+v", item, want)

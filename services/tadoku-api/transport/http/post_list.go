@@ -40,8 +40,8 @@ func (s *server) ContentPostList(
 			Title:       item.Title,
 			Content:     item.Content,
 			PublishedAt: item.PublishedAt,
-			CreatedAt:   &item.CreatedAt,
-			UpdatedAt:   &item.UpdatedAt,
+			CreatedAt:   item.CreatedAt,
+			UpdatedAt:   item.UpdatedAt,
 		})
 	}
 

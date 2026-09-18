@@ -47,8 +47,8 @@ func (r *PostsRepository) ListPosts(ctx context.Context, namespace string, inclu
 			Title:       row.Title.String,
 			Content:     row.Content.String,
 			PublishedAt: publishedAt,
-			CreatedAt:   row.CreatedAt.Time,
-			UpdatedAt:   row.UpdatedAt.Time,
+			CreatedAt:   &row.CreatedAt.Time,
+			UpdatedAt:   &row.UpdatedAt.Time,
 		})
 	}
 

@@ -49,6 +49,15 @@ func TestPagesRepositoryCreatePageIsAtomic(t *testing.T) {
 		if got.Title != item.Title || got.HTML != item.HTML {
 			t.Errorf("transaction readback=%+v", got)
 		}
+		if got.PublishedAt == nil || !got.PublishedAt.Equal(instant) {
+			t.Errorf("published_at=%v, want %v", got.PublishedAt, instant)
+		}
+		if got.CreatedAt == nil || !got.CreatedAt.Equal(instant) {
+			t.Errorf("created_at=%v, want %v", got.CreatedAt, instant)
+		}
+		if got.UpdatedAt == nil || !got.UpdatedAt.Equal(instant) {
+			t.Errorf("updated_at=%v, want %v", got.UpdatedAt, instant)
+		}
 		return nil
 	}); err != nil {
 		t.Fatal(err)

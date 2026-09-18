@@ -9,7 +9,7 @@ Externally the gateway still adds `/api`.
 
 ```
 transport/http -> app -> features/<feature> -> generated/sqlc/<feature>
-cmd/tadoku-api constructs and closes the shared pgx/v5 pool and HTTP resources
+cmd/tadoku-api constructs and closes the shared pgx/v5 pool, raw Valkey client and HTTP resources
 ```
 
 `transport/http/router.go` constructs the application router with standard
@@ -100,6 +100,12 @@ In addition to the existing four upstream URLs, startup now requires:
 - Individual `API_POSTGRES_HOST`, `PORT` (default 5432), `DATABASE`, `USER`,
   `PASSWORD`, `SSLMODE` fields. `API_POSTGRES_URL` remains rejected.
 - `API_POSTGRES_MAX_CONNECTIONS` (default 4, validated range 1–32).
+- `API_VALKEY_URL`, one standalone TCP URL accepted by `valkey-go`. URL
+  credentials, TLS, databases and client options are preserved except for the
+  service's timeout, retry and pipelining policy; Sentinel, multiple-address and
+  Unix-socket configurations are rejected.
+- `API_VALKEY_TIMEOUT` (default 1s), the positive bound for each connection and
+  handshake attempt and the established-connection keepalive/I/O interval.
 - `API_JWKS`, the gateway's public signing-key URL.
 - `API_MAX_TOKEN_AGE` (default 24h), the maximum accepted age since `iat`.
 - `API_JWT_ISSUER`, an optional exact issuer match. Empty leaves issuer unchecked
@@ -108,14 +114,28 @@ In addition to the existing four upstream URLs, startup now requires:
   URL or credential.
 
 Startup fetches JWKS within `API_DIAL_TIMEOUT` and pings PostgreSQL before opening
-listeners. Either failure aborts startup. Signing keys remain cached until restart;
-there is no periodic refresh or refresh on an unknown key ID.
+listeners. Either failure aborts startup. Tadoku API also constructs and owns its
+raw Valkey client unconditionally. Invalid Valkey configuration or canceled setup
+aborts startup; an unavailable standalone server logs a warning and starts in
+degraded mode so the retained client can reconnect on a later command. Signing
+keys remain cached until restart; there is no periodic refresh or refresh on an
+unknown key ID.
 `/readyz` checks PostgreSQL; `/livez` remains independent of dependency health.
+Valkey is deliberately not a readiness or liveness gate. Commands use the caller's
+context, and blocking commands require an explicit caller deadline. The raw client
+preserves `valkey-go` behavior during a lazy connection or reconnect: canceling
+before an existing deadline may wait for that deadline or `API_VALKEY_TIMEOUT`
+while the handshake or another caller's shared setup finishes. Streaming commands
+also retain the upstream client's native cancellation behavior. See
+[`infra/valkey`](infra/valkey/) for the direct command pattern.
+
 The existing proxy metrics and Go process metrics remain on the metrics listener
 (`API_METRICS_PORT`, default 9090). They describe proxy request volume/latency/errors
 and process health. This thin slice adds no native-specific metric family.
-Shutdown closes request/metrics listeners, the pool and idle HTTP
-connections. The dev deployment uses the existing disposable development DB role;
+Shutdown closes request/metrics listeners, the pool, the Valkey client and idle
+HTTP connections. Valkey close follows the upstream client's native per-connection
+close allowance rather than `API_VALKEY_TIMEOUT`. The dev deployment uses the
+existing disposable development DB role;
 secret synchronization and reset scripts include Tadoku API.
 
 Authentication accepts only RS256 bearer JWTs, requires `exp` and `iat`, and
@@ -168,6 +188,10 @@ complete canonical migration history. Do not point them at shared dev or product
 Relationship scenarios also start a pinned, official Linux x86-64 Keto v25.4.0
 SQLite-enabled executable under Bazel. Each helper owns an in-memory, loopback-only
 process using `infra/dev/ory/namespaces.keto.ts`; it never accepts an external target.
+Raw Valkey and application lifecycle tests also require
+`TADOKU_TEST_VALKEY_URL` in the exact form `redis://127.0.0.1:<port>` (or
+`localhost`) for a disposable Valkey 9 service. They isolate and delete their own
+keys and never flush the shared instance.
 
 ```sh
 bazel test //services/tadoku-api/... --test_output=errors

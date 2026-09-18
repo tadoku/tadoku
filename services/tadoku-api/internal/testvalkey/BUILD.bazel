@@ -1,0 +1,15 @@
+load("@rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "testvalkey",
+    testonly = True,
+    srcs = ["valkey.go"],
+    importpath = "github.com/tadoku/tadoku/services/tadoku-api/internal/testvalkey",
+    visibility = ["//services/tadoku-api:__subpackages__"],
+)
+
+go_test(
+    name = "testvalkey_test",
+    srcs = ["valkey_test.go"],
+    embed = [":testvalkey"],
+)

@@ -315,8 +315,8 @@ func TestRunInTransactionDeferredConstraintFailsAtCommitWithoutReplay(t *testing
 	if !errors.Is(err, pgError) {
 		t.Errorf("commit error cause was not preserved: %v", err)
 	}
-	if got := errx.KindOf(err); got != errx.Unavailable {
-		t.Errorf("commit error kind=%v, want unavailable", got)
+	if got := errx.KindOf(err); got != errx.Unknown {
+		t.Errorf("commit error kind=%v, want unknown", got)
 	}
 	if calls != 1 {
 		t.Errorf("callback replayed: calls=%d", calls)
@@ -360,8 +360,8 @@ func TestRunInTransactionFailedBeginNeverCallsWork(t *testing.T) {
 		if err == nil || called {
 			t.Errorf("closed-pool begin: error=%v, called=%v", err, called)
 		}
-		if got := errx.KindOf(err); got != errx.Unavailable {
-			t.Errorf("closed-pool begin kind=%v, want unavailable", got)
+		if got := errx.KindOf(err); got != errx.Unknown {
+			t.Errorf("closed-pool begin kind=%v, want unknown", got)
 		}
 	})
 	t.Run("waiting for pool connection", func(t *testing.T) {

@@ -53,7 +53,7 @@ func TestDependencyFailures(t *testing.T) {
 		{
 			operation:   "FindAnnouncementByID",
 			description: []string{"read", "failure"},
-			want:        http.StatusServiceUnavailable,
+			want:        http.StatusInternalServerError,
 			suite:       poolClosed,
 			handler:     poolClosed.handler,
 			logMessage:  "find announcement by ID failed",
@@ -71,7 +71,7 @@ func TestDependencyFailures(t *testing.T) {
 		{
 			operation:   "ListActiveAnnouncements",
 			description: []string{"read", "failure"},
-			want:        http.StatusServiceUnavailable,
+			want:        http.StatusInternalServerError,
 			suite:       poolClosed,
 			handler:     poolClosed.handler,
 			logMessage:  "list active announcements failed",
@@ -80,7 +80,7 @@ func TestDependencyFailures(t *testing.T) {
 		{
 			operation:   "ListAnnouncements",
 			description: []string{"read", "failure"},
-			want:        http.StatusServiceUnavailable,
+			want:        http.StatusInternalServerError,
 			suite:       poolClosed,
 			handler:     poolClosed.handler,
 			logMessage:  "list announcements failed",

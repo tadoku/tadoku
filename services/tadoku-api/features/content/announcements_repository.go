@@ -3,6 +3,7 @@ package content
 import (
 	"context"
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/google/uuid"
@@ -38,7 +39,7 @@ func (r *AnnouncementsRepository) DeleteAnnouncement(ctx context.Context, namesp
 		DeletedAt: postgres.Timestamp(deletedAt),
 	})
 	if err != nil {
-		return errx.NewUnavailableError("delete announcement", err)
+		return fmt.Errorf("delete announcement: %w", err)
 	}
 
 	return nil
@@ -71,7 +72,7 @@ func (r *AnnouncementsRepository) CreateAnnouncement(ctx context.Context, item *
 		return errx.NewConflictError("announcement already exists")
 	}
 	if err != nil {
-		return errx.NewUnavailableError("create announcement", err)
+		return fmt.Errorf("create announcement: %w", err)
 	}
 	return nil
 }
@@ -101,7 +102,7 @@ func (r *AnnouncementsRepository) UpdateAnnouncement(ctx context.Context, item *
 		return ErrAnnouncementNotFound
 	}
 	if err != nil {
-		return errx.NewUnavailableError("update announcement", err)
+		return fmt.Errorf("update announcement: %w", err)
 	}
 	return nil
 }
@@ -120,7 +121,7 @@ func (r *AnnouncementsRepository) FindAnnouncementByID(ctx context.Context, name
 		return nil, ErrAnnouncementNotFound
 	}
 	if err != nil {
-		return nil, errx.NewUnavailableError("find announcement by ID", err)
+		return nil, fmt.Errorf("find announcement by ID: %w", err)
 	}
 
 	var href *string
@@ -154,7 +155,7 @@ func (r *AnnouncementsRepository) ListAnnouncements(ctx context.Context, namespa
 		StartFrom:   offset,
 	})
 	if err != nil {
-		return nil, 0, errx.NewUnavailableError("list announcements", err)
+		return nil, 0, fmt.Errorf("list announcements: %w", err)
 	}
 
 	result := make([]Announcement, 0, len(rows))
@@ -199,7 +200,7 @@ func (r *AnnouncementsRepository) ListActiveAnnouncements(ctx context.Context, n
 		ResultLimit: limit,
 	})
 	if err != nil {
-		return nil, errx.NewUnavailableError("list active announcements", err)
+		return nil, fmt.Errorf("list active announcements: %w", err)
 	}
 
 	result := make([]Announcement, 0, len(rows))

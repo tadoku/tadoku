@@ -19,3 +19,11 @@ type Post struct {
 }
 
 var ErrPostNotFound = errx.NewNotFoundError("post not found")
+
+type PostVersion struct {
+	ID        uuid.UUID
+	Version   int
+	Title     string
+	Content   string
+	CreatedAt time.Time
+}

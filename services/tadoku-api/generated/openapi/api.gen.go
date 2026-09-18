@@ -1120,6 +1120,9 @@ type ServerInterface interface {
 	// ContentPostCreate Creates a new post
 	// (POST /content/posts/{namespace})
 	ContentPostCreate(w http.ResponseWriter, r *http.Request, namespace string)
+	// ContentPostVersionList Lists all versions of a post
+	// (GET /content/posts/{namespace}/{id}/versions)
+	ContentPostVersionList(w http.ResponseWriter, r *http.Request, namespace string, id string)
 	// ContentPostDelete Deletes an existing post
 	// (DELETE /content/posts/{namespace}/{slug})
 	ContentPostDelete(w http.ResponseWriter, r *http.Request, namespace string, slug string)
@@ -1446,6 +1449,41 @@ func (siw *ServerInterfaceWrapper) ContentPostCreate(w http.ResponseWriter, r *h
 	handler.ServeHTTP(w, r)
 }
 
+// ContentPostVersionList operation middleware
+func (siw *ServerInterfaceWrapper) ContentPostVersionList(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "namespace" -------------
+	var namespace string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "namespace", r.PathValue("namespace"), &namespace, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "namespace", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", r.PathValue("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ContentPostVersionList(w, r, namespace, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // ContentPostDelete operation middleware
 func (siw *ServerInterfaceWrapper) ContentPostDelete(w http.ResponseWriter, r *http.Request) {
 
@@ -1676,6 +1714,7 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	m.HandleFunc(http.MethodPut+" "+options.BaseURL+"/content/posts/{namespace}/{slug}", wrapper.ContentPostUpdate)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/content/posts/{namespace}", wrapper.ContentPostList)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/content/posts/{namespace}", wrapper.ContentPostCreate)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/content/posts/{namespace}/{id}/versions", wrapper.ContentPostVersionList)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/content/announcements/{namespace}/active", wrapper.ContentAnnouncementListActive)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/content/announcements/{namespace}", wrapper.ContentAnnouncementList)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/content/announcements/{namespace}", wrapper.ContentAnnouncementCreate)
@@ -1946,6 +1985,45 @@ func (response ContentPostCreate409Response) VisitContentPostCreateResponse(w ht
 	return nil
 }
 
+type ContentPostVersionListRequestObject struct {
+	Namespace string `json:"namespace"`
+	Id        string `json:"id"`
+}
+
+type ContentPostVersionListResponseObject interface {
+	VisitContentPostVersionListResponse(w http.ResponseWriter) error
+}
+
+type ContentPostVersionList200JSONResponse ContentPostVersions
+
+func (response ContentPostVersionList200JSONResponse) VisitContentPostVersionListResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ContentPostVersionList403Response struct {
+}
+
+func (response ContentPostVersionList403Response) VisitContentPostVersionListResponse(w http.ResponseWriter) error {
+	w.WriteHeader(403)
+	return nil
+}
+
+type ContentPostVersionList404Response struct {
+}
+
+func (response ContentPostVersionList404Response) VisitContentPostVersionListResponse(w http.ResponseWriter) error {
+	w.WriteHeader(404)
+	return nil
+}
+
 type ContentPostDeleteRequestObject struct {
 	Namespace string `json:"namespace"`
 	Slug      string `json:"slug"`
@@ -2084,6 +2162,9 @@ type StrictServerInterface interface {
 	// ContentPostCreate Creates a new post
 	// (POST /content/posts/{namespace})
 	ContentPostCreate(ctx context.Context, request ContentPostCreateRequestObject) (ContentPostCreateResponseObject, error)
+	// ContentPostVersionList Lists all versions of a post
+	// (GET /content/posts/{namespace}/{id}/versions)
+	ContentPostVersionList(ctx context.Context, request ContentPostVersionListRequestObject) (ContentPostVersionListResponseObject, error)
 	// ContentPostDelete Deletes an existing post
 	// (DELETE /content/posts/{namespace}/{slug})
 	ContentPostDelete(ctx context.Context, request ContentPostDeleteRequestObject) (ContentPostDeleteResponseObject, error)
@@ -2370,6 +2451,33 @@ func (sh *strictHandler) ContentPostCreate(w http.ResponseWriter, r *http.Reques
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(ContentPostCreateResponseObject); ok {
 		if err := validResponse.VisitContentPostCreateResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ContentPostVersionList operation middleware
+func (sh *strictHandler) ContentPostVersionList(w http.ResponseWriter, r *http.Request, namespace string, id string) {
+	var request ContentPostVersionListRequestObject
+
+	request.Namespace = namespace
+	request.Id = id
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ContentPostVersionList(ctx, request.(ContentPostVersionListRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ContentPostVersionList")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ContentPostVersionListResponseObject); ok {
+		if err := validResponse.VisitContentPostVersionListResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

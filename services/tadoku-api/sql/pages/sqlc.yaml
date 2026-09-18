@@ -6,6 +6,8 @@ sql:
       - page_find.sql
       - page_list.sql
       - page_create.sql
+      - page_update.sql
+      - page_delete.sql
     gen:
       go:
         package: pages

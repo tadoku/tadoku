@@ -21,7 +21,10 @@ test('all retained wire contracts survive the merge, including internal callers'
         if (legacy.security && !operation.security) operation.security = legacy.security;
       }
     }
-    if (name === 'Content') legacy.paths['/announcements/{namespace}'].post.responses['409'] = {description: 'Announcement already exists'};
+    if (name === 'Content') {
+      legacy.paths['/announcements/{namespace}'].post.responses['409'] = {description: 'Announcement already exists'};
+      legacy.components.schemas.Announcement.properties.href.maxLength = 2048;
+    }
     const view = sourceView(contract, name);
     assert.deepEqual(view.paths, legacy.paths, `${name} paths`);
     assert.deepEqual(view.components, legacy.components ?? {}, `${name} components`);

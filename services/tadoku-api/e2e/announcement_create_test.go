@@ -15,6 +15,7 @@ func TestCreateAnnouncement(t *testing.T) {
 		{description: []string{"null", "href"}, want: http.StatusCreated},
 		{description: []string{"omitted", "href"}, want: http.StatusCreated},
 		{description: []string{"empty", "href"}, want: http.StatusCreated},
+		{description: []string{"relative", "href"}, want: http.StatusCreated},
 		{description: []string{"ignored", "server", "fields"}, want: http.StatusCreated},
 		{description: []string{"trailing", "json"}, want: http.StatusCreated},
 		// Legacy stores timestamp offsets as wall-clock fields instead of UTC instants.
@@ -30,6 +31,9 @@ func TestCreateAnnouncement(t *testing.T) {
 		{description: []string{"invalid", "id"}, want: http.StatusBadRequest},
 		{description: []string{"invalid", "time"}, want: http.StatusBadRequest},
 		{description: []string{"invalid", "href"}, want: http.StatusBadRequest},
+		{description: []string{"javascript", "href"}, want: http.StatusBadRequest, skipParity: "intentional native href validation difference"},
+		{description: []string{"data", "href"}, want: http.StatusBadRequest, skipParity: "intentional native href validation difference"},
+		{description: []string{"href", "too", "long"}, want: http.StatusBadRequest, skipParity: "intentional native href validation difference"},
 		{description: []string{"malformed", "json"}, want: http.StatusBadRequest},
 		{description: []string{"malformed", "guest"}, want: http.StatusBadRequest},
 		{description: []string{"whitespace", "guest"}, want: http.StatusBadRequest},

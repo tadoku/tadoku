@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"reflect"
+	"strings"
 	"testing"
 	"time"
 
@@ -30,6 +31,20 @@ func TestUpdateAnnouncementParametersValidation(t *testing.T) {
 	parameters.Namespace = ""
 	if err := parameters.Validate(); !errors.Is(err, content.ErrInvalidAnnouncement) {
 		t.Errorf("error=%v, want invalid announcement", err)
+	}
+
+	parameters.Namespace = "main"
+	for _, href := range []string{"", "/news", "https://example.test/news", "http://example.test", "/" + strings.Repeat("a", 2047)} {
+		parameters.Href = &href
+		if err := parameters.Validate(); err != nil {
+			t.Errorf("valid href %q rejected: %v", href, err)
+		}
+	}
+	for _, href := range []string{"news", "//example.test/news", `/\example.test/news`, "javascript:alert(1)", "data:text/html,<script>alert(1)</script>", "vbscript:msgbox(1)", "https://example.test/%gh", "/" + strings.Repeat("a", 2048)} {
+		parameters.Href = &href
+		if err := parameters.Validate(); !errors.Is(err, content.ErrInvalidAnnouncement) {
+			t.Errorf("error=%v, want invalid announcement for href %q", err, href)
+		}
 	}
 }
 

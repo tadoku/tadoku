@@ -3070,6 +3070,7 @@ components:
           example: warning
         href:
           type: string
+          maxLength: 2048
           nullable: true
           example: https://tadoku.app/blog/posts/maintenance
         starts_at:

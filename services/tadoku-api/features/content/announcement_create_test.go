@@ -2,6 +2,7 @@ package content_test
 
 import (
 	"errors"
+	"strings"
 	"testing"
 	"time"
 
@@ -55,6 +56,39 @@ func TestCreateAnnouncementParametersValidation(t *testing.T) {
 			}
 			if errx.KindOf(err) != errx.InvalidInput {
 				t.Errorf("error=%v, want invalid-input category", err)
+			}
+		})
+	}
+}
+
+func TestCreateAnnouncementParametersHrefValidation(t *testing.T) {
+	t.Parallel()
+	parameters := content.CreateAnnouncementParameters{
+		ID:        uuid.MustParse("11111111-1111-4111-8111-111111111111"),
+		Namespace: "main",
+		Title:     "Title",
+		Content:   "Content",
+		Style:     "info",
+		StartsAt:  time.Date(2026, 9, 12, 0, 0, 0, 0, time.UTC),
+		EndsAt:    time.Date(2026, 9, 13, 0, 0, 0, 0, time.UTC),
+	}
+
+	for _, href := range []string{"", "/news", "https://example.test/news", "http://example.test", "/" + strings.Repeat("a", 2047)} {
+		t.Run("valid "+href, func(t *testing.T) {
+			parameters := parameters
+			parameters.Href = &href
+			if err := parameters.Validate(); err != nil {
+				t.Errorf("valid href %q rejected: %v", href, err)
+			}
+		})
+	}
+
+	for _, href := range []string{"news", "//example.test/news", `/\example.test/news`, "javascript:alert(1)", "data:text/html,<script>alert(1)</script>", "vbscript:msgbox(1)", "https://example.test/%gh", "/" + strings.Repeat("a", 2048)} {
+		t.Run("invalid "+href, func(t *testing.T) {
+			parameters := parameters
+			parameters.Href = &href
+			if err := parameters.Validate(); !errors.Is(err, content.ErrInvalidAnnouncement) {
+				t.Errorf("error=%v, want invalid announcement for href %q", err, href)
 			}
 		})
 	}

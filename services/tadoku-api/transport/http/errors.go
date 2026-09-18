@@ -18,6 +18,8 @@ func errorStatus(err error) int {
 		return stdhttp.StatusForbidden
 	case errx.NotFound:
 		return stdhttp.StatusNotFound
+	case errx.Conflict:
+		return stdhttp.StatusConflict
 	case errx.Unavailable:
 		return stdhttp.StatusServiceUnavailable
 	default:

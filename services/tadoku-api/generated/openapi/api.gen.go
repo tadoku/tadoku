@@ -1510,6 +1510,14 @@ func (response ContentAnnouncementCreate400Response) VisitContentAnnouncementCre
 	return nil
 }
 
+type ContentAnnouncementCreate409Response struct {
+}
+
+func (response ContentAnnouncementCreate409Response) VisitContentAnnouncementCreateResponse(w http.ResponseWriter) error {
+	w.WriteHeader(409)
+	return nil
+}
+
 type ContentAnnouncementListActiveRequestObject struct {
 	Namespace string `json:"namespace"`
 }

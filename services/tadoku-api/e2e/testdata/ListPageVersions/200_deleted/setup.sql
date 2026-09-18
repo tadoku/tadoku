@@ -9,4 +9,4 @@ values
   ('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa1', '11111111-1111-4111-8111-111111111111', 'Original title', 'Original content', '2026-09-10 12:00:00'),
   ('bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbb1', '22222222-2222-4222-8222-222222222222', 'Another post', 'Another content', '2026-09-10 12:00:00');
 
-update posts set deleted_at = '2026-09-12 12:00:00' where id = '11111111-1111-4111-8111-111111111111';
+update pages set deleted_at = '2026-09-12 12:00:00' where id = '11111111-1111-4111-8111-111111111111';

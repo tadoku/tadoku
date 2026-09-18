@@ -124,6 +124,10 @@ func newTestAPI(ctx context.Context, ketoFixture *testketo.Fixture) (_ *suite, e
 
 func newTestRouter(ctx context.Context, pool *pgxpool.Pool, ketoReadURL string) (*transport.Router, error) {
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
+	return newTestRouterWithLogger(ctx, pool, ketoReadURL, logger)
+}
+
+func newTestRouterWithLogger(ctx context.Context, pool *pgxpool.Pool, ketoReadURL string, logger *slog.Logger) (*transport.Router, error) {
 	reader := ketoclient.NewReadClient(ketoReadURL)
 	permissionChecker := permissions.NewKetoChecker(reader)
 	repository := content.NewAnnouncementsRepository(pool)

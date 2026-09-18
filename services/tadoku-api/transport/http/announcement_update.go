@@ -39,7 +39,7 @@ func (s *server) ContentAnnouncementUpdate(
 		EndsAt:    body.EndsAt.UTC(),
 	})
 	if err != nil {
-		s.logger.ErrorContext(ctx, "update announcement failed", "error", err)
+		s.logOperationError(ctx, "update announcement", err)
 		return nil, err
 	}
 

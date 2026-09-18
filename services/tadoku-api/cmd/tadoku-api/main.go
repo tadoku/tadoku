@@ -22,7 +22,8 @@ import (
 	ketoclient "github.com/tadoku/tadoku/services/common/client/keto"
 	"github.com/tadoku/tadoku/services/common/postgresconfig"
 	"github.com/tadoku/tadoku/services/tadoku-api/app"
-	"github.com/tadoku/tadoku/services/tadoku-api/features/content"
+	"github.com/tadoku/tadoku/services/tadoku-api/features/announcements"
+	"github.com/tadoku/tadoku/services/tadoku-api/features/posts"
 	"github.com/tadoku/tadoku/services/tadoku-api/infra/postgres"
 	valkeyinfra "github.com/tadoku/tadoku/services/tadoku-api/infra/valkey"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/permissions"
@@ -226,10 +227,11 @@ func start(ctx context.Context, cfg config, logger *slog.Logger) (*application, 
 	}
 	keto := ketoclient.NewReadClient(cfg.KetoReadURL, ketoclient.WithHTTPClient(ketoHTTP))
 	permissionChecker := permissions.NewKetoChecker(keto)
-	contentRepository := content.NewAnnouncementsRepository(pool)
-	postsRepository := content.NewPostsRepository(pool)
-	contentService := content.NewService(contentRepository, postsRepository)
-	api := app.New(contentService, pool, permissionChecker)
+	announcementsRepository := announcements.NewAnnouncementsRepository(pool)
+	postsRepository := posts.NewPostsRepository(pool)
+	announcementsService := announcements.NewService(announcementsRepository)
+	postsService := posts.NewService(postsRepository)
+	api := app.New(announcementsService, postsService, pool, permissionChecker)
 	rejectBanned := newBannedUserMiddleware(keto, logger)
 
 	handler, err := transporthttp.NewHandler(api, pool.Ping, cfg.RequestTimeout, metrics, logger, authenticate, rejectBanned)

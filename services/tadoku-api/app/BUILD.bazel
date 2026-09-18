@@ -3,18 +3,9 @@ load("@rules_go//go:def.bzl", "go_library")
 go_library(
     name = "app",
     srcs = [
-        "announcement_create.go",
-        "announcement_delete.go",
-        "announcement_update.go",
         "announcements.go",
         "app.go",
-        "post_create.go",
-        "post_delete.go",
-        "post_find.go",
-        "post_list.go",
-        "post_update.go",
-        "post_version_get.go",
-        "post_version_list.go",
+        "posts.go",
     ],
     importpath = "github.com/tadoku/tadoku/services/tadoku-api/app",
     visibility = [
@@ -23,7 +14,8 @@ go_library(
         "//services/tadoku-api/transport/http:__pkg__",
     ],
     deps = [
-        "//services/tadoku-api/features/content",
+        "//services/tadoku-api/features/announcements",
+        "//services/tadoku-api/features/posts",
         "//services/tadoku-api/infra/postgres",
         "//services/tadoku-api/internal/errx",
         "//services/tadoku-api/internal/permissions",

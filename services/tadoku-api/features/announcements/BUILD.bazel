@@ -1,0 +1,55 @@
+load("@rules_go//go:def.bzl", "go_library", "go_test")
+
+go_test(
+    name = "announcements_test",
+    srcs = [
+        "announcement_create_test.go",
+        "announcement_update_test.go",
+        "announcements_repository_test.go",
+    ],
+    args = ["-test.parallel=4"],
+    data = glob(["testdata/*.sql"]),
+    env_inherit = ["TADOKU_TEST_POSTGRES_URL"],
+    tags = [
+        "no-cache",
+        "no-remote-exec",
+        "requires-network",
+    ],
+    deps = [
+        ":announcements",
+        "//services/tadoku-api/infra/postgres",
+        "//services/tadoku-api/internal/errx",
+        "//services/tadoku-api/internal/testpostgres",
+        "//services/tadoku-api/internal/timex",
+        "@com_github_google_uuid//:uuid",
+    ],
+)
+
+go_library(
+    name = "announcements",
+    srcs = [
+        "announcement_create.go",
+        "announcement_delete.go",
+        "announcement_update.go",
+        "announcements.go",
+        "announcements_repository.go",
+    ],
+    importpath = "github.com/tadoku/tadoku/services/tadoku-api/features/announcements",
+    visibility = [
+        "//services/tadoku-api/app:__pkg__",
+        "//services/tadoku-api/cmd/tadoku-api:__pkg__",
+        "//services/tadoku-api/e2e:__pkg__",
+    ],
+    deps = [
+        "//services/tadoku-api/generated/sqlc/announcements",
+        "//services/tadoku-api/infra/postgres",
+        "//services/tadoku-api/internal/errx",
+        "//services/tadoku-api/internal/timex",
+        "@com_github_google_uuid//:uuid",
+        "@com_github_jackc_pgerrcode//:pgerrcode",
+        "@com_github_jackc_pgx_v5//:pgx",
+        "@com_github_jackc_pgx_v5//pgconn",
+        "@com_github_jackc_pgx_v5//pgtype",
+        "@com_github_jackc_pgx_v5//pgxpool",
+    ],
+)

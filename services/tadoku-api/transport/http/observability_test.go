@@ -42,7 +42,7 @@ func TestNativeRequestMetricUsesMatchedPattern(t *testing.T) {
 	}
 	passthrough := func(next stdhttp.Handler) stdhttp.Handler { return next }
 	router, err := NewHandler(
-		app.New(nil, nil, nil),
+		app.New(nil, nil, nil, nil),
 		func(context.Context) error { return nil },
 		time.Second,
 		registry,

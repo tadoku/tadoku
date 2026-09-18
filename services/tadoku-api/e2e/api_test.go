@@ -19,7 +19,8 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	ketoclient "github.com/tadoku/tadoku/services/common/client/keto"
 	"github.com/tadoku/tadoku/services/tadoku-api/app"
-	"github.com/tadoku/tadoku/services/tadoku-api/features/content"
+	"github.com/tadoku/tadoku/services/tadoku-api/features/announcements"
+	"github.com/tadoku/tadoku/services/tadoku-api/features/posts"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/permissions"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/testketo"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/testpostgres"
@@ -137,10 +138,11 @@ func newTestRouter(ctx context.Context, pool *pgxpool.Pool, ketoReadURL string) 
 func newTestRouterWithLogger(ctx context.Context, pool *pgxpool.Pool, ketoReadURL string, logger *slog.Logger) (*transport.Router, error) {
 	reader := ketoclient.NewReadClient(ketoReadURL)
 	permissionChecker := permissions.NewKetoChecker(reader)
-	repository := content.NewAnnouncementsRepository(pool)
-	postsRepository := content.NewPostsRepository(pool)
-	service := content.NewService(repository, postsRepository)
-	application := app.New(service, pool, permissionChecker)
+	announcementsRepository := announcements.NewAnnouncementsRepository(pool)
+	postsRepository := posts.NewPostsRepository(pool)
+	announcementsService := announcements.NewService(announcementsRepository)
+	postsService := posts.NewService(postsRepository)
+	application := app.New(announcementsService, postsService, pool, permissionChecker)
 	authenticate, err := transport.NewJWTAuthentication(ctx, authenticationJWKS.URL, time.Second, 24*time.Hour, "http://oathkeeper-api/", logger)
 	if err != nil {
 		return nil, err

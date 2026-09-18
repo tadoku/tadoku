@@ -1104,6 +1104,9 @@ type ServerInterface interface {
 	// ContentPostDelete Deletes an existing post
 	// (DELETE /content/posts/{namespace}/{slug})
 	ContentPostDelete(w http.ResponseWriter, r *http.Request, namespace string, slug string)
+	// ContentPostFindBySlug Returns page content for a given slug
+	// (GET /content/posts/{namespace}/{slug})
+	ContentPostFindBySlug(w http.ResponseWriter, r *http.Request, namespace string, slug string)
 }
 
 // ServerInterfaceWrapper converts contexts to parameters.
@@ -1362,6 +1365,41 @@ func (siw *ServerInterfaceWrapper) ContentPostDelete(w http.ResponseWriter, r *h
 	handler.ServeHTTP(w, r)
 }
 
+// ContentPostFindBySlug operation middleware
+func (siw *ServerInterfaceWrapper) ContentPostFindBySlug(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "namespace" -------------
+	var namespace string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "namespace", r.PathValue("namespace"), &namespace, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "namespace", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "slug" -------------
+	var slug string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "slug", r.PathValue("slug"), &slug, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "slug", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ContentPostFindBySlug(w, r, namespace, slug)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 type UnescapedCookieParamError struct {
 	ParamName string
 	Err       error
@@ -1483,6 +1521,7 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	}
 
 	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/content/posts/{namespace}/{slug}", wrapper.ContentPostDelete)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/content/posts/{namespace}/{slug}", wrapper.ContentPostFindBySlug)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/content/announcements/{namespace}/active", wrapper.ContentAnnouncementListActive)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/content/announcements/{namespace}", wrapper.ContentAnnouncementList)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/content/announcements/{namespace}", wrapper.ContentAnnouncementCreate)
@@ -1724,6 +1763,37 @@ func (response ContentPostDelete404Response) VisitContentPostDeleteResponse(w ht
 	return nil
 }
 
+type ContentPostFindBySlugRequestObject struct {
+	Namespace string `json:"namespace"`
+	Slug      string `json:"slug"`
+}
+
+type ContentPostFindBySlugResponseObject interface {
+	VisitContentPostFindBySlugResponse(w http.ResponseWriter) error
+}
+
+type ContentPostFindBySlug200JSONResponse ContentPost
+
+func (response ContentPostFindBySlug200JSONResponse) VisitContentPostFindBySlugResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ContentPostFindBySlug404Response struct {
+}
+
+func (response ContentPostFindBySlug404Response) VisitContentPostFindBySlugResponse(w http.ResponseWriter) error {
+	w.WriteHeader(404)
+	return nil
+}
+
 // StrictServerInterface represents all server handlers.
 type StrictServerInterface interface {
 	// ContentAnnouncementList Lists all announcements
@@ -1747,6 +1817,9 @@ type StrictServerInterface interface {
 	// ContentPostDelete Deletes an existing post
 	// (DELETE /content/posts/{namespace}/{slug})
 	ContentPostDelete(ctx context.Context, request ContentPostDeleteRequestObject) (ContentPostDeleteResponseObject, error)
+	// ContentPostFindBySlug Returns page content for a given slug
+	// (GET /content/posts/{namespace}/{slug})
+	ContentPostFindBySlug(ctx context.Context, request ContentPostFindBySlugRequestObject) (ContentPostFindBySlugResponseObject, error)
 }
 
 type StrictHandlerFunc func(ctx context.Context, w http.ResponseWriter, r *http.Request, request any) (any, error)
@@ -1988,6 +2061,33 @@ func (sh *strictHandler) ContentPostDelete(w http.ResponseWriter, r *http.Reques
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(ContentPostDeleteResponseObject); ok {
 		if err := validResponse.VisitContentPostDeleteResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ContentPostFindBySlug operation middleware
+func (sh *strictHandler) ContentPostFindBySlug(w http.ResponseWriter, r *http.Request, namespace string, slug string) {
+	var request ContentPostFindBySlugRequestObject
+
+	request.Namespace = namespace
+	request.Slug = slug
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ContentPostFindBySlug(ctx, request.(ContentPostFindBySlugRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ContentPostFindBySlug")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ContentPostFindBySlugResponseObject); ok {
+		if err := validResponse.VisitContentPostFindBySlugResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

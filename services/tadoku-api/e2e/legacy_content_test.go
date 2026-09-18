@@ -43,7 +43,9 @@ func newLegacyContentAPI(ctx context.Context, dsn, jwksURL, ketoReadURL string) 
 		nil, nil, nil, nil, nil, nil, nil, nil, // Page operations are not exercised.
 		nil, nil,
 		domain.NewPostDelete(postsRepository),
-		nil, nil, nil, nil, nil,
+		domain.NewPostFind(postsRepository, scenarioClock{}),
+		domain.NewPostFindByID(postsRepository),
+		nil, nil, nil,
 		domain.NewAnnouncementCreate(repository, scenarioClock{}),
 		domain.NewAnnouncementUpdate(repository, scenarioClock{}),
 		domain.NewAnnouncementDelete(repository),

@@ -1,0 +1,4 @@
+>>> GET /content/posts/main/77777777-7777-4777-8777-777777777777
+HTTP/1.1 404 Not Found
+Content-Length: 0
+

@@ -5,6 +5,7 @@ sql:
     queries:
       - announcements.sql
       - post_delete.sql
+      - post_find.sql
     gen:
       go:
         package: content

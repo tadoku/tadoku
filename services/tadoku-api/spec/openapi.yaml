@@ -537,7 +537,7 @@ paths:
           description: Post not found or not published
       x-tadoku-source: Content
       x-tadoku-exposure: public
-      x-tadoku-owner: legacy
+      x-tadoku-owner: native
       x-legacy-path: /posts/{namespace}/{slug}
       x-legacy-operation-id: postFindBySlug
     put:

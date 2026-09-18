@@ -36,7 +36,8 @@ func (s *Service) UpdatePost(ctx context.Context, parameters UpdatePostParameter
 	post.Title = parameters.Title
 	post.Content = parameters.Content
 	post.PublishedAt = parameters.PublishedAt
-	post.UpdatedAt = timex.Now()
+	now := timex.Now()
+	post.UpdatedAt = &now
 
 	return s.posts.UpdatePost(ctx, post, contentChanged)
 }

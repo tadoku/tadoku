@@ -52,7 +52,7 @@ func TestPostsRepositoryUpdatePost(t *testing.T) {
 	metadata.Slug = "renamed-post"
 	publishedAt := time.Date(2026, 9, 11, 12, 0, 0, 0, time.UTC)
 	metadata.PublishedAt = &publishedAt
-	metadata.UpdatedAt = publishedAt
+	metadata.UpdatedAt = &publishedAt
 	err = postgres.RunInTransaction(t.Context(), db.Pool, func(ctx context.Context) error {
 		return repository.UpdatePost(ctx, &metadata, false)
 	})
@@ -79,7 +79,8 @@ func TestPostsRepositoryUpdatePost(t *testing.T) {
 	updated.Title = "Revised title"
 	updated.Content = "Revised content"
 	updated.PublishedAt = nil
-	updated.UpdatedAt = publishedAt.Add(time.Hour)
+	updatedAt := publishedAt.Add(time.Hour)
+	updated.UpdatedAt = &updatedAt
 	stop := errors.New("roll back revised post")
 	for _, rollback := range []bool{true, false} {
 		err := postgres.RunInTransaction(t.Context(), db.Pool, func(ctx context.Context) error {
@@ -136,13 +137,13 @@ func TestPostsRepositoryUpdatePost(t *testing.T) {
 	if err := db.Pool.QueryRow(t.Context(), `select title, content, created_at from posts_content where id = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'`).Scan(&title, &body, &createdAt); err != nil {
 		t.Fatal(err)
 	}
-	if title != original.Title || body != original.Content || !createdAt.Equal(original.CreatedAt) {
+	if title != original.Title || body != original.Content || !createdAt.Equal(*original.CreatedAt) {
 		t.Errorf("original revision changed: title=%q, content=%q, created_at=%v", title, body, createdAt)
 	}
 	if err := db.Pool.QueryRow(t.Context(), `select posts_content.created_at from posts join posts_content on posts_content.id = posts.current_content_id where posts.id = $1`, id).Scan(&createdAt); err != nil {
 		t.Fatal(err)
 	}
-	if !createdAt.Equal(updated.UpdatedAt) {
+	if !createdAt.Equal(*updated.UpdatedAt) {
 		t.Errorf("revision timestamp=%v, want explicit update time %v", createdAt, updated.UpdatedAt)
 	}
 
@@ -161,7 +162,8 @@ func TestPostsRepositoryUpdatePost(t *testing.T) {
 		{name: "revision insertion failure", change: func(post *content.Post) {
 			post.Slug = "rolled-back-post"
 			post.Title = "rejected revision"
-			post.UpdatedAt = post.UpdatedAt.Add(time.Hour)
+			updatedAt := post.UpdatedAt.Add(time.Hour)
+			post.UpdatedAt = &updatedAt
 		}},
 	} {
 		t.Run(test.name, func(t *testing.T) {
@@ -193,7 +195,7 @@ func TestPostsRepositoryUpdatePost(t *testing.T) {
 		})
 	}
 
-	if _, err := db.Pool.Exec(t.Context(), "update posts set deleted_at = $1 where id = $2", updated.UpdatedAt, id); err != nil {
+	if _, err := db.Pool.Exec(t.Context(), "update posts set deleted_at = $1 where id = $2", *updated.UpdatedAt, id); err != nil {
 		t.Fatal(err)
 	}
 	var before, after string

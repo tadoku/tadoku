@@ -36,7 +36,7 @@ func (r *PostsRepository) UpdatePost(ctx context.Context, post *Post, contentCha
 		Slug:             post.Slug,
 		CurrentContentID: contentID,
 		PublishedAt:      publishedAt,
-		UpdatedAt:        postgres.Timestamp(post.UpdatedAt),
+		UpdatedAt:        postgres.Timestamp(*post.UpdatedAt),
 	})
 	if errors.Is(err, pgx.ErrNoRows) {
 		return ErrPostNotFound
@@ -55,7 +55,7 @@ func (r *PostsRepository) UpdatePost(ctx context.Context, post *Post, contentCha
 			PostID:    pgtype.UUID{Bytes: post.ID, Valid: true},
 			Title:     post.Title,
 			Content:   post.Content,
-			CreatedAt: postgres.Timestamp(post.UpdatedAt),
+			CreatedAt: postgres.Timestamp(*post.UpdatedAt),
 		})
 		if err != nil {
 			return fmt.Errorf("create post revision: %w", err)

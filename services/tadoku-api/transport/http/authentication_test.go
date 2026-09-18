@@ -323,6 +323,7 @@ func TestAuthenticationRateLimitsUnknownSigningKeyRefresh(t *testing.T) {
 func TestAuthenticationCancelsRefreshWithLifetime(t *testing.T) {
 	refreshStarted := make(chan struct{})
 	refreshCanceled := make(chan struct{})
+	releaseRefresh := make(chan struct{})
 	var fetches atomic.Int32
 	server := httptest.NewServer(stdhttp.HandlerFunc(func(w stdhttp.ResponseWriter, r *stdhttp.Request) {
 		if fetches.Add(1) == 1 {
@@ -331,13 +332,19 @@ func TestAuthenticationCancelsRefreshWithLifetime(t *testing.T) {
 		}
 
 		close(refreshStarted)
-		<-r.Context().Done()
-		close(refreshCanceled)
+		select {
+		case <-r.Context().Done():
+			close(refreshCanceled)
+		case <-releaseRefresh:
+		}
 	}))
-	t.Cleanup(server.Close)
+	t.Cleanup(func() {
+		close(releaseRefresh)
+		server.Close()
+	})
 
 	lifetime, cancelLifetime := context.WithCancel(t.Context())
-	authenticate, err := NewJWTAuthentication(lifetime, server.URL, time.Second, slog.Default())
+	authenticate, err := NewJWTAuthentication(lifetime, server.URL, time.Minute, slog.Default())
 	if err != nil {
 		t.Fatal(err)
 	}

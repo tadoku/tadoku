@@ -639,9 +639,11 @@ paths:
                 $ref: "#/components/schemas/ContentPost"
         "400":
           description: Invalid post
+        "409":
+          description: Post ID or slug already exists
       x-tadoku-source: Content
       x-tadoku-exposure: public
-      x-tadoku-owner: legacy
+      x-tadoku-owner: native
       x-legacy-path: /posts/{namespace}
       x-legacy-operation-id: postCreate
     get:

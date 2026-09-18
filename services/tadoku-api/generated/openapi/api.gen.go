@@ -1088,6 +1088,9 @@ type ContentAnnouncementCreateJSONRequestBody = ContentAnnouncement
 // ContentAnnouncementUpdateJSONRequestBody defines body for ContentAnnouncementUpdate for application/json ContentType.
 type ContentAnnouncementUpdateJSONRequestBody = ContentAnnouncement
 
+// ContentPostCreateJSONRequestBody defines body for ContentPostCreate for application/json ContentType.
+type ContentPostCreateJSONRequestBody = ContentPost
+
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
 	// ContentAnnouncementList Lists all announcements
@@ -1111,6 +1114,9 @@ type ServerInterface interface {
 	// ContentPostList lists all posts
 	// (GET /content/posts/{namespace})
 	ContentPostList(w http.ResponseWriter, r *http.Request, namespace string, params ContentPostListParams)
+	// ContentPostCreate Creates a new post
+	// (POST /content/posts/{namespace})
+	ContentPostCreate(w http.ResponseWriter, r *http.Request, namespace string)
 	// ContentPostDelete Deletes an existing post
 	// (DELETE /content/posts/{namespace}/{slug})
 	ContentPostDelete(w http.ResponseWriter, r *http.Request, namespace string, slug string)
@@ -1408,6 +1414,32 @@ func (siw *ServerInterfaceWrapper) ContentPostList(w http.ResponseWriter, r *htt
 	handler.ServeHTTP(w, r)
 }
 
+// ContentPostCreate operation middleware
+func (siw *ServerInterfaceWrapper) ContentPostCreate(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "namespace" -------------
+	var namespace string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "namespace", r.PathValue("namespace"), &namespace, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "namespace", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ContentPostCreate(w, r, namespace)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // ContentPostDelete operation middleware
 func (siw *ServerInterfaceWrapper) ContentPostDelete(w http.ResponseWriter, r *http.Request) {
 
@@ -1601,6 +1633,7 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/content/posts/{namespace}/{slug}", wrapper.ContentPostDelete)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/content/posts/{namespace}/{slug}", wrapper.ContentPostFindBySlug)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/content/posts/{namespace}", wrapper.ContentPostList)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/content/posts/{namespace}", wrapper.ContentPostCreate)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/content/announcements/{namespace}/active", wrapper.ContentAnnouncementListActive)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/content/announcements/{namespace}", wrapper.ContentAnnouncementList)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/content/announcements/{namespace}", wrapper.ContentAnnouncementCreate)
@@ -1832,6 +1865,45 @@ func (response ContentPostList200JSONResponse) VisitContentPostListResponse(w ht
 	return err
 }
 
+type ContentPostCreateRequestObject struct {
+	Namespace string `json:"namespace"`
+	Body      *ContentPostCreateJSONRequestBody
+}
+
+type ContentPostCreateResponseObject interface {
+	VisitContentPostCreateResponse(w http.ResponseWriter) error
+}
+
+type ContentPostCreate201JSONResponse ContentPost
+
+func (response ContentPostCreate201JSONResponse) VisitContentPostCreateResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(201)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ContentPostCreate400Response struct {
+}
+
+func (response ContentPostCreate400Response) VisitContentPostCreateResponse(w http.ResponseWriter) error {
+	w.WriteHeader(400)
+	return nil
+}
+
+type ContentPostCreate409Response struct {
+}
+
+func (response ContentPostCreate409Response) VisitContentPostCreateResponse(w http.ResponseWriter) error {
+	w.WriteHeader(409)
+	return nil
+}
+
 type ContentPostDeleteRequestObject struct {
 	Namespace string `json:"namespace"`
 	Slug      string `json:"slug"`
@@ -1919,6 +1991,9 @@ type StrictServerInterface interface {
 	// ContentPostList lists all posts
 	// (GET /content/posts/{namespace})
 	ContentPostList(ctx context.Context, request ContentPostListRequestObject) (ContentPostListResponseObject, error)
+	// ContentPostCreate Creates a new post
+	// (POST /content/posts/{namespace})
+	ContentPostCreate(ctx context.Context, request ContentPostCreateRequestObject) (ContentPostCreateResponseObject, error)
 	// ContentPostDelete Deletes an existing post
 	// (DELETE /content/posts/{namespace}/{slug})
 	ContentPostDelete(ctx context.Context, request ContentPostDeleteRequestObject) (ContentPostDeleteResponseObject, error)
@@ -2166,6 +2241,42 @@ func (sh *strictHandler) ContentPostList(w http.ResponseWriter, r *http.Request,
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(ContentPostListResponseObject); ok {
 		if err := validResponse.VisitContentPostListResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ContentPostCreate operation middleware
+func (sh *strictHandler) ContentPostCreate(w http.ResponseWriter, r *http.Request, namespace string) {
+	var request ContentPostCreateRequestObject
+
+	request.Namespace = namespace
+
+	var body ContentPostCreateJSONRequestBody
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		if !errors.Is(err, io.EOF) {
+			sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+			return
+		}
+	} else {
+		request.Body = &body
+	}
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ContentPostCreate(ctx, request.(ContentPostCreateRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ContentPostCreate")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ContentPostCreateResponseObject); ok {
+		if err := validResponse.VisitContentPostCreateResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {
